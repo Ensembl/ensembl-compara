@@ -1,5 +1,20 @@
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -12,13 +27,6 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 =head1 DESCRIPTION
 
 This RunnableDB module runs gzip -9
-
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-ensembl-dev@ebi.ac.uk
 
 =cut
 
@@ -51,7 +59,9 @@ sub run {
     #
     #Run gzip -9 command (with force option)
     #
-    my $cmd = "gzip -f -9 " . $self->param('output_file');
+    my $output_file = $self->param('output_dir') . "/" . $self->param('output_file');
+
+    my $cmd = "gzip -f -9 " . $output_file;
     if(my $return_value = system($cmd)) {
         $return_value >>= 8;
         die "system( $cmd ) failed: $return_value";
@@ -62,7 +72,7 @@ sub run {
     #directory
     #
     if ($self->param('maf_output_dir')) {
-	my $mv_cmd = "mv " . $self->param('output_file') . ".gz " . $self->param('maf_output_dir');
+	my $mv_cmd = "mv " . $self->param('output_dir') . "/" . $self->param('output_file') . ".gz " . $self->param('maf_output_dir');
 	if(my $return_value = system($mv_cmd)) {
 	    $return_value >>= 8;
 	    die "system( $cmd ) failed: $return_value";
