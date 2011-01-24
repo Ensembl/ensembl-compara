@@ -81,7 +81,6 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
             y: e.pageY, 
             height: panel.elementHeight, 
             width: panel.elementWidth, 
-            aspectRatio: panel.aspectRatio, 
             direction: panel.dragProps.direction
           };
         }
@@ -206,8 +205,6 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
         width:      this.windowWidth
       });
     }
-    
-    this.aspectRatio = this.elementWidth / this.elementHeight;
   },
 
   storeWindowDimensions: function () {
