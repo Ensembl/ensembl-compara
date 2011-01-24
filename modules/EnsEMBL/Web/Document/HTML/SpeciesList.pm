@@ -110,7 +110,7 @@ sub render_species_list {
     if ($user) {
       $html .= ' (<span class="link toggle_link">Change favourites</span>)';
     } else {
-      $html .= ' (<a href="/Account/Login" class="modal_link">Log in to customize this list</a>)';
+      $html .= ' (<a href="/Account/Login" class="modal_link modal_title_Login/Register">Log in to customize this list</a>)';
     }
   }
   
