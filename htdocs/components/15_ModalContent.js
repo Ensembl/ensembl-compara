@@ -162,18 +162,11 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   },
   
   setSelectAll: function () {
-    $('form div.select_all input', this.elLk.content).attr('checked', function () {
-      return !$(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').not(this).length;
-    });
+    var selectAllRow, inputs, checked, val, i, filtered;
     
-    $('fieldset.matrix input.select_all_column, fieldset.matrix input.select_all_row', this.elLk.content).attr('checked', function () {
-      return !$(this).parents('fieldset').find('input.' + this.name + ':not(:checked)').length;
-    });
-    
-    $('fieldset.matrix select.select_all_column, fieldset.matrix select.select_all_row', this.elLk.content).each(function () {
-      var inputs  = $(this).parents('fieldset').find('input.' + this.name);
-      var checked = inputs.filter(':checked');
-      var val, i, filtered;
+    function setSelectAllDropdown() {
+      inputs  = $(this).parents('fieldset').find('input.' + this.name);
+      checked = inputs.filter(':checked');
       
       if (!checked.length) {
         this.value = 'none';
@@ -195,10 +188,36 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
           }
         }
       }
-      
-      inputs   = null;
-      checked  = null;
-      filtered = null;
+    }
+    
+    $('form div.select_all input', this.elLk.content).attr('checked', function () {
+      return $(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').length - 1 <= 0; // -1 for the select_all checkbox itself
     });
+    
+    $('fieldset.matrix input.select_all_column', this.elLk.content).attr('checked', function () {
+      return !$(this).parents('fieldset').find('input.' + this.name + ':not(:checked)').length;
+    });
+    
+    $('fieldset.matrix select.select_all_column, fieldset.matrix select.select_all_row', this.elLk.content).each(setSelectAllDropdown);
+      
+    // Split select_all_row from select_all_column since rows can be processed faster by looking at the tr
+    $('fieldset.matrix tr', this.elLk.content).each(function () {
+      selectAllRow = $('input.select_all_row', this);
+      
+      if (selectAllRow.length) {
+        selectAllRow.attr('checked', !$(this).find('input.' + selectAllRow[0].name + ':not(:checked)').length);
+      }
+      
+      selectAllRow = $('select.select_all_row', this);
+      
+      if (selectAllRow.length) {
+        setSelectAllDropdown.call(selectAllRow[0]);
+      }
+    });
+    
+    selectAllRow = null;
+    inputs       = null;
+    checked      = null;
+    filtered     = null;
   }
 });
