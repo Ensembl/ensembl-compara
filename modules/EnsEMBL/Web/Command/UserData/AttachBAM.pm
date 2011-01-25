@@ -54,7 +54,7 @@ sub process {
         $session->add_data(
           'type'  => 'message',
           'code'  => 'AttachBAM',
-          'message' => "Unable to open/index remote BAM file: $url<br>Ensembl can only display sorted, indexed BAM files<br>Ensure you have sorted and indexed your file and that your web server is accessible to the Ensembl site",
+          'message' => "Unable to open/index remote BAM file: $url<br>Ensembl can only display sorted, indexed BAM files.<br>Please ensure that your web server is accessible to the Ensembl site and that both your .bam and .bai files are present, named consistently, and have the correct file permissions (public readable).",
           function => '_error'
         );
         $redirect .= 'ManageData';
