@@ -1,0 +1,37 @@
+This file describes how to create an image with our species tree.
+
+First, we need to re-scale the tree in order to improve the readability.
+We use a log-scale and make internal branches slightly smaller than final
+ones:
+
+more ensembl-compara/scripts/pipeline/species_tree_blength.nw | \
+  perl -e 'my @a = split(/([\)\,])/, $_);
+    foreach my $a (@a) {
+      if ($a =~ /(.*\w\:)(\d\.\d+)(.*)/) {
+        print $1, log(1.6+$2), $3; # final branches, make them slightly larger than...
+      } elsif ($a =~ /(.*)(\d\.\d+)(.*)/) {
+        print $1, log(1.2+$2), $3; # ... internal branches
+      } else {
+        print $a;
+      }
+    }' -n > rescaled_tree.nw
+
+Open Dendroscope. Load the file and select the Radial Phylogram (Ctrl+7).
+- In the view menu, deselect "Sparse labels" and choose "Radial labels".
+- Adjust the tree, by rotating it left or right.
+- Remove species not in e! by selecting them and Ctrl+Backspace
+- Rotate nodes with Ctrl+Shift+T if you wish
+
+If you want to let Dendroscope load the figures automatically, do:
+cd ~/src/public-plugins/ensembl/htdocs/img/species
+mkdir ~/tmp/species_tree_imgs
+ls thumb_* | sed -e 's/thumb_//' | while read i; do \
+  cp thumb_$i ~/tmp/species_tree_imgs/$i; done
+And go to Options -> Load Taxon Images...
+You can change the size of the images in Options -> Set Image Size...
+
+Save the file as a PDF or an SVG.
+
+Don't forget to cite:
+D.H. Huson, D. C. Richter, C. Rausch, T. Dezulian, M. Franz and R. Rupp, Dendroscope- An interactive viewer for large phylogenetic trees, BMC Bioinformatics 8:460, 2007
+
