@@ -24,12 +24,12 @@ sub init {
   });
 
   $self->create_menus(
-    transcript => 'Other Genes',
-    prediction => 'Prediction transcripts',
-    other      => 'Other',
-    variation  => 'Germline variation',
-    somatic    => 'Somatic Mutations',
-    legends    => 'Legends'
+    transcript  => 'Genes',
+    prediction  => 'Prediction transcripts',
+    variation   => 'Germline variation',
+    somatic     => 'Somatic Mutations',
+    other       => 'Additional decorations',
+    information => 'Information'
   );
 
   $self->load_tracks;
@@ -43,14 +43,10 @@ sub init {
     [ 'scalebar', '', 'scalebar', { display => 'normal', strand => 'r', name => 'Scale bar', description => 'Shows the scalebar' }],
     [ 'ruler',    '', 'ruler',    { display => 'normal', strand => 'f', name => 'Ruler',     description => 'Shows the length of the region being displayed' }]
   );
-
-  $self->add_tracks('legends',
-    [ 'variation_legend', '', 'variation_legend', { variation_legend => 'on', strand => 'r', caption => 'Variation legend' }]
-  );
-
+  
   $self->modify_configs(
     [ 'transcript_core_ensembl' ],
-    { display => 'normal' }
+    { display => 'transcript_label' }
   );
   
   $self->modify_configs(
