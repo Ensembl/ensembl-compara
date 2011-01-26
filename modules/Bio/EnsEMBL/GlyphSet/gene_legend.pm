@@ -77,6 +77,20 @@ sub _init {
       }
     }
   }
+  
+  # Set up a separating line
+  my $rect = $self->Rect({
+    x             => 0,
+    y             => 0,
+    width         => $im_width,
+    height        => 0,
+    colour        => 'grey50',
+    absolutey     => 1,
+    absolutex     => 1,
+    absolutewidth => 1,
+  });
+  
+  $self->push($rect);
 }
 
 1;
