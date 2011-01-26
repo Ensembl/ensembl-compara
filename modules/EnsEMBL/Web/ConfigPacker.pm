@@ -152,7 +152,7 @@ sub _summarise_core_tables {
   my $r_aref = $dbh->selectall_arrayref( 
       'select max(date_format( created, "%Y%m%d"))
       from analysis, meta
-      where logic_name = meta_value and meta_key = "repeat.analysis"' 
+      where logic_name = lower(meta_value) and meta_key = "repeat.analysis"' 
   );
   my $date;
   foreach my $a_aref (@$r_aref){
