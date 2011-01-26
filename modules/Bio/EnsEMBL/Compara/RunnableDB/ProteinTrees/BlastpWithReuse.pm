@@ -138,7 +138,7 @@ sub run {
     my $reuse_ss_hash     = $self->param('reuse_ss_hash');
     my $reuse_this_member = $reuse_ss_hash->{$member->genome_db_id};
 
-    my $fasta_dir         = $self->param('fasta_dir');
+    my $fasta_dir         = $self->param('fasta_dir') or die "'fasta_dir' is an obligatory parameter";
 
     my $blastp_exe        = $self->analysis->program_file || 'wublastp';
 

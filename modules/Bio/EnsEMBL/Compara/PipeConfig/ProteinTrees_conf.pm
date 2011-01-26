@@ -55,7 +55,7 @@ sub default_options {
 
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
         'work_dir'             => '/lustre/scratch101/ensembl/'.$ENV{'USER'}.'/protein_trees_'.$self->o('rel_with_suffix'),
-        'fasta_dir'            => $self->o('work_dir') . '/bDB',
+        'fasta_dir'            => $self->o('work_dir') . '/bDB',    # affects 'dump_subset_create_blastdb' and 'blastp_with_reuse'
         'cluster_dir'          => $self->o('work_dir') . '/c',
 
         'email'             => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
@@ -412,11 +412,12 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
             -program_file       => 'wublastp',
             -parameters         => {
-                'mlss_id'       => $self->o('mlss_id'),
-                'reuse_db'      => $self->dbconn_2_url('reuse_db'),
-                'blast_options' => $self->o('blast_options'),
+                'mlss_id'                   => $self->o('mlss_id'),
+                'reuse_db'                  => $self->dbconn_2_url('reuse_db'),
+                'blast_options'             => $self->o('blast_options'),
+                'fasta_dir'                 => $self->o('fasta_dir'),
             },
-            -wait_for => [ 'load_fresh_members', 'paf_table_reuse', 'paf_create_empty_table' ],
+            -wait_for => [ 'load_fresh_members', 'dump_subset_create_blastdb', 'paf_table_reuse', 'paf_create_empty_table' ],
             -batch_size    =>  40,
             -hive_capacity => 450,
         },
