@@ -41,7 +41,7 @@ sub default_options {
     return {
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',                 # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
 
-        'rel'               => 60,                                                  # current release number
+        'rel'               => 61,                                                  # current release number
         'rel_suffix'        => '',                                                  # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),              # for convenience
         'tree_type'         => 'protein_trees',                                     # either 'protein_trees' or 'ncrna_trees'
@@ -68,6 +68,7 @@ sub default_options {
         'batch_size'  => 25,                                                        # how may trees' dumping jobs can be batched together
         'name_root'   => 'Compara.'.$self->o('rel_with_suffix').'.'.$self->o('tree_type'),      # dump file name root
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',
+        'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs',
         'target_dir'  => '/lustre/scratch101/ensembl/'.$ENV{'USER'}.'/'.$self->o('pipeline_name'),   # where the final dumps will be stored
         'work_dir'    => $self->o('target_dir').'/dump_hash',                       # where directory hash is created and maintained
     };
@@ -187,7 +188,7 @@ sub pipeline_analyses {
             -hive_capacity => 10,
             -wait_for => [ 'collate_dumps' ],
             -flow_into => {
-                1 => [ 'md5sum' ],
+                1 => [ 'md5sum', 'copy_readme' ],
             },
         },
 
@@ -206,6 +207,16 @@ sub pipeline_analyses {
                 'cmd'         => 'cd #target_dir# ; md5sum *.gz >MD5SUM.#tree_type#',
             },
             -wait_for => [ 'archive_long_files' ],
+            -hive_capacity => 10,
+        },
+
+        {   -logic_name => 'copy_readme',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'readme_dir'  => $self->o('readme_dir'),
+                'target_dir'  => $self->o('target_dir'),
+                'cmd'         => 'cp #readme_dir#/README.#tree_type#.dumps #target_dir#',
+            },
             -hive_capacity => 10,
         },
     ];
