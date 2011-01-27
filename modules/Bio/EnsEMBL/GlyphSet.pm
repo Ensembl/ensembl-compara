@@ -193,7 +193,7 @@ sub init_label {
   my @res    = $self->get_text_width(0, $text, '', 'font' => $font, 'ptsize' => $fsze);
   my $track  = $self->_type;
   my $node   = $config->get_node($track);
-  my $hover  = $node->get('menu') ne 'no' && $hub->get_viewconfig->has_image_config($config->{'type'});
+  my $hover  = !$hub->param('export') && $node->get('menu') ne 'no' && $hub->get_viewconfig->has_image_config($config->{'type'});
   (my $class = $self->species . "_$track") =~ s/\W/_/g;
   
   if ($hover) {
