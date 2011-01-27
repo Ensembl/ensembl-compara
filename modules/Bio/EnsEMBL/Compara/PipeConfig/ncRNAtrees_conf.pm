@@ -168,6 +168,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'sql'         => "ALTER TABLE #table_name# ENGINE=InnoDB",
             },
+            -can_be_empty  => 1,
             -hive_capacity => 10,
         },
 
@@ -179,7 +180,7 @@ sub pipeline_analyses {
                 'compara_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
                 'mlss_id'       => $self->o('mlss_id'),
             },
-            -wait_for  => [ 'innodbise_table_factory', 'innodbise_table' ],
+            -wait_for  => [ 'innodbise_table_factory', 'innodbise_table' ],     # have to wait for both, because 'innodbise_table' can_be_empty
             -flow_into => {
                 2 => [ 'load_genomedb' ],
                 1 => [ 'create_species_tree', 'create_lca_species_set', 'load_rfam_models' ],
