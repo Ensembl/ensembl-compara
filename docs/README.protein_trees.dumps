@@ -1,0 +1,17 @@
+Compara.{release}.gene_trees.nh.emf.gz 
+  contains the tree for every protein_tree in Newick (New Hampshire) format
+
+Compara.{release}.gene_trees.nhx.emf.gz 
+  contains the tree for every protein_tree in New Hampshire Extended (NHX) format with:
+  [D] duplication tag -- Y or N
+  [G] gene stable_id
+  [T] NCBI taxon_id
+
+Compara.{release}.gene_trees.aln.emf.gz 
+  contains the peptide alignment for every protein_tree in EMF Alignment format
+
+Compara.{release}.gene_trees.aa.fasta.gz 
+  contains the peptide alignment for every protein_tree in FASTA format
+
+Compara.{release}.gene_trees.cds.fasta.gz 
+  contains the CDS alignment for every protein_tree in FASTA format

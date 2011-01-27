@@ -1,0 +1,15 @@
+Compara.{release}.ncrna_trees.nh.emf.gz 
+  contains the tree for every ncrna_tree in Newick (New Hampshire) format
+
+Compara.{release}.ncrna_trees.nhx.emf.gz 
+  contains the tree for every ncrna_tree in New Hampshire Extended (NHX) format with:
+  [D] duplication tag -- Y or N
+  [G] gene stable_id
+  [T] NCBI taxon_id
+
+Compara.{release}.ncrna_trees.aln.emf.gz 
+  contains the peptide alignment for every ncrna_tree in EMF Alignment format
+
+Compara.{release}.ncrna_trees.aa.fasta.gz 
+  contains the peptide alignment for every ncrna_tree in FASTA format
+
