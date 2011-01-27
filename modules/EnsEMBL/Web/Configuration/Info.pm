@@ -32,6 +32,8 @@ sub populate_tree {
   my $self           = shift;
   my $species_defs   = $self->hub->species_defs;
   my %error_messages = EnsEMBL::Web::Constants::ERROR_MESSAGES;
+  my $species        = $self->hub->species;
+  my $unit           = $species_defs->get_config( $species, 'GENOMIC_UNIT');
 
   my $index = $self->create_node('Index', 'Description',
     [qw(blurb EnsEMBL::Web::Component::Info::SpeciesBlurb)],
@@ -91,8 +93,13 @@ sub populate_tree {
     $data_menu->append($self->create_node('Karyotype', $karyotype_text, [],
       { availability => scalar @{$species_defs->ENSEMBL_CHROMOSOMES || []}, url => $karyotype_url }
     ));
-    
-    $data_menu->append($self->create_node('Location', "Location ($location_text)", [],
+
+    my $location_text_ = " ($location_text)";    
+    if ($unit eq 'bacteria') {
+	$location_text_ = "";
+    }
+
+    $data_menu->append($self->create_node('Location', "Location".$location_text_, [],
       { availability => 1, url => $location_url, raw => 1 }
     ));
     
