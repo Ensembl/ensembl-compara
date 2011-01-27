@@ -476,7 +476,7 @@ sub alleles {
   my $self = shift;
 
   my  @vari_mappings = @{ $self->unique_variation_feature };
-  return $vari_mappings[0]->allele_string if @vari_mappings == 1;
+  return $vari_mappings[0]->allele_string if @vari_mappings;
 
   # Several mappings or no mappings
   my @allele_obj = @{$self->vari->get_all_Alleles};
