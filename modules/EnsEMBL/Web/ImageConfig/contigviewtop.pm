@@ -1,14 +1,12 @@
+# $Id$
+
 package EnsEMBL::Web::ImageConfig::contigviewtop;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
-sub mergeable_config {
-  return 0;
-}
+sub mergeable_config { return 0; }
 
 sub init {
   my $self = shift;
@@ -27,15 +25,15 @@ sub init {
   });
   
   $self->create_menus(
-    sequence    => 'Sequence',
-    marker      => 'Markers',
-    transcript  => 'Genes', 
-    misc_feature  => 'Misc. regions',
-    synteny     => 'Synteny',
-    variation   =>  'Germline variation',
-    somatic     =>  'Somatic mutations',
-    decorations => 'Additional features',
-    information => 'Information'
+    sequence     => 'Sequence',
+    marker       => 'Markers',
+    transcript   => 'Genes', 
+    misc_feature => 'Misc. regions',
+    synteny      => 'Synteny',
+    variation    => 'Germline variation',
+    somatic      => 'Somatic mutations',
+    decorations  => 'Additional features',
+    information  => 'Information'
   );
   
   $self->add_track('sequence',    'contig', 'Contigs',     'stranded_contig', { display => 'normal', strand => 'f' });
@@ -51,32 +49,13 @@ sub init {
   
 #  $self->add_track( 'misc_feature', 'lrg', 'LRG', '_lrg',  { display => 'normal' });
 
-
-  $self->modify_configs(
-    [ 'transcript' ],
-    { qw(render gene_label strand r) }
-  );
-
-  $self->modify_configs(
-    [ 'misc_feature_lrg' ],
-    { qw(render gene_label strand r) }
-  );
-
-  $self->modify_configs(
-    [ 'variation' ],
-    { qw(display off menu no) }  
-  );
+  $self->modify_configs([ 'transcript' ],             { render => 'gene_label', strand => 'r' });
+  $self->modify_configs([ 'misc_feature_lrg' ],       { render => 'gene_label', strand => 'r' });
+  $self->modify_configs([ 'variation' ],                    { display => 'off', menu => 'no'  });
+  $self->modify_configs([ 'somatic' ],                      { display => 'off', menu => 'no'  });
+  $self->modify_configs([ 'variation_feature_structural' ], { display => 'off', menu => 'yes' });
   
-  $self->modify_configs(
-    [ 'somatic' ],
-    { qw(display off menu no) }  
-  );
-  
-  $self->modify_configs(
-    [ 'variation_feature_structural' ],
-    { qw(display off menu yes) }
-  );
-
+  $self->remove_disabled_menus;
 }
 
 1;
