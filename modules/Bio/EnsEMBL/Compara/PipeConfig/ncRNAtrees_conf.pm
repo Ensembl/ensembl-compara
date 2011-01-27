@@ -30,11 +30,11 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'mlss_id'           => 40066,
+        # 'mlss_id'           => 40070,   # 40070 was good for release 61, but make sure you have the correct id!
         'max_gene_count'    => 1500,
 
-        'release'           => '60',
-        'rel_suffix'        => 'c',    # an empty string by default, a letter otherwise
+        'release'           => '61',
+        'rel_suffix'        => '',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
