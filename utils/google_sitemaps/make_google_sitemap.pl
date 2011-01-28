@@ -28,8 +28,14 @@ our $DEFS = EnsEMBL::Web::BlastView::BlastDefs->new;
 
 my ( $host, $user, $pass, $port, $inifile, $chromosome, $start, $end, $transcript, $gene );
 
-#removing the sitemaps from the previous release first
-`rm sitemaps/*`;
+# prepare sitemaps dir
+if (-d 'sitemaps') {
+  print "emptying old sitemaps dir\n";
+  `rm sitemaps/*`;
+} else {
+  print "creating sitemaps dir\n";
+  mkdir('sitemaps');
+}
 
 my %rHash = map { $_ } @ARGV;
 if ( $inifile = $rHash{'-inifile'} ) {
@@ -38,14 +44,23 @@ if ( $inifile = $rHash{'-inifile'} ) {
    eval $icontent;
 }
 
+
 GetOptions(
-   "host=s", \$host, "port=i",    \$port, "user=s", \$user,"pass=s", \$pass, "inifile=s", \$inifile, );
+   "host=s", \$host, "port=i",    \$port, "user=s", \$user,"pass=s", \$pass, "inifile=s", \$inifile);
 
 my $species_list = [ $DEFS->dice( -out => 'species' ) ];
 
 use EnsEMBL::Web::SpeciesDefs;
 my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new(); $host ||= $SPECIES_DEFS->DATABASE_HOST; $port ||= $SPECIES_DEFS->DATABASE_HOST_PORT;$user ||= 'ensro';
 my $sitemap_index = Search::Sitemap::Index->new();
+
+my $domain = sprintf 'http://%s.ensembl.org', $SPECIES_DEFS->GENOMIC_UNIT || 'www';
+print "domain: $domain\n";
+
+print "creating robots.txt\n";
+open ROBOTS, ">", "robots.txt" or die $!;
+print ROBOTS "Sitemap: $domain/sitemaps/sitemap-index.xml\n";
+close ROBOTS;
 
 my $COUNTER;
 my $SITEMAP_NUM = 1;
@@ -59,7 +74,8 @@ my %lookup = (
 );
 
 my $sample_sp_path = $SPECIES_DEFS->species_path( @{$species_list}->[0] );
-$sample_sp_path =~ /$RE{URI}{HTTP}{-keep}/; my $toplevel = 'http://www.ensembl.org' . $3 . '/';
+$sample_sp_path =~ /$RE{URI}{HTTP}{-keep}/; 
+my $toplevel = '$domain' . $3 . '/';
 
 my $map = Search::Sitemap->new();
 $map->add(
@@ -110,7 +126,7 @@ foreach my $species (@$species_list) {
         $transcript = $region->[0];
         $gene = $region->[4];
       }
-      $url = qq{http://www.ensembl.org$url;r=$chromosome:$start-$end};
+      $url = qq{$domain$url;r=$chromosome:$start-$end};
       $url .= qq{;t=$transcript}    if ($count == 1 && $type eq 'gene');     #only if there is one transcript add it to the url
       $url .= qq{;g=$gene} if($type eq 'transcript');
       
