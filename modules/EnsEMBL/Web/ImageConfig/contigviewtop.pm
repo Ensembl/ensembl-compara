@@ -55,7 +55,7 @@ sub init {
   $self->modify_configs([ 'somatic' ],                      { display => 'off', menu => 'no'  });
   $self->modify_configs([ 'variation_feature_structural' ], { display => 'off', menu => 'yes' });
   
-  $self->remove_disabled_menus;
+  $self->get_node('variation_sets')->remove;
 }
 
 1;
