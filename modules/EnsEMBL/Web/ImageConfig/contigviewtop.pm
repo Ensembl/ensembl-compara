@@ -41,12 +41,6 @@ sub init {
   
   $self->load_tracks;
   
-  $self->add_tracks('decorations',
-    [ 'scalebar',  '', 'scalebar',  { display => 'normal', menu => 'no' }],
-    [ 'ruler',     '', 'ruler',     { display => 'normal', menu => 'no', strand => 'f' }],
-    [ 'draggable', '', 'draggable', { display => 'normal', menu => 'no' }]
-  );
-  
 #  $self->add_track( 'misc_feature', 'lrg', 'LRG', '_lrg',  { display => 'normal' });
 
   $self->modify_configs([ 'transcript' ],             { render => 'gene_label', strand => 'r' });
@@ -55,7 +49,13 @@ sub init {
   $self->modify_configs([ 'somatic' ],                      { display => 'off', menu => 'no'  });
   $self->modify_configs([ 'variation_feature_structural' ], { display => 'off', menu => 'yes' });
   
-  $self->get_node('variation_sets')->remove;
+  $self->remove_disabled_menus;
+  
+  $self->add_tracks('decorations',
+    [ 'scalebar',  '', 'scalebar',  { display => 'normal', menu => 'no' }],
+    [ 'ruler',     '', 'ruler',     { display => 'normal', menu => 'no', strand => 'f' }],
+    [ 'draggable', '', 'draggable', { display => 'normal', menu => 'no' }]
+  );
 }
 
 1;
