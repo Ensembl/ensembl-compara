@@ -210,8 +210,8 @@ sub species_list {
       $all_species .= sprintf '<li>%s</li>', $output_order[$j][$i] ? qq{<a class="constant" href="$output_order[$j][$i][0]">$output_order[$j][$i][1]</a>} : '&nbsp;';
     }
   }
-  
-  return qq{<div class="dropdown species">$fav_species<h4>All species</h4><ul>$all_species</ul></div>};
+
+  return sprintf '<div class="dropdown species">%s<h4>%s</h4><ul>%s</ul></div>', $fav_species, $fav_species ? 'All species' : 'Select a species', $all_species;  
 }
 
 sub history {
