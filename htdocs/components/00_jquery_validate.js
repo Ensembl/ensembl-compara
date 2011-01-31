@@ -37,8 +37,20 @@ $.validator = function (options, form) {
   this.settings      = $.extend({}, $.validator.defaults, options);
   this.rules         = this.settings.rules;
   this.tests         = this.settings.tests; // Precompiled regular expressions
-  this.inputs        = $('input[type="text"], input[type="password"], textarea', form);
+  this.inputs        = $('input[type="text"], input[type="password"], textarea, select', form);
   this.submitButtons = $('input[type="submit"]', form);
+  this.result        = true;
+  
+  $(form).bind('submit', function(e) {
+  
+    validator.result = true;
+    validator.validateInputs(null, 'showError');
+    
+    if (!validator.result) {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+    }
+  }, true);
   
   form = null;
   
@@ -123,9 +135,8 @@ $.extend($.validator, {
         'null':  function (el) { $(el).removeClass(validator.settings.validClass + ' ' + validator.settings.invalidClass);   }
       };
       
-      clearTimeout(this.timeout);
-      
-      this.timeout = setTimeout(function () {
+      var validate = function () {
+
         inputs.each(function () {
           var el    = $(this);
           var input = $.extend({}, el.data());
@@ -202,7 +213,17 @@ $.extend($.validator, {
         } else {
           validator.submitButtons.attr('disabled', 'disabled').addClass('disabled');
         }
-      }, flag == 'delay' ? 250 : 0);
+        
+        if (!isValid) validator.result = false;
+      };
+
+      if (this.timeout) clearTimeout(this.timeout);
+
+      if (flag == 'delay') {
+        this.timeout = setTimeout(validate, 250);
+      } else {
+        validate();
+      }
     }
   }
 });
