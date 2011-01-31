@@ -50,7 +50,7 @@ form.check input.invalid  { background-color: #FFCCCC; }
 form.check input.valid    { background-color: #CCFFCC; }
 form.check input.disabled { background-color: #999999; }
 
-form.check label.invalid { color: #FF0000; font-weight: normal; font-style: italic; margin-top: 6px; display: inline; white-space: nowrap; }
+form.check label.invalid { color: #FF0000; font-weight: normal; font-style: italic; display: inline; white-space: nowrap; position: relative; top: 3px; vertical-align: top; }
 
 .hi { border: solid 1px red; padding: 0 1px; font-weight: bold }
 
@@ -83,6 +83,11 @@ label.ff-label {
 }
 div.ff-right {
   padding-left: 50%;
+}
+div.ff-right span.snote {
+  vertical-align: top;
+  position: relative;
+  top: 3px;
 }
 div.fbutton-centre div.ff-right {
   padding-left: 0%;
