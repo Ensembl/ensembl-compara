@@ -11,7 +11,7 @@ sub configure {
   ## @overrides
   my ($self, $params) = @_;
   
-  $self->append_child($self->dom->create_text_node($params->{'value'}));
+  $params->{'is_plain_text'} ? $self->inner_text($params->{'value'}) : $self->inner_HTML($params->{'value'});
   $self->set_attribute('id',    $params->{'wrapper_id'})    if exists $params->{'wrapper_id'};
   $self->set_attribute('class', $params->{'wrapper_class'}) if exists $params->{'wrapper_class'};
 
