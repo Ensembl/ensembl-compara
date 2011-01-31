@@ -49,8 +49,6 @@ sub init {
   $self->modify_configs([ 'somatic' ],                      { display => 'off', menu => 'no'  });
   $self->modify_configs([ 'variation_feature_structural' ], { display => 'off', menu => 'yes' });
   
-  $self->remove_disabled_menus;
-  
   $self->add_tracks('decorations',
     [ 'scalebar',  '', 'scalebar',  { display => 'normal', menu => 'no' }],
     [ 'ruler',     '', 'ruler',     { display => 'normal', menu => 'no', strand => 'f' }],
