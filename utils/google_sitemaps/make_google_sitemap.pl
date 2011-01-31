@@ -59,7 +59,7 @@ print "domain: $domain\n";
 
 print "creating robots.txt\n";
 open ROBOTS, ">", "robots.txt" or die $!;
-print ROBOTS "Sitemap: $domain/sitemaps/sitemap-index.xml\n";
+print ROBOTS "Sitemap: $domain/sitemap-index.xml\n";
 close ROBOTS;
 
 my $COUNTER;
@@ -75,7 +75,7 @@ my %lookup = (
 
 my $sample_sp_path = $SPECIES_DEFS->species_path( @{$species_list}->[0] );
 $sample_sp_path =~ /$RE{URI}{HTTP}{-keep}/; 
-my $toplevel = '$domain' . $3 . '/';
+my $toplevel = $domain . $3 . '/';
 
 my $map = Search::Sitemap->new();
 $map->add(
