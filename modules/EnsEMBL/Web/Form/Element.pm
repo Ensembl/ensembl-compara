@@ -20,6 +20,7 @@ use strict;
 use constant {
   CSS_CLASS_REQUIRED  => 'required',
   CSS_CLASS_OPTIONAL  => 'optional',
+  CSS_CLASS_SHORTNOTE => 'snote'
 };
 
 sub configure {
@@ -44,6 +45,7 @@ sub configure {
   ##    - group         If option needs to go in any <optgroup> in case of <option> or a sub heading in case of checkbox/radio
   ##    - is_plain_text Flag kept on if html encoding needs to be done to the caption
   ##  - no_input        Flag to prevent a hidden input automatically being added from NoEdit element
+  ##  - is_plain_text   Flag kept on if html encoding needs to be done to the value
   ##  - class           Class attribute (space seperated string for multiple classes) - goes to all the sub elements (inputs, selects, textarea)
   ##  - wrapper_class   Class attribute for the wrapper (if there's any wrapper - eg. in checklist etc)
   ##  - option_class    Class attribute for all the options (in case of a dropdown)
