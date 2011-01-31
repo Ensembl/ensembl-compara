@@ -10,7 +10,7 @@ use base qw(
 sub render {
   ## @overrides
   my $self = shift;
-  $self->after($self->dom->create_element('span', {'inner_HTML' => ' '.$self->{'__shortnote'}})) if exists $self->{'__shortnote'};
+  $self->after($self->dom->create_element('span', {'class' => $self->CSS_CLASS_SHORTNOTE, 'inner_HTML' => ' '.$self->{'__shortnote'}})) if exists $self->{'__shortnote'};
   return $self->SUPER::render;
 }
 
@@ -28,6 +28,8 @@ sub configure {
     $params->{'value'} = [ shift @{ $params->{'value'} } ] unless $self->multiple;
     $selected_values  = { map { $_ => 1 } @{ $params->{'value'} } };
   }
+  
+  $params->{'shortnote'} = '<strong title="Required field">*</strong> '.($params->{'shortnote'} || '') if $params->{'required'};
   $self->{'__shortnote'} = $params->{'shortnote'} if exists $params->{'shortnote'};
   $self->{'__option_class'} = $params->{'option_class'} if exists $params->{'option_class'};
   if (exists $params->{'values'}) {

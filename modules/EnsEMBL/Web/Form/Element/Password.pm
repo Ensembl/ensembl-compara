@@ -14,7 +14,7 @@ use constant {
 sub render {
   ## @overrides
   my $self = shift;
-  $self->after($self->dom->create_element('span', {'inner_HTML' => ' '.$self->{'__shortnote'}})) if exists $self->{'__shortnote'};
+  $self->after($self->dom->create_element('span', {'class' => $self->CSS_CLASS_SHORTNOTE, 'inner_HTML' => ' '.$self->{'__shortnote'}})) if exists $self->{'__shortnote'};
   return $self->SUPER::render;
 }
 
