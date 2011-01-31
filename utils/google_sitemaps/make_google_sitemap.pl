@@ -26,7 +26,7 @@ BEGIN {
 use EnsEMBL::Web::BlastView::BlastDefs;
 our $DEFS = EnsEMBL::Web::BlastView::BlastDefs->new;
 
-my ( $host, $user, $pass, $port, $inifile, $chromosome, $start, $end, $transcript, $gene );
+my ( $host, $user, $pass, $port, $inifile, $chromosome, $start, $end, $transcript, $gene, $robots );
 
 # prepare sitemaps dir
 if (-d 'sitemaps') {
@@ -46,7 +46,7 @@ if ( $inifile = $rHash{'-inifile'} ) {
 
 
 GetOptions(
-   "host=s", \$host, "port=i",    \$port, "user=s", \$user,"pass=s", \$pass, "inifile=s", \$inifile);
+   "host=s", \$host, "port=i",    \$port, "user=s", \$user,"pass=s", \$pass, "inifile=s", \$inifile, "robots", \$robots);
 
 my $species_list = [ $DEFS->dice( -out => 'species' ) ];
 
@@ -57,10 +57,12 @@ my $sitemap_index = Search::Sitemap::Index->new();
 my $domain = sprintf 'http://%s.ensembl.org', $SPECIES_DEFS->GENOMIC_UNIT || 'www';
 print "domain: $domain\n";
 
-print "creating robots.txt\n";
-open ROBOTS, ">", "robots.txt" or die $!;
-print ROBOTS "Sitemap: $domain/sitemap-index.xml\n";
-close ROBOTS;
+if ($robots) {
+  print "creating sitemaps/robots.txt\n";
+  open ROBOTS, ">", "sitemaps/robots.txt" or die $!;
+  print ROBOTS "Sitemap: $domain/sitemap-index.xml\n";
+  close ROBOTS;
+}
 
 my $COUNTER;
 my $SITEMAP_NUM = 1;
