@@ -195,10 +195,10 @@ sub remove_disabled_menus {
     return;
   }
   
- if ($node->get('node_type') !~ /^(track|option)$/ && !$node->has_child_nodes) {
+  if ($node->get('node_type') !~ /^(track|option)$/ && !$node->has_child_nodes) {
     my $parent = $node->parent_node;
-    $self->remove_disabled_menus($parent) if $parent && scalar @{$parent->child_nodes} == 1;
     $node->remove;
+    $self->remove_disabled_menus($parent) if $parent && !scalar @{$parent->child_nodes};
   }
 }
 
