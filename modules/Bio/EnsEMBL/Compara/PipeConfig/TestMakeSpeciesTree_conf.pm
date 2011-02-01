@@ -20,13 +20,7 @@ sub default_options {
             -dbname => 'lg4_compara_homology_61h',
         },
 
-        'master_db' => {
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => 'sf5_ensembl_compara_master',
-        },
+        'species_tree_input_file' => '',    # a non-empty value will force the loader to take the data from the file
 
     };
 }
@@ -42,16 +36,15 @@ sub pipeline_create_commands {
 sub pipeline_analyses {
     my ($self) = @_;
     return [
-        {   -logic_name    => 'test_make_species_tree',
+        {   -logic_name    => 'test_make_species_tree3',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters    => {
-                # 'master_db'   => $self->o('master_db'),
             },
             -input_ids     => [
-                { },
+                { 'species_tree_input_file' => $self->o('species_tree_input_file') },
             ],
             -flow_into  => {
-                3 => { 'mysql:////meta' => { 'meta_key' => 'test_species_tree', 'meta_value' => '#species_tree_string#' } },
+                3 => { 'mysql:////meta' => { 'meta_key' => 'test_species_tree3', 'meta_value' => '#species_tree_string#' } },
             },
         },
         

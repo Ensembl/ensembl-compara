@@ -7,7 +7,17 @@
 
 =head1 SYNOPSIS
 
-    Have a look at the examples of usage in Compara::PipeConfig.
+            # a configuration example:
+        {   -logic_name    => 'make_species_tree',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
+            -parameters    => { },
+            -input_ids     => [
+                { 'species_tree_input_file' => $self->o('species_tree_input_file') },   # if this parameter is set, the tree will be taken from the file, otherwise it will be generated
+            ],
+            -flow_into  => {
+                3 => { 'mysql:////meta' => { 'meta_key' => 'test_species_tree', 'meta_value' => '#species_tree_string#' } },    # store the tree in 'meta' table (as an example)
+            },
+        },
 
 =head1 DESCRIPTION
 
@@ -52,7 +62,7 @@ sub fetch_input {
                 (qw(no_previous species_set_id extrataxon_sequenced extrataxon_incomplete multifurcation_deletes_node multifurcation_deletes_all_subnodes)) {
 
             if(defined(my $config_value = $self->param($config_param))) {
-                push @tree_creation_args, ($config_param, $config_value);
+                push @tree_creation_args, ("-$config_param", $config_value);
             }
         }
 

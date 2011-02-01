@@ -43,6 +43,7 @@ sub default_options {
     # tree building parameters:
         'tree_max_gene_count'       => 400,     # affects 'mcoffee'
         'use_genomedb_id'           => 0,       # affects 'njtree_phyml' and 'ortho_tree'
+        'species_tree_input_file'   => '',      # you can define your own species_tree for 'njtree_phyml' and 'ortho_tree'
 
     # homology_dnds parameters:
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',      # used by 'homology_dNdS'
@@ -252,7 +253,7 @@ sub pipeline_analyses {
             },
             -flow_into => {
                 2 => [ 'load_genomedb' ],
-                1 => { 'create_species_tree' => undef,
+                1 => { 'make_species_tree' => undef,
                        'accumulate_reuse_ss' => undef,  # backbone
                 },
             },
@@ -271,30 +272,15 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[load species tree]-------------------------------------------------------------------
 
-        {   -logic_name    => 'create_species_tree',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+        {   -logic_name    => 'make_species_tree',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters    => {
-                'db_url'   => $self->dbconn_2_url('pipeline_db'),
-                'species_tree_file' => $self->o('work_dir').'/spec_tax.nh',
-                'cmd'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/tree/testTaxonTree.pl -url #db_url# -create_species_tree -njtree_output_filename #species_tree_file# -no_other_files 2>/dev/null',
+                'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
             },
             -wait_for => [ 'load_genomedb' ],  # a funnel
             -hive_capacity => -1,   # to allow for parallelization
-            -flow_into => {
-                1 => { 'store_species_tree' => { 'species_tree_file' => '#species_tree_file#' } },
-            },
-        },
-
-        {   -logic_name    => 'store_species_tree',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',     # a non-standard use of JobFactory for iterative insertion
-            -parameters => {
-                'inputcmd'        => 'cat #species_tree_file#',
-                'input_id'        => { 'node_id' => 1, 'tag' => 'species_tree_string', 'value' => '#_range_start#' },
-                'fan_branch_code' => 3,
-            },
-            -hive_capacity => -1,   # to allow for parallelization
-            -flow_into => {
-                3 => [ 'mysql:////protein_tree_tag' ],
+            -flow_into  => {
+                3 => { 'mysql:////protein_tree_tag' => { 'node_id' => 1, 'tag' => 'species_tree_string', 'value' => '#species_tree_string#' } },
             },
         },
 

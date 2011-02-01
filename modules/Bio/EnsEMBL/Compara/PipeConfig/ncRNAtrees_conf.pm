@@ -37,6 +37,8 @@ sub default_options {
         'rel_suffix'        => '',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
+        'species_tree_input_file'   => '',  # empty value means 'create using genome_db+ncbi_taxonomy information'; can be overriden by a file with a tree in it
+
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
         'work_dir'             => $ENV{'HOME'}.'/ncrna_trees_'.$self->o('rel_with_suffix'),
 
@@ -183,7 +185,7 @@ sub pipeline_analyses {
             -wait_for  => [ 'innodbise_table_factory', 'innodbise_table' ],     # have to wait for both, because 'innodbise_table' can_be_empty
             -flow_into => {
                 2 => [ 'load_genomedb' ],
-                1 => [ 'create_species_tree', 'create_lca_species_set', 'load_rfam_models' ],
+                1 => [ 'make_species_tree', 'create_lca_species_set', 'load_rfam_models' ],
             },
         },
 
@@ -200,30 +202,17 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[load species tree]-------------------------------------------------------------------
 
-        {   -logic_name    => 'create_species_tree',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+        {   -logic_name    => 'make_species_tree',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters    => {
-                'db_url'   => $self->dbconn_2_url('pipeline_db'),
-                'species_tree_file' => $self->o('work_dir').'/nctree_spec_tax.nh',
-                'cmd'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/tree/testTaxonTree.pl -url #db_url# -create_species_tree -multifurcation_deletes_node 33316_129949_314146 -multifurcation_deletes_all_subnodes 9347_186625_32561 -njtree_output_filename #species_tree_file# -no_other_files 2>/dev/null',
+                'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
+                'multifurcation_deletes_node'           => [ 33316, 129949, 314146 ],
+                'multifurcation_deletes_all_subnodes'   => [  9347, 186625,  32561 ],
             },
             -wait_for => [ 'load_genomedb_factory', 'load_genomedb' ],  # have to wait for both to complete (so is a funnel)
             -hive_capacity => -1,   # to allow for parallelization
-            -flow_into => {
-                1 => { 'store_species_tree' => { 'species_tree_file' => '#species_tree_file#' } },
-            },
-        },
-
-        {   -logic_name    => 'store_species_tree',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',     # a non-standard use of JobFactory for iterative insertion
-            -parameters => {
-                'inputcmd'        => 'cat #species_tree_file#',
-                'input_id'        => { 'node_id' => 1, 'tag' => 'species_tree_string', 'value' => '#_range_start#' },
-                'fan_branch_code' => 3,
-            },
-            -hive_capacity => -1,   # to allow for parallelization
-            -flow_into => {
-                3 => [ 'mysql:////nc_tree_tag' ],
+            -flow_into  => {
+                3 => { 'mysql:////nc_tree_tag' => { 'node_id' => 1, 'tag' => 'species_tree_string', 'value' => '#species_tree_string#' } },
             },
         },
 
@@ -295,7 +284,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'mlss_id'        => $self->o('mlss_id'),
             },
-            -wait_for => [ 'create_species_tree', 'store_species_tree', 'create_lca_species_set', 'store_lca_species_set', 'load_members_factory', 'load_members' ], # mega-funnel
+            -wait_for => [ 'make_species_tree', 'create_lca_species_set', 'store_lca_species_set', 'load_members_factory', 'load_members' ], # mega-funnel
             -flow_into => {
                 2 => [ 'recover_epo' ],
             },
