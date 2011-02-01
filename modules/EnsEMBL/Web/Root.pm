@@ -206,7 +206,7 @@ sub dynamic_use_failure {
 
 sub get_module_names {
   my ($self, $type, $arg1, $arg2) = @_;
-  my @packages = $self->can('species_defs') ? (grep(/::/, 'EnsEMBL::Web', reverse @{$self->species_defs->ENSEMBL_PLUGINS})) : ('EnsEMBL::Web');
+  my @packages = $self->can('species_defs') ? (grep(/::/, @{$self->species_defs->ENSEMBL_PLUGINS}), 'EnsEMBL::Web') : ('EnsEMBL::Web');
   my @return;
   
   ### Check for all possible module permutations
