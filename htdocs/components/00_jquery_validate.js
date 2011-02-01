@@ -16,7 +16,7 @@
 
 $.extend($.fn, {
   validate: function (options) {
-    if (this.length && this.attr('tagName') == 'FORM') {
+    if (this.length && this.attr('tagName') === 'FORM') {
       var validator = $(this).data('validator');
       
       if (!validator) {
@@ -41,8 +41,7 @@ $.validator = function (options, form) {
   this.submitButtons = $('input[type="submit"]', form);
   this.result        = true;
   
-  $(form).bind('submit', function(e) {
-  
+  $(form).bind('submit', function (e) {
     validator.result = true;
     validator.validateInputs(null, 'showError');
     
@@ -50,9 +49,7 @@ $.validator = function (options, form) {
       e.stopImmediatePropagation();
       e.preventDefault();
     }
-  }, true);
-  
-  form = null;
+  });
   
   this.inputs.each(function () {
     var el    = $(this);
@@ -85,10 +82,12 @@ $.validator = function (options, form) {
     
     el = null;
   }).bind({
-    keyup:  function (e) { if (e.keyCode != 9) { validator.validateInputs($(this), 'delay'); } }, // Ignored if the tab key is pressed, since this will cause blur to fire
+    keyup:  function (e) { if (e.keyCode !== 9) { validator.validateInputs($(this), 'delay'); } }, // Ignored if the tab key is pressed, since this will cause blur to fire
     change: function ()  { validator.validateInputs($(this), 'delay'); },
     blur:   function ()  { validator.validateInputs($(this), 'showError'); }
   });
+  
+  form = null;
 };
 
 $.extend($.validator, {  
@@ -104,10 +103,10 @@ $.extend($.validator, {
       url:      new RegExp(/^(https?|ftp):\/\/(((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:)*@)?(((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5]))|((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?)(:\d*)?)(\/((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)+(\/(([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)*)*)?)?(\?((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|[\uE000-\uF8FF]|\/|\?)*)?(\#((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|\/|\?)*)?$/i)
     },
     rules: {
-      nonnegint:   function (val) { return this.tests['int'].test(val)   && val >= 0; },
-      posint:      function (val) { return this.tests['int'].test(val)   && val >  0; },
-      nonnegfloat: function (val) { return this.tests['float'].test(val) && val >= 0; },
-      posfloat:    function (val) { return this.tests['float'].test(val) && val >  0; }
+      nonnegint:   function (val) { return this.tests.int.test(val)   && val >= 0; },
+      posint:      function (val) { return this.tests.int.test(val)   && val >  0; },
+      nonnegfloat: function (val) { return this.tests.float.test(val) && val >= 0; },
+      posfloat:    function (val) { return this.tests.float.test(val) && val >  0; }
     },
     messages: {
       required:    'This field is required',
@@ -135,13 +134,15 @@ $.extend($.validator, {
         'null':  function (el) { $(el).removeClass(validator.settings.validClass + ' ' + validator.settings.invalidClass);   }
       };
       
-      var validate = function () {
-
+      function validate() {
+        var isValid = true;
+        var i;
+        
         inputs.each(function () {
           var el    = $(this);
           var input = $.extend({}, el.data());
           
-          var state = (flag == 'initial' || !input.required) && !this.value ? null :                                        // Not required and no value - do nothing. On initial run, ignore empty fields
+          var state = (flag === 'initial' || !input.required) && !this.value ? null :                                       // Not required and no value - do nothing. On initial run, ignore empty fields
                       input.rule && validator.rules[input.rule] ? validator.rules[input.rule].call(validator, this.value) : // Validate against rule
                       input.rule && validator.tests[input.rule] ? validator.tests[input.rule].test(this.value) :            // Validate against test
                       input.required ? !!this.value : null;                                                                 // No rule - check if required
@@ -183,12 +184,12 @@ $.extend($.validator, {
               };
               
               el.data('error', input.error);
-            } else if (input.error.rule != input.rule) {
+            } else if (input.error.rule !== input.rule) {
               input.error.el.html(message);
               input.error.rule = input.rule;
             }
             
-            if (flag == 'showError') {
+            if (flag === 'showError') {
               input.error.el.css('display', 'inline');
             }
           } else if (input.error) {
@@ -199,9 +200,7 @@ $.extend($.validator, {
           el = null;
         });
         
-        var isValid = true;
-        
-        for (var i in validator.inputs.toArray()) {
+        for (i in validator.inputs.toArray()) {
           if ($(validator.inputs[i]).data('valid') === false) {
             isValid = false;
             break;
@@ -214,12 +213,16 @@ $.extend($.validator, {
           validator.submitButtons.attr('disabled', 'disabled').addClass('disabled');
         }
         
-        if (!isValid) validator.result = false;
-      };
+        if (!isValid) {
+          validator.result = false;
+        }
+      }
 
-      if (this.timeout) clearTimeout(this.timeout);
+      if (this.timeout) {
+        clearTimeout(this.timeout);
+      }
 
-      if (flag == 'delay') {
+      if (flag === 'delay') {
         this.timeout = setTimeout(validate, 250);
       } else {
         validate();
