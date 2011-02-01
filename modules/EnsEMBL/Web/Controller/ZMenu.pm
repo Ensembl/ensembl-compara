@@ -13,12 +13,10 @@ sub init {
   
   $self->builder->create_objects;
   
-  my $hub     = $self->hub;
-  my $object  = $self->object;
-  my @modules = $self->get_module_names('ZMenu', $self->type, $self->action);
-  my $menu;
-  
-  $menu = $_->new($hub, $object, $menu) for @modules;
+  my $hub    = $self->hub;
+  my $object = $self->object;
+  my $module = $self->get_module_names('ZMenu', $self->type, $self->action);
+  my $menu   = $module->new($hub, $object);
   
   $self->r->content_type('text/plain');
   $menu->render if $menu;

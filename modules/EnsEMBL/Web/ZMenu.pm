@@ -9,15 +9,15 @@ use HTML::Entities qw(encode_entities);
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my ($class, $hub, $object, $existing_menu) = @_;
+  my ($class, $hub, $object) = @_;
   
   my $self = {
     hub            => $hub,
     object         => $object,
     entries        => [],
-    stored_entries => \%{$existing_menu->{'stored_entries'}} || {},
-    order          => $existing_menu->{'order'} || 1,
-    caption        => $existing_menu->{'caption'}
+    stored_entries => {},
+    order          => 1,
+    caption        => ''
   };
   
   bless $self, $class;
@@ -53,31 +53,11 @@ sub caption {
 # POSITION will insert the entry at that position in the menu. Since it increments all subsequent
 #          entries' orders, it should only be used to insert at existing positions.
 # It is probably best not to use POSITION and ORDER together, just in case something goes wrong.
-#
-# ZMenus are pluggable in such a way that if you specify either ORDER or POSITION for an entry from 
-# a plugin, it will OVERWRITE the existing menu of that position unless $insert is set. If you specify neither, the plugin 
-# entry will be added at the bottom of the menu.
-
 sub add_entry {
-  my ($self, $entry, $insert) = @_;
+  my ($self, $entry) = @_;
   
   if ($entry->{'position'}) {
     $_->{'order'}++ for grep $_->{'order'} >= $entry->{'position'}, @{$self->{'entries'}}; # increment order for each entry after the given position
-    
-    if ($insert && scalar keys %{$self->{'stored_entries'}}) {
-      my %stored_entries;
-      
-      foreach (keys %{$self->{'stored_entries'}}) {
-        if ($_ >= $entry->{'position'}) {
-          $stored_entries{$_ + 1} = $self->{'stored_entries'}->{$_};
-        } else {
-          $stored_entries{$_} = $self->{'stored_entries'}->{$_};
-        }
-      }
-      
-      $self->{'stored_entries'} = \%stored_entries;
-    }
-    
     $entry->{'order'} = $entry->{'position'};
     $self->{'order'}++;
   } else {
