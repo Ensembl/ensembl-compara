@@ -60,8 +60,8 @@ sub caption {
 # entry will be added at the bottom of the menu.
 
 sub add_entry {
-  my ($self, $entry, $insert) = @_;
-  if ($insert){
+  my ($self, $entry) = @_;
+  if ($entry-{'insert'}){
   if ($entry->{'position'}) {#if insert
       $_->{'order'}++ for grep $_->{'order'} >= $entry->{'position'}, @{$self->{'entries'}}; # increment order for each entry after the given position
       
