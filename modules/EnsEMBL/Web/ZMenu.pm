@@ -54,19 +54,45 @@ sub caption {
 #          entries' orders, it should only be used to insert at existing positions.
 # It is probably best not to use POSITION and ORDER together, just in case something goes wrong.
 #
+# INSERT a flag to indicate inserting (rather than overwriting) the new element
 # ZMenus are pluggable in such a way that if you specify either ORDER or POSITION for an entry from 
-# a plugin, it will OVERWRITE the existing menu of that position. If you specify neither, the plugin 
+# a plugin, it will OVERWRITE the existing menu of that position, unless INSERT = true. If you specify neither, the plugin 
 # entry will be added at the bottom of the menu.
 
 sub add_entry {
-  my ($self, $entry) = @_;
-  
-  if ($entry->{'position'}) {
-    $_->{'order'}++ for grep $_->{'order'} >= $entry->{'position'}, @{$self->{'entries'}}; # increment order for each entry after the given position
-    $entry->{'order'} = $entry->{'position'};
-    $self->{'order'}++;
-  } else {
-    $entry->{'order'} ||= $self->{'order'}++;
+  my ($self, $entry, $insert) = @_;
+  if ($insert){
+  if ($entry->{'position'}) {#if insert
+      $_->{'order'}++ for grep $_->{'order'} >= $entry->{'position'}, @{$self->{'entries'}}; # increment order for each entry after the given position
+      
+      if (keys %{$self->{'stored_entries'}}) {
+        my %stored_entries;
+        
+        foreach (keys %{$self->{'stored_entries'}}) {
+          if ($_ >= $entry->{'position'}) {
+            $stored_entries{$_+1} = $self->{'stored_entries'}->{$_};
+          } else {
+            $stored_entries{$_} = $self->{'stored_entries'}->{$_};
+          }
+        }
+        
+        $self->{'stored_entries'} = \%stored_entries;
+      }
+
+      
+      $entry->{'order'} = $entry->{'position'};
+      $self->{'order'}++;
+    } else {
+      $entry->{'order'} ||= $self->{'order'}++;
+    }
+  }else{#overwrite
+    if ($entry->{'position'}) {
+      $_->{'order'}++ for grep $_->{'order'} >= $entry->{'position'}, @{$self->{'entries'}}; # increment order for each entry after the given position
+      $entry->{'order'} = $entry->{'position'};
+      $self->{'order'}++;
+    } else {
+      $entry->{'order'} ||= $self->{'order'}++;
+    }      
   }
   
   push @{$self->{'entries'}}, $entry;
