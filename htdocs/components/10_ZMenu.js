@@ -377,6 +377,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     var scale = (max - min + 1) / (this.areaCoords.b - this.areaCoords.t);
     
+    if (scale === max) {
+      scale /= 2; // For very small images, halve the scale. This will stop start > end problems
+    }
+    
     // Region select
     if (this.coords.r) {
       view = 'Overview';
