@@ -72,7 +72,8 @@ foreach (@{$sth->fetchall_arrayref}) {
 
 $dbh->commit;
 $dbh->do('DELETE FROM session_record_tmp WHERE type="script"');
-$dbh->do("ALTER TABLE session_record_tmp modify type enum('view_config','image_config','das','tmp','url','upload','message','custom_page','blast','bam','vcf') DEFAULT 'url'");
-$dbh->do('RENAME TABLE session_record TO session_record2, session_record_tmp TO session_record');
+$dbh->do("ALTER TABLE session_record_tmp MODIFY type varchar(255) NOT NULL DEFAULT ''");
+$dbh->do("ALTER TABLE session_record_tmp DROP COLUMN type_id");
+#$dbh->do('RENAME TABLE session_record TO session_record2, session_record_tmp TO session_record');
 #$dbh->do('DROP TABLE session_record2'); ********* DO THIS MANUALLY ONCE YOU'VE CHECKED EVERYTHING IS OK *********
 $dbh->disconnect;
