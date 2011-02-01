@@ -293,7 +293,8 @@ sub get_available_adaptors {
       "Analysis" => "Bio::EnsEMBL::DBSQL::AnalysisAdaptor",
       "ConservationScore" => "Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor",
       "ConstrainedElement" => "Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor",
-      "SitewiseOmega" => "Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor"
+      "SitewiseOmega" => "Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor",
+      "SpeciesTree" => "Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor",
         );
   return (\%pairs);
 }
