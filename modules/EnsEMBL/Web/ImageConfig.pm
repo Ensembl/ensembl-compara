@@ -648,19 +648,14 @@ sub update_from_url {
       } elsif ($type eq 'das') {
         $p = uri_unescape($p);
         
-        if (my $error = $session->add_das_from_string($p, $self->{'type'}, { display => $renderer })) {
-          $session->add_data(
-            type     => 'message',
-            function => '_warning',
-            code     => 'das:' . md5_hex($p),
-            message  => sprintf('You attempted to attach a DAS source with DSN: %s, unfortunately we were unable to attach this source (%s)', encode_entities($p), encode_entities($error))
-          );
-        } else {
+        my $logic_name = $session->add_das_from_string($p, $self->{'type'}, { display => $renderer });
+        
+        if ($logic_name) {
           $session->add_data(
             type     => 'message',
             function => '_info',
             code     => 'das:' . md5_hex($p),
-            message  => sprintf('You have attached a DAS source with DSN: %s %s', encode_entities($p), $self->get_node('user_data') ? ' to this display' : ' but it cannot be displayed on the specified image')
+            message  => sprintf('You have attached a DAS source with DSN: %s %s.', encode_entities($p), $self->get_node("das_$logic_name") ? 'to this display' : 'but it cannot be displayed on the specified image')
           );
         }
       }
@@ -674,7 +669,7 @@ sub update_from_url {
       type     => 'message',
       function => '_info',
       code     => 'image_config',
-      message  => 'The link you followed has made changes to the tracks displayed on this page',
+      message  => 'The link you followed has made changes to the tracks displayed on this page.',
     );
   }
 }

@@ -34,8 +34,9 @@ package EnsEMBL::Web::Session;
 use strict;
 
 use Apache2::RequestUtil;
-use Time::HiRes qw(time);
-use Digest::MD5 qw(md5_hex);
+use Digest::MD5    qw(md5_hex);
+use HTML::Entities qw(encode_entities);
+use Time::HiRes    qw(time);
 
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
 
@@ -496,12 +497,12 @@ sub add_das {
 }
 
 sub add_das_from_string {
-  my $self   = shift;
-  my $string = shift;
-
+  my $self    = shift;
+  my $string  = shift;
   my @existing = $self->hub->get_all_das;
   my $parser   = $self->das_parser;
   my ($server, $identifier) = $parser->parse_das_string($string);
+  my $error;
   
   # If we couldn't reliably parse an identifier (i.e. string is not a URL),
   # assume it is a registry ID
@@ -512,17 +513,16 @@ sub add_das_from_string {
 
   # Check if the source has already been added, otherwise add it
   my $source = $existing[0]->{$identifier} || $existing[1]->{"$server/$identifier"};
-  my $no_coord_system;
   
   if (!$source) {
     # If not, parse the DAS server to get a list of sources...
-    eval { 
+    eval {
       foreach (@{$parser->fetch_Sources( -location => $server )}) { 
         # ... and look for one with a matcing URI or DSN
         if ($_->logic_name eq $identifier || $_->dsn eq $identifier) { 
         
           if (!@{$_->coord_systems}) { 
-            $no_coord_system =  "Unable to add DAS source $identifier as it does not provide any details of its coordinate systems";
+            $error = "Unable to add DAS source $identifier as it does not provide any details of its coordinate systems";
             return;  
           }
           
@@ -533,19 +533,26 @@ sub add_das_from_string {
       }
     };
     
-    return "DAS error: $@" if $@;
+    $error = "DAS error: $@" if $@;
   }
 
   if ($source) {
     # so long as the source is 'suitable' for this view, turn it on
-    $self->configure_das_views($source, @_);
-  } elsif ($no_coord_system) {
-    return $no_coord_system;
+    $self->configure_das_views($source, @_) unless $error;
   } else { 
-    return "Unable to find a DAS source named $identifier on $server";
+    $error ||= "Unable to find a DAS source named $identifier on $server";
   }
   
-  return;
+  if ($error) {
+    $self->add_data(
+      type     => 'message',
+      function => '_warning',
+      code     => 'das:' . md5_hex($string),
+      message  => sprintf('You attempted to attach a DAS source with DSN: %s, unfortunately we were unable to attach this source (%s).', encode_entities($string), encode_entities($error))
+    );
+  }
+  
+  return $source ? $source->logic_name : undef;
 }
 
 # Switch on a DAS source for the current view/image (if it is suitable)

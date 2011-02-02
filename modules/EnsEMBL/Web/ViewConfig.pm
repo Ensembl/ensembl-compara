@@ -5,7 +5,7 @@ use strict;
 use CGI::Cookie;
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
-use URI::Escape qw(uri_escape);
+use URI::Escape qw(uri_escape uri_unescape);
 
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::OrderedTree;
@@ -209,10 +209,12 @@ sub update_from_url {
   my $session = $hub->session;
   my $input   = $hub->input;
   my $species = $hub->species;
+  my @config  = $input->param('config');
+  my @das     = $input->param('das');
   my $params_removed;
   
-  if ($input->param('config')) {
-    foreach my $v (split /,/, $input->param('config')) {
+  if (scalar @config) {
+    foreach my $v (split /,/, @config) {
       my ($k, $t) = split /=/, $v, 2;
       
       if ($k =~ /^(cookie|image)_width$/) {
@@ -250,31 +252,37 @@ sub update_from_url {
     $input->delete('config');
   }
   
+  if (scalar @das) {
+    my $action = $hub->action;
+    
+    $hub->action = 'ExternalData'; # Change action so that the source will be added to the ExternalData view config
+    
+    foreach (@das) {
+      my $source     = uri_unescape($_);
+      my $logic_name = $session->add_das_from_string($source);
+      
+      if ($logic_name) {
+        $session->add_data(
+          type     => 'message',
+          function => '_info',
+          code     => 'das:' . md5_hex($source),
+          message  => sprintf('You have attached a DAS source with DSN: %s%s.', encode_entities($source), $hub->get_viewconfig->get($logic_name) ? ', and it has been added to the External Data menu' : '')
+        );
+      }
+    }
+    
+    $hub->action = $action; # Reset the action
+    
+    $input->delete('das');
+    $params_removed = 1;
+  }
+  
   foreach my $name ($self->image_config_names) {
     my @values = split /,/, $input->param($name);
     
     if (@values) {
       $input->delete($name); 
       $params_removed = 1;
-    }
-    
-    if ($name eq 'contigviewbottom' || $name eq 'cytoview') {
-      foreach my $v ($input->param('data_URL')) {
-        push @values, sprintf 'url:%s=normal', uri_escape($v);
-        $params_removed = 1; 
-      }
-      
-      $input->delete('data_URL');
-      
-      foreach my $v ($input->param('add_das_source')) {
-        my $server = $v =~ /url=(https?:[^ +]+)/ ? $1 : '';
-        my $dsn    = $v =~ /dsn=(\w+)/ ? $1 : '';
-        
-        push @values, sprintf 'das:%s=normal', uri_escape("$server/$dsn");
-        $params_removed = 1;
-      }
-      
-      $input->delete('add_das_source');
     }
     
     $hub->get_imageconfig($name)->update_from_url(@values) if @values;
