@@ -7,7 +7,7 @@
 #masthead ul                              { list-style: none; margin: 0; padding: 0 }
 #masthead li                              { list-style-image: none; float: left; text-align: center; white-space: nowrap; }
 #masthead .mh                             { float: left; }
-#masthead ul.tools                        { margin-top: 19px; height: 16px; overflow: hidden; }
+#masthead ul.tools                        { margin: 19px 0 0 -5px; height: 16px; overflow: hidden; }
 #masthead ul.tools li                     { padding: 0 10px; border-right: 1px solid [[MH_TEXT]]; }
 #masthead ul.tools li.last                { border: 0; }
 #masthead ul.tabs                         { line-height: normal; margin: 0; padding: 0; width: 100%; }
@@ -32,7 +32,7 @@
 #masthead div.dropdown ul li a.bold       { font-weight: bold; font-size: 90%; }
 #masthead div.dropdown.species            { width: 505px; }
 #masthead div.dropdown.species ul li      { width: 130px; float: left; }
-#masthead .logo_holder                    { position: relative; top: 7px; left: 5px; float: left; }
+#masthead .logo_holder                    { position: relative; top: 7px; margin-left: 5px; float: left; }
 #masthead .account_holder                 { position: absolute; top: 5px; right: 10px; }
 #masthead .tools_holder                   { position: relative; top: 10px; }
 #masthead .tools_holder .arrow            { font-size: 8px; position: relative; top: -1px; padding-left: 1px; }
