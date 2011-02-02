@@ -955,9 +955,9 @@ CREATE TABLE mapping_session (
     when_mapped        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     rel_from           INT UNSIGNED,
     rel_to             INT UNSIGNED,
-
+    prefix             CHAR(4) NOT NULL,
     PRIMARY KEY ( mapping_session_id ),
-    UNIQUE KEY  ( type, rel_from, rel_to )
+    UNIQUE KEY  ( type, rel_from, rel_to, prefix )
 );
 
 

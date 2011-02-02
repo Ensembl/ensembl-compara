@@ -21,6 +21,7 @@ use Treefam::Tree;
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Compara::StableId::NamedClusterSet;
 use Bio::EnsEMBL::Compara::StableId::Map;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 sub new {
     my $class = shift @_;
@@ -149,27 +150,30 @@ sub load_treefam_ncs {
 
 sub load_compara_ncs {
     my ($self, $ncs, $dbh) = @_;
+    
+    #Need the schema's version not the reported version from the 
+    #NamedClusterSet as people like EG's releases are not the same as Ensembl's
+    my $schema_version = $self->_get_db_version($dbh);
+    warn "\t- Detected DB Version is ${schema_version}\n";
 
     my $step = ($ncs->type() eq 'f') ? 100000 : 30000;
     my $sql = ($ncs->type() eq 'f')
     ? qq{
-        SELECT f.family_id, }.(($ncs->release()<53)?"f.stable_id":"CONCAT(f.stable_id,'.',f.version)").qq{,
+        SELECT f.family_id, }.(($schema_version<53)?"f.stable_id":"CONCAT(f.stable_id,'.',f.version)").qq{,
             IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
         FROM family f, family_member fm, member m
         WHERE f.family_id=fm.family_id
         AND   fm.member_id=m.member_id
         AND   m.source_name <> 'ENSEMBLGENE'
     } : qq{
-        SELECT ptn.node_id, }.(($ncs->release()<53)?"CONCAT('Node_',ptn.node_id)":"IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id))").qq{,
+        SELECT ptn.node_id, }.(($schema_version<53)?"CONCAT('Node_',ptn.node_id)":"IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id))").qq{,
             IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
         FROM protein_tree_node ptn
         LEFT JOIN protein_tree_member n2m ON ptn.node_id=n2m.node_id
         LEFT JOIN member m ON n2m.member_id=m.member_id
-        }.(($ncs->release()<53)?'':"LEFT JOIN protein_tree_stable_id ptsi ON ptn.node_id=ptsi.node_id").qq{
-        WHERE ptn.parent_id=}.(($ncs->release()<55)?"ptn.root_id":"ptn.clusterset_id").qq{
-           OR m.stable_id IS NOT NULL
-        ORDER BY left_index
-    };
+        }.(($schema_version<53) ? q{} :q{ LEFT JOIN protein_tree_stable_id ptsi ON ptn.node_id=ptsi.node_id}).
+        ( ($schema_version < 55) ? q{ WHERE ptn.parent_id = ptn.root_id } : q{ WHERE ptn.node_id= ptn.root_id }).
+        q{ OR m.stable_id IS NOT NULL ORDER BY left_index };
 
     my $sth = $dbh->prepare($sql);
     warn "\t- waiting for the data to start coming\n";
@@ -235,28 +239,10 @@ sub store_map {
 
 sub store_history {
     my ($self, $ncsl, $dbh, $timestamp, $master_dbh) = @_;
-
-    $timestamp  ||= time();
-    $master_dbh ||= $dbh;       # in case no master was given (so please provide the $master_dbh to avoid doing unnecessary work afterwards)
-
+    
+    my $mapping_session_id = $self->_get_mapping_session_id($ncsl, $timestamp, $dbh, $master_dbh);
+    
     my $step = 2000;
-
-    my $type = $ncsl->to->type();
-    my $fulltype = { 'f' => 'family', 't' => 'tree' }->{$type} || die "Cannot store history for type '$type'";
-
-        # obtain a unique mapping_session_id for this session:
-    my $ms_sth = $master_dbh->prepare( "INSERT INTO mapping_session(type, rel_from, rel_to, when_mapped) VALUES (?, ?, ?, FROM_UNIXTIME(?))" );
-    $ms_sth->execute($fulltype, $ncsl->from->release(), $ncsl->to->release(), $timestamp);
-    my $mapping_session_id = $ms_sth->{'mysql_insertid'};
-    warn "newly generated mapping_session_id = '$mapping_session_id'\n";
-    $ms_sth->finish();
-
-    if($dbh != $master_dbh) {   # replicate it in the release database:
-        my $ms_sth2 = $dbh->prepare( "INSERT INTO mapping_session(mapping_session_id, type, rel_from, rel_to, when_mapped) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?))" );
-        $ms_sth2->execute($mapping_session_id, $fulltype, $ncsl->from->release(), $ncsl->to->release(), $timestamp);
-        $ms_sth2->finish();
-    }
-
     my $counter = 0;
 
     my $sth = $dbh->prepare(
@@ -282,16 +268,22 @@ sub store_history {
         }
     }
     foreach my $to_clid (keys %{$ncsl->xto_size}) {
-            my ($stid_to  , $ver_to  ) = split(/\./, $ncsl->to->clid2clname($to_clid));
-            $sth->execute($mapping_session_id, '', undef, $stid_to, $ver_to, 1.0*$self->hist_contrib_unit());
+        my ($stid_to  , $ver_to  ) = split(/\./, $ncsl->to->clid2clname($to_clid));
+        my @params = ($mapping_session_id, '', undef, $stid_to, $ver_to, 1.0*$self->hist_contrib_unit());
+        eval { $sth->execute(@params); };
+        throw "Cannot continue inserting into history with params '@params' when working with $to_clid and ".$ncsl->to->clid2clname($to_clid).": $@" if $@;
 
-            unless(++$counter % $step) {
-                warn "\t$counter history lines stored\n";
-            }
+        unless(++$counter % $step) {
+         warn "\t$counter history lines stored\n";
+        }
+
     }
     foreach my $from_clid (keys %{$ncsl->xfrom_size}) {
             my ($stid_from, $ver_from) = split(/\./, $ncsl->from->clid2clname($from_clid));
-            $sth->execute($mapping_session_id, $stid_from, $ver_from, '', undef, 1.0*$self->hist_contrib_unit());
+            my @params = ($mapping_session_id, $stid_from, $ver_from, '', undef, 1.0*$self->hist_contrib_unit());
+            eval { $sth->execute(@params); };
+            throw "Cannot continue inserting into history with params '@params' when working with $from_clid and ".$ncsl->from->clid2clname($from_clid).": $@" if $@;
+
 
             unless(++$counter % $step) {
                 warn "\t$counter history lines stored\n";
@@ -299,6 +291,40 @@ sub store_history {
     }
     $sth->finish();
     warn "\t$counter lines stored, done.\n";
+}
+
+sub _get_mapping_session_id {
+  my ($self, $ncsl, $timestamp, $dbh, $master_dbh) = @_;
+  
+  $timestamp  ||= time();
+  $master_dbh ||= $dbh;       # in case no master was given (so please provide the $master_dbh to avoid doing unnecessary work afterwards)
+  
+  my $type = $ncsl->to->type();
+  my $fulltype = { 'f' => 'family', 't' => 'tree' }->{$type} || die "Cannot store history for type '$type'";
+  
+  #Need to get the Generator to get the prefix and then remove the FM/GT from
+  #the names. Allows us to have a default value of ENS in the mapping table
+  my $generator = Bio::EnsEMBL::Compara::StableId::Generator->new(
+    -TYPE => $ncsl->to->type, 
+    -RELEASE => $ncsl->to->release, 
+    -MAP => $ncsl->from 
+  );
+  my $prefix = $generator->prefix();
+  my $prefix_to_remove = { f => 'FM', t => 'GT' }->{$type} || die "Do not know the extension for type '${type}'";
+  $prefix =~ s/$prefix_to_remove \Z//xms;
+  
+  my $ms_sth = $master_dbh->prepare( "INSERT INTO mapping_session(type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, FROM_UNIXTIME(?), ?)" );
+  $ms_sth->execute($fulltype, $ncsl->from->release(), $ncsl->to->release(), $timestamp, $prefix);
+  my $mapping_session_id = $ms_sth->{'mysql_insertid'};
+  warn "newly generated mapping_session_id = '$mapping_session_id' for prefix '${prefix}'\n";
+  $ms_sth->finish();
+
+  if($dbh != $master_dbh) {   # replicate it in the release database:
+      my $ms_sth2 = $dbh->prepare( "INSERT INTO mapping_session(mapping_session_id, type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), ?)" );
+      $ms_sth2->execute($mapping_session_id, $fulltype, $ncsl->from->release(), $ncsl->to->release(), $timestamp, $prefix);
+      $ms_sth2->finish();
+  }
+  return $mapping_session_id;
 }
 
 sub store_tags {    # used to create cross-references from EnsEMBL GeneTrees to Treefam families
@@ -365,6 +391,31 @@ sub hist_contrib_unit {
         $self->{'_hist_contrib_unit'} = shift @_;
     }
     return $self->{'_hist_contrib_unit'};
+}
+
+sub source {
+  my ($self, $source) = @_;
+  $self->{_source} = $source if defined $source;
+  return $self->{_source};
+}
+
+# -------------------------------------- privates ---------------------------------------------
+
+#Have to use basic DBI because we could have been given one 
+sub _get_db_version {
+  my ($self, $dbh) = @_;
+  my $sql = 'select meta_value from meta where meta_key =? and species_id is null';
+  my $sth = $dbh->prepare($sql);
+  my $row;
+  eval {
+    $sth->execute('schema_version');
+    $row = $sth->fetchrow_arrayref();
+  };
+  my $error = $@;
+  $sth->finish();
+  throw("Detected an error whilst querying for schema version: $error") if $error;
+  throw('No schema_version found in meta; you really should have this') if ! $row;
+  return $row->[0];
 }
 
 1;
