@@ -7,22 +7,22 @@ use strict;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my $view_config = shift;
+  my $self = shift;
 
-  $view_config->storable   = 1;
-  $view_config->_set_defaults(map { $_->logic_name => undef } values %{$view_config->hub->get_all_das});
+  $self->storable   = 1;
+  $self->_set_defaults(map { $_->logic_name => undef } values %{$self->hub->get_all_das});
 }
 
 sub form {
-  my ($view_config, $object) = @_;
+  my ($self, $object) = @_;
   
-  $view_config->add_fieldset('DAS sources');
+  $self->add_fieldset('DAS sources');
   
   my $view    = $object->__objecttype . '/ExternalData';
-  my @all_das = sort { lc $a->label cmp lc $b->label } grep $_->is_on($view), values %{$view_config->hub->get_all_das};
+  my @all_das = sort { lc $a->label cmp lc $b->label } grep $_->is_on($view), values %{$self->hub->get_all_das};
   
   foreach my $das (@all_das) {
-    $view_config->add_form_element({
+    $self->add_form_element({
       type  => 'DASCheckBox',
       das   => $das,
       name  => $das->logic_name,
