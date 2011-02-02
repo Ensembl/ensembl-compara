@@ -711,63 +711,46 @@ sub fetch_homology_species_hash {
 }
 
 sub get_compara_Member {
-  # Returns the Bio::EnsEMBL::Compara::Member object
-  # corresponding to this gene 
-  my $self = shift;
+  my $self       = shift;
   my $compara_db = shift || 'compara';
-
-  # Catch coderef
-  my $cachekey = "_compara_member_$compara_db";
-  my $error = sub { warn($_[0]); $self->{$cachekey} = 0; return 0; };
-
-  unless( defined( $self->{$cachekey} ) ){ # Look in cache
-    # Prepare the adaptors
-    my $compara_dba    = $self->database( $compara_db )      || return &$error('No compara db');
-    my $member_adaptor = $compara_dba->get_adaptor('Member') || return &$error("Cannot COMPARA->get_adaptor('Member')");
-    # Fetch the object
-    my $id     = $self->stable_id;
-    my $member = $member_adaptor->fetch_by_source_stable_id('ENSEMBLGENE', $id) || return &$error("<h3>No compara ENSEMBLGENE member for $id</h3>");
-    # Update the cache
-    $self->{$cachekey} = $member;
+  my $cache_key  = "_compara_member_$compara_db";
+  
+  if (!$self->{$cache_key}) {
+    my $compara_dba = $self->database($compara_db)        || return;
+    my $adaptor     = $compara_dba->get_adaptor('Member') || return;
+    my $member      = $adaptor->fetch_by_source_stable_id('ENSEMBLGENE', $self->stable_id);
+    
+    $self->{$cache_key} = $member if $member;
   }
-  # Return cached value
-  return $self->{$cachekey};
-}
-
-sub get_ProteinTree {
-  # deprecated, use get_GeneTree
-  return get_GeneTree(@_);
+  
+  return $self->{$cache_key};
 }
 
 sub get_GeneTree {
-  # Returns the Bio::EnsEMBL::Compara::ProteinTree object
-  # corresponding to this gene
-  my $self = shift;
+  my $self       = shift;
   my $compara_db = shift || 'compara';
+  my $cache_key  = "_protein_tree_$compara_db";
 
-  # Where to keep the cached data
-  my $cachekey = "_protein_tree_$compara_db";
-
-  # Catch coderef
-  my $error = sub { warn($_[0]); $self->{$cachekey} = 0; return 0; };
-
-  unless( defined( $self->{$cachekey} ) ){ # Look in cache
-    # Fetch the objects
-    my $member       = $self->get_compara_Member($compara_db)               || return &$error('No compara member for this gene');
-    my $proteintree_adaptor = $member->adaptor->db->get_adaptor('ProteinTree')     || return &$error("Cannot COMPARA->get_adaptor('ProteinTree')");
+  if (!$self->{$cache_key}) {
+    my $member  = $self->get_compara_Member($compara_db)           || return;
+    my $adaptor = $member->adaptor->db->get_adaptor('ProteinTree') || return;
     my $tree;
-    eval {$tree = $proteintree_adaptor->fetch_by_gene_Member_root_id($member);};
-    if ($@ || !defined($tree)) {
-      my $nctree_adaptor = $member->adaptor->db->get_adaptor('NCTree')     || return &$error("Cannot COMPARA->get_adaptor('NCTree')");
+    
+    eval {
+      $tree = $adaptor->fetch_by_gene_Member_root_id($member);
+    };
+    
+    if ($@ || !$tree) {
+      my $nctree_adaptor = $member->adaptor->db->get_adaptor('NCTree') || return;
       $tree = $nctree_adaptor->fetch_by_gene_Member_root_id($member);
-      return &$error("No compara tree for ENSEMBLGENE $member") if (!defined($tree));
+      return unless $tree;
     }
-    # Update the cache
-    $self->{$cachekey} = $tree;
+    
+    $self->{$cache_key} = $tree;
     $self->{"_member_$compara_db"} = $member;
   }
-  # Return cached value
-  return $self->{$cachekey};
+  
+  return $self->{$cache_key};
 }
 
 sub get_gene_slices {
