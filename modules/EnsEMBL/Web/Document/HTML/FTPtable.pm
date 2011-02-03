@@ -23,6 +23,7 @@ sub render {
     'embl'    => 'Ensembl database dumps in EMBL nucleotide sequence database format',
     'genbank' => 'Ensembl database dumps in GenBank nucleotide sequence database format',
     'gtf'     => 'Gene sets for each species. These files include annotations of both coding and non-coding genes',
+    'mysql'   => 'All Ensembl MySQL databases are available in text format as are the SQL table definition files',
     'emf'     => 'Alignments of resequencing data from the ensembl_compara database',
     'gvf'     => 'Variation data in GVF format',
     'funcgen' => 'Functional genomics data in GFF format',
@@ -38,6 +39,7 @@ sub render {
 <th colspan="1" style="text-align:center">Protein sequence</th>
 <th colspan="2" style="text-align:center">Annotated sequence</th>
 <th colspan="1" style="text-align:center">Gene sets</th>
+<th colspan="1" style="text-align:center">MySQL</th>
 <th colspan="2" style="text-align:center">Resequencing data</th>
 <th colspan="4" style="text-align:center">Other</th>
 </tr>
@@ -51,12 +53,8 @@ sub render {
     my $sp_dir =lc($spp);
     my $sp_var = lc($spp).'_variation';
     my $common = $species_defs->get_config($spp, 'DISPLAY_NAME');
-    my $ncrna = '-';
-    if ($sp_dir =~ /homo_sapiens/) {
-      $ncrna = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s_fasta/%s/ncrna/">FASTA</a> (ncRNA)', $title{'rna'}, $rel, $sp_dir;
-    }
     my $variation = '-'; 
-    if ($sp_dir =~ /bos_taurus|canis_familiaris|danio_rerio|drosophila_melanogaster|equus_caballus|gallus_gallus|homo_sapiens|saccharomyces_cerevisiae|mus_musculus|ornithorhynchus_anatinus|pan_troglodytes|pongo_pygmaeus|rattus_norvegicus|sus_scrofa|taeniopygia_guttata|tetraodon_nigroviridis/) {
+    if ($sp_dir =~ /bos_taurus|canis_familiaris|danio_rerio|drosophila_melanogaster|equus_caballus|felis_catus|gallus_gallus|homo_sapiens|saccharomyces_cerevisiae|monodelphis_domestica|mus_musculus|ornithorhynchus_anatinus|pan_troglodytes|pongo_pygmaeus|rattus_norvegicus|sus_scrofa|taeniopygia_guttata|tetraodon_nigroviridis/) {
       $variation = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/%s/">Variation</a>', $title{'gvf'}, $rel, $sp_dir;
     }
     my $emf = '-';
@@ -74,11 +72,12 @@ sub render {
 <td><strong><i>%s</i></strong> (%s)</td>
 <td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a> (DNA)</td>
 <td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cdna/">FASTA</a> (cDNA)</td>
-<td>%s</td>
+<td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/ncrna/">FASTA</a> (ncRNA)</td>
 <td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/pep/">FASTA</a> (protein)</td>
 <td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/embl/%s/">EMBL</a></td>
 <td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/genbank/%s/">GenBank</a></td>
 <td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/gtf/">GTF</a></td>
+<td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/mysql/">MySQL</a></td>
 <td>%s</td>
 <td>%s</td>
 <td>%s</td>
@@ -88,11 +87,12 @@ sub render {
       ), $class, $sp_name, $common,
          $title{'dna'}, $rel, $sp_dir, 
          $title{'cdna'}, $rel, $sp_dir, 
-         $ncrna,
+         $title{'rna'}, $rel, $sp_dir,
          $title{'prot'}, $rel, $sp_dir, 
          $title{'embl'}, $rel, $sp_dir,
          $title{'genbank'}, $rel, $sp_dir,
          $title{'gtf'}, $rel,
+         $title{'mysql'}, $rel,
          $emf, $variation, $funcgen, 
     ;
     $row++;
@@ -111,6 +111,7 @@ sub render {
 <td>-</td>
 <td>-</td>
 <td>-</td>
+<td><a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">MySQL</a></td>
 <td><a rel="external" title="$EMF" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/emf/">EMF</a></td>
 <td>-</td>
 <td>-</td>
@@ -126,6 +127,8 @@ sub render {
 <td>-</td>
 <td>-</td>
 <td>-</td>
+<td><a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">MySQL</a></td>
+<td>-</td>
 <td>-</td>
 <td>-</td>
 <td>-</td>
@@ -133,6 +136,7 @@ sub render {
 </tr>
 <tr class="$class">
 <td><strong>Ensembl API</strong></td>
+<td>-</td>
 <td>-</td>
 <td>-</td>
 <td>-</td>
