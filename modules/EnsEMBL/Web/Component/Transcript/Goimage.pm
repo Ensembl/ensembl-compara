@@ -81,7 +81,7 @@ sub content {
   my $go_hash      = $object->get_go_list($olist);
   my $terms_found = 0;
 
-  my @goslim_subset = ("goslim_goa");
+  my @goslim_subset = ("goslim_generic");
   if (%$go_hash) {
     $html .= sprintf(
       '<p><strong>The chart shows the ancestry of the ontology terms that have been mapped to this entity. <br/>

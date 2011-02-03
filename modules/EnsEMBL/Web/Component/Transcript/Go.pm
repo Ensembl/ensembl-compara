@@ -46,14 +46,14 @@ sub content {
     if (%$go_hash) {
 	$terms_found = 1;
 	$html .= "<p><h3>The following terms are descendants of $clusters{$oid}->{description}</h3>";
-      #add closest goslim_goa
+      #add goslim_generic
       my $go_database=$self->hub->get_databases('go')->{'go'};    
       foreach (keys %$go_hash){
         my $query = qq(        
           SELECT t.accession, t.name,c.distance
           FROM closure c join term t on c.parent_term_id= t.term_id
           where child_term_id = (SELECT term_id FROM term where accession='$_')
-          and parent_term_id in (SELECT term_id FROM term t where subsets like '%goslim_goa%')
+          and parent_term_id in (SELECT term_id FROM term t where subsets like '%goslim_generic%')
           order by distance         
         );
         my $result = $go_database->dbc->db_handle->selectall_arrayref($query);
