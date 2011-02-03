@@ -271,7 +271,7 @@ sub _summarise_core_tables {
          left join external_db using(external_db_id)'
 					 );
     foreach my $row (@$oref) {
-	push @{$self->db_tree->{'SPECIES_ONTOLOGIES'}}, $row->[0];
+	push @{$self->db_tree->{'SPECIES_ONTOLOGIES'}}, $row->[0] if ($row->[0]);
     }
 
   }
