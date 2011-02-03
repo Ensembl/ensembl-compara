@@ -37,7 +37,7 @@ my $conf = new EnsEMBL::Web::SpeciesDefs;
 # The effect of this is that any plugin with an EnsEMBL::Web:: namespace is used to extend that module in the core directory
 # Functions that exist in both the core and the plugin will be overwritten, functions that exist only in the plugin will be added
 require LoadPlugins;
-LoadPlugins::plugin(sub { /\.pm$/ && !/(SpeciesDefs|ConfigPacker|DHTMLmerge|Cache)\.pm/; });
+LoadPlugins::plugin(sub { /\.pm$/ && !/(Root|SpeciesDefs|ConfigPacker|DHTMLmerge|Cache)\.pm/; });
 
 if ($conf->ENSEMBL_MART_ENABLED > 0) {
   require 'BioMart/Initializer.pm';
