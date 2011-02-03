@@ -85,7 +85,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw try catch);
+use Bio::EnsEMBL::Utils::Exception qw(throw try catch warning);
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref wrap_array);
 
 use XML::LibXML;
@@ -107,6 +107,8 @@ my $xsi_uri = 'http://www.w3.org/2001/XMLSchema-instance';
                           Defaults to B<Unknown>.
   Arg[ALIGNED]          : Boolean; indicates if we want to emit aligned
                           sequence. Defaults to B<false>.
+  Arg[NO_SEQUENCES]     : Boolean; indicates we want to ignore sequence 
+                          dumping. Defaults to B<false>.                          
   Description : Creates a new tree writer object. 
   Returntype  : Instance of the writer
   Exceptions  : None
@@ -119,8 +121,8 @@ my $xsi_uri = 'http://www.w3.org/2001/XMLSchema-instance';
 
 sub new {
   my ($class, @args) = @_;
-  my ($processors, $processor_order, $cdna, $source, $aligned) = 
-    rearrange([qw(processors processor_order cdna source aligned)], @args);
+  my ($processors, $processor_order, $cdna, $source, $aligned, $no_sequences) = 
+    rearrange([qw(processors processor_order cdna source aligned no_sequencess)], @args);
   
   $source ||= 'Unknown';
   $cdna ||= 1;
@@ -148,9 +150,14 @@ sub new {
   $processor_order ||= [map { $base.$_ } qw(ProteinTree AlignedMember NestedSet)];
   $self->register_processor_order($processor_order);
   
+  if( ($cdna || $aligned) && $no_sequences) {
+    warning "-CDNA or -ALIGNED was specified but so was -NO_SEQUENCES. Will ignore sequences";
+  }
+  
   $self->cdna($cdna);
   $self->source($source);
   $self->aligned($aligned);
+  $self->no_sequences($no_sequences);
   
   return $self;
 }
@@ -178,6 +185,7 @@ sub clone {
   $new->cdna($self->cdna());
   $new->source($self->source());
   $new->aligned($self->aligned());
+  $new->no_sequences($self->no_sequences());
   return $new;
 }
 
@@ -207,6 +215,7 @@ sub doc {
 
 =head2 cdna()
 
+  Arg[0] : The value to set this to
   Description : Indicates if we want CDNA sequence in the XML. If false
   the code will dump peptide data
   Returntype : Boolean
@@ -223,10 +232,29 @@ sub cdna {
 
 =pod
 
+=head2 no_sequences()
+
+  Arg[0] : The value to set this to
+  Description : Indicates if we do not want to perform sequence dumping 
+  Returntype  : Boolean
+  Exceptions  : None
+  Status      : Stable
+  
+=cut
+ 
+sub no_sequences {
+  my ($self, $no_sequences) = @_;
+  $self->{no_sequences} = $no_sequences if defined $no_sequences;
+  return $self->{no_sequences};
+}
+
+=pod
+
 =head2 source()
 
+  Arg[0] : The value to set this to
   Description : Indicates the source of the stable identifiers for the 
-  peptides.
+                peptides.
   Returntype : String
   Exceptions : None
   Status     : Stable
@@ -243,6 +271,7 @@ sub source {
 
 =head2 aligned()
 
+  Arg[0] : The value to set this to
   Description : Indicates if we want to push aligned sequences into the XML
   Returntype : Boolean
   Exceptions : None
@@ -260,6 +289,7 @@ sub aligned {
 
 =head2 write_trees()
 
+  Arg[0]      : The tree to write. Can be a single Tree or an ArrayRef
   Description : Writes a tree into the backing document representation
   Returntype  : None
   Exceptions  : Possible if there is an issue with retrieving data from the tree
@@ -482,18 +512,20 @@ sub _aligned_member_processor {
   my $location = sprintf('%s:%d-%d',$gene->chr_name(), $gene->chr_start(), $gene->chr_end());
   $sequence->addNewChild($phylo_uri, 'location')->appendText($location);
   
-  my $mol_seq;
-  if($self->aligned()) {
-    $mol_seq = ($self->cdna()) ? $protein->cdna_alignment_string() : $protein->alignment_string();
+  if(!$self->no_sequences()) {
+    my $mol_seq;
+    if($self->aligned()) {
+      $mol_seq = ($self->cdna()) ? $protein->cdna_alignment_string() : $protein->alignment_string();
+    }
+    else {
+      $mol_seq = ($self->cdna()) ? $protein->sequence_cds() : $protein->sequence(); 
+    }
+    $mol_seq =~ s/\s+//g if $self->cdna();
+    
+    my $mol_seq_element = $sequence->addNewChild($phylo_uri, 'mol_seq');
+    $mol_seq_element->setAttribute('is_aligned', $self->aligned() || 0);
+    $mol_seq_element->appendText($mol_seq);
   }
-  else {
-    $mol_seq = ($self->cdna()) ? $protein->sequence_cds() : $protein->sequence(); 
-  }
-  $mol_seq =~ s/\s+//g if $self->cdna();
-  
-  my $mol_seq_element = $sequence->addNewChild($phylo_uri, 'mol_seq');
-  $mol_seq_element->setAttribute('is_aligned', $self->aligned() || 0);
-  $mol_seq_element->appendText($mol_seq);
   
   #Adding GenomeDB
   my $genome_db_property = $element->addNewChild($phylo_uri, 'property');
