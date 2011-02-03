@@ -13,7 +13,8 @@ sub render {
 
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
 
-  my $rel = ($species_defs->ENSEMBL_SERVERNAME =~ 'archive') ? 'release-'.$species_defs->ENSEMBL_VERSION : 'current';
+  # Always set to use the release number rather than current to get around the delay in FTP site links updating 
+  my $rel = 'release-'.$species_defs->ENSEMBL_VERSION;
 
   my %title = (
     'dna'     => 'Masked and unmasked genome sequences associated with the assembly (contigs, chromosomes etc.)',
