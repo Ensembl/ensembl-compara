@@ -48,7 +48,7 @@ sub clear_cached_content {
   my $cache = $self->cache;
   my $r     = $self->r;
   
-  if ($cache && ($r->headers_in->{'Cache-Control'} eq 'max-age=0' || $r->headers_in->{'Pragma'} eq 'no-cache') && $r->method ne 'POST') {
+  if ($cache && $r->headers_in->{'Cache-Control'} =~ /(max-age=0|no-cache)/ && $r->method ne 'POST') {
     $cache->delete_by_tags($self->{'url_tag'}, $self->{'session_id'} ? "session_id[$self->{'session_id'}]" : ());
     
     warn "DYNAMIC CONTENT CACHE CLEAR: $self->{'url_tag'}, $self->{'session_id'}" if $self->{'cache_debug'};
