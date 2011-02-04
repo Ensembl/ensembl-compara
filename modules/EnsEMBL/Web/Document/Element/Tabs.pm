@@ -76,12 +76,11 @@ sub init {
 
 sub init_species_list {
   my ($self, $hub) = @_;
-  my $species      = $hub->species;
   my $species_defs = $hub->species_defs;
   
   $self->{'species_list'} = [ 
     sort { $a->[1] cmp $b->[1] } 
-    map  { $_ eq $species ? () : [ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME') ]}
+    map  [ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME') ],
     $species_defs->valid_species
   ];
   
