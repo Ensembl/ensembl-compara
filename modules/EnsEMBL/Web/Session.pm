@@ -43,9 +43,7 @@ use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::ImageConfig;
 use EnsEMBL::Web::Tools::Encryption 'checksum';
-use EnsEMBL::Web::ViewConfig;
 
 use base qw(EnsEMBL::Web::Root);
 
