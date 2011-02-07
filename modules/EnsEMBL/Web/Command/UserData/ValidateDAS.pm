@@ -21,6 +21,7 @@ sub process {
 
     if ($filter->error_code) {
       $next = 'DasSources';
+      $param->{'das_server'} = $server;
       $param->{'filter_module'} = 'DAS';
       $param->{'filter_code'} = $filter->error_code;
     }

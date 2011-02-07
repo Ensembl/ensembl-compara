@@ -15,7 +15,7 @@ sub init {
   $self->messages = {
     no_server  => 'No server was selected.',
     DAS        => 'The DAS server returned an error.',
-    none_found => 'No sources found on server.',
+    none_found => 'No sources found/selected on server.',
     no_coords  => 'Source has no coordinate systems and none were selected'
   };
 }
@@ -27,7 +27,7 @@ sub catch {
   # Process any errors
   if (!ref $sources) {
     # Store the server's message in the session
-    $self->hub->session->add_data(
+    $self->object->hub->session->add_data(
       type     => 'message',
       code     => 'DAS_server_error',
       message  => "Unable to access DAS source. Server response: $sources",
