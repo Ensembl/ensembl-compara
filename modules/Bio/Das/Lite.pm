@@ -19,7 +19,9 @@ use English qw(-no_match_vars);
 
 our $DEBUG    = 0;
 our $VERSION  = do { my @r = (q$Revision$ =~ /\d+/mxg); sprintf '%d.'.'%03d' x $#r, @r };
-our $BLK_SIZE = 8192;
+# Changed blocksize to improve performance for reading registry
+#our $BLK_SIZE = 8192;
+our $BLK_SIZE = 2097152;
 our $TIMEOUT  = 5;
 our $MAX_REQ  = 5;
 our $MAX_HOST = 7;
