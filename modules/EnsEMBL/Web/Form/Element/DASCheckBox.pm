@@ -32,7 +32,7 @@ sub configure {
 
   $self->append_child($self->dom->create_element('p', {'class' => $self->CSS_CLASS_CHECKBOX_WRAPPER}))->append_child($checkbox);
   $self->append_child($self->dom->create_element('div', {
-    'inner_HTML'  => sprintf(qq(<p><label for="$params->{'id'}">$params->{'label'}</label></p><div>$params->{'das'}->{'description'}  %s </div>), $params->{'das'}->{'homepage'} ? qq([<a href="$params->{'das'}->{'homepage'}">Homepage</a>]) : '' ),
+    'inner_HTML'  => sprintf(qq(<p><label for="$params->{'id'}">$params->{'label'}) . ($params->{'das'}->logic_name eq  $params->{'label'} ? '' : ' ('.$params->{'das'}->logic_name.')') . qq(</label></p><div>$params->{'das'}->{'description'}  %s </div>), $params->{'das'}->{'homepage'} ? qq([<a href="$params->{'das'}->{'homepage'}">Homepage</a>]) : '' ),
     'class'       => $self->CSS_CLASS_TEXT
   }));
 }
