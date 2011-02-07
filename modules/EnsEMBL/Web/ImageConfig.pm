@@ -1036,6 +1036,7 @@ sub add_genes {
           'transcript_label',   'Expanded with labels',
           'collapsed_nolabel',  'Collapsed without labels',
           'collapsed_label',    'Collapsed with labels',
+          'coding_only',        'Coding transcripts only (in coding genes)',
         ] : $t eq 'rnaseq' ? [
          'off',                'Off',
          'transcript_nolabel', 'Expanded without labels',
