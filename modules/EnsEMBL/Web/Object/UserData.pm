@@ -984,6 +984,7 @@ sub get_das_servers {
 sub get_das_sources {
   #warn "!!! ATTEMPTING TO GET DAS SOURCES";
   my ($self, $server, @logic_names) = @_;
+  my $clearCache = 0;
   
   my $species = $self->species;
   if ($species eq 'common') {
@@ -992,21 +993,26 @@ sub get_das_sources {
 
   my @name  = grep { $_ } $self->param('das_name_filter');
   my $source_info = [];
- 
-=pod
 
-THIS CODE IS WRONG - FILTERING IS DONE BY SOURCEPARSER!
+  $clearCache = $self->param('das_clear_cache');
 
   ## First check for cached sources
   my $MEMD = new EnsEMBL::Web::Cache;
-  #$MEMD->delete($server) if $MEMD;
-  if ($MEMD) {
-    my $unfiltered = $MEMD->get($server) || []; # wrong - need more tags
-    #warn "FOUND SOURCES IN MEMORY" if scalar @$unfiltered;
-  }
 
-  ## TODO - cache in session?
-=cut
+  my $cache_key;
+  if ($MEMD) {
+    $cache_key = $server . '::SPECIES[' . $species . ']';
+
+    if ($clearCache) {
+      $MEMD->delete($cache_key);
+    }
+    my $unfiltered = $MEMD->get($cache_key) || [];
+    #warn "FOUND SOURCES IN MEMORY" if scalar @$unfiltered;
+
+    foreach my $source (@{ $unfiltered }) {
+      push @$source_info, EnsEMBL::Web::DASConfig->new_from_hashref( $source );
+    }
+  }
 
   unless (scalar @$source_info) {
     #warn ">>> NO CACHED SOURCES, SO TRYING PARSER";
@@ -1015,11 +1021,13 @@ THIS CODE IS WRONG - FILTERING IS DONE BY SOURCEPARSER!
  
     try {
       my $parser = $self->hub->session->das_parser;
+
+      # Fetch ALL sources and filter later in this method (better for caching)
       $sources = $parser->fetch_Sources(
         -location   => $server,
         -species    => $species || undef,
-        -name       => scalar @name  ? \@name  : undef, # label or DSN
-        -logic_name => scalar @logic_names ? \@logic_names : undef, # the URI
+# DON'T DO IN PARSER       -name       => scalar @name  ? \@name  : undef, # label or DSN
+# DON'T DO IN PARSER       -logic_name => scalar @logic_names ? \@logic_names : undef, # the URI
       ) || [];
     
       if (!scalar @{ $sources }) {
@@ -1046,10 +1054,27 @@ THIS CODE IS WRONG - FILTERING IS DONE BY SOURCEPARSER!
       push @$source_info, EnsEMBL::Web::DASConfig->new_from_hashref( $source );
     }
     ## Cache them for later use
-    #$MEMD->set($server, $cached, undef, 'DSN_INFO', $species) if $MEMD; # wrong
+    # Only cache if more than 10 sources, so we don't confuse people in the process of setting
+    # up small personal servers (by caching their results half way through their setup).
+    if (scalar(@$cached) > 10) {
+      $MEMD->set($cache_key, $cached, 1800, 'DSN_INFO', $species) if $MEMD;
+    }
   }
-  #warn '>>> RETURNING '.@$source_info.' SOURCES';
+
+  # Do filtering here rather than in das_parser so only have to cache one complete set of sources for server
   
+  if (scalar(@logic_names)) {
+    #print STDERR "logic_names = |" . join('|',@logic_names) . "|\n";
+    @$source_info = grep { my $source = $_; grep { $source->logic_name eq $_ } @logic_names  } @$source_info;
+  }
+  if (scalar(@name)) {
+    @$source_info = grep { my $source = $_; grep { $source->label =~ /$_/i || 
+                                                   $source->logic_name =~ /$_/i || 
+                                                   $source->description =~ /$_/msi || 
+                                                   $source->caption =~ /$_/i } @name  } @$source_info;
+  }
+
+  #warn '>>> RETURNING '.@$source_info.' SOURCES';
   return $source_info;
 }
 
