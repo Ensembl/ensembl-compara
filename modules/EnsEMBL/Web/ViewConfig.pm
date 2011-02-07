@@ -161,7 +161,7 @@ sub get_fieldset {
 sub add_form_element {
   my ($self, $element) = @_;
 
-  if ($element->{'type'} eq 'CheckBox') {
+  if ($element->{'type'} eq 'CheckBox' || $element->{'type'} eq 'DASCheckBox') {
     $element->{'selected'} = $self->get($element->{'name'}) eq $element->{'value'} ? 1 : 0 ;
   }
   elsif (not exists $element->{'value'}) {
