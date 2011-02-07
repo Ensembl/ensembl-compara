@@ -6,6 +6,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::Root);
 
+use EnsEMBL::Web::DOM::Node::Element::Generic;
+
 use constant {
   POSSIBLE_HTML_ELEMENTS => [qw(
       a abbr acronym address area b base bdo big blockquote body br button
@@ -48,21 +50,22 @@ sub create_element {
   ## @param Element type
   ## @param HashRef of {attrib1 => value1, attrib2 => value2} for attributes, inner_HTML/inner_text
   ## @return Element subclass object
-  my ($self, $element_type, $attributes)  = @_;
+  my ($self, $element_name, $attributes)  = @_;
 
-  $element_type = lc $element_type;
+  $element_name = lc $element_name;
   $attributes ||= {};
 
-  my $node_class  = $self->_get_mapped_element_class($element_type);
+  my $node_class  = $self->_get_mapped_element_class($element_name);
+  
   my $class_found = $self->dynamic_use($node_class);
   my $is_generic  = 0;
   
   unless ($class_found) {
-    $_ eq $element_type and $node_class = 'EnsEMBL::Web::DOM::Node::Element::Generic' and $is_generic = 1 and last for @{$self->POSSIBLE_HTML_ELEMENTS};
+    $_ eq $element_name and $node_class = 'EnsEMBL::Web::DOM::Node::Element::Generic' and $is_generic = 1 and last for @{$self->POSSIBLE_HTML_ELEMENTS};
     return undef unless $is_generic;
   }
   my $element = $node_class->new($self);
-  $element->node_name = $element_type if $is_generic;
+  $element->node_name = $element_name if $is_generic;
   if (exists $attributes->{'inner_HTML'}) {
     $element->inner_HTML($attributes->{'inner_HTML'}) and delete $attributes->{'inner_HTML'};
   }
@@ -98,10 +101,10 @@ sub create_comment {
 }
 
 sub _get_mapped_element_class {
-  my ($self, $element_type) = @_;
-  return $self->{'_classes'}{$element_type} if exists $self->{'_classes'}{$element_type};
-  return 'EnsEMBL::Web::DOM::Node::Element::Input::'.ucfirst $1 if $element_type =~ /^input([a-z]+)$/;
-  return 'EnsEMBL::Web::DOM::Node::Element::'.ucfirst $element_type;
+  my ($self, $element_name) = @_;
+  return $self->{'_classes'}{$element_name} if exists $self->{'_classes'}{$element_name};
+  return 'EnsEMBL::Web::DOM::Node::Element::Input::'.ucfirst $1 if $element_name =~ /^input([a-z]+)$/;
+  return 'EnsEMBL::Web::DOM::Node::Element::'.ucfirst $element_name;
 }
 
 1;
