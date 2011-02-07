@@ -20,7 +20,7 @@ sub features {
     @T = map { @{$slice->feature_Slice->get_all_Genes( $_, $db_alias )||[]} } @$analyses;
   }
   else {
-    @T = map { @{$slice->get_all_Genes( $_, $db_alias )||[]} } @$analyses;
+    @T = map { @{$slice->get_all_Genes( $_, $db_alias, 1 )||[]} } @$analyses;
   }
   $self->timer_push( 'Fetched transcripts', undef, 'fetch' );
   return \@T;
