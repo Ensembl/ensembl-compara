@@ -143,33 +143,34 @@ sub add_field {
   # add notes
   $field->head_notes($params->{'head_notes'}) if (exists $params->{'head_notes'});
   $field->foot_notes($params->{'notes'})      if (exists $params->{'notes'});
-  
-  # add elements
+
+  # find out which elements are to be added
+  my $elements = [];
   if (exists $params->{'elements'}) {
-    $params->{'elements'} = [ $params->{'elements'} ] if ref($params->{'elements'}) eq 'HASH';
-    $_->{'id'} ||= $self->_next_id;
-    $field->add_element($_, $params->{'inline'} || 0) for @{$params->{'elements'}};
-    $self->set_flag($self->_FLAG_REQUIRED) if exists $_->{'required'};
+    $elements = ref($params->{'elements'}) eq 'HASH' ? [ $params->{'elements'} ] : $params->{'elements'};
   }
   else {
-    my $extra_keys = [ qw(field_class label head_notes notes inline) ];
-    exists $params->{$_} and delete $params->{$_} for @$extra_keys;
-    $params->{'id'} ||= $self->_next_id;
-    $field->add_element($params);
-    $self->set_flag($self->_FLAG_REQUIRED) if exists $params->{'required'};
+    exists $params->{$_} and delete $params->{$_} for qw(field_class label head_notes notes);
+    $elements = [ $params ];
   }
+  
+  # add elements
+  for (@{$elements}) {
+  
+    # if honeypot element
+    if (lc $_->{'type'} eq 'honeypot') {
+      $_->{'type'} = 'text';
+      $field->set_attribute('class', 'hidden');
+      $field->set_flag($self->_FLAG_HONEYPOT);
+    }
+
+    $_->{'id'} ||= $self->_next_id;
+    $field->add_element($_, $params->{'inline'} || 0);
+    $self->set_flag($self->_FLAG_REQUIRED) if exists $_->{'required'};
+  }
+
   $field->set_flag($self->_FLAG_FIELD);
   return $self->append_child($field);
-}
-
-sub add_honeypot_field {
-  ## Adds a honeypot field
-  my ($self, $params) = @_;
-  $params->{'type'} = 'text';
-  $params->{'field_class'} = 'hidden';
-  my $field = $self->add_field($params);
-  $field->set_flag($self->_FLAG_HONEYPOT);
-  return $field;
 }
 
 sub add_matrix {
@@ -314,7 +315,7 @@ my $do_warn = 0;
 sub add_element {
   my $self = shift;
   
-  ## Call new add_element method is argument is HashRef or ArrayRef
+  ## Call new add_element method if argument is HashRef or ArrayRef
   return $self->_add_element($_[0]) if ref($_[0]) =~ /^(HASH|ARRAY)$/;
   
   warn "Method add_element is deprecated. Please use an appropriate method." if $do_warn;
@@ -339,9 +340,6 @@ sub add_element {
 
   ## SubHeader is now new fieldset's legend
   return $self->form->add_fieldset($params{'value'}) if $params{'type'} eq 'SubHeader';
-  
-  ## Honeypot field
-  return $self->add_honeypot_field(\%params) if $params{'type'} eq 'Honeypot';
 
   ## Information is now fieldset's notes
   return $self->add_notes($params{'value'}) if $params{'type'} eq 'Information';
