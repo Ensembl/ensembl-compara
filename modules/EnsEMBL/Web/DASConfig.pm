@@ -282,12 +282,12 @@ sub _guess_views {
   ) if $positional;
 
   push @views, qw(
-    Gene
-    Transcript
+    Gene/ExternalData
+    Transcript/ExternalData
   ) if $nonpositional;
 
   push @views, qw(
-    Variation
+    Variation/ExternalData
   ) if $snp;
   
   return \@views;
