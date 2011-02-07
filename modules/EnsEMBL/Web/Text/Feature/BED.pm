@@ -21,6 +21,13 @@ sub new {
   return bless { '__raw__' => $args, '__extra__' => $extra }, $class;
 }
 
+sub coords {
+  ## BED start coord needs +1 
+  my ($self, $data) = @_;
+  (my $chr = $data->[0]) =~ s/chr//;
+  return ($chr, $data->[1]+1, $data->[2]);
+}
+
 sub _seqname { my $self = shift; return $self->{'__raw__'}[0]; }
 sub strand   { my $self = shift;
   my $T = ( 0+@{$self->{'__raw__'}}) > 5 
@@ -28,7 +35,8 @@ sub strand   { my $self = shift;
         : -1
         ;
 }
-sub rawstart { my $self = shift; return $self->{'__raw__'}[1]; }
+# Note rawstart has +1 because BED is 'semi-open' coordinates
+sub rawstart { my $self = shift; return $self->{'__raw__'}[1]+1; }
 sub rawend   { my $self = shift; return $self->{'__raw__'}[2]; }
 sub id       { my $self = shift; return $self->{'__raw__'}[3]; }
 
