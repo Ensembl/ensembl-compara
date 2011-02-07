@@ -72,7 +72,7 @@ sub redirect_to_nearest_mirror {
   my $r = shift;  
   
   # Check that host is ENSEMBL_SERVERNAME - if not content is coming from static server, where the redirect cookie will never be set. In this case, don't redirect
-  if ($species_defs->ENSEMBL_MIRRORS && $r->headers_in->{'Host'} eq $species_defs->ENSEMBL_SERVERNAME) {
+  if ($species_defs->ENSEMBL_MIRRORS && ($r->headers_in->{'Host'} eq $species_defs->ENSEMBL_SERVERNAME || $r->headers_in->{'X-Forwarded-Host'} eq $species_defs->ENSEMBL_SERVERNAME)) {
     my $unparsed_uri = $r->unparsed_uri;
     my $user_agent = $r->headers_in->{'User-Agent'};
 
