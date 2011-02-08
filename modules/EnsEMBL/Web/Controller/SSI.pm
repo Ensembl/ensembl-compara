@@ -28,7 +28,7 @@ sub _init {
   
   $self->clear_cached_content;
   
-  return OK if $self->get_cached_content; # Page retrieved from cache
+  return OK if $self->get_cached_content('page'); # Page retrieved from cache
   
   unless (-e $r->filename) {
     $r->log->error('File does not exist: ', $r->filename);
@@ -94,52 +94,17 @@ sub render_page {
   $self->SUPER::render_page;
 }
 
-sub get_cached_content {
-  ### Attempt to retrieve page and component requests from Memcached
+sub set_cache_params {
+  my $self = shift;
   
-  my ($self, $type) = @_;
-  
-  my $cache = $self->cache;
-  my $r     = $self->r;
-  
-  return unless $cache;
-  
-  $ENV{'CACHE_TAGS'}{'STATIC'}            = 1;
-  $ENV{'CACHE_TAGS'}{$ENV{'REQUEST_URI'}} = 1;
+  $ENV{'CACHE_TAGS'}{'STATIC'}           = 1;
+  $ENV{'CACHE_TAGS'}{$self->{'url_tag'}} = 1;
   
   $ENV{'CACHE_KEY'}  = $ENV{'REQUEST_URI'};
-  $ENV{'CACHE_KEY'} .= "::USER[$self->{'user_id'}]" if $self->{'user_id'}; ## User logged in, some content depends on user
-  $ENV{'CACHE_KEY'} .= '::NO_AJAX' unless $self->hub->check_ajax;          ## Ajax disabled
-  
-  my $content = $cache->get($ENV{'CACHE_KEY'}, keys %{$ENV{'CACHE_TAGS'}});
-  
-  if ($content) {
-    $r->headers_out->set('X-MEMCACHED' => 'yes');     
-    $r->content_type('text/html');
-    
-    print $content;
-    
-    warn "STATIC CONTENT CACHE HIT:  $ENV{'CACHE_KEY'}" if $self->{'cache_debug'};
-  } else {
-    warn "STATIC CONTENT CACHE MISS: $ENV{'CACHE_KEY'}" if $self->{'cache_debug'};
-  }
-  
-  return !!$content;
-}
-
-sub clear_cached_content {
-  ### Flush the cache if the user has hit ^R or F5.
-  ### Removes content from Memcached based on the request's URL and the user id.
-  
-  my $self  = shift;
-  my $cache = $self->cache;
-  my $r     = $self->r;
-  
-  if ($cache && ($r->headers_in->{'Cache-Control'} eq 'max-age=0' || $r->headers_in->{'Pragma'} eq 'no-cache')) {
-    $cache->delete_by_tags($ENV{'REQUEST_URI'}, $self->{'user_id'} ? "user[$self->{'user_id'}]" : ());
-    
-    warn "STATIC CONTENT CACHE CLEAR: $ENV{'REQUEST_URI'}, $self->{'user_id'}" if $self->{'cache_debug'};
-  }
+  $ENV{'CACHE_KEY'} .= "::USER[$self->{'user_id'}]" if $self->{'user_id'};
+  $ENV{'CACHE_KEY'} .= '::NO_AJAX'                  unless $self->hub->check_ajax;
+  $ENV{'CACHE_KEY'} .= '::MAC'                      if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
+  $ENV{'CACHE_KEY'} .= "::IE$1"                     if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d)/;
 }
 
 sub template_SPECIESINFO {

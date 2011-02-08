@@ -254,6 +254,24 @@ sub update_user_history {
   }
 }
 
+sub set_cache_params {
+  my ($self, $type) = @_;
+  
+  $ENV{'CACHE_TAGS'}{'DYNAMIC'} = 1;
+  $ENV{'CACHE_TAGS'}{'AJAX'}    = 1;
+
+  $ENV{'CACHE_KEY'}  = $ENV{'REQUEST_URI'};
+  $ENV{'CACHE_KEY'} .= "::SESSION[$self->{'session_id'}]" if $self->{'session_id'};
+  
+  if ($type eq 'page') {
+    $ENV{'CACHE_TAGS'}{$self->{'url_tag'}} = 1;
+    $ENV{'CACHE_KEY'} .= "::USER[$self->{'user_id'}]" if $self->{'user_id'};
+  } else {
+    $ENV{'CACHE_TAGS'}{$ENV{'HTTP_REFERER'}} = 1;
+    $ENV{'CACHE_KEY'} .= "::WIDTH[$ENV{ENSEMBL_IMAGE_WIDTH}]" if $ENV{'ENSEMBL_IMAGE_WIDTH'};
+  }
+}
+
 sub get_cached_content {
   ### Attempt to retrieve page and component requests from Memcached
   
@@ -266,19 +284,7 @@ sub get_cached_content {
   return if $r->method eq 'POST';
   return unless $type =~ /^(page|component)$/;
   
-  $ENV{'CACHE_TAGS'}{'DYNAMIC'} = 1;
-  $ENV{'CACHE_TAGS'}{'AJAX'}    = 1;
-
-  $ENV{'CACHE_KEY'} = $ENV{'REQUEST_URI'};
-  $ENV{'CACHE_KEY'} .= "::SESSION[$self->{'session_id'}]" if $self->{'session_id'};
-  
-  if ($type eq 'page') {
-    $ENV{'CACHE_TAGS'}{$self->{'url_tag'}} = 1;
-    $ENV{'CACHE_KEY'} .= "::USER[$self->{'user_id'}]" if $self->{'user_id'}; # If user logged in, some content depends on user
-  } else {
-    $ENV{'CACHE_TAGS'}{$ENV{'HTTP_REFERER'}} = 1;
-    $ENV{'CACHE_KEY'} .= "::WIDTH[$ENV{ENSEMBL_IMAGE_WIDTH}]" if $ENV{'ENSEMBL_IMAGE_WIDTH'};
-  }
+  $self->set_cache_params($type);
   
   my $content = $cache->get($ENV{'CACHE_KEY'}, keys %{$ENV{'CACHE_TAGS'}});
   
@@ -288,9 +294,9 @@ sub get_cached_content {
     
     print $content;
     
-    warn "DYNAMIC CONTENT CACHE HIT:  $ENV{'CACHE_KEY'}" if $self->{'cache_debug'};
+    warn "CONTENT CACHE HIT:  $ENV{'CACHE_KEY'}" if $self->{'cache_debug'};
   } else {
-    warn "DYNAMIC CONTENT CACHE MISS: $ENV{'CACHE_KEY'}" if $self->{'cache_debug'};
+    warn "CONTENT CACHE MISS: $ENV{'CACHE_KEY'}" if $self->{'cache_debug'};
   }
   
   return !!$content;
@@ -304,11 +310,27 @@ sub set_cached_content {
   my $cache = $self->cache;
   
   return unless $cache && $self->cacheable;
+  return unless $ENV{'CACHE_KEY'};
   return if $self->r->method eq 'POST';
   
   $cache->set($ENV{'CACHE_KEY'}, $content, 60*60*24*7, keys %{$ENV{'CACHE_TAGS'}});
   
-  warn "DYNAMIC CONTENT CACHE SET:  $ENV{'CACHE_KEY'}" if $self->{'cache_debug'};
+  warn "CONTENT CACHE SET:  $ENV{'CACHE_KEY'}" if $self->{'cache_debug'};
+}
+
+sub clear_cached_content {
+  ### Flush the cache if the user has hit ^R or F5.
+  ### Removes content from Memcached based on the request's URL and the user's session id.
+  
+  my $self  = shift;
+  my $cache = $self->cache;
+  my $r     = $self->r;
+  
+  if ($cache && $r->headers_in->{'Cache-Control'} =~ /(max-age=0|no-cache)/ && $r->method ne 'POST') {
+    $cache->delete_by_tags($self->{'url_tag'}, $self->{'session_id'} ? "session_id[$self->{'session_id'}]" : (), $self->{'user_id'} ? "user[$self->{'user_id'}]" : ());
+    
+    warn "CONTENT CACHE CLEAR: $self->{'url_tag'}, $self->{'session_id'}, $self->{'user_id'}" if $self->{'cache_debug'};
+  }
 }
 
 sub add_error {

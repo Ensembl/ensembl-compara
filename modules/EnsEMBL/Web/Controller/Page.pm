@@ -40,21 +40,6 @@ sub render_page {
   $self->SUPER::render_page if $self->access_ok && !$self->process_command;
 }
 
-sub clear_cached_content {
-  ### Flush the cache if the user has hit ^R or F5.
-  ### Removes content from Memcached based on the request's URL and the user's session id.
-  
-  my $self  = shift;
-  my $cache = $self->cache;
-  my $r     = $self->r;
-  
-  if ($cache && $r->headers_in->{'Cache-Control'} =~ /(max-age=0|no-cache)/ && $r->method ne 'POST') {
-    $cache->delete_by_tags($self->{'url_tag'}, $self->{'session_id'} ? "session_id[$self->{'session_id'}]" : ());
-    
-    warn "DYNAMIC CONTENT CACHE CLEAR: $self->{'url_tag'}, $self->{'session_id'}" if $self->{'cache_debug'};
-  }
-}
-
 sub update_configuration_from_url {
   ### Checks for shared data and updated config settings from the URL parameters
   ### If either exist, returns 1 to force a redirect to the updated page
