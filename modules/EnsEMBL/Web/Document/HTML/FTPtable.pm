@@ -113,7 +113,7 @@ sub render {
 <td>-</td>
 <td>-</td>
 <td><a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">MySQL</a></td>
-<td><a rel="external" title="$EMF" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/emf/">EMF</a></td>
+<td><a rel="external" title="$EMF" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/emf/ensembl-compara/">EMF</a></td>
 <td>-</td>
 <td>-</td>
 <td><a rel="external" title="$BED" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/bed/">BED</a></td>
