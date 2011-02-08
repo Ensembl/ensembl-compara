@@ -138,7 +138,7 @@ sub content {
   
   $table->add_row('Stop codons', "<p>$codons</p>", 1) if $codons =~ /^\w/;
 
-  if ($translation) {
+  if ($translation && $translation->dbID) {
     my $missing_evidence_attribs = $translation->get_all_Attributes('NoEvidence') || [];
     
     if (@$missing_evidence_attribs) {
