@@ -32,9 +32,14 @@ standard:
 
 =over 8
 
-=item B<Compara:genome_db_name> - Used to show the name of the GenomeDB of the species found. Useful when taxonomy is not exact
+=item B<Compara:genome_db_name>
 
-=item B<Compara:dubious_duplication> - Indicates locations of potential duplications we are unsure about
+Used to show the name of the GenomeDB of the species found. Useful when 
+taxonomy is not exact.
+
+=item B<Compara:dubious_duplication>
+
+Indicates locations of potential duplications we are unsure about
 
 =back
 
@@ -85,8 +90,8 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw try catch warning);
-use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref wrap_array);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Scalar qw(check_ref wrap_array);
 
 use XML::LibXML;
 
@@ -97,10 +102,6 @@ my $xsi_uri = 'http://www.w3.org/2001/XMLSchema-instance';
 
 =head2 new()
 
-  Arg[PROCESSORS]       : ArrayRef of hashes keyed by the input to 
-                          C<add_processor()> to use instead of defaults 
-                          for ProteinTree, NestedSet and AlignedMember.
-  Arg[PROCESSOR_ORDER]  : ArrayRef of the order to call processors
   Arg[CDNA]             : Boolean; indicates if we want CDNA emitted or peptide.
                           Defaults to B<true>. 
   Arg[SOURCE]           : String; the source of the stable identifiers.
@@ -121,37 +122,16 @@ my $xsi_uri = 'http://www.w3.org/2001/XMLSchema-instance';
 
 sub new {
   my ($class, @args) = @_;
-  my ($processors, $processor_order, $cdna, $source, $aligned, $no_sequences) = 
-    rearrange([qw(processors processor_order cdna source aligned no_sequencess)], @args);
+  my ($cdna, $source, $aligned, $no_sequences) = 
+    rearrange([qw(cdna source aligned no_sequencess)], @args);
   
   $source ||= 'Unknown';
   $cdna ||= 1;
   
   my $self = bless({}, ref($class) || $class);
   
-  my $base = 'Bio::EnsEMBL::Compara::';
-  $self->_add_multiple_processors([
-    {
-      -PACKAGE => $base.'NestedSet',
-      -PROCESSOR => \&_nested_processor
-    },
-    {
-      -PACKAGE => $base.'AlignedMember',
-      -PROCESSOR => \&_aligned_member_processor
-    },
-    {
-      -PACKAGE => $base.'ProteinTree',
-      -PROCESSOR => \&_protein_tree_processor
-    },
-  ]);
-  $self->_add_multiple_processors($processors);
-  
-  
-  $processor_order ||= [map { $base.$_ } qw(ProteinTree AlignedMember NestedSet)];
-  $self->register_processor_order($processor_order);
-  
   if( ($cdna || $aligned) && $no_sequences) {
-    warning "-CDNA or -ALIGNED was specified but so was -NO_SEQUENCES. Will ignore sequences";
+    warning '-CDNA or -ALIGNED was specified but so was -NO_SEQUENCES. Will ignore sequences';
   }
   
   $self->cdna($cdna);
@@ -180,8 +160,6 @@ sub new {
 sub clone {
   my ($self) = @_;
   my $new = $self->new();
-  $new->{_processors} = $self->{_processors};
-  $new->{_processor_order} = $self->{_processor_order};
   $new->cdna($self->cdna());
   $new->source($self->source());
   $new->aligned($self->aligned());
@@ -309,54 +287,6 @@ sub write_trees {
   return;
 }
 
-=pod 
-
-=head2 add_processor()
-
-  Arg[PACKAGE]    : The package for which we should fire the processor for when
-                    a tree node responds to C<isa>
-  Arg[PROCESSOR]  : The processor subroutine call. Should take a signature
-                    the same as C<my ($self, $tree_node, $parent_element) = @_;>
-  Description     : Adds a processor to the 
-  Returntype      : None
-  Exceptions      : None
-  Status          : Stable
-  
-=cut
-
-sub add_processor {
-  my ($self, @args) = @_;
-  my ($package, $processor) = rearrange([qw(package processor)], @args);
-  assert_ref($processor, 'CODE');
-  throw 'Need a -PACKAGE to perform ref checks against' unless $package;
-  $self->{_processors}->{$package} = $processor;
-  return;
-}
-
-=pod
-
-=head2 register_processor_order()
-
-  Arg[0]      : ArrayRef of the order of the processors to call
-  Description : The way you enforce an order call on objects allowing you
-                to force the calling of more specific processors e.g.
-                making sure we call ProteinTree's processor over NestedSet
-  Returntype : String
-  Exceptions : None
-  Status     : Stable
-  
-=cut
-
-sub register_processor_order {
-  my ($self, $processors) = @_;
-  assert_ref($processors, 'ARRAY');
-  my $given_count = scalar(@{$processors});
-  my $actual_count = scalar(keys %{$self->{_processors}});
-  throw "The size of the order array (${given_count}) is not the same as the number of available processors (${actual_count})" unless $given_count == $actual_count;
-  $self->{_processor_order} = $processors;
-  return;
-}
-
 ########### PRIVATE
 
 sub _generate_doc {
@@ -365,7 +295,8 @@ sub _generate_doc {
   my $doc = XML::LibXML::Document->createDocument();
   my $phyloxml = $doc->createElementNS($phylo_uri, 'phyloxml');
   $phyloxml->setNamespace($xsi_uri, 'xsi', 0);
-  $phyloxml->setAttributeNS($xsi_uri, 'schemaLocation', sprintf('%1$s %1$s/1.10/phyloxml.xsd', $phylo_uri));
+  $phyloxml->setAttributeNS($xsi_uri, 'schemaLocation', 
+    sprintf('%1$s %1$s/1.10/phyloxml.xsd', $phylo_uri));
   $doc->setDocumentElement($phyloxml);
   
   return $doc;
@@ -392,8 +323,7 @@ sub _write_tree {
 
 sub _process {
   my ($self, $node, $parent_element) = @_;
-  my $processor = $self->_get_processor($node);
-  my @results = $processor->($self, $node, $parent_element);
+  my @results = $self->_dispatch($node, $parent_element);
   if(@results) {
     foreach my $result (@results) {
       $parent_element->appendChild($result);
@@ -402,33 +332,26 @@ sub _process {
   return;
 }
 
-sub _add_multiple_processors {
-  my ($self, $processors) = @_;
-  $processors = wrap_array($processors);
-  foreach my $processor_hash (@{$processors}) {
-    assert_ref($processor_hash, 'HASH');
-    $self->add_processor(%{$processor_hash});
+sub _dispatch {
+  my ($self, $node, $parent_element) = @_;
+  my $element;
+  if(check_ref($node, 'Bio::EnsEMBL::Compara::AlignedMember')) {
+    $element = $self->_alignedmember_processor($node, $parent_element);
   }
-  return;
-}
-
-sub _get_processor {
-  my ($self, $instance) = @_;
-  my $processor;
-  foreach my $type (@{$self->{_processor_order}}) {
-    if(check_ref($instance, $type)) {
-      $processor =  $self->{_processors}->{$type};
-      last;
-    }
+  elsif(check_ref($node, 'Bio::EnsEMBL::Compara::NestedSet')) {
+    $element = $self->_nestedset_processor($node, $parent_element);
   }
-  throw "Cannot find a viable processor for $instance" unless $processor;
-  return $processor;
+  else {
+    my $ref = ref($node);
+    throw("Cannot process type $ref");
+  }
+  return $element;
 }
 
 ###### PROCESSORS
 
 #How we work with a basic NestedSet node
-sub _nested_processor {
+sub _nestedset_processor {
   my ($self, $node, $parent_element) = @_;
   
   my $element = $parent_element->addNewChild($phylo_uri, 'clade');
@@ -469,30 +392,22 @@ sub _nested_processor {
     $dubious->appendText($dubi);
   }
   
-  if($node->get_child_count() > 0) {
+  if($node->get_child_count()) {
     foreach my $child (@{$node->children()}) {
       $self->_process($child, $element);
     }
   }
   
   return $element;
-};
-
-#How we set it going for ProteinTrees
-sub _protein_tree_processor {
-  my ($self, $node, $parent_element) = @_;
-  my $element = $self->_nested_processor($node, $parent_element);
-  return $element;
-};
-
+}
 
 #How we supplement this with member information
-sub _aligned_member_processor {
+sub _alignedmember_processor {
   my ($self, $protein, $parent_element) = @_;
   my $gene = $protein->gene_member();
   my $taxon = $protein->taxon();
   
-  my $element = $self->_protein_tree_processor($protein, $parent_element);
+  my $element = $self->_nestedset_processor($protein, $parent_element);
   
   #Stable IDs
   my $name = $element->addNewChild($phylo_uri, 'name');
@@ -535,7 +450,6 @@ sub _aligned_member_processor {
   $genome_db_property->appendText($protein->genome_db()->name());
 
   return $element;
-};
-
+}
 
 1;
