@@ -10,15 +10,34 @@ Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter
 
   use Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter;
   
+  my $string_handle = IO::String->new();
   my $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(
-    -SOURCE => 'Ensembl', -ALIGNED => 1
+    -SOURCE => 'Ensembl', -ALIGNED => 1, -HANDLE => $string_handle
   );
   
   my $pt = $dba->get_ProteinTreeAdaptor()->fetch_node_by_node_id(2);
   
   $w->write_trees($pt);
+  $w->finish(); #YOU MUST CALL THIS TO WRITE THE FINAL TAG
   
-  print $w->document()->toString(1), "\n";
+  my $xml_scalar_ref = $string_handle->string_ref();
+  
+  #Or to write to a file via IO::File
+  my $file_handle = IO::File->new('output.xml', 'w');
+  $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(
+    -SOURCE => 'Ensembl', -ALIGNED => 1, -HANDLE => $file_handle
+  );
+  $w->write_trees($pt);
+  $w->finish(); #YOU MUST CALL THIS TO WRITE THE FINAL TAG
+  $file_handle->close();
+  
+  #Or letting this deal with it
+  $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(
+    -SOURCE => 'Ensembl', -ALIGNED => 1, -FILE => 'loc.xml'
+  );
+  $w->write_trees($pt);
+  $w->finish(); #YOU MUST CALL THIS TO WRITE THE FINAL TAG
+  $w->handle()->close();
 
 =head1 DESCRIPTION
 
@@ -35,9 +54,9 @@ standard:
 =item B<Compara:genome_db_name>
 
 Used to show the name of the GenomeDB of the species found. Useful when 
-taxonomy is not exact.
+taxonomy is not exact
 
-=item B<Compara:dubious_duplication>
+=item B<Compara:dubious_duplication> 
 
 Indicates locations of potential duplications we are unsure about
 
@@ -62,7 +81,9 @@ $Revision$
 
 =over 8
 
-=item L<XML::LibXML>
+=item L<XML::Writer>
+
+=item L<IO::File> - part of Perl 5.8+
 
 =back
 
@@ -90,10 +111,11 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
-use Bio::EnsEMBL::Utils::Scalar qw(check_ref wrap_array);
+use Bio::EnsEMBL::Utils::Exception qw(throw try catch warning);
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref wrap_array);
 
-use XML::LibXML;
+use IO::File;
+use XML::Writer;
 
 my $phylo_uri = 'http://www.phyloxml.org';
 my $xsi_uri = 'http://www.w3.org/2001/XMLSchema-instance';
@@ -109,12 +131,17 @@ my $xsi_uri = 'http://www.w3.org/2001/XMLSchema-instance';
   Arg[ALIGNED]          : Boolean; indicates if we want to emit aligned
                           sequence. Defaults to B<false>.
   Arg[NO_SEQUENCES]     : Boolean; indicates we want to ignore sequence 
-                          dumping. Defaults to B<false>.                          
+                          dumping. Defaults to B<false>.
+  Arg[HANDLE]           : IO::Handle; pass in an instance of IO::File or
+                          an instance of IO::String so long as it behaves
+                          the same as IO::Handle. Can be left blank in 
+                          favour of the -FILE parameter
+  Arg[FILE]             : Scalar;                        
   Description : Creates a new tree writer object. 
   Returntype  : Instance of the writer
   Exceptions  : None
   Example     : my $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(
-                  -SOURCE => 'Ensembl', -ALIGNED => 1
+                  -SOURCE => 'Ensembl', -ALIGNED => 1, -HANDLE => $handle
                 );
   Status      : Stable  
   
@@ -122,71 +149,97 @@ my $xsi_uri = 'http://www.w3.org/2001/XMLSchema-instance';
 
 sub new {
   my ($class, @args) = @_;
-  my ($cdna, $source, $aligned, $no_sequences) = 
-    rearrange([qw(cdna source aligned no_sequencess)], @args);
-  
+  my ($cdna, $source, $aligned, $no_sequences, $handle, $file) = 
+    rearrange([qw(cdna source aligned no_sequencess handle file)], @args);
+
   $source ||= 'Unknown';
   $cdna ||= 1;
   
   my $self = bless({}, ref($class) || $class);
   
   if( ($cdna || $aligned) && $no_sequences) {
-    warning '-CDNA or -ALIGNED was specified but so was -NO_SEQUENCES. Will ignore sequences';
+    warning "-CDNA or -ALIGNED was specified but so was -NO_SEQUENCES. Will ignore sequences";
   }
   
   $self->cdna($cdna);
   $self->source($source);
   $self->aligned($aligned);
   $self->no_sequences($no_sequences);
+  $self->handle($handle) if defined $handle;
+  $self->file($file) if defined $file;
   
   return $self;
 }
 
 =pod
 
-=head2 clone()
-  
-  Description : Clones everything about the current instance except for the
-                document object used which makes this a convinient way
-                of resetting a Document object whilst maintaining your
-                current settings
-  Example     : my $new = $self->clone();
-  Returntype  : Instance of PhyloXMLWriter
-  Exceptions  : None
-  Status      : Stable
- 
+=head2 finish()
+
+  Description : An important method which will write the final element. This
+  allows you to stream any number of trees into one XML file and then call
+  finish once you are done with it. B<Always call this method when you are
+  done otherwise your XML will not be valid>.
+  Returntype : Nothing
+  Exceptions : Thrown if you are not finishing the file off with a phyloxml
+  element
+  Status     : Stable
+
 =cut
- 
-sub clone {
+
+sub finish {
   my ($self) = @_;
-  my $new = $self->new();
-  $new->cdna($self->cdna());
-  $new->source($self->source());
-  $new->aligned($self->aligned());
-  $new->no_sequences($self->no_sequences());
-  return $new;
+  $self->_writer()->endTag('phyloxml');
+  return;
 }
 
 =pod
 
-=head2 doc()
+=head2 handle()
 
-  Description : Gives access to the document instance which contains the DOM
-  representation of the trees given. A single document is reused in all
-  calls so you can add trees to a single document. To add to a new document
-  create a new instance of the object.
-  Returntype : L<XML::LibXML::Document>
+  Arg[0] : The handle to set
+  Description : Mutator for the handle backing this writer. If invoked without
+  giving it an instance of a handler it will use the FILE attribute to open
+  an instance of L<IO::File>
+  Returntype : IO::Handle
+  Exceptions : Thrown if we cannot open a file handle
+  Status     : Stable
+  
+=cut
+
+sub handle {
+  my ($self, $handle) = @_;
+  if(defined $handle) {
+    $self->{_writer} = undef;
+    $self->{handle} = $handle;
+  }
+  else {
+    if(! defined $self->{handle}) {
+      $self->{handle} = IO::File->new($self->file(), 'w');
+    }
+  }
+  return $self->{handle};
+}
+
+=pod
+
+=head2 file()
+
+  Arg[0] : Set the file location
+  Description : Sets the file location to write to. Will undefine handle
+  Returntype : String
   Exceptions : None
   Status     : Stable
   
 =cut
 
-sub doc {
-  my ($self) = @_;
-  if(! exists $self->{doc}) {
-    $self->{doc} = $self->_generate_doc();
+sub file {
+  my ($self, $file) = @_;
+  if(defined $file) {
+    $self->{handle} = undef;
+    $self->{_writer} = undef;
+    $self->{file} = $file;
   }
-  return $self->{doc};
+  return $self->{file};
 }
 
 =pod
@@ -289,143 +342,177 @@ sub write_trees {
 
 ########### PRIVATE
 
-sub _generate_doc {
-  my ($self, $tree) = @_;
-  
-  my $doc = XML::LibXML::Document->createDocument();
-  my $phyloxml = $doc->createElementNS($phylo_uri, 'phyloxml');
-  $phyloxml->setNamespace($xsi_uri, 'xsi', 0);
-  $phyloxml->setAttributeNS($xsi_uri, 'schemaLocation', 
-    sprintf('%1$s %1$s/1.10/phyloxml.xsd', $phylo_uri));
-  $doc->setDocumentElement($phyloxml);
-  
-  return $doc;
+sub _writer {
+  my ($self) = @_;
+  if(!$self->{_writer}) {
+    my $writer = $self->_build_writer();
+    $self->{_writer} = $writer;
+    $self->_write_opening($writer);
+  }
+  return $self->{_writer};
+}
+
+sub _build_writer {
+  my ($self) = @_;
+  return XML::Writer->new( 
+    OUTPUT => $self->handle(), 
+    DATA_MODE => 1, 
+    DATA_INDENT => 2,
+    NAMESPACES => 1,
+    PREFIX_MAP => {
+      $phylo_uri => '',
+      $xsi_uri => 'xsi'
+    }
+  );
+}
+
+sub _write_opening {
+  my ($self, $w) = @_;
+  $w->xmlDecl("UTF-8");
+  $w->forceNSDecl($phylo_uri);
+  $w->forceNSDecl($xsi_uri);
+  $w->startTag('phyloxml', [$xsi_uri, 'schemaLocation'] => 
+   "${phylo_uri} ${phylo_uri}/1.10/phyloxml.xsd");
+  return;
 }
 
 sub _write_tree {
   my ($self, $tree) = @_;
-  my $root = $self->doc->documentElement();
-  my $phylogeny = $self->doc->createElement('phylogeny');
-  $phylogeny->setAttribute('rooted', 'true');
-  $root->appendChild($phylogeny);
+  
+  my $w = $self->_writer();
+  
+  my %attr = (rooted => 'true');
   
   if(check_ref($tree, 'Bio::EnsEMBL::Compara::ProteinTree')) {
-    $phylogeny->setAttribute('type', 'gene tree');
-    if($tree->stable_id()) {
-      $phylogeny->addNewChild($phylo_uri, 'id')->appendText($tree->stable_id());
-    }
+    $attr{type} = 'gene tree';
   }
   
-  $self->_process($tree, $phylogeny);
+  $w->startTag('phylogeny', %attr);
+  $w->dataElement('id', $tree->stable_id()) if $tree->stable_id();
+  $self->_process($tree);
+  $w->endTag('phylogeny');
+  
   $tree->release_tree();
   return;
 }
 
 sub _process {
-  my ($self, $node, $parent_element) = @_;
-  my @results = $self->_dispatch($node, $parent_element);
-  if(@results) {
-    foreach my $result (@results) {
-      $parent_element->appendChild($result);
-    }
-  }
-  return;
+  my ($self, $node) = @_;
+  my ($tag, $attributes) = @{$self->_dispatch_tag($node)};
+  $self->_writer()->startTag($tag, %{$attributes});
+  $self->_dispatch_body($node);
+  $self->_writer()->endTag($tag);
+  return; 
 }
 
-sub _dispatch {
-  my ($self, $node, $parent_element) = @_;
-  my $element;
+sub _dispatch_tag {
+  my ($self, $node) = @_;
   if(check_ref($node, 'Bio::EnsEMBL::Compara::AlignedMember')) {
-    $element = $self->_alignedmember_processor($node, $parent_element);
+    return $self->_alignedmember_tag($node);
   }
   elsif(check_ref($node, 'Bio::EnsEMBL::Compara::NestedSet')) {
-    $element = $self->_nestedset_processor($node, $parent_element);
+    return $self->_nestedset_tag($node);
+  }
+  my $ref = ref($node);
+  throw("Cannot process type $ref");
+}
+
+sub _dispatch_body {
+  my ($self, $node) = @_;
+  if(check_ref($node, 'Bio::EnsEMBL::Compara::AlignedMember')) {
+    $self->_alignedmember_body($node);
+  }
+  elsif(check_ref($node, 'Bio::EnsEMBL::Compara::NestedSet')) {
+    $self->_nestedset_body($node);
   }
   else {
     my $ref = ref($node);
     throw("Cannot process type $ref");
   }
-  return $element;
+  return;
 }
 
 ###### PROCESSORS
 
-#How we work with a basic NestedSet node
-sub _nestedset_processor {
-  my ($self, $node, $parent_element) = @_;
+#tags return [ 'tag', {attributes} ]
+
+sub _nestedset_tag {
+  my ($self, $node) = @_;
+  return ['clade', {branch_length => $node->distance_to_parent()}];
+}
+
+#body writes data
+sub _nestedset_body {
+  my ($self, $node, $defer_taxonomy) = @_;
   
-  my $element = $parent_element->addNewChild($phylo_uri, 'clade');
-  my $dist  = $node->distance_to_parent();
   my $dup   = $node->get_tagvalue('Duplication');
   my $dubi  = $node->get_tagvalue('dubious_duplication');
   my $boot  = $node->get_tagvalue('Bootstrap');
   my $taxid = $node->get_tagvalue('taxon_id');
   my $tax   = $node->get_tagvalue('taxon_name');
   
-  $element->setAttribute('branch_length', $dist) if $dist;
+  my $w = $self->_writer();
   
   if($boot) {
-    my $confidence = $element->addNewChild($phylo_uri, 'confidence');
-    $confidence->setAttribute('type', 'bootstrap');
-    $confidence->appendText($boot);
+    $w->dataElement('confidence', $boot, 'type' => 'bootstrap');
   }
   
-  if($taxid) {
-    my $taxonomy = $element->addNewChild($phylo_uri, 'taxonomy');
-    $taxonomy->addNewChild($phylo_uri, 'id')->appendText($taxid);
-    $taxonomy->addNewChild($phylo_uri, 'scientific_name')->appendText($tax);
+  if(!$defer_taxonomy && $taxid) {
+    $self->_write_taxonomy($taxid, $tax);
   }
   
   if($dup) {
-    my $events = $element->addNewChild($phylo_uri,'events');
-    my $type = $events->addNewChild($phylo_uri, 'type');
-    $type->appendText('speciation_or_duplication');
-    my $duplications = $events->addNewChild($phylo_uri, 'duplications');
-    $duplications->appendText(1);
+    $w->startTag('events');
+    $w->dataElement('type', 'speciation_or_duplication');
+    $w->dataElement('duplications', 1);
+    $w->endTag();
   }
   
   if($dubi) {
-    my $dubious = $element->addNewChild($phylo_uri, 'property');
-    $dubious->setAttribute('datatype', 'xsd:int');
-    $dubious->setAttribute('ref', 'Compara:dubious_duplication');
-    $dubious->setAttribute('applies_to', 'clade');
-    $dubious->appendText($dubi);
+    $w->dataElement('property', $dubi, 
+      'datatype' => 'xsd:int', 
+      'ref' => 'Compara:dubious_duplication', 
+      'applies_to' => 'clade'
+    );
   }
   
   if($node->get_child_count()) {
     foreach my $child (@{$node->children()}) {
-      $self->_process($child, $element);
+      $self->_process($child);
     }
   }
   
-  return $element;
+  return;
 }
 
-#How we supplement this with member information
-sub _alignedmember_processor {
-  my ($self, $protein, $parent_element) = @_;
+sub _alignedmember_tag {
+  my ($self, $node) = @_;
+  return $self->_nestedset_tag($node);
+}
+
+sub _alignedmember_body {
+  my ($self, $protein) = @_;
+  
+  my $w = $self->_writer();
+  $self->_nestedset_body($protein , 1); #Used to defer taxonomy writing
+  
   my $gene = $protein->gene_member();
   my $taxon = $protein->taxon();
   
-  my $element = $self->_nestedset_processor($protein, $parent_element);
-  
   #Stable IDs
-  my $name = $element->addNewChild($phylo_uri, 'name');
-  $name->appendText($gene->stable_id());
+  $w->dataElement('name', $gene->stable_id());
   
   #Taxon
-  my $taxonomy = $element->addNewChild($phylo_uri, 'taxonomy');
-  $taxonomy->addNewChild($phylo_uri, 'id')->appendText($taxon->taxon_id());
-  $taxonomy->addNewChild($phylo_uri, 'scientific_name')->appendText($taxon->name());
+  $self->_write_taxonomy($taxon->taxon_id(), $taxon->name());
   
   #Dealing with Sequence
-  my $sequence = $element->addNewChild($phylo_uri, 'sequence');
-  my $accession = $sequence->addNewChild($phylo_uri, 'accession');
-  $accession->setAttribute('source', $self->source());
-  $accession->appendText($protein->stable_id());
-  $sequence->addNewChild($phylo_uri, 'name')->appendText($protein->display_label()) if $protein->display_label();
+  $w->startTag('sequence');
+  $w->startTag('accession', 'source' => $self->source());
+  $w->characters($protein->stable_id());
+  $w->endTag();
+  $w->dataElement('name', $protein->display_label()) if $protein->display_label();
   my $location = sprintf('%s:%d-%d',$gene->chr_name(), $gene->chr_start(), $gene->chr_end());
-  $sequence->addNewChild($phylo_uri, 'location')->appendText($location);
+  $w->dataElement('location', $location);
   
   if(!$self->no_sequences()) {
     my $mol_seq;
@@ -436,20 +523,31 @@ sub _alignedmember_processor {
       $mol_seq = ($self->cdna()) ? $protein->sequence_cds() : $protein->sequence(); 
     }
     $mol_seq =~ s/\s+//g if $self->cdna();
-    
-    my $mol_seq_element = $sequence->addNewChild($phylo_uri, 'mol_seq');
-    $mol_seq_element->setAttribute('is_aligned', $self->aligned() || 0);
-    $mol_seq_element->appendText($mol_seq);
+
+    $w->dataElement('mol_seq', $mol_seq, 'is_aligned' => ($self->aligned() || 0));
   }
   
+  $w->endTag('sequence');
+  
   #Adding GenomeDB
-  my $genome_db_property = $element->addNewChild($phylo_uri, 'property');
-  $genome_db_property->setAttribute('datatype', 'xsd:string');
-  $genome_db_property->setAttribute('ref', 'Compara:genome_db_name');
-  $genome_db_property->setAttribute('applies_to', 'clade');
-  $genome_db_property->appendText($protein->genome_db()->name());
-
-  return $element;
+  $w->dataElement('property', $protein->genome_db()->name(),
+    'datatype' => 'xsd:string', 
+    'ref' => 'Compara:genome_db_name', 
+    'applies_to' => 'clade'
+  );
+  
+  return;
 }
+
+sub _write_taxonomy {
+  my ($self, $id, $name) = @_;
+  my $w = $self->_writer();
+  $w->startTag('taxonomy');
+  $w->dataElement('id', $id);
+  $w->dataElement('scientific_name', $name);
+  $w->endTag();
+  return;
+}
+
 
 1;
