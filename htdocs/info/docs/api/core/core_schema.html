@@ -62,7 +62,7 @@ Different tables are populated throughout the gene build process:
 </table>
 
 <p>
-This document refers to version <strong>58</strong> of the EnsEMBL
+This document refers to version <strong>61</strong> of the EnsEMBL
 core schema.
 </p>
 
@@ -70,7 +70,7 @@ core schema.
 
 <p>Quick links to tables:</p>
 
-<p><b>Fundamental tables</b></p>
+<p><b>Fundamental tables</b><a href="#ft_er_diagram">ER diagram</a></p>
 
 <ul>
 <li><a href="#assembly">assembly</a></li>
@@ -87,20 +87,18 @@ core schema.
 <li><a href="#karyotype">karyotype</a></li>
 <li><a href="#meta">meta</a></li>
 <li><a href="#meta_coord">meta_coord</a></li>
-<li><a href="#prediction_exon">prediction_exon</a></li>
-<li><a href="#prediction_transcript">prediction_transcript</a></li>
 <li><a href="#seq_region">seq_region</a></li>
 <li><a href="#seq_region_attrib">seq_region_attrib</a></li>
-<li><a href="#supporting_feature">supporting_feature</a></li>
 <li><a href="#transcript">transcript</a></li>
 <li><a href="#transcript_attrib">transcript_attrib</a></li>
 <li><a href="#transcript_stable_id">transcript_stable_id</a></li>
 <li><a href="#translation">translation</a></li>
 <li><a href="#translation_attrib">translation_attrib</a></li>
 <li><a href="#translation_stable_id">translation_stable_id</a></li>
+<li><a href="#unconventional_transcript_association">unconventional_transcript_association</a></li>
 </ul>
 
-<p><b>Features and analyses</b></p>
+<p><b>Features and analyses</b><a href="#fa_er_diagram">ER diagram</a></p>
 
 <ul>
 <li><a href="#alt_allele">alt_allele</a></li>
@@ -108,6 +106,8 @@ core schema.
 <li><a href="#analysis_description">analysis_description</a></li>
 <li><a href="#density_feature">density_feature</a></li>
 <li><a href="#density_type">density_type</a></li>
+<li><a href="#ditag">ditag</a></li>
+<li><a href="#ditag_feature">ditag_feature</a></li>
 <li><a href="#dna_align_feature">dna_align_feature</a></li>
 <li><a href="#map">map</a></li>
 <li><a href="#marker">marker</a></li>
@@ -118,6 +118,7 @@ core schema.
 <li><a href="#misc_feature">misc_feature</a></li>
 <li><a href="#misc_feature_misc_set">misc_feature_misc_set</a></li>
 <li><a href="#misc_set">misc_set</a></li>
+<li><a href="#prediction_exon">prediction_exon</a></li>
 <li><a href="#prediction_transcript">prediction_transcript</a></li>
 <li><a href="#protein_align_feature">protein_align_feature</a></li>
 <li><a href="#protein_feature">protein_feature</a></li>
@@ -127,10 +128,12 @@ core schema.
 <li><a href="#repeat_consensus">repeat_consensus</a></li>
 <li><a href="#repeat_feature">repeat_feature</a></li>
 <li><a href="#simple_feature">simple_feature</a></li>
+<li><a href="#supporting_feature">supporting_feature</a></li>
+<li><a href="#transcript_supporting_feature">transcript_supporting_feature</a></li>
 </ul>
 
 <p>
-<b>ID Mapping</b> 
+<b>ID Mapping</b> <a href="#id_er_diagram">ER diagram</a>
 (Tables involved in mapping identifiers between releases) 
 </p>
 
@@ -142,16 +145,19 @@ core schema.
 </ul>
 
 <p>
-<b>Exernal references</b> 
+<b>Exernal references</b> <a href="#ext_er_diagram">ER diagram</a>
 (Tables used for storing links to and details about objects that are stored in other databases) 
 </p>
 
 <ul>
+<li><a href="#dependent_xref">dependent_xref</a></li>
 <li><a href="#external_db">external_db</a></li>
 <li><a href="#external_synonym">external_synonym</a></li>
 <li><a href="#go_xref">go_xref</a></li>
 <li><a href="#identity_xref">identity_xref</a></li>
 <li><a href="#object_xref">object_xref</a></li>
+<li><a href="#unmapped_reason">unmapped_reason</a></li>
+<li><a href="#unmapped_object">unmapped_object</a></li>
 <li><a href="#xref">xref</a></li>
 </ul>
 
@@ -167,100 +173,7 @@ core schema.
 <hr />
 
 <h2>Fundamental tables</h2>
-
-<h3><a name="seq_region">seq_region</a></h3>
-
-<p>
-Stores information about sequence regions. The primary key is used as
-a pointer into the dna table so that actual sequence can be obtained,
-and the coord_system_id allows sequence regions of multiple types to
-be stored. Clones, contigs and chromosomes are all now stored in the
-seq_region table. Contigs are stored with the co-ordinate system
-'contig'. The relationship between contigs and clones is stored in the
-assembly table. The relationships between contigs and chromosomes, and
-between contigs and supercontigs, are stored in the assembly table. 
-</p>
-
-<p>
-<b>See also:</b></p>
-<p>Tables:</p>
-
-<ul>
-<li><a href="#dna">dna</a> - 1:1 relationship to the dna table.
-</li>
-<li><a href="#coord_system">coord_system</a> - Describes which co-ordinates a particular feature is stored in.
-</li>
-</ul>
-
-<h3><a name="coord_system">coord_system</a></h3>
-
-<p>
-Stores information about the available co-ordinate systems for the
-species identified through the species_id field. Note that for each
-species, there must be one co-ordinate system that has the attribute
-"top_level" and one that has the attribute "sequence_level".
-</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#seq_region">seq_region</a>
-- Has coord_system_id foreign key to allow joins with the
-coord_system table.
-</li>
-<li><a href="#meta">meta</a>
-- Holds meta information about each of the species in a
-database, no matter if it's a multi-species or single-species
-database.</li>
-</ul>
-
-
-
-
-<h3><a name="seq_region_attrib">seq_region_attrib</a></h3>
-<p>Allows "attributes" to be defined for certain seq_regions. Provides a way of storing extra information about particular seq_regions
-without adding extra columns to the seq_region table. e.g. 
-</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#seq_region">seq_region</a> - 
-</li>
-<li><a href="#attrib_type">attrib_type</a> - Provides codes, names and desctriptions of attribute types.
-</li>
-</ul>
-
-
-
-
-<h3><a name="attrib_type">attrib_type</a></h3>
-<p>Provides codes, names and desctriptions of attribute types.</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#seq_region_attrib">seq_region_attrib</a> - Associates seq_regions with attributes.
-</li>
-</ul>
-
-
-
-
-<h3><a name="dna">dna</a></h3>
-<p>Contains DNA sequence. This table has a 1:1 relationship with the contig table.</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#seq_region">seq_region</a> - Relates sequence to features.
-</li>
-<li><a href="#external_synonym">external_synonym</a> - Allows xrefs to have more than one name
-</li>
-</ul>
-
-
-
-
-<h3><a name="dnac">dnac</a></h3>
-<p>Stores compressed DNA sequence.</p>
-
+<a name="ft_er_diagram"><img src="fundamental_tables.png" alt="Fundamental Tables ER diagram" text="Fundamental Tables ER diagram" /></a>
 
 
 
@@ -295,11 +208,53 @@ similar structures in the future.
 </ul>
 
 
+<h3><a name="attrib_type">attrib_type</a></h3>
+<p>Provides codes, names and desctriptions of attribute types.</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+<li><a href="#seq_region_attrib">seq_region_attrib</a> - Associates seq_regions with attributes.
+</li>
+</ul>
 
 
-<h3><a name="karyotype">karyotype</a></h3>
-<p>Describes bands that can be stained on the chromosome.</p>
+<h3><a name="coord_system">coord_system</a></h3>
 
+<p>
+Stores information about the available co-ordinate systems for the
+species identified through the species_id field. Note that for each
+species, there must be one co-ordinate system that has the attribute
+"top_level" and one that has the attribute "sequence_level".
+</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+<li><a href="#seq_region">seq_region</a>
+- Has coord_system_id foreign key to allow joins with the
+coord_system table.
+</li>
+<li><a href="#meta">meta</a>
+- Holds meta information about each of the species in a
+database, no matter if it's a multi-species or single-species
+database.</li>
+</ul>
+
+
+<h3><a name="dna">dna</a></h3>
+<p>Contains DNA sequence. This table has a 1:1 relationship with the contig table.</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+<li><a href="#seq_region">seq_region</a> - Relates sequence to features.
+</li>
+<li><a href="#external_synonym">external_synonym</a> - Allows xrefs to have more than one name
+</li>
+</ul>
+
+
+
+<h3><a name="dnac">dnac</a></h3>
+<p>Stores compressed DNA sequence.</p>
 
 
 
@@ -313,8 +268,6 @@ similar structures in the future.
 </ul>
 
 
-
-
 <h3><a name="exon_stable_id">exon_stable_id</a></h3>
 <p>Relates exon IDs in this release to release-independent stable identifiers.</p>
 <p><b>See also:</b></p>
@@ -323,54 +276,6 @@ similar structures in the future.
 <li><a href="#stable_id">stable_id</a> - Describes the rationale behind the use of stable identifiers.
 </li>
 </ul>
-
-
-
-
-
-<h3><a name="transcript">transcript</a></h3>
-<p>Stores information about transcripts. Has seq_region_start, seq_region_end and seq_region_strand for faster retrieval and
-to allow storage independently of genes and exons. Note that a transcript is usually associated with a translation, but may
-not be, e.g. in the case of pseudogenes and RNA genes (those that code for RNA molecules).
-</p>
-
-
-
-
-<h3><a name="transcript_stable_id">transcript_stable_id</a></h3>
-<p>Relates transcript IDs in this release to release-independent stable identifiers.</p>
-<p><b>See also:</b></p>
-<p>Concepts:</p>
-<ul>
-<li><a href="#stable_id">stable_id</a> - Describes the rationale behind the use of stable identifiers.
-</li>
-</ul>
-
-
-
-
-<h3><a name="transcript_attrib">transcript_attrib</a></h3>
-<p>Enables storage of attributes that relate to transcripts.</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#transcript">transcript</a> - 
-</li>
-</ul>
-
-
-
-
-<h3><a name="translation_attrib">translation_attrib</a></h3>
-<p>Enables storage of attributes that relate to translations.</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#translation">translation</a> - 
-</li>
-</ul>
-
-
 
 
 <h3><a name="exon_transcript">exon_transcript</a></h3>
@@ -385,9 +290,6 @@ i.e. a rank of 1 means the exon is the 5' most within this transcript.
 <li><a href="#transcript">transcript</a> - One of the entities related by the exon_transcript table.
 </li>
 </ul>
-
-
-
 
 
 <h3><a name="gene">gene</a></h3>
@@ -406,37 +308,8 @@ i.e. a rank of 1 means the exon is the 5' most within this transcript.
 </ul>
 
 
-
-
-<h3><a name="translation">translation</a></h3>
-<p>Describes which parts of which exons are used in translation. The seq_start and seq_end columns are 1-based offsets into the
-<em>relative</em> coordinate system of start_exon_id and end_exon_id. i.e, if the translation starts at the first base of the exon,
-seq_start would be 1. Transcripts are related to translations by the transcript_id key in this table.
-</p>
-
-
-
-
-<h3><a name="translation_stable_id">translation_stable_id</a></h3>
-<p>Relates translation IDs in this release to release-independent stable identifiers.</p>
-<p><b>See also:</b></p>
-<p>Concepts:</p>
-<ul>
-<li><a href="#stable_id">stable_id</a> - Describes the rationale behind the use of stable identifiers.
-</li>
-</ul>
-
-
-
-
-
-
-<h3><a name="supporting_feature">supporting_feature</a></h3>
-<p>Describes the exon prediction process by linking exons to DNA or protein alignment features. As in several other tables, the
-feature_id column is a foreign key; the feature_type column specifies which table feature_id refers to.
-</p>
-
-
+<h3><a name="karyotype">karyotype</a></h3>
+<p>Describes bands that can be stained on the chromosome.</p>
 
 
 
@@ -487,11 +360,118 @@ in the coord_system table.
 </li>
 </ul>
 
+<h3><a name="seq_region">seq_region</a></h3>
+
+<p>
+Stores information about sequence regions. The primary key is used as
+a pointer into the dna table so that actual sequence can be obtained,
+and the coord_system_id allows sequence regions of multiple types to
+be stored. Clones, contigs and chromosomes are all now stored in the
+seq_region table. Contigs are stored with the co-ordinate system
+'contig'. The relationship between contigs and clones is stored in the
+assembly table. The relationships between contigs and chromosomes, and
+between contigs and supercontigs, are stored in the assembly table. 
+</p>
+
+<p>
+<b>See also:</b></p>
+<p>Tables:</p>
+
+<ul>
+<li><a href="#dna">dna</a> - 1:1 relationship to the dna table.
+</li>
+<li><a href="#coord_system">coord_system</a> - Describes which co-ordinates a particular feature is stored in.
+</li>
+</ul>
+
+
+
+<h3><a name="seq_region_attrib">seq_region_attrib</a></h3>
+<p>Allows "attributes" to be defined for certain seq_regions. Provides a way of storing extra information about particular seq_regions
+without adding extra columns to the seq_region table. e.g. 
+</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+<li><a href="#seq_region">seq_region</a> - 
+</li>
+<li><a href="#attrib_type">attrib_type</a> - Provides codes, names and desctriptions of attribute types.
+</li>
+</ul>
+
+
+
+
+<h3><a name="transcript">transcript</a></h3>
+<p>Stores information about transcripts. Has seq_region_start, seq_region_end and seq_region_strand for faster retrieval and
+to allow storage independently of genes and exons. Note that a transcript is usually associated with a translation, but may
+not be, e.g. in the case of pseudogenes and RNA genes (those that code for RNA molecules).
+</p>
+
+
+
+
+<h3><a name="transcript_stable_id">transcript_stable_id</a></h3>
+<p>Relates transcript IDs in this release to release-independent stable identifiers.</p>
+<p><b>See also:</b></p>
+<p>Concepts:</p>
+<ul>
+<li><a href="#stable_id">stable_id</a> - Describes the rationale behind the use of stable identifiers.
+</li>
+</ul>
+
+
+
+
+<h3><a name="transcript_attrib">transcript_attrib</a></h3>
+<p>Enables storage of attributes that relate to transcripts.</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+<li><a href="#transcript">transcript</a> - 
+</li>
+</ul>
+
+<h3><a name="translation">translation</a></h3>
+<p>Describes which parts of which exons are used in translation. The seq_start and seq_end columns are 1-based offsets into the
+<em>relative</em> coordinate system of start_exon_id and end_exon_id. i.e, if the translation starts at the first base of the exon,
+seq_start would be 1. Transcripts are related to translations by the transcript_id key in this table.
+</p>
+
+
+<h3><a name="translation_attrib">translation_attrib</a></h3>
+<p>Enables storage of attributes that relate to translations.</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+<li><a href="#translation">translation</a> - 
+</li>
+</ul>
+
+
+<h3><a name="translation_stable_id">translation_stable_id</a></h3>
+<p>Relates translation IDs in this release to release-independent stable identifiers.</p>
+<p><b>See also:</b></p>
+<p>Concepts:</p>
+<ul>
+<li><a href="#stable_id">stable_id</a> - Describes the rationale behind the use of stable identifiers.
+</li>
+</ul>
+
+
+<h3><a name="unconventional_transcript_association">unconventional_transcript_association</a></h3>
+<p>Describes transcripts that do not link to a single gene in the normal way.</p>
+
+
 
 <hr />
 <h2>Features and analyses</h2>
+<a name="fa_er_diagram"><img src="features_analyses.png" alt="Features and Analyses ER diagram" text="Features and Analyses ER diagram" /></a>
 <p></p>
 
+
+<h3><a name="alt_allele">alt_allele</a></h3>
+<p>Stores information about genes on haplotypes that may be orthologous.</p>
 
 
 
@@ -520,8 +500,6 @@ typically a RunnableDB module.
 </ul>
 
 
-
-
 <h3><a name="dna_align_feature">dna_align_feature</a></h3>
 <p>Stores DNA sequence alignments generated from Blast (or Blast-like) comparisons.</p>
 <p><b>See also:</b></p>
@@ -532,23 +510,45 @@ typically a RunnableDB module.
 </ul>
 
 
-
-
-<h3><a name="protein_align_feature">protein_align_feature</a></h3>
-<p>Stores translation alignments generated from Blast (or Blast-like) comparisons.</p>
+<h3><a name="density_feature">density_feature</a></h3>
+<p>.</p>
 <p><b>See also:</b></p>
-<p>Concepts:</p>
+<p>Tables:</p>
 <ul>
-<li><a href="#cigar_line">cigar_line</a> - Used to encode gapped alignments.
+<li><a href="#density_type">density_type</a> - 
+</li>
+</ul>
+
+<h3><a name="density_type">density_type</a></h3>
+<p>.</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+<li><a href="#density_feature">density_feature</a> - 
 </li>
 </ul>
 
 
+<h3><a name="map">map</a></h3>
+<p>Stores the names of different genetic or radiation hybrid maps, for which there is marker map information.</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+<li><a href="#marker">marker</a> - Stores the original marker.
+</li>
+</ul>
 
-<h3><a name="repeat_feature">repeat_feature</a></h3>
-<p>Describes sequence repeat regions.</p>
 
-
+<h3><a name="marker">marker</a></h3>
+<p>Stores data about the marker itself - e.g. the primer sequences used.</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+<li><a href="#marker_synonym">marker_synonym</a> - Stores alternative names for markers.
+</li>
+<li><a href="#marker_map_location">marker_map_location</a> - 
+</li>
+</ul>
 
 
 <h3><a name="marker_feature">marker_feature</a></h3>
@@ -564,21 +564,74 @@ typically a RunnableDB module.
 </li>
 </ul>
 
-
-
-
-<h3><a name="qtl_feature">qtl_feature</a></h3>
-<p>Describes Quantitative Trail Loci (QTL) positions as obtained from inbreeding experiments. Note the values in this table are
-in chromosomal co-ordinates. Also, this table is not populated all schemas.
+<h3><a name="marker_map_location">marker_map_location</a></h3>
+<p>Allows storage of information about the position of a marker - these are positions on genetic or radiation hybrid maps (as
+opposed to positions on the assembly, which EnsEMBL has determined and which are stored in marker_feature).
 </p>
 <p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-<li><a href="#qtl">qtl</a> - Describes the markers used to define a QTL.
+<li><a href="#marker">marker</a> - Stores marker data.
 </li>
-<li><a href="#qtl_synonym">qtl_synonym</a> - Stores alternative names for QTLs
+<li><a href="#marker_feature">marker_feature</a> - Stores marker positions on the assembly.
 </li>
 </ul>
+
+
+<h3><a name="marker_synonym">marker_synonym</a></h3>
+<p>Stores alternative names for markers, as well as their sources.</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+<li><a href="#marker">marker</a> - Stores the original marker.
+</li>
+</ul>
+
+
+<h3><a name="misc_attrib">misc_attrib</a></h3>
+<p>Stores arbitrary attributes about the features in the misc_feature table.</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+<li><a href="#misc_feature">misc_feature</a> - 
+</li>
+</ul>
+
+
+<h3><a name="misc_feature">misc_feature</a></h3>
+<p>Alllows for storage of arbitrary features.</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+<li><a href="#misc_attrib">misc_attrib</a> - Allows storage of arbitrary attributes for the misc_features.
+</li>
+</ul>
+
+
+<h3><a name="misc_feature_misc_set">misc_feature_misc_set</a></h3>
+<p>Defines which of the features in misc_feature are in which of the sets defined in misc_set</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+<li><a href="#misc_feature">misc_feature</a> - 
+</li>
+<li><a href="#misc_set">misc_set</a> - 
+</li>
+</ul>
+
+
+<h3><a name="misc_set">misc_set</a></h3>
+<p>Defines "sets" that the features held in the misc_feature table can be grouped into.</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+<li><a href="#misc_feature_misc_set">misc_feature_misc_set</a> - Defines which features are in which set
+</li>
+</ul>
+
+
+<h3><a name="prediction_exon">prediction_exon</a></h3>
+<p>Stores exons that are predicted by ab initio gene finder programs. Unlike EnsEMBL exons they are not supported by any evidence.</p>
 
 
 <h3><a name="prediction_transcript">prediction_transcript</a></h3>
@@ -587,17 +640,14 @@ are not supported by any evidence.
 </p>
 
 
-
-
-<h3><a name="prediction_exon">prediction_exon</a></h3>
-<p>Stores exons that are predicted by ab initio gene finder programs. Unlike EnsEMBL exons they are not supported by any evidence.</p>
-
-
-
-
-<h3><a name="simple_feature">simple_feature</a></h3>
-<p>Describes general genomic features that don't fit into any of the more specific feature tables.</p>
-
+<h3><a name="protein_align_feature">protein_align_feature</a></h3>
+<p>Stores translation alignments generated from Blast (or Blast-like) comparisons.</p>
+<p><b>See also:</b></p>
+<p>Concepts:</p>
+<ul>
+<li><a href="#cigar_line">cigar_line</a> - Used to encode gapped alignments.
+</li>
+</ul>
 
 
 
@@ -617,33 +667,6 @@ rather than contig co-ordinates.
 </li>
 </ul>
 
-
-
-
-<h3><a name="density_feature">density_feature</a></h3>
-<p>.</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#density_type">density_type</a> - 
-</li>
-</ul>
-
-
-
-
-<h3><a name="density_type">density_type</a></h3>
-<p>.</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#density_feature">density_feature</a> - 
-</li>
-</ul>
-
-
-
-
 <h3><a name="qtl">qtl</a></h3>
 <p>Describes the markers (of which there may be up to three) which define Quantitative Trait Loci. Note that QTL is a statistical
 technique used to find links between certain expressed traits and regions in a genetic map.
@@ -656,65 +679,22 @@ technique used to find links between certain expressed traits and regions in a g
 </ul>
 
 
-
-
-<h3><a name="qtl_synonym">qtl_synonym</a></h3>
-<p>Describes alternative names for Quantitative Trait Loci (QTLs).</p>
-
-
-
-
-<h3><a name="marker">marker</a></h3>
-<p>Stores data about the marker itself - e.g. the primer sequences used.</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#marker_synonym">marker_synonym</a> - Stores alternative names for markers.
-</li>
-<li><a href="#marker_map_location">marker_map_location</a> - 
-</li>
-</ul>
-
-
-
-
-<h3><a name="marker_map_location">marker_map_location</a></h3>
-<p>Allows storage of information about the position of a marker - these are positions on genetic or radiation hybrid maps (as
-opposed to positions on the assembly, which EnsEMBL has determined and which are stored in marker_feature).
+<h3><a name="qtl_feature">qtl_feature</a></h3>
+<p>Describes Quantitative Trail Loci (QTL) positions as obtained from inbreeding experiments. Note the values in this table are
+in chromosomal co-ordinates. Also, this table is not populated all schemas.
 </p>
 <p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-<li><a href="#marker">marker</a> - Stores marker data.
+<li><a href="#qtl">qtl</a> - Describes the markers used to define a QTL.
 </li>
-<li><a href="#marker_feature">marker_feature</a> - Stores marker positions on the assembly.
-</li>
-</ul>
-
-
-
-
-<h3><a name="marker_synonym">marker_synonym</a></h3>
-<p>Stores alternative names for markers, as well as their sources.</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#marker">marker</a> - Stores the original marker.
+<li><a href="#qtl_synonym">qtl_synonym</a> - Stores alternative names for QTLs
 </li>
 </ul>
 
 
-
-
-<h3><a name="map">map</a></h3>
-<p>Stores the names of different genetic or radiation hybrid maps, for which there is marker map information.</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#marker">marker</a> - Stores the original marker.
-</li>
-</ul>
-
+<h3><a name="qtl_synonym">qtl_synonym</a></h3>
+<p>Describes alternative names for Quantitative Trait Loci (QTLs).</p>
 
 
 
@@ -723,68 +703,35 @@ opposed to positions on the assembly, which EnsEMBL has determined and which are
 
 
 
-
-<h3><a name="misc_feature">misc_feature</a></h3>
-<p>Alllows for storage of arbitrary features.</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#misc_attrib">misc_attrib</a> - Allows storage of arbitrary attributes for the misc_features.
-</li>
-</ul>
+<h3><a name="repeat_feature">repeat_feature</a></h3>
+<p>Describes sequence repeat regions.</p>
 
 
+<h3><a name="simple_feature">simple_feature</a></h3>
+<p>Describes general genomic features that don't fit into any of the more specific feature tables.</p>
 
 
-<h3><a name="misc_attrib">misc_attrib</a></h3>
-<p>Stores arbitrary attributes about the features in the misc_feature table.</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#misc_feature">misc_feature</a> - 
-</li>
-</ul>
+<h3><a name="supporting_feature">supporting_feature</a></h3>
+<p>Describes the exon prediction process by linking exons to DNA or protein alignment features. As in several other tables, the
+feature_id column is a foreign key; the feature_type column specifies which table feature_id refers to.
+</p>
 
-
-
-
-<h3><a name="misc_set">misc_set</a></h3>
-<p>Defines "sets" that the features held in the misc_feature table can be grouped into.</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#misc_feature_misc_set">misc_feature_misc_set</a> - Defines which features are in which set
-</li>
-</ul>
-
-
-
-
-<h3><a name="misc_feature_misc_set">misc_feature_misc_set</a></h3>
-<p>Defines which of the features in misc_feature are in which of the sets defined in misc_set</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#misc_feature">misc_feature</a> - 
-</li>
-<li><a href="#misc_set">misc_set</a> - 
-</li>
-</ul>
-
-
-
-
-<h3><a name="alt_allele">alt_allele</a></h3>
-<p>Stores information about genes on haplotypes that may be orthologous.</p>
-
-
-
-
+<h3><a name="transcript_supporting_feature">transcript_supporting_feature</a></h3>
+<p>Describes the exon prediction process by linking transcripts to DNA or protein alignment features. As in several other tables, the
+feature_id column is a foreign key; the feature_type column specifies which table feature_id refers to.
+</p>
 
 
 <hr />
 <h2>ID Mapping</h2>
 <p>Tables involved in mapping identifiers between releases</p>
+<a name="id_er_diagram"><img src="id_mapping.png" alt="ID Mapping ER diagram" text="ID Mapping ER diagram" /></a>
+
+
+<h3><a name="gene_archive">gene_archive</a></h3>
+<p>Contains a snapshot of the stable IDs associated with genes deleted or changed between releases. Includes gene, transcript
+and translation stable IDs.
+</p>
 
 
 <h3><a name="mapping_session">mapping_session</a></h3>
@@ -804,6 +751,8 @@ to another. Details of the "old" and "new" databases are stored.
 </ul>
 
 
+<h3><a name="peptide_archive">peptide_archive</a></h3>
+<p>Contains the peptides for deleted or changed translations.</p>
 
 
 <h3><a name="stable_id_event">stable_id_event</a></h3>
@@ -818,42 +767,16 @@ IDs where deleted, created and related to each other. Each event is represented 
 </ul>
 
 
-
-
-<h3><a name="gene_archive">gene_archive</a></h3>
-<p>Contains a snapshot of the stable IDs associated with genes deleted or changed between releases. Includes gene, transcript
-and translation stable IDs.
-</p>
-
-
-
-
-<h3><a name="peptide_archive">peptide_archive</a></h3>
-<p>Contains the peptides for deleted or changed translations.</p>
-
-
 <hr />
 <h2>Exernal references</h2>
 <p>Tables used for storing links to and details about objects that are stored in other databases</p>
+<a name="ext_er_diagram"><img src="external_refs.png" alt="External References ER diagram" text="External References ER diagram" /></a>
 
 
 
 
-<h3><a name="xref">xref</a></h3>
-<p>Holds data about objects which are external to EnsEMBL, but need to be associated with EnsEMBL objects. Information about
-the database that the external object is stored in is held in the external_db table entry referred to by the external_db column.
-</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#external_db">external_db</a> - Describes the database that xrefs are stored in
-</li>
-<li><a href="#external_synonym">external_synonym</a> - Allows xrefs to have more than one name
-</li>
-</ul>
-
-
-
+<h3><a name="dependent_xref">dependent_xref</a></h3>
+<p></p>
 
 <h3><a name="external_db">external_db</a></h3>
 <p>Stores data about the external databases in which the objects described in the xref table are stored.</p>
@@ -876,25 +799,6 @@ the database that the external object is stored in is held in the external_db ta
 </li>
 </ul>
 
-
-
-
-<h3><a name="object_xref">object_xref</a></h3>
-<p>Describes links between EnsEMBL objects and objects held in external databases. The EnsEMBL object can be one of several types;
-the type is held in the ensembl_object_type column. The ID of the particular EnsEMBL gene, translation or whatever is given
-in the ensembl_id column. The xref_id points to the entry in the xref table that holds data about the external object.Each
-EnsEMBL object can be associated with zero or more xrefs. An xref object can be associated with one or more EnsEMBL objects.
-</p>
-<p><b>See also:</b></p>
-<p>Tables:</p>
-<ul>
-<li><a href="#xref">xref</a> - Stores the data about each externally-referenced object.
-</li>
-<li><a href="#go_xref">go_xref</a> - Stores extra data for relationships to GO objects.
-</li>
-<li><a href="#identity_xref">identity_xref</a> - Stores data about how 'good' the relationships are
-</li>
-</ul>
 
 
 
@@ -928,6 +832,45 @@ stored in the object_xref table.
 </ul>
 
 
+<h3><a name="object_xref">object_xref</a></h3>
+<p>Describes links between EnsEMBL objects and objects held in external databases. The EnsEMBL object can be one of several types;
+the type is held in the ensembl_object_type column. The ID of the particular EnsEMBL gene, translation or whatever is given
+in the ensembl_id column. The xref_id points to the entry in the xref table that holds data about the external object.Each
+EnsEMBL object can be associated with zero or more xrefs. An xref object can be associated with one or more EnsEMBL objects.
+</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+<li><a href="#xref">xref</a> - Stores the data about each externally-referenced object.
+</li>
+<li><a href="#go_xref">go_xref</a> - Stores extra data for relationships to GO objects.
+</li>
+<li><a href="#identity_xref">identity_xref</a> - Stores data about how 'good' the relationships are
+</li>
+</ul>
+
+
+
+<h3><a name="unmapped_reason">unmapped_reason</a></h3>
+<p>Describes the reason why a mapping failed.</p>
+
+<h3><a name="unmapped_object">unmapped_object</a></h3>
+<p>Describes why a particular external entity was not mapped to an ensembl one.</p>
+
+
+
+<h3><a name="xref">xref</a></h3>
+<p>Holds data about objects which are external to EnsEMBL, but need to be associated with EnsEMBL objects. Information about
+the database that the external object is stored in is held in the external_db table entry referred to by the external_db column.
+</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+<li><a href="#external_db">external_db</a> - Describes the database that xrefs are stored in
+</li>
+<li><a href="#external_synonym">external_synonym</a> - Allows xrefs to have more than one name
+</li>
+</ul>
 
 
 <hr />
