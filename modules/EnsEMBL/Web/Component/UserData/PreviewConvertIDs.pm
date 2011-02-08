@@ -48,7 +48,7 @@ sub content {
       my $newname = $name || 'converted_data_'.$i.'.txt';
       $html .= sprintf('<h3>File <a href="/%s/download?file=%s;name=%s;prefix=%s;format=txt">%s</a></h3>', $object->species, $file, $newname, $prefix, $newname);
       if ($gaps) {
-        $html .= "<p>This data has $gaps gaps when mapped to the new assembly</p>";
+        $html .= "<p>This data includes $gaps gaps where the input coordinates could not be mapped directly to the output assembly.</p>";
       }
       $html .= '<pre>';
       my $count = 1;
