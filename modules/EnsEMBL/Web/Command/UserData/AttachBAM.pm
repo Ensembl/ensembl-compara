@@ -23,7 +23,7 @@ sub process {
 
   if (my $url = $hub->param('url')) {
     
-    if ($url =~ /^ftp:\/\//i) {
+    if ($url =~ /^ftp:\/\//i && !$SiteDefs::BAM_ALLOW_FTP) {
      $session->add_data(
         'type'  => 'message',
         'code'  => 'AttachBAM',
