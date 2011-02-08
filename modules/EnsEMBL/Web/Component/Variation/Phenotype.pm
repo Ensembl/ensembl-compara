@@ -77,7 +77,7 @@ sub table_data {
     my $source_name  = $va->source_name;
     my $disease_url  = $hub->url({ type => 'Location', action => 'Genome', id => $id, ftype => 'Phenotype', somatic => $is_somatic, phenotype_name => $disorder }); 
     my $source       = $self->source_link($va, $code);
-    my $study        = $self->study_link($va->study, $va->associated_variant_risk_allele) || $va->study; # use raw value if can't be made into a link
+    my $study        = $self->study_link($va->study) || $va->study; # use raw value if can't be made into a link
     
     if ($source =~ /<a href="">(.*)<\/a>/) {
       $source = $1; 
@@ -94,7 +94,7 @@ sub table_data {
     }
    
     my $gene         = $self->gene_links($va->associated_gene);
-    my $allele       = $va->associated_variant_risk_allele;
+    my $allele       = $self->allele_link($va->study, $va->associated_variant_risk_allele) || $va->associated_variant_risk_allele;
     my $variant_link = $self->variation_link($va->variation->name);
     my $pval         = $va->p_value;
     
@@ -199,6 +199,7 @@ sub study_link {
       my $sub_link = $self->hub->get_ExtURL_link($mim, 'OMIM', $id);
       my @parts = split /\"/, $sub_link;
       $parts[1] .= '#'.$id.'Variants'.$allele if defined($allele);
+      $parts[-1] =~ s/\>[^\<]+\</\>$allele\</ if (defined($allele));
       $sub_link = join '"', @parts;
       $link .= ', '.$sub_link;
       $link =~ s/^\, //g;
@@ -210,6 +211,14 @@ sub study_link {
   else {
     return '';
   }
+}
+
+sub allele_link {
+	my ($self, $study, $allele) = @_;
+	
+	# Only create allele-specific link if the study is a OMIM record and the allele is defined
+	return '' unless ($study =~ /^MIM\:/ && defined($allele));
+	return $self->study_link($study,$allele);
 }
 
 sub variation_link {
