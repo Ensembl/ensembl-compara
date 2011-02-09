@@ -103,6 +103,7 @@ foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::ENSEMBL_DATASETS) {
   $dbh->do("INSERT INTO gene_autocomplete (species, stable_id, display_label, db) VALUES $insert") if $insert;
 }
 
+$dbh->do("OPTIMIZE TABLE gene_autocomplete");
 $dbh->disconnect;
 
 1;
