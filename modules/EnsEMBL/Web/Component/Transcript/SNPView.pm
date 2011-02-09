@@ -175,9 +175,9 @@ sub sample_configs {
   foreach my $sample ($object->get_samples) {  
     my $sample_slice = $transcript_slice->get_by_strain($sample); 
     next unless $sample_slice; 
-
+    
     ## Initialize content
-    my $sample_config              = $hub->get_imageconfig('tsv_sampletranscript');
+    my $sample_config              = $hub->get_imageconfig('tsv_sampletranscript', $sample);
     $sample_config->{'id'}         = $stable_id;
     $sample_config->{'subslices'}  = $sub_slices;
     $sample_config->{'extent'}     = $extent;
