@@ -10,6 +10,7 @@ use IO::String;
 use EnsEMBL::Web::Component::Compara_Alignments;
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::SeqDumper;
+use Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter;
 
 use base qw(EnsEMBL::Web::Component);
 
@@ -44,6 +45,7 @@ sub export {
       embl      => sub { return $self->flat('embl');    },
       genbank   => sub { return $self->flat('genbank'); },
       alignment => sub { return $self->alignment;       },
+      phyloxml  => sub { return $self->phyloxml;},
       %$custom_outputs
     };
 
@@ -81,6 +83,23 @@ sub output {
   my ($self, $key, $string) = @_;
   $self->{$key} .= "$string\r\n" if defined $string;
   return $self->{$key};
+}
+
+sub phyloxml{
+  my $self = shift;
+  my $params = $self->params;
+  my $hub             = $self->hub;
+  my $object          = $self->object;
+  my $db = $hub->database('compara');
+  my $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(
+          -SOURCE => 'Ensembl',
+          -ALIGNED => $params->{'aligned'},
+          -CDNA => $params->{'cdna'},
+          -NO_SEQUENCES => $params->{'no_sequences'}
+  ); 
+  my $tree = $object->get_GeneTree('compara');
+  $w->write_trees($tree);
+  $self->string($w->doc->toString(1));
 }
 
 sub fasta {

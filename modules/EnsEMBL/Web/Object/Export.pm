@@ -123,7 +123,18 @@ sub config {
         [ 'pipmaker', 'Pipmaker / zPicture format' ],
         [ 'vista',    'Vista Format' ]
       ]
-    }
+    },
+    phyloxml => {
+      label => 'Tree',
+      formats => [
+        [ 'phyloxml',    'PhyloXML' ]
+      ],
+      params => [
+        [ 'cdna', 'cDNA instead of protein sequence' ],
+        [ 'aligned', 'Aligned sequences with gaps' ],
+        [ 'no_sequences', 'Omit sequences' ]
+      ]
+    }  
   };
   
   my $func = sprintf 'modify_%s_options', lc $self->function;

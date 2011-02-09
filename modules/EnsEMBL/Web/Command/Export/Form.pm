@@ -76,7 +76,8 @@ sub get_formats {
       embl     => 'flat',
       genbank  => 'flat',
       pipmaker => 'pip',
-      vista    => 'pip'
+      vista    => 'pip',
+      phyloxml => 'phyloxml'
     };
     
     my $key = $map->{$output} || $output;
