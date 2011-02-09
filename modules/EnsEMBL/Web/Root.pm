@@ -198,6 +198,16 @@ sub dynamic_use {
   return 1;
 }
 
+sub dynamic_use_fallback {
+  ## Tries to dynamically use the first possible module out of a list of given modules
+  ## @param   list of modules' name (Array, not ArrayRef)
+  ## @return  first successfully "use"d module's name
+  my $self    = shift;
+  my $module  = shift;
+  $module     = shift while $module && !$self->dynamic_use($module);
+  return $module;
+}
+
 # Return error message cached if use previously failed
 sub dynamic_use_failure {
   my ($self, $classname) = @_;
