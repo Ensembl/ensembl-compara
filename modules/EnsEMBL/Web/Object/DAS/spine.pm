@@ -296,7 +296,12 @@ if (0) {
       }
   }
 
-  push @features, values %{ $self->{'_features'} };
+  foreach my $geneid (keys %{$self->{_features} || {}}) {
+      push @features, {
+	  FEATURES => $self->{_features}{$geneid}{'FEATURES'},
+	  REGION=> $geneid
+	  };
+  }
 
   return \@features;
 }
