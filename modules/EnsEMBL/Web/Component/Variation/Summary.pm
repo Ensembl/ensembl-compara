@@ -43,9 +43,9 @@ sub content {
   } elsif ($source =~ /HGMD/) { # HACK - should get its link properly somehow
     foreach my $va (@{$vaa->fetch_all_by_Variation($variation)}) {
       next unless $va->source_name =~ /HGMD/;
-      
-      my $source_link = $hub->get_ExtURL_link($va->source_name, 'HGMD', { ID => $va->associated_gene, ACC => $name });
-      $name = "$class ($display_name source $source_link $source_description)";
+			my $display_name = $hub->get_ExtURL_link($display_name, 'HGMD', { ID => $va->associated_gene, ACC => $name });
+      $name = $hub->get_ExtURL_link($va->source_name, 'HGMD-PUBLIC', '');
+			$name = "$class ($display_name source $name $source_description)";
     }
   } else {
     $name = defined $source_url ? qq{<a href="$source_url">$source</a>} : $source;
@@ -137,6 +137,7 @@ sub content {
 
   if ($vari_class eq 'snp' or $vari_class eq 'SNP') {
     my $ambig_code = $variation->ambig_code;
+		if ($alleles =~ /HGMD/) { $ambig_code='not available'; }
     $allele_html .= " (Ambiguity code: <strong>$ambig_code</strong>)";
   }
   
