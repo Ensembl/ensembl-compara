@@ -82,7 +82,8 @@ sub cigar_string {
     }
     return $self->{'_cigar'}=$cigar;
   } else {
-    return $self->{'_cigar'}=($self->{'__raw__'}[2]-$self->{'__raw__'}[1]+1)."M";
+    # Length of Cigar must not have +1 
+    return $self->{'_cigar'}=($self->{'__raw__'}[2]-$self->{'__raw__'}[1])."M";
   }
 }
 
