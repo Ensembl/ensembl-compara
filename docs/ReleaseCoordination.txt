@@ -1,6 +1,11 @@
   COMPARA PRODUCTION CYCLE
 ============================
 
+
+#============================================================================
+#  Intentions (declaration of intentions)
+#============================================================================
+
 1. Once the release coordinator has sent the mail for declaration of
 intention, ask the other members of compara group (or related) what
 they intend to produce. Sometimes, you have to wait a bit that gene
@@ -8,21 +13,26 @@ builders do their declaration first to know what compara will need to
 produce and also potential schema changes. Compara has one extra day
 to send the DOI, because we have to know which new species are added.
 
-For homologues and families, ask Albert (avilella@ebi.ac.uk).  
-For whole genome alignments and synteny ask Javier (jherrero@ebi.ac.uk). 
+2. Submit the declaration of intentions using the admin website. Remember
+that compara has one additional day after the declaration of intentions
+deadline for the genebuilders.
 
-2. Mail the compara declaration of intentions to ensembl-admin@ebi.ac.uk
-send the DOI after the Genebuilders
+3. Set up a web page with intentions in the Confluence wiki system to
+allow easy tracking of the progress.
 
-3. Define priorities and assign jobs to the team members.
+Note: The current (rel.60) compara_master database is sf5_ensembl_compara_master on compara1 
 
-3bis. The current (rel.60) compara_master database is sf5_ensembl_compara_master on compara1 
 
-4. Update the ncbi_taxa_node and ncbi_taxa_name in the master DB using the
-ncbi_taxonomy database located in mysql::/ens-livemirror:3306/ncbi_taxonomy
-This is usually done by the person who runs the orthologs/paralogs.
-Check that the ens-livemirror ncbi_taxonomy database has been updated. This is usually done when the GeneBuilders request a change (ie before handover to compara)
-For more information, here is the doc ensembl-compara/scripts/taxonomy/README-taxonomy
+#============================================================================
+# NCBI taxonomy data (handover to compara)
+#============================================================================
+
+4. Update the NCBI taxonomy local "mirror". Follow the instructions in
+ensembl-compara/scripts/taxonomy/README-taxonomy
+
+5. Update the ncbi_taxa_node and ncbi_taxa_name in the master DB using the
+ncbi_taxonomy database located in mysql://ens-livemirror:3306/ncbi_taxonomy
+This may be done by the person who runs the orthologs/paralogs, check with him/her.
 
 time mysqldump -u ensro -h ens-livemirror -P3306 --extended-insert --compress --delayed-insert ncbi_taxonomy \
 ncbi_taxa_node ncbi_taxa_name | mysql -u ensadmin -pxxxx -h compara1 sf5_ensembl_compara_master
@@ -38,7 +48,11 @@ Some of the species need fixing to be webcode-compatible. This is usually done i
  "update ncbi_taxa_name set name = \"Pongo pygmaeus abelii\" where taxon_id = 9600 and name_class = \"synonym\" and name = \"Pongo pygmaeus abelii\""
 
 
-5. Add in the master compara database
+#============================================================================
+# Master compara database (handover to compara)
+#============================================================================
+
+6. Add in the master compara database
 (compara1:3306/sf5_ensembl_compara_master) the new entries in the
 genome_db and dnafrag tables. You can set up your registry and use the
 ~ensembl-compara/scripts/pipeline/update_genome.pl script. This script
@@ -54,13 +68,13 @@ perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/updat
  --reg_conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_48/v48.conf \
  --compara compara-master --species "Ochotona princeps"
 
-5.1 Add in extra non-reference patches 
+6.1 Add in extra non-reference patches 
 
 To add extra non-reference patches to an assembly, eg human, you need the -force option to just add those dnafrags which aren't already in the database.
 
 perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/update_genome.pl --reg_conf reg_conf --compara compara_master --species human --force
 
-6. New method_link_species_set entries might be added using the
+7. New method_link_species_set entries might be added using the
 ~ensembl-compara/scripts/pipeline/create_mlss.pl script. The release
 coordinator (or any team member) should create a new
 method_link_species_set in the master database before starting a new
@@ -91,7 +105,7 @@ echo -e "401\n" | /usr/local/ensembl/bin/perl /nfs/acari/avilella/src/ensembl_ma
 # families
 echo -e "301\n" | /usr/local/ensembl/bin/perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_53/mlss_53.conf --name "families" --genome_db_id "3,4,5,16,18,22,27,29,31,33,34,36,37,38,39,42,43,44,46,48,49,51,52,53,55,56,57,58,60,61,62,64,65,66,67,68,69,77,78,79,80,81,82,83,84,85,86,87,88" 1>create_mlss.FAMILY.301.out 2>create_mlss.FAMILY.301.err
 
-6.1. Update the species_set_tags.
+7.1. Update the species_set_tags.
 Run the script: update_species_sets.pl
 
 eg
@@ -216,6 +230,10 @@ time ./run-healthcheck.sh -d sf5_ensembl_compara_61 -type compara -d2 .+_core_61
 
 ...and correct mismatches if any!
 
+
+#============================================================================
+# Merging (pre-compara handover)
+#============================================================================
 
 10. Merge data.
 
