@@ -77,16 +77,6 @@ $Author$
 
 $Revision$
 
-=head1 REQUIREMENTS
-
-=over 8
-
-=item L<XML::Writer>
-
-=item L<IO::File> - part of Perl 5.8+
-
-=back
-
 =head1 LICENSE
 
  Copyright (c) 1999-2011 The European Bioinformatics Institute and
@@ -110,15 +100,13 @@ $Revision$
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw try catch warning);
-use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref wrap_array);
+use base qw(Bio::EnsEMBL::Compara::Utils::BaseXMLWriter);
 
-use IO::File;
-use XML::Writer;
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Scalar qw(check_ref wrap_array);
 
 my $phylo_uri = 'http://www.phyloxml.org';
-my $xsi_uri = 'http://www.w3.org/2001/XMLSchema-instance';
 
 =pod
 
@@ -136,7 +124,7 @@ my $xsi_uri = 'http://www.w3.org/2001/XMLSchema-instance';
                           an instance of IO::String so long as it behaves
                           the same as IO::Handle. Can be left blank in 
                           favour of the -FILE parameter
-  Arg[FILE]             : Scalar;                        
+  Arg[FILE]             : Scalar; file to write to              
   Description : Creates a new tree writer object. 
   Returntype  : Instance of the writer
   Exceptions  : None
@@ -149,14 +137,14 @@ my $xsi_uri = 'http://www.w3.org/2001/XMLSchema-instance';
 
 sub new {
   my ($class, @args) = @_;
-  my ($cdna, $source, $aligned, $no_sequences, $handle, $file) = 
-    rearrange([qw(cdna source aligned no_sequencess handle file)], @args);
+  $class = ref($class) || $class;
+  my $self = $class->SUPER::new(@args);
+  
+  my ($cdna, $source, $aligned, $no_sequences) = 
+    rearrange([qw(cdna source aligned no_sequencess)], @args);
 
   $source ||= 'Unknown';
-  $cdna ||= 1;
-  
-  my $self = bless({}, ref($class) || $class);
-  
+  $cdna = 1 unless defined $cdna;
   if( ($cdna || $aligned) && $no_sequences) {
     warning "-CDNA or -ALIGNED was specified but so was -NO_SEQUENCES. Will ignore sequences";
   }
@@ -165,81 +153,39 @@ sub new {
   $self->source($source);
   $self->aligned($aligned);
   $self->no_sequences($no_sequences);
-  $self->handle($handle) if defined $handle;
-  $self->file($file) if defined $file;
   
   return $self;
 }
 
 =pod
 
-=head2 finish()
+=head2 end_element()
 
-  Description : An important method which will write the final element. This
-  allows you to stream any number of trees into one XML file and then call
-  finish once you are done with it. B<Always call this method when you are
-  done otherwise your XML will not be valid>.
-  Returntype : Nothing
-  Exceptions : Thrown if you are not finishing the file off with a phyloxml
-  element
-  Status     : Stable
-
-=cut
-
-sub finish {
-  my ($self) = @_;
-  $self->_writer()->endTag('phyloxml');
-  return;
-}
-
-=pod
-
-=head2 handle()
-
-  Arg[0] : The handle to set
-  Description : Mutator for the handle backing this writer. If invoked without
-  giving it an instance of a handler it will use the FILE attribute to open
-  an instance of L<IO::File>
-  Returntype : IO::Handle
-  Exceptions : Thrown if we cannot open a file handle
-  Status     : Stable
-  
-=cut
-
-sub handle {
-  my ($self, $handle) = @_;
-  if(defined $handle) {
-    $self->{_writer} = undef;
-    $self->{handle} = $handle;
-  }
-  else {
-    if(! defined $self->{handle}) {
-      $self->{handle} = IO::File->new($self->file(), 'w');
-    }
-  }
-  return $self->{handle};
-}
-
-=pod
-
-=head2 file()
-
-  Arg[0] : Set the file location
-  Description : Sets the file location to write to. Will undefine handle
-  Returntype : String
+  Description : The starting/final element name
+  Returntype : String; phyloxml
   Exceptions : None
   Status     : Stable
-  
+
 =cut
 
-sub file {
-  my ($self, $file) = @_;
-  if(defined $file) {
-    $self->{handle} = undef;
-    $self->{_writer} = undef;
-    $self->{file} = $file;
-  }
-  return $self->{file};
+sub end_element {
+  my ($self) = @_;
+  return 'phyloxml';
+}
+
+=pod
+
+=head2 namespaces()
+
+Provides the namespaces used in this writer (the PhyloXML namespace)
+
+=cut
+
+sub namespaces {
+  my ($self) = @_;
+  return {
+    $phylo_uri => ''
+  };
 }
 
 =pod
@@ -342,32 +288,9 @@ sub write_trees {
 
 ########### PRIVATE
 
-sub _writer {
-  my ($self) = @_;
-  if(!$self->{_writer}) {
-    my $writer = $self->_build_writer();
-    $self->{_writer} = $writer;
-    $self->_write_opening($writer);
-  }
-  return $self->{_writer};
-}
-
-sub _build_writer {
-  my ($self) = @_;
-  return XML::Writer->new( 
-    OUTPUT => $self->handle(), 
-    DATA_MODE => 1, 
-    DATA_INDENT => 2,
-    NAMESPACES => 1,
-    PREFIX_MAP => {
-      $phylo_uri => '',
-      $xsi_uri => 'xsi'
-    }
-  );
-}
-
 sub _write_opening {
   my ($self, $w) = @_;
+  my $xsi_uri = $self->xml_schema_namespace();
   $w->xmlDecl("UTF-8");
   $w->forceNSDecl($phylo_uri);
   $w->forceNSDecl($xsi_uri);
