@@ -42,8 +42,8 @@ You just need to activate your account, using the link below:
   }
 
   $message .= $self->base_url . '/Account/Activate?email=' . $user->email . '&code=' . $user->salt;
-  $message .= ';group_id='  . $object->param('group_id')  if $object->param('group_id');
-  $message .= ';invite_id=' . $object->param('invite_id') if $object->param('invite_id');
+  $message .= '&group_id='  . $object->param('group_id')  if $object->param('group_id');
+  $message .= '&invite_id=' . $object->param('invite_id') if $object->param('invite_id');
   $message .= $self->email_footer;
   
   $self->message = $message;
@@ -91,7 +91,7 @@ on the %s Genome Browser.
 
 To accept this invitation, click on the following link:
 
-%s/Account/Accept?id=%s;code=%s;email=%s
+%s/Account/Accept?id=%s&code=%s&email=%s
 
 If you do not wish to accept, please just disregard this email.
 
