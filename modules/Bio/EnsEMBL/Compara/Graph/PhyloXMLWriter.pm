@@ -100,7 +100,7 @@ $Revision$
 use strict;
 use warnings;
 
-use base qw(Bio::EnsEMBL::Compara::Utils::BaseXMLWriter);
+use base qw(Bio::EnsEMBL::Compara::Graph::BaseXMLWriter);
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
