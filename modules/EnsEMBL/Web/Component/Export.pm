@@ -66,7 +66,9 @@ sub export {
   if ($html_format) {
     $string = "<pre>$string</pre>" if $string;
   } else {    
-    s/<.*?>//g for $string, $html; # Strip html tags;
+    if($o ne "phyloxml"){
+      s/<.*?>//g for $string, $html; # Strip html tags;
+    }
     $string .= "\r\n" if $string && $html;
   }
   
@@ -99,7 +101,12 @@ sub phyloxml{
   ); 
   my $tree = $object->get_GeneTree('compara');
   $w->write_trees($tree);
-  $self->string($w->doc->toString(1));
+  my $out= $w->doc->toString(1);
+  do{
+     $out =~ s/</&lt\;/g;
+     $out =~ s/>/&gt\;/g;
+  }unless $hub->param('_format') eq 'TextGz';
+  $self->string($out);
 }
 
 sub fasta {
