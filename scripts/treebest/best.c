@@ -250,6 +250,7 @@ Tree *best_core(BestConfig *bo)
 		float lk1, lk2;
 		c_begin = clock();
 		tree = phyml_core(bo->ma, pc, t_final, 0, 1); /* pc has been initialized above */
+		tr_compare_core(t_final, tree, COMPARE_WRITE_TREE_INDEX);
 		cpp_get_keyval(tree, "Loglk", &s); lk1 = (float)atof(s); free(s);
 		cpp_get_keyval(tree, "LoglkSpec", &s); lk2 = (float)atof(s); free(s);
 		phyml_free_config(pc);
@@ -279,6 +280,7 @@ Tree *best_core(BestConfig *bo)
 		write_tmp_tree(bo->prefix, ".nj-dn.nhx", t_nj_dn);
 		write_tmp_tree(bo->prefix, ".nj-ds.nhx", t_nj_ds);
 		write_tmp_tree(bo->prefix, ".nj-mm.nhx", t_nj_mm);
+		write_tmp_tree(bo->prefix, ".mmerge.nhx", t_final);
 	}
 
 	if (bo->is_phyml) { /* bootstrap */

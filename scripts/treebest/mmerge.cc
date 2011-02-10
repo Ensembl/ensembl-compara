@@ -31,6 +31,7 @@ typedef struct
 typedef struct _Bipart
 {
 	int F, f, bs;
+	int tree_index;
 	AllowedNode *an[2];
 } Bipart;
 
@@ -141,7 +142,7 @@ static inline int cal_score(Tree *t)
 		n_lost += MMinfo(t->node[i])->si->n_lost;
 	return (((((MMinfo(t)->si->type == 'D')? 1 : 0) << 8) + n_lost + 1) << 8);
 }
-static inline AllowedNode *insert_to_SameMagic(SameMagicPtr smp, int n_leaf, char *q, Tree *t, AllowedNode *an1, AllowedNode *an2)
+static inline AllowedNode *insert_to_SameMagic(SameMagicPtr smp, int n_leaf, char *q, Tree *t, AllowedNode *an1, AllowedNode *an2, int tree_index)
 {
 	int i, j, k;
 	for (i = 0; i < smp->n; ++i) {
@@ -178,11 +179,13 @@ static inline AllowedNode *insert_to_SameMagic(SameMagicPtr smp, int n_leaf, cha
 		Bipart *b = (Bipart*)malloc(sizeof(Bipart));
 		b->F = 0; b->f = cal_score(t); b->an[0] = an1; b->an[1] = an2;
 		b->bs = -((t->bs > 0)? t->bs : DEFAULT_BS);
+		b->tree_index = tree_index;
 		an->bipart[k] = b;
 		++(an->n);
 	} else { // NOTE: this only works with node-based bootstrapping values!!!
 		int bs = -((t->bs > 0)? t->bs : DEFAULT_BS);
 		if (bs < an->bipart[k]->bs) an->bipart[k]->bs = bs;
+		an->bipart[k]->tree_index |= tree_index;
 	}
 	return an;
 }
@@ -233,7 +236,7 @@ static MMergeGlobal *initialize_G_space(int n, Tree **forest)
 {
 	Tree *tree, **node;
 	char **name;
-	int i, n_leaf;
+	int i, n_leaf, tree_index;
 	AllowedNode *root_an;
 	MMergeGlobal *g;
 
@@ -253,7 +256,8 @@ static MMergeGlobal *initialize_G_space(int n, Tree **forest)
 
 	insert_single_leaf(all_node, n_leaf, name);
 	root_an = 0;
-	for (int k = 0; k < n; ++k) {
+	tree_index = 1;
+	for (int k = 0; k < n; ++k, tree_index<<=1) {
 		tree = forest[k];
 		// QC
 		if (tree->n_leaf != n_leaf) {
@@ -299,7 +303,7 @@ static MMergeGlobal *initialize_G_space(int n, Tree **forest)
 			}
 			magic = magic * n_leaf + count;
 			smp = locate_SameMagic(magic, all_node);
-			MMinfo(p)->an = insert_to_SameMagic(smp, n_leaf, q, p, MMinfo(p->node[0])->an, MMinfo(p->node[1])->an);
+			MMinfo(p)->an = insert_to_SameMagic(smp, n_leaf, q, p, MMinfo(p->node[0])->an, MMinfo(p->node[1])->an, tree_index);
 		}
 		root_an = MMinfo(tree)->an;
 		free(node);
@@ -331,12 +335,14 @@ static Tree *make_merged_tree(AllowedNode *an)
 	Tree *p = tr_new_node();
 	if (an->name) { // leaf
 		p->name = cpystr(an->name);
+		p->tree_index = 0;
 	} else {
 		p->n = 2;
 		p->bs = -an->bipart[an->i]->bs;
 		p->node = (Tree**)malloc(sizeof(Tree*) * p->n);
 		p->node[0] = make_merged_tree(an->bipart[an->i]->an[0]);
 		p->node[1] = make_merged_tree(an->bipart[an->i]->an[1]);
+		p->tree_index = an->bipart[an->i]->tree_index;
 	}
 	return p;
 }

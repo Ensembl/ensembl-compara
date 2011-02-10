@@ -1,5 +1,5 @@
-#include <FL/Fl_Box.h>
-#include <FL/fl_draw.h>
+#include <FL/Fl_Box.H>
+#include <FL/fl_draw.H>
 #include <stdlib.h>
 #include "flglobal.h"
 #include "utils.h"

@@ -88,6 +88,8 @@ inline int string_nhx_node(char *str, const Tree *t)
 		if (spec(t) && spec(t)->name && (s->type != 'N' || t->n == 0)) /* species name */
 			p += sprintf(p, ":S=%s", spec(t)->name);
 	}
+	if (t->tree_index > 0)
+		p += sprintf(p, ":T=%d", t->tree_index);
 	if (t->bs >= 0) p += sprintf(p, ":B=%d", t->bs); /* bootstrap value */
 	if ((out_flag & OUTPUT_COMPARE) && t->is_cons == 0) /* identical clade */
 		p += sprintf(p, ":Com=N");

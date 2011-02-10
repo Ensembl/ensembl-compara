@@ -38,6 +38,7 @@ Tree *tr_copy_node(const Tree *node)
 	dest->ftime = node->ftime;
 	dest->n_leaf = node->n_leaf;
 	dest->d = node->d;
+	dest->tree_index = node->tree_index;
 	dest->node_array = 0;
 	dest->node = (node->n == 0)? 0 : (Tree**)malloc(sizeof(Tree*) * dest->n);
 	for (i = 0; i < dest->n; ++i)

@@ -1,6 +1,6 @@
 CC=			gcc
 CXX=		g++
-CFLAGS=		-g -Wall -O2 -fomit-frame-pointer #-pg
+CFLAGS=		-g -Wall -O2 -fomit-frame-pointer -pipe #-march=native #-pg
 CXXFLAGS=	$(CFLAGS)
 YFLAGS= 
 DFLAGS=		-DUSE_GCC -DHAVE_PHYML -DLH3_ADDON # for phyml

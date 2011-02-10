@@ -50,7 +50,7 @@ Tree *tr_new_node()
 	t->n_leaf = 0;
 	t->is_cons = 0;
 	t->flag = 0;
-
+	t->tree_index = 0;
 	t->n_node = 0;
 	t->node_array = 0;
 	return t;
@@ -81,6 +81,8 @@ nhx_cell	: nh_cell nhx
 						$$->nhx = (void*)hash;
 						if (hash->find("B", &s))
 							$$->bs = atoi(s);
+						if (hash->find("T", &s))
+							$$->tree_index = atoi(s);
 					}
 					hash = 0;
 				}

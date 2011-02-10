@@ -6,14 +6,14 @@
 #define FN_DIONYSIS	1
 #define FN_SELENA	2
 
-#include <FL/Fl_Double_Window.h>
-#include <FL/Fl_File_Chooser.h>
-#include <FL/Fl_Int_Input.h>
-#include <FL/Fl_Float_Input.h>
-#include <FL/Fl_Progress.h>
-#include <FL/Fl_Button.h>
-#include <FL/Fl_Tabs.h>
-#include <FL/Fl_Check_Button.h>
+#include <FL/Fl_Double_Window.H>
+#include <FL/Fl_File_Chooser.H>
+#include <FL/Fl_Int_Input.H>
+#include <FL/Fl_Float_Input.H>
+#include <FL/Fl_Progress.H>
+#include <FL/Fl_Button.H>
+#include <FL/Fl_Tabs.H>
+#include <FL/Fl_Check_Button.H>
 #include "tree.h"
 #include "phyml.h"
 #include "tree_plot.h"
