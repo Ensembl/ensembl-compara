@@ -194,8 +194,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         }
       },
       mouseleave: function (e) {
-        if (e.relatedTarget && !$(e.relatedTarget).parents('.hover_label').length) {
-          panel.elLk.hoverLabels.removeClass('active').hide();
+        if (e.relatedTarget) {
+          var active = panel.elLk.hoverLabels.filter('.active');
+          
+          if (!active.has(e.relatedTarget).length) {
+            active.removeClass('active').hide();
+          }
+          
+          active = null;
         }
       }
     });
