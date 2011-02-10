@@ -1,0 +1,500 @@
+\input texinfo
+@setfilename treebest.info
+@settitle TreeBeST User's Manual
+
+@titlepage
+@title TreeBeST User's Manual
+@subtitle A Versatile NJ Tree-Builder
+@author by Li Heng and Du Wenfeng
+@end titlepage
+
+@menu
+* Introduction::			Introduction
+* Installation::			Installation
+* Use @command{treebest}::	Use @command{treebest}
+* Miscellaneous Topics::	Miscellaneous Topics
+@end menu
+
+@contents
+
+@node Introduction
+@chapter Introduction
+
+@command{TreeBeST} is an original tree builder for constrained
+neighbour-joining and tree merge, an efficient tool capable of
+duplication/loss/ortholog inference, and a versatile program
+facilitating many tree-building routines, such as tree rooting,
+alignment filtering and tree plotting.  @command{TreeBeST} stands for
+`(gene) Tree Building guided by Species Tree'. It is previously known as
+@command{NJTREE} as the first piece of codes of this project aimed to
+build a eighbour-joining tree.
+
+@command{TreeBeST} is the core engine of TreeFam (Tree Families
+Database) project initiated by Richard Durbin. The basic idea of this
+project is to build a full tree constrained by a manually verified seed
+tree. The tree builder must know how to utilize the prior knowledge
+provided by human experts. This demand disqualifies any existing
+softwares. Given this fact, we devised a new algorithm to control the
+joining step of traditional neighbour-joining.  This is origin the
+constrained neighbour-joining.
+
+When trees are built, they are only meaningful to biologists. Computers
+generate trees, but they do not understand them. To understand gene
+trees, a computer must be equipped with some biological knowledges, the
+species tree.  It will teach a computer how to discriminate a speciation
+from a duplication event and how to find orthologs, provided a correct
+gene tree.
+
+Unfortunately, gene trees are not always correct. Since the advent of
+UPGMA algorithm in 1958, we have tried to find a ideal model for nearly
+half a century.  But we failed. Evolution is so complex a thing. A model
+best fits in one lineage might mean a disaster in another. A unified
+model is far from being discovered.  @command{TreeBeST} aims at
+improving the accuracy of tree building, but it does not try to set up a
+new model in a traditional way.  Instead, it integrates two existing
+models with the help of species tree, finding the subtree that best fits
+the models and merging them together to build a new tree incorporating
+the advantages of the both.  This is the tree algorithm.
+
+@node Installation
+@chapter Installation
+
+@menu
+* System Requirements::		System Requirements
+* Compilation::				Compilation
+@end menu
+
+@node System Requirements
+@section System Requirements
+
+@command{TreeBeST} is written in C/C++. It is known to work in x86-linux
+and alpha-True64, and should be ported to any POSIX-compatible
+systems. It also comes with a GUI using cross-platform @command{FLTK}
+package. @command{TexInfo} package is necessary for compiling this
+manual.
+
+@node Compilation
+@section Compilation
+
+In standard UNIX systems, just type @command{make}. @file{treebest} will
+be generated. This binary file can be copied to any directory you
+want. No configuration file is needed. To compile @file{fltreebest}, the
+GUI version, you need to first install @command{FLTK} package, and then
+@command{make fltreebest} will commit the compilation. We recommend to
+use pre-compiled @file{fltreebest} available at @command{TreeBeST}
+website as GUI might cause some troubles. Besides, @command{yacc} might
+fail to generate @command{gcc}-compatible files in some UNIX
+systems. Please use @command{byacc} or @command{bison} instead.
+
+
+
+
+@node Use @command{treebest}
+@chapter Use @command{treebest}
+
+@menu
+* Input Formats::				Input Formats
+* Examples::					Examples
+* Invoke @command{treebest}::		Invoke @command{treebest}
+@end menu
+
+
+
+@node Input Formats
+@section Input Formats
+
+@command{treebest} takes multi-sequence FASTA format as its unique input format of
+multi-alignment. Other formats can be converted to FASTA by @command{seqret} in
+@command{EMBOSS} package. If you just want to build a tree, a common FASTA input
+is enough, but if you are interested in the full power of @command{treebest}, you must
+specify species names and gene names in FASTA header lines.
+
+The species names of the input sequences are required for duplication/loss inference. They are
+recognized from Swiss-Prot-like sequence names automatically. For example, sequence
+name `CYG1_HUMAN' tells @command{treebest} this sequence comes from `HUMAN',
+and `UniRef100_Q6P7H3_XENLA' means the species is `XENLA'.
+
+@command{treebest} only recognizes a few important species. In current version,
+they are HUMAN, PANTR, MACFA (monkey), BOVIN (cow), PIG, RABIT, MOUSE, RAT, CHICK,
+XENLA, XENTR, BRARE (zebrafish), ONCMY (trout), FUGRU (pufferfish), DROME (fruit fly),
+ANOGA (mosquito), CAEBR, CAEEL, SCHPO, YEAST, MAIZE, ORYSA (rice) and ARATH.
+The species codes above are named by Swiss-Prot, where the standard taxonomy IDs
+and taxonomy names of these species can be obtained.
+
+@command{treebest} is able to choose the best aligned splicing form in building a tree,
+if a gene has several alternative splicing forms. Gene name is specified in second field of
+FASTA header line. For example, a header line `>CYCI_HUMAN GENEID=ENSG00000118816 TAXID=9606'
+tells @command{treebest} `CYCI_HUMAN' is a transcript of `GENEID=ENSG00000118816'.
+
+
+
+@node Examples
+@section Examples
+
+To begin with, see some examples.
+
+@itemize @bullet
+@item Filter amino acid multi-alignment @file{aa_align.mfa} and build NJ tree.
+@example
+@command{treebest} nj aa_align.mfa
+@end example
+
+@item
+Do not filter nucleotide alignment @file{nt_align.mfa} and build synonymous tree.
+@example
+@command{treebest} nj -F 0 -t ds nt_align.mfa
+@end example
+
+@item
+Use @file{cons_tree.nh} as constraint and build NJ tree from alignment file
+@file{aa_align.mfa}. Use JTT model to calculate maximum likelihood distance.
+@example
+@command{treebest} nj -c cons_tree.nh -t jtt aa_align.mfa
+@end example
+
+@item
+Use @file{seed.lst} as seed list and cut the tree at @file{Euteleostomi} node according
+to the species tree @file{spec.nh}.
+@example
+@command{treebest} nj -s spec.nh -l seed.lst -o Euteleostomi aa_align.mfa
+@end example
+
+@item
+Do SDI (Speciation vs. Duplication Inference) for a tree @file{tree.nh}
+@example
+@command{treebest} sdi tree.nh
+@end example
+
+@end itemize
+
+
+
+@node Invoke @command{treebest}
+@section Invoke @command{treebest}
+
+@menu
+* @command{nj} Component::			@command{nj} Component
+* @command{sdi} Component::			@command{sdi} Component
+* @command{spec} Component::		@command{spec} Component
+* @command{format} Component::		@command{format} Component
+* @command{filter} Component::		@command{filter} Component
+* @command{trans} Component::		@command{trans} Component
+* @command{leaf} Component::		@command{leaf} Component
+* @command{mfa2aln} Component::		@command{mfa2ln} Component
+* @command{ortho} Component::		@command{ortho} Component
+* @command{distmat} Component::		@command{distmat} Component
+* @command{merge} Component::		@command{merge} Component
+* @command{root} Component::		@command{root} Component
+@end menu
+
+@command{treebest} is invoked by
+@example
+@command{treebest} <@var{component}> [<@var{options}>]
+@end example
+
+Valid components are:
+@table @samp
+
+@item nj
+Build a tree from multi-alignment and do SDI.
+
+@item sdi
+Do SDI for a given tree.
+
+@item spec
+Output the default species tree.
+
+@item format
+Reformat the input tree.
+
+@item filter
+Filter multialignment by discarding poorly aligned columns.
+
+@item trans
+Translate coding nucleotide alignment to amino acid alignment.
+
+@item leaf
+Get the external nodes of a tree.
+
+@item mfa2aln
+Change multi-sequence FASTA format (MFA) to Clustalw format (ALN).
+
+@item ortho
+Ortholog inference.
+
+@item distmat
+Calculate distance matrix.
+
+@item merge
+Merge two gene trees.
+
+@item root
+Root a tree by minimizing the height of the input tree.
+
+@end table
+
+
+
+@node @command{nj} Component
+@subsection @command{nj} Component
+
+The @command{nj} component is invoked by
+@example
+@command{treebest} nj [<@var{options}>] <@var{alignment}>
+@end example
+
+@menu
+* Basic Options::			Basic Options
+* Advanced Options::		Advanced Options
+@end menu
+
+@node Basic Options
+@subsubsection{Basic Options}
+
+@table @samp
+@item -b <@var{NUM}>
+Bootstrap times.
+
+@item -c <@var{fasta_file}>
+Do constrained Neighbour-Joining, taking <@var{fasta_file}> as the constrained tree.
+
+@item -F <@var{NUM}>
+Threshold for quality trimming. The columns with ClustalX-quality less than <@var{NUM}>
+will be discarded. Default value is 15. No trimming will be applied if <@var{NUM}> equals to zero.
+
+@item -l <@var{list_file}>
+Use blank-separated <@var{list_file}> as the seed list. Each sequence in the list will be
+treated as seed. Cutting point will cover all the seed sequences.
+
+@item -o <@var{node_name}>
+Cut gene tree at <@var{node_name}> node of the species tree. The cutting node is actually
+the last common ancester of all seed sequences and <@var{node_name}>. The default value
+is Bilateria.
+
+@item -t <@var{model}>
+Set <@var{model}> as the model in distance calculation. Valid values are:
+@table @samp
+@item dn
+Non-synonymous distance
+@item ds
+Synonymous distance
+@item dm
+Mixed distance for coding nucleotide alignment. If this type of distance is used,
+synonymous and non-synonymous trees will be merged together by tree merge algorithm.
+@item mm
+Protein mismatch distance
+@item kimura
+Mismatch distance with Kimura correction
+@item jtt
+Jones-Taylor-Thornton (JTT) maximum-likelihood distance
+@end table
+Default value is `mm'. If `dn', `ds' or `dm' is used, the input alignment will be regarded as
+nucleotide alignment.
+
+@item -v
+Verbose output. By default, only tree is output. Verbose output prints more information
+than default output. The output is separated to several sections by `@@begin' and `@@end'
+pairs. The output is self-explaining. To get all the information
+from output, you can also use @command{run_treebest.pl} (see below).
+@end table
+
+@node Advanced Options
+@subsubsection{Advanced Options}
+
+@table @samp
+@item -a
+Use `brance mode' to compute bootstrap values. Different from other tree-builders, @command{treebest}
+uses `node mode' to calculate bootstrap values for binary trees.
+
+In `node mode', a node
+is said to be successfully resampled if and only if all the three sets of leaves, covered
+by the three branches of this node,
+are correctly resampled. In `branch mode', however, a branch is said to be successfully
+resampled if and only if the two sets of leaves, on either side of this branch, are
+correctly resampled. So in branch mode, bootstrap values are assigned to branches,
+while in node mode, to nodes.
+
+Node mode is stricter than branch mode, which means bootstrap values in node mode are
+usually smaller than those in branch mode. Here is an example: (a,((b,c),d)bcd) will be considered
+a correct resample of (a,(b,(c,d))bcd) for `bcd' in brach mode, but not in node mode.
+
+Node mode is more appropriate to measuring the statistical significance of a SDI node.
+This is why @command{treebest} uses node mode by default.
+
+@item -I
+One-line output. By default, the output is indent.
+
+@item -n
+Use standard New Hampshire (NH), instead of NHX, as output format.
+
+@item -s <@var{nh_file}>
+Use the tree stored in <@var{nh_file}>, instead of the default one, as species tree in SDI.
+Each node in <@var{nh_file}> must be named. The strings after `-' will be treated as comments.
+An `*' at the end of a species name means that this species has whole-genome sequences.
+
+@end table
+
+
+@node @command{sdi} Component
+@subsection @command{sdi} Component
+
+Do duplication/loss inference for a given tree.
+@example
+@command{treebest} sdi [-r|-H] <@var{nh_tree}>
+@end example
+Option @option{-r} will lead to a rooted tree with the minimum number of duplication/loss events
+and tree height, while @option{-H} will tell @command{treebest} do rooting by minimizing
+the height of the tree.
+
+@node @command{spec} Component
+@subsection @command{spec} Component
+
+Print the default species tree.
+@example
+@command{treebest} spec
+@end example
+
+@node @command{format} Component
+@subsection @command{format} Component
+
+Reformat a tree. New Hampshire format does not specify where to put a line-break.
+One-line NH format is permitted. However, it is sometimes quite difficult to handle
+a long line for some programs, even for perl scripts because perl usually reads one line
+at a time.
+
+By default, @command{format} component will eliminate unnecessary blanks and add line-breaks after
+`(', `,' and before `)'. One line format will cause errors for some TreeFam perl scripts.
+If @option{-1} is specified, the input will be converted to one-line format, with any
+blank characters eliminated.
+@example
+@command{treebest} format [-1] <@var{nh_tree}>
+@end example
+
+@node @command{filter} Component
+@subsection @command{filter} Component
+
+Filter multialignment. Usage:
+@example
+@command{treebest} filter [-n|-F <@var{NUM}>] <@var{alignment}>
+@end example
+where @option{-n} tells treebest the <@var{alignment}> is a nucleotide alignment, and
+@option{-F} specifies <@var{NUM}> as the threshold for quality trimming.
+
+@node @command{trans} Component
+@subsection @command{trans} Component
+
+Translate coding nucleotide alignment to amino acid alignment. It is similar to @command{transeq}
+in @command{EMBOSS} package, but gaps will be reserved.
+@example
+@command{treebest} trans <@var{alignment}>
+@end example
+
+@node @command{leaf} Component
+@subsection @command{leaf} Component
+
+Print external nodes, or leaf nodes of <@var{nh_tree}>
+@example
+@command{treebest} leaf <@var{nh_tree}>
+@end example
+
+@node @command{ortho} Component
+@subsection @command{ortho} Component
+
+Do ortholog inference.
+@example
+@command{treebest} ortho <@var{nh_tree}>
+@end example
+
+@node @command{distmat} Component
+@subsection @command{distmat} Component
+
+This component calculate the distance matrix for a given alignment.
+@example
+@command{treebest} distmat <dn|ds|dm|mm|kimura|jtt> <@var{alignment}>
+@end example
+
+@node @command{merge} Component
+@subsection @command{merge} Component
+
+@example
+@command{treebest} merge <@var{tree_file}>
+@end example
+This component will merge the two trees stored in <@var{tree_file}>.
+
+@node @command{root} Component
+@subsection @command{root} Component
+
+Root a tree by minimizing the height of the input tree. Branch length must be given in
+<@var{nh_tree}>.
+@example
+@command{treebest} root <@var{nh_tree}>
+@end example
+
+
+
+@node Miscellaneous Topics
+@chapter Miscellaneous Topics
+
+@menu
+* Select the Best Distance::	Select the Best Distance
+* Efficiency Considerations::	Efficiency Considerations
+@end menu
+
+
+@node Select the Best Distance
+@section Select the Best Distance
+
+Here is some advice on distance selection.
+
+@enumerate
+
+@item
+To my own experience, Jukes-Cantor or Kimura correction is less effective than
+the simplest mismatch distance (or p-distance) in case of low similarity.
+Jones-Taylor-Thornton (JTT) distance seems better than Kimura distance, but
+it might still be inferior to p-distance as a whole. Besides, it is too slow
+even though @command{treebest} gives a very efficient implementation.
+
+@item
+Synonymous distance (dS) is a kind of absolute distance because the evolutionary
+speed of synonymous sites is thought to be conservative across various species.
+For close-related sequences (dS < 0.5), Ds might be the best choice. Avoid use Ds
+outside vertebrate group, where Ds will tend to be saturated.
+
+@item
+We recommand dN-dS merged tree when the nucleotide sequences are available.
+
+@end enumerate
+
+@node Efficiency Considerations
+@section Efficiency Considerations
+
+@command{TreeBeST} is an efficient program. Any time-consuming procedures
+have been optimized at length. @command{TreeBeST} is the fastest program that
+calculates the JTT distance. It is hundreds times faster than @command{PHYLIP} and times faster
+than @command{TREE-PUZZLE}. @command{TreeBeST} is one of the fastest programs that
+build neighbour-joing trees. It at least outperforms @command{quicktree} and @command{CLUSTALW}.
+The following are some special considerations. We hope they will be helpful
+if you also want to implement similar algorithms.
+
+@enumerate
+@item
+Given a set of several hundred sequences, most time is spent on calculating distances,
+instead on neighbour-joining. It is somewhat unfair to compare @command{quicktree}
+with @command{PHYLIP} because the former one only implements the simplest model, while
+the the later one uses JTT model by default. @command{TreeBeST} pre-processes the
+input multi-alignment by filtering low-quality regions. This strategy
+reduces the time spent on distance calculation and improves the accuracy at the
+same time.
+
+@item
+@command{PHYLIP} is a gift to every biologist. However, it does not implement an
+efficent distance calculator. Including an exponential in the inner loop,
+@command{dnadist} wastes much time. @command{TREE-PUZZLE} avoids this trap and
+utilizes BRENT algorithm in finding the maximum, but it still fails to accelerate
+further like @command{TreeBeST}. @command{TreeBeST} pre-calculates a matrix
+that saves a times in the inner loop. It also cleverly avoids a logrithm that
+costs same time as the inner loop.
+@end enumerate
+
+@bye

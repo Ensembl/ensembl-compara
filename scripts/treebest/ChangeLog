@@ -1,0 +1,97 @@
+------------------------------------------------------------------------
+r274 | lh3lh3 | 2007-10-19 09:44:45 +0100 (Fri, 19 Oct 2007) | 3 lines
+
+ * 1.9.1-4
+ * rename project name as treebest
+
+------------------------------------------------------------------------
+r273 | lh3lh3 | 2007-10-19 09:17:05 +0100 (Fri, 19 Oct 2007) | 2 lines
+
+rename njtree to treebest
+
+------------------------------------------------------------------------
+r204 | lh3lh3 | 2007-01-29 10:04:07 +0000 (Mon, 29 Jan 2007) | 2 lines
+
+there is a bug in this tree.
+
+------------------------------------------------------------------------
+r197 | lh3lh3 | 2007-01-23 13:04:47 +0000 (Tue, 23 Jan 2007) | 2 lines
+
+add species trees for Ensembl
+
+------------------------------------------------------------------------
+r188 | lh3lh3 | 2007-01-18 10:53:36 +0000 (Thu, 18 Jan 2007) | 2 lines
+
+Makefiles for building universal binaries on Intel-Mac
+
+------------------------------------------------------------------------
+r186 | lh3lh3 | 2007-01-17 12:53:37 +0000 (Wed, 17 Jan 2007) | 8 lines
+
+
+ - add quiet mode to "njtree best"
+ - fix a bug in phyml when protein alignemnt is bootstrapped.
+ - add "fltk-config --post" for flnjtree under Mac OS X
+ - fix a typo in spec.*
+ - add taxon_id species tree
+
+
+------------------------------------------------------------------------
+r163 | lh3lh3 | 2006-12-04 08:53:49 +0000 (Mon, 04 Dec 2006) | 2 lines
+
+fix a bug when "njtree nj -s spec.nh" is in use.
+
+------------------------------------------------------------------------
+r153 | lh3lh3 | 2006-11-30 13:51:05 +0000 (Thu, 30 Nov 2006) | 2 lines
+
+my own branch
+
+------------------------------------------------------------------------
+r58 | lh3lh3 | 2006-10-26 08:48:56 +0100 (Thu, 26 Oct 2006) | 3 lines
+
+Add "trimpoor" which is expected to trim sequences that affect the quality of a
+gene trees. However, this has not been tested thoroughly.
+
+------------------------------------------------------------------------
+r53 | lh3lh3 | 2006-10-25 11:34:40 +0100 (Wed, 25 Oct 2006) | 4 lines
+
+
+ - fix a bug when packaging
+ - release 1.9.1
+
+------------------------------------------------------------------------
+r51 | lh3lh3 | 2006-10-24 15:23:38 +0100 (Tue, 24 Oct 2006) | 7 lines
+
+
+ - add SIS (species intersection score) for duplication nodes
+ - :DD=Y now means: Dubious Duplication. Previously it means
+   "confirmed duplication".
+ - fix a potential bug, although seemingly it has never happened.
+
+
+------------------------------------------------------------------------
+r20 | lh3lh3 | 2006-10-11 09:44:08 +0100 (Wed, 11 Oct 2006) | 2 lines
+
+Remove some obsolete rules
+
+------------------------------------------------------------------------
+r16 | lh3lh3 | 2006-10-10 13:58:05 +0100 (Tue, 10 Oct 2006) | 2 lines
+
+improve packaging method
+
+------------------------------------------------------------------------
+r15 | lh3lh3 | 2006-10-10 13:06:55 +0100 (Tue, 10 Oct 2006) | 2 lines
+
+change NJTREE version number
+
+------------------------------------------------------------------------
+r13 | lh3lh3 | 2006-10-10 11:57:54 +0100 (Tue, 10 Oct 2006) | 3 lines
+
+create dev branch
+
+
+------------------------------------------------------------------------
+r12 | lh3lh3 | 2006-10-10 10:48:55 +0100 (Tue, 10 Oct 2006) | 2 lines
+
+add njtree source codes.
+
+------------------------------------------------------------------------

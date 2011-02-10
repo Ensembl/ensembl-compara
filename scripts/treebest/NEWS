@@ -1,0 +1,259 @@
+Beta Release 1.9.2 (19 October, 2007)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A year later, release 1.9.2 comes out, and from this release, NJTREE
+will be formally renamed as `TreeBeST' which stands for `(gene) Tree
+Building guided by Species Tree'. It is a long story about how this name
+comes and I may not explain this here. Anyway, this project has a more
+appropriate name.
+
+Few improvements were made in the past one year. However,
+TreeBeST/NJTREE was intensively used by both TreeFam and EmsemblCompara,
+is proved to be highly accurate and robust in practice. As for the
+changes in this new release, here is the list:
+
+ * Added `trimpoor' command, which recursively removes sequences that
+   lead to a lot of spurious duplications and losses.
+
+ * Added a Makefile for Mac OS X. Universal binary can be built.
+
+ * Fixed a typo in the species tree.
+
+ * Added quiet mode to `treebest best'.
+
+(1.9.2: 19 October 2007, r277)
+
+
+
+Beta Release 1.9.1 (25 October, 2006)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is a bug fix release. Now njtree can be correctly packaged. We also
+fixed a potential memory violation, although that never happened. A new
+function to calculate an "SIS" (Species Intersection Score) was
+added. This score is the percentage overlap between the two species sets
+that are descendant from the two daughters of a duplication node. Higher
+value indicate more reliablity.
+
+We are sorry for the obvious bugs in the previous release, and hope you
+enjoy the new one.
+
+
+
+Beta Release 1.9.0 (10 October, 2006)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is the last release managed by the CVS located on my own laptop. I
+will migrate the whole NJTREE source codes to treesoft subversion
+repository, hosted by SourceForge.net. The historical version before
+this release of NJTREE cannot be tracked any longer, but ChangeLog is
+still available showing the path of NJTREE.
+
+From this release, NJTREE will be released more frequently. The version
+number will also differ from the previous ones. I will not use "release
+candidate" or "rc" any more. Instead, version is always named by "x.y.z"
+where "x" indicates major version, "y" minor version and "z" means bug
+fix release. A release can be a beta one, which will be clarified in the
+corresponding release note, but is not always visible from the version
+number.
+
+So far as subversion structures are concerned, release and beta release
+will always stay at the top of "trunk". A "dev" will be created in
+"branches" for main-thread development. A tag will be applied to each
+release or beta release.  I prefer not to create a branch for bug fixes
+unless this is absolutely necessary. Bug fixes usually happen at the top
+of "dev" branch and then will be merged to the "trunk".
+
+Now, come to the changes since release 1.0.0. The most notable changes
+in this release is the use of a species tree and/or a constraining tree
+in building ML trees. This is done by multiplying extra likelihood terms
+to the original likelihood calculated from sequences evolution. During
+the development of this function, I also made it possible to root a gene
+tree by SDI in O(N^2) time (or O(N logN) in average). Fast rooting makes
+the new tree builder practically useful. Other minor changes are:
+
+* Infer apparent orthologs, named by Ensembl Compara group. But my
+  definition is slightly different from theirs.
+
+* Accelerate several functions.
+
+* Improve the command-line interfaces for `phyml' and `best' modules.
+
+* Compatible with gcc-3.4 and gcc-4.1.
+
+* Compatible with MINGW and MacOS X.
+
+* Add more species into the species tree. Now in the mammalian group,
+  the topology of the species tree is identical to the NCBI
+  taxonomy. However, for now I do not know whether this is a good idea
+  or not.
+
+
+
+Release 1.0.0 (06 July, 2006)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After nearly two years, I decide to release the first version
+1.0.0. This does not mean I plan to stop the project, but means I
+prepare to inject new methods and ideas which may impair the stability
+of the current codes. NJTREE-1.0.0 has been heavily tested in building
+TreeFam-3, and is proved to be quite stable when TreeFam data are
+provided.
+
+Notable changes are:
+
+* New modules: 'pwalign', 'mmerge', 'sortleaf' and 'estlen'.
+
+* New distance: nt-mm, the mismatch distance for nucleotide alignment.
+
+* Merge multiple trees. Functions for merging two trees are removed. The
+  new algorithm is also able to consider bootstrapping supports. Now
+  'dm' tree is built by merging 'dn', 'ds' and 'ntmm' trees, and 'best'
+  tree by merging the three trees above plus 'phyml-HKY' and 'phyml-WAG'
+  trees.
+
+* PHYML part:
+  1. Accelerate PHYML by about 20%.
+  2. Integrate PHYML to FLNJTREE, the NJTREE GUI.
+  3. Add names of internal nodes to the PHYML tree.
+  4. PHYML bootstrapping is avaible.
+
+* Mask low-scoring segments. See CLUSTALX paper for more description.
+
+* Calculate topological distance (Robinson-Foulds distance) between two
+  trees.
+
+* TreeFam-3 species tree.
+
+* Reserve NHX information of the input tree.
+
+* A lot of bug fixes.
+
+
+
+Beta Release 0.2.0-rc5 (01 December, 2005)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A lot of bug fixes and improvements have been achieved since the last
+release.  Integrating `align_lib' and hash library written by me, and
+the masterpiece `phyml' as well, njtree becomes more powerful and
+flexible. It is now capable of constructing ML tree, building
+protein-guided nucleotide alignment, reordering leaves and many other
+new functions. It also comes with a GUI which will make biologists feel
+more friendly.
+
+Notable changes are:
+
+* Incorporate phyml. ML tree and likelihood mapping are available.
+
+* Implement GUI (Graphical User Interface) by using FLTK, a
+  cross-platform GUI library.
+
+* Build protein-guided nucleotide alignment.
+
+* Reorder leaves according to another tree, or to the species of the leaves.
+  This will make it easy to compare similar trees.
+
+* Information stored in NHX format is now fully parsed and stored in a
+  hash.  Tag `Sd' and `G' will also be added by `njtree' itself instead
+  of by additional scripts.
+
+* Implement unrooted constrained NJ for binary constraints.
+
+* Simulate a gene tree based on a species tree by randomly generating
+  duplications and losses.
+
+* A batch of bug fixes.
+
+Version 1.0 will be released if no other bugs are found.
+
+
+
+Beta Release 0.2.0-rc4 (10 April, 2005)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It is a long time, and finally a new beta release is coming out. It
+seems that I have forgotten to add a tag for 0.2.0-rc3, and so I can
+only compare the current version with tag RELEASE-0-2-0-rc2-bk9 that is
+presumably identical to 0.2.0-rc3.
+
+The most notable change in this release is "tree merging" strategy. By
+tree merging, dS and dN trees can be combined in a more reasonable way.
+Other changes include:
+
+* Implement a new algorithm to do gene loss inference. This one complies
+  with the original meaning of `gene loss'.
+
+* Add Du Wenfeng to AUTHOR.
+
+* Add `distmat' component.
+
+* Add time limit to tune the number of bootstraps.
+
+* Code clean-up, efficiency improvements  and numerous bug fixes.
+
+
+
+Beta Release 0.2.0-rc3 (28 January, 2004)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We here claim a new beta release of NJTREE. Bugs are fixed and many new
+functions added including SDI tree rooting, improved ortholog inference,
+dN-dS mixed distance, and leaf, mfa2aln and ortho components.
+
+Other notable changes are:
+
+* `leaf' component: get names of external nodes `mfa2aln' component:
+  convert fasta format to quality-assigned aln format `ortho' component:
+  ortholog inference
+
+* Add version checking in run_njtree.pl and cgi_njtree.pl.
+
+* Remove gapped columns in multialignment
+
+* Output full FASTA header line
+
+Many new functions are added to BRANCH-0-2-0-rc2-bk9, an unstable
+working branch for the next release.
+
+
+
+Beta Release 0.2.0-rc2 (12 December, 2004)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The major revisions in this release include adding nucleotide alignment
+support and NJTREE user's manual. Now phylogenetic trees can be built
+from nucleotide alignment in coding regions with d_s or d_n distances.
+
+Other notable changes are:
+
+* Fix SDI bugs when multifurcated species nodes are encountered. In
+  previous release, this function is not fully tested.
+
+* Fix floating point exception on alpha-True64.
+
+* Add `trans' and `filter' components.
+
+* nh2pic can still be compiled when GD package is lacked, but only EPS
+  output is support at this time.
+
+
+
+Beta Release 0.2.0-rc1 (29 November, 2004)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is the first formal release of njtree, a tree-builder by
+constrained neighbour-joining algorithm. This package is also capable of
+SDI (Speciation vs. Duplication Inference), tree rooting, figure output
+and many other utilities, facilitating tree-building routains.
+
+Njtree is initiated by TreeFam project inspired by Richard Durbin. The
+basic idea is to build a full tree constrained by the human curated seed
+tree. As we will handle a batch of large trees, this process must be
+controlled and fast enough. Allowing for multifurcated nodes makes the
+things more complex: SDI algorithm only works with binary species
+trees. These demands disqualify all the current softwares. So we wrote
+njtree, a fast and capable tree builder according to these
+requirments. The basic framework of njtree might not be brand-new, but
+njtree must be the program you want in practice.
+

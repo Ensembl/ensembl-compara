@@ -1,0 +1,14 @@
+
+Li Heng, lh3@sanger.ac.uk, was the original author and chief programmer of
+treebest.
+
+Du Wenfeng, duwf@genomics.org.cn, was the author of dn/ds calculator. His
+creative idea accelerated the calculation speed by far.
+
+Guan Liang, guanl@genomics.org.cn, was the author of nh2pic, a wonderful
+NHX->FIGURE convertor. Although I do not use his codes any longer, I still
+appreciate his contribution to TreeBeST.
+
+Liu Tao, liutao@genomics.org.cn, was the author of goTree.pl, a wapper for
+the famous `puzzle' and `phyml' tree-builder.
+

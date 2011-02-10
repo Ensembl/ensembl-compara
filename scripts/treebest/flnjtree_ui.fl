@@ -1,0 +1,550 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0106 
+header_name {.h} 
+code_name {.cc}
+decl {\#include "flglobal.h"} {} 
+
+Function {make_main_window(void *global)} {} {
+  code {FNglobal *g = (FNglobal*)global;} {}
+  Fl_Window {} {
+    label FLtreeBeST
+    xywh {340 105 604 657} type Double labelsize 11 resizable visible
+  } {
+    Fl_Tabs {} {open
+      xywh {0 0 604 632} box PLASTIC_THIN_UP_BOX
+      code0 {o->callback(cb_update_buttons, g);}
+      code1 {g->tabs = o;}
+      code2 {o->when(FL_WHEN_CHANGED);}
+    } {
+      Fl_Group {} {
+        label Artemis open
+        xywh {0 25 604 607} labelsize 11
+      } {
+        Fl_Scroll {} {open
+          xywh {0 28 604 604} box DOWN_FRAME
+        } {
+          Fl_Box {} {
+            xywh {2 30 600 600} box FLAT_BOX color 7
+            code0 {g->workspace[FN_ARTEMIS] = o;}
+            code1 {o->set_global(g);}
+            class Workspace
+          }
+        }
+      }
+      Fl_Group {} {
+        label Dionysis open
+        xywh {0 25 604 607} labelsize 11 hide
+      } {
+        Fl_Scroll {} {open
+          xywh {0 28 604 604} box DOWN_FRAME
+        } {
+          Fl_Box {} {
+            xywh {2 30 600 600} box FLAT_BOX color 7
+            code0 {g->workspace[FN_DIONYSIS] = o;}
+            code1 {o->set_global(g);}
+            class Workspace
+          }
+        }
+      }
+      Fl_Group {} {
+        label Selena open
+        xywh {0 25 604 607} labelsize 11 hide
+      } {
+        Fl_Scroll {} {open
+          xywh {0 28 604 604} box DOWN_FRAME
+        } {
+          Fl_Box {} {
+            xywh {2 30 600 600} box FLAT_BOX color 7
+            code0 {g->workspace[FN_SELENA] = o;}
+            code1 {o->set_global(g);}
+            class Workspace
+          }
+        }
+      }
+    }
+    Fl_Button {} {
+      label {&Open}
+      tooltip {load a tree (^o)} xywh {3 634 35 20} box PLASTIC_UP_BOX shortcut 0x4006f labelsize 11
+      code0 {o->callback(cb_open, g);}
+    }
+    Fl_Button {} {
+      label {&Save}
+      tooltip {save current tree (^s)} xywh {41 634 35 20} box PLASTIC_UP_BOX shortcut 0x40073 labelsize 11 deactivate
+      code0 {o->callback(cb_save, g);}
+      code1 {g->b_save = o;}
+    }
+    Fl_Button {} {
+      label {&Expt}
+      tooltip {export current tree (^e)} xywh {79 634 35 20} box PLASTIC_UP_BOX shortcut 0x40065 labelsize 11 deactivate
+      code0 {o->callback(cb_expt, g);}
+      code1 {g->b_expt = o;}
+    }
+    Fl_Button {} {
+      label {&Build} user_data_type {void*}
+      tooltip {build tree (^b)} xywh {122 634 35 20} box PLASTIC_UP_BOX shortcut 0x40062 labelsize 11
+      code0 {o->callback(cb_build, g);}
+    }
+    Fl_Button {} {
+      label {&Root}
+      tooltip {root current tree (^r)} xywh {160 634 35 20} box PLASTIC_UP_BOX shortcut 0x40072 labelsize 11 deactivate
+      code0 {o->callback(cb_root, g);}
+      code1 {g->b_root = o;}
+    }
+    Fl_Button {} {
+      label {&Quit}
+      callback {exit(0);}
+      tooltip {exit (^q)} xywh {566 634 35 20} box PLASTIC_UP_BOX shortcut 0x40071 labelsize 11
+    }
+    Fl_Button {} {
+      label {&Help}
+      callback {fl_message("FLtreeBeST-0.2.0, FLTK GUI to TreeBeST.\\nWritten by Heng Li <lh3@@sanger.ac.uk>.\\n\\n(Move mouse over buttons to see instructions.)");}
+      tooltip {help (^h)} xywh {528 634 35 20} box PLASTIC_UP_BOX shortcut 0x40068 labelsize 11
+    }
+    Fl_Button {} {
+      label F
+      tooltip {larger font (F)} xywh {579 3 22 20} box PLASTIC_UP_BOX shortcut 0x46 labelfont 1
+      code0 {o->callback(cb_large_font, g);}
+    }
+    Fl_Button {} {
+      label F
+      tooltip {smaller font (f)} xywh {554 3 22 20} box PLASTIC_UP_BOX shortcut 0x66 labelsize 9
+      code0 {o->callback(cb_small_font, g);}
+    }
+    Fl_Button {} {
+      label {Y-}
+      tooltip {zoom out y (y)} xywh {529 3 22 20} box PLASTIC_UP_BOX shortcut 0x79 labelsize 11
+      code0 {o->callback(cb_zoom_out_y, g);}
+    }
+    Fl_Button {} {
+      label {Y+}
+      tooltip {zoom in y (Y)} xywh {504 3 22 20} box PLASTIC_UP_BOX shortcut 0x59 labelsize 11
+      code0 {o->callback(cb_zoom_in_y, g);}
+    }
+    Fl_Button {} {
+      label {X-}
+      tooltip {zoom out x (x)} xywh {479 3 22 20} box PLASTIC_UP_BOX shortcut 0x78 labelsize 11
+      code0 {o->callback(cb_zoom_out_x, g);}
+    }
+    Fl_Button {} {
+      label {X+}
+      tooltip {zoom in x (X)} xywh {454 3 22 20} box PLASTIC_UP_BOX shortcut 0x58 labelsize 11
+      code0 {o->callback(cb_zoom_in_x, g);}
+    }
+    Fl_Light_Button {} {
+      label Spec
+      tooltip {show/hide taxa (s)} xywh {401 3 45 20} box PLASTIC_UP_BOX shortcut 0x73 labelsize 11
+      code0 {o->callback(cb_spec, g);}
+      code1 {o->when(FL_WHEN_CHANGED);}
+      code2 {g->b_spec = o;}
+    }
+    Fl_Light_Button {} {
+      label Real
+      tooltip {real/equal length (r)} xywh {353 3 45 20} box PLASTIC_UP_BOX shortcut 0x72 labelsize 11
+      code0 {o->callback(cb_real, g);}
+      code1 {o->value(1);}
+      code2 {o->when(FL_WHEN_CHANGED);}
+      code3 {g->b_real = o;}
+    }
+    Fl_Button {} {
+      label {Or&der}
+      tooltip {order leaves (^d)} xywh {198 634 35 20} box PLASTIC_UP_BOX shortcut 0x40064 labelsize 11 deactivate
+      code0 {o->callback(cb_order, g);}
+      code1 {g->b_order = o;}
+    }
+    Fl_Button {} {
+      label {&Comp}
+      tooltip {compare trees (^c)} xywh {236 634 35 20} box PLASTIC_UP_BOX shortcut 0x40063 labelsize 11 deactivate
+      code0 {o->callback(cb_compare, g);}
+      code1 {g->b_comp = o;}
+    }
+    Fl_Button {} {
+      label {&Merge}
+      tooltip {merge trees (^m)} xywh {274 634 35 20} box PLASTIC_UP_BOX shortcut 0x4006d labelsize 11 deactivate
+      code0 {o->callback(cb_merge, g);}
+      code1 {g->b_merge = o;}
+    }
+    Fl_Button {} {
+      label {@<}
+      tooltip {previous workspace (,)} xywh {150 3 20 20} box PLASTIC_UP_BOX shortcut 0x2c
+      code0 {o->callback(cb_prev, g);}
+    }
+    Fl_Button {} {
+      label {@>}
+      tooltip {next workspace (.)} xywh {173 3 20 20} box PLASTIC_UP_BOX shortcut 0x2e
+      code0 {o->callback(cb_next, g);}
+    }
+    Fl_Button {} {
+      label {&Trans}
+      tooltip {back translate aa multialignment (^t)} xywh {317 634 35 20} box PLASTIC_UP_BOX shortcut 0x40074 labelsize 11
+      code0 {o->callback(cb_backtrans, g);}
+    }
+    Fl_Button {} {
+      label {&Phyml}
+      tooltip {build PHYML tree (^p)} xywh {355 634 35 20} box PLASTIC_UP_BOX shortcut 0x40070 labelsize 11
+      code0 {o->callback(cb_phyml, g);}
+    }
+  }
+} 
+
+Function {make_build_window(void *global)} {open
+} {
+  code {FNglobal *g = (FNglobal*)global;
+FNbuild *b = g->build;} {}
+  Fl_Window {} {
+    label Build open
+    xywh {321 250 350 265} type Double box PLASTIC_UP_BOX labelsize 11 visible
+  } {
+    Fl_Return_Button {} {
+      label {&Build}
+      xywh {80 225 60 25} box PLASTIC_UP_BOX
+      code0 {o->callback(cb_build_tree, g);}
+    }
+    Fl_Button {} {
+      label {&Close} user_data_type {void*}
+      xywh {210 225 60 25} box PLASTIC_UP_BOX
+      code0 {o->callback(cb_close_build, g);}
+    }
+    Fl_Button {} {
+      label {&Browse}
+      xywh {259 29 60 22} box PLASTIC_UP_BOX
+      code0 {o->callback(cb_browse, g);}
+    }
+    Fl_Input {} {
+      label {Alignment:}
+      xywh {120 30 130 20}
+      code0 {b->i_alignment = o;}
+    }
+    Fl_Choice {} {
+      label {&Input Type:} open
+      xywh {120 55 130 20} box PLASTIC_UP_BOX down_box BORDER_BOX
+      code0 {b->i_type = o;}
+      code1 {o->menu(menu_type);}
+      code2 {o->callback(cb_type, g);}
+    } {}
+    Fl_Choice {} {open
+      xywh {259 55 60 20} box PLASTIC_UP_BOX down_box BORDER_BOX
+      code0 {b->i_format = o;}
+      code1 {o->menu(menu_format);}
+    } {}
+    Fl_Choice {} {
+      label {&Distance Model:} open
+      xywh {120 80 130 20} box PLASTIC_UP_BOX down_box BORDER_BOX
+      code0 {b->i_dist_type = o;}
+      code1 {o->menu(menu_aa_type);}
+    } {}
+    Fl_Input {} {
+      label {Bootstrapping:}
+      xywh {120 105 130 20}
+      code0 {b->i_bs = o;}
+      code1 {o->value("100");}
+      class Fl_Int_Input
+    }
+    Fl_Input {} {
+      label {Quality Cutoff:}
+      xywh {120 130 130 20}
+      code0 {b->i_cutoff = o;}
+      code1 {o->value("10");}
+      class Fl_Int_Input
+    }
+    Fl_Progress {} {
+      label {0%}
+      xywh {40 190 270 20} selection_color 15 labelsize 11
+      code0 {b->prog_bar = o;}
+      code1 {o->minimum(0.0);}
+      code2 {o->maximum(1.0);}
+      code3 {o->value(0.0);}
+    }
+    Fl_Check_Button {} {
+      label apply
+      tooltip {check to apply a constrained tree} xywh {260 155 20 20} down_box DOWN_BOX
+      code0 {b->is_cons = o;}
+      code1 {o->callback(cb_toggle_cons, g);}
+    }
+    Fl_Choice {} {
+      label {Constrained Tree:} open
+      xywh {120 155 130 20} box PLASTIC_UP_BOX down_box BORDER_BOX deactivate
+      code0 {o->menu(menu_workspace);}
+      code1 {b->i_cons_tree = o;}
+    } {}
+    Fl_Check_Button {} {
+      label {mask LSS}
+      tooltip {mask low-scoring segments (LSS)} xywh {260 130 20 20} down_box DOWN_BOX
+      code0 {o->value(1);}
+    }
+  }
+} 
+
+Function {make_merge_window(void *global)} {} {
+  code {FNglobal *g = (FNglobal*)global;
+FNmerge *m = g->merge;} {}
+  Fl_Window {} {
+    label {Tree Merge} open
+    xywh {680 370 245 130} type Double box PLASTIC_THIN_UP_BOX visible
+  } {
+    Fl_Choice {} {
+      label {Tree &1:} open
+      xywh {75 25 130 20} box PLASTIC_UP_BOX down_box BORDER_BOX
+      code0 {m->i_ws1 = o;}
+      code1 {o->menu(menu_workspace);}
+    } {}
+    Fl_Choice {} {
+      label {Tree &2:} open
+      xywh {75 50 130 20} box PLASTIC_UP_BOX down_box BORDER_BOX
+      code0 {m->i_ws2 = o;}
+      code1 {o->menu(menu_workspace);}
+    } {}
+    Fl_Return_Button {} {
+      label {&Merge}
+      xywh {35 90 70 25} box PLASTIC_UP_BOX
+      code0 {o->callback(cb_merge_tree, g);}
+    }
+    Fl_Button {} {
+      label {&Close}
+      xywh {140 90 70 25} box PLASTIC_UP_BOX
+      code0 {o->callback(cb_close_merge, g);}
+    }
+  }
+} 
+
+Function {make_comp_window(void *global)} {} {
+  code {FNglobal *g = (FNglobal*)global;
+FNcompare *c = g->compare;} {}
+  Fl_Window {} {
+    label {Compare Trees} open
+    xywh {680 250 245 110} type Double box PLASTIC_THIN_UP_BOX visible
+  } {
+    Fl_Choice {} {
+      label {Tree:} open
+      xywh {70 25 130 20} box PLASTIC_UP_BOX down_box BORDER_BOX
+      code0 {o->menu(menu_workspace);}
+      code1 {c->i_ws = o;}
+    } {}
+    Fl_Return_Button {} {
+      label {Com&pare}
+      xywh {30 65 85 25} box PLASTIC_UP_BOX
+      code0 {o->callback(cb_compare_tree, g);}
+    }
+    Fl_Button {} {
+      label {&Close}
+      xywh {130 65 85 25} box PLASTIC_UP_BOX
+      code0 {o->callback(cb_close_compare, g);}
+    }
+  }
+} 
+
+Function {make_trans_window(void *global)} {} {
+  code {FNglobal *g = (FNglobal*)global;
+FNbacktrans *b = (FNbacktrans*)g->backtrans;} {}
+  Fl_Window {} {
+    label {Back Translate} open
+    xywh {320 269 350 160} type Double box PLASTIC_UP_BOX visible
+  } {
+    Fl_Input {} {
+      label {AA alignment:}
+      xywh {110 30 145 20}
+      code0 {b->i_aa_aln = o;}
+    }
+    Fl_Input {} {
+      label {NT sequences:}
+      xywh {110 55 145 20}
+      code0 {b->i_nt_seq = o;}
+    }
+    Fl_Input {} {
+      label {NT aln output:}
+      xywh {110 80 145 20}
+      code0 {b->i_nt_aln = o;}
+    }
+    Fl_Button {} {
+      label Browse
+      xywh {265 29 60 22} box PLASTIC_UP_BOX
+      code0 {o->callback(cb_browse_aa_aln, g);}
+    }
+    Fl_Button {} {
+      label Browse
+      xywh {265 54 60 22} box PLASTIC_UP_BOX
+      code0 {o->callback(cb_browse_nt_seq, g);}
+    }
+    Fl_Button {} {
+      label Browse
+      xywh {265 79 60 22} box PLASTIC_UP_BOX
+      code0 {o->callback(cb_browse_nt_aln, g);}
+    }
+    Fl_Return_Button {} {
+      label {&Trans}
+      xywh {80 120 60 25} box PLASTIC_UP_BOX
+      code0 {o->callback(cb_do_backtrans, g);}
+    }
+    Fl_Button {} {
+      label {&Close}
+      xywh {210 120 60 25} box PLASTIC_UP_BOX
+      code0 {o->callback(cb_close_backtrans, g);}
+    }
+  }
+} 
+
+Function {make_phyml_window(void *global)} {open
+} {
+  code {FNglobal *g = (FNglobal*)global;
+FNphyml *p = g->phyml;} {}
+  Fl_Window {} {
+    label Phyml open selected
+    xywh {132 145 350 490} type Double box PLASTIC_UP_BOX visible
+  } {
+    Fl_Input {} {
+      label {Alignment:}
+      xywh {120 30 130 20}
+      code0 {p->i_alignment = o;}
+    }
+    Fl_Button {} {
+      label Browse
+      xywh {259 29 60 22} box PLASTIC_UP_BOX
+      code0 {o->callback(cb_phyml_browse, g);}
+    }
+    Fl_Choice {} {
+      label {&Input Type:} open
+      xywh {120 80 130 20} box PLASTIC_UP_BOX down_box BORDER_BOX
+      code0 {p->i_type = o;}
+      code1 {o->menu(menu_phyml_type);}
+      code2 {o->callback(cb_phyml_type, g);}
+    } {}
+    Fl_Choice {} {open
+      xywh {259 80 60 20} box PLASTIC_UP_BOX down_box BORDER_BOX
+      code0 {p->i_format = o;}
+      code1 {o->menu(menu_format);}
+    } {}
+    Fl_Choice {} {
+      label {&Model:} open
+      xywh {120 105 130 20} box PLASTIC_UP_BOX down_box BORDER_BOX
+      code0 {p->i_model = o;}
+      code1 {o->menu(menu_phyml_nt_model);}
+    } {}
+    Fl_Choice {} {
+      label {Input &Tree:} open
+      tooltip {calculate the branch length of the input tree} xywh {120 55 130 20} box PLASTIC_UP_BOX down_box BORDER_BOX deactivate
+      code0 {p->i_tree = o;}
+      code1 {o->menu(menu_workspace);}
+    } {}
+    Fl_Check_Button {} {
+      label apply
+      tooltip {check to optimize the input tree} xywh {259 55 20 20} down_box DOWN_BOX
+      code0 {p->has_tree = o;}
+      code1 {o->value(0);}
+      code2 {o->callback(cb_phyml_has_tree, g);}
+    }
+    Fl_Input {} {
+      label {ts/tv Ratio:}
+      tooltip {transition/transversion ratio (kappa)} xywh {120 130 70 20} deactivate
+      code0 {p->i_tstv = o;}
+      code1 {o->value("4.0");}
+      class Fl_Float_Input
+    }
+    Fl_Check_Button {} {
+      label estimate
+      tooltip {check to estimate transition/transvertion ratio} xywh {195 130 20 20} down_box DOWN_BOX
+      code0 {p->is_tstv = o;}
+      code1 {o->value(1);}
+      code2 {o->callback(cb_phyml_tstv, g);}
+    }
+    Fl_Input {} {
+      label {Rate Categories:}
+      tooltip {number of discrete rate categories} xywh {120 180 70 20}
+      code0 {p->i_num_cat = o;}
+      code1 {o->value("1");}
+      code2 {o->callback(cb_phyml_n_cat, g);}
+      class Fl_Int_Input
+    }
+    Fl_Input {} {
+      label {Alpha Parameter:}
+      tooltip {shape parameter of Gamma distribution} xywh {120 205 70 20} deactivate
+      code0 {p->i_alpha = o;}
+      code1 {o->value("1.0");}
+      class Fl_Float_Input
+    }
+    Fl_Check_Button {} {
+      label estimate
+      tooltip {check to estimate alpha shape parameter} xywh {195 205 20 20} down_box DOWN_BOX deactivate
+      code0 {p->is_alpha = o;}
+      code1 {o->value(0);}
+      code2 {o->callback(cb_phyml_alpha, g);}
+    }
+    Fl_Progress {} {
+      label {0%}
+      tooltip unavailable xywh {40 405 270 20} selection_color 15 labelsize 11 deactivate
+    }
+    Fl_Return_Button {} {
+      label {&Build}
+      xywh {60 440 60 25} box PLASTIC_UP_BOX
+      code0 {o->callback(cb_phyml_tree, g);}
+    }
+    Fl_Button {} {
+      label {&Close} user_data_type {void*}
+      xywh {230 440 60 25} box PLASTIC_UP_BOX
+      code0 {o->callback(cb_close_phyml, g);}
+    }
+    Fl_Button {} {
+      label {&Stop} user_data_type {void*}
+      tooltip {NOT implemented yet} xywh {145 440 60 25} box PLASTIC_UP_BOX deactivate
+    }
+    Fl_Input {} {
+      label {Invariant Sites:}
+      tooltip {proportion of invariant sites} xywh {120 155 70 20}
+      code0 {p->i_inv = o;}
+      code1 {o->value("0.0");}
+      class Fl_Float_Input
+    }
+    Fl_Check_Button {} {
+      label estimate
+      tooltip {check to estimate proportion of invariant sites} xywh {195 155 20 20} down_box DOWN_BOX
+      code0 {p->is_inv = o;}
+      code1 {o->value(0);}
+      code2 {o->callback(cb_phyml_inv, g);}
+    }
+    Fl_Input {} {
+      label {Quality Cutoff:}
+      tooltip {threshod for masking poorly aligned regions} xywh {120 265 70 20}
+      code0 {p->i_cutoff = o;}
+      code1 {o->value("11");}
+      class Fl_Int_Input
+    }
+    Fl_Check_Button {} {
+      label {mask LSS}
+      tooltip {mask low-scoring segments (LSS)} xywh {195 265 20 20} down_box DOWN_BOX
+      code0 {o->value(1);}
+      code1 {p->is_mask_lss = o;}
+    }
+    Fl_Input {} {
+      label {Duplication Prob:}
+      xywh {120 335 70 20} deactivate
+      class Fl_Float_Input
+    }
+    Fl_Input {} {
+      label {Loss Prob (spec):}
+      xywh {120 360 70 20} deactivate
+      class Fl_Float_Input
+    }
+    Fl_Input {} {
+      label {(dup):}
+      xywh {230 360 70 20} deactivate
+      class Fl_Float_Input
+    }
+    Fl_Check_Button {} {
+      label {use species tree}
+      xywh {195 335 70 20} down_box DOWN_BOX deactivate
+    }
+    Fl_Choice {} {
+      label {&Constraining Tree} open
+      xywh {120 300 130 20} box PLASTIC_UP_BOX down_box BORDER_BOX deactivate
+    } {}
+    Fl_Check_Button {} {
+      label apply
+      tooltip {check to optimize the input tree} xywh {259 300 20 20} down_box DOWN_BOX deactivate
+    }
+    Fl_Input {} {
+      label {Bootstrapping:}
+      xywh {120 230 70 20}
+      code0 {p->i_bs = o;}
+      code1 {o->value("0");}
+      class Fl_Int_Input
+    }
+  }
+} 

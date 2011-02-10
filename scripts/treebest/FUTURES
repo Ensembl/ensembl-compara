@@ -1,0 +1,20 @@
+
+HIGH Piority:
+
+
+MODERATE Piority:
+
+*  constrained NJ for multifurcated unrooted trees
+
+
+LOW Piority:
+
+*  Fetch TreeFam data via http connection. I am conceiving of some kind of
+   http library.
+*  Add more evolutionary model.
+
+
+Useful:
+
+*  Add a graphical multialignment viewer?
+

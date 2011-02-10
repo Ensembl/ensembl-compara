@@ -1,0 +1,15 @@
+
+* Component 'backtrans' has not been thoroghly tested.
+
+* For branch-based bootstrapping, bootstrap values will still stick to
+  the nodes instead of branches. When the tree is re-rooted, this will
+  cause trouble. So I strongly recommend to use node-based
+  bootstrapping, which is the default behaviour.
+
+* Memory violation still occurs in rare cases, especially in
+  `fltreebest'. I will fix them one by one.
+
+* Unrooted constrained NJ now only works with binary constrained trees.
+
+* Some new functionalities should be added to FLtreeBeST.
+
