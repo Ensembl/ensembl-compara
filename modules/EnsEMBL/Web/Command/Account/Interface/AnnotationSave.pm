@@ -9,7 +9,8 @@ use base qw(EnsEMBL::Web::Command);
 sub process {
   my $self      = shift;
   my $hub       = $self->hub;
-  my $interface = $self->interface;
+  my $object    = $self->object;
+  my $interface = $object->interface;
   
   $interface->cgi_populate($hub);
 
