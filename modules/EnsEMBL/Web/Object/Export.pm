@@ -124,15 +124,16 @@ sub config {
         [ 'vista',    'Vista Format' ]
       ]
     },
-    phyloxml => {
-      label => 'Tree',
+    genetree => {
+      label => 'Gene Tree',
       formats => [
-        [ 'phyloxml',    'PhyloXML' ]
+        [ 'phyloxml',    'PhyloXML from Compara' ],
+        [ 'phylopan',    'PhyloXML from Pan-taxonomic Compara' ]
       ],
       params => [
-        [ 'cdna', 'cDNA instead of protein sequence' ],
+        [ 'cdna', 'cDNA rather than protein sequence' ],
         [ 'aligned', 'Aligned sequences with gaps' ],
-        [ 'no_sequences', 'Omit sequences' ]
+        [ 'no_sequences', 'Omit sequences' ],
       ]
     }  
   };

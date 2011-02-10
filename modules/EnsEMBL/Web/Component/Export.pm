@@ -45,7 +45,8 @@ sub export {
       embl      => sub { return $self->flat('embl');    },
       genbank   => sub { return $self->flat('genbank'); },
       alignment => sub { return $self->alignment;       },
-      phyloxml  => sub { return $self->phyloxml;},
+      phyloxml  => sub { return $self->phyloxml('compara');},
+      phylopan  => sub { return $self->phyloxml('compara_pan_ensembl');},
       %$custom_outputs
     };
 
@@ -66,7 +67,7 @@ sub export {
   if ($html_format) {
     $string = "<pre>$string</pre>" if $string;
   } else {    
-    if($o ne "phyloxml"){
+    if($o ne "phyloxml" && $o ne "phylopan"){
       s/<.*?>//g for $string, $html; # Strip html tags;
     }
     $string .= "\r\n" if $string && $html;
@@ -88,18 +89,17 @@ sub output {
 }
 
 sub phyloxml{
-  my $self = shift;
+  my ($self,$cdb) = @_;
   my $params = $self->params;
   my $hub             = $self->hub;
   my $object          = $self->object;
-  my $db = $hub->database('compara');
   my $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(
           -SOURCE => 'Ensembl',
           -ALIGNED => $params->{'aligned'},
           -CDNA => $params->{'cdna'},
           -NO_SEQUENCES => $params->{'no_sequences'}
   ); 
-  my $tree = $object->get_GeneTree('compara');
+  my $tree = $object->get_GeneTree($cdb);
   $w->write_trees($tree);
   my $out= $w->doc->toString(1);
   do{

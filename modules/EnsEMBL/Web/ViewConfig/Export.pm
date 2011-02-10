@@ -24,7 +24,10 @@ sub init {
   $defaults{'bed_'  . $_} = 'yes' for qw(userdata description);
   $defaults{'gtf_'  . $_} = 'yes' for qw(similarity repeat genscan contig variation marker gene vegagene estgene);
 #  $defaults{'psl_'  . $_} = 'yes' for qw();
-  $defaults{'phyloxml_'  . $_} = 'yes' for qw(cdna aligned no_sequences);
+  $defaults{'phyloxml_'  . $_} = 'yes' for qw(cdna aligned);
+  $defaults{'phylopan_'  . $_} = 'yes' for qw(cdna aligned);
+  $defaults{'phyloxml_'  . $_} = 'no' for qw(no_sequences);
+  $defaults{'phylopan_'  . $_} = 'no' for qw(no_sequences);
   $defaults{'fasta_genomic'} = 'unmasked';
   
   foreach my $f (qw(csv tab gff)) {
