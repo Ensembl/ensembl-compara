@@ -1,9 +1,20 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -75,16 +86,6 @@ Additional pecan options eg "-p 15"
 If an alignment is longer than this value, it will be split in several blocks in the database. All resulting blocks will share the same genomic_align_group_id. 
 
 =back
-
-=head1 AUTHOR
-
-Javier Herrero
-
-
-=head1 CONTACT
-
-Post questions to the Ensembl development list: ensembl-dev@ebi.ac.uk
-
 
 =head1 APPENDIX
 
@@ -232,6 +233,7 @@ sub write_output {
   my $dbh = $self->{'comparaDBA'}->dbc->db_handle;
   my $rc = $dbh->begin_work or die $dbh->errstr;
 
+  eval {
   #Set use_autoincrement to 1 otherwise the GenomicAlignBlockAdaptor will use
   #LOCK TABLES which does an implicit commit and prevent any rollback
   $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
@@ -362,6 +364,12 @@ sub write_output {
   $dbh->commit;
   $dbh_core->commit;
   $ancestor_dba->dbc->disconnect_when_inactive($original_core_dwi);
+  }; #end eval
+
+  if($@) {
+      eval {$dbh->rollback};
+      throw "Transaction aborted because $@";
+  }
 
   chdir("$self->worker_temp_directory");
   foreach(glob("*")){

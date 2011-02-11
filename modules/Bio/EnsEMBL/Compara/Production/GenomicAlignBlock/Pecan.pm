@@ -189,6 +189,7 @@ sub write_output {
   my $dbh = $self->{'comparaDBA'}->dbc->db_handle;
   my $rc = $dbh->begin_work or die $dbh->errstr;
 
+  eval {
   foreach my $gab (@{$self->{'_runnable'}->output}) {
       foreach my $ga (@{$gab->genomic_align_array}) {
 	  $ga->adaptor($gaa);
@@ -275,6 +276,12 @@ $gab->_print(\*STDERR);
   #Commit transaction
   #
   $dbh->commit;
+  }; #end eval
+
+  if($@) {
+      eval {$dbh->rollback};
+      throw "Transaction aborted because $@";
+  }
 
   return 1;
 }

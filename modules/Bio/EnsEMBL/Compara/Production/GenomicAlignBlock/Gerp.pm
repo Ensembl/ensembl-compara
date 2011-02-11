@@ -1,13 +1,21 @@
-#
-# Ensembl module for Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Gerp
-#
-# Cared for by Kathryn Beal <kbeal@ebi.ac.uk>
-#
-# Copyright Ewan Birney
-#
-# You may distribute this module under the same terms as perl itself
+=head1 LICENSE
 
-# POD documentation - main docs before the code
+  Copyright (c) 1999-2010 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Gerp 
@@ -25,20 +33,6 @@ Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Gerp
     the program GERP.pl. It then parses the output and writes the constrained
     elements in the GenomicAlignBlock table and the conserved scores in the 
     ConservationScore table
-
-=head1 AUTHOR - Kathryn Beal
-
-This modules is part of the Ensembl project http://www.ensembl.org
-
-Email kbeal@ebi.ac.uk
-
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-ensembl-dev@ebi.ac.uk
-
 
 =head1 APPENDIX
 
@@ -286,19 +280,26 @@ sub write_output {
     my $dbh = $self->{'comparaDBA'}->dbc->db_handle;
     my $rc = $dbh->begin_work or die $dbh->errstr;
 
-    #parse results and store constraints and conserved elements in database
-    if ($self->program_version == 1) {
-	$self->_parse_results;
-    } elsif ($self->program_version == 2.1) {
-	$self->_parse_results_v2;
-    } else {
-	throw("Invalid version number. Valid values are 1 or 2.1\n");
-    }
+    eval {
+	#parse results and store constraints and conserved elements in database
+	if ($self->program_version == 1) {
+	    $self->_parse_results;
+	} elsif ($self->program_version == 2.1) {
+	    $self->_parse_results_v2;
+	} else {
+	    throw("Invalid version number. Valid values are 1 or 2.1\n");
+	}
 
-    #
-    #Commit transaction
-    #
-    $dbh->commit;
+	#
+	#Commit transaction
+	#
+	$dbh->commit;
+    };
+
+    if($@) {
+	eval {$dbh->rollback};
+	throw "Transaction aborted because $@";
+    }
 
     return 1;
 }
