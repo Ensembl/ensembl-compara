@@ -569,7 +569,7 @@ sub features {
 # This will be used for display
       # FIXME: ucfirst tree->genome_db->name is a hack to get species names right.
       # There should be a way of retrieving this name correctly instead.
-      $f->{'_species_label'} = $self->species_defs->get_config(ucfirst $tree->genome_db->name, 'SPECIES_SCIENTIFIC_NAME') || $tree->genome_db->name; 
+      $f->{'_species_label'} = $self->species_defs->get_config(ucfirst $tree->genome_db->name, 'SPECIES_SCIENTIFIC_NAME') || $self->species_defs->species_label($tree->genome_db->name) || $tree->genome_db->name; 
       $f->{'_genome_dbs'} ||= {};
       $f->{'_genome_dbs'}->{$tree->genome_db->dbID}++;
     }
