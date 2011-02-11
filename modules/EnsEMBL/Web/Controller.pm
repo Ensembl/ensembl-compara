@@ -261,7 +261,13 @@ sub set_cache_params {
   $ENV{'CACHE_TAGS'}{'AJAX'}    = 1;
 
   $ENV{'CACHE_KEY'}  = $ENV{'REQUEST_URI'};
-  $ENV{'CACHE_KEY'} .= "::SESSION[$self->{'session_id'}]" if $self->{'session_id'};
+  
+  if ($self->{'session_id'}) {
+    $ENV{'CACHE_KEY'} .= "::SESSION[$self->{'session_id'}]"
+  } else {
+    $ENV{'CACHE_KEY'} .= '::MAC'  if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
+    $ENV{'CACHE_KEY'} .= "::IE$1" if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d)/;
+  }
   
   if ($type eq 'page') {
     $ENV{'CACHE_TAGS'}{$self->{'url_tag'}} = 1;
