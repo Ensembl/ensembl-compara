@@ -45,7 +45,9 @@ sub content {
 
     if (%$go_hash) {
 	$terms_found = 1;
-	$html .= "<p><h3>The following terms are descendants of $clusters{$oid}->{description}</h3>";
+        my $description = $clusters{$oid}->{description};
+        $description =~ tr/_/ /;
+	$html .= "<p><h3>The following terms are descendants of GO: $description</h3>";
       #add goslim_generic
       my $go_database=$self->hub->get_databases('go')->{'go'};    
       foreach (keys %$go_hash){
@@ -126,7 +128,7 @@ sub process_data {
     $row->{'go'}          = $go_link;
     $row->{'description'} = $ghash->{'term'};
     $row->{'evidence'}    = $ghash->{'evidence'};
-    $row->{'desc'}        = join ', ', grep {$_} ($info_text_html, $ghash->{source});
+    $row->{'desc'}        = join ', ', grep {$_} ($info_text_html, 'UniProt:' . $ghash->{source});
     $row->{'goslim_goa_acc'}   = $goslim_goa_acc;
     $row->{'goslim_goa_title'} = $goslim_goa_desc;
     
