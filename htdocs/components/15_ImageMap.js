@@ -166,7 +166,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
             var label = panel.elLk.hoverLabels.filter('.' + area.a.className.replace(/label /, ''));
             
             if (!label.hasClass('active')) {
-              panel.elLk.hoverLabels.removeClass('active');
+              panel.elLk.hoverLabels.filter('.active').removeClass('active');
               label.addClass('active');
               
               clearTimeout(panel.hoverTimeout);
@@ -174,7 +174,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
               panel.hoverTimeout = setTimeout(function () {
                 var offset = panel.elLk.img.offset();
                 
-                panel.elLk.hoverLabels.hide().filter('.active').css({
+                panel.elLk.hoverLabels.filter(':visible').hide().end().filter('.active').css({
                   left:     area.l + offset.left,
                   top:      area.t + offset.top,
                   display: 'block'
@@ -190,7 +190,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         
         if (hover === false) {
           clearTimeout(panel.hoverTimeout);
-          panel.elLk.hoverLabels.removeClass('active');
+          panel.elLk.hoverLabels.filter('.active').removeClass('active');
         }
       },
       mouseleave: function (e) {
