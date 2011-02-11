@@ -93,15 +93,18 @@ sub phyloxml{
   my $params = $self->params;
   my $hub             = $self->hub;
   my $object          = $self->object;
+  my $handle          = IO::String->new();
   my $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(
-          -SOURCE => 'Ensembl',
+          -SOURCE => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
           -ALIGNED => $params->{'aligned'},
           -CDNA => $params->{'cdna'},
-          -NO_SEQUENCES => $params->{'no_sequences'}
+          -NO_SEQUENCES => $params->{'no_sequences'},
+          -HANDLE => $handle
   ); 
   my $tree = $object->get_GeneTree($cdb);
   $w->write_trees($tree);
-  my $out= $w->doc->toString(1);
+  $w->finish();
+  my $out = ${$handle->string_ref()};
   do{
      $out =~ s/</&lt\;/g;
      $out =~ s/>/&gt\;/g;
