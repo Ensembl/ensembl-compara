@@ -141,7 +141,7 @@ sub new {
   my $self = $class->SUPER::new(@args);
   
   my ($cdna, $source, $aligned, $no_sequences) = 
-    rearrange([qw(cdna source aligned no_sequencess)], @args);
+    rearrange([qw(cdna source aligned no_sequences)], @args);
 
   $source ||= 'Unknown';
   $cdna = 1 unless defined $cdna;
