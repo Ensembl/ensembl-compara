@@ -1,6 +1,24 @@
+=head1 LICENSE
+
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
 =head1 NAME
 
-ProteinTree - DESCRIPTION of Object
+Bio::EnsEMBL::Compara::GenomicAlignTree
 
 =head1 SYNOPSIS
 
@@ -10,18 +28,11 @@ Specific subclass of NestedSet to add functionality when the nodes of this tree
 are GenomicAlign objects and the tree is a representation of a Protein derived
 Phylogenetic tree
 
-=head1 CONTACT
-
-  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
-  Contact Abel Ureta-Vidal on EnsEMBL compara project: abel@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
 
 =cut
-
 
 
 package Bio::EnsEMBL::Compara::GenomicAlignTree;
@@ -34,9 +45,9 @@ use Bio::SimpleAlign;
 use IO::File;
 
 use Bio::EnsEMBL::Compara::NestedSet;
-use Bio::EnsEMBL::Compara::GenomicAlignBlock;
-our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet Bio::EnsEMBL::Compara::GenomicAlignBlock);
-# our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
+use Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
+
+our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet Bio::EnsEMBL::Compara::BaseGenomicAlignSet);
 
 
 =head2 left_node_id
@@ -124,32 +135,6 @@ sub right_node {
   return undef;
 }
 
-
-=head2 get_original_strand
-
-  Args       : -none-
-  Example    : if (!$genomic_align_tree->get_original_strand()) {
-                 # original GenomicAlignTree has been reverse-complemented
-               }
-  Description: getter for the _orignal_strand attribute
-  Returntype : none
-  Exceptions : none
-  Caller     : general
-  Status     : At risk
-
-=cut
-
-sub get_original_strand {
-  my ($self) = @_;
-
-  if (!defined($self->{_original_strand})) {
-    $self->{_original_strand} = 1;
-  }
-
-  return $self->{_original_strand};
-}
-
-
 =head2 ancestral_genomic_align_block_id
 
   Arg [1]     : (optional) $ancestral_genomic_align_block_id
@@ -217,12 +202,12 @@ sub genomic_align_group {
 }
 
 
-=head2 get_all_GenomicAligns
+=head2 get_all_genomic_aligns_for_node
 
   Arg [1]     : -none-
-  Example     : $genomic_aligns = $object->get_all_GenomicAligns
+  Example     : $genomic_aligns = $object->get_all_genomic_aligns_for_node
   Description : Getter for all the GenomicAligns contained in the
-                genomic_align_group object. This method is a short
+                genomic_align_group object on a node. This method is a short
                 cut for $object->genomic_align_group->get_all_GenomicAligns()
   Returntype  : listref of Bio::EnsEMBL::Compara::GenomicAlign objects
   Exceptions  : none
@@ -231,12 +216,51 @@ sub genomic_align_group {
 
 =cut
 
-sub get_all_GenomicAligns {
+sub get_all_genomic_aligns_for_node {
   my $self = shift(@_);
   return [] if (!$self->genomic_align_group);
   return $self->genomic_align_group->get_all_GenomicAligns;
 }
 
+=head2 genomic_align_array (DEPRECATED)
+
+  Arg [1]     : -none-
+  Example     : $genomic_aligns = $object->genomic_align_array
+  Description : Alias for get_all_genomic_aligns_for_node. TO BE DEPRECATED
+  Returntype  : listref of Bio::EnsEMBL::Compara::GenomicAlign objects
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub genomic_align_array {
+    my $self = shift(@_);
+
+    deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignTree->get_all_genomic_aligns_for_node() method instead");
+    return($self->get_all_genomic_aligns_for_node);
+
+}
+
+=head2 get_all_GenomicAligns (DEPRECATED)
+
+  Arg [1]     : -none-
+  Example     : $genomic_aligns = $object->get_all_GenomicAligns
+  Description : Alias for get_all_genomic_aligns_for_node. TO BE DEPRECATED
+  Returntype  : listref of Bio::EnsEMBL::Compara::GenomicAlign objects
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub get_all_GenomicAligns {
+    my $self = shift(@_);
+
+    deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignTree->get_all_genomic_aligns_for_node() method instead");
+    return($self->get_all_genomic_aligns_for_node);
+
+}
 
 =head2 reference_genomic_align
 
@@ -259,6 +283,57 @@ sub reference_genomic_align {
   }
 
   return $self->{reference_genomic_align};
+}
+
+=head2 reference_genomic_align_id
+
+  Arg [1]    : integer $reference_genomic_align_id
+  Example    : $genomic_align_block->reference_genomic_align_id(4321);
+  Description: get/set for attribute reference_genomic_align_id. A value of 0 will set the
+               reference_genomic_align_id attribute to undef. When looking for genomic
+               alignments in a given slice or dnafrag, the reference_genomic_align
+               corresponds to the Bio::EnsEMBL::Compara::GenomicAlign included in the
+               starting slice or dnafrag. The reference_genomic_align_id is the dbID
+               corresponding to the reference_genomic_align. All remaining
+               Bio::EnsEMBL::Compara::GenomicAlign objects included in the
+               Bio::EnsEMBL::Compara::GenomicAlignBlock are the
+               non_reference_genomic_aligns.
+               Synchronises reference_genomic_align and reference_genomic_align_id
+               attributes.
+  Returntype : integer
+  Exceptions : throw if $reference_genomic_align_id id not a postive number
+  Caller     : $genomic_align_block->reference_genomic_align_id(int)
+  Status     : Stable
+
+=cut
+
+sub reference_genomic_align_id {
+  my ($self, $reference_genomic_align_id) = @_;
+ 
+  if (defined($reference_genomic_align_id)) {
+    if ($reference_genomic_align_id !~ /^\d+$/) {
+      throw "[$reference_genomic_align_id] should be a positive number.";
+    }
+    $self->{'reference_genomic_align_id'} = ($reference_genomic_align_id or undef);
+
+    ## Synchronises reference_genomic_align and reference_genomic_align_id
+    if (defined($self->{'reference_genomic_align'}) and
+        defined($self->{'reference_genomic_align'}->dbID) and
+        ($self->{'reference_genomic_align'}->dbID != ($self->{'reference_genomic_align_id'} or 0))) {
+        $self->{'reference_genomic_align'} = undef; ## Attribute will be set on request
+    }
+
+  ## Try to get data from other sources...
+  } elsif (!defined($self->{'reference_genomic_align_id'})) {
+
+    ## ...from the reference_genomic_align attribute
+    if (defined($self->{'reference_genomic_align'}) and
+        defined($self->{'reference_genomic_align'}->dbID)) {
+      $self->{'reference_genomic_align_id'} = $self->{'reference_genomic_align'}->dbID;
+    }
+  }
+  
+  return $self->{'reference_genomic_align_id'};
 }
 
 
@@ -516,6 +591,7 @@ sub restrict_between_alignment_positions {
     my $length = $this_node->length;
     foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
       my $restricted_genomic_align = $this_genomic_align->restrict($start, $end, $length);
+
       if ($genomic_align_tree->reference_genomic_align eq $this_genomic_align) {
         ## Update the reference_genomic_align
         $genomic_align_tree->reference_genomic_align($restricted_genomic_align);
@@ -583,6 +659,8 @@ sub restrict_between_alignment_positions {
 
 =cut
 
+=comment 
+
 sub restrict_between_reference_positions {
   my ($self, $start, $end, $reference_genomic_align, $skip_empty_GenomicAligns) = @_;
   my $genomic_align_tree;
@@ -599,6 +677,7 @@ sub restrict_between_reference_positions {
   return wantarray ? @restricted_genomic_align_tree_params : $restricted_genomic_align_tree;
 }
 
+=cut
 
 =head2 copy
 
@@ -615,11 +694,52 @@ sub restrict_between_reference_positions {
 
 sub copy {
   my $self = shift(@_);
+  my $new_copy;
 
-  my $new_copy = $self->SUPER::copy();
+  $new_copy = $self->SUPER::copy();
+
   $new_copy->genomic_align_group($self->genomic_align_group->copy) if ($self->genomic_align_group);
-  $new_copy->reference_genomic_align($self->reference_genomic_align) if ($self->reference_genomic_align);
-  $new_copy->reference_genomic_align_node($self->reference_genomic_align_node) if ($self->reference_genomic_align_node);
+  
+  if ($self->reference_genomic_align_node) {
+      my $ref_ga = $self->reference_genomic_align;
+      #Need to find the reference_genomic_align in the genomic_align_group
+      foreach my $leaf (@{$new_copy->get_all_leaves}) {
+	  foreach my $gag ($leaf->genomic_align_group) {
+	      foreach my $ga (@{$gag->genomic_align_array}) {
+		  if ($ref_ga->dnafrag_id == $ga->dnafrag_id &&
+		      $ref_ga->dnafrag_start == $ga->dnafrag_start &&
+		      $ref_ga->dnafrag_end == $ga->dnafrag_end &&
+		      $ref_ga->dnafrag_strand == $ga->dnafrag_strand) {
+		      $new_copy->reference_genomic_align($ga);
+		      last;
+		  }
+	      }
+	  }
+      }
+  }
+  
+
+  $new_copy->reference_genomic_align_node($self->reference_genomic_align_node->copy) if ($self->reference_genomic_align_node);
+
+  #These are not deep copies
+  #$new_copy->reference_genomic_align($self->reference_genomic_align) if ($self->reference_genomic_align);
+  #$new_copy->reference_genomic_align_node($self->reference_genomic_align_node) if ($self->reference_genomic_align_node);
+
+  #There are lots of bits missing from this copy
+  #Still to add?
+  #parent_link
+  #obj_id_to_link
+
+  $new_copy->{_original_strand} = $self->{_original_strand} if ($self->{_original_strand});
+  $new_copy->{_parent_id} = $self->{_parent_id} if ($self->{_parent_id});
+  $new_copy->{_root_id} = $self->{_root_id} if ($self->{_root_id});
+  $new_copy->{_left_node_id} = $self->{_left_node_id} if ($self->{_left_node_id});
+  $new_copy->{_right_node_id} = $self->{_right_node_id} if ($self->{_right_node_id});
+  $new_copy->{_node_id} = $self->{_node_id} if ($self->{_node_id});
+  $new_copy->{_reference_slice} = $self->{_reference_slice} if ($self->{_reference_slice});
+  $new_copy->{_reference_slice_start} = $self->{_reference_slice_start} if ($self->{_reference_slice_start});
+  $new_copy->{_reference_slice_end} = $self->{_reference_slice_end} if ($self->{_reference_slice_end});
+  $new_copy->{_reference_slice_strand} = $self->{_reference_slice_strand} if ($self->{_reference_slice_strand});
 
   return $new_copy;
 }
@@ -646,7 +766,7 @@ sub print {
   }
   $level++;
   my $mark = "- ";
-  if (grep {$_ eq $reference_genomic_align} @{$self->get_all_GenomicAligns}) {
+  if (grep {$_ eq $reference_genomic_align} @{$self->get_all_genomic_aligns_for_node}) {
     $mark = "* ";
   }
   print STDERR " " x $level, $mark,
@@ -658,7 +778,7 @@ sub print {
       $self->genomic_align_group->dnafrag_strand,":",
       " (", ($self->left_node_id?$self->left_node->node_id."/".$self->left_node->root->node_id:"...."),
       " - ",  ($self->right_node_id?$self->right_node->node_id."/".$self->right_node->root->node_id:"...."),")\n";
-  foreach my $this_genomic_align (@{$self->get_all_GenomicAligns}) {
+  foreach my $this_genomic_align (@{$self->get_all_genomic_aligns_for_node}) {
     if ($this_genomic_align eq $reference_genomic_align) {
       print " " x 8, "* ", $this_genomic_align->aligned_sequence("+FAKE_SEQ"), "\n";
     } else {
@@ -837,8 +957,8 @@ sub length {
       if (defined($self->{'adaptor'}) and defined($self->dbID)) {
 	  # ...from the database, using the dbID of the Bio::Ensembl::Compara::GenomicAlignBlock object
 	  $self->adaptor->retrieve_all_direct_attributes($self);
-      } elsif (@{$self->get_all_GenomicAligns} and $self->get_all_GenomicAligns->[0]->aligned_sequence("+FAKE_SEQ")) {
-	  $self->{'length'} = CORE::length($self->get_all_GenomicAligns->[0]->aligned_sequence("+FAKE_SEQ"));
+      } elsif (@{$self->get_all_genomic_aligns_for_node} and $self->get_all_genomic_aligns_for_node->[0]->aligned_sequence("+FAKE_SEQ")) {
+	  $self->{'length'} = CORE::length($self->get_all_genomic_aligns_for_node->[0]->aligned_sequence("+FAKE_SEQ"));
       } else {
 	  foreach my $this_node (@{$self->get_all_nodes}) {
 	      my $genomic_align_group = $this_node->genomic_align_group;
@@ -851,5 +971,82 @@ sub length {
   return $self->{'length'};
 }
 
+=head2 alignment_strings
+
+  Arg [1]    : none
+  Example    : $genomic_align_tree->alignment_strings
+  Description: Returns the alignment string of all the sequences in the
+               alignment
+  Returntype : array reference containing several strings
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub alignment_strings {
+  my ($self) = @_;
+  my $alignment_strings = [];
+
+  foreach my $this_node (@{$self->get_all_nodes}) {
+    my $genomic_align_group = $this_node->genomic_align_group;
+    next if (!$genomic_align_group);
+    foreach my $genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
+	push(@$alignment_strings, $genomic_align->aligned_sequence);
+    }
+  }
+
+  return $alignment_strings;
+}
+
+=head2 method_link_species_set
+
+  Arg [1]    : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
+  Example    : $method_link_species_set = $genomic_align_tree->method_link_species_set;
+  Description: Getter for attribute method_link_species_set. Takes this from the first Bio::EnsEMBL::Compara::GenomicAlign
+               object
+  Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
+  Exceptions : thrown if $method_link_species_set is not a
+               Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub method_link_species_set {
+  my ($self) = @_;
+
+  my $method_link_species_set = $self->get_all_leaves->[0]->genomic_align_group->genomic_align_array->[0]->method_link_species_set;
+
+  throw("$method_link_species_set is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
+        unless ($method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+
+  return $method_link_species_set;
+}
+
+=head2 method_link_species_set_id
+
+  Arg [1]    : integer $method_link_species_set_id
+  Example    : $method_link_species_set_id = $genomic_align_tree->method_link_species_set_id;
+  Description: Getter for the attribute method_link_species_set_id. Takes this from the first 
+               Bio::EnsEMBL::Compara::GenomicAlign object
+  Returntype : integer
+  Caller     : object::methodname
+  Status     : Stable
+
+=cut
+
+sub method_link_species_set_id {
+  my ($self) = @_;
+
+  my $method_link_species_set_id = $self->get_all_leaves->[0]->genomic_align_group->genomic_align_array->[0]->method_link_species_set->dbID;
+
+  return $method_link_species_set_id;
+}
+
+#sub DESTROY {
+#    my ($self) = @_;
+#    $self->release_tree;
+#}
 
 1;
