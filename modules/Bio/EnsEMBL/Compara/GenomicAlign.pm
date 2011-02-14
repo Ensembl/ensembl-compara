@@ -1,13 +1,20 @@
-#
-# Ensembl module for Bio::EnsEMBL::Compara::GenomicAlign
-#
-# Cared for by Ewan Birney <birney@ebi.ac.uk>
-#
-# Copyright Ewan Birney
-#
-# You may distribute this module under the same terms as perl itself
+=head1 LICENSE
 
-# pod documentation - main docs before the code
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -135,17 +142,6 @@ in conjuction with cigar_line to get the aligned_sequence.
 
 =back
 
-=head1 AUTHOR
-
-Javier Herrero (jherrero@ebi.ac.uk)
-
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-ensembl-dev@ebi.ac.uk
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
@@ -162,7 +158,7 @@ use strict;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate verbose);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Scalar::Util qw(weaken);
-use Bio::EnsEMBL::Compara::GenomicAlignBlock;
+use Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Mapper;
 
@@ -388,8 +384,8 @@ sub genomic_align_block {
   my ($self, $genomic_align_block) = @_;
 
   if (defined($genomic_align_block)) {
-    throw("$genomic_align_block is not a Bio::EnsEMBL::Compara::GenomicAlignBlock object")
-        if (!$genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
+    throw("$genomic_align_block is not a Bio::EnsEMBL::Compara::BaseGenomicAlignSet object")
+        if (!$genomic_align_block->isa("Bio::EnsEMBL::Compara::BaseGenomicAlignSet"));
     weaken($self->{'genomic_align_block'} = $genomic_align_block);
 
     ## Add adaptor to genomic_align_block object if possible and needed
@@ -397,18 +393,20 @@ sub genomic_align_block {
       $genomic_align_block->adaptor($self->adaptor->db->get_GenomicAlignBlockAdaptor);
     }
 
-    if ($self->{'genomic_align_block_id'}) {
-      if (!$self->{'genomic_align_block'}->{'dbID'}) {
-        $self->{'genomic_align_block'}->dbID($self->{'genomic_align_block_id'});
-      }
-#       warning("Defining both genomic_align_block_id and genomic_align_block");
-      throw("dbID of genomic_align_block object does not match previously defined".
-            " genomic_align_block_id. If you want to override a".
-            " Bio::EnsEMBL::Compara::GenomicAlign object, you can reset the ".
-            "genomic_align_block_id using \$genomic_align->genomic_align_block_id(0)")
-          if ($self->{'genomic_align_block'}->{'dbID'} != $self->{'genomic_align_block_id'});
-    } else {
-      $self->{'genomic_align_block_id'} = $genomic_align_block->{'dbID'};
+    if ($genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+	if ($self->{'genomic_align_block_id'}) {
+	    if (!$self->{'genomic_align_block'}->{'dbID'}) {
+		$self->{'genomic_align_block'}->dbID($self->{'genomic_align_block_id'});
+	    }
+	    #       warning("Defining both genomic_align_block_id and genomic_align_block");
+	    throw("dbID of genomic_align_block object does not match previously defined".
+		  " genomic_align_block_id. If you want to override a".
+		  " Bio::EnsEMBL::Compara::GenomicAlign object, you can reset the ".
+		  "genomic_align_block_id using \$genomic_align->genomic_align_block_id(0)")
+	      if ($self->{'genomic_align_block'}->{'dbID'} != $self->{'genomic_align_block_id'});
+	} else {
+	    $self->{'genomic_align_block_id'} = $genomic_align_block->{'dbID'};
+	}
     }
 
   } elsif (!defined($self->{'genomic_align_block'})) {
@@ -455,6 +453,7 @@ sub genomic_align_block_id {
   my ($self, $genomic_align_block_id) = @_;
 
   if (defined($genomic_align_block_id)) {
+
     $self->{'genomic_align_block_id'} = ($genomic_align_block_id or undef);
     if (defined($self->{'genomic_align_block'}) and $self->{'genomic_align_block_id'}) {
 #       warning("Defining both genomic_align_block_id and genomic_align_block");
@@ -462,12 +461,13 @@ sub genomic_align_block_id {
           if ($self->{'genomic_align_block'} and
               $self->{'genomic_align_block'}->dbID != $self->{'genomic_align_block_id'});
     }
-
   } elsif (!($self->{'genomic_align_block_id'})) {
     # Try to get the ID from other sources...
-    if (defined($self->{'genomic_align_block'}) and defined($self->{'genomic_align_block'}->dbID)) {
-      # ...from the corresponding Bio::EnsEMBL::Compara::GenomicAlignBlock object
-      $self->{'genomic_align_block_id'} = $self->{'genomic_align_block'}->dbID;
+    if (defined($self->{'genomic_align_block'})) {
+	if ($self->{genomic_align_block}->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")and defined($self->{'genomic_align_block'}->dbID)) {
+	    # ...from the corresponding Bio::EnsEMBL::Compara::GenomicAlignBlock object
+	    $self->{'genomic_align_block_id'} = $self->{'genomic_align_block'}->dbID;
+	}
     } elsif (defined($self->{'adaptor'}) and defined($self->{'dbID'})) {
       # ...from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
@@ -1455,7 +1455,7 @@ sub reverse_complement {
                to transform coordinates into the "alignment" coordinates and then to
                the other Bio::EnsEMBL::Compara::GenomicAlign coordinates using the
                corresponding Bio::EnsEMBL::Mapper.
-               The coordinates of the "alignment" starts with the reference_slice_start
+               The coordinates of the "alignment" starts with the start
                position of the GenomicAlignBlock if available or 1 otherwise.
                With the $cache argument you can decide whether you want to cache the
                result or not. Result is *not* cached by default.
@@ -1482,7 +1482,7 @@ sub get_Mapper {
       my $rel_strand = $self->dnafrag_strand;
       my $ref_cigar_line = $self->genomic_align_block->reference_genomic_align->cigar_line;
 
-      my $aln_pos = (eval{$self->genomic_align_block->reference_slice_start} or 1);
+      my $aln_pos = (eval{$self->genomic_align_block->start} or 1);
 
       #if the reference genomic_align, I only need a simple 1 to 1 mapping
       if ($self eq $self->genomic_align_block->reference_genomic_align) {
@@ -1492,8 +1492,8 @@ sub get_Mapper {
               $self->dnafrag_end,
               $self->dnafrag_strand,
               'alignment',
-	      $self->genomic_align_block->reference_slice_start,
-	      $self->genomic_align_block->reference_slice_end,
+	      $self->genomic_align_block->start,
+	      $self->genomic_align_block->end,
           );
 	  return $mapper if (!$cache);
 
@@ -1589,7 +1589,7 @@ sub get_Mapper {
       if (!$cigar_line) {
         throw("[$self] has no cigar_line and cannot be retrieved by any means");
       }
-      my $alignment_position = (eval{$self->genomic_align_block->reference_slice_start} or 1);
+      my $alignment_position = (eval{$self->genomic_align_block->start} or 1);
       my $sequence_position = $self->dnafrag_start;
       my $rel_strand = $self->dnafrag_strand;
       if ($rel_strand == 1) {
@@ -1624,7 +1624,7 @@ sub get_MapperOLD {
       my $ref_cigar_line = $self->genomic_align_block->reference_genomic_align->cigar_line;
       my $this_aligned_seq = $self->aligned_sequence("+FAKE_SEQ");
 
-      my $aln_pos = (eval{$self->genomic_align_block->reference_slice_start} or 1);
+      my $aln_pos = (eval{$self->genomic_align_block->start} or 1);
       my $aln_seq_pos = 0;
       my $seq_pos = 0;
 
@@ -1679,7 +1679,7 @@ sub get_MapperOLD {
       if (!$cigar_line) {
         throw("[$self] has no cigar_line and cannot be retrieved by any means");
       }
-      my $alignment_position = (eval{$self->genomic_align_block->reference_slice_start} or 1);
+      my $alignment_position = (eval{$self->genomic_align_block->start} or 1);
       my $sequence_position = $self->dnafrag_start;
       my $rel_strand = $self->dnafrag_strand;
       if ($rel_strand == 1) {
