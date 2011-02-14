@@ -1,13 +1,20 @@
-#
-# Ensembl module for Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor
-#
-# Cared for by Javier Herrero <jherrero@ebi.ac.uk>
-#
-# Copyright EnsEMBL Team
-#
-# You may distribute this module under the same terms as perl itself
-#
-# pod documentation - main docs before the code
+=head1 LICENSE
+
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -55,23 +62,6 @@ This module inherits attributes and methods from Bio::EnsEMBL::DBSQL::BaseAdapto
 =item db (from SUPER class)
 
 =back
-
-=head1 AUTHORS
-
-Javier Herrero (jherrero@ebi.ac.uk)
-
-=head1 COPYRIGHT
-
-Copyright (c) 2004. EnsEMBL Team
-
-You may distribute this module under the same terms as perl itself
-
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-ensembl-dev@ebi.ac.uk
 
 =head1 APPENDIX
 
@@ -220,13 +210,13 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
 
     ## First tree. Build the species order using the first tree only
     foreach my $this_genomic_align_node (@{$genomic_align_trees->[0]->get_all_sorted_genomic_align_nodes}) {
-      next if (!@{$this_genomic_align_node->get_all_GenomicAligns});
-      my $this_genomic_align = $this_genomic_align_node->get_all_GenomicAligns->[0];
+      next if (!@{$this_genomic_align_node->get_all_genomic_aligns_for_node});
+      my $this_genomic_align = $this_genomic_align_node->get_all_genomic_aligns_for_node->[0];
       my $genome_db = $this_genomic_align->genome_db;
       my $this_node_id = $this_genomic_align_node->node_id;
       my $right_node_id = _get_right_node_id($this_genomic_align_node);
       my $genomic_align_ids = [];
-      foreach my $each_genomic_align (@{$this_genomic_align_node->get_all_GenomicAligns}) {
+      foreach my $each_genomic_align (@{$this_genomic_align_node->get_all_genomic_aligns_for_node}) {
         push (@$genomic_align_ids, $each_genomic_align->dbID);
       }
       push(@$species_order,
@@ -236,7 +226,7 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
             genomic_align_ids => $genomic_align_ids,
             # #               last_node => $this_genomic_align_node,
             });
-    }
+  }
     $| = 1;
     ## Combine the first tree with the second, the resulting order with the third and so on
     foreach my $this_genomic_align_tree (@$genomic_align_trees) {
@@ -256,7 +246,6 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
 
     }
   }
-
   my $align_slice = new Bio::EnsEMBL::Compara::AlignSlice(
           -adaptor => $self,
           -reference_Slice => $reference_slice,
