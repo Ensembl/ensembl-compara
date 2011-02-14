@@ -1,13 +1,20 @@
-#
-# Ensembl module for Bio::EnsEMBL::Compara::AlignSlice
-#
-# Cared for by Javier Herrero <jherrero@ebi.ac.uk>
-#
-# Copyright EnsEMBL Team
-#
-# You may distribute this module under the same terms as perl itself
-#
-# pod documentation - main docs before the code
+=head1 LICENSE
+
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -158,23 +165,6 @@ a listref of Bio::EnsEMBL::Compara::GenomicAlignBlock objects found using the re
 
 =back
 
-=head1 AUTHORS
-
-Javier Herrero (jherrero@ebi.ac.uk)
-
-=head1 COPYRIGHT
-
-Copyright (c) 2004. EnsEMBL Team
-
-You may distribute this module under the same terms as perl itself
-
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-ensembl-dev@ebi.ac.uk
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
@@ -196,8 +186,8 @@ use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::SimpleAlign;
 
-
 ## Creates a new coordinate system for creating empty Slices.
+
 my $aligngap_coord_system = new Bio::EnsEMBL::CoordSystem(
         -NAME => 'alignment',
         -VERSION => "none",
@@ -298,7 +288,11 @@ sub new {
     #GenomicAlignBlock and not GenomicAlignTree
     foreach my $tree (@$genomic_align_trees) {
         foreach my $block (@$genomic_align_blocks) {
-            my $gab_id = $tree->get_all_leaves->[0]->genomic_align_group->get_all_GenomicAligns->[0]->genomic_align_block_id;
+
+            #my $gab_id = $tree->get_all_leaves->[0]->get_all_genomic_aligns_for_node->[0]->genomic_align_block_id;
+	    #Hope always have a reference_genomic_align. The above doesn't work because only the reference species
+	    #has the genomic_align_block_id set
+            my $gab_id = $tree->reference_genomic_align->genomic_align_block_id;
 	    my $block_id = $block->dbID;
 
 	    #if the block has been restricted, need to look at original_dbID
@@ -314,12 +308,12 @@ sub new {
 		$tree_ref_ga->dnafrag_start == $block_ref_ga->dnafrag_start && 
 		$tree_ref_ga->dnafrag_end == $block_ref_ga->dnafrag_end && 
 		$tree_ref_ga->dnafrag_strand == $block_ref_ga->dnafrag_strand) {
+
                 $block->{_alignslice_from} = $tree->{_alignslice_from};
                 $block->{_alignslice_to} = $tree->{_alignslice_to};
-            }
+	    }
         }
     }
-
   } else {
     $self->_create_underlying_Slices($genomic_align_blocks, $self->{expanded},
         $self->{solve_overlapping}, $preserve_blocks, $species_order);
@@ -797,9 +791,9 @@ sub get_all_constrained_elements {
 
         my @alignment_coords = $big_mapper->map_coordinates(
             "sequence", # $self->genomic_align->dbID,
-            $this_genomic_align_block->reference_slice_start + $this_genomic_align_block->reference_slice->start - 1,
-            $this_genomic_align_block->reference_slice_end + $this_genomic_align_block->reference_slice->start - 1,
-            $this_genomic_align_block->reference_slice_strand,
+            $this_genomic_align_block->start + $this_genomic_align_block->slice->start - 1,
+            $this_genomic_align_block->end + $this_genomic_align_block->slice->start - 1,
+            $this_genomic_align_block->strand,
             "sequence" # $from_mapper->from
         );
         foreach my $alignment_coord (@alignment_coords) {
@@ -817,10 +811,10 @@ sub get_all_constrained_elements {
             }
           }
         }
-        $this_genomic_align_block->reference_slice($self);
-        $this_genomic_align_block->reference_slice_start($reference_slice_start);
-        $this_genomic_align_block->reference_slice_end($reference_slice_end);
-        $this_genomic_align_block->reference_slice_strand($reference_slice_strand);
+        $this_genomic_align_block->slice($self);
+        $this_genomic_align_block->start($reference_slice_start);
+        $this_genomic_align_block->end($reference_slice_end);
+        $this_genomic_align_block->strand($reference_slice_strand);
       }
     }
     $self->{$key_cache} = $all_constrained_elements;
@@ -934,7 +928,7 @@ sub _create_underlying_Slices {
       }
       $align_slice_length += $this_gap_between_genomic_align_blocks;
     }
-    $reference_genomic_align->genomic_align_block->reference_slice_start($align_slice_length + 1);
+    $reference_genomic_align->genomic_align_block->start($align_slice_length + 1);
     $original_genomic_align_block->{_alignslice_start} = $align_slice_length;
     if ($expanded) {
       $align_slice_length += CORE::length($reference_genomic_align->aligned_sequence("+FAKE_SEQ"));
@@ -943,8 +937,8 @@ sub _create_underlying_Slices {
       $align_slice_length += $reference_genomic_align->dnafrag_end - $reference_genomic_align->dnafrag_start + 1;
       $big_mapper->add_Mapper($reference_genomic_align->get_Mapper(0,1));
     }
-    $reference_genomic_align->genomic_align_block->reference_slice_end($align_slice_length);
-    $reference_genomic_align->genomic_align_block->reference_slice($self);
+    $reference_genomic_align->genomic_align_block->end($align_slice_length);
+    $reference_genomic_align->genomic_align_block->slice($self);
 
     if ($strand == 1) {
       $last_ref_pos = $reference_genomic_align->dnafrag_end + 1;
@@ -1034,7 +1028,7 @@ sub _create_underlying_Slices {
 
         # For composite segments (2X genomes), the node will link to several GenomicAligns.
         # Add each of them to one of the AS:Slice objects
-        foreach my $this_genomic_align (@{$this_genomic_align_node->get_all_GenomicAligns}) {
+        foreach my $this_genomic_align (@{$this_genomic_align_node->get_all_genomic_aligns_for_node}) {
           # Link to genomic_align_block may have been lost during tree minimization
           $this_genomic_align->genomic_align_block_id(0);
           $this_genomic_align->genomic_align_block($this_genomic_align_block);
@@ -1077,8 +1071,8 @@ sub _add_GenomicAlign_to_a_Slice {
     push(@{$self->{_slices}}, $self->{slices}->{lc($species)}->[0]);
   }
 
-  my $this_block_start = $this_genomic_align_block->reference_slice_start;
-  my $this_block_end = $this_genomic_align_block->reference_slice_end;
+  my $this_block_start = $this_genomic_align_block->start;
+  my $this_block_end = $this_genomic_align_block->end;
   my $this_core_slice = $this_genomic_align->get_Slice();
   if (!$this_core_slice) {
     $this_core_slice = new Bio::EnsEMBL::Slice(
