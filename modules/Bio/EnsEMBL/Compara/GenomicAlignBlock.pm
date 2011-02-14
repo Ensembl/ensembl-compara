@@ -1,13 +1,20 @@
-#
-# Ensembl module for Bio::EnsEMBL::Compara::GenomicAlignBlock
-#
-# Cared for by Javier Herrero <jherrero@ebi.ac.uk>
-#
-# Copyright Javier Herrero
-#
-# You may distribute this module under the same terms as perl itself
+=head1 LICENSE
 
-# pod documentation - main docs before the code
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -127,23 +134,6 @@ ending position in the coordinates system defined by the reference_slice
 
 =back
 
-=head1 AUTHOR
-
-Javier Herrero (jherrero@ebi.ac.uk)
-
-=head1 COPYRIGHT
-
-Copyright (c) 2004. EnsEMBL Team
-
-You may distribute this module under the same terms as perl itself
-
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-ensembl-dev@ebi.ac.uk
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
@@ -162,7 +152,9 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info deprecate verbose);
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::SimpleAlign;
+use Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
 
+our @ISA = qw(Bio::EnsEMBL::Compara::BaseGenomicAlignSet);
 
 =head2 new (CONSTRUCTOR)
 
@@ -421,59 +413,6 @@ sub method_link_species_set_id {
   return $self->{'method_link_species_set_id'};
 }
 
-
-=head2 reference_genomic_align_id
-
-  Arg [1]    : integer $reference_genomic_align_id
-  Example    : $genomic_align_block->reference_genomic_align_id(4321);
-  Description: get/set for attribute reference_genomic_align_id. A value of 0 will set the
-               reference_genomic_align_id attribute to undef. When looking for genomic
-               alignments in a given slice or dnafrag, the reference_genomic_align
-               corresponds to the Bio::EnsEMBL::Compara::GenomicAlign included in the
-               starting slice or dnafrag. The reference_genomic_align_id is the dbID
-               corresponding to the reference_genomic_align. All remaining
-               Bio::EnsEMBL::Compara::GenomicAlign objects included in the
-               Bio::EnsEMBL::Compara::GenomicAlignBlock are the
-               non_reference_genomic_aligns.
-               Synchronises reference_genomic_align and reference_genomic_align_id
-               attributes.
-  Returntype : integer
-  Exceptions : throw if $reference_genomic_align_id id not a postive number
-  Caller     : $genomic_align_block->reference_genomic_align_id(int)
-  Status     : Stable
-
-=cut
-
-sub reference_genomic_align_id {
-  my ($self, $reference_genomic_align_id) = @_;
- 
-  if (defined($reference_genomic_align_id)) {
-    if ($reference_genomic_align_id !~ /^\d+$/) {
-      throw "[$reference_genomic_align_id] should be a positive number.";
-    }
-    $self->{'reference_genomic_align_id'} = ($reference_genomic_align_id or undef);
-
-    ## Synchronises reference_genomic_align and reference_genomic_align_id
-    if (defined($self->{'reference_genomic_align'}) and
-        defined($self->{'reference_genomic_align'}->dbID) and
-        ($self->{'reference_genomic_align'}->dbID != ($self->{'reference_genomic_align_id'} or 0))) {
-        $self->{'reference_genomic_align'} = undef; ## Attribute will be set on request
-    }
-
-  ## Try to get data from other sources...
-  } elsif (!defined($self->{'reference_genomic_align_id'})) {
-
-    ## ...from the reference_genomic_align attribute
-    if (defined($self->{'reference_genomic_align'}) and
-        defined($self->{'reference_genomic_align'}->dbID)) {
-      $self->{'reference_genomic_align_id'} = $self->{'reference_genomic_align'}->dbID;
-    }
-  }
-  
-  return $self->{'reference_genomic_align_id'};
-}
-
-
 =head2 starting_genomic_align_id (DEPRECATED)
 
   DEPRECATED! Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_genomic_align_id() method instead
@@ -499,66 +438,6 @@ sub starting_genomic_align_id {
   deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_genomic_align_id() method instead");
   return $self->reference_genomic_align_id(@_);
 }
-
-
-=head2 reference_genomic_align
-
-  Arg [1]    : (optional) Bio::EnsEMBL::Compara::GenomicAlign $reference_genomic_align
-  Example    : $genomic_align_block->reference_genomic_align($reference_genomic_align);
-  Example    : $genomic_align = $genomic_align_block->reference_genomic_align();
-  Description: get/set the reference_genomic_align. When looking for genomic alignments in
-               a given slice or dnafrag, the reference_genomic_align corresponds to the
-               Bio::EnsEMBL::Compara::GenomicAlign included in the starting slice or
-               dnafrag. The reference_genomic_align_id is the dbID corresponding to the
-               reference_genomic_align. All remaining Bio::EnsEMBL::Compara::GenomicAlign
-               objects included in the Bio::EnsEMBL::Compara::GenomicAlignBlock are the
-               non_reference_genomic_aligns.
-               Synchronises reference_genomic_align and reference_genomic_align_id
-               attributes.
-  Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
-  Exceptions : throw if reference_genomic_align is not a Bio::EnsEMBL::Compara::GenomicAlign
-               object
-  Exceptions : throw if reference_genomic_align_id does not match any of the
-               Bio::EnsEMBL::Compara::GenomicAlign objects in the genomic_align_array
-  Caller     : $genomic_align_block->reference_genomic_align()
-  Status     : Stable
-
-=cut
-
-sub reference_genomic_align {
-  my ($self, $reference_genomic_align) = @_;
-
-  if (defined($reference_genomic_align)) {
-    throw("[$reference_genomic_align] must be a Bio::EnsEMBL::Compara::GenomicAlign object")
-        unless($reference_genomic_align and  ref($reference_genomic_align) and
-            $reference_genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
-    $self->{'reference_genomic_align'} = $reference_genomic_align;
-
-    ## Synchronises reference_genomic_align and reference_genomic_align_id attributes
-    if (defined($self->{'reference_genomic_align'}->dbID)) {
-      $self->{'reference_genomic_align_id'} = $self->{'reference_genomic_align'}->dbID;
-    }
-
-  ## Try to get data from other sources...
-  } elsif (!defined($self->{'reference_genomic_align'})) {
-    
-    ## ...from the reference_genomic_align_id attribute
-    if (defined($self->{'reference_genomic_align_id'}) and @{$self->get_all_GenomicAligns}) {
-      my $reference_genomic_align_id = $self->{'reference_genomic_align_id'};
-      foreach my $this_genomic_align (@{$self->get_all_GenomicAligns}) {
-        if ($this_genomic_align->dbID == $reference_genomic_align_id) {
-          $self->{'reference_genomic_align'} = $this_genomic_align;
-          return $this_genomic_align;
-        }
-      }
-      throw("[$self] Cannot found Bio::EnsEMBL::Compara::GenomicAlign::reference_genomic_align_id".
-          " ($reference_genomic_align_id) in the genomic_align_array");
-    }
-  }
-
-  return $self->{'reference_genomic_align'};
-}
-
 
 =head2 starting_genomic_align (DEPRECATED)
 
@@ -621,6 +500,115 @@ sub resulting_genomic_aligns {
   return $self->get_all_non_reference_genomic_aligns(@_);
 }
 
+
+=head2 reference_genomic_align
+
+  Arg [1]    : (optional) Bio::EnsEMBL::Compara::GenomicAlign $reference_genomic_align
+  Example    : $genomic_align_block->reference_genomic_align($reference_genomic_align);
+  Example    : $genomic_align = $genomic_align_block->reference_genomic_align();
+  Description: get/set the reference_genomic_align. When looking for genomic alignments in
+               a given slice or dnafrag, the reference_genomic_align corresponds to the
+               Bio::EnsEMBL::Compara::GenomicAlign included in the starting slice or
+               dnafrag. The reference_genomic_align_id is the dbID corresponding to the
+               reference_genomic_align. All remaining Bio::EnsEMBL::Compara::GenomicAlign
+               objects included in the Bio::EnsEMBL::Compara::GenomicAlignBlock are the
+               non_reference_genomic_aligns.
+               Synchronises reference_genomic_align and reference_genomic_align_id
+               attributes.
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
+  Exceptions : throw if reference_genomic_align is not a Bio::EnsEMBL::Compara::GenomicAlign
+               object
+  Exceptions : throw if reference_genomic_align_id does not match any of the
+               Bio::EnsEMBL::Compara::GenomicAlign objects in the genomic_align_array
+  Caller     : $genomic_align_block->reference_genomic_align()
+  Status     : Stable
+
+=cut
+
+sub reference_genomic_align {
+  my ($self, $reference_genomic_align) = @_;
+
+  if (defined($reference_genomic_align)) {
+    throw("[$reference_genomic_align] must be a Bio::EnsEMBL::Compara::GenomicAlign object")
+        unless($reference_genomic_align and  ref($reference_genomic_align) and
+            $reference_genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
+    $self->{'reference_genomic_align'} = $reference_genomic_align;
+
+    ## Synchronises reference_genomic_align and reference_genomic_align_id attributes
+    if (defined($self->{'reference_genomic_align'}->dbID)) {
+      $self->{'reference_genomic_align_id'} = $self->{'reference_genomic_align'}->dbID;
+    }
+
+  ## Try to get data from other sources...
+  } elsif (!defined($self->{'reference_genomic_align'})) {
+    
+    ## ...from the reference_genomic_align_id attribute
+    if (defined($self->{'reference_genomic_align_id'}) and @{$self->get_all_GenomicAligns}) {
+      my $reference_genomic_align_id = $self->{'reference_genomic_align_id'};
+      foreach my $this_genomic_align (@{$self->get_all_GenomicAligns}) {
+        if ($this_genomic_align->dbID == $reference_genomic_align_id) {
+          $self->{'reference_genomic_align'} = $this_genomic_align;
+          return $this_genomic_align;
+        }
+      }
+      throw("[$self] Cannot found Bio::EnsEMBL::Compara::GenomicAlign::reference_genomic_align_id".
+          " ($reference_genomic_align_id) in the genomic_align_array");
+    }
+  }
+
+  return $self->{'reference_genomic_align'};
+}
+
+=head2 reference_genomic_align_id
+
+  Arg [1]    : integer $reference_genomic_align_id
+  Example    : $genomic_align_block->reference_genomic_align_id(4321);
+  Description: get/set for attribute reference_genomic_align_id. A value of 0 will set the
+               reference_genomic_align_id attribute to undef. When looking for genomic
+               alignments in a given slice or dnafrag, the reference_genomic_align
+               corresponds to the Bio::EnsEMBL::Compara::GenomicAlign included in the
+               starting slice or dnafrag. The reference_genomic_align_id is the dbID
+               corresponding to the reference_genomic_align. All remaining
+               Bio::EnsEMBL::Compara::GenomicAlign objects included in the
+               Bio::EnsEMBL::Compara::GenomicAlignBlock are the
+               non_reference_genomic_aligns.
+               Synchronises reference_genomic_align and reference_genomic_align_id
+               attributes.
+  Returntype : integer
+  Exceptions : throw if $reference_genomic_align_id id not a postive number
+  Caller     : $genomic_align_block->reference_genomic_align_id(int)
+  Status     : Stable
+
+=cut
+
+sub reference_genomic_align_id {
+  my ($self, $reference_genomic_align_id) = @_;
+ 
+  if (defined($reference_genomic_align_id)) {
+    if ($reference_genomic_align_id !~ /^\d+$/) {
+      throw "[$reference_genomic_align_id] should be a positive number.";
+    }
+    $self->{'reference_genomic_align_id'} = ($reference_genomic_align_id or undef);
+
+    ## Synchronises reference_genomic_align and reference_genomic_align_id
+    if (defined($self->{'reference_genomic_align'}) and
+        defined($self->{'reference_genomic_align'}->dbID) and
+        ($self->{'reference_genomic_align'}->dbID != ($self->{'reference_genomic_align_id'} or 0))) {
+        $self->{'reference_genomic_align'} = undef; ## Attribute will be set on request
+    }
+
+  ## Try to get data from other sources...
+  } elsif (!defined($self->{'reference_genomic_align_id'})) {
+
+    ## ...from the reference_genomic_align attribute
+    if (defined($self->{'reference_genomic_align'}) and
+        defined($self->{'reference_genomic_align'}->dbID)) {
+      $self->{'reference_genomic_align_id'} = $self->{'reference_genomic_align'}->dbID;
+    }
+  }
+  
+  return $self->{'reference_genomic_align_id'};
+}
 
 =head2 get_all_non_reference_genomic_aligns
 
@@ -919,165 +907,6 @@ sub requesting_slice {
   deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_slice() method instead");
   return $self->reference_slice(@_);
 }
-
-
-=head2 slice
-
-  Arg [1]    : (optional) Bio::EnsEMBL::Slice $reference_slice
-  Example    : my $slice = $genomic_align_block->slice;
-  Example    : $genomic_align_block->slice($slice);
-  Description: get/set for attribute slice.
-  Returntype : Bio::EnsEMBL::Slice object
-  Exceptions : 
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub slice {
-  my ($self, $reference_slice) = @_;
-
-  if (defined($reference_slice)) {
-#     throw "[$reference_slice] is not a Bio::EnsEMBL::Slice"
-#         unless $reference_slice->isa("Bio::EnsEMBL::Slice");
-    $self->{'reference_slice'} = $reference_slice;
-  }
-
-  return $self->{'reference_slice'};
-}
-
-
-=head2 reference_slice
-
-  Arg [1]    : (optional) Bio::EnsEMBL::Slice $reference_slice
-  Example    : my $reference_slice = $genomic_align_block->reference_slice;
-  Example    : $genomic_align_block->reference_slice($slice);
-  Description: Alias for slice method. TO BE DEPRECATED.
-  Returntype : Bio::EnsEMBL::Slice object
-  Exceptions : 
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub reference_slice {
-  my ($self, $reference_slice) = @_;
-
-  return $self->slice($reference_slice);
-}
-
-=head2 start
-
-  Arg [1]    : (optional) integer $start
-  Example    : my $start = $genomic_align_block->start;
-  Example    : $genomic_align_block->start(1035);
-  Description: get/set for attribute reference_slice_start. A value of 0 will set
-               the attribute to undefined.
-  Returntype : integer
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub start {
-  my $self = shift;
-  return $self->reference_slice_start(@_);
-}
-
-
-=head2 reference_slice_start
-
-  Arg [1]    : integer $reference_slice_start
-  Example    : my $reference_slice_start = $genomic_align_block->reference_slice_start;
-  Example    : $genomic_align_block->reference_slice_start(1035);
-  Description: get/set for attribute reference_slice_start. A value of 0 will set
-               the attribute to undefined.
-  Returntype : integer
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub reference_slice_start {
-  my ($self, $reference_slice_start) = @_;
- 
-  if (defined($reference_slice_start)) {
-    $self->{'reference_slice_start'} = ($reference_slice_start or undef);
-  }
-  
-  return $self->{'reference_slice_start'};
-}
-
-
-=head2 end
-
-  Arg [1]    : (optional) integer $end
-  Example    : my $end = $genomic_align_block->end;
-  Example    : $genomic_align_block->end(1283);
-  Description: get/set for attribute reference_slice_end. A value of 0 will set
-               the attribute to undefined.
-  Returntype : integer
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub end {
-  my $self = shift;
-  return $self->reference_slice_end(@_);
-}
-
-
-=head2 reference_slice_end
-
-  Arg [1]    : integer $reference_slice_end
-  Example    : my $reference_slice_end = $genomic_align_block->reference_slice_end;
-  Example    : $genomic_align_block->reference_slice_end(1283);
-  Description: get/set for attribute reference_slice_end. A value of 0 will set
-               the attribute to undefined.
-  Returntype : integer
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub reference_slice_end {
-  my ($self, $reference_slice_end) = @_;
- 
-  if (defined($reference_slice_end)) {
-    $self->{'reference_slice_end'} = ($reference_slice_end or undef);
-  }
-  
-  return $self->{'reference_slice_end'};
-}
-
-
-=head2 reference_slice_strand
-
-  Arg [1]    : integer $reference_slice_strand
-  Example    : my $reference_slice_strand = $genomic_align_block->reference_slice_strand;
-  Example    : $genomic_align_block->reference_slice_strand(-1);
-  Description: get/set for attribute reference_slice_strand. A value of 0 will set
-               the attribute to undefined.
-  Returntype : integer
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub reference_slice_strand {
-  my ($self, $reference_slice_strand) = @_;
- 
-  if (defined($reference_slice_strand)) {
-    $self->{'reference_slice_strand'} = ($reference_slice_strand or undef);
-  }
-  
-  return $self->{'reference_slice_strand'};
-}
-
 
 =head2 alignment_strings
 
@@ -1502,32 +1331,6 @@ sub reverse_complement {
   }
 }
 
-
-=head2 get_original_strand
-
-  Args       : none
-  Example    : if (!$genomic_align_block->get_original_strand()) {
-                 # original GenomicAlignBlock has been reverse-complemented
-               }
-  Description: getter for the _orignal_strand attribute
-  Returntype : none
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub get_original_strand {
-  my ($self) = @_;
-
-  if (!defined($self->{_original_strand})) {
-    $self->{_original_strand} = 1;
-  }
-
-  return $self->{_original_strand};
-}
-
-
 =head2 restrict_between_alignment_positions
 
   Arg[1]     : [optional] int $start, refers to the start of the alignment
@@ -1625,256 +1428,6 @@ sub restrict_between_alignment_positions {
 
   return $genomic_align_block;
 }
-
-
-=head2 restrict_between_reference_positions
-
-  Arg[1]     : [optional] int $start, refers to the reference_dnafrag
-  Arg[2]     : [optional] int $end, refers to the reference_dnafrag
-  Arg[3]     : [optional] Bio::EnsEMBL::Compara::GenomicAlign $reference_GenomicAlign
-  Arg[4]     : [optional] boolean $skip_empty_GenomicAligns
-  Example    : none
-  Description: restrict this GenomicAlignBlock. It returns a new object unless no
-               restriction is needed. In that case, it returns the original unchanged
-               object
-               It might be the case that the restricted region coincide with a gap
-               in one or several GenomicAligns. By default these GenomicAligns are
-               returned with a dnafrag_end equals to its dnafrag_start + 1. For instance,
-               a GenomicAlign with dnafrag_start = 12345 and dnafrag_end = 12344
-               correspond to a block which goes on this region from before 12345 to
-               after 12344, ie just between 12344 and 12345. You can choose to remove
-               these empty GenomicAligns by setting $skip_empty_GenomicAligns to any
-               true value.
-  Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object in scalar context. In
-               list context, returns the previous object and the start and end
-               positions of the restriction in alignment coordinates (from 1 to
-               alignment_length)
-  Exceptions : return undef if reference positions lie outside of the alignment
-  Caller     : general
-  Status     : At risk
-
-=cut
-
-sub restrict_between_reference_positions {
-  my ($self, $start, $end, $reference_genomic_align, $skip_empty_GenomicAligns) = @_;
-  my $genomic_align_block;
-  my $new_reference_genomic_align;
-  my $new_genomic_aligns = [];
-  
-  $reference_genomic_align ||= $self->reference_genomic_align;
-  throw("A reference Bio::EnsEMBL::Compara::GenomicAlign must be given") if (!$reference_genomic_align);
-  $start = $reference_genomic_align->dnafrag_start if (!defined($start));
-  $end = $reference_genomic_align->dnafrag_end if (!defined($end));
-
-  if ($start > $reference_genomic_align->dnafrag_end or $end < $reference_genomic_align->dnafrag_start) {
-    # restricting outside of boundaries => return undef object
-    warn("restricting outside of boundaries => return undef object: $start-$end (".$reference_genomic_align->dnafrag_start."-".$reference_genomic_align->dnafrag_end.")");
-    return wantarray ? (undef, undef, undef) : undef;
-  }
-  my $number_of_base_pairs_to_trim_from_the_start = $start - $reference_genomic_align->dnafrag_start;
-  my $number_of_base_pairs_to_trim_from_the_end  = $reference_genomic_align->dnafrag_end - $end;
-
-  my $is_ref_low_coverage = 0;
-  if ($reference_genomic_align->cigar_line =~ /X/) {
-      $is_ref_low_coverage = 1;
-  }
-
-  ## Skip if no restriction is needed. Return original object! We are still going on with the
-  ## restriction when either excess_at_the_start or excess_at_the_end are 0 as a (multiple)
-  ## alignment may start or end with gaps in the reference species. In that case, we want to
-  ## trim these gaps from the alignment as they fall just outside of the region of interest
-
-  ##Exception if the reference species is low coverage, then need to continue 
-  ##with this routine to find out the correct align positions
-  if ($number_of_base_pairs_to_trim_from_the_start < 0 and $number_of_base_pairs_to_trim_from_the_end < 0 and !$is_ref_low_coverage) {
-    return wantarray ? ($self, 1, $self->length) : $self;
-  }
-
-  my $negative_strand = ($reference_genomic_align->dnafrag_strand == -1);
-
-  ## Create a new Bio::EnsEMBL::Compara::GenomicAlignBlock object
-  throw("Reference GenomicAlign not found!") if (!$reference_genomic_align);
-
-  my @reference_cigar = grep {$_} split(/(\d*[GDMXI])/, $reference_genomic_align->cigar_line);
-  if ($negative_strand) {
-    @reference_cigar = reverse @reference_cigar;
-  }
-
-  #If this is negative, eg when a slice starts in one block and ends in
-  #another, need to set to 0 to ensure we enter the loop below. This
-  #fixes a bug when using a 2x species as the reference and fetching using
-  #an expanded align slice. 
-  if ($number_of_base_pairs_to_trim_from_the_start < 0) {
-      $number_of_base_pairs_to_trim_from_the_start = 0;
-  }
-
-  ## Parse start of cigar_line for the reference GenomicAlign
-  my $counter_of_trimmed_columns_from_the_start = 0; # num. of bp in the alignment to be trimmed
-
-  if ($number_of_base_pairs_to_trim_from_the_start >= 0) {
-    my $counter_of_trimmed_base_pairs = 0; # num of bp in the reference sequence we trim (from the start)
-    ## Loop through the cigar pieces
-    while (my $cigar = shift(@reference_cigar)) {
-      # Parse each cigar piece
-      my ($num, $type) = ($cigar =~ /^(\d*)([GDMXI])/);
-      $num = 1 if ($num eq "");
-
-      # Insertions are not part of the alignment, don't count them
-      if ($type ne "I") {
-        $counter_of_trimmed_columns_from_the_start += $num;
-      }
-
-      # Matches and insertions are actual base pairs in the reference
-      if ($type eq "M" or $type eq "I") {
-        $counter_of_trimmed_base_pairs += $num;
-        # If this cigar piece is too long and we overshoot the number of base pairs we want to trim,
-        # we substitute this cigar piece by a shorter one
-        if ($counter_of_trimmed_base_pairs > $number_of_base_pairs_to_trim_from_the_start) {
-          my $new_cigar_piece = "";
-          # length of the new cigar piece
-          my $length = $counter_of_trimmed_base_pairs - $number_of_base_pairs_to_trim_from_the_start;
-          if ($length > 1) {
-            $new_cigar_piece = $length.$type;
-          } elsif ($length == 1) {
-            $new_cigar_piece = $type;
-          }
-          unshift(@reference_cigar, $new_cigar_piece) if ($new_cigar_piece);
-
-          # There is no need to correct the counter of trimmed columns if we are in an insertion
-          # when we overshoot
-          if ($type eq "M") {
-            $counter_of_trimmed_columns_from_the_start -= $length;
-          }
-
-          ## We don't want to start with an insertion or a deletion. Trim them!
-          while (@reference_cigar and $reference_cigar[0] =~ /[DI]/) {
-            my ($num, $type) = ($reference_cigar[0] =~ /^(\d*)([DIGMX])/);
-            $num = 1 if ($num eq "");
-            # only counts deletions, insertions are not part of the aligment
-            $counter_of_trimmed_columns_from_the_start += $num if ($type eq "D");
-            shift(@reference_cigar);
-          }
-          last;
-        }
-      }
-    }
-  }
-
-  #If this is negative, eg when a slice starts in one block and ends in
-  #another, need to set to 0 to ensure we enter the loop below. This
-  #fixes a bug when using a 2x species as the reference and fetching using
-  #an expanded align slice. 
-  if ($number_of_base_pairs_to_trim_from_the_end < 0) {
-      $number_of_base_pairs_to_trim_from_the_end = 0;
-  }
-
-  ## Parse end of cigar_line for the reference GenomicAlign
-  my $counter_of_trimmed_columns_from_the_end = 0; # num. of bp in the alignment to be trimmed
-  if ($number_of_base_pairs_to_trim_from_the_end >= 0) {
-    my $counter_of_trimmed_base_pairs = 0; # num of bp in the reference sequence we trim (from the end)
-    ## Loop through the cigar pieces
-    while (my $cigar = pop(@reference_cigar)) {
-      # Parse each cigar piece
-      my ($num, $type) = ($cigar =~ /^(\d*)([DIGMX])/);
-      $num = 1 if ($num eq "");
-
-      # Insertions are not part of the alignment, don't count them
-      if ($type ne "I") {
-        $counter_of_trimmed_columns_from_the_end += $num;
-      }
-
-      # Matches and insertions are actual base pairs in the reference
-      if ($type eq "M" or $type eq "I") {
-        $counter_of_trimmed_base_pairs += $num;
-        # If this cigar piece is too long and we overshoot the number of base pairs we want to trim,
-        # we substitute this cigar piece by a shorter one
-        if ($counter_of_trimmed_base_pairs > $number_of_base_pairs_to_trim_from_the_end) {
-          my $new_cigar_piece = "";
-          # length of the new cigar piece
-          my $length = $counter_of_trimmed_base_pairs - $number_of_base_pairs_to_trim_from_the_end;
-          if ($length > 1) {
-            $new_cigar_piece = $length.$type;
-          } elsif ($length == 1) {
-            $new_cigar_piece = $type;
-          }
-          push(@reference_cigar, $new_cigar_piece) if ($new_cigar_piece);
-
-          # There is no need to correct the counter of trimmed columns if we are in an insertion
-          # when we overshoot
-          if ($type eq "M") {
-            $counter_of_trimmed_columns_from_the_end -= $length;
-          }
-
-          ## We don't want to end with an insertion or a deletion. Trim them!
-          while (@reference_cigar and $reference_cigar[-1] =~ /[DI]/) {
-            my ($num, $type) = ($reference_cigar[-1] =~ /^(\d*)([DIGMX])/);
-            $num = 1 if ($num eq "");
-            # only counts deletions, insertions are not part of the aligment
-            $counter_of_trimmed_columns_from_the_end += $num if ($type eq "D");
-            pop(@reference_cigar);
-          }
-          last;
-        }
-      }
-    }
-  }
-
-  ## Skip if no restriction is needed. Return original object! This may happen when
-  ## either excess_at_the_start or excess_at_the_end are 0 but the alignment does not
-  ## start or end with gaps in the reference species.
-  if ($counter_of_trimmed_columns_from_the_start <= 0 and $counter_of_trimmed_columns_from_the_end <= 0) {
-    return wantarray ? ($self, 1, $self->length) : $self;
-  }
-
-  my ($aln_start, $aln_end);
-  if ($negative_strand) {
-    $aln_start = $counter_of_trimmed_columns_from_the_end + 1;
-    $aln_end = $self->length - $counter_of_trimmed_columns_from_the_start;
-  } else {
-    $aln_start = $counter_of_trimmed_columns_from_the_start + 1;
-    $aln_end = $self->length - $counter_of_trimmed_columns_from_the_end;
-  }
-
-  $genomic_align_block = $self->restrict_between_alignment_positions($aln_start, $aln_end, $skip_empty_GenomicAligns);
-  $new_reference_genomic_align = $genomic_align_block->reference_genomic_align;
-
-  if (!defined $self->{'restricted_aln_start'}) {
-      $self->{'restricted_aln_start'} = 0;
-  }
-  if (!defined $self->{'restricted_aln_end'}) {
-      $self->{'restricted_aln_end'} = 0;
-  }
-  $genomic_align_block->{'restricted_aln_start'} = $counter_of_trimmed_columns_from_the_start + $self->{'restricted_aln_start'};
-  $genomic_align_block->{'restricted_aln_end'} = $counter_of_trimmed_columns_from_the_end + $self->{'restricted_aln_end'};
-  #$genomic_align_block->{'original_length'} = $self->length;
-
-  #Need to use original gab length. If original_length is not set, length has
-  #not changed. Needed when use 2X genome as reference. 
-  if (defined $self->{'original_length'}) {
-      $genomic_align_block->{'original_length'} = $self->{'original_length'};
-  } else {
-      $genomic_align_block->{'original_length'} = $self->length;
-  }
-
-  if (defined $self->reference_slice) {
-    if ($self->reference_slice_strand == 1) {
-      $genomic_align_block->reference_slice_start($new_reference_genomic_align->dnafrag_start -
-          $self->reference_slice->start + 1);
-      $genomic_align_block->reference_slice_end($new_reference_genomic_align->dnafrag_end -
-          $self->reference_slice->start + 1);
-      $genomic_align_block->reference_slice_strand(1);
-    } else {
-      $genomic_align_block->reference_slice_start($self->{reference_slice}->{end} -
-          $new_reference_genomic_align->{dnafrag_end} + 1);
-      $genomic_align_block->reference_slice_end($self->{reference_slice}->{end} -
-          $new_reference_genomic_align->{dnafrag_start} + 1);
-      $genomic_align_block->reference_slice_strand(-1);
-    }
-  }
-
-  return wantarray ? ($genomic_align_block, $aln_start, $aln_end) : $genomic_align_block;
-}
-
 
 =head2 _print
 
