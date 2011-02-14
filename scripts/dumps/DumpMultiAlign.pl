@@ -436,18 +436,30 @@ if ($species and !$skip_species and ($coord_system or $seq_region)) {
       if (!$slice_adaptor);
   if ($coord_system and !$seq_region) {
     @query_slices = grep {$_->coord_system_name eq $coord_system} @{$slice_adaptor->fetch_all('toplevel')};
+    if (@query_slices == 0) {    
+	print "No slices found with coord_system $coord_system\n";
+	exit(0);
+    } 
   } elsif ($coord_system) { # $seq_region is defined
     my $query_slice = $slice_adaptor->fetch_by_region(
         $coord_system, $seq_region, $seq_region_start, $seq_region_end, $seq_region_strand);
     throw("No Slice can be created with coordinates $seq_region:$seq_region_start-$seq_region_end:$seq_region_strand")
         if (!$query_slice);
     @query_slices = ($query_slice);
+    if (@query_slices == 0) {    
+	print "No slices found with coordinates $seq_region:$seq_region_start-$seq_region_end:$seq_region_strand\n";
+	exit(0);
+    } 
   } elsif ($seq_region) {
     my $query_slice = $slice_adaptor->fetch_by_region(
         'toplevel', $seq_region, $seq_region_start, $seq_region_end, $seq_region_strand);
     throw("No Slice can be created with coordinates $seq_region:$seq_region_start-$seq_region_end:$seq_region_strand")
         if (!$query_slice);
     @query_slices = ($query_slice);
+    if (@query_slices == 0) {    
+	print "No slices found with coordinates $seq_region:$seq_region_start-$seq_region_end:$seq_region_strand\n";
+	exit(0);
+    } 
   }
 }
 
@@ -460,6 +472,10 @@ if ($method_link_species_set->method_link_class =~ /GenomicAlignTree/) {
   $genomic_align_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
       $dbname, 'compara', 'GenomicAlignBlock');
 }
+
+#Need if get genomic_align_blocks from file_of_genomic_align_block_ids
+my  $genomic_align_block_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
+      $dbname, 'compara', 'GenomicAlignBlock');
 
 my $release = Bio::EnsEMBL::Registry->get_adaptor(
     $dbname, 'compara', 'MetaContainer')->list_value_by_key("schema_version")->[0];
@@ -503,7 +519,7 @@ if ($skip_species && !$file_of_genomic_align_block_ids) {
     my $has_skip = 0;
     foreach my $this_genomic_align (@{$skip_genomic_align_blocks->[$i]->get_all_GenomicAligns()}) {
       if (($this_genomic_align->genome_db->name eq $skip_species) or
-          ($this_genomic_align->genome_db->name eq "Ancestral sequences")) {
+          ($this_genomic_align->genome_db->name eq "ancestral_sequences")) {
         $has_skip = 1;
         last;
       }
@@ -523,7 +539,12 @@ do {
     open(FILE, $file_of_genomic_align_block_ids) or die ("Cannot open $file_of_genomic_align_block_ids");
     while (<FILE>) {
 	chomp;
-	my $gab = $genomic_align_block_adaptor->fetch_by_dbID($_);
+	my $gab;
+	if ($method_link_species_set->method_link_class =~ /GenomicAlignTree/) {
+	    $gab = $genomic_align_set_adaptor->fetch_by_genomic_align_block_id($_);
+	} else {
+	    $gab = $genomic_align_set_adaptor->fetch_by_dbID($_);
+	}
 	push @$genomic_align_blocks, $gab;
     }
     close(FILE);
@@ -753,7 +774,6 @@ sub print_my_emf {
   my ($genomic_align_block) = @_;
   return if (!$genomic_align_block);
 
-
 # print STDERR "1. ", qx"ps v $$ | cut -c 1-80";
   print "\n";
   my $aligned_seqs;
@@ -829,8 +849,9 @@ sub print_my_emf {
 
       my $genomic_aligns = $genomic_align_group->get_all_GenomicAligns();
       my $this_genomic_align = $genomic_aligns->[0];
-      $this_genomic_align->dnafrag->genome_db->name =~ /(.)[^ ]+ (.{3})/;
+      $this_genomic_align->dnafrag->genome_db->name =~ /(.)[^ ]+_(.{3})/;
       my $name = "${1}${2}_";
+      $name = ucfirst($name);
       if (@$genomic_aligns > 1) {
         $name .= "Composite_".$this_genomic_align_tree->genomic_align_group->dbID;
         my $length = 0;
@@ -844,7 +865,7 @@ sub print_my_emf {
           $name .= "[+]";
         }
       } else {
-        $this_genomic_align->dnafrag->genome_db->name =~ /(.)[^ ]+ (.{3})/;
+        $this_genomic_align->dnafrag->genome_db->name =~ /(.)[^ ]+_(.{3})/;
         $name .= $this_genomic_align->dnafrag->name."_".
             $this_genomic_align->dnafrag_start."_".$this_genomic_align->dnafrag_end."[".
             (($this_genomic_align->dnafrag_strand eq "-1")?"-":"+")."]";
@@ -899,7 +920,7 @@ sub print_my_maf {
   my ($genomic_align_block) = @_;
 
   print "a";
-  if (defined $genomic_align_block->score) {
+  if (UNIVERSAL::isa($genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignBlock") && defined $genomic_align_block->score) {
     print " score=", $genomic_align_block->score;
   }
   print "\n";
