@@ -8,6 +8,7 @@ $reg->no_version_check(1);
 
 use Getopt::Long;
 
+my $reg_conf;
 my $url = 'mysql://anonymous@ensembldb.ensembl.org/';
 my $compara_url;
 my $species = "Homo sapiens";
@@ -54,6 +55,7 @@ Options:
 ";
 
 GetOptions(
+  'reg_conf=s' => \$reg_conf,
   'url=s' => \$url,
   'compara_url=s' => \$compara_url,
   'species=s' => \$species,
@@ -76,7 +78,11 @@ if ($help || !$feature) {
   exit(0);
 }
 
-$reg->load_registry_from_url($url);
+if ($reg_conf) {
+  $reg->load_all($reg_conf);
+} else {
+  $reg->load_registry_from_url($url);
+}
 
 my $compara_dba;
 if ($compara_url) {
@@ -86,7 +92,7 @@ if ($compara_url) {
   $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
 }
 
-my $species_name = $reg->get_adaptor($species, "core", "MetaContainer")->get_Species->binomial;
+my $species_name = $reg->get_adaptor($species, "core", "MetaContainer")->get_production_name;
 
 my $slice_adaptor = $reg->get_adaptor($species_name, "core", "Slice");
 
