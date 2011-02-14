@@ -1,11 +1,20 @@
-#
-# Ensembl module for Bio::EnsEMBL::Compara::GenomicAlignGroup
-#
-# Copyright Javier Herrero
-#
-# You may distribute this module under the same terms as perl itself
+=head1 LICENSE
 
-# pod documentation - main docs before the code
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -52,12 +61,6 @@ listref of Bio::EnsEMBL::Compara::DBSQL::GenomicAlign objects corresponding to t
 Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroup object
 
 =back
-
-=head1 AUTHOR
-
-Javier Herrero (jherrero@ebi.ac.uk)
-
-This modules is part of the Ensembl project http://www.ensembl.org
 
 =head1 APPENDIX
 
@@ -155,7 +158,16 @@ sub copy {
   my $self = shift;
   my $copy;
   $copy->{original_dbID} = $self->{dbID};
-  $copy->{genomic_align_array} = $self->{genomic_align_array};
+
+  #This is not a deep copy
+  #$copy->{genomic_align_array} = $self->{genomic_align_array};
+
+  my $new_genomic_align_array;
+  foreach my $genomic_align (@{$self->{genomic_align_array}}) {
+      my $new_ga = $genomic_align->copy;
+      push @$new_genomic_align_array, $new_ga;
+  }
+  $copy->{genomic_align_array} = $new_genomic_align_array;
 
   return bless $copy, ref($self);
 }
