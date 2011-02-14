@@ -127,11 +127,10 @@ sub storable_data {
   
   foreach my $type (qw(view_config image_config)) {
     while (my ($code, $config) = each %{$self->{$type . 's'}}) {
-      
       ## Only store if config is storable and has changed
       if ($config->storable && $config->altered) {
         push @$data, {
-          code => $type eq 'view_config' ? $code : $code,
+          code => $code,
           type => $type,
           data => $config->get_user_settings
         };
