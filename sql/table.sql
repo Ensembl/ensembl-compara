@@ -1034,26 +1034,6 @@ CREATE TABLE sitewise_aln (
   KEY (node_id)
 ) COLLATE=latin1_swedish_ci;
 
-
-#
-# Table structure for table 'lr_index_offset'
-#
-# overview:
-#   Used to store the current maximum left right index for a given table. Table
-#   name is unique and lr_index should be equal to the SQL statement
-#   select max(right_index) from table_name
-# semantics:
-#   table_name      -- name of the table this lr_index corresponds to
-#   lr_index        -- max right index for the given table
-
-CREATE TABLE lr_index_offset (
-	table_name  varchar(64) NOT NULL,
-	lr_index    int(10) unsigned NOT NULL,
-
-	PRIMARY KEY (table_name)
-) COLLATE=latin1_swedish_ci;
-
-
 #
 # Table structure for table 'protein_tree_hmmprofile'
 #
@@ -1075,7 +1055,7 @@ CREATE TABLE protein_tree_hmmprofile (
 
 
 # Auto add schema version to database (this will override whatever hive puts there)
-REPLACE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "61");
+REPLACE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "62");
 
 #Add schema type
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_type", "compara");
