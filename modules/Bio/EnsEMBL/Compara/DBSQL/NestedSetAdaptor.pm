@@ -338,55 +338,40 @@ sub sync_tree_leftright_index {
 	return;
 }
 
-# Rather than the old algorithm this uses the lr_index_offset table to
-# lock on & to record the current max lr index for a given table.
+#
+# Remove need for locks by adding an auto_increment column to the table, 
+# allowing transactions to be used in the EPO pipeline.
+# The table now has an auto-increment column (id), the number of indexes
+# required (num_index) and the starting index (start). The (sum of num_index)+1
+# gives the new start position.
 # Offset is pre-calculated by taking the number of nodes in the tree
 # and multiplying by 2. This is then stored & passed back to
 # sync_tree_leftright_index()
-
+#
 sub _get_starting_lr_index {
-	my ($self, $tree_root) = @_;
+    my ($self, $tree_root) = @_;
+    
+    my $table = $self->_lr_table_name();
+    
+    my $node_count = scalar(@{$tree_root->get_all_nodes()});
+    my $lr_ids_needed = $node_count*2;
+    
+    my $sql = "INSERT INTO lr_index_offset SELECT NULL, ?, ?, SUM(num_index)+1 FROM lr_index_offset WHERE table_name = ?";
+    my $sth = $self->prepare($sql);
+    $sth->execute($table, $lr_ids_needed, $table);
+    my $this_id = $sth->{'mysql_insertid'};
+    $sth->finish();
 
-	my $starting_lr_index;
-	my $table = $self->_lr_table_name();
+    $sql = "SELECT start FROM lr_index_offset WHERE id = ?";
+    $sth = $self->prepare($sql);
+    $sth->execute($this_id);
+    my ($starting_lr_index) = $sth->fetchrow_array();
+    $sth->finish();
 
-	my $node_count = scalar(@{$tree_root->get_all_nodes()});
-	my $lr_ids_needed = $node_count*2;
-
-	my $original_dwi = $self->dbc()->disconnect_when_inactive();
-	$self->dbc()->disconnect_when_inactive(0);
-
-	eval {
-		$self->dbc->do("LOCK TABLES lr_index_offset WRITE");
-
-		my $sth = $self->prepare('select max(lr_index) from lr_index_offset where table_name =?');
-		$sth->execute($table);
-		my ($max_lr_index) = $sth->fetchrow_array();
-		$sth->finish();
-
-		my $sql;
-		my $new_max_lr_index;
-		if(defined $max_lr_index) {
-			$sql = 'update lr_index_offset set lr_index =? where table_name =?';
-			$starting_lr_index = $max_lr_index+1;
-			$new_max_lr_index = $max_lr_index+$lr_ids_needed;
-		}
-		else {
-			$sql = 'insert into lr_index_offset (lr_index, table_name) values (?,?)';
-			$starting_lr_index = 1;
-			$new_max_lr_index = $lr_ids_needed;
-		}
-
-		$sth = $self->prepare($sql);
-		$sth->execute($new_max_lr_index, $table);
-		$sth->finish();
-
-		$self->dbc->do("UNLOCK TABLES");
-	};
-	$self->dbc()->disconnect_when_inactive($original_dwi);
-	throw("Problem occured whilst getting next lr index for $table: $@") if $@;
-
-	return $starting_lr_index;
+    if (!$starting_lr_index) {
+	$starting_lr_index = 1;
+    }
+    return $starting_lr_index;
 }
 
 sub _lr_table_name {
