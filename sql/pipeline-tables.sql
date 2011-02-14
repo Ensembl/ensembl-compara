@@ -291,3 +291,22 @@ CREATE TABLE cmsearch_hit (
   PRIMARY KEY (hit_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+#
+# Table structure for table 'lr_index_offset'
+#
+# overview:
+#   Used to store the current maximum left right index for a given table. Table
+#   name is unique and lr_index should be equal to the SQL statement
+#   select max(right_index) from table_name
+# semantics:
+#   table_name      -- name of the table this lr_index corresponds to
+#   lr_index        -- max right index for the given table
+DROP TABLE IF EXISTS lr_index_offset;
+CREATE TABLE lr_index_offset (
+        id int(10) unsigned NOT NULL AUTO_INCREMENT,
+	table_name  varchar(64) NOT NULL,
+	num_index int(10) unsigned DEFAULT 0,
+	start    int(10) unsigned NOT NULL DEFAULT 0,
+
+	PRIMARY KEY (id)
+) COLLATE=latin1_swedish_ci;
