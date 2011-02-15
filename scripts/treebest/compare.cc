@@ -162,7 +162,7 @@ int tr_compare_core(Tree *src, Tree *dst, unsigned write_flag)
 		if (j < n) { /* clade found */
 			Tree *q = node[j];
 			p->is_cons = 1;
-			if (write_flag & COMPARE_WRITE_TREE_INDEX)
+			if ((write_flag & COMPARE_WRITE_TREE_INDEX) && q->tree_index >= 0 && p->n_leaf == q->n_leaf)
 				p->tree_index = q->tree_index;
 			if ((write_flag & COMPARE_WRITE_BRANCH_LENGTH) && q->d >= 0.0 && p->n_leaf == q->n_leaf)
 				p->d = q->d;

@@ -496,7 +496,7 @@ int tr_mmerge_task(int argc, char *argv[])
 	tree = tr_mmerge(n, forest);
 	tr_SDI(tree, spec_tree, 0);
 	tr_lost_infer(tree, spec_tree);
-	tr_tree_output(stdout, tree, OUTPUT_SDI);
+	tr_tree_output(stdout, tree, OUTPUT_SDI | OUTPUT_TREE_INDEX);
 	for (i = 0; i < n; ++i) {
 		tr_delete_tree_SDIptr(forest[i]);
 		tr_delete_tree(forest[i]);

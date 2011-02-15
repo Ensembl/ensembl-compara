@@ -43,6 +43,7 @@ BestConfig *best_init_option()
 	bo->prob_loss_spec = 0.10;
 	bo->prob_loss_dup = 0.20;
 	bo->prob_not_exist = 0.01;
+	bo->is_skip_mmerge = NULL;
 	return bo;
 }
 void best_free_option(BestConfig *bo)
@@ -128,7 +129,7 @@ Tree *best_core(BestConfig *bo)
 	if (n_spec <= 2)
 		fprintf(stderr, "[best_core] this algorithm is less useful if only %d species are matched.", n_spec);
 	
-	if (bo->is_phyml) { /* build phyml_aa tree */
+	if (bo->is_phyml && !bo->is_skip_mmerge) { /* build phyml_aa tree */
 		char *s;
 		float lk1, lk2;
 		MultiAlign *pma;
@@ -155,18 +156,20 @@ Tree *best_core(BestConfig *bo)
 		c_begin = clock();
 		pc = init_PhymlConfig(bo); /* this will be deleted later, not in this block */
 		pc->is_nucl = 1; free(pc->model); pc->model = cpystr("HKY");
-		t_phyml_nt = phyml_core(bo->ma, pc, 0, 1, 1);
-		cpp_get_keyval(t_phyml_nt, "Loglk", &s); lk1 = (float)atof(s); free(s);
-		cpp_get_keyval(t_phyml_nt, "LoglkSpec", &s); lk2 = (float)atof(s); free(s);
-		t_phyml_nt = tr_root_tree(t_phyml_nt, (n_spec > 2)? bo->stree : 0);
-		tr_normalize_bs_value(t_phyml_nt, -80);
-		if (bo->is_debug) {
-			fprintf(stderr, "(best_core) Time elapses in PHYML-HKY: %.2fs\n", (float)(clock() - c_begin) / CLOCKS_PER_SEC);
-			fprintf(stderr, "(best_core) PHYML-HKY (Loglk,LoglkSpec) = (%f,%f)\n", lk1, lk2);
+		if (!bo->is_skip_mmerge) {
+			t_phyml_nt = phyml_core(bo->ma, pc, 0, 1, 1);
+			cpp_get_keyval(t_phyml_nt, "Loglk", &s); lk1 = (float)atof(s); free(s);
+			cpp_get_keyval(t_phyml_nt, "LoglkSpec", &s); lk2 = (float)atof(s); free(s);
+			t_phyml_nt = tr_root_tree(t_phyml_nt, (n_spec > 2)? bo->stree : 0);
+			tr_normalize_bs_value(t_phyml_nt, -80);
+			if (bo->is_debug) {
+				fprintf(stderr, "(best_core) Time elapses in PHYML-HKY: %.2fs\n", (float)(clock() - c_begin) / CLOCKS_PER_SEC);
+				fprintf(stderr, "(best_core) PHYML-HKY (Loglk,LoglkSpec) = (%f,%f)\n", lk1, lk2);
+			}
 		}
 	}
 
-	{ /* build nj_dn tree */
+	if (!bo->is_skip_mmerge) { /* build nj_dn tree */
 		c_begin = clock();
 		t_nj_dn = tr_build_tree_from_align(tma, 0, 0, 0, bo->stree, DIST_DN, 1, 0);
 		tr_delete_tree_SDIptr(t_nj_dn);
@@ -186,7 +189,7 @@ Tree *best_core(BestConfig *bo)
 			fprintf(stderr, "(best_core) Time elapses in NJ-dN: %.2fs\n", (float)(clock() - c_begin) / CLOCKS_PER_SEC);
 	}
 
-	{ /* build nj_ds tree */
+	if (!bo->is_skip_mmerge) { /* build nj_ds tree */
 		c_begin = clock();
 		t_nj_ds = tr_build_tree_from_align(tma, 0, 0, 0, bo->stree, DIST_DS, 1, 0);
 		tr_delete_tree_SDIptr(t_nj_ds);
@@ -197,7 +200,7 @@ Tree *best_core(BestConfig *bo)
 			fprintf(stderr, "(best_core) Time elapses in NJ-dS: %.2fs\n", (float)(clock() - c_begin) / CLOCKS_PER_SEC);
 	}
 	
-	{ /* build nj_mm tree */
+	if (!bo->is_skip_mmerge) { /* build nj_mm tree */
 		c_begin = clock();
 		t_nj_mm = tr_build_tree_from_align(bo->ma, 0, 0, 0, bo->stree, DIST_NT_MM, 1, 0);
 		tr_delete_tree_SDIptr(t_nj_mm);
@@ -217,33 +220,38 @@ Tree *best_core(BestConfig *bo)
 			fprintf(stderr, "(best_core) Time elapses in NJ-MM: %.2fs\n", (float)(clock() - c_begin) / CLOCKS_PER_SEC);
 	}
 
-	c_begin = clock();
-	if (bo->is_phyml) { /* tree merge */
-		Tree *forest[7];
-		forest[0] = t_phyml_nt; forest[1] = t_nj_ds;
-		forest[2] = t_phyml_aa; forest[3] = t_nj_dn;
-		forest[4] = t_nj_mm;
-		if (bo->ctree == 0) {
-			t_final = tr_mmerge(5, forest);
+	if (!bo->is_skip_mmerge) {
+		c_begin = clock();
+		if (bo->is_phyml) { /* tree merge */
+			Tree *forest[7];
+			forest[0] = t_phyml_nt; forest[1] = t_nj_ds;
+			forest[2] = t_phyml_aa; forest[3] = t_nj_dn;
+			forest[4] = t_nj_mm;
+			if (bo->ctree == 0) {
+				t_final = tr_mmerge(5, forest);
+			} else {
+				forest[5] = t_nj_dn_cons;
+				forest[6] = t_nj_mm_cons;
+				t_final = tr_mmerge(7, forest);
+			}
 		} else {
-			forest[5] = t_nj_dn_cons;
-			forest[6] = t_nj_mm_cons;
-			t_final = tr_mmerge(7, forest);
+			Tree *forest[5];
+			forest[0] = t_nj_mm;
+			forest[1] = t_nj_dn; forest[2] = t_nj_ds;
+			if (bo->ctree == 0) {
+				t_final = tr_mmerge(3, forest);
+			} else {
+				forest[3] = t_nj_dn_cons;
+				forest[4] = t_nj_mm_cons;
+				t_final = tr_mmerge(5, forest);
+			}
 		}
-	} else {
-		Tree *forest[5];
-		forest[0] = t_nj_mm;
-		forest[1] = t_nj_dn; forest[2] = t_nj_ds;
-		if (bo->ctree == 0) {
-			t_final = tr_mmerge(3, forest);
-		} else {
-			forest[3] = t_nj_dn_cons;
-			forest[4] = t_nj_mm_cons;
-			t_final = tr_mmerge(5, forest);
-		}
-	}
-	if (bo->is_debug) fprintf(stderr, "tree merge: %.2fs\n", (float)(clock() - c_begin) / CLOCKS_PER_SEC);
+		if (bo->is_debug) fprintf(stderr, "tree merge: %.2fs\n", (float)(clock() - c_begin) / CLOCKS_PER_SEC);
 
+	} else {
+		t_final = bo->is_skip_mmerge;
+	}
+	
 	if (bo->is_phyml) { /* calculate branch length */
 		char *s;
 		float lk1, lk2;
@@ -269,16 +277,18 @@ Tree *best_core(BestConfig *bo)
 	}
 
 	if (bo->prefix) {
-		if (bo->is_phyml) {
-			write_tmp_tree(bo->prefix, ".phyml-aa.nhx", t_phyml_aa);
-			write_tmp_tree(bo->prefix, ".phyml-nt.nhx", t_phyml_nt);
-		} else {
-			write_tmp_tree(bo->prefix, ".phyml-aa.nhx", t_nj_dn);
-			write_tmp_tree(bo->prefix, ".phyml-nt.nhx", t_nj_mm);
+		if (!bo->is_skip_mmerge) {
+			if (bo->is_phyml) {
+				write_tmp_tree(bo->prefix, ".phyml-aa.nhx", t_phyml_aa);
+				write_tmp_tree(bo->prefix, ".phyml-nt.nhx", t_phyml_nt);
+			} else {
+				write_tmp_tree(bo->prefix, ".phyml-aa.nhx", t_nj_dn);
+				write_tmp_tree(bo->prefix, ".phyml-nt.nhx", t_nj_mm);
+			}
+			write_tmp_tree(bo->prefix, ".nj-dn.nhx", t_nj_dn);
+			write_tmp_tree(bo->prefix, ".nj-ds.nhx", t_nj_ds);
+			write_tmp_tree(bo->prefix, ".nj-mm.nhx", t_nj_mm);
 		}
-		write_tmp_tree(bo->prefix, ".nj-dn.nhx", t_nj_dn);
-		write_tmp_tree(bo->prefix, ".nj-ds.nhx", t_nj_ds);
-		write_tmp_tree(bo->prefix, ".nj-mm.nhx", t_nj_mm);
 		write_tmp_tree(bo->prefix, ".mmerge.nhx", t_final);
 		write_tmp_tree(bo->prefix, ".mmerge.phyml.nhx", tree);
 	}
@@ -324,6 +334,7 @@ static int best_usage()
 	fprintf(stderr, "         -C FILE     constraining tree                               [null]\n");
 	fprintf(stderr, "         -f FILE     species tree                                 [default]\n");
 	fprintf(stderr, "         -r          discard species that do not appear at all\n\n");
+	fprintf(stderr, "         -I          skip the mmerge step and use the constraining tree instead\n\n");
 	fprintf(stderr, "Output Options:\n\n");
 	fprintf(stderr, "         -D          output some debug information\n");
 	fprintf(stderr, "         -q          suppress part of PHYML warnings\n");
@@ -351,16 +362,18 @@ static int best_usage()
 
 BestConfig *best_command_line_options(int argc, char *argv[])
 {
-	int c;
+	int c, skip_mmerge;
 	BestConfig *bo;
 	FILE *fp;
 
 	bo = best_init_option();
-	while ((c = getopt(argc, argv, "qsrDNgSPAF:c:C:f:p:o:k:a:d:l:L:b:")) >= 0) {
+	skip_mmerge = 0;
+	while ((c = getopt(argc, argv, "qsrIDNgSPAF:c:C:f:p:o:k:a:d:l:L:b:")) >= 0) {
 		switch (c) {
 			case 'q': bo->is_quiet = 1; break;
 			case 's': bo->is_sequenced_only = 1; break;
 			case 'r': bo->is_contract_stree = 1; break;
+			case 'I': skip_mmerge = 1; break;
 			case 'D': bo->is_debug = 1; break;
 			case 'N': bo->is_mask_lss = 0; break;
 			case 'g': bo->is_collapse_splice = 1; break;
@@ -397,6 +410,10 @@ BestConfig *best_command_line_options(int argc, char *argv[])
 	bo->ma = ma_read_alignment(fp, 1);
 	fclose(fp);
 	if (bo->stree == 0) bo->stree = tr_default_spec_tree();
+	if (skip_mmerge) {
+		bo->is_skip_mmerge = bo->ctree;
+		bo->ctree = 0;
+	}
 	return bo;
 }
 int best_task(int argc, char *argv[])

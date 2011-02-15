@@ -152,6 +152,7 @@ char *tr_tree_string(const Tree *root, unsigned flag)
 		if (flag & OUTPUT_COMPARE) set->insert("Com");
 		if (flag & OUTPUT_TREE_INDEX) set->insert("T");
 	}
+	if (flag & OUTPUT_TREE_INDEX) set->insert("T");
 	len = string_estimate_string_len(root, flag);
 	str = (char*)malloc(sizeof(char) * len);
 	p = str;
