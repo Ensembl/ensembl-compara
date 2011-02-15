@@ -1,0 +1,157 @@
+#!/usr/local/bin/perl                                                                                                                                                                                          
+use CGI;
+use Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor;
+use EnsEMBL::Web::Document::SpreadSheet;
+use EnsEMBL::Web::RegObj;
+use Time::HiRes qw (sleep);
+use Data::Dumper;
+
+use vars qw( $SPECIES_DEFS);
+$SPECIES_DEFS = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
+
+my $cgi     = new CGI;
+my $file    = $cgi->param('vcf');
+my $pos_param     = $cgi->param('pos');
+my $species = $cgi->param('sp');
+
+my ($chr, $s, $e) = $pos_param =~ /(\d+?):(\d+?)-(\d+?)(?:%3A|;|$)/;
+
+my $vcf_adaptor = Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor->new($file);
+
+my $consensus   = $vcf_adaptor->fetch_variations($chr, $s, $e);
+
+my $fnum =  scalar(@$consensus);
+
+
+my $table1000    = new EnsEMBL::Web::Document::SpreadSheet([], [], {  data_table => 1, sorting => [ 'Individual asc' ], exportable => 0, id => "1000Genomes_table"  });
+$table1000->add_columns(
+        { key => 'count',       title => 'Number of genotypes', width => '15%', sort => 'numeric', align => 'right'  },
+        { key => 'view',        title => '',                    width => '5%',  sort => 'none',    align => 'center' },                                                                                         
+        { key => 'Population',  title => 'Population',          width => '25%', sort => 'html'                       },
+        { key => 'Description', title => 'Description',         width => '55%', sort => 'html'                       },
+      );
+
+#foreach my $a (@$consensus) {
+  my $a = $consensus->[0];
+  my $row_count = keys %{$a->{'gtypes'}} ;
+  my $pos   = $a->{'POS'};
+  my @substit;
+  push @substit, $a->{'REF'}, @{$a->{'ALT'}};
+  my $alt = join ', ', @{$a->{'ALT'}};
+  
+  my $info = { 'GC' => "Overlap with Gencode CCDS coding sequence",                                                          #FLAG 
+               'DP' => "Total number of reads in haplotype window: ",
+               'AF' => "Dindel estimated population allele frequency: ",
+               'CA' => "Pilot 1 callability mask: ",
+               'HP' => "Reference homopolymer tract length: ",
+               'NS' => "Number of samples with data: ",
+               'DB' => "dbSNP membership build 129 - type match and indel sequence length match within 25 bp",               #FLAG
+               'NR' => "Number of reads covering non-ref variant on reverse strand: ",
+               'NF' => "Number of reads covering non-ref variant on forward strand: ",
+               'SF' => "High-confidence indel that passes high-stringency filter; only applied in certain GENCODE regions",  #FLAG
+	     };
+
+  my $info_desc ='';
+  if (defined $a->{'INFO'}) {
+    foreach my $inf (keys %{$a->{'INFO'}}) {
+      $info_desc .= $info->{$inf} =~ /:/ ?  "<p>".$info->{$inf}."<span style='color: green;'>".$a->{'INFO'}->{$inf}."</span>;</p>" : "<p>".$info->{$inf}.";</p>";
+    }
+  }
+
+  my $count;
+
+  my ($rs) = $a->{'ID'} =~ /([^\.]+?)(?:;|$)/;
+  my $rs_source = $rs ? qq{(<a href="http://www.ncbi.nlm.nih.gov/SNP/snp_ref.cgi?rs=$rs" rel="external">$rs</a> source)} : '';  #IS THIS LINK CORRECT ??
+  my $url_v     = $rs ? qq{v=$rs;} : '';
+
+  my $inner_html ='' ;
+  my $end = $a->{'POS'} + 1000;
+
+  my $html = qq{<div class="summary_panel">
+                <dl class="summary">
+                 <dt>Variation class</dt> 
+                 <dd>SNP ${rs_source}</dd>  
+                 <dt>Alleles</dt>
+                 <dd><b>$a->{'REF'}/$alt</b></dd>
+                </dl>
+                <dl class="summary">
+                 <dt>Location</dt>
+                 <dd>This feature maps to $a->{'CHROM'}:$a->{'POS'} (forward strand) | <a href="/$species/Location/View?db=core;r=$a->{'CHROM'}:$a->{'POS'}-$end;${url_v}vdb=variation;">View in location tab</a>
+                </dd>
+               </dl>
+             </div>};
+
+  $html .= '<h2 style="margin-top: 20px; margin-bottom: 10px;">Summary of genotypes</h2></br>';
+
+  my $view_html = qq{
+        <a href="#$pos">
+          <span>Show</span>
+	</a>
+      };
+
+
+  $table1000->add_row({
+        'Population'  => "-",
+        'Description' => "<span>$info_desc</span>",
+        'count'       => $row_count,
+        'view'        => $view_html,
+      });
+
+  my $table    = new EnsEMBL::Web::Document::SpreadSheet([], [], {  data_table => 1, sorting => [ 'Individual asc' ], exportable => 0, id => "${pos}_table"  });
+
+  $table->add_columns(
+		      { key => 'Individual', title => 'Individual<br />',
+			sort => 'html', width => '20%' },
+		      { key => 'Genotype', title => 'Genotype<br />(forward strand)',
+			sort => 'html', width => '15%' },
+		      { key => 'Description', title => 'Description',
+			sort => 'html' }
+  );
+  my @add_row;
+  for ($count = 1; $count <= $row_count; $count++) {
+    my $sample = $a->{'gtypes'}->{$count};
+    my $GT     = $sample->{'GT'};
+
+    my $format = { 'HQ' => 'Haplotype quality: ', 
+                   'GQ' => 'Genotype quality: ' 
+                 };
+    
+    my $format_desc = '';
+    foreach $form (keys %{$sample}) {
+      next if $form =~ /GT/;    
+        $format_desc .= $format->{$form}.$sample->{$form}.'; ';
+    }
+
+    my ($ref_val, $delim,  $alt_val) = $GT =~ /(\d+|\.)([^\d\.]{1})(\d+|\.)/ if ($GT =~ /[\|\/]{1}/);  #diploid calls                                                                                          
+    $ref_val = $GT  if ($GT !~ /[\|\/]{1}/);   #haploid calls, e.g. on Y, male X, mitochondrion, only one allele value should be given                                                                        
+
+    my $gt1 =  $ref_val =~ /(\d+)/ ? $substit[$ref_val] : '.';
+    my $gt2 =  $alt_val =~ /(\d+)/ ? $substit[$alt_val] : '.';
+    
+
+    my $genotype = $GT =~ /[\|\/]{1}/ ? $gt1.$delim.$gt2 : $gt1;
+    my $row = {
+        'Individual'  => "Sample $count",
+        'Genotype'    => $genotype,
+        'Description' => "$format_desc",
+    };
+    push @add_row, $row;
+
+  }
+  #print  "\n\n A: ". Dumper $a;                                                                                                                                                            
+
+ $inner_html .= qq{
+                 <h2 style="margin-top: 15px; margin-bottom: 5px;"><a name="$pos">Genotypes</a></h2></br>
+                };
+
+  $table->add_rows(@add_row);
+  $inner_html .= sprintf '<div class="toggleable">%s</div>                 
+                 <span style="float:right;"><a href="#">[back to top]</a></span>
+                 <p class="invisible">.</p>', $table->render;
+
+
+  $html .= $table1000->render;
+  print $html . $inner_html;
+
+1;
+
