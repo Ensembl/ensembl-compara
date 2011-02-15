@@ -132,7 +132,17 @@ Ensembl.LayoutManager.extend({
     var localTools = $('#local-tools');
     
     tools.each(function () {
-      $(this).children().addClass('additional').appendTo(localTools).not('.hidden').show();
+      var a = $(this).find('a');
+      var existing = $('.additional .' + a[0].className.replace(' ', '.'), localTools);
+      
+      if (existing.length) {
+        existing.replaceWith(a);
+      } else {
+        $(this).children().addClass('additional').appendTo(localTools).not('.hidden').show();
+      }
+      
+      a = null;
+      existing = null;
     }).remove();
     
     $('a.seq_blast', localTools).click(function () {
