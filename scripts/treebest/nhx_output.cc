@@ -42,6 +42,9 @@ static int string_estimate_string_len(const Tree *tree, int out_flag)
 							len += 1 + strlen(s->lost[j]->name); // "-"spec
 				}
 			}
+			if (p->tree_index) {
+				len += 6; //:T=100
+			}
 			
 		}
 		len += 6 + 7; // ":Com=N" + ":B=100"
@@ -88,7 +91,7 @@ inline int string_nhx_node(char *str, const Tree *t)
 		if (spec(t) && spec(t)->name && (s->type != 'N' || t->n == 0)) /* species name */
 			p += sprintf(p, ":S=%s", spec(t)->name);
 	}
-	if (t->tree_index > 0)
+	if ((out_flag & OUTPUT_TREE_INDEX) && (t->tree_index > 0))
 		p += sprintf(p, ":T=%d", t->tree_index);
 	if (t->bs >= 0) p += sprintf(p, ":B=%d", t->bs); /* bootstrap value */
 	if ((out_flag & OUTPUT_COMPARE) && t->is_cons == 0) /* identical clade */
@@ -147,6 +150,7 @@ char *tr_tree_string(const Tree *root, unsigned flag)
 			set->insert("E"); set->insert("S"); set->insert("D");
 		}
 		if (flag & OUTPUT_COMPARE) set->insert("Com");
+		if (flag & OUTPUT_TREE_INDEX) set->insert("T");
 	}
 	len = string_estimate_string_len(root, flag);
 	str = (char*)malloc(sizeof(char) * len);

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 #include "align.h"
 #include "seq.h"
 #include "version.h"
@@ -8,10 +9,6 @@
 #ifndef MAX_NAME_LEN
 #define MAX_NAME_LEN 255
 #endif
-
-extern int getopt(int nargc, char * const *nargv, const char *ostr);
-extern int optind, opterr;
-extern char *optarg;
 
 int aln_pair_align(FILE *fp1, FILE *fp2, AlnParam *ap, int type, int misc_flag)
 {

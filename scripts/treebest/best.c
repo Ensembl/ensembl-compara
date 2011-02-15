@@ -62,7 +62,7 @@ static void write_tmp_tree(const char *prefix, const char *suffix, Tree *root)
 	strcat(strcpy(str, prefix), suffix);
 	fp = fopen(str, "w");
 	if (fp) {
-		tr_tree_output(fp, root, OUTPUT_SDI);
+		tr_tree_output(fp, root, OUTPUT_SDI | OUTPUT_TREE_INDEX);
 		fclose(fp);
 	}
 	free(str);
@@ -217,9 +217,9 @@ Tree *best_core(BestConfig *bo)
 			fprintf(stderr, "(best_core) Time elapses in NJ-MM: %.2fs\n", (float)(clock() - c_begin) / CLOCKS_PER_SEC);
 	}
 
+	c_begin = clock();
 	if (bo->is_phyml) { /* tree merge */
 		Tree *forest[7];
-		c_begin = clock();
 		forest[0] = t_phyml_nt; forest[1] = t_nj_ds;
 		forest[2] = t_phyml_aa; forest[3] = t_nj_dn;
 		forest[4] = t_nj_mm;
@@ -232,7 +232,6 @@ Tree *best_core(BestConfig *bo)
 		}
 	} else {
 		Tree *forest[5];
-		c_begin = clock();
 		forest[0] = t_nj_mm;
 		forest[1] = t_nj_dn; forest[2] = t_nj_ds;
 		if (bo->ctree == 0) {
@@ -281,14 +280,15 @@ Tree *best_core(BestConfig *bo)
 		write_tmp_tree(bo->prefix, ".nj-ds.nhx", t_nj_ds);
 		write_tmp_tree(bo->prefix, ".nj-mm.nhx", t_nj_mm);
 		write_tmp_tree(bo->prefix, ".mmerge.nhx", t_final);
+		write_tmp_tree(bo->prefix, ".mmerge.phyml.nhx", tree);
 	}
 
 	if (bo->is_phyml) { /* bootstrap */
 		c_begin = clock();
 		tr_nj_bs(tree, tma, bo->stree, 100, DIST_DM, 1);
+		if (bo->is_debug)
+			fprintf(stderr, "(best_core) Time elapse in bootstrapping: %.2fs\n", (float)(clock() - c_begin) / CLOCKS_PER_SEC);
 	}
-	if (bo->is_debug)
-		fprintf(stderr, "(best_core) Time elapse in bootstrapping: %.2fs\n", (float)(clock() - c_begin) / CLOCKS_PER_SEC);
 	/* tr_dN_dS(tree, ma); */
 	tr_SDI(tree, bo->stree, 0);
 	tr_lost_infer(tree, bo->stree);
@@ -409,7 +409,7 @@ int best_task(int argc, char *argv[])
 	if (bo == 0) return best_usage();
 	tree = best_core(bo);
 	fp = (bo->output_fn)? fopen(bo->output_fn, "w") : stdout;
-	tr_tree_output(fp, tree, OUTPUT_SDI);
+	tr_tree_output(fp, tree, OUTPUT_SDI | OUTPUT_TREE_INDEX);
 	if (fp != stdout) fclose(fp);
 	tr_delete_tree_SDIptr(tree);
 	tr_delete_tree(tree);

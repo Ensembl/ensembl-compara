@@ -5,19 +5,6 @@
 
 typedef unsigned char uchar;
 
-#ifndef HAVE_GETOPE
-extern char *optarg;
-extern int optind;
-extern int opterr;
-#ifdef __cplusplus
-extern "C" {
-int getopt(int nargc, char * const *nargv, const char *ostr);
-}
-#else
-int getopt(int nargc, char * const *nargv, const char *ostr);
-#endif
-#endif /* HAVE_GETOPT */
-
 #ifdef USE_KR_ALLOC
 #define MYALLOC   kr_alloc
 #define MYFREE    kr_free
