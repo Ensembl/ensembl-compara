@@ -3,7 +3,6 @@ package EnsEMBL::Web::Data::Species;
 use strict;
 use warnings;
 use base qw(EnsEMBL::Web::CDBI);
-use EnsEMBL::Web::Data::Release;
 use EnsEMBL::Web::DBSQL::WebDBConnection (__PACKAGE__->species_defs);
 
 __PACKAGE__->table('species');
@@ -17,8 +16,6 @@ __PACKAGE__->add_queriable_fields(
   dump_notes  => 'text',
   online      => "enum('N','Y')"
 );
-
-__PACKAGE__->has_many(releases   => 'EnsEMBL::Web::Data::Release');
 
 __PACKAGE__->set_sql(in_release => qq{
   SELECT
