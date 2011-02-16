@@ -135,27 +135,8 @@ sub cdna_alignment_string {
   }
 
   unless (defined $self->{'cdna_alignment_string'}) {
-    my $genome_db_id = $member->genome_db_id;
+    my $cdna = $member->sequence_cds();
     
-    my $genome_db =
-      $member->adaptor->db->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
-    
-    my $ta = $genome_db->db_adaptor->get_TranscriptAdaptor;
-    my $transcript;
-    if ($member->stable_id =~ /^\d+$/) {
-      $transcript = $ta->fetch_by_translation_id($member->stable_id);
-    } else {
-      $transcript = $ta->fetch_by_translation_stable_id($member->stable_id);
-    }
-    if(!$transcript) {
-      warning("Could not retrieve transcript via peptide id [" .
-                  $member->stable_id . "] from database [" .
-                  $genome_db->db_adaptor->dbname . "]");
-      return undef;
-    }
-    
-    my $cdna = $transcript->translateable_seq;
-
     if (defined $self->cigar_start || defined $self->cigar_end) {
       unless (defined $self->cigar_start && defined $self->cigar_end) {
         throw("both cigar_start and cigar_end should be defined");
