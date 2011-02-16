@@ -18,9 +18,10 @@ foreach my $this_genome_db (@$genome_dbs) {
 }
 my $no_id = 1000;
 
+
 foreach my $this_leaf (@{$tree->get_all_leaves}) {  
     my $leaf_name = $this_leaf->name;
-    $leaf_name =~ s/_/ /;
+#    $leaf_name =~ s/_/ /;
     if (defined($species_name_to_dbID->{$leaf_name})) { 
 	$this_leaf->name($species_name_to_dbID->{$leaf_name});
     } else {    
