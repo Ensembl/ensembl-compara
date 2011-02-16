@@ -6,8 +6,6 @@ use strict;
 
 use RTF::Writer;
 
-use EnsEMBL::Web::TmpFile::Text;
-
 use base qw(EnsEMBL::Web::Component::Transcript EnsEMBL::Web::Component::TextSequence);
 
 sub _init {
@@ -124,7 +122,7 @@ sub content {
       { key => 'Sequence',   title => 'Sequence',      width => '15%', align => 'left' }
     ], 
     $data, 
-    { data_table => 'no_sort' }
+    { data_table => 'no_sort', exportable => 0 }
   );
   
   my $html = $self->tool_buttons . $table->render;
@@ -220,13 +218,12 @@ sub get_intron_sequence_data {
 }
 
 sub get_flanking_sequence_data {
-  my $self = shift;
-  my ($config, $first_exon, $last_exon) = @_;
+  my ($self, $config, $first_exon, $last_exon) = @_;
   
   my $display_width = $config->{'display_width'};
   my $strand        = $config->{'strand'};
   my $flanking      = $config->{'flanking'};
-  my @dots          = map {{ letter => $_, class => 'ef' }} split //, '.' x ($display_width - ($flanking % $display_width));
+  my @dots          = $display_width == $flanking ? () : map {{ letter => $_, class => 'ef' }} split //, '.' x ($display_width - ($flanking % $display_width));
   my ($upstream, $downstream);
 
   if ($strand == 1) {
