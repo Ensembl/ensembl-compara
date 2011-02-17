@@ -115,7 +115,7 @@ sub render {
   };
   
   $table  = qq{<div class="autocenter_wrapper">$table</div>} if $width ne '100%' && $table_class =~ /\s*autocenter\s*/;
-  $table .= sprintf qq{<div class="other-tool"><p><a class="export" href="%s;_format=Excel">Download view as CSV</a></p></div>}, $self->exportable if $self->exportable;
+  $table .= sprintf qq{<div class="other_tool"><p><a class="export" href="%s;_format=Excel">Download view as CSV</a></p></div>}, $self->exportable if $self->exportable;
   
   return $table;
 }

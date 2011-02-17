@@ -1201,7 +1201,7 @@ sub tool_buttons {
   return unless $self->html_format;
   
   my $html = sprintf('
-    <div class="other-tool">
+    <div class="other_tool">
       <p><a class="seq_export export" href="%s">Download view as RTF</a></p>
     </div>', 
     $self->ajax_url('rtf')
@@ -1209,7 +1209,7 @@ sub tool_buttons {
   
   if ($blast_seq) {
     $html .= sprintf('
-      <div class="other-tool">
+      <div class="other_tool">
         <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
         <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
           <fieldset>

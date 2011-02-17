@@ -22,7 +22,7 @@ sub content {
   my $self = shift;
   my $url  = $self->ajax_url('ajax');
   
-  return qq{<div class="other-tool"><p><a class="config modal_link" href="$url">$self->{'link_text'}</a></p></div>};
+  return qq{<div class="other_tool"><p><a class="config modal_link" href="$url">$self->{'link_text'}</a></p></div>};
 }
 
 sub content_ajax {
