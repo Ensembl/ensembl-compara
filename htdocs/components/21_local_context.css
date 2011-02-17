@@ -1,4 +1,5 @@
 .local_context { margin: 0 0 0.5em 0; border: 1px solid [[PANEL_BORDER]]; padding: 0; background-color: [[PANEL_BG]]; }
+.local_context a { color: [[MH_BORDER]]; text-decoration: none; }
 .local_context dt { font-weight: bold; }
 .local_context dd { margin-left: 0; white-space: nowrap; }
 .local_context dd dl { border:0; padding: 0 0 0 14px; }
@@ -13,18 +14,19 @@
 .local_context dd.active, .local_context a.active { font-weight: bold; background-color: [[TINT_BG]]; }
 .local_context dd.active dl { background-color: [[PANEL_BG]]; }
 .local_context dd.active dd { font-weight: normal; }
+.local_context dd._closed dl  { display: none; }
 body.static .local_context dl { width: 20em; }
 
-#local-tools p, .other-tool { display: none; margin: 0; }
-#local-tools a, #local-tools p.disabled { background-position: 7px 50%; background-repeat: no-repeat; border: 3px double [[PAGE_BG]]; margin: 4px 0px; padding: 4px 4px 4px 28px; }
-#local-tools a { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; text-decoration: none; display: block; }
-#local-tools p.disabled { background-color: [[BUTTON_DISABLED]]; color: [[BUTTON_TEXT]]; }
-
-#local-tools a:hover   { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
-#local-tools a:visited { color: [[BUTTON_TEXT]]; }
-
-#local-tools .config   { background-image: url(/i/config.png);   background-repeat: no-repeat; }
-#local-tools .data     { background-image: url(/i/data.png);     background-repeat: no-repeat; }
-#local-tools .export   { background-image: url(/i/export.png);   background-repeat: no-repeat; }
-#local-tools .bookmark { background-image: url(/i/bookmark.png); background-repeat: no-repeat; }
-#local-tools .find     { background-image: url(/i/find.png);     background-repeat: no-repeat; }
+.tool_buttons p, .other_tool { display: none; margin: 0; }
+.tool_buttons a, .tool_buttons p.disabled { background-position: 7px 50%; background-repeat: no-repeat; border: 3px double [[PAGE_BG]]; margin: 4px 0px; padding: 4px 4px 4px 28px; }
+.tool_buttons a { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; text-decoration: none; display: block; }
+.tool_buttons p.disabled { background-color: [[BUTTON_DISABLED]]; color: [[BUTTON_TEXT]]; }
+      
+.tool_buttons a:hover   { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
+.tool_buttons a:visited { color: [[BUTTON_TEXT]]; }
+      
+.tool_buttons .config   { background-image: url(/i/config.png);   background-repeat: no-repeat; }
+.tool_buttons .data     { background-image: url(/i/data.png);     background-repeat: no-repeat; }
+.tool_buttons .export   { background-image: url(/i/export.png);   background-repeat: no-repeat; }
+.tool_buttons .bookmark { background-image: url(/i/bookmark.png); background-repeat: no-repeat; }
+.tool_buttons .find     { background-image: url(/i/find.png);     background-repeat: no-repeat; }
