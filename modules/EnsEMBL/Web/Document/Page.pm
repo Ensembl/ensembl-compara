@@ -412,7 +412,7 @@ sub html_template {
   my $nav;
   
   if ($self->include_navigation) {
-    $nav = qq{<div id="nav" class="print_hide js_panel">
+    $nav = qq{<div id="page_nav" class="nav print_hide js_panel">
           $elements->{'navigation'}
           $elements->{'tool_buttons'}
           $elements->{'acknowledgements'}
