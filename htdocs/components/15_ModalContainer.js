@@ -124,7 +124,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       context: this,
       success: function (json) {
         var params = hash ? $.extend(json.params || {}, { hash: hash }) : json.params;
-        var wrapper, buttonText, forceReload;
+        var wrapper, buttonText, forceReload, nav;
         
         if (json.redirectURL) {
           return this.getContent(json.redirectURL, id);
@@ -144,13 +144,20 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         
         wrapper = $(json.wrapper);
         
-        if (!json.nav) {
+        if (json.tools) {
+          json.nav += json.tools;
+        }
+        
+        if (json.nav) {
+          nav = [ '<div class="modal_nav nav">', json.nav, '</div>' ].join('');
+        } else {
           wrapper.addClass('no_local_context');
         }
         
-        contentEl.html(json.content).wrapInner(wrapper).prepend(json.nav);
+        contentEl.html(json.content).wrapInner(wrapper).prepend(nav).find('.tool_buttons > p').show();
         
         wrapper = null;
+        nav     = null;
         
         this.elLk.closeButton.attr({ title: buttonText, alt: buttonText });
         
