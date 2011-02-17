@@ -20,7 +20,7 @@ sub init {
   my $controller = shift;
   my $hub        = $controller->hub;
   
-  if ($hub->type eq 'Config') {
+  if ($hub->script eq 'Config') {
     my $config = $hub->param('config');
     
     $self->add_entry({
