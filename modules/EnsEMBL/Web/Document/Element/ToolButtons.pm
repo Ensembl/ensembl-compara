@@ -10,7 +10,7 @@ use base qw(EnsEMBL::Web::Document::Element);
 
 sub entries {
   my $self = shift;
-  return $self->{'_entries'}||[];
+  return $self->{'_entries'} || [];
 }
 
 sub add_entry {
@@ -18,40 +18,43 @@ sub add_entry {
   push @{$self->{'_entries'}}, @_;
 }
 
-sub content {
+sub get_json {
   my $self = shift;
-  
-  return unless @{$self->entries};
-  
-  my %classes = (
+  return { tools => $self->content };
+} 
+
+sub label_classes {
+  return {
     'Configure this page' => 'config',
     'Manage your data'    => 'data',
     'Export data'         => 'export',
     'Bookmark this page'  => 'bookmark'
-  );
-  
-  my $html = '<div id="local-tools">';
+  };
+}
 
-  foreach (@{$self->entries}) {
+sub content {
+  my $self = shift;
+  my $entries = $self->entries;
+  
+  return unless scalar @$entries;
+  
+  my $classes = $self->label_classes;
+  my $html;
+
+  foreach (@$entries) {
     if ($_->{'class'} eq 'disabled') {
-      $html .= qq{<p class="disabled $classes{$_->{'caption'}}" title="$_->{'title'}">$_->{'caption'}</p>};
+      $html .= qq{<p class="disabled $classes->{$_->{'caption'}}" title="$_->{'title'}">$_->{'caption'}</p>};
     } else {
       my $rel   = lc $_->{'rel'};
-      my $attrs = $_->{'class'};
-      $attrs   .= ($attrs ? ' ' : '') . 'external' if $rel eq 'external';
-      $attrs   .= ($attrs ? ' ' : '') . $classes{$_->{'caption'}} if $classes{$_->{'caption'}};
-      $attrs    = qq{class="$attrs"} if $attrs;
-      $attrs   .= ' style="display:none"' if $attrs =~ /modal_link/;
-      $attrs   .= qq{ rel="$rel"} if $rel;
+      my $class = join ' ', map $_ || (), $_->{'class'}, $rel eq 'external' ? 'external' : '', $classes->{$_->{'caption'}};
+      $class    = qq{ class="$class"} if $class;
+      $rel      = qq{ rel="$rel"}     if $rel;
 
-      $html .= qq{
-        <p><a href="$_->{'url'}" $attrs>$_->{'caption'}</a></p>};
+      $html .= qq{<p><a href="$_->{'url'}"$class$rel>$_->{'caption'}</a></p>};
     }
   }
   
-  $html .= '</div>';
-
-  return $html; 
+  return qq{<div class="tool_buttons">$html</div>};
 }
 
 sub init {
