@@ -32,12 +32,6 @@ sub active {
   return $self->{'active'};
 }
 
-sub class {
-  my $self = shift;
-  $self->{'class'} = shift if @_;
-  return $self->{'class'};
-}
-
 sub caption {
   my $self = shift;
   $self->{'caption'} = shift if @_;
@@ -65,7 +59,6 @@ sub availability {
 
 sub get_json {
   my $self = shift;
-  $self->class('local_modal');
   return { nav => $self->content };
 }
 
@@ -96,10 +89,9 @@ sub content {
   
   my $content = sprintf('
     %s
-    <dl class="local_context %s">
+    <dl class="local_context">
       <dt>%s</dt>',
     $self->configuration ? '' : '<input type="hidden" class="panel_type" value="LocalContext" />',
-    $self->class,
     encode_entities($caption)
   );
   
