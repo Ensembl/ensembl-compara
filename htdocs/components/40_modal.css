@@ -140,6 +140,15 @@ body.ie6 .modal_title .modal_close {
   margin: 0.25em 0.25em 0;
 }
 
+.modal_nav .local_context a.disabled {	 
+  color: [[PAGE_TEXT]];	 
+  cursor: text;	 
+}
+
+.modal_nav .local_context dd.active a {
+  outline: 0;
+}
+
 .modal_reload {
   display: none;
 }
