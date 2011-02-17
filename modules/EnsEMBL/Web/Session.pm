@@ -602,6 +602,7 @@ sub configure_das_views {
     if (!$node) {
       my %default_keys = map { $_ => '' } (keys %$track_options, @{$self->{'das_image_defaults'}});
       $node = $image_config->tree->create_node('das_' . $das->logic_name, \%default_keys);
+      $image_config->get_node('user_data')->append($node);
     }
     
     $node->set_user($_, $track_options->{$_}) for keys %$track_options;
