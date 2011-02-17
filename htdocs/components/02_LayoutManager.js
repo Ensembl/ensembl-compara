@@ -18,7 +18,7 @@ Ensembl.LayoutManager.extend({
     Ensembl.EventManager.register('hashChange',    this, this.hashChange);
     Ensembl.EventManager.register('toggleContent', this, this.toggleContent);
         
-    $('#local-tools > p').show();
+    $('#page_nav .tool_buttons > p').show();
     
     $('#header a:not(#tabs a)').addClass('constant');
     
@@ -129,24 +129,24 @@ Ensembl.LayoutManager.extend({
   },
   
   relocateTools: function (tools) {
-    var localTools = $('#local-tools');
+    var toolButtons = $('#page_nav .tool_buttons');
     
     tools.each(function () {
       var a = $(this).find('a');
-      var existing = $('.additional .' + a[0].className.replace(' ', '.'), localTools);
+      var existing = $('.additional .' + a[0].className.replace(' ', '.'), toolButtons);
       
       if (existing.length) {
         existing.replaceWith(a);
       } else {
-        $(this).children().addClass('additional').appendTo(localTools).not('.hidden').show();
+        $(this).children().addClass('additional').appendTo(toolButtons).not('.hidden').show();
       }
       
       a = null;
       existing = null;
     }).remove();
     
-    $('a.seq_blast', localTools).click(function () {
-      $('form.seq_blast', localTools).submit();
+    $('a.seq_blast', toolButtons).click(function () {
+      $('form.seq_blast', toolButtons).submit();
       return false;
     });
   },
