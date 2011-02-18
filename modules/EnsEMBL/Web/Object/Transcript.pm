@@ -1131,8 +1131,8 @@ sub get_go_list {
       foreach my $e (@{$goxref->get_all_linkage_info}) {
 	my ($linkage, $xref) = @{$e || []};
  	next unless $xref;	
-	my ($id, $db) =  ($xref->display_id, $xref->dbname);
-	push @$sources, $self->hub->get_ExtURL_link($id, $db, $id);
+	my ($id, $db, $db_name) =  ($xref->display_id, $xref->dbname, $xref->db_display_name);
+	push @$sources, $self->hub->get_ExtURL_link("$db_name:$id", $db, $id);
       }
     }
 
