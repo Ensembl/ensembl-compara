@@ -55,6 +55,7 @@ sub default_options {
         'wublastp_exe'              => 'wublastp',
         'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         'mcoffee_exe'               => '/software/ensembl/compara/tcoffee-7.86b/t_coffee',
+        'mafft_exe'                 => '',  # use module built-in default (not ready yet to touch that can of worms)
         'sreformat_exe'             => '/usr/local/ensembl/bin/sreformat',
         'treebest_exe'              => '/software/ensembl/compara/treebest/treebest',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
@@ -541,6 +542,7 @@ sub pipeline_analyses {
                 'method'                    => 'cmcoffee',      # presumably, at the moment it refers to the 'initial' method
                 'use_exon_boundaries'       => $self->o('use_exon_boundaries'),
                 'max_gene_count'            => $self->o('tree_max_gene_count'),
+                'mafft_exe'                 => $self->o('mafft_exe'),
             },
             -wait_for => [ 'store_sequences', 'overall_clusterset_qc', 'per_genome_clusterset_qc' ],    # funnel
             -hive_capacity        => 600,
@@ -558,6 +560,7 @@ sub pipeline_analyses {
                 'method'                    => 'cmcoffee',      # presumably, at the moment it refers to the 'initial' method
                 'use_exon_boundaries'       => $self->o('use_exon_boundaries'),
                 'max_gene_count'            => $self->o('tree_max_gene_count'),
+                'mafft_exe'                 => $self->o('mafft_exe'),
             },
             -hive_capacity        => 600,
             -can_be_empty         => 1,
