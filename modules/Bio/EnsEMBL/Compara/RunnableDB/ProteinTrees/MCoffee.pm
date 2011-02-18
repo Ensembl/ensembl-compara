@@ -354,10 +354,9 @@ sub run_mcoffee {
   $prefix .= "export CACHE_4_TCOFFEE=\"$tempdir\";";
   $prefix .= "export NO_ERROR_REPORT_4_TCOFFEE=1;";
 
-  if(defined $self->param('mafft')) {
-  	print "Using defined mafft location ".$self->param('mafft').". Make sure MAFFT_BINARIES is setup correctly\n" if $self->debug();
-  }
-  else {
+  if($self->param('mafft_exe')) {
+  	print "Using defined mafft location ".$self->param('mafft_exe').". Make sure MAFFT_BINARIES is setup correctly\n" if $self->debug();
+  } else {
   	print "Using default mafft location\n" if $self->debug();
   	$prefix .= 'export MAFFT_BINARIES=/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux ;';
         # path to t_coffee components:
@@ -371,18 +370,19 @@ sub run_mcoffee {
   $self->compara_dba->dbc->disconnect_when_inactive(1);
   my $rc;
   if ($self->param('method') eq 'mafft') {
-  	my ($mafft_env, $mafft_executable);
-  	if(defined $self->param('mafft')) {
-  		$mafft_executable = $self->param('mafft');
-  	}
-  	else {
-    	$mafft_executable = "/software/ensembl/compara/mafft-6.707/bin/mafft";
+
+  	my ($mafft_env, $mafft_exe);
+
+  	if($self->param('mafft_exe')) {
+  		$mafft_exe = $self->param('mafft_exe');
+  	} else {
+    	$mafft_exe = "/software/ensembl/compara/mafft-6.707/bin/mafft";
     	$mafft_env = '/software/ensembl/compara/mafft-6.707/binaries';
   	}
 
   	$ENV{MAFFT_BINARIES} = $mafft_env if $mafft_env;
-    print STDERR "### $mafft_executable --auto $input_fasta > $mcoffee_output\n";
-    $rc = system("$mafft_executable --auto $input_fasta > $mcoffee_output");
+    print STDERR "### $mafft_exe --auto $input_fasta > $mcoffee_output\n";
+    $rc = system("$mafft_exe --auto $input_fasta > $mcoffee_output");
     $self->param('mcoffee_scores', undef); #these wont have scores
   } else {
     $DB::single=1;

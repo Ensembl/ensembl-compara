@@ -41,13 +41,24 @@ sub default_options {
         'clustering_max_gene_halfcount' => 750,     # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
 
     # tree building parameters:
-        'tree_max_gene_count'       => 400,     # affects 'mcoffee'
+        'tree_max_gene_count'       => 400,     # affects 'mcoffee' and 'mcoffee_himem'
+        'use_exon_boundaries'       => 2,       # affects 'mcoffee' and 'mcoffee_himem'
         'use_genomedb_id'           => 0,       # affects 'njtree_phyml' and 'ortho_tree'
         'species_tree_input_file'   => '',      # you can define your own species_tree for 'njtree_phyml' and 'ortho_tree'
 
     # homology_dnds parameters:
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',      # used by 'homology_dNdS'
         'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes'],
+        'filter_high_coverage'      => 1,   # affects 'group_genomes_under_taxa'
+
+    # executable locations:
+        'wublastp_exe'              => 'wublastp',
+        'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
+        'mcoffee_exe'               => '/software/ensembl/compara/tcoffee-7.86b/t_coffee',
+        'sreformat_exe'             => '/usr/local/ensembl/bin/sreformat',
+        'treebest_exe'              => '/software/ensembl/compara/treebest/treebest',
+        'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
+        'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
 
 
         'release'           => '61',
@@ -351,8 +362,9 @@ sub pipeline_analyses {
             -parameters => {
                 'reuse_db'      => $self->dbconn_2_url('reuse_db'),     # FIXME: remove the first-hash-to-url-then-hash-from-url code redundancy
             },
-            -wait_for => [ 'load_reuse_members' ],
+            -wait_for => [ 'accumulate_reuse_ss', 'load_reuse_members' ],
             -hive_capacity => -1,
+            -can_be_empty  => 1,
             -flow_into => {
                 1 => [ 'dump_subset_create_blastdb', 'store_sequences_factory' ],
             },
@@ -365,6 +377,7 @@ sub pipeline_analyses {
                             'ALTER TABLE peptide_align_feature_#per_genome_suffix# DISABLE KEYS',
                 ],
             },
+            -can_be_empty  => 1,
         },
 
 
@@ -396,7 +409,7 @@ sub pipeline_analyses {
 
         {   -logic_name         => 'blastp_with_reuse',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
-            -program_file       => 'wublastp',
+            -program_file       => $self->o('wublastp_exe'),
             -parameters         => {
                 'mlss_id'                   => $self->o('mlss_id'),
                 'reuse_db'                  => $self->dbconn_2_url('reuse_db'),
@@ -463,8 +476,8 @@ sub pipeline_analyses {
             -parameters    => {
                 'clustering_max_gene_halfcount' => $self->o('clustering_max_gene_halfcount'),
                 'cluster_dir'                   => $self->o('cluster_dir'),
-                'hcluster_exec'                 => '/software/ensembl/compara/hcluster/hcluster_sg',
-                'cmd'                           => '#hcluster_exec# -m #clustering_max_gene_halfcount# -w 0 -s 0.34 -O -C #cluster_dir#/hcluster.cat -o #cluster_dir#/hcluster.out #cluster_dir#/hcluster.txt',
+                'hcluster_exe'                  => $self->o('hcluster_exe'),
+                'cmd'                           => '#hcluster_exe# -m #clustering_max_gene_halfcount# -w 0 -s 0.34 -O -C #cluster_dir#/hcluster.cat -o #cluster_dir#/hcluster.out #cluster_dir#/hcluster.txt',
             },
             -input_ids => [
                 { },    # backbone
@@ -522,9 +535,11 @@ sub pipeline_analyses {
 
         {   -logic_name => 'mcoffee',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
+            -program_file       => $self->o('mcoffee_exe'),
             -parameters => {
                 'method'                    => 'cmcoffee',      # presumably, at the moment it refers to the 'initial' method
-                'use_exon_boundaries'       => 2,
+                'use_exon_boundaries'       => $self->o('use_exon_boundaries'),
+                'max_gene_count'            => $self->o('tree_max_gene_count'),
             },
             -wait_for => [ 'store_sequences', 'overall_clusterset_qc', 'per_genome_clusterset_qc' ],    # funnel
             -hive_capacity        => 600,
@@ -537,12 +552,14 @@ sub pipeline_analyses {
 
         {   -logic_name => 'mcoffee_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
+            -program_file       => $self->o('mcoffee_exe'),
             -parameters => {
                 'method'                    => 'cmcoffee',      # presumably, at the moment it refers to the 'initial' method
-                'use_exon_boundaries'       => 2,
+                'use_exon_boundaries'       => $self->o('use_exon_boundaries'),
                 'max_gene_count'            => $self->o('tree_max_gene_count'),
             },
             -hive_capacity        => 600,
+            -can_be_empty         => 1,
             -flow_into => {
                 1 => [ 'njtree_phyml' ],
                 3 => [ 'quick_tree_break' ],
@@ -552,6 +569,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'njtree_phyml',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML',
+            -program_file       => $self->o('treebest_exe'),
             -parameters => {
                 'cdna'                      => 1,
                 'bootstrap'                 => 1,
@@ -581,8 +599,9 @@ sub pipeline_analyses {
 
         {   -logic_name => 'build_HMM_aa',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
+            -program_file       => $self->o('buildhmm_exe'),
             -parameters => {
-                'sreformat'                 => '/usr/local/ensembl/bin/sreformat',
+                'sreformat_exe'     => $self->o('sreformat_exe'),
             },
             -hive_capacity        => 200,
             -failed_job_tolerance => 5,
@@ -590,9 +609,10 @@ sub pipeline_analyses {
 
         {   -logic_name => 'build_HMM_cds',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
+            -program_file       => $self->o('buildhmm_exe'),
             -parameters => {
-                'cdna'                      => 1,
-                'sreformat'                 => '/usr/local/ensembl/bin/sreformat',
+                'cdna'              => 1,
+                'sreformat_exe'     => $self->o('sreformat_exe'),
             },
             -hive_capacity        => 200,
             -failed_job_tolerance => 5,
@@ -600,7 +620,9 @@ sub pipeline_analyses {
 
         {   -logic_name => 'quick_tree_break',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::QuickTreeBreak',
+            -program_file       => $self->o('quicktree_exe'),
             -parameters => {
+                'sreformat_exe'     => $self->o('sreformat_exe'),
                 'mlss_id'           => $self->o('mlss_id'),
             },
             -hive_capacity        => 1, # this one seems to slow the whole loop down; why can't we have any more of these?
@@ -649,10 +671,11 @@ sub pipeline_analyses {
 # ---------------------------------------------[homology step]-----------------------------------------------------------------------
 
         {   -logic_name => 'group_genomes_under_taxa',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupHighCoverageGenomesUnderTaxa',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa',
             -parameters => {
-                'mlss_id'   => $self->o('mlss_id'),
-                'taxlevels' => $self->o('taxlevels'),
+                'mlss_id'               => $self->o('mlss_id'),
+                'taxlevels'             => $self->o('taxlevels'),
+                'filter_high_coverage'  => $self->o('filter_high_coverage'),
             },
             -wait_for => [ 'per_genome_genetreeset_qc' ],   # funnel
             -hive_capacity => -1,

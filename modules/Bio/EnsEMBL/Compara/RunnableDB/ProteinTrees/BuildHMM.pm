@@ -73,7 +73,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
             'cdna'                  => 0,
-            'sreformat'             => '/usr/local/ensembl/bin/sreformat',
+            'sreformat_exe'         => '/usr/local/ensembl/bin/sreformat',
     };
 }
 
@@ -308,8 +308,8 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   }
 
   my $stk_file = $file_root . '.stk';
-  my $sreformat = $self->param('sreformat');
-  my $cmd = "$sreformat stockholm $aln_file > $stk_file";
+  my $sreformat_exe = $self->param('sreformat_exe');
+  my $cmd = "$sreformat_exe stockholm $aln_file > $stk_file";
   if(system($cmd)) {
     $self->throw("could not run '$cmd': $!\n");
   }

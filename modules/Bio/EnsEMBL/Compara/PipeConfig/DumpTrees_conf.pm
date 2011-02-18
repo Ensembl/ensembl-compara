@@ -110,6 +110,8 @@ sub pipeline_create_commands {
 
                     * 'md5sum'              compute md5sum for compressed files
 
+                    * 'copy_readme'         copy a correct README file into the target directory
+
 =cut
 
 sub pipeline_analyses {

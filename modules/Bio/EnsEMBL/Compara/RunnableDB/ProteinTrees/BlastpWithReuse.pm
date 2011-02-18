@@ -140,7 +140,9 @@ sub run {
 
     my $fasta_dir         = $self->param('fasta_dir') or die "'fasta_dir' is an obligatory parameter";
 
-    my $blastp_exe        = $self->analysis->program_file || 'wublastp';
+    my $wublastp_exe      = $self->analysis->program_file || 'wublastp';
+
+    my $blast_tmp_dir     = $self->param('blast_tmp_dir');
 
     my %cross_pafs = ();
 
@@ -183,11 +185,12 @@ sub run {
       my $runnable = Bio::EnsEMBL::Analysis::Runnable::Blast->new(
          -query     => $query,
          -database  => $cross_genome_dbfile,
-         -program   => $blastp_exe,
+         -program   => $wublastp_exe,
          -analysis  => $self->analysis,
          -options   => $blast_options,
          -parser    => $parser,
          -filter    => undef,
+         ( $blast_tmp_dir ? (-workdir => $blast_tmp_dir) : () ),
       );
 
       $self->compara_dba->dbc->disconnect_when_inactive(1);

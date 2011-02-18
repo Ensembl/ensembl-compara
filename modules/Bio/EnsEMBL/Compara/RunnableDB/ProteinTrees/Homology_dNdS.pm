@@ -124,8 +124,8 @@ sub calc_genetic_distance {
   $self->compara_dba->dbc->disconnect_when_inactive(1);
   
   my $codeml = new Bio::Tools::Run::Phylo::PAML::Codeml();
-  my $possible_exe = $self->analysis->program_file;
-  if(defined $possible_exe) {
+  my $possible_exe = $self->analysis->program_file || '';
+  if($possible_exe) {
     print("Using executable at ${possible_exe}\n") if $self->debug;
     $codeml->executable($possible_exe);
   }
