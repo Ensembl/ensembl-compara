@@ -317,10 +317,11 @@ sub render_transcripts {
       }
     }
     
+    my $is_coding_check    = $coding_only ? $self->is_coding_gene($gene) : 0;
     my @sorted_transcripts = map $_->[1], sort { $b->[0] <=> $a->[0] } map [ $_->start * $gene_strand, $_ ], @{$gene->get_all_Transcripts};
     
     foreach my $transcript (@sorted_transcripts) {
-      next if $coding_only && !$transcript->translation;
+      next if $coding_only && $is_coding_check && !$transcript->translation;
       next if $transcript->start > $length || $transcript->end < 1;
       
       my @exons = sort { $a->start <=> $b->start } grep { $_ } @{$transcript->get_all_Exons}; # sort exons on their start coordinate 
@@ -1434,6 +1435,16 @@ sub map_AlignSlice_Exons {
     
   return reverse @exons;
 }
+
+sub is_coding_gene {
+   my ($self, $gene) = @_;
+	 
+   foreach (@{$gene->get_all_Transcripts}) {
+     return 1 if $_->translation;
+   }
+   
+   return 0;
+ }
 
 # Generate title tag which will be used to render z-menu
 sub title {
