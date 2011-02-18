@@ -35,6 +35,7 @@ sub default_options {
 
     # blast parameters:
         'blast_options'             => '-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1',
+        'blast_tmp_dir'             => '',  # if empty, will use Blast Analysis' default
 
     # clustering parameters:
         'outgroups'                     => [106],   # affects 'hcluster_dump_input_per_genome'
@@ -55,7 +56,7 @@ sub default_options {
         'wublastp_exe'              => 'wublastp',
         'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         'mcoffee_exe'               => '/software/ensembl/compara/tcoffee-7.86b/t_coffee',
-        'mafft_exe'                 => '',  # use module built-in default (not ready yet to touch that can of worms)
+        'mafft_exe'                 => '',  # if empty, will use module built-in default (not ready yet to touch that can of worms)
         'sreformat_exe'             => '/usr/local/ensembl/bin/sreformat',
         'treebest_exe'              => '/software/ensembl/compara/treebest/treebest',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
@@ -416,6 +417,7 @@ sub pipeline_analyses {
                 'mlss_id'                   => $self->o('mlss_id'),
                 'reuse_db'                  => $self->dbconn_2_url('reuse_db'),
                 'blast_options'             => $self->o('blast_options'),
+                'blast_tmp_dir'             => $self->o('blast_tmp_dir'),
                 'fasta_dir'                 => $self->o('fasta_dir'),
             },
             -wait_for => [ 'load_fresh_members', 'dump_subset_create_blastdb', 'paf_table_reuse', 'paf_create_empty_table' ],
