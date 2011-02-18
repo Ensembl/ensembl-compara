@@ -59,6 +59,7 @@ sub default_options {
         'treebest_exe'              => '/software/ensembl/compara/treebest/treebest',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
+        'codeml_exe'                => '/usr/local/ensembl/bin/codeml',
 
 
         'release'           => '61',
@@ -696,6 +697,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'homology_dNdS',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Homology_dNdS',
+            -program_file       => $self->o('codeml_exe'),
             -parameters => {
                 'codeml_parameters_file'    => $self->o('codeml_parameters_file'),
             },
