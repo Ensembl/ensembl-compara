@@ -24,7 +24,7 @@ sub render_collapsed_label       { my $self = shift; $self->render_collapsed(1);
 sub render_collapsed_nolabel     { my $self = shift; $self->render_collapsed(0); }
 sub render_transcript_label      { my $self = shift; $self->render_transcripts(1); }
 sub render_transcript            { my $self = shift; $self->render_transcripts(1); }
-sub render_coding_only           { my $self = shift; $self->render_transcripts(1,1); }
+sub render_coding_only           { my $self = shift; $self->render_transcripts(1, 1); }
 sub render_normal                { my $self = shift; $self->render_transcripts(1); }
 sub render_transcript_nolabel    { my $self = shift; $self->render_transcripts(0); }
 sub render_as_transcript_label   { my $self = shift; $self->render_alignslice_transcript(1); }
@@ -319,24 +319,17 @@ sub render_transcripts {
     
     my @sorted_transcripts = map $_->[1], sort { $b->[0] <=> $a->[0] } map [ $_->start * $gene_strand, $_ ], @{$gene->get_all_Transcripts};
     
-    my $is_coding;
-    if ($coding_only) {
-      $is_coding = $self->is_coding_gene($gene);
-    }
-
-
     foreach my $transcript (@sorted_transcripts) {
-      my $transcript_stable_id = $transcript->stable_id;
-      
+      next if $coding_only && !$transcript->translation;
       next if $transcript->start > $length || $transcript->end < 1;
-   
-      next if ($is_coding && !$transcript->translation && $coding_only);
       
       my @exons = sort { $a->start <=> $b->start } grep { $_ } @{$transcript->get_all_Exons}; # sort exons on their start coordinate 
       
       next unless scalar @exons; # Skip if no exons for this transcript
       next if @exons[0]->strand != $gene_strand && $self->{'do_not_strand'} != 1; # If stranded diagram skip if on wrong strand
       next if $target && $transcript->stable_id ne $target; # For exon_structure diagram only given transcript
+      
+      my $transcript_stable_id = $transcript->stable_id;
       
       $transcript_drawn = 1;        
 
@@ -527,16 +520,6 @@ sub render_transcripts {
   } elsif ($config->get_option('opt_empty_tracks') != 0) {
     $self->errorTrack(sprintf 'No %s in this region', $self->error_track_name);
   }
-}
-
-sub is_coding_gene {
-  my ($self,$gene) = @_;
-  foreach my $trans (@{$gene->get_all_Transcripts}) {
-    if ($trans->translation) {
-      return 1;
-    }
-  }
-  return 0;
 }
 
 sub render_alignslice_transcript {
