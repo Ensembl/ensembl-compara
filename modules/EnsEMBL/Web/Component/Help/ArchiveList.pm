@@ -18,12 +18,11 @@ sub _init {
 }
 
 sub content {
-  my $self    = shift;
-  my $hub     = $self->hub;
-  my $referer = $self->_parse_referer;
-  my $url     = $referer->{'uri'};
-  my $r       = $hub->param('r');
-  my $match   = $url =~ m/^\//;
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $url   = $hub->referer->{'uri'};
+  my $r     = $hub->param('r');
+  my $match = $url =~ m/^\//;
   
   if ($r) {
     $url  =~ s/([\?;&]r=)[^;]+(;?)/$1$r$2/;

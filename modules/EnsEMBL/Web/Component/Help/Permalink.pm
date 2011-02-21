@@ -18,7 +18,7 @@ sub content {
   my $self     = shift;
   my $hub      = $self->hub;
   my $sitename = $hub->species_defs->ENSEMBL_SITETYPE;
-  my $url      = $hub->param('url') . $hub->_parse_referer->{'uri'};
+  my $url      = $hub->param('url') . $hub->referer->{'uri'};
   my $r        = $hub->param('r');
   
   if ($r) {
