@@ -105,7 +105,7 @@ sub species_defs  { return $_[0]{'_species_defs'};  }
 
 sub timer_push        { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? shift->timer->push(@_) : undef; }
 sub check_ajax        { return $_[0]{'check_ajax'} ||= $_[0]->get_cookies('ENSEMBL_AJAX') eq 'enabled';    }
-sub referer           { return $_[0]{'referer'}    ||= $_[0]->_parse_referer;                              }
+sub referer           { return $_[0]{'referer'}    ||= $_[0]->parse_referer;                               }
 sub colourmap         { return $_[0]{'colourmap'}  ||= new Bio::EnsEMBL::ColourMap($_[0]->species_defs);   }
 sub viewconfig        { return $_[0]{'viewconfig'} ||= $_[0]->get_viewconfig;                              } # Store default viewconfig so we don't have to keep getting it from session
 
@@ -326,6 +326,65 @@ sub multi_params {
     map { $_ => $input->param($_) } grep { /^([srg]\d*|pop\d+|align)$/ && $input->param($_) } $input->param;
 
   return \%params;
+}
+
+sub parse_referer {
+  my $self = shift;
+  my $species_defs = $self->species_defs;
+  
+  my $uri = $ENV{'HTTP_REFERER'}; 
+  $uri    =~ s/^(https?:\/\/.*?)?\///i;
+  $uri    =~ s/[;&]$//;
+  
+  my ($url, $query_string) = split /\?/, $uri;
+  my ($species, $type, $action, $function) = split /\//, $url;
+  
+  return {} unless $species_defs->valid_species($species);
+  
+  my @pairs  = split /[&;]/, $query_string;
+  my $params = {};
+  
+  foreach (@pairs) {
+    my ($param, $value) = split '=', $_, 2;
+    
+    next unless defined $param;
+    
+    $value = '' unless defined $value;
+    $param = uri_unescape($param);
+    $value = uri_unescape($value);
+    
+    push @{$params->{$param}}, $value unless $param eq 'time'; # don't copy time
+  }
+
+  if ($species_defs->ENSEMBL_DEBUG_FLAGS & $species_defs->ENSEMBL_DEBUG_REFERER) {
+    warn "\n";
+    warn "------------------------------------------------------------------------------\n";
+    warn "\n";
+    warn "  SPECIES:  $species\n";
+    warn "  TYPE:     $type\n";
+    warn "  ACTION:   $action\n";
+    warn "  FUNCTION: $function\n";
+    warn "  QS:       $query_string\n";
+    
+    foreach my $param (sort keys %$params) {
+      warn sprintf '%20s = %s\n', $param, $_ for sort @{$params->{$param}};
+    }
+    
+    warn "\n";
+    warn "  URI:      $uri\n";
+    warn "\n";
+    warn "------------------------------------------------------------------------------\n";
+  }
+  
+  return {
+    ENSEMBL_SPECIES  => $species,
+    ENSEMBL_TYPE     => $type,
+    ENSEMBL_ACTION   => $action,
+    ENSEMBL_FUNCTION => $function,
+    params           => $params,
+    uri              => "/$uri",
+    absolute_url     => $ENV{'HTTP_REFERER'}
+  };
 }
 
 sub filename {
