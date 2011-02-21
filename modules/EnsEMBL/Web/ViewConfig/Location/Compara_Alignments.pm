@@ -5,39 +5,35 @@ use strict;
 use base qw(EnsEMBL::Web::ViewConfig::Gene::Compara_Alignments);
 
 sub init { 
-  my $view_config = shift;
+  my $self = shift;
   
-  $view_config->SUPER::init;
+  $self->SUPER::init;
   
-  $view_config->{'no_flanking'} = 1;
-  $view_config->{'strand_option'} = 1;
+  $self->{'no_flanking'} = 1;
+  $self->{'strand_option'} = 1;
   
-  $view_config->_set_defaults(qw(
+  $self->_set_defaults(qw(
     flank5_display 0 
     flank3_display 0
     panel_top      yes
     strand         1
   ));
   
-  $view_config->add_image_configs({qw(
-    contigviewtop        nodas
-    alignsliceviewbottom nodas
-  )}); 
+  if ($self->hub->function eq 'Image') {
+    $self->add_image_configs({qw(
+      contigviewtop        nodas
+      alignsliceviewbottom nodas
+    )});
+    
+    $self->default_config = 'alignsliceviewbottom';
+    $self->{'species_only'} = 1;
+  }
 }
 
 sub form {
-  my ($view_config, $object) = @_;
-  
-  if ($object->function eq 'Image') { 
-    $view_config->default_config = 'alignsliceviewbottom';
-    $view_config->add_form_element({ type => 'YesNo', name => 'panel_top', select => 'select', label => 'Show overview panel' });
-    $view_config->{'species_only'} = 1;
-  } elsif (!$view_config->is_custom) {
-    $view_config->{'_image_config_names'} = {}; # Removes the image config tabs
-    $view_config->has_images = 0;
-  }
-  
-  $view_config->SUPER::form($object);
+  my ($self, $object) = @_;
+  $self->add_form_element({ type => 'YesNo', name => 'panel_top', select => 'select', label => 'Show overview panel' }) if $self->hub->function eq 'Image';
+  $self->SUPER::form($object);
 }
 
 1;
