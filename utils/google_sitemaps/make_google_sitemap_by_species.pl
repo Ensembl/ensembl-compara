@@ -122,7 +122,6 @@ sub get_analysis_ids {
       "SELECT ad.analysis_id, ad.web_data 
        FROM analysis_description ad, analysis a 
        WHERE a.analysis_id = ad.analysis_id  
-       AND   a.logic_name != 'estgene' 
        AND   ad.displayable = 1"
   );
   $sth->execute;
