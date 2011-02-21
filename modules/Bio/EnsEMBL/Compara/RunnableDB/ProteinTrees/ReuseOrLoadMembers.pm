@@ -159,7 +159,20 @@ sub dbc_2_mysql_params {    # NB: this subroutine is not a method!
     my $port     = $dbc->port;
     my $dbname   = $dbc->dbname;
 
-    return " -u $username $pass -h $host -P$port $dbname ";
+    return " -h$host -P$port -u$username $pass $dbname ";
+}
+
+sub dbconn_2_mysql_params {     # NB: this subroutine is not a method!
+    my $dbconn_hash = shift @_;
+
+    my $host     = $dbconn_hash->{-host};
+    my $port     = $dbconn_hash->{-port};
+    my $username = $dbconn_hash->{-user};
+    my $password = $dbconn_hash->{-pass};
+    my $pass     = $password ? "-p'$password'" : '';
+    my $dbname   = $dbconn_hash->{-dbname};
+
+    return " -h$host -P$port -u$username $pass $dbname ";
 }
 
 sub drop_temp_member_table {
@@ -181,14 +194,13 @@ sub create_temp_member_table {
 
     my $genome_db_id     = $self->param('genome_db_id');
 
-    my $reuse_db = $self->param('reuse_db');
-    my $comparaDBA_reuse = Bio::EnsEMBL::Hive::URLFactory->fetch($reuse_db . ';type=compara')
-        or $self->throw("Couldn't connect to reuse_db '$reuse_db': $!");
+    my $reuse_db = $self->param('reuse_db') or die "'reuse_db' connection parameters hash has to be defined in reuse mode";
+
+    my $cmd = "mysqldump --skip-quote-names --where=\"genome_db_id=${genome_db_id}\" ".dbconn_2_mysql_params($reuse_db). ' member';
+    print("Running: # $cmd\n") if($self->debug);
 
     my $starttime = time();
-    my $cmd = "mysqldump --skip-quote-names --where=\"genome_db_id=${genome_db_id}\" ".dbc_2_mysql_params($comparaDBA_reuse->dbc). ' member';
-    print("Running: # $cmd\n") if($self->debug);
-    open(INRUN, "$cmd |") or $self->throw("Error mysqldump $reuse_table_name, $!\n");
+    open(INRUN, "$cmd |") or $self->throw("Error running $cmd : $!\n");
     my @output = <INRUN>;
     my $exit_status = close(INRUN);
     foreach my $line (@output) {

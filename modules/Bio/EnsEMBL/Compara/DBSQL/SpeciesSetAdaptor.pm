@@ -128,7 +128,6 @@ sub store {
 
 sub fetch_by_dbID {
   my ($self, $dbID) = @_;
-  my $species_set; # returned object
 
   my $sql = qq{
           SELECT
@@ -142,25 +141,22 @@ sub fetch_by_dbID {
 
   my $sth = $self->prepare($sql);
   $sth->execute($dbID);
+
   my ($species_set_id,$genome_db_id);
   $sth->bind_columns(\$species_set_id,\$genome_db_id);
-  my $genome_dbs;
+  my $genome_dbs = ();
   while ($sth->fetch) {
     my $genome_db = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
     push(@$genome_dbs, $genome_db) if (defined($genome_db));
   }
   $sth->finish();
 
-  if (!defined($genome_dbs)) {
-    # There are situations when the genome_db will not exist, but
-    # still makes sense to do the query -- mostly production
-    $DB::single=1;1;
-  }
   ## Create the object
-  $species_set = new Bio::EnsEMBL::Compara::SpeciesSet
-    (-adaptor => $self,
+  my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
+     -adaptor => $self,
      -dbID => $dbID,
-     -genome_dbs => $genome_dbs);
+     -genome_dbs => $genome_dbs
+  );
   $self->_load_tagvalues($species_set);
 
   return $species_set;

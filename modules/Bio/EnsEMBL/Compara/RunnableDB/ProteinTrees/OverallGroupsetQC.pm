@@ -58,8 +58,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC;
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
-use Bio::EnsEMBL::Hive::URLFactory;               # reuse_db
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -104,7 +102,9 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    $self->overall_groupset_qc;
+    if(my $reuse_db = $self->param('reuse_db')) {
+        $self->overall_groupset_qc($reuse_db);
+    }
 }
 
 
@@ -143,11 +143,10 @@ sub generate_dbname {
 
 
 sub overall_groupset_qc {
-  my $self = shift @_;
+    my $self     = shift @_;
+    my $reuse_db = shift @_;
 
-  my $reuse_db_url = $self->param('reuse_db') or die "'reuse_db' is an obligatory parameter";
-  my $reuse_compara_dba = Bio::EnsEMBL::Hive::URLFactory->fetch($reuse_db_url . ';type=compara')
-    or die "Cannot connect to reuse compara_dba '$reuse_db_url'";
+    my $reuse_compara_dba = $self->go_figure_compara_dba($reuse_db);    # may die if bad parameters
 
     my $xtb_filename = $self->join_one_pair( $reuse_compara_dba, $self->compara_dba );
 

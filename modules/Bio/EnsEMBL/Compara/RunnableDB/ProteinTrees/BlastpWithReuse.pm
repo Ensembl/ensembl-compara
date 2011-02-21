@@ -83,8 +83,7 @@ sub fetch_input {
     my $reuse_ss_id = $self->param('reuse_ss_id')
                     or die "'reuse_ss_id' is an obligatory parameter dynamically set in 'meta' table by the pipeline - please investigate";
 
-    my $reuse_ss = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($reuse_ss_id)
-                    or die "Could not fetch reuse species_set with dbID=$reuse_ss_id";
+    my $reuse_ss = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($reuse_ss_id);    # this method cannot fail at the moment, but in future it may
 
     my $reuse_ss_hash = { map { $_->dbID() => 1 } @{ $reuse_ss->genome_dbs() } };
     $self->param('reuse_ss_hash', $reuse_ss_hash );
@@ -134,7 +133,8 @@ sub run {
     my $member      = $self->param('member');
     my $query       = $self->param('query');
 
-    my $reuse_at_all      = $self->param('reuse_db');
+    my $reuse_db          = $self->param('reuse_db');   # if this parameter is an empty string, there will be no reuse
+
     my $reuse_ss_hash     = $self->param('reuse_ss_hash');
     my $reuse_this_member = $reuse_ss_hash->{$member->genome_db_id};
 
@@ -155,7 +155,7 @@ sub run {
         # Here we can look at a previous build and try to reuse the blast
         # results for this query peptide against this hit genome.
         # Only run if the blasts are not being reused:
-    unless($reuse_at_all and $reuse_ss_hash->{$genome_db->dbID} and $reuse_this_member) {
+    unless($reuse_db and $reuse_ss_hash->{$genome_db->dbID} and $reuse_this_member) {
 
           ## Define the filter from the parameters:
       my $thr_type = $self->param('-threshold_type');

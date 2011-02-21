@@ -57,8 +57,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC;
 
 use strict;
 
-use Bio::EnsEMBL::Hive::URLFactory;               # reuse_db
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -79,9 +77,9 @@ sub run {
 
     return unless $self->param('reuse_this');
 
-    my $reuse_db_url            = $self->param('reuse_db') or die "'reuse_db' has to be defined if 'reuse_this' is true";
-    my $reuse_compara_dba = Bio::EnsEMBL::Hive::URLFactory->fetch($reuse_db_url . ';type=compara')
-        or die "Cannot connect to reuse compara_dba '$reuse_db_url'";
+    my $reuse_db                = $self->param('reuse_db') or die "'reuse_db' connection parameters hash has to be defined in reuse mode";
+
+    my $reuse_compara_dba       = $self->go_figure_compara_dba($reuse_db);    # may die if bad parameters
 
     my $reuse_orphans           = $self->fetch_gdb_orphan_genes($reuse_compara_dba, $genome_db_id);
     my %common_orphans = ();

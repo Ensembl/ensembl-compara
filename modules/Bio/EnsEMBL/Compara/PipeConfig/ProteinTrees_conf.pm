@@ -336,7 +336,7 @@ sub pipeline_analyses {
         {   -logic_name => 'load_reuse_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ReuseOrLoadMembers',
             -parameters => {
-                'reuse_db'      => $self->dbconn_2_url('reuse_db'),     # FIXME: remove the first-hash-to-url-then-hash-from-url code redundancy
+                'reuse_db'  => $self->o('reuse_db'),
             },
             -wait_for => [ 'accumulate_reuse_ss' ], # to make sure some fresh members won't start because they were dataflown first (as this analysis can_be_empty)
             -hive_capacity => -1,
@@ -362,9 +362,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'load_fresh_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ReuseOrLoadMembers',
-            -parameters => {
-                'reuse_db'      => $self->dbconn_2_url('reuse_db'),     # FIXME: remove the first-hash-to-url-then-hash-from-url code redundancy
-            },
+            -parameters => { },
             -wait_for => [ 'accumulate_reuse_ss', 'load_reuse_members' ],
             -hive_capacity => -1,
             -can_be_empty  => 1,
@@ -415,7 +413,7 @@ sub pipeline_analyses {
             -program_file       => $self->o('wublastp_exe'),
             -parameters         => {
                 'mlss_id'                   => $self->o('mlss_id'),
-                'reuse_db'                  => $self->dbconn_2_url('reuse_db'),
+                'reuse_db'                  => $self->o('reuse_db'),
                 'blast_options'             => $self->o('blast_options'),
                 'blast_tmp_dir'             => $self->o('blast_tmp_dir'),
                 'fasta_dir'                 => $self->o('fasta_dir'),
@@ -512,7 +510,7 @@ sub pipeline_analyses {
         {   -logic_name => 'overall_clusterset_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC',
             -parameters => {
-                'reuse_db'                  => $self->dbconn_2_url('reuse_db'),     # FIXME: remove the first-hash-to-url-then-hash-from-url code redundancy
+                'reuse_db'                  => $self->o('reuse_db'),
                 'cluster_dir'               => $self->o('cluster_dir'),
                 'groupset_tag'              => 'ClustersetQC',
             },
@@ -525,7 +523,7 @@ sub pipeline_analyses {
         {   -logic_name => 'per_genome_clusterset_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC',
             -parameters => {
-                'reuse_db'                  => $self->dbconn_2_url('reuse_db'),     # FIXME: remove the first-hash-to-url-then-hash-from-url code redundancy
+                'reuse_db'                  => $self->o('reuse_db'),
                 'groupset_tag'              => 'ClustersetQC',
             },
             -wait_for => [ 'hcluster_parse_output' ],
@@ -653,7 +651,7 @@ sub pipeline_analyses {
         {   -logic_name => 'overall_genetreeset_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC',
             -parameters => {
-                'reuse_db'                  => $self->dbconn_2_url('reuse_db'),     # FIXME: remove the first-hash-to-url-then-hash-from-url code redundancy
+                'reuse_db'                  => $self->o('reuse_db'),
                 'cluster_dir'               => $self->o('cluster_dir'),
                 'groupset_tag'              => 'GeneTreesetQC',
             },
@@ -667,7 +665,7 @@ sub pipeline_analyses {
         {   -logic_name => 'per_genome_genetreeset_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC',
             -parameters => {
-                'reuse_db'                  => $self->dbconn_2_url('reuse_db'),     # FIXME: remove the first-hash-to-url-then-hash-from-url code redundancy
+                'reuse_db'                  => $self->o('reuse_db'),
                 'groupset_tag'              => 'GeneTreesetQC',
             },
             -wait_for => [ 'mcoffee', 'mcoffee_himem', 'njtree_phyml', 'ortho_tree', 'quick_tree_break' ],
