@@ -143,9 +143,6 @@ sub new {
 		  if($ref eq '') {
 			# make ref '-' if no ref allele left
 			$ref = '-';
-			
-			# extra adjustment required for Ensembl
-			$start++;
 		  }
 		  
 		  # make alt '-' if no alt allele left
