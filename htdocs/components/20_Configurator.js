@@ -151,6 +151,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           panel.searchTimer = setTimeout(function () {
             panel.elLk.links.removeClass('active');
             panel.elLk.searchResults.removeClass('disabled').parent().addClass('active');
+            panel.elLk.form.addClass('multi');
             panel.search(); 
           }, 250);
         }
