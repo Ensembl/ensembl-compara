@@ -334,6 +334,7 @@ sub load_user_tracks {
     
     $url_sources{$entry->{'url'}} = {
       source_name => $entry->{'name'} || $entry->{'url'},
+      source_url  => $entry->{'url'},
       source_type => 'session',
       format      => $entry->{'format'},
       style       => $entry->{'style'},
@@ -395,17 +396,23 @@ sub load_user_tracks {
     }
   }
 
-  foreach (sort { $url_sources{$a}{'source_name'} cmp $url_sources{$b}{'source_name'} } keys %url_sources) {
-    my $k = 'url_' . md5_hex("$self->{'species'}:$_");
-    
-    $self->_add_flat_file_track($menu, 'url', $k, $url_sources{$_}{'source_name'}, sprintf('
-        Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', 
-        encode_entities($url_sources{$_}{'source_type'}), encode_entities($_)
-      ),
-      'url'    => $_,
-      'format' => $url_sources{$_}{'format'},
-      'style'  => $url_sources{$_}{'style'},
-    );
+  foreach my $url (sort { $url_sources{$a}{'source_name'} cmp $url_sources{$b}{'source_name'} } keys %url_sources) {
+    my $add_method = '_add_'.$url_sources{$url}{'format'}.'_track';
+    if ($self->can($add_method)) {
+      $self->$add_method($menu, $url_sources{$url});
+    }
+    else {
+      my $k = 'url_' . md5_hex($self->{'species'} . ':' . $url);
+        
+      $self->_add_flat_file_track($menu, 'url', $k, $url_sources{$url}{'source_name'}, sprintf('
+          Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s',
+          encode_entities($url_sources{$url}{'source_type'}), encode_entities($url)
+        ),
+        'url'     => $url,
+        'format'  => $url_sources{$url}{'format'},
+        'style'   => $url_sources{$url}{'style'},
+      );
+    }
   }
   
   # We now need to get a userdata adaptor to get the analysis info
@@ -442,43 +449,6 @@ sub load_user_tracks {
     
     $menu->append($self->create_track(@$_)) for sort { lc($a->[2]{'source_name'}) cmp lc($b->[2]{'source_name'}) || lc($a->[1]) cmp lc($b->[1]) } @tracks;
   }
-  
-  # session bam sources
-  foreach my $entry (grep $_->{'species'} eq $self->{'species'}, $session->get_data(type => 'bam')) {
-    $bam_sources{"$entry->{'name'}_$entry->{'url'}"} = {
-      source_name => $entry->{'name'},
-      source_url  => $entry->{'url'},
-      source_type => 'session'
-    };
-  }
-  
-  # user bam sources
-  if ($user) {
-    foreach my $entry (grep $_->species eq $self->{'species'}, $user->bams) {
-      $bam_sources{$entry->name . '_' . $entry->url} = {
-        source_name => $entry->name,
-        source_url  => $entry->url,
-        source_type => 'user'
-      };
-    }
-  }
- 
-  # create bam tracks
-  foreach (sort { $bam_sources{$a}{'source_name'} cmp $bam_sources{$b}{'source_name'} } keys %bam_sources) {
-    my $source = $bam_sources{$_};
-    my $key    = "bam_$source->{'source_name'}_" . md5_hex("$self->{'species'}:$source->{'source_url'}");
-    
-    $self->_add_bam_track($menu, $key, $source->{'source_name'},
-      caption     => $source->{'source_name'},
-      url         => $source->{'source_url'},
-      description => sprintf('
-        Data retrieved from a BAM file on an external webserver.  
-        The read end bars indicate the direction of the read and the colour indicates the type of read pair: Green = both mates mapped to the same chromosome, Blue = second mate was not mapped, Red = second mate mapped to a different chromosome.
-        This data is attached to the %s, and comes from URL: %s',
-        encode_entities($source->{'source_type'}), encode_entities($source->{'source_url'})
-      ),
-    );
-  }
 }
 
 sub load_configured_bam {
@@ -492,16 +462,25 @@ sub load_configured_bam {
     my $menu   = $self->get_node($internal_bam_sources->{$source_name});
     my $source = $menu ? $self->sd_call($source_name) : undef;
     
-    $self->_add_bam_track($menu, "bam_${source_name}_" . md5_hex("$self->{'species'}:$source->{'url'}"), $source_name, %$source) if $source;
+    $self->_add_bam_track($menu, $source) if $source;
   }
 }
  
 sub _add_bam_track {
-  my ($self, $menu, $key, $name, %options) = @_;
+  my ($self, $menu, $source) = @_;
   
   $menu ||= $self->get_node('user_data');
-  
   return unless $menu;
+
+  my $name  = $source->{'source_name'};
+  my $key   = 'bam_'.$name.'_' . md5_hex("$self->{'species'}:$source->{'source_url'}");
+
+  my $description = sprintf('
+        Data retrieved from a BAM file on an external webserver.  
+        The read end bars indicate the direction of the read and the colour indicates the type of read pair: Green = both mates mapped to the same chromosome, Blue = second mate was not mapped, Red = second mate mapped to a different chromosome.
+        This data is attached to the %s, and comes from URL: %s',
+        encode_entities($source->{'source_type'}), encode_entities($source->{'source_url'})
+      );
  
   my $track = $self->create_track($key, $name, {
     display   => 'off',
@@ -516,7 +495,9 @@ sub _add_bam_track {
       'unlimited', 'Unlimited', 
       'histogram', 'Coverage only'
     ],
-    %options
+    caption   => $name,
+    url       => $source->{'source_url'},
+    description => $description,
   });
  
   $menu->append($track) if $track;
