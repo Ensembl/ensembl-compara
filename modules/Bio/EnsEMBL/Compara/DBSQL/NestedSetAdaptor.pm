@@ -316,6 +316,10 @@ sub store {
 =head2 sync_tree_leftright_index
 
   Arg [1]    : Bio::EnsEMBL::Compara::NestedSet $root
+  Arg [2]    : Boolean; indicates if you wish to use a fresh database 
+               connection to perform any locking. If you are within an existing
+               transaction this is a good idea to avoid locking the LR table
+               for the duration of your transaction
   Example    : $nsa->sync_tree_leftright_index($root);
   Description: For the given root this method looks for left right index
                offset recorded in lr_index_offset for the configured
@@ -332,51 +336,65 @@ sub store {
 =cut
 
 sub sync_tree_leftright_index {
-	my ($self, $tree_root) = @_;
-	my $starting_lr_index = $self->_get_starting_lr_index($tree_root);
-	$tree_root->build_leftright_indexing($starting_lr_index);
-	return;
+  my ($self, $tree_root, $use_fresh_connection) = @_;
+  my $starting_lr_index = $self->_get_starting_lr_index($tree_root);
+  $tree_root->build_leftright_indexing($starting_lr_index, $use_fresh_connection);
+  return;
 }
 
-#
-# Remove need for locks by adding an auto_increment column to the table, 
-# allowing transactions to be used in the EPO pipeline.
-# The table now has an auto-increment column (id), the number of indexes
-# required (num_index) and the starting index (start). The (sum of num_index)+1
-# gives the new start position.
-# Offset is pre-calculated by taking the number of nodes in the tree
-# and multiplying by 2. This is then stored & passed back to
-# sync_tree_leftright_index()
-#
+##
+## Offset is pre-calculated by taking the number of nodes in the tree
+## and multiplying by 2. This is then stored & passed back to
+## sync_tree_leftright_index()
+##
 sub _get_starting_lr_index {
-    my ($self, $tree_root) = @_;
-    
-    my $table = $self->_lr_table_name();
-    
-    my $node_count = scalar(@{$tree_root->get_all_nodes()});
-    my $lr_ids_needed = $node_count*2;
-    
-    my $sql = "INSERT INTO lr_index_offset SELECT NULL, ?, ?, SUM(num_index)+1 FROM lr_index_offset WHERE table_name = ?";
-    my $sth = $self->prepare($sql);
-    $sth->execute($table, $lr_ids_needed, $table);
-    my $this_id = $sth->{'mysql_insertid'};
-    $sth->finish();
+  my ($self, $tree_root, $use_fresh_connection) = @_;
 
-    $sql = "SELECT start FROM lr_index_offset WHERE id = ?";
-    $sth = $self->prepare($sql);
-    $sth->execute($this_id);
-    my ($starting_lr_index) = $sth->fetchrow_array();
-    $sth->finish();
+  my $table = $self->_lr_table_name();
+  my $node_count = scalar(@{$tree_root->get_all_nodes()});
+  my $lr_ids_needed = $node_count*2;
 
-    if (!$starting_lr_index) {
-	$starting_lr_index = 1;
+  my $sql = 'SELECT lr_index_offset_id, lr_index FROM lr_index_offset WHERE table_name =? FOR UPDATE';
+  my $update_sql = 'UPDATE lr_index_offset SET lr_index =? WHERE lr_index_offset_id =?';
+  my $insert_sql = 'INSERT INTO lr_index_offset (table_name, lr_index) VALUES (?, ?)';
+
+  my $conn = ($use_fresh_connection) ?
+    Bio::EnsEMBL::DBSQL::DBConnection->new(-DBCONN => $self->dbc()) :
+    $self->dbc();
+  my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $conn);
+
+  my $starting_lr_index;
+
+  $h->transaction(-CALLBACK => sub {
+    my $rows = $h->execute(-SQL => $sql, -PARAMS => [$table]);
+
+    my ($ddl, $params);
+    if(@{$rows}) {
+      my ($lr_index_offset_id, $max_lr_index) = @{$rows->[0]};
+      $starting_lr_index = $max_lr_index+1;
+      my $new_max_lr_index = $max_lr_index+$lr_ids_needed;
+      $ddl = $update_sql;
+      $params = [$new_max_lr_index, $lr_index_offset_id];
     }
-    return $starting_lr_index;
+    else {
+      $starting_lr_index = 1;
+      my $new_max_lr_index = $lr_ids_needed;
+      $ddl = $insert_sql;
+      $params = [$table, $new_max_lr_index];
+    }
+
+    $h->execute_update(-SQL =>  $ddl, -PARAMS => $params);
+    return;
+  });
+  
+  $conn->disconnect_if_idle() if($use_fresh_connection);
+
+  return $starting_lr_index;
 }
 
 sub _lr_table_name {
-	my ($self) = @_;
-	return $self->tables->[0]->[0];
+  my ($self) = @_;
+  return $self->tables->[0]->[0];
 }
 
 ##################################
