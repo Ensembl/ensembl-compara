@@ -176,11 +176,11 @@ sub init_imageconfig {
       
       my $class = 'config_menu';
       
-      if ($children > 1) {
+      if ($children) {
         my $menu   = $self->{'select_all_menu'}->{$n->id};
-        my $header = $children ? $n->get('caption') : '';
+        my $header = $n->get('caption');
       
-        if ($menu) {
+        if ($menu && $children > 1) {
           $header ||= 'tracks';
           $class   .= ' selectable';
           
