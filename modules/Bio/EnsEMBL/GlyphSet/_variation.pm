@@ -67,11 +67,10 @@ sub fetch_features {
          $sets    = { map { $_ => 1 } @$sets } if $sets;
       my %ct      = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
      
-      my @vari_features;  
-      if ($self->{'my_config'}->id =~/set/){
-        my $track_set = $self->{'my_config'}->id; 
-        $track_set =~s/variation_set_//;
-        
+      my @vari_features;
+      
+      if ($self->{'my_config'}->id =~ /set/) {
+        my $track_set = $self->my_config('set_name');
         my $variation_db_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation');
         my $set_object = $variation_db_adaptor->get_VariationSetAdaptor->fetch_by_name($track_set);
       
@@ -84,7 +83,6 @@ sub fetch_features {
         
         #ÊReset the flag for displaying of failed variations to its original state
         $variation_db_adaptor->include_failed_variations($orig_failed_flag);
-        
       } else {
         my @temp_variations =  @{$self->{'container'}->get_all_VariationFeatures($self->my_config('filter')) || []};  
         ## Add a filtering step here
