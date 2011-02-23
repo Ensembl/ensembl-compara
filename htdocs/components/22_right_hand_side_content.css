@@ -44,12 +44,22 @@ body.ie6 .threecol-left,
 body.ie6 .threecol-middle,
 body.ie6 .threecol-right { width: 25%; }
 
+
+table.blobs { width:100%; }
+table.blobs td { 
+  padding:10px; border-width:1px; border-style:solid; border-color:#ccc; 
+  border-radius:15px; -moz-border-radius: 15px; -webkit-border-radius: 15px;
+}
+table.blobs td.twocol {width:50%;}
+table.blobs td.fourcol {width:25%;}
+
 .plain-box  { color:[[PANEL_TEXT]]; background-color:[[PANEL_BG]]; border:1px solid [[PANEL_BORDER]]; }
 .tinted-box { color:[[PANEL_TEXT]]; background-color:[[TINT_BG]]; border:1px solid [[TINT_BORDER]]; }
 .info-box { color:[[CONTRAST_TEXT]]; background-color:[[CONTRAST_BG]]; border:1px solid [[CONTRAST_BORDER]]; }
 .alert-box { color:[[ALERT_TEXT]]; background-color:[[ALERT_BG]]; border:1px solid [[ALERT_BORDER]]; }
 .embedded-box { width:80%; margin:1em auto; padding:0.5em; }
 
+.centered { text-align:center; margin:auto; }
 .float-right { float:right; width:30%; margin:1% 1% 0 0; padding:1%; }
 .float-left { float:left; width:30%; margin:1% 1% 0 0; padding:1%; }
 .unpadded { margin:0 1%; padding:0; }
