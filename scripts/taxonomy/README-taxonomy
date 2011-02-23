@@ -88,10 +88,6 @@ mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
  "update ncbi_taxa_name set name = \"Canis familiaris\" where taxon_id = 9615 and name_class = \"scientific name\" and name = \"Canis lupus familiaris\""
 mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
  "update ncbi_taxa_name set name = \"Canis lupus familiaris\" where taxon_id = 9615 and name_class = \"synonym\" and name = \"Canis familiaris\""
-
-mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
- "update ncbi_taxa_name set name = \"Pongo abelii\" where taxon_id = 9601 and name_class = \"scientific name\" and name = \"Pongo pygmaeus abelii\""
-
 mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
  "update ncbi_taxa_name set name = \"Vicugna pacos\" where taxon_id = 30538 and name_class = \"scientific name\" and name = \"Lama pacos\""
 mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
