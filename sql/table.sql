@@ -1053,6 +1053,25 @@ CREATE TABLE protein_tree_hmmprofile (
   UNIQUE KEY type_node_id (type, node_id)
 ) COLLATE=latin1_swedish_ci;
 
+#
+# Table structure for table 'lr_index_offset'
+#
+# overview:
+#   Used to store the current maximum left right index for a given table. Table
+#   name is unique and lr_index should be equal to the SQL statement
+#   select max(right_index) from table_name
+# semantics:
+#		lr_index_offset_id -- id of the row since this is an InnoDB table
+#   table_name      -- name of the table this lr_index corresponds to
+#   lr_index        -- max right index for the given table
+
+CREATE TABLE lr_index_offset (
+  lr_index_offset_id int(10) unsigned NOT NULL AUTO_INCREMENT,
+	table_name  varchar(64) NOT NULL,
+	lr_index int(10) unsigned DEFAULT 0,
+	PRIMARY KEY (lr_index_offset_id),
+	UNIQUE KEY (table_name)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 # Auto add schema version to database (this will override whatever hive puts there)
 REPLACE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "62");
