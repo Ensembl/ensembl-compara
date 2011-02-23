@@ -104,9 +104,9 @@ sub adaptor {
 sub genome_dbs {
   my ($self, $arg) = @_;
 
-  if ($arg && @$arg) {
+  if (defined $arg) {
     ## Check content
-    my $genome_dbs;
+    my $genome_dbs = {};
     foreach my $gdb (@$arg) {
       throw("undefined value used as a Bio::EnsEMBL::Compara::GenomeDB\n")
         if (!defined($gdb));

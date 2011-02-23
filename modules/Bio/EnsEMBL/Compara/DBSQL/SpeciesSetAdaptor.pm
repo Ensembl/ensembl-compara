@@ -144,7 +144,7 @@ sub fetch_by_dbID {
 
   my ($species_set_id,$genome_db_id);
   $sth->bind_columns(\$species_set_id,\$genome_db_id);
-  my $genome_dbs = ();
+  my $genome_dbs = [];
   while ($sth->fetch) {
     my $genome_db = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
     push(@$genome_dbs, $genome_db) if (defined($genome_db));
