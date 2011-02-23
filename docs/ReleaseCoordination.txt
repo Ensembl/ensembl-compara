@@ -120,28 +120,28 @@ EOF
 ## run the loading script several times:
 
 #orthologues
-echo -e "201\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/mlss_61.conf \
---pw --genome_db_id "$ALL_GENOMEDB_IDS" 1>create_mlss.ENSEMBL_ORTHOLOGUES.201.out 2>$MLSS_DIR/create_mlss.ENSEMBL_ORTHOLOGUES.201.err
+echo -e "201\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/master.conf \
+--pw --genome_db_id "$ALL_GENOMEDB_IDS" 1>$MLSS_DIR/create_mlss.ENSEMBL_ORTHOLOGUES.201.out 2>$MLSS_DIR/create_mlss.ENSEMBL_ORTHOLOGUES.201.err
 
 # paralogues btw
-echo -e "202\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/mlss_61.conf \
---pw --genome_db_id "$ALL_GENOMEDB_IDS" 1>create_mlss.ENSEMBL_PARALOGUES.btw.202.out 2>$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.btw.202.err
+echo -e "202\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/master.conf \
+--pw --genome_db_id "$ALL_GENOMEDB_IDS" 1>$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.btw.202.out 2>$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.btw.202.err
 
 # paralogues wth
-echo -e "202\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/mlss_61.conf \
---sg --genome_db_id "$ALL_GENOMEDB_IDS" 1>create_mlss.ENSEMBL_PARALOGUES.wth.202.out 2>$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.wth.202.err
+echo -e "202\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/master.conf \
+--sg --genome_db_id "$ALL_GENOMEDB_IDS" 1>$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.wth.202.out 2>$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.wth.202.err
 
 # proteintrees
-echo -e "401\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/mlss_61.conf \
---name "protein trees" --genome_db_id "$ALL_GENOMEDB_IDS" 1>create_mlss.PROTEIN_TREES.401.out 2>$MLSS_DIR/create_mlss.PROTEIN_TREES.401.err
+echo -e "401\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/master.conf \
+--name "protein trees" --genome_db_id "$ALL_GENOMEDB_IDS" 1>$MLSS_DIR/create_mlss.PROTEIN_TREES.401.out 2>$MLSS_DIR/create_mlss.PROTEIN_TREES.401.err
 
 # nctrees
-echo -e "402\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/mlss_61.conf \
---name "nc trees" --genome_db_id "$ALL_GENOMEDB_IDS" 1>create_mlss.NC_TREES.402.out 2>$MLSS_DIR/create_mlss.NC_TREES.402.err
+echo -e "402\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/master.conf \
+--name "nc trees" --genome_db_id "$ALL_GENOMEDB_IDS" 1>$MLSS_DIR/create_mlss.NC_TREES.402.out 2>$MLSS_DIR/create_mlss.NC_TREES.402.err
 
 # families
-echo -e "301\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/mlss_61.conf \
---name "families" --genome_db_id "$ALL_GENOMEDB_IDS" 1>create_mlss.FAMILY.301.out 2>$MLSS_DIR/create_mlss.FAMILY.301.err
+echo -e "301\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/master.conf \
+--name "families" --genome_db_id "$ALL_GENOMEDB_IDS" 1>$MLSS_DIR/create_mlss.FAMILY.301.out 2>$MLSS_DIR/create_mlss.FAMILY.301.err
 
 
 
