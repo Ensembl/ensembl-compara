@@ -39,15 +39,6 @@ ncbi_taxa_node ncbi_taxa_name | mysql -u ensadmin -pxxxx -h compara1 sf5_ensembl
 
 Release 60: 1 min
 
-Some of the species need fixing to be webcode-compatible. This is usually done in ens-livemirror, so it's not needed anywhere else. E.g.:
-
- "update ncbi_taxa_name set name = \"Canis familiaris\" where taxon_id = 9615 and name_class = \"scientific name\" and name = \"Canis lupus familiaris\""
- "update ncbi_taxa_name set name = \"Canis lupus familiaris\" where taxon_id = 9615 and name_class = \"synonym\" and name = \"Canis familiaris\""
-
- "update ncbi_taxa_name set name = \"Pongo abelii\" where taxon_id = 9600 and name_class = \"scientific name\" and name = \"Pongo pygmaeus abelii\""
- "update ncbi_taxa_name set name = \"Pongo pygmaeus abelii\" where taxon_id = 9600 and name_class = \"synonym\" and name = \"Pongo pygmaeus abelii\""
-
-
 #============================================================================
 # Master compara database (handover to compara)
 #============================================================================
