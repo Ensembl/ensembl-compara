@@ -1731,13 +1731,16 @@ sub add_sequence_variations {
     foreach my $toplevel_set (sort { $a->{'name'} cmp $b->{'name'} && (scalar @{$a->{'subsets'}} ? 1 : 0) <=> (scalar @{$b->{'subsets'}} ? 1 : 0) } values %{$hashref->{'variation_set'}{'supersets'}}) {
       my $name          = $toplevel_set->{'name'};
       my $caption       = $name . (scalar @{$toplevel_set->{'subsets'}} ? ' (all data)' : '');
-      my $set_variation = scalar @{$toplevel_set->{'subsets'}} ? $self->create_submenu("set_variation_$name", $name) : $variation_sets;
+      (my $key = $name) =~ s/\W/_/g;
       
-      $set_variation->append($self->create_track("variation_set_$name", $caption, {
+      my $set_variation = scalar @{$toplevel_set->{'subsets'}} ? $self->create_submenu("set_variation_$key", $name) : $variation_sets;
+      
+      $set_variation->append($self->create_track("variation_set_$key", $caption, {
         %options,
         caption     => $caption,
         sources     => undef,
         sets        => [ $name ],
+        set_name    => $name,
         description => $toplevel_set->{'description'},
       }));
   
@@ -1746,12 +1749,14 @@ sub add_sequence_variations {
         foreach my $subset_id (sort @{$toplevel_set->{'subsets'}}) {
           my $sub_set_name        = $hashref->{'variation_set'}{'subsets'}{$subset_id}{'name'}; 
           my $sub_set_description = $hashref->{'variation_set'}{'subsets'}{$subset_id}{'description'};
+          (my $sub_set_key = $sub_set_name) =~ s/\W/_/g;
           
-          $set_variation->append($self->create_track("variation_set_$sub_set_name", $sub_set_name, {
+          $set_variation->append($self->create_track("variation_set_$sub_set_key", $sub_set_name, {
             %options,
             caption     => $sub_set_name,
             sources     => undef,
             sets        => [ $sub_set_name ],
+            set_name    => $sub_set_name,
             description => $sub_set_description
           }));
         }
@@ -1789,11 +1794,12 @@ sub add_structural_variations {
   
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'} || {}}) {
     my $description = $hashref->{'source'}{'descriptions'}{$key_2};
+    (my $k = $key_2) =~ s/\W/_/g;
     
-    $structural_variation->append($self->create_track("variation_feature_structural_$key_2", "$key_2 structural variations", {
+    $structural_variation->append($self->create_track("variation_feature_structural_$k", "$key_2 structural variations", {
       %options,
       caption     => $key_2,
-      sources     => [ $key_2 ],
+      source      => $key_2,
       depth       => 0.5,
       description => $description
       
