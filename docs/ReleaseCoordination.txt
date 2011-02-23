@@ -81,22 +81,78 @@ eg. for the pairwise alignment
 # --pw stands for all pairwised genome_db_ids in the list provided
 # --sg stands for keep genome_db_id in the list alone (singleton) 
 
+
+
+7.1. Create MLSS entries for homology side pipelines:
+
+## generate the species_set and check it :
+
+    export ALL_GENOMEDB_IDS=`mysql -hcompara1 -uensro sf5_ensembl_compara_master -N -e "select group_concat(genome_db_id order by genome_db_id) from genome_db where (assembly_default=1 and taxon_id!=0)" | cat`
+    echo $ALL_GENOMEDB_IDS
+
+
+## choose a temp. directory where the output will be generated:
+
+    export MLSS_DIR="/tmp/mlss_creation"
+    mkdir $MLSS_DIR
+
+## create a registry file to access the master database:
+
+    cat >$MLSS_DIR/master.conf <<EOF
+use strict;
+use Bio::EnsEMBL::Utils::ConfigRegistry;
+use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+
+new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
+    -species => 'compara-master',
+    -host => 'compara1',
+    -user => 'ensadmin',
+    -pass => 'ensembl',
+    -port => 3306,
+    -dbname => 'sf5_ensembl_compara_master',
+);
+
+1;
+EOF
+
+
+## run the loading script several times:
+
 #orthologues
-echo -e "201\n" | /usr/local/ensembl/bin/perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --reg_conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_53/mlss_53.conf --pw --f --genome_db_id "3,4,5,16,18,22,27,29,31,33,34,36,37,38,39,42,43,44,46,48,49,51,52,53,55,56,57,58,60,61,62,64,65,66,67,68,69,77,78,79,80,81,82,83,84,85,86,87,88" 1>create_mlss.ENSEMBL_ORTHOLOGUES.201.out 2>create_mlss.ENSEMBL_ORTHOLOGUES.201.err
+echo -e "201\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/mlss_61.conf \
+--pw --genome_db_id "$ALL_GENOMEDB_IDS" 1>create_mlss.ENSEMBL_ORTHOLOGUES.201.out 2>$MLSS_DIR/create_mlss.ENSEMBL_ORTHOLOGUES.201.err
 
-# paralogues btw                              
-echo -e "202\n" | /usr/local/ensembl/bin/perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --reg_conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_53/mlss_53.conf --pw --f --genome_db_id "3,4,5,16,18,22,27,29,31,33,34,36,37,38,39,42,43,44,46,48,49,51,52,53,55,56,57,58,60,61,62,64,65,66,67,68,69,77,78,79,80,81,82,83,84,85,86,87,88" 1>create_mlss.ENSEMBL_PARALOGUES.btw.202.out 2>create_mlss.ENSEMBL_PARALOGUES.btw.202.err
+# paralogues btw
+echo -e "202\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/mlss_61.conf \
+--pw --genome_db_id "$ALL_GENOMEDB_IDS" 1>create_mlss.ENSEMBL_PARALOGUES.btw.202.out 2>$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.btw.202.err
 
-# paralogues wth                              
-echo -e "202\n" | /usr/local/ensembl/bin/perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_53/mlss_53.conf --sg --genome_db_id "3,4,5,16,18,22,27,29,31,33,34,36,37,38,39,42,43,44,46,48,49,51,52,53,55,56,57,58,60,61,62,64,65,66,67,68,69,77,78,79,80,81,82,83,84,85,86,87,88" 1>create_mlss.ENSEMBL_PARALOGUES.wth.202.out 2>create_mlss.ENSEMBL_PARALOGUES.wth.202.err
+# paralogues wth
+echo -e "202\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/mlss_61.conf \
+--sg --genome_db_id "$ALL_GENOMEDB_IDS" 1>create_mlss.ENSEMBL_PARALOGUES.wth.202.out 2>$MLSS_DIR/create_mlss.ENSEMBL_PARALOGUES.wth.202.err
 
-# proteintrees                                
-echo -e "401\n" | /usr/local/ensembl/bin/perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_53/mlss_53.conf --name "protein trees" --genome_db_id "3,4,5,16,18,22,27,29,31,33,34,36,37,38,39,42,43,44,46,48,49,51,52,53,55,56,57,58,60,61,62,64,65,66,67,68,69,77,78,79,80,81,82,83,84,85,86,87,88" 1>create_mlss.PROTEIN_TREES.401.out 2>create_mlss.PROTEIN_TREES.401.err
+# proteintrees
+echo -e "401\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/mlss_61.conf \
+--name "protein trees" --genome_db_id "$ALL_GENOMEDB_IDS" 1>create_mlss.PROTEIN_TREES.401.out 2>$MLSS_DIR/create_mlss.PROTEIN_TREES.401.err
+
+# nctrees
+echo -e "402\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/mlss_61.conf \
+--name "nc trees" --genome_db_id "$ALL_GENOMEDB_IDS" 1>create_mlss.NC_TREES.402.out 2>$MLSS_DIR/create_mlss.NC_TREES.402.err
 
 # families
-echo -e "301\n" | /usr/local/ensembl/bin/perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_53/mlss_53.conf --name "families" --genome_db_id "3,4,5,16,18,22,27,29,31,33,34,36,37,38,39,42,43,44,46,48,49,51,52,53,55,56,57,58,60,61,62,64,65,66,67,68,69,77,78,79,80,81,82,83,84,85,86,87,88" 1>create_mlss.FAMILY.301.out 2>create_mlss.FAMILY.301.err
+echo -e "301\n" | perl ~lg4/work/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf $MLSS_DIR/mlss_61.conf \
+--name "families" --genome_db_id "$ALL_GENOMEDB_IDS" 1>create_mlss.FAMILY.301.out 2>$MLSS_DIR/create_mlss.FAMILY.301.err
 
-7.1. Update the species_set_tags.
+
+
+## if output/error files are ok, remove them all:
+
+    rm -rf $MLSS_DIR
+
+## ,otherwise *PANIC*
+
+
+7.2. Update the species_set_tags.
 Run the script: update_species_sets.pl
 
 eg
@@ -117,11 +173,12 @@ INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33012,"name","am
 INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33163,"name","mammals");
  
 
-7. Wait for the handover before starting to build the new database in case
+7.3. Wait for the handover before starting to build the new database in case
 any of the new species cannot make it. Don't forget to switch the
 assembly_default values of genome_db in this case.
  [1] for species making it / used in the pipeline
  [0] for species not making it / or old assemblies
+
 
 8. Create the new database for the new release and add it to your
 registry configuration file. Use the ~ensembl-compara/sql/table.sql
