@@ -276,7 +276,12 @@ sub add_data {
   $args{'code'} ||= time;
   $self->set_data(%args);
 
-  return $self->get_data(type => $args{'type'}, code => $args{'code'});
+  my $data = $self->get_data(type => $args{'type'}, code => $args{'code'});
+  
+  # Delete the cache, so that calling get_data(type => [TYPE]) afterwards will return all data, not just this one record
+  delete $self->{'data'}{$args{'type'}};
+  
+  return $data;
 }
 
 sub save_data {
