@@ -594,7 +594,8 @@ sub store {
 
   ## Set and store the left and right indexes unless otherwise stated
   if (!$skip_left_right_indexes) {
-      $self->sync_tree_leftright_index($node);
+      my $fresh_connection = 1; #fresh conn to continue current transaction
+      $self->sync_tree_leftright_index($node, $fresh_connection);
       $self->update_subtree($node);
   }
 
