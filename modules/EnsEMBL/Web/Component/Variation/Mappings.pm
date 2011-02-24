@@ -26,6 +26,26 @@ sub content {
   my $hub    = $self->hub;
   my $source = $object->source;
   my $name   = $object->name;
+  
+  my $html;
+  
+  if($object->Obj->failed_description =~ /match.+reference\ allele/) {
+    my $variation_features = $object->Obj->get_all_VariationFeatures;
+    
+    # get slice for variation feature
+    my $feature_slice;
+  
+    foreach my $vf (@$variation_features) {
+      $feature_slice = $vf->feature_Slice if $vf->dbID == $hub->core_param('vf');
+    }
+      
+    $html .= $self->_warning(
+      'Warning',
+      'Consequences for this variation have been calculated using the Ensembl reference allele'.
+      (defined $feature_slice ? " (".$feature_slice->seq.")" : ""),
+      '50%'
+    );
+  }
  
   my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'gene asc', 'trans asc' ] });
   
@@ -131,8 +151,10 @@ sub content {
     }
   }
 
-  if ($flag) { 
-    return $table->render;
+  if ($flag) {
+    $html .= $table->render;
+    
+    return $html;
   } else { 
     return $self->_info('', '<p>This variation has not been mapped any Ensembl genes or transcripts</p>');
   }
