@@ -22,6 +22,7 @@ sub new {
   my $margin         = $primary_config->get_parameter('margin')         || 5;
   my $trackspacing   = $primary_config->get_parameter('spacing')        || 2;
   my $image_width    = $primary_config->get_parameter('image_width')    || 700;
+  my $padding        = $primary_config->get_parameter('padding')    || 0;
   my $colours        = $primary_config->species_defs->colour('classes') || {};  
   my $label_start    = $margin;
   my $panel_start    = $label_start + ($show_labels  eq 'yes' ? $label_width  + $margin : 0);
@@ -152,18 +153,10 @@ sub new {
     
     ## pull out alternating background colours for this script
     ## mh18 21/02/2011 allow setting of a legend colour via the ini file
-    my $bgcolours = [];
-    if($config->{'type'} eq 'text_seq_legend' && ($config->get_parameter('legend') || $primary_config->species_defs->ENSEMBL_STYLE->{'LEGEND_BG'} )  ){
-      $bgcolours = [
-        $config->get_parameter('legend') || 'legend',
-        $config->get_parameter('legend') || 'legend'
-      ];
-    }else{
-      $bgcolours = [
-        $config->get_parameter( 'bgcolour1') || 'background1',
-        $config->get_parameter( 'bgcolour2') || 'background2'
-      ];	
-    }
+    my $bgcolours = [
+      $config->get_parameter('bgcolour1') || 'background1',
+      $config->get_parameter('bgcolour2') || 'background2'
+    ];
 
     my $bgcolour_flag = $bgcolours->[0] ne $bgcolours->[1];
 
@@ -218,11 +211,11 @@ sub new {
       if ($bgcolour_flag && $glyphset->_colour_background) {
         ## colour the area behind this strip
         my $background = new Sanger::Graphics::Glyph::Rect({
-          x             => -$label_width - $margin * 3/2,
-          y             => $gminy,
+          x             => -$label_width - $margin * 3/2 -$padding,
+          y             => $gminy-$padding,
           z             => -100,
-          width         => $panel_width + $label_width + $margin * 2,
-          height        => $glyphset->maxy - $gminy,
+          width         => $panel_width + $label_width + $margin * 2 + (2*$padding),
+          height        => $glyphset->maxy - $gminy +(2*$padding),
           colour        => $bgcolours->[$iteration % 2],
           absolutewidth => 1,
           absolutex     => 1,
