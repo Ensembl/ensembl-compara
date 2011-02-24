@@ -76,7 +76,7 @@ sub content {
   
   $html .= qq(
        <dl class="summary">
-      <dt>Validation status</dt>
+      <dt>dbSNP<br />validation status</dt>
       <dd> $stat</dd>);
   
   ## HGVS NOTATIONS
