@@ -151,10 +151,19 @@ sub new {
     }
     
     ## pull out alternating background colours for this script
-    my $bgcolours = [
-      $config->get_parameter('bgcolour1') || 'background1',
-      $config->get_parameter('bgcolour2') || 'background2'
-    ];
+    ## mh18 21/02/2011 allow setting of a legend colour via the ini file
+    my $bgcolours = [];
+    if($config->{'type'} eq 'text_seq_legend' && ($config->get_parameter('legend') || $primary_config->species_defs->ENSEMBL_STYLE->{'LEGEND_BG'} )  ){
+      $bgcolours = [
+        $config->get_parameter('legend') || 'legend',
+        $config->get_parameter('legend') || 'legend'
+      ];
+    }else{
+      $bgcolours = [
+        $config->get_parameter( 'bgcolour1') || 'background1',
+        $config->get_parameter( 'bgcolour2') || 'background2'
+      ];	
+    }
 
     my $bgcolour_flag = $bgcolours->[0] ne $bgcolours->[1];
 
