@@ -26,7 +26,7 @@ sub content {
   my $is_somatic         = $variation->is_somatic;
   my $vaa                = $variation->adaptor->db->get_VariationAnnotationAdaptor;
   my $variation_features = $variation->get_all_VariationFeatures;
-  my $display_name       = $object->name; 
+  my $display_name       = $object->name;
   
   if ($source eq 'dbSNP') {
     my $version = $object->source_version; 
@@ -54,9 +54,22 @@ sub content {
 
   my $html;
   
+  # get slice for variation feature
+  my $feature_slice;
+  
+  foreach my $vf (@$variation_features) {
+    $feature_slice = $vf->feature_Slice if $vf->dbID == $hub->core_param('vf');
+  }
+  
   ## First warn if variation has been failed
   if ($variation->failed_description) {
-    $html .= $self->_warning('This variation has been flagged as failed', $variation->failed_description, '50%');
+    my $desc = $variation->failed_description;
+    
+    if($desc =~ /match.+reference\ allele/ && defined($feature_slice)) {
+      $desc .= " (".$feature_slice->seq.")";
+    }
+    
+    $html .= $self->_warning('This variation has been flagged as failed', $desc, '50%');
   }
   
   $html .= qq{
@@ -64,6 +77,40 @@ sub content {
       <dt> Variation class </dt> 
       <dd>$name</dd>
   };
+
+  # First add co-located variation info if count == 1
+  if ($feature_slice) {
+    my $vfa = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
+    my $variation_string;
+    my @germline_variations = @{$vfa->fetch_all_by_Slice($feature_slice)};  
+    my @somatic_mutations = @{$vfa->fetch_all_somatic_by_Slice($feature_slice)};
+    my @variations = (@germline_variations, @somatic_mutations);
+
+    if (@variations) {
+      $variation_string = 'with '; #$is_somatic ? 'with variation ' : 'with somatic mutation ';
+      
+      foreach my $v (@variations) {
+        my $v_name           = $v->variation_name; 
+        next if $v_name eq $object->name;
+        my $v_start = $v->start + $feature_slice->start -1;
+        my $v_end = $v->end + $feature_slice->start -1;
+        next unless (( $v_start == $feature_slice->start) && ($v_end == $feature_slice->end)); 
+        my $link           = $hub->url({ v => $v_name, vf => $v->dbID });
+        my $variation      = qq{<a href="$link">$v_name</a>};
+        $variation_string .= ", $variation (".$v->source.")";
+      }
+    }
+ 
+    if ($variation_string =~/,/) {      
+      $variation_string =~ s/,\s+//;  
+        $html .= "
+        <dl class='summary'>
+          <dt>Co-located </dt>
+          <dd>$variation_string</dd>
+        </dl>";    
+    }
+  }
+  
  
   ## Add synonyms
   my %synonyms = %{$object->dblinks};
@@ -123,13 +170,6 @@ sub content {
   }
 
   ## Add Alleles
-  # get slice for variation feature
-  my $feature_slice;
-  
-  foreach my $vf (@$variation_features) {
-    $feature_slice = $vf->feature_Slice if $vf->dbID == $hub->core_param('vf');
-  }  
-  
   my $label       = 'Alleles';
   my $alleles     = $object->alleles;
   my $vari_class  = $object->vari_class || 'Unknown';
@@ -145,12 +185,14 @@ sub content {
   $allele_html .= "<br /><em>Ancestral allele</em>: $ancestor" if $ancestor;
 
   # Check somatic mutation base matches reference
-  if ($is_somatic && $feature_slice) {
+  if ($feature_slice) {
     my $ref_base = $feature_slice->seq; 
-    my ($a1, $a2) = split /\//, $alleles;
-
-    my $ref_seq = length $ref_base == 1 ? 'base': 'sequence';
-    $allele_html .= "<br /><em>Note</em>: The reference $ref_seq for this mutation ($a1) does not match the Ensembl reference $ref_seq ($ref_base)." if $ref_base ne $a1;
+    my @alleles = split /\//, $alleles;
+    
+    if($alleles[0] =~ /^[ACGTN]+$/) {
+      my $ref_seq = length $ref_base == 1 ? 'base': 'sequence';
+      $allele_html .= "<br /><em>Note</em>: The reference $ref_seq for this mutation ($alleles[0]) does not match the Ensembl reference $ref_seq ($ref_base) at this location." if $ref_base ne $alleles[0];
+    }
   }
   
   $html .= "
@@ -158,39 +200,6 @@ sub content {
       <dd>$allele_html</dd>
     </dl>
   ";
-
-  # First add co-located variation info if count == 1
-  if ($feature_slice) {
-    my $vfa = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
-    my $variation_string;
-    my @germline_variations = @{$vfa->fetch_all_by_Slice($feature_slice)};  
-    my @somatic_mutations = @{$vfa->fetch_all_somatic_by_Slice($feature_slice)};
-    my @variations = (@germline_variations, @somatic_mutations);
-
-    if (@variations) {
-      $variation_string = 'with '; #$is_somatic ? 'with variation ' : 'with somatic mutation ';
-      
-      foreach my $v (@variations) {
-        my $v_name           = $v->variation_name; 
-        next if $v_name eq $object->name;
-        my $v_start = $v->start + $feature_slice->start -1;
-        my $v_end = $v->end + $feature_slice->start -1;
-        next unless (( $v_start == $feature_slice->start) && ($v_end == $feature_slice->end)); 
-        my $link           = $hub->url({ v => $v_name, vf => $v->dbID });
-        my $variation      = qq{<a href="$link">$v_name</a>};
-        $variation_string .= ", $variation";
-      }
-    }
- 
-    if ($variation_string =~/,/) {      
-      $variation_string =~ s/,\s+//;  
-        $html .= "
-        <dl class='summary'>
-          <dt>Co-located </dt>
-          <dd>$variation_string</dd>
-        </dl>";    
-    }
-  }
 
   ## Add location information
   my $location; 
