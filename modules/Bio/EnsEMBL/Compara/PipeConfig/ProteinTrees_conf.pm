@@ -7,6 +7,12 @@
 
 =head1 SYNOPSIS
 
+    # 0. make sure that all default_options are set correctly
+
+    # 1. do not forget to 'cvs update' ensembl core API before each new release (otherwise the core databases will not be found during loading step)
+
+    # 2. you may need to update 'schema_version' in meta table to the same number in ensembl-hive/sql/tables.sql
+
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -password <your_password> -mlss_id <your_current_PT_mlss_id>
 
 =head1 DESCRIPTION  
@@ -29,9 +35,23 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 sub default_options {
     my ($self) = @_;
     return {
-        %{$self->SUPER::default_options},
+        %{$self->SUPER::default_options},   # inherit the generic ones
 
-#       'mlss_id'           => 40069,   # it is very important to check that this value is current!
+
+    # parameters that are likely to change from execution to another:
+#       'mlss_id'               => 40071,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        'release'               => '62',
+        'rel_suffix'            => '',    # an empty string by default, a letter otherwise
+        'ensembl_cvs_root_dir'  => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
+        'email'                 => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
+        'work_dir'              => '/lustre/scratch101/ensembl/'.$ENV{'USER'}.'/protein_trees_'.$self->o('rel_with_suffix'),
+
+    # dependent parameters:
+        'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
+        'pipeline_name'         => 'PT_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+        'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp_with_reuse'
+        'cluster_dir'           => $self->o('work_dir') . '/cluster',
+
 
     # blast parameters:
         'blast_options'             => '-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1',
@@ -64,23 +84,22 @@ sub default_options {
         'codeml_exe'                => '/usr/local/ensembl/bin/codeml',
 
 
-        'release'           => '61',
-        'rel_suffix'        => 'h',    # an empty string by default, a letter otherwise
-        'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
+    # connection parameters to various databases:
 
-        'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
-        'work_dir'             => '/lustre/scratch101/ensembl/'.$ENV{'USER'}.'/protein_trees_'.$self->o('rel_with_suffix'),
-        'fasta_dir'            => $self->o('work_dir') . '/bDB',    # affects 'dump_subset_create_blastdb' and 'blastp_with_reuse'
-        'cluster_dir'          => $self->o('work_dir') . '/c',
-
-        'email'             => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
-
-        'pipeline_db' => {                                  # connection parameters
+        'pipeline_db' => {                      # the production database itself (will be created)
             -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                    
             -dbname => $ENV{'USER'}.'_compara_homology_'.$self->o('rel_with_suffix'),
+        },
+
+        'master_db' => {                        # the master database for synchronization of various ids
+            -host   => 'compara1',
+            -port   => 3306,
+            -user   => 'ensro',
+            -pass   => '',
+            -dbname => 'sf5_ensembl_compara_master',
         },
 
         'staging_loc1' => {                     # general location of half of the current release core databases
@@ -97,20 +116,13 @@ sub default_options {
             -pass   => '',
         },
 
-        'livemirror_loc' => {                     # general location of the previous release core databases (for checking their reusability)
+        'livemirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
             -host   => 'ens-livemirror',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
         },
 
-        'master_db' => {
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -dbname => 'sf5_ensembl_compara_master',
-        },
 
         # "production mode"
         'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
@@ -121,7 +133,7 @@ sub default_options {
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'kb3_ensembl_compara_60',
+           -dbname => 'sf5_ensembl_compara_61',
         },
 
         ## mode for testing the non-Blast part of the pipeline: reuse all Blasts
@@ -143,8 +155,9 @@ sub default_options {
 sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
     my ($self) = @_;
     return {
-        'pipeline_name'     => 'PT_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
-        'email'             => $self->o('email'),                   # for automatic notifications (may be unsupported by your Meadows)
+        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+
+        'email'             => $self->o('email'),           # for (future) automatic notifications (may be unsupported by your Meadows)
     };
 }
 
