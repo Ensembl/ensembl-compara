@@ -31,13 +31,16 @@ this is db_adaptor which is created from the current Hive DBAdaptor instance.
 
 =head1 DESCRIPTION
 
-This module loops through the known GenomeDBs or the specified GenomeDB & 
-attempts to update any gene or translation with the display identifier from 
-the core database. This code uses direct SQL statements because of the
+When run in hive mode the module loops through all genome db ids given via
+the parameter C<genome_db_ids> and attempts to update any gene/translation
+with the display identifier from the core database.
+
+When run in non-hive mode not specifying a set of genome db ids will cause
+the code to work over all genome dbs with entries in the member table.
+
+This code uses direct SQL statements because of the
 relationship between translations and their display labels being stored at the
 transcript level. If the DB changes this will break.
-
-The set of GenomeDBs are all Genome DBs with members.
 
 =head1 AUTHOR
 
@@ -63,7 +66,8 @@ use warnings;
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref);
+use Bio::EnsEMBL::Utils::SqlHelper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -86,17 +90,25 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub new_without_hive {
   my ($class, @params) = @_;
+  
   my $self = bless {}, $class;
+  #Put in so we can have access to $self->param()
+  my $job = Bio::EnsEMBL::Hive::AnalysisJob->new();
+  $self->input_job($job);
   
-  my ($db_adaptor, $replace, $die_if_no_core_adaptor, $genome_db_ids, $debug) = rearrange(
-    [qw(db_adaptor replace die_if_no_core_adaptor genome_db_ids debug)], 
-  @params);
+  my ($db_adaptor, $replace, $die_if_no_core_adaptor, $genome_db_ids, $debug) = 
+    rearrange(
+      [qw(db_adaptor replace die_if_no_core_adaptor genome_db_ids debug)], 
+      @params
+  );
   
-  $self->db_adaptor($db_adaptor);
-  $self->replace($replace) if defined $replace;
-  $self->die_if_no_core_adaptor($die_if_no_core_adaptor) if defined $die_if_no_core_adaptor;
-  $self->genome_db_ids($genome_db_ids) if defined $genome_db_ids;
-  $self->debug($debug) if defined $debug;
+  $self->compara_dba($db_adaptor);
+  $self->param('replace', $replace);
+  $self->param('die_if_no_core_adaptor', $die_if_no_core_adaptor);
+  $self->param('genome_db_ids', $genome_db_ids);
+  $self->debug($debug);
+  
+  $self->_use_all_genomedbs() if ! check_ref($genome_db_ids, 'ARRAY');
   
   $self->_assert_state();
   
@@ -116,9 +128,18 @@ sub run_without_hive {
   return;
 }
 
-#--- Hive methods
+#Set all IDs into the available ones to run over; only available through the 
+#non-hive interface
+sub _use_all_available_genomedbs {
+  my ($self) = @_;
+  my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba()->dbc());
+  my $sql = q{select distinct genome_db_id from member where genome_db_id is not null and genome_db_id <> 0};
+  my $ids = $h->execute_simple( -SQL => $sql);
+  $self->param('genome_db_ids', $ids);
+  return;
+}
 
-my @PARAMS = qw(db_adaptor replace die_if_no_core_adaptor genome_db_id);
+#--- Hive methods
 
 =head2 fetch_input
 
@@ -132,28 +153,17 @@ my @PARAMS = qw(db_adaptor replace die_if_no_core_adaptor genome_db_id);
 
 sub fetch_input {
   my ($self) = @_;
-  
-  #Defaults
-  foreach my $param (@PARAMS) {
-    my $value = $self->param($param);
-    $self->can($param)->($self, $param);
-  }
-  
-  #DBAdaptor
-  my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db()->dbc());
-  $self->db_adaptor($dba);
-  
   $self->_assert_state();
   $self->_print_params();
-  
   return 1;
 }
 
 sub _print_params {
   my ($self) = @_;
   return unless $self->debug();
-  foreach my $param (@PARAMS) {
-    my $value = $self->can($param)->($self);
+  my @params = qw(replace die_if_no_core_adaptor genome_db_id);
+  foreach my $param (@params) {
+    my $value = $self->param($param);
     print "$param : ".(defined $value ? q{} : $value), "\n"; 
   }
 }
@@ -171,15 +181,17 @@ sub _print_params {
 sub run {
   my ($self) = @_;
   
-  my $genome_dbs = $self->_genome_dbs_to_work_with();
+  my $genome_dbs = $self->_genome_dbs();
   if($self->debug()) {
     my $names = join(q{, }, map { $_->name() } @{$genome_dbs});
     print "Working with: [${names}]\n";
   }
   
+  my $results = $self->param('results', {});
+  
   foreach my $genome_db (@{$genome_dbs}) {
     my $output = $self->_process_genome_db($genome_db);
-    $self->_add_to_process_list($genome_db, $output);
+    $results->{$genome_db->dbID()} = $output;
   }
   
   return 1;
@@ -198,145 +210,63 @@ sub run {
 sub write_output {
   my ($self) = @_;
   
-  my $genome_dbs = $self->_genome_dbs_to_work_with();
+  my $genome_dbs = $self->_genome_dbs();
   foreach my $genome_db (@{$genome_dbs}) {
-    $self->_update_genome_db($genome_db);
+    $self->_update_display_labels($genome_db);
   }
   
   return 1;
-}
-
-#--- Generic accessors
-
-=head2 db_adaptor()
-
-The database adaptor for Compara. Must be given
-
-=cut
-
-sub db_adaptor {
-  my ($self, $db_adaptor) = @_;
-  $self->{db_adaptor} = $db_adaptor if defined $db_adaptor;
-  return $self->{db_adaptor};
-}
-
-=head2 replace()
-
-Normal logic says if there is already a display identifier for a member then
-we do not update it. However if this is set to true then we will replace it.
-
-=cut
-
-sub replace {
-  my ($self, $replace) = @_;
-  $self->{replace} = $replace if defined $replace;
-  return $self->{replace};
-}
-
-=head2 die_if_no_core_adaptor()
-
-Set to true if you want the updater to die when we encounter a genome db with
-no db_locator. This is a situation which we can find ourselves in if we are
-working with externally donated comparas.
-
-=cut
-
-sub die_if_no_core_adaptor {
-  my ($self, $die_if_no_core_adaptor) = @_;
-  $self->{die_if_no_core_adaptor} = $die_if_no_core_adaptor if defined $die_if_no_core_adaptor;
-  return $self->{die_if_no_core_adaptor};
-}
-
-=head2 genome_db_ids()
-
-Will return the GenomeDB IDs we are using; can be left blank (which causes the
-module to work over all GenomeDBs)
-
-=cut
-
-sub genome_db_ids {
-  my ($self, $genome_db_ids) = @_;
-  if(defined $genome_db_ids) {
-    $self->throw( 'Not an array or no data: ['.$genome_db_ids.']')
-      unless ref($genome_db_ids) eq 'ARRAY' && @{$genome_db_ids};
-    $self->{genome_db_ids} = $genome_db_ids;
-  }
-  return $self->{genome_db_ids};
-}
-
-sub _add_to_process_list {
-  my ($self, $genome_db, $members) = @_;
-  return unless defined $members && ref($members) eq 'ARRAY' && @{$members};
-  my $id = $genome_db->dbID();
-  $self->throw('Already have data for GenomeDB '.$id) if exists $self->{_process_list}->{$id};
-  $self->{_process_list}->{$id} = $members;
-  return;
-}
-
-sub _process_list {
-  my ($self, $genome_db) = @_;
-  return $self->{_process_list}->{$genome_db->dbID()};
 }
 
 #--- Generic Logic
 
 sub _assert_state {
   my ($self) = @_;
-  my $dba = $self->db_adaptor();
-  $self->throw('A suitable Compara DBAdaptor was not found') 
-    unless defined $dba;
-  $self->throw('Found DBAaptor is not a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor') 
-    unless $dba->isa('Bio::EnsEMBL::Compara::DBSQL::DBAdaptor');
+  
+  my $dba = $self->compara_dba();
+  throw('A suitable Compara DBAdaptor was not found') unless defined $dba;
+  assert_ref($dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor');
+  
+  #Checking we have some genome dbs to work on
+  my $genome_db_ids = $self->param('genome_db_ids');
+  throw 'GenomeDB IDs array was not defined' if(! defined $genome_db_ids);
+  assert_ref($genome_db_ids, 'ARRAY');
+  throw 'GenomeDB IDs array was empty' if(! @{$genome_db_ids});
+  
   return;
 }
 
-sub _genome_dbs_to_work_with {
+sub _genome_dbs {
 	my ($self) = @_;
-	my @ids;
-	if(defined $self->genome_db_ids()) {
-	  @ids = @{$self->genome_db_ids()};
-	}
-	else {
-    my $sql = q{select distinct genome_db_id from member where genome_db_id is not null and genome_db_id <> 0};
-    @ids = map {$_->[0]} @{$self->_compara_execute_to_array($sql)};
-	}
-  my $gdba = $self->db_adaptor()->get_GenomeDBAdaptor();  
-  my @genome_dbs = map { $gdba->fetch_by_dbID($_) } @ids;
-	return \@genome_dbs;
+	my $ids = $self->param('genome_db_ids');
+  my $gdba = $self->compara_dba()->get_GenomeDBAdaptor();  
+  return [ map { $gdba->fetch_by_dbID($_) } @{$ids} ];
 }
 
 sub _process_genome_db {
 	my ($self, $genome_db) = @_;
 	
 	my $name = $genome_db->name();
+	my $replace = $self->param('replace');
 	
 	print "Processing ${name}\n" if $self->debug();
 	
 	if(!$genome_db->db_adaptor()) {
-		$self->throw('Cannot get an adaptor for GenomeDB '.$name) if $self->die_if_no_adaptor();
+		throw('Cannot get an adaptor for GenomeDB '.$name) if $self->param('die_if_no_core_adaptor');
 		return;
 	}
-	
-	my $dispatch = {
-	  'ENSEMBLGENE'  => sub {
-	    return $self->_get_genes($genome_db);
-	  },
-	  'ENSEMBLPEP'   => sub {
-	    return $self->_get_translations($genome_db);
-	  } 
-	};
-	
+
 	my @members_to_update;
-	foreach my $source (keys %{$dispatch}) {
-	  print "Working with ${source}\n" if $self->debug();
-	  my $subroutine = $dispatch->{$source};
-	  if(!$self->_need_to_process_genome_db_source($genome_db, $source) && !$self->replace()) {
+	my @sources = qw(ENSEMBLGENE ENSEMBLPEP);
+	foreach my $source_name (@sources) {
+	  print "Working with ${source_name}\n" if $self->debug();
+	  if(!$self->_need_to_process_genome_db_source($genome_db, $source_name) && !$replace) {
 	    if($self->debug()) {
-	      print "No need to update as all members for ${name} and source ${source} have display labels\n";
+	      print "No need to update as all members for ${name} and source ${source_name} have display labels\n";
 	    }
 	    next;
 	  }
-	  my $results = $self->_process($genome_db, $source, $subroutine);
+	  my $results = $self->_process($genome_db, $source_name);
 	  push(@members_to_update, @{$results});
 	}
 	
@@ -344,12 +274,12 @@ sub _process_genome_db {
 }
 
 sub _process {
-  my ($self, $genome_db, $source, $subroutine) = @_;
+  my ($self, $genome_db, $source_name) = @_;
   
   my @members_to_update;
   
-  my $core_labels = $subroutine->();
-  my $members = $self->_get_members_by_source($genome_db, $source);
+  my $core_labels = $self->_get_display_label_lookup($genome_db, $source_name);
+  my $members = $self->_get_members_by_source($genome_db, $source_name);
   
   if(%{$members}) {
     foreach my $stable_id (keys %{$members}) {
@@ -367,25 +297,26 @@ sub _process {
   }
   else {
     my $name = $genome_db->name();
-    print "No members found for ${name} and ${source}\n" if $self->debug();
+    print "No members found for ${name} and ${source_name}\n" if $self->debug();
   }
 	
 	return \@members_to_update;
 }
 
 sub _need_to_process_genome_db_source {
-	my ($self, $genome_db, $source) = @_;
-	my $sql = q{select count(*) from member where genome_db_id =? and display_label is null and source_name =?};
-	my $results = $self->_compara_execute_to_array($sql, $genome_db->dbID(), $source);
-	return $results->[0] if @{$results};
-	return 0;
+	my ($self, $genome_db, $source_name) = @_;
+	my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba()->dbc());
+	my $sql = q{select count(*) from member 
+where genome_db_id =? and display_label is null and source_name =?};
+  my $params = [$genome_db->dbID(), $source_name];
+	return $h->execute_single_result( -SQL => $sql, -PARAMS => $params);
 }
 
 sub _get_members_by_source {
-	my ($self, $genome_db, $source) = @_;
+	my ($self, $genome_db, $source_name) = @_;
 	my $member_a = $self->db_adaptor()->get_MemberAdaptor();
 	my $gdb_id = $genome_db->dbID();
-	my $constraint = qq(m.source_name = '${source}' and m.genome_db_id = ${gdb_id});
+	my $constraint = qq(m.source_name = '${source_name}' and m.genome_db_id = ${gdb_id});
 	my $members = $member_a->_generic_fetch($constraint);
 	my $members_hash = {};
 	foreach my $member (@{$members}) {
@@ -394,62 +325,42 @@ sub _get_members_by_source {
 	return $members_hash;
 }
 
-sub _get_genes {
-  my ($self, $genome_db) = @_;
-  
-  my $sql = q{select gsi.stable_id, x.display_label 
+sub _get_display_label_lookup {
+  my ($self, $genome_db, $source_name) = @_;
+  	
+  my $sql_lookup = {
+	  'ENSEMBLGENE'  => q{select gsi.stable_id, x.display_label 
 from gene_stable_id gsi 
 join gene g using (gene_id)  
 join xref x on (g.display_xref_id = x.xref_id) 
 join seq_region sr on (g.seq_region_id = sr.seq_region_id) 
 join coord_system cs using (coord_system_id) 
-where cs.species_id =?};
-
-  return $self->_run_mapper_sql($genome_db, $sql);
-}
-
-sub _get_translations {
-  my ($self, $genome_db) = @_;
-  
-  my $sql = q{select tsi.stable_id, x.display_label 
+where cs.species_id =?},
+	  'ENSEMBLPEP'   => q{select tsi.stable_id, x.display_label 
 from translation_stable_id tsi 
 join translation tr using (translation_id) 
 join transcript t using (transcript_id) 
 join xref x on (t.display_xref_id = x.xref_id) 
 join seq_region sr on (t.seq_region_id = sr.seq_region_id) 
 join coord_system cs using (coord_system_id) 
-where cs.species_id =?};
-
-  return $self->_run_mapper_sql($genome_db, $sql);
+where cs.species_id =?}
+	};
+	
+	my $sql = $sql_lookup->{$source_name};
+	
+	my $dba = $genome_db->db_adaptor();
+  my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $dba->dbc());
+  my $hash = $h->execute_into_hash( -SQL => $sql );
+  return $hash;
 }
 
-sub _run_mapper_sql {
-  my ($self, $genome_db, $sql) = @_;
-  my $dba = $genome_db->db_adaptor();
-	my $original_dwi = $dba->dbc()->disconnect_when_inactive();
-  $dba->dbc()->disconnect_when_inactive(0);
-  my $hash = $self->_execute_to_hash($dba, $sql, $dba->species_id());
-  $genome_db->db_adaptor()->dbc()->disconnect_if_idle();
-	$dba->dbc()->disconnect_when_inactive($original_dwi);
-	return $hash;
-}
-
-sub _set_into_hash {
-  my ($self, $hash, $stable_id, $core_object) = @_;
-  my $display_xref = $core_object->display_xref();
-  if(defined $display_xref) {
-    $hash->{$stable_id} = $display_xref->display_id();
-  }
-  return;
-}
-
-sub _update_genome_db {
+sub _update_display_labels {
 	my ($self, $genome_db) = @_;
 	
-	my $members = $self->_process_list($genome_db);
 	my $name = $genome_db->name();
+	my $members = $self->param('results')->{$genome_db->dbID()};
 	
-	if(! defined $members) {
+	if(! defined $members || scalar(@{$members}) == 0) {
 	  print "No members to write back for ${name}\n" if $self->debug();
 	  return;
 	}
@@ -457,77 +368,27 @@ sub _update_genome_db {
   print "Writing members out for ${name}\n" if $self->debug();
 	
 	my $total = 0;
-	my $dbc = $self->db_adaptor()->dbc();
-	my $handle = $dbc->db_handle();
 	
-	#Forcing the code to prevent early connection termination & turn on transactions (InnoDB only affected)
-  my $original_dwi = $dbc->disconnect_when_inactive();
-  $dbc->disconnect_when_inactive(0);
-	my $ac = $handle->{'AutoCommit'};
-  $handle->{'AutoCommit'} = 0;
-  
-	my $sql = 'update member set display_label =? where member_id =?';
-	my $sth;
-	my $last_member;
-	eval {
-	 $sth = $dbc->prepare($sql);
-	 foreach my $member (@{$members}) {
-	   $last_member = $member;
-	   my $rows_affected = $sth->execute($member->display_label(), $member->dbID());
-	   $total += $rows_affected;
-	 }
-	 $handle->commit();
-	};
-	
-	#Cleanup statement, rollback, reset AC and DWI
-	my $error = $@;
-	eval { $sth->finish() if defined $sth; };
-	eval { $handle->rollback() if $error; };
-	$handle->{'AutoCommit'} = $ac;
-	$dbc->disconnect_when_inactive($original_dwi);
-	
-	if($error) {
-	  $self->throw('Cannot insert member '.$last_member->stable_id().' because of error raised during insertion: '.$error);
-	}
-	
+	my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba()->dbc());
+	 
+	$h->transaction( -CALLBACK => sub {
+	  my $sql = 'update member set display_label =? where member_id =?';
+	  $h->batch(
+	   -SQL => $sql,
+	   -CALLBACK => sub {
+	     my ($sth) = @_;
+	     foreach my $member (@{$members}) {
+	       my $updated = $sth->execute($member->display_label(), $member->dbID());
+	       $total += $updated;
+	     }
+	     return;
+	   }
+	  );
+	});
+
 	print "Inserted ${total} member(s) for ${name}\n" if $self->debug();
 	
 	return $total;
-}
-
-sub _compara_execute_to_array {
-  my ($self, $sql, @params) = @_;
-  return $self->_execute_to_array($self->db_adaptor(), $sql, @params);
-}
-
-sub _execute_to_array {
-  my ($self, $db_adaptor, $sql, @params) = @_;
-  my $dbc = $db_adaptor->dbc();
-  my @res;
-  my $sth;
-  eval {
-    $sth = $dbc->prepare($sql);
-    $sth->execute(@params);
-  };
-  my $error= $@;
-  
-  if(! $error) {
-    while(my $row = $sth->fetchrow_arrayref()) {
-      push(@res, [@{$row}]);
-    }
-  }
-  eval { $sth->finish(); };
-  
-  $self->throw("Error when executing '${sql}' with params [@params]: $error") if $error;
-  
-  return \@res;
-}
-
-sub _execute_to_hash {
-  my ($self, $db_adaptor, $sql, @params) = @_;
-  my $results = $self->_execute_to_array($db_adaptor, $sql, @params);
-  my %hash = map { @{$_} } @{$results};
-  return \%hash;
 }
 
 1;
