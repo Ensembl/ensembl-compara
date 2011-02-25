@@ -23,6 +23,7 @@ use strict;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
+use Bio::EnsEMBL::Utils::SqlHelper;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
