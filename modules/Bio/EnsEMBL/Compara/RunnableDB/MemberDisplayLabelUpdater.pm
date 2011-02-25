@@ -346,11 +346,13 @@ join coord_system cs using (coord_system_id)
 where cs.species_id =?}
 	};
 	
-	my $sql = $sql_lookup->{$source_name};
-	
 	my $dba = $genome_db->db_adaptor();
   my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $dba->dbc());
-  my $hash = $h->execute_into_hash( -SQL => $sql );
+  
+	my $sql = $sql_lookup->{$source_name};
+	my $params = [$dba->species_id()];
+	
+  my $hash = $h->execute_into_hash( -SQL => $sql, -PARAMS => $params );
   return $hash;
 }
 
