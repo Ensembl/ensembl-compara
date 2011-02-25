@@ -161,11 +161,13 @@ sub fetch_input {
 sub _print_params {
   my ($self) = @_;
   return unless $self->debug();
-  my @params = qw(replace die_if_no_core_adaptor genome_db_id);
+  my @params = qw(replace die_if_no_core_adaptor);
   foreach my $param (@params) {
     my $value = $self->param($param);
-    print "$param : ".(defined $value ? q{} : $value), "\n"; 
+    print "$param : ".(defined $value ? $value : q{}), "\n"; 
   }
+  print 'genome_db_ids: '.join(q{,}, @{$self->param('genome_db_ids')}), "\n";
+  return;
 }
 
 =head2 run
