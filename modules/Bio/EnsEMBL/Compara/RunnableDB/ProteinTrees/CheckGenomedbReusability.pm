@@ -98,8 +98,8 @@ sub run {
     my $prev_core_dba   = $self->param('prev_core_dba');
     my $curr_core_dba   = $self->param('curr_core_dba');
 
-    my $prev_exons = hash_all_exons_from_dbc( $prev_core_dba->dbc() );
-    my $curr_exons = hash_all_exons_from_dbc( $curr_core_dba->dbc() );
+    my $prev_exons = hash_all_exons_from_dbc( $prev_core_dba );
+    my $curr_exons = hash_all_exons_from_dbc( $curr_core_dba );
     my ($removed, $remained1) = check_presence($prev_exons, $curr_exons);
     my ($added, $remained2)   = check_presence($curr_exons, $prev_exons);
 
@@ -150,21 +150,25 @@ sub Bio::EnsEMBL::DBSQL::DBAdaptor::extract_assembly_name {
 
 
 sub hash_all_exons_from_dbc {
-    my $dbc = shift @_;
+    my $dba = shift @_;
+    my $dbc = $dba->dbc();
 
     my $sql = qq{
         SELECT CONCAT(tsi.stable_id, ':', e.seq_region_start, ':', e.seq_region_end)
-          FROM transcript_stable_id tsi, transcript t, exon_transcript et, exon e
+          FROM transcript_stable_id tsi, transcript t, exon_transcript et, exon e, seq_region sr, coord_system cs
          WHERE tsi.transcript_id=t.transcript_id
            AND t.transcript_id=et.transcript_id
            AND et.exon_id=e.exon_id
-           AND t.biotype='protein_coding'
+           AND t.seq_region_id = sr.seq_region_id
+           AND sr.coord_system_id = cs.coord_system_id
+           AND t.biotype=?
+           AND cs.species_id =?
     };
 
     my %exon_set = ();
 
     my $sth = $dbc->prepare($sql);
-    $sth->execute();
+    $sth->execute('protein_coding', $dba->species_id());
 
     while(my ($key) = $sth->fetchrow()) {
         $exon_set{$key} = 1;
