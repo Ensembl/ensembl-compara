@@ -9,7 +9,9 @@ use Bio::EnsEMBL::Compara::StableId::Adaptor;
 use Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink;
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref);
+use Scalar::Util qw(looks_like_number);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -38,7 +40,11 @@ sub new_without_hive {
   my ($db_adaptor, $type, $release, $prev_release, $prev_release_db, $master_db) = 
     rearrange([qw(db_adaptor type release prev_release prev_release_db master_db)], @args);
   
-  assert_ref($db_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor'); 
+  assert_ref($db_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor');
+  throw 'Need a -TYPE' unless $type; 
+  throw 'Need a -RELEASE' unless $release;
+  throw 'Need a -PREV_RELEASE_DB' unless $prev_release_db;
+  throw 'Need a -MASTER_DB' unless $master_db;
   
   my $self = bless {}, $class;
   #Put in so we can have access to $self->param()
@@ -46,11 +52,11 @@ sub new_without_hive {
   $self->input_job($job);
   
   $self->compara_dba($db_adaptor);
-  $self->param('type', $type);
-  $self->param('release', $release);
-  $self->param('prev_release', $prev_release);
-  $self->param('prev_rel_db', $self->_dba_to_hash($prev_release_db));
-  $self->param('master_db', $self->_dba_to_hash($master_db));
+  $self->param('type',          $type);
+  $self->param('release',       $release);
+  $self->param('prev_release',  $prev_release);
+  $self->param('prev_rel_db',   $self->_dba_or_hash_to_conn($prev_release_db));
+  $self->param('master_db',     $self->_dba_or_hash_to_conn($master_db));
   
   return $self;
 }
@@ -76,73 +82,88 @@ sub run_without_hive {
 }
 
 sub fetch_input {
-    my $self = shift @_;
+  my $self = shift @_;
+  
+  my $prev_rel_db  = $self->param('prev_rel_db');
+  if(! $prev_rel_db) {
+    print 'Not running as not prev_rel_db given in parameters' if $self->debug();
+    return;
+  }
 
-    my $type         = $self->param('type')         || die "'type' is an obligatory parameter, please set it in the input_id hashref to 'f' or 't'";
-    my $curr_release = $self->param('release')      || die "'release' is an obligatory numeric parameter, please set it in the input_id hashref";
-    my $prev_release = $self->param('prev_release') || $curr_release - 1;
-    my $prev_rel_db  = $self->param('prev_rel_db');
+  $self->param('master_db')                       || throw "'master_db' is a required parameter";
+  my $type         = $self->param('type')         || throw "'type' is a required parameter, please set it in the input_id hashref to 'f' or 't'";
+  my $curr_release = $self->param('release')      || throw "'release' is a required numeric parameter, please set it in the input_id hashref";
+  looks_like_number($curr_release)                || throw "'release' is a numeric parameter. Check your input";
+  my $prev_release = $self->param('prev_release') || $curr_release - 1;
+  my $prev_rel_dbc = $prev_rel_db && $self->_dba_or_hash_to_conn($prev_rel_db);
 
-    my $prev_rel_dbc = $prev_rel_db && Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(%$prev_rel_db)->dbc();
+  my $adaptor   = Bio::EnsEMBL::Compara::StableId::Adaptor->new();
+  my $from_ncs  = $adaptor->fetch_ncs($prev_release, $type, $prev_rel_dbc);
+  my $to_ncs    = $adaptor->fetch_ncs($curr_release, $type, $self->compara_dba->dbc());
+  my $ncsl      = Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink->new(-FROM => $from_ncs, -TO => $to_ncs);
 
-    my $adaptor = Bio::EnsEMBL::Compara::StableId::Adaptor->new();
+  $self->compara_dba()->dbc()->disconnect_when_inactive(1);
 
-    my $from_ncs = $adaptor->fetch_ncs($prev_release, $type, $prev_rel_dbc);
-    my $to_ncs   = $adaptor->fetch_ncs($curr_release, $type, $self->compara_dba->dbc());
-    my $ncsl     = Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink->new(-FROM => $from_ncs, -TO => $to_ncs);
+  $self->param('adaptor', $adaptor);
+  $self->param('ncsl', $ncsl);
+  $self->param('prev_release', $prev_release); #replace it with whatever it is now
 
-    $self->compara_dba()->dbc()->disconnect_when_inactive(1);
-
-    $self->param('adaptor', $adaptor);
-    $self->param('ncsl', $ncsl);
-
-    return 1;
+  return 1;
 }
 
 sub run {
-    my $self = shift @_;
+  my $self = shift @_;
+  
+  return if ! $self->param('prev_rel_db'); #bail out early
 
-    my $type         = $self->param('type')         || die "'type' is an obligatory parameter, please set it in the input_id hashref to 'f' or 't'";
-    my $curr_release = $self->param('release')      || die "'release' is an obligatory numeric parameter, please set it in the input_id hashref";
-    my $prev_release = $self->param('prev_release') || $curr_release - 1;
+  my $type         = $self->param('type');
+  my $curr_release = $self->param('release');
+  my $prev_release = $self->param('prev_release');
 
-    my $ncsl = $self->param('ncsl');
-    my $postmap = $ncsl->maximum_name_reuse();
-    $ncsl->to->apply_map($postmap);
+  my $ncsl = $self->param('ncsl');
+  my $postmap = $ncsl->maximum_name_reuse();
+  $ncsl->to->apply_map($postmap);
 
-    return 1;
+  return 1;
 }
 
 sub write_output {
-    my $self = shift @_;
+  my $self = shift @_;
 
-    my $adaptor   = $self->param('adaptor');
-    my $ncsl      = $self->param('ncsl');
-    my $master_db = $self->param('master_db');
+  return if ! $self->param('prev_rel_db'); #bail out early
 
-    my $time_when_started_storing = time();
+  my $adaptor   = $self->param('adaptor');
+  my $ncsl      = $self->param('ncsl');
+  my $master_db = $self->param('master_db');
 
+  my $master_dbc = $master_db && $self->_dba_or_hash_to_conn($master_db);
+  my $time_when_started_storing = time();  
+  eval {
     $adaptor->store_map($ncsl->to, $self->compara_dba()->dbc());
-
-    my $master_dbc = $master_db && Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(%$master_db)->dbc();
     $adaptor->store_history($ncsl, $self->compara_dba()->dbc(), $time_when_started_storing, $master_dbc);
+  };
+  if($@) {
+    throw "Detected error during store. Check your database settings are correct for the master database (read/write): $@";
+  }
 
-    return 1;
+  return 1;
 }
 
-sub _dba_to_hash {
-  my ($self, $dba) = @_;
-  if(check_ref($dba, 'Bio::EnsEMBL::DBSQL::DBAdaptor')) {
-    return {
-      -SPECIES => $dba->species(),
-      -SPECIES_ID => $dba->species_id(),
-      -MULTISPECIES_DB => $dba->is_multispecies(),
-      -DBCONN => $dba->dbc(),
-      -GROUP => $dba->group()
-    };
+sub _dba_or_hash_to_conn {
+  my ($self, $input) = @_;
+  if(check_ref($input, 'Bio::EnsEMBL::DBSQL::DBAdaptor')) {
+    return $input->dbc();
   }
-  #Probably a HASH anyway
-  return $dba;
+  if(check_ref($input, 'Bio::EnsEMBL::DBSQL::DBConnection')) {
+    return $input;
+  }
+  elsif(check_ref($input, 'HASH')) {
+    return Bio::EnsEMBL::DBSQL::DBConnection->new(%{$input});
+  }
+  else {
+    my $ref = ref($input) || 'UNKNOWNREF';
+    throw "Not sure how to parse $ref into a database adaptor";
+  }
 }
 
 1;
