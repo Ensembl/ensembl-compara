@@ -1,5 +1,7 @@
 .local_context { margin: 0 0 0.5em 0; border: 1px solid [[PANEL_BORDER]]; padding: 0; background-color: [[PANEL_BG]]; }
-.local_context a { color: [[MH_BORDER]]; text-decoration: none; }
+.local_context a,
+.local_context a:hover,
+.local_context a:visited { color: [[MH_BORDER]]; text-decoration: none; }
 .local_context dt { font-weight: bold; }
 .local_context dd { margin-left: 0; white-space: nowrap; }
 .local_context dd dl { border:0; padding: 0 0 0 14px; }
