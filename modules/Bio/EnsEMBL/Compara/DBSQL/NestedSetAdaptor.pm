@@ -366,28 +366,35 @@ sub _get_starting_lr_index {
   my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $conn);
 
   my $starting_lr_index;
-
-  $h->transaction(-CALLBACK => sub {
-    my $rows = $h->execute(-SQL => $sql, -PARAMS => [$table]);
-
-    my ($ddl, $params);
-    if(@{$rows}) {
-      my ($lr_index_offset_id, $max_lr_index) = @{$rows->[0]};
-      $starting_lr_index = $max_lr_index+1;
-      my $new_max_lr_index = $max_lr_index+$lr_ids_needed;
-      $ddl = $update_sql;
-      $params = [$new_max_lr_index, $lr_index_offset_id];
+  #Have to allow 3 retries to avoid really bad deadlocks
+  $h->transaction(
+    -RETRY => 3,
+    -CONDITION => sub {
+      my ($error) = @_;
+      return $error =~ /deadlock/i ? 1 : 0;
+    },
+    -CALLBACK => sub {
+      my $rows = $h->execute(-SQL => $sql, -PARAMS => [$table]);
+  
+      my ($ddl, $params);
+      if(@{$rows}) {
+        my ($lr_index_offset_id, $max_lr_index) = @{$rows->[0]};
+        $starting_lr_index = $max_lr_index+1;
+        my $new_max_lr_index = $max_lr_index+$lr_ids_needed;
+        $ddl = $update_sql;
+        $params = [$new_max_lr_index, $lr_index_offset_id];
+      }
+      else {
+        $starting_lr_index = 1;
+        my $new_max_lr_index = $lr_ids_needed;
+        $ddl = $insert_sql;
+        $params = [$table, $new_max_lr_index];
+      }
+  
+      $h->execute_update(-SQL =>  $ddl, -PARAMS => $params);
+      return;
     }
-    else {
-      $starting_lr_index = 1;
-      my $new_max_lr_index = $lr_ids_needed;
-      $ddl = $insert_sql;
-      $params = [$table, $new_max_lr_index];
-    }
-
-    $h->execute_update(-SQL =>  $ddl, -PARAMS => $params);
-    return;
-  });
+  );
   
   $conn->disconnect_if_idle() if($use_fresh_connection);
 
