@@ -1073,6 +1073,15 @@ CREATE TABLE lr_index_offset (
 	UNIQUE KEY (table_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+# Auto-populate lr_index_offset with all tables
+INSERT INTO lr_index_offset (table_name, lr_index) 
+values 
+	('protein_tree_node', 0), 
+	('ncbi_taxa_node', 0), 
+	('genomic_align_tree', 0), 
+	('nc_tree_node', 0),
+	('super_protein_tree_node', 0);
+
 # Auto add schema version to database (this will override whatever hive puts there)
 REPLACE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "62");
 

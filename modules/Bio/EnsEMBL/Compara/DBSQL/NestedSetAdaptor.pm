@@ -355,10 +355,9 @@ sub _get_starting_lr_index {
   my $table = $self->_lr_table_name();
   my $node_count = scalar(@{$tree_root->get_all_nodes()});
   my $lr_ids_needed = $node_count*2;
-
-  my $sql = 'SELECT lr_index_offset_id, lr_index FROM lr_index_offset WHERE table_name =? FOR UPDATE';
+  
+  my $select_sql = 'SELECT lr_index_offset_id, lr_index FROM lr_index_offset WHERE table_name =? FOR UPDATE';
   my $update_sql = 'UPDATE lr_index_offset SET lr_index =? WHERE lr_index_offset_id =?';
-  my $insert_sql = 'INSERT INTO lr_index_offset (table_name, lr_index) VALUES (?, ?)';
 
   my $conn = ($use_fresh_connection) ?
     Bio::EnsEMBL::DBSQL::DBConnection->new(-DBCONN => $self->dbc()) :
@@ -366,32 +365,23 @@ sub _get_starting_lr_index {
   my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $conn);
 
   my $starting_lr_index;
-  #Have to allow 3 retries to avoid really bad deadlocks
+  #Retry because this *cannot* fail due to NJTREE -> QuickTreeBreak flow
   $h->transaction(
     -RETRY => 3,
     -CONDITION => sub {
       my ($error) = @_;
-      return $error =~ /deadlock/i ? 1 : 0;
+      return ( $error =~ /deadlock/i ) ? 1 : 0;
     },
     -CALLBACK => sub {
-      my $rows = $h->execute(-SQL => $sql, -PARAMS => [$table]);
-  
-      my ($ddl, $params);
-      if(@{$rows}) {
-        my ($lr_index_offset_id, $max_lr_index) = @{$rows->[0]};
-        $starting_lr_index = $max_lr_index+1;
-        my $new_max_lr_index = $max_lr_index+$lr_ids_needed;
-        $ddl = $update_sql;
-        $params = [$new_max_lr_index, $lr_index_offset_id];
+      my $updated_row = $h->execute_update();
+      my $rows = $h->execute(-SQL => $select_sql, -PARAMS => [$table]);
+      if(!@{$rows}) {
+        throw("The table '${table}' does not have an entry in lr_index_offset");
       }
-      else {
-        $starting_lr_index = 1;
-        my $new_max_lr_index = $lr_ids_needed;
-        $ddl = $insert_sql;
-        $params = [$table, $new_max_lr_index];
-      }
-  
-      $h->execute_update(-SQL =>  $ddl, -PARAMS => $params);
+      my ($id, $max) = @{$rows->[0]};
+      $starting_lr_index = $max+1;
+      my $new_max = $max+$lr_ids_needed;
+      $h->execute_update(-SQL => $update_sql, -PARAMS => [$new_max, $id]);
       return;
     }
   );
