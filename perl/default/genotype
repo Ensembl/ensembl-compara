@@ -20,8 +20,20 @@ my $vcf_adaptor = Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor->new($file);
 
 my $consensus   = $vcf_adaptor->fetch_variations($chr, $s, $e);
 
-my $fnum =  scalar(@$consensus);
+my $header_columns =   $vcf_adaptor->parse_header_columns($chr, $s, $e);
 
+my @cols = split (/\s/, $header_columns);
+my $reserved_cols = ['CHROM','POS','ID','REF','ALT','QUAL','FILTER','INFO','FORMAT'];
+my $cindex = 1;
+my @sample_names;
+
+foreach my $col (@cols) {
+  next if (grep /$col$/, @$reserved_cols);
+  $sample_names[$cindex] = $col;
+  $cindex++;  
+}
+
+my $fnum =  scalar(@$consensus);
 
 my $table1000    = new EnsEMBL::Web::Document::SpreadSheet([], [], {  data_table => 1, sorting => [ 'Individual asc' ], exportable => 0, id => "1000Genomes_table"  });
 $table1000->add_columns(
@@ -61,13 +73,17 @@ $table1000->add_columns(
   my $count;
 
   my ($rs) = $a->{'ID'} =~ /([^\.]+?)(?:;|$)/;
-  my $rs_source = $rs ? qq{(<a href="http://www.ncbi.nlm.nih.gov/SNP/snp_ref.cgi?rs=$rs" rel="external">$rs</a> source)} : '';  #IS THIS LINK CORRECT ??
+  my $rs_source = $rs ? qq{($rs source)} : '';
+  #my $rs_source = $rs ? qq{(<a href="http://www.ncbi.nlm.nih.gov/SNP/snp_ref.cgi?rs=$rs" rel="external">$rs</a> source)} : '';  #IS THIS LINK CORRECT ??
   my $url_v     = $rs ? qq{v=$rs;} : '';
 
   my $inner_html ='' ;
-  my $end = $a->{'POS'} + 1000;
+  my $start = $a->{'POS'} - 500;
+  $start = 0 if ($start < 0);
+  my $end   = $a->{'POS'} + 500;
 
   my $html = qq{<div class="summary_panel">
+                <a name="top"></a>
                 <dl class="summary">
                  <dt>Variation class</dt> 
                  <dd>SNP ${rs_source}</dd>  
@@ -76,7 +92,7 @@ $table1000->add_columns(
                 </dl>
                 <dl class="summary">
                  <dt>Location</dt>
-                 <dd>This feature maps to $a->{'CHROM'}:$a->{'POS'} (forward strand) | <a href="/$species/Location/View?db=core;r=$a->{'CHROM'}:$a->{'POS'}-$end;${url_v}vdb=variation;">View in location tab</a>
+                 <dd>This feature maps to $a->{'CHROM'}:$a->{'POS'} (forward strand) | <a href="/$species/Location/View?db=core;r=$a->{'CHROM'}:$start-$end;${url_v}vdb=variation;">View in location tab</a>
                 </dd>
                </dl>
              </div>};
@@ -119,10 +135,10 @@ $table1000->add_columns(
     my $format_desc = '';
     foreach $form (keys %{$sample}) {
       next if $form =~ /GT/;    
-        $format_desc .= $format->{$form}.$sample->{$form}.'; ';
+      $format_desc .= $format->{$form}.$sample->{$form}.'; ';
     }
 
-    my ($ref_val, $delim,  $alt_val) = $GT =~ /(\d+|\.)([^\d\.]{1})(\d+|\.)/ if ($GT =~ /[\|\/]{1}/);  #diploid calls                                                                                          
+    my ($ref_val, $delim,  $alt_val) = $GT =~ /(\d+|\.)([\|\/]{1})(\d+|\.)/ if ($GT =~ /[\|\/]{1}/);  #diploid calls                                                                                          
     $ref_val = $GT  if ($GT !~ /[\|\/]{1}/);   #haploid calls, e.g. on Y, male X, mitochondrion, only one allele value should be given                                                                        
 
     my $gt1 =  $ref_val =~ /(\d+)/ ? $substit[$ref_val] : '.';
@@ -131,22 +147,21 @@ $table1000->add_columns(
 
     my $genotype = $GT =~ /[\|\/]{1}/ ? $gt1.$delim.$gt2 : $gt1;
     my $row = {
-        'Individual'  => "Sample $count",
+        'Individual'  => $sample_names[$count],
         'Genotype'    => $genotype,
         'Description' => "$format_desc",
     };
     push @add_row, $row;
 
-  }
-  #print  "\n\n A: ". Dumper $a;                                                                                                                                                            
+  }  
 
- $inner_html .= qq{
+  $inner_html .= qq{
                  <h2 style="margin-top: 15px; margin-bottom: 5px;"><a name="$pos">Genotypes</a></h2></br>
                 };
 
   $table->add_rows(@add_row);
   $inner_html .= sprintf '<div class="toggleable">%s</div>                 
-                 <span style="float:right;"><a href="#">[back to top]</a></span>
+                 <span style="float:right;"><a href="#top">[back to top]</a></span>
                  <p class="invisible">.</p>', $table->render;
 
 
