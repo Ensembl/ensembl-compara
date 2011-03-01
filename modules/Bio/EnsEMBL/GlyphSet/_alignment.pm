@@ -122,24 +122,24 @@ sub render_histogram {
     my ($sorted_feats, $sorted_can_feats, $sorted_non_can_feats, $hrefs) = ([],[],[],{});
     my $feats = $features{$feature_key};
     foreach my $f (
-	map { $_->[1] }
-        sort{ $a->[0] <=> $b->[0] }
-	map { [$_->start,$_ ] }
-	  @{$feats->[0]}
-	){
+	    map { $_->[1] }
+      sort{ $a->[0] <=> $b->[0] }
+	    map { [$_->start,$_ ] }
+	      @{$feats->[0]}
+	  ){
       next if ($f->strand ne $strand);
 
       #artificially set score to the max allowed score if it's greater than that
       if ($f->score > $self->{'max_score'}) {
-	$f->score($self->{'max_score'});
+	      $f->score($self->{'max_score'});
       }
 
       #sort into canonical and non-canonical
       if ($f->display_id =~ /non canonical$/) {
-	push @$sorted_non_can_feats, $f;
+	      push @$sorted_non_can_feats, $f;
       }
       else {
-	push @$sorted_can_feats, $f;
+	      push @$sorted_can_feats, $f;
       }
       $hrefs->{$f->display_id} = $self->href($f);
     }
@@ -289,7 +289,7 @@ sub render_normal {
 
       if ($config) {
         my $f = $F[0][2];
-        if ($config->{'useScore'} == 1) {
+        if ($config->{'useScore'} == 1 && !$feature_colour) {
           my $index = int(($f->score * scalar(@greyscale)) / 1000);
           $feature_colour = $greyscale[$index];
         }
