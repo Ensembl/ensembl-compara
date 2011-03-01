@@ -237,6 +237,9 @@ sub pretty_date {
   elsif ($format && $format eq 'short') {
     return $short_months[$mon] . ' ' . $year;
   }
+  elsif ($format && $format eq 'daymon') {
+    return $long_months[$mon].' '.$day;
+  }
   else {
     return $day . ' ' . $long_months[$mon] . ' ' . $year;
   }
