@@ -373,7 +373,6 @@ sub _get_starting_lr_index {
       return ( $error =~ /deadlock/i ) ? 1 : 0;
     },
     -CALLBACK => sub {
-      my $updated_row = $h->execute_update();
       my $rows = $h->execute(-SQL => $select_sql, -PARAMS => [$table]);
       if(!@{$rows}) {
         throw("The table '${table}' does not have an entry in lr_index_offset");
