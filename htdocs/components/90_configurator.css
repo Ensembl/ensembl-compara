@@ -28,6 +28,7 @@ form.configuration.multi div.config div.select_all                  { display: n
 form.configuration.multi div.config ul.config_menu                  { margin-left: 0 !important; }
 
 body.ie6 form.configuration div.config ul.config_menu li            { height: 21px; }
+body.ie6 form.configuration div.config ul.popup_menu li             { height: auto; }
 body.ie6 form.configuration div.config div.select_all               { margin-bottom: 4px; }
 body.ie6 form.configuration div.config ul.config_menu li .controls  { margin-top: -16px; }
 body.ie7 form.configuration div.config ul.config_menu li .controls  { margin-top: -18px; }
