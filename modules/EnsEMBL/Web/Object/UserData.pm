@@ -657,11 +657,12 @@ sub calculate_consequence_data {
         }
         
         # include failed variations
-        $vfa->db->include_failed_variations(1) if $vfa->db->can('include_failed_variations');
+        $vfa->db->include_failed_variations(1) if defined($vfa->db) && $vfa->db->can('include_failed_variations');
 
         while ( $f = shift @{$features}){
-          $file_count++;
-          next if $feature_count >= $size_limit; 
+          $file_count++; 
+          next if $feature_count >= $size_limit; # $size_limit is max number of v to process, if hit max continue counting v's in file but do not process them 
+          $feature_count++;
           # Get Slice
           my $slice;
           if (defined $slice_hash{$f->seqname}){
@@ -814,13 +815,13 @@ sub calculate_consequence_data {
               push @new_vfs, $snp_effect;
 
               # if the array is "full" or there are no more items in @features
-              if(scalar @new_vfs == $size_limit || scalar @$features == 0) {
+              if(scalar @new_vfs == 1000 || scalar @$features == 0) { 
                 $count++;
+                next if scalar @new_vfs == 0;
                 my @feature_block = @new_vfs;
                 $consequence_results{$count} = \@feature_block;
                 @new_vfs = ();
               }
-              $feature_count++;
             }
           }
         }
@@ -829,9 +830,9 @@ sub calculate_consequence_data {
     $nearest = $parser->nearest;
   }
 
-  if ($file_count <= $size_limit){
+  if ($file_count <= $size_limit){ 
     return (\%consequence_results, $nearest);
-  } else {
+  } else {  
     return (\%consequence_results, $nearest, $file_count);
   }
 }

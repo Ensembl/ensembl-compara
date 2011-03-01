@@ -62,6 +62,7 @@ sub read_tree {
     if( $filename eq 'index.html' || $filename eq 'index.none' ) {
       my ($title, $nav, $order, $index) = get_info( $doc_root . $path . $filename );
       $branch->{'_show'} = 'n' if $filename eq 'index.none';
+      $branch->{'_show'} = 'y' if $filename eq 'index.html';
       if ($index =~ /NO FOLLOW/) {
         $branch->{_title} = $title;
         $branch->{_nav}   = $nav;
