@@ -20,7 +20,7 @@ body { font-family: Luxi Sans, Geneva, Helvetica, Arial, sans-serif; color:#000;
 #mh_lo     { width:50%; vertical-align:middle; white-space: nowrap; padding-left:3px }
 #mh_lo img { border: 0 }
 td#mh_bc { color: #cccccc; font-weight: bold; padding-left:4px; } 
-#mh_bc a { color: #ccddff; text-decoration: none }
+#mh_bc a { color: #fff; text-decoration: none }
 #mh_bc a:hover { color: #cc0000;}
 
 #wide-footer { clear: both; text-align: center; font-size: 0.9em; padding: 2px 0; margin: 0.5em 0 0 0; }
@@ -38,13 +38,7 @@ h3.boxed { margin: 0 0 0.5em 0; padding: 0.5em; background-color: #8fa0c4 }
 <body id="ensembl-webpage">
   <table class="mh" summary="layout table">
     <tr>
-      <td id="mh_lo"><a href="/"><img src="/i/e-ensembl.gif" alt="Ensembl" title="Ensembl" style="width:150px;height:40px" /></a></td>
-    </tr>
-  </table>
-  <table class="mh" summary="layout table">
-    <tr>
-      <td id="mh_bc"><strong id="title"></strong></td>
-      <td id="mh_lnk"></td>
+      <td id="mh_lo"><a href="/"><img src="/i/e-ensembl.png" alt="Ensembl" title="Ensembl" style="width:150px;height:40px" /></a></td>
     </tr>
   </table>
 

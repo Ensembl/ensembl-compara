@@ -14,6 +14,7 @@ use vars qw( $SERVERROOT );
 BEGIN{
   $SERVERROOT = dirname( $Bin );
   warn $SERVERROOT;
+  unshift @INC, "$SERVERROOT";
   unshift @INC, "$SERVERROOT/conf";
   eval{ require SiteDefs };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
@@ -43,7 +44,8 @@ my $seqname = undef;
 my $coordsystem = 'toplevel';
 
 my @SPECIES;
-my ($dumpdir, $no_log, $email, $no_compress, $start_with, $end_with);
+my ($dumpdir, $no_log, $logfile, $email, $no_email, $no_compress, $start_with, $end_with);
+my ($noncore_db,$core_dbname) = '',''; #can dump from non-core databases if you provide a core db for the dna sequence
 $| = 1;
 
 &GetOptions(
@@ -63,8 +65,12 @@ $| = 1;
   'coordsystem:s' => \$coordsystem,
   'no_compress'   => \$no_compress,
   'no_log'        => \$no_log,
+  'logfile:s'     => \$logfile,
   'email:s'       => \$email,
+  'no_email'      => \$no_email,
   'dumpdir:s'     => \$dumpdir,
+  'noncore_db:s'  => \$noncore_db,
+  'core_dbname:s' => \$core_dbname,
 );
 
 if (scalar(@chromosomes)) {
@@ -102,7 +108,6 @@ elsif ($end_with) {
 
 # Times and log file
 my $script_start_time = time();
-my $logfile;
 unless ($no_log) {
   (my $time = gmtime(time)) =~ s/\s+/\./g;
   $logfile ||= "logs/gtf$release"."_$time.log";
@@ -118,12 +123,26 @@ for my $sp( sort @SPECIES ){  # users selected spp
   my $db;
   if ($host, $port, $dbname) {
     $db = new Bio::EnsEMBL::DBSQL::DBAdaptor(
-					     -host   => $host,
-					     -user   => $user,
-					     -port   => $port,
-					     -pass   => $pass,
-					     -dbname => $dbname
-					    );
+      -host   => $host,
+      -user   => $user,
+      -port   => $port,
+      -pass   => $pass,
+      -dbname => $dbname
+    );
+    if ($noncore_db) {
+      unless ($core_dbname) {
+        print STDERR "Please specify details of core DB using 'core_dbname='. Exiting\n";
+        exit;
+      }
+      my $core_db  = new Bio::EnsEMBL::DBSQL::DBAdaptor(
+        -host   => $host,
+        -user   => $user,
+        -pass   => $pass,
+        -port   => $port,
+        -dbname => $core_dbname,
+      );
+      $db->dnadb($core_db);
+    }
   }
   else {
     my $dbConnection = EnsEMBL::Web::DBSQL::DBConnection->new($sp, $SPECIES_DEFS);
@@ -204,8 +223,10 @@ utils::Tool::info (2, "Used $logfile.") if $logfile;
 utils::Tool::info (2, " Time taken: $hours:". localtime($time_taken)->min."mins");
 close STDERR;
 
-$email ||= 'ssg-ensembl@sanger.ac.uk';
-utils::Tool::mail_log( $logfile, $email ) if $logfile;
+unless ($no_email) {
+  $email ||= 'ssg-ensembl@sanger.ac.uk';
+  utils::Tool::mail_log( $logfile, $email ) if $logfile;
+}
 exit;
 
 
@@ -292,6 +313,13 @@ sub write_transcript_gtf {
   my $intrans = 0;
   my $instop = 0;
 
+
+  my $biotype_display;
+  {
+    no warnings 'uninitialized';
+    $biotype_display = $noncore_db eq 'vega' ? $gene->status.'_'.$gene->biotype : $gene->biotype;
+  }
+
   foreach my $exon (@{$transcript->get_all_Exons}) {
     my $strand = $exon->strand;
 
@@ -308,7 +336,7 @@ sub write_transcript_gtf {
     }
 
     print $fh $idstr . "\t" . 
-              $gene->biotype . "\t" . 
+              $biotype_display . "\t" . 
               'exon' . "\t" . 
               ($exon->start+$sliceoffset) . "\t". 
               ($exon->end+$sliceoffset) . "\t". 
@@ -346,7 +374,7 @@ sub write_transcript_gtf {
           $exon_end >= $cdsexon->start &&
           !$instop) {
         print $fh $idstr . "\t" . 
-                  $gene->biotype . "\t" . 
+                  $biotype_display . "\t" . 
                   'CDS' . "\t" . 
                   ($exon_start+$sliceoffset) . "\t". 
                   ($exon_end+$sliceoffset) . "\t". 
@@ -362,7 +390,7 @@ sub write_transcript_gtf {
       my $tmpcnt = $count;
       foreach my $startc (@startcs) {
         print $fh $idstr . "\t" . 
-                  $gene->biotype . "\t" . 
+                  $biotype_display . "\t" . 
                   'start_codon' . "\t" . 
                   ($startc->start+$sliceoffset) . "\t". 
                   ($startc->end+$sliceoffset) . "\t". 
@@ -379,7 +407,7 @@ sub write_transcript_gtf {
         my $tmpcnt = $count - $#endcs;
         foreach my $endc (@endcs) {
           print $fh $idstr . "\t" . 
-                    $gene->biotype . "\t" . 
+                    $biotype_display . "\t" . 
                     'stop_codon' . "\t" . 
                     ($endc->start+$sliceoffset) . "\t". 
                     ($endc->end+$sliceoffset) . "\t". 
@@ -453,9 +481,11 @@ sub print_attribs {
 
   my $gene_name;
   $gene_name = $gene->external_name;
+  $gene_name =~ s/^[A-Z]{1,3}:// if ($noncore_db eq 'vega');
 
   my $trans_name;
   $trans_name = $transcript->external_name;
+  $trans_name =~ s/^[A-Z]{1,3}:// if ($noncore_db eq 'vega');
 
   print $fh " gene_id \"" .  get_gene_id($gene) . "\";" .
             " transcript_id \"" . get_transcript_id($transcript) . "\";";

@@ -193,7 +193,7 @@ sub fetch_movies {
   ## Have to sort post-query, since it's on a 'data' field
   my @sorted = sort {
       $a->{'list_position'} <=> $b->{'list_position'}                
-      || $a-{'>title'} cmp $b->{'title'}
+      || $a->{'title'} cmp $b->{'title'}
     } @$records;
   return \@sorted;
 }

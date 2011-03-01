@@ -4,6 +4,9 @@ use CGI;
 
 use EnsEMBL::Web::TmpFile::Text;
 
+print 'TEST' ;
+
+
 my $cgi    = new CGI;
 my $file   = $cgi->param('file');
 my $name   = $cgi->param('name');

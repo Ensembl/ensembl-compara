@@ -20,26 +20,13 @@ sub caption {
 sub content {
   my $self = shift;
 
-  my $species = $self->object->param('species') || $self->object->data_species;
-  my $form = $self->modal_form('more_input', $self->object->species_path($species) . "/UserData/UploadFeedback", {'wizard' => 1});
+  my $species = $self->hub->param('species') || $self->hub->data_species;
+  my $form = $self->modal_form('more_input', $self->hub->species_path($species) . "/UserData/UploadFeedback", {'wizard' => 1});
 
-  ## Format selector
-  my $formats = [
-    {name => '-- Please Select --', value => ''},
-    {name => 'generic', value => 'Generic'},
-    {name => 'BED', value => 'BED'},
-    {name => 'GBrowse', value => 'GBrowse'},
-    {name => 'GFF', value => 'GFF'},
-    {name => 'GTF', value => 'GTF'},
-    {name => 'PSL', value => 'PSL'},
-    {name => 'WIG', value => 'WIG'},
-  ];
-
-
-  $form->add_element(type => 'Hidden', name => 'code', value => $self->object->param('code'));
+  $form->add_element(type => 'Hidden', name => 'code', value => $self->hub->param('code'));
   $form->add_element(type => 'Hidden', name => 'species', value => $species);
   $form->add_element(type => 'Information', value => 'Your file format could not be identified - please select an option:');
-  $form->add_element(type => 'DropDown', name => 'format', label => 'File format', select => 'select', values => $formats);
+  $self->add_file_format_dropdown($form);
 
   return $form->render;
 }

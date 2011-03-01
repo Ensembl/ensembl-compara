@@ -48,10 +48,10 @@ sub map {
   return () unless $chr eq $slice->seq_region_name;
   my $start = $self->rawstart();
   my $slice_end = $slice->end();
-  return () unless $start < $slice_end;
+  return () unless $start <= $slice_end;
   my $end   = $self->rawend();
   my $slice_start = $slice->start();
-  return () unless $slice_start < $end;
+  return () unless $slice_start <= $end;
   $self->slide( 1 - $slice_start );
   return $self;
 }

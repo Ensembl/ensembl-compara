@@ -103,7 +103,6 @@ sub parse {
 
   my $error = $self->check_format($data, $format);
   if ($error) {
-    warn "!!! PARSER ERROR $error";
     return $error;
   }
   else {
@@ -214,7 +213,12 @@ sub parse {
           if ($filter->{'chr'}) {
             next unless ($chr eq $filter->{'chr'} || $chr eq 'chr'.$filter->{'chr'}); 
             if ($filter->{'start'} && $filter->{'end'}) {
-              next unless $start >= $filter->{'start'} && $end <= $filter->{'end'};
+              next unless (
+                ($start >= $filter->{'start'} && $end <= $filter->{'end'}) ## feature lies within coordinates
+                || ($start < $filter->{'start'} && $end >= $filter->{'start'}) ## feature overlaps start
+                || ($end > $filter->{'end'} && $start <= $filter->{'end'}) ## feature overlaps end
+  
+              );
             }
           }
 
@@ -263,7 +267,7 @@ sub split_into_columns {
       $tabbed = 1;
     }
     else { 
-      @columns = split /\t|\s/, $row; ; 
+      @columns = split /\t|\s+/, $row; ; 
     } 
   }
   else { ## Trying to identify the format
@@ -272,7 +276,7 @@ sub split_into_columns {
       $tabbed = 1;
     }
     else {
-      @columns = split /\s/, $row;
+      @columns = split /\s+/, $row;
     }
   }
   ## Clean up any remaining white space and non-printing characters
@@ -343,7 +347,7 @@ sub _find_nearest {
 
 sub check_format {
   my ($self, $data, $format) = @_;
-
+  my $feature_class = 'EnsEMBL::Web::Text::Feature::'.uc($format);  
   unless ($format) {
     foreach my $row ( split /\n|\r/, $data ) { 
       next unless $row;
@@ -379,6 +383,10 @@ sub check_format {
   if (!$format) {
     return 'Unrecognised format';
   }
+	if (defined &{$feature_class .'::check_format'}){ # If needed, create this function in EnsEMBL::Web::Text::Feature::[format]
+		my $result= $feature_class->check_format($data);
+		if($result){return "Incorrect format:$result";}
+	}
   $self->format($format);
   return undef;
 }

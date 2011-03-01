@@ -53,7 +53,7 @@ sub handler_das {
     
     if ($querystring =~ /segment=([^;]+)/) {
       my ($s) = Bio::EnsEMBL::Registry->get_species_and_object_type($1, 'Gene');
-      $das_species = $s if $s;
+      $das_species = ucfirst $s if $s;
     }
     
     # in case no macth was found go to the default site species to report the page with no features

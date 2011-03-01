@@ -1991,6 +1991,7 @@ sub populate_result_summary{
     my $CoordSystemAdaptor = $DBAdaptor->get_CoordSystemAdaptor;
     my $toplevel;
     foreach my $CoordSystem( @{$CoordSystemAdaptor->fetch_all} ){
+      next if !($CoordSystem->is_default);
       my $name = $CoordSystem->name;
       if( $CoordSystem->rank == 1 ){ $toplevel = $name }
       push @view_types, $name;
@@ -2158,6 +2159,7 @@ sub populate_result_summary{
   my( $toplevel, $seqlevel );
   foreach my $CoordSystem( @{$CoordSystemAdaptor->fetch_all} ){
     my $name = $CoordSystem->name;
+    next if !($CoordSystem->is_default);
     if( $CoordSystem->rank == 1         ){ $toplevel = $name } #23.1 only
     if( $CoordSystem->is_sequence_level ){ $seqlevel = $name } #23.1 only
     push @coord_systems, $name;
@@ -2261,6 +2263,7 @@ sub populate_result_summary{
   my( $toplevel, $seqlevel );
   my @coord_systems;
   foreach my $CoordSystem( @{$CoordSystemAdaptor->fetch_all} ){
+      next if !($CoordSystem->is_default); 
     my $name = $CoordSystem->name;
     if( $CoordSystem->rank == 1         ){ $toplevel = $name } #map-old
     if( $CoordSystem->is_sequence_level ){ $seqlevel = $name } #map-old

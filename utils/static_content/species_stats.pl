@@ -269,11 +269,16 @@ foreach my $spp (@valid_spp) {
       print "Exons:$exons\n" if $DEBUG;
 
       $snps = 0;
+      $strucvar = 0;
       if ($var_db) {
         ($snps) = &query ( $var_db,
           "SELECT COUNT(DISTINCT variation_id) FROM variation_feature",
           );
-        print "Variations:$snps\n" if $DEBUG;
+        print "SNPs, etc:$snps\n" if $DEBUG;
+        ($strucvar) = &query ( $var_db,
+          "SELECT COUNT(DISTINCT structural_variation_id) FROM structural_variation",
+          );
+        print "Structural variations:$strucvar\n" if $DEBUG;
       }
     }
 
@@ -286,16 +291,17 @@ foreach my $spp (@valid_spp) {
   ## Golden path length
 
     my ( $gpl ) = &query( $db,
-      "SELECT sum(length)
-        FROM seq_region
-        WHERE seq_region_id IN (
-          SELECT sr.seq_region_id FROM seq_region sr
-            LEFT JOIN assembly_exception ae ON ae.seq_region_id = sr.seq_region_id
-            LEFT JOIN seq_region_attrib sra ON sr.seq_region_id = sra.seq_region_id
-            LEFT JOIN attrib_type at ON sra.attrib_type_id = at.attrib_type_id
-            WHERE at.code = 'toplevel'
-            AND (ae.exc_type != 'HAP' OR ae.exc_type IS NULL)
-        )"
+      "SELECT sum(length) 
+        FROM seq_region sr, seq_region_attrib sra, attrib_type at, coord_system cs 
+        WHERE 
+          sr.seq_region_id = sra.seq_region_id
+          AND sra.attrib_type_id = at.attrib_type_id 
+          AND sr.coord_system_id = cs.coord_system_id 
+          AND at.code = 'toplevel' 
+          AND cs.name != 'lrg' 
+          AND sr.seq_region_id NOT IN 
+            (SELECT DISTINCT seq_region_id FROM assembly_exception ae WHERE ae.exc_type != 'par' )
+        "
     );
 
     print "Golden path length: $gpl.\n" if $DEBUG;
@@ -496,8 +502,18 @@ foreach my $spp (@valid_spp) {
       $snps = thousandify($snps);
       $row = stripe_row($rowcount);
       print STATS qq($row
-          <td class="data">Variations:</td>
+          <td class="data">Short Variants (SNPs, indels, somatic mutations):</td>
           <td class="value">$snps</td>
+          </tr>);
+    }
+
+    if ($strucvar) {
+      $rowcount++;
+      $strucvar = thousandify($strucvar);
+      $row = stripe_row($rowcount);
+      print STATS qq($row
+          <td class="data">Structural variants:</td>
+          <td class="value">$strucvar</td>
           </tr>);
     }
 

@@ -16,6 +16,27 @@ sub get_assemblies {
   return \@assemblies;
 }
 
+sub add_file_format_dropdown {
+  my ($self, $form) = @_;
+  
+  my @formats = sort {lc($a) cmp lc($b)} @{$self->hub->species_defs->USERDATA_FILE_FORMATS || []};
+
+  if (scalar @formats > 0) {
+    my $values = [{'name' => '-- Choose --', 'value' => ''}];
+    foreach my $f (@formats) {
+      push @$values, {'name' => $f, 'value' => uc($f)};
+    }
+    $form->add_element(
+      'type'    => 'DropDown',
+      'name'    => 'format',
+      'label'   => "Data format",
+      'values'  => $values,
+      'select'  => 'select',
+    );
+  }
+
+}
+
 sub output_das_text {
   my ($self, $form, @sources) = @_;
   

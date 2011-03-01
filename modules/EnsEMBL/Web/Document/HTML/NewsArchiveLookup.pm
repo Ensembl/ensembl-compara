@@ -21,7 +21,7 @@ sub render {
   if (@releases) {
     $html .= $self->format_release($_, $id) for @releases;
     $html  = qq{
-      <form action="/info/website/news/archive.html" method="get">
+      <form action="/info/website/news/index.html" method="get">
         <select name="id">
           $html
         </select> <input type="submit" name="submit" value="Go" />

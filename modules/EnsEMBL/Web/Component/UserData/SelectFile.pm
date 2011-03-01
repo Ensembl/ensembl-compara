@@ -93,20 +93,7 @@ sub content {
     );
   }
 
-  my @formats = sort @{$object->species_defs->USERDATA_FILE_FORMATS || []};
-  my $format_values = [{'name' => '-- Choose --', 'value' => ''}];
-  foreach my $f (@formats) {
-    push @$format_values, {'name' => $f, 'value' => uc($f)};
-  }
-
-  $form->add_element(
-      'type'    => 'DropDown',
-      'name'    => 'format',
-      'label'   => "Data format",
-      'values'  => $format_values,
-      'select'  => 'select',
-      'disabled'=> scalar @formats ? 0 : 1,
-  );
+  $self->add_file_format_dropdown($form);
 
   $form->add_element( type => 'Text', name => 'text', label => 'Paste file' );
   $form->add_element( type => 'File', name => 'file', label => 'Upload file' );

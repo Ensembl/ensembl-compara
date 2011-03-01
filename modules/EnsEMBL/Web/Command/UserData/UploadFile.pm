@@ -91,6 +91,7 @@ sub upload {
       $format = uc $ext if $ext =~ /(bed|psl|gff|gtf|wig)/i;
     }
   }
+  $param->{'format'} = $format;
 
   ## Get original path, so can save file name as default name for upload
   my $name = $hub->param('name');

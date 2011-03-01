@@ -7,11 +7,9 @@
  * ------------------------------------------------------------------ */
 
 /*
-    background: #E1D9FF;
     border-style: solid;
     color: #453D5C;
     border-width: 1px;
-    background: #ECFFE2;
 */
 
 /* Main area with the levels */
@@ -21,6 +19,7 @@
 
 
 #levelsArea {
+    background-color: #eaeeff;
     color: #5E5B6F;
 }
 
@@ -60,13 +59,13 @@
     text-decoration: none;
     color: #333;
     padding: 1px;
-    border: #fff solid 1px;
+    border: #eaeeff solid 1px;
 }
 
 #levelsEntry a:visited {
     color: #666;
     text-decoration: none;
-    border-color: #fff;
+    border-color: #eaeeff;
 }
 
 #levelsEntry a:hover {
@@ -80,6 +79,7 @@
 
 /* Main area with the modules */
 #modulesArea {
+    background-color: #ffffdd;
     color: #336;
 }
 

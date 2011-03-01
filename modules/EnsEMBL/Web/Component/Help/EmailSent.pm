@@ -14,9 +14,10 @@ sub _init {
 
 sub content {
   my $self = shift;
+  my $email = $self->hub->species_defs->ENSEMBL_HELPDESK_EMAIL;
 
   my $html = '<p>Thank you. Your message has been sent to our HelpDesk. You should receive a confirmation email shortly.</p>';
-  $html .= '<p>If you do not receive a confirmation, please email us directly at <a href="mailto:helpdesk@ensembl.org">helpdesk@ensembl.org</a>. Thank you.</p>';
+  $html .= qq(<p>If you do not receive a confirmation, please email us directly at <a href="mailto:$email">$email</a>. Thank you.</p>);
 
   return $html;
 }

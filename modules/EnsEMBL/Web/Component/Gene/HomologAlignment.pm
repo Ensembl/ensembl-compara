@@ -108,7 +108,7 @@ sub content {
       my $homology_desc_mapped = $desc_mapping{$homology_desc} ? $desc_mapping{$homology_desc} : 
                                  $homology_desc ? $homology_desc : 'no description';
 
-      $html .= "<h2>Ortholog type: $homology_desc_mapped</h2>";
+      $html .= "<h2>Orthologue type: $homology_desc_mapped</h2>";
       
       my $ss = $self->new_table([
           { title => 'Species',          width => '20%' },

@@ -84,7 +84,7 @@ sub populate_tree {
     { 'availability' => 'gene database:compara core has_orthologs', 'concise' => 'Orthologues' }
   );
   
-  $ol_node->append($self->create_subnode('Compara_Ortholog/Alignment', 'Ortholog Alignment',
+  $ol_node->append($self->create_subnode('Compara_Ortholog/Alignment', 'Orthologue Alignment',
     [qw( alignment EnsEMBL::Web::Component::Gene::HomologAlignment )],
     { 'availability'  => 'gene database:compara core has_orthologs', 'no_menu_entry' => 1 }
   ));

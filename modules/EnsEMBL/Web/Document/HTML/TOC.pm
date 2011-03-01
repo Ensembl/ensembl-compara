@@ -14,8 +14,9 @@ sub render {
   my $tree              = $ENSEMBL_WEB_REGISTRY->species_defs->STATIC_INFO;
   (my $location         = $ENV{'SCRIPT_NAME'}) =~ s/index\.html$//;
   my @toplevel_sections = map { ref $tree->{$_} eq 'HASH' ? $_ : () } keys %$tree;
-  my %html              = ( left => '', right => '' );
-  
+  my %html              = ( left => '', middle => '', right => '' );
+  my $column            = 'left';  
+
   my @section_order = sort {
     $tree->{$a}{'_order'} <=> $tree->{$b}{'_order'} ||
     $tree->{$a}{'_title'} cmp $tree->{$b}{'_title'} ||
@@ -24,14 +25,20 @@ sub render {
   
   foreach my $dir (grep { !/^_/ && keys %{$tree->{$_}} } @section_order) {
     my $section      = $tree->{$dir};
-    my $side         = $dir eq 'docs' ? 'right' : 'left';
+    if ($dir eq 'about') {
+      $column = 'middle';
+    }
+    elsif ($dir eq 'docs') {
+      $column = 'right';
+    }
+    
     my $title        = $section->{'_title'} || ucfirst $dir;
     my @second_level = @{$self->create_links($section, ' style="font-weight:bold"')};
     
-    $html{$side} .= qq{<div class="plain-box" style="margin:0 0 2%;padding:2%"><h2 class="first">$title</h2>};
+    $html{$column} .= qq{<div class="plain-box" style="margin:0 0 2%;padding:2%"><h2 class="first">$title</h2>\n};
     
     if (scalar @second_level) {
-      $html{$side} .= '<ul>';
+      $html{$column} .= '<ul>';
   
       foreach my $entry (@second_level) {
         my $link = $entry->{'link'};
@@ -40,24 +47,28 @@ sub render {
         my $subsection  = $entry->{'key'};
         my @third_level = @{$self->create_links($subsection)};
         
-        if (scalar @third_level) {
+        if (scalar @third_level && $link !~ /eHive/ && $link !~ /webcode/) {
           $link .= '<ul>';
-          $link .= "<li>$_->{'link'}</li>" for @third_level;
+          $link .= "<li>$_->{'link'}</li>\n" for @third_level;
           $link .= '</ul>';
         }
 
-        $html{$side} .= "<li>$link</li>";
+        $html{$column} .= "<li>$link</li>\n";
       }      
       
-      $html{$side} .= '</ul>';
+      $html{$column} .= '</ul>';
     }
     
-    $html{$side} .= '</div>';
+    $html{$column} .= '</div>';
   }
   
-  $html{$_} = qq{<div style="float:$_;clear:$_;width:49%">$html{$_}</div>} for grep $html{$_}, keys %html;
+  $html{$_} = qq{<div class="threecol-$_ widepage">$html{$_}</div>} for grep $html{$_}, keys %html;
   
-  return qq{<div style="width:100%">$html{'left'}$html{'right'}</div>};
+  return qq{<div style="width:100%">
+              $html{'left'}
+              $html{'middle'}
+              $html{'right'}
+            </div>};
 }
 
 sub create_links {

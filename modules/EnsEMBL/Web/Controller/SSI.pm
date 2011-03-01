@@ -158,7 +158,7 @@ sub template_INCLUDE {
   }
   
   # using $hub->apache_handle instead of $self->r because this function is also called by Component modules, providing THEIR $self as this $self
-  $hub->apache_handle->log->error('Cannot include virtual file: does not exist or permission denied ', $include);
+  $hub->apache_handle->log->error('Cannot include virtual file: does not exist or permission denied ', $include) if $hub;
   
   return $content;
 }

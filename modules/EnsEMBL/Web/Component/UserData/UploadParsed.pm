@@ -54,7 +54,7 @@ sub content_ajax {
       }
 
       if ($content) {      
-        $parser->parse($content, $data->{'format'});
+        my $error=$parser->parse($content, $data->{'format'});
 
         if ($parser->{'feature_count'}) {      
           $data->{'format'}  = $parser->format unless $data->{'format'};
@@ -73,6 +73,10 @@ sub content_ajax {
         }
         else {
           $html .= sprintf '<p class="space-below">None of the features in your file could be mapped to the %s genome. Please check that you have selected the right species!</p><p class="space-below"><a href="/%s/UserData/DeleteUpload?type=upload;goto=SelectFile;code=%s" class="modal_link">Delete upload and start again</a></p>', $data->{'species'}, $self->hub->species, $self->hub->param('code');
+					if ($error){
+						if($error eq $parser->nearest){$error = "Region does not exist:\"$error\"";}
+						$html .= sprintf '<p>Information:<pre>%s</pre></p>',$error;
+					}
         }
       }
       

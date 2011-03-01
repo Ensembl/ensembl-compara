@@ -507,6 +507,11 @@ sub genomic_hit {
       my @transformedFeatures;
       foreach my $CoordSystem( @{$CSAdaptor->fetch_all} ){
         my $cs = $CoordSystem->name;
+
+        if (!$CoordSystem->is_default) {
+           next;
+        }
+     
         my $csFeature   = $Feature->transform($cs) || next;
 
         # Store in array temporarily so can remove adaptors once all transforms 
