@@ -11,9 +11,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   
   init: function () {
     var panel = this;
-    var dims  = this.getDimensions();
     
-    this.base(dims.w, dims.h);
+    this.base();
     
     this.elLk.content     = $('.modal_content', this.el);
     this.elLk.title       = $('.modal_title', this.el);
@@ -60,14 +59,6 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     }); 
   },
   
-  setDimensions: function (width, height) {
-    this.base(width, height);
-    
-    if (this.elLk.content) {
-      this.elLk.content.height(this.elementHeight - this.constant.titleHeight);
-    }
-  },
-  
   open: function (el) {
     var rel = $(this.el).is(':visible') ? el.rel : this.activePanel.match(/config/) && el.rel.match(/config/) ? this.activePanel : el.rel;
 
@@ -100,7 +91,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     id = id || 'modal_default';
     
     var contentEl = this.elLk.content.filter('#' + id);
-    var reload    = url.match(/reset=1/) || $('.modal_reload', this.el).remove().length;
+    var reload    = url.match(/reset=/)  || $('.modal_reload', this.el).remove().length;
     var hash      = (url.match(/#(.+)$/) || [])[1];
     
     this.elLk.content.hide();
