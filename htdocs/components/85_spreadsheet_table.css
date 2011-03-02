@@ -20,7 +20,7 @@ table.toggle_table th div            { padding: 0; }
 .dataTables_wrapper, .toggleTable_wrapper { margin: 1em 0; clear: both; }
 
 .dataTables_top,
-.dataTables_bottom { height: 22px; padding: 7px 10px 5px; border: 1px solid [[PAGE_TEXT]]; background: #8E97AF; color: [[PANEL_BG]]; }
+.dataTables_bottom { height: 22px; padding: 7px 10px 5px; border: 1px solid [[PAGE_TEXT]]; background: [[TABLE_HEADER]]; color: [[PANEL_BG]]; }
 .dataTables_top    { border-bottom: 0; }
 .dataTables_bottom { border-top: 0; }
 
