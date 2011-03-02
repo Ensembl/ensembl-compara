@@ -166,6 +166,7 @@ sub highlight_lharrow {
 sub highlight_rharrow {
   my $self = shift;
   my $details = shift;
+
   return $self->Poly({
     'points' => [ 
       $details->{'mid'}-$details->{'padding2'}, $details->{'h_offset'}+$details->{'wid'}+$details->{'padding'},
@@ -174,7 +175,7 @@ sub highlight_rharrow {
     ],
     'colour' => $details->{'col'},
     'absolutey' => 1,
-    'href'=>$details->{'href'},'zmenu'  => $details->{'zmenu'}
+    'href'=>$details->{'href'},'zmenu'  => $details->{'zmenu'},'id' => $details->{'html_id'},
   });
 }
 

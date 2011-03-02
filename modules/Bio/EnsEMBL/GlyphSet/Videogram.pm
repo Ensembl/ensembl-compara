@@ -470,6 +470,7 @@ sub _init {
 
             my $zmenu = $_->{'zmenu'};
             my $col   = $_->{'col'};
+            my $html_id = $_->{'html_id'} ? $_->{'html_id'} : '';
 
       #########
       # dynamic require of the right type of renderer
@@ -487,6 +488,7 @@ sub _init {
                               'href'      => $_->{'href'},
                               'col'       => $col,
                               'id'        => $_->{'id'},
+                              'html_id'   => $html_id,
                               'strand'    => $_->{'strand'},
                             } );
               $g and $self->push($g);
