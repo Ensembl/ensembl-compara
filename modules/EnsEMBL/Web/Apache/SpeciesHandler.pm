@@ -83,10 +83,8 @@ sub handler_species {
     
     return HTTP_TEMPORARY_REDIRECT;
   }
-  
-  $script = 'Export' if $action eq 'Export';
-  
-  my $controller = "EnsEMBL::Web::Controller::$script";
+ 
+  my $controller = "EnsEMBL::Web::Controller::$script";  
   
   eval "use $controller";
   
