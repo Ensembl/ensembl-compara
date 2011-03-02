@@ -2,60 +2,58 @@
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  margin: 0;
-  border: 0;
-  padding: 0;
-  background-color: [[PANEL_TEXT]];
+  height: 100%;
+  width: 100%;
+  background-color: [[MH_BORDER]];
   text-align: center;
   vertical-align: middle;
   display: none;
-  z-index: 999999997;
+  z-index: 1000;
+  opacity: 0.25; filter: Alpha(Opacity=25);
 }
+
 #modal_panel {
   position: fixed;
-  left: 50%;
-  top: 50%;
+  left: auto;
+  top: auto;
   text-align: left;
   background-color: [[PANEL_BG]];
-  margin: auto;
-  padding: 0;
-  display: none;
-  z-index: 999999999;
-}
-#modal_border {
-  position: fixed;
-  left: 50%;
-  top: 50%;
   margin: 0;
   padding: 0;
-  background: [[PANEL_TEXT]] url(/i/resize.png) no-repeat right bottom;
-  background-color: [[PANEL_TEXT]];
   display: none;
-  z-index: 999999998;
-  border-radius: 5px;
-  -moz-border-radius: 5px;
-  -webkit-border-radius: 5px;
-  
+  z-index: 1001;
+  zoom: 1;
 }
 body.ie6 #modal_bg,
-body.ie6 #modal_panel,
-body.ie6 #modal_border {
+body.ie6 #modal_panel {
   position: absolute;
-  background-image: none;
 }
 
 #modal_panel div.modal_title {
-  overflow: hidden;
+  position: absolute;
+  top: -20px;
+  border: solid [[PANEL_TEXT]];
+  border-width: 0 1px;
   background-color: [[PANEL_TEXT]];
   margin: 0;
-  padding: 2px 2px 0;
+  padding: 2px 0 0;
   color: [[PANEL_BG]];
   font-weight: bold;
   clear: both;
   font-size: 12px;
   height: 18px;
+   width: 100%;
+}
+body.ie6 #modal_panel div.modal_title {
+  height: 20px;
+}
+
+#modal_panel .ui-resizable-se {
+  width: 14px;
+  height: 14px;
+  right: 2px;
+  bottom: 2px;
+  background: url(/i/resize.png) no-repeat scroll right bottom;
 }
 
 .modal_caption {
@@ -66,11 +64,20 @@ body.ie6 #modal_border {
 body.mac .modal_caption {
   line-height: 16px;
 }
+
 .modal_content {
+  position: absolute;
+  height: 100%;
+  width: 100%;
   overflow: auto;
+  border: solid [[PANEL_TEXT]];
+  border-width: 0 1px 1px;
 }
 .modal_content .panel {
   margin-left: 16.75em;
+}
+body.ie6 .modal_content .panel {
+  margin-right: 4px;
 }
 .modal_content .no_local_context {
   margin-left: 0.25em;
@@ -98,9 +105,9 @@ body.mac .modal_caption {
 }
 .modal_title li {
   list-style: none;
-  padding: 0 0.5em 0.5em;
+  padding: 0 6px 1px;
   background-color: #999;
-  margin: 0 0.5em;
+  margin: 0 6px;
   float: left;
   border-radius: 5px 5px 0 0;
   -moz-border-radius: 5px 5px 0 0;
@@ -124,20 +131,31 @@ body.mac .modal_title li a {
   color: [[PAGE_TEXT]];
 }
 .modal_title .modal_close {
+  display: block;
   position: absolute;
-  top: 0;
-  right: 0;
+  top: -11px;
+  right: -11px;
   cursor: pointer;
-  margin: -14px -14px 0 0;
+  margin: 0;
+  background: url(/i/cp_close.png) no-repeat center;
+  height: 22px;
+  width: 22px;
 }
 body.ie6 .modal_title .modal_close {
-  margin: 0;
-  height: 18px;
+  background-image: url(/i/cp_close.gif);
+}
+.ui-draggable .modal_title {
+  cursor: move;
 }
 
 .modal_nav {
   width: 16em;
   margin: 0.25em 0.25em 0;
+}
+
+body.ie6 .modal_nav .local_context {
+  width: 100%;
+  overflow: hidden;
 }
 
 .modal_nav .local_context a.disabled {	 
