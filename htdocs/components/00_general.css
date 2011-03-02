@@ -36,6 +36,15 @@ body.ie6 #min_width_holder    { display: inline-block; position: relative; margi
 .pointer { cursor: pointer; }
 
 /*----------------------------------------------------------------------
+  jQuery resizable handles
+----------------------------------------------------------------------*/
+
+.ui-resizable-handle { position: absolute; font-size: 0.1px; display: block;  }
+.ui-resizable-s      { cursor: s-resize;  width: 100%; height: 7px;  left:  0;    bottom: -5px; }
+.ui-resizable-e      { cursor: e-resize;  width: 7px;  height: 100%; right: -5px; top:    0;    }
+.ui-resizable-se     { cursor: se-resize; width: 12px; height: 12px; right: 1px;  bottom: 1px;  }
+
+/*----------------------------------------------------------------------
   Headings
 ----------------------------------------------------------------------*/
 
