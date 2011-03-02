@@ -49,7 +49,6 @@ sub content {
   
   $content = qq{
   <div id="modal_bg"></div>
-  <div id="modal_border"></div>
   <div id="modal_panel" class="js_panel">
     <input type="hidden" class="panel_type" value="ModalContainer" />
     <div class="modal_title">
@@ -57,7 +56,7 @@ sub content {
         $content
       </ul>
       <div class="modal_caption"></div>
-      <img class="modal_close" src="${img_url}cp_close.png" alt="Save and close" title="Save and close" />
+      <div class="modal_close"></div>
     </div>
     $panels
     <div id="modal_default" class="modal_content js_panel" style="display:none"></div>
