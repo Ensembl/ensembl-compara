@@ -339,8 +339,8 @@ sub store {
 
 sub sync_tree_leftright_index {
   my ($self, $tree_root, $use_fresh_connection) = @_;
-  my $starting_lr_index = $self->_get_starting_lr_index($tree_root);
-  $tree_root->build_leftright_indexing($starting_lr_index, $use_fresh_connection);
+  my $starting_lr_index = $self->_get_starting_lr_index($tree_root, $use_fresh_connection);
+  $tree_root->build_leftright_indexing($starting_lr_index);
   return;
 }
 
