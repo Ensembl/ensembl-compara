@@ -363,6 +363,8 @@ $OBJECT_TO_SCRIPT = {
   ZMenu               => 'ZMenu',
   psychic             => 'Psychic',
   autocomplete        => 'AutoComplete',
+  
+  Export              => 'Export',
 
   Gene                => 'Page',
   Transcript          => 'Page',
@@ -382,8 +384,7 @@ $OBJECT_TO_SCRIPT = {
   
   Account             => 'Modal',
   UserData            => 'Modal',
-  Help                => 'Modal',
-  Export              => 'Modal',
+  Help                => 'Modal',  
 };
 
 sub tmp {
