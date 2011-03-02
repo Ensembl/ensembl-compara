@@ -228,11 +228,12 @@ sub _process {
   my @previous_row = ();
   my @totals       = ();
   my $row_colours  = $options->{'data_table'} ? [] : exists $options->{'rows'} ? $options->{'rows'} : [ 'bg1', 'bg2' ];
-  
-  foreach my $row (@$data) {
-    my $flag = 0;
-    my $out_row = { style => 'row', class => $row_colours->[0], col => [] };
-    $counter = 0;
+
+  foreach my $row (@$data) {    
+    my $flag       = 0;
+    my $class = ref $row eq 'HASH' ? $row->{'class'} : {};
+    my $out_row    = { style => 'row', class => join(' ', $row_colours->[0], $class), col => [] }; 
+    $counter       = 0;
     
     foreach my $col (@$columns) {
       my $value        = $self->get_value($row, $counter, $col->{'key'});
@@ -385,7 +386,8 @@ sub add_rows {
 }
 
 sub get_value {
-  my ($self, $row, $counter, $key) = @_;  
+  my ($self, $row, $counter, $key) = @_; 
+  
   return unless $row;
   
   my $rtn = '--';
