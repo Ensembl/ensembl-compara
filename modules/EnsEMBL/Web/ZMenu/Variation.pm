@@ -176,8 +176,9 @@ sub content {
   }
   
   if(defined($p_value)) {
+    my $type = $hub->param('ftype') eq 'Phenotype' ? 'p-value (negative log)': 'p-value';
     $self->add_entry({
-      type   => 'p-value',
+      type   => $type,
       label  => $p_value,
     });
   }
