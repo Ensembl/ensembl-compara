@@ -53,7 +53,7 @@ sub form {
   my $hub      = $view_config->hub;
   my $function = $hub->function;
   
-  return if $function !~ /Location|Gene|Transcript|LRG/;
+  return if $function !~ /Location|Gene|Transcript|LRG|Variation/;
   
   my $action              = $hub->action;
   my $config              = $object->config;
@@ -110,8 +110,15 @@ sub form {
       label => 'Transcript to export',
       value => $hub->core_objects->{'transcript'}->long_caption
     });
-  } 
-  
+  } elsif ($function eq 'Variation') {
+    $view_config->add_form_element({
+      type  => 'NoEdit',
+      name  => 'variation_to_export',
+      label => 'Variation to export',
+      value => $hub->core_objects->{'variation'}->name,
+    });
+  }
+
   $view_config->add_fieldset(undef, 'general_options');
   
   my @output_values;
