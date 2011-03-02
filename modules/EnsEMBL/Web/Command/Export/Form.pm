@@ -16,7 +16,7 @@ sub process {
   my $hub         = $self->hub;
   my $function    = $hub->function;
   my $view_config = $hub->get_viewconfig($function, 'Export');
-  
+
   $view_config->update_from_input;
   $hub->session->store;  
   
@@ -61,8 +61,8 @@ sub get_formats {
      r        => $r,
      strand   => $strand, 
      output   => $output,
-     type     => $hub->function,
-     action   => 'Export'
+     type     => 'Export/Output',
+     action   => $hub->function
     });
     
     my $map = { 
