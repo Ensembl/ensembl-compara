@@ -1,0 +1,148 @@
+package EnsEMBL::Web::Component::Export::Output;
+
+use strict;
+
+use POSIX qw(floor);
+
+use base qw(EnsEMBL::Web::Component::Export);
+
+sub content {
+  my $self = shift;
+  my $hub  = $self->hub;
+  my $custom_outputs;
+  
+  if($hub->function eq 'Location') {    
+    $custom_outputs = {ld => sub { return $self->ld_dump; }};        
+    return $self->builder->object('Export')->process($custom_outputs);  #the reason to call the object like this is because the hub type is not export (change in Controller/Export).
+   } elsif ($hub->function eq 'Transcript'){
+      $custom_outputs = { gen_var => sub { return $self->genetic_variation; } };
+      return $self->builder->object('Export')->process($custom_outputs);
+   } else {
+    return $self->builder->object('Export')->process();
+  }
+  
+}
+
+sub ld_dump {
+  my $self   = shift;
+  my $hub    = $self->hub;
+  my $object = $self->builder->object('Export');
+  my $v      = $hub->param('v');
+
+  my %pop_params = map { $hub->param("pop$_") => $_ } grep s/^pop(\d+)$/$1/, $hub->param;    
+  warn 'ERROR: No population defined' and return unless %pop_params;
+
+  foreach (values %pop_params) {
+    my $pop_param       = $hub->param("pop$_");
+    my $zoom            = 20000; # Currently non-configurable
+    my @colour_gradient = ('ffffff', $hub->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red'));
+    my $ld_values       = $object->get_ld_values($pop_param, $v, $zoom);
+    my %populations     = map { $_ => 1 } map { keys %$_ } values %$ld_values;
+  
+    my $header_style = 'background-color:#CCCCCC;font-weight:bold;';
+  
+    foreach my $pop_name (sort { $a cmp $b } keys %populations) {
+      foreach my $ld_type (keys %$ld_values) {
+        my $ld = $ld_values->{$ld_type}->{$pop_name};
+        
+        next unless $ld->{'data'};
+      
+        my ($starts, $snps, $data) = (@{$ld->{'data'}});
+        my $table = $self->html_format ? $self->new_table : undef;
+      
+        unshift (@$data, []);
+      
+        $self->html("<h3>$ld->{'text'}</h3>");
+      
+        if ($table) {
+          $table->add_option('cellspacing', 2);
+          $table->add_option('rows', '', ''); # No row colouring
+          $table->add_columns(map {{ title => $_, align => 'center' }} ( 'bp&nbsp;position', 'SNP', @$snps ));
+        } else {
+          $self->html('=' x length $ld->{'text'});
+          $self->html('');
+          $self->html(join "\t", 'bp position', 'SNP', @$snps);
+        }
+      
+        foreach my $row (@$data) {
+          next unless ref $row eq 'ARRAY';
+        
+          my $snp = shift @$snps;
+          my $pos = shift @$starts;
+        
+          my @values = map { $_ ? sprintf '%.3f', $_ : '-' } @$row;
+          my @row_style = map { 'background-color:#' . ($_ eq '-' ? 'ffffff' : $colour_gradient[floor($_*40)]) . ';' } @values;
+        
+          if ($table) {
+            $table->add_row([ $pos, $snp, @values, $snp ]);
+            $table->add_option('row_style', [ $header_style, $header_style, @row_style, $header_style ]);
+          } else {
+            $self->html(join "\t", $pos, $snp, @values, $snp);
+          }
+        }
+      
+        $self->html($table ? $table->render : '');
+      }
+    }
+  }
+}
+
+sub genetic_variation {
+  my $self   = shift;
+  my $hub    = $self->hub;
+  my $object = $self->builder->object('Export');
+  
+  my $params;
+  map { /opt_pop_(.+)/; $params->{$1} = 1 if $hub->param($_) ne 'off' } grep { /opt_pop_/ } $hub->param;
+  
+  my @samples  = $object->get_samples(undef, $params);
+  my $snp_data = $object->get_genetic_variations(@samples);
+  
+  $self->html(sprintf '<h2>Variation data for strains on transcript %s</h2>', $object->stable_id);
+  $self->html('<p>Format: tab separated per strain (SNP id; Type; Amino acid change;)</p>');
+  $self->html('');
+  
+  my $colours    = $hub->species_defs->colour('variation');
+  my $colour_map = $hub->colourmap;
+  my $table      = $self->html_format ? $self->new_table : undef;
+  
+  if ($table) {
+    $table->add_option('cellspacing', 2);
+    $table->add_columns(map {{ title => $_, align => 'left' }} ( 'bp&nbsp;position', @samples ));
+  } else {
+    $self->html(join "\t", 'bp position', @samples);
+  }
+  
+  foreach my $snp_pos (sort keys %$snp_data) {
+    my @info      = ($snp_pos);
+    my @row_style = ('');
+    
+    foreach my $sample (@samples) {
+      if ($snp_data->{$snp_pos}->{$sample}) {
+        foreach my $row (@{$snp_data->{$snp_pos}->{$sample}}) {
+          (my $type = $row->{'consequence'}) =~ s/\(Same As Ref. Assembly\)//;
+          
+          my $colour = $row->{'aachange'} eq '-' ? '' : $colour_map->hex_by_name($colours->{lc $type}->{'default'});
+          
+          push @info, "$row->{'ID'}; $type; $row->{'aachange'};";
+          push @row_style, $colour ? "background-color:#$colour" : '';
+        }
+      } else {
+        push @info, '';
+        push @row_style, '';
+      }
+    }
+    
+    if ($table) {
+      $table->add_row(\@info);
+      $table->add_option('row_style', \@row_style);
+    } else {
+      $self->html(join "\t", @info);
+    }
+  }
+  
+  $self->html($table->render) if $table;
+}
+
+
+1;
