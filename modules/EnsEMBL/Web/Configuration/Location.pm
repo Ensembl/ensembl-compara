@@ -124,8 +124,8 @@ sub populate_tree {
   );
 
   $self->create_subnode(
-    'Export', '',
-    [qw( export EnsEMBL::Web::Component::Export::Location )],
+    'Output', 'Export Location Data',
+    [qw( export EnsEMBL::Web::Component::Export::Output )],
     { 'availability' => 'slice', 'no_menu_entry' => 1 }
   );
 }

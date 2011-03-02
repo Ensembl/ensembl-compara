@@ -164,8 +164,8 @@ sub populate_tree {
     { 'availability' => 'history', 'concise' => 'ID History' }
   ));
   
-  $self->create_subnode('Export', 'Export Gene Data',
-    [qw( export EnsEMBL::Web::Component::Export::Gene )],
+  $self->create_subnode('Output', 'Export Gene Data',
+    [qw( export  EnsEMBL::Web::Component::Export::Output  )],
     { 'availability' => 'gene', 'no_menu_entry' => 1 }
   );
 }

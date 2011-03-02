@@ -155,8 +155,8 @@ sub populate_tree {
     { 'availability' => 'history_protein', 'concise' => 'ID History' }
   ));
   
-  $self->create_subnode('Export', '',
-    [qw( export EnsEMBL::Web::Component::Export::Transcript )],
+  $self->create_subnode('Output', 'Export Transcript Data',
+    [qw( export EnsEMBL::Web::Component::Export::Output )],
     { 'availability' => 'transcript', 'no_menu_entry' => 1 }
   );
 }

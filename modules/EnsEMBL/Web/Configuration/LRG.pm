@@ -102,8 +102,8 @@ sub populate_tree {
   #  { 'availability' => 'gene' }
   #));
   
-  $self->create_subnode('Export', 'Export LRG Data',
-    [qw( export EnsEMBL::Web::Component::Export::LRG )],
+  $self->create_subnode('Output', 'Export LRG Data',
+    [qw( export EnsEMBL::Web::Component::Export::Output )],
     { 'availability' => 'lrg', 'no_menu_entry' => 1 }
   );
 }
