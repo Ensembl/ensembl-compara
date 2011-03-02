@@ -59,6 +59,7 @@ sub content {
     if ($draw_karyotype) {
       my $image    = $self->new_karyotype_image;
       my $config   = $hub->get_imageconfig('Vkaryotype'); ## Form with hidden elements for click-through
+     
       my $pointers = [];
 
       ## Deal with pointer colours
@@ -113,15 +114,14 @@ sub content {
                 
         $image->image_name = "feature-$species";
         $image->imagemap   = 'yes';
-
-        while (my ($feat_type, $set) = each (%$features)) {           
+        while (my ($feat_type, $set) = each (%$features)) {          
           my $defaults    = $pointer_default{$set->[2]};
           my $pointer_ref = $image->add_pointers($hub, {
             config_name  => 'Vkaryotype',
             features     => $set->[0],
             feature_type => $feat_type,
             color        => $hub->param('colour') || $defaults->[0],
-            style        => $hub->param('style')  || $defaults->[1],
+            style        => $hub->param('style')  || $defaults->[1],            
           });
           
           push @$pointers, $pointer_ref;
@@ -140,12 +140,14 @@ sub content {
         $image->image_name = "karyotype-$species";
         $image->imagemap   = 'no';
       }
-  
+        
       $image->set_button('drag', 'title' => 'Click on a chromosome');
       $image->caption  = 'Click on the image above to jump to a chromosome, or click and drag to select a region';
       $image->imagemap = 'yes';
       $image->karyotype($hub, $self->object, $pointers, 'Vkaryotype');
-
+      
+      return if $self->_export_image($image);
+      
       $html .= $image->render;
       
       if ($hub->param('ftype') eq 'Phenotype') { # making colour scale for pointers
@@ -174,8 +176,8 @@ sub content {
   }
 
   if ($table || $usertable) {
-    $html .= $table if $table;
     $html .= '<h3 style="margin-bottom:-5px">Key to tracks</h3>' . $usertable->render if $usertable;
+    $html .= $table if $table;    
   } else {
     $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/stats_$species.html");
   }
@@ -195,7 +197,7 @@ sub feature_tables {
   while (my ($feat_type, $feature_set) = each (%$feature_dets)) {
     my $features      = $feature_set->[0];
     my $extra_columns = $feature_set->[1];
-    
+
     # could show only gene links for xrefs, but probably not what is wanted:
     # next SET if ($feat_type eq 'Gene' && $data_type =~ /Xref/);
    
@@ -268,7 +270,7 @@ sub feature_tables {
       my $contig_link = 'Unmapped';
       my $names       = '';
       my $data_row;
-     
+
       if ($row->{'region'}) {
         $contig_link = sprintf(
           '<a href="%s">%s:%d-%d(%d)</a>',
@@ -342,6 +344,7 @@ sub feature_tables {
           }
           
           $data_row = { loc => $contig_link, length => $row->{'length'}, names => $names };
+          $data_row->{'class'} = $row->{'table_class'} if($row->{'table_class'});
         }
       }
       
