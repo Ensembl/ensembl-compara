@@ -289,7 +289,7 @@ sub phyloxml{
   my ($self,$cdb) = @_;
   my $params = $self->params;
   my $hub             = $self->hub;
-  my $object          = $self->object;
+  my $object          = $self->get_object;
   my $handle          = IO::String->new();
   my $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(
           -SOURCE => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
