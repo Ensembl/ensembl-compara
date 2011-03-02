@@ -1,3 +1,5 @@
+// $Revision$
+
 Ensembl.Panel.Overlay = Ensembl.Panel.extend({
   constructor: function (id) {
     this.base(id);
@@ -36,6 +38,8 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
           
           $(this).css('position', 'fixed').css('top', function (i, top) {
             return parseInt(top, 10) - panel.window.scrollTop();
+          }).css('left', function (i, left) {
+            return parseInt(left, 10) - panel.window.scrollLeft();
           });
           
           Ensembl.EventManager.trigger('modalPanelResize');
@@ -65,6 +69,8 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
   },
   
   show: function () {
+    var css;
+    
     this.elLk.background.show();
     
     if (this.firstOpen) {
@@ -73,6 +79,9 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
     }
     
     if (this.isIE6) {
+      css = { marginTop: this.window.scrollTop(), marginLeft: this.window.scrollLeft() };
+      $(this.el).css(css);
+      this.elLk.background.css(css);
       $('body').css('overflow', 'hidden');
       $('select').hide();
       $('select', this.el).show();
