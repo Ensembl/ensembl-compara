@@ -122,7 +122,7 @@ div.error, div.warning, div.info, div.hint { padding: 0; margin: 0.2em auto; bor
 
 div.syntax-error, div.error { color: [[ALERT_TEXT]]; background-color: [[ALERT_BG]]; }
 div.error                   { border-color: [[ALERT_BORDER]]; }
-div.warning                 { border-color: #ffb90f;          }
+div.warning                 { border-color: #daa246;          }
 div.info, div.hint          { border-color: #97d897;          }
 
 div.error h3, div.error h4, div.warning h3, div.info h3, div.hint h3 { padding: 2px 0.5em 2px 20px; margin: 0; background-position: 2px 2px; background-repeat: no-repeat; }
