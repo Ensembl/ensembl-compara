@@ -419,20 +419,25 @@ sub dumpVariation {
   $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
 
   print LOG "    Preparing to get extra ssID info ", &date_and_mem, "\n";
-  my $ssid_hash = $conf->{'dbh'}->selectall_hashref(
-    qq{SELECT a.variation_id,
-        GROUP_CONCAT( DISTINCT CONCAT('ss',a.subsnp_id) ) AS ssid
-         FROM $VariationDB.allele a
-        WHERE a.subsnp_id IS NOT NULL
-        GROUP BY a.variation_id},'variation_id');
+  my $stmt = qq{SELECT a.variation_id,
+                  GROUP_CONCAT(
+                     DISTINCT CONCAT('ss',a.subsnp_id)
+                       ) AS ssid
+                  FROM $VariationDB.allele a
+                 WHERE a.subsnp_id IS NOT NULL
+              GROUP BY a.variation_id
+     };
+  my $sth = $conf->{'dbh'}->prepare($stmt);
+  $sth->execute();
+
+  # Get a hashref of the results with the variation_id as key
+  my $ssid_hash = $sth->fetchall_hashref('variation_id');
   print LOG "    Retrieved extra ssID info ", &date_and_mem, "\n";
 
   #disconnect and then connect to free up memory
-  my $core = $conf->{'core_details'};
   $conf->{'dbh'}->disconnect;
   $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
 
-  # Statement to get all variations, both mapped, failed and the precious non-mapped, non-failed
   print LOG "    Preparing to execute SQL to get all SNPs ", &date_and_mem, "\n";
   my $sth = $conf->{'dbh'}->prepare(qq{
     SELECT
