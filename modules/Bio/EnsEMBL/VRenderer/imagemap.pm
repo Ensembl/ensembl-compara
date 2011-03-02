@@ -29,9 +29,9 @@ sub render_Text      { shift->render_Rect(@_); }
 
 sub render_Rect {
   my ($self, $glyph) = @_;
-  
-  my $attrs = $self->get_attributes($glyph);
-  
+
+  my $attrs = $self->get_attributes($glyph);  
+    
   return unless $attrs;
   
   my $x1 = $glyph->{'pixelx'};
@@ -46,7 +46,7 @@ sub render_Rect {
   
   $y2++;
   $x2++;
-  
+
   $self->render_area('rect', [ $y1, $x1, $y2, $x2 ], $attrs);  
 }
 
@@ -55,30 +55,30 @@ sub render_Poly {
   my $attrs = $self->get_attributes($glyph);
   
   return unless $attrs;
-  
+
   $self->render_area('poly', [ reverse @{$glyph->pixelpoints} ], $attrs);
 }
 
 sub render_area {
   my ($self, $shape, $points, $attrs) = @_;
-  
+ 
   my $coords = join ',', map int, @$points;
-  
-  $self->{'canvas'} = qq{<area shape="$shape" coords="$coords"$attrs />\n$self->{'canvas'}};
+  $self->{'canvas'} = qq{<area shape="$shape" coords="$coords"$attrs />\n$self->{'canvas'}};  
 }
 
 sub get_attributes {
   my ($self, $glyph) = @_;
 
-  my %actions = ();
-
-  foreach (qw(title alt href target class)) {
+  my %actions = ();  
+  foreach (qw(title alt href target class id)) {
     my $attr = $glyph->$_;
-    
+ 
     if (defined $attr) {
       if ($_ eq 'alt' || $_ eq 'title') {
         $actions{'title'} = $actions{'alt'} = encode_entities($attr);
-      } else {
+      } elsif ($_ eq 'id') {
+        $actions{$_} = $attr if($attr);
+      }else {
         $actions{$_} = $attr;
       }
     }
