@@ -103,23 +103,21 @@ sub content {
  
   $var_slice = 1 ? $slice  : $slice_adaptor->fetch_by_region($seq_type, $seq_region, $v->{'start'}, $v->{'end'}, 1);
   
-  $html .= '<h2>Overlapping features</h2>';
-  
-  # structural variation table
-  $html .= '<h3>Structural variants</h3>';
-  $html .= $self->structural_variation_table($var_slice);
-
-  # sequence variation table
-  $html .= '<h3>Sequence variants</h3>';
-  $html .= $self->sequence_variation_table($var_slice);
-
-  # regulatory region table
-  $html .= '<h3>Regulatory features</h3>';
-  $html .= $self->regulatory_feature_table($var_slice);
-  
-  # constrained elements table
-  $html .= '<h3>Constrained elements</h3>';
-  $html .= $self->constrained_element_table($var_slice);
+  $html .= sprintf('
+    <h3>Overlapping features</h3>
+    <h2><a href="#" class="toggle" rel="structural_variants">Structural variants</a></h2>
+    <div class="structural_variants"><div class="toggleable">%s</div></div>
+    <h2><a href="#" class="toggle" rel="sequence_variants">Sequence variants</a></h2>
+    <div class="sequence_variants"><div class="toggleable">%s</div></div>
+    <h2><a href="#" class="toggle" rel="regulatory_features">Regulatory features</a></h2>
+    <div class="regulatory_features"><div class="toggleable">%s</div></div>
+    <h2><a href="#" class="toggle" rel="constrained_elements">Constrained elements</a></h2>
+    <div class="constrained_elements"><div class="toggleable">%s</div></div>',
+    $self->structural_variation_table($var_slice),
+    $self->sequence_variation_table($var_slice),
+    $self->regulatory_feature_table($var_slice),
+    $self->constrained_element_table($var_slice),
+  );
   
   return $html;
 }
