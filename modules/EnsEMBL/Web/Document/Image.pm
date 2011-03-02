@@ -115,7 +115,7 @@ sub karyotype {
     $da = $db->get_DensityFeatureAdaptor
   };
   return $@ if $@;
-  
+
   # create the container object and add it to the image
   $self->drawable_container = new Bio::EnsEMBL::VDrawableContainer({
       sa  => $sa, 
@@ -136,7 +136,7 @@ sub add_pointers {
   my $color       = lc($hub->param('col'))   || lc($extra->{'color'}) || 'red';     # set sensible defaults
   my $style       = lc($hub->param('style')) || lc($extra->{'style'}) || 'rharrow'; # set style before doing chromosome layout, as layout may need tweaking for some pointer styles
   my $high        = { style => $style };
-  my ($p_value_sorted,$i);
+  my ($p_value_sorted,$i, $html_id);
   my $j = 1;
   
   # colour gradient bit for phenotype
@@ -151,13 +151,15 @@ sub add_pointers {
 
   foreach my $row (@data) {
     my $chr = $row->{'chr'} || $row->{'region'};
-
+    $html_id =  ($row->{'html_id'}) ? $row->{'html_id'} : '';    
+   
     my $point = {
-      start => $row->{'start'},
-      end   => $row->{'end'},
-      id    => $row->{'label'},
-      col   => $p_value_sorted->{sprintf("%.1f",$row->{'p_value'})} || $color,
-      href  => $row->{'href'}
+      start   => $row->{'start'},
+      end     => $row->{'end'},
+      id      => $row->{'label'},
+      col     => $p_value_sorted->{sprintf("%.1f",$row->{'p_value'})} || $color,
+      href    => $row->{'href'},
+      html_id => $html_id,
     };
     
     if (exists $high->{$chr}) {
@@ -366,7 +368,7 @@ sub render {
   } elsif ($self->button eq 'yes') {
     $html .= $self->render_image_button($image);
     $html .= sprintf '<div style="text-align: center; font-weight: bold">%s</div>', $self->caption if $self->caption;
-  } elsif ($self->button eq 'drag') {
+  } elsif ($self->button eq 'drag') {   
     my $img = $self->render_image_tag($image);
 
     # continue with tag html
@@ -375,7 +377,7 @@ sub render {
     # outside this module
     
     my $export;
-    
+ 
     if ($self->{'export'}) {
       my @formats = (
         { f => 'pdf',     label => 'PDF' },
