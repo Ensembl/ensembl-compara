@@ -199,6 +199,10 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     if (this.id == rel) {
       $('.toggleable', this.el).toggle();
     } else {
+      if (!this.elLk[rel]) {
+        this.elLk[rel] = $('.' + rel, this.el);
+      }
+      
       $('.toggleable', this.elLk[rel]).toggle();
     }
     
