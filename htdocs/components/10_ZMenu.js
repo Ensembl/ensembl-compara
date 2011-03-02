@@ -17,6 +17,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.position   = data.position;
     this.coords     = data.coords;
     this.imageId    = data.imageId;
+    this.relatedEl  = data.relatedEl;
     this.areaCoords = $.extend({}, data.area);
     this.location   = 0;
     
@@ -517,6 +518,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     $(this.el).css(css);
     
     this.base();
+    
+    if (this.relatedEl) {      
+      this.relatedEl.addClass('highlight');
+    }
   },
 
   showExisting: function (data) {
@@ -536,6 +541,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   hide: function (imageId) {
     if (!imageId || imageId == this.imageId) {
       this.base();
+      
+      if (this.relatedEl) {
+        this.relatedEl.removeClass('highlight');
+      }
     }
   }
 });

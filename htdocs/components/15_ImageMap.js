@@ -369,7 +369,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
     }
     
-    Ensembl.EventManager.trigger('makeZMenu', id, { position: { left: e.pageX, top: e.pageY }, coords: coords, area: area, imageId: this.id });
+    Ensembl.EventManager.trigger('makeZMenu', id, { position: { left: e.pageX, top: e.pageY }, coords: coords, area: area, imageId: this.id, relatedEl: area.a.id ? $('.' + area.a.id, this.el) : false });
   },
   
   /**
