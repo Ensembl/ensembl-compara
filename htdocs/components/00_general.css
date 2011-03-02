@@ -120,15 +120,15 @@ dd { margin-bottom: 1em; }
 
 div.error, div.warning, div.info, div.hint { padding: 0; margin: 0.2em auto; border: 1px solid; }
 
-div.syntax-error, div.error { color: [[ALERT_BORDER]]; background-color: [[ALERT_BG]]; }
+div.syntax-error, div.error { color: [[ALERT_TEXT]]; background-color: [[ALERT_BG]]; }
 div.error                   { border-color: [[ALERT_BORDER]]; }
 div.warning                 { border-color: #ffb90f;          }
-div.info, div.hint          { border-color: #90ee90;          }
+div.info, div.hint          { border-color: #97d897;          }
 
 div.error h3, div.error h4, div.warning h3, div.info h3, div.hint h3 { padding: 2px 0.5em 2px 20px; margin: 0; background-position: 2px 2px; background-repeat: no-repeat; }
 div.error h3, div.error h4 { background-image: url(/i/warning.gif); background-color: [[ALERT_BORDER]]; color: [[ALERT_BG]]; }
-div.warning h3             { background-image: url(/i/warning.gif); background-color: #ffb90f; }
-div.info h3, div.hint h3   { background-image: url(/i/info.gif); background-color: #90ee90;    }
+div.warning h3             { background-image: url(/i/warning.gif); background-color: #daa246; }
+div.info h3, div.hint h3   { background-image: url(/i/info_blue_13.png); background-color: #97d897;    }
 
 div.hint h3 img { float: right; vertical-align: top; }
 
