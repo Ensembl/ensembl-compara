@@ -11,7 +11,8 @@ sub new {
     'canvas'    => undef,
     'colourmap' => $config->colourmap,
     'config'    => $config,
-    'container' => $container
+    'container' => $container,
+    'sf'        => $config->get_parameter('sf') || 1
   };
   
   bless($self, $class);
@@ -32,10 +33,11 @@ sub render {
   # create a fresh canvas
   $self->init_canvas($config, $im_width, $im_height) if $self->can('init_canvas');
 
-  for my $glyphset (@{$self->{'glyphsets'}}) {
+  for my $glyphset (@{$self->{'glyphsets'}}) {    
     # loop through everything and draw it
     for my $glyph ($glyphset->glyphs) {
       my $method = $self->method($glyph);
+      
       if ($self->can($method)) {
         $self->$method($glyph);
       } else {
@@ -47,7 +49,7 @@ sub render {
   my %tags;
   my %layers;
   
-  for my $glyphset (@{$self->{'glyphsets'}}) {
+  for my $glyphset (@{$self->{'glyphsets'}}) {    
     foreach( keys %{$glyphset->{'tags'}}) {
       if ($tags{$_}) {
         my $COL   = undef;
@@ -107,8 +109,7 @@ sub render {
       } else {
         $tags{$_} = $glyphset->{'tags'}{$_}
       }
-    }
-    
+    }    
     push @{$layers{$_->{'z'}||0}}, $_ for @{$glyphset->{'glyphs'}};
   }
 
@@ -117,9 +118,8 @@ sub render {
   for my $layer (sort { $a <=> $b } keys %layers) {
     # loop through everything and draw it
     for (@{$layers{$layer}}) {
-      my $method = $M{$_} ||= $self->method($_);
-      
-      if ($self->can($method)) {
+      my $method = $M{$_} ||= $self->method($_);      
+      if ($self->can($method)) {        
         $self->$method($_);
       } else {
         print STDERR "Sanger::Graphics::Renderer::render: Do not know how to $method\n";
@@ -160,5 +160,5 @@ sub render_Composite {
 
 # empty stub for Blank spacer objects with no rendering at all
 sub render_Blank {}
-
+sub render_Space {}
 1;
