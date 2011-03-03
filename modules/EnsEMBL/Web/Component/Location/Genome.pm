@@ -146,7 +146,7 @@ sub content {
       $image->imagemap = 'yes';
       $image->karyotype($hub, $self->object, $pointers, 'Vkaryotype');
       
-      return if $self->_export_image($image);
+      return if $self->_export_image($image,'no_text');
       
       $html .= $image->render;
       
