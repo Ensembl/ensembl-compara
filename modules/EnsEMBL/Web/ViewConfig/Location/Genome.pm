@@ -12,19 +12,24 @@ sub init {
   ### {{EnsEMBL::Web::ViewConfig}} object
 
   my ($view_config) = @_;
-
-  $view_config->_set_defaults(qw(
+  my $self = shift;
+  
+  my $total_chrs = @{$self->species_defs->ENSEMBL_CHROMOSOMES};
+  
+  my %settings =  qw(
     panel_top     yes
     panel_zoom    no
     image_width   1200
     zoom_width    100
-    context       1000
-    rows          2
-    chr_length    200
+    context       1000    
+    chr_length    300
     h_padding     4
     h_spacing     6
     v_spacing     10
-  ));
+  );
+  %settings->{rows} = ($total_chrs ge '26') ? '2' : '1';;
+  
+  $view_config->_set_defaults(%settings);
   
   $view_config->add_image_configs({qw(
     Vkaryotype das
