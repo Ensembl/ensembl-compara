@@ -78,6 +78,12 @@ sub populate_tree {
     [qw( external EnsEMBL::Web::Component::Variation::ExternalData )],
     { 'availability' => 'variation' }
   );
+  
+   $self->create_subnode(
+    'Output', 'Export Variation Data',
+    [qw( export EnsEMBL::Web::Component::Export::Output )],
+    { 'availability' => 'variation', 'no_menu_entry' => 1 }
+  );
 }
 
 sub user_populate_tree {
