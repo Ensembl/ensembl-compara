@@ -520,7 +520,7 @@ sub get_imageconfig {
   
   return undef if $type eq '_page' || $type eq 'cell_page'; # FIXME: hack
   return undef unless $session;
-  return $session->image_configs->{$code} if $session->image_configs->{$code};
+  return $session->image_configs->{$code} if $session->image_configs->{$code} && $session->image_configs->{$code}->{'species'} eq ($species || $self->species);
   
   my $module_name  = "EnsEMBL::Web::ImageConfig::$type";
   my $image_config = $self->dynamic_use($module_name) ? $module_name->new($self, $species) : undef;
