@@ -160,6 +160,13 @@ sub count_individuals {
   return (scalar keys %sample_ids_for_variation) + $multibp_samples;
 }
 
+# uncomment when including export data for variation
+# sub can_export {
+#   my $self = shift;
+#   
+#   return $self->action =~ /^Export$/ ? 0 : $self->availability->{'variation'};
+# }
+
 sub count_ldpops {
   my $self = shift;
   my $pa  = $self->database('variation')->get_PopulationAdaptor;
