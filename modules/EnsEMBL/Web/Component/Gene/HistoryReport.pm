@@ -62,7 +62,8 @@ sub content {
     $status = 'Retired (see below for possible successors)'; # this stable ID no longer exists
   }
   
-  if ($archive_object->release >= $hub->species_defs->EARLIEST_ARCHIVE){ 
+
+  if ($archive_object->release >= $object->get_earliest_archive){ 
     $version_html = sprintf '<a href="%s">%s</a>', $self->_archive_link($archive_object), $id;
   } else {
     $version_html = $id;
@@ -98,7 +99,7 @@ sub _archive_link {
   my $species_defs = $hub->species_defs;
   
   # no archive for old release, return un-linked display_label
-  return $archive_object->stable_id . '.' . $archive_object->version if $archive_object->release < $species_defs->EARLIEST_ARCHIVE;
+  return $archive_object->stable_id . '.' . $archive_object->version if $archive_object->release < $object->get_earliest_archive;
 
   my $type    = $archive_object->type eq 'Translation' ? 'peptide' : lc $archive_object->type;
   my $name    = $archive_object->stable_id . '.' . $archive_object->version;
