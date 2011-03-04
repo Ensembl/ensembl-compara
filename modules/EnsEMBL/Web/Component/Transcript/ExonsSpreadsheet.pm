@@ -33,12 +33,17 @@ sub initialize {
     flanking      => $hub->param('flanking') || 50,   # no of bp up/down stream of transcript
     full_seq      => $hub->param('fullseq') eq 'yes', # flag to display full sequence (introns and exons)
     variation     => $hub->param('variation'),
+    number        => $hub->param('line_numbering'),
     coding_start  => $transcript->coding_region_start,
     coding_end    => $transcript->coding_region_end,
-    strand        => $strand
+    strand        => $strand,
+    export        => $export
   };
   
-  $config->{'variation'} = 'off' unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
+  $config->{'end_number'}  = $config->{'number'};
+  $config->{'last_number'} = $config->{'coding_start'} - $config->{'flanking'} - 1 if $config->{'number'} eq 'slice';
+  
+  $config->{'variation'}  = 'off' unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
   
   if ($config->{'variation'} ne 'off') {
     my $filter = $hub->param('population_filter');
@@ -47,6 +52,18 @@ sub initialize {
       $config->{'population'}    = $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter);
       $config->{'min_frequency'} = $hub->param('min_frequency');
     }
+  }
+  
+  # Get flanking sequence
+  my ($upstream, $downstream) = $config->{'flanking'} && !$only_exon ? $self->get_flanking_sequence_data($config, $exons[0], $exons[-1]) : ();
+  
+  if ($upstream) {
+    $self->add_line_numbers($config, $config->{'flanking'}) if $config->{'number'} ne 'off';
+    
+    push @data, $export ? $upstream : {
+      exint    => "5' upstream sequence", 
+      Sequence => $self->build_sequence($upstream, $config)
+    };
   }
   
   foreach my $exon (@exons) {
@@ -87,15 +104,9 @@ sub initialize {
       };
     }
   }
-
-  # Add flanking sequence
-  if ($config->{'flanking'} && !$only_exon) {
-    my ($upstream, $downstream) = $self->get_flanking_sequence_data($config, $exons[0], $exons[-1]);
-    
-    unshift @data, $export ? $upstream : {
-      exint    => "5' upstream sequence", 
-      Sequence => $self->build_sequence($upstream, $config)
-    };
+  
+  if ($downstream) {
+    $self->add_line_numbers($config, $config->{'flanking'}) if $config->{'number'} ne 'off';
     
     push @data, $export ? $downstream : { 
       exint    => "3' downstream sequence", 
@@ -178,6 +189,7 @@ sub get_exon_sequence_data {
   }
 
   $self->add_variations($config, $exon->feature_Slice, \@sequence) if $config->{'variation'} ne 'off';
+  $self->add_line_numbers($config, $seq_length) if $config->{'number'} ne 'off';
 
   return \@sequence;
 }
@@ -204,6 +216,8 @@ sub get_intron_sequence_data {
         $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $start, $end;
       }
       
+      $self->add_line_numbers($config, $intron_length, 1) if $config->{'number'} ne 'off';
+      
       @sequence = $strand == 1 ? (@{$start->{'sequence'}}, @dots, @{$end->{'sequence'}}) : (@{$end->{'sequence'}}, @dots, @{$start->{'sequence'}});
     } else {
       my $slice = $exon->slice->sub_Slice($intron_start, $intron_end, $strand);
@@ -211,6 +225,7 @@ sub get_intron_sequence_data {
       @sequence = map {{ letter => $_, class => 'e1' }} split //, lc $slice->seq;
       
       $self->add_variations($config, $slice, \@sequence) if $config->{'variation'} eq 'on';
+      $self->add_line_numbers($config, $intron_length) if $config->{'number'} ne 'off';
     }
   };
   
@@ -296,6 +311,31 @@ sub add_variations {
   }
   
   $sequence->[$_]->{'href'} = $self->hub->url($href{$_}) for keys %href;
+}
+
+sub add_line_numbers {
+  my ($self, $config, $seq_length, $truncated) = @_;
+  
+  my $i      = $config->{'export'} ? $config->{'lines'}++ : 0;
+  my $start  = $config->{'last_number'};
+  my $length = $start + $seq_length;
+  my $end;
+  
+  if ($truncated) {
+    $end = $length;
+    push @{$config->{'line_numbers'}->{$i}}, { start => $start + 1, end => $end };
+  } else {
+    while ($end < $length) {
+      $end = $start + $config->{'display_width'};
+      $end = $length if $end > $length;
+      
+      push @{$config->{'line_numbers'}->{$i}}, { start => $start + 1, end => $end };
+      
+      $start += $config->{'display_width'};
+    }
+  }
+  
+  $config->{'last_number'} = $end;
 }
 
 sub build_sequence {

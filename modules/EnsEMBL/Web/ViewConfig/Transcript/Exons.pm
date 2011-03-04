@@ -17,6 +17,7 @@ sub init {
     flanking          50
     fullseq           no
     oexon             no
+    line_numbering    off
     variation         off
     population_filter off
     min_frequency     0.1
@@ -64,6 +65,10 @@ sub form {
     value => 'yes'
   });
   
+  my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
+  
+  $view_config->add_form_element($general_markup_options{'line_numbering'});
+  
   if ($object->species_defs->databases->{'DATABASE_VARIATION'}) {
     $view_config->add_form_element({
       type   => 'DropDown', 
@@ -80,14 +85,13 @@ sub form {
     my $populations = $object->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_all_LD_Populations;
     
     if (scalar @$populations) {
-      my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
-      
       push @{$general_markup_options{'pop_filter'}{'values'}}, sort { $a->{'name'} cmp $b->{'name'} } map {{ value => $_->name, name => $_->name }} @$populations;
     
       $view_config->add_form_element($general_markup_options{'pop_filter'});
       $view_config->add_form_element($general_markup_options{'pop_min_freq'});
     }
   }
+  
   $_->set_flag($view_config->SELECT_ALL_FLAG) for @{$view_config->get_form->fieldsets};
 }
 
