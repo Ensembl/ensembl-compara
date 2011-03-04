@@ -49,7 +49,7 @@ sub add_unmapped_ids {
 sub format_mapped_ids { 
   my ($self, $ids) = @_;
   my %stable_ids       = %$ids;
-  my $earliest_archive = $self->hub->species_defs->EARLIEST_ARCHIVE;
+  my $earliest_archive = $self->object->get_earliest_archive;
   
   return '<p>No IDs were succesfully converted</p>' if scalar keys %stable_ids < 1;
   
