@@ -16,6 +16,7 @@ use strict;
 
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 
 use base qw(EnsEMBL::Web::Root);
@@ -259,5 +260,16 @@ sub long_caption {
   return $self->stable_id . $label;
 }
 
+# method required for ID history views, applies to several web objects
+
+sub get_earliest_archive { 
+  my $self = shift;
+  
+  my $adaptor = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($self->hub);
+  my $releases = $adaptor->fetch_releases();
+  foreach my $r (@$releases){ 
+    return $r->{'id'} if $r->{'online'} eq 'Y';
+  }
+}
 1;
 
