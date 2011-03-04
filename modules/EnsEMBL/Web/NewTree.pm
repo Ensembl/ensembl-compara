@@ -69,8 +69,7 @@ sub create_node {
   $data ||= {};
   
   if (exists $self->tree_ids->{$id}) {
-    warn "DUPLICATE ID $id";
-    return undef;
+    return $self->get_node($id);
   }
   
   return new EnsEMBL::Web::NewTree($self->dom, {
