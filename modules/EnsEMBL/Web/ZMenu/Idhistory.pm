@@ -21,7 +21,7 @@ sub archive_link {
   
   my $hub = $self->hub;
   
-  return '' unless ($release || $archive->release) > $hub->species_defs->EARLIEST_ARCHIVE;
+  return '' unless ($release || $archive->release) > $self->object->get_earliest_archive;
   
   my $type    = $archive->type eq 'Translation' ? 'peptide' : lc $archive->type;
   my $name    = $archive->stable_id . '.' . $archive->version;
