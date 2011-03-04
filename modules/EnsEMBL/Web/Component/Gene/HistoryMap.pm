@@ -48,8 +48,8 @@ sub content {
   my $name        = $archive->stable_id . '.' . $archive->version;
   my $historytree = $htree || $object->history; 
 
-  return '<p style="text-align:center"><b>There are too many stable IDs related to $name to draw a history tree.</b></p>' unless defined $historytree;
-  return '<p style="text-align:center"><b>There is no history for $name stored in the database.</b></p>' if scalar @{$historytree->get_release_display_names} < 2;
+  return '<p style="text-align:center"><b>There are too many stable IDs related to '.  $name .' to draw a history tree.</b></p>' unless defined $historytree;
+  return '<p style="text-align:center"><b>There is no history for '. $name .' stored in the database.</b></p>' if scalar @{$historytree->get_release_display_names} < 2;
 
   my $tree = $self->_create_idhistory_tree($archive, $historytree);
   my $html = $historytree->is_incomplete ? '<p>Too many related stable IDs found to draw complete tree - tree shown is only partial.</p>' : '';
