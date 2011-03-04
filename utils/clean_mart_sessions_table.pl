@@ -25,6 +25,8 @@ my $dbh = DBI->connect(
   $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS
 );
 
+$dbh->do('DELETE from sessions WHERE modified_at < DATE(NOW()) - INTERVAL 1 WEEK');
+
 # Optimise table on Sundays
 if (!(gmtime)[6]) {
   $dbh->do('OPTIMIZE TABLE sessions');
