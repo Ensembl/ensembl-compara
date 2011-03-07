@@ -109,36 +109,21 @@ sub populate_tree {
   );
 
   ## URL attachment
-  $self->create_node( 'SelectURL', "Attach URL Data",
-   [qw(select_url EnsEMBL::Web::Component::UserData::SelectURL)], 
+  $self->create_node( 'SelectRemote', "Attach Remote File",
+   [qw(select_url EnsEMBL::Web::Component::UserData::SelectRemote)], 
     { 'availability' => 1 }
   );
-  $self->create_node( 'AttachURL', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::AttachURL', 
+  $self->create_node( 'AttachRemote', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::UserData::AttachRemote', 
     'availability' => 1, 'no_menu_entry' => 1 }
   );
-  $self->create_node( 'UrlFeedback', '',
+  $self->create_node( 'AttachFeedback', '',
    [qw(
-      url_feedback  EnsEMBL::Web::Component::UserData::UrlFeedback
-      url_parsed    EnsEMBL::Web::Component::UserData::UploadParsed
+      attach_feedback  EnsEMBL::Web::Component::UserData::AttachFeedback
+      attach_parsed    EnsEMBL::Web::Component::UserData::AttachParsed
     )],
     { 'availability' => 1, 'no_menu_entry' => 1 }
   );
-
-  ## BAM file attachment
-  $self->create_node( 'SelectBAM', "Attach BAM File",
-   [qw(select_bam EnsEMBL::Web::Component::UserData::SelectBAM)],
-    { 'availability' => 1 }
-  );
-  $self->create_node( 'AttachBAM', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::AttachBAM',
-    'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'BAMFeedback', '',
-   [qw(bam_feedback EnsEMBL::Web::Component::UserData::BAMFeedback)],
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-
 
   ## Saving remote data
   $self->create_node( 'ShowRemote', '',
