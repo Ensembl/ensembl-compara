@@ -298,7 +298,7 @@ sub phyloxml{
           -NO_SEQUENCES => $params->{'no_sequences'},
           -HANDLE => $handle
   ); 
-  if(!defined $object->get_GeneTree){return $self->string('no data');}
+  if(! $object->can('get_GeneTree')){return $self->string('no data');}
   my $tree = $object->get_GeneTree($cdb);
   $w->write_trees($tree);
   $w->finish();
