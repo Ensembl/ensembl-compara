@@ -1,0 +1,11 @@
+MySQL Workbench was used to create schema diagrams for the core database.
+In case of schema changes, update the relevant diagram and regenerate the diagram pdf. Fundamental_tables_core.pdf was created by merging fundamental_tables_1.pdf and fundamental_tables_2.pdf using Batch pdf Merger.
+
+To regenerate core_schema.html use script SQL2HTML.pl in ensembl-variation/sql/ with the following options:
+
+-i (sql file name) table.sql
+-o (html file name) 
+-sort 0 (1- sort tables and table sets in alphabetical order)
+-d (database) Core
+
+Follow instructions at the top of table.sql to complete the generated HTML and save as core_schema.html.  
