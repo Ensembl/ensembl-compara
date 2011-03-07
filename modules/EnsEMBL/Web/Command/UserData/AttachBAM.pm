@@ -60,13 +60,14 @@ sub process {
         $redirect .= 'ManageData';
       } else {
         my $data = $session->add_data(
-          type      => 'bam',
+          type      => 'url',
+          format    => 'bam',
           url       => $url,
           name      => $name,
           species   => $hub->data_species,
         );
         if ($hub->param('save')) {
-          $self->object->move_to_user('type' => 'bam', 'code' => $data->{'code'});
+          $self->object->move_to_user('type' => 'url', 'code' => $data->{'code'});
         }
         $redirect .= 'BAMFeedback';
         $session->configure_bam_views($data);
