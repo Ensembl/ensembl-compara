@@ -7,17 +7,27 @@
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf -password <your_password>
+    #1. update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
+
+    #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+
+    #3. make sure that all default_options are set correctly
+
+    #4. Run init_pipeline.pl script:
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf -password <your_password> -mlss_id <your_current_NCT_mlss_id>
+
+    #5. Sync and loop the beekeeperi.pl as shown in init_pipeline.pl's output
 
 =head1 DESCRIPTION  
 
-    This is an experimental PipeConfig file for ncRNAtrees pipeline (work in progress)
+    The PipeConfig file for ncRNAtrees pipeline that should automate most of the pre-execution tasks.
 
 =head1 CONTACT
 
   Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =cut
+
 
 package Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf;
 
@@ -36,6 +46,8 @@ sub default_options {
         'release'           => '62',
         'rel_suffix'        => 'a',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
+
+        'pipeline_name'     => 'NCT_'.$self->o('rel_with_suffix'),  # name the pipeline to differentiate the submitted processes
 
         'species_tree_input_file'   => '',  # empty value means 'create using genome_db+ncbi_taxonomy information'; can be overriden by a file with a tree in it
 
@@ -87,10 +99,12 @@ sub default_options {
 sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
     my ($self) = @_;
     return {
-        'pipeline_name'     => 'NCT_'.$self->o('rel_with_suffix'),  # name the pipeline to differentiate the submitted processes
-        'email'             => $self->o('email'),                   # for automatic notifications (may be unsupported by your Meadows)
+        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+
+        'email'             => $self->o('email'),           # for (future) automatic notifications (may be unsupported by your Meadows)
     };
 }
+
 
 
 sub pipeline_analyses {

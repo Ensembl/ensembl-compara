@@ -7,11 +7,13 @@
 
 =head1 SYNOPSIS
 
-    #1. make sure that ProteinTree pipeline (whose EnsEMBL peptide members you want to incorporate) is already past member loading stage
+    #0. make sure that ProteinTree pipeline (whose EnsEMBL peptide members you want to incorporate) is already past member loading stage
 
-    #2. update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
+    #1. update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
 
-    #3. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+    #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+
+    #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Families_conf -password <your_password>

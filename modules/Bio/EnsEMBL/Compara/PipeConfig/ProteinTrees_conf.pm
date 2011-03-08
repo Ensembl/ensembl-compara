@@ -7,17 +7,23 @@
 
 =head1 SYNOPSIS
 
-    # 0. make sure that all default_options are set correctly
+    #1. update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
 
-    # 1. do not forget to 'cvs update' ensembl core API before each new release (otherwise the core databases will not be found during loading step)
+    #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
 
-    # 2. you may need to update 'schema_version' in meta table to the same number in ensembl-hive/sql/tables.sql
+    #3. make sure that all default_options are set correctly
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -password <your_password> -mlss_id <your_current_PT_mlss_id>
+    #4. Run init_pipeline.pl script:
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -password <your_password> -mlss_id <your_current_PT_mlss_id>
+
+    #5. Sync and loop the beekeeperi.pl as shown in init_pipeline.pl's output
+
 
 =head1 DESCRIPTION  
 
-    The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks (including blast reuse and finding out entry data for dNdS).
+    The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
+
+    FYI: it took (5.3 x 24h) to perform the full production run for EnsEMBL release 62.
 
 =head1 CONTACT
 
