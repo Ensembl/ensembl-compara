@@ -30,17 +30,16 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        # 'mlss_id'           => 40070,   # 40070 was good for release 61, but make sure you have the correct id!
+        # 'mlss_id'           => 40072,   # 40072 was good for release 62, but make sure you have the correct id!
         'max_gene_count'    => 1500,
 
-        'release'           => '61',
-        'rel_suffix'        => '',    # an empty string by default, a letter otherwise
+        'release'           => '62',
+        'rel_suffix'        => 'a',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
         'species_tree_input_file'   => '',  # empty value means 'create using genome_db+ncbi_taxonomy information'; can be overriden by a file with a tree in it
 
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
-        'work_dir'             => $ENV{'HOME'}.'/ncrna_trees_'.$self->o('rel_with_suffix'),
 
         'email'             => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
 
@@ -79,7 +78,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'kb3_ensembl_compara_60',
+            -dbname => 'sf5_ensembl_compara_61',
         },
     };
 }
@@ -90,17 +89,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     return {
         'pipeline_name'     => 'NCT_'.$self->o('rel_with_suffix'),  # name the pipeline to differentiate the submitted processes
         'email'             => $self->o('email'),                   # for automatic notifications (may be unsupported by your Meadows)
-        'work_dir'          => $self->o('work_dir'),                # data directories and filenames
     };
-}
-
-sub pipeline_create_commands {
-    my ($self) = @_;
-    return [
-        @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
-        
-        'mkdir -p '.$self->o('work_dir'),
-    ];
 }
 
 
