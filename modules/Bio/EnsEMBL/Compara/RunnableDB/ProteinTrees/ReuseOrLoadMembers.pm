@@ -264,11 +264,11 @@ sub loadMembersFromCoreSlices {
       # LV and C are for the Ig/TcR family, which rearranges
       # somatically so is considered as a different biotype in EnsEMBL
       # D and J are very short or have no translation at all
-      if (lc($gene->biotype) eq 'protein_coding'         || 
-          lc($gene->biotype) eq 'ig_v_gene'              || 
-          lc($gene->biotype) eq 'ig_c_gene'              || 
-          lc($gene->biotype) eq 'c_segment'              || 
-          lc($gene->biotype) eq 'v_segment') {
+      if (   lc($gene->biotype) eq 'protein_coding'
+          || lc($gene->biotype) eq 'ig_v_gene'
+          || lc($gene->biotype) eq 'ig_c_gene'
+#         || lc($gene->biotype) eq 'polymorphic_pseudogene'     # lg4: not sure if this biotype is ok, as it has a stop codon in the middle
+        ) {
         $self->param('realGeneCount', $self->param('realGeneCount')+1 );
         $self->store_gene_and_all_transcripts($gene);
         print STDERR $self->param('realGeneCount') , " genes stored\n" if ($self->debug && (0 == ($self->param('realGeneCount') % 100)));
