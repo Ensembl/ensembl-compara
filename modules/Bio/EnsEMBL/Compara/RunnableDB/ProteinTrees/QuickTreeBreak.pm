@@ -146,26 +146,27 @@ sub write_output {
     $self->store_proteintrees;
 }
 
+sub release_tree {
+    my $self       = shift @_;
+    my $tree_param = shift @_;
+
+    if(my $root = $self->param($tree_param)) {
+        $root->release_tree;
+        $self->param($tree_param, undef);
+    }
+}
 
 sub DESTROY {
-  my $self = shift;
+    my $self = shift;
 
-  if($self->param('protein_tree')) {
-    printf("QuickTreeBreak::DESTROY releasing tree\n") if($self->debug);
+    printf("QuickTreeBreak::DESTROY releasing trees\n") if($self->debug);
 
-    $self->param('protein_tree')->release_tree;
-    $self->param('protein_tree', undef);
+    $self->release_tree('protein_tree');
+    $self->release_tree('max_subtree');
+    $self->release_tree('new_subtree');
+    $self->release_tree('remaining_subtree');
 
-    $self->param('max_subtree')->release_tree;
-    $self->param('new_subtree')->release_tree;
-    $self->param('remaining_subtree')->release_tree;
-
-    $self->param('max_subtree', undef);
-    $self->param('new_subtree', undef);
-    $self->param('remaining_subtree', undef);
-  }
-
-  $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
+    $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
 }
 
 
