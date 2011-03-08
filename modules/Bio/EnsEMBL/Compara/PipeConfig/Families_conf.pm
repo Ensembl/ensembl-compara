@@ -1,26 +1,72 @@
-## Configuration file for the MCL family pipeline (development in progress)
-#
-# Don't forget to use '-lifespan 1200' on the beekeeper, otherwise the benefit of using the long queue will be lost.
-# 
-# rel.57+:  init_pipeline.pl execution took 8m45;   pipeline execution took 100hours (4.2 x days-and-nights) including queue waiting
-# rel.58:   init_pipeline.pl execution took 5m (Albert's pipeline not working) or 50m (Albert's pipeline working);   pipeline execution took ...
-# rel.58b:  init_pipeline.pl execution took 6m30, pipeline execution [with some debugging in between] took 5*24h. Should be 4*24h at most.
-# rel.59:   init_pipeline.pl execution took 6m45, pipeline execution took 13.5 days [prob. because of MyISAM engine left there by mistake]
-# rel.60:   init_pipeline.pl execution took 16m, pipeline execution took 6 full days (lost about one day on debugging an unusual case, code fixed)
-# rel.61:   init_pipeline.pl doesn't take considerable time anymore, since table copying has moved into the pipeline proper.
 
-#
-## Please remember that mapping_session, stable_id_history, member and sequence tables will have to be MERGED in an intelligent way, and not just written over.
-#
+=pod 
+
+=head1 NAME
+
+    Bio::EnsEMBL::Compara::PipeConfig::Families_conf
+
+=head1 SYNOPSIS
+
+    #1. make sure that ProteinTree pipeline (whose EnsEMBL peptide members you want to incorporate) is already past member loading stage
+
+    #2. update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
+
+    #3. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+
+    #4. Run init_pipeline.pl script:
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Families_conf -password <your_password>
+
+    #5. When looping the beekeeper do not forget to add '-lifespan 1200' to its command line options to get some benefit from using 'long' queue
+
+    #6. Please remember that mapping_session, stable_id_history, member and sequence tables will have to be MERGED in an intelligent way, and not just written over.
+        ReleaseCoordination.txt document explains how to do the merge correctly.
+
+=head1 DESCRIPTION  
+
+    The PipeConfig file for Families pipeline that should automate most of the tasks
+
+    Some statistics of previous releases:
+
+=head2 rel.62 stats
+
+    sequences to cluster:       3,079,257           [ SELECT count(*) from sequence; ]
+    distances by Blast:         550,334,750         [ SELECT count(*) from mcl_sparse_matrix; ]
+
+    total running time:         4.5 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
+    mcxload running time:       1.5h                [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcxload_matrix'; ]
+    mcl running time:           3.7h                [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcl'; ]
+
+    memory used by mcxload:     15G RAM + 15G SWAP  [ bacct -l [ SELECT max(process_id) FROM hive WHERE analysis_id=11; ] ]
+    memory used by mcl:         18G RAM + 18G SWAP  [ bacct -l [ SELECT max(process_id) FROM hive WHERE analysis_id=12; ] ]
+
+=head2 rel.61 stats
+
+    sequences to cluster:       2,914,080           [ SELECT count(*) from sequence; ]
+    distances by Blast:         523,104,710         [ SELECT count(*) from mcl_sparse_matrix; ]
+
+    total running time:         3(!) days           [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
+    mcxload running time:       8h                  [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcxload_matrix'; ]
+    mcl running time:           9.4h                [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcl'; ]
+
+=head2 rel.60 stats
+
+    sequences to cluster:       2,725,421           [ SELECT count(*) from sequence; ]
+    distances by Blast:         484,837,915         [ SELECT count(*) from mcl_sparse_matrix; ]
+
+    total running time:         ? days              [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
+    mcxload running time:       11.2h               [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcxload_matrix'; ]
+    mcl running time:           3.1h                [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcl'; ]
+
+    memory used by mcxload:     13G RAM + 13G SWAP  
+    memory used by mcl:         15G RAM + 16G SWAP  
 
 
-# Some rel60 stats:
-#
-#   2,725,421 sequences to cluster
-# 484,837,915 distances computed by Blast with -seg masking off (default in C++ binary)
-#
-# mcxload step took 11.2h
-# mcl     step took  3.1h
+=head1 CONTACT
+
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+
+=cut
+
 
 
 package Bio::EnsEMBL::Compara::PipeConfig::Families_conf;
@@ -34,40 +80,40 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        release         => '61',
-        rel_suffix      => '',    # an empty string by default, a letter otherwise
-        rel_with_suffix => $self->o('release').$self->o('rel_suffix'),
+        'release'         => '62',
+        'rel_suffix'      => 'a',    # an empty string by default, a letter otherwise
+        'rel_with_suffix' => $self->o('release').$self->o('rel_suffix'),
 
-        email           => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
+        'email'           => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
 
             # code directories:
-        sec_root_dir    => '/software/ensembl/compara',
-        blast_bin_dir   => $self->o('sec_root_dir') . '/ncbi-blast-2.2.23+/bin',
-        mcl_bin_dir     => $self->o('sec_root_dir') . '/mcl-10-201/bin',
-        mafft_root_dir  => $self->o('sec_root_dir') . '/mafft-6.522',
+        'sec_root_dir'    => '/software/ensembl/compara',
+        'blast_bin_dir'   => $self->o('sec_root_dir') . '/ncbi-blast-2.2.23+/bin',
+        'mcl_bin_dir'     => $self->o('sec_root_dir') . '/mcl-10-201/bin',
+        'mafft_root_dir'  => $self->o('sec_root_dir') . '/mafft-6.522',
             
             # data directories:
-        work_dir        => $ENV{'HOME'}.'/families_'.$self->o('rel_with_suffix'),
-        blastdb_dir     => '/lustre/scratch101/ensembl/'.$ENV{'USER'}.'/families_'.$self->o('rel_with_suffix'),
-        blastdb_name    => 'metazoa_'.$self->o('rel_with_suffix').'.pep',
-        tcx_name        => 'families_'.$self->o('rel_with_suffix').'.tcx',
-        itab_name       => 'families_'.$self->o('rel_with_suffix').'.itab',
-        mcl_name        => 'families_'.$self->o('rel_with_suffix').'.mcl',
+        'work_dir'        => '/lustre/scratch101/ensembl/'.$ENV{'USER'}.'/families_'.$self->o('rel_with_suffix'),
+        'blastdb_dir'     => $self->o('work_dir').'/blast_db',
+        'blastdb_name'    => 'metazoa_'.$self->o('rel_with_suffix').'.pep',
+        'tcx_name'        => 'families_'.$self->o('rel_with_suffix').'.tcx',
+        'itab_name'       => 'families_'.$self->o('rel_with_suffix').'.itab',
+        'mcl_name'        => 'families_'.$self->o('rel_with_suffix').'.mcl',
 
-        blast_params    => '', # By default C++ binary has composition stats on and -seg masking off
+        'blast_params'    => '', # By default C++ binary has composition stats on and -seg masking off
 
             # resource requirements:
-        mcxload_gigs    => 30,                                      # 13G RAM + 13G SWAP according to bacct -l in rel.60
-        mcl_gigs        => 40,                                      # 15G RAM + 16G SWAP accorting to bacct -l in rel.60
-        mcl_procs       =>  4,
-        himafft_gigs    => 14,
-        dbresource      => 'my'.$self->o('pipeline_db', '-host'),   # will work for compara1..compara3, but will have to be set manually otherwise
-        blast_capacity  => 1000,                                    # work both as hive_capacity and resource-level throttle
-        mafft_capacity  =>  400,
-        cons_capacity   =>  400,
+        'mcxload_gigs'    => 30,
+        'mcl_gigs'        => 40,
+        'mcl_procs'       =>  4,
+        'himafft_gigs'    => 14,
+        'dbresource'      => 'my'.$self->o('pipeline_db', '-host'),   # will work for compara1..compara3, but will have to be set manually otherwise
+        'blast_capacity'  => 1000,                                    # work both as hive_capacity and resource-level throttle
+        'mafft_capacity'  =>  400,
+        'cons_capacity'   =>  400,
 
             # family database connection parameters (our main database):
-        pipeline_db => {
+        'pipeline_db' => {
             -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensadmin',
@@ -76,23 +122,23 @@ sub default_options {
         },
 
             # homology database connection parameters (we inherit half of the members and sequences from there):
-        homology_db  => {
-            -host   => 'compara2',
+        'homology_db'  => {
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
             -dbname => 'lg4_compara_homology_'.$self->o('release'),
         },
 
-        prev_rel_db => {     # used by the StableIdMapper as the reference
-            -host   => 'ens-livemirror',
+        'prev_rel_db' => {     # used by the StableIdMapper as the reference
+            -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'ensembl_compara_60',
+            -dbname => 'sf5_ensembl_compara_61',
         },
 
-        master_db => {     # used by the StableIdMapper as the location of the master 'mapping_session' table
+        'master_db' => {     # used by the StableIdMapper as the location of the master 'mapping_session' table
             -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensadmin',
@@ -108,8 +154,8 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
         
-        'mkdir -p '.$self->o('blastdb_dir'),
         'mkdir -p '.$self->o('work_dir'),
+        'mkdir -p '.$self->o('blastdb_dir'),
     ];
 }
 
@@ -117,7 +163,7 @@ sub pipeline_create_commands {
 sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
     my ($self) = @_;
     return {
-        'pipeline_name'     => 'FAM_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+        'pipeline_name'     => 'FAM_'.$self->o('rel_with_suffix'),  # name the pipeline to differentiate the submitted processes
         'email'             => $self->o('email'),                   # for automatic notifications (may be unsupported by your Meadows)
 
         'work_dir'          => $self->o('work_dir'),                # data directories and filenames
@@ -203,7 +249,7 @@ sub pipeline_analyses {
             -wait_for => [ 'offset_and_innodbise_tables' ],
             -flow_into => {
                 2 => [ 'load_uniprot' ],
-                1 => { 'remove_members_with_unknown_taxa' => { 'fasta_name' => '#work_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#', 'blastdb_dir' => '#blastdb_dir#' } },
+                1 => { 'remove_members_with_unknown_taxa' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#', 'blastdb_dir' => '#blastdb_dir#' } },
             },
             -rc_id => 1,
         },
@@ -242,18 +288,7 @@ sub pipeline_analyses {
         {   -logic_name => 'make_blastdb',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd' => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #work_dir#/make_blastdb.log -in #fasta_name#',
-            },
-            -flow_into => {
-                1 => [ 'copy_blastdb_over' ],
-            },
-            -rc_id => 1,
-        },
-
-        {   -logic_name => 'copy_blastdb_over',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters => {
-                'cmd' => 'cp #fasta_name#* #blastdb_dir#',
+                'cmd' => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #blastdb_dir#/make_blastdb.log -in #fasta_name#',
             },
             -flow_into => {
                 1 => [ 'family_blast_factory' ],
