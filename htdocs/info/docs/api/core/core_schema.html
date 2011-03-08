@@ -947,7 +947,7 @@ core schema.
 		<tr class="bg1"><td><b>perc_ident</b></td><td>FLOAT</td><td></td><td>Alignment percentage identity.</td><td></td></tr>
 		<tr class="bg2"><td><b>cigar_line</b></td><td>TEXT</td><td></td><td>Used to encode gapped alignments. </td><td></td></tr>
 		<tr class="bg1"><td><b>external_db_id</b></td><td>SMALLINT</td><td></td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td>key: external_db_idx</td></tr>
-		<tr class="bg2"><td><b>hcoverage</b></td><td>DOUBLE</td><td></td><td> </td><td></td></tr>
+		<tr class="bg2"><td><b>hcoverage</b></td><td>DOUBLE</td><td></td><td>Hit coverage.</td><td></td></tr>
 		<tr class="bg1"><td><b>external_data</b></td><td>TEXT</td><td></td><td>External data.</td><td></td></tr>
 		<tr class="bg2"><td><b>pair_dna_align_feature_id</b></td><td>INT(10)</td><td></td><td>The id of the dna feature aligned.</td><td>key: pair_idx</td></tr>
 </table>
@@ -1591,7 +1591,7 @@ core schema.
 		<tr class="bg2"><td><b>new_version</b></td><td>SMALLINT</td><td></td><td>Stable id version.</td><td></td></tr>
 		<tr class="bg1"><td><b>mapping_session_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#mapping_session">mapping_session</a> table.</td><td>unique key: uni_idx</td></tr>
 		<tr class="bg2"><td><b>type</b></td><td>ENUM('gene', 'transcript', 'translation')</td><td></td><td>ENUM('gene', 'transcript', 'translation') NOT NULL,</td><td>unique key: uni_idx</td></tr>
-		<tr class="bg1"><td><b>score</b></td><td>FLOAT</td><td>0</td><td>Mapping score.</td><td></td></tr>
+		<tr class="bg1"><td><b>score</b></td><td>FLOAT</td><td>0</td><td>Combined mapping score.</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -1673,8 +1673,8 @@ core schema.
 		<tr class="bg2"><td><b>db_name</b></td><td>VARCHAR(100)</td><td></td><td>Database name.     </td><td></td></tr>
 		<tr class="bg1"><td><b>db_release</b></td><td>VARCHAR(255)</td><td></td><td>Database release.      </td><td></td></tr>
 		<tr class="bg2"><td><b>status</b></td><td>ENUM('KNOWNXREF','KNOWN','XREF','PRED','ORTH',<br />'PSEUDO')</td><td></td><td>Status, e.g. 'KNOWNXREF','KNOWN','XREF','PRED','ORTH','PSEUDO'. </td><td></td></tr>
-		<tr class="bg1"><td><b>dbprimary_acc_linkable</b></td><td>BOOLEAN</td><td>1</td><td> </td><td></td></tr>
-		<tr class="bg2"><td><b>priority</b></td><td>INT</td><td></td><td>Priority.</td><td></td></tr>
+		<tr class="bg1"><td><b>dbprimary_acc_linkable</b></td><td>BOOLEAN</td><td>1</td><td>Indicates if primary accessions can be linked to from the EnsEMBL web site.</td><td></td></tr>
+		<tr class="bg2"><td><b>priority</b></td><td>INT</td><td></td><td>Determines the order in which the sources are displayed on the EnsEMBL web site.</td><td></td></tr>
 		<tr class="bg1"><td><b>db_display_name</b></td><td>VARCHAR(255)</td><td></td><td>Database display name.</td><td></td></tr>
 		<tr class="bg2"><td><b>type</b></td><td>ENUM('ARRAY', 'ALT_TRANS', 'ALT_GENE', 'MISC', 'LIT', 'PRIMARY_DB_SYNONYM', 'ENSEMBL')</td><td></td><td>Type, e.g. 'ARRAY', 'ALT_TRANS', 'ALT_GENE', 'MISC', 'LIT', 'PRIMARY_DB_SYNONYM', 'ENSEMBL'.</td><td></td></tr>
 		<tr class="bg1"><td><b>secondary_db_name</b></td><td>VARCHAR(255)</td><td>NULL</td><td>Secondary database name.</td><td></td></tr>
@@ -1772,7 +1772,7 @@ core schema.
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>object_xref_id</b></td><td>INT(10)</td><td>'0'</td><td>Composite key. Foreign key references to the <a href="#object_xref">object_xref</a> table.        </td><td>unique key: object_source_type_idx</td></tr>
-		<tr class="bg2"><td><b>source_xref_id</b></td><td>INT(10)</td><td>NULL</td><td>Composite key.</td><td>key: source_idx<br />unique key: object_source_type_idx</td></tr>
+		<tr class="bg2"><td><b>source_xref_id</b></td><td>INT(10)</td><td>NULL</td><td>Composite key.Foreign key references to the <a href="#xref">xref</a> table. </td><td>key: source_idx<br />unique key: object_source_type_idx</td></tr>
 		<tr class="bg1"><td><b>linkage_type</b></td><td>ENUM('IC',  'IDA', 'IEA', 'IEP', 'IGI', 'IMP',<br />'IPI', 'ISS', 'NAS', 'ND' , 'TAS', 'NR' ,<br />'RCA', 'EXP', 'ISO', 'ISA', 'ISM', 'IGC')</td><td></td><td>Composite key. <a href="http://www.geneontology.org/GO.evidence.shtml">Evidence tags</a> </td><td>unique key: object_source_type_idx</td></tr>
 </table>
 </div>
@@ -1820,7 +1820,7 @@ core schema.
 		<tr class="bg2"><td><b>target_score</b></td><td>DOUBLE</td><td></td><td>Target mapping query score.</td><td></td></tr>
 		<tr class="bg1"><td><b>ensembl_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#seq_region">seq_region</a>, @link transcript, @link gene, @translation tables depending on ensembl_object_type.     </td><td></td></tr>
 		<tr class="bg2"><td><b>ensembl_object_type</b></td><td>ENUM('RawContig','Transcript','Gene','Translation')</td><td></td><td>Ensembl object type: 'RawContig', 'Transcript', 'Gene','Translation'.   </td><td></td></tr>
-		<tr class="bg1"><td><b>parent</b></td><td>VARCHAR(255)</td><td>NULL</td><td> </td><td></td></tr>
+		<tr class="bg1"><td><b>parent</b></td><td>VARCHAR(255)</td><td>NULL</td><td>Foreign key references to the <a href="#dependent_xref">dependent_xref</a> table, in case the unmapped object is dependent on a primary external reference which wasn't mapped to an ensembl one. </td><td></td></tr>
 </table>
 </div>
 
