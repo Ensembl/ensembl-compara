@@ -8,4 +8,4 @@ To regenerate core_schema.html use script SQL2HTML.pl in ensembl-variation/sql/ 
 -sort 0 (1- sort tables and table sets in alphabetical order)
 -d (database) Core
 
-Follow instructions at the top of table.sql to complete the generated HTML and save as core_schema.html.  
+Follow instructions in file html_to_append.html to complete the generated HTML and save as core_schema.html.  
