@@ -15,30 +15,30 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        release         => '61',
-        rel_suffix      => '',    # an empty string by default, a letter otherwise
-        rel_with_suffix => $self->o('release').$self->o('rel_suffix'),
+        'release'           => '62',
+        'rel_suffix'        => '',    # an empty string by default, a letter otherwise
+        'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
-        pipeline_name => 'stable_id_mapper_'.$self->o('rel_with_suffix'),
+        'pipeline_name' => 'STID_'.$self->o('rel_with_suffix'),
 
             # family database connection parameters (our main database):
-        pipeline_db => {
-            -host   => 'compara2',
+        'pipeline_db' => {
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
             -dbname => 'lg4_compara_homology_'.$self->o('rel_with_suffix'),
         },
 
-        prev_rel_db => {     # used by the StableIdMapper as the reference
+        'prev_rel_db' => {     # used by the StableIdMapper as the reference
             -host   => 'ens-livemirror',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'ensembl_compara_60',
+            -dbname => 'ensembl_compara_61',
         },
 
-        master_db => {     # used by the StableIdMapper as the location of the master 'mapping_session' table
+        'master_db' => {     # used by the StableIdMapper as the location of the master 'mapping_session' table
             -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensadmin',
@@ -46,7 +46,7 @@ sub default_options {
             -dbname => 'sf5_ensembl_compara_master',
         },
 
-        idmap_gigs  => 8,
+        'idmap_gigs'  => 8,
     };
 }
 
