@@ -165,7 +165,7 @@ sub content {
   }
   
   my $table = $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'Species asc', 'Type asc' ] });
-  my $html  = '<p>The following gene(s) have been identified as putative orthologues:</p>' . $table->render;
+  my $html;
   
   if ($alignview && keys %orthologue_list) {
     $html .= sprintf(
@@ -173,6 +173,7 @@ sub content {
       $hub->url({ action => "Compara_Ortholog", function => "Alignment". ($cdb=~/pan/ ? '_pan_compara' : ''), })
     );
   }
+  $html .= $table->render;
   
   if (scalar keys %skipped) {
     my $count;
