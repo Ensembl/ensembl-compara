@@ -48,10 +48,11 @@ sub content {
     { key => 'Type',               align => 'left', width => '5%',  sort => 'string'        },
     { key => 'dN/dS',              align => 'left', width => '5%',  sort => 'numeric'       },
     { key => 'Ensembl identifier', align => 'left', width => '20%', sort => 'html'          },
+    { key => 'Gene name (Xref)',   align => 'left', width => '20%', sort => 'none'          },
+    { key => 'Compare',            align => 'left', width => '10%', sort => 'none'          },
     { key => 'Location',           align => 'left', width => '20%', sort => 'position_html' },
     { key => 'Target %id',         align => 'left', width => '5%',  sort => 'numeric'       },
     { key => 'Query %id',          align => 'left', width => '5%',  sort => 'numeric'       },
-    { key => 'External ref.',      align => 'left', width => '30%', sort => 'none'          }
   ];
   
   my @rows;
@@ -87,7 +88,7 @@ sub content {
       my $local_species = ($link_url =~ /^\//) ? 1 : 0;      
 
       my $target_links =  ($local_species && ($cdb eq 'compara')) ? sprintf(
-        '<a href="%s">Multi-species view</a>',
+        '<a href="%s" class="notext">Multi-species view</a>',
         $hub->url({
           type   => 'Location',
           action => 'Multi',
@@ -109,21 +110,22 @@ sub content {
       
       if ($orthologue_desc ne 'DWGA') {
         ($target, $query) = ($orthologue->{'target_perc_id'}, $orthologue->{'query_perc_id'});
-        
-        $target_links .= sprintf(
-          '<br /><a href="%s">Alignment</a>',
-          $hub->url({
-            action   => 'Compara_Ortholog', 
+       
+        my $align_url = $hub->url({
+            action   => 'Compara_Ortholog',
             function => "Alignment". ($cdb=~/pan/ ? '_pan_compara' : ''),
             g1       => $stable_id,
-          })
-        );
+          });
+
+        $target_links .= sprintf('<br /><a href="%s" class="notext">Alignment (protein)</a>', $align_url);
+        $align_url .= ';seq=cDNA';
+        $target_links .= sprintf('<br /><a href="%s" class="notext">Alignment (cDNA)</a>', $align_url);
         
         $alignview = 1;
       }
       
       $target_links .= sprintf(
-        '<br /><a href="%s">Gene Tree (image)</a>',
+        '<br /><a href="%s" class="notext">Gene Tree (image)</a>',
         $hub->url({
           type   => 'Gene',
           action => "Compara_Tree". ($cdb=~/pan/ ? '/pan_compara' : ''),
@@ -152,11 +154,12 @@ sub content {
         'Species'            => join('<br />(', split /\s*\(/, $species),
         'Type'               => ucfirst $orthologue_desc,
         'dN/dS'              => $orthologue_dnds_ratio,
-        'Ensembl identifier' => qq{$object_stable_id_link<br />} . ($self->html_format ? qq{<span class="small">$target_links</span>} : ''),
+        'Ensembl identifier' => $object_stable_id_link,
+        'Gene name (Xref)'   => join('<br />', @external),
         'Location'           => qq{<a href="$location_link">$orthologue->{'location'}</a>},
+        'Compare'            => $self->html_format ? qq{<span class="small">$target_links</span>} : '',
         'Target %id'         => $target,
         'Query %id'          => $query,
-        'External ref.'      => join('<br />', @external)
       };
     }
   }
