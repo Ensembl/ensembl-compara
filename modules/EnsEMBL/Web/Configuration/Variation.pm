@@ -25,11 +25,17 @@ sub populate_tree {
   $self->create_node('Summary', 'Summary',
     [qw(
       summary  EnsEMBL::Web::Component::Variation::VariationSummary
-      flanking EnsEMBL::Web::Component::Variation::FlankingSequence
     )],
     { 'availability' => 'variation', 'concise' => 'Variation summary' }
   );
   
+  $self->create_node('Sequence', 'Flanking sequence',
+    [qw(
+      flanking EnsEMBL::Web::Component::Variation::FlankingSequence
+    )],
+    { 'availability' => 'variation' }
+  );
+    
   $self->create_node('Mappings', 'Gene/Transcript  ([[counts::transcripts]])',
     [qw( summary EnsEMBL::Web::Component::Variation::Mappings )],
     { 'availability' => 'variation has_transcripts', 'concise' => 'Gene/Transcript' }
@@ -50,7 +56,7 @@ sub populate_tree {
     { 'availability' => 'variation has_individuals not_somatic', 'concise' => 'Individual genotypes', 'no_menu_entry' => $somatic }
   ); 
 
-  $self->create_node('Context', 'Context',
+  $self->create_node('Context', 'Genomic context',
     [qw( summary EnsEMBL::Web::Component::Variation::Context )],
     { 'availability' => 'variation', 'concise' => 'Context' }
   );
