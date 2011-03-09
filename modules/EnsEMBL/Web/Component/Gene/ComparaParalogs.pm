@@ -24,13 +24,13 @@ sub content {
   my $alignview     = 0;
   
   my $columns = [
-    { key => 'Taxonomy Level',  align => 'left', width => '10%', sort => 'html'          },
-    { key => 'Type',            align => 'left', width => '10%', sort => 'string'        },
-    { key => 'Gene identifier', align => 'left', width => '20%', sort => 'html'          },
-    { key => 'Location',        align => 'left', width => '20%', sort => 'position_html' },
-    { key => 'Target %id',      align => 'left', width => '5%',  sort => 'numeric'       },
-    { key => 'Query %id',       align => 'left', width => '5%',  sort => 'numeric'       },
-    { key => 'External ref.',   align => 'left', width => '30%', sort => 'none'          }
+    { key => 'Ancestral taxonomy',  align => 'left', width => '10%', sort => 'html'          },
+    { key => 'Gene identifier',     align => 'left', width => '20%', sort => 'html'          },
+    { key => 'Gene name (Xref)',    align => 'left', width => '25%', sort => 'none'          },
+    { key => 'Compare',             align => 'left', width => '15%', sort => 'none'          },
+    { key => 'Location',            align => 'left', width => '20%', sort => 'position_html' },
+    { key => 'Target %id',          align => 'left', width => '5%',  sort => 'numeric'       },
+    { key => 'Query %id',           align => 'left', width => '5%',  sort => 'numeric'       },
   ];
   
   my @rows;
@@ -61,7 +61,7 @@ sub content {
       });
       
       my $links = sprintf (
-        '<a href="%s">Multi-location view</a>',
+        '<a href="%s" class="notext">Multi-location view</a>',
         $hub->url({
           type   => 'Location',
           action => 'Multi',
@@ -74,14 +74,14 @@ sub content {
       my ($target, $query);
       
       if ($paralogue_desc ne 'DWGA') {          
-        $links .= sprintf(
-          '<br /><a href="%s">Alignment</a>', 
-          $hub->url({
+        my $align_url = $hub->url({
             action   => 'Compara_Paralog', 
             function => "Alignment". ($cdb=~/pan/ ? '_pan_compara' : ''),, 
             g1       => $stable_id
-          })
-        );
+        });
+        $links .= sprintf('<br /><a href="%s" class="notext">Alignment (protein)</a>', $align_url);
+        $align_url .= ';seq=cDNA';
+        $links .= sprintf('<br /><a href="%s" class="notext">Alignment (cDNA)</a>', $align_url);
         
         ($target, $query) = ($paralogue->{'target_perc_id'}, $paralogue->{'query_perc_id'});
         $alignview = 1;
@@ -96,19 +96,19 @@ sub content {
       unshift @external, $paralogue->{'display_id'} if $paralogue->{'display_id'};
       
       push @rows, {
-        'Taxonomy Level'  => $paralogue_subtype,
-        'Type'            => ucfirst $paralogue_desc,
-        'Gene identifier' => qq{<a href="$link">$stable_id</a><br />} . ($self->html_format ? qq{<span class="small">$links</span>} : ''),
-        'Location'        => qq{<a href="$location_link">$paralogue->{'location'}</a>},
-        'Target %id'      => $target,
-        'Query %id'       => $query,
-        'External ref.'   => join('<br />', @external)
+        'Ancestral taxonomy'  => $paralogue_subtype,
+        'Gene identifier'     => qq{<a href="$link">$stable_id</a>},
+        'Gene name (Xref)'    => join('<br />', @external),
+        'Compare'             => $self->html_format ? qq{<span class="small">$links</span>} : '',
+        'Location'            => qq{<a href="$location_link">$paralogue->{'location'}</a>},
+        'Target %id'          => $target,
+        'Query %id'           => $query,
       };
     }
   }
   
   my $table = $self->new_table($columns, \@rows, { data_table => 1 });
-  my $html  = '<p>The following gene(s) have been identified as putative paralogues (within species):</p>' . $table->render;
+  my $html;
   
   if ($alignview && keys %paralogue_list) {
     $html .= sprintf(
@@ -116,7 +116,9 @@ sub content {
       $hub->url({ action => 'Compara_Paralog', function => 'Alignment' })
     );
   }
-  
+ 
+  $html .= $table->render;
+ 
   return $html;
 }
 
