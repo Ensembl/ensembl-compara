@@ -22,6 +22,23 @@
 
     The PipeConfig file for ncRNAtrees pipeline that should automate most of the pre-execution tasks.
 
+    Some statistics of previous releases:
+
+=head2 rel.62 stats
+
+    sequences to cluster:       191,777           [ SELECT count(*) from sequence; ]
+    total running time:         5 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
+
+=head2 rel.61 stats
+
+    sequences to cluster:       182,051           [ SELECT count(*) from sequence; ]
+    total running time:         7 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
+
+=head2 rel.60 stats
+
+    sequences to cluster:       172,250           [ SELECT count(*) from sequence; ]
+    total running time:         7.5 days          [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
+
 =head1 CONTACT
 
   Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
