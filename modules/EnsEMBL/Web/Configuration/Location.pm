@@ -49,7 +49,10 @@ sub populate_tree {
     { 'availability' => 'slice' }
   );
 
-  my $align_menu = $self->create_submenu('Compara', 'Comparative Genomics');
+  my $align_menu = $self->create_node('Compara', 'Comparative Genomics',
+    [qw(button_panel EnsEMBL::Web::Component::Location::Compara_Portal)],
+    {'availability' => 'database:compara'}
+  );
   
   $align_menu->append($self->create_node('Compara_Alignments/Image', 'Alignments (image) ([[counts::alignments]])', 
     [qw(

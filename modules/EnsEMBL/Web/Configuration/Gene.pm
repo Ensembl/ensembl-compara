@@ -52,7 +52,10 @@ sub populate_tree {
     { 'availability' => 'regulation' }
   );
   
-  my $compara_menu = $self->create_submenu('Compara', 'Comparative Genomics');
+  my $compara_menu = $self->create_node('Compara', 'Comparative Genomics',
+    [qw(button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
+    {'availability' => 'gene database:compara core'}
+  );
   
   $compara_menu->append($self->create_node('Compara_Alignments', 'Genomic alignments',
     [qw(
