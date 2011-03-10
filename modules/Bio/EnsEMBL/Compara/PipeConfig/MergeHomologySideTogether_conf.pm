@@ -7,7 +7,15 @@
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MergeHomologySideTogether_conf -password <your_password>
+    #1. In ProteinTrees and ncRNAtrees databases run the following (turn it into an SqlCmd analysis later):
+        DELETE FROM lr_index_offset WHERE lr_index=0;
+
+    #2. update all databases' names and locations
+
+    #3. initialize the pipeline:
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MergeHomologySideTogether_conf -password <your_password>
+
+    #4. run the beekeeper.pl
 
 =head1 DESCRIPTION  
 
@@ -43,7 +51,7 @@ sub default_options {
     return {
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
 
-        'pipeline_name' => 'compara_homology_merged_61',    # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_homology_merged_62',    # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
             -host   => 'compara4',
@@ -67,39 +75,39 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'ensembl_compara_60',
+            -dbname => 'ensembl_compara_61',
         },
         'prevrel_merge_tables' => [ 'stable_id_history' ],
         
         'genetrees_db' => {
-            -host   => 'compara2',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'lg4_compara_homology_61',
+            -dbname => 'lg4_compara_homology_62',
         },
-        'genetrees_copy_tables'  => [ 'lr_index_offset', 'sequence_cds', 'sequence_exon_bounded', 'subset', 'subset_member' ],
-        'genetrees_merge_tables' => [ 'stable_id_history', 'homology', 'homology_member' ],
+        'genetrees_copy_tables'  => [ 'sequence_cds', 'sequence_exon_bounded', 'subset', 'subset_member' ],
+        'genetrees_merge_tables' => [ 'stable_id_history', 'homology', 'homology_member', 'lr_index_offset' ],
 
         'families_db' => {
             -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'lg4_compara_families_61',
+            -dbname => 'lg4_compara_families_62',
         },
         'families_copy_tables'  => [ 'family', 'family_member' ],
         'families_merge_tables' => [ 'member', 'sequence', 'stable_id_history' ],
 
         'nctrees_db' => {
-            -host   => 'compara1',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'jh7_compara_nctrees_61',
+            -dbname => 'mp12_compara_nctrees_62',
         },
         'nctrees_copy_tables'  => [ 'nc_profile', 'nc_tree_member', 'nc_tree_node', 'nc_tree_tag' ],
-        'nctrees_merge_tables' => [ 'member', 'sequence', 'homology', 'homology_member' ],
+        'nctrees_merge_tables' => [ 'member', 'sequence', 'homology', 'homology_member', 'lr_index_offset' ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
     };
