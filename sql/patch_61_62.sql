@@ -17,4 +17,13 @@ alter table mapping_session add column prefix CHAR(4);
 update mapping_session set prefix = 'ENS';
 alter table mapping_session modify column prefix CHAR(4) NOT NULL;
 
+# Auto-populate lr_index_offset with all tables
+INSERT INTO lr_index_offset (table_name, lr_index)
+values
+      ('protein_tree_node', 0),
+      ('ncbi_taxa_node', 0),
+      ('genomic_align_tree', 0),
+      ('nc_tree_node', 0),
+      ('super_protein_tree_node', 0);
+
 alter table mapping_session add index `type` (`type`,`rel_from`,`rel_to`, `prefix`);
