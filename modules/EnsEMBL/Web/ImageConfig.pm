@@ -1658,7 +1658,7 @@ sub add_oligo_probes {
   
   foreach my $key_2 (sort keys %$data) {
     my $key_3 = $key_2; 
-    $key_2    =~ s/:/__/; warn $key_2; 
+    $key_2    =~ s/:/__/;  
     
     $menu->append($self->create_track("oligo_${key}_" . uc $key_2, $key_3, {
       glyphset    => '_oligo',
