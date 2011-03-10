@@ -23,7 +23,23 @@
 
     The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
 
-    FYI: it took (5.3 x 24h) to perform the full production run for EnsEMBL release 62.
+=head2 rel.62 stats
+
+    sequences to cluster:       1,192,544           [ SELECT count(*) from sequence; ]
+    reused core dbs:            46                  [ number of 'load_reuse_members' jobs ]
+    newly loaded core dbs:       7                  [ number of 'load_fresh_members' jobs ]
+
+    total running time:         6 days              [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
+    blasting time:              2.7 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='blastp_with_reuse'; ]
+
+=head2 rel.61 stats
+
+    sequences to cluster:       1,173,469           [ SELECT count(*) from sequence; ]
+    reused core dbs:            46                  [ number of 'load_reuse_members' jobs ]
+    newly loaded core dbs:       6                  [ number of 'load_fresh_members' jobs ]
+
+    total running time:         6 days              [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
+    blasting time:              1.4 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name like 'blast%' or logic_name like 'SubmitPep%'; ]
 
 =head1 CONTACT
 
