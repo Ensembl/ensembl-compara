@@ -35,6 +35,7 @@
     distances by Blast:         550,334,750         [ SELECT count(*) from mcl_sparse_matrix; ]
 
     total running time:         4.5 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
+    uniprot_loading time:       5.1h                [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='load_uniprot'; ]
     mcxload running time:       1.5h                [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcxload_matrix'; ]
     mcl running time:           3.7h                [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcl'; ]
 
@@ -47,6 +48,7 @@
     distances by Blast:         523,104,710         [ SELECT count(*) from mcl_sparse_matrix; ]
 
     total running time:         3(!) days           [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
+    uniprot_loading time:       4h                  [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='load_uniprot'; ]
     mcxload running time:       8h                  [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcxload_matrix'; ]
     mcl running time:           9.4h                [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcl'; ]
 
@@ -55,7 +57,6 @@
     sequences to cluster:       2,725,421           [ SELECT count(*) from sequence; ]
     distances by Blast:         484,837,915         [ SELECT count(*) from mcl_sparse_matrix; ]
 
-    total running time:         ? days              [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
     mcxload running time:       11.2h               [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcxload_matrix'; ]
     mcl running time:           3.1h                [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcl'; ]
 
