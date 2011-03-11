@@ -237,7 +237,7 @@ sub pipeline_analyses {
             -wait_for => [ 'copy_table_factory', 'copy_table' ],    # have to wait until the tables have been copied
         },
 
-        {   -logic_name => 'load_uniprot_factory',
+        {   -logic_name => 'load_uniprot_superfactory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'blastdb_dir'     => $self->o('blastdb_dir'),
@@ -246,42 +246,42 @@ sub pipeline_analyses {
                 'fan_branch_code' => 2,
             },
             -input_ids => [
-                { 'input_id' => { 'srs' => 'SWISSPROT', 'tax_div' => '#_range_start#' } },
-                { 'input_id' => { 'srs' => 'SPTREMBL',  'tax_div' => '#_range_start#' } },
+                { 'input_id' => { 'uniprot_source' => 'SWISSPROT', 'tax_div' => '#_range_start#' } },
+                { 'input_id' => { 'uniprot_source' => 'SPTREMBL',  'tax_div' => '#_range_start#' } },
             ],
             -wait_for => [ 'offset_and_innodbise_tables' ],
             -flow_into => {
-                2 => [ 'load_uniprot' ],
-                1 => { 'remove_members_with_unknown_taxa' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#', 'blastdb_dir' => '#blastdb_dir#' } },
+                2 => [ 'load_uniprot_factory' ],
+                1 => { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#', 'blastdb_dir' => '#blastdb_dir#' } },
             },
             -rc_id => 1,
         },
 
-        {   -logic_name    => 'load_uniprot',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProt',
-            -hive_capacity => 20,
-            -rc_id => 0,
+        {   -logic_name    => 'load_uniprot_factory',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtIndex',
+            -hive_capacity => 3,
+            -flow_into => {
+                2 => [ 'load_uniprot' ],
+            },
+            -rc_id => 1,
         },
         
-                # LoadUniProt.pm actually does its best to skip unknown taxa_ids, so the following check is needed very rarely:
-                #
-        {   -logic_name => 'remove_members_with_unknown_taxa',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters => {
-                'sql' => "DELETE member FROM member LEFT JOIN ncbi_taxa_name ON member.taxon_id = ncbi_taxa_name.taxon_id WHERE ncbi_taxa_name.taxon_id IS NULL",
-            },
-            -wait_for  => [ 'load_uniprot' ],   # act as a funnel
+        {   -logic_name    => 'load_uniprot',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtEntries',
+            -hive_capacity => 30,
+            -batch_size    => 100,
             -flow_into => {
-                1 => [ 'dump_member_proteins' ],
+                3 => [ 'mysql:////subset_member' ],
             },
             -rc_id => 1,
         },
-
+        
         {   -logic_name => 'dump_member_proteins',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMemberSequencesIntoFasta',
             -parameters => {
                 'source_names' => [ 'ENSEMBLPEP','Uniprot/SWISSPROT','Uniprot/SPTREMBL' ],
             },
+            -wait_for  => [ 'load_uniprot_superfactory', 'load_uniprot_factory', 'load_uniprot' ],   # act as a funnel
             -flow_into => {
                 1 => [ 'make_blastdb' ],
             },
