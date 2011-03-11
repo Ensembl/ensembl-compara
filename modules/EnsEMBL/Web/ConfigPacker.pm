@@ -349,7 +349,7 @@ sub _summarise_variation_db {
   return unless $dbh;
   push @{ $self->db_tree->{'variation_like_databases'} }, $db_name;
   $self->_summarise_generic( $db_name, $dbh );
-  my $t_aref = $dbh->selectall_arrayref( 'select source_id,name,description,somatic from source' );
+  my $t_aref = $dbh->selectall_arrayref( 'select source_id,name,description, if(somatic_status = "somatic", 1, 0) from source' );
 #---------- Add in information about the sources from the source table
   my $temp = {map {$_->[0],[$_->[1],0]} @$t_aref};
   my $temp_description = {map {$_->[1],$_->[2]} @$t_aref};
@@ -456,10 +456,11 @@ sub _summarise_variation_db {
   my %somatic_mutations;
   my $sm_aref =  $dbh->selectall_arrayref(  
     'select distinct(p.description), va.phenotype_id, s.name 
-       from phenotype p, variation_annotation va, source s 
-      where p.phenotype_id=va.phenotype_id and va.source_id=s.source_id and s.somatic =1'
+       from phenotype p, variation_annotation va, source s, study st
+      where p.phenotype_id=va.phenotype_id and va.study_id = st.study_id
+      and st.source_id=s.source_id and s.somatic_status = "somatic"'
   );
-
+  
   foreach (@$sm_aref){ 
     $somatic_mutations{$_->[2]}->{$_->[0]} = $_->[1] ;
   } 
