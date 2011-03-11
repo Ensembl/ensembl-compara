@@ -15,7 +15,10 @@
     #3. initialize the pipeline:
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MergeHomologySideTogether_conf -password <your_password>
 
-    #4. run the beekeeper.pl
+    #4. In the pipeline database apply the same correction:
+        DELETE FROM lr_index_offset WHERE lr_index=0;
+
+    #5. run the beekeeper.pl
 
 =head1 DESCRIPTION  
 
