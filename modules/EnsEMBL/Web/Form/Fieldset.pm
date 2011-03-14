@@ -44,6 +44,7 @@ sub render {
     'inputfile'     => $self->CSS_CLASS_FILE_INPUT,
     'inputsubmit'   => $self->CSS_CLASS_BUTTON,
     'inputbutton'   => $self->CSS_CLASS_BUTTON,
+    'inputreset'    => $self->CSS_CLASS_BUTTON,
     'select'        => $self->CSS_CLASS_SELECT,
     'textarea'      => $self->CSS_CLASS_TEXTAREA
   };
