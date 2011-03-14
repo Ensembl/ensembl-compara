@@ -423,6 +423,18 @@ sub append_child {
   return undef;
 }
 
+sub append_children {
+  ## Appends multiple children (wrapper around append_child)
+  ## @param List of new nodes (NOT arrayref)
+  ## @return ArrayRef or List of new nodes appended, undef indexed at any unsuccessful addition
+  my $self    = shift;
+  my $return  = [];
+  while (my $child = shift) {
+    push @$return, $self->append_child($child);
+  }
+  return wantarray ? @$return : $return;
+}
+
 sub prepend_child {
   ## Appends a child node at the beginning
   ## @param Node to be appended
@@ -505,6 +517,8 @@ sub clone_node {
     '_next_sibling'     => 0,
     '_previous_sibling' => 0,
   }, ref($self);
+  
+  $clone->{'_node_name'} =  $self->{'_node_name'} if exists $self->{'_node_name'};
   
   return $clone unless defined $deep_clone && $deep_clone == 1;
   
