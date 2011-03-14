@@ -6,8 +6,8 @@ package EnsEMBL::Web::Component::Help::Preview;
 use strict;
 use warnings;
 no warnings "uninitialized";
+
 use base qw(EnsEMBL::Web::Component::Help);
-use EnsEMBL::Web::Form;
 
 sub _init {
   my $self = shift;
@@ -20,80 +20,54 @@ sub content {
   my $self = shift;
   my $hub = $self->hub;
 
-  my $form = EnsEMBL::Web::Form->new( 'contact', "/Help/SendEmail", 'post' );
-
-  $form->add_element(
+  my $form = $self->new_form({'id' =>'contact', 'action' => "/Help/SendEmail", 'method' => 'post'});
+  my $fieldset = $form->add_fieldset;
+  
+  $fieldset->add_field([{
     'type'    => 'NoEdit',
+    'name'    => 'name',
     'label'   => 'Your name',
     'value'   => $hub->param('name'),
-  );
-  $form->add_element(
-    'type'    => 'Hidden',
-    'name'    => 'name',
-    'value'   => $hub->param('name'),
-  );
-
-  $form->add_element(
+  },{
     'type'    => 'NoEdit',
+    'name'    => 'address',
     'label'   => 'Your email',
     'value'   => $hub->param('address'),
-  );
-  $form->add_element(
-    'type'    => 'Hidden',
-    'name'    => 'address',
-    'value'   => $hub->param('address'),
-  );
-
-  $form->add_element(
+  },{
     'type'    => 'NoEdit',
+    'name'    => 'subject',
     'label'   => 'Subject',
     'value'   => $hub->param('subject'),
-  );
-  $form->add_element(
-    'type'    => 'Hidden',
-    'name'    => 'subject',
-    'value'   => $hub->param('subject'),
-  );
-
-  $form->add_element(
+  },{
     'type'    => 'NoEdit',
+    'name'    => 'message',
     'label'   => 'Message',
     'value'   => $hub->param('message'),
-  );
-  $form->add_element(
-    'type'    => 'Hidden',
-    'name'    => 'message',
-    'value'   => $hub->param('message'),
-  );
+  }]);
 
-  $form->add_element(
-    'type'    => 'Hidden',
+  $fieldset->add_hidden([{
     'name'    => 'string',
     'value'   => $hub->param('string'),
-  );
-
-  ## Pass honeypot fields, to weed out any persistent robots!
-  $form->add_element(
-    'type'    => 'Hidden',
+  },{
     'name'    => 'honeypot_1',
     'value'   => $hub->param('email'),
-  );
-  $form->add_element(
-    'type'    => 'Hidden',
+  },{
     'name'    => 'honeypot_2',
     'value'   => $hub->param('comments'),
-  );
+  }]);
 
-  $form->add_element(
-    'type'    => 'Submit',
-    'name'    => 'submit',
-    'value'   => 'Back',
-  );
-  $form->add_element(
-    'type'    => 'Submit',
-    'name'    => 'submit',
-    'value'   => 'Send Email',
-  );
+
+  $form->add_button({
+    'buttons' => [{
+      'type'    => 'Submit',
+      'name'    => 'submit',
+      'value'   => 'Back',
+    },{
+      'type'    => 'Submit',
+      'name'    => 'submit',
+      'value'   => 'Send Email',
+    }]
+  });
 
   return $form->render;
 }
