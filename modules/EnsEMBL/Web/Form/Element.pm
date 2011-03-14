@@ -43,9 +43,9 @@ sub configure {
   ##    - name          name attribute incase of checkboxes. This will override the default name attribute (the one for the whole list)
   ##    - caption       InnerHTML of the option OR label for checkboxes and radio buttons
   ##    - group         If option needs to go in any <optgroup> in case of <option> or a sub heading in case of checkbox/radio
-  ##    - is_plain_text Flag kept on if html encoding needs to be done to the caption
+  ##    - is_text       Flag kept on if html encoding needs to be done to the caption
   ##  - no_input        Flag to prevent a hidden input automatically being added from NoEdit element
-  ##  - is_plain_text   Flag kept on if html encoding needs to be done to the value
+  ##  - is_html         Flag kept on if the value is HTML (in case of NoEdit only)
   ##  - class           Class attribute (space seperated string for multiple classes) - goes to all the sub elements (inputs, selects, textarea)
   ##  - wrapper_class   Class attribute for the wrapper (if there's any wrapper - eg. in checklist etc)
   ##  - option_class    Class attribute for all the options (in case of a dropdown)
