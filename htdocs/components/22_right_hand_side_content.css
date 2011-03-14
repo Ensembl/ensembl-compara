@@ -55,6 +55,11 @@ table.blobs td {
 }
 table.blobs td.twocol {width:50%;}
 table.blobs td.fourcol {width:25%;}
+img.portal {
+  width:80px;height:80px; margin:10px; padding:10px;
+  border-width:1px; border-style:solid; border-color:#ccc;
+  border-radius:15px; -moz-border-radius: 15px; -webkit-border-radius: 15px;
+}
 
 .plain-box  { color:[[PANEL_TEXT]]; background-color:[[PANEL_BG]]; border:1px solid [[PANEL_BORDER]]; }
 .tinted-box { color:[[PANEL_TEXT]]; background-color:[[TINT_BG]]; border:1px solid [[TINT_BORDER]]; }
@@ -62,7 +67,7 @@ table.blobs td.fourcol {width:25%;}
 .alert-box { color:[[ALERT_TEXT]]; background-color:[[ALERT_BG]]; border:1px solid [[ALERT_BORDER]]; }
 .embedded-box { width:80%; margin:1em auto; padding:0.5em; }
 
-.centered { text-align:center; margin:auto; }
+.centered { text-align:center; margin:0 auto; }
 .float-right { float:right; width:30%; margin:1% 1% 0 0; padding:1%; }
 .float-left { float:left; width:30%; margin:1% 1% 0 0; padding:1%; }
 .unpadded { margin:0 1%; padding:0; }
