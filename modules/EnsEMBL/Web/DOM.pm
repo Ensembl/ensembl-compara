@@ -67,10 +67,10 @@ sub create_element {
   my $element = $node_class->new($self);
   $element->node_name = $element_name if $is_generic;
   if (exists $attributes->{'inner_HTML'}) {
-    $element->inner_HTML($attributes->{'inner_HTML'}) and delete $attributes->{'inner_HTML'};
+    $element->inner_HTML(delete $attributes->{'inner_HTML'});
   }
   elsif (exists $attributes->{'inner_text'}) {
-    $element->inner_text($attributes->{'inner_text'}) and delete $attributes->{'inner_text'};
+    $element->inner_text(delete $attributes->{'inner_text'});
   }
   $element->set_attributes($attributes) if scalar keys %$attributes;
   return $element;
