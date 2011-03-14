@@ -17,7 +17,9 @@ sub configure {
   $self->set_attribute('class', $params->{'wrapper_class'}) if exists $params->{'wrapper_class'};
 
   return if $params->{'no_input'};
-  
+
+  $params->{'value'} = $self->encode_htmlentities($params->{'value'}) unless $params->{'is_encoded'};
+
   my $input = $self->append_child($self->dom->create_element('inputhidden'));
   exists $params->{$_} and $input->set_attribute($_, $params->{$_}) for qw(id name class value);
 }

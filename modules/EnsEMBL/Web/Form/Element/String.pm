@@ -23,6 +23,8 @@ sub configure {
   my ($self, $params) = @_;
 
   $params->{'class'} = join ' ', $params->{'class'} || '', $self->VALIDATION_CLASS || '', $params->{'required'} ? $self->CSS_CLASS_REQUIRED : $self->CSS_CLASS_OPTIONAL;
+  
+  exists $params->{'value'} and $params->{'value'} = $self->encode_htmlentities($params->{'value'}) unless $params->{'is_encoded'};
 
   exists $params->{$_} and $self->set_attribute($_, $params->{$_}) for qw(id name value size class maxlength);
   $params->{$_} and $self->$_(1) for qw(disabled readonly);
