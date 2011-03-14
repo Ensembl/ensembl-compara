@@ -108,7 +108,7 @@ sub new_without_hive {
   $self->param('genome_db_ids', $genome_db_ids);
   $self->debug($debug);
   
-  $self->_use_all_genomedbs() if ! check_ref($genome_db_ids, 'ARRAY');
+  $self->_use_all_available_genomedbs() if ! check_ref($genome_db_ids, 'ARRAY');
   
   $self->_assert_state();
   
