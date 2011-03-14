@@ -60,15 +60,15 @@ sub configure {
 sub add_option {
   ## Adds an option to the dropdown
   ## @params HashRef with following keys:
-  ##  - id            Id attribute of <input>
-  ##  - value         goes in value attribute of the option
-  ##  - caption       goes as innerText in <label>, appearing right side of the checkbox/radiobutton (is the actual name displayed)
-  ##  - selected      flag to tell whether option is selected or not
-  ##  - group         Subheading caption - If subheading does not exist, a new one's created before adding it
-  ##  - class         Only needed to override the default class attribute for all options
-  ##  - name          Only needed to override the default name attribute for all options
-  ##  - disabled      Only needed to override the default enabled status for all options
-  ##  - is_plain_text Flag to be on if caption is NOT HTML
+  ##  - id        Id attribute of <input>
+  ##  - value     goes in value attribute of the option
+  ##  - caption   goes as innerText in <label>, appearing right side of the checkbox/radiobutton (is the actual name displayed)
+  ##  - selected  flag to tell whether option is selected or not
+  ##  - group     Subheading caption - If subheading does not exist, a new one's created before adding it
+  ##  - class     Only needed to override the default class attribute for all options
+  ##  - name      Only needed to override the default name attribute for all options
+  ##  - disabled  Only needed to override the default enabled status for all options
+  ##  - is_text   Flag to be on if caption needs HTML escaping
   ## @return newly added Node::Element::P/Span object containg an input and a label
   my ($self, $params) = @_;
 
@@ -85,7 +85,7 @@ sub add_option {
   $input->checked(1) if exists $params->{'checked'} && $params->{'checked'} == 1;
 
   $wrapper->append_child($input);
-  $wrapper->append_child($self->dom->create_element('label', {'id' => $input->id, ($params->{'is_plain_text'} ? 'inner_text' : 'inner_HTML') => $params->{'caption'}})) if $params->{'caption'} ne '';
+  $wrapper->append_child($self->dom->create_element('label', {'id' => $input->id, ($params->{'is_text'} ? 'inner_text' : 'inner_HTML') => $params->{'caption'}})) if $params->{'caption'} ne '';
 
   my $next_heading = undef;
   if (exists $params->{'group'} && defined $params->{'group'}) {
