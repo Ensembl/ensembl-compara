@@ -236,7 +236,12 @@ sub _add_button {## TODO - remove prefixed underscore once compatibile
 
 sub add_hidden {
   ## Adds hidden input(s) inside the fieldset
-  ## @params HashRef of { 'id' => ?, 'name' => ?, 'value' => ?, 'class' => ? } OR ArrayRef of the similar Hashes if muliple addition needed
+  ## @params HashRef with the following keys OR ArrayRef of the similar Hashes if muliple addition needed
+  ##  - id            Id attribuite
+  ##  - name          Name attribute
+  ##  - value         Value attribute
+  ##  - class         Class attribute
+  ##  - is_encoded    Flag kept on, is value does not need any HTML encoding
   ## @return Input object added OR ArrayRef of all Input objects in case of multiple addition
   my ($self, $params) = @_;
   
@@ -248,6 +253,7 @@ sub add_hidden {
 
   warn 'Hidden element needs to have a name.' and return undef unless exists $params->{'name'};
   $params->{'value'} = '' unless exists $params->{'value'};
+  $params->{'value'} = $self->encode_htmlentities($params->{'value'}) unless $params->{'is_encoded'};
 
   my $hidden = $self->dom->create_element('inputhidden', {
     'name'  => $params->{'name'},
