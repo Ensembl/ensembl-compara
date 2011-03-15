@@ -106,5 +106,15 @@
 #     'hc_output_dir' => '/lustre/work1/ensembl/kb3/hive/release_55/kb3_hsap_ggor_blastz_55', #write healthcheck to a file in this directory
 #  },            
 
+##Automatically update the pairwise config database and create parameter web page
+##Must have Template.pm in your PERL5LIB
+# { TYPE => PAIR_ALIGNER_CONFIG,
+#      'ref_species' => 'homo_sapiens',
+#      'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
+#      'config_url' => 'mysql://host:pass@compara1:3306/pair_aligner_config',
+#      'config_file' => '/path/to/config_file/tblat.conf',
+#      'perl_path' => '/path/to/perl/ensembl-compara/',      
+#  },
+
   { TYPE => END }
 ]
