@@ -77,6 +77,7 @@ sub write_output {
             'genome_db_id'  => $genome_db->dbID(),
             'species_name'  => $genome_db->name(),
             'assembly_name' => $genome_db->assembly(),
+	    'genebuild'     => $genome_db->genebuild(),
         }, 2);
     }
 }
