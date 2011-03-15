@@ -277,7 +277,7 @@ core schema.
 <td style="width:500px;text-align:left;height:10px"><span id="coord_system" style="font-size:11pt;font-weight:bold">coord_system</span></td>
 <td style="width:100px;text-align:right"><a id="a_coord_system" style="cursor:pointer;text-decoration:underline" onclick="show_hide('coord_system')">Show</a> columns</td>
 </tr></table>
-<p>Stores information about the available co-ordinate systems for the species identified through the species_id field. Note that for each species, there must be one co-ordinate system that has the attribute "top_level" and one that has the attribute "sequence_level".<p>
+<p>Stores information about the available co-ordinate systems for the species identified through the species_id field. Note that for each species, there must be one co-ordinate system that has the attribute "sequence_level". (This is usually the contig coord_system.) The "top_level" coord_system is defined by linking the seq_region table through the seq_region_attrib table to the attrib_type table and giving the toplevel sequences the attribute "toplevel".<p>
 
 	<div id="div_coord_system" style="display:none">
 
