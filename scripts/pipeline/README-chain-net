@@ -106,3 +106,7 @@ runWorker.pl -bk LSF -url mysql://ensadmin:xxxx@ia64g:3306/abel_compara_human_co
 
 where the job_id is the analysis_job_id of the job you wish to rerun. For more information on the options of runWorker.pl see
 runWorker.pl -help
+
+8- Pair Aligner Config
+   ~~~~~~~~~~~~~~~~~~~
+If defined, this will automatically update the pair aligner configuration database which keeps track of what parameters were used for each pipeline run and calculates some simple statistics, such as percentage coverage. It will also produce the web pages used in the web documentation. It requires the species used as the reference, the bed files for the pairwise genomes and coding exons, the location of the configuration database, the location of the configuration file and the path the perl modules to access the the compare_beds.pl script.
