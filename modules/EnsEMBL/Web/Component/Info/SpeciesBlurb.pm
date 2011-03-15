@@ -44,7 +44,7 @@ sub content {
     next if $assemblies{$release} eq $previous;
     push @old_archives, {
         'url' => 'http://'.lc($archive{$release}).".archive.ensembl.org/$species/", 
-        'text' => $assemblies{$release}.' ('.$archive{$release}.')',
+        'text' => $assemblies{$release}.' (Release '.$release.', '.$archive{$release}.')',
     };
     $previous = $assemblies{$release};
   }
