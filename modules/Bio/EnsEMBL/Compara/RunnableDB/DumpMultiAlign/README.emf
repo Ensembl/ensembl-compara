@@ -1,0 +1,138 @@
+#### README ####
+
+IMPORTANT: Please note you can download correlation data tables,
+supported by Ensembl, via the highly customisable BioMart and
+EnsMart data mining tools. See http://www.ensembl.org/multi/martview or
+http://www.ebi.ac.uk/biomart/ for more information.
+
+Please send comments or questions to ensembl-dev@ebi.ac.uk.
+
+-----------------------------------------
+Ensembl Multi Format (EMF) FLATFILE DUMPS
+-----------------------------------------
+This directory contains Compara EMF flatfile dumps.  To ease
+downloading of the files, an EMF file is created for each chromosome.
+All files are then compacted with GNU Zip for storage efficiency.
+
+EMF files store:
+
+1.  Whole-genome multiple alignments created by the Ensembl
+Comparative Genomics team (compara).
+
+2.  Genesbased multiple alignments created by the Ensembl Comparative
+Genomics team (gene_alignment).
+
+3.  Alignments of resequencing data from individuals
+(or strains) to the reference genome assembly created by the Ensembl
+Functional Genomics team (resequencing).
+
+The file format is very similar for all uses, with differences noted below.
+This README represents verion 1.0 of the EMF specification.
+
+----------
+FILE NAMES
+----------
+The files are consistently named following this pattern:
+<species>.<assembly>.<release>.<data type>.<region>.emf.gz
+
+EXAMPLE EMF resequencing data file names
+Mus_musculus.NCBIM36.43.resequencing.chromosome.Y.emf.gz
+Homo_sapiens.NCBI36.43.resequencing.chromosome.X.emf.gz
+Rattus_norvegicus.RGSC3.4.43.resequencing.chromosome.7.emf.gz
+
+EXAMPLE EMF whole-genome multiple alignment (compara) data file names
+Compara.pecan_7_way.chr13_1.emf.gz
+Compara.pecan_gerp_10_way.chr3_5.emf.gz
+Compara.pecan_gerp_10_way.others_1.emf.gz
+
+EXAMPLE EMF genebased multiple alignment (gene_alignment) data file names
+Compara.protein_trees.43.emf.gz
+
+-----------
+FILE FORMAT
+-----------
+#File Header lines start with ##
+
+##FORMAT (compara, resequencing, gene_alignment)
+##DATE dump_date
+##RELEASE ensembl_release_number (may contain multiple release numbers)
+
+#Data Header
+#total number of SEQ and SCORE lines must correspond to the number and order of
+columns in the data lines
+
+#first line
+SEQ organism individual*/translation_stable_id^ chr sequence_start sequence_stop strand gene_stable_id display_label|NULL^/(chr_length=sequence_length)&
+
+#compara following lines
+SEQ organism chr sequence_start sequence_stop strand sequence_length
+
+#resequencing following lines
+SEQ organism individual sequence_source (WGS, etc.)
+SCORE score_type
+
+#gene_alignment following lines
+SEQ organism translation_stable_id chr sequence_start sequence_stop strand gene_stable_id display_label|NULL
+
+
+
+#compara example
+SEQ human 4  450000 560000 1
+SEQ mouse 17 780000 790000 -1
+SEQ rat   12 879999 889998 1
+SCORE GERP
+
+#resequencing example
+SEQ mouse reference 17 780000 790000 1
+SEQ mouse 129S1/SvJ WGS
+SEQ mouse DBA WGS
+SCORE aligned 129S1/SvJ reads (may also be confidence score)
+SCORE aligned DBA reads
+
+#gene_alignment example
+SEQ Mus_musculus ENSMUSP00000042016 2 76987970 77045910 -1 ENSMUSG00000042272 Sestd1
+SEQ Canis_familiaris ENSCAFP00000029327 5 66656398 66666500 -1 ENSCAFG00000019806 489651
+SEQ Drosophila_melanogaster CG5439-PA 2L 13177251 13178813 1 CG5439 CG5439
+SEQ Ornithorhynchus_anatinus ENSOANP00000021778 Ultra102 388659 395409 -1 ENSOANG00000013809 NULL
+
+
+# data lines one per bp based on the sequence coordinates in the Data Header
+# gap character "-"
+# no alignment character "~"
+# lower case character: masked sequence
+# heterozygous bases use ambiguity codes
+# all coordinates are inclusive coordinates
+
+#Data Block
+#the data lock starts with DATA
+#spaces are optional between columns representing SEQ and SCORE lines
+
+
+DATA
+# compara example
+AAA -5
+TTA +1
+CGA +1
+GG- +4
+CG- +4
+
+
+# resequencing example
+A A A 2 1
+T A T 2 1
+C C C 2 1
+G G ~ 1 0
+C C ~ 1 0
+
+# at the end of a data block // signals the beginning of the next data header
+//
+
+
+* resequencing only
+^ gene_alignment only
+& optional for resequencing
+
+Other information:
+
+There may be multiple SEQ and SCORE lines in data headers
+Comment character is "#" and must be the first character in the line
