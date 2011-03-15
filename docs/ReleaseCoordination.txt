@@ -494,9 +494,10 @@ Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs() call on both servers.
 
 12.2 Run the command
 
-bsub -o populate_member_display_labels.out -e populate_member_display_labels.err -R "select[mem>5000] rusage[mem=5000]" -M5000000 perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/populate_member_display_labels.pl --registry reg_conf59 --compara compara_59 --verbose
+bsub -o populate_member_display_labels.out -e populate_member_display_labels.err -R "select[mem>5000] rusage[mem=5000]" -M5000000 perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/populate_member_display_labels.pl --registry reg_conf62 --compara compara_62 --verbose
 e59 real    9m44.754s
 e60 real    10m23.002s
+e62 real    11m
 
 This will iterate over all GenomeDBs and update any label which is empty. Should
 you wish to replace existing labels then rerun with the -replace switch. 
@@ -529,8 +530,8 @@ Remember to DROP TABLE member_orig if made a backup.
 
 13.1 Run the healthchecks for ancestral database:
 
-    time ./run-healthcheck.sh -d sf5_ensembl_ancestral_61 compara-ancestral
-# rel.61: 22s, all successful
+    time ./run-healthcheck.sh -d sf5_ensembl_ancestral_62 compara-ancestral
+# rel.62: 4sec, all successful
 
 13.2 Update the max_alignment_length. You can use the corresponding healthcheck with the -repair option:
 
@@ -551,6 +552,7 @@ Remember to DROP TABLE member_orig if made a backup.
 # rel.58:   47m, 7 failures
 
     time ./run-healthcheck.sh -d sf5_ensembl_compara_62 -type compara compara_homology
+# rel.62:   3m, 1 failure (CheckSpeciesSetTag, ok?)
 # rel.61:   30m, 3 failures
 # rel.58:   14m, 5 failures
 
@@ -571,20 +573,24 @@ and check their data.
 # a dry run of each doesn't even take a minute.
 
 time mysqlcheck --analyze --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases sf5_ensembl_compara_62
+# rel.62    6min
 # rel.58    3min
 # rel.57    9+4+5min
 # rel.pre57 30+105min
 # rel.56    12min
 
-time mysqlcheck --optimize --verbose --host=compara4 --port=3306 --user=ensadmin --password=ensembl --databases sf5_ensembl_compara_62
+time mysqlcheck --optimize --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases sf5_ensembl_compara_62
+# rel.62    32min
 # rel.57    2+1.6 hours
 # rel.pre57 : took several iterations (not all tables were MyISAM initially), last one 132min.
 # rel.56    2.5 hours
 
-time mysqlcheck --analyze --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases sf5_ensembl_ancestral_61
+time mysqlcheck --analyze --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases sf5_ensembl_ancestral_62
+# rel.62    1sec
 # rel.57    took seconds to complete
 
-time mysqlcheck --optimize --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases sf5_ensembl_ancestral_61
+time mysqlcheck --optimize --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases sf5_ensembl_ancestral_62
+# rel.62
 # rel.57    took seconds to complete
 
 
@@ -604,8 +610,8 @@ bash
 cat <<EOF >/tmp/sf5_ensembl_compara_62.copy_options
 #from_host      from_port   from_dbname                 to_host         to_port     to_dbname
 #
-compara1        3306        sf5_ensembl_compara_62      ens-staging     3306        ensembl_compara_61
-compara1        3306        sf5_ensembl_ancestral_61    ens-staging     3306        ensembl_ancestral_61
+compara1        3306        sf5_ensembl_compara_62      ens-staging     3306        ensembl_compara_62
+compara1        3306        sf5_ensembl_ancestral_62    ens-staging     3306        ensembl_ancestral_62
 EOF
 
 
@@ -619,6 +625,8 @@ time perl ~lg4/work/ensembl/misc-scripts/CopyDBoverServer.pl -pass ensembl \
 # copying of ensembl_compara_57 took 2 hours (SUCCESSFUL)
 # copying of ensembl_ancestral_57 took 20 minutes (only SUCCESSFUL after analyzing/optimizing)
 # copying of ensembl_compara_58 and ensembl_ancestral_58 together took 1:30h (SUCCESSFUL)
+# copying of ensembl_compara_62 and ensembl_ancestral_62 took 2h38
+
 
 16.4 Do the same thing in parallel on ens-staging2 :
 
@@ -631,12 +639,13 @@ bash
 cat <<EOF >/tmp/sf5_ensembl_compara_62.copy_options
 #from_host      from_port   from_dbname                 to_host         to_port     to_dbname
 #
-compara1        3306        sf5_ensembl_compara_62      ens-staging2     3306        ensembl_compara_61
+compara1        3306        sf5_ensembl_compara_62      ens-staging2     3306        ensembl_compara_62
 EOF
 
 time perl ~lg4/work/ensembl/misc-scripts/CopyDBoverServer.pl -pass ensembl \
         -noflush /tmp/sf5_ensembl_compara_62.copy_options > /tmp/sf5_ensembl_compara_62.copy.err 2>&1
 # copying of ensembl_compara_58 took 1:15h (SUCCESSFUL)
+# copying of ensembl_compara_62 took 1:34h (SUCCESSFUL)
 
 
 #### At this point you are "handing over the databases" to the person running Compara Mart (usually Rhoda).
@@ -650,18 +659,18 @@ time perl ~lg4/work/ensembl/misc-scripts/CopyDBoverServer.pl -pass ensembl \
 
 # The patch should include at least an update of the schema_version in the meta table!
 #
-mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table lg4_ensembl_compara_60 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >old_schema.sql
+mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table sf5_ensembl_compara_61 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >old_schema.sql
 mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table sf5_ensembl_compara_62 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >new_schema.sql
 #
 sdiff -b old_schema.sql new_schema.sql | less
 #
-# (create the patch_60_61.sql file by hand)
+# (create the patch_61_62.sql file by hand)
 
 17.2 Generate an empty database from the old schema, apply the patch, dump it, and check that you get the new schema.
 
 mysql --defaults-group-suffix=_compara4 -e 'create database lg4_schema_patch_test'
 mysql --defaults-group-suffix=_compara4 lg4_schema_patch_test < old_schema.sql
-mysql --defaults-group-suffix=_compara4 lg4_schema_patch_test < patch_60_61.sql
+mysql --defaults-group-suffix=_compara4 lg4_schema_patch_test < patch_61_62.sql
 mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table lg4_schema_patch_test | sed 's/AUTO_INCREMENT=[0-9]*\b//' >patched_old_schema.sql
 #
 sdiff -bs patched_old_schema.sql new_schema.sql | less
@@ -687,28 +696,28 @@ You might need to update the create_mlss_table.conf file with new species added.
 Or you can use the order of species given in the species tree:
 
   ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/release_58/reg_conf.pl --dbname compara_58 --method_link PECAN \
+    --reg_conf ~/release_58/reg_conf.pl --dbname compara_62 --method_link PECAN \
     --list --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > pecan.inc
 
   ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/release_58/reg_conf.pl --dbname compara_58 --method_link EPO \
+    --reg_conf ~/release_58/reg_conf.pl --dbname compara_62 --method_link EPO \
     --list --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > epo.inc
 
   ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/release_58/reg_conf.pl --dbname compara_58 --method_link EPO_LOW_COVERAGE \
+    --reg_conf ~/release_58/reg_conf.pl --dbname compara_62 --method_link EPO_LOW_COVERAGE \
     --list --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > epo_lc.inc
 
   ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/release_58/reg_conf.pl --dbname compara_58 --method_link TRANSLATED_BLAT_NET \
+    --reg_conf ~/release_58/reg_conf.pl --dbname compara_62 --method_link TRANSLATED_BLAT_NET \
     --trim --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > tblat_net.inc
 
 # for blastz_net/lastz_net produce a simple list, because the table is getting too big:
   ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/release_58/reg_conf.pl --dbname compara_58 --method_link BLASTZ_NET --method_link LASTZ_NET \
+    --reg_conf ~/release_58/reg_conf.pl --dbname compara_62 --method_link BLASTZ_NET --method_link LASTZ_NET \
     --blastz_list --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > blastz_net.inc
 
   ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/release_58/reg_conf.pl --dbname compara_58 --method_link SYNTENY \
+    --reg_conf ~/release_58/reg_conf.pl --dbname compara_62 --method_link SYNTENY \
     --trim --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > synteny.inc
 
 CVS commit these files.
