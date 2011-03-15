@@ -730,16 +730,16 @@ sub copy {
   #parent_link
   #obj_id_to_link
 
-  $new_copy->{_original_strand} = $self->{_original_strand} if ($self->{_original_strand});
-  $new_copy->{_parent_id} = $self->{_parent_id} if ($self->{_parent_id});
-  $new_copy->{_root_id} = $self->{_root_id} if ($self->{_root_id});
-  $new_copy->{_left_node_id} = $self->{_left_node_id} if ($self->{_left_node_id});
-  $new_copy->{_right_node_id} = $self->{_right_node_id} if ($self->{_right_node_id});
-  $new_copy->{_node_id} = $self->{_node_id} if ($self->{_node_id});
-  $new_copy->{_reference_slice} = $self->{_reference_slice} if ($self->{_reference_slice});
-  $new_copy->{_reference_slice_start} = $self->{_reference_slice_start} if ($self->{_reference_slice_start});
-  $new_copy->{_reference_slice_end} = $self->{_reference_slice_end} if ($self->{_reference_slice_end});
-  $new_copy->{_reference_slice_strand} = $self->{_reference_slice_strand} if ($self->{_reference_slice_strand});
+  $new_copy->{_original_strand} = $self->{_original_strand} if (defined $self->{_original_strand});
+  $new_copy->{_parent_id} = $self->{_parent_id} if (defined $self->{_parent_id});
+  $new_copy->{_root_id} = $self->{_root_id} if (defined $self->{_root_id});
+  $new_copy->{_left_node_id} = $self->{_left_node_id} if (defined $self->{_left_node_id});
+  $new_copy->{_right_node_id} = $self->{_right_node_id} if (defined $self->{_right_node_id});
+  $new_copy->{_node_id} = $self->{_node_id} if (defined $self->{_node_id});
+  $new_copy->{_reference_slice} = $self->{_reference_slice} if (defined $self->{_reference_slice});
+  $new_copy->{_reference_slice_start} = $self->{_reference_slice_start} if (defined $self->{_reference_slice_start});
+  $new_copy->{_reference_slice_end} = $self->{_reference_slice_end} if (defined $self->{_reference_slice_end});
+  $new_copy->{_reference_slice_strand} = $self->{_reference_slice_strand} if (defined $self->{_reference_slice_strand});
 
   return $new_copy;
 }
@@ -1046,7 +1046,8 @@ sub method_link_species_set_id {
 
 #sub DESTROY {
 #    my ($self) = @_;
-#    $self->release_tree;
-#}
+#    $self->release_tree unless ($self->{_parent_link});
+#    }
+}
 
 1;
