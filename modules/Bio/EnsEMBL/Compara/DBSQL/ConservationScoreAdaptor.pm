@@ -1,13 +1,20 @@
-#
-# Ensembl module for Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor
-#
-# Cared for by Kathryn Beal <kbeal@ebi.ac.uk>
-#
-# Copyright Ewan Birney
-#
-# You may distribute this module under the same terms as perl itself
+=head1 LICENSE
 
-# POD documentation - main docs before the code
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -44,22 +51,9 @@ Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor - Object adaptor to acces
 
 =head1 DESCRIPTION
 
-This module is used to access data in the conservation_score table.
+This module is used to access data in the conservation_score table. The scores are stored in the database as LITTLE ENDIAN.
 Each score is represented by a Bio::EnsEMBL::Compara::ConservationScore. The position and an observed, expected score and a difference score (expected-observed) is stored for each column in a multiple alignment. Not all columns in an alignment have a score (for example, if there is insufficient coverage) and termed here as 'uncalled'. 
 In order to speed up processing of the scores over large regions, the scores are stored in the database averaged over window_sizes of 1 (no averaging), 10, 100 and 500. When retrieving the scores, the most appropriate window_size is estimated from the length of the alignment or slice and the number of scores requested, given by the display_size. There is no need to specify the window_size directly. If the number of scores requested (display_size) is smaller than the alignment length or slice length, the scores will be either averaged if display_type = "AVERAGE" or the maximum value taken if display_type = "MAX". Scores in uncalled regions are not returned. If a score for each column in an alignment is required, the display_size should be set to be the same size as the alignment length or slice length. 
-
-=head1 AUTHOR - Kathryn Beal
-
-This modules is part of the Ensembl project http://www.ensembl.org
-
-Email kbeal@ebi.ac.uk
-
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-ensembl-dev@ebi.ac.uk
 
 =head1 APPENDIX
 
@@ -80,12 +74,14 @@ use POSIX qw(floor);
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::ConservationScore;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info deprecate);
+use Config;
 
 #global variables
 
 #store as 4 byte float. If change here, must also change in 
 #ConservationScore.pm
 my $_pack_size = 4;
+#my $_pack_type = "f<"; # not possible until perl 5.10. Avoid for now
 my $_pack_type = "f";
 
 my $_bucket; 
@@ -94,6 +90,13 @@ my $_score_index = 0;
 my $_no_score_value = undef; #value if no score
 
 my $PACKED = 1;
+
+#Check endian-ness. Always write data to database in LITTLE ENDIAN 
+#Byteorders "1234" and "12345678" are little-endian; "4321" and "87654321" are big-endian.
+my $is_little_endian = 1;
+if ($Config{byteorder} eq "87654321" or $Config{byteorder} eq "4321") {
+    $is_little_endian = 0;
+}
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -707,9 +710,20 @@ sub store {
       my @exp_scores = split ' ',$cs->expected_score;
       my @diff_scores = split ' ',$cs->diff_score;
 
-      for (my $i = 0; $i < scalar(@exp_scores); $i++) {
-	  $exp_packed .= pack($_pack_type, $exp_scores[$i]);
-	  $diff_packed .= pack($_pack_type, $diff_scores[$i]);
+      #Check if big or little endian
+      if ($is_little_endian) {
+	  for (my $i = 0; $i < scalar(@exp_scores); $i++) {
+	      $exp_packed .= pack($_pack_type, $exp_scores[$i]);
+	      $diff_packed .= pack($_pack_type, $diff_scores[$i]);
+	  }
+      } else {
+	  #Reverse bytes before storage on big_endian machines
+	  for (my $i = 0; $i < scalar(@exp_scores); $i++) {
+	      my $exp_packed_value = reverse(pack($_pack_type, $exp_scores[$i]));
+	      my $diff_packed_value = reverse(pack($_pack_type, $diff_scores[$i]));
+	      $exp_packed .= $exp_packed_value;
+	      $diff_packed .= $diff_packed_value;
+	  }
       }
   } else {
       $exp_packed = $cs->expected_score;
@@ -884,11 +898,41 @@ sub _unpack_scores {
     my $num_scores = length($scores)/$_pack_size;
 
     my $score = "";
-    for (my $i = 0; $i < $num_scores * $_pack_size; $i+=$_pack_size) {
-	my $value = substr $scores, $i, $_pack_size;
-	$score .= unpack($_pack_type, $value) . " ";
+    if ($is_little_endian) {
+	for (my $i = 0; $i < $num_scores * $_pack_size; $i+=$_pack_size) {
+	    my $value = substr $scores, $i, $_pack_size;
+	    $score .= unpack($_pack_type, $value) . " ";
+	}
+    } else {
+	for (my $i = 0; $i < $num_scores * $_pack_size; $i+=$_pack_size) {
+	    my $value = reverse(substr $scores, $i, $_pack_size);
+	    $score .= unpack($_pack_type, $value) . " ";
+	}
     }
+
     return $score;
+}
+
+=head2 _unpack_score
+
+  Arg  1     : string $score
+  Example    : $exp_scores = _unpack_score($score);
+  Description: unpack score values retrieved from a database
+  Returntype : space delimited string of floats
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub _unpack_score {
+    my ($pack_type, $score) = @_;
+
+    if ($is_little_endian) {
+	return unpack($pack_type, $score);
+    } else {
+	return unpack($pack_type, reverse($score));
+    }
 }
 
 
@@ -977,7 +1021,7 @@ sub _print_scores {
 	    my $score;
 	    if ($packed) {
 		my $value = substr $scores->[$cnt]->expected_score, $i*$_pack_size, $_pack_size;
-		$score = unpack($_pack_type, $value);
+		$score = _unpack_score($_pack_type, $value);
 	    } else {
 		$score = $values[$i];
 	    }
@@ -1138,9 +1182,9 @@ sub _get_aligned_scores_from_cigar_line {
 	    my $value;
 	    if ($PACKED) {
 		$value = substr $scores->[$cs_index]->expected_score, $csBlockCnt*$_pack_size, $_pack_size;
-		$exp_score = unpack($_pack_type, $value);
+		$exp_score = _unpack_score($_pack_type, $value);
 		$value = substr $scores->[$cs_index]->diff_score, $csBlockCnt*$_pack_size, $_pack_size;
-		$diff_score = unpack($_pack_type, $value);
+		$diff_score = _unpack_score($_pack_type, $value);
 	    } else {
 		@exp_scores = split ' ', $scores->[$cs_index]->exp_score;
 		$exp_score = $exp_scores[$csBlockCnt];
@@ -1350,9 +1394,9 @@ sub _get_aligned_scores_from_cigar_line_fast {
 	    my $value;
 	    if ($PACKED) {
 		$value = substr $scores->[$cs_index]->expected_score, $csBlockCnt*$_pack_size, $_pack_size;
-		$exp_score = unpack($_pack_type, $value);
+		$exp_score = _unpack_score($_pack_type, $value);
 		$value = substr $scores->[$cs_index]->diff_score, $csBlockCnt*$_pack_size, $_pack_size;
-		$diff_score = unpack($_pack_type, $value);
+		$diff_score = _unpack_score($_pack_type, $value);
 	    } else {
 		@exp_scores = split ' ', $scores->[$cs_index]->exp_score;
 		$exp_score = $exp_scores[$csBlockCnt];
@@ -1571,10 +1615,10 @@ sub _get_alignment_scores {
 	    if ($PACKED) {
 		my $value;
 		$value = substr $conservation_scores->[$i]->expected_score, $j*$_pack_size, $_pack_size;
-		$exp_score = unpack($_pack_type, $value);
+		$exp_score = _unpack_score($_pack_type, $value);
 
 		$value = substr $conservation_scores->[$i]->diff_score, $j*$_pack_size, $_pack_size;
-		$diff_score = unpack($_pack_type, $value);
+		$diff_score = _unpack_score($_pack_type, $value);
 	    } else {
 		$exp_score = $exp_scores[$j];
 		$diff_score = $diff_scores[$j];
