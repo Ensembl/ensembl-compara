@@ -25,10 +25,16 @@ sub content {
   my $position        = $neat_sr_name . ':' . $formatted_start . '-' . $formatted_end;
   my $length          = $end - $start;
   my $max_length      = ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1) * 1e6; 
-  my $description     = $variation->source_description; 
-  my $pubmed_link     = '';
-  my $location_link;
-
+	my $pubmed_link     = '';
+	my $location_link;
+	my $study_name		  = $variation->study_name;
+	my $description     = $variation->study_description;
+	my $class						= $variation->class;
+	
+	if (! $description) {
+		$description = $variation->source_description;
+	}
+	
   if ($length > $max_length) {  
     $location_link = $hub->url({
       type     => 'Location',
@@ -51,10 +57,14 @@ sub content {
     $pubmed_link = $hub->get_ExtURL('PUBMED', $pubmed_id);  
   }    
 
-  $self->caption('Structural variation: ' . $variation->variation_name);
+	my $sv_caption = 'Structural variation: ';
+	if ($class eq 'CNV_PROBE') {
+		$sv_caption = 'Copy number variation probe: ';
+	}
+  $self->caption($sv_caption . $variation->variation_name);
 
   $self->add_entry({
-    label_html => 'Structural Variation Properties',
+    label_html => $variation->variation_name.' properties',
     link       => $hub->url({
       type     => 'StructuralVariation',
       action   => 'Summary',
@@ -66,6 +76,16 @@ sub content {
     type  => 'Source',
     label => $variation->source,
   });
+	
+	
+	if ($study_name ne '') {
+		my $study_url = $variation->study_url;
+		$self->add_entry({
+    	type  => 'Study',
+    	label => $study_name,
+    	link  => $study_url, 
+  	});
+	}
 
   $self->add_entry({
     type  => 'Description',
@@ -75,7 +95,7 @@ sub content {
 
   $self->add_entry({
     type  => 'Class',
-    label => $variation->class,
+    label => $class,
   });
 
   $self->add_entry({
@@ -83,7 +103,5 @@ sub content {
     label => $position,
     link  => $location_link,
   });
-
 }
-
 1;
