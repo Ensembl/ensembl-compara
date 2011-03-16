@@ -8,9 +8,13 @@ our @ISA = qw(EnsEMBL::Web::Object::DAS);
 
 use Bio::EnsEMBL::Map::DBSQL::DitagFeatureAdaptor;
 
-my %ditag_analysis = (
-	FANTOM_CAGE => 1 # got its own track 
-	);
+my $analysis_predicate = sub {
+  $_[0]->logic_name =~ m/cage/i;
+};
+
+#my %ditag_analysis = (
+#	fantom_cage => 1 # mouse and human
+#	);
 
 sub Types {
     my $self = shift;
@@ -30,7 +34,7 @@ sub Types {
         my $slice = $s->slice;
 	my $tHash;
         foreach my $ft (@{$dfa->fetch_all_by_Slice($slice) || [] }) {
-	  next unless $ditag_analysis{ $ft->analysis->logic_name };
+          next unless &{ $analysis_predicate }($ft->analysis);
 	  $tHash->{ $ft->analysis->logic_name } ++;
         }
 
@@ -45,7 +49,7 @@ sub Types {
     } else {
 	my $tHash;
         foreach my $ft (@{$dfa->fetch_all || [] }) {
-	  next unless $ditag_analysis{ $ft->analysis->logic_name };
+          next unless &{ $analysis_predicate }($ft->analysis);
 	  $tHash->{ $ft->analysis->logic_name } ++;
         }
 	my @tarray = map { {id=>$_, text=>$tHash->{$_}} } sort keys %{$tHash ||{}};
@@ -63,7 +67,6 @@ sub Features {
     my $dba = $self->database('core', $self->real_species); 
 
     my $species = $self->real_species;
-    my @ditag_analysis = keys %ditag_analysis;
 
     my @segments = $self->Locations;
     my @features;
@@ -83,7 +86,7 @@ sub Features {
 
 	foreach my $ft (sort {$a->start <=> $b->start} @{$dfa->fetch_all_by_Slice($slice) || [] }) {
 
-	    next unless grep {$_ eq $ft->analysis->logic_name} @ditag_analysis;
+	    next unless &{ $analysis_predicate }($ft->analysis);
 
 	    if (@fts > 0) {
 		next unless grep {$_ eq $ft->ditag_side} @fts;

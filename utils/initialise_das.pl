@@ -82,7 +82,7 @@ my $source_types = {
     'query'        => '
   select s.name, t.seq_region_start, t.seq_region_end
     from seq_region s, ditag_feature t, analysis a
-   where a.logic_name like "%CAGE%" and t.analysis_id = a.analysis_id and t.seq_region_id = s.seq_region_id',
+   where a.logic_name like "%cage%" and t.analysis_id = a.analysis_id and t.seq_region_id = s.seq_region_id',
     'source_id'    => 5,
   },
   'ditags' => {
@@ -91,7 +91,7 @@ my $source_types = {
     'query'        => '
   select s.name, t.seq_region_start, t.seq_region_end
     from seq_region s, ditag_feature t, analysis a
-   where a.logic_name not like "%CAGE%" and t.analysis_id = a.analysis_id and t.seq_region_id = s.seq_region_id',
+   where a.logic_name not like "%cage%" and t.analysis_id = a.analysis_id and t.seq_region_id = s.seq_region_id',
     'source_id'    => 6,
   },
   'prediction_transcript' => {
@@ -170,8 +170,20 @@ foreach my $sp (@$species) {
   my $search_info = $species_defs->get_config($sp, 'SEARCH_LINKS');
   (my $vsp = $sp) =~ s/\_/ /g;
   $species_info->{$sp}->{'species'}  = $vsp;
-  
-  my $type = $species_defs->get_config($sp,'ASSEMBLY_NAME') || die "[FATAL] ASSEMBLY_NAME is missing for $sp";
+
+  my $db_info = $species_defs->get_config($sp, 'databases')->{'DATABASE_CORE'};
+  my $db = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    -species => $sp,
+    -dbname  => $db_info->{'NAME'},
+    -host    => $db_info->{'HOST'},
+    -port    => $db_info->{'PORT'},
+    -user    => $db_info->{'USER'},
+    -driver  => $db_info->{'DRIVER'},
+  );
+  my $meta = $db->get_MetaContainer();
+  my $taxid = $meta->get_taxonomy_id();
+  my $csa = $db->get_CoordSystemAdaptor();
+  my $type = $csa->fetch_by_rank(1)->version()  || die "[FATAL] Rank 1 coordinate system has no version for $sp";
   my $mapmaster = sprintf("%s.%s.reference", $sp, $type);
 
   if (-e "$docroot/htdocs/das/$mapmaster/entry_points") {
@@ -184,18 +196,6 @@ foreach my $sp (@$species) {
   }
   
   print STDERR "[INFO]  Parsing species $sp at ".gmtime()."\n";
-  
-  my $db_info = $species_defs->get_config($sp, 'databases')->{'DATABASE_CORE'};
-  my $db = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -species => $sp,
-    -dbname  => $db_info->{'NAME'},
-    -host    => $db_info->{'HOST'},
-    -port    => $db_info->{'PORT'},
-    -user    => $db_info->{'USER'},
-    -driver  => $db_info->{'DRIVER'},
-  );
-  my $meta = $db->get_MetaContainer();
-  my $taxid = $meta->get_taxonomy_id();
 
   # Must have these coordinates for all species (though we don't create sources for them yet):
   for my $coord_type ('ensembl_gene', 'ensembl_peptide') {
@@ -271,7 +271,7 @@ foreach my $sp (@$species) {
     my $rv = $species_defs->table_info_other( $sp, $dbn, $table );
     my $rows = $rv ? $rv->{'rows'} : 0;
 
-    print STDERR "\t $sp : $feature : $table => ", $rv || 'Off',  "\n";
+    print STDERR "\t $sp : $feature : $table => ", $rows || 'Off',  "\n";
     next unless $rows || $source_types->{$feature}->{params}->{species};
     my $sql = $featuresQuery{$feature};
     
@@ -280,9 +280,8 @@ foreach my $sp (@$species) {
 
     $sth->execute(@params);
     my @r = $sth->fetchrow();
-    print STDERR "\t $sp : $feature => Off\n" and next unless @r;
-    print STDERR "\t\t\tTEST REGION : ", join('*', @r), "\n";
-    next unless @r;
+    print STDERR "\t $sp : $feature : $table => Off (no features)\n" and next unless @r;
+    print STDERR "\t $sp : $feature : $table => ", sprintf "%s:%s,%s\n", @r;
 
     my $dsn = sprintf("%s.%s.%s", $sp, $type, $feature);
     $shash->{$dsn}->{coords} = \%coords;
@@ -563,7 +562,7 @@ sub publish_multi_species_sources {
 	my $rv = $species_defs->table_info_other( $sp, $dbn, $table );
 	my $rows = $rv ? $rv->{'rows'} : 0;
 	
-	print STDERR "\t $feature : $table => ", $rv || 'Off',  "\n";
+	print STDERR "\t $sp : $feature : $table => ", $rows || 'Off',  "\n";
 
 	next unless $rows || $sources_info->{$feature}->{params}->{species};
 	my $sql = $sources_info->{$feature}->{query};
@@ -572,8 +571,8 @@ sub publish_multi_species_sources {
 	
 	$sth->execute(@params);
 	my @r = $sth->fetchrow();
-	print STDERR "\t $sp : $feature => Off\n" and next unless @r;
-	print STDERR "\t\t\tTEST REGION : ", join('*', @r), "\n";
+	print STDERR "\t $sp : $feature : $table => Off (no features)\n" and next unless @r;
+	print STDERR "\t $sp : $feature : $table => ", join('*', @r), "\n";
 	next unless @r;
 
 

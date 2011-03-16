@@ -7,15 +7,17 @@ use EnsEMBL::Web::Object::DAS;
 our @ISA = qw(EnsEMBL::Web::Object::DAS);
 
 use Bio::EnsEMBL::Map::DBSQL::DitagFeatureAdaptor;
-my %ditag_analysis = (
-	FANTOM_GSC_PET => 1,
-	FANTOM_GIS_PET => 1,
-	GIS_PET_Encode => 1,
-	GIS_PET => 1,
-	medaka_5pSAGE=> 1,
-#	CHIP_PET => 1, # got its own track
-#	FANTOM_CAGE => 1 # got its own track 
-	);
+
+my $analysis_predicate = sub {
+  $_[0]->logic_name !~ m/cage/i;
+};
+#my %ditag_analysis = (
+#	fantom_gsc_pet => 1, # mouse
+#	fantom_gis_pet => 1, # mouse
+#	fantom_gsc_pet_raw => 1, # mouse and human
+#	fantom_gis_pet_raw => 1, # mouse and human
+#	medaka_5psage=> 1, # medaka
+#	);
 
 sub Types {
     my $self = shift;
@@ -35,7 +37,7 @@ sub Types {
         my $slice = $s->slice;
 	my $tHash;
         foreach my $ft (@{$dfa->fetch_all_by_Slice($slice) || [] }) {
-	  next unless $ditag_analysis{ $ft->analysis->logic_name };
+	  next unless &{ $analysis_predicate }($ft->analysis);
 	  $tHash->{ $ft->analysis->logic_name } ++;
         }
 
@@ -50,7 +52,7 @@ sub Types {
     } else {
 	my $tHash;
         foreach my $ft (@{$dfa->fetch_all || [] }) {
-	  next unless $ditag_analysis{ $ft->analysis->logic_name };
+	  next unless &{ $analysis_predicate }($ft->analysis);
 	  $tHash->{ $ft->analysis->logic_name } ++;
         }
 	my @tarray = map { {id=>$_, text=>$tHash->{$_}} } sort keys %{$tHash ||{}};
@@ -88,7 +90,7 @@ sub Features {
 	my @segment_features;
 
 	foreach my $ft (sort {$a->start <=> $b->start} @{$dfa->fetch_all_by_Slice($slice) || [] }) {
-	    next unless ($ditag_analysis{$ft->analysis->logic_name});
+	    next unless &{ $analysis_predicate }($ft->analysis);
 	    my $ftype = $ft->analysis->logic_name;
 	    next unless (! $filter || $fts{$ftype});
 
