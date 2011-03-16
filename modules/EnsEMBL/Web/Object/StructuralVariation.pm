@@ -91,11 +91,4 @@ sub variation_feature_mapping {
 
   return \%data;
 }
-
-# uncomment when including export data for structural_variation
- sub can_export {
-   my $self = shift;
-   
-   return $self->action =~ /^Export$/ ? 0 : $self->availability->{'structural_variation'};
- }
 1;
