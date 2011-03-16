@@ -25,14 +25,22 @@ sub content {
   
   my $is_somatic = $object->Obj->is_somatic;
   my $study      = $is_somatic ? 'Tumour site' : 'Study'; 
-  my $table_rows = $self->table_data($data);
+  my ($table_rows, $supporting_evidence) = $self->table_data($data);
   my $table      = $self->new_table([], [], { data_table => 1 });
    
 
   $table->add_columns(
     { key => 'disease', title => 'Disease/Trait',         align => 'left', sort => 'html' },  
-    { key => 'source',  title => 'Source',                align => 'left', sort => 'html' },
-    { key => 'study',   title => $study,                  align => 'left', sort => 'html' },
+    { key => 'source',  title => 'Source(s)',             align => 'left', sort => 'html' },
+  );
+  if ($supporting_evidence!=0) {
+  	 $table->add_columns(
+      { key => 's_evidence', title => 'Supporting evidence(s)', align => 'left', sort => 'html' }
+	);
+  }
+  
+  $table->add_columns(
+		{ key => 'study',   title => $study,                  align => 'left', sort => 'html' },
     { key => 'genes',   title => 'Associated Gene(s)',    align => 'left', sort => 'none' },
     { key => 'variant', title => 'Associated variant',    align => 'left', sort => 'none' },
   );
@@ -45,7 +53,7 @@ sub content {
   }
   
   $table->add_rows(@$_) for values %$table_rows;
-  
+	
   return $table->render;
 };
 
@@ -56,7 +64,8 @@ sub table_data {
   my $object     = $self->object;
   my $is_somatic = $object->Obj->is_somatic;
   my %rows;
-  
+  my $has_evidence = 0;
+   
   foreach my $va (@$external_data) { 
     my $disorder = $va->phenotype_description;
     
@@ -72,16 +81,24 @@ sub table_data {
       @data_row = @{$rows{lc $disorder}};
     }
     
-    my $id           = $va->{'_phenotype_id'};
-    my $code         = $va->phenotype_name;
-    my $source_name  = $va->source_name;
-    my $disease_url  = $hub->url({ type => 'Location', action => 'Genome', id => $id, ftype => 'Phenotype', somatic => $is_somatic, phenotype_name => $disorder }); 
-    my $source       = $self->source_link($va, $code);
-    my $study        = $self->study_link($va->study) || $va->study; # use raw value if can't be made into a link
-    
+    my $id           			 = $va->{'_phenotype_id'};
+    my $code         			 = $va->phenotype_name;
+    my $source_name  			 = $va->source_name;
+		my $study_name         = $va->study_name;
+    my $disease_url  			 = $hub->url({ type => 'Location', action => 'Genome', id => $id, ftype => 'Phenotype', somatic => $is_somatic, phenotype_name => $disorder }); 
+		my $source             = $self->source_link($source_name, $study_name, $va->external_reference, $code);
+		my $external_reference = $self->external_reference_link($va->external_reference) || $va->external_reference; # use raw value if can't be made into a link
+    my $associated_studies = $va->associated_studies; # List of Study objects
+		
     if ($source =~ /<a href="">(.*)<\/a>/) {
       $source = $1; 
     }
+	
+		# Add the supporting evidence source(s)
+		my $a_study_source='';
+		if (defined($associated_studies)) {
+			$a_study_source = $self->supporting_evidence_link($associated_studies, $va->external_reference, $code);
+		}
 
     if ($is_somatic) { 
       my @tumour_info      = split /\:/, $disorder;
@@ -90,11 +107,11 @@ sub table_data {
       my $source_study     = uc($source_name) . '_STUDY'; 
       $tissue              =~ s/^\s+//;
       $tissue_formatted    =~ s/\s+/\_/g; 
-      $study               = $hub->get_ExtURL_link($tissue, $source_study, $tissue_formatted);
+      $external_reference  = $hub->get_ExtURL_link($tissue, $source_study, $tissue_formatted);
     }
    
     my $gene         = $self->gene_links($va->associated_gene);
-    my $allele       = $self->allele_link($va->study, $va->associated_variant_risk_allele) || $va->associated_variant_risk_allele;
+    my $allele       = $self->allele_link($va->external_reference, $va->associated_variant_risk_allele) || $va->associated_variant_risk_allele;
     my $variant_link = $self->variation_link($va->variation->name);
     my $pval         = $va->p_value;
     
@@ -102,21 +119,28 @@ sub table_data {
     $disease = $code ? qq{<dt>$disorder ($code)} : qq{<dt>$disorder} if $disorder =~ /^\w+/;
     $disease .= qq{ <a href="$disease_url">[View on Karyotype]</a></dt>} unless $disease =~ /HGMD_MUTATION/;
     
+	
+	
     my $row = {
       disease => $disease,
       source  => $source,
-      study   => $study, 
+      study   => $external_reference, 
       genes   => $gene,
       allele  => $allele,
       variant => $variant_link,
       pvalue  => $pval
     };
+	
+	if ($a_study_source ne ''){
+		$row->{s_evidence} = $a_study_source;
+		$has_evidence = 1;
+	}
     
     push @data_row, $row;
     $rows{lc $va->phenotype_description} = \@data_row;
   } 
 
-  return \%rows;
+  return \%rows,$has_evidence;
 }
 
 sub gene_links {
@@ -160,35 +184,34 @@ sub gene_links {
   return $gene_links;
 }
 
+
 sub source_link {
-  my ($self, $va, $code) = @_;
+  my ($self, $source, $ega_id, $ext_id, $code) = @_;
   
-  my $source    = $va->source_name; 
   my $source_uc = uc $source;
   $source_uc    = 'OPEN_ACCESS_GWAS_DATABASE' if $source_uc =~ /OPEN/;
   my $url       = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
   
   if ($url =~ /ega/) {
-    my $ext_id = $va->local_stable_id;
-    $url       =~ s/###ID###/$ext_id/;
+    $url       =~ s/###ID###/$ega_id/;
     $url       =~ s/###D###/$code/;
   } elsif ($url =~/gwastudies/) {
-    my $pubmed_id = $va->study;
-    $pubmed_id    =~ s/pubmed\///; 
-    $url          =~ s/###ID###/$pubmed_id/;       
+    $ext_id    =~ s/pubmed\///; 
+    $url          =~ s/###ID###/$ext_id/;       
   } else {
     my $name = $self->object->Obj->name;
     $url =~ s/###ID###/$name/;
   }
   
-  return qq{<a href="$url">[$source]</a>};
+  return qq{<a rel="external" href="$url">[$source]</a>};
 }
 
-sub study_link {
+
+sub external_reference_link {
   my ($self, $study, $allele) = @_;
   
   if($study =~ /pubmed/) {
-    return qq{<a href="http://www.ncbi.nlm.nih.gov/$study">$study</a>};
+    return qq{<a rel="external" href="http://www.ncbi.nlm.nih.gov/$study">$study</a>};
   }
   
   elsif($study =~ /^MIM\:/) {
@@ -207,19 +230,47 @@ sub study_link {
     
     return $link;
   }
-  
   else {
     return '';
   }
 }
+
+
+# Supporting evidence links
+sub supporting_evidence_link {
+	my ($self, $associated, $ext_id, $code) = @_;
+	my $as_html = '';
+	my $count = 0;
+	my $se_by_line = 2;
+	foreach my $st (@{$associated}) {
+		if ($as_html ne '') { $as_html .= ', '; }
+		if ($count==$se_by_line) {
+			$as_html .= '<br />';
+			$count = 0;
+		}
+		my $a_url = $st->url;
+		if (!defined($a_url)) {
+			$as_html .= $self->source_link($st->source,$st->name,$ext_id,$code);
+		}
+		else {
+			my $a_source = $st->source;
+			if ($st->name) { $a_source = $st->name; }
+			$as_html .= qq{<a rel="external" href="$a_url">[$a_source]</a>};
+		}
+		$count++;
+	}
+	return $as_html;
+}
+
 
 sub allele_link {
 	my ($self, $study, $allele) = @_;
 	
 	# Only create allele-specific link if the study is a OMIM record and the allele is defined
 	return '' unless ($study =~ /^MIM\:/ && defined($allele));
-	return $self->study_link($study,$allele);
+	return $self->external_reference_link($study,$allele);
 }
+
 
 sub variation_link {
   my ($self, $v) = @_;
