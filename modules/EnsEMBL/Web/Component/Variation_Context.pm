@@ -15,7 +15,7 @@ sub _init {
 sub content {
   my $self   = shift; 
   my $object = $self->object;
-  
+	
   ## first check we have a location
   if ($object->isa('Bio::EnsEMBL::Variation::Variation') && $object->not_unique_location) {
     return $self->_info(
@@ -27,10 +27,19 @@ sub content {
   my $hub           = $self->hub;
   my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor');
   my $width         = $hub->param('context') || 30000;
+	my $width_max     = 1000000;
   my %mappings      = %{$object->variation_feature_mapping};  # first determine correct SNP location 
   my $v;
+	my $vname         = $object->name;
   my $var_slice;
   my $html;
+	
+	# Different display and image configuration between Variation and Structural Variation
+	my $im_cfg = 'snpview';
+	if ($object->isa('EnsEMBL::Web::Object::StructuralVariation')) {
+		$im_cfg = 'structural_variation';
+	}
+	
   
   if (keys %mappings == 1) {
     ($v) = values %mappings;
@@ -46,13 +55,21 @@ sub content {
   }
 
   my $seq_region = $v->{'Chr'};
+	my $seq_type = $v->{'type'};
   my $start = $v->{'start'} <= $v->{'end'} ? $v->{'start'} : $v->{'end'};
   my $end = $v->{'start'} << $v->{'end'} ? $v->{'end'} : $v->{'start'};   
   my $length =  ($end - $start) +1;
 
-  if ($length>= 30000 ){
+	# Width max > length Slice > context
+	if ($length >= $width and $length <= $width_max) {
+		my $new_width = 5000;
+		$start -= $new_width; 
+    $end += $new_width;
+	}
+	# length Slice > Width max
+	elsif ($length > $width_max){
     my $location = $seq_region.':'.$start.'-'.$end;
-    $end = $start + 30000 -1; 
+    $end = $start + $width_max -1; 
     $var_slice = 1;
     my $overview_link = $hub->url({
       type   => 'Location',
@@ -61,35 +78,40 @@ sub content {
       sv     => $object->name
     });
     $overview_link .=';cytoview=variation_feature_structural=normal';
-    my $warning_text = '<p>This '.$object->type.' is too large to display in full, this image and tables below contain only the information relating to the first 30 Kb of the feature. To see the full length structural variation please use the <a href="'.$overview_link.'">region overview</a> display.</p>';
+		my $interval = $width_max/1000;
+    my $warning_text = '<p>This '.$object->type.' is too large to display in full, this image and tables below contain only the information relating to the first '.$interval.' Kb of the feature. To see the full length structural variation please use the <a href="'.$overview_link.'">region overview</a> display.</p>';
  
    $html .= $self->_info(
       $object->type . ' has been truncated',
       $warning_text
     );
-  } else {
+  }
+	# context > length Slice
+	else {
     $start -= ($width/2); 
     $end += ($width/2);
   }
-  my $seq_type = $v->{'type'};
-  my $slice      = $slice_adaptor->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
-  my $sliceObj   = $self->new_object('Slice', $slice, $object->__data);
+	
+  my $slice    = $slice_adaptor->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
 
-  my ($count_snps, $filtered_snps)       = $sliceObj->getVariationFeatures;
-  my ($genotyped_count, $genotyped_snps) = $sliceObj->get_genotyped_VariationFeatures;
-
-  my $image_config = $hub->get_imageconfig('snpview'); 
-  
+	# Image
+	my $image_config = $hub->get_imageconfig($im_cfg);
+	
   $image_config->set_parameters( {
     image_width     => $self->image_width || 900,
     container_width => $slice->length,
     slice_number    => '1|1',
   });
 
-  $image_config->{'snps'}           = $filtered_snps;
-  $image_config->{'genotyped_snps'} = $genotyped_snps;
-  $image_config->{'snp_counts'}     = [ $count_snps + $genotyped_count, scalar @$filtered_snps + scalar @$genotyped_snps ];
-
+	if ($im_cfg eq 'snpview') {
+		my $sliceObj   = $self->new_object('Slice', $slice, $object->__data);
+		my ($count_snps, $filtered_snps)       = $sliceObj->getVariationFeatures;
+  	my ($genotyped_count, $genotyped_snps) = $sliceObj->get_genotyped_VariationFeatures;
+  	
+		$image_config->{'snps'}           = $filtered_snps;
+  	$image_config->{'genotyped_snps'} = $genotyped_snps;
+  	$image_config->{'snp_counts'}     = [ $count_snps + $genotyped_count, scalar @$filtered_snps + scalar @$genotyped_snps ];
+	}
   
   my $image = $self->new_image($slice, $image_config, [ $object->name ]);
   
@@ -101,50 +123,66 @@ sub content {
  
   $html .= $image->render;
  
-  $var_slice = 1 ? $slice  : $slice_adaptor->fetch_by_region($seq_type, $seq_region, $v->{'start'}, $v->{'end'}, 1);
+	$var_slice = 1 ? $slice  : $slice_adaptor->fetch_by_region($seq_type, $seq_region, $v->{'start'}, $v->{'end'}, 1);
   
-  $html .= sprintf('
-    <h3>Overlapping features</h3>
-    <h2><a href="#" class="toggle" rel="structural_variants">Structural variants</a></h2>
-    <div class="structural_variants"><div class="toggleable">%s</div></div>
-    <h2><a href="#" class="toggle" rel="sequence_variants">Sequence variants</a></h2>
-    <div class="sequence_variants"><div class="toggleable">%s</div></div>
-    <h2><a href="#" class="toggle" rel="regulatory_features">Regulatory features</a></h2>
-    <div class="regulatory_features"><div class="toggleable">%s</div></div>
-    <h2><a href="#" class="toggle" rel="constrained_elements">Constrained elements</a></h2>
-    <div class="constrained_elements"><div class="toggleable">%s</div></div>',
-    $self->structural_variation_table($var_slice),
-    $self->sequence_variation_table($var_slice),
-    $self->regulatory_feature_table($var_slice),
-    $self->constrained_element_table($var_slice),
-  );
+
+  $html .= qq{<h2>Overlapping features :</h2>};
   
+  # structural variation table
+  $html .= $self->structural_variation_table($var_slice,$vname);
+  
+	# copy number variant probe table
+  $html .= $self->cnv_probe_table($var_slice,$vname);
+	
+	# sequence variation table (not displayed for structural variants and CNV probes)
+  if ($im_cfg eq 'snpview') {
+  	$html .= $self->sequence_variation_table($var_slice,$vname);
+	}
+
+  # regulatory region table
+  $html .= $self->regulatory_feature_table($var_slice,$vname,$im_cfg);
+  
+  # constrained elements table
+  $html .= $self->constrained_element_table($var_slice,$vname);
+
   return $html;
 }
 
+
 sub structural_variation_table{
-  my $self   = shift;
-  my $slice  = shift;
-  my $hub    = $self->hub;
-  my $v      = $self->object->name;
-  my $svs    = $slice->get_all_StructuralVariations;
- 
+  my $self     = shift;
+  my $slice    = shift;
+	my $v        = shift;
+  my $hub      = $self->hub;
+  my $svs      = $slice->get_all_StructuralVariations;
+  my $title    = 'Structural variants';
+	my $table_id = 'sv';
+	my $html;
+	
   my $columns = [
      { key => 'id',          sort => 'string',        title => 'Name'   },
      { key => 'location',    sort => 'position_html', title => 'Chr:bp' },
      { key => 'class',       sort => 'string',        title => 'Class'  },
-     { key => 'source',      sort => 'string',        title => 'Source' },
-     { key => 'description', sort => 'string',        title => 'Source description', width => '40%' },
+     { key => 'source',      sort => 'string',        title => 'Source Study' },
+     { key => 'description', sort => 'string',        title => 'Study description', width => '40%' },
   ];
   
   my $rows;
-  
+	
   if (defined $svs) {
     foreach my $sv (@$svs) {
       next if $sv->variation_name eq $v;
       # make PMID link for description
       my $description = $sv->source_description;
       my $pubmed_link;
+	 		my $sv_class = $sv->class;
+	  	my $source   = $sv->source;
+	  
+	  	# Add study information
+	  	if ($sv->study_name ne '') {
+	  		$source .= ":".$sv->study_name;
+				$description .= $sv->study_description;
+	  	}
       
       if ($description =~ /PMID/) {
         my @description_string = split ':', $description;
@@ -157,7 +195,7 @@ sub structural_variation_table{
       my $name = $sv->variation_name;
       my $sv_link = $hub->url({
         type    => 'StructuralVariation',
-        action  =>  'Summary',
+        action  => 'Summary',
         sv      => $name
       });      
 
@@ -172,24 +210,105 @@ sub structural_variation_table{
       my %row = (
         id          => qq{<a href="$sv_link">$name</a>},
         location    => qq{<a href="$loc_link">$loc_string</a>},
-        class       => $sv->class,
-        source      => $sv->source,
+        class       => $sv_class,
+        source      => $source,
         description => $description,
       );
-      
+	  
       push @$rows, \%row;
     }
   }
-   
-  return $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
+  
+	my $sv_table = $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] });
+	$html .= display_table_with_toggle_button($title,$table_id,1,$sv_table);
+	return $html;
 }
 
+
+sub cnv_probe_table{
+  my $self     = shift;
+  my $slice    = shift;
+	my $v        = shift;
+  my $hub      = $self->hub;
+  my $svs      = $slice->get_all_CopyNumberVariantProbes;
+  my $title    = 'Copy number variants probes';
+	my $table_id = 'cnv';
+	my $html;
+	
+  my $columns = [
+     { key => 'id',          sort => 'string',        title => 'Name'   },
+     { key => 'location',    sort => 'position_html', title => 'Chr:bp' },
+     { key => 'class',       sort => 'string',        title => 'Class'  },
+     { key => 'source',      sort => 'string',        title => 'Source Study' },
+     { key => 'description', sort => 'string',        title => 'Study description', width => '40%' },
+  ];
+  
+  my $rows;
+	
+  if (defined $svs) {
+    foreach my $sv (@$svs) {
+      next if $sv->variation_name eq $v;
+      # make PMID link for description
+      my $description = $sv->source_description;
+      my $pubmed_link;
+	 		my $sv_class = $sv->class;
+	  	my $source   = $sv->source;
+	  
+	  	# Add study information
+	  	if ($sv->study_name ne '') {
+	  		$source .= ":".$sv->study_name;
+				$description .= $sv->study_description;
+	  	}
+      
+      if ($description =~ /PMID/) {
+        my @description_string = split ':', $description;
+        my $pubmed_id          = pop @description_string;
+        
+        $pubmed_id   =~ s/\s+.+//g;
+        $pubmed_link = $hub->get_ExtURL('PUBMED', $pubmed_id);
+        $description =~ s/$pubmed_id/'<a href="'.$pubmed_link.'" target="_blank">'.$&.'<\/a>'/eg;
+      }
+      my $name = $sv->variation_name;
+      my $sv_link = $hub->url({
+        type    => 'StructuralVariation',
+        action  => 'Summary',
+        sv      => $name
+      });      
+
+      my $loc_string = $sv->seq_region_name . ':' . $sv->seq_region_start . '-' . $sv->seq_region_end;
+        
+      my $loc_link = $hub->url({
+        type   => 'Location',
+        action => 'View',
+        r      => $loc_string,
+      });
+      
+      my %row = (
+        id          => qq{<a href="$sv_link">$name</a>},
+        location    => qq{<a href="$loc_link">$loc_string</a>},
+        class       => $sv_class,
+        source      => $source,
+        description => $description,
+      );
+	  
+      push @$rows, \%row;
+    }
+  }
+  
+	my $cnv_table = $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] });
+	$html .= display_table_with_toggle_button($title,$table_id,0,$cnv_table);
+	return $html;
+}
+
+
 sub sequence_variation_table {
- my $self   = shift;
-  my $slice  = shift;
-  my $hub    = $self->hub;
-  my $v      = $self->object->name;
-  my $vfs    = $slice->get_all_VariationFeatures;
+  my $self     = shift;
+  my $slice    = shift;
+	my $v        = shift;
+  my $hub      = $self->hub;
+  my $vfs      = $slice->get_all_VariationFeatures;
+	my $title    = 'Sequence variants';
+	my $table_id = 'seq';
 
   my $columns = [
      { key => 'id',          sort => 'string',        title => 'Name'       },
@@ -208,23 +327,24 @@ sub sequence_variation_table {
       next if $vf->variation_name eq $v;
       
       my $name = $vf->variation_name;
-      my $vf_dbid = $vf->dbID;
       my $vf_link = $hub->url({
         type    => 'Variation',
         action  =>  'Summary',
         v       => $name,
-        vf      => $vf_dbid
+        vf      => $vf->dbID
       });
 
-      my $loc_string = $vf->seq_region_name . ':' . $vf->seq_region_start . ($vf->seq_region_start == $vf->seq_region_end ? '' : '-' . $vf->seq_region_end);
-
+			my $region_start = $vf->seq_region_start;
+			my $region_end = $vf->seq_region_end;
+			
+      my $loc_string = $vf->seq_region_name . ':' . $region_start . ($region_start = $region_end ? '' : '-' . $region_end);
       my $loc_link = $hub->url({
         type   => 'Location',
         action => 'View',
         r      => $loc_string,
       });
 
-     my $validation        = $vf->get_all_validation_states || [];
+     my $validation = $vf->get_all_validation_states || [];
     
         
      my %row = (
@@ -240,16 +360,21 @@ sub sequence_variation_table {
       push @$rows, \%row;
     }
   }
-
-  return $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
+	
+	my $table = $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] });
+	
+	return display_table_with_toggle_button($title,$table_id,1,$table);
 }
 
 sub regulatory_feature_table{
-  my $self  = shift;
-  my $slice = shift;
-  my $hub   = $self->hub;
-  my $v     = $self->object->name;
-  
+  my $self     = shift;
+  my $slice    = shift;
+	my $v        = shift;
+	my $im_conf  = shift;
+  my $hub      = $self->hub;
+  my $title    = 'Regulatory features';
+	my $table_id = 'reg';
+	
   my $columns = [
     { key => 'id',         sort => 'string',        title => 'Name'              },
     { key => 'location',   sort => 'position_html', title => 'Chr:bp'            },
@@ -262,27 +387,30 @@ sub regulatory_feature_table{
   my $fsa = $hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen');
   
   # get image config
-  my $image_config = $hub->get_imageconfig('snpview');
+  my $image_config = $hub->get_imageconfig($im_conf);
   
   if (defined $fsa) {
+		
     foreach my $set(@{$fsa->fetch_all_by_feature_class('regulatory')}) {
       my $set_name = (split /\s+/, $set->display_label)[-1];
-      
+
       # check if this feature set is switched on in the image config
       if (defined $image_config->get_node('functional')->get_node("reg_feats_$set_name")) {
-         if ($image_config->get_node('functional')->get_node("reg_feats_$set_name")->get('display') eq 'normal') {
-           foreach my $rf (@{$set->get_Features_by_Slice($slice)}) {
-             my $rf_link = $hub->url({
+				foreach my $rf (@{$set->get_Features_by_Slice($slice)}) {
+            
+						my $stable_id = $rf->stable_id;
+						my $rf_link = $hub->url({
                type   => 'Regulation',
                action => 'Summary',
                fdb    => 'funcgen',
                r      => undef,
-               rf     => $rf->stable_id,
+               rf     => $stable_id,
              });
              
-             my $loc_string = $rf->seq_region_name . ':' . ($slice->start + $rf->bound_start - 1) . '-' . ($slice->start + $rf->bound_end - 1);
+						 my $region_name = $rf->seq_region_name;
+             my $loc_string = "$region_name:" . ($slice->start + $rf->bound_start - 1) . '-' . ($slice->start + $rf->bound_end - 1);
              
-             my $loc_link = $hub->url({
+						 my $loc_link = $hub->url({
                type             => 'Location',
                action           => 'View',
                r                => $loc_string,
@@ -290,27 +418,31 @@ sub regulatory_feature_table{
              });
              
              push @$rows, {
-               id         => qq{<a href="$rf_link">}  . $rf->stable_id . '</a>',
-               location   => qq{<a href="$loc_link">} . $rf->seq_region_name . ':' . $rf->seq_region_start . '-' . $rf->seq_region_end . '</a>',
+               id         => qq{<a href="$rf_link">}  . $stable_id . '</a>',
+               location   => qq{<a href="$loc_link">$region_name:} . $rf->seq_region_start . '-' . $rf->seq_region_end . '</a>',
                bound      => qq{<a href="$loc_link">$loc_string</a>},
                type       => $rf->feature_type->name,
                featureset => $set->display_label,
              };
           }
-        }
+        #}
       }
     }
   }
   
-  return $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
+  my $table = $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] });
+	
+	return display_table_with_toggle_button($title,$table_id,1,$table);
 }
 
 sub constrained_element_table {
-  my $self  = shift;
-  my $slice = shift;
-  my $hub   = $self->hub;
-  my $v     = $self->object->name;
-  
+  my $self     = shift;
+  my $slice    = shift;
+	my $v        = shift;
+  my $hub      = $self->hub;
+  my $title    = 'Constrained elements';
+	my $table_id = 'cons';
+	
   my $mlssa = $hub->get_adaptor('get_MethodLinkSpeciesSetAdaptor', 'compara');
   my $cea   = $hub->get_adaptor('get_ConstrainedElementAdaptor',   'compara');
   
@@ -326,7 +458,8 @@ sub constrained_element_table {
   if (defined $mlssa && defined $cea) {
     foreach my $mlss (@{$mlssa->fetch_all_by_method_link_type('GERP_CONSTRAINED_ELEMENT')}) {
       foreach my $ce (@{$cea->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice)}) {
-        my $loc_string = $ce->slice->seq_region_name . ':' . ($slice->start + $ce->start - 1) . '-' . ($slice->start + $ce->end - 1);
+				my $slice_start = $slice->start;
+        my $loc_string = $ce->slice->seq_region_name . ':' . ($slice_start + $ce->start - 1) . '-' . ($slice_start + $ce->end - 1);
         
         my $loc_link = $hub->url({
           type   => 'Location',
@@ -344,7 +477,36 @@ sub constrained_element_table {
     }
   }
   
-  return $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
+  my $table = $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] });
+	
+	return display_table_with_toggle_button($title,$table_id,1,$table);
 }
 
+
+sub display_table_with_toggle_button {
+	my $title = shift;
+	my $id    = shift;
+	my $state = shift;
+	my $table = shift;
+	
+	my $is_show = 'show';
+	my $is_open = 'open';
+	if ($state==0) {
+		$is_show = 'hide';
+		$is_open = 'closed';
+	}
+	
+	$table->add_option('data_table', "toggle_table $is_show");
+  $table->add_option('id', $id.'_table');
+	my $html = qq{
+  	<div>
+    	<h2 style="float:left">$title</h2>
+      <span class="toggle_button" id="$id"><em class="$is_open" style="margin:5px"></em></span>
+      <p class="invisible">.</p>
+    </div>\n
+	};
+	$html .= $table->render;	
+		
+	return $html;
+}
 1;
