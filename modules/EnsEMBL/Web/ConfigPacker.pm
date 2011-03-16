@@ -403,7 +403,7 @@ sub _summarise_variation_db {
   }
 
 #--------- Add in structural variation information
-  my $v_aref = $dbh->selectall_arrayref( "select s.name, count(*), s.description from structural_variation sv, source s where sv.source_id=s.source_id  group by sv.source_id");
+  my $v_aref = $dbh->selectall_arrayref( "select s.name, count(*), s.description from structural_variation sv, source s where sv.source_id=s.source_id and sv.class='SV' group by sv.source_id");
   my %structural_variations;
   my %sv_descriptions;
   foreach (@$v_aref) {
@@ -412,6 +412,17 @@ sub _summarise_variation_db {
   }
   $self->db_details($db_name)->{'tables'}{'structural_variation'}{'counts'} = \%structural_variations;
   $self->db_details($db_name)->{'tables'}{'structural_variation'}{'descriptions'} = \%sv_descriptions;
+
+#--------- Add in copy number variant probes information
+  my $cnv_aref = $dbh->selectall_arrayref( "select s.name, count(*), s.description from structural_variation sv, source s where sv.source_id=s.source_id and sv.class='CNV_PROBE' group by sv.source_id");
+  my %cnv_probes;
+  my %cnv_probes_descriptions;
+  foreach (@$cnv_aref) {
+   $cnv_probes{$_->[0]} = $_->[1];    
+   $cnv_probes_descriptions{$_->[0]} = $_->[2];
+  }
+  $self->db_details($db_name)->{'tables'}{'structural_variation'}{cnv_probes}{'counts'} = \%cnv_probes;
+  $self->db_details($db_name)->{'tables'}{'structural_variation'}{cnv_probes}{'descriptions'} = \%cnv_probes_descriptions;
 
 #--------- Add in Variation set information
   # First get all toplevel sets
@@ -456,9 +467,9 @@ sub _summarise_variation_db {
   my %somatic_mutations;
   my $sm_aref =  $dbh->selectall_arrayref(  
     'select distinct(p.description), va.phenotype_id, s.name 
-       from phenotype p, variation_annotation va, source s, study st
-      where p.phenotype_id=va.phenotype_id and va.study_id = st.study_id
-      and st.source_id=s.source_id and s.somatic_status = "somatic"'
+     from phenotype p, variation_annotation va, source s, study st
+     where p.phenotype_id=va.phenotype_id and va.study_id = st.study_id
+     and st.source_id=s.source_id and s.somatic_status = "somatic"'
   );
   
   foreach (@$sm_aref){ 
