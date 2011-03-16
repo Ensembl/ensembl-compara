@@ -47,6 +47,9 @@ sub short_caption {
   my $self = shift;
 
   my $type = 'Structural variation';
+	if ($self->class eq 'CNV_PROBE') {
+ 		$type = 'CNV probe';
+ 	}
   my $short_type = 'S. Var';
   return $type.' displays' unless shift eq 'global';
 
@@ -58,29 +61,41 @@ sub short_caption {
 sub caption {
  my $self = shift;
  my $type = 'Structural variation';
+ if ($self->class eq 'CNV_PROBE') {
+ 	$type = 'Copy number variation probe';
+ }
  my $caption = $type.': '.$self->name;
 
  return $caption;
 }
 
-sub name                { my $self = shift; return $self->Obj->variation_name;    }
-sub class               { my $self = shift; return $self->Obj->class;             }
-sub source              { my $self = shift; return $self->Obj->source;            }
-sub source_description  { my $self = shift; return $self->Obj->source_description; }
-
+sub name               { my $self = shift; return $self->Obj->variation_name;                      }
+sub class              { my $self = shift; return $self->Obj->class;                               }
+sub source             { my $self = shift; return $self->Obj->source;                              }
+sub source_description { my $self = shift; return $self->Obj->source_description;                  }
+sub study_name         { my $self = shift; return $self->Obj->study_name;                          }
+sub study_description  { my $self = shift; return $self->Obj->study_description;                   }
+sub study_url          { my $self = shift; return $self->Obj->study_url;                           }
+sub supporting_sv      { my $self = shift; return $self->Obj->get_all_SupportingStructuralVariants;}    
 
 sub variation_feature_mapping { 
   my $self = shift;
   my %data;
-  my $id = $self->Obj->dbID;
-  $data{$id}{Chr}            = $self->Obj->slice->seq_region_name;
-  $data{$id}{start}          = $self->Obj->start;
-  $data{$id}{end}            = $self->Obj->end;
-  $data{$id}{strand}         = $self->Obj->strand;
+	my $obj = $self->Obj;
+  my $id = $obj->dbID;
+  $data{$id}{Chr}            = $obj->slice->seq_region_name;
+  $data{$id}{start}          = $obj->start;
+  $data{$id}{end}            = $obj->end;
+  $data{$id}{strand}         = $obj->strand;
   $data{$id}{transcript_vari} = undef;
 
   return \%data;
 }
 
-
+# uncomment when including export data for structural_variation
+ sub can_export {
+   my $self = shift;
+   
+   return $self->action =~ /^Export$/ ? 0 : $self->availability->{'structural_variation'};
+ }
 1;
