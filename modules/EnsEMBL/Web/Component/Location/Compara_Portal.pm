@@ -35,10 +35,10 @@ sub content {
   }
 
   my @buttons = (
-    {'title' => 'Alignments (image)', 'img' => '/img/compara_image.gif', 'url' => $text_url},
-    {'title' => 'Alignments (text)',  'img' => '/img/compara_text.gif',   'url' => $image_url},
-    {'title' => 'Multi-species view', 'img' => '/img/compara_multi.gif',  'url' => $multi_url},
-    {'title' => 'Synteny',            'img' => '/img/compara_syn.gif',    'url' => $syn_url},
+    {'title' => 'Alignments (image)', 'img' => 'compara_image', 'url' => $text_url},
+    {'title' => 'Alignments (text)',  'img' => 'compara_text',   'url' => $image_url},
+    {'title' => 'Multi-species view', 'img' => 'compara_multi',  'url' => $multi_url},
+    {'title' => 'Synteny',            'img' => 'compara_syn',    'url' => $syn_url},
   );
 
   my $html = qq(
@@ -49,11 +49,13 @@ sub content {
     my $img = $button->{'img'};
     my $url = $button->{'url'};
     if ($url) {
-      $html .= qq(<a href="$url" title="$title"><img src="$img" class="portal" alt="" /></a>);
+      $img .= '.gif';
+      $html .= qq(<a href="$url" title="$title"><img src="/img/$img" class="portal" alt="" /></a>);
     }
     else {
+      $img   .= '_off.gif';
       $title .= ' (NOT AVAILABLE)';
-      $html .= qq(<img src="$img" class="portal" alt="" title="$title" />);
+      $html .= qq(<img src="/img/$img" class="portal" alt="" title="$title" />);
     }
   }
   $html .= qq(

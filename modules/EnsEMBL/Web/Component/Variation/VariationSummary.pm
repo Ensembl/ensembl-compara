@@ -52,14 +52,14 @@ sub content {
   }
 
   my @buttons = (
-    {'title' => 'Sequence',             'img' => '/img/variation_seq.gif',      'url' => $seq_url},
-    {'title' => 'Gene/Transcript',      'img' => '/img/variation_gt.gif',       'url' => $gt_url},
-    {'title' => 'Population genetics',  'img' => '/img/variation_pop.gif',      'url' => $pop_url},
-    {'title' => 'Individual genotypes', 'img' => '/img/variation_geno.gif',     'url' => $geno_url},
-    {'title' => 'Genomic context',      'img' => '/img/variation_context.gif',  'url' => $context_url},
-    {'title' => 'Linked variations',    'img' => '/img/variation_ld.gif',       'url' => $ld_url},
-    {'title' => 'Phenotype data',       'img' => '/img/variation_pheno.gif',    'url' => $pheno_url},
-    {'title' => 'Phylogenetic context', 'img' => '/img/variation_phylo.gif',    'url' => $phylo_url},
+    {'title' => 'Sequence',             'img' => 'variation_seq',      'url' => $seq_url},
+    {'title' => 'Gene/Transcript',      'img' => 'variation_gt',       'url' => $gt_url},
+    {'title' => 'Population genetics',  'img' => 'variation_pop',      'url' => $pop_url},
+    {'title' => 'Individual genotypes', 'img' => 'variation_geno',     'url' => $geno_url},
+    {'title' => 'Genomic context',      'img' => 'variation_context',  'url' => $context_url},
+    {'title' => 'Linked variations',    'img' => 'variation_ld',       'url' => $ld_url},
+    {'title' => 'Phenotype data',       'img' => 'variation_pheno',    'url' => $pheno_url},
+    {'title' => 'Phylogenetic context', 'img' => 'variation_phylo',    'url' => $phylo_url},
   );
 
   my $html = qq(
@@ -77,11 +77,13 @@ sub content {
     my $img   = $button->{'img'};
     my $url   = $button->{'url'};
     if ($url) {
-      $html .= qq(<a href="$url" title="$title"><img src="$img" class="portal" alt="" /></a>);
+      $img .= '.gif';
+      $html .= qq(<a href="$url" title="$title"><img src="/img/$img" class="portal" alt="" /></a>);
     }
     else {
+      $img   .= '_off.gif';
       $title .= ' (NOT AVAILABLE)';
-      $html .= qq(<img src="$img" class="portal" alt="" title="$title" />);
+      $html .= qq(<img src="/img/$img" class="portal" alt="" title="$title" />);
     }
     $i++;
   }

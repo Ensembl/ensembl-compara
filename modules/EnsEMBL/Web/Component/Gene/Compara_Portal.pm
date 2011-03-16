@@ -37,11 +37,11 @@ sub content {
   }
 
   my @buttons = (
-    {'title' => 'Genomic alignments', => 'img' => '/img/compara_align.gif', 'url' => $align_url},
-    {'title' => 'Gene tree',          => 'img' => '/img/compara_tree.gif',  'url' => $tree_url},
-    {'title' => 'Orthologues',        => 'img' => '/img/compara_ortho.gif', 'url' => $ortho_url},
-    {'title' => 'Paralogues',         => 'img' => '/img/compara_para.gif',  'url' => $para_url},
-    {'title' => 'Families',           => 'img' => '/img/compara_fam.gif',   'url' => $fam_url},
+    {'title' => 'Genomic alignments', => 'img' => 'compara_align', 'url' => $align_url},
+    {'title' => 'Gene tree',          => 'img' => 'compara_tree',  'url' => $tree_url},
+    {'title' => 'Orthologues',        => 'img' => 'compara_ortho', 'url' => $ortho_url},
+    {'title' => 'Paralogues',         => 'img' => 'compara_para',  'url' => $para_url},
+    {'title' => 'Families',           => 'img' => 'compara_fam',   'url' => $fam_url},
   );
 
   my $html = qq(
@@ -52,11 +52,13 @@ sub content {
     my $img = $button->{'img'};
     my $url = $button->{'url'};
     if ($url) {
-      $html .= qq(<a href="$url" title="$title"><img src="$img" class="portal" alt="" /></a>);
+      $img  .= '.gif';
+      $html .= qq(<a href="$url" title="$title"><img src="/img/$img" class="portal" alt="" /></a>);
     }
     else {
+      $img   .= '_off.gif';
       $title .= ' (NOT AVAILABLE)';
-      $html .= qq(<img src="$img" class="portal" alt="" title="$title" />);
+      $html  .= qq(<img src="/img/$img" class="portal" alt="" title="$title" />);
     }
   }
   $html .= qq(
