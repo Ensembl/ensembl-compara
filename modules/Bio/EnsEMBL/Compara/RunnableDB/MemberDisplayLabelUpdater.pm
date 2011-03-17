@@ -279,6 +279,7 @@ sub _process {
   my ($self, $genome_db, $source_name) = @_;
   
   my @members_to_update;
+  my $replace = $self->param('replace');
   
   my $core_labels = $self->_get_display_label_lookup($genome_db, $source_name);
   my $members = $self->_get_members_by_source($genome_db, $source_name);
@@ -288,7 +289,7 @@ sub _process {
       my $member = $members->{$stable_id};
       
       #Skip if it's already got a label & we are not replacing things
-      next if defined $member->display_label() && !$self->replace();
+      next if defined $member->display_label() && !$replace;
       
       my $display_label = $core_labels->{$stable_id};
       #Next if there was no core object for the stable ID
