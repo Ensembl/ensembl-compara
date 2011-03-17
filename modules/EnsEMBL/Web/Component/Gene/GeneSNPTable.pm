@@ -205,7 +205,7 @@ sub variation_table {
     
     my %snps = %{$transcript->__data->{'transformed'}{'snps'} || {}};
    
-    return unless %snps;
+    next unless %snps;
     
     my $gene_snps         = $transcript->__data->{'transformed'}{'gene_snps'} || [];
     my $tr_start          = $transcript->__data->{'transformed'}{'start'};
@@ -214,7 +214,7 @@ sub variation_table {
     my $cdna_coding_start = $transcript->Obj->cdna_coding_start;
     my $gene              = $transcript->gene;
     
-    foreach (@$gene_snps) {      
+    foreach (@$gene_snps) {
       my ($snp, $chr, $start, $end) = @$_;
       my $raw_id               = $snp->dbID;
       my $transcript_variation = $snps{$raw_id};
