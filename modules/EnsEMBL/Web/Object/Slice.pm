@@ -207,7 +207,7 @@ sub filter_snps {
 		  (grep { $valids->{"opt_$_"} } @{$_->get_all_validation_states}) :
 		  $valids->{'opt_noinfo'}
 		)}                                                                                    # [ fake_s, fake_e, SNP ] Grep features to see if the area valid
-    grep { scalar map { $valids->{'opt_'. lc $_} ? 1 : () } @{$_->get_consequence_type} } # Filter unwanted consequence classifications
+    grep { scalar map { $valids->{'opt_'. lc $_} ? 1 : () } @{$_->_list_all_consequences} } # Filter unwanted consequence classifications
     grep { scalar map { $sources->{$_} ? 1 : () } @{$_->get_all_sources} }                # Filter our unwanted sources
 	  grep { $valids->{'opt_class_' . lc($_->var_class)} }                                      # Filter our unwanted classes
 	  grep { $_->map_weight < 4 }
@@ -292,7 +292,7 @@ sub filter_munged_snps {
       (grep { $valids->{"opt_$_"} } @{$_->[2]->get_all_validation_states}) : 
       $valids->{'opt_noinfo'}
     )}                                                                                          # [ fake_s, fake_e, SNP ] Grep features to see if they are valid
-    grep { scalar map { $valids->{'opt_' . lc $_} ? 1 : () } @{$_->[2]->get_consequence_type} } # [ fake_s, fake_e, SNP ] Filter our unwanted consequence types
+    grep { scalar map { $valids->{'opt_' . lc $_} ? 1 : () } @{$_->[2]->_list_all_consequences} } # [ fake_s, fake_e, SNP ] Filter our unwanted consequence types
     grep { scalar map { $sources->{$_} ? 1 : () } @{$_->[2]->get_all_sources} }                 # [ fake_s, fake_e, SNP ] Filter our unwanted sources
     grep { $valids->{'opt_class_' . lc($_->[2]->var_class)} }                                       # [ fake_s, fake_e, SNP ] Filter our unwanted classes
     @$snps;
