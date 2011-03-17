@@ -1110,7 +1110,7 @@ sub store_TransformedSNPS {
 	foreach my $tv(@{$tva->fetch_all_by_Transcripts([map {$_->transcript} @transcripts])}) {
 	  foreach my $type(@{$tv->consequence_type || []}) {
 		next unless $valids->{'opt_'.lc($type)};
-		$tvs_by_tr->{$tv->transcript->stable_id}->{$tv->{'_vf_id'}} = $tv;
+		$tvs_by_tr->{$tv->transcript->stable_id}->{$tv->variation_feature->dbID} = $tv;
 		last;
 	  }
 	}
@@ -1119,7 +1119,7 @@ sub store_TransformedSNPS {
 	foreach my $tv(@{$tva->fetch_all_somatic_by_Transcripts([map {$_->transcript} @transcripts])}) {
 	  foreach my $type(@{$tv->consequence_type || []}) {
 		next unless $valids->{'opt_'.lc($type)};
-		$tvs_by_tr->{$tv->transcript->stable_id}->{$tv->{'_vf_id'}} = $tv;
+		$tvs_by_tr->{$tv->transcript->stable_id}->{$tv->variation_feature->dbID} = $tv;
 		last;
 	  }
 	}
