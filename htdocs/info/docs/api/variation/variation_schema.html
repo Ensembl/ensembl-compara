@@ -1064,7 +1064,7 @@ A PDF document of the schema is available <a href="variation-database-schema.pdf
 		<tr class="bg2"><td><b>source_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#source">source</a> table.</td><td>key: source_idx</td></tr>
 		<tr class="bg1"><td><b>name</b></td><td>varchar(255)</td><td></td><td>Name of the variation. e.g. "rs1333049".</td><td>unique</td></tr>
 		<tr class="bg2"><td><b>validation_status</b></td><td>SET('cluster','freq',<br />'submitter','doublehit',<br />'hapmap','1000Genome',<br />'failed','precious')</td><td></td><td>Variant discovery method and validation from dbSNP.</td><td></td></tr>
-		<tr class="bg1"><td><b>ancestral_allele</b></td><td>varchar(25000)</td><td>NULL</td><td>Taken from dbSNP to show ancestral allele for the variation.</td><td></td></tr>
+		<tr class="bg1"><td><b>ancestral_allele</b></td><td>varchar(255)</td><td>NULL</td><td>Taken from dbSNP to show ancestral allele for the variation.</td><td></td></tr>
 		<tr class="bg2"><td><b>flipped</b></td><td>tinyint(1)</td><td>NULL</td><td>This is set to 1 if the variant is flipped from the negative to the positive strand during import.</td><td></td></tr>
 		<tr class="bg1"><td><b>class_attrib_id</b></td><td>int(10)</td><td>0</td><td>Class of the variation, key into the <a href="#attrib">attrib</a> table</td><td></td></tr>
 		<tr class="bg2"><td><b>somatic</b></td><td>tinyint(1)</td><td>0</td><td>flags whether this variation is known to be somatic or not</td><td></td></tr>
