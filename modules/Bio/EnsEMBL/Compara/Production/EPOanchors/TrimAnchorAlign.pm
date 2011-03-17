@@ -97,8 +97,8 @@ sub run {
   $run_str .= " -h"; # output leaves only
 
   $self->{'msa_string'} = qx"$run_str";
-
-  my $trim_position = $self->get_best_trimming_position($self->{'msa_string'});
+  my $trimming_off_set = defined($self->{'trimming_off_set'}) ? $self->{'trimming_off_set'} : 0; #restrict the trimming position this distance from either end of the sequence
+  my $trim_position = $self->get_best_trimming_position($self->{'msa_string'}, $trimming_off_set);
   $self->{'trimmed_anchor_aligns'} = $self->get_trimmed_anchor_aligns($trim_position);
 
   return 1;
@@ -162,7 +162,9 @@ sub get_params {
   if(defined($params->{'method_link_species_set_id'})) {
     $self->method_link_species_set_id($params->{'method_link_species_set_id'});
   }
-
+  if(defined($params->{'trimming_off_set'})) {
+	$self->{'trimming_off_set'} = $params->{'trimming_off_set'};
+  }
   return 1;
 }
 
@@ -214,7 +216,7 @@ sub _dump_fasta {
 }
 
 sub get_best_trimming_position {
-  my ($self, $msa_string) = @_;
+  my ($self, $msa_string, $trimming_off_set) = @_;
   my $num_of_leaves = 1;
 
   ################################
@@ -311,7 +313,7 @@ sub get_best_trimming_position {
 
   my $max_score = 0;
   my $best_position = 0;
-  for (my $i = 0; $i < @final_scores; $i++) {
+  for (my $i = $trimming_off_set; $i < @final_scores - $trimming_off_set; $i++) {
     if ($final_scores[$i] > $max_score) {
       $max_score = $final_scores[$i];
       $best_position = $i+2;
