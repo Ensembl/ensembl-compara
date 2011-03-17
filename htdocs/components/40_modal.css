@@ -148,8 +148,8 @@ body.ie6 .modal_title .modal_close {
   cursor: move;
 }
 
-.modal_nav {
-  width: 16em;
+.modal_nav, body.static .modal_nav {
+  width: 16.25em;
   margin: 0.25em 0.25em 0;
 }
 
