@@ -99,7 +99,7 @@ sub _archive_link {
   my $species_defs = $hub->species_defs;
   
   # no archive for old release, return un-linked display_label
-  return $archive_object->stable_id . '.' . $archive_object->version if $archive_object->release < $object->get_earliest_archive;
+  return $archive_object->stable_id . '.' . $archive_object->version if $archive_object->release < $self->object->get_earliest_archive;
 
   my $type    = $archive_object->type eq 'Translation' ? 'peptide' : lc $archive_object->type;
   my $name    = $archive_object->stable_id . '.' . $archive_object->version;
