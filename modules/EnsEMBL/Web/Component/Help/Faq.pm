@@ -28,10 +28,10 @@ sub content {
   if ($id) {
     $args->{'id'} = $id;
   }
-  elsif ($hub->param('kw')) {
-    $args->{'kw'} = $hub->param('kw');
-  }
-  my @faqs = @{$adaptor->fetch_faqs($args)};  
+  my @faqs = @{$adaptor->fetch_faqs($args)}; 
+
+  ## Can't do category via SQL any more, as it has been moved into 'data' 
+  my $category = $hub->param('cat');
 
   if (scalar(@faqs) > 0) {
   
@@ -39,6 +39,7 @@ sub content {
 
     foreach my $faq (@faqs) {
       next unless $faq;
+      next if $category && $faq->{'category'} ne $category;
 
       $html .= sprintf(qq(<h3 id="faq%s">%s</h3>\n<p>%s</p>), $faq->{'id'}, $faq->{'question'}, $faq->{'answer'});
       if ($hub->param('feedback') && $hub->param('feedback') == $faq->{'id'}) {
