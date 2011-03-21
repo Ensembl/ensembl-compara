@@ -92,15 +92,11 @@ sub content {
       });
       
       # HGVS
-      my @vfs = grep $_->dbID eq $varif_id, @{$object->Obj->get_all_VariationFeatures};
-      my $vf  = $vfs[0];
-      
-      # get HGVS notations
       my $hgvs;
       
       unless ($object->is_somatic_with_different_ref_base){ 
-        my %cdna_hgvs = %{$vf->get_all_hgvs_notations($trans, 'c')};
-        my %pep_hgvs  = %{$vf->get_all_hgvs_notations($trans, 'p')};
+        my %cdna_hgvs = %{$transcript_data->{tv}->hgvs_coding};
+        my %pep_hgvs  = %{$transcript_data->{tv}->hgvs_protein};
       
         # filter peptide ones for synonymous changes
         #map {delete $pep_hgvs{$_} if $pep_hgvs{$_} =~ /p\.\=/} keys %pep_hgvs;
