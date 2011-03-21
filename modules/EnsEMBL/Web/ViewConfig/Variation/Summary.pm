@@ -10,6 +10,7 @@ sub init {
   $view_config->_set_defaults(qw(
     flank_size          400
     show_mismatches     yes
+    display_type        align
   ));
   
   $view_config->storable = 1;
@@ -35,6 +36,17 @@ sub form {
       { value => '500', name => '500bp' },
       { value => '1000', name => '1000bp' },
     ]
+  });  
+  
+  $view_config->add_form_element({
+    type   => 'DropDown',
+    select =>, 'select',
+    label  => 'Type of display when flanking sequence differs from reference',
+    name   => 'display_type',
+    values => [
+      { value => 'align',  name => 'NW alignment' },
+      { value => 'basic',  name => 'Basic' },
+    ]
   });
   
   $view_config->add_form_element({
@@ -44,6 +56,7 @@ sub form {
     value => 'yes',
     raw   => 1,
   });
+  
 }
 
 1;
