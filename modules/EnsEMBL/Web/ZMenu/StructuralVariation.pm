@@ -59,7 +59,7 @@ sub content {
 
 	my $sv_caption = 'Structural variation: ';
 	if ($class eq 'CNV_PROBE') {
-		$sv_caption = 'Copy number variation probe: ';
+		$sv_caption = 'CNV probe: ';
 	}
   $self->caption($sv_caption . $variation->variation_name);
 
