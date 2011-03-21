@@ -99,6 +99,9 @@ foreach my $index (@indexes) {
 #    next if ($species =~ /Homo/);
 
     $conf->{'species'}   = $species;
+    push @{$conf->{'speciesname_list'}},$SD->get_config($species,'SPECIES_COMMON_NAME');
+#    (my $species_name = $species) =~ s/_/ /;
+    push  @{$conf->{'speciesname_list'}},$species;
     $conf->{'authority'} = $SD->get_config($species,'AUTHORITY');
     my %dbs = %{$SD->get_config($species,'databases')||{}};
     $conf->{'dbs'}       = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
@@ -220,14 +223,11 @@ sub markerLine {
 <entry id="$key">
   <description>$desc</description>
   <additional_fields>);
+  $xml .= &common_fields($species,'Marker');
   foreach my $syn (@synonyms) {
     $xml .= qq(
     <field name="synonym">$syn</field>);
   }
-  $xml .= qq(
-    <field name="species">$species</field>
-    <field name="featuretype">Marker</field>
-);
   while (my ($param,$value) = each %$params) {
     $xml .= qq(
     <field name="$param">$value</field>);
@@ -329,14 +329,13 @@ sub QTLLine {
 <entry id="$key">
   <description>$desc</description>
   <additional_fields>);
+  $xml .= &common_fields($species,'QTL');
   foreach my $id (@$IDS) {
     $xml .= qq(
     <field name="synonym">$id</field>);
   }
   $xml .= qq(
     <field name="action">$action</field>
-    <field name="species">$species</field>
-    <field name="featuretype">QTL</field>
     <field name="location">$pos</field>
   </additional_fields>);
   $counter->();
@@ -554,6 +553,7 @@ sub VariationLine {
 <entry id="$name">
   <description>$desc</description>
   <additional_fields>);
+  $xml .= &common_fields($species,'Variation');
   foreach my $id (@$IDS) {
     $xml .= qq(
     <field name="synonym">$id</field>);
@@ -565,8 +565,6 @@ sub VariationLine {
     }
   }
   $xml .= qq(
-    <field name="species">$species</field>
-    <field name="featuretype">Variation</field>
     <field name="source">$source</field>
   </additional_fields>);
   $counter->();
@@ -613,9 +611,8 @@ sub VariationPhenLine {
 <entry id="$id">
   <description>$name</description>
   <additional_fields>);
+  $xml .= &common_fields($species,'Phenotype');
   $xml .= qq(
-    <field name="species">$species</field>
-    <field name="featuretype">Phenotype</field>
   </additional_fields>);
   $counter->();
   return $xml . '</entry>';
@@ -680,9 +677,8 @@ sub StrucVarLine {
 <entry id="$id">
   <description>$desc</description>
   <additional_fields>);
+  $xml .= &common_fields($species,'StructuralVariation');
   $xml .= qq(
-    <field name="species">$species</field>
-    <field name="featuretype">StructuralVariation</field>
     <field name="location">$location</field>
     <field name="action">$action</field>);
   while (my ($param,$value) = each %$params) {
@@ -798,9 +794,8 @@ sub GenomicAlignmentLine {
     $cross_references{$db_name}++;
   }
   $xml .= qq(
-  <additional_fields>
-    <field name="species">$species</field>
-    <field name="featuretype">$ftype</field>);
+  <additional_fields>);
+  $xml .= &common_fields($species,$ftype);
   unless ($db eq 'core') {
     $xml .= qq(
     <field name="db">$db</field>);
@@ -893,9 +888,9 @@ sub OligoProbeLine {
 <entry id="$hid">
   <description>$desc</description>);
   $xml .= qq(
-  <additional_fields>
-    <field name="species">$species</field>
-    <field name="featuretype">ProbeFeature</field>
+  <additional_fields>);
+  $xml .= &common_fields($species,'ProbeFeature');
+  $xml .= qq(
     <field name="db">$db</field>
     <field name="ptype">$pset</field>
   </additional_fields>);
@@ -968,13 +963,12 @@ sub DomainLine {
 <entry id="$acc">
   <description>$description</description>
   <additional_fields>);
+  $xml .= &common_fields($species,'Domain');
   foreach my $id (@$IDS) {
     $xml .= qq(
     <field name="synonym">$id</field>);
   }
   $xml .= qq(
-    <field name="species">$species</field>
-    <field name="featuretype">Domain</field>
   </additional_fields>);
   $counter->();
   return $xml . '</entry>';
@@ -1051,9 +1045,9 @@ sub FamilyLine {
 <entry id="$fid">
   <description>$desc</description>);
   $xml .= qq(
-  <additional_fields>
-    <field name="species">$species</field>
-    <field name="featuretype">Family</field>
+  <additional_fields>);
+  $xml .= &common_fields($species,'Family');
+  $xml .= qq(
   </additional_fields>);
   $counter->();
   return $xml . '</entry>';
@@ -1293,9 +1287,9 @@ sub SeqLine {
 <entry id="$name">
   <description>$desc</description>);
   $xml .= qq(
-  <additional_fields>
-    <field name="species">$species</field>
-    <field name="featuretype">Sequence</field>
+  <additional_fields>);
+  $xml .= &common_fields($species,'Sequence');
+  $xml .= qq(
     <field name="location">$r</field>
     <field name="action">$action</field>);
   foreach my $syn (@$synonyms) {
@@ -1734,12 +1728,11 @@ sub GeneLine {
   </cross_references>);
 
   $xml .= qq(
-  <additional_fields>
-    <field name="species">$species</field>
-    <field name="featuretype">Gene</field>
+  <additional_fields>);
+  $xml .= &common_fields($species,'Gene');
+  $xml .= qq(
     <field name="action">Summary</field>
     <field name="source">$ad_label</field>);
-
   if ($gene_loc) {
     my $loc = $gene_loc->{'sr_name'} .':'. $gene_loc->{'seq_region_start'} .'-'. $gene_loc->{'seq_region_end'} .':'. $gene_loc->{'seq_region_strand'};
     $xml .= qq(
@@ -1810,13 +1803,12 @@ sub GeneStableIdMappingLine {
 <entry id="$osi">
   <description>$desc</description>
   <additional_fields>);
+  $xml .= &common_fields($species,'Gene');
   foreach my $id (@$current_sis,@$deprecated_sis) {
     $xml .= qq(
     <field name="old_id">$id</field>);
   }
   $xml .= qq(
-    <field name="species">$species</field>
-    <field name="featuretype">Gene</field>
     <field name="action">Idhistory</field>
     <field name="db">$db</field>
   </additional_fields>);
@@ -1905,9 +1897,7 @@ sub RegulatoryFeatureLine {
 <entry id="$id">
   <description>$desc</description>
   <additional_fields>);
-  $xml .= qq(
-    <field name="species">$species</field>
-    <field name="featuretype">$ftype</field>);
+  $xml .= &common_fields($species,$ftype);
   foreach my $syn (@$ids) {
     $xml .= qq(
     <field name="synonym">$syn</field>);
@@ -1980,10 +1970,10 @@ sub LRGLine {
     <ref dbname="$dbname" dbkey="$dbkey"/>
   </cross_references>);
   $xml .= qq(
-  <additional_fields>
-    <field name="action">LRG_Summary</field>
-    <field name="species">$species</field>
-    <field name="featuretype">$type</field>);
+  <additional_fields>);
+  $xml .= &common_fields($species,$type);
+  $xml .= qq(
+    <field name="action">LRG_Summary</field>);
   foreach my $tsi (@$tsids) {
     $xml .= qq(
     <field name="transcript">$tsi</field>);
@@ -2027,6 +2017,19 @@ sub footer {
     $fh->close();
   }
   return $ecount;
+}
+
+sub common_fields {
+  my ($species,$feature_type) = @_;
+  my $xml = qq(
+    <field name="species">$species</field>);
+  foreach my $sp (@{$conf->{'speciesname_list'}}) {
+    $xml .= qq(
+    <field name="species_name">$sp</field>);
+  }
+  $xml .= qq(
+    <field name="featuretype">$feature_type</field>);
+  return $xml;
 }
 
 sub p {
