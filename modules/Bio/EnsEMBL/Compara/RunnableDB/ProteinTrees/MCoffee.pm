@@ -355,7 +355,13 @@ sub run_mcoffee {
   $prefix .= "export NO_ERROR_REPORT_4_TCOFFEE=1;";
 
   if($self->param('mafft_exe')) {
-  	print "Using defined mafft location ".$self->param('mafft_exe').". Make sure MAFFT_BINARIES is setup correctly\n" if $self->debug();
+    my $mafft_exe = $self->param('mafft_exe');
+    if(-x $mafft_exe) {
+  	 print "Using defined mafft location ${mafft_exe}. Make sure MAFFT_BINARIES is setup correctly\n" if $self->debug();
+    }
+    else {
+      throw("Cannot find the mafft binary ${mafft_exe}. Check your setup & try again");
+    }
   } else {
   	print "Using default mafft location\n" if $self->debug();
   	$prefix .= 'export MAFFT_BINARIES=/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux ;';
