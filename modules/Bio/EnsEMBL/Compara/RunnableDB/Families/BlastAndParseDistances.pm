@@ -6,21 +6,16 @@ use FileHandle;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub load_fasta_sequences_from_db {
-    my ($self, $start_seq_id, $minibatch, $overwrite) = @_;
+    my ($self, $start_seq_id, $minibatch) = @_;
 
-    my $offset                  = $self->param('offset')      || 0;
     my $idprefixed              = $self->param('idprefixed')  || 0;
     my $debug                   = $self->debug() || $self->param('debug') || 0;
 
     my $sql = qq {
         SELECT s.sequence_id, m.stable_id, s.sequence
           FROM member m, sequence s
-    }.($overwrite ? '' : ' LEFT JOIN mcl_sparse_matrix x ON (s.sequence_id+?)=x.row_id ')
-    .qq{
          WHERE s.sequence_id BETWEEN ? AND ?
            AND m.sequence_id=s.sequence_id
-    }.($overwrite ? '' : ' AND x.row_id IS NULL ')
-    .qq{
       GROUP BY s.sequence_id
       ORDER BY s.sequence_id
     };
@@ -30,7 +25,7 @@ sub load_fasta_sequences_from_db {
     }
 
     my $sth = $self->compara_dba->dbc->prepare( $sql );
-    $sth->execute( ($overwrite ? () : ($offset)), $start_seq_id, $start_seq_id+$minibatch-1 );
+    $sth->execute( $start_seq_id, $start_seq_id+$minibatch-1 );
 
     my @fasta_list = ();
     while( my ($seq_id, $stable_id, $seq) = $sth->fetchrow() ) {
@@ -69,37 +64,15 @@ sub load_name2index_mapping_from_db {
     return \%name2index;
 }
 
-sub load_name2index_mapping_from_file {
-    my ($self, $filename) = @_;
-
-    my %name2index = ();
-    open(MAPPING, "<$filename") || die "Could not open name2index mapping file '$filename'";
-    while(my $line = <MAPPING>) {
-        chomp $line;
-        my ($idx, $stable_id) = split(/\s+/,$line);
-        $name2index{$stable_id} = $idx;
-    }
-    close MAPPING;
-
-    return \%name2index;
-}
-
 sub name2index { # can load the name2index mapping from db/file if necessary
     my ($self, $name) = @_;
 
     if($name=~/^seq_id_(\d+)_/) {
         return $1;
     } else {
-        my $name2index;
-        unless($name2index = $self->param('name2index')) {
-            my $tabfile                 = $self->param('tabfile');
+        my $name2index = $self->param('name2index') || $self->param('name2index', $self->load_name2index_mapping_from_db() );
 
-            $name2index = $self->param('name2index', $tabfile
-                ? $self->load_name2index_mapping_from_file($tabfile)
-                : $self->load_name2index_mapping_from_db()
-            );
-        }
-        return $name2index->{$name} || "UNKNOWN($name)";
+        return $name2index->{$name};
     }
 }
 
@@ -108,12 +81,11 @@ sub fetch_input {
 
     my $start_seq_id            = $self->param('sequence_id') || die "'sequence_id' is an obligatory parameter, please set it in the input_id hashref";
     my $minibatch               = $self->param('minibatch')   || 1;
-    my $overwrite               = $self->param('overwrite')   || 0; # overwrite=0 means we only fill in holes, overwrite=1 means we rewrite everything
     my $debug                   = $self->debug() || $self->param('debug') || 0;
 
-    my $fasta_list = $self->load_fasta_sequences_from_db($start_seq_id, $minibatch, $overwrite);
+    my $fasta_list = $self->load_fasta_sequences_from_db($start_seq_id, $minibatch);
 
-    if($overwrite and scalar(@$fasta_list)<$minibatch) {
+    if(scalar(@$fasta_list)<$minibatch) {
         die "Could not load all ($minibatch) sequences, please investigate";
     }
 
@@ -178,11 +150,11 @@ sub run {
     }
 
     my $blastdb_dir             = $self->param('blastdb_dir');
-    my $blastdb_name            = $self->param('blastdb_name')  || die "'blastdb_name' is an obligatory parameter, please set it in the input_id hashref";
+    my $blastdb_name            = $self->param('blastdb_name')  || die "'blastdb_name' is an obligatory parameter";
 
     my $minibatch               = $self->param('minibatch')     || 1;
 
-    my $blast_bin_dir           = $self->param('blast_bin_dir') || ( '/software/ensembl/compara/ncbi-blast-2.2.23+/bin' );
+    my $blast_bin_dir           = $self->param('blast_bin_dir') || '/software/ensembl/compara/ncbi-blast-2.2.23+/bin';
     my $blast_params            = $self->param('blast_params')  || '';  # no parameters to C++ binary means having composition stats on and -seg masking off
     my $evalue_limit            = $self->param('evalue_limit')  || 0.00001;
     my $tophits                 = $self->param('tophits')       || 250;
@@ -210,14 +182,16 @@ sub run {
 
     my $matrix_hash = $self->parse_blast_table_into_matrix_hash($blast_outfile, -log($evalue_limit)/log(10) );
 
-    my $incomplete = $self->param('incomplete', (scalar(keys %$matrix_hash) != scalar(@$fasta_list)) );
-
-    unless($debug || $incomplete) {
-        unlink $blast_outfile;
+    my $expected_elements   = scalar(@$fasta_list);
+    my $parsed_elements     = scalar(keys %$matrix_hash);
+    unless($parsed_elements == $expected_elements) {
+        die "Could only parse $parsed_elements out of $expected_elements";
     }
 
+    $self->param('matrix_hash', $matrix_hash);        # store it in a parameter
+
     unless($debug) {
-        $self->param('matrix_hash', $matrix_hash);        # store it in a parameter
+        unlink $blast_outfile;
     }
 }
 
@@ -225,23 +199,13 @@ sub write_output {
     my $self = shift @_;
 
     if(my $matrix_hash = $self->param('matrix_hash')) {
-
-        my $offset                  = $self->param('offset') || 0;
-
-        my $sql = "REPLACE INTO mcl_sparse_matrix (row_id, column_id, value) VALUES (?, ?, ?)";
-
-        my $sth = $self->compara_dba->dbc->prepare( $sql );
-
+        my @output_ids = ();
         while(my($row_id, $subhash) = each %$matrix_hash) {
             while(my($column_id, $value) = each %$subhash) {
-                $sth->execute( $row_id + $offset, $column_id + $offset, $value );
+                push @output_ids, { 'row_id' => $row_id, 'column_id' => $column_id, 'value' => $value};
             }
         }
-        $sth->finish();
-    }
-
-    if($self->param('incomplete')) {
-        die "According to our parser the table file generated by Blastp is incomplete, please investigate";
+        $self->dataflow_output_id( \@output_ids, 3);
     }
 }
 

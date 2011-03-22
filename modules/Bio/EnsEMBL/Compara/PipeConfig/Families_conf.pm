@@ -29,15 +29,38 @@
 
     Some statistics of previous releases:
 
+=head2 rel.62e stats
+
+    sequences to cluster:       3,133,750           [ SELECT count(*) from sequence; ]
+    uniprot_loading time:       1.6h                {20 x pfetch}
+    blasting time:              2 days              
+
+=head2 rel.62d stats
+
+    uniprot_loading time:       3.5h                {10 x pfetch}
+
+=head2 rel.62c stats
+
+    uniprot_loading time:       3.5h                {14 x pfetch}
+
+=head2 rel.62b stats
+
+    uniprot_loading time:       2.15h               {7 x mfetch}
+
+=head2 rel.62a stats
+
+    uniprot_loading time:       3h                  {30 x pfetch}
+
 =head2 rel.62 stats
 
     sequences to cluster:       3,079,257           [ SELECT count(*) from sequence; ]
     distances by Blast:         550,334,750         [ SELECT count(*) from mcl_sparse_matrix; ]
 
-    total running time:         4.5 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
-    uniprot_loading time:       5.1h                [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='load_uniprot'; ]
-    mcxload running time:       1.5h                [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcxload_matrix'; ]
-    mcl running time:           3.7h                [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcl'; ]
+    total running time:         4.5 days            
+    uniprot_loading time:       5.1h                
+    blasting time:              3 days              
+    mcxload running time:       1.5h                
+    mcl running time:           3.7h                
 
     memory used by mcxload:     15G RAM + 15G SWAP  [ bacct -l [ SELECT max(process_id) FROM hive WHERE analysis_id=11; ] ]
     memory used by mcl:         18G RAM + 18G SWAP  [ bacct -l [ SELECT max(process_id) FROM hive WHERE analysis_id=12; ] ]
@@ -47,18 +70,19 @@
     sequences to cluster:       2,914,080           [ SELECT count(*) from sequence; ]
     distances by Blast:         523,104,710         [ SELECT count(*) from mcl_sparse_matrix; ]
 
-    total running time:         3(!) days           [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
-    uniprot_loading time:       4h                  [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='load_uniprot'; ]
-    mcxload running time:       8h                  [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcxload_matrix'; ]
-    mcl running time:           9.4h                [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcl'; ]
+    total running time:         3(!) days           
+    uniprot_loading time:       4h                  
+    blasting time:              1.7(!) days         
+    mcxload running time:       8h                  
+    mcl running time:           9.4h                
 
 =head2 rel.60 stats
 
     sequences to cluster:       2,725,421           [ SELECT count(*) from sequence; ]
     distances by Blast:         484,837,915         [ SELECT count(*) from mcl_sparse_matrix; ]
 
-    mcxload running time:       11.2h               [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcxload_matrix'; ]
-    mcl running time:           3.1h                [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name='mcl'; ]
+    mcxload running time:       11.2h               
+    mcl running time:           3.1h                
 
     memory used by mcxload:     13G RAM + 13G SWAP  
     memory used by mcl:         15G RAM + 16G SWAP  
@@ -84,8 +108,10 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'release'         => '62',
-        'rel_suffix'      => 'a',    # an empty string by default, a letter otherwise
+        'rel_suffix'      => 'e',    # an empty string by default, a letter otherwise
         'rel_with_suffix' => $self->o('release').$self->o('rel_suffix'),
+
+        'pipeline_name'   => 'FAM_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
         'email'           => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
 
@@ -166,7 +192,8 @@ sub pipeline_create_commands {
 sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
     my ($self) = @_;
     return {
-        'pipeline_name'     => 'FAM_'.$self->o('rel_with_suffix'),  # name the pipeline to differentiate the submitted processes
+        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+
         'email'             => $self->o('email'),                   # for automatic notifications (may be unsupported by your Meadows)
 
         'work_dir'          => $self->o('work_dir'),                # data directories and filenames
@@ -174,8 +201,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'blast_bin_dir'     => $self->o('blast_bin_dir'),           # binary & script directories
         'mcl_bin_dir'       => $self->o('mcl_bin_dir'),
         'mafft_root_dir'    => $self->o('mafft_root_dir'),
-
-        'idprefixed'        => 1,                                   # other options to sync different analyses
     };
 }
 
@@ -252,7 +277,7 @@ sub pipeline_analyses {
             -wait_for => [ 'offset_and_innodbise_tables' ],
             -flow_into => {
                 2 => [ 'load_uniprot_factory' ],
-                1 => { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#', 'blastdb_dir' => '#blastdb_dir#' } },
+                1 => { 'snapshot_after_load_uniprot' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#', 'blastdb_dir' => '#blastdb_dir#' } },
             },
             -rc_id => 1,
         },
@@ -268,20 +293,35 @@ sub pipeline_analyses {
         
         {   -logic_name    => 'load_uniprot',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtEntries',
-            -hive_capacity => 30,
+            -parameters => {
+                'seq_loader_name'   => 'pfetch', # {'mfetch' x 7} takes 2.15h; {'pfetch' x 14} takes 3.5h; {'pfetch' x 30} takes 3h;
+            },
+            -hive_capacity => 20,
             -batch_size    => 100,
             -flow_into => {
                 3 => [ 'mysql:////subset_member' ],
             },
-            -rc_id => 1,
+            -rc_id => 0,
+        },
+
+        {   -logic_name => 'snapshot_after_load_uniprot',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd'       => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 0).' '.$self->o('pipeline_db','-dbname').' >#filename#',
+                'filename'  => $self->o('work_dir').'/'.$self->o('pipeline_name').'_snapshot_after_load_uniprot.sql',
+            },
+            -wait_for  => [ 'load_uniprot_superfactory', 'load_uniprot_factory', 'load_uniprot' ],   # act as a funnel
+            -flow_into => {
+                1 => [ 'dump_member_proteins' ],
+            },
         },
         
         {   -logic_name => 'dump_member_proteins',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMemberSequencesIntoFasta',
             -parameters => {
                 'source_names' => [ 'ENSEMBLPEP','Uniprot/SWISSPROT','Uniprot/SPTREMBL' ],
+                'idprefixed'   => 1,
             },
-            -wait_for  => [ 'load_uniprot_superfactory', 'load_uniprot_factory', 'load_uniprot' ],   # act as a funnel
             -flow_into => {
                 1 => [ 'make_blastdb' ],
             },
@@ -303,13 +343,13 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'      => 'SELECT DISTINCT s.sequence_id FROM member m, sequence s WHERE m.sequence_id=s.sequence_id AND m.source_name IN ("Uniprot/SPTREMBL", "Uniprot/SWISSPROT", "ENSEMBLPEP") ',
-                'input_id'        => { 'sequence_id' => '#_range_start#', 'minibatch' => '#_range_count#', 'blastdb_dir' => '#blastdb_dir#', 'blastdb_name' => '#blastdb_name#' },
+                'input_id'        => { 'sequence_id' => '#_range_start#', 'minibatch' => '#_range_count#' },
                 'step'            => 100,
                 'fan_branch_code' => 2,
             },
             -flow_into => {
                 2 => [ 'family_blast' ],
-                1 => { 'mcxload_matrix' => { 'tcx_name' => $self->o('tcx_name'), 'itab_name' => $self->o('itab_name'), 'mcl_name' => $self->o('mcl_name') } },
+                1 => { 'snapshot_after_family_blast' => { 'tcx_name' => $self->o('tcx_name'), 'itab_name' => $self->o('itab_name'), 'mcl_name' => $self->o('mcl_name') } },
             },
             -rc_id => 1,
         },
@@ -317,10 +357,28 @@ sub pipeline_analyses {
         {   -logic_name    => 'family_blast',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::BlastAndParseDistances',
             -parameters    => {
-                'blast_params' => $self->o('blast_params'),
+                'blastdb_dir'   => $self->o('blastdb_dir'),
+                'blastdb_name'  => $self->o('blastdb_name'),
+                'blast_params'  => $self->o('blast_params'),
+                'idprefixed'    => 1,
             },
             -hive_capacity => $self->o('blast_capacity'),
+            -flow_into => {
+                3 => [ 'mysql:////mcl_sparse_matrix?insertion_method=REPLACE' ],
+            },
             -rc_id => 2,
+        },
+
+        {   -logic_name => 'snapshot_after_family_blast',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd'       => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 0).' '.$self->o('pipeline_db','-dbname').' >#filename#',
+                'filename'  => $self->o('work_dir').'/'.$self->o('pipeline_name').'_snapshot_after_family_blast.sql',
+            },
+            -wait_for => [ 'family_blast' ],    # act as a funnel
+            -flow_into => {
+                1 => [ 'mcxload_matrix' ],
+            },
         },
 
         {   -logic_name => 'mcxload_matrix',
@@ -329,7 +387,6 @@ sub pipeline_analyses {
                 'db_conn'  => $self->dbconn_2_mysql('pipeline_db', 1), # to conserve the valuable input_id space
                 'cmd'      => "mysql #db_conn# -N -q -e 'select * from mcl_sparse_matrix' | #mcl_bin_dir#/mcxload -abc - -ri max -o #work_dir#/#tcx_name# -write-tab #work_dir#/#itab_name#",
             },
-            -wait_for => [ 'family_blast' ],    # act as a funnel
             -flow_into => {
                 1 => [ 'mcl' ],
             },
