@@ -9,17 +9,13 @@
 
 Bio::EnsEMBL::Compara::RunnableDB::DumpMemberSequencesIntoFasta
 
-Come on, read the code!
+This runnable dumps all members from given source_names into one big FASTA file.
 
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMemberSequencesIntoFasta;
 
 use strict;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::Member;
-
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -31,9 +27,6 @@ sub param_defaults {
         'removeXed'   => undef,         # do not filter sequences that contain that many X-es consecutively
         'source_names'=> [ 'ENSEMBLPEP','Uniprot/SWISSPROT','Uniprot/SPTREMBL', 'EXTERNALPEP' ],
     };
-}
-
-sub fetch_input {
 }
 
 sub run {
@@ -79,9 +72,6 @@ sub run {
     $sth->finish();
 
     close FASTAFILE;
-}
-
-sub write_output {  
 }
 
 1;
