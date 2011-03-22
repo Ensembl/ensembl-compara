@@ -184,7 +184,7 @@ sub run_njtree_phyml {
   } else {
     $self->param('species_tree_string', $species_tree_string->{value});
     my $spfilename = $self->worker_temp_directory . "spec_tax.nh";
-    open SPECIESTREE, ">$spfilename" or die "$!";
+    open SPECIESTREE, ">$spfilename" or die "Could not open '$spfilename' for writing : $!";
     print SPECIESTREE $self->param('species_tree_string');
     close SPECIESTREE;
     $self->param('species_tree_file', $spfilename);
@@ -207,17 +207,20 @@ sub run_njtree_phyml {
     $cmd .= " 1>$logfile 2>$errfile";
     #     $cmd .= " 2>&1 > /dev/null" unless($self->debug);
 
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
-    print("$cmd\n") if($self->debug);
     my $worker_temp_directory = $self->worker_temp_directory;
+    my $full_cmd = "cd $worker_temp_directory; $cmd";
+    print STDERR "Running:\n\t$full_cmd\n" if($self->debug);
 
-    unless(system("cd $worker_temp_directory; $cmd") == 0) {
-      my $njtree_error = $!;
-      if(my $segfault = $njtree_error eq 'Inappropriate ioctl for device') {
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
+    
+    if(my $rc = system($full_cmd)) {
+      my $system_error = $!;
+
+      if(my $segfault = (($rc != -1) and ($rc & 127 == 11))) {
           $self->check_job_fail_options($segfault);
       }
-      print("$cmd\n");
-      open ERRFILE,"$errfile" or die "couldnt open logfile $errfile: $!\n";
+      print STDERR "$full_cmd\n";
+      open(ERRFILE, $errfile) or die "Could not open logfile '$errfile' for reading : $!\n";
       while (<ERRFILE>) {
         if ($_ =~ /NNI/) {
           # Do jack-knife treebest starting by the sequence with more Ns
@@ -233,7 +236,7 @@ sub run_njtree_phyml {
         }
       }
       $self->check_job_fail_options;
-      $self->throw("error running njtree phyml: $njtree_error\n");
+      $self->throw("error running njtree phyml: $system_error\n");
     }
 
     $self->compara_dba->dbc->disconnect_when_inactive(0);
@@ -255,9 +258,9 @@ sub run_njtree_phyml {
     print("$cmd\n") if($self->debug);
     my $worker_temp_directory = $self->worker_temp_directory;
     if(system("cd $worker_temp_directory; $cmd")) {
-      print("$cmd\n");
+      my $system_error = $!;
       $self->check_job_fail_options;
-      $self->throw("error running njtree phyml noboot (step 1 of 2), $!\n");
+      die "Error running njtree phyml noboot (step 1 of 2) : $system_error";
     }
     # second part
     # nice -n 19 ./njtree sdi -s species_tree.nh $BASENAME.cons.nh > $BASENAME.cons.nhx
@@ -274,9 +277,9 @@ sub run_njtree_phyml {
     print("$cmd\n") if($self->debug);
     my $worker_temp_directory = $self->worker_temp_directory;
     if(system("cd $worker_temp_directory; $cmd")) {
-      print("$cmd\n");
+      my $system_error = $!;
       $self->check_job_fail_options;
-      $self->throw("error running njtree phyml noboot (step 2 of 2), $!\n");
+      die "Error running njtree phyml noboot (step 2 of 2) : $system_error";
     }
     $self->compara_dba->dbc->disconnect_when_inactive(0);
   } else {

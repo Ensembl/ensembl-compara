@@ -190,7 +190,7 @@ sub run_quicktreebreak {
     $quicktree_exe = '/software/ensembl/compara/quicktree_1.1/bin/quicktree';
   }
 
-  $self->throw("can't find a quicktree executable to run. Tried $quicktree_exe \n") 
+  die "Could not find a quicktree executable to run. Tried '$quicktree_exe'" 
     unless(-e $quicktree_exe);
 
   my $cmd = $quicktree_exe;
@@ -199,12 +199,9 @@ sub run_quicktreebreak {
 
   $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
-  open(RUN, "$cmd |") or $self->throw("error running quicktree, $!\n");
+  open(RUN, "$cmd |") or die "Could not open pipe [$cmd |] for reading : $!";
   my @output = <RUN>;
-  my $exit_status = close(RUN);
-  if (!$exit_status) {
-    $self->throw("error running quicktree, $!\n");
-  }
+  close(RUN) or die "Could not close pipe [$cmd |] : $!";
   $self->compara_dba->dbc->disconnect_when_inactive(0);
 
   my $quicktree_newick_string = '';
@@ -247,7 +244,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     print("aln_file = '$aln_file'\n");
   }
 
-  open(OUTSEQ, ">$aln_file") or $self->throw("Error opening $aln_file for write");
+  open(OUTSEQ, ">$aln_file") or die "Could not open '$aln_file' for writing : $!";
 
   # Using append_taxon_id will give nice seqnames_taxonids needed for
   # njtree species_tree matching
@@ -267,9 +264,8 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   
   my $cmd = "$sreformat_exe stockholm $aln_file > $stk_file";
 
-  unless( system("$cmd") == 0) {
-    print("$cmd\n");
-    $self->throw("error running sreformat with cmd $cmd: $!\n");
+  if(system($cmd)) {
+    die "Error running command [$cmd] : $!";
   }
 
   return $stk_file;
@@ -295,8 +291,9 @@ sub store_clusters {
   my $protein_tree_adaptor = $self->compara_dba->get_ProteinTreeAdaptor;
   my $starttime = time();
 
-  my $clusterset = $protein_tree_adaptor->fetch_node_by_node_id($self->param('clusterset_id'));
-  $self->throw("no clusterset found: $!\n") unless($clusterset);
+  my $clusterset_id = $self->param('clusterset_id');
+  my $clusterset = $protein_tree_adaptor->fetch_node_by_node_id($clusterset_id)
+    or die "no clusterset found for $clusterset_id";
 
   $clusterset->no_autoload_children; # Important so that only the two below are used
   $clusterset->add_child($self->param('new_subtree'));
@@ -467,13 +464,13 @@ sub generate_subtrees {
   $self->param('new_subtree',       $self->param('new_subtree')->minimize_tree);
 
   # Some checks
-  $self->throw("QuickTreeBreak: Failed to generate subtrees: $!\n")  unless(defined($self->param('new_subtree')) && defined($self->param('remaining_subtree')));
+  die "Failed to generate subtrees: $!"  unless(defined($self->param('new_subtree')) && defined($self->param('remaining_subtree')));
   my  $final_original_num = scalar @{$self->param('protein_tree')->get_all_leaves};
   my       $final_max_num = scalar @{$self->param('new_subtree')->get_all_leaves};
   my $final_remaining_num = scalar @{$self->param('remaining_subtree')->get_all_leaves};
 
   if(($final_max_num + $final_remaining_num) != $final_original_num) {
-    $self->throw("QuickTreeBreak: Incorrect sum of leaves [$final_max_num + $final_remaining_num != $final_original_num]: $!\n");
+    die "Incorrect sum of leaves [$final_max_num + $final_remaining_num != $final_original_num]";
   }
 
   $self->param('original_cluster', $self->param('protein_tree'));

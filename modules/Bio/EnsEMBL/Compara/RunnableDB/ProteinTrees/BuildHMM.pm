@@ -230,7 +230,7 @@ sub run_buildhmm {
   unless (-e $buildhmm_exe) {
       $buildhmm_exe = '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild';
   }
-  $self->throw("can't find a hmmbuild executable to run\n") unless(-e $buildhmm_exe);
+  die "can't find a hmmbuild executable to run, tried '$buildhmm_exe'" unless(-e $buildhmm_exe);
 
   ## as in treefam
   # $hmmbuild --amino -g -F $file.hmm $file >/dev/null
@@ -247,7 +247,8 @@ sub run_buildhmm {
   my $worker_temp_directory = $self->worker_temp_directory;
   $cmd = "cd $worker_temp_directory ; $cmd";
   if(system($cmd)) {
-    $self->throw("could not run '$cmd': $!\n");
+    my $system_error = $!;
+    die "Could not run [$cmd] : $system_error";
   }
 
   $self->compara_dba->dbc->disconnect_when_inactive(0);
@@ -279,8 +280,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     print("aln_file = '$aln_file'\n");
   }
 
-  open(OUTSEQ, ">$aln_file")
-    or $self->throw("Error opening $aln_file for write");
+  open(OUTSEQ, ">$aln_file") or die "Could not open '$aln_file' for writing : $!";
 
   my $sa = $protein_tree->get_SimpleAlign (
      -id_type => 'MEMBER',
@@ -304,17 +304,18 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   close OUTSEQ;
 
   unless(-e $aln_file and -s $aln_file) {
-    $self->throw("There are no alignments in '$aln_file', cannot continue");
+    die "There are no alignments in '$aln_file', cannot continue";
   }
 
   my $stk_file = $file_root . '.stk';
   my $sreformat_exe = $self->param('sreformat_exe');
   my $cmd = "$sreformat_exe stockholm $aln_file > $stk_file";
   if(system($cmd)) {
-    $self->throw("could not run '$cmd': $!\n");
+    my $system_error = $!;
+    die "Could not run [$cmd] : $system_error";
   }
   unless(-e $stk_file and -s $stk_file) {
-    $self->throw("'$cmd' did not produce any data in '$stk_file'");
+    die "'$cmd' did not produce any data in '$stk_file'";
   }
 
   return $stk_file;
@@ -328,7 +329,7 @@ sub store_hmmprofile {
   
   #parse hmmer file
   print("load from file $hmm_file\n") if($self->debug);
-  open (FH, $hmm_file) or $self->throw("Couldnt open hmm_file [$hmm_file]");
+  open(FH, $hmm_file) or die "Could not open '$hmm_file' for reading : $!";
   my $hmm_text = join('', <FH>);
   close(FH);
 

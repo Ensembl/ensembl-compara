@@ -411,7 +411,7 @@ sub load_species_tree {
   } else {
     $self->param('species_tree_string', $species_tree_string->{value});
     my $spfilename = $self->worker_temp_directory . "spec_tax.nh";
-    open SPECIESTREE, ">$spfilename" or die "$!";
+    open SPECIESTREE, ">$spfilename" or die "Could not open '$spfilename' for writing : $!";
     print SPECIESTREE $self->param('species_tree_string');
     close SPECIESTREE;
     $self->param('species_tree_file', $spfilename);

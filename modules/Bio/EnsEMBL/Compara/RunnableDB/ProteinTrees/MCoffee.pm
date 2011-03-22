@@ -248,40 +248,23 @@ sub run_mcoffee {
   return if ($self->param('single_peptide_tree'));
   my $input_fasta = $self->param('input_fasta');
 
-  my $mcoffee_output = $self->worker_temp_directory . "output.mfa";
-  $mcoffee_output =~ s/\/\//\//g;
-  $self->param('mcoffee_output', $mcoffee_output);
-
-  # (Note: t_coffee automatically uses the .mfa output as the basename for the score output)
-  my $mcoffee_scores = $mcoffee_output . ".score_ascii";
-  $mcoffee_scores =~ s/\/\//\//g;
-  $self->param('mcoffee_scores', $mcoffee_scores);
-
-  my $tree_temp = $self->worker_temp_directory . "tree_temp.dnd";
-  $tree_temp =~ s/\/\//\//g;
-
-  my $mcoffee_exe = $self->analysis->program_file || '';
-  unless (-e $mcoffee_exe) {
-      print "Using default T-Coffee executable!\n";
-      $mcoffee_exe = '/software/ensembl/compara/tcoffee-7.86b/t_coffee';
-        # path to t_coffee components:
-      $ENV{'PATH'}=$ENV{'PATH'}.':/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux';
-  }
-  $self->throw("can't find a M-Coffee executable to run\n") unless(-e $mcoffee_exe);
-
   #
   # Make the t_coffee temp dir.
   #
   my $tempdir = $self->worker_temp_directory;
   print "TEMP DIR: $tempdir\n" if ($self->debug);
 
-  #
-  # Output the params file.
-  #
-  my $paramsfile = $self->worker_temp_directory. "temp.params";
-  $paramsfile =~ s/\/\//\//g;  # converts any // in path to /
-  open(OUTPARAMS, ">$paramsfile")
-    or $self->throw("Error opening $paramsfile for write");
+  my $msa_output = $tempdir . 'output.mfa';
+  $msa_output =~ s/\/\//\//g;
+  $self->param('msa_output', $msa_output);
+
+  # (Note: t_coffee automatically uses the .mfa output as the basename for the score output)
+  my $mcoffee_scores = $msa_output . '.score_ascii';
+  $mcoffee_scores =~ s/\/\//\//g;
+  $self->param('mcoffee_scores', $mcoffee_scores);
+
+  my $tree_temp = $tempdir . 'tree_temp.dnd';
+  $tree_temp =~ s/\/\//\//g;
 
   my $method_string = '-method=';
   if ($self->param('method') and ($self->param('method') eq 'cmcoffee') ) {
@@ -299,16 +282,24 @@ sub run_mcoffee {
   } elsif (defined($self->param('redo')) and ($self->param('method') eq 'unalign') ) {
     my $cutoff = $self->param('cutoff') || 2;
       # Unalign module
-    $method_string = " -other_pg seq_reformat -in " . $self->param('redo_alnname') ." -action +aln2overaln unalign 2 30 5 15 0 1>$mcoffee_output";
+    $method_string = " -other_pg seq_reformat -in " . $self->param('redo_alnname') ." -action +aln2overaln unalign 2 30 5 15 0 1>$msa_output";
   } else {
       throw ("Improper method parameter: ".$self->param('method'));
   }
 
+  #
+  # Output the params file.
+  #
+  my $paramsfile = $tempdir. 'temp.params';
+  $paramsfile =~ s/\/\//\//g;  # converts any // in path to /
+  open(OUTPARAMS, ">$paramsfile")
+    or $self->throw("Error opening $paramsfile for write");
+
   my $extra_output = '';
   if ($self->param('use_exon_boundaries')) {
     if (1 == $self->param('use_exon_boundaries')) {
-      my $exon_file = $self->param('input_fasta_exons');
       $method_string .= ", exon_pair";
+      my $exon_file = $self->param('input_fasta_exons');
       print OUTPARAMS "-template_file=$exon_file\n";
     } elsif (2 == $self->param('use_exon_boundaries')) {
       $self->param('mcoffee_scores', undef);
@@ -320,9 +311,9 @@ sub run_mcoffee {
   print OUTPARAMS $method_string;
   print OUTPARAMS "-mode=mcoffee\n";
   print OUTPARAMS "-output=fasta_aln,score_ascii" . $extra_output . "\n";
-  print OUTPARAMS "-outfile=$mcoffee_output\n";
+  print OUTPARAMS "-outfile=$msa_output\n";
   print OUTPARAMS "-newtree=$tree_temp\n";
-  close(OUTPARAMS);
+  close OUTPARAMS;
 
   my $t_env_filename = $tempdir . "t_coffee_env";
   open(TCOFFEE_ENV, ">$t_env_filename")
@@ -331,75 +322,82 @@ sub run_mcoffee {
   print TCOFFEE_ENV "EMAIL_4_TCOFFEE=cedric.notredame\@europe.com\n";
   close TCOFFEE_ENV;
 
-  # Commandline
-  my $cmd = $mcoffee_exe;
-  $cmd .= " ".$input_fasta unless ($self->param('redo'));
-  $cmd .= " ". $self->param('options');
-  if (defined($self->param('redo')) and ($self->param('method') eq 'unalign') ) {
-    $self->param('mcoffee_scores', undef); #these wont have scores
-    $cmd .= " ". $method_string;
-  } else {
-    $cmd .= " -parameters=$paramsfile";
-  }
+    my $cmd       = '';
+    my $prefix    = '';
+    if ($self->param('method') eq 'mafft') {
 
-  print("$cmd\n") if($self->debug);
+        my ($mafft_exe, $mafft_binaries);
 
-  #
-  # Output some environment variables for tcoffee
-  #
-  my $prefix = '';
-  $prefix = "export HOME_4_TCOFFEE=\"$tempdir\";" if ! $ENV{HOME_4_TCOFFEE};
-  $prefix .= "export DIR_4_TCOFFEE=\"$tempdir\";" if ! $ENV{DIR_4_TCOFFEE};
-  $prefix .= "export TMP_4_TCOFFEE=\"$tempdir\";";
-  $prefix .= "export CACHE_4_TCOFFEE=\"$tempdir\";";
-  $prefix .= "export NO_ERROR_REPORT_4_TCOFFEE=1;";
+        if($self->param('mafft_exe') and $self->param('mafft_binaries')) {
+            $mafft_exe      = $self->param('mafft_exe');
+            $mafft_binaries = $self->param('mafft_binaries');
+        } elsif(!$self->param('mafft_exe') and !$self->param('mafft_binaries')) {
+            $mafft_exe      = '/software/ensembl/compara/mafft-6.707/bin/mafft';
+            $mafft_binaries = '/software/ensembl/compara/mafft-6.707/binaries';
+        } else {
+            die "Either 'mafft_exe' or 'mafft_binaries' parameter has not been properly defined";
+        }
 
-  if($self->param('mafft_exe')) {
-    my $mafft_exe = $self->param('mafft_exe');
-    if(-x $mafft_exe) {
-  	 print "Using defined mafft location ${mafft_exe}. Make sure MAFFT_BINARIES is setup correctly\n" if $self->debug();
+        unless(-x $mafft_exe) {
+            die "Cannot execute the mafft binary '$mafft_exe'. Check your setup & try again";
+        }
+
+        $ENV{MAFFT_BINARIES} = $mafft_binaries;
+
+        print "Using '$mafft_exe' for mafft location and '$mafft_binaries' for mafft binaries location\n" if $self->debug();
+        $self->param('mcoffee_scores', undef); #these wont have scores
+
+        $cmd = "$mafft_exe --auto $input_fasta > $msa_output";
+
+    } else {
+
+        my $mcoffee_exe = $self->analysis->program_file || '';
+        unless (-x $mcoffee_exe) {
+            print "Using default T-Coffee executable!\n";
+            $mcoffee_exe = '/software/ensembl/compara/tcoffee-7.86b/t_coffee';
+                # path to t_coffee components:
+            $ENV{'PATH'}=$ENV{'PATH'}.':/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux';
+        }
+        die "Cannot execute M-Coffee executable '$mcoffee_exe'" unless(-x $mcoffee_exe);
+
+        $cmd = $mcoffee_exe;
+        $cmd .= ' '.$input_fasta unless ($self->param('redo'));
+        $cmd .= ' '. $self->param('options');
+        if (defined($self->param('redo')) and ($self->param('method') eq 'unalign') ) {
+            $self->param('mcoffee_scores', undef); #these wont have scores
+            $cmd .= ' '. $method_string;
+        } else {
+            $cmd .= " -parameters=$paramsfile";
+        }
+        #
+        # Output some environment variables for tcoffee
+        #
+        $prefix = "export HOME_4_TCOFFEE=\"$tempdir\";" if ! $ENV{HOME_4_TCOFFEE};
+        $prefix .= "export DIR_4_TCOFFEE=\"$tempdir\";" if ! $ENV{DIR_4_TCOFFEE};
+        $prefix .= "export TMP_4_TCOFFEE=\"$tempdir\";";
+        $prefix .= "export CACHE_4_TCOFFEE=\"$tempdir\";";
+        $prefix .= "export NO_ERROR_REPORT_4_TCOFFEE=1;";
+
+        print "Using default mafft location\n" if $self->debug();
+        $prefix .= 'export MAFFT_BINARIES=/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux ;';
+            # path to t_coffee components:
+        $prefix .= 'export PATH=$PATH:/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux ;';
     }
-    else {
-      throw("Cannot find the mafft binary ${mafft_exe}. Check your setup & try again");
+
+    #
+    # Run the command:
+    #
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
+
+    print STDERR "Running:\n\t$prefix $cmd\n" if ($self->debug);
+    if(system($prefix.$cmd)) {
+        my $system_error = $!;
+
+        $self->DESTROY;
+        die "Failed to execute [$prefix $cmd]: $system_error ";
     }
-  } else {
-  	print "Using default mafft location\n" if $self->debug();
-  	$prefix .= 'export MAFFT_BINARIES=/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux ;';
-        # path to t_coffee components:
-  	$prefix .= 'export PATH=$PATH:/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux ;';
-  }
-  print $prefix.$cmd."\n" if ($self->debug);
 
-  #
-  # Run the command.
-  #
-  $self->compara_dba->dbc->disconnect_when_inactive(1);
-  my $rc;
-  if ($self->param('method') eq 'mafft') {
-
-  	my ($mafft_env, $mafft_exe);
-
-  	if($self->param('mafft_exe')) {
-  		$mafft_exe = $self->param('mafft_exe');
-  	} else {
-    	$mafft_exe = "/software/ensembl/compara/mafft-6.707/bin/mafft";
-    	$mafft_env = '/software/ensembl/compara/mafft-6.707/binaries';
-  	}
-
-  	$ENV{MAFFT_BINARIES} = $mafft_env if $mafft_env;
-    print STDERR "### $mafft_exe --auto $input_fasta > $mcoffee_output\n";
-    $rc = system("$mafft_exe --auto $input_fasta > $mcoffee_output");
-    $self->param('mcoffee_scores', undef); #these wont have scores
-  } else {
-    $DB::single=1;
-    $rc = system($prefix.$cmd);
-  }
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-
-  if($rc) {
-      $self->DESTROY;
-      $self->throw("MCoffee job, error running executable: $!\n");
-  }
+    $self->compara_dba->dbc->disconnect_when_inactive(0);
 }
 
 ########################################################
@@ -457,7 +455,6 @@ sub dumpProteinTreeToWorkdir {
     };
     if($self->debug() and $@) { print "ERROR IN EVAL (node_id=".$member->node_id.") : $@"; }
     unless (defined($canonical_member) && ($canonical_member->member_id eq $member->member_id) ) {
-      $DB::single=1;1;#??
       my $canonical_member2 = $gene_member->get_canonical_peptide_Member;
       my $clustered_stable_id = $member->stable_id;
       my $canonical_stable_id = $canonical_member->stable_id;
@@ -478,9 +475,9 @@ sub dumpProteinTreeToWorkdir {
 
       my $seq = '';
       if ($use_exon_boundaries) {
-	  $seq = $member->sequence_exon_bounded;
+          $seq = $member->sequence_exon_bounded;
       } else {
-	  $seq = $member->sequence;
+          $seq = $member->sequence;
       }
       $residues += $member->seq_length;
       $seq =~ s/(.{72})/$1\n/g;
@@ -492,7 +489,7 @@ sub dumpProteinTreeToWorkdir {
 
   $self->throw("Cluster has canonical transcript issues: [$has_canonical_issues]\n") if (0 < $has_canonical_issues);
 
-  if(scalar keys (%{$seq_id_hash}) <= 1) {
+  if(scalar keys (%$seq_id_hash) <= 1) {
     $self->update_single_peptide_tree($tree);
     $self->param('single_peptide_tree', 1);
   }
@@ -501,26 +498,26 @@ sub dumpProteinTreeToWorkdir {
   return $fastafile;
 }
 
+
 sub parse_and_store_alignment_into_proteintree {
   my $self = shift;
 
   return if ($self->param('single_peptide_tree'));
-  my $mcoffee_output =  $self->param('mcoffee_output');
+  my $msa_output =  $self->param('msa_output');
   my $mcoffee_scores = $self->param('mcoffee_scores');
   my $format = 'fasta';
   my $tree = $self->param('protein_tree');
 
   if (2 == $self->param('use_exon_boundaries')) {
-    $mcoffee_output .= ".overaln";
+    $msa_output .= ".overaln";
   }
-  return unless($mcoffee_output and -e $mcoffee_output);
+  return unless($msa_output and -e $msa_output);
 
   #
   # Read in the alignment using Bioperl.
   #
   use Bio::AlignIO;
-  $DB::single=1;1;
-  my $alignio = Bio::AlignIO->new(-file => "$mcoffee_output",
+  my $alignio = Bio::AlignIO->new(-file => "$msa_output",
 				  -format => "$format");
   my $aln = $alignio->next_aln();
   my %align_hash;
@@ -575,7 +572,6 @@ sub parse_and_store_alignment_into_proteintree {
       $alignment_length = length($alignment_string);
     } else {
       if ($alignment_length != length($alignment_string)) {
-        $DB::single=1;1;
         $self->throw("While parsing the alignment, some id did not return the expected alignment length\n");
       }
     }
@@ -733,8 +729,8 @@ sub _get_alternate_alignment_tree {
 
         # Grab the correct cigar line for each leaf node.
         my $id = $leaf->member_id;
-        my $cmd = "SELECT cigar_line FROM $table where member_id=$id;";
-        my $sth = $pta->prepare($cmd);
+        my $sql = "SELECT cigar_line FROM $table where member_id=$id;";
+        my $sth = $pta->prepare($sql);
         $sth->execute();
         my $data = $sth->fetchrow_hashref();
         $sth->finish();

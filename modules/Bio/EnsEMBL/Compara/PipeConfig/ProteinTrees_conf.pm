@@ -98,7 +98,8 @@ sub default_options {
         'wublastp_exe'              => 'wublastp',
         'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         'mcoffee_exe'               => '/software/ensembl/compara/tcoffee-7.86b/t_coffee',
-        'mafft_exe'                 => '',  # if empty, will use module built-in default (not ready yet to touch that can of worms)
+        'mafft_exe'                 => '',  # if empty, will use module built-in default
+        'mafft_binaries'            => '',  # if empty, will use module built-in default
         'sreformat_exe'             => '/usr/local/ensembl/bin/sreformat',
         'treebest_exe'              => '/software/ensembl/compara/treebest/treebest',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
@@ -578,6 +579,7 @@ sub pipeline_analyses {
                 'use_exon_boundaries'       => $self->o('use_exon_boundaries'),
                 'max_gene_count'            => $self->o('tree_max_gene_count'),
                 'mafft_exe'                 => $self->o('mafft_exe'),
+                'mafft_binaries'            => $self->o('mafft_binaries'),
             },
             -wait_for => [ 'store_sequences', 'overall_clusterset_qc', 'per_genome_clusterset_qc' ],    # funnel
             -hive_capacity        => 600,
@@ -596,6 +598,7 @@ sub pipeline_analyses {
                 'use_exon_boundaries'       => $self->o('use_exon_boundaries'),
                 'max_gene_count'            => $self->o('tree_max_gene_count'),
                 'mafft_exe'                 => $self->o('mafft_exe'),
+                'mafft_binaries'            => $self->o('mafft_binaries'),
             },
             -hive_capacity        => 600,
             -can_be_empty         => 1,

@@ -200,7 +200,7 @@ sub create_temp_member_table {
     print("Running: # $cmd\n") if($self->debug);
 
     my $starttime = time();
-    open(INRUN, "$cmd |") or $self->throw("Error running $cmd : $!\n");
+    open(INRUN, "$cmd |") or die "Could not open pipe [$cmd |] for reading : $!";
     my @output = <INRUN>;
     my $exit_status = close(INRUN);
     foreach my $line (@output) {
@@ -208,7 +208,7 @@ sub create_temp_member_table {
     }
 
     my $tempfile = $self->worker_temp_directory . "$reuse_table_name.sql";
-    open(OUTRUN, ">$tempfile") or $self->throw("Error writing mysqldump $tempfile, $!\n");
+    open(OUTRUN, ">$tempfile") or die "Could not open mysqldump file '$tempfile' for writing : $!";
     print OUTRUN @output;
     close OUTRUN;
 
@@ -375,7 +375,7 @@ sub store_gene_and_all_transcripts {
           my $stable_id = $gene_member->stable_id;
           if ( $self->param('reuse_this') ) {
             $self->input_job->transient_error(0);
-            $self->throw ("Reuse member set non identical for $stable_id: $!");
+            die "Reuse member set non identical for $stable_id";
           }
           $member_adaptor->store($gene_member);
         }
@@ -394,7 +394,7 @@ sub store_gene_and_all_transcripts {
       my $stable_id = $pep_member->stable_id;
       if ( $self->param('reuse_this') ) {
             $self->input_job->transient_error(0);
-            $self->throw("Reuse member set non identical for $stable_id: $!");
+            die "Reuse member set non identical for $stable_id";
       }
       $member_adaptor->store($pep_member);
     }

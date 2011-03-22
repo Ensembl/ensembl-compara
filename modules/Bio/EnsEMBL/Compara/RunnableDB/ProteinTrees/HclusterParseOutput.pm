@@ -91,7 +91,7 @@ sub fetch_input {
     $self->param('clusterset_id', $clusterset->node_id);
   }
 
-  open(FILE, $filename) or die "Error opening '$filename' for reading: $!";
+  open(FILE, $filename) or die "Could not open '$filename' for reading : $!";
   while (<FILE>) {
     # 0       0       0       1.000   2       1       697136_68,
     # 1       0       39      1.000   3       5       1213317_31,1135561_22,288182_42,426893_62,941130_38,
