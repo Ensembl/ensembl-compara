@@ -31,11 +31,11 @@ sub new {
     ## last ones are for the new schema
     my ($adaptor, $dbID, $method_link_species_set, $method_link_species_set_id, $anchor_id,
         $dnafrag, $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand,
-        $score, $num_of_organisms, $num_of_sequences, $anchor_status) =
+        $score, $num_of_organisms, $num_of_sequences, $evalue, $anchor_status) =
       rearrange([qw(
           ADAPTOR DBID METHOD_LINK_SPECIES_SET METHOD_LINK_SPECIES_SET_ID ANCHOR_ID
           DNAFRAG DNAFRAG_ID DNAFRAG_START DNAFRAG_END DNAFRAG_STRAND
-          SCORE NUM_OF_ORGANISMS NUM_OF_SEQUENCES ANCHOR_STATUS)], @args);
+          SCORE NUM_OF_ORGANISMS NUM_OF_SEQUENCES EVALUE ANCHOR_STATUS)], @args);
 
     $self->adaptor($adaptor) if (defined($adaptor));
     $self->dbID($dbID) if (defined($dbID));
@@ -50,6 +50,7 @@ sub new {
     $self->score($score) if (defined($score));
     $self->num_of_organisms($num_of_organisms) if (defined($num_of_organisms));
     $self->num_of_sequences($num_of_sequences) if (defined($num_of_sequences));
+    $self->evalue($evalue) if (defined($evalue));
     $self->anchor_status($anchor_status) if (defined($anchor_status));
     return $self;
 }
@@ -95,6 +96,14 @@ sub anchor_id {
     $self->{_anchor_id} = shift;
   }
   return $self->{_anchor_id};
+}
+
+sub evalue {
+  my $self = shift;
+  if (@_) {
+    $self->{_evalue} = shift;
+  }
+  return $self->{_evalue};
 }
 
 sub dnafrag {

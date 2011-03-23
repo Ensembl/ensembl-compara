@@ -53,8 +53,8 @@ sub store {
   my $query = qq{
   INSERT INTO anchor_align
     (method_link_species_set_id, anchor_id, dnafrag_id, dnafrag_start,
-    dnafrag_end, dnafrag_strand, score, num_of_organisms, num_of_sequences)
-  VALUES (?,?,?,?,?,?,?,?,?)};
+    dnafrag_end, dnafrag_strand, score, num_of_organisms, num_of_sequences, evalue)
+  VALUES (?,?,?,?,?,?,?,?,?,?)};
 
 print Dumper $self;	
 
@@ -69,6 +69,7 @@ print Dumper $self;
         $anchor_align->score,
         $anchor_align->num_of_organisms,
         $anchor_align->num_of_sequences,
+	$anchor_align->evalue,
         );
   if($insertCount>0) {
     #sucessful insert
@@ -93,8 +94,8 @@ sub store_exonerate_hits {
 
 	my $query = qq{
 	INSERT INTO anchor_align (method_link_species_set_id, anchor_id, dnafrag_id, dnafrag_start,	
-	dnafrag_end, dnafrag_strand, score, num_of_organisms, num_of_sequences)
-	VALUES (?,?,?,?,?,?,?,?,?)};
+	dnafrag_end, dnafrag_strand, score, num_of_organisms, num_of_sequences, evalue)
+	VALUES (?,?,?,?,?,?,?,?,?,?)};
 
 	my $sth = $self->prepare($query);
 	foreach my $row(@$batch_records) {
