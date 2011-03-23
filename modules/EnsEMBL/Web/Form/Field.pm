@@ -23,6 +23,7 @@ use constant {
   _FLAG_FOOT_NOTES          => '_is_foot_note',
   _FLAG_HEAD_NOTES          => '_is_head_note',
   _FLAG_INLINE              => '_can_be_inline',
+  _FLAG_ELEMENT             => '_is_field_element',
 };
 
 sub render {
@@ -75,11 +76,17 @@ sub foot_notes {
   return shift->_notes('foot', @_);
 }
 
+sub elements {
+  ## Returns all the elements inside the field
+  ## @return ArrayRef of Form::Element drived objects
+  my $self = shift;
+  return $self->get_child_nodes_by_flag($self->_FLAG_ELEMENT);
+}
+
 sub add_element {
   ## Adds a new element under existing label
   ## @params HashRef of standard parameters required for Form::Element->configure
   ## @params Inline flag - if on, tries to add the element inline with the previous element if possible
-
   my ($self, $params, $inline) = @_;
   
   my $children = $self->child_nodes;
@@ -117,6 +124,7 @@ sub add_element {
     $div->append_child($element);
   }
   $div->set_attribute('class', $self->CSS_CLASS_ELEMENT_DIV);
+  $div->set_flag($self->_FLAG_ELEMENT);
   return $div;
 }
 
