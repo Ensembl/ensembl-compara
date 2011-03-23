@@ -77,8 +77,8 @@ sub configure {
 }
 
 sub elements {
-  ## Gets all the element child nodes (immediate only) in the fieldset
-  ## @return ArrayRef of Form::Fields
+  ## Gets all the element child nodes (immediate only) in the fieldset (excluding the ones nested in the fields)
+  ## @return ArrayRef of Form::Element drived objects
   my $self = shift;
   return $self->get_child_nodes_by_flag($self->_FLAG_ELEMENT);
 }
