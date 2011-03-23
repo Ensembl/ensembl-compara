@@ -47,6 +47,7 @@ sub configure {
   ##    - is_text       Flag kept on if html encoding needs to be done to the caption
   ##  - no_input        Flag to prevent a hidden input automatically being added from NoEdit element
   ##  - is_html         Flag kept on if the value is HTML (in case of NoEdit only)
+  ##  - caption         String to be displayed in NoEdit element if different from value attribute of the hidden input
   ##  - class           Class attribute (space seperated string for multiple classes) - goes to all the sub elements (inputs, selects, textarea)
   ##  - wrapper_class   Class attribute for the wrapper (if there's any wrapper - eg. in checklist etc)
   ##  - option_class    Class attribute for all the options (in case of a dropdown)
