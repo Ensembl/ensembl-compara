@@ -175,6 +175,7 @@ CREATE TABLE `anchor_align` (
   `score` float default NULL,
   `num_of_organisms` smallint(5) unsigned default NULL,
   `num_of_sequences` smallint(5) unsigned default NULL,
+  `evalue` varchar(10) default NULL,
   `anchor_status` int(10) default NULL,
   PRIMARY KEY  (`anchor_align_id`),
   KEY `anchor_id_mlss_id` (`anchor_id`,`method_link_species_set_id`)
