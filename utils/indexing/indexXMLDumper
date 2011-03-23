@@ -369,7 +369,7 @@ sub dumpVariation {
   header( $VariationDB, $dbspecies, 'variation', $nogzip, $fh, $release );
 
   my ($counter2,$file2,$fh2);
-  my $somatic = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, somatic from $VariationDB.source" )} };
+  my $somatic = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, somatic_status from $VariationDB.source" )} };
   my $somatic_present = ( grep { $somatic->{$_} } keys %$somatic ) ? 1 : 0;
   if ($somatic_present) {
     $counter2 = make_counter(0);
@@ -449,7 +449,8 @@ sub dumpVariation {
             ' ',
             vs.name
         ),
-        fd.description
+        fd.description,
+        v.somatic
     FROM
         $VariationDB.variation v LEFT JOIN
         $VariationDB.variation_synonym vs USING (variation_id) LEFT JOIN (
@@ -472,6 +473,7 @@ sub dumpVariation {
       my $source_id          = $row->[2];
       my $synonyms           = $row->[3];
       my $failed_description = $row->[4];
+      my $somatic_var        = $row->[5]; 
       my $ssids              = $ssid_hash->{$variation_id}{'ssid'};
       my %synonyms;
       my $syn_c = 0;
@@ -493,7 +495,7 @@ sub dumpVariation {
         $synonym_text .= $synonyms{$syn}.':'.$syn.' ';
       }
 
-      my $somatic_mutation = $somatic->{$source_id};
+      my $somatic_mutation = $somatic_var;
       my $snp_source = $sources->{ $source_id };
       my $extra      = '';
       my $x = $snp_extra{$variation_id};
