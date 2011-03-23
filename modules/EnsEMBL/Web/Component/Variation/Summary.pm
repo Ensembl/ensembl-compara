@@ -64,10 +64,15 @@ sub content {
   ## First warn if variation has been failed
   if ($variation->failed_description) {
     my $desc = $variation->failed_description;
-    
-    if($desc =~ /match.+reference\ allele/ && defined($feature_slice)) {
-      $desc .= " (".$feature_slice->seq.")";
-    }
+	
+	if(defined($feature_slice)) {
+	  my $seq = $feature_slice->seq;
+	  $seq =~ s/.{60}/$&\n/g;
+	  
+	  if($desc =~ /match.+reference\ allele/ && defined($feature_slice)) {
+		$desc .= " (".$seq.")";
+	  }
+	}
     
     $html .= $self->_warning('This variation has been flagged as failed', $desc, '50%');
   }
@@ -87,8 +92,10 @@ sub content {
     my @variations = (@germline_variations, @somatic_mutations);
 
     if (@variations) {
-      $variation_string = 'with '; #$is_somatic ? 'with variation ' : 'with somatic mutation ';
+      $variation_string = 'with'; #$is_somatic ? 'with variation ' : 'with somatic mutation ';
       
+	  my %by_source;
+	  
       foreach my $v (@variations) {
         my $v_name           = $v->variation_name; 
         next if $v_name eq $object->name;
@@ -97,17 +104,22 @@ sub content {
         next unless (( $v_start == $feature_slice->start) && ($v_end == $feature_slice->end)); 
         my $link           = $hub->url({ v => $v_name, vf => $v->dbID });
         my $variation      = qq{<a href="$link">$v_name</a>};
-        $variation_string .= ", $variation (".$v->source.")";
+		push @{$by_source{$v->source}}, $variation;
       }
-    }
- 
-    if ($variation_string =~/,/) {      
-      $variation_string =~ s/,\s+//;  
-        $html .= "
-        <dl class='summary'>
-          <dt>Co-located </dt>
-          <dd>$variation_string</dd>
-        </dl>";    
+	  
+	  if(scalar keys %by_source) {
+		
+		foreach my $source(keys %by_source) {
+		  $variation_string .= ' <b>'.$source.'</b> ';
+		  $variation_string .= (join ", ", @{$by_source{$source}});
+		}
+		
+		$html .= "
+		  <dl class='summary'>
+			<dt>Co-located </dt>
+			<dd>$variation_string</dd>
+		  </dl>";
+	  }
     }
   }
   
@@ -186,11 +198,12 @@ sub content {
 
   # Check somatic mutation base matches reference
   if ($feature_slice) {
-    my $ref_base = $feature_slice->seq; 
+    my $ref_base = $feature_slice->seq;
     my @alleles = split /\//, $alleles;
     
     if($alleles[0] =~ /^[ACGTN]+$/) {
       my $ref_seq = length $ref_base == 1 ? 'base': 'sequence';
+	  $ref_base =~ s/.{60}/$&<br\/>/g;
       $allele_html .= "<br /><em>Note</em>: The reference $ref_seq for this mutation ($alleles[0]) does not match the Ensembl reference $ref_seq ($ref_base) at this location." if $ref_base ne $alleles[0];
     }
   }
@@ -397,7 +410,7 @@ sub content {
       ## HGVS
       #######
 
-      my (%cdna_hgvs, %pep_hgvs, %by_allele, $hgvs_html, $prev_trans);
+      my (%cdna_hgvs, %pep_hgvs, %gen_hgvs, %by_allele, $hgvs_html, $prev_trans);
 
       # check if overlaps LRG
       if($hub->param('lrg') =~ /^LRG/) {
@@ -426,22 +439,19 @@ sub content {
 
       # now get normal ones
       # go via transcript variations (should be faster than slice)
+	  my %genomic_alleles_added;
+	  
       foreach my $tv (@{$vf->get_all_TranscriptVariations}) {
-        next unless defined $tv->{'_transcript_stable_id'};
-        next if $tv->{'_transcript_stable_id'} eq $prev_trans;
-        $prev_trans = $tv->{'_transcript_stable_id'};
-        my $transcript = $tv->transcript;
-
-        # get HGVS notations
-        %cdna_hgvs = %{$vf->get_all_hgvs_notations($transcript, 'c')};
-        %pep_hgvs  = %{$vf->get_all_hgvs_notations($transcript, 'p')};
-
-        # filter peptide ones for synonymous changes
-        map { delete $pep_hgvs{$_} if $pep_hgvs{$_} =~ /p\.\=/ } keys %pep_hgvs;
-
-        # group by allele
-        push @{$by_allele{$_}}, $cdna_hgvs{$_} for keys %cdna_hgvs;
-        push @{$by_allele{$_}}, $pep_hgvs{$_}  for keys %pep_hgvs;
+		foreach my $tva(@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
+		  unless($genomic_alleles_added{$tva->variation_feature_seq}) {
+			push @{$by_allele{$tva->variation_feature_seq}}, $tva->hgvs_genomic;
+			$genomic_alleles_added{$tva->variation_feature_seq} = 1;
+		  }
+  
+		  # group by allele
+		  push @{$by_allele{$tva->variation_feature_seq}}, $tva->hgvs_coding if $tva->hgvs_coding;
+		  push @{$by_allele{$tva->variation_feature_seq}}, $tva->hgvs_protein if $tva->hgvs_protein && $tva->hgvs_protein !~ /p\.\=/;
+		}
       }
 
       # count alleles
