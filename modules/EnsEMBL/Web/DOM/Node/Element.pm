@@ -278,15 +278,15 @@ sub _parse_HTML_to_nodes {
       $current_node ? $current_node->append_child($node) : push @$nodes, $node;
     }
     elsif ($_->{'type'} eq 'end_tag') {
-      my $expected = pop @lifo;
-      $current_node = $current_node->parent_node, next if ($_->{'name'} eq $expected);
-      warn "HTML parsing error: Unexpected closing tag found - ".$_->{'name'}." as in ".$_->{'string'}.", expected ".($expected || 'no')." tag.";
+      my $expected  = pop @lifo;
+      $current_node = $current_node->parent_node, next if $_->{'name'} eq $expected;
+      warn sprintf('HTML parsing error: Unexpected closing tag found - %s as in %s, expected %s tag.', $_->{'name'}, $_->{'string'}, $expected || 'no');
       return [];
     }
     else {
       my $node = $self->dom->create_element($_->{'name'}, $_->{'attr'}, 1);
       if (!$node) {
-        warn "HTML parsing error: Could not create HTML element '".$_->{'name'}."' from ".$_->{'string'};
+        warn sprintf("HTML parsing error: Could not create HTML element '%s' from %s", $_->{'name'}, $_->{'string'});
         return [];
       }
       $current_node ? $current_node->append_child($node) : push @$nodes, $node;
