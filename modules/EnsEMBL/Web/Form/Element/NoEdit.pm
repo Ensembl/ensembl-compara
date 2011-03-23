@@ -11,7 +11,9 @@ sub configure {
   ## @overrides
   my ($self, $params) = @_;
   
-  $self->append_child($self->dom->create_element($params->{'is_html'} ? 'div' : 'span', {($params->{'is_html'} ? 'inner_HTML' : 'inner_text') => $params->{'value'}}));
+  $params->{'caption'} = $params->{'value'} unless exists $params->{'caption'};
+  
+  $self->append_child($self->dom->create_element($params->{'is_html'} ? 'div' : 'span', {($params->{'is_html'} ? 'inner_HTML' : 'inner_text') => $params->{'caption'}}));
 
   $self->set_attribute('id',    $params->{'wrapper_id'})    if exists $params->{'wrapper_id'};
   $self->set_attribute('class', $params->{'wrapper_class'}) if exists $params->{'wrapper_class'};
