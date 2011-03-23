@@ -45,16 +45,16 @@ sub url {
 ### This is a simple version, that can be extended in children as needed
 # TODO: add site base url
   my ($self, $path, $param, $anchor) = @_;
-  $anchor = '' unless defined $anchor;
   my $clean_params = $self->escape_url_parameters($param);
   return $self->reassemble_url($path, $clean_params, sprintf('%s', $anchor));
 }
 
 sub reassemble_url {
   my ($self, $path, $param, $anchor) = @_;
-  return $path unless $param;
-  $path .= $path =~ /\?/ ? ';' : '?';
-  $path .= (join ';', @$param);
+  if ($param) {
+    $path .= $path =~ /\?/ ? ';' : '?';
+    $path .= (join ';', @$param);
+  }
   $path .= qq(#$anchor) if defined $anchor && $anchor ne '';
   return $path;
 }
