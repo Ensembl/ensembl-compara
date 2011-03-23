@@ -1143,20 +1143,25 @@ sub transcript_variation {
   my @data;
   foreach my $tvari_obj ( @{ $transcript_variation_obj } )  {
     next unless $tvari_obj->transcript;
-    my $type = join ", " , @{ $tvari_obj->consequence_type || [] };
-
-    push (@data, {
-            conseq =>           $type,
-            transcriptname =>   $tvari_obj->transcript->stable_id,
-            proteinname  =>     $tvari_obj->transcript->translation ? $tvari_obj->transcript->translation->stable_id : '-',
-            cdna_start =>       $tvari_obj->cdna_start,
-            cdna_end =>         $tvari_obj->cdna_end,
-            translation_start =>$tvari_obj->translation_start,
-            translation_end =>  $tvari_obj->translation_end,
-            pepallele =>        $tvari_obj->pep_allele_string,
-            codon =>            $tvari_obj->codons,
-            tv =>               $tvari_obj
-    });
+    
+    foreach my $tva_obj(@{ $tvari_obj->get_all_alternate_TranscriptVariationAlleles }) {
+      my $type = join ", " , map {$_->display_term} @{ $tva_obj->get_all_OverlapConsequences || [] };
+  
+      push (@data, {
+              vf_allele =>        $tva_obj->variation_feature_seq,
+              tr_allele =>        $tva_obj->feature_seq,
+              conseq =>           $type,
+              transcriptname =>   $tvari_obj->transcript->stable_id,
+              proteinname  =>     $tvari_obj->transcript->translation ? $tvari_obj->transcript->translation->stable_id : '-',
+              cdna_start =>       $tvari_obj->cdna_start,
+              cdna_end =>         $tvari_obj->cdna_end,
+              translation_start =>$tvari_obj->translation_start,
+              translation_end =>  $tvari_obj->translation_end,
+              pepallele =>        $tva_obj->pep_allele_string,
+              codon =>            $tva_obj->display_codon_allele_string,
+              tva =>              $tva_obj
+      });
+    }
   }
 
   return \@data;

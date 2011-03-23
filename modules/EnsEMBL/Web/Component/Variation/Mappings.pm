@@ -27,6 +27,8 @@ sub content {
   my $source = $object->source;
   my $name   = $object->name;
   
+  my $cons_format = $object->param('consequence_format');
+  
   my $html;
   
   if($object->Obj->failed_description =~ /match.+reference\ allele/) {
@@ -47,17 +49,19 @@ sub content {
     );
   }
  
-  my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'gene asc', 'trans asc' ] });
+  my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'type asc', 'trans asc', 'allele asc'] });
   
   $table->add_columns(
     { key => 'gene',      title => 'Gene',                   sort => 'html'                        },
     { key => 'trans',     title => 'Transcript (strand)',    sort => 'html'                        },
-    { key => 'type',      title => 'Type'  ,                 sort => 'string'                      },
+    { key => 'allele',    title => 'Allele (transcript allele)', sort => 'string', width => '7%'          },
+    { key => 'type',      title => 'Type'  ,                 sort => 'position_html'                      },
     { key => 'hgvs',      title => 'HGVS names'  ,           sort => 'string'                      },     
     { key => 'trans_pos', title => 'Position in transcript', sort => 'position', align => 'center' },
     { key => 'prot_pos',  title => 'Position in protein',    sort => 'position', align => 'center' },
     { key => 'aa',        title => 'Amino acid',             sort => 'string'                      },
-    { key => 'codon',     title => 'Codon',                  sort => 'string'                      },
+    { key => 'codon',     title => 'Codons',                 sort => 'string'                      },
+    #{ key => 'info',      title => 'Info',                       sort => 'string'                      },
   );
   
   my $gene_adaptor  = $hub->get_adaptor('get_GeneAdaptor');
@@ -70,6 +74,7 @@ sub content {
       my $gene_name  = $gene ? $gene->stable_id : '';
       my $trans_name = $transcript_data->{'transcriptname'};
       my $trans      = $trans_adaptor->fetch_by_stable_id($trans_name);
+      my $tva        = $transcript_data->{'tva'};
       
       my $gene_url = $hub->url({
         type   => 'Gene',
@@ -94,30 +99,9 @@ sub content {
       # HGVS
       my $hgvs;
       
-      unless ($object->is_somatic_with_different_ref_base){ 
-        my %cdna_hgvs = %{$transcript_data->{tv}->hgvs_coding};
-        my %pep_hgvs  = %{$transcript_data->{tv}->hgvs_protein};
-      
-        # filter peptide ones for synonymous changes
-        #map {delete $pep_hgvs{$_} if $pep_hgvs{$_} =~ /p\.\=/} keys %pep_hgvs;
-      
-        my %by_allele;
-      
-        # group by allele
-        push @{$by_allele{$_}}, $cdna_hgvs{$_} foreach keys %cdna_hgvs;
-        push @{$by_allele{$_}}, $pep_hgvs{$_}  foreach keys %pep_hgvs;
-      
-        my $allele_count = scalar keys %by_allele;
-      
-        my @temp;
-        
-        foreach my $a(keys %by_allele) {
-          foreach my $h (@{$by_allele{$a}}) {
-            push @temp, $h . ($allele_count > 1 ? " <b>($a)</b>" : '');
-          }
-        }
-      
-        $hgvs = join '<br />', @temp;
+      unless ($object->is_somatic_with_different_ref_base){
+        $hgvs = $tva->hgvs_coding if defined($tva->hgvs_coding);
+        $hgvs .= '<br />'.$tva->hgvs_protein if defined($tva->hgvs_protein);
       }
 
       # Now need to add to data to a row, and process rows somehow so that a gene ID is only displayed once, regardless of the number of transcripts;
@@ -129,17 +113,59 @@ sub content {
         $codon =~ tr/acgt/ACGT/;
       }
       
-      my $strand = $trans->strand;
+      my $strand = ($trans->strand < 1 ? '-' : '+');
+      
+      # consequence type
+      my $type;
+      
+      if($cons_format eq 'so') {
+        $type = join ", ", map {$hub->get_ExtURL_link($_->SO_term, 'SEQUENCE_ONTOLOGY', $_->SO_accession)} @{$tva->get_all_OverlapConsequences};
+      }
+      
+      elsif($cons_format eq 'ncbi') {
+        # not all terms have an ncbi equiv so default to SO
+        $type = join ", ", map {$_->NCBI_term || $hub->get_ExtURL_link($_->SO_term, 'SEQUENCE_ONTOLOGY', $_->SO_accession).'<span style="color:red;">*</span>'} @{$tva->get_all_OverlapConsequences};
+      }
+      
+      else {
+        $type = join ", ", map{'<span title="'.$_->description.'">'.$_->label.'</span>'} @{$tva->get_all_OverlapConsequences};
+      }
+      
+      # consequence rank
+      my $rank = (sort map {$_->rank} @{$tva->get_all_OverlapConsequences})[0];
+      
+      $type = qq{<span class="hidden">$rank</span>$type};
+      
+      # info panel
+      #my $allele = $transcript_data->{'vf_allele'};
+      #
+      #my $url = $hub->url('Component', {
+      #  action       => 'Web',
+      #  function     => 'MappingPanel',
+      #  transcript   => $trans_name,
+      #  vf           => $varif_id,
+      #  allele       => $transcript_data->{'vf_allele'},
+      #  update_panel => 1
+      #});
+      #
+      #my $info = qq{
+      #  <a href="$url" class="ajax_add toggle closed" rel="$trans_name\_$varif_id\_$allele">
+      #    <span class="closed">Show</span><span class="open">Hide</span>
+      #    <input type="hidden" class="url" value="$url" />
+      #  </a>
+      #};
       
       my $row = {
+        allele    => $transcript_data->{'vf_allele'}.' ('.$transcript_data->{'tr_allele'}.')',
         gene      => qq{<a href="$gene_url">$gene_name</a>},
-        trans     => qq{<a href="$transcript_url">$trans_name</a> ($strand)},
-        type      => $transcript_data->{'conseq'},
+        trans     => qq{<nobr><a href="$transcript_url">$trans_name</a> ($strand)</nobr>},
+        type      => $type,
         hgvs      => $hgvs || '-',
         trans_pos => $self->_sort_start_end($transcript_data->{'cdna_start'},        $transcript_data->{'cdna_end'}),
         prot_pos  => $self->_sort_start_end($transcript_data->{'translation_start'}, $transcript_data->{'translation_end'}),
         aa        => $transcript_data->{'pepallele'} || '-',
-        codon     => $codon
+        codon     => $codon,
+        #info      => $info,
       };
       
       $table->add_row($row);
@@ -149,6 +175,8 @@ sub content {
 
   if ($flag) {
     $html .= $table->render;
+    
+    $html .= $self->_info('Information','<p><span style="color:red;">*</span> SO terms are shown when no NCBI term is available</p>', '50%') if $cons_format eq 'ncbi';
     
     return $html;
   } else { 
@@ -164,9 +192,15 @@ sub content {
 sub _sort_start_end {
   my ($self, $start, $end) = @_;
   
-  if ($start || $end) {
-    return "$start-$end";
-  } else {
+  if ($start || $end) { 
+    if($start == $end) {
+      return $start;
+    }
+    else {
+      return "$start-$end";
+    }
+  }
+  else {
     return '-';
   };
 }

@@ -1643,31 +1643,33 @@ sub variation_data {
   my $i               = 0;
  
   foreach my $tv (@{$self->get_transcript_variations}) {
-    my $pos = $tv->translation_start;
-    
-    next if !$include_utr && !$pos;
-    
-    my $vf    = $tv->variation_feature;
-    my $start = $vf->start;
-    my $end   = $vf->end;
-    
-    push @data, {
-      tv            => $tv,
-      vf            => $vf,
-      position      => $pos,
-      snp_source    => $vf->source,
-      vdbid         => $vf->dbID,
-      snp_id        => $vf->variation_name,
-      ambigcode     => $vf->ambig_code,
-      codons        => join(', ', split '/', $tv->codons),
-      allele        => $vf->allele_string,
-      pep_snp       => join(', ', split '/', $tv->pep_allele_string),
-      type          => $tv->display_consequence,
-      length        => $end - $start,
-      indel         => $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '',
-      codon_seq     => [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ],
-      codon_var_pos => ($tv->cds_start + 2) - ($pos * 3)
-    };
+	foreach my $tva (@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
+	  my $pos = $tv->translation_start;
+	  
+	  next if !$include_utr && !$pos;
+	  
+	  my $vf    = $tv->variation_feature;
+	  my $start = $vf->start;
+	  my $end   = $vf->end;
+	  
+	  push @data, {
+		tva           => $tva,
+		vf            => $vf,
+		position      => $pos,
+		snp_source    => $vf->source,
+		vdbid         => $vf->dbID,
+		snp_id        => $vf->variation_name,
+		ambigcode     => $vf->ambig_code,
+		codons        => join(', ', split '/', $tva->display_codon_allele_string),
+		allele        => $vf->allele_string,
+		pep_snp       => join(', ', split '/', $tva->pep_allele_string),
+		type          => $tv->display_consequence,
+		length        => $end - $start,
+		indel         => $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '',
+		codon_seq     => [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ],
+		codon_var_pos => ($tv->cds_start + 2) - ($pos * 3)
+	  };
+	}
   }
   
   return \@data;

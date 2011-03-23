@@ -4,7 +4,7 @@ package EnsEMBL::Web::Component::Gene::GeneSNPTable;
 
 use strict;
 
-use Bio::EnsEMBL::Variation::ConsequenceType;
+use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
@@ -43,6 +43,7 @@ sub make_table {
     { key => 'chr' ,       sort => 'position', title => 'Chr: bp'                           },
     { key => 'Alleles',    sort => 'string',                              align => 'center' },
     { key => 'Ambiguity',  sort => 'string',                              align => 'center' },
+    { key => 'HGVS',       sort => 'string',   title => 'HGVS name(s)',   align => 'center' },
     { key => 'class',      sort => 'string',   title => 'Class',          align => 'center' },
     { key => 'Source',     sort => 'string'                                                 },
     { key => 'status',     sort => 'string',   title => 'Validation',     align => 'center' },
@@ -61,7 +62,7 @@ sub render_content {
   my $html;
   
   if ($consequence_type) {
-    my $label = $Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_LABELS{$consequence_type} || 'All';
+    my $label = $consequence_type;#$Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_LABELS{$consequence_type} || 'All';
     
     $html = qq{
       <h2 style="float:left"><a href="#" class="toggle open" rel="$consequence_type">$label variants</a></h2>
@@ -80,6 +81,9 @@ sub render_content {
 sub stats_table {
   my ($self, $transcripts) = @_;
   
+  my $hub = $self->hub;
+  my $cons_display = $hub->param('consequence_format');
+  
   my $columns = [
     { key => 'count', title => 'Number of variants', sort => 'numeric_hidden', width => '20%', align => 'right'  },   
     { key => 'view',  title => '',                   sort => 'none',           width => '5%',  align => 'center' },
@@ -89,6 +93,33 @@ sub stats_table {
   
   my %counts;
   my %total_counts;
+  my %ranks;
+  my %descriptions;
+  my %labels;
+  
+  my @all_cons = @Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  
+  foreach my $con(@all_cons) {
+    my $term = $self->select_consequence_term($con, $cons_display);
+    
+    if($cons_display eq 'so') {
+      $labels{$term} = $term;
+      $descriptions{$term} = ($con->SO_accession =~ /x/i ? $con->SO_accession : $hub->get_ExtURL_link($con->SO_accession, 'SEQUENCE_ONTOLOGY', $con->SO_accession)) unless $descriptions{$term};
+    }
+    elsif($cons_display eq 'ncbi') {
+      $labels{$term} = $term;
+      $descriptions{$term} = '-';
+    }
+    else {
+      $labels{$term} = $con->label;
+      $descriptions{$term} = $con->description;
+    }
+    
+    $ranks{$term} = $con->rank if $con->rank < $ranks{$term} || !defined($ranks{$term});
+  }
+  
+  # mini-hack for when NCBI don't have a term
+  $ranks{'unclassified'} = 99999999999;
   
   foreach my $tr (@$transcripts) {
     my $tr_stable_id = $tr->stable_id;
@@ -104,19 +135,19 @@ sub stats_table {
       my $tv = $tvs->{$vf_id};
       
       if(defined($tv) && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
-        foreach my $con (@{$tv->consequence_type}) {
-          my $key = "${tr_stable_id}_$vf_id";
-          
-          $counts{$con}{$key} = 1 if $con;
-          $total_counts{$key} = 1;
+        foreach my $tva(@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
+          foreach my $con (@{$tva->get_all_OverlapConsequences}) {
+            my $key = join "_", ($tr_stable_id, $vf_id, $tva->variation_feature_seq);
+            
+            my $term = $self->select_consequence_term($con, $cons_display);
+            
+            $counts{$term}{$key} = 1 if $con;
+            $total_counts{$key} = 1;
+          }
         }
       }
     }
   }
-  
-  my %ranks        = %Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_TYPES;
-  my %descriptions = %Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_DESCRIPTIONS;
-  my %labels       = %Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_LABELS;
   my @rows;
   
   my $warning_text = qq{<span style="color:red;">(WARNING: table may not load for this number of variants!)</span>};
@@ -179,7 +210,8 @@ sub stats_table {
 
 sub variation_table {
   my ($self, $consequence_type, $transcripts, $slice) = @_;
-  my $hub                 = $self->hub;
+  my $hub          = $self->hub;
+  my $cons_display = $hub->param('consequence_format');
   my @rows;
   
   # create some URLs - quicker than calling the url method for every variation
@@ -196,9 +228,6 @@ sub variation_table {
     action => 'Summary',
     t      => undef,
   });
-  
-  my %labels = %Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_LABELS;
-  $labels{'ALL'} = 'All';
   
   foreach my $transcript (@$transcripts) {
     my $transcript_stable_id = $transcript->stable_id;
@@ -219,64 +248,71 @@ sub variation_table {
       my $raw_id               = $snp->dbID;
       my $transcript_variation = $snps{$raw_id};
       
-      my $skip = 1;
+      next unless $transcript_variation;
       
-      if ($consequence_type eq 'ALL') {
-        $skip = 0;
-      } elsif ($transcript_variation) {
-        foreach my $con (@{$transcript_variation->consequence_type}) {
-          if ($con eq $consequence_type) {
-            $skip = 0;
-            last;
+      foreach my $tva(@{$transcript_variation->get_all_alternate_TranscriptVariationAlleles}) {
+        
+        my $skip = 1;
+        
+        if ($consequence_type eq 'ALL') {
+          $skip = 0;
+        } elsif ($tva) {
+          foreach my $con (@{$tva->get_all_OverlapConsequences}) {
+            if ($self->select_consequence_term($con, $cons_display) eq $consequence_type) {
+              $skip = 0;
+              last;
+            }
           }
         }
-      }
-      
-      next if $skip;
-      
-      if ($transcript_variation && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
-        my $validation        = $snp->get_all_validation_states || [];
-        my $variation_name    = $snp->variation_name;
-        my $var_class         = $snp->var_class;
-        my $translation_start = $transcript_variation->translation_start;
-        my $source            = $snp->source;
         
-        # store the transcript variation so that HGVS doesn't try and calculate it again
-        $snp->{'transcriptVariations'} = [$transcript_variation];
+        next if $skip;
         
-        my ($aachange, $aacoord) = $translation_start ? 
-          ($transcript_variation->pep_allele_string, sprintf('%s (%s)', $transcript_variation->translation_start, (($transcript_variation->cdna_start - $cdna_coding_start) % 3 + 1))) : 
-          ('-', '-');
-        
-        my $url       = "$base_url;v=$variation_name;vf=$raw_id;source=$source";
-        my $trans_url = "$base_trans_url;t=$transcript_stable_id";
-        
-        # break up allele string if too long
-        my $as = $snp->allele_string;
-        $as    =~ s/(.{20})/$1\n/g;
-        
-        # sort out consequence type string
-        my $type = join ', ', map $labels{$_}, @{$transcript_variation->consequence_type || []};
-        $type  ||= '-';
-        
-        my $row = {
-          ID         => qq{<a href="$url">$variation_name</a>},
-          class      => $var_class,
-          Alleles    => qq{<span style="font-family:Courier New,Courier,monospace;">$as</span>},
-          Ambiguity  => $snp->ambig_code,
-          status     => (join(', ',  @$validation) || '-'),
-          chr        => "$chr:$start" . ($start == $end ? '' : "-$end"),
-          Source     => $source,
-          snptype    => $type,
-          Transcript => qq{<a href="$trans_url">$transcript_stable_id</a>},
-          aachange   => $aachange,
-          aacoord    => $aacoord,
-        };
-        
-        # add HGVS if LRG
-        $row->{'HGVS'} = $self->get_hgvs($snp, $transcript->Obj, $slice) || '-' if $transcript_stable_id =~ /^LRG/;
-        
-        push @rows, $row;
+        if ($tva && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
+          my $validation        = $snp->get_all_validation_states || [];
+          my $variation_name    = $snp->variation_name;
+          my $var_class         = $snp->var_class;
+          my $translation_start = $transcript_variation->translation_start;
+          my $source            = $snp->source;
+          
+          my ($aachange, $aacoord) = $translation_start ? 
+            ($tva->pep_allele_string, sprintf('%s (%s)', $transcript_variation->translation_start, (($transcript_variation->cdna_start - $cdna_coding_start) % 3 + 1))) : 
+            ('-', '-');
+          
+          my $url       = "$base_url;v=$variation_name;vf=$raw_id;source=$source";
+          my $trans_url = "$base_trans_url;t=$transcript_stable_id";
+          
+          my $as = $snp->allele_string;
+          
+          # break up allele string if too long (will disrupt highlight below, but for long alleles who cares)
+          $as =~ s/(.{20})/$1\n/g;
+          
+          # highlight variant allele in allele string
+          my $vf_allele = $tva->variation_feature_seq;
+          $as =~ s/$vf_allele/<b>$&\<\/b>/ if $as =~ /\//;
+          
+          # sort out consequence type string
+          my $type = join ', ', map {$self->select_consequence_label($_, $cons_display)} @{$tva->get_all_OverlapConsequences || []};
+          $type  ||= '-';
+          
+          my $row = {
+            ID         => qq{<a href="$url">$variation_name</a>},
+            class      => $var_class,
+            Alleles    => qq{<span style="font-family:Courier New,Courier,monospace;">$as</span>},
+            Ambiguity  => $snp->ambig_code,
+            status     => (join(', ',  @$validation) || '-'),
+            chr        => "$chr:$start" . ($start == $end ? '' : "-$end"),
+            Source     => $source,
+            snptype    => $type,
+            Transcript => qq{<a href="$trans_url">$transcript_stable_id</a>},
+            aachange   => $aachange,
+            aacoord    => $aacoord,
+          };
+          
+          # add HGVS if LRG
+          $row->{'HGVS'} = $self->get_hgvs($transcript_variation) || '-';# if $transcript_stable_id =~ /^LRG/;
+          
+          push @rows, $row;
+        }
       }
     }
   }
@@ -326,22 +362,23 @@ sub configure {
 }
 
 sub get_hgvs {
-  my ($self, $vf, $trans, $slice) = @_;
   
-  my %cdna_hgvs = %{$vf->get_all_hgvs_notations($trans, 'c')};
-  my %pep_hgvs  = %{$vf->get_all_hgvs_notations($trans, 'p')};
+  my ($self, $tv) = @_;
+  
+  my %cdna_hgvs = %{$tv->hgvs_coding || {}};
+  my %pep_hgvs  = %{$tv->hgvs_protein || {}};
 
   # group by allele
   my %by_allele;
   
   # get genomic ones if given a slice
-  if ($slice) {
-    my %genomic_hgvs = %{$vf->get_all_hgvs_notations($slice, 'g', $vf->seq_region_name)};
-    push @{$by_allele{$_}}, $genomic_hgvs{$_} for keys %genomic_hgvs;
-  }
+  #if ($slice) {
+  #  my %genomic_hgvs = %{$vf->get_all_hgvs_notations($slice, 'g', $vf->seq_region_name)};
+  #  push @{$by_allele{$_}}, $genomic_hgvs{$_} for keys %genomic_hgvs;
+  #}
 
   push @{$by_allele{$_}}, $cdna_hgvs{$_} for keys %cdna_hgvs;
-  push @{$by_allele{$_}}, $pep_hgvs{$_}  for keys %pep_hgvs;
+  #push @{$by_allele{$_}}, $pep_hgvs{$_}  for keys %pep_hgvs;
   
   my $allele_count = scalar keys %by_allele;
   my @temp;
@@ -354,6 +391,34 @@ sub get_hgvs {
   }
 
   return join ', ', @temp;
+}
+
+sub select_consequence_term {
+  my ($self, $con, $format) = @_;
+  
+  if($format eq 'so') {
+    return $con->SO_term;
+  }
+  elsif($format eq 'ncbi') {
+    return $con->NCBI_term || 'unclassified';
+  }
+  else {
+    return $con->display_term;
+  }  
+}
+
+sub select_consequence_label {
+  my ($self, $con, $format) = @_;
+  
+  if($format eq 'so') {
+    return $self->hub->get_ExtURL_link($con->SO_term, 'SEQUENCE_ONTOLOGY', $con->SO_accession);
+  }
+  elsif($format eq 'ncbi') {
+    return $con->NCBI_term || 'unclassified';
+  }
+  else {
+    return '<span title="'.$con->description.'">'.$con->label.'</span>';
+  }  
 }
 
 1;

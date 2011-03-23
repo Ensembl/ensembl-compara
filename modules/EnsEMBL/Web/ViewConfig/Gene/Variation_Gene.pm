@@ -12,6 +12,7 @@ sub init {
   my $variations = $view_config->species_defs->databases->{'DATABASE_VARIATION'};
   
   $view_config->_set_defaults(qw(
+    consequence_format   ensembl
     panel_image          on 
     context              100
     hgvs                 transcript
@@ -105,6 +106,18 @@ sub form {
   
   # Add type selection
   $view_config->add_fieldset('Consequence type');
+  
+  $view_config->add_form_element({
+    type   => 'DropDown',
+    select =>, 'select',
+    label  => 'Type of consequences to display',
+    name   => 'consequence_format',
+    values => [
+      { value => 'ensembl',  name => 'Ensembl terms'           },
+      { value => 'so',       name => 'Sequence Ontology terms' },
+      { value => 'ncbi',     name => 'NCBI terms'              },
+    ]
+  });
   
   foreach (sort { $type{$a}->[2] <=> $type{$b}->[2] } keys %type) { 
     next if $_ eq 'opt_sara';
