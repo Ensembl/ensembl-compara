@@ -75,9 +75,9 @@ sub fetch_features {
         my $set_object = $variation_db_adaptor->get_VariationSetAdaptor->fetch_by_name($track_set);
       
         # Enable the display of failed variations in order to display the failed variation track
-        my $failed_variations_track_name = 'Failed variations';
+        my $failed_variations_track_name = 'Failed';
         my $orig_failed_flag = $variation_db_adaptor->include_failed_variations();
-        $variation_db_adaptor->include_failed_variations(1) if ($track_set =~ m/$failed_variations_track_name/i);
+        $variation_db_adaptor->include_failed_variations(1) if ($track_set =~ m/^$failed_variations_track_name/i);
         
         @vari_features =  @{$self->{'container'}->get_all_VariationFeatures_by_VariationSet($set_object) || []};
         
