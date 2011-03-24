@@ -27,67 +27,6 @@
 
     The PipeConfig file for Families pipeline that should automate most of the tasks
 
-    Some statistics of previous releases:
-
-=head2 rel.62e stats
-
-    sequences to cluster:       3,133,750           [ SELECT count(*) from sequence; ]
-    uniprot_loading time:       1.6h                {20 x pfetch}
-    blasting time:              2 days              
-
-=head2 rel.62d stats
-
-    uniprot_loading time:       3.5h                {10 x pfetch}
-
-=head2 rel.62c stats
-
-    uniprot_loading time:       3.5h                {14 x pfetch}
-
-=head2 rel.62b stats
-
-    uniprot_loading time:       2.15h               {7 x mfetch}
-
-=head2 rel.62a stats
-
-    uniprot_loading time:       3h                  {30 x pfetch}
-
-=head2 rel.62 stats
-
-    sequences to cluster:       3,079,257           [ SELECT count(*) from sequence; ]
-    distances by Blast:         550,334,750         [ SELECT count(*) from mcl_sparse_matrix; ]
-
-    total running time:         4.5 days            
-    uniprot_loading time:       5.1h                
-    blasting time:              3 days              
-    mcxload running time:       1.5h                
-    mcl running time:           3.7h                
-
-    memory used by mcxload:     15G RAM + 15G SWAP  [ bacct -l [ SELECT max(process_id) FROM hive WHERE analysis_id=11; ] ]
-    memory used by mcl:         18G RAM + 18G SWAP  [ bacct -l [ SELECT max(process_id) FROM hive WHERE analysis_id=12; ] ]
-
-=head2 rel.61 stats
-
-    sequences to cluster:       2,914,080           [ SELECT count(*) from sequence; ]
-    distances by Blast:         523,104,710         [ SELECT count(*) from mcl_sparse_matrix; ]
-
-    total running time:         3(!) days           
-    uniprot_loading time:       4h                  
-    blasting time:              1.7(!) days         
-    mcxload running time:       8h                  
-    mcl running time:           9.4h                
-
-=head2 rel.60 stats
-
-    sequences to cluster:       2,725,421           [ SELECT count(*) from sequence; ]
-    distances by Blast:         484,837,915         [ SELECT count(*) from mcl_sparse_matrix; ]
-
-    mcxload running time:       11.2h               
-    mcl running time:           3.1h                
-
-    memory used by mcxload:     13G RAM + 13G SWAP  
-    memory used by mcl:         15G RAM + 16G SWAP  
-
-
 =head1 CONTACT
 
   Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
@@ -565,3 +504,67 @@ sub pipeline_analyses {
 }
 
 1;
+
+=head1 STATS and TIMING
+
+=head2 rel.62e stats
+
+    sequences to cluster:       3,133,750           [ SELECT count(*) from sequence; ]
+    uniprot_loading time:       1.6h                {20 x pfetch}
+    dumping_after_loading:      1.3m
+    blasting time:              2 days              
+    dumping_after_blasting:     1h
+
+=head2 rel.62d stats
+
+    uniprot_loading time:       3.5h                {10 x pfetch}
+
+=head2 rel.62c stats
+
+    uniprot_loading time:       3.5h                {14 x pfetch}
+
+=head2 rel.62b stats
+
+    uniprot_loading time:       2.15h               {7 x mfetch}
+
+=head2 rel.62a stats
+
+    uniprot_loading time:       3h                  {30 x pfetch}
+
+=head2 rel.62 stats
+
+    sequences to cluster:       3,079,257           [ SELECT count(*) from sequence; ]
+    distances by Blast:         550,334,750         [ SELECT count(*) from mcl_sparse_matrix; ]
+
+    total running time:         4.5 days            
+    uniprot_loading time:       5.1h                
+    blasting time:              3 days              
+    mcxload running time:       1.5h                
+    mcl running time:           3.7h                
+
+    memory used by mcxload:     15G RAM + 15G SWAP  [ bacct -l [ SELECT max(process_id) FROM hive WHERE analysis_id=11; ] ]
+    memory used by mcl:         18G RAM + 18G SWAP  [ bacct -l [ SELECT max(process_id) FROM hive WHERE analysis_id=12; ] ]
+
+=head2 rel.61 stats
+
+    sequences to cluster:       2,914,080           [ SELECT count(*) from sequence; ]
+    distances by Blast:         523,104,710         [ SELECT count(*) from mcl_sparse_matrix; ]
+
+    total running time:         3(!) days           
+    uniprot_loading time:       4h                  
+    blasting time:              1.7(!) days         
+    mcxload running time:       8h                  
+    mcl running time:           9.4h                
+
+=head2 rel.60 stats
+
+    sequences to cluster:       2,725,421           [ SELECT count(*) from sequence; ]
+    distances by Blast:         484,837,915         [ SELECT count(*) from mcl_sparse_matrix; ]
+
+    mcxload running time:       11.2h               
+    mcl running time:           3.1h                
+
+    memory used by mcxload:     13G RAM + 13G SWAP  
+    memory used by mcl:         15G RAM + 16G SWAP  
+
+=cut
