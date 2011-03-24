@@ -20,7 +20,10 @@ sub tree_cache_key {
 
 sub populate_tree {
   my $self = shift;
-  my $somatic = $self->object->Obj->is_somatic;
+	my $somatic;
+	if (defined($self->object)) {
+  	$somatic = $self->object->Obj->is_somatic;
+	}
 
   $self->create_node('Summary', 'Summary',
     [qw(
