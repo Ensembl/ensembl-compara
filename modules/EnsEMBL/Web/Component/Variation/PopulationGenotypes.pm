@@ -93,7 +93,7 @@ sub format_frequencies {
       foreach my $ssid(keys %{$freq_data->{$pop_id}}) {
         if($freq_data->{$pop_id}{$ssid}{failed_desc}) {
           $fv_data->{$pop_id}{$ssid} = $freq_data->{$pop_id}{$ssid};
-          $fv_data->{$pop_id}{$ssid}{failed_desc} =~ s/Variation/'Variation '.$ssid/e;
+          $fv_data->{$pop_id}{$ssid}{failed_desc} =~ s/Variation submission/$& $ssid/;
           delete $freq_data->{$pop_id}{$ssid};
         }
         elsif($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'} =~ /^1000genomes\:.*/i) {
