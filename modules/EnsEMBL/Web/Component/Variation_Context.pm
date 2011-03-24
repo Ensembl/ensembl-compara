@@ -126,7 +126,7 @@ sub content {
 	$var_slice = 1 ? $slice  : $slice_adaptor->fetch_by_region($seq_type, $seq_region, $v->{'start'}, $v->{'end'}, 1);
   
 
-  $html .= qq{<h2>Overlapping features :</h2>};
+  $html .= qq{<h2>Overlapping features :</h2><br />};
   
   # structural variation table
   $html .= $self->structural_variation_table($var_slice,$vname);
@@ -144,9 +144,10 @@ sub content {
   
   # constrained elements table
   $html .= $self->constrained_element_table($var_slice,$vname);
-
+  
   return $html;
 }
+
 
 
 sub structural_variation_table{
@@ -154,7 +155,6 @@ sub structural_variation_table{
   my $slice    = shift;
 	my $v        = shift;
   my $hub      = $self->hub;
-  my $svs      = $slice->get_all_StructuralVariations;
   my $title    = 'Structural variants';
 	my $table_id = 'sv';
 	my $html;
@@ -164,59 +164,55 @@ sub structural_variation_table{
      { key => 'location',    sort => 'position_html', title => 'Chr:bp' },
      { key => 'class',       sort => 'string',        title => 'Class'  },
      { key => 'source',      sort => 'string',        title => 'Source Study' },
-     { key => 'description', sort => 'string',        title => 'Study description', width => '40%' },
+     { key => 'description', sort => 'string',        title => 'Study description', width => '50%' },
   ];
   
   my $rows;
 	
-  if (defined $svs) {
-    foreach my $sv (@$svs) {
-      next if $sv->variation_name eq $v;
-      # make PMID link for description
-      my $description = $sv->source_description;
-      my $pubmed_link;
-	 		my $sv_class = $sv->class;
-	  	my $source   = $sv->source;
+	foreach my $sv (@{$slice->get_all_StructuralVariations}) {
+		my $name = $sv->variation_name;
+    next if $name eq $v;
+    # make PMID link for description
+    my $description = $sv->source_description;
+		my $ext_ref  = $sv->external_reference;
+	 	my $sv_class = $sv->class;
+	  my $source   = $sv->source;
 	  
-	  	# Add study information
-	  	if ($sv->study_name ne '') {
-	  		$source .= ":".$sv->study_name;
-				$description .= $sv->study_description;
-	  	}
+	  # Add study information
+	  if ($sv->study_name ne '') {
+	  	$source .= ":".$sv->study_name;
+			$description .= $sv->study_description;
+	  }
       
-      if ($description =~ /PMID/) {
-        my @description_string = split ':', $description;
-        my $pubmed_id          = pop @description_string;
-        
-        $pubmed_id   =~ s/\s+.+//g;
-        $pubmed_link = $hub->get_ExtURL('PUBMED', $pubmed_id);
-        $description =~ s/$pubmed_id/'<a href="'.$pubmed_link.'" target="_blank">'.$&.'<\/a>'/eg;
-      }
-      my $name = $sv->variation_name;
-      my $sv_link = $hub->url({
-        type    => 'StructuralVariation',
-        action  => 'Summary',
-        sv      => $name
-      });      
-
-      my $loc_string = $sv->seq_region_name . ':' . $sv->seq_region_start . '-' . $sv->seq_region_end;
-        
-      my $loc_link = $hub->url({
-        type   => 'Location',
-        action => 'View',
-        r      => $loc_string,
-      });
-      
-      my %row = (
-        id          => qq{<a href="$sv_link">$name</a>},
-        location    => qq{<a href="$loc_link">$loc_string</a>},
-        class       => $sv_class,
-        source      => $source,
-        description => $description,
-      );
-	  
-      push @$rows, \%row;
+    if ($ext_ref =~ /pubmed\/(.+)/) {
+			my $pubmed_id = $1;
+			my $pubmed_link = $hub->get_ExtURL('PUBMED', $pubmed_id);
+      $description =~ s/$pubmed_id/'<a href="'.$pubmed_link.'" target="_blank">'.$&.'<\/a>'/eg;
     }
+			
+    my $sv_link = $hub->url({
+       		type    => 'StructuralVariation',
+        	action  => 'Summary',
+        	sv      => $name
+       	});      
+
+    my $loc_string = $sv->seq_region_name . ':' . $sv->seq_region_start . '-' . $sv->seq_region_end;
+        
+    my $loc_link = $hub->url({
+        	type   => 'Location',
+        	action => 'View',
+        	r      => $loc_string,
+      	});
+      
+    my %row = (
+        	id          => qq{<a href="$sv_link">$name</a>},
+        	location    => qq{<a href="$loc_link">$loc_string</a>},
+        	class       => $sv_class,
+        	source      => $source,
+        	description => $description,
+      	);
+	  
+    push @$rows, \%row;
   }
   
 	my $sv_table = $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] });
@@ -230,7 +226,6 @@ sub cnv_probe_table{
   my $slice    = shift;
 	my $v        = shift;
   my $hub      = $self->hub;
-  my $svs      = $slice->get_all_CopyNumberVariantProbes;
   my $title    = 'Copy number variants probes';
 	my $table_id = 'cnv';
 	my $html;
@@ -245,54 +240,49 @@ sub cnv_probe_table{
   
   my $rows;
 	
-  if (defined $svs) {
-    foreach my $sv (@$svs) {
-      next if $sv->variation_name eq $v;
-      # make PMID link for description
-      my $description = $sv->source_description;
-      my $pubmed_link;
-	 		my $sv_class = $sv->class;
-	  	my $source   = $sv->source;
+	foreach my $sv (@{$slice->get_all_CopyNumberVariantProbes}) {
+		my $name = $sv->variation_name;
+    next if $name eq $v;
+    # make PMID link for description
+    my $description = $sv->source_description;
+    my $ext_ref  = $sv->external_reference;
+	 	my $sv_class = $sv->class;
+	  my $source   = $sv->source;
 	  
-	  	# Add study information
-	  	if ($sv->study_name ne '') {
-	  		$source .= ":".$sv->study_name;
-				$description .= $sv->study_description;
-	  	}
-      
-      if ($description =~ /PMID/) {
-        my @description_string = split ':', $description;
-        my $pubmed_id          = pop @description_string;
-        
-        $pubmed_id   =~ s/\s+.+//g;
-        $pubmed_link = $hub->get_ExtURL('PUBMED', $pubmed_id);
-        $description =~ s/$pubmed_id/'<a href="'.$pubmed_link.'" target="_blank">'.$&.'<\/a>'/eg;
-      }
-      my $name = $sv->variation_name;
-      my $sv_link = $hub->url({
-        type    => 'StructuralVariation',
-        action  => 'Summary',
-        sv      => $name
-      });      
-
-      my $loc_string = $sv->seq_region_name . ':' . $sv->seq_region_start . '-' . $sv->seq_region_end;
-        
-      my $loc_link = $hub->url({
-        type   => 'Location',
-        action => 'View',
-        r      => $loc_string,
-      });
-      
-      my %row = (
-        id          => qq{<a href="$sv_link">$name</a>},
-        location    => qq{<a href="$loc_link">$loc_string</a>},
-        class       => $sv_class,
-        source      => $source,
-        description => $description,
-      );
-	  
-      push @$rows, \%row;
+	  # Add study information
+	  if ($sv->study_name ne '') {
+	  	$source .= ":".$sv->study_name;
+			$description .= $sv->study_description;
+	  }
+    if ($ext_ref =~ /pubmed\/(.+)/) {
+			my $pubmed_id = $1;
+			my $pubmed_link = $hub->get_ExtURL('PUBMED', $pubmed_id);
+      $description =~ s/$pubmed_id/'<a href="'.$pubmed_link.'" target="_blank">'.$&.'<\/a>'/eg;
     }
+			
+    my $sv_link = $hub->url({
+       		type    => 'StructuralVariation',
+        	action  => 'Summary',
+        	sv      => $name
+      	});      
+
+    my $loc_string = $sv->seq_region_name . ':' . $sv->seq_region_start . '-' . $sv->seq_region_end;
+        
+    my $loc_link = $hub->url({
+        	type   => 'Location',
+        	action => 'View',
+        	r      => $loc_string,
+      	});
+      
+    my %row = (
+        	id          => qq{<a href="$sv_link">$name</a>},
+        	location    => qq{<a href="$loc_link">$loc_string</a>},
+        	class       => $sv_class,
+        	source      => $source,
+        	description => $description,
+      	);
+	  
+    push @$rows, \%row;
   }
   
 	my $cnv_table = $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] });
@@ -306,7 +296,6 @@ sub sequence_variation_table {
   my $slice    = shift;
 	my $v        = shift;
   my $hub      = $self->hub;
-  my $vfs      = $slice->get_all_VariationFeatures;
 	my $title    = 'Sequence variants';
 	my $table_id = 'seq';
 
@@ -322,43 +311,41 @@ sub sequence_variation_table {
 
   my $rows;
   
-  if (defined $vfs){
-    foreach my $vf (@$vfs){
-      next if $vf->variation_name eq $v;
+	foreach my $vf (@{$slice->get_all_VariationFeatures}){
+		my $name = $vf->variation_name;
+    next if $name eq $v;
       
-      my $name = $vf->variation_name;
-      my $vf_link = $hub->url({
-        type    => 'Variation',
-        action  =>  'Summary',
-        v       => $name,
-        vf      => $vf->dbID
-      });
+    my $vf_link = $hub->url({
+        	type    => 'Variation',
+        	action  =>  'Summary',
+        	v       => $name,
+        	vf      => $vf->dbID
+      	});
 
-			my $region_start = $vf->seq_region_start;
-			my $region_end = $vf->seq_region_end;
+		my $region_start = $vf->seq_region_start;
+		my $region_end = $vf->seq_region_end;
 			
-      my $loc_string = $vf->seq_region_name . ':' . $region_start . ($region_start = $region_end ? '' : '-' . $region_end);
-      my $loc_link = $hub->url({
-        type   => 'Location',
-        action => 'View',
-        r      => $loc_string,
-      });
+    my $loc_string = $vf->seq_region_name . ':' . $region_start . ($region_start = $region_end ? '' : '-' . $region_end);
+    my $loc_link = $hub->url({
+        	type   => 'Location',
+        	action => 'View',
+        	r      => $loc_string,
+      	});
 
-     my $validation = $vf->get_all_validation_states || [];
+    my $validation = $vf->get_all_validation_states || [];
     
         
-     my %row = (
-        id          => qq{<a href="$vf_link">$name</a>},
-        location    => qq{<a href="$loc_link">$loc_string</a>},
-        alleles     => $vf->allele_string,
-        ambiguity   => $vf->ambiguity_code,
-        class       => $vf->var_class,
-        source      => $vf->source,
-        valid       =>  join(', ',  @$validation) || '-',
-      );
+		my %row = (
+        	id          => qq{<a href="$vf_link">$name</a>},
+        	location    => qq{<a href="$loc_link">$loc_string</a>},
+        	alleles     => $vf->allele_string,
+        	ambiguity   => $vf->ambiguity_code,
+        	class       => $vf->var_class,
+        	source      => $vf->source,
+        	valid       =>  join(', ',  @$validation) || '-',
+      	);
 
-      push @$rows, \%row;
-    }
+    push @$rows, \%row;
   }
 	
 	my $table = $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] });
@@ -398,8 +385,8 @@ sub regulatory_feature_table{
       if (defined $image_config->get_node('functional')->get_node("reg_feats_$set_name")) {
 				foreach my $rf (@{$set->get_Features_by_Slice($slice)}) {
             
-						my $stable_id = $rf->stable_id;
-						my $rf_link = $hub->url({
+					my $stable_id = $rf->stable_id;
+					my $rf_link = $hub->url({
                type   => 'Regulation',
                action => 'Summary',
                fdb    => 'funcgen',
@@ -407,25 +394,24 @@ sub regulatory_feature_table{
                rf     => $stable_id,
              });
              
-						 my $region_name = $rf->seq_region_name;
-             my $loc_string = "$region_name:" . ($slice->start + $rf->bound_start - 1) . '-' . ($slice->start + $rf->bound_end - 1);
+					my $region_name = $rf->seq_region_name;
+          my $loc_string = "$region_name:" . ($slice->start + $rf->bound_start - 1) . '-' . ($slice->start + $rf->bound_end - 1);
              
-						 my $loc_link = $hub->url({
+					my $loc_link = $hub->url({
                type             => 'Location',
                action           => 'View',
                r                => $loc_string,
                contigviewbottom => "reg_feats_$set_name=normal",
              });
              
-             push @$rows, {
+          push @$rows, {
                id         => qq{<a href="$rf_link">}  . $stable_id . '</a>',
                location   => qq{<a href="$loc_link">$region_name:} . $rf->seq_region_start . '-' . $rf->seq_region_end . '</a>',
                bound      => qq{<a href="$loc_link">$loc_string</a>},
                type       => $rf->feature_type->name,
                featureset => $set->display_label,
-             };
-          }
-        #}
+          };
+      	}
       }
     }
   }
@@ -454,12 +440,15 @@ sub constrained_element_table {
   ];
   
   my $rows;
-  
+	
+  my $slice_start = $slice->start;
+	my $slice_region_name = $slice->seq_region_name;
+	
   if (defined $mlssa && defined $cea) {
     foreach my $mlss (@{$mlssa->fetch_all_by_method_link_type('GERP_CONSTRAINED_ELEMENT')}) {
       foreach my $ce (@{$cea->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice)}) {
-				my $slice_start = $slice->start;
-        my $loc_string = $ce->slice->seq_region_name . ':' . ($slice_start + $ce->start - 1) . '-' . ($slice_start + $ce->end - 1);
+			
+        my $loc_string = $slice_region_name . ':' . ($slice_start + $ce->start - 1) . '-' . ($slice_start + $ce->end - 1);
         
         my $loc_link = $hub->url({
           type   => 'Location',
@@ -506,6 +495,7 @@ sub display_table_with_toggle_button {
     </div>\n
 	};
 	$html .= $table->render;	
+	$html .= qq{<br />};
 		
 	return $html;
 }
