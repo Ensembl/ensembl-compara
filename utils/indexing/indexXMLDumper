@@ -94,20 +94,28 @@ foreach my $index (@indexes) {
     mkdir $conf->{'directory_somatic_mutations'}, 0777 unless -e $conf->{'directory_somatic_mutations'};
   }
   foreach my $species ( @species ) {
-
-#    next unless ($species =~ /^[L-Z]/);
-#    next if ($species =~ /Homo/);
-
-    $conf->{'species'}   = $species;
-    push @{$conf->{'speciesname_list'}},$SD->get_config($species,'SPECIES_COMMON_NAME');
-#    (my $species_name = $species) =~ s/_/ /;
-    push  @{$conf->{'speciesname_list'}},$species;
-    $conf->{'authority'} = $SD->get_config($species,'AUTHORITY');
+    my $single_species = 0;
     my %dbs = %{$SD->get_config($species,'databases')||{}};
     $conf->{'dbs'}       = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
     $conf->{'dbs'}{'DATABASE_COMPARA'} = 'ensembl_compara_'.$SD->ENSEMBL_VERSION;
     my $core = $dbs{'DATABASE_CORE'};
     $conf->{'core_details'} = $core;
+
+    if ($index eq 'Help') {
+      $single_species = 1;
+    }
+
+    else {
+
+#    next unless ($species =~ /^[L-Z]/);
+
+      $conf->{'species'}   = $species;
+      $conf->{'speciesname_list'}{$SD->get_config($species,'SPECIES_COMMON_NAME')}++;
+      $conf->{'speciesname_list'}{$species}++;
+      $conf->{'authority'} = $SD->get_config($species,'AUTHORITY');
+
+    }
+
     my $no_success = 1;
     my $c;
     print LOG "Starting: $index $species\n";
@@ -148,6 +156,7 @@ foreach my $index (@indexes) {
       }
     }
     $conf->{'dbh'}->disconnect;
+    last if $single_species;
   }
   print LOG "\nTime for $index is " . &elapsed_time($start) . "\n";
 }
@@ -158,6 +167,11 @@ print LOG "\nTotal time for dumping " . &elapsed_time($start_time) . "\n";
 exit;
 
 ## Now for all the dump functions...............................
+
+
+sub dumpHelp {
+
+}
 
 ########################################################################## Markers
 
@@ -1569,7 +1583,7 @@ sub dumpGene {
     my $other_count = 0;
     my %current_stable_ids =();
     foreach my $type (qw(gene transcript translation)) {
-      $current_stable_ids{$type}  = {map {@$_} @{$conf->{'dbh'}->selectall_arrayref( "select stable_id,1 from $COREDB.".$type."_stable_id" )}};
+      $current_stable_ids{$type} = { map {@$_} @{$conf->{'dbh'}->selectall_arrayref( "select stable_id,1 from $COREDB.".$type."_stable_id" )}};
     }
     my $species = $conf->{'species'};
     my $sth = $conf->{'dbh'}->prepare( qq(
@@ -1584,10 +1598,10 @@ sub dumpGene {
     my %mapping = ();
     while( my($type,$osi,$nsi) = $sth->fetchrow_array() ) {
       next if $current_stable_ids{$type}{$osi}; ## Don't need to cope with current IDS already searchable...
-      $mapping{$type}{$osi}{$nsi}=1;
+      $mapping{$type}{$osi}{$nsi} = 1;
       if($mapping{$type}{$nsi}) {
         foreach( keys %{$mapping{$type}{$nsi}} ) {
-          $mapping{$type}{$osi}{$_}=1;
+          $mapping{$type}{$osi}{$_} = 1;
         }
       }
     }
@@ -1701,7 +1715,46 @@ sub GeneLine {
   my $xml = qq(
 <entry id="$gsid">
   <name>$disp_xref</name>
-  <description>$description</description>
+  <description>$description</description>);
+
+  $xml .= qq(
+  <additional_fields>);
+  $xml .= &common_fields($species,'Gene');
+  $xml .= qq(
+    <field name="action">Summary</field>
+    <field name="source">$ad_label</field>);
+  if ($gene_loc) {
+    my $loc = $gene_loc->{'sr_name'} .':'. $gene_loc->{'seq_region_start'} .'-'. $gene_loc->{'seq_region_end'} .':'. $gene_loc->{'seq_region_strand'};
+    $xml .= qq(
+    <field name="location">$loc</field>);
+  }
+  foreach my $xref_description (keys %{$xref_descriptions}) {
+    if ($xref_description) {
+      $xref_description = &clean($xref_description,'xref description');
+      $xml .= qq(
+    <field name="xref_description">$xref_description</field>);
+    }
+  }
+  unless ($db eq 'core') {
+    $xml .= qq(
+    <field name="db">$db</field>);
+  }
+  foreach my $tsi (keys %$tsids) {
+    $xml .= qq(
+    <field name="transcript">$tsi</field>);
+  }
+  foreach my $tlsi (keys %$tlsids) {
+    $xml .= qq(
+    <field name="peptide">$tlsi</field>);
+  }
+  foreach my $esi (keys %$exons) {
+    $xml .= qq(
+    <field name="exon">$esi</field>);
+  }
+  $xml .= qq(
+  </additional_fields>);
+
+  $xml .= qq(
   <cross_references>);
   my (%seen_labels,%seen_syns);
   foreach my $xref (@$xrefs) {
@@ -1729,83 +1782,22 @@ sub GeneLine {
   $xml .= qq(
   </cross_references>);
 
-  $xml .= qq(
-  <additional_fields>);
-  $xml .= &common_fields($species,'Gene');
-  $xml .= qq(
-    <field name="action">Summary</field>
-    <field name="source">$ad_label</field>);
-  if ($gene_loc) {
-    my $loc = $gene_loc->{'sr_name'} .':'. $gene_loc->{'seq_region_start'} .'-'. $gene_loc->{'seq_region_end'} .':'. $gene_loc->{'seq_region_strand'};
-    $xml .= qq(
-    <field name="location">$loc</field>);
-  }
-
-  foreach my $xref_description (keys %{$xref_descriptions}) {
-    if ($xref_description) {
-      $xref_description = &clean($xref_description,'xref description');
-      $xml .= qq(
-    <field name="xref_description">$xref_description</field>);
-    }
-  }
-
-  unless ($db eq 'core') {
-    $xml .= qq(
-    <field name="db">$db</field>);
-  }
-  foreach my $tsi (keys %$tsids) {
-    $xml .= qq(
-    <field name="transcript">$tsi</field>);
-  }
-  foreach my $tlsi (keys %$tlsids) {
-    $xml .= qq(
-    <field name="peptide">$tlsi</field>);
-  }
-  foreach my $esi (keys %$exons) {
-    $xml .= qq(
-    <field name="exon">$esi</field>);
-  }
-
-  $xml .= qq(
-  </additional_fields>);
   $counter->();
   return $xml . qq(
 </entry>);
 }
 
-#deal with those pesky non-standard characters in gene names and descriptions (order of regexps is important)
-sub clean {
-  my ($text,$field) = @_;
-  $text =~ s/&/&amp;/g;
-  $text =~ s/<i>//g;
-  $text =~ s/<\/i>//g;
-  $text =~ s/<sup>/-/g;
-  $text =~ s/<\/sup>/-/g;
-  $text =~ s/<em>//g;
-  $text =~ s/<\/em>//g;
-  $text =~ s/</&lt;/g;
-  $text =~ s/>/&gt;/g;
-  $text =~ s/'/&#44;/g;
-  $text =~ s/"/&quot;/g;
-  $text =~ s/ & / &amp; /g;
-  $text =~ s/</&lt;/g;
-  $text =~ s/>/&gt;/g;
-
-  if ($text =~ /[<>]/) {
-    print LOG "WARNING: Unsupported character $text in field $field\n";
-  }
-  return $text;
-}
-
 sub GeneStableIdMappingLine {
   my ($species,$desc,$osi,$current_sis,$deprecated_sis,$type,$db,$counter) = @_;
   $species =~ s/_/ /;
-  $type = lc($type);
   my $xml = qq(
 <entry id="$osi">
   <description>$desc</description>
+  <name>"Retired Ensembl $type stable ID"</name>
   <additional_fields>);
-  $xml .= &common_fields($species,'Gene');
+  $type = 'IDHistory_'.lc($type);
+
+  $xml .= &common_fields($species,$type);
   foreach my $id (@$current_sis,@$deprecated_sis) {
     $xml .= qq(
     <field name="old_id">$id</field>);
@@ -1818,6 +1810,433 @@ sub GeneStableIdMappingLine {
   return $xml . qq(
 </entry>);
 }
+
+########################################################################## Transcripts
+
+sub dumpTranscript {
+  my $conf      = shift;
+  my $dbspecies = $conf->{'species'};
+  my $COREDB    = $conf->{'dbs'}->{'DATABASE_CORE'};
+  my $ESTGENEDB = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
+  my $RNASEQDB  = $conf->{'dbs'}->{'DATABASE_RNASEQ'};
+  my %dbs = ( 'core' => $COREDB );
+  $dbs{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
+#  $dbs{'rnaseq'} = $RNASEQDB if $RNASEQDB; #don't add these until the IDs mean something and the transcript pages are usefull!
+
+  my $total_c;
+ DB:
+  foreach my $db ( sort { $b cmp $a } keys %dbs) {
+    my $dbname    = $dbs{$db};
+    my $counter   = make_counter(0);
+    my $file = $conf->{'directory'}."/${dbname}_Transcript.xml";
+    $file .= ".gz" unless $nogzip;
+    my $start_time = time;
+    my $fh;
+    unless ($nogzip) {
+      $fh = new IO::Zlib;
+      $fh->open( "$file", "wb9" )
+        or die("Can't open compressed stream to $file: $!");
+    }
+    else {
+      open( $fh, ">$file" ) or die "Can't open $file: $!";
+    }
+    print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
+    header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
+
+    my $external_dbs = $conf->{'dbh'}->selectall_hashref(
+      'select external_db_id, db_name, db_display_name
+         from external_db', 'external_db_id'
+       );
+    my $external_synonyms;
+    my $es = $conf->{'dbh'}->selectall_arrayref(qq(select xref_id, synonym from external_synonym));
+    foreach (@$es) {
+      $external_synonyms->{$_->[0]}{$_->[1]} = 1;
+    }
+    my %xrefs = ();
+    foreach my $type( qw(Transcript Translation) ) {
+      my $sql = qq(
+         SELECT ox.ensembl_id, x.display_label, x.dbprimary_acc,
+                x.description, x.external_db_id, x.xref_id
+           FROM $dbname.object_xref as ox, $dbname.xref as x
+          WHERE ox.ensembl_object_type = '$type'
+            AND ox.xref_id = x.xref_id );
+      my $T = $conf->{'dbh'}->selectall_arrayref($sql);
+      foreach (@$T) {
+        push @{$xrefs{$type}{$_->[0]}{$external_dbs->{$_->[4]}{'db_name'}}}, {
+          'xref_description'=> $_->[3],
+          'db_acc'          => $_->[2],
+          'label'           => $_->[1],
+          'external_db_id'  => $_->[4],
+          'xref_id'         => $_->[5],
+        };
+      }
+      print LOG "    $type xref query done ".&date_and_mem()."\n";
+    }
+
+    #disconnect and then connect to free up memory
+    my $core = $conf->{'core_details'};
+    $conf->{'dbh'}->disconnect;
+    $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
+
+    my %exons = ();
+    my $sql = qq(
+       SELECT t.transcript_id, esi.stable_id
+         FROM $dbname.transcript as t, $dbname.exon_transcript as et, $dbname.exon_stable_id as esi
+        WHERE t.transcript_id = et.transcript_id
+          AND et.exon_id = esi.exon_id);
+    my $sth = $conf->{'dbh'}->prepare($sql);
+    $sth->execute;
+    while (my $r = $sth->fetchrow_arrayref()) {
+      $exons{$r->[0]}{$r->[1]}=1;
+    }
+    $sth->finish;
+    print LOG "    Exon query done ".&date_and_mem()."\n";
+
+    #get descriptions for the genes to use if none have been assigned to the transcript
+    my $gene_desc = $conf->{'dbh'}->selectall_hashref(qq(
+      SELECT t.transcript_id, g.description
+        FROM transcript t, gene g
+       WHERE t.gene_id = g.gene_id),
+     'transcript_id');
+
+    my $trans_locations = $conf->{'dbh'}->selectall_hashref(qq(
+      SELECT tsi.stable_id, sr.name as sr_name, t.seq_region_start, t.seq_region_end, t.seq_region_strand, cs.name as sr_type, cs.version
+        FROM $dbname.transcript_stable_id tsi, $dbname.transcript t, $dbname.seq_region sr, $dbname.coord_system cs
+       WHERE tsi.transcript_id = t.transcript_id
+         AND t.seq_region_id = sr.seq_region_id
+         AND sr.coord_system_id = cs.coord_system_id),
+      'stable_id');
+
+    $sql = qq(
+      SELECT tsi.transcript_id, trsi.translation_id,
+             tsi.stable_id as tsid, trsi.stable_id as trsid,
+             t.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, t.status, t.biotype, a.logic_name
+        FROM ((( $dbname.transcript_stable_id as tsi,
+             $dbname.analysis_description as ad,
+             $dbname.analysis as a,
+             $dbname.transcript as t) left join
+             $dbname.translation as tr on t.transcript_id = tr.transcript_id) left join
+             $dbname.translation_stable_id as trsi on tr.translation_id = trsi.translation_id) left join
+             $dbname.xref as x on t.display_xref_id = x.xref_id
+       WHERE t.transcript_id = tsi.transcript_id
+         AND t.analysis_id = ad.analysis_id
+         AND t.analysis_id = a.analysis_id
+         AND a.logic_name != 'LRG_import'
+       ORDER by tsi.stable_id);
+    $sth = $conf->{'dbh'}->prepare($sql);
+    $sth->execute();
+
+    my $old;
+    my ($tid,$tlid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln);
+    while (my $r = $sth->fetchrow_arrayref()) {
+      ($tid,$tlid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln) = @$r;
+      $desc = $desc ? $desc : $gene_desc->{$tid}{'description'} ? $gene_desc->{$tid}{'description'} : '';
+      my $wd = eval($webdata);
+      next if $wd->{'gene'}{'do_not_display'};
+      next if ($ln =~ /rnaseq/);
+      if( $old->{'tid'} != $tid ) {
+        if( $old->{'tid'} ) {
+          my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
+          &p( TransLine($dbspecies,
+                       $old->{'tsid'},
+                       $old->{'tlsids'},
+                       $old->{'exons'},
+                       $old->{'biotype'},
+                       $old->{'ad_dl'},
+                       $old->{'disp_xref'},
+                       $old->{'desc'},
+                       $old->{'xrefs'},
+                       $old->{'xref_descriptions'},
+                       $trans_locations->{$old->{'tsid'}},
+                       $db,
+                       $counter),
+              $nogzip, $fh);
+        }
+
+        #only use status for vega#
+
+        $old = {
+          'tid'       => $tid,
+          'tsid'      => $tsid,
+          'tlsids'    => {$tlsid?($tlsid=>1):()},
+          'desc'      => $desc,
+          'exons'     => {},
+          'biotype'   => $biotype,
+          'ad_dl'     => $ad_dl,
+          'xrefs'     => [],
+          'xref_descriptions' => {},
+          'disp_xref' => $disp_xref ? "$disp_xref" : "novel transcript",
+          'status'    => $status,
+          'biotype'   => $biotype,
+          'ad_dl'     => $ad_dl,
+        };
+
+        $old->{'exons'}  = $exons{$tid};
+
+        #add xref details
+        foreach my $type (qw(Transcript Translation)) {
+          my $id = ($type eq 'Transcript')  ? $tid
+                 : ($type eq 'Translation') ? $tlid
+                 : '';
+          while (my ($db_name,$xrefs) = each %{$xrefs{$type}{$id}}) {
+            foreach my $dets (@$xrefs) {
+              my $xref_id = $dets->{'xref_id'};
+              $dets->{'db_name'} = $db_name;
+              $old->{'xref_descriptions'}{$dets->{'xref_description'}}++ ;
+              foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
+                push @{$dets->{'synonyms'}},$syn;
+              }
+              push @{$old->{'xrefs'}}, $dets;
+            }
+          }
+        }
+      }
+      else {
+        $old->{'tlsids'}{$tlsid}=1 if $tlsid;
+
+        #add xref details
+        foreach my $type (qw(Transcript Translation)) {
+          my $id = ($type eq 'Transcript')  ? $tid
+                 : ($type eq 'Translation') ? $tlid
+                 : '';
+          while (my ($db_name,$xrefs) = each %{$xrefs{$type}{$id}}) {
+            foreach my $dets (@$xrefs) {
+              my $xref_id = $dets->{'xref_id'};
+              $dets->{'db_name'} = $db_name;
+              $old->{'xref_descriptions'}{$dets->{'xref_description'}}++;
+              foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
+                push @{$dets->{'synonyms'}},$syn;
+              }
+              push @{$old->{'xrefs'}}, $dets;
+            }
+          }
+        }
+      }
+    }
+    &p( TransLine($dbspecies,
+                 $old->{'tsid'},
+                 $old->{'tlsids'},
+                 $old->{'exons'},
+                 $old->{'biotype'},
+                 $old->{'ad_dl'},
+                 $old->{'disp_xref'},
+                 $old->{'desc'},
+                 $old->{'xrefs'},
+                 $old->{'xref_descriptions'},
+                 $trans_locations->{$old->{'tsid'}},
+                 $db,
+                 $counter),
+        $nogzip, $fh) if ($old->{'gsid'});
+    print LOG "    Transcript info query done ".&date_and_mem()."\n";
+
+    my $other_count = 0;
+    my %current_stable_ids =();
+    foreach my $type (qw(transcript translation)) {
+      $current_stable_ids{$type} = { map {@$_} @{$conf->{'dbh'}->selectall_arrayref( "select stable_id,1 from $COREDB.".$type."_stable_id" )}};
+    }
+    my $species = $conf->{'species'};
+    my $sth = $conf->{'dbh'}->prepare( qq(
+    SELECT sie.type, sie.old_stable_id, if(isnull(sie.new_stable_id),'NULL',sie.new_stable_id),
+           ms.old_release*1.0 as X, ms.new_release*1.0 as Y
+      FROM $dbname.mapping_session as ms, $dbname.stable_id_event as sie
+     WHERE ms.mapping_session_id = sie.mapping_session_id and ( old_stable_id != new_stable_id or isnull(new_stable_id) )
+     ORDER by Y desc, X desc
+  ));
+
+    $sth->execute();
+    my %mapping = ();
+
+    while ( my($type,$osi,$nsi) = $sth->fetchrow_array() ) {
+      next if $type eq 'gene';
+      next if $current_stable_ids{$type}{$osi}; ## Don't need to cope with current IDS already searchable...
+      $mapping{$type}{$osi}{$nsi} = 1;
+      if($mapping{$type}{$nsi}) {
+        foreach( keys %{$mapping{$type}{$nsi}} ) {
+          $mapping{$type}{$osi}{$_} = 1;
+        }
+      }
+    }
+
+    foreach my $type ( keys %mapping ) {
+      foreach my $osi ( keys %{$mapping{$type}} ) {
+        my @current_sis = ();
+        my @deprecated_sis = ();
+        foreach ( keys %{$mapping{$type}{$osi}} ) {
+          next if $osi eq $_;
+          if( $current_stable_ids{$_} ) {
+            push @current_sis,$_;
+          } elsif( $_ ne 'NULL' ) {
+            push @deprecated_sis,$_;
+          }
+        }
+        if( @current_sis ) {
+          $other_count++;
+          my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to the following current identifiers: @current_sis);
+          $desc .= @deprecated_sis ? qq(; and the following deprecated identifiers: @deprecated_sis) : '';
+          &p (&GeneStableIdMappingLine($dbspecies,$desc,$osi,\@current_sis,\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
+        }
+        elsif( @deprecated_sis ) {
+          $other_count++;
+          my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to the following identifiers: @deprecated_sis);
+          &p (&GeneStableIdMappingLine($dbspecies,$desc,$osi,[],\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
+        }
+        else {
+          $other_count++;
+          my $desc = qq(Ensembl $type $osi is no longer in the database and has not been mapped to any newer identifiers);
+          &p (&GeneStableIdMappingLine($dbspecies,$desc,$osi,[],[],$type,$db,$counter),$nogzip, $fh);
+        }
+      }
+    }
+    print LOG "    Stable_id mapping querying done ".&date_and_mem()."\n";
+    $total_c += footer( $counter->(),$nogzip,$fh);
+
+    while (0) {
+      $other_count = 0;
+      my %unmapped_queries = (
+      'None' => qq(
+      select a.logic_name, e.db_display_name,
+             uo.identifier, ur.summary_description,
+             'Not mapped'
+        from $dbname.analysis as a, $dbname.external_db as e, $dbname.unmapped_object as uo,
+             $dbname.unmapped_reason as ur
+       where a.analysis_id = uo.analysis_id and
+             uo.external_db_id = e.external_db_id and
+             uo.unmapped_reason_id = ur.unmapped_reason_id and
+               uo.ensembl_id = 0
+    ),
+      'Transcript' => qq(
+      select a.logic_name, e.db_display_name,
+             uo.identifier, ur.summary_description,
+             concat( 'Transcript: ', tsi.stable_id, '; Gene: ',gsi.stable_id )
+        from $dbname.analysis as a, $dbname.external_db as e, $dbname.unmapped_object as uo,
+             $dbname.unmapped_reason as ur, $dbname.transcript_stable_id as tsi,
+             $dbname.transcript as t, $dbname.gene_stable_id as gsi
+       where a.analysis_id = uo.analysis_id and
+             uo.external_db_id = e.external_db_id and
+             uo.unmapped_reason_id = ur.unmapped_reason_id and
+             uo.ensembl_id = t.transcript_id and
+             uo.ensembl_object_type = 'Transcript' and
+             t.transcript_id = tsi.transcript_id and
+             t.gene_id       = gsi.gene_id
+    ),
+      'Translation' => qq(
+      select a.logic_name, e.db_display_name, uo.identifier, ur.summary_description,
+             concat( 'Protein: ',trsi.stable_id,'; Transcript: ', tsi.stable_id, '; Gene: ',gsi.stable_id )
+        from $dbname.analysis as a, $dbname.external_db as e, $dbname.unmapped_object as uo,
+             $dbname.unmapped_reason as ur, $dbname.transcript_stable_id as tsi,
+             $dbname.translation as tr, $dbname.translation_stable_id as trsi,
+             $dbname.transcript as t, $dbname.gene_stable_id as gsi
+       where a.analysis_id = uo.analysis_id and 
+             uo.external_db_id = e.external_db_id and
+             uo.unmapped_reason_id = ur.unmapped_reason_id and
+             uo.ensembl_id = tr.translation_id and 
+             tr.transcript_id = t.transcript_id and
+             trsi.translation_id = tr.translation_id and
+             uo.ensembl_object_type = 'Translation' and
+             t.transcript_id = tsi.transcript_id and
+             t.gene_id       = gsi.gene_id
+    )
+    );
+
+      foreach my $FLAG (keys %unmapped_queries) {
+        my $SQL = $unmapped_queries{$FLAG};
+        my $sth = $conf->{'dbh'}->prepare($SQL);
+        $sth->execute;
+        while( my $T = $sth->fetchrow_arrayref() ) {
+          print O join "\t",
+            (INC_SPECIES?"$conf->{'species'}\t":"").qq(Unmapped feature),
+              "$T->[1] $T->[2]",
+                "/$conf->{'species'}/Location/Genome?ftype=Gene;id=$T->[2]",
+                  "$T->[2] $T->[4]",
+                    "$T->[3]; $T->[4]\n";
+        }
+      }
+    }
+    close O;
+  }
+  return $total_c;
+}
+
+sub TransLine {
+  my ($species, $tsid, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $xref_descriptions, $trans_loc, $db, $counter) = @_;
+  $species =~ s/_/ /;
+  $biotype =~ s/_/ /;
+  $desc = &clean($desc,'desc');
+  $disp_xref = &clean($disp_xref,'name');
+  my $description = $desc . " [Type: $biotype $ad_label]";
+  my $xml = qq(
+<entry id="$tsid">
+  <name>$disp_xref</name>
+  <description>$description</description>);
+
+  $xml .= qq(
+  <additional_fields>);
+  $xml .= &common_fields($species,'Transcript');
+  $xml .= qq(
+    <field name="action">Summary</field>
+    <field name="source">$ad_label</field>);
+  if ($trans_loc) {
+    my $loc = $trans_loc->{'sr_name'} .':'. $trans_loc->{'seq_region_start'} .'-'. $trans_loc->{'seq_region_end'} .':'. $trans_loc->{'seq_region_strand'};
+    $xml .= qq(
+    <field name="location">$loc</field>);
+  }
+
+  foreach my $xref_description (keys %{$xref_descriptions}) {
+    if ($xref_description) {
+      $xref_description = &clean($xref_description,'xref description');
+      $xml .= qq(
+    <field name="xref_description">$xref_description</field>);
+    }
+  }
+  unless ($db eq 'core') {
+    $xml .= qq(
+    <field name="db">$db</field>);
+  }
+  foreach my $tlsi (keys %$tlsids) {
+    $xml .= qq(
+    <field name="peptide">$tlsi</field>);
+  }
+  foreach my $esi (keys %$exons) {
+    $xml .= qq(
+    <field name="exon">$esi</field>);
+  }
+  $xml .= qq(
+  </additional_fields>);
+
+  $xml .= qq(
+  <cross_references>);
+  my (%seen_labels,%seen_syns);
+  foreach my $xref (@$xrefs) {
+    my $dbname   = $xref->{'db_name'};
+    my $dbkey    = $xref->{'label'};
+    next if $seen_labels{$dbkey};
+    $seen_labels{$dbkey} = 1;
+    $dbkey = &clean($dbkey,'dbkey');
+    if (! $dbname) {
+      print LOG "WARNING: $tsid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
+    }
+    else {
+      $xml .= qq(
+    <ref dbname="$dbname" dbkey="$dbkey"/>);
+      foreach my $syn (@{$xref->{'synonyms'}}) {
+        next if $seen_syns{$syn};
+        $seen_syns{$syn} = 1;
+        $syn = &clean($syn,'syn');
+        $xml .= qq(
+    <ref dbname="$dbname" dbkey="$syn"/>);
+      }
+    }
+    $cross_references{$dbname}++;
+  }
+  $xml .= qq(
+  </cross_references>);
+
+  $counter->();
+
+  return $xml . qq(
+</entry>);
+}
+
 
 ########################################################################## Regulatory Features
 
@@ -1987,6 +2406,30 @@ sub LRGLine {
 
 #######################################################################
 
+#deal with those pesky non-standard characters in gene names and descriptions (order of regexps is important)
+sub clean {
+  my ($text,$field) = @_;
+  $text =~ s/&/&amp;/g;
+  $text =~ s/<i>//g;
+  $text =~ s/<\/i>//g;
+  $text =~ s/<sup>/-/g;
+  $text =~ s/<\/sup>/-/g;
+  $text =~ s/<em>//g;
+  $text =~ s/<\/em>//g;
+  $text =~ s/</&lt;/g;
+  $text =~ s/>/&gt;/g;
+  $text =~ s/'/&#44;/g;
+  $text =~ s/"/&quot;/g;
+  $text =~ s/ & / &amp; /g;
+  $text =~ s/</&lt;/g;
+  $text =~ s/>/&gt;/g;
+
+  if ($text =~ /[<>]/) {
+    print LOG "WARNING: Unsupported character $text in field $field\n";
+  }
+  return $text;
+}
+
 sub make_counter {
   my $start = shift;
   return sub { $start++ }
@@ -2025,7 +2468,7 @@ sub common_fields {
   my ($species,$feature_type) = @_;
   my $xml = qq(
     <field name="species">$species</field>);
-  foreach my $sp (@{$conf->{'speciesname_list'}}) {
+  foreach my $sp (keys %{$conf->{'speciesname_list'}}) {
     $xml .= qq(
     <field name="species_name">$sp</field>);
   }
