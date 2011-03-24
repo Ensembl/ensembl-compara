@@ -3,7 +3,6 @@ package Bio::EnsEMBL::Compara::FormatTree;
 use strict;
 use warnings;
 use Data::Dumper;
-use Data::Dump::Streamer;
 use Carp;
 
 # Grammar to parse $fmt
