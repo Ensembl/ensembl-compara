@@ -1048,6 +1048,5 @@ sub method_link_species_set_id {
 #    my ($self) = @_;
 #    $self->release_tree unless ($self->{_parent_link});
 #    }
-}
 
 1;
