@@ -18,6 +18,7 @@ BEGIN {
 
 use EnsEMBL::Web::SpeciesDefs;
 use XML::Parser;
+use URI::Escape qw(uri_escape);
 use Data::Dumper;
 use Getopt::Long;
 use POSIX qw(strftime);
@@ -62,6 +63,7 @@ unless ($debug) {
 ## HACK 1 - if the INDEX is set to ALL grab all dumper methods...
 @indexes = map { /dump(\w+)/?$1:() } keys %indexXMLDumper:: if $indexes[0] eq 'ALL';
 
+
 ## HACK 2 - if the SPECIES is set to ALL grab stuff from config...
 my %X = %{$SD->ENSEMBL_SPECIES_ALIASES};
 my $input_c =  @species;
@@ -87,13 +89,23 @@ my $start_time = time;
 my $total_c;
 foreach my $index (@indexes) {
   my $start = time;
-  $conf->{'directory'} = "$dir/ensembl_$index";
-  mkdir $conf->{'directory'}, 0777 unless -e  $conf->{'directory'};
+  if ($index eq 'Help') {
+    foreach my $type (qw(View Glossary FAQ)) {
+      $conf->{"directory_$type"} = "$dir/ensembl_$type";
+      mkdir $conf->{"directory_$type"}, 0777 unless -e $conf->{"directory_$type"};
+    }
+  }
+  else {
+    $conf->{'directory'} = "$dir/ensembl_$index";
+    mkdir $conf->{'directory'}, 0777 unless -e  $conf->{'directory'};
+  }
   if ($index eq 'Variation') {
     $conf->{'directory_somatic_mutations'} = "$dir/ensembl_SomaticMutation";
     mkdir $conf->{'directory_somatic_mutations'}, 0777 unless -e $conf->{'directory_somatic_mutations'};
   }
+
   foreach my $species ( @species ) {
+    $conf->{'speciesname_list'} = undef;
     my $single_species = 0;
     my %dbs = %{$SD->get_config($species,'databases')||{}};
     $conf->{'dbs'}       = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
@@ -103,6 +115,9 @@ foreach my $index (@indexes) {
 
     if ($index eq 'Help') {
       $single_species = 1;
+      my $website = $SD->multidb->{DATABASE_WEBSITE};
+      $conf->{'website'}{'name'} = $website->{'NAME'};
+      $conf->{'website'}{'dbh'}  = DBI->connect("dbi:mysql:$website->{'NAME'};host=$website->{'HOST'};port=$website->{'PORT'}", $website->{'USER'}, $website->{'PASS'}, { PrintError => 0, RaiseError => 0} );
     }
 
     else {
@@ -123,7 +138,8 @@ foreach my $index (@indexes) {
       $c++;
       $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
       if ($index eq 'Family') {
-        $conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:ensembl_compara_".$SD->ENSEMBL_VERSION.";host=ensdb-1-13;port=5307", $core->{'USER'}, $core->{'PASS'} );
+        my $compara = $SD->multidb->{DATABASE_COMPARA};
+        $conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:$compara->{'NAME'};host=$compara->{'HOST'};port=$compara->{'PORT'}", $compara->{'USER'}, $compara->{'PASS'} );
       }
       my $function = "dump$index";
       no strict "refs";
@@ -169,9 +185,82 @@ exit;
 ## Now for all the dump functions...............................
 
 
-sub dumpHelp {
+########################################################################## Help
 
+sub dumpHelp {
+  my $conf = shift;
+  my $start_time = time;
+  my $counts;
+  foreach my $type (qw(View Glossary FAQ)) {
+    my $counter   = make_counter(0);
+    my $file = $conf->{'directory_'.$type}.'/'.$conf->{'website'}{'name'}.'_'.$type.'.xml';
+    $file .= ".gz" unless $nogzip;
+    my $dbname    = $conf->{'website'}{'name'};
+    my $db_type   = $type;
+    my $fh;
+    unless ($nogzip) {
+      $fh = new IO::Zlib;
+      $fh->open( "$file", "wb9" )
+        or die("Can't open compressed stream to $file: $!");
+    }
+    else {
+      open( $fh, ">$file" ) or die "Can't open $file: $!";
+    }
+    print LOG "  Dumping $dbname $type to $file ... ", format_datetime($start_time), "\n";
+    header( $dbname, 'Help', $db_type, $nogzip, $fh, $release );
+    my $sth = $conf->{'website'}{'dbh'}->prepare(qq(
+       SELECT help_record_id, keyword, data
+         FROM help_record
+        WHERE status = 'live'
+          AND type = lower('$type')));
+    $sth->execute;
+    my ($id, $keywords, $content);
+    while( ($id, $keywords, $content) = $sth->fetchrow_array()){
+      my ($extra,$description);
+      my $data = eval($content);
+      if ($type eq 'View') {
+        $description = $data->{'content'} .' '. $data->{'answer'};
+      }
+      elsif ($type eq 'Glossary') {
+        $description = $data->{'meaning'};
+        push @$extra, $data->{'word'};
+        push @$extra, $data->{'expanded'} if $data->{'expanded'};
+      }
+      elsif ($type eq 'FAQ') {
+        $description = $data->{'question'} .' '. $data->{'answer'};
+      }
+      &p( helpLine( $id, $keywords, $description, $extra, $type, $counter ), $nogzip, $fh); #### need to parse it
+    }
+    $counts->{$type} = footer( $counter->(),$nogzip,$fh,$type);
+  }
 }
+
+sub helpLine {
+  my ($id, $keywords, $description, $extra,  $type, $counter) = @_;
+  my @keywords = map { s/^ //; $_; } split ',', $keywords if $keywords;
+  $description = uri_escape($description);
+  my $xml = qq(
+<entry id="$id">
+  <description>$description</description>
+  <featuretype>$type</featuretype>
+  <additional_fields>);
+  foreach my $kw (@keywords) {
+    $xml .= qq(
+    <field name="keyword">$kw</field>);
+  }
+  foreach my $kw (@$extra) {
+       $xml .= qq(
+    <field name="keyword">$kw</field>);
+  }
+  $xml .= qq(
+  </additional_fields>);
+  $counter->();
+  return $xml . qq(
+</entry>);
+}
+
+
+#http://www.ensembl.org/Help/View?id=142
 
 ########################################################################## Markers
 
@@ -249,7 +338,8 @@ sub markerLine {
   $xml .= qq(
   </additional_fields>);
   $counter->();
-  return $xml . '</entry>';
+  return $xml . qq(
+</entry>);
 }
 
 
