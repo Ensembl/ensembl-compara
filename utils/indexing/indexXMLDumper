@@ -174,11 +174,11 @@ foreach my $index (@indexes) {
     $conf->{'dbh'}->disconnect;
     last if $single_species;
   }
-  print LOG "\nTime for $index is " . &elapsed_time($start) . "\n";
+  print LOG "  Time for $index is " . &elapsed_time($start) . "\n\n";
 }
 
 #print LOG "\nCross references are:\n",Dumper(\%cross_references) if %cross_references;
-print LOG "\nDumped $total_c records in total\n";
+print LOG "Dumped $total_c records in total\n";
 print LOG "\nTotal time for dumping " . &elapsed_time($start_time) . "\n";
 exit;
 
@@ -190,7 +190,7 @@ exit;
 sub dumpHelp {
   my $conf = shift;
   my $start_time = time;
-  my $counts;
+  my $total_c;
   foreach my $type (qw(View Glossary FAQ)) {
     my $counter   = make_counter(0);
     my $file = $conf->{'directory_'.$type}.'/'.$conf->{'website'}{'name'}.'_'.$type.'.xml';
@@ -231,8 +231,9 @@ sub dumpHelp {
       }
       &p( helpLine( $id, $keywords, $description, $extra, $type, $counter ), $nogzip, $fh); #### need to parse it
     }
-    $counts->{$type} = footer( $counter->(),$nogzip,$fh,$type);
+    $total_c += footer( $counter->(),$nogzip,$fh,$type);
   }
+  return $total_c;
 }
 
 sub helpLine {
@@ -2441,7 +2442,7 @@ sub footer {
   p("</entries>",$nogzip,$fh,1);
   p("<entry_count>$ecount</entry_count>",$nogzip,$fh,1);
   p("</database>",$nogzip,$fh,1);
-  my $text = $type ? "  Dumped $ecount $type entries\n" : "  ...Dumped $ecount entries\n";
+  my $text = $type ? "  ...Dumped $ecount $type entries\n" : "  ...Dumped $ecount entries\n";
   print LOG $text;
   if ($nogzip) {
     close($fh) or die $!;
