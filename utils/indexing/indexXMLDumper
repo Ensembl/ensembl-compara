@@ -1923,8 +1923,8 @@ sub dumpTranscript {
   my %dbs = ( 'core' => $COREDB );
   $dbs{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
 #  $dbs{'rnaseq'} = $RNASEQDB if $RNASEQDB; #don't add these until the IDs mean something and the transcript pages are usefull!
-
   my $total_c;
+
  DB:
   foreach my $db ( sort { $b cmp $a } keys %dbs) {
     my $dbname    = $dbs{$db};
@@ -2129,131 +2129,7 @@ sub dumpTranscript {
                  $counter),
         $nogzip, $fh) if ($old->{'gsid'});
     print LOG "    Transcript info query done ".&date_and_mem()."\n";
-
-    my $other_count = 0;
-    my %current_stable_ids =();
-    foreach my $type (qw(transcript translation)) {
-      $current_stable_ids{$type} = { map {@$_} @{$conf->{'dbh'}->selectall_arrayref( "select stable_id,1 from $COREDB.".$type."_stable_id" )}};
-    }
-    my $species = $conf->{'species'};
-    my $sth = $conf->{'dbh'}->prepare( qq(
-    SELECT sie.type, sie.old_stable_id, if(isnull(sie.new_stable_id),'NULL',sie.new_stable_id),
-           ms.old_release*1.0 as X, ms.new_release*1.0 as Y
-      FROM $dbname.mapping_session as ms, $dbname.stable_id_event as sie
-     WHERE ms.mapping_session_id = sie.mapping_session_id and ( old_stable_id != new_stable_id or isnull(new_stable_id) )
-     ORDER by Y desc, X desc
-  ));
-
-    $sth->execute();
-    my %mapping = ();
-
-    while ( my($type,$osi,$nsi) = $sth->fetchrow_array() ) {
-      next if $type eq 'gene';
-      next if $current_stable_ids{$type}{$osi}; ## Don't need to cope with current IDS already searchable...
-      $mapping{$type}{$osi}{$nsi} = 1;
-      if($mapping{$type}{$nsi}) {
-        foreach( keys %{$mapping{$type}{$nsi}} ) {
-          $mapping{$type}{$osi}{$_} = 1;
-        }
-      }
-    }
-
-    foreach my $type ( keys %mapping ) {
-      foreach my $osi ( keys %{$mapping{$type}} ) {
-        my @current_sis = ();
-        my @deprecated_sis = ();
-        foreach ( keys %{$mapping{$type}{$osi}} ) {
-          next if $osi eq $_;
-          if( $current_stable_ids{$_} ) {
-            push @current_sis,$_;
-          } elsif( $_ ne 'NULL' ) {
-            push @deprecated_sis,$_;
-          }
-        }
-        if( @current_sis ) {
-          $other_count++;
-          my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to the following current identifiers: @current_sis);
-          $desc .= @deprecated_sis ? qq(; and the following deprecated identifiers: @deprecated_sis) : '';
-          &p (&GeneStableIdMappingLine($dbspecies,$desc,$osi,\@current_sis,\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
-        }
-        elsif( @deprecated_sis ) {
-          $other_count++;
-          my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to the following identifiers: @deprecated_sis);
-          &p (&GeneStableIdMappingLine($dbspecies,$desc,$osi,[],\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
-        }
-        else {
-          $other_count++;
-          my $desc = qq(Ensembl $type $osi is no longer in the database and has not been mapped to any newer identifiers);
-          &p (&GeneStableIdMappingLine($dbspecies,$desc,$osi,[],[],$type,$db,$counter),$nogzip, $fh);
-        }
-      }
-    }
-    print LOG "    Stable_id mapping querying done ".&date_and_mem()."\n";
     $total_c += footer( $counter->(),$nogzip,$fh);
-
-    while (0) {
-      $other_count = 0;
-      my %unmapped_queries = (
-      'None' => qq(
-      select a.logic_name, e.db_display_name,
-             uo.identifier, ur.summary_description,
-             'Not mapped'
-        from $dbname.analysis as a, $dbname.external_db as e, $dbname.unmapped_object as uo,
-             $dbname.unmapped_reason as ur
-       where a.analysis_id = uo.analysis_id and
-             uo.external_db_id = e.external_db_id and
-             uo.unmapped_reason_id = ur.unmapped_reason_id and
-               uo.ensembl_id = 0
-    ),
-      'Transcript' => qq(
-      select a.logic_name, e.db_display_name,
-             uo.identifier, ur.summary_description,
-             concat( 'Transcript: ', tsi.stable_id, '; Gene: ',gsi.stable_id )
-        from $dbname.analysis as a, $dbname.external_db as e, $dbname.unmapped_object as uo,
-             $dbname.unmapped_reason as ur, $dbname.transcript_stable_id as tsi,
-             $dbname.transcript as t, $dbname.gene_stable_id as gsi
-       where a.analysis_id = uo.analysis_id and
-             uo.external_db_id = e.external_db_id and
-             uo.unmapped_reason_id = ur.unmapped_reason_id and
-             uo.ensembl_id = t.transcript_id and
-             uo.ensembl_object_type = 'Transcript' and
-             t.transcript_id = tsi.transcript_id and
-             t.gene_id       = gsi.gene_id
-    ),
-      'Translation' => qq(
-      select a.logic_name, e.db_display_name, uo.identifier, ur.summary_description,
-             concat( 'Protein: ',trsi.stable_id,'; Transcript: ', tsi.stable_id, '; Gene: ',gsi.stable_id )
-        from $dbname.analysis as a, $dbname.external_db as e, $dbname.unmapped_object as uo,
-             $dbname.unmapped_reason as ur, $dbname.transcript_stable_id as tsi,
-             $dbname.translation as tr, $dbname.translation_stable_id as trsi,
-             $dbname.transcript as t, $dbname.gene_stable_id as gsi
-       where a.analysis_id = uo.analysis_id and 
-             uo.external_db_id = e.external_db_id and
-             uo.unmapped_reason_id = ur.unmapped_reason_id and
-             uo.ensembl_id = tr.translation_id and 
-             tr.transcript_id = t.transcript_id and
-             trsi.translation_id = tr.translation_id and
-             uo.ensembl_object_type = 'Translation' and
-             t.transcript_id = tsi.transcript_id and
-             t.gene_id       = gsi.gene_id
-    )
-    );
-
-      foreach my $FLAG (keys %unmapped_queries) {
-        my $SQL = $unmapped_queries{$FLAG};
-        my $sth = $conf->{'dbh'}->prepare($SQL);
-        $sth->execute;
-        while( my $T = $sth->fetchrow_arrayref() ) {
-          print O join "\t",
-            (INC_SPECIES?"$conf->{'species'}\t":"").qq(Unmapped feature),
-              "$T->[1] $T->[2]",
-                "/$conf->{'species'}/Location/Genome?ftype=Gene;id=$T->[2]",
-                  "$T->[2] $T->[4]",
-                    "$T->[3]; $T->[4]\n";
-        }
-      }
-    }
-    close O;
   }
   return $total_c;
 }
