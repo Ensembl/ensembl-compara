@@ -108,10 +108,10 @@ foreach my $index (@indexes) {
     $conf->{'speciesname_list'} = undef;
     my $single_species = 0;
     my %dbs = %{$SD->get_config($species,'databases')||{}};
-    $conf->{'dbs'}       = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
+    $conf->{'dbs'}                     = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
     $conf->{'dbs'}{'DATABASE_COMPARA'} = 'ensembl_compara_'.$SD->ENSEMBL_VERSION;
     my $core = $dbs{'DATABASE_CORE'};
-    $conf->{'core_details'} = $core;
+    $conf->{'core_details'}            = $core;
 
     if ($index eq 'Help') {
       $single_species = 1;
@@ -177,7 +177,7 @@ foreach my $index (@indexes) {
   print LOG "\nTime for $index is " . &elapsed_time($start) . "\n";
 }
 
-print LOG "\nCross references are:\n",Dumper(\%cross_references) if %cross_references;
+#print LOG "\nCross references are:\n",Dumper(\%cross_references) if %cross_references;
 print LOG "\nDumped $total_c records in total\n";
 print LOG "\nTotal time for dumping " . &elapsed_time($start_time) . "\n";
 exit;
@@ -1808,6 +1808,41 @@ sub GeneLine {
   <description>$description</description>);
 
   $xml .= qq(
+  <cross_references>);
+  my (%seen_labels,%seen_syns);
+  my @non_versioned;
+  foreach my $xref (@$xrefs) {
+    my $dbname   = $xref->{'db_name'};
+    my $dbkey    = $xref->{'label'};
+    next if $seen_labels{$dbkey};
+    $seen_labels{$dbkey} = 1;
+    $dbkey = &clean($dbkey,'dbkey');
+    if (! $dbname) {
+      print LOG "WARNING: $gsid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
+    }
+    else {
+      $xml .= qq(
+    <ref dbname="$dbname" dbkey="$dbkey"/>);
+      if ($dbkey =~ /^(\w+)\.\d+$/) {
+        my $k = $1;
+        next if $seen_labels{$k};
+        $seen_labels{$dbkey} = $k;
+        push @non_versioned, $k;
+      }
+      foreach my $syn (@{$xref->{'synonyms'}}) { 
+        next if $seen_syns{$syn};
+        $seen_syns{$syn} = 1;
+        $syn = &clean($syn,'syn');
+        $xml .= qq(
+    <ref dbname="$dbname" dbkey="$syn"/>);
+      }
+    }
+    $cross_references{$dbname}++;
+  }
+  $xml .= qq(
+  </cross_references>);
+
+  $xml .= qq(
   <additional_fields>);
   $xml .= &common_fields($species,'Gene');
   $xml .= qq(
@@ -1841,36 +1876,12 @@ sub GeneLine {
     $xml .= qq(
     <field name="exon">$esi</field>);
   }
-  $xml .= qq(
-  </additional_fields>);
-
-  $xml .= qq(
-  <cross_references>);
-  my (%seen_labels,%seen_syns);
-  foreach my $xref (@$xrefs) {
-    my $dbname   = $xref->{'db_name'};
-    my $dbkey    = $xref->{'label'};
-    next if $seen_labels{$dbkey};
-    $seen_labels{$dbkey} = 1;
-    $dbkey = &clean($dbkey,'dbkey');
-    if (! $dbname) {
-      print LOG "WARNING: $gsid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
-    }
-    else {
-      $xml .= qq(
-    <ref dbname="$dbname" dbkey="$dbkey"/>);
-      foreach my $syn (@{$xref->{'synonyms'}}) { 
-        next if $seen_syns{$syn};
-        $seen_syns{$syn} = 1;
-        $syn = &clean($syn,'syn');
-        $xml .= qq(
-    <ref dbname="$dbname" dbkey="$syn"/>);
-      }
-    }
-    $cross_references{$dbname}++;
+  foreach my $nv_xref (@non_versioned) {
+    $xml .= qq(
+    <field name="non_versioned">$nv_xref</field>);
   }
   $xml .= qq(
-  </cross_references>);
+  </additional_fields>);
 
   $counter->();
   return $xml . qq(
@@ -2260,6 +2271,41 @@ sub TransLine {
   <description>$description</description>);
 
   $xml .= qq(
+  <cross_references>);
+  my (%seen_labels,%seen_syns);
+  my @non_versioned;
+  foreach my $xref (@$xrefs) {
+    my $dbname   = $xref->{'db_name'};
+    my $dbkey    = $xref->{'label'};
+    next if $seen_labels{$dbkey};
+    $seen_labels{$dbkey} = 1;
+    $dbkey = &clean($dbkey,'dbkey');
+    if (! $dbname) {
+      print LOG "WARNING: $tsid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
+    }
+    else {
+      if ($dbkey =~ /^(\w+)\.\d+$/) {
+        my $k = $1;
+        next if $seen_labels{$k};
+        $seen_labels{$dbkey} = $k;
+        push @non_versioned, $k;
+      }
+      $xml .= qq(
+    <ref dbname="$dbname" dbkey="$dbkey"/>);
+      foreach my $syn (@{$xref->{'synonyms'}}) {
+        next if $seen_syns{$syn};
+        $seen_syns{$syn} = 1;
+        $syn = &clean($syn,'syn');
+        $xml .= qq(
+    <ref dbname="$dbname" dbkey="$syn"/>);
+      }
+    }
+    $cross_references{$dbname}++;
+  }
+  $xml .= qq(
+  </cross_references>);
+
+  $xml .= qq(
   <additional_fields>);
   $xml .= &common_fields($species,'Transcript');
   $xml .= qq(
@@ -2290,36 +2336,12 @@ sub TransLine {
     $xml .= qq(
     <field name="exon">$esi</field>);
   }
-  $xml .= qq(
-  </additional_fields>);
-
-  $xml .= qq(
-  <cross_references>);
-  my (%seen_labels,%seen_syns);
-  foreach my $xref (@$xrefs) {
-    my $dbname   = $xref->{'db_name'};
-    my $dbkey    = $xref->{'label'};
-    next if $seen_labels{$dbkey};
-    $seen_labels{$dbkey} = 1;
-    $dbkey = &clean($dbkey,'dbkey');
-    if (! $dbname) {
-      print LOG "WARNING: $tsid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
-    }
-    else {
-      $xml .= qq(
-    <ref dbname="$dbname" dbkey="$dbkey"/>);
-      foreach my $syn (@{$xref->{'synonyms'}}) {
-        next if $seen_syns{$syn};
-        $seen_syns{$syn} = 1;
-        $syn = &clean($syn,'syn');
-        $xml .= qq(
-    <ref dbname="$dbname" dbkey="$syn"/>);
-      }
-    }
-    $cross_references{$dbname}++;
+  foreach my $nv_xref (@non_versioned) {
+    $xml .= qq(
+    <field name="non_versioned">$nv_xref</field>);
   }
   $xml .= qq(
-  </cross_references>);
+  </additional_fields>);
 
   $counter->();
 
