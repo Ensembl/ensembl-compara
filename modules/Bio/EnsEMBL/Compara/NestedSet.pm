@@ -35,7 +35,7 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Compara::FormatTree;
 use Bio::TreeIO;
-use DDS;
+#use DDS;
 use Bio::EnsEMBL::Compara::Graph::Node;
 our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node);
 
