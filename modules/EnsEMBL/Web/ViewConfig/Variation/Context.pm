@@ -15,7 +15,7 @@ sub init {
     panel_locations  on
     panel_individual off
     image_width      900
-    context          20000
+    context          5000
   ));
   
   my %options = EnsEMBL::Web::Constants::VARIATION_OPTIONS; # Add other options

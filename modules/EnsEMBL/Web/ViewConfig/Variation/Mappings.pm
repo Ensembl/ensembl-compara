@@ -9,6 +9,7 @@ sub init {
   
   $view_config->_set_defaults(qw(
     consequence_format   ensembl
+    show_scores          no
   ));
   
   $view_config->storable = 1;
@@ -31,6 +32,14 @@ sub form {
       { value => 'ncbi',     name => 'NCBI terms'              },
     ]
   });  
+  
+  $view_config->add_form_element({
+    type  => 'CheckBox',
+    label => 'Show SIFT and PolyPhen scores',
+    name  => 'show_scores',
+    value => 'yes',
+    raw   => 1,
+  });
 }
 
 1;
