@@ -1138,6 +1138,24 @@ sub transcript_variation {
   $self->hub->database('variation')->dnadb($self->database('core'));
   
   my $transcript_variation_obj =  $vari_feature->get_all_TranscriptVariations;
+  
+  # if we've come from an LRG, add LRG TVs
+  if($self->hub->param('lrg') =~ /LRG\_\d+/) {
+    
+    # transform to LRG coord system
+    my $lrg_vf = $vari_feature->transform('LRG');
+    
+    if(defined($lrg_vf)) {
+      
+      # force API to recalc consequences for LRG
+      delete $lrg_vf->{'dbID'};
+      delete $lrg_vf->{'transcript_variations'};
+      
+      # add consequences to existing list
+      push @$transcript_variation_obj, @{$lrg_vf->get_all_TranscriptVariations};
+    }
+  }
+  
   return [] unless $transcript_variation_obj;
 
   my @data;
@@ -1155,6 +1173,8 @@ sub transcript_variation {
               proteinname  =>     $tvari_obj->transcript->translation ? $tvari_obj->transcript->translation->stable_id : '-',
               cdna_start =>       $tvari_obj->cdna_start,
               cdna_end =>         $tvari_obj->cdna_end,
+              cds_start =>        $tvari_obj->cds_start,
+              cds_end =>          $tvari_obj->cds_end,
               translation_start =>$tvari_obj->translation_start,
               translation_end =>  $tvari_obj->translation_end,
               pepallele =>        $tva_obj->pep_allele_string,
