@@ -932,4 +932,45 @@ sub _warn_block {
   warn "\n";
 }
 
+# render a sift or polyphen prediction with colours and a hidden span with a rank for sorting
+sub render_sift_polyphen {
+  my ($self, $pred, $score) = @_;
+  
+  my %colours = (
+    '-'                 => '',
+    'probably damaging' => 'red',
+    'possibly damaging' => 'orange',
+    'benign'            => 'green',
+    'unknown'           => 'blue',
+    'tolerated'         => 'green',
+    'deleterious'       => 'red'
+  );
+  
+  my %ranks = (
+    '-'                 => 0,
+    'probably damaging' => 4,
+    'possibly damaging' => 3,
+    'benign'            => 1,
+    'unknown'           => 2,
+    'tolerated'         => 1,
+    'deleterious'       => 2,
+  );
+  
+  my ($rank, $rank_str);
+  
+  if(defined($score)) {
+    $rank = int(1000 * $score) + 1;
+    $rank_str = " ($score)";
+  }
+  else {
+    $rank = $ranks{$pred};
+    $rank_str = '';
+  }
+  
+  return qq{
+    <span class="hidden">$rank</span>
+    <span style="color:$colours{$pred}">$pred$rank_str</span>
+  };
+}
+
 1;
