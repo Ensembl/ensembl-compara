@@ -410,38 +410,32 @@ sub content {
       ## HGVS
       #######
 
-      my (%cdna_hgvs, %pep_hgvs, %gen_hgvs, %by_allele, $hgvs_html, $prev_trans);
-
-      # check if overlaps LRG
-      if($hub->param('lrg') =~ /^LRG/) {
-        my $proj = $vf->project('LRG');
-
-               if(scalar @$proj == 1) {
-          my $lrg_slice = $proj->[0]->to_Slice();
-          if($lrg_slice) {
-            my $lrg_vf = $vf->transfer($lrg_slice);
-
-            foreach my $transcript(@{$lrg_vf->feature_Slice->get_all_Transcripts}) {
-              # get HGVS notations
-              %cdna_hgvs = %{$lrg_vf->get_all_hgvs_notations($transcript, 'c')};
-              %pep_hgvs  = %{$lrg_vf->get_all_hgvs_notations($transcript, 'p')};
-
-              # filter peptide ones for synonymous changes
-              map { delete $pep_hgvs{$_} if $pep_hgvs{$_} =~ /p\.\=/ } keys %pep_hgvs;
-
-              # group by allele
-              push @{$by_allele{$_}}, $cdna_hgvs{$_} for keys %cdna_hgvs;
-              push @{$by_allele{$_}}, $pep_hgvs{$_}  for keys %pep_hgvs;
-            }
-          }
-        }
-      }
+      my (%by_allele, $hgvs_html);
 
       # now get normal ones
       # go via transcript variations (should be faster than slice)
 	  my %genomic_alleles_added;
 	  
-      foreach my $tv (@{$vf->get_all_TranscriptVariations}) {
+	  my $tvs = $vf->get_all_TranscriptVariations;
+	  
+	  # if we've come from an LRG, add LRG TVs
+	  if($self->hub->param('lrg') =~ /LRG\_\d+/) {
+		
+		# transform to LRG coord system
+		my $lrg_vf = $vf->transform('LRG');
+		
+		if(defined($lrg_vf)) {
+		  
+		  # force API to recalc consequences for LRG
+		  delete $lrg_vf->{'dbID'};
+		  delete $lrg_vf->{'transcript_variations'};
+		  
+		  # add consequences to existing list
+		  push @$tvs, @{$lrg_vf->get_all_TranscriptVariations};
+		}
+	  }
+	  
+      foreach my $tv (@{$tvs}) {
 		foreach my $tva(@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
 		  unless($genomic_alleles_added{$tva->variation_feature_seq}) {
 			push @{$by_allele{$tva->variation_feature_seq}}, $tva->hgvs_genomic;
@@ -497,10 +491,23 @@ sub content {
       }
 
       $hgvs_html = join '<br/>', @temp;
+	  my $count = scalar @temp;
 
       $hgvs_html ||= "<h5>None</h5>";
-
-      $html .= qq{<dl class="summary"><dt>HGVS names</dt><dd>$hgvs_html</dd></dl>};
+	  
+	  if($count == 0) {
+		$html .= qq{<dl class="summary"><dt>HGVS names</dt><dd>$hgvs_html</dd></dl>};
+	  }
+	  
+	  else {
+		$html .= sprintf(qq{
+		  <dt class="toggle_button" title="Click to toggle HGVS names"><span>HGVS names</span><em class="closed"></em></dt>
+		  <dd>This feature has $count HGVS names - click the plus to show</dd>
+		  <dd class="toggle_info" style="display:none;font-weight:normal;">$hgvs_html</dd>
+		  </dl>
+		  <table class="toggle_table" id="hgvs"></table>
+		});
+	  }
     }
   }
 
