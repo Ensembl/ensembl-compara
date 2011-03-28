@@ -29,13 +29,11 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::NestedSet;
 
 use strict;
-use Data::Dumper;
 use warnings;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Compara::FormatTree;
 use Bio::TreeIO;
-#use DDS;
 use Bio::EnsEMBL::Compara::Graph::Node;
 our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node);
 
