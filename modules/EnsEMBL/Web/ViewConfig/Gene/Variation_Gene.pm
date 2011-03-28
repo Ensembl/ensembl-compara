@@ -13,6 +13,7 @@ sub init {
   
   $view_config->_set_defaults(qw(
     consequence_format   ensembl
+    show_scores          no
     panel_image          on 
     context              100
     hgvs                 transcript
@@ -105,7 +106,7 @@ sub form {
   }
   
   # Add type selection
-  $view_config->add_fieldset('Consequence type');
+  $view_config->add_fieldset('Consequence options');
   
   $view_config->add_form_element({
     type   => 'DropDown',
@@ -118,6 +119,17 @@ sub form {
       { value => 'ncbi',     name => 'NCBI terms'              },
     ]
   });
+  
+  $view_config->add_form_element({
+    type  => 'CheckBox',
+    label => 'Show SIFT and PolyPhen scores',
+    name  => 'show_scores',
+    value => 'yes',
+    raw   => 1,
+  });
+  
+  # Add type selection
+  $view_config->add_fieldset('Consequence type');
   
   foreach (sort { $type{$a}->[2] <=> $type{$b}->[2] } keys %type) { 
     next if $_ eq 'opt_sara';
