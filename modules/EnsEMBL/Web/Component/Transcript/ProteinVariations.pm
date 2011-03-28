@@ -20,10 +20,11 @@ sub content {
 
   my $hub    = $self->hub;
   my $cons_format = $hub->param('consequence_format');
+  my $show_scores = $hub->param('show_scores');
   my @data;
   
   foreach my $snp (@{$object->variation_data}) {
-    next unless $snp->{'allele'};
+    #next unless $snp->{'allele'};
     
     my $codons = $snp->{'codons'} || '-';
     
@@ -57,23 +58,27 @@ sub content {
     
     push @data, {
       res    => $snp->{'position'},
-      id     => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Variation', action => 'Summary', v => $snp->{'snp_id'}, vf => $snp->{'vdbid'}, vdb => 'variation' }), $snp->{'snp_id'}),
+      id     => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Variation', action => 'Mappings', v => $snp->{'snp_id'}, vf => $snp->{'vdbid'}, vdb => 'variation' }), $snp->{'snp_id'}),
       type   => $type,
       allele => $allele,
       ambig  => $snp->{'ambigcode'} || '-',
       alt    => $snp->{'pep_snp'} || '-',
-      codons => $codons
+      codons => $codons,
+      sift   => $self->render_sift_polyphen($tva->sift_prediction || '-', $show_scores eq 'yes' ? $tva->sift_score : undef),
+      poly   => $self->render_sift_polyphen($tva->polyphen_prediction || '-', $show_scores eq 'yes' ? $tva->polyphen_score : undef),
     };
   }
   
   my $html = $self->new_table([
-    { key => 'res',    title => 'Residue',            width => '10%', align => 'center', sort => 'numeric' },
+    { key => 'res',    title => 'Residue',            width => '5%',  align => 'center', sort => 'numeric' },
     { key => 'id',     title => 'Variation ID',       width => '10%', align => 'center', sort => 'html'    }, 
     { key => 'type',   title => 'Variation type',     width => '20%', align => 'center', sort => 'string'  },
-    { key => 'allele', title => 'Alleles',            width => '15%', align => 'center', sort => 'string'  },
-    { key => 'ambig',  title => 'Ambiguity code',     width => '15%', align => 'center', sort => 'string'  },
-    { key => 'alt',    title => 'Alternate residues', width => '15%', align => 'center', sort => 'string'  },
-    { key => 'codons', title => 'Alternate codons',   width => '15%', align => 'center', sort => 'string'  }
+    { key => 'allele', title => 'Alleles',            width => '10%', align => 'center', sort => 'string'  },
+    { key => 'ambig',  title => 'Ambiguity code',     width => '5%',  align => 'center', sort => 'string'  },
+    { key => 'alt',    title => 'Alternate residues', width => '10%', align => 'center', sort => 'string'  },
+    { key => 'codons', title => 'Alternate codons',   width => '10%', align => 'center', sort => 'string'  },
+    { key => 'sift',   title => 'SIFT',               width => '15%', align => 'center', sort => 'position_html'  },
+    { key => 'poly',   title => 'PolyPhen',           width => '15%', align => 'center', sort => 'position_html'  }
   ], \@data, { data_table => 1, sorting => [ 'res asc' ] })->render;
   
   $html .= $self->_info('Information','<p><span style="color:red;">*</span> SO terms are shown when no NCBI term is available</p>', '50%') if $cons_format eq 'ncbi';
