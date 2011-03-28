@@ -28,6 +28,7 @@ sub content {
   my $name   = $object->name;
   
   my $cons_format = $object->param('consequence_format');
+  my $show_scores = $object->param('show_scores');
   
   my $html;
   
@@ -58,9 +59,12 @@ sub content {
     { key => 'type',      title => 'Type'  ,                 sort => 'position_html'                      },
     { key => 'hgvs',      title => 'HGVS names'  ,           sort => 'string'                      },     
     { key => 'trans_pos', title => 'Position in transcript', sort => 'position', align => 'center' },
+    { key => 'cds_pos',   title => 'Position in CDS',        sort => 'position', align => 'center' },
     { key => 'prot_pos',  title => 'Position in protein',    sort => 'position', align => 'center' },
     { key => 'aa',        title => 'Amino acid',             sort => 'string'                      },
     { key => 'codon',     title => 'Codons',                 sort => 'string'                      },
+    { key => 'sift',      title => 'SIFT',                   sort => 'position_html'                      },
+    { key => 'polyphen',  title => 'PolyPhen',               sort => 'position_html'                      },
     #{ key => 'info',      title => 'Info',                       sort => 'string'                      },
   );
   
@@ -155,6 +159,16 @@ sub content {
       #  </a>
       #};
       
+      # sift
+      my $sift = $self->render_sift_polyphen(
+        $tva->sift_prediction || '-',
+        $show_scores eq 'yes' ? $tva->sift_score : undef
+      );
+      my $poly = $self->render_sift_polyphen(
+        $tva->polyphen_prediction || '-',
+        $show_scores eq 'yes' ? $tva->polyphen_score : undef
+      );
+      
       my $row = {
         allele    => $transcript_data->{'vf_allele'}.' ('.$transcript_data->{'tr_allele'}.')',
         gene      => qq{<a href="$gene_url">$gene_name</a>},
@@ -162,9 +176,12 @@ sub content {
         type      => $type,
         hgvs      => $hgvs || '-',
         trans_pos => $self->_sort_start_end($transcript_data->{'cdna_start'},        $transcript_data->{'cdna_end'}),
+        cds_pos   => $self->_sort_start_end($transcript_data->{'cds_start'},        $transcript_data->{'cds_end'}),
         prot_pos  => $self->_sort_start_end($transcript_data->{'translation_start'}, $transcript_data->{'translation_end'}),
         aa        => $transcript_data->{'pepallele'} || '-',
         codon     => $codon,
+        sift      => $sift,
+        polyphen  => $poly,
         #info      => $info,
       };
       
