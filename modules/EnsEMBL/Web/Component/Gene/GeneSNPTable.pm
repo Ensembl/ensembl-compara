@@ -39,18 +39,20 @@ sub make_table {
   my ($self, $table_rows, $consequence_type) = @_;
   
   my $columns = [
-    { key => 'ID',         sort => 'html'                                                   },
-    { key => 'chr' ,       sort => 'position', title => 'Chr: bp'                           },
-    { key => 'Alleles',    sort => 'string',                              align => 'center' },
-    { key => 'Ambiguity',  sort => 'string',                              align => 'center' },
-    { key => 'HGVS',       sort => 'string',   title => 'HGVS name(s)',   align => 'center' },
-    { key => 'class',      sort => 'string',   title => 'Class',          align => 'center' },
-    { key => 'Source',     sort => 'string'                                                 },
-    { key => 'status',     sort => 'string',   title => 'Validation',     align => 'center' },
-    { key => 'snptype',    sort => 'string',   title => 'Type',                             },
-    { key => 'aachange',   sort => 'string',   title => 'Amino Acid',     align => 'center' },
-    { key => 'aacoord',    sort => 'position', title => 'AA co-ordinate', align => 'center' },
-    { key => 'Transcript', sort => 'string'                                                 },
+    { key => 'ID',         sort => 'html'                                                        },
+    { key => 'chr' ,       sort => 'position',      title => 'Chr: bp'                           },
+    { key => 'Alleles',    sort => 'string',                                   align => 'center' },
+    { key => 'Ambiguity',  sort => 'string',                                   align => 'center' },
+    { key => 'HGVS',       sort => 'string',        title => 'HGVS name(s)',   align => 'center' },
+    { key => 'class',      sort => 'string',        title => 'Class',          align => 'center' },
+    { key => 'Source',     sort => 'string'                                                      },
+    #{ key => 'status',     sort => 'string',   title => 'Validation',     align => 'center' },
+    { key => 'snptype',    sort => 'string',        title => 'Type',                             },
+    { key => 'aachange',   sort => 'string',        title => 'Amino Acid',     align => 'center' },
+    { key => 'aacoord',    sort => 'position',      title => 'AA co-ordinate', align => 'center' },
+    { key => 'sift',       sort => 'position_html', title => 'SIFT',                             },
+    { key => 'polyphen',   sort => 'position_html', title => 'PolyPhen',                         },
+    { key => 'Transcript', sort => 'string'                                                      },
   ];
   
   return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 0, id => "${consequence_type}_table" });
@@ -82,7 +84,7 @@ sub stats_table {
   my ($self, $transcripts) = @_;
   
   my $hub = $self->hub;
-  my $cons_display = $hub->param('consequence_format');
+  my $cons_format = $hub->param('consequence_format');
   
   my $columns = [
     { key => 'count', title => 'Number of variants', sort => 'numeric_hidden', width => '20%', align => 'right'  },   
@@ -100,13 +102,13 @@ sub stats_table {
   my @all_cons = @Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   
   foreach my $con(@all_cons) {
-    my $term = $self->select_consequence_term($con, $cons_display);
+    my $term = $self->select_consequence_term($con, $cons_format);
     
-    if($cons_display eq 'so') {
+    if($cons_format eq 'so') {
       $labels{$term} = $term;
       $descriptions{$term} = ($con->SO_accession =~ /x/i ? $con->SO_accession : $hub->get_ExtURL_link($con->SO_accession, 'SEQUENCE_ONTOLOGY', $con->SO_accession)) unless $descriptions{$term};
     }
-    elsif($cons_display eq 'ncbi') {
+    elsif($cons_format eq 'ncbi') {
       $labels{$term} = $term;
       $descriptions{$term} = '-';
     }
@@ -139,7 +141,7 @@ sub stats_table {
           foreach my $con (@{$tva->get_all_OverlapConsequences}) {
             my $key = join "_", ($tr_stable_id, $vf_id, $tva->variation_feature_seq);
             
-            my $term = $self->select_consequence_term($con, $cons_display);
+            my $term = $self->select_consequence_term($con, $cons_format);
             
             $counts{$term}{$key} = 1 if $con;
             $total_counts{$key} = 1;
@@ -211,13 +213,14 @@ sub stats_table {
 sub variation_table {
   my ($self, $consequence_type, $transcripts, $slice) = @_;
   my $hub          = $self->hub;
-  my $cons_display = $hub->param('consequence_format');
+  my $cons_format = $hub->param('consequence_format');
+  my $show_scores = $hub->param('show_scores');
   my @rows;
   
   # create some URLs - quicker than calling the url method for every variation
   my $base_url = $hub->url({
     type   => 'Variation',
-    action => 'Sumary',
+    action => 'Mappings',
     vf     => undef,
     v      => undef,
     source => undef,
@@ -258,7 +261,7 @@ sub variation_table {
           $skip = 0;
         } elsif ($tva) {
           foreach my $con (@{$tva->get_all_OverlapConsequences}) {
-            if ($self->select_consequence_term($con, $cons_display) eq $consequence_type) {
+            if ($self->select_consequence_term($con, $cons_format) eq $consequence_type) {
               $skip = 0;
               last;
             }
@@ -291,8 +294,17 @@ sub variation_table {
           $as =~ s/$vf_allele/<b>$&\<\/b>/ if $as =~ /\//;
           
           # sort out consequence type string
-          my $type = join ', ', map {$self->select_consequence_label($_, $cons_display)} @{$tva->get_all_OverlapConsequences || []};
+          my $type = join ', ', map {$self->select_consequence_label($_, $cons_format)} @{$tva->get_all_OverlapConsequences || []};
           $type  ||= '-';
+          
+          my $sift = $self->render_sift_polyphen(
+            $tva->sift_prediction || '-',
+            $show_scores eq 'yes' ? $tva->sift_score : undef
+          );
+          my $poly = $self->render_sift_polyphen(
+            $tva->polyphen_prediction || '-',
+            $show_scores eq 'yes' ? $tva->polyphen_score : undef
+          );
           
           my $row = {
             ID         => qq{<a href="$url">$variation_name</a>},
@@ -306,10 +318,12 @@ sub variation_table {
             Transcript => qq{<a href="$trans_url">$transcript_stable_id</a>},
             aachange   => $aachange,
             aacoord    => $aacoord,
+            sift       => $sift,
+            polyphen   => $poly,
           };
           
           # add HGVS if LRG
-          $row->{'HGVS'} = $self->get_hgvs($transcript_variation) || '-';# if $transcript_stable_id =~ /^LRG/;
+          $row->{'HGVS'} = $self->get_hgvs($tva) || '-';# if $transcript_stable_id =~ /^LRG/;
           
           push @rows, $row;
         }
@@ -363,34 +377,13 @@ sub configure {
 
 sub get_hgvs {
   
-  my ($self, $tv) = @_;
+  my ($self, $tva) = @_;
   
-  my %cdna_hgvs = %{$tv->hgvs_coding || {}};
-  my %pep_hgvs  = %{$tv->hgvs_protein || {}};
-
-  # group by allele
-  my %by_allele;
+  my $hgvs;
+  $hgvs .= $tva->hgvs_coding if defined($tva->hgvs_coding);
+  $hgvs .= ", ".$tva->hgvs_protein if defined($tva->hgvs_protein);
   
-  # get genomic ones if given a slice
-  #if ($slice) {
-  #  my %genomic_hgvs = %{$vf->get_all_hgvs_notations($slice, 'g', $vf->seq_region_name)};
-  #  push @{$by_allele{$_}}, $genomic_hgvs{$_} for keys %genomic_hgvs;
-  #}
-
-  push @{$by_allele{$_}}, $cdna_hgvs{$_} for keys %cdna_hgvs;
-  #push @{$by_allele{$_}}, $pep_hgvs{$_}  for keys %pep_hgvs;
-  
-  my $allele_count = scalar keys %by_allele;
-  my @temp;
-  
-  foreach my $a (keys %by_allele) {
-    foreach my $h (@{$by_allele{$a}}) {
-      $h =~ s/(.{35})/$1\n/g if length $h > 50; # wordwrap
-      push @temp, $h . ($allele_count > 1 ? " <b>($a)</b>" : '');
-    }
-  }
-
-  return join ', ', @temp;
+  return $hgvs;
 }
 
 sub select_consequence_term {
