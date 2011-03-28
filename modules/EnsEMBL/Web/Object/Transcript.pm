@@ -1654,6 +1654,7 @@ sub variation_data {
 	  
 	  push @data, {
 		tva           => $tva,
+		tv           => $tv,
 		vf            => $vf,
 		position      => $pos,
 		snp_source    => $vf->source,
