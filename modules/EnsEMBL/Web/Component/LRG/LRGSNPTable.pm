@@ -37,18 +37,18 @@ sub make_table {
   my ($self, $table_rows, $consequence_type) = @_;
   
   my $columns = [
-    { key => 'ID',         sort => 'html'                                                   },
-    { key => 'chr' ,       sort => 'position', title => 'Chr: bp'                           },
-    { key => 'Alleles',    sort => 'string',   align => 'center'                            },
-    { key => 'Ambiguity',  sort => 'string',   align => 'center'                            },
-    { key => 'HGVS',       sort => 'string',   title => 'HGVS name(s)',   align => 'center' },
-    { key => 'class',      sort => 'string',   title => 'Class',          align => 'center' },
-    { key => 'Source',     sort => 'string'                                                 },
-    { key => 'status',     sort => 'string',   title => 'Validation',     align => 'center' },
-    { key => 'snptype',    sort => 'string',   title => 'Type',                             },
-    { key => 'aachange',   sort => 'string',   title => 'Amino Acid',     align => 'center' },
-    { key => 'aacoord',    sort => 'position', title => 'AA co-ordinate', align => 'center' },
-    { key => 'Transcript', sort => 'string'                                                 },
+    { key => 'ID',         sort => 'html'                                                        },
+    { key => 'chr' ,       sort => 'position',      title => 'Chr: bp'                           },
+    { key => 'Alleles',    sort => 'string',                                   align => 'center' },
+    { key => 'Ambiguity',  sort => 'string',                                   align => 'center' },
+    { key => 'HGVS',       sort => 'string',        title => 'HGVS name(s)',   align => 'center' },
+    { key => 'class',      sort => 'string',        title => 'Class',          align => 'center' },
+    { key => 'Source',     sort => 'string'                                                      },
+    #{ key => 'status',     sort => 'string',   title => 'Validation',     align => 'center' },
+    { key => 'snptype',    sort => 'string',        title => 'Type',                             },
+    { key => 'aachange',   sort => 'string',        title => 'Amino Acid',     align => 'center' },
+    { key => 'aacoord',    sort => 'position',      title => 'AA co-ordinate', align => 'center' },
+    { key => 'Transcript', sort => 'string'                                                      },
   ];
   
   return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 0, id => "${consequence_type}_table" });
