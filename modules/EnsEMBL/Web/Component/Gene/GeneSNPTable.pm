@@ -381,7 +381,7 @@ sub get_hgvs {
   
   my $hgvs;
   $hgvs .= $tva->hgvs_coding if defined($tva->hgvs_coding);
-  $hgvs .= '\n'.$tva->hgvs_protein if defined($tva->hgvs_protein);
+  $hgvs .= '<br/>'.$tva->hgvs_protein if defined($tva->hgvs_protein);
   
   $hgvs =~ s/.{30}/$&\n/g;
   
