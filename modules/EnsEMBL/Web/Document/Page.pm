@@ -400,7 +400,7 @@ sub html_template {
   $self->set_doc_type('XHTML',  '1.0 Trans');
   $self->add_body_attr('id',    'ensembl-webpage');
   $self->add_body_attr('class', 'mac')                               if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
-  $self->add_body_attr('class', "ie ie$2" . ($2 < 8 ? ' ie67' : '')) if $ENV{'HTTP_USER_AGENT'} =~ /MSIE( (\d))?/ && $2 < 9; # Assumes that IE 9 will have support for everything we need. LOL.
+  $self->add_body_attr('class', "ie ie$1" . ($1 < 8 ? ' ie67' : '')) if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d)/ && $1 < 9; # Assumes that IE 9 will have support for everything we need. LOL.
   $self->add_body_attr('class', 'no_tabs')                           unless $elements->{'tabs'};
   $self->add_body_attr('class', 'static')                            if $self->isa('EnsEMBL::Web::Document::Page::Static');
   
