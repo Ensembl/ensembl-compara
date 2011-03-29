@@ -380,10 +380,17 @@ sub get_hgvs {
   my ($self, $tva) = @_;
   
   my $hgvs;
-  $hgvs .= $tva->hgvs_coding if defined($tva->hgvs_coding);
-  $hgvs .= '<br/>'.$tva->hgvs_protein if defined($tva->hgvs_protein);
+  my $hgvs_c = $tva->hgvs_coding;
+  my $hgvs_p = $tva->hgvs_protein;
   
-  $hgvs =~ s/.{30}/$&\n/g;
+  if(defined($hgvs_c)) {
+    $hgvs_c =~ s/.{35}/$&\n/g;
+    $hgvs .= $hgvs_c;
+  }
+  if(defined($hgvs_p)) {
+    $hgvs_p =~ s/.{35}/$&\n/g;
+    $hgvs .= '<br/>'.$hgvs_p;
+  }
   
   return $hgvs;
 }
