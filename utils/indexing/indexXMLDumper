@@ -18,10 +18,10 @@ BEGIN {
 
 use EnsEMBL::Web::SpeciesDefs;
 use XML::Parser;
-use URI::Escape qw(uri_escape);
 use Data::Dumper;
 use Getopt::Long;
 use POSIX qw(strftime);
+use URI;
 
 use constant INC_SPECIES => 0;
 use CGI;
@@ -221,20 +221,22 @@ sub dumpHelp {
     $sth->execute;
     my ($id, $keywords, $content);
     while( ($id, $keywords, $content) = $sth->fetchrow_array()){
-      my ($extra,$description);
+      my ($extra,$description,$name);
       my $data = eval($content);
       if ($type eq 'View') {
-        $description = $data->{'content'} .' '. $data->{'answer'};
+        $description = $data->{'content'};
+        $name = $data->{'ensembl_object'} . ' ' . $data->{'ensembl_action'} . ' View';
       }
       elsif ($type eq 'Glossary') {
         $description = $data->{'meaning'};
-        push @$extra, $data->{'word'};
+        $name = $data->{'word'};
         push @$extra, $data->{'expanded'} if $data->{'expanded'};
       }
       elsif ($type eq 'FAQ') {
-        $description = $data->{'question'} .' '. $data->{'answer'};
+        $description = $data->{'answer'};
+        $name = $data->{'question'};
       }
-      &p( helpLine( $id, $keywords, $description, $extra, $type, $counter ), $nogzip, $fh); #### need to parse it
+      &p( helpLine( $id, $name, $keywords, $description, $extra, $type, $counter ), $nogzip, $fh); #### need to parse it
     }
     $total_c += footer( $counter->(),$nogzip,$fh,$type);
   }
@@ -242,11 +244,24 @@ sub dumpHelp {
 }
 
 sub helpLine {
-  my ($id, $keywords, $description, $extra,  $type, $counter) = @_;
+  my ($id, $name, $keywords, $description, $extra,  $type, $counter) = @_;
   my @keywords = map { s/^ //; $_; } split ',', $keywords if $keywords;
-  $description = uri_escape($description);
+  $name        = &clean($name);
+
+  #replace relative with absolute URLs
+  while ($description =~ /<a.*?href="(.+?)"/g) {
+    my $rel = $1;
+    my $abs = URI->new_abs($rel, 'http://www.ensembl.org/');
+#    warn "$rel --> $abs";
+  }
+
+  #remove image tags
+  $description =~ s/<img.*>?//g;
+
+  $description = &clean($description);
   my $xml = qq(
 <entry id="$id">
+  <name>$name</name>
   <description>$description</description>
   <additional_fields>
     <field name="featuretype">$type</field>);
