@@ -326,10 +326,10 @@ sub imageconfig_content {
       <ul class="popup_menu">$menu</ul>
       $selected<span class="menu_option">$icons$name</span>
       $fg_link
-      <span class="controls">
+      <div class="controls">
         $favourite
         $help
-      </span>
+      </div>
       $desc
     });
     
