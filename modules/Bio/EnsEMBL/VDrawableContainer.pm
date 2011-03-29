@@ -85,7 +85,7 @@ sub new {
 
         my $EW_Glyphset;
         eval { # Generic glyphsets need to have the type passed as a fifth parameter...
-          $EW_Glyphset = new $classname({
+          $EW_Glyphset = $classname->new({
 	          'container'  => $Container,
 	          'config'     => $Config,
 	          'my_config'  => $row_config,
