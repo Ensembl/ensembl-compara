@@ -32,19 +32,18 @@ sub init {
   if ($controller->request eq 'ssi') {
     $self->set($controller->content =~ /<title>(.*?)<\/title>/sm ? $1 : 'Untitled: ' . $controller->r->uri);
   } else {
-    my $node          = $controller->node;
-    my $object        = $controller->object;
-    my $configuration = $controller->configuration;
-  
-    return unless $node && ($object || $configuration);
+    my $node = $controller->node;
     
+    return unless $node;
+    
+    my $object       = $controller->object;
     my $hub          = $self->hub;
     my $species_defs = $hub->species_defs;
-    my $caption      = $object ? $object->caption : $configuration->caption;
+    my $caption      = $object ? $object->caption : undef;
     my $title        = $node->data->{'concise'} || $node->data->{'caption'};
     $title           =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
     
-    $self->set(sprintf '%s %s: %s %s', $species_defs->ENSEMBL_SITE_NAME, $species_defs->SITE_RELEASE_VERSION || $species_defs->ENSEMBL_VERSION, $species_defs->SPECIES_BIO_NAME, " - $title - $caption");
+    $self->set(sprintf '%s %s: %s - %s%s', $species_defs->ENSEMBL_SITE_NAME, $species_defs->SITE_RELEASE_VERSION || $species_defs->ENSEMBL_VERSION, $species_defs->SPECIES_BIO_NAME, $title, ($caption ? " - $caption" : ''));
     
     ## Short title to be used in the bookmark link
     if ($hub->user) {
@@ -60,7 +59,7 @@ sub init {
       $caption =~ s/$type: //;
       $caption =~ s/\(.+\)$//;
       
-      $self->set_short(sprintf '%s: %s', $species_defs->SPECIES_COMMON_NAME, "$title - $caption");
+      $self->set_short(sprintf '%s: %s%s', $species_defs->SPECIES_COMMON_NAME, $title, ($caption ? " - $caption" : ''));
     }
   }
 }
