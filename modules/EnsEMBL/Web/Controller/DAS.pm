@@ -11,21 +11,10 @@ use EnsEMBL::Web::Document::Page::Dynamic;
 
 use base qw(EnsEMBL::Web::Controller::Component);
 
-sub page_type     { return 'Dynamic';          }
-sub renderer_type { return 'Apache';           }
-sub request       { return $_[0]->hub->script; }
-
-sub page {
-  my $self = shift;
-  
-  return $self->{'page'} ||= new EnsEMBL::Web::Document::Page::Dynamic({
-    input        => $self->input,
-    hub          => $self->hub, 
-    species_defs => $self->species_defs, 
-    renderer     => $self->renderer, 
-    outputtype   => 'DAS'
-  });
-}
+sub page_type     { return 'Dynamic';                 }
+sub renderer_type { return 'Apache';                  }
+sub request       { return $_[0]->hub->script;        }
+sub page          { return $_[0]->SUPER::page('DAS'); }
 
 sub configure {
   my $self          = shift;
