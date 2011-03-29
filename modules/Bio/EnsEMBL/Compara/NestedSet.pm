@@ -1093,7 +1093,7 @@ sub _internal_nhx_format {
   Description : Prints this tree in Newick format. Several modes are
                 available: full, display_label_composite, simple, species,
                 species_short_name, ncbi_taxon, ncbi_name, njtree and phylip
-  Returntype  : undef
+  Returntype  : string
   Exceptions  :
   Caller      : general
   Status      : Stable
