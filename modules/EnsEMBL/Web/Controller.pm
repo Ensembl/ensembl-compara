@@ -130,7 +130,8 @@ sub renderer {
 }
 
 sub page {
-  my $self = shift;
+  my $self       = shift;
+  my $outputtype = $ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/ ? 'search_bot' : shift;
   
   if (!$self->{'page'}) {
     my $document_module = 'EnsEMBL::Web::Document::Page::' . $self->page_type;
@@ -139,7 +140,8 @@ sub page {
       input        => $self->input,
       hub          => $self->hub, 
       species_defs => $self->species_defs, 
-      renderer     => $self->renderer
+      renderer     => $self->renderer,
+      outputtype   => $outputtype
     });
   }
   
@@ -268,6 +270,8 @@ sub set_cache_params {
     $ENV{'CACHE_KEY'} .= '::MAC'  if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
     $ENV{'CACHE_KEY'} .= "::IE$1" if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d)/;
   }
+  
+  $ENV{'CACHE_KEY'} .= '::BOT' if $ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/;
   
   if ($type eq 'page') {
     $ENV{'CACHE_TAGS'}{$self->{'url_tag'}} = 1;
