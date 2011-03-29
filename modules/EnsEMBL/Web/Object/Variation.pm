@@ -1140,10 +1140,12 @@ sub transcript_variation {
   my $transcript_variation_obj =  $vari_feature->get_all_TranscriptVariations;
   
   # if we've come from an LRG, add LRG TVs
+  my $lrg_vf;
+  
   if($self->hub->param('lrg') =~ /LRG\_\d+/) {
     
     # transform to LRG coord system
-    my $lrg_vf = $vari_feature->transform('LRG');
+    $lrg_vf = $vari_feature->transform('LRG');
     
     if(defined($lrg_vf)) {
       
@@ -1182,6 +1184,7 @@ sub transcript_variation {
               tva =>              $tva_obj,
               tv  =>              $tvari_obj,
               vf  =>              $vari_feature,
+              lrg_vf =>           $lrg_vf,
       });
     }
   }
