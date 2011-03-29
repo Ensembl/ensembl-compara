@@ -467,7 +467,6 @@ sub QTLLine {
   return $xml . '</entry>';
 }
 
-
 ########################################################################## Variations
 
 sub dumpVariation {
@@ -514,27 +513,48 @@ sub dumpVariation {
 
   my $sources = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $VariationDB.source" )} };
 
+  my $sth;
+
+  print LOG "    Preparing to get SNP location info ", &date_and_mem, "\n";
+  my $query = qq(
+    SELECT vf.variation_id, concat(sr.name, ':', vf.seq_region_start, '-',  vf.seq_region_end, ':', vf.seq_region_strand ) as location
+      FROM $VariationDB.variation_feature vf, $VariationDB.seq_region sr
+     WHERE vf.seq_region_id = sr.seq_region_id);
+  $sth = $conf->{'dbh'}->prepare($query);
+  $sth->execute;
+  my $locations;
+  while ( my $rows = $sth->fetchrow_arrayref() ) {
+    push @{$locations->{$rows->[0]}},$rows->[1];
+  }
+  print LOG "    Got SNP location info ", &date_and_mem, "\n";
+
   print LOG "    Preparing to get extra SNP info ", &date_and_mem, "\n";
   my %snp_extra = map { ($_->[0] => $_) }
     @{$conf->{'dbh'}->selectall_arrayref(
-      "SELECT va.variation_id,
-              group_concat( distinct va.local_stable_id SEPARATOR '; ') AS lsi,
-              group_concat( distinct va.study           SEPARATOR '; ') AS st,
-              group_concat( distinct va.associated_gene SEPARATOR '; ') AS gn,
-              group_concat( distinct va.variation_names SEPARATOR '; ') AS vars,
-              group_concat( distinct
-                if(
-                  isnull(p.name),
-                  description,
-                  concat( p.description,' (',p.name,')' )
-                )
-                SEPARATOR '; '
-              ) AS phen
-         FROM $VariationDB.variation_annotation AS va left join
-              $VariationDB.phenotype AS p ON p.phenotype_id = va.phenotype_id
-        GROUP BY va.variation_id
-        ORDER BY va.variation_id"
+       "SELECT va.variation_id,
+             group_concat( distinct sta.name SEPARATOR '; ') AS lsi,
+             group_concat( distinct st.external_reference SEPARATOR ';') AS st,
+             group_concat( distinct va.associated_gene SEPARATOR ';') AS gn,
+             group_concat( distinct va.variation_names SEPARATOR ';') AS vars,
+             group_concat( distinct
+               if(
+                 isnull(p.name),
+                 p.description,
+                 concat( p.description,' (',p.name,')' )
+               )
+               SEPARATOR ';'
+             ) AS phen
+        FROM $VariationDB.variation_annotation AS va left join
+             $VariationDB.phenotype AS p ON p.phenotype_id = va.phenotype_id left join
+             $VariationDB.study AS st ON st.study_id=va.study_id left join
+             $VariationDB.associate_study AS sa ON sa.study1_id=st.study_id left join
+             $VariationDB.study AS sta ON sta.study_id=sa.study2_id
+       GROUP BY va.variation_id
+       ORDER BY va.variation_id"
     )};
+
+#  warn Data::Dumper::Dumper(\%snp_extra);
+
   print LOG "    Retrieved extra SNP info ", &date_and_mem, "\n";
 
   #disconnect and then connect to free up memory
@@ -542,29 +562,40 @@ sub dumpVariation {
   $conf->{'dbh'}->disconnect;
   $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
 
-  print LOG "    Preparing to get extra ssID info ", &date_and_mem, "\n";
-  my $stmt = qq{SELECT a.variation_id,
-                  GROUP_CONCAT(
-                     DISTINCT CONCAT('ss',a.subsnp_id)
-                       ) AS ssid
-                  FROM $VariationDB.allele a
-                 WHERE a.subsnp_id IS NOT NULL
-              GROUP BY a.variation_id
+  my ($ssid_sth, $stmt,$ssid_hash);
+  if ($dbspecies ne 'Homo_sapiens') {
+    print LOG "    Preparing to get extra ssID info ", &date_and_mem, "\n";
+    $stmt = qq{SELECT a.variation_id,
+                GROUP_CONCAT(
+                    DISTINCT CONCAT('ss',a.subsnp_id)
+                      ) AS ssid
+                FROM $VariationDB.allele a
+               WHERE a.subsnp_id IS NOT NULL
+               GROUP BY a.variation_id
      };
-  my $sth = $conf->{'dbh'}->prepare($stmt);
-  $sth->execute();
+    $ssid_sth = $conf->{'dbh'}->prepare($stmt);
+    $ssid_sth->execute();
 
-  # Get a hashref of the results with the variation_id as key
-  my $ssid_hash = $sth->fetchall_hashref('variation_id');
-  print LOG "    Retrieved extra ssID info ", &date_and_mem, "\n";
+    # Get a hashref of the results with the variation_id as key
+    $ssid_hash = $ssid_sth->fetchall_hashref('variation_id');
+    print LOG "    Retrieved extra ssID info ", &date_and_mem, "\n";
 
-  #disconnect and then connect to free up memory
-  $conf->{'dbh'}->disconnect;
-  $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
+    #disconnect and then connect to free up memory
+    $conf->{'dbh'}->disconnect;
+    $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
+  }
+  else {
+    $stmt = qq{SELECT GROUP_CONCAT(
+                 DISTINCT CONCAT('ss',subsnp_id)
+                                  ) AS ssid
+                  FROM $VariationDB.allele
+                 WHERE variation_id = ?};
+    $ssid_sth = $conf->{'dbh'}->prepare($stmt);
+  }
 
   # Statement to get all variations, both mapped, failed and the precious non-mapped, non-failed
   print LOG "    Preparing to execute SQL to get all SNPs ", &date_and_mem, "\n";
-  my $sth = $conf->{'dbh'}->prepare(qq{
+  $sth = $conf->{'dbh'}->prepare(qq{
     SELECT
         v.variation_id,
         v.name,
@@ -597,9 +628,17 @@ sub dumpVariation {
       my $variation_name     = $row->[1];
       my $source_id          = $row->[2];
       my $synonyms           = $row->[3];
-      my $failed_description = $row->[4];
-      my $somatic_var        = $row->[5]; 
-      my $ssids              = $ssid_hash->{$variation_id}{'ssid'};
+      my $failed_desc        = $row->[4];
+      my $somatic_var        = $row->[5];
+      my $ssids;
+      if ($ssid_hash) {
+        $ssids = $ssid_hash->{$variation_id}{'ssid'};
+      }
+      else {
+        $ssid_sth->execute($variation_id);
+        (my $res) = $ssid_sth->fetchall_arrayref();
+        $ssids = $res->[0][0];
+      }
       my %synonyms;
       my $syn_c = 0;
       foreach my $syn (split /,/, $synonyms) {
@@ -614,48 +653,35 @@ sub dumpVariation {
           $new_syn_c++;
         }
       }
-      my (@syns, @gene_syns,$synonym_text);
+      my (@syns, @genes, @phenotypes, @studies);
       foreach my $syn (keys %synonyms) {
         push @syns, $syn;
-        $synonym_text .= $synonyms{$syn}.':'.$syn.' ';
       }
 
       my $somatic_mutation = $somatic_var;
-      my $snp_source = $sources->{ $source_id };
-      my $extra      = '';
+      my $snp_source       = $sources->{ $source_id };
+      my $desc;
+      my $locs = $locations->{$variation_id};
+
       my $x = $snp_extra{$variation_id};
       if( $x ) {
-        push @syns,$x->[1],$x->[4];
-        push @gene_syns,$x->[3];
-
-        $extra = ' It is associated with following phenotypes:'. $x->[4].','.$x->[5];
-        if( $x->[1] ) {
-          $extra .= sprintf ', through %s', $x->[1];
-        }
-        if( $x->[2] ) {
-          $extra .= sprintf ', through study(s): %s, and associated with following gene(s): %s', $x->[2], $x->[3];
-        }
+        push @syns,       split ';', $x->[1];
+        push @genes,      split ';', $x->[3];
+        push @syns, split ';', $x->[4];
+        push @phenotypes, $x->[5] if $x->[5];
+        push @studies,    split ';', $x->[2];
       }
-      $extra .= '.' if $extra;
-      $extra .= ' '.$failed_description if $failed_description;
+      else {
+        $desc = sprintf( "%s %s %s",
+                         @phenotypes  ? 'Phenotypes: ' .         (join ', ', @phenotypes) . '.' : '',
+                         @genes       ? 'Gene Association(s): ' .(join ', ', @genes)      . '.' : '',
+                         $failed_desc ? "$failed_desc."                                         : '');
+      }
       if ($somatic_mutation){
-        my $desc = sprintf( "A %s Somatic Mutation %s%s",
-                            $snp_source,
-                            $syn_c > 1 ? "with $syn_c synonyms: $synonym_text."
-                          : $syn_c     ? "with one synonym: $synonym_text."
-                          : 'with no synonyms.',
-                            $extra
-                          );
-        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@gene_syns, $snp_source, $desc, $counter2 ), $nogzip, $fh2);
-      } else {
-        my $desc = sprintf( "A %s Variation %s%s",
-                            $snp_source,
-                            $syn_c > 1 ? "with $syn_c synonyms: $synonym_text."
-                          : $syn_c     ? "with one synonym: $synonym_text."
-                          : 'with no synonyms.',
-                            $extra
-                          );
-        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@gene_syns, $snp_source, $desc, $counter ), $nogzip, $fh);
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, $locs, $snp_source, $desc, $counter2 ), $nogzip, $fh2);
+      }
+      else {
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, $locs, $snp_source, $desc, $counter ), $nogzip, $fh);
       }
     }
   }
@@ -674,22 +700,32 @@ sub dumpVariation {
 }
 
 sub VariationLine {
-  my ($species, $name, $IDS, $gene_IDS, $source, $desc, $counter ) = @_;
+  my ($species, $name, $synonyms, $genes, $phenotypes, $studys, $locs, $source, $desc, $counter ) = @_;
   $species =~ s/_/ /;
   my $xml = qq(
 <entry id="$name">
   <description>$desc</description>
   <additional_fields>);
   $xml .= &common_fields($species,'Variation');
-  foreach my $id (@$IDS) {
+  foreach (@$locs) {
     $xml .= qq(
-    <field name="synonym">$id</field>);
+    <field name="location">$_</field>);
   }
-  foreach my $ids (@$gene_IDS) {
-    foreach my $id (split ',', $ids) {
-      $xml .= qq(
-    <field name="synonym">$id</field>);
-    }
+  foreach (@$synonyms) {
+    $xml .= qq(
+    <field name="synonym">$_</field>);
+  }
+  foreach (@$genes) {
+    $xml .= qq(
+    <field name="assoc_gene">$_</field>);
+  }
+  foreach (@$phenotypes) {
+    $xml .= qq(
+    <field name="phenotype">$_</field>);
+  }
+  foreach (@$studys ) {
+    $xml .= qq(
+    <field name="study">$_</field>);
   }
   $xml .= qq(
     <field name="source">$source</field>
@@ -1214,7 +1250,7 @@ sub dumpSequence {
     header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
 
     if ($db eq 'core') {
-      my $lrgs = &dumpLRGs($conf);
+      my $lrgs = &findLRGs($conf);
       if (@$lrgs) {
         &sort_lrgs($dbspecies,'Sequence',$fh,$lrgs);
       }
@@ -2345,7 +2381,7 @@ sub RegulatoryFeatureLine {
 
 ########################################################################## LRGs
 
-sub dumpLRGs {
+sub findLRGs {
   my $conf = shift;
   return $conf->{'dbh'}->selectall_arrayref(
         qq(SELECT gsi.stable_id, x.display_label, edb.db_name, tsi.stable_id, sr.length
