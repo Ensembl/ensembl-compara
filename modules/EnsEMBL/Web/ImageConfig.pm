@@ -1837,8 +1837,7 @@ sub add_copy_number_variant_probes {
   
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'cnv_probes'}{'counts'} || {}}) {
 	  my $description = $hashref->{'source'}{'descriptions'}{$key_2};
-    #(my $k = $key_2) =~ s/\W/_/g;
-		(my $k = $key_2) =~ s/\s/@/g;
+    (my $k = $key_2) =~ s/\W/_/g;
     
     $cnv_probes->append($self->create_track("variation_feature_cnv_$k", "$key_2", {
       %options,
