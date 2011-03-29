@@ -1560,7 +1560,7 @@ sub add_regulation_builds {
   my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
   my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
   my %fg_data           = (%$data_1, %$data_2);
-  my $db_tables         = $self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'};
+  my $db_tables         = $self->databases->{'DATABASE_FUNCGEN'}->{'tables'};
   
   foreach my $key_2 (sort grep { /reg_feats/ } @$keys_1, @$keys_2) {
     my $type = $fg_data{$key_2}{'type'};
@@ -1729,7 +1729,7 @@ sub add_sequence_variations {
     
     $menu->append($variation_sets);
   
-    foreach my $toplevel_set (sort { $a->{'name'} cmp $b->{'name'} && (scalar @{$a->{'subsets'}} ? 1 : 0) <=> (scalar @{$b->{'subsets'}} ? 1 : 0) } values %{$hashref->{'variation_set'}{'supersets'}}) {
+    foreach my $toplevel_set (sort { !!scalar @{$a->{'subsets'}} <=> !!scalar @{$b->{'subsets'}} } sort { $a->{'name'} cmp $b->{'name'} } values %{$hashref->{'variation_set'}{'supersets'}}) {
       my $name          = $toplevel_set->{'name'};
       my $caption       = $name . (scalar @{$toplevel_set->{'subsets'}} ? ' (all data)' : '');
       (my $key = $name) =~ s/\W/_/g;
