@@ -88,6 +88,11 @@ mkdir $dir, 0777 unless -e "$dir";
 my $start_time = time;
 my $total_c;
 foreach my $index (@indexes) {
+
+
+#  next if $index =~ /Help|Domain|Family/;
+
+
   my $start = time;
   if ($index eq 'Help') {
     foreach my $type (qw(View Glossary FAQ)) {
@@ -243,8 +248,8 @@ sub helpLine {
   my $xml = qq(
 <entry id="$id">
   <description>$description</description>
-  <featuretype>$type</featuretype>
-  <additional_fields>);
+  <additional_fields>
+    <field name="featuretype">$type</field>);
   foreach my $kw (@keywords) {
     $xml .= qq(
     <field name="keyword">$kw</field>);
