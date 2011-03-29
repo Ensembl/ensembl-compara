@@ -234,6 +234,12 @@ sub initialize {
   $self->extra_configuration;
 }
 
+sub initialize_search_bot {
+  my $self = shift;
+  $self->add_head_elements(qw(title   EnsEMBL::Web::Document::Element::Title));
+  $self->add_body_elements(qw(content EnsEMBL::Web::Document::Element::Content));
+}
+
 sub _init {
   my $self = shift;
   

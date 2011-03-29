@@ -9,6 +9,8 @@ use base qw(EnsEMBL::Web::Document::HTML);
 use EnsEMBL::Web::RegObj;
 
 sub render {
+  return if $ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/;
+  
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $page_species = $ENV{'ENSEMBL_SPECIES'} || 'common';
   my $species_name = '';
