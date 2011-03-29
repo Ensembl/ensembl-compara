@@ -309,7 +309,7 @@ sub variation_table {
           my $row = {
             ID         => qq{<a href="$url">$variation_name</a>},
             class      => $var_class,
-            Alleles    => qq{<span style="font-family:Courier New,Courier,monospace;">$as</span>},
+            Alleles    => $as,#qq{<span style="font-family:Courier New,Courier,monospace;">$as</span>},
             Ambiguity  => $snp->ambig_code,
             status     => (join(', ',  @$validation) || '-'),
             chr        => "$chr:$start" . ($start == $end ? '' : "-$end"),
@@ -381,7 +381,9 @@ sub get_hgvs {
   
   my $hgvs;
   $hgvs .= $tva->hgvs_coding if defined($tva->hgvs_coding);
-  $hgvs .= ", ".$tva->hgvs_protein if defined($tva->hgvs_protein);
+  $hgvs .= '\n'.$tva->hgvs_protein if defined($tva->hgvs_protein);
+  
+  $hgvs =~ s/.{30}/$&\n/g;
   
   return $hgvs;
 }
