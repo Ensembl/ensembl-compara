@@ -19,14 +19,11 @@ sub initialize_HTML {
   ));
   
   $self->add_body_elements(qw(
-    logo        EnsEMBL::Web::Document::Element::Logo
-    account     EnsEMBL::Web::Document::Element::AccountLinks
-    search_box  EnsEMBL::Web::Document::Element::SearchBox
-    tools       EnsEMBL::Web::Document::Element::ToolLinks
-    breadcrumbs EnsEMBL::Web::Document::Element::BreadCrumbs
-  ));
-  
-  $self->add_body_elements(qw(
+    logo            EnsEMBL::Web::Document::Element::Logo
+    account         EnsEMBL::Web::Document::Element::AccountLinks
+    search_box      EnsEMBL::Web::Document::Element::SearchBox
+    tools           EnsEMBL::Web::Document::Element::ToolLinks
+    breadcrumbs     EnsEMBL::Web::Document::Element::BreadCrumbs
     content         EnsEMBL::Web::Document::Element::Content
     modal           EnsEMBL::Web::Document::Element::Modal
     copyright       EnsEMBL::Web::Document::Element::Copyright
