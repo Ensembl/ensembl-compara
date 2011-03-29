@@ -63,18 +63,31 @@ sub content {
   
   ## First warn if variation has been failed
   if ($variation->failed_description) {
-    my $desc = $variation->failed_description;
+    my @descs = @{$variation->get_all_failed_descriptions};
 	
-	if(defined($feature_slice)) {
-	  my $seq = $feature_slice->seq;
-	  $seq =~ s/.{60}/$&\n/g;
-	  
-	  if($desc =~ /match.+reference\ allele/ && defined($feature_slice)) {
-		$desc .= " (".$seq.")";
+	for my $i(0..$#descs) {
+	  if(defined($feature_slice)) {
+		my $seq = $feature_slice->seq;
+		$seq =~ s/.{60}/$&\n/g;
+		
+		if($descs[$i] =~ /match.+reference\ allele/ && defined($feature_slice)) {
+		  $descs[$i] =~ s/reference allele/$& \($seq\)/;
+		}
 	  }
 	}
+	
+	my $failed_html;
+	
+	if(scalar @descs > 1) {
+	  $failed_html = '<p><ul>';
+	  $failed_html .= '<li>'.$_.'</li>' foreach @descs;
+	  $failed_html .= '</ul></p>';
+	}
+	else {
+	  $failed_html = $descs[0];
+	}
     
-    $html .= $self->_warning('This variation has been flagged as failed', $desc, '50%');
+    $html .= $self->_warning('This variation has been flagged as failed', $failed_html, '50%');
   }
   
   $html .= qq{
@@ -419,10 +432,12 @@ sub content {
 	  my $tvs = $vf->get_all_TranscriptVariations;
 	  
 	  # if we've come from an LRG, add LRG TVs
+	  my $lrg_vf;
+	  
 	  if($self->hub->param('lrg') =~ /LRG\_\d+/) {
 		
 		# transform to LRG coord system
-		my $lrg_vf = $vf->transform('LRG');
+		$lrg_vf = $vf->transform('LRG');
 		
 		if(defined($lrg_vf)) {
 		  
@@ -491,7 +506,7 @@ sub content {
       }
 
       $hgvs_html = join '<br/>', @temp;
-	  my $count = scalar @temp;
+	  my $count = scalar grep {$_ =~ /\:/} @temp;
 
       $hgvs_html ||= "<h5>None</h5>";
 	  
