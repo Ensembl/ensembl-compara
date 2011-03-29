@@ -145,6 +145,10 @@ sub config {
       ]
     }  
   };
+
+if(! $self->get_object->can('get_GeneTree') ){
+	delete $self->__data->{'config'}{'genetree'};
+}
   
   my $func = sprintf 'modify_%s_options', lc $self->function;
   $self->$func if $self->can($func);
