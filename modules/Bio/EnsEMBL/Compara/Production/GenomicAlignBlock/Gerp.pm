@@ -54,6 +54,7 @@ use Bio::AlignIO;
 use Bio::LocatableSeq;
 use Bio::EnsEMBL::Compara::ConservationScore;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
+use Bio::EnsEMBL::Utils::SqlHelper;
 
 use Bio::EnsEMBL::Hive::Process;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
@@ -266,6 +267,26 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
+
+    print "WRITE OUTPUT\n" if $self->debug;
+
+    if ($self->do_transactions) {
+	my $compara_conn = $self->{'comparaDBA'}->dbc;
+
+	my $compara_helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_conn);
+	$compara_helper->transaction(-CALLBACK => sub {
+	     $self->_write_output;
+         });
+    } else {
+	$self->_write_output;
+    }
+
+  return 1;
+
+}
+
+sub _write_output {
+    my ($self) = @_;
   
     #if haven't run gerp, don't try to store any results!
     if (!$self->{'run_gerp'}) { 
@@ -274,31 +295,13 @@ sub write_output {
 
     print STDERR "Write Output\n";
 
-    #
-    #Start transaction
-    #
-    my $dbh = $self->{'comparaDBA'}->dbc->db_handle;
-    my $rc = $dbh->begin_work or die $dbh->errstr;
-
-    eval {
-	#parse results and store constraints and conserved elements in database
-	if ($self->program_version == 1) {
-	    $self->_parse_results;
-	} elsif ($self->program_version == 2.1) {
-	    $self->_parse_results_v2;
-	} else {
-	    throw("Invalid version number. Valid values are 1 or 2.1\n");
-	}
-
-	#
-	#Commit transaction
-	#
-	$dbh->commit;
-    };
-
-    if($@) {
-	eval {$dbh->rollback};
-	throw "Transaction aborted because $@";
+    #parse results and store constraints and conserved elements in database
+    if ($self->program_version == 1) {
+	$self->_parse_results;
+    } elsif ($self->program_version == 2.1) {
+	$self->_parse_results_v2;
+    } else {
+	throw("Invalid version number. Valid values are 1 or 2.1\n");
     }
 
     return 1;
@@ -406,6 +409,12 @@ sub param_file_tmp {
   return $self->{'_param_file_tmp'};
 }
 
+sub do_transactions {
+  my $self = shift;
+  $self->{'_do_transactions'} = shift if(@_);
+  return $self->{'_do_transactions'};
+}
+
 
 ##########################################
 #
@@ -457,6 +466,12 @@ sub get_params {
     }
     if (defined($params->{'no_conservation_scores'})) {
         $self->no_conservation_scores($params->{'no_conservation_scores'});
+    }
+    if (defined($params->{'do_transactions'})) {
+	$self->{_do_transactions} = $params->{'do_transactions'};
+    } else {
+	#default is to do transactions
+	$self->{_do_transactions} = 1;
     }
 
     return 1;
