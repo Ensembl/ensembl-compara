@@ -1179,7 +1179,9 @@ sub transcript_variation {
               translation_end =>  $tvari_obj->translation_end,
               pepallele =>        $tva_obj->pep_allele_string,
               codon =>            $tva_obj->display_codon_allele_string,
-              tva =>              $tva_obj
+              tva =>              $tva_obj,
+              tv  =>              $tvari_obj,
+              vf  =>              $vari_feature,
       });
     }
   }
