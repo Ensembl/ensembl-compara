@@ -1,3 +1,23 @@
+=head1 LICENSE
+
+  Copyright (c) 1999-2010 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=cut
+
 package Bio::EnsEMBL::Compara::FormatTree;
 
 use strict;
@@ -18,7 +38,7 @@ sub _tokenize {
                                     has_parent  : "^"
                                     { $tokens[-1]->{has_parent} = 1 }
                                     or          : "|"
-                                    character   : /[\w\.\s:]+/i
+                                    character   : /[\w\.\s:\|]+/i
                                     literal     : character
                                         { $tokens[-1]->{literal} = $item{character} }
                                     Letter_code : "n" | "c" | "d" | "t" | "l" | "h" | "s" | "p" | "m" | "g" | "i" | "e" | "o" | "x" | "S"
@@ -116,7 +136,11 @@ my $ensembl_timetree_mya_cb = sub {
 
 my $gdb_id_cb = sub {
   my ($self) = @_;
-  return sprintf ("%s", $self->{tree}->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->{tree}->taxon_id)->dbID);
+  my $gdb_id;
+  eval {
+    $gdb_id = $self->{tree}->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->{tree}->taxon_id)->dbID;
+  };
+  return $gdb_id;
 };
 
 my $node_id_cb = sub {  ## only if we are in a leaf? ... if ($self->{tree}->is_leaf);
@@ -132,7 +156,11 @@ my $label_cb = sub { ## only if we are in a leaf? ... if ($self->{tree}->is_leaf
 
 my $sp_short_name_cb = sub {
   my ($self) = @_;
-  return $self->{tree}->genome_db->short_name;
+  my $sp;
+  eval {
+    $sp = $self->{tree}->genome_db->short_name
+  };
+  return $sp;
 };
 
 my $stable_id_cb = sub {  ## only if we are in a leaf?
@@ -143,9 +171,8 @@ my $stable_id_cb = sub {  ## only if we are in a leaf?
 my $prot_id_cb = sub {
   my ($self) = @_;
   my $prot_member;
-  eval {$prot_member = $self->{tree}->get_canonical_peptide_Member;};
-  return sprintf ("%s", $prot_member->stable_id) if (defined ($prot_member));
-  return "";
+  eval {$prot_member = $self->{tree}->get_canonical_peptide_Member->stable_id};
+  return $prot_member;
 };
 
 my $member_id_cb = sub {
@@ -155,7 +182,10 @@ my $member_id_cb = sub {
 
 my $taxon_id_cb = sub {
   my ($self) = @_;
-  return sprintf ("%s", $self->{tree}->taxon_id);
+  my $taxon_id;
+  eval { $taxon_id = $self->{tree}->taxon_id };
+  return $taxon_id;
+#  return sprintf ("%s", $self->{tree}->taxon_id);
 };
 
 my $sp_name_cb = sub {
