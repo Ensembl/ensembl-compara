@@ -5,6 +5,7 @@ package EnsEMBL::Web::Document::HTML;
 use strict;
 
 use EnsEMBL::Web::Document::Panel;
+use LWP::UserAgent;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -84,6 +85,69 @@ sub new_panel {
     );
   
   return undef;
+}
+
+sub get_rss_feed {
+  my ($self, $hub, $rss_url) = @_;
+  if (!$hub || !$rss_url) {
+    return [];
+  }
+
+  ## Does this feed work best with XML::Atom or XML:RSS? 
+  my $rss_type = $rss_url =~ /atom/ ? 'atom' : 'rss';
+
+  my $ua = new LWP::UserAgent;
+  my $proxy = $hub->species_defs->ENSEMBL_WWW_PROXY;
+  $ua->proxy( 'http', $proxy ) if $proxy;
+  $ua->timeout(5);
+
+  my $response = $ua->get($rss_url);
+  my $items = [];
+
+  if ($response->is_success) {
+    my $count = 0;
+    if ($rss_type eq 'atom' && $self->dynamic_use('XML::Atom::Feed')) {
+      my $feed = XML::Atom::Feed->new(\$response->decoded_content);
+      my @entries = $feed->entries;
+      foreach my $entry (@entries) {
+        my ($link) = grep { $_->rel eq 'alternate' } $entry->link;
+        my $date  = $self->pretty_date(substr($entry->published, 0, 10), 'daymon');
+        my $item = {
+              'title'   => $entry->title,
+              'content' => $entry->content,
+              'link'    => $link->href,
+              'date'    => $date,
+        };
+        push @$items, $item;
+        $count++;
+        last if $count == 3;
+      }
+    }
+    elsif ($rss_type eq 'rss' && $self->dynamic_use('XML::RSS')) {
+      my $rss = XML::RSS->new;
+      $rss->parse($response->decoded_content);
+      foreach my $entry (@{$rss->{'items'}}) {
+        my $date = substr($entry->{'pubDate'}, 5, 11);
+        my $item = {
+          'title'   => $entry->{'title'},
+          'content' => $entry->{'http://purl.org/rss/1.0/modules/content/'}{'encoded'},
+          'link'    => $entry->{'link'},
+          'date'    => $date,
+        };
+        push @$items, $item;
+        $count++;
+        last if $count == 3;
+      }
+    }
+    else {
+      warn "!!! UNKNOWN RSS METHOD DEFINED";
+    }
+  }
+  else {
+    warn "!!! COULD NOT GET RSS FEED from $rss_url";
+  }
+
+  return $items;
 }
 
 1;
