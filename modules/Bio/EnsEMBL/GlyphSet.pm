@@ -183,18 +183,18 @@ sub init_label {
   
   return $self->label(undef) unless $text;
   
-  my $config = $self->{'config'};
-  my $hub    = $config->hub;
-  my $name   = $self->my_config('name');
-  my $desc   = $self->my_config('description');
-  my $style  = $config->species_defs->ENSEMBL_STYLE;
-  my $font   = $style->{'GRAPHIC_FONT'};
-  my $fsze   = $style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'};
-  my @res    = $self->get_text_width(0, $text, '', 'font' => $font, 'ptsize' => $fsze);
-  my $track  = $self->_type;
-  my $node   = $config->get_node($track);
-  my $hover  = !$hub->param('export') && $node->get('menu') ne 'no' && $hub->get_viewconfig->has_image_config($config->{'type'});
-  (my $class = $self->species . "_$track") =~ s/\W/_/g;
+  my $config  = $self->{'config'};
+  my $hub     = $config->hub;
+  my $caption = $self->my_config('caption');
+  my $desc    = $self->my_config('description');
+  my $style   = $config->species_defs->ENSEMBL_STYLE;
+  my $font    = $style->{'GRAPHIC_FONT'};
+  my $fsze    = $style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'};
+  my @res     = $self->get_text_width(0, $text, '', 'font' => $font, 'ptsize' => $fsze);
+  my $track   = $self->_type;
+  my $node    = $config->get_node($track);
+  my $hover   = !$hub->param('export') && $node->get('menu') ne 'no' && $hub->get_viewconfig->has_image_config($config->{'type'});
+  (my $class  = $self->species . "_$track") =~ s/\W/_/g;
   
   if ($hover) {
     my @renderers = @{$node->get('renderers') || []};
@@ -212,7 +212,7 @@ sub init_label {
     }
     
     $config->{'hover_labels'}->{$class} = {
-      header    => $name,
+      header    => $caption,
       desc      => $desc,
       class     => $class,
       config    => $config->{'type'},
@@ -229,7 +229,7 @@ sub init_label {
     absolutey => 1,
     height    => $res[3],
     class     => "label $class",
-    alt       => $name,
+    alt       => $caption,
     hover     => $hover
   }));
   
