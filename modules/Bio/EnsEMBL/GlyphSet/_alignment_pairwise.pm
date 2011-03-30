@@ -182,21 +182,6 @@ sub render_normal {
     
     my $n1 = $features[0][1]->hseqname . ":$hs_net-$he_net";
     
-    $net_composite->href($self->_url({
-      type    => 'Location',
-      action  => 'PairwiseAlignment',
-      species => $url_species,
-      r       => undef,
-      n0      => $n0,
-      n1      => $n1,
-      s1      => $other_species,
-      method  => $self->my_config('type'),
-      align   => $mlss_id,
-      orient  => $features[0][1]->hstrand * $features[0][1]->strand > 0 ? 'Forward' : 'Reverse'
-    }));
-    
-    $self->push($net_composite);
-    
     foreach (@internal_boxes) {
       my ($box, $r, $r1, $ori) = @$_;
       
@@ -216,6 +201,21 @@ sub render_normal {
       
       $self->push($box);
     }
+    
+    $net_composite->href($self->_url({
+      type    => 'Location',
+      action  => 'PairwiseAlignment',
+      species => $url_species,
+      r       => undef,
+      n0      => $n0,
+      n1      => $n1,
+      s1      => $other_species,
+      method  => $self->my_config('type'),
+      align   => $mlss_id,
+      orient  => $features[0][1]->hstrand * $features[0][1]->strand > 0 ? 'Forward' : 'Reverse'
+    }));
+    
+    $self->push($net_composite);
   }
   
   # No features show "empty track line" if option set
