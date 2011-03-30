@@ -11,29 +11,25 @@
 <h2>Database Description</h2>
 
 <p>
-The Ensembl Funcgen database (eFG) database and API stores functional genomics 
-experiments submitted to Ensembl from our collaborators. eFG is a dual purpose 
-system which can be used as a normal ensembl database or as a local or 
-laboratory data storage and analysis platform. Due to the differing requirements 
-from nature of the data and duality of function, eFG is a multi-coordinate system 
-database.
-The database includes:
+The Ensembl Funcgen database and API are developed and maintained by the Ensembl Regulation team. The main focus of the 'funcgen' database is on experimental data which may elucidate transcriptional regulation.  The schema was originally designed to support ChIP on Chip tiling array experiments but soon expanded to support other sequence based technologies.  The original requirements supported use as a local data storage and analysis platform, as such the funcgen data bases supports multiple coordinate systems.
+
+The database content includes:
 </p>
 
 <ul>
-<li>The Ensembl Regulatory Build - Regulatory features generated from a combined analysis of all of the above.</li>
+<li>The <a href="/info/docs/funcgen/index.html">Ensembl Regulatory Build</a> - Regulatory features generated from a combined analysis of all of the above.</li>
 <li>Experimental data and meta data from functional genomics experiments using the following technologies:
   <ul>
   <li>Chromatin immunoprecipitation using tiling arrays (ChIP-chip)</li>
-  <li>Chromatin immunoprecipitation using 2nd generation sequencing (ChIP-Seq)</li>
+  <li>Chromatin immunoprecipitation sequencing</li>
+  <li>Other techniques identifying open chromatin e.g. DNase sequencing, FAIRE</li>
   </ul>
 </li>
 <li>Experimental data on epigenomic modifications and DNA binding proteins:
   <ul>
   <li>Histone modifications</li>
-  <li>DNase1 Hypersensitivity sites</li>
+  <li>Transcription factors e.g. CCCTC binding factor(CTCF) etc.
   <li>RNAPollII</li>
-  <li>CCCTC binding factor</li>
   </ul>
 </li>
 <li>Externally curated data with a regulatory focus:
@@ -43,6 +39,11 @@ The database includes:
   <li>VISTA - Enhancers</li>
   </ul>
 </li>
+<li>Array designs
+  <ul>
+  <li>For various array types e.g. Affy IVT/ST, Illumina Whole Genome/Infinium, Codelink, Agilent etc
+  <li>Ensembl transcript annotations for Expression arrays.
+  </ul>
 </ul>
 
 
