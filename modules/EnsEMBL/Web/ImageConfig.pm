@@ -1646,6 +1646,7 @@ sub add_regulation_builds {
   }
   
   $self->add_track('information', 'fg_regulatory_features_legend', 'Reg. Features Legend', 'fg_regulatory_features_legend', { colourset => 'fg_regulatory_features', strand => 'r' }) if $db_tables->{'cell_type'}{'ids'};
+  $self->add_track('information', 'fg_multi_wiggle_legend', 'Cell/Tissue Regulation Legend', 'fg_multi_wiggle_legend', { display => 'off', strand => 'r'}) if $db_tables->{'cell_type'}{'ids'};
 }
 
 sub add_oligo_probes {
