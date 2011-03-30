@@ -27,7 +27,7 @@ sub render {
     'mysql'   => 'All Ensembl MySQL databases are available in text format as are the SQL table definition files',
     'emf'     => 'Alignments of resequencing data from the ensembl_compara database',
     'gvf'     => 'Variation data in GVF format',
-    'funcgen' => 'Functional genomics data in GFF format',
+    'funcgen' => 'Regulation data in GFF format',
     'bed'     => 'Constrained elements calculated using GERP',
   );
 
@@ -64,7 +64,7 @@ sub render {
     }
     my $funcgen = '-';
     if ($sp_dir =~ /homo_sapiens/ || $sp_dir =~/mus_musculus/) {
-      $funcgen = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/functional_genomics/%s/">FUNCGEN</a>', $title{'funcgen'}, $rel, $sp_dir;
+      $funcgen = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/functional_genomics/%s/">Regulation</a> (GFF)', $title{'funcgen'}, $rel, $sp_dir;
     }
     $class = $row % 2 == 0 ? 'bg1' : 'bg2';
 
