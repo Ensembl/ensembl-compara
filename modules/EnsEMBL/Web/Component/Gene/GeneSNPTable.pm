@@ -42,11 +42,11 @@ sub make_table {
     { key => 'ID',         sort => 'html'                                                        },
     { key => 'chr' ,       sort => 'position',      title => 'Chr: bp'                           },
     { key => 'Alleles',    sort => 'string',                                   align => 'center' },
-    { key => 'Ambiguity',  sort => 'string',                                   align => 'center' },
+    #{ key => 'Ambiguity',  sort => 'string',                                   align => 'center' },
     { key => 'HGVS',       sort => 'string',        title => 'HGVS name(s)',   align => 'center' },
     { key => 'class',      sort => 'string',        title => 'Class',          align => 'center' },
     { key => 'Source',     sort => 'string'                                                      },
-    #{ key => 'status',     sort => 'string',   title => 'Validation',     align => 'center' },
+    { key => 'status',     sort => 'string',   title => 'Validation',     align => 'center' },
     { key => 'snptype',    sort => 'string',        title => 'Type',                             },
     { key => 'aachange',   sort => 'string',        title => 'Amino Acid',     align => 'center' },
     { key => 'aacoord',    sort => 'position',      title => 'AA co-ordinate', align => 'center' },
@@ -102,11 +102,13 @@ sub stats_table {
   my @all_cons = @Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   
   foreach my $con(@all_cons) {
+    next if $con->SO_accession =~ /x/i;
+    
     my $term = $self->select_consequence_term($con, $cons_format);
     
     if($cons_format eq 'so') {
       $labels{$term} = $term;
-      $descriptions{$term} = ($con->SO_accession =~ /x/i ? $con->SO_accession : $hub->get_ExtURL_link($con->SO_accession, 'SEQUENCE_ONTOLOGY', $con->SO_accession)) unless $descriptions{$term};
+      $descriptions{$term} = $hub->get_ExtURL_link($con->SO_accession, 'SEQUENCE_ONTOLOGY', $con->SO_accession) unless $descriptions{$term};
     }
     elsif($cons_format eq 'ncbi') {
       $labels{$term} = $term;
@@ -294,7 +296,7 @@ sub variation_table {
           $as =~ s/$vf_allele/<b>$&\<\/b>/ if $as =~ /\//;
           
           # sort out consequence type string
-          my $type = join ', ', map {$self->select_consequence_label($_, $cons_format)} @{$tva->get_all_OverlapConsequences || []};
+          my $type = join ',<br/>', map {$self->select_consequence_label($_, $cons_format)} @{$tva->get_all_OverlapConsequences || []};
           $type  ||= '-';
           
           my $sift = $self->render_sift_polyphen(
@@ -320,10 +322,8 @@ sub variation_table {
             aacoord    => $aacoord,
             sift       => $sift,
             polyphen   => $poly,
+            HGVS       => $self->get_hgvs($tva) || '-',
           };
-          
-          # add HGVS if LRG
-          $row->{'HGVS'} = $self->get_hgvs($tva) || '-';# if $transcript_stable_id =~ /^LRG/;
           
           push @rows, $row;
         }
