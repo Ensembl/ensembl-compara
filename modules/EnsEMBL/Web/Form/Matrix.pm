@@ -213,6 +213,7 @@ sub add_row {
     $checkbox->checked(1) if $row->{$column->{'name'}}->{'checked'};
     $checkbox->set_attribute('class', 'default') if $row->{$column->{'name'}}->{'default'};
     $checkbox->set_attribute('class', $row->{$column->{'name'}}->{'class'}) if $row->{$column->{'name'}}->{'class'};
+    $checkbox->set_attribute('title', $row->{$column->{'name'}}->{'title'}) if $row->{$column->{'name'}}->{'title'};
 
     $td->append_child($checkbox);
     $tr->append_child($td);
