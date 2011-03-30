@@ -26,7 +26,7 @@ sub _init {
   my $th                    = $res[3];
   my $flag                  = 0;
   
-  foreach (sort keys %$features) {  #warn $features->{$_};
+  foreach (sort keys %$features) {  
     my $legend = $_;
     
     my $colour =  $features->{$_} || 'black';
