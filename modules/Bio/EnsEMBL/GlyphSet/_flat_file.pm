@@ -101,6 +101,17 @@ strand < 0;
     ## Set track depth a bit higher if there are lots of user features!
     my $depth = @{$T->{'features'}} > 20 ? 20 : @{$T->{'features'}};
     $T->{'config'}{'dep'} = $depth;
+
+### this bit will ensure the display of the VEP features using colours corresponding to their consequence
+    if ( $self->my_config('format') eq 'SNP_EFFECT') {
+        my $cm = $self->species_defs->colour('variation');
+        $T->{'config'}{'itemRgb'} = 'on';
+        foreach( @{$T->{'features'}}) {
+            $_->external_data->{'item_colour'}[0]
+                = $cm->{lc $_->consequence}->{default};
+        }
+    }
+
     $results{$key} = [$T->{'features'}, $T->{'config'}];
   }
   return %results;
