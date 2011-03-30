@@ -1,0 +1,174 @@
+[
+  { # information to connect to compara/hive database
+    TYPE => COMPARA,
+    '-host'     => "ia64e",
+    '-port'     => "3306",
+    '-user'     => "ensadmin",
+    '-pass'     => "ensembl",
+    '-dbname'   => "jessica_compara_blastz_HsMm_27i",
+    '-adaptor'  => "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor",
+  },
+  { TYPE => HIVE,
+    'name'                 => "HsMmBlastz", #used to name the jobs
+    'hive_output_dir'      => "/ecs4/work2/ensembl/jessica/data/hive_output/jessica_compara_blastz_HsMm_27i/workers",
+# IMPORTANT: The hive system can generate an awful lot of log outputs that are dumped in
+# the hive_output_dir. When a pipeline runs fine, these are not needed and can take a lot of
+# disk space as well as generate a large number of files. If you don't want log outputs (recommended),
+# then just don't specify any hive_output_dir (delete or comment the line or set to "" if you don't want
+# any STDOUT/STDERR files
+  },
+
+  { TYPE => SPECIES,
+    'species'        => 'Homo sapiens',
+    'abrev'          => 'Hs35b',
+    'genome_db_id'   => 1,
+    'taxon_id'       => 9606,
+    'phylum'         => 'Vertebrata',
+    'module'         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+    'host'           => "ecs2",
+    'port'           => 3365,
+    'user'           => "ensro",
+    'dbname'         => "homo_sapiens_core_29_35b",
+  },
+
+  { TYPE => SPECIES,
+    'species'        => 'Mus musculus',
+    'abrev'          => 'Mm33e',
+    'genome_db_id'   => 2,
+    'taxon_id'       => 10090,
+    'phylum'         => 'Vertebrata',
+    'module'         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+    'host'           => "ecs2",
+    'port'           => 3365,
+    'user'           => "ensro",
+    'dbname'         => "jessica_mus_musculus_core_29_33e",
+  },
+
+
+  { TYPE => DNA_COLLECTION,
+    'collection_name'       => 'mouse chr11',
+    'genome_db_id'          => 2,
+    'genome_name_assembly'  => 'Mus musculus:NCBIM33',
+    'region'                => 'chromosome:11', # optional, default: undef i.e. all toplevel seq_regions
+    'chunk_size'            => 1100000, #optional, default: 1000000
+    'overlap'               =>  100000, #optional, default: 0
+    'group_set_size'        => 4000000, #optional, default: undef i.e. not sequence grouping
+    'include_non_reference' => 0, #optional, default: 0 do not include non-reference regions eg haplotypes
+    'include_duplicates'    => 0, #optional, default: 0 do not include duplicated regions eg PAR region
+    'masking_options'       => "{default_soft_masking => 1}", # 0 for hard masking, comment the line for no masking
+# or  'masking_options'       => "{default_soft_masking => 1, logic_names => ["RepeatMask", "Dust", "TRF"]}",
+# if you want to mask only certain type of repeat logic_name analysis.
+#
+#    'masking_options_file'       => '/path/to/masking/options/file/for/mouse',
+# if both masking_options_file and masking_options are specific masking_options_file has priority over masking_options
+# masking_options_file contains a perl hash reference of the following format
+#
+# {
+# "repeat_name_L1P" => 0,
+# "repeat_class_SINE/Alu" => 0,
+# "repeat_name_L1PA7" => 0,
+# "repeat_name_L1PA3" => 0,
+# "repeat_name_PRIMA4-int" => 0
+# }
+#
+# that defined the masking 0:hard or 1:soft for particular repeat_name or repeat_class as defined in the repeat_consensus
+# table in the core database.
+
+  },
+
+  { TYPE => DNA_COLLECTION,
+    'collection_name'       => 'human chr17',
+    'genome_db_id'          => 1,
+    'genome_name_assembly'  => 'Homo sapiens:NCBI35',
+    'region'                => 'chromosome:17',# can also be a restricted region e.g. chromosome:17:100000:500000
+    'chunk_size'            => 30000000,
+    'include_non_reference' => 1, #optional, default: 0. In this case include non-reference regions eg haplotypes
+    'include_duplicates'    => 0, #optional, default: 0 do not include duplicated regions eg PAR region
+    'masking_options'       => "{default_soft_masking => 1, assembly_exception_type_PAR => 0}",
+#    'masking_options_file'       => '/path/to/masking/options/file/for/human',
+  },
+
+
+  { TYPE => PAIR_ALIGNER,
+    'logic_name_prefix' => 'BlastZ', # optional default: PairAligner
+    'method_link' => [1001, 'BLASTZ_RAW'],
+    'analysis_template' => {
+        '-program'       => 'blastz',
+        '-program_file'       => 'blastz',
+        '-parameters'    => "{method_link=>'BLASTZ_RAW',options=>'T=1 T=1 L=3000 H=2200 M=40000000 O=400 E=30'}",
+        '-module'        => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::BlastZ',
+    },
+    'max_parallel_workers'    => 200, #depending on the speed of the 'core' and 'compara' databases used, default is 200
+    'batch_size'              => 3, #optional, default: 1. 3 is optimal for blastz
+    'non_reference_collection_name'   => 'mouse chr11',
+    'reference_collection_name'  => 'human chr17',
+  },
+
+
+  #Change the default ENGINE. Can define individual tables or if dna_pipeline 
+  #is defined, change a set of tables (as defined in loadPairAlignerSystem.pl). 
+  { TYPE => ENGINE,
+    'dna_pipeline' => 'InnoDB',
+  },
+
+  #########second half of the pipeline ###########
+
+  { TYPE => DNA_COLLECTION,
+    'collection_name'       => 'xenopus for chain', # Don't forget that you have probably run a blastz
+                                                # pipeline with a collection_name 'rat'. 
+                                                # The collection_name needs to be unique to avoid confusion
+    'genome_db_id'          => 16,
+    'genome_name_assembly'  => 'Xenopus tropicalis:JGI4.1',
+#    'chunk_size'            => 270000000,# set it to be over the longest toplevel seq_region you expect for this species. If it is not defined, then the longest toplevel seg_region is automatically used. 
+    'dump_loc'              => '/lustre/scratch1/ensembl/kb3/hive/kb3_compara_zebrafish_xenopus_tblat_50/xenopus_nib_for_chain'
+  },
+
+  { TYPE => DNA_COLLECTION,
+    'collection_name'       => 'zebrafish for chain',# Don't forget that you have probably run a blastz
+                                                 # pipeline with a collection_name 'human'.
+                                                 # The collection_name needs to be unique to avoid confusion
+    'genome_db_id'          => 56,
+    'genome_name_assembly'  => 'Danio rerio:ZFISH7',
+#    'chunk_size'            => 80000000,# set it to be over the longest toplevel seq_region you expect for this species. If it is not defined, then the longest toplevel seg_region is automatically used.
+    'dump_loc'              => '/lustre/scratch1/ensembl/kb3/hive/kb3_compara_zebrafish_xenopus_tblat_50/zebrafish_nib_for_chain',
+  },
+
+
+  { TYPE => CHAIN_CONFIG,
+    'input_method_link' => [6, 'TRANSLATED_BLAT'],
+    'output_method_link' => [1002, 'TRANSLATED_BLAT_CHAIN'],
+
+    'reference_collection_name' => 'zebrafish for chain',
+    'non_reference_collection_name' => 'xenopus for chain',
+              
+    'max_gap' => 50,
+    'output_group_type' => 'chain'
+  },
+
+  { TYPE => NET_CONFIG,
+    'input_method_link' => [1002, 'TRANSLATED_BLAT_CHAIN'],
+    'output_method_link' => [1, 'TRANSLATED_BLAT_NET'],
+
+    'reference_collection_name' => 'zebrafish for chain',
+    'non_reference_collection_name' => 'xenopus for chain',
+              
+    'max_gap' => 50,
+    'input_group_type' => 'chain',
+    'output_group_type' => 'default'
+  },
+
+##If this is defined, the pipeline will set the BLASTZ_NET genomic_align_block_id
+##and genomic_align_ids to be unique across a release by adding $mlss_id*10**10
+#  { TYPE => SET_INTERNAL_IDS,
+#  },
+
+## HEALTHCHECKS are run at the end of the pipeline.
+## If not defined, the healthcheck params are automatically created.
+# { TYPE => HEALTHCHECKS,
+#    'pairwise_gabs' => "params=>{method_link_type=>\'TRANSLATED_BLAT_NET\',genome_db_ids=>\'[25,22,]\'}", 
+#    'compare_to_previous_db' => "params=>{previous_db_url=>\'mysql://anonymous\@ensembldb.ensembl.org\',method_link_type=>\'TRANSLATED_BLAT_NET\',current_genome_db_ids=>\'[25,22,]\',max_percentage_diff=>10}",             
+#    'previous_db_url' => 'mysql://anonymous@ensembldb.ensembl.org', #default mysql://ensro@ens-livemirror
+#  },            
+
+  { TYPE => END }
+]
