@@ -102,6 +102,7 @@ sub form {
       $row->{'row'}->{$cell_line}->{'enabled'} = 1 if exists $self->{'feature_type_ids'}{$cell_line}{$feature_id};
       $row->{'row'}->{$cell_line}->{'default'} = 1 if $self->{'_options'}{"opt_cft_$cell_line:$feature_name"}{'default'} eq 'on';
       $row->{'row'}->{$cell_line}->{'checked'} = 1 if $self->get("opt_cft_$cell_line:$feature_name") eq 'on';
+      $row->{'row'}->{$cell_line}->{'title'}   = "$cell_line:$feature_name";
     }
     
     push @{$groups->{$set}}, $row;
