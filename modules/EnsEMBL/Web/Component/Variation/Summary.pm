@@ -186,14 +186,6 @@ sub content {
     <dd>$info</dd>
   "; 
 
-  ## Add variation sets
-  my $variation_sets = $object->get_formatted_variation_set_string;
-  
-  if ($variation_sets) {
-    $html .= '<dt>Present in</dt>';
-    $html .= "<dd>$variation_sets</dd>";
-  }
-
   ## Add Alleles
   my $label       = 'Alleles';
   my $alleles     = $object->alleles;
@@ -394,137 +386,8 @@ sub content {
   $html .= qq(
        <dl class="summary">
       <dt>Validation status</dt>
-      <dd> $stat</dd>);
-
- ## HGVS NOTATIONS
-  ## count locations
-  my $mapping_count = scalar keys %{$object->variation_feature_mapping};
-
-  # skip if somatic mutation with mutation ref base different to ensembl ref base
-  if (!$object->is_somatic_with_different_ref_base && $mapping_count) {
-    my %mappings = %{$object->variation_feature_mapping};
-    my $loc;
-
-    if (keys %mappings == 1) {
-      ($loc) = values %mappings;
-    } else {
-      $loc = $mappings{$hub->param('vf')};
-    }
-
-    # get vf object
-    my $vf;
-
-    foreach (@{$variation->get_all_VariationFeatures}) {
-      $vf = $_ if $_->seq_region_start == $loc->{'start'} && $_->seq_region_end == $loc->{'end'} && $_->seq_region_name eq $loc->{'Chr'};
-    }
-
-    if (defined $vf) {
-
-      ## HGVS
-      #######
-
-      my (%by_allele, $hgvs_html);
-
-      # now get normal ones
-      # go via transcript variations (should be faster than slice)
-	  my %genomic_alleles_added;
-	  
-	  my $tvs = $vf->get_all_TranscriptVariations;
-	  
-	  # if we've come from an LRG, add LRG TVs
-	  my $lrg_vf;
-	  
-	  if($self->hub->param('lrg') =~ /LRG\_\d+/) {
-		
-		# transform to LRG coord system
-		$lrg_vf = $vf->transform('LRG');
-		
-		if(defined($lrg_vf)) {
-		  
-		  # force API to recalc consequences for LRG
-		  delete $lrg_vf->{'dbID'};
-		  delete $lrg_vf->{'transcript_variations'};
-		  
-		  # add consequences to existing list
-		  push @$tvs, @{$lrg_vf->get_all_TranscriptVariations};
-		}
-	  }
-	  
-      foreach my $tv (@{$tvs}) {
-		foreach my $tva(@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
-		  unless($genomic_alleles_added{$tva->variation_feature_seq}) {
-			push @{$by_allele{$tva->variation_feature_seq}}, $tva->hgvs_genomic;
-			$genomic_alleles_added{$tva->variation_feature_seq} = 1;
-		  }
-  
-		  # group by allele
-		  push @{$by_allele{$tva->variation_feature_seq}}, $tva->hgvs_coding if $tva->hgvs_coding;
-		  push @{$by_allele{$tva->variation_feature_seq}}, $tva->hgvs_protein if $tva->hgvs_protein && $tva->hgvs_protein !~ /p\.\=/;
-		}
-      }
-
-      # count alleles
-      my $allele_count = scalar keys %by_allele;
-
-      # make HTML
-      my @temp;
-
-      foreach my $a(keys %by_allele) {
-        push @temp, (scalar @temp ? '<br/>' : '') . "<b>Variant allele $a</b>" if $allele_count > 1;
-
-        foreach my $h (@{$by_allele{$a}}) {
-
-          $h =~ s/LRG\_\d+(\.\d+)?/'<a href="'.$hub->url({
-            type => 'LRG',
-            action => 'Variation_LRG',
-            db     => 'core',
-            r      => undef,
-            t      => $&,
-            v      => $object->name,
-            source => $variation->source}).'">'.$&.'<\/a>'/eg;
-
-          $h =~ s/ENS(...)?T\d+(\.\d+)?/'<a href="'.$hub->url({
-            type => 'Transcript',
-            action => $hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary',
-            db     => 'core',
-            r      => undef,
-            t      => $&,
-            v      => $object->name,
-            source => $variation->source}).'">'.$&.'<\/a>'/eg;
-
-          $h =~ s/ENS(...)?P\d+(\.\d+)?/'<a href="'.$hub->url({
-            type => 'Transcript',
-            action => 'ProtVariations',
-            db     => 'core',
-            r      => undef,
-            p      => $&,
-            v      => $object->name,
-            source => $variation->source}).'">'.$&.'<\/a>'/eg;
-
-          push @temp, $h;
-        }
-      }
-
-      $hgvs_html = join '<br/>', @temp;
-	  my $count = scalar grep {$_ =~ /\:/} @temp;
-
-      $hgvs_html ||= "<h5>None</h5>";
-	  
-	  if($count == 0) {
-		$html .= qq{<dl class="summary"><dt>HGVS names</dt><dd>$hgvs_html</dd></dl>};
-	  }
-	  
-	  else {
-		$html .= sprintf(qq{
-		  <dt class="toggle_button" title="Click to toggle HGVS names"><span>HGVS names</span><em class="closed"></em></dt>
-		  <dd>This feature has $count HGVS names - click the plus to show</dd>
-		  <dd class="toggle_info" style="display:none;font-weight:normal;">$hgvs_html</dd>
-		  </dl>
-		  <table class="toggle_table" id="hgvs"></table>
-		});
-	  }
-    }
-  }
+      <dd> $stat</dd></dl>
+  );
 
   return qq{<div class="summary_panel">$html</div>};
 }
