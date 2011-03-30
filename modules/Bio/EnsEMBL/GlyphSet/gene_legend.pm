@@ -10,9 +10,9 @@ sub _init {
   return unless $self->strand == -1;
 
   my $box_width = 20;
-  my $coloums   = 2;
+  my $columns   = 2;
   my $config    = $self->{'config'};
-  my $im_width  = $config->image_width;
+  my $im_width  = $config->get_parameter('panel_width');
   my @colours;
   
   return unless $config->{'legend_features'};
@@ -44,7 +44,7 @@ sub _init {
       my $join = $legend =~ /orthologue|paralogue|alleles/i;
       
       $self->push($self->Rect({
-        x             => $im_width * $x/$coloums,
+        x             => $im_width * $x/$columns,
         y             => $y * ($th + 3) + ($join ? ($th/2) : 2),
         width         => $box_width, 
         height        => $join ? 0.5 : $th-2,
@@ -55,7 +55,7 @@ sub _init {
       }));
       
       $self->push($self->Text({
-        x             => $im_width * $x/$coloums + $box_width,
+        x             => $im_width * $x/$columns + $box_width,
         y             => $y * ($th + 3),
         height        => $th,
         valign        => 'center',
@@ -71,7 +71,7 @@ sub _init {
       
       $x++;
       
-      if ($x == $coloums) {
+      if ($x == $columns) {
         $x = 0;
         $y++;
       }
