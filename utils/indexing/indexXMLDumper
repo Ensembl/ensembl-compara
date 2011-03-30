@@ -249,7 +249,9 @@ sub helpLine {
   $name        = &clean($name);
 
   #replace relative with absolute URLs
-  $description =~ s{href="([^"]*)"}{href="http://www.ensembl.org$1"}gm;
+  $description =~ s/href="([^"]*)"
+                   /URI->new_abs($1, 'http:\/\/www.ensembl.org\/') . '"'
+                   /gmxe;
 
   #remove image tags
   $description =~ s/<img.*>?//g;
@@ -275,6 +277,7 @@ sub helpLine {
   return $xml . qq(
 </entry>);
 }
+
 
 
 #http://www.ensembl.org/Help/View?id=142
