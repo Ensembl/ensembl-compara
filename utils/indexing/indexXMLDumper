@@ -249,11 +249,7 @@ sub helpLine {
   $name        = &clean($name);
 
   #replace relative with absolute URLs
-  while ($description =~ /<a.*?href="(.+?)"/g) {
-    my $rel = $1;
-    my $abs = URI->new_abs($rel, 'http://www.ensembl.org/');
-#    warn "$rel --> $abs";
-  }
+  $description =~ s{href="([^"]*)"}{href="http://www.ensembl.org$1"}gm;
 
   #remove image tags
   $description =~ s/<img.*>?//g;
@@ -261,10 +257,10 @@ sub helpLine {
   $description = &clean($description);
   my $xml = qq(
 <entry id="$id">
-  <name>$name</name>
   <description>$description</description>
   <additional_fields>
-    <field name="featuretype">$type</field>);
+    <field name="featuretype">$type</field>
+    <field name="displayname">$name</field>);
   foreach my $kw (@keywords) {
     $xml .= qq(
     <field name="keyword">$kw</field>);
