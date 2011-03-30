@@ -165,6 +165,7 @@ sub process_wiggle_data {
   if ($data_flag == 1) {
     if ($object_type eq 'Regulation' && $max_score <= 1) {$max_score = 1;}
     $self->draw_wiggle( \@all_features, $min_score, $max_score, \@colours, $labels );
+    $self->{'config'}->{'fg_multi_wiggle_legend'} = {'priority' => 1030, 'legend' => [], 'colours' => $colour_keys };
   } else {
     $self->display_error_message($cell_line, $type, 'wiggle');
   }    
