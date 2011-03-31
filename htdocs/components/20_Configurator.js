@@ -7,6 +7,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
     Ensembl.EventManager.register('showConfiguration',   this, this.show);
     Ensembl.EventManager.register('changeConfiguration', this, this.externalChange);
+    Ensembl.EventManager.register('changeFavourite',     this, this.changeFavourite);
   },
   
   init: function () {
@@ -46,7 +47,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.elLk.favourite.bind('click', function () {
       var li = $(this).toggleClass('selected').parents('li:first').toggleClass('fav');
       
-      if (panel.elLk.links.filter('.active').children('a').attr('className') == 'favourite_tracks') {
+      if (panel.elLk.links.filter('.active').children('a').attr('className') === 'favourite_tracks') {
         li.hide(); // Always hide, since the only way a click can come here is from a selected track
         
         if (!li.siblings(':visible').length) {
@@ -57,6 +58,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           panel.elLk.favouritesMsg.show();
         }
       }
+      
+      Ensembl.EventManager.triggerSpecific('changeFavourite', panel.imageConfig, li.children('input')[0].name);
       
       li = null;
     }).filter('.selected').each(function () {
@@ -414,5 +417,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   externalChange: function (trackName, renderer) {
     $('input[name=' + trackName + ']', this.elLk.form).siblings('.popup_menu').children('.' + renderer).trigger('click');
     this.initialConfig[trackName].renderer = renderer;
+  },
+  
+  changeFavourite: function (trackName) {
+    this.initialConfig[trackName].favourite = $('input[name=' + trackName + ']', this.elLk.form).siblings('.controls').children('.favourite')
+      .toggleClass('selected').parents('li:first').toggleClass('fav').hasClass('fav') ? 1 : 0;
   }
 });
