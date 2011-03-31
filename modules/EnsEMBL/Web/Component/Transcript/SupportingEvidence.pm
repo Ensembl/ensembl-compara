@@ -58,7 +58,7 @@ sub _content {
   my $transcript       = $object->Obj;
   my $length           = $transcript->length;
   my $translation      = $transcript->translation;
-  my @missing_evidence = $translation ? map $_->value, @{$translation->get_all_Attributes('NoEvidence') || []} : ();
+  my @missing_evidence = map $_->value, @{$transcript->get_all_Attributes('NoEvidence') || []} ;
   my $db               = $object->get_db;
   my $db_key           = 'DATABASE_' . uc $db;
   my $info_summary     = $hub->species_defs->databases->{$db_key}{'tables'};
