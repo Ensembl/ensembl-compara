@@ -298,21 +298,22 @@ sub hover_labels {
       }
     }
     
-    $html .= sprintf(
-      '<div class="hover_label floating_popup %s">
+    $html .= sprintf(qq{
+      <div class="hover_label floating_popup %s">
         <p class="header">%s</p>
         %s
         %s
-        %s
+        <a href="$label->{'fav'}[1]" class="config favourite%s" rel="$label->{'config'}" title="Favourite track"></a>
+        <a href="$label->{'off'}" class="config" rel="$label->{'config'}"><img src="${img_url}cross_red_13.png" alt="Turn track off" title="Turn track off" /></a>
         <div class="desc">%s</div>
         <div class="config">%s</div>
         <div class="spinner"></div>
-      </div>',
+      </div>},
       $label->{'class'},
       $label->{'header'},
       $label->{'desc'}   ? qq{<img class="desc" src="${img_url}info_blue_13.png" alt="Info" title="Info" />} : '',
       $renderers         ? qq{<img class="config" src="${img_url}config_13.png" alt="Change track renderer" title="Change track renderer" />} : '',
-      $label->{'config'} ? qq{<a href="$label->{'off'}" class="config" rel="$label->{'config'}"><img src="${img_url}cross_red_13.png" alt="Turn track off" title="Turn track off" /></a>} : '',
+      $label->{'fav'}[0] ? ' selected' : '',
       $desc,
       $renderers         ? "<p>Change track renderer:</p><ul>$renderers</ul>" : ''
     );

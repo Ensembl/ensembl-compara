@@ -13,9 +13,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.draggables       = [];
     this.speciesCount     = 0;
     
-    Ensembl.EventManager.register('highlightImage', this, this.highlightImage);
-    Ensembl.EventManager.register('mouseUp',        this, this.dragStop);
-    Ensembl.EventManager.register('hashChange',     this, this.hashChange);
+    Ensembl.EventManager.register('highlightImage',  this, this.highlightImage);
+    Ensembl.EventManager.register('mouseUp',         this, this.dragStop);
+    Ensembl.EventManager.register('hashChange',      this, this.hashChange);
+    Ensembl.EventManager.register('changeFavourite', this, this.changeFavourite);
     
     Ensembl.EventManager.register('highlightAllImages', this, function () {
       if (!this.align) {
@@ -222,15 +223,21 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     );
     
     $('a.config', this.elLk.hoverLabels).bind('click', function () {
-      $(this).parents('.hover_label').width(function (i, value) {
-        return value > 100 ? value : 100;
-      }).find('.spinner').show().siblings('div').hide();
-      
       var config = this.rel;
       var update = this.href.split(';').reverse()[0].split('='); // update = [ trackName, renderer ]
+      var fav    = '';
+      
+      if ($(this).hasClass('favourite')) {
+        fav = $(this).toggleClass('selected').hasClass('selected') ? 'on' : 'off';
+        Ensembl.EventManager.triggerSpecific('changeFavourite', 'modal_config_' + config, update[0]);
+      } else {
+        $(this).parents('.hover_label').width(function (i, value) {
+          return value > 100 ? value : 100;
+        }).find('.spinner').show().siblings('div').hide();
+      }
       
       $.ajax({
-        url: this.href,
+        url: this.href + fav,
         dataType: 'json',
         method: 'post',
         success: function (json) {
@@ -248,6 +255,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
     
     Ensembl.EventManager.register('hideHoverLabels', this, function () { this.elLk.hoverLabels.hide(); });
+  },
+  
+  changeFavourite: function (trackName) {
+    this.elLk.hoverLabels.filter(function () { return this.className.match(trackName); }).children('a.favourite').toggleClass('selected');
   },
   
   dragStart: function (e) {

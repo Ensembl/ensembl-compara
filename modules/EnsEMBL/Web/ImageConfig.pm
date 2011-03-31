@@ -573,8 +573,21 @@ sub update_from_input {
     
     $self->update_favourite_tracks($diff);
   } else {
-    $self->update_track_renderer($_, $input->param($_)) for $input->param;
+    my %favourites;
+    
+    foreach my $p ($input->param) {
+      my $val = $input->param($p);
+      
+      if ($val =~ /favourite_(on|off)/) {
+        $favourites{$p} = { favourite => $1 eq 'on' ? 1 : 0 };
+      } else {
+        $self->update_track_renderer($p, $val);
+      }
+    }
+    
     $reload = $self->altered;
+    
+    $self->update_favourite_tracks(\%favourites) if scalar keys %favourites;
   }
   
   return $reload;
