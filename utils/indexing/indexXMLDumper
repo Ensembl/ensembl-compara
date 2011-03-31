@@ -246,17 +246,18 @@ sub dumpHelp {
 sub helpLine {
   my ($id, $name, $keywords, $description, $extra,  $type, $counter) = @_;
   my @keywords = map { s/^ //; $_; } split ',', $keywords if $keywords;
-  $name        = &clean($name);
 
-  #replace relative with absolute URLs
+  #replace relative with absolute URLs, remove img tags, escape any other markup
   $description =~ s/href="([^"]*)"
                    /URI->new_abs($1, 'http:\/\/www.ensembl.org\/') . '"'
                    /gmxe;
-
-  #remove image tags
-  $description =~ s/<img.*>?//g;
-
+  $description =~ s/<img.*>?//mg;
   $description = &clean($description);
+
+  #remove markup from headers and escape just to be sure
+  $name =~ s/<\/*\w+>//g;
+  $name        = &clean($name);
+
   my $xml = qq(
 <entry id="$id">
   <description>$description</description>
