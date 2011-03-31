@@ -7,7 +7,7 @@ ALTER TABLE analysis MODIFY COLUMN module varchar(255);
 # extending the length of meta.meta_value to text
 ALTER TABLE meta DROP INDEX species_key_value_idx;
 ALTER TABLE meta DROP INDEX species_value_idx;
-ALTER TABLE meta MODIFY COLUMN meta_value TEXT;
+ALTER TABLE meta MODIFY COLUMN meta_value TEXT NOT NULL;
 ALTER TABLE meta ADD UNIQUE KEY species_key_value_idx (species_id,meta_key,meta_value(255));
 ALTER TABLE meta ADD        KEY species_value_idx (species_id,meta_value(255));
 
