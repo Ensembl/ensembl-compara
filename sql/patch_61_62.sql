@@ -18,7 +18,12 @@ update mapping_session set prefix = 'ENS';
 alter table mapping_session modify column prefix CHAR(4) NOT NULL;
 
 # Auto-populate lr_index_offset with all tables
-ALTER TABLE lr_index_offset ADD COLUMN lr_index_offset_id int(10) unsigned NOT NULL AUTO_INCREMENT;
+ALTER TABLE lr_index_offset DROP PRIMARY KEY;
+ALTER TABLE lr_index_offset 
+  ADD COLUMN lr_index_offset_id int(10) unsigned NOT NULL AUTO_INCREMENT FIRST, 
+  ADD PRIMARY KEY (lr_index_offset_id),
+  ADD UNIQUE INDEX (table_name)
+;
 INSERT IGNORE INTO lr_index_offset (table_name, lr_index)
 values
       ('protein_tree_node', 0),
