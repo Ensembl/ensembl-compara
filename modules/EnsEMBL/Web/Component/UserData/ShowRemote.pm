@@ -35,15 +35,8 @@ sub content {
   
   if (@urls) {
     $has_data = 1;
-    $fieldset->add_notes("You have the following URL data attached:")->set_attribute('class', 'spaced');
+    $fieldset->add_notes("You have the following remote data attached:")->set_attribute('class', 'spaced');
     $fieldset->add_field({'type'=>'checkbox', 'name' => 'code', 'value' => $_->{'code'}, 'label' => $_->{'name'}, 'notes' => $_->{'url'}}) for @urls;
-  }
-
-  my @bams = $session->get_data(type => 'bam');
-  if (@bams) {
-    $has_data = 1;
-    $fieldset->add_notes("You have the following BAM sources attached:")->set_attribute('class', 'spaced');
-    $fieldset->add_field({'type'=>'checkBbx', 'name' => 'code', 'value' => $_->{'code'}, 'label' => $_->{'name'}, 'notes' => $_->{'url'}}) for @bams;
   }
 
   $fieldset->add_notes("You have no temporary data sources to save. Click on 'Attach DAS' or 'Attach URL' in the left-hand menu to add sources.") unless $has_data;

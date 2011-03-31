@@ -42,10 +42,6 @@ sub content {
       push @data, $user->urls;
       $saved_data = 1;
     }
-    if ($user->bams) {
-      push @data, $user->bams;
-      $saved_data = 1;
-    }
     if ($user->dases) {
       push @data, $user->dases;
       $saved_data = 1;
@@ -57,10 +53,6 @@ sub content {
     $temp_data = 1;
   }
   if (@tmp = $session->get_data('type' => 'url')) {
-    push @data, @tmp;
-    $temp_data = 1;
-  }
-  if (@tmp = $session->get_data('type' => 'bam')) {
     push @data, @tmp;
     $temp_data = 1;
   }
@@ -166,22 +158,7 @@ sub content {
           $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=urls;id=%s" class="%s">Rename</a>', $dir, $file->id, $delete_class);
           $share = sprintf('<a href="%s/UserData/SelectShare?id=%s" class="modal_link">Share</a>', $dir, $file->id);
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=url;id=%s" class="%s">Delete</a>', $dir, $file->id, $delete_class);
-        } elsif (ref ($file) =~ /BAM/) {
-          $type = 'BAM';
-          $name = '<strong>';
-          if ($file->{'nearest'}) {
-            $name .= '<a href="/'.$file->{'species'}.'/Location/View?r='.$file->{'nearest'}
-                        .'" title="Jump to sample region with data">'.$file->{'name'}.'</a>';
-          }
-          else {
-            $name .= $file->{'name'};
-          }
-          $name .= '</strong><br />'.$file->url." (<em>$species</em>)";
-          $date = '-';
-          $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=bams;id=%s" class="%s">Rename</a>', $dir, $file->id, $delete_class);
-          $share = sprintf('<a href="%s/UserData/SelectShare?id=%s" class="modal_link">Share</a>', $dir, $file->id);
-          $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=bam;id=%s" class="%s">Delete</a>', $dir, $file->id, $delete_class);
-        }
+        } 
         
         if ($logins) {
           $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'date' => $date, 'rename' => $rename, 'share' => $share, 'save' => 'Saved' };
@@ -202,26 +179,8 @@ sub content {
           }
           
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?logic_name=%s" class="modal_link">Delete</a>', $dir, $file->logic_name);
-        } elsif ($file->{type} =~ /^bam$/) {
-          $type = 'BAM';
-          $name = '<strong>';
-          if ($file->{'nearest'}) {
-            $name .= '<a href="/'.$file->{'species'}.'/Location/View?r='.$file->{'nearest'}
-                        .'" title="Jump to sample region with data">'.$file->{'name'}.'</a>';
-          }
-          else {
-            $name .= $file->{'name'};
-          }
-          $name .= "</strong><br />$file->{'url'} (<em>$species</em>)";
-
-          if ($sd->ENSEMBL_LOGINS && $user) {
-            $save = sprintf('<a href="%s/UserData/SaveRemote?code=%s;species=%s" class="modal_link">Save to account</a>', $dir, $file->{'code'}, $file->{'species'});
-          }
-          $rename = sprintf('<a href="%s/UserData/RenameTempData?type=bam;code=%s" class="%s"%s>Rename</a>', $dir, $file->{'code'}, $delete_class, $title);
-          $share = sprintf('<a href="%s/UserData/SelectShare?code=%s;species=%s" class="modal_link">Share</a>', $dir, $file->{'code'}, $file->{'species'});
-
-          $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=bam;code=%s" class="%s">Delete</a>', $dir, $file->{'code'}, $delete_class);
-        } elsif ($file->{'url'}) {
+        } 
+        elsif ($file->{'url'}) {
           $type = 'URL';
           $name = '<strong>';
           if ($file->{'nearest'}) {

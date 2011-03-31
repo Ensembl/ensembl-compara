@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Component::UserData::BAMFeedback;
+package EnsEMBL::Web::Component::UserData::RemoteFeedback;
 
 use strict;
 use warnings;
@@ -14,17 +14,17 @@ sub _init {
 
 sub caption {
   my $self = shift;
-  return 'BAM attached';
+  return 'URL attached';
 }
 
 sub content {
   my $self = shift;
 
-  my $form = EnsEMBL::Web::Form->new('bam_feedback', '', 'post');
+  my $form = EnsEMBL::Web::Form->new('url_feedback', '', 'post');
 
   $form->add_element(
     type  => 'Information',
-    value => qq(Thank you - your BAM file was successfully attached. Close this Control Panel to view your data),
+    value => qq(Thank you - your remote data was successfully attached. Close this Control Panel to view your data),
   );
   $form->add_element( 'type' => 'ForceReload' );
 
