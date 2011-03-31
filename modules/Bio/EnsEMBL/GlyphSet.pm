@@ -194,6 +194,7 @@ sub init_label {
   my $track   = $self->_type;
   my $node    = $config->get_node($track);
   my $hover   = !$hub->param('export') && $node->get('menu') ne 'no' && $hub->get_viewconfig->has_image_config($config->{'type'});
+  my $fav     = $node->get('favourite');
   (my $class  = $self->species . "_$track") =~ s/\W/_/g;
   
   if ($hover) {
@@ -217,6 +218,7 @@ sub init_label {
       class     => $class,
       config    => $config->{'type'},
       renderers => \@r,
+      fav       => [ $fav, "$url;$track=favourite_" ],
       off       => "$url;$track=off"
     };
   }
