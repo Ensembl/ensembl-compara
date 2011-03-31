@@ -21,11 +21,14 @@ sub render {
   my $static_server = $hub->species_defs->ENSEMBL_STATIC_SERVER;
   my @movies        = @{$adaptor->fetch_movies};
   
-  $html .= qq(<p class="space-below">The tutorials listed below are Flash animations of some of our training presentations. We are gradually adding to the list, so please check back regularly.</p>
-<p><a href="http://www.youtube.com/user/EnsemblHelpdesk"><img src="$static_server/img/youtube.png" style="float:left;padding:0px 10px 10px 0px;" /></a>Note that we are now hosting all our tutorials on <a href="http://www.youtube.com/user/EnsemblHelpdesk">YouTube</a> 
-for ease of maintenance</a>. If you are unable to access YouTube, please accept our apologies 
-- a selection of tutorials is available on the 
-<a href="http://www.ebi.ac.uk/2can/evideos/index.html">EBI E-Video website</a>.</p>);
+  $html .= qq{<p class="space-below">The tutorials listed below are Flash animations of some of our training presentations.
+              We are gradually adding to the list, so please check back regularly.</p>
+              <p><a href="http://www.youtube.com/user/EnsemblHelpdesk"><img src="$static_server/img/youtube.png" height="54"
+              width="85" alt="YouTube" title="Youtube" style="float:left;padding:0px 10px 10px 0px;" /></a>Note that we are
+              now hosting all our tutorials on <a href="http://www.youtube.com/user/EnsemblHelpdesk">YouTube</a> (and
+              <a href="http://u.youku.com/Ensemblhelpdesk" title="YouKu">&#20248;&#37239;&#32593;</a> for users in China)
+              for ease of maintenance</a>. A selection of tutorials is also available on the
+              <a href="http://www.ebi.ac.uk/2can/evideos/index.html">EBI E-Video website</a>.</p>};
 
   my $table = EnsEMBL::Web::Document::SpreadSheet->new();
 
