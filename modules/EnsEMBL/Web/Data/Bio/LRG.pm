@@ -20,6 +20,8 @@ sub convert_to_drawing_parameters {
   my $self = shift;
   my $data = $self->data_objects;
   my $results = [];
+  my $prev_lrg = 0;
+  my $tmp_row;
 
   foreach my $slice_pair (@$data) {
     my $lrg = $slice_pair->{'lrg'};
@@ -44,22 +46,38 @@ sub convert_to_drawing_parameters {
     }
     
     else {
-      (my $lrg_number = $lrg_sr_name) =~ s/^LRG_//i; 
-      push @$results, {
-        'lrg_name'    => $lrg_sr_name,
-        'lrg_number'  => $lrg_number,
-        'lrg_start'   => $lrg->start,
-        'lrg_end'     => $lrg->end,
-        'region'      => $chr->seq_region_name,
-        'start'       => $chr->start,
-        'end'         => $chr->end,
-        'strand'      => (scalar keys %strands > 1 ? "mixed" : (keys %strands)[0]),
-        'length'      => $lrg->seq_region_length,
-        'label'       => $chr->name,
-        'hgnc_name'   => $hgnc_name,
-      };
+      (my $lrg_number = $lrg_sr_name) =~ s/^LRG_//i;
+      
+      if($lrg_sr_name ne $prev_lrg) {
+        push @$results, $tmp_row if defined $tmp_row;
+        
+        $tmp_row = {
+          'lrg_name'    => $lrg_sr_name,
+          'lrg_number'  => $lrg_number,
+          'lrg_start'   => $lrg->start,
+          'lrg_end'     => $lrg->end,
+          'region'      => $chr->seq_region_name,
+          'start'       => $chr->start,
+          'end'         => $chr->end,
+          'strand'      => (scalar keys %strands > 1 ? "mixed" : (keys %strands)[0]),
+          'length'      => $lrg->seq_region_length,
+          'label'       => $chr->name,
+          'hgnc_name'   => $hgnc_name,
+        };
+      }
+      
+      else {
+        $tmp_row->{lrg_start} = $lrg->start if $lrg->start < $tmp_row->{lrg_start};
+        $tmp_row->{lrg_end}   = $lrg->end if $lrg->end > $tmp_row->{lrg_end};
+        $tmp_row->{start}     = $chr->start if $chr->start < $tmp_row->{start};
+        $tmp_row->{end}       = $chr->end if $chr->end > $tmp_row->{end};
+      }
     }
+    
+    $prev_lrg = $lrg_sr_name;
   }
+  
+  push @$results, $tmp_row if $tmp_row;
 
   return [$results, [], 'LRG'];
 }
