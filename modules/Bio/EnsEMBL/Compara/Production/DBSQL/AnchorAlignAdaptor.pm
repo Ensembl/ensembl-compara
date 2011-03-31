@@ -56,8 +56,6 @@ sub store {
     dnafrag_end, dnafrag_strand, score, num_of_organisms, num_of_sequences, evalue)
   VALUES (?,?,?,?,?,?,?,?,?,?)};
 
-print Dumper $self;	
-
   my $sth = $self->prepare($query);
   my $insertCount =
      $sth->execute($anchor_align->method_link_species_set_id,
@@ -82,7 +80,7 @@ print Dumper $self;
   return $anchor_align;
 }
 
-sub store_exonerate_hits {
+sub store_mapping_hits {
 	my $self = shift;
 	my $batch_records = shift;
 	my $out_put_mlssid = shift;
@@ -98,8 +96,8 @@ sub store_exonerate_hits {
 	VALUES (?,?,?,?,?,?,?,?,?,?)};
 
 	my $sth = $self->prepare($query);
-	foreach my $row(@$batch_records) {
-		$sth->execute( split(":", $row) );
+	foreach my $anchor_hits( @$batch_records ) {
+		$sth->execute( @{ $anchor_hits } );
 	}	
 	$sth->finish;
 	$self->dbc->do("UNLOCK TABLES");
@@ -107,6 +105,30 @@ sub store_exonerate_hits {
 	return 1;
 }
 
+sub store_exonerate_hits {
+        my $self = shift;
+        my $batch_records = shift;
+        my $out_put_mlssid = shift;
+        throw() unless($batch_records);
+    
+        my $dcs = $self->dbc->disconnect_when_inactive();
+        $self->dbc->disconnect_when_inactive(0);
+        $self->dbc->do("LOCK TABLE anchor_align WRITE");
+
+        my $query = qq{ 
+        INSERT INTO anchor_align (method_link_species_set_id, anchor_id, dnafrag_id, dnafrag_start,     
+        dnafrag_end, dnafrag_strand, score, num_of_organisms, num_of_sequences)
+        VALUES (?,?,?,?,?,?,?,?,?)};
+
+        my $sth = $self->prepare($query);
+        foreach my $row(@$batch_records) {
+                $sth->execute( split(":", $row) );
+        }    
+        $sth->finish;
+        $self->dbc->do("UNLOCK TABLES");
+        $self->dbc->disconnect_when_inactive($dcs);
+        return 1;
+}
 
 =head2 store_new_method_link_species_set_id
 
