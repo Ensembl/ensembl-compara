@@ -71,7 +71,6 @@ sub gene_transcript_table {
 	if (scalar @{$genes}) {
     foreach my $gene (@$genes){
 			
-			my $gname = $gene->external_name;
       my $gs_id = $gene->stable_id;
       my $gene_dbid = $gene->dbID;
       my $gene_link = $hub->url({
@@ -80,7 +79,10 @@ sub gene_transcript_table {
         g       => $gs_id,
       });
 
-      my $loc_string = $gene->seq_region_name . ':' . $gene->seq_region_start . ($gene->seq_region_start == $gene->seq_region_end ? '' : '-' . $gene->seq_region_end);
+			my $g_start = $gene->seq_region_start;
+			my $g_end   = $gene->seq_region_end;
+			
+      my $loc_string = $gene->seq_region_name . ':' . $g_start . ($g_start == $g_end ? '' : '-' . $g_end);
 
       my $loc_link = $hub->url({
         type   => 'Location',
@@ -89,22 +91,21 @@ sub gene_transcript_table {
       });
 
 			# Transcripts list
-			my $all_trans = $gene->get_all_Transcripts;
-			foreach my $trans (@$all_trans){
+			foreach my $trans (@{$gene->get_all_Transcripts}){
 			
-				my $tname = $trans->external_name;
+				my $ts_id = $trans->stable_id;
 				my $trans_link = $hub->url({
         	type    => 'Transcript',
         	action  =>  'Summary',
         	g       => $gs_id,
-					t       => $trans->stable_id,
+					t       => $ts_id,
 					r       => $loc_string
       	});
         
      		my %row = (
 					location    => qq{<a href="$loc_link">$loc_string</a>},
-        	gene        => qq{<a href="$gene_link">$gname</a>},
-					transcript  => qq{<a href="$trans_link">$tname</a>},
+        	gene        => qq{<a href="$gene_link">$gs_id</a>},
+					transcript  => qq{<a href="$trans_link">$ts_id</a>},
         	type        => $trans->biotype,
       	);
 				
@@ -114,7 +115,7 @@ sub gene_transcript_table {
   	return $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
 	}
 	else {
-		my $msg = 'No genes fall within the structural variant.<br /> Please, go to the <b>Context</b> page for more detailed information.';
+		my $msg = 'No genes fall within the structural variant.<br /> Please, go to the <b>Genomic context</b> page for more detailed information.';
 		return $self->_info('No genes', $msg, '50%');
 	}
 }
