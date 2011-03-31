@@ -28,7 +28,9 @@ sub convert_to_drawing_parameters {
     # get the strand by projecting to lrg coord system
     my %strands;    
     foreach my $segment(@{$chr->project('lrg')}) {
-      $strands{$segment->to_Slice->strand} = 1;
+      my $sl = $segment->to_Slice;
+      next unless $sl->seq_region_name eq $lrg->seq_region_name;      
+      $strands{$sl->strand} = 1;
     }
     
     # get the LRG's HGNC name
