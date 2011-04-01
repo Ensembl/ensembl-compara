@@ -64,6 +64,12 @@ sub init {
     [qw(fg_regulatory_features_funcgen)],
     {qw(display off)}
   );
+  
+  $self->modify_configs(
+	[qw(reg_feats_MultiCell)],
+	{ display => 'normal' },
+  );
+  
   $self->modify_configs(
     [qw(transcript prediction variation)],
     {qw(display off)} 
