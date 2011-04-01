@@ -60,16 +60,19 @@ sub content {
   my $end = $v->{'start'} << $v->{'end'} ? $v->{'end'} : $v->{'start'};   
   my $length =  ($end - $start) +1;
 
+	my $img_start = $start;
+	my $img_end   = $end;
+	
 	# Width max > length Slice > context
 	if ($length >= $width and $length <= $width_max) {
-		my $new_width = 5000;
-		$start -= $new_width; 
-    $end += $new_width;
+		my $new_width = 10000;
+		$img_start -= $new_width; 
+    $img_end += $new_width;
 	}
 	# length Slice > Width max
 	elsif ($length > $width_max){
-    my $location = $seq_region.':'.$start.'-'.$end;
-    $end = $start + $width_max -1; 
+    my $location = $seq_region.':'.$img_start.'-'.$img_end;
+    $img_end = $img_start + $width_max -1; 
     $var_slice = 1;
     my $overview_link = $hub->url({
       type   => 'Location',
@@ -88,11 +91,12 @@ sub content {
   }
 	# context > length Slice
 	else {
-    $start -= ($width/2); 
-    $end += ($width/2);
+    $img_start -= ($width/2); 
+    $img_end += ($width/2);
   }
 	
-  my $slice    = $slice_adaptor->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
+	# Image slice
+  my $slice = $slice_adaptor->fetch_by_region($seq_type, $seq_region, $img_start, $img_end, 1);
 
 	# Image
 	my $image_config = $hub->get_imageconfig($im_cfg);
@@ -123,10 +127,10 @@ sub content {
  
   $html .= $image->render;
  
-	$var_slice = 1 ? $slice  : $slice_adaptor->fetch_by_region($seq_type, $seq_region, $v->{'start'}, $v->{'end'}, 1);
-  
 
-  $html .= qq{<h2>Overlapping features :</h2><br />};
+	$var_slice = $slice_adaptor->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
+	
+  $html .= qq{<h2>Features overlapping $vname:</h2><br />};
   
   # structural variation table
   $html .= $self->structural_variation_table($var_slice,$vname);
@@ -140,7 +144,7 @@ sub content {
 	}
 
   # regulatory region table
-  $html .= $self->regulatory_feature_table($var_slice,$vname,$im_cfg);
+  $html .= $self->regulatory_feature_table($var_slice,$vname,$image_config);
   
   # constrained elements table
   $html .= $self->constrained_element_table($var_slice,$vname);
@@ -354,13 +358,13 @@ sub sequence_variation_table {
 }
 
 sub regulatory_feature_table{
-  my $self     = shift;
-  my $slice    = shift;
-	my $v        = shift;
-	my $im_conf  = shift;
-  my $hub      = $self->hub;
-  my $title    = 'Regulatory features';
-	my $table_id = 'reg';
+  my $self         = shift;
+  my $slice        = shift;
+	my $v            = shift;
+	my $image_config = shift;
+  my $hub          = $self->hub;
+  my $title        = 'Regulatory features';
+	my $table_id     = 'reg';
 	
   my $columns = [
     { key => 'id',         sort => 'string',        title => 'Name'              },
@@ -372,9 +376,6 @@ sub regulatory_feature_table{
   
   my $rows;
   my $fsa = $hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen');
-  
-  # get image config
-  my $image_config = $hub->get_imageconfig($im_conf);
   
   if (defined $fsa) {
 		
