@@ -76,13 +76,20 @@ sub highlight {
   
   # First a black box
   $self->unshift($self->Rect({
-    x         => $f->start - 2 / $pix_per_bp,
-    y         => $composite->y - 2, # + makes it go down
-    width     => $length + 4 / $pix_per_bp,
-    height    => $h + 4,
-    colour    => 'highlight2',
-    absolutey => 1,
-  }));
+      x         => $composite->x - 2/$pix_per_bp,
+      y         => $composite->y - 2, # + makes it go down
+      width     => $composite->width + 4/$pix_per_bp,
+      height    => $h + 4,
+      colour    => 'black',
+      absolutey => 1,
+    }),
+		$self->Rect({ # Then a 1 pixel smaller green box
+      x         => $composite->x - 1/$pix_per_bp,
+      y         => $composite->y - 1, # + makes it go down
+      width     => $composite->width + 2/$pix_per_bp,
+      height    => $h + 2,
+      colour    => 'green',
+      absolutey => 1,
+    }));
 }
-
 1;
