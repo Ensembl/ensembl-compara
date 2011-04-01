@@ -33,7 +33,7 @@ sub content {
   my ($query_db, $ext_seq, $ext_seq_length);
   my @hit_ids = ($hit_id);
   $query_db   = $hit_db_name;
-  
+
   if ($hit_db_name =~ /^RefSeq/) {
     $query_db = 'RefSeq';
     $hit_id   =~ s/\.\d+//;
@@ -42,30 +42,36 @@ sub content {
     $hit_id =~ /(\w+)-\d+/; # hack - strip off isoform version for uniprot
     push @hit_ids, $1;
   }
-  
+
   # As yet don't do anything if we have a DnaDnaAlignFeature as an ENS_ supporting_feature (only a limited number in Fugu at presents (e58))
   # if we decide to use these then will have to modify ENSEMBL_RETRIEVE.pm
+  my $strand_mismatch;
   if ($hit_db_name =~ /ENS/ && $object->get_hit($hit_id)->isa('Bio::EnsEMBL::DnaDnaAlignFeature')) {
     $ext_seq = '';
   } else {
     foreach my $id (@hit_ids) {
-      my $rec = $hub->get_ext_seq($id, uc $query_db);
-      
-      $ext_seq        = $rec->[0] || '';
-      $ext_seq_length = $rec->[1] || '';
-      
-      if ($ext_seq) {
-        $hit_id = $id;
-        last;
+      if (my $hit_object = $object->get_hit($id)) {
+        my $hit_strand = $hit_object->strand;
+        $strand_mismatch = $hit_strand != $transcript->strand ? 1 : 0;
+
+        my $rec = $hub->get_ext_seq($id, uc $query_db, $strand_mismatch);
+
+        $ext_seq        = $rec->[0] || '';
+        $ext_seq_length = $rec->[1] || '';
+
+        if ($ext_seq) {
+          $hit_id = $id;
+          last;
+        }
       }
     }
-    
+
     # munge hit name for the display
     if ($hit_db_name =~ /^RefSeq/) {
       $ext_seq =~ s/\w+\|\d+\|ref\|//;
       $ext_seq =~ s/\|.+//m;
     }
-    
+
     $ext_seq =~ s/ .+$//m if $hit_db_name =~ /Uniprot/i;
     $ext_seq =~ s /^ //mg; # remove white space from the beginning of each line of sequence
   }
@@ -80,18 +86,18 @@ sub content {
   } else {
     $table->add_row('External record', "<p>Unable to retrieve sequence for $hit_id</p>", 1);
   }
-  
+
   if ($seq_type eq 'PEP' && $translation) {
     $cds_aa_length = $translation->length;
     $cds_length    = " Translation length: $cds_aa_length aa";
   }
-  
+
   $table->add_row('Transcript details', "<p>Exons: $e_count. Length: $trans_length bp.$cds_length</p>", 1);
-  
+
   # exon alignment (if exon ID is in the URL)
   if ($exon_id) {
     my $exon;
-    
+
     # get cached exon off the transcript
     foreach my $e (@{$transcript->get_all_Exons}) {
       if ($e->stable_id eq $exon_id) {
@@ -113,26 +119,26 @@ sub content {
 
     ## position of exon in the translation
     my $exon_cds_pos;
-    
+
     if ($seq_type eq 'PEP' && $translation) {
       # postions of everything we need in cDNA coords
       my $tl_start  = $exon->cdna_coding_start($transcript);
       my $tl_end    = $exon->cdna_coding_end($transcript);
       my $cds_start = $transcript->cdna_coding_start;
       my $cds_end   = $transcript->cdna_coding_end;
-      
+
       if ($tl_start && $tl_end) {
         my $start = int(($tl_start - $cds_start) / 3  + 1);
         my $end   = int(($tl_end   - $cds_start) / 3) + 1;
         $end     -= 1 if ($tl_end == $cds_end); # need to take off one since the stop codon is included
-        
+
         $e_length_text .= " ($e_sequence_length aa)";
         $exon_cds_pos   = "<p>CDS: $start-$end aa</p>";
       } else {
         $exon_cds_pos = "<p>Exon is not coding</p>";
       }
     }
-    
+
     $table->add_row('Exon Information', "<p>$exon_id</p><p>$e_length_text</p>", 1);
     $table->add_row('Exon coordinates', "Transcript: $cdna_start-$cdna_end bp</p>$exon_cds_pos", 1);
 
@@ -143,7 +149,8 @@ sub content {
       } else {
         # get exon alignment
         my $e_alignment = $object->get_alignment($ext_seq, $e_sequence, $seq_type);
-        
+        $e_alignment =~ s/$hit_id/$hit_id .' (reverse complement)'/e if $strand_mismatch;
+
         $table->add_row('Exon alignment:', '', 1);
         $html .= $table->render;
         $html .= "<p><br /><pre>$e_alignment</pre></p>";
@@ -158,22 +165,22 @@ sub content {
     my $trans_sequence = $object->get_int_seq($transcript, $seq_type)->[0];
     my $table2         = new EnsEMBL::Web::Document::HTML::TwoCol;
     my $type           = $seq_type eq 'PEP' ? 'Translation' : 'Transcript';
-    
+
     if (!$trans_sequence && $seq_type eq 'PEP') {
       $table2->add_row("$type alignment:", "Unable to retrieve translation for $tsi", 1);
       $html .= $table2->render;
     } else {
       # get transcript alignment
       my $trans_alignment = $object->get_alignment($ext_seq, $trans_sequence, $seq_type);
-      
+      $trans_alignment =~ s/$hit_id/$hit_id .' (reverse complement)'/e if $strand_mismatch;
+
       $table2->add_row("$type alignment:", '', 1);
       $html .= $table2->render;
       $html .= "<p><br /><br /><pre>$trans_alignment</pre></p>";
     }
   }
-  
-  return $html;
-}                
 
+  return $html;
+}
 1;
 
