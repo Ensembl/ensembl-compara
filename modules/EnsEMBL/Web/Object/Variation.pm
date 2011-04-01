@@ -983,8 +983,9 @@ sub get_individuals_pops {
 
 # Variation sets ##############################################################
 
-sub get_formatted_variation_set_string {
+sub get_variation_set_string {
   my $self = shift;
+	my @vs = ();
   my $vari_set_adaptor = $self->hub->database('variation')->get_VariationSetAdaptor;
   my $sets = $vari_set_adaptor->fetch_all_by_Variation($self->vari);
 
@@ -997,7 +998,7 @@ sub get_formatted_variation_set_string {
 
   foreach my $top_set (@$toplevel_sets){
     next unless exists  $sets_observed{$top_set->name};
-    $variation_string .= ", " .$top_set->name ;
+    $variation_string = $top_set->name ;
     my $sub_sets = $top_set->get_all_sub_VariationSets(1);
     my $sub_set_string = " (";
     foreach my $sub_set( sort { $a->name cmp $b->name } @$sub_sets ){ 
@@ -1009,10 +1010,9 @@ sub get_formatted_variation_set_string {
       $sub_set_string .= ")";
       $variation_string .= $sub_set_string;
     }
+		push(@vs,$variation_string);
   }
-
-  $variation_string =~s/^,\s+//; 
-  return  $variation_string;
+	return \@vs;
 }
 
 sub get_variation_sets {
