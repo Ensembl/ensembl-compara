@@ -855,6 +855,7 @@ sub _merge {
     
     if ($sub_tree->{'web'}{'key'}) {
       if ($sub_tree->{'desc'}) {
+        $data->{$key}{'multiple'}      = "This track comprises multiple analyses;" if $data->{$key}{'description'};
         $data->{$key}{'description'} ||= '';
         $data->{$key}{'description'}  .= ($data->{$key}{'description'} ? '; ' : '') . $sub_tree->{'desc'};
       }
@@ -866,10 +867,11 @@ sub _merge {
   }
   
   foreach my $key (keys %$data) {
-    $data->{$key}{'name'}    ||= $tree->{$key}{'name'};
-    $data->{$key}{'caption'} ||= $data->{$key}{'name'} || $tree->{$key}{'name'};
-    $data->{$key}{'display'} ||= 'off';
-    $data->{$key}{'strand'}  ||= 'r';
+    $data->{$key}{'name'}      ||= $tree->{$key}{'name'};
+    $data->{$key}{'caption'}   ||= $data->{$key}{'name'} || $tree->{$key}{'name'};
+    $data->{$key}{'display'}   ||= 'off';
+    $data->{$key}{'strand'}    ||= 'r';
+    $data->{$key}{'description'} = "$data->{$key}{'multiple'} $data->{$key}{'description'}" if $data->{$key}{'multiple'};
   }
   
   return ([ sort { $data->{$a}{'name'} cmp $data->{$b}{'name'} } keys %$data ], $data);
@@ -1430,8 +1432,8 @@ sub add_alignments {
       $alignments->{$menu_key}{$row->{'id'}} = {
         db                         => $key,
         glyphset                   => '_alignment_pairwise',
-        name                       => $other_label,
-        caption                    => "$other_label - $row->{'type'}",
+        name                       => "$other_label - $row->{'type'}",
+        caption                    => $other_label,
         type                       => $row->{'type'},
         species                    => $other_species,
         method_link_species_set_id => $row->{'id'},
