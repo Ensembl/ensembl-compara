@@ -64,7 +64,7 @@ sub _get_seq{
   ###############################################
   # Check for valid options and fix if necessary
   ###############################################
-  my %options = ( 'id' => undef, 'acc' => undef, 'seq' => undef, 'desc' => undef, 'all' => undef );
+  my %options = ( 'id' => undef, 'acc' => undef, 'seq' => undef, 'desc' => undef, 'mismatch' => undef, 'all' => undef );
   $args->{'OPTIONS'} = 'all' unless exists $args->{'OPTIONS'} && exists $options{ $args->{'OPTIONS'} };
     
   ############################################
@@ -84,6 +84,7 @@ sub _get_seq{
       'ID'           => $args->{$type},
       'FORMAT'       => $args->{'FORMAT'},
       'OPTIONS'      => $args->{'OPTIONS'},
+      'strand_mismatch' => $args->{'strand_mismatch'} 
     } );
   } else {
     warn "No indexer for DB of type $db";

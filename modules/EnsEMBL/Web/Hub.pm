@@ -435,7 +435,7 @@ sub get_ExtURL_link {
 
 # use PFETCH etc to get description and sequence of an external record
 sub get_ext_seq {
-  my ($self, $id, $ext_db) = @_;
+  my ($self, $id, $ext_db, $strand_mismatch) = @_;
   my $indexer = new EnsEMBL::Web::ExtIndex($self->species_defs);
   
   return unless $indexer;
@@ -444,6 +444,7 @@ sub get_ext_seq {
   my %args;
   $args{'ID'} = $id;
   $args{'DB'} = $ext_db ? $ext_db : 'DEFAULT';
+  $args{'strand_mismatch'} = $strand_mismatch ? $strand_mismatch : 0;
 
   eval { $seq_ary = $indexer->get_seq_by_id(\%args); };
   
