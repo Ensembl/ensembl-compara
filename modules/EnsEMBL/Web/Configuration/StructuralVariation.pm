@@ -17,10 +17,15 @@ sub populate_tree {
 
 	$self->create_node('Summary', 'Genes/Transcripts',
     [qw( summary EnsEMBL::Web::Component::StructuralVariation::Mappings )],
-    { 'availability' => 'structural_variation', 'concise' => 'Genes/Transcripts' }
+    { 'availability' => 'structural_variation', 'concise' => 'Overlapped Genes/Transcripts' }
   );
-
-  $self->create_node('Context', 'Context',
+	
+	$self->create_node('Evidence', 'Supporting evidence',
+    [qw( summary  EnsEMBL::Web::Component::StructuralVariation::SupportingEvidence)],
+    { 'availability' => 'supporting_structural_variation', 'concise' => 'Supporting evidence' }
+  );
+	
+  $self->create_node('Context', 'Genomic context',
     [qw( summary  EnsEMBL::Web::Component::StructuralVariation::Context)],
     { 'availability' => 'structural_variation', 'concise' => 'Context' }
   );
