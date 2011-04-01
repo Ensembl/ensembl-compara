@@ -75,8 +75,8 @@ sub content {
     { key => 'type',   title => 'Variation type',     width => '20%', align => 'center', sort => 'string'  },
     { key => 'allele', title => 'Alleles',            width => '10%', align => 'center', sort => 'string'  },
     { key => 'ambig',  title => 'Ambiguity code',     width => '5%',  align => 'center', sort => 'string'  },
-    { key => 'alt',    title => 'Alternate residues', width => '10%', align => 'center', sort => 'string'  },
-    { key => 'codons', title => 'Alternate codons',   width => '10%', align => 'center', sort => 'string'  },
+    { key => 'alt',    title => 'Residues',           width => '10%', align => 'center', sort => 'string'  },
+    { key => 'codons', title => 'Codons',             width => '10%', align => 'center', sort => 'string'  },
     { key => 'sift',   title => 'SIFT',               width => '15%', align => 'center', sort => 'position_html'  },
     { key => 'poly',   title => 'PolyPhen',           width => '15%', align => 'center', sort => 'position_html'  }
   ], \@data, { data_table => 1, sorting => [ 'res asc' ] })->render;
