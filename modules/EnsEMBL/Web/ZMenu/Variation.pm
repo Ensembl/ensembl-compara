@@ -19,7 +19,6 @@ sub content {
   my $var              = $var_adaptor->fetch_by_name($v_id);
   my $vf               = $var_feat_adaptor->fetch_all_by_Variation($var);
   my $tvar_adaptor     = $db_adaptor->get_TranscriptVariationAdaptor;
-  my $trans_variation  = $tvar_adaptor->fetch_by_dbID($hub->param('vf'));
   my $type;
   my $feature;
   
@@ -32,6 +31,8 @@ sub content {
       $feature = $_ if $_->dbID eq $hub->param('vf');
     }
   }
+  
+  my $trans_variation = $feature->get_all_TranscriptVariations();
   
   # alternate way to retrieve transcript_variation_feature if there are more than one with the same variation_feature id;
   if (!$trans_variation) {
