@@ -1394,14 +1394,14 @@ sub get_sf_hit_db_name {
 sub get_hit {
   my $self = shift;
   my ($id) = @_;
-  
+
   foreach my $sf (@{$self->Obj->get_all_supporting_features}) {
     return $sf if ($sf->hseqname eq $id);
   }
   
   foreach my $exon (@{$self->Obj->get_all_Exons}) {
     foreach my $sf (@{$exon->get_all_supporting_features}) {
-      return $sf if ($sf->hseqname eq $id);        
+      return $sf if ($sf->hseqname eq $id);
     }
   }
   return;
@@ -1486,10 +1486,15 @@ sub get_alignment {
     $self->problem('fatal', 'Cannot align if sequence > 1 Mbase');
     return undef;
   }
-  
+
   my $int_seq_file = $self->save_seq($int_seq);
   my $ext_seq_file = $self->save_seq($ext_seq);
-  
+
+  ####
+  #We deal with having to use the reverse complement of a hit sequence by telling PFETCH to retrieve it where appropriate
+  #This will deal with all situations I am aware of, but a better way of doing it could be to use EMBOSS revcomp before running matcher
+  ####
+
   my $label_width  = '22'; # width of column for e! object label
   my $output_width = 61;   # width of alignment
   my $dnaAlignExe  = '%s/bin/matcher -asequence %s -bsequence %s -outfile %s %s';
@@ -1497,7 +1502,7 @@ sub get_alignment {
 
   my $out_file = time() . int(rand()*100000000) . $$;
   $out_file = $self->species_defs->ENSEMBL_TMP_DIR.'/' . $out_file . '.out';
-  
+
   my $command;
   if ($seq_type eq 'DNA') {
     $command = sprintf $dnaAlignExe, $self->species_defs->ENSEMBL_EMBOSS_PATH, $int_seq_file, $ext_seq_file, $out_file, '-aformat3 pairln';
@@ -1517,7 +1522,7 @@ sub get_alignment {
     $command = sprintf $pepAlignExe, $self->species_defs->ENSEMBL_WISE2_PATH, $self->species_defs->ENSEMBL_WISE2_PATH, $int_seq_file, $ext_seq_file, $label_width, $output_width, $out_file;
     warn "Command: $command" if $self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_EXTERNAL_COMMANDS;
     `$command`;
-    
+
     unless (open(OUT, "<$out_file")) {
       $self->problem('fatal', "Cannot open alignment file.", $!);
     }
@@ -1677,6 +1682,7 @@ sub variation_data {
 }
 
 =head2 peptide_splice_sites
+
  Example    : $splice_sites = $transcript->peptide_splice_sites
  Description: Calculates any overlapping exon boundries for a peptide sequence
               it then builds a hash and stores it on the object. The hash contains
@@ -1685,6 +1691,7 @@ sub variation_data {
               in the middle of a amino-acid residue of the protein
  Return type: hashref
 =cut
+
 sub peptide_splice_sites {
   my $self = shift;
   
