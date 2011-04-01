@@ -8,7 +8,7 @@ use base qw(EnsEMBL::Web::Configuration);
 
 sub set_default_action {
   my $self = shift;
-  $self->{'_data'}->{'default'} = 'Summary';
+  $self->{'_data'}->{'default'} = 'Sequence';
 }
 
 sub tree_cache_key {
@@ -25,13 +25,13 @@ sub populate_tree {
   	$somatic = $self->object->Obj->is_somatic;
 	}
 
-  $self->create_node('Summary', 'Summary',
-    [qw(
-      summary  EnsEMBL::Web::Component::Variation::VariationSummary
-    )],
-    { 'availability' => 'variation', 'concise' => 'Variation summary' }
-  );
-  
+  #$self->create_node('Summary', 'Summary',
+  #  [qw(
+  #    summary  EnsEMBL::Web::Component::Variation::VariationSummary
+  #  )],
+  #  { 'availability' => 'variation', 'concise' => 'Variation summary' }
+  #);
+
   $self->create_node('Sequence', 'Flanking sequence',
     [qw(
       flanking EnsEMBL::Web::Component::Variation::FlankingSequence
@@ -64,9 +64,9 @@ sub populate_tree {
     { 'availability' => 'variation', 'concise' => 'Context' }
   );
   
-  $self->create_node('HighLD', 'Linked variations',
+  $self->create_node('HighLD', 'Linkage disequilibrium',
     [qw( summary EnsEMBL::Web::Component::Variation::HighLD )],
-    { 'availability' => 'variation has_ldpops variation has_individuals not_somatic', 'concise' => 'Linked variations', 'no_menu_entry' => $somatic }
+    { 'availability' => 'variation has_ldpops variation has_individuals not_somatic', 'concise' => 'Linkage disequilibrium', 'no_menu_entry' => $somatic }
   );
     
   $self->create_node('Phenotype', 'Phenotype Data ([[counts::ega]])',
@@ -81,7 +81,7 @@ sub populate_tree {
     )],
     { 'availability' => 'variation database:compara has_alignments', 'concise' => 'Phylogenetic Context' }
   );
-
+  
   # External Data tree, including non-positional DAS sources
   my $external = $self->create_node('ExternalData', 'External Data',
     [qw( external EnsEMBL::Web::Component::Variation::ExternalData )],
