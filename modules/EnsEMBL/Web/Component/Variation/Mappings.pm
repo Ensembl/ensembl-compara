@@ -128,7 +128,7 @@ sub content {
       
       elsif($cons_format eq 'ncbi') {
         # not all terms have an ncbi equiv so default to SO
-        $type = join ", ", map {$_->NCBI_term || $hub->get_ExtURL_link($_->SO_term, 'SEQUENCE_ONTOLOGY', $_->SO_accession).'<span style="color:red;">*</span>'} @{$tva->get_all_OverlapConsequences};
+        $type = join ", ", map {$_->NCBI_term || '<span title="'.$_->description.' (no NCBI term available)">'.$_->label.'*</span>'} @{$tva->get_all_OverlapConsequences};
       }
       
       else {
@@ -193,11 +193,11 @@ sub content {
   if ($flag) {
     $html .= $table->render;
     
-    $html .= $self->_info('Information','<p><span style="color:red;">*</span> SO terms are shown when no NCBI term is available</p>', '50%') if $cons_format eq 'ncbi';
+    #$html .= $self->_info('Information','<p><span style="color:red;">*</span> SO terms are shown when no NCBI term is available</p>', '50%') if $cons_format eq 'ncbi';
     
     return $html;
   } else { 
-    return $self->_info('', '<p>This variation has not been mapped any Ensembl genes or transcripts</p>');
+    return $self->_info('', '<p>This variation has not been mapped to any Ensembl genes or transcripts</p>');
   }
 }
 
