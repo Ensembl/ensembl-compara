@@ -22,7 +22,6 @@ sub content {
   my $study_name          = $object->study_name;
   my $study_description   = $object->study_description;
   my $study_url           = $object->study_url;
-  my $supporting_sv				= $object->supporting_sv;
   $name = "$class ($name)";
   my $source_link = $hub->get_ExtURL_link($source, 'DGVA', $source);
  
@@ -37,27 +36,8 @@ sub content {
     $study_line = sprintf ('<a href="%s">%s</a>',$study_url,$study_name);
   	$study_line = "<dt>Study</dt><dd>$study_line - $study_description</dd>";
   }
-	
-	# Supporting evidence
-	my $ssv_line = '';
-	if (scalar @{$supporting_sv} > 0) {
-		$ssv_line = "<dt>Supporting evidence</dt>\n<dd>";
-		my $ssv_sep = '';
-		my $ssv_count = 1;
-		my $ssv_limit = 15;
-		foreach my $ssv (@{$supporting_sv}) {
-			$ssv_line .= "$ssv_sep".$ssv->name;
-			if ($ssv_sep eq '') { $ssv_sep = ', '; }
-			if ($ssv_count==$ssv_limit) { 
-				$ssv_line .= $ssv_sep.'<br />';
-				$ssv_count = 0;
-				$ssv_sep = '';
-			}
-			$ssv_count++;
-		}
-		$ssv_line .= "</dd>";
-	} 
  
+  # Location
   my $location = $object->neat_sr_name($sv_obj->slice->seq_region_name .":" . $sv_obj->start ."-" . $sv_obj->end);
   my $strand = $sv_obj->strand > 0 ? "forward" : "reverse";
   my $location_url = $self->hub->url({
@@ -71,9 +51,23 @@ sub content {
     $location_url,
     'View in location tab'
   );
-	
   my $location_link = "This feature maps to $location ($strand strand) | $location_html";
  
+	# SV size (format the size with comma separations, e.g: 10000 to 10,000)
+	my $sv_size = ($sv_obj->end-$sv_obj->start+1);
+	my $int_length = length($sv_size);
+	if ($int_length>3){
+		my $nb = 0;
+		my $int_string = '';
+		while (length($sv_size)>3) {
+			$sv_size =~ /(\d{3})$/;
+			if ($int_string ne '') {	$int_string = ','.$int_string; }
+			$int_string = $1.$int_string;
+			$sv_size = substr($sv_size,0,(length($sv_size)-3));
+		}	
+		$sv_size = "$sv_size,$int_string";
+	}
+	
   my $html = qq{
     <dl class="summary">
       <dt>Variation class</dt>
@@ -83,7 +77,8 @@ sub content {
 	    $study_line
       <dt>Location</dt>
       <dd>$location_link</dd>
-			$ssv_line 
+			<dt>Genomic size</dt>
+			<dd>$sv_size bp</dd>
     </dl>
   };
 	
