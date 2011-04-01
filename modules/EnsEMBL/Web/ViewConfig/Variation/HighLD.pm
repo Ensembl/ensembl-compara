@@ -7,9 +7,6 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my ($view_config) = @_;
   my $variations = $view_config->species_defs->databases->{'DATABASE_VARIATION'}||{};
-  
-  #$view_config->_set_defaults($variations->{DEFAULT_LD_POP}, 'yes') if $variations->{DEFAULT_LD_POP};
-  $view_config->_set_defaults($_, 'yes') foreach @{$view_config->species_defs->databases->{'DATABASE_VARIATION'}->{'LD_POPULATIONS'}};
 
   $view_config->_set_defaults(qw(
     max_distance          50000
@@ -84,22 +81,6 @@ sub form {
       { value => '1',  name => '1' },
     ]
   });
-  
-  # populations
-  $view_config->add_fieldset("Populations");
-  
-  my $pa = $object->vari->adaptor->db->get_PopulationAdaptor;
-  my @pops = @{$pa->fetch_all_LD_Populations};
-
-  foreach (sort {$a->name cmp $b->name} @pops) {
-    $view_config->add_form_element({
-      type  => 'CheckBox', 
-      label => $_->name,
-      name  => $_->name,
-      value => 'yes',
-      raw   => 1
-    });
-  }
   
   # other options
   $view_config->add_fieldset("Phenotype options");
