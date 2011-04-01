@@ -36,6 +36,10 @@ sub availability {
     if ($obj->isa('Bio::EnsEMBL::Variation::StructuralVariation')) {
       $availability->{'structural_variation'} = 1;
     }
+		
+		if (scalar @{$obj->get_all_SupportingStructuralVariants} != 0) {
+			$availability->{'supporting_structural_variation'} = 1;
+		}
 
     $self->{'_availability'} = $availability;
   }
@@ -76,6 +80,7 @@ sub source_description { my $self = shift; return $self->Obj->source_description
 sub study_name         { my $self = shift; return $self->Obj->study_name;                          }
 sub study_description  { my $self = shift; return $self->Obj->study_description;                   }
 sub study_url          { my $self = shift; return $self->Obj->study_url;                           }
+sub external_reference { my $self = shift; return $self->Obj->external_reference;                  }
 sub supporting_sv      { my $self = shift; return $self->Obj->get_all_SupportingStructuralVariants;}    
 
 sub variation_feature_mapping { 
