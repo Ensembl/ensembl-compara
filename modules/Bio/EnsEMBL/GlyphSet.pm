@@ -185,7 +185,7 @@ sub init_label {
   
   my $config  = $self->{'config'};
   my $hub     = $config->hub;
-  my $caption = $self->my_config('caption');
+  my $name    = $self->my_config('name');
   my $desc    = $self->my_config('description');
   my $style   = $config->species_defs->ENSEMBL_STYLE;
   my $font    = $style->{'GRAPHIC_FONT'};
@@ -213,7 +213,7 @@ sub init_label {
     }
     
     $config->{'hover_labels'}->{$class} = {
-      header    => $caption,
+      header    => $name,
       desc      => $desc,
       class     => $class,
       config    => $config->{'type'},
@@ -231,7 +231,7 @@ sub init_label {
     absolutey => 1,
     height    => $res[3],
     class     => "label $class",
-    alt       => $caption,
+    alt       => $name,
     hover     => $hover
   }));
   
