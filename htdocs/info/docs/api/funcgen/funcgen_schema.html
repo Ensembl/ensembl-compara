@@ -29,13 +29,12 @@
 
 <h2>Introduction</h2>
 
+
 <p>
-This document gives a describes the tables that make up the Ensembl 'Funcgen' schema. Tables are grouped logically by their function, and the purpose of each table is explained. This document refers to version 62 of the Ensembl variation schema.
-
+This document gives a describes the tables that make up the Ensembl 'Funcgen' schema. Tables are grouped logically by their function, and the purpose of each table is explained. This document refers to version 62 of the Ensembl variation schema.<br>
+<br>
 A simplified entity relationship diagram of the schema is available <a href="./Funcgen_62_trimmed_schema.png">here</a>.
-
 </p>
-<br />
 
 <h3>List of the tables:</h3>
 <h2>Main feature tables</h2>
@@ -49,7 +48,6 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 		<li><a href="#binding_matrix"><b>binding_matrix</b></a></li>
 		<li><a href="#external_feature"><b>external_feature</b></a></li>
 		<li><a href="#result_feature"><b>result_feature</b></a></li>
-		<li><a href="#dbfile_registry"><b>dbfile_registry</b></a></li>
 		<li><a href="#probe_feature"><b>probe_feature</b></a></li>
 		</ul>
 </td></tr></table>
@@ -61,6 +59,7 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 		<li><a href="#feature_set"><b>feature_set</b></a></li>
 		<li><a href="#result_set"><b>result_set</b></a></li>
 		<li><a href="#result_set_input"><b>result_set_input</b></a></li>
+		<li><a href="#dbfile_registry"><b>dbfile_registry</b></a></li>
 		<li><a href="#input_set"><b>input_set</b></a></li>
 		<li><a href="#input_subset"><b>input_subset</b></a></li>
 		</ul>
@@ -341,27 +340,6 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 
 <br />
 <table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="dbfile_registry" style="font-size:11pt;font-weight:bold">dbfile_registry</span></td>
-<td style="width:100px;text-align:right"><a id="a_dbfile_registry" style="cursor:pointer;text-decoration:underline" onclick="show_hide('dbfile_registry')">Show</a> columns</td>
-</tr></table>
-<p>This generic table contains a simple registry of paths to support  flat file (DBFile) access. This should be left joined from the relevant adaptor e.g. ResultSetAdaptor.<p>
-
-	<div id="div_dbfile_registry" style="display:none">
-
-	<table style="border:1px outset #222222">
-		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>table_id</b></td><td>int(10)</td><td></td><td>Primary key of linked dbfile entity e.g. <a href="#result_set">result_set</a> or @link analysis</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>table_name</b></td><td>varchar(32)</td><td></td><td>Name of linked table</td><td>primary key</td></tr>
-		<tr class="bg1"><td><b>path</b></td><td>varchar(255)</td><td></td><td>Either a full filepath or a directory which the API will use to build the filepath</td><td></td></tr>
-</table>
-</div>
-<p><b>See also:</b></p>
-<ul>
-	<li><a href="#result_set">result_set</a></li>
-</ul>
-
-<br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
 <td style="width:500px;text-align:left;height:10px"><span id="probe_feature" style="font-size:11pt;font-weight:bold">probe_feature</span></td>
 <td style="width:100px;text-align:right"><a id="a_probe_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('probe_feature')">Show</a> columns</td>
 </tr></table>
@@ -521,6 +499,27 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 	<li><a href="#input_set">input_set</a></li>
 	<li><a href="#experimental_chip">experimental_chip</a></li>
 	<li><a href="#channel">channel</a></li>
+</ul>
+
+<br />
+<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
+<td style="width:500px;text-align:left;height:10px"><span id="dbfile_registry" style="font-size:11pt;font-weight:bold">dbfile_registry</span></td>
+<td style="width:100px;text-align:right"><a id="a_dbfile_registry" style="cursor:pointer;text-decoration:underline" onclick="show_hide('dbfile_registry')">Show</a> columns</td>
+</tr></table>
+<p>This generic table contains a simple registry of paths to support  flat file (DBFile) access. This should be left joined from the relevant adaptor e.g. ResultSetAdaptor.<p>
+
+	<div id="div_dbfile_registry" style="display:none">
+
+	<table style="border:1px outset #222222">
+		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
+		<tr class="bg1"><td><b>table_id</b></td><td>int(10)</td><td></td><td>Primary key of linked dbfile entity e.g. <a href="#result_set">result_set</a> or @link analysis</td><td>primary key</td></tr>
+		<tr class="bg2"><td><b>table_name</b></td><td>varchar(32)</td><td></td><td>Name of linked table</td><td>primary key</td></tr>
+		<tr class="bg1"><td><b>path</b></td><td>varchar(255)</td><td></td><td>Either a full filepath or a directory which the API will use to build the filepath</td><td></td></tr>
+</table>
+</div>
+<p><b>See also:</b></p>
+<ul>
+	<li><a href="#result_set">result_set</a></li>
 </ul>
 
 <br />
@@ -1016,7 +1015,7 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 <br />
 <hr />
 <h2>Core tables</h2>
-<p>These are exact clones of the corresponding core schema tables. See <a href=''>core schema docs</a> for more details.</p>
+<p>These are exact clones of the corresponding core schema tables. See <a href='../core/core_schema.html'>core schema docs</a> for more details.</p>
 <br />
 <table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
 <td style="width:500px;text-align:left;height:10px"><span id="analysis" style="font-size:11pt;font-weight:bold">analysis</span></td>
