@@ -46,18 +46,10 @@ sub process {
         if ($user->add_to_urls($url)) {
           $session->purge_data(type => 'url', code => $code);
         } else {
-          warn "failed to save url: $code";
+          warn "failed to save url (".$url->{'format'}.") data: $code";
           $error = 1;
         }
-      } elsif (my $bam = $session->get_data(type => 'bam', code => $code)) {
-        my $added = $user->add_to_bams($bam);
-        if ($added) {
-          $session->purge_data(type => 'bam', code => $code);
-        } else {
-          warn "failed to save bam: $code";
-          $error = 1;
-        }
-      }
+      }      
     }
     
     if ($error) {
