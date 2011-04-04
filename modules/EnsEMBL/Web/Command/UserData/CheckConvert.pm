@@ -25,7 +25,21 @@ sub process {
   } elsif ($object->param('consequence_mapper')) {
     $param->{'consequence_mapper'} = $object->param('consequence_mapper');
     $url = $object->species_path($object->data_species).'/UserData/SNPConsequence';
-    $param->{'format'} = $object->param('format');
+    foreach my $p(qw(
+      format
+      check_existing
+      coding_only
+      novel_only
+      hgnc
+      protein
+      hgvs
+      consequence_format
+      sift
+      polyphen
+      condel)
+    ) {
+      $param->{$p} = $object->param($p);
+    }
   } else {
     $url = $object->species_path($object->data_species).'/UserData/ConvertFeatures';
   }
