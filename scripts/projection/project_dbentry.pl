@@ -14,7 +14,7 @@ log4perl.appender.Screen=Log::Log4perl::Appender::Screen
 log4perl.appender.Screen.stderr=1
 log4perl.appender.Screen.Threshold=DEBUG
 log4perl.appender.Screen.layout=Log::Log4perl::Layout::PatternLayout
-log4perl.appender.Screen.layout.ConversionPattern=%d %p> %F{1}:%L %M - %m%n
+log4perl.appender.Screen.layout.ConversionPattern=%d %p>%M{2}:%L - %m%n
 LOGCFG
 
 my @options = qw( 
@@ -28,6 +28,7 @@ my @options = qw(
   one_to_many
   file=s 
   registry=s 
+  log_cfg=s
   verbose help man 
 );
 
@@ -37,7 +38,7 @@ run();
 
 sub run {
   my $opts = _get_opts();
-  _initalise_log();
+  _initalise_log($opts);
   my $runnable = _build_runnable($opts);
   $runnable->run_without_hive();
   return;
@@ -132,8 +133,14 @@ sub _exit {
 my $log4perl_available = 0;
 
 sub _initalise_log {
+  my ($opts) = @_;
   if(_runtime_import('Log::Log4perl')) {
-    Log::Log4perl->init(\$log_config);
+    if($opts->{log_cfg}) {
+      Log::Log4perl->init($opts->{log_cfg});
+    }
+    else {
+      Log::Log4perl->init(\$log_config);
+    }
     $log4perl_available = 1;
   }
 }
@@ -167,7 +174,7 @@ project_dbentry.pl
 
 =head1 SYNOPSIS
 
-  ./project_dbentry.pl -registry REG -source SRC -target TRG -compara COM [-display_xrefs] [-engine ENG] [-write_to_db] [-file FILE] [-verbose] [-help | -man]
+  ./project_dbentry.pl -registry REG -source SRC -target TRG -compara COM [-log_cfg LOC] -display_xrefs] [-engine ENG] [-write_to_db] [-file FILE] [-verbose] [-help | -man]
 
 =head1 DESCRIPTION
 
@@ -204,6 +211,11 @@ The target species (species without GOs)
 =item B<--compara>
 
 The compara database to use
+
+=item B<--log_cfg>
+
+The log4perl configuration location; otherwise the code will use a default
+logger to STDERR
 
 =item B<--engine>
 
