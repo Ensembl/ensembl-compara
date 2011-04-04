@@ -853,7 +853,7 @@ sub calculate_consequence_data {
           
           my $snp = '-';
           
-          if($check_existing eq 'yes' || $novel_only eq 'yes') {
+          if($check_existing eq 'yes') {
             if(defined($vfa->db)) {
               
               my $sth = $vfa->db->dbc->prepare(qq{
