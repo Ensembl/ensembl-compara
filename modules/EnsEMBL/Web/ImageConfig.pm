@@ -503,6 +503,45 @@ sub _add_bam_track {
   $menu->append($track) if $track;
 }
 
+sub load_configured_bigwig {
+  my $self = shift;
+  # get the internal sources from config
+  my $internal_bigwig_sources = $self->sd_call('ENSEMBL_INTERNAL_BIGWIG_SOURCES') || {};
+
+  foreach my $source_name (sort keys %$internal_bigwig_sources) {
+    # get the target menu 
+    my $menu   = $self->get_node($internal_bigwig_sources->{$source_name});
+    my $source = $menu ? $self->sd_call($source_name) : undef;
+
+    $self->_add_bigwig_track($menu, "bigwig_${source_name}_" . md5_hex("$self->{'species'}:$source->{'url'}"), $source_n
+ame, %$source) if $source;
+  }
+}
+
+sub _add_bigwig_track {
+  my ($self, $menu, $key, $name, %options) = @_;
+ 
+  $menu ||= $self->get_node('user_data');
+
+  return unless $menu;
+
+  my $track = $self->create_track($key, $name, {
+    display   => 'off',
+    strand    => 'f',
+    _class    => 'bigwig',
+    glyphset  => 'bigwig',
+    colourset => 'bigwig',
+    sub_type  => 'bigwig',
+    renderers => [
+      'off',       'Off',
+      'tiling',    'Wiggle plot',
+    ],
+    %options
+  });
+
+  $menu->append($track) if $track;
+}
+
 sub load_configured_vcf {
   my $self = shift;
 

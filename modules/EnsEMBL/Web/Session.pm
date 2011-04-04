@@ -638,6 +638,29 @@ sub configure_bam_views {
   }
 }
 
+sub configure_bigwig_views {
+  my ($self, $bigwig, $track_options) = @_;
+  my $hub = $self->hub;
+
+  return unless $bigwig->{'species'} eq $hub->species;
+
+  my $referer = $hub->referer;
+  my $type    = $referer->{'ENSEMBL_TYPE'}   || $hub->type;
+  my $action  = $referer->{'ENSEMBL_ACTION'} || $hub->action;
+
+  $track_options->{'display'} ||= 'tiling';
+
+  foreach ($hub->get_viewconfig($type, $action)->image_config_names) {
+    my $image_config = $hub->get_imageconfig($_);
+    my $node         = $image_config->get_node("bigwig_$bigwig->{'name'}_" . md5_hex("$bigwig->{'species'}:$bigwig->{'url'}"));
+
+    if ($node) {
+      $node->set_user($_, $track_options->{$_}) for keys %$track_options;
+      $image_config->altered = 1;
+    }
+  }
+}
+
 sub configure_vcf_views {
   my ($self, $data, $track_options) = @_;
   my $hub         = $self->hub;
