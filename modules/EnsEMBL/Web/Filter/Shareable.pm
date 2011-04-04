@@ -32,12 +32,8 @@ sub catch {
   my @temp_urls = $hub->session->get_data(type => 'url');
   my @user_urls = $user ? $user->urls : ();
 
-  my @temp_bams = $hub->session->get_data(type => 'bam');
-  my @user_bams = $user ? $user->bams : ();
-
   $self->error_code = 'none' unless @temp_uploads || @user_uploads ||
-                                    @temp_urls || @user_urls ||
-                                    @temp_bams || @user_bams;
+                                    @temp_urls || @user_urls;
 
 }
 
