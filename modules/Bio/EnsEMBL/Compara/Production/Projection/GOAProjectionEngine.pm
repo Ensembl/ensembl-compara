@@ -224,7 +224,7 @@ sub _transfer_dbentry_by_targets {
 
     # if a GO term with the same accession, but IEA evidence code, exists, also don't project, as this
     # will lead to duplicates when the projected term has its evidence code changed to IEA after projection
-    if ($target_xref->primary_id() eq $target_xref->primary_id()) {
+    if ($source->primary_id() eq $target_xref->primary_id()) {
       foreach my $evidence_code (@{$target_xref->get_all_linkage_types()}) {
         if($evidence_code eq 'IEA') {
           if($self->log()->is_trace()) {
