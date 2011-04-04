@@ -186,7 +186,7 @@ SQL
 #WHERE tsi.stable_id =?
 #SQL
 
-  my $params = [$peptide_member->stable_id()];
+  my $params = ['Translation', $peptide_member->stable_id()];
   
   if($db_names) {
     foreach my $dbname (@{$db_names}) {      
