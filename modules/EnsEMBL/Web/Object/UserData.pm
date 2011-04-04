@@ -22,6 +22,7 @@ use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor;
 #use Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor;
 use Bio::DB::Sam;
+#use Bio::DB::BigFile;
 
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::DASConfig;
@@ -118,6 +119,31 @@ sub check_bam_data {
 
     if ($@ or !$bam or !$index) {
         $error = "Unable to open/index remote BAM file: $url<br>Ensembl can only display sorted, indexed BAM files.<br>Please ensure that your web server is accessible to the Ensembl site and that both your .bam and .bai files are present, named consistently, and have the correct file permissions (public readable).";
+    }
+  }
+  return $error;
+}
+
+sub check_bigwig_data {
+  my ($self, $url) = @_;
+  my $error = '';
+
+  if ($url =~ /^ftp:\/\//i && !$SiteDefs::ALLOW_FTP_BIGWIG) {
+    $error = "The BigWig file could not be added - FTP is not supported, please use HTTP.";
+  }
+  else {
+    # try to open and use the bigwig file
+    # this checks that the bigwig files is present and correct
+    my $bigwig;
+    eval {
+      $bigwig = Bio::DB::BigFile->bigWigFileOpen($url);
+      my $chromosome_list = $bigwig->chromList;
+    };
+    warn $@ if $@;
+    warn "Failed to open BigWig " . $url unless $bigwig;
+
+    if ($@ or !$bigwig) {
+      $error = "Unable to open remote BigWig file: $url<br>Ensure hat your web/ftp server is accessible to the Ensembl site";
     }
   }
   return $error;
