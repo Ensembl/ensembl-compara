@@ -220,6 +220,8 @@ sub _transfer_dbentry_by_targets {
       }
     }
   }
+  
+  return 1;
 }
 
 
