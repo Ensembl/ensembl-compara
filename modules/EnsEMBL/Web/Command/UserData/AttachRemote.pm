@@ -80,6 +80,7 @@ sub process {
       if ($hub->param('save')) {
         $self->object->move_to_user(type => 'url', code => $data->{'code'});
       }
+      $param->{'format'} = $format;
     }
   } else {
     $redirect .= 'SelectRemote';
