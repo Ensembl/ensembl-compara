@@ -206,9 +206,19 @@ sub _transfer_dbentry_by_targets {
     next unless check_ref($target_xref, $source_ref);
     
     #Reject if it was the same
-    if ( $source->dbname() eq $target_xref->dbname() &&
-	    $source->primary_id() eq $target_xref->primary_id() &&
-	    $link_join->($source) eq $link_join->($target_xref)) {
+    if ( 
+        $source->dbname() eq $target_xref->dbname() &&
+	      $source->primary_id() eq $target_xref->primary_id() &&
+	      $link_join->($source) eq $link_join->($target_xref)) {
+	      
+      if($self->log()->is_trace()) {
+        my $linkage_join = $link_join->($source);
+        $self->log()->trace(sprintf(
+          'Rejecting because target entity had a DBEntry (%d) with the same dbnames, primary ids & linkage type (%s) as the source DBEntry (%d)',
+          $target_xref->dbID(), $linkage_join, $source->dbID()
+        ));
+      }
+      
       return 0;
     }
 
@@ -216,7 +226,14 @@ sub _transfer_dbentry_by_targets {
     # will lead to duplicates when the projected term has its evidence code changed to IEA after projection
     if ($target_xref->primary_id() eq $target_xref->primary_id()) {
       foreach my $evidence_code (@{$target_xref->get_all_linkage_types()}) {
-	     return 0 if ($evidence_code eq "IEA");
+        if($evidence_code eq 'IEA') {
+          if($self->log()->is_trace()) {
+  	        $self->log()->trace(sprintf('Rejecting because %s is already projected by IEA', 
+    	       $target_xref->primary_id()
+    	      ));
+  	      }
+          return 0;
+        }
       }
     }
   }
