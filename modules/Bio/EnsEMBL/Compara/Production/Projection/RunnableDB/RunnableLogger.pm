@@ -37,6 +37,7 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
   Arg[DEBUG]  : Indicates if debug mode is on.
   Arg[STDERR] : Indicates we need to write out to STDERR
+  Arg[TRACE]  : Indicates if trace mode is on (defaults to 0)
   Description : Constructor for the logger
 
 =cut
@@ -44,9 +45,10 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 sub new {
   my ( $class, @args ) = @_;
   my $self = bless( {}, ref($class) || $class );
-  my ( $debug, $stderr ) = rearrange( [qw(debug stderr)], @args );
+  my ( $debug, $stderr, $trace ) = rearrange( [qw(debug stderr trace)], @args );
   $self->_debug($debug);
   $self->_stderr($stderr);
+  $self->_trace($trace);
   return $self;
 }
 
@@ -60,6 +62,12 @@ sub _stderr {
   my ($self, $_stderr) = @_;
   $self->{_stderr} = $_stderr if defined $_stderr;
   return $self->{_stderr};
+}
+
+sub _trace {
+  my ($self, $_trace) = @_;
+  $self->{_trace} = $_trace if defined $_trace;
+  return $self->{_trace};
 }
 
 =head2 fatal()
@@ -196,7 +204,7 @@ Returns true if debug was given as true during construction
 
 sub is_trace {
   my ($self) = @_;
-  return $self->_debug();
+  return $self->_trace();
 }
 
 sub _print {

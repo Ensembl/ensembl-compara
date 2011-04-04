@@ -256,31 +256,61 @@ sub _dbentry_predicate_builder {
 sub project {
   my ($self, $target_genome_db) = @_;
   
-  $self->log()->info('Processing '.$self->genome_db()->name().' Vs. '.$target_genome_db->name());
+  my $log = $self->log();
+  
+  $log->info('Processing '.$self->genome_db()->name().' Vs. '.$target_genome_db->name());
   
   my $mlss = $self->_get_mlss($target_genome_db);
   my $homologies = $self->_homologies($mlss);
   
   my @projections;
   
-  $self->log()->info('Looping over '.scalar(@{$homologies}).' homologies');
+  $log->info('Looping over '.scalar(@{$homologies}).' homologies');
   foreach my $homology (@{$homologies}) {
     my ($query_member, $query_attribute, $target_member, $target_attribute) = $self->_decode_homology($homology);
+    
+    if($self->log()->is_trace()) {
+      my $q_id = $query_member->stable_id();
+      my $t_id = $target_member->stable_id();
+      $log->trace(sprintf('Projecting from %s to %s', $q_id, $t_id));
+    }
+    
     my $query_dbentry_holder = $self->dbentry_source_object($query_member);
     my $target_dbentry_holder = $self->dbentry_source_object($target_member);
     my $db_entries = $query_dbentry_holder->get_all_DBEntries();
     foreach my $dbentry (@{$db_entries}) {
+      
+      if($log->is_trace()) {
+        $log->trace(sprintf('Working with %s from external db %s', $dbentry->primary_id(), $dbentry->dbname()));
+      }
+      
       my $filter_dbentry = $self->_filter_dbentry($dbentry, $target_dbentry_holder);
       if($filter_dbentry) {
+        
+        if($log->is_trace()) {
+          $log->trace('Passes DBEntry filter');
+        }
+        
         if($self->_transfer_dbentry_by_targets($dbentry, $target_dbentry_holder->get_all_DBEntries(), $target_member->stable_id())) {
+          $log->trace('DBEntry will be transferred');
           my $projection = $self->build_projection($query_member, $target_member, $query_attribute, $target_attribute, $dbentry, $homology);
           push(@projections, $projection) if defined $projection;
+        }
+        else {
+          if($log->is_trace()) {
+            $log->trace('Failed target entry transfer; check target for existing annotation or better quality annotation');
+          }
+        }
+      }
+      else {
+        if($log->is_trace()) {
+          $log->trace('Fails DBEntry filter');
         }
       }
     }
   }
   
-  $self->log()->info('Finished homology and have found '.scalar(@projections).' projection(s)');
+  $log->info('Finished homology and have found '.scalar(@projections).' projection(s)');
   
   return \@projections;
 }
