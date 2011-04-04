@@ -134,7 +134,9 @@ Expect to see the following params:
 
 =item file - String indicating a directory to write to (auto generated file name) or a target file name. We do not automatically create directories
 
-=item engine_params = Give optional parameters to the engine if required
+=item engine_params - Give optional parameters to the engine if required
+
+=item source - The source of the DBEntries to use; specify the source_name as used in member
 
 =back
 
@@ -153,9 +155,12 @@ sub fetch_input {
   #Building the engine
   my $source_gdb = $gdb_a->fetch_by_dbID($self->param('source_genome_db_id'));
   my $log = Bio::EnsEMBL::Compara::Production::Projection::RunnableDB::RunnableLogger->new(-DEBUG => $self->debug());
+  
   my $params = { -GENOME_DB => $source_gdb, -DBA => $compara_dba, -LOG => $log };
   $params->{-METHOD_LINK} = $self->param('method_link') if $self->param('method_link');
+  $params->{-SOURCE} = $self->param('source') if $self->param('source');
   %{$params} = %{$self->param('engine_params')} if $self->param('engine_params');
+  
   my $engine = $self->_build_engine($params);
   $self->projection_engine($engine);
   

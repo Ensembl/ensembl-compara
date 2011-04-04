@@ -22,6 +22,7 @@ my @options = qw(
   target=s 
   engine=s 
   compara=s 
+  source_name=s
   write_to_db 
   display_xrefs
   all_sources
@@ -103,6 +104,7 @@ sub _build_engine {
   );
   $args{-ALL_SOURCES} = 1 if $opts->{all_sources};
   $args{-ONE_TO_MANY} = 1 if $opts->{one_to_many};
+  $args{-SOURCE}      = $opts->{source_name} if $opts->{source_name};
   return $mod->new(%args);
 }
 
@@ -216,6 +218,13 @@ The compara database to use
 
 The log4perl configuration location; otherwise the code will use a default
 logger to STDERR
+
+=item B<--source_name>
+
+Optional argument allowing the specification of the level to perform 
+projections at. This means if we wish to project from Gene to Gene you can
+specify ENSEMBLGENE (these are the same names as used in MEMBER). The default
+is ENSEMBLPEP and is the recommended mode.
 
 =item B<--engine>
 

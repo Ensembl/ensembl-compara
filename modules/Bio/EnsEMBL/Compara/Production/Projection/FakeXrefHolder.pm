@@ -157,38 +157,44 @@ JOIN xref x USING (xref_id)
 JOIN external_db ed on (x.external_db_id = ed.external_db_id)
 LEFT JOIN ontology_xref oxr ON (ox.object_xref_id = oxr.object_xref_id)
 SQL
-  my $where = 'WHERE tsi.stable_id =?';
+  my $where = 'WHERE si.stable_id =?';
 
   my $translation_sql = <<SQL;
 SELECT $columns
-FROM translation_stable_id tsi
-JOIN object_xref ox ON (tsi.translation_id = ox.ensembl_id AND ox.ensembl_object_type =?)
+FROM translation_stable_id si
+JOIN object_xref ox ON (si.translation_id = ox.ensembl_id AND ox.ensembl_object_type =?)
 $xref_join
 $where
 SQL
 
-#  my $transcript_sql = <<SQL;
-#SELECT $columns
-#FROM translation_stable_id tsi
-#JOIN translation tr USING (translation_id)
-#JOIN transcript t USING (transcript_id)
-#JOIN object_xref ox ON (t.transcript_id = ox.ensembl_id AND ox.ensembl_object_type =?)
-#$xref_join
-#$where
-#SQL
+  my $transcript_sql = <<SQL;
+SELECT $columns
+FROM transcript_stable_id si
+JOIN object_xref ox ON (si.transcript_id = ox.ensembl_id AND ox.ensembl_object_type =?)
+$xref_join
+$where
+SQL
 
-#  my $gene_sql = <<SQL;
-#SELECT $columns
-#FROM translation_stable_id tsi
-#JOIN translation tr USING (translation_id)
-#JOIN transcript t USING (transcript_id)
-#JOIN gene g USING (gene_id)
-#JOIN object_xref ox ON (g.gene_id = ox.ensembl_id AND ox.ensembl_object_type =?)
-#$xref_join
-#$where
-#SQL
+  my $gene_sql = <<SQL;
+SELECT $columns
+FROM gene_stable_id si
+JOIN object_xref ox ON (si.gene_id = ox.ensembl_id AND ox.ensembl_object_type =?)
+$xref_join
+$where
+SQL
 
-  my $params = ['Translation', $peptide_member->stable_id()];
+  my $sql = {
+    ENSEMBLGENE => $gene_sql,
+    ENSEMBLTRANS => $transcript_sql,
+    ENSEMBLPEP => $translation_sql
+  }->{$member->source_name()};
+  my $type = {
+    ENSEMBLGENE => 'Gene',
+    ENSEMBLTRANS => 'Transcript',
+    ENSEMBLPEP => 'Translation'
+  }->{$member->source_name()};
+
+  my $params = [$type, $peptide_member->stable_id()];
   
   if($db_names) {
     my @conditions;
@@ -197,10 +203,10 @@ SQL
       push(@{$params}, $dbname);
     }
     my $joined_condition = join(' OR ', @conditions);
-    $translation_sql .= " AND ($joined_condition)";
+    $sql .= " AND ($joined_condition)";
   }
   
-  my $entries = $t->execute(-SQL => $translation_sql, -CALLBACK => sub {
+  my $entries = $t->execute(-SQL => $sql, -CALLBACK => sub {
     my ($row) = @_;
     my ($xref_id, $external_db_id, $primary_ac, $display_label, $version, $description, $info_type, $info_text, $linkage, $dbname, $type, $db_release, $ontology_xref_ox_id) = @{$row};
     

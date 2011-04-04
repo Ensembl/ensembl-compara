@@ -51,8 +51,9 @@ use warnings;
 
 use base qw( Bio::EnsEMBL::Compara::Production::Projection::ProjectionEngine );
 
-use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref);
 
 use Bio::EnsEMBL::Compara::Production::Projection::FakeXrefHolder;
 
@@ -62,6 +63,8 @@ use Data::Predicate::Predicates qw(:all);
 =head2 new()
 
   Arg[-dbentry_types] : The DBEntry database name to use. Defaults to GO
+  Arg[-source]: String; defines the level to use for finding xrefs to project
+                which should be assigned to the SOURCE_NAME used in MEMBER
   Description : New method used for a new instance of the given object. 
                 Required fields are indicated accordingly. Fields are specified
                 using the Arguments syntax (case insensitive).
@@ -72,13 +75,29 @@ sub new {
   my ( $class, @args ) = @_;
   my $self = $class->SUPER::new(@args);
   
-  my ($dbentry_types) = rearrange([qw(dbentry_types)], @args);
+  my ($dbentry_types, $source) = rearrange([qw(dbentry_types source)], @args);
   
   $dbentry_types = $self->_dbentry_types_builder() if ! defined $dbentry_types;
   assert_ref( $dbentry_types, 'ARRAY' );
   $self->{dbentry_types} = $dbentry_types;
   
+  $source ||= q{ENSEMBLPEP};
+  throw "Do not understand the source $source" unless $self->_valid_sources()->{$source};
+  $self->{source} = $source;
+  
   return $self;
+}
+
+=head2 source()
+
+  Description : Getter. Source used to define the level we use to get DBEntries
+  from
+
+=cut
+
+sub source {
+  my ($self, $source) = @_;
+  return $self->{source};
 }
 
 =head2 dbentry_types()
@@ -113,11 +132,57 @@ object to get Xrefs quickly. The class returned responds to the
 C<get_all_DBEntries()> subroutine call returning all of those Translation
 based DBEntry objects.
 
+The method looks at the type of member given which will instruct the level
+we perform projections at i.e. ENSEMBLGENE or ENSEMBLPEP
+
 =cut
 
 sub dbentry_source_object {
   my ($self, $member) = @_;
-  return Bio::EnsEMBL::Compara::Production::Projection::FakeXrefHolder->build_peptide_dbentries_from_Member($member, $self->dbentry_types());
+  my $decoded = $self->_decode_member($member);
+  return Bio::EnsEMBL::Compara::Production::Projection::FakeXrefHolder->build_peptide_dbentries_from_Member($decoded, $self->dbentry_types());
+}
+
+=head2 build_projection()
+
+  Arg[1]      : Member; source member of projection
+  Arg[2]      : Member; target member of projection
+  Arg[3]      : Source attribute
+  Arg[4]      : Target attribute
+  Arg[5]      : DBEntry projected
+  Arg[6]      : The homology used for projection
+  Description : Provides an abstraction to building a projection from a 
+                set of elements.
+  Returntype  : Projection object. Can be null & the current projection code
+                will ignore it
+
+=cut
+
+sub build_projection {
+  my ($self, $query_member, $target_member, $query_attribute, $target_attribute, $dbentry, $homology) = @_;
+  return Bio::EnsEMBL::Compara::Production::Projection::Projection->new(
+    -ENTRY => $dbentry,
+    -FROM => $self->_decode_member($query_member),
+    -TO => $self->_decode_member($target_member),
+    -FROM_IDENTITY => $query_attribute->perc_id(),
+    -TO_IDENTITY => $target_attribute->perc_id(),
+    -TYPE => $homology->description()
+  );
+}
+
+sub _decode_member {
+  my ($self, $member) = @_;
+  my $dispatch = {
+    ENSEMBLPEP => sub {
+      my ($member) = @_;
+      return $member->get_canonical_peptide_Member();
+    },
+    ENSEMBLGENE => sub {
+      my ($member) = @_;
+      return $member->gene_member();
+    }
+  };
+  return $dispatch->{$self->source()}->($member);
 }
 
 ###### BUILDERS
@@ -155,12 +220,14 @@ sub _dbentry_predicate_builder {
   my $correct_type_predicate = p_and(p_defined(), p_blessed(), $entry_type_predicate, p_isa('Bio::EnsEMBL::OntologyXref'));
   
   #Allowed linkage types; can be any of these so it's an OR
-  #  IC Inferred by curator
   #  IDA Inferred from direct assay
   #  IEA Inferred from electronic annotation
   #  IGI Inferred from genetic interaction
   #  IMP Inferred from mutant phenotype
   #  IPI Inferred from physical interaction
+
+  #We do not use these  
+  #  IC Inferred by curator
   #  ISS Inferred from sequence or structural similarity
   #  NAS Non-traceable author statement
   #  ND No biological data available
@@ -183,6 +250,8 @@ sub _dbentry_predicate_builder {
   #Build it together & return
   return p_and($correct_type_predicate, $go_term_removal_predicate, $dbentry_has_allowed_linkage_predicate);
 }
+
+############### LOGIC
 
 =pod
 
@@ -241,5 +310,10 @@ sub _transfer_dbentry_by_targets {
   return 1;
 }
 
+sub _valid_sources {
+  my ($self) = @_;
+  my %valid = map { $_ => 1} qw(ENSEMBLGENE ENSEMBLPEP);
+  return \%valid;
+}
 
 1;

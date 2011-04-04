@@ -208,6 +208,7 @@ sub genome_db {
   return $self->{genome_db};
 }
 
+
 ######BUILDERS
 
 sub _method_link_type_builder {

@@ -30,6 +30,7 @@ package Bio::EnsEMBL::Compara::Production::Projection::Writer::ProjectedDBEntryW
 use strict;
 use warnings;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 use base qw(Bio::EnsEMBL::Compara::Production::Projection::Writer::BaseWriter);
@@ -78,12 +79,39 @@ also stores the newly assigned DBEntry.
 
 sub write_projection {
   my ($self, $p) = @_;
-  my $db_entry_a = $self->dba()->get_DBEntryAdaptor();  
+  my $db_entry_a = $self->dba()->get_DBEntryAdaptor();
   my $entry = $self->_process_entry($p);
-  my $translation = $p->to()->get_Translation(); 
-  $translation->add_DBEntry($entry);
-  $db_entry_a->store($entry, $translation->dbID(), 'Translation');
+  my ($object, $type) = $self->_to_ensembl_object();
+  $object->add_DBEntry($entry);
+  $db_entry_a->store($entry, $object->dbID(), $type);
   return;
+}
+
+=head2 _process_entry()
+
+Maps a member object to its Ensembl core object and returns the expected type
+for the DBEntryAdaptor to correctly write the xref back
+
+=cut
+
+sub _to_ensembl_object {
+  my ($self, $member) = @_;
+  my $source = $member->source_name();
+  my $object;
+  my $type;
+  if($source eq 'ENSEMBLGENE') {
+    ($object, $type) = ($member->get_Gene(), 'Gene');
+  }
+  elsif($source eq 'ENSEMBLTRANS') {
+    ($object, $type) = ($member->get_Transcript(), 'Transcript');
+  }
+  elsif($source eq 'ENSEMBLPEP') {
+    ($object, $type) = ($member->get_Translation(), 'Translation');
+  }
+  else {
+    throw "Cannot understand how to write an Xref back for the source type $source";
+  }
+  return ($object, $type);
 }
 
 =head2 _process_entry()
