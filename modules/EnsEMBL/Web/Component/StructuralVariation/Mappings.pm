@@ -115,7 +115,13 @@ sub gene_transcript_table {
   	return $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
 	}
 	else {
-		my $msg = 'No genes fall within the structural variant.<br /> Please, go to the <b>Genomic context</b> page for more detailed information.';
+	 	my $url  = $self->hub->url({
+    	species   => $self->hub->species,
+    	type      => 'StructuralVariation',
+			action    => 'Context'
+ 		});
+  	
+		my $msg = qq{No genes fall within the structural variant.<br /> Please, go to the <a href="$url">Genomic context</a> page for more detailed information.};
 		return $self->_info('No genes', $msg, '50%');
 	}
 }
