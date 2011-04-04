@@ -31,7 +31,7 @@ sub content {
   if (!$v) { 
     return $self->_info(
       '',
-      "<p>Unable to draw SNP neighbourhood as we cannot uniquely determine the SNP's location</p>"
+      "<p>Unable to draw structural variant neighbourhood as we cannot uniquely determine the structural variant's location</p>"
     );
   }
 
