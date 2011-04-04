@@ -70,36 +70,43 @@ example, a three base pair deletion of nucleotides 12600, 12601, and
 <h2 id="output">Output format</h2>
 
 <p>The tool predicts the consequence of this variation, the amino acid
-position and change (if the variation falls within a protein) and the SNP
-identifier of  known SNPs that occur at this position. The output
+position and change (if the variation falls within a protein) and the
+identifier of known variations that occur at this position. The output
 columns are:</p>
 
 <ol>
 <li><strong>uploaded variation</strong> - as chromosome_start_alleles</li>
 <li><strong>location</strong> - in standard coordinate format (chr:start or chr:start-end)</li>
+<li><strong>allele</strong> - the variant allele used to calculate the consequence</li>
 <li><strong>gene</strong> - Ensembl stable ID of affected gene</li>
 <li><strong>transcript</strong> - Ensembl stable ID of affected transcript</li>
 <li><strong>consequence</strong> - consequence type of this variation</li>
-<li><strong>relative position in cDNA</strong> - base pair position in coding sequence</li>
+<li><strong>relative position in cDNA</strong> - base pair position in cDNA sequence</li>
+<li><strong>relative position in CDS</strong> - base pair position in coding sequence</li>
 <li><strong>relative position in protein</strong> - amino acid position in protein</li>
 <li><strong>amino acid change</strong> - only given if the variation affects the protein-coding sequence</li>
-<li><strong>corresponding variation</strong> - stable ID of SNP, if known</li>
+<li><strong>codons</strong> - the alternate codons with the variant base highlighted as bold (HTML) or upper case (text)
+<li><strong>corresponding variation</strong> - identifier of existing variation</li>
+<li><strong>extra</strong> - this column contains extra information as key=value pairs separated by ";". The keys are as follows:
+	<ul>
+		<li><i>HGNC</i> - the HGNC gene identifier</li>
+		<li><i>ENSP</i> - the Ensembl protein identifier of the affected transcript</li>
+		<li><i>HGVSc</i> - the HGVS coding sequence name</li>
+		<li><i>HGVSp</i> - the HGVS protein sequence name</li>
+		<li><i>SIFT</i> - the SIFT prediction and/or score, with both given as prediction(score)</li>
+		<li><i>PolyPhen</i> - the PolyPhen prediction and/or score</li>
+		<li><i>Condel</i> - the Condel consensus prediction and/or score</li>
+	</ul>
+</li>
 </ol>
 
 <p>Empty values are denoted by '-'.</p>
 
 <pre class="code">
-12_1017956_T/A  12:1017956  ENSG00000060237 ENST00000315939 NON_SYNONYMOUS_CODING 7790  2383  /K  rs55650617
-12_1017956_T/A  12:1017956  ENSG00000060237 ENST00000252477 NON_SYNONYMOUS_CODING 6916  2137  /K  rs55650617
-12_1017956_T/A  12:1017956  ENSG00000060237 ENST00000340908 NON_SYNONYMOUS_CODING 5926  1976  /K  rs55650617
-12_1017956_T/A  12:1017956  ENSG00000002016 ENST00000358495 DOWNSTREAM  - - - rs55650617
-12_1017956_T/A  12:1017956  ENSG00000002016 ENST00000228345 DOWNSTREAM  - - - rs55650617
-12_1017956_T/A  12:1017956  ENSG00000002016 ENST00000430095 DOWNSTREAM  - - - rs55650617
-12_1017956_T/A  12:1017956  ENSG00000002016 ENST00000468231 DOWNSTREAM  - - - rs55650617
-12_1017956_T/A  12:1017956  ENSG00000002016 ENST00000481052 DOWNSTREAM  - - - rs55650617
-12_1017956_T/A  12:1017956  ENSG00000002016 ENST00000488642 DOWNSTREAM  - - - rs55650617
-14_19584687_C/T 14:19584687 ENSG00000222036 ENST00000409832 3PRIME_UTR  1671  - - rs2818537
-19_66520_G/A  19:66520  ENSG00000225373 ENST00000391654 INTRONIC  - - - -
+11_224088_C/A  11:224088  T  ENSG00000142082  ENST00000525319  NON_SYNONYMOUS_CODING   742  716  239  T/N  aCc/aAc  -  SIFT=deleterious(0);PolyPhen=unknown(1)
+11_224088_C/A  11:224088  T  ENSG00000142082  ENST00000534381  5_PRIME_UTR             -    -    -    -    -        -  -
+11_224088_C/A  11:224088  T  ENSG00000142082  ENST00000529055  DOWNSTREAM              -    -    -    -    -        -  -
+11_224585_G/A  11:224585  T  ENSG00000142082  ENST00000529937  INTRONIC,NMD_TRANSCRIPT -    -    -    -    -        -  HGVSc=ENST00000529937.1:c.136-346G>A
 </pre>
 
 </body>
