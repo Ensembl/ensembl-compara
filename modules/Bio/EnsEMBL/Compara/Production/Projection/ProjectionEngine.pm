@@ -370,9 +370,8 @@ sub _homologies {
       $log->trace('Rejected homology') if $trace;
     }
   }
-  my $filtered = $self->homology_predicate()->filter($homologies);
   $self->log()->debug('Finished filtering');
-  return $filtered;
+  return \@filtered;
 }
 
 sub _filter_dbentry {
