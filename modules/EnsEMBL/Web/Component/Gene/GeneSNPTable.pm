@@ -37,7 +37,7 @@ sub content {
 
 sub make_table {
   my ($self, $table_rows, $consequence_type) = @_;
-  
+    
   my $columns = [
     { key => 'ID',         sort => 'html'                                                        },
     { key => 'chr' ,       sort => 'position',      title => 'Chr: bp'                           },
@@ -46,14 +46,24 @@ sub make_table {
     { key => 'HGVS',       sort => 'string',        title => 'HGVS name(s)',   align => 'center' },
     { key => 'class',      sort => 'string',        title => 'Class',          align => 'center' },
     { key => 'Source',     sort => 'string'                                                      },
-    { key => 'status',     sort => 'string',   title => 'Validation',     align => 'center' },
+    { key => 'status',     sort => 'string',        title => 'Validation',     align => 'center' },
     { key => 'snptype',    sort => 'string',        title => 'Type',                             },
     { key => 'aachange',   sort => 'string',        title => 'Amino Acid',     align => 'center' },
     { key => 'aacoord',    sort => 'position',      title => 'AA co-ordinate', align => 'center' },
+  ];
+  
+  # add SIFT and PolyPhen for human
+  if($self->hub->species =~ /homo_sapiens/i) {
+    push @$columns, (
     { key => 'sift',       sort => 'position_html', title => 'SIFT',                             },
     { key => 'polyphen',   sort => 'position_html', title => 'PolyPhen',                         },
+    );
+  }
+  
+  # add transcript column
+  push @$columns,
     { key => 'Transcript', sort => 'string'                                                      },
-  ];
+  ;
   
   return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 0, id => "${consequence_type}_table" });
 }

@@ -63,10 +63,13 @@ sub content {
     { key => 'prot_pos',  title => 'Position in protein',    sort => 'position', align => 'center' },
     { key => 'aa',        title => 'Amino acid',             sort => 'string'                      },
     { key => 'codon',     title => 'Codons',                 sort => 'string'                      },
-    { key => 'sift',      title => 'SIFT',                   sort => 'position_html'                      },
-    { key => 'polyphen',  title => 'PolyPhen',               sort => 'position_html'                      },
     #{ key => 'info',      title => 'Info',                       sort => 'string'                      },
   );
+  
+  $table->add_columns(
+    { key => 'sift',      title => 'SIFT',                   sort => 'position_html'                      },
+    { key => 'polyphen',  title => 'PolyPhen',               sort => 'position_html'                      },
+  ) if $hub->species =~ /homo_sapiens/i;
   
   my $gene_adaptor  = $hub->get_adaptor('get_GeneAdaptor');
   my $trans_adaptor = $hub->get_adaptor('get_TranscriptAdaptor');

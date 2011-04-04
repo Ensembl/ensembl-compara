@@ -69,7 +69,7 @@ sub content {
     };
   }
   
-  my $html = $self->new_table([
+  my $columns = [
     { key => 'res',    title => 'Residue',            width => '5%',  align => 'center', sort => 'numeric' },
     { key => 'id',     title => 'Variation ID',       width => '10%', align => 'center', sort => 'html'    }, 
     { key => 'type',   title => 'Variation type',     width => '20%', align => 'center', sort => 'string'  },
@@ -77,9 +77,14 @@ sub content {
     { key => 'ambig',  title => 'Ambiguity code',     width => '5%',  align => 'center', sort => 'string'  },
     { key => 'alt',    title => 'Residues',           width => '10%', align => 'center', sort => 'string'  },
     { key => 'codons', title => 'Codons',             width => '10%', align => 'center', sort => 'string'  },
+  ];
+  
+  push @$columns, (
     { key => 'sift',   title => 'SIFT',               width => '15%', align => 'center', sort => 'position_html'  },
     { key => 'poly',   title => 'PolyPhen',           width => '15%', align => 'center', sort => 'position_html'  }
-  ], \@data, { data_table => 1, sorting => [ 'res asc' ] })->render;
+  ) if $hub->species =~ /homo_sapiens/i;
+  
+  my $html = $self->new_table($columns, \@data, { data_table => 1, sorting => [ 'res asc' ] })->render;
   
   $html .= $self->_info('Information','<p><span style="color:red;">*</span> SO terms are shown when no NCBI term is available</p>', '50%') if $cons_format eq 'ncbi';
   
