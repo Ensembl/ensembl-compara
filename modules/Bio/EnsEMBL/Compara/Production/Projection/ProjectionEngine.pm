@@ -356,6 +356,20 @@ sub _homologies {
   $self->log()->debug('Retriving homologies');
   my $homologies = $self->_get_homologies($mlss);
   $self->log()->debug('Filtering homologies');
+  my $predicate = $self->homology_predicate();
+  my $log = $self->log();
+  my $trace = $log->is_trace();
+  my @filtered;
+  foreach my $h (@{$homologies}) {
+    $log->trace(sprintf('Filtering homology %d', $h->dbID())) if $trace;
+    if($predicate->apply($h)) {
+      $log->trace('Accepted homology') if $trace;
+      push(@filtered, $h);
+    }
+    else {
+      $log->trace('Rejected homology') if $trace;
+    }
+  }
   my $filtered = $self->homology_predicate()->filter($homologies);
   $self->log()->debug('Finished filtering');
   return $filtered;
