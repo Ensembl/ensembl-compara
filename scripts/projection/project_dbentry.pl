@@ -14,7 +14,7 @@ log4perl.appender.Screen=Log::Log4perl::Appender::Screen
 log4perl.appender.Screen.stderr=1
 log4perl.appender.Screen.Threshold=DEBUG
 log4perl.appender.Screen.layout=Log::Log4perl::Layout::PatternLayout
-log4perl.appender.Screen.layout.ConversionPattern=%d %p>%M{2}:%L - %m%n
+log4perl.appender.Screen.layout.ConversionPattern=%d %p> %M{2}::%L - %m%n
 LOGCFG
 
 my @options = qw( 
