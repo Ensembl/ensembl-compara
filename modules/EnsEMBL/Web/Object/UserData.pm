@@ -20,6 +20,8 @@ use Bio::EnsEMBL::StableIdHistoryTree;
 use Bio::EnsEMBL::Utils::Exception qw(try catch);
 use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor;
+#use Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor;
+use Bio::DB::Sam;
 
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::DASConfig;
@@ -29,6 +31,7 @@ use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::Text::Feature::SNP_EFFECT;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::Tools::Misc qw(get_url_filesize);
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -61,6 +64,92 @@ sub availability {
   $hash->{'has_variation'} = $self->database('variation') ? 1 : 0;
   return $hash;
 }
+
+sub check_url_data {
+  my ($self, $url) = @_;
+  my $error = '';
+  my $options = {};
+
+  $url = "http://$url" unless $url =~ /^http/;
+
+  ## Check file size
+  my $feedback = get_url_filesize($url);
+
+  if ($feedback->{'error'}) {
+    if ($feedback->{'error'} eq 'timeout') {
+      $error = 'No response from remote server';
+    } elsif ($feedback->{'error'} eq 'mime') {
+      $error = 'Invalid mime type';
+    } else {
+      $error = "Unable to access file. Server response: $feedback->{'error'}";
+    }
+  } elsif (defined $feedback->{'filesize'} && $feedback->{'filesize'} == 0) {
+    $error = 'File appears to be empty';
+  }
+  else {
+    $options = {'filesize' => $feedback->{'filesize'}};
+  }
+  return ($error, $options);
+}
+
+sub check_bam_data {
+  my ($self, $url) = @_;
+  my $error = '';
+
+  if ($url =~ /^ftp:\/\//i && !$SiteDefs::BAM_ALLOW_FTP) {
+    $error = "The bam file could not be added - FTP is not supported, please use HTTP.";
+  } 
+  else {
+    # try to open and use the bam file and its index -
+    # this checks that the bam and index files are present and correct, 
+    # and should also cause the index file to be downloaded and cached in /tmp/ 
+    my ($bam, $index);
+    eval {
+      $bam = Bio::DB::Bam->open($url);
+      $index = Bio::DB::Bam->index($url,0);
+      my $header = $bam->header;
+      my $region = $header->target_name->[0];
+      my $callback = sub {return 1};
+      $index->fetch($bam, $header->parse_region("$region:1-10"), $callback);
+    };
+    warn $@ if $@;
+    warn "Failed to open BAM " . $url unless $bam;
+    warn "Failed to open BAM index for " . $url unless $index;
+
+    if ($@ or !$bam or !$index) {
+        $error = "Unable to open/index remote BAM file: $url<br>Ensembl can only display sorted, indexed BAM files.<br>Please ensure that your web server is accessible to the Ensembl site and that both your .bam and .bai files are present, named consistently, and have the correct file permissions (public readable).";
+    }
+  }
+  return $error;
+}
+
+sub check_vcf_data {
+  my ($self, $url) = @_;
+  my $error = '';
+
+  if ($url =~ /^ftp:\/\//i && !$SiteDefs::ALLOW_FTP_ATTACHMENT) {
+    $error = "The VCF file could not be added - FTP is not supported, please use HTTP.";
+  } 
+  else {
+    # try to open and use the VCF file       # this checks that the VCF and index files are present and correct, 
+    # and should also cause the index file to be downloaded and cached in /tmp/ 
+    my ($dba, $index);
+    eval {
+      $dba =  Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor->new($url);
+      $dba->fetch_variations(1, 1, 10);
+    };
+    warn $@ if $@;
+    warn "Failed to open VCF $url\n $@\n " if $@; 
+    warn "Failed to open VCF $url\n $@\n " unless $dba;
+          
+    if ($@ or !$dba) {
+      $error = "Unable to open/index remote VCF file: $url<br>Ensembl can only display sorted, indexed VCF files
+<br>Ensure you have sorted and indexed your file and that your web server is accessible to the Ensembl site";
+    }
+  }
+  return $error;
+}
+
 
 #---------------------------------- userdata DB functionality ----------------------------------
 
@@ -145,9 +234,6 @@ sub move_to_user {
 
   $record = $user->add_to_urls($data)
     if $args{'type'} eq 'url';
-
-  $record = $user->add_to_bams($data)
-    if $args{'type'} eq 'bam';
 
   if ($record) {
     $session->purge_data(%args);
@@ -273,7 +359,7 @@ sub delete_remote {
   my $user    = $hub->user;
   my $session = $hub->session;
   
-  if ($code && $type =~ /^(url|bam)$/) {
+  if ($code && $type =~ /^(url)$/) {
     $session->purge_data(type => $type, code => $code);
   }
   elsif ($self->param('logic_name')) {
@@ -295,12 +381,6 @@ sub delete_remote {
       my ($url) = $user->urls($id);
       if ($url) {
         $url->delete;
-      }
-    }
-    elsif ($type eq 'bam') {
-      my ($bam) = $user->bams($id);
-      if ($bam) {
-        $bam->delete;
       }
     }
   }
