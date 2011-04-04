@@ -202,7 +202,7 @@ sub parse {
                       }
             ) unless $self->{'_find_nearest'}{'done'};
           
-          if (keys %$valid_coords && scalar(@$columns) >1 && $format ne 'SNP') { 
+          if (keys %$valid_coords && scalar(@$columns) >1 && $format !~ /snp|pileup|vcf/i) { 
             ## We only validate on chromosomal coordinates, to prevent errors on vertical code
             next unless $valid_coords->{$chr}; ## Chromosome is valid and has length
             next unless $start > 0 && $end <= $valid_coords->{$chr};
