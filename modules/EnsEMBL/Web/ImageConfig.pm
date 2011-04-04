@@ -316,7 +316,7 @@ sub load_user_tracks {
   my $hub  = $self->hub;
   my $user = $hub->user;
   my $das  = $hub->get_all_das;
-  my (%url_sources, %user_sources, %bam_sources);
+  my (%url_sources, %user_sources);
 
   foreach my $source (sort { ($a->caption || $a->label) cmp ($b->caption || $b->label) } values %$das) {
     next if $self->get_node('das_' . $source->logic_name);
@@ -397,7 +397,7 @@ sub load_user_tracks {
   }
 
   foreach my $url (sort { $url_sources{$a}{'source_name'} cmp $url_sources{$b}{'source_name'} } keys %url_sources) {
-    my $add_method = '_add_'.$url_sources{$url}{'format'}.'_track';
+    my $add_method = '_add_'.lc($url_sources{$url}{'format'}).'_track';
     if ($self->can($add_method)) {
       $self->$add_method($menu, $url_sources{$url});
     }
@@ -500,6 +500,48 @@ sub _add_bam_track {
     description => $description,
   });
  
+  $menu->append($track) if $track;
+}
+
+sub load_configured_vcf {
+  my $self = shift;
+
+  # get the internal sources from config
+  my $internal_vcf_sources = $self->sd_call('ENSEMBL_INTERNAL_VCF_SOURCES') || {};
+
+  foreach my $source_name (sort keys %$internal_vcf_sources) {
+    # get the target menu 
+    my $menu_name = $internal_vcf_sources->{$source_name};
+    if (my $menu = $self->get_node($menu_name)) {
+      # get vcf source config
+      if (my $source  = $self->sd_call($source_name)) {
+  # add the track
+  my $key = 'vcf_' . $source_name . '_' . md5_hex($self->{'species'} . ':' . $source->{url});
+  $self->_add_vcf_track($menu, $key, $source_name, %{$source});
+      }
+    }
+  }
+}
+
+sub _add_vcf_track {
+  my ($self, $menu, $key, $name, %options) = @_;
+
+  $menu ||= $self->get_node('user_data');
+  return unless $menu;
+
+  my $track = $self->create_track($key, $name, {
+      display     => 'off',
+      caption => $name,
+      glyphset    => 'vcf',
+      sources     => undef,
+      strand      => 'f',
+      depth       => 0.5,
+      bump_width  => 0,
+      colourset   => 'variation',
+      renderers   => [off => 'Off', histogram => 'Normal', compact => 'Compact'],
+      %options
+  });
+
   $menu->append($track) if $track;
 }
 
