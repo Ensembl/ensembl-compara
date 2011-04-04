@@ -11,7 +11,7 @@ use Bio::EnsEMBL::Registry;
 my $log_config = <<LOGCFG;
 log4perl.logger=DEBUG, Screen
 log4perl.appender.Screen=Log::Log4perl::Appender::Screen
-log4perl.appender.Screen.stderr=0
+log4perl.appender.Screen.stderr=1
 log4perl.appender.Screen.Threshold=DEBUG
 log4perl.appender.Screen.layout=Log::Log4perl::Layout::PatternLayout
 log4perl.appender.Screen.layout.ConversionPattern=%d %p> %F{1}:%L %M - %m%n
@@ -189,31 +189,61 @@ will produce a CSV of what I<would> have been written back to the DB.
 
 =over 8
 
-=item B<--registry> - The registry to use
+=item B<--registry>
 
-=item B<--source> - The source species (species with GOs)
+The registry to use
 
-=item B<--target> - The target species (species without GOs)
+=item B<--source>
 
-=item B<--compara> - The compara database to use
+The source species (species with GOs)
 
-=item B<--engine> - The engine to use; defaults to GOAProjectionEngine or DisplayXrefProjectionEngine. Must be a fully qualified package
+=item B<--target>
 
-=item B<--display_xrefs> - Flags we wish to project display Xrefs
+The target species (species without GOs)
 
-=item B<--all_sources> - Allow the input of any sources of information
+=item B<--compara>
 
-=item B<--one_to_many> - Bring in 1:m relationships rather than just 1:1
+The compara database to use
 
-=item B<--write_to_db> - Indicates we want Xrefs going back to the core DB. If used we assume the registry's core DBAdaptor is writable
+=item B<--engine>
 
-=item B<--file> - Location to write output to. Can be a directory (so an automatically generated name will be given) or a full path
+The engine to use; defaults to GOAProjectionEngine or 
+DisplayXrefProjectionEngine. Must be a fully qualified package
 
-=item B<--verbose> - Start emitting more messages
+=item B<--display_xrefs>
 
-=item B<--help> - Basic help with options
+Flags we wish to project display Xrefs
 
-=item B<--man> - Manual version of the help. More complete 
+=item B<--all_sources>
+
+Allow the input of any sources of information
+
+=item B<--one_to_many>
+
+Bring in 1:m relationships rather than just 1:1
+
+=item B<--write_to_db>
+
+Indicates we want Xrefs going back to the core DB. If used we assume the 
+registry's core DBAdaptor is writable
+
+=item B<--file>
+
+Location to write output to. Can be a directory (so an automatically 
+generated name will be given) or a full path. Specifying B<-> will write the
+file out to STDOUT.
+
+=item B<--verbose>
+
+Start emitting more messages
+
+=item B<--help>
+
+Basic help with options
+
+=item B<--man>
+
+Manual version of the help. More complete 
 
 =back
 

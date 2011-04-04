@@ -32,7 +32,7 @@ package Bio::EnsEMBL::Compara::Production::Projection::FakeXrefHolder;
 use strict;
 use warnings;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref wrap_array);
 
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::DBEntry;
@@ -138,30 +138,66 @@ sub build_display_xref_from_Member {
 =cut
 
 sub build_peptide_dbentries_from_Member {
-  my ($class, $member, $dbname) = @_;
-    
+  my ($class, $member, $db_names) = @_;
+  
+  if(defined $db_names) {
+    $db_names = wrap_array($db_names);
+  }
+  else {
+    $db_names = [];
+  }
+  
   my $peptide_member = ($member->source_name() eq 'ENSEMBLGENE') ? $member->get_canonical_peptide_Member() : $member;
   my $dbc = $peptide_member->genome_db()->db_adaptor()->dbc();
   my $t = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $dbc);
-  
-  my $sql = q{SELECT x.xref_id, x.external_db_id, x.dbprimary_acc, x.display_label, x.version, x.description, x.info_type, x.info_text, oxr.linkage_type, ed.db_name, ed.type, ed.db_release
+
+  my $translation_sql = <<'SQL';
+SELECT x.xref_id, x.external_db_id, x.dbprimary_acc, x.display_label, x.version, x.description, x.info_type, x.info_text, oxr.linkage_type, ed.db_name, ed.type, ed.db_release, oxr.object_xref_id
 FROM translation_stable_id tsi
-JOIN object_xref ox ON (tsi.translation_id = ox.ensembl_id AND ox.ensembl_object_type = 'Translation')
+JOIN object_xref ox ON (tsi.translation_id = ox.ensembl_id AND ox.ensembl_object_type =?)
 JOIN xref x USING (xref_id)
 JOIN external_db ed on (x.external_db_id = ed.external_db_id)
 LEFT JOIN ontology_xref oxr ON (ox.object_xref_id = oxr.object_xref_id)
-WHERE tsi.stable_id =?};
-  
+WHERE tsi.stable_id =?
+SQL
+
+#  my $transcript_sql = <<'SQL';
+#SELECT x.xref_id, x.external_db_id, x.dbprimary_acc, x.display_label, x.version, x.description, x.info_type, x.info_text, oxr.linkage_type, ed.db_name, ed.type, ed.db_release, oxr.object_xref_id
+#FROM translation_stable_id tsi
+#JOIN translation tr USING (translation_id)
+#JOIN transcript t USING (transcript_id)
+#JOIN object_xref ox ON (t.transcript_id = ox.ensembl_id AND ox.ensembl_object_type =?)
+#JOIN xref x USING (xref_id)
+#JOIN external_db ed on (x.external_db_id = ed.external_db_id)
+#LEFT JOIN ontology_xref oxr ON (ox.object_xref_id = oxr.object_xref_id)
+#WHERE tsi.stable_id =?
+#SQL
+
+#  my $gene_sql = <<'SQL';
+#SELECT x.xref_id, x.external_db_id, x.dbprimary_acc, x.display_label, x.version, x.description, x.info_type, x.info_text, oxr.linkage_type, ed.db_name, ed.type, ed.db_release, oxr.object_xref_id
+#FROM translation_stable_id tsi
+#JOIN translation tr USING (translation_id)
+#JOIN transcript t USING (transcript_id)
+#JOIN gene g USING (gene_id)
+#JOIN object_xref ox ON (g.gene_id = ox.ensembl_id AND ox.ensembl_object_type =?)
+#JOIN xref x USING (xref_id)
+#JOIN external_db ed on (x.external_db_id = ed.external_db_id)
+#LEFT JOIN ontology_xref oxr ON (ox.object_xref_id = oxr.object_xref_id)
+#WHERE tsi.stable_id =?
+#SQL
+
   my $params = [$peptide_member->stable_id()];
   
-  if($dbname) {
-    $sql .= ' AND ed.db_name like ?';
-    push(@{$params}, $dbname);
+  if($db_names) {
+    foreach my $dbname (@{$db_names}) {      
+      $translation_sql .= ' AND ed.db_name like ?';
+      push(@{$params}, $dbname);
+    }
   }
   
-  my $entries = $t->execute(-SQL => $sql, -CALLBACK => sub {
+  my $entries = $t->execute(-SQL => $translation_sql, -CALLBACK => sub {
     my ($row) = @_;
-    my ($xref_id, $external_db_id, $primary_ac, $display_label, $version, $description, $info_type, $info_text, $linkage, $dbname, $type, $db_release) = @{$row};
+    my ($xref_id, $external_db_id, $primary_ac, $display_label, $version, $description, $info_type, $info_text, $linkage, $dbname, $type, $db_release, $ontology_xref_ox_id) = @{$row};
     
     my $hash_to_bless = {
       dbID => $xref_id,
@@ -178,9 +214,10 @@ WHERE tsi.stable_id =?};
     
     my $xref;
     
-    #It was an OntologyXref if we had this
-    if($linkage) {
-      $hash_to_bless->{linkage_types} = [[$linkage]];
+    #It was an OntologyXref if we had linked into ontology_xref
+    if($ontology_xref_ox_id) {
+      #only add linkage types if we had some
+      $hash_to_bless->{linkage_types} = [[$linkage]] if $linkage;
       $xref = Bio::EnsEMBL::OntologyXref->new_fast($hash_to_bless);
     } else {
       $xref = Bio::EnsEMBL::DBEntry->new_fast($hash_to_bless);

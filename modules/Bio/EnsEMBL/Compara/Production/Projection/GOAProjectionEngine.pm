@@ -85,7 +85,7 @@ sub new {
 
   Description : Getter. Percentage identity in the source
   Can be customised by overriding C<_dbentry_types_builder>(). Defaults to
-  an arrayref containing GO and PO by default.
+  an arrayref containing GO by default.
 
 =cut
 
@@ -117,7 +117,7 @@ based DBEntry objects.
 
 sub dbentry_source_object {
   my ($self, $member) = @_;
-  return Bio::EnsEMBL::Compara::Production::Projection::FakeXrefHolder->build_peptide_dbentries_from_Member($member);
+  return Bio::EnsEMBL::Compara::Production::Projection::FakeXrefHolder->build_peptide_dbentries_from_Member($member, $self->dbentry_types());
 }
 
 ###### BUILDERS

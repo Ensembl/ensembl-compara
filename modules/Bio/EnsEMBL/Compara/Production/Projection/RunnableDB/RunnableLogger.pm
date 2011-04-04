@@ -32,11 +32,11 @@ package Bio::EnsEMBL::Compara::Production::Projection::RunnableDB::RunnableLogge
 use strict;
 use warnings;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception ();
 
 =head2 new()
 
   Arg[DEBUG]  : Indicates if debug mode is on.
+  Arg[STDERR] : Indicates we need to write out to STDERR
   Description : Constructor for the logger
 
 =cut
@@ -44,8 +44,9 @@ use Bio::EnsEMBL::Utils::Exception ();
 sub new {
   my ( $class, @args ) = @_;
   my $self = bless( {}, ref($class) || $class );
-  my ( $debug ) = rearrange( [qw(debug)], @args );
+  my ( $debug, $stderr ) = rearrange( [qw(debug stderr)], @args );
   $self->_debug($debug);
+  $self->_stderr($stderr);
   return $self;
 }
 
@@ -53,6 +54,12 @@ sub _debug {
   my ($self, $_debug) = @_;
   $self->{_debug} = $_debug if defined $_debug;
   return $self->{_debug};
+}
+
+sub _stderr {
+  my ($self, $_stderr) = @_;
+  $self->{_stderr} = $_stderr if defined $_stderr;
+  return $self->{_stderr};
 }
 
 =head2 fatal()
@@ -63,7 +70,7 @@ Issues an Ensembl warning with the message
 
 sub fatal {
   my ($self, $message) = @_;
-  Bio::EnsEMBL::Utils::Exception::warning($message);
+  $self->_print("FATAL: $message");
   return; 
 }
 
@@ -85,7 +92,7 @@ Issues an Ensembl warning with the message
 
 sub error {
   my ($self, $message) = @_;
-  Bio::EnsEMBL::Utils::Exception::warning($message);
+  $self->_print("ERROR: $message");
   return;
 }
 
@@ -107,7 +114,7 @@ Issues an Ensembl warning with the message
 
 sub warning {
   my ($self, $message) = @_;
-  Bio::EnsEMBL::Utils::Exception::warning($message);
+  $self->_print("WARN: $message");
   return;
 }
 
@@ -129,7 +136,7 @@ Prints the message to STDOUT
 
 sub info {
   my ($self, $message) = @_;
-  print $message;
+  $self->_print("INFO: $message");
   return;
 }
 
@@ -153,7 +160,7 @@ Prints to STDOUT if the object was contstructed with the debug flag on
 sub debug {
   my ($self, $message) = @_;
   return unless $self->is_debug();
-  print $message;
+  $self->_print("DEBUG: $message");
   return;
 }
 
@@ -177,7 +184,7 @@ Prints the message to STDOUT if is_trace() responded true
 sub trace {
   my ($self, $message) = @_;
   return unless $self->is_trace();
-  print $message;
+  $self->_print("TRACE: $message");
   return;
 }
 
@@ -190,6 +197,17 @@ Returns true if debug was given as true during construction
 sub is_trace {
   my ($self) = @_;
   return $self->_debug();
+}
+
+sub _print {
+  my ($self, $msg) = @_;
+  if($self->_stderr()) {
+    print STDERR $msg, "\n";
+  }
+  else {
+    print STDOUT $msg, "\n";
+  }
+  return;
 }
 
 1;

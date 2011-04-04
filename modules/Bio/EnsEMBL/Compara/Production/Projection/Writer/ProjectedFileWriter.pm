@@ -33,6 +33,7 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 use File::Copy;
+use IO::Handle;
 use IO::File;
 
 use base qw(Bio::EnsEMBL::Compara::Production::Projection::Writer::BaseWriter);
@@ -137,11 +138,17 @@ sub file_handle {
 sub _build_file_handle {
   my ($self) = @_;
   my $f = $self->file();
-  if( -f $f ) {
-    warn("The file $f already exists; moving out of the way to ${f}.old");
-    move($f, $f.'.old');
+  # - means go to STDOUT
+  if($f eq '-') {
+    return IO::Handle->new_from_fd(fileno(STDOUT), 'w');
   }
-  return IO::File->new($f, 'w');
+  else {
+    if( -f $f ) {
+      warn("The file $f already exists; moving out of the way to ${f}.old");
+      move($f, $f.'.old');
+    }
+    return IO::File->new($f, 'w');
+  }
 }
 
 =head2 close()
