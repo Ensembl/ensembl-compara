@@ -4,7 +4,6 @@ package EnsEMBL::Web::Command::UserData::AttachRemote;
 
 use strict;
 
-use EnsEMBL::Web::Tools::Misc qw(get_url_filesize);
 use EnsEMBL::Web::Root;
 
 use base qw(EnsEMBL::Web::Command);
@@ -12,35 +11,87 @@ use base qw(EnsEMBL::Web::Command);
 sub process {
   my $self     = shift;
   my $hub      = $self->hub;
-  my $format = $hub->param('format');;
+  my $object   = $self->object;
+  my $session  = $hub->session;
+  my $redirect = $hub->species_path($hub->data_species) . '/UserData/';
+  my $name     = $hub->param('name');
+  my $param    = {};
+  my $options  = {};
+  my $error;
 
-  ## Has a file format been supplied?
-  if (!$format) {
-    ## Try to guess format from file name
-    my @path = split '/', $hub->param('url');
-    my $filename = $path[-1];
-    my @bits = split /\./, $filename;
-    my $extension = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
-    $format = uc($extension);
+  my @path = split '/', $hub->param('url');
+  my $filename = $path[-1];
+  $name ||= $filename;
+  ## Try to guess format from file name
+  my $format;
+  my @bits = split /\./, $filename;
+  my $extension = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
+  $extension = uc($extension);
+  my @attachable = @{$hub->species_defs->USERDATA_FILE_FORMATS};
+  push @attachable, @{$hub->species_defs->USERDATA_REMOTE_FORMATS};
+  if (grep $extension, @attachable) {
+    $format = $extension;
+  }
+  else {
+    $redirect .= 'SelectRemote';
+    $session->add_data(
+        'type'  => 'message',
+        'code'  => 'AttachURL',
+        'message' => 'Unknown format',
+        function => '_error'
+    );
   }
 
-  my $class = 'EnsEMBL::Web::Command::UserData::Attach';
-  
-  my @remote_formats = @{$hub->species_defs->USERDATA_REMOTE_FORMATS};
+  if (my $url = $hub->param('url')) {
 
-  my $remote = grep(/^$format$/, @remote_formats) ? $format : 'URL';
-  $class .= $remote;
+    my $check_method = 'check_'.lc($format).'_data';
+    if ($object->can($check_method)) {
+      ($error, $options) = $object->$check_method($url);
+    }
+    else {
+      ($error, $options) = $object->check_url_data($url);
+    }
 
-  if ($self->dynamic_use($class)) {
-    my $module = $class->new({
-            object => $self->object,
-            hub    => $hub,
-            page   => $self->page,
-            node   => $self->node
-          });
-
-    $module->process;
+    if ($error) {
+      $redirect .= 'SelectRemote';
+      $session->add_data(
+          'type'  => 'message',
+          'code'  => 'AttachURL',
+          'message' => $error,
+          function => '_error'
+      );
+    }
+    else {
+      $redirect .= 'RemoteFeedback';
+      my $data = $session->add_data(
+        type     => 'url',
+        url      => $url,
+        name     => $name,
+        format   => $format,
+        style    => $format,
+        species  => $hub->data_species,
+        %$options,
+      );
+      my $config_method = 'configure_'.lc($format).'_views';
+      if ($session->can($config_method)) {
+        $session->$config_method($data);
+        $session->store;
+      }
+      if ($hub->param('save')) {
+        $self->object->move_to_user(type => 'url', code => $data->{'code'});
+      }
+    }
+  } else {
+    $redirect .= 'SelectRemote';
+      $session->add_data(
+          'type'  => 'message',
+          'code'  => 'AttachURL',
+          'message' => 'No URL was provided',
+          function => '_error'
+      );
   }
+
+  $self->ajax_redirect($redirect, $param);  
 }
 
 1;
