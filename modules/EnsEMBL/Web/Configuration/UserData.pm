@@ -125,24 +125,6 @@ sub populate_tree {
     { 'availability' => 1, 'no_menu_entry' => 1 }
   );
 
-  ## Extra nodes for big formats
-  $self->create_node( 'AttachBAM', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::AttachBAM',
-    'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'BAMFeedback', '',
-   [qw(bam_feedback EnsEMBL::Web::Component::UserData::BAMFeedback)],
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'AttachVCF', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::AttachVCF',
-    'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'VCFFeedback', '',
-   [qw(vcf_feedback EnsEMBL::Web::Component::UserData::VCFFeedback)],
-    { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-
   ## Saving remote data
   $self->create_node( 'ShowRemote', '',
    [qw(show_remote EnsEMBL::Web::Component::UserData::ShowRemote)], 
