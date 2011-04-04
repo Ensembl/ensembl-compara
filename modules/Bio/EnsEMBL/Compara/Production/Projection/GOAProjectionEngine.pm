@@ -175,11 +175,21 @@ sub _decode_member {
   my $dispatch = {
     ENSEMBLPEP => sub {
       my ($member) = @_;
-      return $member->get_canonical_peptide_Member();
+      if($member->source_name() eq 'ENSEMBLPEP') {
+        return $member;
+      }
+      else {
+        return $member->get_canonical_peptide_Member();
+      }
     },
     ENSEMBLGENE => sub {
       my ($member) = @_;
-      return $member->gene_member();
+      if($member->source_name() eq 'ENSEMBLGENE') {
+        return $member;
+      }
+      else {
+        return $member->gene_member();
+      }
     }
   };
   return $dispatch->{$self->source()}->($member);
