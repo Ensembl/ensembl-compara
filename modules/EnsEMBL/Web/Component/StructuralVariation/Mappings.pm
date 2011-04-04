@@ -19,8 +19,6 @@ sub content {
 	my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor');
 	my %mappings      = %{$object->variation_feature_mapping};  # first determine correct SNP location 
 	my $v;
-  my $var_slice;
-  my $html;
 	
 	if (keys %mappings == 1) {
     ($v) = values %mappings;
@@ -43,10 +41,7 @@ sub content {
 	my $seq_type = $v->{'type'};
   my $slice    = $slice_adaptor->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
 	
-	$var_slice = 1 ? $slice  : $slice_adaptor->fetch_by_region($seq_type, $seq_region, $v->{'start'}, $v->{'end'}, 1);
-	
-  $html .= $self->gene_transcript_table($var_slice);
-	return $html;
+  return $self->gene_transcript_table($slice);
 }
 
 
