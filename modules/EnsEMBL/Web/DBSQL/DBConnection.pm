@@ -75,7 +75,7 @@ sub get_DBAdaptor {
   $self->{'_dbs'}->{$species} ||= {}; 
 
   # if we have connected to the db before, return the adaptor from the cache
-  if(exists($self->{'_dbs'}->{$species}->{$database})){
+  if(exists($self->{'_dbs'}->{$species}->{$database})){ 
     return $self->{'_dbs'}->{$species}->{$database};
   }
     
@@ -83,6 +83,14 @@ sub get_DBAdaptor {
   my $dba = $reg->get_DBAdaptor($species, $database);
   # warn "$species - $database - $dba";
 
+
+  # Funcgen Database Files Overwrite
+  if ($database eq 'funcgen' ){
+    my $root = $self->{'species_defs'}->REGULATION_FILE_PATH;
+    next unless $root;
+    $dba->get_ResultSetAdaptor->dbfile_data_root($root);    
+  }  
+ 
   # Glovar
   $self->{'_dbs'}->{$species}->{$database} = $dba;
 
