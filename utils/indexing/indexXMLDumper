@@ -89,10 +89,6 @@ my $start_time = time;
 my $total_c;
 foreach my $index (@indexes) {
 
-
-#  next if $index =~ /Help|Domain|Family/;
-
-
   my $start = time;
   if ($index eq 'Help') {
     foreach my $type (qw(View Glossary FAQ)) {
@@ -585,6 +581,7 @@ sub dumpVariation {
     $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
   }
   else {
+    print LOG "    Will get extra ssID info as we go along", &date_and_mem, "\n";
     $stmt = qq{SELECT GROUP_CONCAT(
                  DISTINCT CONCAT('ss',subsnp_id)
                                   ) AS ssid
@@ -659,6 +656,7 @@ sub dumpVariation {
       }
 
       my $somatic_mutation = $somatic_var;
+      my $type             = $somatic_mutation ? 'Somatic Mutation' : 'Variation';
       my $snp_source       = $sources->{ $source_id };
       my $desc;
       my $locs = $locations->{$variation_id};
@@ -671,12 +669,10 @@ sub dumpVariation {
         push @phenotypes, $x->[5] if $x->[5];
         push @studies,    split ';', $x->[2];
       }
-      else {
-        $desc = sprintf( "%s %s %s",
-                         @phenotypes  ? 'Phenotypes: ' .         (join ', ', @phenotypes) . '.' : '',
-                         @genes       ? 'Gene Association(s): ' .(join ', ', @genes)      . '.' : '',
-                         $failed_desc ? "$failed_desc."                                         : '');
-      }
+      $desc = sprintf( "A $snp_source $type.%s%s%s",
+                       @phenotypes  ? ' Phenotypes: ' .         (join ', ', @phenotypes) . '.' : '',
+                       @genes       ? ' Gene Association(s): ' .(join ', ', @genes)      . '.' : '',
+                       $failed_desc ? " $failed_desc."                                         : '');
       if ($somatic_mutation){
         &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, $locs, $snp_source, $desc, $counter2 ), $nogzip, $fh2);
       }
