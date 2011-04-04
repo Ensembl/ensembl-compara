@@ -709,6 +709,19 @@ sub calculate_consequence_data {
   my $file_count = 0;
   my $nearest;
   my %slices;
+  
+  # options
+  my $check_existing  = $self->param('check_existing');
+  my $coding_only     = $self->param('coding_only');
+  my $hgnc            = $self->param('hgnc');
+  my $hgvs            = $self->param('hgvs');
+  my $protein         = $self->param('protein');
+  my $cons_format     = $self->param('consequence_format');
+  my %prog_options    = (
+    'sift'     => $self->param('sift'),
+    'polyphen' => $self->param('polyphen'),
+    'condel'   => $self->param('condel'),
+  );
 
   ## Get some adaptors for assembling required information
   my $transcript_variation_adaptor;
@@ -738,11 +751,12 @@ sub calculate_consequence_data {
         
         # include failed variations
         $vfa->db->include_failed_variations(1) if defined($vfa->db) && $vfa->db->can('include_failed_variations');
-
+        
         while ( $f = shift @{$features}){
-          $file_count++; 
-          next if $feature_count >= $size_limit; # $size_limit is max number of v to process, if hit max continue counting v's in file but do not process them 
+          $file_count++;
+          next if $feature_count >= $size_limit; # $size_limit is max number of v to process, if hit max continue counting v's in file but do not process them
           $feature_count++;
+          
           # Get Slice
           my $slice;
           if (defined $slice_hash{$f->seqname}){
@@ -810,86 +824,124 @@ sub calculate_consequence_data {
           unless ($vf->seq_region_start == $vf->seq_region_end){
             $location .= '-' . $vf->seq_region_end;
           }
+          
+          my $snp = '-';
+          
+          if($check_existing eq 'yes' || $novel_only eq 'yes') {
+            if(defined($vfa->db)) {
+              
+              my $sth = $vfa->db->dbc->prepare(qq{
+                SELECT variation_name, source_id
+                FROM variation_feature
+                WHERE seq_region_id = ?
+                AND seq_region_start = ?
+                AND seq_region_end = ?
+              });
+              
+              $sth->execute($vf->slice->get_seq_region_id, $vf->seq_region_start, $vf->seq_region_end);
+              
+              my ($name, $source);
+              $sth->bind_columns(\$name, \$source);
+              
+              my %by_source;
+              
+              push @{$by_source{$source}}, $name while $sth->fetch;
+              $sth->finish();
+              
+              if(scalar keys %by_source) {
+                  foreach my $s(sort {$a <=> $b} keys %by_source) {
+                      $snp = shift @{$by_source{$s}};
+                      last;
+                  }
+              }
+            }
+          }
 
           my $transcript_variations = $vf->get_all_TranscriptVariations();
           foreach my $tv (@{$transcript_variations}){
-            foreach my $consequence (@{$tv->consequence_type}){
-
+            
+            # exclude non-coding if requested
+            next if($coding_only eq 'yes' && !($tv->affects_transcript));
+            
+            foreach my $tva (@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
+              
+              my $method_name = $cons_format.'_term';
+              my $type = join ",", map {$_->$method_name} @{$tva->get_all_OverlapConsequences};
+              
               ## Set default values
               my $gene_id       = '-';
               my $transcript_id = '-';
-              my $cdna_pos      = '-';
-              my $prot_pos      = '-';
-              my $aa            = $tv->pep_allele_string || '-';;
-              my $snp           = '-';
-
+              my $prot_id       = '-';
+              my $aa            = $tva->pep_allele_string || '-';
+              my $codons        = $tva->display_codon_allele_string || '-';
+              my $allele        = $tva->variation_feature_seq;
+              my $extra;
+              
               if ($tv->transcript){
                 $transcript_id = $tv->transcript->stable_id;
                 my $gene = $gene_adaptor->fetch_by_transcript_id($tv->transcript->dbID);
                 $gene_id = $gene->stable_id;
+                
+                # HGNC gene ID
+                if($hgnc && $gene) {
+                  my @entries = grep {$_->database eq 'HGNC'} @{$gene->get_all_DBEntries()};
+                  my $hgnc_name = (scalar @entries ? $entries[0]->display_id : undef);
+                  
+                  $extra .= 'HGNC='.$hgnc_name.';' if $hgnc_name;
+                }
+				
+                # protein ID
+                if($protein && $tv->transcript->translation) {
+                    $extra .= 'ENSP='.$tv->transcript->translation->stable_id.';';
+                }
               }
-
-              if ($tv->translation_start){
-                $prot_pos = $tv->translation_start;
-                unless ($tv->translation_start == $tv->translation_end){
-                  if ($tv->translation_end < $tv->translation_start){ 
-                    $prot_pos = $tv->translation_end .'-' .$prot_pos;
-                  } else {
-                    $prot_pos .= '-'. $tv->translation_end;
+              
+              # coords
+              my $cdna_pos = $self->format_coords($tv->cdna_start, $tv->cdna_end);
+              my $cds_pos  = $self->format_coords($tv->cds_start, $tv->cds_end);
+              my $prot_pos = $self->format_coords($tv->translation_start, $tv->translation_end);
+              
+              # HGVS
+              if($hgvs ne 'no') {
+                $extra .= 'HGVSc='.$tva->hgvs_coding.';' if defined($tva->hgvs_coding) && $hgvs =~ /coding/;
+				$extra .= 'HGVSp='.$tva->hgvs_protein.';' if defined($tva->hgvs_protein) && $hgvs =~ /protein/;
+              }
+              
+              # sift, polyphen and condel
+              foreach (['sift', 'SIFT'], ['polyphen', 'PolyPhen'], ['condel', 'Condel']) {
+                my ($prog, $key_name) = @{$_};
+                
+                if($prog_options{$prog} ne 'no') {
+                  my $method = $prog.'_prediction';
+                  my $pred = $tva->$method;
+                  
+                  if($pred) {                    
+                    my $string = '';
+                    if($prog_options{$prog} =~ /pred/) {
+                      $string = $pred;
+                      $string =~ s/\s+/\_/g;
+                    }
+                    if($prog_options{$prog} =~ /score/) {
+                      $method = $prog.'_score';
+                      
+                      if($string) {
+                        $string .= '('.$tva->$method.')';
+                      }
+                      else {
+                        $string .= $tva->$method;
+                      }
+                    }                    
+                    $extra .= $key_name.'='.$string.';';
                   }
                 }
               }
-          
-              if ($tv->cdna_start){
-                $cdna_pos = $tv->cdna_start;
-                unless ($tv->cdna_start == $tv->cdna_end){
-                  if ($tv->cdna_end < $tv->cdna_start){
-                    $cdna_pos = $tv->cdna_end .'-' .$cdna_pos;
-                  } else {
-                    $cdna_pos .= '-'. $tv->cdna_end;
-                  }
-                }
-              }
-
-              my $slice_name = $vf->seq_region_name .":" . $location;
-              if (exists $slices{$slice_name} ){
-                $snp = $slices{$slice_name};
-              }
-              else {
-                my $temp_slice;
-                if ($vf->start <= $vf->end){
-                  eval { $temp_slice = $slice_adaptor->fetch_by_region("chromosome",
-                    $vf->seq_region_name, $vf->seq_region_start,
-                    $vf->seq_region_end); };
-                  if(!defined($temp_slice)) {
-                    $temp_slice = $slice_adaptor->fetch_by_region(undef,
-                    $vf->seq_region_name, $vf->seq_region_start,
-                    $vf->seq_region_end);
-                  }
-                } else {
-                  eval {
-                    $temp_slice = $slice_adaptor->fetch_by_region("chromosome",
-                    $vf->seq_region_name, $vf->seq_region_end,
-                    $vf->seq_region_start); };
-                  if(!defined($temp_slice)) {
-                    $temp_slice = $slice_adaptor->fetch_by_region(undef,
-                    $vf->seq_region_name, $vf->seq_region_end,
-                    $vf->seq_region_start);
-                  }
-                }
-
-                foreach my $vf (@{$temp_slice->get_all_VariationFeatures()}){
-                  next unless ($vf->seq_region_start == $vf->seq_region_start) &&
-                  ($vf->seq_region_end == $vf->seq_region_end);
-                  $snp = $vf->variation_name;
-                  last if defined($snp);
-                }
-
-              }
-
+              
+              $extra =~ s/\;$//g;
+              $extra ||= '-';
+              
               my $snp_effect = EnsEMBL::Web::Text::Feature::SNP_EFFECT->new([
-                  $vf->variation_name, $location, $gene_id, $transcript_id, 
-                  $consequence, $cdna_pos, $prot_pos, $aa, $snp
+                  $vf->variation_name, $location, $allele, $gene_id, $transcript_id, 
+                  $type, $cdna_pos, $cds_pos, $prot_pos, $aa, $codons, $snp, $extra
               ]);
 
               push @new_vfs, $snp_effect;
@@ -905,12 +957,19 @@ sub calculate_consequence_data {
             }
           }
         }
+        
+        if(scalar @new_vfs) {
+          $count++;
+          my @feature_block = @new_vfs;
+          $consequence_results{$count} = \@feature_block;
+          @new_vfs = ();
+        }
       }
     }
     $nearest = $parser->nearest;
   }
-
-  if ($file_count <= $size_limit){ 
+  
+  if ($file_count <= $size_limit){
     return (\%consequence_results, $nearest);
   } else {  
     return (\%consequence_results, $nearest, $file_count);
@@ -938,31 +997,41 @@ sub consequence_table {
   my $hub     = $self->hub;
   my $species = $self->param('species');
   my $columns = [
-    { key => 'var',      title =>'Uploaded Variation',      align => 'center' },
-    { key => 'location', title =>'Location',                align => 'center' },
-    { key => 'gene',     title =>'Gene',                    align => 'center' },
-    { key => 'trans',    title =>'Transcript',              align => 'center' },
-    { key => 'con',      title =>'Consequence',             align => 'center' },
-    { key => 'cdna_pos', title =>'Position in cDNA',        align => 'center' },
-    { key => 'prot_pos', title =>'Position in protein',     align => 'center' },
-    { key => 'aa',       title =>'Amino acid change',       align => 'center' },
-    { key => 'snp',      title =>'Corresponding Variation', align => 'center' }
+    { key => 'var',      title =>'Uploaded Variation',   align => 'center', sort => 'string'        },
+    { key => 'location', title =>'Location',             align => 'center', sort => 'position_html' },
+    { key => 'allele',   title =>'Allele',               align => 'center', sort => 'string'        },
+    { key => 'gene',     title =>'Gene',                 align => 'center', sort => 'html'          },
+    { key => 'trans',    title =>'Transcript',           align => 'center', sort => 'html'          },
+    { key => 'con',      title =>'Consequence',          align => 'center', sort => 'string'        },
+    { key => 'cdna_pos', title =>'Position in cDNA',     align => 'center', sort => 'position'      },
+    { key => 'cds_pos',  title =>'Position in CDS',      align => 'center', sort => 'position'      },
+    { key => 'prot_pos', title =>'Position in protein',  align => 'center', sort => 'position'      },
+    { key => 'aa',       title =>'Amino acid change',    align => 'center', sort => 'none'          },
+    { key => 'codons',   title =>'Codon change',         align => 'center', sort => 'none'          },
+    { key => 'snp',      title =>'Co-located Variation', align => 'center', sort => 'html'          },
+    { key => 'extra',    title =>'Extra',                align => 'left',   sort => 'html'          },
   ];
 
   my @rows;
 
   foreach my $feature_set (keys %$consequence_data) {
-    foreach my $f (@{$consequence_data->{$feature_set}}) { 
+    foreach my $f (@{$consequence_data->{$feature_set}}) {
+      next if $f->id =~ /^Uploaded/;
+      
       my $row               = {};
       my $location          = $f->location;
+      my $allele            = $f->allele;
       my $url_location      = $f->seqname . ':' . ($f->rawstart - 500) . '-' . ($f->rawend + 500);
       my $uploaded_loc      = $f->id;
       my $transcript_id     = $f->transcript;
       my $gene_id           = $f->gene;
       my $consequence       = $f->consequence;
       my $cdna_pos          = $f->cdna_position;
+      my $cds_pos           = $f->cds_position;
       my $prot_pos          = $f->protein_position;
       my $aa                = $f->aa_change;
+      my $codons            = $f->codons;
+      my $extra             = $f->extra_col;
       my $snp_id            = $f->snp;
       my $transcript_string = $transcript_id;
       my $gene_string       = $gene_id;
@@ -976,7 +1045,7 @@ sub consequence_table {
         contigviewbottom => 'variation_feature_variation=normal',
       });
       
-      if ($transcript_id ne 'N/A') { 
+      if ($transcript_id ne '-') { 
         my $transcript_url = $hub->url({
           species => $species,
           type    => 'Transcript',
@@ -987,7 +1056,10 @@ sub consequence_table {
         $transcript_string = qq{<a href="$transcript_url">$transcript_id</a>};
       }
 
-      if ($gene_id ne 'N/A') { 
+      if ($gene_id ne '-') {
+        my $hgnc_id;
+        ($gene_id, $hgnc_id) = split /\;/, $gene_id;
+        
         my $gene_url = $hub->url({
           species => $species,
           type    => 'Gene',
@@ -996,6 +1068,7 @@ sub consequence_table {
         });
         
         $gene_string = qq{<a href="$gene_url">$gene_id</a>};
+        $gene_string .= ';'.$hgnc_id if defined($hgnc_id);
       }
       
       if ($snp_id =~ /^\w/){
@@ -1008,22 +1081,42 @@ sub consequence_table {
         
         $snp_string = qq{<a href="$snp_url">$snp_id</a>};
       }
+      
+      $consequence =~ s/\,/\,\<br\/>/g;
+      
+      # format extra string nicely
+      $extra = join ";", map {$self->render_sift_polyphen($_)} split /\;/, $extra;
+      $extra =~ s/(SIFT|PolyPhen|HGNC|ENSP|Condel|HGVSc|HGVSp)\=/<b>$&<\/b>/g;
+      $extra =~ s/\;/\;\<br\/>/g;
+      
+      $extra =~ s/ENSP\d+/'<a href="'.$hub->url({
+        species => $species,
+        type    => 'Transcript',
+        action  => 'ProteinSummary',
+        t       =>  $transcript_id,
+      }).'">'.$&.'<\/a>'/e;
+      
+      #$consequence = qq{<span class="hidden">$ranks{$consequence}</span>$consequence};
 
       $row->{'var'}      = $uploaded_loc;
       $row->{'location'} = qq{<a href="$location_url">$location</a>};
+      $row->{'allele'}   = $allele;
       $row->{'gene'}     = $gene_string;
       $row->{'trans'}    = $transcript_string;
       $row->{'con'}      = $consequence;
       $row->{'cdna_pos'} = $cdna_pos;
+      $row->{'cds_pos'}  = $cds_pos;
       $row->{'prot_pos'} = $prot_pos;
       $row->{'aa'}       = $aa;
+      $row->{'codons'}   = $codons;
+      $row->{'extra'}    = $extra || '-';
       $row->{'snp'}      = $snp_string;
 
       push @rows, $row;
     }
   }
   
-  return new EnsEMBL::Web::Document::SpreadSheet($columns, [ sort { $a->{'var'} cmp $b->{'var'} } @rows ], { margin => '1em 0px' });
+  return new EnsEMBL::Web::Document::SpreadSheet($columns, [ sort { $a->{'var'} cmp $b->{'var'} } @rows ], { margin => '1em 0px', data_table => 'no_col_toggle' });
 }
 
 #---------------------------------- DAS functionality ----------------------------------
@@ -1157,6 +1250,57 @@ sub get_das_sources {
 
   #warn '>>> RETURNING '.@$source_info.' SOURCES';
   return $source_info;
+}
+
+# render a sift or polyphen prediction with colours
+sub render_sift_polyphen {
+  my ($self, $string) = @_;
+  
+  my ($type, $pred_string) = split /\=/, $string;
+  
+  return $string unless $type =~ /SIFT|PolyPhen|Condel/;
+  
+  my ($pred, $score) = split /\(|\)/, $pred_string;
+  
+  my %colours = (
+    '-'                  => '',
+    'probably_damaging'  => 'red',
+    'possibly_damaging'  => 'orange',
+    'benign'             => 'green',
+    'unknown'            => 'blue',
+    'tolerated'          => 'green',
+    'deleterious'        => 'red',
+    'neutral'            => 'green',
+    'not_computable_was' => 'blue',
+  );
+  
+  my $rank_str = '';
+  
+  if(defined($score)) {
+    $rank_str = "($score)";
+  }
+  
+  return qq{$type=<span style="color:$colours{$pred}">$pred$rank_str</span>};
+}
+
+sub format_coords {
+	my ($self, $start, $end) = @_;
+	
+	if(!defined($start)) {
+		return '-';
+	}
+	elsif(!defined($end)) {
+		return $start;
+	}
+	elsif($start == $end) {
+		return $start;
+	}
+	elsif($start > $end) {
+		return $end.'-'.$start;
+	}
+	else {
+		return $start.'-'.$end;
+	}
 }
 
 1;
