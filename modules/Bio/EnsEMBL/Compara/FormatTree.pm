@@ -220,12 +220,11 @@ my $sp_name_cb = sub {
 
 # Maybe leaves and internal nodes should be formatted different?
 sub new {
-  my ($class,$tree,$fmt) = @_;
+  my ($class,$fmt) = @_;
   $fmt = "%{n}" unless (defined $fmt); # "full" by default
   my $obj = bless ({
 		    'fmt' => $fmt,
 		    'tokens' => [],
-		    'tree' => $tree,
 		    'callbacks' => {%callbacks},
 		   }, $class);
   eval {
@@ -239,40 +238,34 @@ sub new {
 }
 
 sub format_newick {
-  my ($self) = @_;
-  my $newick = $self->_internal_format_newick;
-#  return $self->{'newick'};
-  return $newick;
+  my ($self, $tree) = @_;
+  return $self->_internal_format_newick($tree);
 }
 
 sub _internal_format_newick {
-  my ($self) = @_;
+  my ($self, $tree) = @_;
+
   my $newick = "";
-  if ($self->{tree}->get_child_count()>0) {
+  if ($tree->get_child_count()>0) {
     $newick .= "(";
     my $first_child = 1;
-    for my $child (@{$self->{tree}->sorted_children}) {
+    for my $child (@{$tree->sorted_children}) {
       $newick .= "," unless ($first_child);
-      my $newobj = __PACKAGE__->new($child,$self->{fmt});
-      $newick .= $newobj->_internal_format_newick();
+      $newick .= $self->_internal_format_newick($child);
       $first_child = 0;
     }
     $newick .= ")";
   }
-  $newick .= $self->_format_str();
-  return $newick;
-}
 
-sub _format_str {
-  my ($self) = @_;
   my $header = "";
+  $self->{tree} = $tree;
   for my $token (@{$self->{tokens}}) {
     if (defined $token->{literal}) {
       $header .= $token->{literal}
-    } elsif (($token->{place} eq "Leaf") && ($self->{tree}->is_leaf) ||
-	     ($token->{place} eq "Internal") && (! $self->{tree}->is_leaf) ||
+    } elsif (($token->{place} eq "Leaf") && ($tree->is_leaf) ||
+	     ($token->{place} eq "Internal") && (! $tree->is_leaf) ||
 	     ($token->{place} eq "Both")) {
-      next if (defined $token->{has_parent} && $token->{has_parent} == 1 && !$self->{tree}->parent);
+      next if (defined $token->{has_parent} && $token->{has_parent} == 1 && !$tree->parent);
       for my $item (split //,$token->{main}.$token->{alternatives}x!!$token->{alternatives}) {  ## For "main" and "alternatives"
 	my $itemstr = $self->{callbacks}{$item}->($self);
 #	print STDERR "ITEMSTR:$itemstr\n";exit;
@@ -284,7 +277,7 @@ sub _format_str {
     }
   }
 #  $header .= ":".$self->{callbacks}{d}->($self);
-  return $header;
+  return $newick.$header;
 }
 
 

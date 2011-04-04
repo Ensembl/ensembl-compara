@@ -1120,8 +1120,8 @@ sub _internal_newick_format_ryo {
   my ($self,$fmt) = @_;
   my $tree;
   eval {
-    my $newick = Bio::EnsEMBL::Compara::FormatTree->new($self,$fmt);
-    $tree = $newick->format_newick;
+    my $newick = Bio::EnsEMBL::Compara::FormatTree->new($fmt);
+    $tree = $newick->format_newick($self);
   };
   if ($@) {
     print STDERR "Something bad happened while trying to stringify the tree: \n";
