@@ -78,7 +78,11 @@ use Bio::EnsEMBL::Compara::Production::Projection::Writer::MultipleWriter;
 
 sub new_without_hive {
   my ($class, @params) = @_;
+  
   my $self = bless {}, $class;
+  
+  my $job = Bio::EnsEMBL::Hive::AnalysisJob->new();
+  $self->input_job($job);
   
   my ($projection_engine, $target_genome_db, $write_dba, $file, $debug) = rearrange(
     [qw(projection_engine target_genome_db write_dba file debug)], 
