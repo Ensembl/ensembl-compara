@@ -96,7 +96,7 @@ sub check_bam_data {
   my ($self, $url) = @_;
   my $error = '';
 
-  if ($url =~ /^ftp:\/\//i && !$SiteDefs::BAM_ALLOW_FTP) {
+  if ($url =~ /^ftp:\/\//i && !$SiteDefs::ALLOW_FTP_BAM) {
     $error = "The bam file could not be added - FTP is not supported, please use HTTP.";
   } 
   else {
@@ -127,7 +127,7 @@ sub check_vcf_data {
   my ($self, $url) = @_;
   my $error = '';
 
-  if ($url =~ /^ftp:\/\//i && !$SiteDefs::ALLOW_FTP_ATTACHMENT) {
+  if ($url =~ /^ftp:\/\//i && !$SiteDefs::ALLOW_FTP_VCF) {
     $error = "The VCF file could not be added - FTP is not supported, please use HTTP.";
   } 
   else {
