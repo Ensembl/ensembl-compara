@@ -47,10 +47,18 @@ sub get_url_content {
 
 sub get_url_filesize {
 ## Returns the size of a file in bytes, or an error code if the request fails
+## TODO - needs changing to get just the first line or so of the file before
+## trying to fetch the rest, in case we are dealing with a huge file format like BAM!
   my $url   = shift;
   my $proxy = shift || $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WWW_PROXY;
 
   my $feedback = {};
+
+  ## TODO - handle FTP as well as HTTP
+  if ($url =~ /^ftp:\/\//i) {
+    ## return arbitrary filesize as a stopgap!
+    return {'filesize' => 1000};
+  }
 
   my $ua = new LWP::UserAgent;
      $ua->timeout(10);
@@ -65,16 +73,16 @@ sub get_url_filesize {
 
   return { 'error' => $error } if $error;
 
-  # Get the size of the file - either trust the header - or find the size of the response!
+  # Get the size of the file if possible
   my $size = 0;
   if ($response->header('Content-Length')) {
     $size = $response->header('Content-Length');
   }
   else {
-    my $content = $response->content;
-    if ($content) {
-      $size = length(EnsEMBL::Web::CompressionSupport::uncomp( \$content ));
-    }
+    #if ($content) {
+    #  $size = length(EnsEMBL::Web::CompressionSupport::uncomp( \$content ));
+    #}
+    $size = 1000;
   }
   return {'filesize' => $size};
 }
