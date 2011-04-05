@@ -12,6 +12,8 @@ use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::Hub;
 
+#use Data::Dumper;
+
 use base qw(EnsEMBL::Web::Controller);
 
 sub new {
@@ -51,19 +53,19 @@ sub feature_map {
     oliogprobe   => 'OligoProbe',
     affy         => 'OligoProbe',
     oligo        => 'OligoProbe',
-    snp          => 'SNP',
-    variaton     => 'SNP',
-    chr          => 'Chromosome',
+    snp          => 'Variation',
+    variation    => 'Variation',
+    chr          => 'Sequence',
     clone        => 'Sequence',
     contig       => 'Sequence',
-    chromosome   => 'Chromosome',
+    chromosome   => 'Sequence',
     supercontig  => 'Sequence',
     region       => 'Sequence',
     sequence     => 'Sequence',
     disease      => 'Gene',
     domain       => 'Domain',
     peptide      => 'Gene',
-    transcript   => 'Gene',
+    transcript   => 'Transcript',
     gene         => 'Gene',
     translation  => 'Gene',
     cdna         => 'GenomicAlignment',
@@ -81,7 +83,7 @@ sub psychic {
   my $species_defs  = $hub->species_defs;
   my $site_type     = lc $species_defs->ENSEMBL_SITETYPE;
   my $script        = $species_defs->ENSEMBL_SEARCH;
-  my %sp_hash       = %{$species_defs->ENSEMBL_SPECIES_ALIASES};
+  my %sp_hash          = %{$species_defs->ENSEMBL_SPECIES_ALIASES};
   my $dest_site     = $hub->param('site') || $site_type;
   my $index         = $hub->param('idx')  || undef;
   my $query         = $hub->param('q');
@@ -89,7 +91,7 @@ sub psychic {
   my $species       = $sp_param || ($hub->species !~ /^(common|multi)$/i ? $hub->species : undef);
   my $query_species = 0;
   my ($url, $site);
-  
+
   if ($species eq 'all' && $dest_site eq 'ensembl') {
     $dest_site = 'ensembl_all';
     $species   = $species_defs->ENSEMBL_PRIMARY_SPECIES;
@@ -98,14 +100,13 @@ sub psychic {
   $query =~ s/^\s+//g;
   $query =~ s/\s+$//g;
   $query =~ s/\s+/ /g;
-  $query =~ s/^(\S+?)(\d+)(\.\d*)?/$1.sprintf("%011d",$2)/eg if $query =~ /^ENS|OTT/ && $query !~ /[ENSFM|ENSSNP]/; # Make sure we've eleven digits
 
   $species = undef if $dest_site =~ /_all/;
-  
+
   return $hub->redirect("http://www.ebi.ac.uk/ebisearch/search.ebi?db=allebi&query=$query")                          if $dest_site eq 'ebi';
   return $hub->redirect("http://www.sanger.ac.uk/search?db=allsanger&t=$query")                                      if $dest_site eq 'sanger';
   return $hub->redirect("http://www.ensemblgenomes.org/search?site=ensembl&q=$query&site=&x=0&y=0&genomic_unit=all") if $dest_site eq 'ensembl_genomes';
-  
+
   if ($dest_site =~ /vega/) {
     if ($site_type eq 'vega') {
       $url = "/Multi/Search/Results?species=all&idx=All&q=$query";
@@ -119,12 +120,10 @@ sub psychic {
   } else {
     $url = "/Multi/Search/Results?species=$species&idx=All&q=$query";
   }
-  
-  ## Let us parse the first string to see if it is the name of a species or one of its aliases
-  
-  $query .= ' ';
 
+  ## Let us parse the first string to see if it is the name of a species or one of its aliases
   foreach my $sp (sort keys %sp_hash) {
+    next if lc($sp) eq lc($query); #don't do anything with a search for just a species name
     if (lc(substr $query, 0, length($sp) + 1) eq lc "$sp ") {
       $species       = $sp_hash{$sp};
       $query         = substr $query, length($sp) + 1;
@@ -132,12 +131,8 @@ sub psychic {
     }
   }
 
-  chop $query;
-  
   my $species_path = $species_defs->species_path($species) || "/$species";
-  
-  return $hub->redirect("$species_path/Info/Index") if $query_species && !length $query && ($sp_param eq $species || !$sp_param);
-  
+
   ## Now we look to see if we can find a feature in the next part
   ## of the search string - if so use that as the provisional name
   ## of the index
@@ -156,7 +151,11 @@ sub psychic {
 
   $index = $index_t if $index_t;
 
+#warn "setting index to $index_t";
+
   ## We have a species so we can see if we can generate a link
+
+
 
   if ($species) {
     if (!$query) { ## nothing to search for
@@ -165,7 +164,7 @@ sub psychic {
       ## match any of the following:
       if ($query =~ /^\s*([-\.\w]+)[: ]([\d\.]+?[MKG]?)( |-|\.\.|,)([\d\.]+?[MKG]?)$/i || $query =~ /^\s*([-\.\w]+)[: ]([\d,]+[MKG]?)( |\.\.|-)([\d,]+[MKG]?)$/i) {
         my ($seq_region_name, $start, $end) = ($1, $2, $4);
-        
+
         $seq_region_name =~ s/chr//;
         $start = $self->evaluate_bp($start);
         $end   = $self->evaluate_bp($end);
