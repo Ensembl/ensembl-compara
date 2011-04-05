@@ -128,6 +128,36 @@ foreach my $vf (@{$vfs}){
 }
 </pre>
 
+
+<h2>Alleles and frequencies</h2>
+
+<p>
+Most variations in the Ensembl Variation database have associated allele frequencies. Each allele object associated with a variation represents an observation of a variant allele in a given population, and may have an associated frequency. Populations are also represented as objects.
+</p>
+
+<pre class="code">
+use strict;
+use warnings;
+use Bio::EnsEMBL::Registry;
+
+my $registry = 'Bio::EnsEMBL::Registry';
+
+$registry-&gt;load_registry_from_db(
+    -host =&gt; 'ensembldb.ensembl.org',
+    -user =&gt; 'anonymous'
+);
+
+my $variation_adaptor = $regsitry-&gt;get_adaptor('mus_musculus', 'variation', 'variation');
+
+my $variation = $variation_adaptor-&gt;fetch_by_name('rs4224828');
+my $alleles = $variation-&gt;get_all_Alleles();
+
+foreach my $allele(@{$alleles}) {
+	print "Allele ", $allele-&gt;allele, " has frequency ", $allele-&gt;frequency,
+		" in population ", $allele-&gt;population-&gt;name, "\n";
+}
+</pre>
+
 <h2 id="failed_variations">
 	Failed variations
 </h2>
@@ -258,9 +288,32 @@ foreach my $vf (@{$vfs}) {
 <h2 id="Consequence">Consequence type of variations</h2>
 
 <p>
-Another common use of the variation database is to retrieve the effects that variations have on a transcript. In the example below,
-it is explained how to get all variations in a particular chicken transcript and see what is the effect of that variation in
-the transcript. For a complete list of the consequence types predicted by Ensembl, <a href="../../variation/index.html">click here</a>.
+Another common use of the variation database is to retrieve the effects that
+variations have on a transcript. In human, Ensembl also provides <a
+href="http://sift.jcvi.org/" target="_blank">SIFT</a> and <a
+href="http://genetics.bwh.harvard.edu/pph/" target="_blank">PolyPhen</a>
+predictions of the effects of non-synonymous protein changes. For a complete
+list of the consequence types predicted by Ensembl, <a
+href="../../variation/index.html">click here</a>.
+</p>
+
+<p>Consequences are represented by a heirarchy of objects as shown below:</p>
+
+<ul>
+	<li><strong>TranscriptVariation</strong> - represents the overlap of a variation feature and a transcript</li>
+	<ul>
+		<li><strong>TranscriptVariationAllele</strong> - the component represented by a particular allele of a variation</li>
+		<ul>
+			<li><strong>OverlapConsequence</strong> - represents the consequence itself</li>
+		</ul>
+	</ul>
+</ul>
+
+<p>
+In the example below, it is explained how to get all variations in a particular
+human transcript and see what is the effect of that variation in the transcript,
+including the PolyPhen and SIFT predictions. It is also shown how to retrieve
+the Sequence Ontology terms for the consequences.
 </p>
 
 <pre class="code">
@@ -275,23 +328,54 @@ $registry-&gt;load_registry_from_db(
     -user =&gt; 'anonymous'
 );
 
-my $stable_id = 'ENSGALT00000007843'; #this is the stable_id of a chicken transcript
-my $transcript_adaptor = $registry-&gt;get_adaptor('gallus_gallus', 'core', 'transcript'); #get the adaptor to get the Transcript from the database
+my $stable_id = 'ENST00000393489'; #this is the stable_id of a human transcript
+my $transcript_adaptor = $registry-&gt;get_adaptor('homo_sapiens', 'core', 'transcript'); #get the adaptor to get the Transcript from the database
 my $transcript = $transcript_adaptor-&gt;fetch_by_stable_id($stable_id); #get the Transcript object
 
-my $trv_adaptor = $registry-&gt;get_adaptor('gallus_gallus', 'variation', 'transcriptvariation'); #get the adaptor to get TranscriptVariation objects
+my $trv_adaptor = $registry-&gt;get_adaptor('homo_sapiens', 'variation', 'transcriptvariation'); #get the adaptor to get TranscriptVariation objects
 my $trvs = $trv_adaptor-&gt;fetch_all_by_Transcripts([$transcript]); #get ALL effects of Variations in the Transcript
 
-foreach my $tv (@{$trvs}){
-  print "SNP :",$tv-&gt;variation_feature-&gt;variation_name, " has a consequence/s ", 
-    join(",",@{$tv-&gt;consequence_type}), " in transcript ", $stable_id, "\n";
-  #print the name of the variation and the effect (consequence_type) of the variation in the Transcript
+foreach my $tv (@{$trvs}) {
+	my $tvas = $tv-&gt;get_all_alternate_TranscriptVariationAlleles();
+
+	foreach my $tva(@{$tvas}) {
+		my @ensembl_consequences;
+		my @so_consequences;
+		
+		my $ocs = $tva-&gt;get_all_OverlapConsequences();
+		
+		foreach my $oc(@{$ocs}) {
+			push @ensembl_consequences, $oc-&gt;display_term;
+			push @so_consequences, $oc-&gt;so_term;
+		}
+		
+		my $sift = $tva-&gt;sift_prediction;
+		my $polyphen = $tva-&gt;polyphen_prediction;
+		
+		print
+			"Variation ", $tv-&gt;variation_feature-&gt;variation_name,
+			 " allele ", $tva-&gt;variation_feature_seq,
+			 " has consequence ", join(",", @ensembl_consequences),
+			 " (SO ", join(",", @so_consequences), ").";
+			 
+		if(defined($sift)) {
+			print " SIFT=$sift";
+		}
+		if(defined($polyphen)) {
+			print " PolyPhen=$polyphen";
+		}
+		
+		print "\n";
+	}
 }
 </pre>
 
 
 <p>
-It is also possible to calculate consequence types for variations not currently in the database. In the example below, we create a VariationFeature object from scratch, given a slice and VariationFeatureAdaptor object, and use this to calculate the consequence of our new SNP. A script is also provided in ftp://ftp.ensembl.org/pub/misc-scripts/ that will calculate consequence types from a list of variations provided in an input file.
+It is also possible to calculate consequence types for variations not currently in the database. In the example below, we create a VariationFeature object from scratch, given a slice and VariationFeatureAdaptor object, and use this to calculate the consequence of our new SNP. Here we use the aggregation methods in the TranscriptVariation object instead of retrieving each TranscriptVariationAllele and OverlapConsequence object.
+</p>
+<p>
+A script is also provided in ftp://ftp.ensembl.org/pub/misc-scripts/ that will calculate consequence types from a list of variations provided in an input file.
 </p>
 
 <pre class="code">
@@ -310,10 +394,10 @@ my $slice = $sa->fetch_by_region('chromosome', 13);
 
 # create a new VariationFeature object
 my $new_vf = Bio::EnsEMBL::Variation::VariationFeature->new(
-  -start => 31798639,
-  -end => 31798639,
+  -start => 114268626,
+  -end => 114268626,
   -slice => $slice,           # the variation must be attached to a slice
-  -allele_string => 'C/T',    # the first allele should be the reference allele
+  -allele_string => 'A/C',    # the first allele should be the reference allele
   -strand => 1,
   -map_weight => 1,
   -adaptor => $vfa,           # we must attach a variation feature adaptor
