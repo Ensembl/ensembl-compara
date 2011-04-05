@@ -200,7 +200,7 @@ sub dumpNibFiles {
       #use this version to solve problem of very large chromosomes eg opossum
       $dna_object->dump_chunks_to_fasta_file($fastafile);
 
-      if (defined $BIN_DIR) {
+      if (defined $BIN_DIR && -e $BIN_DIR) {
 	  #use newer version
 	  system("$BIN_DIR/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
       } else {
