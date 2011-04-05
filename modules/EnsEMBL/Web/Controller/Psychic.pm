@@ -89,7 +89,6 @@ sub psychic {
   my $query         = $hub->param('q');
   my $sp_param      = $hub->param('species');
   my $species       = $sp_param || ($hub->species !~ /^(common|multi)$/i ? $hub->species : undef);
-  my $query_species = 0;
   my ($url, $site);
 
   if ($species eq 'all' && $dest_site eq 'ensembl') {
@@ -119,16 +118,6 @@ sub psychic {
     $site = 'http://www.ensembl.org'; 
   } else {
     $url = "/Multi/Search/Results?species=$species&idx=All&q=$query";
-  }
-
-  ## Let us parse the first string to see if it is the name of a species or one of its aliases
-  foreach my $sp (sort keys %sp_hash) {
-    next if lc($sp) eq lc($query); #don't do anything with a search for just a species name
-    if (lc(substr $query, 0, length($sp) + 1) eq lc "$sp ") {
-      $species       = $sp_hash{$sp};
-      $query         = substr $query, length($sp) + 1;
-      $query_species = 1;
-    }
   }
 
   my $species_path = $species_defs->species_path($species) || "/$species";
