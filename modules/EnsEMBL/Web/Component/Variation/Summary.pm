@@ -215,13 +215,13 @@ sub content {
 				}
 			}
 			if ($vs_count != scalar @$variation_sets) {		
-					$set_label = "This feature is present in <b>1000 genomes</b> and <b>$vs_count</b> others sets";
+					$set_label = "This feature is present in <b>1000 genomes</b> and <b>$vs_count</b> other sets";
 			}
-			$vs_list = join('<br />- ', @$variation_sets);
+			$vs_list = '<ul><li>'.join('</li><li>', @$variation_sets).'</li></ul>';
 			$html .= sprintf(qq{
 		  	<dt class="toggle_button" title="Click to toggle sets names"><span>Present in</span><em class="closed"></em></dt>
 		  	<dd>$set_label - click the plus to show all sets</dd>
-		  	<dd class="toggle_info" style="display:none;font-weight:normal;">- $vs_list</dd>
+		  	<dd class="toggle_info" style="display:none;font-weight:normal;">$vs_list</dd>
 				<table class="toggle_table" style="display:none"></table>
 			});
 		}
