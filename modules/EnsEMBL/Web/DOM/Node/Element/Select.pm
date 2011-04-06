@@ -20,16 +20,15 @@ sub selected_index {
   ## @param index or ArrayRef of indices to be set if intended to set selection. -1 (or any invalid index) will deselect all
   ## @return index or ArrayRef of indices of new selections
   my $self    = shift;
-  my @options = $self->options;
+  my @options = @{$self->options};
   my $multi   = $self->multiple;
 
   if (@_) {
     my $indices = shift;
     $indices    = [ $indices ] if ref($indices) ne 'ARRAY';
     $indices    = [ shift @$indices ] unless $multi;
-    foreach my $i (0..$#options) {
-      $options[$i]->selected((grep {$_ == $i} @{$indices}) ? 1 : 0);
-    }
+    $indices    = map {$_ => 1} @$indices;
+    $options[$_]->selected(exists $indices->{$_} ? 1 : 0) for 0..$#options;
   }
   my $indices = [];
   $options[$_]->selected and push @$indices, $_ for 0..$#options;
