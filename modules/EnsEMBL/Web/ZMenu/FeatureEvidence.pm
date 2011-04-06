@@ -12,12 +12,17 @@ sub content {
   my $db_adaptor        = $hub->database($hub->param('fdb'));
   my $feature_set       = $db_adaptor->get_FeatureSetAdaptor->fetch_by_name($hub->param('fs')); 
   my ($chr, $start, $end) = split (/\:|\-/g, $hub->param('pos')); 
+  my $length = ($end - $start) +1;
   my $slice             = $hub->database('core')->get_SliceAdaptor->fetch_by_region('toplevel', $chr, $start, $end);
 
   my @a_features = @{$db_adaptor->get_AnnotatedFeatureAdaptor->fetch_all_by_Slice($slice)};
   my $annotated_feature;
-  foreach ( @a_features) {
-    if ($_->feature_set->display_label eq $feature_set->display_label) { $annotated_feature = $_; }
+  foreach ( @a_features) { 
+    if ($_->feature_set->display_label eq $feature_set->display_label) { 
+      if ( $_->start == 1 && $_->end == $length ) { 
+        $annotated_feature = $_; 
+      }
+    }
   }
 
   my $summit         = $annotated_feature->summit || 'undetermined';
