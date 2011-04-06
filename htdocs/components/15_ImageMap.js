@@ -509,8 +509,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   
   getMapCoords: function (e) {
     return {
-      x: e.layerX || e.originalEvent.x || 0, 
-      y: e.layerY || e.originalEvent.y || 0
+      x: e.offsetX || e.layerX || 0,
+      y: e.offsetY || e.layerY || 0
     };
   },
   
