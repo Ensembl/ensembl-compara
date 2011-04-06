@@ -306,23 +306,24 @@ sub get_nodes_by_flag {
   ## Gets all the child nodes (recursively) of the node with the given flag
   ## Independent of node type
   ## @param Either of the following
-  ##  - String flag name                                - single flag with default value (ie. 1)
-  ##  - ArrayRef of flag Strings [flag1, flag2, ... ]   - to accomodate multiple flags with default value
+  ##  - String flag name                                - single flag with any value
+  ##  - ArrayRef of flag Strings [flag1, flag2, ... ]   - to accomodate multiple flags with any values
   ##  - HashRef {flag1 => value1, flag2 => value2 ...}  - to accomodate multiple flags with custom values
   ##  - HashRef {flag1 => [a, b ... ], flag2 => c ...}  - to accomodate multiple flag values
+  ## @return ArrayRef of nodes
   my $self  = shift;
   my $flag  = shift;
   my $recur = scalar @_ ? shift : 1;
 
-  $flag = [ $flag ]                 if ref($flag) !~ /^(ARRAY|HASH)$/;
-  $flag = { map {$_ => 1} @$flag }  if ref($flag) eq 'ARRAY';
+  $flag = [ $flag ]                     if ref($flag) !~ /^(ARRAY|HASH)$/;
+  $flag = { map {$_ => undef} @$flag }  if ref($flag) eq 'ARRAY';
   ref($flag->{$_}) ne 'ARRAY' and $flag->{$_} = [$flag->{$_}] for keys %$flag;
   
   my $nodes = [];
   foreach my $child_node (@{$self->child_nodes}) {
     FLAG: foreach my $flag_name (keys %$flag) {
       foreach my $flag_value (@{$flag->{$flag_name}}) {
-        push @$nodes, $child_node and last FLAG if exists $child_node->{'_flags'}{$flag_name} && $child_node->{'_flags'}{$flag_name} eq $flag_value;
+        push @$nodes, $child_node and last FLAG if exists $child_node->{'_flags'}{$flag_name} && (!defined $flag_value || $child_node->{'_flags'}{$flag_name} eq $flag_value);
       }
     }
     push @$nodes, @{$child_node->get_nodes_by_flag($flag)} if $recur;
