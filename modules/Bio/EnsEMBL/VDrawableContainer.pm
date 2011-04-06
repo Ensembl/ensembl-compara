@@ -61,6 +61,7 @@ sub new {
       $flag = 1;
     }
     
+    @chromosomes = reverse(@chromosomes) if($Container->{'format'} && $Container->{'format'} eq 'pdf'); #reverse the order for drawing
     my $pos = 100000;
     my $scalex = $Config->get_parameter('image_height') / $Config->get_parameter('container_width');
     $Config->{'transform'}->{'scalex'}         = $scalex;
