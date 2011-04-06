@@ -34,7 +34,7 @@ sub configure {
   $self->{'__option_class'} = $params->{'option_class'} if exists $params->{'option_class'};
   if (exists $params->{'values'}) {
     for (@{$params->{'values'}}) {
-      $_->{'selected'} = $_->{'value'} && exists $selected_values->{ $_->{'value'} } ? 1 : 0;
+      $_->{'selected'} = defined $_->{'value'} && exists $selected_values->{ $_->{'value'} } ? 1 : 0;
       $self->add_option($_);
     }
   }
