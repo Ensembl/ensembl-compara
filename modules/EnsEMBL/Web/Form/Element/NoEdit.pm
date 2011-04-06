@@ -26,4 +26,12 @@ sub configure {
   exists $params->{$_} and $input->set_attribute($_, $params->{$_}) for qw(id name class value);
 }
 
+sub caption {
+  ## Sets/gets caption for the noedit element
+  my $self = shift;
+
+  @_ and $self->first_child->inner_HTML(@_);  
+  return $self->first_child->inner_HTML;
+}
+
 1;
