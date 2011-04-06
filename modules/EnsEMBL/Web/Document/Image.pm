@@ -121,7 +121,8 @@ sub karyotype {
       sa  => $sa, 
       ka  => $ka, 
       da  => $da, 
-      chr => $chr_name 
+      chr => $chr_name,
+      format =>$hub->param('export')
     }, $image_config, \@highlights);
 
   return undef; # successful
