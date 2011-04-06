@@ -46,37 +46,6 @@ sub new {
   return $self;
 }
 
-sub feature_map {
-  return {
-    gene         => 'Gene',
-    affyprobe    => 'OligoProbe',
-    oliogprobe   => 'OligoProbe',
-    affy         => 'OligoProbe',
-    oligo        => 'OligoProbe',
-    snp          => 'Variation',
-    variation    => 'Variation',
-    chr          => 'Sequence',
-    clone        => 'Sequence',
-    contig       => 'Sequence',
-    chromosome   => 'Sequence',
-    supercontig  => 'Sequence',
-    region       => 'Sequence',
-    sequence     => 'Sequence',
-    disease      => 'Gene',
-    domain       => 'Domain',
-    peptide      => 'Gene',
-    transcript   => 'Transcript',
-    gene         => 'Gene',
-    translation  => 'Gene',
-    cdna         => 'GenomicAlignment',
-    mrna         => 'GenomicAlignment',
-    protein      => 'GenomicAlignment',
-    domain       => 'Domain',
-    marker       => 'Marker',
-    family       => 'Family',
-  };
-}
-
 sub psychic {
   my $self          = shift;
   my $hub           = $self->hub;
@@ -120,67 +89,71 @@ sub psychic {
     $url = "/Multi/Search/Results?species=$species&idx=All&q=$query";
   }
 
-  my $species_path = $species_defs->species_path($species) || "/$species";
-
-  ## Now we look to see if we can find a feature in the next part
-  ## of the search string - if so use that as the provisional name
-  ## of the index
-
   my $flag = 0;
   my $index_t;
 
-  if ($query =~ /^(\w+)\b/) {
-    $index_t = $self->feature_map->{lc $1};
-    $query   =~ s/^\w+\W*// if $index_t;
-  } elsif ($query =~ s/^(chromosome)//i || $query =~ s/^(chr)//i) {
-    $index_t = 'Chromosome';
-  } elsif ($query =~ /^(contig|clone|supercontig|region)/i) {
-    $index_t = 'Sequence';
+  #are we wanting to jump to a location page ?
+  if ($species ) {
+    if ($query =~ s/^(chromosome)//i || $query =~ s/^(chr)//i) {
+      $flag = $1;
+      $index_t = 'Chromosome';
+    }
+    elsif ($query =~ s/^(contig|clone|supercontig|scaffold|region)//i) {
+      $index_t = 'Sequence';
+      $flag = $1;
+    }
   }
 
-  $index = $index_t if $index_t;
+  # if we decide we want to use a species as well as a location page for the jump to then this will be usefull
+#  if ($flag) {
+#    warn "flag = $flag";
+#    foreach my $sp (sort keys %sp_hash) {
+#      if ( $query =~ /$sp/) {
+#        $query =~ s/$sp//;
+#        $species = $sp_hash{$sp};
+#        warn "setting species to be $species and query to be $flag";
+#      }
+#    }
+#  }
 
-#warn "setting index to $index_t";
+  my $species_path = $species_defs->species_path($species) || "/$species";
 
-  ## We have a species so we can see if we can generate a link
-
-
-
+  ## If we have a species and a location can we jump directly to that page ?
   if ($species) {
-    if (!$query) { ## nothing to search for
-      $flag = 1;
-    } elsif ($index eq 'Sequence' || $index eq 'Chromosome' || !$index) {
-      ## match any of the following:
-      if ($query =~ /^\s*([-\.\w]+)[: ]([\d\.]+?[MKG]?)( |-|\.\.|,)([\d\.]+?[MKG]?)$/i || $query =~ /^\s*([-\.\w]+)[: ]([\d,]+[MKG]?)( |\.\.|-)([\d,]+[MKG]?)$/i) {
-        my ($seq_region_name, $start, $end) = ($1, $2, $4);
 
-        $seq_region_name =~ s/chr//;
-        $start = $self->evaluate_bp($start);
-        $end   = $self->evaluate_bp($end);
-        
-        ($end, $start) = ($start, $end) if $end < $start;
-        
-        my $script = 'Location/View';
-        $script    = 'Location/Overview' if $end - $start > 1000000;
-        
-        if ($index eq 'Chromosome') {
-          $url  = "$species_path/Location/Chromosome?r=$seq_region_name";
-          $flag = 1;
-        } else {
-          $url  = $self->escaped_url("$species_path/$script?r=%s", $seq_region_name . ($start && $end ? ":$start-$end" : ''));
-          $flag = 1;
-        }
+    ## match any of the following:
+    if ($query =~ /^\s*([-\.\w]+)[: ]([\d\.]+?[MKG]?)( |-|\.\.|,)([\d\.]+?[MKG]?)$/i || $query =~ /^\s*([-\.\w]+)[: ]([\d,]+[MKG]?)( |\.\.|-)([\d,]+[MKG]?)$/i) {
+      my ($seq_region_name, $start, $end) = ($1, $2, $4);
+
+      $seq_region_name =~ s/chr//;
+      $seq_region_name =~ s/ //g;
+      $start = $self->evaluate_bp($start);
+      $end   = $self->evaluate_bp($end);
+      ($end, $start) = ($start, $end) if $end < $start;
+
+      my $script = 'Location/View';
+      $script    = 'Location/Overview' if $end - $start > 1000000;
+
+      if ($index_t eq 'Chromosome') {
+        $url  = "$species_path/Location/Chromosome?r=$seq_region_name";
+        $flag = 1;
       } else {
-        if ($index eq 'Chromosome') {
-          $url  = "$species_path/Location/Chromosome?r=$query";
-          $flag = 1;
-        } elsif ($index eq 'Sequence') {
-          $url  = "$species_path/Location/View?r=$query";
-          $flag = 1;
-        }
+        $url  = $self->escaped_url("$species_path/$script?r=%s", $seq_region_name . ($start && $end ? ":$start-$end" : ''));
+        $flag = 1;
       }
     }
-    
+    else {
+      if ($index_t eq 'Chromosome') {
+        $query =~ s/ //g;
+        $url  = "$species_path/Location/Chromosome?r=$query";
+        $flag = 1;
+      } elsif ($index_t eq 'Sequence') {
+        $query =~ s/ //g;
+        $url  = "$species_path/Location/View?region=$query";
+        $flag = 1;
+      }
+    }
+
     ## other pairs of identifiers
     if ($query =~ /\.\./ && !$flag) {
       ## str.string..str.string
@@ -189,7 +162,8 @@ sub psychic {
       $url   = $self->escaped_url("$species_path/jump_to_contig?type1=all;type2=all;anchor1=%s;anchor2=%s", $1, $3);
       $flag  = 1;
     }
-  } else {
+  }
+  else {
     $url = "/$script?species=;idx=;q=";
   }
 
@@ -198,9 +172,9 @@ sub psychic {
       $query =~ /^BLA_\w+$/               ? $self->escaped_url('/Multi/blastview/%s', $query) :                                                                 ## Blast ticket
       $query =~ /^\s*([ACGT]{20,})\s*$/i  ? $self->escaped_url('/Multi/blastview?species=%s;_query_sequence=%s;query=dna;database=dna', $species, $1) :         ## BLAST seq search
       $query =~ /^\s*([A-Z]{20,})\s*$/i   ? $self->escaped_url('/Multi/blastview?species=%s;_query_sequence=%s;query=peptide;database=peptide', $species, $1) : ## BLAST seq search
-      $self->escaped_url(($species eq 'ALL' || !$species ? '/Multi' : $species_path) . "/$script?species=%s;idx=%s;q=%s", $species || 'all', $index, $query);
+      $self->escaped_url(($species eq 'ALL' || !$species ? '/Multi' : $species_path) . "/$script?species=%s;idx=%s;q=%s", $species || 'all', $index, $query);    # everything else!
   }
-  
+
   $hub->redirect($site . $url);
 }
 
