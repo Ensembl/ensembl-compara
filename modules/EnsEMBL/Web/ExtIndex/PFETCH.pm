@@ -25,11 +25,17 @@ sub get_seq_by_id {
     $arghashref->{'species_defs'}->ENSEMBL_PFETCH_SERVER,
     $arghashref->{'species_defs'}->ENSEMBL_PFETCH_PORT
   );
-  my $hostname = &Sys::Hostname::hostname();
-  print $server "--client $hostname $str \n";
 
+  my $hostname = &Sys::Hostname::hostname();
   my $output;
-  push @$output, $_ while(<$server>);
+  if ($arghashref->{'strand_mismatch'}) {
+    print $server "--client $hostname $str -r \n";
+    push @$output, $_ while(<$server>);
+  }
+  else {
+    print $server "--client $hostname $str  \n";
+    push @$output, $_ while(<$server>);
+  }
 
   return $output;
 }
