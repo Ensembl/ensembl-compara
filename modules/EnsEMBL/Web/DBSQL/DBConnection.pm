@@ -86,9 +86,9 @@ sub get_DBAdaptor {
 
   # Funcgen Database Files Overwrite
   if ($database eq 'funcgen' ){
-    my $root = $self->{'species_defs'}->REGULATION_FILE_PATH;
-    next unless $root;
-    $dba->get_ResultSetAdaptor->dbfile_data_root($root);    
+      if ( my $root = $self->{'species_defs'}->REGULATION_FILE_PATH) {
+	  $dba->get_ResultSetAdaptor->dbfile_data_root($root);    
+      }
   }  
  
   # Glovar
