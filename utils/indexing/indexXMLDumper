@@ -22,6 +22,7 @@ use Data::Dumper;
 use Getopt::Long;
 use POSIX qw(strftime);
 use URI;
+use HTML::Strip;
 
 use constant INC_SPECIES => 0;
 use CGI;
@@ -123,8 +124,8 @@ foreach my $index (@indexes) {
 
     else {
 
-#    next unless ($species =~ /^[L-Z]/);
-
+#      next unless ($species =~ /^[L-Z]/);
+#      next unless $species =~ /Callithrix_jacchus|Meleagris_gallopavo|Nomascus_leucogenys|Oryctolagus_cuniculus/;
       $conf->{'species'}   = $species;
       $conf->{'speciesname_list'}{$SD->get_config($species,'SPECIES_COMMON_NAME')}++;
       $conf->{'speciesname_list'}{$species}++;
@@ -172,7 +173,8 @@ foreach my $index (@indexes) {
         $no_success = 0;
       }
     }
-    $conf->{'dbh'}->disconnect;
+    eval { $conf->{'dbh'}->disconnect; };
+    if ($@) { print LOG "WARNING: Problems disconnecting database habdle, don't understand this!"; }
     last if $single_species;
   }
   print LOG "  Time for $index is " . &elapsed_time($start) . "\n\n";
@@ -240,19 +242,19 @@ sub dumpHelp {
 }
 
 sub helpLine {
-  my ($id, $name, $keywords, $description, $extra,  $type, $counter) = @_;
+  my ($id, $name, $keywords, $desc, $extra,  $type, $counter) = @_;
   my @keywords = map { s/^ //; $_; } split ',', $keywords if $keywords;
 
-  #replace relative with absolute URLs, remove img tags, escape any other markup
-  $description =~ s/href="([^"]*)"
-                   /URI->new_abs($1, 'http:\/\/www.ensembl.org\/') . '"'
-                   /gmxe;
-  $description =~ s/<img.*>?//mg;
-  $description = &clean($description);
+  #remove all HTML markup, extra whitespace and extra lines. Escape any characters that might have slipped through
+  my $hs = HTML::Strip->new(decode_entities => 0); #don't decode HTML entitites, they're fine as they are
+  my $description = $hs->parse( $desc );
+  $description =~ s/\s{1,}/ /g;
+  $description = clean($description);
+  $hs->eof;
 
   #remove markup from headers and escape just to be sure
-  $name =~ s/<\/*\w+>//g;
-  $name        = &clean($name);
+  $name =~ s/<\/*.+>?//g;
+  $name = &clean($name);
 
   my $xml = qq(
 <entry id="$id">
@@ -274,10 +276,6 @@ sub helpLine {
   return $xml . qq(
 </entry>);
 }
-
-
-
-#http://www.ensembl.org/Help/View?id=142
 
 ########################################################################## Markers
 
@@ -1281,6 +1279,7 @@ sub dumpSequence {
           AND ma.attrib_type_id = at.attrib_type_id
         ORDER by mf.misc_feature_id, at.code));
       $sth->execute();
+
       my ($old_ID,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$NAMES,$ftype);
       while( my($ID,$sr,$sr_type,$start,$end,$len,$ms_id,$code,$val) = $sth->fetchrow_array() ) {
         if($ID == $old_ID) {
@@ -2464,6 +2463,7 @@ sub clean {
   $text =~ s/ & / &amp; /g;
   $text =~ s/</&lt;/g;
   $text =~ s/>/&gt;/g;
+
 
   if ($text =~ /[<>]/) {
     print LOG "WARNING: Unsupported character $text in field $field\n";
