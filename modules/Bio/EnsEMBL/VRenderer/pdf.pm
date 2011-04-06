@@ -23,12 +23,15 @@ sub init_canvas {
 }
 
 sub add_canvas_frame {
+  my ($self, $config, $im_height, $im_width) = @_;
+  
+  return;
 }
 
 sub canvas {
   my ($self, $canvas) = @_;
 
-  if(defined $canvas) {
+  if(defined $canvas) {    
   $self->{'canvas'} = $canvas;
   } else {
   my $result = $self->{'canvas'}{'pdf'}->stringify;
@@ -85,7 +88,7 @@ sub render_Text {
   my $gcolour = $glyph->colour() || "black";
   my $text  = $glyph->text();
 
-	my($x,$y) = $self->XY($glyph->pixelx,$glyph->pixely);
+	my($x,$y) = $self->XY($glyph->pixelx+2,$glyph->pixely);
 	my($a,$b) = $self->XY($glyph->pixelx+$glyph->pixelwidth,$glyph->pixely+$glyph->pixelheight);
 
 	my $h = $y - $b;
@@ -108,7 +111,7 @@ sub render_Text {
   } elsif( $glyph->{'halign'} eq 'center' ) {
     $T->translate( ($x+$a)/2, $y );
     $T->text_center( $text );
-  } else {
+  } else {    
     $T->translate( $x, $y );
     $T->text( $text );
   }
@@ -116,6 +119,20 @@ sub render_Text {
 
 sub render_Circle {
 #  die "Not implemented in pdf yet!";
+  my ($self, $glyph) = @_;
+  my $gcolour     = $glyph->colour();
+  my $gbordercolour = $glyph->bordercolour();
+  
+	my($x,$y) = $self->XY($glyph->pixelx,$glyph->pixely);
+	my($a,$b) = $self->XY($glyph->pixelx+$glyph->pixelwidth,$glyph->pixely+$glyph->pixelheight);
+	
+  unless( $gcolour eq 'transparent' ) {
+    $self->fillcolor( $gcolour );
+    $self->strokecolor( $gcolour );
+    $self->circle($x,$y,3);
+    # $self->stroke();
+    $self->fill();
+  }
 }
 
 sub render_Ellipse {
