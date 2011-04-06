@@ -1,23 +1,44 @@
-#!/usr/bin/perl
-
+#!/usr/bin/env perl
 use strict;
 use warnings;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::Member;
+use Getopt::Long;
 
 my $reg = "Bio::EnsEMBL::Registry";
 
+my $help;
+my $registry_file;
+my $url;
+my $compara_url;
 my $tree_id = 2; # 112589 for NCTree
-$reg->load_registry_from_db(
-                            -host => "127.0.0.1", # -host => "ens-livemirror",
-                            -port => 2902,        # -port => 3306,
-                            -user => "ensro",
-                            -verbose => 0
-                           );
 
-my $compara_dba = $reg->get_DBAdaptor("Multi","compara");
+GetOptions(
+  "help" => \$help,
+  "url=s" => \$url,
+  "compara_url=s" => \$compara_url,
+  "conf|registry=s" => \$registry_file,
+  "tree_id=i" => \$tree_id,
+);
+
+if ($registry_file) {
+  die if (!-e $registry_file);
+  $reg->load_all($registry_file);
+} elsif ($url) {
+  $reg->load_registry_from_url($url);
+} else {
+  $reg->load_all();
+}
+
+my $compara_dba;
+if ($compara_url) {
+  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+  $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url=>$compara_url);
+} else {
+  $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
+}
 
 my $clusterset_id = 1;
 
@@ -62,54 +83,63 @@ S --> species_name (\$tree->genome_db->name)
 
 EOL
 print "For example, to print the name of each node you can use the 'format' string '%{n}'\n\n";
-print "\$tree->newick_format('ryo','%{n}')\n\n";
+print "\$tree->newick_format('ryo','%{n}')\n",
+      " [Please wait, printing tree...]\n\n";
 print $tree->newick_format("ryo",'%{n}'), "\n\n";
 print "Press \"enter\" to continue...";
 <>;
 print "\n\n";
 print "2. If you want to include the branch distances you should include another token: '%{n}:%{d}'. This reads 'for each node give me its name, a ':' and the distance to its parent\n\n";
-print "\$tree->newick_format('ryo','%{n}:%{d}')\n\n";
+print "\$tree->newick_format('ryo','%{n}:%{d}')\n",
+      " [Please wait, printing tree...]\n\n";
 print $tree->newick_format("ryo",'%{n}:%{d}'),"\n\n";
 print "Press \"enter\" to continue...";
 <>;
 print "\n\n";
 print "3. You may also include the colon (or other string literals) inside the token, but if placed there they must be double-quoted. The meaning is slightly different though, if a string literal is placed inside the token, it will be printed only if the main attribute of the token is defined. For example '%{n}{\":\"d}'\n\n";
-print "\$tree->newick_format('ryo','%{n}%{\":\"d}')\n\n";
+print "\$tree->newick_format('ryo','%{n}%{\":\"d}')\n",
+      " [Please wait, printing tree...]\n\n";
 print $tree->newick_format('ryo','%{n}%{":"d}'), "\n\n";
 print "Press \"enter\" to continue...";
 <>;
 print "\n\n";
 print "4. Tokens may also have 'modifiers'. For example, if you want only the \"distance to parent\" in the nodes that are leaves you can use a dash '-' just before the one-letter attribute: '%{n}%{\":\"-d}'. Note that in this case, both the colon and the distance are absent in internal nodes\n\n";
-print "\$tree->newick_format('ryo','%{n}%{\":\"-d}')\n\n";
+print "\$tree->newick_format('ryo','%{n}%{\":\"-d}')\n",
+      " [Please wait, printing tree...]\n\n";
 print $tree->newick_format('ryo','%{n}%{":"-d}'),"\n\n";
 print "Press \"enter\" to continue...";
 <>;
 print "\n\n";
 print "5. The same can be done with only internal nodes by appending the dash just after the attribute: '%{n}%{\":\"d-}'. You should be aware that if an attribute is undefined for a node, it will not be printed, so '%{n}' is the same as '%{-n}' since internal nodes are unnamed\n\n";
-print "\$tree->newick_format('ryo','%{n}%{\":\"d-}')\n\n";
+print "\$tree->newick_format('ryo','%{n}%{\":\"d-}')\n",
+      " [Please wait, printing tree...]\n\n";
 print $tree->newick_format('ryo','%{n}%{":"d-}'),"\n\n";
 print "Press \"enter\" to continue...";
 <>;
 print "\n\n";
 print "6. You can also specify alternatives in the one-letter attributes. For example, the following format would print for each node the protein member ID or (if it is not defined) its name: '%{p|n}'\n\n";
-print "\$tree->newick_format('ryo','%{p|n}')\n\n";
+print "\$tree->newick_format('ryo','%{p|n}')\n",
+      " [Please wait, printing tree...]\n\n";
 print $tree->newick_format('ryo','%{p|n}'),"\n\n";
 print "Press \"enter\" to continue...";
 <>;
 print "\n\n";
 print "7. The last modifier that you can use is a caret (^) just at the beginning of the token. This modifier means that the token only applies to nodes that has a parent (\$tree->has_parent method returns a 'true' value). An example of use could be: '%{^o}'. This will print the node_id of all the nodes that has a parent\n\n";
-print "\$tree->newick_format('ryo','%{^o}')\n\n";
+print "\$tree->newick_format('ryo','%{^o}')\n",
+      " [Please wait, printing tree...]\n\n";
 print $tree->newick_format('ryo','%{^o}'),"\n\n";
 print "Press \"enter\" to continue...";
 <>;
 print "\n\n";
 print "8. To keep the formats clean and help the parser all these modifiers should be in order. Here is a template, all modifiers are optional and only the main one-letter attribute is mandatory: '%{^\"_\"p-|on\"_\"}'. Here are a couple of more examples:\n\n";
-print "otu_id --> '%{-s\"|\"}%{-l}%{n}:%{d}'\n\n";
+print "otu_id --> '%{-s\"|\"}%{-l}%{n}:%{d}'\n",
+      " [Please wait, printing tree...]\n\n";
 print $tree->newick_format('ryo','%{-s"|"}%{-l}%{n}:%{d}'),"\n\n";
 print "Press \"enter\" to continue...";
 <>;
 print "\n\n";
-print "display_label_composite --> '%{-l\"_\"}%{n}%{\"_\"-s}:%{d}'\n\n";
+print "display_label_composite --> '%{-l\"_\"}%{n}%{\"_\"-s}:%{d}'\n",
+      " [Please wait, printing tree...]\n\n";
 print $tree->newick_format('ryo','%{-l"_"}%{n}%{"_"-s}:%{d}'),"\n\n";
 print "All examples run successfully\n\n";
 
