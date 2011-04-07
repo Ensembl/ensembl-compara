@@ -67,9 +67,10 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-        'method'      => 'Infernal',
-        'cmbuild_exe' => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmbuild',
-    };
+            'method'      => 'Infernal',
+            'cmbuild_exe' => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmbuild',
+            'cmalign_exe' => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign'
+           };
 }
 
 
@@ -161,8 +162,8 @@ sub dump_sequences_to_workdir {
   my $node_id = $cluster->node_id;
   my $member_list = $cluster->get_all_leaves;
   if (2 > scalar @$member_list) {
-    warn("Only one member for cluster [$node_id]");
-    return 1;
+      $self->input_job->transient_error(0);
+      die ("Only one member for cluster [$node_id]");
   }
   print STDERR "Counting number of members\n" if ($self->debug);
   my $tag_gene_count = scalar(@{$member_list});
@@ -171,6 +172,7 @@ sub dump_sequences_to_workdir {
     or $self->throw("Error opening $fastafile for write!");
   my $count = 0;
 
+  my @no_acc_members = ();
   foreach my $member (@{$member_list}) {
     my $sequence_id;
     eval {$sequence_id = $member->sequence_id;};
@@ -182,6 +184,7 @@ sub dump_sequences_to_workdir {
     eval { $description = $member->description; };
     unless (defined($description) && $description =~ /Acc\:(\w+)/) {
       warn ("No accession for [$description]");
+      push @no_acc_members, $member->dbID;
     }
     $seq_id_hash->{$sequence_id} = 1;
     $count++;
@@ -197,6 +200,10 @@ sub dump_sequences_to_workdir {
     print STDERR "sequences $count\n" if ($count % 50 == 0);
   }
   close(OUTSEQ);
+  unless (keys %{$self->param('model_id_hash')}) {
+      die "No Accs found for nc_tree_id $node_id : ", join ",",@no_acc_members;
+  }
+
 
   if(scalar keys (%{$seq_id_hash}) <= 1) {
     $self->update_single_peptide_tree($cluster);
@@ -229,12 +236,11 @@ sub update_single_peptide_tree {
 sub run_infernal {
   my $self = shift;
 
-  return if ($self->param('single_peptide_tree'));
-
   my $stk_output = $self->worker_temp_directory . "output.stk";
 
-  my $infernal_executable = $self->analysis->program_file || '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign';
-  $self->throw("can't find a cmalign executable to run\n") unless(-e $infernal_executable);
+  my $infernal_executable = $self->analysis->program_file || $self->param('cmalign_exe') || '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign';
+
+  die ("can't find a cmalign executable to run\n") unless(-e $infernal_executable);
 
   my $model_id;
 
@@ -242,11 +248,11 @@ sub run_infernal {
     # We revert to the clustering_id tag, which maps to the RFAM
     # 'name' field in nc_profile (e.g. 'mir-135' instead of 'RF00246')
     print STDERR "WARNING: More than one model: ", join(",",keys %{$self->param('model_id_hash')}), "\n";
-    $model_id = $self->param('nc_tree')->get_tagvalue('clustering_id') or die "'clustering_id' tag for this tree is not defined";
+    $model_id = $self->param('nc_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
     # $self->throw("This cluster has more than one associated model");
   } else {
     my @models = keys %{$self->param('model_id_hash')};
-    $model_id = $models[0] or die "model_id_hash is empty?";
+    $model_id = $models[0] or die ("model_id_hash is empty?");
   }
 
   $self->param('model_id', $model_id );
@@ -257,7 +263,7 @@ sub run_infernal {
     $self->param('nc_tree')->release_tree;
     $self->param('nc_tree', undef);
     $self->input_job->transient_error(0);
-    die "Failed to find '$model_id' both in 'model_id' and 'name' fields of 'nc_profile' table";
+    die ("Failed to find '$model_id' both in 'model_id' and 'name' fields of 'nc_profile' table");
   }
 
 
@@ -301,8 +307,7 @@ sub run_infernal {
   $cmd .= " -F $refined_profile";
   $cmd .= " $stk_output";
   $self->compara_dba->dbc->disconnect_when_inactive(1);
-  print("$cmd\n") if($self->debug);
-  $DB::single=1;1;
+
   unless(system($cmd) == 0) {
     $self->throw("error running cmbuild refine, $!\n");
   }
@@ -441,7 +446,7 @@ sub parse_and_store_alignment_into_tree {
     if ($align_hash{$member->sequence_id} eq "") {
       $self->throw("infernal produced an empty cigar_line for ".$member->stable_id."\n");
     }
-    $DB::single=1;1;
+
     $member->cigar_line($align_hash{$member->sequence_id});
     ## Check that the cigar length (Ms) matches the sequence length
     my @cigar_match_lengths = map { if ($_ eq '') {$_ = 1} else {$_ = $_;} } map { $_ =~ /^(\d*)/ } ( $member->cigar_line =~ /(\d*[M])/g );
@@ -451,7 +456,7 @@ sub parse_and_store_alignment_into_tree {
       $self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
     }
     #
-    printf("update nc_tree_member %s : %s\n",$member->stable_id, $member->cigar_line) if($self->debug);
+#    printf("update nc_tree_member %s : %s\n",$member->stable_id, $member->cigar_line) if($self->debug);
     $self->compara_dba->get_NCTreeAdaptor->store($member);
   }
 
