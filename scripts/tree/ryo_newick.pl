@@ -81,10 +81,6 @@ if ($compara_url) {
   $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
 }
 
-
-# First get all the nc_tree_ids:
-
-my $clusterset_id = 1;
 my $tree_adaptor = $compara_dba->get_ProteinTreeAdaptor(); # Repeat with TreeAdaptor
 my $tree = $tree_adaptor->fetch_node_by_node_id($tree_id);
 
