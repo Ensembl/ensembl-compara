@@ -13,17 +13,16 @@
 	<li><a href="#connect">Connecting an Ensembl variation database</a></li>
 	<li><a href="#genome">Variations in the genome</a></li>
 	<li><a href="#alleles">Alleles and frequencies</a></li>
-	<li><a href="#consequences">Consequence type of variations</a></li>
+	<li><a href="#Consequence">Consequence type of variations</a></li>
 	<li><a href="#flanks">Variations, Flanking sequences and Genes</a></li>
-	<li><a href="#failed">Failed variations</a></li>
+	<li><a href="#failed_variations">Failed variations</a></li>
 	<li><a href="#structural">Structural variations</a></li>
 	<li><a href="#ld">LD calculation</a></li>
 	<li><a href="#strains">Specific strain information</a></li>
 	<li><a href="#help">Further help</a></li>
 </ul>
 
-<a name="intro" />
-<h2>Introduction</h2>
+<h2 id="intro">Introduction</h2>
 
 <p>
 This tutorial is an introduction to the
@@ -38,16 +37,14 @@ http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-variation/schema/?root=ensemb
 , and while not necessary for this tutorial, an understanding of the database tables may help as many of the adaptor modules are table-specific.
 </p>
 
-<a name="code" />
-<h2>Code Conventions (and unconventions)</h2>
+<h2 id="code">Code Conventions (and unconventions)</h2>
 
 <p>
 Refer to the Ensembl core tutorial for a good description of the coding conventions normally used in Ensembl. Please note that there may be exceptions to these rules in variation.
 </p>
 
 
-<a name="connect" />
-<h2>Connecting an Ensembl variation database</h2>
+<h2 id="connect">Connecting an Ensembl variation database</h2>
 
 <p>
 Connecting to an Ensembl variation database is made simple by using the Bio::EnsEMBL::Registry module:
@@ -114,8 +111,7 @@ Only some of these adaptors will be used for illustration as part of this tutori
 </p>
 
 
-<a name="genome" />
-<h2>Variations in the genome</h2>
+<h2 id="genome">Variations in the genome</h2>
 
 <p>
 One of the most important uses for the variation database is to be able to get all variations in a certain region in the genome.
@@ -146,8 +142,7 @@ foreach my $vf (@{$vfs}){
 }
 </pre>
 
-<a name="alleles" />
-<h2>Alleles and frequencies</h2>
+<h2 id="alleles">Alleles and frequencies</h2>
 
 <p>
 Most variations in the Ensembl Variation database have associated allele frequencies. Each allele object associated with a variation represents an observation of a variant allele in a given population, and may have an associated frequency. Populations are also represented as objects.
@@ -177,7 +172,6 @@ foreach my $allele(@{$alleles}) {
 </pre>
 
 
-<a name="consequences" />
 <h2 id="Consequence">Consequence type of variations</h2>
 
 <p>
@@ -313,8 +307,7 @@ foreach my $con(@{$new_vf->get_all_TranscriptVariations}) {
 </pre>
 
 
-<a name="flanks" />
-<h2>Variations, Flanking sequences and Genes</h2>
+<h2 id="flanks">Variations, Flanking sequences and Genes</h2>
 
 <p>
 Below is a complete example on how to use the variation API to retrieve different data from the database. In this particular example, 
@@ -378,7 +371,6 @@ sub get_TranscriptVariations{
 </pre>
 
 
-<a name="failed" />
 <h2 id="failed_variations">
 	Failed variations
 </h2>
@@ -503,8 +495,7 @@ foreach my $vf (@{$vfs}) {
 </pre>
 
 
-<a name="structural" />
-<h2>Structural variations</h2>
+<h2 id="structural">Structural variations</h2>
 
 <p>
 The Ensembl variation database also stores information about structural variations. These data are imported from the DGVa (Database of Genomic Variants archive). Structural variants are remapped to the current genome assembly using the $slice->project() method from the Ensembl Core API, allowing for one gap in the resultant mapping.</p>
@@ -538,8 +529,7 @@ foreach my $sv(@$svs) {
 </pre>
 
 
-<a name="ld" />
-<h2>LD calculation</h2>
+<h2 id="ld">LD calculation</h2>
 
 <p>
 In order to be able to use the LD calculation, you need to compile the C source code and install a module, called IPC::Run. There is more information
@@ -593,8 +583,7 @@ Please note the following warning <code> MSG: variation features have no pairwis
 <p> Looking at other associated data will help to narrow down the reason. If there are variants in the region spanned by the LDFeatureContainer 
 with genotypes with a minor allele frequency greater than zero, then assume the r<sup>2</sup> is < 0.05, which essentially means no correlation. </p>
 
-<a name="strains" />
-<h2>Specific strain information</h2>
+<h2 id="strains">Specific strain information</h2>
 
 <p>
 With the apparition of the new technologies, one of the new functionalities that the variation API has is the possibility to
@@ -632,8 +621,7 @@ foreach my $diff (@differences){
 }
 </pre>
 
-<a name="help" />
-<h2>Further help</h2>
+<h2 id="help">Further help</h2>
 
 <p>
 For additional information or help mail the <a href="mailto:ensemb-dev&#64;ebi.ac.uk">ensembl-dev</a> mailing list.
