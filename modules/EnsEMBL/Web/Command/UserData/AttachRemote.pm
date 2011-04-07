@@ -22,17 +22,28 @@ sub process {
   my @path = split '/', $hub->param('url');
   my $filename = $path[-1];
   $name ||= $filename;
+
   ## Try to guess format from file name
   my $format;
   my @bits = split /\./, $filename;
   my $extension = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
-  $extension = uc($extension);
-  my @attachable = @{$hub->species_defs->USERDATA_FILE_FORMATS};
-  push @attachable, @{$hub->species_defs->USERDATA_REMOTE_FORMATS};
-  if (grep $extension, @attachable) {
-    $format = $extension;
+  my @small_formats = @{$hub->species_defs->USERDATA_FILE_FORMATS};
+  my @big_formats   = @{$hub->species_defs->USERDATA_REMOTE_FORMATS};
+  my @all_formats   = (@small_formats, @big_formats);
+
+  ## We have to do some intelligent checking here, in case the user
+  ## selects the wrong format from the dropdown, or none at all!
+  my $chosen_format = $hub->param('format');
+  my $pattern = '^'.$extension.'$';
+  if (grep(/$chosen_format/i, @big_formats)
+    || (grep(/$chosen_format/i, @small_formats) && grep(/$pattern/i, @small_formats))) {
+    $format = $chosen_format;
   }
-  else {
+  elsif (grep(/$pattern/i, @all_formats)) {
+    $format = uc($extension);
+  }
+
+  unless ($format) {
     $redirect .= 'SelectRemote';
     $session->add_data(
         'type'  => 'message',
@@ -62,7 +73,13 @@ sub process {
       );
     }
     else {
-      $redirect .= 'RemoteFeedback';
+      ## This next bit is a hack - we need to implement userdata configuration properly! 
+      if ($format eq 'BIGWIG') {
+        $redirect .= 'ConfigureBigWig';
+      }
+      else {
+        $redirect .= 'RemoteFeedback';
+      }
       my $data = $session->add_data(
         type     => 'url',
         url      => $url,
