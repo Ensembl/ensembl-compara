@@ -76,7 +76,7 @@ sub render {
   if ($page_species eq 'Multi') {
     $sample_data = $species_defs->get_config('MULTI', 'GENERIC_DATA') || {};
   } else {
-    $sample_data = $species_defs->SAMPLE_DATA;
+    $sample_data = { %{$species_defs->SAMPLE_DATA} };
     $sample_data->{'GENE_TEXT'} = "gene $sample_data->{'GENE_TEXT'}" if $sample_data->{'GENE_TEXT'};
   }
   
