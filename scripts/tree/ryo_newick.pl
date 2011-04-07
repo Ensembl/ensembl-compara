@@ -1,5 +1,4 @@
-#!/usr/bin/perl
-
+#!/usr/bin/env perl
 use strict;
 use warnings;
 
@@ -10,16 +9,23 @@ use Getopt::Long;
 
 my $reg = "Bio::EnsEMBL::Registry";
 
-#my $tree_id = 112589;
+my $help;
+my $registry_file;
+my $url;
+my $compara_url;
 my $tree_id = 2;
 my $fmt = '%{n}%{":"d}';
-my $help = 0;
+my $quiet = 0;
 
-my $opts = GetOptions(
-		      "id:i" => \$tree_id,
-		      "format:s" => \$fmt,
-		      "help" => \$help
-		     );
+GetOptions(
+  "help" => \$help,
+  "url=s" => \$url,
+  "compara_url=s" => \$compara_url,
+  "conf|registry=s" => \$registry_file,
+  "id|tree_id:i" => \$tree_id,
+  "format:s" => \$fmt,
+  "quiet" => \$quiet,
+);
 
 if ($help) {
   print <<'EOH';
@@ -51,22 +57,35 @@ EOH
 exit;
 }
 
-print "tree_id => $tree_id\n";
-print "format => $fmt\n\n";
+if ($quiet) {
+  $reg->no_version_check(1);
+} else {
+  print "tree_id => $tree_id\n";
+  print "format => $fmt\n\n";
+}
 
-$reg->load_registry_from_db(
-                            -host => "127.0.0.1", # -host => "ens-livemirror",
-                            -port => 2902,        # -port => 3306,
-                            -user => "ensro",
-                            -verbose => 0
-                           );
+if ($registry_file) {
+  die if (!-e $registry_file);
+  $reg->load_all($registry_file);
+} elsif ($url) {
+  $reg->load_registry_from_url($url);
+} elsif (!$compara_url) {
+  $reg->load_all();
+}
 
-my $compara_dba = $reg->get_DBAdaptor("Multi","compara");
+my $compara_dba;
+if ($compara_url) {
+  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+  $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url=>$compara_url);
+} else {
+  $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
+}
+
 
 # First get all the nc_tree_ids:
 
 my $clusterset_id = 1;
-my $tree_Adaptor = $compara_dba->get_ProteinTreeAdaptor(); # Repeat with TreeAdaptor
-my $tree = $tree_Adaptor->fetch_node_by_node_id($tree_id);
+my $tree_adaptor = $compara_dba->get_ProteinTreeAdaptor(); # Repeat with TreeAdaptor
+my $tree = $tree_adaptor->fetch_node_by_node_id($tree_id);
 
 print $tree->newick_format('ryo',$fmt),"\n";
