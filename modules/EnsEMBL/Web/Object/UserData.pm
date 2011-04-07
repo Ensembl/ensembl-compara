@@ -20,9 +20,6 @@ use Bio::EnsEMBL::StableIdHistoryTree;
 use Bio::EnsEMBL::Utils::Exception qw(try catch);
 use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor;
-#use Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor;
-use Bio::DB::Sam;
-#use Bio::DB::BigFile;
 
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::DASConfig;
@@ -93,11 +90,17 @@ sub check_url_data {
   return ($error, $options);
 }
 
+## Note that we use 'require' in the following modules so that the web code
+## doesn't barf if the relevant tools aren't installed - each method is only
+## called if the corresponding format is configured in DEFAULTS.ini
+
 sub check_bam_data {
   my ($self, $url) = @_;
   my $error = '';
+=pod
+  require Bio::DB::Sam;
 
-  if ($url =~ /^ftp:\/\//i && !$SiteDefs::ALLOW_FTP_BAM) {
+  if ($url =~ /^ftp:\/\//i && !$self->hub->species_defs->ALLOW_FTP_BAM) {
     $error = "The bam file could not be added - FTP is not supported, please use HTTP.";
   } 
   else {
@@ -121,14 +124,17 @@ sub check_bam_data {
         $error = "Unable to open/index remote BAM file: $url<br>Ensembl can only display sorted, indexed BAM files.<br>Please ensure that your web server is accessible to the Ensembl site and that both your .bam and .bai files are present, named consistently, and have the correct file permissions (public readable).";
     }
   }
+=cut
   return $error;
 }
 
 sub check_bigwig_data {
   my ($self, $url) = @_;
   my $error = '';
+=pod
+  require Bio::DB::BigFile;
 
-  if ($url =~ /^ftp:\/\//i && !$SiteDefs::ALLOW_FTP_BIGWIG) {
+  if ($url =~ /^ftp:\/\//i && !$self->hub->species_defs->ALLOW_FTP_BIGWIG) {
     $error = "The BigWig file could not be added - FTP is not supported, please use HTTP.";
   }
   else {
@@ -146,14 +152,17 @@ sub check_bigwig_data {
       $error = "Unable to open remote BigWig file: $url<br>Ensure hat your web/ftp server is accessible to the Ensembl site";
     }
   }
+=cut
   return $error;
 }
 
 sub check_vcf_data {
   my ($self, $url) = @_;
   my $error = '';
+=pod
+  require Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor;
 
-  if ($url =~ /^ftp:\/\//i && !$SiteDefs::ALLOW_FTP_VCF) {
+  if ($url =~ /^ftp:\/\//i && !$self->hub->species_defs->ALLOW_FTP_VCF) {
     $error = "The VCF file could not be added - FTP is not supported, please use HTTP.";
   } 
   else {
@@ -173,6 +182,7 @@ sub check_vcf_data {
 <br>Ensure you have sorted and indexed your file and that your web server is accessible to the Ensembl site";
     }
   }
+=cut
   return $error;
 }
 
