@@ -29,7 +29,7 @@ sub init {
     somatic     => 'Somatic Mutation',
     functional  => 'Functional Genomics',
     information => 'Information', 
-    other       => 'Decorations'
+    other       => 'Decorations',
   );
   
   $self->add_tracks('sequence',
@@ -66,11 +66,21 @@ sub init {
     ['variation_set_Phenotype-associated variations'],
     { display => 'normal' }
   );
+	
+	# structural variations
   $self->modify_configs(
     ['variation_feature_structural'],
     { display => 'normal', depth => 10 }
   );
-    $self->modify_configs(
+	
+	# CNV probes
+	$self->modify_configs(
+    ['variation_feature_cnv'],
+    { display => 'normal', depth => 5 }
+  );
+	
+	# COSMIC
+  $self->modify_configs(
     ['somatic_mutation_COSMIC'],
     { display => 'normal', style => 'box', depth => 100000 }
   );
