@@ -138,6 +138,14 @@ sub populate_tree {
    [qw(remote_feedback EnsEMBL::Web::Component::UserData::RemoteFeedback)], 
     { 'availability' => 1, 'no_menu_entry' => 1 }
   );
+  $self->create_node( 'ConfigureBigWig', '',
+   [qw(remote_feedback EnsEMBL::Web::Component::UserData::ConfigureBigWig)], 
+    { 'availability' => 1, 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'SaveExtraConfig', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::UserData::SaveExtraConfig', 
+    'availability' => 1, 'no_menu_entry' => 1 }
+  );
 
   ## Data management
   $self->create_node( 'ManageData', "Manage Data",
