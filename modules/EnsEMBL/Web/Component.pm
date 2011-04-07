@@ -672,15 +672,13 @@ sub transcript_table {
   my $seq_region_start = $object->seq_region_start;
   my $seq_region_end   = $object->seq_region_end;
   
-  my $url = $hub->url({
-    type   => 'Location',
-    action => 'View',
-    r      => "$seq_region_name:$seq_region_start-$seq_region_end"
-  });
-  
   my $location_html = sprintf(
     '<a href="%s">%s: %s-%s</a> %s.',
-    $url,
+    $hub->url({
+      type   => 'Location',
+      action => 'View',
+      r      => "$seq_region_name:$seq_region_start-$seq_region_end"
+    }),
     $self->neat_sr_name($object->seq_region_type, $seq_region_name),
     $self->thousandify($seq_region_start),
     $self->thousandify($seq_region_end),
@@ -702,13 +700,12 @@ sub transcript_table {
     
     # link to Vega if there is an ungapped mapping of whole gene
     if (scalar @$alt_slices == 1 && $alt_slices->[0]->length == $object->feature_length) {
-      my $l   = $alt_slices->[0]->seq_region_name . ':' . $alt_slices->[0]->start . '-' . $alt_slices->[0]->end;
-      my $url = $hub->ExtURL->get_url('VEGA_CONTIGVIEW', $l);
+      my $l = $alt_slices->[0]->seq_region_name . ':' . $alt_slices->[0]->start . '-' . $alt_slices->[0]->end;
       
       $location_html .= ' [<span class="small">This corresponds to ';
       $location_html .= sprintf(
         '<a href="%s" target="external">%s-%s</a>',
-        $url,
+        $hub->ExtURL->get_url('VEGA_CONTIGVIEW', $l),
         $self->thousandify($alt_slices->[0]->start),
         $self->thousandify($alt_slices->[0]->end)
       );
@@ -768,9 +765,8 @@ sub transcript_table {
     my %biotype_rows;
     
     my %url_params = (
-      type     => 'Transcript',
-      action   => $page_type eq 'gene' || $action eq 'ProteinSummary' ? 'Summary' : $action,
-      function => undef
+      type   => 'Transcript',
+      action => $page_type eq 'gene' || $action eq 'ProteinSummary' ? 'Summary' : $action
     );
     
     if ($count == 1) { 
