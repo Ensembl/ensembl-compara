@@ -338,6 +338,7 @@ sub load_user_tracks {
       source_type => 'session',
       format      => $entry->{'format'},
       style       => $entry->{'style'},
+      colour      => $entry->{'colour'},
     };
   }
   
@@ -518,11 +519,13 @@ sub load_configured_bigwig {
 }
 
 sub _add_bigwig_track {
-  my ($self, $menu, $key, $name, %options) = @_;
+  my ($self, $menu, $source) = @_;
  
   $menu ||= $self->get_node('user_data');
-
   return unless $menu;
+
+  my $name = $source->{'source_name'};
+  my $key    = "bigwig_$name" . '_' . md5_hex("$source->{'source_species'}:$source->{'source_url'}");
 
   my $track = $self->create_track($key, $name, {
     display   => 'off',
@@ -535,7 +538,10 @@ sub _add_bigwig_track {
       'off',       'Off',
       'tiling',    'Wiggle plot',
     ],
-    %options
+    caption     => $source->{'source_name'},
+    url         => $source->{'source_url'},
+    colour      => $source->{'source_colour'} || 'red',
+    description => sprintf('Data retrieved from a BigWig file on an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($source->{'source_type'}), encode_entities($source->{'source_url'})),
   });
 
   $menu->append($track) if $track;
@@ -562,10 +568,13 @@ sub load_configured_vcf {
 }
 
 sub _add_vcf_track {
-  my ($self, $menu, $key, $name, %options) = @_;
+  my ($self, $menu, $source) = @_;
 
   $menu ||= $self->get_node('user_data');
   return unless $menu;
+
+  my $name = $source->{'source_name'};
+  my $key = 'vcf_' . $name . '_' . md5_hex($self->{'species'} . ':' . $source->{'source_url'});
 
   my $track = $self->create_track($key, $name, {
       display     => 'off',
@@ -577,7 +586,9 @@ sub _add_vcf_track {
       bump_width  => 0,
       colourset   => 'variation',
       renderers   => [off => 'Off', histogram => 'Normal', compact => 'Compact'],
-      %options
+      caption     => $source->{'source_name'},
+      url         => $source->{'source_url'},
+      description => sprintf('Data retrieved from a VCF file on an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($source->{'source_type'}), encode_entities($source->{'source_url'})),
   });
 
   $menu->append($track) if $track;
