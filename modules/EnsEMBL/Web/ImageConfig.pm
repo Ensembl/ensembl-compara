@@ -1994,11 +1994,12 @@ sub add_somatic_mutations {
       my $phenotype_id           = $tumour_sites{$description};
       my ($source, $type, $site) = split /\:/, $description;
       my $formatted_site         = $site;
+      $site                      =~ s/\W/_/g;
       $formatted_site            =~ s/\_/ /g;
 
       $menu->append($self->create_track("somatic_mutation_${k}_$site", "$key_2 somatic mutations in $formatted_site", {
         %options,
-        caption     => "$key_2 $site tumours",
+        caption     => "$key_2 $formatted_site tumours",
         filter      => $phenotype_id,
         description => $description
       }));    
