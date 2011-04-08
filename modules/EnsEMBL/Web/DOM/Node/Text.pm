@@ -16,7 +16,12 @@ sub can_have_child {
 
 sub render {
   ## @overrides
-  return shift->text; 
+  return shift->{'_text'}; 
+}
+
+sub render_text {
+  ## @overrides
+  return shift->{'_text'}; 
 }
 
 sub text {

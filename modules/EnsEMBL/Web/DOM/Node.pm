@@ -84,6 +84,13 @@ sub render {
   return '';
 }
 
+sub render_text {
+  ## Outputs the node's text
+  ## Override in child class
+  ## @return output text
+  return '';
+}
+
 sub get_all_nodes {
   ## Gets all the child nodes recursively from a node
   ## @return ArrayRef of Node objects
@@ -647,7 +654,7 @@ sub dump {
   $string .= ' {'.join(', ', @$extras).'}';
   push @$output, $indent.$string;
   $_->dump($indent.'- ', $output) for @{$self->child_nodes};
-  warn Data::Dumper->Dump([$output], ['________TREE________']) if $do_warn;
+  warn Data::Dumper->Dump([$output], ['_' x 10 . 'TREE' . '_' x 10]) if $do_warn;
 }
 
 sub _adjust_child_nodes {
