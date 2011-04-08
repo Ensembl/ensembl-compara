@@ -175,7 +175,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
           if (val && !val.match(/^(all|none)$/)) {
             filtered = inputs.filter('.' + val);
             
-            if (filtered.length === checked.length) {
+            if (filtered.length === checked.length && filtered.length === checked.filter('.' + val).length) {
               this.value = val;
               break;
             }
