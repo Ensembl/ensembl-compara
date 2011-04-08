@@ -30,6 +30,19 @@ sub render {
   return $self->can_have_child ? "<$tag$attributes>".$self->inner_HTML."</$tag>" : "<$tag$attributes />";
 }
 
+sub render_text {
+  ## Outputs the text version of the element's html
+  ## @overrides
+  ## @return text
+  my $self = shift;
+
+  return $self->{'_text'} if $self->{'_text'} ne '';
+
+  my $text = '';
+  $text .= sprintf('%s%s', $_->render_text, $_->node_name eq 'br' || $_->node_type eq $self->ELEMENT_NODE && $_->element_type eq $self->ELEMENT_TYPE_BLOCK_LEVEL && $_->next_sibling ? "\n" : '') for @{$self->child_nodes};
+  return $text;
+}
+
 sub can_have_child {
   ## Checks if the element can have child nodes or not - depending upon node_name
   ## @return 1/0 accordingly
@@ -40,10 +53,10 @@ sub element_type {
   ## Tells us the element type
   ## @return Constant corresponding to the element type
   my $self = shift;
-  return $self->ELEMENT_TYPE_BLOCK_LEVEL if grep { $self->node_name eq $_ } qw(address blockquote div dl fieldset form h1 h2 h3 h4 h5 h6 hr noscript ol p pre table ul dd dt li tbody td tfoot th thead tr);
-  return $self->ELEMENT_TYPE_TOP_LEVEL   if grep { $self->node_name eq $_ } qw(html head body);
-  return $self->ELEMENT_TYPE_HEAD_ONLY   if grep { $self->node_name eq $_ } qw(title meta style base link);
-  return $self->ELEMENT_TYPE_SCRIPT      if $self->node_name eq 'script';
+  $self->node_name eq $_ and return $self->ELEMENT_TYPE_BLOCK_LEVEL for qw(address blockquote div dl fieldset form h1 h2 h3 h4 h5 h6 hr noscript ol p pre table ul dd dt li tbody td tfoot th thead tr);
+  $self->node_name eq $_ and return $self->ELEMENT_TYPE_TOP_LEVEL   for qw(html head body);
+  $self->node_name eq $_ and return $self->ELEMENT_TYPE_HEAD_ONLY   for qw(title meta style base link);
+  $self->node_name eq $_ and return $self->ELEMENT_TYPE_SCRIPT      for qw(script);
   return $self->ELEMENT_TYPE_INLINE;
 }
 
@@ -196,19 +209,23 @@ sub name {
 sub inner_HTML {
   ## Sets/Gets inner HTML of an element
   ## If intended to set parsed HTML, string is converted to tree format and appended to the node after removing the existing child nodes.
-  ## @param innerHTML string
+  ## @param innerHTML string (or ArrayRef of all the three arguments)
   ## @param flag to tell whether or not to parse the HTML - off (no parsing) by default.
+  ## @param A flag kept on to ignore parsing error, OR reference to a scalar to save parsing error if any (only if html parsing is on)
   ## @return final HTML string
-  my ($self, $html, $do_parse) = @_;
+  my ($self, $html, $do_parse, $error) = @_;
+  ($html, $do_parse, $error) = @$html if ref $html eq 'ARRAY';
+  my $error_message = "";
   if (defined $html) {
     $self->remove_children;
     if ($do_parse) {
-      $self->append_child($_) for @{$self->_parse_HTML_to_nodes($html)};
+      $self->append_child($_) for @{$self->_parse_HTML_to_nodes($html, \$error_message)};
     }
     else {
       $self->{'_text'} = $html;
     }
   }
+  not $error and $error_message and warn $error_message or ref $error eq 'SCALAR' and $$error = $error_message;
   return $self->{'_text'} if $self->{'_text'} ne '';
   $html  = '';
   $html .= $_->render for @{$self->{'_child_nodes'}};
@@ -238,9 +255,10 @@ sub add_attribute {
 sub _parse_HTML_to_nodes {
   ## private method used in &inner_HTML
   ## function to parse HTML from a string to tree structure
-  my ($self, $html) = @_;
+  my ($self, $html, $error_ref) = @_;
 
   my $nodes = [];
+  my $error_message;
   my @raw_nodes;
   my @tags;
   my @lifo;
@@ -274,20 +292,20 @@ sub _parse_HTML_to_nodes {
   # convert raw nodes to Node objects
   for (@raw_nodes) {
     if ($_->{'type'} eq 'text') {
-      my $node = $self->dom->create_text_node($_->{'text'});
+      my $node = $self->dom->create_text_node($self->decode_htmlentities($_->{'text'}));
       $current_node ? $current_node->append_child($node) : push @$nodes, $node;
     }
     elsif ($_->{'type'} eq 'end_tag') {
-      my $expected  = pop @lifo;
-      $current_node = $current_node->parent_node, next if $_->{'name'} eq $expected;
-      warn sprintf('HTML parsing error: Unexpected closing tag found - %s as in %s, expected %s tag.', $_->{'name'}, $_->{'string'}, $expected || 'no');
-      return [];
+      my $expected    = pop @lifo;
+      $current_node   = $current_node->parent_node, next if $_->{'name'} eq $expected;
+      $$error_ref     = sprintf('HTML parsing error: Unexpected closing tag found - %s as in %s, expected %s tag.', $_->{'name'}, $_->{'string'}, $expected || 'no');
+      return $nodes; #return the parsed ones
     }
     else {
       my $node = $self->dom->create_element($_->{'name'}, $_->{'attr'}, 1);
       if (!$node) {
-        warn sprintf("HTML parsing error: Could not create HTML element '%s' from %s", $_->{'name'}, $_->{'string'});
-        return [];
+        $$error_ref = sprintf("HTML parsing error: Could not create HTML element '%s' from %s", $_->{'name'}, $_->{'string'});
+        return $nodes; #return the parsed ones
       }
       $current_node ? $current_node->append_child($node) : push @$nodes, $node;
       push @lifo, $_->{'name'} and $current_node = $node if $_->{'type'} eq 'start_tag';
