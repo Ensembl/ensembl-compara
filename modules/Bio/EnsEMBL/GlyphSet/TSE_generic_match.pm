@@ -1,5 +1,8 @@
 package Bio::EnsEMBL::GlyphSet::TSE_generic_match;
 
+use Data::Dumper;
+
+
 use strict;
 
 use base qw(Bio::EnsEMBL::GlyphSet);
@@ -20,15 +23,36 @@ sub draw_glyphs {
   my($font_w_bp, $font_h_bp) = $wuc->texthelper->px2bp($fontname);
   my $length       = $wuc->container_width(); 
   my $strand       = $wuc->cache('trans_object')->{'transcript'}->strand;
+  my $legend       = $wuc->cache('legend') || {};
 
-  my( $font_w_bp, $font_h_bp);
+  #these are defined in image config and allow filtering by logic_name:
+  my $havana_excl = $self->my_config('logic_names_excluded') || 0;
+  my $havana_only = $self->my_config('logic_names_only')     || 0;
+
   my $legend_priority = 4;
   my $H               = 0;
   my @draw_end_lines;
 
-  my $legend = $wuc->cache('legend') || {};
+  #add a spacer
+  my $gap = $font_h_bp + 20;
+  my $tglyph = $self->Rect({
+    'x'         => 0,
+    'y'         => $H,
+    'height'    => $gap,
+    'width'     => 10,
+    'colour'    => 'white',
+  });
+  $self->push($tglyph);
+  $H += $gap;
+
   #go through each parsed transcript_supporting_feature
   foreach my $hit_details (sort { $b->{'hit_length'} <=> $a->{'hit_length'} } values %{$all_matches} ) {
+    if ($havana_excl) {
+      next if $hit_details->{'logic_name'} =~ /$havana_excl$/;
+    }
+    elsif ($havana_only) {
+      next unless $hit_details->{'logic_name'} =~ /$havana_only$/;
+    }
     my $hit_name = $hit_details->{'hit_name'};
     my $hit_type = $hit_details->{'hit_type'};
     my $start_x  = 1000000;
@@ -223,11 +247,17 @@ sub draw_glyphs {
     #label the hit
     my @res = $self->get_text_width(0, "$hit_name", '', 'font'=>$fontname, 'ptsize'=>$fontsize);
     my $W = ($res[2])/$pix_per_bp;
-    ($font_w_bp, $font_h_bp) = ($res[2]/$pix_per_bp,$res[3]);        
+    ($font_w_bp, $font_h_bp) = ($res[2]/$pix_per_bp,$res[3]);
+    my $zmenu_dets = {
+      'type'        => 'Transcript',
+      'action'      => 'SupportingEvidenceAlignmentLegend',
+      'id'          => $hit_name,
+      'havana'      => $havana_only,
+    };
     my $tglyph = $self->Text({
       'x'         => -$res[2],
-      'y'         => $H,
-      'height'    => $font_h_bp,
+      'y'         => $H-($font_h_bp/2.8), #this position sets the bottom of the glyph and the label to be level, may not scale though
+      'height'    => 13, #originally set it to $font_h_bp but nicer to have it the same height for all; 13 is about the max we see
       'width'     => $res[2],
       'textwidth' => $res[2],
       'font'      => $fontname,
@@ -238,6 +268,7 @@ sub draw_glyphs {
       'absolutewidth' => 1,
       'ptsize'    => $fontsize,
       'halign'    => 'right',
+      'href'      => $self->_url($zmenu_dets),
     });
     $self->push($tglyph);
     $H += $font_h_bp + 4;
