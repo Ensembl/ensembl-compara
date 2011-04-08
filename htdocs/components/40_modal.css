@@ -57,12 +57,9 @@ body.ie6 #modal_panel div.modal_title {
 }
 
 .modal_caption {
-  float: left;
-  padding: 0 4px;
-  line-height: 15px;
-}
-body.mac .modal_caption {
-  line-height: 16px;
+  position: absolute;
+  bottom: 3px;
+  left: 4px;
 }
 
 .modal_content {
@@ -102,10 +99,16 @@ body.ie6 .modal_content .panel {
 .modal_title ul {
   margin: 0;
   padding: 0;
+  position: absolute;
+  bottom: 0;
 }
+body.ie6 .modal_title ul {
+  position: relative;
+}
+
 .modal_title li {
   list-style: none;
-  padding: 0 6px 1px;
+  padding: 1px 6px 2px;
   background-color: #999;
   margin: 0 6px;
   float: left;
@@ -122,10 +125,10 @@ body.ie6 .modal_content .panel {
   padding: 0 8px;
   text-decoration: none;
   outline: none;
-  line-height: 17px;
 }
 body.mac .modal_title li a {
-  line-height: 19px;
+  position: relative;
+  top: 1px;
 }
 .modal_title li.active a {
   color: [[PAGE_TEXT]];
