@@ -53,7 +53,7 @@ sub init {
         'display' => 'normal',
         'strand'  => 'r',
         'colours' => $self->species_defs->colour('feature'),
-        'description' => 'Alignments from Ensembl pipeline that support the exons',
+        'description' => 'Alignments from the Ensembl pipeline that support the exons',
         'logic_names_excluded' => '_havana',
       }
     ], [
@@ -61,7 +61,7 @@ sub init {
         'display' => 'normal',
         'strand'  => 'r',
         'colours' => $self->species_defs->colour('feature'),
-        'description' => 'Alignments from Havana pipeline that support the exons',
+        'description' => 'Alignments from the Havana pipeline that support the exons',
         'logic_names_only' => '_havana',
       }
     ]);
