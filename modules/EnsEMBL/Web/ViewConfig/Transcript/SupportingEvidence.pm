@@ -8,6 +8,8 @@ sub init {
   my ($view_config) = @_;
   $view_config->_set_defaults(qw(context 100));
   $view_config->storable = 1;
+  $view_config->add_image_configs({qw(supporting_evidence_transcript)});
+  $view_config->default_config = 'supporting_evidence_transcript'; #sets the default tab on the configuration panel
 }
 
 sub form {
