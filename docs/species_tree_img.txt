@@ -16,11 +16,25 @@ more ensembl-compara/scripts/pipeline/species_tree_blength.nw | \
       }
     }' -n > rescaled_tree.nw
 
+more ensembl-compara/scripts/pipeline/species_tree_blength.nh | \
+  perl -e '$_ =~ s/\)\w+/\)/g;
+    $_ =~ s/\?\w+/XXXXXXXXXXX/g;
+    my @a = split(/([\)\,])/, $_);
+    foreach my $a (@a) {
+      if ($a =~ /(.*\w\:)(\d\.\d+)(.*)/) {
+        print $1, log(1.6+$2), $3; # final branches, make them slightly larger than...
+      } elsif ($a =~ /(.*)(\d\.\d+)(.*)/) {
+        print $1, log(1.2+$2), $3; # ... internal branches
+      } else {
+        print $a;
+      }
+    }' -n > rescaled_tree.nw
+
 Open Dendroscope. Load the file and select the Radial Phylogram (Ctrl+7).
 - In the view menu, deselect "Sparse labels" and choose "Radial labels".
 - Adjust the tree, by rotating it left or right.
 - Remove species not in e! by selecting them and Ctrl+Backspace
-- Rotate nodes with Ctrl+Shift+T if you wish
+- Rotate nodes with Ctrl+Shift+T if you wish (Cionas tend to get on the internal side after removing mosquitoes)
 
 If you want to let Dendroscope load the figures automatically, do:
 cd ~/src/public-plugins/ensembl/htdocs/img/species
@@ -35,3 +49,7 @@ Save the file as a PDF or an SVG.
 Don't forget to cite:
 D.H. Huson, D. C. Richter, C. Rausch, T. Dezulian, M. Franz and R. Rupp, Dendroscope- An interactive viewer for large phylogenetic trees, BMC Bioinformatics 8:460, 2007
 
+You can do that by modifying the SVG file with a text editor. Try to add
+    <text id="dendroscoperef" fill="#303030" fill-opacity="1" font-family="Sans Serif" font-size="10pt"       x="200pt" y="500pt">
+Image obtained using Dendroscope (D.H. Huson et al. "Dendroscope- An interactive viewer for large phylogenetic trees", BMC Bioinformatics 8:460, 2007) </text>
+near the end of the file.
