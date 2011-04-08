@@ -13,6 +13,8 @@ sub _init {
   my $self = shift;
   $self->cacheable(1);
   $self->ajaxable(1);
+  $self->configurable(1);
+  $self->has_image(1);
 }
 
 sub content {
@@ -28,7 +30,7 @@ sub content {
     if ($hub->type =~ /otter/ || $object->db_type eq 'vega' ){
       $html .= '
       <p>
-        Although this Vega Havana transcript has been manually annotated and its structure is supported by experimental evidence, this evidence is currently missing from the database. 
+        Although this Vega Havana transcript has been manually annotated and its structure is supported by experimental evidence, this evidence is currently missing from the database.
         We are adding the evidence to the database as time permits
       </p>';
     } else {
@@ -81,18 +83,11 @@ sub _content {
     { qw(display supporting_evidence_transcript strand f) }  ## show on the forward strand only
   );
 
-  # turn off exon support tracks for vega genes - always empty
-  if ($logic_name =~ /otter/) {
-    $image_config->modify_configs(
-      [ 'SE_generic_match_label' ],
-      { qw(display off) }
-    );
-    $image_config->modify_configs(
-      [ 'SE_generic_match' ],
-      { qw(display off) }
-    );
-  }
-  
+  ###
+  ## config modification now done in imageconfig because of a bug that prevents chages here
+  ## being reflected in the configuration menu
+
+
   $object->__data->{'slices'}{$_->[0]} = $object->get_transcript_slices($_) || warn "Couldn't get slice" for @slice_defs;
 
   my $transcript_slice = $object->__data->{'slices'}{'supporting_evidence_transcript'}[1];
@@ -213,13 +208,13 @@ sub _content {
   foreach my $evi (@{$transcript->get_all_supporting_features}) {
     my $coords;
     my $hit_name = $evi->hseqname;
-
     $t_ids{$hit_name}++;
 
     $t_evidence->{$hit_name}{'hit_name'}         = $hit_name;
     $t_evidence->{$hit_name}{'hit_db'}           = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
     $t_evidence->{$hit_name}{'hit_type'}         = $evi->isa('Bio::EnsEMBL::DnaPepAlignFeature') ? 'protein' : $self->hit_type($info_summary, $evi);
     $t_evidence->{$hit_name}{'evidence_removed'} = 1 if grep $hit_name eq $_, @missing_evidence;
+    $t_evidence->{$hit_name}{'logic_name'}       = $evi->analysis->logic_name;
 
     #for non-vega genes, split evidence into ungapped features (ie parse cigar string),
     #map onto exons ie determine mismatches and munge (ie account for gaps)
@@ -339,19 +334,19 @@ sub _content {
         # coordinate munging:
         # pass it a single exon but could pass it all if them if we wanted to match the hit across all exons
         my $munged_coords = $self->split_evidence_and_munge_gaps($evi, [ $exon ], $offset, [ $raw_coding_start + $offset, $raw_coding_end + $offset ], ref $evi);
-        
         foreach my $munged_hit (@$munged_coords) {
           # add tag if there is a mismatch between exon / hit boundries
           $munged_hit->{'hit_mismatch'} = $hit_mismatch if defined $hit_mismatch;
-          
+
           if ($transcript->strand == 1) {
             push @{$e_evidence->{$hit_name}{'data'}}, $munged_hit;
           }  else {
             unshift @{$e_evidence->{$hit_name}{'data'}}, $munged_hit;
           }
         }
-        
+
         $e_evidence->{$hit_name}{'hit_name'}         = $hit_name;
+        $e_evidence->{$hit_name}{'logic_name'}       = $evi->analysis->logic_name;
         $e_evidence->{$hit_name}{'hit_db'}           = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
         $e_evidence->{$hit_name}{'hit_type'}         = $evi->isa('Bio::EnsEMBL::DnaPepAlignFeature') ? 'protein' : $self->hit_type($info_summary, $evi);
         $e_evidence->{$hit_name}{'evidence_removed'} = 1 if grep $hit_name eq $_, @missing_evidence;
