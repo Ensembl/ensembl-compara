@@ -391,7 +391,7 @@ sub draw_wiggle_points {
   my $hrefs = $parameters->{'hrefs'};
   foreach my $f (@$features) { 
     my $href = '';
-    if ($f->can('id')){
+    if (ref($f) ne 'HASH' && $f->can('id')){
       $href = $hrefs->{$f->id};
     }
     my ($START, $END, $score, $min_score);
@@ -431,7 +431,7 @@ sub draw_wiggle_points {
     my $this_colour = $colour;
 
     # alter colour if the intron supporting feature has a name of non_canonical
-    if ($f->can('display_id') && $f->display_id =~ /non canonical$/ && $f->analysis->logic_name =~ /_intron$/) {
+    if (ref($f) ne 'HASH' && $f->can('display_id') && $f->display_id =~ /non canonical$/ && $f->analysis->logic_name =~ /_intron$/) {
       $this_colour = $parameters->{'non_can_score_colour'} ||  $colour;
     }
  
