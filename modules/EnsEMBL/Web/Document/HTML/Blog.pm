@@ -23,39 +23,34 @@ sub render {
 
   my $html = '<h3>Latest blog posts</h3>';
    
-  if ($hub->cookies->{'ENSEMBL_AJAX'}) {
-    $html .= qq(<div class="js_panel ajax" id="blog"><input type="hidden" class="ajax_load" value="/blog.html" /><inpu
-t type="hidden" class="panel_type" value="Content" /></div>);
+  my $blog_url  = $hub->species_defs->ENSEMBL_BLOG_URL;
+  my $items = $MEMD && $MEMD->get('::BLOG') || [];
+  
+  unless ($items && @$items && $MEMD) {
+    $items = $self->get_rss_feed($hub, $rss_url, 3);
+
+    if ($items && @$items && $MEMD) {
+      $MEMD->set('::BLOG', $items, 3600, qw(STATIC BLOG));
+    }
+  }
+    
+  if (scalar(@$items)) {
+    $html .= "<ul>";
+    foreach my $item (@$items) {
+      my $title = $item->{'title'};
+      my $link  = $item->{'link'};
+      my $date = $item->{'date'} ? $item->{'date'}.': ' : '';
+  
+      $html .= qq(<li>$date<a href="$link">$title</a></li>); 
+    }
+    $html .= "</ul>";
   } 
   else {
-    my $blog_url  = $hub->species_defs->ENSEMBL_BLOG_URL;
-    my $items = $MEMD && $MEMD->get('::BLOG') || [];
-  
-    unless ($items && @$items && $MEMD) {
-      $items = $self->get_rss_feed($hub, $rss_url);
-
-      if ($items && @$items && $MEMD) {
-        $MEMD->set('::BLOG', $items, 3600, qw(STATIC BLOG));
-      }
-    }
-    
-    if (scalar(@$items)) {
-      $html .= "<ul>";
-      foreach my $item (@$items) {
-        my $title = $item->{'title'};
-        my $link  = $item->{'link'};
-        my $date = $item->{'date'} ? $item->{'date'}.': ' : '';
-  
-        $html .= qq(<li>$date<a href="$link">$title</a></li>); 
-      }
-      $html .= "</ul>";
-    } 
-    else {
-      $html .= qq(<p>Sorry, no feed is available from our blog at the moment</p>);
-    }
-  
-    $html .= qq(<a href="$blog_url">Go to Ensembl blog &rarr;</a>);
+    $html .= qq(<p>Sorry, no feed is available from our blog at the moment</p>);
   }
+  
+  $html .= qq(<a href="$blog_url">Go to Ensembl blog &rarr;</a>);
+
   return $html;
 }
 

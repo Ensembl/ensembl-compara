@@ -88,7 +88,7 @@ sub new_panel {
 }
 
 sub get_rss_feed {
-  my ($self, $hub, $rss_url) = @_;
+  my ($self, $hub, $rss_url, $limit) = @_;
   if (!$hub || !$rss_url) {
     return [];
   }
@@ -99,7 +99,7 @@ sub get_rss_feed {
   my $ua = new LWP::UserAgent;
   my $proxy = $hub->species_defs->ENSEMBL_WWW_PROXY;
   $ua->proxy( 'http', $proxy ) if $proxy;
-  $ua->timeout(5);
+  #$ua->timeout(5);
 
   my $response = $ua->get($rss_url);
   my $items = [];
@@ -120,7 +120,7 @@ sub get_rss_feed {
         };
         push @$items, $item;
         $count++;
-        last if $count == 3;
+        last if ($limit && $count == $limit);
       }
     }
     elsif ($rss_type eq 'rss' && $self->dynamic_use('XML::RSS')) {
@@ -136,7 +136,7 @@ sub get_rss_feed {
         };
         push @$items, $item;
         $count++;
-        last if $count == 3;
+        last if ($limit && $count == $limit);
       }
     }
     else {
@@ -144,7 +144,7 @@ sub get_rss_feed {
     }
   }
   else {
-    warn "!!! COULD NOT GET RSS FEED from $rss_url";
+    warn "!!! COULD NOT GET RSS FEED from $rss_url: ".$response->code.' ('.$response->message.')';
   }
 
   return $items;
