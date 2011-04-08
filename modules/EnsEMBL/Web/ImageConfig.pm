@@ -1836,8 +1836,7 @@ sub add_sequence_variations {
     
     $menu->append($variation_sets);
   
-    #ÊHacked the sorting of the variation sets for release 62 so that the 'Failed variations' set will be displayed last
-    foreach my $toplevel_set (sort { !!scalar @{$a->{'subsets'}} <=> !!scalar @{$b->{'subsets'}} } sort { ($a->{'name'} =~ m/^failed/i ? 1 : 0) <=> ($b->{'name'} =~ m/^failed/i ? 1 : 0) } sort { $a->{'name'} cmp $b->{'name'} } values %{$hashref->{'variation_set'}{'supersets'}}) {
+    foreach my $toplevel_set (sort { !!scalar @{$a->{'subsets'}} <=> !!scalar @{$b->{'subsets'}} } sort { $a->{'name'} cmp $b->{'name'} } values %{$hashref->{'variation_set'}{'supersets'}}) {
       my $name          = $toplevel_set->{'name'};
       my $caption       = $name . (scalar @{$toplevel_set->{'subsets'}} ? ' (all data)' : '');
       (my $key = $name) =~ s/\W/_/g;
