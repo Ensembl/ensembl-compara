@@ -25,11 +25,14 @@ use Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter;
 
 use base qw(EnsEMBL::Web::Object);
 
-sub caption             { return 'Export Data';                                                      }
-sub get_location_object { return $_[0]->{'_location'} ||= $_[0]->hub->core_objects->{'location'};    }
-sub get_all_transcripts { return $_[0]->hub->core_objects->{'gene'}->Obj->get_all_Transcripts || []; }
-sub check_slice         { return shift->get_location_object->check_slice(@_);                        }
-sub get_ld_values       { return shift->get_location_object->get_ld_values(@_);                      }
+sub caption                { return 'Export Data';                                                      }
+sub get_location_object    { return $_[0]->{'_location'} ||= $_[0]->hub->core_objects->{'location'};    }
+sub get_all_transcripts    { return $_[0]->hub->core_objects->{'gene'}->Obj->get_all_Transcripts || []; }
+sub check_slice            { return shift->get_location_object->check_slice(@_);                        }
+sub get_ld_values          { return shift->get_location_object->get_ld_values(@_);                      }
+sub get_samples            { return shift->get_object->get_samples(@_);                                 }
+sub get_genetic_variations { return shift->get_object->get_genetic_variations(@_);                      }
+sub stable_id              { return shift->get_object->stable_id;                                       }
 
 sub slice {
   my $self     = shift;
