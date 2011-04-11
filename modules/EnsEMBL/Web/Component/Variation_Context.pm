@@ -127,11 +127,15 @@ sub content {
  
   $html .= $image->render;
  
-
-	$var_slice = $slice_adaptor->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
+	if ($length > $width_max){ # Variation truncated (slice very large)
+		$var_slice = $slice;
+		$html .= qq{<h2>Features overlapping the variation context:</h2><br />};
+	}
+	else {
+		$var_slice = $slice_adaptor->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
+  	$html .= qq{<h2>Features overlapping $vname:</h2><br />};
+	}
 	
-  $html .= qq{<h2>Features overlapping $vname:</h2><br />};
-  
   # structural variation table
   $html .= $self->structural_variation_table($var_slice,$vname);
   
