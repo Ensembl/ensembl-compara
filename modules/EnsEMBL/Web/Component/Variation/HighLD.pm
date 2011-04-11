@@ -121,8 +121,8 @@ sub summary_table {
       
       # export table
       $url = $hub->url({
-        type => 'Location',
-        action => 'Export',
+        type => 'Export/Output',
+        action => 'Location',
         r => $object->ld_location,
         v => $object->name,
         vf => $hub->param('vf'),
