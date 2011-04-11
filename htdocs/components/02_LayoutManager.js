@@ -71,7 +71,7 @@ Ensembl.LayoutManager.extend({
         Ensembl.EventManager.trigger('windowResize');
       },
       hashchange: function (e) {
-        if ((window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.hashRegex)) {
+        if ((window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.hashRegex) || !window.location.hash && Ensembl.hash.match(Ensembl.hashRegex)) {
           Ensembl.setCoreParams();
           Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
         }
