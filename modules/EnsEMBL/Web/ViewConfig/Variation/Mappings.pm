@@ -33,13 +33,15 @@ sub form {
     ]
   });  
   
-  $view_config->add_form_element({
-    type  => 'CheckBox',
-    label => 'Show SIFT and PolyPhen scores',
-    name  => 'show_scores',
-    value => 'yes',
-    raw   => 1,
-  });
+  if($view_config->hub->species =~ /homo_sapiens/i) {
+    $view_config->add_form_element({
+      type  => 'CheckBox',
+      label => 'Show SIFT and PolyPhen scores',
+      name  => 'show_scores',
+      value => 'yes',
+      raw   => 1,
+    });
+  }
 }
 
 1;
