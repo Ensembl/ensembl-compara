@@ -46,14 +46,13 @@ sub createObjects {
     if ($variation_feature) {
       my $context = $self->param('context') || 500;
       $self->generate_object('Location', $variation_feature->feature_Slice->expand($context, $context));
-      $self->param('vf', $variation_feature->dbID) unless $vf eq $variation_feature->dbID; # This check is needed because ZMenu::TextSequence uses an array of v and vf parameters. The check stops being unecessarily overwritten
+      $self->param('vf', $variation_feature->dbID) unless $self->param('vf'); # This check is needed because ZMenu::TextSequence uses an array of v and vf parameters - don't overwrite with a single value
     } elsif ($vf) {
       $self->delete_param('vf');
     }
     
     $self->param('vdb', 'variation');
-    $self->param('v', $variation->name) unless $identifier eq $variation->name; # For same reason as vf check above
-    $self->param('v', $variation->name) unless $self->param('v'); # need to set v param in case somebody came in via old snpview link with snp parameter
+    $self->param('v', $variation->name) unless $self->param('v'); # For same reason as vf check above
   } else { 
     my $dbsnp_version = $db->{'dbSNP_VERSION'} ? "which includes data from dbSNP $db->{'dbSNP_VERSION'}," : '';
     my $help_message  = "Either $identifier does not exist in the current Ensembl database, $dbsnp_version or there was a problem retrieving it.";
