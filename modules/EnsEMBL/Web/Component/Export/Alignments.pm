@@ -16,8 +16,8 @@ sub content {
   my $align = $hub->referer->{'params'}->{'align'}->[0];
   
   my $params = {
-    action   => 'Export', 
-    type     => $hub->function, 
+    action   => 'Location', 
+    type     => 'Export/Output', 
     function => 'Alignment',
     output   => 'alignment',
     align    => $align
