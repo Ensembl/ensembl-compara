@@ -37,6 +37,7 @@ sub ld_dump {
     my $zoom            = 20000; # Currently non-configurable
     my @colour_gradient = ('ffffff', $hub->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red'));
     my $ld_values       = $object->get_ld_values($pop_param, $v, $zoom);
+    
     my %populations     = map { $_ => 1 } map { keys %$_ } values %$ld_values;
   
     my $header_style = 'background-color:#CCCCCC;font-weight:bold;';
@@ -48,20 +49,20 @@ sub ld_dump {
         next unless $ld->{'data'};
       
         my ($starts, $snps, $data) = (@{$ld->{'data'}});
-        my $table = $self->html_format ? $self->new_table : undef;
+        my $table = $object->html_format ? $self->new_table : undef;
       
         unshift (@$data, []);
       
-        $self->html("<h3>$ld->{'text'}</h3>");
+        $object->html("<h3>$ld->{'text'}</h3>");
       
         if ($table) {
           $table->add_option('cellspacing', 2);
           $table->add_option('rows', '', ''); # No row colouring
           $table->add_columns(map {{ title => $_, align => 'center' }} ( 'bp&nbsp;position', 'SNP', @$snps ));
         } else {
-          $self->html('=' x length $ld->{'text'});
-          $self->html('');
-          $self->html(join "\t", 'bp position', 'SNP', @$snps);
+          $object->html('=' x length $ld->{'text'});
+          $object->html('');
+          $object->html(join "\t", 'bp position', 'SNP', @$snps);
         }
       
         foreach my $row (@$data) {
@@ -77,11 +78,11 @@ sub ld_dump {
             $table->add_row([ $pos, $snp, @values, $snp ]);
             $table->add_option('row_style', [ $header_style, $header_style, @row_style, $header_style ]);
           } else {
-            $self->html(join "\t", $pos, $snp, @values, $snp);
+            $object->html(join "\t", $pos, $snp, @values, $snp);
           }
         }
       
-        $self->html($table ? $table->render : '');
+        $object->html($table ? $table->render : '');
       }
     }
   }
@@ -98,19 +99,19 @@ sub genetic_variation {
   my @samples  = $object->get_samples(undef, $params);
   my $snp_data = $object->get_genetic_variations(@samples);
   
-  $self->html(sprintf '<h2>Variation data for strains on transcript %s</h2>', $object->stable_id);
-  $self->html('<p>Format: tab separated per strain (SNP id; Type; Amino acid change;)</p>');
-  $self->html('');
+  $object->html(sprintf '<h2>Variation data for strains on transcript %s</h2>', $object->stable_id);
+  $object->html('<p>Format: tab separated per strain (SNP id; Type; Amino acid change;)</p>');
+  $object->html('');
   
   my $colours    = $hub->species_defs->colour('variation');
   my $colour_map = $hub->colourmap;
-  my $table      = $self->html_format ? $self->new_table : undef;
+  my $table      = $object->html_format ? $self->new_table : undef;
   
   if ($table) {
     $table->add_option('cellspacing', 2);
     $table->add_columns(map {{ title => $_, align => 'left' }} ( 'bp&nbsp;position', @samples ));
   } else {
-    $self->html(join "\t", 'bp position', @samples);
+    $object->html(join "\t", 'bp position', @samples);
   }
   
   foreach my $snp_pos (sort keys %$snp_data) {
@@ -137,11 +138,11 @@ sub genetic_variation {
       $table->add_row(\@info);
       $table->add_option('row_style', \@row_style);
     } else {
-      $self->html(join "\t", @info);
+      $object->html(join "\t", @info);
     }
   }
   
-  $self->html($table->render) if $table;
+  $object->html($table->render) if $table;
 }
 
 
