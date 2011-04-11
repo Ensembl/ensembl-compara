@@ -79,6 +79,7 @@ Ensembl.extend({
     var lastR = this.coreParams ? this.coreParams.r : '';
     var match, m, i, r;
     
+    this.hash          = hash;
     this.coreParams    = {};
     this.initialR      = $('input[name=r]', '#core_params').val();
     this.location      = { length: 100000 };
