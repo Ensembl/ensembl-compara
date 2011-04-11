@@ -11,8 +11,8 @@ sub content {
   my $hub  = $self->hub;
   
   my $params = {
-    action   => 'Export', 
-    type     => 'Transcript', 
+    action   => 'Transcript', 
+    type     => 'Export/Output', 
     function => 'Population',
     output   => 'gen_var'
   };
