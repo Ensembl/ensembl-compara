@@ -69,8 +69,8 @@ sub get_formats {
     }
     
     my $href = $hub->url({
-      type    => $function, 
-      action  => 'Export', 
+      type    => 'Export/Output', 
+      action  => 'Location', 
       output  => 'ld', 
       %populations
     });
@@ -88,6 +88,7 @@ sub get_formats {
       function => $function, 
       %populations
     });
+    
     
     @formats = (
       [ 'HTML',  $href, 'HTML', ' rel="external"' ],
