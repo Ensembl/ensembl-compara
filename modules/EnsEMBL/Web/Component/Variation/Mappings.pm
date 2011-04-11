@@ -172,8 +172,11 @@ sub content {
         $show_scores eq 'yes' ? $tva->polyphen_score : undef
       );
       
+      my $allele = $transcript_data->{'vf_allele'};
+      $allele .= ' ('.$transcript_data->{'tr_allele'}.')' unless $transcript_data->{'vf_allele'} =~ /HGMD|LARGE|DEL|INS/;
+      
       my $row = {
-        allele    => $transcript_data->{'vf_allele'}.' ('.$transcript_data->{'tr_allele'}.')',
+        allele    => $allele,
         gene      => qq{<a href="$gene_url">$gene_name</a>},
         trans     => qq{<nobr><a href="$transcript_url">$trans_name</a> ($strand)</nobr>},
         type      => $type,
