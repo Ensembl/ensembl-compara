@@ -413,22 +413,29 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
           $('<li>', {
             html: '<input type="checkbox"' + (th.hasClass('no_hide') ? ' disabled' : '') + (columns[col].bVisible ? ' checked' : '') + ' /><span>' + th.text() + '</span>',
             click: function () {
-              var input = $('input', this);
+              var input  = $('input', this);
+              var tables, visibility, index, textCheck;
               
               if (!input.attr('disabled')) {
-                var visibility = !columns[col].bVisible;
+                tables     = panel.dataTables;
+                visibility = !columns[col].bVisible;
                 
                 if (panel.elLk.colToggle.length == 1) {
                   input.attr('checked', visibility);
                 } else {
-                  var index = $(this).index();
+                  index     = $(this).index();
+                  textCheck = $(this).parent().text();
+                  tables    = []
                   
-                  panel.elLk.colToggle.each(function () {
-                    $('input', this).get(index).checked = visibility;
+                  panel.elLk.colToggle.each(function (i) {
+                    if ($(this).find('ul').text() === textCheck) {
+                      $('input', this).get(index).checked = visibility;
+                      tables.push(panel.dataTables[i]);
+                    }
                   });
                 }
                 
-                $.each(panel.dataTables, function () {
+                $.each(tables, function () {
                   this.fnSetColumnVis(col, visibility);
                 });
               }
