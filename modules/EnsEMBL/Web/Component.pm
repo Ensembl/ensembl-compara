@@ -458,7 +458,7 @@ sub _matches {
     return $html . $self->new_table([ 
         { key => 'dbtype', align => 'left', title => 'External database type' },
         { key => 'dbid',   align => 'left', title => 'Database identifier'    }
-      ], \@rows, { data_table => 1, sorting => [ 'dbid asc' ]}
+      ], \@rows, { data_table => 1, sorting => [ 'dbid asc' ], exportable => 0 }
     )->render;
   } else {
     return "$html$list_html</table>";
