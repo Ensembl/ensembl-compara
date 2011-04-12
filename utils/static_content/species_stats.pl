@@ -23,13 +23,14 @@ use File::Basename qw( dirname );
 use Pod::Usage;
 use Getopt::Long;
 
-use vars qw( $SERVERROOT $PLUGIN_ROOT $SCRIPT_ROOT $DEBUG $FUDGE $NOINTERPRO $NOSUMMARY $help $info @user_spp);
+use vars qw( $SERVERROOT $PLUGIN_ROOT $SCRIPT_ROOT $DEBUG $FUDGE $NOINTERPRO $NOSUMMARY $help $info @user_spp $allgenetypes);
 
 BEGIN{
   &GetOptions( 
                'help'      => \$help,
                'info'      => \$info,
                'species=s' => \@user_spp,
+	       'a' => \$allgenetypes,
                'debug'     => \$DEBUG,
                'nointerpro'=> \$NOINTERPRO,
                'nosummary' => \$NOSUMMARY,
@@ -163,7 +164,7 @@ foreach my $spp (@valid_spp) {
     my $db_id = $release_id;
 		$db_id .= '.'.$data_version unless $pre;
     #print "Version $data_version\n";
-
+    my $strucvar;
 ##----------------------- NASTY RAW SQL STUFF! ------------------------------
 
     ## logicnames for valid genes
@@ -249,24 +250,42 @@ foreach my $spp (@valid_spp) {
     print "Fgenesh:$fgenpept\n" if $DEBUG;
 
     unless ($pre) {
-      ( $transcripts )= &query( $db,
-      "select count(distinct t.transcript_id)
+	if ($allgenetypes) {
+	    ( $transcripts )= &query( $db,
+				      "select count(distinct t.transcript_id)
+        from transcript t, gene g, analysis a
+        where t.gene_id = g.gene_id
+        and g.analysis_id = a.analysis_id
+        ");
+	} else {
+	    ( $transcripts )= &query( $db,
+				      "select count(distinct t.transcript_id)
         from transcript t, gene g, analysis a
         where t.gene_id = g.gene_id
         and g.analysis_id = a.analysis_id
         and a.logic_name in ($genetypes)
         ");
+	}
       print "Transcripts:$transcripts\n" if $DEBUG;
-
-      ( $exons )= &query( $db,
-      "select count(distinct et.exon_id)
+	if ($allgenetypes) {
+	    ( $exons )= &query( $db,
+				"select count(distinct et.exon_id)
+      from exon_transcript et, transcript t, gene g, analysis a
+      where et.transcript_id = t.transcript_id
+      and  t.gene_id = g.gene_id
+      and g.analysis_id = a.analysis_id
+      ");
+	} else {
+	    ( $exons )= &query( $db,
+				"select count(distinct et.exon_id)
       from exon_transcript et, transcript t, gene g, analysis a
       where et.transcript_id = t.transcript_id
       and  t.gene_id = g.gene_id
       and g.analysis_id = a.analysis_id
       and a.logic_name in ($genetypes)
       ");
-      print "Exons:$exons\n" if $DEBUG;
+	}
+	    print "Exons:$exons\n" if $DEBUG;
 
       $snps = 0;
       $strucvar = 0;
