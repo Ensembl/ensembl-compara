@@ -169,8 +169,7 @@ sub render_collapsed {
     if ($show_labels ne 'off' && $labels) {
       if (my $text_label = $self->gene_text_label($gene)) {
         my @lines = split "\n", $text_label;
-        $lines[0] = "< $lines[0]" if $strand < 1;
-        $lines[0] = "$lines[0] >" if $strand >= 1;
+        $lines[0] = $gene_strand == 1 ? "$lines[0] >" : "< $lines[0]";
         
         for (my $i = 0; $i < @lines; $i++){
           my $line = "$lines[$i] ";
@@ -472,8 +471,7 @@ sub render_transcripts {
       if ($show_labels ne 'off' && $labels) {
         if (my $text_label = $self->text_label($gene, $transcript)) {
           my @lines = split "\n", $text_label; 
-          $lines[0] = "< $lines[0]" if $strand < 1;
-          $lines[0] = "$lines[0] >" if $strand >= 1;
+          $lines[0] = $gene_strand == 1 ? "$lines[0] >" : "< $lines[0]";
           
           for (my $i = 0; $i < @lines; $i++) {
             my $line = "$lines[$i] ";
@@ -711,6 +709,7 @@ sub render_alignslice_transcript {
       if ($show_labels ne 'off' && $labels) {
         if (my $text_label = $self->text_label($gene, $transcript)) {
           my @lines = split "\n", $text_label;
+          $lines[0] = $gene_strand == 1 ? "$lines[0] >" : "< $lines[0]";
           
           for (my $i = 0; $i < scalar @lines; $i++) {
             my $line = $lines[$i];
@@ -917,8 +916,7 @@ sub render_alignslice_collapsed {
     if ($show_labels ne 'off' && $labels) {
       if (my $text_label = $self->gene_text_label($gene)) {
         my @lines = split "\n", $text_label;
-        $lines[0] = "< $lines[0]" if $strand < 1;
-        $lines[0] = "$lines[0] >" if $strand >= 1;
+        $lines[0] = $gene_strand == 1 ? "$lines[0] >" : "< $lines[0]";
         
         for (my $i = 0; $i < scalar @lines; $i++){
           my $line = "$lines[$i] ";
@@ -1136,7 +1134,8 @@ sub render_genes {
       $self->_init_bump;
 
       foreach my $gr (@genes_to_label) {
-        my $w = ($self->get_text_width(0, "$gr->{'label'} ", '', 'font' => $fontname, 'ptsize' => $fontsize))[2];
+        my $label = $gr->{'gene'}->strand == 1 ? "$gr->{'label'} > " : "< $gr->{'label'} ";
+        my $w     = ($self->get_text_width(0, $label, '', 'font' => $fontname, 'ptsize' => $fontsize))[2];
         
         my $tglyph = $self->Text({
           x         => ($gr->{'start'} - 1) + 4/$pix_per_bp,
@@ -1147,7 +1146,7 @@ sub render_genes {
           halign    => 'left',
           ptsize    => $fontsize,
           colour    => $gr->{'col'},
-          text      => "$gr->{'label'} ",
+          text      => $label,
           title     => $gr->{'title'},
           href      => $gr->{'href'},
           absolutey => 1
