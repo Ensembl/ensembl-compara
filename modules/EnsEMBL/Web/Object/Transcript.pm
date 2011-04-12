@@ -272,13 +272,13 @@ sub count_go {
       my $ontologies_list = scalar(@ontologies) > 1 ? qq{ in ('}.(join "\', \'", @ontologies).qq{' ) } : qq{ ='$ontologies[0]' };
 
       my $sql = qq{
-	  SELECT count(distinct(x.display_label))
-	      FROM object_xref ox, xref x, external_db edb
-	      WHERE ox.xref_id = x.xref_id
-	      AND x.external_db_id = edb.external_db_id
-	      AND edb.db_name $ontologies_list 
-	      AND ox.ensembl_object_type = ?
-	      AND ox.ensembl_id = ?};
+       SELECT count(distinct(x.display_label))
+           FROM object_xref ox, xref x, external_db edb
+           WHERE ox.xref_id = x.xref_id
+           AND x.external_db_id = edb.external_db_id
+           AND edb.db_name $ontologies_list 
+           AND ox.ensembl_object_type = ?
+           AND ox.ensembl_id = ?};
 
       # Count the ontology terms mapped to the translation
       my $sth = $dbc->prepare($sql);
@@ -1129,10 +1129,10 @@ sub get_go_list {
       $evidence = join ', ', @{$goxref->get_all_linkage_types}; 
 
       foreach my $e (@{$goxref->get_all_linkage_info}) {
-	my ($linkage, $xref) = @{$e || []};
- 	next unless $xref;	
-	my ($id, $db, $db_name) =  ($xref->display_id, $xref->dbname, $xref->db_display_name);
-	push @$sources, $self->hub->get_ExtURL_link("$db_name:$id", $db, $id);
+        my ($linkage, $xref) = @{$e || []};
+        next unless $xref;     
+        my ($id, $db, $db_name) =  ($xref->display_id, $xref->dbname, $xref->db_display_name);
+        push @$sources, $self->hub->get_ExtURL_link("$db_name:$id", $db, $id);
       }
     }
 
@@ -1140,34 +1140,34 @@ sub get_go_list {
     $hash{$go2} = 1;
     
     if (my $goa = $goadaptor->get_GOTermAdaptor) {
-        my $term;
-        eval { 
-          $term = $goa->fetch_by_accession($go2); 
+      my $term;
+      eval { 
+        $term = $goa->fetch_by_accession($go2); 
+      };
+
+      warn $@ if $@;
+      
+      my $term_name = $term ? $term->name : '';
+      $term_name ||= $goxref->description || '';
+
+      my $has_ancestor = (!defined ($ancestor));
+      if (!$has_ancestor){
+        $has_ancestor=($go eq $ancestor);
+
+        my $ancestors = $goa->fetch_all_by_descendant_term($goa->fetch_by_accession($go));
+        for(my $i=0; $i< scalar (@$ancestors) && !$has_ancestor; $i++){
+          $has_ancestor=(@{$ancestors}[$i]->accession eq $ancestor);
+        }
+      }
+      
+      if($has_ancestor){
+        $go_hash{$go} = {
+          evidence => $evidence,
+          term     => $term_name,
+          info     => $info_text,
+          source   => join ' ,', @{$sources || []},
         };
-
-        warn $@ if $@;
-        
-        my $term_name = $term ? $term->name : '';
-        $term_name ||= $goxref->description || '';
-
-        my $has_ancestor = (!defined ($ancestor));
-        if (!$has_ancestor){
-          $has_ancestor=($go eq $ancestor);
-
-          my $ancestors = $goa->fetch_all_by_descendant_term($goa->fetch_by_accession($go));
-          for(my $i=0; $i< scalar (@$ancestors) && !$has_ancestor; $i++){
-            $has_ancestor=(@{$ancestors}[$i]->accession eq $ancestor);
-          }
-        }
-        
-        if($has_ancestor){
-          $go_hash{$go} = {
-	      'evidence' => $evidence,
-	      'term' => $term_name,
-	      'info' => $info_text,
-	      'source' => join ' ,', @{$sources || []},
-	      };
-        }
+      }
     }
 
   }
@@ -1297,7 +1297,6 @@ sub rna_notation {
     
     foreach (@$ncRNA) {
       my ($start, $end, $packed) = $_->value =~ /^(\d+):(\d+)\s+(.*)/;
-      
       substr($string, $start - 1, $end - $start + 1) = join '', map { substr($_, 0, 1) x (substr($_, 1) || 1) } ($packed =~ /(\D\d*)/g);
     }
     
@@ -1436,12 +1435,10 @@ sub get_int_seq {
   
   if ($seq_type eq 'DNA') {
     return [ $fasta_prefix . $self->split60($obj->seq->seq), length $obj->seq->seq ];
-  }
-  elsif ($seq_type eq 'PEP') {
+  } elsif ($seq_type eq 'PEP') {
     if ($obj->isa('Bio::EnsEMBL::Exon') && $other_obj->isa('Bio::EnsEMBL::Transcript')) {
       return [ $fasta_prefix.$self->split60($obj->peptide($other_obj)->seq), length $obj->peptide($other_obj)->seq ] if $obj->peptide($other_obj) && $other_obj->translate;
-    } 
-    elsif($obj->translate) {
+    } elsif($obj->translate) {
       $fasta_prefix = join '', '>', $obj->translation->stable_id, "<br />\n";
       return [ $fasta_prefix . $self->split60($obj->translate->seq), length $obj->translate->seq ];
     }
@@ -1646,36 +1643,43 @@ sub variation_data {
   my $trans_strand    = $transcript->strand;
   my @coding_sequence = split '', substr $transcript->seq->seq, $cd_start - 1, $cd_end - $cd_start + 1;
   my $i               = 0;
- 
+  my %seen;
+  
   foreach my $tv (@{$self->get_transcript_variations}) {
-	foreach my $tva (@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
-	  my $pos = $tv->translation_start;
-	  
-	  next if !$include_utr && !$pos;
-	  
-	  my $vf    = $tv->variation_feature;
-	  my $start = $vf->start;
-	  my $end   = $vf->end;
-	  
-	  push @data, {
-		tva           => $tva,
-		tv           => $tv,
-		vf            => $vf,
-		position      => $pos,
-		snp_source    => $vf->source,
-		vdbid         => $vf->dbID,
-		snp_id        => $vf->variation_name,
-		ambigcode     => $vf->ambig_code,
-		codons        => join(', ', split '/', $tva->display_codon_allele_string),
-		allele        => $vf->allele_string,
-		pep_snp       => join(', ', split '/', $tva->pep_allele_string),
-		type          => $tv->display_consequence,
-		length        => $end - $start,
-		indel         => $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '',
-		codon_seq     => [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ],
-		codon_var_pos => ($tv->cds_start + 2) - ($pos * 3)
-	  };
-	}
+    foreach my $tva (@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
+      my $vf  = $tv->variation_feature;
+      my $key = join ':', $vf->dbID, $vf->variation_name;
+      
+      next if $seen{$key};
+      
+      my $pos = $tv->translation_start;
+
+      next if !$include_utr && !$pos;
+      
+      my $start = $vf->start;
+      my $end   = $vf->end;
+      
+      push @data, {
+        tva           => $tva,
+        tv            => $tv,
+        vf            => $vf,
+        position      => $pos,
+        snp_source    => $vf->source,
+        vdbid         => $vf->dbID,
+        snp_id        => $vf->variation_name,
+        ambigcode     => $vf->ambig_code,
+        codons        => join(', ', split '/', $tva->display_codon_allele_string),
+        allele        => $vf->allele_string,
+        pep_snp       => join(', ', split '/', $tva->pep_allele_string),
+        type          => $tv->display_consequence,
+        length        => $end - $start,
+        indel         => $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '',
+        codon_seq     => [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ],
+        codon_var_pos => ($tv->cds_start + 2) - ($pos * 3)
+      };
+      
+      $seen{$key} = 1;
+    }
   }
   
   return \@data;
