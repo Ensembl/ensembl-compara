@@ -41,35 +41,14 @@ sub variation_content {
   my $variation  = $object->Obj;
   my $genes      = $variation->get_all_Genes;  
   my $feature    = $variation->get_VariationFeature_by_dbID($vf);
-  my $seq_region = $feature->seq_region_name . ':';
+  my $seq_region = $feature->seq_region_name . ':';  
+  my $chr_start  = $feature->start;
+  my $chr_end    = $feature->end;
+  my $allele     = $feature->allele_string;
+  my $link       = '<a href="%s">%s</a>';
+  my $position   = "$seq_region$chr_start";
   my $lrg_position;
-  
-  if ($lrg) {
-    my $lrg_feature = $feature->transfer($lrg);
-    
-    my $chr_start = $lrg_feature->start;
-    my $chr_end   = $lrg_feature->end;
-    $lrg_position = $chr_start;
-    
-    if ($chr_end < $chr_start) {
-      $lrg_position = "between $chr_end &amp; $chr_start";
-    } elsif ($chr_end > $chr_start) {
-      $lrg_position = "$chr_start-$chr_end";
-    }
-  }
-  
-  my $chr_start = $feature->start;
-  my $chr_end   = $feature->end;
-  my $position  = "$seq_region$chr_start";
-  
-  if ($chr_end < $chr_start) {
-    $position = "between $seq_region$chr_end &amp; $seq_region$chr_start";
-  } elsif ($chr_end > $chr_start) {
-    $position = "$seq_region$chr_start-$chr_end";
-  }
-  
-  my $allele    = $feature->allele_string;
-  my $link      = '<a href="%s">%s</a>';
+  my %population_data;
   
   my %url_params  = (
     type   => 'Variation',
@@ -78,7 +57,24 @@ sub variation_content {
     source => $feature->source
   );
   
-  my %population_data;
+  if ($chr_end < $chr_start) {
+    $position = "between $seq_region$chr_end &amp; $seq_region$chr_start";
+  } elsif ($chr_end > $chr_start) {
+    $position = "$seq_region$chr_start-$chr_end";
+  }
+  
+  if ($lrg) {
+    my $lrg_feature = $feature->transfer($lrg);
+    my $lrg_start   = $lrg_feature->start;
+    my $lrg_end     = $lrg_feature->end;
+    $lrg_position   = $lrg_start;
+    
+    if ($lrg_end < $lrg_start) {
+      $lrg_position = "between $lrg_end &amp; $lrg_start";
+    } elsif ($lrg_end > $lrg_start) {
+      $lrg_position = "$lrg_start-$lrg_end";
+    }
+  }
   
   $allele = substr($allele, 0, 10) . '...' if length $allele > 10; # truncate very long allele strings
   
@@ -87,12 +83,10 @@ sub variation_content {
     { caption => 'Position',  entry => $position },
   );
   
-  push @entries, (
-    { caption => 'LRG position', entry => $lrg_position}
-  ) if $lrg_position;
+  push @entries, { caption => 'LRG position', entry => $lrg_position } if $lrg_position;
   
   push @entries, (
-    { caption => 'Alleles',   entry => $allele   },
+    { caption => 'Alleles', entry => $allele },
     { entry => sprintf $link, $hub->url({ action => 'Mappings', %url_params }), 'Gene/Transcript Locations' }
   );
   
@@ -115,7 +109,7 @@ sub variation_content {
   
   foreach my $name (keys %population_data) {
     my %display = reverse %{$population_data{$name}};
-    my $i = 0;
+    my $i       = 0;
     
     foreach my $submitter (keys %display) {
       my @freqs = map { split /: /, $_ } split /, /, $display{$submitter};
