@@ -1481,7 +1481,7 @@ sub get_alignment {
   # that alignview can handle
   if (length $int_seq > 1e6 || length $ext_seq > 1e6)  {
     $self->problem('fatal', 'Cannot align if sequence > 1 Mbase');
-    return undef;
+    return 'Sorry, cannot do the alignments if sequence is longer than 1 Mbase';
   }
 
   my $int_seq_file = $self->save_seq($int_seq);
