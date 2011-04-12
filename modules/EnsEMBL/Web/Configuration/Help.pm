@@ -24,7 +24,7 @@ sub populate_tree {
 
   my $T = $self->create_node( 'Search', "Search",
     [qw(
-      search    EnsEMBL::Web::Component::Help::Search
+      search    EnsEMBL::Web::Component::Search::New
     )],
     { 'availability' => 1}
   );
