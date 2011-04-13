@@ -14,16 +14,18 @@ sub set_default_action {
 sub tree_cache_key {
   my $self = shift;
   my $key  = $self->SUPER::tree_cache_key(@_);
-  $key .= '::SOMATIC' if $self->object->Obj->is_somatic;
+  if (defined($self->object)) {
+    $key .= '::SOMATIC' if $self->object->Obj->is_somatic;
+  }
   return $key;
 }
 
 sub populate_tree {
   my $self = shift;
 	my $somatic;
-	if (defined($self->object)) {
-  	$somatic = $self->object->Obj->is_somatic;
-	}
+  if (defined($self->object)) {
+    $somatic = $self->object->Obj->is_somatic;
+  }
 
   #$self->create_node('Summary', 'Summary',
   #  [qw(
