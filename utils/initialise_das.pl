@@ -447,9 +447,12 @@ sub _coord_system_as_xml {
     $type = $_;
     for (keys %{ $NON_GENOMIC_COORDS{$type} }) {
       $authority = $_;
-      my $cs = $NON_GENOMIC_COORDS{$type}{$authority};
-      if ($cs->name eq $cs_name) {
-        goto CREATE;
+      if (my $cs = $NON_GENOMIC_COORDS{$type}{$authority}) {
+        if ($cs->name eq $cs_name) {
+          goto CREATE;
+        }
+      } else {
+        print STDERR '[WARN] Skipping $NON_GENOMIC_COORDS{'.$type.'}{'.$authority.'} (Value not defined)';
       }
     }
   }
