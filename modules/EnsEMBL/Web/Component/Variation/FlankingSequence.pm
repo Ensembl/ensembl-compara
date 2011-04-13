@@ -17,8 +17,9 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   my $html = '';
-  ## first check we have a location
-  return if $object->not_unique_location =~ /select/;
+  
+  ## first check we have uniquely determined variation
+  return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
   
   ## count locations
   my $mapping_count = scalar keys %{$object->variation_feature_mapping};
