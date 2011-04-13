@@ -932,7 +932,8 @@ sub _parse_branch {
     my $opts = $attr->{$tag}||[];
 
     for my $a (@{$opts}) {
-      ($tmp)              = $blk =~ m|<$tag[^>]+$a="([^"]+?)"|smix;
+      #($tmp) = $blk =~ m|<$tag[^>]+$a="([^"]+?)"|smix; # nickl: if tag has attributes 'id' and 'cvId', this regex fails to get correct vaule when $a='id'
+      ($tmp) = $blk =~ m{<$tag[^>]*\s+$a="([^"]+?)"}smix; # stricter regex to get correct attr value
       if(defined $tmp) {
 	$ref->{"${tag}_$a"} = $tmp;
       }
