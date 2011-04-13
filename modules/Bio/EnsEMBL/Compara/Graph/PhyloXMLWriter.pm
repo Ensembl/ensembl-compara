@@ -113,7 +113,7 @@ my $phylo_uri = 'http://www.phyloxml.org';
 =head2 new()
 
   Arg[CDNA]             : Boolean; indicates if we want CDNA emitted or peptide.
-                          Defaults to B<true>. 
+                          Defaults to B<false>. 
   Arg[SOURCE]           : String; the source of the stable identifiers.
                           Defaults to B<Unknown>.
   Arg[ALIGNED]          : Boolean; indicates if we want to emit aligned
