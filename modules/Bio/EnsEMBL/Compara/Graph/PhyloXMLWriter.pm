@@ -144,7 +144,7 @@ sub new {
     rearrange([qw(cdna source aligned no_sequences)], @args);
 
   $source ||= 'Unknown';
-  $cdna = 1 unless defined $cdna;
+  $cdna ||= 0;
   if( ($cdna || $aligned) && $no_sequences) {
     warning "-CDNA or -ALIGNED was specified but so was -NO_SEQUENCES. Will ignore sequences";
   }
