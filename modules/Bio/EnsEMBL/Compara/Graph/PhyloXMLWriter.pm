@@ -113,7 +113,7 @@ my $phylo_uri = 'http://www.phyloxml.org';
 =head2 new()
 
   Arg[CDNA]             : Boolean; indicates if we want CDNA emitted or peptide.
-                          Defaults to B<true>. 
+                          Defaults to B<false>. 
   Arg[SOURCE]           : String; the source of the stable identifiers.
                           Defaults to B<Unknown>.
   Arg[ALIGNED]          : Boolean; indicates if we want to emit aligned
@@ -144,7 +144,7 @@ sub new {
     rearrange([qw(cdna source aligned no_sequences)], @args);
 
   $source ||= 'Unknown';
-  $cdna = 1 unless defined $cdna;
+  $cdna ||= 0;
   if( ($cdna || $aligned) && $no_sequences) {
     warning "-CDNA or -ALIGNED was specified but so was -NO_SEQUENCES. Will ignore sequences";
   }
