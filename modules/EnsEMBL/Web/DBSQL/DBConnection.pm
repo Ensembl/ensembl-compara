@@ -83,9 +83,8 @@ sub get_DBAdaptor {
   my $dba = $reg->get_DBAdaptor($species, $database);
   # warn "$species - $database - $dba";
 
-
   # Funcgen Database Files Overwrite
-  if ($database eq 'funcgen' ){
+  if ($database eq 'funcgen' && $self->{'species_defs'}->databases->{'DATABASE_FUNCGEN'}{'NAME'} ){
     if ($species =~/^(mus|homo)/i ){
       my $root = $self->{'species_defs'}->ENSEMBL_REGULATION_FILE_PATH;
       $root .= '/'. $self->{'species_defs'}->databases->{'DATABASE_FUNCGEN'}{'NAME'}; 
