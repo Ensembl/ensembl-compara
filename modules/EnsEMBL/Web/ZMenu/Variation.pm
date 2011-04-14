@@ -50,8 +50,6 @@ sub content {
   
   if (($snp_fake || $var_box) && $feature) {
     $type = $feature->display_consequence;
-  } elsif ($trans_variation) {
-    $type =  join ', ', @{$trans_variation->consequence_type||[]};
   } elsif ($hub->param('consequence')) {
     $type = $hub->param('consequence') || '';
   } else {
