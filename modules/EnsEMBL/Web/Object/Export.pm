@@ -323,15 +323,16 @@ sub fasta {
   my $object_id       = ($hub->function eq 'Gene' || $hub->function eq 'LRG') ? $object->stable_id : '';
   my $slice           = $object->slice('expand');
   $slice              = $self->slice if($slice == 1);
+  my $strand          = $hub->param('strand');
+  if(($strand ne 1) && ($strand ne -1)) {$strand = $slice->strand;}
+  if($strand != $slice->strand){ $slice=$slice->invert; }
   my $params          = $self->params;
   my $genomic         = $hub->param('genomic');
   my $seq_region_name = $object->seq_region_name;
   my $seq_region_type = $object->seq_region_type;
   my $slice_name      = $slice->name;
   my $slice_length    = $slice->length;
-  my $strand          = $slice->strand;
   my $fasta;
-  
   if (scalar keys %$params) {
     my $intron_id;
     
