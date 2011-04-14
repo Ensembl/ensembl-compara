@@ -13,6 +13,9 @@ __PACKAGE__->add_fields(
   code      => 'text',
   name      => 'text',
   nearest   => 'text',
+  colour    => 'text',
+  format    => 'text',
+  timestamp => 'int',
 );
 
 1;
