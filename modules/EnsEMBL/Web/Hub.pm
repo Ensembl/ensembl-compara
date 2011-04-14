@@ -438,7 +438,7 @@ sub get_ext_seq {
   my ($self, $id, $ext_db, $strand_mismatch) = @_;
   my $indexer = new EnsEMBL::Web::ExtIndex($self->species_defs);
   
-  return unless $indexer;
+  return [" Could not get an indexer: $@", -1] unless $indexer;
   
   my $seq_ary;
   my %args;
@@ -449,9 +449,11 @@ sub get_ext_seq {
   eval { $seq_ary = $indexer->get_seq_by_id(\%args); };
   
   if (!$seq_ary) {
-    warn "The $ext_db server is unavailable: $@";
-    return '';
+    return [ "The $ext_db server is unavailable: $@" , -1];
   } else {
+      if ($seq_ary->[0] =~ /Error|No entries found/i) {
+	  return [$seq_ary->[0], -1];
+      }
     my ($list, $l);
     
     foreach (@$seq_ary) {

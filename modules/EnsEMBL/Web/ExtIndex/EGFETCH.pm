@@ -18,7 +18,8 @@ my $DEFAULT_PARAMS = {
 	agent        => 'EgFetch/1.0',
 #	service_base => 'http://www.ebi.ac.uk/Tools/webservices/rest/dbfetch/',
 	
-	service_base => 'http://www.ebi.ac.uk/Tools/webservices/rest/dbfetch/%dbname%/%id%/%format%',
+#	service_base => 'http://www.ebi.ac.uk/Tools/webservices/rest/dbfetch/%dbname%/%id%/%format%',
+	service_base => 'http://www.ebi.ac.uk/Tools/dbfetch/dbfetch/%dbname%/%id%/%format%',
 	format       => 'fasta',
     srs_seq_query_url => 'http://srs.ebi.ac.uk/srsbin/cgi-bin/wgetz?%query%+-f+seq+-sf+%format%',
     srs_entry_query_url => 'http://srs.ebi.ac.uk/srsbin/cgi-bin/wgetz?%query%+-e+-ascii',
@@ -97,7 +98,7 @@ sub get_sequence_by_id {
     $dbname_b =~ s/_predicted$//i;
     my $dbname = $dbnames->{lc $dbname_b};
     if(!$dbname) {
-		warn "Database name not found for ID ($dbname_b): $id";
+	return "Error: Database name not found for ID ($dbname_b): $id";
     }
 
     if ( $dbname =~ /emblcds|refseq/ || $dbname eq 'embl') {
@@ -117,12 +118,15 @@ sub get_sequence_by_id {
     my $seq = $self->do_request( 'GET', $url );
 #    warn "GET ($url)";
     if($seq =~ m/No entries found/) {
-	return "No entries found for $dbname:$id";
+	return "No entries found for $dbname_b : $id";
     }
+
     my $parser_sub = $db_to_parser_sub->{$dbname};
+
     if($parser_sub) {
 	$seq = $self->$parser_sub($seq);
     }
+
     return $seq;
 }
 
@@ -247,15 +251,7 @@ sub get_seq_by_id {
 #		warn "GET SEQ: $id * $dbname * format \n[$seq]\n";
 		last if ($seq && ($seq !~ m/No entries/));
 	    }
-	}
-
-#	my $seq = $self->do_request( 'GET', $self->path_for_id( $id, $dbname ) );
-
-
-	if($seq =~ m/No entries found/) {
-		warn "No entries found for $dbname:$id";
-	}
-	
+	}	
 #	warn "SEQ: * ($seq) ", length($seq);
 	$seq =~ s/\r/\n/g;
 	return [$seq];
