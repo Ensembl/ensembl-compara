@@ -22,9 +22,16 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
     
     if (!panel.isIE6) {
       $(this.el).draggable({
+        containment: 'document',
         handle: 'div.modal_title',
         stop: function (e, ui) {
-          $.extend(panel.customized, ui.position);
+          if (ui.position.top < panel.offsetTop) {
+            ui.position.top = panel.offsetTop;
+            $(this).css('top', panel.offsetTop);
+          }
+          
+          panel.customized.left = ui.position.left || 1;
+          panel.customized.top  = ui.position.top;
           panel.setCookie();
         }
       }).resizable({
@@ -88,6 +95,10 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
     }
     
     this.base();
+    
+    if (!this.offsetTop) {
+      this.offsetTop = - $('.modal_title', this.el).position().top - $('.modal_close', this.el).position().top;
+    }
   },
   
   hide: function () {
