@@ -29,7 +29,7 @@ sub content {
   my $residues     = $translation ? $self->thousandify($translation->length) : 0;
   my @CCDS         = grep $_->dbname eq 'CCDS', @{$transcript->get_all_DBLinks};
   my $html         = "<strong>Exons:</strong> $exons <strong>Transcript length:</strong> $basepairs bps";
-  $html           .= "<strong>Translation length:</strong> $residues residues" if $residues;
+  $html           .= " <strong>Translation length:</strong> $residues residues" if $residues;
   
   $table->add_row('Statistics', "<p>$html</p>", 1);
 
