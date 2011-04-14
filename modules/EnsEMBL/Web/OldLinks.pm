@@ -59,7 +59,11 @@ our %mapping = (
   'searchview'            => [{ 'type' => 'Search',     'action' => 'Results',                      'initial_release' => 1  }],
   'search'                => [{ 'type' => 'Search',     'action' => 'Results',                      'initial_release' => 1  }],
   'new_views'             => [{ 'type' => 'Location',   'action' => 'Compara_Alignments',           'initial_release' => 54 },
-                          =>  { 'type' => 'Variation',  'action' => 'Compara_Alignments',           'initial_release' => 54 },
+                              { 'type' => 'Variation',  'action' => 'Compara_Alignments',           'initial_release' => 54 },
+                              { 'type' => 'Regulation', 'action' => 'Summary',                      'initial_release' => 56 },
+                              { 'type' => 'Regulation', 'action' => 'Cell_line',                      'initial_release' => 58 },
+                              { 'type' => 'Regulation', 'action' => 'Evidence',                     'initial_release' => 56 },
+                              { 'type' => 'Regulation', 'action' => 'Context',                      'initial_release' => 56 },
                               { 'type' => 'Gene',       'action' => 'Evidence',                     'initial_release' => 51 }],
   # internal views
   'colourmap'             => [{ 'type' => 'Server',     'action' => 'Colourmap',                    'initial_release' => 1  }],
