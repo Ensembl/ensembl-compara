@@ -97,7 +97,6 @@ sub check_url_data {
 sub check_bam_data {
   my ($self, $url) = @_;
   my $error = '';
-=pod
   require Bio::DB::Sam;
 
   if ($url =~ /^ftp:\/\//i && !$self->hub->species_defs->ALLOW_FTP_BAM) {
@@ -107,9 +106,13 @@ sub check_bam_data {
     # try to open and use the bam file and its index -
     # this checks that the bam and index files are present and correct, 
     # and should also cause the index file to be downloaded and cached in /tmp/ 
-    my ($bam, $index);
+    my ($sam, $bam, $index);
     eval {
-      $bam = Bio::DB::Bam->open($url);
+      # Note the reason this uses Bio::DB::Sam->new rather than Bio::DB::Bam->open is to allow set up
+      # of default cache dir (which happens in Bio::DB:Sam->new)
+      $sam = Bio::DB::Sam->new( -bam => $url);
+      #$bam = Bio::DB::Bam->open($url);
+      $bam = $sam->bam;
       $index = Bio::DB::Bam->index($url,0);
       my $header = $bam->header;
       my $region = $header->target_name->[0];
@@ -124,14 +127,12 @@ sub check_bam_data {
         $error = "Unable to open/index remote BAM file: $url<br>Ensembl can only display sorted, indexed BAM files.<br>Please ensure that your web server is accessible to the Ensembl site and that both your .bam and .bai files are present, named consistently, and have the correct file permissions (public readable).";
     }
   }
-=cut
   return $error;
 }
 
 sub check_bigwig_data {
   my ($self, $url) = @_;
   my $error = '';
-=pod
   require Bio::DB::BigFile;
 
   if ($url =~ /^ftp:\/\//i && !$self->hub->species_defs->ALLOW_FTP_BIGWIG) {
@@ -142,6 +143,7 @@ sub check_bigwig_data {
     # this checks that the bigwig files is present and correct
     my $bigwig;
     eval {
+      Bio::DB::BigFile->set_udc_defaults;
       $bigwig = Bio::DB::BigFile->bigWigFileOpen($url);
       my $chromosome_list = $bigwig->chromList;
     };
@@ -152,14 +154,12 @@ sub check_bigwig_data {
       $error = "Unable to open remote BigWig file: $url<br>Ensure hat your web/ftp server is accessible to the Ensembl site";
     }
   }
-=cut
   return $error;
 }
 
 sub check_vcf_data {
   my ($self, $url) = @_;
   my $error = '';
-=pod
   require Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor;
 
   if ($url =~ /^ftp:\/\//i && !$self->hub->species_defs->ALLOW_FTP_VCF) {
@@ -182,7 +182,6 @@ sub check_vcf_data {
 <br>Ensure you have sorted and indexed your file and that your web server is accessible to the Ensembl site";
     }
   }
-=cut
   return $error;
 }
 
