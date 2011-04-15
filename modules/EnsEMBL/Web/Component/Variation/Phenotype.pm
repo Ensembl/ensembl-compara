@@ -90,10 +90,6 @@ sub table_data {
 		my $external_reference = $self->external_reference_link($va->external_reference) || $va->external_reference; # use raw value if can't be made into a link
     my $associated_studies = $va->associated_studies; # List of Study objects
 		
-    if ($source =~ /<a href="">(.*)<\/a>/) {
-      $source = $1; 
-    }
-	
 		# Add the supporting evidence source(s)
 		my $a_study_source='';
 		if (defined($associated_studies)) {
@@ -202,6 +198,7 @@ sub source_link {
     my $name = $self->object->Obj->name;
     $url =~ s/###ID###/$name/;
   }
+	return $source if $url eq "";
   
   return qq{<a rel="external" href="$url">[$source]</a>};
 }
