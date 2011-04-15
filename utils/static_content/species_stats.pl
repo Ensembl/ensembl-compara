@@ -595,6 +595,7 @@ sub do_interpro {
                 FROM  interpro i
                 LEFT JOIN xref x ON i.interpro_ac = x.dbprimary_acc
                 LEFT JOIN protein_feature pf ON i.id = pf.hit_name
+	        WHERE pf.hit_name IS NOT NULL
                 GROUP BY pf.hit_name);
   my $sth = $db->dbc->prepare($SQL);
   $sth->execute();
@@ -602,7 +603,7 @@ sub do_interpro {
   my $domain;
   while (my ($acc, $descr, $count) = $sth->fetchrow_array) {
     $domain->{$acc}{descr} = $descr;
-    $domain->{$acc}{count} = $count;
+    $domain->{$acc}{count} += $count;
   }
 
   warn "HEY ! ($species)";
