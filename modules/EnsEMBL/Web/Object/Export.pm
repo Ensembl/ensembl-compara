@@ -237,6 +237,7 @@ sub process {
 
   my $object         = $self->get_object;   
   my @inputs         = ($hub->function eq 'Gene' || $hub->function eq 'LRG') ? $object->get_all_transcripts : @_;  
+  @inputs            = [$object] if($hub->function eq 'Transcript');  
 
   my $slice          = $object->slice('expand');
   $slice             = $self->slice if($slice == 1);
@@ -318,6 +319,7 @@ sub phyloxml{
 }
 sub fasta {
   my ($self, $trans_objects) = @_;
+
   my $hub             = $self->hub;
   my $object          = $self->get_object;
   my $object_id       = ($hub->function eq 'Gene' || $hub->function eq 'LRG') ? $object->stable_id : '';
@@ -367,7 +369,7 @@ sub fasta {
       $self->string('');
     }
   }
-  
+
   if (defined $genomic && $genomic ne 'off') {
     my $masking = $genomic eq 'soft_masked' ? 1 : $genomic eq 'hard_masked' ? 0 : undef;
     my ($seq, $start, $end, $flank_slice);
@@ -398,6 +400,7 @@ sub fasta {
       $self->string($fasta) while $fasta = substr $seq, 0, 60, '';
     }
   }
+
 }
 
 sub flat {
