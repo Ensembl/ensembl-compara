@@ -91,9 +91,7 @@ sub content {
       
       if ($max > 2 && $i < $max) {
         # Make new versions of the primary image config because the alignments required will be different each time
-        if ($join_alignments) {
-          my @sl = map { $slices->[$_]->{'species'} eq $primary_species ? {} : { species => $slices->[$_]->{'species'}, ori => $slices->[$_]->{'strand'} }} $i-1, $i;
-          
+        if ($join_alignments || $join_genes) {
           $primary_image_config = $hub->get_imageconfig('MultiBottom', "contigview_bottom_1_$i", $primary_species);
           
           $primary_image_config->set_parameters({
@@ -105,6 +103,10 @@ sub content {
             base_url        => $base_url,
             join_types      => $gene_join_types
           });
+        }
+        
+        if ($join_alignments) {
+          my @sl = map { $slices->[$_]->{'species'} eq $primary_species ? {} : { species => $slices->[$_]->{'species'}, ori => $slices->[$_]->{'strand'} }} $i-1, $i;
           
           $primary_image_config->get_node('scalebar')->set('caption', $short_name);
           $primary_image_config->multi($methods, 1, $max, @sl);
