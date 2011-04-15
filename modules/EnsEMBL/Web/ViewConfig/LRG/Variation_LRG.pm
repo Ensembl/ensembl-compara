@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig::LRG::Variation_LRG;
 
 use strict;
@@ -7,30 +9,30 @@ use EnsEMBL::Web::Constants;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my ($view_config) = @_;
-  
-  my $variations = $view_config->species_defs->databases->{'DATABASE_VARIATION'};
-#    context              100  
-  $view_config->_set_defaults(qw(
-    consequence_format   ensembl
-    panel_image          on 
+  my $self       = shift;
+  my $variations = $self->species_defs->databases->{'DATABASE_VARIATION'};
 
-    context              FULL
-    panel_transcript     on
-    image_width          800
-    reference),          ''
+  $self->_set_defaults(qw(
+    consequence_format  ensembl
+    panel_image         on 
+    context             FULL
+    panel_transcript    on
+    image_width         800
+    reference),         ''
   );
   
-  $view_config->_set_defaults('opt_pop_' . $_ => 'off') for @{$variations->{'DISPLAY_STRAINS'}};
-  $view_config->_set_defaults('opt_pop_' . $_ => 'on')  for @{$variations->{'DEFAULT_STRAINS'}};
-  $view_config->_set_defaults('opt_pop_' . $variations->{'REFERENCE_STRAIN'} => 'off');
+  
+  
+  $self->_set_defaults("opt_pop_$_" => 'off') for @{$variations->{'DISPLAY_STRAINS'}};
+  $self->_set_defaults("opt_pop_$_" => 'on')  for @{$variations->{'DEFAULT_STRAINS'}};
+  $self->_set_defaults("opt_pop_$variations->{'REFERENCE_STRAIN'}" => 'off');
 
   # Add source information if we have a variation database
   if ($variations) {
-    foreach (keys %{$variations->{'tables'}{'source'}{'counts'}||{}}){
-      my $name = 'opt_' . lc($_);
-      $name =~ s/\s+/_/g;
-      $view_config->_set_defaults($name => 'on');
+    foreach (keys %{$variations->{'tables'}{'source'}{'counts'} || {}}){
+      my $name = 'opt_' . lc $_;
+      $name    =~ s/\s+/_/g;
+      $self->_set_defaults($name => 'on');
     }
   }
 
@@ -39,31 +41,30 @@ sub init {
   foreach (keys %options) {
     my %hash = %{$options{$_}};
     
-    foreach my $key (keys %hash){
-      $view_config->_set_defaults(lc($key) => $hash{$key}[0]);
+    foreach my $key (keys %hash) {
+      $self->_set_defaults(lc $key => $hash{$key}[0]);
     }
   }
 
-  $view_config->add_image_configs({qw(
+  $self->add_image_configs({qw(
     lrgsnpview_gene       nodas  
     lrgsnpview_transcript nodas
   )});
   
-  $view_config->storable = 1;
-  $view_config->nav_tree = 1;
+  $self->storable = 1;
+  $self->nav_tree = 1;
 }
 
 sub form {
-  my ($view_config, $object) = @_;
-
+  my $self       = shift;
   my %options    = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
   my %validation = %{$options{'variation'}};
   my %class      = %{$options{'class'}};
   my %type       = %{$options{'type'}};
 
   # Add context selection
-	$view_config->add_fieldset('Context');
-	$view_config->add_form_element({
+	$self->add_fieldset('Context');
+	$self->add_form_element({
 	  type   => 'DropDown',
     select => 'select',
     name   => 'context',
@@ -82,66 +83,66 @@ sub form {
   });
   
   # Add source selection
-  $view_config->add_fieldset('Variation source');
+  $self->add_fieldset('Variation source');
   
-  foreach (sort keys %{$object->table_info('variation', 'source')->{'counts'}}) {
+  foreach (sort keys %{$self->hub->table_info('variation', 'source')->{'counts'}}) {
     my $name = 'opt_' . lc($_);
     $name =~ s/\s+/_/g;
     
-    $view_config->add_form_element({
-      'type'  => 'CheckBox', 
-      'label' => $_,
-      'name'  => $name,
-      'value' => 'on',
-      'raw'   => 1
+    $self->add_form_element({
+      type  => 'CheckBox', 
+      label => $_,
+      name  => $name,
+      value => 'on',
+      raw   => 1
     });
   }
   
   # Add class selection
-  $view_config->add_fieldset('Variation class');
+  $self->add_fieldset('Variation class');
   
   foreach (keys %class) {
-    $view_config->add_form_element({
+    $self->add_form_element({
       type  => 'CheckBox',
       label => $class{$_}[1],
-      name  => lc($_),
+      name  => lc $_,
       value => 'on',
       raw   => 1
     });
   }
   
   # Add Validation selection
-  $view_config->add_fieldset('Validation');
+  $self->add_fieldset('Validation');
   
   foreach (keys %validation) {
-    $view_config->add_form_element({
+    $self->add_form_element({
       type  => 'CheckBox',
       label => $validation{$_}[1],
-      name  =>  lc($_),
+      name  =>  lc $_,
       value => 'on',
       raw   => 1
     });
   }
   
   # Add type selection
-  $view_config->add_fieldset('Consequence type');
+  $self->add_fieldset('Consequence type');
   
-  $view_config->add_form_element({
+  $self->add_form_element({
     type   => 'DropDown',
     select =>, 'select',
     label  => 'Type of consequences to display',
     name   => 'consequence_format',
     values => [
-      { value => 'ensembl',  name => 'Ensembl terms'           },
-      { value => 'so',       name => 'Sequence Ontology terms' },
-      { value => 'ncbi',     name => 'NCBI terms'              },
+      { value => 'ensembl', name => 'Ensembl terms'           },
+      { value => 'so',      name => 'Sequence Ontology terms' },
+      { value => 'ncbi',    name => 'NCBI terms'              },
     ]
   });
   
   foreach (sort { $type{$a}->[2] <=> $type{$b}->[2] } keys %type) { 
     next if $_ eq 'opt_sara';
     
-    $view_config->add_form_element({
+    $self->add_form_element({
       type  => 'CheckBox',
       label => $type{$_}[1],
       name  => lc($_),

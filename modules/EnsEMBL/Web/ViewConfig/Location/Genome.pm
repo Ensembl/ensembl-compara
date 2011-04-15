@@ -10,13 +10,11 @@ sub init {
   ### Used by Constructor
   ### init function called to set defaults for the passed
   ### {{EnsEMBL::Web::ViewConfig}} object
-
-  my ($view_config) = @_;
-  my $self = shift;
   
+  my $self       = shift;
   my $total_chrs = @{$self->species_defs->ENSEMBL_CHROMOSOMES};
   
-  my %settings =  qw(
+  my %settings = qw(
     panel_top     yes
     panel_zoom    no
     image_width   1200
@@ -27,24 +25,24 @@ sub init {
     h_spacing     6
     v_spacing     10
   );
-  %settings->{rows} = ($total_chrs ge '26') ? '2' : '1';;
+  %settings->{'rows'} = $total_chrs ge '26' ? '2' : '1';
   
-  $view_config->_set_defaults(%settings);
+  $self->_set_defaults(%settings);
   
-  $view_config->add_image_configs({qw(
+  $self->add_image_configs({qw(
     Vkaryotype das
   )});
   
-  $view_config->default_config = 'Vkaryotype';
-  $view_config->storable       = 1;
+  $self->default_config = 'Vkaryotype';
+  $self->storable       = 1;
 }
 
 sub form {
-  my ($view_config) = @_;
+  my $self = shift;
 
-  $view_config->add_fieldset('Chromosome layout');
+  $self->add_fieldset('Chromosome layout');
 
-  $view_config->add_form_element({
+  $self->add_form_element({
     type    => 'DropDown',
     name    => 'rows',
     label   => 'Number of rows of chromosomes',
@@ -57,7 +55,7 @@ sub form {
     ],
   });
 
-  $view_config->add_form_element({
+  $self->add_form_element({
     type     => 'Int',
     name     => 'chr_length',
     label    => 'Height of the longest chromosome (pixels)',

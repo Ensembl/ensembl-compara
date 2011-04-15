@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig::dotterview;
 
 use strict;
@@ -5,15 +7,16 @@ use strict;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my ($view_config) = @_;
+  my $self = shift;
 
-  $view_config->_set_defaults(qw(
-    w 5000
-    t   48
-    g    1
-    h   -1
+  $self->_set_defaults(qw(
+    w  5000
+    t  48
+    g  1
+    h -1
   ));
-  $view_config->storable = 1;
+  
+  $self->storable = 1;
 }
 
 1;

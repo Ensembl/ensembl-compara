@@ -63,7 +63,7 @@ sub init {
 }
 
 sub form {
-  my ($self, $object) = @_;  
+  my $self = shift;  
   
   my %focus_feature_type_ids;
   my $focus_row = 3;

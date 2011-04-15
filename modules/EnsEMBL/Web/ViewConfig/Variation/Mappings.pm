@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig::Variation::Mappings;
 
 use strict;
@@ -5,23 +7,23 @@ use strict;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my ($view_config) = @_;
+  my $self = shift;
   
-  $view_config->_set_defaults(qw(
+  $self->_set_defaults(qw(
     consequence_format   ensembl
     show_scores          no
   ));
   
-  $view_config->storable = 1;
+  $self->storable = 1;
 }
 
 sub form {
-  my ($view_config, $object) = @_;
+  my $self = shift;
 
   # Add selection
-  $view_config->add_fieldset('Gene/Transcript');
+  $self->add_fieldset('Gene/Transcript');
   
-  $view_config->add_form_element({
+  $self->add_form_element({
     type   => 'DropDown',
     select =>, 'select',
     label  => 'Type of consequences to display',
@@ -33,8 +35,8 @@ sub form {
     ]
   });  
   
-  if($view_config->hub->species =~ /homo_sapiens/i) {
-    $view_config->add_form_element({
+  if ($self->hub->species =~ /homo_sapiens/i) {
+    $self->add_form_element({
       type  => 'CheckBox',
       label => 'Show SIFT and PolyPhen scores',
       name  => 'show_scores',

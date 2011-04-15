@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig::Gene::Compara_Paralog;
 
 use strict;
@@ -7,25 +9,26 @@ use EnsEMBL::Web::Constants;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my ($view_config) = @_;
+  my $self = shift;
   
-  $view_config->_set_defaults(qw(
-    image_width          800
-    width                800
-    seq                  Protein
-    text_format          clustalw
-    scale                150
+  $self->_set_defaults(qw(
+    image_width 800
+    width       800
+    seq         Protein
+    text_format clustalw
+    scale       150
   ));
   
-  $view_config->storable = 1;
+  $self->storable = 1;
 }
 
 sub form {
-  my ($view_config, $object) = @_;
+  my $self    = shift;
   my %formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
 
-  $view_config->add_fieldset('Aligment output');
-  $view_config->add_form_element({
+  $self->add_fieldset('Aligment output');
+  
+  $self->add_form_element({
     type   => 'DropDown', 
     select => 'select',   
     name   => 'seq',
@@ -33,7 +36,7 @@ sub form {
     values => [ map {{ value => $_, name => $_ }} qw(cDNA Protein) ]
   });
 
-  $view_config->add_form_element({
+  $self->add_form_element({
     type   => 'DropDown', 
     select => 'select',   
     name   => 'text_format',

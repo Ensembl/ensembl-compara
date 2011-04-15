@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig::Gene::Family;
 
 use strict;
@@ -7,45 +9,43 @@ use EnsEMBL::Web::Constants;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my ($view_config) = @_;
-  
+  my $self    = shift;
   my %formats = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
 
-  $view_config->_set_defaults(
-    map({ 'species_'. lc($_) => 'yes' } $view_config->species_defs->valid_species),
+  $self->_set_defaults(
+    map({ 'species_'. lc($_) => 'yes' } $self->species_defs->valid_species),
     map({ 'opt_'. lc($_) => 'yes' } keys %formats)
   );
   
-  $view_config->storable = 1;
-  $view_config->nav_tree = 1;
+  $self->storable = 1;
+  $self->nav_tree = 1;
 }
 
 sub form {
-  my ($view_config, $object) = @_;
-  
-  my %formats = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
-  my $species_defs = $view_config->species_defs;
+  my $self         = shift;
+  my %formats      = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
+  my $species_defs = $self->species_defs;
 
-  $view_config->add_fieldset('Selected species');
+  $self->add_fieldset('Selected species');
   
   foreach ($species_defs->valid_species) {
-    $view_config->add_form_element({
-      'type'  => 'CheckBox', 
-      'label' => $species_defs->species_label($_),
-      'name'  => 'species_' . lc($_),
-      'value' => 'yes', 
-      'raw'   => 1
+    $self->add_form_element({
+      type  => 'CheckBox', 
+      label => $species_defs->species_label($_),
+      name  => 'species_' . lc $_,
+      value => 'yes', 
+      raw   => 1
     });
   }
-  $view_config->add_fieldset('Selected databases');
+  $self->add_fieldset('Selected databases');
   
   foreach(sort keys %formats) {
-    $view_config->add_form_element({
-      'type'  => 'CheckBox', 
-      'label' => $formats{$_}{'name'},
-      'name'  => 'opt_' . lc($_),
-      'value' => 'yes', 
-      'raw'   => 1
+    $self->add_form_element({
+      type  => 'CheckBox', 
+      label => $formats{$_}{'name'},
+      name  => 'opt_' . lc $_,
+      value => 'yes', 
+      raw   => 1
     });
   }
 }

@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig::Variation::HighLD;
 
 use strict;
@@ -5,10 +7,10 @@ use strict;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my ($view_config) = @_;
-  my $variations = $view_config->species_defs->databases->{'DATABASE_VARIATION'}||{};
+  my $self       = shift;
+  my $variations = $self->species_defs->databases->{'DATABASE_VARIATION'} || {};
 
-  $view_config->_set_defaults(qw(
+  $self->_set_defaults(qw(
     max_distance          50000
     min_r2                0.8
     min_d_prime           0.8
@@ -16,17 +18,17 @@ sub init {
     min_p_log             0
   ));
   
-  $view_config->storable = 1;
+  $self->storable = 1;
 }
 
 sub form {
-  my ($view_config, $object) = @_;
+  my $self = shift;
 
   # Add selection
-  $view_config->add_fieldset('Thresholds');
+  $self->add_fieldset('Thresholds');
   
   # max distance
-  $view_config->add_form_element({
+  $self->add_form_element({
     type   => 'DropDown',
     select => 'select',
     name   => 'max_distance',
@@ -41,7 +43,7 @@ sub form {
   });
   
   # min r2
-  $view_config->add_form_element({
+  $self->add_form_element({
     type   => 'DropDown',
     select => 'select',
     name   => 'min_r2',
@@ -62,7 +64,7 @@ sub form {
   });
   
   # min d_prime
-  $view_config->add_form_element({
+  $self->add_form_element({
     type   => 'DropDown',
     select => 'select',
     name   => 'min_d_prime',
@@ -83,9 +85,9 @@ sub form {
   });
   
   # other options
-  $view_config->add_fieldset("Phenotype options");
+  $self->add_fieldset("Phenotype options");
   
-  $view_config->add_form_element({
+  $self->add_form_element({
     type  => 'CheckBox',
     label => 'Only display variations associated with phenotypes',
     name  => 'only_phenotypes',
@@ -93,7 +95,7 @@ sub form {
     raw   => 1,
   });
   
-  $view_config->add_form_element({
+  $self->add_form_element({
     type   => 'DropDown',
     select => 'select',
     name   => 'min_p_log',

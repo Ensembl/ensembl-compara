@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig::Regulation::Context;
 
 use strict;
@@ -5,17 +7,19 @@ use strict;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my ($view_config) = @_;
+  my $self = shift;
 
-  $view_config->_set_defaults(qw(
-    image_width             800
-    das_sources),           []
+  $self->_set_defaults(qw(
+    image_width   800
+    das_sources), []
   );
-  $view_config->add_image_configs({qw(
+   
+  $self->add_image_configs({qw(
     reg_summary das
   )});
-  $view_config->default_config = 'reg_summary';
-  $view_config->storable = 1;
+  
+  $self->default_config = 'reg_summary';
+  $self->storable       = 1;
 }
 
 1;

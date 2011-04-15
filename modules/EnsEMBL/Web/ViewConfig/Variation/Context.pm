@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig::Variation::Context;
 
 use strict;
@@ -7,9 +9,9 @@ use EnsEMBL::Web::Constants;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my ($view_config) = @_;
+  my $self = shift;
 
-  $view_config->_set_defaults(qw(
+  $self->_set_defaults(qw(
     panel_genotypes  on
     panel_alleles    on
     panel_locations  on
@@ -24,23 +26,22 @@ sub init {
     my %hash = %{$options{$_}};
     
     foreach my $key (keys %hash){
-      $view_config->_set_defaults(lc($key) => $hash{$key}[0]);
+      $self->_set_defaults(lc($key) => $hash{$key}[0]);
     }
   }
 	
-  $view_config->add_image_configs({ snpview => 'nodas' });
-
-  $view_config->storable = 1;
+  $self->add_image_configs({ snpview => 'nodas' });
+  $self->storable = 1;
 }
 
 sub form {
-  my ($view_config, $object) = @_;
+  my $self = shift;
 
-  $view_config->default_config = 'snpview'; 
+  $self->default_config = 'snpview'; 
 
   # Add context selection
-  $view_config->add_fieldset('Context');
-  $view_config->add_form_element({
+  $self->add_fieldset('Context');
+  $self->add_form_element({
     type   => 'DropDown',
     select => 'select',
     name   => 'context',
@@ -54,4 +55,5 @@ sub form {
     ]
   });
 }
+
 1;

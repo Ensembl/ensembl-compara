@@ -14,12 +14,12 @@ sub init {
 }
 
 sub form {
-  my ($self, $object) = @_;
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $view    = $hub->type . '/ExternalData';
+  my @all_das = sort { lc $a->label cmp lc $b->label } grep $_->is_on($view), values %{$hub->get_all_das};
   
   $self->add_fieldset('DAS sources');
-  
-  my $view    = $object->__objecttype . '/ExternalData';
-  my @all_das = sort { lc $a->label cmp lc $b->label } grep $_->is_on($view), values %{$self->hub->get_all_das};
   
   foreach my $das (@all_das) {
     $self->add_form_element({

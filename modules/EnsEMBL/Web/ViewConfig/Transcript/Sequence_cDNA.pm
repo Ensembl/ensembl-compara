@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig::Transcript::Sequence_cDNA;
 
 use strict;
@@ -7,9 +9,9 @@ use EnsEMBL::Web::Constants;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my ($view_config) = @_;
+  my $self = shift;
 
-  $view_config->_set_defaults(qw(
+  $self->_set_defaults(qw(
     exons             yes
     codons            yes
     utr               yes
@@ -23,13 +25,13 @@ sub init {
     number            yes
   ));
   
-  $view_config->storable = 1;
+  $self->storable = 1;
 }
 
 sub form {
-  my ($view_config, $object) = @_;
+  my $self = shift;
 
-  $view_config->add_form_element({
+  $self->add_form_element({
     type   => 'DropDown', 
     select => 'select',
     name   => 'display_width',
@@ -39,29 +41,29 @@ sub form {
     ] 
   });
 
-  $view_config->add_form_element({ type => 'YesNo', name => 'exons',       select => 'select', label => 'Show exons' });
-  $view_config->add_form_element({ type => 'YesNo', name => 'codons',      select => 'select', label => 'Show codons' });
-  $view_config->add_form_element({ type => 'YesNo', name => 'utr',         select => 'select', label => 'Show UTR' });
-  $view_config->add_form_element({ type => 'YesNo', name => 'coding_seq',  select => 'select', label => 'Show coding sequence' });
-  $view_config->add_form_element({ type => 'YesNo', name => 'translation', select => 'select', label => 'Show protein sequence' });
-  $view_config->add_form_element({ type => 'YesNo', name => 'rna',         select => 'select', label => 'Show RNA features' });
+  $self->add_form_element({ type => 'YesNo', name => 'exons',       select => 'select', label => 'Show exons'            });
+  $self->add_form_element({ type => 'YesNo', name => 'codons',      select => 'select', label => 'Show codons'           });
+  $self->add_form_element({ type => 'YesNo', name => 'utr',         select => 'select', label => 'Show UTR'              });
+  $self->add_form_element({ type => 'YesNo', name => 'coding_seq',  select => 'select', label => 'Show coding sequence'  });
+  $self->add_form_element({ type => 'YesNo', name => 'translation', select => 'select', label => 'Show protein sequence' });
+  $self->add_form_element({ type => 'YesNo', name => 'rna',         select => 'select', label => 'Show RNA features'     });
   
-  if ($object->species_defs->databases->{'DATABASE_VARIATION'}) {
-    $view_config->add_form_element({ type => 'YesNo', name => 'variation', select => 'select', label => 'Show variation features' });
+  if ($self->species_defs->databases->{'DATABASE_VARIATION'}) {
+    $self->add_form_element({ type => 'YesNo', name => 'variation', select => 'select', label => 'Show variation features' });
     
-    my $populations = $object->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_all_LD_Populations;
+    my $populations = $self->hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_all_LD_Populations;
     
     if (scalar @$populations) {
       my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
       
       push @{$general_markup_options{'pop_filter'}{'values'}}, sort { $a->{'name'} cmp $b->{'name'} } map {{ value => $_->name, name => $_->name }} @$populations;
     
-      $view_config->add_form_element($general_markup_options{'pop_filter'});
-      $view_config->add_form_element($general_markup_options{'pop_min_freq'});
+      $self->add_form_element($general_markup_options{'pop_filter'});
+      $self->add_form_element($general_markup_options{'pop_min_freq'});
     }
   }
   
-  $view_config->add_form_element({ type => 'YesNo', name => 'number', select => 'select', label => 'Number residues' });
+  $self->add_form_element({ type => 'YesNo', name => 'number', select => 'select', label => 'Number residues' });
 }
 
 1;

@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig::Regulation::Summary;
 
 use strict;
@@ -5,29 +7,31 @@ use strict;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my ($view_config) = @_;
+  my $self = shift;
 
-  $view_config->_set_defaults(qw(
-    image_width         800
-    context             200
-    das_sources),       []
+  $self->_set_defaults(qw(
+    image_width   800
+    context       200
+    das_sources), []
   );
 
-  $view_config->add_image_configs({ reg_detail => 'das' });
+  $self->add_image_configs({ reg_detail => 'das' });
 
-  $view_config->_set_defaults('opt_focus' => 'yes'); # Add config for focus feature track 
-  $view_config->_set_defaults('opt_ft_' . $_ => 'on') for keys %{$view_config->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'feature_type'}{'analyses'}}; # Add config for different feature types
+  $self->_set_defaults('opt_focus' => 'yes'); # Add config for focus feature track 
+  $self->_set_defaults("opt_ft_$_" => 'on') for keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'feature_type'}{'analyses'}}; # Add config for different feature types
   
-  $view_config->storable = 1;
-  $view_config->nav_tree = 1;
+  $self->storable = 1;
+  $self->nav_tree = 1;
 }
 
 sub form {
-  my ($view_config, $object) = @_;  
-
+  my ($self, $object) = @_;  
+  my $reg_object = $object->Obj;
+  
   # Add context selection
-  $view_config->add_fieldset('Context');
-  $view_config->add_form_element({
+  $self->add_fieldset('Context');
+  
+  $self->add_form_element({
     type   => 'DropDown',
     select => 'select',
     name   => 'context',
@@ -43,12 +47,8 @@ sub form {
       { value => '5000', name => '5000bp' }
     ]
   });
-
-  my $reg_object = $object->Obj; 
-  return unless $reg_object;
   
-  $view_config->add_form_element({ type => 'YesNo', name => 'opt_focus', select => 'select', label => 'Show Core Evidence track' }) if $reg_object->get_focus_attributes;
-
+  $self->add_form_element({ type => 'YesNo', name => 'opt_focus', select => 'select', label => 'Show Core Evidence track' }) if $reg_object && $reg_object->get_focus_attributes;
 }
 
 1;

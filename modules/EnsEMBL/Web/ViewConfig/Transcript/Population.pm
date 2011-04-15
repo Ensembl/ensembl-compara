@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig::Transcript::Population;
 
 use strict;
@@ -7,27 +9,26 @@ use EnsEMBL::Web::Constants;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my ($view_config) = @_;
+  my $self       = shift;
+  my $variations = $self->species_defs->databases->{'DATABASE_VARIATION'};
   
-  my $variations = $view_config->species_defs->databases->{'DATABASE_VARIATION'};
-  
-  $view_config->_set_defaults(qw(
-    panel_image          on 
-    context              100
-    panel_transcript     on
-    image_width          800
-    reference),          ''
+  $self->_set_defaults(qw(
+    panel_image       on 
+    context           100
+    panel_transcript  on
+    image_width       800
+    reference),       ''
   );
 
-  $view_config->_set_defaults('opt_pop_' . $_ => 'off') for @{$variations->{'DISPLAY_STRAINS'}};
-  $view_config->_set_defaults('opt_pop_' . $_ => 'on')  for @{$variations->{'DEFAULT_STRAINS'}};
+  $self->_set_defaults("opt_pop_$_" => 'off') for @{$variations->{'DISPLAY_STRAINS'}};
+  $self->_set_defaults("opt_pop_$_" => 'on')  for @{$variations->{'DEFAULT_STRAINS'}};
 
   # Add source information if we have a variation database
   if ($variations) {
     foreach (keys %{$variations->{'tables'}{'source'}{'counts'}||{}}){
       my $name = 'opt_' . lc($_);
-      $name =~ s/\s+/_/g;
-      $view_config->_set_defaults($name => 'on');
+      $name    =~ s/\s+/_/g;
+      $self->_set_defaults($name => 'on');
     }
   }
 
@@ -37,37 +38,36 @@ sub init {
     my %hash = %{$options{$_}};
     
     foreach my $key (keys %hash){
-      $view_config->_set_defaults(lc($key) => $hash{$key}[0]);
+      $self->_set_defaults(lc $key => $hash{$key}[0]);
     }
   }
   
-  $view_config->storable = 1;
-  $view_config->nav_tree = 1;
+  $self->storable = 1;
+  $self->nav_tree = 1;
 }
 
 sub form {
-  my ($view_config, $object) = @_;
-  
-  my $variations = $object->species_defs->databases->{'DATABASE_VARIATION'};
+  my $self       = shift;
+  my $variations = $self->species_defs->databases->{'DATABASE_VARIATION'};
   my %options    = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
   my %validation = %{$options{'variation'}};
   my %class      = %{$options{'class'}};
   my %type       = %{$options{'type'}};
 
   # Add Individual selection
-  $view_config->add_fieldset('Selected individuals');
+  $self->add_fieldset('Selected individuals');
 
   my @strains = (@{$variations->{'DEFAULT_STRAINS'}}, @{$variations->{'DISPLAY_STRAINS'}}); #, $variations->{'REFERENCE_STRAIN'});
   my %seen;
 
   foreach (sort @strains) {
     if (!exists $seen{$_}) {
-      $view_config->add_form_element({
-       'type'  => 'CheckBox',
-       'label' => $_,
-       'name'  => 'opt_pop_' . $_,
-       'value' => 'on',
-       'raw'   => 1
+      $self->add_form_element({
+        type  => 'CheckBox',
+        label => $_,
+        name  => "opt_pop_$_",
+        value => 'on',
+        raw   => 1
       });
 
       $seen{$_} = 1;
@@ -75,51 +75,51 @@ sub form {
   }
 
   # Add source selection
-  $view_config->add_fieldset('Variation source');
+  $self->add_fieldset('Variation source');
   
-  foreach (sort keys %{$object->table_info('variation', 'source')->{'counts'}}) {
-    my $name = 'opt_' . lc($_);
-    $name =~ s/\s+/_/g;
+  foreach (sort keys %{$self->hub->table_info('variation', 'source')->{'counts'}}) {
+    my $name = 'opt_' . lc $_;
+    $name    =~ s/\s+/_/g;
     
-    $view_config->add_form_element({
-      'type'  => 'CheckBox', 
-      'label' => $_,
-      'name'  => $name,
-      'value' => 'on',
-      'raw'   => 1
+    $self->add_form_element({
+      type  => 'CheckBox', 
+      label => $_,
+      name  => $name,
+      value => 'on',
+      raw   => 1
     });
   }
   
   # Add class selection
-  $view_config->add_fieldset('Variation class');
+  $self->add_fieldset('Variation class');
   
   foreach (keys %class) {
-    $view_config->add_form_element({
+    $self->add_form_element({
       type  => 'CheckBox',
       label => $class{$_}[1],
-      name  => lc($_),
+      name  => lc $_,
       value => 'on',
       raw   => 1
     });
   }
   
   # Add type selection
-  $view_config->add_fieldset('Consequence type');
+  $self->add_fieldset('Consequence type');
   
   foreach (keys %type) {
-    $view_config->add_form_element({
-      'type'  => 'CheckBox',
-      'label' => $type{$_}[1],
-      'name'  => lc($_),
-      'value' => 'on',
-      'raw'   => 1
+    $self->add_form_element({
+      type  => 'CheckBox',
+      label => $type{$_}[1],
+      name  => lc $_,
+      value => 'on',
+      raw   => 1
     });
   }
   
   # Add context selection
-  $view_config->add_fieldset('Intron Context');
+  $self->add_fieldset('Intron Context');
 
-  $view_config->add_form_element({
+  $self->add_form_element({
     type   => 'DropDown',
     select => 'select',
     name   => 'context',

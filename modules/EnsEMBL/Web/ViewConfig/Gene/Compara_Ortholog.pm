@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig::Gene::Compara_Ortholog;
 
 use strict;
@@ -7,29 +9,29 @@ use EnsEMBL::Web::Constants;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my $view_config = shift;
+  my $self = shift;
   
-  $view_config->_set_defaults(qw(
+  $self->_set_defaults(qw(
       image_width 800
       width       800
       seq         Protein
       text_format clustalw
       scale       150
     ),
-    map { 'species_' . lc($_) => 'yes' } $view_config->species_defs->valid_species
+    map { 'species_' . lc($_) => 'yes' } $self->species_defs->valid_species
   );
   
-  $view_config->storable = 1;
-  $view_config->nav_tree = 1;
+  $self->storable = 1;
+  $self->nav_tree = 1;
 }
 
 sub form {
-  my ($view_config, $object) = @_;
-  
+  my $self    = shift;
   my %formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
 
-  $view_config->add_fieldset('Aligment output');
-  $view_config->add_form_element({
+  $self->add_fieldset('Aligment output');
+  
+  $self->add_form_element({
     type   => 'DropDown', 
     select => 'select',     
     name   => 'seq',
@@ -37,7 +39,7 @@ sub form {
     values => [ map {{ value => $_, name => $_ }} qw(cDNA Protein) ]
   });
   
-  $view_config->add_form_element({
+  $self->add_form_element({
     type   => 'DropDown', 
     select => 'select',      
     name   => 'text_format',
@@ -45,13 +47,13 @@ sub form {
     values => [ map {{ value => $_, name => $formats{$_} }} sort keys %formats ]
   });
   
-  $view_config->add_fieldset('Selected species');
+  $self->add_fieldset('Selected species');
   
-  my $species_defs = $view_config->species_defs;
-  my %species = map { $species_defs->species_label($_) => $_ } $species_defs->valid_species;
+  my $species_defs = $self->species_defs;
+  my %species     = map { $species_defs->species_label($_) => $_ } $species_defs->valid_species;
   
   foreach (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %species) {
-    $view_config->add_form_element({
+    $self->add_form_element({
       type  => 'CheckBox', 
       label => $_,
       name  => 'species_' . lc $species{$_},

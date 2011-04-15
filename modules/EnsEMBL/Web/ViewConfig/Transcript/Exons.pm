@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig::Transcript::Exons;
 
 use strict;
@@ -7,9 +9,9 @@ use EnsEMBL::Web::Constants;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my ($view_config) = @_;
+  my $self = shift;
 
-  $view_config->_set_defaults(qw(
+  $self->_set_defaults(qw(
     panel_exons       on
     panel_supporting  on
     sscon             25
@@ -23,19 +25,19 @@ sub init {
     min_frequency     0.1
   ));
   
-  $view_config->storable = 1;
+  $self->storable = 1;
 }
 
 sub form {
-  my ($view_config, $object) = @_;
+  my $self = shift;
     
-  $view_config->add_form_element({
+  $self->add_form_element({
     type  => 'NonNegInt',
     label => 'Flanking sequence at either end of transcript',
     name  => 'flanking'
   });
   
-  $view_config->add_form_element({
+  $self->add_form_element({
     type   => 'DropDown',
     select => 'select',
     name   => 'seq_cols',
@@ -45,20 +47,20 @@ sub form {
     ]
   });
   
-  $view_config->add_form_element({
+  $self->add_form_element({
     type  => 'NonNegInt',
     label => 'Intron base pairs to show at splice sites', 
     name  => 'sscon'
   });
   
-  $view_config->add_form_element({
+  $self->add_form_element({
     type  => 'CheckBox',
     label => 'Show full intronic sequence',
     name  => 'fullseq',
     value => 'yes'
   });
   
-  $view_config->add_form_element({
+  $self->add_form_element({
     type  => 'CheckBox',
     label => 'Show exons only',
     name  => 'oexon',
@@ -67,10 +69,10 @@ sub form {
   
   my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
   
-  $view_config->add_form_element($general_markup_options{'line_numbering'});
+  $self->add_form_element($general_markup_options{'line_numbering'});
   
-  if ($object->species_defs->databases->{'DATABASE_VARIATION'}) {
-    $view_config->add_form_element({
+  if ($self->species_defs->databases->{'DATABASE_VARIATION'}) {
+    $self->add_form_element({
       type   => 'DropDown', 
       select => 'select',
       name   => 'variation',
@@ -82,17 +84,17 @@ sub form {
       ]
     });
     
-    my $populations = $object->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_all_LD_Populations;
+    my $populations = $self->hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_all_LD_Populations;
     
     if (scalar @$populations) {
       push @{$general_markup_options{'pop_filter'}{'values'}}, sort { $a->{'name'} cmp $b->{'name'} } map {{ value => $_->name, name => $_->name }} @$populations;
     
-      $view_config->add_form_element($general_markup_options{'pop_filter'});
-      $view_config->add_form_element($general_markup_options{'pop_min_freq'});
+      $self->add_form_element($general_markup_options{'pop_filter'});
+      $self->add_form_element($general_markup_options{'pop_min_freq'});
     }
   }
   
-  $_->set_flag($view_config->SELECT_ALL_FLAG) for @{$view_config->get_form->fieldsets};
+  $_->set_flag($self->SELECT_ALL_FLAG) for @{$self->get_form->fieldsets};
 }
 
 1;

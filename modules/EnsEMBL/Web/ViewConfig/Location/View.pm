@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig::Location::View;
 
 use strict;
@@ -5,31 +7,33 @@ use strict;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-### Used by Constructor
-### init function called to set defaults for the passed
-### {{EnsEMBL::Web::ViewConfig}} object
+  ### Used by Constructor
+  ### init function called to set defaults for the passed
+  ### {{EnsEMBL::Web::ViewConfig}} object
+  
+  my $self = shift;
 
-  my( $view_config ) = @_;
-
-  $view_config->_set_defaults(qw(
+  $self->_set_defaults(qw(
     panel_top      yes
     panel_zoom      no
     image_width   1200
     zoom_width     100
     context       1000
   ));
-  $view_config->add_image_configs({qw(
+  
+  $self->add_image_configs({qw(
     contigviewtop    das
     contigviewbottom das
   )});
-  $view_config->default_config = 'contigviewbottom';
-  $view_config->storable       = 1;
+  
+  $self->default_config = 'contigviewbottom';
+  $self->storable       = 1;
 }
 
 sub form {
-  my( $view_config, $object ) = @_;
+  my $self = shift;
 
-  $view_config->add_form_element({ 'type' => 'YesNo', 'name' => 'panel_top', 'select' => 'select', 'label'  => 'Show overview panel' });
+  $self->add_form_element({ 'type' => 'YesNo', 'name' => 'panel_top', 'select' => 'select', 'label'  => 'Show overview panel' });
  
 }
 1;
