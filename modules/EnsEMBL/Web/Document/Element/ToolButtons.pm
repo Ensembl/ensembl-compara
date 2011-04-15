@@ -66,17 +66,14 @@ sub init {
   my $config      = $view_config && $view_config->real ? $view_config->default_config : undef;
   
   if ($config) {
-    my $action = join '/', map $hub->$_ || (), qw(type action function);
     (my $rel   = $config) =~ s/^_//;
     
     $self->add_entry({
       caption => 'Configure this page',
       class   => 'modal_link',
       rel     => "modal_config_$rel",
-      url     => $hub->url({ 
+      url     => $hub->url('Config', { 
         time   => time, 
-        type   => 'Config', 
-        action => $action,
         config => $config
       })
     });
