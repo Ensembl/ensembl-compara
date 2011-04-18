@@ -193,7 +193,10 @@ sub source_link {
     $url       =~ s/###D###/$code/;
   } elsif ($url =~/gwastudies/) {
     $ext_id    =~ s/pubmed\///; 
-    $url          =~ s/###ID###/$ext_id/;       
+    $url          =~ s/###ID###/$ext_id/;
+	} elsif ($url =~/omim/) {
+    $ext_id    =~ s/MIM\://; 
+    $url  =~ s/###ID###/$ext_id/;     
   } else {
     my $name = $self->object->Obj->name;
     $url =~ s/###ID###/$name/;
