@@ -196,8 +196,9 @@ sub form {
           { value => '5_3_flanking', name => "5' and 3' Flanking sequences" }
         ];
 
-        unshift @$genomic, { value => 'off', name => 'None' } unless $action eq 'Location';
-        
+        unshift @$genomic, { value => 'off', name => 'None' } unless $function eq 'Location';
+        my $default_value = 'off' unless $function eq 'Location';
+
         $self->add_form_element({
           type     => 'DropDown', 
           select   => 'select',
@@ -205,7 +206,7 @@ sub form {
           name     => 'fasta_genomic',
           label    => 'Genomic',
           values   => $genomic,
-          value    => 'off'
+          value    => $default_value
         });
       }
       
