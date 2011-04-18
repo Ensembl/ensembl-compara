@@ -31,66 +31,73 @@ sub render {
   ## Are we using static news content output from a script?
   my $file         = '/ssi/whatsnew.html';
   my $include = EnsEMBL::Web::Controller::SSI::template_INCLUDE(undef, $file);
-  ## Only use static page with current release!
-  if ($release_id == $hub->species_defs->ENSEMBL_VERSION && $include) {
-    return $html.$include;
-  }
-
-  ## Return dynamic content from the ensembl_website database
-  my $news_url     = '/info/website/news/index.html?id='.$release_id;
-  my @items = ();
-
-  my $first_production = $hub->species_defs->get_config('MULTI', 'FIRST_PRODUCTION_RELEASE');
-
-  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}
-      && $first_production && $release_id > $first_production) {
-    ## TODO - implement way of selecting interesting news stories
-    #my $p_adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
-    #if ($p_adaptor) {
-    #  @items = @{$p_adaptor->fetch_changelog({'release' => $release_id, order_by => 'priority', limit => 5})};
-    #}   
-  }
-  elsif ($hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'NAME'}) { 
-    @items    = @{$adaptor->fetch_news({ release => $release_id, order_by => 'priority', limit => 5 })};
-  } 
-
-  if (scalar @items > 0) {
-    $html .= "<ul>\n";
-
-    ## format news headlines
-    foreach my $item (@items) {
-      my @species = @{$item->{'species'}};
-      my (@sp_ids, $sp_id, $sp_name, $sp_count);
-      
-      if (!scalar(@species) || !$species[0]) {
-        $sp_name = 'all species';
-      } 
-      elsif (scalar(@species) > 5) {
-        $sp_name = 'multiple species';
-      } 
-      else {
-        my @names;
-        
-        foreach my $sp (@species) {
-          if ($sp->{'common_name'} =~ /\./) {
-            push @names, '<i>'.$sp->{'common_name'}.'</i>';
-          } 
-          else {
-            push @names, $sp->{'common_name'};
-          } 
-        }
-        
-        $sp_name = join ', ', @names;
-      }
-      
-      ## generate HTML
-      $html .= qq{<li><strong><a href="$news_url#news_$item->{'id'}" style="text-decoration:none">$item->{'title'}</a></strong> ($sp_name)</li>\n};
+  if ($include) {
+    ## Only use static page with current release!
+    if ($release_id == $hub->species_defs->ENSEMBL_VERSION && $include) {
+      $html .= $include;
     }
-
-    $html .= "</ul>\n";
   }
   else {
-    $html .= "<p>No news is currently available for release $release_id.</p>\n";
+    ## Return dynamic content from the ensembl_website database
+    my $news_url     = '/info/website/news/index.html?id='.$release_id;
+    my @items = ();
+
+    my $first_production = $hub->species_defs->get_config('MULTI', 'FIRST_PRODUCTION_RELEASE');
+
+    if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}
+        && $first_production && $release_id > $first_production) {
+      ## TODO - implement way of selecting interesting news stories
+      #my $p_adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
+      #if ($p_adaptor) {
+      #  @items = @{$p_adaptor->fetch_changelog({'release' => $release_id, order_by => 'priority', limit => 5})};
+      #}   
+    }
+    elsif ($hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'NAME'}) { 
+      @items    = @{$adaptor->fetch_news({ release => $release_id, order_by => 'priority', limit => 5 })};
+    } 
+
+    if (scalar @items > 0) {
+      $html .= "<ul>\n";
+
+      ## format news headlines
+      foreach my $item (@items) {
+        my @species = @{$item->{'species'}};
+        my (@sp_ids, $sp_id, $sp_name, $sp_count);
+      
+        if (!scalar(@species) || !$species[0]) {
+          $sp_name = 'all species';
+        } 
+        elsif (scalar(@species) > 5) {
+          $sp_name = 'multiple species';
+        } 
+        else {
+          my @names;
+        
+          foreach my $sp (@species) {
+            if ($sp->{'common_name'} =~ /\./) {
+              push @names, '<i>'.$sp->{'common_name'}.'</i>';
+            } 
+            else {
+              push @names, $sp->{'common_name'};
+            } 
+          }
+        
+          $sp_name = join ', ', @names;
+        }
+      
+        ## generate HTML
+        $html .= qq{<li><strong><a href="$news_url#news_$item->{'id'}" style="text-decoration:none">$item->{'title'}</a></strong> ($sp_name)</li>\n};
+      }
+      $html .= "</ul>\n";
+    }
+    else {
+      $html .= "<p>No news is currently available for release $release_id.</p>\n";
+    }
+  }
+  $html .= qq(<p><a href="/info/website/news/">Full details of this release</a></p>);
+
+  if ($species_defs->ENSEMBL_BLOG_URL) {
+    $html .= qq(<p><a href="http://www.ensembl.info/category/releases/">More release news on our blog &rarr;</a></p>);
   }
 
   return $html;
