@@ -154,12 +154,12 @@ sub apply_to_image_config {
 sub apply_to_config {
   ### Adds session data to a view or image config
 
-  my ($self, $config_type, $config, $type, $name, $config_code) = @_;
+  my ($self, $config_type, $config, $type, $code, $config_code) = @_;
   
   EnsEMBL::Web::Data::Session->propagate_cache_tags(
     session_id => $self->session_id,
     type       => $type,
-    code       => $name
+    code       => $code
   );
   
   if ($self->session_id && $config->storable) {
@@ -173,7 +173,7 @@ sub apply_to_config {
     $config->set_user_settings($session_data->data) if $session_data && $session_data->data;
   }
   
-  $self->{$config_type . 's'}->{$name} = $config;
+  $self->{$config_type . 's'}->{$code} = $config;
 }
 
 ###################################################################################################
