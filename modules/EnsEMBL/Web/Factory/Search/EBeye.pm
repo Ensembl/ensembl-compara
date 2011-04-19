@@ -22,6 +22,9 @@ sub _search_all {
 
      ( my $SPECIES   = $ENV{'ENSEMBL_SPECIES'} ) =~ s/_/ /g;
      my $q = CGI->new();
+     
+     s/^Multi$/all/ for @$species;
+     
      if (@$species) {
  	$q->param('species',@$species);
      }
