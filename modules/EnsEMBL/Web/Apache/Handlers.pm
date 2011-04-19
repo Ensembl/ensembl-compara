@@ -126,12 +126,12 @@ sub redirect_to_nearest_mirror {
       my $geo_details;
       my $record;
       my $geo;
-      my $geocity_dat_file =  $species_defs->GEOCITY_DAT ||  $ENSEMBL_SERVERROOT . '/geocity/GeoLiteCity.dat';
+      my $geocity_dat_file = $ENSEMBL_SERVERROOT;
+      $geocity_dat_file .= $species_defs->GEOCITY_DAT || '/geocity/GeoLiteCity.dat';
       my $ip = $r->headers_in->{'X-Forwarded-For'} || $r->connection->remote_ip;
       if ( -e $geocity_dat_file ) {
         require Geo::IP;
         eval {
-#         $geo = Geo::IP->open( '/home/ubuntu/geoip/GeoLiteCity.dat', 'GEOIP_STANDARD' );
           $geo = Geo::IP->open( $geocity_dat_file, 'GEOIP_MEMORY_CACHE' );
           $record = $geo->record_by_addr($ip) if $geo;
         };
@@ -141,7 +141,7 @@ sub redirect_to_nearest_mirror {
       }
       else {
         require Geo::IP;
-        warn "** GeoIP city dat file not found at [ $geocity_dat_file ] falling back to country based lookup... Set GEOCITY_DAT location in DEFAULTS.ini **";
+        warn "** GeoIP city dat file not found at [ $geocity_dat_file ] falling back to country based lookup... Set GEOCITY_DAT location in SiteDefs **";
         eval ' 
           $geo = new Geo::IP(GEOIP_MEMORY_CACHE | GEOIP_CHECK_CACHE);
           $geo_details = [ $geo->country_code_by_addr($ip), undef ] if $geo;
