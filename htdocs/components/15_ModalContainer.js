@@ -184,7 +184,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   },
   
   setPageReload: function (section, reload, force) {
-    if (section) {
+    if (section && Ensembl.PanelManager.panels[section]) {
       this.sectionReload[section] = 1;
       this.sectionReload.count = (this.sectionReload.count || 0) + 1;
     } else if (section !== false) {
