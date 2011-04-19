@@ -123,38 +123,59 @@ sub redirect_to_nearest_mirror {
     return DECLINED if $cookies{'redirect'} && $cookies{'redirect'}->value eq 'mirror';
     
     if ($species_defs->ENSEMBL_MIRRORS && keys %{$species_defs->ENSEMBL_MIRRORS}) {
+      my $geo_details;
+      my $record;
       my $geo;
-      
-      eval '
-        use Geo::IP;
-        $geo = new Geo::IP(GEOIP_MEMORY_CACHE | GEOIP_CHECK_CACHE);
-      ';
-      
-      warn $@ if $@;
-    
-      ## Ok, so which country you from
-      if ($geo && $user_agent !~ /Googlebot/) {
-        my $ip       = $r->headers_in->{'X-Forwarded-For'} || $r->connection->remote_ip;
-        my $country  = $geo->country_code_by_addr($ip);
-        my $location = $species_defs->ENSEMBL_MIRRORS->{$country} || $species_defs->ENSEMBL_MIRRORS->{'MAIN'};
+      my $geocity_dat_file =  $species_defs->GEOCITY_DAT ||  $ENSEMBL_SERVERROOT . '/geocity/GeoLiteCity.dat';
+      my $ip = $r->headers_in->{'X-Forwarded-For'} || $r->connection->remote_ip;
+      if ( -e $geocity_dat_file ) {
+        require Geo::IP;
+        eval {
+#         $geo = Geo::IP->open( '/home/ubuntu/geoip/GeoLiteCity.dat', 'GEOIP_STANDARD' );
+          $geo = Geo::IP->open( $geocity_dat_file, 'GEOIP_MEMORY_CACHE' );
+          $record = $geo->record_by_addr($ip) if $geo;
+        };
+        warn $@ if $@;
 
-        if ($location) {
-          return DECLINED if $location eq $species_defs->ENSEMBL_SERVERNAME;
-    
+        $geo_details = [ $record->country_code, $record->region ] if $record;
+      }
+      else {
+        require Geo::IP;
+        warn "** GeoIP city dat file not found at [ $geocity_dat_file ] falling back to country based lookup... Set GEOCITY_DAT location in DEFAULTS.ini **";
+        eval ' 
+          $geo = new Geo::IP(GEOIP_MEMORY_CACHE | GEOIP_CHECK_CACHE);
+          $geo_details = [ $geo->country_code_by_addr($ip), undef ] if $geo;
+        ';
+        warn $@ if $@;
+      }
+      ## Ok, so which country you from
+      if ( $geo_details && $user_agent !~ /Googlebot/ ) {
+
+        my $ip_location = $species_defs->ENSEMBL_MIRRORS->{ $geo_details->[0] }
+            || $species_defs->ENSEMBL_MIRRORS->{MAIN};
+
+        my $mirror =
+            ref $ip_location eq 'HASH'
+              ? $ip_location->{ $geo_details->[1] } || $ip_location->{DEFAULT}
+              : $ip_location;
+
+        if ($mirror) {
+          return DECLINED if $mirror eq $species_defs->ENSEMBL_SERVERNAME;
+
           ## Deleting cookie for current site
           my $cookie = new CGI::Cookie(
             -name    => 'redirect',
             -value   => '',
-            -expires => '-1h',         
+            -expires => '-1h',
           );
-    
+
           $unparsed_uri .= $unparsed_uri =~ /\?/ ? ';redirect=mirror' : '?redirect=mirror';
           $unparsed_uri .= ';source=' . $species_defs->ENSEMBL_SERVERNAME;
-          
-          $r->err_headers_out->add('Set-Cookie' => $cookie);
-          $r->headers_out->set(Location => "http://$location$unparsed_uri");
-          
-          return REDIRECT;       
+
+          $r->err_headers_out->add( 'Set-Cookie' => $cookie );
+          $r->headers_out->set( Location => "http://$mirror$unparsed_uri" );
+
+          return REDIRECT;
         }
       }
     }
