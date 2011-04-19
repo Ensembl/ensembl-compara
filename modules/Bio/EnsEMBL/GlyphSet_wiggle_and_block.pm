@@ -126,7 +126,7 @@ sub draw_block_features {
       }        
     }
     if ($length <= 20000 && $midpoint && $display_summit){
-      $midpoint -= $self->{'container'}->start; warn $midpoint;
+      $midpoint -= $self->{'container'}->start; 
       if ($midpoint > 0 && $midpoint < $length ){
         my $pix_per_bp = $self->scalex;
         # Upward pointing triangle
@@ -134,16 +134,16 @@ sub draw_block_features {
         my $triangle_start =  $midpoint + 2/$pix_per_bp;
         $self->push($self->Poly({
           'points'    => [ $triangle_start, $h+4+$y,
-                         $midpoint, $h+$y,
-                         $triangle_end, $h+4+$y  ],
+                           $midpoint, $h+$y,
+                           $triangle_end, $h+4+$y  ],
           'colour'    => 'black',
           'absolutey' => 1,
         }));
         # Downward pointing triangle
         $self->push($self->Poly({
           'points'    => [ $triangle_start, $h-12+$y,
-                         $midpoint,  $h-9+$y,
-                         $triangle_end, $h-12+$y ], 
+                           $midpoint,  $h-9+$y,
+                           $triangle_end, $h-12+$y ], 
 
           'colour'    => 'black',
         'absolutey' => 1,
