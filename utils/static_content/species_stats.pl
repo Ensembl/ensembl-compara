@@ -480,6 +480,8 @@ foreach my $spp (@valid_spp) {
       );
     }
 
+    next unless ($genpept || $genfpept || $fgenpept || $snps || $strucvar );
+
     print STATS qq(
   <h3>Other</h3>
   <table class="ss tint species-stats">
@@ -691,12 +693,12 @@ sub hits2html {
     my $name1  = $domids[$i];
     my $gene1  = $tmpdom1->{genes};
     my $count1 = $tmpdom1->{count};
-    my $descr1 = $tmpdom1->{descr};
+    my $descr1 = $tmpdom1->{descr} || '&nbsp;';
 
     my $name2  = $domids[$i + $number/2];
     my $gene2  = $tmpdom2->{genes};
     my $count2 = $tmpdom2->{count};
-    my $descr2 = $tmpdom2->{descr};
+    my $descr2 = $tmpdom2->{descr} || '&nbsp;';
 
     my $order1 = $i+1 || 0;
     my $order2 = $i+($number/2)+1 || 0;
