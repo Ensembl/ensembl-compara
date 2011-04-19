@@ -10,7 +10,7 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater;
 
 my @OPTIONS = qw(
-  registry=s
+  registry|reg_conf=s
   compara=s
   species=s@
   replace
@@ -108,9 +108,9 @@ populate_member_display_label.pl
 
 =head1 SYNOPSIS
 
-  ./populate_member_display_label.pl --registry my.reg --compara my_compara --species 'homo_sapiens' --replace
+  ./populate_member_display_label.pl --reg_conf my.reg --compara my_compara --species 'homo_sapiens' --replace
   
-  ./populate_member_display_label.pl --registry my.reg --compara my_compara --species 90 --species 91
+  ./populate_member_display_label.pl --reg_conf my.reg --compara my_compara --species 90 --species 91
   
   ./populate_member_display_label.pl --registry my.reg --compara my_compara
 
@@ -133,21 +133,38 @@ all GenomeDBs
 
 =over 8
 
-=item B<--registry> - Specify a location of the registry file to load
+=item B<--registry | --reg_conf>
 
-=item B<--database> - Compara database to use e.g. multi
+Specify a location of the registry file to load
 
-=item B<--species> - Specify a registry alias to find a GenomeDB by; supports GenomeDB IDs & you can specify multiple options on the command line
+=item B<--compara>
 
-=item B<--replace> - Replace any existing display labels
+Compara database to use e.g. multi
 
-=item B<--die_if_no_core> - Cause the script to die if we encounter any GenomeDB without a Core DBAdaptor
+=item B<--species>
 
-=item B<--verbose> - Prints messages to STDOUT 
+Specify a registry alias to find a GenomeDB by; supports GenomeDB IDs & 
+you can specify multiple options on the command line
 
-=item B<--help> - Help output
+=item B<--replace>
 
-=item B<--man> - Manual page
+Replace any existing display labels
+
+=item B<--die_if_no_core>
+
+Cause the script to die if we encounter any GenomeDB without a Core DBAdaptor
+
+=item B<--verbose>
+
+Prints messages to STDOUT 
+
+=item B<--help>
+
+Help output
+
+=item B<--man>
+
+Manual page
 
 =back
 
