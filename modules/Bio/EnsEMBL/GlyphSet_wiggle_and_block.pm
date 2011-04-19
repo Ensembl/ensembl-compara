@@ -90,10 +90,9 @@ sub draw_block_features {
 
   my ( $self, $features, $colour, $score, $display_summit, $display_pwm) = @_;
   my $length = $self->{'container'}->length;
-
   my $h = 8;
   foreach my $f (@$features ) {
-    my $start = $f->start; 
+    my $start = $f->start;  
     my $end   = $f->end;
     my $midpoint =  $f->summit;
     $start = 1 if $start < 1; 
@@ -127,27 +126,29 @@ sub draw_block_features {
       }        
     }
     if ($length <= 20000 && $midpoint && $display_summit){
-      $midpoint -= $self->{'container'}->start;
-      my $pix_per_bp = $self->scalex;
-      # Upward pointing triangle
-      my $triangle_end   =  $midpoint - 2/$pix_per_bp;
-      my $triangle_start =  $midpoint + 2/$pix_per_bp;
-      $self->push($self->Poly({
-        'points'    => [ $triangle_start, $h+4+$y,
+      $midpoint -= $self->{'container'}->start; warn $midpoint;
+      if ($midpoint > 0 && $midpoint < $length ){
+        my $pix_per_bp = $self->scalex;
+        # Upward pointing triangle
+        my $triangle_end   =  $midpoint - 2/$pix_per_bp;
+        my $triangle_start =  $midpoint + 2/$pix_per_bp;
+        $self->push($self->Poly({
+          'points'    => [ $triangle_start, $h+4+$y,
                          $midpoint, $h+$y,
                          $triangle_end, $h+4+$y  ],
-        'colour'    => 'black',
-        'absolutey' => 1,
-      }));
-      # Downward pointing triangle
-      $self->push($self->Poly({
-        'points'    => [ $triangle_start, $h-12+$y,
+          'colour'    => 'black',
+          'absolutey' => 1,
+        }));
+        # Downward pointing triangle
+        $self->push($self->Poly({
+          'points'    => [ $triangle_start, $h-12+$y,
                          $midpoint,  $h-9+$y,
                          $triangle_end, $h-12+$y ], 
 
-        'colour'    => 'black',
+          'colour'    => 'black',
         'absolutey' => 1,
-      }));
+        }));
+      }
     }
   }
 
