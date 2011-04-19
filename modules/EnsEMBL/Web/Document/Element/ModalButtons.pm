@@ -38,7 +38,7 @@ sub init {
       class   => 'modal_link',
       url     => $hub->url('Config', {
         reset   => 1,
-        config  => $config eq '_page' ? '' : $config,
+        config  => $config,
         __clear => 1 
       })
     });
