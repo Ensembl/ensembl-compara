@@ -118,6 +118,7 @@ sub process_wiggle_data {
   my $max_bins = $self->image_width(); 
   my ($min_score, $max_score) ==  (0, 0);
   my @all_features;
+  my $legend;
   my @colours;
   my $data_flag = 0;
 
@@ -160,12 +161,18 @@ sub process_wiggle_data {
     push @$labels, $feature_name;
     push @all_features, \@features;
     push @colours, $colour; 
+    $legend->{$feature_name} = $colour; 
   }
 
   if ($data_flag == 1) {
     if ($object_type eq 'Regulation' && $max_score <= 1) {$max_score = 1;}
     $self->draw_wiggle( \@all_features, $min_score, $max_score, \@colours, $labels );
-    $self->{'config'}->{'fg_multi_wiggle_legend'} = {'priority' => 1030, 'legend' => [], 'colours' => $colour_keys };
+    #Add colours to legend
+    my $legend_colours = $self->{'config'}->{'fg_multi_wiggle_legend'}{'colours'} || {};
+    foreach my $feature (keys %$legend ){ 
+      $legend_colours->{$feature} = $legend->{$feature};
+    } 
+    $self->{'config'}->{'fg_multi_wiggle_legend'} = {'priority' => 1030, 'legend' => [], 'colours' => $legend_colours };
   } else {
     $self->display_error_message($cell_line, $type, 'wiggle');
   }    
