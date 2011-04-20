@@ -628,7 +628,7 @@ sub store_group {
 
     ### Check if this is defined or not!!!
     my $group_id = 
-      $nodes->[0]->genomic_align_group->get_all_genomic_aligns_for_node->[0]->genomic_align_block_id;
+      $nodes->[0]->get_all_genomic_aligns_for_node->[0]->genomic_align_block_id;
     
     my $genomic_align_blocks = {};
     foreach my $this_node (@$nodes) {
@@ -643,7 +643,7 @@ sub store_group {
 	
 	## Modern GAB
 	my $modern_genomic_align_block_id = 
-	  $this_node->get_all_leaves->[0]->genomic_align_group->
+	  $this_node->get_all_leaves->[0]->
 	    get_all_genomic_aligns_for_node->[0]->genomic_align_block_id;
 	my $fake_modern_gab;
 	$fake_modern_gab->{dbID} = $modern_genomic_align_block_id;
