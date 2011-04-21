@@ -2326,7 +2326,7 @@ sub populate_result_summary{
   $code{links} = sub{
     my ( $hit, $hsp ) = @_;
     my $A_link = sprintf( $alink_t, $hit->token, $hsp->token, "ALIGN"    );
-    my $S_link = sprintf( $slink_t, $hit->token, $hsp->token, "SEQUENCE" );
+    $CGI->param('method') eq 'BLAT' ? my $S_link ="" : my $S_link = sprintf( $slink_t, $hit->token, $hsp->token, "SEQUENCE" );
     my $G_link = sprintf( $glink_t, $hit->token, $hsp->token, "GSEQUENCE" );
 
     my $gh = $hsp->genomic_hit;
