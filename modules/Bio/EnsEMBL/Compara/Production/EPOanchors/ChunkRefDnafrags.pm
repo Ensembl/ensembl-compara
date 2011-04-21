@@ -18,7 +18,8 @@ sub fetch_input {
 	my $min_anchor_size = $self->param('min_anchor_size');
 	my $reference_genome_db = $genome_db_adaptor->fetch_by_dbID($reference_species_id);
 	my @method_link_types = split(":", $self->param('method_link_type'));
-	my (%non_reference_genome_db_ids, %selected_genome_db_ids, @jobs);
+	my $dnafrag_adaptor = $compara_dba->get_adaptor("DnaFrag");	
+	my (%non_reference_genome_db_ids, @dnafrag_region_jobs, @genome_dbs, @dnafrags);
 	# find all species used in the $method_link_type(s) 
 	foreach my $method_link_type ( @method_link_types ){
 		my ($method_link_species_sets, $mlss);
@@ -42,15 +43,49 @@ sub fetch_input {
 		foreach my $mlss( @{ $method_link_species_sets } ){
 			foreach my $genome_db( @{ $mlss->species_set } ){
 				next if ($genome_db->dbID == $reference_species_id);
-				$non_reference_genome_db_ids{ $method_link_type }{ $genome_db->dbID }++;
+				push(@{ $non_reference_genome_db_ids{ $method_link_type } }, $genome_db->dbID );
+				push(@genome_dbs, { # non-reference genome_dbs
+					genome_db_id => $genome_db->dbID,
+					taxon_id     => $genome_db->taxon_id,
+					name         => $genome_db->name,
+					assembly     => $genome_db->assembly,
+					assembly_default => $genome_db->assembly_default,
+					genebuild => $genome_db->genebuild,
+				});
+				my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db);
+				foreach my $this_dnafrag ( @$dnafrags ){ # non-reference dnafrags
+					push(@dnafrags, {
+						dnafrag_id        => $this_dnafrag->dbID,
+						length            => $this_dnafrag->length,
+						name              => $this_dnafrag->name,
+						genome_db_id      => $this_dnafrag->genome_db_id,
+						coord_system_name => $this_dnafrag->coord_system_name,
+						is_reference      => $this_dnafrag->is_reference,
+					});
+				}
 			}
 		}
 	}
-	foreach my $method_link_type( keys %non_reference_genome_db_ids ){ 
-		$selected_genome_db_ids{ $method_link_type } = [ keys %{ $non_reference_genome_db_ids{ $method_link_type } } ];
+	push(@genome_dbs, {
+		genome_db_id => $reference_genome_db->dbID,
+		taxon_id     => $reference_genome_db->taxon_id,
+		name         => $reference_genome_db->name,
+		assembly     => $reference_genome_db->assembly,
+		assembly_default => $reference_genome_db->assembly_default,
+		genebuild => $reference_genome_db->genebuild,
+	});
+	my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($reference_genome_db);
+	foreach my $this_dnafrag ( @$dnafrags ){
+		push(@dnafrags, {
+			dnafrag_id        => $this_dnafrag->dbID,
+			length            => $this_dnafrag->length,
+			name              => $this_dnafrag->name,
+			genome_db_id      => $this_dnafrag->genome_db_id,
+			coord_system_name => $this_dnafrag->coord_system_name,
+			is_reference      => $this_dnafrag->is_reference,
+		});
 	}
 	my @chunked_reference_dnafrags;
-	my $dnafrag_adaptor = $compara_dba->get_adaptor("DnaFrag");	
 	my $reference_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($reference_genome_db);
 	foreach my $dnafrag( @{ $reference_dnafrags } ){
 		next unless($dnafrag->is_reference);
@@ -65,18 +100,17 @@ sub fetch_input {
 			push( @chunked_reference_dnafrags, [$dnafrag->dbID, 1, $dnafrag_len] );
 		}
 	}
-	foreach my $method_link_type ( sort keys %selected_genome_db_ids){
-		foreach my $chunked_dnafrag( @chunked_reference_dnafrags ){
-			my $job = {
-				method_type => $method_link_type,
-				genome_db_ids=> $selected_genome_db_ids{ $method_link_type },
-				ref_dnafrag_id=> $chunked_dnafrag->[0] ,
-				dnafrag_chunks=>[ $chunked_dnafrag->[1] , $chunked_dnafrag->[2] ],
-			 };
-			push(@jobs, $job);
-		}
-	}		
-	$self->param('jobs', \@jobs);
+	foreach my $chunked_dnafrag( @chunked_reference_dnafrags ){
+		my $dnafrag_region_job = {
+			method_type_genome_db_ids => \%non_reference_genome_db_ids,
+			ref_dnafrag_id=> $chunked_dnafrag->[0] ,
+			dnafrag_chunks=>[ $chunked_dnafrag->[1] , $chunked_dnafrag->[2] ],
+		 };
+		push(@dnafrag_region_jobs, $dnafrag_region_job);
+	}
+	$self->param('dnafrag_region_jobs', \@dnafrag_region_jobs);
+	$self->param('dnafrag', \@dnafrags);
+	$self->param('genome_db', \@genome_dbs);
 }
 
 sub run {
@@ -85,8 +119,9 @@ sub run {
 
 sub write_output {
 	my ($self) = @_;
-
-	$self->dataflow_output_id( $self->param('jobs') , 2 );
+	$self->dataflow_output_id( $self->param('dnafrag_region_jobs') , 1 );
+	$self->dataflow_output_id( $self->param('dnafrag'), 2 );
+	$self->dataflow_output_id( $self->param('genome_db'), 3 );	
 }
 
 1;

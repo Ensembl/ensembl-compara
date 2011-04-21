@@ -19,7 +19,6 @@ sub fetch_input {
 	my $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor( %{ $self->param('compara_pairwise_db') } );
 	$self->param('compara_dba', $compara_dba);
 	$self->param('reference_dba', $reference_species_dba);
-	my $method_link_type = $self->param('method_type');
 	my $reference_genome_db_id = $self->param('reference_genome_db_id');
 	my $ref_genome_db = $compara_dba->get_GenomedbAdaptor()->fetch_by_dbID($reference_genome_db_id);
 	$self->param('ref_genome_db', $ref_genome_db);
@@ -34,20 +33,23 @@ sub fetch_input {
 						$ref_dnafrag->name, @{ $self->param('dnafrag_chunks') });
 	$self->param('ref_slice_adaptor', $ref_slice_adaptor);
 	my (@multi_gab_overlaps, @mlss);
-	foreach my $non_reference_genome_dbID( @{ $non_reference_genome_dbIDs }){
-		my $mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_genome_db_ids(
-			$method_link_type, [ $reference_genome_db_id, $non_reference_genome_dbID ]);
-		my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
-				$mlss, $ref_slice);
+	my $method_type_genome_db_ids = $self->param('method_type_genome_db_ids');
+	foreach my $this_method_link_type( keys %{ $method_type_genome_db_ids } ){
+		foreach my $non_reference_genome_dbID( @{ $method_type_genome_db_ids->{$this_method_link_type} }){
+			my $mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_genome_db_ids(
+				$this_method_link_type, [ $reference_genome_db_id, $non_reference_genome_dbID ]);
+			my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+					$mlss, $ref_slice);
 		
-		foreach my $genomic_align_block( @{ $gabs } ){
-			next if $genomic_align_block->length < $self->param('min_anchor_size');
-			push( @multi_gab_overlaps, [
-					$genomic_align_block->reference_genomic_align->dnafrag_start,
-					$genomic_align_block->reference_genomic_align->dnafrag_end,
-					$non_reference_genome_dbID ] );
+			foreach my $genomic_align_block( @{ $gabs } ){
+				next if $genomic_align_block->length < $self->param('min_anchor_size');
+				push( @multi_gab_overlaps, [
+						$genomic_align_block->reference_genomic_align->dnafrag_start,
+						$genomic_align_block->reference_genomic_align->dnafrag_end,
+						$non_reference_genome_dbID ] );
+			}	
+			push(@mlss, $mlss);
 		}
-		push(@mlss, $mlss);
 	}
 	$self->param('mlss', \@mlss);
 	# @multi_genomic_align_blocks is a list of [ref_dnafrag_start,ref_dnafrag_end,nonref-species-id] 
@@ -57,7 +59,8 @@ sub fetch_input {
 
 sub run {
 	my ($self) = @_;
-	my($overlap_index_ranges, $reference_positions, $genomic_aligns_on_ref_slice, $synteny_region_jobs);
+	my($overlap_index_ranges, $reference_positions, $genomic_aligns_on_ref_slice, $synteny_region_jobs) = 
+	([],[],[],[]);
 	my $overlapping_gabs = $self->param('overlapping_gabs');
 	for(my$i=0;$i<@{ $overlapping_gabs }-1;$i++) { # find the overlapping gabs for a ref-dnafrag chunk 
 		my $temp_end = $overlapping_gabs->[$i]->[1];
@@ -73,6 +76,7 @@ sub run {
 			}
 		}
 	}
+	return unless( @$overlap_index_ranges);
 	for(my$k=0;$k<@$overlap_index_ranges;$k++) {
 		my(%bases, @bases);
 		for(my$l=$overlap_index_ranges->[$k]->[0];$l<=$overlap_index_ranges->[$k]->[1];$l++) { 
@@ -149,6 +153,7 @@ sub run {
 
 sub write_output {
 	my ($self) = @_;
+	return unless $self->param('synteny_region_jobs');
 	$self->dataflow_output_id( $self->param('synteny_region_jobs'), 1);
 	$self->dataflow_output_id( $self->param('genomic_aligns_on_ref_slice'), 3);
 }

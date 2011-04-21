@@ -99,21 +99,23 @@ sub pipeline_analyses {
 				    'method_link_type' => 'BLASTZ_NET:LASTZ_NET',
 				    'chunk_size' => '10000000',
 				    'consensus_overlap' => 0,
-				#    'genome_db_ids' => [38, 101],
-				    'genome_db_ids' => [],
+				    'genome_db_ids' => [38, 101],
+				#    'genome_db_ids' => [],
 				   },
 		-input_ids 	=> [{}],
 		-wait_for       => [ 'innodbise_table_factory', 'innodbise_table' ],	
 		-flow_into	=> {
-					2 => [ 'find_pairwise_overlaps' ],
+					1 => [ 'find_pairwise_overlaps' ],
+					2 => [ 'mysql:////dnafrag?insertion_method=INSERT_IGNORE' ],
+					3 => [ 'mysql:////genome_db?insertion_method=INSERT_IGNORE'  ],
 				   },
 				 
 	    },
-	    
+		
 	    {
 		-logic_name	=> 'find_pairwise_overlaps',
 		-module		=> 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindPairwiseOverlaps',
-		-wait_for	=> 'chunk_reference_dnafrags',
+		-wait_for	=> [ 'chunk_reference_dnafrags' ],
 		-parameters     => { 'method_link_species_set_id' => 300, },
 		-flow_into	=> {
 					1 => [ 'pecan' ],
