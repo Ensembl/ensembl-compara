@@ -34,6 +34,7 @@ sub content {
   $form->add_notes({'heading'=>'Tip', 'text'=> qq(
   Accessing data via a URL can be slow unless you use an indexed format such as BAM. However it has the advantage that you always see the same data as the file on your own machine.<br /><br />
   We currently accept attachment of the following formats: $formats.
+  VCF files must be indexed prior to attachment.
   )});
 
   $form->add_element('type'  => 'URL',
