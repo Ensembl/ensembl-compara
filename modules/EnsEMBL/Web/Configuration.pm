@@ -49,7 +49,7 @@ sub new {
 
     if ($user_tree) {
       $self->user_populate_tree;
-      $MEMD->set($self->tree_cache_key($user, $session), $self->{'_data'}{'tree'}, undef, 'TREE', keys %{$ENV{'CACHE_TAGS'}||{}}) if $MEMD && $self->tree_cache_key($user, $session); # Cache user + session tree version
+      $MEMD->set($self->tree_cache_key($user, $session), $self->{'_data'}{'tree'}, undef, 'TREE', keys %{$ENV{'CACHE_TAGS'} || {}}) if $MEMD && $self->tree_cache_key($user, $session); # Cache user + session tree version
     }
   }
   
@@ -68,17 +68,18 @@ sub add_external_browsers {}
 sub modify_page_elements  {}
 sub caption               {}
 
-sub delete_tree   { my $self = shift; $self->tree->_flush_tree;              } 
-sub hub           { return $_[0]->{'hub'};                                   }
-sub builder       { return $_[0]->{'builder'};                               }
-sub object        { return $_[0]->{'object'};                                }
-sub page          { return $_[0]->{'page'};                                  }
-sub tree          { return $_[0]->{'_data'}{'tree'};                         }
-sub configurable  { return $_[0]->{'_data'}{'configurable'};                 }
-sub action        { return $_[0]->{'_data'}{'action'};                       }
-sub species       { return $_[0]->hub->species;                              }
-sub type          { return $_[0]->hub->type;                                 }
-sub short_caption { return sprintf '%s-based displays', ucfirst $_[0]->type; } # return the caption for the tab
+sub delete_tree    { my $self = shift; $self->tree->_flush_tree;              } 
+sub hub            { return $_[0]->{'hub'};                                   }
+sub builder        { return $_[0]->{'builder'};                               }
+sub object         { return $_[0]->{'object'};                                }
+sub page           { return $_[0]->{'page'};                                  }
+sub tree           { return $_[0]->{'_data'}{'tree'};                         }
+sub configurable   { return $_[0]->{'_data'}{'configurable'};                 }
+sub action         { return $_[0]->{'_data'}{'action'};                       }
+sub default_action { return $_[0]->{'_data'}{'default'};                      } # Default action for feature type
+sub species        { return $_[0]->hub->species;                              }
+sub type           { return $_[0]->hub->type;                                 }
+sub short_caption  { return sprintf '%s-based displays', ucfirst $_[0]->type; } # return the caption for the tab
 
 sub set_default_action {  
   my $self = shift; 
@@ -119,18 +120,11 @@ sub tree_cache_key {
   return $key;
 }
 
-# Default action for feature type
-sub default_action {
-  my $self = shift;
-  ($self->{'_data'}{'default'}) = $self->{'_data'}{'tree'}->leaf_codes unless $self->{'_data'}{'default'};
-  return $self->{'_data'}{'default'};
-}
-
 sub get_valid_action {
   my ($self, $action, $func) = @_;
   my $object = $self->object;
   my $hub = $self->hub;  
-
+  
   return $action if $action eq 'Wizard';
   
   my $node;
@@ -158,7 +152,7 @@ sub get_valid_action {
 
 sub get_node { 
   my ($self, $code) = @_;
-  return $self->{'_data'}{'tree'}->get_node($code);
+  return $self->tree->get_node($code);
 }
 
 sub query_string {
