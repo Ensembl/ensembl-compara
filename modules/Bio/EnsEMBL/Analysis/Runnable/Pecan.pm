@@ -5,11 +5,11 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Analysis::Runnable::Mlagan
+Bio::EnsEMBL::Analysis::Runnable::Pecan
 
 =head1 SYNOPSIS
 
-  my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Mlagan
+  my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Pecan
      (-workdir => $workdir,
       -fasta_files => $fasta_files,
       -tree_string => $tree_string,
@@ -60,9 +60,9 @@ my $estimate_tree = "/software/ensembl/compara/pecan/EstimateTree.py";
   Arg [3]   : -tree_string => "/path/to/tree/file" (optional)
   Arg [4]   : -parameters => "parameter" (optional)
 
-  Function  : contruct a new Bio::EnsEMBL::Analysis::Runnable::Mlagan
+  Function  : contruct a new Bio::EnsEMBL::Analysis::Runnable::Pecan
   runnable
-  Returntype: Bio::EnsEMBL::Analysis::Runnable::Mlagan
+  Returntype: Bio::EnsEMBL::Analysis::Runnable::Pecan
   Exceptions: none
   Example   :
 
@@ -194,7 +194,7 @@ sub exonerate {
 
 =head2 run_analysis
 
-  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable::Mlagan
+  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable::Pecan
   Arg [2]   : string, program name
   Function  : create and open a commandline for the program trf
   Returntype: none
@@ -207,19 +207,19 @@ sub exonerate {
 sub run_analysis {
   my ($self, $program) = @_;
 
-  $self->run_mlagan;
+  $self->run_pecan;
 
   $self->parse_results;
 
   return 1;
 }
 
-sub run_mlagan {
+sub run_pecan {
   my $self = shift;
 
   chdir $self->workdir;
 
-  throw($self->program . " is not executable Mlagan::run_analysis ")
+  throw($self->program . " is not executable Pecan::run_analysis ")
     unless ($self->program && -x $self->program);
 
   my $command = $self->program;
@@ -245,14 +245,22 @@ sub run_mlagan {
     $command .= " " . $self->options;
   }
   print "Running pecan: " . $command . "\n";
-  unless (system($command) == 0) {
-    throw("pecan execution failed\n");
+
+  open(PECAN, "$command 2>&1 |") || die "Failed: $!\n";
+  my $java_error = <PECAN>;
+  if ($java_error) {
+      die ($java_error);
   }
+  close PECAN;
+
+#  unless (system($command) == 0) {
+#    throw("pecan execution failed\n");
+#  }
 }
 
 =head2 parse_results
 
-  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable::Mlagan
+  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable::Pecan
   Function  : parse the specifed file and produce RepeatFeatures
   Returntype: nine
   Exceptions: throws if fails to open or close the results file
