@@ -92,9 +92,13 @@ sub fetch_input {
     $self->param('geneSubset', Bio::EnsEMBL::Compara::Subset->new(
       -name=>"gdb:$genome_db_id $genome_db_name genes") );
 
+    $self->param('exonSubset', Bio::EnsEMBL::Compara::Subset->new(
+      -name=>"gdb:$genome_db_id $genome_db_name coding exons") );
+
         # This does an INSERT IGNORE or a SELECT if already exists:
     $compara_dba->get_SubsetAdaptor->store($self->param('pepSubset'));
     $compara_dba->get_SubsetAdaptor->store($self->param('geneSubset'));
+    $compara_dba->get_SubsetAdaptor->store($self->param('exonSubset'));
 }
 
 
@@ -137,6 +141,11 @@ sub write_output {
     my $genome_db_id      = $self->param('genome_db_id');
     my $reuse_this        = $self->param('reuse_this');
     my $subset_id         = $self->param('pepSubset')->dbID;
+
+    #Overwrite subset_id if doing coding_exons (eg MercatorPecan pipeline)
+    if ($self->param('coding_exons')) {
+	$subset_id = $self->param('exonSubset')->dbID;
+    }
     my $per_genome_suffix = $self->param('per_genome_suffix');
 
     $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'reuse_this' => $reuse_this, 'subset_id' => $subset_id, 'per_genome_suffix' => $per_genome_suffix } , 1);
@@ -247,6 +256,7 @@ sub loadMembersFromCoreSlices {
     $self->param('realGeneCount',   0);
     $self->param('transcriptCount', 0);
     $self->param('longestCount',    0);
+    $self->param('exonCount',       0);
 
   #from core database, get all slices, and then all genes in slice
   #and then all transcripts in gene to store as members in compara
@@ -255,32 +265,61 @@ sub loadMembersFromCoreSlices {
   print("fetched ",scalar(@slices), " slices to load from\n");
   $self->throw("problem: no toplevel slices") unless(scalar(@slices));
 
+  my $genes;
+
   SLICE: foreach my $slice (@slices) {
     $self->param('sliceCount', $self->param('sliceCount')+1 );
     #print("slice " . $slice->name . "\n");
+
+    @$genes = ();
+    my $current_end;
+
     foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes}) {
       $self->param('geneCount', $self->param('geneCount')+1 );
-
       # LV and C are for the Ig/TcR family, which rearranges
       # somatically so is considered as a different biotype in EnsEMBL
       # D and J are very short or have no translation at all
-      if (   lc($gene->biotype) eq 'protein_coding'
-          || lc($gene->biotype) eq 'ig_v_gene'
-          || lc($gene->biotype) eq 'ig_c_gene'
-#         || lc($gene->biotype) eq 'polymorphic_pseudogene'     # lg4: not sure if this biotype is ok, as it has a stop codon in the middle
-        ) {
-        $self->param('realGeneCount', $self->param('realGeneCount')+1 );
-        $self->store_gene_and_all_transcripts($gene);
-        print STDERR $self->param('realGeneCount') , " genes stored\n" if ($self->debug && (0 == ($self->param('realGeneCount') % 100)));
+
+      if (defined $self->param('coding_exons')) {
+	  $current_end = $gene->end unless (defined $current_end);
+	  $self->param('geneCount', $self->param('geneCount')+1);
+	  if((lc($gene->biotype) eq 'protein_coding')) {
+	      $self->param('realGeneCount', $self->param('realGeneCount')+1 );
+#	      print "gene_start " . $gene->start . " end $current_end\n";
+	      if ($gene->start <= $current_end) {
+		  push @$genes, $gene;
+		  $current_end = $gene->end if ($gene->end > $current_end);
+	      } else {
+		  $self->store_all_coding_exons($genes);
+		  @$genes = ();
+		  $current_end = $gene->end;
+		  push @$genes, $gene;
+	      }
+	  }
+      } else {
+	  if (   lc($gene->biotype) eq 'protein_coding'
+		 || lc($gene->biotype) eq 'ig_v_gene'
+		 || lc($gene->biotype) eq 'ig_c_gene'
+		 #         || lc($gene->biotype) eq 'polymorphic_pseudogene'     # lg4: not sure if this biotype is ok, as it has a stop codon in the middle
+	     ) {
+	      $self->param('realGeneCount', $self->param('realGeneCount')+1 );
+	      
+	      $self->store_gene_and_all_transcripts($gene);
+	      
+	      print STDERR $self->param('realGeneCount') , " genes stored\n" if ($self->debug && (0 == ($self->param('realGeneCount') % 100)));
+	  }
       }
     }
+    if ($self->param('coding_exons')) {
+	$self->store_all_coding_exons($genes);
+    }
+
   }
 
   print("loaded ".$self->param('sliceCount')." slices\n");
   print("       ".$self->param('geneCount')." genes\n");
   print("       ".$self->param('realGeneCount')." real genes\n");
   print("       ".$self->param('transcriptCount')." transcripts\n");
-  print("       ".$self->param('longestCount')." canonical transcripts\n");
   print("       ".$self->param('pepSubset')->count()." in Subset\n");
 }
 
@@ -307,6 +346,7 @@ sub store_gene_and_all_transcripts {
     print STDERR "WARN: ", $gene->stable_id, " has no canonical transcript\n" if ($self->debug);
     return 1;
   }
+
   foreach my $transcript (@{$gene->get_all_Transcripts}) {
     my $translation = $transcript->translation;
     next unless (defined $translation);
@@ -414,6 +454,109 @@ sub store_gene_and_all_transcripts {
     # print("     LONGEST " . $transcript->stable_id . "\n");
   }
   return 1;
+}
+
+sub store_all_coding_exons {
+  my ($self, $genes) = @_;
+
+  return 1 if (scalar @{$genes} == 0);
+
+  my $member_adaptor = $self->compara_dba->get_MemberAdaptor();
+  my $genome_db = $self->param('genome_db');
+  my @exon_members = ();
+
+  foreach my $gene (@{$genes}) {
+      #print " gene " . $gene->stable_id . "\n";
+
+    foreach my $transcript (@{$gene->get_all_Transcripts}) {
+      $self->param('transcriptCount', $self->param('transcriptCount')+1);
+
+      print("     transcript " . $transcript->stable_id ) if($self->param('verbose'));
+      
+      foreach my $exon (@{$transcript->get_all_translateable_Exons}) {
+#	  print "        exon " . $exon->stable_id . "\n";
+        unless (defined $exon->stable_id) {
+          warn("COREDB error: does not contain exon stable id for translation_id ".$exon->dbID."\n");
+          next;
+        }
+        my $description = $self->fasta_description($exon, $transcript);
+        
+        my $exon_member = new Bio::EnsEMBL::Compara::Member;
+        $exon_member->taxon_id($genome_db->taxon_id);
+        if(defined $description ) {
+          $exon_member->description($description);
+        } else {
+          $exon_member->description("NULL");
+        }
+        $exon_member->genome_db_id($genome_db->dbID);
+        $exon_member->chr_name($exon->seq_region_name);
+        $exon_member->chr_start($exon->seq_region_start);
+        $exon_member->chr_end($exon->seq_region_end);
+        $exon_member->chr_strand($exon->seq_region_strand);
+        $exon_member->version($exon->version);
+        $exon_member->stable_id($exon->stable_id);
+        $exon_member->source_name("ENSEMBLEXON");
+
+	#Not sure what this should be but need to set it to something or else the members do not get added
+	#to the member table in the store method of MemberAdaptor
+	$exon_member->display_label("NULL");
+        
+        my $seq_string = $exon->peptide($transcript)->seq;
+        ## a star or a U (selenocysteine) in the seq breaks the pipe to the cast filter for Blast
+        $seq_string =~ tr/\*U/XX/;
+        if ($seq_string =~ /^X+$/) {
+          warn("X+ in sequence from exon " . $exon->stable_id."\n");
+        }
+        else {
+          $exon_member->sequence($seq_string);
+        }
+
+        print(" => member " . $exon_member->stable_id) if($self->param('verbose'));
+
+        unless($exon_member->sequence) {
+          print("  => NO SEQUENCE!\n") if($self->param('verbose'));
+          next;
+        }
+        print(" len=",$exon_member->seq_length ) if($self->param('verbose'));
+        next if ($exon_member->seq_length < $self->param('min_length'));
+        push @exon_members, $exon_member;
+      }
+    }
+  }
+  @exon_members = sort {$b->seq_length <=> $a->seq_length} @exon_members;
+  my @exon_members_stored = ();
+  while (my $exon_member = shift @exon_members) {
+    my $not_to_store = 0;
+    foreach my $stored_exons (@exon_members_stored) {
+      if ($exon_member->chr_start <=$stored_exons->chr_end &&
+          $exon_member->chr_end >= $stored_exons->chr_start) {
+        $not_to_store = 1;
+        last;
+      }
+    }
+    next if ($not_to_store);
+    push @exon_members_stored, $exon_member;
+
+    eval {
+	#if (my $exon_member_id = $self->param('reuse_member_hash')->{$exon_member->stable_id}{ENSEMBLEXON}) {
+	if (my $exon_member_id = $self->param('reuse_member_hash')->{$exon_member->stable_id}{''}) {
+	    $exon_member->dbID( $exon_member_id );
+	    $member_adaptor->store_reused($exon_member);
+	    #print "Reuse member\n";
+	} else {
+	    my $stable_id = $exon_member->stable_id;
+	    if ( $self->param('reuse_this') ) {
+		$self->input_job->transient_error(0);
+		$self->throw ("Reuse member set non identical for $stable_id: $!")
+	    }
+	    #print "New member\n";
+	    $member_adaptor->store($exon_member);
+	    print(" : stored\n") if($self->param('verbose'));
+	}
+    };
+    $self->param('exonSubset')->add_member($exon_member);
+    $self->param('exonCount', $self->param('exonCount')+1);
+  }
 }
 
 sub fasta_description {
