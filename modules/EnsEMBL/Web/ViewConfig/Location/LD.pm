@@ -27,8 +27,7 @@ sub init {
   }
   
   $self->add_image_configs({qw(
-    ldview        nodas
-    ld_population nodas
+    ldview nodas
   )});
   
   $self->default_config = 'ldview';
