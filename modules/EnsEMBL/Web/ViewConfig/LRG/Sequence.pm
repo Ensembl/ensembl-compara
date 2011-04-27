@@ -34,7 +34,7 @@ sub form {
   
   push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'vega', name => 'Vega exons' } if $dbs->{'DATABASE_VEGA'};
   
-  $_->{'name'} = 'Core and LRG exons' for grep $_->{'value'} eq 'core', @{$gene_markup_options{'exon_display'}{'values'}}
+  $_->{'name'} = 'Core and LRG exons' for grep $_->{'value'} eq 'core', @{$gene_markup_options{'exon_display'}{'values'}};
 
   push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'otherfeatures', name => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
   
