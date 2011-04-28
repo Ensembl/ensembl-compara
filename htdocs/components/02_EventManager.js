@@ -71,11 +71,10 @@ Ensembl.EventManager = {
    */
   getCallIds: function (callId) {
     var ids = callId.split(/--/);
-    var i   = ids.length;
     var rtn = {};
     
-    if  (i > 1) { ids.push(callId); }
-    while (i--) { rtn[ids[i]] = 1;  }
+    if (ids.length > 1) { ids.push(callId); }
+    $.each(ids, function () { rtn[this] = 1; })
     
     return rtn;
   },
