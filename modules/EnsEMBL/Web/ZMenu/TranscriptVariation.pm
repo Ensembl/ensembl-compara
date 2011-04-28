@@ -12,7 +12,6 @@ sub content {
   my $self             = shift;
   my $hub              = $self->hub; 
   my $v_id             = $hub->param('v');
-  my $vf               = $hub->param('vf');
   my $alt_allele       = $hub->param('alt_allele');
   my $aa_change        = $hub->param('aa_change');
   my $cov              = $hub->param('cov');
