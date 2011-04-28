@@ -85,7 +85,7 @@ sub get_page_data {
   });
 
   foreach my $sample (@$samples) {
-    my $munged_transcript = $object->get_munged_slice('tsv_transcript',  $hub->param('context') eq 'FULL' ? 1000 : $hub->param('context'), 1) || warn "Couldn't get munged transcript";
+    my $munged_transcript = $object->get_munged_slice($hub->param('context') eq 'FULL' ? 1000 : $hub->param('context'), 1) || warn "Couldn't get munged transcript";
     my $sample_slice      = $munged_transcript->[1]->get_by_strain($sample);
 
     my ($allele_info, $consequences) = $object->getAllelesConsequencesOnSlice($sample, 'tsv_transcript', $sample_slice);
