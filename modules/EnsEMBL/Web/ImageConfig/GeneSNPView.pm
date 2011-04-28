@@ -25,7 +25,7 @@ sub init {
     somatic        => '',
     gsv_transcript => '',
     other          => '',
-    gsv_domain     => 'Protein Domains'    
+    gsv_domain     => 'Protein Domains'
   );
   
   $self->load_tracks;

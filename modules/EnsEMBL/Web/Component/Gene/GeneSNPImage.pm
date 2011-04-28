@@ -49,9 +49,9 @@ sub content {
   # Fake SNPs
   # Grab the SNPs and map them to subslice co-ordinate
   # $snps contains an array of array each sub-array contains [fake_start, fake_end, B:E:Variation object] # Stores in $object->__data->{'SNPS'}
-  my ($count_snps, $snps, $context_count) = $object->getVariationsOnSlice($transcript_slice, $sub_slices );  
+  my ($count_snps, $snps, $context_count) = $object->getVariationsOnSlice($transcript_slice, $sub_slices);  
   my $start_difference   = $object->__data->{'slices'}{'transcripts'}[1]->start - $object->__data->{'slices'}{'gene'}[1]->start;
-  my @fake_filtered_snps = map [ $_->[2]->start + $start_difference, $_->[2]->end   + $start_difference, $_->[2] ], @$snps;
+  my @fake_filtered_snps = map [ $_->[2]->start + $start_difference, $_->[2]->end + $start_difference, $_->[2] ], @$snps;
   my @domain_logic_names = qw(Pfam scanprosite Prints pfscan PrositePatterns PrositeProfiles Tigrfam Superfamily Smart PIRSF);
   
   $image_configs->{'gene'}->{'filtered_fake_snps'} = \@fake_filtered_snps unless $no_snps;
