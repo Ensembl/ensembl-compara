@@ -516,85 +516,79 @@ sub get_transcript_slices {
     my $slice = $self->get_transcript_Slice($slice_config->[2], 1);
     return [ 'normal', $slice, [], $slice->length ];
   } else {
-    return $self->get_munged_slice($slice_config->[0], $slice_config->[2], 1);
+    return $self->get_munged_slice($slice_config->[2], 1);
   }
 }
 
 # TSV/TSE
 sub get_munged_slice {
-  my $self = shift;
-  my $config_name = shift;
-  my $master_config = $self->get_imageconfig($config_name);
-  $master_config->{'_draw_single_Transcript'} = $self->stable_id;
-
-  my $slice  = $self->get_transcript_Slice(@_); # pushes it onto forward strand, expands if necc.
-  my $length = $slice->length;
-  my $munged = '0' x $length;  # Munged is string of 0, length of slice
-
-  # Context is the padding around the exons in the fake slice
-  my $extent = $self->param('context');
-
+  my $self        = shift;
+  my $slice       = $self->get_transcript_Slice(@_); # pushes it onto forward strand, expands if necc.
+  my $length      = $slice->length;
+  my $munged      = '0' x $length;                   # Munged is string of 0, length of slice
+  my $extent      = $self->param('context');         # Context is the padding around the exons in the fake slice
   my @lengths;
   
   if ($extent eq 'FULL') {
     $extent = 1000;
-    @lengths = ( $length );
+    @lengths = ($length);
   } else {
     foreach my $exon (@{$self->Obj->get_all_Exons}) {                
-      my $START    = $exon->start - $slice->start + 1 - $extent;
-      my $EXON_LEN = $exon->end-$exon->start + 1 + 2 * $extent;
+      my $start       = $exon->start - $slice->start + 1 - $extent;
+      my $exon_length = $exon->end   - $exon->start  + 1 + 2 * $extent;
       # Change munged to 1 where there is exon or extent (i.e. flank)
-      substr($munged, $START-1, $EXON_LEN) = '1' x $EXON_LEN;
+      substr($munged, $start - 1, $exon_length) = '1' x $exon_length;
     }
     
-    @lengths = map { length($_) } split /(0+)/, $munged;
+    @lengths = map length $_, split /(0+)/, $munged;
   }
   
-  # @lengths contains the sizes of gaps and exons(+- context)
+  # @lengths contains the sizes of gaps and exons(+/- context)
 
   $munged = undef;
 
   my $collapsed_length = 0;
-  my $flag = 0;
-  my $subslices = [];
-  my $pos = 0;
+  my $flag             = 0;
+  my $subslices        = [];
+  my $pos              = 0;
 
-  foreach( @lengths , 0) {
-    if ($flag = 1-$flag) {
-      push @$subslices, [ $pos+1, 0, 0 ] ;
+  foreach (@lengths, 0) {
+    if ($flag = 1 - $flag) {
+      push @$subslices, [ $pos + 1, 0, 0 ];
       $collapsed_length += $_;
     } else {
       $subslices->[-1][1] = $pos;
     }
     
-    $pos+=$_;
+    $pos += $_;
   }
   
   # compute the width of the slice image within the display
-  my $PIXEL_WIDTH =
+  my $pixel_width =
     $self->param('image_width') -
-    ($master_config->get_parameter('label_width') || 100) -
-    ($master_config->get_parameter('margin')      ||   5) * 3;
+    ($self->param('label_width') || 100) -
+    ($self->param('margin')      ||   5) * 3;
 
   # Work out the best size for the gaps between the "exons"
   my $fake_intron_gap_size = 11;
-  my $intron_gaps  = (@lengths-1)/2;
+  my $intron_gaps          = $#lengths / 2;
   
-  if ($intron_gaps && ($intron_gaps * $fake_intron_gap_size > $PIXEL_WIDTH * 0.75)) {
-    $fake_intron_gap_size = int($PIXEL_WIDTH * 0.75 / $intron_gaps);
+  if ($intron_gaps && ($intron_gaps * $fake_intron_gap_size > $pixel_width * 0.75)) {
+    $fake_intron_gap_size = int($pixel_width * 0.75 / $intron_gaps);
   }
 
   # Compute how big this is in base-pairs
-  my $exon_pixels  = $PIXEL_WIDTH - $intron_gaps * $fake_intron_gap_size;
-  my $scale_factor = $collapsed_length / $exon_pixels;
-  my $padding      = int($scale_factor * $fake_intron_gap_size) + 1;
+  my $exon_pixels    = $pixel_width - $intron_gaps * $fake_intron_gap_size;
+  my $scale_factor   = $collapsed_length / $exon_pixels;
+  my $padding        = int($scale_factor * $fake_intron_gap_size) + 1;
   $collapsed_length += $padding * $intron_gaps;
 
   # Compute offset for each subslice
   my $start = 0;
+  
   foreach (@$subslices) {
     $_->[2] = $start - $_->[0];
-    $start += $_->[1]-$_->[0]-1 + $padding;
+    $start += $_->[1] - $_->[0] - 1 + $padding;
   }
   
   return [ 'munged', $slice, $subslices, $collapsed_length ];
@@ -1566,7 +1560,7 @@ sub get_genetic_variations {
   my $snp_data   = {};
 
   foreach my $sample (@samples) {
-    my $munged_transcript = $self->get_munged_slice('tsv_transcript',  $tsv_extent, 1);    
+    my $munged_transcript = $self->get_munged_slice($tsv_extent, 1);    
     my $sample_slice      = $munged_transcript->[1]->get_by_strain($sample);
     my ($allele_info, $consequences) = $self->getAllelesConsequencesOnSlice($sample, 'tsv_transcript', $sample_slice);
     
