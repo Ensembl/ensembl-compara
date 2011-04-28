@@ -10,20 +10,19 @@ sub init {
   my $self = shift;
 
   $self->_set_defaults(qw(
-    panel_image          on 
-    context              100
-    panel_transcript     on
-    image_width          800
-    reference            ),'',qw(
-  ));
+    panel_image      on 
+    context          100
+    panel_transcript on
+    image_width      800
+    reference),      ''
+  );
 
   $self->add_image_configs({qw(
-    genespliceview_gene            nodas  
-    genespliceview_transcript      nodas
+    GeneSpliceView nodas
   )});
 
-  $self->default_config = 'genespliceview_transcript';
-  $self->storable = 1;
+  $self->default_config = 'GeneSpliceView';
+  $self->storable       = 1;
 }
 
 1;

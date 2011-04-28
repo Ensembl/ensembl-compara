@@ -40,15 +40,11 @@ sub init {
 
   foreach (keys %options) {
     my %hash = %{$options{$_}};
-    
-    foreach my $key (keys %hash) {
-      $self->_set_defaults(lc $key => $hash{$key}[0]);
-    }
+    $self->_set_defaults(lc $_ => $hash{$_}[0]) for keys %hash;
   }
 
   $self->add_image_configs({qw(
-    genesnpview_gene       nodas  
-    genesnpview_transcript nodas
+    GeneSNPView nodas
   )});
   
   $self->storable = 1;

@@ -16,7 +16,6 @@ sub content {
   my $self      = shift;
   my $hub       = $self->hub;
   my $object    = $self->object;
-  my $db        = $object->get_db;
   my $stable_id = $object->stable_id;
   my $extent    = $object->extent;
   
@@ -60,7 +59,7 @@ sub content {
   my $context     = $hub->param('context') || 100;
 
   foreach (qw(transcript transcripts_bottom transcripts_top)) {
-    $configs->{$_} = $hub->get_imageconfig("tsv_$_");
+    $configs->{$_} = $hub->get_imageconfig('TranscriptSNPView', $_);
     $configs->{$_}->set_parameters({
       image_width  => $image_width, 
       slice_number => '1|1',
@@ -83,7 +82,7 @@ sub content {
     $configs->{$_}->set_parameters({ container_width => $fake_length });
   }
 
-  $configs->{'snps'} = $hub->get_imageconfig('genesnpview_snps');
+  $configs->{'snps'} = $hub->get_imageconfig('GeneSNPView', 'snps');
   $configs->{'snps'}->set_parameters({
     image_width     => $image_width,
     container_width => 100,
@@ -177,7 +176,8 @@ sub sample_configs {
     next unless $sample_slice; 
     
     ## Initialize content
-    my $sample_config              = $hub->get_imageconfig('tsv_sampletranscript', $sample);
+    my $sample_config = $hub->get_imageconfig('TranscriptSNPView', $sample);
+    $sample_config->init_sample_transcript;
     $sample_config->{'id'}         = $stable_id;
     $sample_config->{'subslices'}  = $sub_slices;
     $sample_config->{'extent'}     = $extent;

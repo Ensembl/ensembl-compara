@@ -18,7 +18,7 @@ sub content {
   my $self             = shift;
   my $hub              = $self->hub;
   my $consequence_type = $hub->param('sub_table');
-  my $gene             = $self->configure($hub->param('context') || 100, $hub->get_imageconfig('genesnpview_transcript'));
+  my $gene             = $self->configure($hub->param('context') || 100);
   my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene->get_all_transcripts};
   
   my $count;
@@ -345,19 +345,11 @@ sub variation_table {
 }
 
 sub configure {
-  my ($self, $context, $master_config) = @_;
+  my ($self, $context) = @_;
   my $object = $self->object;
   my $extent = $context eq 'FULL' ? 1000 : $context;
   
-  $master_config->set_parameters({
-    image_width     => 800,
-    container_width => 100,
-    slice_number    => '1|1',
-    context         => $context
-  });
-
   $object->get_gene_slices(
-    $master_config,
     [ 'context',     'normal', '100%'  ],
     [ 'gene',        'normal', '33%'   ],
     [ 'transcripts', 'munged', $extent ]
