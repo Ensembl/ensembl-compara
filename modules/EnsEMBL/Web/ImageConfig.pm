@@ -27,6 +27,7 @@ sub new {
   my $class   = shift;
   my $hub     = shift;
   my $species = shift || $hub->species;
+  my $code    = shift;
   my $type    = $class =~ /([^:]+)$/ ? $1 : $class;
   my $style   = $hub->species_defs->ENSEMBL_STYLE || {};
   my $session = $hub->session;
@@ -37,6 +38,7 @@ sub new {
     _font_face          => $style->{'GRAPHIC_FONT'} || 'Arial',
     _font_size          => ($style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'}) || 20,
     _texthelper         => new Sanger::Graphics::TextHelper,
+    code                => $code,
     type                => $type,
     species             => $species,
     user                => {},
