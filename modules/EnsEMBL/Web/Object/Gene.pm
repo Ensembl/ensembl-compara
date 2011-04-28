@@ -754,13 +754,13 @@ sub get_GeneTree {
 }
 
 sub get_gene_slices {
-  my( $self, $master_config, @slice_configs ) = @_;
-  foreach my $array ( @slice_configs ) { 
-    if($array->[1] eq 'normal') {
-      my $slice= $self->get_Slice( $array->[2], 1 ); 
-      $self->__data->{'slices'}{ $array->[0] } = [ 'normal', $slice, [], $slice->length ];
+  my ($self, @slice_configs) = @_;
+  foreach my $array (@slice_configs) { 
+    if ($array->[1] eq 'normal') {
+      my $slice = $self->get_Slice($array->[2], 1); 
+      $self->__data->{'slices'}{$array->[0]} = [ 'normal', $slice, [], $slice->length ];
     } else { 
-      $self->__data->{'slices'}{ $array->[0] } = $self->get_munged_slice( $master_config, $array->[2], 1 );
+      $self->__data->{'slices'}{$array->[0]} = $self->get_munged_slice($array->[2], 1);
     }
   }
 }
@@ -901,84 +901,81 @@ sub munge_gaps {
 }
 
 sub get_munged_slice {
-  my $self = shift;
-  my $master_config = shift;
-  my $slice = $self->get_Slice( @_ );
-  my $gene_stable_id = $self->stable_id;
-
-  my $length = $slice->length(); 
-  my $munged  = '0' x $length;
-  my $CONTEXT = $self->param( 'context' )|| 100;
-  my $EXTENT  = $CONTEXT eq 'FULL' ? 1000 : $CONTEXT;
-  ## first get all the transcripts for a given gene...
-  my @ANALYSIS = ( $self->get_db() eq 'core' ? (lc($self->species_defs->AUTHORITY)||'ensembl') : 'otter' );
-  @ANALYSIS = qw(ensembl havana ensembl_havana_gene) if $ENV{'ENSEMBL_SPECIES'} eq 'Homo_sapiens';
-# my $features = [map { @{ $slice->get_all_Genes($_)||[]} } @ANALYSIS ];
-  my $features = $slice->get_all_Genes( undef, $self->param('opt_db') );
+  my $self      = shift;
+  my $slice     = $self->get_Slice(@_);
+  my $stable_id = $self->stable_id;
+  my $length    = $slice->length; 
+  my $munged    = '0' x $length;
+  my $context   = $self->param('context') || 100;
+  my $extent    = $context eq 'FULL' ? 1000 : $context;
+  my $features  = $slice->get_all_Genes(undef, $self->param('opt_db'));
   my @lengths;
-  if( $CONTEXT eq 'FULL' ) {
-    @lengths = ( $length );
+  
+  if ($context eq 'FULL') {
+    @lengths = ($length);
   } else {
-    foreach my $gene ( grep { $_->stable_id eq $gene_stable_id } @$features ) {
-      foreach my $X ('1') { ## 1 <- exon+flanking, 2 <- exon only
-        my $extent = $X == 1 ? $EXTENT : 0;
-        foreach my $transcript (@{$gene->get_all_Transcripts()}) {
-          foreach my $exon (@{$transcript->get_all_Exons()}) {
-            my $START    = $exon->start            - $extent;
-            my $EXON_LEN = $exon->end-$exon->start + 1 + 2 * $extent;
-            substr( $munged, $START-1, $EXON_LEN ) = $X x $EXON_LEN;
-          }
+    foreach my $gene (grep { $_->stable_id eq $stable_id } @$features) {   
+      foreach my $transcript (@{$gene->get_all_Transcripts}) {
+        foreach my $exon (@{$transcript->get_all_Exons}) {
+          my $start       = $exon->start - $extent;
+          my $exon_length = $exon->end   - $exon->start + 1 + 2 * $extent;
+          substr($munged, $start - 1, $exon_length) = '1' x $exon_length;
         }
       }
     }
-    @lengths = map { length($_) } split /(0+)/, $munged;
+    
+    @lengths = map length($_), split /(0+)/, $munged;
   }
-  ## @lengths contains the sizes of gaps and exons(+- context)
+  
+  # @lengths contains the sizes of gaps and exons(+/- context)
 
   $munged = undef;
 
   my $collapsed_length = 0;
-  my $flag = 0;
-  my $subslices = [];
-  my $pos = 0;
-  foreach(@lengths,0) {
-    if ($flag=1-$flag) {
-      push @$subslices, [ $pos+1, 0, 0 ] ;
+  my $flag             = 0;
+  my $subslices        = [];
+  my $pos              = 0;
+  
+  foreach (@lengths, 0) {
+    if ($flag = 1 - $flag) {
+      push @$subslices, [ $pos + 1, 0, 0 ];
       $collapsed_length += $_;
     } else {
       $subslices->[-1][1] = $pos;
     }
-    $pos+=$_;
+    
+    $pos += $_;
   }
 
-## compute the width of the slice image within the display
-  my $PIXEL_WIDTH =
-    ($self->param('image_width')||800) -
-        ( $self->param( 'label_width' ) || 100 ) -
-    3 * ( $self->param( 'margin' )      ||   5 );
+  # compute the width of the slice image within the display
+  my $pixel_width =
+    ($self->param('image_width') || 800) -
+    ($self->param('label_width') || 100) -
+    ($self->param('margin')      || 5) * 3;
 
-## Work out the best size for the gaps between the "exons"
+  # Work out the best size for the gaps between the "exons"
   my $fake_intron_gap_size = 11;
-  my $intron_gaps  = ((@lengths-1)/2);
+  my $intron_gaps          = $#lengths / 2;
   
-  if( $intron_gaps * $fake_intron_gap_size > $PIXEL_WIDTH * 0.75 ) {
-     $fake_intron_gap_size = int( $PIXEL_WIDTH * 0.75 / $intron_gaps );
+  if ($intron_gaps * $fake_intron_gap_size > $pixel_width * 0.75) {
+    $fake_intron_gap_size = int($pixel_width * 0.75 / $intron_gaps);
   }
-## Compute how big this is in base-pairs
-  my $exon_pixels  = $PIXEL_WIDTH - $intron_gaps * $fake_intron_gap_size;
-  my $scale_factor = $collapsed_length / $exon_pixels;
-  my $padding      = int($scale_factor * $fake_intron_gap_size) + 1;
+  
+  # Compute how big this is in base-pairs
+  my $exon_pixels    = $pixel_width - $intron_gaps * $fake_intron_gap_size;
+  my $scale_factor   = $collapsed_length / $exon_pixels;
+  my $padding        = int($scale_factor * $fake_intron_gap_size) + 1;
   $collapsed_length += $padding * $intron_gaps;
 
-## Compute offset for each subslice
+  # Compute offset for each subslice
   my $start = 0;
-  foreach(@$subslices) {
-    $_->[2] = $start - $_->[0];
-    $start += $_->[1]-$_->[0]-1 + $padding;
+  
+  foreach (@$subslices) {
+    $_->[2] = $start  - $_->[0];
+    $start += $_->[1] - $_->[0] - 1 + $padding;
   }
-
+  
   return [ 'munged', $slice, $subslices, $collapsed_length ];
-
 }
 
 # Calls for HistoryView
