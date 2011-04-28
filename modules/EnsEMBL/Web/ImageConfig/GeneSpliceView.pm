@@ -57,6 +57,10 @@ sub init_transcript {
   my $self = shift;
   
   $self->get_node('transcript')->remove;
+  
+  $self->add_tracks('other',
+    [ 'spacer', '', 'spacer', { display => 'normal', strand => 'r', menu => 'no', height => 10 }],
+  );
 }
 
 1;
