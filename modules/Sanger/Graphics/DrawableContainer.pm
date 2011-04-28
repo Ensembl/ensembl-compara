@@ -51,16 +51,13 @@ sub new {
   my $class = shift;
   my $self = $class->_init( @_ ); 
   my $T = $self->{'config'};
-  my $button_width = $T->get_parameter('button_width')   || 7;
-  my $show_buttons = $T->get_parameter('show_buttons')   || 'no' ;
   my $show_labels  = $T->get_parameter('show_labels')    || 'yes';
   my $label_width  = $T->get_parameter('label_width')    || 100;
   my $margin       = $T->get_parameter('margin')         || 5;
   my $trackspacing = $T->get_parameter('spacing')        || 2;
   my $inter_space  = defined($T->get_parameter('intercontainer')) ? $T->get_parameter('intercontainer') : $margin * 2;
   my $image_width  = $T->get_parameter('width')          || 700;
-  my $label_start  = $margin      +
-                     ( $show_buttons eq 'yes' ? $button_width + $margin : 0 );
+  my $label_start  = $margin;
   my $panel_start  = $label_start + 
                      ( $show_labels  eq 'yes' ? $label_width  + $margin : 0 );
   my $panel_width  = $image_width - $panel_start - $margin;
@@ -172,38 +169,6 @@ sub new {
 
    my $x_scale = $panel_width /( ($Config->container_width()|| $Container->length() || $panel_width));
   
-  if($show_buttons eq 'yes' && $Config->get_parameter('URL') ) {
-  for my $glyphset (@glyphsets) {
-    next unless defined $glyphset->bumped();
-    my $NAME = $glyphset->check();
-      my $box_glyph = new Sanger::Graphics::Glyph::Rect({
-        'x' => -$panel_start + $margin,
-        'y'             => 0,
-        'width'         => $button_width,
-        'height'        => $button_width,
-        'bordercolour'  => 'red',
-        'absolutey' => 1,
-        'absolutex' => 1,
-        'absolutewidth' =>1, 'pixperbp' => $x_scale,
-        'href'      => $Config->get( '_settings', 'URL')."$NAME%3A".
-                       ($glyphset->bumped() eq 'yes' ? 'off' : 'on'),
-        'id'        => $glyphset->bumped() eq 'yes' ? 'collapse' : 'expand',
-      });
-      my $horiz_glyph = new Sanger::Graphics::Glyph::Text({
-        'text'      => $glyphset->bumped() eq 'yes' ? '-' : '+',
-        'font'      => 'Small',
-        'absolutey' => 1,
-        'x'         => -$panel_start + $margin + 2,
-        'y'         => -2,
-        'width'     => 6,
-        'textwidth'     => 6,
-        'height'    => 6,
-        'colour'    => 'red',
-        'absolutex' => 1, 'absolutewidth' => 1, 'pixperbp' => $x_scale
-      });
-      $glyphset->bumpbutton([$horiz_glyph, $box_glyph]);
-    }
-    }
     ## set scaling factor for base-pairs -> pixels
     $Config->{'transform'}->{'scalex'} = $x_scale;
     $Config->{'transform'}->{'absolutescalex'} = 1;
@@ -275,12 +240,6 @@ sub new {
         $glyphset->_dump('rendered' => $glyphset->label()->text());
       } else {
         $glyphset->_dump('rendered' => 'No label' );
-      }
-      if( $show_buttons eq 'yes' && defined $glyphset->bumpbutton()) {
-        my $T = int(($glyphset->maxy() - $glyphset->miny() - 8) / 2 + $gminy );
-        $glyphset->bumpbutton->[0]->y( $T     );
-        $glyphset->bumpbutton->[1]->y( $T + 2 );
-        $glyphset->push(@{$glyphset->bumpbutton()});
       }
 
       $glyphset->transform();
