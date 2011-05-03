@@ -629,7 +629,7 @@ sub configure_bam_views {
   
   foreach ($hub->get_viewconfig($type, $action)->image_config_names) {
     my $image_config = $hub->get_imageconfig($_);
-    my $node         = $image_config->get_node("bam_$bam->{'name'}_" . md5_hex("$bam->{'species'}:$bam->{'url'}"));
+    my $node         = $image_config->get_node("bam_$bam->{'timestamp'}_" . md5_hex("$bam->{'species'}:$bam->{'url'}"));
 
     if ($node) {
       $node->set_user($_, $track_options->{$_}) for %$track_options;
@@ -652,7 +652,7 @@ sub configure_bigwig_views {
 
   foreach ($hub->get_viewconfig($type, $action)->image_config_names) {
     my $image_config = $hub->get_imageconfig($_);
-    my $node         = $image_config->get_node("bigwig_$bigwig->{'name'}_" . md5_hex("$bigwig->{'species'}:$bigwig->{'url'}"));
+    my $node         = $image_config->get_node("bigwig_$bigwig->{'timestamp'}_" . md5_hex("$bigwig->{'species'}:$bigwig->{'url'}"));
 
     if ($node) {
       $node->set_user($_, $track_options->{$_}) for keys %$track_options;
@@ -671,7 +671,7 @@ sub configure_vcf_views {
   my $this_vc     = $hub->get_viewconfig($this_type, $this_action, $hub);
   my %this_ics    = $this_vc->image_configs;
 
-  $track_options->{'display'} ||= 'normal';
+  $track_options->{'display'} ||= 'histogram';
 
   my @this_images = grep {
     (!$this_image || $this_image eq $_)  # optional override
@@ -680,10 +680,9 @@ sub configure_vcf_views {
   foreach my $image (@this_images) {
     my $ic = $hub->get_imageconfig($image, $image);
     if ($data->{species} eq $ic->{species}) {
-      my $n  = $ic->get_node('vcf_' . $data->{name} . '_' . md5_hex($data->{species} . ':' . $data->{url}));
-
+      my $n  = $ic->get_node('vcf_' . $data->{timestamp} . '_' . md5_hex($data->{species} . ':' . $data->{url}));
       if ($n) {
-        $n->set_user(%$track_options);
+        $n->set_user($_, $track_options->{$_}) for keys %$track_options;
         $ic->altered = 1;
       }
     }

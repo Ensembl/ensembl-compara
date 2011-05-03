@@ -333,14 +333,18 @@ sub load_user_tracks {
   # Now we deal with the url sources... again flat file
   foreach my $entry ($session->get_data(type => 'url')) {
     next unless $entry->{'species'} eq $self->{'species'};
-    
-    $url_sources{$entry->{'url'}} = {
+ 
+    my $time  = $entry->{'timestamp'} || time(); 
+    my $key   = $entry->{'url'}."_$time";
+    $url_sources{$key} = {
+      source_type => 'session',
       source_name => $entry->{'name'} || $entry->{'url'},
       source_url  => $entry->{'url'},
-      source_type => 'session',
+      species     => $entry->{'species'},
       format      => $entry->{'format'},
       style       => $entry->{'style'},
       colour      => $entry->{'colour'},
+      timestamp   => $time,
     };
   }
   
@@ -411,7 +415,7 @@ sub load_user_tracks {
           Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s',
           encode_entities($url_sources{$url}{'source_type'}), encode_entities($url)
         ),
-        'url'     => $url,
+        'url'     => $url_sources{$url}{'source_url'},
         'format'  => $url_sources{$url}{'format'},
         'style'   => $url_sources{$url}{'style'},
       );
@@ -475,8 +479,8 @@ sub _add_bam_track {
   $menu ||= $self->get_node('user_data');
   return unless $menu;
 
-  my $name  = $source->{'source_name'};
-  my $key   = 'bam_'.$name.'_' . md5_hex("$self->{'species'}:$source->{'source_url'}");
+  my $time  = $source->{'timestamp'};
+  my $key   = 'bam_'.$time.'_' . md5_hex("$self->{'species'}:$source->{'source_url'}");
 
   my $description = sprintf('
         Data retrieved from a BAM file on an external webserver.  
@@ -485,7 +489,7 @@ sub _add_bam_track {
         encode_entities($source->{'source_type'}), encode_entities($source->{'source_url'})
       );
  
-  my $track = $self->create_track($key, $name, {
+  my $track = $self->create_track($key, $source->{'source_name'}, {
     display   => 'off',
     strand    => 'f',
     _class    => 'bam',
@@ -498,7 +502,7 @@ sub _add_bam_track {
       'unlimited', 'Unlimited', 
       'histogram', 'Coverage only'
     ],
-    caption   => $name,
+    caption   => $source->{'source_name'},
     url       => $source->{'source_url'},
     description => $description,
   });
@@ -516,7 +520,7 @@ sub load_configured_bigwig {
     my $menu   = $self->get_node($internal_bigwig_sources->{$source_name});
     my $source = $menu ? $self->sd_call($source_name) : undef;
 
-    $self->_add_bigwig_track($menu, "bigwig_${source_name}_" . md5_hex("$self->{'species'}:$source->{'url'}"), $source_name, %$source) if $source;
+    $self->_add_bigwig_track($menu, $source) if $source;
   }
 }
 
@@ -526,10 +530,10 @@ sub _add_bigwig_track {
   $menu ||= $self->get_node('user_data');
   return unless $menu;
 
-  my $name = $source->{'source_name'};
-  my $key    = "bigwig_$name" . '_' . md5_hex("$source->{'source_species'}:$source->{'source_url'}");
+  my $time = $source->{'timestamp'};
+  my $key    = "bigwig_$time" . '_' . md5_hex("$source->{'species'}:$source->{'source_url'}");
 
-  my $track = $self->create_track($key, $name, {
+  my $track = $self->create_track($key, $source->{'source_name'}, {
     display   => 'off',
     strand    => 'f',
     _class    => 'bigwig',
@@ -561,9 +565,9 @@ sub load_configured_vcf {
     if (my $menu = $self->get_node($menu_name)) {
       # get vcf source config
       if (my $source  = $self->sd_call($source_name)) {
-  # add the track
-  my $key = 'vcf_' . $source_name . '_' . md5_hex($self->{'species'} . ':' . $source->{url});
-  $self->_add_vcf_track($menu, $key, $source_name, %{$source});
+        # add the track
+        my $key = 'vcf_' . $source_name . '_' . md5_hex($self->{'species'} . ':' . $source->{url});
+        $self->_add_vcf_track($menu, $source);
       }
     }
   }
@@ -575,12 +579,12 @@ sub _add_vcf_track {
   $menu ||= $self->get_node('user_data');
   return unless $menu;
 
-  my $name = $source->{'source_name'};
-  my $key = 'vcf_' . $name . '_' . md5_hex($self->{'species'} . ':' . $source->{'source_url'});
+  my $time = $source->{'timestamp'};
+  my $key = 'vcf_' . $time . '_' . md5_hex($self->{'species'} . ':' . $source->{'source_url'});
 
-  my $track = $self->create_track($key, $name, {
+  my $track = $self->create_track($key, $source->{'source_name'}, {
       display     => 'off',
-      caption => $name,
+      caption     => $source->{'source_name'},
       glyphset    => 'vcf',
       sources     => undef,
       strand      => 'f',
@@ -1838,7 +1842,8 @@ sub add_sequence_variations {
     
     $menu->append($variation_sets);
   
-    foreach my $toplevel_set (sort { !!scalar @{$a->{'subsets'}} <=> !!scalar @{$b->{'subsets'}} } sort { $a->{'name'} cmp $b->{'name'} } values %{$hashref->{'variation_set'}{'supersets'}}) {
+    # Hacked the sorting of the variation sets for release 62 so that the 'Failed variations' set will be displayed last
+    foreach my $toplevel_set (sort { !!scalar @{$a->{'subsets'}} <=> !!scalar @{$b->{'subsets'}} } sort { ($a->{'name'} =~ m/^failed/i ? 1 : 0) <=> ($b->{'name'} =~ m/^failed/i ? 1 : 0) } sort { $a->{'name'} cmp $b->{'name'} } values %{$hashref->{'variation_set'}{'supersets'}}) {
       my $name          = $toplevel_set->{'name'};
       my $caption       = $name . (scalar @{$toplevel_set->{'subsets'}} ? ' (all data)' : '');
       (my $key = $name) =~ s/\W/_/g;
