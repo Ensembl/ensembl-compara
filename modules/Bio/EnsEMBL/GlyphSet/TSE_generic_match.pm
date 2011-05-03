@@ -33,26 +33,38 @@ sub draw_glyphs {
   my $H               = 0;
   my @draw_end_lines;
 
-  #add a spacer
-  my $gap = $font_h_bp + 20;
-  my $tglyph = $self->Rect({
-    'x'         => 0,
-    'y'         => $H,
-    'height'    => $gap,
-    'width'     => 10,
-    'colour'    => 'white',
-  });
-  $self->push($tglyph);
-  $H += $gap;
-
-  #go through each parsed transcript_supporting_feature
-  foreach my $hit_details (sort { $b->{'hit_length'} <=> $a->{'hit_length'} } values %{$all_matches} ) {
+  (my @sorted_hits) = sort { $b->{'hit_length'} <=> $a->{'hit_length'} } values %{$all_matches};
+  my $hits_to_show = [];
+  foreach my $hit (@sorted_hits) {
     if ($havana_excl) {
-      next if $hit_details->{'logic_name'} =~ /$havana_excl$/;
+      next if $hit->{'logic_name'} =~ /$havana_excl$/;
     }
     elsif ($havana_only) {
-      next unless $hit_details->{'logic_name'} =~ /$havana_only$/;
+      next unless $hit->{'logic_name'} =~ /$havana_only$/;
     }
+    push @$hits_to_show, $hit;
+  }
+
+  if (@$hits_to_show) {
+    #add a spacer
+    my $gap = $font_h_bp + 20;
+    my $tglyph = $self->Rect({
+      'x'         => 0,
+      'y'         => $H,
+      'height'    => $gap,
+      'width'     => 10,
+      'colour'    => 'white',
+    });
+    $self->push($tglyph);
+    $H += $gap;
+  }
+  else {
+    #let the user know there are no features
+    $self->no_features;
+  }
+
+  #go through each parsed transcript_supporting_feature
+  foreach my $hit_details (@$hits_to_show) {
     my $hit_name = $hit_details->{'hit_name'};
     my $hit_type = $hit_details->{'hit_type'};
     my $start_x  = 1000000;
@@ -288,5 +300,12 @@ sub draw_glyphs {
   }
   $wuc->cache('legend',$legend) if $legend;
 }
+
+sub no_features {
+  my $self  = shift;
+  my $label = $self->my_label;
+  $self->errorTrack("No $label for this transcript") if $label && $self->{'config'}->get_option('opt_empty_tracks') == 0;
+}
+
 
 1;

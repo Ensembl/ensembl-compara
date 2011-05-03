@@ -5,6 +5,7 @@ use strict;
 
 use base qw(Bio::EnsEMBL::GlyphSet::_variation);
 use Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor;
+use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
 use Data::Dumper;
 use HTML::Entities qw(encode_entities);
 
