@@ -92,37 +92,37 @@ sub psychic {
   my $flag = 0;
   my $index_t;
 
-  #are we wanting to jump to a location page ?
-  if ($species ) {
-    if ($query =~ s/^(chromosome)//i || $query =~ s/^(chr)//i) {
-      $flag = $1;
-      $index_t = 'Chromosome';
-    }
-    elsif ($query =~ s/^(contig|clone|supercontig|scaffold|region)//i) {
-      $index_t = 'Sequence';
-      $flag = $1;
+  #if there is a species at the beginning of the query term then make a note in case we trying to jump to another location
+  my ($query_species, $query_without_species);
+  foreach my $sp (sort keys %sp_hash) {
+    if ( $query =~ /^$sp /) {
+      ($query_without_species = $query) =~ s/$sp//;
+      $query_without_species =~ s/^ //;
+      $query_species = $sp;
     }
   }
-
-  # if we decide we want to use a species as well as a location page for the jump to then this will be usefull
-#  if ($flag) {
-#    warn "flag = $flag";
-#    foreach my $sp (sort keys %sp_hash) {
-#      if ( $query =~ /$sp/) {
-#        $query =~ s/$sp//;
-#        $species = $sp_hash{$sp};
-#        warn "setting species to be $species and query to be $flag";
-#      }
-#    }
-#  }
 
   my $species_path = $species_defs->species_path($species) || "/$species";
 
   ## If we have a species and a location can we jump directly to that page ?
-  if ($species) {
+  if ($species || $query_species ) {
+    my $jump_query = $query;
+    if ($query_species) {
+      $jump_query = $query_without_species;
+      $species_path = $species_defs->species_path($query_species);
+    }
+
+    if ($jump_query =~ s/^(chromosome)//i || $jump_query =~ s/^(chr)//i) {
+      $flag = $1;
+      $index_t = 'Chromosome';
+    }
+    elsif ($jump_query =~ s/^(contig|clone|supercontig|scaffold|region)//i) {
+      $index_t = 'Sequence';
+      $flag = $1;
+    }
 
     ## match any of the following:
-    if ($query =~ /^\s*([-\.\w]+)[: ]([\d\.]+?[MKG]?)( |-|\.\.|,)([\d\.]+?[MKG]?)$/i || $query =~ /^\s*([-\.\w]+)[: ]([\d,]+[MKG]?)( |\.\.|-)([\d,]+[MKG]?)$/i) {
+    if ($jump_query =~ /^\s*([-\.\w]+)[: ]([\d\.]+?[MKG]?)( |-|\.\.|,)([\d\.]+?[MKG]?)$/i || $jump_query =~ /^\s*([-\.\w]+)[: ]([\d,]+[MKG]?)( |\.\.|-)([\d,]+[MKG]?)$/i) {
       my ($seq_region_name, $start, $end) = ($1, $2, $4);
 
       $seq_region_name =~ s/chr//;
@@ -144,27 +144,24 @@ sub psychic {
     }
     else {
       if ($index_t eq 'Chromosome') {
-        $query =~ s/ //g;
-        $url  = "$species_path/Location/Chromosome?r=$query";
+        $jump_query =~ s/ //g;
+        $url  = "$species_path/Location/Chromosome?r=$jump_query";
         $flag = 1;
       } elsif ($index_t eq 'Sequence') {
-        $query =~ s/ //g;
-        $url  = "$species_path/Location/View?region=$query";
+        $jump_query =~ s/ //g;
+        $url  = "$species_path/Location/View?region=$jump_query";
         $flag = 1;
       }
     }
 
     ## other pairs of identifiers
-    if ($query =~ /\.\./ && !$flag) {
+    if ($jump_query =~ /\.\./ && !$flag) {
       ## str.string..str.string
       ## str.string-str.string
-      $query =~ /([\w|\.]*\w)(\.\.)(\w[\w|\.]*)/;
+      $jump_query =~ /([\w|\.]*\w)(\.\.)(\w[\w|\.]*)/;
       $url   = $self->escaped_url("$species_path/jump_to_contig?type1=all;type2=all;anchor1=%s;anchor2=%s", $1, $3);
       $flag  = 1;
     }
-  }
-  else {
-    $url = "/$script?species=;idx=;q=";
   }
 
   if (!$flag) {

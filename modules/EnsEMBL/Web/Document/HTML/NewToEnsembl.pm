@@ -26,7 +26,6 @@ sub render {
   my $sitename       = $sd->ENSEMBL_SITETYPE;
   my $html           = '<h2 class="first">New to '.$sitename.'?</h2>'; 
 
-
   my $rss_url = $sd->ENSEMBL_TIPS_RSS;
   my $tips = $MEMD && $MEMD->get('::TIPS') || [];
   

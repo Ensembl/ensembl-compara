@@ -29,6 +29,7 @@ sub render {
     'gvf'     => 'Variation data in GVF format',
     'funcgen' => 'Regulation data in GFF format',
     'bed'     => 'Constrained elements calculated using GERP',
+    'extra'   => 'Additional release data stored as flat files rather than MySQL for performance reasons',
   );
 
   my $html = qq(
@@ -58,13 +59,16 @@ sub render {
     if ($sp_dir =~ /bos_taurus|canis_familiaris|danio_rerio|drosophila_melanogaster|equus_caballus|felis_catus|gallus_gallus|homo_sapiens|saccharomyces_cerevisiae|monodelphis_domestica|mus_musculus|ornithorhynchus_anatinus|pan_troglodytes|pongo_pygmaeus|rattus_norvegicus|sus_scrofa|taeniopygia_guttata|tetraodon_nigroviridis/) {
       $variation = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/%s/">Variation</a>', $title{'gvf'}, $rel, $sp_dir;
     }
-    my $emf = '-';
+    my $emf   = '-';
     if ($sp_dir =~ /homo_sapiens|mus_musculus|rattus_norvegicus/) {
       $emf = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/emf/%s/">EMF</a>', $title{'emf'}, $rel, $sp_var;
     }
     my $funcgen = '-';
+    my $extra = '-';
     if ($sp_dir =~ /homo_sapiens/ || $sp_dir =~/mus_musculus/) {
       $funcgen = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/functional_genomics/%s/">Regulation</a> (GFF)', $title{'funcgen'}, $rel, $sp_dir;
+      my $coll_dir = $species_defs->databases->{'DATABASE_FUNCGEN'}{'NAME'};
+      $extra = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/data_files/%s/">Regulation data files</a>', $title{'extra'}, $rel, $coll_dir;
     }
     $class = $row % 2 == 0 ? 'bg1' : 'bg2';
 
@@ -82,7 +86,7 @@ sub render {
 <td>%s</td>
 <td>%s</td>
 <td>%s</td>
-<td>-</td>
+<td>%s</td>
 <td>-</td>
 </tr>
       ), $class, $sp_name, $common,
@@ -94,7 +98,7 @@ sub render {
          $title{'genbank'}, $rel, $sp_dir,
          $title{'gtf'}, $rel,
          $title{'mysql'}, $rel,
-         $emf, $variation, $funcgen, 
+         $emf, $variation, $funcgen, $extra
     ;
     $row++;
   }

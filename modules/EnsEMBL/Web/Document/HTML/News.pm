@@ -18,6 +18,20 @@ sub render {
 
   my $hub = new EnsEMBL::Web::Hub;
   my $release_id = $hub->param('id') || $hub->species_defs->ENSEMBL_VERSION;
+  my $adaptor = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub);
+  my $release      = $adaptor->fetch_release($release_id);
+  my $release_date = $self->pretty_date($release->{'date'});
+
+  $html .= qq(<h1>What's New in Release $release_id ($release_date)</h1>);
+
+  ## Are we using static news content output from a script?
+  my $file         = '/ssi/whatsnew.html';
+  my $include = EnsEMBL::Web::Controller::SSI::template_INCLUDE(undef, $file);
+
+  if ($release_id == $hub->species_defs->ENSEMBL_VERSION && $include) {
+    $html .= '<h2>Headlines</h2>'.$include;
+  }
+
   my $first_production = $hub->species_defs->get_config('MULTI', 'FIRST_PRODUCTION_RELEASE');
 
   if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'} 

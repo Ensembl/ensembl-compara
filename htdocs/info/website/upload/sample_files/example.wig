@@ -34,7 +34,7 @@ variableStep chrom=chr19 span=150
 #	priority = 30 positions this as the third graph
 #	Note, one-relative coordinate system in use for this format
 track type=wiggle_0 name="fixedStep" description="fixed step" visibility=full autoScale=off viewLimits=0:1000 color=0,200,100 maxHeightPixels=100:50:20 graphType=colour priority=30
-fixedStep chrom=chr19 start=59307401 step=300 span=200
+fixedStep chrom=chr19 start=58307401 step=300 span=200
 1000
 900
 800

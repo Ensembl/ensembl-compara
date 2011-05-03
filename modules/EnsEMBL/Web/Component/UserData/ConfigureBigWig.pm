@@ -21,7 +21,7 @@ sub content {
   my $self = shift;
   my $current_species = $self->object->species_path($self->object->data_species); 
   
-  my $form = EnsEMBL::Web::Form->new('url_feedback', "$current_species/UserData/SaveImageconfig", 'post');
+  my $form = EnsEMBL::Web::Form->new('url_feedback', "$current_species/UserData/SaveExtraConfig", 'post');
 
   ## This next bit is a hack - we need to implement userdata configuration properly!
   $form->add_element(
@@ -77,6 +77,7 @@ sub content {
 #                      'notes' => 'You can set a fixed maximum or leave this field blank in which case automatic scaling will be done.'
 #                      );
 
+  $form->add_element('type' => 'Hidden', 'name' => 'code', 'value' => $self->hub->param('code'));
   $form->add_element('type' => 'Submit', 'value' => 'Save');
 
   return $form->render;

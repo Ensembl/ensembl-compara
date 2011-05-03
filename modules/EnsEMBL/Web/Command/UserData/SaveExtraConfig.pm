@@ -1,6 +1,6 @@
 # $Id$
 
-package EnsEMBL::Web::Command::UserData::SaveImageconfig;
+package EnsEMBL::Web::Command::UserData::SaveExtraConfig;
 
 use strict;
 
@@ -14,6 +14,11 @@ sub process {
   my $object   = $self->object;
   my $session  = $hub->session;
   my $redirect = $hub->species_path($hub->data_species) . '/UserData/RemoteFeedback';
+  my $param    = {};
+
+  my $data = $session->get_data(type => 'url', code => $hub->param('code'));
+  $data->{'colour'} = $hub->param('colour');
+  $session->set_data(%$data);
 
   $self->ajax_redirect($redirect, $param);  
 }

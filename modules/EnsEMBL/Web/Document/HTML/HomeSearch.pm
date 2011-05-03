@@ -9,7 +9,6 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub new {
   my ($class, $hub) = @_;
-  
   my $self = $class->SUPER::new(
     species      => $hub->species || 'Multi',
     species_defs => $hub->species_defs,
@@ -77,7 +76,7 @@ sub render {
     $sample_data = $species_defs->get_config('MULTI', 'GENERIC_DATA') || {};
   } else {
     $sample_data = { %{$species_defs->SAMPLE_DATA} };
-    $sample_data->{'GENE_TEXT'} = "gene $sample_data->{'GENE_TEXT'}" if $sample_data->{'GENE_TEXT'};
+    $sample_data->{'GENE_TEXT'} = "$sample_data->{'GENE_TEXT'}" if $sample_data->{'GENE_TEXT'};
   }
   
   my @examples = map $sample_data->{$_} || (), qw(GENE_TEXT LOCATION_TEXT SEARCH_TEXT);

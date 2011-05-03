@@ -16,12 +16,14 @@ sub init {
     'label_width'   => 100,     # width of labels on left-hand side
     'margin'        => 5,       # margin
     'spacing'       => 2,       # spacing
+    'opt_empty_tracks'  => 0,   # show empty tracks - not picked up by glyphset!
   });
 
   $self->create_menus(
     'TSE_transcript'      => 'Genes',
     'transcript_features' => 'Transcript features',
     'evidence'            => 'Evidence',
+
   );
 
   ## Add in additional

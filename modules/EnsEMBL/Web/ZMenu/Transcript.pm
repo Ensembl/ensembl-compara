@@ -14,7 +14,6 @@ sub content {
   my $transcript  = $object->Obj;
   my $translation = $transcript->translation;
   my @xref        = $object->display_xref;
-  
   $self->caption($xref[0] ? "$xref[3]: $xref[0]" : !$object->gene ? $stable_id : 'Novel transcript');
   
   $self->add_entry({
@@ -85,9 +84,11 @@ sub content {
   }
   
   if ($object->analysis) {
+    my $label = $transcript->analysis->display_label;
+    $label =~ s/gene/transcript/ig; #added in e62, should be able to be removed in e63
     $self->add_entry({
       type  => 'Analysis',
-      label => $transcript->analysis->display_label
+      label => $label
     });
 
     $self->add_entry({

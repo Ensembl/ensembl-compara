@@ -117,10 +117,10 @@ sub populate_tree {
     [], { 'command' => 'EnsEMBL::Web::Command::UserData::AttachRemote', 
     'availability' => 1, 'no_menu_entry' => 1 }
   );
-  $self->create_node( 'AttachFeedback', '',
+  $self->create_node( 'RemoteFeedback', '',
    [qw(
-      attach_feedback  EnsEMBL::Web::Component::UserData::AttachFeedback
-      attach_parsed    EnsEMBL::Web::Component::UserData::AttachParsed
+      remote_feedback  EnsEMBL::Web::Component::UserData::RemoteFeedback
+      remote_parsed    EnsEMBL::Web::Component::UserData::UploadParsed
     )],
     { 'availability' => 1, 'no_menu_entry' => 1 }
   );
@@ -133,10 +133,6 @@ sub populate_tree {
   $self->create_node( 'SaveRemote', '',
     [], { 'command' => 'EnsEMBL::Web::Command::UserData::SaveRemote', 
     'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'RemoteFeedback', '',
-   [qw(remote_feedback EnsEMBL::Web::Component::UserData::RemoteFeedback)], 
-    { 'availability' => 1, 'no_menu_entry' => 1 }
   );
   $self->create_node( 'ConfigureBigWig', '',
    [qw(remote_feedback EnsEMBL::Web::Component::UserData::ConfigureBigWig)], 

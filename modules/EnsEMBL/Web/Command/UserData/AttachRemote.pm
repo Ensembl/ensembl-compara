@@ -5,6 +5,7 @@ package EnsEMBL::Web::Command::UserData::AttachRemote;
 use strict;
 
 use EnsEMBL::Web::Root;
+use Digest::MD5    qw(md5_hex);
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -81,12 +82,13 @@ sub process {
         $redirect .= 'RemoteFeedback';
       }
       my $data = $session->add_data(
-        type     => 'url',
-        url      => $url,
-        name     => $name,
-        format   => $format,
-        style    => $format,
-        species  => $hub->data_species,
+        type      => 'url',
+        url       => $url,
+        name      => $name,
+        format    => $format,
+        style     => $format,
+        species   => $hub->data_species,
+        timestamp => time(),
         %$options,
       );
       my $config_method = 'configure_'.lc($format).'_views';
@@ -98,6 +100,8 @@ sub process {
         $self->object->move_to_user(type => 'url', code => $data->{'code'});
       }
       $param->{'format'} = $format;
+      $param->{'type'} = 'url';
+      $param->{'code'} = $data->{'code'};
     }
   } else {
     $redirect .= 'SelectRemote';

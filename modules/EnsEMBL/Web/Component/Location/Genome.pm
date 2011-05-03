@@ -27,7 +27,6 @@ sub content {
   my $sortable; #to make the data table sortable
   
   my ($html, $table, $user_pointers, $usertable, $features, $has_features, @all_features);
- 
   if (my $id = $hub->param('id') || $hub->referer->{'ENSEMBL_TYPE'} eq 'LRG') { ## "FeatureView"
     $features = $self->builder->create_objects('Feature', 'lazy');
     $features = $features ? $features->convert_to_drawing_parameters : {};
@@ -286,20 +285,22 @@ sub feature_tables {
 
         if ($feat_type =~ /Gene|Transcript|Domain/ && $row->{'label'}) {
           $feat_type = 'Gene' if $feat_type eq 'Domain';
-          my $param  = $feat_type eq 'Gene' ? 'g' : 't';
-          
+          my $is_lrg_link = $row->{'label'} =~ /^LRG_/ ? 1 : 0; #not a very satisfying way of identifying that the link must be to LRG, but can't see any other way
+          my $param  = $is_lrg_link ? 'lrg' : $feat_type eq 'Gene' ? 'g' : 't';
+          my $url_params = {
+            type    => $is_lrg_link ? 'LRG' : $feat_type,
+            action  => 'Summary',
+            $param  => $row->{'label'},
+            __clear => 1
+          };
+          unless ($is_lrg_link) {
+            $url_params->{'r'} = "$row->{'region'}:$row->{'start'}-$row->{'end'}";
+          }
           $names = sprintf(
             '<a href="%s">%s</a>',
-            $hub->url({
-              type    => $feat_type,
-              action  => 'Summary',
-              $param  => $row->{'label'},
-              r       => "$row->{'region'}:$row->{'start'}-$row->{'end'}",
-              __clear => 1
-            }),
+            $hub->url($url_params),
             $row->{'label'}
           );
-          
           $data_row = { extname => $row->{'extname'}, names => $names, loc => $contig_link };
         } else {
           if ($feat_type !~ /align|RegulatoryFactor|ProbeFeature/i && $row->{'label'}) {

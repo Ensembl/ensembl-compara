@@ -285,6 +285,7 @@ sub _content {
   
   $al_obj->{'transcript_evidence'} = $t_evidence;
 
+
   # add info on additional supporting_evidence (exon level) (mot Vega)
   my $e_evidence = {};
   my $evidence_checks;
@@ -296,8 +297,9 @@ sub _content {
       foreach my $evi (@{$exon->get_all_supporting_features}) {
         my $hit_name = $evi->hseqname;
 
-        # only proceed (for ensembl) if this hit name has *not* been used as transcript evidence
-        next EVI if exists $t_evidence->{$hit_name};
+        # only proceed (for ensembl) if this hit name has *not* been used as transcript evidence 
+        # (commented out in e62)
+#        next EVI if exists $t_evidence->{$hit_name};
 
         my $hit_seq_region_start = $evi->seq_region_start;
         my $hit_seq_region_end   = $evi->seq_region_end;

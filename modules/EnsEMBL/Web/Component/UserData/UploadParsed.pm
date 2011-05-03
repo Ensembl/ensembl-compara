@@ -37,52 +37,59 @@ sub content_ajax {
   my $html;
   
   if ($data) {
-    my $size = int($data->{'filesize'} / (1024 ** 2));
+    my $format = $data->{'format'};
+    my @remote = @{$hub->species_defs->USERDATA_REMOTE_FORMATS};
+    if (grep(/^$format$/, @remote)) {
+      $html .= qq(<p>We cannot parse large file formats to navigate to the nearest feature. Please select appropriate coordinates after closing this window</p>);
+    }
+    else {
+      my $size = int($data->{'filesize'} / (1024 ** 2));
     
-    if ($size > 10) {
-      $html .= "<p>Your uncompressed file is over $size MB, which may be very slow to parse and load. Please consider uploading a smaller dataset.</p>";
-    } else {
-      my $content;
+      if ($size > 10) {
+        $html .= "<p>Your uncompressed file is over $size MB, which may be very slow to parse and load. Please consider uploading a smaller dataset.</p>";
+      } 
+      else {
+        my $content;
 
-      if ($type eq 'url') {
-        my $response = get_url_content($data->{'url'});
-        $content = $response->{'content'};
-      }
-      elsif ($type eq 'upload') {
-        my $file = new EnsEMBL::Web::TmpFile::Text(filename => $data->{'filename'}, extension => $data->{'extension'});
-        $content = $file->retrieve;
-      }
+        if ($type eq 'url') {
+          my $response = get_url_content($data->{'url'});
+          $content = $response->{'content'};
+        }
+        elsif ($type eq 'upload') {
+          my $file = new EnsEMBL::Web::TmpFile::Text(filename => $data->{'filename'}, extension => $data->{'extension'});
+          $content = $file->retrieve;
+        }
 
-      if ($content) {      
-        my $error=$parser->parse($content, $data->{'format'});
+        if ($content) {      
+          my $error=$parser->parse($content, $data->{'format'});
 
-        if ($parser->{'feature_count'}) {      
-          $data->{'format'}  = $parser->format unless $data->{'format'};
-          $data->{'style'}   = $parser->style;
-          $data->{'nearest'} = $parser->nearest;
+          if ($parser->{'feature_count'}) {      
+            $data->{'format'}  = $parser->format unless $data->{'format'};
+            $data->{'style'}   = $parser->style;
+            $data->{'nearest'} = $parser->nearest;
       
-          $session->set_data(%$data);
+            $session->set_data(%$data);
       
-          $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $parser->feature_count;
+            $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $parser->feature_count;
       
-          if ($parser->nearest) {
-            $html .= sprintf '<p class="space-below"><strong>Go to %s region with data</strong>: ', $hub->referer->{'params'}{'r'} ? 'nearest' : 'first';
-            $html .= sprintf '<a href="%s/Location/View?r=%s">%s</a></p>', $hub->species_path($data->{'species'}), $parser->nearest, $parser->nearest;
-            $html .= '<p class="space-below">or</p>';
+            if ($parser->nearest) {
+              $html .= sprintf '<p class="space-below"><strong>Go to %s region with data</strong>: ', $hub->referer->{'params'}{'r'} ? 'nearest' : 'first';
+              $html .= sprintf '<a href="%s/Location/View?r=%s">%s</a></p>', $hub->species_path($data->{'species'}), $parser->nearest, $parser->nearest;
+              $html .= '<p class="space-below">or</p>';
+            }
+          }
+          else {
+            $html .= sprintf '<p class="space-below">None of the features in your file could be mapped to the %s genome. Please check that you have selected the right species!</p><p class="space-below"><a href="/%s/UserData/DeleteUpload?type=upload;goto=SelectFile;code=%s" class="modal_link">Delete upload and start again</a></p>', $data->{'species'}, $self->hub->species, $self->hub->param('code');
+					  if ($error){
+						  if($error eq $parser->nearest){$error = "Region does not exist:\"$error\"";}
+						  $html .= sprintf '<p>Information:<pre>%s</pre></p>',$error;
+					  }
           }
         }
-        else {
-          $html .= sprintf '<p class="space-below">None of the features in your file could be mapped to the %s genome. Please check that you have selected the right species!</p><p class="space-below"><a href="/%s/UserData/DeleteUpload?type=upload;goto=SelectFile;code=%s" class="modal_link">Delete upload and start again</a></p>', $data->{'species'}, $self->hub->species, $self->hub->param('code');
-					if ($error){
-						if($error eq $parser->nearest){$error = "Region does not exist:\"$error\"";}
-						$html .= sprintf '<p>Information:<pre>%s</pre></p>',$error;
-					}
-        }
       }
-      
-      $html .= '<p>Close this window to return to current page</p>';
     }
   }
+  $html .= '<p>Close this window to return to current page</p>';
 
   return $html;
 }

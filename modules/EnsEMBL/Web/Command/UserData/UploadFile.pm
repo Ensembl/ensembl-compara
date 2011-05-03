@@ -69,7 +69,9 @@ sub upload {
 ## Separate out the upload, to make code reuse easier
   my ($method, $hub) = @_;
   my $param = {};
-  my ($error, $format, $filename, $full_ext, %args);
+  my ($error, $format, $full_ext, %args);
+  my @orig_path = split('/', $hub->param($method));
+  my $filename = $orig_path[-1];
 
   ## Has the user specified a format?
   my $f_param = $hub->param('format');
@@ -77,11 +79,8 @@ sub upload {
     $format = $f_param;
   }
   else {
-
     ## Try to guess the format from the extension
     unless ($method eq 'text') {
-      my @orig_path = split('/', $hub->param($method));
-      $filename = $orig_path[-1];
       my @parts = split('\.', $filename);
       my $ext = $parts[-1];
       if ($ext =~ /gz/i) {
@@ -99,11 +98,13 @@ sub upload {
     if ($method eq 'text') {
       $name = 'Data';
     } else {
+      warn ">>> FILE $filename";
       $name = $filename;
       $args{'filename'} = $filename;
     }
   }
   $param->{'name'} = $name;
+  warn ">>> SET NAME TO $name";
 
   if ($method eq 'url') {
     my $url = $hub->param('url');
