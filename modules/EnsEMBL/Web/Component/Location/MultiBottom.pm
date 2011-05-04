@@ -23,7 +23,7 @@ sub content {
   
   return if $hub->param('show_panels') eq 'top';
   
-  my $threshold = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE||1);
+  my $threshold = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
   
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
   
@@ -37,33 +37,22 @@ sub content {
   my $base_url        = $hub->url($hub->multi_params);
   my $s               = $hub->param('show_panels') eq 'both' ? 3 : 2;
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
+  my $multi_config    = $hub->get_imageconfig('MultiBottom', 'Multi', 'Multi');
+  my $methods         = { BLASTZ_NET => $multi_config->get_option('opt_pairwise_blastz', 'values'), TRANSLATED_BLAT_NET => $multi_config->get_option('opt_pairwise_tblat', 'values') };
+  my $join_alignments = grep $_, values %$methods;
+  my $join_genes      = $multi_config->get_option('opt_join_genes', 'values');
+  my $compara_db      = $join_genes ? new EnsEMBL::Web::DBSQL::DBConnection($primary_species)->_get_compara_database : undef;
   my $i               = 1;
-  my $methods         = {};
-  my $join_genes;
-  my $join_alignments;
-  my $compara_db;
   my $primary_image_config;
   my @images;
   
   foreach (@$slices) {
     my $image_config   = $hub->get_imageconfig('MultiBottom', "contigview_bottom_$i", $_->{'species'});
-    my $highlight_gene = $hub->param('g' . ($i-1));
-    
-    if (!defined $join_alignments) {
-      $methods->{'BLASTZ_NET'}          = $image_config->get_option('opt_pairwise_blastz', 'values');
-      $methods->{'TRANSLATED_BLAT_NET'} = $image_config->get_option('opt_pairwise_tblat', 'values');
-      
-      $join_alignments = grep $_, values %$methods;
-    }
-    
-    if (!defined $join_genes) {
-      $join_genes = $image_config->get_option('opt_join_genes', 'values');
-      $compara_db = new EnsEMBL::Web::DBSQL::DBConnection($primary_species)->_get_compara_database if $join_genes
-    }
+    my $highlight_gene = $hub->param('g' . ($i - 1));
     
     $image_config->set_parameters({
       container_width => $_->{'slice'}->length,
-      image_width    => $hub->param('i_width') || $self->image_width,
+      image_width     => $hub->param('i_width') || $self->image_width,
       slice_number    => "$i|$s",
       multi           => 1,
       compara         => $i == 1 ? 'primary' : $_->{'species'} eq $primary_species ? 'paralogue' : 'secondary',
@@ -106,7 +95,7 @@ sub content {
         }
         
         if ($join_alignments) {
-          my @sl = map { $slices->[$_]->{'species'} eq $primary_species ? {} : { species => $slices->[$_]->{'species'}, ori => $slices->[$_]->{'strand'} }} $i-1, $i;
+          my @sl = map { $slices->[$_]->{'species'} eq $primary_species ? {} : { species => $slices->[$_]->{'species'}, ori => $slices->[$_]->{'strand'} }} $i - 1, $i;
           
           $primary_image_config->get_node('scalebar')->set('caption', $short_name);
           $primary_image_config->multi($methods, 1, $max, @sl);

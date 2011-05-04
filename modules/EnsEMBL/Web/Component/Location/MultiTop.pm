@@ -16,32 +16,34 @@ sub _init {
 
 sub content {
   my $self = shift;
+  my $hub  = $self->hub;
   
-  my $object = $self->object;
+  return if $hub->param('show_panels') eq 'bottom';
   
-  return if $object->param('show_panels') eq 'bottom';
-  
-  my $threshold       = 1e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1); # get a slice corresponding to the region to be shown for Navigational Overview
+  my $threshold       = 1e6 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1); # get a slice corresponding to the region to be shown for Navigational Overview
   my $image_width     = $self->image_width;
-  my $primary_species = $object->species;
-  my $slices          = $object->multi_locations;
+  my $primary_species = $hub->species;
+  my $slices          = $self->object->multi_locations;
   my $max             = scalar @$slices;
   my $i               = 1;
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
   my $compara_db      = new EnsEMBL::Web::DBSQL::DBConnection($primary_species)->_get_compara_database;
+  my $join_genes      = $hub->get_imageconfig('MultiTop', 'Multi', 'Multi')->get_option('opt_join_genes', 'values');
   my @images;
   
   foreach (@$slices) {
-    my $highlight_gene = $object->param('g' . ($i-1));
-    my $slice = $_->{'slice'};
+    my $highlight_gene    = $hub->param('g' . ($i - 1));
+    my $slice             = $_->{'slice'};
+    my $image_config      = $hub->get_imageconfig('MultiTop', "contigviewtop_$i", $_->{'species'});
+    my $annotation_status = $image_config->get_node('annotation_status');
     
     if ($slice->length <= $threshold) {
       if ($_->{'length'} < $threshold) {
         $slice = $slice->adaptor->fetch_by_region($slice->coord_system->name, $slice->seq_region_name, 1, $slice->seq_region_length, 1);
       } else {
         my $c = int $slice->centrepoint;
-        my $s = ($c - $threshold/2) + 1;
-        $s = 1 if $s < 1;
+        my $s = ($c - $threshold / 2) + 1;
+           $s = 1 if $s < 1;
         my $e = $s + $threshold - 1;
         
         if ($e > $slice->seq_region_length) {
@@ -53,9 +55,6 @@ sub content {
       }
     }
     
-    my $image_config = $object->get_imageconfig('MultiTop', "contigviewtop_$i", $_->{'species'});
-    my $join_genes   = $image_config->get_option('opt_join_genes', 'values');
-    
     $image_config->set_parameters({
       container_width => $slice->length,
       image_width     => $image_width,
@@ -64,19 +63,22 @@ sub content {
       compara         => $i == 1 ? 'primary' : $_->{'species'} eq $primary_species ? 'paralogue' : 'secondary',
       join_types      => $gene_join_types
     });
- 
-    if ($image_config->get_node('annotation_status')) {
-      $image_config->get_node('annotation_status')->set('caption', '');
-      $image_config->get_node('annotation_status')->set('menu', 'no');
+    
+    if ($annotation_status) {
+      $annotation_status->set('caption', '');
+      $annotation_status->set('menu', 'no');
     };
     
     $image_config->get_node('ruler')->set('caption', $_->{'short_name'});
-    $image_config->join_genes(map $_ >= 0 && $_ < $max ? $slices->[$_]->{'species'} : '', $i-2, $i) if $join_genes;
     $image_config->highlight($highlight_gene) if $highlight_gene;
     
-    $slice->adaptor->db->set_adaptor('compara', $compara_db) if $join_genes;
+    if ($join_genes) {
+      $image_config->join_genes(map $_ >= 0 && $_ < $max ? $slices->[$_]->{'species'} : '', $i-2, $i);
+      $slice->adaptor->db->set_adaptor('compara', $compara_db);
+    }
     
     push @images, $slice, $image_config;
+    
     $i++;
   }
 
@@ -88,9 +90,7 @@ sub content {
   $image->set_button('drag', 'title' => 'Click or drag to centre display');
   $image->{'panel_number'} = 'top';
   
-  my $html = $image->render;
-  
-  return $html;
+  return $image->render;
 }
 
 1;
