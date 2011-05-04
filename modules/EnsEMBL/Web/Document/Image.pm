@@ -273,7 +273,6 @@ sub render_image_map {
   };
   
   $map .= '<input type="hidden" class="panel_type" value="ImageMap" />' unless $self->{'no_panel_type'};
-  $map .= $self->hover_labels;
   
   return $map;
 }
@@ -323,6 +322,76 @@ sub hover_labels {
   return $html;
 }
 
+sub track_boundaries {
+  my $self            = shift;
+  my $container       = $self->drawable_container;
+  my $config          = $container->{'config'};
+  my $spacing         = $config->get_parameter('spacing');
+  my $top             = $config->get_parameter('margin') * 2 - $spacing;
+  my @sortable_tracks = grep { $_->get('display') ne 'off' } $config->get_sortable_tracks;
+  my %track_ids       = map  { $_->id => 1 } @sortable_tracks;
+  my %strand_map      = ( f => 1, r => -1 );
+  my @boundaries;
+  
+  foreach my $glyphset (@{$container->{'glyphsets'}}) {
+    next unless scalar @{$glyphset->{'glyphs'}};
+    
+    my $height = $glyphset->height + $spacing;
+    my $type   = $glyphset->_type;
+    my $node;  
+    
+    if ($track_ids{$type}) {
+      while (scalar @sortable_tracks) {
+        my $track  = $sortable_tracks[0];
+        my $strand = $track->get('drawing_strand');
+        
+        last if $type eq $track->id && (($strand && $strand_map{$strand} == $glyphset->strand) || !$strand);
+        shift @sortable_tracks;
+      }
+      
+      $node = shift @sortable_tracks;
+    }
+    
+    push @boundaries, [ $top, $height, $type, $node->get('drawing_strand'), $node->get('order') ] if $node && $node->get('sortable') && !scalar keys %{$glyphset->{'tags'}};
+    
+    $top += $height;
+  }
+  
+  return \@boundaries;
+}
+
+sub moveable_tracks {
+  my ($self, $image) = @_;
+  my $config = $self->drawable_container->{'config'};
+  
+  return unless $config->get_parameter('sortable_tracks') eq 'drag';
+  
+  my $species = $config->species;
+  my $url     = $image->URL;
+  my ($top, $html);
+  
+  foreach (@{$self->track_boundaries}) {
+    my ($t, $h, $type, $strand, $order) = @$_;
+    
+    $html .= sprintf(
+      '<li class="%s%s" style="height:%spx;background:url(%s) 0 %spx%s">
+        <p class="handle" style="height:%spx"%s></p>
+        <i class="%s"></i>
+      </li>',
+      $type, $strand ? " $strand" : '',
+      $h, $url, 3 - $t,
+      $h == 0 ? ';display:none' : '',
+      $h - 1,
+      $strand ? sprintf(' title="%s strand"', $strand eq 'f' ? 'Forward' : 'Reverse') : '',
+      $order
+    );
+    
+    $top ||= $t - 3 if $h;
+  }
+  
+  return qq{<div class="boundaries_wrapper" style="top:${top}px"><div class="up"></div><ul class="$species boundaries">$html</ul><div class="down"></div></div>} if $html;
+}
+
 sub render {
   my ($self, $format) = @_;
   return unless $self->drawable_container;
@@ -332,8 +401,7 @@ sub render {
     return;
   }
 
-  my $html = $self->introduction;
-
+  my $html    = $self->introduction;
   my $image   = new EnsEMBL::Web::TmpFile::Image;
   my $content = $self->drawable_container->render('png');
 
@@ -370,7 +438,7 @@ sub render {
   } elsif ($self->button eq 'yes') {
     $html .= $self->render_image_button($image);
     $html .= sprintf '<div style="text-align: center; font-weight: bold">%s</div>', $self->caption if $self->caption;
-  } elsif ($self->button eq 'drag') {   
+  } elsif ($self->button eq 'drag') {
     my $img = $self->render_image_tag($image);
 
     # continue with tag html
@@ -379,7 +447,7 @@ sub render {
     # outside this module
     
     my $export;
- 
+    
     if ($self->{'export'}) {
       my @formats = (
         { f => 'pdf',     label => 'PDF' },
@@ -419,10 +487,14 @@ sub render {
       <div class="drag_select" style="margin:0px auto; border:solid 1px black; position:relative; width:%dpx">
         %s
         %s
+        %s
+        %s
       </div>',
       $image->width,
       $img,
-      $self->imagemap eq 'yes' ? $self->render_image_map($image) : ''
+      $self->imagemap eq 'yes' ? $self->render_image_map($image) : '',
+      $self->moveable_tracks($image),
+      $self->hover_labels
     );
     
     $html .= sprintf('
@@ -441,16 +513,18 @@ sub render {
     $html .= join('',
       $self->render_image_tag($image),
       $self->imagemap eq 'yes' ? $self->render_image_map($image) : '',
+      $self->moveable_tracks($image),
+      $self->hover_labels,
       $self->caption ? sprintf('<div style="text-align:center; font-weight:bold">%s</div>', $self->caption) : ''
     );
   }
 
   $html .= $self->tailnote;
-    
+  
   $self->{'width'} = $image->width;
   $self->{'species_defs'}->timer_push('Image->render ending', undef, 'draw');
   
-  return $html
+  return $html;
 }
 
 1;
