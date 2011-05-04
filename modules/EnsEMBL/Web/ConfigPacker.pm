@@ -997,7 +997,6 @@ sub _summarise_compara_db {
     
     my $key = $sections{uc $row->[0]} || uc $row->[0];
     
-    $self->db_tree->{$db_name}{$key}{'merged'}{$species2}  = $valid_species{$species2};
     $self->db_tree->{$db_name}{$key}{$species1}{$species2} = $valid_species{$species2};
   }             
   

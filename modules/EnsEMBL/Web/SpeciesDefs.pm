@@ -519,95 +519,6 @@ sub _merge_db_tree {
   $tree->{$key} = $t;
 }
 
-sub _created_merged_table_hash {
-  my $self      = shift;
-  my $tree      = shift;
-  my $databases = {};
-  my $extra     = {};
-  
-  foreach my $sp (@$ENSEMBL_DATASETS) {
-    # v37 hack to exclude Danio - should get it out of multi tree ($self->multi_hash->{'DATABASE_COMPARA'}->{'VEGA_COMPARA'}) but as this has not been created yet need another way
-    next if $self->ENSEMBL_SITETYPE eq 'Vega' && $sp eq 'Danio_rerio';
-    my $species_dbs = $tree->{$sp}{'databases'};
-    foreach my $db (keys %$species_dbs) {
-      $databases->{$db} ||= { tables => {}};
-      foreach my $tb (keys %{$species_dbs->{$db}{'tables'}}) {
-        my $t_hash = $species_dbs->{$db}{'tables'}{$tb};
-        next unless ref $t_hash eq 'HASH';
-
-        foreach my $k1 (keys %$t_hash) {
-          my $x1 = $t_hash->{$k1};
-
-          if (ref $x1 eq 'HASH') {
-            foreach my $k2 (keys %$x1) {
-              my $x2 = $x1->{$k2};
-              $k2 = lc $k2;
-
-              if (ref $x2 eq 'HASH') {
-                foreach my $k3 (keys %$x2) {
-                  my ($name_overwrite,$key);
-                  my $x3 = $x2->{$k3};
-                  if (ref $x3 eq 'HASH') {
-                    foreach my $web_data_key (keys %$x3) {
-		      # do we overwite the display name in the merged species with the multi_name entry ?
-                      $name_overwrite = $x3->{$web_data_key} if $web_data_key eq 'multi_name';
-                    }
-
-                    my $x3 = { %{$x2->{$k3}} };
-                    $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3} ||= $x3;
-
-		    #use lowercase throughout
-                    if (exists($databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3}{'key'})) {
-                      my $key = lc $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3}{'key'};
-                      $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3}{'key'} = $key;
-                    }
-
-                    if ($name_overwrite) {
-                      # shouldn't have to add new name to both but some were failing without webdata (the second) entry
-                      $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{'name'}      = $name_overwrite;
-                      $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3}{'name'} = $name_overwrite;
-                    }
-                  }
-		  else {
-		    #all non-webdata analysis_description entries
-#		    warn sprintf "A:  %30s %20s %20s %20s %20s %20s %s\n", $sp, $db, $tb, $k1, $k2, $k3, $x2->{$k3} if $sp eq 'Ornithorhynchus_anatinus' && $tb eq 'gene';
-                    $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3} ||= $x2->{$k3};
-                  }
-#		  warn sprintf "A:  %30s %20s %20s %20s %20s %20s %s\n", $sp, $db, $tb, $k1, $k2, $k3, $x2->{$k3} if $tb eq 'gene';
-                }
-              }
-	      else {
-		#this makes a note of coord_systems (variation has other info) - not sure of relevance
-                $databases->{$db}{'tables'}{$tb}{$k1}{$k2} ||= $x2;
-#		warn sprintf "B:  %30s %20s %20s %20s %20s %20s %s\n", $sp, $db, $tb, $k1, $k2, " ", $x2 if $tb eq 'gene';
-              }
-            }
-          }
-	  else {
-	    #this makes a note of the number of features for each logic name for each database type / species combination
-	    #will of course flatten it out and not at all sure of the relevance of this
-            $databases->{$db}{'tables'}{$tb}{$k1} ||= $x1;
-#	    warn sprintf "C:  %30s %20s %20s %20s %20s %20s %s\n", $sp, $db, $tb, $k1, " ", " ", $x1 if $tb eq 'gene';
-          }
-        }
-      }
-    }
-
-    foreach my $n (keys %{$tree->{$sp}}) {
-      if ($n =~ /^\w+_like_databases$/) {
-        foreach my $db (@{$tree->{$sp}{$n}||[]}) {
-          $extra->{$n}{$db}++;
-        }
-      }
-    }
-  }
-  
-  $extra->{$_} = [ sort keys %{$extra->{$_}} ] for keys %$extra;
-  $extra->{'databases'} = $databases;
-  
-  return $extra;
-}
-
 sub _get_valid_urls {
   ### Searches plugins for children of Command
   ### N.B. Not currently used - under development
@@ -707,9 +618,6 @@ sub _parse {
     }
   }
   
-  # Fake a databases/tables hash so we can mess around in ImageConfig with an all species configuration
-  $tree->{'merged'} = $self->_created_merged_table_hash($tree);
-  $self->_info_line('Creating', 'merged species config');
   $self->_info_log('Parser', 'Post processing ini files');
   
   $self->_merge_in_dhtml($tree);
