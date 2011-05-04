@@ -1,8 +1,8 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Location::MultiIdeogram;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
 
 use base qw(EnsEMBL::Web::Component::Location);
 
@@ -14,18 +14,16 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  
-  my $object = $self->object;
+  my $self        = shift;
+  my $hub         = $self->hub;
   my $image_width = $self->image_width;
-  my $i = 1;
+  my $i           = 1;
   my @images;
   
-  my $slices = $object->multi_locations;
-  
-  foreach (@$slices) {
-    my $image_config = $object->get_imageconfig('MultiIdeogram', "chromosome_$i", $_->{'species'});
-    my $chromosome = $_->{'slice'}->adaptor->fetch_by_region(undef, $_->{'name'});
+  foreach (@{$self->object->multi_locations}) {
+    my $image_config      = $hub->get_imageconfig('chromosome', "chromosome_$i", $_->{'species'});
+    my $chromosome        = $_->{'slice'}->adaptor->fetch_by_region(undef, $_->{'name'});
+    my $annotation_status = $image_config->get_node('annotation_status');
     
     $image_config->set_parameters({
       container_width => $chromosome->seq_region_length,
@@ -34,9 +32,9 @@ sub content {
       multi           => 1
     });
     
-    if ($image_config->get_node('annotation_status')) {
-      $image_config->get_node('annotation_status')->set('caption', '');
-      $image_config->get_node('annotation_status')->set('menu', 'no');
+    if ($annotation_status) {
+      $annotation_status->set('caption', '');
+      $annotation_status->set('menu', 'no');
     };
 
     $image_config->get_node('ideogram')->set('caption', $_->{'short_name'});
@@ -53,9 +51,7 @@ sub content {
   $image->set_button('drag', 'title' => 'Click or drag to centre display');
   $image->{'panel_number'} = 'ideogram';
   
-  my $html = $image->render;
-  
-  return $html;
+  return $image->render;
 }
 
 1;
