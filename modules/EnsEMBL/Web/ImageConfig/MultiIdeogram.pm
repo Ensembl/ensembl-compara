@@ -1,51 +1,35 @@
+# $Id$
+
 package EnsEMBL::Web::ImageConfig::MultiIdeogram;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
-sub mergeable_config {
-  return 1;
-}
-
 sub init {
-  my ($self) = @_;
+  my $self = shift;
 
   $self->set_parameters({
-    'title'         => 'Chromosome panel',
-    'show_buttons'  => 'no',  # do not show +/- buttons
-    'button_width'  => 8,     # width of red "+/-" buttons
-    'show_labels'   => 'yes', # show track names on left-hand side
-    'label_width'   => 113,   # width of labels on left-hand side
-    'margin'        => 5,     # margin
-    'spacing'       => 2,     # spacing
-    'image_width'   => 800    ### not here surely
+    title         => 'Chromosome panel',
+    show_labels   => 'yes', # show track names on left-hand side
+    label_width   => 113,   # width of labels on left-hand side
+    image_width   => 800    ### not here surely
   });
-
+  
   $self->create_menus(
-    'decorations' => 'Chromosome',
+    decorations => 'Chromosome',
   );
-
-## Now we have a number of tracks which we have to manually add...
-  $self->add_tracks( 'decorations', 
-    [ 'ideogram',           'Ideogram',            'ideogram', {
-      'display' => 'normal',
-      'strand'=>'r',
-      'colourset' => 'ideogram'
-    } ]
+  
+  $self->add_tracks('decorations', 
+    [ 'ideogram', 'Ideogram', 'ideogram',  { display => 'normal', strand => 'r', colourset => 'ideogram' }],
+    [ 'draggable', '',        'draggable', { display => 'normal' }]
   );
-## Load all tracks from the database....
-  $self->load_tracks();
-
+  
+  $self->load_tracks;
+  
   $self->modify_configs(
-    [qw(decorations)],
-    {qw(short_labels 1)}
-  );
-
-  $self->add_tracks( 'decorations', 
-    [ 'draggable', '', 'draggable', { 'display' => 'normal' } ]
+    [ 'decorations' ],
+    { short_labels => 1 }
   );
 }
 1;
