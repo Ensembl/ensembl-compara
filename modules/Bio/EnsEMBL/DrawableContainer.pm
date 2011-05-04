@@ -7,37 +7,34 @@
 package Bio::EnsEMBL::DrawableContainer;
 
 use strict;
-no warnings "uninitialized";
-use Sanger::Graphics::Glyph::Rect;
+
 use Time::HiRes qw(time);
+
+use Sanger::Graphics::Glyph::Rect;
 
 use base qw(Sanger::Graphics::Root);
 
 sub new {
-  my $class          = shift;
-  my $self           = $class->_init(@_); 
-  my $primary_config = $self->{'config'};
-  my $show_labels    = $primary_config->get_parameter('show_labels')    || 'yes';
-  my $label_width    = $primary_config->get_parameter('label_width')    || 100;
-  my $margin         = $primary_config->get_parameter('margin')         || 5;
-  my $trackspacing   = $primary_config->get_parameter('spacing')        || 2;
-  my $image_width    = $primary_config->get_parameter('image_width')    || 700;
-  my $padding        = $primary_config->get_parameter('padding')    || 0;
-  my $colours        = $primary_config->species_defs->colour('classes') || {};  
-  my $label_start    = $margin;
-  my $panel_start    = $label_start + ($show_labels  eq 'yes' ? $label_width  + $margin : 0);
-  my $panel_width    = $image_width - $panel_start - $margin;
-  my $inter_space    = $primary_config->get_parameter('intercontainer');
-     $inter_space    = 2 * $margin unless defined $inter_space;
-  
-
-  $self->{'__extra_block_spacing__'} -= $inter_space;
-  ## loop over all turned on & tuned in glyphsets
-
-  ## If strandedness -show always on the same strand - o/w show forward/reverse
-  my @strands_to_show = $self->{'strandedness'} == 1 ? (-1) : (1, -1);
+  my $class           = shift;
+  my $self            = $class->_init(@_); 
+  my $primary_config  = $self->{'config'};
+  my $sortable_tracks = $primary_config->get_parameter('sortable_tracks') eq 'drag';
+  my $show_labels     = $primary_config->get_parameter('show_labels')    || 'yes';
+  my $label_width     = $primary_config->get_parameter('label_width')    || 100;
+  my $margin          = $primary_config->get_parameter('margin')         || 5;
+  my $padding         = $primary_config->get_parameter('padding')        || 0;
+  my $trackspacing    = $primary_config->get_parameter('spacing')        || 2;
+  my $image_width     = $primary_config->get_parameter('image_width')    || 700;
+  my $colours         = $primary_config->species_defs->colour('classes') || {};
+  my $label_start     = $margin;
+  my $panel_start     = $label_start + ($show_labels  eq 'yes' ? $label_width  + $margin : 0) + ($sortable_tracks ? 10 : 0);
+  my $panel_width     = $image_width - $panel_start - $margin;
   my $yoffset         = $margin;
   my $iteration       = 0;
+  my $inter_space     = $primary_config->get_parameter('intercontainer');
+     $inter_space     = 2 * $margin unless defined $inter_space;
+  
+  $self->{'__extra_block_spacing__'} -= $inter_space;
 
   ## Loop through each pair of "container / config"s
   foreach my $CC (@{$self->{'contents'}}) {
@@ -76,50 +73,37 @@ sub new {
       
       push @glyphsets, $glyphset unless $@;
     } else {
-      my @configs = $config->glyphset_configs;
-      
-      for my $strand (@strands_to_show) {
-        ## This is much simplified as we just get a row of configurations
-        for my $row_config ($strand == 1 ? reverse @configs : @configs) {
-          my $display = $row_config->get('display') || ($row_config->get('on') eq 'on' ? 'normal' : 'off');
-          
-          next if $display eq 'off';
-          
-          if (!$self->{'strandedness'}) { ## Don't skip if strandedness is set to 1 as we don't want to miss any tracks out
-            my $str_tmp = $row_config->get('strand');
-            
-            if (defined $str_tmp) {                     ## Is this to be shown on a particular strand?
-              next if $str_tmp eq 'r' && $strand == 1;  ## Show on reverse strand only
-              next if $str_tmp eq 'f' && $strand == -1; ## Show on forward strand only
-            }
-          }
-          
-          ## create a new glyphset for this row
-          my $glyphset  = $row_config->get('glyphset') || $row_config->code;
-          my $classname = "$self->{'prefix'}::GlyphSet::$glyphset";
-          
-          next unless $self->dynamic_use($classname);
-          
-          my $ew_glyphset;
-          
-          eval { # Generic glyphsets need to have the type passed as a fifth parameter
-            $ew_glyphset = $classname->new({
-              container   => $container,
-              config      => $config,
-              my_config   => $row_config,
-              strand      => $strand,
-              extra       => {},
-              highlights  => $self->{'highlights'},
-              display     => $display
-            });
-          };
-          
-          if ($@ || !$ew_glyphset) {
-            my $reason = $@ || 'No reason given just returns undef';
-            warn "GLYPHSET: glyphset $classname failed at ", gmtime, "\n", "GLYPHSET: $reason";
-          } else {
-            push @glyphsets, $ew_glyphset;
-          }
+      ## This is much simplified as we just get a row of configurations
+      foreach my $row_config (@{$config->glyphset_configs}) {
+        my $display = $row_config->get('display') || ($row_config->get('on') eq 'on' ? 'normal' : 'off');
+        next if $display eq 'off';
+        
+        my $strand = $row_config->get('drawing_strand') || $row_config->get('strand');
+        next if $self->{'strandedness'} && $strand eq 'f';
+        
+        my $classname = "$self->{'prefix'}::GlyphSet::" . $row_config->get('glyphset');
+        next unless $self->dynamic_use($classname);
+        
+        my $glyphset;
+        
+        ## create a new glyphset for this row
+        eval {
+          $glyphset = $classname->new({
+            container   => $container,
+            config      => $config,
+            my_config   => $row_config,
+            strand      => $strand eq 'f' ? 1 : -1,
+            extra       => {},
+            highlights  => $self->{'highlights'},
+            display     => $display
+          });
+        };
+        
+        if ($@ || !$glyphset) {
+          my $reason = $@ || 'No reason given just returns undef';
+          warn "GLYPHSET: glyphset $classname failed at ", gmtime, "\n", "GLYPHSET: $reason";
+        } else {
+          push @glyphsets, $glyphset;
         }
       }
     }
@@ -133,8 +117,8 @@ sub new {
     $config->{'transform'}->{'absolutescalex'} = 1;
     $config->{'transform'}->{'translatex'}     = $panel_start; ## because our label starts are < 0, translate everything back onto canvas
 
-    ## set the X-locations for each of the bump buttons/labels
-    for my $glyphset (@glyphsets) {
+    ## set the X-locations for each of the bump labels
+    foreach my $glyphset (@glyphsets) {
       next unless defined $glyphset->label;
       my @res = $glyphset->get_text_width($label_width, $glyphset->label->{'text'}, '', 'ellipsis' => 1, 'font' => $glyphset->label->{'font'}, 'ptsize' => $glyphset->label->{'ptsize'});
       
@@ -152,12 +136,13 @@ sub new {
     }
     
     ## pull out alternating background colours for this script
-    ## mh18 21/02/2011 allow setting of a legend colour via the ini file
     my $bgcolours = [
       $config->get_parameter('bgcolour1') || 'background1',
       $config->get_parameter('bgcolour2') || 'background2'
     ];
-
+    
+    $bgcolours->[1] = $bgcolours->[0] if $sortable_tracks;
+    
     my $bgcolour_flag = $bgcolours->[0] ne $bgcolours->[1];
 
     ## go ahead and do all the database work
@@ -165,7 +150,7 @@ sub new {
     
     my $export_cache;
     
-    for my $glyphset (@glyphsets) {
+    foreach my $glyphset (@glyphsets) {
       ## load everything from the database
       my $name         = $glyphset->{'my_config'}->id;
       my $ref_glyphset = ref $glyphset;
@@ -198,7 +183,7 @@ sub new {
       if ($@ || scalar @{$glyphset->{'glyphs'}} == 0) {
         warn $@ if $@;
         
-	      $self->timer_push('track finished', 3);
+        $self->timer_push('track finished', 3);
         $self->timer_push(sprintf("INIT: [ ] $name '%s'", $glyphset->{'my_config'}->get('name')), 2);
         next;
       }
@@ -211,11 +196,11 @@ sub new {
       if ($bgcolour_flag && $glyphset->_colour_background) {
         ## colour the area behind this strip
         my $background = new Sanger::Graphics::Glyph::Rect({
-          x             => -$label_width - $margin * 3/2 -$padding,
-          y             => $gminy-$padding,
+          x             => -$label_width - $padding - $margin * 3/2,
+          y             => $gminy - $padding,
           z             => -100,
-          width         => $panel_width + $label_width + $margin * 2 + (2*$padding),
-          height        => $glyphset->maxy - $gminy +(2*$padding),
+          width         => $panel_width + $label_width + $margin * 2 + (2 * $padding),
+          height        => $glyphset->maxy - $gminy + (2 * $padding),
           colour        => $bgcolours->[$iteration % 2],
           absolutewidth => 1,
           absolutex     => 1,
