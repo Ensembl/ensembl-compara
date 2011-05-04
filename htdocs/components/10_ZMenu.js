@@ -59,7 +59,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.base();
     
     this.elLk.caption = $('span.title', this.el);
-    this.elLk.tbody   = $('tbody', this.el);
+    this.elLk.tbody   = $('tbody:last', this.el);
+    this.elLk.loading = $('.loading',   this.el);
     
     $(this.el).bind('mousedown', function () {
       Ensembl.EventManager.trigger('panelToFront', panel.id);
@@ -108,14 +109,15 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     this.timeout = setTimeout(function () {
       if (panel.populated === false) {
-        panel.elLk.caption.html('<p class="spinner" style="font-weight:normal">Loading component</p>');
+        panel.elLk.caption.html('Loading component');
+        panel.elLk.loading.show();
         panel.show();
       }
     }, 300);
   
-    if (this.drag == 'drag') {
+    if (this.drag === 'drag') {
       this.populateRegion();
-    } else if (this.drag == 'vdrag') {
+    } else if (this.drag === 'vdrag') {
       this.populateVRegion();
     } else if (this.das !== false) {
       this.populateDas();
@@ -511,6 +513,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     if (this.position.left + menuWidth - scrollLeft > windowWidth) {
       css.left = windowWidth + scrollLeft - menuWidth;
+    }
+    
+    if (this.elLk.tbody.html()) {
+      this.elLk.loading.hide();
     }
     
     Ensembl.EventManager.trigger('panelToFront', this.id);
