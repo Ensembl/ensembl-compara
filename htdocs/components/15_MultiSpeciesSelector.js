@@ -2,9 +2,10 @@
 
 Ensembl.Panel.MultiSpeciesSelector = Ensembl.Panel.MultiSelector.extend({
   updateSelection: function () {
-    var params = [ 's', 'r', 'g' ]; // Multi-species parameters
+    var params            = [ 's', 'r', 'g' ]; // Multi-species parameters
     var existingSelection = {};
-    var urlParams = [];
+    var urlParams         = [];
+    var species           = [];
     var i, j, k;
     
     for (var s in Ensembl.multiSpecies) {
@@ -19,16 +20,26 @@ Ensembl.Panel.MultiSpeciesSelector = Ensembl.Panel.MultiSelector.extend({
         
         while (k--) {
           if (Ensembl.multiSpecies[j][params[k]]) {
-            urlParams.push(params[k] + (i + 1) + '=' + Ensembl.multiSpecies[j][params[k]]);
+            if (params[k] === 's') {
+              species.push('s' + (i + 1) + '=' + Ensembl.multiSpecies[j].s)
+            } else {
+              urlParams.push(params[k] + (i + 1) + '=' + Ensembl.multiSpecies[j][params[k]]);
+            }
           }
         }
       } else {
-        urlParams.push('s' + (i + 1) + '=' + this.selection[i]);
+        species.push('s' + (i + 1) + '=' + this.selection[i]);
       }
     }
     
     if (this.selection.join(',') != this.initialSelection) {
-      Ensembl.redirect(this.elLk.form.attr('action') + '?' + Ensembl.cleanURL(this.elLk.form.serialize() + ';' + urlParams.join(';')));
+      $.ajax({
+        url: '/' + Ensembl.species + '/Ajax/multi_species?' + species.join(';'),
+        context: this,
+        complete: function () {
+          Ensembl.redirect(this.elLk.form.attr('action') + '?' + Ensembl.cleanURL(this.elLk.form.serialize() + ';' + species.join(';') + ';' + urlParams.join(';')));
+        }
+      });
     }
     
     return true;
