@@ -1,18 +1,4 @@
 /**
- zmenu styling... keeping it nice and simple!!
-**/
-.zmenu             { position: absolute; width: 18em; background-color: [[NEUTRAL_BG]]; margin: 0; border-collapse: collapse; border: 1px solid [[NEUTRAL_BG]]; z-index: 200; display: none; }
-.zmenu th          { font-weight: bold; padding: 2px; margin: 0; text-align: right; width: 8em; font-size: 0.8em; background-color: [[NEUTRAL_BG]]; }
-.zmenu .caption    { width: 18em; text-align: left; font-size: 1em }
-.zmenu .subheader  { width: 18em; text-align: left; font-size: 0.85em }
-.zmenu .close      { float: right; background-color: [[NEUTRAL_BORDER]]; color: [[CONTRAST_TEXT]]; height: 1em; width: 1em; cursor: pointer; text-align: center; }
-.zmenu td          { background-color: [[PANEL_BG]]; border: 1px solid [[NEUTRAL_BG]]; margin: 0; padding: 2px; font-size: 0.8em; padding: 2px; width: 18em; }
-.zmenu.coloured td { border: none; border-top: 1px solid [[NEUTRAL_BG]]; }
-.zmenu a           { text-decoration: none; font-weight: bold }
-.zmenu table td, 
-.zmenu table th    { border: 0 none; font-size: 1em; text-align: left; }
-
-/**
  redbox      - red box around slice to indicate where in upper slice this slice is!
  redbox2     - red box in upper slice to indicate where lower slice is.
  rubberband  - drag region - top and right
@@ -53,3 +39,31 @@
 .hover_label div.config img.tick   { margin: 9px 0 0 -11px; }
 
 body.ie6 .hover_label div.config li { margin: 5px 0 0; }
+body.ie67 .hover_label a.favourite  { position: relative; top: -2px; left: 3px; }
+
+div.boundaries_wrapper                         { position: absolute; width: 100%; }
+div.boundaries_wrapper ul                      { position: relative; width: 100%; list-style: none; margin: 0; padding: 0; background-color: #DAA520; visibility: hidden; }
+div.boundaries_wrapper ul li                   { list-style-image: none; margin: 0; padding: 0; }
+div.boundaries_wrapper ul li p                 { width: 10px; border: solid [[BUTTON_BG]]; border-width: 0 1px 0 0; position: relative; background: [[BUTTON_BG]]; }
+div.boundaries_wrapper ul li p.handle          { cursor: n-resize; border-width: 1px 1px 1px 0; background: [[TINT_BG]]; }
+div.boundaries_wrapper ul li p.handle:hover,
+div.boundaries_wrapper ul li.tmp p.handle      { background: #B3EFBC!important; }
+div.boundaries_wrapper ul li.f p.handle        { background: #9ED4DC; }
+div.boundaries_wrapper ul li.r p.handle        { background: #F1D7A4; }
+div.boundaries_wrapper ul li p.nohover:hover   { background: [[TINT_BG]]!important; }
+div.boundaries_wrapper ul li.f p.nohover:hover { background: #9ED4DC!important; }
+div.boundaries_wrapper ul li.r p.nohover:hover { background: #F1D7A4!important; }
+div.boundaries_wrapper div                     { position: absolute; left: 0; height: 10px; width: 10px; border: solid [[BUTTON_BG]]; border-width: 1px 1px 1px 0; background: url(/i/sort.png) no-repeat [[BUTTON_BG]]; }
+div.boundaries_wrapper div.up                  { background-position: top center; top: -10px; }
+div.boundaries_wrapper div.down                { background-position: bottom center; bottom: -10px; }
+
+body.ie7 div.boundaries_wrapper                     { left: 0; }
+body.ie7 div.boundaries_wrapper ul                  { padding-top: 3px; }
+body.ie7 div.boundaries_wrapper ul li               { margin: -3px 0; }
+body.ie7 div.boundaries_wrapper ul.f li:first-child { margin-top: 0; }
+body.ie7 div.boundaries_wrapper ul li p             { position: absolute; left: 0; }
+body.mac div.boundaries_wrapper ul li p.handle      { cursor: move; }
+
+@media print {
+  div.boundaries_wrapper { display: none; }
+}
