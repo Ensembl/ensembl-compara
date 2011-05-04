@@ -13,11 +13,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.draggables       = [];
     this.speciesCount     = 0;
     
-    Ensembl.EventManager.register('highlightImage',  this, this.highlightImage);
-    Ensembl.EventManager.register('mouseUp',         this, this.dragStop);
-    Ensembl.EventManager.register('hashChange',      this, this.hashChange);
-    Ensembl.EventManager.register('changeFavourite', this, this.changeFavourite);
-    
+    Ensembl.EventManager.register('highlightImage',     this, this.highlightImage);
+    Ensembl.EventManager.register('mouseUp',            this, this.dragStop);
+    Ensembl.EventManager.register('hashChange',         this, this.hashChange);
+    Ensembl.EventManager.register('changeFavourite',    this, this.changeFavourite);
+    Ensembl.EventManager.register('windowResize',       this, function () { delete this.imgOffset; });
     Ensembl.EventManager.register('highlightAllImages', this, function () {
       if (!this.align) {
         this.highlightAllImages();
@@ -33,12 +33,13 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.lastImage = $(this.el).parents('.image_panel')[0] == Ensembl.images.last;
     this.params.highlight = (Ensembl.images.total == 1 || !this.lastImage);
     
-    this.elLk.drag        = $('.drag_select', this.el);
-    this.elLk.map         = $('map', this.el);
-    this.elLk.areas       = $('area', this.elLk.map);
+    this.elLk.drag        = $('.drag_select',  this.el);
+    this.elLk.map         = $('map',           this.el);
+    this.elLk.areas       = $('area',          this.elLk.map);
     this.elLk.exportMenu  = $('.iexport_menu', this.el);
-    this.elLk.img         = $('img.imagemap', this.el);
-    this.elLk.hoverLabels = $('.hover_label', this.el);
+    this.elLk.img         = $('img.imagemap',  this.el);
+    this.elLk.hoverLabels = $('.hover_label',  this.el);
+    this.elLk.boundaries  = $('.boundaries',   this.el);
     
     this.vdrag = this.elLk.areas.hasClass('vdrag');
     this.multi = this.elLk.areas.hasClass('multi');
@@ -46,6 +47,16 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.makeImageMap(); 
     this.makeHoverLabels(); 
+    
+    if (this.elLk.boundaries.length) {
+      Ensembl.EventManager.register('changeTrackOrder', this, this.sortUpdate);
+      
+      if (this.elLk.img[0].complete) {
+        panel.makeSortable();
+      } else {
+        this.elLk.img.bind('load', function () { panel.makeSortable(); });
+      }
+    }
     
     $('.iexport a', this.el).click(function () {
       panel.elLk.exportMenu.css({ left: parseInt($(this).offset().left, 10) - 1, top: $(this).parent().position().top + $(this).height() + 2 }).toggle();
@@ -153,7 +164,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.elLk.hoverLabels.detach().appendTo('body'); // IE 6/7 can't do z-index, so move hover labels to body
     
-    this.elLk.img.bind({
+    this.elLk.drag.bind({
       mousemove: function (e) {
         if (panel.dragging !== false) {
           return;
@@ -228,8 +239,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       var fav    = '';
       
       if ($(this).hasClass('favourite')) {
-        fav = $(this).toggleClass('selected').hasClass('selected') ? 'on' : 'off';
-        Ensembl.EventManager.triggerSpecific('changeFavourite', 'modal_config_' + config, update[0]);
+        fav = $(this).hasClass('selected') ? 'off' : 'on';
+        Ensembl.EventManager.trigger('changeFavourite', update[0], fav === 'on');
       } else {
         $(this).parents('.hover_label').width(function (i, value) {
           return value > 100 ? value : 100;
@@ -246,7 +257,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
             Ensembl.EventManager.trigger('hideHoverLabels'); // Hide labels and z menus on other ImageMap panels
             Ensembl.EventManager.trigger('hideZMenu');
             Ensembl.EventManager.triggerSpecific('changeConfiguration', 'modal_config_' + config, update[0], update[1]);
-            Ensembl.EventManager.trigger('reloadPage', config);
+            Ensembl.EventManager.trigger('reloadPage', panel.id);
           }
         }
       });
@@ -255,6 +266,142 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
     
     Ensembl.EventManager.register('hideHoverLabels', this, function () { this.elLk.hoverLabels.hide(); });
+  },
+  
+  makeSortable: function () {
+    var panel      = this;
+    var wrapperTop = $('.boundaries_wrapper', this.el).position().top;
+    var ulTop      = this.elLk.boundaries.position().top + wrapperTop;
+    var lis        = [];
+    
+    this.elLk.boundaries.children().each(function (i) {
+      var li = $(this);
+      var t  = li.position().top + ulTop;
+      
+      li.data({ areas: [], position: i, order: parseFloat(li.children('i')[0].className, 10), top: li.offset().top });
+      
+      lis.push({ top: t, bottom: t + li.height(), areas: li.data('areas') });
+      
+      li = null;
+    });
+    
+    $.each(this.areas, function () {
+      var i = lis.length;
+      
+      while (i--) {
+        if (lis[i].top <= this.t && lis[i].bottom >= this.b) {
+          lis[i].areas.push(this);
+          break;
+        }
+      }
+    });
+    
+    this.elLk.boundaries.each(function () {
+      $(this).data('updateURL', '/' + this.className.split(' ')[0] + '/Ajax/track_order');
+    }).sortable({
+      axis:   'y',
+      handle: 'p.handle',
+      helper: 'clone',
+      placeholder: 'tmp',
+      start: function (e, ui) {
+        ui.placeholder.css({
+          backgroundImage:     ui.item.css('backgroundImage'),
+          backgroundPosition:  ui.item.css('backgroundPosition'),  // Firefox
+          backgroundPositionY: ui.item.css('backgroundPositionY'), // IE (Chrome works with either)
+          height:              ui.item.height(),
+          opacity:             0.8,
+          visibility:          'visible'
+        }).html(ui.item.html());
+        
+        ui.helper.hide();
+        $(this).find(':not(.tmp) p.handle').addClass('nohover');
+        panel.elLk.drag.css('cursor', 'n-resize');
+        panel.dragging = true;
+      },
+      stop: function () {
+        $(this).find('p.nohover').removeClass('nohover');
+        panel.elLk.drag.css('cursor', 'pointer');
+        panel.dragging = false;
+      },
+      update: function (e, ui) {
+        var order = panel.sortUpdate(ui.item);
+        var track = ui.item[0].className.replace(' ', '.');
+        
+        $.ajax({
+          url: $(this).data('updateURL'),
+          type: 'post',
+          data: {
+            image_config: panel.id,
+            track: track,
+            order: order
+          }
+        });
+        
+        Ensembl.EventManager.triggerSpecific('changeTrackOrder', 'modal_config_' + panel.id, track, order);
+      }
+    }).css('visibility', 'visible');
+  },
+  
+  sortUpdate: function (track, order) {
+    var tracks = this.elLk.boundaries.children();
+    var i, p, n, o, move, li, top;
+    
+    if (typeof track === 'string') {
+      i     = tracks.length;
+      track = tracks.filter('.' + track).detach();
+      
+      if (!track.length) {
+        return;
+      }
+      
+      while (i--) {
+        if ($(tracks[i]).data('order') < order && tracks[i] !== track[0]) {
+          track.insertAfter(tracks[i]);
+          break;
+        }
+      }
+      
+      if (i === -1) {
+        track.insertBefore(tracks[0]);
+      }
+      
+      tracks = this.elLk.boundaries.children();
+    } else {
+      p = track.prev().data('order') || 0;
+      n = track.next().data('order') || 0;
+      o = p || n;
+      
+      if (Math.floor(n) === Math.floor(p)) {
+        order = p + (n - p) / 2;
+      } else {
+        order = o + (p ? 1 : -1) * (Math.round(o) - o || 1) / 2;
+      }
+    }
+    
+    track.data('order', order);
+    
+    tracks.each(function (j) {
+      li = $(this);
+      
+      if (j !== li.data('position')) {
+        top  = li.offset().top;
+        move = top - li.data('top'); // Up is positive, down is negative
+        
+        $.each(li.data('areas'), function () {
+          this.t += move;
+          this.b += move;
+        });
+        
+        li.data({ top: top, position: j });
+      }
+      
+      li = null;
+    });
+    
+    tracks = null;
+    track  = null;
+    
+    return order;
   },
   
   changeFavourite: function (trackName) {
@@ -271,18 +418,23 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.dragRegion = this.getArea(this.dragCoords.map, true);
     
     if (this.dragRegion) {
-      this.elLk.drag.bind('mousemove', function (e2) {
+      this.mousemove = function (e2) {
         panel.dragging = e; // store mousedown even
         panel.drag(e2);
         return false;
-      });
+      };
+    
+      this.elLk.drag.bind('mousemove', this.mousemove);
     }
   },
   
   dragStop: function (e) {
     var diff, range;
     
-    this.elLk.drag.unbind('mousemove');
+    if (this.mousemove) {
+      this.elLk.drag.unbind('mousemove', this.mousemove);
+      this.mousemove = false;
+    }
     
     if (this.dragging !== false) {
       diff = { 
@@ -508,9 +660,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   getMapCoords: function (e) {
+    this.imgOffset = this.imgOffset || this.elLk.img.offset();
+    
     return {
-      x: e.offsetX || e.layerX || 0,
-      y: e.offsetY || e.layerY || 0
+      x: e.pageX - this.imgOffset.left, 
+      y: e.pageY - this.imgOffset.top
     };
   },
   
