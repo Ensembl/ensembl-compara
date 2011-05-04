@@ -77,7 +77,7 @@ sub init {
   foreach my $cell_line (@cell_lines) {
     $cell_line =~ s/\:\d*//;
     
-    # Turn on core and supporting evidence track
+    # Turn off core and supporting evidence track
     $self->modify_configs(
       [ "reg_feats_core_$cell_line", "reg_feats_other_$cell_line" ],
       { display => 'off' }

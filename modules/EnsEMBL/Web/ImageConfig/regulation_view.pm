@@ -1,8 +1,8 @@
+# $Id$
+
 package EnsEMBL::Web::ImageConfig::regulation_view;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
@@ -11,12 +11,9 @@ sub init {
   
   $self->set_parameters({
     title          => 'Feature context',
-    show_buttons   => 'no',
     show_labels    => 'yes',
     label_width    => 113,
     opt_lines      => 1,
-    margin         => 5,
-    spacing        => 2,
     opt_highllight => 'yes',
   });  
 
@@ -37,9 +34,9 @@ sub init {
   );
 
   $self->add_tracks('other',
-    [ 'scalebar',   '', 'scalebar',   { display => 'normal', strand => 'f', name => 'Scale bar', menu => 'no' }],
-    [ 'ruler',      '', 'ruler',      { display => 'normal', strand => 'f', name => 'Ruler', menu => 'no' }],
-    [ 'fg_background_regulation', '', 'fg_background_regulation', { display => 'normal', tag => 0, strand => 'r', menu => 'no',}],
+    [ 'scalebar',                 '', 'scalebar',                 { display => 'normal', strand => 'f', menu => 'no', name => 'Scale bar' }],
+    [ 'ruler',                    '', 'ruler',                    { display => 'normal', strand => 'f', menu => 'no', name => 'Ruler'     }],
+    [ 'fg_background_regulation', '', 'fg_background_regulation', { display => 'normal', strand => 'r', menu => 'no', tag => 0            }],
 );
   
   $self->add_tracks('sequence',
@@ -53,30 +50,27 @@ sub init {
     [ 'functional' ],
     { display => 'off', menu => 'no' }
   );
-
-  my @feature_sets = ( 'cisRED', 'VISTA', 'miRanda', 'NestedMICA', 'REDfly CRM', 'REDfly TFBS');
-  foreach my $f_set (@feature_sets){
-    $self->modify_configs(
-      ['regulatory_regions_funcgen_'. $f_set],
-      {qw(menu yes)}
-    );
-  }
-
+  
+  my @feature_sets = ('cisRED', 'VISTA', 'miRanda', 'NestedMICA', 'REDfly CRM', 'REDfly TFBS', 'search');
+  
   $self->modify_configs(
-    [qw(regulatory_regions_funcgen_search)],
-    {qw(menu yes)}
-  ); 
+    [ map "regulatory_regions_funcgen_$_", @feature_sets ],
+    { menu => 'yes' }
+  );
+  
   $self->modify_configs(
     [ 'transcript_core_ensembl' ],
     { display => 'collapsed_nolabel' }
   );
+  
   $self->modify_configs(
-    ['information'],
-    {qw(menu no display off)}
+    [ 'information' ],
+    { menu => 'no', display => 'off' }
   );
+  
   $self->modify_configs(
-    ['opt_empty_tracks'],
-    {qw(menu yes display off)}
+    [ 'opt_empty_tracks' ],
+    { menu => 'yes', display => 'off' }
   );
 }
 1;

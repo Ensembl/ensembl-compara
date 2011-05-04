@@ -139,28 +139,22 @@ sub init {
 
   my @feature_sets = ('cisRED', 'VISTA', 'miRanda', 'NestedMICA', 'REDfly CRM', 'REDfly TFBS');
   
-  foreach my $f_set (@feature_sets){
+  foreach my $f_set (@feature_sets) {
     $self->modify_configs(
       [ "regulatory_regions_funcgen_$f_set" ],
       { depth => 25, height => 6 }
     );
   }
-
+  
   # Enable cell line displays 
   my @cell_lines = sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
   
   foreach my $cell_line (@cell_lines) {
     $cell_line =~ s/\:\d*//;
     
-    # Turn on core evidence track
+    # Turn on menus for core and supporting evidence track
     $self->modify_configs(
-      [ "reg_feats_core_$cell_line" ],
-      { menu => 'yes' }
-    );
-    
-    # Turn on supporting evidence track
-    $self->modify_configs(
-      [ "reg_feats_other_$cell_line" ],
+      [ "reg_feats_core_$cell_line", "reg_feats_other_$cell_line" ],
       { menu => 'yes' }
     );
   }

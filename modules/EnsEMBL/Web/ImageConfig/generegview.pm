@@ -32,32 +32,32 @@ sub init {
   );
 
   $self->modify_configs(
-    [qw(functional)],
+    [ 'functional' ],
     { display => 'normal' }
   );
   
   $self->modify_configs(
-    [qw(gene_legend)],
+    [ 'gene_legend' ],
     { display => 'off' }
   );
   
   $self->modify_configs(
-    [qw(transcript_core_ensembl)],
+    [ 'transcript_core_ensembl' ],
     { display => 'transcript_label' }
   );
   
   $self->modify_configs(
-    [qw(regulatory_regions_funcgen_feature_set)],
+    [ 'regulatory_regions_funcgen_feature_set' ],
     { depth => 25, height => 6 }
   );
   
   # Turn off cell line wiggle tracks
   my @cell_lines = sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
   
-  foreach my $cell_line (@cell_lines){
+  foreach my $cell_line (@cell_lines) {
     $cell_line =~ s/\:\d*//;
     
-    # Turn on core and supporting evidence track
+    # Turn off core and supporting evidence track
     $self->modify_configs(
       [ "reg_feats_core_$cell_line", "reg_feats_other_$cell_line" ],
       { display => 'off' }

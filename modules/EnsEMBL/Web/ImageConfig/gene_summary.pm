@@ -41,16 +41,13 @@ sub init {
   $self->load_configured_das;
 
   $self->modify_configs(
-    [qw(fg_regulatory_features_funcgen)],
-    {qw(display off)}
+    [ 'fg_regulatory_features_funcgen', 'transcript', 'prediction', 'variation' ],
+    { display => 'off' }
   );
-  $self->modify_configs(
-    [qw(transcript prediction variation)],
-    {qw(display off)} 
-  );
+  
   $self->modify_configs(	 
-    [qw(transcript_core_ensembl transcript_core_sg)],
-    {qw(display transcript_label)}
+    [ 'transcript_core_ensembl', 'transcript_core_sg' ],
+    { display => 'transcript_label' }
   );
 }
 

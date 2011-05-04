@@ -1,8 +1,8 @@
+# $Id$
+
 package EnsEMBL::Web::ImageConfig::lrgsnpview_context;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
@@ -11,12 +11,8 @@ sub init {
 
   $self->set_parameters({
     title            => 'Context slice',
-    show_buttons     => 'no',  # show +/- buttons
-    button_width     => 8,     # width of red "+/-" buttons
     show_labels      => 'yes', # show track names on left-hand side
     label_width      => 100,   # width of labels on left-hand side
-    margin           => 5,     # margin
-    spacing          => 2,     # spacing
     features         => [],
     opt_halfheight   => 0,     # glyphs are half-height [ probably removed when this becomes a track config ]
     opt_empty_tracks => 0,     # include empty tracks..
@@ -49,7 +45,6 @@ sub init {
     [ 'variation_feature_variation' ],
     { display => 'normal', caption => 'Variations' }
   );
-
-
 }
+
 1;

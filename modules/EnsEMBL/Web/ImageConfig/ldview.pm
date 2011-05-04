@@ -23,7 +23,6 @@ sub init {
   my $colours = $self->species_defs->colour('variation');
   
   $self->set_parameters({
-    show_buttons => 'no',  # do not show +/- buttons
     show_labels  => 'yes', # show track names on left-hand side
     label_width  => 100,   # width of labels on left-hand side
     title        => 'LD Panel',

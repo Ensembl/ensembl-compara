@@ -1,8 +1,8 @@
+# $Id$
+
 package EnsEMBL::Web::ImageConfig::structural_variation;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
@@ -10,15 +10,11 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title             => 'Structural Variation Context',
-    show_buttons      => 'no',  # do not show +/- buttons
-    button_width      => 8,     # width of red "+/-" buttons
-    show_labels       => 'yes', # show track names on left-hand side
-    label_width       => 113,   # width of labels on left-hand side
-    margin            => 5,     # margin
-    spacing           => 2,     # spacing
-    opt_halfheight    => 1,     # glyphs are half-height [ probably removed when this becomes a track config ]
-    opt_lines         => 1,     # draw registry lines
+    title          => 'Structural Variation Context',
+    show_labels    => 'yes', # show track names on left-hand side
+    label_width    => 113,   # width of labels on left-hand side
+    opt_halfheight => 1,     # glyphs are half-height [ probably removed when this becomes a track config ]
+    opt_lines      => 1,     # draw registry lines
   });
   
   $self->create_menus(
@@ -54,20 +50,18 @@ sub init {
 
   # variations
 	$self->modify_configs(
-   [ 'variation_legend' ],
+   [ 'variation_legend', 'somatic', 'functional', 'fg_regulatory_features_legend' ],
    { display => 'off' }
   );
+  
   $self->modify_configs(
     [ 'variation' ],
     { display => 'off', style => 'box', depth => 100000 }
   ); 
+  
 	$self->modify_configs(
     ['somatic_mutation_COSMIC'],
     { style => 'box', depth => 100000 }
-  );
-	$self->modify_configs(
-    ['somatic'],
-    { display => 'off' }
   );
 
 	# structural variations
@@ -87,30 +81,17 @@ sub init {
     ['transcript_core_ensembl'],
     { display => 'transcript_nolabel' }
   );
-  
-  # reg feats
-  $self->modify_configs(
-    [qw(functional)],
-    {qw(display off)}
-  );
-	$self->modify_configs(
-   [ 'fg_regulatory_features_legend' ],
-   { display => 'off' }
-  );
 
   # Turn off cell line wiggle tracks
-  my @cell_lines =  sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
-  foreach my $cell_line (@cell_lines){
-    $cell_line =~s/\:\d*//;
-    # Turn on core evidence track
+  my @cell_lines = sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
+  
+  foreach my $cell_line (@cell_lines) {
+    $cell_line =~ s/\:\d*//;
+    
+    # Turn off core and supporting evidence track
     $self->modify_configs(
-      [ 'reg_feats_core_' .$cell_line ],
-      { qw(display off)}
-    );
-    # Turn on supporting evidence track
-    $self->modify_configs(
-      [ 'reg_feats_other_' .$cell_line ],
-      {qw(display off)}
+      [ "reg_feats_core_$cell_line", "reg_feats_other_$cell_line" ],
+      { display => 'off' }
     );
   }
 }

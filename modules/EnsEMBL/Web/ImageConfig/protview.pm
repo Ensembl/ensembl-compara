@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ImageConfig::protview;
 
 use strict;
@@ -9,12 +11,9 @@ sub init {
 
   $self->set_parameters({
     title        => 'Protein display',
-    show_buttons => 'no',  # show +/- buttons
     button_width => 8,     # width of red "+/-" buttons
     show_labels  => 'yes', # show track names on left-hand side
     label_width  => 100,   # width of labels on left-hand side
-    margin       => 5,     # margin
-    spacing      => 2      # spacing
   });
 
   $self->create_menus(
@@ -36,4 +35,5 @@ sub init {
     [ 'legend',         'Legend',     'P_variation_legend', { display => 'normal', strand => 'r' }],
   );
 }
+
 1;

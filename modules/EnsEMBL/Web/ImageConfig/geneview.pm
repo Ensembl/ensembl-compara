@@ -1,8 +1,8 @@
+# $Id$
+
 package EnsEMBL::Web::ImageConfig::geneview;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
@@ -10,15 +10,12 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title        => 'Transcripts panel',
-    show_buttons => 'no',  # do not show +/- buttons
-    show_labels  => 'no',  # show track names on left-hand side
-    label_width  => 113,   # width of labels on left-hand side
-    margin       => 5,     # margin
-    spacing      => 2,     # spacing
-    bgcolor      => 'background1',
-    bgcolour1    => 'background2',
-    bgcolour2    => 'background3'
+    title       => 'Transcripts panel',
+    show_labels => 'no',  # show track names on left-hand side
+    label_width => 113,   # width of labels on left-hand side
+    bgcolor     => 'background1',
+    bgcolour1   => 'background2',
+    bgcolour2   => 'background3'
   });
 
   $self->create_menus(
