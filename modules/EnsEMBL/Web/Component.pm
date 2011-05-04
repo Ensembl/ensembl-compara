@@ -269,6 +269,7 @@ sub new_image {
   my $self    = shift;
   my $hub     = $self->hub;
   my %formats = EnsEMBL::Web::Constants::FORMATS;
+  my $export  = $hub->param('export');
   my (@image_configs, $image_config, $id);
   
   if (ref $_[0] eq 'ARRAY') {
@@ -284,13 +285,16 @@ sub new_image {
   } else {
     @image_configs = ($_[1]);
     $image_config  = $_[1];
-    $id            = $image_config->{'type'}
+    $id            = $image_config->{'type'};
   }
   
   $self->id($id) unless $image_config->{'no_panel_type'};
   
-  # Set text export on image config
-  $image_config->set_parameter('text_export', $hub->param('export')) if $formats{$hub->param('export')}{'extn'} eq 'txt';
+  if ($export) {
+    # Set text export on image config
+    $image_config->set_parameter('text_export', $export) if $formats{$export}{'extn'} eq 'txt';
+    $image_config->set_parameter('sortable_tracks', 0);
+  }
   
   my $image = new EnsEMBL::Web::Document::Image($hub->species_defs, \@image_configs);
   $image->drawable_container = new Bio::EnsEMBL::DrawableContainer(@_) if $self->html_format;
