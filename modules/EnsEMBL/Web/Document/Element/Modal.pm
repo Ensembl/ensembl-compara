@@ -29,22 +29,19 @@ sub active {
 sub content {
   my $self    = shift; 
   my $img_url = $self->img_url;
-  my ($panels, $content);
+  my ($panels, $content, $default);
   
   foreach my $entry (@{$self->entries}) {
-    $entry->{'url'} ||= '#';
+    my $id = lc $entry->{'id'};
     
-    my $id   = 'modal_' . lc($entry->{'id'} || $entry->{'type'});
-    my $name = encode_entities($self->strip_HTML($entry->{'caption'}));
-    
-    if ($id =~ /config/) {
-      $name    = qq{<a rel="$id" href="$entry->{'url'}">$name</a>};
-      $panels .= qq{<div id="$id" class="modal_content js_panel" style="display:none"></div>};
-    } else {
-      $name = qq{<a href="$entry->{'url'}">$name</a>};
+    if ($entry->{'type'} ne 'Config') {
+      next if $default;
+      $default = 1;
+      $id      = 'default';
     }
     
-    $content .= qq{<li class="$entry->{'class'}">$name</li>};
+    $panels  .= qq{<div id="modal_$id" class="modal_content js_panel" style="display:none"></div>};
+    $content .= sprintf '<li class="%s"><a class="modal_%s" href="%s">%s</a></li>', $entry->{'class'}, $id, $entry->{'url'} || '#', encode_entities($self->strip_HTML($entry->{'caption'}));
   }
   
   $content = qq{
@@ -59,7 +56,6 @@ sub content {
       <div class="modal_close"></div>
     </div>
     $panels
-    <div id="modal_default" class="modal_content js_panel" style="display:none"></div>
   </div>
   };
   
