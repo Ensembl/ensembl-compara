@@ -1,8 +1,8 @@
+# $Id$
+
 package EnsEMBL::Web::ImageConfig::contigviewbottom;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
@@ -16,15 +16,12 @@ sub init {
   
   $self->set_parameters({
     title             => 'Main panel',
-    show_buttons      => 'no',  # show +/- buttons
-    button_width      => 8,     # width of red "+/-" buttons
-    show_labels       => 'yes', # show track names on left-hand side
-    label_width       => 113,   # width of labels on left-hand side
-    margin            => 5,     # margin
-    spacing           => 2,     # spacing
-    opt_halfheight    => 0,     # glyphs are half-height [ probably removed when this becomes a track config ]
-    opt_lines         => 1,     # draw registry lines
-    opt_restrict_zoom => 1      # when we get "zoom" working draw restriction enzyme info on it
+    sortable_tracks   => 'drag', # allow the user to reorder tracks on the image
+    show_labels       => 'yes',  # show track names on left-hand side
+    label_width       => 113,    # width of labels on left-hand side
+    opt_halfheight    => 0,      # glyphs are half-height [ probably removed when this becomes a track config ]
+    opt_lines         => 1,      # draw registry lines
+    opt_restrict_zoom => 1       # when we get "zoom" working draw restriction enzyme info on it
   });
   
   # First add menus in the order you want them for this display
@@ -68,7 +65,7 @@ sub init {
     [ 'blast',     'BLAT/BLAST hits',     '_blast',          { display => 'normal', strand => 'b', sub_type => 'blast', colourset => 'feature', menu => 'no' }]
   );
   
-  $self->add_track('decorations', 'gc_plot', '%GC', 'gcplot', { display => 'normal',  strand => 'r', description => 'Shows percentage of Gs & Cs in region' });
+  $self->add_track('decorations', 'gc_plot', '%GC', 'gcplot', { display => 'normal',  strand => 'r', description => 'Shows percentage of Gs & Cs in region', sortable => 1 });
   
   if ($self->species_defs->ALTERNATIVE_ASSEMBLIES) {
     foreach my $alt_assembly (@{$self->species_defs->ALTERNATIVE_ASSEMBLIES}) {
@@ -116,7 +113,7 @@ sub init {
       menu    => 'no',
       strand  => 'r', 
       text    => $self->species_defs->ENSEMBL_MOD
-    })
+    });
   }
 
   $self->add_tracks('information',
@@ -130,40 +127,43 @@ sub init {
     [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }]
   );
 
-  #switch on default compara multiple alignments (check track name each release)
+  # switch on default compara multiple alignments (check track name each release)
   $self->modify_configs(
     [ 'alignment_compara_436_scores' ],
-    { qw(display tiling) }
+    { display => 'tiling' }
   );
   $self->modify_configs(
     [ 'alignment_compara_436_constrained' ],
-    { qw(display compact) }
+    { display => 'compact' }
   );
 
-  my @feature_sets = ( 'cisRED', 'VISTA', 'miRanda', 'NestedMICA', 'REDfly CRM', 'REDfly TFBS');
+  my @feature_sets = ('cisRED', 'VISTA', 'miRanda', 'NestedMICA', 'REDfly CRM', 'REDfly TFBS');
+  
   foreach my $f_set (@feature_sets){
     $self->modify_configs(
-      ['regulatory_regions_funcgen_'. $f_set],
-      {qw(depth 25 height 6)}
+      [ "regulatory_regions_funcgen_$f_set" ],
+      { depth => 25, height => 6 }
     );
   }
 
   # Enable cell line displays 
-  my @cell_lines =  sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
+  my @cell_lines = sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
+  
   foreach my $cell_line (@cell_lines) {
-    $cell_line =~s/\:\d*//;
+    $cell_line =~ s/\:\d*//;
+    
     # Turn on core evidence track
     $self->modify_configs(
-      [ 'reg_feats_core_' .$cell_line ],
-      {qw(menu yes)}
+      [ "reg_feats_core_$cell_line" ],
+      { menu => 'yes' }
     );
+    
     # Turn on supporting evidence track
     $self->modify_configs(
-      [ 'reg_feats_other_' .$cell_line ],
-      {qw(menu yes)}
+      [ "reg_feats_other_$cell_line" ],
+      { menu => 'yes' }
     );
   }
-
 }
 
 1;

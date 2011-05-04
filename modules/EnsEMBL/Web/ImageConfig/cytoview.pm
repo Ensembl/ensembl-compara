@@ -1,8 +1,8 @@
+# $Id$
+
 package EnsEMBL::Web::ImageConfig::cytoview;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
@@ -11,16 +11,13 @@ sub init {
   
   $self->set_parameters({
     title             => 'Overview panel',
-    show_buttons      => 'no',  # do not show +/- buttons
-    button_width      => 8,     # width of red "+/-" buttons
-    show_labels       => 'yes', # show track names on left-hand side
-    label_width       => 113,   # width of labels on left-hand side
-    margin            => 5,     # margin
-    spacing           => 2,     # spacing
-    opt_halfheight    => 1,     # glyphs are half-height [ probably removed when this becomes a track config ]
-    opt_empty_tracks  => 0,     # include empty tracks..
-    opt_lines         => 1,     # draw registry lines
-    opt_restrict_zoom => 1,     # when we get "zoom" working draw restriction enzyme info on it!!
+    sortable_tracks   => 'drag', # allow the user to reorder tracks on the image
+    show_labels       => 'yes',  # show track names on left-hand side
+    label_width       => 113,    # width of labels on left-hand side
+    opt_halfheight    => 1,      # glyphs are half-height [ probably removed when this becomes a track config ]
+    opt_empty_tracks  => 0,      # include empty tracks..
+    opt_lines         => 1,      # draw registry lines
+    opt_restrict_zoom => 1,      # when we get "zoom" working draw restriction enzyme info on it!!
   });
   
   $self->create_menus(
@@ -44,63 +41,39 @@ sub init {
     [ 'info',    '', 'text', { display => 'normal', strand => 'r', name => 'Information' }]
   );
   
-  if ($self->species_defs->ALTERNATIVE_ASSEMBLIES) {
-    foreach my $alt_assembly (@{$self->species_defs->ALTERNATIVE_ASSEMBLIES}) {
-      $self->add_track('misc_feature', "${alt_assembly}_assembly", "$alt_assembly assembly", 'alternative_assembly', { 
-        display       => 'off',  
-        strand        => 'r',  
-        colourset     => 'alternative_assembly' ,  
-        description   => "Track indicating $alt_assembly assembly", 
-        assembly_name => $alt_assembly
-      });
-    }
-  }
-
- # show versions of clones from other sites
-  if ($self->species_defs->das_VEGACLONES) {
-    $self->add_track('misc_feature', 'v_clones', 'Vega clones', 'alternative_clones', {
-      display     => 'off', 
-      strand      => 'f', 
-      description => 'Vega clones', 
-      colourset   => 'alternative_clones', 
-      das_source  => 'das_VEGACLONES'
+  foreach my $alt_assembly (@{$self->species_defs->ALTERNATIVE_ASSEMBLIES || []}) {
+    $self->add_track('misc_feature', "${alt_assembly}_assembly", "$alt_assembly assembly", 'alternative_assembly', { 
+      display       => 'off',  
+      strand        => 'r',  
+      colourset     => 'alternative_assembly' ,  
+      description   => "Track indicating $alt_assembly assembly", 
+      assembly_name => $alt_assembly
     });
   }
-  
-  if ($self->species_defs->das_ENSEMBLCLONES) {
-    $self->add_track('misc_feature', 'e_clones', 'Ensembl clones', 'alternative_clones', {
-      display     => 'off', 
-      strand      => 'f', 
-      description => 'Ensembl clones', 
-      colourset   => 'alternative_clones', 
-      das_source  => 'das_ENSEMBLCLONES'
-    });
-  }
-
 
   $self->load_tracks;
 
   $self->modify_configs(
     [ 'transcript' ],
-    { qw(render gene_label strand r) }
+    { render => 'gene_label', strand => 'r' }
   );
 
   $self->modify_configs(
     [ 'marker' ],
-    { qw(labels off) }
+    { labels => 'off' }
   );
 
   $self->modify_configs(
     [ 'variation' ],
-    { qw(display off menu no) }
+    { display => 'off', menu => 'no' }
   );
   $self->modify_configs(
     [ 'variation_feature_structural' ],
-    { qw(display normal menu yes) }
+    { display => 'normal', menu => 'yes' }
   );
   $self->modify_configs(
     [ 'das' ],
-    { qw(display off menu yes) }
+    { display => 'off', menu => 'yes' }
   );
 
   $self->load_configured_das('strand' => 'r');

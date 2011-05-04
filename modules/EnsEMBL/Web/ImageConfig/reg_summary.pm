@@ -1,22 +1,18 @@
+# $Id$
+
 package EnsEMBL::Web::ImageConfig::reg_summary;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
-
-use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
   my $self = shift;
   
   $self->set_parameters({
-    title        => 'Feature context',
-    show_buttons => 'no',
-    show_labels  => 'yes',
-    label_width  => 113,
-    opt_lines    => 1,
-    margin       => 5,
-    spacing      => 2,
+    title           => 'Feature context',
+    sortable_tracks => 1,
+    show_labels     => 'yes',
+    label_width     => 113,
+    opt_lines       => 1,
   });  
 
   $self->create_menus(
@@ -57,18 +53,15 @@ sub init {
   );
 
   # Turn off cell line wiggle tracks
-  my @cell_lines =  sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
-  foreach my $cell_line (@cell_lines){
-    $cell_line =~s/\:\d*//;
-    # Turn on core evidence track
+  my @cell_lines = sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
+  
+  foreach my $cell_line (@cell_lines) {
+    $cell_line =~ s/\:\d*//;
+    
+    # Turn on core and supporting evidence track
     $self->modify_configs(
-      [ 'reg_feats_core_' .$cell_line ],
-      { qw(display off)}
-    );
-    # Turn on supporting evidence track
-    $self->modify_configs(
-      [ 'reg_feats_other_' .$cell_line ],
-      {qw(display off)}
+      [ "reg_feats_core_$cell_line", "reg_feats_other_$cell_line" ],
+      { display => 'off' }
     );
   }
 }
