@@ -6,10 +6,6 @@ use strict;
 
 use base qw(EnsEMBL::Web::Document::Page::Popup);
 
-sub panel_type {
-  return '<input type="hidden" class="panel_type" value="Configurator" />';
-}
-
 sub initialize_HTML {
   my $self = shift;
 
