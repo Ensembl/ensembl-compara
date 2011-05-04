@@ -6,14 +6,13 @@
 package Sanger::Graphics::GlyphSet;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
-use base qw( Sanger::Graphics::Root );
 
 use Sanger::Graphics::Glyph::Diagnostic;
 use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Root;
 use Sanger::Graphics::Glyph::Space;
+
+use base qw(Sanger::Graphics::Root);
 
 #########
 # constructor
@@ -235,7 +234,7 @@ sub bumped {
 
 sub height {
   my ($self) = @_;
-  return abs($self->{'maxy'}-$self->{'miny'});
+  return int(abs($self->{'maxy'}-$self->{'miny'}) + 0.5);
 }
 
 sub width {
