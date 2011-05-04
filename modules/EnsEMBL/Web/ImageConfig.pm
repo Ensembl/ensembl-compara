@@ -4,6 +4,7 @@ package EnsEMBL::Web::ImageConfig;
 
 use strict;
 
+use Clone qw(clone);
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
 use JSON qw(from_json);
@@ -41,7 +42,6 @@ sub new {
     code                => $code,
     type                => $type,
     species             => $species,
-    user                => {},
     _useradded          => {}, # contains list of added features
     _r                  => undef,
     no_load             => undef,
@@ -49,8 +49,14 @@ sub new {
     altered             => 0,
     _core               => undef,
     _tree               => new EnsEMBL::Web::NewTree,
-    _parameters         => {},
+    _parameters         => { margin => 5, spacing => 2 }, # Default margin and spacing
     transcript_types    => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene)],
+    unsortable_menus    => {
+      decorations => 1,
+      information => 1,
+      options     => 1,
+      other       => 1
+    },
     alignment_renderers => [
       'off',         'Off',
       'normal',      'Normal',
@@ -61,13 +67,9 @@ sub new {
       'ungrouped',   'Ungrouped',
     ],
   };
-
+  
   bless $self, $class;
-
-  # Special code here to set species back to default if cannot merge
-  $self->{'species'} = $hub->species if $species eq 'merged' && !$self->mergeable_config;
-  $species = $self->{'species'};
-     
+  
   # Check to see if we have a user/session saved copy of tree.... 
   #   Load tree from cache...
   #   If not check to see if we have a "common" saved copy of tree
@@ -92,6 +94,8 @@ sub new {
     }
   }
   
+  $self->set_parameter('sortable_tracks', 1) if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d)/ && $1 < 7 && $self->get_parameter('sortable_tracks') eq 'drag'; # No sortable tracks on images for IE6 and lower
+  
   $self->{'no_image_frame'} = 1;
   
   # Add user defined data sources
@@ -103,30 +107,96 @@ sub new {
 sub storable :lvalue { $_[0]->{'storable'}; } # Set whether this ViewConfig is changeable by the User, and hence needs to access the database to set storable do $view_config->storable = 1; in SC code
 sub altered  :lvalue { $_[0]->{'altered'};  } # Set to one if the configuration has been updated
 
-sub hub               { return $_[0]->{'hub'};                                                 }
-sub core_objects      { return $_[0]->hub->core_objects;                                       }
-sub colourmap         { return $_[0]->hub->colourmap;                                          }
-sub species_defs      { return $_[0]->hub->species_defs;                                       }
-sub sd_call           { return $_[0]->species_defs->get_config($_[0]->{'species'}, $_[1]);     }
-sub databases         { return $_[0]->sd_call('databases');                                    }
-sub texthelper        { return $_[0]->{'_texthelper'};                                         }
-sub transform         { return $_[0]->{'transform'};                                           }
-sub tree              { return $_[0]->{'_tree'};                                               }
-sub mergeable_config  { return 0;                                                              }
-sub bgcolor           { return $_[0]->get_parameter('bgcolor') || 'background1';               }
-sub bgcolour          { return $_[0]->bgcolor;                                                 }
-sub get_node          { return shift->tree->get_node(@_);                                      }
-sub get_user_settings { return $_[0]->tree->user_data;                                         }
-sub subsections       { return grep { /^managed_/ } keys %{$_[0]->{'user'}};                   }
-sub get_parameters    { return $_[0]->{'_parameters'};                                         }
-sub get_parameter     { return $_[0]->{'_parameters'}{$_[1]};                                  }
-sub set_width         { $_[0]->set_parameter('width', $_[1]);                                  } # TODO: find out why we have width and image_width. delete?
-sub image_height      { return shift->parameter('image_height',    @_);                        }
-sub image_width       { return shift->parameter('image_width',     @_);                        }
-sub container_width   { return shift->parameter('container_width', @_);                        }
-sub title             { return shift->parameter('title',           @_);                        }
-sub slice_number      { return shift->parameter('slice_number',    @_);                        } # TODO: delete?
-sub glyphset_configs  { return grep { $_->data->{'node_type'} eq 'track' } $_[0]->tree->nodes; } # return a list of glyphsets
+sub hub                 { return $_[0]->{'hub'};                                                                     }
+sub core_objects        { return $_[0]->hub->core_objects;                                                           }
+sub colourmap           { return $_[0]->hub->colourmap;                                                              }
+sub species_defs        { return $_[0]->hub->species_defs;                                                           }
+sub sd_call             { return $_[0]->species_defs->get_config($_[0]->{'species'}, $_[1]);                         }
+sub databases           { return $_[0]->sd_call('databases');                                                        }
+sub texthelper          { return $_[0]->{'_texthelper'};                                                             }
+sub transform           { return $_[0]->{'transform'};                                                               }
+sub tree                { return $_[0]->{'_tree'};                                                                   }
+sub species             { return $_[0]->{'species'};                                                                 }
+sub multi_species       { return 0;                                                                                  }
+sub bgcolor             { return $_[0]->get_parameter('bgcolor') || 'background1';                                   }
+sub bgcolour            { return $_[0]->bgcolor;                                                                     }
+sub get_node            { return shift->tree->get_node(@_);                                                          }
+sub get_user_settings   { return $_[0]->tree->user_data;                                                             }
+sub get_parameters      { return $_[0]->{'_parameters'};                                                             }
+sub get_parameter       { return $_[0]->{'_parameters'}{$_[1]};                                                      }
+sub set_width           { $_[0]->set_parameter('width', $_[1]);                                                      } # TODO: find out why we have width and image_width. delete?
+sub image_height        { return shift->parameter('image_height',    @_);                                            }
+sub image_width         { return shift->parameter('image_width',     @_);                                            }
+sub container_width     { return shift->parameter('container_width', @_);                                            }
+sub title               { return shift->parameter('title',           @_);                                            }
+sub slice_number        { return shift->parameter('slice_number',    @_);                                            } # TODO: delete?
+sub get_tracks          { return grep { $_->data->{'node_type'} eq 'track' } $_[0]->tree->nodes;                     } # return a list of track nodes
+sub get_sortable_tracks { return grep { $_->get('sortable') && $_->get('menu') ne 'no' } @{$_[0]->glyphset_configs}; }
+
+sub glyphset_configs {
+  my $self = shift;
+  
+  if (!$self->{'ordered_tracks'}) {
+    my @tracks      = $self->get_tracks;
+    my $track_order = $self->track_order;
+    my $i           = 1;
+    my @default_order;
+    
+    foreach my $track (@tracks) {
+      my $strand = $track->get('strand');
+      
+      if ($strand =~ /^[rf]$/) {
+        if ($strand eq 'f') {
+          unshift @default_order, $track;
+        } else {
+          push @default_order, $track;
+        }
+      } else {
+        my $clone = clone($track);
+        
+        $clone->set('drawing_strand', 'f');
+        $track->set('drawing_strand', 'r');
+        
+        unshift @default_order, $clone;
+        push    @default_order, $track;
+      }
+    }
+    
+    if ($self->get_parameter('sortable_tracks')) {
+      $_->set('sortable', 1) for grep !$self->{'unsortable_menus'}->{$_->parent_key}, @default_order;
+    }
+    
+    my @ordered_tracks;
+    my %order     = map { join('.', grep $_, $_->id, $_->get('drawing_strand')) => [ $i++, $_ ] } @default_order;
+    $order{$_}[0] = $track_order->{$_} for grep $order{$_}, keys %$track_order;
+    
+    foreach (sort { $a->[0] <=> $b->[0] } values %order) {
+      $_->[1]->set('order', $_->[0]);
+      push @ordered_tracks, $_->[1];
+    }
+    
+    $self->{'ordered_tracks'} = \@ordered_tracks;
+  }
+  
+  return $self->{'ordered_tracks'};
+}
+
+sub get_favourite_tracks {
+  my $self = shift;
+  
+  if (!$self->{'favourite_tracks'}) {
+    my $data = $self->hub->session->get_data(type => 'favourite_tracks', code => 'favourite_tracks') || {};
+    $self->{'favourite_tracks'} = $data->{'tracks'} || {};
+  }
+  
+  return $self->{'favourite_tracks'};
+}
+
+sub track_order {
+  my $self = shift;
+  my $node = $self->get_node('track_order');
+  return $node ? $node->get($self->species) || {} : {};
+}
 
 sub set_user_settings {
   my ($self, $data) = @_;
@@ -154,19 +224,6 @@ sub parameter {
   my ($self, $key, $value) = @_;
   $self->set_parameter($key, $value) if $value;
   return $self->get_parameter($key);
-}
-
-sub reset {
-  my $self = shift;
-  $self->{'user'}->{$self->{'type'}} = {}; 
-  $self->altered = 1;
-}
-
-sub reset_subsection {
-  my ($self, $subsection) = @_;
-  return unless defined $subsection;
-  $self->{'user'}->{$self->{'type'}}->{$subsection} = {}; 
-  $self->altered = 1;
 }
 
 sub scalex {
@@ -663,11 +720,14 @@ sub update_from_input {
   my $reload = 0;
   
   if ($diff) {
+    my $track_reorder = 0;
+    
     $diff = from_json($diff);
     
     $self->update_track_renderer($_, $diff->{$_}->{'renderer'}) for grep exists $diff->{$_}->{'renderer'}, keys %$diff;
-    $reload = $self->altered;
-    
+    $reload        = $self->altered;
+    $track_reorder = $self->update_track_order($diff) if $diff->{'track_order'};
+    $reload      ||= $track_reorder;
     $self->update_favourite_tracks($diff);
   } else {
     my %favourites;
@@ -782,28 +842,58 @@ sub update_track_renderer {
 
 sub update_favourite_tracks {
   my ($self, $diff) = @_;
+  my $session = $self->hub->session;
+  my %args    = ( type => 'favourite_tracks', code => 'favourite_tracks' );
+  my $data    = $session->get_data(%args) || \%args;
   
   foreach (grep exists $diff->{$_}->{'favourite'}, keys %$diff) {
-    my $node = $self->get_node($_);
-    
-    next unless $node;
-    
-    $node->data->{'favourite'} = 0; # Causes favourite to be deleted if favourite is 0    
-    $self->altered = 1 if $node->set_user('favourite', $diff->{$_}->{'favourite'});
+    if ($diff->{$_}->{'favourite'} == 1) {
+      $data->{'tracks'}{$_} = 1;
+    } elsif (exists $diff->{$_}->{'favourite'}) {
+      delete $data->{'tracks'}{$_};
+    }
   }
+  
+  if (scalar keys %{$data->{'tracks'}}) {
+    $session->set_data(%$data);
+  } else {
+    $session->purge_data(type => 'favourite_tracks', code => 'favourite_tracks');
+  }
+  
+  delete $self->{'favourite_tracks'};
+}
+
+sub update_track_order {
+  my ($self, $diff) = @_;
+  my $species    = $self->species;
+  my $node       = $self->get_node('track_order');
+  $self->altered = $node->set_user($species, { %{$node->get($species) || {}}, %{$diff->{'track_order'}} });
+  return $self->altered if $self->get_parameter('sortable_tracks') ne 'drag';
 }
 
 sub reset {
   my $self = shift;
-  my $tree = $self->tree;
   
-  foreach my $node ($tree, $tree->nodes) {
-    my $user_data = $node->{'user_data'};
+  if ($self->hub->input->param('reset') eq 'track_order') {
+    my $node    = $self->get_node('track_order');
+    my $species = $self->species;
     
-    foreach (keys %$user_data) {
-      $self->altered = 1 if $user_data->{$_}->{'display'};
-      delete $user_data->{$_}->{'display'};
-      delete $user_data->{$_} unless scalar keys %{$user_data->{$_}};
+    if ($node->{'user_data'}{'track_order'}{$species}) {
+      $self->altered = 1;
+      delete $node->{'user_data'}{'track_order'}{$species};
+      delete $node->{'user_data'}{'track_order'} unless scalar keys %{$node->{'user_data'}{'track_order'}};
+    }
+  } else {
+    my $tree = $self->tree;
+    
+    foreach my $node ($tree, $tree->nodes) {
+      my $user_data = $node->{'user_data'};
+      
+      foreach (keys %$user_data) {
+        $self->altered = 1 if $user_data->{$_}->{'display'};
+        delete $user_data->{$_}->{'display'};
+        delete $user_data->{$_} unless scalar keys %{$user_data->{$_}};
+      }
     }
   }
 }
@@ -830,7 +920,7 @@ sub modify_configs {
 sub _update_missing {
   my ($self, $object) = @_;
   my $species_defs    = $self->species_defs;
-  my $count_missing   = grep { $_->get('display') eq 'off' || !$_->get('display') } $self->glyphset_configs; 
+  my $count_missing   = grep { $_->get('display') eq 'off' || !$_->get('display') } $self->get_tracks; 
   my $missing         = $self->get_node('missing');
   $missing->set('text', $count_missing > 0 ? "There are currently $count_missing tracks turned off." : 'All tracks are turned on') if $missing;
   
@@ -903,6 +993,7 @@ sub load_tracks {
   }
   
   $self->add_options('information', [ 'opt_empty_tracks', 'Display empty tracks', undef, undef, 'off' ]);
+  $self->tree->append_child($self->create_option('track_order')) if $self->get_parameter('sortable_tracks');
 }
  
 sub load_configured_das {
@@ -1406,6 +1497,18 @@ sub add_decorations {
   
   return unless $menu;
   
+  if ($key eq 'core' && $hashref->{'karyotype'}{'rows'} > 0 && !$self->get_node('ideogram')) {
+    $menu->append($self->create_track("chr_band_$key", 'Chromosome bands', {
+      db          => $key,
+      glyphset    => 'chr_band',
+      display     => 'normal',
+      strand      => 'f',
+      description => 'Cytogenetic bands',
+      colourset   => 'ideogram',
+      sortable    => 1
+    }));
+  }
+  
   if ($key eq 'core' && $hashref->{'assembly_exception'}{'rows'} > 0) {
     $menu->append($self->create_track("assembly_exception_$key", 'Assembly exceptions', {
       db            => $key,
@@ -1417,17 +1520,6 @@ sub add_decorations {
       short_labels  => 0,
       description   => 'GRC assembly patches, haplotype (HAPs) and pseudo autosomal regions (PARs)',
       colourset     => 'assembly_exception'
-    }));
-  }
-  
-  if ($key eq 'core' && $hashref->{'karyotype'}{'rows'} > 0 && !$self->get_node('ideogram')) {
-    $menu->append($self->create_track("chr_band_$key", 'Chromosome bands', {
-      db          => $key,
-      glyphset    => 'chr_band',
-      display     => 'normal',
-      strand      => 'f',
-      description => 'Cytogenetic bands',
-      colourset   => 'ideogram'
     }));
   }
   
@@ -1506,7 +1598,7 @@ sub add_alignments {
     next unless $row->{'species'}{$species};
     
     if ($row->{'class'} =~ /pairwise_alignment/) {
-      my ($other_species) = grep { !/^$species|merged|ancestral_sequences$/ } keys %{$row->{'species'}};
+      my ($other_species) = grep { !/^$species|ancestral_sequences$/ } keys %{$row->{'species'}};
       $other_species ||= $species if $vega && $row->{'species'}->{$species} && scalar keys %{$row->{'species'}} == 2;
       
       my $other_label = $species_defs->species_label($other_species, 'no_formatting');
@@ -1542,7 +1634,7 @@ sub add_alignments {
         renderers                  => [ 'off', 'Off', 'compact', 'Compact', 'normal', 'Normal' ],
       };
     } else {
-      my $n_species = grep { !/^ancestral_sequences|merged$/ } keys %{$row->{'species'}};
+      my $n_species = grep { $_ ne "ancestral_sequences" } keys %{$row->{'species'}};
       
       my %options = (
         db                         => $key,
@@ -1843,7 +1935,12 @@ sub add_sequence_variations {
     $menu->append($variation_sets);
   
     # Hacked the sorting of the variation sets for release 62 so that the 'Failed variations' set will be displayed last
-    foreach my $toplevel_set (sort { !!scalar @{$a->{'subsets'}} <=> !!scalar @{$b->{'subsets'}} } sort { ($a->{'name'} =~ m/^failed/i ? 1 : 0) <=> ($b->{'name'} =~ m/^failed/i ? 1 : 0) } sort { $a->{'name'} cmp $b->{'name'} } values %{$hashref->{'variation_set'}{'supersets'}}) {
+    foreach my $toplevel_set (
+      sort { !!scalar @{$a->{'subsets'}} <=> !!scalar @{$b->{'subsets'}} } 
+      sort { $a->{'name'} =~ /^failed/i <=> $b->{'name'} =~ /^failed/i } 
+      sort { $a->{'name'} cmp $b->{'name'} } 
+      values %{$hashref->{'variation_set'}{'supersets'}}
+    ) {
       my $name          = $toplevel_set->{'name'};
       my $caption       = $name . (scalar @{$toplevel_set->{'subsets'}} ? ' (all data)' : '');
       (my $key = $name) =~ s/\W/_/g;
