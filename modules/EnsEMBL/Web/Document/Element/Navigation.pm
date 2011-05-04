@@ -129,17 +129,18 @@ sub content {
         # $node->data->{'code'} contains action and function where required, so setting function to undef is fine.
         # If function is NOT set to undef and you are on a page with a function, the generated url could be wrong
         # e.g. on Location/Compara_Alignments/Image the url for Alignments (Text) will also be Location/Compara_Alignments/Image, rather than Location/Compara_Alignments
-        my $external = $node->data->{'external'} ? ' rel="external"' : '';
-        my $class    = $node->data->{'class'};
-        my $url      = $node->data->{'url'} || $hub->url({ action => $node->data->{'code'}, function => undef }, undef, $all_params);
+        my $rel   = $node->data->{'external'} ? 'external' : $node->data->{'rel'};
+        my $class = $node->data->{'class'};
+        my $url   = $node->data->{'url'} || $hub->url({ action => $node->data->{'code'}, function => undef }, undef, $all_params);
         $class = qq{ class="$class"} if $class;
+        $rel   = qq{ rel="$rel"}     if $rel;
         
         for ($title, $name) {
           s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
           $_ = encode_entities($_);
         }
         
-        $name = qq{<a href="$url" title="$title"$class$external>$name</a>};
+        $name = qq{<a href="$url" title="$title"$class$rel>$name</a>};
       } else {
         $name =~ s/\(\[\[counts::(\w+)\]\]\)//eg;
         $name = sprintf '<span class="disabled" title="%s">%s</span>', $node->data->{'disabled'}, $name;
