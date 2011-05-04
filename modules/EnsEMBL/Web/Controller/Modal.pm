@@ -12,7 +12,7 @@ sub request   { return 'modal'; }
 sub init {
   my $self = shift;
   
-  $self->builder->create_objects;
+  $self->builder->create_objects unless $self->page_type eq 'Configurator' && !scalar grep $_, values %{$self->hub->core_params};
   $self->renderer->{'_modal_dialog_'} = $self->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; # Flag indicating that this is modal dialog panel, loaded by AJAX
   $self->page->initialize; # Adds the components to be rendered to the page module
   $self->configure;
