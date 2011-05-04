@@ -1,84 +1,87 @@
+# $Id$
+
 package EnsEMBL::Web::ImageConfig::MultiBottom;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
-use base qw(EnsEMBL::Web::ImageConfig);
-
-sub mergeable_config {
-  return 1;
-}
+use base qw(EnsEMBL::Web::ImageConfig::MultiSpecies);
 
 sub init {
   my $self = shift;
-
+  
   $self->set_parameters({
-    title        => 'Main panel',
-    show_buttons => 'no',  # show +/- buttons
-    button_width => 8,     # width of red "+/-" buttons
-    show_labels  => 'yes', # show track names on left-hand side
-    label_width  => 113,   # width of labels on left-hand side
-    margin       => 5,     # margin
-    spacing      => 2,     # spacing
-    opt_lines    => 1,     # register lines
-    spritelib    => { default => $self->species_defs->ENSEMBL_SERVERROOT . '/htdocs/img/sprites' }
+    title           => 'Main panel',
+    sortable_tracks => 1,     # allow the user to reorder tracks
+    show_labels     => 'yes', # show track names on left-hand side
+    label_width     => 113,   # width of labels on left-hand side
+    opt_lines       => 1,     # register lines
+    global_options  => 1,
+    spritelib       => { default => $self->species_defs->ENSEMBL_SERVERROOT . '/htdocs/img/sprites' }
   });
 
   # Add menus in the order you want them for this display
   $self->create_menus(
-    options          => 'Comparative features',
-    sequence         => 'Sequence',
-    marker           => 'Markers',
-    transcript       => 'Genes',
-    prediction       => 'Prediction Transcripts',
-    protein_align    => 'Protein alignments',
-    dna_align_cdna   => 'cDNA/mRNA alignments', # Separate menus for different cDNAs/ESTs...
-    dna_align_est    => 'EST alignments',
-    dna_align_rna    => 'RNA alignments',
-    dna_align_other  => 'Other DNA alignments', 
-    rnaseq           => 'RNA-Seq',
-    oligo            => 'Probe features',
-    simple           => 'Simple features',
-    misc_feature     => 'Misc. regions',
-    repeat           => 'Repeats',
-    variation        => 'Germline variation',
-    somatic          => 'Somatic mutations', 
-    functional       => 'Functional genomics',
-    decorations      => 'Additional decorations',
-    information      => 'Information'
+    options         => 'Comparative features',
+    sequence        => 'Sequence',
+    marker          => 'Markers',
+    transcript      => 'Genes',
+    prediction      => 'Prediction Transcripts',
+    protein_align   => 'Protein alignments',
+    dna_align_cdna  => 'cDNA/mRNA alignments', # Separate menus for different cDNAs/ESTs...
+    dna_align_est   => 'EST alignments',
+    dna_align_rna   => 'RNA alignments',
+    dna_align_other => 'Other DNA alignments', 
+    rnaseq          => 'RNA-Seq',
+    oligo           => 'Probe features',
+    simple          => 'Simple features',
+    misc_feature    => 'Misc. regions',
+    repeat          => 'Repeats',
+    variation       => 'Germline variation',
+    somatic         => 'Somatic mutations', 
+    functional      => 'Functional genomics',
+    decorations     => 'Additional decorations',
+    information     => 'Information'
   );
 
-  # Add in additional tracks
-  $self->load_tracks;
-  $self->load_configured_das;
-  
-  $self->add_tracks('sequence', 
-    [ 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' }]
-  );
-  
-  $self->add_tracks('decorations',
-    [ 'scalebar',  '', 'scalebar',   { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
-    [ 'ruler',     '', 'ruler',      { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
-    [ 'draggable', '', 'draggable',  { display => 'normal', strand => 'b', menu => 'no' }],
-    [ 'nav',       '', 'navigation', { display => 'normal', strand => 'b', menu => 'no' }]
-  );
-  
   $self->add_options( 
     [ 'opt_pairwise_blastz', 'BLASTz/LASTz net pairwise alignments',    {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
     [ 'opt_pairwise_tblat',  'Translated BLAT net pairwise alignments', {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
     [ 'opt_join_genes',      'Join genes', undef, undef, 'off' ]
   );
   
-  $_->set('display', 'off') for grep $_->id =~ /^chr_band_/, $self->get_node('decorations')->nodes; # Turn off chromosome bands by default
+  if ($self->species_defs->valid_species($self->species)) {
+    $_->set('menu', 'no') for map $self->get_node($_), qw(opt_pairwise_blastz opt_pairwise_tblat opt_join_genes);
+    
+    # Add in additional tracks
+    $self->load_tracks;
+    $self->load_configured_das;
+    
+    $self->add_tracks('sequence', 
+      [ 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' }]
+    );
+    
+    $self->add_tracks('decorations',
+      [ 'scalebar',  '', 'scalebar',   { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
+      [ 'ruler',     '', 'ruler',      { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
+      [ 'draggable', '', 'draggable',  { display => 'normal', strand => 'b', menu => 'no' }],
+      [ 'nav',       '', 'navigation', { display => 'normal', strand => 'b', menu => 'no' }]
+    );
+    
+    $_->set('display', 'off') for grep $_->id =~ /^chr_band_/, $self->get_node('decorations')->nodes; # Turn off chromosome bands by default
+  } else {
+    $self->set_parameters({
+      active_menu => 'options',
+      extra_menus => 'no'
+    });
+  }
 }
 
 sub multi {
   my ($self, $methods, $pos, $total, @slices) = @_;
  
-  my $sp = $self->{'species'};
+  my $sp         = $self->{'species'};
   my $multi_hash = $self->species_defs->multi_hash;
-  my $p = $pos == $total && $total > 2 ? 2 : 1;
+  my $p          = $pos == $total && $total > 2 ? 2 : 1;
   my $i;
   my %alignments;
   my @strands;
@@ -99,9 +102,9 @@ sub multi {
       
       foreach (@slices) {
         if ($align{'species'}->{$_->{'species'}}) {
-          $align{'order'} = $i;
+          $align{'order'}     = $i;
           $align{'other_ori'} = $_->{'ori'};
-          $align{'gene'} = $_->{'g'};
+          $align{'gene'}      = $_->{'g'};
           last;
         }
         
@@ -109,6 +112,7 @@ sub multi {
       }
       
       $align{'db'} = lc substr $db, 9;
+      
       push @{$alignments{$align{'order'}}}, \%align;
     }
   }
@@ -164,7 +168,7 @@ sub join_genes {
   my ($pos, $total, @species) = @_;
   
   my ($prev_species, $next_species) = @species;
-  ($prev_species, $next_species) = ('', $prev_species) if ($pos == 1 && $total == 2) || ($pos == 2 && $total > 2);
+     ($prev_species, $next_species) = ('', $prev_species) if ($pos == 1 && $total == 2) || ($pos == 2 && $total > 2);
   $next_species = $prev_species if $pos > 2 && $pos < $total && $total > 3;
   
   foreach ($self->get_node('transcript')->nodes) {
@@ -176,7 +180,6 @@ sub join_genes {
 
 sub highlight {
   my ($self, $gene) = @_;
-  
   $_->set('g', $gene) for $self->get_node('transcript')->nodes; 
 }
 
