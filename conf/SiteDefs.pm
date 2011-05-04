@@ -363,8 +363,7 @@ $OBJECT_TO_SCRIPT = {
   Component           => 'Component',
   ZMenu               => 'ZMenu',
   psychic             => 'Psychic',
-  autocomplete        => 'AutoComplete',
-  
+  Ajax                => 'Ajax',
   Export              => 'Export',
 
   Gene                => 'Page',
