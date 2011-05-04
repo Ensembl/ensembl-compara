@@ -343,7 +343,7 @@ sub realign {
   
   foreach my $i (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
     foreach (keys %{$alignments->{$i}->{'species'}}) {
-      $allowed{$_} = 1 if $alignments->{$i}->{'species'}->{$species} && $_ ne $species && $_ ne 'merged'; 
+      $allowed{$_} = 1 if $alignments->{$i}->{'species'}->{$species} && $_ ne $species; 
     }
   }
   

@@ -53,7 +53,7 @@ sub configure {
       my $TEMP = $self->{'conf'}->{'_storage'}{$species}{'databases'}{$type};
       
       ## Skip if the name hasn't been set (mis-configured database)
-      if ($sp ne 'merged' && $sp ne 'ancestral_sequences') {
+      if ($sp ne 'ancestral_sequences') {
         warn((' ' x 10) . "[WARN] no NAME for $sp $type") unless $TEMP->{'NAME'};
         warn((' ' x 10) . "[WARN] no USER for $sp $type") unless $TEMP->{'USER'};
       }
