@@ -97,7 +97,7 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
       if (!panel.filter(value)) {
         panel.timer = setTimeout(function () {
           panel.xhr = $.ajax({
-            url: Ensembl.speciesPath + '/autocomplete',
+            url: Ensembl.speciesPath + '/Ajax/autocomplete',
             data: { q: value },
             dataType: 'json',
             success: function (json) {
