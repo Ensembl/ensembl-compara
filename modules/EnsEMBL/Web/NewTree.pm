@@ -18,8 +18,6 @@ sub new {
   
   $self->{'tree_ids'}{$self->{'id'}} = 1;
   
-  $self->set_attribute('id', $self->{'id'});
-  
   return $self;
 }
 
@@ -28,7 +26,6 @@ sub data           { return $_[0]->{'data'};                             }
 sub user_data      { return $_[0]->{'user_data'};                        }
 sub tree_ids       { return $_[0]->{'tree_ids'};                         }
 sub parent_key     { return $_[0]->parent_node->id;                      }
-sub get_node       { return $_[0]->get_element_by_id($_[1]);             }
 sub nodes          { return @{$_[0]->get_all_nodes};                     }
 sub descendants    { return $_[0]->nodes;                                }
 sub is_leaf        { return !$_[0]->has_child_nodes;                     }
@@ -40,6 +37,18 @@ sub remove_subtree { return $_[0]->remove;                               }
 sub remove_node    { return $_[0]->remove unless $_[0]->has_child_nodes; } # Remove a node - only if it has no children
 sub render         { return $_[0]->is_empty ? '' : $_[0]->SUPER::render; }
 sub _flush_tree    { $_[0]->{'user_data'} = {};                          } # TODO: rename to flush_tree - called on Configuration tree in Document::Element::Configurator
+
+sub get_node {
+  my ($self, $id) = @_;
+  
+  for (@{$self->child_nodes}) {
+    return $_ if $_->id eq $id;
+    my $child_with_this_id = $_->get_node($id);
+    return $child_with_this_id if defined $child_with_this_id;
+  }
+  
+  return undef;
+}
 
 sub flush_user {
   ### Remove all user data in this tree
