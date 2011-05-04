@@ -17,6 +17,7 @@ sub set_default_action {
 
 sub populate_tree {
   my $self = shift;
+  my $hub  = $self->hub;
   
   $self->create_node('Genome', 'Whole genome',
     [qw( genome EnsEMBL::Web::Component::Location::Genome )],
@@ -73,6 +74,13 @@ sub populate_tree {
     { 'availability' => 'slice database:compara has_alignments', 'concise' => 'Alignments (text)' }
   ));
   
+  my $multi_url;
+  
+  if (!scalar grep /^s\d+$/, keys %{$hub->multi_params}) {
+    my $multi_species = $hub->session->get_data(type => 'multi_species', code => 'multi_species');
+    $multi_url = $hub->url({ action => 'Multi', function => undef, %{$multi_species->{$hub->species}} }) if $multi_species && $multi_species->{$hub->species};
+  }
+  
   $align_menu->append($self->create_node('Multi', 'Multi-species view ([[counts::pairwise_alignments]])',
     [qw(
       selector EnsEMBL::Web::Component::Location::MultiSpeciesSelector
@@ -80,7 +88,7 @@ sub populate_tree {
       botnav   EnsEMBL::Web::Component::Location::MultiBottomNav
       bottom   EnsEMBL::Web::Component::Location::MultiBottom
     )],
-    { 'availability' => 'slice database:compara has_pairwise_alignments', 'concise' => 'Multi-species view' }
+    { 'availability' => 'slice database:compara has_pairwise_alignments', 'concise' => 'Multi-species view', 'url' => $multi_url }
   ));
   
   $align_menu->append($self->create_subnode('ComparaGenomicAlignment', '',
