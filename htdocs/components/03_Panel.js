@@ -26,6 +26,8 @@ Ensembl.Panel = Base.extend({
   },
   
   init: function () {
+    var panel = this;
+    
     if (this.initialised) {
       return false;
     }
@@ -37,6 +39,12 @@ Ensembl.Panel = Base.extend({
     }
     
     this.elLk = {};
+    
+    $('input.js_param', this.el).each(function () {
+      if (!panel.params[this.name]) {
+        panel.params[this.name] = this.value;
+      }
+    });
     
     this.initialised = true;
   },
