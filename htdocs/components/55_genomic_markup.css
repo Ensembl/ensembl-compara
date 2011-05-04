@@ -47,17 +47,3 @@ div.sequence_key    { margin: 0 0 1em 1em; }
 
 div.alignment_list p { margin-top: 1em; }
 div.alignment_list a { text-decoration: none; }
-
-.info_popup                    { width: auto; padding: 0; }
-.info_popup th, .info_popup td { padding: 2px 3px; white-space: nowrap; }
-.info_popup tr.header          { background-color: [[BUTTON_BG]]; }
-.info_popup tr.header th       { border-bottom: 1px solid black; color: #FFFFFF; }
-.info_popup tr.header a        { color: #FFFFFF; }
-.info_popup img.close          { position: absolute; top: -8px; right: -12px; cursor: pointer; }
-.info_popup td.closed          { background: url(/i/closed2.gif) 100% 3px no-repeat; cursor: pointer; padding-right: 16px; }
-.info_popup td.opened          { background: url(/i/open2.gif)   100% 3px no-repeat; cursor: pointer; padding-right: 16px; }
-.info_popup .freq              { display: inline-block; height: 0.5em; }
-.info_popup .A                 { background-color: #90EE90; }
-.info_popup .T                 { background-color: #EEA2AD; }
-.info_popup .C                 { background-color: #B0C4DE; }
-.info_popup .G                 { background-color: #FFEC8B; }
