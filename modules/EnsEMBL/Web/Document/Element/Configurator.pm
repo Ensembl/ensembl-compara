@@ -32,7 +32,8 @@ sub get_json {
   return {
     wrapper   => qq{<div class="$wrapper"></div>},
     content   => $self->content,
-    panelType => 'Configurator'
+    params    => { tracks => $self->{'tracks'}, order => $self->{'track_order'} },
+    panelType => $self->{'panel_type'}
   };
 }
 
@@ -44,7 +45,7 @@ sub init {
   my $configuration = $controller->configuration;
   my $view_config   = $controller->view_config;
   my $config_key    = $hub->param('config');
-  my $image_config  = $config_key ? $hub->get_imageconfig($config_key, $config_key, 'merged') : undef;
+  my $image_config  = $config_key ? $hub->get_imageconfig($config_key, 'configurator', $hub->species) : undef;
   my $action        = join '/', map $hub->$_ || (), qw(type action function);
   my $url           = $hub->url({ type => 'Config', action => $action }, 1);
   
@@ -62,6 +63,8 @@ sub init {
   $page->navigation->active($self->active);
   $page->navigation->caption($self->caption);
   $page->navigation->configuration(1);
+  
+  $self->{'panel_type'} = $image_config ? 'ImageConfig' : 'ViewConfig';
 }
 
 sub init_viewconfig {
@@ -79,17 +82,16 @@ sub init_viewconfig {
     # hack to display help message for Cell line configuration on region in detail
     if ($view_config->action eq 'Cell_line') {
       my $info_panel = $self->new_panel('Configurator', $controller, code => 'configurator_info');
-      my $function = $view_config->type eq 'Location' ? 'View' : 'Cell_line';
-      my $conf = $view_config->type eq 'Location' ? 'contigviewbottom' : 'reg_detail_by_cell_line';
-      my $label = $view_config->type eq 'Location' ? 'Main Panel' : 'Cell line tracks';
-
+      my ($function, $conf, $label) = $view_config->type eq 'Location' ? ('View', 'contigviewbottom', 'Main Panel') : ('Cell_line', 'reg_detail_by_cell_line', 'Cell line tracks');
+      
       my $configuration_link = $hub->url({
         type     => 'Config',
         action   => $view_config->type,
         function => $function,
-        config   => $conf
-       });
-       
+        config   => $conf,
+        __clear  => 1
+      });
+      
       $info_panel->set_content(qq{
         <div class="info">
           <h3>Note:</h3>
@@ -105,7 +107,7 @@ sub init_viewconfig {
           </div>
         </div>
       });
-
+      
       $self->add_panel($info_panel);
     }
     
@@ -132,12 +134,34 @@ sub init_imageconfig {
   my $configuration = $controller->configuration;
   my $search_panel  = $self->new_panel('Configurator', $controller, code => 'configurator_search');
   my $panel         = $self->new_panel('Configurator', $controller, code => 'configurator');
+  my $config_type   = $controller->hub->param('config');
+  my ($track_order, $species_select);
   
-  $image_config->remove_disabled_menus; # Delete all tracks where menu = no, and parent nodes if they are now empty
+  if ($image_config->get_parameter('extra_menus') ne 'no') {
+    $configuration->create_node('active_tracks',    'Active tracks',    [], { availability => 1, url => '#', rel => 'multi', class => 'active_tracks'           });
+    $configuration->create_node('favourite_tracks', 'Favourite tracks', [], { availability => 1, url => '#', rel => 'multi', class => 'favourite_tracks'        });
+    $configuration->create_node('search_results',   'Search results',   [], { availability => 1, url => '#', rel => 'multi', class => 'search_results disabled' });
+    
+    my @sortable_tracks = $image_config->get_parameter('sortable_tracks') ? $image_config->get_sortable_tracks : ();
+    
+    if (scalar @sortable_tracks) {
+      $self->{'track_order'} = { map { join('.', grep $_, $_->id, $_->get('drawing_strand')) => $_->get('order') } @sortable_tracks };
+      
+      $track_order = '
+        <div class="config track_order">
+          <ul class="config_menu"></ul>
+        </div>
+      ';
+      
+      $configuration->create_node('track_order', 'Track order',  [], { availability => 1, url => '#', class => 'track_order' });
+    }
+  }
   
-  $configuration->create_node('active_tracks',    'Active tracks',     [], { availability => 1, url => '#', class => 'active_tracks'           });
-  $configuration->create_node('favourite_tracks', 'Favourite tracks',  [], { availability => 1, url => '#', class => 'favourite_tracks'        });
-  $configuration->create_node('search_results',   'Search Results',    [], { availability => 1, url => '#', class => 'search_results disabled' });
+  # Delete all tracks where menu = no, and parent nodes if they are now empty
+  # Do this after creating track order, so that unconfigurable but displayed tracks are still considered in the ordering process
+  $image_config->remove_disabled_menus;
+  
+  $self->{'favourite_tracks'} = $image_config->get_favourite_tracks;
   
   my @nodes = @{$image_config->tree->child_nodes};
   
@@ -157,6 +181,7 @@ sub init_imageconfig {
     my $id      = $node->id;
     my $caption = $node->get('caption');
     my $first   = ' first';
+    my $i       = 0;
     
     $node->data->{'content'} .= qq{
       <div class="config $id">
@@ -165,14 +190,18 @@ sub init_imageconfig {
     
     foreach my $n (@{$node->child_nodes}) {
       my $children = 0;
-      my $content; 
+      my $c = 0;
+      my $content;
       
-      foreach (map { $_->render || () } @{$n->child_nodes}) {
-        $content .= $_;
+      foreach (grep $_->[1], map [ $_->id, $_->render, $self->{'favourite_tracks'}->{$_->id}, $_->get('display') ], @{$n->child_nodes}) {
+        my $display = pop @$_;
+        push @{$node->data->{'tracks'}[$i]}, $_;
+        $content .= $_->[1] if $display && $display ne 'off';
+        $c++ if $_->[1];
         $children++;
       }
       
-      next unless $content;
+      next unless $c;
       
       my $class = 'config_menu';
       
@@ -204,6 +233,8 @@ sub init_imageconfig {
       
       $node->data->{'content'} .= qq{<ul class="$class">$content</ul>};
       
+      $i++;
+      
       $first = '';
     }
     
@@ -215,7 +246,30 @@ sub init_imageconfig {
     $configuration->create_node($id, ($count ? "($on/$count) " : '') . $caption, [], { url => '#', availability => ($count > 0), class => $id });
   }
   
-  $search_panel->set_content('<div class="configuration_search">Find a track: <input class="configuration_search_text" /></div>');
+  if ($image_config->multi_species) {
+    my $hub = $controller->hub;
+    
+    foreach (@{$image_config->species_list}) {
+      $species_select .= sprintf(
+        '<option value="%s"%s>%s</option>', 
+        $hub->url('Config', { species => $_->[0], config => $config_type, __clear => 1 }), 
+        $hub->species eq $_->[0] ? ' selected="selected"' : '',
+        $_->[1]
+      );
+    }
+    
+    if ($image_config->get_parameter('global_options')) {
+      $species_select .= sprintf(
+        '<option value="">-----</option><option value="%s"%s>All species</option>', 
+        $hub->url('Config', { species => 'Multi', config => $config_type, __clear => 1 }),
+        $hub->species eq 'Multi' ? ' selected="selected"' : ''
+      );
+    }
+    
+    $species_select = qq{<div style="float:left">Select species: <select class="species">$species_select</select></div>} if $species_select;
+  }
+  
+  $search_panel->set_content(qq{$species_select<div class="configuration_search"><input class="configuration_search_text" value="Find a track" /></div>});
   
   $panel->set_content(sprintf(qq{
     <form class="configuration" action="$url->[0]" method="post">
@@ -224,20 +278,24 @@ sub init_imageconfig {
         <input type="hidden" name="config" value="%s" />
       </div>
       %s
-      <div class="favourite_tracks hidden">
+      <div class="config favourite_tracks">
         You have no favourite tracks. Use the <img src="${img_url}grey_star.png" alt="star" /> icon to add tracks to your favourites.
       </div>
+      $track_order
     </form>},
     join('', map { sprintf '<input type="hidden" name="%s" value="%s" />', $_, encode_entities($url->[1]->{$_}) } keys %{$url->[1]}),
-    $controller->hub->param('config'),
+    $config_type,
     join('', map $_->data->{'content'}, @nodes)
   ));
+  
+  my %tracks = map @{$_->data->{'tracks'} || []} ? ( $_->id => $_->data->{'tracks'} ) : (), @nodes;
+  $self->{'tracks'} = \%tracks;
   
   $self->add_panel($search_panel);
   $self->add_panel($panel);
   
   $self->tree    = $configuration->tree;
-  $self->active  = 'active_tracks';
+  $self->active  = $image_config->get_parameter('active_menu') || 'active_tracks';
   $self->caption = $image_config->get_parameter('title');
 }
 
@@ -280,19 +338,18 @@ sub imageconfig_content {
       }
     }
   } elsif ($node->get('menu') ne 'no') {
-    my @states    = @{$node->get('renderers') || [ 'off', 'Off', 'normal', 'Normal' ]};
-    my $display   = $node->get('display')     || 'off';
-    my $external  = $node->get('_class');
-    my $desc      = $node->get('description');
-    my $name      = encode_entities($node->get('name'));
-    my $icons     = $external ? sprintf '<img src="%strack-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" />', $img_url, lc $external, $external, $external : ''; # DAS icons, etc
-    my $fg_link   = $name && $node->get('glyphset') eq 'fg_multi_wiggle' ? $self->multiwiggle_multi_link($image_config) : ''; # FIXME: HACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACK
-    my $favourite = sprintf '<div class="favourite%s"></div>', $node->get('favourite') ? ' selected' : '';
+    my @states   = @{$node->get('renderers') || [ 'off', 'Off', 'normal', 'Normal' ]};
+    my $display  = $node->get('display')     || 'off';
+    my $external = $node->get('_class');
+    my $desc     = $node->get('description');
+    my $name     = encode_entities($node->get('name'));
+    my $icons    = $external ? sprintf '<img src="%strack-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" />', $img_url, lc $external, $external, $external : ''; # DAS icons, etc
+    my $fg_link  = $name && $node->get('glyphset') eq 'fg_multi_wiggle' ? $self->multiwiggle_multi_link($image_config) : ''; # FIXME: HACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACK
     my ($selected, $menu, $help);
     
     while (my ($val, $text) = splice @states, 0, 2) {
       $text     = encode_entities($text);
-      $selected = sprintf '<input type="hidden" name="%s" value="%s" /><img title="%s" alt="%s" src="%srender/%s.gif" class="menu_option" />', $id, $val, $text, $text, $img_url, $val if $val eq $display;
+      $selected = sprintf '<input type="hidden" class="track_name" name="%s" value="%s" /><img title="%s" alt="%s" src="%srender/%s.gif" class="menu_option" />', $id, $val, $text, $text, $img_url, $val if $val eq $display;
       $text     = qq{<li class="$val"><img title="$text" alt="$text" src="${img_url}render/$val.gif" class="$menu_class" />$text</li>};
       
       $menu .= $text;
@@ -321,13 +378,13 @@ sub imageconfig_content {
       $help = qq{<div class="empty"></div>};
     }
     
-    $node->set_attribute('class', "leaf $external");
+    $node->set_attribute('class', "$id track $external" . ($display eq 'off' ? '' : ' on') . ($self->{'favourite_tracks'}->{$id} ? ' fav' : ''));
     $node->inner_HTML(qq{
       <ul class="popup_menu">$menu</ul>
       $selected<span class="menu_option">$icons$name</span>
       $fg_link
       <div class="controls">
-        $favourite
+        <div class="favourite"></div>
         $help
       </div>
       $desc
