@@ -116,12 +116,18 @@ Ensembl.LayoutManager.extend({
   makeZMenu: function (id, params) {
     if (!$('#' + id).length) {
       $([
-        '<table class="zmenu" id="' + id + '" style="display:none">',
-        '  <thead>', 
-        '    <tr><th class="caption" colspan="2"><span class="close">X</span><span class="title"></span></th></tr>',
-        '  </thead>', 
-        '  <tbody></tbody>',
-        '</table>'
+        '<div class="info_popup floating_popup" id="', id, '">',
+        ' <span class="close"></span>',
+        '  <table class="zmenu" cellspacing="0">',
+        '    <thead>', 
+        '      <tr class="header"><th class="caption" colspan="2"><span class="title"></span></th></tr>',
+        '    </thead>', 
+        '    <tbody class="loading">',
+        '      <tr><td><p class="spinner"></p></td></tr>',
+        '    </tbody>',
+        '    <tbody></tbody>',
+        '  </table>',
+        '</div>'
       ].join('')).draggable({ handle: 'thead' }).appendTo('body');
     }
     
