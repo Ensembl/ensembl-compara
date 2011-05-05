@@ -15,7 +15,7 @@ sub init {
     label_width => 113,   # width of labels on left-hand side
   });
 
-  $swlf->create_menus(
+  $self->create_menus(
     lrg        => 'LRG transcripts',
     transcript => 'Other genes',
     prediction => 'Prediction transcripts',
@@ -27,7 +27,7 @@ sub init {
     [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no'    }],
   );
 
-  $self->load_tracks);
+  $self->load_tracks;
 
   # FIXME - should surely come from db?
   $self->add_tracks('lrg',
