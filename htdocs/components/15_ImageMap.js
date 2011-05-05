@@ -274,6 +274,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var ulTop      = this.elLk.boundaries.position().top + wrapperTop;
     var lis        = [];
     
+    this.dragCursor = $('body').hasClass('mac') ? 'move' : 'n-resize';
+    
     this.elLk.boundaries.children().each(function (i) {
       var li = $(this);
       var t  = li.position().top + ulTop;
@@ -315,7 +317,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         
         ui.helper.hide();
         $(this).find(':not(.tmp) p.handle').addClass('nohover');
-        panel.elLk.drag.css('cursor', 'n-resize');
+        panel.elLk.drag.css('cursor', panel.dragCursor);
         panel.dragging = true;
       },
       stop: function () {
