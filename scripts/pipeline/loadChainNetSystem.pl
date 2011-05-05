@@ -24,7 +24,7 @@ my $help;
 my %compara_conf;
 $compara_conf{'-port'} = 3306;
 my %healthcheck_conf;
-my %pair_aligner_conf;
+my $pair_aligner_conf;
 
 # ok this is a hack, but I'm going to pretend I've got an object here
 # by creating a blessed hash ref and passing it around like an object
@@ -202,7 +202,7 @@ sub parse_conf {
         %healthcheck_conf = %{$confPtr};
       }
       elsif($type eq 'PAIR_ALIGNER_CONFIG') {
-        %pair_aligner_conf = %{$confPtr};
+        $pair_aligner_conf = $confPtr;
       }
       elsif($type eq 'SPECIES') {
 	  push @{$self->{'speciesList'}}, $confPtr;
@@ -511,7 +511,7 @@ sub prepareNetSystem {
   $self->create_pairwise_healthcheck_analysis($output_method_link_type);
 
   #Create pair_aligner_config jobs
-  if (defined %pair_aligner_conf) {
+  if (defined $pair_aligner_conf) {
       $self->create_pair_aligner_config_analysis($output_method_link_type);
   }
 }
@@ -654,24 +654,24 @@ sub create_pair_aligner_config_analysis {
 	my $user = $speciesPtr->{user};
 	my $species = $speciesPtr->{species};
 	my $pass = $speciesPtr->{pass};
-	if ($species eq $pair_aligner_conf{ref_species}) {
+	if ($species eq $pair_aligner_conf->{ref_species}) {
 	    $ref_url = get_url($host, $port, $user, $dbname, $pass);
 	} else {
 	    $non_ref_url = get_url($host, $port, $user, $dbname, $pass);
 	}
     }
     my $params = "{";
-    $params .= "'ref_species' => '" . $pair_aligner_conf{ref_species} . "', ";
+    $params .= "'ref_species' => '" . $pair_aligner_conf->{ref_species} . "', ";
     $params .= "'ref_url' =>'$ref_url', ";
     $params .= "'non_ref_url' => '$non_ref_url', ";
     $params .= "'method_link_type'=>\'$output_method_link_type\', ";
     $params .= "'genome_db_ids'=>'[";
     $params .= join ",", map $_->{'genome_db_id'}, values %{$self->{'dna_collection_conf_selected_hash'}};
     $params .= "]', ";
-    $params .= "'bed_dir' => '" . $pair_aligner_conf{bed_dir} . "', ";
-    $params .= "'config_url' => '" . $pair_aligner_conf{config_url} . "', ";
-    $params .= "'config_file' => '" . $pair_aligner_conf{config_file} . "',";
-    $params .= "'perl_path' => '" . $pair_aligner_conf{perl_path} . "',";
+    $params .= "'bed_dir' => '" . $pair_aligner_conf->{bed_dir} . "', ";
+    $params .= "'config_url' => '" . $pair_aligner_conf->{config_url} . "', ";
+    $params .= "'config_file' => '" . $pair_aligner_conf->{config_file} . "',";
+    $params .= "'perl_path' => '" . $pair_aligner_conf->{perl_path} . "',";
     $params .= "}";
 
     my $pair_aligner_config_analysis = Bio::EnsEMBL::Analysis->new(

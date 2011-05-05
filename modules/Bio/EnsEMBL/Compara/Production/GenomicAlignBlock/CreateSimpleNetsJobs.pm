@@ -136,9 +136,8 @@ sub write_output {
     query_genome_db_id => $self->QUERY_GENOME_DB_ID,
     target_genom_db_id => $self->TARGET_GENOME_DB_ID,
   };
-  my $output_id = $self->encode_hash($output_id_hash);
 
-  $self->dataflow_output_id($output_id, 2);
+  $self->dataflow_output_id($output_id_hash, 2);
   return 1;
 }
 
@@ -174,12 +173,11 @@ sub createAlignmentNetsJobs {
       tg_genomedb_id => $self->TARGET_GENOME_DB_ID,
     };
     
-    my $input_id = $self->encode_hash($input_hash);
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-        (-input_id       => $input_id,
-         -analysis       => $self->output_analysis,
-         -input_job_id   => $self->input_job->dbID,
-        );
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+        -input_id       => $input_hash,
+        -analysis       => $self->output_analysis,
+        -input_job_id   => $self->input_job->dbID,
+    );
   }
 }
 

@@ -224,10 +224,8 @@ sub createPairAlignerJobs
       next if (($query_dnafrag_name eq "MT" && $target_dnafrag_name ne "MT") || 
 	      ($query_dnafrag_name ne "MT" && $target_dnafrag_name eq "MT"));
 
-      my $input_id = main::encode_hash($input_hash);
-      #printf("create_job : %s : %s\n", $self->{'pair_aligner'}->logic_name, $input_id);
       Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-        -input_id       => $input_id,
+        -input_id       => $input_hash,
         -analysis       => $self->{'pair_aligner'},
         -input_job_id   => $self->input_job->dbID,
       );

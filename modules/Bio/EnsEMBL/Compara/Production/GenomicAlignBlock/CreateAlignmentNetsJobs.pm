@@ -252,13 +252,12 @@ sub createAlignmentNetsJobs
       $input_hash->{'end'} = $end;
       $input_hash->{'DnaFragID'} = $qy_dnafrag_id;
       $input_hash->{'method_link_species_set_id'} = $self->{'method_link_species_set'}->dbID;
-      my $input_id = main::encode_hash($input_hash);
-      #printf("create_job : %s : %s\n", $analysis->logic_name, $input_id);
-      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-          (-input_id       => $input_id,
-           -analysis       => $analysis,
-           -input_job_id   => $self->input_job->dbID,
-          );
+
+      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+          -input_id       => $input_hash,
+          -analysis       => $analysis,
+          -input_job_id   => $self->input_job->dbID,
+      );
       $count++;
     }
   }

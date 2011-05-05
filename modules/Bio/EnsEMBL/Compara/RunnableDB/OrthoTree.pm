@@ -71,6 +71,7 @@ use Bio::EnsEMBL::Compara::Graph::Node;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Homology;
+use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
 use Bio::SimpleAlign;
 use Bio::AlignIO;
@@ -569,7 +570,7 @@ sub get_ancestor_species_hash
     }
   }
   
-  #printf("\ncalc_ancestor_species_hash : %s\n", $self->encode_hash($species_hash));
+  #printf("\ncalc_ancestor_species_hash : %s\n", stringify($species_hash));
   #$node->print_tree(20);
   
   $node->add_tag("species_hash", $species_hash);
@@ -1089,14 +1090,14 @@ sub store_homologies {
     print STDERR "homology links $hlinkscount\n" if ($hlinkscount++ % 500 == 0);
   }
 
-  my $counts_str = $self->encode_hash($self->param('orthotree_homology_counts'));
+  my $counts_str = stringify($self->param('orthotree_homology_counts'));
   printf("$counts_str\n");
 
   $self->check_homology_consistency;
 
   $self->param('protein_tree')->store_tag(
       'OrthoTree_types_hashstr', 
-      $self->encode_hash($self->param('orthotree_homology_counts'))) unless ($self->param('_readonly'));
+      stringify($self->param('orthotree_homology_counts'))) unless ($self->param('_readonly'));
 
   return undef;
 }

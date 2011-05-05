@@ -50,7 +50,6 @@ use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
 
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBLoader;
 
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
@@ -63,6 +62,7 @@ use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
 use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Hive::Process;
+use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
 our @ISA = qw(Bio::EnsEMBL::Hive::Process Bio::EnsEMBL::Analysis::RunnableDB);
 
@@ -103,7 +103,7 @@ sub fetch_input {
 
 
   $self->{'analysis_job'}             = undef;
-  $self->{'create_analysis_prefix'}   = undef; # 'analysis', 'job'
+#  $self->{'create_analysis_prefix'}   = undef; # 'analysis', 'job'
   $self->{'collection_id'}            = undef;
   $self->{'collection_name'}          = undef;
 
@@ -149,36 +149,23 @@ sub write_output
 {  
   my $self = shift;
 
-  my $outputHash = {};
-  $outputHash = eval($self->input_id) if(defined($self->input_id));
-  $outputHash->{'collection_id'} = $self->{'dna_collection'}->dbID;
-  my $output_id = main::encode_hash($outputHash);
-
-  #print("output_id = $output_id\n");
-  $self->input_id($output_id);
-
-  #
   #Create a StoreSequence job for each DnaFragChunk or DnaFragChunkSet object 
   #to parallelise the storing of sequences in the Sequence table. Only do this if
   #chunk_size is defined
-  #
+  
   if (defined $self->{'chunk_size'}) {
       my $dna_objects = $self->{'dna_collection'}->get_all_dna_objects;
       foreach my $dna_object (@$dna_objects) {
-          if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
-              my $store_seq_id = "{'chunkSetID' => '" . $dna_object->dbID . "'}";
-              #Use branch1 to send data to StoreSequence
-              $self->dataflow_output_id($store_seq_id,1);
-          } else {
-              my $store_seq_id = "{'chunkID' => '" . $dna_object->dbID .  "'}";
-              #Use branch1 to send data to StoreSequence
-              $self->dataflow_output_id($store_seq_id,1);
-          }
+            my $object_id_name = $dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')
+                ? 'chunkSetID'
+                : 'chunkID';
+
+                # Use branch1 to send data to StoreSequence:
+            $self->dataflow_output_id( { $object_id_name => $dna_object->dbID }, 1 );
       }
   } else {
       #Do not produce any StoreSequence jobs
       $self->input_job->autoflow(0);
-      #$self->autoflow_inputjob(0);
   }
 
   return 1;
@@ -228,8 +215,11 @@ sub get_params {
   $self->{'masking_analysis_data_id'} = $params->{'masking_analysis_data_id'}
     if(defined($params->{'masking_analysis_data_id'}));
 
-  $self->{'create_analysis_prefix'} = $params->{'analysis_template'} 
-    if(defined($params->{'analysis_template'}));
+## there seems to have been a typo since the very beginning, and nobody noticed :)
+#
+#  $self->{'create_analysis_prefix'} = $params->{'analysis_template'} 
+#    if(defined($params->{'analysis_template'}));
+
   $self->{'analysis_job'} = $params->{'analysis_job'} if(defined($params->{'analysis_job'}));
 
   $self->{'group_set_size'} = $params->{'group_set_size'} if(defined($params->{'group_set_size'}));
@@ -497,7 +487,7 @@ sub create_dnafrag_chunks {
     }
     
     $self->submit_job($chunk) if($self->{'analysis_job'});
-    $self->create_chunk_analysis($chunk) if($self->{'create_analysis_prefix'});
+#    $self->create_chunk_analysis($chunk) if($self->{'create_analysis_prefix'});
 
     #This is very important, otherwise it leaks
     undef($chunk->{'_sequence'});
@@ -557,6 +547,8 @@ sub submit_job {
 }
 
 
+# this subroutine is never called and can probably be deleted:
+
 sub create_chunk_analysis {
   #routine to create one analysis per chunk
   my $self  = shift;
@@ -596,7 +588,7 @@ sub create_chunk_analysis {
     $param_hash = eval($analysis->parameters);
   }
   $param_hash->{'dbChunk'} = $chunk->dbID;
-  $analysis->parameters(main::encode_hash($param_hash));
+  $analysis->parameters(stringify($param_hash));
   #print("new parameters : ", $analysis->parameters, "\n");
   $analysisDBA->store($analysis);
 

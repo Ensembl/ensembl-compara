@@ -276,13 +276,11 @@ sub createAlignmentChainsJobs
       }
       $reverse_pairs->{$tg_dnafrag_id}->{$qy_dnafrag_id} = 1;
 
-      my $input_id = main::encode_hash($input_hash);
-      #printf("create_job : %s : %s\n", $self->{'pair_aligner'}->logic_name, $input_id);
-      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-                                                                   -input_id       => $input_id,
-                                                                   -analysis       => $analysis,
-                                                                   -input_job_id   => $self->input_job->dbID,
-                                                                  );
+      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+            -input_id       => $input_hash,
+            -analysis       => $analysis,
+            -input_job_id   => $self->input_job->dbID,
+      );
       $count++;
     }
   }

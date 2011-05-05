@@ -264,10 +264,9 @@ sub submitGenome
   if(defined($species->{'pseudo_stableID_prefix'})) {
     $genomeHash->{'pseudo_stableID_prefix'} = $species->{'pseudo_stableID_prefix'};
   }
-  my $input_id = encode_hash($genomeHash);
 
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-        -input_id       => $input_id,
+        -input_id       => $genomeHash,
         -analysis       => $submitGenome,
   );
 }
@@ -294,12 +293,10 @@ sub submitUniprot
     $stats->status('LOADING');
     $stats->update();
   }
-
   delete $uniprotHash->{'TYPE'};
-  my $input_id = encode_hash($uniprotHash);
 
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-        -input_id       => $input_id,
+        -input_id       => $uniprotHash,
         -analysis       => $loadUniProt,
   );
 
