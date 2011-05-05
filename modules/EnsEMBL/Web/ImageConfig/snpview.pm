@@ -4,6 +4,8 @@ package EnsEMBL::Web::ImageConfig::snpview;
 
 use strict;
 
+use base qw(EnsEMBL::Web::ImageConfig);
+
 sub init {
   my $self = shift;
 

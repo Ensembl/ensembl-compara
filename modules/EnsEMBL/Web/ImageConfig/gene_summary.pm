@@ -4,6 +4,8 @@ package EnsEMBL::Web::ImageConfig::gene_summary;
 
 use strict;
 
+use base qw(EnsEMBL::Web::ImageConfig);
+
 sub init {
   my $self = shift;
 
