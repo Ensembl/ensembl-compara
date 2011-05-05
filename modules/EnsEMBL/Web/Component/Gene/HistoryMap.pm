@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Gene::HistoryMap;
 
 use strict;
@@ -10,9 +12,7 @@ sub _init {
   $self->ajaxable(1);
 }
 
-sub caption {
-  return 'ID History Map';
-}
+sub caption { return 'ID History Map'; }
 
 sub content_protein {
   my $self = shift;
@@ -22,6 +22,7 @@ sub content_protein {
 sub content {
   my $self    = shift;
   my $protein = shift;
+  my $hub     = $self->hub;
   my $object  = $self->object;
   my $archive;
   my $htree;
@@ -30,9 +31,9 @@ sub content {
     my $transcript = $object->transcript;
     
     if ($transcript->isa('Bio::EnsEMBL::ArchiveStableId') || $transcript->isa('EnsEMBL::Web::Fake')) { 
-       my $p  = $object->param('p')  || $object->param('protein') || $transcript->get_all_translation_archive_ids->[0]->stable_id; 
-       my $db = $object->param('db') || 'core';
-       my $a  = $object->database($db)->get_ArchiveStableIdAdaptor;
+       my $p  = $hub->param('p')  || $hub->param('protein') || $transcript->get_all_translation_archive_ids->[0]->stable_id; 
+       my $db = $hub->param('db') || 'core';
+       my $a  = $hub->database($db)->get_ArchiveStableIdAdaptor;
        
        $archive = $a->fetch_by_stable_id($p);
        $htree   = $a->fetch_history_tree_by_stable_id($p); ## get tree from Archve stableid object
@@ -60,8 +61,8 @@ sub content {
 sub _create_idhistory_tree {
   my ($self, $archive, $tree) = @_;
 
-  my $object       = $self->object;
-  my $image_config = $object->get_imageconfig('idhistoryview');
+  my $hub          = $self->hub;
+  my $image_config = $hub->get_imageconfig('idhistoryview');
   
   $image_config->set_parameters({
     container_width => $self->image_width || 800,
@@ -71,12 +72,12 @@ sub _create_idhistory_tree {
 
   $image_config->{'_object'} = $archive;
   
-  my $image = $self->new_image($tree, $image_config, [ $archive->stable_id ], $object);
+  my $image = $self->new_image($tree, $image_config, [ $archive->stable_id ]);
   
   return if $self->_export_image($image, 'no_text');
   
   $image->image_type       = 'idhistorytree';
-  $image->image_name       = $object->param('image_width') . '-' . $archive->stable_id;
+  $image->image_name       = $hub->param('image_width') . '-' . $archive->stable_id;
   $image->imagemap         = 'yes';
   $image->{'panel_number'} = 'top';
   $image->set_button('drag', 'title' => 'Drag to select region');
