@@ -9,6 +9,7 @@ use HTML::Entities qw(encode_entities decode_entities);
 
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Document::Renderer::GzFile;
+use Encode;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -387,7 +388,8 @@ sub render_HTML {
   }
   
   $r->content_type('text/html; charset=utf-8') unless $r->content_type;
-  
+
+  binmode STDOUT, ":utf8"; 
   print  $content;
   return $content;
 }
