@@ -18,7 +18,7 @@ sub _row {
   
   return sprintf '
   <dl class="summary">
-    <dt>%s</dt>
+    <dt class="__h">%s</dt>
     <dd>%s</dd>
   </dl>', encode_entities($label), $value;
 }
