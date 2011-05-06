@@ -62,7 +62,7 @@ if ($sitemap_path) {
 } else {
   $sitemap_path = $domain;
 }
-
+#`rm -r $ouput_dir` if(-d $ouput_dir);
 mkdir($ouput_dir) unless -d $ouput_dir;
 
 # create the 'common' sitemap for non-species urls
@@ -219,7 +219,7 @@ sub create_dataset_sitemaps {
     $total_count++;
     
     if ($batch_count == $batch_size or $total_count == $#urls) {
-      my $filename = "${dataset}_${suffix}.xml";
+      my $filename = "sitemap_${dataset}_${suffix}.xml";
       $map->write("${ouput_dir}/$filename");
       print "  Wrote ${ouput_dir}/$filename\n";
       push @files, $filename;
