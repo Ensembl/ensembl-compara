@@ -28,6 +28,7 @@ sub default_options {
 		-pass   => $self->o('password'),
 		-dbname => $ENV{'USER'}.'_compara_generate_anchors'.$self->o('rel_with_suffix'),
    	},
+	  # database containing the pairwise alignments needed to get the overlaps
 	'compara_pairwise_db' => {
 		-user => 'ensro',
 		-port => 3306,
@@ -35,7 +36,12 @@ sub default_options {
 		-pass => '',
 		-dbname => 'ensembl_compara_62',
 	},
+	  # location of species core dbs which were used in the pairwise alignments
 	'core_db_url' => 'mysql://anonymous@ensembldb.ensembl.org:5306/62',
+	  # alignment chunk size
+	'chunk_size' => 10000000,
+	  # max block size for pecan to align
+	'pecan_block_size' => 1000000,
      };
 }
 
@@ -87,7 +93,6 @@ sub pipeline_analyses {
 			       2 => [ 'innodbise_table' ],
 			      },
 	    },
-
 	    {   -logic_name    => 'innodbise_table',
 		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
 		-parameters    => {
@@ -95,13 +100,12 @@ sub pipeline_analyses {
 				  },
 		-hive_capacity => 1,
 	    },
-
 	    {	-logic_name	=> 'chunk_reference_dnafrags',
 		-module		=> 'Bio::EnsEMBL::Compara::Production::EPOanchors::ChunkRefDnafrags',
 		-parameters	=> {
 				    'compara_db' => $self->o('compara_pairwise_db'),
 				    'method_link_types' => [ 'BLASTZ_NET', 'LASTZ_NET'],
-				    'chunk_size' => '10000000',
+				    'chunk_size' => $self->o('chunk_size'),
 				    'consensus_overlap' => 0,
 				    'genome_db_ids' => [39, 64, 93],
 #				    'genome_db_ids' => [],
@@ -115,7 +119,6 @@ sub pipeline_analyses {
 				   },
 				 
 	    },
-
 	    {   -logic_name => 'import_entries',
 	        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
     	        -parameters => {
@@ -135,7 +138,7 @@ sub pipeline_analyses {
 		-wait_for       => [ 'import_entries' ],
 		-flow_into => {
 				2 => [ 'mysql:////genome_db?insertion_method=REPLACE' ],
-		}
+		},
 	
 	    },
 	    {
@@ -152,7 +155,6 @@ sub pipeline_analyses {
 		},
 		-wait_for       => [ 'import_entries' ],
 	   },
-		
 	   {
 		-logic_name	=> 'find_pairwise_overlaps',
 		-module		=> 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindPairwiseOverlaps',
@@ -164,12 +166,11 @@ sub pipeline_analyses {
 				   },
 		-hive_capacity => 100,
 	   },
-
 	   {
 		-logic_name    => 'pecan',
 		-module        => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Pecan',
 		-wait_for      => 'find_pairwise_overlaps',
-		-parameters     => { 'method_link_species_set_id' => 400, },
+		-parameters     => { 'method_link_species_set_id' => 400, max_block_size=>$self->o('pecan_block_size'),java_options=>'-server -Xmx1000M',},
 		-hive_capacity => 100,
 	   },
 	];

@@ -61,8 +61,9 @@ sub fetch_input {
 		next unless $dbname=~/_core_/;
 		my ($species_name)=$dbname=~/(\w+)_core_/; 
 		if(exists($genome_dbs->{$species_name})){
-			$genome_dbs->{$species_name}->{'locator'} = "Bio::EnsEMBL::DBSQL::DBAdaptor/host=" . $host .
-			";port=" . $port . ";user=" . $user . ";dbname=" . $dbname . ";species=" . $species_name . ";disconnect_when_inactive=1";
+			$genome_dbs->{$species_name}->{'locator'} = "Bio::EnsEMBL::DBSQL::DBAdaptor/host=" . 
+			$host . ";port=" . $port . ";user=" . $user . ";dbname=" . $dbname . ";species=" . 
+			$species_name . ";disconnect_when_inactive=1";
 		}
 	} 
 	my @genome_dbs = values( %$genome_dbs );
