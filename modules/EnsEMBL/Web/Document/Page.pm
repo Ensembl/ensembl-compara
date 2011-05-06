@@ -9,7 +9,6 @@ use HTML::Entities qw(encode_entities decode_entities);
 
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Document::Renderer::GzFile;
-use Encode;
 
 use base qw(EnsEMBL::Web::Root);
 
