@@ -3,7 +3,7 @@ package Bio::EnsEMBL::GlyphSet::tsv_variations;
 use strict;
 
 use Sanger::Graphics::Bump;
-use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
+use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 
 use base qw(Bio::EnsEMBL::GlyphSet);
 
@@ -54,23 +54,7 @@ sub _init {
     next unless $conseq_type && $allele;
     next if $allele->end < $transcript->start - $EXTENT;
     next if $allele->start > $transcript->end + $EXTENT;
-
-    # Alleles (if same as ref, draw empty box )---------------------
-    my $aa_change =  $conseq_type->aa_alleles || []; 
-    my $label  = join "/", @$aa_change; 
-    my $S =  ( $allele_ref->[0]+$allele_ref->[1] )/2;
-    my $width = $font_w_bp * length( $label );
-
-    # Note: due to some bizarre API caching, the allele->allele_string is incorrect here
-    # The alleles from conseq_type need to be used instead. 
-    my $ref_allele = $allele->ref_allele_string();
-    my @conseq_alleles = @{$conseq_type->alleles || [] };
-    if ($allele->strand != $transcript->strand) {
-      map {tr/ACGT/TGCA/} @conseq_alleles;
-    }
-    warn "Consequence alleles has more than one alt allele" if $#conseq_alleles > 0;
-
-
+	
     # Type and colour -------------------------------------------
     my $type = lc($conseq_type->display_consequence); 
     my $colour;
@@ -79,6 +63,20 @@ sub _init {
     } else {
       $colour = $colour_map->{$type}->{'default'}; 
     }
+
+    # Alleles (if same as ref, draw empty box )---------------------
+    my $var_pep  = $type eq 'sara' ? '' : ($conseq_type->pep_allele_string || '');
+	$var_pep =~ s/\//\|/g;
+	my $aa_change;
+	@$aa_change = split /\|/, $var_pep;
+    my $S =  ( $allele_ref->[0]+$allele_ref->[1] )/2;
+    my $width = $font_w_bp * length( $var_pep );
+
+    my $ref_allele = $allele->ref_allele_string();
+	# get the feature seq from each TVA
+	# this will come flipped if transcript is on opposite strand to feature
+	my @conseq_alleles = map {$_->feature_seq} @{$conseq_type->get_all_alternate_TranscriptVariationAlleles};
+    warn "Consequence alleles has more than one alt allele" if $#conseq_alleles > 0;
 
     my $c;
     # Coverage -------------------------------------------------
@@ -102,12 +100,12 @@ sub _init {
       'action'  => 'TranscriptVariation',
       'v'     => $allele_id,
       'vf'    => $dbid,
-      'alt_allele' => $conseq_alleles[0],
+      'alt_allele' => $allele->allele_string,#$conseq_alleles[0],
       'sara'  => 1,
     });
 
     # SARA snps ----------------------------------------------------
-    if ($ref_allele eq $conseq_alleles[0]) { # if 'negative snp'
+    if ($type eq 'sara') { # if 'negative snp'
        my $bglyph = $self->Rect({
       'x'         => $S - $font_w_bp / 2,
       'y'         => $height + 2,
@@ -128,11 +126,19 @@ sub _init {
     }
 
     # Normal SNPs
-    my $aa;
-    $aa = "$aa_change->[0] to $aa_change->[1]"  if $aa_change->[1];
+    # we need to get the original allele
+	my $ref_tva = $conseq_type->{_alleles_by_seq}->{$ref_allele};
+	my $ref_pep = $ref_tva->peptide;
+	
+	my $ref_codon = $ref_tva->codon;
+	my $var_codon = $conseq_type->codons;
+	$var_codon =~ s/\//\|/g;
+	
+    my $aa = "$ref_pep to $var_pep";
+	my $codon = "$ref_codon $var_codon";
 
     # Draw ------------------------------------------------
-    my @res = $self->get_text_width( 0, $label, '', 'font'=>$fontname, 'ptsize' => $fontsize );
+    my @res = $self->get_text_width( 0, $var_pep, '', 'font'=>$fontname, 'ptsize' => $fontsize );
     my $W = ($res[2]+4)/$pix_per_bp;
 
     my $href = $self->_url({
@@ -140,9 +146,10 @@ sub _init {
       'action'  => 'TranscriptVariation',
       'v'     => $allele_id,
       'vf'    => $dbid,
-      'alt_allele' => $conseq_alleles[0],
+      'alt_allele' => $allele->allele_string,#$conseq_alleles[0],
       'aa_change' => $aa,
       'cov'       => $c,
+	  'codon'     => $codon,
     });
 
     my $tglyph = $self->Text({
@@ -154,7 +161,7 @@ sub _init {
       'font'      => $fontname,
       'ptsize'    => $fontsize,
       'colour'    => 'black',
-      'text'      => $label,
+      'text'      => $var_pep,
       'absolutey' => 1,
     });
 
