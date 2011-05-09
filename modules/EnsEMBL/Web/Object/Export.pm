@@ -38,16 +38,19 @@ sub slice {
   my $self     = shift;
   my $location = $self->get_location_object;
   
-  return $location->slice if $location;
-  
+  if ($location) {
+     my ($flank5, $flank3) = map $self->param($_), qw(flank5_display flank3_display);
+     my $slice = $location->slice;
+     return $flank5 || $flank3 ? $slice->expand($flank5, $flank3) : $slice; 
+   }
+
   my $hub = $self->hub;
   my $lrg = $hub->param('lrg');
   my $lrg_slice;
   
   if ($lrg) {
     eval { $lrg_slice = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('LRG', $lrg); };
-  }
-  
+  }  
   return $lrg_slice;
 }
 
@@ -373,8 +376,8 @@ sub fasta {
   if (defined $genomic && $genomic ne 'off') {
     my $masking = $genomic eq 'soft_masked' ? 1 : $genomic eq 'hard_masked' ? 0 : undef;
     my ($seq, $start, $end, $flank_slice);
-    
-    if ($genomic =~ /flanking/) {
+
+    if ($genomic =~ /flanking/) {      
       for (5, 3) {
         if ($genomic =~ /$_/) {
           if ($strand == $params->{'feature_strand'}) {
