@@ -4,6 +4,8 @@ package EnsEMBL::Web::Component::Transcript::TranscriptSNPTable;
 
 use strict;
 
+use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
+
 use base qw(EnsEMBL::Web::Component::Transcript);
 
 sub _init {
@@ -33,10 +35,9 @@ sub content {
     { key => 'ref_alleles', sort => 'string',   title => 'Ref. allele'                   },
     { key => 'Alleles',     sort => 'string',   title => ucfirst "$strain_name genotype" },
     { key => 'Ambiguity',   sort => 'string',   title => 'Ambiguity'                     },
-    { key => 'HGVS',        sort => 'string',   title => 'HGVS name(s)'                  },
     { key => 'Codon',       sort => 'html',     title => 'Transcript codon'              },
     { key => 'cdscoord',    sort => 'numeric',  title => 'CDS coord.'                    },
-    { key => 'aachange',    sort => 'string',   title => 'AA change'                     },
+    { key => 'aachange',    sort => 'string',   title => 'Amino acids'                   },
     { key => 'aacoord',     sort => 'numeric',  title => 'AA coord.'                     },
     { key => 'Class',       sort => 'string'                                             },
     { key => 'Source',      sort => 'string'                                             },
@@ -76,6 +77,8 @@ sub get_page_data {
   my $transcript = $object->Obj;
   my %snp_data;
   
+  my $con_format = $hub->param('consequence_format');
+  
   my $base_url = $hub->url({
     'type' => 'Variation',
     'action' => 'Summary',
@@ -86,6 +89,7 @@ sub get_page_data {
 
   foreach my $sample (@$samples) {
     my $munged_transcript = $object->get_munged_slice($hub->param('context') eq 'FULL' ? 1000 : $hub->param('context'), 1) || warn "Couldn't get munged transcript";
+    
     my $sample_slice      = $munged_transcript->[1]->get_by_strain($sample);
 
     my ($allele_info, $consequences) = $object->getAllelesConsequencesOnSlice($sample, 'tsv_transcript', $sample_slice);
@@ -103,24 +107,26 @@ sub get_page_data {
       $index++;
       
       next unless $conseq_type && $allele;
-
-      # Check consequence obj and allele feature obj have same alleles
-      my $tmp        = join '', @{$conseq_type->alleles || []};
-      $tmp           =~ tr/ACGT/TGCA/ if $transcript->strand ne $allele->strand;
-      my $type       = join ', ', @{$conseq_type->type || []};
+      
+      my $cons = $conseq_type->consequence_type($con_format);
+      $cons = $conseq_type->consequence_type('label') if $cons->[0] eq '';
+      
+      my $type       = join ', ', @{$cons || []};
       $type         .= ' (Same As Ref. Assembly)' if $type eq 'SARA';
       my $offset     = $sample_slice->strand > 0 ? $sample_slice->start - 1 :  $sample_slice->end + 1;
       my $chr_start  = $allele->start + $offset;
       my $chr_end    = $allele->end   + $offset;
-      my $class      = $object->var_class($allele);
-      my $codon      = $conseq_type->codon;
+      my $class      = $allele->variation_feature->var_class();
+      my $codons     = $conseq_type->codons;
       my $chr        = $sample_slice->seq_region_name;
-      my $aa_alleles = $conseq_type->aa_alleles || [];
-      my $aa_coord   = $conseq_type->aa_start;
-      $aa_coord     .= $aa_coord == $conseq_type->aa_end ? "": $conseq_type->aa_end;
+      my $aa_alleles = $conseq_type->pep_allele_string;
+      my $aa_coord   = $conseq_type->translation_start;
+      $aa_coord     .= $aa_coord == $conseq_type->translation_end ? "": $conseq_type->translation_end;
       my $cds_coord  = $conseq_type->cds_start;
       $cds_coord    .= '-' . $conseq_type->cds_end unless $conseq_type->cds_start == $conseq_type->cds_end;
       
+      $codons     =~ s/\//\|/g;
+      $aa_alleles =~ s/\//\|/g;
       
       my ($pos, $status);
       if ($chr_end < $chr_start) {
@@ -132,9 +138,10 @@ sub get_page_data {
       }
 
       # Codon - make the letter for the SNP position in the codon bold
-      if ($codon) {
+      if ($codons) {
         my $position = ($conseq_type->cds_start % 3 || 3) - 1;
-        $codon =~ s/(\w{$position})(\w)(.*)/$1<b>$2<\/b>$3/;
+        $codons =~ s/[ACGT]/'<b>'.$&.'<\/b>'/eg;
+        $codons =~ tr/acgt/ACGT/;
       }
       
       # read coverage in mouse?
@@ -167,28 +174,22 @@ sub get_page_data {
       #my $sources = join ", " , @{$allele->get_all_sources || [] };
       my $sources = $source;
       
-      # hgvs
-      my @hgvs = values %{$allele->variation_feature->get_all_hgvs_notations($object->transcript, 'c')};
-      s/ENS(...)?[TG]\d+(\.\d+)?\://g for @hgvs;
-      my $hgvs = join ", ", @hgvs;
-      
       my $row = {
         ID          => sprintf('<a href="%s">%s</a>', $url, $allele->variation_name),
         Class       => $class                     || '-',
         Source      => $sources                   || '-',
         ref_alleles => $allele->ref_allele_string || '-',
         Alleles     => $allele->allele_string     || '-',
-        Ambiguity   => $object->ambig_code($allele),
-        HGVS        => $hgvs                      || '-',
+        Ambiguity   => ambiguity_code($allele->allele_string),
         Status      => $status                    || '-',
         chr         => "$chr:$pos",
-        Codon       => $codon                     || '-',
+        Codon       => $codons                    || '-',
         consequence => $type,
         cdscoord    => $cds_coord                 || '-'
       };
  
-      if ($conseq_type->aa_alleles) {
-        $row->{'aachange'} = join '/', @$aa_alleles || '';
+      if ($aa_alleles) {
+        $row->{'aachange'} = $aa_alleles;
         $row->{'aacoord'}  = $aa_coord;
       } else {
         $row->{'aachange'} = '-';
