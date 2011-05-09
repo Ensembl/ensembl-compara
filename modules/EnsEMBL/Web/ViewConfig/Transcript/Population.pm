@@ -17,6 +17,7 @@ sub init {
     context           100
     panel_transcript  on
     image_width       800
+    consequence_format   label
     reference),       ''
   );
 
@@ -115,6 +116,21 @@ sub form {
       raw   => 1
     });
   }
+
+  # Add selection
+  $view_config->add_fieldset('Consequence options');
+  
+  $view_config->add_form_element({
+    type   => 'DropDown',
+    select =>, 'select',
+    label  => 'Type of consequences to display',
+    name   => 'consequence_format',
+    values => [
+      { value => 'label', name => 'Ensembl terms'           },
+      { value => 'SO',    name => 'Sequence Ontology terms' },
+      { value => 'NCBI',  name => 'NCBI terms'              },
+    ]
+  });  
   
   # Add context selection
   $self->add_fieldset('Intron Context');
