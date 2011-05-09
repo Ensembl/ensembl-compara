@@ -375,9 +375,13 @@ sub content {
       $location_string_long = $location_string.' ('.($str > 0 ? "forward" : "reverse").' strand)';
       
       # turn on somatic or normal variation track
-      my $track_name = $is_somatic ? 'somatic_mutation_COSMIC' : 'variation_feature_variation';
+      my $track_name = $is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal';
+	  
+	  if($variation->failed_description) {
+		$track_name .= ',variation_set_Failed_variations=normal';
+	  }
       
-      my $location_link = $hub->url({ type =>'Location', action => 'View', r => $display_region, v => $id, source => $source, vf => $selected_vf, contigviewbottom => $track_name.'=normal' });
+      my $location_link = $hub->url({ type =>'Location', action => 'View', r => $display_region, v => $id, source => $source, vf => $selected_vf, contigviewbottom => $track_name });
       $location_link_html = qq( | <a href="$location_link">View in location tab</a>);
     }
     
