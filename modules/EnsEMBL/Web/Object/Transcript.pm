@@ -654,28 +654,36 @@ sub getAllelesConsequencesOnSlice {
   # consequences of AlleleFeatures on the transcript
   my @slice_alleles = map { $_->[2]->transfer($self->Obj->slice) } @filtered_af;
 
-  $consequences = get_all_ConsequenceType($self->Obj, \@slice_alleles);
+  push @$consequences, $_->get_all_TranscriptVariations([$self->Obj])->[0] foreach @slice_alleles;
   return ([], []) unless @$consequences;
+  
+  # this is a hack, there's an issue with weakening to avoid circular
+  # references in VariationFeature that causes the reference to the VF to be
+  # garbage collected, so we make a copy here such that we can still get to it
+  # later
+  $_->{_cache_variation_feature} = $_->variation_feature foreach @$consequences;
 
   my @valid_conseq;
   my @valid_alleles;
 
-  foreach (sort {$a->start <=> $b->start} @$consequences) { # conseq on our transcript
-    my $last_af =  $valid_alleles[-1];
-    my $allele_feature;
+  #foreach (sort {$a->start <=> $b->start} @$consequences) { # conseq on our transcript
+  foreach (@$consequences) { # conseq on our transcript
+    #my $last_af =  $valid_alleles[-1];
+    #my $allele_feature;
+    #
+    #if ($last_af && $last_af->[2]->start eq $_->start) {
+    #  $allele_feature = $last_af;
+    #} else {
+    #  $allele_feature = shift @filtered_af;
+    #}
     
-    if ($last_af && $last_af->[2]->start eq $_->start) {
-      $allele_feature = $last_af;
-    } else {
-      $allele_feature = shift @filtered_af;
-    }
-    
-    next unless $allele_feature;
-
-    foreach my $type (@{$_->type || []}) {
+	my $allele_feature = shift @filtered_af;
+    #next unless $allele_feature;
+	
+    foreach my $type (@{$_->consequence_type || []}) {
       next unless $valids->{'opt_' . lc $type};
       warn "Allele undefined for ", $allele_feature->[2]->variation_name . "\n" unless $allele_feature->[2]->allele_string;
-
+	  
       # [ fake_s, fake_e, SNP ]   Filter our unwanted consequences
       push @valid_conseq,  $_;
       push @valid_alleles, $allele_feature;
@@ -1577,7 +1585,7 @@ sub get_genetic_variations {
       next unless $conseq_type && $allele;
 
       # Type
-      my $type = join ', ', @{$conseq_type->type || []};
+      my $type = join ', ', @{$conseq_type->consequence_type || []};
       $type   .= ' (Same As Ref. Assembly)' if $type eq 'SARA';
 
       # Position
@@ -1593,7 +1601,7 @@ sub get_genetic_variations {
       }
       
       my $chr        = $sample_slice->seq_region_name;
-      my $aa_alleles = $conseq_type->aa_alleles || [];
+      my $aa_alleles = $conseq_type->pep_allele_string;
       my $sources    = join ', ' , @{$allele->get_all_sources || []};
       my $vid        = $allele->variation_name;
       my $source     = $allele->source;
@@ -1610,7 +1618,7 @@ sub get_genetic_variations {
       push @{$snp_data->{"$chr:$pos"}->{$sample}}, {
         ID          => qq{<a href="$url">$vid</a>},
         consequence => $type,
-        aachange    => $conseq_type->aa_alleles ? (join "/", @$aa_alleles) || '' : '-'
+        aachange    => $aa_alleles || '-'
       };
     }
   }
