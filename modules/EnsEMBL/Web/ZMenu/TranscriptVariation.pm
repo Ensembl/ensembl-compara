@@ -4,7 +4,7 @@ package EnsEMBL::Web::ZMenu::TranscriptVariation;
 
 use strict;
 
-use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
+use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -15,6 +15,8 @@ sub content {
   my $alt_allele       = $hub->param('alt_allele');
   my $aa_change        = $hub->param('aa_change');
   my $cov              = $hub->param('cov');
+  my $codon            = $hub->param('codon');
+  my $is_sara          = $hub->param('sara');
   my $db_adaptor       = $hub->database('variation');
   my $var_adaptor      = $db_adaptor->get_VariationAdaptor;
   my $var_feat_adaptor = $db_adaptor->get_VariationFeatureAdaptor;
@@ -33,19 +35,20 @@ sub content {
   }
 
   my $tc;
-  foreach ( @{$feature->get_all_TranscriptVariations()} ){
-    if ($trans_id eq $_->transcript->stable_id){
-      my $codon = $_->codons;
-      $codon =~s/([A-Z])/<strong>$1<\/strong>/g;  
-      next unless $codon =~/\w+/;
-      $tc = "<strong>Codon change </strong> ".$codon; 
-    }
+  
+  if(!$is_sara && $codon) {
+    my @codons = split /\s|\|/, $codon;
+    $codons[1] =~ s/([A-Z])/<strong>$1<\/strong>/g;
+    $codons[1] =~ tr/acgt/ACGT/;
+    $codons[2] =~ s/([A-Z])/<strong>$1<\/strong>/g;
+    $codons[2] =~ tr/acgt/ACGT/;
+    $tc = "$codons[0] to $codons[1]\|$codons[2]";
   }
   
   my $chr_start  = $feature->start;
   my $chr_end    = $feature->end;
   my $ref_allele = $feature->ref_allele_string;
-  my $type       = $hub->param('sara') ? 'SARA' : $feature->display_consequence;
+  my $type       = $is_sara ? 'SARA' : $feature->display_consequence('label');
   my $bp         = $chr_start;
   
   if ($chr_end < $chr_start) {
@@ -56,8 +59,8 @@ sub content {
   
   $ref_allele = length $ref_allele < 16 ? $ref_allele : substr($ref_allele, 0, 14) . '..';
   
-  my $ambig_code = $type eq 'SARA' ? '' : ambiguity_code(join '|', $ref_allele, $alt_allele);
-  my $class      = variation_class(join '|', $ref_allele, $alt_allele);
+  my $ambig_code = $type eq 'SARA' ? '' : ambiguity_code(join '|', $alt_allele);
+  my $class      = $feature->var_class;
 
   $self->caption($feature->variation_name);
   
@@ -101,8 +104,15 @@ sub content {
   
   if ($aa_change) {
     $self->add_entry({
-      type  => 'Amino acid',
+      type  => 'Amino acid change',
       label => $aa_change
+    });
+  }
+
+  if ($tc) {
+    $self->add_entry({
+      type => 'Codon change',
+      label_html => "$tc"
     });
   }
   
@@ -122,12 +132,6 @@ sub content {
     type  =>  'Type',
     label => $type
   });
-
-  if ($tc) {
-    $self->add_entry({
-      label_html => "$tc"
-    });
-  }
 }
 
 1;
