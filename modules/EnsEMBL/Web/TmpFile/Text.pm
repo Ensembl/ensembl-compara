@@ -5,6 +5,7 @@ package EnsEMBL::Web::TmpFile::Text;
 
 use strict;
 use Compress::Zlib qw(gzopen $gzerrno);
+use Archive::Zip;
 
 use base 'EnsEMBL::Web::TmpFile';
 
@@ -40,6 +41,18 @@ sub new {
         my $buffer  = 0;
         $content   .= $buffer while $gz->gzread( $buffer ) > 0;
         $gz->gzclose;
+      }
+      $self->{content} = $content;
+    }
+    elsif ($self->{extension} =~ /zip$/) {
+      my $content = '';
+      my $file = $args{tmp_filename};
+      my $zip = Archive::Zip->new();
+      my $error = $zip->read($file);
+      unless ($error) { ## no error code returned
+        foreach my $member ($zip->members) {
+          $content .= $zip->contents($member);
+        }
       }
       $self->{content} = $content;
     }
