@@ -73,6 +73,19 @@ sub upload {
   my @orig_path = split('/', $hub->param($method));
   my $filename = $orig_path[-1];
 
+  my $name = $hub->param('name');
+  ## Need the filename (for handling zipped files)
+  if ($method eq 'text') {
+    $name = 'Data' unless $name;
+  }
+  else {
+    my @orig_path = split('/', $hub->param($method));
+    $filename = $orig_path[-1];
+    $args{'filename'} = $filename;
+    $name = $filename unless $name;
+  }
+  $param->{'name'} = $name;
+
   ## Has the user specified a format?
   my $f_param = $hub->param('format');
   if ($f_param) {
@@ -86,25 +99,10 @@ sub upload {
       if ($ext =~ /gz/i) {
         $ext = $parts[-2];
       }
-    
-      $format = uc $ext if $ext =~ /(bed|psl|gff|gtf|wig)/i;
+      $format = uc $ext if grep(/$ext/i, @{$hub->species_defs->USERDATA_FILE_FORMATS});
     }
   }
   $param->{'format'} = $format;
-
-  ## Get original path, so can save file name as default name for upload
-  my $name = $hub->param('name');
-  unless ($name) {
-    if ($method eq 'text') {
-      $name = 'Data';
-    } else {
-      warn ">>> FILE $filename";
-      $name = $filename;
-      $args{'filename'} = $filename;
-    }
-  }
-  $param->{'name'} = $name;
-  warn ">>> SET NAME TO $name";
 
   if ($method eq 'url') {
     my $url = $hub->param('url');
