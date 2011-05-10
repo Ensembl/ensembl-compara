@@ -55,7 +55,7 @@ sub fetch_input {
 	$sth->execute();
         my $genome_dbs = $sth->fetchall_hashref('name');
 	Bio::EnsEMBL::Registry->load_registry_from_url( $self->param('core_db_url') );
-	my($user,$host,$port) = $self->param('core_db_url')=~/mysql:\/\/(\w+)@([\w\.]+):(\d+)/;
+	my($user,$host,$port) = $self->param('core_db_url')=~/mysql:\/\/(\w+)@([\w\.\-]+):(\d+)/ or die "no user/host/port for core dbs\n";
 	foreach my $db_adaptor( @{ Bio::EnsEMBL::Registry->get_all_DBAdaptors } ){
 		my $dbname = $db_adaptor->dbc->dbname;
 		next unless $dbname=~/_core_/;
