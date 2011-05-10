@@ -209,12 +209,12 @@ sub update_from_url {
   my $session = $hub->session;
   my $input   = $hub->input;
   my $species = $hub->species;
-  my @config  = $input->param('config');
+  my $config  = $input->param('config');
   my @das     = $input->param('das');
   my $params_removed;
   
-  if (scalar @config) {
-    foreach my $v (split /,/, @config) {
+  if ($config) {
+    foreach my $v (split /,/, $config) {
       my ($k, $t) = split /=/, $v, 2;
       
       if ($k =~ /^(cookie|image)_width$/) {
