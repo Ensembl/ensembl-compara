@@ -7,7 +7,7 @@
 .local_context dd dl { border:0; padding: 0 0 0 14px; }
 .local_context dd img { height: 14px; width: 14px; border: 0; vertical-align: top; padding-right: 5px; }
 
-.local_context dl { overflow: hidden; width: 14em; margin: 0; }
+.local_context dl { overflow: hidden; margin: 0; }
 .local_context dd { margin-bottom: 0; overflow: hidden; }
 .local_context dt { border-bottom: 1px solid [[NEUTRAL_BORDER]]; padding: 2px; }
 .local_context dd.notl dl, .local_context dd.notl { background: url(/i/line.gif) repeat-y;  }
