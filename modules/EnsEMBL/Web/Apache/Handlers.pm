@@ -413,6 +413,7 @@ sub handler {
   $r->uri("/$path");
   
   my $filename = $MEMD ? $MEMD->get("::STATIC::$path") : '';
+  warn ">>> PATH $path";
   
   # Search the htdocs dirs for a file to return
   # Exclude static files (and no, html is not a static file in ensembl)
@@ -438,7 +439,7 @@ sub handler {
     $r->child_terminate;
     $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
     
-    return HTTP_TEMPORARY_REDIRECT;
+    return HTTP_MOVED_TEMPORARILY;
   } elsif ($filename) {
     $r->filename($filename);
     $r->content_type('text/html');
