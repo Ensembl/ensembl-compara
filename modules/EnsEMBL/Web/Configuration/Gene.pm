@@ -142,6 +142,11 @@ sub populate_tree {
     [qw( image EnsEMBL::Web::Component::Gene::GeneSNPImage )],
     { 'availability' => 'gene database:variation' }
   ));
+	
+	$var_menu->append($self->create_node('StructuralVariation_Gene', 'Structural Variation',
+    [qw( svtable EnsEMBL::Web::Component::Gene::GeneSVTable )],
+    { 'availability' => 'gene database:variation core' }
+  ));
 
   # External Data tree, including non-positional DAS sources
   my $external = $self->create_node('ExternalData', 'External Data',
