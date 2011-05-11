@@ -135,7 +135,7 @@ sub createObjects {
     # 3) Reading the paramters listed in the else block below
     if ($identifier = $self->param('r') || $self->param('l')) {
       $identifier =~ s/\s|,//g;
-      ($seq_region, $start, $end, $strand) = $identifier =~ /^([^:]+):(-?\w+\.?\w*)-?(-?\w+\.?\w*)?(?::(-?\d))?$/;
+      ($seq_region, $start, $end, $strand) = $identifier =~ /^([^:]+):(-?\w+\.?\w*)[-|..]?(-?\w+\.?\w*)?(?::(-?\d))?$/;
       
       $start = $self->evaluate_bp($start);
       $end   = $self->evaluate_bp($end) || $start;
