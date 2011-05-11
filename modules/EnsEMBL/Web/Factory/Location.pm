@@ -297,7 +297,7 @@ sub get_slice {
   # Checks to see if top-level as "toplevel" above is correct
   return if $slice && !scalar @{$slice->get_all_Attributes('toplevel')||[]};
 
-  if ($slice && $s < 1 || $e > $slice->seq_region_length) {
+  if ($slice && ($s < 1 || $e > $slice->seq_region_length)) {
     $s = 1 if $s < 1;
     $s = $slice->seq_region_length if $s > $slice->seq_region_length;
     
