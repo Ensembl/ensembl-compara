@@ -51,8 +51,11 @@ sub content {
   foreach (keys %{$align_details->{'species'}}) {
     next if $_ eq $primary_species;
     
-    push @skipped, $_ if $align_details->{'class'} !~ /pairwise/ && ($hub->param(sprintf 'species_%d_%s', $align, lc) || 'off') eq 'off';
-    push @missing, $_ unless $aligned_species{$_} || $_ eq 'ancestral_sequences';
+    if ($align_details->{'class'} !~ /pairwise/ && ($hub->param(sprintf 'species_%d_%s', $align, lc) || 'off') eq 'off') {
+      push @skipped, $_;
+    } elsif (!$aligned_species{$_} && $_ ne 'ancestral_sequences') {
+      push @missing, $_;
+    }
   }
   
   foreach (@$slices) {
