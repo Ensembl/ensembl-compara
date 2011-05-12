@@ -1,4 +1,25 @@
 
+#########################################################################
+
+Achtung: a Hive pipeline exists now that does the same thing.
+
+    You can run it (assuming you have ensembl, ensembl-hive and ensembl-compara installed into <path_to_your_ensembl_cvs_root>) like this:
+    
+    # 1. edit ensembl-compara/scripts/taxonomy/web_name_patches.sql to patch web names (if needed)
+
+    # 2. edit ensembl-compara/scripts/taxonomy/ensembl_aliases.sql to ensembl aliases (if needed)
+
+        # 3. initialize the pipeline:
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportNCBItaxonomy_conf -ensembl_cvs_root_dir <path_to_your_ensembl_cvs_root> -password <your_password>
+
+        # 4. run the pipeline:
+    beekeeper.pl ... (specific command line(s) will be printed by init_pipeline.pl)
+
+#########################################################################
+
+OTHERWISE do everything by hand (old instruction follows) :
+
+
 This file describes how to "mirror" the NCBI taxonomy database by creating
 and populating MySQL tables (to be used in a compara database), that retain
 the necessary information to generate the taxonomy tree structure used by
