@@ -28,6 +28,7 @@ sub content {
 
   $form->add_notes({'id' => 'notes', 'heading' => 'Hint', 'text' => qq{
 Using this form, you can select Ensembl features to display on a karyotype (formerly known as FeatureView).
+<br />If you want to use your own data file, please go to the <a href="/$current_species/UserData/SelectFile">Upload Data</a> page instead.
   }});
 
   ## Species is set automatically for the page you are on
