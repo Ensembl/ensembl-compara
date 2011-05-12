@@ -1088,7 +1088,7 @@ sub consequence_table {
           t       =>  $transcript_id,
         });
         
-        $transcript_string = qq{<a href="$transcript_url">$transcript_id</a>};
+        $transcript_string = qq{<a href="$transcript_url" rel="external">$transcript_id</a>};
       }
 
       if ($gene_id ne '-') {
@@ -1102,7 +1102,7 @@ sub consequence_table {
           g       =>  $gene_id,
         });
         
-        $gene_string = qq{<a href="$gene_url">$gene_id</a>};
+        $gene_string = qq{<a href="$gene_url" rel="external">$gene_id</a>};
         $gene_string .= ';'.$hgnc_id if defined($hgnc_id);
       }
       
@@ -1114,7 +1114,7 @@ sub consequence_table {
           v       =>  $snp_id,
         });
         
-        $snp_string = qq{<a href="$snp_url">$snp_id</a>};
+        $snp_string = qq{<a href="$snp_url" rel="external">$snp_id</a>};
       }
       
       $consequence =~ s/\,/\,\<br\/>/g;
@@ -1129,12 +1129,12 @@ sub consequence_table {
         type    => 'Transcript',
         action  => 'ProteinSummary',
         t       =>  $transcript_id,
-      }).'">'.$&.'<\/a>'/e;
+      }).'" rel="external">'.$&.'<\/a>'/e;
       
       #$consequence = qq{<span class="hidden">$ranks{$consequence}</span>$consequence};
 
       $row->{'var'}      = $uploaded_loc;
-      $row->{'location'} = qq{<a href="$location_url">$location</a>};
+      $row->{'location'} = qq{<a href="$location_url" rel="external">$location</a>};
       $row->{'allele'}   = $allele;
       $row->{'gene'}     = $gene_string;
       $row->{'trans'}    = $transcript_string;
