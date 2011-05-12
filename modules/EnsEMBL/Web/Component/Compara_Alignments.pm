@@ -212,13 +212,7 @@ sub get_alignments {
     }
   }
   
-  # I could not find a better way to distinguish between pairwise and multiple alignments.
-  # The difference is that in case of multiple alignments
-  # there are checkboxes for all species from the alignment apart from the reference species:
-  # So we need to add the reference species to the list of selected species.
-  # In case of pairwise alignments the list remains empty - that will force the display
-  # of all available species in the alignment
-  unshift @selected_species, lc $species if scalar @selected_species;
+  unshift @selected_species, lc $species unless $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'class'} =~ /pairwise/;
   
   $align_slice = $align_slice->sub_AlignSlice($start, $end) if $start && $end;
   
