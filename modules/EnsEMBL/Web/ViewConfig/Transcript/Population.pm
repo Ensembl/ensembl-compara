@@ -118,9 +118,9 @@ sub form {
   }
 
   # Add selection
-  $view_config->add_fieldset('Consequence options');
+  $self->add_fieldset('Consequence options');
   
-  $view_config->add_form_element({
+  $self->add_form_element({
     type   => 'DropDown',
     select =>, 'select',
     label  => 'Type of consequences to display',
