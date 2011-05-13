@@ -281,7 +281,7 @@ sub add_variations {
   
   my $transcript         = $self->object->Obj;
   my $variation_features = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;
-  
+  my $length             = scalar @$sequence - 1;
   my %href;
   
   foreach my $vf (@$variation_features) {
@@ -291,11 +291,16 @@ sub add_variations {
     
     my $class = lc $transcript_variation->display_consequence;
     my $name  = $vf->variation_name;
+    my $start = $vf->start - 1;
+    my $end   = $vf->end   - 1;
+    
+    $start = 0 if $start < 0;
+    $end   = $length if $end > $length;
     
     $config->{'key'}->{'variations'}->{$class} = 1;
     $class = " $class";
     
-    for ($vf->start-1..$vf->end-1) {
+    for ($start..$end) {
       $sequence->[$_]->{'class'} .= $class;
       $sequence->[$_]->{'title'}  = $name;
        
