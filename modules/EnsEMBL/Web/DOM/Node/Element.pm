@@ -146,12 +146,14 @@ sub set_attribute {
   my ($self, $attrib, $value) = @_;
 
   return unless defined $value;
-  $value  =~ s/^\s+|\s+$//g; #trim
+  $value  =~ s/^\s+|\s+$//g unless ref $value; #trim
   $attrib = lc $attrib;
 
   if ($attrib =~ /^(class|style)$/) {
+    $self->{'_attributes'}{$attrib} ||= {};
+    ref $value eq 'HASH'  and $attrib eq 'style' and map {$_ and $self->{'_attributes'}{$attrib}{$_} = $value->{$_}} keys %$value  and return;
+    ref $value eq 'ARRAY' and $attrib eq 'class' and map {$_ and $self->{'_attributes'}{$attrib}{$_} = 1           } @$value       and return;
     my $delimiter = {'class' => qr/\s+/, 'style' => qr/\s*;\s*/};
-    $self->{'_attributes'}{$attrib} = {} unless defined $self->{'_attributes'}{$attrib};
     for (split $delimiter->{$attrib}, $value) {
       my ($key, $val) = $attrib eq 'style' ? split /\s*:\s*/, $_ : ($_, 1);
       $self->{'_attributes'}{$attrib}{$key} = $val if $key;
