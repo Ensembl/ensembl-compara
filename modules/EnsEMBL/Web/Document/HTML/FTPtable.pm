@@ -28,11 +28,41 @@ sub render {
     'emf'     => 'Alignments of resequencing data from the ensembl_compara database',
     'gvf'     => 'Variation data in GVF format',
     'funcgen' => 'Regulation data in GFF format',
+    'coll'    => 'Additional regulation data (not in database)',
     'bed'     => 'Constrained elements calculated using GERP',
     'extra'   => 'Additional release data stored as flat files rather than MySQL for performance reasons',
   );
 
+
+  my $EMF = $title{'emf'};
+  my $BED = $title{'bed'};
+
   my $html = qq(
+<h3>Multi-species data</h3>
+<table class="ss tint" cellpadding="4">
+<tr>
+<th>Database</th>
+<th></th>
+<th></th>
+<th></th>
+</tr>
+<tr class="bg1">
+<td>Comparative genomics</td>
+<td style="text-align:center"><a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">MySQL</a></td>
+<td style="text-align:center"><a rel="external" title="$EMF" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/emf/ensembl-compara/">EMF</a></td>
+<td style="text-align:center"><a rel="external" title="$BED" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/bed/">BED</a></td>
+</tr>
+<tr class="bg2">
+<td>BioMart</td>
+<td style="text-align:center"><a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">MySQL</a></td>
+<td>-</td>
+<td>-</td>
+</tr>
+</table>
+  );
+
+  $html .= qq(
+<h3>Single species data</h3>
 <table class="ss tint" cellpadding="4">
 
 <tr>
@@ -42,8 +72,9 @@ sub render {
 <th colspan="2" style="text-align:center">Annotated sequence</th>
 <th colspan="1" style="text-align:center">Gene sets</th>
 <th colspan="1" style="text-align:center">MySQL</th>
-<th colspan="2" style="text-align:center">Resequencing data</th>
-<th colspan="4" style="text-align:center">Other</th>
+<th colspan="2" style="text-align:center">Variation</th>
+<th colspan="1" style="text-align:center">Regulation</th>
+<th colspan="1" style="text-align:center">Data files</th>
 </tr>
 
 );
@@ -57,7 +88,7 @@ sub render {
     my $common = $species_defs->get_config($spp, 'DISPLAY_NAME');
     my $variation = '-'; 
     if ($sp_dir =~ /bos_taurus|canis_familiaris|danio_rerio|drosophila_melanogaster|equus_caballus|felis_catus|gallus_gallus|homo_sapiens|saccharomyces_cerevisiae|monodelphis_domestica|mus_musculus|ornithorhynchus_anatinus|pan_troglodytes|pongo_pygmaeus|rattus_norvegicus|sus_scrofa|taeniopygia_guttata|tetraodon_nigroviridis/) {
-      $variation = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/%s/">Variation</a>', $title{'gvf'}, $rel, $sp_dir;
+      $variation = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/%s/">GVF</a>', $title{'gvf'}, $rel, $sp_dir;
     }
     my $emf   = '-';
     if ($sp_dir =~ /homo_sapiens|mus_musculus|rattus_norvegicus/) {
@@ -87,7 +118,6 @@ sub render {
 <td>%s</td>
 <td>%s</td>
 <td>%s</td>
-<td>-</td>
 </tr>
       ), $class, $sp_name, $common,
          $title{'dna'}, $rel, $sp_dir, 
@@ -102,59 +132,7 @@ sub render {
     ;
     $row++;
   }
-  my $rev = $class eq 'bg2' ? 'bg2' : 'bg1';
-  $class = $class eq 'bg2' ? 'bg1' : 'bg2';
-  my $EMF = $title{'emf'};
-  my $BED = $title{'bed'};
   $html .= qq(
-<tr class="$class">
-<td><strong>Multi-species</strong></td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td><a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">MySQL</a></td>
-<td><a rel="external" title="$EMF" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/emf/ensembl-compara/">EMF</a></td>
-<td>-</td>
-<td>-</td>
-<td><a rel="external" title="$BED" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/bed/">BED</a></td>
-<td>-</td>
-</tr>
-<tr class="$rev">
-<td><strong>Ensembl Mart</strong></td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td><a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">MySQL</a></td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-</tr>
-<tr class="$class">
-<td><strong>Ensembl API</strong></td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td><a rel="external" title="Entire Ensembl API, concatenated into a single TAR file and gzipped - updated daily" href="ftp://ftp.ensembl.org/pub/ensembl-api.tar.gz ">Tarball</td>
-</tr>
 </table>
   );
 
