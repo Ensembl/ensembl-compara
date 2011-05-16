@@ -27,10 +27,6 @@ use warnings;
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');      # we want to treat it as a 'pure' Hive pipeline
 
 
-   # EXPERIMENTAL: choose either 'mysql' or 'sqlite' and do not forget to provide the correct connection parameters:
-$Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf::hive_default_driver = 'mysql';
-
-
 =head2 default_options
 
     Description : Implements default_options() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that is used to initialize default options.
@@ -48,7 +44,6 @@ sub default_options {
         'pipeline_name' => 'ncbi_taxonomy',            # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {
-            -driver => $Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf::hive_default_driver,
             -host   => 'localhost',
             -port   => 3306,
             -user   => 'ensadmin',
