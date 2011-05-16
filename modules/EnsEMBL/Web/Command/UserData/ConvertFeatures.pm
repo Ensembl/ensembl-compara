@@ -5,7 +5,7 @@ use warnings;
 
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 
-use EnsEMBL::Web::Component::Export;
+use EnsEMBL::Web::Object::Export;
 use EnsEMBL::Web::TmpFile::Text;
 
 use base qw(EnsEMBL::Web::Command);
@@ -65,7 +65,7 @@ sub process {
     my @skip = qw(_type source feature_type score frame);
     my $skip = join('|', map {'^'.$_.'$'} @skip);
     
-    my $exporter = new EnsEMBL::Web::Component::Export($self->hub);
+    my $exporter = new EnsEMBL::Web::Object::Export($self->hub);
     $exporter->{'config'} = {
       format => 'gff',
       delim  => "\t"
