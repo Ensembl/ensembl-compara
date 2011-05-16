@@ -28,7 +28,6 @@ sub init {
  
   if ($self->type eq 'Regulation') {
     $self->add_image_configs({ regulation_view         => 'das' });
-    $self->add_image_configs({ reg_detail_by_cell_line => 'das' }); 
   }
 
   $self->_set_defaults('opt_highlight'    => 'yes');
