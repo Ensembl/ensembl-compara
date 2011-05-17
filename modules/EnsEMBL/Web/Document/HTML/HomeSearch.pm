@@ -12,7 +12,8 @@ sub new {
   my $self = $class->SUPER::new(
     species      => $hub->species || 'Multi',
     species_defs => $hub->species_defs,
-    favourites   => $hub->get_favourite_species
+    favourites   => $hub->get_favourite_species,
+    query        => $hub->param('q'),
   );
   
   bless $self, $class;
@@ -35,6 +36,7 @@ sub render {
   my $default_search_code = $species_defs->ENSEMBL_DEFAULT_SEARCHCODE;
   my $input_size          = $page_species eq 'Multi' ? 30 : 50;
   my $favourites          = $self->favourites;
+  my $q                   = $self->{'query'};
   
   my $html = qq{
   <div class="center">
@@ -66,7 +68,7 @@ sub render {
   }
 
   $html .= qq{
-    <input id="q" name="q" size="$input_size" value="" />
+    <input id="q" name="q" size="$input_size" value="$q" />
     <input type="submit" value="Go" class="input-submit" />};
 
   ## Examples
