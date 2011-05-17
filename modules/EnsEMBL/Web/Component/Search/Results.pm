@@ -4,142 +4,84 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component);
+use EnsEMBL::Web::Document::HTML::HomeSearch;
+
+# --------------------------------------------------------------------
+# An updated version of Summary.pm enabling: 
+# - specification of the order the result categories are displayed in
+# - more user friendly descriptions of the search categories. 
+# - display of the search term above the results
+#  NJ, Eagle Genomics
+# Replaces UniSearch::Summary - ap5, Ensembl webteam
+# --------------------------------------------------------------------
 
 sub _init {
   my $self = shift;
   $self->cacheable( 0 );
   $self->ajaxable(  0 );
+  $self->configurable( 0 );
 }
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
-  my $exa_obj = $object->Obj;
+  my $hub = $self->hub;
+  my $search = $self->object->Obj;
   my $html;
 
-  my @groups;
-  foreach my $group ( $exa_obj->groups ) {
-    my $name = $group->name;
-    $name =~ s/answergroup\.//;
-    next if ($name eq 'Source');
-    push @groups, $group;
-  }
-  my $group_count = @groups;
+  if ($hub->species ne 'Multi' && $hub->param('q')) {
+    $html = "<p><strong>You searched for \'" . $hub->param('q')  . "\'</strong</p>";
 
-  if (@groups) {
-    my @group_classes = ('one-col');
-    if ($group_count > 1) {
-      @group_classes = $group_count > 2 
-        ? ('threecol-left', 'threecol-middle', 'threecol-right') 
-        : ('twocol-left', 'twocol-right');
-    }
+    # Eagle change to order the results differently
+    # we can either order the results by our own @order_results array, the species.ini files ( @idxs ), or just by sorting by keys as below. 	
+    # ## Filter by configured indices
 
-    my $i = 0;
-    foreach my $group ( @groups ) {
-      my $name = $group->name;
-      $name =~ s/answergroup\.//;
+    # # These are the methods for the current species that we want to try and run
+    # # The array is ordered in the way that they are listed in the .ini file
+    # my @idxs = @{$hub->species_defs->ENSEMBL_SEARCH_IDXS};
+	
+    # the first value is the search method/species ini term. The second value is the display label.
+    my @order_results = ( ['Gene', 'Gene or Gene Product' ], [ 'Marker', 'Genetic Marker'], [ 'OligoProbe', 'Array Probe Set' ], [ 'SNP', 'SNP'], [ 'Domain', 'Interpro Domain'], [ 'Family', 'Gene Family'], ['GenomicAlignment', 'Sequence Aligned to Genome, eg. EST or Protein' ], [ 'Sequence', 'Genomic Region, eg. Clone or Contig' ], [ 'QTL', 'QTL' ]  ); 
 
-      my $url = '/'.$object->species.'/Search/Details?species='.$object->param('species')
-                .';idx='.$object->param('idx').';q='.$object->param('q');
-
-      my $c;
-      foreach ($group->children) {
-        $c += $_->count;
-      }
-
-      my $index = ($i % 3) - 1;
-      my $class = $group_classes[$i];
-      $html .= qq(<div class="$class">
-<table class="search_results">
-<tr><th colspan="2">By $name</th></tr>
-<tr><td><a href="$url">Total</a></td><td><a href="$url">$c</a></td></tr>
-      );
-
-      foreach my $child ( sort {$a->name cmp $b->name} $group->children ) {
-        my $c_name = $child->name;
-        my $c_count    = $child->count;
-        my $c_url;
-        if ($child->link( 'refine' )) {
-          $c_url = $child->link( 'refine' )->URL;
+    foreach my $search_ref ( @order_results ) {
+      my $search_index = $search_ref->[0];
+      my $display_term = $search_ref->[1]; 
+      #foreach my $search_index ( sort keys %{$search->{'results'} } ) {
+        if ( $search->{'results'}{$search_index} ) { 
+	        my( $results, $count ) = @{ $search->{'results'}{$search_index} };
+	        $html .= "<h3>$display_term</h3><p>$count entries matched your search strings.</p><ol>";
+	        foreach my $result ( @$results ) {
+	          $html .= sprintf(qq(<li><strong>%s:</strong> <a href="%s">%s</a>),
+			        $result->{'subtype'}, $result->{'URL'}, $result->{'ID'}
+			      );
+	          if( $result->{'URL_extra'} ) {
+	            foreach my $E ( @{[$result->{'URL_extra'}]} ) {
+	              $html .= sprintf(qq( [<a href="%s" title="%s">%s</a>]),
+			            $E->[2], $E->[1], $E->[0]
+			          );
+	            }
+	          }
+	          if( $result->{'desc'} ) {
+	            $html .= sprintf(qq(<br />%s), $result->{'desc'});
+	          }
+	          $html .= '</li>';
+	        }
+	        $html .= '</ol>';
         }
-        $c_url =~ s#search#Search/Details#;
-        $html .= qq(<tr>
-<td>);
-
-        if ($child->children) {
-          $html .= qq(<a href="$c_url" class="collapsible">$c_name</a>
-<ul class="shut">\n);
-
-          foreach my $grandchild ( sort {$a->name cmp $b->name} $child->children ) {
-            my $g_name  = $grandchild->name;
-            my $g_count = $grandchild->count;
-            my $g_url;
-            if ($grandchild->link( 'refine' )) {
-              $g_url = $grandchild->link( 'refine' )->URL;
-            }
-            $g_url =~ s#search#Search/Details#;
-            $html .= qq#<li><a href="$g_url">$g_name ($g_count)</a></li>#;
-          }
-          $html .= "</ul>\n";
-        }
-        else {
-          $html .= qq(<a href="$c_url" class="no_arrow">$c_name</a>);
-        }
-
-        $html .= qq(</td>
-<td style="width:5em"><a href="$c_url">$c_count</a>
-</tr>\n);
-      }
-
-      $html .= qq(</table>\n</div>\n\n);
-      $i++;
+      #}
     }
   }
   else {
-    $html = $self->re_search;
-  }
-  return $html;
-}
-
-
-sub re_search {
-  my $self = shift;
-  my $object = $self->object;
-  my $exa_obj = $object->Obj;
-  my $html;
-
-  my $species = $object->param('species');
-  my $species_name = $species eq 'all' ? 'all species' : $species;
-  my $q = $object->param('q');
-  my $q_name = $q;
-
-  my $do_search = 0;
-  if ($q =~ /^(\S+?)(\d+)/) {
-    my $ENS = $1;
-    my $dig = $2;
-    if ( ($ENS =~ /ENS|OTT/) && ($ENS !~ /[ENSFM|ENSSNP]/ ) && (length($dig) != 11) ) {
-      $do_search = 1;
-      my $newq = $ENS.sprintf("%011d",$dig);
-      (my $newq_name = $newq) =~ s/(\d+)/<strong>$1<\/strong>/;
-      $q_name =~ s/(\d+)/<strong>$1<\/strong>/;
-      $html = qq(<p>Your search of $species_name with $q_name returned no results</p>);
-      my $url = '/'.$object->species."/Search/Results?species=$species;idx=".$object->param('idx').';q='.$newq;
-      $html .= sprintf qq(<p><br />Would you like to <a href="%s"> search using $newq_name</a> ?<p>),$url;
-      return $html;
+    if ($hub->species eq 'Multi') {
+     $html .= '<p class="space-below">Simple text search cannot be executed on all species at once. Please select a species from the dropdown list below and try again.</p>';
     }
-  }
-  if (! $do_search && ($species ne 'all') ) {
-    $species =~ s/_/ /g;
-    $html = qq(<p>Your search of <strong>$species</strong> returned no results</p>);
-    my $url = '/'.$object->species.'/Search/Results?species=all;idx='.$object->param('idx').';q='.$q;
-    $html .= sprintf qq(<p><br />Would you like to <a href="%s"> search <strong>all</strong> species</a> with this term ?<p>),$url;
-    return $html;
+    elsif (!$hub->param('q')) {
+     $html .= '<p class="space-below">No query terms were entered. Please try again.</p>';
+    }
+    my $search = EnsEMBL::Web::Document::HTML::HomeSearch->new($self->hub);
+    $html .= $search->render
   }
 
-  $html = qq(<p>Your search of <strong>$species_name</strong> with <strong>$q</strong> returned no results</p>);
   return $html;
 }
-
 
 1;
-
