@@ -33,35 +33,37 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       return false;
     });
     
-    $('a.delete_bookmark', this.elLk.content).live('click', function () {
-      Ensembl.EventManager.trigger('deleteBookmark', this.href.match(/id=(\d+)\b/)[1]);
-    });
+    this.live.push(
+      $('a.delete_bookmark', this.elLk.content).live('click', function () {
+        Ensembl.EventManager.trigger('deleteBookmark', this.href.match(/id=(\d+)\b/)[1]);
+      }),
     
-    $('form div.select_all input', this.elLk.content).live('click', function () {
-      $(this).parents('fieldset').find('input[type=checkbox]').attr('checked', this.checked);
-    });
-    
-    $('fieldset.matrix input.select_all_column, fieldset.matrix input.select_all_row', this.elLk.content).live('click', function () {
-      $(this).parents('fieldset').find('input.' + this.name).attr('checked', this.checked);
-    });
-    
-    $('fieldset.matrix select.select_all_column, fieldset.matrix select.select_all_row', this.elLk.content).live('change', function () {
-      var cls    = this.value;
-      var inputs = $(this).parents('fieldset').find('input.' + this.name);
+      $('form div.select_all input', this.elLk.content).live('click', function () {
+        $(this).parents('fieldset').find('input[type=checkbox]').attr('checked', this.checked);
+      }),
       
-      switch (cls) {
-        case ''     : break;
-        case 'none' : inputs.attr('checked', false); break;
-        case 'all'  : inputs.attr('checked', 'checked'); break;
-        default     : inputs.filter('.' + cls).attr('checked', 'checked').end().not('.' + cls).attr('checked', false);
-      }
+      $('fieldset.matrix input.select_all_column, fieldset.matrix input.select_all_row', this.elLk.content).live('click', function () {
+        $(this).parents('fieldset').find('input.' + this.name).attr('checked', this.checked);
+      }),
       
-      inputs = null;
-    });
-    
-    $('form.wizard input.back', this.elLk.content).live('click', function () {
-      $(this).parents('form.wizard').append('<input type="hidden" name="wizard_back" value="1" />').submit();
-    });
+      $('fieldset.matrix select.select_all_column, fieldset.matrix select.select_all_row', this.elLk.content).live('change', function () {
+        var cls    = this.value;
+        var inputs = $(this).parents('fieldset').find('input.' + this.name);
+        
+        switch (cls) {
+          case ''     : break;
+          case 'none' : inputs.attr('checked', false); break;
+          case 'all'  : inputs.attr('checked', 'checked'); break;
+          default     : inputs.filter('.' + cls).attr('checked', 'checked').end().not('.' + cls).attr('checked', false);
+        }
+        
+        inputs = null;
+      }),
+      
+      $('form.wizard input.back', this.elLk.content).live('click', function () {
+        $(this).parents('form.wizard').append('<input type="hidden" name="wizard_back" value="1" />').submit();
+      })
+    );
     
     Ensembl.EventManager.trigger('validateForms', this.el);
     
