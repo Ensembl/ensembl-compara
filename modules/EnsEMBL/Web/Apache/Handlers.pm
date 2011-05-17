@@ -413,7 +413,6 @@ sub handler {
   $r->uri("/$path");
   
   my $filename = $MEMD ? $MEMD->get("::STATIC::$path") : '';
-  warn ">>> PATH $path";
   
   # Search the htdocs dirs for a file to return
   # Exclude static files (and no, html is not a static file in ensembl)
