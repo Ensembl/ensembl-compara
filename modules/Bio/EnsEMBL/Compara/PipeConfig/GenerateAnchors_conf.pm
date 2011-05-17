@@ -37,7 +37,7 @@ sub default_options {
 		-dbname => 'ensembl_compara_62',
 	},
 	  # location of species core dbs which were used in the pairwise alignments
-	'core_db_url' => 'mysql://anonymous@ensembldb.ensembl.org:5306/62',
+	'core_db_url' => 'mysql://ensro@ens-livemirror:3306/62',
 	  # alignment chunk size
 	'chunk_size' => 10000000,
 	  # max block size for pecan to align
@@ -67,7 +67,7 @@ sub pipeline_wide_parameters {
 				-group => 'core',
 				-species => 'homo_sapiens',
 				-host => "ens-livemirror",
-				-dbname => 'homo_sapiens_core_61_37f',
+				-dbname => 'homo_sapiens_core_62_37g',
 				},
 	};
 }
@@ -108,7 +108,7 @@ sub pipeline_analyses {
 				    'chunk_size' => $self->o('chunk_size'),
 				    'consensus_overlap' => 0,
 				    'genome_db_ids' => [39, 64, 93],
-#				    'genome_db_ids' => [],
+#				    'genome_db_ids' => [3,31,38,39,57,60,61,64,90,93,101,114],
 				   },
 		-input_ids 	=> [{}],
 		-wait_for       => [ 'innodbise_table_factory', 'innodbise_table' ],	
@@ -142,6 +142,28 @@ sub pipeline_analyses {
 	
 	    },
 	    {
+		-logic_name     => 'load_method_link_table',
+		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+		-input_ids => [{}],
+		-parameters => {
+			'src_db_conn'   => $self->o('compara_pairwise_db'),
+			'table'         => 'method_link',
+		},
+		-flow_into => {
+			2 => [ 'mysql:////method_link?insertion_method=IGNORE' ],
+		},
+	    },
+	    { # this sets the values in the method_link_species_set and species_set tables
+		-logic_name     => 'populate_compara_tables',
+		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::LoadMethodTables',
+		-wait_for       => ['load_method_link_table'],
+		-input_ids => [{'species_set_id' => 1, 'pecan_mlssid' => 10, 'gerp_mlssid' => 20,}],	
+		-flow_into => {
+			2 => [ 'mysql:////species_set?insertion_method=INSERT_IGNORE' ],
+			3 => [ 'mysql:////method_link_species_set?insertion_method=INSERT_IGNORE' ],
+		},
+	    },
+	    {
 		-logic_name => 'load_species_tree',
 		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
 		-parameters => {
@@ -153,13 +175,12 @@ sub pipeline_analyses {
 		-flow_into => {
 				2 => [ 'mysql:////meta' ],
 		},
-		-wait_for       => [ 'import_entries' ],
 	   },
 	   {
 		-logic_name	=> 'find_pairwise_overlaps',
 		-module		=> 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindPairwiseOverlaps',
 		-parameters     => { 'method_link_species_set_id' => 300, },
-		-wait_for	=> [ 'import_entries' ],
+		-wait_for	=> [ 'load_species_tree',  ],
 		-flow_into	=> {
 					1 => [ 'pecan' ],
 					3 => [ 'mysql:////dnafrag_region?insertion_method=INSERT_IGNORE' ],
@@ -169,11 +190,13 @@ sub pipeline_analyses {
 	   {
 		-logic_name    => 'pecan',
 		-module        => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Pecan',
-		-wait_for      => 'find_pairwise_overlaps',
-		-parameters     => { 'method_link_species_set_id' => 400, max_block_size=>$self->o('pecan_block_size'),java_options=>'-server -Xmx1000M',},
+		-wait_for      => [ 'find_pairwise_overlaps', 'load_species_tree', 'set_genome_db_locator', 'populate_compara_tables' ],
+		-parameters    => { 'method_link_species_set_id' => 400, 
+				    'max_block_size' => $self->o('pecan_block_size'),
+				    'java_options' => '-server -Xmx1000M',},
 		-hive_capacity => 100,
-	   },
-	];
+   },
+];
 }	
 
 
