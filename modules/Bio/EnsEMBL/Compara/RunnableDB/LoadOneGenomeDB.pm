@@ -78,7 +78,9 @@ sub fetch_input {
 
             Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $suffix_separator.$r_ind );
 
-            my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$suffix_separator.$r_ind, 'core') || next;
+
+	    my $no_alias_check = 1;
+            my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$suffix_separator.$r_ind, 'core', $no_alias_check) || next;
             my $this_assembly = $this_core_dba->extract_assembly_name();
 	    my $this_start_date = $this_core_dba->get_MetaContainer->get_genebuild();
 
