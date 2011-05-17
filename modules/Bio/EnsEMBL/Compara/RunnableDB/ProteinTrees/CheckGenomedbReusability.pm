@@ -64,18 +64,6 @@ sub fetch_input {
         # load the prev.release registry:
     foreach my $prev_reg_conn (@{ $self->param('registry_dbs') }) {
         Bio::EnsEMBL::Registry->load_registry_from_db( %{ $prev_reg_conn }, -db_version => $prev_release, -species_suffix => $suffix_separator.$prev_release );
-	#Load previous compara database
-        Bio::EnsEMBL::Registry->load_registry_from_db( %{ $prev_reg_conn }, -db_version => $prev_release, -species => 'Multi' );
-    }
-
-    #Need to check genome_db_id of previous release in case assemblies haven't changed but
-    #some other data has
-    my $prev_genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor('Multi', "compara", "GenomeDB");
-    my $prev_genome_db_id = $prev_genome_db_adaptor->fetch_by_name_assembly($genome_db->name, $genome_db->assembly)->dbID;
-
-    if ($prev_genome_db_id != $genome_db->dbID) {
-	warn "Genome_db_ids for '$species_name' ($prev_genome_db_id -> " . $genome_db->dbID . ") do not match, so cannot reuse\n";
-	$self->param('reuse_this', 0);
     }
 
     if( my $prev_core_dba = $self->param('prev_core_dba', Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$suffix_separator.$prev_release, 'core')) ) {
