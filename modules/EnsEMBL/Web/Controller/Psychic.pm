@@ -2,7 +2,8 @@
 
 package EnsEMBL::Web::Controller::Psychic;
 
-### Pyschic search
+### Psychic search - tries to guess where the user wanted to go 
+### based on analysis of the search string!
 
 use strict;
 
@@ -51,7 +52,7 @@ sub psychic {
   my $hub           = $self->hub;
   my $species_defs  = $hub->species_defs;
   my $site_type     = lc $species_defs->ENSEMBL_SITETYPE;
-  my $script        = $species_defs->ENSEMBL_SEARCH;
+  my $script        = 'Search/Results';
   my %sp_hash          = %{$species_defs->ENSEMBL_SPECIES_ALIASES};
   my $dest_site     = $hub->param('site') || $site_type;
   my $index         = $hub->param('idx')  || undef;
