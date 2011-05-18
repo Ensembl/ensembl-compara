@@ -395,7 +395,7 @@ sub dumpFastaForSubset {
            # " ORDER BY member.stable_id;";
 
   open FASTAFILE, ">$fastafile"
-    or die "Could open $fastafile for output\n";
+    or die "Could not open $fastafile for output\n";
   print("writing fasta to loc '$fastafile'\n");
 
   my $sth = $self->prepare( $sql );
