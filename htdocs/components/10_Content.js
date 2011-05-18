@@ -41,7 +41,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     // Links in a popup (help) window should make a new window in the main browser
     if (window.name.match(/^popup_/)) {
-      $('a', this.el).bind('click', function () {
+      $('a:not(.cp-internal, .popup)', this.el).bind('click', function () {
         window.open(this.href, window.name.replace(/^popup_/, '') + '_1');
         return false;
       });
