@@ -55,8 +55,27 @@ sub fetch_input {
     my $genome_db    = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with genome_db_id='$genome_db_id'";
     my $species_name = $self->param('species_name', $genome_db->name());
 
+    my $reuse_db                = $self->param('reuse_db');
+
     unless($self->param('per_genome_suffix')) {
         $self->param('per_genome_suffix', ($genome_db->name . '_' . $genome_db_id));
+    }
+
+    if($reuse_db) {
+            # Need to check that the genome_db_id has not changed (treat the opposite as a signal not to reuse) :
+        my $reuse_compara_dba       = $self->go_figure_compara_dba($reuse_db);    # may die if bad parameters
+        my $reuse_genome_db_adaptor = $reuse_compara_dba->get_GenomeDBAdaptor();
+        my $reuse_genome_db_id = $reuse_genome_db_adaptor->fetch_by_name_assembly($genome_db->name, $genome_db->assembly)->dbID;
+
+        if ($reuse_genome_db_id != $genome_db_id) {
+            $self->warning("Genome_db_ids for '$species_name' ($reuse_genome_db_id -> $genome_db_id) do not match, so cannot reuse");
+            $self->param('reuse_this', 0);
+            return;
+        }
+    } else {
+        $self->warning("reuse_db hash has not been set, so cannot reuse");
+        $self->param('reuse_this', 0);
+        return;
     }
 
     Bio::EnsEMBL::Registry->no_version_check(1);
@@ -74,14 +93,14 @@ sub fetch_input {
 
         if($curr_assembly ne $prev_assembly) {
 
-            warn "Assemblies for '$species_name'($prev_assembly -> $curr_assembly) do not match, so cannot reuse\n";
+            $self->warning("Assemblies for '$species_name'($prev_assembly -> $curr_assembly) do not match, so cannot reuse");
 
             $self->param('reuse_this', 0);
         }
 
     } else {
 
-        warn "Could not find the previous core database for '$species_name', so reuse is naturally impossible";
+        $self->warning("Could not find the previous core database for '$species_name', so reuse is naturally impossible");
 
         $self->param('reuse_this', 0);
     }
@@ -105,9 +124,7 @@ sub run {
 
     my $coding_exons_differ = $added || $removed;
     if($coding_exons_differ) {
-        warn "The coding exons changed: $added hash keys were added and $removed were removed\n";
-    } else {
-        warn "No change\n";
+        $self->warning("The coding exons changed: $added hash keys were added and $removed were removed");
     }
 
     $self->param('reuse_this', $coding_exons_differ ? 0 : 1);

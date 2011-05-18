@@ -339,6 +339,7 @@ sub pipeline_analyses {
         {   -logic_name => 'check_reusability',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability',
             -parameters => {
+                'reuse_db'      => $self->o('reuse_db'),
                 'registry_dbs'  => $self->o('reuse_core_sources_locs'),
                 'release'       => $self->o('release'),
                 'prev_release'  => $self->o('prev_release'),
@@ -381,6 +382,7 @@ sub pipeline_analyses {
                 1 => [ 'dump_subset_create_blastdb', 'store_sequences_factory' ],
             },
         },
+
 
         {   -logic_name => 'paf_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
