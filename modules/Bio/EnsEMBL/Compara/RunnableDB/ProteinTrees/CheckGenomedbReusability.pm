@@ -65,7 +65,16 @@ sub fetch_input {
             # Need to check that the genome_db_id has not changed (treat the opposite as a signal not to reuse) :
         my $reuse_compara_dba       = $self->go_figure_compara_dba($reuse_db);    # may die if bad parameters
         my $reuse_genome_db_adaptor = $reuse_compara_dba->get_GenomeDBAdaptor();
-        my $reuse_genome_db_id = $reuse_genome_db_adaptor->fetch_by_name_assembly($genome_db->name, $genome_db->assembly)->dbID;
+        my $reuse_genome_db;
+        eval {
+            $reuse_genome_db = $reuse_genome_db_adaptor->fetch_by_name_assembly($genome_db->name, $genome_db->assembly);
+        };
+        unless($reuse_genome_db) {
+            $self->warning("Could not fetch genome_db object for name='".$genome_db->name."' and assembly='".$genome_db->assembly."' from reuse_db");
+            $self->param('reuse_this', 0);
+            return;
+        }
+        my $reuse_genome_db_id = $reuse_genome_db->dbID();
 
         if ($reuse_genome_db_id != $genome_db_id) {
             $self->warning("Genome_db_ids for '$species_name' ($reuse_genome_db_id -> $genome_db_id) do not match, so cannot reuse");
