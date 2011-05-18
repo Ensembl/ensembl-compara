@@ -474,7 +474,7 @@ sub new_module {
   my $class = "EnsEMBL::Web::${type}::$module";
   
   $data->{'_objecttype'} = $module;
-  delete $data->{'_viewconfig'};
+  delete $data->{'viewconfig'};
   
   if ($self->dynamic_use($class)) {
     return $class->new($data);
