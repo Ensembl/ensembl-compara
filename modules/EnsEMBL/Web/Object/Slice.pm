@@ -18,9 +18,11 @@ package EnsEMBL::Web::Object::Slice;
 
 use strict;
 
+use Bio::EnsEMBL::Variation::ConsequenceType;
+
 use base qw(EnsEMBL::Web::Object);
 
-our %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
+our %ct = %Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_TYPES;
 
 sub snp_display {
 
@@ -287,7 +289,7 @@ sub filter_munged_snps {
   my @filtered_snps =
     map  { $_->[1] }                                                                            # [fake_s, fake_e, SNP] Remove the schwartzian index
     sort { $a->[0] <=> $b->[0] }                                                                # [ index, [fake_s, fake_e, SNP] ] Sort snps on schwartzian index
-    map  {[ $_->[1] - $ct{$_->[2]->display_consequence($gene)} * 1e9, $_ ]}                     # [ index, [fake_s, fake_e, SNP] ] Compute schwartzian index [ consequence type priority, fake SNP ]
+    map  {[ $_->[1] + $ct{$_->[2]->display_consequence($gene)} * 1e9, $_ ]}                     # [ index, [fake_s, fake_e, SNP] ] Compute schwartzian index [ consequence type priority, fake SNP ]
     grep {( @{$_->[2]->get_all_validation_states} ? 
       (grep { $valids->{"opt_$_"} } @{$_->[2]->get_all_validation_states}) : 
       $valids->{'opt_noinfo'}
