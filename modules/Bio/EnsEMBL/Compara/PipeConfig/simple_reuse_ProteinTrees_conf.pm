@@ -376,7 +376,7 @@ sub pipeline_analyses {
                 'src_db_conn'   => $self->o('reuse_db'),
                 'table'         => 'subset',
                 'mode'          => 'insertignore',
-                'where'         => 'description like "gdb:#genome_db_id# %"',
+                'where'         => 'description LIKE "gdb:#genome_db_id# %"',
             },
             -wait_for => [ 'accumulate_reuse_ss' ], # to make sure some fresh members won't start because they were dataflown first (as this analysis can_be_empty)
             -hive_capacity => 4,
@@ -390,7 +390,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                             'db_conn'    => $self->o('reuse_db'),
-                            'inputquery' => 'SELECT sm.member_id, sm.subset_id FROM subset_member sm JOIN member USING (member_id) WHERE description like "gdb:#genome_db_id# %"',
+                            'inputquery' => "SELECT sm.member_id, sm.subset_id FROM subset_member sm JOIN subset USING (subset_id) WHERE description LIKE 'gdb:#genome_db_id# %'",
                             'input_id' => {'member_id' => '#_start_0#', 'subset_id' => '#_start_1#'},
                             'fan_branch_code' => 2,
             },
