@@ -61,8 +61,8 @@ sub default_options {
 
 
     # parameters that are likely to change from execution to another:
-#       'mlss_id'               => 40071,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '62',
+#       'mlss_id'               => 40073,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        'release'               => '63',
         'rel_suffix'            => '',    # an empty string by default, a letter otherwise
         'ensembl_cvs_root_dir'  => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, # make sure you have this variable defined & exported in your shell configs
         'email'                 => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
@@ -80,12 +80,12 @@ sub default_options {
         'blast_tmp_dir'             => '',  # if empty, will use Blast Analysis' default
 
     # clustering parameters:
-        'outgroups'                     => [106],   # affects 'hcluster_dump_input_per_genome'
+        'outgroups'                     => [119],   # affects 'hcluster_dump_input_per_genome'
         'clustering_max_gene_halfcount' => 750,     # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
 
     # tree building parameters:
         'tree_max_gene_count'       => 400,     # affects 'mcoffee' and 'mcoffee_himem'
-        'use_exon_boundaries'       => 2,       # affects 'mcoffee' and 'mcoffee_himem'
+        'use_exon_boundaries'       => 0,       # affects 'mcoffee' and 'mcoffee_himem'
         'use_genomedb_id'           => 0,       # affects 'njtree_phyml' and 'ortho_tree'
         'species_tree_input_file'   => '',      # you can define your own species_tree for 'njtree_phyml' and 'ortho_tree'
 
@@ -156,7 +156,7 @@ sub default_options {
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'sf5_ensembl_compara_61',
+           -dbname => 'sf5_ensembl_compara_62',
         },
 
         ## mode for testing the non-Blast part of the pipeline: reuse all Blasts
