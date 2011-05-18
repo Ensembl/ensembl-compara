@@ -4,7 +4,6 @@ package EnsEMBL::Web::ImageConfig;
 
 use strict;
 
-use Clone qw(clone);
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
 use JSON qw(from_json);
@@ -152,7 +151,8 @@ sub glyphset_configs {
           push @default_order, $track;
         }
       } else {
-        my $clone = clone($track);
+        my $clone = $self->tree->create_node($track->id . '_tmp'); # Id is replaced in the for loop below
+        $clone->{$_} = $_ eq 'data' ? { %{$track->{'data'}} } : $track->{$_} for keys %$track; # Make a new hash for data, so that drawing_strand can differ
         
         $clone->set('drawing_strand', 'f');
         $track->set('drawing_strand', 'r');
