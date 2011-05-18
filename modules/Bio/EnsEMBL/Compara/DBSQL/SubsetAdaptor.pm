@@ -68,6 +68,35 @@ sub fetch_by_set_description {
   return $obj;
 }
 
+
+=head2 fetch_by_description_pattern
+
+  Arg [1]    : string $description_pattern
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : 
+  Caller     : 
+
+=cut
+
+sub fetch_by_description_pattern {
+  my ($self,$description_pattern) = @_;
+
+  unless(defined $description_pattern) {
+    $self->throw("fetch_by_description_pattern must have a description_pattern");
+  }
+
+  #construct a constraint like 't1.table1_id = 1'
+  my $constraint = "s.description LIKE '$description_pattern'";
+  # print("fetch_by_description_pattern contraint:\n$constraint\n");
+
+  #return first element of _generic_fetch list
+  my ($obj) = @{$self->_generic_fetch($constraint)};
+  return $obj;
+}
+
+
 =head2 fetch_all
 
   Arg        : None
