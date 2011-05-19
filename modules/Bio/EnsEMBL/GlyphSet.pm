@@ -184,25 +184,32 @@ sub init_label {
   
   return $self->label(undef) unless $text;
   
-  my $config      = $self->{'config'};
-  my $config_type = $config->{'type'};
-  my $hub         = $config->hub;
-  my $name        = $self->my_config('name');
-  my $desc        = $self->my_config('description');
-  my $style       = $config->species_defs->ENSEMBL_STYLE;
-  my $font        = $style->{'GRAPHIC_FONT'};
-  my $fsze        = $style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'};
-  my @res         = $self->get_text_width(0, $text, '', 'font' => $font, 'ptsize' => $fsze);
-  my $track       = $self->_type;
-  my $node        = $config->get_node($track);
-  my $hover       = !$hub->param('export') && $node->get('menu') ne 'no' && $hub->get_viewconfig->has_image_config($config_type);
-  my $fav         = $config->get_favourite_tracks->{$track};
-  (my $class      = $self->species . "_$track") =~ s/\W/_/g;
+  my $config    = $self->{'config'};
+  my $hub       = $config->hub;
+  my $name      = $self->my_config('name');
+  my $desc      = $self->my_config('description');
+  my $style     = $config->species_defs->ENSEMBL_STYLE;
+  my $font      = $style->{'GRAPHIC_FONT'};
+  my $fsze      = $style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'};
+  my @res       = $self->get_text_width(0, $text, '', 'font' => $font, 'ptsize' => $fsze);
+  my $track     = $self->_type;
+  my $node      = $config->get_node($track);
+  my $component = $config->get_parameter('component');
+  my $hover     = $component && !$hub->param('export') && $node->get('menu') ne 'no';
+  my $fav       = $config->get_favourite_tracks->{$track};
+  (my $class    = $self->species . "_$track") =~ s/\W/_/g;
   
   if ($hover) {
     my @renderers = @{$node->get('renderers') || []};
-    my $url       = $hub->url('Config', { species => $config->species, config => $config_type, submit => 1, __clear => 1 });
     my @r;
+    
+    my $url = $hub->url('Config', {
+      species  => $config->species,
+      action   => $component,
+      function => undef,
+      submit   => 1,
+      __clear  => 1
+    });
     
     if (scalar @renderers > 4) {
       while (my ($val, $text) = splice @renderers, 0, 2) {
@@ -218,7 +225,7 @@ sub init_label {
       header    => $name,
       desc      => $desc,
       class     => $class,
-      config    => $config_type . ($config->multi_species ? '_' . lc $config->species : ''),
+      component => $component . ($config->multi_species ? '_' . lc $config->species : ''),
       renderers => \@r,
       fav       => [ $fav, "$url;$track=favourite_" ],
       off       => "$url;$track=off"
