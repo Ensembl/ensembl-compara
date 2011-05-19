@@ -5,6 +5,7 @@ use strict;
 use CGI::Cookie;
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
+use JSON qw(from_json);
 use URI::Escape qw(uri_escape uri_unescape);
 
 use EnsEMBL::Web::Form;
@@ -17,26 +18,24 @@ use constant {
 };
 
 sub new {
-  my ($class, $type, $action, $hub) = @_;
-
+  my ($class, $type, $component, $hub) = @_;
+  
   my $self = {
-    hub                 => $hub,
-    species             => $hub->species,
-    species_defs        => $hub->species_defs,
-    real                => 1,
-    nav_tree            => 0,
-    title               => undef,
-    _options            => {},
-    _image_config_names => {},
-    default_config      => '_page',
-    has_images          => 0,
-    _form               => undef,
-    _form_id            => sprintf('%s_%s_configuration', lc $type, lc $action),
-    url                 => undef,
-    tree                => new EnsEMBL::Web::OrderedTree,
-    custom              => $ENV{'ENSEMBL_CUSTOM_PAGE'} ? $hub->session->custom_page_config($type) : [],
-    type                => $type,
-    action              => $action
+    hub              => $hub,
+    species          => $hub->species,
+    species_defs     => $hub->species_defs,
+    type             => $type,
+    component        => $component,
+    code             => "${type}::$component",
+    options          => {},
+    has_images       => 0,
+    image_config     => undef,
+    image_config_das => undef,
+    title            => undef,
+    form             => undef,
+    form_id          => sprintf('%s_%s_configuration', lc $type, lc $component),
+    custom           => $ENV{'ENSEMBL_CUSTOM_PAGE'} ? $hub->session->custom_page_config($type) : [],
+    tree             => new EnsEMBL::Web::OrderedTree,
   };
   
   bless $self, $class;
@@ -46,160 +45,129 @@ sub new {
   return $self;
 }
 
-sub hub            :lvalue { $_[0]->{'hub'};            }
-sub default_config :lvalue { $_[0]->{'default_config'}; }
-sub real           :lvalue { $_[0]->{'real'};           }
-sub nav_tree       :lvalue { $_[0]->{'nav_tree'};       }
-sub url            :lvalue { $_[0]->{'url'};            }
-sub title          :lvalue { $_[0]->{'title'};          }
-sub has_images     :lvalue { $_[0]->{'has_images'};     }
-sub altered        :lvalue { $_[0]->{'altered'};        } # Set to one if the configuration has been updated
-sub storable       :lvalue { $_[0]->{'storable'};       } # Set whether this ViewConfig is changeable by the User, and hence needs to access the database to set storable do $view_config->storable = 1; in SC code
-sub custom         :lvalue { $_[0]->{'custom'};         }
-sub species       { return $_[0]->{'species'};          }
-sub species_defs  { return $_[0]->{'species_defs'};     }
-sub is_custom     { return $ENV{'ENSEMBL_CUSTOM_PAGE'}; }
-sub type          { return $_[0]->{'type'};             }
-sub action        { return $_[0]->{'action'};           }
-sub tree          { return $_[0]->{'tree'};             }
-sub init          { return $_[0]->real = 0;             }
+sub hub              :lvalue { $_[0]->{'hub'};              }
+sub title            :lvalue { $_[0]->{'title'};            }
+sub image_config     :lvalue { $_[0]->{'image_config'};     }
+sub image_config_das :lvalue { $_[0]->{'image_config_das'}; }
+sub has_images       :lvalue { $_[0]->{'has_images'};       }
+sub altered          :lvalue { $_[0]->{'altered'};          } # Set to one if the configuration has been updated
+sub custom           :lvalue { $_[0]->{'custom'};           }
+sub code             :lvalue { $_[0]->{'code'};             }
+sub species          { return $_[0]->{'species'};           }
+sub species_defs     { return $_[0]->{'species_defs'};      }
+sub type             { return $_[0]->{'type'};              }
+sub component        { return $_[0]->{'component'};         }
+sub tree             { return $_[0]->{'tree'};              }
+sub storable         { return 1;                            }
 
-# Value indidates that the track can be configured for DAS (das) or not (nodas)
-sub add_image_configs {
-  my ($self, $image_config) = @_;
-  
-  foreach (keys %$image_config) {
-    $self->{'_image_config_names'}->{$_} = $image_config->{$_};
-    $self->has_images = 1 if $image_config->{$_} !~ /^V/
-  }
-}
-
-sub has_image_config {
-  my $self   = shift;
-  my $config = shift;
-  return exists $self->{'_image_config_names'}{$config};
-}
-sub image_config_names {
-  my $self = shift;
-  return keys %{$self->{'_image_config_names'} || {}};
-}
-
-sub image_configs {
-  my $self = shift;
-  return %{$self->{'_image_config_names'} || {}};
-}
-
-sub _set_defaults {
-  my $self = shift;
-  my %defs = @_;
-
-  foreach my $key (keys %defs) {
-    $self->{'_options'}{$key}{'default'} = $defs{$key};
-  }
-}
-
-sub _clear_defaults {
-  my $self = shift;
-  $self->{'_options'} = {};
-}
-
-# Clears the listed default values
-sub _remove_defaults {
-  my $self = shift;
-  foreach my $key (@_) {
-    delete $self->{'_options'}{$key};
-  }
-}
+sub init {}
+sub form {}
 
 sub options { 
   my $self = shift;
-  return keys %{$self->{'_options'}};
+  return keys %{$self->{'options'}};
 }
 
-sub has_form {
+sub set_defaults {
+  my ($self, $defaults) = @_;
+  $self->{'options'}{$_}{'default'} = $defaults->{$_} for keys %$defaults;
+}
+
+sub set {
+  my ($self, $key, $value, $force) = @_; 	 
+  
+  return unless $force || exists $self->{'options'}{$key}; 	 
+  return if $self->{'options'}{$key}{'user'} eq $value;
+  $self->altered = 1;
+  $self->{'options'}{$key}{'user'} = $value;
+}
+
+sub get {
+  my ($self, $key) = @_;
+  
+  return undef unless exists $self->{'options'}{$key};
+  
+  my $type = exists $self->{'options'}{$key}{'user'} ? 'user' : 'default';
+  
+  return ref $self->{'options'}{$key}{$type} eq 'ARRAY' ? @{$self->{'options'}{$key}{$type}} : $self->{'options'}{$key}{$type};
+}
+
+sub set_user_settings {
+  my ($self, $diffs) = @_;
+  
+  if ($diffs) {
+    $self->{'options'}{$_}{'user'} = $diffs->{$_} for keys %$diffs;
+  }
+}
+
+sub get_user_settings {
   my $self = shift;
-  return $self->{'_form'} || $self->has_images || $self->can('form');
-}
-
-sub get_form {
-  my $self = shift;
-  $self->{'_form'} ||= EnsEMBL::Web::Form->new({'id' => $self->{'_form_id'}, 'action' => $self->url, 'class' => 'configuration std'});
-  return $self->{'_form'};
-}
-
-sub add_fieldset {
-  my ($self, $legend, $class) = @_;
+  my $diffs = {};
   
-  (my $div_class = $legend) =~ s/ /_/g;
-  
-  my $fieldset = $self->get_form->add_fieldset($legend);
-  $fieldset->set_attribute('class', $class) if $class;
-  
-  $self->tree->create_node(undef, { url => '#', availability => 1, caption => $legend, class => $div_class }) if $self->nav_tree;
-    
-  return $fieldset;
-}
-
-sub get_fieldset {
-  my ($self, $i) = @_;
-
-  my $fieldsets = $self->get_form->fieldsets;
-  my $fieldset;
-  
-  if (int $i eq $i) {
-    $fieldset = $fieldsets->[$i];
-  }
-  else {
-    for (@$fieldsets) {
-      $fieldset = $_ and last if $_->get_legend && $_->get_legend->inner_HTML eq $i
-    }
+  foreach my $key ($self->options) {
+    $diffs->{$key} = $self->{'options'}{$key}{'user'} if exists $self->{'options'}{$key}{'user'} && $self->{'options'}{$key}{'user'} ne $self->{'options'}{$key}{'default'};
   }
   
-  return $fieldset;
+  return $diffs;
 }
 
-sub add_form_element {
-  my ($self, $element) = @_;
-
-  if ($element->{'type'} eq 'CheckBox' || $element->{'type'} eq 'DASCheckBox') {
-    $element->{'selected'} = $self->get($element->{'name'}) eq $element->{'value'} ? 1 : 0 ;
+sub reset {
+  my ($self, $image_config) = @_;
+  
+  $image_config->reset if $image_config;
+  
+  foreach my $key ($self->options) {
+    next unless exists $self->{'options'}{$key}{'user'};
+    $self->altered = 1;
+    delete $self->{'options'}{$key}{'user'};
   }
-  elsif (not exists $element->{'value'}) {
-    $element->{'value'} = $self->get($element->{'name'});
-  }
+}
 
-  my $fieldset = $self->get_form->has_fieldset ? $self->get_form->fieldset : $self->add_fieldset('Display options');
-
-  $self->get_form->add_element(%$element); ## TODO- modify it for the newer version of Form once all child classes are modified
+# Value indidates that the track can be configured for DAS (das) or not (nodas)
+sub add_image_config {
+  my ($self, $image_config, $das) = @_;  
+  $self->image_config     = $image_config;
+  $self->image_config_das = $das || 'das';
+  $self->has_images       = 1 unless $image_config =~ /^V/;
 }
 
 # Loop through the parameters and update the config based on the parameters passed
 sub update_from_input {
-  my $self  = shift;
-  my $input = $self->hub->input;
+  my $self         = shift;
+  my $hub          = $self->hub;
+  my $input        = $hub->input;
+  my $image_config = $hub->get_imageconfig($self->image_config) if $self->image_config;
   
-  return $self->reset if $input->param('reset');
+  return $self->reset($image_config) if $input->param('reset');
   
+  my $diff = $input->param('view_config');
   my $flag = 0;
   my $altered;
   
-  foreach my $key ($self->options) {
-    my @values = $input->param($key);
+  if ($diff) {
+    $diff = from_json($diff);
     
-    if (scalar @values && $values[0] ne $self->{'_options'}{$key}{'user'}) {
-      $flag = 1;
+    foreach my $key (grep exists $self->{'options'}{$_}, keys %$diff) {
+      my @values = ref $diff->{$key} eq 'ARRAY' ? @{$diff->{$key}} : ($diff->{$key});
       
-      if (scalar @values > 1) {
-        $self->set($key, \@values);
-      } else {
-        $self->set($key, $values[0]);
+      if ($values[0] ne $self->{'options'}{$key}{'user'}) {
+        $flag = 1;
+        
+        if (scalar @values > 1) {
+          $self->set($key, \@values);
+        } else {
+          $self->set($key, $values[0]);
+        }
+        
+        $altered ||= $key if $values[0] !~ /^(off|no)$/;
       }
-      
-      $altered ||= $key if $values[0] !~  /^(off|no)$/;
     }
   }
   
+  $self->altered = $image_config->update_from_input if $image_config;
   $self->altered = $altered || 1 if $flag;
+  
+  return $self->altered;
 }
 
 # Loop through the parameters and update the config based on the parameters passed
@@ -266,7 +234,7 @@ sub update_from_url {
           type     => 'message',
           function => '_info',
           code     => 'das:' . md5_hex($source),
-          message  => sprintf('You have attached a DAS source with DSN: %s%s.', encode_entities($source), $hub->get_viewconfig->get($logic_name) ? ', and it has been added to the External Data menu' : '')
+          message  => sprintf('You have attached a DAS source with DSN: %s%s.', encode_entities($source), $self->get($logic_name) ? ', and it has been added to the External Data menu' : '')
         );
       }
     }
@@ -277,57 +245,99 @@ sub update_from_url {
     $params_removed = 1;
   }
   
-  foreach my $name ($self->image_config_names) {
-    my @values = split /,/, $input->param($name);
-    
-    if (@values) {
-      $input->delete($name); 
-      $params_removed = 1;
-    }
-    
-    $hub->get_imageconfig($name)->update_from_url(@values) if @values;
+  my $image_config = $self->image_config;
+  my @values       = split /,/, $input->param($image_config);
+  
+  if (@values) {
+    $input->delete($image_config); 
+    $params_removed = 1;
   }
+  
+  $hub->get_imageconfig($image_config)->update_from_url(@values) if @values;
   
   $session->store;
 
-  return $params_removed ? join '?', $r->uri, $input->query_string : undef;
+  return $params_removed;
 }
 
-# Delete a key from the user settings
-sub delete {
-  my ($self, $key) = @_;
-  return unless exists $self->{'_options'}{$key}{'user'};
-  $self->altered = 1;
-  delete $self->{'_options'}{$key}{'user'};
+sub get_form {
+  my $self = shift;
+  return $self->{'form'} ||= new EnsEMBL::Web::Form({ id => $self->{'form_id'}, action => $self->hub->url('Config', undef, 1)->[0], class => 'configuration std' });
 }
 
-# Delete all keys from user settings
-sub reset {
-  my ($self) = @_;
+sub add_fieldset {
+  my ($self, $legend, $class) = @_;
   
-  foreach my $key ($self->options) {
-    next unless exists $self->{'_options'}{$key}{'user'};
-    $self->altered = 1;
-    delete $self->{'_options'}{$key}{'user'};
+  (my $div_class = $legend) =~ s/ /_/g;
+  my $fieldset   = $self->get_form->add_fieldset($legend);
+  
+  $fieldset->set_attribute('class', $class) if $class;
+  
+  $self->tree->create_node(lc $div_class, { url => '#', availability => 1, caption => $legend, class => $div_class });
+  
+  return $fieldset;
+}
+
+sub get_fieldset {
+  my ($self, $i) = @_;
+
+  my $fieldsets = $self->get_form->fieldsets;
+  my $fieldset;
+  
+  if (int $i eq $i) {
+    $fieldset = $fieldsets->[$i];
+  } else {
+    for (@$fieldsets) {
+      $fieldset = $_;
+      last if $_->get_legend && $_->get_legend->inner_HTML eq $i;
+    }
   }
+  
+  return $fieldset;
+}
+
+sub add_form_element {
+  my ($self, $element) = @_;
+
+  if ($element->{'type'} eq 'CheckBox' || $element->{'type'} eq 'DASCheckBox') {
+    $element->{'selected'} = $self->get($element->{'name'}) eq $element->{'value'} ? 1 : 0 ;
+  } elsif (!exists $element->{'value'}) {
+    $element->{'value'} = $self->get($element->{'name'});
+  }
+  
+  $self->add_fieldset('Display options') unless $self->get_form->has_fieldset;
+  $self->get_form->add_element(%$element); ## TODO- modify it for the newer version of Form once all child classes are modified
 }
 
 sub build_form {
-  my ($self, $object, $no_extra_bits) = @_;
+  my ($self, $object, $image_config) = @_;
   
-  $self->form($object) if $self->can('form'); # can't use an empty form stub in the parent because has_form checks $self->can('form'). TODO: change has_form
+  $self->build_imageconfig_form($image_config) if $image_config;
+  
+  if ($self->has_images) {
+    my $fieldset = $self->get_fieldset('Display options') || $self->add_fieldset('Display options');
+    
+    $fieldset->add_field({
+      type   => 'DropDown',
+      name   => 'image_width',
+      value  => $ENV{'ENSEMBL_IMAGE_WIDTH'},
+      label  => 'Width of image',
+      values => [
+        { value => 'bestfit', caption => 'best fit' },
+        map {{ value => $_, caption => "$_ pixels" }} map $_*100, 5..20
+      ]
+    });
+  }
+  
+  $self->form($object);
   
   foreach my $fieldset (@{$self->get_form->fieldsets}) {
-
-    ## Add select all checkboxes
-    next if $fieldset->get_flag($self->SELECT_ALL_FLAG);
+    next if $fieldset->get_flag($self->SELECT_ALL_FLAG); 
        
     my %element_types;
-    my $elements = $fieldset->inputs;# returns all input, select and textarea nodes 
+    my $elements = $fieldset->inputs; # returns all input, select and textarea nodes 
     
-    for (@{$elements}) {
-      $element_types{$_->node_name . $_->get_attribute('type')}++;
-    }
+    $element_types{$_->node_name . $_->get_attribute('type')}++ for @$elements;
     
     delete $element_types{$_} for qw(inputhidden inputsubmit);
     
@@ -335,102 +345,252 @@ sub build_form {
     if ($element_types{'inputcheckbox'} > 1 && [ sort { $element_types{$b} <=> $element_types{$a} } keys %element_types ]->[0] eq 'inputcheckbox') {
       my $reference_element = undef;
       
-      for (@{$elements}) {
-        $reference_element = $_ and last if $_->get_attribute('type') eq 'checkbox';
+      foreach (@$elements) {
+        $reference_element = $_;
+        last if $_->get_attribute('type') eq 'checkbox';
       }
       
-      $reference_element = $reference_element->parent_node while defined $reference_element && ref($reference_element) !~ /::Form::Field$/; #get the wrapper of the element before using it as reference
+      $reference_element = $reference_element->parent_node while defined $reference_element && ref($reference_element) !~ /::Form::Field$/; # get the wrapper of the element before using it as reference
       
       next unless defined $reference_element;
       
       my $select_all = $fieldset->add_field({
-        type          => 'checkbox',
-        name          => 'select_all',
-        label         => 'Select/deselect all',
-        value         => 'select_all',
-        field_class   => 'select_all',
-        selected      => 1
+        type        => 'checkbox',
+        name        => 'select_all',
+        label       => 'Select/deselect all',
+        value       => 'select_all',
+        field_class => 'select_all',
+        selected    => 1
       });
       
       $fieldset->insert_before($select_all, $reference_element);
-      $fieldset->set_flag($self->SELECT_ALL_FLAG);
+      $fieldset->set_flag($self->SELECT_ALL_FLAG); # Add select all checkboxes
     }
   }
   
-  if (!$no_extra_bits && $self->has_images) {
-    my $fieldset = $self->get_fieldset('Display options') || $self->add_fieldset('Display options');
-    
-    $fieldset->add_field({
-      type    => 'DropDown',
-      name    => 'cookie_width',
-      value   => $ENV{'ENSEMBL_IMAGE_WIDTH'},
-      label   => 'Width of image',
-      values  => [
-        { value => 'bestfit', caption => 'best fit' },
-        map {{ value => $_, caption => "$_ pixels" }} map $_*100, 5..20
-      ]
-    });
-  }
-  
-  for (@{$self->get_form->fieldsets}) {
-    
-    ## wrap the fieldset inside the div for JS to work properly
+  foreach (@{$self->get_form->fieldsets}) {
     my $wrapper_div = $_->dom->create_element('div');
-    if (my $legend = $_->get_legend) {
+    my $legend      = $_->get_legend;
+    
+    if ($legend) {
       (my $div_class = $legend->inner_HTML) =~ s/ /_/g;
-      $wrapper_div->set_attribute('class', $div_class);
+      $wrapper_div->set_attribute('class', "config $div_class view_config");
     }
+    
     $wrapper_div->append_child($_->parent_node->replace_child($wrapper_div, $_));
   }
-  
-  return if $no_extra_bits;
-  
-  $self->tree->create_node('form_conf', { availability => 0, caption => 'Configure' }) unless $self->nav_tree;
 }
 
-# Set a key for user settings 	 
-sub set { 	 
-  my ($self, $key, $value, $force) = @_; 	 
+sub build_imageconfig_form {
+  my $self         = shift;
+  my $image_config = shift;
+  my $img_url      = $self->img_url;
+  my $hub          = $self->hub;
+  my $extra_menus  = $image_config->{'extra_menus'};
+  my $track_order;
   
-  return unless $force || exists $self->{'_options'}{$key}; 	 
-  return if $self->{'_options'}{$key}{'user'} eq $value;
-  $self->altered = 1;
-  $self->{'_options'}{$key}{'user'}  = $value;
-}
-
-sub get {
-  my ($self, $key) = @_;
+  my $menu = $self->tree->create_node('image_config', { caption => 'Image options' });
   
-  return undef unless exists $self->{'_options'}{$key};
+  $menu->append($self->tree->create_node('active_tracks',    { caption => 'Active tracks',    availability => 1, url => '#', class => 'active_tracks',           rel => 'multi' })) if $extra_menus->{'active_tracks'};
+  $menu->append($self->tree->create_node('favourite_tracks', { caption => 'Favourite tracks', availability => 1, url => '#', class => 'favourite_tracks',        rel => 'multi' })) if $extra_menus->{'favourite_tracks'};
+  $menu->append($self->tree->create_node('search_results',   { caption => 'Search results',   availability => 1, url => '#', class => 'search_results disabled', rel => 'multi' })) if $extra_menus->{'search_results'};
   
-  my $type = exists $self->{'_options'}{$key}{'user'} ? 'user' : 'default';
-  
-  return ref $self->{'_options'}{$key}{$type} eq 'ARRAY' ? @{$self->{'_options'}{$key}{$type}} : $self->{'_options'}{$key}{$type};
-}
-
-sub is_option {
-  my ($self, $key) = @_;
-  return exists $self->{'_options'}{$key};
-}
-
-# Set the user settings from a hash of key value pairs
-sub set_user_settings {
-  my ($self, $diffs) = @_;
-  
-  if ($diffs) {
-    $self->{'_options'}{$_}{'user'} = $diffs->{$_} for keys %$diffs;
-  }
-}
-
-sub get_user_settings {
-  my $self = shift;
-  my $diffs = {};
-  
-  foreach my $key ($self->options) {
-    $diffs->{$key} = $self->{'_options'}{$key}{'user'} if exists $self->{'_options'}{$key}{'user'} && $self->{'_options'}{$key}{'user'} ne $self->{'_options'}{$key}{'default'};
+  if ($extra_menus->{'track_order'}) {
+    $menu->append($self->tree->create_node('track_order', { caption => 'Track order', availability => 1, url => '#', class => 'track_order' }));
+    $self->{'track_order'} = { map { join('.', grep $_, $_->id, $_->get('drawing_strand')) => $_->get('order') } $image_config->get_parameter('sortable_tracks') ? $image_config->get_sortable_tracks : () };
   }
   
-  return $diffs;
+  # Delete all tracks where menu = no, and parent nodes if they are now empty
+  # Do this after creating track order, so that unconfigurable but displayed tracks are still considered in the ordering process
+  $image_config->remove_disabled_menus;
+  
+  $self->{'favourite_tracks'} = $image_config->get_favourite_tracks;
+  
+  my @nodes = @{$image_config->tree->child_nodes};
+  
+  foreach my $n (grep $_->has_child_nodes, @nodes) {
+    my @children = grep !$_->has_child_nodes, @{$n->child_nodes};
+    
+    if (scalar @children) {
+      my $internal = $image_config->tree->create_node($n->id . '_internal');
+      $internal->append($_) for @children;
+      $n->prepend($internal);
+    }
+  }
+  
+  $self->build_imageconfig_menus($image_config, $img_url, $_, $_->id, 0) for @nodes;
+  
+  foreach my $node (grep $_->has_child_nodes, @nodes) {
+    my $id      = $node->id;
+    my $caption = $node->get('caption');
+    my $first   = ' first';
+    my $i       = 0;
+    
+    $node->data->{'class'}    = "config $id";
+    $node->data->{'content'} .= qq{<h2 class="config_header">$caption</h2>};
+    
+    foreach my $n (@{$node->child_nodes}) {
+      my $children = 0;
+      my $c = 0;
+      my $content;
+      
+      foreach (grep $_->[1], map [ $_->id, $_->render, $self->{'favourite_tracks'}->{$_->id}, $_->get('display') ], @{$n->child_nodes}) {
+        my $display = pop @$_;
+        push @{$node->data->{'tracks'}[$i]}, $_;
+        $content .= $_->[1] if $display && $display ne 'off';
+        $c++ if $_->[1];
+        $children++;
+      }
+      
+      next unless $c;
+      
+      my $class = 'config_menu';
+      
+      if ($children) {
+        my $menu   = $self->{'select_all_menu'}->{$n->id};
+        my $header = $n->get('caption');
+      
+        if ($menu && $children > 1) {
+          $header ||= 'tracks';
+          $class   .= ' selectable';
+          
+          my %counts = reverse %{$self->{'track_renderers'}->{$n->id}};
+          
+          if (scalar keys %counts != 1) {
+            $menu  = '';
+            $menu .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="${img_url}render/$_->[0].gif" class="$id" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
+          }
+          
+          $node->data->{'content'} .= qq{
+            <div class="select_all$first">
+              <ul class="popup_menu">$menu</ul>
+              <img title="Enable/disable all" alt="Enable/disable all" src="${img_url}render/off.gif" class="menu_option select_all" /><strong class="menu_option">Enable/disable all $header</strong>
+            </div>
+          };
+        } elsif ($header) {
+          $node->data->{'content'} .= "<h4>$header</h4>";
+        }
+      }
+      
+      $node->data->{'content'} .= qq{<ul class="$class">$content</ul>};
+      
+      $i++;
+      
+      $first = '';
+    }
+    
+    my $on    = $self->{'enabled_tracks'}->{$id} || 0;
+    my $count = $self->{'total_tracks'}->{$id}   || 0;
+    
+    $menu->append($self->tree->create_node($id, { caption => ($count ? "($on/$count) " : '') . $caption, url => '#', availability => ($count > 0), class => $id }));
+  }
+  
+  my $form    = $self->get_form;
+  my $no_favs = qq{You have no favourite tracks. Use the <img src="${img_url}grey_star.png" alt="star" /> icon to add tracks to your favourites};
+  
+  $form->append_child($form->dom->create_element('div', { inner_HTML => $_->data->{'content'},           class => $_->data->{'class'}       })) for @nodes;
+  $form->append_child($form->dom->create_element('div', { inner_HTML => $no_favs,                        class => 'config favourite_tracks' })) if $extra_menus->{'favourite_tracks'};
+  $form->append_child($form->dom->create_element('div', { inner_HTML => '<ul class="config_menu"></ul>', class => 'config track_order'      })) if $self->{'track_order'};
+  
+  my %tracks = map @{$_->data->{'tracks'} || []} ? ( $_->id => $_->data->{'tracks'} ) : (), @nodes;
+  $self->{'tracks'} = \%tracks;
+}
+
+sub build_imageconfig_menus {
+  my ($self, $image_config, $img_url, $node, $menu_class, $i) = @_;
+  my $id       = $node->id;
+  my $children = $node->child_nodes;
+  
+  $node->node_name = 'li';
+  
+  if (scalar @$children) {
+    my $ul = $i > 1 && scalar @$children > 1 ? $node->dom->create_element('ul', { class => 'config_menu' }) : undef;
+    my ($j, $menu);
+    
+    foreach (@$children) {
+      my $m = $self->build_imageconfig_menus($image_config, $img_url, $_, $menu_class, $i + 1);
+      $menu = $m if $m && ++$j;
+      $ul->append_child($_) if $ul;
+    }
+    
+    if ($ul) {
+      $node->append_child($ul);
+      
+      if ($menu) {
+        my $caption   = $node->get('caption');
+        my %renderers = reverse %{$self->{'track_renderers'}->{$id}};
+        
+        if (scalar keys %renderers != 1) {
+          $menu  = '';
+          $menu .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="${img_url}render/$_->[0].gif" class="$menu_class" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
+        }
+        
+        $ul->before($node->dom->create_element('div', {
+          class      => 'select_all',
+          inner_HTML => qq{
+            <ul class="popup_menu">$menu</ul>
+            <img title="Enable/disable all" alt="Enable/disable all" src="${img_url}render/off.gif" class="menu_option select_all" /><strong class="menu_option">Enable/disable all $caption</strong>
+          }
+        }));
+      }
+    }
+  } elsif ($node->get('menu') ne 'no') {
+    my @states   = @{$node->get('renderers') || [ 'off', 'Off', 'normal', 'Normal' ]};
+    my $display  = $node->get('display')     || 'off';
+    my $external = $node->get('_class');
+    my $desc     = $node->get('description');
+    my $name     = encode_entities($node->get('name'));
+    my $icons    = $external ? sprintf '<img src="%strack-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" />', $img_url, lc $external, $external, $external : ''; # DAS icons, etc
+    my ($selected, $menu, $help);
+    
+    while (my ($val, $text) = splice @states, 0, 2) {
+      $text     = encode_entities($text);
+      $selected = sprintf '<input type="hidden" class="track_name" name="%s" value="%s" /><img title="%s" alt="%s" src="%srender/%s.gif" class="menu_option" />', $id, $val, $text, $text, $img_url, $val if $val eq $display;
+      $text     = qq{<li class="$val"><img title="$text" alt="$text" src="${img_url}render/$val.gif" class="$menu_class" />$text</li>};
+      
+      $menu .= $text;
+      
+      if (!$external) {
+        my $n = $node;
+        
+        while ($n = $n->parent_node) {
+          $self->{'track_renderers'}->{$n->id}->{$val}++;
+        }
+      }
+    }
+    
+    $self->{'enabled_tracks'}->{$menu_class}++ if $display ne 'off';
+    $self->{'total_tracks'}->{$menu_class}++;
+    
+    if ($desc) {
+      $desc =~ s/&(?!\w+;)/&amp;/g;
+      $desc =~ s/href="?([^"]+?)"?([ >])/href="$1"$2/g;
+      $desc =~ s/<a>/<\/a>/g;
+      $desc =~ s/"[ "]*>/">/g;
+      $desc = qq{<div class="desc">$desc</div>};
+      
+      $help = qq{<div class="menu_help"></div>};
+    } else {
+      $help = qq{<div class="empty"></div>};
+    }
+    
+    $node->set_attribute('class', "$id track $external" . ($display eq 'off' ? '' : ' on') . ($self->{'favourite_tracks'}->{$id} ? ' fav' : ''));
+    $node->inner_HTML(qq{
+      <ul class="popup_menu">$menu</ul>
+      $selected<span class="menu_option">$icons$name</span>
+      <div class="controls">
+        <div class="favourite"></div>
+        $help
+      </div>
+      $desc
+    });
+    
+    $self->{'select_all_menu'}->{$node->parent_node->id} = $menu unless $external;
+    
+    return $menu unless $external;
+  }
+  
+  return undef;
 }
 
 1;
