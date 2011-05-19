@@ -166,7 +166,7 @@ sub heading {
 sub add_notes {
   ## Adds notes to the form (or fieldset)
   ## If 'location' and 'heading' key is missing, appends the notes to the last fieldset - all other keys are invalid then (see fieldset->add_notes)
-  ## @param HashRef with the following keys
+  ## @param Either a string that needs to go in the notes, OR a HashRef with the following keys
   ##  - id        Id if any for the notes div
   ##  - location  (head|foot) or head by default
   ##  - class     css class name to override the default class
@@ -176,6 +176,9 @@ sub add_notes {
   ##  - serialise In case of list, <ol> is used if this flag is on, otherwise <ul>
   ## @return DOM::Node::Element::Div object
   my ($self, $params) = @_;
+  
+  ## If only text provided
+  $params = {'text' => $params} unless ref $params eq 'HASH';
 
   ## if no location or heading, add notes to fieldset
   $params->{'location'} = 'head' if exists $params->{'heading'};
