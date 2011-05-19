@@ -32,6 +32,8 @@ sub init {
     my $func = "init_$self->{'code'}";
     $self->$func if $self->can($func);
   }
+  
+  $self->storable = 0;
 }
 
 sub init_transcript {

@@ -36,6 +36,8 @@ sub init {
     }],
     [ 'drag_right', '', 'Vdraggable', { display => 'normal', part => 1, menu => 'no' }],
   );
+  
+  $self->storable = 0;
 }
 
 1;

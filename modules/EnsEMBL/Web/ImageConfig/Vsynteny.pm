@@ -26,8 +26,8 @@ sub init {
   });
 
   $self->create_menus('features', 'Features');
-
   $self->add_tracks('features', [ 'Vsynteny', 'Videogram', 'Vsynteny', { display => 'normal', renderers => [ 'normal', 'normal' ], colourset => 'ideogram' } ]);
+  $self->storable = 0;
 }
 
 1;

@@ -30,6 +30,8 @@ sub init {
     [ 'decorations' ],
     { short_labels => 1 }
   );
+  
+  $self->storable = 0;
 }
 
 1;

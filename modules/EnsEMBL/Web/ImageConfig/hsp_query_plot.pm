@@ -22,6 +22,8 @@ sub init {
     [ 'query_plot', 'HSPs',     'HSP_query_plot', { display => 'normal', strand => 'b', name => 'HSP Query Plot', col => 'red', dep => 50, txt => 'black', mode => 'allhsps' }],
     [ 'coverage',   'coverage', 'HSP_coverage',   { display => 'normal', strand => 'f', name => 'HSP Coverage' }]
   );
+  
+  $self->storable = 0;
 }
 
 1;

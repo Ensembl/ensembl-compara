@@ -24,6 +24,8 @@ sub init {
     [ 'genetree',        'Gene',   'genetree',        { on => 'on', strand => 'r' }],
     [ 'genetree_legend', 'Legend', 'genetree_legend', { on => 'on', strand => 'r' }],
   );
+  
+  $self->storable = 0;
 }
 
 1;

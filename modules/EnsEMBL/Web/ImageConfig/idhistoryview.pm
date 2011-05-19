@@ -24,6 +24,8 @@ sub init {
   $self->add_tracks('ID_History',
     [ 'idhistorytree', '', 'idhistorytree', { display => 'on', strand => 'f', menu => 'no' }]
   );
+  
+  $self->storable = 0;
 }
 
 1;
