@@ -248,8 +248,8 @@ Motif Features contain specific properties:
 foreach my $motif_feature (@motif_features) {
 	print_feature($motif_feature);
 	print $motif_feature->binding_matrix->name."\n";
-	print $motif_feature->seq.Ó\nÓ;
-	print $motif_feature->score.Ó\nÓ;
+	print $motif_feature->seq."\n";
+	print $motif_feature->score."\n";
 	my $afs = $motif_feature->associated_annotated_features();	
 	foreach my $feat (@$afs){
 		#Each feature is an annotated feature
