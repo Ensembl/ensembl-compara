@@ -104,8 +104,10 @@ Ensembl.LayoutManager.extend({
         Ensembl.EventManager.triggerSpecific('updatePanel', i);
       }
     } else {
-      Ensembl.redirect();
+      return Ensembl.redirect();
     }
+    
+    $('#messages').hide();
   },
   
   validateForms: function (context) {
