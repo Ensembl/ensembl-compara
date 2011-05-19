@@ -24,15 +24,15 @@ sub new {
   my $input = new CGI;
   
   my $object_params = [
-    [ 'Location',             'r'   ],
-    [ 'Gene',                 'g'   ],
-    [ 'Transcript',           't'   ],
-    [ 'Variation',            'v'   ],
-    [ 'StructuralVariation',  'sv'  ],
-    [ 'Regulation',           'rf'  ],
-    [ 'Marker',               'm'   ],
-    [ 'LRG',                  'lrg' ],
-    [ 'GeneTree',             'gt'  ],
+    [ 'Location',            'r'   ],
+    [ 'Gene',                'g'   ],
+    [ 'Transcript',          't'   ],
+    [ 'Variation',           'v'   ],
+    [ 'StructuralVariation', 'sv'  ],
+    [ 'Regulation',          'rf'  ],
+    [ 'Marker',              'm'   ],
+    [ 'LRG',                 'lrg' ],
+    [ 'GeneTree',            'gt'  ],
   ];
   
   my $object_types    = { map { $_->[0] => $_->[1] } @$object_params };
@@ -109,7 +109,6 @@ sub page_type     { return $_[0]->{'page_type'};      }
 sub renderer_type { return $_[0]->{'renderer_type'};  }
 sub request       { return undef;                     }
 sub cacheable     { return 0;                         }
-sub configuration :lvalue { $_[0]->{'configuration'}; }
 sub node          :lvalue { $_[0]->{'node'};          }
 sub command       :lvalue { $_[0]->{'command'};       }
 sub filters       :lvalue { $_[0]->{'filters'};       }
@@ -148,36 +147,45 @@ sub page {
   return $self->{'page'};
 }
 
-sub view_config {
+sub configuration {
   my $self = shift;
   my $hub  = $self->hub;
-  return $self->{'view_config'} ||= $hub->object_types->{$hub->type} ? $hub->viewconfig : undef;
+  
+  if (!$self->{'configuration'}) {
+    my $conf = {
+      tree         => new EnsEMBL::Web::OrderedTree,
+      default      => undef,
+      action       => undef,
+      configurable => 0,
+      page_type    => $self->page_type
+    };
+    
+    my $module_name = 'EnsEMBL::Web::Configuration::' . $hub->type;
+    my ($configuration, $error) = $self->_use($module_name, $self->page, $hub, $self->builder, $conf);
+    
+    if ($error) {
+      # Handle "use" failures gracefully, but skip "Can't locate" errors
+      $self->add_error( 
+        'Configuration module compilation error',
+        '<p>Unable to use Configuration module <strong>%s</strong> due to the following error:</p><pre>%s</pre>',
+        $module_name, $error
+      );
+    }
+    
+    $self->{'configuration'} = $configuration;
+  } elsif (!$self->{'configuration'}{'object'} && $self->object) {
+    $self->{'configuration'}{'object'} = $self->object;
+    $self->{'configuration'}->set_action($hub->action, $hub->function);
+  }
+  
+  return $self->{'configuration'};
 }
 
 sub configure {
-  my $self = shift;
-  
-  my $common_conf = {
-    tree         => new EnsEMBL::Web::OrderedTree,
-    default      => undef,
-    action       => undef,
-    configurable => 0,
-    page_type    => $self->page_type
-  };
-  
-  my $config_module_name = 'EnsEMBL::Web::Configuration::' . $self->type; # Work out what the module name is, to see if it can be used
-  my ($configuration, $error) = $self->_use($config_module_name, $self->page, $self->hub, $self->builder, $common_conf);
-  
-  if ($error) {
-    # Handle "use" failures gracefully, but skip "Can't locate" errors
-    $self->add_error( 
-      'Configuration module compilation error',
-      '<p>Unable to use Configuration module <strong>%s</strong> due to the following error:</p><pre>%s</pre>',
-      $config_module_name, $error
-    );
-  }
-  
-  my $node = $configuration->get_node($configuration->get_valid_action($self->action, $self->function));
+  my $self          = shift;
+  my $hub           = $self->hub;
+  my $configuration = $self->configuration;
+  my $node          = $configuration->get_node($configuration->get_valid_action($self->action, $self->function));
   
   if ($node) {
     $self->node    = $node;
@@ -185,7 +193,14 @@ sub configure {
     $self->filters = $node->data->{'filters'};
   }
   
-  $self->configuration = $configuration;
+  if ($hub->object_types->{$hub->type}) {
+    $hub->components = $configuration->get_configurable_components($node);
+  } elsif ($self->request eq 'modal') {
+    my $referer     = $hub->referer;
+    my $module_name = "EnsEMBL::Web::Configuration::$referer->{'ENSEMBL_TYPE'}";
+    
+    $hub->components = $module_name->new_for_components($hub, { tree => new EnsEMBL::Web::OrderedTree }, $referer->{'ENSEMBL_ACTION'}, $referer->{'ENSEMBL_FUNCTION'}) if $self->dynamic_use($module_name);
+  }
 }
 
 sub render_page {

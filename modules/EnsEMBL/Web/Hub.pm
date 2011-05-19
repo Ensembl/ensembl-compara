@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Hub;
 
 ### NAME: EnsEMBL::Web::Hub 
@@ -57,8 +59,7 @@ sub new {
     _script        => $args->{'script'}        || $ENV{'ENSEMBL_SCRIPT'},   # Page, Component, Config etc
     _cache         => $args->{'cache'}         || new EnsEMBL::Web::Cache(enable_compress => 1, compress_threshold => 10000),
     _ext_url       => $args->{'ext_url'}       || new EnsEMBL::Web::ExtURL($species, $species_defs),
-    _problem       => $args->{'problem'}       || {},    
-    _view_configs  => $args->{'view_configs_'} || {},
+    _problem       => $args->{'problem'}       || {},
     _user_details  => $args->{'user_details'}  || 1,
     _object_types  => $args->{'object_types'}  || {},
     _apache_handle => $args->{'apache_handle'} || undef,
@@ -68,6 +69,7 @@ sub new {
     _cookies       => $cookies,
     _core_objects  => {},
     _core_params   => {},
+    _components    => [],
   };
 
   bless $self, $class;
@@ -92,6 +94,8 @@ sub session     :lvalue { $_[0]{'_session'};     }
 sub cache       :lvalue { $_[0]{'_cache'};       }
 sub user        :lvalue { $_[0]{'_user'};        }
 sub timer       :lvalue { $_[0]{'_timer'};       }
+sub components  :lvalue { $_[0]{'_components'};  }
+sub viewconfig  :lvalue { $_[0]{'_viewconfig'};  } # Store viewconfig so we don't have to keep getting it from session
 
 sub input         { return $_[0]{'_input'};         }
 sub cookies       { return $_[0]{'_cookies'};       }
@@ -107,7 +111,6 @@ sub timer_push        { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? shift
 sub check_ajax        { return $_[0]{'check_ajax'} ||= $_[0]->get_cookies('ENSEMBL_AJAX') eq 'enabled';    }
 sub referer           { return $_[0]{'referer'}    ||= $_[0]->parse_referer;                               }
 sub colourmap         { return $_[0]{'colourmap'}  ||= new Bio::EnsEMBL::ColourMap($_[0]->species_defs);   }
-sub viewconfig        { return $_[0]{'viewconfig'} ||= $_[0]->get_viewconfig;                              } # Store default viewconfig so we don't have to keep getting it from session
 
 sub species_path      { return shift->species_defs->species_path(@_);       }
 sub table_info        { return shift->species_defs->table_info(@_);         }
@@ -197,7 +200,7 @@ sub set_core_params {
   my $core_params = {};
 
   foreach (@{$self->species_defs->core_params}) {
-    my @param = $self->param($_, 'no_cache');
+    my @param = $self->param($_);
     $core_params->{$_} = scalar @param == 1 ? $param[0] : \@param if scalar @param;
   }
 
@@ -284,14 +287,13 @@ sub url {
 }
 
 sub param {
-  my $self     = shift;
-  my $no_cache = scalar @_ > 1 && $_[-1] eq 'no_cache';
-  pop @_ if $no_cache;
+  my $self = shift;
   
   if (@_) {
     my @T = map _sanitize($_), $self->input->param(@_);
     return wantarray ? @T : $T[0] if @T;
-    my $view_config = $no_cache ? $self->get_viewconfig : $self->viewconfig;
+    
+    my $view_config = $self->viewconfig;
     
     if ($view_config) {
       $view_config->set(@_) if @_ > 1;
@@ -301,8 +303,9 @@ sub param {
     
     return wantarray ? () : undef;
   } else {
-    my @params = map _sanitize($_), $self->input->param;
-    my $view_config = $no_cache ? $self->get_viewconfig : $self->viewconfig;
+    my @params      = map _sanitize($_), $self->input->param;
+    my $view_config = $self->viewconfig;
+    
     push @params, $view_config->options if $view_config;
     my %params = map { $_, 1 } @params; # Remove duplicates
     
@@ -500,23 +503,29 @@ sub get_das_by_logic_name {
 # VIEW / IMAGE CONFIGS
 
 sub get_viewconfig {
-  ### Create a new EnsEMBL::Web::ViewConfig object for the type and action passed
-  
-  my $self    = shift;
-  my $type    = shift || $self->type;
-  my $action  = shift || $self->action;
-  my $session = $self->session;
-  my $code    = "${type}::$action";
+  ### Create a new EnsEMBL::Web::ViewConfig object for the component and type passed.
+  ### Stores the ViewConfig as $self->viewconfig if a third argument of "cache" is passed.
+
+  my $self       = shift;
+  my $component  = shift;
+  my $type       = shift || $self->type;
+  my $cache      = shift eq 'cache';
+  my $session    = $self->session;
+  my $cache_code = "${type}::$component";
   
   return undef unless $session;
-  return $session->view_configs->{$code} if $session->view_configs->{$code};
+  return $session->view_configs->{$cache_code} if $session->view_configs->{$cache_code};
   
-  my $module_name = $self->get_module_names('ViewConfig', $type, $action) || 'EnsEMBL::Web::ViewConfig';
-  my $view_config = $module_name->new($type, $action, $self);
+  my $module_name = $self->get_module_names('ViewConfig', $type, $component);
   
-  $session->apply_to_view_config($view_config, $type, $code);
+  return unless $module_name;
   
-  return $view_config;
+  my $config = $module_name->new($type, $component, $self);
+  
+  $session->apply_to_view_config($config, $type, $cache_code, $config->code); # $config->code and $cache_code can be different
+  $self->viewconfig = $config if $cache;
+  
+  return $config;
 }
 
 sub get_imageconfig {
@@ -531,7 +540,6 @@ sub get_imageconfig {
   my $species = shift;
   my $session = $self->session;
   
-  return undef if $type eq '_page' || $type eq 'cell_page'; # FIXME: hack
   return undef unless $session;
   return $session->image_configs->{$code} if $session->image_configs->{$code};
   
