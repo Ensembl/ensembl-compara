@@ -72,6 +72,14 @@ sub form {
   }
 }
 
+sub build_imageconfig_form {
+  my $self         = shift;
+  my $image_config = shift;
+  
+  $_->set('controls', qq{<div style="width:auto"><a href="#Evidence_types" class="modal_link">Configure Evidence types</a></div>}) for grep $_->get('glyphset') eq 'fg_multi_wiggle', $image_config->get_tracks;
+  $self->SUPER::build_imageconfig_form($image_config);
+}
+
 sub form_evidence_types {
   my $self      = shift;
   my $focus_row = 3;
