@@ -38,7 +38,7 @@ sub configure {
   ##  - inline          Flag stating whether checkbox/radio buttons are to be disaplayed in a horizontal line in case of checklist/radiolist
   ##  - size            Size attribute for text input, password input or select.
   ##  - selectall       Flag to tell whether or not we need a selectall checkbox in case of a checklist
-  ##  - values          ArrayRef of Hashref for all options checkbox, radio or select with following keys each
+  ##  - values          ArrayRef of either string values, or Hashref with following keys (for each option, checkbox or radio)
   ##    - id            Id attribute for the option
   ##    - value         Value of the option
   ##    - name          name attribute incase of checkboxes. This will override the default name attribute (the one for the whole list)
