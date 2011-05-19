@@ -92,13 +92,17 @@ sub fetch_input {
     $self->param('geneSubset', Bio::EnsEMBL::Compara::Subset->new(
       -name=>"gdb:$genome_db_id $genome_db_name genes") );
 
-    $self->param('exonSubset', Bio::EnsEMBL::Compara::Subset->new(
-      -name=>"gdb:$genome_db_id $genome_db_name coding exons") );
-
         # This does an INSERT IGNORE or a SELECT if already exists:
     $compara_dba->get_SubsetAdaptor->store($self->param('pepSubset'));
     $compara_dba->get_SubsetAdaptor->store($self->param('geneSubset'));
-    $compara_dba->get_SubsetAdaptor->store($self->param('exonSubset'));
+
+
+    if ($self->param('coding_exons')) {
+        $self->param('exonSubset', Bio::EnsEMBL::Compara::Subset->new(
+          -name=>"gdb:$genome_db_id $genome_db_name coding exons") );
+
+        $compara_dba->get_SubsetAdaptor->store($self->param('exonSubset'));
+    }
 }
 
 
@@ -142,9 +146,9 @@ sub write_output {
     my $reuse_this        = $self->param('reuse_this');
     my $subset_id         = $self->param('pepSubset')->dbID;
 
-    #Overwrite subset_id if doing coding_exons (eg MercatorPecan pipeline)
+        #Overwrite subset_id if doing coding_exons (eg MercatorPecan pipeline) :
     if ($self->param('coding_exons')) {
-	$subset_id = $self->param('exonSubset')->dbID;
+        $subset_id = $self->param('exonSubset')->dbID;
     }
     my $per_genome_suffix = $self->param('per_genome_suffix');
 
@@ -281,39 +285,39 @@ sub loadMembersFromCoreSlices {
       # D and J are very short or have no translation at all
 
       if (defined $self->param('coding_exons')) {
-	  $current_end = $gene->end unless (defined $current_end);
-	  $self->param('geneCount', $self->param('geneCount')+1);
-	  if((lc($gene->biotype) eq 'protein_coding')) {
-	      $self->param('realGeneCount', $self->param('realGeneCount')+1 );
-#	      print "gene_start " . $gene->start . " end $current_end\n";
-	      if ($gene->start <= $current_end) {
-		  push @$genes, $gene;
-		  $current_end = $gene->end if ($gene->end > $current_end);
-	      } else {
-		  $self->store_all_coding_exons($genes);
-		  @$genes = ();
-		  $current_end = $gene->end;
-		  push @$genes, $gene;
-	      }
-	  }
+          $current_end = $gene->end unless (defined $current_end);
+          $self->param('geneCount', $self->param('geneCount')+1);
+          if((lc($gene->biotype) eq 'protein_coding')) {
+              $self->param('realGeneCount', $self->param('realGeneCount')+1 );
+    #	      print "gene_start " . $gene->start . " end $current_end\n";
+              if ($gene->start <= $current_end) {
+                  push @$genes, $gene;
+                  $current_end = $gene->end if ($gene->end > $current_end);
+              } else {
+                  $self->store_all_coding_exons($genes);
+                  @$genes = ();
+                  $current_end = $gene->end;
+                  push @$genes, $gene;
+              }
+          }
       } else {
-	  if (   lc($gene->biotype) eq 'protein_coding'
-		 || lc($gene->biotype) eq 'ig_v_gene'
-		 || lc($gene->biotype) eq 'ig_c_gene'
-		 #         || lc($gene->biotype) eq 'polymorphic_pseudogene'     # lg4: not sure if this biotype is ok, as it has a stop codon in the middle
-	     ) {
-	      $self->param('realGeneCount', $self->param('realGeneCount')+1 );
-	      
-	      $self->store_gene_and_all_transcripts($gene);
-	      
-	      print STDERR $self->param('realGeneCount') , " genes stored\n" if ($self->debug && (0 == ($self->param('realGeneCount') % 100)));
-	  }
+          if (   lc($gene->biotype) eq 'protein_coding'
+             || lc($gene->biotype) eq 'ig_v_gene'
+             || lc($gene->biotype) eq 'ig_c_gene'
+             #         || lc($gene->biotype) eq 'polymorphic_pseudogene'     # lg4: not sure if this biotype is ok, as it has a stop codon in the middle
+             ) {
+              $self->param('realGeneCount', $self->param('realGeneCount')+1 );
+              
+              $self->store_gene_and_all_transcripts($gene);
+              
+              print STDERR $self->param('realGeneCount') , " genes stored\n" if ($self->debug && (0 == ($self->param('realGeneCount') % 100)));
+          }
       }
-    }
-    if ($self->param('coding_exons')) {
-	$self->store_all_coding_exons($genes);
-    }
+    } # foreach
 
+    if ($self->param('coding_exons')) {
+        $self->store_all_coding_exons($genes);
+    }
   }
 
   print("loaded ".$self->param('sliceCount')." slices\n");
