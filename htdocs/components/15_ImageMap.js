@@ -273,7 +273,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   makeSortable: function () {
     var panel      = this;
     var wrapperTop = $('.boundaries_wrapper', this.el).position().top;
-    var ulTop      = this.elLk.boundaries.position().top + wrapperTop;
+    var ulTop      = this.elLk.boundaries.position().top + wrapperTop - ($('body').hasClass('ie7') ? 3 : 0); // IE7 reports li.position().top as 3 pixels higher than other browsers, so offset that here.
     var lis        = [];
     
     this.dragCursor = $('body').hasClass('mac') ? 'move' : 'n-resize';
