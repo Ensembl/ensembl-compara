@@ -18,6 +18,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     Ensembl.EventManager.register('hashChange',         this, this.hashChange);
     Ensembl.EventManager.register('changeFavourite',    this, this.changeFavourite);
     Ensembl.EventManager.register('windowResize',       this, function () { delete this.imgOffset; });
+    Ensembl.EventManager.register('changeWidth',        this, function () { Ensembl.EventManager.trigger('queuePageReload', this.id); });
     Ensembl.EventManager.register('highlightAllImages', this, function () {
       if (!this.align) {
         this.highlightAllImages();
@@ -30,7 +31,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.base();
     
-    this.lastImage = $(this.el).parents('.image_panel')[0] == Ensembl.images.last;
+    this.imageConfig = $('input.image_config', this.el).val();
+    this.lastImage   = $(this.el).parents('.image_panel')[0] == Ensembl.images.last;
+    
     this.params.highlight = (Ensembl.images.total == 1 || !this.lastImage);
     
     this.elLk.drag        = $('.drag_select',  this.el);
@@ -250,7 +253,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       $.ajax({
         url: this.href + fav,
         dataType: 'json',
-        method: 'post',
         success: function (json) {
           if (json.updated) {
             panel.elLk.hoverLabels.remove(); // Deletes elements moved to body
@@ -333,13 +335,13 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           url: $(this).data('updateURL'),
           type: 'post',
           data: {
-            image_config: panel.id,
+            image_config: panel.imageConfig,
             track: track,
             order: order
           }
         });
         
-        Ensembl.EventManager.triggerSpecific('changeTrackOrder', 'modal_config_' + panel.id, track, order);
+        Ensembl.EventManager.triggerSpecific('changeTrackOrder', 'modal_config_' + panel.id.toLowerCase(), track, order);
       }
     }).css('visibility', 'visible');
   },
