@@ -124,7 +124,7 @@ sub storable_data {
       ## Only store if config has changed
       if ($config->storable && $config->altered) {
         push @$data, {
-          code => $code,
+          code => $config->code,
           type => $type,
           data => $config->get_user_settings
         };
