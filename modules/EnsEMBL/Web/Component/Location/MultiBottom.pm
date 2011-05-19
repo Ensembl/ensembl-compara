@@ -52,7 +52,7 @@ sub content {
     
     $image_config->set_parameters({
       container_width => $_->{'slice'}->length,
-      image_width     => $hub->param('i_width') || $self->image_width,
+      image_width     => $image_width,
       slice_number    => "$i|$s",
       multi           => 1,
       compara         => $i == 1 ? 'primary' : $_->{'species'} eq $primary_species ? 'paralogue' : 'secondary',
