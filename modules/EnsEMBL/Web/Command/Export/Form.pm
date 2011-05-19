@@ -16,7 +16,7 @@ sub process {
   my $hub      = $self->hub;
   my $function = $hub->function;
   
-  $hub->get_viewconfig('Export', $function)->update_from_input;
+  $hub->get_viewconfig('Export', $function, 'cache')->update_from_input;
   $hub->session->store;  
   
   my $url    = $hub->url({ action => 'Formats', function => $function });
@@ -27,17 +27,16 @@ sub process {
 
 # Returns either the location of temp files for vista/pipmaker export, or a url based on the input parameters for other types
 sub get_formats {
-  my $self       = shift;
-  my $hub        = $self->hub;
-  my $object     = $self->object;
-  my $output     = $hub->param('output');
-  my $new_region = $hub->param('new_region');
-  my $strand     = $hub->param('strand');
-  my $r          = $hub->param('r');
-  my $flank5     = $hub->param('flank5_display');
-  my $flank3     = $hub->param('flank3_display');
-  
-  my $config = $object->config;
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $object      = $self->object;
+  my $output      = $hub->param('output');
+  my $new_region  = $hub->param('new_region');
+  my $strand      = $hub->param('strand');
+  my $r           = $hub->param('r');
+  my $flank5      = $hub->param('flank5_display');
+  my $flank3      = $hub->param('flank3_display');
+  my $config      = $object->config;
   my $check_slice = 1;
 
   if ($new_region) {
@@ -59,13 +58,13 @@ sub get_formats {
   
   if ($check_slice) {
     my $href = $hub->url({ 
-     r              => $r,
-     strand         => $strand, 
-     output         => $output,
-     flank5_display => $flank5,
-     flank3_display => $flank3,
-     type           => 'Export/Output',
-     action         => $hub->function
+      r              => $r,
+      strand         => $strand, 
+      output         => $output,
+      flank5_display => $flank5,
+      flank3_display => $flank3,
+      type           => 'Export/Output',
+      action         => $hub->function
     });
     
     my $map = { 
