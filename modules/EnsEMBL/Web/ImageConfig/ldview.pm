@@ -69,13 +69,12 @@ sub init_slice {
 }
 
 sub init_population {
-  my ($self, $parameters, $pop_name, $snps) = @_;
+  my ($self, $parameters, $pop_name) = @_;
   my %menus = $self->menus;
   
   $self->set_parameters($parameters);
   
   $self->{'_ld_population'} = [ $pop_name ];
-  $self->{'snps'}           = $snps;
   
   $self->get_node('text')->set('text', $pop_name);
   $self->get_node($_)->remove for grep $_ ne 'population', keys %menus;
