@@ -539,8 +539,9 @@ sub build_imageconfig_menus {
     my $display  = $node->get('display')     || 'off';
     my $external = $node->get('_class');
     my $desc     = $node->get('description');
+    my $controls = $node->get('controls');
     my $name     = encode_entities($node->get('name'));
-    my $icons    = $external ? sprintf '<img src="%strack-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" />', $img_url, lc $external, $external, $external : ''; # DAS icons, etc
+    my $icon     = $external ? sprintf '<img src="%strack-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" />', $img_url, lc $external, $external, $external : ''; # DAS icons, etc
     my ($selected, $menu, $help);
     
     while (my ($val, $text) = splice @states, 0, 2) {
@@ -577,8 +578,9 @@ sub build_imageconfig_menus {
     $node->set_attribute('class', "$id track $external" . ($display eq 'off' ? '' : ' on') . ($self->{'favourite_tracks'}->{$id} ? ' fav' : ''));
     $node->inner_HTML(qq{
       <ul class="popup_menu">$menu</ul>
-      $selected<span class="menu_option">$icons$name</span>
+      $selected<span class="menu_option">$icon$name</span>
       <div class="controls">
+        $controls
         <div class="favourite"></div>
         $help
       </div>
