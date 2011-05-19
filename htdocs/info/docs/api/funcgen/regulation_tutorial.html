@@ -1,0 +1,531 @@
+<html>
+<head>
+<title>Ensembl Regulation (funcgen) API Tutorial</title>
+</head>
+
+<body>
+
+<h1>Ensembl Regulation (funcgen) API Tutorial</h1>
+
+<h2>Introduction</h2>
+
+<p>
+The Ensembl Regulation team deals with functional genomics data. 
+The API and databases for Ensembl Regulation are called Funcgen. 
+</p>
+
+<p>
+This tutorial is an introduction to the <a href="/info/docs/api/funcgen/index.html">Funcgen API</a>.
+Knowledge of the <a href="/info/docs/api/core/index.html">Ensembl Core API</a> and of the concepts and 
+conventions in the <a href="/info/docs/api/core/core_tutorial.html">Ensembl Core API tutorial</a> is assumed. 
+Please note that the Ensembl Core API must also be <a href="/info/docs/api/api_installation.html">installed</a> to use the Funcgen API.
+</p>
+
+
+
+
+<h2>Connecting to the funcgen Database using the Registry</h2>
+
+
+<p>
+Connecting to any Ensembl database is made simple by using the 
+<kbd>Bio::EnsEMBL::Registry</kbd> module:
+</p>
+
+<pre class="code">
+
+use strict;
+use warnings;
+use Bio::EnsEMBL::Registry;
+
+my $registry = 'Bio::EnsEMBL::Registry';
+
+$registry->load_registry_from_db(
+    -host => 'ensembldb.ensembl.org',
+    -user => 'anonymous'
+);
+
+</pre>
+
+<p>
+
+The use of the registry ensures you will load the correct versions of the Ensembl databases
+for the software release it can find on a database instance. Using the registry object, 
+you can then create any of number of database adaptors. Each of these adaptors is 
+responsible for generating an object of one type. The above code will be omitted from the 
+following examples for brevity.
+
+</p>
+
+<h2>Regulatory Features</h2>
+
+<p>
+Regulatory Features are groups of overlapping features representing regions of open chromatin 
+(eg. regions that are accessible to Dnase1) and regions bound by Transcription Factors (TF). 
+The Ensembl <a href="http://www.ensembl.org/info/docs/funcgen/index.html">'RegulatoryBuild'</a> 
+combines annotations across all available cell lines data to generate global 'MultiCell' 
+Regulatory Features. 
+</p>
+
+<h3>Global 'MultiCell' Regulatory Features</h3>
+
+<p>
+To fetch Regulatory Features from the funcgen database, you need to use the corresponding adaptor. 
+To obtain all the regulatory features present in a given region of the genome, use the adaptor method 
+<kbd>fetch_all_by_Slice</kbd>:
+</p>
+
+<pre class="code">
+
+my $regfeat_adaptor = $registry->get_adaptor('Human', 'funcgen', 'regulatoryfeature');
+
+my $slice = $slice_adaptor->fetch_by_region('chromosome',1,54960000,54980000);
+
+my @reg_feats = @{$regfeat_adaptor->fetch_all_by_Slice($slice)};
+
+</pre>
+
+<p>
+The features you obtain this way are global 'MultiCell' Regulatory Features.
+</p>
+
+<pre class="code">
+
+foreach my $rf (@reg_feats){ 	
+	print $rf->stable_id.": ";
+	print_feature($rf);
+	print "\tCell: ".$rf->cell_type->name."\n"; 	
+	print "\tFeature Type: ".$rf->feature_type->name."\n"; 
+}
+
+#Prints absolute coordinates and not relative to the slice
+sub print_feature {
+	my $feature = shift;
+	print 	$feature->display_label.
+		"\t(".$feature->seq_region_name.":".
+	  	$feature->seq_region_start."-". 
+		$feature->seq_region_end.")\n";
+}
+
+</pre>
+
+<p>
+To access the features supporting a specific regulatory region, you just need to obtain the regulatory feature's attributes: 
+</p>
+
+<pre class="code">
+
+foreach my $feature (@{$rf->regulatory_attributes()}){
+	print_feature($feature) 
+}
+
+</pre>
+
+<p>
+Regulatory Feature attributes can be of the type 'annotated' or 'motif'. 
+Each of these types will be covered in a specific section later in this tutorial.
+</p>
+
+<h3>Cell-specific information for a Regulatory Feature</h3>
+
+<p>
+We annotate Regulatory Features with cell-specific information. This includes extra boundaries 
+representing the range of activity of a given regulatory region in a cell line. These boundaries 
+are defined by cell-specific Histone modification and Polymerase binding data. All cell-specific 
+information is then gathered to provide a cell-specific classification for the regulatory region 
+(eg. promoter-associated).  
+</p>
+
+<pre class="code">
+
+my $rfs = $regfeat_adaptor->fetch_all_by_stable_ID('ENSR00000165384'); 
+
+foreach my $cell_rf (@{$rfs}){
+	#The stable id will always be 'ENSR00000165384' 	
+	print $cell_rf->stable_id.": \n"; 	
+	#But now it will be for a specific cell type
+	print "\tCell: ".$cell_rf->cell_type->name."\n";
+	#It will also contain cell-specific annotation
+	print "\tType: ".$cell_rf->feature_type->name."\n";
+	#And cell-specific extra boundaries
+	print 	"\t".$cell_rf->seq_region_name.":".	
+		$cell_rf->bound_start."..".
+		$cell_rf->start."-". $cell_rf->end."..".
+		$cell_rf->bound_end."\n";	
+	#Unlike the generic MultiCell Regulatory Features, Histone
+	# modifications and Polymerase are also used as attributes	
+	print "\tEvidence Features: \n"; 	
+	foreach my $attr_feat (@{$cell_rf->regulatory_attributes()}){
+		print_feature($attr_feat);
+	}	
+}
+
+</pre>
+
+<h2>Annotated Features: Processed data</h2>
+
+<p>
+Regulatory Features are built based on results from experiments like Dnase1 sensitivity assays (Dnase-Seq)
+to detect regions of open chromatin, or TF binding assays, like Chromatin ImmunoPrecipitation (ChIP) 
+coupled with high throughput sequencing (ChIP-Seq). Results from these experiments are stored as Annotated Features. 
+</p>
+
+<p>
+ChIP-Seq studies are also used to detect histone modifications (eg. H3K36 trimethylation) and Polymerase binding. 
+Annotated Features for these experiments define cell-specific boundaries for Regulatory Features.
+</p>
+
+<p>
+To specifically access Annotated Features that serve as attributes for a given Regulatory Feature, you just need to specify:
+</p>
+
+<pre class="code">
+
+my @annotated_features = @{$rf->regulatory_attributes('annotated')};
+
+</pre>
+
+Annotated Features contain specific properties:
+<ul>
+	<li><code>Feature Type</code> usually representing antibody used in ChIP experiment.</li>
+	<li><code>Feature Set</code> for this Annotated Feature (see further down in Tutorial).</li> 
+	<li><code>Score</code>. An analysis-dependent value (eg. peak-caller score)</li>
+	<li>The peak <code>Summit</code>. Precise 1bp position within annotated feature with the highest read density in a ChIP 
+	experiment. It is dependent on the analysis and sometimes it may not be present.</li> 
+</ul>
+
+<pre class="code">
+
+#An example to print annotated feature properties
+foreach my $annotated_feature (@annotated_features) {
+	print_feature($annotated_feature);
+	print $annotated_feature->feature_type->name."\n";
+	print $annotated_feature->feature_set->name."\n";
+	#Analysis-depends property
+	print $annotated_feature->score."\n";
+	#Summit is usually present, but may not exist
+	if(annotated_feature->analysis->logic_name =~ /SWEmbl/){
+		print $annotated_feature->summit."\n";
+	}
+}
+
+</pre>
+
+
+<h2>Motif Features: TF Binding Sites</h2>
+
+
+<p>
+Motif Features represent short genomic regions where the Transcription Factor (TF) protein is 
+thought to be directly interacting with DNA (TF binding sites). These are defined by combining 
+binding matrices and annotated features. More information on how they are defined can be found
+on the <a href="/info/docs/funcgen/index.html">RegulatoryBuild</a> page.
+</p>
+
+<p>
+To obtain the motif features present in a given Regulatory Feature, you just need to specify:
+</p>
+
+<pre class="code">
+
+my @motif_features = @{$rf->regulatory_attributes('motif')};
+
+</pre>
+
+
+Motif Features contain specific properties:
+<ul>
+	<li><code>Binding Matrix</code>: Position Weight Matrix used to define the site. These are 
+	currently from <a href="http://jaspar.genereg.net">Jaspar</a> and their name is the Jaspar Identifier.</li>
+	<li><code>Score</code>. analysis-dependent value indicating degree of similarity to the binding matrix</li>
+	<li><code>Associated Annotated Features</code>: set of features that serve as experimental support for a binding site./li> 
+</ul>
+
+
+<pre class="code">
+
+#An example to print motif feature properties
+foreach my $motif_feature (@motif_features) {
+	print_feature($motif_feature);
+	print $motif_feature->binding_matrix->name."\n";
+	print $motif_feature->seq.”\n”;
+	print $motif_feature->score.”\n”;
+	my $afs = $motif_feature->associated_annotated_features();	
+	foreach my $feat (@$afs){
+		#Each feature is an annotated feature
+		print_feature($feat); 
+	}
+}	
+
+</pre>
+
+<p>
+As Motif Features are defined using Annotated Features, you can also access Motif Features present in an annotated feature:
+</p>
+
+<pre class="code">
+
+my @motif_features = @{$annot_feat->get_associated_MotifFeatures()};
+
+</pre>
+
+<h2>Feature Sets: Groups of related features</h2>
+
+<p>
+Most features can be grouped according to the type of feature and analysis used to create them. 
+A Feature Set is a container for features that result from a specific analysis.
+</p>
+
+<p>
+Feature Sets group three different classes of features: Regulatory, Annotated and External. 
+External Features are features that have been created outside of Ensembl and we import directly 
+into the database. The Regulatory Build is not currently using external features. Motif Features 
+can only be grouped by Binding Matrix, and are not currently grouped by Feature Sets.
+</p>
+
+<p>
+To access Feature Sets, you need to use a specific adaptor:
+</p>
+
+<pre class="code">
+my $fset_adaptor = $registry->get_adaptor('Human', 'funcgen', 'featureset');
+</pre>
+
+<p>
+You can for example get all the regulatory feature sets grouped by cell type (including the global ‘MultiCell’):
+</p>
+
+<pre class="code">
+my @reg_fsets = @{$fset_adaptor->fetch_all_by_type('regulatory')};
+</pre>
+
+Feature Sets include the following properties:
+<ul>
+	<li><code>Feature Class</code> of feature set indicating the type of features in the set: 'regulatory', 'annotated' or 'external'</li>
+	<li><code>Analysis</code> used to obtain the features in this set</li>
+	<li><code>Feature Type</code> of the features in this set. This depends on the Type of Feature set. For example, for 'annotated' feature sets, the feature type will be an antibody in a ChIP-Seq experiment.</li>
+	<li><code>Cell Type</code> for the features in this set, if unique. May not be defined in some feature sets. External Features may not have a cell type defined.</li> 
+	<li><code>Features</code>: the features in this set.</li>
+</ul>
+
+
+<pre class="code">
+
+foreach my $reg_fset (@reg_fsets) {
+	print $reg_fset->name."\n";
+	#Regulatory Feature Sets
+	print $reg_fset->feature_class."\n";
+	#The Regulatory Build
+	print $reg_fset->analysis->logic_name."\n";
+	#Regulatory Feature Type
+	print $reg_fset->feature_type->name."\n";
+	#Regulatory Feature Sets have Cell Type defined
+	print $reg_fset->cell_type->name."\n";
+	#Finally, you can also get features from this set
+	my @features = @{$reg_fset->get_Features_by_Slice($slice)};
+	foreach my $feat (@features) { print_feature($feat); }
+}
+
+</pre>
+
+<h2>External Features: Externally curated data</h2>
+
+<p>
+There are some Feature Sets that are either entirely or partially curated by external groups. 
+These are stored as External Features and can be accessed as follows:
+</p>
+
+<pre class="code">
+
+#Grab and list all the external feature sets
+my @ext_fsets = @{$fset_adaptor->fetch_all_by_type('external')};
+
+foreach my $ext_fset (@ext_fsets){
+  print "External FeatureSet:\t".$ext_fset->name."\n";
+}
+
+</pre>
+
+<p>
+Knowing the name of a feature set, you can specifically access it. For example, we store data from the 
+<a href="http://enhancer.lbl.gov">Vista Enhancer Browser</a>.
+</p>
+
+<pre class="code">
+
+#Grab the specific Vista set
+my $vista_fset = $fset_adaptor->fetch_by_name('VISTA enhancer set');
+
+#Now you can get all the features (in this case external features) 
+#You can also get features by Slice using get_Features_by_Slice: 
+foreach my $vista_feature (@{$vista_fset->get_all_Features()}){
+	print_feature($vista_feature);
+	#There is no cell type for these features
+	#Feature type indicates vista annotation (eg. active enhancer)
+	print $vista_feature->feature_type->name."\n";
+}
+
+</pre>
+
+
+<h2>Feature Types</h2>
+
+<p>
+Feature Types provide a biological annotation for the feature. They are divided in classes forming biologically 
+coherent groups (eg. Transcription Factors). This is different from the Feature Set class, which just states 
+the origin of the data. Feature Types can be accessed using a specific adaptor: 
+</p>
+
+
+<pre class="code">
+
+my $ftype_adaptor = $registry->get_adaptor('Human', 'funcgen', 'featuretype');
+
+</pre>
+
+<h3>Regulatory Feature Types</h3>
+
+<p>
+All 'MultiCell' regulatory features are of the generic "Regulatory Feature" Feature Type. Each individual 
+cell-specific regulatory feature can be associated to a Feature Type that describes the cell-specific 
+annotation for a Regulatory Feature (promoter-associated, within a gene, far away from genes (enhancer 
+or insulator)). The annotation process is described in the <a href="/info/docs/funcgen/index.html">RegulatoryBuild</a> document.  
+</p>
+
+<h3>External Feature Types</h3>
+
+<p>
+Feature Types for External Features have a meaning that is specific to the Feature Set. For example, for features of the Vista 
+Feature Set, the feature type indicates if the feature was active or inactive in an experiment.  
+</p>
+
+<h3>Annotated Feature Types</h3>
+
+<p>
+Feature Types for Annotated Feature Sets usually correspond to the antibody used in a ChIP experiment. We also group these 
+Feature Types by classes of functionally related Feature Types. For example, you may want to look for all Feature Sets 
+related to Transcription Factor binding. For this, you just have to use appropriate adaptors: 
+</p>
+
+<pre class="code">
+
+my @tfs =  @{$ftype_adaptor->fetch_all_by_class('Transcription Factor')}; 
+foreach my $ft (@tfs){
+	print $ft->name."\n";
+	my @fsets = @{$fset_adaptor->fetch_all_by_FeatureType($ft)};
+	foreach my $fset (@fsets){ print $fset->name."\n"; }
+}
+
+</pre>
+
+
+<h2>Microarrays and associated Information</h2>
+
+<p>
+This code demonstrates the use of adaptors, specifically the ArrayAdaptor. 
+In this example, we export all microarray platforms and associated information.
+</p>
+
+<pre class="code">
+
+#Grab the adaptors
+my $array_adaptor = $registry->get_adaptor('Human','funcgen','array');
+
+#Grab all the arrays
+my @array = @{$array_adaptor->fetch_all};
+
+#Print some array info
+foreach my $array ( @array ){
+  print "\nArray:\t".$array->name."\n";
+  print "Type:\t".$array->type."\n";
+  print "Vendor:\t".$array->vendor."\n";
+  #Grab the ArrayChips from the array design
+  my @array_chips   = @{$array->get_ArrayChips};
+
+  #Print some ArrayChip info
+  foreach my $ac ( @array_chips ){
+    print "ArrayChip:".$ac->name."\tDesignID:".$ac->design_id."\n";
+  }
+}
+
+</pre>
+
+<h3>Fetch all ProbeSets from a specific Array</h3>
+
+<p>
+In this example, probesets from the NIMBLEGEN HG17 tiling array are obtained.
+</p>
+
+<pre class="code">
+
+#Grab the adaptors
+my $probe_adaptor = $registry->get_adaptor('Human','funcgen','probe');
+my $pfeature_adaptor = $registry->get_adaptor('Human','funcgen','probefeature'); 
+
+#Grab a probe from the HG17 array
+my $probe = $probe_adaptor->fetch_by_array_probe_probeset_name('2005-05-10_HG17Tiling_Set', 'chr22P38797630');
+print "Got ".$probe->class." probe ".$probe->get_probename."\n";
+
+#Grab the feature associated with this probe
+my @pfeatures = @{$pfeature_adaptor->fetch_all_by_Probe($probe)};
+print "\nFound ".scalar(@pfeatures)." ProbeFeatures\n";
+
+#Print some info about the features
+foreach my $pfeature ( @pfeatures ){
+  print "\nProbeFeature found at:\t".$pfeature->feature_Slice->name."\n";
+}
+
+</pre>
+
+<h3>Microarray Annotations</h3>
+
+<p>
+In this example, the FOXP2 transcript is specified and all available ProbeSet annotations are printed.
+</p>
+
+<pre class="code">
+
+#Grab the relevant adaptors
+my $tx_adaptor = $registry->get_adaptor("human","core","Transcript");
+my $ps_adaptor = 
+   $registry->get_adaptor("mus musculus","funcgen","ProbeSet");
+
+#Fetch the transcript and associated ProbeSets
+my $transcript = $tx_adaptor->fetch_by_stable_id('ENST00000393489');#Foxp2
+my @probesets  = @{$ps_adaptor->fetch_all_by_external_name($transcript->stable_id)};
+
+foreach my $probeset (@probesets){
+
+  my $arrays_string = join(', ', (map $_->name, @{$probeset->get_all_Arrays}));
+
+  my $dbe_info;
+  #Now get linkage_annotation
+  foreach my $dbe (@{$probeset->get_all_Transcript_DBEntries($transcript)}){
+  #This will return all ProbeSet DBEntries for this transcript
+  #There should really be one max per transcript per probeset/probe
+	$dbe_info = $dbe->linkage_annotation;
+  }
+  
+  print "\t".$probeset->name." on arrays ".
+	$arrays_string." with Probe hits $dbe_info\n";
+}
+
+</pre>
+
+<p>
+Documentation on the current array mapping strategy can be found <a href="/info/docs/microarray_probe_set_mapping.html">here</a>.  
+More examples for accessing microarray data can be found in the funcgen API package:
+ensembl-functgenomics/scripts/examples/microarray_annotation_example.pl
+</p>
+
+<h2>Further help</h2>
+
+<p>
+Complete example scripts for the funcgen API can be found in the funcgen API package: ensembl-functgenomics/scripts/examples/
+For additional information or help mail the <a href="mailto:dev@ensembl.org">ensembl-dev</a> mailing list. You will need to subscribe to this mailing list to use it. 
+More information on subscribing to any Ensembl mailing list is available from the <a href="/info/about/contact/">Ensembl Contacts</a> page.
+</p>
+
+
+</body>
+</html>
