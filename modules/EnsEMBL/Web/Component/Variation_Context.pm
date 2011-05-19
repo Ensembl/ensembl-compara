@@ -106,16 +106,6 @@ sub content {
     container_width => $slice->length,
     slice_number    => '1|1',
   });
-
-	if ($im_cfg eq 'snpview') {
-		my $sliceObj   = $self->new_object('Slice', $slice, $object->__data);
-		my ($count_snps, $filtered_snps)       = $sliceObj->getVariationFeatures;
-  	my ($genotyped_count, $genotyped_snps) = $sliceObj->get_genotyped_VariationFeatures;
-  	
-		$image_config->{'snps'}           = $filtered_snps;
-  	$image_config->{'genotyped_snps'} = $genotyped_snps;
-  	$image_config->{'snp_counts'}     = [ $count_snps + $genotyped_count, scalar @$filtered_snps + scalar @$genotyped_snps ];
-	}
   
   my $image = $self->new_image($slice, $image_config, [ $object->name ]);
   
