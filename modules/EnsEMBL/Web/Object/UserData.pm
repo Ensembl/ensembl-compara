@@ -1166,12 +1166,12 @@ sub get_das_servers {
   my $reg_url  = $self->species_defs->get_config('MULTI', 'DAS_REGISTRY_URL');
   my $reg_name = $self->species_defs->get_config('MULTI', 'DAS_REGISTRY_NAME') || $reg_url;
 
-  push( @domains, {'name'  => $reg_name, 'value' => $reg_url} );
+  push( @domains, {'caption'  => $reg_name, 'value' => $reg_url} );
   my @extras = @{$self->species_defs->get_config('MULTI', 'ENSEMBL_DAS_SERVERS')};
   foreach my $e (@extras) {
-    push( @domains, {'name' => $e, 'value' => $e} );
+    push( @domains, {'caption' => $e, 'value' => $e} );
   }
-  #push( @domains, {'name' => $self->param('preconf_das'), 'value' => $self->param('preconf_das')} );
+  #push( @domains, {'caption' => $self->param('preconf_das'), 'value' => $self->param('preconf_das')} );
 
   # Ensure servers are proper URLs, and omit duplicate domains
   my %known_domains = ();
@@ -1182,8 +1182,8 @@ sub get_das_servers {
     $known_domains{$url}++;
     $url = "http://$url" if ($url !~ m!^\w+://!);
     $url .= "/das" if ($url !~ /\/das1?$/);
-    $server->{'name'}  = $url if ( $server->{'name'} eq $server->{'value'});
-    $server->{'value'} = $url;
+    $server->{'caption'} = $url if ( $server->{'caption'} eq $server->{'value'});
+    $server->{'value'}   = $url;
   }
 
   return @domains;
