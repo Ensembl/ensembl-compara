@@ -63,9 +63,11 @@ sub form {
     my $tree = $self->tree;
     my $node = $tree->get_node('functional');
     
-    $self->form_context;
+    if ($self->can('form_context')) {
+      $self->form_context;
+      $node->append($tree->get_node('context'));
+    }
     
-    $node->append($tree->get_node('context'));
     $node->append($tree->create_node('evidence_types', { url => $hub->url('Config', { function => 'Cell_line', partial => 1 }), availability => 1, caption => 'Evidence types', class => 'Evidence_types' }));
   }
 }
@@ -141,33 +143,6 @@ sub info_panel {
       </div>
     </div>
   }}));
-}
-
-
-sub form_context {
-  my $self = shift;
-  
-  $self->add_fieldset('Context');
-  
-  $self->add_form_element({
-    type   => 'DropDown',
-    select => 'select',
-    name   => 'context',
-    label  => 'Context',
-    values => [
-      { value => '20',   name => '20bp'   },
-      { value => '50',   name => '50bp'   },
-      { value => '100',  name => '100bp'  },
-      { value => '200',  name => '200bp'  },
-      { value => '500',  name => '500bp'  },
-      { value => '1000', name => '1000bp' },
-      { value => '2000', name => '2000bp' },
-      { value => '5000', name => '5000bp' }
-    ]
-  });
-
-  $self->add_form_element({ type => 'YesNo', name => 'opt_highlight',    select => 'select', label => 'Highlight core region' });
-  $self->add_form_element({ type => 'YesNo', name => 'opt_empty_tracks', select => 'select', label => 'Show empty tracks'     });
 }
 
 # Set image config tracks when selecting checkboxes
