@@ -15,51 +15,75 @@ use base qw(EnsEMBL::Web::Root);
 our $MEMD = new EnsEMBL::Web::Cache;
 
 sub new {
-  my ($class, $page, $hub, $builder, $common_conf) = @_;
+  my ($class, $page, $hub, $builder, $data) = @_;
   
   my $self = {
     page    => $page,
     hub     => $hub,
     builder => $builder,
     object  => $builder->object,
-    _data   => $common_conf,
+    _data   => $data,
     cl      => {}
   };
   
   bless $self, $class;
+  
+  $self->init;
+  $self->add_external_browsers;
+  $self->modify_tree;
+  $self->set_default_action;
+  $self->set_action($hub->action, $hub->function);
+  $self->modify_page_elements;
+  
+  return $self;
+}
 
+# Get configurable components from a specific action/function combination
+sub new_for_components {
+  my ($class, $hub, $data, $action, $function) = @_;
+  
+  my $self = {
+    hub   => $hub,
+    _data => $data,
+  };
+  
+  bless $self, $class;
+  
+  $self->init;
+  $self->modify_tree;
+  
+  return $self->get_configurable_components(undef, $action, $function);
+}
+
+sub init {
+  my $self       = shift;
+  my $hub        = $self->hub;
   my $user       = $hub->user;
   my $session    = $hub->session;
   my $session_id = $session->session_id;
-  my $user_tree  = $self->can('user_populate_tree') && ($user || $session_id);
+  my $user_tree  = $self->user_tree && ($user || $session_id);
   my $tree       = $user_tree && $MEMD && $self->tree_cache_key($user, $session) ? $MEMD->get($self->tree_cache_key($user, $session)) : undef; # Trying to get user + session version of the tree from cache
   
   if ($tree) {
     $self->{'_data'}{'tree'} = $tree;
   } else {
-    $tree = $MEMD->get($self->tree_cache_key) if $MEMD && $self->tree_cache_key; # Try to get default tree from cache
+    my $cache_key = $self->tree_cache_key;
+    
+    $tree = $MEMD->get($cache_key) if $MEMD && $cache_key; # Try to get default tree from cache
 
     if ($tree) {
       $self->{'_data'}{'tree'} = $tree;
     } else {
       $self->populate_tree; # If no user + session tree found, build one
-      
-      $MEMD->set($self->tree_cache_key, $self->{'_data'}{'tree'}, undef, 'TREE') if $MEMD && $self->tree_cache_key; # Cache default tree
+      $MEMD->set($cache_key, $self->{'_data'}{'tree'}, undef, 'TREE') if $MEMD && $cache_key; # Cache default tree
     }
 
     if ($user_tree) {
+      $cache_key = $self->tree_cache_key($user, $session);
       $self->user_populate_tree;
-      $MEMD->set($self->tree_cache_key($user, $session), $self->{'_data'}{'tree'}, undef, 'TREE', keys %{$ENV{'CACHE_TAGS'} || {}}) if $MEMD && $self->tree_cache_key($user, $session); # Cache user + session tree version
+      $MEMD->set($cache_key, $self->{'_data'}{'tree'}, undef, 'TREE', keys %{$ENV{'CACHE_TAGS'} || {}}) if $MEMD && $cache_key; # Cache user + session tree version
     }
   }
-  
-  $self->add_external_browsers;
-  $self->modify_tree;
-  $self->set_default_action;
-  $self->set_action($ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'});
-  $self->modify_page_elements;
-  
-  return $self;
 }
 
 sub populate_tree         {}
@@ -80,6 +104,7 @@ sub default_action { return $_[0]->{'_data'}{'default'};                      } 
 sub species        { return $_[0]->hub->species;                              }
 sub type           { return $_[0]->hub->type;                                 }
 sub short_caption  { return sprintf '%s-based displays', ucfirst $_[0]->type; } # return the caption for the tab
+sub user_tree      { return 0;                                                }
 
 sub set_default_action {  
   my $self = shift; 
@@ -121,25 +146,27 @@ sub tree_cache_key {
 }
 
 sub get_valid_action {
-  my ($self, $action, $func) = @_;
-  my $object = $self->object;
-  my $hub = $self->hub;  
+  my ($self, $action, $function) = @_;
   
   return $action if $action eq 'Wizard';
   
-  my $node;
+  my $object   = $self->object;
+  my $hub      = $self->hub;
+  my $tree     = $self->tree;
+  my $node_key = join '/', grep $_, $action, $function;
+  my $node     = $tree->get_node($node_key);
   
-  $node = $self->tree->get_node($action. '/' . $func) if $func;
-  $self->{'availability'} = $object ? $object->availability : {};
-
-  return $action. '/' . $func if $node && $node->get('type') =~ /view/ && $self->is_available($node->get('availability'));
+  if (!$node) {
+    $node     = $tree->get_node($action);
+    $node_key = $action;
+  }
   
-  $node = $self->tree->get_node($action) unless $node;
+  $self->{'availability'} = $object->availability if $object;
   
-  return $action if $node && $node->get('type') =~ /view/ && $self->is_available($node->get('availability'));
+  return $node_key if $node && $node->get('type') =~ /view/ && $self->is_available($node->get('availability'));
   
   foreach ($self->default_action, 'Idhistory', 'Chromosome', 'Genome') {
-    $node = $self->tree->get_node($_);
+    $node = $tree->get_node($_);
     
     if ($node && $self->is_available($node->get('availability'))) {
       $hub->problem('redirect', $hub->url({ action => $_ }));
@@ -229,37 +256,51 @@ sub get_submenu {
   }
 }
 
-# FIXME: Dead?
-sub add_block {
-  my $self = shift;
-  return unless $self->page->can('menu') && $self->page->menu;
+sub get_configurable_components {
+  my ($self, $node, $action, $function) = @_;
+  my $hub       = $self->hub;
+  my $component = $hub->script eq 'Config' ? $hub->action : undef;
+  my @components;
   
-  my $flag = shift;
-  $flag =~ s/#/($self->{'flag'} || '')/ge;
+  if ($component && !$action) {
+    my $module_name = $self->get_module_names('ViewConfig', $hub->type, $component);
+    @components = ($component) if $module_name;
+  } else {
+    $node ||= $self->get_node($self->get_valid_action($action || $hub->action, $function || $hub->function));
+    
+    if ($node) {
+      foreach (reverse grep /::Component::/, @{$node->data->{'components'}}) {
+        my ($component) = split '/', [split '::']->[-1];
+        my $module_name = $self->get_module_names('ViewConfig', $hub->type, $component);
+        push @components, $component if $module_name;
+      }
+    }
+  }
   
-  $self->page->menu->add_block($flag, @_);
+  return \@components;
 }
 
-# FIXME: Dead?
-sub delete_block {
-  my $self = shift;
-  return unless $self->page->can('menu') && $self->page->menu;
+sub user_populate_tree {
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $type        = $hub->type;
+  my $all_das     = $hub->get_all_das;
+  my $view_config = $hub->get_viewconfig('ExternalData');
+  my @active_das  = grep { $view_config->get($_) eq 'yes' && $all_das->{$_} } $view_config->options;
+  my $ext_node    = $self->tree->get_node('ExternalData');
   
-  my $flag = shift;
-  $flag =~ s/#/$self->{'flag'}/g;
-  $self->page->menu->delete_block($flag, @_);
-}
-
-# FIXME: Dead?
-sub add_entry {
-  my $self = shift;
-  
-  return unless $self->page->can('menu') && $self->page->menu;
-  
-  my $flag = shift;
-  $flag =~ s/#/($self->{'flag'} || '')/ge;
-  
-  $self->page->menu->add_entry($flag, @_);
+  foreach (sort { lc($all_das->{$a}->caption) cmp lc($all_das->{$b}->caption) } @active_das) {
+    my $source = $all_das->{$_};
+    
+    $ext_node->append($self->create_subnode("ExternalData/$_", $source->caption,
+      [ 'textdas', "EnsEMBL::Web::Component::${type}::TextDAS" ], {
+        availability => lc $type, 
+        concise      => $source->caption, 
+        caption      => $source->caption, 
+        full_caption => $source->label
+      }
+    ));	 
+  }
 }
 
 1;
