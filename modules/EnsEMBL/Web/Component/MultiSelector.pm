@@ -1,8 +1,8 @@
+# $Id$
+
 package EnsEMBL::Web::Component::MultiSelector;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use HTML::Entities qw(encode_entities);
 
