@@ -11,28 +11,19 @@ sub set_default_action {
   $self->{'_data'}->{'default'} = 'Sequence';
 }
 
+sub user_tree { return 1; }
+
 sub tree_cache_key {
   my $self = shift;
   my $key  = $self->SUPER::tree_cache_key(@_);
-  if (defined($self->object)) {
-    $key .= '::SOMATIC' if $self->object->Obj->is_somatic;
-  }
+     $key .= '::SOMATIC' if $self->object && $self->object->Obj->is_somatic;
+  
   return $key;
 }
 
 sub populate_tree {
-  my $self = shift;
-	my $somatic;
-  if (defined($self->object)) {
-    $somatic = $self->object->Obj->is_somatic;
-  }
-
-  #$self->create_node('Summary', 'Summary',
-  #  [qw(
-  #    summary  EnsEMBL::Web::Component::Variation::VariationSummary
-  #  )],
-  #  { 'availability' => 'variation', 'concise' => 'Variation summary' }
-  #);
+  my $self    = shift;
+	my $somatic = $self->object ? $self->object->Obj->is_somatic : undef;
 
   $self->create_node('Sequence', 'Flanking sequence',
     [qw(
@@ -96,28 +87,5 @@ sub populate_tree {
     { 'availability' => 'variation', 'no_menu_entry' => 1 }
   );
 }
-
-sub user_populate_tree {
-  my $self        = shift;
-  my $hub         = $self->hub;
-  my $all_das     = $hub->get_all_das;
-  my $view_config = $hub->get_viewconfig(undef, 'ExternalData');
-  my @active_das  = grep { $view_config->get($_) eq 'yes' && $all_das->{$_} } $view_config->options;
-  my $ext_node    = $self->tree->get_node('ExternalData');
-  
-  for my $logic_name (sort { lc($all_das->{$a}->caption) cmp lc($all_das->{$b}->caption) } @active_das) {
-    my $source = $all_das->{$logic_name};
-    
-    $ext_node->append($self->create_subnode("ExternalData/$logic_name", $source->caption,
-      [qw( textdas EnsEMBL::Web::Component::Variation::TextDAS )], {
-        availability => 'variation', 
-        concise      => $source->caption, 
-        caption      => $source->caption, 
-        full_caption => $source->label
-      }
-    ));	 
-  }
-}
-
 
 1;

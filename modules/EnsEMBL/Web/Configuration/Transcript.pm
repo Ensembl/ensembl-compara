@@ -11,6 +11,8 @@ sub set_default_action {
   $self->{'_data'}->{'default'} = $self->object ? $self->object->default_action : 'Summary';
 }
 
+sub user_tree { return 1; }
+
 # either - prediction transcript or transcript
 # domain - domain only (no transcript)
 # history - IDHistory object or transcript
@@ -159,28 +161,6 @@ sub populate_tree {
     [qw( export EnsEMBL::Web::Component::Export::Output )],
     { 'availability' => 'transcript', 'no_menu_entry' => 1 }
   );
-}
-
-sub user_populate_tree {
-  my $self        = shift;
-  my $hub         = $self->hub;
-  my $all_das     = $hub->get_all_das;
-  my $view_config = $hub->get_viewconfig(undef, 'ExternalData');
-  my @active_das  = grep { $view_config->get($_) eq 'yes' && $all_das->{$_} } $view_config->options;
-  my $ext_node    = $self->tree->get_node('ExternalData');
-
-  for my $logic_name (sort { lc($all_das->{$a}->caption) cmp lc($all_das->{$b}->caption) } @active_das) {
-    my $source = $all_das->{$logic_name};
-    
-    $ext_node->append($self->create_subnode("ExternalData/$logic_name", $source->caption,
-      [qw( textdas EnsEMBL::Web::Component::Transcript::TextDAS )],  { 
-        availability => 'transcript',
-        concise      => $source->caption,
-        caption      => $source->caption,
-        full_caption => $source->label
-      }
-    ));
-  }
 }
 
 1;

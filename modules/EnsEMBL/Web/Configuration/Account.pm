@@ -25,6 +25,8 @@ sub set_default_action {
   }
 }
 
+sub user_tree { return 1; }
+
 sub user_populate_tree {
   my $self = shift;
   my $object = $self->object;  
