@@ -10,14 +10,15 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title         => 'Chromosome panel',
-    label         => 'above',
-    band_labels   => 'on',
-    image_height  => 450,
-    image_width   => 500,
-    top_margin    => 40,
-    band_links    => 'yes',
-    spacing       => 10
+    title        => 'Chromosome panel',
+    label        => 'above',
+    band_labels  => 'on',
+    image_height => 450,
+    image_width  => 500,
+    top_margin   => 40,
+    band_links   => 'yes',
+    spacing      => 10,
+    active_menu  => 'features'
   });
 
   $self->create_menus( 
@@ -30,6 +31,7 @@ sub init {
     [ 'Videogram', 'Ideogram', 'Videogram', {
       display   => 'normal',
       colourset => 'ideogram',
+      menu      => 'no',
       renderers => [ 'normal', 'normal' ],
     }],
     [ 'Vgenes', 'Genes', 'Vdensity_features', {
@@ -67,6 +69,8 @@ sub init {
     }],
     [ 'drag_right', '', 'Vdraggable', { display => 'normal', part => 1, menu => 'no' }],
   );
+  
+  $self->{'extra_menus'} = {};
 }
 
 1;

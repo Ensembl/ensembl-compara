@@ -50,13 +50,17 @@ sub init {
     
     $self->modify_configs(
       [ 'transcript' ],
-      { qw(render gene_label strand r) }
+      { render => 'gene_label', strand => 'r' }
     );
+    
+    delete $self->{'extra_menus'}->{'display_options'};
   } else {
     $self->set_parameters({
-      active_menu => 'options',
-      extra_menus => 'no'
+      active_menu     => 'options',
+      sortable_tracks => 0
     });
+    
+    $self->{'extra_menus'} = { display_options => 1 };
   }
 }
 

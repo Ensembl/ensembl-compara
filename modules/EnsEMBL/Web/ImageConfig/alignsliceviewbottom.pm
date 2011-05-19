@@ -48,8 +48,8 @@ sub init {
     );
   } else {
     $self->set_parameters({
-      active_menu => 'sequence',
-      extra_menus => 'no'
+      active_menu     => 'sequence',
+      sortable_tracks => 0
     });
   }
 }
