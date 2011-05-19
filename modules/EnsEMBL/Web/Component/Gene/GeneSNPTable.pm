@@ -359,10 +359,10 @@ sub configure {
   $object->store_TransformedSNPS;        ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
   
   my $transcript_slice = $object->__data->{'slices'}{'transcripts'}[1];
-  my ($count_snps, $snps, $context_count) = $object->getVariationsOnSlice($transcript_slice, $object->__data->{'slices'}{'transcripts'}[2]);
+  my (undef, $snps)    = $object->getVariationsOnSlice($transcript_slice, $object->__data->{'slices'}{'transcripts'}[2]);
   
   ## Map SNPs for the last SNP display  
-  my @snps2 = map {[ 
+  my @gene_snps = map {[ 
     $_->[2], $transcript_slice->seq_region_name,
     $transcript_slice->strand > 0 ?
       ( $transcript_slice->start + $_->[2]->start - 1, $transcript_slice->start + $_->[2]->end   - 1 ) :
@@ -371,7 +371,7 @@ sub configure {
 
   foreach (@{$object->get_all_transcripts}) {
     $_->__data->{'transformed'}{'extent'}    = $extent;
-    $_->__data->{'transformed'}{'gene_snps'} = \@snps2;
+    $_->__data->{'transformed'}{'gene_snps'} = \@gene_snps;
   }
 
   return $object;
