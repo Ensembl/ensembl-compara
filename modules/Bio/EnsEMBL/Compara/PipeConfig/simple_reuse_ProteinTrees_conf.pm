@@ -510,27 +510,6 @@ sub pipeline_analyses {
             -hive_capacity => 450,
         },
 
-# ---------------------------------------------[sequence caching step]---------------------------------------------------------------
-
-        {   -logic_name => 'store_sequences_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PeptideMemberGroupingFactory',
-            -parameters => { },
-            -hive_capacity => -1,
-            -flow_into => {
-                2 => [ 'store_sequences' ],
-            },
-        },
-
-        {   -logic_name => 'store_sequences',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FlowMemberSeq',
-            -parameters => { },
-            -hive_capacity => 200,
-            -flow_into => {
-                2 => [ 'mysql:////sequence_cds' ],
-                3 => [ 'mysql:////sequence_exon_bounded' ],
-            },
-        },
-
 # ---------------------------------------------[clustering step]---------------------------------------------------------------------
 
         {   -logic_name => 'hcluster_dump_input_per_genome',
@@ -589,6 +568,27 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'overall_clusterset_qc' ],   # backbone 
                 2 => [ 'mcoffee' ],                 # per-cluster
+            },
+        },
+
+# ---------------------------------------------[sequence caching step]---------------------------------------------------------------
+
+        {   -logic_name => 'store_sequences_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PeptideMemberGroupingFactory',
+            -parameters => { },
+            -hive_capacity => -1,
+            -flow_into => {
+                2 => [ 'store_sequences' ],
+            },
+        },
+
+        {   -logic_name => 'store_sequences',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FlowMemberSeq',
+            -parameters => { },
+            -hive_capacity => 200,
+            -flow_into => {
+                2 => [ 'mysql:////sequence_cds' ],
+                3 => [ 'mysql:////sequence_exon_bounded' ],
             },
         },
 
