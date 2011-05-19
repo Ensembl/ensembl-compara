@@ -30,15 +30,19 @@ use EnsEMBL::Web::TmpFile::Text;
 
 sub new {
   my $class = shift;
+  my $hub   = shift;
+  my $id    = [split /::/, $class]->[-1];
   
   my $self = {
-    hub      => shift,
-    builder  => shift,
-    renderer => shift,
-    id       => [split /::/, $class]->[-1] . 'Panel'
+    hub         => $hub,
+    builder     => shift,
+    renderer    => shift,
+    id          => $id,
+    view_config => $hub->get_viewconfig($id, $hub->type, 'cache')
   };
   
   bless $self, $class;
+  
   $self->_init;
   
   return $self;
@@ -50,10 +54,11 @@ sub id {
   return $self->{'id'};
 }
 
-sub builder  { return $_[0]->{'builder'};  }
-sub hub      { return $_[0]->{'hub'};      }
-sub renderer { return $_[0]->{'renderer'}; }
-sub dom      { return $_[0]->{'dom'} ||= new EnsEMBL::Web::DOM; }
+sub builder     { return $_[0]->{'builder'};     }
+sub hub         { return $_[0]->{'hub'};         }
+sub renderer    { return $_[0]->{'renderer'};    }
+sub view_config { return $_[0]->{'view_config'}; }
+sub dom         { return $_[0]->{'dom'} ||= new EnsEMBL::Web::DOM; }
 
 sub content_pan_compara {
   my $self = shift;
@@ -266,11 +271,13 @@ sub modal_form {
 }
 
 sub new_image {
-  my $self    = shift;
-  my $hub     = $self->hub;
-  my %formats = EnsEMBL::Web::Constants::FORMATS;
-  my $export  = $hub->param('export');
-  my (@image_configs, $image_config, $id);
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my %formats     = EnsEMBL::Web::Constants::FORMATS;
+  my $export      = $hub->param('export');
+  my $id          = $self->id;
+  my $config_type = $self->view_config ? $self->view_config->image_config : undef;
+  my (@image_configs, $image_config);
   
   if (ref $_[0] eq 'ARRAY') {
     my %image_config_types;
@@ -280,15 +287,11 @@ sub new_image {
       push @image_configs, $_;
     }
     
-    $image_config  = $_[0][1];
-    $id            = join '--', keys %image_config_types;
+    $image_config = $_[0][1];
   } else {
     @image_configs = ($_[1]);
     $image_config  = $_[1];
-    $id            = $image_config->{'type'};
   }
-  
-  $self->id($id) unless $image_config->{'no_panel_type'};
   
   if ($export) {
     # Set text export on image config
@@ -296,18 +299,16 @@ sub new_image {
     $image_config->set_parameter('sortable_tracks', 0);
   }
   
+  $_->set_parameter('component', $id) for grep $_->{'type'} eq $config_type, @image_configs;
+  
   my $image = new EnsEMBL::Web::Document::Image($hub->species_defs, \@image_configs);
   $image->drawable_container = new Bio::EnsEMBL::DrawableContainer(@_) if $self->html_format;
-  $image->{'no_panel_type'} = $image_config->{'no_panel_type'};
   
   return $image;
 }
 
 sub new_vimage {
-  my $self = shift;
-  
-  $self->id($_[1]->{'type'}); # $_[1] is image config
-  
+  my $self  = shift;
   my $image = new EnsEMBL::Web::Document::Image($self->hub->species_defs);
   $image->drawable_container = new Bio::EnsEMBL::VDrawableContainer(@_) if $self->html_format;
   
@@ -315,10 +316,7 @@ sub new_vimage {
 }
 
 sub new_karyotype_image {
-  my ($self, $image_config) = @_;
-  
-  $self->id($image_config->{'type'}) if $image_config;
-  
+  my ($self, $image_config) = @_;  
   my $image = new EnsEMBL::Web::Document::Image($self->hub->species_defs);
   $image->{'object'} = $self->object;
   
