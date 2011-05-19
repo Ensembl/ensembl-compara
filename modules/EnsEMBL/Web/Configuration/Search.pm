@@ -25,11 +25,6 @@ sub populate_tree {
     [qw(results EnsEMBL::Web::Component::Search::Results)],
     { no_menu_entry => 1 }
   );
-
-  $self->create_node('Details', 'Result in Detail',
-    [qw(details EnsEMBL::Web::Component::Search::Details)],
-    { no_menu_entry => 1 }
-  );
 }
 
 1;
