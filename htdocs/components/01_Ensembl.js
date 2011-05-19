@@ -65,11 +65,13 @@ Ensembl.extend({
     this.cookie.set('ENSEMBL_AJAX', ($.ajaxSettings.xhr() || false) ? 'enabled' : 'none');
   },
   
-  setWidth: function () {
-    var w = Math.floor(($(window).width() - 250) / 100) * 100;
+  setWidth: function (w) {
+    w = isNaN(w) ? Math.floor(($(window).width() - 250) / 100) * 100 : w;
     
     this.width = w < 500 ? 500 : w;
     this.cookie.set('ENSEMBL_WIDTH', this.width);
+    
+    return this.width;
   },
   
   setCoreParams: function () {
