@@ -102,15 +102,16 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       this.xhr.abort();
     }
     
-    id = id || 'modal_default';
+    var reload = url.match(/reset=/)  || $('.modal_reload', this.el).remove().length;
+    var hash   = (url.match(/#(.+)$/) || [])[1];
+    
+    id = id || (hash ? this.activePanel : 'modal_default');
     
     var contentEl = this.elLk.content.filter('#' + id);
-    var reload    = url.match(/reset=/)  || $('.modal_reload', this.el).remove().length;
-    var hash      = (url.match(/#(.+)$/) || [])[1];
     
     this.elLk.content.hide();
     this.activePanel = id;
-        
+    
     if (reload) {
       contentEl.empty();
     } else if (id.match(/config/) && contentEl.children(':not(.spinner, .ajax_error)').length) {
@@ -169,7 +170,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         forceReload = !!$('.modal_reload', contentEl).length;
         
         if (reload || forceReload) {
-          this.setPageReload((url.match(/\bconfig=(\w+)\b/) || [])[1], false, forceReload);
+          this.setPageReload($('input.component', contentEl).val(), false, forceReload);
         }
         
         if (url.match(/reset=/)) {

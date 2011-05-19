@@ -1,9 +1,15 @@
 // $Revision$
 
 Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
-  init: function () {    
+  init: function () {
+    var panel = this;
+    
     this.base();
     this.filterInit();
+    
+    this.config = {};
+    
+    $.each($('form.configuration', this.el).serializeArray(), function () { panel.config[this.name] = this.value; });
   },
   
   filter: function (val) {
@@ -22,16 +28,35 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
   },
   
   formSubmit: function (form) {
-    var data = form.serialize();
+    var panel   = this;
+    var checked = $.extend({}, this.config);
+    var data    = {};
+    var diff    = {};
+    var i;
     
-    $('input[type=checkbox]', form).each(function () {
-      // Give the value of "no" for deselected checkboxes
-      if (this.checked === false) {
-        data += '&' + this.name + '=no';
+    $('input[type=hidden]', form).each(function () { data[this.name] = this.value; });
+    
+    if (form.hasClass('configuration')) {
+      $.each(form.serializeArray(), function () {
+        if (panel.config[this.name] !== this.value) {
+          diff[this.name] = this.value;
+        }
+
+        delete checked[this.name];
+      });
+
+      // Add unchecked checkboxes to the diff
+      for (i in checked) {
+        diff[i] = 'no';
       }
-    });
+      
+      data.view_config = JSON.stringify(diff);
+      
+      $.extend(true, this.config, diff);
+    }
     
     this.elLk.outputTypes.unbind();
+    
     return this.base(form, data);
   },
   
