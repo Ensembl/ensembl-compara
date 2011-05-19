@@ -17,6 +17,7 @@ Ensembl.LayoutManager.extend({
     Ensembl.EventManager.register('relocateTools', this, this.relocateTools);
     Ensembl.EventManager.register('hashChange',    this, this.hashChange);
     Ensembl.EventManager.register('toggleContent', this, this.toggleContent);
+    Ensembl.EventManager.register('changeWidth',   this, this.changeWidth);
         
     $('#page_nav .tool_buttons > p').show();
     
@@ -187,6 +188,10 @@ Ensembl.LayoutManager.extend({
   
   toggleContent: function (rel) {
     $('a.toggle[rel="' + rel + '"]').toggleClass('open closed');
+  },
+  
+  changeWidth: function () {
+    $('.navbar, div.info, div.hint, div.warning, div.error').width(Ensembl.width);
   }
 });
 
