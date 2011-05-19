@@ -38,26 +38,30 @@ sub content {
   my @preconf_das = $object->get_das_servers;
 
   # DAS server section
-  $form->add_element('type'   => 'DropDown',
-                     'name'   => 'preconf_das',
-                     'select' => 'select',
-                     'label'  => "$sitename DAS sources",
-                     'values' => \@preconf_das,
-                     'value'  => $object->param('preconf_das'));
-  $form->add_element('type'   => 'URL',
-                     'name'   => 'other_das',
-                     'label'  => 'or other DAS server',
-                     'size'   => '30',
-                     'value'  => $object->param('other_das'),
-                     'notes'  => '( e.g. http://www.example.com/MyProject/das )');
-  $form->add_element('type'   => 'String',
-                     'name'   => 'das_name_filter',
-                     'label'  => 'Filter sources',
-                     'size'   => '30',
-                     'value'  => $object->param('das_name_filter'),
-                     'notes'  => 'by name, description or URL');
-  $form->add_element('type'   => 'Information',
-                     'value'  => 'Please note that the next page may take a few moments to load.');
+  $form->add_field([{
+    'type'   => 'dropdown',
+    'name'   => 'preconf_das',
+    'select' => 'select',
+    'label'  => "$sitename DAS sources",
+    'values' => \@preconf_das,
+    'value'  => $object->param('preconf_das') || ''
+  }, {
+    'type'   => 'URL',
+    'name'   => 'other_das',
+    'label'  => 'or other DAS server',
+    'size'   => '30',
+    'value'  => $object->param('other_das') || '',
+    'notes'  => '( e.g. http://www.example.com/MyProject/das )'
+  }, {
+    'type'   => 'String',
+    'name'   => 'das_name_filter',
+    'label'  => 'Filter sources',
+    'size'   => '30',
+    'value'  => $object->param('das_name_filter') || '',
+    'notes'  => 'by name, description or URL'
+  }]);
+
+  $form->add_notes('Please note that the next page may take a few moments to load.');
 
   return $form->render;
 }
