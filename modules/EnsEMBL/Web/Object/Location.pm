@@ -1406,28 +1406,6 @@ sub pops_for_slice {
   return \@tmp_sorted;
 }
 
-
-sub getVariationsOnSlice {
-  my $self = shift;
-  my $sliceObj = $self->new_object(
-        'Slice', $self->slice_cache, $self->__data
-       );
-
-  my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures;
-  return ($count_snps, $filtered_snps);
-}
-
-
-sub get_genotyped_VariationsOnSlice {
-  my $self = shift;
-  my $sliceObj = $self->new_object(
-        'Slice', $self->slice_cache, $self->__data
-       );
-
-  my ($count_snps, $filtered_snps) = $sliceObj->get_genotyped_VariationFeatures;
-  return ($count_snps, $filtered_snps);
-}
-
 sub get_source {
   my $self = shift;
   my $default = shift;
