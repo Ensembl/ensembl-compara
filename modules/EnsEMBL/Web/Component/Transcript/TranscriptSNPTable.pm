@@ -167,7 +167,7 @@ sub get_page_data {
       # url
       my $vid = $allele->variation_name;
       my $source = $allele->source;
-      my $vf = $allele->variation->dbID; 
+      my $vf = $allele->variation_feature->dbID; 
       my $url = $base_url.qq{;v=$vid;vf=$vf;source=$source};
       
       # source
