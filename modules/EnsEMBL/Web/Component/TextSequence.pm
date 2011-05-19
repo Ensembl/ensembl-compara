@@ -1069,7 +1069,6 @@ sub get_key {
   }
   
   $image_config->image_width(650);
-  $image_config->{'no_panel_type'} = 1;
   
   my $key_html;
   $key_html .= sprintf '<li>Displaying variations for %s with a minimum frequency of %s</li>', $config->{'population_filter'}, $config->{'min_frequency'} if $config->{'population_filter'};
