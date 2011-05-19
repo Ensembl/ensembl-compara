@@ -22,7 +22,7 @@ sub content {
   my $context     = $hub->param('context') || 100; 
   my $extent      = $context eq 'FULL' ? 1000 : $context;
   my @confs       = qw(gene transcripts_top transcripts_bottom);
-  my $image_configs;
+  my ($image_configs, $snp_counts);
   
   # Padding
   # Get 4 configs - and set width to width of context config
@@ -179,8 +179,8 @@ sub content {
   if (!$no_snps) {
     $image_configs->{'snps'}->{'fakeslice'}  = 1;
     $image_configs->{'snps'}->{'snps'}       = \@snps2;
-    $image_configs->{'snps'}->{'snp_counts'} = [ $count_snps, scalar @$snps, $context_count ];
     $image_configs->{'snps'}->set_parameters({ container_width => $fake_length }); 
+    $snp_counts = [ $count_snps, scalar @$snps, $context_count ];
   }
 
   # Render image
@@ -210,7 +210,7 @@ sub content {
     return $html;
   }
   
-  my $info_text = $self->config_info($image_configs->{'snps'}->{'snp_counts'});
+  my $info_text = $self->config_info($snp_counts);
   
   $html .= $self->_info(
     'Configuring the display',
