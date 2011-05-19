@@ -28,6 +28,10 @@ sub content {
 
   my $key  = $image_config->get_track_key('transcript', $object);
   my $node = $image_config->get_node($key) || $image_config->get_node(lc $key);
+  if (!$node) {
+    warn ">>> NO NODE FOR KEY $key";
+    return "<p>Cannot display image for this transcript</p>";
+  }
   
   $node->set('display', 'transcript_label') if $node->get('display') eq 'off';
   $node->set('show_labels', 'off');
