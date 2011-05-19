@@ -22,8 +22,7 @@ package EnsEMBL::Web::Session;
 ### {{EnsEMBL::Web::ViewConfig}} or {{EnsEMBL::Web::ImageConfig}} objects.
 ###
 ### These commands in turn access the database if we already have a session (whose is
-### accessible by {{session_id}}) and if the appropriate viewconfig is defined as
-### storable. (In this way it replaces the ViewConfigAdaptor/ImageConfigAdaptor modules
+### accessible by {{session_id}}).
 ###
 ### At the end of the configuration section of the webpage if any data needs to be
 ### saved to the session this is done so (and if required a session cookie set and
@@ -94,12 +93,7 @@ sub create_session_id {
 }
 
 sub store {
-  ### Write session back to the database if required...
-  ### Only work with storable configs and only if they or attached
-  ### image configs have been altered!
-  ### 
-  ### Comment: not really, we also have das and tmp data which needs
-  ### to be stored as well
+  ### Write session back to the database if configs have been altered
   
   my $self = shift;
   
@@ -127,7 +121,7 @@ sub storable_data {
   
   foreach my $type (qw(view_config image_config)) {
     while (my ($code, $config) = each %{$self->{$type . 's'}}) {
-      ## Only store if config is storable and has changed
+      ## Only store if config has changed
       if ($config->storable && $config->altered) {
         push @$data, {
           code => $code,
@@ -142,30 +136,31 @@ sub storable_data {
 }
 
 sub apply_to_view_config {
-  my ($self, $view_config, $type, $code) = @_;
-  $self->apply_to_config('view_config', $view_config, $type, $code, $code);
+  my ($self, $view_config, $type, $cache_code, $config_code) = @_;
+  $self->apply_to_config('view_config', $view_config, $type, $cache_code, $config_code);
 }
 
 sub apply_to_image_config {
-  my ($self, $image_config, $type, $code) = @_;
-  $self->apply_to_config('image_config', $image_config, $type, $code, $type); # $code is optional - used when an image has multiple configs. Defaults to $type.
+  my ($self, $image_config, $type, $cache_code) = @_;
+  $self->apply_to_config('image_config', $image_config, $type, $cache_code, $type); # $cache_code is optional - used when an image has multiple configs. Defaults to $type.
 }
 
 sub apply_to_config {
   ### Adds session data to a view or image config
 
-  my ($self, $config_type, $config, $type, $code, $config_code) = @_;
+  my ($self, $config_type, $config, $type, $cache_code, $config_code) = @_;
+  my $session_id = $self->session_id;
   
   EnsEMBL::Web::Data::Session->propagate_cache_tags(
-    session_id => $self->session_id,
+    session_id => $session_id,
     type       => $type,
-    code       => $code
+    code       => $cache_code
   );
   
-  if ($self->session_id && $config->storable) {
+  if ($session_id && $config->storable) {
     # Let us see if there is an entry in the database and load it into the script config and store any other data which comes back
     my $session_data = EnsEMBL::Web::Data::Session->get_config(
-      session_id => $self->session_id,
+      session_id => $session_id,
       type       => $config_type,
       code       => $config_code
     );
@@ -173,7 +168,7 @@ sub apply_to_config {
     $config->set_user_settings($session_data->data) if $session_data && $session_data->data;
   }
   
-  $self->{$config_type . 's'}->{$code} = $config;
+  $self->{$config_type . 's'}->{$cache_code} = $config;
 }
 
 ###################################################################################################
@@ -558,55 +553,57 @@ sub add_das_from_string {
 }
 
 # Switch on a DAS source for the current view/image (if it is suitable)
+#
+# This method has to deal with two types of configurations - those of views
+# and those of images. Non-positional DAS sources are attached to views, and
+# positional sources are attached to images. The source automatically becomes
+# available on all the views/images it is -suitable for-, and this method
+# switches it on for the current view/image provided it is suitable.
+#
+# The DASConfig "is_on" method gives a way to test whether a source is
+# suitable for a view (e.g. Gene/ExternalData) or image (e.g contigviewbottom).
+#
+# Find images on the current view that support DAS and for which the DAS
+# source is suitable, optionally filtered with
+# an override. But don't trust the override to always indentify an image that
+# supports DAS!
 sub configure_das_views {
   my ($self, $das, $image, $track_options) = @_;
-  my $hub           = $self->hub;
-  my $referer       = $hub->referer;
-  my $type          = $referer->{'ENSEMBL_TYPE'}   || $hub->type;
-  my $action        = $referer->{'ENSEMBL_ACTION'} || $hub->action;
-  my $view_config   = $hub->get_viewconfig($type, $action);
-  my %image_configs = $view_config->image_configs;
+  my $hub     = $self->hub;
+  my $referer = $hub->referer;
+  my $type    = $referer->{'ENSEMBL_TYPE'}   || $hub->type;
+  my $action  = $referer->{'ENSEMBL_ACTION'} || $hub->action;
   
   $track_options->{'display'} ||= 'normal';
   
-  # This method has to deal with two types of configurations - those of views
-  # and those of images. Non-positional DAS sources are attached to views, and
-  # positional sources are attached to images. The source automatically becomes
-  # available on all the views/images it is -suitable for-, and this method
-  # switches it on for the current view/image provided it is suitable.
-  
-  # The DASConfig "is_on" method gives a way to test whether a source is
-  # suitable for a view (e.g. Gene/ExternalData) or image (e.g contigview).
-  
-  # Find images on the current view that support DAS and for which the DAS
-  # source is suitable, optionally filtered with
-  # an override. But don't trust the override to always indentify an image that
-  # supports DAS!
-  my @image_config_names = grep {
-    $image_configs{$_} eq 'das' && # DAS-compatible image
-    (!$image || $image eq $_)   && # optional override
-    $das->is_on($_)                # DAS source is suitable for this image
-  } keys %image_configs;
+  foreach (@{$hub->components}) {
+    my $view_config  = $hub->get_viewconfig($_, $type);
+    my $image_config = $view_config->image_config;
+    my $logic_name   = $das->logic_name;
     
-  # If source is suitable for this VIEW (i.e. not image) - Gene/Protein DAS
-  if ($das->is_on($type)) {
-    # Need to set default to 'no' before we can set it to 'yes'
-    $view_config->_set_defaults($das->logic_name, 'no') unless $view_config->is_option($das->logic_name);
-    $view_config->set($das->logic_name, 'yes');
-  }
-  
-  # For all IMAGES the source needs to be turned on for
-  foreach (@image_config_names) {
-    my $image_config = $hub->get_imageconfig($_);
+    # If source is suitable for this VIEW (i.e. not image) - Gene/Protein DAS
+    if ($das->is_on($type)) {
+      # Need to set default to 'no' before we can set it to 'yes'
+      $view_config->set_defaults({ $logic_name => 'no' }) unless $view_config->get($logic_name);
+      $view_config->set($logic_name, 'yes');
+      $view_config->altered = $logic_name;
+    }
+    
+    next unless $view_config->image_config_das eq 'das'; # DAS-compatible image
+    next if     $image && $image ne $image_config;       # optional override
+    next unless $das->is_on($image_config);              # DAS source is suitable for this image
+    
+    $image_config = $hub->get_imageconfig($image_config);
     
     # Only attach user requested DAS source to images which have a configuration menu for them.
     next unless $image_config->get_node('user_data');
     
-    my $node = $image_config->get_node('das_' . $das->logic_name);
+    # For IMAGES the source needs to be turned on for
+    my $node = $image_config->get_node("das_$logic_name");
     
     if (!$node) {
-      my %default_keys = map { $_ => '' } (keys %$track_options, @{$self->{'das_image_defaults'}});
-      $node = $image_config->tree->create_node('das_' . $das->logic_name, \%default_keys);
+      my %default_keys = map { $_ => '' } keys %$track_options, @{$self->{'das_image_defaults'}};
+      $node = $image_config->tree->create_node("das_$logic_name", \%default_keys);
       $image_config->get_node('user_data')->append($node);
     }
     
@@ -615,80 +612,37 @@ sub configure_das_views {
   }
 }
 
-sub configure_bam_views {
-  my ($self, $bam, $track_options) = @_;
+sub configure_bam_views    { shift->configure_user_attached_data('bam',    'normal',    @_) };
+sub configure_bigwig_views { shift->configure_user_attached_data('bigwig', 'tiling',    @_) };
+sub configure_vcf_views    { shift->configure_user_attached_data('vcf',    'histogram', @_) };
+
+sub configure_user_attached_data {
+  my ($self, $track_type, $default_display, $track, $track_options) = @_;
   my $hub = $self->hub;
-  
-  return unless $bam->{'species'} eq $hub->species;
-  
+
+  return unless $track->{'species'} eq $hub->species;
+
   my $referer = $hub->referer;
   my $type    = $referer->{'ENSEMBL_TYPE'}   || $hub->type;
   my $action  = $referer->{'ENSEMBL_ACTION'} || $hub->action;
   
-  $track_options->{'display'} ||= 'normal';
-  
-  foreach ($hub->get_viewconfig($type, $action)->image_config_names) {
-    my $image_config = $hub->get_imageconfig($_);
-    my $node         = $image_config->get_node("bam_$bam->{'timestamp'}_" . md5_hex("$bam->{'species'}:$bam->{'url'}"));
+  foreach (@{$hub->components}) {
+    my $view_config  = $hub->get_viewconfig($_, $type);
+    my $image_config = $view_config->image_config;
+    
+    next unless $image_config;
+    
+    $track_options->{'display'} ||= $default_display;
 
-    if ($node) {
-      $node->set_user($_, $track_options->{$_}) for %$track_options;
-      $image_config->altered = 1;
-    }
-  }
-}
-
-sub configure_bigwig_views {
-  my ($self, $bigwig, $track_options) = @_;
-  my $hub = $self->hub;
-
-  return unless $bigwig->{'species'} eq $hub->species;
-
-  my $referer = $hub->referer;
-  my $type    = $referer->{'ENSEMBL_TYPE'}   || $hub->type;
-  my $action  = $referer->{'ENSEMBL_ACTION'} || $hub->action;
-
-  $track_options->{'display'} ||= 'tiling';
-
-  foreach ($hub->get_viewconfig($type, $action)->image_config_names) {
-    my $image_config = $hub->get_imageconfig($_);
-    my $node         = $image_config->get_node("bigwig_$bigwig->{'timestamp'}_" . md5_hex("$bigwig->{'species'}:$bigwig->{'url'}"));
+    $image_config = $hub->get_imageconfig($image_config);
+    
+    my $node = $image_config->get_node("${track_type}_$track->{'timestamp'}_" . md5_hex("$track->{'species'}:$track->{'url'}"));
 
     if ($node) {
       $node->set_user($_, $track_options->{$_}) for keys %$track_options;
       $image_config->altered = 1;
     }
   }
-}
-
-sub configure_vcf_views {
-  my ($self, $data, $track_options) = @_;
-  my $hub         = $self->hub;
-  my $referer     = $hub->referer;
-  my $this_type   = $referer->{'ENSEMBL_TYPE'}   || $ENV{'ENSEMBL_TYPE'};
-  my $this_action = $referer->{'ENSEMBL_ACTION'} || $ENV{'ENSEMBL_ACTION'};
-  my $this_image  = $referer->{'ENSEMBL_IMAGE'};
-  my $this_vc     = $hub->get_viewconfig($this_type, $this_action, $hub);
-  my %this_ics    = $this_vc->image_configs;
-
-  $track_options->{'display'} ||= 'histogram';
-
-  my @this_images = grep {
-    (!$this_image || $this_image eq $_)  # optional override
-  } keys %this_ics;
-
-  foreach my $image (@this_images) {
-    my $ic = $hub->get_imageconfig($image, $image);
-    if ($data->{species} eq $ic->{species}) {
-      my $n  = $ic->get_node('vcf_' . $data->{timestamp} . '_' . md5_hex($data->{species} . ':' . $data->{url}));
-      if ($n) {
-        $n->set_user($_, $track_options->{$_}) for keys %$track_options;
-        $ic->altered = 1;
-      }
-    }
-  }
-
-  return;
 }
 
 sub save_custom_page {
