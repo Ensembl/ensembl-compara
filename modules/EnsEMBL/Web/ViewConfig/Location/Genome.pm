@@ -7,40 +7,19 @@ use strict;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  ### Used by Constructor
-  ### init function called to set defaults for the passed
-  ### {{EnsEMBL::Web::ViewConfig}} object
+  my $self = shift;
   
-  my $self       = shift;
-  my $total_chrs = @{$self->species_defs->ENSEMBL_CHROMOSOMES};
-  
-  my %settings = qw(
-    panel_top     yes
-    panel_zoom    no
-    image_width   1200
-    zoom_width    100
-    context       1000    
-    chr_length    300
-    h_padding     4
-    h_spacing     6
-    v_spacing     10
-  );
-  %settings->{'rows'} = $total_chrs ge '26' ? '2' : '1';
-  
-  $self->_set_defaults(%settings);
-  
-  $self->add_image_configs({qw(
-    Vkaryotype das
-  )});
-  
-  $self->default_config = 'Vkaryotype';
-  $self->storable       = 1;
+  $self->set_defaults({
+    chr_length => 300,
+    h_padding  => 4,
+    h_spacing  => 6,
+    v_spacing  => 10,
+    rows       => scalar @{$self->species_defs->ENSEMBL_CHROMOSOMES} >= 26 ? 2 : 1,
+  });
 }
 
 sub form {
   my $self = shift;
-
-  $self->add_fieldset('Chromosome layout');
 
   $self->add_form_element({
     type    => 'DropDown',
@@ -56,7 +35,7 @@ sub form {
   });
 
   $self->add_form_element({
-    type     => 'Int',
+    type     => 'PosInt',
     name     => 'chr_length',
     label    => 'Height of the longest chromosome (pixels)',
     required => 'yes',

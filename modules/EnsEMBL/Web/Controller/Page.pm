@@ -51,18 +51,16 @@ sub update_configuration_from_url {
   my $hub       = $self->hub;
   my $session   = $hub->session;
   my @share_ref = $input->param('share_ref');
-  my $url;
+  my ($url, $new_url);
   
   if (@share_ref) {
     $session->receive_shared_data(@share_ref); # This should push a message onto the message queue
     $input->delete('share_ref');
-    $url = join '?', $r->uri, $input->query_string;
+    $new_url = 1;
   }
   
-  my $view_config = $hub->viewconfig;
-  my $new_url     = $view_config->update_from_url($r); # This should push a message onto the message queue
-  
-  $url = $new_url if $new_url;
+  $new_url += $hub->get_viewconfig($_)->update_from_url($r) for @{$self->configuration->get_configurable_components}; # This should push a message onto the message queue
+  $url      = join '?', $r->uri, $input->query_string if $new_url;
   
   if ($url) {
     my @t = split /\?/, $url;

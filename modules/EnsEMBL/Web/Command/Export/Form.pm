@@ -12,12 +12,11 @@ use EnsEMBL::Web::TmpFile::Text;
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
-  my $self        = shift;
-  my $hub         = $self->hub;
-  my $function    = $hub->function;
-  my $view_config = $hub->get_viewconfig($function, 'Export');
-
-  $view_config->update_from_input;
+  my $self     = shift;
+  my $hub      = $self->hub;
+  my $function = $hub->function;
+  
+  $hub->get_viewconfig('Export', $function)->update_from_input;
   $hub->session->store;  
   
   my $url    = $hub->url({ action => 'Formats', function => $function });

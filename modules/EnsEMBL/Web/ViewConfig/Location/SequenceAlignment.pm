@@ -13,22 +13,22 @@ sub init {
   my $sp         = $self->species;
   my $variations = $self->species_defs->databases->{'DATABASE_VARIATION'}||{};
   my $ref        = $variations->{'REFERENCE_STRAIN'};
+  my %strains;
   
-  $self->_set_defaults(qw(
-    display_width   120
-    exon_ori        all
-    match_display   dot
-    snp_display     snp
-    line_numbering  sequence
-    codons_display  off
-    title_display   off
-    strand          1
-  ));
+  $strains{$_} = 'yes' for grep $_ ne $ref, @{$variations->{'DEFAULT_STRAINS'} || []};
+  $strains{$_} = 'no'  for grep $_ ne $ref, @{$variations->{'DISPLAY_STRAINS'} || []};
   
-  $self->_set_defaults($_, 'yes') for grep $_ ne $ref, @{$variations->{'DEFAULT_STRAINS'} || []};
-  $self->_set_defaults($_, 'no')  for grep $_ ne $ref, @{$variations->{'DISPLAY_STRAINS'} || []};
-  $self->storable = 1;
-  $self->nav_tree = 1;
+  $self->set_defaults({
+    display_width  => 120,
+    exon_ori       => 'all',
+    match_display  => 'dot',
+    snp_display    => 'snp',
+    line_numbering => 'sequence',
+    codons_display => 'off',
+    title_display  => 'off',
+    strand         => 1,
+    %strains
+  });
 }
 
 sub form {

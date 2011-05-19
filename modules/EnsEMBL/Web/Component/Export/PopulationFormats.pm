@@ -17,10 +17,10 @@ sub content {
     output   => 'gen_var'
   };
   
-  my $vc = $hub->get_viewconfig('Transcript', 'Population');
-  
-  foreach ($vc->options) {
-    my $option = $vc->get($_);
+  my $view_config = $hub->get_viewconfig('TranscriptSNPTable', 'Transcript');
+
+  foreach ($view_config->options) {
+    my $option = $view_config->get($_);
     $params->{$_} = $option unless $option =~ /^off|no$/;
   }
   

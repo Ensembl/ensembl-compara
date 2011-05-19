@@ -11,37 +11,35 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my $self      = shift;
   my $misc_sets = $self->species_defs->databases->{'DATABASE_CORE'}->{'tables'}->{'misc_feature'}->{'sets'};
-  my %defaults;
+  my $defaults  = {};
   
-  $defaults{'output'}        = 'fasta';
-  $defaults{'strand'}        = $self->hub->action eq 'Location' ? 'forward' : 'feature';
-  $defaults{$_}              = 0 for qw(flank5_display flank3_display);
-  $defaults{"fasta_$_"}      = 'yes' for qw(cdna coding peptide utr5 utr3 exon intron);
-  $defaults{"gff3_$_"}       = 'yes' for qw(gene transcript exon intron cds);
-  $defaults{"bed_$_"}        = 'yes' for qw(userdata description);
-  $defaults{"gtf_$_"}        = 'yes' for qw(similarity repeat genscan contig variation marker gene vegagene estgene);
-#  $defaults{"psl_$_"}       = 'yes' for qw();
-  $defaults{"phyloxml_$_"}   = 'yes' for qw(cdna aligned);
-  $defaults{"phylopan_$_"}   = 'yes' for qw(cdna aligned);
-  $defaults{"phyloxml_$_"}   = 'no'  for qw(no_sequences);
-  $defaults{"phylopan_$_"}   = 'no'  for qw(no_sequences);
-  $defaults{'fasta_genomic'} = 'unmasked';
+  $defaults->{'output'}        = 'fasta';
+  $defaults->{'strand'}        = $self->hub->action eq 'Location' ? 'forward' : 'feature';
+  $defaults->{$_}              = 0 for qw(flank5_display flank3_display);
+  $defaults->{"fasta_$_"}      = 'yes' for qw(cdna coding peptide utr5 utr3 exon intron);
+  $defaults->{"gff3_$_"}       = 'yes' for qw(gene transcript exon intron cds);
+  $defaults->{"bed_$_"}        = 'yes' for qw(userdata description);
+  $defaults->{"gtf_$_"}        = 'yes' for qw(similarity repeat genscan contig variation marker gene vegagene estgene);
+#  $defaults->{"psl_$_"}       = 'yes' for qw();
+  $defaults->{"phyloxml_$_"}   = 'yes' for qw(cdna aligned);
+  $defaults->{"phylopan_$_"}   = 'yes' for qw(cdna aligned);
+  $defaults->{"phyloxml_$_"}   = 'no'  for qw(no_sequences);
+  $defaults->{"phylopan_$_"}   = 'no'  for qw(no_sequences);
+  $defaults->{'fasta_genomic'} = 'unmasked';
   
   foreach my $f (qw(csv tab gff)) {
-    $defaults{$f . '_' . $_} = 'yes' for qw(similarity repeat genscan variation gene);
+    $defaults->{$f . '_' . $_} = 'yes' for qw(similarity repeat genscan variation gene);
     
     next if $f eq 'gff';
     
-    $defaults{$f . '_miscset_' . $_} = 'yes' for keys %$misc_sets;
+    $defaults->{$f . '_miscset_' . $_} = 'yes' for keys %$misc_sets;
   }
   
   foreach my $f (qw(embl genbank)) {
-    $defaults{$f . '_' . $_} = 'yes' for qw(similarity repeat genscan contig variation marker gene vegagene estgene);
+    $defaults->{$f . '_' . $_} = 'yes' for qw(similarity repeat genscan contig variation marker gene vegagene estgene);
   }
   
-  $self->_set_defaults(%defaults);
-  $self->storable       = 1;
-  $self->default_config = 0;
+  $self->set_defaults($defaults);
 }
 
 sub form {
@@ -73,12 +71,6 @@ sub form {
     name    => 'panel_type',
     classes => [ 'panel_type' ],
     value   => 'Exporter'
-  });
-  
-  $self->add_form_element({
-    type  => 'Hidden',
-    name  => 'save',
-    value => 'yes'
   });
   
   foreach (keys %{$form_action->[1]}) {

@@ -25,84 +25,72 @@ sub update_configuration {
   my $self = shift;
   my $hub  = $self->hub;
   
-  if ($hub->param('submit') || $hub->param('reset')) {
-    my $r           = $self->r;
-    my $session     = $hub->session;
-    my $type        = $hub->type;
-    my $config      = $hub->param('config');
-    my $view_config = $hub->viewconfig;
-    my $updated     = 0;
-    
-    # Updating an image config
-    if ($config && $view_config->has_image_config($config)) {
-      $updated = $hub->get_imageconfig($config)->update_from_input;
-    } else { # Updating a view config
-      $view_config->update_from_input;
+  return unless $hub->param('submit') || $hub->param('reset');
+  
+  my $r            = $self->r;
+  my $session      = $hub->session;
+  my $type         = $hub->type;
+  my $view_config  = $hub->get_viewconfig($hub->action);
+  my $updated      = $view_config->update_from_input;
+  my $cookie_host  = $hub->species_defs->ENSEMBL_COOKIEHOST;
+  my $image_width  = $hub->param('image_width');
+  my $cookie_ajax  = $hub->param('cookie_ajax');
+  my @cookies;
+  
+  # Set width
+  if ($image_width && $image_width != $ENV{'ENSEMBL_IMAGE_WIDTH'}) {
+    push @cookies, new CGI::Cookie(
+      -name    => 'ENSEMBL_WIDTH',
+      -value   => $image_width,
+      -domain  => $cookie_host,
+      -path    => '/',
+      -expires => $image_width =~ /\d+/ ? 'Monday, 31-Dec-2037 23:59:59 GMT' : 'Monday, 31-Dec-1970 00:00:01 GMT'
+    );
+  }
+  
+  # Set ajax cookie
+  if ($cookie_ajax && $cookie_ajax ne $ENV{'ENSEMBL_AJAX_VALUE'}) {
+    push @cookies, new CGI::Cookie(
+      -name    => 'ENSEMBL_AJAX',
+      -value   => $cookie_ajax,
+      -domain  => $cookie_host,
+      -path    => '/',
+      -expires => 'Monday, 31-Dec-2037 23:59:59 GMT'
+    );
+  }
+  
+  foreach my $cookie (@cookies) {
+    $r->$_->add('Set-cookie' => $cookie) for qw(headers_out err_headers_out);
+  }
+  
+  $session->store;
+  
+  if ($hub->param('submit')) {
+    if ($r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
+      my $json;
       
-      my $cookie_host  = $hub->species_defs->ENSEMBL_COOKIEHOST;
-      my $cookie_width = $hub->param('cookie_width');
-      my $cookie_ajax  = $hub->param('cookie_ajax');
-      
-      # Set width
-      if ($cookie_width && $cookie_width != $ENV{'ENSEMBL_IMAGE_WIDTH'}) {
-        my $cookie = new CGI::Cookie(
-          -name    => 'ENSEMBL_WIDTH',
-          -value   => $cookie_width,
-          -domain  => $cookie_host,
-          -path    => '/',
-          -expires => $cookie_width =~ /\d+/ ? 'Monday, 31-Dec-2037 23:59:59 GMT' : 'Monday, 31-Dec-1970 00:00:01 GMT'
-        );
+      if ($hub->action =~ /^(ExternalData|TextDAS)$/) {
+        my $function = $view_config->altered == 1 ? undef : $view_config->altered;
         
-        $r->headers_out->add('Set-cookie' => $cookie);
-        $r->err_headers_out->add('Set-cookie' => $cookie);
+        $json = {
+          redirect => $hub->url({ 
+            action   => 'ExternalData', 
+            function => $function, 
+            %{$hub->referer->{'params'}}
+          })
+        };
+      } elsif ($updated || $hub->param('reload')) {
+        $json = { updated => 1 };
       }
       
-      # Set ajax cookie
-      if ($cookie_ajax && $cookie_ajax ne $ENV{'ENSEMBL_AJAX_VALUE'}) {
-        my $cookie = new CGI::Cookie(
-          -name    => 'ENSEMBL_AJAX',
-          -value   => $cookie_ajax,
-          -domain  => $cookie_host,
-          -path    => '/',
-          -expires => 'Monday, 31-Dec-2037 23:59:59 GMT'
-        );
-        
-        $r->headers_out->add('Set-cookie' => $cookie);
-        $r->err_headers_out->add('Set-cookie' => $cookie);
-      }
+      $r->content_type('text/plain');
       
-      $updated = 1;
+      print $self->jsonify($json || {});
+    } else {
+      $hub->redirect; # refreshes the page
     }
     
-    $session->store;
-    
-    if ($hub->param('submit')) {
-      if ($r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
-        my $json;
-        
-        if ($hub->action eq 'ExternalData') {
-          my $function = $view_config->altered == 1 ? undef : $view_config->altered;
-          
-          $json = {
-            redirect => $hub->url({ 
-              action   => 'ExternalData', 
-              function => $function, 
-              %{$hub->referer->{'params'}}
-            })
-          };
-        } elsif ($updated) {
-          $json = { updated => 1 };
-        }
-        
-        $r->content_type('text/plain');
-        
-        print $self->jsonify($json || {});
-      } else {
-        $hub->redirect; # refreshes the page
-      }
-      
-      return 1;
-    }
+    return 1;
   }
 }
 

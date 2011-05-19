@@ -22,19 +22,17 @@ sub init {
   my $hub        = $controller->hub;
   
   if ($hub->script eq 'Config') {
-    my $config       = $hub->param('config');
-    my $image_config = $hub->get_imageconfig($config);
-    my $rel          = "modal_config_$config";
+    my $action       = $hub->action;
+    my $image_config = $hub->get_imageconfig($hub->get_viewconfig($action)->image_config);
+    my $rel          = "modal_config_$action";
        $rel         .= '_' . lc $hub->species if $image_config && $image_config->multi_species && $hub->referer->{'ENSEMBL_SPECIES'} ne $hub->species;
-       $rel          =~ s/__/_/; # config paramenter can be _page, so in this case make sure we have the correct value
 
     $self->add_entry({
       caption => 'Reset configuration',
       class   => 'modal_link',
       rel     => $rel,
       url     => $hub->url('Config', {
-        config => $config,
-        reset  => 1
+        reset => 1
       })
     });
     
@@ -46,7 +44,6 @@ sub init {
           rel     => $rel,
           url     => $hub->url('Config', {
             reset   => 'track_order',
-            config  => $config,
             __clear => 1 
           })
         });

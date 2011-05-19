@@ -4,16 +4,12 @@ package EnsEMBL::Web::ViewConfig::Cell_line;
 
 use strict;
 
+use JSON qw(from_json);
+
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my $self = shift;
-  
-  $self->_set_defaults(qw(
-    image_width   800
-    context       200
-    das_sources), []
-  );
  
   my %default_evidence_types = (
     CTCF     => 1,
@@ -24,14 +20,7 @@ sub init {
     H3K9me3  => 1,
     PolII    => 1,
     PolIII   => 1,
-  );  
- 
-  if ($self->type eq 'Regulation') {
-    $self->add_image_configs({ regulation_view         => 'das' });
-  }
-
-  $self->_set_defaults('opt_highlight'    => 'yes');
-  $self->_set_defaults('opt_empty_tracks' => 'yes');
+  );
   
   my $funcgen_tables           = $self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'};
   $self->{'cell_lines'}        = $funcgen_tables->{'cell_type'}{'ids'};
@@ -39,35 +28,56 @@ sub init {
   $self->{'feature_type_ids'}  = $funcgen_tables->{'meta'}{'feature_type_ids'};
   $self->{'focus_set_ids'}     = $funcgen_tables->{'meta'}{'focus_feature_set_ids'};
   
+  my $defaults = {
+    opt_highlight    => 'yes',
+    opt_empty_tracks => 'yes'
+  };
+  
   foreach my $cell_line (keys %{$self->{'cell_lines'}}) {
     $cell_line =~ s/\:\w*//;
     
     # allow all evdience for this sell type to be configured together  
-    $self->_set_defaults("opt_cft_$cell_line:all" => 'off');
+    $defaults->{"opt_cft_$cell_line:all"} = 'off';
     
     foreach my $evidence_type (keys %{$self->{'evidence_features'}}) {
-      my ($evidence_name, $evidence_id) = split /\:/, $evidence_type; 
-      my $value = ( exists $default_evidence_types{$evidence_name} && exists $self->{'feature_type_ids'}{$cell_line}{$evidence_id} ) ? 'on' : 'off';
-      $self->_set_defaults("opt_cft_$cell_line:$evidence_name" => $value);
+      my ($evidence_name, $evidence_id) = split /\:/, $evidence_type;
+      $defaults->{"opt_cft_$cell_line:$evidence_name"} = exists $default_evidence_types{$evidence_name} && exists $self->{'feature_type_ids'}{$cell_line}{$evidence_id} ? 'on' : 'off';
     }
   }
   
   foreach my $evidence_type (keys %{$self->{'evidence_features'}}) {
     $evidence_type =~ s/\:\w*//;
-    $self->_set_defaults("opt_cft_$evidence_type:all" => 'off');
+    $defaults->{"opt_cft_$evidence_type:all"} = 'off';
   }
-
-  $self->storable = 1;
-  $self->nav_tree = 1;
+  
+  $self->set_defaults($defaults);
 }
 
 sub form {
-  my $self = shift;  
+  my $self = shift;
+  my $hub  = $self->hub;
   
-  my %focus_feature_type_ids;
-  my $focus_row = 3;
-  my $row = 3;
+  if ($hub->function eq 'Cell_line') {
+    $self->form_evidence_types;
+  } else {
+    my $tree = $self->tree;
+    my $node = $tree->get_node('functional');
+    
+    $self->form_context;
+    
+    $node->append($tree->get_node('context'));
+    $node->append($tree->create_node('evidence_types', { url => $hub->url('Config', { function => 'Cell_line', partial => 1 }), availability => 1, caption => 'Evidence types', class => 'Evidence_types' }));
+  }
+}
 
+sub form_evidence_types {
+  my $self      = shift;
+  my $focus_row = 3;
+  my $row       = 3;
+  my %focus_feature_type_ids;
+  
+  $self->info_panel;
+  
   # Allow focus sets to appear first
   foreach my $feature_sets (values %{$self->{'focus_set_ids'}}) {
     $focus_feature_type_ids{$_} ||= $focus_row++ for keys %$feature_sets;
@@ -99,7 +109,7 @@ sub form {
       $cell_line =~ s/\:\w*//;
       
       $row->{'row'}->{$cell_line}->{'enabled'} = 1 if exists $self->{'feature_type_ids'}{$cell_line}{$feature_id};
-      $row->{'row'}->{$cell_line}->{'default'} = 1 if $self->{'_options'}{"opt_cft_$cell_line:$feature_name"}{'default'} eq 'on';
+      $row->{'row'}->{$cell_line}->{'default'} = 1 if $self->{'options'}{"opt_cft_$cell_line:$feature_name"}{'default'} eq 'on';
       $row->{'row'}->{$cell_line}->{'checked'} = 1 if $self->get("opt_cft_$cell_line:$feature_name") eq 'on';
       $row->{'row'}->{$cell_line}->{'title'}   = "$cell_line:$feature_name";
     }
@@ -111,9 +121,34 @@ sub form {
     $matrix->add_subheading(ucfirst "$subheading features:", $subheading);
     $matrix->add_row($_->{'name'}, $_->{'row'}) for @{$groups->{$subheading}};
   }
+}
 
-  # Add context selection
+sub info_panel {
+  my $self = shift;
+  my $form = $self->get_form;
+  
+  $form->append_child($form->dom->create_element('div', { class => 'content', inner_HTML => qq{
+    <div class="info">
+      <h3>Note:</h3>
+      <div class ="error-pad">
+      <p>
+        These are data intensive tracks. For best performance it is advised that you limit the 
+        number of feature types you try to display at any one time.
+      </p>
+      <p>
+        Any cell lines that you configure here must also be turned on in the <a href="#functional" class="modal_link">Functional genomics</a> section before any data will be displayed.
+      </p>
+      </div>
+    </div>
+  }}));
+}
+
+
+sub form_context {
+  my $self = shift;
+  
   $self->add_fieldset('Context');
+  
   $self->add_form_element({
     type   => 'DropDown',
     select => 'select',
@@ -135,85 +170,91 @@ sub form {
   $self->add_form_element({ type => 'YesNo', name => 'opt_empty_tracks', select => 'select', label => 'Show empty tracks'     });
 }
 
+# Set image config tracks when selecting checkboxes
 sub update_from_input {
-  my ($self, $image_config_name) = @_;
+  my $self         = shift;
+  my $hub          = $self->hub;
+  my $input        = $hub->input;
+  my $image_config = $hub->get_imageconfig($self->image_config) if $self->image_config;
   
-  $image_config_name ||= 'reg_detail_by_cell_line';
+  return $self->reset($image_config) if $input->param('reset');
   
-  my $hub   = $self->hub;
-  my $input = $hub->input;
-  
-  return $self->reset if $input->param('reset');
-  
-  my $image_config = $hub->get_imageconfig($image_config_name);
-  my @options      = $self->options;
-  my $flag         = 0;
+  my $diff = $input->param('view_config');
+  my $flag = 0;
   my $altered;
-  my %cell_lines;
-  my %evidence_types;
   
-  foreach (keys %{$self->{'evidence_features'}}) {
-    my ($name, $id) = split /:/;
-    my $type = 'other';
+  if ($diff) {
+    my @options = $self->options;
+    my (%cell_lines, %evidence_types);
     
-    foreach my $focus_set (values %{$self->{'focus_set_ids'}}) {
-      if (exists $focus_set->{$id}) {
-        $type = 'core';
-        last;
-      }
-    }
+    $diff = from_json($diff);
     
-    $evidence_types{$name} = $type;
-  }
-  
-  foreach my $key (@options) {
-    my @values = $input->param($key);
-    
-    (my $cell_line = $key) =~ s/^opt_cft_//;
-    ($cell_line)   = split /:/, $cell_line;
-    
-    if (scalar @values && $values[0] ne $self->{'_options'}{$key}{'user'}) {
-      $flag = 1;
+    foreach (keys %{$self->{'evidence_features'}}) {
+      my ($name, $id) = split /:/;
+      my $type = 'other';
       
-      if (scalar @values > 1) {
-        $self->set($key, \@values);
-      } else {
-        $self->set($key, $values[0]);
-      }
-      
-      $altered ||= $key if $values[0] !~ /^(off|no)$/;
-      
-      $cell_lines{$cell_line}{$key} = $values[0];
-    }
-  }
-  
-  foreach my $cell_line (keys %cell_lines) {
-    foreach my $key (keys %{$cell_lines{$cell_line}}) {
-      my (undef, $feature) = split /:/, $key;
-      
-      if ($cell_lines{$cell_line}{$key} =~ /^(off|no)$/) {
-        foreach (grep /^opt_cft_$cell_line/, @options) {
-          if ($self->get($_) !~ /^(off|no)$/) {
-            $cell_lines{$evidence_types{$feature}}{$cell_line} = 1;
-            last;
-          }
+      foreach my $focus_set (values %{$self->{'focus_set_ids'}}) {
+        if (exists $focus_set->{$id}) {
+          $type = 'core';
+          last;
         }
-      } else {
-        $cell_lines{$evidence_types{$feature}}{$cell_line} = 1;
+      }
+      
+      $evidence_types{$name} = $type;
+    }
+    
+    foreach my $key (grep exists $self->{'options'}{$_}, keys %$diff) {
+      my @values = ref $diff->{$key} eq 'ARRAY' ? @{$diff->{$key}} : ($diff->{$key});
+      
+      (my $cell_line = $key) =~ s/^opt_cft_//;
+      ($cell_line)   = split /:/, $cell_line;
+      
+      if ($values[0] ne $self->{'options'}{$key}{'user'}) {
+        $flag = 1;
+        
+        if (scalar @values > 1) {
+          $self->set($key, \@values);
+        } else {
+          $self->set($key, $values[0]);
+        }
+        
+        $altered ||= $key if $values[0] !~ /^(off|no)$/;
+        
+        $cell_lines{$cell_line}{$key} = $values[0];
       }
     }
     
-    for ('core', 'other') {
-      my $node = $image_config->get_node("reg_feats_${_}_$cell_line");
+    foreach my $cell_line (keys %cell_lines) {
+      foreach my $key (keys %{$cell_lines{$cell_line}}) {
+        my (undef, $feature) = split /:/, $key;
+        
+        if ($cell_lines{$cell_line}{$key} =~ /^(off|no)$/) {
+          foreach (grep /^opt_cft_$cell_line/, @options) {
+            if ($self->get($_) !~ /^(off|no)$/) {
+              $cell_lines{$evidence_types{$feature}}{$cell_line} = 1;
+              last;
+            }
+          }
+        } else {
+          $cell_lines{$evidence_types{$feature}}{$cell_line} = 1;
+        }
+      }
       
-      if ($cell_lines{$_}{$cell_line} && $node->get('display') eq 'off') {
-        $node->set_user('display', 'compact');
-        $image_config->altered = 1;
+      for ('core', 'other') {
+        my $node = $image_config->get_node("reg_feats_${_}_$cell_line");
+        
+        if ($cell_lines{$_}{$cell_line} && $node->get('display') eq 'off') {
+          $node->set_user('display', 'compact');
+          $image_config->altered = 1;
+        }
       }
     }
   }
   
-  $self->altered = $altered || 1 if $flag;
+  $self->altered   = $image_config->update_from_input if $image_config;
+  $self->altered ||= $altered || 1 if $flag;
+  
+  return $self->altered;
 }
 
 1;

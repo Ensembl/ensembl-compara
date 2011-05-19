@@ -743,28 +743,16 @@ sub get_samples {
   }
 
   my %configured_pops = (%default_pops, %db_pops);
-  my $view_config = $hub->viewconfig;
   my @pops;
   
   if ($options eq 'display') { # return list of pops with default first
     return (sort keys %default_pops), (sort keys %db_pops); 
-  } elsif ($hub->param('strain')) { # This elsif allows a user to manually add in an optional strain. Use format strain=xxx:on. Only occurs when tweak URL
-    foreach my $sample ($hub->param('strain')) {
-      next unless $sample =~ /(.*):(\w+)/;
-      
-      $view_config->set("opt_pop_$1", $2, 1);
-      push @pops, $1 if $2 eq 'on';
-    }
   } elsif ($params) {
-    foreach my $sample (sort keys %$params) {      
-      push @pops, $sample if $configured_pops{$sample};
-    }
+    @pops = grep $configured_pops{$_}, sort keys %$params;
   } else { # get configured samples 
-    foreach my $sample (sort $view_config->options) { 
-      next unless $sample =~ s/opt_pop_//;  
-      next unless $view_config->get("opt_pop_$sample") eq 'on'; 
-      
-      push @pops, $sample if $configured_pops{$sample};
+    foreach (sort grep /opt_pop_/, $hub->param) {
+      (my $sample = $_) =~ s/opt_pop_//;
+      push @pops, $sample if $configured_pops{$sample} && $hub->param($_) eq 'on';
     }
   }
   

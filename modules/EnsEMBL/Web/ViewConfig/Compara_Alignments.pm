@@ -9,30 +9,30 @@ use EnsEMBL::Web::Constants;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my $self = shift;
+  my $self       = shift;
+  my $alignments = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
+  my %defaults;
   
-  $self->_set_defaults(qw(
-    flank5_display        600
-    flank3_display        600
-    exon_display          core
-    exon_ori              all
-    snp_display           off
-    line_numbering        off
-    display_width         120
-    conservation_display  off
-    region_change_display off
-    codons_display        off
-    title_display         off
-  ));
-  
-  $self->storable = 1;
-  $self->nav_tree = 1;
-  
-  my $hash = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
-  
-  foreach my $row_key (grep { $hash->{$_}{'class'} !~ /pairwise/ } keys %$hash) {
-    $self->_set_defaults(map {( lc("species_${row_key}_$_"), /Ancestral/ ? 'off' : 'yes' )} keys %{$hash->{$row_key}{'species'}});
+  foreach my $key (grep { $alignments->{$_}{'class'} !~ /pairwise/ } keys %$alignments) {
+    $defaults{lc "species_${key}_$_"} = /ancestral/ ? 'off' : 'yes' for keys %{$alignments->{$key}{'species'}};
   }
+  
+  $self->set_defaults({
+    flank5_display        => 600,
+    flank3_display        => 600,
+    exon_display          => 'core',
+    exon_ori              => 'all',
+    snp_display           => 'off',
+    line_numbering        => 'off',
+    display_width         => 120,
+    conservation_display  => 'off',
+    region_change_display => 'off',
+    codons_display        => 'off',
+    title_display         => 'off',
+    %defaults
+  });
+  
+  $self->code = $self->hub->type . '::Compara_Alignments';
 }
 
 sub form {
@@ -44,7 +44,7 @@ sub form {
     my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS; # options shared with resequencing and marked-up sequence
     my %other_markup_options   = EnsEMBL::Web::Constants::OTHER_MARKUP_OPTIONS;   # options shared with resequencing
     
-    push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'vega', name => 'Vega exons' } if $dbs->{'DATABASE_VEGA'};
+    push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'vega',          name => 'Vega exons'     } if $dbs->{'DATABASE_VEGA'};
     push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'otherfeatures', name => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
     
     if (!$self->{'no_flanking'}) {
@@ -103,25 +103,15 @@ sub form {
     $self->add_fieldset($row->{'name'});
     
     foreach (sort { ($sp->{$a} =~ /^<.*?>(.+)/ ? $1 : $sp->{$a}) cmp ($sp->{$b} =~ /^<.*?>(.+)/ ? $1 : $sp->{$b}) } keys %$sp) {
-      my $name = sprintf 'species_%s_%s', $row->{'id'}, lc;
-      
-      if ($_ eq $species) {
-        $self->add_form_element({
-          type => 'Hidden',
-          name => $name
-        });
-      } else {
-        $self->add_form_element({
-          type  => 'CheckBox', 
-          label => $sp->{$_},
-          name  => $name,
-          value => 'yes',
-          raw   => 1
-        });
-      }
+      $self->add_form_element({
+        type  => 'CheckBox', 
+        label => $sp->{$_},
+        name  => sprintf('species_%s_%s', $row->{'id'}, lc),
+        value => 'yes',
+        raw   => 1
+      });
     }
   }
 }
 
 1;
-

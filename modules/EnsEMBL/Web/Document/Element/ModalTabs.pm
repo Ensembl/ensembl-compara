@@ -15,8 +15,7 @@ sub init {
   my $controller = shift;
   my $hub        = $self->hub;
   my $type       = $controller->page_type eq 'Configurator' ? 'Config' : $hub->type;
-  my $config     = 'config_' . $hub->param('config');
-  $config        =~ s/__/_/; # config paramenter can be _page, so in this case make sure we have the correct value
+  my $config     = 'config_' . $hub->action;
   
   $self->EnsEMBL::Web::Document::Element::Modal::init($controller);
   

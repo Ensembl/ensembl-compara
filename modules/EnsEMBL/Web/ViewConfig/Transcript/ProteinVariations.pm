@@ -1,6 +1,6 @@
 # $Id$
 
-package EnsEMBL::Web::ViewConfig::Variation::Mappings;
+package EnsEMBL::Web::ViewConfig::Transcript::ProteinVariations;
 
 use strict;
 
@@ -17,10 +17,10 @@ sub init {
 
 sub form {
   my $self = shift;
-  
+
   $self->add_form_element({
     type   => 'DropDown',
-    select => 'select',
+    select =>, 'select',
     label  => 'Type of consequences to display',
     name   => 'consequence_format',
     values => [

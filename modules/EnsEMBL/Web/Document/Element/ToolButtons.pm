@@ -62,19 +62,21 @@ sub init {
   my $controller  = shift;
   my $hub         = $controller->hub;
   my $object      = $controller->object;
-  my $view_config = $controller->view_config;
-  my $config      = $view_config && $view_config->real ? $view_config->default_config : undef;
+  my @components  = @{$hub->components};
+  my $view_config;
   
-  if ($config) {
-    (my $rel   = $config) =~ s/^_//;
+  $view_config = $hub->get_viewconfig(shift @components) while !$view_config && scalar @components; 
+  
+  if ($view_config) {
+    my $component = $view_config->component;
     
     $self->add_entry({
       caption => 'Configure this page',
       class   => 'modal_link',
-      rel     => "modal_config_$rel",
-      url     => $hub->url('Config', { 
-        time   => time, 
-        config => $config
+      rel     => "modal_config_$component",
+      url     => $hub->url('Config', {
+        action    => $component,
+        function  => undef,
       })
     });
   } else {

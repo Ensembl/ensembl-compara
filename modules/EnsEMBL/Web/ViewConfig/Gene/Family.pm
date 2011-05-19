@@ -12,31 +12,32 @@ sub init {
   my $self    = shift;
   my %formats = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
 
-  $self->_set_defaults(
-    map({ 'species_'. lc($_) => 'yes' } $self->species_defs->valid_species),
-    map({ 'opt_'. lc($_) => 'yes' } keys %formats)
-  );
+  $self->set_defaults({
+    map({ 'species_' . lc($_) => 'yes' } $self->species_defs->valid_species),
+    map({ 'opt_'     . lc($_) => 'yes' } keys %formats)
+  });
   
-  $self->storable = 1;
-  $self->nav_tree = 1;
+  $self->code = 'Gene::Family';
 }
 
 sub form {
   my $self         = shift;
   my %formats      = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
   my $species_defs = $self->species_defs;
-
+  my %species      = map { $species_defs->species_label($_) => $_ } $species_defs->valid_species;
+  
   $self->add_fieldset('Selected species');
   
-  foreach ($species_defs->valid_species) {
+  foreach (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %species) {
     $self->add_form_element({
       type  => 'CheckBox', 
-      label => $species_defs->species_label($_),
-      name  => 'species_' . lc $_,
-      value => 'yes', 
+      label => $_,
+      name  => 'species_' . lc $species{$_},
+      value => 'yes',
       raw   => 1
     });
   }
+  
   $self->add_fieldset('Selected databases');
   
   foreach(sort keys %formats) {
