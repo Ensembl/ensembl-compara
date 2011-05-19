@@ -12,7 +12,7 @@ sub content {
   my $form_action = $hub->url({ action => 'Configure', function => $hub->function }, 1);
   my $slice       = $hub->param('slice');
   my $href        = $hub->param('base_url');
-  my $form        = $self->modal_form('export_output_configuration', $form_action->[0], { label => '< Back', method => 'get' });
+  my $form        = $self->modal_form('export_output_configuration', $form_action->[0], { label => '< Back', method => 'post' });
   
   $form->add_fieldset;
   
