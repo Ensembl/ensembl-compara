@@ -31,7 +31,8 @@ sub content {
   
   $self->_attach_das($image_config);
 
-  my $info = $image_config->_update_missing($object);
+  $image_config->_update_missing($object);
+  
   my $image = $self->new_image($slice, $image_config, $object->highlights);
   
   return if $self->_export_image($image);
@@ -40,7 +41,7 @@ sub content {
   $image->{'panel_number'} = 'top';
   $image->set_button('drag', 'title' => 'Click or drag to centre display');
 
-  return $image->render . $self->_configure_display($info->{'count'});
+  return $image->render;
 }
 
 1;
