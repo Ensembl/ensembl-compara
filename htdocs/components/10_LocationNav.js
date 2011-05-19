@@ -7,7 +7,8 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     this.matchRegex   = new RegExp(/[\?;&]r=([^;&]+)/);
     this.replaceRegex = new RegExp(/([\?;&]r=)[^;&]+(;&?)*/);
     
-    Ensembl.EventManager.register('hashChange', this, this.getContent);
+    Ensembl.EventManager.register('hashChange',  this, this.getContent);
+    Ensembl.EventManager.register('changeWidth', this, this.resize);
     
     if (!window.location.pathname.match(/\/Multi/)) {
       Ensembl.EventManager.register('ajaxComplete', this, function () { this.enabled = true; });
