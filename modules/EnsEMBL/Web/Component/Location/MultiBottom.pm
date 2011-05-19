@@ -21,7 +21,7 @@ sub content {
   my $hub    = $self->hub;
   my $object = $self->object;
   
-  return if $hub->param('show_panels') eq 'top';
+  return if $hub->param('show_bottom_panel') eq 'no';
   
   my $threshold = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
   
