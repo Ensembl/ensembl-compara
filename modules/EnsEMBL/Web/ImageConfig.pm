@@ -116,6 +116,7 @@ sub storable :lvalue { $_[0]->{'storable'}; } # Set to 1 if configuration can be
 sub altered  :lvalue { $_[0]->{'altered'};  } # Set to 1 if the configuration has been updated
 
 sub hub                 { return $_[0]->{'hub'};                                                                     }
+sub code                { return $_[0]->{'code'};                                                                    }
 sub core_objects        { return $_[0]->hub->core_objects;                                                           }
 sub colourmap           { return $_[0]->hub->colourmap;                                                              }
 sub species_defs        { return $_[0]->hub->species_defs;                                                           }
