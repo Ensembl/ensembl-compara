@@ -61,43 +61,36 @@ sub karyotype {
   my $chr_name;
 
   my $image_config = $hub->get_imageconfig($config_name);
-  my $view_config  = $hub->viewconfig;
-
+  
   # set some dimensions based on number and size of chromosomes
   if ($image_config->get_parameter('all_chromosomes') eq 'yes') {
     my $total_chrs = @{$hub->species_defs->ENSEMBL_CHROMOSOMES};
-    my $rows;
+    my $rows       = $hub->param('rows') || ceil($total_chrs / 18);
+    my $chr_length = $hub->param('chr_length');
+       $chr_name   = 'ALL';
 
-    $chr_name = 'ALL';
-
-    if ($view_config) {
-      my $chr_length = $view_config->get('chr_length') || 200;
-      my $total_length = $chr_length + 25;
-
-      $rows = $view_config->get('rows');
-
+    if ($chr_length) {
       $image_config->set_parameters({
         image_height => $chr_length,
-        image_width  => $total_length,
+        image_width  => $chr_length + 25,
       });
     }
-
-    $rows = ceil($total_chrs / 18) unless $rows;
-
+    
     $image_config->set_parameters({ 
-        container_width => $hub->species_defs->MAX_CHR_LENGTH,
-        rows            => $rows,
-        slice_number    => '0|1',
-      });
+      container_width => $hub->species_defs->MAX_CHR_LENGTH,
+      rows            => $rows,
+      slice_number    => '0|1',
+    });
   } else {
     $chr_name = $object->seq_region_name if $object;
-
+    
     my $seq_region_length = $object ? $object->seq_region_length : '';
+    
     $image_config->set_parameters({
-        container_width => $seq_region_length,
-        slice_number    => '0|1'
-      });
-
+      container_width => $seq_region_length,
+      slice_number    => '0|1'
+    });
+    
     $image_config->{'_rows'} = 1;
   }
 
@@ -106,24 +99,27 @@ sub karyotype {
   # get some adaptors for chromosome data
   my ($sa, $ka, $da);
   my $species = $hub->param('species') || $hub->species;
+  
   return unless $species;
 
   my $db = $hub->databases->get_DBAdaptor('core', $species);
+  
   eval {
     $sa = $db->get_SliceAdaptor,
     $ka = $db->get_KaryotypeBandAdaptor,
     $da = $db->get_DensityFeatureAdaptor
   };
+  
   return $@ if $@;
 
   # create the container object and add it to the image
   $self->drawable_container = new Bio::EnsEMBL::VDrawableContainer({
-      sa  => $sa, 
-      ka  => $ka, 
-      da  => $da, 
-      chr => $chr_name,
-      format =>$hub->param('export')
-    }, $image_config, \@highlights);
+    sa  => $sa, 
+    ka  => $ka, 
+    da  => $da, 
+    chr => $chr_name,
+    format =>$hub->param('export')
+  }, $image_config, \@highlights);
 
   return undef; # successful
 }
@@ -272,7 +268,7 @@ sub render_image_map {
     </map>
   };
   
-  $map .= '<input type="hidden" class="panel_type" value="ImageMap" />' unless $self->{'no_panel_type'};
+  $map .= '<input type="hidden" class="panel_type" value="ImageMap" />';
   
   return $map;
 }
@@ -294,7 +290,7 @@ sub hover_labels {
       if ($_->{'current'}) {
         $renderers .= qq{<li class="current"><img src="${img_url}render/$_->{'current'}.gif" alt="$text" title="$text" /><img src="${img_url}tick.png" class="tick" alt="Selected" title="Selected" /> $text</li>};
       } else {
-        $renderers .= qq{<li><a href="$_->{'url'}" class="config" rel="$label->{'config'}"><img src="${img_url}render/$_->{'val'}.gif" alt="$text" title="$text" /> $text</a></li>};
+        $renderers .= qq{<li><a href="$_->{'url'}" class="config" rel="$label->{'component'}"><img src="${img_url}render/$_->{'val'}.gif" alt="$text" title="$text" /> $text</a></li>};
       }
     }
     
@@ -303,8 +299,8 @@ sub hover_labels {
         <p class="header">%s</p>
         %s
         %s
-        <a href="$label->{'fav'}[1]" class="config favourite%s" rel="$label->{'config'}" title="Favourite track"></a>
-        <a href="$label->{'off'}" class="config" rel="$label->{'config'}"><img src="${img_url}cross_red_13.png" alt="Turn track off" title="Turn track off" /></a>
+        <a href="$label->{'fav'}[1]" class="config favourite%s" rel="$label->{'component'}" title="Favourite track"></a>
+        <a href="$label->{'off'}" class="config" rel="$label->{'component'}"><img src="${img_url}cross_red_13.png" alt="Turn track off" title="Turn track off" /></a>
         <div class="desc">%s</div>
         <div class="config">%s</div>
         <div class="spinner"></div>
@@ -520,6 +516,7 @@ sub render {
   }
 
   $html .= $self->tailnote;
+  $html .= qq{<input type="hidden" class="image_config" value="$self->{'image_configs'}[0]{'type'}" />};
   
   $self->{'width'} = $image->width;
   $self->{'species_defs'}->timer_push('Image->render ending', undef, 'draw');
