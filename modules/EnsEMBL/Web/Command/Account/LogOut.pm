@@ -30,7 +30,7 @@ sub process {
   });
   
   $user_cookie->clear($self->r);
-  $hub->redirect($hub->referer->{'uri'});
+  $hub->redirect($hub->referer->{'absolute_url'});
 }
 
 1;
