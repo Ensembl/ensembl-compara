@@ -34,23 +34,29 @@ sub new {
   my $cache   = $hub->cache;
   
   my $self = {
-    hub                 => $hub,
-    _font_face          => $style->{'GRAPHIC_FONT'} || 'Arial',
-    _font_size          => ($style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'}) || 20,
-    _texthelper         => new Sanger::Graphics::TextHelper,
-    code                => $code,
-    type                => $type,
-    species             => $species,
-    _useradded          => {}, # contains list of added features
-    _r                  => undef,
-    no_load             => undef,
-    storable            => 1,
-    altered             => 0,
-    _core               => undef,
-    _tree               => new EnsEMBL::Web::NewTree,
-    _parameters         => { margin => 5, spacing => 2 }, # Default margin and spacing
-    transcript_types    => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene)],
-    unsortable_menus    => {
+    hub              => $hub,
+    _font_face       => $style->{'GRAPHIC_FONT'} || 'Arial',
+    _font_size       => ($style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'}) || 20,
+    _texthelper      => new Sanger::Graphics::TextHelper,
+    code             => $code,
+    type             => $type,
+    species          => $species,
+    _useradded       => {}, # contains list of added features
+    _r               => undef,
+    no_load          => undef,
+    storable         => 1,
+    altered          => 0,
+    _core            => undef,
+    _tree            => new EnsEMBL::Web::NewTree,
+    _parameters      => { margin => 5, spacing => 2 }, # Default margin and spacing
+    transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene)],
+    extra_menus      => {
+      active_tracks    => 1,
+      favourite_tracks => 1,
+      search_results   => 1,
+      display_options  => 1
+    },
+    unsortable_menus => {
       decorations => 1,
       information => 1,
       options     => 1,
@@ -93,7 +99,10 @@ sub new {
     }
   }
   
-  $self->set_parameter('sortable_tracks', 1) if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d)/ && $1 < 7 && $self->get_parameter('sortable_tracks') eq 'drag'; # No sortable tracks on images for IE6 and lower
+  my $sortable = $self->get_parameter('sortable_tracks');
+  
+  $self->set_parameter('sortable_tracks', 1)  if $sortable eq 'drag' && $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d)/ && $1 < 7; # No sortable tracks on images for IE6 and lower
+  $self->{'extra_menus'}->{'track_order'} = 1 if $sortable;
   
   $self->{'no_image_frame'} = 1;
   
@@ -103,8 +112,8 @@ sub new {
   return $self;
 }
 
-sub storable :lvalue { $_[0]->{'storable'}; } # Set whether this ViewConfig is changeable by the User, and hence needs to access the database to set storable do $view_config->storable = 1; in SC code
-sub altered  :lvalue { $_[0]->{'altered'};  } # Set to one if the configuration has been updated
+sub storable :lvalue { $_[0]->{'storable'}; } # Set to 1 if configuration can be altered
+sub altered  :lvalue { $_[0]->{'altered'};  } # Set to 1 if the configuration has been updated
 
 sub hub                 { return $_[0]->{'hub'};                                                                     }
 sub core_objects        { return $_[0]->hub->core_objects;                                                           }
@@ -317,7 +326,7 @@ sub add_tracks {
     next if $self->get_node($key); # Don't add duplicates
     
     $params->{'glyphset'} = $glyphset;
-    $menu->append( $self->create_track($key, $caption, $params));
+    $menu->append($self->create_track($key, $caption, $params));
   }
 }
 
@@ -716,7 +725,7 @@ sub update_from_input {
   
   return $self->reset if $input->param('reset');
   
-  my $diff   = $input->param('diff');
+  my $diff   = $input->param('image_config');
   my $reload = 0;
   
   if ($diff) {
