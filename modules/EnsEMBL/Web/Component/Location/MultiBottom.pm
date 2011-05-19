@@ -35,7 +35,7 @@ sub content {
   my $short_name      = $slices->[0]->{'short_name'};
   my $max             = scalar @$slices;
   my $base_url        = $hub->url($hub->multi_params);
-  my $s               = $hub->param('show_panels') eq 'both' ? 3 : 2;
+  my $s               = $hub->get_viewconfig('MultiTop')->get('show_panel') eq 'yes' ? 3 : 2;
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
   my $multi_config    = $hub->get_imageconfig('MultiBottom', 'Multi', 'Multi');
   my $methods         = { BLASTZ_NET => $multi_config->get_option('opt_pairwise_blastz', 'values'), TRANSLATED_BLAT_NET => $multi_config->get_option('opt_pairwise_tblat', 'values') };
