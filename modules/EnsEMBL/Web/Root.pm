@@ -176,8 +176,10 @@ sub get_module_names {
     } else {
       my $error = $self->dynamic_use_failure("$module_root$modules[-1]");
       warn $error unless $error =~ /^Can't locate/;
+      $@ = undef;
     }
   }
+  
   return wantarray ? @return : $return[0];
 }
 
