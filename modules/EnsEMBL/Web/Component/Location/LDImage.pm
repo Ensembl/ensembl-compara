@@ -35,9 +35,8 @@ sub content {
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $hub->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH    = $hub->species_defs->ENSEMBL_TMP_TMP;
   
-  my $image_config  = $hub->get_imageconfig('ldview');
-  my (undef, $snps) = $object->getVariationsOnSlice;
-  my $parameters    = { 
+  my $image_config = $hub->get_imageconfig('ldview');
+  my $parameters   = { 
     image_width     => $self->image_width || 800, 
     container_width => $slice->length
   };
@@ -52,7 +51,7 @@ sub content {
     next unless $object->pop_obj_from_name($pop_name)->{$pop_name}; # skip if not a valid population name
    
     my $population_image_config = $hub->get_imageconfig('ldview', $pop_name);
-    $population_image_config->init_population($parameters, $pop_name, $snps);
+    $population_image_config->init_population($parameters, $pop_name);
     push @$containers_and_configs, $slice, $population_image_config;
   }
 
