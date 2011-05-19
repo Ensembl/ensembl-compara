@@ -1,8 +1,8 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Location::ViewTop;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
 
 use base qw(EnsEMBL::Web::Component::Location);
 
@@ -14,42 +14,37 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
+  my $self   = shift;
+  my $hub    = $self->hub;
   my $object = $self->object;
 
-  return if $object->param('panel_top') eq 'no';
+  return if $hub->param('show_panel') eq 'no';
   
-  my $threshold = 1e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
-
-  my $slice = $object->slice;
-
+  my $threshold    = 1e6 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
+  my $image_config = $hub->get_imageconfig('contigviewtop');
+  my ($seq_region_type, $seq_region_name, $seq_region_length) = map $object->$_, qw(seq_region_type seq_region_name seq_region_length);
+  my $slice;
+  
   if ($object->length > $threshold) {
-    my $slice = $object->slice;
-  } elsif ($object->seq_region_length < $threshold) {
-    $slice = $object->database('core')->get_SliceAdaptor->fetch_by_region(
-      $object->seq_region_type, $object->seq_region_name, 1, $object->seq_region_length, 1
-    );
+    $slice = $object->slice;
+  } elsif ($seq_region_length < $threshold) {
+    $slice = $hub->database('core')->get_SliceAdaptor->fetch_by_region($seq_region_type, $seq_region_name, 1, $seq_region_length, 1);
   } else {
-    my $c = int($object->centrepoint);
+    my $c = int $object->centrepoint;
     my $s = ($c - $threshold/2) + 1;
-    $s = 1 if $s < 1;
+       $s = 1 if $s < 1;
     my $e = $s + $threshold - 1;
     
-    if ($e > $object->seq_region_length) {
-      $e = $object->seq_region_length;
+    if ($e > $seq_region_length) {
+      $e = $seq_region_length;
       $s = $e - $threshold - 1;
     }
     
-    $slice = $object->database('core')->get_SliceAdaptor->fetch_by_region(
-      $object->seq_region_type, $object->seq_region_name, $s, $e, 1
-    );
+    $slice = $hub->database('core')->get_SliceAdaptor->fetch_by_region($seq_region_type, $seq_region_name, $s, $e, 1);
   }
   
-  my $length = $slice->end - $slice->start + 1;
-  my $image_config = $object->get_imageconfig('contigviewtop');
-  
   $image_config->set_parameters({
-    container_width => $length,
+    container_width => $slice->end - $slice->start + 1,
     image_width     => $self->image_width,
     slice_number    => '1|2'
   });
@@ -70,19 +65,18 @@ sub content {
   };
 
   ## Force display of individual low-weight markers on pages linked to from Location/Marker
-  if (my $marker_id = $object->param('m')) {
+  if (my $marker_id = $hub->param('m')) {
     $image_config->modify_configs(
       [ 'marker' ],
       { marker_id => $marker_id }
     );
   }
-
-
+  
   my $image = $self->new_image($slice, $image_config, $object->highlights);
   
   return if $self->_export_image($image);
  
-  $image->imagemap = 'yes';
+  $image->imagemap         = 'yes';
   $image->{'panel_number'} = 'top';
   $image->set_button('drag', 'title' => 'Click or drag to centre display');
   
