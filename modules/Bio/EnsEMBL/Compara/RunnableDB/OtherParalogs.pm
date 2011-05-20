@@ -88,8 +88,6 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->print_params if($self->debug);
-
     my $protein_tree_id     = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
     my $protein_tree        = $self->compara_dba->get_SuperProteinTreeAdaptor->fetch_node_by_node_id( $protein_tree_id )
                                         or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";

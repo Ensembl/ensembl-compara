@@ -144,15 +144,6 @@ sub DESTROY {
 ##########################################
 
 
-sub print_params {
-  my $self = shift;
-
-  print("params:\n");
-  print("  tree_id   : ", $self->param('protein_tree')->node_id,"\n") if($self->param('protein_tree'));
-  print("  cdna      : ", $self->param('cdna'),"\n");
-}
-
-
 sub run_njtree_phyml {
   my $self = shift;
 
