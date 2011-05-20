@@ -47,7 +47,7 @@ sub init {
     repeat           => 'Repeats',
     variation        => 'Germline variation',
     somatic          => 'Somatic Mutations',
-    functional       => 'Functional genomics',
+    functional       => 'Regulation',
     multiple_align   => 'Multiple alignments',
     pairwise_blastz  => 'BLASTz/LASTz alignments',
     pairwise_tblat   => 'Translated blat alignments',

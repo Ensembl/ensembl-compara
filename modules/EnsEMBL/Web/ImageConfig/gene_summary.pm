@@ -23,7 +23,7 @@ sub init {
     prediction    => 'Prediction transcripts',
     variation     => 'Germline variation',
     somatic       => 'Somatic mutations',
-    functional    => 'Functional genomics',
+    functional    => 'Regulation',
     external_data => 'External data',
     user_data     => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
     other         => 'Decorations',

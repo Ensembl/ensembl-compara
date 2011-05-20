@@ -20,7 +20,7 @@ sub init {
   $self->create_menus(
     transcript   => 'Genes',
     prediction   => 'Prediction transcripts',
-    functional   => 'Functional genomics',
+    functional   => 'Regulation',
     other        => 'Decorations',
     information  => 'Information',
   );

@@ -29,7 +29,7 @@ sub init {
     simple         => 'Simple features',
     misc_feature   => 'Misc. regions',
     repeat         => 'Repeats',
-    functional     => 'Functional Genomics', 
+    functional     => 'Regulation', 
     multiple_align => 'Multiple alignments',
     variation      => 'Germline variation',
     other          => '',

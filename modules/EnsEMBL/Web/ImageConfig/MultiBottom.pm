@@ -38,7 +38,7 @@ sub init {
     repeat          => 'Repeats',
     variation       => 'Germline variation',
     somatic         => 'Somatic mutations', 
-    functional      => 'Functional genomics',
+    functional      => 'Regulation',
     decorations     => 'Additional decorations',
     information     => 'Information'
   );

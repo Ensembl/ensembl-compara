@@ -23,7 +23,7 @@ sub init {
     sequence    => 'Sequence',
     variation   => 'Germline variation',
     somatic     => 'Somatic Mutation',
-    functional  => 'Functional Genomics',
+    functional  => 'Regulation',
     information => 'Information', 
     other       => 'Decorations'
   );

@@ -24,7 +24,7 @@ sub init {
     prediction  => 'Prediction transcripts',
     variation   => 'Germline variation',
     somatic     => 'Somatic Mutation',
-    functional  => 'Functional Genomics',
+    functional  => 'Regulation',
     information => 'Information', 
     other       => 'Decorations'
   );

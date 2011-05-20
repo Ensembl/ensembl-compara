@@ -26,7 +26,7 @@ sub init {
     simple        => 'Simple features',
     misc_feature  => 'Misc. regions',
     repeat        => 'Repeats',
-    functional    => 'Functional Genomics', 
+    functional    => 'Regulation', 
     variation     => 'Germline variation',
     other         => 'Decorations',
     information   => 'Information'
