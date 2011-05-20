@@ -104,6 +104,11 @@ Disallow:   /);
 
 User-Agent: W3C-checklink
 Allow: /info
+
+User-Agent: Sanger Search Bot/Nutch-1.1 (Nutch Spider; http://www.sanger.ac.uk; webmaster at sanger dot ac dot uk)
+Allow: /info/*
+Allow: /index.html
+
 );
     close FH;
   } else {
