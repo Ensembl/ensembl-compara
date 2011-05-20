@@ -10,6 +10,7 @@ sub init {
   my $self = shift;
   
   $self->SUPER::init;
+  $self->set_defaults({ opt_highlight => 'yes' });
   $self->add_image_config('regulation_view') unless $self->hub->function eq 'Cell_line'; 
 }
 
@@ -35,8 +36,7 @@ sub form_context {
     ]
   });
 
-  $self->add_form_element({ type => 'YesNo', name => 'opt_highlight',    select => 'select', label => 'Highlight core region'            });
-  $self->add_form_element({ type => 'YesNo', name => 'opt_empty_tracks', select => 'select', label => 'Show number of selected features' });
+  $self->add_form_element({ type => 'YesNo', name => 'opt_highlight', select => 'select', label => 'Highlight core region' });
 }
 
 1;

@@ -39,11 +39,10 @@ sub content {
   my $image_config_cell_line = $hub->get_imageconfig('regulation_view', 'cell_line');
   
   $image_config_cell_line->set_parameters({
-    container_width  => $slice_length,
-    image_width      => $image_width,
-    slice_number     => '2|1',
-    opt_highlight    => $highlight,
-    opt_empty_tracks => $hub->param('opt_empty_tracks')
+    container_width => $slice_length,
+    image_width     => $image_width,
+    slice_number    => '2|1',
+    opt_highlight   => $highlight,
   });
 
   $image_config_cell_line->{'data_by_cell_line'} = $self->new_object('Slice', $slice, $object->__data)->get_cell_line_data($image_config_cell_line); 
