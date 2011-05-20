@@ -17,7 +17,7 @@ sub init {
     title       => 'Details by cell line',
     show_labels => 'yes',
     label_width => 113,
-    opt_lines   => 1,
+    opt_lines   => 1
   });
   
   $self->create_menus(
@@ -57,10 +57,7 @@ sub init {
     { menu => 'no', display => 'off' }
   );
   
-  $self->modify_configs(
-    [ 'opt_empty_tracks' ],
-    { menu => 'yes' }
-  );
+  $self->get_node('opt_empty_tracks')->set('display', 'normal');
   
   foreach my $cell_line (@cell_lines) {
     my $display = $cell_line =~ /^(MultiCell|CD4)$/ ? 'tiling_feature' : 'compact';
