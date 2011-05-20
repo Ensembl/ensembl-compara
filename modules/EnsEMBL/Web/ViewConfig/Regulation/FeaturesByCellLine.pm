@@ -17,8 +17,6 @@ sub init {
 sub form_context {
   my $self = shift;
   
-  $self->add_fieldset('Context');
-  
   $self->add_form_element({
     type   => 'DropDown',
     select => 'select',
