@@ -30,6 +30,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
+
 =head2 compara_dba
 
     Description: this is an intelligent setter/getter of a Compara DBA. Resorts to magic in order to figure out how to connect.
@@ -49,6 +50,7 @@ sub compara_dba {
 
     return $self->{'comparaDBA'};
 }
+
 
 =head2 go_figure_compara_dba
 
@@ -82,6 +84,18 @@ sub go_figure_compara_dba {
         return Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -DBCONN => $foo->db->dbc );
 
     } else {
+    
+        unless(ref($foo)) {    # maybe it is simply a registry key?
+        
+            my $dba;
+            eval {
+                require Bio::EnsEMBL::Registry;
+                $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($foo, 'compara');
+            };
+            if($dba) {
+                return $dba;
+            }
+        }
 
         die "Sorry, could not figure out how to make a Compara DBAdaptor out of $foo";
     }
