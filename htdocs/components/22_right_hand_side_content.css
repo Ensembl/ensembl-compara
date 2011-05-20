@@ -83,4 +83,5 @@ body.static hr.with-nav { margin-left: 21em; }
 
 ul.no-bullet, ul.no-bullet li {list-style-image:none; list-style:none;}
 
-div.reorder_species ul li        { cursor: move; }
+div.reorder_species ul li          { cursor: n-resize; }
+body.mac div.reorder_species ul li { cursor: ns-resize; }

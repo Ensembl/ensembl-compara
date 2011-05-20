@@ -62,7 +62,7 @@ body.ie7 div.boundaries_wrapper ul                  { padding-top: 3px; }
 body.ie7 div.boundaries_wrapper ul li               { margin: -3px 0; }
 body.ie7 div.boundaries_wrapper ul.f li:first-child { margin-top: 0; }
 body.ie7 div.boundaries_wrapper ul li p             { position: absolute; left: 0; }
-body.mac div.boundaries_wrapper ul li p.handle      { cursor: move; }
+body.mac div.boundaries_wrapper ul li p.handle      { cursor: ns-resize; }
 
 @media print {
   div.boundaries_wrapper { display: none; }
