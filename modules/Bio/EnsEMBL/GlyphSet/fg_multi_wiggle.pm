@@ -62,7 +62,7 @@ sub draw_features {
   } 
 
   # if we have drawn tracks for this cell line add a separating line    
-  if ($drawn_data || $data->{$cell_line}{'reg_feature'} || ($Config->get_parameter('opt_empty_tracks') eq 'yes')){ 
+  if ($drawn_data || $data->{$cell_line}{'reg_feature'} || ($Config->get_option('opt_empty_tracks') == 1)){ 
     # do not draw on contig view
     return if ($object_type eq 'Location');
     unless (exists $data->{$cell_line}->{'last_cell_line'}){
@@ -271,7 +271,7 @@ sub display_error_message {
   my $Config = $self->{'config'}; 
   my $number_available = scalar @{$Config->{'data_by_cell_line'}{$cell_line}{$focus}{'available'}};
   my $number_configured  = scalar @{$Config->{'data_by_cell_line'}{$cell_line}{$focus}{'configured'}};
-  return unless $Config->get_parameter('opt_empty_tracks') eq 'yes'; 
+  return unless $Config->get_option('opt_empty_tracks') == 1; 
   my ($class,  $display_style); 
    
   if ($type eq 'peaks'){
