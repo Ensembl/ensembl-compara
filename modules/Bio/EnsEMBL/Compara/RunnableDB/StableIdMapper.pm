@@ -15,7 +15,6 @@ use Scalar::Util qw(looks_like_number);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-=pod
 
 =head2 new_without_hive()
   
@@ -55,13 +54,12 @@ sub new_without_hive {
   $self->param('type',          $type);
   $self->param('release',       $release);
   $self->param('prev_release',  $prev_release);
-  $self->param('prev_rel_db',   $self->_dba_or_hash_to_conn($prev_release_db));
-  $self->param('master_db',     $self->_dba_or_hash_to_conn($master_db));
+  $self->param('prev_rel_db',   $prev_release_db);
+  $self->param('master_db',     $master_db);
   
   return $self;
 }
 
-=pod
 
 =head2 run_without_hive()
   
@@ -81,12 +79,13 @@ sub run_without_hive {
   return;
 }
 
+
 sub fetch_input {
   my $self = shift @_;
   
   my $prev_rel_db  = $self->param('prev_rel_db');
   if(! $prev_rel_db) {
-    print 'Not running as not prev_rel_db given in parameters' if $self->debug();
+    print 'Not running as 'prev_rel_db' not given in parameters' if $self->debug();
     return;
   }
 
@@ -95,7 +94,7 @@ sub fetch_input {
   my $curr_release = $self->param('release')      || throw "'release' is a required numeric parameter, please set it in the input_id hashref";
   looks_like_number($curr_release)                || throw "'release' is a numeric parameter. Check your input";
   my $prev_release = $self->param('prev_release') || $curr_release - 1;
-  my $prev_rel_dbc = $prev_rel_db && $self->_dba_or_hash_to_conn($prev_rel_db);
+  my $prev_rel_dbc = $prev_rel_db && $self->go_figure_compara_dba($prev_rel_db)->dbc();
 
   my $adaptor   = Bio::EnsEMBL::Compara::StableId::Adaptor->new();
   my $from_ncs  = $adaptor->fetch_ncs($prev_release, $type, $prev_rel_dbc);
@@ -107,9 +106,8 @@ sub fetch_input {
   $self->param('adaptor', $adaptor);
   $self->param('ncsl', $ncsl);
   $self->param('prev_release', $prev_release); #replace it with whatever it is now
-
-  return 1;
 }
+
 
 sub run {
   my $self = shift @_;
@@ -123,9 +121,8 @@ sub run {
   my $ncsl = $self->param('ncsl');
   my $postmap = $ncsl->maximum_name_reuse();
   $ncsl->to->apply_map($postmap);
-
-  return 1;
 }
+
 
 sub write_output {
   my $self = shift @_;
@@ -136,7 +133,7 @@ sub write_output {
   my $ncsl      = $self->param('ncsl');
   my $master_db = $self->param('master_db');
 
-  my $master_dbc = $master_db && $self->_dba_or_hash_to_conn($master_db);
+  my $master_dbc = $master_db && $self->go_figure_compara_dba($master_db)->dbc();
   my $time_when_started_storing = time();  
   eval {
     $adaptor->store_map($ncsl->to, $self->compara_dba()->dbc());
@@ -144,25 +141,6 @@ sub write_output {
   };
   if($@) {
     throw "Detected error during store. Check your database settings are correct for the master database (read/write): $@";
-  }
-
-  return 1;
-}
-
-sub _dba_or_hash_to_conn {
-  my ($self, $input) = @_;
-  if(check_ref($input, 'Bio::EnsEMBL::DBSQL::DBAdaptor')) {
-    return $input->dbc();
-  }
-  if(check_ref($input, 'Bio::EnsEMBL::DBSQL::DBConnection')) {
-    return $input;
-  }
-  elsif(check_ref($input, 'HASH')) {
-    return Bio::EnsEMBL::DBSQL::DBConnection->new(%{$input});
-  }
-  else {
-    my $ref = ref($input) || 'UNKNOWNREF';
-    throw "Not sure how to parse $ref into a database adaptor";
   }
 }
 
