@@ -74,17 +74,13 @@ sub init {
       { display => $display , menu => 'yes' }
     );
     
-    push @{$self->{'tracks_to_remove'}}, "reg_feats_$cell_line", "reg_feats_core_$cell_line";
-    
-    next if $cell_line eq 'MultiCell';
-    
     # Turn on supporting evidence track
     $self->modify_configs(
       [ "reg_feats_other_$cell_line" ],
       { display => 'compact', menu => 'yes' }
     );
     
-    push @{$self->{'tracks_to_remove'}}, "reg_feats_other_$cell_line";
+    push @{$self->{'tracks_to_remove'}}, "reg_feats_$cell_line", "reg_feats_core_$cell_line", "reg_feats_other_$cell_line";
   }
   
   if ($self->{'code'} ne $self->{'type'}) {
@@ -102,7 +98,7 @@ sub init_top {
     [ 'fg_background_regulation', '', 'fg_background_regulation', { display => 'normal', strand => 'r', menu => 'no', tag => 0            }],
   );
   
-  $self->get_node($_)->remove for @{$self->{'tracks_to_remove'}};
+  $_->remove for map $self->get_node($_) || (), @{$self->{'tracks_to_remove'}};
 }
 
 sub init_cell_line {
@@ -119,7 +115,7 @@ sub init_bottom {
     [ 'ruler',                    '', 'ruler',                    { display => 'normal', strand => 'r', menu => 'no', name => 'Ruler'     }],
   );
   
-  $self->get_node($_)->remove for @{$self->{'tracks_to_remove'}}, 'contig', 'transcript_core_ensembl';
+  $_->remove for map $self->get_node($_) || (), @{$self->{'tracks_to_remove'}}, 'contig', 'transcript_core_ensembl';
   
   $self->modify_configs(
     [ 'fg_regulatory_features_legend' ],
