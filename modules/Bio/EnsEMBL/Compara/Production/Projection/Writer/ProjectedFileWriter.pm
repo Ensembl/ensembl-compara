@@ -31,6 +31,7 @@ use strict;
 use warnings;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use File::Copy;
 use IO::Handle;
