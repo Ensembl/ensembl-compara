@@ -1,5 +1,5 @@
 MySQL Workbench was used to create schema diagrams for the core database.
-In case of schema changes, update the relevant diagram and regenerate the diagram pdf. Fundamental_tables_core.pdf was created by merging fundamental_tables_1.pdf and fundamental_tables_2.pdf using Batch pdf Merger.
+In case of schema changes, update the relevant diagram and regenerate the diagram pdf.
 
 To regenerate core_schema.html use script SQL2HTML.pl in ensembl-variation/sql/ with the following options:
 
