@@ -85,7 +85,7 @@ sub fetch_input {
   
   my $prev_rel_db  = $self->param('prev_rel_db');
   if(! $prev_rel_db) {
-    print 'Not running as 'prev_rel_db' not given in parameters' if $self->debug();
+    print q{Not running as 'prev_rel_db' not given in parameters}."\n" if $self->debug();
     return;
   }
 
