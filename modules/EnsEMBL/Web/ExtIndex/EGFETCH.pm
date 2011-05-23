@@ -41,6 +41,7 @@ my $dbnames = {
        'embl_dna' => 'embl',
        'unigene' => 'unigene',
        'swiss-2dpage' => 'uniprotkb',
+       'external feature' => 'embl', # this effectively makes embl the default when the dbname is not known
 };
 
 my $db_to_url_sub = {
