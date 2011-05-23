@@ -1,7 +1,7 @@
 MySQL Workbench was used to create schema diagrams for the core database.
 In case of schema changes, update the relevant diagram and regenerate the diagram pdf.
 
-To regenerate core_schema.html use script SQL2HTML.pl in ensembl-variation/sql/ with the following options:
+To regenerate core_schema.html use script sql2html.pl in ensembl/misc-scripts/ with the following options:
 
 -i (sql file name) table.sql
 -o (html file name) 
