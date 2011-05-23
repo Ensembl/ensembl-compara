@@ -2,9 +2,7 @@
 <html>
 <head>
 <meta http-equiv="CONTENT-TYPE" content="text/html; charset=utf-8" />
-<link rel="stylesheet" type="text/css" media="all" href="/minified/fa1c0d7130e7e0dd9fe708cf3f48373e.css" />
-
-<title>e! core schema </title>
+<title>Core Schema Documentation</title>
 
 <script language="Javascript" type="text/javascript">
 	// Function to show/hide the columns table
@@ -30,7 +28,6 @@
 <h1>Ensembl Core Schema Documentation</h1>
 
 <h2>Introduction</h2>
-
 
 <p>
 This document gives a high-level description of the tables that
@@ -84,13 +81,13 @@ Different tables are populated throughout the gene build process:
 </table>
 
 <p>
-This document refers to version <strong>61</strong> of the EnsEMBL
+This document refers to version <strong>63</strong> of the EnsEMBL
 core schema.
 </p>
 
 <br />
 
-
+<h3>List of the tables:</h3>
 <h2>Fundamental Tables</h2>
 <table><tr><td>
  <ul>
@@ -192,7 +189,6 @@ core schema.
 		<li><a href="#interpro"><b>interpro</b></a></li>
 		</ul>
 </td></tr></table>
-<hr />
 <br />
 <hr />
 <h2>Fundamental Tables</h2>
@@ -277,7 +273,7 @@ core schema.
 <td style="width:500px;text-align:left;height:10px"><span id="coord_system" style="font-size:11pt;font-weight:bold">coord_system</span></td>
 <td style="width:100px;text-align:right"><a id="a_coord_system" style="cursor:pointer;text-decoration:underline" onclick="show_hide('coord_system')">Show</a> columns</td>
 </tr></table>
-<p>Stores information about the available co-ordinate systems for the species identified through the species_id field. Note that for each species, there must be one co-ordinate system that has the attribute "sequence_level". (This is usually the contig coord_system.) The "top_level" coord_system is defined by linking the seq_region table through the seq_region_attrib table to the attrib_type table and giving the toplevel sequences the attribute "toplevel".<p>
+<p>Stores information about the available co-ordinate systems for the species identified through the species_id field. Note that for each species, there must be one co-ordinate system that has the attribute "top_level" and one that has the attribute "sequence_level".<p>
 
 	<div id="div_coord_system" style="display:none">
 
@@ -294,6 +290,7 @@ core schema.
 <p><b>See also:</b></p>
 <ul>
 	<li><a href="#seq_region">seq_region</a></li>
+	<li><a href="#meta_coord">meta_coord</a></li>
 	<li><a href="#meta">meta</a></li>
 </ul>
 
@@ -374,7 +371,7 @@ core schema.
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>exon_id</b></td><td>INT(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
 		<tr class="bg2"><td><b>stable_id</b></td><td>VARCHAR(128)</td><td></td><td>Stable identifier.     </td><td>key: stable_id_idx</td></tr>
-		<tr class="bg1"><td><b>version</b></td><td>INT(10)</td><td></td><td>Version number.       </td><td>key: stable_id_idx</td></tr>
+		<tr class="bg1"><td><b>version</b></td><td>INT(10)</td><td>1</td><td>Version number.       </td><td>key: stable_id_idx</td></tr>
 		<tr class="bg2"><td><b>created_date</b></td><td>DATETIME</td><td></td><td>Date created.       </td><td></td></tr>
 		<tr class="bg1"><td><b>modified_date</b></td><td>DATETIME</td><td></td><td>Date modified.       </td><td></td></tr>
 </table>
@@ -451,7 +448,7 @@ core schema.
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>gene_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#gene">gene</a> table.</td><td>key: gene_idx</td></tr>
 		<tr class="bg2"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>'0'</td><td>Foreign key references to the <a href="#attribute_type">attribute_type</a> table.</td><td>key: type_val_idx</td></tr>
-		<tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>Attribute value.  </td><td></td></tr>
+		<tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>Attribute value.  </td><td>key: type_val_idx<br />key: val_only_idx</td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -472,7 +469,7 @@ core schema.
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>gene_id</b></td><td>INT</td><td></td><td>Primary key, internal identifier. Foreign key references to the <a href="#gene">gene</a> table.</td><td>primary key</td></tr>
 		<tr class="bg2"><td><b>stable_id</b></td><td>VARCHAR(128)</td><td></td><td>Stable identifier.       </td><td>key: stable_id_idx</td></tr>
-		<tr class="bg1"><td><b>version</b></td><td>INT(10)</td><td></td><td>Version number.       </td><td>key: stable_id_idx</td></tr>
+		<tr class="bg1"><td><b>version</b></td><td>INT(10)</td><td>1</td><td>Version number.       </td><td>key: stable_id_idx</td></tr>
 		<tr class="bg2"><td><b>created_date</b></td><td>DATETIME</td><td></td><td>Date created.       </td><td></td></tr>
 		<tr class="bg1"><td><b>modified_date</b></td><td>DATETIME</td><td></td><td>Date modified.    </td><td></td></tr>
 </table>
@@ -583,7 +580,7 @@ core schema.
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>seq_region_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#seq_region">seq_region</a> table.</td><td>key: seq_region_idx</td></tr>
 		<tr class="bg2"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>'0'</td><td>Foreign key references to the <a href="#attribute_type">attribute_type</a> table.</td><td>key: type_val_idx</td></tr>
-		<tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>Attribute value.  </td><td></td></tr>
+		<tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>Attribute value.  </td><td>key: type_val_idx<br />key: val_only_idx</td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -632,7 +629,7 @@ core schema.
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>transcript_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#transcript">transcript</a> table.</td><td>key: transcript_idx</td></tr>
 		<tr class="bg2"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>'0'</td><td>Foreign key references to the <a href="#attribute_type">attribute_type</a> table.</td><td>key: type_val_idx</td></tr>
-		<tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>Attribute value. </td><td></td></tr>
+		<tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>Attribute value. </td><td>key: type_val_idx<br />key: val_only_idx</td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -653,7 +650,7 @@ core schema.
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>transcript_id</b></td><td>INT(10)</td><td></td><td>Primary key, internal identifier. Foreign key references to the <a href="#transcript">transcript</a> table.</td><td>primary key</td></tr>
 		<tr class="bg2"><td><b>stable_id</b></td><td>VARCHAR(128)</td><td></td><td>Stable identifier.       </td><td>key: stable_id_idx</td></tr>
-		<tr class="bg1"><td><b>version</b></td><td>INT(10)</td><td></td><td>Version number.       </td><td>key: stable_id_idx</td></tr>
+		<tr class="bg1"><td><b>version</b></td><td>INT(10)</td><td>1</td><td>Version number.       </td><td>key: stable_id_idx</td></tr>
 		<tr class="bg2"><td><b>created_date</b></td><td>DATETIME</td><td></td><td>Date created.       </td><td></td></tr>
 		<tr class="bg1"><td><b>modified_date</b></td><td>DATETIME</td><td></td><td>Date modified.    </td><td></td></tr>
 </table>
@@ -697,7 +694,7 @@ core schema.
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>translation_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#transcript">transcript</a> table.</td><td>key: translation_idx</td></tr>
 		<tr class="bg2"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>'0'</td><td>Foreign key references to the <a href="#attribute_type">attribute_type</a> table.</td><td>key: type_val_idx</td></tr>
-		<tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>Attribute value. </td><td></td></tr>
+		<tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>Attribute value. </td><td>key: type_val_idx<br />key: val_only_idx</td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -718,7 +715,7 @@ core schema.
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>translation_id</b></td><td>INT(10)</td><td></td><td>Primary key, internal identifier. Foreign key references to the <a href="#translation">translation</a> table.</td><td>primary key</td></tr>
 		<tr class="bg2"><td><b>stable_id</b></td><td>VARCHAR(128)</td><td></td><td>Stable identifier.       </td><td>key: stable_id_idx</td></tr>
-		<tr class="bg1"><td><b>version</b></td><td>INT(10)</td><td></td><td>Version number.       </td><td>key: stable_id_idx</td></tr>
+		<tr class="bg1"><td><b>version</b></td><td>INT(10)</td><td>1</td><td>Version number.       </td><td>key: stable_id_idx</td></tr>
 		<tr class="bg2"><td><b>created_date</b></td><td>DATETIME</td><td></td><td>Date created.       </td><td></td></tr>
 		<tr class="bg1"><td><b>modified_date</b></td><td>DATETIME</td><td></td><td>Date modified.    </td><td></td></tr>
 </table>
@@ -974,7 +971,7 @@ core schema.
 </div>
 <p><b>See also:</b></p>
 <ul>
-	<li><a href="#marker - Stores the original marker.  ">marker - Stores the original marker.  </a></li>
+	<li><a href="#marker  ">marker  </a></li>
 </ul>
 
 <br />
@@ -1091,7 +1088,7 @@ core schema.
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>misc_feature_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#misc_feature">misc_feature</a> table.       </td><td>key: misc_feature_idx</td></tr>
 		<tr class="bg2"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>'0'</td><td>Foreign key references to the <a href="#attribute_type">attribute_type</a> table.</td><td>key: type_val_idx</td></tr>
-		<tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>Attribute value.                 </td><td></td></tr>
+		<tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>Attribute value.                 </td><td>key: type_val_idx<br />key: val_only_idx</td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -1355,7 +1352,7 @@ core schema.
 		<tr class="bg2"><td><b>repeat_name</b></td><td>VARCHAR(255)</td><td></td><td>Repeat name.</td><td>key: name</td></tr>
 		<tr class="bg1"><td><b>repeat_class</b></td><td>VARCHAR(100)</td><td></td><td>E.g. 'Satellite', 'tRNA', 'LTR'.</td><td>key: class</td></tr>
 		<tr class="bg2"><td><b>repeat_type</b></td><td>VARCHAR(40)</td><td></td><td>E.g. 'Satellite repeats', 'Tandem repeats', 'Low complexity regions'.</td><td>key: type</td></tr>
-		<tr class="bg1"><td><b>repeat_consensus</b></td><td>TEXT</td><td></td><td>Repeat consensus sequence.</td><td></td></tr>
+		<tr class="bg1"><td><b>repeat_consensus</b></td><td>TEXT</td><td></td><td>Repeat consensus sequence.</td><td>key: consensus</td></tr>
 </table>
 </div>
 
@@ -1410,7 +1407,7 @@ core schema.
 <td style="width:500px;text-align:left;height:10px"><span id="splicing_event" style="font-size:11pt;font-weight:bold">splicing_event</span></td>
 <td style="width:100px;text-align:right"><a id="a_splicing_event" style="cursor:pointer;text-decoration:underline" onclick="show_hide('splicing_event')">Show</a> columns</td>
 </tr></table>
-<p>Represents alternative splicing events. <p>
+<p>The splicing event table contains alternative splicing events and constitutive splicing events as reported by the AltSpliceFinder program. Multiple alternative splicing events can be observed on a gene. The location of the splicing event on the seq_region is reported. The type of event is stored in the @link attrib_type table. <p>
 
 	<div id="div_splicing_event" style="display:none">
 
@@ -1432,7 +1429,7 @@ core schema.
 <td style="width:500px;text-align:left;height:10px"><span id="splicing_event_feature" style="font-size:11pt;font-weight:bold">splicing_event_feature</span></td>
 <td style="width:100px;text-align:right"><a id="a_splicing_event_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('splicing_event_feature')">Show</a> columns</td>
 </tr></table>
-<p>Represents alternative splicing event features. <p>
+<p>Represents alternative splicing event features. If the event is a constitutive exon, the constitutive exon and the transcript it belongs to is reported in this table. If the event is a cassette exon, the cassette exon and the transcript it belongs to is represented in this table. The transcript association field associates a sequence number with a transcript id. Thus, several exons skipped in an event can be attached to the same transcript. The features are ordered according to their genomic location and this is reflected in the feature order field value.<p>
 
 	<div id="div_splicing_event_feature" style="display:none">
 
@@ -1442,8 +1439,8 @@ core schema.
 		<tr class="bg2"><td><b>splicing_event_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#splicing_event">splicing_event</a> table.</td><td>key: se_idx</td></tr>
 		<tr class="bg1"><td><b>exon_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#exon">exon</a> table.</td><td>primary key</td></tr>
 		<tr class="bg2"><td><b>transcript_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#transcript">transcript</a> table.</td><td>primary key<br />key: transcript_idx</td></tr>
-		<tr class="bg1"><td><b>feature_order</b></td><td>INT(10)</td><td></td><td> </td><td></td></tr>
-		<tr class="bg2"><td><b>transcript_association</b></td><td>INT(10)</td><td></td><td> </td><td></td></tr>
+		<tr class="bg1"><td><b>feature_order</b></td><td>INT(10)</td><td></td><td>Feature order number according to genomic location.</td><td></td></tr>
+		<tr class="bg2"><td><b>transcript_association</b></td><td>INT(10)</td><td></td><td>Transcript sequence.</td><td></td></tr>
 		<tr class="bg1"><td><b>type</b></td><td>ENUM('constitutive_exon','exon','flanking_exon')</td><td></td><td>E.g. 'constitutive_exon','exon','flanking_exon'.</td><td></td></tr>
 		<tr class="bg2"><td><b>start</b></td><td>INT(10)</td><td></td><td>Sequence start.</td><td></td></tr>
 		<tr class="bg1"><td><b>end</b></td><td>INT(10)</td><td></td><td>Sequence end.</td><td></td></tr>
@@ -1455,7 +1452,7 @@ core schema.
 <td style="width:500px;text-align:left;height:10px"><span id="splicing_transcript_pair" style="font-size:11pt;font-weight:bold">splicing_transcript_pair</span></td>
 <td style="width:100px;text-align:right"><a id="a_splicing_transcript_pair" style="cursor:pointer;text-decoration:underline" onclick="show_hide('splicing_transcript_pair')">Show</a> columns</td>
 </tr></table>
-<p>Describes a pair of spliced transcripts in a splicing event. <p>
+<p>Describes a pair of spliced transcripts in a splicing event.  A splicing event is an observation of a change of splice sites between two isoforms. To avoid redundancy, some events, like a skipped exon observed between different pairs of transcripts are reported only once. The splicing transcript pair table contains a list of all the combinations of 2 isoforms relating to the same event.<p>
 
 	<div id="div_splicing_transcript_pair" style="display:none">
 
@@ -1517,11 +1514,11 @@ core schema.
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>gene_stable_id</b></td><td>VARCHAR(128)</td><td></td><td>Foreign key references to the <a href="#gene_stable_id">gene_stable_id</a> table. </td><td>key: gene_idx</td></tr>
-		<tr class="bg2"><td><b>gene_version</b></td><td>SMALLINT</td><td></td><td>Gene version.</td><td>key: gene_idx</td></tr>
+		<tr class="bg2"><td><b>gene_version</b></td><td>SMALLINT</td><td>1</td><td>Gene version.</td><td>key: gene_idx</td></tr>
 		<tr class="bg1"><td><b>transcript_stable_id</b></td><td>VARCHAR(128)</td><td></td><td>Foreign key references to the <a href="#transcript_stable_id">transcript_stable_id</a> table. </td><td>key: transcript_idx</td></tr>
-		<tr class="bg2"><td><b>transcript_version</b></td><td>SMALLINT</td><td></td><td>Transcript version.</td><td>key: transcript_idx</td></tr>
+		<tr class="bg2"><td><b>transcript_version</b></td><td>SMALLINT</td><td>1</td><td>Transcript version.</td><td>key: transcript_idx</td></tr>
 		<tr class="bg1"><td><b>translation_stable_id</b></td><td>VARCHAR(128)</td><td></td><td>Foreign key references to the <a href="#transcript_stable_id">transcript_stable_id</a> table. </td><td>key: translation_idx</td></tr>
-		<tr class="bg2"><td><b>translation_version</b></td><td>SMALLINT</td><td></td><td>Translation version.</td><td>key: translation_idx</td></tr>
+		<tr class="bg2"><td><b>translation_version</b></td><td>SMALLINT</td><td>1</td><td>Translation version.</td><td>key: translation_idx</td></tr>
 		<tr class="bg1"><td><b>peptide_archive_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#peptide">peptide</a> archive table. </td><td>key: peptide_archive_id_idx</td></tr>
 		<tr class="bg2"><td><b>mapping_session_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#mapping_session">mapping_session</a> table.</td><td></td></tr>
 </table>
@@ -1635,7 +1632,7 @@ core schema.
 <br />
 <hr />
 <h2>External References</h2>
-<p>A PDF document of the schema is available <a href="external_refs_core.pdf">here</a>.</p>
+<p>A PDF document of the schema is available <a href="xrefs_core.pdf">here</a>.</p>
 <br />
 <table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
 <td style="width:500px;text-align:left;height:10px"><span id="dependent_xref" style="font-size:11pt;font-weight:bold">dependent_xref</span></td>
@@ -1647,9 +1644,9 @@ core schema.
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>object_xref_id</b></td><td>INT</td><td></td><td>Primary key, internal identifier. Foreign key references to the <a href="#object_xref">object_xref</a> table.</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>master_xref_id</b></td><td>INT</td><td></td><td>Foreign key references to the <a href="#xref">xref</a> table.</td><td>key: master_idx</td></tr>
-		<tr class="bg1"><td><b>dependent_xref_id</b></td><td>INT</td><td></td><td>Foreign key references to the <a href="#xref">xref</a> table.</td><td>key: dependent</td></tr>
+		<tr class="bg1"><td><b>object_xref_id</b></td><td></td><td></td><td>Primary key, internal identifier. Foreign key references to the <a href="#object_xref">object_xref</a> table.</td><td></td></tr>
+		<tr class="bg2"><td><b>master_xref_id</b></td><td></td><td></td><td>Foreign key references to the <a href="#xref">xref</a> table.</td><td></td></tr>
+		<tr class="bg1"><td><b>dependent_xref_id</b></td><td></td><td></td><td>Foreign key references to the <a href="#xref">xref</a> table.</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -1673,18 +1670,20 @@ core schema.
 		<tr class="bg2"><td><b>db_name</b></td><td>VARCHAR(100)</td><td></td><td>Database name.     </td><td></td></tr>
 		<tr class="bg1"><td><b>db_release</b></td><td>VARCHAR(255)</td><td></td><td>Database release.      </td><td></td></tr>
 		<tr class="bg2"><td><b>status</b></td><td>ENUM('KNOWNXREF','KNOWN','XREF','PRED','ORTH',<br />'PSEUDO')</td><td></td><td>Status, e.g. 'KNOWNXREF','KNOWN','XREF','PRED','ORTH','PSEUDO'. </td><td></td></tr>
-		<tr class="bg1"><td><b>dbprimary_acc_linkable</b></td><td>BOOLEAN</td><td>1</td><td>Indicates if primary accessions can be linked to from the EnsEMBL web site.</td><td></td></tr>
-		<tr class="bg2"><td><b>priority</b></td><td>INT</td><td></td><td>Determines the order in which the sources are displayed on the EnsEMBL web site.</td><td></td></tr>
-		<tr class="bg1"><td><b>db_display_name</b></td><td>VARCHAR(255)</td><td></td><td>Database display name.</td><td></td></tr>
-		<tr class="bg2"><td><b>type</b></td><td>ENUM('ARRAY', 'ALT_TRANS', 'ALT_GENE', 'MISC', 'LIT', 'PRIMARY_DB_SYNONYM', 'ENSEMBL')</td><td></td><td>Type, e.g. 'ARRAY', 'ALT_TRANS', 'ALT_GENE', 'MISC', 'LIT', 'PRIMARY_DB_SYNONYM', 'ENSEMBL'.</td><td></td></tr>
-		<tr class="bg1"><td><b>secondary_db_name</b></td><td>VARCHAR(255)</td><td>NULL</td><td>Secondary database name.</td><td></td></tr>
-		<tr class="bg2"><td><b>secondary_db_table</b></td><td>VARCHAR(255)</td><td>NULL</td><td>Secondary database table.</td><td></td></tr>
-		<tr class="bg1"><td><b>description</b></td><td>TEXT</td><td></td><td>Description.</td><td></td></tr>
+		<tr class="bg1"><td><b>priority</b></td><td>INT</td><td></td><td>Determines which one of the xrefs will be used as the gene name.</td><td></td></tr>
+		<tr class="bg2"><td><b>db_display_name</b></td><td>VARCHAR(255)</td><td></td><td>Database display name.</td><td></td></tr>
+		<tr class="bg1"><td><b>type</b></td><td>ENUM('ARRAY', 'ALT_TRANS', 'ALT_GENE', 'MISC', 'LIT', 'PRIMARY_DB_SYNONYM', 'ENSEMBL')</td><td></td><td>Type, e.g. 'ARRAY', 'ALT_TRANS', 'ALT_GENE', 'MISC', 'LIT', 'PRIMARY_DB_SYNONYM', 'ENSEMBL'.</td><td></td></tr>
+		<tr class="bg2"><td><b>secondary_db_name</b></td><td>VARCHAR(255)</td><td>NULL</td><td>Secondary database name.</td><td></td></tr>
+		<tr class="bg1"><td><b>secondary_db_table</b></td><td>VARCHAR(255)</td><td>NULL</td><td>Secondary database table.</td><td></td></tr>
+		<tr class="bg2"><td><b>description</b></td><td>TEXT</td><td></td><td>Description.</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
 <ul>
 	<li><a href="#xref">xref</a></li>
+	<li><a href="#unmapped_object">unmapped_object</a></li>
+	<li><a href="#protein_align_feature">protein_align_feature</a></li>
+	<li><a href="#dna_align_feature">dna_align_feature</a></li>
 </ul>
 
 <br />
@@ -1749,7 +1748,7 @@ core schema.
 		<tr class="bg1"><td><b>object_xref_id</b></td><td>INT(10)</td><td></td><td>Primary key, internal identifier.             </td><td>primary key</td></tr>
 		<tr class="bg2"><td><b>ensembl_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#seq_region">seq_region</a>, @link transcript, @link gene, @translation tables depending on ensembl_object_type.     </td><td>key: ensembl_idx</td></tr>
 		<tr class="bg1"><td><b>ensembl_object_type</b></td><td>ENUM('RawContig', 'Transcript', 'Gene',<br />'Translation')</td><td></td><td>Ensembl object type: 'RawContig', 'Transcript', 'Gene','Translation'.                     </td><td>key: ensembl_idx</td></tr>
-		<tr class="bg2"><td><b>xref_id</b></td><td>INT</td><td></td><td>Foreign key references to the <a href="#xref">xref</a> table.    </td><td></td></tr>
+		<tr class="bg2"><td><b>xref_id</b></td><td>ensembl_object_type</td><td></td><td>Foreign key references to the <a href="#xref">xref</a> table.    </td><td></td></tr>
 		<tr class="bg1"><td><b>linkage_annotation</b></td><td>VARCHAR(255)</td><td>NULL</td><td>Additional annotation on the linkage.  </td><td></td></tr>
 		<tr class="bg2"><td><b>analysis_id</b></td><td>SMALLINT</td><td>NULL</td><td>Foreign key references to the <a href="#analysis">analysis</a> table.    </td><td>key: analysis_idx</td></tr>
 </table>
@@ -1772,7 +1771,7 @@ core schema.
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>object_xref_id</b></td><td>INT(10)</td><td>'0'</td><td>Composite key. Foreign key references to the <a href="#object_xref">object_xref</a> table.        </td><td>unique key: object_source_type_idx</td></tr>
-		<tr class="bg2"><td><b>source_xref_id</b></td><td>INT(10)</td><td>NULL</td><td>Composite key.Foreign key references to the <a href="#xref">xref</a> table. </td><td>key: source_idx<br />unique key: object_source_type_idx</td></tr>
+		<tr class="bg2"><td><b>source_xref_id</b></td><td>INT(10)</td><td>NULL</td><td>Composite key. Foreign key references to the <a href="#xref">xref</a> table.</td><td>key: source_idx<br />unique key: object_source_type_idx</td></tr>
 		<tr class="bg1"><td><b>linkage_type</b></td><td>ENUM('IC',  'IDA', 'IEA', 'IEP', 'IGI', 'IMP',<br />'IPI', 'ISS', 'NAS', 'ND' , 'TAS', 'NR' ,<br />'RCA', 'EXP', 'ISO', 'ISA', 'ISM', 'IGC')</td><td></td><td>Composite key. <a href="http://www.geneontology.org/GO.evidence.shtml">Evidence tags</a> </td><td>unique key: object_source_type_idx</td></tr>
 </table>
 </div>
@@ -1793,7 +1792,7 @@ core schema.
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>seq_region_synonym_id</b></td><td>INT</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>seq_region_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#seq_region">seq_region</a> table.</td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#seq_region">seq_region</a> table.</td><td>key: seq_region_idx</td></tr>
 		<tr class="bg1"><td><b>synonym</b></td><td>VARCHAR(40)</td><td></td><td>Alternative name for sequence region.</td><td>unique key: syn_idx</td></tr>
 		<tr class="bg2"><td><b>external_db_id</b></td><td>SMALLINT</td><td></td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td></td></tr>
 </table>
@@ -1812,15 +1811,15 @@ core schema.
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>unmapped_object_id</b></td><td>INT(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
 		<tr class="bg2"><td><b>type</b></td><td>ENUM('xref', 'cDNA', 'Marker')</td><td></td><td>Object type: 'xref', 'cDNA', 'Marker'.</td><td></td></tr>
-		<tr class="bg1"><td><b>analysis_id</b></td><td>SMALLINT</td><td></td><td>Foreign key references to the <a href="#analysis">analysis</a> table.</td><td>key: anal_idx<br />key: anal_exdb_idx</td></tr>
-		<tr class="bg2"><td><b>external_db_id</b></td><td>SMALLINT</td><td></td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td>key: anal_exdb_idx</td></tr>
-		<tr class="bg1"><td><b>identifier</b></td><td>VARCHAR(255)</td><td></td><td>External database identifier.</td><td>key: id_idx</td></tr>
-		<tr class="bg2"><td><b>unmapped_reason_id</b></td><td>SMALLINT(5)</td><td></td><td>Foreign key references to the <a href="#unmapped_reason">unmapped_reason</a> table.</td><td></td></tr>
+		<tr class="bg1"><td><b>analysis_id</b></td><td>SMALLINT</td><td></td><td>Foreign key references to the <a href="#analysis">analysis</a> table.</td><td>key: anal_exdb_idx</td></tr>
+		<tr class="bg2"><td><b>external_db_id</b></td><td>SMALLINT</td><td></td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td>unique key: unique_unmapped_obj_idx<br />key: anal_exdb_idx<br />key: ext_db_identifier_idx</td></tr>
+		<tr class="bg1"><td><b>identifier</b></td><td>VARCHAR(255)</td><td></td><td>External database identifier.</td><td>unique key: unique_unmapped_obj_idx<br />key: id_idx<br />key: ext_db_identifier_idx</td></tr>
+		<tr class="bg2"><td><b>unmapped_reason_id</b></td><td>SMALLINT(5)</td><td></td><td>Foreign key references to the <a href="#unmapped_reason">unmapped_reason</a> table.</td><td>unique key: unique_unmapped_obj_idx</td></tr>
 		<tr class="bg1"><td><b>query_score</b></td><td>DOUBLE</td><td></td><td>Actual mapping query score.</td><td></td></tr>
 		<tr class="bg2"><td><b>target_score</b></td><td>DOUBLE</td><td></td><td>Target mapping query score.</td><td></td></tr>
-		<tr class="bg1"><td><b>ensembl_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#seq_region">seq_region</a>, @link transcript, @link gene, @translation tables depending on ensembl_object_type.     </td><td></td></tr>
-		<tr class="bg2"><td><b>ensembl_object_type</b></td><td>ENUM('RawContig','Transcript','Gene','Translation')</td><td></td><td>Ensembl object type: 'RawContig', 'Transcript', 'Gene','Translation'.   </td><td></td></tr>
-		<tr class="bg1"><td><b>parent</b></td><td>VARCHAR(255)</td><td>NULL</td><td>Foreign key references to the <a href="#dependent_xref">dependent_xref</a> table, in case the unmapped object is dependent on a primary external reference which wasn't mapped to an ensembl one. </td><td></td></tr>
+		<tr class="bg1"><td><b>ensembl_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#seq_region">seq_region</a>, @link transcript, @link gene, @translation tables depending on ensembl_object_type.     </td><td>unique key: unique_unmapped_obj_idx</td></tr>
+		<tr class="bg2"><td><b>ensembl_object_type</b></td><td>ENUM('RawContig','Transcript','Gene','Translation')</td><td></td><td>Ensembl object type: 'RawContig', 'Transcript', 'Gene','Translation'.   </td><td>unique key: unique_unmapped_obj_idx</td></tr>
+		<tr class="bg1"><td><b>parent</b></td><td>VARCHAR(255)</td><td>NULL</td><td>Foreign key references to the <a href="#dependent_xref">dependent_xref</a> table, in case the unmapped object is dependent on a primary external reference which wasn't mapped to an ensembl one.   </td><td>unique key: unique_unmapped_obj_idx</td></tr>
 </table>
 </div>
 
@@ -1887,6 +1886,7 @@ core schema.
 </table>
 </div>
 
+
 <hr />
 <h2>Concepts</h2>
 
@@ -1930,7 +1930,6 @@ the number of rows in the feature table around 4-fold.
 </dd>
 </dl>
 <hr />
-
 
 </body>
 </html>
