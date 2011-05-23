@@ -5,7 +5,8 @@ To regenerate core_schema.html use script sql2html.pl in ensembl/misc-scripts/ w
 
 -i (sql file name) table.sql
 -o (html file name) 
--sort 0 (1- sort tables and table sets in alphabetical order)
+-sort_headers 0 (1- sort in alphabetical order)
+-sort_tables 0
 -d (database) Core
 
 Follow instructions in file html_to_append.html to complete the generated HTML and save as core_schema.html.  
