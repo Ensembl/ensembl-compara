@@ -77,6 +77,10 @@ hr.end-of-doc { height: 1px; color:[[PANEL_BORDER]]; background-color:[[PANEL_BO
 hr.with-nav { margin-left: 15em; }
 body.static hr.with-nav { margin-left: 21em; }
 
+ul.compact, ul.compact li {list-style-image:none;}
+ul.compact li {margin-top:-2px; margin-left:-25px;}
+ul.compact li.first {margin-top:-10px;}
+
 .ajax_add span               { display: none;   }
 .ajax_add.closed span.closed { display: inline; }
 .ajax_add.open span.open     { display: inline; }
