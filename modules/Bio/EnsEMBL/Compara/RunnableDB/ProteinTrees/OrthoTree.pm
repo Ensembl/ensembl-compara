@@ -110,7 +110,7 @@ sub fetch_input {
                                         or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
     $self->param('protein_tree', $protein_tree);
 
-    $self->check_job_fail_options;
+    #$self->check_job_fail_options;
 
     $self->delete_old_homologies;
     $self->delete_old_orthotree_tags;
