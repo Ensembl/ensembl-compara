@@ -1206,7 +1206,7 @@ sub tool_buttons {
     $self->ajax_url('rtf')
   );
   
-  if ($blast_seq) {
+  if ($self->hub->species_defs->ENSEMBL_BLAST_ENABLED && $blast_seq) {
     $html .= sprintf('
       <div class="other_tool">
         <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
