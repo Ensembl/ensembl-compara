@@ -35,8 +35,8 @@ sub content {
   }
 
   my @buttons = (
-    {'title' => 'Alignments (image)', 'img' => 'compara_image', 'url' => $text_url},
-    {'title' => 'Alignments (text)',  'img' => 'compara_text',   'url' => $image_url},
+    {'title' => 'Alignments (image)', 'img' => 'compara_image', 'url' => $image_url},
+    {'title' => 'Alignments (text)',  'img' => 'compara_text',   'url' => $text_url},
     {'title' => 'Multi-species view', 'img' => 'compara_multi',  'url' => $multi_url},
     {'title' => 'Synteny',            'img' => 'compara_syn',    'url' => $syn_url},
   );
@@ -61,6 +61,14 @@ sub content {
   $html .= qq(
     </div>
   );
+
+  if ($hub->param('g')) {
+    my $url = $hub->url({'type'=>'Gene','action'=>'Compara'});
+    $html .= qq(<p>More views of comparative genomics data, such as orthologues and paralogues, are available on the <a href="$url">Gene</a> page.</p>);
+  }
+  else {
+    $html .= qq(<p>Additional comparative genomics views are available for individual genes.</p>);
+  }
  
   return $html;
 }
