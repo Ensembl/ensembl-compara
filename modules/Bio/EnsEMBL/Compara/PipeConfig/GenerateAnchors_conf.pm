@@ -22,7 +22,7 @@ sub default_options {
 	'password' 		=> 'ensembl',
 	   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
-		-host   => 'compara3',
+		-host   => 'compara1',
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
@@ -36,12 +36,23 @@ sub default_options {
 		-pass => '',
 		-dbname => 'ensembl_compara_62',
 	},
+	  # genome_db_id from which pairwise alignments will be used
+	'reference_genome_db_id' => 90,
+	  # pairwise alignments from these non-ref genome_db_ids and the reference_genome_db_id will be use to build the anchors
+	  # if it's an empty string then all pairwise alignments with the reference_genome_db_id will be used
+#	'non_ref_genome_db_ids' => [39,64,93],
+	'non_ref_genome_db_ids' => [],
 	  # location of species core dbs which were used in the pairwise alignments
 	'core_db_url' => 'mysql://ensro@ens-livemirror:3306/62',
 	  # alignment chunk size
 	'chunk_size' => 10000000,
 	  # max block size for pecan to align
 	'pecan_block_size' => 1000000,
+	'pecan_mlssid' => 10,
+	'gerp_constrained_element_mlssid' => 20,
+	'gerp_program_file'    => '/software/ensembl/compara/gerp/GERPv2.1',
+	'find_pairwise_overlaps_mlssid' => 0, # does not matter what you set it to as long as it does not clash with an other mlssid used in the pipeline
+	'species_tree_dump_dir' => '/lustre/scratch101/ensembl/sf5/species_tree', # dir to dump species tree for gerp
      };
 }
 
@@ -60,7 +71,7 @@ sub pipeline_wide_parameters {
 		'compara_pairwise_db' => $self->o('compara_pairwise_db'),
 		'min_anchor_size'     => 50,
 		'min_number_of_org_hits_per_base' => 2,
-	        'reference_genome_db_id' => 90,
+	        'reference_genome_db_id' => $self->o('reference_genome_db_id'),
 		'reference_db' => {
 				-user => 'ensro',
 				-port => 3306,
@@ -70,13 +81,13 @@ sub pipeline_wide_parameters {
 				-dbname => 'homo_sapiens_core_62_37g',
 				},
 	};
+	
 }
 
 sub pipeline_analyses {
 	my ($self) = @_;
 	print "pipeline_analyses\n";
-	
-		
+
     return [
 # Turn all tables except 'genome_db' to InnoDB
 	    {   -logic_name => 'innodbise_table_factory',
@@ -106,9 +117,7 @@ sub pipeline_analyses {
 				    'compara_db' => $self->o('compara_pairwise_db'),
 				    'method_link_types' => [ 'BLASTZ_NET', 'LASTZ_NET'],
 				    'chunk_size' => $self->o('chunk_size'),
-				    'consensus_overlap' => 0,
-				    'genome_db_ids' => [39, 64, 93],
-#				    'genome_db_ids' => [3,31,38,39,57,60,61,64,90,93,101,114],
+				    'genome_db_ids' => $self->o('non_ref_genome_db_ids'),
 				   },
 		-input_ids 	=> [{}],
 		-wait_for       => [ 'innodbise_table_factory', 'innodbise_table' ],	
@@ -139,7 +148,6 @@ sub pipeline_analyses {
 		-flow_into => {
 				2 => [ 'mysql:////genome_db?insertion_method=REPLACE' ],
 		},
-	
 	    },
 	    {
 		-logic_name     => 'load_method_link_table',
@@ -156,8 +164,9 @@ sub pipeline_analyses {
 	    { # this sets the values in the method_link_species_set and species_set tables
 		-logic_name     => 'populate_compara_tables',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::LoadMethodTables',
-		-wait_for       => ['load_method_link_table'],
-		-input_ids => [{'species_set_id' => 1, 'pecan_mlssid' => 10, 'gerp_mlssid' => 20,}],	
+		-wait_for       => [ 'load_method_link_table', 'set_genome_db_locator' ],
+		-input_ids => [{'species_set_id' => 1, 'mlss_ids' => {'PECAN_mlssid' => $self->o('pecan_mlssid'), 
+							'GERP_CONSTRAINED_ELEMENT_mlssid' => $self->o('gerp_constrained_element_mlssid'),},}],	
 		-flow_into => {
 			2 => [ 'mysql:////species_set?insertion_method=INSERT_IGNORE' ],
 			3 => [ 'mysql:////method_link_species_set?insertion_method=INSERT_IGNORE' ],
@@ -177,10 +186,17 @@ sub pipeline_analyses {
 		},
 	   },
 	   {
+		-logic_name    => 'dump_species_tree',
+		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+		-input_ids     => [ {
+			'cmd'        => 'cat ' . $self->o('species_tree_file') . ' | tr \'[A-Z]\' \'[a-z]\' > ' .
+						 $self->o('species_tree_dump_dir') . '/species_tree',
+		} ],
+	   },		
+	   {
 		-logic_name	=> 'find_pairwise_overlaps',
 		-module		=> 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindPairwiseOverlaps',
-		-parameters     => { 'method_link_species_set_id' => 300, },
-		-wait_for	=> [ 'load_species_tree',  ],
+		-parameters     => { 'method_link_species_set_id' => $self->o('find_pairwise_overlaps_mlssid'), },
 		-flow_into	=> {
 					1 => [ 'pecan' ],
 					3 => [ 'mysql:////dnafrag_region?insertion_method=INSERT_IGNORE' ],
@@ -190,12 +206,25 @@ sub pipeline_analyses {
 	   {
 		-logic_name    => 'pecan',
 		-module        => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Pecan',
-		-wait_for      => [ 'find_pairwise_overlaps', 'load_species_tree', 'set_genome_db_locator', 'populate_compara_tables' ],
-		-parameters    => { 'method_link_species_set_id' => 400, 
+		-wait_for      => [ 'populate_compara_tables', 'load_species_tree', ],
+		-parameters    => { 'method_link_species_set_id' => $self->o('pecan_mlssid'), 
 				    'max_block_size' => $self->o('pecan_block_size'),
 				    'java_options' => '-server -Xmx1000M',},
+		-flow_into      => {
+					1 => [ 'gerp_constrained_element' ],
+				   },
 		-hive_capacity => 100,
-   },
+   	   },
+	   {
+		-logic_name    => 'gerp_constrained_element',
+		-module => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Gerp',
+		-parameters    => { 'window_sizes' => '[1,10,100,500]', 'tree_file' => $self->o('species_tree_dump_dir') . '/species_tree',
+				    'constrained_element_method_link_type' => 'GERP_CONSTRAINED_ELEMENT', },
+		-program_file  => $self->o('gerp_program_file'),
+		-wait_for      => [ 'dump_species_tree' ],
+		-hive_capacity => 100,
+	   },
+				
 ];
 }	
 
