@@ -52,7 +52,8 @@ our $release = $SD->ENSEMBL_VERSION;
 our $nogzip = 1;    #try setting to 0 for on the fly gzipping (not tested)?
 our %cross_references;  #get a set of external_dbs so we can make sure we link to them all correctly if we ever need to
 our $parser =  new XML::Parser( 'ErrorContext' => 3 );
-
+my $sitetype = $SD->ENSEMBL_SITETYPE || 'Ensembl'
+;
 #redirect STDOUT and maybe STDERR to a file
 $log ||= $debug ? '>-' : "dumping_${release}.log";
 open (LOG,    ">$log") or die "Can't open $log: $!";
@@ -82,7 +83,7 @@ if( $species[0] eq 'ALL' ) {
 
 # EnsEMBL::Web::IndexSupport takes path to conf, path to files, species
 my $conf = {};
-$dir ||= $debug ? 'input' : "/nfs/eureka/data/ensembl_$release";
+$dir ||= $debug ? 'input' : "/nfs/eureka/data/".lc($sitetype)."_$release";
 print LOG "Dumping xml files to $dir\n";
 mkdir $dir, 0777 unless -e "$dir";
 
@@ -93,16 +94,16 @@ foreach my $index (@indexes) {
   my $start = time;
   if ($index eq 'Help') {
     foreach my $type (qw(View Glossary FAQ)) {
-      $conf->{"directory_$type"} = "$dir/ensembl_$type";
+      $conf->{"directory_$type"} = "$dir/".lc($sitetype)."_$type";
       mkdir $conf->{"directory_$type"}, 0777 unless -e $conf->{"directory_$type"};
     }
   }
   else {
-    $conf->{'directory'} = "$dir/ensembl_$index";
+    $conf->{'directory'} = "$dir/".lc($sitetype)."_$index";
     mkdir $conf->{'directory'}, 0777 unless -e  $conf->{'directory'};
   }
   if ($index eq 'Variation') {
-    $conf->{'directory_somatic_mutations'} = "$dir/ensembl_SomaticMutation";
+    $conf->{'directory_somatic_mutations'} = "$dir/".lc($sitetype)."_SomaticMutation";
     mkdir $conf->{'directory_somatic_mutations'}, 0777 unless -e $conf->{'directory_somatic_mutations'};
   }
 
@@ -2483,7 +2484,7 @@ sub header {
   p("<!DOCTYPE database [ <!ENTITY auml \"&#228;\">]>",$nogzip,$fh,1);
   p("<database>",$nogzip,$fh,1);
   p("<name>$dbname</name>",$nogzip,$fh,1);
-  p("<description>Ensembl $dbspecies $dbtype database</description>",$nogzip,$fh,1);
+  p("<description>$sitetype $dbspecies $dbtype database</description>",$nogzip,$fh,1);
   p("<release>$release</release>",$nogzip,$fh,1);
   p("",$nogzip,$fh,1);
   p("<entries>",$nogzip,$fh,1);
