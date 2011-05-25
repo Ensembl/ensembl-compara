@@ -29,9 +29,10 @@ use CGI;
 
 $| = 1;
 
-my (@species,@indexes,$debug,$dry_run,$log,$dir,$help);
+my (@species,@indexes,$search_engine,$debug,$dry_run,$log,$dir,$help);
 GetOptions('species=s' => \@species,
            'index=s'   => \@indexes,
+           'engine=s'  => \$search_engine,
            'debug'     => \$debug,
            'dry_run|n' => \$dry_run,
            'log=s'     => \$log,
@@ -52,8 +53,11 @@ our $release = $SD->ENSEMBL_VERSION;
 our $nogzip = 1;    #try setting to 0 for on the fly gzipping (not tested)?
 our %cross_references;  #get a set of external_dbs so we can make sure we link to them all correctly if we ever need to
 our $parser =  new XML::Parser( 'ErrorContext' => 3 );
-my $sitetype = $SD->ENSEMBL_SITETYPE || 'Ensembl'
-;
+my $sitetype = $SD->ENSEMBL_SITETYPE || 'Ensembl';
+my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/' : 'http://www.ensembl.org'; #what happens to this when we are on an archive ?
+
+$search_engine ||= 'lucene';
+
 #redirect STDOUT and maybe STDERR to a file
 $log ||= $debug ? '>-' : "dumping_${release}.log";
 open (LOG,    ">$log") or die "Can't open $log: $!";
@@ -1850,95 +1854,187 @@ sub dumpGene {
 
 sub GeneLine {
   my ($species, $gsid, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $xref_descriptions, $gene_loc, $db, $counter) = @_;
+  my $url = sprintf(qq(%s/Gene/Summary/g=%s&amp;db=%s),
+                    $species,
+                    $gsid,
+                    $db);
   $species =~ s/_/ /;
   $biotype =~ s/_/ /;
   $desc = &clean($desc,'desc');
   $disp_xref = &clean($disp_xref,'name');
   my $description = $desc . " [Type: $biotype $ad_label]";
-  my $xml = qq(
+  my $xml;
+
+  if ($search_engine eq 'solr') {
+    $xml = qq(
+<doc>
+  <field name="id">$gsid"</field>
+  <field name="name">$disp_xref</field>
+  <field name="description">$description</field>);
+    $xml .= &common_fields($species,'Gene');
+    my (%seen_labels,%seen_syns);
+    foreach my $xref (@$xrefs) {
+      my $dbname   = $xref->{'db_name'};
+      my $dbkey    = $xref->{'label'};
+      next if $seen_labels{$dbkey};
+      $seen_labels{$dbkey} = 1;
+      $dbkey = &clean($dbkey,'dbkey');
+      if (! $dbname) {
+        print LOG "WARNING: $gsid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
+      }
+      else {
+        $xml .= qq(
+  <field name="_xr_$dbname">$dbkey"</field>);
+        #non-versioned
+        if ($dbkey =~ /^(\w+)\.\d+$/) {
+          my $k = $1;
+          next if $seen_labels{$k};
+          $seen_labels{$dbkey} = $k;
+          $xml .= qq(
+  <field name="_xr_$dbname">$k</field>);
+        }
+        #xref synonyms
+        foreach my $syn (@{$xref->{'synonyms'}}) {
+          next if $seen_syns{$syn};
+          $seen_syns{$syn} = 1;
+          $syn = &clean($syn,'syn');
+          $xml .= qq(
+  <field name="_xr_$dbname">$syn</field>);
+        }
+      }
+    }
+    foreach my $xref_description (keys %{$xref_descriptions}) {
+      if ($xref_description) {
+        $xref_description = &clean($xref_description,'xref description');
+        $xml .= qq(
+  <field name="xref_description">$xref_description</field>);
+      }
+    }
+    if (my $t_count = keys %$tsids) {
+      $xml .= qq(
+  <field name="transcript_count">$t_count</field>);
+      foreach my $tsi (keys %$tsids) {
+        $xml .= qq(
+  <field name="transcript">$tsi</field>);
+      }
+    }
+    if (my $tl_count = keys %$tlsids) {
+      $xml .= qq(
+  <field name="translation_count">$tl_count</field>);
+      foreach my $tlsi (keys %$tlsids) {
+        $xml .= qq(
+  <field name="peptide">$tlsi</field>);
+      }
+    }
+    if (my $e_count = keys %$exons) {
+      $xml .= qq(
+  <field name="exon_count">$e_count</field>);
+      foreach my $esi (keys %$exons) {
+        $xml .= qq(
+  <field name="exon">$esi</field>);
+      }
+    }
+
+    #these are not to be searchable
+    if ($gene_loc) {
+      my $loc = $gene_loc->{'sr_name'} .':'. $gene_loc->{'seq_region_start'} .'-'. $gene_loc->{'seq_region_end'} .':'. $gene_loc->{'seq_region_strand'};
+      $xml .= qq(
+  <field name="location">$loc</field>);
+    }
+    $xml .= qq(
+  <field name="source">$ad_label</field>
+  <field name= "domain_url">$url</field>);
+
+    $xml .= qq(
+</doc>);
+
+    $counter->();
+    return $xml;
+  }
+
+  elsif ($search_engine eq 'lucene') {
+    $xml = qq(
 <entry id="$gsid">
   <name>$disp_xref</name>
   <description>$description</description>);
-
-  $xml .= qq(
+    $xml .= qq(
   <cross_references>);
-  my (%seen_labels,%seen_syns);
-  my @non_versioned;
-  foreach my $xref (@$xrefs) {
-    my $dbname   = $xref->{'db_name'};
-    my $dbkey    = $xref->{'label'};
-    next if $seen_labels{$dbkey};
+    my (%seen_labels,%seen_syns);
+    my @non_versioned;
+    foreach my $xref (@$xrefs) {
+      my $dbname   = $xref->{'db_name'};
+      my $dbkey    = $xref->{'label'};
+      next if $seen_labels{$dbkey};
     $seen_labels{$dbkey} = 1;
-    $dbkey = &clean($dbkey,'dbkey');
-    if (! $dbname) {
-      print LOG "WARNING: $gsid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
-    }
-    else {
-      $xml .= qq(
-    <ref dbname="$dbname" dbkey="$dbkey"/>);
-      if ($dbkey =~ /^(\w+)\.\d+$/) {
-        my $k = $1;
-        next if $seen_labels{$k};
-        $seen_labels{$dbkey} = $k;
-        push @non_versioned, $k;
+      $dbkey = &clean($dbkey,'dbkey');
+      if (! $dbname) {
+        print LOG "WARNING: $gsid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
       }
-      foreach my $syn (@{$xref->{'synonyms'}}) { 
-        next if $seen_syns{$syn};
-        $seen_syns{$syn} = 1;
-        $syn = &clean($syn,'syn');
+      else {
         $xml .= qq(
+    <ref dbname="$dbname" dbkey="$dbkey"/>);
+        if ($dbkey =~ /^(\w+)\.\d+$/) {
+          my $k = $1;
+          next if $seen_labels{$k};
+          $seen_labels{$dbkey} = $k;
+          push @non_versioned, $k;
+        }
+        foreach my $syn (@{$xref->{'synonyms'}}) { 
+          next if $seen_syns{$syn};
+          $seen_syns{$syn} = 1;
+          $syn = &clean($syn,'syn');
+          $xml .= qq(
     <ref dbname="$dbname" dbkey="$syn"/>);
+        }
       }
+      $cross_references{$dbname}++;
     }
-    $cross_references{$dbname}++;
-  }
-  $xml .= qq(
+    $xml .= qq(
   </cross_references>);
-
-  $xml .= qq(
+    $xml .= qq(
   <additional_fields>);
-  $xml .= &common_fields($species,'Gene');
-  $xml .= qq(
+    $xml .= &common_fields($species,'Gene');
+    $xml .= qq(
     <field name="action">Summary</field>
     <field name="source">$ad_label</field>);
-  if ($gene_loc) {
-    my $loc = $gene_loc->{'sr_name'} .':'. $gene_loc->{'seq_region_start'} .'-'. $gene_loc->{'seq_region_end'} .':'. $gene_loc->{'seq_region_strand'};
-    $xml .= qq(
-    <field name="location">$loc</field>);
-  }
-  foreach my $xref_description (keys %{$xref_descriptions}) {
-    if ($xref_description) {
-      $xref_description = &clean($xref_description,'xref description');
+    if ($gene_loc) {
+      my $loc = $gene_loc->{'sr_name'} .':'. $gene_loc->{'seq_region_start'} .'-'. $gene_loc->{'seq_region_end'} .':'. $gene_loc->{'seq_region_strand'};
       $xml .= qq(
-    <field name="xref_description">$xref_description</field>);
+    <field name="location">$loc</field>);
     }
-  }
-  unless ($db eq 'core') {
-    $xml .= qq(
+    foreach my $xref_description (keys %{$xref_descriptions}) {
+      if ($xref_description) {
+        $xref_description = &clean($xref_description,'xref description');
+        $xml .= qq(
+    <field name="xref_description">$xref_description</field>);
+      }
+    }
+    unless ($db eq 'core') {
+      $xml .= qq(
     <field name="db">$db</field>);
-  }
-  foreach my $tsi (keys %$tsids) {
-    $xml .= qq(
+    }
+    foreach my $tsi (keys %$tsids) {
+      $xml .= qq(
     <field name="transcript">$tsi</field>);
-  }
-  foreach my $tlsi (keys %$tlsids) {
-    $xml .= qq(
+    }
+    foreach my $tlsi (keys %$tlsids) {
+      $xml .= qq(
     <field name="peptide">$tlsi</field>);
-  }
-  foreach my $esi (keys %$exons) {
-    $xml .= qq(
+    }
+    foreach my $esi (keys %$exons) {
+      $xml .= qq(
     <field name="exon">$esi</field>);
-  }
-  foreach my $nv_xref (@non_versioned) {
-    $xml .= qq(
+    }
+    foreach my $nv_xref (@non_versioned) {
+      $xml .= qq(
     <field name="non_versioned">$nv_xref</field>);
-  }
-  $xml .= qq(
+    }
+    $xml .= qq(
   </additional_fields>);
-
-  $counter->();
-  return $xml . qq(
+    $counter->();
+    return $xml . qq(
 </entry>);
+  }
 }
 
 sub GeneStableIdMappingLine {
@@ -2479,22 +2575,35 @@ sub make_counter {
 
 sub header {
   my ( $dbname, $dbspecies, $dbtype, $nogzip, $fh, $release ) = @_;
-  $dbspecies =~ s/_/ /;
-  p("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>",$nogzip,$fh,1);
-  p("<!DOCTYPE database [ <!ENTITY auml \"&#228;\">]>",$nogzip,$fh,1);
-  p("<database>",$nogzip,$fh,1);
-  p("<name>$dbname</name>",$nogzip,$fh,1);
-  p("<description>$sitetype $dbspecies $dbtype database</description>",$nogzip,$fh,1);
-  p("<release>$release</release>",$nogzip,$fh,1);
-  p("",$nogzip,$fh,1);
-  p("<entries>",$nogzip,$fh,1);
+  if ($search_engine eq 'lucene') {
+    $dbspecies =~ s/_/ /;
+    p("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>",$nogzip,$fh,1);
+    p("<!DOCTYPE database [ <!ENTITY auml \"&#228;\">]>",$nogzip,$fh,1);
+    p("<database>",$nogzip,$fh,1);
+    p("<name>$dbname</name>",$nogzip,$fh,1);
+    p("<description>$sitetype $dbspecies $dbtype database</description>",$nogzip,$fh,1);
+    p("<release>$release</release>",$nogzip,$fh,1);
+    p("",$nogzip,$fh,1);
+    p("<entries>",$nogzip,$fh,1);
+  }
+  elsif ($search_engine eq 'solr') {
+    p("<add>",$nogzip,$fh,1);
+  }
+  else {
+    print LOG "Incorrect data format -$search_engine- specified. Please correct\n";
+  }
 }
 
 sub footer {
   my ($ecount,$nogzip,$fh,$type) = @_;
-  p("</entries>",$nogzip,$fh,1);
-  p("<entry_count>$ecount</entry_count>",$nogzip,$fh,1);
-  p("</database>",$nogzip,$fh,1);
+  if ($search_engine eq 'lucene') {
+    p("</entries>",$nogzip,$fh,1);
+    p("<entry_count>$ecount</entry_count>",$nogzip,$fh,1);
+    p("</database>",$nogzip,$fh,1);
+  }
+  elsif ($search_engine eq 'solr') {
+    p("</add>",$nogzip,$fh,1);
+  }
   my $text = $type ? "  ...Dumped $ecount $type entries\n" : "  ...Dumped $ecount entries\n";
   print LOG $text;
   if ($nogzip) {
@@ -2508,14 +2617,28 @@ sub footer {
 
 sub common_fields {
   my ($species,$feature_type) = @_;
-  my $xml = qq(
+  my $xml;
+  if ($search_engine eq 'lucene') {
+    $xml = qq(
     <field name="species">$species</field>);
-  foreach my $sp (keys %{$conf->{'speciesname_list'}}) {
-    $xml .= qq(
+    foreach my $sp (keys %{$conf->{'speciesname_list'}}) {
+      $xml .= qq(
     <field name="species_name">$sp</field>);
-  }
-  $xml .= qq(
+    }
+    $xml .= qq(
     <field name="featuretype">$feature_type</field>);
+  }
+  elsif ($search_engine eq 'solr') {
+    $xml = qq(
+  <field name="website">$website_url</field>
+  <field name="species">$species</field>);
+    foreach my $sp (keys %{$conf->{'speciesname_list'}}) {
+      $xml .= qq(
+  <field name="species_alias">$sp</field>);
+    }
+    $xml .= qq(
+  <field name="featuretype">$feature_type</field>);
+  }
   return $xml;
 }
 
@@ -2603,6 +2726,7 @@ Examples:
 ./indexXMLDumper --species=ALL --index=ALL --dir new_input         #all log output to dumping_$release.log; xml to new_input
 ./indexXMLDumper --species=ALL --index=ALL -log dumping.log        #all log output to all_log.log; xml to /nfs/eureka/data/ensembl_$release"
 
+./indexXMLDumper --species=ALL --index=Gene --engine solr  -log dumping.log        #output in format for solr (for testing, only works for genes as yet)
 
 ABOUT_END
 }
