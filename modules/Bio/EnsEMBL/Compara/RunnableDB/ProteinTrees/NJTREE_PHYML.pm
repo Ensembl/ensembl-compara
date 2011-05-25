@@ -421,6 +421,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
       $sa = $sa->remove_gaps(undef,1);
       $i++;
     }
+    $sa->set_displayname_flat(1);
   }
 
   my $alignIO = Bio::AlignIO->newFh
