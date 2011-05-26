@@ -87,7 +87,9 @@ if( $species[0] eq 'ALL' ) {
 
 # EnsEMBL::Web::IndexSupport takes path to conf, path to files, species
 my $conf = {};
-$dir ||= $debug ? 'input' : "/nfs/eureka/data/".lc($sitetype)."_$release";
+$dir ||= $debug ? 'input' 
+       : ($search_engine eq 'solr') ? "/nfs/eureka/data/solr/".lc($sitetype)
+       : "/nfs/eureka/data/".lc($sitetype)."_$release";
 print LOG "Dumping xml files to $dir\n";
 mkdir $dir, 0777 unless -e "$dir";
 
