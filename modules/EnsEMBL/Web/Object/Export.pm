@@ -37,17 +37,18 @@ sub stable_id              { return shift->get_object->stable_id;               
 sub slice {
   my $self     = shift;
   my $location = $self->get_location_object;
-  
-  if ($location) {
-     my ($flank5, $flank3) = map $self->param($_), qw(flank5_display flank3_display);
-     my $slice = $location->slice;
-     return $flank5 || $flank3 ? $slice->expand($flank5, $flank3) : $slice; 
-   }
-
   my $hub = $self->hub;
   my $lrg = $hub->param('lrg');
   my $lrg_slice;
   
+  if ($location) {
+     my ($flank5, $flank3) = map $self->param($_), qw(flank5_display flank3_display);
+     my $slice = $location->slice;     
+     $slice = $slice->invert if ($hub->param('strand') eq '-1');
+
+     return $flank5 || $flank3 ? $slice->expand($flank5, $flank3) : $slice; 
+   }
+   
   if ($lrg) {
     eval { $lrg_slice = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('LRG', $lrg); };
   }  
@@ -246,7 +247,7 @@ sub process {
   $slice             = $self->slice if($slice == 1);
    
   my $feature_strand = $slice->strand;
-  $strand            = undef unless $strand == 1 || $strand == -1; # Feature strand will be correct automatically
+  $strand            = undef unless $strand == 1 || $strand == -1; # Feature strand will be correct automatically  
   $slice             = $slice->invert if $strand && $strand != $feature_strand;
   my $params         = { feature_strand => $feature_strand };
   my $html_format    = $self->html_format;
