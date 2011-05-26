@@ -134,17 +134,14 @@ sub form {
   }
   
   if ($function eq 'Location') {
-    my $s = $slice->strand;
-    my @strand = map $s == $_ ? 'selected="selected"' : '', (1, -1);
-    
     $form->add_field({
       label     => 'Select location',
       inline    => 1,
       elements  => [
-        {'type' => 'string',    'size' => '1', 'value' => $slice->seq_region_name, 'name' => 'new_region', 'required' => 1},
-        {'type' => 'posint',    'size' => '8', 'value' => $slice->start,           'name' => 'new_start',  'required' => 1},
-        {'type' => 'posint',    'size' => '8', 'value' => $slice->end,             'name' => 'new_end',    'required' => 1},
-        {'type' => 'dropdown',  'size' => '1', 'value' => $slice->strand,          'name' => 'strand',     'values' => [{'value' => '1', 'caption' => '1'}, {'value' => '-1', 'caption' => '-1'}]},
+        { type => 'string',   size => 1, value => $slice->seq_region_name, name => 'new_region', required => 1 },
+        { type => 'posint',   size => 8, value => $slice->start,           name => 'new_start',  required => 1 },
+        { type => 'posint',   size => 8, value => $slice->end,             name => 'new_end',    required => 1 },
+        { type => 'dropdown', size => 1, value => $self->get('strand'),    name => 'strand',     values => [{ value => 1, caption => 1 }, { value => -1, caption => -1 }] },
       ],
     });
   } else {
