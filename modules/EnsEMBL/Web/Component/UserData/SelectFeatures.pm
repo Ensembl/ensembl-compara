@@ -38,7 +38,9 @@ sub content {
   ## Species now set automatically for the page you are on
   my @species;
   foreach my $sp ($species_defs->valid_species) {
-    push @species, {'value' => $sp, 'name' => $species_defs->species_label($sp, 1)};
+    if (scalar($species_defs->get_config($sp, 'ASSEMBLY_MAPPINGS'))) {
+      push @species, {'value' => $sp, 'name' => $species_defs->species_label($sp, 1)};
+    }
   }
   @species = sort {$a->{'name'} cmp $b->{'name'}} @species;
 
