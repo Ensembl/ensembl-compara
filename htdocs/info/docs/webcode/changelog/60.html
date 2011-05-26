@@ -1,0 +1,105 @@
+<html>
+<head>
+<meta name="order" content="6" />
+<title>Web changelog for release 60</title>
+</head>
+
+<body>
+
+<h1>Web Code Changelog - Release 60</h1>
+
+<h2>Page infrastructure</h2>
+
+<p>In this release we refactored the code which is used to construct pages. These changes are unlikely to impact customised versions of Ensembl, unless you have added entirely new object types. A diagram of the new module structure is available in our <a href="/info/docs/webcode/extend/index.html">page documentation</a>.</p>
+
+<p>These changes are designed to support future code developments and allow more flexible building of pages from a selection of components.</p>
+
+<ul class="spaced">
+
+<li><kbd>EnsEMBL::Web::Magic</kbd> has been replaced by <kbd>EnsEMBL::Web::Controller</kbd> and its children. Each child controller handles a specific request type, as implied by the module name.</li>
+
+<li>
+The scripts in <kbd>/perl/defaults</kbd> which were previously used to call functions in <kbd>EnsEMBL::Web::Magic</kbd> have been removed.
+<br />Additionally, <kbd>/perl/defaults/psychic</kbd> has been moved to <kbd>EnsEMBL::Web::Controller::Psychic</kbd>.
+
+</li>
+
+<li style="font-weight:bold"><kbd>$OBJECT_TO_SCRIPT</kbd> in <kbd>SiteDefs</kbd> has been changed so that the values of the hash are module names of the required controller.</li>
+
+<li>
+<kbd>EnsEMBL::Web::Apache::SendDecPage</kbd> has been renamed <kbd>EnsEMBL::Web::Apache::SSI</kbd>. 
+<br />The <kbd>template_INCLUDE</kbd> function has been moved to <kbd>EnsEMBL::Web::Controller::SSI</kbd> and should be called from there.
+
+</li>
+
+<li><kbd>EnsEMBL::Web::Model</kbd> has been renamed to <kbd>EnsEMBL::Web::Builder</kbd>, and all function calls like <kbd>$self->model</kbd> have been replaced by <kbd>$self->builder</kbd>.</li>
+
+<li>
+<kbd>The EnsEMBL::Web::Session</kbd> is now initialized in the constructor of <kbd>EnsEMBL::Web::Hub</kbd>, removing the need to store it in <kbd>EnsEMBL::Web::Registry</kbd>.
+
+<br />Many other functions from <kbd>EnsEMBL::Web::Registry</kbd> were also unused and have been deleted.
+</li>
+<li>
+<kbd>ViewConfigs</kbd> and <kbd>ImageConfigs</kbd> are now obtained through <kbd>EnsEMBL::Web::Hub->viewconfig</kbd> (cacheable version), <kbd>EnsEMBL::Web::Hub->get_viewconfig</kbd> (uncached) and <kbd><br />EnsEMBL::Web::Hub->get_imageconfig</kbd>, rather than from the <kbd>EnsEMBL::Web::Object</kbd> or the <kbd>EnsEMBL::Web::Session</kbd>.
+
+</li>
+<li>
+<kbd>EnsEMBL::Web::Proxiable</kbd> has been removed. Much of the functionality it performed has been moved to <kbd>EnsEMBL::Web::Hub</kbd>, with wrapper functions left on <kbd>EnsEMBL::Web::Object</kbd> and <kbd><br />EnsEMBL::Web::Factory</kbd> where necessary.
+<br />Deprecation warnings will appear in the error log for any wrapper functions which are due to be removed in release 61.
+</li>
+<li>
+The <kbd>global_context, local_context</kbd> etc. functions from <kbd>EnsEMBL::Web::Configuration</kbd> have been removed. The functions they performed have been moved into a new set of modules - <kbd><br />EnsEMBL::Web::Document::Element</kbd> and children. 
+
+<br />Most of these modules previously existed as <kbd>EnsEMBL::Web::Document::HTML</kbd> children, and where this is the case their content generation functions have been retained. 
+<br />Where necessary, an <kbd>init</kbd> function has been added to perform the functions previously in the Configuration modules.
+</li>
+<li>
+The following modules have been renamed while being moved from <kbd>EnsEMBL::Web::Document::HTML</kbd> to <kbd>EnsEMBL::Web::Document::Element</kbd>:
+  <ul>
+
+  <li><kbd>GlobalContext&nbsp;-> Tabs</kbd></li>
+  <li><kbd>LocalContext&nbsp;&nbsp;-> Navigation</kbd></li>
+  <li><kbd>LocalTools&nbsp;&nbsp;&nbsp;&nbsp;-> ToolButtons</kbd></li>
+  <li><kbd>ModalContext&nbsp;&nbsp;-> Modal</kbd></li>
+  </ul>
+
+</li>
+<li>
+The equivalent functions called on <kbd>$page</kbd> have also been changed, so <kbd>$page->global_context</kbd> is now <kbd>$page->tabs</kbd> etc. (where <kbd>$page</kbd> is a <kbd>EnsEMBL::Web::Document::Page</kbd>).
+
+</li>
+<li>
+The function <kbd>modify_page_elements</kbd> has been added to <kbd>EnsEMBL::Web::Configuration</kbd> modules, to allow changes from the default page layout.
+<br />Where previously a Configuration module would have the function
+<br />
+<br /><kbd>sub local_context { return undef; }</kbd>
+<br />
+<br />it now has the function
+<br />
+<br /><kbd>sub modify_page_elements { $_[0]->page->remove_body_element('local_context'); }</kbd>
+
+<li>
+<kbd>EnsEMBL::Web::Document::Page</kbd> and <kbd>EnsEMBL::Web::Document::Panel</kbd> modules have also been changed. Panels now contain <kbd>content</kbd> functions (returning HTML), while Pages have <kbd>render</kbd> functions (printing HTML).
+<br />Note: the Panels' content functions are <kbd>$self->content</kbd>, NOT <kbd>$self->_content</kbd> as previously.
+
+</li>
+<li><kbd>EnsEMBL::Web::Document::Page</kbd> has a new html_template function which is used to print the HTML for dynamic pages.</li>
+<li><kbd>EnsEMBL::Web::Document::Page</kbd> child modules' initialization  functions have been renamed from (for example) <kbd>_initialize_HTML</kbd> to <kbd>initialize_HTML</kbd> and so on.</li>
+<li><kbd>EnsEMBL::Web::Document::Page::Common</kbd> has been removed, with the functionality it provided moving into <kbd>EnsEMBL::Web::Document::Element</kbd> modules.</li>
+
+<li><kbd>EnsEMBL::Web::Hub->_set_core_params</kbd> has been renamed <kbd>set_core_params</kbd>, and <kbd>EnsEMBL::Web::Hub->parent</kbd> has been renamed <kbd>EnsEMBL::Web::Hub->referer</kbd>.</li>
+<li><kbd>EnsEMBL::Web::Configuration->_get_valid_action</kbd> has been renamed <kbd>EnsEMBL::Web::Configuration->get_valid_action</kbd>.</li>
+
+</ul>
+
+<h2>Other changes</h2>
+
+<ul class="spaced">
+
+<li><kbd>EnsEMBL::Web::Component::Location::MarkerDetails</kbd> has been renamed <kbd>EnsEMBL::Web::Component::Location::MarkerList</kbd></li>
+
+<li>Links for zmenus are now <kbd>/ZMenu</kbd> rather than <kbd>/Zmenu</kbd>, to bring them inline with the page names of the modules and avoid confusion.</li>
+</ul>
+
+</body>
+</html>
