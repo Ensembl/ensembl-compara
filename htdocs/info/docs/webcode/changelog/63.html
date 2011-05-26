@@ -16,6 +16,20 @@
 
 </ul>
 
+<h2>Ensembl Search</h2>
+
+<ul class="spaced">
+
+<li>All Exalead frontend code has been removed from the web code, as this search engine is only used in release 59 and earlier.</li>
+
+<li>The Altavista and EBeye child modules have also been removed from EnsEMBL::Web::Factory::Search, and the UniSearch (text search) code moved into the parent EnsEMBL::Web::Factory::Search module.</p>
+
+<li>Other search frontend code, including Configuration::Search and various Component::Search modules, have been updated to reflect these changes.</li>
+
+<li>A new public plugin, <kbd>lucene</kbd>, has been created for the Lucene search front end. A single module, Lucene::WebServiceWrapper, provides access to the lucene server, whilst modules within the EnsEMBL::Lucene and EnsEMBL::Web namespaces are used to override the simple text-based search with more sophisticated behaviour. This plugin should be used as a template when adding other search engines to Ensembl.</li>
+
+</ul>
+
 
 </body>
 </html>
