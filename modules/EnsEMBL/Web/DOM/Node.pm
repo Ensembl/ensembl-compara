@@ -412,10 +412,15 @@ sub appendable {
 }
 
 sub append_child {
-  ## Appends a child node
-  ## @param New node
+  ## Appends a child node (or creates a new child node before appending)
+  ## @param New node (OR 'text' or string node_name (for Node::Element) if intended to create a new node before adding)
+  ## @param String to go inside the new text node, OR HashRef for providing attributes of a new Element node (optional) - considered only if first argument is a string
   ## @return New node if success, undef otherwise
-  my ($self, $child) = @_;
+  my ($self, $child, $arg) = @_;
+  
+  ref $child eq 'ARRAY' and ($child, $arg) = @$child; #in case this method is called by append_children
+  $child and !ref $child and $child = $child eq 'text' ? $self->dom->create_text_node($arg) : $child = $self->dom->create_element($child, $arg);
+
   my $error = "";
   if ($self->appendable($child, \$error)) {
     $self->{'_text'} = ''; #remove text if any
@@ -434,14 +439,11 @@ sub append_child {
 
 sub append_children {
   ## Appends multiple children (wrapper around append_child)
-  ## @param List of new nodes (NOT arrayref)
-  ## @return ArrayRef or List of new nodes appended, undef indexed at any unsuccessful addition
-  my $self    = shift;
-  my $return  = [];
-  while (my $child = shift) {
-    push @$return, $self->append_child($child);
-  }
-  return wantarray ? @$return : $return;
+  ## @param List of nodes to be appended (NOT arrayref) - if new node creation is intended, provide arrayref ['text', inner_text] or [node_name, {arguments}] along with other nodes in the list
+  ## @return ArrayRef or List of newly appended nodes or undef indexed at any unsuccessful addition in the list
+  my $self  = shift;
+  my @nodes = map {$self->append_child($_)} @_;
+  return wantarray ? @nodes : \@nodes;
 }
 
 sub prepend_child {
