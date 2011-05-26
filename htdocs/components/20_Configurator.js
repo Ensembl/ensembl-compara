@@ -44,6 +44,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.elLk.trackOrderList   = $('ul.config_menu', this.elLk.trackOrder);
     this.elLk.viewConfigs      = this.elLk.configDivs.filter('.view_config');
     this.elLk.viewConfigInputs = $(':input:not([name=select_all])', this.elLk.viewConfigs);
+    this.elLk.imageConfigNotes = $('.image_config_notes', this.el);
     
     this.component          = $('input.component', this.elLk.form).val();
     this.sortable           = !!this.elLk.trackOrder.length;
@@ -518,6 +519,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         } else {
           configDiv.find('ul.config_menu li').filter(function () { return this.style.display === 'none'; }).show();
         }
+        
+        this.elLk.imageConfigNotes[configDiv.hasClass('view_config') ? 'hide' : 'show']();
     }
     
     this.styleTracks();
