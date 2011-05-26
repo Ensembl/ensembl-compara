@@ -563,6 +563,7 @@ sub columns {
           'tm.cigar_line',
           'tm.cigar_start',
           'tm.cigar_end',
+          'tm.method_link_species_set_id',
 
           @{Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->columns()}
           ];
@@ -621,6 +622,7 @@ sub init_instance_from_rowhash {
     Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->init_instance_from_rowhash($node, $rowhash);
 
     $node->cigar_line($rowhash->{'cigar_line'});
+    $node->method_link_species_set_id($rowhash->{method_link_species_set_id});
 # cigar_start and cigar_end does not need to be set.
 #    $node->cigar_start($rowhash->{'cigar_start'});
 #    $node->cigar_end($rowhash->{'cigar_end'});
