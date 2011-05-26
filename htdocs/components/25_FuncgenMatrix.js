@@ -35,7 +35,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       });
       
       table = null;
-    })
+    });
     
     if (!$('body').hasClass('ie')) { // IE 8 and below are too slow
       this.elLk.tables.bind('mousedown', function (e) {
@@ -80,7 +80,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       
       cells = null;
     });
-     
+    
     // Display a select all popup for rows
     $('tbody th', this.elLk.tables).hover(function () {
       if (panel.mousemove) {
@@ -249,8 +249,8 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       return; // Target is unchanged
     }
     
-    var x     = [ cell[0], this.startCell[0] ].sort(function (a, b) { return a - b });
-    var y     = [ cell[1], this.startCell[1] ].sort(function (a, b) { return a - b });
+    var x     = [ cell[0], this.startCell[0] ].sort(function (a, b) { return a - b; });
+    var y     = [ cell[1], this.startCell[1] ].sort(function (a, b) { return a - b; });
     var cells = [];
     var i, j;
     
