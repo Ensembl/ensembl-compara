@@ -28,10 +28,7 @@ sub init {
   $self->{'feature_type_ids'}  = $funcgen_tables->{'meta'}{'feature_type_ids'};
   $self->{'focus_set_ids'}     = $funcgen_tables->{'meta'}{'focus_feature_set_ids'};
   
-  my $defaults = {
-    opt_highlight    => 'yes',
-    opt_empty_tracks => 'yes'
-  };
+  my $defaults;
   
   foreach my $cell_line (keys %{$self->{'cell_lines'}}) {
     $cell_line =~ s/\:\w*//;
@@ -61,14 +58,14 @@ sub form {
     $self->form_evidence_types;
   } else {
     my $tree = $self->tree;
-    my $node = $tree->get_node('functional');
     
-    if ($self->can('form_context')) {
-      $self->form_context;
-      $node->append($tree->get_node('context'));
-    }
-    
-    $node->append($tree->create_node('evidence_types', { url => $hub->url('Config', { function => 'Cell_line', partial => 1 }), availability => 1, caption => 'Evidence types', class => 'Evidence_types' }));
+    $self->form_context if $self->can('form_context');
+    $tree->get_node('functional')->append($tree->create_node('evidence_types', {
+      url          => $hub->url('Config', { function => 'Cell_line', partial => 1 }),
+      availability => 1,
+      caption      => 'Evidence types',
+      class        => 'Evidence_types'
+    }));
   }
 }
 
@@ -81,55 +78,100 @@ sub build_imageconfig_form {
 }
 
 sub form_evidence_types {
-  my $self      = shift;
-  my $focus_row = 3;
-  my $row       = 3;
-  my %focus_feature_type_ids;
+  my $self   = shift;
+  my $groups = { Core => [], Other => [] };
+  my (@columns, %focus_feature_type_ids);
+  
+  my $select_all_col = qq{
+    <div class="select_all_column floating_popup">
+      Select features for %s<br />
+      <div><input type="radio" name="%s" class="default">Default</input></div>
+      <div><input type="radio" name="%s" class="all">All</input></div>
+      <div><input type="radio" name="%s" class="none">None</input></div>
+    </div>
+  };
+  
+  my $select_all_row = qq{
+    <div class="select_all_row floating_popup">
+      Select all<br />
+      %s
+      <input type="checkbox" />
+    </div>
+  };
   
   $self->info_panel;
+  $self->{'panel_type'} = 'FuncgenMatrix';
   
   # Allow focus sets to appear first
   foreach my $feature_sets (values %{$self->{'focus_set_ids'}}) {
-    $focus_feature_type_ids{$_} ||= $focus_row++ for keys %$feature_sets;
+    $focus_feature_type_ids{$_} = 1 for keys %$feature_sets;
   }
-  
-  my $fieldset = $self->add_fieldset('Evidence types', 'matrix');
-  my $matrix   = $fieldset->add_matrix;
-  
-  $fieldset->set_flag($self->SELECT_ALL_FLAG);
-  $matrix->configure({ name_prefix => 'opt_cft_', selectall_label => '<b>Select features:</b>' });
   
   foreach my $cell_line (sort keys %{$self->{'cell_lines'}}) {
     $cell_line =~ s/\:\w*//;
-    $matrix->add_column({ name => $cell_line, caption => $cell_line });
+    push @columns, { html => sprintf "<p>$cell_line</p>$select_all_col", map $cell_line, 0..4 };
   }
   
-  my $groups = { core => [], other => [] };
-
   foreach my $feature (sort keys %{$self->{'evidence_features'}}) {
     my ($feature_name, $feature_id) = split /\:/, $feature;
-    my $set = exists $focus_feature_type_ids{$feature_id} ? 'core' : 'other';
+    my $set = exists $focus_feature_type_ids{$feature_id} ? 'Core' : 'Other';
+    my @row = ({ tag => 'th', html => sprintf "$feature_name$select_all_row", $feature_name  }); # row name
     
-    my $row = {
-      name => $feature_name,
-      row  => {}
-    };
-    
-    foreach my $cell_line (sort keys %{$self->{'cell_lines'}}) { 
+    foreach my $cell_line (sort keys %{$self->{'cell_lines'}}) {
       $cell_line =~ s/\:\w*//;
       
-      $row->{'row'}->{$cell_line}->{'enabled'} = 1 if exists $self->{'feature_type_ids'}{$cell_line}{$feature_id};
-      $row->{'row'}->{$cell_line}->{'default'} = 1 if $self->{'options'}{"opt_cft_$cell_line:$feature_name"}{'default'} eq 'on';
-      $row->{'row'}->{$cell_line}->{'checked'} = 1 if $self->get("opt_cft_$cell_line:$feature_name") eq 'on';
-      $row->{'row'}->{$cell_line}->{'title'}   = "$cell_line:$feature_name";
+      my $cell = { tag => 'td', html => '<p></p>' };
+      
+      if (exists $self->{'feature_type_ids'}{$cell_line}{$feature_id}) {
+        $cell->{'title'}  = "$cell_line:$feature_name";
+        $cell->{'class'}  = "option $cell_line $feature_name";
+        $cell->{'class'} .= ' on'      if $self->get("opt_cft_$cell_line:$feature_name") eq 'on';
+        $cell->{'class'} .= ' default' if $self->{'options'}{"opt_cft_$cell_line:$feature_name"}{'default'} eq 'on';
+      } else {
+        $cell->{'class'} = 'disabled';
+      }
+      
+      push @row, $cell;
     }
     
-    push @{$groups->{$set}}, $row;
+    push @{$groups->{$set}}, \@row;
   }
   
-  foreach my $subheading (keys %$groups) {
-    $matrix->add_subheading(ucfirst "$subheading features:", $subheading);
-    $matrix->add_row($_->{'name'}, $_->{'row'}) for @{$groups->{$subheading}};
+  my $fieldset  = $self->add_fieldset('Evidence types');
+  my $panel_div = $fieldset->append_child($fieldset->dom->create_element('div', { id => 'funcgen_matrix', class => 'js_panel' }));
+  my $width     = (scalar @columns * 26) + 86; # Each td is 25px wide + 1px border. The first cell (th) is 85px + 1px border
+  
+  foreach my $set ('Core', 'Other') {
+    my $table = sprintf('
+      <table class="funcgen_matrix" cellspacing="0" cellpadding="0" style="width:%spx">
+        <thead>
+          <tr>%s</tr>
+        </thead>
+        <tbody>
+      ',
+      $width,
+      join '', map "<th>$_->{'html'}</th>", {}, @columns
+    );
+    
+    foreach (@{$groups->{$set}}) {
+      my $row_html;
+      
+      foreach (@$_) {
+        $row_html .= sprintf('<%s%s%s>%s</%s>',
+          $_->{'tag'},
+          $_->{'class'} ? qq{ class="$_->{'class'}"} : '',
+          $_->{'title'} ? qq{ title="$_->{'title'}"} : '',
+          $_->{'html'},
+          $_->{'tag'}
+        );
+      }
+      
+      $table .= "<tr>$row_html</tr>";
+    }
+    
+    $table .= '</tbody></table>'; 
+    
+    $panel_div->append_child($fieldset->dom->create_element('div', { class => "funcgen_matrix $set", inner_HTML => "<h2>$set features</h2>$table" }));
   }
 }
 
@@ -146,7 +188,7 @@ sub info_panel {
         number of feature types you try to display at any one time.
       </p>
       <p>
-        Any cell lines that you configure here must also be turned on in the <a href="#functional" class="modal_link">Functional genomics</a> section before any data will be displayed.
+        Any cell lines that you configure here must also be turned on in the <a href="#functional" class="modal_link">Regulation</a> section before any data will be displayed.
       </p>
       </div>
     </div>
@@ -164,6 +206,7 @@ sub update_from_input {
   
   my $diff = $input->param('view_config');
   my $flag = 0;
+  my %altered_tracks;
   my $altered;
   
   if ($diff) {
@@ -229,6 +272,7 @@ sub update_from_input {
         if ($cell_lines{$_}{$cell_line} && $node->get('display') eq 'off') {
           $node->set_user('display', 'compact');
           $image_config->altered = 1;
+          $altered_tracks{"reg_feats_${_}_$cell_line"} = 'compact';
         }
       }
     }
@@ -237,7 +281,7 @@ sub update_from_input {
   $self->altered   = $image_config->update_from_input if $image_config;
   $self->altered ||= $altered || 1 if $flag;
   
-  return $self->altered;
+  return scalar keys %altered_tracks ? { imageConfig => \%altered_tracks, trackTypes => [ 'functional' ] } : $self->altered;
 }
 
 1;
