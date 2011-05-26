@@ -19,7 +19,7 @@ a.help-header { color:[[CONTRAST_HEADER]];text-decoration:none; }
   z-index: 200; 
   font-weight: bold; 
   padding: 2px; 
-  font-size: 0.8em; 
+  font-size: 10px; 
   text-align: left; 
   width: 20em;
   white-space: normal;
