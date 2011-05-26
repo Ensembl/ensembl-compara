@@ -54,6 +54,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.externalFavourites = {};
     this.imageConfig        = {};
     this.viewConfig         = {};
+    this.subPanels          = [];
     
     for (type in this.params.tracks) {
       group = this.params.tracks[type];
@@ -442,6 +443,39 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       lis = null;
     }
     
+    function addSection() {
+      configDiv = $('<div>', {
+        className: 'config view_config ' + active,
+        innerHTML: '<div class="spinner">Loading Content</div>'
+      }).appendTo(panel.elLk.form);
+      
+      panel.elLk.configDivs  = $('div.config', panel.elLk.form);
+      panel.elLk.viewConfigs = panel.elLk.configDivs.filter('.view_config');
+      
+      $.ajax({
+        url: url,
+        data: { time: new Date().getTime() }, // Cache buster for IE
+        dataType: 'json',
+        success: function (json) {
+          configDiv.html(json.content);
+          
+          var panelDiv = $('.js_panel', configDiv);
+          
+          if (panelDiv.length) {
+            Ensembl.EventManager.trigger('createPanel', panelDiv[0].id, json.panelType, $.extend({}, panel.params, { component: panel.component }));
+            panel.subPanels.push(panelDiv[0].id);
+          } else {
+            panel.elLk.viewConfigInputs = $(':input:not([name=select_all])', panel.elLk.viewConfigs);
+            panel.setSelectAll();
+            
+            $(':input:not([name=select_all])', configDiv).each(function () {
+              panel.viewConfig[this.name] = this.type === 'checkbox' ? this.checked ? this.value : 'off' : this.value;
+            });
+          }
+        }
+      });
+    }
+    
     if (active.rel === 'multi' ^ this.elLk.form.hasClass('multi')) {
       this.elLk.form[active.rel === 'multi' ? 'addClass' : 'removeClass']('multi');
     }
@@ -480,27 +514,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         configDiv = this.elLk.configDivs.filter('.' + active).show();
         
         if (url && !configDiv.length) {
-          configDiv = $('<div>', {
-            className: 'config view_config ' + active,
-            innerHTML: '<div class="spinner">Loading Content</div>'
-          }).appendTo(this.elLk.form);
-          
-          this.elLk.configDivs  = $('div.config', this.elLk.form);
-          this.elLk.viewConfigs = this.elLk.configDivs.filter('.view_config');
-          
-          $.ajax({
-            url: url,
-            dataType: 'json',
-            success: function (json) {
-              configDiv.html(json.content);
-              panel.elLk.viewConfigInputs = $(':input:not([name=select_all])', panel.elLk.viewConfigs);
-              panel.setSelectAll();
-              
-              $(':input:not([name=select_all])', configDiv).each(function () {
-                panel.viewConfig[this.name] = this.type === 'checkbox' ? this.checked ? this.value : 'off' : this.value;
-              });
-            }
-          });
+          addSection();
         } else {
           configDiv.find('ul.config_menu li').filter(function () { return this.style.display === 'none'; }).show();
         }
@@ -518,9 +532,15 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     var diff        = false;
     var imageConfig = {};
     var viewConfig  = {};
-    var reload      = this.params.reset ? 1 : 0;
     
-    this.params.reset = false;
+    $.each(this.subPanels, function () {
+      var conf = Ensembl.EventManager.triggerSpecific('updateConfiguration', this, true);
+      
+      if (conf) {
+        $.extend(viewConfig, conf);
+        diff = true;
+      }
+    });
     
     this.elLk.tracks.each(function () {
       var fav       = $(this).hasClass('fav');
@@ -570,25 +590,36 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       $.extend(true, this.imageConfig, imageConfig);
       $.extend(true, this.viewConfig,  viewConfig);
       
-      this.updatePage({ image_config: JSON.stringify(imageConfig), view_config: JSON.stringify(viewConfig), reload: reload }, delayReload);
+      this.updatePage({ image_config: JSON.stringify(imageConfig), view_config: JSON.stringify(viewConfig) }, delayReload);
       
       return diff;
     }
   },
   
   updatePage: function (data, delayReload) {
+    var panel = this;
+    
     data.submit = 1;
+    data.reload = this.params.reset ? 1 : 0;
+    
+    this.params.reset = false;
     
     $.ajax({
       url:  this.elLk.form.attr('action'),
       type: this.elLk.form.attr('method'),
       data: data, 
       dataType: 'json',
-      context: this,
       async: false,
       success: function (json) {
+        var trackName;
+        
         if (json.updated) {
-          Ensembl.EventManager.trigger('queuePageReload', this.component, !delayReload);
+          Ensembl.EventManager.trigger('queuePageReload', panel.component, !delayReload);
+          
+          if (json.imageConfig) {
+            $.each(json.trackTypes, function (i, type) { panel.addTracks(type); });
+            panel.externalChange(json.imageConfig);
+          }
         } else if (json.redirect) {
           Ensembl.redirect(json.redirect);
         }
@@ -818,9 +849,19 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   },
   
   // Called when track configuration is changed on the image, rather that in the configuration panel
-  externalChange: function (trackName, renderer) {
-    this.elLk.tracks.filter('.' + trackName).find('.popup_menu .' + renderer).trigger('click');
-    this.imageConfig[trackName].renderer = renderer;
+  externalChange: function (args) {
+    var tracks = {};
+    
+    if (typeof args !== 'object') {
+      tracks[arguments[0]] = arguments[1];
+    } else {
+      tracks = args;
+    }
+    
+    for (var trackName in tracks) {
+      this.elLk.tracks.filter('.' + trackName).find('.popup_menu .' + tracks[trackName]).trigger('click');
+      this.imageConfig[trackName].renderer = tracks[trackName];
+    }
   },
   
   // Called when a view config option is changed, to make sure the identical option is updated in other Configurator panels
