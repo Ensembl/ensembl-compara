@@ -6,6 +6,8 @@ body { font-family: Luxi Sans, Helvetica, Arial, Geneva, sans-serif; color: [[PA
 pre, code, kbd { font-family: Courier New, Courier, monospace; }
 div, p, span, li, dd, dt, th, td, pre, code, kbd { font-size: 1em; }
 
+body.ie6 th, body.ie6 td { font-size: 13px; }
+
 /*----------------------------------------------------------------------
   Default whitespace settings round features...
 ----------------------------------------------------------------------*/
