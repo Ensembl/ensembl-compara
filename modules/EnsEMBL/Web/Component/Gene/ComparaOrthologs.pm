@@ -42,6 +42,7 @@ sub content {
   
   my %orthologue_map = qw(SEED BRH PIP RHS);
   my $alignview      = 0;
+  my $column_name =  $self->html_format ? 'Compare' : 'Description';
   
   my $columns = [
     { key => 'Species',            align => 'left', width => '10%', sort => 'html'          },
@@ -49,7 +50,7 @@ sub content {
     { key => 'dN/dS',              align => 'left', width => '5%',  sort => 'numeric'       },
     { key => 'Ensembl identifier', align => 'left', width => '20%', sort => 'html'          },
     { key => 'Gene name (Xref)',   align => 'left', width => '20%', sort => 'none'          },
-    { key => 'Compare',            align => 'left', width => '10%', sort => 'none'          },
+    { key => $column_name,         align => 'left', width => '10%', sort => 'none'          },
     { key => 'Location',           align => 'left', width => '20%', sort => 'position_html' },
     { key => 'Target %id',         align => 'left', width => '5%',  sort => 'numeric'       },
     { key => 'Query %id',          align => 'left', width => '5%',  sort => 'numeric'       },
@@ -148,19 +149,19 @@ sub content {
       unshift @external, $orthologue->{'display_id'} if $orthologue->{'display_id'};
 
       # Bug fix:  In othologues list, all orthologues with no description used to appear to be described as "novel ensembl predictions":
-      @external = qq{<span class="small">-</span>} if (($description eq 'No description') && ($orthologue->{'display_id'} eq 'Novel Ensembl prediction'));  
-
+      @external = qq{<span class="small">-</span>} if (($description eq 'No description') && ($orthologue->{'display_id'} eq 'Novel Ensembl prediction'));
+      
       push @rows, {
         'Species'            => join('<br />(', split /\s*\(/, $species),
         'Type'               => ucfirst $orthologue_desc,
         'dN/dS'              => $orthologue_dnds_ratio,
         'Ensembl identifier' => $object_stable_id_link,
-        'Gene name (Xref)'   => join('<br />', @external),
+        'Gene name (Xref)'   => $self->html_format ?  join('<br />', @external) : "$orthologue->{'display_id'}",                
         'Location'           => qq{<a href="$location_link">$orthologue->{'location'}</a>},
-        'Compare'            => $self->html_format ? qq{<span class="small">$target_links</span>} : '',
+        $column_name         => $self->html_format ? qq{<span class="small">$target_links</span>} : "$description",
         'Target %id'         => $target,
         'Query %id'          => $query,
-      };
+      };      
     }
   }
   
@@ -187,8 +188,7 @@ sub content {
         join "</li>\n<li>", map "$_ ($skipped{$_})", sort keys %skipped
       )
     );
-  }
-  
+  }  
   return $html;
 }
 
