@@ -10,7 +10,7 @@ sub set_content {
   my ($self, $content) = @_;
   
   $self->{'content'} = qq{
-  <div class="panel">
+  <div class="panel $self->{'class'}">
     <div class="content">
       $content
     </div>
