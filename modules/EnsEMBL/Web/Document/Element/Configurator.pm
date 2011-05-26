@@ -118,12 +118,12 @@ sub init_config {
     $self->{$_} = $view_config->{$_} || {} for qw(tracks track_order);
   }
   
-  $self->add_image_notes($controller) if $view_config->has_images;
+  $self->add_image_config_notes($controller) if $view_config->has_images;
 }
 
-sub add_image_notes {
+sub add_image_config_notes {
   my ($self, $controller) = @_;
-  my $panel   = $self->new_panel('Configurator', $controller, code => 'x');
+  my $panel   = $self->new_panel('Configurator', $controller, code => 'x', class => 'image_config_notes' );
   my $img_url = $controller->img_url;
   
   $panel->set_content(qq{
