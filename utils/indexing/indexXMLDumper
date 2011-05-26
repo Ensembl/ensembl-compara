@@ -29,9 +29,10 @@ use CGI;
 
 $| = 1;
 
-my (@species,@indexes,$search_engine,$debug,$dry_run,$log,$dir,$help);
-GetOptions('species=s' => \@species,
-           'index=s'   => \@indexes,
+my ($species_list,$ignore_species_list,$indexes_list,$search_engine,$debug,$dry_run,$log,$dir,$help);
+GetOptions('species=s' => \$species_list,
+           'ignore_species=s' => \$ignore_species_list,
+           'index=s'   => \$indexes_list,
            'engine=s'  => \$search_engine,
            'debug'     => \$debug,
            'dry_run|n' => \$dry_run,
@@ -45,8 +46,9 @@ if ($help){
   exit;
 }
 
-(@species) = split ',',@species[0];
-(@indexes) = split ',',@indexes[0];
+my @species        = split ',',$species_list;
+my @ignore_species = split ',',$ignore_species_list;
+my @indexes        = split ',',$indexes_list;
 
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
 our $release = $SD->ENSEMBL_VERSION;
@@ -72,10 +74,16 @@ unless ($debug) {
 
 ## HACK 2 - if the SPECIES is set to ALL grab stuff from config...
 my %X = %{$SD->ENSEMBL_SPECIES_ALIASES};
-my $input_c =  @species;
-if( $species[0] eq 'ALL' ) {
-  @species = @{$SD->ENSEMBL_DATASETS}
-} else {
+my $input_c = @species;
+if( $species_list eq 'ALL' ) {
+  @species = ();
+  my %ignored;
+  @ignored{@ignore_species} = ();
+  foreach my $sp (@{$SD->ENSEMBL_DATASETS}) {
+    push @species,$sp unless exists $ignored{$sp};
+  }
+}
+else {
   @species = grep {$_} map { $X{lc($_)} } @species;
   if (@species ne $input_c) {
     print LOG "WARNING - one or more of your species names is not recognised, please check your spelling. Available species are:\n";
@@ -2699,32 +2707,28 @@ sub about {
   print STDERR <<ABOUT_END;
 
 usage:
-./indexXMLDumper --species=aaa,bbb --index=xxx,yyy (--debug) (--log index.log) (--dir dir) (--dry_run|n)
+./indexXMLDumper --species=aaa,bbb|ALL --index=xxx,yyy|ALL (--ignore_species=ccc) (--debug) (--log=index.log) (--dir=dir) (--dry_run|n)
 
 'ALL' can be used for both 'species' and 'index'
 
 The script will retry five times if it encounters MySQL errors (for example loses database connections)
 unless --debug is specified in which case it will exit on the first failure.
 
-In the abscence of --debug option, STDOUT and STDERR are sent to a log file (dumping_log.log by default). If you run with --debug then output is sent to STDOUT
+In the abscence of --debug option, STDOUT and STDERR are sent to a log file (dumping_$release.log unless specified otherwise). If you run with --debug then output is sent to STDOUT
 
-The locations of the actual xml files can be specified with the dir option. If not specified then it is dumped locally with debug, or in the correct location for indexing without (/nfs/eureka/data - you have to be a member of the www-search UNIX group to write here)
+The locations of the actual xml files can be specified with the dir option. If not specified then it is dumped locally with debug, or in the correct location for indexing without (/nfs/eureka/data/ensembl_$release - note you have to be a member of the www-search UNIX group to write here)
 
-Examine the log file for 'WARNING XML' - this will identify any entries identified by XML::Parser as not being well formed and which would crash index production. These are not added to the xml file but the record count in the footer *will* include them. Either manaully fix and add the entry(ies) to the xml file, or else fix the database / script to account for it and rerun.
-
-Also look for other 'WARNING' messages in the log file
+Examine the log file for 'WARNING' messages, particularly 'WARNING XML' - this will identify any entries identified by XML::Parser as not being well formed and which would crash index production. These are not added to the xml file but the record count in the footer *will* include them. Either manaully fix and add the entry(ies) to the xml file, or else fix the database / script to account for it and rerun.
 
 --dry_run|n does everything apart from actually write the xml [note that this option will delete any preexisting file]
 
 Examples:
 
-./indexXMLDumper --species=ALL --index=ALL --debug                 #all log output to STDOUT; xml to input
-./indexXMLDumper --species=ALL --index=ALL --debug -log debug.log  #all log output to debug.log; xml to input
-./indexXMLDumper --species=ALL --index=ALL                         #all log output to dumping_$release.log; xml to /nfs/eureka/data/ensembl_$release
-./indexXMLDumper --species=ALL --index=ALL --dir new_input         #all log output to dumping_$release.log; xml to new_input
-./indexXMLDumper --species=ALL --index=ALL -log dumping.log        #all log output to all_log.log; xml to /nfs/eureka/data/ensembl_$release"
-
-./indexXMLDumper --species=ALL --index=Gene --engine solr  -log dumping.log        #output in format for solr (for testing, only works for genes as yet)
+./indexXMLDumper --species=ALL --index=ALL --debug --log=debug.log  #all log output to debug.log; xml to input; all indices for all species
+./indexXMLDumper --species=ALL --index=ALL                          #all log output to dumping_$release.log; xml to /nfs/eureka/data/ensembl_$release; all indices for all species
+./indexXMLDumper --species=ALL --index=ALL --dir=input              #all log output to dumping_$release.log; xml to input; all indices for all species
+./indexXMLDumper --species=ALL --ignore_species=Homo_sapiens --index=Variation --log=no_hs_variations.log #log output to no_hs_variations; xml to /nfs/eureka/data/ensembl_$release"; Variations for all species but human
+./indexXMLDumper --species=ALL --index=Gene --engine solr  -log dumping.log #output in format for solr (for testing, only works for genes as yet)
 
 ABOUT_END
 }
