@@ -584,6 +584,7 @@ sub dumpVariation {
     $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
   }
   else {
+    #for human we can't read the allele table in one go so need to do it was go along, very slow!
     print LOG "    Will get extra ssID info as we go along", &date_and_mem, "\n";
     $stmt = qq{SELECT GROUP_CONCAT(
                  DISTINCT CONCAT('ss',subsnp_id)
@@ -635,6 +636,7 @@ sub dumpVariation {
         $ssids = $ssid_hash->{$variation_id}{'ssid'};
       }
       else {
+        #e62 - comment out these three lines to generate indices without allele table info
         $ssid_sth->execute($variation_id);
         (my $res) = $ssid_sth->fetchall_arrayref();
         $ssids = $res->[0][0];
