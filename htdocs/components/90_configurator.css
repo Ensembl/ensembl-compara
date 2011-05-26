@@ -44,8 +44,14 @@ body.ie6 form.configuration div.config ul.config_menu li .controls  { margin-top
 body.ie7 form.configuration div.config ul.config_menu li .controls  { margin-top: -18px; }
 body.mac div.track_order span.menu_option                           { cursor: ns-resize; }
 
-div.funcgen_matrix                                              { float: left; margin: 10px 50px 0 0; }
-div.funcgen_matrix h2                                           { margin-bottom: 15px; border: 0!important; }
+div.funcgen_matrix                                              { float: left; margin-right: 50px; }
+div.funcgen_matrix h2                                           { margin-bottom: 15px; border: 0 !important; }
+div.matrix_key                                                  { margin-bottom: 10px; height: 41px; border-bottom: 1px solid [[PANEL_BORDER]]; }
+div.matrix_key h2                                               { border: 0 !important; width: 75px; float: left; position: relative; top: 10px; }
+div.matrix_key div                                              { float: left; margin-right: 10px; font-weight: bold; position: relative; }
+div.matrix_key .key                                             { top: 7px; }
+div.matrix_key .key div                                         { display: block; top: 5px; }
+div.matrix_key .key .cell                                       { width: 25px; height: 25px; border: 1px solid black; top: 0; }
 table.funcgen_matrix                                            { border-collapse: collapse; cursor: pointer; }
 table.funcgen_matrix tr                                         { height: 26px; }
 table.funcgen_matrix tr th,                                     
@@ -58,11 +64,11 @@ table.funcgen_matrix thead th div.select_all_column input       { margin: 0 3px;
 table.funcgen_matrix tbody th                                   { width: 85px; }
 table.funcgen_matrix tbody th div.select_all_row                { width: 70px; margin-top: -22px; padding: 2px 4px; }
 table.funcgen_matrix tbody th div.select_all_row input          { position: absolute; top: 5px; right: 2px; }
-table.funcgen_matrix tbody td                                   { border: 1px solid black; }
-table.funcgen_matrix tbody td.option                            { background: #EAEEFF; }
-table.funcgen_matrix tbody td.on                                { background: #336699; }
-table.funcgen_matrix tbody td.disabled                          { background: #B5B5B5; }
-table.funcgen_matrix tbody td.highlight p                       { background: #DAA520; height: 25px; opacity: 0.4; }
+table.funcgen_matrix td                                         { border: 1px solid black; }
+table.funcgen_matrix td.option,   div.matrix_key .key .off      { background: [[TINT_BG]]; }
+table.funcgen_matrix td.on,       div.matrix_key .key .on       { background: [[MH_BORDER]]; }
+table.funcgen_matrix td.disabled, div.matrix_key .key .disabled { background: #B5B5B5; }
+table.funcgen_matrix td.highlight p                             { background: #DAA520; height: 25px; opacity: 0.4; }
 
 body.ie div.funcgen_matrix h2                                   { margin-bottom: 25px; }
 body.ie table.funcgen_matrix th                                 { position: relative; }
