@@ -1,0 +1,42 @@
+<html>
+<head>
+<meta name="order" content="6" />
+<title>Web changelog for release 61</title>
+</head>
+
+<body>
+
+<h1>Web Code Changelog - Release 61</h1>
+
+<h2>Session table</h2>
+
+<p class="space-below">There has been a schema change to the <kbd>session_record</kbd> table 
+in the <kbd>ensembl_web_user_db</kbd> database.</p>
+
+<p class="space-below">As we do not provide dumps of this database, you MUST run the script 
+<kbd>/utils/update_session_record.pl</kbd> when updating to the new code for this release, 
+otherwise track configuration will no longer be stored correctly. This script both alters the 
+table and updates all existing configurations to work with the new code.</p>
+
+<p>Further changes to this table will probably be coming over the next few releases.</p>
+
+<h2>ZMenu plugins</h2>
+
+<p class="space-below">ZMenu plugins now work in the same way as the rest of the code.</p>
+
+<p>Previously all modules matching the required namespace would be called, starting from 
+the most important plugin and ending with the core code. Now only the first matching namespace 
+will be used, and as a result plugin code should be changed to call <kbd>$self->SUPER::content</kbd> 
+in the <kbd>content</kbd> function where required.</p>
+
+<h2>Static server</h2>
+
+<p class="space-below">Ensembl can now serve static files - images, css and javascript - from a different URL, 
+specified in SiteDefs as <kbd>$ENSEMBL_STATIC_SERVER</kbd>. This change reduces server load as cookies will not be 
+registered for the static domain.</p>
+
+<p>If no <kbd>ENSEMBL_STATIC_SERVER</kbd> variable is set, the site will behave as it did previously.</p>
+
+
+</body>
+</html>

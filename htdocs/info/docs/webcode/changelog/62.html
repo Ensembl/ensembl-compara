@@ -1,0 +1,26 @@
+<html>
+<head>
+<meta name="order" content="6" />
+<title>Web changelog for release 62</title>
+</head>
+
+<body>
+
+<h1>Web Code Changelog - Release 62</h1>
+
+<h2>Large file formats</h2>
+
+<p class="space-below">To support the increasing number of large file formats being added to 
+Ensembl, the Custom Data section of the control panel has been simplified, with 'Attach BAM File' 
+now merged into 'Attach URL Data'. Format-specific modules in <kbd>EnsEMBL::Web::Command::UserData</kbd> 
+and <kbd>EnsEMBL::Web::Component::UserData</kbd> have been removed and any functionality merged into
+generic modules such as <kbd>EnsEMBL::Web::Command::UserData::AttachRemote</kbd>.</p>
+
+<p class="space-below">Additional large file formats include BigWig and VCF. Note that these are 
+not enabled by default, as you will also have to install the necessary file-handling tools. 
+Formats can be enabled individually in <kbd>DEFAULTS.ini</kbd> as follows</p>
+
+<p><kbd>USERDATA_REMOTE_FORMATS = [BAM BigWig VCF]</kbd></p>
+
+</body>
+</html>
