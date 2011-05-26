@@ -99,7 +99,6 @@ sub form_evidence_types {
     </div>
   };
   
-  $self->info_panel;
   $self->{'panel_type'} = 'FuncgenMatrix';
   
   # Allow focus sets to appear first
@@ -137,9 +136,11 @@ sub form_evidence_types {
     push @{$groups->{$set}}, \@row;
   }
   
-  my $fieldset  = $self->add_fieldset('Evidence types');
-  my $panel_div = $fieldset->append_child($fieldset->dom->create_element('div', { id => 'funcgen_matrix', class => 'js_panel' }));
-  my $width     = (scalar @columns * 26) + 86; # Each td is 25px wide + 1px border. The first cell (th) is 85px + 1px border
+  my $width    = (scalar @columns * 26) + 86; # Each td is 25px wide + 1px border. The first cell (th) is 85px + 1px border
+  my $fieldset = $self->add_fieldset;
+  my $dom      = $fieldset->dom;
+  my $panel    = $dom->create_element('div', { id => 'funcgen_matrix', class => 'js_panel' });
+  my @matrices;
   
   foreach my $set ('Core', 'Other') {
     my $table = sprintf('
@@ -171,28 +172,23 @@ sub form_evidence_types {
     
     $table .= '</tbody></table>'; 
     
-    $panel_div->append_child($fieldset->dom->create_element('div', { class => "funcgen_matrix $set", inner_HTML => "<h2>$set features</h2>$table" }));
+    push @matrices, $dom->create_element('div', { class => "funcgen_matrix $set", inner_HTML => "<h2>$set features</h2>$table" });
   }
-}
-
-sub info_panel {
-  my $self = shift;
-  my $form = $self->get_form;
   
-  $form->append_child($form->dom->create_element('div', { class => 'content', inner_HTML => qq{
-    <div class="info">
-      <h3>Note:</h3>
-      <div class ="error-pad">
-      <p>
-        These are data intensive tracks. For best performance it is advised that you limit the 
-        number of feature types you try to display at any one time.
-      </p>
-      <p>
-        Any cell lines that you configure here must also be turned on in the <a href="#functional" class="modal_link">Regulation</a> section before any data will be displayed.
-      </p>
-      </div>
-    </div>
-  }}));
+  $panel->append_children(
+    $dom->create_element('div', { class => 'matrix_key', inner_HTML => '
+      <h2>Key</h2>
+      <div class="key"><div>On</div><div class="cell on"></div></div>
+      <div class="key"><div>Off</div><div class="cell off"></div></div>
+      <div class="key"><div>Disabled</div><div class="cell disabled"></div></div>
+    '}),
+    @matrices
+  );
+  
+  $fieldset->append_children(
+    $dom->create_element('h2', { inner_HTML => 'Evidence types' }), 
+    $panel
+  );
 }
 
 # Set image config tracks when selecting checkboxes
