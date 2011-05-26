@@ -50,7 +50,7 @@ sub init {
   $page->navigation->caption($self->caption);
   $page->navigation->configuration(1);
   
-  $self->{'panel_type'} = 'Configurator';
+  $self->{'panel_type'} ||= 'Configurator';
 }
 
 sub init_config {
@@ -104,7 +104,8 @@ sub init_config {
     }
     
     if ($hub->param('partial')) {
-      $panel->{'content'} = join '', map $_->render, @{$form->child_nodes};
+      $panel->{'content'}   = join '', map $_->render, @{$form->child_nodes};
+      $self->{'panel_type'} = $view_config->{'panel_type'} if $view_config->{'panel_type'};
     } else {
       $panel->set_content($form->render);
     }
