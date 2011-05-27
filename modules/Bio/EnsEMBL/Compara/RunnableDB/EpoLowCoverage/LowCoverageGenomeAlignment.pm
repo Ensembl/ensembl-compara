@@ -72,6 +72,11 @@ sub fetch_input {
     throw("MethodLinkSpeciesSet->dbID is not defined for this LowCoverageAlignment job");
   }
 
+  #set default to do transactions
+  if (!defined $self->param('do_transactions')) {
+      $self->param('do_transactions', 1);
+  }
+
   #load from genomic_align_block ie using in 2X mode
   $self->_load_GenomicAligns($self->param('genomic_align_block_id'));
 
@@ -245,7 +250,7 @@ sub _write_output {
 	  #remove the need to call NestedSetAdaptor.pm. However, this would mean making other alterations to the API which use
 	  #the left and right indexes.
 	  #	      $gata->store($genomic_align_tree, "skip_left_right_indexes");
-	  $gata->store($genomic_align_tree, $skip_left_right_index, $use_fresh_connection);
+	  $gata->store($genomic_align_tree, $skip_left_right_index);
 	  $self->_write_gerp_dataflow($genomic_align_tree->modern_genomic_align_block_id,
 					  $mlss);
       }
