@@ -463,7 +463,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           var panelDiv = $('.js_panel', configDiv);
           
           if (panelDiv.length) {
-            Ensembl.EventManager.trigger('createPanel', panelDiv[0].id, json.panelType, $.extend({}, panel.params, { component: panel.component }));
+            Ensembl.EventManager.trigger('createPanel', panelDiv[0].id, json.panelType);
             panel.subPanels.push(panelDiv[0].id);
           } else {
             panel.elLk.viewConfigInputs = $(':input:not([name=select_all])', panel.elLk.viewConfigs);
