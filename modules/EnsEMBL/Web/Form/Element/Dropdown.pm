@@ -48,7 +48,7 @@ sub add_option {
   ##  - value     goes in value attribute of the option
   ##  - caption   goes as innerText in <option> (is the actual name displayed)
   ##  - selected  flag to tell whether option is selected or not
-  ##  - class     Class attribute - overrides the 
+  ##  - class     Class attribute - overrides the one added by option_class key in the element itself
   ##  - group     (optional) Label attribute for the parent Optgroup for the option - If optgroup does not exist, a new one's created before adding it
   ## @return newly added Node::Element::Option object
   my ($self, $params) = @_;
@@ -57,7 +57,7 @@ sub add_option {
   $params->{'caption'} = '' unless exists $params->{'caption'} && defined $params->{'caption'};
   $params->{'class'} ||= $self->{'__option_class'} if exists $params->{'__option_class'};
   
-  my $option = $self->dom->create_element('option', {'inner_HTML' => $params->{'caption'}, 'value' => $params->{'value'}});
+  my $option = $self->dom->create_element('option', {'inner_HTML' => $params->{'caption'}, 'value' => $params->{'value'}, $params->{'class'} ? ('class' => $params->{'class'}) : ()});
   $option->set_attribute('id', $params->{'id'}) if $params->{'id'};
   $option->selected(1) if exists $params->{'selected'} && $params->{'selected'} == 1;
 
