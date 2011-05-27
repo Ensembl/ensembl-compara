@@ -45,10 +45,10 @@ sub default_options {
 
 
     # parameters that are likely to change from execution to another:
-#       'mlss_id'               => 500,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-#       'ce_mlss_id'            => 501,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-#       'cs_mlss_id'            => 50025, # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '62',
+#       'mlss_id'               => 522,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
+#       'ce_mlss_id'            => 523,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
+#       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        'release'               => '63',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
         'ensembl_cvs_root_dir'  => $ENV{'HOME'}.'/src/ensembl_main',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
 	'dbname'                => $ENV{USER}.'_pecan_19way_'.$self->o('release').$self->o('release_suffix'),
@@ -117,7 +117,7 @@ sub default_options {
         },
 
         'staging_loc1' => {                     # general location of half of the current release core databases
-            -host   => 'ens-staging',
+            -host   => 'ens-staging1',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
@@ -136,7 +136,19 @@ sub default_options {
             -user   => 'ensro',
             -pass   => '',
         },
+        # "production mode"
+       'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
+       'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
+       'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
+       'reuse_db' => {   # usually previous pecan production database
+           -host   => 'compara1',
+           -port   => 3306,
+           -user   => 'ensro',
+           -pass   => '',
+           -dbname => 'kb3_pecan_19way_62',
+        },
 
+	#Testing mode
         'reuse_loc' => {                   # general location of the previous release core databases (for checking their reusability)
             -host   => 'ensdb-archive',
             -port   => 5304,
@@ -152,29 +164,16 @@ sub default_options {
             -pass   => '',
             -db_version => '62'
         },
-
-
-        # "production mode"
-#        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
-#        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-#        'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
-#        'reuse_db' => {   # usually previous release database on compara1
-#           -host   => 'compara1',
+#        'reuse_core_sources_locs'   => [ $self->o('reuse_loc') ],
+#        'curr_core_sources_locs'    => [ $self->o('curr_loc'), ],
+#        'prev_release'              => 61,   # 0 is the default and it means "take current release number and subtract 1"
+#        'reuse_db' => {   # usually previous production database
+#           -host   => 'compara4',
 #           -port   => 3306,
 #           -user   => 'ensro',
 #           -pass   => '',
-#           -dbname => 'sf5_ensembl_compara_61',
+#           -dbname => 'kb3_pecan_19way_61',
 #        },
-        'reuse_core_sources_locs'   => [ $self->o('reuse_loc') ],
-        'curr_core_sources_locs'    => [ $self->o('curr_loc'), ],
-        'prev_release'              => 61,   # 0 is the default and it means "take current release number and subtract 1"
-        'reuse_db' => {   # usually previous production database
-           -host   => 'compara4',
-           -port   => 3306,
-           -user   => 'ensro',
-           -pass   => '',
-           -dbname => 'kb3_pecan_19way_61',
-        },
     };
 }
 
@@ -542,6 +541,7 @@ sub pipeline_analyses {
 		'mlss_id'      => $self->o('mlss_id'),
 		'fasta_dir'    => $self->o('fasta_dir'),
             },
+	    -wait_for => [ 'paf_table_reuse' ],
             -hive_capacity => $self->o('blast_capacity'),
         },
 
@@ -595,14 +595,12 @@ sub pipeline_analyses {
                  'method_link_species_set_id' => $self->o('mlss_id'),
 		 'jar_file'                   => $self->o('jar_file'),
              },
-             -wait_for => [ 'mercator' ],
+#             -wait_for => [ 'mercator' ],
              -max_retry_count => 1,
              -hive_capacity => 500,
              -flow_into => {
                  1 => [ 'gerp' ],
 		 2 => [ 'pecan_mem1'], #retry with more heap memory
-		 3 => [ 'pecan_mem2'], #retry with even more heap memory
-		 4 => [ 'pecan_mem3'], #retry with even more heap memory
              },
          },
 
@@ -613,13 +611,13 @@ sub pipeline_analyses {
                  'java_options'               => $self->o('java_options_mem1'),
                  'method_link_species_set_id' => $self->o('mlss_id'),
              },
-             -wait_for => [ 'mercator' ],
  	     -can_be_empty  => 1,
              -max_retry_count => 1,
 	     -rc_id => 2,
              -hive_capacity => 500,
              -flow_into => {
                  1 => [ 'gerp' ],
+		 2 => [ 'pecan_mem2'], #retry with even more heap memory
              },
          },
          {   -logic_name => 'pecan_mem2',
@@ -629,13 +627,13 @@ sub pipeline_analyses {
                  'java_options'               => $self->o('java_options_mem2'),
                  'method_link_species_set_id' => $self->o('mlss_id'),
              },
-             -wait_for => [ 'mercator' ],
 	     -can_be_empty  => 1,
              -max_retry_count => 1,
 	     -rc_id => 3,
              -hive_capacity => 500,
              -flow_into => {
                  1 => [ 'gerp' ],
+		 2 => [ 'pecan_mem3'], #retry with even more heap memory
              },
          },
          {   -logic_name => 'pecan_mem3',
@@ -645,7 +643,6 @@ sub pipeline_analyses {
                  'java_options'               => $self->o('java_options_mem3'),
                  'method_link_species_set_id' => $self->o('mlss_id'),
              },
-             -wait_for => [ 'mercator' ],
 	     -can_be_empty  => 1,
              -max_retry_count => 1,
 	     -rc_id => 4,
