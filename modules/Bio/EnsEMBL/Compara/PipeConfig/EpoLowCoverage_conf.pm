@@ -11,22 +11,19 @@ sub default_options {
     return {
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
 
-	'release'       => 62,
+	'release'       => 63,
         'release_suffix'=> '', # set it to '' for the actual release
         'pipeline_name' => 'LOW35_'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
-	'dbname'        => $ENV{USER}.'_epo_35way_'.$self->o('release').$self->o('release_suffix'),
 
 	#location of new pairwise mlss if not in the pairwise_default_location eg:
-	'pairwise_exception_location' => { 517 => 'mysql://ensro@compara4/kb3_hsap_nleu_lastz_62'},
-	#'pairwise_exception_location' => { 478 => 'mysql://ensro@compara1/kb3_hsap_ocun_lastz_60',  
-	#				   483 => 'mysql://ensro@compara1/kb3_hsap_amel_lastz_60'},
+	#'pairwise_exception_location' => { 517 => 'mysql://ensro@compara4/kb3_hsap_nleu_lastz_62'},
+	'pairwise_exception_location' => { 521 => 'mysql://ensro@compara1/kb3_hsap_mluc_lastz_63'},
 
         'pipeline_db' => {
             -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            #-dbname => $self->o('dbname'),
             -dbname => $ENV{USER}.'_epo_35way_'.$self->o('release').$self->o('release_suffix'),
         },
 
@@ -36,7 +33,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -dbname => 'ensembl_compara_61',
+	    -dbname => 'ensembl_compara_62',
         },
 
 	#Location of compara db containing the high coverage alignments
@@ -45,7 +42,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -dbname => 'sf5_compara62_ortheus12way2',
+	    -dbname => 'sf5_63compara_ortheus12way',
         },
 	master_db => { 
             -host   => 'compara1',
@@ -61,21 +58,22 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -db_version => 62,
+	    -db_version => $self->o('release'),
         },
         'reg2' => {
             -host   => 'ens-staging2',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -db_version => 62,
+	    -db_version => $self->o('release'),
         },  
 	'live_db' => {
             -host   => 'ens-livemirror',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -db_version => 61,
+#	    -db_version => 62,
+	    -db_version => ($self->o('release')-1),
         },
 
 	'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment
@@ -106,7 +104,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     my ($self) = @_;
 
     return {
-	    'reg_conf' => $self->o('reg_conf'),
 	    'pipeline_name' => $self->o('pipeline_name'), #Essential for the beekeeper to work correctly
     };
 }
@@ -116,7 +113,7 @@ sub resource_classes {
     return {
          0 => { -desc => 'default, 8h',      'LSF' => '' },
 	 1 => { -desc => 'urgent',           'LSF' => '-q yesterday' },
-         2 => { -desc => 'compara1',         'LSF' => '-R"select[compara1<300] rusage[compara1=10:duration=3]"' },
+         2 => { -desc => 'compara1',         'LSF' => '-R"select[compara1<800] rusage[compara1=10:duration=3]"' },
     };
 }
 
@@ -157,13 +154,11 @@ sub pipeline_analyses {
 	       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
 	       -parameters    => {
 				  'program'        => $self->o('populate_new_database_program'),
-				  'reg_conf'       => $self->o('reg_conf'),
 				  'master'         => $self->o('master_db_name'),
-				  'new_db'         => $self->o('dbname'),
 				  'mlss_id'        => $self->o('low_epo_mlss_id'),
 				  'ce_mlss_id'     => $self->o('ce_mlss_id'),
 				  'cs_mlss_id'     => $self->o('cs_mlss_id'),
-				  'cmd'            => "#program# --reg-conf #reg_conf# --master #master# --new #new_db# --mlss #mlss_id# --mlss #ce_mlss_id# --mlss #cs_mlss_id# ",
+				  'cmd'            => "#program# --master " . $self->dbconn_2_url('master_db') . " --new " . $self->dbconn_2_url('pipeline_db') . " --mlss #mlss_id# --mlss #ce_mlss_id# --mlss #cs_mlss_id# ",
 				 },
 	       -wait_for  => [ 'innodbise_table_factory', 'innodbise_table' ],
 	       -flow_into => {
@@ -313,7 +308,7 @@ sub pipeline_analyses {
 	    },
 # ---------------------------------------------------------------[Gerp]-------------------------------------------------------------------
 	    {   -logic_name => 'Gerp',
-		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::Gerp',
+		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
 		-program_version => $self->o('gerp_version'),
 		-program_file    => $self->o('gerp_program_file'),
 		-parameters => {'window_sizes' => $self->o('gerp_window_sizes') },
@@ -376,12 +371,11 @@ sub pipeline_analyses {
 				 'params' => {'logic_name'=>'Gerp','method_link_type'=>'EPO_LOW_COVERAGE'}, 
 				},
 				{'test' => 'conservation_scores',
-				 'params' => {'method_link_species_set_id'=>$self->o(cs_mlss_id)} 
+				 'params' => {'method_link_species_set_id'=>$self->o('cs_mlss_id')},
 				},
 			       ],
 	    },
 
      ];
-
-
 }
+1;
