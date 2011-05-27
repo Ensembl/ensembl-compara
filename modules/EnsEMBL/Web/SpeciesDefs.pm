@@ -994,6 +994,7 @@ sub species_label {
   
   my $common = $self->get_config($key, 'SPECIES_COMMON_NAME');
   my $rtn    = $self->get_config($key, 'SPECIES_BIO_NAME');
+  $rtn       =~ s/_/ /g;
   
   $rtn = sprintf '<i>%s</i>', $rtn unless $no_formatting;
   
