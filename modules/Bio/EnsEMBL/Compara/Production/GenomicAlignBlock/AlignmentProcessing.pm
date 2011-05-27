@@ -1,12 +1,20 @@
-# Cared for by Ensembl
-#
-# Copyright GRL & EBI
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -30,6 +38,8 @@ use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+
+use Bio::EnsEMBL::Utils::SqlHelper;
 
 @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
@@ -70,6 +80,13 @@ sub get_params {
   if (defined($params->{'min_chain_score'})) {
     $self->MIN_CHAIN_SCORE($params->{'min_chain_score'});
   }
+  if (defined($params->{'do_transactions'})) {
+      $self->{_do_transactions} = $params->{'do_transactions'};
+  } else {
+      #default is to do transactions
+      $self->{_do_transactions} = 1;
+  }
+
 }
 
 sub fetch_input {
@@ -118,22 +135,46 @@ sub run{
 sub write_output {
   my($self) = @_;
 
-  my $compara_dba = $self->compara_dba;
   my @gen_al_groups;
+
+  #
+  #Start transaction
+  #
+  if ($self->do_transactions)  {
+      my $compara_conn = $self->compara_dba->dbc;
+      my $compara_helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_conn);
+      $compara_helper->transaction(-CALLBACK => sub {
+	  $self->_write_output;
+      });
+  } else {
+      $self->_write_output;
+  }
+
+  return 1;
+
+}
+
+sub _write_output {
+  my ($self) = @_;
+
+  #Set use_autoincrement to 1 otherwise the GenomicAlignBlockAdaptor will use
+  #LOCK TABLES which does an implicit commit and prevent any rollback
+  $self->compara_dba->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
+
   foreach my $chain (@{$self->output}) {
       my $group_id;
 
       #store first block
       my $first_block = shift @$chain;
 
-      $compara_dba->get_GenomicAlignBlockAdaptor->store($first_block);
+      $self->compara_dba->get_GenomicAlignBlockAdaptor->store($first_block);
     
       #Set the group_id if one doesn't already exist ie for chains, to be the
       #dbID of the first genomic_align_block. For nets,the group_id has already
       #been set and is the same as it's chain.
       unless (defined($first_block->group_id)) {
 	  $group_id = $first_block->dbID;
-	  $compara_dba->get_GenomicAlignBlockAdaptor->store_group_id($first_block, $group_id);
+	  $self->compara_dba->get_GenomicAlignBlockAdaptor->store_group_id($first_block, $group_id);
       }
 
       #store the rest of the genomic_align_blocks
@@ -141,7 +182,7 @@ sub write_output {
 	  if (defined $group_id) {
 	      $block->group_id($group_id);
 	  }
-	  $compara_dba->get_GenomicAlignBlockAdaptor->store($block);
+	  $self->compara_dba->get_GenomicAlignBlockAdaptor->store($block);
      }
   }
 }
@@ -663,6 +704,12 @@ sub MIN_CHAIN_SCORE {
   } else {
     return $self->{_min_chain_score};
   }
+}
+
+sub do_transactions {
+  my $self = shift;
+  $self->{'_do_transactions'} = shift if(@_);
+  return $self->{'_do_transactions'};
 }
 
 1;
