@@ -47,7 +47,7 @@ sub content {
     button_value => 'Go'
   );
   
-  return '<div class="center">' . $form->render . '</div>';
+  return '<div class="center">' . $form->render($self->format) . '</div>';  
 }
 
 1;
