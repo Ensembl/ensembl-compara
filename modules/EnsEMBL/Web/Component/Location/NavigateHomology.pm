@@ -99,7 +99,7 @@ sub content {
         </table>
       </div>
     </div>
-  };
+  } if($self->html_format);
 }
 
 1;
