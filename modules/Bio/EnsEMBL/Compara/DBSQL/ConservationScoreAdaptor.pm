@@ -834,17 +834,17 @@ sub _find_min_max_score {
 
     foreach my $score (@$scores) {
 	#find min and max of diff scores
-	if (defined $score->diff_score) {
+	if (defined $score->{diff_score}) {
 	    #if min hasn't been defined yet, then define min and max
 	    unless (defined $min) {
-		$min = $score->diff_score;
-		$max = $score->diff_score;
+		$min = $score->{diff_score};
+		$max = $score->{diff_score};
 	    }
-	    if ($min > $score->diff_score) {
-		$min = $score->diff_score;
+	    if ($min > $score->{diff_score}) {
+		$min = $score->{diff_score};
 	    }
-	    if ($max < $score->diff_score) {
-		$max = $score->diff_score;
+	    if ($max < $score->{diff_score}) {
+		$max = $score->{diff_score};
 	    }
 	}
     }
@@ -1107,11 +1107,11 @@ sub _get_aligned_scores_from_cigar_line {
     my $score_lengths;
     for (my $j = 0; $j < $num_scores; $j++) {
 	my $length = 0;
-	if (defined($scores->[$j]->diff_score)) {
+	if (defined($scores->[$j]->{diff_score})) {
 	    if ($PACKED) {
-		$length = length($scores->[$j]->diff_score)/$_pack_size;
+		$length = length($scores->[$j]->{diff_score})/$_pack_size;
 	    } else {
-		my @split_scores = split ' ', $scores->[$j]->diff_score;
+		my @split_scores = split ' ', $scores->[$j]->{diff_score};
 		$length = scalar(@split_scores);
 	    }
 	}
@@ -1183,7 +1183,7 @@ sub _get_aligned_scores_from_cigar_line {
 	    if ($PACKED) {
 		$value = substr $scores->[$cs_index]->expected_score, $csBlockCnt*$_pack_size, $_pack_size;
 		$exp_score = _unpack_score($_pack_type, $value);
-		$value = substr $scores->[$cs_index]->diff_score, $csBlockCnt*$_pack_size, $_pack_size;
+		$value = substr $scores->[$cs_index]->{diff_score}, $csBlockCnt*$_pack_size, $_pack_size;
 		$diff_score = _unpack_score($_pack_type, $value);
 	    } else {
 		@exp_scores = split ' ', $scores->[$cs_index]->exp_score;
@@ -1374,6 +1374,21 @@ sub _get_aligned_scores_from_cigar_line_fast {
     #initialise start of region in chromosome coords
     $chr_pos = $chr_start;
 
+    #Initialise array of index of positions to index in the scores array
+
+    my @hash_positions = ((-1) x (($align_end-$align_start+1)));
+
+    for (my $i = 0; $i < @$scores; $i++) {
+	my $score = $scores->[$i];
+	my $length = ($score_lengths->[$i] - 1) * $win_size;
+	my $start = $score->{position};
+	my $end = $score->{position} + $length;
+
+	for (my $j = $start; $j <= $end; $j++) {
+	    $hash_positions[$j] = $i;
+	}
+    }
+
     #loop round in alignment coords, incrementing by win_size until either
     #reached the end of the alignment or end of the slice
     #12/03/2007 fixed bug in line below, where $chr_pos <= $chr_end. This gave
@@ -1384,7 +1399,11 @@ sub _get_aligned_scores_from_cigar_line_fast {
 
 	#find conservation score row index containing current_pos. Returns -1
 	#if no score found
-	$cs_index = _find_score_index($scores, $num_scores, $score_lengths, $current_pos, $win_size);
+	#$cs_index = _find_score_index($scores, $num_scores, $score_lengths, $current_pos, $win_size);
+	$cs_index = $hash_positions[$current_pos];
+	if (!defined $cs_index) {
+	    $cs_index = -1;
+	}
 
 	#if a score has been found, find the score in the score string and 
 	#unpack it.
@@ -1393,9 +1412,9 @@ sub _get_aligned_scores_from_cigar_line_fast {
 
 	    my $value;
 	    if ($PACKED) {
-		$value = substr $scores->[$cs_index]->expected_score, $csBlockCnt*$_pack_size, $_pack_size;
+		$value = substr $scores->[$cs_index]->{expected_score}, $csBlockCnt*$_pack_size, $_pack_size;
 		$exp_score = _unpack_score($_pack_type, $value);
-		$value = substr $scores->[$cs_index]->diff_score, $csBlockCnt*$_pack_size, $_pack_size;
+		$value = substr $scores->[$cs_index]->{diff_score}, $csBlockCnt*$_pack_size, $_pack_size;
 		$diff_score = _unpack_score($_pack_type, $value);
 	    } else {
 		@exp_scores = split ' ', $scores->[$cs_index]->exp_score;
@@ -1421,17 +1440,10 @@ sub _get_aligned_scores_from_cigar_line_fast {
 		$total_chr_pos += $cigLength;
 	    }
 	}
-	
-	#total_pos is > than current_pos, so if in match, must delete this
-	#excess 
-	if ($cigType eq "M") {
-	    $chr_pos = $total_chr_pos - ($total_pos - $current_pos + 1);
-	} else {
-	    $chr_pos = $total_chr_pos - 1;
-	}
 
 	#now add the scores to the bucket
 	if ($cigType eq "M") {
+	    $chr_pos = $total_chr_pos - ($total_pos - $current_pos + 1);
 	    if ($cs_index != -1) {
 		#in cigar match and have conservation score
 
@@ -1452,6 +1464,8 @@ sub _get_aligned_scores_from_cigar_line_fast {
 		 push(@$aligned_scores, $aligned_score);
 	    }
 	} else {
+	    $chr_pos = $total_chr_pos - 1;
+
 	    #not in cigar match so only add the next conservation score or
 	    #_no_score_value if this isn't a score
 	    if ($prev_position != $chr_pos) {
