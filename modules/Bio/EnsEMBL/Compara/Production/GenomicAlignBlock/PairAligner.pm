@@ -1,9 +1,20 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -30,12 +41,6 @@ extraction of appropriate parameters.
 
 =cut
 
-=head1 CONTACT
-
-Jessica Severin <jessica@ebi.ac.uk>
-
-=cut
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. 
@@ -59,6 +64,8 @@ use File::Basename;
 
 use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Hive::Process;
+
+use Bio::EnsEMBL::Utils::SqlHelper;
 
 our @ISA = qw( Bio::EnsEMBL::Hive::Process );
 
@@ -111,6 +118,13 @@ sub get_params {
   $self->method_link_type($params->{'method_link'}) if(defined($params->{'method_link'}));
   $self->max_alignments($params->{'max_alignments'}) if(defined($params->{'max_alignments'}));
   $self->dump_loc($params->{'dump_loc'}) if(defined($params->{'dump_loc'}));
+
+  if (defined($params->{'do_transactions'})) {
+      $self->{_do_transactions} = $params->{'do_transactions'};
+  } else {
+      #default is to do transactions
+      $self->{_do_transactions} = 1;
+  }
   return;
 }
 
@@ -161,6 +175,12 @@ sub db_DnaFragChunkSet {
     $self->{'_db_DnaFragChunkSet'} = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
   }
   return $self->{'_db_DnaFragChunkSet'};
+}
+
+sub do_transactions {
+  my $self = shift;
+  $self->{'_do_transactions'} = shift if(@_);
+  return $self->{'_do_transactions'};
 }
 
 ##########################################
@@ -290,6 +310,29 @@ sub write_output {
   #which are a shadow of the real analysis object ($self->analysis)
   #The returned FeaturePair objects thus need to be reset to the real analysis object
 
+  #
+  #Start transaction
+  #
+  if ($self->do_transactions)  {
+      my $compara_conn = $self->{'comparaDBA'}->dbc;
+      my $compara_helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_conn);
+      $compara_helper->transaction(-CALLBACK => sub {
+	  $self->_write_output;
+      });
+  } else {
+      $self->_write_output;
+  }
+
+  return 1;
+}
+
+sub _write_output {
+    my ($self) = @_;
+
+  #Set use_autoincrement to 1 otherwise the GenomicAlignBlockAdaptor will use
+  #LOCK TABLES which does an implicit commit and prevent any rollback
+  $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
+
   foreach my $fp ($self->output) {
     if($fp->isa('Bio::EnsEMBL::FeaturePair')) {
       $fp->analysis($self->analysis);
@@ -297,6 +340,7 @@ sub write_output {
       $self->store_featurePair_as_genomicAlignBlock($fp);
     }
   }
+
   if($self->debug){printf("%d FeaturePairs found\n", scalar($self->output));}
   #print STDERR (time()-$starttime), " secs to write_output\n";
 }
