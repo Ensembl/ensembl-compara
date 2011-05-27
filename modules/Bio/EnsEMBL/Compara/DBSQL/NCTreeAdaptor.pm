@@ -431,13 +431,17 @@ sub _store_tagvalue {
 
   $value="" unless(defined($value));
 
-  my $sql = "INSERT ignore into nc_tree_tag (node_id,tag) values ($node_id,\"$tag\")";
+  my $sth = $self->prepare("INSERT ignore into nc_tree_tag (node_id,tag) values (?, ?)");
+  $sth->execute($node_id, $tag);
+  #my $sql = "INSERT ignore into nc_tree_tag (node_id,tag) values ($node_id,\"$tag\")";
   #print("$sql\n");
-  $self->dbc->do($sql);
+  #$self->dbc->do($sql);
 
-  $sql = "UPDATE nc_tree_tag set value=\"$value\" where node_id=$node_id and tag=\"$tag\"";
+  $sth = $self->prepare("UPDATE nc_tree_tag set value=? where node_id=? and tag=?");
+  $sth->execute($value, $node_id, $tag);
+  #$sql = "UPDATE nc_tree_tag set value=\"$value\" where node_id=$node_id and tag=\"$tag\"";
   #print("$sql\n");
-  $self->dbc->do($sql);
+  #$self->dbc->do($sql);
 }
 
 
