@@ -413,59 +413,52 @@ sub appendable {
 
 sub append_child {
   ## Appends a child node (or creates a new child node before appending)
-  ## @param New node (OR 'text' or string node_name (for Node::Element) if intended to create a new node before adding)
-  ## @param String to go inside the new text node, OR HashRef for providing attributes of a new Element node (optional) - considered only if first argument is a string
+  ## @param New node (OR Hashref with keys - node_name (mandatory - can be 'text' for text nodes), inner_HTML/inner_text and other attributes if new element/text node is to be created)
   ## @return New node if success, undef otherwise
-  my ($self, $child, $arg) = @_;
-  
-  ref $child eq 'ARRAY' and ($child, $arg) = @$child; #in case this method is called by append_children
-  $child and !ref $child and $child = $child eq 'text' ? $self->dom->create_text_node($arg) : $child = $self->dom->create_element($child, $arg);
-
-  my $error = "";
-  if ($self->appendable($child, \$error)) {
-    $self->{'_text'} = ''; #remove text if any
-    $child->remove; #remove from present parent node, if any
-    $child->{'_parent_node'} = $self;
-    if ($self->has_child_nodes) {
-      $child->{'_previous_sibling'} = $self->last_child;
-      $self->last_child->{'_next_sibling'} = $child;
-    }
-    push @{$self->{'_child_nodes'}}, $child;
-    return $child;
-  }
-  warn 'Node cannot be inserted at the specified point in the hierarchy. '.$error;
-  return undef;
+  ## Note: This method can also accept arguments as accepted by Dom::create_element if new element is to be created before appending it
+  ## @example If $child_node is a Node itself
+  ##    $node->append_child($child_node)
+  ## @example If new node creation intended
+  ##    $node->append_child('div')                                                                        - creates an empty <div> node and appends it to the $node
+  ##    $node->append_child('text')                                                                       - creates an empty text node and appends it to the $node
+  ##    $node->append_child({'node_name' => 'div', 'class' => 'narrow', 'inner_HTML' => 'this is a div'}) - creates a <div> node with given attributes and innerHTML
+  ##    $node->append_child('div', {'class' => 'narrow', 'inner_HTML' => 'this is a div'})                - same as above
+  ##    $node->append_child({'node_name' => 'text', 'text' => 'this is a text node'})                     - creates a text node with given text
+  ##    $node->append_child('text', {'text' => 'this is a text node'})                                    - same as above
+  ##    $node->append_child('text', 'this is a text node')                                                - same as above
+  my ($self, $child) = shift->_normalise_arguments(@_) or return;
+  return $self->_append_child($child);
 }
 
 sub append_children {
   ## Appends multiple children (wrapper around append_child)
-  ## @param List of nodes to be appended (NOT arrayref) - if new node creation is intended, provide arrayref ['text', inner_text] or [node_name, {arguments}] along with other nodes in the list
+  ## @param List (NOT ArrayRef) of nodes (or argument as accpeted by append child - only one argument per child - OR for multiple arguments per child, provide ref to the array of arguments)
   ## @return ArrayRef or List of newly appended nodes or undef indexed at any unsuccessful addition in the list
   my $self  = shift;
-  my @nodes = map {$self->append_child($_)} @_;
+  my @nodes = map {$self->append_child(ref $_ eq 'ARRAY' ? @$_ : $_)} @_;
   return wantarray ? @nodes : \@nodes;
 }
 
 sub prepend_child {
-  ## Appends a child node at the beginning
-  ## @param Node to be appended
-  ## @return new child Node object if success, undef otherwise
-  my ($self, $child) = @_;
+  ## Appends a child node at the beginning (or also creates a new one before prepending)
+  ## @params as accepted by append_child
+  my $self = shift;
   return $self->has_child_nodes
-    ? $self->insert_before($child, $self->first_child)
-    : $self->append_child($child);
+    ? $self->insert_before(@_, $self->first_child)
+    : $self->append_child(@_);
 }
 
 sub insert_before {
   ## Appends a child node before a given reference node
-  ## @param New node
-  ## @param Reference node
+  ## @params As accpeted by append_child
+  ## @param  Reference node (mandatory)
   ## @return New Node object if successfully added, undef otherwise
-  my ($self, $new_node, $reference_node) = @_;
-  
+  my $reference_node = pop @_;
+  my ($self, $new_node) = shift->_normalise_arguments(@_) or return;
+
   if (defined $reference_node && $self->is_same_node($reference_node->parent_node) && !$reference_node->is_same_node($new_node)) {
   
-    return undef unless $self->append_child($new_node);
+    $self->_append_child($new_node) or return;
     $new_node->previous_sibling->{'_next_sibling'} = 0;
     $new_node->{'_next_sibling'} = $reference_node;
     $new_node->{'_previous_sibling'} = $reference_node->previous_sibling || 0;
@@ -480,35 +473,38 @@ sub insert_before {
 
 sub insert_after {
   ## Appends a child node after a given reference node
-  ## @param New node
-  ## @param Reference node
+  ## @params As accepted by insert_before
   ## @return New node if success, undef otherwise
-  my ($self, $new_node, $reference_node) = @_;
+  my $self = shift;
+  my $reference_node = pop @_;
+
   return defined $reference_node->next_sibling
-    ? $self->insert_before($new_node, $reference_node->next_sibling)
-    : $self->append_child($new_node);
+    ? $self->insert_before(@_, $reference_node->next_sibling)
+    : $self->append_child(@_);
 }
 
 sub before {
-  ## Places a new node before the node. An extra to DOM function to make it easy to insert nodes.
-  ## @param New Node if success, undef otherwise
-  my ($self, $new_node) = @_;
+  ## Places a new node before the node. An extra to DOM functionality to make it easy to insert nodes.
+  ## @params As accepted by append_child
+  ## @return New Node if success, undef otherwise
+  my $self = shift;
   unless ($self->parent_node) {
     warn "New node could not be inserted. Either the reference node is top level or has not been added to the DOM tree yet.";
     return undef;
   }
-  return $self->parent_node->insert_before($new_node, $self);
+  return $self->parent_node->insert_before(@_, $self);
 }
 
 sub after {
-  ## Places a new node after the node. An extra to DOM function to make it easy to insert nodes.
-  ## @param New Node if success, undef otherwise
-  my ($self, $new_node) = @_;
+  ## Places a new node after the node. An extra to DOM functionality to make it easy to insert nodes.
+  ## @param As accepted by append_child
+  ## @return New Node if success, undef otherwise
+  my $self = shift;
   unless ($self->parent_node) {
     warn "New node could not be inserted. Either the reference node is top level or has not been added to the DOM tree yet.";
     return undef;
   }
-  return $self->parent_node->insert_after($new_node, $self);
+  return $self->parent_node->insert_after(@_, $self);
 }
 
 sub clone_node {
@@ -582,11 +578,12 @@ sub remove_children {
 
 sub replace_child {
   ## Replaces a child node with another
-  ## @param New Node
+  ## @params As accepted by append_child
   ## @param Old Node
   ## @return Removed node
-  my ($self, $new_node, $old_node) = @_;
-  return $self->remove_child($old_node) if $self->insert_before($new_node, $old_node);
+  my $self = shift;
+  my $old_node = pop @_;
+  return $self->remove_child($old_node) if $self->insert_before(@_, $old_node);
 }
 
 sub is_empty {
@@ -690,6 +687,42 @@ sub _adjust_child_nodes {
   }
 
   $self->{'_child_nodes'} = $adjusted;
+}
+
+sub _normalise_arguments {
+  ## private method to normalise the arguments provided for methods append_child, insert_before etc
+  my ($self, $arg1, $arg2) = @_;
+
+  # normalise the arguments
+  ref $arg1 or $arg1 = { ($arg2 ? ref $arg2 ? %$arg2 : ($arg1 eq 'text' ? {'text' => $arg2} : {}) : {}), 'node_name' => $arg1 };
+
+  # create new node if intended
+  if (ref $arg1 eq 'HASH') {
+    warn "Node can not be created: 'node_name' not provided for new node" and return unless exists $arg1->{'node_name'};
+    $arg1 = $arg1->{'node_name'} eq 'text' ? $self->dom->create_text_node($arg1->{'text'}) : $self->dom->create_element(delete $arg1->{'node_name'}, $arg1) or return;
+  }
+  return ($self, $arg1);
+}
+
+sub _append_child {
+  ## private method to actually append the child
+  ## this method is only called if arguments are normalised
+  my ($self, $child) = @_;
+
+  my $error = "";
+  if ($self->appendable($child, \$error)) {
+    $self->{'_text'} = ''; #remove text if any
+    $child->remove; #remove from present parent node, if any
+    $child->{'_parent_node'} = $self;
+    if ($self->has_child_nodes) {
+      $child->{'_previous_sibling'} = $self->last_child;
+      $self->last_child->{'_next_sibling'} = $child;
+    }
+    push @{$self->{'_child_nodes'}}, $child;
+    return $child;
+  }
+  warn 'Node cannot be inserted at the specified point in the hierarchy. '.$error;
+  return undef;
 }
 
 1;
