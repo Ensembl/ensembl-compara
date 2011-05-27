@@ -49,9 +49,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     
     Ensembl.EventManager.trigger('validateForms', this.el);
     
-    if ($('.ajax', this.elLk.content).length) {
-      Ensembl.EventManager.trigger('createPanel', $('.ajax', this.elLk.content).parents('.js_panel')[0].id, 'Content');
-    }
+    this.addSubPanel();
   },
   
   getContent: function (link, url) {
@@ -119,15 +117,11 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     return false;
   },
   
-  updateContent: function (json) {    
+  updateContent: function (json) {
     this.elLk.content.html(json.content);
     
     if ($('.panel', this.elLk.content).length > 1) {
       this.elLk.content.removeClass('panel');
-    }
-    
-    if ($('.ajax', this.elLk.content).length) {
-      Ensembl.EventManager.trigger('createPanel', $('.ajax', this.elLk.content).parents('.js_panel')[0].id, 'Content');
     }
     
     this.setSelectAll();
@@ -137,6 +131,23 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     if ($('.modal_reload', this.el).length) {
       Ensembl.EventManager.trigger('queuePageReload');
     }
+    
+    this.addSubPanel();
+  },
+  
+  addSubPanel: function () {
+    var ajax     = $('.ajax',     this.elLk.content);
+    var newPanel = $('.js_panel', this.elLk.content);
+    
+    if (ajax.length) {
+      Ensembl.EventManager.trigger('createPanel', ajax.parents('.js_panel')[0].id, 'Content');
+    }
+    
+    if (newPanel.length) {
+      Ensembl.EventManager.trigger('createPanel', newPanel[0].id, $('input.panel_type', newPanel).val());
+    }
+    
+    ajax = newPanel = null;
   },
   
   setSelectAll: function () {
