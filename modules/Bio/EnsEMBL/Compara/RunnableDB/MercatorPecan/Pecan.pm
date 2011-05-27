@@ -186,19 +186,14 @@ sub write_output {
 
     #If job failed due to insufficient heap space, flow into new analysis
     if ($self->param('more_heap')) {
-	#first time failed, flow into pecan_mem1
-	if ($self->analysis->logic_name eq 'pecan') {
-	    $self->dataflow_output_id($self->input_id,2);
-	} elsif ($self->analysis->logic_name eq 'pecan_mem1') {
-	    #second time failed, flow into pecan_mem2
-	    $self->dataflow_output_id($self->input_id,3);
-	} elsif ($self->analysis->logic_name eq 'pecan_mem2') {
-	    #third time failed, flow into pecan_mem3
-	    $self->dataflow_output_id($self->input_id,4);
-	} else {
-	    #forth time failed. Fail
+	#Flow to next memory. But what happens in the end?
+	my $num_jobs = $self->dataflow_output_id($self->input_id,2);
+
+	#Check if any jobs created (if none, then know that no flow was defined on this branch ie got to last pecan_mem(
+	if (@$num_jobs == 0) {
 	    throw("Pecan ". $self->analysis->logic_name . " still failed due to insufficient heap space");
 	}
+
 	#Don't want to flow to gerp jobs here
 	$self->input_job->autoflow(0);
     } else {
