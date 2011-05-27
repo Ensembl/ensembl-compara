@@ -60,7 +60,7 @@ sub content {
   my $object       = $self->object;
   my $html         = '';
   my $hub          = $self->hub;
-  my $selected_pop = $hub->param('pop');
+  my $selected_pop = $hub->param('pop'); 
 
   ## first check we have uniquely determined variation
   if ( $object->not_unique_location ){
@@ -78,7 +78,7 @@ sub content {
   }
   
   my %ind_data = %{$object->individual_table($pop_obj)};
-  
+
   return
     '<h3>No individual genotypes for this SNP'.
     (defined($selected_pop) ? ' in population '.$pop_obj->name : '').
@@ -159,7 +159,7 @@ sub content {
   if(defined($selected_pop) || (scalar keys %rows == 1)) {
     $selected_pop = (keys %rows)[0] if !defined($selected_pop);
     
-    my $table = $self->new_table([], [], {  data_table => 1, sorting => [ 'Individual asc' ], exportable => 0, id => "${selected_pop}_table"  });
+    my $table = $self->new_table([], [], {  data_table => 1, sorting => [ 'Individual asc' ], id => "${selected_pop}_table"  });
     
     $table->add_columns($self->get_table_headings());
     $table->add_columns({ key => 'Children', title => 'Children', sort => 'none' }) if $flag_children;
@@ -177,9 +177,9 @@ sub content {
   }
   
   else {
-    my $od_table = $self->new_table([], [], {  data_table => 1, sorting => [ 'Population asc' ], exportable => 0 });
-    my $hm_table = $self->new_table([], [], {  data_table => 1, sorting => [ 'Population asc' ], exportable => 0 });
-    my $tg_table = $self->new_table([], [], {  data_table => 1, sorting => [ 'Population asc' ], exportable => 0 });
+    my $od_table = $self->new_table([], [], {  data_table => 1, download_table => 1, sorting => [ 'Population asc' ]});
+    my $hm_table = $self->new_table([], [], {  data_table => 1, download_table => 1, sorting => [ 'Population asc' ]});
+    my $tg_table = $self->new_table([], [], {  data_table => 1, download_table => 1, sorting => [ 'Population asc' ]});
     
     foreach my $t($od_table, $hm_table, $tg_table) {
       $t->add_columns(
@@ -209,7 +209,7 @@ sub content {
       my $description = $descriptions{$pop};
       my $full_desc = $description;
       
-      if(length($description) > 75) {
+      if(length($description) > 75 && $self->html_format) {
         while($description =~ m/^.{75}.*?(\s|\,|\.)/g) {
           $description = substr($description, 0, (pos $description) - 1).'...(more)';
           last;
@@ -218,10 +218,10 @@ sub content {
       
       my $t;
       
-      if($pop_name =~ /cshl-hapmap/i) {
+      if($pop_name =~ /cshl-hapmap/i) {        
         $t = $hm_table;
       }
-      elsif($pop_name =~ /1000genomes/i) {
+      elsif($pop_name =~ /1000genomes/i) {        
         $t = $tg_table;
       }
       else {
@@ -235,15 +235,16 @@ sub content {
         'count'       => $row_count,
         'view'        => $view_html,
       });
-    }
-    
+    }    
     $html .= qq{<a id="$self->{'id'}_top"></a>};
     
     if($tg_table->has_rows) {
-      $html .= '<h2>1000 Genomes</h2>'.$tg_table->render;
+      $tg_table->add_option('id', '1000genomes_table');
+      $html .= '<h2>1000 Genomes</h2>'.$tg_table->render;      
     }
     
     if($hm_table->has_rows) {
+      $hm_table->add_option('id', 'hapmap_table');
       $html .= '<h2>HapMap</h2>'.$hm_table->render;
     }
     
@@ -251,14 +252,18 @@ sub content {
       $od_table->add_option('data_table', 'toggle_table hide');
       $od_table->add_option('id', 'other_table');
       
-      $html .= sprintf('
-        <div class="toggle_button" id="other">
-          <h2 style="float:left">Other data (%i)</h2>
-          <em class="closed" style="margin:3px"></em>
-          <p class="invisible">.</p>
-        </div>
-        %s
-      ', $other_row_count, $od_table->render) if $od_table->has_rows;
+      if ($self->html_format) {
+        $html .= sprintf('
+          <div class="toggle_button" id="other">
+            <h2 style="float:left">Other data (%i)</h2>
+            <em class="closed" style="margin:3px"></em>
+            <p class="invisible">.</p>
+          </div>
+          %s
+        ', $other_row_count, $od_table->render) if $od_table->has_rows;
+      } else {
+        $html .= '<h2>Other data</h2>'.$od_table->render;
+      }
     }
       
     else {     
