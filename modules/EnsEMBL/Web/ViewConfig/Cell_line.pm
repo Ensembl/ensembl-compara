@@ -108,13 +108,13 @@ sub form_evidence_types {
   
   foreach my $cell_line (sort keys %{$self->{'cell_lines'}}) {
     $cell_line =~ s/\:\w*//;
-    push @columns, { html => sprintf "<p>$cell_line</p>$select_all_col", map $cell_line, 0..4 };
+    push @columns, sprintf "<p>$cell_line</p>$select_all_col", map $cell_line, 0..4;
   }
   
   foreach my $feature (sort keys %{$self->{'evidence_features'}}) {
     my ($feature_name, $feature_id) = split /\:/, $feature;
     my $set = exists $focus_feature_type_ids{$feature_id} ? 'Core' : 'Other';
-    my @row = ({ tag => 'th', html => sprintf "$feature_name$select_all_row", $feature_name  }); # row name
+    my @row = ({ tag => 'th', class => 'first', html => sprintf("$feature_name$select_all_row", $feature_name) }); # row name
     
     foreach my $cell_line (sort keys %{$self->{'cell_lines'}}) {
       $cell_line =~ s/\:\w*//;
@@ -136,25 +136,22 @@ sub form_evidence_types {
     push @{$groups->{$set}}, \@row;
   }
   
-  my $width    = (scalar @columns * 26) + 86; # Each td is 25px wide + 1px border. The first cell (th) is 85px + 1px border
-  my $fieldset = $self->add_fieldset;
-  my $dom      = $fieldset->dom;
-  my $panel    = $dom->create_element('div', { id => 'funcgen_matrix', class => 'js_panel' });
-  my @matrices;
+  my $width = (scalar @columns * 26) + 86; # Each td is 25px wide + 1px border. The first cell (th) is 85px + 1px border
+  my $html  = '
+    <div class="matrix_key">
+      <h2>Key</h2>
+      <div class="key"><div>On</div><div class="cell on"></div></div>
+      <div class="key"><div>Off</div><div class="cell off"></div></div>
+      <div class="key"><div>Disabled</div><div class="cell disabled"></div></div>
+    </div>
+  ';
   
   foreach my $set ('Core', 'Other') {
-    my $table = sprintf('
-      <table class="funcgen_matrix" cellspacing="0" cellpadding="0" style="width:%spx">
-        <thead>
-          <tr>%s</tr>
-        </thead>
-        <tbody>
-      ',
-      $width,
-      join '', map "<th>$_->{'html'}</th>", {}, @columns
-    );
+    my @cols = map {{ html => $_, enabled => 0 }} @columns;
+    my @rows;
     
     foreach (@{$groups->{$set}}) {
+      my $i = 0;
       my $row_html;
       
       foreach (@$_) {
@@ -165,29 +162,39 @@ sub form_evidence_types {
           $_->{'html'},
           $_->{'tag'}
         );
+        
+        $cols[$i-1]{'enabled'} ||= $_->{'class'} ne 'disabled' if $i;
+        $i++;
       }
       
-      $table .= "<tr>$row_html</tr>";
+      push @rows, "<tr>$row_html</tr>";
     }
     
-    $table .= '</tbody></table>'; 
-    
-    push @matrices, $dom->create_element('div', { class => "funcgen_matrix $set", inner_HTML => "<h2>$set features</h2>$table" });
+    $html .= sprintf('
+      <div class="funcgen_matrix %s">
+        <div class="header_wrapper">
+          <h2>%s features</h2>
+          <input type="text" class="filter" value="Filter" />
+        </div>
+        <table class="funcgen_matrix" cellspacing="0" cellpadding="0" style="width:%spx">
+          <thead>
+            <tr><th class="first"></th>%s</tr>
+          </thead>
+          <tbody>
+            %s
+          </tbody>
+        </table>
+        <div class="no_results">No results found</div>
+      </div>',
+      $set, $set, $width,
+      join('', map { sprintf '<th%s>%s</th>', $_->{'enabled'} ? '' : ' class="disabled"', $_->{'html'} } @cols),
+      join('', @rows)
+    );
   }
   
-  $panel->append_children(
-    $dom->create_element('div', { class => 'matrix_key', inner_HTML => '
-      <h2>Key</h2>
-      <div class="key"><div>On</div><div class="cell on"></div></div>
-      <div class="key"><div>Off</div><div class="cell off"></div></div>
-      <div class="key"><div>Disabled</div><div class="cell disabled"></div></div>
-    '}),
-    @matrices
-  );
-  
-  $fieldset->append_children(
-    $dom->create_element('h2', { inner_HTML => 'Evidence types' }), 
-    $panel
+  $self->add_fieldset->append_children(
+    [ 'h2',  { inner_HTML => 'Evidence types' }],
+    [ 'div', { id => 'funcgen_matrix', class => 'js_panel', inner_HTML => $html }]
   );
 }
 

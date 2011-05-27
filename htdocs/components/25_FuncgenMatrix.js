@@ -16,31 +16,80 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     this.startCell  = [];
     this.dragCell   = [];
     this.viewConfig = {};
-    this.component  = this.params.component;
     
     this.elLk.tables = $('table.funcgen_matrix', this.el).each(function () {
-      var table = this;
-      var l     = table.rows.length;
-      var i;
+      var table       = this;   
+      var searchTerms = {};
+      var disallowed  = { option: 1, disabled: 1, on: 1, filter: 1 };
+      var i           = this.rows.length;
+      var j, k, classes;
       
-      // Disable select all column popups for columns where all cells are disabled
-      $('thead th', this).addClass(function (j) {
-        for (i = 1; i < l; i++) { // start at 1 to skip the th at the top of the column
-          if (!$(table.rows[i].cells[j]).hasClass('disabled')) {
-            return;
+      while (i--) {
+        j = this.rows[i].cells.length;
+        
+        while (j--) {
+          classes = this.rows[i].cells[j].className.toLowerCase().split(' ');
+          k = classes.length;
+          
+          while (k--) {
+            if (classes[k] && !disallowed[classes[k]]) {
+              if (!searchTerms[classes[k]]) {
+                searchTerms[classes[k]] = [];
+              }
+              
+              searchTerms[classes[k]].push([j, i]);
+            }
           }
         }
-        
-        return 'disabled';
-      });
+      }
+      
+      $(this).data('searchTerms', searchTerms);
       
       table = null;
+    });
+    
+    $('input.filter', this.el).each(function () {
+      var related = $(this).parent().siblings();
+      
+      $(this).data('table',     related.filter('.funcgen_matrix'));
+      $(this).data('noResults', related.filter('.no_results'));
+      
+      related = null;
+    }).bind({
+      keyup: function () {
+        var el = this;
+        
+        if (this.value && this.value.length < 2) {
+          this.lastQuery = this.value;
+        }
+        
+        if (this.value !== this.lastQuery) {
+          if (this.searchTimer) {
+            clearTimeout(this.searchTimer);
+          }
+          
+          this.searchTimer = setTimeout(function () {
+            panel.filter(el);
+            el = null;
+          }, 250);
+        }
+      },
+      focus: function () {
+        this.value = '';
+        this.style.color = '#000';
+      },
+      blur: function () {
+        if (!this.value) {
+          this.value = 'Filter';
+          this.style.color = '#999';
+        }
+      }
     });
     
     if (!$('body').hasClass('ie')) { // IE 8 and below are too slow
       this.elLk.tables.bind('mousedown', function (e) {
         // only for left clicks, create a highlight overlay to show which cells are being dragged over
-        if (e.target.nodeName === 'TD' && (!e.which || e.which === 1)) {
+        if ((!e.which || e.which === 1) && (e.target.nodeName === 'TD' || e.target.nodeName === 'P')) {
           panel.dragTable = $(this);
           panel.dragStart(e);
         }
@@ -255,8 +304,10 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     var i, j;
     
     for (i = y[0]; i <= y[1]; i++) {
-      for (j = x[0]; j <= x[1]; j++) {
-        cells.push(this.dragTable[0].rows[i].cells[j]); // Get the cells in the rows and columns between the current target and the start cell
+      if (this.dragTable[0].rows[i].style.display !== 'none') {
+        for (j = x[0]; j <= x[1]; j++) {
+          cells.push(this.dragTable[0].rows[i].cells[j]); // Get the cells in the rows and columns between the current target and the start cell
+        }
       }
     }
     
@@ -266,5 +317,50 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     this.dragCell = cell;
     
     target = cells = null;
+  },
+  
+  filter: function (el) {
+    var table       = $(el).data('table');
+    var noResults   = $(el).data('noResults').hide();
+    var searchTerms = table.data('searchTerms');
+    var value       = el.value.toLowerCase();
+    var matches     = { row: {}, col: {}, cells: [] };
+    var rows        = [];
+    var cells       = [];
+    var i, j;
+    
+    if (value) {
+      for (i in searchTerms) {
+        if (i.indexOf(value) !== -1) {
+          for (j in searchTerms[i]) {
+            matches.cells.push(searchTerms[i][j]);
+            matches.col[searchTerms[i][j][0]] = 1;
+            matches.row[searchTerms[i][j][1]] = 1;
+          }
+        }
+      }
+      
+      if (matches.cells.length) {
+        for (i in matches.row) {
+          rows.push(table[0].rows[i]);
+        }
+        
+        for (i in matches.cells) {
+          cells.push(table[0].rows[matches.cells[i][1]].cells[matches.cells[i][0]]);
+        }
+      
+        table.find('tbody tr').not(rows).hide();
+        table.find('.filter').removeClass('filter');
+        $(rows).show();
+        $(cells).addClass('filter');
+      } else {
+        table.find('tbody tr').hide();
+        noResults.show();
+      }
+    } else {
+      table.find('tbody tr').show().children('.filter').removeClass('filter');
+    }
+    
+    table = noResults = cells = rows = null;
   }
 });
