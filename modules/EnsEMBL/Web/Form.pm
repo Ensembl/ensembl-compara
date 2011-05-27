@@ -73,8 +73,10 @@ sub new {
 
 sub render {
   ## @overrides
-  ## Modifies the form before calling the inherited render method
-  my $self = shift;
+  ## Modifies the form before calling the inherited render method  
+  my ($self, $format) = @_;
+  
+  return '' if($format && $format ne 'HTML');  #dont return any form stuff if the format is not HTML (webpage) (eg: csv)
   
   ## change form attributes for uploading a file
   for (@{$self->get_elements_by_tag_name('input')}) {
