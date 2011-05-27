@@ -65,9 +65,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-  my $comparaDBA = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-  $self->param('comparaDBA', $comparaDBA);
-
   if (!$self->param('method_link_species_set_id')) {
     throw("MethodLinkSpeciesSet->dbID is not defined for this LowCoverageAlignment job");
   }
@@ -144,7 +141,7 @@ sub run
   }
 
   #disconnect compara database
-  $self->param('comparaDBA')->dbc->disconnect_if_idle;
+  $self->compara_dba->dbc->disconnect_if_idle;
 
   $runnable->run_analysis;
   $self->_parse_results();
@@ -167,7 +164,7 @@ sub write_output {
     print "WRITE OUTPUT\n" if $self->debug;
 
     if ($self->param('do_transactions')) {
-	my $compara_conn = $self->{'comparaDBA'}->dbc;
+	my $compara_conn = $self->compara_dba->dbc;
 
 	my $compara_helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_conn);
 	$compara_helper->transaction(-CALLBACK => sub {
@@ -195,22 +192,20 @@ sub _write_output {
   my $use_fresh_connection = 1;
   my $skip_left_right_index = 0;
 
-  my $comparaDBA = $self->param('comparaDBA');
-
   #Set use_autoincrement to 1 otherwise the GenomicAlignBlockAdaptor will use
   #LOCK TABLES which does an implicit commit and prevent any rollback
-  $comparaDBA->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
+  $self->compara_dba->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
   
-  my $mlssa = $comparaDBA->get_MethodLinkSpeciesSetAdaptor;
+  my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my $mlss = $mlssa->fetch_by_dbID($self->param('method_link_species_set_id'));
   my $mlss_id = $mlss->dbID;
-  my $dnafrag_adaptor = $comparaDBA->get_DnaFragAdaptor;
-  my $gaba = $comparaDBA->get_GenomicAlignBlockAdaptor;
-  my $gaa = $comparaDBA->get_GenomicAlignAdaptor;
+  my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
+  my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
+  my $gaa = $self->compara_dba->get_GenomicAlignAdaptor;
   
-  my $gaga = $comparaDBA->get_GenomicAlignGroupAdaptor;
+  my $gaga = $self->compara_dba->get_GenomicAlignGroupAdaptor;
   
-  my $gata = $comparaDBA->get_GenomicAlignTreeAdaptor;
+  my $gata = $self->compara_dba->get_GenomicAlignTreeAdaptor;
 
   foreach my $genomic_align_tree (@{$self->param('runnable')->output}) {
       my $all_nodes;
@@ -694,7 +689,7 @@ sub _parse_results {
 
     #fetch group_id from base alignment block if there is one
     my $multi_gab_id = $self->param('genomic_align_block_id');
-    my $multi_gaba = $self->param('comparaDBA')->get_GenomicAlignBlockAdaptor;
+    my $multi_gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
     my $multi_gab = $multi_gaba->fetch_by_dbID($multi_gab_id);
     my $group_id = $multi_gab->group_id;
 
@@ -989,7 +984,7 @@ sub get_species_tree {
       Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_species_tree);
 
   #if the tree leaves are species names, need to convert these into genome_db_ids
-  my $genome_dbs = $self->param('comparaDBA')->get_GenomeDBAdaptor->fetch_all();
+  my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
 
   my %leaf_name;
   my %leaf_check;
@@ -1070,7 +1065,7 @@ sub _load_GenomicAligns {
   # Fail if dbID has not been provided
   return $genomic_aligns if (!$genomic_align_block_id);
 
-  my $gaba = $self->param('comparaDBA')->get_GenomicAlignBlockAdaptor;
+  my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gab = $gaba->fetch_by_dbID($genomic_align_block_id);
 
   foreach my $ga (@{$gab->get_all_GenomicAligns}) {  
@@ -1127,7 +1122,7 @@ sub _load_2XGenomes {
   }
 
   #Find the slice on the reference genome
-  my $genome_db_adaptor = $self->param('comparaDBA')->get_GenomeDBAdaptor;
+  my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
 
   #DEBUG this opens up connections to all the databases
   my $ref_genome_db = $genome_db_adaptor->fetch_by_name_assembly($self->param('reference_species'));
@@ -1135,7 +1130,7 @@ sub _load_2XGenomes {
   my $ref_slice_adaptor = $ref_dba->get_SliceAdaptor();
 
   #Get multiple alignment genomic_align_block adaptor
-  my $multi_gaba = $self->param('comparaDBA')->get_GenomicAlignBlockAdaptor;
+  my $multi_gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
 
   #Find all the dnafrag_regions for the reference genome in this synteny region
   my $ref_gas =[];
@@ -1344,12 +1339,12 @@ sub _construct_pairwise_locations {
     }
 
     #Need a check here that I have pairwise_mlss for all the low coverage genomes.
-    my $gab_adaptor = $self->param('comparaDBA')->get_GenomicAlignBlockAdaptor;
+    my $gab_adaptor = $self->compara_dba->get_GenomicAlignBlockAdaptor;
     my $gab = $gab_adaptor->fetch_by_dbID($self->param('genomic_align_block_id'));
     my $high_epo_mlss = $gab->method_link_species_set;
-    my $genome_db_adaptor = $self->param('comparaDBA')->get_GenomeDBAdaptor;
+    my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
 
-    my $mlss_adaptor = $self->param('comparaDBA')->get_MethodLinkSpeciesSetAdaptor;
+    my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
     my $low_mlss = $mlss_adaptor->fetch_by_dbID($self->param('method_link_species_set_id'));
 
     my $low_coverage_species_set;
@@ -1922,7 +1917,7 @@ sub _create_mfa {
     my ($self) = @_;
 
     my $multi_gab_id = $self->param('genomic_align_block_id');
-    my $multi_gaba = $self->param('comparaDBA')->get_GenomicAlignBlockAdaptor;
+    my $multi_gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
     my $multi_gab = $multi_gaba->fetch_by_dbID($multi_gab_id);
     my $multi_gas = $multi_gab->get_all_GenomicAligns;
 
