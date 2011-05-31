@@ -981,11 +981,10 @@ sub get_Transcript {
 
 sub get_Translation {
   my $self = shift;
-  my $no_canonical = shift;
 
   if($self->get_Transcript) {
     my $transcript = $self->get_Transcript;
-    return $transcript->translation(undef,$no_canonical);
+    return $transcript->translation();
   }
   return undef;
 }
@@ -1000,8 +999,7 @@ sub transcript {
 }
 sub translation {
   my $self = shift;
-  my $no_canonical = shift;
-  return $self->get_Translation($no_canonical);
+  return $self->get_Translation();
 }
 
 
