@@ -48,7 +48,7 @@ sub create_element {
   ## Creates an element of a given tag name by instantiating the corresponding class
   ## Also adds attributes and inner_HTML/inner_text
   ## @param Element type
-  ## @param HashRef of {attrib1 => value1, attrib2 => value2} for attributes, inner_HTML/inner_text
+  ## @param HashRef of {attrib1 => value1, attrib2 => value2} for attributes, inner_HTML/inner_text and children (value for children key should be ref of array as accepted by append_children method).
   ## @return Element subclass object
   my ($self, $element_name, $attributes)  = @_;
 
@@ -72,7 +72,9 @@ sub create_element {
   elsif (exists $attributes->{'inner_text'}) {
     $element->inner_text(delete $attributes->{'inner_text'});
   }
+  my @children = @{delete $attributes->{'children'} || []};
   $element->set_attributes($attributes) if scalar keys %$attributes;
+  $element->append_children(@children) if @children;
   return $element;
 }
 
