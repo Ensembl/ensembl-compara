@@ -108,13 +108,13 @@ sub form_evidence_types {
   
   foreach my $cell_line (sort keys %{$self->{'cell_lines'}}) {
     $cell_line =~ s/\:\w*//;
-    push @columns, sprintf "<p>$cell_line</p>$select_all_col", map $cell_line, 0..4;
+    push @columns, $cell_line;
   }
   
   foreach my $feature (sort keys %{$self->{'evidence_features'}}) {
     my ($feature_name, $feature_id) = split /\:/, $feature;
     my $set = exists $focus_feature_type_ids{$feature_id} ? 'Core' : 'Other';
-    my @row = ({ tag => 'th', class => 'first', html => sprintf("$feature_name$select_all_row", $feature_name) }); # row name
+    my @row = ($feature_name, { tag => 'th', class => 'first', html => sprintf("$feature_name$select_all_row", $feature_name) }); # row name
     
     foreach my $cell_line (sort keys %{$self->{'cell_lines'}}) {
       $cell_line =~ s/\:\w*//;
@@ -147,11 +147,12 @@ sub form_evidence_types {
   ';
   
   foreach my $set ('Core', 'Other') {
-    my @cols = map {{ html => $_, enabled => 0 }} @columns;
+    my @cols = map {{ class => $_, html => sprintf("<p>$_</p>$select_all_col", map $_, 0..4), enabled => 0 }} @columns;
     my @rows;
     
     foreach (@{$groups->{$set}}) {
-      my $i = 0;
+      my $row_class = shift @$_;
+      my $i         = 0;
       my $row_html;
       
       foreach (@$_) {
@@ -167,7 +168,7 @@ sub form_evidence_types {
         $i++;
       }
       
-      push @rows, "<tr>$row_html</tr>";
+      push @rows, qq{<tr class="$row_class">$row_html</tr>};
     }
     
     $html .= sprintf('
@@ -187,7 +188,7 @@ sub form_evidence_types {
         <div class="no_results">No results found</div>
       </div>',
       $set, $set, $width,
-      join('', map { sprintf '<th%s>%s</th>', $_->{'enabled'} ? '' : ' class="disabled"', $_->{'html'} } @cols),
+      join('', map { sprintf '<th class="%s">%s</th>', $_->{'enabled'} ? $_->{'class'} : 'disabled', $_->{'html'} } @cols),
       join('', @rows)
     );
   }
