@@ -29,7 +29,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
         
         while (j--) {
           classes = this.rows[i].cells[j].className.toLowerCase().split(' ');
-          k = classes.length;
+          k       = classes.length;
           
           while (k--) {
             if (classes[k] && !disallowed[classes[k]]) {
@@ -80,6 +80,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       },
       blur: function () {
         if (!this.value) {
+          panel.filter(this);
           this.value = 'Filter';
           this.style.color = '#999';
         }
@@ -323,7 +324,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     var table       = $(el).data('table');
     var noResults   = $(el).data('noResults').hide();
     var searchTerms = table.data('searchTerms');
-    var value       = el.value.toLowerCase();
+    var value       = el.value.trim().toLowerCase();
     var matches     = { row: {}, col: {}, cells: [] };
     var rows        = [];
     var cells       = [];
