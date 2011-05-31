@@ -81,13 +81,13 @@ sub write_projection {
   my ($self, $p) = @_;
   my $db_entry_a = $self->dba()->get_DBEntryAdaptor();
   my $entry = $self->_process_entry($p);
-  my ($object, $type) = $self->_to_ensembl_object();
+  my ($object, $type) = $self->_to_ensembl_object($p->to());
   $object->add_DBEntry($entry);
   $db_entry_a->store($entry, $object->dbID(), $type);
   return;
 }
 
-=head2 _process_entry()
+=head2 _to_ensembl_object()
 
 Maps a member object to its Ensembl core object and returns the expected type
 for the DBEntryAdaptor to correctly write the xref back
