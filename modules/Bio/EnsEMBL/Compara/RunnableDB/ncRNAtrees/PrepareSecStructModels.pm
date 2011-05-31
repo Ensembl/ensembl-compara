@@ -20,7 +20,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecModels
+Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels
 
 =head1 SYNOPSIS
 
