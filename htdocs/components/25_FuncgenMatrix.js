@@ -20,7 +20,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     this.elLk.tables = $('table.funcgen_matrix', this.el).each(function () {
       var table       = this;   
       var searchTerms = {};
-      var disallowed  = { option: 1, disabled: 1, on: 1, filter: 1 };
+      var disallowed  = { option: 1, disabled: 1, on: 1, filter: 1, 'default': 1 };
       var i           = this.rows.length;
       var j, k, classes;
       
@@ -165,7 +165,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
   },
   
   selectAllCol: function (el) {
-    if (el.data('selectAll')) {
+    if (!el.length || el.data('selectAll')) {
       return;
     }
     
