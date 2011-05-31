@@ -57,6 +57,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Infernal;
 
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
+use Data::Dumper;
 
 use Bio::AlignIO;
 use Bio::EnsEMBL::BaseAlignFeature;
@@ -93,11 +94,19 @@ sub fetch_input {
     $self->input_job->transient_error(1);
 
     my $nc_tree    = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
+
+#     my $n_nodes = $nc_tree->get_tagvalue('gene_count');
+#     if ($n_nodes == 1) {
+#         die "Only one member in tree $nc_tree_id";
+#     }
+
     $self->param('nc_tree', $nc_tree);
 
     $self->param('model_id_hash', {});
 
     $self->param('input_fasta', $self->dump_sequences_to_workdir($nc_tree));
+
+    print STDERR Dumper $self->param('model_id_hash') if ($self->debug);
 
     $self->param('infernal_starttime', time()*1000);
 }
@@ -152,6 +161,8 @@ sub dump_sequences_to_workdir {
   my $self = shift;
   my $cluster = shift;
 
+  print STDERR Dumper $cluster if ($self->debug);
+
   my $fastafile = $self->worker_temp_directory . "cluster_" . $cluster->node_id . ".fasta";
   print("fastafile = '$fastafile'\n") if($self->debug);
 
@@ -162,8 +173,10 @@ sub dump_sequences_to_workdir {
   my $node_id = $cluster->node_id;
   my $member_list = $cluster->get_all_leaves;
   if (2 > scalar @$member_list) {
-      $self->input_job->transient_error(0);
+#      $self->input_job->transient_error(0);
+      $self->input_job->incomplete(0);
       die ("Only one member for cluster [$node_id]");
+#      return undef
   }
   print STDERR "Counting number of members\n" if ($self->debug);
   my $tag_gene_count = scalar(@{$member_list});
@@ -237,6 +250,7 @@ sub run_infernal {
   my $self = shift;
 
   my $stk_output = $self->worker_temp_directory . "output.stk";
+  my $nc_tree_id = $self->param('nc_tree_id');
 
   my $infernal_executable = $self->analysis->program_file || $self->param('cmalign_exe') || '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign';
 
@@ -244,19 +258,25 @@ sub run_infernal {
 
   my $model_id;
 
-  if (1 < scalar keys %{$self->param('model_id_hash')}) {
-    # We revert to the clustering_id tag, which maps to the RFAM
-    # 'name' field in nc_profile (e.g. 'mir-135' instead of 'RF00246')
-    print STDERR "WARNING: More than one model: ", join(",",keys %{$self->param('model_id_hash')}), "\n";
-    $model_id = $self->param('nc_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
-    # $self->throw("This cluster has more than one associated model");
-  } else {
-    my @models = keys %{$self->param('model_id_hash')};
-    $model_id = $models[0] or die ("model_id_hash is empty?");
+#   if (1 < scalar keys %{$self->param('model_id_hash')}) {
+#     # We revert to the clustering_id tag, which maps to the RFAM
+#     # 'name' field in nc_profile (e.g. 'mir-135' instead of 'RF00246')
+#     print STDERR "WARNING: More than one model: ", join(",",keys %{$self->param('model_id_hash')}), "\n";
+#     $model_id = $self->param('nc_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
+#     # $self->throw("This cluster has more than one associated model");
+#   } else {
+#     my @models = keys %{$self->param('model_id_hash')};
+#     $model_id = $models[0] or die ("model_id_hash is empty?");
+#   }
+
+  if (scalar keys %{$self->param('model_id_hash')} > 1) {
+      print STDERR "WARNING: More than one model: ", join(",",keys %{$self->param('model_id_hash')}), "\n";
   }
+  $model_id = $self->param('nc_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
 
   $self->param('model_id', $model_id );
 
+  print STDERR "Model_id : $model_id\n" if ($self->debug);
   my $ret1 = $self->dump_model('model_id', $model_id );
   my $ret2 = $self->dump_model('name',     $model_id ) if (1 == $ret1);
   if (1 == $ret2) {
