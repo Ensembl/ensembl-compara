@@ -46,7 +46,7 @@ body.mac div.track_order span.menu_option                           { cursor: ns
 
 div.funcgen_matrix                                              { float: left; margin: 0 50px 10px 0; }
 div.funcgen_matrix div.header_wrapper                           { text-align: right; margin-bottom: 40px; }
-div.funcgen_matrix h2                                           { margin-bottom: 15px; border: 0 !important; float: left; }
+div.funcgen_matrix h2                                           { margin: 0 30px 15px 0; border: 0 !important; float: left; }
 div.funcgen_matrix input.filter                                 { color: #999999; }
 div.funcgen_matrix div.no_results                               { font-weight: bold; margin-top: 5px; display: none; }
 div.matrix_key                                                  { margin-bottom: 10px; height: 41px; border-bottom: 1px solid [[PANEL_BORDER]]; }
