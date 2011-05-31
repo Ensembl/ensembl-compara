@@ -24,24 +24,24 @@ sub process {
   my $filename = $path[-1];
   $name ||= $filename;
 
-  ## Try to guess format from file name
+  ## Check file format
   my $format;
   my @bits = split /\./, $filename;
   my $extension = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
   my @small_formats = @{$hub->species_defs->USERDATA_FILE_FORMATS};
   my @big_formats   = @{$hub->species_defs->USERDATA_REMOTE_FORMATS};
-  my @all_formats   = (@small_formats, @big_formats);
 
-  ## We have to do some intelligent checking here, in case the user
-  ## selects the wrong format from the dropdown, or none at all!
   my $chosen_format = $hub->param('format');
   my $pattern = '^'.$extension.'$';
-  if (grep(/$chosen_format/i, @big_formats)
-    || (grep(/$chosen_format/i, @small_formats) && grep(/$pattern/i, @small_formats))) {
-    $format = $chosen_format;
-  }
-  elsif (grep(/$pattern/i, @all_formats)) {
+
+  ## We have to do some intelligent checking here, in case the user
+  ## doesn't select a format, or tries to attach a large format file
+  ## with a small format selected in the form
+  if (!$chosen_format || (grep(/$chosen_format/i, @small_formats) && grep(/$pattern/i, @big_formats))) {
     $format = uc($extension);
+  }
+  else {
+    $format = $chosen_format;
   }
 
   unless ($format) {
