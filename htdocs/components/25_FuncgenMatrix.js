@@ -18,34 +18,32 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     this.viewConfig = {};
     
     this.elLk.tables = $('table.funcgen_matrix', this.el).each(function () {
-      var table       = this;   
-      var searchTerms = {};
-      var disallowed  = { option: 1, disabled: 1, on: 1, filter: 1, 'default': 1 };
-      var i           = this.rows.length;
-      var j, k, classes;
+      var headerRow  = this.rows[0].cells;
+      var disallowed = { option: 1, disabled: 1, on: 1, filter: 1, 'default': 1, first: 1 };
       
-      while (i--) {
-        j = this.rows[i].cells.length;
+      // Do this loop here so we don't have to look up the header row for every cell
+      $('.option', this).each(function () {
+        var classes = this.className.split(' ');
+        var cls, i;
         
-        while (j--) {
-          classes = this.rows[i].cells[j].className.toLowerCase().split(' ');
-          k       = classes.length;
+        this.searchTerms = {
+          row:  this.parentNode.className.toLowerCase(),
+          col:  headerRow[$(this).index()].className.toLowerCase(),
+          cell: ''
+        };
+        
+        for (i in classes) {
+          cls = classes[i].toLowerCase();
           
-          while (k--) {
-            if (classes[k] && !disallowed[classes[k]]) {
-              if (!searchTerms[classes[k]]) {
-                searchTerms[classes[k]] = [];
-              }
-              
-              searchTerms[classes[k]].push([j, i]);
-            }
+          if (!disallowed[cls] && cls !== this.searchTerms.row && cls !== this.searchTerms.col) {
+            this.searchTerms.cell += cls + ' ';
           }
         }
-      }
+        
+        this.searchTerms.joined = $.trim([ this.searchTerms.row, this.searchTerms.col, this.searchTerms.cell ].join(' '));
+      });
       
-      $(this).data('searchTerms', searchTerms);
-      
-      table = null;
+      headerRow = null;
     });
     
     $('input.filter', this.el).each(function () {
@@ -99,7 +97,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       });
     }
     
-    this.elLk.options = $('.option', this.elLk.tables).each(function () {
+    this.elLk.options = $('.option', this.elLk.tables).each(function () {      
       this.configCode = 'opt_cft_' + this.title; // configCode is used to set the correct values for the ViewConfig
       panel.viewConfig[this.configCode] = $(this).hasClass('on') ? 'on' : 'off';
     }).bind('click', function () {
@@ -321,33 +319,56 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
   },
   
   filter: function (el) {
-    var table       = $(el).data('table');
-    var noResults   = $(el).data('noResults').hide();
-    var searchTerms = table.data('searchTerms');
-    var value       = el.value.trim().toLowerCase();
-    var matches     = { row: {}, col: {}, cells: [] };
-    var rows        = [];
-    var cells       = [];
-    var i, j;
+    var table      = $(el).data('table');
+    var noResults  = $(el).data('noResults').hide();
+    var value      = $.trim(el.value.toLowerCase()); // remove extra whitespace
+    var rowMatches = {};
+    var cells      = [];
+    var rows       = [];
+    var values, r;
     
     if (value) {
-      for (i in searchTerms) {
-        if (i.indexOf(value) !== -1) {
-          for (j in searchTerms[i]) {
-            matches.cells.push(searchTerms[i][j]);
-            matches.col[searchTerms[i][j][0]] = 1;
-            matches.row[searchTerms[i][j][1]] = 1;
-          }
-        }
-      }
+      values = value.split(' ');
       
-      if (matches.cells.length) {
-        for (i in matches.row) {
-          rows.push(table[0].rows[i]);
+      $('.option', table).each(function () {
+        var searchTerms = this.searchTerms;
+        var i, j, checked, test;
+        
+        if (values.length > 1) {
+          checked = { matches: {} };
+        
+          for (i in searchTerms) {
+            if (typeof checked[i] === 'undefined') {
+              checked[i] = 0;
+            }
+            
+            // Loop through user's filter values, checking if they match the cell's search terms
+            // checked.matches[values[j]] is set to 1 to stop the same filter value being reused
+            // for example a search for "multi m" will only match multicell options with an m in 
+            // their feature type name because this flag is set
+            for (j in values) {
+              if (!checked.matches[values[j]] && searchTerms[i].indexOf(values[j]) !== -1) {
+                checked[i] = 1;
+                checked.matches[values[j]] = 1;
+                break;
+              }
+            }
+          }
+          
+          test = checked.row + checked.col + checked.cell >= values.length; // Must match at least as many criteria as there are filter values
+        } else {
+          test = searchTerms.joined.indexOf(value) !== -1;
         }
         
-        for (i in matches.cells) {
-          cells.push(table[0].rows[matches.cells[i][1]].cells[matches.cells[i][0]]);
+        if (test) {
+          cells.push(this);
+          rowMatches[$(this).parent().index() + 1] = 1;
+        }
+      });
+      
+      if (cells.length) {
+        for (r in rowMatches) {
+          rows.push(table[0].rows[r]);
         }
       
         table.find('tbody tr').not(rows).hide();
@@ -362,6 +383,6 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       table.find('tbody tr').show().children('.filter').removeClass('filter');
     }
     
-    table = noResults = cells = rows = null;
+    el = table = noResults = rows = cells = null;
   }
 });
