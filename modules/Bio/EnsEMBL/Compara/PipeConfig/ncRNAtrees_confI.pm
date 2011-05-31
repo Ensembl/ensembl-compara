@@ -30,24 +30,25 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'mlss_id'           => 40072,
+        'mlss_id'           => 40074,
         'max_gene_count'    => 1500,
 
-        'release'           => '62',
+        'release'           => '63',
         'rel_suffix'        => '',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
-        'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
+        'ensembl_cvs_root_dir' => $ENV{ENSEMBL_CVS_ROOT_DIR},  #  $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
         'work_dir'             => $ENV{'HOME'}.'/ncrna_trees_'.$self->o('rel_with_suffix'),
 
         'email'             => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
 
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara4',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => $ENV{'USER'}.'_compara_nctrees_'.$self->o('rel_with_suffix'),
+                          -driver => 'mysql',
+                          -host   => 'compara3',
+                          -port   => 3306,
+                          -user   => 'ensadmin',
+                          -pass   => $self->o('password'),
+                          -dbname => $ENV{'USER'}.'_compara_nctrees_'.$self->o('rel_with_suffix'),
         },
 
         'reg1' => {
@@ -69,7 +70,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'sf5_ensembl_compara_master',
+            -dbname => 'sf5_ensembl_compara_master', # 'sf5_ensembl_compara_master',
         },
 
         'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
@@ -77,7 +78,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'sf5_ensembl_compara_61',
+            -dbname => 'sf5_ensembl_compara_62',
         },
     };
 }
@@ -295,11 +296,22 @@ sub pipeline_analyses {
             },
             -wait_for => [ 'create_species_tree', 'store_species_tree', 'create_lca_species_set', 'store_lca_species_set', 'load_members_factory', 'load_members' ], # mega-funnel
             -flow_into => {
-                2 => [ 'recover_epo' ],
+                           2 => [ 'recover_epo' ],
+                           1 => ['db_snapshot_after_Rfam_classify']
             },
         },
 
 # ---------------------------------------------[by-cluster branches]----------------------------------------------------------------------
+
+            {   -logic_name => 'db_snapshot_after_Rfam_classify',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+                -parameters => {
+                                'cmd'      => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 0).' '.$self->o('pipeline_db','-dbname').' >#filename#',
+                                'filename'  => $ENV{'HOME'}.'/db_snapshot_after_Rfam_classify',
+                               },
+            },
+
+#--------------------------------------------------------------------------------
 
         {   -logic_name    => 'recover_epo',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
@@ -308,6 +320,7 @@ sub pipeline_analyses {
                 'epo_db'         => $self->o('epo_db'),
             },
             -hive_capacity => 100,
+            -wait_for => ['db_snapshot_after_Rfam_classify'],
             -flow_into => {
                            1 => [ 'infernal','genomic_alignment', 'treebest_mmerge' ],
             },
@@ -332,7 +345,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'pre_sec_struct_tree', ## pre_sec_struct_tree
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecModels',  ## PrepareRAxMLSecModels -- rename
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',  ## PrepareRAxMLSecModels -- rename
             -hive_capacity => 200,
 #            -failed_job_tolerance =>  5,   ### No failed_job_tolerance here
             -flow_into => {
