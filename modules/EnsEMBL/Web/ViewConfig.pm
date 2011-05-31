@@ -391,14 +391,15 @@ sub build_imageconfig_form {
   
   my $menu = $self->tree->create_node('image_config', { caption => 'Image options' });
   
-  $menu->append($self->tree->create_node('active_tracks',    { caption => 'Active tracks',    availability => 1, url => '#', class => 'active_tracks',           rel => 'multi' })) if $extra_menus->{'active_tracks'};
-  $menu->append($self->tree->create_node('favourite_tracks', { caption => 'Favourite tracks', availability => 1, url => '#', class => 'favourite_tracks',        rel => 'multi' })) if $extra_menus->{'favourite_tracks'};
-  $menu->append($self->tree->create_node('search_results',   { caption => 'Search results',   availability => 1, url => '#', class => 'search_results disabled', rel => 'multi' })) if $extra_menus->{'search_results'};
+  $menu->append($self->tree->create_node('active_tracks',    { caption => 'Active tracks',    availability => 1, url => '#', class => 'active_tracks',    rel => 'multi' })) if $extra_menus->{'active_tracks'};
+  $menu->append($self->tree->create_node('favourite_tracks', { caption => 'Favourite tracks', availability => 1, url => '#', class => 'favourite_tracks', rel => 'multi' })) if $extra_menus->{'favourite_tracks'};
   
   if ($extra_menus->{'track_order'}) {
     $menu->append($self->tree->create_node('track_order', { caption => 'Track order', availability => 1, url => '#', class => 'track_order' }));
     $self->{'track_order'} = { map { join('.', grep $_, $_->id, $_->get('drawing_strand')) => $_->get('order') } $image_config->get_parameter('sortable_tracks') ? $image_config->get_sortable_tracks : () };
   }
+  
+  $menu->append($self->tree->create_node('search_results', { caption => 'Search results', availability => 1, url => '#', class => 'search_results disabled', rel => 'multi' })) if $extra_menus->{'search_results'};
   
   # Delete all tracks where menu = no, and parent nodes if they are now empty
   # Do this after creating track order, so that unconfigurable but displayed tracks are still considered in the ordering process
