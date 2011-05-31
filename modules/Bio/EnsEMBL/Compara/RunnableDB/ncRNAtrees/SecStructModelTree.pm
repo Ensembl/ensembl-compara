@@ -39,7 +39,7 @@ Internal methods are usually preceded with a _
 =cut
 
 
-package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCSecStrucTreeModels;
+package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree;
 
 use strict;
 use Time::HiRes qw(time);                          # Needed *
@@ -184,7 +184,7 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     if($leafcount<4) {
         my $node_id = $tree->node_id;
         $self->input_job->incomplete(0);
-        die ("tree cluster $node_id has <4 proteins - can not build a raxml tree");
+        die ("tree cluster $node_id has <4 proteins - can not build a raxml tree\n");
     }
 
     my $file_root = $self->worker_temp_directory. "nctree_". $tree->node_id;
@@ -234,10 +234,9 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     $struct_string =~ s/[^\(^\)^\<^\>^\[^\]^\{^\}^\.]/\./g;
     my $struct_file = $file_root . ".struct";
     if ($struct_string =~ /^\.+$/) {
-        $self->input_job->transient_error(0);
-       die "struct string is $struct_string\n";
-#        $struct_file = undef;
-        # No struct file
+#        $self->input_job->transient_error(0);
+        $self->input_job->incomplete(0);
+        die "struct string is $struct_string\n";
     } else {
         open(STRUCT, ">$struct_file")
             or $self->throw("Error opening $struct_file for write");
