@@ -142,7 +142,7 @@ sub form_evidence_types {
       <h2>Key</h2>
       <div class="key"><div>On</div><div class="cell on"></div></div>
       <div class="key"><div>Off</div><div class="cell off"></div></div>
-      <div class="key"><div>Disabled</div><div class="cell disabled"></div></div>
+      <div class="key"><div>Unavailable</div><div class="cell disabled"></div></div>
     </div>
   ';
   
