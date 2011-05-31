@@ -56,6 +56,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Ktreedist;
 
 use strict;
+use Data::Dumper;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -209,6 +210,7 @@ sub load_input_trees {
     }
   }
   $sth1->finish;
+#  print STDERR Dumper $self->param('inputtrees_unrooted') if ($self->{'verbose'});
 
   return 1;
 }
