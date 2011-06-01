@@ -327,12 +327,13 @@ sub new_table {
   my $self     = shift;
   my $hub      = $self->hub;
   my $table    = new EnsEMBL::Web::Document::SpreadSheet(@_);
-  (my $comp    = ref $self) =~ s/[^\w\.]+/_/g;
- 
-  $table->format     = $self->format;    
-  $table->exportable = $hub->url unless defined $table->exportable || $self->{'_table_count'}++;
+  my $filename = $hub->filename($self->object);
   
-  $self->renderer->{'filename'} = join '-', $comp, $hub->filename($self->object);
+  $table->format     = $self->format;
+  $table->exportable = $hub->url unless defined $table->exportable || $self->{'_table_count'}++;
+  $table->filename   = join '-', $self->id, $filename;
+  
+  $self->renderer->{'filename'} = $filename;
   
   return $table;
 }
