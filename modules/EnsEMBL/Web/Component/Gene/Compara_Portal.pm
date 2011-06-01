@@ -61,10 +61,14 @@ sub content {
       $html  .= qq(<img src="/img/$img" class="portal" alt="" title="$title" />);
     }
   }
+
+  my $url = $self->hub->url({'type'=>'Location', 'action'=>'Compara'});
+  $html .= qq(<p>More views of comparative genomics data, such as multiple alignments and synteny, are available on the <a href="$url">Location</a> page for this gene.</p>);
+ 
   $html .= qq(
     </div>
   );
- 
+
   return $html;
 }
 

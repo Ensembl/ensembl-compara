@@ -58,9 +58,6 @@ sub content {
       $html .= qq(<img src="/img/$img" class="portal" alt="" title="$title" />);
     }
   }
-  $html .= qq(
-    </div>
-  );
 
   if ($hub->param('g')) {
     my $url = $hub->url({'type'=>'Gene','action'=>'Compara'});
@@ -70,6 +67,10 @@ sub content {
     $html .= qq(<p>Additional comparative genomics views are available for individual genes.</p>);
   }
  
+  $html .= qq(
+    </div>
+  );
+
   return $html;
 }
 
