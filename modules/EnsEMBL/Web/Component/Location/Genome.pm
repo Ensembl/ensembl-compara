@@ -149,7 +149,7 @@ sub content {
       
       $html .= $image->render;
       
-      if ($hub->param('ftype') eq 'Phenotype') { # making colour scale for pointers
+      if ($hub->param('ftype') eq 'Phenotype' && $self->html_format) { # making colour scale for pointers
         $html .= '<h3>Colour Scale:</h3>';
         
         my @colour_scale = $hub->colourmap->build_linear_gradient(30, '#0000FF', '#770088', '#BB0044', 'red'); # making an array of the colour scale to make the scale
@@ -190,8 +190,11 @@ sub feature_tables {
   my $sortable     = shift;
   my $hub          = $self->hub;
   my $data_type    = $hub->param('ftype');  
-  my ($html, $table_style);
+  my $id           = $hub->param('id');
+  my ($html, $table_style);  
   my @tables;  
+  
+  $table_style->{'exportable'} = qq{?ftype=$data_type;id=$id;db=core};  #make a complete url for the download view as csv
 
   while (my ($feat_type, $feature_set) = each (%$feature_dets)) {
     my $features      = $feature_set->[0];
@@ -216,7 +219,8 @@ sub feature_tables {
     }
     else{
       $table_style->{'margin'} = '1em 0px';
-    }    
+    }      
+    
     my $table = $self->new_table([], [], $table_style);
     
     if ($feat_type =~ /Gene|Transcript|Domain/) {
@@ -335,7 +339,7 @@ sub feature_tables {
               $hub->url({
                 type    => 'Variation',
                 action  => 'Phenotype',
-                v       => $row->{'label'},
+                v       => $row->{'label'},                
                 __clear => 1
               }),
               $row->{'label'}
