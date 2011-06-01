@@ -54,6 +54,7 @@ sub new {
   
   my $self = $class->SUPER::new($params->{'dom'} || undef);
   
+  $self->{_format} =  exists $params->{'format'} ? $params->{'format'} : 'HTML';  
   $self->set_attribute('id',      $params->{'id'}) if exists $params->{'id'};
   $self->set_attribute('action',  $params->{'action'}) if exists $params->{'action'};
   $self->set_attribute('method',  $params->{'method'} || 'post');
@@ -74,9 +75,8 @@ sub new {
 sub render {
   ## @overrides
   ## Modifies the form before calling the inherited render method  
-  my ($self, $format) = @_;
-  
-  return '' if($format && $format ne 'HTML');  #dont return any form stuff if the format is not HTML (webpage) (eg: csv)
+  my ($self) = @_; 
+  return '' if($self->format ne 'HTML');  #dont return any form stuff if the format is not HTML (webpage) (eg: csv)
   
   ## change form attributes for uploading a file
   for (@{$self->get_elements_by_tag_name('input')}) {
@@ -246,6 +246,7 @@ sub add_hidden {          shift->fieldset->add_hidden(@_);          }
 sub add_matrix {          shift->fieldset->add_matrix(@_);          }
 sub add_button {          shift->fieldset->add_button(@_);          }
 sub add_element {         shift->fieldset->add_element(@_);         }
+sub format      {         return shift->{_format};                 }
 
 
 ##################################
