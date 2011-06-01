@@ -52,6 +52,10 @@ sub new {
 
   assert_ref( $dba, 'Bio::EnsEMBL::DBSQL::DBAdaptor' );
   $self->{dba} = $dba;
+  if(defined $analysis) {
+    assert_ref( $analysis, 'Bio::EnsEMBL::Analysis' );
+    $self->{analysis} = $analysis;
+  }
 
   return $self;
 }
@@ -71,16 +75,15 @@ sub dba {
 
 =head2 analysis()
 
-  Arg [1] : Bio::EnsEMBL::Analysis; optional argument to set
-  Returntype : Bio::EnsEMBL::Analysis; can be undef if never set before
-  Exceptions : None
-  Status     : Stable
+  Description : Getter for the analysis to write  
+  Returntype  : Bio::EnsEMBL::Analysis or undef
+  Exceptions  : None
+  Status      : Stable
 
 =cut
 
 sub analysis {
-  my ($self, $analysis) = @_;
-  $self->{analysis} = $analysis if defined $analysis;
+  my ($self) = @_;
   return $self->{analysis};
 }
 
