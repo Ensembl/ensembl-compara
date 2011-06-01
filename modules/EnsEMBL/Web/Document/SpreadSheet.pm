@@ -29,6 +29,7 @@ sub new {
 
 sub format     :lvalue { $_[0]{'_format'};     }
 sub exportable :lvalue { $_[0]{'_exportable'}; }
+sub filename   :lvalue { $_[0]{'_filename'};   }
 
 sub has_rows { return !!@{$_[0]->{'_data'}}; }
 
@@ -51,11 +52,12 @@ sub render {
   my $config;
   
   if ($options->{'data_table'}) {
-    $table_class .= ' data_table';
+    $table_class .= ' data_table exportable';
     $table_class .= " $options->{'data_table'}" if $options->{'data_table'} =~ /[a-z]/i;
     $config      .= $self->sort_config;
   }
   
+  my $wrapper  = $width ne '100%' && $table_class =~ /\s*autocenter\s*/ ? 'autocenter_wrapper' : $options->{'data_table'} ? '' : undef;
   my %elements = ( thead => '', tbody => '', tfoot => '');
   
   if (scalar @{$self->{'_spanning'}}) {
@@ -114,8 +116,26 @@ sub render {
     $config
   };
   
-  $table  = qq{<div class="autocenter_wrapper">$table</div>} if $width ne '100%' && $table_class =~ /\s*autocenter\s*/;
+  if ($options->{'data_table'} ) {
+    my $id       = $options->{'id'};
+       $id       =~ s/[\W_]table//g;
+    my $filename = join '-', grep $_, $id, $self->filename;
+    
+    $table .= qq{
+      <form class="data_table_export" action="/Ajax/table_export" method="post">
+        <input type="hidden" name="filename" value="$filename" />
+        <input type="hidden" class="data" name="data" value="" />
+      </form>
+    };
+  }
+    
   $table .= sprintf qq{<div class="other_tool"><p><a class="export" href="%s;_format=Excel">Download view as CSV</a></p></div>}, $self->exportable if $self->exportable;
+  
+  # A wrapper div is needed for data tables so that export and config forms can be found by checking the table's siblings
+  if (defined $wrapper) {
+    $wrapper = qq{ class="$wrapper"} if $wrapper; 
+    $table   = qq{<div$wrapper>$table</div>};
+  }
   
   return $table;
 }
