@@ -13,10 +13,6 @@ Bio::EnsEMBL::Compara::Production::Projection::Writer::ProjectedDBEntryWriter
 This class will write the results of the given projections to a 
 database given at construction.
 
-=head1 AUTHOR
-
-Andy Yates (ayatesatebiacuk)
-
 =head1 CONTACT
 
 This modules is part of the EnsEMBL project (http://www.ensembl.org)
@@ -37,23 +33,25 @@ use base qw(Bio::EnsEMBL::Compara::Production::Projection::Writer::BaseWriter);
 
 =head2 new()
 
-  Arg[-dba] : required; Assumed to be a DBA which we can write to
-  Description : New method used for a new instance of the given object. 
-                Required fields are indicated accordingly. Fields are specified
-                using the Arguments syntax (case insensitive).
+  Arg[-DBA]       : Bio::EnsEMBL::DBSQL::DBAdaptor; Assumed to be a DBA which 
+                    can be written to. Required argument 
+  Arg[-ANALYSIS]  : Bio::EnsEMBL::Analysis; analysis used to link DBEntries to
+  Returntype      : Bio::EnsEMBL::Compara::Production::Projection::Writer::ProjectedDBEntryWriter
+  Description     : New method used for a new instance of the given object. 
+                    Required fields are indicated accordingly. Fields are 
+                    specified using the Arguments syntax (case insensitive).
+  Exceptions      : If the DBAdaptor was not defined 
+  Status          : Stable
 
 =cut
 
 sub new {
   my ( $class, @args ) = @_;
   my $self = $class->SUPER::new(@args);
-  my ( $dba, ) = rearrange( [qw(dba )], @args );
+  my ( $dba, $analysis, ) = rearrange( [qw(dba analysis)], @args );
 
   assert_ref( $dba, 'Bio::EnsEMBL::DBSQL::DBAdaptor' );
-  confess(
-'The attribute dba must be specified during construction or provide a builder subroutine'
-  ) if !defined $dba;
-  $self->{dba} = $dba if defined $dba;
+  $self->{dba} = $dba;
 
   return $self;
 }
@@ -68,6 +66,24 @@ sub dba {
   my ($self) = @_;
   return $self->{dba};
 }
+
+=pod
+
+=head2 analysis()
+
+  Arg [1] : Bio::EnsEMBL::Analysis; optional argument to set
+  Returntype : Bio::EnsEMBL::Analysis; can be undef if never set before
+  Exceptions : None
+  Status     : Stable
+
+=cut
+
+sub analysis {
+  my ($self, $analysis) = @_;
+  $self->{analysis} = $analysis if defined $analysis;
+  return $self->{analysis};
+}
+
 
 =head2 write_projection()
 
@@ -137,7 +153,17 @@ sub _process_entry {
   my $txt = "from $from_species translation $from";
   $entry->info_type("PROJECTION");
   $entry->info_text($txt);
+  $self->_add_analysis($entry);
   return $entry;
+}
+
+sub _add_analysis {
+  my ($self, $entry) = @_;
+  my $a = $self->analysis();
+  if(defined $a) {
+    $entry->analysis($a);
+  }
+  return;
 }
 
 1;
