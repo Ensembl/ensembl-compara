@@ -11,11 +11,11 @@ sub new {
 sub seqname { my $self = shift; (my $T = $self->_seqname) =~s/^chr//; return $T; }
 sub start   { my $self = shift; return $self->{'start'}; }
 sub end     { my $self = shift; return $self->{'end'}; }
-sub strand        { return undef; }
+sub strand        { return 0; }
 sub cigar_string  { return undef; }
 sub hstart        { return undef; }
 sub hend          { return undef; }
-sub hstrand       { return undef; }
+sub hstrand       { return 0; }
 sub type          { return undef; }
 sub note          { return undef ;}
 sub score         { return undef; }  
