@@ -403,11 +403,11 @@ sub valid_type {
 sub filename {
   my ($self, $object) = @_;
   
-  my $name = sprintf('%s-%s-%d-%s',
+  my $name = sprintf('%s-%s-%s-%d',
     $self->species,
-    lc $self->type,
-    $self->species_defs->ENSEMBL_VERSION,
-    $self->get_db
+    $self->type,
+    $self->action,
+    $self->species_defs->ENSEMBL_VERSION
   );
   
   $name .= '-' . $object->stable_id if $object && $object->can('stable_id');
