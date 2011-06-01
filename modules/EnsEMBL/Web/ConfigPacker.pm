@@ -403,7 +403,7 @@ sub _summarise_variation_db {
   }
 
 #--------- Add in structural variation information
-  my $v_aref = $dbh->selectall_arrayref( "select s.name, count(*), s.description from structural_variation sv, source s where sv.source_id=s.source_id and sv.class='SV' group by sv.source_id");
+  my $v_aref = $dbh->selectall_arrayref( "select s.name, count(*), s.description from structural_variation sv, source s, attrib a where sv.source_id=s.source_id and sv.class_attrib_id=a.attrib_id and a.value='structural_variant' group by sv.source_id");
   my %structural_variations;
   my %sv_descriptions;
   foreach (@$v_aref) {
@@ -414,7 +414,7 @@ sub _summarise_variation_db {
   $self->db_details($db_name)->{'tables'}{'structural_variation'}{'descriptions'} = \%sv_descriptions;
 
 #--------- Add in copy number variant probes information
-  my $cnv_aref = $dbh->selectall_arrayref( "select s.name, count(*), s.description from structural_variation sv, source s where sv.source_id=s.source_id and sv.class='CNV_PROBE' group by sv.source_id");
+  my $cnv_aref = $dbh->selectall_arrayref( "select s.name, count(*), s.description from structural_variation sv, source s, attrib a where sv.source_id=s.source_id and sv.class_attrib_id=a.attrib_id and a.value='probe' group by sv.source_id");
   my %cnv_probes;
   my %cnv_probes_descriptions;
   foreach (@$cnv_aref) {
