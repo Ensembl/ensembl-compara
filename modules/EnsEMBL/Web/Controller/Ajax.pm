@@ -6,6 +6,8 @@ package EnsEMBL::Web::Controller::Ajax;
 
 use strict;
 
+use JSON qw(from_json);
+
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Hub;
 
@@ -83,6 +85,25 @@ sub multi_species {
     $session->purge_data(%args);
     $session->set_data(%args, %data) if scalar grep $_ !~ /(type|code)/, keys %data;
   }
+}
+
+sub table_export {
+  my ($self, $hub) = @_;
+  my $r     = $hub->apache_handle;
+  my $data  = from_json($hub->param('data'));
+  my $clean = sub {
+    my $str = shift;
+       $str =~ s/<br.*?>/ /g;
+       $str =~ s/&nbsp;/ /g;
+       $str = $self->strip_HTML($str);
+       $str =~ s/"/""/g;
+    return $str;
+  };
+  
+  $r->content_type('application/octet-string');
+  $r->headers_out->add('Content-Disposition' => sprintf 'attachment; filename=%s.csv', $hub->param('filename'));
+  
+  print join '', sprintf qq{"%s"\n}, join '","', map { &$clean($_) } @$_ for @$data;
 }
 
 1;
