@@ -38,7 +38,10 @@ sub populate_tree {
   );
     
   $self->create_node('Population', 'Population genetics ([[counts::populations]])',
-    [qw( summary EnsEMBL::Web::Component::Variation::PopulationGenotypes )],
+    [qw( 
+      graphs  EnsEMBL::Web::Component::Variation::PopulationGraphs
+      table 	EnsEMBL::Web::Component::Variation::PopulationGenotypes 
+    )],
     { 'availability' => 'variation has_populations not_somatic', 'concise' => 'Population genetics', 'no_menu_entry' => $somatic }
   );
   
@@ -74,7 +77,8 @@ sub populate_tree {
     )],
     { 'availability' => 'variation database:compara has_alignments', 'concise' => 'Phylogenetic Context' }
   );
-  
+	
+	
   # External Data tree, including non-positional DAS sources
   my $external = $self->create_node('ExternalData', 'External Data',
     [qw( external EnsEMBL::Web::Component::Variation::ExternalData )],
