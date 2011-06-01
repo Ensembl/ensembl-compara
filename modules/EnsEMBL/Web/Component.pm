@@ -328,8 +328,8 @@ sub new_table {
   my $hub      = $self->hub;
   my $table    = new EnsEMBL::Web::Document::SpreadSheet(@_);
   (my $comp    = ref $self) =~ s/[^\w\.]+/_/g;
-  
-  $table->format     = $self->format;
+ 
+  $table->format     = $self->format;    
   $table->exportable = $hub->url unless defined $table->exportable || $self->{'_table_count'}++;
   
   $self->renderer->{'filename'} = join '-', $comp, $hub->filename($self->object);
@@ -343,6 +343,7 @@ sub new_form {
   ## @return  EnsEMBL::Web::Form object
   my ($self, $params) = @_;
   $params->{'dom'} = $self->dom;
+  $params->{'format'} = $self->format;  
   return new EnsEMBL::Web::Form($params);
 }
 
