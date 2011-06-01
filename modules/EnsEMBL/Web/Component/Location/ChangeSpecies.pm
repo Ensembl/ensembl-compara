@@ -22,7 +22,7 @@ sub content {
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
   my $url          = $hub->url({ otherspecies => undef }, 1);
-  my $form         = new EnsEMBL::Web::Form('change_sp', $url->[0], 'get', 'nonstd check');
+  my $form         = $self->new_form({id => 'change_sp', action => $url->[0], method => 'get', class => 'nonstd check'});
     
   $form->add_hidden({ name => $_, value => $url->[1]->{$_} }) for keys %{$url->[1]};
 
@@ -47,7 +47,7 @@ sub content {
     button_value => 'Go'
   );
   
-  return '<div class="center">' . $form->render($self->format) . '</div>';  
+  return '<div class="center">' . $form->render() . '</div>';  
 }
 
 1;

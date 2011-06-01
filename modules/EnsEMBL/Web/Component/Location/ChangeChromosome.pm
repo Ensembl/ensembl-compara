@@ -21,7 +21,7 @@ sub content {
   my $self     = shift;
   my $hub      = $self->hub;
   my $object   = $self->object;
-  my $form     = new EnsEMBL::Web::Form( 'change_chr', $hub->url({ __clear => 1 }), 'get', 'nonstd check');
+  my $form     = $self->new_form({id => 'change_chr', action => $hub->url({ __clear => 1 }), method => 'get', class => 'nonstd check'});
   my @chrs     = $self->chr_list($object);
   my $chr_name = $object->seq_region_name;
   my $label     = 'Jump to Chromosome';
@@ -47,7 +47,7 @@ sub content {
     button_value => 'Go'
   );
   
-  return '<div class="center">' . $form->render($self->format) . '</div>';
+  return '<div class="center">' . $form->render() . '</div>';
 }
 
 1;
