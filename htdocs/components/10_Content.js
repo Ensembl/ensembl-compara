@@ -280,18 +280,29 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   dataTable: function () {
     var panel = this;
     
+    this.hideFilter = $('body').hasClass('ie67');
+    
+    var exportHover = function () {
+      $(this).children().toggle();
+      
+      if (panel.hideFilter) {
+        $(this).siblings('.dataTables_filter').toggle();
+      }
+    }
+    
     this.elLk.dataTable.each(function (i) {
       // Because dataTables is written to create alert messages if you try to reinitialise a table, block any attempts here.
       if ($.fn.dataTableSettings[i] && $.fn.dataTableSettings[i].nTable == this) {
         return;
       }
       
-      var table    = $(this);
-      var length   = $('tbody tr', this).length;
-      var width    = table.hasClass('fixed_width') ? table.outerWidth() : '100%';
-      var noSort   = table.hasClass('no_sort');
-      var noToggle = table.hasClass('no_col_toggle');
-      var menu     = [[],[]];
+      var table      = $(this);
+      var length     = $('tbody tr', this).length;
+      var width      = table.hasClass('fixed_width') ? table.outerWidth() : '100%';
+      var noSort     = table.hasClass('no_sort');
+      var noToggle   = table.hasClass('no_col_toggle');
+      var exportable = table.hasClass('exportable');
+      var menu       = [[],[]];
       var sDom;
       
       var cookieId      = this.id || 'data_table' + panel.panelNumber;
@@ -314,7 +325,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       });
       
       if (length > 10) {
-        sDom = '<"dataTables_top"l' + (noToggle ? '' : '<"col_toggle">') + 'f<"invisible">>t<"dataTables_bottom"ip<"invisible">>';
+        sDom = '<"dataTables_top"l' + (noToggle ? '' : '<"col_toggle">') + (exportable ? '<"dataTables_export">' : '') + 'f<"invisible">>t<"dataTables_bottom"ip<"invisible">>';
         
         $.each([ 10, 25, 50, 100 ], function () {
           if (this < length) {
@@ -326,7 +337,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         menu[0].push(-1);
         menu[1].push('All');
       } else {
-        sDom = '<"dataTables_top"' + (noToggle ? '' : '<"col_toggle left">') + 'f<"invisible">>t';
+        sDom = '<"dataTables_top"' + (noToggle ? '' : '<"col_toggle left">') + (exportable ? '<"dataTables_export">' : '') + '<"dataTables_filter_overlay">f<"invisible">>t';
       }
       
       var options = {
@@ -340,7 +351,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         bAutoWidth: false,
         aLengthMenu: menu,
         oLanguage: {
-          sSearch: 'Filter: ',
+          sSearch: '',
           oPaginate: {
             sFirst:    '&lt;&lt;',
             sPrevious: '&lt;',
@@ -353,7 +364,8 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
           table.not(':visible').parent().hide(); // Hide the wrapper of already hidden tables
         },
         fnDrawCallback: function (data) {
-          $('.dataTables_info, .dataTables_paginate, .dataTables_bottom', $(data.nTable).parent())[data._iDisplayLength == -1 ? 'hide' : 'show']();
+          $('.dataTables_info, .dataTables_paginate, .dataTables_bottom', data.nTableWrapper)[data._iDisplayLength == -1 ? 'hide' : 'show']();
+          $(data.nTable).data('export', false);
           
           var sort   = $.map(data.aaSorting, function (s) { return '[' + s.toString().replace(/([a-z]+)/g, '"$1"') + ']'; });
           var hidden = $.map(data.aoColumns, function (c, j) { return c.bVisible ? null : j; });
@@ -395,6 +407,17 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       $.fn.dataTableExt.oStdClasses.sWrapper = table.hasClass('toggle_table') ? 'toggleTable_wrapper' : 'dataTables_wrapper';
       
       var dataTable = table.dataTable(options);
+      
+      $('.dataTables_filter input', dataTable.fnSettings().nTableWrapper).after('<div class="overlay">Filter</div>').bind({
+        focus: function () {
+          $(this).siblings('.overlay').hide();
+        },
+        blur: function () {
+          if (!this.value) {
+            $(this).siblings('.overlay').show();
+          }
+        }
+      });
       
       if (!noToggle) {
         panel.elLk.colToggle = $('.col_toggle', panel.el);
@@ -448,6 +471,60 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         });
         
         $('.col_toggle', table.parent()).append(toggle);
+      }
+      
+      if (exportable) {
+        $('.dataTables_top .dataTables_export', dataTable.fnSettings().nTableWrapper).append(
+          '<div class="floating_popup"><a>Download what you see</a><a class="all">Download whole table</a></div>'
+        ).hoverIntent({
+          over: exportHover,
+          out:  exportHover,
+          interval: 300
+        }).bind('click', function (e) {
+          var table    = $(this).parent().next();
+          var settings = table.dataTable().fnSettings();
+          var form     = $(settings.nTableWrapper).siblings('form.data_table_export');
+          var data;
+          
+          if (e.target.className === 'all') {
+            if (!table.data('exportAll')) {
+              data = [[]];
+              
+              $.each(settings.aoColumns, function (i, col) { data[0].push(col.sTitle); });
+              $.each(settings.aoData,    function (i, row) { data.push(row._aData);    });
+
+              table.data('exportAll', data);
+              form.find('input.data').val(JSON.stringify(data));
+            }
+          } else {
+            if (!table.data('export')) {
+              data = [];
+              
+              $('tr', table).each(function (i) {
+                data[i] = [];
+                
+                $(this.cells).each(function () {
+                  var hidden = $('.hidden', this);
+                  
+                  if (hidden.length) {
+                    data[i].push($.trim($(this).clone().find('.hidden').remove().end().html()));
+                  } else {
+                    data[i].push($(this).html());
+                  }
+                  
+                  hidden = null;
+                });
+              });
+              
+              table.data('export', data);
+              form.find('input.data').val(JSON.stringify(data));
+            }
+          }
+          
+          form.trigger('submit');
+          
+          table = form = null;
+        });
       }
       
       panel.dataTables = panel.dataTables || [];
