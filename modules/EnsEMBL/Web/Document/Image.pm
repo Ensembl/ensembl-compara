@@ -119,7 +119,7 @@ sub karyotype {
     da  => $da, 
     chr => $chr_name,
     format =>$hub->param('export')
-  }, $image_config, \@highlights);
+  }, $image_config, \@highlights) if($hub->param('_format') ne 'Excel');
 
   return undef; # successful
 }
@@ -390,6 +390,7 @@ sub moveable_tracks {
 
 sub render {
   my ($self, $format) = @_;
+
   return unless $self->drawable_container;
 
   if ($format) {
