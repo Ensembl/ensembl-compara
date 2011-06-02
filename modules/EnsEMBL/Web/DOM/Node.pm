@@ -694,7 +694,7 @@ sub _normalise_arguments {
   my ($self, $arg1, $arg2) = @_;
 
   # normalise the arguments
-  ref $arg1 or $arg1 = { ($arg2 ? ref $arg2 ? %$arg2 : ($arg1 eq 'text' ? {'text' => $arg2} : {}) : {}), 'node_name' => $arg1 };
+  ref $arg1 or $arg1 = { ($arg2 ? ref $arg2 ? %$arg2 : ($arg1 eq 'text' ? ('text' => $arg2) : ()) : ()), 'node_name' => $arg1 };
 
   # create new node if intended
   if (ref $arg1 eq 'HASH') {
