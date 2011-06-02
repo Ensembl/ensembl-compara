@@ -410,21 +410,19 @@ sub store_gene_and_all_transcripts {
                                                                   -genome_db=>$self->param('genome_db'));
       print(" => member " . $gene_member->stable_id) if($self->param('verbose'));
 
-      eval {
-        # We had this stable_id in reuse_db, so we store it with the same member_id again
-        if (my $gene_member_id = $self->param('reuse_member_hash')->{$gene_member->stable_id}{ENSEMBLGENE}) {
-          $gene_member->dbID( $gene_member_id );
-          $member_adaptor->store_reused($gene_member);
-        } else {
-          my $stable_id = $gene_member->stable_id;
-          if ( $self->param('reuse_this') ) {
-            $self->input_job->transient_error(0);
-            die "Reuse member set non identical for $stable_id";
-          }
-          $member_adaptor->store($gene_member);
+      # We had this stable_id in reuse_db, so we store it with the same member_id again
+      if (my $gene_member_id = $self->param('reuse_member_hash')->{$gene_member->stable_id}{ENSEMBLGENE}) {
+        $gene_member->dbID( $gene_member_id );
+        $member_adaptor->store_reused($gene_member);
+      } else {
+        my $stable_id = $gene_member->stable_id;
+        if ( $self->param('reuse_this') ) {
+          $self->input_job->transient_error(0);
+          die "Reuse member set non identical for $stable_id";
         }
-        print(" : stored") if($self->param('verbose'));
-      };
+        $member_adaptor->store($gene_member);
+      }
+      print(" : stored") if($self->param('verbose'));
 
       $self->param('geneSubset')->add_member($gene_member);
       print("\n") if($self->param('verbose'));
