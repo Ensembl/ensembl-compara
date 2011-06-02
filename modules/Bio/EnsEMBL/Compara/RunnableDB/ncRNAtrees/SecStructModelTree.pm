@@ -87,7 +87,7 @@ sub run {
     my $root_id = $nc_tree->node_id;
 
     my $raxml_tag = $root_id . "." . $self->worker->process_id . ".raxml";
-    my $raxml_executable = '/software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3';
+    my $raxml_executable = '/software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3';
     $self->throw("can't find a raxml executable to run\n") unless(-e $raxml_executable);
 
     my $tag = 'ss_IT_' . $model;
