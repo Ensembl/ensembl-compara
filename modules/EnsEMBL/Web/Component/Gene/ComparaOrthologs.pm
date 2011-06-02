@@ -45,7 +45,6 @@ sub content {
   
   my %orthologue_map = qw(SEED BRH PIP RHS);
   my $alignview      = 0;
-<<<<<<< ComparaOrthologs.pm
  
   my ($html, $columns, @rows);
 
