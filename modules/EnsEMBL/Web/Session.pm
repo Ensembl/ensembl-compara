@@ -325,6 +325,7 @@ sub receive_shared_data {
       # Session record:
       $record = EnsEMBL::Web::Data::Session->retrieve(code => $share_ref);
     }
+    warn ">>> RECORD ".ref($record);
     
     if ($record) {
       $self->add_data(%{$record->data});
@@ -353,7 +354,7 @@ sub receive_shared_data {
     $self->add_data(
       type     => 'message', 
       code     => 'shared_data:' . (join ',', map $_[0], @share_refs),
-      message  => "The following added tracks displayed in the image below are shared data:$tracks", 
+      message  => "The following added tracks are shared data:$tracks", 
       function => '_info'
     );
   }
