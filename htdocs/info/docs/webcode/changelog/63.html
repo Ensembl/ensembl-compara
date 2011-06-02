@@ -8,11 +8,43 @@
 
 <h1>Web Code Changelog - Release 63</h1>
 
-<h2>Configurations</h2>
+<h2>ViewConfigs and ImageConfigs</h2>
 
 <ul class="spaced">
 
-<li></li>
+<li>
+  <kbd>EnsEMBL::Web::ViewConfig</kbd> modules are now linked to the component that shares their namespace, e.g. <kbd>EnsEMBL::Web::Component::Location::ViewBottom</kbd> links to <kbd>EnsEMBL::Web::ViewConfig::Location::ViewBottom</kbd>.
+  <br />Plugin files need to be renamed accordingly.
+</li>
+<li><kbd>EnsEMBL::Web::ViewConfig->_set_default</kbd> has been renamed to <kbd>EnsEMBL::Web::ViewConfig->set_default</kbd>, and now takes a hashref as an argument, rather than a hash.</li>
+<li>
+  <kbd>EnsEMBL::Web::ViewConfig->add_image_configs</kbd> has been renamed to <kbd>EnsEMBL::Web::ViewConfig->add_image_config</kbd>.
+  <br />A ViewConfig can have no more than one ImageConfig. The arguments to <kbd>EnsEMBL::Web::ViewConfig->add_image_config</kbd> are image config name and (optionally) 'nodas'.
+</li>
+<li>
+  <kbd>EnsEMBL::Web::ViewConfig->storable</kbd> is no longer required, as all ViewConfigs are storable.
+  <br />However, <kbd>EnsEMBL::Web::ImageConfig->storable</kbd> should be set to 0 for any ImageConfigs which are not attached to a ViewConfig.
+</li>
+<li>The URL parameter when setting values on ImageConfigs from the control panel is now <kbd>image_config</kbd>, rather than <kbd>diff</kbd>.
+<br />Additionally, the parameter for setting values on ViewConfigs is now <kbd>view_config</kbd>.
+</li>
+<li>The arguments for <kbd>EnsEMBL::Web::Hub->get_viewconfig</kbd> are now module name (e.g. 'ViewBottom'), type (optional, defaults to <kbd>EnsEMBL::Web::Hub->type</kbd>) and 'cache' (optional, should only be used if you want to change the ViewConfig used when calling <kbd>EnsEMBL::Web::Hub->param</kbd>).
+<br /><kbd>EnsEMBL::Web::Hub->get_viewconfig</kbd> is called with the cache parameter in the new function of <kbd>EnsEMBL::Web::Component</kbd> so that the param set is correct in the component.</li>
+<li>
+  As only one <kbd>EnsEMBL::Web::ImageConfig</kbd> can exist per <kbd>EnsEMBL::Web::ViewConfig</kbd>, ImageConfigs have been merged for Components using multiple types. These Components are:
+  <ul style="margin:1em 0">
+    <li><pre style="margin:0">EnsEMBL::Web::Component::Gene::GeneSpliceImage (EnsEMBL::Web::ImageConfig::GeneSpliceView)</pre></li>
+    <li><pre style="margin:0">EnsEMBL::Web::Component::Gene::GeneSNPImage    (EnsEMBL::Web::ImageConfig::GeneSNPView)</pre></li>
+    <li><pre style="margin:0">EnsEMBL::Web::Component::Transcript::SNPView   (EnsEMBL::Web::ImageConfig::TranscriptSNPView)</pre></li>
+    <li><pre style="margin:0">EnsEMBL::Web::Component::Location::LDImage     (EnsEMBL::Web::ImageConfig::ldview)</pre></li>
+  </ul>
+  Additionally, <kbd>EnsEMBL::Web::Component::Location::Compara_AlignSliceBottom</kbd>, <kbd>EnsEMBL::Web::Component::Location::MultiTop</kbd> and <kbd>EnsEMBL::Web::Component::Location::MultiBottom</kbd> have modified since release 62 to support changes to their ImageConfigs.
+</li>
+<li>
+  <kbd>EnsEMBL::Web::ViewConfig</kbd> records are stored in the database under a code. The code defaults to <kbd>EnsEMBL::Web::Hub->type . '::' . EnsEMBL::Web::Component->id</kbd> (e.g. 'Location::ViewBottom').
+  <br />This can be altered by setting <kbd>$self->code = $code</kbd> in a ViewConfig <kbd>init</kbd> function, which should be done when two ViewConfigs should share the same database record.
+  <br />This behavior was previously achieved by using page URLs with the same <kbd>EnsEMBL::Web::Hub->type</kbd> and <kbd>EnsEMBL::Web::Hub->action</kbd>, but a different <kbd>EnsEMBL::Web::Hub->function</kbd>.
+</li>
 
 </ul>
 
@@ -21,12 +53,9 @@
 <ul class="spaced">
 
 <li>All Exalead frontend code has been removed from the web code, as this search engine is only used in release 59 and earlier.</li>
-
-<li>The Altavista and EBeye child modules have also been removed from EnsEMBL::Web::Factory::Search, and the UniSearch (text search) code moved into the parent EnsEMBL::Web::Factory::Search module.</p>
-
-<li>Other search frontend code, including Configuration::Search and various Component::Search modules, have been updated to reflect these changes.</li>
-
-<li>A new public plugin, <kbd>lucene</kbd>, has been created for the Lucene search front end. A single module, Lucene::WebServiceWrapper, provides access to the lucene server, whilst modules within the EnsEMBL::Lucene and EnsEMBL::Web namespaces are used to override the simple text-based search with more sophisticated behaviour. This plugin should be used as a template when adding other search engines to Ensembl.</li>
+<li>The Altavista and EBeye child modules have also been removed from <kbd>EnsEMBL::Web::Factory::Search</kbd>, and the UniSearch (text search) code moved into the parent <kbd>EnsEMBL::Web::Factory::Search</kbd> module.</li>
+<li>Other search frontend code, including <kbd>Configuration::Search</kbd> and various <kbd>Component::Search</kbd> modules, have been updated to reflect these changes.</li>
+<li>A new public plugin, <kbd>lucene</kbd>, has been created for the Lucene search front end. A single module, <kbd>Lucene::WebServiceWrapper</kbd>, provides access to the lucene server, whilst modules within the <kbd>EnsEMBL::Lucene</kbd> and <kbd>EnsEMBL::Web</kbd> namespaces are used to override the simple text-based search with more sophisticated behaviour. This plugin should be used as a template when adding other search engines to Ensembl.</li>
 
 </ul>
 
