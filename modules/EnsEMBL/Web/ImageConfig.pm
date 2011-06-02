@@ -411,6 +411,7 @@ sub load_user_tracks {
       format      => $entry->{'format'},
       style       => $entry->{'style'},
       colour      => $entry->{'colour'},
+      display     => $entry->{'display'} || 'normal',
       timestamp   => $time,
     };
   }
@@ -555,9 +556,9 @@ sub _add_bam_track {
         This data is attached to the %s, and comes from URL: %s',
         encode_entities($source->{'source_type'}), encode_entities($source->{'source_url'})
       );
- 
+  
   my $track = $self->create_track($key, $source->{'source_name'}, {
-    display   => 'off',
+    display   => $source->{'display'} || 'off',
     strand    => 'f',
     _class    => 'bam',
     glyphset  => 'bam',
@@ -601,7 +602,7 @@ sub _add_bigwig_track {
   my $key    = "bigwig_$time" . '_' . md5_hex("$source->{'species'}:$source->{'source_url'}");
 
   my $track = $self->create_track($key, $source->{'source_name'}, {
-    display   => 'off',
+    display   => $source->{'display'} || 'off',
     strand    => 'f',
     _class    => 'bigwig',
     glyphset  => 'bigwig',
@@ -650,7 +651,7 @@ sub _add_vcf_track {
   my $key = 'vcf_' . $time . '_' . md5_hex($self->{'species'} . ':' . $source->{'source_url'});
 
   my $track = $self->create_track($key, $source->{'source_name'}, {
-      display     => 'off',
+      display     => $source->{'display'} || 'off',
       caption     => $source->{'source_name'},
       glyphset    => 'vcf',
       sources     => undef,
