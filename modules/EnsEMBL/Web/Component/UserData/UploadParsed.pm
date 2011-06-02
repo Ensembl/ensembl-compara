@@ -46,11 +46,10 @@ sub content_ajax {
       my $size = int($data->{'filesize'} / (1024 ** 2));
     
       if ($size > 10) {
-        $html .= "<p>Your uncompressed file is over $size MB, which may be very slow to parse and load. Please consider uploading a smaller dataset.</p>";
+        $html .= "<p>Your uncompressed file is over $size MB, which may be very slow to parse and load. Please consider using a smaller dataset.</p>";
       } 
       else {
         my $content;
-
         if ($type eq 'url') {
           my $response = get_url_content($data->{'url'});
           $content = $response->{'content'};
@@ -61,7 +60,7 @@ sub content_ajax {
         }
 
         if ($content) {      
-          my $error=$parser->parse($content, $data->{'format'});
+          my $error = $parser->parse($content, $data->{'format'});
 
           if ($parser->{'feature_count'}) {      
             $data->{'format'}  = $parser->format unless $data->{'format'};
