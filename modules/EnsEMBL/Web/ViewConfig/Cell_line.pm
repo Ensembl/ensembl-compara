@@ -60,11 +60,11 @@ sub form {
     my $tree = $self->tree;
     
     $self->form_context if $self->can('form_context');
-    $tree->get_node('functional')->append($tree->create_node('evidence_types', {
+    $tree->get_node('functional')->append($tree->create_node('regulatory_evidence', {
       url          => $hub->url('Config', { function => 'Cell_line', partial => 1 }),
       availability => 1,
-      caption      => 'Evidence types',
-      class        => 'Evidence_types'
+      caption      => 'Regulatory evidence',
+      class        => 'Regulatory_evidence'
     }));
   }
 }
@@ -73,7 +73,7 @@ sub build_imageconfig_form {
   my $self         = shift;
   my $image_config = shift;
   
-  $_->set('controls', qq{<div style="width:auto"><a href="#Evidence_types" class="modal_link">Configure Evidence types</a></div>}) for grep $_->get('glyphset') eq 'fg_multi_wiggle', $image_config->get_tracks;
+  $_->set('controls', qq{<div style="width:auto"><a href="#Regulatory_evidence" class="modal_link">Configure Regulatory evidence</a></div>}) for grep $_->get('glyphset') eq 'fg_multi_wiggle', $image_config->get_tracks;
   $self->SUPER::build_imageconfig_form($image_config);
 }
 
