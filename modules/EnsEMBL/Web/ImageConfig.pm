@@ -452,7 +452,14 @@ sub load_user_tracks {
     foreach my $entry (grep $_->species eq $self->{'species'}, $user->urls) {
       $url_sources{$entry->url} = {
         source_name => $entry->name || $entry->url,
-        source_type => 'user' 
+        source_type => 'user', 
+        source_url  => $entry->url,
+        species     => $entry->species,
+        format      => $entry->format,
+        style       => $entry->style,
+        colour      => $entry->colour,
+        display     => $entry->display,
+        timestamp   => $entry->timestamp,
       };
     }
     
