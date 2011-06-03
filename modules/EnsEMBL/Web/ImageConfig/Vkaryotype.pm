@@ -19,7 +19,7 @@ sub init {
   });
 
   $self->create_menus( 
-    'ideogram',  'Ideogram',           # N.B. Karyotype not currently configurable
+    'ideogram',  '',           # N.B. Karyotype not currently configurable
     'user_data', 'User attached data', # DAS/URL tracks/uploaded data/blast responses
    );
 
@@ -31,12 +31,13 @@ sub init {
       width      => 12,
       totalwidth => 18,
       padding    => 6,
-      colourset  => 'ideogram'
+      colourset  => 'ideogram',
+      menu       => 'no',
     }],
     [ 'drag_right', '', 'Vdraggable', { display => 'normal', part => 1, menu => 'no' }],
   );
   
-  $self->storable = 0;
+  $self->{'extra_menus'} = {};
 }
 
 1;

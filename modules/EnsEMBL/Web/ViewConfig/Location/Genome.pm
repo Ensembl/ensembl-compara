@@ -16,6 +16,8 @@ sub init {
     v_spacing  => 10,
     rows       => scalar @{$self->species_defs->ENSEMBL_CHROMOSOMES} >= 26 ? 2 : 1,
   });
+
+  $self->add_image_config('Vkaryotype', 'nodas');
 }
 
 sub form {
