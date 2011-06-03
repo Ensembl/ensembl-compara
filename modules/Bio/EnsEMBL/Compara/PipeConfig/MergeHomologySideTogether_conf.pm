@@ -7,23 +7,17 @@
 
 =head1 SYNOPSIS
 
-    #1. In ProteinTrees and ncRNAtrees databases run the following (turn it into an SqlCmd analysis later):
-        DELETE FROM lr_index_offset WHERE lr_index=0;
+    #1. update all databases' names and locations
 
-    #2. update all databases' names and locations
-
-    #3. initialize the pipeline:
+    #2. initialize the pipeline:
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MergeHomologySideTogether_conf -password <your_password>
 
-    #4. In the pipeline database apply the same correction:
-        DELETE FROM lr_index_offset WHERE lr_index=0;
-
-    #5. run the beekeeper.pl
+    #3. run the beekeeper.pl
 
 =head1 DESCRIPTION  
 
     A pipeline to merge together the "homology side" of the Compara release: gene_trees, families and ncrna_trees.
-    (Took 2h15m to execute for release 60)
+    (Took 2.7h to execute for release 63)
 
 =head1 CONTACT
 
@@ -54,7 +48,7 @@ sub default_options {
     return {
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
 
-        'pipeline_name' => 'compara_homology_merged_62',    # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_homology_merged_63',    # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
             -host   => 'compara4',
@@ -78,16 +72,16 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'ensembl_compara_61',
+            -dbname => 'ensembl_compara_62',
         },
         'prevrel_merge_tables' => [ 'stable_id_history' ],
         
         'genetrees_db' => {
             -host   => 'compara4',
             -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -dbname => 'lg4_compara_homology_62',
+            -user   => 'ensadmin',
+            -pass   => $self->o('password'),
+            -dbname => 'mm14_compara_homology_63',
         },
         'genetrees_copy_tables'  => [ 'sequence_cds', 'sequence_exon_bounded', 'subset', 'subset_member' ],
         'genetrees_merge_tables' => [ 'stable_id_history', 'homology', 'homology_member', 'lr_index_offset' ],
@@ -95,19 +89,19 @@ sub default_options {
         'families_db' => {
             -host   => 'compara2',
             -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -dbname => 'lg4_compara_families_62',
+            -user   => 'ensadmin',
+            -pass   => $self->o('password'),
+            -dbname => 'lg4_compara_families_63',
         },
         'families_copy_tables'  => [ 'family', 'family_member' ],
         'families_merge_tables' => [ 'member', 'sequence', 'stable_id_history' ],
 
         'nctrees_db' => {
-            -host   => 'compara4',
+            -host   => 'compara3',
             -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -dbname => 'mp12_compara_nctrees_62',
+            -user   => 'ensadmin',
+            -pass   => $self->o('password'),
+            -dbname => 'mp12_compara_nctrees_63',
         },
         'nctrees_copy_tables'  => [ 'nc_profile', 'nc_tree_member', 'nc_tree_node', 'nc_tree_tag' ],
         'nctrees_merge_tables' => [ 'member', 'sequence', 'homology', 'homology_member', 'lr_index_offset' ],
@@ -146,6 +140,18 @@ sub pipeline_create_commands {
 sub pipeline_analyses {
     my ($self) = @_;
     return [
+        {   -logic_name => 'lr_index_offset_correction',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql' => 'DELETE FROM lr_index_offset WHERE lr_index=0',
+            },
+            -input_ids => [
+                { 'db_conn' => $self->o('pipeline_db') },
+                { 'db_conn' => $self->o('genetrees_db') },
+                { 'db_conn' => $self->o('nctrees_db') },
+            ],
+        },
+
         {   -logic_name => 'generate_job_list',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
@@ -167,6 +173,7 @@ sub pipeline_analyses {
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('nctrees_db'),   'inputlist' => $self->o('nctrees_copy_tables') },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputlist' => $self->o('nctrees_merge_tables') },
             ],
+            -wait_for => [ 'lr_index_offset_correction' ],
             -flow_into => {
                 2 => [ 'copy_table'  ],
                 4 => [ 'merge_table' ],
