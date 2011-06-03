@@ -18,12 +18,26 @@ sub content {
   my $self             = shift;
   my $hub              = $self->hub;
   my $consequence_type = $hub->param('sub_table');
-  my $gene             = $self->configure($hub->param('context') || 100);
+	my $icontext         = $hub->param('context');
+  my $gene             = $self->configure($icontext || 100);
   my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene->get_all_transcripts};
   
   my $count;
   $count += scalar @{$_->__data->{'transformed'}{'gene_snps'}} foreach @transcripts;
   
+	my $msg = '';
+	if ($icontext) {
+		if ($icontext eq 'FULL') {
+			$msg = 'The <b>full</b> intronic sequence around this gene is used.';
+		}	
+		else {	
+			$msg = "Currently <b>$icontext"."bp</b> of intronic sequence is included either side of the exons.";
+		}
+		$msg .='<br />';
+	}
+	my $html = $self->_info('Configuring the page', qq{<p>$msg\To extend or reduce the intronic sequence, use the "<strong>Configure this page - Intron Context</strong>" link on the left.</p>});
+	
+	
   if ($consequence_type || $count < 25) {
     $consequence_type ||= 'ALL';
     my $table_rows = $self->variation_table($consequence_type, \@transcripts);
@@ -31,7 +45,7 @@ sub content {
     return $self->render_content($table, $consequence_type);
   } else {
     my $table = $self->stats_table(\@transcripts); # no sub-table selected, just show stats
-    return $self->render_content($table);
+    return $html.$self->render_content($table);
   }
 }
 
@@ -109,8 +123,8 @@ sub stats_table {
   my %descriptions;
   my %labels;
   
-  my @all_cons = @Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-  
+  my @all_cons = values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+	
   foreach my $con(@all_cons) {
     next if $con->SO_accession =~ /x/i;
     
@@ -142,7 +156,7 @@ sub stats_table {
     my $tr_start     = $tr->__data->{'transformed'}{'start'};
     my $tr_end       = $tr->__data->{'transformed'}{'end'};
     my $extent       = $tr->__data->{'transformed'}{'extent'};
-    
+		
     foreach (@$gene_snps) {
       my ($snp, $chr, $start, $end) = @$_;
       my $vf_id = $snp->dbID;
@@ -290,7 +304,7 @@ sub variation_table {
           my $source            = $snp->source;
           
           my ($aachange, $aacoord) = $translation_start ? 
-            ($tva->pep_allele_string, sprintf('%s (%s)', $transcript_variation->translation_start, (($transcript_variation->cdna_start - $cdna_coding_start) % 3 + 1))) : 
+            ($tva->pep_allele_string, sprintf('%s (%s)', $translation_start, (($transcript_variation->cdna_start - $cdna_coding_start) % 3 + 1))) : 
             ('-', '-');
           
           my $url       = "$base_url;v=$variation_name;vf=$raw_id;source=$source";
