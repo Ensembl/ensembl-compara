@@ -97,6 +97,7 @@ sub load_user_tracks {
           logic_name  => $logic_name,
           description => $analysis->description,
           style       => $analysis->web_data,
+          display     => $source->{'display'},
           render      => EnsEMBL::Web::Tools::Misc::style_by_filesize($source->{'filesize'})
         };
       }
@@ -106,6 +107,16 @@ sub load_user_tracks {
   # Now add these tracks to the menu
   foreach my $entry (@user_tracks) {
     if ($entry->{'species'} eq $self->{'species'}) {
+      my $display   = $entry->{'display'};
+      my $style     = $entry->{'style'};
+      if (!$display) {
+        if ($style eq 'wiggle' || $style eq 'WIG') {
+          $display = 'tiling';
+        }
+        else {
+          $display = 'normal';
+        }
+      }
       my $settings = {
         id          => $entry->{'id'},
         source      => $entry->{'source'},
@@ -116,8 +127,8 @@ sub load_user_tracks {
         logic_name  => $entry->{'logic_name'},
         caption     => $entry->{'name'},
         description => $entry->{'description'},
-        display     => 'off',
-        style       => $entry->{'style'},
+        display     => $display,
+        style       => $style,
         width       => $width,
         strand      => 'b'
       };
