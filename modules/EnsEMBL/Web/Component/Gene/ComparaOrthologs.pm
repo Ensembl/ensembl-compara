@@ -211,7 +211,6 @@ sub content {
       unshift @external, $orthologue->{'display_id'} if $orthologue->{'display_id'};
 
       # Bug fix:  In othologues list, all orthologues with no description used to appear to be described as "novel ensembl predictions":
-<<<<<<< ComparaOrthologs.pm
       @external = qq{<span class="small">-</span>} if (($description eq 'No description') && ($orthologue->{'display_id'} eq 'Novel Ensembl prediction'));  
 
       my $id_info = $object_stable_id_link.join('<br />', @external);
