@@ -64,7 +64,7 @@ table.funcgen_matrix thead th p                                 { -webkit-transf
 table.funcgen_matrix thead th div.select_all_column             { width: auto; margin: 5px 0 0; padding: 2px 4px; opacity: 0.85; }
 table.funcgen_matrix thead th div.select_all_column div         { margin-top: 4px; }
 table.funcgen_matrix thead th div.select_all_column input       { margin: 0 3px; height: 16px; vertical-align: middle; }
-table.funcgen_matrix th.first                                   { width: 85px; }
+table.funcgen_matrix th.first                                   { width: 85px; vertical-align: middle; }
 table.funcgen_matrix th.first div.select_all_row                { width: 70px; margin-top: -22px; padding: 2px 4px; }
 table.funcgen_matrix th.first div.select_all_row input          { position: absolute; top: 5px; right: 2px; }
 table.funcgen_matrix td                                         { border: 1px solid black; }
