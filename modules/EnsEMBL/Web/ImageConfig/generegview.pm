@@ -43,6 +43,9 @@ sub init {
     { display => 'off' }
   );
   
+  # hack to stop zmenus having the URL ZMenu/Transcript/Regulation, since this causes a ZMenu::Regulation to be created instead of a ZMenu::Transcript
+  $_->data->{'zmenu'} ||= 'x' for $self->get_node('transcript')->nodes;
+  
   $self->modify_configs(
     [ 'transcript_core_ensembl' ],
     { display => 'transcript_label' }
