@@ -55,7 +55,7 @@ sub fetch_input {
 	}
 	$self->param('method_type_genome_db_ids', { 'meta_key' => 'method_type_genome_db_ids',
 						   'meta_value' => stringify(\%non_reference_genome_db_ids) });
-	$self->param('all_genome_db_ids', { 'meta_key' => 'all_genome_db_ids',
+	$self->param('species_set', { 'meta_key' => 'species_set',
 					'meta_value' => stringify(\@interesting_genome_db_ids) });
 	my @dnafrag_region_jobs = ();
 	my $reference_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($reference_genome_db);
@@ -85,9 +85,9 @@ sub fetch_input {
 
 sub write_output {
 	my ($self) = @_;
-	$self->dataflow_output_id( $self->param('dnafrag_region_jobs'), 2 );
+	$self->dataflow_output_id( $self->param('dnafrag_region_jobs'), 1 );
 	$self->dataflow_output_id( $self->param('method_type_genome_db_ids'), 4 );
-	$self->dataflow_output_id( $self->param('all_genome_db_ids'), 4 );
+	$self->dataflow_output_id( $self->param('species_set'), 4 );
 	$self->dataflow_output_id( { 'genome_dbs_csv' => $self->param('genome_dbs_csv'), 'table' => 'genome_db' }, 3 );
 	$self->dataflow_output_id( { 'genome_dbs_csv' => $self->param('genome_dbs_csv'), 'table' => 'dnafrag', },  3 );
 }

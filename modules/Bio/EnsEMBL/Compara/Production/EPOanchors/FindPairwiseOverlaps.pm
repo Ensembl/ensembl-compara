@@ -42,10 +42,11 @@ sub fetch_input {
 					$mlss, $ref_slice);
 		
 			foreach my $genomic_align_block( @{ $gabs } ){
-				next if $genomic_align_block->length < $self->param('min_anchor_size');
+				my $restricted_gab = $genomic_align_block->restrict_between_reference_positions( @{ $self->param('dnafrag_chunks') } );
+				next if $restricted_gab->length < $self->param('min_anchor_size');
 				push( @multi_gab_overlaps, [
-						$genomic_align_block->reference_genomic_align->dnafrag_start,
-						$genomic_align_block->reference_genomic_align->dnafrag_end,
+						$restricted_gab->reference_genomic_align->dnafrag_start,
+						$restricted_gab->reference_genomic_align->dnafrag_end,
 						$non_reference_genome_dbID ] );
 			}	
 			push(@mlss, $mlss);
@@ -61,6 +62,7 @@ sub run {
 	my ($self) = @_;
 	my($overlap_index_ranges, $reference_positions, $genomic_aligns_on_ref_slice, $synteny_region_jobs) = 
 	([],[],[],[]);
+	my $max_size_diff = $self->param('max_frag_diff');
 	my $overlapping_gabs = $self->param('overlapping_gabs');
 	for(my$i=0;$i<@{ $overlapping_gabs }-1;$i++) { # find the overlapping gabs for a ref-dnafrag chunk 
 		my $temp_end = $overlapping_gabs->[$i]->[1];
@@ -130,13 +132,30 @@ sub run {
 			foreach my $uniq_key(keys %non_ref_dnafrags){
 				$non_ref_dnafrags{$uniq_key} = [ sort {$a->[0] <=> $b->[0]} @{ $non_ref_dnafrags{$uniq_key} } ];
 				my ($non_ref_dnafrag_id, $non_ref_strand) = split(":", $uniq_key);
-				push( @$genomic_aligns_on_ref_slice, {
-					synteny_region_id => $synteny_region_id,
-					dnafrag_id        => $non_ref_dnafrag_id,
-					dnafrag_start     => @{ $non_ref_dnafrags{$uniq_key} }[0]->[0],
-					dnafrag_end       => @{ $non_ref_dnafrags{$uniq_key} }[-1]->[1],
-					dnafrag_strand    => $non_ref_strand,
-				});
+				my ($nr_start, $nr_end) = ( @{ $non_ref_dnafrags{$uniq_key} }[0]->[0], @{ $non_ref_dnafrags{$uniq_key} }[-1]->[1] );
+				# if the difference of the start and end positions of the first and last non-ref frags is much greater ($max_size_diff)
+				# than the length of the ref frag then they should be split into there component frags
+				if($nr_end - $nr_start > ($coord_pair->[1] - $coord_pair->[0] ) * $max_size_diff) {
+					foreach my $aligned_frag(@{ $non_ref_dnafrags{$uniq_key} }){
+						next if ($aligned_frag->[1] - $aligned_frag->[0] > ($coord_pair->[1] - $coord_pair->[0] ) * $max_size_diff); 
+						push( @$genomic_aligns_on_ref_slice, {
+							synteny_region_id => $synteny_region_id,	
+							dnafrag_id        => $non_ref_dnafrag_id,
+							dnafrag_start     => $aligned_frag->[0],
+							dnafrag_end       => $aligned_frag->[1],
+							dnafrag_strand    => $non_ref_strand,
+						});
+					}
+				}
+				else {
+					push( @$genomic_aligns_on_ref_slice, {
+						synteny_region_id => $synteny_region_id,
+						dnafrag_id        => $non_ref_dnafrag_id,
+						dnafrag_start     => $nr_start,
+						dnafrag_end       => $nr_end,
+						dnafrag_strand    => $non_ref_strand,
+					});
+				}
 			}
 		}
 		push( @$genomic_aligns_on_ref_slice, {
@@ -154,7 +173,7 @@ sub run {
 sub write_output {
 	my ($self) = @_;
 	return unless $self->param('synteny_region_jobs');
-	$self->dataflow_output_id( $self->param('synteny_region_jobs'), 1);
+	$self->dataflow_output_id( $self->param('synteny_region_jobs'), 2);
 	$self->dataflow_output_id( $self->param('genomic_aligns_on_ref_slice'), 3);
 }
 
