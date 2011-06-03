@@ -147,7 +147,7 @@ sub form_evidence_types {
   ';
   
   foreach my $set ('Core', 'Other') {
-    my @cols = map {{ class => $_, html => sprintf("<p>$_</p>$select_all_col", map $_, 0..4), enabled => 0 }} @columns;
+    my @cols = map {{ class => $_, html => sprintf("<p>$_</p>$select_all_col", $_, $_, $_, $_), enabled => 0 }} @columns;
     my @rows;
     
     foreach (@{$groups->{$set}}) {
