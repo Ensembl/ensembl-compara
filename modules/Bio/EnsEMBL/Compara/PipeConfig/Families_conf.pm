@@ -46,8 +46,8 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'release'         => '62',
-        'rel_suffix'      => 'e',    # an empty string by default, a letter otherwise
+        'release'         => '63',
+        'rel_suffix'      => '',    # an empty string by default, a letter otherwise
         'rel_with_suffix' => $self->o('release').$self->o('rel_suffix'),
 
         'pipeline_name'   => 'FAM_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
@@ -95,7 +95,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => 'lg4_compara_homology_'.$self->o('release'),
+            -dbname => 'mm14_compara_homology_'.$self->o('release'),
         },
 
         'prev_rel_db' => {     # used by the StableIdMapper as the reference
@@ -103,7 +103,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'sf5_ensembl_compara_61',
+            -dbname => 'sf5_ensembl_compara_62',
         },
 
         'master_db' => {     # used by the StableIdMapper as the location of the master 'mapping_session' table
@@ -233,12 +233,12 @@ sub pipeline_analyses {
         {   -logic_name    => 'load_uniprot',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtEntries',
             -parameters => {
-                'seq_loader_name'   => 'pfetch', # {'mfetch' x 7} takes 2.15h; {'pfetch' x 14} takes 3.5h; {'pfetch' x 30} takes 3h;
+                'seq_loader_name'   => 'pfetch', # {'pfetch' x 20} takes 1.3h; {'mfetch' x 7} takes 2.15h; {'pfetch' x 14} takes 3.5h; {'pfetch' x 30} takes 3h;
             },
             -hive_capacity => 20,
             -batch_size    => 100,
             -flow_into => {
-                3 => [ 'mysql:////subset_member' ],
+                3 => [ ':////subset_member' ],
             },
             -rc_id => 0,
         },
@@ -264,7 +264,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'make_blastdb' ],
             },
-            -rc_id => 1,
+            -rc_id => 5,    # NB: now needs more memory than what is given by default (actually, 2G RAM & 2G SWAP). Does the code need checking for leaks?
         },
 
         {   -logic_name => 'make_blastdb',
@@ -303,7 +303,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => $self->o('blast_capacity'),
             -flow_into => {
-                3 => [ 'mysql:////mcl_sparse_matrix?insertion_method=REPLACE' ],
+                3 => [ ':////mcl_sparse_matrix?insertion_method=REPLACE' ],
             },
             -rc_id => 2,
         },
@@ -507,6 +507,20 @@ sub pipeline_analyses {
 
 =head1 STATS and TIMING
 
+=head2 rel.63 stats
+
+    sequences to cluster:       3,289,861           [ SELECT count(*) from sequence; ]
+    distances by Blast:         591,086,511         [ SELECT count(*) from mcl_sparse_matrix; ]
+
+    total running time:         3.5 days            
+    uniprot_loading time:       4.3h                {20 x pfetch}
+    blasting time:              2.2 days              
+    mcxload running time:       2.8h                
+    mcl running time:           4h                
+
+    memory used by mcxload:     16G RAM + 16G SWAP  [ bacct -l [ SELECT max(process_id) FROM worker WHERE analysis_id=13; ] ]
+    memory used by mcl:         20G RAM + 20G SWAP  [ bacct -l [ SELECT max(process_id) FROM worker WHERE analysis_id=14; ] ]
+
 =head2 rel.62e stats
 
     sequences to cluster:       3,133,750           [ SELECT count(*) from sequence; ]
@@ -537,7 +551,7 @@ sub pipeline_analyses {
     distances by Blast:         550,334,750         [ SELECT count(*) from mcl_sparse_matrix; ]
 
     total running time:         4.5 days            
-    uniprot_loading time:       5.1h                
+    uniprot_loading time:       5.1h
     blasting time:              3 days              
     mcxload running time:       1.5h                
     mcl running time:           3.7h                
