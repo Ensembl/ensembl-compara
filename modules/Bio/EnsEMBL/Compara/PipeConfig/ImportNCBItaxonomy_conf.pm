@@ -7,6 +7,7 @@
 
 =head1 SYNOPSIS
 
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportNCBItaxonomy_conf -ensembl_cvs_root_dir <path_to_your_ensembl_cvs_root> -password <your_password>
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportNCBItaxonomy_conf -password <your_password>
 
 =head1 DESCRIPTION  
@@ -44,7 +45,7 @@ sub default_options {
         'pipeline_name' => 'ncbi_taxonomy',            # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {
-            -host   => 'localhost',
+            -host   => 'ens-livemirror',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -260,11 +261,21 @@ sub pipeline_analyses {
             -wait_for => [ 'build_left_right_indices' ],
             -hive_capacity  => 10,  # to allow parallel branches
             -flow_into => {
+                1 => [ 'cleanup' ],
                 2 => [ ':////ncbi_taxa_name' ],
             },
             -rc_id => 1,
         },
 
+        {   -logic_name    => 'cleanup',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters    => {
+                'work_dir'  => '/tmp/not_so_important', # make sure $self->param('work_dir') contains something by default, or else.
+                'cmd'       => 'rm -rf #work_dir#',
+            },
+            -hive_capacity  => 10,  # to allow parallel branches
+            -rc_id => 1,
+        },
 
     ];
 }
