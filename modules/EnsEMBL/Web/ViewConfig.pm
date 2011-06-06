@@ -483,7 +483,13 @@ sub build_imageconfig_form {
     my $on    = $self->{'enabled_tracks'}->{$id} || 0;
     my $count = $self->{'total_tracks'}->{$id}   || 0;
     
-    $menu->append($self->tree->create_node($id, { caption => ($count ? "($on/$count) " : '') . $caption, url => '#', availability => ($count > 0), class => $id }));
+    $menu->append($self->tree->create_node($id, {
+      caption      => $caption,
+      url          => '#',
+      availability => ($count > 0),
+      class        => $id,
+      count        => $count ? "($on/$count)" : ''
+    }));
   }
   
   my $form    = $self->get_form;
