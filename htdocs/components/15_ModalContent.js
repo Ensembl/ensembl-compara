@@ -136,6 +136,8 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   },
   
   addSubPanel: function () {
+    var panel = this;
+    
     $('.ajax', this.elLk.content).each(function () {
       Ensembl.EventManager.trigger('createPanel', $(this).parents('.js_panel')[0].id, 'Content');
     });
@@ -143,7 +145,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     $('.js_panel', this.elLk.content).each(function () {
       var panelType = $('input.panel_type', this).val();
       
-      if (panelType) {
+      if (panelType && !(panel instanceof Ensembl.Panel[panelType])) {
         Ensembl.EventManager.trigger('createPanel', this.id, panelType);
       }
     });
