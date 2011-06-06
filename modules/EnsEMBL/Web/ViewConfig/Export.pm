@@ -29,6 +29,7 @@ sub init {
   
   foreach my $f (qw(csv tab gff)) {
     $defaults->{$f . '_' . $_} = 'yes' for qw(similarity repeat genscan variation gene);
+    $defaults->{gff_probe} = 'yes' if ($f eq 'gff');  #had to put this one in here because i dont want csv or tab to have probe features, only gff
     
     next if $f eq 'gff';
     
