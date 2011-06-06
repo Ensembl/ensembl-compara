@@ -95,12 +95,15 @@ sub variation_content {
   foreach my $pop (
     sort { $a->{'pop_info'}->{'Name'} cmp $b->{'pop_info'}->{'Name'} }
     sort { $a->{'submitter'} cmp $b->{'submitter'} }
-    grep { $_->{'pop_info'}->{'Name'} =~ /^1000genomes\:(low_coverage|exon|trio)/i }
+    grep { $_->{'pop_info'}->{'Name'} =~ /^1000genomes.+pilot_\d/i }
     map  { values %$_ }
     values %{$object->freqs($feature)}
   ) {
-    my $name = [ split /:/, $pop->{'pop_info'}->{'Name'} ]->[-1]; # shorten the population name
     my $key  = join ', ', map { "$pop->{'Alleles'}->[$_]: " . sprintf '%.3f', $pop->{'AlleleFrequency'}->[$_] } 0..$#{$pop->{'Alleles'}}; # $key is the allele frequencies in the form C: 0.400, T: 0.600
+    my $name = [ split /:/, $pop->{'pop_info'}->{'Name'} ]->[-1]; # shorten the population name
+       $name =~ s/pilot_\d_//;
+       $name =~ s/_panel//;
+       $name =~ s/_/ /g;
     
     $population_data{$name}{$key} .= ($population_data{$name}{$key} ? ' / ' : '') . $pop->{'submitter'}; # concatenate population submitters if they provide the same frequencies
   }
