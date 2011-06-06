@@ -12,231 +12,84 @@
   opacity: 0.25; filter: Alpha(Opacity=25);
 }
 
-#modal_panel {
-  position: fixed;
-  left: auto;
-  top: auto;
-  text-align: left;
-  background-color: [[PANEL_BG]];
-  margin: 0;
-  padding: 0;
-  display: none;
-  z-index: 1001;
-  zoom: 1;
-}
-body.ie6 #modal_bg,
-body.ie6 #modal_panel {
-  position: absolute;
-}
-
-#modal_panel div.modal_title {
+#modal_panel                  { position: fixed; left: auto; top: auto; text-align: left; background-color: [[PANEL_BG]]; margin: 0; padding: 0; display: none; z-index: 1001; zoom: 1; }
+#modal_panel .ui-resizable-se { width: 14px; height: 14px; right: 2px; bottom: 2px; background: url(/i/resize.png) no-repeat scroll right bottom; }
+#modal_panel div.modal_title  {
   position: absolute;
   top: -20px;
+  height: 18px;
+  width: 100%;
+  margin: 0;
+  padding: 2px 0 0;
   border: solid [[PANEL_TEXT]];
   border-width: 0 1px;
   background-color: [[PANEL_TEXT]];
-  margin: 0;
-  padding: 2px 0 0;
   color: [[PANEL_BG]];
   font-weight: bold;
   clear: both;
   font-size: 12px;
-  height: 18px;
-   width: 100%;
-}
-body.ie6 #modal_panel div.modal_title {
-  height: 20px;
 }
 
-#modal_panel .ui-resizable-se {
-  width: 14px;
-  height: 14px;
-  right: 2px;
-  bottom: 2px;
-  background: url(/i/resize.png) no-repeat scroll right bottom;
-}
+body.ie6 #modal_bg,
+body.ie6 #modal_panel                 { position: absolute; }
+body.ie6 #modal_panel div.modal_title { height: 20px; }
 
-.modal_caption {
-  position: absolute;
-  bottom: 3px;
-  left: 4px;
-}
+.modal_reload  { display: none; }
+.modal_caption { position: absolute; bottom: 3px; left: 4px; }
 
-.modal_content {
-  position: absolute;
-  height: 100%;
-  width: 100%;
-  overflow: auto;
-  border: solid [[PANEL_TEXT]];
-  border-width: 0 1px 1px;
-}
-.modal_content .panel {
-  margin-left: 16.75em;
-}
-body.ie6 .modal_content .panel {
-  margin-right: 4px;
-}
-.modal_content .no_local_context {
-  margin-left: 0.25em;
-}
-.modal_content .panel h2 {
-  border-bottom: 1px solid [[PANEL_BORDER]];
-}
-.modal_content p.modal_error {
-  color: #c33;
-}
-.modal_content p.modal_a {
-  margin: 10px 0;
-}
-.modal_content p.modal_a a {
-  background-color: [[MH_BG]];
-  color: #fff;
-  border: outset [[MH_BG]] 2px;
-  text-decoration: none;
-  padding: 2px 8px;
-}
+.modal_title ul                    { margin: 0; padding: 0; position: absolute; bottom: 0; }
+.modal_title li                    { list-style: none; padding: 1px 6px 2px; background-color: #999; margin: 0 6px; float: left; border-radius: 5px 5px 0 0; -moz-border-radius: 5px 5px 0 0; -webkit-border-radius: 5px 5px 0 0; }
+.modal_title li.active             { background-color: [[PANEL_BG]]; color: [[PAGE_TEXT]]; }
+.modal_title li a                  { color: [[PANEL_BG]]; padding: 0 8px; text-decoration: none; outline: none; }
+.modal_title li.active a           { color: [[PAGE_TEXT]]; }
+.modal_title .modal_close          { position: absolute; top: -11px; right: -11px;  height: 22px; width: 22px; margin: 0; display: block; background: url(/i/cp_close.png) no-repeat center; cursor: pointer; }
+.ui-draggable .modal_title         { cursor: move; }
 
-.modal_title ul {
-  margin: 0;
-  padding: 0;
-  position: absolute;
-  bottom: 0;
-}
-body.ie6 .modal_title ul {
-  position: relative;
-}
+body.mac .modal_title li a         { position: relative; top: 1px; }
+body.ie6 .modal_title ul           { position: relative; }
+body.ie6 .modal_title .modal_close { background-image: url(/i/cp_close.gif); }
 
-.modal_title li {
-  list-style: none;
-  padding: 1px 6px 2px;
-  background-color: #999;
-  margin: 0 6px;
-  float: left;
-  border-radius: 5px 5px 0 0;
-  -moz-border-radius: 5px 5px 0 0;
-  -webkit-border-radius: 5px 5px 0 0;
-}
-.modal_title li.active {
-  background-color: [[PANEL_BG]];
-  color: [[PAGE_TEXT]];
-}
-.modal_title li a {
-  color: [[PANEL_BG]];
-  padding: 0 8px;
-  text-decoration: none;
-  outline: none;
-}
-body.mac .modal_title li a {
-  position: relative;
-  top: 1px;
-}
-.modal_title li.active a {
-  color: [[PAGE_TEXT]];
-}
-.modal_title .modal_close {
-  display: block;
-  position: absolute;
-  top: -11px;
-  right: -11px;
-  cursor: pointer;
-  margin: 0;
-  background: url(/i/cp_close.png) no-repeat center;
-  height: 22px;
-  width: 22px;
-}
-body.ie6 .modal_title .modal_close {
-  background-image: url(/i/cp_close.gif);
-}
-.ui-draggable .modal_title {
-  cursor: move;
-}
+.modal_content                   { position: absolute; height: 100%; width: 100%; overflow: auto; border: solid [[PANEL_TEXT]]; border-width: 0 1px 1px; }
+.modal_content .modal_wrapper    { overflow: hidden; padding-left: 3px; }
+.modal_content .no_local_context { margin-left: 3px !important; padding-left: 0; }
+.modal_content .panel            { margin: 3px 3px 3px 0; }
+.modal_content .panel h2         { border-bottom: 1px solid [[PANEL_BORDER]]; }
+.modal_content p.modal_error     { color: #C33; }
+.modal_content p.modal_a         { margin: 10px 0; }
+.modal_content p.modal_a a       { background-color: [[MH_BG]]; color: #FFF; border: outset [[MH_BG]] 2px; text-decoration: none; padding: 2px 8px; }
 
-.modal_nav, body.static .modal_nav {
-  width: 16.25em;
-  margin: 0.25em 0.25em 0;
-}
+.modal_content .modal_nav                              { width: auto; float: left; position: relative; margin: 3px 2px 3px 3px; }
+.modal_content .modal_nav .tool_buttons p              { margin: 0 -3px 0 -1px; }
+.modal_content .modal_nav div.header                   { margin-right: -2px; }
+.modal_content .modal_nav ul.local_context             { width: 100%; margin-right: 3px; }
+.modal_content .modal_nav ul.local_context a.disabled  { color: [[PAGE_TEXT]]; cursor: text; }
+.modal_content .modal_nav ul.local_context li          { cursor: pointer; }
+.modal_content .modal_nav ul.local_context li img,
+.modal_content .modal_nav ul.local_context li a        { float: left; }
+.modal_content .modal_nav ul.local_context li ul       { clear: both; }
+.modal_content .modal_nav ul.local_context li.active a { outline: 0; }
+.modal_content .modal_nav ul.local_context li .count   { float: right; margin: 0 3px 0 10px; color: [[MH_BORDER]]; }
 
-body.ie6 .modal_nav .local_context {
-  width: 100%;
-  overflow: hidden;
-}
+body.ie67 .modal_content .modal_nav                         { width: 250px; }
+body.ie6  .modal_content .modal_wrapper                     { margin-left: 253px; }
+body.ie6  .modal_content .panel                             { margin-right: 4px; }
+body.ie6  .modal_content .modal_nav ul.local_context li img { margin-left: -3px; } 
+body.ie6  .modal_content .modal_nav div.header              { width: 247px; }
+body.ie6  .modal_content .modal_nav .tool_buttons           { width: 248px; }
+body.ie6  .modal_content .modal_nav .tool_buttons p         { margin-right: 0; }
 
-.modal_nav .local_context a.disabled {	 
-  color: [[PAGE_TEXT]];	 
-  cursor: text;	 
-}
+.multi_selector_list                            { width: 48%; font-weight: normal; float: left; margin: 0 0.5%; }
+.multi_selector_list ul                         { padding: 0; margin-left: 5px; margin-right: 5px; list-style: none; }
+.multi_selector_list li                         { position: relative; height: 22px; padding-left: 10px; list-style-image: none; cursor: pointer; clear: both; }
+.multi_selector_list ul.included li             { background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; border: 1px solid [[TINT_BORDER]]; }
+.multi_selector_list ul.excluded li             { background-color: #EEE; color: [[CONTRAST_TEXT]]; border: 1px solid [[NEUTRAL_BORDER]]; }
+.multi_selector_list ul li span                 { position: absolute; margin-top: 3px; }
+.multi_selector_list ul li span.switch          { height: 22px; width: 22px; margin: 0; right: 0; }
+.multi_selector_list ul.included li span.switch { background-image: url(/i/remove.png); }
+.multi_selector_list ul.excluded li span.switch { background-image: url(/i/add.png); }
 
-.modal_nav .local_context dd.active a {
-  outline: 0;
-}
+.multi_selector_hint    { width: 200px; border: 1px [[CONTRAST_BORDER]] solid; padding: 4px; background-color: [[CONTRAST_BG]]; overflow: hidden; }
+.multi_selector_hint h4 { background-image: url(/i/infoicon.gif); background-repeat: no-repeat; background-position: top left; margin: 0 0 5px 10px; padding-left: 16px; }
+.multi_selector_hint p  { padding-left: 10px; }
 
-.modal_reload {
-  display: none;
-}
-
-div.multi_selector_list {
-  width: 48%;
-  font-weight: normal;
-  float: left;
-  margin: 0 0.5%;
-}
-div.multi_selector_list ul {
-  padding: 0;
-  margin-left: 5px;
-  margin-right: 5px;
-}
-div.multi_selector_list li {
-  list-style-image: none;
-  list-style-type: none;
-  cursor: pointer;
-  clear: both;
-  height: 22px;
-  padding-left: 10px;
-  position: relative;
-}
-div.multi_selector_list ul.included li {
-  background-color: [[TINT_BG]];
-  color: [[CONTRAST_TEXT]];
-  border: 1px solid [[TINT_BORDER]];
-}
-div.multi_selector_list ul.excluded li {
-  background-color: #eeeeee;
-  color: [[CONTRAST_TEXT]];
-  border: 1px solid [[NEUTRAL_BORDER]];
-}
-div.multi_selector_list ul li span {
-  position: absolute;
-  margin-top: 3px;
-}
-div.multi_selector_list ul li span.switch {
-  height: 22px;
-  width: 22px;
-  margin: 0;
-  right: 0;
-}
-div.multi_selector_list ul.included li span.switch {
-  background-image: url(/i/remove.png);
-}
-div.multi_selector_list ul.excluded li span.switch {
-  background-image: url(/i/add.png);
-}
-div.multi_selector_hint {
-  width: 15em;
-  margin: 0.25em 0.5em;
-  position: absolute;
-  left: 0;
-  border: 1px [[CONTRAST_BORDER]] solid;
-  padding: 4px;
-  background-color: [[CONTRAST_BG]];
-  overflow: hidden;
-}
-div.multi_selector_hint h4 {
-  background-image: url(/i/infoicon.gif);
-  background-repeat: no-repeat;
-  background-position: top left;
-  margin: 0 0 5px 10px;
-  padding-left: 16px;
-}
-div.multi_selector_hint p {
-  padding-left: 10px;
-}
+body.ie67 .multi_selector_hint { width: 240px; }

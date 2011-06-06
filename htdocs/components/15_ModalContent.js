@@ -33,6 +33,10 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       return false;
     });
     
+    this.elLk.links.bind('click', function () {
+      return $(this).children('a').trigger('click');
+    });
+    
     this.live.push(
       $('a.delete_bookmark', this.elLk.content).live('click', function () {
         Ensembl.EventManager.trigger('deleteBookmark', this.href.match(/id=(\d+)\b/)[1]);
@@ -53,7 +57,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   },
   
   getContent: function (link, url) {
-    this.elLk.content.html('<div class="spinner">Loading Content</div>').addClass('panel');
+    this.elLk.content.html('<div class="panel"><div class="spinner">Loading Content</div></div>');
     
     $.ajax({
       url: Ensembl.replaceTimestamp(url),
@@ -88,7 +92,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     
     data = data || form.serialize();
     
-    this.elLk.content.html('<div class="spinner">Loading Content</div>');
+    this.elLk.content.html('<div class="panel"><div class="spinner">Loading Content</div></div>');
     
     $.ajax({
       url: form.attr('action'),
@@ -118,11 +122,11 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   },
   
   updateContent: function (json) {
-    this.elLk.content.html(json.content);
-    
-    if ($('.panel', this.elLk.content).length > 1) {
-      this.elLk.content.removeClass('panel');
+    if (json.wrapper) {
+      this.elLk.content.wrapInner(json.wrapper);
     }
+  
+    this.elLk.content.html(json.content);
     
     this.setSelectAll();
     

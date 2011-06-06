@@ -1,23 +1,28 @@
-.local_context { margin: 0 0 0.5em 0; border: 1px solid [[PANEL_BORDER]]; padding: 0; background-color: [[PANEL_BG]]; }
-.local_context a,
-.local_context a:hover,
-.local_context a:visited { color: [[MH_BORDER]]; text-decoration: none; }
-.local_context dt { font-weight: bold; }
-.local_context dd { margin-left: 0; white-space: nowrap; }
-.local_context dd dl { border:0; padding: 0 0 0 14px; }
-.local_context dd img { height: 14px; width: 14px; border: 0; vertical-align: top; padding-right: 5px; }
+.nav                               { width: 14em; margin: 0 0.25em; border: 0; padding: 0; z-index: 100; position: absolute; left: 0; }
+.nav div.header                    { font-weight: bold; border: 1px solid [[PANEL_BORDER]]; border-bottom: 0; padding: 2px; }
+.nav ul                            { margin: 0 0 0.5em 0; border: 1px solid [[PANEL_BORDER]]; padding: 0.2em 0 0 1.5em; background-color: [[PANEL_BG]]}
+.nav ul li                         { margin-bottom: 0; list-style-image: none; color: [[CONTRAST_HEADER]]; }
+.nav ul.local_context              { margin: 0 0 0.5em 0; border: 1px solid [[PANEL_BORDER]]; padding: 0; background-color: [[PANEL_BG]]; list-style: none; }
+.nav ul.local_context li           { list-style-image: none; margin-left: 0; }
+.nav ul.local_context li ul        { list-style: none; border: 0; padding: 0 0 0 14px; margin: 0; }
+.nav ul.local_context a,
+.nav ul.local_context a:hover,
+.nav ul.local_context a:visited    { color: [[MH_BORDER]]; text-decoration: none; }
+.nav ul.local_context li img       { height: 14px; width: 14px; border: 0; margin-bottom: -3px; padding-right: 5px; }
+.nav ul
+.nav ul.local_context dl           { overflow: hidden; margin: 0; }
+.nav ul.local_context li           { margin-bottom: 0; overflow: hidden; }
+.nav ul.local_context li,
+.nav ul.local_context li ul        { background-image: url(/i/line.gif); background-repeat: repeat-y; }
+.nav ul.local_context li.last      { background: [[PANEL_BG]] url(/i/last.gif) no-repeat; }
+.nav ul.local_context li.active    { font-weight: bold; background-color: [[TINT_BG]]; }
+.nav ul.local_context li.active ul { background-color: [[PANEL_BG]]; }
+.nav ul.local_context li.active li { font-weight: normal; }
+.nav ul.local_context li.closed ul { display: none; }
+.nav ul.local_context li .disabled { color: [[PAGE_TEXT]]; }
 
-.local_context dl { overflow: hidden; margin: 0; }
-.local_context dd { margin-bottom: 0; overflow: hidden; }
-.local_context dt { border-bottom: 1px solid [[NEUTRAL_BORDER]]; padding: 2px; }
-.local_context dd.notl dl, .local_context dd.notl { background: url(/i/line.gif) repeat-y;  }
-.local_context dd.notl dl { margin: 0; }
-.local_context dd.last { background: [[PANEL_BG]] url(/i/last.gif) no-repeat; }
-.local_context dd.active, .local_context a.active { font-weight: bold; background-color: [[TINT_BG]]; }
-.local_context dd.active dl { background-color: [[PANEL_BG]]; }
-.local_context dd.active dd { font-weight: normal; }
-.local_context dd._closed dl  { display: none; }
-body.static .local_context dl { width: 20em; }
+body.ie67 .nav                         { margin-top: 3px; }
+body.ie67 .nav ul.local_context li img { margin: 0; vertical-align: top; }
 
 .tool_buttons p, .other_tool { display: none; margin: 0; }
 .tool_buttons a, .tool_buttons p.disabled { background-position: 7px 50%; background-repeat: no-repeat; border: 3px double [[PAGE_BG]]; margin: 4px 0px; padding: 4px 4px 4px 28px; }

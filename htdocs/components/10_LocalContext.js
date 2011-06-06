@@ -5,44 +5,28 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
   init: function () {    
     this.base();
     
-    this.elLk.links = $('dl.local_context dd', this.el).each(function () {
-      var dd   = $(this);
-      var dls  = $('dl', dd).length;
-      var name = 'leaf';
-      var cl;
+    this.elLk.links = $('ul.local_context li', this.el).each(function () {
+      var li = $(this);
       
-      if (dd.hasClass('open')) {
-        if (dls > 0) {
-          name = 'open';
-        } else {
-          dd.removeClass('open');
-        }
+      if (!$('ul', li).length) {
+        li.removeClass('open closed').children('img.toggle').attr('src', '/i/leaf.gif').removeClass('toggle');
       }
       
-      if (dd.hasClass('closed')) {
-        if (dls > 0) {
-          dd.toggleClass('_closed');
-          name = 'closed';
-        }
-        
-        dd.removeClass('closed');
-      }
+      li.addClass(li.next().length ? '' : 'last');
       
-      cl = name == 'leaf' ? '' : 'class="toggle"';
-      
-      dd.prepend('<img src="/i/' + name + '.gif" ' + cl + ' />').addClass(dd.next().length ? 'notl' : 'last');
-      
-      dd = null;
+      li = null;
     });
     
     $('img.toggle', this.el).bind('click', function () {
-      var p = $(this).parent(); 
+      var li = $(this).parent(); 
       
-      p.toggleClass('open _closed');
+      li.toggleClass('open closed');
       
-      this.src = '/i/' + (p.hasClass('_closed') ? 'closed' : 'open') + '.gif';
+      this.src = '/i/' + (li.hasClass('closed') ? 'closed' : 'open') + '.gif';
       
-      p = null;
+      li = null;
+      
+      return false;
     });
   }
 });

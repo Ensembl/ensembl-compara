@@ -138,8 +138,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         var menu    = li.parents('.popup_menu');
         var track   = menu.parent();
         var val     = li.attr('className');
-        var link    = panel.elLk.links.children('a.' + img.attr('className'));
-        var label   = link.html().split(/\b/);
+        var countEl = panel.elLk.links.children('a.' + img.attr('className')).siblings('.count');
+        var count   = countEl.html().split(/\b/);
         var updated = {};
         
         if (track.hasClass('select_all')) {
@@ -163,7 +163,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           var input = $(this);
           
           if (input.val() === 'off' ^ val === 'off') {
-            label[1] = parseInt(label[1], 10) + (val === 'off' ? -1 : 1);
+            count[1] = parseInt(count[1], 10) + (val === 'off' ? -1 : 1);
           }
           
           input.val(input.attr('newVal') || val).removeAttr('newVal');
@@ -181,8 +181,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           }).end()[val === 'off' ? 'removeClass' : 'addClass']('on');
         }
         
-        label = label.join('');
-        link.attr('title', label).html(label);
+        countEl.html(count.join(''));
         menu.hide();
         
         if (panel.sortable) {
@@ -197,11 +196,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           });
         }
         
-        menu  = null;
-        track = null;
-        link  = null;
-        img   = null;
-        li    = null;
+        menu = track = countEl = img = li = null;
       })
     );
     
