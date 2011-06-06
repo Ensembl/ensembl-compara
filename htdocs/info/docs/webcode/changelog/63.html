@@ -45,6 +45,10 @@
   <br />This can be altered by setting <kbd>$self->code = $code</kbd> in a ViewConfig <kbd>init</kbd> function, which should be done when two ViewConfigs should share the same database record.
   <br />This behavior was previously achieved by using page URLs with the same <kbd>EnsEMBL::Web::Hub->type</kbd> and <kbd>EnsEMBL::Web::Hub->action</kbd>, but a different <kbd>EnsEMBL::Web::Hub->function</kbd>.
 </li>
+<li>
+  A <kbd>modify</kbd> function has been added to both <kbd>EnsEMBL::Web::ViewConfig</kbd> and <kbd>EnsEMBL::Web::ImageConfig</kbd> as an empty stub.
+  <br />It is called directly after <kbd>init</kbd> in both cases, and can be used to make changes to configuration without having to overwrite the existing <kbd>init</kbd> function.
+</li>
 
 </ul>
 
