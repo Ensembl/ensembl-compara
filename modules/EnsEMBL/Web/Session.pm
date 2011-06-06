@@ -307,7 +307,6 @@ sub save_data {
 
 sub receive_shared_data {
   my ($self, @share_refs) = @_; 
-  
   my (@success, @failure);
   
   foreach my $share_ref (@share_refs) {
@@ -323,13 +322,20 @@ sub receive_shared_data {
       $record = new EnsEMBL::Web::Data::Record::Upload::User($id);
     } else {
       # Session record:
-      $record = EnsEMBL::Web::Data::Session->retrieve(code => $share_ref);
+      $record = EnsEMBL::Web::Data::Session->retrieve(
+        session_id => [ split '_', $share_ref ]->[1],
+        type       => 'upload',
+        code       => $share_ref
+      );
     }
-    warn ">>> RECORD ".ref($record);
     
     if ($record) {
-      $self->add_data(%{$record->data});
-      push @success, $record->data->{'name'};
+      my $user = $self->hub->user;
+      
+      if (!($record->{'session_id'} == $self->session_id) && !($record->{'user_id'} && $user && $record->{'user_id'} == $user->user_id)) {
+        $self->add_data(%{$record->data});
+        push @success, $record->data->{'name'};
+      }
     } else {
       push @failure, $share_ref;
     }
