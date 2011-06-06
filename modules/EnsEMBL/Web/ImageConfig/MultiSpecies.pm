@@ -21,7 +21,7 @@ sub new {
   my $class   = shift;
   my $hub     = shift;
   my $species = shift;
-  my $self    = $class->SUPER::new($hub, $species || $hub->species);
+  my $self    = $class->SUPER::new($hub, $species || $hub->species, @_);
   
   $self->{'all_species'} = !$species;
   
