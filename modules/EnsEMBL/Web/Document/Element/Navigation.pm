@@ -85,28 +85,27 @@ sub content {
   
   return unless $tree;
   
-  my $caption = encode_entities($self->strip_HTML($self->caption));
-  
   my $content = sprintf('
     %s
-    <dl class="local_context">
-      <dt>%s</dt>',
+    <div class="header">%s</div>
+    <ul class="local_context">',
     $self->configuration ? '' : '<input type="hidden" class="panel_type" value="LocalContext" />',
-    encode_entities($caption)
+    encode_entities($self->strip_HTML($self->caption))
   );
   
   my $active      = $self->active;
   my @nodes       = $tree->nodes;
   my $active_node = $tree->get_node($active) || $nodes[0];
   
-  return "$content</dl>" unless $active_node;
+  return "$content</ul>" unless $active_node;
   
-  my $hub          = $self->{'hub'};
-  my $active_l     = $active_node->left;
-  my $active_r     = $active_node->right;
-  my $counts       = $self->counts;
-  my $all_params   = !!$hub->object_types->{$hub->type};
-  my $r            = 0;
+  my $hub        = $self->{'hub'};
+  my $img_url    = $hub->species_defs->img_url;
+  my $active_l   = $active_node->left;
+  my $active_r   = $active_node->right;
+  my $counts     = $self->counts;
+  my $all_params = !!$hub->object_types->{$hub->type};
+  my $r          = 0;
   my $previous_node;
   
   foreach my $node (@nodes) {
@@ -115,12 +114,13 @@ sub content {
     $r = $node->right if $node->right > $r;
     
     if ($previous_node && $node->left > $previous_node->right) {
-      $content .= '</dl></dd>' for 1..$node->left - $previous_node->right - 1;
+      $content .= '</ul></li>' for 1..$node->left - $previous_node->right - 1;
     }
     
     if (!$no_show) {
       my $title = $node->data->{'full_caption'};
       my $name  = $node->data->{'caption'};
+      my $count = $node->data->{'count'};
       my $id    = $node->data->{'id'};
       
       $title ||= $name;
@@ -140,25 +140,26 @@ sub content {
           $_ = encode_entities($_);
         }
         
-        $name = qq{<a href="$url" title="$title"$class$rel>$name</a>};
+        $name  = qq{<a href="$url" title="$title"$class$rel>$name</a>};
+        $name .= qq{<span class="count">$count</span>} if $count;
       } else {
         $name =~ s/\(\[\[counts::(\w+)\]\]\)//eg;
         $name = sprintf '<span class="disabled" title="%s">%s</span>', $node->data->{'disabled'}, $name;
       }
       
       if ($node->is_leaf) {
-        $content .= sprintf '<dd%s%s>%s</dd>', $id ? qq{ id="$id"} : '', $node->key eq $active ? ' class="active"' : '', $name;
+        $content .= sprintf '<li%s%s><img src="%sleaf.gif" alt="" />%s</li>', $id ? qq{ id="$id"} : '', $node->key eq $active ? ' class="active"' : '', $img_url, $name;
       } else {
-        $content .= sprintf '<dd class="open%s">%s<dl>', ($node->key eq $active ? ' active' : ''), $name;
+        $content .= sprintf '<li class="open%s"><img src="%sopen.gif" class="toggle" alt="" />%s<ul>', ($node->key eq $active ? ' active' : ''), $img_url, $name;
       }
     }
     
     $previous_node = $node;
   }
   
-  $content .= '</dl></dd>' for $previous_node->right + 1..$r;
-  $content .= '</dl>';
-  $content =~ s/\s*<dl>\s*<\/dl>//g;
+  $content .= '</ul></li>' for $previous_node->right + 1..$r;
+  $content .= '</ul>';
+  $content =~ s/\s*<ul>\s*<\/ul>//g;
   
   return $content;
 }
