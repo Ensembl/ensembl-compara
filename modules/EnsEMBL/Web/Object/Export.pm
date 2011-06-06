@@ -88,6 +88,7 @@ sub config {
         [ 'repeat',     'Repeat features' ],
         [ 'genscan',    'Prediction features (genscan)' ],
         [ 'variation',  'Variation features' ],
+        [ 'probe',      'Probe features' ],
         [ 'gene',       'Gene information' ],
         [ 'transcript', 'Transcripts' ],
         [ 'exon',       'Exons' ],
@@ -484,7 +485,7 @@ sub features {
   my $slice         = $self->slice;
   my $params        = $self->params;
   my @common_fields = qw(seqname source feature start end score strand frame);
-  my @extra_fields  = $format eq 'gtf' ? qw(gene_id transcript_id) : qw(hid hstart hend genscan gene_id transcript_id exon_id gene_type variation_name);
+  my @extra_fields  = $format eq 'gtf' ? qw(gene_id transcript_id) : qw(hid hstart hend genscan gene_id transcript_id exon_id gene_type variation_name probe_name);  
   
   $self->{'config'} = {
     extra_fields  => \@extra_fields,
@@ -525,6 +526,18 @@ sub features {
   if ($params->{'variation'}) {
     foreach (@{$slice->get_all_VariationFeatures}) {
       $self->feature('variation', $_, { variation_name => $_->variation_name });	    
+    }
+  }
+
+  if($params->{'probe'}) {
+    my $fg_db = $self->database('funcgen'); 
+    my $probe_feature_adaptor = $fg_db->get_ProbeFeatureAdaptor;     
+    my @probe_features = @{$probe_feature_adaptor->fetch_all_by_Slice($slice)};
+    
+    foreach my $pf(@probe_features){
+      my $probe_details = $pf->probe->get_all_complete_names();
+      my @probes = split(/:/,@$probe_details[0]);
+      $self->feature('ProbeFeature', $pf, { probe_name => @probes[1] },{ source => @probes[0]});
     }
   }
   
