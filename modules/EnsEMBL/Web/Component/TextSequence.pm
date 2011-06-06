@@ -129,9 +129,17 @@ sub get_sequence_data {
         }
       }
       
-      # Put 1bp snps second, so that they will overwrite the markup of other variations in the same location
-      my @ordered_snps = map $_->[1], sort { $a->[0] <=> $b->[0] } map [ $_->end == $_->start ? 1 : 0, $_ ], @$snps;
+      # XXX: doing 2 sorts here is inefficient, but I don't immediately see how to combine them 
       
+      # order variations descending by worst consequence rank so that the 'worst' variation will overwrite the markup of other 
+      # variations in the same location
+      
+      my @ordered_snps = sort { $b->most_severe_OverlapConsequence->rank <=> $a->most_severe_OverlapConsequence->rank } @$snps;
+
+      # Put 1bp snps second, so that they will overwrite the markup of other variations in the same location
+
+      @ordered_snps = map $_->[1], sort { $a->[0] <=> $b->[0] } map [ $_->end == $_->start ? 1 : 0, $_ ], @ordered_snps;
+
       foreach (@ordered_snps) {
         #my $snp_type       = 'snp';
         my $snp_type       = $_->can('display_consequence') ? lc $_->display_consequence : 'snp';
