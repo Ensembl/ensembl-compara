@@ -134,9 +134,7 @@ sub content {
 }
 
 sub get_json {
-  my $self    = shift;
-  my $single  = scalar @{$self->{'panels'}} == 1;
-  my $wrapper = 'modal_wrapper' . ($single ? ' panel' : '');
+  my $self = shift;
   my ($filter, $content);
   
   # Include any access warning at top of page
@@ -151,9 +149,10 @@ sub get_json {
   
   $content .= sprintf '<div class="content">%s</div>', $_->component_content for @{$self->{'panels'}};
   $content  = "$self->{'form'}$content</form>" if $self->{'form'};
+  $content  = qq{<div class="panel">$content</div>} if @{$self->{'panels'}} == 1;
   
   return {
-    wrapper   => qq{<div class="$wrapper"></div>},
+    wrapper   => '<div class="modal_wrapper"></div>',
     content   => $content,
     panelType => 'ModalContent'
   };
