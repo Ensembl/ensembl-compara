@@ -41,6 +41,7 @@ sub new {
   bless $self, $class;
   
   $self->init;
+  $self->modify;
   
   return $self;
 }
@@ -60,8 +61,9 @@ sub component        { return $_[0]->{'component'};         }
 sub tree             { return $_[0]->{'tree'};              }
 sub storable         { return 1;                            }
 
-sub init {}
-sub form {}
+sub init   {}
+sub modify {} # For plugins
+sub form   {}
 
 sub options { 
   my $self = shift;

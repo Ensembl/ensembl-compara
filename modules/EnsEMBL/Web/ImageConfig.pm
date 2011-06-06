@@ -87,7 +87,8 @@ sub new {
     $self->{$_} = $defaults->{$_} for keys %$defaults;
   } else {
     # No cached defaults found, so initialize them and cache
-    $self->init if $self->can('init');
+    $self->init;
+    $self->modify;
     
     if ($cache) {
       my $defaults = {
@@ -111,6 +112,9 @@ sub new {
   
   return $self;
 }
+
+sub init   {}
+sub modify {} # For plugins
 
 sub storable :lvalue { $_[0]->{'storable'}; } # Set to 1 if configuration can be altered
 sub altered  :lvalue { $_[0]->{'altered'};  } # Set to 1 if the configuration has been updated
