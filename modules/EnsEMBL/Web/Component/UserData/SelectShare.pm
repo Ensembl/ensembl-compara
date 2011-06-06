@@ -99,7 +99,6 @@ sub content {
   ## If only one record, have the checkbox automatically checked
   my @autoselect = $hub->param('id');
   push @autoselect, $hub->param('code'); 
-  warn "SELECTED: @autoselect";
 
   $form->add_element(
     type   => 'MultiSelect',
