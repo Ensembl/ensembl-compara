@@ -30,7 +30,7 @@ sub content {
   my $version            = $object->source_version;
 	
 	# Date version
-	if ($version =~ /^(\d{4})(\d{2})/) {
+	if ($version =~ /^(20\d{2})(\d{2})/) {
 		$version = " ($2/$1)";
 	}
 	elsif ($version) { $version = " $version"; }
