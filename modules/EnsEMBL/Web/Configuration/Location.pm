@@ -241,7 +241,7 @@ sub add_vega_link {
 sub get_other_browsers_menu {
   my $self = shift;
   # The menu may already have an other browsers sub menu from Ensembl, if so we add to this one, otherwise create it
-  return $self->{'browser_menu'} ||= $self->get_submenu('OtherBrowsers') || $self->create_submenu('OtherBrowsers', 'Other genome browsers');
+  return $self->{'browser_menu'} ||= $self->get_node('OtherBrowsers') || $self->create_submenu('OtherBrowsers', 'Other genome browsers');
 }
 
 1;
