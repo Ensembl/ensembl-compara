@@ -41,9 +41,9 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
+        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
-        'pipeline_name' => 'compara_full_merge_62',         # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_full_merge_63',         # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {
             -host   => 'compara4',
@@ -58,7 +58,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'lg4_compara_homology_merged_62',
+            -dbname => 'lg4_compara_homology_merged_63',
         },
 
         'rel_db' => {
@@ -66,12 +66,12 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => 'sf5_ensembl_compara_62',
+            -dbname => 'lg4_ensembl_compara_63',
         },
 
-        'skipped_tables' => [ 'meta', 'analysis', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set',
-                              'analysis_data', 'analysis_job', 'analysis_stats', 'analysis_stats_monitor', 'analysis_ctrl_rule',
-                              'dataflow_rule', 'hive', 'job_message', 'monitor', 'resource_description' ],
+        'skipped_tables' => [ 'meta', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set',
+                              'analysis', 'analysis_data', 'job', 'job_file', 'job_message', 'analysis_stats', 'analysis_stats_monitor', 'analysis_ctrl_rule',
+                              'dataflow_rule', 'worker', 'monitor', 'resource_description' ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
     };
