@@ -55,7 +55,7 @@ JOIN
 JOIN 
  `member` gm on (m.gene_member_id = gm.member_id)
 JOIN 
- `member` pm on (gm.member_id = pm.gene_member_id);    
+ `member` pm on (gm.member_id = pm.gene_member_id)  
 SQL
 
   my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $DBA->dbc());
