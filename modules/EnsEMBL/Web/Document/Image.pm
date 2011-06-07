@@ -450,7 +450,12 @@ sub render {
         { f => 'pdf',     label => 'PDF' },
         { f => 'svg',     label => 'SVG' },
         { f => 'eps',     label => 'PostScript' },
-        { f => 'png-10',  label => 'PNG (x10)' },
+      );
+      ## PNG renderer will crash if image too tall!
+      unless ($image->height > 32000) {
+        push @formats, { f => 'png-10',  label => 'PNG (x10)' };
+      }
+      push @formats, (
         { f => 'png-5',   label => 'PNG (x5)' },
         { f => 'png-2',   label => 'PNG (x2)' },
         { f => 'png',     label => 'PNG' },
