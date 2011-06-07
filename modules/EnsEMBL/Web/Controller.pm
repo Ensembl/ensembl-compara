@@ -13,7 +13,7 @@ use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Builder;
 use EnsEMBL::Web::Data::Record::History;
 use EnsEMBL::Web::Document::Panel;
-use EnsEMBL::Web::OrderedTree;
+use EnsEMBL::Web::Tree;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -153,7 +153,7 @@ sub configuration {
   
   if (!$self->{'configuration'}) {
     my $conf = {
-      tree         => new EnsEMBL::Web::OrderedTree,
+      tree         => new EnsEMBL::Web::Tree,
       default      => undef,
       action       => undef,
       configurable => 0,
@@ -199,7 +199,7 @@ sub configure {
     my $referer     = $hub->referer;
     my $module_name = "EnsEMBL::Web::Configuration::$referer->{'ENSEMBL_TYPE'}";
     
-    $hub->components = $module_name->new_for_components($hub, { tree => new EnsEMBL::Web::OrderedTree }, $referer->{'ENSEMBL_ACTION'}, $referer->{'ENSEMBL_FUNCTION'}) if $self->dynamic_use($module_name);
+    $hub->components = $module_name->new_for_components($hub, { tree => new EnsEMBL::Web::Tree }, $referer->{'ENSEMBL_ACTION'}, $referer->{'ENSEMBL_FUNCTION'}) if $self->dynamic_use($module_name);
   }
 }
 

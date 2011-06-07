@@ -12,7 +12,7 @@ use URI::Escape qw(uri_unescape);
 use Sanger::Graphics::TextHelper;
 
 use EnsEMBL::Web::DBSQL::DBConnection;
-use EnsEMBL::Web::NewTree;
+use EnsEMBL::Web::Tree;
 
 #########
 # 'user' settings are restored from cookie if available
@@ -47,7 +47,7 @@ sub new {
     storable         => 1,
     altered          => 0,
     _core            => undef,
-    _tree            => new EnsEMBL::Web::NewTree,
+    _tree            => new EnsEMBL::Web::Tree,
     _parameters      => { margin => 5, spacing => 2 }, # Default margin and spacing
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene)],
     extra_menus      => {
@@ -143,7 +143,7 @@ sub image_width         { return shift->parameter('image_width',     @_);       
 sub container_width     { return shift->parameter('container_width', @_);                                            }
 sub title               { return shift->parameter('title',           @_);                                            }
 sub slice_number        { return shift->parameter('slice_number',    @_);                                            } # TODO: delete?
-sub get_tracks          { return grep { $_->data->{'node_type'} eq 'track' } $_[0]->tree->nodes;                     } # return a list of track nodes
+sub get_tracks          { return grep { $_->{'data'}{'node_type'} eq 'track' } $_[0]->tree->nodes;                   } # return a list of track nodes
 sub get_sortable_tracks { return grep { $_->get('sortable') && $_->get('menu') ne 'no' } @{$_[0]->glyphset_configs}; }
 
 sub glyphset_configs {

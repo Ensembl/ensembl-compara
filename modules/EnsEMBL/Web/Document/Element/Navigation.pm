@@ -85,83 +85,84 @@ sub content {
   
   return unless $tree;
   
-  my $content = sprintf('
-    %s
-    <div class="header">%s</div>
-    <ul class="local_context">',
-    $self->configuration ? '' : '<input type="hidden" class="panel_type" value="LocalContext" />',
-    encode_entities($self->strip_HTML($self->caption))
-  );
+  my $active = $self->active;
+  my $nodes  = $tree->child_nodes;
+  my $menu;
   
-  my $active      = $self->active;
-  my @nodes       = $tree->nodes;
-  my $active_node = $tree->get_node($active) || $nodes[0];
-  
-  return "$content</ul>" unless $active_node;
-  
-  my $hub        = $self->{'hub'};
-  my $img_url    = $hub->species_defs->img_url;
-  my $active_l   = $active_node->left;
-  my $active_r   = $active_node->right;
-  my $counts     = $self->counts;
-  my $all_params = !!$hub->object_types->{$hub->type};
-  my $r          = 0;
-  my $previous_node;
-  
-  foreach my $node (@nodes) {
-    my $no_show = 1 if $node->data->{'no_menu_entry'} || !$node->data->{'caption'};
+  if ($tree->get_node($active) || $nodes->[0]) {
+    my $hub        = $self->{'hub'};
+    my $img_url    = $hub->species_defs->img_url;
+    my $counts     = $self->counts;
+    my $all_params = !!$hub->object_types->{$hub->type};
     
-    $r = $node->right if $node->right > $r;
+    $self->build_menu($_, $hub, $img_url, $counts, $all_params, $active) for @$nodes;
     
-    if ($previous_node && $node->left > $previous_node->right) {
-      $content .= '</ul></li>' for 1..$node->left - $previous_node->right - 1;
-    }
-    
-    if (!$no_show) {
-      my $title = $node->data->{'full_caption'};
-      my $name  = $node->data->{'caption'};
-      my $count = $node->data->{'count'};
-      my $id    = $node->data->{'id'};
-      
-      $title ||= $name;
-      
-      if ($node->data->{'availability'} && $self->is_available($node->data->{'availability'})) {
-        # $node->data->{'code'} contains action and function where required, so setting function to undef is fine.
-        # If function is NOT set to undef and you are on a page with a function, the generated url could be wrong
-        # e.g. on Location/Compara_Alignments/Image the url for Alignments (Text) will also be Location/Compara_Alignments/Image, rather than Location/Compara_Alignments
-        my $rel   = $node->data->{'external'} ? 'external' : $node->data->{'rel'};
-        my $class = $node->data->{'class'};
-        my $url   = $node->data->{'url'} || $hub->url({ action => $node->data->{'code'}, function => undef }, undef, $all_params);
-        $class = qq{ class="$class"} if $class;
-        $rel   = qq{ rel="$rel"}     if $rel;
-        
-        for ($title, $name) {
-          s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
-          $_ = encode_entities($_);
-        }
-        
-        $name  = qq{<a href="$url" title="$title"$class$rel>$name</a>};
-        $name .= qq{<span class="count">$count</span>} if $count;
-      } else {
-        $name =~ s/\(\[\[counts::(\w+)\]\]\)//eg;
-        $name = sprintf '<span class="disabled" title="%s">%s</span>', $node->data->{'disabled'}, $name;
-      }
-      
-      if ($node->is_leaf) {
-        $content .= sprintf '<li%s%s><img src="%sleaf.gif" alt="" />%s</li>', $id ? qq{ id="$id"} : '', $node->key eq $active ? ' class="active"' : '', $img_url, $name;
-      } else {
-        $content .= sprintf '<li class="open%s"><img src="%sopen.gif" class="toggle" alt="" />%s<ul>', ($node->key eq $active ? ' active' : ''), $img_url, $name;
-      }
-    }
-    
-    $previous_node = $node;
+    $menu = $tree->render;
   }
   
-  $content .= '</ul></li>' for $previous_node->right + 1..$r;
-  $content .= '</ul>';
-  $content =~ s/\s*<ul>\s*<\/ul>//g;
+  return sprintf('
+    %s
+    <div class="header">%s</div>
+    <ul class="local_context">%s</ul>',
+    $self->configuration ? '' : '<input type="hidden" class="panel_type" value="LocalContext" />',
+    encode_entities($self->strip_HTML($self->caption)),
+    $menu
+  );
+}
+
+sub build_menu {
+  my ($self, $node, $hub, $img_url, $counts, $all_params, $active) = @_;
   
-  return $content;
+  my $data = $node->data;
+  
+  return if $data->{'no_menu_entry'} || !$data->{'caption'};
+  
+  my @children     = grep { $_->can('data') && !$_->data->{'no_menu_entry'} && $_->data->{'caption'} } @{$node->child_nodes};
+  my $caption      = $data->{'caption'};
+  my $title        = $data->{'full_caption'} || $caption;
+  my $count        = $data->{'count'};
+  my $id           = $data->{'id'};
+  my $availability = $data->{'availability'};
+  my @append       = ([ 'img', scalar @children ? { src => "${img_url}open.gif", class => 'toggle' } : { src => "${img_url}leaf.gif" }]);
+  
+  if ($availability && $self->is_available($availability)) {
+    # $node->data->{'code'} contains action and function where required, so setting function to undef is fine.
+    # If function is NOT set to undef and you are on a page with a function, the generated url could be wrong
+    # e.g. on Location/Compara_Alignments/Image the url for Alignments (Text) will also be Location/Compara_Alignments/Image, rather than Location/Compara_Alignments
+    my $url   = $data->{'url'} || $hub->url({ action => $data->{'code'}, function => undef }, undef, $all_params);
+    my $class = $data->{'class'};
+    my $rel   = $data->{'external'} ? 'external' : $data->{'rel'};
+    
+    for ($title, $caption) {
+      s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
+      $_ = encode_entities($_);
+    }
+    
+    push @append, [ 'a',    { class => $class,  inner_HTML => $caption, href => $url, title => $title, rel => $rel }];
+    push @append, [ 'span', { class => 'count', inner_HTML => $count }] if $count;
+  } else {
+    $caption =~ s/\(\[\[counts::(\w+)\]\]\)//eg;
+    push @append, [ 'span', { class => 'disabled', title => $data->{'disabled'}, inner_HTML => $caption }];
+  }
+  
+  if (scalar @children) {
+    my $ul = $node->dom->create_element('ul');
+    
+    foreach (@children) {
+      $self->build_menu($_, $hub, $img_url, $counts, $all_params, $active);
+      $ul->append_child($_);
+    }
+    
+    push @append, $ul;
+  } else {
+    $node->set_attributes({
+      id    => $id,
+      class => ($node->id eq $active ? 'active' : '') . ($node->next_sibling ? '' : ' last')
+    });
+  }
+  
+  $node->node_name = 'li';
+  $node->append_children(@append);
 }
 
 1;

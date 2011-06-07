@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig;
 
 use strict;
@@ -6,10 +8,10 @@ use CGI::Cookie;
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
 use JSON qw(from_json);
-use URI::Escape qw(uri_escape uri_unescape);
+use URI::Escape qw(uri_unescape);
 
 use EnsEMBL::Web::Form;
-use EnsEMBL::Web::OrderedTree;
+use EnsEMBL::Web::Tree;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -35,7 +37,7 @@ sub new {
     form             => undef,
     form_id          => sprintf('%s_%s_configuration', lc $type, lc $component),
     custom           => $ENV{'ENSEMBL_CUSTOM_PAGE'} ? $hub->session->custom_page_config($type) : [],
-    tree             => new EnsEMBL::Web::OrderedTree,
+    tree             => new EnsEMBL::Web::Tree,
   };
   
   bless $self, $class;
@@ -272,10 +274,11 @@ sub add_fieldset {
   
   (my $div_class = $legend) =~ s/ /_/g;
   my $fieldset   = $self->get_form->add_fieldset($legend);
+  my $tree       = $self->tree;
   
   $fieldset->set_attribute('class', $class) if $class;
   
-  $self->tree->create_node(lc $div_class, { url => '#', availability => 1, caption => $legend, class => $div_class });
+  $tree->append($tree->create_node(lc $div_class, { url => '#', availability => 1, caption => $legend, class => $div_class }));
   
   return $fieldset;
 }
@@ -335,7 +338,7 @@ sub build_form {
   
   foreach my $fieldset (@{$self->get_form->fieldsets}) {
     next if $fieldset->get_flag($self->SELECT_ALL_FLAG); 
-       
+    
     my %element_types;
     my $elements = $fieldset->inputs; # returns all input, select and textarea nodes 
     
@@ -384,24 +387,26 @@ sub build_form {
 }
 
 sub build_imageconfig_form {
-  my $self         = shift;
-  my $image_config = shift;
-  my $img_url      = $self->img_url;
-  my $hub          = $self->hub;
-  my $extra_menus  = $image_config->{'extra_menus'};
+  my $self              = shift;
+  my $image_config      = shift;
+  my $img_url           = $self->img_url;
+  my $hub               = $self->hub;
+  my $extra_menus       = $image_config->{'extra_menus'};
+  my $tree              = $self->tree;
+  my $image_config_tree = $image_config->tree;
   my $track_order;
   
-  my $menu = $self->tree->create_node('image_config', { caption => 'Image options' });
+  my $menu = $tree->append($tree->create_node('image_config', { caption => 'Image options' }));
   
-  $menu->append($self->tree->create_node('active_tracks',    { caption => 'Active tracks',    availability => 1, url => '#', class => 'active_tracks',    rel => 'multi' })) if $extra_menus->{'active_tracks'};
-  $menu->append($self->tree->create_node('favourite_tracks', { caption => 'Favourite tracks', availability => 1, url => '#', class => 'favourite_tracks', rel => 'multi' })) if $extra_menus->{'favourite_tracks'};
+  $menu->append($tree->create_node('active_tracks',    { caption => 'Active tracks',    availability => 1, url => '#', class => 'active_tracks',    rel => 'multi' })) if $extra_menus->{'active_tracks'};
+  $menu->append($tree->create_node('favourite_tracks', { caption => 'Favourite tracks', availability => 1, url => '#', class => 'favourite_tracks', rel => 'multi' })) if $extra_menus->{'favourite_tracks'};
   
   if ($extra_menus->{'track_order'}) {
-    $menu->append($self->tree->create_node('track_order', { caption => 'Track order', availability => 1, url => '#', class => 'track_order' }));
+    $menu->append($tree->create_node('track_order', { caption => 'Track order', availability => 1, url => '#', class => 'track_order' }));
     $self->{'track_order'} = { map { join('.', grep $_, $_->id, $_->get('drawing_strand')) => $_->get('order') } $image_config->get_parameter('sortable_tracks') ? $image_config->get_sortable_tracks : () };
   }
   
-  $menu->append($self->tree->create_node('search_results', { caption => 'Search results', availability => 1, url => '#', class => 'search_results disabled', rel => 'multi' })) if $extra_menus->{'search_results'};
+  $menu->append($tree->create_node('search_results', { caption => 'Search results', availability => 1, url => '#', class => 'search_results disabled', rel => 'multi' })) if $extra_menus->{'search_results'};
   
   # Delete all tracks where menu = no, and parent nodes if they are now empty
   # Do this after creating track order, so that unconfigurable but displayed tracks are still considered in the ordering process
@@ -409,13 +414,13 @@ sub build_imageconfig_form {
   
   $self->{'favourite_tracks'} = $image_config->get_favourite_tracks;
   
-  my @nodes = @{$image_config->tree->child_nodes};
+  my @nodes = @{$image_config_tree->child_nodes};
   
   foreach my $n (grep $_->has_child_nodes, @nodes) {
     my @children = grep !$_->has_child_nodes, @{$n->child_nodes};
     
     if (scalar @children) {
-      my $internal = $image_config->tree->create_node($n->id . '_internal');
+      my $internal = $image_config_tree->create_node($n->id . '_internal');
       $internal->append($_) for @children;
       $n->prepend($internal);
     }
@@ -450,23 +455,23 @@ sub build_imageconfig_form {
       my $class = 'config_menu';
       
       if ($children) {
-        my $menu   = $self->{'select_all_menu'}->{$n->id};
+        my $popup  = $self->{'select_all_menu'}->{$n->id};
         my $header = $n->get('caption');
       
-        if ($menu && $children > 1) {
+        if ($popup && $children > 1) {
           $header ||= 'tracks';
           $class   .= ' selectable';
           
           my %counts = reverse %{$self->{'track_renderers'}->{$n->id}};
           
           if (scalar keys %counts != 1) {
-            $menu  = '';
-            $menu .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="${img_url}render/$_->[0].gif" class="$id" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
+            $popup  = '';
+            $popup .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="${img_url}render/$_->[0].gif" class="$id" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
           }
           
           $node->data->{'content'} .= qq{
             <div class="select_all$first">
-              <ul class="popup_menu">$menu</ul>
+              <ul class="popup_menu">$popup</ul>
               <img title="Enable/disable all" alt="Enable/disable all" src="${img_url}render/off.gif" class="menu_option select_all" /><strong class="menu_option">Enable/disable all $header</strong>
             </div>
           };
@@ -485,7 +490,7 @@ sub build_imageconfig_form {
     my $on    = $self->{'enabled_tracks'}->{$id} || 0;
     my $count = $self->{'total_tracks'}->{$id}   || 0;
     
-    $menu->append($self->tree->create_node($id, {
+    $menu->append($tree->create_node($id, {
       caption      => $caption,
       url          => '#',
       availability => ($count > 0),
@@ -497,9 +502,9 @@ sub build_imageconfig_form {
   my $form    = $self->get_form;
   my $no_favs = qq{You have no favourite tracks. Use the <img src="${img_url}grey_star.png" alt="star" /> icon to add tracks to your favourites};
   
-  $form->append_child($form->dom->create_element('div', { inner_HTML => $_->data->{'content'},           class => $_->data->{'class'}       })) for @nodes;
-  $form->append_child($form->dom->create_element('div', { inner_HTML => $no_favs,                        class => 'config favourite_tracks' })) if $extra_menus->{'favourite_tracks'};
-  $form->append_child($form->dom->create_element('div', { inner_HTML => '<ul class="config_menu"></ul>', class => 'config track_order'      })) if $self->{'track_order'};
+  $form->append_child('div', { inner_HTML => $_->data->{'content'},           class => $_->data->{'class'}       }) for @nodes;
+  $form->append_child('div', { inner_HTML => $no_favs,                        class => 'config favourite_tracks' }) if $extra_menus->{'favourite_tracks'};
+  $form->append_child('div', { inner_HTML => '<ul class="config_menu"></ul>', class => 'config track_order'      }) if $self->{'track_order'};
   
   my %tracks = map @{$_->data->{'tracks'} || []} ? ( $_->id => $_->data->{'tracks'} ) : (), @nodes;
   $self->{'tracks'} = \%tracks;
@@ -534,13 +539,13 @@ sub build_imageconfig_menus {
           $menu .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="${img_url}render/$_->[0].gif" class="$menu_class" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
         }
         
-        $ul->before($node->dom->create_element('div', {
+        $ul->before('div', {
           class      => 'select_all',
           inner_HTML => qq{
             <ul class="popup_menu">$menu</ul>
             <img title="Enable/disable all" alt="Enable/disable all" src="${img_url}render/off.gif" class="menu_option select_all" /><strong class="menu_option">Enable/disable all $caption</strong>
           }
-        }));
+        });
       }
     }
   } elsif ($node->get('menu') ne 'no') {
@@ -568,7 +573,7 @@ sub build_imageconfig_menus {
         }
       }
     }
-    
+        
     $self->{'enabled_tracks'}->{$menu_class}++ if $display ne 'off';
     $self->{'total_tracks'}->{$menu_class}++;
     
