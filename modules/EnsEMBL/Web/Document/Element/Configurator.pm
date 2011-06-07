@@ -72,8 +72,6 @@ sub init_config {
     
     $form->add_element(type => 'Hidden', name => 'component', value => $action, class => 'component');
     
-    $self->active = [$view_config->tree->nodes]->[0]->key;
-    
     if ($image_config) {
       my $top_panel = $self->new_panel('Configurator', $controller, code => 'configurator_top');
     
@@ -101,6 +99,16 @@ sub init_config {
       $top_panel->set_content(qq{$species_select<div class="configuration_search"><input class="configuration_search_text" value="Find a track" /></div>});
       $self->add_panel($top_panel);
       $self->active = $image_config->get_parameter('active_menu') || 'active_tracks';
+    }
+    
+    if (!$view_config->tree->get_node($self->active)) {
+      my @nodes     = @{$view_config->tree->child_nodes};
+      $self->active = undef;
+      
+      while (!$self->active && scalar @nodes) {
+        my $node      = shift @nodes;
+        $self->active = $node->id if $node->data->{'class'};
+      }
     }
     
     if ($hub->param('partial')) {
