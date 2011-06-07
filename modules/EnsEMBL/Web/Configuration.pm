@@ -4,15 +4,7 @@ package EnsEMBL::Web::Configuration;
 
 use strict;
 
-use HTML::Entities qw(encode_entities);
-use Time::HiRes qw(time);
-
-use EnsEMBL::Web::Document::Panel;
-use EnsEMBL::Web::Cache;
-
 use base qw(EnsEMBL::Web::Root);
-
-our $MEMD = new EnsEMBL::Web::Cache;
 
 sub new {
   my ($class, $page, $hub, $builder, $data) = @_;
@@ -58,30 +50,31 @@ sub new_for_components {
 sub init {
   my $self       = shift;
   my $hub        = $self->hub;
+  my $cache      = $hub->cache;
   my $user       = $hub->user;
   my $session    = $hub->session;
   my $session_id = $session->session_id;
   my $user_tree  = $self->user_tree && ($user || $session_id);
-  my $tree       = $user_tree && $MEMD && $self->tree_cache_key($user, $session) ? $MEMD->get($self->tree_cache_key($user, $session)) : undef; # Trying to get user + session version of the tree from cache
+  my $tree       = $user_tree && $cache && $self->tree_cache_key($user, $session) ? $cache->get($self->tree_cache_key($user, $session)) : undef; # Trying to get user + session version of the tree from cache
   
   if ($tree) {
     $self->{'_data'}{'tree'} = $tree;
   } else {
     my $cache_key = $self->tree_cache_key;
     
-    $tree = $MEMD->get($cache_key) if $MEMD && $cache_key; # Try to get default tree from cache
+    $tree = $cache->get($cache_key) if $cache && $cache_key; # Try to get default tree from cache
 
     if ($tree) {
       $self->{'_data'}{'tree'} = $tree;
     } else {
       $self->populate_tree; # If no user + session tree found, build one
-      $MEMD->set($cache_key, $self->{'_data'}{'tree'}, undef, 'TREE') if $MEMD && $cache_key; # Cache default tree
+      $cache->set($cache_key, $self->{'_data'}{'tree'}, undef, 'TREE') if $cache && $cache_key; # Cache default tree
     }
 
     if ($user_tree) {
       $cache_key = $self->tree_cache_key($user, $session);
       $self->user_populate_tree;
-      $MEMD->set($cache_key, $self->{'_data'}{'tree'}, undef, 'TREE', keys %{$ENV{'CACHE_TAGS'} || {}}) if $MEMD && $cache_key; # Cache user + session tree version
+      $cache->set($cache_key, $self->{'_data'}{'tree'}, undef, 'TREE', keys %{$ENV{'CACHE_TAGS'} || {}}) if $cache && $cache_key; # Cache user + session tree version
     }
   }
 }
@@ -92,7 +85,6 @@ sub add_external_browsers {}
 sub modify_page_elements  {}
 sub caption               {}
 
-sub delete_tree    { my $self = shift; $self->tree->_flush_tree;              } 
 sub hub            { return $_[0]->{'hub'};                                   }
 sub builder        { return $_[0]->{'builder'};                               }
 sub object         { return $_[0]->{'object'};                                }
@@ -127,7 +119,7 @@ sub get_availability {
 
   my $hash = { map { ('database:'. lc(substr $_, 9) => 1) } keys %{$hub->species_defs->databases} };
   $hash->{'database:compara'} = 1 if $hub->species_defs->compara_like_databases;
-  $hash->{'logged_in'} = 1 if $hub->user;
+  $hash->{'logged_in'}        = 1 if $hub->user;
 
   return $hash;
 }
@@ -139,7 +131,7 @@ sub tree_cache_key {
   
   my $key = join '::', ref $self, $self->species, 'TREE';
 
-  $key .= '::USER[' . $user->id . ']' if $user;
+  $key .= '::USER['    . $user->id            . ']' if $user;
   $key .= '::SESSION[' . $session->session_id . ']' if $session && $session->session_id;
   
   return $key;
@@ -199,61 +191,29 @@ sub create_node {
     components => $components,
     code       => $code,
     type       => 'view',
-    %{$options||{}}
+    %{$options || {}}
   };
   
-  return $self->tree->create_node($code, $details) if $self->tree;
+  return $self->tree->append($self->tree->create_node($code, $details));
 }
 
 sub create_subnode {
-  my ($self, $code, $caption, $components, $options) = @_;
-
-  my $details = {
-    caption    => $caption,
-    components => $components,
-    code       => $code,
-    type       => 'subview',
-    %{$options||{}},
-  };
-
-  return $self->tree->create_node($code, $details) if $self->tree;
+  my $self  = shift;
+  $_[3]{'type'} = 'subview';
+  return $self->create_node(@_,);
 }
 
 sub create_submenu {
-  my ($self, $code, $caption, $options) = @_;
-
-  my $details = {
-    caption => $caption,
-    url     => '',
-    type    => 'menu',
-    %{$options||{}},
-  };
-  
-  return $self->tree->create_node($code, $details) if $self->tree;
+  my $self = shift;
+  splice @_, 2, 0, undef;
+  $_[3]{'type'} = 'menu';
+  return $self->create_node(@_);
 }
 
 sub delete_node {
   my ($self, $code) = @_;
-  if ($code && $self->tree) {
-    my $node = $self->tree->get_node($code);
-    $node->remove_node if $node;
-  }
-}
-
-sub delete_submenu {
-  my ($self, $code) = @_;
-  if ($code && $self->tree) {
-    my $node = $self->tree->get_node($code);
-    $node->remove_subtree if $node;
-  }
-}
-
-sub get_submenu {
-  my ($self, $code) = @_;
-  if ($code && $self->tree) {
-    my $node = $self->tree->get_node($code);
-    return $node if $node;
-  }
+  my $node = $self->tree->get_node($code);
+  $node->remove_node if $node;
 }
 
 sub get_configurable_components {
