@@ -1747,7 +1747,7 @@ sub add_regulation_features {
       @renderers = qw(off Off normal Normal);
     }
     
-    $menu->append($self->create_track("${type}_${key}_$key_2", $fg_data{$key_2}{'name'} || $fg_data{$key_2}{'logic_names'}, { 
+    $menu->append($self->create_track("${type}_${key}_$key_2", $fg_data{$key_2}{'name'}, { 
       db          => $key,
       glyphset    => $type,
       sources     => 'undef',
@@ -1812,12 +1812,13 @@ sub add_regulation_builds {
 
       my $track_key = "${key_2}_$cell_line";
       my $display   = 'off';
-      my $name      = "$fg_data{$key_2}{'name'} $cell_line";
+      my $name      = $fg_data{$key_2}{'name'};
       
       if ($cell_line =~ /MultiCell/) {  
         $display    = $fg_data{$key_2}{'display'} || 'off';
-        $name       = $fg_data{$key_2}{'name'}; 
         $multi_flag = 1;
+      } else {
+        $name .= " $cell_line";
       }
       
       my $cell_line_menu = $self->create_submenu("regulatory_features $cell_line", "$cell_line tracks");
@@ -1859,12 +1860,12 @@ sub add_regulation_builds {
       
       if (scalar @focus_sets && scalar @focus_sets <= scalar @ftypes) { 
         # Add Core evidence tracks
-        $cell_line_menu->append($self->create_track("${key_2}_core_$cell_line", "Core evidence $cell_line", { %options, type => 'core' }));
+        $cell_line_menu->append($self->create_track("${key_2}_core_$cell_line", "Core evidence", { %options, type => 'core' }));
       } 
 
       if (scalar @ftypes != scalar @focus_sets  && $cell_line ne 'MultiCell') {
         # Add 'Other' evidence tracks
-        $cell_line_menu->append($self->create_track("${key_2}_other_$cell_line", "Other evidence $cell_line", { %options, type => 'other' })); 
+        $cell_line_menu->append($self->create_track("${key_2}_other_$cell_line", 'Histones & Polymerases', { %options, type => 'other' })); 
       }
       
       $menu->append($cell_line_menu);
