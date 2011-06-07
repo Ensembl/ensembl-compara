@@ -332,7 +332,7 @@ sub receive_shared_data {
     if ($record) {
       my $user = $self->hub->user;
       
-      if (!($record->{'session_id'} == $self->session_id) && !($record->{'user_id'} && $user && $record->{'user_id'} == $user->user_id)) {
+      if (!($record->{'session_id'} == $self->session_id) && !($record->{'user_id'} && $user && $record->{'user_id'} == $user->id)) {
         $self->add_data(%{$record->data});
         push @success, $record->data->{'name'};
       }
