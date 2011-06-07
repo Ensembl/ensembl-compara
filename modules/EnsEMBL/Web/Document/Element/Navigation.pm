@@ -121,7 +121,6 @@ sub build_menu {
   my $caption      = $data->{'caption'};
   my $title        = $data->{'full_caption'} || $caption;
   my $count        = $data->{'count'};
-  my $id           = $data->{'id'};
   my $availability = $data->{'availability'};
   my @append       = ([ 'img', scalar @children ? { src => "${img_url}open.gif", class => 'toggle' } : { src => "${img_url}leaf.gif" }]);
   
@@ -154,14 +153,10 @@ sub build_menu {
     }
     
     push @append, $ul;
-  } else {
-    $node->set_attributes({
-      id    => $id,
-      class => ($node->id eq $active ? 'active' : '') . ($node->next_sibling ? '' : ' last')
-    });
   }
   
   $node->node_name = 'li';
+  $node->set_attributes({ id => $data->{'id'}, class => ($node->id eq $active ? 'active' : '') . ($node->next_sibling ? '' : ' last') });
   $node->append_children(@append);
 }
 
