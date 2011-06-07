@@ -29,8 +29,10 @@ sub createObjects {
     return $self->problem('fatal', 'Database Error', 'Could not connect to the variation database.') unless $variation_db;
     
     $variation_db->dnadb($dbs->{'core'});
+    my $source = $self->param('source');
+    $source = undef if $source =~ /ensembl\.org/; ## quick hack to stop mirror redirects breaking stuff!
     
-    $variation = $variation_db->get_VariationAdaptor->fetch_by_name($identifier, $self->param('source'));
+    $variation = $variation_db->get_VariationAdaptor->fetch_by_name($identifier, $source);
   }
   
   if ($variation) {
