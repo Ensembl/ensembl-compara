@@ -36,19 +36,16 @@ sub get_json {
 }
 
 sub init {
-  my $self          = shift;
-  my $controller    = shift;
-  my $page          = $controller->page;
-  my $configuration = $controller->configuration;
-  
-  $configuration->tree->_flush_tree;
+  my $self       = shift;
+  my $controller = shift;
+  my $navigation = $controller->page->navigation;
   
   $self->init_config($controller);
   
-  $page->navigation->tree($self->tree);
-  $page->navigation->active($self->active);
-  $page->navigation->caption($self->caption);
-  $page->navigation->configuration(1);
+  $navigation->tree($self->tree);
+  $navigation->active($self->active);
+  $navigation->caption($self->caption);
+  $navigation->configuration(1);
   
   $self->{'panel_type'} ||= 'Configurator';
 }
