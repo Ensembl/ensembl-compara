@@ -2,7 +2,7 @@
 .nav div.header                    { font-weight: bold; border: 1px solid [[PANEL_BORDER]]; border-bottom: 0; padding: 2px; }
 .nav ul                            { margin: 0 0 0.5em 0; border: 1px solid [[PANEL_BORDER]]; padding: 0.2em 0 0 1.5em; background-color: [[PANEL_BG]]}
 .nav ul li                         { margin-bottom: 0; list-style-image: none; color: [[CONTRAST_HEADER]]; }
-.nav ul.local_context              { margin: 0 0 0.5em 0; border: 1px solid [[PANEL_BORDER]]; padding: 0; background-color: [[PANEL_BG]]; list-style: none; }
+.nav ul.local_context              { margin: 0 0 0.5em 0; border: 1px solid [[PANEL_BORDER]]; padding: 0; background-color: [[PANEL_BG]]; list-style: none; white-space: nowrap; }
 .nav ul.local_context li           { list-style-image: none; margin-left: 0; }
 .nav ul.local_context li ul        { list-style: none; border: 0; padding: 0 0 0 14px; margin: 0; }
 .nav ul.local_context a,
