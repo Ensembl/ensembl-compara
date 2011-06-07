@@ -5,19 +5,9 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
   init: function () {    
     this.base();
     
-    this.elLk.links = $('ul.local_context li', this.el).each(function () {
-      var li = $(this);
-      
-      if (!$('ul', li).length) {
-        li.removeClass('open closed').children('img.toggle').attr('src', '/i/leaf.gif').removeClass('toggle');
-      }
-      
-      li.addClass(li.next().length ? '' : 'last');
-      
-      li = null;
-    });
+    this.elLk.links = $('ul.local_context li', this.el);
     
-    $('img.toggle', this.el).bind('click', function () {
+    $('img.toggle', this.el.links).bind('click', function () {
       var li = $(this).parent(); 
       
       li.toggleClass('open closed');
