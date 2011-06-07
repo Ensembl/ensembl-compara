@@ -18,6 +18,7 @@ sub draw_features {
   if ($Config->isa('EnsEMBL::Web::ImageConfig::contigviewbottom')){ $object_type = 'Location'; }
   my $type = $self->my_config('type');  
   my $data = $Config->{'data_by_cell_line'}; 
+  my $label = $type eq 'core' ? 'Core' : 'Hists & Pols';
   if (!$Config->{'colours'}){ $Config->{'colours'} = $self->get_colours; }
   my $colours = $Config->{'colours'};
   my $display_style = $self->my_config('display');
@@ -42,7 +43,7 @@ sub draw_features {
         $tracks_on = "$configured_tracks/$available_tracks features turned on";  
       }
       my $feature_set_data = $Config->{'data_by_cell_line'}{$cell_line}{$type}{'block_features'}; 
-      $self->draw_blocks($feature_set_data, ucfirst($type) .' Evidence ' . $cell_line, undef, $colours, $tracks_on);
+      $self->draw_blocks($feature_set_data, sprintf("$label%s $cell_line", $type eq 'core' ? ' Evidence' : ''), undef, $colours, $tracks_on);
       $drawn_data = 1;
     } else {
       $self->display_error_message($cell_line, $type, 'peaks');
@@ -52,9 +53,7 @@ sub draw_features {
   if ($wiggle) { 
     if ($Config->{'data_by_cell_line'}{$cell_line}{$type}{'wiggle_features'} && $wiggle){   
       my %wiggle_data = %{$Config->{'data_by_cell_line'}{$cell_line}{$type}{'wiggle_features'}}; 
-      my $label = $type .' Support ' .$cell_line; 
-      my @labels = (ucfirst($label));
-      $self->process_wiggle_data(\%wiggle_data, $colours, \@labels, $cell_line, $type, $object_type);
+      $self->process_wiggle_data(\%wiggle_data, $colours, [ "$label Support $cell_line" ], $cell_line, $type, $object_type);
       $drawn_data =1;
     } else {
       $self->display_error_message($cell_line, $type, 'wiggle'); 
@@ -275,13 +274,17 @@ sub display_error_message {
   my ($class,  $display_style); 
    
   if ($type eq 'peaks'){
-    $class = 'Evidence';
-  } elsif ($type eq 'wiggle'){
+    if ($focus eq 'core') {
+      $class = 'Evidence';
+    } else {
+      $focus = 'Hists & Pols';
+    }
+  } elsif ($type eq 'wiggle') {
     $class = 'Support';
   }  
 
   my $error_message = "$number_configured/$number_available available feature sets turned on";
-  $self->draw_track_name( ucfirst($focus) . ' '.$class.' '.$cell_line , 'black', -118,  2, 1);
+  $self->draw_track_name(join(' ', grep $_, ucfirst $focus, $class, $cell_line), 'black', -118,  2, 1);
   $self->display_no_data_error($error_message);
     
   return 1;
