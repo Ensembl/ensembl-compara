@@ -79,7 +79,7 @@ sub build_imageconfig_form {
 
 sub form_evidence_types {
   my $self   = shift;
-  my $groups = { Core => [], Other => [] };
+  my $groups = { core => [], other => [] };
   my (@columns, %focus_feature_type_ids);
   
   my $select_all_col = qq{
@@ -113,7 +113,7 @@ sub form_evidence_types {
   
   foreach my $feature (sort keys %{$self->{'evidence_features'}}) {
     my ($feature_name, $feature_id) = split /\:/, $feature;
-    my $set = exists $focus_feature_type_ids{$feature_id} ? 'Core' : 'Other';
+    my $set = exists $focus_feature_type_ids{$feature_id} ? 'core' : 'other';
     my @row = ($feature_name, { tag => 'th', class => 'first', html => sprintf("$feature_name$select_all_row", $feature_name) }); # row name
     
     foreach my $cell_line (sort keys %{$self->{'cell_lines'}}) {
@@ -146,7 +146,7 @@ sub form_evidence_types {
     </div>
   ';
   
-  foreach my $set ('Core', 'Other') {
+  foreach my $set ('core', 'other') {
     my @cols = map {{ class => $_, html => sprintf("<p>$_</p>$select_all_col", $_, $_, $_, $_), enabled => 0 }} @columns;
     my @rows;
     
@@ -174,7 +174,7 @@ sub form_evidence_types {
     $html .= sprintf('
       <div class="funcgen_matrix %s">
         <div class="header_wrapper">
-          <h2>%s features</h2>
+          <h2>%s</h2>
           <input type="text" class="filter" value="Filter" />
         </div>
         <table class="funcgen_matrix" cellspacing="0" cellpadding="0" style="width:%spx">
@@ -187,14 +187,14 @@ sub form_evidence_types {
         </table>
         <div class="no_results">No results found</div>
       </div>',
-      $set, $set, $width,
+      $set, $set eq 'core' ? ucfirst $set : 'Histones &amp; Polymerases', $width,
       join('', map { sprintf '<th class="%s">%s</th>', $_->{'enabled'} ? $_->{'class'} : 'disabled', $_->{'html'} } @cols),
       join('', @rows)
     );
   }
   
   $self->add_fieldset->append_children(
-    [ 'h2',  { inner_HTML => 'Evidence types' }],
+    [ 'h2',  { inner_HTML => 'Regulatory evidence' }],
     [ 'div', { id => 'funcgen_matrix', class => 'js_panel', inner_HTML => $html }]
   );
 }
