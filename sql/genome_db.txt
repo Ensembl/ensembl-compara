@@ -15,7 +15,6 @@
 49	9365	erinaceus_europaeus	HEDGEHOG	1	2006-10-Ensembl	
 51	30611	otolemur_garnettii	BUSHBABY1	1	2007-02-Ensembl	
 52	43179	spermophilus_tridecemlineatus	SQUIRREL	1	2006-10-Ensembl	
-53	59463	myotis_lucifugus	MICROBAT1	1	2007-01-Ensembl	
 55	42254	sorex_araneus	COMMON_SHREW1	1	2007-04-Ensembl	
 57	10090	mus_musculus	NCBIM37	1	2010-04-Ensembl	
 58	30608	microcebus_murinus	micMur1	1	2007-07-Ensembl	
@@ -42,13 +41,14 @@
 98	9785	loxodonta_africana	loxAfr3	1	2009-07-Ensembl	
 101	9593	gorilla_gorilla	gorGor3	1	2009-08-Ensembl	
 105	7227	drosophila_melanogaster	BDGP5.25	1	2010-02-FlyBase	
-106	4932	saccharomyces_cerevisiae	EF2	1	2009-07-SGD	
 108	9986	oryctolagus_cuniculus	oryCun2	1	2009-11-Ensembl	
 109	9646	ailuropoda_melanoleuca	ailMel1	1	2010-01-Ensembl	
 110	7955	danio_rerio	Zv9	1	2010-06-Ensembl	
 111	28377	anolis_carolinensis	AnoCar2.0	1	2010-09-Ensembl	
 112	9103	meleagris_gallopavo	UMD2	1	2010-09-Ensembl	
 113	6239	caenorhabditis_elegans	WS220	1	2010-10-WormBase	
-114	9483	callithrix_jacchus	C_jacchus3.2.1	1	2010-02-Ensembl	
 115	61853	nomascus_leucogenys	Nleu1.0	1	2010-10-Ensembl	
 116	8364	xenopus_tropicalis	JGI_4.2	1	2010-09-Ensembl	
+117	9483	callithrix_jacchus	C_jacchus3.2.1	1	2010-02-Ensembl	
+118	59463	myotis_lucifugus	Myoluc2.0	1	2010-12-Ensembl	
+119	4932	saccharomyces_cerevisiae	EF3	1	2009-07-SGD	
