@@ -225,7 +225,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       $(this).hide().children('div').hide();
     });
     
-    $('img.desc, img.config', this.elLk.hoverLabels).hoverIntent(
+    this.elLk.hoverLabels.children('img').hoverIntent(
       function () {
         var width = $(this).parent().outerWidth();
         
