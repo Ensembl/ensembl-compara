@@ -779,7 +779,9 @@ sub pipeline_analyses {
 
         {   -logic_name => 'homology_dNdS_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyGroupingFactory',
-            -parameters => { },
+            -parameters => {
+		    'method_link_types'  => ['ENSEMBL_ORTHOLOGUES', 'ENSEMBL_PARALOGUES'],
+		},
             -hive_capacity => -1,
             -flow_into => {
                 1 => [ 'threshold_on_dS' ],
