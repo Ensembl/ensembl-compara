@@ -98,7 +98,8 @@ sub render {
     my $extra = '-';
     if ($sp_dir =~ /homo_sapiens/ || $sp_dir =~/mus_musculus/) {
       $funcgen = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/functional_genomics/%s/">Regulation</a> (GFF)', $title{'funcgen'}, $rel, $sp_dir;
-      my $coll_dir = $species_defs->databases->{'DATABASE_FUNCGEN'}{'NAME'};
+      my $dbs = $species_defs->get_config(ucfirst($sp_dir), 'databases');
+      my $coll_dir = $dbs->{'DATABASE_FUNCGEN'}{'NAME'};
       $extra = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/data_files/%s/">Regulation data files</a>', $title{'extra'}, $rel, $coll_dir;
     }
     $class = $row % 2 == 0 ? 'bg1' : 'bg2';
