@@ -79,7 +79,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       blur: function () {
         if (!this.value) {
           panel.filter(this);
-          this.value = 'Filter';
+          this.value = 'Search';
           this.style.color = '#999';
         }
       }

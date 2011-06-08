@@ -175,7 +175,7 @@ sub form_evidence_types {
       <div class="funcgen_matrix %s">
         <div class="header_wrapper">
           <h2>%s</h2>
-          <input type="text" class="filter" value="Filter" />
+          <input type="text" class="filter" value="Search" />
         </div>
         <table class="funcgen_matrix" cellspacing="0" cellpadding="0" style="width:%spx">
           <thead>
