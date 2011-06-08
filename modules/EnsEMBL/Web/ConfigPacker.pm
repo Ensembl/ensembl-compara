@@ -1305,7 +1305,7 @@ sub _munge_meta {
       $self->tree->{'DB_SPECIES'} = [ $species ];
     }
 
-    ## Get assembly info 
+    ## Get assembly info
     while (my ($meta_key, $key) = each (%keys)) {
       next unless $meta_hash->{$meta_key};
       
@@ -1333,6 +1333,9 @@ sub _munge_meta {
     
     $self->tree->{$species}{'ASSEMBLY_DATE'} = "$months[$A[1]] $A[0]";
     
+
+    $self->tree->{$species}{'HAVANA_DATAFREEZE_DATE'} = $meta_hash->{'genebuild.havana_datafreeze_date'}[0];
+
     # check if there are sample search entries defined in meta table ( the case with Ensembl Genomes)
     # they can be overwritten at a later stage  via INI files
     my @ks = grep { /^sample\./ } keys %{$meta_hash || {}};
