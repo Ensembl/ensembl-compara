@@ -46,9 +46,10 @@ sub content {
   });
   
   if ($object->analysis) {
+    my $label = $object->analysis->display_label . ' Gene';
     $self->add_entry({
       type  => 'Analysis',
-      label => $object->analysis->display_label
+      label => $label
     });
     
     $self->add_entry({

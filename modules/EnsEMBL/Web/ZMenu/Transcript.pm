@@ -84,8 +84,7 @@ sub content {
   }
   
   if ($object->analysis) {
-    my $label = $transcript->analysis->display_label;
-    $label =~ s/gene/transcript/ig; #added in e62, should be able to be removed in e63
+    my $label = $transcript->analysis->display_label . ' Transcript';
     $self->add_entry({
       type  => 'Analysis',
       label => $label
