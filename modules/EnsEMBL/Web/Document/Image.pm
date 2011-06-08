@@ -66,7 +66,7 @@ sub karyotype {
   if ($image_config->get_parameter('all_chromosomes') eq 'yes') {
     my $total_chrs = @{$hub->species_defs->ENSEMBL_CHROMOSOMES};
     my $rows       = $hub->param('rows') || ceil($total_chrs / 18);
-    my $chr_length = $hub->param('chr_length');
+    my $chr_length = $hub->param('chr_length') || 200;
        $chr_name   = 'ALL';
 
     if ($chr_length) {
