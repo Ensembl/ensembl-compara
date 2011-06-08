@@ -55,15 +55,19 @@ sub init {
         description          => 'Alignments from the Ensembl pipeline that support the exons',
         logic_names_excluded => '_havana',
       }
-    ], [
-      'SE_generic_match_havana', 'Exon supporting evidence (Havana)', 'SE_generic_match', {
-        display          => 'normal',
-        strand           => 'r',
-        colours          => $self->species_defs->colour('feature'),
-        description      => 'Alignments from the Havana pipeline that support the exons',
-        logic_names_only => '_havana',
-      }
     ]);
+
+    if ($self->species_defs->HAVANA_DATAFREEZE_DATE) {
+      $self->add_tracks('evidence', [
+        'SE_generic_match_havana', 'Exon supporting evidence (Havana)', 'SE_generic_match', {
+          display          => 'normal',
+          strand           => 'r',
+          colours          => $self->species_defs->colour('feature'),
+          description      => 'Alignments from the Havana pipeline that support the exons',
+          logic_names_only => '_havana',
+        }
+      ]);
+    }
   }
   
   $self->add_tracks('evidence', [
