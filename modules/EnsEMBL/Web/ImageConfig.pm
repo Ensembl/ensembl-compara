@@ -1853,7 +1853,7 @@ sub add_regulation_builds {
         renderers   => [
           'off',            'Off', 
           'compact',        'Peaks', 
-          'tiling',         'Wiggle plot', 
+          'tiling',         'Signal', 
           'tiling_feature', 'Both' 
         ],         
       );
