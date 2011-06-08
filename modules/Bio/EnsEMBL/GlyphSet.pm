@@ -228,7 +228,8 @@ sub init_label {
       component => lc($component . ($config->multi_species ? '_' . $config->species : '')),
       renderers => \@r,
       fav       => [ $fav, "$url;$track=favourite_" ],
-      off       => "$url;$track=off"
+      off       => "$url;$track=off",
+      conf_url  => 'http://' . $config->species_defs->ENSEMBL_SERVERNAME . $hub->url . ";$config->{'type'}=$track=$self->{'display'}"
     };
   }
   
