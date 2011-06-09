@@ -11,7 +11,6 @@ sub content {
   
   return unless $v_id;
   
-  my $vf              = $hub->param('vf');
   my $db_adaptor      = $hub->database('variation');
   my $var_adaptor     = $db_adaptor->get_StructuralVariation;
   my $variation       = $var_adaptor->fetch_by_dbID($v_id); 
@@ -30,6 +29,7 @@ sub content {
 	my $study_name		  = $variation->study_name;
 	my $description     = $variation->study_description;
 	my $class						= $variation->class;
+	my $vstatus         = $variation->get_all_validation_states;
 	
 	if (! $description) {
 		$description = $variation->source_description;
@@ -97,6 +97,13 @@ sub content {
     type  => 'Class',
     label => $class,
   });
+
+	if (scalar(@$vstatus) and $vstatus->[0]) {
+		$self->add_entry({
+			type  => 'Validation',
+			label => join(',',@$vstatus),
+		});		
+	}
 
   $self->add_entry({
     type  => 'Location',
