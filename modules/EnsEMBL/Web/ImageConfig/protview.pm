@@ -10,29 +10,37 @@ sub init {
   my ($self) = @_;
 
   $self->set_parameters({
-    title        => 'Protein display',
-    button_width => 8,     # width of red "+/-" buttons
-    show_labels  => 'yes', # show track names on left-hand side
-    label_width  => 100,   # width of labels on left-hand side
+    title => 'Protein display',
   });
 
   $self->create_menus(
-    domain        => 'Protein domains',
-    feature       => 'Protein features',
-    alignment     => 'Protein alignments',
-    p_variation   => 'Germline variation',
-    somatic       => 'Somatic Mutations',
-    p_decorations => 'Decorations',
-    legends       => 'Legends'
+    domain      => 'Protein domains',
+    feature     => 'Protein features',
+    variation   => 'Germline variation',
+    other       => 'Decorations',
+    information => 'Information'
   );
   
   $self->load_tracks;
-
-  $self->add_tracks('p_decorations',
-    [ 'variation',      'Variations', 'P_variation',        { display => 'normal', strand => 'r', colourset => 'protein_feature', depth => 1e5 }],
-    [ 'scalebar',       'Scale bar',  'P_scalebar',         { display => 'normal', strand => 'r' }],
-    [ 'exon_structure', 'Protein',    'P_protein',          { display => 'normal', strand => 'f', colourset => 'protein_feature' }],
-    [ 'legend',         'Legend',     'P_variation_legend', { display => 'normal', strand => 'r' }],
+  
+  $self->modify_configs(
+    [ 'variation' ],
+    { menu => 'no' }
+  );
+  
+  $self->modify_configs(
+    [ 'variation_feature_variation' ],
+    { menu => 'yes', glyphset => 'P_variation', display => 'normal', strand => 'r', colourset => 'protein_feature', depth => 1e5 }
+  );
+  
+  $self->modify_configs(
+    [ 'variation_legend' ],
+    { glyphset => 'P_variation_legend' }
+  );
+  
+  $self->add_tracks('other',
+    [ 'scalebar',       'Scale bar', 'P_scalebar', { display => 'normal', strand => 'r' }],
+    [ 'exon_structure', 'Protein',   'P_protein',  { display => 'normal', strand => 'f', colourset => 'protein_feature', menu => 'no' }],
   );
 }
 
