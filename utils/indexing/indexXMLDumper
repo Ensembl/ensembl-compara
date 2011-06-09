@@ -813,39 +813,46 @@ sub dumpStructuralVariations {
   my $scale           = $SD->ENSEMBL_GENOME_SIZE || 1;
   my $max_length      = $scale *= 1e6;
 
-  my $T = $conf->{'dbh'}->selectall_arrayref("
+  my $T = $conf->{'dbh'}->selectall_arrayref(qq(
     select v.structural_variation_id,
            v.variation_name,
            s.name,
            s.description,
            r.name,
            v.seq_region_start,
-           v.seq_region_end
-      from $VariationDB.structural_variation as v, $VariationDB.source as s, $VariationDB.seq_region as r
-     where s.source_id = v.source_id and r.seq_region_id = v.seq_region_id
-     order by v.structural_variation_id"
-  );
+           v.seq_region_end,
+           group_concat(ssv.name)
+      from $VariationDB.structural_variation as v, $VariationDB.supporting_structural_variation as ssv, $VariationDB.source as s, $VariationDB.seq_region as r
+     where s.source_id = v.source_id 
+       and v.seq_region_id = r.seq_region_id
+       and v.structural_variation_id = ssv.structural_variation_id
+     group by v.structural_variation_id));
   foreach my $row ( @$T ) {
     my $id = $row->[1];
     my $location = $row->[4] .":" . $row->[5] ."-". $row->[6];
-    my $length = $row->[6] - $row->[7];
+    my $length = $row->[6] - $row->[5] + 1;
+    my $evidence =  $row->[7];
     my $action = ($length >> $max_length) ? 'Overview' : 'View';
     my $params = ($length >> $max_length) ? { 'cytoview' => 'variation_feature_structural=normal' }
                                           : { 'contigviewbottom' => 'variation_feature_structural=normal' };
     my $desc = qq(A structural variation from $row->[2], identified by $row->[3]. This variation has been mapped to chromosome $row->[4], from $row->[5] to $row->[6]. );
-    &p( StrucVarLine( $dbspecies, $id, $location, $desc, $action, $params, $counter ), $nogzip, $fh);
+    &p( StrucVarLine( $dbspecies, $id, $evidence, $location, $desc, $action, $params, $counter ), $nogzip, $fh);
   }
   return footer( $counter->(),$nogzip,$fh);
 }
 
 sub StrucVarLine {
-  my ($species, $id, $location, $desc, $action, $params, $counter ) = @_;
+  my ($species, $id, $evidence, $location, $desc, $action, $params, $counter ) = @_;
   $species =~ s/_/ /;
   my $xml = qq(
 <entry id="$id">
   <description>$desc</description>
   <additional_fields>);
   $xml .= &common_fields($species,'StructuralVariation');
+  foreach (split ',', $evidence) {
+    $xml .= qq(
+    <field name="evidence">$_</field>);
+  }
   $xml .= qq(
     <field name="location">$location</field>
     <field name="action">$action</field>);
