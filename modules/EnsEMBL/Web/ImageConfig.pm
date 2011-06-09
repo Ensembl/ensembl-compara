@@ -1161,14 +1161,11 @@ sub add_dna_align_features {
   
   foreach my $key_2 (@$keys) {
     my $k    = $data->{$key_2}{'type'} || 'other';
-    my $menu = ($k eq 'rnaseq') ? $self->tree->get_node($k) : $self->tree->get_node("dna_align_$k");
-    
+    my $menu = ($k =~ /rnaseq|simple/) ? $self->tree->get_node($k) : $self->tree->get_node("dna_align_$k");
     if ($menu) {
       my $alignment_renderers = [ @{$self->{'alignment_renderers'}} ];
-      
       if (my @other_renderers = @{$data->{$key_2}{'additional_renderers'} || [] }) {
         my $i = 0;
-        
         while ($i < scalar(@other_renderers)) {
           splice @$alignment_renderers, $i+2, 0, $other_renderers[$i];
           splice @$alignment_renderers, $i+3, 0, $other_renderers[$i+1];
