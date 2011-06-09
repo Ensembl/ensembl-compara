@@ -1,25 +1,20 @@
-.nav                               { width: 14em; margin: 0 0.25em; border: 0; padding: 0; z-index: 100; position: absolute; left: 0; }
+.nav                               { width: 15.5em; margin: 0 0.25em; border: 0; padding: 0; z-index: 100; position: absolute; left: 0; }
 .nav div.header                    { font-weight: bold; border: 1px solid [[PANEL_BORDER]]; border-bottom: 0; padding: 2px; }
-.nav ul                            { margin: 0 0 0.5em 0; border: 1px solid [[PANEL_BORDER]]; padding: 0.2em 0 0 1.5em; background-color: [[PANEL_BG]]}
+.nav ul                            { margin: 0 0 0.5em 0; border: 1px solid [[PANEL_BORDER]]; padding: 0.2em 0 0 1.5em; background-color: [[PANEL_BG]]; }
 .nav ul li                         { margin-bottom: 0; list-style-image: none; color: [[CONTRAST_HEADER]]; }
-.nav ul.local_context              { margin: 0 0 0.5em 0; border: 1px solid [[PANEL_BORDER]]; padding: 0; background-color: [[PANEL_BG]]; list-style: none; white-space: nowrap; }
-.nav ul.local_context li           { list-style-image: none; margin-left: 0; }
-.nav ul.local_context li ul        { list-style: none; border: 0; padding: 0 0 0 14px; margin: 0; }
-.nav ul.local_context a,
-.nav ul.local_context a:hover,
-.nav ul.local_context a:visited    { color: [[MH_BORDER]]; text-decoration: none; }
-.nav ul.local_context li img       { height: 14px; width: 14px; border: 0; margin-bottom: -3px; padding-right: 5px; }
-.nav ul
-.nav ul.local_context dl           { overflow: hidden; margin: 0; }
-.nav ul.local_context li           { margin-bottom: 0; overflow: hidden; }
+.nav ul.local_context              { padding: 0; list-style: none; white-space: nowrap; }
+.nav ul.local_context li           { width: 100%; list-style-image: none; margin: 0; overflow: hidden; }
 .nav ul.local_context li,
 .nav ul.local_context li ul        { background-image: url(/i/line.gif); background-repeat: repeat-y; }
+.nav ul.local_context li ul        { list-style: none; border: 0; padding: 0 0 0 14px; margin: 0; }
+.nav ul.local_context li img       { height: 14px; width: 14px; border: 0; margin-bottom: -3px; padding-right: 5px; }
 .nav ul.local_context li.last      { background: [[PANEL_BG]] url(/i/last.gif) no-repeat; }
 .nav ul.local_context li.active    { font-weight: bold; background-color: [[TINT_BG]]; }
 .nav ul.local_context li.active ul { background-color: [[PANEL_BG]]; }
 .nav ul.local_context li.active li { font-weight: normal; }
 .nav ul.local_context li.closed ul { display: none; }
 .nav ul.local_context li .disabled { color: [[PAGE_TEXT]]; }
+.nav ul.local_context a            { color: [[MH_BORDER]]; text-decoration: none; }
 
 body.ie67 .nav                         { margin-top: 3px; }
 body.ie67 .nav ul.local_context li img { margin: 0; vertical-align: top; }
