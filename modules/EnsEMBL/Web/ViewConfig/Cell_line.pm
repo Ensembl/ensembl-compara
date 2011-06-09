@@ -27,6 +27,7 @@ sub init {
   $self->{'evidence_features'} = $funcgen_tables->{'feature_type'}{'ids'};
   $self->{'feature_type_ids'}  = $funcgen_tables->{'meta'}{'feature_type_ids'};
   $self->{'focus_set_ids'}     = $funcgen_tables->{'meta'}{'focus_feature_set_ids'};
+  $self->{'type_descriptions'} = $funcgen_tables->{'feature_set'}{'analyses'}{'RegulatoryRegion'}{'desc'};
   
   my $defaults;
   
@@ -175,7 +176,9 @@ sub form_evidence_types {
       <div class="funcgen_matrix %s">
         <div class="header_wrapper">
           <h2>%s</h2>
+          <div class="help" title="Click for more information"></div>
           <input type="text" class="filter" value="Search" />
+          <div class="desc">%s</div>
         </div>
         <table class="funcgen_matrix" cellspacing="0" cellpadding="0" style="width:%spx">
           <thead>
@@ -187,7 +190,10 @@ sub form_evidence_types {
         </table>
         <div class="no_results">No results found</div>
       </div>',
-      $set, $set eq 'core' ? ucfirst $set : 'Histones &amp; Polymerases', $width,
+      $set,
+      $set eq 'core' ? ucfirst $set : 'Histones &amp; Polymerases',
+      $self->{'type_descriptions'}{$set},
+      $width,
       join('', map { sprintf '<th class="%s">%s</th>', $_->{'enabled'} ? $_->{'class'} : 'disabled', $_->{'html'} } @cols),
       join('', @rows)
     );
