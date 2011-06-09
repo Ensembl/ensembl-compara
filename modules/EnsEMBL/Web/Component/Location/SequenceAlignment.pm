@@ -95,7 +95,7 @@ sub content {
     $html  = $self->build_sequence($sequence, $config);
     $html .= $self->_hint(
       'strain_config', 
-      'Strain configuration', 
+      'Strain / Individual configuration', 
       '<p>You can choose which strains to display from the "<b>Resequenced individuals</b>" section of the configuration panel, accessible via the "<b>Configure this page</b>" link to the left.</p>'
     );
   } else {
@@ -124,7 +124,7 @@ sub get_slices {
   if (!defined $individuals) {
     my $var_db = $hub->species_defs->databases->{'DATABASE_VARIATION'};
     
-    foreach ('DEFAULT_STRAINS', 'DISPLAY_STRAINS') {
+    foreach ('DEFAULT_STRAINS', 'DISPLAY_STRAINS', 'DISPLAYBLE') {
       foreach my $ind (@{$var_db->{$_}}) {
         push @$individuals, $ind if $hub->param($ind) eq 'yes';
       }
