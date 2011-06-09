@@ -302,9 +302,6 @@ sub hover_labels {
         <img class="url" src="${img_url}link.png" alt="Link" title="URL to turn this track on" />
         <a href="$label->{'fav'}[1]" class="config favourite%s" rel="$label->{'component'}" title="Favourite track"></a>
         <a href="$label->{'off'}" class="config" rel="$label->{'component'}"><img src="${img_url}cross_red_13.png" alt="Turn track off" title="Turn track off" /></a>
-
-        
-        
         <div class="desc">%s</div>
         <div class="config">%s</div>
         <div class="url"><p>Copy <a href="$label->{'conf_url'}">this link</a> to force this track to be turned on</p></div>
