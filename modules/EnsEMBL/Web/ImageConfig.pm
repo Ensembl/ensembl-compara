@@ -48,8 +48,13 @@ sub new {
     altered          => 0,
     _core            => undef,
     _tree            => new EnsEMBL::Web::Tree,
-    _parameters      => { margin => 5, spacing => 2 }, # Default margin and spacing
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene)],
+    _parameters      => { # Default parameters
+      margin      => 5,
+      spacing     => 2,
+      label_width => 113,
+      show_labels => 'yes'
+    },
     extra_menus      => {
       active_tracks    => 1,
       favourite_tracks => 1,
@@ -1046,7 +1051,7 @@ sub _merge {
   my $tree        = $_sub_tree->{'analyses'};
   my $config_name = $self->{'type'};
   my $data        = {};
-
+  
   foreach my $analysis (keys %$tree) {
     my $sub_tree = $tree->{$analysis}; 
     
@@ -1734,7 +1739,7 @@ sub add_regulation_features {
   my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
   my %fg_data           = (%$data_1, %$data_2);
   
-  foreach my $key_2 (sort grep { !/reg_feats/ } @$keys_1, @$keys_2) {
+  foreach my $key_2 (sort grep { !/RegulatoryRegion/ } @$keys_1, @$keys_2) {
     my $type = $fg_data{$key_2}{'type'};
     
     next if !$type || $type eq 'ctcf';
@@ -1787,93 +1792,93 @@ sub add_regulation_builds {
   my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
   my %fg_data           = (%$data_1, %$data_2);
   my $db_tables         = $self->databases->{'DATABASE_FUNCGEN'}->{'tables'};
+  my $key_2             = 'RegulatoryRegion';
+  my $type              = $fg_data{$key_2}{'type'};
   
-  foreach my $key_2 (sort grep { /reg_feats/ } @$keys_1, @$keys_2) {
-    my $type = $fg_data{$key_2}{'type'};
-    
-    next unless $type;
-    
-    my @cell_lines = sort keys %{$db_tables->{'cell_type'}{'ids'}};
-    my (@renderers, $multi_flag);
+  return unless $type;
+  
+  my @cell_lines = sort keys %{$db_tables->{'cell_type'}{'ids'}};
+  my (@renderers, $multi_flag);
 
-    if ($fg_data{$key_2}{'renderers'}) {
-      push @renderers, $_, $fg_data{$key_2}{'renderers'}{$_} for sort keys %{$fg_data{$key_2}{'renderers'}}; 
-    } else {
-      @renderers = qw(off Off normal Normal);
-    }
-    
-    # Add MultiCell first
-    unshift @cell_lines, 'AAAMultiCell';   
-
-    foreach my $cell_line (sort  @cell_lines) { 
-      $cell_line =~ s/AAA|\:\w*//g;
-      
-      next if $cell_line eq 'MultiCell' && $multi_flag;
-
-      my $track_key = "${key_2}_$cell_line";
-      my $display   = 'off';
-      my $name      = $fg_data{$key_2}{'name'};
-      
-      if ($cell_line =~ /MultiCell/) {  
-        $display    = $fg_data{$key_2}{'display'} || 'off';
-        $multi_flag = 1;
-      } else {
-        $name .= " $cell_line";
-      }
-      
-      my $cell_line_menu = $self->create_submenu("regulatory_features $cell_line", "$cell_line tracks");
-      
-      $cell_line_menu->append($self->create_track($track_key, $name || $fg_data{$key_2}{'logic_names'}, {
-        db          => $key,
-        glyphset    => $type,
-        sources     => 'undef',
-        strand      => 'r',
-        depth       => $fg_data{$key_2}{'depth'}     || 0.5,
-        colourset   => $fg_data{$key_2}{'colourset'} || $type,
-        description => $fg_data{$key_2}{'description'},
-        display     => $display,
-        renderers   => \@renderers,
-        cell_line   => $cell_line
-      }));
-      
-      ### Add tracks for cell_line peaks and wiggles only if we have data to display
-      my @ftypes     = keys %{$db_tables->{'meta'}{'feature_type_ids'}{$cell_line}      || {}};  
-      my @focus_sets = keys %{$db_tables->{'meta'}{'focus_feature_set_ids'}{$cell_line} || {}};  
-      
-      my %options = (
-        db          => $key,
-        glyphset    => 'fg_multi_wiggle',
-        strand      => 'r',
-        depth       => $fg_data{$key_2}{'depth'} || 0.5,
-        description => $fg_data{$key_2}{'description'},
-        colourset   => 'feature_set',
-        display     => 'off',
-        menu        => 'no',
-        cell_line   => $cell_line,
-        renderers   => [
-          'off',            'Off', 
-          'compact',        'Peaks', 
-          'tiling',         'Signal', 
-          'tiling_feature', 'Both' 
-        ],         
-      );
-      
-      if (scalar @focus_sets && scalar @focus_sets <= scalar @ftypes) { 
-        # Add Core evidence tracks
-        $cell_line_menu->append($self->create_track("${key_2}_core_$cell_line", "Core evidence", { %options, type => 'core' }));
-      } 
-
-      if (scalar @ftypes != scalar @focus_sets  && $cell_line ne 'MultiCell') {
-        # Add 'Other' evidence tracks
-        $cell_line_menu->append($self->create_track("${key_2}_other_$cell_line", 'Histones & Polymerases', { %options, type => 'other' })); 
-      }
-      
-      $menu->append($cell_line_menu);
-    } 
+  if ($fg_data{$key_2}{'renderers'}) {
+    push @renderers, $_, $fg_data{$key_2}{'renderers'}{$_} for sort keys %{$fg_data{$key_2}{'renderers'}}; 
+  } else {
+    @renderers = qw(off Off normal Normal);
   }
   
-  $self->add_track('information', 'fg_regulatory_features_legend', 'Reg. Features Legend', 'fg_regulatory_features_legend', { colourset => 'fg_regulatory_features', strand => 'r' }) if $db_tables->{'cell_type'}{'ids'};
-  $self->add_track('information', 'fg_multi_wiggle_legend', 'Cell/Tissue Regulation Legend', 'fg_multi_wiggle_legend', { display => 'off', strand => 'r'}) if $db_tables->{'cell_type'}{'ids'};
+  # Add MultiCell first
+  unshift @cell_lines, 'AAAMultiCell';   
+  
+  foreach my $cell_line (sort  @cell_lines) {
+    $cell_line =~ s/AAA|\:\w*//g;
+    
+    next if $cell_line eq 'MultiCell' && $multi_flag;
+
+    my $track_key = "${key_2}_$cell_line";
+    my $display   = 'off';
+    my $name      = $fg_data{$key_2}{'name'};
+    
+    if ($cell_line =~ /MultiCell/) {  
+      $display    = $fg_data{$key_2}{'display'} || 'off';
+      $multi_flag = 1;
+    } else {
+      $name .= " $cell_line";
+    }
+    
+    my $cell_line_menu = $self->create_submenu("regulatory_features $cell_line", "$cell_line tracks");
+    
+    $cell_line_menu->append($self->create_track($track_key, $name || $fg_data{$key_2}{'logic_names'}, {
+      db          => $key,
+      glyphset    => $type,
+      sources     => 'undef',
+      strand      => 'r',
+      depth       => $fg_data{$key_2}{'depth'}     || 0.5,
+      colourset   => $fg_data{$key_2}{'colourset'} || $type,
+      description => $fg_data{$key_2}{'description'}{'reg_feats'},
+      display     => $display,
+      renderers   => \@renderers,
+      cell_line   => $cell_line
+    }));
+    
+    ### Add tracks for cell_line peaks and wiggles only if we have data to display
+    my @ftypes     = keys %{$db_tables->{'meta'}{'feature_type_ids'}{$cell_line}      || {}};  
+    my @focus_sets = keys %{$db_tables->{'meta'}{'focus_feature_set_ids'}{$cell_line} || {}};  
+    
+    my %options = (
+      db          => $key,
+      glyphset    => 'fg_multi_wiggle',
+      strand      => 'r',
+      depth       => $fg_data{$key_2}{'depth'} || 0.5,
+      description => $fg_data{$key_2}{'description'},
+      colourset   => 'feature_set',
+      display     => 'off',
+      menu        => 'no',
+      cell_line   => $cell_line,
+      renderers   => [
+        'off',            'Off', 
+        'compact',        'Peaks', 
+        'tiling',         'Signal', 
+        'tiling_feature', 'Both' 
+      ],         
+    );
+    
+    if (scalar @focus_sets && scalar @focus_sets <= scalar @ftypes) {
+      # Add Core evidence tracks
+      $cell_line_menu->append($self->create_track("reg_feats_core_$cell_line", "Core evidence", { %options, type => 'core', description => $options{'description'}{'core'} }));
+    } 
+
+    if (scalar @ftypes != scalar @focus_sets  && $cell_line ne 'MultiCell') {
+      # Add 'Other' evidence tracks
+      $cell_line_menu->append($self->create_track("reg_feats_other_$cell_line", 'Histones & Polymerases', { %options, type => 'other', description => $options{'description'}{'other'} }));
+    }
+    
+    $menu->append($cell_line_menu);
+  }
+  
+  if ($db_tables->{'cell_type'}{'ids'}) {
+    $self->add_track('information', 'fg_regulatory_features_legend', 'Reg. Features Legend',          'fg_regulatory_features_legend', { strand => 'r', colourset => 'fg_regulatory_features' });
+    $self->add_track('information', 'fg_multi_wiggle_legend',        'Cell/Tissue Regulation Legend', 'fg_multi_wiggle_legend',        { strand => 'r', display => 'off' });
+  }
 }
 
 sub add_oligo_probes {
