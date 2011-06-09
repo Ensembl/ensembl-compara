@@ -481,49 +481,45 @@ sub _summarise_variation_db {
 }
 
 sub _summarise_funcgen_db {
-  my($self, $db_key, $db_name) = @_;
-  my $dbh  = $self->db_connect( $db_name );
+  my ($self, $db_key, $db_name) = @_;
+  my $dbh = $self->db_connect($db_name);
+  
   return unless $dbh;
-  push @{ $self->db_tree->{'funcgen_like_databases'} }, $db_name;
-  $self->_summarise_generic( $db_name, $dbh );
-##
-## Grab each of the analyses - will use these in a moment...
-##
+  
+  push @{$self->db_tree->{'funcgen_like_databases'}}, $db_name;
+  
+  $self->_summarise_generic($db_name, $dbh);
+  
+  ## Grab each of the analyses - will use these in a moment
   my $t_aref = $dbh->selectall_arrayref(
-    'select a.analysis_id, a.logic_name, a.created,
-            ad.display_label, ad.description,
-            ad.displayable, ad.web_data
-       from analysis a left join analysis_description as ad on a.analysis_id=ad.analysis_id'
+    'select a.analysis_id, a.logic_name, a.created, ad.display_label, ad.description, ad.displayable, ad.web_data
+    from analysis a left join analysis_description as ad on a.analysis_id=ad.analysis_id'
   );
+  
   my $analysis = {};
+  
   foreach my $a_aref (@$t_aref) {
-## Strip out "crap" at front and end! probably some q(')s...
-    ( my $A = $a_aref->[6] ) =~ s/^[^{]+//;
-    $A =~ s/[^}]+$//;
-    my $T = eval($A);
-
-    $T = {} unless ref($T) eq 'HASH';
-    $analysis->{ $a_aref->[0] } = {
+    my $desc;
+    { no warnings; $desc = eval($a_aref->[4]) || $a_aref->[4]; }    
+    (my $web_data = $a_aref->[6]) =~ s/^[^{]+//; ## Strip out "crap" at front and end! probably some q(')s
+    $web_data     =~ s/[^}]+$//;
+    $web_data     = eval($web_data) || {};
+    
+    $analysis->{$a_aref->[0]} = {
       'logic_name'  => $a_aref->[1],
       'name'        => $a_aref->[3],
-      'description' => $a_aref->[4],
+      'description' => $desc,
       'displayable' => $a_aref->[5],
-      'web_data'    => $T
+      'web_data'    => $web_data
     };
   }
 
-##
-## Let us get analysis information about each feature type...
-##
-  foreach my $table ( qw(
-   probe_feature feature_set result_set 
-  )) {
-    my $res_aref = $dbh->selectall_arrayref(
-      "select analysis_id,count(*) from $table group by analysis_id"
-    );
-    foreach my $T ( @$res_aref ) {
-      my $a_ref = $analysis->{$T->[0]};
-        #|| ( warn("Missing analysis entry $table - $T->[0]\n") && next );
+  ## Get analysis information about each feature type
+  foreach my $table (qw(probe_feature feature_set result_set)) {
+    my $res_aref = $dbh->selectall_arrayref("select analysis_id, count(*) from $table group by analysis_id");
+    
+    foreach my $T (@$res_aref) {
+      my $a_ref = $analysis->{$T->[0]}; #|| ( warn("Missing analysis entry $table - $T->[0]\n") && next );
       my $value = {
         'name'  => $a_ref->{'name'},
         'desc'  => $a_ref->{'description'},
@@ -531,6 +527,7 @@ sub _summarise_funcgen_db {
         'web'   => $a_ref->{'web_data'},
         'count' => $T->[1]
       }; 
+      
       $self->db_details($db_name)->{'tables'}{$table}{'analyses'}{$a_ref->{'logic_name'}} = $value;
     }
   }
