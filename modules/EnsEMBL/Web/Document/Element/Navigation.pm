@@ -97,7 +97,7 @@ sub content {
     
     $self->build_menu($_, $hub, $img_url, $counts, $all_params, $active) for @$nodes;
     
-    $menu = $tree->render;
+    $menu .= $_->render for @$nodes;
   }
   
   return sprintf('
