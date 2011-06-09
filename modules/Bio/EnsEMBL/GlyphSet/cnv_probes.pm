@@ -34,8 +34,8 @@ sub tag {
   return ({
     style  => 'fg_ends',
     colour => $self->my_colour($f->source),
-		start  => $f->bound_start,
-    end    => $f->bound_end
+		start  => $f->start,
+    end    => $f->end
   });
 } 
 
