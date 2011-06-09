@@ -107,10 +107,8 @@ sub render_labels {
 sub render_histogram {
   my $self = shift;
 
-  #configuration options for this track - OK when all tracks use these (although better done in imageconfig),
-  #but might have move to web_data when more tracks added
-  $self->{'max_score'} = 50; # any feature with a score >= this shown at max height
-  $self->{'height'} = 30; #scaling factor for track height
+  $self->{'max_score'} = $self->my_config('hist_max_height') || 50; # ny feature with a score >= this shown at max height. Set to 50 for rna-seq but can be configured via web-data
+  $self->{'height'} = 30; #scaling factor for overall track height
 
   my $strand = $self->strand;
   my %features = $self->features;
@@ -127,19 +125,20 @@ sub render_histogram {
 	    map { [$_->start,$_ ] }
 	      @{$feats->[0]}
 	  ){
+
       next if ($f->strand ne $strand);
 
       #artificially set score to the max allowed score if it's greater than that
       if ($f->score > $self->{'max_score'}) {
-	      $f->score($self->{'max_score'});
+        $f->score($self->{'max_score'});
       }
 
       #sort into canonical and non-canonical
       if ($f->display_id =~ /non canonical$/) {
-	      push @$sorted_non_can_feats, $f;
+        push @$sorted_non_can_feats, $f;
       }
       else {
-	      push @$sorted_can_feats, $f;
+        push @$sorted_can_feats, $f;
       }
       $hrefs->{$f->display_id} = $self->href($f);
     }
