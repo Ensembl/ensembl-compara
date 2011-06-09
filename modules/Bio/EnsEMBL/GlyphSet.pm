@@ -229,7 +229,7 @@ sub init_label {
       renderers => \@r,
       fav       => [ $fav, "$url;$track=favourite_" ],
       off       => "$url;$track=off",
-      conf_url  => 'http://' . $config->species_defs->ENSEMBL_SERVERNAME . $hub->url . ";$config->{'type'}=$track=$self->{'display'}"
+      conf_url  => $hub->url . ";$config->{'type'}=$track=$self->{'display'}"
     };
   }
   
