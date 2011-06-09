@@ -22,6 +22,7 @@ sub content {
   my $study_name          = $object->study_name;
   my $study_description   = $object->study_description;
   my $study_url           = $object->study_url;
+	my $states              = $object->validation_status;
   $name = "$class ($name)";
   my $source_link = $hub->get_ExtURL_link($source, 'DGVA', $source);
  
@@ -68,6 +69,13 @@ sub content {
 		$sv_size = "$sv_size,$int_string";
 	}
 	
+	# Validation status
+	my $vstates = '';
+	if ($states) {
+		$vstates = qq{<dt>Validation status</dt><dd>$states</dd>};
+	}
+	
+	
   my $html = qq{
     <dl class="summary">
       <dt>Variation class</dt>
@@ -79,6 +87,7 @@ sub content {
       <dd>$location_link</dd>
 			<dt>Genomic size</dt>
 			<dd>$sv_size bp</dd>
+			$vstates
     </dl>
   };
 	
