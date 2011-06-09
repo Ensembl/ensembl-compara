@@ -81,7 +81,18 @@ sub study_name         { my $self = shift; return $self->Obj->study_name;       
 sub study_description  { my $self = shift; return $self->Obj->study_description;                   }
 sub study_url          { my $self = shift; return $self->Obj->study_url;                           }
 sub external_reference { my $self = shift; return $self->Obj->external_reference;                  }
-sub supporting_sv      { my $self = shift; return $self->Obj->get_all_SupportingStructuralVariants;}    
+sub supporting_sv      { my $self = shift; return $self->Obj->get_all_SupportingStructuralVariants;}
+
+sub validation_status  { 
+	my $self = shift; 
+	my $states = $self->Obj->get_all_validation_states;
+	if ($states ne 0 and $states ne '') {         
+		return join (',',@$states);
+	}
+	else { 
+		return '';
+	}
+}    
 
 sub variation_feature_mapping { 
   my $self = shift;
