@@ -46,9 +46,12 @@ body.mac div.track_order span.menu_option                           { cursor: ns
 
 div.funcgen_matrix                                              { float: left; margin: 0 50px 10px 0; }
 div.funcgen_matrix div.header_wrapper                           { text-align: right; margin-bottom: 40px; }
-div.funcgen_matrix h2                                           { margin: 0 30px 15px 0; border: 0 !important; float: left; }
+div.funcgen_matrix h2                                           { margin: 0 5px 15px 0; border: 0 !important; float: left; }
 div.funcgen_matrix input.filter                                 { color: #999999; }
 div.funcgen_matrix div.no_results                               { font-weight: bold; margin-top: 5px; display: none; }
+div.funcgen_matrix div.help                                     { background: url(/i/info_toggle.png) top left; position: relative; top: 2px; height: 17px; width: 17px; float: left; cursor: pointer; margin-right: 25px }
+div.funcgen_matrix div.help.open                                { background-position: bottom left; }
+div.funcgen_matrix div.desc                                     { margin: 5px 0; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid #CCC; text-align: left; clear: both; }
 div.matrix_key                                                  { margin-bottom: 10px; height: 41px; border-bottom: 1px solid [[PANEL_BORDER]]; }
 div.matrix_key h2                                               { border: 0 !important; width: 75px; float: left; position: relative; top: 10px; }
 div.matrix_key div                                              { float: left; margin-right: 10px; font-weight: bold; position: relative; }
@@ -75,6 +78,7 @@ table.funcgen_matrix td.filter p                                { background: gr
 table.funcgen_matrix td.highlight p                             { background: #DAA520; height: 25px; opacity: 0.4; filter: Alpha(Opacity=40); }
 
 body.ie div.funcgen_matrix h2                                   { margin-bottom: 40px; }
+body.ie div.funcgen_matrix div.desc                             { position: relative; top: -25px; margin: 0; }
 body.ie table.funcgen_matrix th                                 { position: relative; }
 body.ie table.funcgen_matrix thead th p                         { filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3); position: absolute; bottom: 52px; width: 65px; font-weight: normal; }
 body.ie table.funcgen_matrix thead th div.select_all_column     { width: 140px; margin-top: 20px; filter: Alpha(Opacity=85); }
