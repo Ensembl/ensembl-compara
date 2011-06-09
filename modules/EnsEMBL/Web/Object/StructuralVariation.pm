@@ -86,7 +86,7 @@ sub supporting_sv      { my $self = shift; return $self->Obj->get_all_Supporting
 sub validation_status  { 
 	my $self = shift; 
 	my $states = $self->Obj->get_all_validation_states;
-	if ($states ne 0 and $states ne '') {         
+	if (scalar(@$states) and $states->[0]) {
 		return join (',',@$states);
 	}
 	else { 
