@@ -46,6 +46,11 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       headerRow = null;
     });
     
+    $('.help', this.el).bind('click', function () {
+      $(this).toggleClass('open').attr('title', function (i, title) { return title === 'Hide information' ? 'Click for more information' : 'Hide information'; })
+        .siblings('.desc').width($(this).parent().width() - 25).toggle();
+    });
+    
     $('input.filter', this.el).each(function () {
       var related = $(this).parent().siblings();
       
