@@ -10,17 +10,14 @@ sub content {
   my $self         = shift;
   my $hub          = $self->hub;
   my $object       = $self->object;
-  my $id           = $hub->param('id');
   my $db           = $hub->param('fdb') || $hub->param('db') || 'core'; 
-  my $object_type  = $hub->param('ftype');
   my $db_adaptor   = $hub->database(lc $db);
+  my $object_type  = $hub->param('ftype');
   my $adaptor_name = "get_${object_type}Adaptor";
   my $feat_adap    = $db_adaptor->$adaptor_name;
-  my $features     = $feat_adap->fetch_all_by_hit_name($id) || [];
-  my $click_start  = $hub->param('click_start');
-  my $click_end    = $hub->param('click_end');
+  my $features     = $feat_adap->fetch_all_by_Slice($object->slice,$hub->param('ln'));
 
-  $self->caption($id);
+  $self->caption($hub->param('id'));
 
   $self->add_entry({
     type  => 'Location',
