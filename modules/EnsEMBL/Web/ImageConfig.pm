@@ -118,6 +118,69 @@ sub new {
   return $self;
 }
 
+sub menus {
+  return $_[0]->{'menus'} ||= {
+    # Sequence
+    sequence            => 'Sequence',
+    misc_feature        => 'Misc. regions',
+    marker              => 'Markers',
+    repeat              => 'Repeats',
+    
+    # Transcripts/Genes
+    transcript          => 'Genes',
+    prediction          => 'Prediction transcripts',
+    lrg                 => 'LRG transcripts',
+    
+    # Supporting evidence
+    splice_sites        => 'Splice sites',
+    evidence            => 'Evidence',
+    
+    # Alignments
+    dna_align_cdna      => 'cDNA/mRNA alignments',
+    dna_align_est       => 'EST alignments',
+    dna_align_other     => 'Other DNA alignments',
+    dna_align_rna       => 'RNA alignments',
+    rnaseq              => 'RNA-Seq',
+    
+    # Proteins
+    domain              => 'Protein domains',
+    gsv_domain          => 'Protein domains',
+    protein_align       => 'Protein alignments',
+    protein_feature     => 'Protein features',
+    feature             => 'Protein features',
+    
+    # Variations
+    variation           => 'Germline variation',
+    somatic             => 'Somatic mutations',
+    ld_population       => 'Population features',
+    
+    # Regulation
+    functional          => 'Regulation',
+    
+    # Compara
+    pairwise_blastz     => 'BLASTz/LASTz alignments',
+    pairwise_other      => 'Pairwise alignment',
+    pairwise_tblat      => 'Translated blat alignments',
+    multiple_align      => 'Multiple alignments',
+    synteny             => 'Synteny',
+    
+    # Other features
+    oligo               => 'Probe features',
+    ditag               => 'Ditag features',
+    simple              => 'Simple features',
+    trans_associated    => 'Transcript features',
+    
+    # Info/decorations
+    information         => 'Information',
+    decorations         => 'Additional decorations',
+    other               => 'Additional decorations',
+    
+    # External data
+    user_data           => 'User attached data',
+    external_data       => 'External data',
+  };
+}
+
 sub init   {}
 sub modify {} # For plugins
 
@@ -284,10 +347,8 @@ sub remove_disabled_menus {
 # to configure the menus to be seen on the display..
 # key and value pairs are the code and the text of the menu...
 sub create_menus {
-  my ($self, @list) = @_;
-  while (my ($key, $caption) = splice @list, 0, 2) {
-    $self->tree->append_child($self->create_submenu($key, $caption));
-  }
+  my $self = shift;
+  $self->tree->append_child($self->create_submenu($_, $self->menus->{$_})) for @_;
 }
 
 sub create_submenu {
@@ -1811,20 +1872,20 @@ sub add_regulation_builds {
     
     next if $cell_line eq 'MultiCell' && $multi_flag;
 
-    my $track_key = "${key_2}_$cell_line";
+    my $track_key = "reg_feats_$cell_line";
     my $display   = 'off';
-    my $name      = $fg_data{$key_2}{'name'};
+    my $label;
     
     if ($cell_line =~ /MultiCell/) {  
       $display    = $fg_data{$key_2}{'display'} || 'off';
       $multi_flag = 1;
     } else {
-      $name .= " $cell_line";
+      $label = ": $cell_line";
     }
     
     my $cell_line_menu = $self->create_submenu("regulatory_features $cell_line", "$cell_line tracks");
     
-    $cell_line_menu->append($self->create_track($track_key, $name || $fg_data{$key_2}{'logic_names'}, {
+    $cell_line_menu->append($self->create_track($track_key, "$fg_data{$key_2}{'name'}$label", {
       db          => $key,
       glyphset    => $type,
       sources     => 'undef',
@@ -1861,12 +1922,12 @@ sub add_regulation_builds {
     
     if (scalar @focus_sets && scalar @focus_sets <= scalar @ftypes) {
       # Add Core evidence tracks
-      $cell_line_menu->append($self->create_track("reg_feats_core_$cell_line", "Core evidence", { %options, type => 'core', description => $options{'description'}{'core'} }));
+      $cell_line_menu->append($self->create_track("reg_feats_core_$cell_line", "Core evidence$label", { %options, type => 'core', description => $options{'description'}{'core'} }));
     } 
 
     if (scalar @ftypes != scalar @focus_sets  && $cell_line ne 'MultiCell') {
       # Add 'Other' evidence tracks
-      $cell_line_menu->append($self->create_track("reg_feats_other_$cell_line", 'Histones & Polymerases', { %options, type => 'other', description => $options{'description'}{'other'} }));
+      $cell_line_menu->append($self->create_track("reg_feats_other_$cell_line", "Histones & Polymerases$label", { %options, type => 'other', description => $options{'description'}{'other'} }));
     }
     
     $menu->append($cell_line_menu);
