@@ -20,19 +20,19 @@ sub init {
     opt_restrict_zoom => 1,      # when we get "zoom" working draw restriction enzyme info on it!!
   });
   
-  $self->create_menus(
-    sequence      => 'Sequence',
-    marker        => 'Markers',
-    transcript    => 'Genes',
-    misc_feature  => 'Misc. regions',
-    synteny       => 'Synteny',
-    variation     => 'Germline variation', 
-    somatic       => 'Somatic Mutations',
-    external_data => 'External data',
-    user_data     => 'User attached data',
-    decorations   => 'Additional decorations',
-    information   => 'Information'
-  );
+  $self->create_menus(qw(
+    sequence
+    marker
+    transcript
+    misc_feature
+    synteny
+    variation
+    somatic
+    external_data
+    user_data
+    decorations
+    information
+  ));
   
   $self->add_track('sequence', 'contig', 'Contigs', 'stranded_contig', { display => 'off', strand => 'r', description => 'Track showing underlying assembly contigs' });
   

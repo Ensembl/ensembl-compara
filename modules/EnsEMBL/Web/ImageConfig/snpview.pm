@@ -11,23 +11,21 @@ sub init {
 
   $self->set_parameters({
     title           => 'Variation Context',
-    sortable_tracks => 1,     # allow the user to reorder tracks
-    show_labels     => 'yes', # show track names on left-hand side
-    label_width     => 113,   # width of labels on left-hand side
-    opt_halfheight  => 1,     # glyphs are half-height [ probably removed when this becomes a track config ]
-    opt_lines       => 1,     # draw registry lines
+    sortable_tracks => 1,  # allow the user to reorder tracks
+    opt_halfheight  => 1,  # glyphs are half-height [ probably removed when this becomes a track config ]
+    opt_lines       => 1,  # draw registry lines
   });
   
-  $self->create_menus(
-    sequence    => 'Sequence',
-    transcript  => 'Genes',
-    prediction  => 'Prediction transcripts',
-    variation   => 'Germline variation',
-    somatic     => 'Somatic Mutation',
-    functional  => 'Regulation',
-    information => 'Information', 
-    other       => 'Decorations'
-  );
+  $self->create_menus(qw(
+    sequence
+    transcript
+    prediction
+    variation
+    somatic
+    functional
+    information
+    other
+  ));
   
   $self->add_tracks('sequence',
     [ 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r' }]

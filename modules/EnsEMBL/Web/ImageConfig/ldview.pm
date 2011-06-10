@@ -6,16 +6,16 @@ use strict;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
-sub menus {
-  return (
-    population  => 'Population features',
-    transcript  => 'Genes',
-    prediction  => 'Prediction transcripts',
-    variation   => 'Germline variation',
-    somatic     => 'Somatic Mutations',
-    other       => 'Additional decorations',
-    information => 'Information',
-  );
+sub _menus {
+  return (qw(
+    ld_population
+    transcript
+    prediction
+    variation
+    somatic
+    other
+    information
+  ));
 }
 
 sub init {
@@ -23,16 +23,15 @@ sub init {
   my $colours = $self->species_defs->colour('variation');
   
   $self->set_parameters({
-    show_labels  => 'yes', # show track names on left-hand side
-    label_width  => 100,   # width of labels on left-hand side
-    title        => 'LD Panel',
+    title       => 'LD Panel',
+    label_width => 100
   });
   
-  $self->create_menus($self->menus);
+  $self->create_menus($self->_menus);
   
   $self->load_tracks;
   
-  $self->add_tracks('population',
+  $self->add_tracks('ld_population',
     [ 'text',       '', 'text',       { display => 'normal', strand => 'r', menu    => 'no'                                                                                       }],
     [ 'tagged_snp', '', 'tagged_snp', { display => 'normal', strand => 'r', colours => $colours, caption => 'Tagged SNPs',  name => 'Tagged SNPs', depth => 10000, style => 'box' }],
     [ 'ld_r2',      '', 'ld',         { display => 'normal', strand => 'r', colours => $colours, caption => 'LD (r2)',      name => 'LD (r2)', key => 'r2',                       }],
@@ -70,14 +69,13 @@ sub init_slice {
 
 sub init_population {
   my ($self, $parameters, $pop_name) = @_;
-  my %menus = $self->menus;
   
   $self->set_parameters($parameters);
   
   $self->{'_ld_population'} = [ $pop_name ];
   
   $self->get_node('text')->set('text', $pop_name);
-  $self->get_node($_)->remove for grep $_ ne 'population', keys %menus;
+  $self->get_node($_)->remove for grep $_ ne 'population', $self->_menus;
 }
 
 1;

@@ -11,20 +11,19 @@ sub init {
   
   $self->set_parameters({
     title             => 'Comparison Image',
-    show_labels       => 'yes', # show track names on left-hand side
-    label_width       => 100,   # width of labels on left-hand side
-    opt_halfheight    => 0,     # glyphs are half-height [ probably removed when this becomes a track config ]
-    opt_empty_tracks  => 0,     # include empty tracks..
+    label_width       => 100, # width of labels on left-hand side
+    opt_halfheight    => 0,   # glyphs are half-height [ probably removed when this becomes a track config ]
+    opt_empty_tracks  => 0,   # include empty tracks..
   });
   
-  $self->create_menus(      
-    transcript     => 'Genes',
-    variation      => 'Germline variation',
-    somatic        => 'Somatic Mutations',
-    prediction     => 'Prediction transcripts',
-    tsv_transcript => '',
-    other          => '',
-  );
+  $self->create_menus(qw(
+    transcript
+    variation
+    somatic
+    prediction
+    tsv_transcript
+    other
+  ));
   
   $self->load_tracks;
   

@@ -25,8 +25,8 @@ sub init {
     outer_padding   => 20,
   });
 
-  $self->create_menus('features', 'Features');
-  $self->add_tracks('features', [ 'Vsynteny', 'Videogram', 'Vsynteny', { display => 'normal', renderers => [ 'normal', 'normal' ], colourset => 'ideogram' } ]);
+  $self->create_menus('synteny');
+  $self->add_tracks('synteny', [ 'Vsynteny', 'Videogram', 'Vsynteny', { display => 'normal', renderers => [ 'normal', 'normal' ], colourset => 'ideogram' } ]);
   $self->storable = 0;
 }
 

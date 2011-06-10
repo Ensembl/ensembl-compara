@@ -11,38 +11,38 @@ sub init {
   
   $self->set_parameters({
     title           => 'Main panel',
-    sortable_tracks => 1,     # allow the user to reorder tracks
-    show_labels     => 'yes', # show track names on left-hand side
-    label_width     => 113,   # width of labels on left-hand side
-    opt_lines       => 1,     # register lines
+    sortable_tracks => 1,  # allow the user to reorder tracks
+    opt_lines       => 1,  # register lines
     global_options  => 1,
     spritelib       => { default => $self->species_defs->ENSEMBL_SERVERROOT . '/htdocs/img/sprites' }
   });
 
   # Add menus in the order you want them for this display
-  $self->create_menus(
-    options         => 'Comparative features',
-    sequence        => 'Sequence',
-    marker          => 'Markers',
-    transcript      => 'Genes',
-    prediction      => 'Prediction Transcripts',
-    protein_align   => 'Protein alignments',
-    dna_align_cdna  => 'cDNA/mRNA alignments', # Separate menus for different cDNAs/ESTs...
-    dna_align_est   => 'EST alignments',
-    dna_align_rna   => 'RNA alignments',
-    dna_align_other => 'Other DNA alignments', 
-    rnaseq          => 'RNA-Seq',
-    oligo           => 'Probe features',
-    simple          => 'Simple features',
-    misc_feature    => 'Misc. regions',
-    repeat          => 'Repeats',
-    variation       => 'Germline variation',
-    somatic         => 'Somatic mutations', 
-    functional      => 'Regulation',
-    decorations     => 'Additional decorations',
-    information     => 'Information'
-  );
-
+  $self->create_menus(qw(
+    options 
+    sequence
+    marker
+    transcript
+    prediction
+    protein_align 
+    dna_align_cdna
+    dna_align_est 
+    dna_align_rna 
+    dna_align_other 
+    rnaseq
+    oligo 
+    simple
+    misc_feature
+    repeat
+    variation 
+    somatic 
+    functional
+    decorations 
+    information 
+  ));
+  
+  $self->get_node('options')->set('caption', 'Comparative features');
+  
   $self->add_options( 
     [ 'opt_pairwise_blastz', 'BLASTz/LASTz net pairwise alignments',    {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
     [ 'opt_pairwise_tblat',  'Translated BLAT net pairwise alignments', {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],

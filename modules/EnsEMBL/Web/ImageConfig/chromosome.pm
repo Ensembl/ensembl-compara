@@ -10,14 +10,10 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title       => 'Chromosome panel',
-    show_labels => 'yes', # show track names on left-hand side
-    label_width => 113,   # width of labels on left-hand side
+    title => 'Chromosome panel',
   });
   
-  $self->create_menus(
-    decorations => 'Chromosome',
-  );
+  $self->create_menus('decorations');
   
   $self->add_tracks('decorations', 
     [ 'ideogram', 'Ideogram', 'ideogram',  { display => 'normal', strand => 'r', colourset => 'ideogram' }],

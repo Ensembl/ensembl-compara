@@ -22,7 +22,7 @@ sub init {
     all_chromosomes => 'yes'
   });
 
-  $self->create_menus('ideogram', 'Ideogram'); # N.B. Karyotype not currently configurable
+  $self->create_menus('ideogram');
 
   $self->add_tracks('ideogram',
     [ 'drag_left', '', 'Vdraggable', { display => 'normal', part => 0, menu => 'no' }],

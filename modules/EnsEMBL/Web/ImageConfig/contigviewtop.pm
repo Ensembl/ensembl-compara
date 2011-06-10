@@ -12,24 +12,22 @@ sub init {
   $self->set_parameters({
     title             => 'Top panel',
     sortable_tracks   => 'drag', # allow the user to reorder tracks on the image
-    show_labels       => 'yes',  # show track names on left-hand side
-    label_width       => 113,    # width of labels on left-hand side
     opt_empty_tracks  => 0,      # include empty tracks
     opt_lines         => 1,      # draw registry lines
     opt_restrict_zoom => 1       # when we get "zoom" working draw restriction enzyme info on it
   });
   
-  $self->create_menus(
-    sequence     => 'Sequence',
-    marker       => 'Markers',
-    transcript   => 'Genes', 
-    misc_feature => 'Misc. regions',
-    synteny      => 'Synteny',
-    variation    => 'Germline variation',
-    somatic      => 'Somatic mutations',
-    decorations  => 'Additional features',
-    information  => 'Information'
-  );
+  $self->create_menus(qw(
+    sequence
+    marker
+    transcript
+    misc_feature
+    synteny
+    variation
+    somatic
+    decorations
+    information
+  ));
   
   $self->add_track('sequence',    'contig', 'Contigs',     'stranded_contig', { display => 'normal', strand => 'f' });
   $self->add_track('information', 'info',   'Information', 'text',            { display => 'normal'                });

@@ -11,19 +11,17 @@ sub init {
 
   $self->set_parameters({
     title           => 'Regulation Image',
-    sortable_tracks => 1,     # allow the user to reorder tracks
-    show_labels     => 'yes', # show track names on left-hand side
-    label_width     => 113,   # width of labels on left-hand side
-    opt_lines       => 1,     # draw registry lines
+    sortable_tracks => 1,  # allow the user to reorder tracks
+    opt_lines       => 1,  # draw registry lines
   });
 
-  $self->create_menus(
-    transcript   => 'Genes',
-    prediction   => 'Prediction transcripts',
-    functional   => 'Regulation',
-    other        => 'Decorations',
-    information  => 'Information',
-  );
+  $self->create_menus(qw(
+    transcript
+    prediction
+    functional
+    other
+    information
+  ));
 
   $self->load_tracks;
  

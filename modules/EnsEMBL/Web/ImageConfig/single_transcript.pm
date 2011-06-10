@@ -11,16 +11,10 @@ sub init {
 
   $self->set_parameters({
     title       => 'Transcript panel',
-    show_labels => 'no',  # show track names on left-hand side
-    label_width => 113,   # width of labels on left-hand side
+    show_labels => 'no'
   });
-
-  $self->create_menus(
-    lrg        => 'LRG transcripts',
-    transcript => 'Other genes',
-    prediction => 'Prediction transcripts',
-    other      => 'Decorations',
-  );
+  
+  $self->create_menus('transcript', 'prediction', 'other');
 
   $self->add_tracks('other',
     [ 'ruler',     '', 'ruler',     { display => 'normal', strand => 'r', name => 'Ruler' }],
@@ -28,19 +22,6 @@ sub init {
   );
 
   $self->load_tracks;
-
-  # FIXME - should surely come from db?
-  $self->add_tracks('lrg',
-    [ 'lrg_transcript',  'LRG', '_lrg_transcript', {
-      display     => 'normal',
-      name        => 'LRG transcripts', 
-      description => 'Shows LRG transcripts',
-      logic_names => [ 'LRG_download' ],
-      logic_name  => 'LRG_download',
-      colours     => $self->species_defs->colour('gene'),
-      label_key   => '[display_label]',
-    }]
-  );
 
   $self->modify_configs(
     [ 'transcript', 'prediction' ],

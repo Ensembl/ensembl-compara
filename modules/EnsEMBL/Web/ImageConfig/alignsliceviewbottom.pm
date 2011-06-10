@@ -12,18 +12,16 @@ sub init {
   $self->set_parameters({
     title           => 'Detailed panel',
     sortable_tracks => 1,     # allow the user to reorder tracks
-    show_labels     => 'yes', # show track names on left-hand side
-    label_width     => 113,   # width of labels on left-hand side
   });
 
-  $self->create_menus(
-    sequence    => 'Sequence',
-    transcript  => 'Genes',
-    repeat      => 'Repeats',
-    variation   => 'Germline variation',
-    somatic     => 'Somatic mutations',
-    information => 'Information'
-  );
+  $self->create_menus(qw(
+    sequence
+    transcript
+    repeat
+    variation
+    somatic
+    information
+  ));
   
   $self->add_track('sequence', 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' });
   $self->add_tracks('information', 

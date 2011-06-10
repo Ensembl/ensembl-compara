@@ -13,13 +13,13 @@ sub init {
     title => 'Protein display',
   });
 
-  $self->create_menus(
-    domain      => 'Protein domains',
-    feature     => 'Protein features',
-    variation   => 'Germline variation',
-    other       => 'Decorations',
-    information => 'Information'
-  );
+  $self->create_menus(qw(
+    domain
+    feature
+    variation
+    other
+    information
+  ));
   
   $self->load_tracks;
   

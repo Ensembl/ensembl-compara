@@ -18,15 +18,14 @@ sub init {
     top_margin   => 40,
     band_links   => 'yes',
     spacing      => 10,
-    active_menu  => 'features'
+    active_menu  => 'other'
   });
 
-  $self->create_menus( 
-    'features',  'Features', 
-    'user_data', 'User attached data', # DAS/URL tracks/uploaded data/blast responses
-  );
-
-  $self->add_tracks('features',
+  $self->create_menus('other', 'user_data');
+  
+  $self->get_node('other')->set('caption', 'Features');
+  
+  $self->add_tracks('other',
     [ 'drag_left', '', 'Vdraggable', { display => 'normal', part => 0, menu => 'no' }],
     [ 'Videogram', 'Ideogram', 'Videogram', {
       display   => 'normal',

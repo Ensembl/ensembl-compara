@@ -12,26 +12,24 @@ sub init {
   $self->set_parameters({
     title           => 'Feature context',
     sortable_tracks => 1,
-    show_labels     => 'yes',
-    label_width     => 113,
     opt_lines       => 1,
   });  
 
-  $self->create_menus(
-    sequence      => 'Sequence',
-    transcript    => 'Genes',
-    prediction    => 'Prediction transcripts',
-    dna_align_rna => 'RNA alignments',
-    oligo         => 'Probe features',
-    simple        => 'Simple features',
-    misc_feature  => 'Misc. regions',
-    repeat        => 'Repeats',
-    functional    => 'Regulation', 
-    variation     => 'Germline variation',
-    other         => 'Decorations',
-    information   => 'Information'
-  );
-
+  $self->create_menus(qw(
+    sequence
+    transcript
+    prediction
+    dna_align_rna
+    oligo
+    simple
+    misc_feature
+    repeat
+    functional
+    variation
+    other
+    information
+  ));
+  
   $self->add_tracks('other',
     [ 'scalebar', '', 'scalebar', { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
     [ 'ruler',    '', 'ruler',    { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }]

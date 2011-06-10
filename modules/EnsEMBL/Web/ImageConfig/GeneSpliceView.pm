@@ -11,20 +11,21 @@ sub init {
   
   $self->set_parameters({
     title            => 'Splice variants',
-    show_labels      => 'yes', # show track names on left-hand side
-    label_width      => 100,   # width of labels on left-hand side
-    opt_halfheight   => 0,     # glyphs are half-height [ probably removed when this becomes a track config ]
-    opt_empty_tracks => 0,     # include empty tracks..
+    label_width      => 100, # width of labels on left-hand side
+    opt_halfheight   => 0,   # glyphs are half-height [ probably removed when this becomes a track config ]
+    opt_empty_tracks => 0,   # include empty tracks..
   });
   
-  $self->create_menus(      
-    transcript     => 'Other Genes',
-    gsv_transcript => '',
-    other          => '',
-    gsv_domain     => 'Protein Domains'    
-  );
+  $self->create_menus(qw(
+    transcript
+    gsv_transcript
+    other 
+    gsv_domain
+  ));
   
   $self->load_tracks;
+  
+  $self->get_node('transcript')->set('caption', 'Other genes');
   
   $self->modify_configs(
     [ 'gsv_transcript', 'other' ],

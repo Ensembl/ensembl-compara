@@ -12,23 +12,23 @@ sub init {
   $self->set_parameters({
     title             => 'Top panel',
     sortable_tracks   => 1,     # allow the user to reorder tracks
-    show_labels       => 'yes', # show track names on left-hand side
-    label_width       => 113,   # width of labels on left-hand side
     opt_empty_tracks  => 0,     # include empty tracks
     opt_lines         => 1,     # draw registry lines
     opt_restrict_zoom => 1,     # when we get "zoom" working draw restriction enzyme info on it
     global_options    => 1   
   });
 
-  $self->create_menus(
-    options     => 'Comparative features',
-    sequence    => 'Sequence',
-    marker      => 'Markers',
-    transcript  => 'Genes',
-    synteny     => 'Synteny',
-    decorations => 'Additional features',
-    information => 'Information'
-  );
+  $self->create_menus(qw(
+    options
+    sequence
+    marker
+    transcript
+    synteny
+    decorations
+    information
+  ));
+  
+  $self->get_node('options')->set('caption', 'Comparative features');
   
   $self->add_options( 
     [ 'opt_join_genes', 'Join genes', undef, undef, 'off' ]

@@ -17,44 +17,42 @@ sub init {
   $self->set_parameters({
     title             => 'Main panel',
     sortable_tracks   => 'drag', # allow the user to reorder tracks on the image
-    show_labels       => 'yes',  # show track names on left-hand side
-    label_width       => 113,    # width of labels on left-hand side
     opt_halfheight    => 0,      # glyphs are half-height [ probably removed when this becomes a track config ]
     opt_lines         => 1,      # draw registry lines
     opt_restrict_zoom => 1       # when we get "zoom" working draw restriction enzyme info on it
   });
   
   # First add menus in the order you want them for this display
-  $self->create_menus(
-    sequence         => 'Sequence',
-    marker           => 'Markers',
-    trans_associated => 'Transcript Features',
-    transcript       => 'Genes',
-    prediction       => 'Prediction Transcripts',
-    protein_align    => 'Protein alignments',
-    protein_feature  => 'Protein features',
-    dna_align_cdna   => 'cDNA/mRNA alignments', # Separate menus for different cDNAs/ESTs
-    dna_align_est    => 'EST alignments',
-    dna_align_rna    => 'RNA alignments',
-    dna_align_other  => 'Other DNA alignments',
-    rnaseq           => 'RNA-Seq',
-    oligo            => 'Probe features',
-    ditag            => 'Ditag features',
-    external_data    => 'External data',
-    user_data        => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
-    simple           => 'Simple features',
-    misc_feature     => 'Misc. regions',
-    repeat           => 'Repeats',
-    variation        => 'Germline variation',
-    somatic          => 'Somatic Mutations',
-    functional       => 'Regulation',
-    multiple_align   => 'Multiple alignments',
-    pairwise_blastz  => 'BLASTz/LASTz alignments',
-    pairwise_tblat   => 'Translated blat alignments',
-    pairwise_other   => 'Pairwise alignment',
-    decorations      => 'Additional decorations',
-    information      => 'Information'
-  );
+  $self->create_menus(qw(
+    sequence
+    marker
+    trans_associated
+    transcript
+    prediction
+    protein_align
+    protein_feature
+    dna_align_cdna
+    dna_align_est
+    dna_align_rna
+    dna_align_other
+    rnaseq
+    oligo
+    ditag
+    external_data
+    user_data
+    simple
+    misc_feature
+    repeat
+    variation
+    somatic
+    functional
+    multiple_align
+    pairwise_blastz
+    pairwise_tblat
+    pairwise_other
+    decorations
+    information
+  ));
   
   # Note these tracks get added before the "auto-loaded tracks" get added
   $self->add_tracks( 'sequence', 

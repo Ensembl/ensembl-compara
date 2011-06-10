@@ -14,27 +14,25 @@ sub init {
   s/\:\d*// for @cell_lines;
   
   $self->set_parameters({
-    title       => 'Details by cell line',
-    show_labels => 'yes',
-    label_width => 113,
-    opt_lines   => 1
+    title     => 'Details by cell line',
+    opt_lines => 1
   });
   
-  $self->create_menus(
-    sequence       => 'Sequence',
-    transcript     => 'Genes',
-    prediction     => 'Prediction transcripts',
-    dna_align_rna  => 'RNA alignments',
-    oligo          => 'Probe features',
-    simple         => 'Simple features',
-    misc_feature   => 'Misc. regions',
-    repeat         => 'Repeats',
-    functional     => 'Regulation', 
-    multiple_align => 'Multiple alignments',
-    variation      => 'Germline variation',
-    other          => '',
-    information    => 'Information'
-  );
+  $self->create_menus(qw(
+    sequence
+    transcript
+    prediction
+    dna_align_rna
+    oligo
+    simple
+    misc_feature
+    repeat
+    functional
+    multiple_align
+    variation
+    other
+    information
+  ));
   
   $self->load_tracks;
   

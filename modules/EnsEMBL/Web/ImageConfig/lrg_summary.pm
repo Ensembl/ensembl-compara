@@ -10,25 +10,25 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title         => 'Transcript panel',
-    show_labels   => 'yes', # show track names on left-hand side
-    label_width   => 113,   # width of labels on left-hand side
-    opt_lines     => 1,     # draw registry lines
+    title     => 'Transcript panel',
+    opt_lines => 1,  # draw registry lines
   });
 
-  $self->create_menus(
-    sequence      => 'Sequence',
-    transcript    => 'Other genes',
-    prediction    => 'Prediction transcripts',
-    lrg           => 'LRG transcripts',
-    variation     => 'Germline variation',
-    somatic       => 'Somatic mutations',
-    functional    => 'Regulation',
-    external_data => 'External data',
-    user_data     => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
-    other         => 'Decorations',
-  );
-
+  $self->create_menus(qw(
+    sequence
+    transcript
+    prediction
+    lrg
+    variation
+    somatic
+    functional
+    external_data
+    user_data
+    other
+  ));
+  
+  $self->get_node('transcript')->set('caption', 'Other genes');
+  
   $self->add_tracks('other',
     [ 'scalebar',  '', 'lrg_scalebar', { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
     [ 'ruler',     '', 'ruler',        { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],

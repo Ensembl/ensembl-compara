@@ -11,11 +11,10 @@ sub init {
 
   $self->set_parameters({
     title       => 'Alignment panel',
-    show_labels => 'yes', # show track names on left-hand side
-    label_width => 80,    # width of labels on left-hand side
+    label_width => 80, # width of labels on left-hand side
   });
 
-  $self->create_menus(other => 'Decorations');
+  $self->create_menus('other');
 
   $self->add_tracks('other',
     [ 'scalebar',   '',         'HSP_scalebar',   { display => 'normal', strand => 'f', name => 'Scale bar',      col => 'black', description => 'Shows the scalebar' }],

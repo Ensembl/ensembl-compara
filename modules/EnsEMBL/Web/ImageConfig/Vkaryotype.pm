@@ -18,10 +18,7 @@ sub init {
     all_chromosomes => 'yes'
   });
 
-  $self->create_menus( 
-    'ideogram',  '',           # N.B. Karyotype not currently configurable
-    'user_data', 'User attached data', # DAS/URL tracks/uploaded data/blast responses
-   );
+  $self->create_menus('ideogram', 'user_data');
 
   $self->add_tracks('ideogram',
     [ 'drag_left', '', 'Vdraggable', { display => 'normal', part => 0, menu => 'no' }],

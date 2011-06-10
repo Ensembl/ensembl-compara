@@ -11,17 +11,14 @@ sub init {
   
   $self->set_parameters({
     title       => 'ID History Map',
-    show_labels => 'no',   # show track names on left-hand side
-    label_width => 100,    # width of labels on left-hand side
+    show_labels => 'no',
   });
 
-  $self->create_menus(
-    ID_History => 'History',
-  );
+  $self->create_menus('idhistory');
 
   $self->load_tracks;
 
-  $self->add_tracks('ID_History',
+  $self->add_tracks('idhistory',
     [ 'idhistorytree', '', 'idhistorytree', { display => 'on', strand => 'f', menu => 'no' }]
   );
   
