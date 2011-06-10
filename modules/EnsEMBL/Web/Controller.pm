@@ -173,9 +173,6 @@ sub configuration {
     }
     
     $self->{'configuration'} = $configuration;
-  } elsif (!$self->{'configuration'}{'object'} && $self->object) {
-    $self->{'configuration'}{'object'} = $self->object;
-    $self->{'configuration'}->set_action($hub->action, $hub->function);
   }
   
   return $self->{'configuration'};
