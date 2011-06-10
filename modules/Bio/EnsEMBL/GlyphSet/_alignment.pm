@@ -62,6 +62,7 @@ sub href {
   my( $self, $f ) = @_;
   my $r = $f->seq_region_name.':'.$f->seq_region_start.'-'.$f->seq_region_end;
   my $action = $self->my_config('zmenu') ?  $self->my_config('zmenu') :  'Genome';
+  my $ln = $f->can('analysis') ? $f->analysis->logic_name : '';
   return $self->_url({
     'action'  => $action,
     'ftype'   => $self->my_config('object_type') || 'DnaAlignFeature',
@@ -69,6 +70,7 @@ sub href {
     'id'      => $f->display_id,
     'db'      => $self->my_config('db'),
     'species' => $self->species,
+    'ln'      => $ln,
   });
 }
 
@@ -106,10 +108,8 @@ sub render_labels {
 #variable height renderer
 sub render_histogram {
   my $self = shift;
-
-  $self->{'max_score'} = $self->my_config('hist_max_height') || 50; # ny feature with a score >= this shown at max height. Set to 50 for rna-seq but can be configured via web-data
-  $self->{'height'} = 30; #scaling factor for overall track height
-
+  $self->{'max_score'} = $self->my_config('hist_max_height') || 50; # defines scaling factor, plus any feature with a score >= this shown at max height (set to 50 for rna-seq but can be configured via web-data)
+  $self->{'height'} = 30; # overall track height
   my $strand = $self->strand;
   my %features = $self->features;
   foreach my $feature_key (keys %features) {
