@@ -49,6 +49,11 @@
   A <kbd>modify</kbd> function has been added to both <kbd>EnsEMBL::Web::ViewConfig</kbd> and <kbd>EnsEMBL::Web::ImageConfig</kbd> as an empty stub.
   <br />It is called directly after <kbd>init</kbd> in both cases, and can be used to make changes to configuration without having to overwrite the existing <kbd>init</kbd> function.
 </li>
+<li>
+  <kbd>EnsEMBL::Web::ImageConfig->create_menus</kbd> now takes a list of menu keys only.
+  <br />A new function, <kbd>EnsEMBL::Web::ImageConfig->menus</kbd> has been added to define all menu captions in one place, with a lookup done for the arguments given to <kbd>create_menus</kbd>.
+  <br />Individual menus can have their captions changed by doing <kbd>$self->get_node([MENU_KEY])->set('caption', [CAPTION])</kbd> where necessary.
+</li>
 
 </ul>
 
