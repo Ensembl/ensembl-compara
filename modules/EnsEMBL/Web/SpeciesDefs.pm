@@ -1039,7 +1039,7 @@ sub species_path {
   return $url if $url;
   
   ## Is this species found on this site?
-  if ($self->ENSEMBL_SITETYPE !~ /bacteria/i && $self->valid_species($species)) {
+  if ($self->valid_species($species)) {
     $url = "/$species";
   } else { 
     ## At the moment the mapping between species name and its source (full url) is stored in DEFAULTs.ini
