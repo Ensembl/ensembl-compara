@@ -29,10 +29,11 @@ use CGI;
 
 $| = 1;
 
-my ($species_list,$ignore_species_list,$indexes_list,$search_engine,$debug,$dry_run,$log,$dir,$help);
+my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$search_engine,$debug,$dry_run,$log,$dir,$help);
 GetOptions('species=s' => \$species_list,
            'ignore_species=s' => \$ignore_species_list,
            'index=s'   => \$indexes_list,
+           'ignore_index=s' => \$ignore_indexes_list,
            'engine=s'  => \$search_engine,
            'debug'     => \$debug,
            'dry_run|n' => \$dry_run,
@@ -49,6 +50,7 @@ if ($help){
 my @species        = split ',',$species_list;
 my @ignore_species = split ',',$ignore_species_list;
 my @indexes        = split ',',$indexes_list;
+my @ignore_indexes = split ',',$ignore_indexes_list;
 
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
 our $release = $SD->ENSEMBL_VERSION;
@@ -69,8 +71,16 @@ unless ($debug) {
 }
 
 ## HACK 1 - if the INDEX is set to ALL grab all dumper methods...
-@indexes = map { /dump(\w+)/?$1:() } keys %indexXMLDumper:: if $indexes[0] eq 'ALL';
-
+if ($indexes_list eq 'ALL'){
+  @indexes = ();
+  my %ignored;
+  @ignored{@ignore_indexes} = ();
+  foreach my $method (keys %indexXMLDumper::) {
+    if ($method =~ s/dump(\w+)/$1/) {
+      push @indexes, $method unless exists $ignored{$method};
+    }
+  }
+}
 
 ## HACK 2 - if the SPECIES is set to ALL grab stuff from config...
 my %X = %{$SD->ENSEMBL_SPECIES_ALIASES};
@@ -2714,7 +2724,7 @@ sub about {
   print STDERR <<ABOUT_END;
 
 usage:
-./indexXMLDumper --species=aaa,bbb|ALL --index=xxx,yyy|ALL (--ignore_species=ccc) (--debug) (--log=index.log) (--dir=dir) (--dry_run|n)
+./indexXMLDumper --species=aaa,bbb|ALL --index=vvv,xxx|ALL (--ignore_species=ccc,ddd) (--ignore_index=yyy,zzz) (--debug) (--log=index.log) (--dir=dir) (--dry_run|n)
 
 'ALL' can be used for both 'species' and 'index'
 
@@ -2735,6 +2745,7 @@ Examples:
 ./indexXMLDumper --species=ALL --index=ALL                          #all log output to dumping_$release.log; xml to /nfs/eureka/data/ensembl_$release; all indices for all species
 ./indexXMLDumper --species=ALL --index=ALL --dir=input              #all log output to dumping_$release.log; xml to input; all indices for all species
 ./indexXMLDumper --species=ALL --ignore_species=Homo_sapiens --index=Variation --log=no_hs_variations.log #log output to no_hs_variations; xml to /nfs/eureka/data/ensembl_$release"; Variations for all species but human
+./indexXMLDumper --species=ALL --ignore_index=Variation --log=no_variations.log #log output to no_variations; xml to /nfs/eureka/data/ensembl_$release"; All indexes apart from Variations for for all species
 ./indexXMLDumper --species=ALL --index=Gene --engine solr  -log dumping.log #output in format for solr (for testing, only works for genes as yet)
 
 ABOUT_END
