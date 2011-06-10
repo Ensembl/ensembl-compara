@@ -22,8 +22,8 @@ sub init {
   my $cached = $self->get_cached_content($request); # Page retrieved from cache
   
   if (!$cached) {
-    return if $self->update_configuration_from_url;                                      # Configuration has been updated - will force a redirect
-    return if $self->builder->create_objects($hub->factorytype, $request) eq 'redirect'; # Forcing a redirect - don't need to go any further
+    my $redirect = $self->builder->create_objects($hub->factorytype, $request) eq 'redirect'; # Build objects before checking configuration - they are needed by Configuration.pm
+    return if $self->update_configuration_from_url || $redirect;                              # Redirect if a configuration has been updated or object parameters have changed
   }
   
   $self->update_user_history if $hub->user;
