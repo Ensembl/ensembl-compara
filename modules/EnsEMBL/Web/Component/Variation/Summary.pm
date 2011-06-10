@@ -28,6 +28,7 @@ sub content {
   my $variation_features = $variation->get_all_VariationFeatures;
   my $display_name       = $object->name;
   my $version            = $object->source_version;
+	my @expand             = split(',',$hub->param('expand')); # Expand one ore several fields by default (e.g. HGVS,set))
 	
 	# Date version
 	if ($version =~ /^(20\d{2})(\d{2})/) {
@@ -223,11 +224,14 @@ sub content {
 			if ($vs_count != scalar @$variation_sets) {		
 					$set_label = "This feature is present in <b>1000 genomes</b> and <b>$vs_count</b> other sets";
 			}
+			
+			my $box_display = $self->expand('set',\@expand);
+			
 			$vs_list = '<ul><li>'.join('</li><li>', @$variation_sets).'</li></ul>';
 			$html .= sprintf(qq{
-		  	<dt class="toggle_button" title="Click to toggle sets names"><span>Present in</span><em class="closed"></em></dt>
+		  	<dt class="toggle_button" title="Click to toggle sets names"><span>Present in</span><em class="$box_display->[0]"></em></dt>
 		  	<dd>$set_label - click the plus to show all sets</dd>
-		  	<dd class="toggle_info" style="display:none;font-weight:normal;">$vs_list</dd>
+		  	<dd class="toggle_info" style="display:$box_display->[1];font-weight:normal;">$vs_list</dd>
 				<table class="toggle_table" style="display:none"></table>
 			});
 		}
@@ -544,14 +548,14 @@ sub content {
             	v      => $object->name,
             	source => $variation->source}).'">'.$&.'<\/a>'/eg;
 
-					$h =~ s/ENS(...)?P\d+(\.\d+)?/'<a href="'.$hub->url({
-            	type => 'Transcript',
-            	action => 'ProtVariations',
-            	db     => 'core',
-            	r      => undef,
-            	p      => $&,
-            	v      => $object->name,
-            	source => $variation->source}).'">'.$&.'<\/a>'/eg;
+					#$h =~ s/ENS(...)?P\d+(\.\d+)?/'<a href="'.$hub->url({
+#            	type => 'Transcript',
+#            	action => 'ProtVariations',
+#            	db     => 'core',
+#            	r      => undef,
+#            	p      => $&,
+#            	v      => $object->name,
+#            	source => $variation->source}).'">'.$&.'<\/a>'/eg;
 
         	push @temp, $h;
 				}
@@ -567,11 +571,12 @@ sub content {
 	  	}
 	  
 	  	else {
+				my $box_display = $self->expand('HGVS',\@expand);
 				my $several = ($count>1) ? 's' : '';
 				$html .= sprintf(qq{
-		  			<dt class="toggle_button" title="Click to toggle HGVS names"><span>HGVS names</span><em class="closed"></em></dt>
+		  			<dt class="toggle_button" title="Click to toggle HGVS names"><span>HGVS names</span><em class="$box_display->[0]"></em></dt>
 		  			<dd>This feature has $count HGVS name$several - click the plus to show</dd>
-		  			<dd class="toggle_info" style="display:none;font-weight:normal;">$hgvs_html</dd>
+		  			<dd class="toggle_info" style="display:$box_display->[1];font-weight:normal;">$hgvs_html</dd>
 		  		</dl>
 		  		<table class="toggle_table" style="display:none" id="hgvs"></table>
 				});
@@ -582,4 +587,20 @@ sub content {
   return qq{<div class="summary_panel">$html</div>};
 }
 
+# Determine whether the box has to be expanded or not by default
+sub expand {
+	my $self   = shift;
+	my $div    = shift;
+	my $expand = shift;
+	
+	if (scalar @$expand > 0) {
+		if (grep {$div eq $_} @$expand) {
+			return ['open','normal'];
+		}
+		else {
+			return ['closed','none'];
+		}
+	}
+	return ['closed','none'];
+}
 1;
