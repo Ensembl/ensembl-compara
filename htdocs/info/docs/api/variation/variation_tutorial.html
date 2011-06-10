@@ -233,7 +233,7 @@ foreach my $tv (@{$trvs}) {
 		
 		foreach my $oc(@{$ocs}) {
 			push @ensembl_consequences, $oc-&gt;display_term;
-			push @so_consequences, $oc-&gt;so_term;
+			push @so_consequences, $oc-&gt;SO_term;
 		}
 		
 		my $sift = $tva-&gt;sift_prediction;
