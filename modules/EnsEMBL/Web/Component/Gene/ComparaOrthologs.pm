@@ -72,13 +72,13 @@ sub content {
 
       my $url = $self->ajax_url . ";set=$set;update_panel=1";
       my $show = qq{
-        <a href="$url" class="ajax_add toggle closed" rel="$set">
+        <a href="$url" class="ajax_update toggle closed" rel="">
           <span class="closed">Show</span><span class="open">Hide</span>
-          <input type="hidden" class="url" value="$url" />
+          <input type="hidden" class="set" value="$set" />
         </a>
       };
 
-      my $url = $hub->url({'sets' => $set});
+      my $url = $hub->url({'set' => $set});
       push @rows, {
         'set'         => '<strong>'.$set_info->{'title'}.'</strong><br />'.$set_info->{'desc'},
         'show'        => $show,
@@ -110,8 +110,6 @@ sub content {
     %selected_species = %orthologue_list; 
   }
  
-  $columns = [
-    { key => 'Species',            align => 'left', width => '5%', sort => 'html'          },
   my $column_name =  $self->html_format ? 'Compare' : 'Description';
   
   my $columns = [
