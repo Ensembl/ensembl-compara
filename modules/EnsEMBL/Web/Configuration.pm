@@ -213,7 +213,7 @@ sub create_submenu {
 sub delete_node {
   my ($self, $code) = @_;
   my $node = $self->tree->get_node($code);
-  $node->remove_node if $node;
+  $node->remove if $node;
 }
 
 sub get_configurable_components {
