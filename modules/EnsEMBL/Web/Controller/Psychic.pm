@@ -107,6 +107,7 @@ sub psychic {
 
   ## If we have a species and a location can we jump directly to that page ?
   if ($species || $query_species ) {
+    my $real_chrs = $hub->species_defs->ENSEMBL_CHROMOSOMES;
     my $jump_query = $query;
     if ($query_species) {
       $jump_query = $query_without_species;
@@ -114,8 +115,11 @@ sub psychic {
     }
 
     if ($jump_query =~ s/^(chromosome)//i || $jump_query =~ s/^(chr)//i) {
-      $flag = $1;
-      $index_t = 'Chromosome';
+      $jump_query =~ s/^ //;
+      if (grep { $jump_query eq $_ } @$real_chrs) {
+        $flag = $1;
+        $index_t = 'Chromosome';
+      }
     }
     elsif ($jump_query =~ s/^(contig|clone|supercontig|scaffold|region)//i) {
       $index_t = 'Sequence';
@@ -134,6 +138,7 @@ sub psychic {
 
       my $script = 'Location/View';
       $script    = 'Location/Overview' if $end - $start > 1000000;
+
 
       if ($index_t eq 'Chromosome') {
         $url  = "$species_path/Location/Chromosome?r=$seq_region_name";
