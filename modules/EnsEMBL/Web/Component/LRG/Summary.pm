@@ -96,6 +96,14 @@ sub content {
     
     my $hide = $self->hub->get_cookies('ENSEMBL_transcripts') eq 'close';
     
+		my $action = $hub->action;
+		
+		my %url_params = (
+      type   => 'LRG',
+      #action => $action eq 'Summary' ? 'Summary' : $action
+			lrg => $param
+    );
+		
     $html .= sprintf(qq{
       <dl class="summary">
         <dt id="transcripts" class="toggle_button" title="Click to toggle the transcript table"><span>Transcripts</span><em class="%s"></em></dt>
@@ -120,8 +128,12 @@ sub content {
  
     foreach (map $_->[2], sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map [$_->external_name, $_->stable_id, $_], @$transcripts) {
       my $transcript = encode_entities($_->stable_id);
-      my $protein    = $_->translation ? 'LRG Protein' : 'No protein product';
-      
+      #my $protein    = $_->translation ? 'LRG Protein' : 'No protein product';
+			
+			my $url = $hub->url({ %url_params, lrgt => $_->stable_id });
+			
+			my $tr_id = qq{<a href="$url">$transcript</a>};
+			
       $html .= sprintf('
         <tr%s>      
           <th>%s</th>
@@ -130,8 +142,7 @@ sub content {
         </tr>',
         $_->stable_id eq $transcript ? ' class="active"' : '',
         encode_entities($_->display_xref ? $_->display_xref->display_id : '-'),
-        $transcript,
-	      $protein
+        $tr_id, #$transcript,
       );
     }
     
