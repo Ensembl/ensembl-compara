@@ -441,11 +441,6 @@ sub get_option {
   return $node ? $node->get($key || 'values')->{$node->get('display')} : 0;
 }
 
-sub _check_menus {
-  my $self = shift;
-  return !!grep $self->get_node($_), @_;
-}
-
 sub load_user_tracks {
   my ($self, $session) = @_;
   my $menu = $self->get_node('user_data');
@@ -481,7 +476,7 @@ sub load_user_tracks {
       format      => $entry->{'format'},
       style       => $entry->{'style'},
       colour      => $entry->{'colour'},
-      display     => $entry->{'display'} || 'normal',
+      display     => $entry->{'display'},
       timestamp   => $time,
     };
   }
@@ -549,11 +544,11 @@ sub load_user_tracks {
   }
 
   foreach my $url (sort { $url_sources{$a}{'source_name'} cmp $url_sources{$b}{'source_name'} } keys %url_sources) {
-    my $add_method = '_add_'.lc($url_sources{$url}{'format'}).'_track';
+    my $add_method = '_add_' . lc($url_sources{$url}{'format'}) . '_track';
+    
     if ($self->can($add_method)) {
       $self->$add_method($menu, $url_sources{$url});
-    }
-    else {
+    } else {
       my $k = 'url_' . md5_hex($self->{'species'} . ':' . $url);
         
       $self->_add_flat_file_track($menu, 'url', $k, $url_sources{$url}{'source_name'}, sprintf('
@@ -603,145 +598,118 @@ sub load_user_tracks {
   }
 }
 
-sub load_configured_bam {
-  my $self = shift;
+sub load_configured_bam    { shift->load_file_format('bam');    }
+sub load_configured_bigwig { shift->load_file_format('bigwig'); }
+sub load_configured_vcf    { shift->load_file_format('vcf');    }
+
+sub load_file_format {
+  my ($self, $format)  = @_;
+  my $internal_sources = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {}; # get the internal sources from config
+  my $function         = "_add_${format}_track";
   
-  # get the internal sources from config
-  my $internal_bam_sources = $self->sd_call('ENSEMBL_INTERNAL_BAM_SOURCES') || {};
-  
-  foreach my $source_name (sort keys %$internal_bam_sources) {
+  foreach my $source_name (sort keys %$internal_sources) {
     # get the target menu 
-    my $menu   = $self->get_node($internal_bam_sources->{$source_name});
+    my $menu   = $self->get_node($internal_sources->{$source_name});
     my $source = $menu ? $self->sd_call($source_name) : undef;
     
-    $self->_add_bam_track($menu, $source) if $source;
+    $self->$function($menu, $source) if $source;
   }
 }
- 
+
 sub _add_bam_track {
-  my ($self, $menu, $source) = @_;
-  
-  $menu ||= $self->get_node('user_data');
-  return unless $menu;
-
-  my $time  = $source->{'timestamp'};
-  my $key   = 'bam_'.$time.'_' . md5_hex("$self->{'species'}:$source->{'source_url'}");
-
-  my $description = sprintf('
-        Data retrieved from a BAM file on an external webserver.  
-        The read end bars indicate the direction of the read and the colour indicates the type of read pair: Green = both mates mapped to the same chromosome, Blue = second mate was not mapped, Red = second mate mapped to a different chromosome.
-        This data is attached to the %s, and comes from URL: %s',
-        encode_entities($source->{'source_type'}), encode_entities($source->{'source_url'})
-      );
-  
-  my $track = $self->create_track($key, $source->{'source_name'}, {
-    display   => $source->{'display'} || 'off',
-    strand    => 'f',
-    _class    => 'bam',
-    glyphset  => 'bam',
-    colourset => 'bam',
-    sub_type  => 'bam',
-    renderers => [
-      'off',       'Off', 
-      'normal',    'Normal', 
-      'unlimited', 'Unlimited', 
-      'histogram', 'Coverage only'
-    ],
-    caption   => $source->{'source_name'},
-    url       => $source->{'source_url'},
-    description => $description,
-  });
- 
-  $menu->append($track) if $track;
-}
-
-sub load_configured_bigwig {
   my $self = shift;
-  # get the internal sources from config
-  my $internal_bigwig_sources = $self->sd_call('ENSEMBL_INTERNAL_BIGWIG_SOURCES') || {};
-
-  foreach my $source_name (sort keys %$internal_bigwig_sources) {
-    # get the target menu 
-    my $menu   = $self->get_node($internal_bigwig_sources->{$source_name});
-    my $source = $menu ? $self->sd_call($source_name) : undef;
-
-    $self->_add_bigwig_track($menu, $source) if $source;
-  }
+  my $desc = '
+    The read end bars indicate the direction of the read and the colour indicates the type of read pair:
+    Green = both mates mapped to the same chromosome, Blue = second mate was not mapped, Red = second mate mapped to a different chromosome.
+  ';
+  
+  $self->_add_file_format_track(@_, 'BAM', [
+    'off',       'Off', 
+    'normal',    'Normal', 
+    'unlimited', 'Unlimited', 
+    'histogram', 'Coverage only'
+  ], {
+    _class   => 'bam',
+    sub_type => 'bam'
+  }, $desc);
 }
 
 sub _add_bigwig_track {
-  my ($self, $menu, $source) = @_;
- 
-  $menu ||= $self->get_node('user_data');
-  return unless $menu;
-
-  my $time = $source->{'timestamp'};
-  my $key    = "bigwig_$time" . '_' . md5_hex("$source->{'species'}:$source->{'source_url'}");
-
-  my $track = $self->create_track($key, $source->{'source_name'}, {
-    display   => $source->{'display'} || 'off',
-    strand    => 'f',
-    _class    => 'bigwig',
-    glyphset  => 'bigwig',
-    colourset => 'bigwig',
-    sub_type  => 'bigwig',
-    renderers => [
-      'off',       'Off',
-      'tiling',    'Wiggle plot',
-    ],
-    caption     => $source->{'source_name'},
-    url         => $source->{'source_url'},
-    colour      => $source->{'colour'} || 'red',
-    description => sprintf('Data retrieved from a BigWig file on an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($source->{'source_type'}), encode_entities($source->{'source_url'})),
+  shift->_add_file_format_track(@_, 'BigWig', [
+    'off',    'Off',
+    'tiling', 'Wiggle plot',
+  ], {
+    _class   => 'bigwig',
+    sub_type => 'bigwig',
+    colour   => $_[1]->{'colour'} || 'red',
   });
-
-  $menu->append($track) if $track;
-}
-
-sub load_configured_vcf {
-  my $self = shift;
-
-  # get the internal sources from config
-  my $internal_vcf_sources = $self->sd_call('ENSEMBL_INTERNAL_VCF_SOURCES') || {};
-
-  foreach my $source_name (sort keys %$internal_vcf_sources) {
-    # get the target menu 
-    my $menu_name = $internal_vcf_sources->{$source_name};
-    if (my $menu = $self->get_node($menu_name)) {
-      # get vcf source config
-      if (my $source  = $self->sd_call($source_name)) {
-        # add the track
-        my $key = 'vcf_' . $source_name . '_' . md5_hex($self->{'species'} . ':' . $source->{url});
-        $self->_add_vcf_track($menu, $source);
-      }
-    }
-  }
 }
 
 sub _add_vcf_track {
-  my ($self, $menu, $source) = @_;
+  shift->_add_file_format_track(@_, 'VCF', [
+    'off',       'Off',
+    'histogram', 'Normal',
+    'compact',   'Compact'
+  ], {
+    sources    => undef,
+    depth      => 0.5,
+    bump_width => 0,
+    colourset  => 'variation'
+  });
+}
 
+sub _add_flat_file_track {
+  my ($self, $menu, $sub_type, $key, $name, $description, %options) = @_;
+  
   $menu ||= $self->get_node('user_data');
+  
+  return unless $menu;
+  
+  my ($display, $strand, $renderers) = $self->_user_track_settings($options{'style'});
+
+  my $track = $self->create_track($key, $name, {
+    display     => $display,
+    strand      => $strand,
+    _class      => 'url',
+    glyphset    => '_flat_file',
+    colourset   => 'classes',
+    caption     => $name,
+    sub_type    => $sub_type,
+    renderers   => $renderers,
+    description => $description,
+    %options
+  });
+  
+  $menu->append($track) if $track;
+}
+
+sub _add_file_format_track {
+  my ($self, $menu, $source, $type, $renderers, $options, $description) = @_;
+  
+  $menu ||= $self->get_node('user_data');
+  
   return unless $menu;
 
-  my $time = $source->{'timestamp'};
-  my $key = 'vcf_' . $time . '_' . md5_hex($self->{'species'} . ':' . $source->{'source_url'});
-
+  my $key  = lc "${type}_$source->{'timestamp'}_" . md5_hex("$self->{'species'}:$source->{'source_url'}");
+  my $desc = sprintf(
+    "Data retrieved from a $type file on an external webserver.
+    $description
+    This data is attached to the %s, and comes from URL: %s",
+    encode_entities($source->{'source_type'}), encode_entities($source->{'source_url'})
+  );
+  
   my $track = $self->create_track($key, $source->{'source_name'}, {
-      display     => $source->{'display'} || 'off',
-      caption     => $source->{'source_name'},
-      glyphset    => 'vcf',
-      sources     => undef,
-      strand      => 'f',
-      depth       => 0.5,
-      bump_width  => 0,
-      colourset   => 'variation',
-      renderers   => [off => 'Off', histogram => 'Normal', compact => 'Compact'],
-      caption     => $source->{'source_name'},
-      url         => $source->{'source_url'},
-      description => sprintf('Data retrieved from a VCF file on an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($source->{'source_type'}), encode_entities($source->{'source_url'})),
+    display     => $source->{'display'} || $renderers->[2] || 'off',
+    strand      => 'f',
+    glyphset    => lc $type,
+    colourset   => lc $type,
+    renderers   => $renderers,
+    caption     => $source->{'source_name'},
+    url         => $source->{'source_url'},
+    description => $desc,
+    %$options
   });
-
+ 
   $menu->append($track) if $track;
 }
 
@@ -771,31 +739,6 @@ sub _compare_assemblies {
       function => '_error'
     );
   }
-}
-
-sub _add_flat_file_track {
-  my ($self, $menu, $sub_type, $key, $name, $description, %options) = @_;
-  
-  $menu ||= $self->get_node('user_data');
-  
-  return unless $menu;
-  
-  my ($display, $strand, $renderers) = $self->_user_track_settings($options{'style'});
-
-  my $track = $self->create_track($key, $name, {
-    display     => $display,
-    strand      => $strand,
-    _class      => 'url',
-    glyphset    => '_flat_file',
-    colourset   => 'classes',
-    caption     => $name,
-    sub_type    => $sub_type,
-    renderers   => $renderers,
-    description => $description,
-    %options
-  });
-  
-  $menu->append($track) if $track;
 }
 
 sub update_from_input {
@@ -1216,7 +1159,7 @@ sub add_das_tracks {
 sub add_dna_align_features {
   my ($self, $key, $hashref) = @_;
   
-  return unless $self->_check_menus('dna_align_cdna');
+  return unless $self->get_node('dna_align_cdna');
   
   my ($keys, $data) = $self->_merge($hashref->{'dna_align_feature'}, 'dna_align_feature');
   
@@ -1273,7 +1216,7 @@ sub add_genes {
   my ($self, $key, $hashref) = @_;
   
   # Gene features end up in each of these menus
-  return unless $self->_check_menus(@{$self->{'transcript_types'}});
+  return unless grep $self->get_node($_), @{$self->{'transcript_types'}};
 
   my ($keys, $data) = $self->_merge($hashref->{'gene'}, 'gene');
   my $colours       = $self->species_defs->colour('gene');
@@ -1469,7 +1412,7 @@ sub add_protein_features {
     gsv_domain => [ 'domain',    'gsv_domain', 'normal' ]
   );
 
-  return unless $self->_check_menus(keys %menus);
+  return unless grep $self->get_node($_), keys %menus;
 
   my ($keys, $data) = $self->_merge($hashref->{'protein_feature'});
 
@@ -1668,7 +1611,7 @@ sub add_synteny {
 sub add_alignments {
   my ($self, $key, $hashref, $species) = @_;
   
-  return unless $self->_check_menus(qw(multiple_align pairwise_tblat pairwise_blastz pairwise_other));
+  return unless grep $self->get_node($_), qw(multiple_align pairwise_tblat pairwise_blastz pairwise_other);
   
   my $species_defs = $self->species_defs;
   
@@ -2142,7 +2085,6 @@ sub add_copy_number_variant_probes {
       source      => $key_2,
       depth       => 0.5,
       description => $description
-      
     }));  
   }
   
