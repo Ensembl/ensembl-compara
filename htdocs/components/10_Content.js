@@ -65,6 +65,10 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       }
       
       return false;
+    }).filter('.closed').each(function () {
+      if (Ensembl.hash.indexOf(';' + this.rel + ';') !== -1 || Ensembl.hash.indexOf('?' + this.rel + ';') !== -1) {
+        $(this).trigger('click');
+      }
     });
   },
   
