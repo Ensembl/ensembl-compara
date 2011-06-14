@@ -22,8 +22,8 @@ use constant {
 sub new {
   ## @constructor
   return bless [
-    {}, #mapped classes
-    {}  #used classes
+    {}, #used classes
+    {}  #mapped classes
   ], shift;
 }
 
@@ -32,7 +32,7 @@ sub map_element_class {
   ## When create_element is called with a given node name, the mapped class is instantiated.
   ## @param Hashref of node_name => element_class
   my ($self, $map) = @_;
-  $self->[0]{ lc $_ } = $map->{$_} for keys %$map;
+  $self->[1]{ lc $_ } = $map->{$_} for keys %$map;
 }
 
 sub create_document {
@@ -58,7 +58,7 @@ sub create_element {
   my $node_class;
   
   # skip 'dynamic_use' of element class if already required once
-  unless ($node_class = $self->[1]{$element_name}) {
+  unless ($node_class = $self->[0]{$element_name}) {
 
     $node_class = $self->_get_mapped_element_class($element_name);
     if (!$self->dynamic_use($node_class)) {
@@ -66,7 +66,7 @@ sub create_element {
       $_ eq $element_name and $node_class = 'EnsEMBL::Web::DOM::Node::Element::Generic' and last for @{$self->POSSIBLE_HTML_ELEMENTS};
       return unless $node_class;
     }
-    $self->[1]{$element_name} = $node_class;
+    $self->[0]{$element_name} = $node_class;
   }
 
   my $element = $node_class->new($self);
@@ -109,7 +109,7 @@ sub create_comment {
 
 sub _get_mapped_element_class {
   my ($self, $element_name) = @_;
-  return $self->[0]{$element_name} if exists $self->[0]{$element_name};
+  return $self->[1]{$element_name} if exists $self->[1]{$element_name};
   return 'EnsEMBL::Web::DOM::Node::Element::Input::'.ucfirst $1 if $element_name =~ /^input([a-z]+)$/;
   return 'EnsEMBL::Web::DOM::Node::Element::'.ucfirst $element_name;
 }
