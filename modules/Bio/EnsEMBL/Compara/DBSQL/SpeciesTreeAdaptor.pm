@@ -31,6 +31,12 @@ use Bio::EnsEMBL::Compara::NestedSet;
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
 
+=head2 create_species_tree
+
+    Create a taxonomy tree from original NCBI taxonomy tree by only using a subset of taxa (provided either as a list or species_set or all_genome_dbs)
+
+=cut
+
 sub create_species_tree {
     my ($self, @args) = @_;
 
@@ -121,6 +127,35 @@ sub create_species_tree {
     }
 
     return $root;
+}
+
+
+=head2 prune_tree
+
+    Only retain the leaves that belong to the species_set
+
+=cut
+
+sub prune_tree {
+    my ($self, $input_tree, $species_set_id) = @_;
+
+    my $compara_dba = $self->db();
+
+    my $gdb_list = $species_set_id
+        ? $compara_dba->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id)->genome_dbs()
+        : $compara_dba->get_GenomeDBAdaptor->fetch_all;
+
+    my %leaves_names = map { ($_ => 1) } grep { !/ancestral/ } map { lc($_->name) } @$gdb_list;
+
+    foreach my $leaf (@{$input_tree->get_all_leaves}) {
+        unless ($leaves_names{lc($leaf->name)}) {
+            #print $leaf->name," leaf disavowing parent\n";
+            $leaf->disavow_parent;
+            $input_tree = $input_tree->minimize_tree;
+        }
+    }
+
+    return $input_tree;
 }
 
 1;
