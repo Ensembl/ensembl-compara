@@ -82,18 +82,17 @@ sub table_data {
     }
     
     my $id           			 = $va->{'_phenotype_id'};
-    my $code         			 = $va->phenotype_name;
     my $source_name  			 = $va->source_name;
 		my $study_name         = $va->study_name;
     my $disease_url  			 = $hub->url({ type => 'Location', action => 'Genome', id => $id, ftype => 'Phenotype', somatic => $is_somatic, phenotype_name => $disorder }); 
-		my $source             = $self->source_link($source_name, $study_name, $va->external_reference, $code);
+		my $source             = $self->source_link($source_name, $study_name, $va->external_reference, 1);
 		my $external_reference = $self->external_reference_link($va->external_reference) || $va->external_reference; # use raw value if can't be made into a link
     my $associated_studies = $va->associated_studies; # List of Study objects
 		
 		# Add the supporting evidence source(s)
 		my $a_study_source='';
 		if (defined($associated_studies)) {
-			$a_study_source = $self->supporting_evidence_link($associated_studies, $va->external_reference, $code);
+			$a_study_source = $self->supporting_evidence_link($associated_studies, $va->external_reference);
 		}
 
     if ($is_somatic) { 
@@ -112,7 +111,7 @@ sub table_data {
     my $pval         = $va->p_value;
     
     my $disease;
-    $disease = $code ? qq{<dt>$disorder ($code)} : qq{<dt>$disorder} if $disorder =~ /^\w+/;
+    $disease  = qq{<dt>$disorder} if $disorder =~ /^\w+/;
     $disease .= qq{ <a href="$disease_url">[View on Karyotype]</a></dt>} unless $disease =~ /HGMD_MUTATION/;
     
 	
@@ -190,13 +189,18 @@ sub source_link {
   
   if ($url =~ /ega/) {
     $url       =~ s/###ID###/$ega_id/;
-    $url       =~ s/###D###/$code/;
   } elsif ($url =~/gwastudies/) {
     $ext_id    =~ s/pubmed\///; 
     $url          =~ s/###ID###/$ext_id/;
 	} elsif ($url =~/omim/) {
-    $ext_id    =~ s/MIM\://; 
-    $url  =~ s/###ID###/$ext_id/;     
+		if ($code) {
+			my $vname = "search?search=".$self->object->name;
+			$url  =~ s/###ID###/$vname/; 
+		}
+		else {
+    	$ext_id    =~ s/MIM\://; 
+    	$url  =~ s/###ID###/$ext_id/;
+		}     
   } else {
     my $name = $self->object->Obj->name;
     $url =~ s/###ID###/$name/;
@@ -238,7 +242,7 @@ sub external_reference_link {
 
 # Supporting evidence links
 sub supporting_evidence_link {
-	my ($self, $associated, $ext_id, $code) = @_;
+	my ($self, $associated, $ext_id) = @_;
 	my $as_html = '';
 	my $count = 0;
 	my $se_by_line = 2;
@@ -250,7 +254,7 @@ sub supporting_evidence_link {
 		}
 		my $a_url = $st->url;
 		if (!defined($a_url)) {
-			$as_html .= $self->source_link($st->source,$st->name,$ext_id,$code);
+			$as_html .= $self->source_link($st->source,$st->name,$ext_id);
 		}
 		else {
 			my $a_source = $st->source;
