@@ -524,9 +524,7 @@ sub clone_node {
     '_next_sibling'     => 0,
     '_previous_sibling' => 0,
   }, ref($self);
-  
-  $clone->{'_node_name'} =  $self->{'_node_name'} if exists $self->{'_node_name'};
-  
+
   return $clone unless defined $deep_clone && $deep_clone == 1;
   
   my $previous_sibling = 0;
@@ -664,15 +662,10 @@ sub _adjust_child_nodes {
   return unless $self->has_child_nodes;   #has already no child nodes
 
   my $adjusted  = [];
+  my $node;
   
   #avoid pointing initially to any removed node
-  my $node = undef;
-  for (@{$self->{'_child_nodes'}}) {
-    if (defined $_->parent_node && $self->is_same_node($_->parent_node)) {
-      $node = $_;
-      last;
-    }
-  }
+  defined $_->parent_node and $self->is_same_node($_->parent_node) and $node = $_ and last for @{$self->{'_child_nodes'}};
 
   if (defined $node) {
 
