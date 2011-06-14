@@ -16,4 +16,13 @@ sub node_name :lvalue {
   $_[0]->{'_node_name'};
 }
 
+sub clone_node {
+  ## @overrides
+  ## Copies node name for the new clone
+  my $self  = shift;
+  my $clone = $self->SUPER::clone_node(@_);
+  $clone->{'_node_name'} = $self->{'_node_name'};
+  return $clone;
+}
+
 1;
