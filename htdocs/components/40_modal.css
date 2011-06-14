@@ -63,7 +63,7 @@ body.ie6 .modal_title .modal_close { background-image: url(/i/cp_close.gif); }
 .modal_content .modal_nav div.header                   { margin-right: -2px; }
 .modal_content .modal_nav ul.local_context             { width: 100%; margin-right: 3px; }
 .modal_content .modal_nav ul.local_context a.disabled  { color: [[PAGE_TEXT]]; cursor: text; }
-.modal_content .modal_nav ul.local_context li          { cursor: pointer; }
+.modal_content .modal_nav ul.local_context li          { cursor: pointer; width: auto; }
 .modal_content .modal_nav ul.local_context li img,
 .modal_content .modal_nav ul.local_context li a        { float: left; }
 .modal_content .modal_nav ul.local_context li ul       { clear: both; }
