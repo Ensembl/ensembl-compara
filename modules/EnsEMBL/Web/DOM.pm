@@ -21,18 +21,18 @@ use constant {
 
 sub new {
   ## @constructor
-  return bless {
-    '_classes'  => {},
-  }, shift;
+  return bless [
+    {}, #mapped classes
+    {}  #used classes
+  ], shift;
 }
 
 sub map_element_class {
   ## Maps an element type with a class
-  ## When create_element is called with a given element type, the mapped class is instantiated.
+  ## When create_element is called with a given node name, the mapped class is instantiated.
+  ## @param Hashref of node_name => element_class
   my ($self, $map) = @_;
-  for (keys %$map) {
-    $self->{'_classes'}{ lc $_ } = $map->{$_};
-  }
+  $self->[0]{ lc $_ } = $map->{$_} for keys %$map;
 }
 
 sub create_document {
@@ -46,26 +46,31 @@ sub create_document {
 
 sub create_element {
   ## Creates an element of a given tag name by instantiating the corresponding class
-  ## Also adds attributes and inner_HTML/inner_text
+  ## Also adds attributes, inner_HTML/inner_text and child nodes
   ## @param Element type
   ## @param HashRef of {attrib1 => value1, attrib2 => value2} for attributes, inner_HTML/inner_text and children (value for children key should be ref of array as accepted by append_children method).
-  ## @return Element subclass object
+  ## @return Element subclass object or undef if unknown node_name
   my ($self, $element_name, $attributes)  = @_;
 
   $element_name = lc $element_name;
   $attributes ||= {};
+  
+  my $node_class;
+  
+  # skip 'dynamic_use' of element class if already required once
+  unless ($node_class = $self->[1]{$element_name}) {
 
-  my $node_class  = $self->_get_mapped_element_class($element_name);
-  
-  my $class_found = $self->dynamic_use($node_class);
-  my $is_generic  = 0;
-  
-  unless ($class_found) {
-    $_ eq $element_name and $node_class = 'EnsEMBL::Web::DOM::Node::Element::Generic' and $is_generic = 1 and last for @{$self->POSSIBLE_HTML_ELEMENTS};
-    return undef unless $is_generic;
+    $node_class = $self->_get_mapped_element_class($element_name);
+    if (!$self->dynamic_use($node_class)) {
+      $node_class = undef;
+      $_ eq $element_name and $node_class = 'EnsEMBL::Web::DOM::Node::Element::Generic' and last for @{$self->POSSIBLE_HTML_ELEMENTS};
+      return unless $node_class;
+    }
+    $self->[1]{$element_name} = $node_class;
   }
+
   my $element = $node_class->new($self);
-  $element->node_name = $element_name if $is_generic;
+  $element->node_name = $element_name if $node_class eq 'EnsEMBL::Web::DOM::Node::Element::Generic';
   if (exists $attributes->{'inner_HTML'}) {
     $element->inner_HTML(delete $attributes->{'inner_HTML'});
   }
@@ -74,7 +79,7 @@ sub create_element {
   }
   my @children = @{delete $attributes->{'children'} || []};
   $element->set_attributes($attributes) if scalar keys %$attributes;
-  $element->append_children(@children) if @children;
+  $element->append_children(@children)  if scalar @children;
   return $element;
 }
 
@@ -104,7 +109,7 @@ sub create_comment {
 
 sub _get_mapped_element_class {
   my ($self, $element_name) = @_;
-  return $self->{'_classes'}{$element_name} if exists $self->{'_classes'}{$element_name};
+  return $self->[0]{$element_name} if exists $self->[0]{$element_name};
   return 'EnsEMBL::Web::DOM::Node::Element::Input::'.ucfirst $1 if $element_name =~ /^input([a-z]+)$/;
   return 'EnsEMBL::Web::DOM::Node::Element::'.ucfirst $element_name;
 }
