@@ -30,13 +30,14 @@ package Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree;
 
 use strict;
 use Bio::EnsEMBL::Compara::NestedSet;
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub param_defaults {
     return {
-            'newick_format' => 'njtree',    # the desired output format
+            'newick_format'         => 'njtree',    # the desired output format
     };
 }
 
@@ -66,9 +67,18 @@ sub fetch_input {
             }
         }
 
-        my $species_tree    = $self->compara_dba()->get_SpeciesTreeAdaptor()->create_species_tree( @tree_creation_args );
-        my $newick_format   = $self->param('newick_format');
+        my $species_tree;
+        if(my $blength_tree_file = $self->param('blength_tree_file')) {     # defines the mode
 
+            my $blength_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( `cat $blength_tree_file` );
+            $species_tree  = $self->compara_dba()->get_SpeciesTreeAdaptor()->prune_tree( $blength_tree );
+
+        } else {
+
+            $species_tree = $self->compara_dba()->get_SpeciesTreeAdaptor()->create_species_tree( @tree_creation_args );
+        }
+        
+        my $newick_format   = $self->param('newick_format');
         $species_tree_string = $species_tree->newick_format( $newick_format );
     }
 
@@ -80,8 +90,9 @@ sub write_output {
     my $self = shift @_;
 
     my $species_tree_string = $self->param('species_tree_string');
+    my $output_branch = $self->param('blength_tree_file') ? 3 : 4;
 
-    $self->dataflow_output_id( { 'species_tree_string'   => $species_tree_string }, 3);
+    $self->dataflow_output_id( { 'species_tree_string'   => $species_tree_string }, $output_branch);
 }
 
 1;
