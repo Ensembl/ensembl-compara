@@ -9,6 +9,7 @@
 .nav ul.local_context li ul        { list-style: none; border: 0; padding: 0 0 0 14px; margin: 0; }
 .nav ul.local_context li img       { height: 14px; width: 14px; border: 0; margin-bottom: -3px; padding-right: 5px; }
 .nav ul.local_context li.last      { background: [[PANEL_BG]] url(/i/last.gif) no-repeat; }
+.nav ul.local_context li.last ul   { background: 0; }
 .nav ul.local_context li.active    { font-weight: bold; background-color: [[TINT_BG]]; }
 .nav ul.local_context li.active ul { background-color: [[PANEL_BG]]; }
 .nav ul.local_context li.active li { font-weight: normal; }
