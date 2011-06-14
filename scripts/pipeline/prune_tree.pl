@@ -30,7 +30,7 @@ my $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url => $url)
     or die "Must define a url";
 
 if (defined $output_taxon_file) {
-    my $species_tree    = $compara_dba->get_SpeciesTreeAdaptor()->create_species_tree( '-url', $url );
+    my $species_tree    = $compara_dba->get_SpeciesTreeAdaptor()->create_species_tree();
 
     open  TF, ">$output_taxon_file" or die "$!";
     print TF $species_tree->newick_format( 'njtree' );
