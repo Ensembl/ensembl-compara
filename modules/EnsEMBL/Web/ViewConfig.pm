@@ -368,7 +368,7 @@ sub build_form {
         selected    => 1
       });
       
-      $fieldset->insert_before($select_all, $reference_element);
+      $reference_element->before($select_all);
       $fieldset->set_flag($self->SELECT_ALL_FLAG); # Add select all checkboxes
     }
   }
@@ -439,18 +439,35 @@ sub build_imageconfig_form {
     
     foreach my $n (@{$node->child_nodes}) {
       my $children = 0;
-      my $c = 0;
       my $content;
       
-      foreach (grep $_->[1], map [ $_->id, $_->render, $self->{'favourite_tracks'}->{$_->id}, $_->get('display') ], @{$n->child_nodes}) {
-        my $display = pop @$_;
-        push @{$node->data->{'tracks'}[$i]}, $_;
-        $content .= $_->[1] if $display && $display ne 'off';
-        $c++ if $_->[1];
+      # When creating HTML for the form, we want only the tracks which are turned on, and their parent nodes.
+      # Set a flag to turn everything else off. This flag is checked by the render function in EnsEMBL::Web::Tree.
+      foreach ($n->nodes) {
+        my $display = $_->can('get') ? $_->get('display') : '';
+        
+        if ($display && $display ne 'off') {
+          my $p = $_;
+          $p->{'display'} = 'on' while $p = $p->parent_node;
+        } else {
+          $_->{'display'} = 'off';
+        }
+      }
+      
+      $content .= $_->render for @{$n->child_nodes}; # Add nodes which are turned on to the HTML returned
+      $_->{'display'} = 'on' for $n, $n->nodes;      # Turn all nodes back on
+      
+      # Render again with all nodes turned on to add content to the tracks array
+      foreach (@{$n->child_nodes}) {
+        my $html = $_->render;
+        
+        next unless $html;
+        
+        push @{$node->data->{'tracks'}[$i]}, [ $_->id, $html, $self->{'favourite_tracks'}->{$_->id}, $_->get('display') ];
         $children++;
       }
       
-      next unless $c;
+      next unless $children;
       
       my $class = 'config_menu';
       

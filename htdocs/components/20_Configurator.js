@@ -275,7 +275,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     var panel    = this;
     var tracks   = this.params.tracks[type];
-    var configs  = this.elLk.configDivs.filter('.' + type).find('ul.config_menu');
+    var configs  = this.elLk.configDivs.filter('.' + type).children('ul.config_menu');
     var existing = [];
     var i        = tracks.length;
     var j, track, li;
@@ -293,7 +293,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         existing[k] = {};
       }
       
-      $(this).children().each(function () { existing[k][$('input.track_name', this)[0].name] = this; }).detach();
+      $(this).children().each(function () {
+        $('input.track_name', this).each(function () {
+          existing[k][this.name] = $(this).parent('li');
+        });
+      }).detach();
     });
     
     while (i--) {
@@ -485,7 +489,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       url = active.href;
     }
     
-    active = active.className;    
+    active = active.className;
     
     switch (active) {
       case 'search_results':
