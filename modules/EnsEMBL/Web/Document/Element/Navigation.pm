@@ -95,7 +95,7 @@ sub content {
     my $counts     = $self->counts;
     my $all_params = !!$hub->object_types->{$hub->type};
     
-    $self->build_menu($_, $hub, $img_url, $counts, $all_params, $active) for @$nodes;
+    $self->build_menu($_, $hub, $img_url, $counts, $all_params, $active, $nodes->[-1]) for @$nodes;
     
     $menu .= $_->render for @$nodes;
   }
@@ -111,7 +111,7 @@ sub content {
 }
 
 sub build_menu {
-  my ($self, $node, $hub, $img_url, $counts, $all_params, $active) = @_;
+  my ($self, $node, $hub, $img_url, $counts, $all_params, $active, $last_child) = @_;
   
   my $data = $node->data;
   
@@ -148,7 +148,7 @@ sub build_menu {
     my $ul = $node->dom->create_element('ul');
     
     foreach (@children) {
-      $self->build_menu($_, $hub, $img_url, $counts, $all_params, $active);
+      $self->build_menu($_, $hub, $img_url, $counts, $all_params, $active, $children[-1]);
       $ul->append_child($_);
     }
     
@@ -156,7 +156,7 @@ sub build_menu {
   }
   
   $node->node_name = 'li';
-  $node->set_attributes({ id => $data->{'id'}, class => ($node->id eq $active ? 'active' : '') . ($node->next_sibling ? '' : ' last') });
+  $node->set_attributes({ id => $data->{'id'}, class => ($node->id eq $active ? 'active' : '') . ($node eq $last_child ? ' last' : '') });
   $node->append_children(@append);
 }
 
