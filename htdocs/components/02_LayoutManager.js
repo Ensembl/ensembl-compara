@@ -186,6 +186,11 @@ Ensembl.LayoutManager.extend({
     $('h2.caption').html(function (i, html) {
       return html.replace(/^(Chromosome ).+/, '$1' + text);
     });
+    
+    $('#masthead li.Location a').each(function () {
+      var attr = this.title ? 'title' : 'innerHTML';
+      this[attr] = this[attr].replace(/^(Location: ).+/, '$1' + text);
+    });
   },
   
   toggleContent: function (rel) {
