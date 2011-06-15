@@ -400,17 +400,6 @@ sub hgvs {
   
   my (%by_allele, $hgvs_html, %genomic_alleles, $lrg_vf);
   my $tvs = $vf->get_all_TranscriptVariations; # going via transcript variations should be faster than slice
-
-  if ($hub->param('lrg') =~ /LRG\_\d+/) {
-    $lrg_vf = $vf->transform('LRG'); # transform to LRG coord system
-    
-    if ($lrg_vf) {
-      # force API to recalculate consequences for LRG
-      delete $lrg_vf->{'dbID'};
-      delete $lrg_vf->{'transcript_variations'};
-      push @$tvs, @{$lrg_vf->get_all_TranscriptVariations}; # add consequences to existing list
-    }
-  }
   
   foreach my $tva (map @{$_->get_all_alternate_TranscriptVariationAlleles}, @$tvs) {
     my $seq = $tva->variation_feature_seq;
@@ -437,8 +426,8 @@ sub hgvs {
     push @hgvs, (scalar @hgvs ? '<br />' : '') . "<b>Variant allele $a</b>" if $allele_count > 1;
     
     foreach (@{$by_allele{$a}}) {
-      /(LRG_\d+)(.+)/;
-      push @hgvs, sprintf '<a href="%s">%s</a>%s', $hub->url({ %url_params, type => 'LRG', action => 'Variation_LRG', t => $1 }), $1, $2 and next if $1;
+      /(LRG_\d+)(_)?([t|p]\d+)?(.+)/;
+      push @hgvs, sprintf '<a href="%s">%s</a>%s', $hub->url({ %url_params, type => 'LRG', action => 'Variation_LRG', lrg => $1, lrgt => "$1$2$3" }), "$1$2$3", $4 and next if $1;
       
       /(ENS(?:...)?T\d+)(.+)/;
       push @hgvs, sprintf '<a href="%s">%s</a>%s', $hub->url({ %url_params, t => $1 }), $1, $2 and next if $1;
