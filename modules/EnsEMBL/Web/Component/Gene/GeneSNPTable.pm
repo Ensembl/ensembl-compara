@@ -35,7 +35,7 @@ sub content {
 		}
 		$msg .='<br />';
 	}
-	my $html = $self->_info('Configuring the page', qq{<p>$msg\To extend or reduce the intronic sequence, use the "<strong>Configure this page - Intron Context</strong>" link on the left.</p>});
+	my $html = $self->_hint('snp_table','Configuring the page', qq{<p>$msg\To extend or reduce the intronic sequence, use the "<strong>Configure this page - Intron Context</strong>" link on the left.</p>});
 	
 	
   if ($consequence_type || $count < 25) {
