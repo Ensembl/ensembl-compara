@@ -273,7 +273,7 @@ sub content {
   if ($ancestor) {
 		$html .= qq{
 			<dl class="summary">
-				<dt>Ancestral allele<dt><dd>$ancestor</dd>
+				<dt>Ancestral allele</dt><dd>$ancestor</dd>
 			</dl>	
 		};	
 	}
