@@ -84,7 +84,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->check_job_fail_options;
+    $self->check_job_fail_options;      # we should fix this!
     $self->check_if_exit_cleanly;
 
     $self->param('member_adaptor',       $self->compara_dba->get_MemberAdaptor);
@@ -209,6 +209,7 @@ sub run_njtree_phyml {
 
       if(my $segfault = (($rc != -1) and ($rc & 127 == 11))) {
           $self->check_job_fail_options($segfault);
+          die "'$full_cmd' resulted in a segfault";
       }
       print STDERR "$full_cmd\n";
       open(ERRFILE, $errfile) or die "Could not open logfile '$errfile' for reading : $!\n";
@@ -294,11 +295,11 @@ sub check_job_fail_options {
   if( $segfault    # last system() crashed with Segmentation Fault
    or ($self->input_job->retry_count >= 1 and !$self->param('jackknife'))
   ) {
-    $self->dataflow_output_id($self->input_id, 3);
-
-    $self->DESTROY;
-    $self->input_job->incomplete(0);
-    die "job failed, dataflowing to QuickTreeBreak\n";
+        if(@{ $self->dataflow_output_id($self->input_id, 3) }) {
+            $self->DESTROY;
+            $self->input_job->incomplete(0);
+            die "job failed, dataflowing to QuickTreeBreak\n";
+        }
   }
 }
 
