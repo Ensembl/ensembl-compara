@@ -129,22 +129,26 @@ sub init_config {
 sub add_image_config_notes {
   my ($self, $controller) = @_;
   my $panel   = $self->new_panel('Configurator', $controller, code => 'x', class => 'image_config_notes' );
-  my $img_url = $controller->img_url;
+  my $img_url = $self->img_url;
   
   $panel->set_content(qq{
-<p class="space-below"><strong>Key</strong>:</p>
-<p class="space-below"><img src="/i/render/normal.gif" class="middle" /> Track style</p>
-<p class="space-below"><img src="/i/strand-f.png" class="middle" /> Forward strand</p>
-<p class="space-below"><img src="/i/strand-r.png" class="middle" /> Reverse strand</p>
-<p class="space-below"><img src="/i/star-on.png" class="middle" /> Favourite track</p>
-<p class="space-below"><img src="/i/info_blue_17.png" class="middle" /> Track information</p>
-<p class="space-below"><strong>External tracks</strong></p>
-<p class="space-below"><img src="/i/track-das.gif" class="middle" /> Distributed Annotation Source</p>
-<p class="space-below"><img src="/i/track-tmp.gif" class="middle" /> Custom track - uploaded data</p>
-<p class="space-below"><img src="/i/track-url.gif" class="middle" /> Custom track - UCSC-style web resource</p>
-<p class="space-below"><img src="/i/track-user.gif" class="middle" /> Custom data saved to your user account</p>
-<p class="space-below">Please note that the content of external tracks is not the responsibility of the Ensembl project.</p>
-<p>URL-based or DAS tracks may either slow down your ensembl browsing experience OR may be unavailable as these are served and stored from other servers elsewhere on the Internet.</p>
+    <h2>Key</h2>
+    <ul class="configuration_key">
+      <li><img src="${img_url}render/normal.gif" /><span>Track style</span></li>
+      <li><img src="${img_url}strand-f.png" /><span>Forward strand</span></li>
+      <li><img src="${img_url}strand-r.png" /><span>Reverse strand</span></li>
+      <li><img src="${img_url}star-on.png" /><span>Favourite track</span></li>
+      <li><img src="${img_url}info_blue_17.png" /><span>Track information</span></li>
+    </ul>
+    <h4>External tracks</h4>
+    <ul class="configuration_key">
+      <li><img src="${img_url}track-das.gif" /><span>Distributed Annotation Source</span></li>
+      <li><img src="${img_url}track-tmp.gif" /><span>Custom track - uploaded data</span></li>
+      <li><img src="${img_url}track-url.gif" /><span>Custom track - UCSC-style web resource</span></li>
+      <li><img src="${img_url}track-user.gif" /><span>Custom data saved to your user account</span></li>
+    </ul>
+    <p class="space-below">Please note that the content of external tracks is not the responsibility of the Ensembl project.</p>
+    <p>URL-based or DAS tracks may either slow down your ensembl browsing experience OR may be unavailable as these are served and stored from other servers elsewhere on the Internet.</p>
   });
 
   $self->add_panel($panel);
