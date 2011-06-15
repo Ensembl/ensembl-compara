@@ -149,31 +149,31 @@ sub _hgvs_names {
 
   if (defined $vf) {
     my (%cdna_hgvs, %pep_hgvs, %by_allele, $prev_trans);
-
-    # check if overlaps LRG
-    if($hub->param('lrg') =~ /^LRG/) {
-      my $proj = $vf->project('LRG');
-
-      if(scalar @$proj == 1) {
-        my $lrg_slice = $proj->[0]->to_Slice();
-        if($lrg_slice) {
-          my $lrg_vf = $vf->transfer($lrg_slice);
-
-          foreach my $transcript(@{$lrg_vf->feature_Slice->get_all_Transcripts}) {
-            # get HGVS notations
-            %cdna_hgvs = %{$lrg_vf->get_all_hgvs_notations($transcript, 'c')};
-            %pep_hgvs  = %{$lrg_vf->get_all_hgvs_notations($transcript, 'p')};
-
-            # filter peptide ones for synonymous changes
-            map { delete $pep_hgvs{$_} if $pep_hgvs{$_} =~ /p\.\=/ } keys %pep_hgvs;
-
-            # group by allele
-            push @{$by_allele{$_}}, $cdna_hgvs{$_} for keys %cdna_hgvs;
-            push @{$by_allele{$_}}, $pep_hgvs{$_}  for keys %pep_hgvs;
-          }
-        }
-      }
-    }
+#
+#    # check if overlaps LRG
+#    if($hub->param('lrg') =~ /^LRG/) {
+#      my $proj = $vf->project('LRG');
+#
+#      if(scalar @$proj == 1) {
+#        my $lrg_slice = $proj->[0]->to_Slice();
+#        if($lrg_slice) {
+#          my $lrg_vf = $vf->transfer($lrg_slice);
+#
+#          foreach my $transcript(@{$lrg_vf->feature_Slice->get_all_Transcripts}) {
+#            # get HGVS notations
+#            %cdna_hgvs = %{$lrg_vf->get_all_hgvs_notations($transcript, 'c')};
+#            %pep_hgvs  = %{$lrg_vf->get_all_hgvs_notations($transcript, 'p')};
+#
+#            # filter peptide ones for synonymous changes
+#            map { delete $pep_hgvs{$_} if $pep_hgvs{$_} =~ /p\.\=/ } keys %pep_hgvs;
+#
+#            # group by allele
+#            push @{$by_allele{$_}}, $cdna_hgvs{$_} for keys %cdna_hgvs;
+#            push @{$by_allele{$_}}, $pep_hgvs{$_}  for keys %pep_hgvs;
+#          }
+#        }
+#      }
+#    }
 
     # now get normal ones
     # go via transcript variations (should be faster than slice)
@@ -206,12 +206,13 @@ sub _hgvs_names {
 
       foreach my $h (@{$by_allele{$a}}) {
 
-        $h =~ s/LRG\_\d+(\.\d+)?/'<a href="'.$hub->url({
+        $h =~ s/(LRG_\d+)(_)?([t|p]\d+)?(.*)/'<a href="'.$hub->url({
             type => 'LRG',
             action => 'Variation_LRG',
             db     => 'core',
             r      => undef,
-            t      => $&,
+            lrgt   => "$1$2$3",
+            lrg    => $1,
             v      => $object->name,
             source => $variation->source}).'">'.$&.'<\/a>'/eg;
 

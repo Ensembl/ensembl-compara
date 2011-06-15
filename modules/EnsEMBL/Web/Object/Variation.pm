@@ -1139,25 +1139,6 @@ sub transcript_variation {
   
   my $transcript_variation_obj =  $vari_feature->get_all_TranscriptVariations;
   
-  # if we've come from an LRG, add LRG TVs
-  my $lrg_vf;
-  
-  if($self->hub->param('lrg') =~ /LRG\_\d+/) {
-    
-    # transform to LRG coord system
-    $lrg_vf = $vari_feature->transform('LRG');
-    
-    if(defined($lrg_vf)) {
-      
-      # force API to recalc consequences for LRG
-      delete $lrg_vf->{'dbID'};
-      delete $lrg_vf->{'transcript_variations'};
-      
-      # add consequences to existing list
-      push @$transcript_variation_obj, @{$lrg_vf->get_all_TranscriptVariations};
-    }
-  }
-  
   return [] unless $transcript_variation_obj;
 
   my @data;
@@ -1183,8 +1164,7 @@ sub transcript_variation {
               codon =>            $tva_obj->display_codon_allele_string,
               tva =>              $tva_obj,
               tv  =>              $tvari_obj,
-              vf  =>              $vari_feature,
-              lrg_vf =>           $lrg_vf,
+              vf  =>              $vari_feature
       });
     }
   }
