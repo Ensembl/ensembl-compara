@@ -138,7 +138,8 @@ sub add_image_config_notes {
 <p class="space-below"><img src="/i/strand-r.png" class="middle" /> Reverse strand</p>
 <p class="space-below"><img src="/i/star-on.png" class="middle" /> Favourite track</p>
 <p class="space-below"><img src="/i/info_blue_17.png" class="middle" /> Track information</p>
-<p class="space-below"><img src="/i/track-das.gif" class="middle" /> Distributed Annotation Source (external to Ensembl)</p>
+<p class="space-below"><strong>External tracks</strong></p>
+<p class="space-below"><img src="/i/track-das.gif" class="middle" /> Distributed Annotation Source</p>
 <p class="space-below"><img src="/i/track-tmp.gif" class="middle" /> Custom track - uploaded data</p>
 <p class="space-below"><img src="/i/track-url.gif" class="middle" /> Custom track - UCSC-style web resource</p>
 <p class="space-below"><img src="/i/track-user.gif" class="middle" /> Custom data saved to your user account</p>
