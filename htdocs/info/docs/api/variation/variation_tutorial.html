@@ -561,8 +561,6 @@ foreach my $va (@{$va_adaptor->fetch_all_by_phenotype_description_source_name($p
 	1000 genomes pilot studies into separate variation sets. The sets can be further subdivided into supersets and subsets to reflect hierarchical relationships between them. In the case
 	of the 1000 genomes pilot sets, these are divided into subsets based on population. For example, the set representing variations identified in the first 1000 genomes pilot study is named 
 	'1000 genomes - Low coverage' and has three subsets: '1000 genomes - Low coverage - CEU', '1000 genomes - Low coverage - CHB+JPT' and '1000 genomes - Low coverage - YRI'. 
-	The variation sets can be displayed as separate tracks on the location view. This behaviour is controlled from the 'Germline variations' section on configuration panel which is accessed by 
-	clicking the 'Configure this page' link in the left hand side navigation.
 </p>
 <p>
 	In the Ensembl Variation API, variation sets are handled by the module <a href="/info/docs/Pdoc/ensembl-variation/modules/Bio/EnsEMBL/Variation/VariationSet.html">VariationSet</a>, and the accompanying 
@@ -580,7 +578,7 @@ use Bio::EnsEMBL::Registry;
 
 my $registry = 'Bio::EnsEMBL::Registry';
 
-#ÊLoad the registry from db
+# Load the registry from db
 $registry->load_registry_from_db(
     -host => 'ensembldb.ensembl.org',
     -user => 'anonymous'
@@ -596,19 +594,15 @@ my $vs_adaptor = $registry->get_adaptor('human','variation','variationset');
 </p>
 <pre class="code">
 
-#ÊGet all top-level variation sets
+# Get all top-level variation sets
 my $top_vss = $vs_adaptor->fetch_all_top_VariationSets();
 
 # Loop over the top level variation sets and recursively print the subsets
 foreach my $top_vs (@{$top_vss}) {
 	print_set($top_vs);
 }
-   
-</pre>
-<p>
-	In the example above, we called a custom function to recursively print the set information. We need to define that function:
-</p>
-<pre class="code">
+
+# We define a function that will help us recurse over the set hierarchy and print the data   
 sub print_set {
 	my $set = shift;
 	my $indent = shift || "";
@@ -616,58 +610,17 @@ sub print_set {
 	# Print the set attributes
 	printf("\%s\%s (\%s)\n",$indent,$set->name(),$set->short_name());
 	
-	#ÊGet the subsets that have the current set as immediate parent
+	# Get the subsets that have the current set as immediate parent
 	my $subsets = $set->get_all_sub_VariationSets(1);
 	
-	#ÊCall the print subroutine for each of the subsets with an increased indentation
+	# Call the print subroutine for each of the subsets with an increased indentation
 	foreach my $subset (@{$subsets}) {
 		print_set($subset,$indent . "  ");
 	}
 }
 </pre>
 <p>
-	Running the code in the example above on the e!63 human variation database gives the following result (short names are in parentheses):
-	<span class="sequence">
-Phenotype-associated variants (ph_variants)
-  Johnson & O'Donnell phenotype variants (ph_johnson_et_al)
-  NHGRI catalog phenotype variants (ph_nhgri)
-  HGMD-PUBLIC phenotype variants (ph_hgmd_pub)
-  EGA phenotype variants (ph_ega)
-  OMIM phenotype variants (ph_omim)
-  Uniprot phenotype variants (ph_uniprot)
-  COSMIC phenotype variants (ph_cosmic)
-HapMap (hapmap)
-Clinical/LSDB variations from dbSNP (precious)
-ENSEMBL:Venter (ind_venter)
-ENSEMBL:Watson (ind_watson)
-1000 genomes - Low coverage (1kg_lc)
-  1000 genomes - Low coverage - YRI (1kg_lc_yri)
-  1000 genomes - Low coverage - CEU (1kg_lc_ceu)
-  1000 genomes - Low coverage - CHB+JPT (1kg_lc_chb_jpt)
-1000 genomes - High coverage - Trios (1kg_hct)
-  1000 genomes - High coverage - Trios - CEU (1kg_hct_ceu)
-  1000 genomes - High coverage - Trios - YRI (1kg_hct_yri)
-1000 genomes - High coverage exons (1kg_hce)
-  1000 genomes - High coverage exons - JPT (1kg_hce_jpt)
-  1000 genomes - High coverage exons - CHB (1kg_hce_chb)
-  1000 genomes - High coverage exons - LWK (1kg_hce_lwk)
-  1000 genomes - High coverage exons - YRI (1kg_hce_yri)
-  1000 genomes - High coverage exons - CEU (1kg_hce_ceu)
-  1000 genomes - High coverage exons - CHD (1kg_hce_chd)
-  1000 genomes - High coverage exons - TSI (1kg_hce_tsi)
-Failed variations (fail_all)
-  Failed: Multiple mappings (fail_mult_map)
-  Failed: No mapping (fail_no_map)
-  Failed: No genotypes (fail_no_gt)
-  Failed: Alleles do not match reference (fail_nonref)
-  Failed: Genotype frequencies (fail_gt_fq)
-  Failed: No alleles (fail_no_alleles)
-  Failed: No sequence (fail_no_seq)
-  Failed: Non-nucleotide alleles (fail_non_nt)
-  Failed: Too many alleles (fail_mult_alleles)
-  Failed: Inconsistent mapping (fail_incons_map)
-  Failed: Ambiguous alleles (fail_ambig)
-	</span>
+	Running the code in the example above on the e!63 human variation database produces a table similar to the one on the <a href="/info/docs/variation/index.html">About Variation Data</a> page.
 </p>
 <p>
 	In order to get objects for the variations assigned to a variation set, we use the get_Variation_Iterator method. Note that rather than returning a reference to a list of all variation objects, this 
@@ -677,8 +630,7 @@ Failed variations (fail_all)
 </p>
 <pre class="code">
 
-  #ÊGet the variation set for the phenotype-associated variants. Note that we're using the short name to fetch by. We could also have used
-  #Êthe full name: $vs_adaptor->fetch_by_name('Phenotype-associated variants');
+  # Get the variation set for the phenotype-associated variants.
   my $vs = $vs_adaptor->fetch_by_short_name('ph_variants');
   
   printf("\%s (\%s):\n\t\%s\n",$vs->name(),$vs->short_name(),$vs->description());
@@ -710,7 +662,7 @@ Failed variations (fail_all)
 	In the example below, we fetch all VariationFeatures discovered by the third 1000 genomes pilot study on the RIC8A gene.
 </p>
 <pre class="code">
-	#ÊGet the variation set object
+	# Get the variation set object
 	$vs = $vs_adaptor->fetch_by_short_name('1kg_hce');
 	
 	# Get a gene adaptor and the gene object for the RIC8A gene
@@ -723,9 +675,9 @@ Failed variations (fail_all)
 	# Loop over the variation features and print the variation using HGVS notation relative to the canonical transcript
 	foreach my $vf (@{$vfs}) {
 		my $tvs = $vf->get_all_TranscriptVariations([$gene->canonical_transcript()]);
-		my $hgvs_coding = $tvs->[0]->hgvs_coding();
-		my $hgvs_protein = $tvs->[0]->hgvs_protein();
-		printf("\%s\t\%s\t\%s\n",$vf->variation_name(),join(",",values(%{$hgvs_coding})),join(",",values(%{$hgvs_protein})));
+		my @hgvs_coding = values(%{$tvs->[0]->hgvs_coding()});
+		my @hgvs_protein = values(%{$tvs->[0]->hgvs_protein()});
+		printf("\%s\t\%s\t\%s\n",$vf->variation_name(),join(",",@hgvs_coding),join(",",@hgvs_protein));
 	}
 </pre>
 
