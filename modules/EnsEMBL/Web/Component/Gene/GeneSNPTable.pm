@@ -123,7 +123,7 @@ sub stats_table {
   my %descriptions;
   my %labels;
   
-  my @all_cons = values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  my @all_cons = grep {$_->feature_class =~ /transcript/i} values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
 	
   foreach my $con(@all_cons) {
     next if $con->SO_accession =~ /x/i;
