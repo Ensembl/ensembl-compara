@@ -93,3 +93,12 @@ body.ie6 table.funcgen_matrix th.first div.select_all_row       { width: 80px; }
 body.ie6 table.funcgen_matrix th.first div.select_all_row input { right: 0; }
 
 body.ie67 div.funcgen_matrix                                    { margin-right: 130px; }
+
+div.image_config_notes ul.configuration_key          { list-style: none; padding: 0; margin-left: 5px; }
+div.image_config_notes ul.configuration_key li       { list-style-image: none; }
+div.image_config_notes ul.configuration_key li span,
+div.image_config_notes ul.configuration_key li img   { vertical-align: middle; padding-right: 5px; }
+div.image_config_notes h2                            { border: 0 !important; margin: 4px 0; }
+div.image_config_notes h4                            { margin: 0; }
+div.image_config_notes h4,
+div.image_config_notes p                             { padding-left: 3px; }
