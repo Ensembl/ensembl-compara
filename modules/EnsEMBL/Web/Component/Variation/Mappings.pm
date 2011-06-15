@@ -83,25 +83,54 @@ sub content {
       my $trans      = $trans_adaptor->fetch_by_stable_id($trans_name);
       my $tva        = $transcript_data->{'tva'};
       
-      my $gene_url = $hub->url({
-        type   => 'Gene',
-        action => 'Variation_Gene/Table',
-        db     => 'core',
-        r      => undef,
-        g      => $gene_name,
-        v      => $name,
-        source => $source
-      });
+      my $gene_url;
+      my $transcript_url;
       
-      my $transcript_url = $hub->url({
-        type   => 'Transcript',
-        action => $hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary',
-        db     => 'core',
-        r      => undef,
-        t      => $trans_name,
-        v      => $name,
-        source => $source
-      });
+      # Create links to non-LRG genes and transcripts
+      if ($trans_name !~ m/^LRG/) {
+        $gene_url = $hub->url({
+            type   => 'Gene',
+            action => 'Variation_Gene/Table',
+            db     => 'core',
+            r      => undef,
+            g      => $gene_name,
+            v      => $name,
+            source => $source
+        });
+      
+        $transcript_url = $hub->url({
+            type   => 'Transcript',
+            action => $hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary',
+            db     => 'core',
+            r      => undef,
+            t      => $trans_name,
+            v      => $name,
+            source => $source
+        });
+      } 
+      #ÊLRGs need to be linked to differently
+      else {
+        $gene_url = $hub->url({
+            type   => 'LRG',
+            action => 'Variation_LRG/Table',
+            db     => 'core',
+            r      => undef,
+            lrg    => $gene_name,
+            v      => $name,
+            source => $source
+        });
+      
+        $transcript_url = $hub->url({
+            type   => 'LRG',
+            action => 'Variation_LRG/Table',
+            db     => 'core',
+            r      => undef,
+            lrg    => $gene_name,
+            lrgt   => $trans_name,
+            v      => $name,
+            source => $source
+        });
+      }
       
       # HGVS
       my $hgvs;
