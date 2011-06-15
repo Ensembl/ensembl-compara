@@ -65,7 +65,7 @@ sub init {
 	# structural variations
 	$self->modify_configs(
     ['variation_feature_structural'],
-    { display => 'normal', depth => 10 }
+    { display => 'normal', depth => 50 }
   );
 	
 	# CNV probes
