@@ -1,11 +1,11 @@
-.toggle_button { cursor: pointer; font-weight: bold; }
+#transcripts_table { margin: 0; clear: both; }
+#locations_table   { width: 30em; }
+#locations_table td,
+#locations_table th { border-color: [[TINT_BORDER]]; width: 15em; }
 
-.toggle_button span    { float: left; }
-.toggle_button em      { float: left; display: none; height: 14px; width: 14px; margin-left: 0.5em; background-repeat: no-repeat; background-position: 0 2px; }
-.toggle_button .closed { background-image: url(/i/closed2.gif); }
-.toggle_button .open   { background-image: url(/i/open2.gif);   }
-.toggle_info           { font-weight: bold; }
-
+div.summary_panel dl.summary dd         { margin-left: 9em; }
+div.summary_panel dl.summary dt         { width: 9em; }
+div.summary_panel a.toggle              { color: [[PAGE_TEXT]]; text-decoration: none; padding-right: 20px; background: url(/i/open2.gif) no-repeat right bottom; }
 div.summary_panel .toggle_table         { border-collapse: collapse; margin: 0.5em 0 0.5em 9em; cursor: pointer; }
 div.summary_panel .toggle_table td,
 div.summary_panel .toggle_table th      { border: 1px solid black; margin: 0; text-align: center; white-space: nowrap; }
@@ -14,9 +14,10 @@ div.summary_panel .toggle_table .active { background-color: [[TINT_BG]]; }
 div.summary_panel .toggle_table td.bold { font-weight: bold; text-align: center; }
 div.summary_panel .toggleTable_wrapper  { margin: 1.5em 0 0.5em 1.5em; clear: none; }
 
-#transcripts_table { margin: 0; clear: both; }
-#locations_table   { width: 30em; }
-#locations_table td, #locations_table th { border-color: [[TINT_BORDER]]; width: 15em; }
-
-div.summary_panel dl.summary dt { width: 9em; }
-div.summary_panel dl.summary dd { margin-left: 9em; }
+.toggle_info                       { font-weight: bold; }
+.toggle_button                     { cursor: pointer; font-weight: bold; }
+.toggle_button span                { float: left; }
+.toggle_button em                  { float: left; display: none; height: 14px; width: 14px; margin-left: 0.5em; background-repeat: no-repeat; background-position: 0 2px; }
+div.summary_panel a.toggle.closed,
+.toggle_button .closed             { background-image: url(/i/closed2.gif); }
+.toggle_button .open               { background-image: url(/i/open2.gif);   }
