@@ -55,7 +55,7 @@ sub content {
 			$name = "$class ($display_name source $name $source_description)";
     }
   } elsif ($source =~ /LSDB/) {
-      $name = $hub->get_ExtURL_link($name, $source, $name);
+      $name = $hub->get_ExtURL_link("$source" . (defined($version) ? " ($version)" : ""), $source, $name);
       $name = "$class ($display_name source $name - $source_description)";
   } else {
     $name = defined $source_url ? qq{<a href="$source_url">$source$version</a>} : "$source $version";
