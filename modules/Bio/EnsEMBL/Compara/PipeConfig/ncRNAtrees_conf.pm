@@ -7,37 +7,11 @@
 
 =head1 SYNOPSIS
 
-    #1. update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
-
-    #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
-
-    #3. make sure that all default_options are set correctly
-
-    #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf -password <your_password> -mlss_id <your_current_NCT_mlss_id>
-
-    #5. Sync and loop the beekeeperi.pl as shown in init_pipeline.pl's output
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf -password <your_password>
 
 =head1 DESCRIPTION  
 
-    The PipeConfig file for ncRNAtrees pipeline that should automate most of the pre-execution tasks.
-
-    Some statistics of previous releases:
-
-=head2 rel.62 stats
-
-    sequences to cluster:       191,777           [ SELECT count(*) from sequence; ]
-    total running time:         5 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
-
-=head2 rel.61 stats
-
-    sequences to cluster:       182,051           [ SELECT count(*) from sequence; ]
-    total running time:         7 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
-
-=head2 rel.60 stats
-
-    sequences to cluster:       172,250           [ SELECT count(*) from sequence; ]
-    total running time:         7.5 days          [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
+    This is an experimental PipeConfig file for ncRNAtrees pipeline (work in progress)
 
 =head1 CONTACT
 
@@ -45,8 +19,7 @@
 
 =cut
 
-
-package Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_confI;
 
 use strict;
 use warnings;
@@ -57,27 +30,27 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        # 'mlss_id'           => 40072,   # 40072 was good for release 62, but make sure you have the correct id!
+        'mlss_id'           => 40074,
         'max_gene_count'    => 1500,
 
-        'release'           => '62',
-        'rel_suffix'        => 'a',    # an empty string by default, a letter otherwise
+        'release'           => '63',
+        'rel_suffix'        => 'b',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
-        'pipeline_name'     => 'NCT_'.$self->o('rel_with_suffix'),  # name the pipeline to differentiate the submitted processes
-
-        'species_tree_input_file'   => '',  # empty value means 'create using genome_db+ncbi_taxonomy information'; can be overriden by a file with a tree in it
-
-        'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
+        'ensembl_cvs_root_dir' => $ENV{ENSEMBL_CVS_ROOT_DIR},  #  $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
+        'work_dir'             => $ENV{'HOME'}.'/ncrna_trees_'.$self->o('rel_with_suffix'),
 
         'email'             => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
 
+        'species_tree_input_file'   => '',  # empty value means 'create using genome_db+ncbi_taxonomy information'; can be overriden by a file with a tree in it
+
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara2',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),                    
-            -dbname => $ENV{'USER'}.'_compara_nctrees_'.$self->o('rel_with_suffix'),
+                          -driver => 'mysql',
+                          -host   => 'compara3',
+                          -port   => 3306,
+                          -user   => 'ensadmin',
+                          -pass   => $self->o('password'),
+                          -dbname => $ENV{'USER'}.'_compara_nctrees_'.$self->o('rel_with_suffix'),
         },
 
         'reg1' => {
@@ -99,7 +72,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'sf5_ensembl_compara_master',
+            -dbname => 'sf5_ensembl_compara_master', # 'sf5_ensembl_compara_master',
         },
 
         'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
@@ -107,7 +80,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'sf5_ensembl_compara_61',
+            -dbname => 'sf5_ensembl_compara_62',
         },
     };
 }
@@ -116,13 +89,28 @@ sub default_options {
 sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
     my ($self) = @_;
     return {
-        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-
-        'email'             => $self->o('email'),           # for (future) automatic notifications (may be unsupported by your Meadows)
+        'pipeline_name'     => 'NCT_'.$self->o('rel_with_suffix'),  # name the pipeline to differentiate the submitted processes
+        'email'             => $self->o('email'),                   # for automatic notifications (may be unsupported by your Meadows)
+        'work_dir'          => $self->o('work_dir'),                # data directories and filenames
     };
 }
 
+sub pipeline_create_commands {
+    my ($self) = @_;
+    return [
+        @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
+        'mkdir -p '.$self->o('work_dir'),
+    ];
+}
 
+sub resource_classes {
+    my ($self) = @_;
+    return {
+            0 => { -desc => 'default', 'LSF' => '' },
+            1 => { -desc => 'himem'  , 'LSF' => '-q hugemem -M15000000 -R"select[mem>15000] rusage[mem=15000]"' },
+            2 => { -desc => 'long'   , 'LSF' => '-q long' },
+           };
+}
 
 sub pipeline_analyses {
     my ($self) = @_;
@@ -190,7 +178,6 @@ sub pipeline_analyses {
             -parameters    => {
                 'sql'         => "ALTER TABLE #table_name# ENGINE=InnoDB",
             },
-            -can_be_empty  => 1,
             -hive_capacity => 10,
         },
 
@@ -202,7 +189,7 @@ sub pipeline_analyses {
                 'compara_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
                 'mlss_id'       => $self->o('mlss_id'),
             },
-            -wait_for  => [ 'innodbise_table_factory', 'innodbise_table' ],     # have to wait for both, because 'innodbise_table' can_be_empty
+            -wait_for  => [ 'innodbise_table_factory', 'innodbise_table' ],
             -flow_into => {
                 2 => [ 'load_genomedb' ],
                 1 => [ 'make_species_tree', 'create_lca_species_set', 'load_rfam_models' ],
@@ -222,6 +209,7 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[load species tree]-------------------------------------------------------------------
 
+
         {   -logic_name    => 'make_species_tree',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters    => {
@@ -229,12 +217,13 @@ sub pipeline_analyses {
                 'multifurcation_deletes_node'           => [ 33316, 129949, 314146 ],
                 'multifurcation_deletes_all_subnodes'   => [  9347, 186625,  32561 ],
             },
-            -wait_for => [ 'load_genomedb_factory', 'load_genomedb' ],  # have to wait for both to complete (so is a funnel)
+            -wait_for => [ 'load_genomedb' ],  # have to wait for both to complete (so is a funnel)
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into  => {
                 3 => { 'mysql:////nc_tree_tag' => { 'node_id' => 1, 'tag' => 'species_tree_string', 'value' => '#species_tree_string#' } },
             },
         },
+
 
 # ---------------------------------------------[create the low-coverage-assembly species set]-----------------------------------------
 
@@ -306,11 +295,22 @@ sub pipeline_analyses {
             },
             -wait_for => [ 'make_species_tree', 'create_lca_species_set', 'store_lca_species_set', 'load_members_factory', 'load_members' ], # mega-funnel
             -flow_into => {
-                2 => [ 'recover_epo' ],
+                           2 => [ 'recover_epo' ],
+                           1 => ['db_snapshot_after_Rfam_classify']
             },
         },
 
 # ---------------------------------------------[by-cluster branches]----------------------------------------------------------------------
+
+            {   -logic_name => 'db_snapshot_after_Rfam_classify',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+                -parameters => {
+                                'cmd'      => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 0).' '.$self->o('pipeline_db','-dbname').' >#filename#',
+                                'filename'  => $ENV{'HOME'}.'/db_snapshot_after_Rfam_classify',
+                               },
+            },
+
+#--------------------------------------------------------------------------------
 
         {   -logic_name    => 'recover_epo',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
@@ -319,64 +319,143 @@ sub pipeline_analyses {
                 'epo_db'         => $self->o('epo_db'),
             },
             -hive_capacity => 100,
+            -wait_for => ['db_snapshot_after_Rfam_classify'],
             -flow_into => {
-                1 => [ 'recover_search' ],
+                           1 => [ 'infernal','genomic_alignment' ],
             },
         },
 
-        {   -logic_name    => 'recover_search',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverSearch',
-            -batch_size    => 5,
-            -hive_capacity => -1,
-            -flow_into => {
-                1 => [ 'infernal' ],
-            },
-        },
+#         {   -logic_name    => 'recover_search',
+#             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverSearch',
+#             -batch_size    => 5,
+#             -hive_capacity => -1,
+#             -flow_into => {
+#                 1 => [ 'infernal' ],
+#             },
+#         },
 
         {   -logic_name    => 'infernal',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Infernal',
-            -hive_capacity => -1,
+            -hive_capacity => 200,
             -failed_job_tolerance => 10,    # that many per cent jobs are allowed to fail
             -flow_into => {
-                1 => [ 'sec_struct_tree' ],
-            },
+                           1 => ['pre_sec_struct_tree' ],
+                          },
         },
 
-        {   -logic_name    => 'sec_struct_tree',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCSecStructTree',
-            -hive_capacity => -1,
-            -failed_job_tolerance =>  5,    # that many per cent jobs are allowed to fail
+            {   -logic_name    => 'pre_sec_struct_tree', ## pre_sec_struct_tree
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',  ## PrepareRAxMLSecModels -- rename
+            -hive_capacity => 200,
+            #            -failed_job_tolerance =>  5,   ### No failed_job_tolerance here
             -flow_into => {
-                1 => [ 'genomic_alignment' ],
-            },
+                           1 => [ 'treebest_mmerge' ],
+                           2 => [ 'sec_struct_model_tree'],
+                           -1 => [ 'pre_sec_struct_tree_himem' ],
+                           -2 => [ 'sec_struct_model_tree_himem' ],
+                          },
+        },
+
+        {
+         -logic_name => 'pre_sec_struct_tree_himem',
+         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',
+         -hive_capacity => 200,
+         -flow_into => {
+                        1 => [ 'treebest_mmerge' ],
+                        2 => [ 'sec_struct_model_tree_himem' ],
+                       },
+         -can_be_empty => 1,
+         -rc_id => 1,
+        },
+
+        {   -logic_name    => 'sec_struct_model_tree', ## sec_struct_model_tree
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree', ## SecStrucModels
+            -hive_capacity => 200,
+            -failed_job_tolerance => 3,
+            -flow_into => {
+                           -1 => [ 'sec_struct_model_tree_himem' ],
+                           -2 => [ 'sec_struct_model_tree_himem' ],
+                          },
+        },
+
+        {
+         -logic_name => 'sec_struct_model_tree_himem',
+         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree',
+         -hive_capacity => 200,
+         -failed_job_tolerance => 3,
+         -can_be_empty => 1,
+         -rc_id => 1,
         },
 
         {   -logic_name    => 'genomic_alignment',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment',
-            -hive_capacity => -1,
-            -failed_job_tolerance =>  5,    # that many per cent jobs are allowed to fail
+            -hive_capacity => 200,
+            -failed_job_tolerance => 5,    # that many per cent jobs are allowed to fail
             -flow_into => {
-                1 => [ 'treebest_mmerge' ],
-            },
+                           -2 => ['genomic_alignment_long'],
+                          },
+        },
+
+        {
+         -logic_name => 'genomic_alignment_long',
+         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment',
+         -hive_capacity => 200,
+         -failed_job_tolerance => 5,
+         -can_be_empty => 1,
+         -rc_id => 2,
         },
 
         {   -logic_name    => 'treebest_mmerge',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCTreeBestMMerge',
             -hive_capacity => 400,
+            -wait_for      => ['recover_epo', 'infernal','genomic_alignment', 'genomic_alignment_long', 'sec_struct_model_tree','sec_struct_model_tree_himem', ],
+            -failed_job_tolerance => 5,
             -flow_into => {
-                1 => [ 'orthotree', 'ktreedist' ],
+                           1 => [ 'orthotree', 'ktreedist' ],
+                           -1 => [ 'treebest_mmerge_himem' ],
             },
+        },
+
+        {
+         -logic_name => 'treebest_mmerge_himem',
+         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCTreeBestMMerge',
+         -hive_capacity => 400,
+         -failed_job_tolerance => 5,
+         -flow_into => {
+                        1 => [ 'orthotree', 'ktreedist' ],
+                       },
+         -rc_id => 1,
         },
 
         {   -logic_name    => 'orthotree',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCOrthoTree',
             -hive_capacity => 200,
+            -flow_into => {
+                           -1 => ['orthotree_himem' ],
+                          },
+        },
+
+        {
+         -logic_name => 'orthotree_himem',
+         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCOrthotree',
+         -hive_capacity => 200,
+         -failed_job_tolerance => 5,
+         -rc_id => 1,
         },
 
         {   -logic_name    => 'ktreedist',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Ktreedist',
             -hive_capacity => -1,
             -failed_job_tolerance =>  5,    # that many per cent jobs are allowed to fail
+            -flow_into => {
+                           -1 => [ 'ktreedist_himem' ],
+                          },
+        },
+
+        {
+         -logic_name => 'ktreedist_himem',
+         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Ktreedist',
+         -hive_capacity => -1,
+         -failed_job_tolerance => 5,
         },
 
     ];
