@@ -40,7 +40,7 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
+        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
         'pipeline_name' => 'myisamise_compara_release',            # name used by the beekeeper to prefix job names on the farm
 
@@ -95,7 +95,6 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_job_list',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'input_id'        => { 'table_name' => '#_range_start#' },
                 'db_conn'         => $self->o('rel_db'),
                 'fan_branch_code' => 2,
             },

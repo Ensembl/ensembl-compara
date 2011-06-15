@@ -217,7 +217,6 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
 		-parameters => {
 				'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='".$self->o('pipeline_db','-dbname')."' AND table_name!='genome_db' AND engine='MyISAM' ",
-				'input_id'        => { 'table_name' => '#_range_start#' },
 				'fan_branch_code' => 2,
 			       },
 		-input_ids => [{}],
@@ -331,8 +330,9 @@ sub pipeline_analyses {
 	    {   -logic_name    => 'store_species_tree',
 		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',     # a non-standard use of JobFactory for iterative insertion
 		-parameters => {
-				'inputcmd'        => 'cat #species_tree_file#',
-				'input_id'        => { 'meta_key' => 'tree_string', 'meta_value' => '#_range_start#' },
+				'inputfile'       => '#species_tree_file#',
+                'column_names'    => [ 'the_tree_itself' ],
+				'input_id'        => { 'meta_key' => 'tree_string', 'meta_value' => '#the_tree_itself#' },
 				'fan_branch_code' => 2,
 			       },
 		-hive_capacity => -1,   # to allow for parallelization
@@ -364,8 +364,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'accumulate_reuse_ss',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',     # a non-standard use of JobFactory for iterative insertion
             -parameters => {
-                'inputquery'      => 'SELECT GROUP_CONCAT(genome_db_id) FROM species_set WHERE species_set_id=#reuse_ss_id#',
-                'input_id'        => { 'meta_key' => 'reuse_ss_csv', 'meta_value' => '#_range_start#' },
+                'inputquery'      => 'SELECT "reuse_ss_csv" meta_key, GROUP_CONCAT(genome_db_id) meta_value FROM species_set WHERE species_set_id=#reuse_ss_id#',
                 'fan_branch_code' => 3,
             },
             -wait_for => [ 'load_genomedb', 'check_reusability' ],
@@ -424,9 +423,8 @@ sub pipeline_analyses {
         {   -logic_name => 'subset_member_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-			    'inputcmd' => "mysql " . $self->dbconn_2_mysql('reuse_db', 1) . " -N -e 'SELECT sm.member_id, sm.subset_id FROM subset_member sm JOIN member USING (member_id) WHERE genome_db_id = #genome_db_id#' | cat",
-			    'input_id' => {'member_id' => '#_start_0#', 'subset_id' => '#_start_1#'},
-			    'delimiter' => "\t",
+                'db_conn'    => $self->o('reuse_db'),
+                'inputquery' => 'SELECT sm.* FROM subset_member sm JOIN member USING (member_id) WHERE genome_db_id = #genome_db_id#',
 			    'fan_branch_code' => 2,
             },
             -hive_capacity => 4,
@@ -438,9 +436,8 @@ sub pipeline_analyses {
         {   -logic_name => 'sequence_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-			    'inputcmd' => "mysql " . $self->dbconn_2_mysql('reuse_db', 1) . " -N -e 'SELECT s.sequence_id, s.length, s.sequence FROM sequence s JOIN member USING (sequence_id) WHERE genome_db_id = #genome_db_id#' | cat",
-			    'input_id' => {'sequence_id' => '#_start_0#', 'length' => '#_start_1#', 'sequence' => '#_start_2#',},
-			    'delimiter' => "\t",
+                'db_conn'    => $self->o('reuse_db'),
+                'inputquery' => 'SELECT s.* FROM sequence s JOIN member USING (sequence_id) WHERE genome_db_id = #genome_db_id#',
 			    'fan_branch_code' => 2,
             },
             -hive_capacity => 4,

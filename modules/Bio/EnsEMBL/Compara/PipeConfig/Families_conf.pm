@@ -166,9 +166,10 @@ sub pipeline_analyses {
         {   -logic_name => 'copy_table_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'db_conn'   => $self->o('homology_db'),
-                'inputlist' => [ 'genome_db', 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node', 'member', 'sequence' ],
-                'input_id'  => { 'src_db_conn' => '#db_conn#', 'table' => '#_range_start#' },
+                'db_conn'       => $self->o('homology_db'),
+                'inputlist'     => [ 'genome_db', 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node', 'member', 'sequence' ],
+                'column_names'  => [ 'table' ],
+                'input_id'      => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' },
                 'fan_branch_code' => 2,
             },
             -input_ids => [
@@ -207,11 +208,12 @@ sub pipeline_analyses {
                 'blastdb_dir'     => $self->o('blastdb_dir'),
                 'blastdb_name'    => $self->o('blastdb_name'),
                 'inputlist'       => ['FUN','HUM','MAM','ROD','VRT','INV'],
+                'column_names'    => [ 'tax_div' ],
                 'fan_branch_code' => 2,
             },
             -input_ids => [
-                { 'input_id' => { 'uniprot_source' => 'SWISSPROT', 'tax_div' => '#_range_start#' } },
-                { 'input_id' => { 'uniprot_source' => 'SPTREMBL',  'tax_div' => '#_range_start#' } },
+                { 'input_id' => { 'uniprot_source' => 'SWISSPROT', 'tax_div' => '#tax_div#' } },
+                { 'input_id' => { 'uniprot_source' => 'SPTREMBL',  'tax_div' => '#tax_div#' } },
             ],
             -wait_for => [ 'offset_and_innodbise_tables' ],
             -flow_into => {
@@ -281,8 +283,8 @@ sub pipeline_analyses {
         {   -logic_name => 'family_blast_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'      => 'SELECT DISTINCT s.sequence_id FROM member m, sequence s WHERE m.sequence_id=s.sequence_id AND m.source_name IN ("Uniprot/SPTREMBL", "Uniprot/SWISSPROT", "ENSEMBLPEP") ',
-                'input_id'        => { 'sequence_id' => '#_range_start#', 'minibatch' => '#_range_count#' },
+                'inputquery'      => 'SELECT DISTINCT s.sequence_id seqid FROM member m, sequence s WHERE m.sequence_id=s.sequence_id AND m.source_name IN ("Uniprot/SPTREMBL", "Uniprot/SWISSPROT", "ENSEMBLPEP") ',
+                'input_id'        => { 'sequence_id' => '#_start_seqid#', 'minibatch' => '#_range_count#' },
                 'step'            => 100,
                 'fan_branch_code' => 2,
             },
@@ -375,11 +377,10 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'randomize'  => 1,
-                'input_id'   => { 'family_id' => '#_range_start#' },
             },
             -hive_capacity => 20, # to enable parallel branches
             -input_ids  => [
-                { 'fan_branch_code' => 2, 'inputlist'  => [ 1, 2 ],},
+                { 'fan_branch_code' => 2, 'inputlist'  => [ 1, 2 ], 'column_names' => [ 'family_id' ], },
                 { 'fan_branch_code' => 3, 'inputquery' => 'SELECT family_id FROM family_member WHERE family_id>2 GROUP BY family_id HAVING count(*)>1',},
             ],
             -wait_for => [ 'parse_mcl' ],
@@ -449,7 +450,7 @@ sub pipeline_analyses {
         {   -logic_name => 'consensifier_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'input_id'        => { 'family_id' => '#_range_start#', 'minibatch' => '#_range_count#'},
+                'input_id'        => { 'family_id' => '#_start_family_id#', 'minibatch' => '#_range_count#'},
                 'fan_branch_code' => 2,
             },
             -hive_capacity => 20, # run the two in parallel and enable parallel branches

@@ -131,7 +131,6 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
 		-parameters => {
 				'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='".$self->o('pipeline_db','-dbname')."' AND table_name!='genome_db' AND engine='MyISAM' ",
-				'input_id'        => { 'table_name' => '#_range_start#' },
 				'fan_branch_code' => 2,
 			       },
 		-input_ids => [{}],
@@ -228,8 +227,9 @@ sub pipeline_analyses {
 	    {   -logic_name    => 'store_species_tree',
 		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',     # a non-standard use of JobFactory for iterative insertion
 		-parameters => {
-				'inputcmd'        => 'cat #species_tree_file#',
-				'input_id'        => { 'meta_key' => 'tree_string', 'meta_value' => '#_range_start#' },
+				'inputfile'       => '#species_tree_file#',
+                'column_names'    => [ 'the_tree_itself' ],
+				'input_id'        => { 'meta_key' => 'tree_string', 'meta_value' => '#the_tree_itself#' },
 				'fan_branch_code' => 2,
 			       },
 		-hive_capacity => -1,   # to allow for parallelization
@@ -240,8 +240,9 @@ sub pipeline_analyses {
 	    {   -logic_name    => 'store_taxon_tree',
 		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',     # a non-standard use of JobFactory for iterative insertion
 		-parameters => {
-				'inputcmd'        => 'cat #taxon_tree_file#',
-				'input_id'        => { 'meta_key' => 'taxon_tree', 'meta_value' => '#_range_start#' },
+				'inputfile'       => '#taxon_tree_file#',
+                'column_names'    => [ 'the_tree_itself' ],
+				'input_id'        => { 'meta_key' => 'taxon_tree', 'meta_value' => '#the_tree_itself#' },
 				'fan_branch_code' => 3,
 			       },
 		-hive_capacity => -1,   # to allow for parallelization
@@ -282,8 +283,7 @@ sub pipeline_analyses {
 	    {   -logic_name => 'create_low_coverage_genome_jobs',
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
 		-parameters => {
-				'inputquery' => "SELECT genomic_align_block_id FROM genomic_align ga LEFT JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id=" . $self->o('high_epo_mlss_id') . " AND genome_db_id <> 63 GROUP BY genomic_align_block_id;",
-				'input_id'   => { 'genomic_align_block_id' => '#_range_start#' },
+				'inputquery' => 'SELECT genomic_align_block_id FROM genomic_align ga LEFT JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id') . ' AND genome_db_id <> 63 GROUP BY genomic_align_block_id',
 				'fan_branch_code' => 2,
 			       },
 		-flow_into => {
@@ -345,8 +345,7 @@ sub pipeline_analyses {
 	    {   -logic_name => 'create_neighbour_nodes_jobs_alignment',
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
 		-parameters => {
-				'inputquery' => "SELECT node_id FROM genomic_align_tree WHERE parent_id = 0",
-				'input_id'   => { 'root_id' => '#_range_start#' },
+				'inputquery' => 'SELECT root_id FROM genomic_align_tree WHERE parent_id = 0',
 				'fan_branch_code' => 2,
 			       },
 		-flow_into => {

@@ -160,7 +160,7 @@ sub pipeline_analyses {
             -parameters => {
                 'inputfile'       => '#work_dir#/nodes.dmp',
                 'delimiter'       => "\t\Q|\E\t?",
-                'input_id'        => { 'taxon_id' => '#_start_0#', 'parent_id' => '#_start_1#', 'rank' => '#_start_2#', 'genbank_hidden_flag' => '#_start_10#'},
+                'input_id'        => { 'taxon_id' => '#_0#', 'parent_id' => '#_1#', 'rank' => '#_2#', 'genbank_hidden_flag' => '#_10#'},
                 'fan_branch_code' => 2,
             },
             -hive_capacity  => 10,  # to allow parallel branches
@@ -199,7 +199,7 @@ sub pipeline_analyses {
             -parameters => {
                 'inputfile'       => '#work_dir#/names.dmp',
                 'delimiter'       => "\t\Q|\E\t?",
-                'input_id'        => { 'taxon_id' => '#_start_0#', 'name' => '#_start_1#', 'name_class' => '#_start_3#'},
+                'input_id'        => { 'taxon_id' => '#_0#', 'name' => '#_1#', 'name_class' => '#_3#'},
                 'fan_branch_code' => 2,
             },
             -hive_capacity  => 10,  # to allow parallel branches
@@ -215,7 +215,7 @@ sub pipeline_analyses {
             -parameters => {
                 'inputfile'       => '#work_dir#/merged.dmp',
                 'delimiter'       => "\t\Q|\E\t?",
-                'input_id'        => { 'taxon_id' => '#_start_1#', 'name' => '#_start_0#', 'name_class' => 'merged_taxon_id'},
+                'input_id'        => { 'name' => '#_0#', 'taxon_id' => '#_1#', 'name_class' => 'merged_taxon_id'},
                 'fan_branch_code' => 2,
             },
             -hive_capacity  => 10,  # to allow parallel branches
@@ -254,8 +254,8 @@ sub pipeline_analyses {
         {   -logic_name => 'add_import_date',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'      => 'select distinct taxon_id, CURRENT_TIMESTAMP from ncbi_taxa_node where parent_id=0',
-                'input_id'        => { 'taxon_id' => '#_start_0#', 'name' => '#_start_1#', 'name_class' => 'import date' },
+                'inputquery'      => 'select distinct taxon_id, CURRENT_TIMESTAMP current_timestamp from ncbi_taxa_node where parent_id=0',
+                'input_id'        => { 'taxon_id' => '#taxon_id#', 'name' => '#current_timestamp#', 'name_class' => 'import date' },
                 'fan_branch_code' => 2,
             },
             -wait_for => [ 'build_left_right_indices' ],

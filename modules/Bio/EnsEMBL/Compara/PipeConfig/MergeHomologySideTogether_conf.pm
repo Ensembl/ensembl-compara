@@ -46,7 +46,7 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
+        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
         'pipeline_name' => 'compara_homology_merged_63',    # name used by the beekeeper to prefix job names on the farm
 
@@ -155,7 +155,8 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_job_list',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'input_id' => { 'src_db_conn' => '#db_conn#', 'table' => '#_range_start#' },
+                'column_names' => [ 'table' ],
+                'input_id'     => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' },
             },
             -input_ids => [
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('master_db'),    'inputlist' => $self->o('master_copy_tables') },

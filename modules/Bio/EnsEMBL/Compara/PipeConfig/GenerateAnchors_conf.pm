@@ -96,10 +96,7 @@ sub pipeline_analyses {
 	    {   -logic_name => 'innodbise_table_factory',
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
 		-parameters => {
-				'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='" . 
-						$self->o('pipeline_db','-dbname') .
-						"' AND table_name!='genome_db' AND engine='MyISAM' ",
-				'input_id'        => { 'table_name' => '#_range_start#' },
+				'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='" . $self->o('pipeline_db','-dbname') . "' AND table_name!='genome_db' AND engine='MyISAM' ",
 				'fan_branch_code' => 2,
 			       },
 		-input_ids => [{}],
@@ -181,7 +178,8 @@ sub pipeline_analyses {
 		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
 		-parameters => {
 			'inputcmd'        => 'cat ' . $self->o('species_tree_file') . ' | tr \'[A-Z]\' \'[a-z]\'',
-			'input_id'        => { 'meta_key' => 'tree_string', 'meta_value' => '#_range_start#' },
+            'column_names'    => [ 'the_tree_itself' ],
+			'input_id'        => { 'meta_key' => 'tree_string', 'meta_value' => '#the_tree_itself#' },
 			'fan_branch_code' => 2,
 		},
 		-input_ids      => [{}],

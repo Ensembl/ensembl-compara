@@ -159,7 +159,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='".$self->o('pipeline_db','-dbname')."' AND table_name!='genome_db' AND engine='MyISAM_FIXME' ",
-                'input_id'        => { 'table_name' => '#_range_start#' },
                 'fan_branch_code' => 2,
             },
 		-input_ids  => [ { } ],
@@ -182,9 +181,9 @@ sub pipeline_analyses {
         {   -logic_name => 'load_species_list',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-		    'inputcmd'      => '/bin/ls '.$self->o('data_dir').' | sed \'s/\([0-9]*\)_\(.*\).fasta/\1_\2.fasta \1 \2/\'' ,
-		    'delimiter'     => ' ',
-		    'input_id'      => {'ncbi_taxon_id' => '#_start_1#', 'species_name' => '#_start_2#', 'filename' => '#_start_0#'},
+                'inputcmd'      => '/bin/ls '.$self->o('data_dir').' | sed \'s/\([0-9]*\)_\(.*\).fasta/\1_\2.fasta \1 \2/\'' ,
+                'delimiter'     => ' ',
+                'column_names'  => [ 'filename', 'ncbi_taxon_id', 'species_name' ],
                 'fan_branch_code' => 2,
             },
 		-input_ids  => [ { } ],
@@ -252,8 +251,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                             'db_conn'    => $self->o('reuse_db'),
-                            'inputquery' => "SELECT sm.member_id, sm.subset_id FROM subset_member sm JOIN subset USING (subset_id) WHERE description LIKE 'gdb:#genome_db_id# %'",
-                            'input_id' => {'member_id' => '#_start_0#', 'subset_id' => '#_start_1#'},
+                            'inputquery' => "SELECT sm.* FROM subset_member sm JOIN subset USING (subset_id) WHERE description LIKE 'gdb:#genome_db_id# %'",
                             'fan_branch_code' => 2,
             },
             -can_be_empty  => 1,
@@ -281,8 +279,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                             'db_conn'    => $self->o('reuse_db'),
-                            'inputquery' => 'SELECT s.sequence_id, s.length, s.sequence FROM sequence s JOIN member USING (sequence_id) WHERE genome_db_id = #genome_db_id#',
-                            'input_id' => {'sequence_id' => '#_start_0#', 'length' => '#_start_1#', 'sequence' => '#_start_2#',},
+                            'inputquery' => 'SELECT s.* FROM sequence s JOIN member USING (sequence_id) WHERE genome_db_id = #genome_db_id#',
                             'fan_branch_code' => 2,
             },
             -can_be_empty  => 1,

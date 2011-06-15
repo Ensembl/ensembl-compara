@@ -37,7 +37,7 @@ sub default_options {
         'rel_suffix'        => 'b',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
-        'ensembl_cvs_root_dir' => $ENV{ENSEMBL_CVS_ROOT_DIR},  #  $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
+        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
         'work_dir'             => $ENV{'HOME'}.'/ncrna_trees_'.$self->o('rel_with_suffix'),
 
         'email'             => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
@@ -123,7 +123,8 @@ sub pipeline_analyses {
             -parameters => {
                 'db_conn'   => $self->o('master_db'),
                 'inputlist' => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
-                'input_id'  => { 'src_db_conn' => '#db_conn#', 'table' => '#_range_start#' },
+                'column_names' => [ 'table' ],
+                'input_id'  => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' },
                 'fan_branch_code' => 2,
             },
             -input_ids => [
@@ -164,7 +165,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='".$self->o('pipeline_db','-dbname')."' AND table_name!='genome_db' AND engine='MyISAM' ",
-                'input_id'        => { 'table_name' => '#_range_start#' },
                 'fan_branch_code' => 2,
             },
             -flow_into => {
@@ -247,8 +247,8 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',    # another non-stardard use of JobFactory for iterative insertion
             -parameters => {
                 'db_conn'         => $self->o('epo_db'),
-                'inputquery'      => "SELECT DISTINCT(g.genome_db_id) FROM genome_db g JOIN species_set ss USING(genome_db_id) JOIN method_link_species_set mlss USING(species_set_id) WHERE assembly_default AND mlss.name LIKE '%EPO_LOW_COVERAGE%' AND g.genome_db_id NOT IN (SELECT DISTINCT(g2.genome_db_id) FROM genome_db g2 JOIN species_set ss2 USING(genome_db_id) JOIN method_link_species_set mlss2 USING(species_set_id) WHERE assembly_default AND mlss2.name LIKE '%EPO')",
-                'input_id'        => { 'species_set_id' => '#lca_species_set_id#', 'genome_db_id' => '#_range_start#' },
+                'inputquery'      => "SELECT DISTINCT g.genome_db_id FROM genome_db g JOIN species_set ss USING(genome_db_id) JOIN method_link_species_set mlss USING(species_set_id) WHERE assembly_default AND mlss.name LIKE '%EPO_LOW_COVERAGE%' AND g.genome_db_id NOT IN (SELECT DISTINCT(g2.genome_db_id) FROM genome_db g2 JOIN species_set ss2 USING(genome_db_id) JOIN method_link_species_set mlss2 USING(species_set_id) WHERE assembly_default AND mlss2.name LIKE '%EPO')",
+                'input_id'        => { 'species_set_id' => '#lca_species_set_id#', 'genome_db_id' => '#genome_db_id#' },
                 'fan_branch_code' => 3,
             },
             -hive_capacity => -1,   # to allow for parallelization

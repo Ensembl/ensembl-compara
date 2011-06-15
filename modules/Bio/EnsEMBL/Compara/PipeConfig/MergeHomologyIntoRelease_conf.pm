@@ -108,13 +108,12 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_job_list',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'input_id'        => { 'table' => '#_range_start#' },
                 'db_conn'         => $self->o('merged_homology_db'),
                 'skipped_tables'  => $self->o('skipped_tables'),
                 'fan_branch_code' => 2,
             },
             -input_ids => [
-                { 'inputquery' => "SELECT table_name FROM information_schema.tables WHERE table_schema ='#mysql_dbname:db_conn#' AND table_name NOT IN (#csvq:skipped_tables#) AND table_rows" },
+                { 'inputquery' => "SELECT table_name table FROM information_schema.tables WHERE table_schema ='#mysql_dbname:db_conn#' AND table_name NOT IN (#csvq:skipped_tables#) AND table_rows" },
             ],
             -flow_into => {
                 2 => [ 'copy_table'  ],

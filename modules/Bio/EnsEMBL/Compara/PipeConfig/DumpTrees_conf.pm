@@ -39,9 +39,9 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',                 # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
+        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
-        'rel'               => 61,                                                  # current release number
+        'rel'               => 63,                                                  # current release number
         'rel_suffix'        => '',                                                  # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),              # for convenience
         'tree_type'         => 'protein_trees',                                     # either 'protein_trees' or 'ncrna_trees'
@@ -121,11 +121,10 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'               => $self->o('rel_db'),
-                'protein_trees_query'      => "SELECT DISTINCT ptm.root_id FROM protein_tree_member ptm, protein_tree_tag ptt WHERE ptt.node_id=ptm.root_id AND ptt.tag='gene_count' AND ptt.value>1",
+                'protein_trees_query'      => "SELECT DISTINCT root_id FROM protein_tree_member ptm, protein_tree_tag ptt WHERE ptt.node_id=ptm.root_id AND ptt.tag='gene_count' AND ptt.value>1",
                 'ncrna_trees_query'     => "SELECT root_id FROM nc_tree_member ntm, nc_tree_tag ntt WHERE ntm.root_id=ntt.node_id AND ntt.tag='gene_count' AND ntt.value GROUP BY root_id HAVING sum(length(cigar_line))",
                 'inputquery'            => '#expr(($tree_type eq "protein_trees") ? $protein_trees_query : $ncrna_trees_query)expr#',
-                'hashed_column_number'  => 0,
-                'input_id'              => { 'tree_type' => '#tree_type#', 'tree_id' => '#_start_0#', 'hash_dir' => '#_start_1#' },
+                'input_id'              => { 'tree_type' => '#tree_type#', 'tree_id' => '#root_id#', 'hash_dir' => '#expr(dir_revhash($root_id))expr#' },
                 'fan_branch_code'       => 2,
             },
             -input_ids => [
@@ -158,7 +157,8 @@ sub pipeline_analyses {
                 'protein_trees_list' => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta', 'cds.fasta' ],
                 'ncrna_trees_list'   => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta' ],
                 'inputlist'          => '#expr(($tree_type eq "protein_trees") ? $protein_trees_list : $ncrna_trees_list)expr#',
-                'input_id'           => { 'tree_type' => '#tree_type#', 'extension' => '#_range_start#', 'dump_file_name' => '#name_root#.#_range_start#'},
+                'column_names'       => [ 'extension' ],
+                'input_id'           => { 'tree_type' => '#tree_type#', 'extension' => '#extension#', 'dump_file_name' => '#name_root#.#extension#'},
                 'fan_branch_code'    => 2,
             },
             -wait_for => [ 'dump_a_tree' ],
