@@ -63,6 +63,9 @@ sub variation_content {
     $position = "$seq_region$chr_start-$chr_end";
   }
   
+	my $hgvs_html;
+	
+	#### LRG data ####
   if ($lrg) {
     my $lrg_feature = $feature->transfer($lrg);
     my $lrg_start   = $lrg_feature->start;
@@ -74,6 +77,70 @@ sub variation_content {
     } elsif ($lrg_end > $lrg_start) {
       $lrg_position = "$lrg_start-$lrg_end";
     }
+		
+		my $tvs;
+		my %by_allele;
+		
+		# now get normal ones
+    # go via transcript variations (should be faster than slice)
+	  my %genomic_alleles_added;
+			
+		if(defined($lrg_feature)) {
+		  
+			# force API to recalc consequences for LRG
+		  delete $lrg_feature->{'dbID'};
+		  delete $lrg_feature->{'transcript_variations'};
+		  
+		  # add consequences to existing list
+		  push @$tvs, @{$lrg_feature->get_all_TranscriptVariations};
+		}
+		
+		# Get HGVS data
+		foreach my $tv (@{$tvs}) {
+			foreach my $tva(@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
+	 			unless($genomic_alleles_added{$tva->variation_feature_seq}) {
+					push @{$by_allele{$tva->variation_feature_seq}}, $tva->hgvs_genomic;
+					$genomic_alleles_added{$tva->variation_feature_seq} = 1;
+	  		}
+  
+		  	# group by allele
+		  	push @{$by_allele{$tva->variation_feature_seq}}, $tva->hgvs_coding if $tva->hgvs_coding;
+		  	push @{$by_allele{$tva->variation_feature_seq}}, $tva->hgvs_protein if $tva->hgvs_protein && $tva->hgvs_protein !~ /p\.\=/;
+			}
+		}
+		
+		# make HTML
+    my @temp;
+
+		# Display HGVS data for LRG
+    foreach my $a (keys %by_allele) {
+
+      foreach my $h (@{$by_allele{$a}}) {
+
+					# Trim the allele string if too long
+					if ($h =~ /^(.+)(del|dup)([ATGC]+)$/) {
+						my $h1 = "$1$2";
+						my $h_allele = $3;
+						if (length $h_allele > 10) {
+							$h_allele = substr($h_allele, 0, 10) . '...';
+							$h = "$h1$h_allele";
+						}
+					}
+
+					# Add links to the corresponding ensembl LRG page
+					$h =~ s/LRG\_\d+(\.\d+)?/'<a href="'.$hub->url({
+            	type => 'LRG',
+            	action => 'Variation_LRG',
+            	db     => 'core',
+            	r      => undef,
+            	t      => $&,
+            	v      => $object->name,
+            	source => $variation->source}).'">'.$&.'<\/a>'/eg;
+					
+        	push @temp, $h;
+			}
+		}
+		$hgvs_html = join '<br/>', @temp;
   }
   
   $allele = substr($allele, 0, 10) . '...' if length $allele > 10; # truncate very long allele strings
@@ -84,6 +151,8 @@ sub variation_content {
   );
   
   push @entries, { caption => 'LRG position', entry => $lrg_position } if $lrg_position;
+	
+	push @entries, { caption => 'HGVS notation', entry => $hgvs_html} if $hgvs_html;
   
   push @entries, (
     { caption => 'Alleles', entry => $allele },
