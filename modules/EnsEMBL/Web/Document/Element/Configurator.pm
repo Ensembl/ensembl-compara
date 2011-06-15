@@ -132,34 +132,20 @@ sub add_image_config_notes {
   my $img_url = $controller->img_url;
   
   $panel->set_content(qq{
-  <p>
-    Notes:
-  </p>
-  <ul>
-    <li>
-      To change whether a track is drawn OR how it is drawn, click on the icon by the track name and
-      then select the way the track is to be rendered.
-    </li>
-    <li>
-      On the left hand side of the page the number of tracks in a menu, and the number of tracks
-      currently turned on from that menu are shown by the two numbers in parentheses <span style="white-space:nowrap">(tracks on/total tracks)</span>.
-    </li>
-    <li>
-      <p>
-      Certain tracks displayed come from user-supplied or external data sources, these are clearly marked as 
-      <img src="${img_url}track-das.gif" alt="DAS" style="vertical-align:top; width:40px;height:16px" title="DAS" /> (Distributed Annotation Sources), 
-      <img src="${img_url}track-url.gif" alt="URL" style="vertical-align:top; width:40px;height:16px" title="URL" /> (UCSC style web resources) or 
-      <img src="${img_url}track-bam.gif" alt="URL" style="vertical-align:top; width:40px;height:16px" title="URL" /> (Binary Alignment/Map) or 
-      <img src="${img_url}track-user.gif" alt="User" style="vertical-align:top; width:40px;height:16px" title="User" /> data uploaded by yourself or another user.
-      </p>
-      <p>
-      Please note that the content of these tracks is not the responsibility of the Ensembl project.
-      </p>
-      <p>In the case of URL based or DAS tracks may either slow down your ensembl browsing experience OR may be unavailable as these are served and stored from other servers elsewhere on the Internet.
-      </p>
-    </li>
-  </ul>});
-  
+<p class="space-below"><strong>Key</strong>:</p>
+<p class="space-below"><img src="/i/render/normal.gif" class="middle" /> Track style</p>
+<p class="space-below"><img src="/i/strand-f.png" class="middle" /> Forward strand</p>
+<p class="space-below"><img src="/i/strand-r.png" class="middle" /> Reverse strand</p>
+<p class="space-below"><img src="/i/star-on.png" class="middle" /> Favourite track</p>
+<p class="space-below"><img src="/i/info_blue_17.png" class="middle" /> Track information</p>
+<p class="space-below"><img src="/i/track-das.gif" class="middle" /> Distributed Annotation Source (external to Ensembl)</p>
+<p class="space-below"><img src="/i/track-tmp.gif" class="middle" /> Custom track - uploaded data</p>
+<p class="space-below"><img src="/i/track-url.gif" class="middle" /> Custom track - UCSC-style web resource</p>
+<p class="space-below"><img src="/i/track-user.gif" class="middle" /> Custom data saved to your user account</p>
+<p class="space-below">Please note that the content of external tracks is not the responsibility of the Ensembl project.</p>
+<p>URL-based or DAS tracks may either slow down your ensembl browsing experience OR may be unavailable as these are served and stored from other servers elsewhere on the Internet.</p>
+  });
+
   $self->add_panel($panel);
 }
 
