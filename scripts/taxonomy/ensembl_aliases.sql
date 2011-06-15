@@ -4,6 +4,16 @@
 
 --  Search for 'ADD' below to copy+paste the empty template
 
+SET @this_taxon_id=9601;
+SET @this_value='Orangutan';
+SET @this_name_class='ensembl alias name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+SET @this_taxon_id=9601;
+SET @this_value='orangutan';
+SET @this_name_class='ensembl common name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
 SET @this_taxon_id=10116;
 SET @this_value='Rat';
 SET @this_name_class='ensembl alias name';
@@ -1013,6 +1023,7 @@ SET @this_taxon_id=9005;
 SET @this_value='47.29';
 SET @this_name_class='ensembl timetree mya';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
 
 -- -- Use these to add new mya estimates
 -- SET @this_taxon_id=;
