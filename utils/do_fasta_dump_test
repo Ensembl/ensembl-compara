@@ -295,6 +295,14 @@ sub need_dna {
   my $needed = 0;
   my $reason;
 
+=cut
+  ## Code for using the production db when it actullay stores what we need!
+  my $hub = new EnsEMBL::Web::Hub;
+  my $production_db_adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
+  my $sp_id = $production_db_adaptor->fetch_species_id(lc($sp) );
+  my @changes = @{$production_db_adaptor->fetch_changelog({ release => $release, species => $sp_id}) };
+=cut
+
   my $web_db_connection = Bio::EnsEMBL::DBSQL::DBConnection->new(
     -host => 'ensdb-1-13',
     -port => 5307,
@@ -703,7 +711,7 @@ sub dump_data_for_gene {
        $subtype = 'ncrna';
     } elsif ( $logic_name =~/ncrna/ && $transcript->biotype !~ /RNA/i) {
       # this combination should not happen, so we need to know when it does
-      throw("Transcript with logic_name $logic_name has biotype ".$transcript->biotype);
+      utils::Tool::warning(2, "Transcript ".$transcript->stable_id." with logic_name $logic_name has biotype ".$transcript->biotype);
     } elsif ( $logic_name =~/MT_genbank_import/i && $transcript->biotype =~ /RNA/i) {
       # The genes on MT are both coding and noncoding. We only want
       # the noncoding ones here.
@@ -726,7 +734,7 @@ sub dump_data_for_gene {
       # We should never get here because the novel subtype will catch
       # all status other than known. Problems will only occur if the database
       # enum changes to include new status types. 
-      throw("Transcript ".$transcript->stable_id." status ".$transcript->status." logic ".$logic_name." biotype ".$transcript->biotype);
+      info(2, "Transcript ".$transcript->stable_id." status ".$transcript->status." logic ".$logic_name." biotype ".$transcript->biotype);
     }
     if ($logic_name eq 'pseudogene' && $subtype ne 'pseudogene') {
       utils::Tool::warning(1, "Logic name is set to pseudogene, but transcript has translation:".$transcript->translation);
@@ -982,7 +990,7 @@ sub blast_indexes {
 #        warn "scp -i $key_file $xd_file $blast_machine:/$blastdir/$file_name";
 #        system("scp -i $key_file $xd_file $blast_machine:/$blastdir/$file_name");
         warn "scp $xd_file $blast_machine:/$blastdir/$file_name";
-        system("scp $xd_file $blast_machine:/$blastdir/$file_name");
+#        system("scp $xd_file $blast_machine:/$blastdir/$file_name");
 
       }
       unlink($xd_file) || warn "Can't delete $xd_file: $!" unless $file eq $fh;
