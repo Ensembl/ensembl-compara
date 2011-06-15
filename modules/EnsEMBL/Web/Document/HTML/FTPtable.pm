@@ -6,6 +6,7 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Document::SpreadSheet;
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
@@ -37,6 +38,7 @@ sub render {
   my $EMF = $title{'emf'};
   my $BED = $title{'bed'};
 
+
   my $html = qq(
 <h3>Multi-species data</h3>
 <table class="ss tint" cellpadding="4">
@@ -59,28 +61,35 @@ sub render {
 <td>-</td>
 </tr>
 </table>
+);
+
+  ## Main table
+  $html .= qq(
+<div class="js_panel" id="ftp-table">
+<input type="hidden" class="panel_type" value="Content">
+<h3>Single species data</h3>
+);
+
+  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], {data_table => 1});
+  $table->add_columns(
+    { key => 'species', title => 'Species',             align => 'left',   width => '10%', sort => 'html' },
+    { key => 'dna',     title => 'FASTA (DNA)',         align => 'center', width => '10%', sort => 'none' },
+    { key => 'cdna',    title => 'FASTA (cDNA)',        align => 'center', width => '10%', sort => 'none' },
+    { key => 'ncrna',   title => 'FASTA (ncRNA)',       align => 'center', width => '10%', sort => 'none' },
+    { key => 'protseq', title => 'Protein sequence',    align => 'center', width => '10%', sort => 'none' },
+    { key => 'embl',    title => 'Annotated sequence (EMBL)',  align => 'center', width => '10%', sort => 'none' },
+    { key => 'genbank', title => 'Annotated sequence (GenBank)',  align => 'center', width => '10%', sort => 'none' },
+    { key => 'genes',   title => 'Gene sets',           align => 'center', width => '10%', sort => 'none' },
+    { key => 'mysql',   title => 'Whole databases',     align => 'center', width => '10%', sort => 'none' },
+    { key => 'var1',    title => 'Variation (EMF)',     align => 'center', width => '10%', sort => 'html' },
+    { key => 'var2',    title => 'Variation (GVF)',     align => 'center', width => '10%', sort => 'html' },
+    { key => 'funcgen', title => 'Regulation (GFF)',    align => 'center', width => '10%', sort => 'html' },
+    { key => 'files',   title => 'Data files',          align => 'center', width => '10%', sort => 'html' },
   );
 
-  $html .= qq(
-<h3>Single species data</h3>
-<table class="ss tint" cellpadding="4">
-
-<tr>
-<th>Species</th>
-<th colspan="3" style="text-align:center">DNA sequence only</th>
-<th colspan="1" style="text-align:center">Protein sequence</th>
-<th colspan="2" style="text-align:center">Annotated sequence</th>
-<th colspan="1" style="text-align:center">Gene sets</th>
-<th colspan="1" style="text-align:center">MySQL</th>
-<th colspan="2" style="text-align:center">Variation</th>
-<th colspan="1" style="text-align:center">Regulation</th>
-<th colspan="1" style="text-align:center">Data files</th>
-</tr>
-
-);
   my @species = $species_defs->ENSEMBL_DATASETS;
-  my $row = 0;
-  my $class;
+  my $rows;
+
   foreach my $spp (sort @{$species_defs->ENSEMBL_DATASETS}) {
     (my $sp_name = $spp) =~ s/_/ /;
     my $sp_dir =lc($spp);
@@ -102,40 +111,26 @@ sub render {
       my $coll_dir = $dbs->{'DATABASE_FUNCGEN'}{'NAME'};
       $extra = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/data_files/%s/">Regulation data files</a>', $title{'extra'}, $rel, $coll_dir;
     }
-    $class = $row % 2 == 0 ? 'bg1' : 'bg2';
 
-    $html .= sprintf qq(
-<tr class="%s">
-<td><strong><i>%s</i></strong> (%s)</td>
-<td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a> (DNA)</td>
-<td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cdna/">FASTA</a> (cDNA)</td>
-<td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/ncrna/">FASTA</a> (ncRNA)</td>
-<td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/pep/">FASTA</a> (protein)</td>
-<td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/embl/%s/">EMBL</a></td>
-<td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/genbank/%s/">GenBank</a></td>
-<td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/gtf/">GTF</a></td>
-<td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/mysql/">MySQL</a></td>
-<td>%s</td>
-<td>%s</td>
-<td>%s</td>
-<td>%s</td>
-</tr>
-      ), $class, $sp_name, $common,
-         $title{'dna'}, $rel, $sp_dir, 
-         $title{'cdna'}, $rel, $sp_dir, 
-         $title{'rna'}, $rel, $sp_dir,
-         $title{'prot'}, $rel, $sp_dir, 
-         $title{'embl'}, $rel, $sp_dir,
-         $title{'genbank'}, $rel, $sp_dir,
-         $title{'gtf'}, $rel,
-         $title{'mysql'}, $rel,
-         $emf, $variation, $funcgen, $extra
-    ;
-    $row++;
+    $table->add_row({
+      'species'       => sprintf('<strong><i>%s</i></strong> (%s)', $sp_name, $common),
+      'dna'           => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a> (DNA)', $title{'dna'}, $rel, $sp_dir),
+      'cdna'          => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a> (DNA)', $title{'cdna'}, $rel, $sp_dir),
+      'ncrna'         => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a> (DNA)', $title{'rna'}, $rel, $sp_dir),
+      'protseq'       => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/pep/">FASTA</a> (protein)', $title{'prot'}, $rel, $sp_dir),
+      'embl'          => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/embl/%s/">EMBL</a>', $title{'embl'}, $rel, $sp_dir),
+      'genbank'       => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/genbank/%s/">GenBank</a>', $title{'genbank'}, $rel, $sp_dir),
+      'genes'         => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/gtf/">GTF</a>', $title{'gtf'}, $rel),
+      'mysql'         => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/mysql/">MySQL</a>', $title{'mysql'}, $rel),
+      'var1'          => $emf,
+      'var2'          => $variation,
+      'funcgen'       => $funcgen,
+      'files'         => $extra,
+    });
   }
-  $html .= qq(
-</table>
-  );
+
+  $html .= $table->render;
+  $html .= '</div>';
 
   return $html;
 }
