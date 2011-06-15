@@ -34,7 +34,6 @@ sub init {
   }
   
   $self->set_defaults($defaults);
-  $self->code = 'Gene::Variation_Gene';
 }
 
 sub form {
