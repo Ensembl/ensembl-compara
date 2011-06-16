@@ -50,7 +50,7 @@ sub content {
   }
 
   if (@old_archives) {
-    $html .= '<h3 style="clear:both">Previous assemblies</h3>';
+    $html .= '<h3 style="clear:both;padding-top:1em">Previous assemblies</h3>';
     $html .= qq{
       <form action="/$species/redirect" method="get">
         <select name="url">
