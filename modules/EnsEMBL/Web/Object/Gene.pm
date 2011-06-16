@@ -53,6 +53,9 @@ sub availability {
       $availability->{'family'}        = !!$counts->{families};
       $availability->{'has_gene_tree'} = $gene_tree_sub->('compara');
       $availability->{"has_$_"}        = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches);
+      ## TODO - e63 hack - may need rewriting for subsequent releases
+      $availability->{'not_patch'}     = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1;
+
 
       if ($self->database('compara_pan_ensembl')) {
         $availability->{'family_pan_ensembl'} = !!$counts->{families_pan};

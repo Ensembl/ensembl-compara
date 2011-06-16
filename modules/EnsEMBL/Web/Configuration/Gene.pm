@@ -51,7 +51,7 @@ sub populate_tree {
       regulation EnsEMBL::Web::Component::Gene::RegulationImage
       features   EnsEMBL::Web::Component::Gene::RegulationTable
     )],
-    { 'availability' => 'regulation' }
+    { 'availability' => 'regulation not_patch' }
   );
   
   my $compara_menu = $self->create_node('Compara', 'Comparative Genomics',
@@ -137,17 +137,17 @@ sub populate_tree {
 
   $var_menu->append($self->create_node('Variation_Gene/Table', 'Variation Table',
     [qw( snptable EnsEMBL::Web::Component::Gene::GeneSNPTable )],
-    { 'availability' => 'gene database:variation core' }
+    { 'availability' => 'gene database:variation core not_patch' }
   ));
   
   $var_menu->append($self->create_node('Variation_Gene/Image',  'Variation Image',
     [qw( image EnsEMBL::Web::Component::Gene::GeneSNPImage )],
-    { 'availability' => 'gene database:variation' }
+    { 'availability' => 'gene database:variation not_patch' }
   ));
 	
 	$var_menu->append($self->create_node('StructuralVariation_Gene', 'Structural Variation',
     [qw( svtable EnsEMBL::Web::Component::Gene::GeneSVTable )],
-    { 'availability' => 'gene database:variation core' }
+    { 'availability' => 'gene database:variation core not_patch' }
   ));
 
   # External Data tree, including non-positional DAS sources
