@@ -9,7 +9,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     this.xhr = false;
     
     var fnEls = {
-      subPanel:    $('.js_panel', this.el),
       ajaxLoad:    $('.ajax', this.el),
       hideHints:   $('.hint', this.el),
       toggleTable: $('.toggle_table', this.el),
@@ -69,18 +68,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     }).filter('.closed').each(function () {
       if (Ensembl.hash.indexOf(';' + this.rel + ';') !== -1 || Ensembl.hash.indexOf('?' + this.rel + ';') !== -1) {
         $(this).trigger('click');
-      }
-    });
-  },
-  
-  subPanel: function () {
-    var panel = this;
-    
-    this.elLk.subPanel.each(function () {
-      var panelType = $('input.panel_type', this).val();
-      
-      if (panelType && !(panel instanceof Ensembl.Panel[panelType])) {
-        Ensembl.EventManager.trigger('createPanel', this.id, panelType);
       }
     });
   },
