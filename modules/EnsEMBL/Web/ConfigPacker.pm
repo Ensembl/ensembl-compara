@@ -428,40 +428,49 @@ sub _summarise_variation_db {
   # First get all toplevel sets
   my (%super_sets, %sub_sets);
 
-  my $st_aref = $dbh->selectall_arrayref( 
-    'select  vs.variation_set_id, vs.name, vs.description 
-        from variation_set vs 
-        where not exists (
-          select * 
-            from variation_set_structure vss 
-           where vss.variation_set_sub = vs.variation_set_id
-        )'
+  my $st_aref = $dbh->selectall_arrayref('
+    select vs.variation_set_id, vs.name, vs.description, a.value
+      from variation_set vs, attrib a
+      where not exists (
+        select * 
+          from variation_set_structure vss
+          where vss.variation_set_sub = vs.variation_set_id
+        )
+        and a.attrib_id = vs.short_name_attrib_id'
+  );
+  
+  # then get subsets foreach toplevel set
+  foreach (@$st_aref) {
+    my $set_id = $_->[0];
+    
+    $super_sets{$set_id} = {
+      name        => $_->[1],
+      description => $_->[2],
+      short_name  => $_->[3],
+      subsets     => [],
+    };
+    
+    my $ss_aref = $dbh->selectall_arrayref("
+      select vs.variation_set_id, vs.name, vs.description, a.value 
+        from variation_set vs, variation_set_structure vss, attrib a
+        where vss.variation_set_sub = vs.variation_set_id 
+          and a.attrib_id = vs.short_name_attrib_id
+          and vss.variation_set_super = $set_id"  
     );
-    # then get subsets foreach toplevel set
-    foreach( @$st_aref){
-      $super_sets{$_->[0]} = {};
-      $super_sets{$_->[0]}{'name'} = $_->[1];
-      $super_sets{$_->[0]}{'description'} = $_->[2];
-      $super_sets{$_->[0]}{'subsets'} = [];
-      my $set_id = $_->[0];
 
-      my $ss_aref = $dbh->selectall_arrayref(
-        "select vs.variation_set_id, vs.name, vs.description 
-           from variation_set vs, variation_set_structure vss 
-          where vss.variation_set_sub = vs.variation_set_id 
-            and vss.variation_set_super = $set_id"  
-      );
-
-      foreach my $sub_set (@$ss_aref){
-        push @{$super_sets{$_->[0]}{'subsets'}}, $sub_set->[0];
-        $sub_sets{$sub_set->[0]} = {};
-        $sub_sets{$sub_set->[0]}{'name'} = $sub_set->[1];
-        $sub_sets{$sub_set->[0]}{'description'} = $sub_set->[2]; 
-      } 
-    }
+    foreach my $sub_set (@$ss_aref) {
+      push @{$super_sets{$set_id}{'subsets'}}, $sub_set->[0];
+      
+      $sub_sets{$sub_set->[0]} = {
+        name        => $sub_set->[1],
+        description => $sub_set->[2],
+        short_name  => $sub_set->[3],
+      };
+    } 
+  }
 
   $self->db_details($db_name)->{'tables'}{'variation_set'}{'supersets'} = \%super_sets;  
-  $self->db_details($db_name)->{'tables'}{'variation_set'}{'subsets'} = \%sub_sets;
+  $self->db_details($db_name)->{'tables'}{'variation_set'}{'subsets'}   = \%sub_sets;
 
 #--------- Add in somatic mutation information
   my %somatic_mutations;
