@@ -64,7 +64,7 @@ sub init_slice {
     context            => 20000,
   });
   
-  $self->get_node('population')->remove;
+  $self->get_node('ld_population')->remove;
 }
 
 sub init_population {
@@ -75,7 +75,7 @@ sub init_population {
   $self->{'_ld_population'} = [ $pop_name ];
   
   $self->get_node('text')->set('text', $pop_name);
-  $self->get_node($_)->remove for grep $_ ne 'population', $self->_menus;
+  $self->get_node($_)->remove for grep $_ ne 'ld_population', $self->_menus;
 }
 
 1;
