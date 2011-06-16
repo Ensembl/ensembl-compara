@@ -15,6 +15,7 @@ sub init {
   my $defaults   = {
     consequence_format => 'ensembl',
     show_scores        => 'no',
+		context            => 100,
   };
   
   $defaults->{"opt_pop_$_"} = 'off' for @{$variations->{'DISPLAY_STRAINS'}};
