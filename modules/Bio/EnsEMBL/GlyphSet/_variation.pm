@@ -176,7 +176,7 @@ sub highlight {
   my $self = shift; 
   my ($f, $composite, $pix_per_bp, $h, $hi_colour) = @_;
   
-  return if $self->my_config('style') ne 'box'; 
+  #return if $self->my_config('style') ne 'box'; 
   
   ## Get highlights
   my %highlights;
@@ -193,12 +193,17 @@ sub highlight {
      $id =~ s/^rs//;
  
   return unless $highlights{$id} || $highlights{"rs$id"};
- 
+  
+	# Different 'y' coordinates to highlight the variation, depending on the 'style'.
+	my $composite_y = $composite->y;
+	if ($self->my_config('style') ne 'box'){
+		$composite_y--; 
+	} 
   
   $self->unshift(
     $self->Rect({ # First a black box
       x         => $composite->x - 2/$pix_per_bp,
-      y         => $composite->y - 1, # + makes it go down
+      y         => $composite_y - 1, # + makes it go down
       width     => $composite->width + 4/$pix_per_bp,
       height    => $h + 4,
       colour    => 'black',
@@ -206,7 +211,7 @@ sub highlight {
     }),
     $self->Rect({ # Then a 1 pixel smaller white box
       x         => $composite->x - 1/$pix_per_bp,
-      y         => $composite->y, # + makes it go down
+      y         => $composite_y, # + makes it go down
       width     => $composite->width + 2/$pix_per_bp,
       height    => $h + 2,
       colour    => 'white',
