@@ -252,11 +252,27 @@ sub variation_table {
     source => undef,
   });
   
-  my $base_trans_url = $hub->url({
-    type   => 'Transcript',
-    action => 'Summary',
-    t      => undef,
-  });
+  my $base_trans_url;
+  my $url_transcript_prefix;
+  unless ($self->isa('EnsEMBL::Web::Component::LRG::LRGSNPTable')) {
+      $url_transcript_prefix = 't';
+      $base_trans_url = $hub->url({
+        type   => 'Transcript',
+        action => 'Summary',
+        $url_transcript_prefix      => undef,
+    });  
+  }
+  else {
+      my $gene_stable_id;
+      $gene_stable_id = $transcripts->[0]->gene->stable_id if ($transcripts->[0] && $transcripts->[0]->gene);
+      $url_transcript_prefix = 'lrgt';
+      $base_trans_url = $hub->url({
+        type   => 'LRG',
+        action => 'Summary',
+        lrg    => $gene_stable_id,
+        __clear => 1
+      });
+  } 
   
   foreach my $transcript (@$transcripts) {
     my $transcript_stable_id = $transcript->stable_id;
@@ -308,7 +324,7 @@ sub variation_table {
             ('-', '-');
           
           my $url       = "$base_url;v=$variation_name;vf=$raw_id;source=$source";
-          my $trans_url = "$base_trans_url;t=$transcript_stable_id";
+          my $trans_url = "$base_trans_url;$url_transcript_prefix=$transcript_stable_id";
           
           my $as = $snp->allele_string;
           
