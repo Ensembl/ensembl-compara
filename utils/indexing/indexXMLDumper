@@ -58,7 +58,9 @@ our $nogzip = 1;    #try setting to 0 for on the fly gzipping (not tested)?
 our %cross_references;  #get a set of external_dbs so we can make sure we link to them all correctly if we ever need to
 our $parser =  new XML::Parser( 'ErrorContext' => 3 );
 my $sitetype = $SD->ENSEMBL_SITETYPE || 'Ensembl';
-my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/' : 'http://www.ensembl.org'; #what happens to this when we are on an archive ?
+my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/'
+                : $sitetype eq 'Pre'  ? 'http://pre.ensembl.org/'
+                : 'http://www.ensembl.org'; #what happens to this when we are on an archive ?
 
 $search_engine ||= 'lucene';
 
@@ -545,9 +547,10 @@ sub dumpVariation {
   while ( my $rows = $sth->fetchrow_arrayref() ) {
     push @{$locations->{$rows->[0]}},$rows->[1];
   }
-  print LOG "    Got SNP location info ", &date_and_mem, "\n";
+  print LOG "     Retrieved SNP location info ", &date_and_mem, "\n";
 
-  print LOG "    Preparing to get extra SNP info ", &date_and_mem, "\n";
+  print LOG "    Preparing to get extra SNP info (phenotypes etc) ", &date_and_mem, "\n";
+
   my %snp_extra = map { ($_->[0] => $_) }
     @{$conf->{'dbh'}->selectall_arrayref(
        "SELECT va.variation_id,
@@ -574,7 +577,7 @@ sub dumpVariation {
 
 #  warn Data::Dumper::Dumper(\%snp_extra);
 
-  print LOG "    Retrieved extra SNP info ", &date_and_mem, "\n";
+  print LOG "     Retrieved extra SNP info ", &date_and_mem, "\n";
 
   #disconnect and then connect to free up memory
   my $core = $conf->{'core_details'};
@@ -585,31 +588,31 @@ sub dumpVariation {
   if ($dbspecies ne 'Homo_sapiens') {
     print LOG "    Preparing to get extra ssID info ", &date_and_mem, "\n";
     $stmt = qq{SELECT variation_id,
-                      GROUP_CONCAT('ss',subsnp_id)
-                 FROM $VariationDB.subsnp_map};
+                      GROUP_CONCAT('ss',subsnp_id) as ssid
+                 FROM $VariationDB.subsnp_map
+             GROUP BY variation_id};
     $ssid_sth = $conf->{'dbh'}->prepare($stmt);
     $ssid_sth->execute();
-
+    print LOG "     ...executed SQL, now retrieving data ", &date_and_mem, "\n";
     # Get a hashref of the results with the variation_id as key
     $ssid_hash = $ssid_sth->fetchall_hashref('variation_id');
-    print LOG "    Retrieved extra ssID info ", &date_and_mem, "\n";
+    print LOG "     Retrieved extra ssID info ", &date_and_mem, "\n";
 
     #disconnect and then connect to free up memory
     $conf->{'dbh'}->disconnect;
     $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
   }
   else {
-    #for human we might need to get the extra allele info as we go along
-    print LOG "    Will get extra ssID info as we go along", &date_and_mem, "\n";
-    $stmt = qq{SELECT variation_id,
-                      GROUP_CONCAT('ss',subsnp_id)
+    #for human we need to get the extra allele info as we go along (note, when we have 48G memory it might be worth trying agains to do it in one go)
+    print LOG "    Will get extra ssID info as we go along ", &date_and_mem, "\n";
+    $stmt = qq{SELECT GROUP_CONCAT('ss',subsnp_id) as ssid
                  FROM $VariationDB.subsnp_map
                 WHERE variation_id = ?};
     $ssid_sth = $conf->{'dbh'}->prepare($stmt);
   }
 
   # Statement to get all variations, both mapped, failed and the precious non-mapped, non-failed
-  print LOG "    Preparing to execute SQL to get all SNPs ", &date_and_mem, "\n";
+  print LOG "    Preparing to get all SNPs ", &date_and_mem, "\n";
   $sth = $conf->{'dbh'}->prepare(qq{
     SELECT
         v.variation_id,
@@ -634,7 +637,7 @@ sub dumpVariation {
         NULL});
 
   $sth->execute() or die "Error:", $DBI::errstr;
-  print LOG "    Executed SQL to get all SNPs ", &date_and_mem,  "\n";
+  print LOG "     ...executed SQL, now retrieving data and generating xml ", &date_and_mem,  "\n";
 
   my $new_syn_c = 0;
   while ( my $rowcache = $sth->fetchall_arrayref( undef, 10_000 ) ) {
@@ -650,10 +653,10 @@ sub dumpVariation {
         $ssids = $ssid_hash->{$variation_id}{'ssid'};
       }
       else {
-        #e62 - comment out these three lines to generate indices without extra allele info
+        #comment out these three lines if time constraints mean you need to generate indices without extra allele info
         $ssid_sth->execute($variation_id);
-        (my $res) = $ssid_sth->fetchall_arrayref();
-        $ssids = $res->[0][0];
+        (my $res) = $ssid_sth->fetchrow_arrayref();
+        $ssids = $res->[0];
       }
       my %synonyms;
       my $syn_c = 0;
@@ -706,7 +709,7 @@ sub dumpVariation {
   if ($somatic_present) {
     $c += footer( $counter2->(),$nogzip,$fh2,'Somatic Mutation');
   }
-  print LOG "  $new_syn_c synonyms added from the allele table\n";
+  print LOG "  $new_syn_c synonyms added from the subsnp_map table\n";
 
   %snp_extra    = undef;
   $ssid_hash = undef;
