@@ -176,8 +176,6 @@ sub highlight {
   my $self = shift; 
   my ($f, $composite, $pix_per_bp, $h, $hi_colour) = @_;
   
-  #return if $self->my_config('style') ne 'box'; 
-  
   ## Get highlights
   my %highlights;
   @highlights{$self->highlights} = (1);
