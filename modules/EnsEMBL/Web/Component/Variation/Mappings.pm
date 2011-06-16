@@ -117,7 +117,8 @@ sub content {
             r      => undef,
             lrg    => $gene_name,
             v      => $name,
-            source => $source
+            source => $source,
+            __clear => 1
         });
       
         $transcript_url = $hub->url({
@@ -128,7 +129,8 @@ sub content {
             lrg    => $gene_name,
             lrgt   => $trans_name,
             v      => $name,
-            source => $source
+            source => $source,
+            __clear => 1
         });
       }
       
