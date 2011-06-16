@@ -3,6 +3,7 @@
 package EnsEMBL::Web::Component::Variation::Summary;
 
 use strict;
+use EnsEMBL::Web::Object::LRG qw(hgvs_url);
 
 use base qw(EnsEMBL::Web::Component::Variation);
 
@@ -405,7 +406,7 @@ sub hgvs {
     my $seq = $tva->variation_feature_seq;
     
     # group by allele
-    push @{$by_allele{$seq}}, $tva->hgvs_genomic unless $genomic_alleles{$seq}++;
+    push @{$by_allele{$seq}}, $tva->hgvs_genomic unless $genomic_alleles{$tva->hgvs_genomic =~ /^LRG/}{$seq}++;
     push @{$by_allele{$seq}}, $tva->hgvs_coding  if $tva->hgvs_coding;
     push @{$by_allele{$seq}}, $tva->hgvs_protein if $tva->hgvs_protein && $tva->hgvs_protein !~ /p\.\=/;
   }
@@ -426,8 +427,8 @@ sub hgvs {
     push @hgvs, (scalar @hgvs ? '<br />' : '') . "<b>Variant allele $a</b>" if $allele_count > 1;
     
     foreach (@{$by_allele{$a}}) {
-      /(LRG_\d+)(_)?([t|p]\d+)?(.+)/;
-      push @hgvs, sprintf '<a href="%s">%s</a>%s', $hub->url({ %url_params, type => 'LRG', action => 'Variation_LRG', lrg => $1, lrgt => "$1$2$3" }), "$1$2$3", $4 and next if $1;
+        my $url = EnsEMBL::Web::Object::LRG::hgvs_url($hub,$_,{source => $variation->source, v => $object->name});
+        push @hgvs, sprintf '<a href="%s">%s</a>%s', $url->[0], $url->[1], $url->[2] and next if $url;
       
       /(ENS(?:...)?T\d+)(.+)/;
       push @hgvs, sprintf '<a href="%s">%s</a>%s', $hub->url({ %url_params, t => $1 }), $1, $2 and next if $1;
