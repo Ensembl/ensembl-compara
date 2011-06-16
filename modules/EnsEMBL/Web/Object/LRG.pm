@@ -1460,6 +1460,10 @@ sub hgvs_url {
     if ($effect =~ m/^\:c\./) {        
         $p->{lrgt} = "$lrg_id$stable_id"; 
     }
+    # Else, if we're looking at a genomic location, link to the Summary page
+    elsif ($effect =~ m/^\:g\./) {
+        $p->{action} = 'Summary';
+    }
     
     # Add/override with the supplied parameters
     map {$p->{$_} = $params->{$_}} keys(%{$params});

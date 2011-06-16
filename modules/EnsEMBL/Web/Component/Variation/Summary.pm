@@ -427,14 +427,24 @@ sub hgvs {
     push @hgvs, (scalar @hgvs ? '<br />' : '') . "<b>Variant allele $a</b>" if $allele_count > 1;
     
     foreach (@{$by_allele{$a}}) {
-        my $url = EnsEMBL::Web::Object::LRG::hgvs_url($hub,$_,{source => $variation->source, v => $object->name});
+        
+        # If this is a genomic hgvs string, enable the tracks on the location view when linking back
+        my $location_params = {};
+        if (/\:g\./) {
+            $location_params = {contigviewbottom => ($variation->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($variation->failed_description ? ',variation_set_Failed_variations=normal' : '')};
+        }
+        
+        my $url = EnsEMBL::Web::Object::LRG::hgvs_url($hub,$_,{source => $variation->source, v => $object->name, %{$location_params}});
         push @hgvs, sprintf '<a href="%s">%s</a>%s', $url->[0], $url->[1], $url->[2] and next if $url;
       
       /(ENS(?:...)?T\d+)(.+)/;
       push @hgvs, sprintf '<a href="%s">%s</a>%s', $hub->url({ %url_params, t => $1 }), $1, $2 and next if $1;
       
-      #/(ENS(?:...)?P\d+)(.+)/;
-      #push @hgvs, sprintf '<a href="%s">%s</a>%s', $hub->url({ %url_params, action => 'ProtVariations', t => $1 }), $1, $2 and next if $1;
+      /(ENS(?:...)?P\d+)(.+)/;
+      push @hgvs, sprintf '<a href="%s">%s</a>%s', $hub->url({ %url_params, action => 'ProtVariations', t => $1 }), $1, $2 and next if $1;
+      
+      /(.+?)(\:g\..+)/;
+      push @hgvs, sprintf '<a href="%s">%s</a>%s', $hub->url({ %url_params, type => 'Location', action => 'View', %{$location_params}}), $1, $2 and next if $1;
       
       push @hgvs, $_;
     }
