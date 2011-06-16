@@ -22,9 +22,9 @@ sub process {
   my $output;
   
   my $param  = {
-    _time    => $object->param('_time'),
-    species  => $object->param('species'),
-    consequence_mapper  => $object->param('consequence_mapper'),
+    _time    => $object->param('_time') || '',
+    species  => $object->param('species') || $self->species,
+    consequence_mapper  => $object->param('consequence_mapper') || 0,
   };
   
   foreach my $file_name (@files) {
