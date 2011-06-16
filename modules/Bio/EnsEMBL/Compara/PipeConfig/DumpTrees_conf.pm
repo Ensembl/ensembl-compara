@@ -17,6 +17,9 @@
 
     In rel.60 protein_trees took 2h20m to dump.
 
+    In rel.63 protein_trees took 51m to dump.
+    In rel.63 ncrna_trees   took 06m to dump.
+
 =head1 CONTACT
 
   Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
@@ -28,7 +31,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');   # we don't need Compara tables in this particular case
 
 =head2 default_options
 
@@ -57,11 +60,12 @@ sub default_options {
         },
 
         'rel_db' => {
+            -driver => 'mysql',
             -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'kb3_ensembl_compara_'.$self->o('rel'),
+            -dbname => 'lg4_ensembl_compara_'.$self->o('rel'),
         },
 
         'capacity'    => 100,                                                       # how many trees can be dumped in parallel
