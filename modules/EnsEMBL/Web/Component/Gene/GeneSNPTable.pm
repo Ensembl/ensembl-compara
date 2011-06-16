@@ -18,8 +18,8 @@ sub content {
   my $self             = shift;
   my $hub              = $self->hub;
   my $consequence_type = $hub->param('sub_table');
-	my $icontext         = $hub->param('context');
-  my $gene             = $self->configure($icontext || 100);
+	my $icontext         = $hub->param('context') || 100;
+  my $gene             = $self->configure($icontext);
   my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene->get_all_transcripts};
   
   my $count;
