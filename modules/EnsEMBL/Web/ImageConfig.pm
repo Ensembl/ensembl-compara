@@ -1972,8 +1972,7 @@ sub add_sequence_variations {
     ) {
       my $name          = $toplevel_set->{'name'};
       my $caption       = $name . (scalar @{$toplevel_set->{'subsets'}} ? ' (all data)' : '');
-      (my $key = $name) =~ s/\W/_/g;
-      
+      my $key           = $toplevel_set->{'short_name'};
       my $set_variation = scalar @{$toplevel_set->{'subsets'}} ? $self->create_submenu("set_variation_$key", $name) : $variation_sets;
       
       $set_variation->append($self->create_track("variation_set_$key", $caption, {
@@ -1984,13 +1983,14 @@ sub add_sequence_variations {
         set_name    => $name,
         description => $toplevel_set->{'description'},
       }));
-  
+      
       # add in sub sets
       if (scalar @{$toplevel_set->{'subsets'}}) {
         foreach my $subset_id (sort @{$toplevel_set->{'subsets'}}) {
-          my $sub_set_name        = $hashref->{'variation_set'}{'subsets'}{$subset_id}{'name'}; 
-          my $sub_set_description = $hashref->{'variation_set'}{'subsets'}{$subset_id}{'description'};
-          (my $sub_set_key = $sub_set_name) =~ s/\W/_/g;
+          my $sub_set             = $hashref->{'variation_set'}{'subsets'}{$subset_id};
+          my $sub_set_name        = $sub_set->{'name'}; 
+          my $sub_set_description = $sub_set->{'description'};
+          my $sub_set_key         = $sub_set->{'short_name'};
           
           $set_variation->append($self->create_track("variation_set_$sub_set_key", $sub_set_name, {
             %options,
