@@ -5,6 +5,7 @@ package EnsEMBL::Web::Component::Variation::VariationSummary;
 use strict;
 
 use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
+use EnsEMBL::Web::Object::LRG qw(hgvs_url);
 
 use base qw(EnsEMBL::Web::Component::Variation);
 
@@ -206,16 +207,10 @@ sub _hgvs_names {
 
       foreach my $h (@{$by_allele{$a}}) {
 
-        $h =~ s/(LRG_\d+)(_)?([t|p]\d+)?(.*)/'<a href="'.$hub->url({
-            type => 'LRG',
-            action => 'Variation_LRG',
-            db     => 'core',
-            r      => undef,
-            lrgt   => "$1$2$3",
-            lrg    => $1,
-            v      => $object->name,
-            source => $variation->source}).'">'.$&.'<\/a>'/eg;
-
+		# Add links to the corresponding ensembl LRG page
+		my $url = hgvs_url($hub,$h,{v => $object->name, source => $variation->source});
+		$h = '<a href="'. $url->[0] .'">'. $url->[1] .'</a>' . $url->[2] if ($url);
+					
         $h =~ s/ENS(...)?T\d+(\.\d+)?/'<a href="'.$hub->url({
             type => 'Transcript',
             action => $hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary',

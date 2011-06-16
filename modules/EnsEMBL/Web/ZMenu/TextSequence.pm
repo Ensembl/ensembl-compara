@@ -6,6 +6,7 @@
 package EnsEMBL::Web::ZMenu::TextSequence;
 
 use strict;
+use EnsEMBL::Web::Object::LRG qw(hgvs_url);
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -128,14 +129,8 @@ sub variation_content {
 					}
 
 					# Add links to the corresponding ensembl LRG page
-					$h =~ s/LRG\_\d+(\.\d+)?/'<a href="'.$hub->url({
-            	type => 'LRG',
-            	action => 'Variation_LRG',
-            	db     => 'core',
-            	r      => undef,
-            	t      => $&,
-            	v      => $object->name,
-            	source => $variation->source}).'">'.$&.'<\/a>'/eg;
+					my $url = hgvs_url($hub,$h,{v => $object->name, source => $variation->source});
+					$h = '<a href="'. $url->[0] .'">'. $url->[1] .'</a>' . $url->[2] if ($url);
 					
         	push @temp, $h;
 			}
