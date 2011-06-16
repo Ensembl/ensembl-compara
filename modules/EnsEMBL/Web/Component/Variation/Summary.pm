@@ -319,7 +319,7 @@ sub location {
         v                => $id,
         vf               => $vf,
         source           => $object->source,
-        contigviewbottom => ($variation->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($variation->failed_description ? ',variation_set_Failed_variations=normal' : '')
+        contigviewbottom => ($variation->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($variation->failed_description ? ',fail_all=normal' : '')
       })
     );
   }
@@ -431,7 +431,7 @@ sub hgvs {
         # If this is a genomic hgvs string, enable the tracks on the location view when linking back
         my $location_params = {};
         if (/\:g\./) {
-            $location_params = {contigviewbottom => ($variation->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($variation->failed_description ? ',variation_set_Failed_variations=normal' : '')};
+            $location_params = {contigviewbottom => ($variation->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($variation->failed_description ? ',fail_all=normal' : '')};
         }
         
         my $url = EnsEMBL::Web::Object::LRG::hgvs_url($hub,$_,{source => $variation->source, v => $object->name, %{$location_params}});
