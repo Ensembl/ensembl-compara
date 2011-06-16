@@ -57,6 +57,8 @@ sub new_sheet {
   my $self = shift;
   my $name = shift;
   
+  $name = sprintf '%.31s', $name if length $name > 31; # Sheet names can only be up to 31 characters long
+  
   $self->sheet++;
   $self->row = 0;
   $self->col = 0;
