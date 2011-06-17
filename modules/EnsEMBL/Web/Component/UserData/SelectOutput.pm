@@ -42,7 +42,7 @@ sub content {
 
   my $text         = "Please select the format you would like your output in:";
   my $species      = ';species=' . $object->param('species');
-  my $species_path = $object->species_path($object->data_species) || '/'.$species;
+  my $species_path = $object->species_path($object->data_species) || '/'.$object->param('species');
   
   $extra_param .= ';_time=' . $object->param('_time') if $object->param('_time');
   
@@ -54,7 +54,7 @@ sub content {
   $html_url .= ';code='.$object->param('code') if $object->param('code');
 
   my $text_url = "$species_path/UserData/$text_target?format=text;data_format=".$data_format . $convert_file . $species . $extra_param;
-  
+
   my $list = [
     qq{<a class="modal_link" href="$html_url">HTML</a>},
     qq{<a class="modal_link" href="$text_url">Text</a>}
