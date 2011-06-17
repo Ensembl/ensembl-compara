@@ -20,7 +20,7 @@ use Bio::EnsEMBL::VDrawableContainer;
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 
 use EnsEMBL::Web::Document::Image;
-use EnsEMBL::Web::Document::SpreadSheet;
+use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Form;
@@ -326,7 +326,7 @@ sub new_karyotype_image {
 sub new_table {
   my $self     = shift;
   my $hub      = $self->hub;
-  my $table    = new EnsEMBL::Web::Document::SpreadSheet(@_);
+  my $table    = new EnsEMBL::Web::Document::Table(@_);
   my $filename = $hub->filename($self->object);
   
   $table->format     = $self->format;
