@@ -212,7 +212,10 @@ sub process {
     my ($options, @cells) = ref $row eq 'HASH' ? ($row->{'options'}, map $row->{$_->{'key'}}, @$columns) : ({}, @$row);
     my $i = 0;
     
-    $options->{'class'} .= ($options->{'class'} ? ' ' : '') . $row_colours[0];
+    if (scalar @row_colours) {
+      $options->{'class'} .= ($options->{'class'} ? ' ' : '') . $row_colours[0];
+      push @row_colours, shift @row_colours
+    }
     
     foreach my $cell (@cells) {
       $cell = { value => $cell } unless ref $cell eq 'HASH';
@@ -229,8 +232,6 @@ sub process {
     }
     
     push @body, [ \@cells, join('', map { $options->{$_} ? qq{ $_="$options->{$_}"} : () } qw(id class style valign)) ];
-    
-    push @row_colours, shift @row_colours;
   }
   
   return (\@head, \@body);
