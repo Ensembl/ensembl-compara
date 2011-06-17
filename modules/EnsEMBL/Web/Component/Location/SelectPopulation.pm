@@ -24,13 +24,10 @@ sub content_ajax {
   my $params      = $hub->multi_params; 
   my $slice       = $hub->database('core')->get_SliceAdaptor->fetch_by_region($object->seq_region_type, $object->seq_region_name, 1, $object->seq_region_length, 1);
   my $ld_adaptor  = $hub->database('variation')->get_LDFeatureContainerAdaptor;
-  my @populations = @{$ld_adaptor->get_populations_by_Slice($slice)};  
+  my $populations = $ld_adaptor->get_populations_hash_by_Slice($slice);
   my %shown       = map { $hub->param("pop$_") => $_ } grep s/^pop(\d+)$/$1/, $hub->param;
-  my $next_id     = 1 + scalar keys %shown;
-  my %available;
-  $available{$_} = $_ for sort @populations;
 
-  $self->{'all_options'}      = \%available;
+  $self->{'all_options'}      = $populations;
   $self->{'included_options'} = \%shown;
 
   $self->SUPER::content_ajax;
