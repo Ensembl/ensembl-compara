@@ -292,7 +292,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       if (panel.hideFilter) {
         $(this).siblings('.dataTables_filter').toggle();
       }
-    }
+    };
     
     this.elLk.dataTable.each(function (i) {
       // Because dataTables is written to create alert messages if you try to reinitialise a table, block any attempts here.
@@ -534,9 +534,66 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       panel.dataTables = panel.dataTables || [];
       panel.dataTables.push(dataTable);
       
-      table     = null;
+      table = dataTable = null;
+    });
+    
+    this.tableFilters();
+  },
+  
+  // Data tables can be controlled by external filters - checkboxes with values matching classnames on table rows
+  // Selecting checkboxes will show only rows matching those values
+  tableFilters: function () {
+    var panel   = this;
+    var filters = $('input.table_filter', this.el);
+    
+    if (!filters.length) {
+      return;
+    }
+    
+    $.fn.dataTableExt.afnFiltering.push(
+      function (settings, aData, index) {
+        var i, className;
+        
+        if (settings.classFilter) {
+          i = settings.classFilter.length;
+          className = ' ' + settings.aoData[index].nTr.className + ' ';
+          
+          while (i--) {
+            if (className.indexOf(settings.classFilter[i]) !== -1) {
+              return true;
+            }
+          }
+          
+          return false;
+        }
+        
+        return true;
+      }
+    );
+    
+    filters.bind('click', function () {
+      var classNames = [];
+      var dataTable  = $('#' + this.name, panel.el).dataTable();
+      var settings   = dataTable.fnSettings();
+      
+      $('input.table_filter[name=' + this.name + ']', panel.el).each(function () {
+        if (this.checked) {
+          classNames.push(' ' + this.value + ' ');
+        }
+      });
+      
+      if (classNames.length) {
+        settings.classFilter = classNames;
+      } else {
+        delete settings.classFilter;
+      }
+      
+      dataTable.fnFilter($('.dataTables_filter input', settings.nTableWrapper).val());
+      
       dataTable = null;
     });
+    
+    filters = null;
   },
   
   getSequenceKey: function () {
