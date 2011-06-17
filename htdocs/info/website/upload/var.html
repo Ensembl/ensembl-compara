@@ -14,9 +14,10 @@
 </ul>
 
 <p>
-The 'Variant Effect Predictor' tool which appears as an option when you
-click on <strong>Manage your Data</strong> allows you to upload a set of
-variation data and predict the effect of the variants.</p>
+The <a href="/info/docs/variation/vep/index.html">Variant Effect Predictor</a>
+tool which appears as an option when you click on <strong>Manage your
+Data</strong> allows you to upload a set of variation data and predict the
+effect of the variants.</p>
 
 <p>Note that the input and output formats are completely different.</p>
 
@@ -67,6 +68,10 @@ example, a three base pair deletion of nucleotides 12600, 12601, and
 19,66520,66520,G/A,+
 8,150029,150029,A/T,+ -->
 
+<p> The popular VCF (<a href="http://www.1000genomes.org/wiki/Analysis/vcf4.0"
+target="_blank">version 4.0</a>) and pileup formats are also supported as input.
+</p>
+
 <h2 id="output">Output format</h2>
 
 <p>The tool predicts the consequence of this variation, the amino acid
@@ -75,19 +80,20 @@ identifier of known variations that occur at this position. The output
 columns are:</p>
 
 <ol>
-<li><strong>uploaded variation</strong> - as chromosome_start_alleles</li>
-<li><strong>location</strong> - in standard coordinate format (chr:start or chr:start-end)</li>
-<li><strong>allele</strong> - the variant allele used to calculate the consequence</li>
-<li><strong>gene</strong> - Ensembl stable ID of affected gene</li>
-<li><strong>transcript</strong> - Ensembl stable ID of affected transcript</li>
-<li><strong>consequence</strong> - consequence type of this variation</li>
-<li><strong>relative position in cDNA</strong> - base pair position in cDNA sequence</li>
-<li><strong>relative position in CDS</strong> - base pair position in coding sequence</li>
-<li><strong>relative position in protein</strong> - amino acid position in protein</li>
-<li><strong>amino acid change</strong> - only given if the variation affects the protein-coding sequence</li>
-<li><strong>codons</strong> - the alternate codons with the variant base highlighted as bold (HTML) or upper case (text)
-<li><strong>corresponding variation</strong> - identifier of existing variation</li>
-<li><strong>extra</strong> - this column contains extra information as key=value pairs separated by ";". The keys are as follows:
+<li><strong>Uploaded variation</strong> - as chromosome_start_alleles</li>
+<li><strong>Location</strong> - in standard coordinate format (chr:start or chr:start-end)</li>
+<li><strong>Allele</strong> - the variant allele used to calculate the consequence</li>
+<li><strong>Gene</strong> - Ensembl stable ID of affected gene</li>
+<li><strong>Feature</strong> - Ensembl stable ID of feature</li>
+<li><strong>Feature type</strong> - type of feature. Currently one of Transcript, RegulatoryFeature, MotifFeature.</li>
+<li><strong>Consequence</strong> - consequence type of this variation</li>
+<li><strong>Relative position in cDNA</strong> - base pair position in cDNA sequence</li>
+<li><strong>Relative position in CDS</strong> - base pair position in coding sequence</li>
+<li><strong>Relative position in protein</strong> - amino acid position in protein</li>
+<li><strong>Amino acid change</strong> - only given if the variation affects the protein-coding sequence</li>
+<li><strong>Codons</strong> - the alternate codons with the variant base highlighted as bold (HTML) or upper case (text)
+<li><strong>Corresponding variation</strong> - identifier of existing variation</li>
+<li><strong>Extra</strong> - this column contains extra information as key=value pairs separated by ";". The keys are as follows:
 	<ul>
 		<li><i>HGNC</i> - the HGNC gene identifier</li>
 		<li><i>ENSP</i> - the Ensembl protein identifier of the affected transcript</li>
@@ -96,6 +102,8 @@ columns are:</p>
 		<li><i>SIFT</i> - the SIFT prediction and/or score, with both given as prediction(score)</li>
 		<li><i>PolyPhen</i> - the PolyPhen prediction and/or score</li>
 		<li><i>Condel</i> - the Condel consensus prediction and/or score</li>
+		<li><i>MATRIX</i> - the source and identifier of a transcription factor binding profile aligned at this position</li>
+		<li><i>HIGH_INF_POS</i> - a flag indicating if the variant falls in a high information position of a transcription factor binding profile</li>
 	</ul>
 </li>
 </ol>
@@ -103,10 +111,32 @@ columns are:</p>
 <p>Empty values are denoted by '-'.</p>
 
 <pre class="code">
-11_224088_C/A  11:224088  A  ENSG00000142082  ENST00000525319  NON_SYNONYMOUS_CODING   742  716  239  T/N  aCc/aAc  -  SIFT=deleterious(0);PolyPhen=unknown(0)
-11_224088_C/A  11:224088  A  ENSG00000142082  ENST00000534381  5_PRIME_UTR             -    -    -    -    -        -  -
-11_224088_C/A  11:224088  A  ENSG00000142082  ENST00000529055  DOWNSTREAM              -    -    -    -    -        -  -
-11_224585_G/A  11:224585  A  ENSG00000142082  ENST00000529937  INTRONIC,NMD_TRANSCRIPT -    -    -    -    -        -  HGVSc=ENST00000529937.1:c.136-346G>A
+11_224088_C/A    11:224088   A  ENSG00000142082  ENST00000525319  Transcript         NON_SYNONYMOUS_CODING   742  716  239  T/N  aCc/aAc  -  SIFT=deleterious(0);PolyPhen=unknown(0)
+11_224088_C/A    11:224088   A  ENSG00000142082  ENST00000534381  Transcript         5_PRIME_UTR             -    -    -    -    -        -  -
+11_224088_C/A    11:224088   A  ENSG00000142082  ENST00000529055  Transcript         DOWNSTREAM              -    -    -    -    -        -  -
+11_224585_G/A    11:224585   A  ENSG00000142082  ENST00000529937  Transcript         INTRONIC,NMD_TRANSCRIPT -    -    -    -    -        -  HGVSc=ENST00000529937.1:c.136-346G>A
+22_16084370_G/A  22:16084370 A  -                ENSR00000615113  RegulatoryFeature  REGULATORY_REGION       -    -    -    -    -        -  -
+</pre>
+
+<p> The VEP script (standalone) will also add a header to the output file. This
+contains information about the databases connected to, and also a key describing
+the key/value pairs used in the extra column. </p>
+
+<pre class="code">
+## ENSEMBL VARIANT EFFECT PREDICTOR v2.1
+## Output produced at 2011-06-16 16:09:38
+## Connected to homo_sapiens_core_63_37 on ensembldb.ensembl.org
+## Using API version 63, DB version 63
+## Extra column keys:
+## HGNC         : HGNC gene identifier
+## ENSP         : Ensembl protein identifer
+## HGVSc        : HGVS coding sequence name
+## HGVSp        : HGVS protein sequence name
+## SIFT         : SIFT prediction
+## PolyPhen     : PolyPhen prediction
+## Condel       : Condel SIFT/PolyPhen consensus prediction
+## MATRIX       : The source and identifier of a transcription factor binding profile aligned at this position
+## HIGH_INF_POS : A flag indicating if the variant falls in a high information position of a transcription factor binding profile
 </pre>
 
 </body>
