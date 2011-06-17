@@ -35,7 +35,7 @@ sub content {
   my $newname = $name || 'converted_data.txt';
   my $download_url = sprintf('/%s/download?file=%s;name=%s;prefix=user_upload;format=txt', $object->species, $file, $newname, $newname);
 
-  $html .= qq(<p><a href="$download_url">Download text version</a></p>);
+  $html .= qq(<p style="padding-top:1em"><a href="$download_url">Download text version</a></p>);
   foreach my $code (@files) {
     my $data = $object->consequence_data_from_file($code); 
     my $table = $object->consequence_table($data);
