@@ -1369,7 +1369,7 @@ sub slice_cache {
 }
 
 
-sub current_pop_name {
+sub current_pop_id {
   my $self = shift; 
   
   my %pops_on = map { $self->param("pop$_") => $_ } grep s/^pop(\d+)$/$1/, $self->param;
