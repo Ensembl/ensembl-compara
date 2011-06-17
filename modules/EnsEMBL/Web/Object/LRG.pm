@@ -1028,13 +1028,13 @@ sub valids {
 
 sub getVariationsOnSlice {
   my ($self, $slice, $subslices, $gene) = @_;
-  
+	
   my $sliceObj = $self->new_object('Slice', $slice, $self->__data);
   my ($count_snps, $filtered_snps, $context_count) = $sliceObj->getFakeMungedVariationFeatures($subslices, $gene);  
   
   $self->__data->{'sample'}{'snp_counts'} = [ $count_snps, scalar @$filtered_snps ];
-  $self->__data->{'SNPS'} = $filtered_snps; 
-  
+  $self->__data->{'SNPS'} = $filtered_snps;
+	
   return ($count_snps, $filtered_snps, $context_count);
 }
 
@@ -1199,11 +1199,10 @@ sub get_munged_slice {
       foreach my $exon (@{$transcript->get_all_Exons}) {
         my $start    = $exon->start - $lrg_start - $extent;
         my $exon_len = $exon->end - $exon->start + 1 + 2 * $extent;
-
-        substr $munged, $start - 1, $exon_len = $exon_len;
+				
+        substr($munged, $start - 1, $exon_len) = '1' x $exon_len;
       }
     }
-
     @lengths = map length $_, split /(0+)/, $munged;
   }
   
@@ -1213,12 +1212,16 @@ sub get_munged_slice {
   my $flag             = 0;
   my $subslices        = [];
   my $pos              = 0;
-  
+	
+  # 0: in case the number of lengths is odd
   foreach (@lengths, 0) {
-    if ($flag = 1 - $flag) {
+    # Add the start position
+		if ($flag = 1 - $flag) {
       push @$subslices, [ $pos + 1, 0, 0 ];
       $collapsed_length += $_;
-    } else {
+    } 
+    # Add the end position
+    else {
       $subslices->[-1][1] = $pos;
     }
     
