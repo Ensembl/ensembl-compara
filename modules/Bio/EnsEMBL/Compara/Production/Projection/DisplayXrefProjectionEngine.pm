@@ -18,7 +18,7 @@ DBEntry so look in the corresponding writer for that information.
 
 =head1 FILTERS
 
-=head2 Source DBEntry Filtering
+=head3 Source DBEntry Filtering
 
 =over 8
 
@@ -32,7 +32,7 @@ DBEntry so look in the corresponding writer for that information.
 
 =cut
 
-=head2 Target DBEntry Filtering
+=head3 Target DBEntry Filtering
 
 =over8
 
@@ -42,7 +42,7 @@ DBEntry so look in the corresponding writer for that information.
 
 =back
 
-=head2 Homology Filtering
+=head3 Homology Filtering
 
 Homology objects are filtered accordingly
 

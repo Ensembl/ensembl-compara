@@ -228,7 +228,7 @@ sub dbID {
 }
 
 
-=head2 adpator
+=head2 adaptor
 
  Arg [1]   : Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor $dnafrag_adaptor
  Example   : $dnafrag_adaptor = $dnafrag->adaptor()

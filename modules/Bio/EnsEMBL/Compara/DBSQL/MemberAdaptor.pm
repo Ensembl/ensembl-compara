@@ -56,19 +56,6 @@ sub list_internal_ids {
   return \@internal_ids;
 }
 
-=head2 fetch_by_dbID
-
-  Arg [1]    : int $id
-               the unique database identifier for the feature to be obtained
-  Example    : $feat = $adaptor->fetch_by_dbID(1234);
-  Description: Returns the Member created from the database defined by the
-               the id $id.
-  Returntype : Bio::EnsEMBL::Compara::Member
-  Exceptions : thrown if $id is not defined
-  Caller     : general
-
-=cut
-
 
 sub member_cache {  
   my ($self,$id,$val) = @_; 
@@ -83,6 +70,18 @@ sub member_cache {
   return $result ; 
 }  
 
+=head2 fetch_by_dbID
+
+  Arg [1]    : int $id
+               the unique database identifier for the feature to be obtained
+  Example    : $feat = $adaptor->fetch_by_dbID(1234);
+  Description: Returns the Member created from the database defined by the
+               the id $id.
+  Returntype : Bio::EnsEMBL::Compara::Member
+  Exceptions : thrown if $id is not defined
+  Caller     : general
+
+=cut
 sub fetch_by_dbID {
   my ($self,$id) = @_;
 

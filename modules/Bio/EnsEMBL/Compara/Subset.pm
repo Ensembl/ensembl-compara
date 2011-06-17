@@ -192,6 +192,12 @@ sub add_member {
   return $count;
 }
 
+sub member_id_list {
+  my $self = shift;
+
+  return $self->{'_member_id_list'};
+}
+
 =head2 member_list
 
   Arg [1]    : 
@@ -202,13 +208,6 @@ sub add_member {
   Caller     :
 
 =cut
-
-sub member_id_list {
-  my $self = shift;
-
-  return $self->{'_member_id_list'};
-}
-
 sub member_list {
   my $self = shift;
 

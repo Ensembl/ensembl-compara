@@ -622,7 +622,7 @@ sub get_all_ConservationScores {
   return $all_conservation_scores;
 }
 
-=head2 get_expanded_conservation_scores
+=head2 _get_expanded_conservation_scores
 
   Arg  1     : Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor
   Arg  2     : (opt) integer $display_size (default 700)
@@ -683,7 +683,7 @@ sub _get_expanded_conservation_scores {
     return $all_conservation_scores;
 }
 
-=head2 get_condensed_conservation_scores
+=head2 _get_condensed_conservation_scores
 
   Arg  1     : Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor
   Arg  2     : (opt) integer $display_size (default 700)

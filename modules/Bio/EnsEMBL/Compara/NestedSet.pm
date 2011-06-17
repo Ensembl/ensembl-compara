@@ -440,7 +440,7 @@ sub get_all_nodes {
 }
 
 
-=head2 get_all_nodes_by_tagvalue
+=head2 get_all_nodes_by_tag_value
 
   Arg 1       : tag_name
   Arg 2       : tag_value (optional)
@@ -453,7 +453,7 @@ sub get_all_nodes {
 
 =cut
 
-sub get_all_nodes_by_tag_value{
+sub get_all_nodes_by_tag_value {
   my $self  = shift;
   my $tag   = shift || die( "Need a tag name" );
   my $value = shift;

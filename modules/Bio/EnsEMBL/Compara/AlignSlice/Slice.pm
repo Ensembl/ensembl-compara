@@ -251,7 +251,7 @@ sub add_Slice_Mapper_pair {
 }
 
 
-=head2 get_all_Slice_Mapper_pair
+=head2 get_all_Slice_Mapper_pairs
 
   Arg[1]     : [optional] bool $get_gap_slices
   Example    : $slice_mapper_pairs = $slice->get_all_Slice_Mapper_pairs();
@@ -1206,15 +1206,15 @@ sub _sort_Exons {
   return @sorted_exons;
 }
 
-=head2 OVERWRITEN METHODS FROM Bio::EnsEMBL::Slice module
-
-=head2 WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING
-
- All the methods that need acces to the database (the adaptor) and which
- are not listed here are not supported!!
-
-=head2 WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING
-
+# OVERWRITEN METHODS FROM Bio::EnsEMBL::Slice module
+#
+# WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING
+#
+# All the methods that need access to the database (the adaptor) and which
+# are not listed here are not supported!!
+#
+# WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING
+#
 =head2 invert (not supported)
 
 Maybe at some point...

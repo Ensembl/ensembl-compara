@@ -163,7 +163,7 @@ sub fetch_by_dbID {
 }
 
 
-=head2 fetch_by_tag_value
+=head2 fetch_all_by_tag_value
 
   Arg [1]     : string $tag
   Arg [2]     : string $value

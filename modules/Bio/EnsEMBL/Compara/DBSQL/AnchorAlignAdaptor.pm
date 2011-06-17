@@ -106,16 +106,16 @@ sub store_exonerate_hits {
 }
 
 
-=head2 store_new_method_link_species_set_id
-
-  Arg[1]     : 
-  Example    : 
-  Description: 
-  Returntype : none
-  Exceptions : none
-  Caller     : general
-
-=cut
+#=head2 store_new_method_link_species_set_id
+#
+#  Arg[1]     : 
+#  Example    : 
+#  Description: 
+#  Returntype : none
+#  Exceptions : none
+#  Caller     : general
+#
+#=cut
 
 #sub store_new_method_link_species_set_id {
 #	my($self) = @_;
@@ -425,7 +425,7 @@ sub fetch_all_anchors_by_genome_db_id_and_mlssid {
 	return $sth->fetchall_arrayref();
 }
 
-=head2 fetch_all_anchors_by_dnafrag_id 
+=head2 fetch_all_anchors_by_dnafrag_id_and_test_mlssid 
 
   Arg[1]     : dnafrag_id, string
   Example    : 
@@ -450,7 +450,7 @@ sub fetch_all_anchors_by_dnafrag_id_and_test_mlssid {
 	return $sth->fetchall_arrayref();
 }
  
-=head2 fetch_all_overlapping_anchors
+=head2 fetch_all_filtered_anchors
 
   Args       : none
   Example    : 

@@ -1693,7 +1693,7 @@ sub _get_alignment_scores {
     return $aligned_scores;
 }
 
-=head2 _
+=head2 _add_to_bucket
 
   Arg  1     : string $display_type (either AVERAGE or MAX (plot average or max value))
   Arg  2     : float $exp_score (expected score to be added to bucket)
