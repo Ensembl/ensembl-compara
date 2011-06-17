@@ -88,12 +88,12 @@ sub population_info {
   ### super/sub population info if exists
   ### Description : Returns information about the population.  Calls helper function print_pop_info to get population data (name, size, description, whether the SNP is tagged)
 
-  my $self      = shift;
-  my $object    = $self->object;
-  my $pop_names = $object->current_pop_name; 
+  my $self    = shift;
+  my $object  = $self->object;
+  my $pop_ids = $object->current_pop_id; 
   my $pop_html;
 
-  unless (@$pop_names) {
+  if (!scalar @$pop_ids) {
     if (@{$object->pops_for_slice(100000)}) {
       $pop_html = qq("Population", "Please select a population from the 'Configure this page' link in the left hand menu.");
       return $pop_html;
@@ -103,7 +103,7 @@ sub population_info {
     }
   }
   
-  foreach my $name (sort { $a cmp $b } @$pop_names) { 
+  foreach my $name (sort { $a cmp $b } map { $object->pop_name_from_id($_) || () } @$pop_ids) {
     my $pop       = $object->pop_obj_from_name($name); 
     my $super_pop = $object->extra_pop($pop->{$name}{'PopObject'}, 'super'); 
     my $sub_pop   = $object->extra_pop($pop->{$name}{'PopObject'}, 'sub');

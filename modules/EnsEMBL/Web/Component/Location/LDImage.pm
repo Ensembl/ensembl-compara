@@ -45,11 +45,9 @@ sub content {
   
   # Do images for first section
   my $containers_and_configs = [ $slice, $image_config ];
-
+  
   # Do images for each population
-  foreach my $pop_name (sort { $a cmp $b } @{$object->current_pop_name}) {
-    next unless $object->pop_obj_from_name($pop_name)->{$pop_name}; # skip if not a valid population name
-   
+  foreach my $pop_name (sort { $a cmp $b } map { $object->pop_name_from_id($_) || () } @{$object->current_pop_id}) {
     my $population_image_config = $hub->get_imageconfig('ldview', $pop_name);
     $population_image_config->init_population($parameters, $pop_name);
     push @$containers_and_configs, $slice, $population_image_config;
