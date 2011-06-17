@@ -72,7 +72,7 @@ sub content {
       
       push @rows, {
         'set'       => "<strong>$set_info->{'title'}</strong><br />$set_info->{'desc'}",
-        'show'      => qq{<input type="checkbox" class="table_control" title="Check to show these species in table below" name="orthologues" value="$set" />},
+        'show'      => qq{<input type="checkbox" class="table_filter" title="Check to show these species in table below" name="orthologues" value="$set" />},
         '1:1'       => $set_info->{'1-to-1'}       || 0,
         '1:many'    => $set_info->{'1-to-many'}    || 0,
         'many:many' => $set_info->{'Many-to-many'} || 0,
