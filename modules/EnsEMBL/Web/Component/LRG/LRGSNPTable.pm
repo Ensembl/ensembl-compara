@@ -16,12 +16,26 @@ sub content {
   my $self             = shift;
   my $hub              = $self->hub;
   my $consequence_type = $hub->param('sub_table');
-  my $lrg              = $self->configure($hub->param('context') || 'FULL', $hub->get_imageconfig('lrgsnpview_transcript'));
+	my $icontext         = $hub->param('context') || 'FULL';
+  my $lrg              = $self->configure($icontext, $hub->get_imageconfig('lrgsnpview_transcript'));
   my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$lrg->get_all_transcripts};
   
   my $count;
   $count += scalar @{$_->__data->{'transformed'}{'gene_snps'}} foreach @transcripts;
   
+	my $msg = '';
+  if ($icontext) {
+    if ($icontext eq 'FULL') {
+      $msg = 'The <b>full</b> intronic sequence around this gene is used.';
+    }	
+    else {	
+      $msg = "Currently <b>$icontext"."bp</b> of intronic sequence is included either side of the exons.";
+    }
+    $msg .='<br />';
+  }
+	my $html = $self->_hint('snp_phenotype','Configuring the page', qq{<p>$msg\To extend or reduce the intronic sequence, use the "<strong>Configure this page - Context</strong>" link on the left.</p>});
+	
+	
   if ($consequence_type || $count < 25) {
     $consequence_type ||= 'ALL';
     my $table_rows = $self->variation_table($consequence_type, \@transcripts, $lrg->Obj->feature_Slice);
@@ -29,7 +43,7 @@ sub content {
     return $self->render_content($table, $consequence_type);
   } else {
     my $table = $self->stats_table(\@transcripts); # no sub-table selected, just show stats
-    return $self->render_content($table);
+    return $html.$self->render_content($table);
   }
 }
 
