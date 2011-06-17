@@ -86,18 +86,18 @@ sub content {
   return unless $tree;
   
   my $active = $self->active;
-  my $nodes  = $tree->child_nodes;
+  my @nodes  = grep { $_->can('data') && !$_->data->{'no_menu_entry'} && $_->data->{'caption'} } @{$tree->child_nodes};
   my $menu;
   
-  if ($tree->get_node($active) || $nodes->[0]) {
+  if ($tree->get_node($active) || $nodes[0]) {
     my $hub        = $self->{'hub'};
     my $img_url    = $hub->species_defs->img_url;
     my $counts     = $self->counts;
     my $all_params = !!$hub->object_types->{$hub->type};
     
-    $self->build_menu($_, $hub, $img_url, $counts, $all_params, $active, $nodes->[-1]) for @$nodes;
+    $self->build_menu($_, $hub, $img_url, $counts, $all_params, $active, $nodes[-1]) for @nodes;
     
-    $menu .= $_->render for @$nodes;
+    $menu .= $_->render for @nodes;
   }
   
   return sprintf('
