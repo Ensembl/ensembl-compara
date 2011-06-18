@@ -6,7 +6,6 @@
 package EnsEMBL::Web::ZMenu::TextSequence;
 
 use strict;
-use EnsEMBL::Web::Object::LRG qw(hgvs_url);
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -64,80 +63,30 @@ sub variation_content {
     $position = "$seq_region$chr_start-$chr_end";
   }
   
-	my $hgvs_html;
-	
-	#### LRG data ####
+  # Get a hash with HGVS names as URLs
+  my $hgvs_urls = $object->get_hgvs_names_url($vf);
+  my $hgvs_html = "";
+  foreach my $allele (keys(%{$hgvs_urls})) {
+    $hgvs_html .= (length($hgvs_html) ? "<br />" : "") . "<b>Variant allele $allele</b>" if (scalar(keys(%{$hgvs_urls})) > 1);
+    $hgvs_html .= join("<br />",@{$hgvs_urls->{$allele}});
+  }
+  
+  # If we have an LRG in the URL, get the LRG coordinates as well
   if ($lrg) {
+    
     my $lrg_feature = $feature->transfer($lrg);
     my $lrg_start   = $lrg_feature->start;
     my $lrg_end     = $lrg_feature->end;
-    $lrg_position   = $lrg_start;
+    $lrg_position   = $lrg_feature->seq_region_name . ":$lrg_start";
     
     if ($lrg_end < $lrg_start) {
-      $lrg_position = "between $lrg_end &amp; $lrg_start";
+      $lrg_position = "between $lrg_end &amp; $lrg_start on " . $lrg_feature->seq_region_name;
     } elsif ($lrg_end > $lrg_start) {
-      $lrg_position = "$lrg_start-$lrg_end";
+      $lrg_position = $lrg_feature->seq_region_name . ":$lrg_start-$lrg_end";
     }
-		
-		my $tvs;
-		my %by_allele;
-		
-		# now get normal ones
-    # go via transcript variations (should be faster than slice)
-	  my %genomic_alleles_added;
-			
-		if(defined($lrg_feature)) {
-		  
-			# force API to recalc consequences for LRG
-		  delete $lrg_feature->{'dbID'};
-		  delete $lrg_feature->{'transcript_variations'};
-		  
-		  # add consequences to existing list
-		  push @$tvs, @{$lrg_feature->get_all_TranscriptVariations};
-		}
-		
-		# Get HGVS data
-		foreach my $tv (@{$tvs}) {
-			foreach my $tva(@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
-	 			unless($genomic_alleles_added{$tva->variation_feature_seq}) {
-					push @{$by_allele{$tva->variation_feature_seq}}, $tva->hgvs_genomic;
-					$genomic_alleles_added{$tva->variation_feature_seq} = 1;
-	  		}
-  
-		  	# group by allele
-		  	push @{$by_allele{$tva->variation_feature_seq}}, $tva->hgvs_coding if $tva->hgvs_coding;
-		  	push @{$by_allele{$tva->variation_feature_seq}}, $tva->hgvs_protein if $tva->hgvs_protein && $tva->hgvs_protein !~ /p\.\=/;
-			}
-		}
-		
-		# make HTML
-    my @temp;
-
-		# Display HGVS data for LRG
-    foreach my $a (keys %by_allele) {
-
-      foreach my $h (@{$by_allele{$a}}) {
-
-					# Trim the allele string if too long
-					if ($h =~ /^(.+)(del|dup)([ATGC]+)$/) {
-						my $h1 = "$1$2";
-						my $h_allele = $3;
-						if (length $h_allele > 10) {
-							$h_allele = substr($h_allele, 0, 10) . '...';
-							$h = "$h1$h_allele";
-						}
-					}
-
-					# Add links to the corresponding ensembl LRG page
-					my $url = hgvs_url($hub,$h,{v => $object->name, source => $variation->source});
-					$h = '<a href="'. $url->[0] .'">'. $url->[1] .'</a>' . $url->[2] if ($url);
-					
-        	push @temp, $h;
-			}
-		}
-		$hgvs_html = join '<br/>', @temp;
+    
   }
-  
+   
   $allele = substr($allele, 0, 10) . '...' if length $allele > 10; # truncate very long allele strings
   
   my @entries = (

@@ -3,7 +3,6 @@
 package EnsEMBL::Web::Component::Variation::Summary;
 
 use strict;
-use EnsEMBL::Web::Object::LRG qw(hgvs_url);
 
 use base qw(EnsEMBL::Web::Component::Variation);
 
@@ -377,92 +376,28 @@ sub validation_status {
 sub hgvs {
   my $self          = shift;
   my $object        = $self->object;
-  my %mappings      = %{$object->variation_feature_mapping};
-  my $mapping_count = scalar keys %mappings;
   
-  return unless $mapping_count;
-  return if $object->is_somatic_with_different_ref_base; # skip if somatic mutation with mutation ref base different to ensembl ref base
-  
-  my $hub       = $self->hub;
-  my $variation = $object->Obj;
-  my ($loc, $vf);
-  
-  if (keys %mappings == 1) {
-    ($loc) = values %mappings;
-  } else {
-    $loc = $mappings{$hub->param('vf')};
+  my $hgvs_urls = $object->get_hgvs_names_url;
+  my $html = "";
+  my $count = 0;
+  # Loop over and format the URLs
+  foreach my $allele (keys(%{$hgvs_urls})) {
+    $html .= ($count ? "<br />" : "") . "<b>Variant allele $allele</b>" if (scalar(keys(%{$hgvs_urls})) > 1);
+    $html .= join("<br />",@{$hgvs_urls->{$allele}});
+    $count += scalar(@{$hgvs_urls->{$allele}});
   }
   
-  foreach (@{$variation->get_all_VariationFeatures}) {
-    $vf = $_ if $_->seq_region_start == $loc->{'start'} && $_->seq_region_end == $loc->{'end'} && $_->seq_region_name eq $loc->{'Chr'};
-  }
-  
-  return unless $vf;
-  
-  my (%by_allele, $hgvs_html, %genomic_alleles, $lrg_vf);
-  my $tvs = $vf->get_all_TranscriptVariations; # going via transcript variations should be faster than slice
-  
-  foreach my $tva (map @{$_->get_all_alternate_TranscriptVariationAlleles}, @$tvs) {
-    my $seq = $tva->variation_feature_seq;
-    
-    # group by allele
-    push @{$by_allele{$seq}}, $tva->hgvs_genomic unless $genomic_alleles{$tva->hgvs_genomic =~ /^LRG/}{$seq}++;
-    push @{$by_allele{$seq}}, $tva->hgvs_coding  if $tva->hgvs_coding;
-    push @{$by_allele{$seq}}, $tva->hgvs_protein if $tva->hgvs_protein && $tva->hgvs_protein !~ /p\.\=/;
-  }
-  
-  my $allele_count = scalar keys %by_allele;
-  my @hgvs;
-  
-  my %url_params = (
-    type   => 'Transcript',
-    action => $hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary',
-    db     => 'core',
-    r      => undef,
-    v      => $object->name,
-    source => $variation->source
-  );
-  
-  foreach my $a (keys %by_allele) {
-    push @hgvs, (scalar @hgvs ? '<br />' : '') . "<b>Variant allele $a</b>" if $allele_count > 1;
-    
-    foreach (@{$by_allele{$a}}) {
-        
-        # If this is a genomic hgvs string, enable the tracks on the location view when linking back
-        my $location_params = {};
-        if (/\:g\./) {
-            $location_params = {contigviewbottom => ($variation->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($variation->failed_description ? ',fail_all=normal' : '')};
-        }
-        
-        my $url = EnsEMBL::Web::Object::LRG::hgvs_url($hub,$_,{source => $variation->source, v => $object->name, %{$location_params}});
-        push @hgvs, sprintf '<a href="%s">%s</a>%s', $url->[0], $url->[1], $url->[2] and next if $url;
-      
-      /(ENS(?:...)?T\d+)(.+)/;
-      push @hgvs, sprintf '<a href="%s">%s</a>%s', $hub->url({ %url_params, t => $1 }), $1, $2 and next if $1;
-      
-      /(ENS(?:...)?P\d+)(.+)/;
-      push @hgvs, sprintf '<a href="%s">%s</a>%s', $hub->url({ %url_params, action => 'ProtVariations', t => $1 }), $1, $2 and next if $1;
-      
-      /(.+?)(\:g\..+)/;
-      push @hgvs, sprintf '<a href="%s">%s</a>%s', $hub->url({ %url_params, type => 'Location', action => 'View', %{$location_params}}), $1, $2 and next if $1;
-      
-      push @hgvs, $_;
-    }
-  }
-  
-  my $count = scalar grep /:/, @hgvs;
-  my $html  = join('<br />', @hgvs) || '<h5>None</h5>';
-  
-  if ($count == 0) {
-    $html = qq{<dt>HGVS names</dt><dd>$html</dd>};
-  } else {
+  # Wrap the html
+  if ($count) {
     my $several = ($count > 1) ? 's' : '';
-    
     $html = qq{
       <dt><a class="toggle closed" href="#HGVS_names" rel="HGVS_names" title="Click to toggle HGVS names">HGVS names</a></dt>
       <dd>This feature has $count HGVS name$several - click the plus to show</dd>
       <dd class="HGVS_names"><div class="toggleable" style="display:none;font-weight:normal;">$html</div></dd>
     };
+  }
+  else {
+    $html = qq{<dt>HGVS names</dt><dd><h5>None</h5></dd>};
   }
   
   return qq{<dl class="summary">$html</dl>};
