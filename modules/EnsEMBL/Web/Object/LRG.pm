@@ -8,13 +8,7 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 use Exporter;
 
 use EnsEMBL::Web::Cache;
-use vars qw(@EXPORT_OK);
-
-@EXPORT_OK = qw(
-    &hgvs_url
-);
-
-use base qw(EnsEMBL::Web::Object Exporter);
+use base qw(EnsEMBL::Web::Object);
 
 sub create_features {
     my $self = shift;
@@ -1420,62 +1414,6 @@ sub get_similarity_hash {
 sub can_export {
   my $self = shift;
   return $self->action =~ /^(Export|Genome)$/ ? 0 : $self->availability->{'lrg'};
-}
-
-=head2 hgvs_url
-
- Arg[0]      : Hub $hub
- Arg[1]      : string $hgvs
- Arg[2]      : hashref $params (optional)
- Arg[3]      : string display_name (optional)
- Example     : my $url = hgvs_url($hub,'LRG_5_t1.4:c.345G>A',{v => $object->name(), source => $variation->source()});
-               echo '<a href="' . $url->[0] . '">' . $url->[1] . '</a>' . $url->[2];
- Description : Returns a listref with the url string, display name and remaining part of the hgvs
- Return type : an array ref
-
-=cut
-
-sub hgvs_url {
-    my $hub = shift;
-    my $hgvs = shift || "";
-    my $params = shift || {};
-    my $display_name = shift;
-    
-    #Split the HGVS string into components. We are mainly interested in 1) the LRG name and 2) the transcript/proteins stables id
-    my ($lrg_id,$stable_id,$version,$effect) = $hgvs =~ m/^(LRG_\d+)(.*?)(\.\d+)?(\:.+)$/;
-    
-    #ÊReturn undef if the HGVS could not be properly parsed or the hub object was not supplied
-    return undef unless ($hub && $lrg_id && $effect);
-    
-    #ÊIf display_name was not specified, use the LRG id and stable_id
-    $display_name ||= "$lrg_id$stable_id";
-    
-    # Set the default params to pass to the hub->url method based on the HGVS notation
-    my $p = {
-        db => 'core',
-        type => 'LRG', 
-        action => 'Variation_LRG', 
-        lrg => $lrg_id, 
-        __clear => 1
-    };
-    
-    #ÊIf we're looking at a transcript, add the transcript parameter
-    if ($effect =~ m/^\:c\./) {        
-        $p->{lrgt} = "$lrg_id$stable_id"; 
-    }
-    # Else, if we're looking at a genomic location, link to the Summary page
-    elsif ($effect =~ m/^\:g\./) {
-        $p->{action} = 'Summary';
-    }
-    
-    # Add/override with the supplied parameters
-    map {$p->{$_} = $params->{$_}} keys(%{$params});
-    
-    #ÊCall the HUB URL creation method
-    my $url = $hub->url($p);
-    
-    # Return the array
-    return [$url,$display_name,"$version$effect"];
 }
 
 1;
