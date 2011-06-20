@@ -1432,6 +1432,12 @@ sub hgvs_url {
         $p->{t} = $refseq;
         $p->{action} = 'ProtVariations';
       }
+      # Default to transcript. We may have a special case where the variation falls in e.g. a pseudogene. In that case, there will be no type given but the call should have been on the transcript. Best thing to do is to link to the transcript.
+      else {
+        $p->{type} = 'Transcript';
+        $p->{t} = $refseq;
+        $p->{action} = ($self->hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary');
+      }
   }
   else {
     
@@ -1454,6 +1460,11 @@ sub hgvs_url {
       }
       # Else, if it's a protein position
       elsif ($type eq 'p') {
+        $p->{action} = 'Variation_LRG';
+        $p->{lrgt} = "$id\_$tr";
+      }
+      # Default to transcript. We may have a special case where the variation falls in e.g. a pseudogene. In that case, there will be no type given but the call should have been on the transcript. Best thing to do is to link to the transcript.
+      else {
         $p->{action} = 'Variation_LRG';
         $p->{lrgt} = "$id\_$tr";
       }
