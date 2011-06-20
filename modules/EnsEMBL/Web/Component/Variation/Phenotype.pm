@@ -112,7 +112,7 @@ sub table_data {
     
     my $disease;
     $disease  = qq{<dt>$disorder} if $disorder =~ /^\w+/;
-    $disease .= qq{ <a href="$disease_url">[View on Karyotype]</a></dt>} unless $disease =~ /HGMD_MUTATION/;
+    $disease .= qq{<br /><a href="$disease_url">[View on Karyotype]</a></dt>} unless $disease =~ /HGMD_MUTATION/;
     
 	
 	
