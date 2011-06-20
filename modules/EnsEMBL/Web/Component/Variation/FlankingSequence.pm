@@ -290,8 +290,10 @@ sub content {
         substr($source_seq, 0, $width)."\n\n";
         #'   '.($source_pos + $width - 1)."\n\n";
       
-      $ref_seq = substr($ref_seq, $width) if length($ref_seq) > $width;
-      $source_seq = substr($source_seq, $width) if length($source_seq) > $width;
+      last if $width > length($ref_seq) || $width > length($source_seq);
+      
+      $ref_seq = substr($ref_seq, $width);
+      $source_seq = substr($source_seq, $width);
       
       $ref_pos += $width;
       $source_pos += $width;
