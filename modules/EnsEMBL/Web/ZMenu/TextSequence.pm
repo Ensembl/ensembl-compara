@@ -16,9 +16,9 @@ sub render {
 }
 
 sub _content {
-  my $self   = shift;
-  my $hub    = $self->hub;
-  my $object = $self->object;
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $object  = $self->object;
   my @v       = $hub->param('v');
   my @vf      = $hub->param('vf');
   my $lrg     = $hub->param('lrg');
@@ -33,7 +33,7 @@ sub _content {
     my $variation_object = $self->new_object('Variation', $adaptor->fetch_by_name($v[$_]), $object->__data);
     $self->variation_content($variation_object, $lrg_slice, $v[$_], $vf[$_]);
   }
-}  
+}
 
 sub variation_content {
   my ($self, $object, $lrg, $v, $vf) = @_;
@@ -64,16 +64,23 @@ sub variation_content {
   }
   
   # Get a hash with HGVS names as URLs
-  my $hgvs_urls = $object->get_hgvs_names_url($vf);
-  my $hgvs_html = "";
-  foreach my $allele (keys(%{$hgvs_urls})) {
-    $hgvs_html .= (length($hgvs_html) ? "<br />" : "") . "<b>Variant allele $allele</b><br />" if (scalar(keys(%{$hgvs_urls})) > 1);
-    $hgvs_html .= join("<br />",@{$hgvs_urls->{$allele}});
+  my $hgvs_urls  = $object->get_hgvs_names_url($vf, $hub->referer->{'ENSEMBL_TYPE'});
+  my $hgvs_count = scalar keys %$hgvs_urls;
+  my @hgvs_html;
+  
+  # Loop over and format the URLs
+  foreach my $allele (keys %$hgvs_urls) {
+    if ($hgvs_count > 1) {
+      push @hgvs_html, '' if scalar @hgvs_html;
+      push @hgvs_html, "<b>Variant allele $allele</b>";
+    }
+    
+    push @hgvs_html, @{$hgvs_urls->{$allele}};
+    push @hgvs_html, '' if $hgvs_count > 1;
   }
   
   # If we have an LRG in the URL, get the LRG coordinates as well
   if ($lrg) {
-    
     my $lrg_feature = $feature->transfer($lrg);
     my $lrg_start   = $lrg_feature->start;
     my $lrg_end     = $lrg_feature->end;
@@ -84,7 +91,6 @@ sub variation_content {
     } elsif ($lrg_end > $lrg_start) {
       $lrg_position = $lrg_feature->seq_region_name . ":$lrg_start-$lrg_end";
     }
-    
   }
    
   $allele = substr($allele, 0, 10) . '...' if length $allele > 10; # truncate very long allele strings
@@ -94,12 +100,20 @@ sub variation_content {
     { caption => 'Position',  entry => $position },
   );
   
-  push @entries, { caption => 'LRG position', entry => $lrg_position } if $lrg_position;
-	
-	push @entries, { caption => 'HGVS notation', entry => $hgvs_html} if $hgvs_html;
+  push @entries, { caption => 'LRG position',  entry => $lrg_position } if $lrg_position;
+  
+  if (scalar @hgvs_html) {
+    if (scalar @hgvs_html > 1) {
+      push @entries, { cls     => 'hgvs', entry => 'HGVS notation' };
+      push @entries, { childOf => 'hgvs', entry => [ '', $_ ]} for @hgvs_html;
+    } else {
+      push @entries, { caption => 'HGVS notation', entry => $hgvs_html[0] };
+    }
+  }
   
   push @entries, (
     { caption => 'Alleles', entry => $allele },
+    { caption => 'Type',    entry => $feature->display_consequence },
     { entry => sprintf $link, $hub->url({ action => 'Mappings', %url_params }), 'Gene/Transcript Locations' }
   );
   
