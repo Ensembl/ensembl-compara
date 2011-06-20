@@ -36,9 +36,9 @@ sub createObjects {
   if ($variation) {
     $self->DataObjects($self->new_object('Variation', $variation, $self->__data));
     
-    my $vf                  = $self->param('vf');
+    my @vf                  = $self->param('vf');
     my @variation_features  = @{$variation->get_all_VariationFeatures};
-    my ($variation_feature) = scalar @variation_features == 1 ? $variation_features[0] : $vf ? grep $_->dbID eq $vf, @variation_features : undef;
+    my ($variation_feature) = scalar @variation_features == 1 ? $variation_features[0] : $vf[0] ? grep $_->dbID eq $vf[0], @variation_features : undef;
     
     # If the variation has only one VariationFeature, or if a vf parameter is supplied which matches one of the VariationFeatures,
     # generate a location based on that VariationFeature.
@@ -46,8 +46,8 @@ sub createObjects {
     if ($variation_feature) {
       my $context = $self->param('context') || 500;
       $self->generate_object('Location', $variation_feature->feature_Slice->expand($context, $context));
-      $self->param('vf', $variation_feature->dbID) unless $self->param('vf'); # This check is needed because ZMenu::TextSequence uses an array of v and vf parameters - don't overwrite with a single value
-    } elsif ($vf) {
+      $self->param('vf', $variation_feature->dbID) unless scalar @vf > 1; # This check is needed because ZMenu::TextSequence uses an array of v and vf parameters - don't overwrite with a single value
+    } elsif (scalar @vf) {
       $self->delete_param('vf');
     }
     
