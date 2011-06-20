@@ -8,9 +8,8 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title           => 'Gene - Structural Variation',
-    sortable_tracks => 1, # allow the user to reorder tracks
-    opt_lines       => 1, # draw registry lines
+    title     => 'Gene - Structural Variation',
+    opt_lines => 1, # draw registry lines
   });
 
   $self->create_menus(qw(
@@ -53,6 +52,8 @@ sub init {
     ['variation_feature_structural'],
     { display => 'normal', depth => 50 }
   );
+  
+  $self->storable = 0;
 }
 
 1;
