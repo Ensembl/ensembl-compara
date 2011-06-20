@@ -366,7 +366,7 @@ sub eof {
   return $self->{'_eof'};
 }
 
-=head2 file
+=head2 command_line
 
  Arg [1]     : string $commandline (optional)
                command line used to obtain the blastz output which is parsed
