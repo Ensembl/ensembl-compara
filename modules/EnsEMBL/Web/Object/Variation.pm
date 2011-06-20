@@ -1309,48 +1309,49 @@ sub hgvs {
   my $self = shift;
   my $vfid = shift;
 
-  # Pick out the correct variation feature
-  my $mappings = $self->variation_feature_mapping;
-  my $mapping_count = scalar(keys(%{$mappings}));
+  # Pick out the correct variation feature
+  my $mappings      = $self->variation_feature_mapping;
+  my $mapping_count = scalar keys %$mappings;
   
   # skip if no mapping or somatic mutation with mutation ref base different to ensembl ref base
-  return {} unless($mapping_count && !$self->is_somatic_with_different_ref_base); 
+  return {} unless $mapping_count && !$self->is_somatic_with_different_ref_base; 
   
   if ($mapping_count == 1) {
-    ($vfid) = keys(%{$mappings});
-  } 
-  elsif (!$vfid) {
+    ($vfid) = keys %$mappings;
+  } elsif (!$vfid) {
     $vfid = $self->hub->param('vf');
   }
   
-  return {} unless ($vfid);
+  return {} unless $vfid;
+  
   my $vf = $self->Obj->get_VariationFeature_by_dbID($vfid);
-  return {} unless ($vf);
+  
+  return {} unless $vf;
   
   # Get all transcript variations and put them in a hash with allele seq as key
   my %tvs_by_allele;
-  foreach my $tv (@{$self->transcript_variation($vf)}) {    
-    $tvs_by_allele{$tv->{vf_allele}} ||= [];
-    push(@{$tvs_by_allele{$tv->{vf_allele}}},$tv);
-  }
+  
+  push @{$tvs_by_allele{$_->{'vf_allele'}}}, $_ for @{$self->transcript_variation($vf)};
 
   # Sort the HGVS notations so that LRGs end up last
-  map {$tvs_by_allele{$_} = [sort {$a->{hgvs_genomic} =~ /^LRG/ <=> $b->{hgvs_genomic} =~ /^LRG/} @{$tvs_by_allele{$_}}]} keys(%tvs_by_allele);
+  $tvs_by_allele{$_} = [ map $_->[1], sort { $a->[0] <=> $b->[0] } map [ $_->{'hgvs_genomic'} =~ /^LRG/ ? 1 : 0, $_ ], @{$tvs_by_allele{$_}} ] for keys %tvs_by_allele;
   
-  # Loop over the transcript variations and get the unique (and interesting to us) HGVS notations
+  # Loop over the transcript variations and get the unique (and interesting to us) HGVS notations
   my %hgvs;
-  foreach my $allele (keys(%tvs_by_allele)) {
-    my %seen_genomic = ();
-    $hgvs{$allele} = [];
+  
+  foreach my $allele (keys %tvs_by_allele) {
+    my %seen_genomic;
     
     # Loop over the transcript variations 
     foreach my $tv (@{$tvs_by_allele{$allele}}) {      
-      # Loop over the genomic, coding and protein HGVS strings
-      foreach my $type ('hgvs_genomic','hgvs_coding','hgvs_protein') {
+      # Loop over the genomic, coding and protein HGVS strings
+      foreach my $type ('hgvs_genomic', 'hgvs_coding', 'hgvs_protein') {
         my $h = $tv->{$type};
-        next unless($h && $h !~ m/\:p\.=/);
-        next if ($type eq 'hgvs_genomic' && $seen_genomic{$h}++);
-        push(@{$hgvs{$allele}},$h);
+        
+        next unless $h && $h !~ m/\:p\.=/;
+        next if $type eq 'hgvs_genomic' && $seen_genomic{$h}++;
+        
+        push @{$hgvs{$allele}}, $h;
       }
     }
   }
@@ -1366,12 +1367,11 @@ sub get_hgvs_names_url {
  
   # Loop over and format the URLs
   my %url;
-  foreach my $allele (keys(%{$hgvs_hash})) {
-    $url{$allele} = [];
+  
+  foreach my $allele (keys %$hgvs_hash) {
     foreach my $hgvs (@{$hgvs_hash->{$allele}}) {
       my $url = $self->hgvs_url($hgvs);
-      $hgvs = sprintf('<a href="%s">%s</a>%s',$url->[0],$url->[1],$url->[2]) if ($url);
-      push(@{$url{$allele}},$hgvs);
+      push @{$url{$allele}}, $url ? qq{<a href="$url->[0]">$url->[1]</a>$url->[2]} : $hgvs;
     }
   }
   
@@ -1390,94 +1390,65 @@ sub get_hgvs_names_url {
 =cut
 
 sub hgvs_url {
-  my $self = shift;
-  my $hgvs = shift || "";
-  my $params = shift || {};
-  my $obj = $self->Obj;
-  
-  my $MAX_HGVS_LENGTH = 40;
+  my $self       = shift;
+  my $hgvs       = shift || '';
+  my $params     = shift || {};
+  my $obj        = $self->Obj;
+  my $hub        = $self->hub;
+  my $max_length = 40;
   
   # Split the HGVS string into components. We are mainly interested in 1) Reference sequence, 2) Version (optional), 3) Notation type (optional) and 4) The rest of the description 
-  my ($refseq,$version,$type,$description) = $hgvs =~ m/^((?:ENS[A-Z]*[GTP]\d+)|(?:LRG_\d+[^\.]*)|(?:[^\:]+?))(\.\d+)?\:(?:([mrcgp])\.)?(.*)$/;
+  my ($refseq, $version, $type, $description) = $hgvs =~ m/^((?:ENS[A-Z]*[GTP]\d+)|(?:LRG_\d+[^\.]*)|(?:[^\:]+?))(\.\d+)?\:(?:([mrcgp])\.)?(.*)$/;
 
-  # Return undef if the HGVS could not be properly parsed (i.e. if the refseq and the description could not be obtained)
-  return undef unless ($refseq && $description);
+  # Return undef if the HGVS could not be properly parsed (i.e. if the refseq and the description could not be obtained)
+  return undef unless $refseq && $description;
 
   my $p = {
-    db => 'core',
-    source => $obj->source,
-    v => $obj->name,
     action => 'Summary',
-    r => undef,
+    db     => 'core',
+    source => $obj->source,
+    v      => $obj->name,
+    r      => undef,
   };
   
-  # Treat the URL differently depending on if it will take us to a regular page or a LRG page 
-  unless ($refseq =~ m/^LRG/) {
+  my $config_param = ($obj->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($obj->failed_description ? ',fail_all=normal' : '');
   
-      # If we have a genomic position
-      if ($type eq 'g') {
-        $p->{type} = 'Location';
-        $p->{action} = 'View';
-        $p->{contigviewbottom} = ($obj->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($obj->failed_description ? ',fail_all=normal' : '');
-      }
-      # Else, if it's a cDNA position
-      elsif ($type eq 'c') {
-        $p->{type} = 'Transcript';
-        $p->{t} = $refseq;
-        $p->{action} = ($self->hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary');
-      }
-      # Else, if it's a protein position
-      elsif ($type eq 'p') {
-        $p->{type} = 'Transcript';
-        $p->{t} = $refseq;
-        $p->{action} = 'ProtVariations';
-      }
-      # Default to transcript. We may have a special case where the variation falls in e.g. a pseudogene. In that case, there will be no type given but the call should have been on the transcript. Best thing to do is to link to the transcript.
-      else {
-        $p->{type} = 'Transcript';
-        $p->{t} = $refseq;
-        $p->{action} = ($self->hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary');
-      }
-  }
-  else {
+  # Treat the URL differently depending on if it will take us to a regular page or a LRG page
+  if ($refseq =~ /^LRG/) {
+    my ($id, $tr, $pr) = $refseq =~ m/^(LRG_\d+)\_?(t\d+)?\_?(p\d+)?$/; # Split the reference into LRG_id, transcript and protein
     
-      # Split the reference into LRG_id, transcript and protein
-      my ($id,$tr,$pr) = $refseq =~ m/^(LRG_\d+)\_?(t\d+)?\_?(p\d+)?$/;
-      
-      $p->{type} = 'LRG';
-      $p->{lrg} = $id;
-      $p->{__clear} = 1;
-       
-      # If we have a genomic position
-      if ($type eq 'g') {
-        $p->{action} = 'Summary';
-        $p->{contigviewbottom} = ($obj->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($obj->failed_description ? ',fail_all=normal' : '');
-      }
-      # Else, if it's a cDNA position
-      elsif ($type eq 'c') {
-        $p->{action} = 'Variation_LRG';
-        $p->{lrgt} = "$id\_$tr";
-      }
-      # Else, if it's a protein position
-      elsif ($type eq 'p') {
-        $p->{action} = 'Variation_LRG';
-        $p->{lrgt} = "$id\_$tr";
-      }
-      # Default to transcript. We may have a special case where the variation falls in e.g. a pseudogene. In that case, there will be no type given but the call should have been on the transcript. Best thing to do is to link to the transcript.
-      else {
-        $p->{action} = 'Variation_LRG';
-        $p->{lrgt} = "$id\_$tr";
-      }
-    
+    $p->{'type'}    = 'LRG';
+    $p->{'lrg'}     = $id;
+    $p->{'__clear'} = 1;
+     
+    if ($type eq 'g') { # genomic position
+      $p->{'action'}           = 'Summary';
+      $p->{'contigviewbottom'} = $config_param;
+    } else {
+      $p->{'action'} = 'Variation_LRG';
+      $p->{'lrgt'} = "${id}_$tr";
+    }
+  } else {
+    if ($type eq 'g') { # genomic position
+      $p->{'type'}             = 'Location';
+      $p->{'action'}           = 'View';
+      $p->{'contigviewbottom'} = $config_param;
+    } elsif ($type eq 'p') { # protein position
+      $p->{'type'}   = 'Transcript';
+      $p->{'action'} = 'ProtVariations';
+      $p->{'t'}      = $refseq;
+    } else { # $type eq c: cDNA position, no $type: special cases where the variation falls in e.g. a pseudogene. Default to transcript
+      $p->{'type'}   = 'Transcript';
+      $p->{'action'} = ($hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary');
+      $p->{'t'}      = $refseq;
+    }
   }
-  # Add or override the parameters with the ones supplied to the method
-  map {$p->{$_} = $params->{$_}} keys(%{$params});
   
-  # Get the URL using the main method in hub
-  my $url = $self->hub->url($p);
+  # Add or override the parameters with the ones supplied to the method
+  $p->{$_} = $params->{$_} for keys %$params;
   
-  # Return an arrayref with the elements: [0] -> URL, [1] -> display_name, [2] -> the rest of the HGVS string (capped at a maximum length)
-  return [$url,$refseq,substr($hgvs,length($refseq),($MAX_HGVS_LENGTH - length($refseq))) . (length($hgvs) > $MAX_HGVS_LENGTH ? "..." : "")];
+  # Return an arrayref with the elements: [0] -> URL, [1] -> display_name, [2] -> the rest of the HGVS string (capped at a maximum length)
+  return [ $hub->url($p), $refseq, substr($hgvs, length $refseq, ($max_length - length $refseq)) . (length $hgvs > $max_length ? '...' : '') ];
 }
 
 1;

@@ -374,29 +374,29 @@ sub validation_status {
 }
 
 sub hgvs {
-  my $self          = shift;
-  my $object        = $self->object;
-  
+  my $self      = shift;
+  my $object    = $self->object;
   my $hgvs_urls = $object->get_hgvs_names_url;
-  my $html = "";
-  my $count = 0;
+  my $count     = 0;
+  my $total     = scalar keys %$hgvs_urls;
+  my $html;
+  
   # Loop over and format the URLs
-  foreach my $allele (keys(%{$hgvs_urls})) {
-    $html .= ($count ? "<br />" : "") . "<b>Variant allele $allele</b><br />" if (scalar(keys(%{$hgvs_urls})) > 1);
-    $html .= join("<br />",@{$hgvs_urls->{$allele}});
-    $count += scalar(@{$hgvs_urls->{$allele}});
+  foreach my $allele (keys %$hgvs_urls) {
+    $html  .= ($count ? '<br />' : '') . "<b>Variant allele $allele</b><br />" if $total > 1;
+    $html  .= join '<br />', @{$hgvs_urls->{$allele}}, $total > 1 ? '' : ();
+    $count += scalar @{$hgvs_urls->{$allele}};
   }
   
   # Wrap the html
   if ($count) {
-    my $several = ($count > 1) ? 's' : '';
+    my $several = $count > 1 ? 's' : '';
     $html = qq{
       <dt><a class="toggle closed" href="#HGVS_names" rel="HGVS_names" title="Click to toggle HGVS names">HGVS names</a></dt>
       <dd>This feature has $count HGVS name$several - click the plus to show</dd>
       <dd class="HGVS_names"><div class="toggleable" style="display:none;font-weight:normal;">$html</div></dd>
     };
-  }
-  else {
+  } else {
     $html = qq{<dt>HGVS names</dt><dd><h5>None</h5></dd>};
   }
   
