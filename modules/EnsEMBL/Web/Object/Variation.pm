@@ -1128,12 +1128,13 @@ sub start {
 sub transcript_variation {
 
   ### Variation_features
-  ### Args      : Bio::EnsEMBL::Variation::Variation::Feature
+  ### Args[0]    : Bio::EnsEMBL::Variation::Variation::Feature
+  ### Args[1]    : string transcript stable id (optional)  
   ### Example    : my $consequence = $object->consequence($vari);
-  ### Description: returns SNP consequence (synonymous, stop gained, ...)
+  ### Description: returns SNP consequence (synonymous, stop gained, ...). If a transcript stable id is specifed, will only return transcript_variations on that transcript
   ### Returns arrayref of transcript variation objs
 
-  my ($self, $vari_feature) = @_;
+  my ($self, $vari_feature, $tr_stable_id) = @_;
   
   $self->hub->database('variation')->dnadb($self->database('core'));
   
@@ -1144,7 +1145,8 @@ sub transcript_variation {
   my @data;
   foreach my $tvari_obj ( @{ $transcript_variation_obj } )  {
     next unless $tvari_obj->transcript;
-    
+    next if $tr_stable_id && $tvari_obj->transcript->stable_id ne $tr_stable_id;
+     
     foreach my $tva_obj(@{ $tvari_obj->get_all_alternate_TranscriptVariationAlleles }) {
       my $type = join ", " , map {$_->display_term} @{ $tva_obj->get_all_OverlapConsequences || [] };
   
@@ -1308,7 +1310,8 @@ sub get_source {
 sub hgvs {
   my $self = shift;
   my $vfid = shift;
-
+  my $tr_stable_id = shift;
+  
   # Pick out the correct variation feature
   my $mappings      = $self->variation_feature_mapping;
   my $mapping_count = scalar keys %$mappings;
@@ -1331,7 +1334,7 @@ sub hgvs {
   # Get all transcript variations and put them in a hash with allele seq as key
   my %tvs_by_allele;
   
-  push @{$tvs_by_allele{$_->{'vf_allele'}}}, $_ for @{$self->transcript_variation($vf)};
+  push @{$tvs_by_allele{$_->{'vf_allele'}}}, $_ for @{$self->transcript_variation($vf,$tr_stable_id)};
 
   # Sort the HGVS notations so that LRGs end up last
   $tvs_by_allele{$_} = [ map $_->[1], sort { $a->[0] <=> $b->[0] } map [ $_->{'hgvs_genomic'} =~ /^LRG/ ? 1 : 0, $_ ], @{$tvs_by_allele{$_}} ] for keys %tvs_by_allele;
@@ -1348,7 +1351,7 @@ sub hgvs {
       foreach my $type ('hgvs_genomic', 'hgvs_coding', 'hgvs_protein') {
         my $h = $tv->{$type};
         
-        next unless $h && $h !~ m/\:p\.=/;
+        next unless $h && $h !~ m/\(p\.=\)/;
         next if $type eq 'hgvs_genomic' && $seen_genomic{$h}++;
         
         push @{$hgvs{$allele}}, $h;
