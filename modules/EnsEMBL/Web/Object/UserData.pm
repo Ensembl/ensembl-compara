@@ -752,6 +752,19 @@ sub calculate_consequence_data {
   my $hgvs            = $self->param('hgvs');
   my $protein         = $self->param('protein');
   my $cons_format     = $self->param('consequence_format');
+  my $regulatory      = $self->param('regulatory');
+  
+  # frequency filtering
+  my $check_freqs     = $self->param('freq');
+  my $freq_filter     = $self->param('freq_filter');
+  my $freq_gt_lt      = $self->param('freq_gt_lt');
+  my $freq_freq       = $self->param('freq_freq');
+  my $freq_pop        = $self->param('freq_pop');
+  
+  my $freq_pop_name = (split /\_/, $freq_pop)[-1];
+  $freq_pop_name = undef if $freq_pop_name =~ /1kg|hap/;
+  
+  # non-syn preds
   my %prog_options    = (
     'sift'     => $self->param('sift'),
     'polyphen' => $self->param('polyphen'),
@@ -776,10 +789,11 @@ sub calculate_consequence_data {
       foreach my $type (keys %{$track}) { 
         my $features = $parser->fetch_features_by_tracktype($type);
         my $sa = $self->get_adaptor('get_SliceAdaptor', 'core', $self->param('species'));
-        my $vfa;
+        my ($vfa, $va);
         my %species_dbs =  %{$self->species_defs->get_config($self->param('species'), 'databases')};
         if (exists $species_dbs{'DATABASE_VARIATION'} ){
           $vfa  = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation', $self->param('species'));
+          $va   = $self->get_adaptor('get_VariationAdaptor', 'variation', $self->param('species'));
         } else  { 
           $vfa = Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor->new_fake($self->param('species'));
         }
@@ -804,7 +818,7 @@ sub calculate_consequence_data {
           }
 
           if(!defined($slice)) {
-            warn "Could not get slice $f->seqname $f->start $f->end\n";
+            warn "Could not get slice ", $f->seqname;
             next;
           }
 
@@ -832,7 +846,7 @@ sub calculate_consequence_data {
           
           # name for VF can be specified in extra column or made from location
           # and allele string if not given
-          my $new_vf_name = $f->extra || $f->seqname.'_'.$pos.'_'.$f->allele_string;
+          my $new_vf_name = $f->extra || $f->seqname.'_'.$f->rawstart.'_'.$f->allele_string;
           
           # Create VariationFeature
           my $vf = Bio::EnsEMBL::Variation::VariationFeature->new(
@@ -862,11 +876,11 @@ sub calculate_consequence_data {
           
           my $snp = '-';
           
-          if($check_existing eq 'yes') {
+          if($check_existing ne 'no' || $check_freqs eq 'yes') {
             if(defined($vfa->db)) {
               
               my $sth = $vfa->db->dbc->prepare(qq{
-                SELECT variation_name, source_id
+                SELECT variation_id, variation_name, source_id, allele_string
                 FROM variation_feature
                 WHERE seq_region_id = ?
                 AND seq_region_start = ?
@@ -875,12 +889,38 @@ sub calculate_consequence_data {
               
               $sth->execute($vf->slice->get_seq_region_id, $vf->seq_region_start, $vf->seq_region_end);
               
-              my ($name, $source);
-              $sth->bind_columns(\$name, \$source);
+              my ($var_id, $name, $source, $db_allele_string);
+              $sth->bind_columns(\$var_id, \$name, \$source, \$db_allele_string);
               
-              my %by_source;
+              my (%by_source, %var_ids, @user_alleles);
               
-              push @{$by_source{$source}}, $name while $sth->fetch;
+              if($check_existing eq 'allele') {
+                @user_alleles = split /\//, $vf->allele_string;
+              }
+              
+              while($sth->fetch) {
+                if($check_existing eq 'allele') {
+                  my $found_new_alleles = 0;
+                  
+                  my %db_alleles;
+                  $db_alleles{$_} = 1 for split /\//, $db_allele_string;
+                  
+                  foreach my $user_allele(@user_alleles) {
+                    $found_new_alleles = 1 unless defined $db_alleles{$user_allele};
+                  }
+                  
+                  unless($found_new_alleles) {
+                    push @{$by_source{$source}}, $name;
+                    $var_ids{$name} = $var_id;
+                  }
+                }
+                
+                else {
+                  push @{$by_source{$source}}, $name;
+                  $var_ids{$name} = $var_id;
+                }
+              }
+              
               $sth->finish();
               
               if(scalar keys %by_source) {
@@ -889,19 +929,153 @@ sub calculate_consequence_data {
                       last;
                   }
               }
+              
+              # check frequency stuff
+              my $pass = 0;
+              
+              if($check_freqs eq 'yes' && $freq_pop ne '-' && defined($va) && $snp ne '-') {
+                my $v = $va->fetch_by_dbID($var_ids{$snp});
+                
+                foreach my $a(@{$v->get_all_Alleles}) {
+                  next unless defined $a->{population} || defined $a->{'_population_id'};
+                  next unless defined $a->frequency;
+                  next if $a->frequency > 0.5;
+                  
+                  my $pop_name = $a->population->name;
+                  
+                  if($freq_pop =~ /1kg/) { next unless $pop_name =~ /^1000.+low.+/i; }
+                  if($freq_pop =~ /hap/) { next unless $pop_name =~ /^CSHL-HAPMAP/i; }
+                  if($freq_pop =~ /any/) { next unless $pop_name =~ /^(CSHL-HAPMAP)|(1000.+low.+)/i; }
+                  if(defined $freq_pop_name) { next unless $pop_name =~ /$freq_pop_name/; }
+                  
+                  $pass = 1 if $a->frequency >= $freq_freq and $freq_gt_lt eq 'gt';
+                  $pass = 1 if $a->frequency <= $freq_freq and $freq_gt_lt eq 'lt';
+                }
+              }
+              
+              next if $freq_filter eq 'exclude' and $pass == 1;
+              next if $freq_filter eq 'include' and $pass == 0;
+            }
+          }
+          
+          
+          my $term_method = $cons_format.'_term';
+          
+          if($coding_only ne 'yes' && $regulatory eq 'yes') {
+            my $line = {
+              Uploaded_variation  => $vf->variation_name,
+              Location            => $vf->seq_region_name.':'.&format_coords($vf->start, $vf->end),
+              Existing_variation  => $snp,
+              Extra               => {},
+            };
+            
+            for my $rfv (@{ $vf->get_all_RegulatoryFeatureVariations }) {
+            
+              my $rf = $rfv->regulatory_feature;
+              
+              $line->{Feature_type}   = 'RegulatoryFeature';
+              $line->{Feature}        = $rf->stable_id;
+              
+              # this currently always returns 'RegulatoryFeature', so we ignore it for now
+              #$line->{Extra}->{REG_FEAT_TYPE} = $rf->feature_type->name;
+              
+              for my $rfva (@{ $rfv->get_all_alternate_RegulatoryFeatureVariationAlleles }) {
+              
+                $line->{Allele}         = $rfva->variation_feature_seq;
+                $line->{Consequence}    = join ',', 
+                map { $_->$term_method || $_->display_term } 
+                @{ $rfva->get_all_OverlapConsequences };
+                
+                my $extra .= $_.'='.$line->{Extra}->{$_}.';' for keys %{$line->{Extra}};
+                
+                my $snp_effect = EnsEMBL::Web::Text::Feature::SNP_EFFECT->new([
+                    $line->{Uploaded_variation},
+                    $line->{Location},
+                    $line->{Allele},
+                    '-',                         # gene
+                    $line->{Feature},
+                    $line->{Feature_type},
+                    $line->{Consequence},
+                    '-',                         # cdna_pos
+                    '-',                         # cds_pos
+                    '-',                         # prot_pos
+                    '-',                         # aa_pos
+                    '-',                         # codons
+                    $snp,
+                    $extra
+                ]);
+  
+                push @new_vfs, $snp_effect;
+                
+                #print_line($line);
+              }
+            }
+            
+            for my $mfv (@{ $vf->get_all_MotifFeatureVariations }) {
+            
+              my $mf = $mfv->motif_feature;
+              
+              $line->{Feature_type}   = 'MotifFeature';
+              $line->{Feature}        = $mf->binding_matrix->name;
+              
+              $line->{Extra}->{MATRIX}        = $mf->binding_matrix->description.' '.$mf->display_label,
+              $line->{Extra}->{MATRIX}        =~ s/\s+/\_/g;
+              $line->{Extra}->{HIGH_INF_POS}  = ($mfv->in_informative_position ? 'Y' : 'N');
+              
+              for my $mfva (@{ $mfv->get_all_alternate_MotifFeatureVariationAlleles }) {
+              
+                $line->{Allele}         = $mfva->variation_feature_seq;
+                $line->{Consequence}    = join ',', 
+                map { $_->$term_method || $_->display_term } 
+                @{ $mfva->get_all_OverlapConsequences };
+                
+                my $extra .= $_.'='.$line->{Extra}->{$_}.';' for keys %{$line->{Extra}};
+                
+                my $snp_effect = EnsEMBL::Web::Text::Feature::SNP_EFFECT->new([
+                    $line->{Uploaded_variation},
+                    $line->{Location},
+                    $line->{Allele},
+                    '-',                         # gene
+                    $line->{Feature},
+                    $line->{Feature_type},
+                    $line->{Consequence},
+                    '-',                         # cdna_pos
+                    '-',                         # cds_pos
+                    '-',                         # prot_pos
+                    '-',                         # aa_pos
+                    '-',                         # codons
+                    $snp,
+                    $extra
+                ]);
+  
+                push @new_vfs, $snp_effect;
+                
+                #print_line($line);
+                
+              }
             }
           }
 
           my $transcript_variations = $vf->get_all_TranscriptVariations();
+          
+          # intergenics have no transcript variations
+          if(!@$transcript_variations) {
+            my $snp_effect = EnsEMBL::Web::Text::Feature::SNP_EFFECT->new([
+                $vf->variation_name, $location, '-', '-', '-', '-',
+                $vf->display_consequence($cons_format) || $vf->display_consequence,
+                '-', '-', '-', '-', '-', $snp, '-'
+            ]);
+            
+            push @new_vfs, $snp_effect;
+          }
+          
           foreach my $tv (@{$transcript_variations}){
             
             # exclude non-coding if requested
             next if($coding_only eq 'yes' && !($tv->affects_transcript));
             
             foreach my $tva (@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
-              
-              my $method_name = $cons_format.'_term';
-              my $type = join ",", map {$_->$method_name} @{$tva->get_all_OverlapConsequences};
+              my $type = join ",", map {$_->$term_method} @{$tva->get_all_OverlapConsequences};
               
               ## Set default values
               my $gene_id       = '-';
@@ -976,7 +1150,7 @@ sub calculate_consequence_data {
               
               my $snp_effect = EnsEMBL::Web::Text::Feature::SNP_EFFECT->new([
                   $vf->variation_name, $location, $allele, $gene_id, $transcript_id, 
-                  $type, $cdna_pos, $cds_pos, $prot_pos, $aa, $codons, $snp, $extra
+                  'Transcript', $type, $cdna_pos, $cds_pos, $prot_pos, $aa, $codons, $snp, $extra
               ]);
 
               push @new_vfs, $snp_effect;
@@ -1036,7 +1210,8 @@ sub consequence_table {
     { key => 'location', title =>'Location',             align => 'center', sort => 'position_html' },
     { key => 'allele',   title =>'Allele',               align => 'center', sort => 'string'        },
     { key => 'gene',     title =>'Gene',                 align => 'center', sort => 'html'          },
-    { key => 'trans',    title =>'Transcript',           align => 'center', sort => 'html'          },
+    { key => 'trans',    title =>'Feature',              align => 'center', sort => 'html'          },
+    { key => 'ftype',    title =>'Feature type',         align => 'center', sort => 'html'          },
     { key => 'con',      title =>'Consequence',          align => 'center', sort => 'string'        },
     { key => 'cdna_pos', title =>'Position in cDNA',     align => 'center', sort => 'position'      },
     { key => 'cds_pos',  title =>'Position in CDS',      align => 'center', sort => 'position'      },
@@ -1059,6 +1234,7 @@ sub consequence_table {
       my $url_location      = $f->seqname . ':' . ($f->rawstart - 500) . '-' . ($f->rawend + 500);
       my $uploaded_loc      = $f->id;
       my $transcript_id     = $f->transcript;
+      my $feature_type      = $f->feature_type;
       my $gene_id           = $f->gene;
       my $consequence       = $f->consequence;
       my $cdna_pos          = $f->cdna_position;
@@ -1080,7 +1256,7 @@ sub consequence_table {
         contigviewbottom => 'variation_feature_variation=normal',
       });
       
-      if ($transcript_id ne '-') { 
+      if ($transcript_id =~ /^ENST/) {
         my $transcript_url = $hub->url({
           species => $species,
           type    => 'Transcript',
@@ -1089,6 +1265,19 @@ sub consequence_table {
         });
         
         $transcript_string = qq{<a href="$transcript_url" rel="external">$transcript_id</a>};
+      }
+      elsif ($transcript_id =~ /^ENSR/) {
+        my $transcript_url = $hub->url({
+          species => $species,
+          type    => 'Regulation',
+          action  => 'Cell_line',
+          rf      => $transcript_id,
+        });
+        
+        $transcript_string = qq{<a href="$transcript_url" rel="external">$transcript_id</a>};
+      }
+      else {
+        $transcript_string = $transcript_id;
       }
 
       if ($gene_id ne '-') {
@@ -1121,7 +1310,7 @@ sub consequence_table {
       
       # format extra string nicely
       $extra = join ";", map {$self->render_sift_polyphen($_)} split /\;/, $extra;
-      $extra =~ s/(SIFT|PolyPhen|HGNC|ENSP|Condel|HGVSc|HGVSp)\=/<b>$&<\/b>/g;
+      $extra =~ s/(SIFT|PolyPhen|HGNC|ENSP|Condel|HGVSc|HGVSp|MATRIX|HIGH_INF_POS)\=/<b>$&<\/b>/g;
       $extra =~ s/\;/\;\<br\/>/g;
       
       $extra =~ s/ENSP\d+/'<a href="'.$hub->url({
@@ -1138,6 +1327,7 @@ sub consequence_table {
       $row->{'allele'}   = $allele;
       $row->{'gene'}     = $gene_string;
       $row->{'trans'}    = $transcript_string;
+      $row->{'ftype'}    = $feature_type;
       $row->{'con'}      = $consequence;
       $row->{'cdna_pos'} = $cdna_pos;
       $row->{'cds_pos'}  = $cds_pos;
@@ -1151,7 +1341,7 @@ sub consequence_table {
     }
   }
   
-  return new EnsEMBL::Web::Document::SpreadSheet($columns, [ sort { $a->{'var'} cmp $b->{'var'} } @rows ], { margin => '1em 0px', data_table => 'no_col_toggle' });
+  return new EnsEMBL::Web::Document::SpreadSheet($columns, [ sort { $a->{'var'} cmp $b->{'var'} } @rows ], { margin => '1em 0px', data_table => '1' });
 }
 
 #---------------------------------- DAS functionality ----------------------------------
