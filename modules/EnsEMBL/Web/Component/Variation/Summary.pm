@@ -382,7 +382,7 @@ sub hgvs {
   my $count = 0;
   # Loop over and format the URLs
   foreach my $allele (keys(%{$hgvs_urls})) {
-    $html .= ($count ? "<br />" : "") . "<b>Variant allele $allele</b>" if (scalar(keys(%{$hgvs_urls})) > 1);
+    $html .= ($count ? "<br />" : "") . "<b>Variant allele $allele</b><br />" if (scalar(keys(%{$hgvs_urls})) > 1);
     $html .= join("<br />",@{$hgvs_urls->{$allele}});
     $count += scalar(@{$hgvs_urls->{$allele}});
   }

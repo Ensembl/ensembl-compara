@@ -67,7 +67,7 @@ sub variation_content {
   my $hgvs_urls = $object->get_hgvs_names_url($vf);
   my $hgvs_html = "";
   foreach my $allele (keys(%{$hgvs_urls})) {
-    $hgvs_html .= (length($hgvs_html) ? "<br />" : "") . "<b>Variant allele $allele</b>" if (scalar(keys(%{$hgvs_urls})) > 1);
+    $hgvs_html .= (length($hgvs_html) ? "<br />" : "") . "<b>Variant allele $allele</b><br />" if (scalar(keys(%{$hgvs_urls})) > 1);
     $hgvs_html .= join("<br />",@{$hgvs_urls->{$allele}});
   }
   
