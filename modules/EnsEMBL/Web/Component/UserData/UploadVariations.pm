@@ -32,13 +32,12 @@ sub content {
   $form->add_notes({ 
     'heading'=>'Variant Effect Predictor:',
     'text'=>qq(
-      <p class="space-below">(Formerly SNP Effect Predictor). This tool takes a
-      list of variant positions and alleles, and predicts the effects of each
-      of these on any overlapping features annotated in Ensembl. The
-      tool accepts substitutions, insertions and deletions as input,
-      uploaded as a list of <a href="/info/website/upload/var.html"
-      target="_blank">tab separated values</a>, <a
-      href="http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40"
+      <p class="space-below">This tool takes a list of variant positions and
+      alleles, and predicts the effects of each of these on overlapping
+      transcripts and regulatory regions annotated in Ensembl. The tool accepts
+      substitutions, insertions and deletions as input, uploaded as a list of <a
+      href="/info/website/upload/var.html" target="_blank">tab separated
+      values</a>, <a href="http://www.1000genomes.org/wiki/Analysis/vcf4.0"
       target="_blank">VCF</a> or Pileup format input.</p>
       
       <p>Upload is limited to $variation_limit variants; lines after the limit
@@ -47,14 +46,17 @@ sub content {
       href="ftp://ftp.ensembl.org/pub/misc-scripts/Variant_effect_predictor_2.0/"
       target="_blank">perl script</a> or the <a
       href="/info/docs/api/variation/variation_tutorial.html#Consequence"
-      target="_blank">variation API</a>.</p>
+      target="_blank">variation API</a>. See also <a
+      href="/info/docs/variation/vep/index.html" target="_blank">full
+      documentation</a></p>
   )});
-  my $subheader = 'Upload file';
+  my $subheader = 'Input file';
 
    ## Species now set automatically for the page you are on
   my @species;
+  
   foreach my $sp ($object->species_defs->valid_species) {
-    push @species, {'value' => $sp, 'name' => $object->species_defs->species_label($sp, 1)};
+    push @species, {'value' => $sp, 'name' => $object->species_defs->species_label($sp, 1).': '.$object->species_defs->get_config($sp, 'ASSEMBLY_NAME')};
   }
   @species = sort {$a->{'name'} cmp $b->{'name'}} @species;
 
@@ -67,6 +69,7 @@ sub content {
       'values'  => \@species,
       'value'   => $current_species,
       'select'  => 'select',
+      'width'   => '300px',
   );
   $form->add_element( type => 'Hidden', name => 'variation_limit', 'value' => $variation_limit);
   $form->add_element( type => 'String', name => 'name', label => 'Name for this upload (optional)' );
@@ -92,6 +95,14 @@ sub content {
   $form->add_element('type' => 'SubHeader', 'value' => 'Options');
   
   $form->add_element(
+    type  => 'CheckBox',
+    name  => "regulatory",
+    label => "Get regulatory region consequences",
+    value => 'yes',
+    selected => 1
+  );
+  
+  $form->add_element(
     type   => 'DropDown',
     select =>, 'select',
     label  => 'Type of consequences to display',
@@ -106,12 +117,18 @@ sub content {
   );  
   
   $form->add_element(
-    type  => 'CheckBox',
-    name  => "check_existing",
-    label => "Check for existing co-located variants",
-    value => 'yes',
-    selected => 1
-  );
+    type   => 'DropDown',
+    select =>, 'select',
+    label  => 'Check for existing co-located variants',
+    name   => 'check_existing',
+    values => [
+      { value => 'no',     name => 'No'                      },
+      { value => 'yes',    name => 'Yes'                     },
+      { value => 'allele', name => 'Yes and compare alleles' },
+    ],
+    value  => 'yes',
+    select => 'select',
+  );  
   
   $form->add_element(
     type  => 'CheckBox',
@@ -151,7 +168,6 @@ sub content {
     value  => 'no',
     select => 'select',
   );
-  
   
   $form->add_element('type' => 'SubHeader', 'value' => 'Non-synonymous SNP predictions (human only)');
   
@@ -199,8 +215,125 @@ sub content {
     value  => 'no',
     select => 'select',
   );
+  
+  
+  $form->add_element('type' => 'SubHeader', 'value' => 'Frequency filtering of existing variants (human only)');
+  
+  $form->add_element(
+    type  => 'CheckBox',
+    name  => "freq",
+    label => "Filter variants by frequency",
+    value => 'yes',
+    selected => 0,
+    notes => '<strong>NB:</strong> Enabling frequency filtering may be very slow for large datasets',
+  );
+  
+  $form->add_element(
+    type   => 'DropDown',
+    select =>, 'select',
+    label  => 'Filter',
+    name   => 'freq_filter',
+    values => [
+      { value => 'exclude', name => 'Exclude' },
+      { value => 'include', name => 'Include only' },
+    ],
+    value  => 'exclude',
+    select => 'select',
+  ); 
+  
+  $form->add_element(
+    type   => 'DropDown',
+    select =>, 'select',
+    #label  => '',
+    name   => 'freq_gt_lt',
+    values => [
+      { value => 'gt', name => 'variants with MAF greater than' },
+      { value => 'lt', name => 'variants with MAF less than'    },
+    ],
+    value  => 'gt',
+    select => 'select',
+  ); 
+  
+  $form->add_element(
+    type  => 'String',
+    name  => 'freq_freq',
+    value => '0.1',
+    max   => 1,
+  );
+  
+  $form->add_element(
+    type   => 'DropDown',
+    select =>, 'select',
+    #label  => '',
+    name   => 'freq_pop',
+    values => [
+      { value => 'any',     name => 'in any 1KG LC or HapMap population' },
+      { value => '-',       name => '-----'                              },
+      { value => '1kg',     name => 'in any 1KG low coverage population' },
+      { value => '1kg_ceu', name => 'in 1KG CEU low coverage'            },
+      { value => '1kg_chb', name => 'in 1KG CHB+JPT low coverage'        },
+      { value => '1kg_yri', name => 'in 1KG YRI low coverage'            },
+      { value => '-',       name => '-----'                              },
+      { value => 'hap',     name => 'in any HapMap population'           },
+      { value => 'hap_asw', name => 'in HapMap ASW'                      },
+      { value => 'hap_ceu', name => 'in HapMap CEU'                      },
+      { value => 'hap_chb', name => 'in HapMap CHB'                      },
+      { value => 'hap_chd', name => 'in HapMap CHD'                      },
+      { value => 'hap_gih', name => 'in HapMap GIH'                      },
+      { value => 'hap_jpt', name => 'in HapMap JPT'                      },
+      { value => 'hap_lwk', name => 'in HapMap LWK'                      },
+      { value => 'hap_mex', name => 'in HapMap MEX'                      },
+      { value => 'hap_mkk', name => 'in HapMap MKK'                      },
+      { value => 'hap_tsi', name => 'in HapMap TSI'                      },
+      { value => 'hap_yri', name => 'in HapMap YRI'                      },
+    ],
+    value  => '1kg',
+    select => 'select',
+  ); 
+  
+  
+  $form->add_element('type' => 'SubHeader', 'value' => ' ');
+  
+  my $render = $form->render;
 
-  $html .= $form->render;
+  my @split = split /fieldset>/, $render;
+  
+  for my $i(0..$#split) {
+    my $chunk = $split[$i];
+    
+    next unless $chunk =~ /filtering/;
+    
+    #warn $chunk;
+    
+    my ($count, $pos);
+    while($chunk =~ m/<\/div>/g) {
+      next unless ++$count == 2;
+      $pos = pos $chunk;
+    }
+    
+    my ($chunk1, $chunk2);
+    $chunk1 = substr($chunk, 0, $pos);
+    $chunk2 = substr($chunk, $pos);
+    
+    #$chunk =~ s/<\/div><\/div><div class="form-field"><div class="ff-right">//g;
+    $chunk2 =~ s/<\/div><div class="form-field">//g;
+    $chunk2 =~ s/ class="ff-right"//g;
+    $chunk2 =~ s/div/span/g;
+    $chunk2 =~ s/<span>/<span style="margin-right:2px">/g;
+    $chunk2 =~ s/ ftext"/" style="width: 40px"/;
+    $chunk2 =~ s/ class="fselect"//g;
+    $chunk2 =~ s/ class="ff-label"/ style="margin-right:10px"/;
+    $chunk2 =~ s/^<span/<div/;
+    $chunk2 =~ s/span><\/$/div><br\/><\//;
+    
+    #warn $chunk2;
+    
+    $split[$i] = $chunk1.$chunk2;
+  }
+  
+  $render = join "fieldset>", @split;
+
+  $html .= $render;
   return $html;
 }
 

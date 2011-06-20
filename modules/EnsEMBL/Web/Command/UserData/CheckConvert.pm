@@ -29,14 +29,19 @@ sub process {
       format
       check_existing
       coding_only
-      novel_only
       hgnc
       protein
       hgvs
       consequence_format
+      freq
+      freq_filter
+      freq_gt_lt
+      freq_freq
+      freq_pop
       sift
       polyphen
-      condel)
+      condel
+      regulatory)
     ) {
       $param->{$p} = $object->param($p);
     }
