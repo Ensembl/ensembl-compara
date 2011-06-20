@@ -132,11 +132,6 @@ sub content {
 	# copy number variant probe table
   $html .= $self->cnv_probe_table($var_slice,$vname);
 	
-	# sequence variation table (not displayed for structural variants and CNV probes)
-  if ($im_cfg eq 'snpview') {
-  	$html .= $self->sequence_variation_table($var_slice,$vname);
-	}
-
   # regulatory region table
   $html .= $self->regulatory_feature_table($var_slice,$vname,$image_config);
   
@@ -172,13 +167,15 @@ sub structural_variation_table{
     next if $name eq $v;
     # make PMID link for description
     my $description = $sv->source_description;
-		my $ext_ref  = $sv->external_reference;
-	 	my $sv_class = $sv->class;
-	  my $source   = $sv->source;
-	  
+		my $ext_ref     = $sv->external_reference;
+	 	my $sv_class    = $sv->class;
+	  my $source      = $sv->source;
+	  my $study_url   = $sv->study_url;
+		
 	  # Add study information
 	  if ($sv->study_name ne '') {
 	  	$source .= ":".$sv->study_name;
+			$source = sprintf ('<a rel="external" href="%s">%s</a>',$study_url,$source);
 			$description .= $sv->study_description;
 	  }
       
@@ -288,68 +285,6 @@ sub cnv_probe_table{
 	return $html;
 }
 
-
-sub sequence_variation_table {
-  my $self     = shift;
-  my $slice    = shift;
-	my $v        = shift;
-  my $hub      = $self->hub;
-	my $title    = 'Sequence variants';
-	my $table_id = 'seq';
-
-  my $columns = [
-     { key => 'id',          sort => 'string',        title => 'Name'       },
-     { key => 'location',    sort => 'position_html', title => 'Chr:bp'     },
-     { key => 'alleles',     sort => 'string',        title => 'Alleles'    }, 
-     { key => 'ambiguity',   sort => 'string',        title => 'Ambiguity'  },
-     { key => 'class',       sort => 'string',        title => 'Class'      },
-     { key => 'source',      sort => 'string',        title => 'Source'     },
-     { key => 'valid',       sort => 'string',        title => 'Validation' },
-  ];
-
-  my $rows;
-  
-	foreach my $vf (@{$slice->get_all_VariationFeatures}){
-		my $name = $vf->variation_name;
-    next if $name eq $v;
-      
-    my $vf_link = $hub->url({
-        	type    => 'Variation',
-        	action  =>  'Summary',
-        	v       => $name,
-        	vf      => $vf->dbID
-      	});
-
-		my $region_start = $vf->seq_region_start;
-		my $region_end = $vf->seq_region_end;
-			
-    my $loc_string = $vf->seq_region_name . ':' . $region_start . ($region_start = $region_end ? '' : '-' . $region_end);
-    my $loc_link = $hub->url({
-        	type   => 'Location',
-        	action => 'View',
-        	r      => $loc_string,
-      	});
-
-    my $validation = $vf->get_all_validation_states || [];
-    
-        
-		my %row = (
-        	id          => qq{<a href="$vf_link">$name</a>},
-        	location    => qq{<a href="$loc_link">$loc_string</a>},
-        	alleles     => $vf->allele_string,
-        	ambiguity   => $vf->ambiguity_code,
-        	class       => $vf->var_class,
-        	source      => $vf->source,
-        	valid       =>  join(', ',  @$validation) || '-',
-      	);
-
-    push @$rows, \%row;
-  }
-	
-	my $table = $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] });
-	
-	return display_table_with_toggle_button($title,$table_id,1,$table);
-}
 
 sub regulatory_feature_table{
   my $self         = shift;
