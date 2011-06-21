@@ -176,7 +176,7 @@ sub structural_variation_table{
 	  if ($sv->study_name ne '') {
 	  	$source .= ":".$sv->study_name;
 			$source = sprintf ('<a rel="external" href="%s">%s</a>',$study_url,$source);
-			$description .= $sv->study_description;
+			$description .= ': '.$sv->study_description;
 	  }
       
     if ($ext_ref =~ /pubmed\/(.+)/) {
