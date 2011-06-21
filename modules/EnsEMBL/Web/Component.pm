@@ -888,6 +888,7 @@ sub transcript_table {
     </table>
     <form class="data_table_config">
       <input type="hidden" name="asStripClasses" value="['','']" />
+      <input type="hidden" name="oSearch" value="{'sSearch':'','bRegex':false,'bSmart':false}" />
     </form>};
   }
   
