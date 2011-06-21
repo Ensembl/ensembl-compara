@@ -111,8 +111,8 @@ sub table_data {
     my $pval         = $va->p_value;
     
     my $disease;
-    $disease  = qq{<dt>$disorder} if $disorder =~ /^\w+/;
-    $disease .= qq{<br /><a href="$disease_url">[View on Karyotype]</a></dt>} unless $disease =~ /HGMD_MUTATION/;
+    $disease  = qq{<b>$disorder</b>} if $disorder =~ /^\w+/;
+    $disease .= qq{<br /><a href="$disease_url">[View on Karyotype]</a>} unless $disease =~ /HGMD_MUTATION/;
     
 	
 	
