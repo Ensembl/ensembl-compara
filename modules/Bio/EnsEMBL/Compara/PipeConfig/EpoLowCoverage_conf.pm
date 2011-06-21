@@ -12,6 +12,7 @@ sub default_options {
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
 
 	'release'       => 63,
+	'prev_release'  => 62,
         'release_suffix'=> '', # set it to '' for the actual release
         'pipeline_name' => 'LOW35_'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
 
@@ -34,6 +35,7 @@ sub default_options {
             -user   => 'ensro',
             -pass   => '',
 	    -dbname => 'ensembl_compara_62',
+	    -driver => 'mysql',
         },
 
 	#Location of compara db containing the high coverage alignments
@@ -43,6 +45,7 @@ sub default_options {
             -user   => 'ensro',
             -pass   => '',
 	    -dbname => 'sf5_63compara_ortheus12way',
+	    -driver => 'mysql',
         },
 	master_db => { 
             -host   => 'compara1',
@@ -50,6 +53,7 @@ sub default_options {
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
             -dbname => 'sf5_ensembl_compara_master',
+	    -driver => 'mysql',
         },
 	'populate_new_database_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
 
@@ -72,8 +76,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-#	    -db_version => 62,
-	    -db_version => ($self->o('release')-1),
+	    -db_version => $self->o('prev_release'),
         },
 
 	'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment
@@ -89,6 +92,7 @@ sub default_options {
 	'gerp_window_sizes'    => '[1,10,100,500]',                            #gerp window sizes
 	'no_gerp_conservation_scores' => 0,                                    #Not used in productions but is a valid argument
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh', #location of full species tree, will be pruned 
+	'newick_format' => 'simple',
 	'work_dir' => $self->o('work_dir'),                 #location to put pruned tree file 
     };
 }
@@ -203,52 +207,23 @@ sub pipeline_analyses {
 			       },
 		-wait_for => [ 'load_genomedb' ],    # have to wait until genome_db table has been populated
 		-flow_into => {
-			       1 => [ 'ImportAlignment' , 'create_species_tree', 'CreateDefaultPairwiseMlss'],
+			       1 => [ 'ImportAlignment' , 'make_species_tree', 'CreateDefaultPairwiseMlss'],
 			      },
 	    },
 
 # -------------------------------------------------------------[Load species tree]--------------------------------------------------------
-	    {   -logic_name    => 'create_species_tree',
-		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-		-parameters    => {
-				   'db_url'   => $self->dbconn_2_url('pipeline_db'),
-				   'output_tree_file' => $self->o('work_dir').'/pruned_species_tree.nh',
-				   'output_taxon_file' => $self->o('work_dir').'/pruned_taxon_ids.nh',
-				   'cmd'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/prune_tree.pl --url #db_url# --tree_file '. $self->o('species_tree_file') . ' --njtree_output_filename #output_tree_file# --taxon_output_filename #output_taxon_file# 2>/dev/null',
-			      },
+	    {   -logic_name    => 'make_species_tree',
+		-module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
+		-parameters    => { },
+		-input_ids     => [
+				   {'blength_tree_file' => $self->o('species_tree_file'), 'newick_format' => 'simple' }, #species_tree
+				   {'newick_format'     => 'njtree' },                                                   #taxon_tree
+				  ],
 		-hive_capacity => -1,   # to allow for parallelization
-		-flow_into => {
-			       1 => {
-				     'store_species_tree' => { 'species_tree_file' => '#output_tree_file#' },
-				     'store_taxon_tree' => { 'taxon_tree_file' => '#output_taxon_file#' },
-			      },
-			      },
-	    },
-	    {   -logic_name    => 'store_species_tree',
-		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',     # a non-standard use of JobFactory for iterative insertion
-		-parameters => {
-				'inputfile'       => '#species_tree_file#',
-                'column_names'    => [ 'the_tree_itself' ],
-				'input_id'        => { 'meta_key' => 'tree_string', 'meta_value' => '#the_tree_itself#' },
-				'fan_branch_code' => 2,
-			       },
-		-hive_capacity => -1,   # to allow for parallelization
-		-flow_into => {
-			       2 => [ 'mysql:////meta' ],
-			      },
-	    },
-	    {   -logic_name    => 'store_taxon_tree',
-		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',     # a non-standard use of JobFactory for iterative insertion
-		-parameters => {
-				'inputfile'       => '#taxon_tree_file#',
-                'column_names'    => [ 'the_tree_itself' ],
-				'input_id'        => { 'meta_key' => 'taxon_tree', 'meta_value' => '#the_tree_itself#' },
-				'fan_branch_code' => 3,
-			       },
-		-hive_capacity => -1,   # to allow for parallelization
-		-flow_into => {
-			       3 => [ 'mysql:////meta' ],
-			      },
+	        -flow_into  => {
+                   3 => { 'mysql:////meta' => { 'meta_key' => 'taxon_tree', 'meta_value' => '#species_tree_string#' } },
+                   4 => { 'mysql:////meta' => { 'meta_key' => 'tree_string', 'meta_value' => '#species_tree_string#' } },
+                },
 	    },
 
 # -----------------------------------[Create a list of pairwise mlss found in the default compara database]-------------------------------
@@ -274,7 +249,7 @@ sub pipeline_analyses {
 				'method_link_species_set_id'       => $self->o('high_epo_mlss_id'),
 				'from_db_url'                      => $self->dbconn_2_url('epo_db'),
 			       },
-		-wait_for  => [ 'CreateDefaultPairwiseMlss', 'store_species_tree', 'store_taxon_tree', ],
+		-wait_for  => [ 'CreateDefaultPairwiseMlss', 'make_species_tree'],
 		-flow_into => {
 			       1 => [ 'create_low_coverage_genome_jobs' ],
 			      },
