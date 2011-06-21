@@ -207,8 +207,15 @@ foreach my $index (@indexes) {
   print LOG "  Time for $index is " . &elapsed_time($start) . "\n\n";
 }
 
+#prune empty directories
+foreach my $subdir (<$dir/*>) {
+  if (rmdir $subdir) {
+    print LOG "\nRemoved empty directory $subdir\n";
+  }
+}
+
 #print LOG "\nCross references are:\n",Dumper(\%cross_references) if %cross_references;
-print LOG "Dumped $total_c records in total\n";
+print LOG "\nDumped $total_c records in total\n";
 print LOG "\nTotal time for dumping " . &elapsed_time($start_time) . "\n";
 exit;
 
@@ -221,6 +228,7 @@ sub dumpHelp {
   my $conf = shift;
   my $start_time = time;
   my $total_c;
+  return if $sitetype eq 'Vega';
   foreach my $type (qw(View Glossary FAQ)) {
     my $counter   = make_counter(0);
     my $file = $conf->{'directory_'.$type}.'/'.$conf->{'website'}{'name'}.'_'.$type.'.xml';
@@ -316,6 +324,9 @@ sub dumpMarker {
   my $start_time = time;
   my $db = 'core';
   my $fh;
+  my ($marker_present) = $conf->{'dbh'}->selectrow_array(qq(SELECT count(*) from marker_feature));
+  return unless $marker_present;
+
   unless ($nogzip) {
     $fh = new IO::Zlib;
     $fh->open( "$file", "wb9" )
@@ -397,6 +408,9 @@ sub dumpQTL {
   my $start_time = time;
   my $db = 'core';
   my $fh;
+  my ($QTL_present) = $conf->{'dbh'}->selectrow_array(qq(SELECT count(*) from qtl_feature));
+  return unless $QTL_present;
+
   unless ($nogzip) {
     $fh = new IO::Zlib;
     $fh->open( "$file", "wb9" )
@@ -1173,6 +1187,10 @@ sub dumpFamily {
   $t_sth->execute;
   my $taxon_id = ($t_sth->fetchrow);
   return unless $taxon_id;
+
+  my ($family_present) = $conf->{'dbh'}->selectrow_array(qq(SELECT count(*) from family));
+  return unless $family_present;
+
 
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
