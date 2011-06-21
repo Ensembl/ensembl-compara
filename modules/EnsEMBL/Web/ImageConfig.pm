@@ -88,7 +88,7 @@ sub new {
   #     Cache the user/session version.
   #
   # Check memcached for defaults
-  if (my $defaults = $cache ? $cache->get("::${class}::$species") : undef) {
+  if (my $defaults = $cache ? $cache->get("::${class}::${species}::$code") : undef) {
     $self->{$_} = $defaults->{$_} for keys %$defaults;
   } else {
     # No cached defaults found, so initialize them and cache
@@ -101,7 +101,7 @@ sub new {
         _parameters => $self->{'_parameters'},
       };
       
-      $cache->set("::${class}::$species", $defaults, undef, 'IMAGE_CONFIG', $species);
+      $cache->set("::${class}::${species}::$code", $defaults, undef, 'IMAGE_CONFIG', $species);
     }
   }
   
@@ -1962,8 +1962,7 @@ sub add_sequence_variations {
     my $variation_sets = $self->create_submenu('variation_sets', 'Variation sets');
     
     $menu->append($variation_sets);
-  
-    # Hacked the sorting of the variation sets for release 62 so that the 'Failed variations' set will be displayed last
+    
     foreach my $toplevel_set (
       sort { !!scalar @{$a->{'subsets'}} <=> !!scalar @{$b->{'subsets'}} } 
       sort { $a->{'name'} =~ /^failed/i <=> $b->{'name'} =~ /^failed/i } 
