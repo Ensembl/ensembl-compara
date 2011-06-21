@@ -115,8 +115,8 @@ sub render {
     $table->add_row({
       'species'       => sprintf('<strong><i>%s</i></strong> (%s)', $sp_name, $common),
       'dna'           => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a> (DNA)', $title{'dna'}, $rel, $sp_dir),
-      'cdna'          => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a> (DNA)', $title{'cdna'}, $rel, $sp_dir),
-      'ncrna'         => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a> (DNA)', $title{'rna'}, $rel, $sp_dir),
+      'cdna'          => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cdna/">FASTA</a> (DNA)', $title{'cdna'}, $rel, $sp_dir),
+      'ncrna'         => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/ncrna/">FASTA</a> (DNA)', $title{'rna'}, $rel, $sp_dir),
       'protseq'       => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/pep/">FASTA</a> (protein)', $title{'prot'}, $rel, $sp_dir),
       'embl'          => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/embl/%s/">EMBL</a>', $title{'embl'}, $rel, $sp_dir),
       'genbank'       => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/genbank/%s/">GenBank</a>', $title{'genbank'}, $rel, $sp_dir),
