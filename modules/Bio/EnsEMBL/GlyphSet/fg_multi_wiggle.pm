@@ -43,7 +43,7 @@ sub draw_features {
         $tracks_on = "$configured_tracks/$available_tracks features turned on";  
       }
       my $feature_set_data = $Config->{'data_by_cell_line'}{$cell_line}{$type}{'block_features'}; 
-      $self->draw_blocks($feature_set_data, sprintf("$label%s $cell_line", $type eq 'core' ? ' Evidence' : ''), undef, $colours, $tracks_on);
+      $self->draw_blocks($feature_set_data, "$label $cell_line", undef, $colours, $tracks_on);
       $drawn_data = 1;
     } else {
       $self->display_error_message($cell_line, $type, 'peaks');
@@ -53,7 +53,7 @@ sub draw_features {
   if ($wiggle) { 
     if ($Config->{'data_by_cell_line'}{$cell_line}{$type}{'wiggle_features'} && $wiggle){   
       my %wiggle_data = %{$Config->{'data_by_cell_line'}{$cell_line}{$type}{'wiggle_features'}}; 
-      $self->process_wiggle_data(\%wiggle_data, $colours, [ "$label Support $cell_line" ], $cell_line, $type, $object_type);
+      $self->process_wiggle_data(\%wiggle_data, $colours, [ "$label $cell_line" ], $cell_line, $type, $object_type);
       $drawn_data =1;
     } else {
       $self->display_error_message($cell_line, $type, 'wiggle'); 
