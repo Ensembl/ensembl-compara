@@ -8,7 +8,7 @@ use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
   my $self = shift;
-  $self->cacheable(1);
+  $self->cacheable(0);
   $self->ajaxable(1);
 }
 
@@ -23,7 +23,7 @@ sub content {
 	
 	#### Image configuration ####
 	
-	my $gene_slice = $slice;#$slice->expand(10e3, 10e3);
+	my $gene_slice = $slice;
      $gene_slice = $gene_slice->invert if $object->seq_region_strand < 0;
      
   # Get the web_image_config
@@ -113,7 +113,7 @@ sub structural_variation_table{
 	  if ($sv->study_name ne '') {
 	  	$source .= ":".$sv->study_name;
 			$source = sprintf ('<a rel="external" href="%s">%s</a>',$study_url,$source);
-			$description .= $sv->study_description;
+			$description .= ': '.$sv->study_description;
 	  }
       
     if ($ext_ref =~ /pubmed\/(.+)/) {
