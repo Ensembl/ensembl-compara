@@ -28,7 +28,7 @@ sub get_json {
   my $self = shift;
   
   return {
-    wrapper   => qq{<div class="modal_wrapper"></div>},
+    wrapper   => qq{<div class="modal_wrapper config_wrapper"></div>},
     content   => $self->content,
     params    => { tracks => $self->{'tracks'}, order => $self->{'track_order'} },
     panelType => $self->{'panel_type'}
