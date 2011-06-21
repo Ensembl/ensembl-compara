@@ -19,7 +19,7 @@ sub failed {
   
   if ($feature_slice) {
     for (0..$#descs) {
-      my $seq    = $feature_slice->seq;
+      my $seq    = $feature_slice->seq || '-';
          $seq    =~ s/.{60}/$&\n/g;
       $descs[$_] =~ s/reference allele/$& ($seq)/ if $descs[$_] =~ /match.+reference allele/ && $feature_slice;
     }

@@ -45,7 +45,7 @@ sub content {
     $html .= $self->_warning(
       'Warning',
       'Consequences for this variation have been calculated using the Ensembl reference allele'.
-      (defined $feature_slice ? " (".$feature_slice->seq.")" : ""),
+      (defined $feature_slice ? " (".($feature_slice->seq || '-').")" : ""),
       '50%'
     );
   }
