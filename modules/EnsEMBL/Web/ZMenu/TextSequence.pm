@@ -25,7 +25,7 @@ sub _content {
   my $adaptor = $hub->database('variation')->get_VariationAdaptor;
   my $lrg_slice;
   
-  if ($lrg) {
+  if ($lrg && $hub->referer->{'ENSEMBL_TYPE'} eq 'LRG') {
     eval { $lrg_slice = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('LRG', $lrg); };
   }
   
@@ -64,20 +64,20 @@ sub variation_content {
   }
   
   # Get a hash with HGVS names as URLs
-  my $hgvs_urls  = $object->get_hgvs_names_url($vf, $hub->referer->{'ENSEMBL_TYPE'});
-  my $hgvs_count = scalar keys %$hgvs_urls;
-  my @hgvs_html;
-  
-  # Loop over and format the URLs
-  foreach my $allele (keys %$hgvs_urls) {
-    if ($hgvs_count > 1) {
-      push @hgvs_html, '' if scalar @hgvs_html;
-      push @hgvs_html, "<b>Variant allele $allele</b>";
-    }
-    
-    push @hgvs_html, @{$hgvs_urls->{$allele}};
-    push @hgvs_html, '' if $hgvs_count > 1;
-  }
+  #my $hgvs_urls  = $object->get_hgvs_names_url($vf);
+  #my $hgvs_count = scalar keys %$hgvs_urls;
+  #my @hgvs_html;
+  #
+  ## Loop over and format the URLs
+  #foreach my $allele (keys %$hgvs_urls) {
+  #  if ($hgvs_count > 1) {
+  #    push @hgvs_html, '' if scalar @hgvs_html;
+  #    push @hgvs_html, "<b>Variant allele $allele</b>";
+  #  }
+  #  
+  #  push @hgvs_html, @{$hgvs_urls->{$allele}};
+  #  push @hgvs_html, '' if $hgvs_count > 1;
+  #}
   
   # If we have an LRG in the URL, get the LRG coordinates as well
   if ($lrg) {
@@ -102,14 +102,14 @@ sub variation_content {
   
   push @entries, { caption => 'LRG position',  entry => $lrg_position } if $lrg_position;
   
-  if (scalar @hgvs_html) {
-    if (scalar @hgvs_html > 1) {
-      push @entries, { cls     => 'hgvs', entry => 'HGVS notation' };
-      push @entries, { childOf => 'hgvs', entry => [ '', $_ ]} for @hgvs_html;
-    } else {
-      push @entries, { caption => 'HGVS notation', entry => $hgvs_html[0] };
-    }
-  }
+  #if (scalar @hgvs_html) {
+  #  if (scalar @hgvs_html > 1) {
+  #    push @entries, { cls     => 'hgvs', entry => 'HGVS notation' };
+  #    push @entries, { childOf => 'hgvs', entry => [ '', $_ ]} for @hgvs_html;
+  #  } else {
+  #    push @entries, { caption => 'HGVS notation', entry => $hgvs_html[0] };
+  #  }
+  #}
   
   push @entries, (
     { caption => 'Alleles', entry => $allele },
