@@ -24,8 +24,18 @@ sub content {
   my $study_url           = $object->study_url;
 	my $states              = $object->validation_status;
   $name = "$class ($name)";
-  my $source_link = $hub->get_ExtURL_link($source, 'DGVA', $source);
- 
+	
+  my $source_link = $source;
+	if ($source eq 'DGVa') {
+	 $source_link = $hub->get_ExtURL_link($source, 'DGVA', $source);
+ 	}
+	elsif ($source =~ /affy/i ) {
+		$source_link = $hub->get_ExtURL_link($source, 'AFFYMETRIX', $source);
+	}
+	elsif ($source =~ /illumina/i) {
+		$source_link = $hub->get_ExtURL_link($source, 'ILLUMINA', $source);
+	}
+	
   $source_description = add_pubmed_link($source_description, $hub);
   
 	$source = "$source_link - $source_description";
@@ -74,7 +84,6 @@ sub content {
 	if ($states) {
 		$vstates = qq{<dt>Validation status</dt><dd>$states</dd>};
 	}
-	
 	
   my $html = qq{
     <dl class="summary">
