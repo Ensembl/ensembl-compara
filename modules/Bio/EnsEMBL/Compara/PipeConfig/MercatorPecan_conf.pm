@@ -114,6 +114,7 @@ sub default_options {
             -user   => 'ensro',
             -pass   => '',
             -dbname => 'sf5_ensembl_compara_master',
+	    -driver => 'mysql',
         },
 
         'staging_loc1' => {                     # general location of half of the current release core databases
@@ -146,6 +147,7 @@ sub default_options {
            -user   => 'ensro',
            -pass   => '',
            -dbname => 'kb3_pecan_19way_62',
+	   -driver => 'mysql',
         },
 
 	#Testing mode
@@ -294,7 +296,7 @@ sub pipeline_analyses {
             },
             -flow_into => {
                 2 => [ 'load_genomedb' ],
-                1 => { 'create_species_tree' => undef,
+                1 => { 'make_species_tree' => undef,
                        'accumulate_reuse_ss' => undef,  # backbone
                 },
             },
@@ -313,34 +315,17 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[load species tree]-------------------------------------------------------------------
 
-	    {   -logic_name    => 'create_species_tree',
-		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-		-parameters    => {
-				   'db_url'   => $self->dbconn_2_url('pipeline_db'),
-				   'output_tree_file' => $self->o('work_dir').'/pruned_species_tree.nh',
-				   'cmd'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/prune_tree.pl --url #db_url# --tree_file '. $self->o('species_tree_file') . ' --njtree_output_filename #output_tree_file# 2>/dev/null',
-			      },
+	    {   -logic_name    => 'make_species_tree',
+		-module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
+		-parameters    => { },
+		-input_ids     => [
+				   {'blength_tree_file' => $self->o('species_tree_file'), 'newick_format' => 'simple' }, #species_tree
+				  ],
 		-hive_capacity => -1,   # to allow for parallelization
 		-flow_into => {
-			       1 => {
-				     'store_species_tree' => { 'species_tree_file' => '#output_tree_file#' },
-			      },
+			       4 => { 'mysql:////meta' => { 'meta_key' => 'tree_string', 'meta_value' => '#species_tree_string#' } },
 			      },
 	    },
-	    {   -logic_name    => 'store_species_tree',
-		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',     # a non-standard use of JobFactory for iterative insertion
-		-parameters => {
-				'inputfile'       => '#species_tree_file#',
-                'column_names'    => [ 'the_tree_itself' ],
-				'input_id'        => { 'meta_key' => 'tree_string', 'meta_value' => '#the_tree_itself#' },
-				'fan_branch_code' => 2,
-			       },
-		-hive_capacity => -1,   # to allow for parallelization
-		-flow_into => {
-			       2 => [ 'mysql:////meta' ],
-			      },
-	    },
-
 
 # ---------------------------------------------[filter genome_db entries into reusable and non-reusable ones]------------------------
 
