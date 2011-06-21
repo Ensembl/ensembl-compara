@@ -73,11 +73,11 @@ sub render {
   my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], {data_table => 1});
   $table->add_columns(
     { key => 'species', title => 'Species',             align => 'left',   width => '10%', sort => 'html' },
-    { key => 'dna',     title => 'FASTA (DNA)',         align => 'center', width => '10%', sort => 'none' },
-    { key => 'cdna',    title => 'FASTA (cDNA)',        align => 'center', width => '10%', sort => 'none' },
-    { key => 'ncrna',   title => 'FASTA (ncRNA)',       align => 'center', width => '10%', sort => 'none' },
-    { key => 'protseq', title => 'Protein sequence',    align => 'center', width => '10%', sort => 'none' },
-    { key => 'embl',    title => 'Annotated sequence (EMBL)',  align => 'center', width => '10%', sort => 'none' },
+    { key => 'dna',     title => 'DNA (FASTA)',         align => 'center', width => '10%', sort => 'none' },
+    { key => 'cdna',    title => 'cDNA (FASTA)',        align => 'center', width => '10%', sort => 'none' },
+    { key => 'ncrna',   title => 'ncRNA (FASTA)',       align => 'center', width => '10%', sort => 'none' },
+    { key => 'protseq', title => 'Protein sequence (FASTA)',  align => 'center', width => '10%', sort => 'none' },
+    { key => 'embl',    title => 'Annotated sequence (EMBL)', align => 'center', width => '10%', sort => 'none' },
     { key => 'genbank', title => 'Annotated sequence (GenBank)',  align => 'center', width => '10%', sort => 'none' },
     { key => 'genes',   title => 'Gene sets',           align => 'center', width => '10%', sort => 'none' },
     { key => 'mysql',   title => 'Whole databases',     align => 'center', width => '10%', sort => 'none' },
@@ -114,10 +114,10 @@ sub render {
 
     $table->add_row({
       'species'       => sprintf('<strong><i>%s</i></strong> (%s)', $sp_name, $common),
-      'dna'           => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a> (DNA)', $title{'dna'}, $rel, $sp_dir),
-      'cdna'          => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cdna/">FASTA</a> (DNA)', $title{'cdna'}, $rel, $sp_dir),
-      'ncrna'         => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/ncrna/">FASTA</a> (DNA)', $title{'rna'}, $rel, $sp_dir),
-      'protseq'       => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/pep/">FASTA</a> (protein)', $title{'prot'}, $rel, $sp_dir),
+      'dna'           => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a>', $title{'dna'}, $rel, $sp_dir),
+      'cdna'          => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cdna/">FASTA</a>', $title{'cdna'}, $rel, $sp_dir),
+      'ncrna'         => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/ncrna/">FASTA</a>', $title{'rna'}, $rel, $sp_dir),
+      'protseq'       => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/pep/">FASTA</a>', $title{'prot'}, $rel, $sp_dir),
       'embl'          => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/embl/%s/">EMBL</a>', $title{'embl'}, $rel, $sp_dir),
       'genbank'       => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/genbank/%s/">GenBank</a>', $title{'genbank'}, $rel, $sp_dir),
       'genes'         => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/gtf/">GTF</a>', $title{'gtf'}, $rel),
