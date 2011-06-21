@@ -1206,6 +1206,8 @@ sub pop_name_from_id {
 
   my $self = shift;
   my $pop_id = shift;
+  return $pop_id if $pop_id =~ /\D+/ && $pop_id !~ /^\d+$/;
+  
   my $variation_db = $self->database('variation')->get_db_adaptor('variation');
   my $pa  = $variation_db->get_PopulationAdaptor;
   my $pop = $pa->fetch_by_dbID($pop_id);
