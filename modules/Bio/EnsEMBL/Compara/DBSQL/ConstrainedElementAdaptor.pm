@@ -358,6 +358,7 @@ sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained eleme
        		ce.dnafrag_id,
        		ce.dnafrag_start,
        		ce.dnafrag_end,
+		ce.dnafrag_strand,
        		ce.method_link_species_set_id,
       		ce.score,
       		ce.p_value,
@@ -379,8 +380,8 @@ sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained eleme
 	foreach my $constrained_element_id (@{ $dbIDs }) {
 		my (%general_attributes, @alignment_segments);
 		$sth->execute( $constrained_element_id );
-		my ($dbID, $dnafrag_id, $ce_start, $ce_end, $mlssid, $score, $p_value, $tax_level, $species_name, $dnafrag_name);
-	 	$sth->bind_columns(\$dbID, \$dnafrag_id, \$ce_start, \$ce_end, \$mlssid, 
+		my ($dbID, $dnafrag_id, $ce_start, $ce_end, $ce_strand, $mlssid, $score, $p_value, $tax_level, $species_name, $dnafrag_name);
+	 	$sth->bind_columns(\$dbID, \$dnafrag_id, \$ce_start, \$ce_end, \$ce_strand, \$mlssid, 
 					\$score, \$p_value, \$tax_level, \$species_name, \$dnafrag_name);	
 		while ($sth->fetch()) {
 			$general_attributes{dbID} = $dbID;
@@ -388,7 +389,7 @@ sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained eleme
 			$general_attributes{score} = $score;
 			$general_attributes{p_value} = $p_value;
 			$general_attributes{taxonomic_level} = $tax_level;
-			push(@alignment_segments, [ $dnafrag_id, $ce_start, $ce_end, $species_name, $dnafrag_name ]);
+			push(@alignment_segments, [ $dnafrag_id, $ce_start, $ce_end, $ce_strand, $species_name, $dnafrag_name ]);
 		}
 		my $constrained_element = Bio::EnsEMBL::Compara::ConstrainedElement->new_fast (
 			{
@@ -401,7 +402,7 @@ sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained eleme
 				'taxonomic_level' => $general_attributes{taxonomic_level},
 			}
 		);
-		push(@$constrained_elements, $constrained_element);
+		push(@$constrained_elements, $constrained_element) if @alignment_segments;
 	}
 }
 
