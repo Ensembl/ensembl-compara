@@ -418,7 +418,7 @@ sub content {
   $html .= $self->co_located($feature_slice) if $feature_slice;
   $html .= $self->synonyms;
   $html .= $self->variation_sets;
-  $html .= $self->alleles;
+  $html .= $self->alleles($feature_slice);
   $html .= $self->location;
   $html .= $self->validation_status;
   $html .= $self->hgvs;
