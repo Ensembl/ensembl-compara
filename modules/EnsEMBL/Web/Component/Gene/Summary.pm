@@ -22,7 +22,7 @@ sub content {
   return sprintf '<p>%s</p>', 'This identifier is not in the current EnsEMBL database' if $object->Obj->isa('Bio::EnsEMBL::ArchiveStableId');
   
   my $html = $self->transcript_table;
-  my $extra = ($object->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? ' and manually curated alternative alleles' : ',paralogues, regulatory regions and splice variants';
+  my $extra = ($object->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? ' and manually curated alternative alleles' : ', paralogues, regulatory regions and splice variants';
 
   $html .= $self->_hint('gene', 'Transcript and Gene level displays', sprintf('
     <p>In %s we provide displays at two levels:</p>
