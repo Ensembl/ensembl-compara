@@ -34,12 +34,13 @@ sub new {
   my $id    = [split /::/, $class]->[-1];
   
   my $self = {
-    hub         => $hub,
-    builder     => shift,
-    renderer    => shift,
-    id          => $id,
-    view_config => $hub->get_viewconfig($id, $hub->type, 'cache')
+    hub      => $hub,
+    builder  => shift,
+    renderer => shift,
+    id       => $id
   };
+  
+  $self->{'view_config'} = $hub->get_viewconfig($id, $hub->type, 'cache') if $hub;
   
   bless $self, $class;
   
