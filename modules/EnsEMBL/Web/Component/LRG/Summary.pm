@@ -55,10 +55,6 @@ sub content {
     $description  =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
     $description  =~ s/\[\w+:([-\w\/\_]+)\;\w+:(\w+)\]//g;
     
-    my ($edb, $acc) = ($1, $2);
-    my $link        = $hub->get_ExtURL_link("Source: $edb $acc", $edb, $acc);
-    
-    $description .= qq{<span class="small">$link</span>} unless $acc eq 'content';
     $html        .= "<p>$description</p>";
     
     my $url = $hub->url({
