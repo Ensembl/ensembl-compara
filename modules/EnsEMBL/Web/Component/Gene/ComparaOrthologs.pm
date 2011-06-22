@@ -219,7 +219,7 @@ sub content {
         $column_name => $self->html_format ? qq{<span class="small">$target_links</span>} : $description,
         'Target %id' => $target,
         'Query %id'  => $query,
-        'options'    => { class => join(' ', 'all', @{$sets_by_species->{$species}}) }
+        'options'    => { class => join(' ', 'all', @{$sets_by_species->{$species} || []}) }
       };      
     }
   }
