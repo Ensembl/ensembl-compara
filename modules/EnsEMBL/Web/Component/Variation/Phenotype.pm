@@ -221,13 +221,21 @@ sub external_reference_link {
   elsif($study =~ /^MIM\:/) {
     my $link;
     
-    foreach my $mim(split /\,\s*/, $study) {
+    foreach my $mim (split /\,\s*/, $study) {
       my $id = (split /\:/, $mim)[-1];
-      my $sub_link = $self->hub->get_ExtURL_link($mim, 'OMIM', $id);
-      my @parts = split /\"/, $sub_link;
-      $parts[1] .= '#'.$id.'Variants'.$allele if defined($allele);
-      $parts[-1] =~ s/\>[^\<]+\</\>$allele\</ if (defined($allele));
-      $sub_link = join '"', @parts;
+			my $sub_link;
+			# Most associated allele
+			if (defined($allele)) {
+      	$sub_link = $self->hub->get_ExtURL_link($mim, 'OMIM', '');
+      	my @parts = split /\"/, $sub_link;
+      	$parts[1] .= 'entry/'.$id.'#'.$allele;
+      	$parts[-1] =~ s/\>[^\<]+\</\>$allele\</;
+				$sub_link = join('"', @parts);
+			}
+			# Study
+      else {
+				$sub_link = $self->hub->get_ExtURL_link($mim, 'OMIM', $id);
+			}
       $link .= ', '.$sub_link;
       $link =~ s/^\, //g;
     }
