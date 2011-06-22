@@ -656,14 +656,20 @@ sub create_pair_aligner_config_analysis {
 	my $pass = $speciesPtr->{pass};
 	if ($species eq $pair_aligner_conf->{ref_species}) {
 	    $ref_url = get_url($host, $port, $user, $dbname, $pass);
+	    if (!defined $ref_url && ! defined $pair_aligner_conf->{reg_conf}) {
+		die("You must define either a ref_url following the core database naming scheme or a reg_conf file (used for genebuilder databases)");
+	    }
 	} else {
 	    $non_ref_url = get_url($host, $port, $user, $dbname, $pass);
+	    if (!defined $non_ref_url && ! defined $pair_aligner_conf->{reg_conf}) {
+		die("You must define either a non_ref_url following the core database naming scheme or a reg_conf file (used for genebuilder databases)");
+	    }
 	}
     }
     my $params = "{";
     $params .= "'ref_species' => '" . $pair_aligner_conf->{ref_species} . "', ";
-    $params .= "'ref_url' =>'$ref_url', ";
-    $params .= "'non_ref_url' => '$non_ref_url', ";
+    $params .= "'ref_url' =>'$ref_url', " if (defined $ref_url);
+    $params .= "'non_ref_url' => '$non_ref_url', " if (defined $non_ref_url);
     $params .= "'method_link_type'=>\'$output_method_link_type\', ";
     $params .= "'genome_db_ids'=>'[";
     $params .= join ",", map $_->{'genome_db_id'}, values %{$self->{'dna_collection_conf_selected_hash'}};
@@ -672,6 +678,9 @@ sub create_pair_aligner_config_analysis {
     $params .= "'config_url' => '" . $pair_aligner_conf->{config_url} . "', ";
     $params .= "'config_file' => '" . $pair_aligner_conf->{config_file} . "',";
     $params .= "'perl_path' => '" . $pair_aligner_conf->{perl_path} . "',";
+    
+    $params .= "'ensembl_release' => '" . $pair_aligner_conf->{ensembl_release} . "'," if defined $pair_aligner_conf->{ensembl_release};
+    $params .= "'reg_conf' => '" . $pair_aligner_conf->{reg_conf} . "'," if defined $pair_aligner_conf->{reg_conf};
     $params .= "}";
 
     my $pair_aligner_config_analysis = Bio::EnsEMBL::Analysis->new(
@@ -712,6 +721,9 @@ sub get_url {
 
     #Get ensembl version from core database name
     my ($version) = $dbname =~ /core_(\d+)_.*/;
+
+    #If the version isn't found, it means we have a local genebuild database and must use reg_conf instead
+    return $url unless (defined $version);
 
     if (defined $pass) {
 	$url = "mysql://" . $user . ":" . $pass . "@" . $host . ":" . $port . "/" . $version;
