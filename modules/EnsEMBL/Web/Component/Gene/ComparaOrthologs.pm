@@ -95,7 +95,7 @@ sub content {
     { key => 'dN/dS',      align => 'left', width => '5%',  sort => 'numeric'                                             },
     { key => 'identifier', align => 'left', width => '15%', sort => 'html', title => $self->html_format ? 'Ensembl identifier &amp; gene name' : 'Ensembl identifier'},    
     { key => $column_name, align => 'left', width => '10%', sort => 'none'                                                },
-    { key => 'Location',   align => 'left', width => '20%', sort => 'html'                                                },
+    { key => 'Location',   align => 'left', width => '20%', sort => 'position_html'                                       },
     { key => 'Target %id', align => 'left', width => '5%',  sort => 'numeric'                                             },
     { key => 'Query %id',  align => 'left', width => '5%',  sort => 'numeric'                                             },
   ];
