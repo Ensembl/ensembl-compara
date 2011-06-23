@@ -192,7 +192,7 @@ sub populate_tree {
   ## FeatureView 
   $self->create_node('FeatureView', 'Features on Karyotype',
     [qw(featureview   EnsEMBL::Web::Component::UserData::FeatureView)],
-    {'availability' => @{$self->object->species_defs->ENSEMBL_CHROMOSOMES}},
+    {'availability' => @{$self->hub->species_defs->ENSEMBL_CHROMOSOMES}},
   );
   $self->create_node ('FviewRedirect', '',
     [], {'command' => 'EnsEMBL::Web::Command::UserData::FviewRedirect', 
@@ -202,7 +202,7 @@ sub populate_tree {
 
   ## Data conversion
   my $convert_menu = $self->create_submenu( 'Conversion', 'Data Converters' );
-  my $mappings = $self->object->species_defs->get_config($self->object->species, 'ASSEMBLY_MAPPINGS');
+  my $mappings = $self->hub->species_defs->get_config($self->hub->species, 'ASSEMBLY_MAPPINGS');
   my $available = ref($mappings) eq 'ARRAY' ? 1 : 0;
   $convert_menu->append(
     $self->create_node( 'SelectFeatures', 'Assembly Converter', 
