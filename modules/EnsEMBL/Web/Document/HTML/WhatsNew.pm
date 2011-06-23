@@ -94,7 +94,7 @@ sub render {
       $html .= "<p>No news is currently available for release $release_id.</p>\n";
     }
   }
-  $html .= qq(<p><a href="/info/website/news/">Full details of this release</a></p>);
+  $html .= qq(<p><a href="/info/website/news.html">Full details of this release</a></p>);
 
   if ($species_defs->ENSEMBL_BLOG_URL) {
     $html .= qq(<p><a href="http://www.ensembl.info/category/releases/">More release news on our blog &rarr;</a></p>);
