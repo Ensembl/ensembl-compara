@@ -1414,7 +1414,7 @@ sub hgvs_url {
     r      => undef,
   };
   
-  my $config_param = ($obj->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($obj->failed_description ? ',fail_all=normal' : '');
+  my $config_param = ($obj->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($obj->failed_description ? ',variation_set_fail_all=normal' : '');
   
   # Treat the URL differently depending on if it will take us to a regular page or a LRG page
   if ($refseq =~ /^LRG/) {
