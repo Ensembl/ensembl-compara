@@ -32,19 +32,14 @@ BEGIN{
   import Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(is_genomic %COORD_MAPPINGS %TYPE_MAPPINGS %AUTHORITY_MAPPINGS %NON_GENOMIC_COORDS);
 }
 
-my $permalink_base;
-if ($SiteDefs::ARCHIVE_VERSION) {
-  ($permalink_base = $SiteDefs::ENSEMBL_BASE_URL) =~ s/www/$SiteDefs::ARCHIVE_VERSION.'.archive'/;
-}
-else {
-  $permalink_base = $SiteDefs::ENSEMBL_BASE_URL;
-}
-
-my ($force_update,$check_registry) = (0,0);
+my ($force_update,$check_registry,$site) = (0,0,'');
 GetOptions(
-  "force", \$force_update,
-  "check", \$check_registry,
+  "force",  \$force_update,
+  "check",  \$check_registry,
+  "site=s", \$site,
 );
+
+my $permalink_base = $site || $SiteDefs::ENSEMBL_BASE_URL;
 
 my $source_types = {
   'karyotype' => {
@@ -589,7 +584,7 @@ sub publish_multi_species_sources {
 	$coords{$coord_type}{''} = $cs_xml;
 	my $dsn = sprintf("Multi.Ensembl-GeneID.%s", $feature);
 	$shash->{$dsn}->{coords} = \%coords;
-	$shash->{$dsn}->{mapmaster} = $species_defs->ENSEMBL_BASE_URL;
+	$shash->{$dsn}->{mapmaster} = $permalink_base;
 	$shash->{$dsn}->{description} = $sources_info->{$feature}->{description} || sprintf("%s Annotation source ", $sources_info->{$feature}->{name});
     }
 }
@@ -616,6 +611,7 @@ the 'check' option can be used to report new assemblies and then Jonathan Warren
 ./initialise_das.pl
 
 The (optional) --force forces processing of previously generated species
+The (optional) --site allows the specification of a different base url, e.g. --site=http://www.ensembl.org
 
 =head1 AUTHOR
 
