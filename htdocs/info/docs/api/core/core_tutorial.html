@@ -8,33 +8,33 @@
 <h1>Ensembl Core API Tutorial</h1>
 
 <ul>
-<li><a href="#introduction"><h3>Introduction</h3></a></li>
-<li><a href="#documentation"><h3>API Documentation</h3></a></li>
-<li><a href="#install"><h3>Obtaining and Installing the Code</h3></a></li>
-<li><a href="#conventions"><h3>Code Conventions</h3></a></li>
-<li><a href="#connecting"><h3>Connecting to the Database - The Registry</h3></a></li>
-<li><a href="#adaptors"><h3>Object Adaptors</h3></a></li>
-<li><a href="#slices"><h3>Slices</h3></a></li>
-<li><a href="#features"><h3>Features</h3></a></li>
-<li><a href="#genes"><h3>Genes, Transcripts and Exons</h3></a></li>
-<li><a href="#translations"><h3>Translations and Protein Features</h3></a></li>
-<li><a href="#prediction_transcripts"><h3>Prediction Transcripts</h3></a></li>
-<li><a href="#alignment_features"><h3>Alignment Features</h3></a></li>
-<li><a href="#repeats"><h3>Repeats</h3></a></li>
-<li><a href="#markers"><h3>Markers</h3></a></li>
-<li><a href="#miscfeatures"><h3>MiscFeatures</h3></a></li>
-<li><a href="#xrefs"><h3>External References</h3></a></li>
-<li><a href="#coordinates"><h3>Coordinates</h3></a></li>
-<li><a href="#coordinate_systems"><h3>Coordinate Systems</h3></a></li>
-<li><a href="#transform"><h3>Transform</h3></a></li>
-<li><a href="#transfer"><h3>Transfer</h3></a></li>
-<li><a href="#project"><h3>Project</h3></a></li>
-<li><a href="#feature_methods"><h3>Feature Convenience Methods</h3></a></li>
-<li><a href="#other_scripts"><h3>Other Scripts</h3></a></li>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#documentation">API Documentation</a></li>
+<li><a href="#install">Obtaining and Installing the Code</a></li>
+<li><a href="#conventions">Code Conventions</a></li>
+<li><a href="#connecting">Connecting to the Database - The Registry</a></li>
+<li><a href="#adaptors">Object Adaptors</a></li>
+<li><a href="#slices">Slices</a></li>
+<li><a href="#features">Features</a></li>
+<li><a href="#genes">Genes, Transcripts and Exons</a></li>
+<li><a href="#translations">Translations and Protein Features</a></li>
+<li><a href="#prediction_transcripts">Prediction Transcripts</a></li>
+<li><a href="#alignment_features">Alignment Features</a></li>
+<li><a href="#repeats">Repeats</a></li>
+<li><a href="#markers">Markers</a></li>
+<li><a href="#miscfeatures">MiscFeatures</a></li>
+<li><a href="#xrefs">External References</a></li>
+<li><a href="#coordinates">Coordinates</a></li>
+<li><a href="#coordinate_systems">Coordinate Systems</a></li>
+<li><a href="#transform">Transform</a></li>
+<li><a href="#transfer">Transfer</a></li>
+<li><a href="#project">Project</a></li>
+<li><a href="#feature_methods">Feature Convenience Methods</a></li>
+<li><a href="#other_scripts">Other Scripts</a></li>
 </ul>
 
 
-<span id="introduction"><h2>Introduction</h2></span>
+<h2 id="introduction">Introduction</h2>
 
 <p>
 This tutorial is intended to be an introduction and demonstration of
@@ -62,7 +62,7 @@ the BioMart system.
 appropriate  tool for certain types of data mining.
 </p>
 
-<span id="documentation"><h2>API Documentation</h2></span>
+<h2 id="documentation">API Documentation</h2>
 
 <p>
 The Ensembl Core API has a decent set of code documentation in the
@@ -90,7 +90,7 @@ contact <a href="/info/about/contact/mailing.html">ensembl-dev</a>,
 the Ensembl development mailing list.
 </p>
 
-<span id="install"><h2>Obtaining and Installing the Code</h2></span>
+<h2 id="install">Obtaining and Installing the Code</h2>
 
 <p>
 The Ensembl Perl API can be downloaded in gzipped TAR format from our <a
@@ -100,7 +100,7 @@ server. <a href="/info/docs/api/api_installation.html">Instructions
 for how to install the code</a>.
 </p>
 
-<span id="conventions"><h2>Code Conventions</h2></span>
+<h2 id="conventions">Code Conventions</h2>
 
 <p>
 Several naming conventions are used throughout the API. Learning
@@ -224,7 +224,7 @@ being iterated over is needed at some later point after the end of the
 loop.
 </p>
 
-<span id="connecting"><h2>Connecting to the Database &mdash; The Registry</h2></span>
+<h2 id="connecting">Connecting to the Database &mdash; The Registry</h2>
 
 <p>
 All data used and created by Ensembl is stored in MySQL relational
@@ -305,7 +305,7 @@ foreach my $db_adaptor (@db_adaptors) {
 }
 </pre>
 
-<span id="adaptors"><h2>Object Adaptors</h2></span>
+<h2 id="adaptors">Object Adaptors</h2>
 
 <p>
 Before we launch into the ways the API can be used to retrieve and
@@ -352,7 +352,7 @@ through the ways the Ensembl objects can be used to derive the
 information you want.
 </p>
 
-<span id="slices"><h2>Slices</h2></span>
+<h2 id="slices">Slices</h2>
 
 <p>
 A Slice object represents a single continuous region of a genome.
@@ -491,7 +491,7 @@ of genes which overlap a slice:
 @genes = @{ $slice-&gt;get_all_Genes() };
 </pre>
 
-<span id="features"><h2>Features</h2></span>
+<h2 id="features">Features</h2>
 
 <p>
 Features are objects in the database which have a defined location on
@@ -559,7 +559,7 @@ in detail in the Transform, Transfer and Project sections of this
 tutorial.
 </p>
 
-<span id="genes"><h2>Genes, Transcripts, and Exons</h2></span>
+<h2 id="genes">Genes, Transcripts, and Exons</h2>
 
 <p>
 Genes, exons and transcripts are also features and can be treated in the
@@ -666,7 +666,7 @@ print "Translation: ", ( defined $protein ? $protein-&gt;seq() : "None" ), "\n";
 </pre>
 
 
-<span id="translations"><h2>Translations and ProteinFeatures</h2></span>
+<h2 id="translations">Translations and ProteinFeatures</h2>
 
 <p>
 Translation objects and protein sequence can be extracted from a
@@ -728,7 +728,7 @@ my $seg_features    = $translation-&gt;get_all_ProteinFeatures('Seg');
 my $domain_features = $translation-&gt;get_all_DomainFeatures();
 </pre>
 
-<span id="prediction_transcripts"><h2>PredictionTranscripts</h2></span>
+<h2 id="prediction_transcripts">PredictionTranscripts</h2>
 
 <p>
 PredictionTranscripts are the results of ab initio gene finding programs
@@ -754,7 +754,7 @@ while ( my $ptranscript = shift @{$ptranscripts} ) {
 }
 </pre>
 
-<span id="alignment_features"><h2>Alignment Features</h2></span>
+<h2 id="alignment_features">Alignment Features</h2>
 
 <p>
 Two types of alignments are stored in the core Ensembl database:
@@ -817,7 +817,7 @@ sub print_feature_pairs
 }
 </pre>
 
-<span id="repeats"><h2>Repeats</h2></span>
+<h2 id="repeats">Repeats</h2>
 
 <p>
 Repetitive regions found by RepeatMasker and TRF (Tandem Repeat Finder)
@@ -855,7 +855,7 @@ my $softmasked_seq = $slice-&gt;get_repeatmasked_seq( undef, 1 );
 my $tandem_masked_seq = $slice-&gt;get_repeatmasked_seq( ['TRF'], 1 );
 </pre>
 
-<span id="markers"><h2>Markers</h2></span>
+<h2 id="markers">Markers</h2>
 
 <p>
 Markers are imported into the Ensembl database from UniSTS and several
@@ -930,7 +930,7 @@ while ( my $marker_feature = shift @{$marker_features} ) {
 </pre>
 
 
-<span id="miscfeatures"><h2>MiscFeatures</h2></span>
+<h2 id="miscfeatures">MiscFeatures</h2>
 
 <p>
 MiscFeatures are features with arbitrary attributes which are placed
@@ -988,7 +988,7 @@ while ( my $clone = shift @{$clones} ) {
 }
 </pre>
 
-<span id="xrefs"><h2>External References</h2></span>
+<h2 id="xrefs">External References</h2>
 
 <p>
 Ensembl cross references its genes, transcripts and translations with
@@ -1044,7 +1044,7 @@ The above example could be shortened by using the following:
 print_DBEntries( $gene-&gt;get_all_DBLinks() );
 </pre>
 
-<span id="coordinates"><h2>Coordinates</h2></span>
+<h2 id="coordinates">Coordinates</h2>
 
 <p>
 We have already discussed the fact that slices and features have
@@ -1120,7 +1120,7 @@ Feature A has a start of 0, an end of 2, and a strand of 1.
 Feature B has a start of 3, an end of 6, and a strand of -1.
 </p>
 
-<span id="coordinate_systems"><h2>Coordinate Systems</h2></span>
+<h2 id="coordinate_systems">Coordinate Systems</h2>
 
 <p>
 Sequences stored in Ensembl are associated with coordinate systems.
@@ -1213,7 +1213,7 @@ foreach $cs (@coord_systems) {
 my @slices = @{ $slice_adaptor-&gt;fetch_all('toplevel') };
 </pre>
 
-<span id="transform"><h2>Transform</h2></span>
+<h2 id="transform">Transform</h2>
 
 <p>
 Features on a slice in a given coordinate system may be moved to
@@ -1288,7 +1288,7 @@ printf(
 </pre>
 
 
-<span id="transfer"><h2>Transfer</h2></span>
+<h2 id="transfer">Transfer</h2>
 
 <p>
 Another method that is available on all Ensembl features is the
@@ -1334,7 +1334,7 @@ have been used, provided you had an idea about what sequence region
 the features would be mapped to.
 </p>
 
-<span id="project"><h2>Project</h2></span>
+<h2 id="project">Project</h2>
 
 <p>
 When moving features between coordinate systems it is usually
@@ -1391,7 +1391,7 @@ target="external">Assembly_mapper_1.0 directory</a> on
 the <a href="/info/data/ftp/index.html">Ensembl FTP</a> site.</p>
 
 
-<span id="feature_methods"><h2>Feature Convenience Methods</h2></span>
+<h2 id="feature_methods">Feature Convenience Methods</h2>
 
 <p>
 We have described how a feature's position on the genome is defined by
@@ -1449,20 +1449,15 @@ $genes = $feature_slice-&gt;get_all_Genes();
 </pre>
 
 
-<span id="other_scripts"><h2>Other Scripts</h2></span>
+<h2 id="other_scripts">Other Scripts</h2>
 
 <p>
-Other useful scripts can be found in the <a href="ftp://ftp.ensembl.org/pub/misc-scripts/" target="external">misc-scripts directory</a> on the <a href="/info/data/ftp/index.html">Ensembl FTP</a> site:
+Other useful scripts can be found in the <a href="ftp://ftp.ensembl.org/pub/misc-scripts/" target="external">misc-scripts directory</a> on the <a href="/info/data/ftp/index.html">Ensembl FTP</a> site:</p>
 
 <ul>
   <li>print_alternate_loci.pl - prints alternate loci for a given species and reference chromosome</li>
   <li>print_refseq_transcripts.pl - prints refseq transcripts for a given species and logic name</li>
-<ul>
-</p>
-
-<p>
-    
-</p>
+</ul>
 
 </body>
 </html>
