@@ -565,8 +565,8 @@ foreach my $va (@{$va_adaptor->fetch_all_by_phenotype_description_source_name($p
 	'1000 genomes - Low coverage' and has three subsets: '1000 genomes - Low coverage - CEU', '1000 genomes - Low coverage - CHB+JPT' and '1000 genomes - Low coverage - YRI'. 
 </p>
 <p>
-	In the Ensembl Variation API, variation sets are handled by the module <a href="/info/docs/Pdoc/ensembl-variation/modules/Bio/EnsEMBL/Variation/VariationSet.html">VariationSet</a>, and the accompanying 
-	adaptor module, <a href="/info/docs/Pdoc/ensembl-variation/modules/Bio/EnsEMBL/Variation/VariationSetAdaptor.html">VariationSetAdaptor</a>, that interfaces with the underlying database. A VariationSet has
+	In the Ensembl Variation API, variation sets are handled by the module <a href="/info/docs/Doxygen/variation-api/classBio_1_1EnsEMBL_1_1Variation_1_1VariationSet.html">VariationSet</a>, and the accompanying 
+	adaptor module, <a href="/info/docs/Doxygen/variation-api/classBio_1_1EnsEMBL_1_1Variation_1_1DBSQL_1_1VariationSetAdaptor.html">VariationSetAdaptor</a>, that interfaces with the underlying database. A VariationSet has
 	a name attribute, a brief description and also a short name attribute. In the example below, we will connect to a human variation database, get a VariationSetAdaptor, fetch all available variation sets and 
 	print out their names and hierarchical relationships. 
 </p>
@@ -626,7 +626,7 @@ sub print_set {
 </p>
 <p>
 	In order to get objects for the variations assigned to a variation set, we use the get_Variation_Iterator method. Note that rather than returning a reference to a list of all variation objects, this 
-	returns an <a href="/info/docs/Pdoc/ensembl/modules/Bio/EnsEMBL/Utils/Iterator.html">Iterator</a> object. The Iterator allows you to iterate over large numbers of objects without trying to fit them all into
+	returns an <a href="/info/docs/Doxygen/core-api/classBio_1_1EnsEMBL_1_1Utils_1_1Iterator.html">Iterator</a> object. The Iterator allows you to iterate over large numbers of objects without trying to fit them all into
 	memory at once which could otherwise easily cause your script to crash. The main methods we will use on the iterator are the has_next() and next() methods. In the example below, we fetch a variation set that contains  
 	variations that have been linked to phenotypes and print the first 10 examples. Note that getting variations from a variation set that has subsets below it automatically returns the variations from the subsets.  
 </p>
