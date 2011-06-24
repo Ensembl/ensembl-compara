@@ -106,7 +106,7 @@ sub render {
     my $funcgen = '-';
     my $extra = '-';
     if ($sp_dir =~ /homo_sapiens/ || $sp_dir =~/mus_musculus/) {
-      $funcgen = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/functional_genomics/%s/">Regulation</a> (GFF)', $title{'funcgen'}, $rel, $sp_dir;
+      $funcgen = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/regulation/%s/">Regulation</a> (GFF)', $title{'funcgen'}, $rel, $sp_dir;
       my $dbs = $species_defs->get_config(ucfirst($sp_dir), 'databases');
       my $coll_dir = $dbs->{'DATABASE_FUNCGEN'}{'NAME'};
       $extra = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/data_files/%s/">Regulation data files</a>', $title{'extra'}, $rel, $coll_dir;
