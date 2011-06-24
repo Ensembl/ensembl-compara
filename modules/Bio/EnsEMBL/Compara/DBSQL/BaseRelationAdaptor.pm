@@ -433,22 +433,5 @@ sub _final_clause {
   return '';
 }
 
-# DEPRECATED METHODS
-####################
-
-sub _known_sources {
-  my ($self) = @_;
-  deprecate("_know_sources method is deprecated.\n");
-}
-
-sub get_source_id_by_source_name {
-  my ($self, $source_name) = @_;
-  throw("get_source_id_by_source_name method is deprecated\n");
-}
-
-sub get_source_name_by_source_id {
-  my ($self, $source_id) = @_;
-  throw("get_source_name_by_source_id method is deprecated\n");
-}
 
 1;

@@ -606,30 +606,5 @@ sub Member_count_by_source_GenomeDB {
 	return scalar @{$self->get_Member_Attribute_by_source_GenomeDB($source_name, $genome_db)};
 }
 
-#
-# DEPRECATED METHODS
-####################
-
-sub source_id {
-  my $self = shift;
-  deprecate("source method is deprecated. Calling $self->method_link_id instead\n");
-
-  $self->{'_method_link_id'} = shift if (@_);
-  return $self->method_link_id;
-}
-
-sub source_name {
-  my $self = shift;
-  deprecate("source_name method is now deprecated. Calling method_link_type instead.\n");
-
-  $self->{'_method_link_type'} = shift if (@_);
-  return $self->method_link_type;
-}
-
-sub known_sources {
-  my ($self) = @_;
-  deprecate();
-  throw("Get this data from the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object\n");
-}
 
 1;
