@@ -22,41 +22,6 @@ sub new {
 }
 
 
-
-=head2 list_internal_ids
-
-  Arg        : None
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
-
-=cut
-
-sub list_internal_ids {
-  my $self = shift;
-  
-  my ($name, $syn) = @{$self->tables->[0]};
-  my $sql = "SELECT ${syn}.${name}_id from ${name} ${syn}";
-  
-  my $sth = $self->prepare($sql);
-  $sth->execute;  
-  
-  my $internal_id;
-  $sth->bind_columns(\$internal_id);
-
-  my @internal_ids;
-  while ($sth->fetch()) {
-    push @internal_ids, $internal_id;
-  }
-
-  $sth->finish;
-
-  return \@internal_ids;
-}
-
-
 sub member_cache {  
   my ($self,$id,$val) = @_; 
 

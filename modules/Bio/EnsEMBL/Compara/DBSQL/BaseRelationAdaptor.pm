@@ -451,11 +451,4 @@ sub get_source_name_by_source_id {
   throw("get_source_name_by_source_id method is deprecated\n");
 }
 
-sub list_internal_ids {
-  my $self = shift;
-
-  deprecate("list_internal_ids is deprecated. Calling list_dbIDs instead.\n");
-  return $self->list_dbIDs;
-}
-
 1;
