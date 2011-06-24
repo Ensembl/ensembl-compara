@@ -186,16 +186,18 @@ list of the consequence types predicted by Ensembl, <a
 href="../../variation/index.html">click here</a>.
 </p>
 
-<p>Consequences are represented by a heirarchy of objects as shown below:</p>
+<p>Consequences are represented by a hierarchy of objects as shown below:</p>
 
 <ul>
-	<li><strong>TranscriptVariation</strong> - represents the overlap of a variation feature and a transcript</li>
+	<li><strong>TranscriptVariation</strong> - represents the overlap of a variation feature and a transcript
 	<ul>
-		<li><strong>TranscriptVariationAllele</strong> - the component represented by a particular allele of a variation</li>
+		<li><strong>TranscriptVariationAllele</strong> - the component represented by a particular allele of a variation
 		<ul>
 			<li><strong>OverlapConsequence</strong> - represents the consequence itself</li>
 		</ul>
+		</li>
 	</ul>
+	</li>
 </ul>
 
 <p>
@@ -640,7 +642,7 @@ sub print_set {
   my $it = $vs->get_Variation_Iterator();
   
   # Get the first 10 examples and print some data from them
-  while ($fetched < $limit && $it->has_next()) {
+  while ($fetched &lt; $limit &amp;&amp; $it->has_next()) {
   	
   	# Print the name of the variation
   	my $var = $it->next();
@@ -767,7 +769,7 @@ Please note the following warning <code> MSG: variation features have no pairwis
 <li>the estimated r<sup>2</sup> value is lower than the cut-off threshold in the calculation software (the threshold is 0.05)</li>
 </ul>
 <p> Looking at other associated data will help to narrow down the reason. If there are variants in the region spanned by the LDFeatureContainer 
-with genotypes with a minor allele frequency greater than zero, then assume the r<sup>2</sup> is < 0.05, which essentially means no correlation. </p>
+with genotypes with a minor allele frequency greater than zero, then assume the r<sup>2</sup> is &lt; 0.05, which essentially means no correlation. </p>
 
 <h2 id="strains">Specific strain information</h2>
 
