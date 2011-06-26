@@ -755,7 +755,7 @@ sub build_GeneTreeSystem
       -db_version      => '1',
       -logic_name      => 'CreateHDupsQCJobs',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSfactory',
-      -parameters      => "{ 'input_id' => { 'type' => '#short_type#', 'mlss_id' => '#_range_start#' }, 'fan_branch_code' => 2 }",
+      -parameters      => "{ 'input_id' => { 'is_ortho' => '#is_ortho#', 'mlss_id' => '#mlss_id#' }, 'fan_branch_code' => 2 }",
   );
   $analysisDBA->store($create_Hdups_qc_jobs_analysis);
 
@@ -954,7 +954,7 @@ sub build_GeneTreeSystem
     );
 
     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-        -input_id       => "{ 'inputlist' => '#species_set#', 'input_id' => { 'gdb_id' => '#_range_start#' }, 'fan_branch_code' => 2 }",
+        -input_id       => "{ 'inputlist' => '#species_set#', 'column_names' => [ 'gdb_id' ], 'fan_branch_code' => 2 }",
         -analysis       => $create_hcluster_prepare_jobs_analysis,
     );
 
@@ -978,12 +978,12 @@ sub build_GeneTreeSystem
     );
 
     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-        -input_id       => "{ 'method_link_type' => 'ENSEMBL_ORTHOLOGUES', 'short_type' => 'orthologues' }",
+        -input_id       => "{ 'method_link_type' => 'ENSEMBL_ORTHOLOGUES', 'is_ortho' => 1 }",
         -analysis       => $create_Hdups_qc_jobs_analysis,
     );
 
     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-        -input_id       => "{ 'method_link_type' => 'ENSEMBL_PARALOGUES', 'short_type' => 'paralogues' }",
+        -input_id       => "{ 'method_link_type' => 'ENSEMBL_PARALOGUES', 'is_ortho' => 0 }",
         -analysis       => $create_Hdups_qc_jobs_analysis,
     );
 
