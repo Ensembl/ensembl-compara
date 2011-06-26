@@ -33,6 +33,7 @@ sub fetch_input {
     my $mlsss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type( $method_link_type );
 
     $self->param('inputlist', [ map { $_->dbID() } @$mlsss ] );
+    $self->param('column_names', [ 'mlss_id' ] );
 }
 
 1;

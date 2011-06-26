@@ -34,6 +34,7 @@ sub fetch_input {
     my $subset    = $self->compara_dba->get_SubsetAdaptor()->fetch_by_description_pattern($description_pattern) or die "cannot fetch Subset with pattern '$description_pattern'";
 
     $self->param('inputlist', $subset->member_id_list() );
+    $self->param('column_names', [ 'member_id' ] );
 }
 
 1;

@@ -492,7 +492,6 @@ sub pipeline_analyses {
         {   -logic_name => 'blast_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::SubsetMemberFactory',
             -parameters => {
-                'input_id' => { 'member_id' => '#_range_start#' },
                 'fan_branch_code' => 2,
             },
             -hive_capacity => 10,
@@ -817,13 +816,13 @@ sub pipeline_analyses {
         {   -logic_name => 'homology_duplications_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSfactory',
             -parameters => {
-                'input_id' => { 'type' => '#short_type#', 'mlss_id' => '#_range_start#' },
+                'input_id' => { 'is_ortho' => '#is_ortho#', 'mlss_id' => '#mlss_id#' },
                 'fan_branch_code' => 2,
             },
             -wait_for => [ 'threshold_on_dS' ],
             -input_ids => [
-                { 'method_link_type' => 'ENSEMBL_ORTHOLOGUES', 'short_type' => 'orthologues' },
-                { 'method_link_type' => 'ENSEMBL_PARALOGUES',  'short_type' => 'paralogues'  },
+                { 'method_link_type' => 'ENSEMBL_ORTHOLOGUES', 'is_ortho' => 1 },
+                { 'method_link_type' => 'ENSEMBL_PARALOGUES',  'is_ortho' => 0 },
             ],
             -hive_capacity => -1,
             -flow_into => {

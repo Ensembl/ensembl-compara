@@ -91,31 +91,19 @@ sub fetch_input {
 =cut
 
 sub run {
-  my $self = shift;
+    my $self = shift;
 
-  my $sql = "select h.tree_node_id, h.homology_id, hm1.member_id,hm2.member_id,h.method_link_species_set_id from homology_member hm1, homology_member hm2, homology h where h.homology_id=hm1.homology_id and hm1.homology_id=hm2.homology_id and h.method_link_species_set_id=?";
-  $self->run_dupsqc($sql);
+    my $sql = "select h.tree_node_id, h.homology_id, hm1.member_id,hm2.member_id,h.method_link_species_set_id from homology_member hm1, homology_member hm2, homology h where h.homology_id=hm1.homology_id and hm1.homology_id=hm2.homology_id and h.method_link_species_set_id=?";
 
-  my $sql = "select h.tree_node_id, h.method_link_species_set_id,hm.member_id from homology h, homology_member hm where h.method_link_species_set_id=? and h.homology_id=hm.homology_id group by hm.member_id having count(*)>1 and group_concat(h.description) ='ortholog_one2one'";
-  $self->run_dupsorthologyqc($sql) if ($self->param('type') =~ /ortho/);
+    $self->run_dupsqc($sql);
+
+    my $sql = "select h.tree_node_id, h.method_link_species_set_id,hm.member_id from homology h, homology_member hm where h.method_link_species_set_id=? and h.homology_id=hm.homology_id group by hm.member_id having count(*)>1 and group_concat(h.description) ='ortholog_one2one'";
+
+    if($self->param('is_ortho')) {
+        $self->run_dupsorthologyqc($sql);
+    }
 }
 
-
-=head2 write_output
-
-    Title   :   write_output
-    Usage   :   $self->write_output
-    Function:   stores something
-    Returns :   none
-    Args    :   none
-
-=cut
-
-
-sub write_output {
-  my $self = shift;
-
-}
 
 
 ##########################################
