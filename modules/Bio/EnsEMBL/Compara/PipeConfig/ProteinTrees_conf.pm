@@ -200,7 +200,7 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
         
         'mkdir -p '.$self->o('fasta_dir'),
-        'lfs setstripe '.$self->o('fasta_dir').' -c -1',    # stripe
+        'which lfs && lfs setstripe '.$self->o('fasta_dir').' -c -1',    # perform "lfs setstripe" only if lfs utility exists on the system
         'mkdir -p '.$self->o('cluster_dir'),
     ];
 }
