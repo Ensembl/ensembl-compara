@@ -24,6 +24,13 @@ use strict;
     # Note: the order is important, this is a true example of Multiple Inheritance:
 use base ('Bio::EnsEMBL::Hive::RunnableDB::JobFactory', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    return {
+        'column_names' => [ 'mlss_id' ],
+    };
+}
+
+
 
 sub fetch_input {
     my $self = shift @_;
@@ -33,7 +40,6 @@ sub fetch_input {
     my $mlsss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type( $method_link_type );
 
     $self->param('inputlist', [ map { $_->dbID() } @$mlsss ] );
-    $self->param('column_names', [ 'mlss_id' ] );
 }
 
 1;

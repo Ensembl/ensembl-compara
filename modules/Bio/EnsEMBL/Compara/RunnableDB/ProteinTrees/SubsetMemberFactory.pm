@@ -24,6 +24,13 @@ use strict;
 use base ('Bio::EnsEMBL::Hive::RunnableDB::JobFactory', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+sub param_defaults {
+    return {
+        'column_names' => [ 'member_id' ],
+    };
+}
+
+
 sub fetch_input {
     my $self = shift @_;
 
@@ -34,7 +41,6 @@ sub fetch_input {
     my $subset    = $self->compara_dba->get_SubsetAdaptor()->fetch_by_description_pattern($description_pattern) or die "cannot fetch Subset with pattern '$description_pattern'";
 
     $self->param('inputlist', $subset->member_id_list() );
-    $self->param('column_names', [ 'member_id' ] );
 }
 
 1;
