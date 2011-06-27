@@ -220,10 +220,11 @@ sub get_configurable_components {
   my ($self, $node, $action, $function) = @_;
   my $hub       = $self->hub;
   my $component = $hub->script eq 'Config' ? $hub->action : undef;
+  my $type      = [ split '::', ref $self ]->[-1];
   my @components;
   
   if ($component && !$action) {
-    my $module_name = $self->get_module_names('ViewConfig', $hub->type, $component);
+    my $module_name = $self->get_module_names('ViewConfig', $type, $component);
     @components = ($component) if $module_name;
   } else {
     $node ||= $self->get_node($self->get_valid_action($action || $hub->action, $function || $hub->function));
@@ -231,7 +232,7 @@ sub get_configurable_components {
     if ($node) {
       foreach (reverse grep /::Component::/, @{$node->data->{'components'}}) {
         my ($component) = split '/', [split '::']->[-1];
-        my $module_name = $self->get_module_names('ViewConfig', $hub->type, $component);
+        my $module_name = $self->get_module_names('ViewConfig', $type, $component);
         push @components, $component if $module_name;
       }
     }
