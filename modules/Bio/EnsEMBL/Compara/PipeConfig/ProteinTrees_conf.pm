@@ -308,16 +308,23 @@ sub pipeline_analyses {
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
 
         {   -logic_name => 'load_genomedb_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadGenomedbFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
-                'compara_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
-                'mlss_id'       => $self->o('mlss_id'),
+                'compara_db'            => $self->o('master_db'),   # that's where genome_db_ids come from
+                'mlss_id'               => $self->o('mlss_id'),
+
+                'adaptor_name'          => 'MethodLinkSpeciesSetAdaptor',
+                'adaptor_method'        => 'fetch_by_dbID',
+                'method_param_list'     => [ '#mlss_id#' ],
+                'object_method'         => 'species_set',
+
+                'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild' },
+
+                'fan_branch_code'       => 2,
             },
             -flow_into => {
                 2 => [ 'load_genomedb' ],
-                1 => { 'make_species_tree' => undef,
-                       'accumulate_reuse_ss' => undef,  # backbone
-                },
+                1 => [ 'make_species_tree', 'accumulate_reuse_ss' ],  # backbone
             },
         },
 
@@ -493,9 +500,14 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'blast_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::SubsetMemberFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
-                'fan_branch_code' => 2,
+                'adaptor_name'          => 'SubsetAdaptor',
+                'adaptor_method'        => 'fetch_by_description_pattern',
+                'method_param_list'     => [ 'gdb:#genome_db_id# % translations' ],
+                'object_method'         => 'member_id_list',
+                'column_names'          => [ 'member_id' ],
+                'fan_branch_code'       => 2,
             },
             -hive_capacity => 10,
             -flow_into => {
@@ -817,15 +829,20 @@ sub pipeline_analyses {
 # ---------------------------------------------[homology duplications QC step]-------------------------------------------------------
 
         {   -logic_name => 'homology_duplications_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSfactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
-                'input_id' => { 'is_ortho' => '#is_ortho#', 'mlss_id' => '#mlss_id#' },
-                'fan_branch_code' => 2,
+                'adaptor_name'          => 'MethodLinkSpeciesSetAdaptor',
+                'adaptor_method'        => 'fetch_all_by_method_link_type',
+
+                'column_names2getters'  => { 'mlss_id' => 'dbID' },
+                'input_id'              => { 'mlss_id' => '#mlss_id#', 'is_ortho' => '#is_ortho#' },
+
+                'fan_branch_code'       => 2,
             },
             -wait_for => [ 'threshold_on_dS' ],
             -input_ids => [
-                { 'method_link_type' => 'ENSEMBL_ORTHOLOGUES', 'is_ortho' => 1 },
-                { 'method_link_type' => 'ENSEMBL_PARALOGUES',  'is_ortho' => 0 },
+                { 'method_param_list' => [ 'ENSEMBL_ORTHOLOGUES' ], 'is_ortho' => 1 },
+                { 'method_param_list' => [ 'ENSEMBL_PARALOGUES'  ], 'is_ortho' => 0 },
             ],
             -hive_capacity => -1,
             -flow_into => {
