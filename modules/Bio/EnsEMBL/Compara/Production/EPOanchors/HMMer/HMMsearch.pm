@@ -46,7 +46,7 @@ sub run {
 	print $hmm_build_command, " **\n";
 	system($hmm_build_command);
 	return unless(-e $hmm_file); # The sequences in the alignment are probably too short
-	my $nhmmer_command = $self->param('nhmmer') . " --noali" ." $hmm_file " . $self->param('target_genome')->{"genome_seq"};
+	my $nhmmer_command = $self->param('nhmmer') . " --cpu 1 --noali" ." $hmm_file " . $self->param('target_genome')->{"genome_seq"};
 	print $nhmmer_command, " **\n";
 	my $nhmm_fh;
 	open( $nhmm_fh, "$nhmmer_command |" ) or throw("Error opening nhmmer command: $? $!"); 
