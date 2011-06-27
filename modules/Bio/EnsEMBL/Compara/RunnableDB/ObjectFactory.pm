@@ -35,9 +35,9 @@ sub fetch_input {
 
     my $method_param_list       = $self->param_substitute( $self->param('method_param_list') || [] );
 
-    my $getters2column_names    = $self->param_substitute( $self->param('getters2column_names') || die "'getters2column_names' mapping is an obligatory parameter" );
-    my @getters                 = keys %$getters2column_names;
-    my @column_names            = values %$getters2column_names;
+    my $column_names2getters    = $self->param_substitute( $self->param('column_names2getters') || die "'column_names2getters' mapping is an obligatory parameter" );
+    my @column_names            = keys %$column_names2getters;
+    my @getters                 = values %$column_names2getters;
 
     my $get_adaptor             = 'get_'.$adaptor_name;
     my $adaptor                 = $self->compara_dba->$get_adaptor or die "Could not create a '$adaptor_name' on the database";
@@ -48,8 +48,8 @@ sub fetch_input {
     foreach my $object (@$object_list) {
         push @inputlist, [ map { $object->$_ } @getters ];
     }
-    $self->param('inputlist',    \@inputlist);
     $self->param('column_names', \@column_names);
+    $self->param('inputlist',    \@inputlist);
 }
 
 1;
