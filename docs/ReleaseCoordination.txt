@@ -727,7 +727,9 @@ mysql --defaults-group-suffix=_compara1 -N -e "SELECT * FROM method_link order b
 # CVS commit these files.
 
 
-19. Update files in public-plugins/ensembl/htdocs/info/docs/compara
+19. Update .inc files:
+
+cd $ENSEMBL_CVS_ROOT_DIR/public-plugins/ensembl/htdocs/info/docs/compara
 
 You might need to update the create_mlss_table.conf file with new species added.
 Or you can use the order of species given in the species tree:
