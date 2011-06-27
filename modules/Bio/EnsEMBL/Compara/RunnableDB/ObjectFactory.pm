@@ -22,6 +22,7 @@ It also serves as a good simple example of a Compara job factory:
 package Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory;
 
 use strict;
+use Bio::EnsEMBL::Hive::Utils 'stringify';
 
     # Note: the order is important, this is a true example of Multiple Inheritance:
 use base ('Bio::EnsEMBL::Hive::RunnableDB::JobFactory', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -35,21 +36,35 @@ sub fetch_input {
 
     my $method_param_list       = $self->param_substitute( $self->param('method_param_list') || [] );
 
-    my $column_names2getters    = $self->param_substitute( $self->param('column_names2getters') || die "'column_names2getters' mapping is an obligatory parameter" );
-    my @column_names            = keys %$column_names2getters;
-    my @getters                 = values %$column_names2getters;
-
     my $get_adaptor             = 'get_'.$adaptor_name;
     my $adaptor                 = $self->compara_dba->$get_adaptor or die "Could not create a '$adaptor_name' on the database";
+    my $adaptor_method_result   = $adaptor->$adaptor_method( @$method_param_list ) or die "Could not call '$adaptor_method'(".stringify(@$method_param_list).") on '$adaptor_name'";
 
-    my $object_list             = $adaptor->$adaptor_method( @$method_param_list ) or die "Could not call '$adaptor_method'(".stringify(@$method_param_list).") on '$adaptor_name'";
+    my $object_method           = $self->param('object_method');
 
-    my @inputlist = ();
-    foreach my $object (@$object_list) {
-        push @inputlist, [ map { $object->$_ } @getters ];
+    my $object_method_result    = $object_method
+                                    ? $adaptor_method_result->$object_method()
+                                    : $adaptor_method_result;
+
+    if(my $column_names2getters = $self->param_substitute( $self->param('column_names2getters') ) ) {
+
+        my @getters             = values %$column_names2getters;
+        my @inputlist           = ();
+
+        foreach my $object (@$object_method_result) {
+            push @inputlist, [ map { $object->$_ } @getters ];
+        }
+        $self->param('column_names', [ keys %$column_names2getters ] );
+        $self->param('inputlist',    \@inputlist);
+
+    } elsif( ref($object_method_result) eq 'ARRAY') {   # caller should set 'column_names' for better results
+
+        $self->param('inputlist', $object_method_result);
+
+    } else {
+
+        die "Expected an arrayref instead of ".stringify($object_method_result);
     }
-    $self->param('column_names', \@column_names);
-    $self->param('inputlist',    \@inputlist);
 }
 
 1;
