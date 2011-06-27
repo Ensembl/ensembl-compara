@@ -202,7 +202,7 @@ sub content {
       my ($region, $coords, $strand) = split /:/, $orthologue->{'location'};
       my ($start, $end)              = split /-/, $coords;
       
-      my $region_string  = grep($region, @{$species_defs->get_config($species, 'ENSEMBL_CHROMOSOMES')}) ? 'Chromosome ' : '';
+      my $region_string  = grep($region, @{$species_defs->get_config($species, 'ENSEMBL_CHROMOSOMES') || []}) ? 'Chromosome ' : '';
          $region_string .= $region;
          
       my $location_text = qq{Region: <a href="$location_link">$region_string</a><br />Start: $start<br />End: $end<br />Strand: $strand<br />};
