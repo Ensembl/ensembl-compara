@@ -124,7 +124,7 @@ CREATE TABLE dna_collection (
  FOREIGN KEY (dna_collection_id) REFERENCES subset(subset_id),
 
  UNIQUE(dna_collection_id, table_name, foreign_id)
-);
+) ENGINE=MyISAM;
 
 
 CREATE TABLE genomic_align_block_job_track (
