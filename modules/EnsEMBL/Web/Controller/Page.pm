@@ -23,6 +23,7 @@ sub init {
   
   if (!$cached) {
     my $redirect = $self->builder->create_objects($hub->factorytype, $request) eq 'redirect'; # Build objects before checking configuration - they are needed by Configuration.pm
+    $self->configure;                                                                         # Set hub->components before checking configuration
     return if $self->update_configuration_from_url || $redirect;                              # Redirect if a configuration has been updated or object parameters have changed
   }
   
@@ -31,7 +32,6 @@ sub init {
   return if $cached;
   
   $self->page->initialize; # Adds the components to be rendered to the page module
-  $self->configure;
   $self->render_page;
 }
 
