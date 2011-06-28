@@ -57,10 +57,10 @@ sub init {
   # Note these tracks get added before the "auto-loaded tracks" get added
   $self->add_tracks( 'sequence', 
     [ 'contig',    'Contigs',             'stranded_contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' }],
-    [ 'seq',       'Sequence',            'sequence',        { display => 'off',    strand => 'b', bump_width => 0, threshold => 0.2, colourset => 'seq',      description => 'Track showing sequence in both directions' }],
-    [ 'codon_seq', 'Translated sequence', 'codonseq',        { display => 'off',    strand => 'b', bump_width => 0, threshold => 0.5, colourset => 'codonseq', description => 'Track showing 6-frame translation of sequence' }],
-    [ 'codons',    'Start/stop codons',   'codons',          { display => 'off',    strand => 'b', threshold => 50,  colourset => 'codons',   description => 'Track indicating locations of start and stop codons in region' }],
-    [ 'blast',     'BLAT/BLAST hits',     '_blast',          { display => 'normal', strand => 'b', sub_type => 'blast', colourset => 'feature', menu => 'no' }]
+    [ 'seq',       'Sequence',            'sequence',        { display => 'off',    strand => 'b', colourset => 'seq',      threshold => 0.2, bump_width => 0, description => 'Track showing sequence in both directions'     }],
+    [ 'codon_seq', 'Translated sequence', 'codonseq',        { display => 'off',    strand => 'b', colourset => 'codonseq', threshold => 0.5, bump_width => 0, description => 'Track showing 6-frame translation of sequence' }],
+    [ 'codons',    'Start/stop codons',   'codons',          { display => 'off',    strand => 'b', colourset => 'codons',   threshold => 50,  description => 'Track indicating locations of start and stop codons in region'  }],
+    [ 'blast',     'BLAT/BLAST hits',     '_blast',          { display => 'normal', strand => 'b', colourset => 'feature',  sub_type => 'blast' }]
   );
   
   $self->add_track('decorations', 'gc_plot', '%GC', 'gcplot', { display => 'normal',  strand => 'r', description => 'Shows percentage of Gs & Cs in region', sortable => 1 });
