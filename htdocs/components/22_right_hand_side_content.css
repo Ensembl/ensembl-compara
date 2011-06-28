@@ -38,17 +38,20 @@ p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 body.ie6 .twocol-left,
 body.ie6 .twocol-right { width: 40%; }
 
-.threecol-left   { float:left; width:30%; margin:0 0 1% 0; padding:1%; clear:left; }
-.threecol-middle { float:left; width:30%; margin:0 0 1% 0; padding:1%; }
-.threecol-right  { float:right; width:30%; margin:0 1% 0 0; padding:1%; }
+.threecol-left   { float:left; width:31%; margin:0 0 1% 0; padding:1%; clear:left; }
+.threecol-middle { float:left; width:31%; margin:0 0 1% 0; padding:1%; }
+.threecol-right  { float:right; width:31%; margin:0 1% 0 0; padding:1%; }
 
 /* because three-columns on full-width page looks odd */
 .widepage { width:31% }
 
+body.ie67 .threecol-left,
+body.ie67 .threecol-middle,
+body.ie67 .threecol-right { margin: 0 }
+
 body.ie6 .threecol-left,
 body.ie6 .threecol-middle,
-body.ie6 .threecol-right { width: 25%; }
-
+body.ie6 .threecol-right { width: 33%; }
 
 table.blobs { width:100%; }
 table.blobs td { 
