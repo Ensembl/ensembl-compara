@@ -85,4 +85,5 @@ ul.breadcrumbs li a.home:hover   { background-position: left -30px; }
 
 body.ie6 ul.breadcrumbs          { height: 22px; }
 
-#pdoc_iframe { border: #ccc 1px solid; }
+#pdoc_iframe,
+iframe#doxygen { border: #ccc 1px solid; }
