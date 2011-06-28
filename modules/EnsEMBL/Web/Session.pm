@@ -589,7 +589,7 @@ sub configure_das_views {
     my $logic_name   = $das->logic_name;
     
     # If source is suitable for this VIEW (i.e. not image) - Gene/Protein DAS
-    if ($das->is_on($type)) {
+    if ($das->is_on("$type/$_")) {
       # Need to set default to 'no' before we can set it to 'yes'
       $view_config->set_defaults({ $logic_name => 'no' }) unless $view_config->get($logic_name);
       $view_config->set($logic_name, 'yes');
