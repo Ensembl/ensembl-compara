@@ -1,4 +1,4 @@
-c<html>
+<html>
 <head>
 <title>Variation API Tutorial</title>
 </head>
@@ -21,6 +21,7 @@ c<html>
 	<li><a href="#structural">Structural variations</a></li>
 	<li><a href="#ld">LD calculation</a></li>
 	<li><a href="#strains">Specific strain information</a></li>
+	<li><a href="#iterators">Fetching Iterators</a></li>
 	<li><a href="#help">Further help</a></li>
 </ul>
 
@@ -808,6 +809,83 @@ foreach my $diff (@differences){
   print "Locus ", $diff-&gt;seq_region_start, "-", $diff-&gt;seq_region_end, ", Venter's alleles: ",$diff-&gt;allele_string, "\n";
 }
 </pre>
+
+<h2 id="iterators">Fetching Iterators</h2>
+
+<p>
+Sometimes an adaptor method may return more objects than can fit into memory at once, and for such
+cases the variation API provides methods to fetch Iterator objects instead of the usual array reference.
+An Iterator is an object which allows you to iterate over the entire set of objects fetched by the 
+adaptor without loading them all into memory at once, by calling the next() method to fetch each object
+in turn. You can tell when you have finished iterating over the set of objects
+by using the has_next() method which returns true when the Iterator still has objects to fetch and false
+when it is exhausted. These are the most 
+commonly used Iterator methods, but there are also some other useful methods which allow you to transform
+and filter the set of objects in an analogous way to using map and grep on standard perl arrays, using
+the methods called (imaginatively) map() and grep(). Various other methods are also supported, please 
+see the Iterator API documentation for full details.
+</p>
+
+<p>
+Some example code using Iterators to fetch somatic mutations from the VariationAdaptor is listed below.
+After the first fetch_Iterator_somatic() call we just iterate over all somatic mutations found in the
+variation database, using next() to fetch each object, and has_next() to check when we are done. In the 
+second call we filter the set of mutations down to only those which have
+a source of 'COSMIC' using the grep() method. To do this we pass an anonymous subroutine as the only 
+argument to grep() which checks each Variation object in turn (set to $_ for convenience in the 
+subroutine) and returns a true value if the source is equal to 'COSMIC' and false otherwise. 
+This anonymous subroutine is very similar to a block that
+you would use when using perl's own grep function, but you have to prefix it with the 'sub' keyword.
+In the third call to fetch_Iterator_somatic we use the map() method to return the name of each Variation
+rather than the object itself using an anonymous subroutine just as you would use a block for perl's map
+function. In the final call we combine the grep() and map() methods to return an Iterator over all the
+names of somatic mutations from COSMIC. The map() and grep() methods return a new Iterator and only do
+their transforming and filtering on each object in turn, without needing all objects in memory, they
+are therefore much more memory-efficient than mapping and grepping a native perl array.
+</p>
+
+<pre class="code">
+use strict;
+use warnings;
+
+use Bio::EnsEMBL::Registry;
+
+my $reg = 'Bio::EnsEMBL::Registry';
+
+$reg-&gt;load_registry_from_db(
+    -host   =&gt; 'ensembldb.ensembl.org',
+    -user   =&gt; 'anonymous',
+);
+
+my $va = $reg-&gt;get_adaptor('human', 'variation', 'variation') or die;
+
+my $somatic_iter = $va-&gt;fetch_Iterator_somatic();
+
+while ($somatic_iter-&gt;has_next()) {
+    my $mutation = $somatic_iter-&gt;next();
+    print $mutation-&gt;name(), "\n";
+}
+
+my $cosmic_iter = $va-&gt;fetch_Iterator_somatic()-&gt;grep(sub {$_-&gt;source eq 'COSMIC'});
+
+while ($cosmic_iter-&gt;has_next()) {
+    print $cosmic_iter-&gt;next()-&gt;name(), "\n";
+}
+
+my $name_iter = $va-&gt;fetch_Iterator_somatic()-&gt;map(sub {$_-&gt;name});
+
+while ($name_iter-&gt;has_next()) {
+    print $name_iter-&gt;next(), "\n";
+}
+
+my $cosmic_name_iter = $va-&gt;fetch_Iterator_somatic()-&gt;grep(sub {$_-&gt;source eq 'COSMIC'})-&gt;map(sub {$_-&gt;name});
+
+while ($cosmic_name_iter-&gt;has_next()) {
+    print $cosmic_name_iter-&gt;next(), "\n";
+}
+
+</pre>
+
 
 <h2 id="help">Further help</h2>
 
