@@ -9,7 +9,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my $self = shift;
   $self->set_defaults({ map { $_->logic_name => 'off' } values %{$self->hub->get_all_das} });
-  $self->code = $self->hub->type . '::ExternalData';
+  $self->code = $self->type . '::ExternalData';
 }
 
 sub form {
