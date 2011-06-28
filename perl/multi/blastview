@@ -2116,7 +2116,7 @@ sub populate_result_summary{
   my $ctgview_link_t = sprintf
     ( $link_t, "/$species/Location/View?".
       join( ';', "r=%s",
-            "h=BLAST_NEW:$TICKET!!$use_date"), 
+            "h=BLAST_NEW:$TICKET!!$use_date;contigviewbottom=blast=normal"), 
       "BV_N_", "Location/View", "%s" );
 
   my $cytoview_link_t = sprintf
