@@ -133,7 +133,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     Ensembl.EventManager.trigger('validateForms', this.el);
        
     if ($('.modal_reload', this.el).length) {
-      Ensembl.EventManager.trigger('queuePageReload');
+      Ensembl.EventManager.trigger('queuePageReload', '', false, false, $('.modal_reload', this.el).attr('href'));
     }
     
     this.addSubPanel();

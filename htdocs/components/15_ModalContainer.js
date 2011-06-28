@@ -24,6 +24,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     this.elLk.closeButton = $('.modal_close', this.el);
     
     this.xhr           = false;
+    this.reloadURL     = false;
     this.pageReload    = false;
     this.sectionReload = {};
     this.activePanel   = '';
@@ -92,7 +93,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     
     this.elLk.caption.html('');
     
-    if ((escape !== true && !Ensembl.EventManager.trigger('updateConfiguration') && (this.pageReload || this.sectionReload.count)) || this.pageReload == 'force') {
+    if ((escape !== true && !Ensembl.EventManager.trigger('updateConfiguration') && (this.pageReload || this.sectionReload.count)) || this.pageReload === 'force') {
       this.setPageReload(false, true);
     }
   },
@@ -162,15 +163,12 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         
         contentEl.html(json.content).wrapInner(wrapper).prepend(nav).find('.tool_buttons > p').show();
         
-        wrapper = null;
-        nav     = null;
-        
         this.elLk.closeButton.attr({ title: buttonText, alt: buttonText });
         
-        forceReload = !!$('.modal_reload', contentEl).length;
+        forceReload = $('.modal_reload', contentEl);
         
-        if (reload || forceReload) {
-          this.setPageReload($('input.component', contentEl).val(), false, forceReload);
+        if (reload || forceReload.length) {
+          this.setPageReload($('input.component', contentEl).val(), false, !!forceReload.length, forceReload.attr('href'));
         }
         
         if (url.match(/reset=/)) {
@@ -178,6 +176,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         }
         
         Ensembl.EventManager.trigger('createPanel', id, $((json.content.match(/<input[^<]*class=".*?panel_type.*?".*?>/) || [])[0]).val() || json.panelType, params);
+        
+        wrapper = nav = forceReload = null;
       },
       error: function (e) {
          if (e.status !== 0) {
@@ -216,7 +216,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     tab = null;
   },
   
-  setPageReload: function (section, reload, force) {
+  setPageReload: function (section, reload, force, url) {
     if (section && Ensembl.PanelManager.panels[section]) {
       this.sectionReload[section] = 1;
       this.sectionReload.count = (this.sectionReload.count || 0) + 1;
@@ -228,8 +228,12 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       this.pageReload = 'force';
     }
     
+    if (url) {
+      this.reloadURL = url;
+    }
+    
     if (reload === true) {
-      Ensembl.EventManager.trigger('reloadPage', !!this.pageReload || this.sectionReload);
+      Ensembl.EventManager.trigger('reloadPage', !!this.pageReload || this.sectionReload, this.reloadURL);
       this.sectionReload = {};
     }
   },

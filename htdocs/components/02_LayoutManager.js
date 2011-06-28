@@ -96,7 +96,7 @@ Ensembl.LayoutManager.extend({
     }
   },
   
-  reloadPage: function (args) {
+  reloadPage: function (args, url) {
     if (typeof args == 'string') {
       Ensembl.EventManager.triggerSpecific('updatePanel', args);
     } else if (typeof args == 'object') {
@@ -104,7 +104,7 @@ Ensembl.LayoutManager.extend({
         Ensembl.EventManager.triggerSpecific('updatePanel', i);
       }
     } else {
-      return Ensembl.redirect();
+      return Ensembl.redirect(url);
     }
     
     $('#messages').hide();
