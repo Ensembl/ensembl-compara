@@ -55,28 +55,17 @@ sub init {
   my $session    = $hub->session;
   my $session_id = $session->session_id;
   my $user_tree  = $self->user_tree && ($user || $session_id);
-  my $tree       = $user_tree && $cache && $self->tree_cache_key($user, $session) ? $cache->get($self->tree_cache_key($user, $session)) : undef; # Trying to get user + session version of the tree from cache
+  my $cache_key  = $self->tree_cache_key;
+  my $tree       = $cache->get($cache_key) if $cache && $cache_key; # Try to get default tree from cache
   
   if ($tree) {
     $self->{'_data'}{'tree'} = $tree;
   } else {
-    my $cache_key = $self->tree_cache_key;
-    
-    $tree = $cache->get($cache_key) if $cache && $cache_key; # Try to get default tree from cache
-
-    if ($tree) {
-      $self->{'_data'}{'tree'} = $tree;
-    } else {
-      $self->populate_tree; # If no user + session tree found, build one
-      $cache->set($cache_key, $self->{'_data'}{'tree'}, undef, 'TREE') if $cache && $cache_key; # Cache default tree
-    }
-
-    if ($user_tree) {
-      $cache_key = $self->tree_cache_key($user, $session);
-      $self->user_populate_tree;
-      $cache->set($cache_key, $self->{'_data'}{'tree'}, undef, 'TREE', keys %{$ENV{'CACHE_TAGS'} || {}}) if $cache && $cache_key; # Cache user + session tree version
-    }
+    $self->populate_tree; # If no user + session tree found, build one
+    $cache->set($cache_key, $self->{'_data'}{'tree'}, undef, 'TREE') if $cache && $cache_key; # Cache default tree
   }
+  
+  $self->user_populate_tree if $user_tree;
 }
 
 sub populate_tree         {}
