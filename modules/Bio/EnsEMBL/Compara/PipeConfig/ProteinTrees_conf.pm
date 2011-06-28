@@ -318,7 +318,7 @@ sub pipeline_analyses {
                 'method_param_list'     => [ '#mlss_id#' ],
                 'object_method'         => 'species_set',
 
-                'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild' },
+                'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator' },
 
                 'fan_branch_code'       => 2,
             },
