@@ -24,6 +24,7 @@ sub content {
   my $alignview     = 0;
   
   my $columns = [
+    { key => 'Type',                align => 'left', width => '10%', sort => 'html'          },
     { key => 'Ancestral taxonomy',  align => 'left', width => '10%', sort => 'html'          },
     { key => 'Gene identifier',     align => 'left', width => '20%', sort => 'html'          },
     { key => 'Gene name (Xref)',    align => 'left', width => '25%', sort => 'none'          },
@@ -96,6 +97,7 @@ sub content {
       unshift @external, $paralogue->{'display_id'} if $paralogue->{'display_id'};
       
       push @rows, {
+        'Type'                => ucfirst $paralogue_desc,
         'Ancestral taxonomy'  => $paralogue_subtype,
         'Gene identifier'     => qq{<a href="$link">$stable_id</a>},
         'Gene name (Xref)'    => join('<br />', @external),
