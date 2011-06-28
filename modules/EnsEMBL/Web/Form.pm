@@ -234,8 +234,10 @@ sub add_notes {
 sub force_reload_on_submit {
   ## Adds an empty element in the form which directs JS to refresh the page once modal popup is closed
   ## Works only with the popup modal form
-  my $self = shift;
-  $self->fieldset->append_child($self->dom->create_element('div'))->set_attribute('class', 'modal_reload hidden');
+  my ($self, $url) = @_;
+  my $modal_reload = $self->fieldset->append_child($self->dom->create_element($url ? 'a' : 'div'));
+  $modal_reload->set_attribute('class', 'modal_reload hidden');
+  $modal_reload->set_attribute('href',  $url) if $url;
   return 1;
 }
 

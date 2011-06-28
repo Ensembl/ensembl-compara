@@ -352,7 +352,7 @@ sub add_element {
   return $self->add_notes($params{'value'}) if $params{'type'} eq 'Information';
   
   ## ForceReload
-  return $self->form->force_reload_on_submit if $params{'type'} eq 'ForceReload';
+  return $self->form->force_reload_on_submit($params{'url'}) if $params{'type'} eq 'ForceReload';
 
   ## 'name' key for options is changed to 'caption' key - name key corresponds to name attribute only
   foreach my $option (@{$params{'values'}}) { 
