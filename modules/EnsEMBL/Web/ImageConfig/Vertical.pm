@@ -21,9 +21,11 @@ sub load_user_tracks {
   
   return unless $menu;
   
-  my %types = (upload => 'filename', url => 'url');
-  my $user  = $self->hub->user;
-  my $width = $self->get_parameter('all_chromosomes') eq 'yes' ? 10 : 60;
+  my $hub            = $self->hub;
+  my %types          = (upload => 'filename', url => 'url');
+  my $user           = $hub->user;
+  my $width          = $self->get_parameter('all_chromosomes') eq 'yes' ? 10 : 60;
+  my %remote_formats = map { lc $_ => 1 } @{$hub->species_defs->USERDATA_REMOTE_FORMATS};
   my (@user_tracks, %user_sources);
   
   my @density_renderers = (
@@ -107,28 +109,22 @@ sub load_user_tracks {
   # Now add these tracks to the menu
   foreach my $entry (@user_tracks) {
     if ($entry->{'species'} eq $self->{'species'}) {
-      my $display   = $entry->{'display'};
-      my $style     = $entry->{'style'};
-      if (!$display) {
-        if ($style eq 'wiggle' || $style eq 'WIG') {
-          $display = 'tiling';
-        }
-        else {
-          $display = 'normal';
-        }
-      }
+      my $format = $entry->{'format'};
+      
+      next if $remote_formats{lc $format};
+      
       my $settings = {
         id          => $entry->{'id'},
         source      => $entry->{'source'},
         format      => $entry->{'format'},
         glyphset    => 'Vuserdata',
         colourset   => 'densities',
-        maxmin      =>  1,
+        maxmin      => 1,
         logic_name  => $entry->{'logic_name'},
         caption     => $entry->{'name'},
         description => $entry->{'description'},
-        display     => $display,
-        style       => $style,
+        display     => $entry->{'display'} || ($format eq 'wiggle' || $format eq 'WIG' ? 'density_bar' : 'density_line'),
+        style       => $entry->{'style'},
         width       => $width,
         strand      => 'b'
       };
