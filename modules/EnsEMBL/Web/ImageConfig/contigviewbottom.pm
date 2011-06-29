@@ -6,10 +6,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
-sub init_user {
-  my $self = shift;
-  return $self->load_user_tracks;
-}
+sub init_user           { return $_[0]->load_user_tracks; }
+sub get_sortable_tracks { return grep { $_->get('sortable') && ($_->get('menu') ne 'no' || $_->id eq 'blast') } @{$_[0]->glyphset_configs}; } # Add blast to the sortable tracks
 
 sub init {
   my $self = shift;
@@ -60,7 +58,7 @@ sub init {
     [ 'seq',       'Sequence',            'sequence',        { display => 'off',    strand => 'b', colourset => 'seq',      threshold => 0.2, bump_width => 0, description => 'Track showing sequence in both directions'     }],
     [ 'codon_seq', 'Translated sequence', 'codonseq',        { display => 'off',    strand => 'b', colourset => 'codonseq', threshold => 0.5, bump_width => 0, description => 'Track showing 6-frame translation of sequence' }],
     [ 'codons',    'Start/stop codons',   'codons',          { display => 'off',    strand => 'b', colourset => 'codons',   threshold => 50,  description => 'Track indicating locations of start and stop codons in region'  }],
-    [ 'blast',     'BLAT/BLAST hits',     '_blast',          { display => 'normal', strand => 'b', colourset => 'feature',  sub_type => 'blast' }]
+    [ 'blast',     'BLAT/BLAST hits',     '_blast',          { display => 'normal', strand => 'b', colourset => 'feature',  sub_type => 'blast', menu => 'no' }]
   );
   
   $self->add_track('decorations', 'gc_plot', '%GC', 'gcplot', { display => 'normal',  strand => 'r', description => 'Shows percentage of Gs & Cs in region', sortable => 1 });
