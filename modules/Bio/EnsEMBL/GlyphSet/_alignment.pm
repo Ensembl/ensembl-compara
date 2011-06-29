@@ -368,7 +368,7 @@ sub render_normal {
         }
       }
       if( $h > 1 ) {
-        $Composite->bordercolour($feature_colour);
+        $Composite->bordercolour($feature_colour) unless $self->my_config('format') eq 'SNP_EFFECT'; # HACK omfg
       } else {
         $Composite->unshift( $self->Rect({
           'x'         => $Composite->{'x'},
