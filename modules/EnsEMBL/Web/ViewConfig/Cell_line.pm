@@ -81,7 +81,7 @@ sub build_imageconfig_form {
 sub form_evidence_types {
   my $self    = shift;
   my $groups  = { core => [], other => [] };
-  my @columns = ( sort(map { s/\:\w*//; $_ } grep !/MultiCell/, keys %{$self->{'cell_lines'}}), 'MultiCell' );
+  my @columns = ( 'MultiCell', sort map { s/\:\w*//; $_ } grep !/MultiCell/, keys %{$self->{'cell_lines'}} );
   my %focus_feature_type_ids;
   
   my $select_all_col = qq{
