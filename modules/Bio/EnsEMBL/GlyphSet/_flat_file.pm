@@ -6,6 +6,8 @@ use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::Tools::Misc;
 
+use Bio::EnsEMBL::Variation::Utils::Constants;
+
 use base qw(Bio::EnsEMBL::GlyphSet::_alignment Bio::EnsEMBL::GlyphSet_wiggle_and_block);
 
 sub feature_group { my ($self, $f) = @_; return $f->id; }
@@ -87,6 +89,11 @@ sub features {
 
     ### ensure the display of the VEP features using colours corresponding to their consequence
     if ($self->my_config('format') eq 'SNP_EFFECT') {
+      my %overlap_cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;      
+      my %cons = map { $overlap_cons{$_}{'display_term'} => $overlap_cons{$_}{'rank'} } keys %overlap_cons;
+      
+      @{$T->{'features'}} = sort {$cons{$a->consequence} <=> $cons{$b->consequence}} @{$T->{'features'}};
+      
       my $colours = $species_defs->colour('variation');
       
       $T->{'config'}{'itemRgb'} = 'on';
