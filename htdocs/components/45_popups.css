@@ -1,6 +1,8 @@
 .info_popup                     { width: auto; padding: 0; }
 .info_popup th, .info_popup td  { padding: 2px 3px; white-space: nowrap; }
+.info_popup tr th.subheader,
 .info_popup tr.header           { background-color: [[BUTTON_BG]]; }
+.info_popup tr th.subheader,    
 .info_popup tr.header th        { border-bottom: 1px solid black; color: #FFFFFF; }
 .info_popup tr.header a         { color: #FFFFFF; }
 .info_popup span.close          { position: absolute; top: -8px; right: -12px; cursor: pointer; height: 20px; width: 20px; background: url(/i/close.png) no-repeat; }
