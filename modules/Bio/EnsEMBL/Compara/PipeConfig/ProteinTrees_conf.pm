@@ -110,7 +110,7 @@ sub default_options {
         'mafft_exe'                 => '',  # if empty, will use module built-in default
         'mafft_binaries'            => '',  # if empty, will use module built-in default
         'sreformat_exe'             => '/usr/local/ensembl/bin/sreformat',
-        'treebest_exe'              => '/software/ensembl/compara/treebest/treebest',
+        'treebest_exe'              => '/software/ensembl/compara/treebest.double',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
         'codeml_exe'                => '/usr/local/ensembl/bin/codeml',

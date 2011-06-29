@@ -187,6 +187,9 @@ sub run_njtree_phyml {
   my $cmd = $treebest_exe;
   if (1 == $self->param('bootstrap')) {
     $cmd .= " best ";
+    if(my $max_diff_lk = $self->param('max_diff_lk')) {
+        $cmd .= " -Z $max_diff_lk";
+    }
     if ($self->param('species_tree_file')) {
       $cmd .= " -f ". $self->param('species_tree_file');
     }
