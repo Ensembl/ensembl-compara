@@ -79,9 +79,10 @@ sub build_imageconfig_form {
 }
 
 sub form_evidence_types {
-  my $self   = shift;
-  my $groups = { core => [], other => [] };
-  my (@columns, %focus_feature_type_ids);
+  my $self    = shift;
+  my $groups  = { core => [], other => [] };
+  my @columns = ( sort(map { s/\:\w*//; $_ } grep !/MultiCell/, keys %{$self->{'cell_lines'}}), 'MultiCell' );
+  my %focus_feature_type_ids;
   
   my $select_all_col = qq{
     <div class="select_all_column floating_popup">
@@ -107,19 +108,12 @@ sub form_evidence_types {
     $focus_feature_type_ids{$_} = 1 for keys %$feature_sets;
   }
   
-  foreach my $cell_line (sort keys %{$self->{'cell_lines'}}) {
-    $cell_line =~ s/\:\w*//;
-    push @columns, $cell_line;
-  }
-  
   foreach my $feature (sort keys %{$self->{'evidence_features'}}) {
     my ($feature_name, $feature_id) = split /\:/, $feature;
     my $set = exists $focus_feature_type_ids{$feature_id} ? 'core' : 'other';
     my @row = ($feature_name, { tag => 'th', class => 'first', html => sprintf("$feature_name$select_all_row", $feature_name) }); # row name
     
-    foreach my $cell_line (sort keys %{$self->{'cell_lines'}}) {
-      $cell_line =~ s/\:\w*//;
-      
+    foreach my $cell_line (@columns) {
       my $cell = { tag => 'td', html => '<p></p>' };
       
       if (exists $self->{'feature_type_ids'}{$cell_line}{$feature_id}) {
