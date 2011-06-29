@@ -178,7 +178,7 @@ foreach my $spp (@valid_spp) {
       $genetypes .= sprintf(", '%s'",$authority);
     }
 
-    my ($known, $novel, $proj, $pseudo, $rna, $ig_segments, $exons, $transcripts, $snps);  
+    my ($known, $novel, $proj, $annotated, $pseudo, $rna, $ig_segments, $exons, $transcripts, $snps);  
 
     unless ($pre) { 
       ($known) = &query( $db,
@@ -204,6 +204,14 @@ foreach my $spp (@valid_spp) {
         and status = 'NOVEL'
         ");    
       print "Novel Genes:$novel\n" if $DEBUG;
+
+      ( $annotated ) = &query( $db,
+        "select count(*)
+         from gene
+         where biotype = 'protein_coding'
+         and status = 'ANNOTATED'
+        ");
+      print "Annotated Genes:$annotated\n" if $DEBUG;
 
       ( $pseudo ) = &query( $db,
         "select count(*)
@@ -416,7 +424,6 @@ foreach my $spp (@valid_spp) {
       );
       }
 
-
       if ($novel) {
         $novel = thousandify($novel);
         $rowcount++;
@@ -426,6 +433,17 @@ foreach my $spp (@valid_spp) {
           <td class="value">$novel</td>
       </tr>
       );
+      }
+
+      if ($annotated) {
+	  $annotated = thousandify($annotated);
+	  $rowcount++;
+	  $row = stripe_row($rowcount);
+        print STATS qq($row
+          <td class="data">Annotated protein-coding genes:</td>
+          <td class="value">$annotated</td>
+      </tr>
+        );
       }
 
       if ($pseudo) {
