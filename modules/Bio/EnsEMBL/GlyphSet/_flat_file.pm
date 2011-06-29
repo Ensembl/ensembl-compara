@@ -135,6 +135,7 @@ sub feature_title {
   my %extra = $f->extra_data && ref($f->extra_data) eq 'HASH' ? %{$f->extra_data||{}} : ();
   foreach my $k ( sort keys %extra ) {
     next if $k eq '_type';
+    next if $k eq 'item_colour';
     $title .= "; $k: ".join( ', ', @{$extra{$k}} );
   }
   return $title;
