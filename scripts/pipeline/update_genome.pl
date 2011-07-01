@@ -225,9 +225,9 @@ $species_no_underscores =~ s/\_/\ /;
 ##
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
-my $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species_no_underscores, "core");
+my $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species, "core");
 if(! $species_db) {
-  $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species, "core");
+    $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species_no_underscores, "core");
 }
 throw ("Cannot connect to database [${species_no_underscores} or ${species}]") if (!$species_db);
 
