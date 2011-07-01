@@ -24,7 +24,7 @@ window.addLoadEvent = function (func) {
 
 $(function () {
   if (!window.JSON) {
-    Ensembl.loadScript('/components/json2.js', 'initialize', Ensembl);
+    $.getScript('/components/json2.js', function () { Ensembl.initialize(); });
   } else {
     Ensembl.initialize();
   }

@@ -184,33 +184,6 @@ Ensembl.extend({
     }
     
     return x1 + x2;
-  },
-  
-  loadScript: function (url, callback, caller) {
-    var script = document.createElement('script');
-    
-    function onload() {
-      if (caller) {
-        caller[callback]();
-      } else {
-        callback();
-      }
-    }
-    
-    if (script.readyState) { //IE
-      script.onreadystatechange = function () {
-        if (script.readyState == 'loaded' || script.readyState == 'complete') {
-          script.onreadystatechange = null;
-          
-          onload();
-        }
-      };
-    } else { // others
-      script.onload = onload;
-    }
-    
-    script.src = url;
-    document.getElementsByTagName('head')[0].appendChild(script);
   }
 });
 

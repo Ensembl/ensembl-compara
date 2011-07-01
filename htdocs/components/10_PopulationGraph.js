@@ -7,9 +7,9 @@ Ensembl.Panel.PopulationGraph = Ensembl.Panel.extend({
     this.base();
     
     if (typeof Raphael === 'undefined') {
-      Ensembl.loadScript('/raphael/raphael-min.js', function () {
-        Ensembl.loadScript('/raphael/g.raphael-min.js', function () {
-          Ensembl.loadScript('/raphael/g.pie-modified-min.js', 'getContent', panel);
+      $.getScript('/raphael/raphael-min.js', function () {
+        $.getScript('/raphael/g.raphael-min.js', function () {
+          $.getScript('/raphael/g.pie-modified-min.js', function () { panel.getContent(); });
         });
       });
     }
