@@ -108,9 +108,15 @@ sub process_data {
       
       $info_text_species = $species;
       (my $species       = $info_text_common_name) =~ s/ /_/g;
-      my $script         = $info_text_type eq 'gene' ? 'geneview?gene=' : 'protview?peptide=';
-      $info_text_url     = "<a href='$species_path/$script$info_text_gene'>$info_text_gene</a>";
-      $info_text_html    = "[from $info_text_common_name $info_text_url]";
+      my $info_text_url = $hub->url({
+        species=>$species,
+        type=>'Gene',
+        action=>'Summary',
+        g=>$info_text_gene,
+        t=>undef,
+        r=>undef
+      });
+      $info_text_html    = "[from $info_text_common_name <a href='$info_text_url'>$info_text_gene</a>]";
     } else {
       $info_text_html = '';
     }
