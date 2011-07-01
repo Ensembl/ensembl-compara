@@ -53,7 +53,7 @@ Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor - Object adaptor to acces
 
 This module is used to access data in the conservation_score table. The scores are stored in the database as LITTLE ENDIAN.
 Each score is represented by a Bio::EnsEMBL::Compara::ConservationScore. The position and an observed, expected score and a difference score (expected-observed) is stored for each column in a multiple alignment. Not all columns in an alignment have a score (for example, if there is insufficient coverage) and termed here as 'uncalled'. 
-In order to speed up processing of the scores over large regions, the scores are stored in the database averaged over window_sizes of 1 (no averaging), 10, 100 and 500. When retrieving the scores, the most appropriate window_size is estimated from the length of the alignment or slice and the number of scores requested, given by the display_size. There is no need to specify the window_size directly. If the number of scores requested (display_size) is smaller than the alignment length or slice length, the scores will be either averaged if display_type = "AVERAGE" or the maximum value taken if display_type = "MAX". Scores in uncalled regions are not returned. If a score for each column in an alignment is required, the display_size should be set to be the same size as the alignment length or slice length. 
+In order to speed up processing of the scores over large regions, the scores are stored in the database averaged over window_sizes of 1 (no averaging), 10, 100 and 500. When retrieving the scores, the most appropriate window_size is estimated from the length of the alignment or slice and the number of scores requested, given by the display_size. There is no need to specify the window_size directly. If the number of scores requested (display_size) is smaller than the alignment length or slice length, the scores will be either averaged if display_type = "AVERAGE" or the maximum value taken if display_type = "MAX". Scores in uncalled regions are not returned. To return a score for each column in an alignment, the display_size should be set to be the same size as the alignment length or slice length. 
 
 =head1 APPENDIX
 
@@ -150,7 +150,10 @@ sub delete_by_genomic_align_block_id {
                alignment, using:
                my $mlss = $mlss_adaptor->fetch_by_method_link_type_registry_aliases("GERP_CONSERVATION_SCORE", ["human", "chimp", "rhesus", "cow", "dog", "mouse", "rat", "opossum", "platypus", "chicken"]);
 
-               Display_size defines the number of scores that will be returned.                If the slice length is larger than the display_size, the scores 
+               Display_size defines the number of scores that will be returned.
+               To return a score for each column in an alignment the display_size 
+               should be set to be the same size as the slice length eg ($slice->end-$slice->start+1).
+               If the slice length is larger than the display_size, the scores 
                will either be averaged if the display_type is "AVERAGE" or the 
                maximum taken if display_type is "MAXIMUM". 
                Window_size defines which set of pre-averaged scores to use. 
@@ -330,145 +333,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     return ($scores);
 }
 
-sub fetch_all_by_MethodLinkSpeciesSet_SliceOLD {
-    my ($self, $method_link_species_set, $slice, $display_size, $display_type, $window_size) = @_;
-
-    my $scores = [];
-
-    #need to convert conservation score mlss to the corresponding multiple 
-    #alignment mlss
-    my $key = "gerp_" . $method_link_species_set->dbID;
-
-    my $ma_mlss_id = $self->db->get_MetaContainer->list_value_by_key($key);
-    my $ma_mlss;
-    if (@$ma_mlss_id) {
-	$ma_mlss = $self->db->get_MethodLinkSpeciesSet->fetch_by_dbID($ma_mlss_id->[0]);
-    } else {
-	return $scores;
-    }
-
-    #get genomic align blocks in the slice
-    my $genomic_align_block_adaptor = $self->db->get_GenomicAlignBlockAdaptor;
-    my $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($ma_mlss, $slice);
-
-    if (scalar(@$genomic_align_blocks == 0)) {
-	#print "no genomic_align_blocks found for this slice\n";
-	return $scores;
-    }
-
-    #default display_size is 700
-    if (!defined $display_size) {
-	$display_size = 700;
-    }
-
-     #default display_mode is AVERAGE
-    if (!defined $display_type) {
-	$display_type = "AVERAGE";
-    }
-
-    #set up bucket object for storing bucket_size number of scores 
-    my $bucket_size = ($slice->end-$slice->start+1)/$display_size;
-
-    #default window size is the largest bucket that gives at least 
-    #display_size values ie get speed but reasonable resolution
-    my @window_sizes = (1, 10, 100, 500);
-
-    #check if valid window_size
-    my $found = 0;
-    if (defined $window_size) {
-	foreach my $win_size (@window_sizes) {
-	    if ($win_size == $window_size) {
-		$found = 1;
-		last;
-	    }
-	}
-	if (!$found) {
-	    warning("Invalid window_size $window_size");
-	    return $scores;
-	}
-    }
-    
-    if (!defined $window_size) {
-	#set window_size to be the largest for when for loop fails
-	$window_size = $window_sizes[scalar(@window_sizes)-1];
-	for (my $i = 1; $i < scalar(@window_sizes); $i++) {
-	    if ($bucket_size < $window_sizes[$i]) {
-		$window_size = $window_sizes[$i-1];
-		last;
-	    }
-	}
-    }
-
-    #print "window_size $window_size bucket_size $bucket_size slice length " . ($slice->end - $slice->start + 1) . "\n";
-
-    $_bucket = {diff_score => 0,
-		start_pos => 0,
-		end_pos => 0,
-		start_seq_region_pos => $slice->start,
-		end_seq_region_pos => $slice->end,
-		called => 0,
-		cnt => 0,
-		size => $bucket_size,
-	       current => 0};
-
-    foreach my $genomic_align_block (@$genomic_align_blocks) { 
-	#get genomic_align for this slice
-	my $genomic_align = $genomic_align_block->reference_genomic_align;
-
-	my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($genomic_align_block->dbID, $window_size, $PACKED);
-	
-	if (scalar(@$conservation_scores) == 0) {
-	    next;
-	}
-
-	if ($genomic_align_block->get_original_strand == 0) {
-	    $conservation_scores = _reverse($conservation_scores, $genomic_align_block->length);
-	}
- 
-	#reset _score_index for new conservation_scores
-	$_score_index = 0;
-
-	#if want one score per base in the alignment, use faster method 
-	#doesn't bother with any binning
-	if ($display_size == ($slice->end - $slice->start + 1)) {
-	    $scores = _get_aligned_scores_from_cigar_line_fast($self, $genomic_align->cigar_line, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block->dbID, $genomic_align_block->length, $display_type, $window_size, $scores);
-	} else {
-	    $scores = _get_aligned_scores_from_cigar_line($self, $genomic_align->cigar_line, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block->dbID, $genomic_align_block->length, $display_type, $window_size, $scores);
-	    
-	}
-    }
-
-    if (scalar(@$scores) == 0) {
-	return $scores;
-    }
-
-    #remove _no_score_values from aligned_scores array
-    my $i = 0;
-     while ($i < scalar(@$scores)) {
- 	if (!defined($_no_score_value) && 
- 	    !defined($scores->[$i]->diff_score)) {
- 	    splice @$scores, $i, 1;
- 	} elsif (defined($_no_score_value) && 
- 		 $scores->[$i]->diff_score == $_no_score_value) {
- 	    splice @$scores, $i, 1;
- 	} else {
- 	    $i++;
- 	}
-     }
-
-    #Find the min and max scores for y axis scaling. Save in first
-    #conservation score object
-    my ($min_y_axis, $max_y_axis) =  _find_min_max_score($scores);
-
-    #add min and max scores to the first conservation score object
-    if ((scalar @$scores) > 0) {
-	$scores->[0]->y_axis_min($min_y_axis);
-	$scores->[0]->y_axis_max($max_y_axis);
-    }
-
-    return ($scores);
-}
-
 =head2 fetch_all_by_GenomicAlignBlock
 
   Arg  1     : Bio::EnsEMBL::Compara::GenomicAlignBlock $genomic_align_block
@@ -492,7 +356,9 @@ sub fetch_all_by_MethodLinkSpeciesSet_SliceOLD {
                The $slice_length is the total length of the region to be 
                displayed and may span several individual genomic align blocks.
                It is used to automatically calculate the window_size.
-               Display_size is the number of scores that will be returned. If 
+               Display_size is the number of scores that will be returned.
+               To return a score for each column in an alignment the display_size 
+               should be set to be the same size as the alignment length. If 
                the $slice_length is larger than the $display_size, the scores 
                will either be averaged if the display_type is "AVERAGE" or the 
                maximum taken if display_type is "MAXIMUM". 
