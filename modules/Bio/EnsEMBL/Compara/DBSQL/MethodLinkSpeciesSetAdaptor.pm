@@ -291,14 +291,14 @@ sub store {
       if (!$species_set_id) {
         my $sth2 = $self->prepare("INSERT INTO species_set VALUES (?, ?)");
         foreach my $genome_db_id (@genome_db_ids) {
-          $sth2->execute(($species_set_id or "NULL"), $genome_db_id);
+          $sth2->execute( ($species_set_id or undef), $genome_db_id);
           $species_set_id = $sth2->{'mysql_insertid'};
         }
         $sth2->finish();
       }
       my $sth2 = $self->prepare($method_link_species_set_sql);
-      $sth2->execute(($dbID or "NULL"), $method_link_id, $species_set_id,
-          ($method_link_species_set->name or "NULL"), ($method_link_species_set->source or "NULL"),
+      $sth2->execute(($dbID or undef), $method_link_id, $species_set_id,
+          ($method_link_species_set->name or undef), ($method_link_species_set->source or undef),
           ($method_link_species_set->url or ""));
       $dbID = $sth2->{'mysql_insertid'};
       $sth2->finish();
