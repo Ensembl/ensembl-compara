@@ -229,7 +229,7 @@ sub store {
   my $sth = $self->prepare($genomic_align_block_sql);
   #print $align_block_id, "\n";
   $sth->execute(
-                ($genomic_align_block->dbID or "NULL"),
+                ($genomic_align_block->dbID or undef),
                 $genomic_align_block->method_link_species_set->dbID,
                 $genomic_align_block->score,
                 $genomic_align_block->perc_id,

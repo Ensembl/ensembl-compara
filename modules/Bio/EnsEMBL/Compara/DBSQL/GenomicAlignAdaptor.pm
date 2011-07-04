@@ -193,14 +193,14 @@ sub store {
     }
 
     $genomic_align_sth->execute(
-            ($ga->dbID or "NULL"),
+            ($ga->dbID or undef),
             $ga->genomic_align_block->dbID,
             $ga->method_link_species_set->dbID,
             $ga->dnafrag->dbID,
             $ga->dnafrag_start,
             $ga->dnafrag_end,
             $ga->dnafrag_strand,
-            ($ga->cigar_line or "NULL"),
+            ($ga->cigar_line or "NULL"),    # FIXME: please check that this "NULL" string in a mediumtext field is what you really want
             ($ga->level_id or 1)
         );
 

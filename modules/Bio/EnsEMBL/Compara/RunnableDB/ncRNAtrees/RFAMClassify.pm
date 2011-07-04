@@ -418,7 +418,7 @@ sub tag_assembly_coverage_depth {
     my $sth2 = $self->dbc->prepare("INSERT INTO species_set VALUES (?, ?)");
     foreach my $genome_db (@low_coverage) {
       my $genome_db_id = $genome_db->dbID;
-      $sth2->execute(($species_set_id or "NULL"), $genome_db_id);
+      $sth2->execute(($species_set_id or undef), $genome_db_id);
       $species_set_id = $sth2->{'mysql_insertid'};
     }
     $sth2->finish();

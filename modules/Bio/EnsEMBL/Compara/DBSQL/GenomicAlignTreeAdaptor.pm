@@ -693,7 +693,7 @@ sub store_node {
                               left_index,
                               right_index,
                               distance_to_parent)  VALUES (?,?,?,?,?,?)");
-  $sth->execute("NULL", $parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent);
+  $sth->execute(undef, $parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent);
   #print STDERR "LAST ID: ", $sth->{'mysql_insertid'}, "\n";
   $node->node_id($sth->{'mysql_insertid'});
   $sth->finish;
