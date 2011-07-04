@@ -108,13 +108,16 @@ sub process_data {
       
       $info_text_species = $species;
       (my $species       = $info_text_common_name) =~ s/ /_/g;
+      my $type   = $info_text_type eq 'gene' ? 'Gene' : 'Transcript';
+      my $action = $info_text_type eq 'translation'  ? 'ProteinSummary' : 'Summary';
+      my $param_type = $info_text_type eq 'translation' ? 'p' : substr($info_text_type, 0, 1);        
+  
       my $info_text_url = $hub->url({
-        species=>$species,
-        type=>'Gene',
-        action=>'Summary',
-        g=>$info_text_gene,
-        t=>undef,
-        r=>undef
+        species     => $species,
+        type        => $type,
+        action      => $action,
+        $param_type => $info_text_gene,
+        __clear     => 1,
       });
       $info_text_html    = "[from $info_text_common_name <a href='$info_text_url'>$info_text_gene</a>]";
     } else {
