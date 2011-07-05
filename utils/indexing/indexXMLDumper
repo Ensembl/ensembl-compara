@@ -151,7 +151,7 @@ foreach my $index (@indexes) {
 
     else {
 
-#      next unless ($species =~ /^[L-Z]/);
+#      next if ($species =~ /^[N-Z]/);
 #      next unless $species =~ /Callithrix_jacchus|Meleagris_gallopavo|Nomascus_leucogenys|Oryctolagus_cuniculus/;
       $conf->{'species'}   = $species;
       $conf->{'speciesname_list'}{$SD->get_config($species,'SPECIES_COMMON_NAME')}++;
@@ -166,6 +166,11 @@ foreach my $index (@indexes) {
     while ($no_success) {
       $c++;
       $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
+      if ( ! $conf->{'dbh'}) {
+        print LOG "WARNING: Unable to get database connection for ".$core->{'NAME'}.", will retry\n";
+        $no_success = 0;
+        next;
+      }
       if ($index eq 'Family') {
         my $compara = $SD->multidb->{DATABASE_COMPARA};
         $conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:$compara->{'NAME'};host=$compara->{'HOST'};port=$compara->{'PORT'}", $compara->{'USER'}, $compara->{'PASS'} );
@@ -668,8 +673,23 @@ sub dumpVariation {
       }
       else {
         #comment out these three lines if time constraints mean you need to generate indices without extra allele info
-        $ssid_sth->execute($variation_id);
+        my $timed_out = 1;
+        until ($ssid_sth->execute($variation_id) || $timed_out > 5) {
+          print LOG "Can't execute query to get extra allele info:\n".$conf->{'dbh'}->errstr."\n. Retrying\n";
+          sleep 3;
+          $timed_out++;
+        }
+        if ($timed_out > 5) {
+          print LOG "WARNING: You'll need to reindex human Variations, can't maintain connection\n";
+          return 0;
+        }
+
         (my $res) = $ssid_sth->fetchrow_arrayref();
+        if ($conf->{'dbh'}->err) {
+          print LOG "Data retrieval for $variation_name terinated early:\n".$conf->{'dbh'}->errstr."\n";
+          print LOG "WARNING: You'll need to reindex human Variations, can't maintain connection\n";
+          return 0;
+        }
         $ssids = $res->[0];
       }
       my %synonyms;
@@ -710,6 +730,9 @@ sub dumpVariation {
                        @genes       ? ' Gene Association(s): ' .(join ', ', @genes)      . '.' : '',
                        $failed_desc ? " $failed_desc."                                         : '');
       if ($somatic_mutation){
+        if ( $variation_name eq 'rs113743432') {
+          warn "$dbspecies--$variation_name--@syns--@genes--@phenotypes--@studies--$locs--$snp_source";
+        }
         &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, $locs, $snp_source, $desc, $counter2 ), $nogzip, $fh2);
       }
       else {
@@ -2002,41 +2025,50 @@ sub GeneLine {
   <name>$disp_xref</name>
   <description>$description</description>);
     $xml .= qq(
-  <cross_references>);
-    my (%seen_labels,%seen_syns);
-    my @non_versioned;
+  <additional_fields>);
+    my (%seen_sources,%seen_labels,%seen_syns);
     foreach my $xref (@$xrefs) {
       my $dbname   = $xref->{'db_name'};
       my $dbkey    = $xref->{'label'};
       next if $seen_labels{$dbkey};
-    $seen_labels{$dbkey} = 1;
+      $seen_labels{$dbkey} = 1;
       $dbkey = &clean($dbkey,'dbkey');
       if (! $dbname) {
         print LOG "WARNING: $gsid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
       }
       else {
+        unless ($seen_sources{$dbname}) {
+          $xml .= qq(
+    <field name="xref_source">$dbname</field>);
+        }
+        $seen_sources{$dbname} = 1;
         $xml .= qq(
-    <ref dbname="$dbname" dbkey="$dbkey"/>);
+    <field name="xref">$dbkey</field>);
         if ($dbkey =~ /^(\w+)\.\d+$/) {
           my $k = $1;
           next if $seen_labels{$k};
           $seen_labels{$dbkey} = $k;
-          push @non_versioned, $k;
+          $xml .= qq(
+    <field name="xref_non_versioned">$k</field>);
         }
         foreach my $syn (@{$xref->{'synonyms'}}) { 
           next if $seen_syns{$syn};
           $seen_syns{$syn} = 1;
           $syn = &clean($syn,'syn');
           $xml .= qq(
-    <ref dbname="$dbname" dbkey="$syn"/>);
+    <field name="xref_synonym">$syn"</field>);
         }
       }
-      $cross_references{$dbname}++;
     }
-    $xml .= qq(
-  </cross_references>);
-    $xml .= qq(
-  <additional_fields>);
+
+    foreach my $xref_description (keys %{$xref_descriptions}) {
+      if ($xref_description) {
+        $xref_description = &clean($xref_description,'xref description');
+        $xml .= qq(
+    <field name="xref_description">$xref_description</field>);
+      }
+    }
+
     $xml .= &common_fields($species,'Gene');
     $xml .= qq(
     <field name="action">Summary</field>
@@ -2045,13 +2077,6 @@ sub GeneLine {
       my $loc = $gene_loc->{'sr_name'} .':'. $gene_loc->{'seq_region_start'} .'-'. $gene_loc->{'seq_region_end'} .':'. $gene_loc->{'seq_region_strand'};
       $xml .= qq(
     <field name="location">$loc</field>);
-    }
-    foreach my $xref_description (keys %{$xref_descriptions}) {
-      if ($xref_description) {
-        $xref_description = &clean($xref_description,'xref description');
-        $xml .= qq(
-    <field name="xref_description">$xref_description</field>);
-      }
     }
     unless ($db eq 'core') {
       $xml .= qq(
@@ -2068,10 +2093,6 @@ sub GeneLine {
     foreach my $esi (keys %$exons) {
       $xml .= qq(
     <field name="exon">$esi</field>);
-    }
-    foreach my $nv_xref (@non_versioned) {
-      $xml .= qq(
-    <field name="non_versioned">$nv_xref</field>);
     }
     $xml .= qq(
   </additional_fields>);
@@ -2340,9 +2361,8 @@ sub TransLine {
   <description>$description</description>);
 
   $xml .= qq(
-  <cross_references>);
-  my (%seen_labels,%seen_syns);
-  my @non_versioned;
+  <additional_fields>);
+  my (%seen_sources,%seen_labels,%seen_syns);
   foreach my $xref (@$xrefs) {
     my $dbname   = $xref->{'db_name'};
     my $dbkey    = $xref->{'label'};
@@ -2353,29 +2373,38 @@ sub TransLine {
       print LOG "WARNING: $tsid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
     }
     else {
+      unless ($seen_sources{$dbname}) {
+        $xml .= qq(
+    <field name="xref_source">$dbname</field>);
+      }
+      $seen_sources{$dbname} = 1;
+      $xml .= qq(
+    <field name="xref">$dbkey</field>);
       if ($dbkey =~ /^(\w+)\.\d+$/) {
         my $k = $1;
         next if $seen_labels{$k};
         $seen_labels{$dbkey} = $k;
-        push @non_versioned, $k;
+        $xml .= qq(
+    <field name="xref_non_versioned">$k</field>);
       }
-      $xml .= qq(
-    <ref dbname="$dbname" dbkey="$dbkey"/>);
       foreach my $syn (@{$xref->{'synonyms'}}) {
         next if $seen_syns{$syn};
         $seen_syns{$syn} = 1;
         $syn = &clean($syn,'syn');
         $xml .= qq(
-    <ref dbname="$dbname" dbkey="$syn"/>);
+    <field name="xref_synonym">$syn"</field>);
       }
     }
-    $cross_references{$dbname}++;
   }
-  $xml .= qq(
-  </cross_references>);
 
-  $xml .= qq(
-  <additional_fields>);
+  foreach my $xref_description (keys %{$xref_descriptions}) {
+    if ($xref_description) {
+      $xref_description = &clean($xref_description,'xref description');
+      $xml .= qq(
+    <field name="xref_description">$xref_description</field>);
+    }
+  }
+
   $xml .= &common_fields($species,'Transcript');
   $xml .= qq(
     <field name="action">Summary</field>
@@ -2386,13 +2415,6 @@ sub TransLine {
     <field name="location">$loc</field>);
   }
 
-  foreach my $xref_description (keys %{$xref_descriptions}) {
-    if ($xref_description) {
-      $xref_description = &clean($xref_description,'xref description');
-      $xml .= qq(
-    <field name="xref_description">$xref_description</field>);
-    }
-  }
   unless ($db eq 'core') {
     $xml .= qq(
     <field name="db">$db</field>);
@@ -2404,10 +2426,6 @@ sub TransLine {
   foreach my $esi (keys %$exons) {
     $xml .= qq(
     <field name="exon">$esi</field>);
-  }
-  foreach my $nv_xref (@non_versioned) {
-    $xml .= qq(
-    <field name="non_versioned">$nv_xref</field>);
   }
   $xml .= qq(
   </additional_fields>);
