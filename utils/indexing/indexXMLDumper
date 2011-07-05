@@ -719,20 +719,21 @@ sub dumpVariation {
 
       my $x = $snp_extra{$variation_id};
       if( $x ) {
+        foreach my $g ($x->[3]) {
+          foreach (split ';', $g) {
+            push @genes, $_ if $_;
+          }
+        }
         push @syns,       split ';', $x->[1];
-        push @genes,      split ';', $x->[3];
         push @syns, split ';', $x->[4];
         push @phenotypes, $x->[5] if $x->[5];
         push @studies,    split ';', $x->[2];
       }
       $desc = sprintf( "A $snp_source $type.%s%s%s",
-                       @phenotypes  ? ' Phenotypes: ' .         (join ', ', @phenotypes) . '.' : '',
+                       @phenotypes  ? ' Phenotype(s): ' .         (join ', ', @phenotypes) . '.' : '',
                        @genes       ? ' Gene Association(s): ' .(join ', ', @genes)      . '.' : '',
                        $failed_desc ? " $failed_desc."                                         : '');
       if ($somatic_mutation){
-        if ( $variation_name eq 'rs113743432') {
-          warn "$dbspecies--$variation_name--@syns--@genes--@phenotypes--@studies--$locs--$snp_source";
-        }
         &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, $locs, $snp_source, $desc, $counter2 ), $nogzip, $fh2);
       }
       else {
