@@ -98,7 +98,7 @@ sub process_data {
     
     if (my $info_text = $ghash->{'info'}) {
      # create URL
-     if ($info_text =~ /from ([a-z]+[ _][a-z]+) (gene|translation) (\w+)/i) {
+     if ($info_text =~ /from ([a-z]+[ _][a-z]+) (gene|translation) (\S+)/i) {
         $info_text_gene        = $3;
         $info_text_type        = $2;
         $info_text_common_name = ucfirst $1;
