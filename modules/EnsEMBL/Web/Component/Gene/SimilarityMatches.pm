@@ -77,9 +77,9 @@ sub matches_to_html {
   $table->add_rows(@rows);
   
   if ($count_ext_refs == 0) {
-    $html.= '<p><strong>No (selected) external database contains identifiers which correspond to Transcripts of this Gene.</strong></p>';
+    $html.= '<p><strong>No (selected) external database contains identifiers which correspond to the transcripts of this gene.</strong></p>';
   } else {
-    $html .= '<p><strong>The following database identifier' . ($count_ext_refs > 1 ? 's' : '') . ' correspond' . ($count_ext_refs > 1 ? '' : 's') . ' to Transcripts of this Gene:</strong></p>';
+    $html .= '<p><strong>The following database identifier' . ($count_ext_refs > 1 ? 's' : '') . ' correspond' . ($count_ext_refs > 1 ? '' : 's') . ' to the transcripts of this gene:</strong></p>';
     $html .= $table->render;
   }
   
