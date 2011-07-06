@@ -40,9 +40,9 @@ sub get_releases {
 sub format_release {
   my ($self, $release, $id) = @_;
 
-  my $html = qq{<option value="$release->{'id'}"};
+  my $html = qq(<option value="$release->{'id'}");
   $html   .= ' selected="selected"' if $release->{'id'} == $id;
-  $html   .= sprintf '>Release %s (%s)</option>', $release->{'id'}, $self->pretty_date($release->{'date'}, 'short');
+  $html   .= sprintf '>Release %s (%s)</option>', $release->{'id'}, $release->{'date'};
   
   return $html;
 }

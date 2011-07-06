@@ -25,7 +25,7 @@ sub render {
 
   my $adaptor = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub);
   my $release      = $adaptor->fetch_release($release_id);
-  my $release_date = $self->pretty_date($release->{'date'});
+  my $release_date = $release->{'date'};
   my $html = qq{<h2 class="first">What's New in Release $release_id ($release_date)</h2>};
 
   ## Are we using static news content output from a script?

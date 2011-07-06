@@ -20,7 +20,7 @@ sub render {
   my $release_id = $hub->param('id') || $hub->species_defs->ENSEMBL_VERSION;
   my $adaptor = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub);
   my $release      = $adaptor->fetch_release($release_id);
-  my $release_date = $self->pretty_date($release->{'date'});
+  my $release_date = $release->{'date'};
 
   $html .= qq(<h1>What's New in Release $release_id ($release_date)</h1>);
 
