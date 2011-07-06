@@ -231,6 +231,9 @@ sub pretty_date {
     ($date, $time) = split ' |T', $datetime;
     ($year, $mon, $day) = split '-', $date;
   }
+  elsif ($datetime =~ /\-/) {
+    ($year, $mon, $day) = split '-', $datetime;
+  }
   elsif ($datetime =~ /[a-zA-Z]{3}[0-9]{4}/) {
     my $mname = substr($datetime, 0, 3);
     $mon = first_index {$_ eq $mname} @short_months; 
