@@ -87,6 +87,21 @@ sub multi_species {
   }
 }
 
+sub data_table_config {
+  my ($self, $hub) = @_;
+  my $sorting = $hub->param('sorting');
+  my $hidden  = $hub->param('hidden_columns');
+  my %data    = (
+    type => 'data_table',
+    code => $hub->param('id')
+  );
+  
+  $data{'sorting'}        = "[$sorting]" if length $sorting;
+  $data{'hidden_columns'} = "[$hidden]"  if length $hidden;
+  
+  $hub->session->set_data(%data);
+}
+
 sub table_export {
   my ($self, $hub) = @_;
   my $r     = $hub->apache_handle;

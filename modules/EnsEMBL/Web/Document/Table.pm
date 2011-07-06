@@ -4,6 +4,8 @@ package EnsEMBL::Web::Document::Table;
 
 use strict;
 
+use JSON qw(from_json);
+
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
@@ -26,11 +28,14 @@ sub new {
   bless $self, $class;
 }
 
+sub hub        :lvalue { $_[0]{'hub'};        }
+sub code       :lvalue { $_[0]{'code'}        }
 sub format     :lvalue { $_[0]{'format'};     }
 sub exportable :lvalue { $_[0]{'exportable'}; }
 sub filename   :lvalue { $_[0]{'filename'};   }
 
-sub has_rows { return !!@{$_[0]->{'rows'}}; }
+sub has_rows { return !!@{$_[0]{'rows'}}; }
+sub table_id { return $_[0]{'options'}{'id'} || $_[0]{'id'}; }
 
 sub render {
   my $self = shift;
@@ -61,7 +66,9 @@ sub render {
     $table_class{$_}          = 1 for qw(data_table exportable);
     $table_class{$data_table} = 1 if $data_table =~ /[a-z]/i;
     
-    $config = $self->sort_config;
+    $self->code = join '::', [ split '::', $self->code ]->[0], $options->{'id'} if $options->{'id'};
+    
+    $config = $self->data_table_config;
   }
   
   my $class   = join ' ', keys %table_class;
@@ -88,7 +95,6 @@ sub render {
   
   $thead  = "<thead>$thead</thead>" if $thead;
   $tbody  = "<tbody>$tbody</tbody>" if $tbody;
-  $config = qq{<form class="data_table_config">$config</form>} if $config;
   
   my $table = qq{
     <table$table_id class="$class" style="width:$width;margin:$margin" cellpadding="$padding" cellspacing="$spacing">
@@ -166,26 +172,35 @@ sub csv_escape {
 }
 
 # Returns a hidden input used to configure the sorting options for a javascript data table
-sub sort_config {
-  my $self = shift;
+sub data_table_config {
+  my $self      = shift;
+  my $code      = $self->code;
+  my $col_count = scalar @{$self->{'columns'}};
   
-  return unless $self->{'options'}->{'sorting'} && scalar @{$self->{'rows'}} && scalar @{$self->{'columns'}};
+  return unless $code && scalar @{$self->{'rows'}} && $col_count;
   
-  my $i = 0;
-  my %columns = map { $_->{'key'} => [ $_->{'sort'}, $i++ ] } @{$self->{'columns'}};
-  my @config;
+  my $i            = 0;
+  my %columns      = map { $_->{'key'} => $i++ } @{$self->{'columns'}};
+  my $session_data = $self->hub->session->get_data(type => 'data_table', code => $code) || {};
+  my $sorting      = $session_data->{'sorting'} ?        from_json($session_data->{'sorting'})        : $self->{'options'}->{'sorting'} || [];
+  my $hidden       = $session_data->{'hidden_columns'} ? from_json($session_data->{'hidden_columns'}) : [];
+  my $config       = qq{<input type="hidden" name="code" value="$code" />};
+  my $sort         = [];
   
-  foreach (@{$self->{'options'}->{'sorting'}}) {
+  foreach (@$sorting) {
     my ($col, $dir) = split / /;
-    
-    if (ref $columns{$col}) {
-      push @config, [ $columns{$col}->[1], $dir ];
-      $columns{$col} = $columns{$col}->[0];
-    }
+    $col = $columns{$col} unless $col =~ /^\d+$/ && $col < $col_count;
+    push @$sort, [ $col, $dir ] if defined $col;
   }
   
-  (my $value = $self->jsonify(\@config)) =~ s/"/'/g;
-  return qq{<input type="hidden" name="aaSorting" value="$value" />};
+  if (scalar @$sort) {
+    (my $aaSorting = $self->jsonify($sort)) =~ s/"/'/g;
+    $config .= qq{<input type="hidden" name="aaSorting" value="$aaSorting" />};
+  }
+  
+  $config .= sprintf '<input type="hidden" name="hiddenColumns" value="%s" />', $self->jsonify($hidden) if scalar @$hidden;
+  
+  return qq{<form class="data_table_config">$config</form>};
 }
 
 sub process {

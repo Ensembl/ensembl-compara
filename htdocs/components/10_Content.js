@@ -309,10 +309,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       var menu       = [[],[]];
       var sDom;
       
-      var cookieId      = this.id || 'data_table' + panel.panelNumber;
-      var cookieName    = 'DT#' + (table.hasClass('toggle_table') ? '' : window.location.pathname.replace(Ensembl.speciesPath, '') + '#') + cookieId.replace(/^data_table/, '');
-      var cookieOptions = Ensembl.cookie.get(cookieName, true);
-      
       var cols = $('thead th', this).map(function () {
         var sort = this.className.match(/\s*sort_(\w+)\s*/);
         var rtn  = {};
@@ -368,13 +364,25 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
           table.not(':visible').parent().hide(); // Hide the wrapper of already hidden tables
         },
         fnDrawCallback: function (data) {
-          $('.dataTables_info, .dataTables_paginate, .dataTables_bottom', data.nTableWrapper)[data._iDisplayLength == -1 ? 'hide' : 'show']();
+          $('.dataTables_info, .dataTables_paginate, .dataTables_bottom', data.nTableWrapper)[data._iDisplayLength === -1 ? 'hide' : 'show']();
+          
+          if (data._bInitComplete !== true) {
+            return;
+          }
+          
           $(data.nTable).data('export', false);
           
-          var sort   = $.map(data.aaSorting, function (s) { return '[' + s.toString().replace(/([a-z]+)/g, '"$1"') + ']'; });
-          var hidden = $.map(data.aoColumns, function (c, j) { return c.bVisible ? null : j; });
+          var sorting = $.map(data.aaSorting, function (s) { return '"' + s.join(' ') + '"'; }).join(',');
+          var hidden  = $.map(data.aoColumns, function (c, j) { return c.bVisible ? null : j; }).join(',');
           
-          Ensembl.cookie.set(cookieName, '[' + sort.join(',') + ']' + (hidden.length ? '#' + hidden.join(',') : ''), 1, true);
+          $.ajax({
+            url: '/Ajax/data_table_config',
+            data: {
+              id: $(data.nTable).data('code'),
+              sorting: sorting,
+              hidden_columns: hidden
+            }
+          });
           
           Ensembl.EventManager.trigger('dataTableRedraw');
         }
@@ -382,31 +390,24 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       
       // Extend options from config defined in the html
       $('input', table.siblings('form.data_table_config')).each(function () {
+        if (this.name === 'code') {
+          table.data('code', this.value);
+          
+          return;
+        }
+        
         var val = JSON.parse(this.value.replace(/'/g, '"'));
         
-        if (typeof options[this.name] == 'object') {
+        if (this.name === 'hiddenColumns') {
+          $.each(val, function () {
+            options.aoColumns[this].bVisible = false;
+          });
+        } else if (typeof options[this.name] === 'object') {
           $.extend(true, options[this.name], val);
         } else {
           options[this.name] = val;
         }
       });
-      
-      // Extend options from the cookie
-      if (cookieOptions) {
-        cookieOptions = cookieOptions.replace(/#$/, '').split('#');
-        
-        var sorting = JSON.parse(cookieOptions[0]);
-        
-        if (sorting.length) {
-          options.aaSorting = $.grep(sorting, function (s) { return s[0] < cols.length; });
-        }
-        
-        if (cookieOptions[1]) {
-          $.each(cookieOptions[1].split(','), function () {
-            options.aoColumns[this].bVisible = false;
-          });
-        }
-      }
       
       $.fn.dataTableExt.oStdClasses.sWrapper = table.hasClass('toggle_table') ? 'toggleTable_wrapper' : 'dataTables_wrapper';
       
