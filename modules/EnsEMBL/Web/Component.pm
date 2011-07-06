@@ -330,9 +330,11 @@ sub new_table {
   my $table    = new EnsEMBL::Web::Document::Table(@_);
   my $filename = $hub->filename($self->object);
   
+  $table->hub        = $hub;
   $table->format     = $self->format;
   $table->exportable = $hub->url unless defined $table->exportable || $self->{'_table_count'}++;
   $table->filename   = join '-', $self->id, $filename;
+  $table->code       = $self->id . '::' . $self->{'_table_count'};
   
   $self->renderer->{'filename'} = $filename;
   
