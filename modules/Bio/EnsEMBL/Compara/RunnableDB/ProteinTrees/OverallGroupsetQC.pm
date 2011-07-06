@@ -467,6 +467,11 @@ sub quantify_mapping {
   foreach my $mapped_cluster_id (keys %{$mapping_stats{mapped}}) {
     $sum_contrib += $mapping_stats{mapped}{$mapped_cluster_id};
   }
+  if ($num_mapped_clusters == 0) {
+    $self->warning('No mapped clusters');
+    return;
+  }
+
   my $average_mapped_contribution = $sum_contrib / $num_mapped_clusters;
 
   my $proportion_novel_clusters = $num_novel_clusters/($num_novel_clusters+$num_mapped_clusters);
