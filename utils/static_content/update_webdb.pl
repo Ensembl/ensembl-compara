@@ -48,48 +48,19 @@ my $release_id = $SD->ENSEMBL_VERSION;
 my $release = $adaptor->fetch_release($release_id);
 
 if ($release) {
+    print "Release $release_id is already in the database.\n\n";
 
-    print "Release $release_id is currently scheduled for ". $release->{'date'} .".
-            Is this correct? [y/n]";
-
-    while (<STDIN>) {
-        chomp;
-        unless (/^y$/i) {
-            print "Please give the correct release date, formatted as yyyy-mm-dd:";  
-            INPUT: while (<STDIN>) {
-                chomp;
-                if (/\d{4}-\d{2}-\d{2}/) {
-                    print "Setting release date to $_\n\n";
-                    $sql = "UPDATE ens_release SET date = '$_' WHERE release_id = ?";
-                    $sth = $adaptor->db->prepare($sql);
-                    $sth->execute($release_id);
-                    last INPUT;
-                }
-                print "Sorry, that was not a valid date format.\nPlease input a date in format yyyy-mm-dd:";
-            }
-        }
-        last;
-    }
 } else {
-    if (!$date || $date !~ /\d{4}-\d{2}-\d{2}/) { 
-        # no valid date supplied, so default to 1st of next month
-        my @today = localtime(time);
-        my $year = $today[5]+1900;
-        my $nextmonth = $today[4]+2;
-        if ($nextmonth > 12) {
-            $nextmonth - 12;
-            $year++;
-        }
-        $nextmonth = sprintf "%02d", $nextmonth;
-        $date = $year.'-'.$nextmonth.'-01';
-    }
     my $archive = $SiteDefs::ARCHIVE_VERSION;
+    my $date = $hub->pretty_date($archive);
     $sql = 'INSERT INTO ens_release values(?, ?, ?, ?, ?, ?)';
     @args = ($release_id, $release_id, $date, $archive, 'Y', 'Y');
     $sth = $adaptor->db->prepare($sql);
     $sth->execute(@args);
-    print "Inserting release $release_id ($archive), scheduled for $date.\n\n";
+    print "Inserting release $release_id, scheduled for $date.\n\n";
 }
+
+print "Adding species...\n\n";
 
 # get the hash of all species in the database
 my @db_spp = @{$adaptor->fetch_all_species}; 
