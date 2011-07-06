@@ -59,7 +59,7 @@ body.ie6 .modal_title .modal_close { background-image: url(/i/cp_close.gif); }
 .modal_content p.modal_a         { margin: 10px 0; }
 .modal_content p.modal_a a       { background-color: [[MH_BG]]; color: #FFF; border: outset [[MH_BG]] 2px; text-decoration: none; padding: 2px 8px; }
 
-.modal_content .modal_nav                              { width: auto; min-width: 180px; float: left; position: relative; margin: 3px 2px 3px 3px; }
+.modal_content .modal_nav                              { width: auto; min-width: 210px; float: left; position: relative; margin: 3px 2px 3px 3px; }
 .modal_content .modal_nav .tool_buttons p              { margin: 0 -3px 0 -1px; }
 .modal_content .modal_nav div.header                   { margin-right: -2px; }
 .modal_content .modal_nav ul.local_context             { width: 100%; margin-right: 3px; }
@@ -79,12 +79,12 @@ body.ie6  .modal_content .modal_nav div.header              { width: 247px; }
 body.ie6  .modal_content .modal_nav .tool_buttons           { width: 248px; }
 body.ie6  .modal_content .modal_nav .tool_buttons p         { margin-right: 0; }
 
-#modal_default .modal_nav               { width: 190px; }
-#modal_default .modal_wrapper .panel    { margin-left: 195px; }
+#modal_default .modal_nav               { width: 210px; }
+#modal_default .modal_wrapper .panel    { margin-left: 215px; }
 #modal_default .no_local_context .panel { margin-left: 0; }
 
-body.ie6  #modal_default .modal_wrapper        { margin-left: 0; }
-body.ie6  #modal_default .modal_nav div.header { width: 187px; }
+body.ie6 #modal_default .modal_wrapper        { margin-left: 0; }
+body.ie6 #modal_default .modal_nav div.header { width: 207px; }
 
 .multi_selector_list                            { width: 48%; font-weight: normal; float: left; margin: 0 0.5%; }
 .multi_selector_list ul                         { padding: 0; margin-left: 5px; margin-right: 5px; list-style: none; }
@@ -99,5 +99,3 @@ body.ie6  #modal_default .modal_nav div.header { width: 187px; }
 .multi_selector_hint    { width: 200px; border: 1px [[CONTRAST_BORDER]] solid; padding: 4px; background-color: [[CONTRAST_BG]]; overflow: hidden; }
 .multi_selector_hint h4 { background-image: url(/i/infoicon.gif); background-repeat: no-repeat; background-position: top left; margin: 0 0 5px 10px; padding-left: 16px; }
 .multi_selector_hint p  { padding-left: 10px; }
-
-body.ie67 .multi_selector_hint { width: 240px; }
