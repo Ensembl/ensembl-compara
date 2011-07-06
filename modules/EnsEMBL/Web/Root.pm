@@ -18,6 +18,7 @@ use Data::Dumper;
 use Carp                  qw(cluck);
 use File::Path            qw(mkpath);
 use File::Spec::Functions qw(splitpath);
+use List::MoreUtils        qw(first_index);
 use HTML::Entities        qw(encode_entities);
 use JSON                  qw(to_json);
 use Text::Wrap;
@@ -221,15 +222,23 @@ sub neat_sr_name {
 # Converts a MySQL datetime field into something human-readable
 sub pretty_date {
   my ($self, $datetime, $format) = @_;
-  
-  my ($date, $time) = split ' |T', $datetime;
-  my ($year, $mon, $day) = split '-', $date;
-  
-  return '-' unless $year > 0;
 
   my @long_months  = ('', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
   my @short_months = ('', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
+ 
+  my ($date, $time, $year, $mon, $day);
+  if ($datetime =~ / /) { 
+    ($date, $time) = split ' |T', $datetime;
+    ($year, $mon, $day) = split '-', $date;
+  }
+  elsif ($datetime =~ /[a-zA-Z]{3}[0-9]{4}/) {
+    my $mname = substr($datetime, 0, 3);
+    $mon = first_index {$_ eq $mname} @short_months; 
+    $year = substr($datetime, 3, 4);
+  }
   
+  return '-' unless $year > 0;
+
   $day =~ s/^0//;
   
   if ($format && $format eq 'simple_datetime') {
@@ -243,7 +252,10 @@ sub pretty_date {
     return $long_months[$mon].' '.$day;
   }
   else {
-    return $day . ' ' . $long_months[$mon] . ' ' . $year;
+    my $pretty;
+    $pretty = "$day " if $day;
+    $pretty .= $long_months[$mon] . ' ' . $year;
+    return $pretty;
   }
 }
 
