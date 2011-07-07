@@ -1,7 +1,6 @@
 #transcripts_table { margin: 0; clear: both; }
-#locations_table   { width: 30em; }
-#locations_table td,
-#locations_table th { border-color: [[TINT_BORDER]]; width: 15em; }
+#transcripts_table tr.ss_header,
+#transcripts_table tr.ss_header th { background-color: #FFF!important; }
 
 div.summary_panel dl.summary dd         { margin-left: 9em; }
 div.summary_panel dl.summary dt         { width: 9em; }
