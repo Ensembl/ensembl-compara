@@ -1,3 +1,57 @@
+#
+# You may distribute this module under the same terms as perl itself
+#
+# POD documentation - main docs before the code
+
+=pod 
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::RunnableDB::FindSplitGenesOnTree
+
+=cut
+
+=head1 SYNOPSIS
+
+my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
+my $find_split_genes = Bio::EnsEMBL::Compara::RunnableDB::FindSplitGenesOnTree->new
+  (
+   -db         => $db,
+   -input_id   => $input_id,
+   -analysis   => $analysis
+  );
+$find_split_genes->fetch_input(); #reads from DB
+$find_split_genes->run();
+$find_split_genes->output();
+$find_split_genes->write_output(); #writes to DB
+
+=cut
+
+
+=head1 DESCRIPTION
+
+This Analysis will take a protein tree id and calcul the species intersection score, alignment overlap score, overlap, etc. 
+for each possible pair of split genes 
+
+=cut
+
+
+=head1 CONTACT
+
+  Contact Thomas Maurel on module implementation/design detail: maurel@ebi.ac.uk
+  Contact Javier Herrero on Split/partial genes in general: jherrero@ebi.ac.uk
+
+=cut
+
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods. 
+Internal methods are usually preceded with a _
+
+=cut
+
+
 package Bio::EnsEMBL::Compara::RunnableDB::FindSplitGenesOnTree;
 
 use strict;
@@ -8,12 +62,10 @@ sub fetch_input {
   my $self = shift @_;
 
   my $protein_tree_id      = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
-
   my $protein_tree_adaptor = $self->compara_dba->get_ProteinTreeAdaptor();
       # if fetch_node_by_node_id is insufficient, try fetch_tree_at_node_id
   my $protein_tree         = $protein_tree_adaptor->fetch_node_by_node_id($protein_tree_id) or die "Could not fetch protein_tree by id=$protein_tree_id";
   $self->param('protein_tree', $protein_tree);
-
   my $homology_adaptor     = $self->compara_dba->get_HomologyAdaptor();
   my $homologies           = $homology_adaptor->fetch_all_by_tree_node_id($protein_tree_id);
   $self->param('homologies', $homologies);
@@ -27,7 +79,7 @@ sub run {
 
   my $protein_tree = $self->param('protein_tree');
   my $homologies   = $self->param('homologies');
-
+  my $kingdom      = $self->param('kingdom') or '(none)';
   my @output_ids = ();
 
         # That will return a reference to an array with all homologies (orthologues in
@@ -136,6 +188,7 @@ sub run {
               'protein1_length_in_aa' => $first_aa_length,
               'alignment_length' => $length,
               'species_name' => @$these_aligned_members[$i]->genome_db->name,
+              'kingdom' => $kingdom,
             };
           }           
         }

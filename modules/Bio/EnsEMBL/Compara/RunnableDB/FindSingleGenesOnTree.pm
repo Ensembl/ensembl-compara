@@ -1,3 +1,56 @@
+#
+# You may distribute this module under the same terms as perl itself
+#
+# POD documentation - main docs before the code
+
+=pod 
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::RunnableDB::FindSingleGenesOnTree
+
+=cut
+
+=head1 SYNOPSIS
+
+my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
+my $find_single_gene = Bio::EnsEMBL::Compara::RunnableDB::FindSingleGenesOnTree->new
+  (
+   -db         => $db,
+   -input_id   => $input_id,
+   -analysis   => $analysis
+  );
+$find_single_gene->fetch_input(); #reads from DB
+$find_single_gene->run();
+$find_single_gene->output();
+$find_single_gene->write_output(); #writes to DB
+
+=cut
+
+
+=head1 DESCRIPTION
+
+This Analysis will take a protein tree id and look for single gene of a species.
+Those genes will be possible partial genes.
+
+=cut
+
+
+=head1 CONTACT
+
+  Contact Thomas Maurel on module implementation/design detail: maurel@ebi.ac.uk
+  Contact Javier Herrero on Split/partial genes in general: jherrero@ebi.ac.uk
+
+=cut
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods. 
+Internal methods are usually preceded with a _
+
+=cut
+
+
 package Bio::EnsEMBL::Compara::RunnableDB::FindSingleGenesOnTree;
 
 use strict;
@@ -19,6 +72,7 @@ sub fetch_input {
 sub run {
   my $self = shift @_; 
   my $protein_tree = $self->param('protein_tree');
+  my $kingdom = $self->param('kingdom') or '(none)';
   my @output_ids = (); 
   my @perc_pos=();
   my $first_loop=0;
@@ -59,7 +113,8 @@ foreach my $aligned_member (@single_in_tree){
     'gene_stable_id' => $aligned_member->gene_member->stable_id,
       'protein_tree_stable_id' => $protein_tree->stable_id,
       'species_name' => $aligned_member->genome_db->name,
-  };
+      'kingdom' => $kingdom,
+ };
 
 }
 $self->param('output_ids', \@output_ids);

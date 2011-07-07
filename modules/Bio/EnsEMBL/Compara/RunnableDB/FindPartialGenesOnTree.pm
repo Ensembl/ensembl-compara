@@ -1,3 +1,56 @@
+#
+# You may distribute this module under the same terms as perl itself
+#
+# POD documentation - main docs before the code
+
+=pod 
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::RunnableDB::FindPartialGenesOnTree
+
+=cut
+
+=head1 SYNOPSIS
+
+my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
+my $find_partial_genes = Bio::EnsEMBL::Compara::RunnableDB::FindPartialGenesOnTree->new
+  (
+   -db         => $db,
+   -input_id   => $input_id,
+   -analysis   => $analysis
+  );
+$find_partial_genes->fetch_input(); #reads from DB
+$find_partial_genes->run();
+$find_partial_genes->output();
+$find_partial_genes->write_output(); #writes to DB
+
+=cut
+
+
+=head1 DESCRIPTION
+
+This Analysis will take a protein tree id and calcul the coverage on core region score and  alignment overlap score, 
+in order to find possible partial gene of a tree.
+
+=cut
+
+
+=head1 CONTACT
+
+  Contact Thomas Maurel on module implementation/design detail: maurel@ebi.ac.uk
+  Contact Javier Herrero on Split/partial genes in general: jherrero@ebi.ac.uk
+
+=cut
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods. 
+Internal methods are usually preceded with a _
+
+=cut
+
+
 package Bio::EnsEMBL::Compara::RunnableDB::FindPartialGenesOnTree;
 
 use strict;
@@ -9,19 +62,18 @@ sub fetch_input {
   my $self = shift @_; 
 
   my $protein_tree_id      = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
-  my $threshold      = $self->param('threshold') or die "'threshold' is an obligatory parameter";
   my $protein_tree_adaptor = $self->compara_dba->get_ProteinTreeAdaptor();
       # if fetch_node_by_node_id is insufficient, try fetch_tree_at_node_id
   my $protein_tree         = $protein_tree_adaptor->fetch_node_by_node_id($protein_tree_id) or die "Could not fetch protein_tree by id=$protein_tree_id";
   $self->param('protein_tree', $protein_tree);
-  $self->param('threshold', $threshold);
   $self->dbc->disconnect_when_inactive(1);
 }
 
 sub run {
   my $self = shift @_; 
   my $protein_tree = $self->param('protein_tree');
-  my $threshold = $self->param('threshold');
+  my $threshold = $self->param('threshold') or die "'threshold' is an obligatory parameter";
+  my $kingdom = $self->param('kingdom') or '(none)';
   my @output_ids = (); 
   my @perc_pos=();
   my $first_loop=0;
@@ -186,12 +238,13 @@ for (my $l=0; $l<@aligned_members; $l++)
   }
 #Push all result into an array
       push @output_ids, {
-      'gene_stable_id' => $aligned_members[$l]->gene_member->stable_id,
+      'gene_stable_id' => $aligned_members[$l]->gene_member ? $aligned_members[$l]->gene_member->stable_id : 'protein_member_id='.$aligned_members[$l]->dbID(),
       'protein_tree_stable_id' => $protein_tree->stable_id,
       'coverage_on_core_regions_score' => $score_occupancy,
       'average_intersection_over_length' => $score[$l],
       'species_name' => $aligned_members[$l]->genome_db->name,
-  };
+      'kingdom' => $kingdom,
+ };
 
 #  push @output_ids, {
 #    'gene_stable_id' => $aligned_members[$l]->gene_member->stable_id,
