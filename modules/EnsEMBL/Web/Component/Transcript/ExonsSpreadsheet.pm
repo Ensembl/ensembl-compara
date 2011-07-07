@@ -133,7 +133,7 @@ sub content {
       { key => 'Sequence',   title => 'Sequence',      width => '15%', align => 'left' }
     ], 
     $data, 
-    { data_table => 'no_sort', exportable => 0 }
+    { data_table => 'no_sort', exportable => 1 }
   );
   
   my $html = $self->tool_buttons . $table->render;

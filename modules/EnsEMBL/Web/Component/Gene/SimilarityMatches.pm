@@ -25,7 +25,7 @@ sub matches_to_html {
   my @types          = @_;
   my $hub            = $self->hub;
   my $count_ext_refs = 0;
-  my $table          = $self->new_table([], [], { data_table => 'no_col_toggle', sorting => [ 'transcriptid asc' ], exportable => 0 });
+  my $table          = $self->new_table([], [], { data_table => 'no_col_toggle', sorting => [ 'transcriptid asc' ], exportable => 1 });
   my (%existing_display_names, @rows, $html);
   
   my @columns = ({

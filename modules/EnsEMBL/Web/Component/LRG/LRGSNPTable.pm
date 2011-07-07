@@ -65,7 +65,7 @@ sub make_table {
     { key => 'Transcript', sort => 'string'                                                      },
   ];
   
-  return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 0, id => "${consequence_type}_table" });
+  return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table" });
 }
 
 1;

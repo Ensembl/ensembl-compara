@@ -132,7 +132,7 @@ sub content {
       { key => 'Sequence',   title => 'Sequence',      width => '15%', align => 'left' }
     ], 
     $data, 
-    { data_table => 'no_sort', exportable => 0 }
+    { data_table => 'no_sort', exportable => 1 }
   );
 	
   my $header = '<h2>Transcript ID: '.$transcript->stable_id.'</h2>';
