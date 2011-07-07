@@ -18,34 +18,35 @@ sub content {
   my $self             = shift;
   my $hub              = $self->hub;
   my $consequence_type = $hub->param('sub_table');
-	my $icontext         = $hub->param('context') || 100;
+  my $icontext         = $hub->param('context') || 100;
   my $gene             = $self->configure($icontext);
   my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene->get_all_transcripts};
+  my ($count, $msg);
   
-  my $count;
-  $count += scalar @{$_->__data->{'transformed'}{'gene_snps'}} foreach @transcripts;
+  $count += scalar @{$_->__data->{'transformed'}{'gene_snps'}} for @transcripts;
   
-	my $msg = '';
-	if ($icontext) {
-		if ($icontext eq 'FULL') {
-			$msg = 'The <b>full</b> intronic sequence around this gene is used.';
-		}	
-		else {	
-			$msg = "Currently <b>$icontext"."bp</b> of intronic sequence is included either side of the exons.";
-		}
-		$msg .='<br />';
-	}
-	my $html = $self->_hint('snp_table','Configuring the page', qq{<p>$msg\To extend or reduce the intronic sequence, use the "<strong>Configure this page - Intron Context</strong>" link on the left.</p>});
-	
-	
+  if ($icontext) {
+    if ($icontext eq 'FULL') {
+      $msg = 'The <b>full</b> intronic sequence around this gene is used.';
+    } else {  
+      $msg = "Currently <b>$icontext"."bp</b> of intronic sequence is included either side of the exons.";
+    }
+    
+    $msg .= '<br />';
+  }
+  
+  my $html = $self->_hint('snp_table','Configuring the page', qq{<p>$msg\To extend or reduce the intronic sequence, use the "<strong>Configure this page - Intron Context</strong>" link on the left.</p>});
+  
   if ($consequence_type || $count < 25) {
     $consequence_type ||= 'ALL';
     my $table_rows = $self->variation_table($consequence_type, \@transcripts);
     my $table      = $table_rows ? $self->make_table($table_rows, $consequence_type) : undef;
+    
     return $self->render_content($table, $consequence_type);
   } else {
     my $table = $self->stats_table(\@transcripts); # no sub-table selected, just show stats
-    return $html.$self->render_content($table);
+    
+    return $html . $self->render_content($table);
   }
 }
 
@@ -53,33 +54,29 @@ sub make_table {
   my ($self, $table_rows, $consequence_type) = @_;
     
   my $columns = [
-    { key => 'ID',         sort => 'html'                                                        },
-    { key => 'chr' ,       sort => 'position',      title => 'Chr: bp'                           },
-    { key => 'Alleles',    sort => 'string',                                   align => 'center' },
-    #{ key => 'Ambiguity',  sort => 'string',                                   align => 'center' },
-    { key => 'HGVS',       sort => 'string',        title => 'HGVS name(s)',   align => 'center' },
-    { key => 'class',      sort => 'string',        title => 'Class',          align => 'center' },
-    { key => 'Source',     sort => 'string'                                                      },
-    { key => 'status',     sort => 'string',        title => 'Validation',     align => 'center' },
-    { key => 'snptype',    sort => 'string',        title => 'Type',                             },
-    { key => 'aachange',   sort => 'string',        title => 'Amino Acid',     align => 'center' },
-    { key => 'aacoord',    sort => 'position',      title => 'AA co-ordinate', align => 'center' },
+    { key => 'ID',       sort => 'html'                                                    },
+    { key => 'chr' ,     sort => 'position',  title => 'Chr: bp'                           },
+    { key => 'Alleles',  sort => 'string',                               align => 'center' },
+    { key => 'HGVS',     sort => 'string',    title => 'HGVS name(s)',   align => 'center' },
+    { key => 'class',    sort => 'string',    title => 'Class',          align => 'center' },
+    { key => 'Source',   sort => 'string'                                                  },
+    { key => 'status',   sort => 'string',    title => 'Validation',     align => 'center' },
+    { key => 'snptype',  sort => 'string',    title => 'Type',                             },
+    { key => 'aachange', sort => 'string',    title => 'Amino Acid',     align => 'center' },
+    { key => 'aacoord',  sort => 'position',  title => 'AA co-ordinate', align => 'center' },
   ];
   
   # add SIFT and PolyPhen for human
-  if($self->hub->species =~ /homo_sapiens/i) {
+  if ($self->hub->species eq 'Homo_sapiens') {
     push @$columns, (
-    { key => 'sift',       sort => 'position_html', title => 'SIFT',                             },
-    { key => 'polyphen',   sort => 'position_html', title => 'PolyPhen',                         },
+      { key => 'sift',     sort => 'position_html', title => 'SIFT'     },
+      { key => 'polyphen', sort => 'position_html', title => 'PolyPhen' },
     );
   }
   
-  # add transcript column
-  push @$columns,
-    { key => 'Transcript', sort => 'string'                                                      },
-  ;
+  push @$columns, { key => 'Transcript', sort => 'string' };
   
-  return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 0, id => "${consequence_type}_table" });
+  return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table" });
 }
 
 sub render_content {
@@ -88,10 +85,8 @@ sub render_content {
   my $html;
   
   if ($consequence_type) {
-    my $label = $consequence_type;#$Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_LABELS{$consequence_type} || 'All';
-    
     $html = qq{
-      <h2 style="float:left"><a href="#" class="toggle open" rel="$consequence_type">$label variants</a></h2>
+      <h2 style="float:left"><a href="#" class="toggle open" rel="$consequence_type">$consequence_type variants</a></h2>
       <span style="float:right;"><a href="#$self->{'id'}_top">[back to top]</a></span>
       <p class="invisible">.</p>
     };
@@ -107,7 +102,7 @@ sub render_content {
 sub stats_table {
   my ($self, $transcripts) = @_;
   
-  my $hub = $self->hub;
+  my $hub         = $self->hub;
   my $cons_format = $hub->param('consequence_format');
   
   my $columns = [
@@ -124,22 +119,20 @@ sub stats_table {
   my %labels;
   
   my @all_cons = grep {$_->feature_class =~ /transcript/i} values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-	
+  
   foreach my $con(@all_cons) {
     next if $con->SO_accession =~ /x/i;
     
     my $term = $self->select_consequence_term($con, $cons_format);
     
-    if($cons_format eq 'so') {
-      $labels{$term} = $term;
+    if ($cons_format eq 'so') {
+      $labels{$term}       = $term;
       $descriptions{$term} = $hub->get_ExtURL_link($con->SO_accession, 'SEQUENCE_ONTOLOGY', $con->SO_accession) unless $descriptions{$term};
-    }
-    elsif($cons_format eq 'ncbi') {
-      $labels{$term} = $term;
+    } elsif ($cons_format eq 'ncbi') {
+      $labels{$term}       = $term;
       $descriptions{$term} = '-';
-    }
-    else {
-      $labels{$term} = $con->label;
+    } else {
+      $labels{$term}       = $con->label;
       $descriptions{$term} = $con->description;
     }
     
@@ -156,29 +149,28 @@ sub stats_table {
     my $tr_start     = $tr->__data->{'transformed'}{'start'};
     my $tr_end       = $tr->__data->{'transformed'}{'end'};
     my $extent       = $tr->__data->{'transformed'}{'extent'};
-		
+    
     foreach (@$gene_snps) {
       my ($snp, $chr, $start, $end) = @$_;
       my $vf_id = $snp->dbID;
       my $tv = $tvs->{$vf_id};
       
-      if(defined($tv) && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
-        foreach my $tva(@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
+      if ($tv && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
+        foreach my $tva (@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
           foreach my $con (@{$tva->get_all_OverlapConsequences}) {
-            my $key = join "_", ($tr_stable_id, $vf_id, $tva->variation_feature_seq);
-            
+            my $key  = join '_', $tr_stable_id, $vf_id, $tva->variation_feature_seq;
             my $term = $self->select_consequence_term($con, $cons_format);
             
             $counts{$term}{$key} = 1 if $con;
-            $total_counts{$key} = 1;
+            $total_counts{$key}  = 1;
           }
         }
       }
     }
   }
-  my @rows;
   
   my $warning_text = qq{<span style="color:red;">(WARNING: table may not load for this number of variants!)</span>};
+  my @rows;
   
   foreach my $con (keys %descriptions) {
     if (defined $counts{$con}) {
@@ -210,35 +202,31 @@ sub stats_table {
 
   
   # add the row for ALL variations if there are any
-  if (my $total   = scalar keys %total_counts) {
-      my $url = $self->ajax_url . ';sub_table=ALL;update_panel=1';
-  
-  # create a hidden span to add so that ALL is always last in the table
-      my $hidden_span = qq{<span class="hidden">-</span>};
-  
-      my $view_html = qq{
-	  <a href="$url" class="ajax_add toggle closed" rel="ALL">
-	      <span class="closed">Show</span><span class="open">Hide</span>
-	      <input type="hidden" class="url" value="$url" />
-	      </a>
-	  };
-  
-
-      my $warning = $total > 10000 ? $warning_text : '';
-  
-      push @rows, {
-	  type  => $hidden_span . 'ALL',
-	  view  => $view_html,
-	  desc  => "All variations $warning",
-	  count => $hidden_span . $total,
-      };
+  if (my $total = scalar keys %total_counts) {
+    my $url         = $self->ajax_url . ';sub_table=ALL;update_panel=1';
+    my $hidden_span = qq{<span class="hidden">-</span>}; # create a hidden span to add so that ALL is always last in the table
+    my $warning     = $total > 10000 ? $warning_text : '';
+    my $view_html   = qq{
+      <a href="$url" class="ajax_add toggle closed" rel="ALL">
+        <span class="closed">Show</span><span class="open">Hide</span>
+        <input type="hidden" class="url" value="$url" />
+      </a>
+    };
+    
+    push @rows, {
+      type  => $hidden_span . 'ALL',
+      view  => $view_html,
+      desc  => "All variations $warning",
+      count => $hidden_span . $total,
+    };
   }
+  
   return $self->new_table($columns, \@rows, { data_table => 'no_col_toggle', sorting => [ 'type asc' ], exportable => 0 });
 }
 
 sub variation_table {
   my ($self, $consequence_type, $transcripts, $slice) = @_;
-  my $hub          = $self->hub;
+  my $hub         = $self->hub;
   my $cons_format = $hub->param('consequence_format');
   my $show_scores = $hub->param('show_scores');
   my @rows;
@@ -254,25 +242,26 @@ sub variation_table {
   
   my $base_trans_url;
   my $url_transcript_prefix;
-  unless ($self->isa('EnsEMBL::Web::Component::LRG::LRGSNPTable')) {
-      $url_transcript_prefix = 't';
-      $base_trans_url = $hub->url({
-        type   => 'Transcript',
-        action => 'Summary',
-        $url_transcript_prefix      => undef,
-    });  
+  
+  if ($self->isa('EnsEMBL::Web::Component::LRG::LRGSNPTable')) {
+    my $gene_stable_id     = $transcripts->[0] && $transcripts->[0]->gene ? $transcripts->[0]->gene->stable_id : undef;
+    $url_transcript_prefix = 'lrgt';
+    
+    $base_trans_url = $hub->url({
+      type    => 'LRG',
+      action  => 'Summary',
+      lrg     => $gene_stable_id,
+      __clear => 1
+    });
+  } else {
+    $url_transcript_prefix = 't';
+    
+    $base_trans_url = $hub->url({
+      type   => 'Transcript',
+      action => 'Summary',
+      t      => undef,
+    }); 
   }
-  else {
-      my $gene_stable_id;
-      $gene_stable_id = $transcripts->[0]->gene->stable_id if ($transcripts->[0] && $transcripts->[0]->gene);
-      $url_transcript_prefix = 'lrgt';
-      $base_trans_url = $hub->url({
-        type   => 'LRG',
-        action => 'Summary',
-        lrg    => $gene_stable_id,
-        __clear => 1
-      });
-  } 
   
   foreach my $transcript (@$transcripts) {
     my $transcript_stable_id = $transcript->stable_id;
@@ -296,7 +285,6 @@ sub variation_table {
       next unless $transcript_variation;
       
       foreach my $tva(@{$transcript_variation->get_all_alternate_TranscriptVariationAlleles}) {
-        
         my $skip = 1;
         
         if ($consequence_type eq 'ALL') {
@@ -323,17 +311,16 @@ sub variation_table {
             ($tva->pep_allele_string, sprintf('%s (%s)', $translation_start, (($transcript_variation->cdna_start - $cdna_coding_start) % 3 + 1))) : 
             ('-', '-');
           
-          my $url       = "$base_url;v=$variation_name;vf=$raw_id;source=$source";
-          my $trans_url = "$base_trans_url;$url_transcript_prefix=$transcript_stable_id";
-          
-          my $as = $snp->allele_string;
+          my $url           = "$base_url;v=$variation_name;vf=$raw_id;source=$source";
+          my $trans_url     = "$base_trans_url;$url_transcript_prefix=$transcript_stable_id";
+          my $allele_string = $snp->allele_string;
           
           # break up allele string if too long (will disrupt highlight below, but for long alleles who cares)
-          $as =~ s/(.{20})/$1\n/g;
+          $allele_string =~ s/(.{20})/$1\n/g;
           
           # highlight variant allele in allele string
-          my $vf_allele = $tva->variation_feature_seq;
-          $as =~ s/$vf_allele/<b>$&\<\/b>/ if $as =~ /\//;
+          my $vf_allele  = $tva->variation_feature_seq;
+          $allele_string =~ s/$vf_allele/<b>$&\<\/b>/ if $allele_string =~ /\//;
           
           # sort out consequence type string
           my $type = join ',<br/>', map {$self->select_consequence_label($_, $cons_format)} @{$tva->get_all_OverlapConsequences || []};
@@ -343,6 +330,7 @@ sub variation_table {
             $tva->sift_prediction || '-',
             $show_scores eq 'yes' ? $tva->sift_score : undef
           );
+          
           my $poly = $self->render_sift_polyphen(
             $tva->polyphen_prediction || '-',
             $show_scores eq 'yes' ? $tva->polyphen_score : undef
@@ -351,7 +339,7 @@ sub variation_table {
           my $row = {
             ID         => qq{<a href="$url">$variation_name</a>},
             class      => $var_class,
-            Alleles    => $as,#qq{<span style="font-family:Courier New,Courier,monospace;">$as</span>},
+            Alleles    => $allele_string,
             Ambiguity  => $snp->ambig_code,
             status     => (join(', ',  @$validation) || '-'),
             chr        => "$chr:$start" . ($start == $end ? '' : "-$end"),
@@ -408,20 +396,20 @@ sub configure {
 }
 
 sub get_hgvs {
-  
   my ($self, $tva) = @_;
   
   my $hgvs;
   my $hgvs_c = $tva->hgvs_coding;
   my $hgvs_p = $tva->hgvs_protein;
   
-  if(defined($hgvs_c)) {
+  if ($hgvs_c) {
     $hgvs_c =~ s/.{35}/$&\n/g;
-    $hgvs .= $hgvs_c;
+    $hgvs  .= $hgvs_c;
   }
-  if(defined($hgvs_p)) {
+  
+  if ($hgvs_p) {
     $hgvs_p =~ s/.{35}/$&\n/g;
-    $hgvs .= '<br/>'.$hgvs_p;
+    $hgvs  .= "<br />$hgvs_p";
   }
   
   return $hgvs;
@@ -430,13 +418,11 @@ sub get_hgvs {
 sub select_consequence_term {
   my ($self, $con, $format) = @_;
   
-  if($format eq 'so') {
+  if ($format eq 'so') {
     return $con->SO_term;
-  }
-  elsif($format eq 'ncbi') {
+  } elsif ($format eq 'ncbi') {
     return $con->NCBI_term || 'unclassified';
-  }
-  else {
+  } else {
     return $con->display_term;
   }  
 }
@@ -444,14 +430,12 @@ sub select_consequence_term {
 sub select_consequence_label {
   my ($self, $con, $format) = @_;
   
-  if($format eq 'so') {
+  if ($format eq 'so') {
     return $self->hub->get_ExtURL_link($con->SO_term, 'SEQUENCE_ONTOLOGY', $con->SO_accession);
-  }
-  elsif($format eq 'ncbi') {
+  } elsif ($format eq 'ncbi') {
     return $con->NCBI_term || 'unclassified';
-  }
-  else {
-    return '<span title="'.$con->description.'">'.$con->label.'</span>';
+  } else {
+    return sprintf '<span title="%s">%s</span>', $con->description, $con->label;
   }  
 }
 
