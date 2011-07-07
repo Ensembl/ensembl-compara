@@ -329,12 +329,13 @@ sub new_table {
   my $hub      = $self->hub;
   my $table    = new EnsEMBL::Web::Document::Table(@_);
   my $filename = $hub->filename($self->object);
+  my $options  = $_[2];
   
-  $table->hub        = $hub;
+  $table->session    = $hub->session;
   $table->format     = $self->format;
-  $table->exportable = $hub->url unless defined $table->exportable || $self->{'_table_count'}++;
+  $table->export_url = $hub->url unless defined $options->{'exportable'} || $self->{'_table_count'}++;
   $table->filename   = join '-', $self->id, $filename;
-  $table->code       = $self->id . '::' . $self->{'_table_count'};
+  $table->code       = $self->id . '::' . ($options->{'id'} || $self->{'_table_count'});
   
   $self->renderer->{'filename'} = $filename;
   
@@ -463,10 +464,9 @@ sub _matches {
   
   if ($output_as_table) {
     return $html . $self->new_table([ 
-        { key => 'dbtype', align => 'left', title => 'External database type' },
-        { key => 'dbid',   align => 'left', title => 'Database identifier'    }
-      ], \@rows, { data_table => 1, sorting => [ 'dbid asc' ], exportable => 0 }
-    )->render;
+      { key => 'dbtype', align => 'left', title => 'External database type' },
+      { key => 'dbid',   align => 'left', title => 'Database identifier'    }
+    ], \@rows, { data_table => 1, sorting => [ 'dbid asc' ], exportable => 1 })->render;
   } else {
     return "$html$list_html</table>";
   }
@@ -794,37 +794,19 @@ sub transcript_table {
       $label = qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a> - $label};
     }
     
-    my $hide = $self->hub->get_cookies('ENSEMBL_transcripts') eq 'close';
-    
-    $html .= sprintf(qq{
-      <dl class="summary">
-        <dt id="transcripts" class="toggle_button" title="Click to toggle the transcript table"><span>%s</span><em class="%s"></em></dt>
-        <dd>%s</dd>
-        <dd class="toggle_info"%s>Click the plus to show the transcript table</dd>
-      </dl>
-      <table class="toggle_table data_table fixed_width" id="transcripts_table" summary="List of transcripts for this gene - along with translation information and type"%s>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th class="sort_html">Transcript ID</th>
-            <th class="sort_numeric">Length (bp)</th>
-            <th class="sort_html">Protein ID</th>
-            <th class="sort_numeric">Length (aa)</th>
-            <th class="sort_html">Biotype</th> 
-      }, 
-      $page_type eq 'gene' ? 'Transcripts' : 'Gene',
-      $hide ? 'closed' : 'open',
-      $label,
-      $hide ? '' : ' style="display:none"',
-      $hide ? ' style="display:none"' : ''
+    my $hide    = $hub->get_cookies('ENSEMBL_transcripts') eq 'close';
+    my @columns = (
+       { key => 'name',       sort => 'string',  title => 'Name'          },
+       { key => 'transcript', sort => 'html',    title => 'Transcript ID' },
+       { key => 'bp_length',  sort => 'numeric', title => 'Length (bp)'   },
+       { key => 'protein',    sort => 'html',    title => 'Protein ID'    },
+       { key => 'aa_length',  sort => 'numeric', title => 'Length (aa)'   },
+       { key => 'biotype',    sort => 'html',    title => 'Biotype'       },
     );
-
-    $html .= '<th class="sort_html">CCDS</th>' if $species =~ /^Homo|Mus/;
-    $html .= '
-        </tr>
-      </thead>
-      <tbody>
-    ';
+    
+    push @columns, { key => 'ccds', sort => 'html', title => 'CCDS' } if $species =~ /^Homo|Mus/;
+    
+    my @rows;
     
     foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
       my $transcript_length = $_->length;
@@ -855,44 +837,47 @@ sub transcript_table {
 
       (my $biotype = $_->biotype) =~ s/_/ /g;
       
-      my $html_row .= sprintf('
-        <tr%s>
-          <td class="bold">%s</td>
-          <td><a href="%s">%s</a></td>
-          <td>%s</td>
-          <td>%s</td>
-          <td>%s</td>
-          <td>%s</td>',
-        $count == 1 || $_->stable_id eq $transcript ? ' class="active"' : '',
-        $_->display_xref ? $_->display_xref->display_id : 'Novel',
-        $url,
-        $_->stable_id,
-        $transcript_length,
-        $protein,
-        $protein_length,
-        $self->glossary_mouseover(ucfirst $biotype)
-      );
-
-      $html_row .= "<td>$ccds</td>" if $species =~ /^Homo|Mus/;
-      $html_row .= '</tr>';
+      my $row = {
+        name       => { value => $_->display_xref ? $_->display_xref->display_id : 'Novel', class => 'bold' },
+        transcript => sprintf('<a href="%s">%s</a>', $url, $_->stable_id),
+        bp_length  => $transcript_length,
+        protein    => $protein,
+        aa_length  => $protein_length,
+        biotype    => $self->glossary_mouseover(ucfirst $biotype),
+        ccds       => $ccds,
+        options    => { class => $count == 1 || $_->stable_id eq $transcript ? 'active' : '' }
+      };
       
       $biotype = '.' if $biotype eq 'protein coding';
       $biotype_rows{$biotype} = [] unless exists $biotype_rows{$biotype};
-      push @{$biotype_rows{$biotype}}, $html_row;
+      push @{$biotype_rows{$biotype}}, $row;
     }
 
     # Add rows to transcript table sorted by biotype
-    foreach my $type (sort { $a cmp $b } keys %biotype_rows) {
-      $html .= $_ for @{$biotype_rows{$type}};
-    }   
+    push @rows, @{$biotype_rows{$_}} for sort keys %biotype_rows; 
 
-    $html .= qq{
-      </tbody>
-    </table>
-    <form class="data_table_config">
-      <input type="hidden" name="asStripClasses" value="['','']" />
-      <input type="hidden" name="oSearch" value="{'sSearch':'','bRegex':false,'bSmart':false}" />
-    </form>};
+    my $table = $self->new_table(\@columns, \@rows, {
+      data_table        => 1,
+      data_table_config => { asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' } },
+      class             => 'toggle_table fixed_width',
+      id                => 'transcripts_table',
+      style             => $hide ? 'display:none' : '',
+      exportable        => 0
+    });
+    
+    $html .= sprintf(qq{
+      <dl class="summary">
+        <dt id="transcripts" class="toggle_button" title="Click to toggle the transcript table"><span>%s</span><em class="%s"></em></dt>
+        <dd>%s</dd>
+        <dd class="toggle_info"%s>Click the plus to show the transcript table</dd>
+      </dl>
+      %s}, 
+      $page_type eq 'gene' ? 'Transcripts' : 'Gene',
+      $hide ? 'closed' : 'open',
+      $label,
+      $hide ? '' : ' style="display:none"',
+      $table->render
+    );
   }
   
   return qq{<div class="summary_panel">$html</div>};
