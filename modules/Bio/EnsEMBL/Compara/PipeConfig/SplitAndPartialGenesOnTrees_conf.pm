@@ -7,11 +7,25 @@
 
 =head1 SYNOPSIS
 
-....
+#1. update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
+#2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+
+#3. make sure that all default_options are set correctly
+
+#4. Run init_pipeline.pl script:
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::SplitAndPartialGenesOnTrees -password <your_password>
+
+#5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
+
 
 =head1 DESCRIPTION  
 
-    The PipeConfig file for SplitGenesOnTrees pipeline that should automate most of the pre-execution tasks.
+    The PipeConfig file for SplitGenesAndPartialGenesOnTrees pipeline that should automate most of the pre-execution tasks.
+    Excecution of 4 analysis:
+    -> looking for split genes
+    -> looking for partial genes
+    -> getting coverage on core region of each trees
+    -> looking for unique gene of a species in a tree.
 
 =head1 CONTACT
 
@@ -114,28 +128,11 @@ sub pipeline_create_commands {
 
 }
 
-#sub pipeline_analyses {
-#    my ($self) = @_;
-#    return [
-#
-#        {   -logic_name => 'tree_factory',
-#            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTreeFactory',
-#            -parameters => {
-#                'compara_db' => $self->o('source_db'),
-#                'fan_branch_code' => 2,
-#            },
-#            -input_ids => [
-#              { },
-#            ],
-#            -flow_into => {
-#              2 => ['find_split_genes_on_tree','find_partial_genes_on_tree','coverage_on_core_region_length','find_single_genes_on_tree'],
-#            },
-#        },
 
 sub pipeline_analyses {
     my ($self) = @_;
     return [
-
+# ---------------------------------------------[Get all protein tree ids from the database]-----------------------------------------------------------------------
         {   -logic_name => 'tree_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
@@ -143,21 +140,21 @@ sub pipeline_analyses {
                 'adaptor_name'          => 'ProteinTreeAdaptor',
                 'adaptor_method'        => 'fetch_all',
                 'column_names2getters'  => { 'protein_tree_id' => 'node_id' },
+                'input_id' => { 'protein_tree_id' => '#protein_tree_id#', 'compara_db' => '#compara_db#', },
                 'fan_branch_code' => 2,
             },
             -input_ids => [
-              { },
+              {'compara_db' => $self->o('source_db'), },
             ],
             -flow_into => {
               2 => ['find_split_genes_on_tree','find_partial_genes_on_tree','coverage_on_core_region_length','find_single_genes_on_tree'],
             },
         },
-
+# ---------------------------------------------[Looking for possible split genes on each protein tree id]-----------------------------------------------------------------------
 
         {   -logic_name => 'find_split_genes_on_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindSplitGenesOnTree',
             -parameters => {
-              'compara_db' => $self->o('source_db'),
             },
             -batch_size => 25,
             -hive_capacity => 100,
@@ -166,10 +163,11 @@ sub pipeline_analyses {
             },
         },
 
+# ---------------------------------------------[Looking for possible partial genes on each protein tree id]-----------------------------------------------------------------------
+
         {   -logic_name => 'find_partial_genes_on_tree',
           -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindPartialGenesOnTree',
           -parameters => {
-            'compara_db' => $self->o('source_db'),
             'threshold' => 90,
           },
           -batch_size => 50,
@@ -180,10 +178,11 @@ sub pipeline_analyses {
           },
         },
 
+# ---------------------------------------------[Get the coverage on core region length for each trees]-----------------------------------------------------------------------
+
     {   -logic_name => 'coverage_on_core_region_length',
           -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindCoreRegionLength',
           -parameters => {
-            'compara_db' => $self->o('source_db'),
             'threshold' => 90, 
           },  
           -batch_size => 50, 
@@ -194,10 +193,11 @@ sub pipeline_analyses {
           },  
         },  
 
+# ---------------------------------------------[Find single genes of a species in each trees]-----------------------------------------------------------------------
+
     {   -logic_name => 'find_single_genes_on_tree',
       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindSingleGenesOnTree',
       -parameters => {
-        'compara_db' => $self->o('source_db'),
       },
       -batch_size => 50,
       -hive_capacity => 200,
