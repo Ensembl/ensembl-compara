@@ -86,8 +86,7 @@ sub new {
     open F, $self->file;
     $self->{'_fh'} = \*F;
   }
-  $self->_initialize;
-  return $self;
+  return $self->_initialize ? $self : undef;
 }
 
 sub _initialize {
@@ -96,8 +95,10 @@ sub _initialize {
   return undef if ($self->eof);
 
   my $fh = $self->fh;
+  my $initialized = 0;
 
   while (defined (my $line = <$fh>)) {
+    $initialized = 1;
     next if ($line =~ /^\#:lav$/);
     last if ($line =~ /^\}$/);
     
@@ -116,7 +117,7 @@ sub _initialize {
       $self->matrix($self->matrix.$line);
     }
   }
-  return $self->_parsing_initialized(1);
+  return $self->_parsing_initialized( $initialized );
 }
 
 =head2 nextAlignmemt
