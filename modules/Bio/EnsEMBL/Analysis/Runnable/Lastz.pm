@@ -101,7 +101,6 @@ sub new {
 sub run{
   my ($self, $dir) = @_;
 
-  $DB::single = 1;
   $self->workdir($dir) if($dir);
 
   throw("Can't run ".$self." without a query sequence")
@@ -126,7 +125,6 @@ sub run_analysis {
 
   my $BlastzParser;
   my $blastz_output_pipe = undef;
-              
   if($self->results_to_file) {
     if (not $self->resultsfile) {
       my $resfile = $self->create_filename("lastz", "results");
@@ -148,14 +146,17 @@ sub run_analysis {
   } else {
     info("Running lastz to pipe...\n$cmd\n");
 
-    open($blastz_output_pipe, "$cmd |") ||
+    my $stderr_file = $self->workdir()."/lastz_$$.stderr";
+
+    open($blastz_output_pipe, "$cmd 2>$stderr_file |") ||
       throw("Error opening lasts cmd <$cmd>." .
                    " Returned error $? LAST EXIT: '" .
                    ($? >> 8) . "'," ." SIGNAL '" . ($? & 127) .
                    "', There was " . ($? & 128 ? 'a' : 'no') .
                    " core dump");
+
     $BlastzParser = Bio::EnsEMBL::Analysis::Tools::Blastz->
-        new('-fh' => $blastz_output_pipe);
+        new('-fh' => $blastz_output_pipe) || print_error($stderr_file, "Unable to parse blastz_output_pipe");
   }
 
   my @results;
@@ -168,6 +169,23 @@ sub run_analysis {
   $self->output(\@results);
 }
 
+
+sub print_error {
+    my ($stderr_file, $text) = @_;
+
+    my $msg;
+    if (-e $stderr_file) {
+	print "$stderr_file\n";
+	open FH, $stderr_file or die("Unable to open $stderr_file");
+	while (<FH>) {
+	    $msg .= $_;
+	}
+	unlink($stderr_file);
+    }
+    $msg .= $text;
+
+    throw($msg);
+}
 
 #################
 # get/set methods 
