@@ -349,9 +349,17 @@ sub clear_cached_content {
   my $r     = $self->r;
   
   if ($cache && $r->headers_in->{'Cache-Control'} =~ /(max-age=0|no-cache)/ && $r->method ne 'POST') {
-    $cache->delete_by_tags($self->{'url_tag'}, $self->{'session_id'} ? "session_id[$self->{'session_id'}]" : (), $self->{'user_id'} ? "user[$self->{'user_id'}]" : ());
+    my @tags = ($self->{'url_tag'});
     
-    warn "CONTENT CACHE CLEAR: $self->{'url_tag'}, $self->{'session_id'}, $self->{'user_id'}" if $self->{'cache_debug'};
+    if ($self->request eq 'ssi') {
+      push @tags, "user[$self->{'user_id'}]" if $self->{'user_id'};
+    } else {
+      push @tags, "session_id[$self->{'session_id'}]" if $self->{'session_id'};
+    }
+    
+    $cache->delete_by_tags(@tags);
+    
+    warn 'CONTENT CACHE CLEAR: ' . (join ', ', @tags) if $self->{'cache_debug'};
   }
 }
 
