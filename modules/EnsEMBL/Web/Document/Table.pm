@@ -22,20 +22,18 @@ sub new {
     options    => $options,
     spanning   => $spanning,
     format     => 'HTML',
-    exportable => defined $options->{'exportable'} ? $options->{'exportable'} : undef
   };
   
   bless $self, $class;
 }
 
-sub hub        :lvalue { $_[0]{'hub'};        }
+sub session    :lvalue { $_[0]{'session'};    }
 sub code       :lvalue { $_[0]{'code'}        }
 sub format     :lvalue { $_[0]{'format'};     }
-sub exportable :lvalue { $_[0]{'exportable'}; }
+sub export_url :lvalue { $_[0]{'export_url'}; }
 sub filename   :lvalue { $_[0]{'filename'};   }
 
 sub has_rows { return !!@{$_[0]{'rows'}}; }
-sub table_id { return $_[0]{'options'}{'id'} || $_[0]{'id'}; }
 
 sub render {
   my $self = shift;
@@ -54,20 +52,22 @@ sub render {
   my $align       = $options->{'align'}       || 'autocenter';
   my $table_id    = $options->{'id'} ? qq{ id="$options->{'id'}"} : '';
   my $data_table  = $options->{'data_table'};
-  my %table_class = (
-    ss     => 1,
-    $align => 1,
-    map { $_ => 1 } split(' ', $options->{'class'})
-  );
+  my %table_class = map { $_ => 1 } split ' ', $options->{'class'};
+  
+  if ($table_class{'fixed_width'}) {
+    $width = 'auto';
+    $align = '';
+  }
+  
+  $table_class{$align} = 1 if $align;
+  $table_class{'ss'}   = 1;
   
   my $config;
   
   if ($data_table) {
-    $table_class{$_}          = 1 for qw(data_table exportable);
-    $table_class{$data_table} = 1 if $data_table =~ /[a-z]/i;
-    
-    $self->code = join '::', [ split '::', $self->code ]->[0], $options->{'id'} if $options->{'id'};
-    
+    $table_class{'data_table'} = 1;
+    $table_class{$data_table}  = 1 if $data_table =~ /[a-z]/i;
+    $table_class{'exportable'} = 1 unless $options->{'exportable'} eq '0';
     $config = $self->data_table_config;
   }
   
@@ -97,7 +97,7 @@ sub render {
   $tbody  = "<tbody>$tbody</tbody>" if $tbody;
   
   my $table = qq{
-    <table$table_id class="$class" style="width:$width;margin:$margin" cellpadding="$padding" cellspacing="$spacing">
+    <table$table_id class="$class" style="width:$width;margin:$margin;$options->{'style'}" cellpadding="$padding" cellspacing="$spacing">
       $thead
       $tbody
     </table>
@@ -117,7 +117,7 @@ sub render {
     };
   }
     
-  $table .= sprintf qq{<div class="other_tool"><p><a class="export" href="%s;_format=Excel" title="Download all tables as CSV">Download view as CSV</a></p></div>}, $self->exportable if $self->exportable;
+  $table .= sprintf qq{<div class="other_tool"><p><a class="export" href="%s;_format=Excel" title="Download all tables as CSV">Download view as CSV</a></p></div>}, $self->export_url if $self->export_url;
   
   # A wrapper div is needed for data tables so that export and config forms can be found by checking the table's siblings
   if (defined $wrapper) {
@@ -181,7 +181,7 @@ sub data_table_config {
   
   my $i            = 0;
   my %columns      = map { $_->{'key'} => $i++ } @{$self->{'columns'}};
-  my $session_data = $self->hub->session->get_data(type => 'data_table', code => $code) || {};
+  my $session_data = $self->session->get_data(type => 'data_table', code => $code) || {};
   my $sorting      = $session_data->{'sorting'} ?        from_json($session_data->{'sorting'})        : $self->{'options'}->{'sorting'} || [];
   my $hidden       = $session_data->{'hidden_columns'} ? from_json($session_data->{'hidden_columns'}) : [];
   my $config       = qq{<input type="hidden" name="code" value="$code" />};
@@ -200,6 +200,11 @@ sub data_table_config {
   
   $config .= sprintf '<input type="hidden" name="hiddenColumns" value="%s" />', $self->jsonify($hidden) if scalar @$hidden;
   
+  foreach (keys %{$self->{'options'}{'data_table_config'}}) {
+    (my $val = $self->jsonify($self->{'options'}{'data_table_config'}{$_})) =~ s/"/'/g;
+    $config .= qq{<input type="hidden" name="$_" value="$val" />};
+  }
+  
   return qq{<form class="data_table_config">$config</form>};
 }
 
@@ -212,8 +217,8 @@ sub process {
   foreach my $col (@$columns) {
     my %style = $col->{'style'} ? ref $col->{'style'} eq 'HASH' ? %{$col->{'style'}} : map { s/(^\s+|\s+$)//g; split ':' } split ';', $col->{'style'} : ();
     
-    $style{'text-align'} ||= $col->{'align'};
-    $style{'width'}      ||= $col->{'width'};
+    $style{'text-align'} ||= $col->{'align'} if $col->{'align'};
+    $style{'width'}      ||= $col->{'width'} if $col->{'width'};
     
     $col->{'style'}  = join ';', map { join ':', $_, $style{$_} } keys %style;
     $col->{'class'} .= ($col->{'class'} ? ' ' : '') . "sort_$col->{'sort'}" if $col->{'sort'};
