@@ -71,7 +71,7 @@ sub content {
         my $f_end = ($object_slice->start + $f->end) -1;
         my $location = $f->slice->seq_region_name .":".$f_start ."-" . $f_end;
         my $row = {
-          'type'      => 'Other',
+          'type'      => 'Hists & Pols',
           'location'  => $location,
           'feature'   => $feature_name,
           'cell'      => $cell_line
