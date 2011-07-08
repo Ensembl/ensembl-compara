@@ -54,7 +54,7 @@ sub content {
     $action  = $part2;
   }
 
-  my (%archive, %assemblies, $genebuilds, @links);
+  my (%archive, %assemblies, $initial_sets, $latest_sets, @links);
   my $count = 0;
   
   ## NB: we create an array of links in ascending date order so we can build the
@@ -63,7 +63,8 @@ sub content {
   if ($species) {
     %archive = %{$hub->species_defs->get_config($species, 'ENSEMBL_ARCHIVES')||{}};
     %assemblies = %{$hub->species_defs->get_config($species, 'ASSEMBLIES')||{}};
-    $genebuilds = $hub->species_defs->get_config($species, 'GENEBUILDS')||{};
+    $initial_sets = $hub->species_defs->get_config($species, 'INITIAL_GENESETS')||{};
+    $latest_sets = $hub->species_defs->get_config($species, 'LATEST_GENESETS')||{};
     
     my @A = keys %archive;
 
@@ -73,7 +74,7 @@ sub content {
       if ($type =~ /\.html/ || $action =~ /\.html/) {
         foreach my $release (sort keys %archive) {
           next if $release == $hub->species_defs->ENSEMBL_VERSION;
-          push @links, $self->_output_link(\%archive, $release, $url, $assemblies{$release}, $genebuilds);
+          push @links, $self->_output_link(\%archive, $release, $url, $assemblies{$release}, $initial_sets, $latest_sets);
           $count++;
         }
       }
@@ -84,10 +85,10 @@ sub content {
           next if $release == $hub->species_defs->ENSEMBL_VERSION;
           
           if ($release > 50) {
-            push @links, $self->_output_link(\%archive, $release, $url, $assemblies{$release}, $genebuilds);
+            push @links, $self->_output_link(\%archive, $release, $url, $assemblies{$release}, $initial_sets, $latest_sets);
           } else {
             $url = $species.'/index.html';
-            push @links, $self->_output_link(\%archive, $release, $url, $assemblies{$release}, $genebuilds);
+            push @links, $self->_output_link(\%archive, $release, $url, $assemblies{$release}, $initial_sets, $latest_sets);
           }
           $count++;
         }
@@ -113,7 +114,7 @@ sub content {
             $url = "$species/" . ($old_url || $old_view) . $old_params if $poss_release < 51;
           }
           
-          push @links, $self->_output_link(\%archive, $poss_release, $url, $assemblies{$poss_release}, $genebuilds) if $release_happened;
+          push @links, $self->_output_link(\%archive, $poss_release, $url, $assemblies{$poss_release}, $initial_sets, $latest_sets) if $release_happened;
           $count++ unless $missing;
         }
       }
@@ -154,22 +155,36 @@ sub content {
 }
 
 sub _output_link {
-  my ($self, $archive, $release, $url, $assembly, $genebuilds) = @_;
+  my ($self, $archive, $release, $url, $assembly, $initial_sets, $latest_sets) = @_;
   
   my $sitename = $self->hub->species_defs->ENSEMBL_SITETYPE;
   my $date  = $archive->{$release};
   my $month = substr $date, 0, 3;
   my $year  = substr $date, 3, 4;
- 
-  my $current_genebuild = $genebuilds->{$release};
-  my $previous_genebuild = $genebuilds->{$release-1};
+
+  my $release_date = $month.' '.$year;
+  my $initial_geneset = $initial_sets->{$release} || ''; 
+  my $current_geneset = $latest_sets->{$release} || '';
+  my $previous_geneset = $latest_sets->{$release-1} || '';
+  #warn "\n>>> release $release = $release_date";
+  #warn ">>> initial $initial_geneset";
+  #warn ">>> current $current_geneset";
+  #warn "<<< previous $previous_geneset";
  
   my $string = qq(<li><a href="http://$date.archive.ensembl.org/$url" class="cp-external">$sitename $release: $month $year</a>);
   if ($assembly) {
     $string .= sprintf ' (%s)', $assembly;
   }
-  if ($current_genebuild && $previous_genebuild && $current_genebuild ne $previous_genebuild) {
-    $string .= sprintf ' - new genebuild %s', $current_genebuild;
+
+  if ($current_geneset) {
+    if ($current_geneset eq $initial_geneset) {
+      $string .= sprintf ' - new genebuild %s', $current_geneset;
+    }
+    else {
+      if ($current_geneset ne $previous_geneset) {
+        $string .= sprintf ' - patched/updated gene set %s', $current_geneset;
+      }
+    }
   }
   $string .= '</li>';
   return $string;
