@@ -15,6 +15,7 @@ package EnsEMBL::Web::Object::Export;
 
 use strict;
 
+use Data::Dumper;
 use Bio::AlignIO;
 use IO::String;
 
@@ -102,8 +103,13 @@ sub config {
         [ 'bed',  'BED Format' ],
       ],
       params => [
+        [ 'variation',  'Variation features' ],
+        [ 'probe',      'Probe features' ],
+        [ 'gene',       'Gene information' ],
+        [ 'repeat',     'Repeat features' ],
+        [ 'similarity', 'Similarity features' ],
+        [ 'genscan',    'Prediction features (genscan)' ],
         [ 'userdata',  'Uploaded Data' ],
-        [ 'description', 'Track name & Description' ],
       ]
     },
 #     PSL => {
@@ -493,7 +499,7 @@ sub features {
     delim         => $format eq 'csv' ? ',' : "\t"
   };
   
-  $self->string(join $self->{'config'}->{'delim'}, @common_fields, @extra_fields) unless $format eq 'gff';
+  if($format ne 'bed'){$self->string(join $self->{'config'}->{'delim'}, @common_fields, @extra_fields) unless $format eq 'gff';}
   
   if ($params->{'similarity'}) {
     foreach (@{$slice->get_all_SimilarityFeatures}) {
@@ -586,31 +592,19 @@ sub bed {
   my $config = $self->{'config'}; 
   my (%vals, @column, $trackname);
 
-  my $title = 'Browser position chr'.$slice->seq_region_name.': '.$slice->start.'-'.$slice->end;
-  $self->string(join "\t", $title);
-#  my $track_description = qq{Track name= description="$f->{'description'}"};
-#  $self->string(join "\t", $track_description);  
-  
-#displaying the basic bed file (name, start, end)
-  foreach my $t (@{$slice->get_all_PredictionTranscripts}) {
-    foreach my $feature (@{$t->get_all_Exons}) {
-      if ($feature->can('seq_region_name')) {
-        %vals = (
-          chrom  => 'chr'.$feature->seq_region_name,
-          start  => $feature->seq_region_start,
-          end    => $feature->seq_region_end,          
-        );
-      } else {
-        %vals = (
-          chrom  => $feature->can('entire_seq') && $feature->entire_seq ? $feature->entire_seq->name : $feature->can('seqname') ? $feature->seqname : undef,
-          start  => $feature->can('start') ? $feature->start : undef,
-          end    => $feature->can('end') ? $feature->end : undef,          
-        );
-      }
-      @column = qw(chrom start end);
-      my @results = map { $vals{$_} =~ s/ /_/g; $vals{$_} } @column;  
-      $self->string(join $self->{'config'}->{'delim'}, @results);      
-    }
+  my $types_to_print = {};
+  foreach my $bed_option (@{ $self->config->{'bed'}->{'params'}}){
+    my ($bed_option_key,$bed_option_desc) = @$bed_option;
+    next unless $params->{$bed_option_key};
+    $types_to_print->{$bed_option_key} = $bed_option_desc;
+    $params->{$bed_option_key} = 0;
+  }
+  foreach my $type(keys %$types_to_print){
+    $params->{$type} = 1;
+    $self->string(sprintf('track name=%s description="%s"',$type,$types_to_print->{$type}));
+    $self->features('bed');
+    $params->{$type} = 0;
+    $self->string("");
   }
   
   #get data from files user uploaded if any and display   
@@ -628,13 +622,12 @@ sub bed {
            $self->string(join $self->{'config'}->{'delim'}, $title);
               
            if($params->{'description'}){
-             my $track_description .= qq{Track name=$trackname description="$f->{'description'}" useScore=$f->{'usescore'} color=$f->{'color'}};
-             $self->string(join $self->{'config'}->{'delim'}, $track_description);
+             $self->string(sprintf("track name=%s description=%s useScore=%s color=%s",
+               $trackname,$f->{'description'},$f->{'usescore'},$f->{'color'}));
            }
          }
          $f->{strand} = ($f->{strand} eq -1) ? '-' : '+';
-         my $string = qq{chr$f->{seqname}   $f->{start}   $f->{end}   $f->{bedname}   $f->{score}   $f->{strand}    $f->{extra_data}->{thick_start}[0]   $f->{extra_data}->{thick_end}[0]   $f->{extra_data}->{item_color}[0]    $f->{extra_data}->{BlockCount}[0]    $f->{extra_data}->{BlockSizes}[0]    $f->{extra_data}->{BlockStart}[0]};
-         $self->string(join $self->{'config'}->{'delim'}, $string);
+         $self->string(join("\t",map {$f->{$_}} qw/seqname start end bedname score strand thick_start thick_end item_color BlockCount BlockSizes BlockStart/));
        }
    }
 }
@@ -777,6 +770,7 @@ sub gff3_features {
 sub feature {
   my ($self, $type, $feature, $attributes, $properties) = @_;
   my $config = $self->{'config'};
+  my $format = $config->{'format'};
   
   my (%vals, @mapping_result);
   
@@ -795,12 +789,18 @@ sub feature {
       strand => $feature->can('strand') ? $feature->strand : undef
     );
   }   
-  @mapping_result = qw(seqid source type start end score strand phase);
+  if($format eq 'bed'){
+    @mapping_result = qw(seqid start end name score strand);
+    $vals{'name'} = $feature->display_id;
+  }
+  else {
+    @mapping_result = qw(seqid source type start end score strand phase);
+  }
   %vals = (%vals, (
      type   => $type || ($feature->can('primary_tag') ? $feature->primary_tag : '.sdf'),
      source => $feature->can('source_tag') ? $feature->source_tag  : $feature->can('source') ? $feature->source : 'Ensembl',
      score  => $feature->can('score') ? $feature->score : '.',
-     phase  => '.'
+     phase  => '.',
    ));   
   
   # Overwrite values where passed in
@@ -822,15 +822,15 @@ sub feature {
   
   my @results = map { $vals{$_} =~ s/ /_/g; $vals{$_} } @mapping_result;
 
-  if ($config->{'format'} eq 'gff') {
+  if ($format eq 'gff') {
     push @results, join ';', map { defined $attributes->{$_} ? "$_=$attributes->{$_}" : () } @{$config->{'extra_fields'}};
   } elsif ($config->{'format'} eq 'gff3') {
     push @results, join ';', map { "$_=" . $self->escape_attribute($attributes->{$_}) } $self->order_attributes($type, $attributes);
-  } else {
+  } elsif($format ne 'bed'){
     push @results, map { $attributes->{$_} } @{$config->{'extra_fields'}};
   }
   
-  if ($config->{'format'} eq 'gff3') {
+  if ($format eq 'gff3') {
     $config->{'feature_order'}->{$type} ||= ++$config->{'feature_type_count'};
     $self->output($type, join "\t", @results);
   } else {
