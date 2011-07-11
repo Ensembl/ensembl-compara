@@ -18,8 +18,7 @@ sub init {
   $defaults->{$_}              = 0 for qw(flank5_display flank3_display);
   $defaults->{"fasta_$_"}      = 'yes' for qw(cdna coding peptide utr5 utr3 exon intron);
   $defaults->{"gff3_$_"}       = 'yes' for qw(gene transcript exon intron cds);
-  $defaults->{"bed_$_"}        = 'yes' for qw(variation);
-  $defaults->{"bed_$_"}        = 'no'  for qw(similarity repeat genscan gene userdata);
+  $defaults->{"bed_$_"}        = 'yes'  for qw(variation similarity repeat genscan gene userdata);
   $defaults->{"gtf_$_"}        = 'yes' for qw(similarity repeat genscan contig variation marker gene vegagene estgene);
 #  $defaults->{"psl_$_"}       = 'yes' for qw();
   $defaults->{"phyloxml_$_"}   = 'yes' for qw(cdna aligned);
