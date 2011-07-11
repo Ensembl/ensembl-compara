@@ -66,6 +66,12 @@ sub init {
         $self->add_sheet($media, $cont);
       }
     }
+    
+    while ($head =~ s/<link (.*?)\s*\/>//sm) {
+      my %attrs = map { s/"//g; split '=' } split ' ', $1;
+      next unless $attrs{'rel'} eq 'stylesheet';
+      $self->add_sheet($attrs{'media'} || 'all', $attrs{'href'}) if $attrs{'href'};
+    }
   }
 }
 
