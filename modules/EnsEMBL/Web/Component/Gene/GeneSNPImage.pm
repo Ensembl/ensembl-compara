@@ -39,6 +39,7 @@ sub content {
   }
   
   $object->get_gene_slices(
+    $image_configs->{'gene'},
     [ 'gene',        'normal', '33%'   ],
     [ 'transcripts', 'munged', $extent ]
   );

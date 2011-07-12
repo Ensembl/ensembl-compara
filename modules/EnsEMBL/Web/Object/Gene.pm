@@ -757,13 +757,13 @@ sub get_GeneTree {
 }
 
 sub get_gene_slices {
-  my ($self, @slice_configs) = @_;
+  my ($self, $master_config, @slice_configs) = @_;
   foreach my $array (@slice_configs) { 
     if ($array->[1] eq 'normal') {
       my $slice = $self->get_Slice($array->[2], 1); 
       $self->__data->{'slices'}{$array->[0]} = [ 'normal', $slice, [], $slice->length ];
     } else { 
-      $self->__data->{'slices'}{$array->[0]} = $self->get_munged_slice($array->[2], 1);
+      $self->__data->{'slices'}{$array->[0]} = $self->get_munged_slice($master_config, $array->[2], 1);
     }
   }
 }
@@ -904,14 +904,15 @@ sub munge_gaps {
 }
 
 sub get_munged_slice {
-  my $self      = shift;
-  my $slice     = $self->get_Slice(@_);
-  my $stable_id = $self->stable_id;
-  my $length    = $slice->length; 
-  my $munged    = '0' x $length;
-  my $context   = $self->param('context') || 100;
-  my $extent    = $context eq 'FULL' ? 1000 : $context;
-  my $features  = $slice->get_all_Genes(undef, $self->param('opt_db'));
+  my $self          = shift;
+  my $master_config = ref($_[0]) =~ /ImageConfig/ ? shift : undef;
+  my $slice         = $self->get_Slice(@_);
+  my $stable_id     = $self->stable_id;
+  my $length        = $slice->length; 
+  my $munged        = '0' x $length;
+  my $context       = $self->param('context') || 100;
+  my $extent        = $context eq 'FULL' ? 1000 : $context;
+  my $features      = $slice->get_all_Genes(undef, $self->param('opt_db'));
   my @lengths;
   
   if ($context eq 'FULL') {
@@ -952,9 +953,9 @@ sub get_munged_slice {
 
   # compute the width of the slice image within the display
   my $pixel_width =
-    ($self->param('image_width') || 800) -
-    ($self->param('label_width') || 100) -
-    ($self->param('margin')      || 5) * 3;
+    ($master_config ? $master_config->get_parameter('image_width') : 800) - 
+    ($master_config ? $master_config->get_parameter('label_width') : 100) -
+    ($master_config ? $master_config->get_parameter('margin')      :   5) * 3;
 
   # Work out the best size for the gaps between the "exons"
   my $fake_intron_gap_size = 11;

@@ -368,6 +368,7 @@ sub configure {
   my $extent = $context eq 'FULL' ? 1000 : $context;
   
   $object->get_gene_slices(
+    undef,
     [ 'context',     'normal', '100%'  ],
     [ 'gene',        'normal', '33%'   ],
     [ 'transcripts', 'munged', $extent ]

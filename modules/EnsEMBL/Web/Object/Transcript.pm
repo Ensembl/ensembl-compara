@@ -516,17 +516,19 @@ sub get_transcript_slices {
     my $slice = $self->get_transcript_Slice($slice_config->[2], 1);
     return [ 'normal', $slice, [], $slice->length ];
   } else {
-    return $self->get_munged_slice($slice_config->[2], 1);
+    return $self->get_munged_slice($slice_config->[0], $slice_config->[2], 1);
   }
 }
 
 # TSV/TSE
 sub get_munged_slice {
-  my $self        = shift;
-  my $slice       = $self->get_transcript_Slice(@_); # pushes it onto forward strand, expands if necc.
-  my $length      = $slice->length;
-  my $munged      = '0' x $length;                   # Munged is string of 0, length of slice
-  my $extent      = $self->param('context');         # Context is the padding around the exons in the fake slice
+  my $self          = shift;
+  my $config_name   = shift;
+  my $master_config = $self->get_imageconfig($config_name eq 'tsv_transcript' ? 'TranscriptSNPView' : $config_name);
+  my $slice         = $self->get_transcript_Slice(@_); # pushes it onto forward strand, expands if necc.
+  my $length        = $slice->length;
+  my $munged        = '0' x $length;                   # Munged is string of 0, length of slice
+  my $extent        = $self->param('context');         # Context is the padding around the exons in the fake slice
   my @lengths;
   
   if ($extent eq 'FULL') {
@@ -565,9 +567,9 @@ sub get_munged_slice {
   
   # compute the width of the slice image within the display
   my $pixel_width =
-    $self->param('image_width') -
-    ($self->param('label_width') || 100) -
-    ($self->param('margin')      ||   5) * 3;
+    ($master_config->get_parameter('image_width') || 800) - 
+    ($master_config->get_parameter('label_width') || 100) -
+    ($master_config->get_parameter('margin')      ||   5) * 3;
 
   # Work out the best size for the gaps between the "exons"
   my $fake_intron_gap_size = 11;
