@@ -4,17 +4,13 @@ package EnsEMBL::Web::Controller::Doxygen;
 
 use strict;
 
-use Apache2::Const qw(:common :methods :http);
-
-use SiteDefs qw(:APACHE);
-
 use base qw(EnsEMBL::Web::Controller::SSI);
 
 sub content {
   my $self = shift;
   
   if (!$self->{'content'}) {
-    # Read html file into memory to parse out SSI directives.
+    # Read html file into memory
     {
       local($/) = undef;
       open FH, $self->r->filename;
