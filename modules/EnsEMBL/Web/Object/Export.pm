@@ -807,6 +807,7 @@ sub feature {
      score  => $feature->can('score') ? $feature->score : '.',
      phase  => '.'
    ));   
+  if($format eq 'bed' && $vals{'score'} eq '.'){$vals{'score'}='0';}
   
   # Overwrite values where passed in
   foreach (keys %$properties) {
@@ -822,7 +823,7 @@ sub feature {
   }
   
   $vals{'phase'}    = '.' if $vals{'phase'} == -1;
-  $vals{'strand'} ||= '.';
+  $vals{'strand'} = '.' unless defined $vals{'strand'};
   $vals{'seqid'}  ||= 'SEQ';
   
   my @results = map { $vals{$_} =~ s/ /_/g; $vals{$_} } @mapping_result;
