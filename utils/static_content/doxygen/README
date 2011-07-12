@@ -1,0 +1,60 @@
+Doxygen-based Ensembl API documentation generator
+
+Contact ktaylor@ebi.ac.uk for assistance (June 2011)
+---------------------------------------------------
+Short version:
+
+Update the various docbuild files to include up to date version numbers and paths.
+Run go-api.sh to do the complete build. It may take up to 2 hours, but is faster on
+a rerun.
+---------------------------------------------------
+
+Long version for the script-averse:
+
+Three components are required:
+
+Doxygen (1.7.4 works well)
+	- built from source bundle, using configure options to keep it in /software/ensembl/doxygen
+	- if Doxygen is significantly updated, generate fresh layout.xml, header.html, footer.html, customdoxygen.css, and docbuild files, then add present configuration to them.
+	- doxygen binary is in /software/ensembl/doxygen/bin
+
+DoxygenFilter (1.10)
+	- available from http://www.bigsister.ch/doxygenfilter/
+	- binary goes with doxygen binary, perl libraries go into lib/site-perl/5.8.8/DoxyGen
+	- add the Perl lib folder to the PERL5LIB environment variable.
+
+Custom filter (from ensembl CVS: ensembl-personal/ktaylor/doxygenfilter/)
+	- copy directly over ModifiedPerlFilter.pm file into the lib folder above. Rename ModifiedPerlFilter.pm to PerlFilter.pm
+	- consider using the layout.xml, html templates and so forth from the CVS checkout
+
+--------------------------------------------------------
+
+Runtime:
+
+Check main configuration options held in *****_docbuild where ***** is the part of the Ensembl codebase. Key parameters in the docbuild file are:
+
+PROJECT_NUMBER
+OUTPUT_DIRECTORY (location for html to go in html/ subfolder
+STRIP_FROM_PATH (to remove the leading parts of the path from the filenames in the documentation)
+INPUT (path to root of source code to be processed)
+EXCLUDE (so that test suites are not processed)
+INPUT_FILTER (should say doxygenfilter)
+GENERATE_HTML
+
+If cross-references between e.g. funcgen and core are not showing, check GENERATE_TAGFILE and TAGFILES
+
+Run the build on core first, then hive, then the rest. This allows cross-referencing.
+
+----------------------------------------------------------
+
+Dealing with errors:
+
+The *****_error.log files contain the errors from the build process. Many are innocuous, such as "warning: found */ without matching /* while inside a \code block!". Regular expressions in the code can look a lot like the end of comments.
+
+The line numbers given refer to the post-processed Perl module, so use the test.pl script that was bundled with the modified Perl filter to process the source to see what is wrong.
+
+Other innocuous errors include "explicit link request to ... could not be resolved" and "warning: Unsupported xml/html tag".
+
+"File ended in the middle of a comment block!" and "warning: documented function `public Arrayref results_file' was not declared or defined" can be indicative of bad POD in the source code.
+
+
