@@ -45,7 +45,7 @@
 #doxygen a.qindexHL { font-weight: bold; background-color: #9CAFD4; color: #ffffff; border: 1px double #869DCA; }
 #doxygen .contents a.qindexHL:visited { color: #ffffff; }
 #doxygen a.el { font-weight: bold; }
-#doxygen a.code { color: #4665A2; }
+#doxygen a.code { color: #4665A2; border: 0; background: 0; margin: 0; padding: 0; }
 #doxygen a.codeRef { color: #4665A2; }
 
 /* @end */
