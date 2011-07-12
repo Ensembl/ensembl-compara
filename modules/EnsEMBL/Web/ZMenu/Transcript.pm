@@ -15,7 +15,6 @@ sub content {
   my $translation = $transcript->translation;
   my @xref        = $object->display_xref;
   $self->caption($xref[0] ? "$xref[3]: $xref[0]" : !$object->gene ? $stable_id : 'Novel transcript');
-  
   $self->add_entry({
     type  => 'Transcript',
     label => $stable_id, 
@@ -82,7 +81,7 @@ sub content {
       label => $self->thousandify($translation->length)
     });
   }
-  
+
   if ($object->analysis) {
     my $label = $transcript->analysis->display_label . ' Transcript';
     $self->add_entry({
@@ -91,7 +90,7 @@ sub content {
     });
 
     $self->add_entry({
-      label_html => $object->analysis->description
+      label_html => $transcript->analysis->description
     });
   }
 }
