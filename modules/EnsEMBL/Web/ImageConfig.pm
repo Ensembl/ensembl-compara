@@ -50,6 +50,7 @@ sub new {
     _tree            => new EnsEMBL::Web::Tree,
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene)],
     _parameters      => { # Default parameters
+      image_width => $ENV{'ENSEMBL_IMAGE_WIDTH'} || 800,
       margin      => 5,
       spacing     => 2,
       label_width => 113,
