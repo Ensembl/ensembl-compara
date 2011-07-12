@@ -417,18 +417,17 @@ sub write_base_frame {
 sub write_frameset {
   ### Writes the frameset for the e! doc collection.
   my $self = shift;
-  open (my $fh, ">", $self->location . "/index.html");
-  print $fh qq(
+  
+  open FH, '>', $self->location . '/iframe.html';
+  print FH '
     <!--#set var="decor" value="none"-->
     <html>
     <head>
       <title>e! doc</title>
     </head>
-
     <frameset rows="25%, 75%">
     <frameset cols="50%,50%">
         <frame src="package.html" title="e! doc" name="packages">
-
         <frame src="methods.html"  name="methods">
     </frameset>
     <frame src="base.html" name="base">
@@ -438,9 +437,26 @@ sub write_frameset {
           </body>
     </noframes>
     </frameset>
-
     </html>
-  );
+  ';
+  
+  close FH;
+  
+  open FH, '>', $self->location . '/index.html';
+  print FH '
+    <html>
+    <head>
+      <title>e! doc</title>
+    </head>
+    <body>
+    <div id="static">
+      <iframe src="iframe.html" id="pdoc_iframe" width="100%" height="1000px"></iframe>
+    </div>
+    </body>
+    </html>
+  ';
+  
+  close FH;
 }
 
 sub link_for_method {
@@ -478,7 +494,7 @@ sub html_header {
 <html>
   <head>
     <title>e! doc</title>
-    <script type="text/javascript" src="/components/01_prototype_plus_bits_of_scriptaculous.js"></script>
+    <script type="text/javascript" src="/components/00_jquery.js"></script>
 	  <script type="text/javascript" src="/edoc.js"></script>
     <link href="/edoc.css" rel="stylesheet" type="text/css" media="all" />
   </head>
