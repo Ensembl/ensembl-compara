@@ -1,16 +1,18 @@
 $(function () {
-  var doxygenBreadcrumbs = $('#nav-path').find('li').removeClass();
-  var breadcrumbs        = $('#main').children('.breadcrumbs');
-  
-  breadcrumbs.append('<li><a href="' + window.location.href.replace(/(.+)\/.+\.html/, '$1/index.html') +'">' + document.title.split(':')[0] + '</a></li>');
-  
-  if (doxygenBreadcrumbs.length) {
-    breadcrumbs.append(doxygenBreadcrumbs);
+  if (window.location.href.indexOf('Doxygen') !== -1) {
+    var doxygenBreadcrumbs = $('#nav-path').find('li').removeClass();
+    var breadcrumbs        = $('#main').children('.breadcrumbs');
+    
+    breadcrumbs.append('<li><a href="' + window.location.href.replace(/(.+)\/.+\.html/, '$1/index.html') +'">' + document.title.split(':')[0] + '</a></li>');
+    
+    if (doxygenBreadcrumbs.length) {
+      breadcrumbs.append(doxygenBreadcrumbs);
+    }
+    
+    breadcrumbs.find('li.last').removeClass('last').siblings(':last').addClass('last');
+    
+    breadcrumbs = doxygenBreadcrumbs = null;
   }
-  
-  breadcrumbs.find('li.last').removeClass('last').siblings(':last').addClass('last');
-  
-  breadcrumbs = doxygenBreadcrumbs = null;
   
   function resize() {
     var outerHeight = $(window).height() - $('#doxygen').offset().top - 85;
