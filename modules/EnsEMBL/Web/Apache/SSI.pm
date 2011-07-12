@@ -40,7 +40,7 @@ sub handler {
       $r->print($content);
       
       return OK;
-    } elsif ($r->filename =~ /\/Doxygen\/(?!index.html)/) {
+    } elsif ($r->filename =~ /\/Doxygen\/(?!index.html)/ || $r->filename =~ /\/edoc\/index.html/) {
       return new EnsEMBL::Web::Controller::Doxygen($r, $cookies)->status;
     }
   }
