@@ -16,12 +16,13 @@ $(function () {
     var outerHeight = $(window).height() - $('#doxygen').offset().top - 85;
     var innerHeight = outerHeight - $('#nav-path').height() - $('#top').height();
     $('#doxygen').height(outerHeight);
-    $('#side-nav, #nav-tree, #doc-content').height(innerHeight); 
+    $('#side-nav, #nav-tree, #doc-content, #pdoc_iframe').height(innerHeight); 
   }
   
   $(window).resize(resize);
   resize();
 });
+
 
 
 /**
