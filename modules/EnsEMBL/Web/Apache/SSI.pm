@@ -7,9 +7,10 @@ use Compress::Zlib;
 
 use SiteDefs qw(:APACHE);
 
+use EnsEMBL::Web::Controller::Doxygen;
 use EnsEMBL::Web::Controller::SSI;
 use EnsEMBL::Web::Cookie;
-use Compress::Zlib;
+
 #############################################################
 # Mod_perl request handler all /htdocs pages
 #############################################################
@@ -21,23 +22,27 @@ sub handler {
   ## Pick up DAS entry points requests and
   ## uncompress them dynamically
   
-  if (-e $r->filename && -r $r->filename && $r->filename =~ /\/entry_points$/) {
-    my $gz      = gzopen($r->filename, 'rb');
-    my $buffer  = 0;
-    my $content = '';
-    $content   .= $buffer while $gz->gzread($buffer) > 0;
-    
-    $gz->gzclose; 
-    
-    if ($ENV{'PERL_SEND_HEADER'}) {
-      print "Content-type: text/xml; charset=utf-8";
-    } else {
-      $r->content_type('text/xml; charset=utf-8');
+  if (-e $r->filename && -r $r->filename) {
+    if ($r->filename =~ /\/entry_points$/) {
+      my $gz      = gzopen($r->filename, 'rb');
+      my $buffer  = 0;
+      my $content = '';
+      $content   .= $buffer while $gz->gzread($buffer) > 0;
+      
+      $gz->gzclose; 
+      
+      if ($ENV{'PERL_SEND_HEADER'}) {
+        print "Content-type: text/xml; charset=utf-8";
+      } else {
+        $r->content_type('text/xml; charset=utf-8');
+      }
+      
+      $r->print($content);
+      
+      return OK;
+    } elsif ($r->filename =~ /\/Doxygen\/(?!index.html)/) {
+      return new EnsEMBL::Web::Controller::Doxygen($r, $cookies)->status;
     }
-    
-    $r->print($content);
-    
-    return OK;
   }
 
   $r->err_headers_out->{'Ensembl-Error' => 'Problem in module EnsEMBL::Web::Apache::SSI'};
