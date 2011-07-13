@@ -29,18 +29,11 @@ sub active {
 sub content {
   my $self    = shift; 
   my $img_url = $self->img_url;
-  my ($panels, $content, $default);
+  my ($panels, $content);
   
   foreach my $entry (@{$self->entries}) {
-    my $id = lc $entry->{'id'};
-    
-    if ($entry->{'type'} ne 'Config') {
-      next if $default;
-      $default = 1;
-      $id      = 'default';
-    }
-    
-    $panels  .= qq{<div id="modal_$id" class="modal_content js_panel" style="display:none"></div>};
+    my $id    = lc $entry->{'id'};
+    $panels  .= qq{<div id="modal_$id" class="modal_content js_panel $entry->{'class'}" style="display:none"></div>};
     $content .= sprintf '<li class="%s"><a class="modal_%s" href="%s">%s</a></li>', $entry->{'class'}, $id, $entry->{'url'} || '#', encode_entities($self->strip_HTML($entry->{'caption'}));
   }
   
@@ -56,6 +49,7 @@ sub content {
       <div class="modal_close"></div>
     </div>
     $panels
+    <div id="modal_default" class="modal_content js_panel fixed_width" style="display:none"></div>
   </div>
   };
   
@@ -66,14 +60,13 @@ sub init {
   my $self       = shift;
   my $controller = shift;
   my $hub        = $controller->hub;
-  my %done;
+  my (%done, @extra);
   
   foreach my $component (@{$hub->components}) {
     my $view_config = $hub->get_viewconfig($component);
     
     if ($view_config && !$done{$component}) {
       $self->add_entry({
-        type    => 'Config',
         id      => "config_$component",
         caption => 'Configure ' . ($view_config->title || 'Page'),
         url     => $hub->url('Config', {
@@ -82,15 +75,28 @@ sub init {
         })
       });
       
+      foreach ($view_config->extra_tabs) {
+        (my $id = $_->[0]) =~ s/ /_/g;
+        
+        push @extra, {
+          id      => $id,
+          class   => 'fixed_width',
+          caption => $_->[0],
+          url     => $_->[1]
+        };
+      }
+      
       $done{$component} = 1;
     }
   }
   
+  $self->add_entry(@extra);
+  
   $self->add_entry({
-    type    => 'UserData',
     id      => 'user_data',
+    class   => 'fixed_width',
     caption => 'Custom Data',
-     url    => $hub->url({
+    url     => $hub->url({
        type    => 'UserData',
        action  => 'ManageData',
        time    => time,
