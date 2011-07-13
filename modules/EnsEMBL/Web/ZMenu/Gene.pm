@@ -53,6 +53,7 @@ sub content {
     });
     
     $self->add_entry({
+      type       => 'Prediction method',
       label_html => $object->analysis->description
     });
   }

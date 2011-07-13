@@ -90,6 +90,7 @@ sub content {
     });
 
     $self->add_entry({
+      type  => 'Prediction method',
       label_html => $transcript->analysis->description
     });
   }
