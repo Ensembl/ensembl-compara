@@ -9,7 +9,7 @@
 -- dblocator    - string to identify location of the external genome database (or file).
 
 CREATE TABLE genome_db_extn (
-  genome_db_id                int(10) DEFAULT '0' NOT NULL,
+  genome_db_id                int(10) DEFAULT 0 NOT NULL,
   phylum                      varchar(40) DEFAULT '' NOT NULL,
   locator                     mediumtext,
 
@@ -30,21 +30,20 @@ CREATE TABLE genome_db_extn (
 --    dataset defined by 'data_type')
 
 CREATE TABLE genome_db_stats (
-    genome_db_id    int(10) NOT NULL default '0',
+    genome_db_id    int(10) NOT NULL default 0,
     data_type       varchar(20) NOT NULL,
     count           int(10) NOT NULL,
-    mean            double NOT NULL default '0',
-    median          double NOT NULL default '0',
+    mean            double NOT NULL default 0,
+    median          double NOT NULL default 0,
     mode            double NOT NULL,
     stddev          double NOT NULL,
     variance        double NOT NULL,
-    min             double NOT NULL default '0',
-    max             double NOT NULL default '0',
-    overlap_count   int(10) NOT NULL default '0',
+    min             double NOT NULL default 0,
+    max             double NOT NULL default 0,
+    overlap_count   int(10) NOT NULL default 0,
 
     UNIQUE KEY genome_db_id_type (genome_db_id, data_type)
 );
-
 
 
 -- ----------------------------------------------------------------------------------
@@ -66,11 +65,11 @@ CREATE TABLE genome_db_stats (
                        
 CREATE TABLE dnafrag_chunk (
   dnafrag_chunk_id           int(10) NOT NULL auto_increment,
-  dnafrag_id                 int(10) NOT NULL DEFAULT '0',
-  seq_start                  int(10) unsigned NOT NULL DEFAULT '0',
-  seq_end                    int(10) unsigned NOT NULL DEFAULT '0',
-  masking_analysis_data_id   int(10) NOT NULL DEFAULT '0',
-  sequence_id                int(10) NOT NULL DEFAULT '0',
+  dnafrag_id                 int(10) NOT NULL DEFAULT 0,
+  seq_start                  int(10) unsigned NOT NULL DEFAULT 0,
+  seq_end                    int(10) unsigned NOT NULL DEFAULT 0,
+  masking_analysis_data_id   int(10) NOT NULL DEFAULT 0,
+  sequence_id                int(10) NOT NULL DEFAULT 0,
 
   PRIMARY KEY (dnafrag_chunk_id),
   UNIQUE KEY uniq_chunk (dnafrag_id, seq_start, seq_end, masking_analysis_data_id),
@@ -208,11 +207,11 @@ CREATE TABLE peptide_align_feature_prod (
   qgenome_db_id               int(10) unsigned NOT NULL, # FK genome.genome_id
   hgenome_db_id               int(10) unsigned NOT NULL, # FK genome.genome_id
   analysis_id                 int(10) unsigned NOT NULL, # FK analysis.analysis_id
-  qstart                      int(10) DEFAULT '0' NOT NULL,
-  qend                        int(10) DEFAULT '0' NOT NULL,
-  hstart                      int(11) DEFAULT '0' NOT NULL,
-  hend                        int(11) DEFAULT '0' NOT NULL,
-  score                       double(16,4) DEFAULT '0.0000' NOT NULL,
+  qstart                      int(10) DEFAULT 0 NOT NULL,
+  qend                        int(10) DEFAULT 0 NOT NULL,
+  hstart                      int(11) DEFAULT 0 NOT NULL,
+  hend                        int(11) DEFAULT 0 NOT NULL,
+  score                       double(16,4) DEFAULT 0.0000 NOT NULL,
   evalue                      double,
   align_length                int(10),
   identical_matches           int(10),
@@ -292,4 +291,44 @@ CREATE TABLE cmsearch_hit (
   PRIMARY KEY (hit_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+--
+-- method_id as primary key (auto-incremented)
+-- name is an arbitrary name
+-- options are the options used to run the method
+-- DROP TABLE IF EXISTS alignment_method
+-- CREATE TABLE alignment_method (
+--        alignment_method_id    int(10) unsigned NOT NULL AUTO_INCREMENT,
+--        name                   varchar(100) NOT NULL,
+--        options                varchar(255),
+
+-- PRIMARY KEY (alignment_method_id),
+-- UNIQUE KEY (name)
+-- ) ENGINE=InnoDB;
+
+-- DROP TABLE IF EXISTS alignment
+-- CREATE TABLE alignment (
+--        alignment_id    int(10) unsigned NOT NULL AUTO_INCREMENT,
+--        compara_table   ENUM('compara','ncrna') NOT NULL,
+--        compara_key     int(10) unsigned NOT NULL,
+--        alignment_method_id       int(10) unsigned NOT NULL,
+
+-- PRIMARY KEY (alignment_id),
+-- FOREIGN KEY (alignment_method_id) REFERENCES alignment_method(alignment_method_id)
+-- ) ENGINE=InnoDB;
+
+
+-- DROP TABLE IF EXISTS aligned_sequence
+-- CREATE TABLE aligned_sequence (
+--        alignment_id           int(10) unsigned NOT NULL,
+--        aligned_seq_id         int(10) unsigned NOT NULL AUTO_INCREMENT,
+--        aligned_length         int(10) NOT NULL,
+--        sequence_id            int(10) unsigned,
+--        member_id              int(10) unsigned,
+--        aligned_sequence       mediumtext,
+
+-- PRIMARY KEY (aligned_seq_id),
+-- FOREIGN KEY (alignment_id) REFERENCES alignment(alignment_id),
+-- FOREIGN KEY (sequence_id) REFERENCES sequence(sequence_id),
+-- FOREIGN KEY (member_id) REFERENCES member(member_id)
+-- ) ENGINE=InnoDB;
 
