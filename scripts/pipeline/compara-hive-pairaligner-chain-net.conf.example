@@ -90,13 +90,13 @@
 
 
   { TYPE => PAIR_ALIGNER,
-    'logic_name_prefix' => 'BlastZ', # optional default: PairAligner
-    'method_link' => [1001, 'BLASTZ_RAW'],
+    'logic_name_prefix' => 'LastZ', # optional default: PairAligner
+    'method_link' => [1001, 'LASTZ_RAW'],
     'analysis_template' => {
-        '-program'       => 'blastz',
-        '-program_file'       => 'blastz',
+        '-program'       => 'lastz',
+        '-program_file'       => 'lastz',
         '-parameters'    => "{method_link=>'BLASTZ_RAW',options=>'T=1 T=1 L=3000 H=2200 M=40000000 O=400 E=30'}",
-        '-module'        => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::BlastZ',
+        '-module'        => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::LastZ',
     },
     'max_parallel_workers'    => 200, #depending on the speed of the 'core' and 'compara' databases used, default is 200
     'batch_size'              => 3, #optional, default: 1. 3 is optimal for blastz
@@ -114,48 +114,45 @@
   #########second half of the pipeline ###########
 
   { TYPE => DNA_COLLECTION,
-    'collection_name'       => 'xenopus for chain', # Don't forget that you have probably run a blastz
+    'collection_name'       => 'human for chain', # Don't forget that you have probably run a blastz
                                                 # pipeline with a collection_name 'rat'. 
                                                 # The collection_name needs to be unique to avoid confusion
-    'genome_db_id'          => 16,
-    'genome_name_assembly'  => 'Xenopus tropicalis:JGI4.1',
+    'genome_db_id'          => 1,
+    'genome_name_assembly'  => 'Homo sapiens:NCBI35',
 #    'chunk_size'            => 270000000,# set it to be over the longest toplevel seq_region you expect for this species. If it is not defined, then the longest toplevel seg_region is automatically used. 
-    'dump_loc'              => '/lustre/scratch1/ensembl/kb3/hive/kb3_compara_zebrafish_xenopus_tblat_50/xenopus_nib_for_chain'
+    'dump_loc'              => '/location/of/dumps/human_nib_for_chain'
   },
 
   { TYPE => DNA_COLLECTION,
-    'collection_name'       => 'zebrafish for chain',# Don't forget that you have probably run a blastz
+    'collection_name'       => 'mouse for chain',# Don't forget that you have probably run a blastz
                                                  # pipeline with a collection_name 'human'.
                                                  # The collection_name needs to be unique to avoid confusion
-    'genome_db_id'          => 56,
-    'genome_name_assembly'  => 'Danio rerio:ZFISH7',
+    'genome_db_id'          => 2,
+    'genome_name_assembly'  => 'Mus musculus:NCBIM33',
 #    'chunk_size'            => 80000000,# set it to be over the longest toplevel seq_region you expect for this species. If it is not defined, then the longest toplevel seg_region is automatically used.
-    'dump_loc'              => '/lustre/scratch1/ensembl/kb3/hive/kb3_compara_zebrafish_xenopus_tblat_50/zebrafish_nib_for_chain',
+    'dump_loc'              => '/location/of/dumps/mouse_nib_for_chain',
   },
 
 
   { TYPE => CHAIN_CONFIG,
-    'input_method_link' => [6, 'TRANSLATED_BLAT'],
-    'output_method_link' => [1002, 'TRANSLATED_BLAT_CHAIN'],
-
-    'reference_collection_name' => 'zebrafish for chain',
-    'non_reference_collection_name' => 'xenopus for chain',
-              
+    'input_method_link' => [1001, 'LASTZ_RAW'],
+    'output_method_link' => [1002, 'LASTZ_CHAIN'],
+    'reference_collection_name' => 'human for chain',
+    'non_reference_collection_name' => 'mouse for chain',
     'max_gap' => 50,
-    'output_group_type' => 'chain'
+    'linear_gap' => 'medium' #can be medium, loose or filename. loose is chicken/human linear gap costs. medium is mouse/human linear gap costs. See axtChain for details
   },
 
   { TYPE => NET_CONFIG,
-    'input_method_link' => [1002, 'TRANSLATED_BLAT_CHAIN'],
-    'output_method_link' => [1, 'TRANSLATED_BLAT_NET'],
+    'input_method_link' => [1002, 'LASTZ_CHAIN'],
+    'output_method_link' => [16, 'LASTZ_NET'],
 
-    'reference_collection_name' => 'zebrafish for chain',
-    'non_reference_collection_name' => 'xenopus for chain',
+    'reference_collection_name' => 'human for chain',
+    'non_reference_collection_name' => 'mouse for chain',
               
     'max_gap' => 50,
     'input_group_type' => 'chain',
-    'output_group_type' => 'default'
-  },
+    'output_group_type' => 'default'  },
 
 ##If this is defined, the pipeline will set the BLASTZ_NET genomic_align_block_id
 ##and genomic_align_ids to be unique across a release by adding $mlss_id*10**10
@@ -165,10 +162,20 @@
 ## HEALTHCHECKS are run at the end of the pipeline.
 ## If not defined, the healthcheck params are automatically created.
 # { TYPE => HEALTHCHECKS,
-#    'pairwise_gabs' => "params=>{method_link_type=>\'TRANSLATED_BLAT_NET\',genome_db_ids=>\'[25,22,]\'}", 
-#    'compare_to_previous_db' => "params=>{previous_db_url=>\'mysql://anonymous\@ensembldb.ensembl.org\',method_link_type=>\'TRANSLATED_BLAT_NET\',current_genome_db_ids=>\'[25,22,]\',max_percentage_diff=>10}",             
 #    'previous_db_url' => 'mysql://anonymous@ensembldb.ensembl.org', #default mysql://ensro@ens-livemirror
+#    'hc_output_dir' => '/location/of/directory/to/output/results/kb3_hsap_mmus_lastz_29',
 #  },            
 
+##PAIR_ALIGNER_CONFIG runs some simple statistics (percentage coverage) and adds these and the configuration details to a database defined using 'config_url'. The statistics are calculated by comparing bed files of the genome and coding exons with the alignments. The genome and coding exons bed files for each species are kept in the 'bed_dir'. The 'config_file' is the location of equivalent of this file and the 'reg_conf' is the location of the registry configuration file.  It also creates a html page and piechart png files of these values which should be added to public-plugins/ensembl/htdocs/info/docs/compara/mlss/ 
+##
+#  { TYPE => PAIR_ALIGNER_CONFIG,
+#      'ref_species' => 'homo_sapiens',
+#      'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
+#      'config_url' => 'mysql://ensadmin:ensembl@compara1:3306/kb3_pair_aligner_config',
+#      'config_file' => '/location/of/config/file/kb3_hsap_mmus_lastz_29/lastz.conf',
+#      'perl_path' => '/nfs/users/nfs_k/kb3/src/ensembl_main/ensembl-compara/',      
+#      'ensembl_release' => '29',
+ #     'reg_conf' => '/location/of/registry/config/file/kb3_hsap_mmus_lastz_29/reg.conf',
+ # },
   { TYPE => END }
 ]
