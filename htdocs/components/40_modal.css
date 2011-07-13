@@ -79,12 +79,12 @@ body.ie6  .modal_content .modal_nav div.header              { width: 247px; }
 body.ie6  .modal_content .modal_nav .tool_buttons           { width: 248px; }
 body.ie6  .modal_content .modal_nav .tool_buttons p         { margin-right: 0; }
 
-#modal_default .modal_nav               { width: 210px; }
-#modal_default .modal_wrapper .panel    { margin-left: 215px; }
-#modal_default .no_local_context .panel { margin-left: 0; }
+#modal_panel .fixed_width .modal_nav               { width: 210px; }
+#modal_panel .fixed_width .modal_wrapper .panel    { margin-left: 215px; }
+#modal_panel .fixed_width .no_local_context .panel { margin-left: 0; }
 
-body.ie6 #modal_default .modal_wrapper        { margin-left: 0; }
-body.ie6 #modal_default .modal_nav div.header { width: 207px; }
+body.ie6 #modal_panel .fixed_width .modal_wrapper        { margin-left: 0; }
+body.ie6 #modal_panel .fixed_width .modal_nav div.header { width: 207px; }
 
 .multi_selector_list                            { width: 48%; font-weight: normal; float: left; margin: 0 0.5%; }
 .multi_selector_list ul                         { padding: 0; margin-left: 5px; margin-right: 5px; list-style: none; }
