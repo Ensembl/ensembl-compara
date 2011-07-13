@@ -62,6 +62,7 @@ sub type             { return $_[0]->{'type'};              }
 sub component        { return $_[0]->{'component'};         }
 sub tree             { return $_[0]->{'tree'};              }
 sub storable         { return 1;                            }
+sub extra_tabs       { return ();                           } # Used to add tabs for related configuration. Return value should be ([ caption, url ] ... )
 
 sub init   {}
 sub modify {} # For plugins
