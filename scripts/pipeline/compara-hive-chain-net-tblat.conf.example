@@ -71,7 +71,8 @@
     'non_reference_collection_name' => 'xenopus for chain',
               
     'max_gap' => 50,
-    'output_group_type' => 'chain'
+    'output_group_type' => 'chain',
+    'linear_gap' => 'loose' #can be medium, loose or filename. loose is chicken/human linear gap costs. medium is mouse/human linear gap costs. See axtChain for details
   },
 
   { TYPE => NET_CONFIG,
@@ -94,9 +95,8 @@
 ## HEALTHCHECKS are run at the end of the pipeline.
 ## If not defined, the healthcheck params are automatically created.
 # { TYPE => HEALTHCHECKS,
-#    'pairwise_gabs' => "params=>{method_link_type=>\'TRANSLATED_BLAT_NET\',genome_db_ids=>\'[25,22,]\'}", 
-    'compare_to_previous_db' => "params=>{previous_db_url=>\'mysql://anonymous\@ensembldb.ensembl.org\',method_link_type=>\'TRANSLATED_BLAT_NET\',current_genome_db_ids=>\'[25,22,]\',max_percentage_diff=>10}",             
 #    'previous_db_url' => 'mysql://anonymous@ensembldb.ensembl.org', #default mysql://ensro@ens-livemirror
+#    'hc_output_dir' => '/location/of/directory/to/output/results/',
 #  },            
 
   { TYPE => END }
