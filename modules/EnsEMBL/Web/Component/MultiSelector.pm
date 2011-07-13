@@ -21,8 +21,9 @@ sub _init {
 sub content {
   my $self = shift;
   my $url  = $self->ajax_url('ajax');
+  my $rel  = $self->{'rel'} ? qq{ rel="$self->{'rel'}"} : '';
   
-  return qq{<div class="other_tool"><p><a class="config modal_link" href="$url">$self->{'link_text'}</a></p></div>};
+  return qq{<div class="other_tool"><p><a class="config modal_link" href="$url"$rel>$self->{'link_text'}</a></p></div>};
 }
 
 sub content_ajax {
@@ -74,9 +75,10 @@ sub content_ajax {
   return $self->jsonify({
     content   => $content,
     panelType => $self->{'panel_type'},
+    activeTab => $self->{'active_tab'},
     wrapper   => qq{<div class="modal_wrapper"><div class="panel"></div></div>},
     nav       => $hint,
-    params    => { urlParam => $self->{'url_param'} }
+    params    => { urlParam => $self->{'url_param'} },
   });
 }
 

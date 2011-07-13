@@ -16,6 +16,8 @@ sub _init {
   $self->{'excluded_header'} = 'Unselected species';
   $self->{'panel_type'}      = 'MultiSpeciesSelector';
   $self->{'url_param'}       = 's';
+  $self->{'active_tab'}      = $self->{'link_text'};
+  $self->{'rel'}             = 'modal_select_species';
 }
 
 sub content_ajax {
