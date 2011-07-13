@@ -90,7 +90,7 @@ sub init_config {
           );
         }
         
-        $species_select = qq{<div style="float:left">Select species: <select class="species">$species_select</select></div>} if $species_select;
+        $species_select = qq{<div style="float:left">Configure species: <select class="species">$species_select</select></div>} if $species_select;
       }
       
       $top_panel->set_content(qq{$species_select<div class="configuration_search"><input class="configuration_search_text" value="Find a track" /></div>});
