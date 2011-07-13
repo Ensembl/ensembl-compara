@@ -139,7 +139,7 @@ CREATE TABLE ncbi_taxa_name (
 
 CREATE TABLE genome_db (
   genome_db_id                int(10) unsigned NOT NULL auto_increment, # unique internal id
-  taxon_id                    int(10) unsigned DEFAULT '0' NOT NULL, # KF taxon.taxon_id
+  taxon_id                    int(10) unsigned DEFAULT 0 NOT NULL, # KF taxon.taxon_id
   name                        varchar(40) DEFAULT '' NOT NULL,
   assembly                    varchar(100) DEFAULT '' NOT NULL,
   assembly_default            tinyint(1) DEFAULT 1,
@@ -162,7 +162,7 @@ CREATE TABLE genome_db (
 
 CREATE TABLE species_set (
   species_set_id              int(10) unsigned NOT NULL auto_increment,
-  genome_db_id                int(10) unsigned NOT NULL default '0',
+  genome_db_id                int(10) unsigned NOT NULL default 0,
 
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
 
@@ -216,7 +216,7 @@ CREATE TABLE method_link (
 CREATE TABLE method_link_species_set (
   method_link_species_set_id  int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   method_link_id              int(10) unsigned, # FK method_link.method_link_id
-  species_set_id              int(10) unsigned NOT NULL default '0',
+  species_set_id              int(10) unsigned NOT NULL default 0,
   name                        varchar(255) NOT NULL default '',
   source                      varchar(255) NOT NULL default 'ensembl',
   url                         varchar(255) NOT NULL default '',
@@ -266,9 +266,9 @@ CREATE TABLE synteny_region (
 
 CREATE TABLE dnafrag (
   dnafrag_id                  bigint unsigned NOT NULL auto_increment, # unique internal id
-  length                      int(11) DEFAULT '0' NOT NULL,
+  length                      int(11) DEFAULT 0 NOT NULL,
   name                        varchar(40) DEFAULT '' NOT NULL,
-  genome_db_id                int(10) unsigned DEFAULT '0' NOT NULL, # FK genome_db.genome_db_id
+  genome_db_id                int(10) unsigned DEFAULT 0 NOT NULL, # FK genome_db.genome_db_id
   coord_system_name           varchar(40) DEFAULT NULL,
   is_reference                tinyint(1) DEFAULT 1,
 
@@ -285,11 +285,11 @@ CREATE TABLE dnafrag (
 #
 
 CREATE TABLE dnafrag_region (
-  synteny_region_id           int(10) unsigned DEFAULT '0' NOT NULL, # unique internal id
-  dnafrag_id                  bigint unsigned DEFAULT '0' NOT NULL, # FK dnafrag.dnafrag_id
-  dnafrag_start               int(10) unsigned DEFAULT '0' NOT NULL,
-  dnafrag_end                 int(10) unsigned DEFAULT '0' NOT NULL,
-  dnafrag_strand              tinyint(4) DEFAULT '0' NOT NULL,
+  synteny_region_id           int(10) unsigned DEFAULT 0 NOT NULL, # unique internal id
+  dnafrag_id                  bigint unsigned DEFAULT 0 NOT NULL, # FK dnafrag.dnafrag_id
+  dnafrag_start               int(10) unsigned DEFAULT 0 NOT NULL,
+  dnafrag_end                 int(10) unsigned DEFAULT 0 NOT NULL,
+  dnafrag_strand              tinyint(4) DEFAULT 0 NOT NULL,
 
   FOREIGN KEY (synteny_region_id) REFERENCES synteny_region(synteny_region_id),
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
@@ -312,7 +312,7 @@ CREATE TABLE dnafrag_region (
 
 CREATE TABLE genomic_align_block (
   genomic_align_block_id      bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  method_link_species_set_id  int(10) unsigned DEFAULT '0' NOT NULL, # FK method_link_species_set_id.method_link_species_set_id
+  method_link_species_set_id  int(10) unsigned DEFAULT 0 NOT NULL, # FK method_link_species_set_id.method_link_species_set_id
   score                       double,
   perc_id                     tinyint(3) unsigned DEFAULT NULL,
   length                      int(10),
@@ -338,13 +338,13 @@ CREATE TABLE genomic_align_block (
 CREATE TABLE genomic_align (
   genomic_align_id            bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   genomic_align_block_id      bigint unsigned NOT NULL, # FK genomic_align_block.genomic_align_block_id
-  method_link_species_set_id  int(10) unsigned DEFAULT '0' NOT NULL, # FK method_link_species_set_id.method_link_species_set_id
-  dnafrag_id                  bigint unsigned DEFAULT '0' NOT NULL, # FK dnafrag.dnafrag_id
-  dnafrag_start               int(10) DEFAULT '0' NOT NULL,
-  dnafrag_end                 int(10) DEFAULT '0' NOT NULL,
-  dnafrag_strand              tinyint(4) DEFAULT '0' NOT NULL,
+  method_link_species_set_id  int(10) unsigned DEFAULT 0 NOT NULL, # FK method_link_species_set_id.method_link_species_set_id
+  dnafrag_id                  bigint unsigned DEFAULT 0 NOT NULL, # FK dnafrag.dnafrag_id
+  dnafrag_start               int(10) DEFAULT 0 NOT NULL,
+  dnafrag_end                 int(10) DEFAULT 0 NOT NULL,
+  dnafrag_strand              tinyint(4) DEFAULT 0 NOT NULL,
   cigar_line                  mediumtext,
-  level_id                    tinyint(2) unsigned DEFAULT '0' NOT NULL,
+  level_id                    tinyint(2) unsigned DEFAULT 0 NOT NULL,
 
   FOREIGN KEY (genomic_align_block_id) REFERENCES genomic_align_block(genomic_align_block_id),
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
@@ -387,13 +387,13 @@ CREATE TABLE genomic_align_group (
 
 CREATE TABLE genomic_align_tree (
   node_id                     bigint(20) unsigned NOT NULL AUTO_INCREMENT, # internal id, FK genomic_align_group.genomic_align_id
-  parent_id                   bigint(20) unsigned NOT NULL default '0',
-  root_id                     bigint(20) unsigned NOT NULL default '0',
-  left_index                  int(10) NOT NULL default '0',
-  right_index                 int(10) NOT NULL default '0',
-  left_node_id                bigint(10) NOT NULL default '0',
-  right_node_id               bigint(10) NOT NULL default '0',
-  distance_to_parent          double NOT NULL default '1',
+  parent_id                   bigint(20) unsigned NOT NULL default 0,
+  root_id                     bigint(20) unsigned NOT NULL default 0,
+  left_index                  int(10) NOT NULL default 0,
+  right_index                 int(10) NOT NULL default 0,
+  left_node_id                bigint(10) NOT NULL default 0,
+  right_node_id               bigint(10) NOT NULL default 0,
+  distance_to_parent          double NOT NULL default 1,
 
   FOREIGN KEY (node_id) REFERENCES genomic_align_group(node_id),
 
@@ -436,7 +436,7 @@ CREATE TABLE constrained_element (
   method_link_species_set_id int(10) unsigned NOT NULL,
   p_value mediumtext,
   taxonomic_level mediumtext,
-  score double NOT NULL default '0',
+  score double NOT NULL default 0,
 
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
@@ -472,7 +472,7 @@ CREATE TABLE sequence (
 CREATE TABLE member (
   member_id                   int(10) unsigned NOT NULL auto_increment, # unique internal id
   stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
-  version                     int(10) DEFAULT '0',
+  version                     int(10) DEFAULT 0,
   source_name                 ENUM('ENSEMBLGENE','ENSEMBLPEP','Uniprot/SPTREMBL','Uniprot/SWISSPROT','ENSEMBLTRANS','EXTERNALCDS') NOT NULL,
   taxon_id                    int(10) unsigned NOT NULL, # FK taxon.taxon_id
   genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
@@ -601,11 +601,11 @@ CREATE TABLE peptide_align_feature (
   qgenome_db_id               int(10) unsigned NOT NULL, # FK genome.genome_id
   hgenome_db_id               int(10) unsigned NOT NULL, # FK genome.genome_id
   analysis_id                 int(10) unsigned NOT NULL, # FK analysis.analysis_id
-  qstart                      int(10) DEFAULT '0' NOT NULL,
-  qend                        int(10) DEFAULT '0' NOT NULL,
-  hstart                      int(11) DEFAULT '0' NOT NULL,
-  hend                        int(11) DEFAULT '0' NOT NULL,
-  score                       double(16,4) DEFAULT '0.0000' NOT NULL,
+  qstart                      int(10) DEFAULT 0 NOT NULL,
+  qend                        int(10) DEFAULT 0 NOT NULL,
+  hstart                      int(11) DEFAULT 0 NOT NULL,
+  hend                        int(11) DEFAULT 0 NOT NULL,
+  score                       double(16,4) DEFAULT 0.0000 NOT NULL,
   evalue                      double,
   align_length                int(10),
   identical_matches           int(10),
