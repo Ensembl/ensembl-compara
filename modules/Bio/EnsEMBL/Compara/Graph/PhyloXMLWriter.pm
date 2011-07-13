@@ -125,6 +125,9 @@ my $phylo_uri = 'http://www.phyloxml.org';
                           the same as IO::Handle. Can be left blank in 
                           favour of the -FILE parameter
   Arg[FILE]             : Scalar; file to write to              
+  Arg[NO_RELEASE_TREES] : Boolean; if set to true this will force the writer
+                          to avoid calling C<release_tree()> on every tree
+                          given. Defaults to false
   Description : Creates a new tree writer object. 
   Returntype  : Instance of the writer
   Exceptions  : None
@@ -140,8 +143,8 @@ sub new {
   $class = ref($class) || $class;
   my $self = $class->SUPER::new(@args);
   
-  my ($cdna, $source, $aligned, $no_sequences) = 
-    rearrange([qw(cdna source aligned no_sequences)], @args);
+  my ($cdna, $source, $aligned, $no_sequences, $no_release_trees) = 
+    rearrange([qw(cdna source aligned no_sequences no_release_trees)], @args);
 
   $source ||= 'Unknown';
   $cdna ||= 0;
@@ -153,6 +156,7 @@ sub new {
   $self->source($source);
   $self->aligned($aligned);
   $self->no_sequences($no_sequences);
+  
   
   return $self;
 }
@@ -223,6 +227,23 @@ sub no_sequences {
   my ($self, $no_sequences) = @_;
   $self->{no_sequences} = $no_sequences if defined $no_sequences;
   return $self->{no_sequences};
+}
+
+=pod
+
+=head2 no_release_trees()
+
+  Arg [0] : Boolean; indiciates if we need to avoid releasing trees
+  Returntype : Boolean
+  Exceptions : None
+  Status     : Stable
+ 
+=cut
+
+sub no_release_trees {
+  my ($self, $no_release_trees) = @_;
+  $self->{no_release_trees} = $no_release_trees if defined $no_release_trees;
+  return $self->{no_release_trees};
 }
 
 =pod
@@ -315,7 +336,8 @@ sub _write_tree {
   $self->_process($tree);
   $w->endTag('phylogeny');
   
-  $tree->release_tree();
+  $tree->release_tree() if ! $self->no_release_trees;
+  
   return;
 }
 
