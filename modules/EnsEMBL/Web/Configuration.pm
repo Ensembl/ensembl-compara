@@ -35,8 +35,8 @@ sub new_for_components {
   my ($class, $hub, $builder, $data, $action, $function) = @_;
   
   my $self = {
-    hub   => $hub,
-    _data => $data,
+    hub     => $hub,
+    _data   => $data,
     builder => $builder,
     object  => $builder->object,
   };
