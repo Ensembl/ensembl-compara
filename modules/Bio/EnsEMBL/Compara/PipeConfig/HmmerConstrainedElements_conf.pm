@@ -10,7 +10,7 @@ sub default_options {
 
     return {
         'pipeline_name' => 'compara_hmmer_ces',
-        'ensembl_cvs_root_dir' => '/nfs/users/nfs_s/sf5/src',
+        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
            # parameters that are likely to change from execution to another:
         'release'               => '82',
         'rel_suffix'            => '',    # an empty string by default, a letter otherwise
@@ -98,7 +98,6 @@ sub pipeline_analyses {
                                 'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='" . 
                                                 $self->o('pipeline_db','-dbname') .
                                                 "' AND table_name!='genome_db' AND engine='MyISAM' ",
-                                'input_id'        => { 'table_name' => '#_range_start#' },
                                 'fan_branch_code' => 2,
                                },  
                 -input_ids => [{}],
@@ -178,8 +177,7 @@ sub pipeline_analyses {
 		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
 		-input_ids => [{}],
                 -parameters    => {
-                                   'inputquery' => "SELECT genomic_align_block_id FROM genomic_align_block WHERE score IS NULL",
-				   'input_id'   => { 'gab_id' => '#_range_start#' },
+                                   'inputquery' => "SELECT genomic_align_block_id gab_id FROM genomic_align_block WHERE score IS NULL",
                                   },  
 		-wait_for       => [ 'find_repeat_gabs', ],
 		-rc_id          => 3,
