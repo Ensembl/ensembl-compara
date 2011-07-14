@@ -57,7 +57,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                    
-            -dbname => $ENV{'USER'}.'_split_genes',
+            -dbname => $ENV{'USER'}.'_split_and_partial_genes',
         },
 
 
@@ -118,7 +118,7 @@ sub pipeline_create_commands {
             # additional table needed for keeping the output of 'find_split_genes_on_tree' analysis
         'mysql '.$self->dbconn_2_mysql('pipeline_db', 1)." -e 'CREATE TABLE split_gene (id_spg MEDIUMINT NOT NULL AUTO_INCREMENT, tagged_as_split_gene_by_gene_tree_pipeline int(1) NOT NULL, overlap int(10) NOT NULL, score_inter_union float(4,2) NOT NULL, first_aa_prot char(1), unknown_aa_prot1 int(10) NOT NULL, unknown_aa_prot2 int(10) NOT NULL, rounded_duplication_confidence_score float(4,3) NOT NULL, intersection_duplication_score int(10) NOT NULL, union_duplication_confidence_score int(10) NOT NULL, merged_by_gene_tree_pipeline char(50) NOT NULL, chr_name char(40) NOT NULL, chr_strand int(5) NOT NULL, first_part_split_gene_stable_id char(30) NOT NULL, second_part_split_gene_stable_id char(30) NOT NULL, protein1_label char(40) NOT NULL, protein1_length_in_aa int(20) NOT NULL, alignment_length int(20) NOT NULL, species_name char(40) NOT NULL, PRIMARY KEY (id_spg)) ENGINE=InnoDB'",
  
-         'mysql '.$self->dbconn_2_mysql('pipeline_db', 1)." -e 'CREATE TABLE partial_gene (id_spg MEDIUMINT NOT NULL AUTO_INCREMENT, gene_stable_id char(30) NOT NULL, protein_tree_stable_id char(30) NOT NULL, coverage_on_core_regions_score float(6,3) NOT NULL, average_intersection_over_length float(6,3) NOT NULL, species_name char(40) NOT NULL,  PRIMARY KEY (id_spg)) ENGINE=InnoDB'",
+         'mysql '.$self->dbconn_2_mysql('pipeline_db', 1)." -e 'CREATE TABLE partial_gene (id_spg MEDIUMINT NOT NULL AUTO_INCREMENT, gene_stable_id char(30) NOT NULL, protein_tree_stable_id char(30) NOT NULL, coverage_on_core_regions_score float(6,3) NOT NULL, alignment_overlap_score float(6,3) NOT NULL, species_name char(40) NOT NULL,  PRIMARY KEY (id_spg)) ENGINE=InnoDB'",
 
          'mysql '.$self->dbconn_2_mysql('pipeline_db', 1)." -e 'CREATE TABLE cocr_length (protein_tree_stable_id char(30) NOT NULL, coverage_on_core_regions_length int(30) NOT NULL, number_of_gene int(30) NOT NULL,  PRIMARY KEY (protein_tree_stable_id)) ENGINE=InnoDB'",
 
