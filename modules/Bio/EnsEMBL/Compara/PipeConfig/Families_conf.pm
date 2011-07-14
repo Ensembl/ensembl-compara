@@ -158,6 +158,12 @@ sub resource_classes {
 }
 
 
+sub beekeeper_extra_cmdline_options {
+    my ($self) = @_;
+
+    return '-lifespan 1200';
+}
+
 
 sub pipeline_analyses {
     my ($self) = @_;
