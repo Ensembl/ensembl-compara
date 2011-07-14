@@ -379,7 +379,6 @@ $OBJECT_TO_SCRIPT = {
   Tools               => 'Page',
   Info                => 'Page',
   Search              => 'Page',
-  UniSearch           => 'Page',
   News                => 'Page',
   
   Account             => 'Modal',
