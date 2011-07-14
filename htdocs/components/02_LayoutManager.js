@@ -24,8 +24,8 @@ Ensembl.LayoutManager.extend({
     $('#header a:not(#tabs a)').addClass('constant');
     
     if ((window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.hashRegex)) {
-      $('.ajax_load').val(function () {
-        return Ensembl.urlFromHash(this.value);
+      $('.ajax_load').val(function (i, val) {
+        return Ensembl.urlFromHash(val);
       });
       
       this.hashChange(Ensembl.urlFromHash(window.location.href, true));
@@ -55,21 +55,32 @@ Ensembl.LayoutManager.extend({
     // Close modal window if the escape key is pressed
     $(document).bind({
       keyup: function (event) {
-        if (event.keyCode == 27) {
+        if (event.keyCode === 27) {
           Ensembl.EventManager.trigger('modalClose', true);
         }
       },
       mouseup: function (e) {
         // only fired on left click
-        if (!e.which || e.which == 1) {
+        if (!e.which || e.which === 1) {
           Ensembl.EventManager.trigger('mouseUp', e);
         }
       }
     });
     
-    $(window).bind({
+    this.window = $(window).bind({
       resize: function () {
-        Ensembl.EventManager.trigger('windowResize');
+        // jquery ui 1.8.14 causes window.resize to fire on resizable when using jquery 1.6.2
+        // This is a hack to stop the windowResize event being triggered in that situation, until the bug is fixed
+        // See http://bugs.jqueryui.com/ticket/7514
+        var windowWidth  = Ensembl.LayoutManager.window.width();
+        var windowHeight = Ensembl.LayoutManager.window.height();
+        
+        if (windowWidth !== Ensembl.LayoutManager.windowWidth || windowHeight !== Ensembl.LayoutManager.windowHeight) {
+          Ensembl.EventManager.trigger('windowResize');
+        }
+        
+        Ensembl.LayoutManager.windowWidth  = windowWidth;
+        Ensembl.LayoutManager.windowHeight = windowHeight;
       },
       hashchange: function (e) {
         if ((window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.hashRegex) || !window.location.hash && Ensembl.hash.match(Ensembl.hashRegex)) {
@@ -97,9 +108,9 @@ Ensembl.LayoutManager.extend({
   },
   
   reloadPage: function (args, url) {
-    if (typeof args == 'string') {
+    if (typeof args === 'string') {
       Ensembl.EventManager.triggerSpecific('updatePanel', args);
-    } else if (typeof args == 'object') {
+    } else if (typeof args === 'object') {
       for (var i in args) {
         Ensembl.EventManager.triggerSpecific('updatePanel', i);
       }
@@ -141,7 +152,7 @@ Ensembl.LayoutManager.extend({
     var toolButtons = $('#page_nav .tool_buttons');
     
     tools.each(function () {
-      var a = $(this).find('a');
+      var a        = $(this).find('a');
       var existing = $('.additional .' + a[0].className.replace(' ', '.'), toolButtons);
       
       if (existing.length) {
@@ -150,8 +161,7 @@ Ensembl.LayoutManager.extend({
         $(this).children().addClass('additional').appendTo(toolButtons).not('.hidden').show();
       }
       
-      a = null;
-      existing = null;
+      a = existing = null;
     }).remove();
     
     $('a.seq_blast', toolButtons).click(function () {
@@ -166,15 +176,15 @@ Ensembl.LayoutManager.extend({
     }
     
     var text = r.split(/\W/);
-    text     = text[0] + ': ' + Ensembl.thousandify(text[1]) + '-' + Ensembl.thousandify(text[2]);
+        text = text[0] + ': ' + Ensembl.thousandify(text[1]) + '-' + Ensembl.thousandify(text[2]);
     
     $('a:not(.constant)').attr('href', function () {
       var r;
       
-      if (this.title == 'UCSC') {
+      if (this.title === 'UCSC') {
         this.href = this.href.replace(/(&?position=)[^&]+(.?)/, '$1chr' + Ensembl.urlFromHash(this.href, true) + '$2');
-      } else if (this.title == 'NCBI') {
-        r = Ensembl.urlFromHash(this.href, true).split(/[:-]/);
+      } else if (this.title === 'NCBI') {
+        r = Ensembl.urlFromHash(this.href, true).split(/[:\-]/);
         this.href = this.href.replace(/(&?CHR=).+&BEG=.+&END=[^&]+(.?)/, '$1' + r[0] + '&BEG=' + r[1] + '&END=' + r[2] + '$2');
       } else {
         return Ensembl.urlFromHash(this.href);
@@ -188,7 +198,7 @@ Ensembl.LayoutManager.extend({
     });
     
     $('#masthead li.Location a').each(function () {
-      var attr = this.title ? 'title' : 'innerHTML';
+      var attr   = this.title ? 'title' : 'innerHTML';
       this[attr] = this[attr].replace(/^(Location: ).+/, '$1' + text);
     });
   },

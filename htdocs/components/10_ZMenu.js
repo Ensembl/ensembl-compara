@@ -28,7 +28,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     if (this.drag) {
       params = this.href.split('|');
-      n = parseInt(params[1], 10) - 1;
+      n      = parseInt(params[1], 10) - 1;
       
       this.speciesPath = params[3].replace(/-/, '/');
       this.species     = this.speciesPath.split('/').pop();
@@ -62,7 +62,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.elLk.tbody   = $('tbody:last', this.el);
     this.elLk.loading = $('.loading',   this.el);
     
-    $(this.el).bind('mousedown', function () {
+    this.el.bind('mousedown', function () {
       Ensembl.EventManager.trigger('panelToFront', panel.id);
     });
     
@@ -89,7 +89,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
     
     if (this.coloured) {
-      $(this.el).addClass('coloured');
+      this.el.addClass('coloured');
     }
     
     $('a.expand', this.el).live('click', function () {
@@ -139,13 +139,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   
   populateDas: function () {
     var strandMap = { '+': 1, '-': -1 };
-    
-    var start  = this.title.match(/Start: (\d+)/)[1];
-    var end    = this.title.match(/End: (\d+)/)[1];
-    var strand = this.title.match(/Strand: ([\-+])/)[1];
-    var id     = this.title.match(/; Id: ([^;]+)$/)[1];
-    
-    var url = [
+    var start     = this.title.match(/Start: (\d+)/)[1];
+    var end       = this.title.match(/End: (\d+)/)[1];
+    var strand    = this.title.match(/Strand: ([\-+])/)[1];
+    var id        = this.title.match(/; Id: ([^;]+)$/)[1];
+    var url       = [
       window.location.pathname.replace(/\/(\w+)\/\w+$/, '/ZMenu/$1/Das'),
       '?logic_name=', this.logicName,
       ';', this.das, '_id=', id,
@@ -180,7 +178,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         dataType: 'json',
         context: this,
         success: function (json) {
-          if (timeout == this.timeout) {
+          if (timeout === this.timeout) {
             this.populated = true;
             
             if (json.entries.length) {
@@ -188,7 +186,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
               var row;
               
               for (var i in json.entries) {
-                if (json.entries[i].type == 'subheader') {
+                if (json.entries[i].type === 'subheader') {
                   row = '<th class="subheader" colspan="2">' + json.entries[i].link + '</th>';
                 } else if (json.entries[i].type) {
                   row = '<th>' + json.entries[i].type + '</th><td>' + json.entries[i].link + '</td>';
@@ -245,15 +243,12 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   populateRegion: function () {
     var panel = this;
     
-    var menu, caption, start, end, tmp;
-    
-    var min = this.start;
-    var max = this.end;
-    
+    var min          = this.start;
+    var max          = this.end;
     var locationView = !!window.location.pathname.match(/\/Location\//);
-    var scale = (max - min + 1) / (this.areaCoords.r - this.areaCoords.l);
-    
-    var url = this.baseURL;
+    var scale        = (max - min + 1) / (this.areaCoords.r - this.areaCoords.l);
+    var url          = this.baseURL;
+    var menu, caption, start, end, tmp;
     
     // Gene, transcript views
     function notLocation() {
@@ -282,10 +277,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     // AlignSlice view
     function align() {
-      var label = start ? 'region' : 'location';
-      label += panel.species == Ensembl.species ? '' : ' on ' + Ensembl.species.replace(/_/g, ' ');
+      var label  = start ? 'region' : 'location';
+          label += panel.species === Ensembl.species ? '' : ' on ' + Ensembl.species.replace(/_/g, ' ');
       
-      menu = [ '<a href="' + url.replace(/%s/, Ensembl.coreParams.r + ';align_start=' + start + ';align_end=' + end) + '">Jump to best aligned ' + label + '</a>' ];
+      menu    = [ '<a href="' + url.replace(/%s/, Ensembl.coreParams.r + ';align_start=' + start + ';align_end=' + end) + '">Jump to best aligned ' + label + '</a>' ];
       caption = 'Alignment: ' + (start ? start + '-' + end : panel.location);
     }
     
@@ -308,7 +303,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         end = max;
       }
       
-      if (this.strand == 1) {
+      if (this.strand === 1) {
         this.location = (start + end) / 2;
       } else {
         this.location = (2 * this.start + 2 * this.end - start - end) / 2;
@@ -321,7 +316,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       if (this.align === true) {
         align();
       } else {
-        url = url.replace(/%s/, this.chr + ':' + start + '-' + end);
+        url     = url.replace(/%s/, this.chr + ':' + start + '-' + end);
         caption = 'Region: ' + this.chr + ':' + start + '-' + end;
         
         if (!locationView) {
@@ -342,7 +337,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         url = this.zoomURL(1/10);
         align();
       } else {
-        url = this.zoomURL(1);
+        url     = this.zoomURL(1);
         caption = 'Location: ' + this.chr + ':' + this.location;
         
         if (!locationView) {
@@ -392,9 +387,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       end   = Math.floor(min + (this.coords.s + this.coords.r - this.areaCoords.t) * scale);
       
       if (start > end) {
-        tmp = start;
+        tmp   = start;
         start = end;
-        end = tmp;
+        end   = tmp;
       }
       
       if (start < min) {
@@ -521,7 +516,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     Ensembl.EventManager.trigger('panelToFront', this.id);
     
-    $(this.el).css(css);
+    this.el.css(css);
     
     this.base();
     
@@ -545,7 +540,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   hide: function (imageId) {
-    if (!imageId || imageId == this.imageId) {
+    if (!imageId || imageId === this.imageId) {
       this.base();
       
       if (this.relatedEl) {

@@ -141,7 +141,7 @@ Ensembl.PanelManager.extend({
    */
   panelToFront: function (id) {
     if (this.panels[id] !== undefined) {
-      this.panels[id].el.style.zIndex = ++this.zIndex;
+      this.panels[id].el.css('zIndex', ++this.zIndex);
       
       if (this.zIndex > 1000000) {
         this.resetZIndex();
@@ -163,11 +163,11 @@ Ensembl.PanelManager.extend({
     this.zIndex = 101;
     
     for (p in this.panels) {
-      zInd.push({ id: p, index: this.panels[p].el.style.zIndex });
+      zInd.push({ id: p, index: this.panels[p].el.css('zIndex') });
     }
     
     for (p in zInd.sort(sort)) {
-      this.panels[zInd[p].id].el.style.zIndex = ++this.zIndex;
+      this.panels[zInd[p].id].el.css('zIndex', ++this.zIndex);
     }
   }
 });

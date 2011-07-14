@@ -70,7 +70,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   
   open: function (el) {
     var caption = /modal_title_([^\s]+)/.exec(el.className + ' ');
-    var rel     = $(this.el).is(':visible') ? el.rel : this.activePanel.match(/config/) && el.rel.match(/config/) ? this.activePanel : el.rel;
+    var rel     = this.el.is(':visible') ? el.rel : this.activePanel.match(/config/) && el.rel.match(/config/) ? this.activePanel : el.rel;
     var tab     = rel ? this.elLk.tabs.children('a.' + rel) : [];
     
     if (tab.length) {
@@ -138,13 +138,13 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         }
         
         switch (json.panelType) {
-          case 'ModalContent': buttonText = 'Close'; break;
+          case 'ModalContent': buttonText = 'Close';          break;
           case 'Configurator': buttonText = 'Save and close'; break;
-          default: buttonText = 'Update options'; break;
+          default:             buttonText = 'Update options'; break;
         }
         
         if (json.activeTab) {
-          this.changeTab(this.elLk.tabs.filter(function () { return $(this).text().match(json.activeTab) }));
+          this.changeTab(this.elLk.tabs.filter(function () { return $(this).text().match(json.activeTab); }));
         }
         
         Ensembl.EventManager.trigger('destroyPanel', id, 'empty'); // clean up handlers, save memory

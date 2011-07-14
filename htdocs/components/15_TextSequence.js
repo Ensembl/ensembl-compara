@@ -86,10 +86,10 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     var popup = this.elLk.popup.clone().appendTo(this.el).draggable({ handle: 'tr:first' }).css(data.position);
     
     function toggle(e) {
-      if (e.target.nodeName != 'A') {
+      if (e.target.nodeName !== 'A') {
         var tr = $(this).parent();
         
-        tr.siblings('.' + tr.attr('className')).toggle();
+        tr.siblings('.' + tr.attr('class')).toggle();
         $(this).toggleClass('closed opened');
         
         tr = null;
@@ -117,7 +117,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
               css     = childOf ? { paddingLeft: '12px' } : {};
               tag     = 'td';
               
-              if (typeof entry != 'object') {
+              if (typeof entry !== 'object') {
                 entry = [ entry ];
               }
               

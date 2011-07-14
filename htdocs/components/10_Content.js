@@ -17,8 +17,8 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       dataTable:   $('table.data_table', this.el)
     };
     
-    if ($(this.el).hasClass('ajax')) {
-      $.extend(fnEls.ajaxLoad, $(this.el));
+    if (this.el.hasClass('ajax')) {
+      $.extend(fnEls.ajaxLoad, this.el);
     }
     
     $.extend(this.elLk, fnEls);
@@ -32,7 +32,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     Ensembl.EventManager.register('updatePanel',  this, this.getContent);
     Ensembl.EventManager.register('ajaxComplete', this, this.getSequenceKey);
     
-    if ($(this.el).parent('.initial_panel')[0] == Ensembl.initialPanels.get(-1)) {
+    if (this.el.parent('.initial_panel')[0] === Ensembl.initialPanels.get(-1)) {
       Ensembl.EventManager.register('hashChange', this, this.hashChange);
     }
     
@@ -86,7 +86,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         return;
       }
       
-      if (urls[0].substr(0, 1) != '/') {
+      if (urls[0].substr(0, 1) !== '/') {
         caption = urls.shift();
         content = $('<div class="content"></div>');
         
@@ -98,7 +98,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       for (i = 0; i < urls.length; i++) {
         component = urls[i];
         
-        if (component.substr(0, 1) == '/') {
+        if (component.substr(0, 1) === '/') {
           if (component.match(/\?/)) {
             referer = '';
             url     = [];
@@ -120,8 +120,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         }
       }
       
-      el      = null;
-      content = null;
+      el = content = null;
     });
   },
   
@@ -130,9 +129,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     params = params || this.params;
     url    = url    || Ensembl.replaceTimestamp(params.updateURL);
-    el     = el     || $(this.el).empty();
+    el     = el     || this.el.empty();
     
-    switch (el.attr('nodeName')) {
+    switch (el[0].nodeName) {
       case 'DL': node = 'dt'; break;
       case 'UL': 
       case 'OL': node = 'li'; break;
@@ -179,7 +178,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   
   addContent: function (url, rel) {
     var newContent = $('<div class="js_panel">').appendTo(this.el);
-    var i = 1;
+    var i          = 1;
     
     if (rel) {
       newContent.addClass(rel);
@@ -200,7 +199,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
   
   toggleContent: function (rel) {
-    if (this.id == rel) {
+    if (this.id === rel) {
       $('.toggleable', this.el).toggle();
     } else {
       if (!this.elLk[rel]) {
@@ -226,14 +225,12 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   
   hideHints: function () {
     this.elLk.hideHints.each(function () {
-      var div = $(this);
-      
       $('<img src="/i/close.gif" alt="Hide hint panel" title="Hide hint panel" />').bind('click', function () {
         var tmp = [];
         
-        div.hide();
+        $(this).hide();
         
-        Ensembl.hideHints[div.attr('id')] = 1;
+        Ensembl.hideHints[this.id] = 1;
         
         for (var i in Ensembl.hideHints) {
           tmp.push(i);
@@ -264,16 +261,15 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   glossary: function () {
     this.elLk.glossary.bind({
       mouseover: function () {
-        var el = $(this);
-        var popup = el.children('.floating_popup');
-        
-        var position = el.position();
+        var el         = $(this);
+        var popup      = el.children('.floating_popup');
+        var position   = el.position();
         position.top  -= popup.height() - (0.25 * el.height());
         position.left += 0.75 * el.width();
         
         popup.show().css(position);
-        popup = null;
-        el = null;
+        
+        popup = el = null;
       },
       mouseout: function () {
         $(this).children('.floating_popup').hide();
@@ -296,7 +292,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     this.elLk.dataTable.each(function (i) {
       // Because dataTables is written to create alert messages if you try to reinitialise a table, block any attempts here.
-      if ($.fn.dataTableSettings[i] && $.fn.dataTableSettings[i].nTable == this) {
+      if ($.fn.dataTableSettings[i] && $.fn.dataTableSettings[i].nTable === this) {
         return;
       }
       
@@ -315,7 +311,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         
         sort = sort ? sort[1] : 'string';
         
-        if (noSort || sort == 'none') {
+        if (noSort || sort === 'none') {
           rtn.bSortable = false;
         } else {
           rtn.sType = $.fn.dataTableExt.oSort[sort + '-asc'] ? sort : 'string';
@@ -430,7 +426,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         var columns    = dataTable.fnSettings().aoColumns;
         var toggleList = $('<ul class="floating_popup"></ul>');
         var toggle     = $('<div class="toggle">Show/hide columns</div>').append(toggleList).bind('click', function (e) {
-          if (e.target == this) {
+          if (e.target === this) {
             toggleList.toggle();
           }
         });
@@ -448,12 +444,12 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
                 tables     = panel.dataTables;
                 visibility = !columns[col].bVisible;
                 
-                if (panel.elLk.colToggle.length == 1) {
+                if (panel.elLk.colToggle.length === 1) {
                   input.attr('checked', visibility);
                 } else {
                   index     = $(this).index();
                   textCheck = $(this).parent().text();
-                  tables    = []
+                  tables    = [];
                   
                   panel.elLk.colToggle.each(function (i) {
                     if ($(this).find('ul').text() === textCheck) {
@@ -556,7 +552,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         var i, className;
         
         if (settings.classFilter) {
-          i = settings.classFilter.length;
+          i         = settings.classFilter.length;
           className = ' ' + settings.aoData[index].nTr.className + ' ';
           
           while (i--) {

@@ -51,7 +51,7 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
         }
         
         // item to be added is closer to the start of the alphabet than anything in the excluded list
-        if (i == -1) {
+        if (i === -1) {
           panel.elLk.excluded.prepend(li);
         }
         
@@ -60,7 +60,7 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
         excluded = null;
       } else {
         panel.elLk.included.append(li);
-        panel.selection.push(li.attr('className'));
+        panel.selection.push(li.attr('class'));
       }
       
       li = null;
@@ -104,7 +104,7 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
       params.push(this.urlParam + (i + 1) + '=' + this.selection[i]);
     }
     
-    if (this.selection.join(',') != this.initialSelection) {
+    if (this.selection.join(',') !== this.initialSelection) {
       Ensembl.redirect(this.elLk.form.attr('action') + '?' + Ensembl.cleanURL(this.elLk.form.serialize() + ';' + params.join(';')));
     }
     

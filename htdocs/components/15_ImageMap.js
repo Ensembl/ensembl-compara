@@ -19,11 +19,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     Ensembl.EventManager.register('changeFavourite',    this, this.changeFavourite);
     Ensembl.EventManager.register('windowResize',       this, function () { delete this.imgOffset; });
     Ensembl.EventManager.register('changeWidth',        this, function () { Ensembl.EventManager.trigger('queuePageReload', this.id); });
-    Ensembl.EventManager.register('highlightAllImages', this, function () {
-      if (!this.align) {
-        this.highlightAllImages();
-      }
-    });
+    Ensembl.EventManager.register('highlightAllImages', this, function () { if (!this.align) { this.highlightAllImages(); } });
   },
   
   init: function () {
@@ -32,9 +28,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.base();
     
     this.imageConfig = $('input.image_config', this.el).val();
-    this.lastImage   = $(this.el).parents('.image_panel')[0] == Ensembl.images.last;
+    this.lastImage   = this.el.parents('.image_panel')[0] === Ensembl.images.last;
     
-    this.params.highlight = (Ensembl.images.total == 1 || !this.lastImage);
+    this.params.highlight = (Ensembl.images.total === 1 || !this.lastImage);
     
     this.elLk.drag        = $('.drag_select',  this.el);
     this.elLk.map         = $('map',           this.el);
@@ -70,7 +66,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   hashChange: function (r) {
     this.params.updateURL = Ensembl.urlFromHash(this.params.updateURL);
     
-    if (Ensembl.images.total == 1) {
+    if (Ensembl.images.total === 1) {
       this.highlightAllImages();
     } else if (this.lastImage) {
       this.base();
@@ -92,13 +88,13 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var panel = this;
     
     var highlight = !!(window.location.pathname.match(/\/Location\//) && !this.vdrag);
-    var rect = [ 'l', 't', 'r', 'b' ];
+    var rect      = [ 'l', 't', 'r', 'b' ];
     var speciesNumber, c, r, start, end, scale;
     
     this.elLk.areas.each(function () {
       c = { a: this };
       
-      if (this.shape && this.shape.toLowerCase() != 'rect') {
+      if (this.shape && this.shape.toLowerCase() !== 'rect') {
         c.c = [];
         $.each(this.coords.split(/[ ,]/), function () { c.c.push(parseInt(this, 10)); });
       } else {
@@ -146,7 +142,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       mousedown: function (e) {
         // Only draw the drag box for left clicks.
         // This property exists in all our supported browsers, and browsers without it will draw the box for all clicks
-        if (!e.which || e.which == 1) {
+        if (!e.which || e.which === 1) {
           panel.dragStart(e);
         }
         
@@ -190,8 +186,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
                 var offset = panel.elLk.img.offset();
                 
                 panel.elLk.hoverLabels.filter(':visible').hide().end().filter('.active').css({
-                  left:     area.l + offset.left,
-                  top:      area.t + offset.top,
+                  left:    area.l + offset.left,
+                  top:     area.t + offset.top,
                   display: 'block'
                 });
               }, 100);
@@ -402,8 +398,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       li = null;
     });
     
-    tracks = null;
-    track  = null;
+    tracks = track = null;
     
     return order;
   },
@@ -461,8 +456,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   drag: function (e) {
-    var x = e.pageX - this.dragCoords.offset.x;
-    var y = e.pageY - this.dragCoords.offset.y;
+    var x      = e.pageX - this.dragCoords.offset.x;
+    var y      = e.pageY - this.dragCoords.offset.y;
     var coords = {};
     
     switch (x < this.dragCoords.map.x) {
@@ -502,7 +497,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       return;
     }
     
-    var id = 'zmenu_' + area.a.coords.replace(/[ ,]/g, '_');
+    var id            = 'zmenu_' + area.a.coords.replace(/[ ,]/g, '_');
     var speciesNumber = 0;
     var dragArea, range, location, fuzziness;
     
@@ -581,7 +576,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       return;
     }
     
-    var i = this.highlightRegions[speciesNumber].length;
+    var i    = this.highlightRegions[speciesNumber].length;
     var link = true; // Defines if the highlighted region has come from another image or the url
     var highlight, coords;
     
@@ -593,9 +588,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
       
       // Highlighting base on self. Take start and end from Ensembl core parameters
-      if (this.imageNumber == imageNumber) {
+      if (this.imageNumber === imageNumber) {
         // Don't draw the redbox on the first imagemap on the page
-        if (this.imageNumber != 1) {
+        if (this.imageNumber !== 1) {
           this.highlight(highlight.region, 'redbox', speciesNumber, i);
         }
         
@@ -636,9 +631,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       b: { left: coords.l, width: w, top: coords.b, height: 1, overflow: 'hidden' }
     };
     
-    if (typeof speciesNumber != 'undefined') {
+    if (typeof speciesNumber !== 'undefined') {
       originalClass = cl;
-      cl = cl + '_' + speciesNumber + (multi || '');
+      cl            = cl + '_' + speciesNumber + (multi || '');
     }
     
     els = $('.' + cl, this.el);
@@ -656,7 +651,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       $(this).css(style[this.className.split(' ')[1]]);
     });
     
-    if (typeof speciesNumber != 'undefined') {
+    if (typeof speciesNumber !== 'undefined') {
       els.addClass(originalClass);
     }
     
@@ -673,7 +668,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   getArea: function (coords, draggables) {
-    var test = false;
+    var test  = false;
     var areas = draggables ? this.draggables : this.areas;
     var c;
     

@@ -143,7 +143,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       var popup = $(this).children().show();
       
       if (!popup.data('selectAll')) {
-        popup.children('input').attr('checked', panel.allOnRow(this));
+        popup.children('input').prop('checked', panel.allOnRow(this));
         popup.data('selectAll', true);
       }
       
@@ -156,7 +156,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       
       panel.resetSelectAll($(this).parent().siblings()[checked ? 'removeClass' : 'addClass']('on'));
       
-      input.attr('checked', !checked);
+      input.prop('checked', !checked);
       input = null;
     });
   },
@@ -187,7 +187,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     }
     
     if (checked) {
-      radio.filter(checked).attr('checked', 'checked');
+      radio.filter(checked).prop('checked', true);
     } else {
       checked = radio.filter(':checked');
       radio   = radio.not('.all, .none');
@@ -204,7 +204,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       }
       
       if (i === -1) {
-        checked.attr('checked', false); // Deselect all options if nothing matches
+        checked.prop('checked', false); // Deselect all options if nothing matches
       }
       
       checked = null;

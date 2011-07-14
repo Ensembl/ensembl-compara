@@ -6,19 +6,23 @@ Ensembl.extend({
   constructor: null,
   
   initialize: function () {
-    var hints = this.cookie.get('ENSEMBL_HINTS');
+    var hints       = this.cookie.get('ENSEMBL_HINTS');
     var imagePanels = $('.image_panel');
     
     if (!window.name) {
       window.name = 'ensembl_' + new Date().getTime() + '_' + Math.floor(Math.random() * 10000);
     }
     
-    this.hashRegex = new RegExp(/[\?;&]r=([^;&]+)/);
-    
-    (this.ajax  = this.cookie.get('ENSEMBL_AJAX'))  || this.setAjax();
-    (this.width = this.cookie.get('ENSEMBL_WIDTH')) || this.setWidth();
-    
-    this.hideHints = {};
+    this.hashRegex     = new RegExp(/[\?;&]r=([^;&]+)/);
+    this.ajax          = this.cookie.get('ENSEMBL_AJAX')  || this.setAjax();
+    this.width         = this.cookie.get('ENSEMBL_WIDTH') || this.setWidth();
+    this.hideHints     = {};
+    this.initialPanels = $('.initial_panel');
+    this.minWidthEl    = $('#min_width_container');
+    this.images        = { // Store image panel details for highlighting
+      total: imagePanels.length,
+      last:  imagePanels.last()[0]
+    };
     
     if (hints) {
       $.each(hints.split(/:/), function () {
@@ -26,16 +30,7 @@ Ensembl.extend({
       });
     }
     
-    // Store image panel details for highlighting
-    this.images = {
-      total: imagePanels.length,
-      last:  imagePanels.last()[0]
-    };
-    
     imagePanels = null;
-    
-    this.initialPanels = $('.initial_panel');
-    this.minWidthEl    = $('#min_width_container');
     
     this.setCoreParams();
     
@@ -48,11 +43,13 @@ Ensembl.extend({
       var cookie = [
         unescaped === true ? (name + '=' + (value || '')) : (escape(name) + '=' + escape(value || '')),
         '; expires=',
-        (expiry == -1 ? 'Thu, 01 Jan 1970' : 'Tue, 19 Jan 2038'),
+        (expiry === -1 ? 'Thu, 01 Jan 1970' : 'Tue, 19 Jan 2038'),
         ' 00:00:00 GMT; path=/'
       ].join('');
       
       document.cookie = cookie;
+      
+      return value;
     },
     
     get: function (name, unescaped) {
@@ -62,7 +59,7 @@ Ensembl.extend({
   },
   
   setAjax: function () {
-    this.cookie.set('ENSEMBL_AJAX', ($.ajaxSettings.xhr() || false) ? 'enabled' : 'none');
+    return this.cookie.set('ENSEMBL_AJAX', ($.ajaxSettings.xhr() || false) ? 'enabled' : 'none');
   },
   
   setWidth: function (w) {
@@ -117,14 +114,14 @@ Ensembl.extend({
         
         Ensembl.multiSpecies[i] = {};
         
-        $.each(['r', 'g', 's'], function () {
-          Ensembl.multiSpecies[i][this] = url.match(regex.replace('%s', this + i));
+        $.each(['r', 'g', 's'], function (j, param) {
+          Ensembl.multiSpecies[i][param] = url.match(regex.replace('%s', param + i));
           
-          if (Ensembl.multiSpecies[i][this]) {
-            Ensembl.multiSpecies[i][this] = unescape(Ensembl.multiSpecies[i][this][1]);
+          if (Ensembl.multiSpecies[i][param]) {
+            Ensembl.multiSpecies[i][param] = unescape(Ensembl.multiSpecies[i][param][1]);
           }
           
-          if (this == 'r' && Ensembl.multiSpecies[i].r) {
+          if (param === 'r' && Ensembl.multiSpecies[i].r) {
             r = Ensembl.multiSpecies[i].r.match(/(.+):(\d+)-(\d+)/);
             
             Ensembl.multiSpecies[i].location = { name: r[1], start: parseInt(r[2], 10), end: parseInt(r[3], 10) };
@@ -172,12 +169,12 @@ Ensembl.extend({
   },
   
   thousandify: function (str) {
-    var rgx = /(\d+)(\d{3})/;
-    
     str += '';
-    x    = str.split('.');
-    x1   = x[0];
-    x2   = x.length > 1 ? '.' + x[1] : '';
+    
+    var rgx = /(\d+)(\d{3})/;
+    var x   = str.split('.');
+    var x1  = x[0];
+    var x2  = x.length > 1 ? '.' + x[1] : '';
     
     while (rgx.test(x1)) {
       x1 = x1.replace(rgx, '$1' + ',' + '$2');

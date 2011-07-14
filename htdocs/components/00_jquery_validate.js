@@ -16,7 +16,7 @@
 
 $.extend($.fn, {
   validate: function (options) {
-    if (this.length && this.attr('tagName') === 'FORM') {
+    if (this.length && this[0].nodeName === 'FORM') {
       var validator = $(this).data('validator');
       
       if (!validator) {
@@ -177,9 +177,9 @@ $.extend($.validator, {
               input.error = {
                 rule: input.rule,
                 el: $('<label>', { 
-                  className: validator.settings.invalidClass, 
-                  'for':     this.id, 
-                  html:      message
+                  'class': validator.settings.invalidClass, 
+                  'for':   this.id, 
+                  html:    message
                 }).hide().appendTo(el.parent())
               };
               
@@ -208,9 +208,9 @@ $.extend($.validator, {
         }
         
         if (isValid) {
-          validator.submitButtons.attr('disabled', '').removeClass('disabled');
+          validator.submitButtons.prop('disabled', false).removeClass('disabled');
         } else {
-          validator.submitButtons.attr('disabled', 'disabled').addClass('disabled');
+          validator.submitButtons.prop('disabled', true).addClass('disabled');
         }
         
         if (!isValid) {

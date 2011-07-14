@@ -22,7 +22,7 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
     this.elLk.input = $('input.autocomplete', this.elLk.form).attr('autocomplete', 'off');
     this.elLk.g     = $('input[name=g]',      this.elLk.form);
     this.elLk.db    = $('input[name=db]',     this.elLk.form);
-    this.elLk.list  = $('<ul>', { className: 'autocomplete' }).appendTo(document.body);
+    this.elLk.list  = $('<ul class="autocomplete">').appendTo(document.body);
     
     // On gene form submit, stop the request going to psychic search if the user has selected a gene from the dropdown,
     // or has typed in something which matches (case insensitive) a name from the dropdown.
@@ -35,7 +35,7 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
         this.action = window.location.pathname;
       } else {
         panel.elLk.list.find('span.name').each(function () {
-          if ($(this).text().toUpperCase() == query) {
+          if ($(this).text().toUpperCase() === query) {
             form.action = window.location.pathname;
             panel.elLk.g.val($(this).siblings('.stable_id').text());
             return true;
@@ -49,22 +49,22 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
       var value = this.value;
             
       // e.keyCode = 27: escape
-      if (e.keyCode == 27) {
+      if (e.keyCode === 27) {
         panel.elLk.list.hide();
         return;
       }
       
       // e.keyCode = 38: up
       // e.keyCode = 40: down
-      if (panel.elLk.list && (e.keyCode == 38 || e.keyCode == 40)) {
+      if (panel.elLk.list && (e.keyCode === 38 || e.keyCode === 40)) {
         panel.elLk.list.children().removeClass('focused');
         
         if (panel.focused) {
-          if (!panel.focused[e.keyCode == 38 ? 'prev' : 'next']().trigger('mouseover', true).length) {
+          if (!panel.focused[e.keyCode === 38 ? 'prev' : 'next']().trigger('mouseover', true).length) {
             panel.elLk.input.val(value);
           }
         } else {
-          panel.elLk.list.children(e.keyCode == 38 ? ':last' : ':first').trigger('mouseover', true);
+          panel.elLk.list.children(e.keyCode === 38 ? ':last' : ':first').trigger('mouseover', true);
         }
         
         return;
@@ -75,7 +75,7 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
       // e.keyCode = 46:      delete
       // e.keyCode > 47:      alphanumeric/symbols
       // e.keyCode = 111-123: F keys
-      if (value.length < 3 || e.ctrlKey || e.altKey || (e.keyCode < 46 && e.keyCode != 8 && e.keyCode != 32) || (e.keyCode > 111 && e.keyCode < 124)) {
+      if (value.length < 3 || e.ctrlKey || e.altKey || (e.keyCode < 46 && e.keyCode !== 8 && e.keyCode !== 32) || (e.keyCode > 111 && e.keyCode < 124)) {
         return;
       }
       
@@ -101,13 +101,13 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
             data: { q: value },
             dataType: 'json',
             success: function (json) {
-              panel.query = value;
+              panel.query        = value;
               panel.cache[value] = json;
               
               panel.buildList(json);
               
               // Call filter again if the user has typed more since the ajax request was made
-              if (input.value != value) {
+              if (input.value !== value) {
                 panel.filter(input.value);
               }
             }
@@ -115,7 +115,6 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
         }, 100);
       }
     });
-    
   },
   
   // Filter down existing results as the user types more
@@ -130,7 +129,7 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
         if (cache[i][0].match(regex)) {
           results.push(cache[i]);
           
-          if (results.length == 10) {
+          if (results.length === 10) {
             break;
           }
         }
@@ -151,7 +150,7 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
   buildList: function (results) {
     var panel = this;
     var lis   = [];
-    var limit = results.length < 10 ? results.length : 10
+    var limit = results.length < 10 ? results.length : 10;
     
     for (var i = 0; i < limit; i++) {
       lis.push('<li><span class="name">', results[i][0], '</span><span class="stable_id">', results[i][1], '</span><input type="hidden" class="db" value="', results[i][2], '" /></li>');

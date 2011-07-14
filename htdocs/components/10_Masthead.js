@@ -52,8 +52,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
           li.remove();
           panel.deleteFromDropdown(lis);
           
-          lis = null;
-          li  = null;
+          lis = li = null;
         }
       });
       
@@ -104,10 +103,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     
     this.resize();
     
-    tabsHolder = null;
-    tabs       = null;
-    tools      = null;
-    logo       = null;
+    tabsHolder = tabs = tools = logo = null;
   },
   
   // Set the left position of a dropdown as the left position of its related tab
@@ -239,7 +235,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     var longTab  = this.elLk.longTabs.filter('.location');
     var recent   = Ensembl.speciesCommon + ': ' + Ensembl.lastR;
     var text     = r.split(/\W/);
-    text         = 'Location: ' + text[0] + ':' + Ensembl.thousandify(text[1]) + '-' + Ensembl.thousandify(text[2]);
+        text     = 'Location: ' + text[0] + ':' + Ensembl.thousandify(text[1]) + '-' + Ensembl.thousandify(text[2]);
     
     shortTab.find('a:not(.toggle)').attr('title', text);
     longTab.find('a:not(.toggle)').html(text);
@@ -250,7 +246,6 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
       $.each([ shortTab, longTab ], function () {
         this.children('.dropdown').removeClass('empty').children('.toggle').show();
       });
-      
       
       if (this.elLk.dropdowns.length && !this.recentLocations[recent]) {
         // Add the URL before the hash change to the top of the recent locations list

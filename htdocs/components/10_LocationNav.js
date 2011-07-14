@@ -20,7 +20,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     
     this.base();
     
-    if (Ensembl.ajax == 'disabled') {
+    if (Ensembl.ajax === 'disabled') {
       return; // If the user has ajax disabled, don't create the slider. The navigation will then be based on the ramp links.
     }
     
@@ -77,7 +77,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         
         newR = this.href.match(panel.matchRegex)[1];
         
-        if (newR != Ensembl.coreParams.r) {
+        if (newR !== Ensembl.coreParams.r) {
           window.location.hash = 'r=' + newR; 
         }
         
@@ -108,7 +108,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         } else if (panel.enabled === false) {
           Ensembl.redirect(url);
           return false;
-        } else if ((!window.location.hash || window.location.hash == '#') && url == window.location.href) {
+        } else if ((!window.location.hash || window.location.hash === '#') && url === window.location.href) {
           return false;
         } else if (window.location.hash.match('r=' + r)) {
           return false;
@@ -143,7 +143,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         success: function (json) {
           var sliderValue = json.shift();
           
-          if (panel.elLk.slider.slider('value') != sliderValue) {
+          if (panel.elLk.slider.slider('value') !== sliderValue) {
             panel.elLk.slider.slider('option', 'force', true);
             panel.elLk.slider.slider('value', sliderValue);
             panel.elLk.slider.slider('option', 'force', false);

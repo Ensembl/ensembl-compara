@@ -21,7 +21,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
     this.base();
     
     if (!panel.isIE6) {
-      $(this.el).draggable({
+      this.el.draggable({
         containment: 'document',
         handle: 'div.modal_title',
         stop: function (e, ui) {
@@ -54,7 +54,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
       });
     }
     
-    this.elLk.background = $('#modal_bg').bind('click', function () { panel.hide() });
+    this.elLk.background = $('#modal_bg').bind('click', function () { panel.hide(); });
   },
   
   setCookie: function () {
@@ -87,7 +87,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
     
     if (this.isIE6) {
       css = { marginTop: this.window.scrollTop(), marginLeft: this.window.scrollLeft() };
-      $(this.el).css(css);
+      this.el.css(css);
       this.elLk.background.css(css);
       $('body').css('overflow', 'hidden');
       $('select').hide();
@@ -102,7 +102,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
   },
   
   hide: function () {
-    this.base()
+    this.base();
     
     this.elLk.background.hide();
     
@@ -124,11 +124,11 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
   
     var height       = this.customized.height ? Math.min(this.customized.height, this.maxHeight) : this.maxHeight;
     var width        = this.customized.width  ? Math.min(this.customized.width,  this.maxWidth)  : this.maxWidth;
-    var offset       = $(this.el).offset();
+    var offset       = this.el.offset();
     var windowWidth  = this.window.width();
     var windowHeight = this.window.height();
 
-    $(this.el).resizable('option', {
+    this.el.resizable('option', {
       maxWidth:  this.maxWidth,
       maxHeight: this.maxHeight,
       minWidth:  this.minWidth,

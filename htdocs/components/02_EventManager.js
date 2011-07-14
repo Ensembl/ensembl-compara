@@ -74,7 +74,7 @@ Ensembl.EventManager = {
     var rtn = {};
     
     if (ids.length > 1) { ids.push(callId); }
-    $.each(ids, function () { rtn[this] = 1; })
+    $.each(ids, function () { rtn[this] = 1; });
     
     return rtn;
   },
@@ -111,14 +111,14 @@ Ensembl.EventManager = {
       for (id in this.registry[eventName].ref) {
         r = this.registry[eventName].ref[id].func.apply(this.registry[eventName].ref[id].obj, args);
         
-        if (typeof r != 'undefined') {
+        if (typeof r !== 'undefined') {
           rtn[id] = r;
           ids.push(id);
         }
       }
     }
     
-    if (ids.length == 1) {
+    if (ids.length === 1) {
       rtn = rtn[ids[0]];
     } else if (ids.length === 0) {
       rtn = undefined;

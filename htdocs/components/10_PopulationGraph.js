@@ -21,7 +21,6 @@ Ensembl.Panel.PopulationGraph = Ensembl.Panel.extend({
     var bcolours  = [ '#FF00FF', '#000000', '#008080', '#7B68EE' ]; // Other colours if the allele is not A, T, G or C
     var graphData = [];
     var i, j, k, raphael, pieData, pieColors, piePercent, b, colourFlag;
-
     
     $('input.population', this.el).each(function () {
       graphData.push(eval(this.value));

@@ -43,7 +43,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       }),
     
       $('form div.select_all input', this.elLk.content).live('click', function () {
-        $(this).parents('fieldset').find('input[type=checkbox]').attr('checked', this.checked);
+        $(this).parents('fieldset').find('input[type=checkbox]').prop('checked', this.checked);
       }),
       
       $('form.wizard input.back', this.elLk.content).live('click', function () {
@@ -107,7 +107,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
         
         if (json.success === true) {
           Ensembl.EventManager.trigger('reloadPage');
-        } else if ($(this.el).is(':visible')) {
+        } else if (this.el.is(':visible')) {
           this.updateContent(json);
         }
       },
@@ -156,7 +156,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   },
   
   setSelectAll: function () {
-    $('form div.select_all input', this.elLk.content).attr('checked', function () {
+    $('form div.select_all input', this.elLk.content).prop('checked', function () {
       return $(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').length - 1 <= 0; // -1 for the select_all checkbox itself
     });
   }

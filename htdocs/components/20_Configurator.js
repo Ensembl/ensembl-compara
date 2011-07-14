@@ -137,8 +137,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         var img     = li.children('img');
         var menu    = li.parents('.popup_menu');
         var track   = menu.parent();
-        var val     = li.attr('className');
-        var countEl = panel.elLk.links.children('a.' + img.attr('className')).siblings('.count');
+        var val     = li.attr('class');
+        var countEl = panel.elLk.links.children('a.' + img.attr('class')).siblings('.count');
         var count   = countEl.html().split(/\b/);
         var updated = {};
         
@@ -154,7 +154,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
                 src:   '/i/render/' + this.className + '.gif', 
                 alt:   text,
                 title: text
-              }).siblings('input.track_name').attr('newVal', this.className).parent()[this.className === 'off' ? 'removeClass' : 'addClass']('on');
+              }).siblings('input.track_name').data('newVal', this.className).parent()[this.className === 'off' ? 'removeClass' : 'addClass']('on');
             });
           }
         }
@@ -166,7 +166,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
             count[1] = parseInt(count[1], 10) + (val === 'off' ? -1 : 1);
           }
           
-          input.val(input.attr('newVal') || val).removeAttr('newVal');
+          input.val(input.data('newVal') || val).removeData('newVal');
           
           updated[this.name] = [ this.value, li.text() ];
           
@@ -236,7 +236,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     // Header on search results and active tracks sections will act like the links on the left
     $('.config_header', this.elLk.configDivs).bind('click', function () {
-      var link = $(this).parent().attr('className').replace(/\s*config\s*/, '');
+      var link = $(this).parent().attr('class').replace(/\s*config\s*/, '');
       $('a.' + link, panel.elLk.links).trigger('click');
     });
     
@@ -250,7 +250,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
         if (!change.length) {
           Ensembl.EventManager.trigger('updateConfiguration', true);
-          change = $('<div>', { id: id, className: 'modal_content js_panel active', html: '<div class="spinner">Loading Content</div>' });
+          change = $('<div>', { id: id, 'class': 'modal_content js_panel active', html: '<div class="spinner">Loading Content</div>' });
           Ensembl.EventManager.trigger('addModalContent', change, this.value, id, 'modal_config_' + panel.component.toLowerCase());
         } else {
           change.find('select.species')[0].selectedIndex = this.selectedIndex;
@@ -439,13 +439,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       panel.elLk.trackOrder.show().find('ul.config_menu li').filter(function () { return this.style.display === 'none'; }).show();
       
-      ul  = null;
-      lis = null;
+      ul = lis = null;
     }
     
     function addSection() {
       configDiv = $('<div>', {
-        className: 'config view_config ' + active,
+        'class':   'config view_config ' + active,
         innerHTML: '<div class="spinner">Loading Content</div>'
       }).appendTo(panel.elLk.form);
       
@@ -548,7 +547,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       var fav       = $(this).hasClass('fav');
       var input     = $('input.track_name', this)[0];
       var trackName = input.name;
-      
       var favourite = !panel.imageConfig[trackName].favourite &&  fav ? 1 : // Making a track a favourite
                        panel.imageConfig[trackName].favourite && !fav ? 0 : // Making a track not a favourite
                        false;
@@ -798,8 +796,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       button.toggleClass('open').attr('title', function () { return desc.is(':visible') ? 'Hide information' : 'Click for more information'; });
       
-      desc   = null;
-      button = null;
+      desc = button = null;
     }
   }, 
   
@@ -834,8 +831,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       }
     }
     
-    li  = null;
-    div = null;
+    li = div = null;
   },
   
   externalFavourite: function (trackName, el) {
@@ -910,7 +906,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       this.params.order[trackName] = order;
     }
     
-    lis = null;
-    li  = null;
+    lis = li = null;
   }
 });
