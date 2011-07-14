@@ -2,7 +2,7 @@
 
 package EnsEMBL::Web::Configuration::Account;
 
-### Configuration for all views based on the Account object, including
+### Configuration for all views based on the Account hub, including
 ### account management 
 
 use strict;
@@ -17,7 +17,7 @@ sub get_valid_action {
 
 sub set_default_action {
   my $self = shift;
-  my $user = $self->object->user;
+  my $user = $self->hub->user;
   if ($user && $user->id) {
     $self->{'_data'}{'default'} = 'Links';
   } else {
@@ -29,9 +29,9 @@ sub user_tree { return 1; }
 
 sub user_populate_tree {
   my $self = shift;
-  my $object = $self->object;  
+  my $hub = $self->hub;  
 
-  if (my $user = $object->user) {
+  if (my $user = $hub->user) {
     my $settings_menu = $self->create_submenu( 'Settings', 'Manage Saved Settings' );
 
     $settings_menu->append(
@@ -42,13 +42,13 @@ sub user_populate_tree {
     );
 
     ## Control panel fixes - custom data section is species-specific
-    my $species = $object->species;
+    my $species = $hub->species;
     $species = '' if $species !~ /_/;
-    $species = $object->species_defs->ENSEMBL_PRIMARY_SPECIES unless $species;
+    $species = $hub->species_defs->ENSEMBL_PRIMARY_SPECIES unless $species;
     
     $settings_menu->append(
       $self->create_node( 'UserData', "Custom data ([[counts::userdata]])",
-        [], { 'availability' => 1, 'url' => $object->species_path($species).'/UserData/ManageData', 'raw' => 1 },
+        [], { 'availability' => 1, 'url' => $hub->species_path($species).'/UserData/ManageData', 'raw' => 1 },
       )
     );
 
@@ -182,7 +182,7 @@ sub user_populate_tree {
 sub populate_tree {
   my $self = shift;
 
-  if (my $user = $self->object->user) {
+  if (my $user = $self->hub->user) {
     $self->create_node( 'Links', 'Quick Links',
       [qw(links EnsEMBL::Web::Component::Account::Links)],
       { 'availability' => 1 },
@@ -255,7 +255,7 @@ sub tree_cache_key {
   ## for non logged-in are defferent
   ## but we cache both:
   my $class = ref $self;
-  my $key = ($self->object->user)
+  my $key = ($self->hub->user)
              ? "::${class}::TREE::USER"
              : "::${class}::TREE";
 
