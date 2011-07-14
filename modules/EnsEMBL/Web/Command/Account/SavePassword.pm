@@ -36,8 +36,8 @@ sub process {
   if ($object->param('code')) { # if password reset after "password lost" request
     $self->ajax_redirect('/Account/SetCookie', {
       'email'     => $user->email,
-      'password'  => $object->param('new_password_1'),
-      'url'       => $object->param('url'),
+      'password'  => $object->param('new_password_1') || '',
+      'url'       => $object->param('url') || '',
       'activated' => 'yes',
       'updated'   => 'yes',
     });
