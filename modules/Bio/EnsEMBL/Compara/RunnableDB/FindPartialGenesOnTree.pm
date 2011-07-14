@@ -13,6 +13,7 @@ Bio::EnsEMBL::Compara::RunnableDB::FindPartialGenesOnTree
 
 =head1 SYNOPSIS
 
+
 my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
 my $find_partial_genes = Bio::EnsEMBL::Compara::RunnableDB::FindPartialGenesOnTree->new
   (
@@ -179,8 +180,9 @@ for(my $j=0;$j<$alignment_length;$j++)
   }    
 }
 
-#Getting average of the intersection over length score
-my @score=();
+#Getting the alignment overlap score for each genes
+#the alignment overlap score i = average(i!=j)(intersection ij/length j)
+my @alignment_overlap_score=();
 for (my $i=0;$i<@aligned_members;$i++)
 {
   my $final_score=0;
@@ -190,7 +192,7 @@ for (my $i=0;$i<@aligned_members;$i++)
     {
       next;
     }
-    my $score =0;
+    my $alignment_overlap_score =0;
     my $intersection=0;
     my $length=0;
     for (my $p=0; $p<@{$members{$j}};$p++)
@@ -204,13 +206,13 @@ for (my $i=0;$i<@aligned_members;$i++)
     $length++;
     }
     }
-#keep the minimum between 1 and the score, no value superior to 1
-    $score=min(1,$intersection/$length);
+# alignment overlap score is the intersection over length
+    $alignment_overlap_score=$intersection/$length;
 #add previous score
-    $final_score=$final_score+$score;
+    $final_score=$final_score+$alignment_overlap_score;
   }
 #final score is the average of score over number total of members
-  $score[$i]=$final_score/(@aligned_members-1);
+  $alignment_overlap_score[$i]=$final_score/(@aligned_members-1);
 }
 
 #Now check for each aligned member at the occupancy position if there is an overlap
@@ -218,8 +220,8 @@ for (my $l=0; $l<@aligned_members; $l++)
 {
   my $total_occupancy=0;
   my $member_occupancy=0;
-  my $score_occupancy=0;
-  my $score=0;
+  my $coverage_on_core_region=0;
+  my $alignment_overlap_score=0;
 #foreach occupancy positions
   foreach my $pos (keys %pos_occupancy)
   {
@@ -234,21 +236,21 @@ for (my $l=0; $l<@aligned_members; $l++)
     }
   }
   if ($total_occupancy!=0){
-    $score_occupancy=($member_occupancy*100)/$total_occupancy;
+    $coverage_on_core_region=($member_occupancy*100)/$total_occupancy;
   }
 #Push all result into an array
       push @output_ids, {
       'gene_stable_id' => $aligned_members[$l]->gene_member ? $aligned_members[$l]->gene_member->stable_id : 'protein_member_id='.$aligned_members[$l]->dbID(),
       'protein_tree_stable_id' => $protein_tree->stable_id,
-      'coverage_on_core_regions_score' => $score_occupancy,
-      'average_intersection_over_length' => $score[$l],
+      'coverage_on_core_regions_score' => $coverage_on_core_region,
+      'alignment_overlap_score' => $alignment_overlap_score[$l],
       'species_name' => $aligned_members[$l]->genome_db->name,
       'kingdom' => $kingdom,
  };
 
 #  push @output_ids, {
 #    'gene_stable_id' => $aligned_members[$l]->gene_member->stable_id,
-#      'coverage_on_core_regions_score' => $score_occupancy,
+#      'coverage_on_core_regions_score' => $coverage_on_core_region,
 #      'species_name' => $aligned_members[$l]->genome_db->name,
 #  };  
 
@@ -261,7 +263,8 @@ sub write_output {
  
   my $output_ids = $self->param('output_ids');
  
-  $self->dbc->disconnect_when_inactive(0);
+  $self->dbc->disconnect_if_idle();
+  #$self->dbc->disconnect_when_inactive(0);
   $self->dataflow_output_id($output_ids, 3);
 }
 
