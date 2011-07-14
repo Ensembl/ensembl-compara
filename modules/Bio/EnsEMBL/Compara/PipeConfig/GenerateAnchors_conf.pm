@@ -11,7 +11,7 @@ sub default_options {
 
     return {
         'pipeline_name' => 'compara_GenerateAnchors',
-	'ensembl_cvs_root_dir' => '/nfs/users/nfs_s/sf5/src',
+	'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
 	   # parameters that are likely to change from execution to another:
 	'release'               => '72',
