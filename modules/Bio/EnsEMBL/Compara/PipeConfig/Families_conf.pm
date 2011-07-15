@@ -18,7 +18,7 @@
     #4. Run init_pipeline.pl script:
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Families_conf -password <your_password>
 
-    #5. When looping the beekeeper do not forget to add '-lifespan 1200' to its command line options to get some benefit from using 'long' queue
+    #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
 
     #6. Please remember that mapping_session, stable_id_history, member and sequence tables will have to be MERGED in an intelligent way, and not just written over.
         ReleaseCoordination.txt document explains how to do the merge correctly.
