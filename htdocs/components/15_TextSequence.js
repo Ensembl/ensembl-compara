@@ -5,6 +5,8 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     this.base.apply(this, arguments);
     
     Ensembl.EventManager.register('dataTableRedraw', this, this.initPopups);
+    Ensembl.EventManager.register('ajaxComplete',    this, this.sequenceKey);
+    Ensembl.EventManager.register('getSequenceKey',  this, this.getSequenceKey);
   },
   
   init: function () {
@@ -182,5 +184,31 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
         popup = null;
       }
     });
+  },
+  
+  sequenceKey: function () {
+    if (!$('.sequence_key', this.el).length) {
+      var key    = Ensembl.EventManager.trigger('getSequenceKey');
+      var params = {};
+      
+      $.each(key, function (id, k) {
+        $.extend(true, params, k);
+      });
+      
+      var urlParams = $.extend({}, params, { variations: [], exons: [] });
+      
+      $.each([ 'variations', 'exons' ], function () {
+        for (var p in params[this]) {
+          urlParams[this].push(p);
+        }
+      });
+      
+      this.getContent(this.params.updateURL.replace(/sub_slice\?/, 'key?') + ';' + $.param(urlParams, true), $('<div class="sequence_key" />').prependTo(this.el));
+    }
+  },
+  
+  getSequenceKey: function () {
+    Ensembl.EventManager.unregister('ajaxComplete', this);
+    return JSON.parse($('.sequence_key_json', this.el).html());
   }
 });
