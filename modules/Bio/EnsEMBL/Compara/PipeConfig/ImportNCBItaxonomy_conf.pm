@@ -254,8 +254,8 @@ sub pipeline_analyses {
         {   -logic_name => 'add_import_date',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'      => 'select distinct taxon_id, CURRENT_TIMESTAMP current_timestamp from ncbi_taxa_node where parent_id=0',
-                'input_id'        => { 'taxon_id' => '#taxon_id#', 'name' => '#current_timestamp#', 'name_class' => 'import date' },
+                'inputquery'      => 'select distinct taxon_id, CURRENT_TIMESTAMP this_moment from ncbi_taxa_node where parent_id=0',
+                'input_id'        => { 'taxon_id' => '#taxon_id#', 'name' => '#this_moment#', 'name_class' => 'import date' },
                 'fan_branch_code' => 2,
             },
             -wait_for => [ 'build_left_right_indices' ],
