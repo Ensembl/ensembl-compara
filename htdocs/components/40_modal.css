@@ -79,7 +79,7 @@ body.ie6  .modal_content .modal_nav div.header              { width: 247px; }
 body.ie6  .modal_content .modal_nav .tool_buttons           { width: 248px; }
 body.ie6  .modal_content .modal_nav .tool_buttons p         { margin-right: 0; }
 
-#modal_panel .fixed_width .modal_nav               { width: 210px; }
+#modal_panel .fixed_width .modal_nav               { width: 210px; float: none; position: absolute; }
 #modal_panel .fixed_width .modal_wrapper .panel    { margin-left: 215px; }
 #modal_panel .fixed_width .no_local_context .panel { margin-left: 0; }
 
