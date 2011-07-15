@@ -25,7 +25,7 @@ use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Data::Record::Upload;
 use EnsEMBL::Web::Data::Session;
-use EnsEMBL::Web::Document::SpreadSheet;
+use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::Text::Feature::SNP_EFFECT;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
@@ -1341,7 +1341,7 @@ sub consequence_table {
     }
   }
   
-  return new EnsEMBL::Web::Document::SpreadSheet($columns, [ sort { $a->{'var'} cmp $b->{'var'} } @rows ], { margin => '1em 0px', data_table => '1' });
+  return new EnsEMBL::Web::Document::Table($columns, [ sort { $a->{'var'} cmp $b->{'var'} } @rows ], { data_table => '1' });
 }
 
 #---------------------------------- DAS functionality ----------------------------------
