@@ -79,7 +79,7 @@ sub pipeline_create_commands {
               parent_id                       INT(10) UNSIGNED NOT NULL,
 
               rank                            CHAR(32) DEFAULT \"\" NOT NULL,
-              genbank_hidden_flag             TINYINT DEFAULT 0 NOT NULL,
+              genbank_hidden_flag             TINYINT(1) DEFAULT 0 NOT NULL,
 
               left_index                      INT(10) NOT NULL,
               right_index                     INT(10) NOT NULL,
@@ -87,7 +87,9 @@ sub pipeline_create_commands {
 
               PRIMARY KEY (taxon_id),
               KEY (parent_id),
-              KEY (rank)
+              KEY (rank),
+              KEY (left_index),
+              KEY (right_index)
             )
         }),
 

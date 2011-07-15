@@ -102,7 +102,7 @@ CREATE TABLE ncbi_taxa_node (
   parent_id                       int(10) unsigned NOT NULL,
 
   rank                            char(32) default '' NOT NULL,
-  genbank_hidden_flag             boolean default 0 NOT NULL,
+  genbank_hidden_flag             tinyint(1) default 0 NOT NULL,
 
   left_index                      int(10) NOT NULL,
   right_index                     int(10) NOT NULL,
