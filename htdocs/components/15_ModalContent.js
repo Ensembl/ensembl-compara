@@ -16,8 +16,6 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     
     this.elLk.content = $('.modal_wrapper', this.el);
     
-    this.setSelectAll();
-    
     $('a', this.elLk.links).bind('click', function () {
       if (!$(this).hasClass('disabled')) {
         var link = $(this).parent();
@@ -50,6 +48,22 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
         $(this).parents('form.wizard').append('<input type="hidden" name="wizard_back" value="1" />').submit();
       })
     );
+    
+    this.initialize();
+  },
+  
+  initialize: function () {
+    this.setSelectAll();
+    
+    this.elLk.dataTable = $('table.data_table', this.el);
+    
+    if (this.elLk.dataTable.length) {
+      if (!this.dataTableInit) {
+        $.extend(this, Ensembl.DataTable);
+      }
+      
+      this.dataTableInit();
+    }
     
     Ensembl.EventManager.trigger('validateForms', this.el);
     
@@ -127,16 +141,12 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     }
   
     this.elLk.content.html(json.content);
-    
-    this.setSelectAll();
-    
-    Ensembl.EventManager.trigger('validateForms', this.el);
        
     if ($('.modal_reload', this.el).length) {
       Ensembl.EventManager.trigger('queuePageReload', '', false, false, $('.modal_reload', this.el).attr('href'));
     }
     
-    this.addSubPanel();
+    this.initialize();
   },
   
   addSubPanel: function () {
