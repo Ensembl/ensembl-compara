@@ -203,7 +203,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
         }
       });
       
-      this.getContent(this.params.updateURL.replace(/sub_slice\?/, 'key?') + ';' + $.param(urlParams, true), $('<div class="sequence_key" />').prependTo(this.el));
+      this.getContent(this.params.updateURL.replace(/sub_slice\?/, 'key?') + ';' + $.param(urlParams, true), this.el.parent().siblings('.sequence_key'));
     }
   },
   
