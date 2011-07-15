@@ -29,8 +29,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       }
     }
     
-    Ensembl.EventManager.register('updatePanel',  this, this.getContent);
-    Ensembl.EventManager.register('ajaxComplete', this, this.getSequenceKey);
+    Ensembl.EventManager.register('updatePanel', this, this.getContent);
     
     if (this.el.parent('.initial_panel')[0] === Ensembl.initialPanels.get(-1)) {
       Ensembl.EventManager.register('hashChange', this, this.hashChange);
@@ -280,26 +279,5 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   dataTable: function () {
     $.extend(this, Ensembl.DataTable);
     this.dataTableInit();
-  },
-  
-  getSequenceKey: function () {
-    var params = {};
-    var urlParams;
-    
-    if ($('> .ajax > .js_panel > input.panel_type[value=TextSequence]', this.el).length) {
-      $('.sequence_key_json', this.el).each(function () {
-        $.extend(true, params, JSON.parse(this.innerHTML));
-      });
-      
-      urlParams = $.extend({}, params, { variations: [], exons: [] });
-      
-      $.each([ 'variations', 'exons' ], function () {
-        for (var p in params[this]) {
-          urlParams[this].push(p);
-        }
-      });
-      
-      this.getContent(this.params.updateURL.replace(/\?/, '/key?') + ';' + $.param(urlParams, true), $('.sequence_key', this.el));
-    }
   }
 });
