@@ -43,6 +43,24 @@ sub set_flag {
   return $self->{'_flags'}{$flag} = scalar @_ ? shift : 1;
 }
 
+sub set_flags {
+  ## Sets/modifies multiple flags
+  ## @param Either string, or arrayref or hashref
+  ##   - string: flag with the given name will be set on
+  ##   - hashref: will add all the keys as flags with corresponding values
+  ##   - arrayref: will be iterated through all the elements to set_flags (so each element can be either a hashref or string)
+  ## @return no return value
+  my ($self, $flags) = @_;
+  if (ref $flags && ref $flags eq 'ARRAY') {
+    $self->set_flags($_) for @$flags;
+    return;
+  }
+  if (!ref $flags) {
+    $flags = { $flags => 1 };
+  }
+  $self->{'_flags'}{$_} = defined $flags->{$_} ? $flags->{$_} : 1 for keys %$flags;
+}
+
 sub get_flag {
   ## Gets previously set flag
   ## @param flag name
