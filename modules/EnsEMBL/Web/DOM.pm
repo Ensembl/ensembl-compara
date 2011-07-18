@@ -48,7 +48,11 @@ sub create_element {
   ## Creates an element of a given tag name by instantiating the corresponding class
   ## Also adds attributes, inner_HTML/inner_text and child nodes
   ## @param Element type
-  ## @param HashRef of {attrib1 => value1, attrib2 => value2} for attributes, inner_HTML/inner_text and children (value for children key should be ref of array as accepted by append_children method).
+  ## @param HashRef of name value pair for attributes, flags, inner_HTML/inner_text and children with keys:
+  ##   - any attribute: value as accepted by Node::set_attribute
+  ##   - inner_HTML/inner_text: value as accepted by the methods resp.
+  ##   - flags: value as accepted by Node::set_flags
+  ##   - children: ref to an array that is accepted by append_children method
   ## @return Element subclass object or undef if unknown node_name
   my ($self, $element_name, $attributes)  = @_;
 
@@ -71,6 +75,9 @@ sub create_element {
 
   my $element = $node_class->new($self);
   $element->node_name = $element_name if $node_class eq 'EnsEMBL::Web::DOM::Node::Element::Generic';
+  if (exists $attributes->{'flags'}) {
+    $element->set_flags(delete $attributes->{'flags'});
+  }
   if (exists $attributes->{'inner_HTML'}) {
     $element->inner_HTML(delete $attributes->{'inner_HTML'});
   }
