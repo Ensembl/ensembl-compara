@@ -326,7 +326,7 @@ sub build_form {
     $fieldset->add_field({
       type   => 'DropDown',
       name   => 'image_width',
-      value  => $ENV{'ENSEMBL_IMAGE_WIDTH'},
+      value  => $ENV{'ENSEMBL_DYNAMIC_WIDTH'} ? 'bestfit' : $ENV{'ENSEMBL_IMAGE_WIDTH'},
       label  => 'Width of image',
       values => [
         { value => 'bestfit', caption => 'best fit' },

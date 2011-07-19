@@ -570,7 +570,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       if (panel.viewConfig[this.name] !== value) {
         if (this.name === 'image_width') {
-          Ensembl.setWidth(parseInt(value, 10));
+          Ensembl.setWidth(parseInt(value, 10), 1);
           panel.viewConfig.image_width = value;
           Ensembl.EventManager.trigger('changeWidth');
         } else {

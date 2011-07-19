@@ -74,9 +74,17 @@ Ensembl.LayoutManager.extend({
         // See http://bugs.jqueryui.com/ticket/7514
         var windowWidth  = Ensembl.LayoutManager.window.width();
         var windowHeight = Ensembl.LayoutManager.window.height();
+        var width        = Ensembl.width;
         
         if (windowWidth !== Ensembl.LayoutManager.windowWidth || windowHeight !== Ensembl.LayoutManager.windowHeight) {
+          Ensembl.setWidth(undefined, Ensembl.dynamicWidth);
+          
           Ensembl.EventManager.trigger('windowResize');
+          
+          if (Ensembl.dynamicWidth && Ensembl.width !== width) {
+            Ensembl.EventManager.trigger('imageResize');
+            $('.navbar, div.info, div.hint, div.warning, div.error').width(Ensembl.width);
+          }
         }
         
         Ensembl.LayoutManager.windowWidth  = windowWidth;

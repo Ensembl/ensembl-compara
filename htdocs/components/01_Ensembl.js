@@ -16,6 +16,7 @@ Ensembl.extend({
     this.hashRegex     = new RegExp(/[\?;&]r=([^;&]+)/);
     this.ajax          = this.cookie.get('ENSEMBL_AJAX')  || this.setAjax();
     this.width         = this.cookie.get('ENSEMBL_WIDTH') || this.setWidth();
+    this.dynamicWidth  = !!this.cookie.get('DYNAMIC_WIDTH');
     this.hideHints     = {};
     this.initialPanels = $('.initial_panel');
     this.minWidthEl    = $('#min_width_container');
@@ -62,11 +63,18 @@ Ensembl.extend({
     return this.cookie.set('ENSEMBL_AJAX', ($.ajaxSettings.xhr() || false) ? 'enabled' : 'none');
   },
   
-  setWidth: function (w) {
-    w = isNaN(w) ? Math.floor(($(window).width() - 250) / 100) * 100 : w;
+  setWidth: function (w, changed) {
+    var numeric = !isNaN(w);
+    
+    w = numeric ? w : Math.floor(($(window).width() - 250) / 100) * 100;
     
     this.width = w < 500 ? 500 : w;
-    this.cookie.set('ENSEMBL_WIDTH', this.width);
+    
+    if (changed) {
+      this.cookie.set('ENSEMBL_WIDTH', this.width);
+      this.cookie.set('DYNAMIC_WIDTH', 1, numeric ? -1 : 1);
+      this.dynamicWidth = !numeric;
+    }
     
     return this.width;
   },
