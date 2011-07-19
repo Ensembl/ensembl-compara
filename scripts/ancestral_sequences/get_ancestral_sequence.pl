@@ -3,27 +3,58 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Feature;
-my $registry = "Bio::EnsEMBL::Registry";
+use Getopt::Long;
 
-$registry->load_registry_from_url('mysql://ensro@ens-livemirror');
+my $reg = "Bio::EnsEMBL::Registry";
 
+my $help;
+my $registry_file;
+my $url;
+my $compara_url;
 my $species_name = "Homo sapiens";
+my $alignment_set = "primates";
 
-my $species_assembly = $registry->get_adaptor($species_name, "core", "CoordSystem")->fetch_all->[0]->version();
+GetOptions(
+  "help" => \$help,
+  "url=s" => \$url,
+  "compara_url=s" => \$compara_url,
+  "conf|registry=s" => \$registry_file,
+  "species=s" => \$species_name,
+  "alignment_set=s" => \$alignment_set,
+);
 
-my $slice_adaptor = $registry->get_adaptor($species_name, "core", "Slice");
+if ($registry_file) {
+  die if (!-e $registry_file);
+  $reg->load_all($registry_file);
+} elsif ($url) {
+  $reg->load_registry_from_url($url);
+} else {
+  $reg->load_all();
+}
 
-my $method_link_species_set_adaptor = $registry->get_adaptor("Multi", "compara", "MethodLinkSpeciesSet");
+my $compara_dba;
+if ($compara_url) {
+  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+  $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url=>$compara_url);
+} else {
+  $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
+}
 
-my $genomic_align_tree_adaptor = $registry->get_adaptor("Multi", "compara", "GenomicAlignTree");
+my $species_scientific_name = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_scientific_name();
+my $species_production_name = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_production_name();
+my $species_assembly = $reg->get_adaptor($species_name, "core", "CoordSystem")->fetch_all->[0]->version();
 
-my $mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name("EPO", "primates");
+my $slice_adaptor = $reg->get_adaptor($species_name, "core", "Slice");
 
-my $compara_dbc = $registry->get_DBAdaptor("Multi", "compara")->dbc;
+my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
-print_header($species_name, $species_assembly, $compara_dbc, $mlss);
-exit;
+my $genomic_align_tree_adaptor = $compara_dba->get_GenomicAlignTreeAdaptor;
+
+my $mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name("EPO", $alignment_set);
+
+my $compara_dbc = $compara_dba->dbc;
+
+print_header($species_scientific_name, $species_assembly, $compara_dbc, $mlss);
 
 my $slices = $slice_adaptor->fetch_all("toplevel", undef, 0, 1);
 my $step = 10000000;
@@ -32,9 +63,9 @@ foreach my $slice (@$slices) {
   next unless (!$ARGV[0] or $slice->seq_region_name eq $ARGV[0] or
       $slice->coord_system_name eq $ARGV[0]);
   my $length = $slice->length;
-  open(FASTA, ">human_ancestor_".$slice->seq_region_name.".fa") or die;
+  open(FASTA, ">${species_production_name}_ancestor_".$slice->seq_region_name.".fa") or die;
   print FASTA ">ANCESTOR_for_", $slice->name, "\n";
-  open(BED, ">human_ancestor_".$slice->seq_region_name.".bed") or die;
+  open(BED, ">${species_production_name}_ancestor_".$slice->seq_region_name.".bed") or die;
   my $num_of_blocks = 0;
   for (my $start = 1; $start <= $length; $start += $step) {
     my $end = $start + $step - 1;
@@ -47,7 +78,8 @@ foreach my $slice (@$slices) {
   close(FASTA);
   close(BED);
   if ($num_of_blocks == 0) {
-    unlink("human_ancestor_".$slice->seq_region_name.".bed", "human_ancestor_".$slice->seq_region_name.".fa");
+    unlink("${species_production_name}_ancestor_".$slice->seq_region_name.".bed",
+        "${species_production_name}_ancestor_".$slice->seq_region_name.".fa");
   }
 }
 
@@ -169,6 +201,7 @@ sub deep_clean {
     foreach my $this_genomic_align (@{$this_genomic_align_group->get_all_GenomicAligns}) {
       foreach my $key (keys %$this_genomic_align) {
         if ($key eq "genomic_align_block") {
+          next if (!$this_genomic_align->{$key});
           foreach my $this_ga (@{$this_genomic_align->{$key}->get_all_GenomicAligns}) {
               my $gab = $this_ga->{genomic_align_block};
               next if (!$gab);
