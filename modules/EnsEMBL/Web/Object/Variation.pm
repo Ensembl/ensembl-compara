@@ -851,20 +851,52 @@ sub individual_table {
   my $individual_genotypes = $self->individual_genotypes_obj($selected_pop);
   return {} unless defined $individual_genotypes && @$individual_genotypes; 
   my %data;
+  
+  my @ind_ids;
+  
   foreach my $ind_gt_obj ( @$individual_genotypes ) { 
     my $ind_obj   = $ind_gt_obj->individual;
     next unless $ind_obj;
     my $ind_id    = $ind_obj->dbID;
+    
+    push @ind_ids, $ind_id;
 
     $data{$ind_id}{Name}           = $ind_obj->name;
     $data{$ind_id}{Genotypes}      = $self->individual_genotype($ind_gt_obj);
     $data{$ind_id}{Gender}         = $ind_obj->gender;
     $data{$ind_id}{Description}    = $self->individual_description($ind_obj);
-    $data{$ind_id}{Population}     = $self->get_individuals_pops($ind_obj);
     $data{$ind_id}{Mother}        = $self->parent($ind_obj,"mother");
     $data{$ind_id}{Father}        = $self->parent($ind_obj,"father");
     $data{$ind_id}{Children}      = $self->child($ind_obj);
+    $data{$ind_id}{Object}        = $ind_obj;
   }
+  
+  # Bit of trickery here to get the populations
+  # Uses a specially written method in the variation API to get a hash
+  # linking individuals to populations
+  # This means we do 1 query here instead of 1 per individual
+  if(scalar @ind_ids) {
+    my $ia = $individual_genotypes->[0]->individual->adaptor;
+    my $ip_hash = $ia->_get_individual_population_hash(\@ind_ids);
+    
+    my (%pops, %pop_links);
+    my $pa = $ia->db->get_PopulationAdaptor;
+    $pops{$_->dbID} = $_ for @{$pa->fetch_all_by_dbID_list([keys %$ip_hash])};
+    $pop_links{$_->dbID} = $self->pop_links($_) for values %pops;
+    
+    foreach my $pop_id(keys %$ip_hash) {
+      foreach my $ind_id(keys %{$ip_hash->{$pop_id}}) {
+        next unless defined($data{$ind_id});
+        
+        push (@{$data{$ind_id}{Population}}, {
+          Name => $self->pop_name($pops{$pop_id}),
+          Link => $pop_links{$pop_id},
+          ID   => $pop_id
+        });
+      }
+    }
+  }
+  
   return \%data;
 }
 
