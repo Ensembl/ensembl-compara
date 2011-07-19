@@ -583,6 +583,9 @@ sub restrict_between_alignment_positions {
   my $genomic_align_tree;
   $genomic_align_tree = $self->copy();
   $genomic_align_tree->adaptor($self->adaptor);
+  foreach my $this_node (@{$genomic_align_tree->get_all_nodes}) {
+    $this_node->adaptor($self->adaptor);
+  }
 
   foreach my $this_node (@{$genomic_align_tree->get_all_nodes}) {
     my $genomic_align_group = $this_node->genomic_align_group;
@@ -603,7 +606,6 @@ sub restrict_between_alignment_positions {
         ## Always skip composite segments outside of the range of restriction
         ## The cigar_line will contain only X's
         next if ($restricted_genomic_align->cigar_line =~ /^\d*X$/);
-
         $restricted_genomic_align->genomic_align_block($genomic_align_tree);
         push(@$new_genomic_aligns, $restricted_genomic_align);
       }
