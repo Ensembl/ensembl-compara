@@ -198,8 +198,9 @@ sub postReadRequestHandler {
   ## Ajax cookie
   my %cookies = CGI::Cookie->parse($r->headers_in->{'Cookie'});
   
-  $r->subprocess_env->{'ENSEMBL_AJAX_VALUE'}  = $cookies{'ENSEMBL_AJAX'}  && $cookies{'ENSEMBL_AJAX'}->value  ? $cookies{'ENSEMBL_AJAX'}->value  : 'none';
-  $r->subprocess_env->{'ENSEMBL_IMAGE_WIDTH'} = $cookies{'ENSEMBL_WIDTH'} && $cookies{'ENSEMBL_WIDTH'}->value ? $cookies{'ENSEMBL_WIDTH'}->value : ($ENSEMBL_IMAGE_WIDTH || 800);
+  $r->subprocess_env->{'ENSEMBL_AJAX_VALUE'}    = $cookies{'ENSEMBL_AJAX'}  && $cookies{'ENSEMBL_AJAX'}->value  ? $cookies{'ENSEMBL_AJAX'}->value  : 'none';
+  $r->subprocess_env->{'ENSEMBL_IMAGE_WIDTH'}   = $cookies{'ENSEMBL_WIDTH'} && $cookies{'ENSEMBL_WIDTH'}->value ? $cookies{'ENSEMBL_WIDTH'}->value : ($ENSEMBL_IMAGE_WIDTH || 800);
+  $r->subprocess_env->{'ENSEMBL_DYNAMIC_WIDTH'} = $cookies{'DYNAMIC_WIDTH'} && $cookies{'DYNAMIC_WIDTH'}->value ? 1 : 0;
   
   $ENSEMBL_WEB_REGISTRY->timer_push('Post read request handler completed', undef, 'Apache');
   
@@ -347,12 +348,15 @@ sub handler {
   
   # Some memcached tags (mainly for statistics)
   my $prefix = '';
-  my @tags = map { $prefix = join '/', $prefix, $_; $prefix; } @path_segments;
-  @tags = map {( "/$species$_", $_ )} @tags;
-  push @tags, "/$species";
+  my @tags   = map { $prefix = join '/', $prefix, $_; $prefix; } @path_segments;
+  
+  if ($species) {
+    @tags = map {( "/$species$_", $_ )} @tags;
+    push @tags, "/$species";
+  }
   
   $ENV{'CACHE_TAGS'}{$_} = 1 for @tags; # /memcached tags
-    
+  
   my $Tspecies  = $species;
   my $script    = undef;
   my $path_info = undef;
@@ -477,10 +481,16 @@ sub cleanupHandler {
   my $length     = $end_time - $start_time;
   
   if ($length >= $ENSEMBL_LONGPROCESS_MINTIME) {
-    my $u     = $r->parsed_uri;
-    my $file  = $u->path;
-    my $query = $u->query . $r->subprocess_env->{'ENSEMBL_REQUEST'};
-    my $size  = &$Apache2::SizeLimit::HOW_BIG_IS_IT();
+    my $u      = $r->parsed_uri;
+    my $file   = $u->path;
+    my $query  = $u->query . $r->subprocess_env->{'ENSEMBL_REQUEST'};
+    my $size;
+    
+    if ($Apache2::SizeLimit::HOW_BIG_IS_IT) {
+      $size = &$Apache2::SizeLimit::HOW_BIG_IS_IT();
+    } else {
+      ($size) = Apache2::SizeLimit->_check_size;
+    }
     
     $r->subprocess_env->{'ENSEMBL_ENDTIME'} = $end_time;
     
@@ -505,7 +515,7 @@ sub cleanupHandler {
     if ($file_mod_time >= $ENSEMBL_WEB_REGISTRY->timer->get_process_start_time) {
       warn sprintf "KILLING CHILD %10s\n", $$;
       
-      if ($Apache2::SizeLimit::WIN32) {
+      if ($Apache2::SizeLimit::IS_WIN32 || $Apache2::SizeLimit::WIN32) {
         CORE::exit(-2);
       } else {
         $r->child_terminate;
@@ -615,10 +625,18 @@ sub childExitHandler {
   my $r = shift;
   
   if ($ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS) {
+    my $size;
+    
+    if ($Apache2::SizeLimit::HOW_BIG_IS_IT) {
+      $size = &$Apache2::SizeLimit::HOW_BIG_IS_IT();
+    } else {
+      ($size) = Apache2::SizeLimit->_check_size;
+    }
+    
     warn sprintf "Child %9d: - reaped at      %30s;  Time: %11.6f;  Req:  %4d;  Size: %8dK\n",
       $$, '' . gmtime, time-$ENSEMBL_WEB_REGISTRY->timer->get_process_start_time,
       $ENSEMBL_WEB_REGISTRY->timer->get_process_child_count,
-      &$Apache2::SizeLimit::HOW_BIG_IS_IT()
+      $size
   }
 }
 
