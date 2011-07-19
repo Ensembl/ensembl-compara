@@ -27,43 +27,12 @@ sub update_configuration {
   
   return unless $hub->param('submit') || $hub->param('reset');
   
-  my $r            = $self->r;
-  my $session      = $hub->session;
-  my $type         = $hub->type;
-  my $view_config  = $hub->get_viewconfig($hub->action);
-  my $updated      = $view_config->update_from_input;
-  my $cookie_host  = $hub->species_defs->ENSEMBL_COOKIEHOST;
-  my $image_width  = $hub->param('image_width');
-  my $cookie_ajax  = $hub->param('cookie_ajax');
-  my @cookies;
+  my $r           = $self->r;
+  my $type        = $hub->type;
+  my $view_config = $hub->get_viewconfig($hub->action);
+  my $updated     = $view_config->update_from_input;
   
-  # Set width
-  if ($image_width && $image_width != $ENV{'ENSEMBL_IMAGE_WIDTH'}) {
-    push @cookies, new CGI::Cookie(
-      -name    => 'ENSEMBL_WIDTH',
-      -value   => $image_width,
-      -domain  => $cookie_host,
-      -path    => '/',
-      -expires => $image_width =~ /\d+/ ? 'Monday, 31-Dec-2037 23:59:59 GMT' : 'Monday, 31-Dec-1970 00:00:01 GMT'
-    );
-  }
-  
-  # Set ajax cookie
-  if ($cookie_ajax && $cookie_ajax ne $ENV{'ENSEMBL_AJAX_VALUE'}) {
-    push @cookies, new CGI::Cookie(
-      -name    => 'ENSEMBL_AJAX',
-      -value   => $cookie_ajax,
-      -domain  => $cookie_host,
-      -path    => '/',
-      -expires => 'Monday, 31-Dec-2037 23:59:59 GMT'
-    );
-  }
-  
-  foreach my $cookie (@cookies) {
-    $r->$_->add('Set-cookie' => $cookie) for qw(headers_out err_headers_out);
-  }
-  
-  $session->store;
+  $hub->session->store;
   
   if ($hub->param('submit')) {
     if ($r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
