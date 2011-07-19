@@ -613,7 +613,7 @@ sub build_imageconfig_menus {
       $selected<span class="menu_option">$icon$name</span>
       <div class="controls">
         $controls
-        <div class="favourite"></div>
+        <div class="favourite" title="Favorite this track"></div>
         $help
       </div>
       $desc
