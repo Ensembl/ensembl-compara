@@ -98,8 +98,8 @@ CREATE TEMPORARY TABLE tmp_1b
 ALTER TABLE tmp_1b ADD PRIMARY KEY (node_id);
 OPTIMIZE TABLE tmp_1b;
 
-SELECT taxon_id, taxon_name, COUNT(duplication_confidence_score) AS nb_dup_nodes, COUNT(IF(duplication_confidence_score=0, 1, NULL)) AS nb_dubious_nodes, ROUND(AVG(duplication_confidence_score), 2) AS avg_dupscore, ROUND(AVG(IF(duplication_confidence_score=0, NULL, duplication_confidence_score)), 2) AS avg_dupscore_nondub
-FROM tmp_1a NATURAL JOIN tmp_1b NATURAL JOIN tmp_1c NATURAL JOIN ncbi_taxa_node GROUP BY taxon_id ORDER BY left_index;
+SELECT taxon_id, taxon_name, COUNT(*) AS nb_nodes, COUNT(*)-COUNT(duplication_confidence_score) AS nb_spec_nodes, COUNT(duplication_confidence_score) AS nb_dup_nodes, COUNT(IF(duplication_confidence_score=0, 1, NULL)) AS nb_dubious_nodes, ROUND(AVG(duplication_confidence_score), 2) AS avg_dupscore, ROUND(AVG(IF(duplication_confidence_score=0, NULL, duplication_confidence_score)), 2) AS avg_dupscore_nondub
+FROM tmp_1a LEFT JOIN tmp_1b USING (node_id) NATURAL JOIN tmp_1c NATURAL JOIN ncbi_taxa_node GROUP BY taxon_id ORDER BY left_index;
 
 
 
