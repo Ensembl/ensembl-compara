@@ -15,7 +15,7 @@ Ensembl.extend({
     
     this.hashRegex     = new RegExp(/[\?;&]r=([^;&]+)/);
     this.ajax          = this.cookie.get('ENSEMBL_AJAX')  || this.setAjax();
-    this.width         = this.cookie.get('ENSEMBL_WIDTH') || this.setWidth();
+    this.width         = this.cookie.get('ENSEMBL_WIDTH') || this.setWidth(undefined, 1);
     this.dynamicWidth  = !!this.cookie.get('DYNAMIC_WIDTH');
     this.hideHints     = {};
     this.initialPanels = $('.initial_panel');
