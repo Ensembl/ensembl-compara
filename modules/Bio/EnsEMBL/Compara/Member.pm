@@ -7,8 +7,6 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Gene;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
-use Bio::EnsEMBL::Compara::NestedSet;
-our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
 
 =head2 new (CONSTRUCTOR)
 
@@ -239,9 +237,9 @@ sub new_from_transcript {
 
 =head2 copy
 
-  Arg [1]    : int $member_id (optional)
+  Arg [1]    : object $parent_object (optional)
   Example    :
-  Description: returns copy of object, calling superclass copy method
+  Description: copies the object, optionally by topping up a given structure (to support multiple inheritance)
   Returntype :
   Exceptions :
   Caller     :
@@ -251,7 +249,7 @@ sub new_from_transcript {
 sub copy {
   my $self = shift;
   
-  my $mycopy = $self->SUPER::copy;
+  my $mycopy = @_ ? shift : {};
   bless $mycopy, "Bio::EnsEMBL::Compara::Member";
   
   $mycopy->dbID($self->dbID);

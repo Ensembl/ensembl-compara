@@ -50,11 +50,9 @@ aligned sequence, which is represented as an AlignedMember object.
 package Bio::EnsEMBL::Compara::AlignedMember;
 
 use strict;
-#use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::Utils::Exception;
 
-use Bio::EnsEMBL::Compara::Member;
-our @ISA = qw(Bio::EnsEMBL::Compara::Member);
+use base ('Bio::EnsEMBL::Compara::NestedSet', 'Bio::EnsEMBL::Compara::Member');
 
 ##################################
 # overriden superclass methods
@@ -75,8 +73,9 @@ our @ISA = qw(Bio::EnsEMBL::Compara::Member);
 sub copy {
   my $self = shift;
   
-  my $mycopy = $self->SUPER::copy;
-  bless $mycopy, "Bio::EnsEMBL::Compara::AlignedMember";
+  my $mycopy = $self->Bio::EnsEMBL::Compara::NestedSet::copy;
+               $self->Bio::EnsEMBL::Compara::Member::copy($mycopy);     # we should probably rename this method into topup() as it should not be needed by 'Member' class itself
+  bless $mycopy, 'Bio::EnsEMBL::Compara::AlignedMember';
   
   $mycopy->cigar_line($self->cigar_line);
   $mycopy->cigar_start($self->cigar_start);
