@@ -40,6 +40,7 @@ aligned sequence, which is represented as an AlignedMember object.
 
   Bio::EnsEMBL::Compara::AlignedMember
   +- Bio::EnsEMBL::Compara::Member
+  +- Bio::EnsEMBL::Compara::NestedSet
    +- Bio::EnsEMBL::Compara::Graph::Node
     +- Bio::EnsEMBL::Compara::Graph::CGObject
 
