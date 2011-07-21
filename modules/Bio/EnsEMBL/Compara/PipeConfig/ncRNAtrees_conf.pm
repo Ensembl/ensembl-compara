@@ -19,7 +19,7 @@
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_confI;
+package Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf ;
 
 use strict;
 use warnings;
@@ -34,7 +34,7 @@ sub default_options {
         'max_gene_count'    => 1500,
 
         'release'           => '63',
-        'rel_suffix'        => 'b',    # an empty string by default, a letter otherwise
+        'rel_suffix'        => 'z',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
@@ -46,22 +46,38 @@ sub default_options {
 
         'pipeline_db' => {                                  # connection parameters
                           -driver => 'mysql',
-                          -host   => 'compara3',
+                          -host   => 'compara4',
                           -port   => 3306,
                           -user   => 'ensadmin',
                           -pass   => $self->o('password'),
                           -dbname => $ENV{'USER'}.'_compara_nctrees_'.$self->o('rel_with_suffix'),
         },
 
+
+            # executable locations:
+            'cmalign_exe' => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign',
+            'cmbuild_exe' => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmbuild',
+            'mafft_exe' => '/software/ensembl/compara/mafft-6.707/bin/mafft',
+            'mafft_binaries' => '/software/ensembl/compara/mafft-6.707/binaries',
+            'raxml_exe' => '/software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3',
+            'prank_exe' => '/software/ensembl/compara/prank/090707/src/prank',
+            'raxmlLight_exe' => '/software/ensembl/compara/raxml/RAxML-Light-1.0.5/raxmlLight',
+            'parsimonator_exe' => '/software/ensembl/compara/parsimonator/Parsimonator-1.0.2/parsimonator-SSE3',
+            'ktreedist_exe' => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
+            'fasttree_exe' => '/software/ensembl/compara/fasttree/FastTree',
+            'treebest_exe' => '/software/ensembl/compara/treebest.doubletracking',
+
         'reg1' => {
-            -host   => 'ens-staging',
+#          -host   => 'ens-staging',
+                   -host => 'ens-livemirror',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
         },
 
         'reg2' => {
-            -host   => 'ens-staging2',
+#           -host   => 'ens-staging2',
+                   -host => 'ens-livemirror',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
@@ -338,38 +354,53 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Infernal',
             -hive_capacity => 200,
             -failed_job_tolerance => 10,    # that many per cent jobs are allowed to fail
+            -parameters => {
+                            'cmbuild_exe' => $self->o('cmbuild_exe'),
+                            'cmalign_exe' => $self->o('cmalign_exe'),
+                           },
             -flow_into => {
                            1 => ['pre_sec_struct_tree' ],
                           },
         },
 
-            {   -logic_name    => 'pre_sec_struct_tree', ## pre_sec_struct_tree
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',  ## PrepareRAxMLSecModels -- rename
-            -hive_capacity => 200,
-            #            -failed_job_tolerance =>  5,   ### No failed_job_tolerance here
-            -flow_into => {
-                           1 => [ 'treebest_mmerge' ],
-                           2 => [ 'sec_struct_model_tree'],
-                           -1 => [ 'pre_sec_struct_tree_himem' ],
-                           -2 => [ 'sec_struct_model_tree_himem' ],
-                          },
-        },
+            {
+             -logic_name    => 'pre_sec_struct_tree', ## pre_sec_struct_tree
+             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',  ## PrepareRAxMLSecModels -- rename
+             -hive_capacity => 200,
+             -parameters => {
+                             'raxml_exe' => $self->o('raxml_exe'),
+                            },
+             -flow_into => {
+                            1 => [ 'treebest_mmerge' ],
+                            2 => [ 'sec_struct_model_tree'],
+#                            -1 => [ 'pre_sec_struct_tree_himem' ],
+#                            -2 => [ 'sec_struct_model_tree_himem' ],
+                            -1 => ['fast_trees'],  # -1 is MEMLIMIT
+                            -2 => ['fast_trees'],  # -2 is TIMELIMIT
+                           },
+            },
 
-        {
-         -logic_name => 'pre_sec_struct_tree_himem',
-         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',
-         -hive_capacity => 200,
-         -flow_into => {
-                        1 => [ 'treebest_mmerge' ],
-                        2 => [ 'sec_struct_model_tree_himem' ],
-                       },
-         -can_be_empty => 1,
-         -rc_id => 1,
-        },
+#         {
+#          -logic_name => 'pre_sec_struct_tree_himem',
+#          -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',
+#          -hive_capacity => 200,
+#          -parameters => {
+#                          'raxml_exe' => $self->o('raxml_exe'),
+#                         },
+#          -flow_into => {
+#                         1 => [ 'treebest_mmerge' ],
+#                         2 => [ 'sec_struct_model_tree_himem' ],
+#                        },
+#          -can_be_empty => 1,
+#          -rc_id => 1,
+#         },
 
         {   -logic_name    => 'sec_struct_model_tree', ## sec_struct_model_tree
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree', ## SecStrucModels
             -hive_capacity => 200,
+            -parameters => {
+                            'raxml' => $self->o('raxml_exe'),
+                           },
             -failed_job_tolerance => 3,
             -flow_into => {
                            -1 => [ 'sec_struct_model_tree_himem' ],
@@ -381,6 +412,9 @@ sub pipeline_analyses {
          -logic_name => 'sec_struct_model_tree_himem',
          -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree',
          -hive_capacity => 200,
+         -parameters => {
+                         'raxml' => $self->o('raxml_exe'),
+                        },
          -failed_job_tolerance => 3,
          -can_be_empty => 1,
          -rc_id => 1,
@@ -389,25 +423,82 @@ sub pipeline_analyses {
         {   -logic_name    => 'genomic_alignment',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment',
             -hive_capacity => 200,
+            -parameters => {
+                            'mafft_exe' => $self->o('mafft_exe'),
+                            'mafft_binaries' => $self->o('mafft_binaries'),
+                            'raxml_exe' => $self->o('raxml_exe'),
+                            'prank_exe' => $self->o('prank_exe'),
+                           },
             -failed_job_tolerance => 5,    # that many per cent jobs are allowed to fail
             -flow_into => {
                            -2 => ['genomic_alignment_long'],
+                           -1 => ['genomic_alignment_long'],
+                           1  => ['fast_trees'],
+                           2  => ['genomic_tree'],
                           },
         },
+
+            {
+             -logic_name => 'fast_trees',
+             -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCFastTrees',
+             -hive_capacity => 200,
+             -parameters => {
+                             'fasttree_exe' => $self->o('fasttree_exe'),
+                             'parsimonator_exe' => $self->o('parsimonator_exe'),
+                             'raxmlLight_exe' => $self->o('raxmlLight_exe'),
+                            },
+             -rc_id => 1,
+            },
 
         {
          -logic_name => 'genomic_alignment_long',
          -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment',
          -hive_capacity => 200,
+            -parameters => {
+                            'mafft_exe' => $self->o('mafft_exe'),
+                            'mafft_binaries' => $self->o('mafft_binaries'),
+                            'raxml_exe' => $self->o('raxml_exe'),
+                            'prank_exe' => $self->o('prank_exe'),
+                           },
          -failed_job_tolerance => 5,
          -can_be_empty => 1,
-         -rc_id => 2,
+         -rc_id => 1,
+         -flow_into => {
+                        2 => ['genomic_tree_himem'],
+                       },
         },
+
+            {
+             -logic_name => 'genomic_tree',
+             -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicTree',
+             -hive_capacity => 200,
+             -parameters => {
+                             'treebest_exe' => $self->o('treebest_exe'),
+                            },
+             -flow_into => {
+                            -2 => ['genomic_tree_himem'],
+                            -1 => ['genomic_tree_himem'],
+                           },
+            },
+
+            {
+             -logic_name => 'genomic_tree_himem',
+             -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicTree',
+             -hive_capacity => 200,
+             -parameters => {
+                             'treebest_exe' => $self->o('treebest_exe'),
+                            },
+             -can_be_empty => 1,
+             -rc_id => 1,
+            },
 
         {   -logic_name    => 'treebest_mmerge',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCTreeBestMMerge',
             -hive_capacity => 400,
-            -wait_for      => ['recover_epo', 'infernal','genomic_alignment', 'genomic_alignment_long', 'sec_struct_model_tree','sec_struct_model_tree_himem', ],
+            -parameters => {
+                            'treebest_exe' => $self->o('treebest_exe'),
+                           },
+            -wait_for      => ['recover_epo', 'infernal','genomic_alignment', 'genomic_alignment_long', 'sec_struct_model_tree','sec_struct_model_tree_himem', 'genomic_tree', 'genomic_tree_himem', 'fast_trees' ],
             -failed_job_tolerance => 5,
             -flow_into => {
                            1 => [ 'orthotree', 'ktreedist' ],
@@ -419,6 +510,9 @@ sub pipeline_analyses {
          -logic_name => 'treebest_mmerge_himem',
          -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCTreeBestMMerge',
          -hive_capacity => 400,
+         -parameters => {
+                         'treebest_exe' => $self->o('treebest_exe'),
+                        },
          -failed_job_tolerance => 5,
          -flow_into => {
                         1 => [ 'orthotree', 'ktreedist' ],
@@ -445,6 +539,9 @@ sub pipeline_analyses {
         {   -logic_name    => 'ktreedist',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Ktreedist',
             -hive_capacity => -1,
+            -parameters => {
+                            'ktreedist_exe' => $self->o('ktreedist_exe'),
+                           },
             -failed_job_tolerance =>  5,    # that many per cent jobs are allowed to fail
             -flow_into => {
                            -1 => [ 'ktreedist_himem' ],
@@ -455,6 +552,9 @@ sub pipeline_analyses {
          -logic_name => 'ktreedist_himem',
          -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Ktreedist',
          -hive_capacity => -1,
+         -parameters => {
+                         'ktreedist_exe' => $self->o('ktreedist_exe'),
+                        },
          -failed_job_tolerance => 5,
         },
 
