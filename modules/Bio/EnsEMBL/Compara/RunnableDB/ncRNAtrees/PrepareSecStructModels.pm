@@ -38,7 +38,7 @@ $ncsecstructtree->write_output(); #writes to DB
 
 =head1 DESCRIPTION
 
-This RunnableDB build phylogenetic trees using RAxML. RAxML can use several secondary
+This RunnableDB builds phylogenetic trees using RAxML. RAxML can use several secondary
 structure substitution models. This Runnable can run several of them in a row, but it
 is recommended to run them in parallel.
 
@@ -92,7 +92,7 @@ sub fetch_input {
     if(my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
         $self->param('input_aln', $input_aln);
     } else {
-        return;  ## Die?
+        die "I can't write input alignment";
     }
 }
 
@@ -108,9 +108,21 @@ sub fetch_input {
 
 sub run {
     my $self = shift @_;
-
-    # Run RAxML without ay structure info first
-    $self->_run_bootstrap_raxml;
+    my $nc_tree_id = $self->param('nc_tree_id');
+    # First check the size of the alignents to compute:
+    if ($self->param('tag_residue_count') > 150000) {
+        $self->dataflow_output_id (
+                                   {
+                                    'nc_tree_id' => $nc_tree_id,
+                                   }, -1
+                                  );
+        # Should we die here? Nothing more to do in the Runnable
+        $self->input_job->incomplete(0);
+        die "$nc_tree_id family is too big. Only fast trees will be computed\n";
+    } else {
+    # Run RAxML without any structure info first
+        $self->_run_bootstrap_raxml;
+    }
 }
 
 =head2 write_output
@@ -148,23 +160,16 @@ sub write_output {
 
 }
 
-
-##########################################
-#
-# internal methods
-#
-##########################################
-
-
 sub _run_bootstrap_raxml {
-  my $self = shift;
+    my $self = shift;
 
   my $aln_file = $self->param('input_aln');
   return unless (defined($aln_file));
 
   my $raxml_tag = $self->param('nc_tree')->node_id . "." . $self->worker->process_id . ".raxml";
-  my $raxml_executable = $self->analysis->program_file || '/software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3';
-  $self->throw("can't find a raxml executable to run\n") unless(-e $raxml_executable);
+  my $raxml_executable = $self->param('raxml_exe') || '/software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3';
+  $self->throw("can't find a raxml executable to run: $raxml_executable\n") unless(-e $raxml_executable);
+  $self->throw("Not an executable program: $raxml_executable\n") unless(-x $raxml_executable);
 
   my $bootstrap_num = 10;
   my $root_id = $self->param('nc_tree')->node_id;
@@ -200,7 +205,7 @@ sub _run_bootstrap_raxml {
 
   my $worker_temp_directory = $self->worker_temp_directory;
   $self->compara_dba->dbc->disconnect_when_inactive(1);
-  print("$cmd\n") if($self->debug);
+  print "$cmd\n" if($self->debug);
   my $bootstrap_starttime = time()*1000;
 
   unless(system("cd $worker_temp_directory; $cmd") == 0) {
@@ -223,7 +228,7 @@ sub _run_bootstrap_raxml {
 
   my $raxml_output = $self->worker_temp_directory . "RAxML_bestTree." . "$raxml_tag.$bootstrap_num";
 
-  $self->_store_newick_into_protein_tree_tag_string($tag,$raxml_output);
+  $self->_store_newick_into_nc_tree_tag_string($tag,$raxml_output);
 
   # Unlink run files
   my $temp_dir = $self->worker_temp_directory;
@@ -238,9 +243,10 @@ sub _dumpMultipleAlignmentStructToWorkdir {
 
   my $leafcount = scalar(@{$tree->get_all_leaves});
   if($leafcount<4) {
-    printf(STDERR "tree cluster %d has <4 proteins - can not build a raxml tree\n", 
-           $tree->node_id);
-    return undef;
+      $self->input_job->incomplete(0);
+      #printf(STDERR "tree cluster %d has <4 proteins - can not build a raxml tree\n", $tree->node_id);
+      my $tree_id = $tree->node_id;
+      die "tree cluster $tree_id has <4 proteins -- can not build a raxml tree\n";
   }
 
   my $file_root = $self->worker_temp_directory. "nctree_". $tree->node_id;
@@ -268,10 +274,11 @@ sub _dumpMultipleAlignmentStructToWorkdir {
 
   # Phylip header
   print OUTSEQ $sa->no_sequences, " ", $sa->length, "\n";
+  $self->param('tag_residue_count', $sa->no_sequences * $sa->length);
   # Phylip body
   my $count = 0;
   foreach my $aln_seq ($sa->each_seq) {
-    print OUTSEQ $aln_seq->display_id, "\n";
+    print OUTSEQ $aln_seq->display_id, " ";
     my $seq = $aln_seq->seq;
 
     # Here we do a trick for all Ns sequences by changing the first
@@ -303,7 +310,7 @@ sub _dumpMultipleAlignmentStructToWorkdir {
   return $aln_file;
 }
 
-sub _store_newick_into_protein_tree_tag_string {
+sub _store_newick_into_nc_tree_tag_string {
   my $self = shift;
   my $tag = shift;
   my $newick_file = shift;
