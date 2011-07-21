@@ -83,7 +83,7 @@ sub fetch_input {
   $self->load_species_tree;
 
   # Define executable
-  my $ktreedist_executable = $self->analysis->program_file || "/software/ensembl/compara/ktreedist/Ktreedist.pl";
+  my $ktreedist_executable = $self->param('ktreedist_exe') || "/software/ensembl/compara/ktreedist/Ktreedist.pl";
   $self->throw("can't find a ktreedist executable to run\n") unless(-e $ktreedist_executable);
   $self->param('ktreedist_executable', $ktreedist_executable);
 
