@@ -233,8 +233,8 @@ sub dumpHelp {
   my $conf = shift;
   my $start_time = time;
   my $total_c;
-  return if $sitetype eq 'Vega';
-  foreach my $type (qw(View Glossary FAQ)) {
+  my @types = $sitetype eq 'Vega' ? qw(Glossary) : qw(View Glossary FAQ);
+  foreach my $type (@types) {
     my $counter   = make_counter(0);
     my $file = $conf->{'directory_'.$type}.'/'.$conf->{'website'}{'name'}.'_'.$type.'.xml';
     $file .= ".gz" unless $nogzip;
@@ -1543,7 +1543,7 @@ sub sanger_project_names {
   my $sanger_species_name = $SPECIES{$conf->{'species'}};
   return {} unless $sanger_species_name;
   my $clones = {};
-  my $dbh = DBI->connect("DBI:mysql:host=otterlive;port=3301;database=submissions", 'ottro', undef, {RaiseError => 1});
+  my $dbh = DBI->connect("DBI:mysql:host=otterlive;port=3324;database=submissions", 'ottro', undef, {RaiseError => 1});
   unless( $dbh ) {
     warn "Can't connect to submissions database as 'read_only' ", DBI::errstr();
     return $clones;
@@ -1637,6 +1637,32 @@ sub dumpGene {
       print LOG "    $type xref query done ".&date_and_mem()."\n";
     }
 
+    my %gene_trans_syns = ();
+    if ($sitetype eq 'Vega') {
+      print LOG "    Getting gene and transcript synonyms ".&date_and_mem()."\n";
+      my $sql = qq(
+         SELECT gsi.stable_id, ga.value
+           FROM $dbname.gene_stable_id gsi, $dbname.gene_attrib ga, $dbname.attrib_type at
+          WHERE gsi.gene_id = ga.gene_id
+            AND ga.attrib_type_id = at.attrib_type_id
+            AND at.code = 'synonym');
+      my $T = $conf->{'dbh'}->selectall_arrayref($sql);
+      foreach (@$T) {
+        push @{$gene_trans_syns{$_->[0]}},$_->[1];
+      }
+      $sql = qq(
+         SELECT tsi.stable_id, ta.value
+           FROM $dbname.transcript_stable_id tsi, $dbname.transcript_attrib ta, $dbname.attrib_type at
+          WHERE tsi.transcript_id = ta.transcript_id
+            AND ta.attrib_type_id = at.attrib_type_id
+            AND at.code = 'synonym');
+      $T = $conf->{'dbh'}->selectall_arrayref($sql);
+      foreach (@$T) {
+        push @{$gene_trans_syns{$_->[0]}},$_->[1];
+      }
+      print LOG "    Got gene and transcript synonyms ".&date_and_mem()."\n";
+    }
+
     #disconnect and then connect to free up memory
     my $core = $conf->{'core_details'};
     $conf->{'dbh'}->disconnect;
@@ -1707,13 +1733,12 @@ sub dumpGene {
                        $old->{'desc'},
                        $old->{'xrefs'},
                        $old->{'xref_descriptions'},
+                       $old->{'name_synonyms'},
                        $gene_locations->{$old->{'gsid'}},
                        $db,
                        $counter),
               $nogzip, $fh);
         }
-
-        #only use status for vega#
 
         $old = {
           'gid'       => $gid,
@@ -1726,6 +1751,7 @@ sub dumpGene {
           'ad_dl'     => $ad_dl,
           'xrefs'     => [],
           'xref_descriptions' => {},
+          'name_synonyms'  => [ @{$gene_trans_syns{$gsid}||[]}, @{$gene_trans_syns{$tsid}||[]} ],
           'disp_xref' => $disp_xref ? "$disp_xref" : "novel gene",
           'status'    => $status,
           'biotype'   => $biotype,
@@ -1756,6 +1782,7 @@ sub dumpGene {
       else {
         $old->{'tsids' }{$tsid }=1;
         $old->{'tlsids'}{$tlsid}=1 if $tlsid;
+        push @{$old->{'name_synonyms'}}, @{$gene_trans_syns{$tsid}||[]};
 
         #add xref details
         foreach my $type (qw(Gene Transcript Translation)) {
@@ -1788,6 +1815,7 @@ sub dumpGene {
                  $old->{'desc'},
                  $old->{'xrefs'},
                  $old->{'xref_descriptions'},
+                 $old->{'name_synonyms'},
                  $gene_locations->{$old->{'gsid'}},
                  $db,
                  $counter),
@@ -1921,7 +1949,7 @@ sub dumpGene {
 }
 
 sub GeneLine {
-  my ($species, $gsid, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $xref_descriptions, $gene_loc, $db, $counter) = @_;
+  my ($species, $gsid, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $xref_descriptions, $synonyms, $gene_loc, $db, $counter) = @_;
   my $url = sprintf(qq(%s/Gene/Summary/g=%s&amp;db=%s),
                     $species,
                     $gsid,
@@ -1977,6 +2005,13 @@ sub GeneLine {
         $xml .= qq(
   <field name="xref_description">$xref_description</field>);
       }
+    }
+    my %seen_syns;
+    foreach my $syn (@$synonyms) {
+      next if $seen_syns{$syn};
+      $seen_syns{$syn} = 1;
+      $xml .= qq(
+  <field name="name_synonym">$syn"</field>);
     }
     if (my $t_count = keys %$tsids) {
       $xml .= qq(
@@ -2074,6 +2109,12 @@ sub GeneLine {
     $xml .= qq(
     <field name="action">Summary</field>
     <field name="source">$ad_label</field>);
+    foreach my $syn (@$synonyms) {
+      next if $seen_syns{$syn};
+      $seen_syns{$syn} = 1;
+      $xml .= qq(
+    <field name="name_synonym">$syn"</field>);
+    }
     if ($gene_loc) {
       my $loc = $gene_loc->{'sr_name'} .':'. $gene_loc->{'seq_region_start'} .'-'. $gene_loc->{'seq_region_end'} .':'. $gene_loc->{'seq_region_strand'};
       $xml .= qq(
@@ -2189,6 +2230,22 @@ sub dumpTranscript {
       print LOG "    $type xref query done ".&date_and_mem()."\n";
     }
 
+    my %trans_syns = ();
+    if ($sitetype eq 'Vega') {
+      print LOG "    Getting transcript synonyms ".&date_and_mem()."\n";
+      my $sql = qq(
+         SELECT tsi.stable_id, ta.value
+           FROM $dbname.transcript_stable_id tsi, $dbname.transcript_attrib ta, $dbname.attrib_type at
+          WHERE tsi.transcript_id = ta.transcript_id
+            AND ta.attrib_type_id = at.attrib_type_id
+            AND at.code = 'synonym');
+      my $T = $conf->{'dbh'}->selectall_arrayref($sql);
+      foreach (@$T) {
+        push @{$trans_syns{$_->[0]}},$_->[1];
+      }
+      print LOG "    Got transcript synonyms ".&date_and_mem()."\n";
+    }
+
     #disconnect and then connect to free up memory
     my $core = $conf->{'core_details'};
     $conf->{'dbh'}->disconnect;
@@ -2254,22 +2311,21 @@ sub dumpTranscript {
         if( $old->{'tid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
           &p( TransLine($dbspecies,
-                       $old->{'tsid'},
-                       $old->{'tlsids'},
-                       $old->{'exons'},
-                       $old->{'biotype'},
-                       $old->{'ad_dl'},
-                       $old->{'disp_xref'},
-                       $old->{'desc'},
-                       $old->{'xrefs'},
-                       $old->{'xref_descriptions'},
-                       $trans_locations->{$old->{'tsid'}},
-                       $db,
-                       $counter),
+                        $old->{'tsid'},
+                        $old->{'tlsids'},
+                        $old->{'exons'},
+                        $old->{'biotype'},
+                        $old->{'ad_dl'},
+                        $old->{'disp_xref'},
+                        $old->{'desc'},
+                        $old->{'xrefs'},
+                        $old->{'xref_descriptions'},
+                        $old->{'name_synonyms'},
+                        $trans_locations->{$old->{'tsid'}},
+                        $db,
+                        $counter),
               $nogzip, $fh);
         }
-
-        #only use status for vega#
 
         $old = {
           'tid'       => $tid,
@@ -2281,6 +2337,7 @@ sub dumpTranscript {
           'ad_dl'     => $ad_dl,
           'xrefs'     => [],
           'xref_descriptions' => {},
+          'name_synonyms'  => $trans_syns{$tsid} || [],
           'disp_xref' => $disp_xref ? "$disp_xref" : "novel transcript",
           'status'    => $status,
           'biotype'   => $biotype,
@@ -2309,7 +2366,7 @@ sub dumpTranscript {
       }
       else {
         $old->{'tlsids'}{$tlsid}=1 if $tlsid;
-
+        push @{$old->{'name_synonyms'}}, @{$trans_syns{$tsid}||[]};
         #add xref details
         foreach my $type (qw(Transcript Translation)) {
           my $id = ($type eq 'Transcript')  ? $tid
@@ -2330,18 +2387,19 @@ sub dumpTranscript {
       }
     }
     &p( TransLine($dbspecies,
-                 $old->{'tsid'},
-                 $old->{'tlsids'},
-                 $old->{'exons'},
-                 $old->{'biotype'},
-                 $old->{'ad_dl'},
-                 $old->{'disp_xref'},
-                 $old->{'desc'},
-                 $old->{'xrefs'},
-                 $old->{'xref_descriptions'},
-                 $trans_locations->{$old->{'tsid'}},
-                 $db,
-                 $counter),
+                  $old->{'tsid'},
+                  $old->{'tlsids'},
+                  $old->{'exons'},
+                  $old->{'biotype'},
+                  $old->{'ad_dl'},
+                  $old->{'disp_xref'},
+                  $old->{'desc'},
+                  $old->{'xrefs'},
+                  $old->{'xref_descriptions'},
+                  $old->{'name_synonyms'},
+                  $trans_locations->{$old->{'tsid'}},
+                  $db,
+                  $counter),
         $nogzip, $fh) if ($old->{'gsid'});
     print LOG "    Transcript info query done ".&date_and_mem()."\n";
     $total_c += footer( $counter->(),$nogzip,$fh);
@@ -2350,7 +2408,7 @@ sub dumpTranscript {
 }
 
 sub TransLine {
-  my ($species, $tsid, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $xref_descriptions, $trans_loc, $db, $counter) = @_;
+  my ($species, $tsid, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $xref_descriptions, $synonyms, $trans_loc, $db, $counter) = @_;
   $species =~ s/_/ /;
   $biotype =~ s/_/ /;
   $desc = &clean($desc,'desc');
@@ -2404,6 +2462,13 @@ sub TransLine {
       $xml .= qq(
     <field name="xref_description">$xref_description</field>);
     }
+  }
+
+  foreach my $syn (@$synonyms) {
+    next if $seen_syns{$syn};
+    $seen_syns{$syn} = 1;
+    $xml .= qq(
+    <field name="name_synonym">$syn"</field>);
   }
 
   $xml .= &common_fields($species,'Transcript');
