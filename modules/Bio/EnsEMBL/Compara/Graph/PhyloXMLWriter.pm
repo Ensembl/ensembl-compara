@@ -352,7 +352,7 @@ sub _process {
 
 sub _dispatch_tag {
   my ($self, $node) = @_;
-  if(check_ref($node, 'Bio::EnsEMBL::Compara::AlignedMember')) {
+  if(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeMember')) {
     return $self->_alignedmember_tag($node);
   }
   elsif(check_ref($node, 'Bio::EnsEMBL::Compara::NestedSet')) {
@@ -364,7 +364,7 @@ sub _dispatch_tag {
 
 sub _dispatch_body {
   my ($self, $node) = @_;
-  if(check_ref($node, 'Bio::EnsEMBL::Compara::AlignedMember')) {
+  if(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeMember')) {
     $self->_alignedmember_body($node);
   }
   elsif(check_ref($node, 'Bio::EnsEMBL::Compara::NestedSet')) {

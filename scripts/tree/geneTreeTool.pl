@@ -274,7 +274,7 @@ if ($self->{'_list_defs'}) {
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   foreach my $tree_id (@treeids_list) {
     $self->{'tree'} = $treeDBA->fetch_node_by_node_id($tree_id);
-    # leaves are Bio::EnsEMBL::Compara::AlignedMember objects
+    # leaves are Bio::EnsEMBL::Compara::GeneTreeMember objects
     my $leaves = $self->{'tree'}->get_all_leaves;
     #printf("fetched %d leaves\n", scalar(@$leaves));
     printf("treeid %d, %d proteins ########################################\n", $tree_id, scalar(@$leaves));
@@ -368,7 +368,7 @@ if ($self->{'tree'}) {
     printf("%d proteins\n", scalar(@{$self->{'tree'}->get_all_leaves}));
   }
   if ($self->{'print_leaves'}) {
-    # leaves are Bio::EnsEMBL::Compara::AlignedMember objects
+    # leaves are Bio::EnsEMBL::Compara::GeneTreeMember objects
     my $leaves = $self->{'tree'}->get_all_leaves;
     printf("fetched %d leaves\n", scalar(@$leaves));
     foreach my $leaf (@$leaves) {
@@ -908,10 +908,7 @@ if ($self->{'clusterset_id'} && $self->{'_homologs_and_dnaaln'}) {
 if ($self->{'clusterset_id'} && $self->{'_consistency_orthotree_member_id'} && $self->{'_consistency_orthotree_mlss'}) {
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   my $aligned_member = $treeDBA->
-    fetch_AlignedMember_by_member_id_root_id
-      (
-       $self->{_consistency_orthotree_member_id},
-       $self->{'clusterset_id'});
+    fetch_AlignedMember_by_member_id_root_id ( $self->{_consistency_orthotree_member_id}, $self->{'clusterset_id'});
   return 0 unless (defined $aligned_member);
   my $node = $aligned_member->subroot;
 
@@ -1306,9 +1303,7 @@ sub fetch_protein_tree_with_gene {
       fetch_by_source_stable_id('ENSEMBLGENE', $gene_stable_id);
   return 0 unless (defined $member);
   my $aligned_member = $treeDBA->
-    fetch_AlignedMember_by_member_id_root_id(
-                                             $member->get_canonical_peptide_Member->member_id,
-                                             $self->{'clusterset_id'});
+    fetch_AlignedMember_by_member_id_root_id( $member->get_canonical_peptide_Member->member_id, $self->{'clusterset_id'});
   return 0 unless (defined $aligned_member);
   my $node = $aligned_member->subroot;
 
@@ -5334,7 +5329,7 @@ sub _dump_genetree_slices {
 #         $leaf->add_tag("S",$gene->taxon->name);
 #         $phyop_map{$genename} = 1;
 #         $phyop_count{$genename}++;
-#         bless $leaf, "Bio::EnsEMBL::Compara::AlignedMember";
+#         bless $leaf, "Bio::EnsEMBL::Compara::GeneTreeMember";
 #         $leaf->name($genename);
 #         $leaf->genome_db_id($gene->genome_db_id);
 #       }
@@ -5662,7 +5657,7 @@ sub _extra_dn_ds {
 #       if (defined($gene)) {
 #         $tf_map{$genename} = 1;
 #         $tf_count{$genename}++;
-#         bless $leaf, "Bio::EnsEMBL::Compara::AlignedMember";
+#         bless $leaf, "Bio::EnsEMBL::Compara::GeneTreeMember";
 #         $leaf->name($genename);
 #         $leaf->genome_db_id($gene->genome_db_id);
 #       }
@@ -7336,11 +7331,11 @@ sub _extra_dn_ds {
 #       my $tree = $self->{treeDBA}->fetch_node_by_node_id($root_id);
 
 #       #cleanup old tree structure- 
-#       #  flatten and reduce to only AlignedMember leaves
+#       #  flatten and reduce to only GeneTreeMember leaves
 #       $tree->flatten_tree;
 #       # $tree->print_tree(20) if($self->{verbose});
 #       foreach my $node (@{$tree->get_all_leaves}) {
-#         next if($node->isa('Bio::EnsEMBL::Compara::AlignedMember'));
+#         next if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
 #         $node->disavow_parent;
 #       }
 
@@ -7421,11 +7416,11 @@ sub _extra_dn_ds {
 #       my $phymltree = $self->{treeDBA}->fetch_node_by_node_id($root_id);
 
 #       #cleanup old tree structure- 
-#       #  flatten and reduce to only AlignedMember leaves
+#       #  flatten and reduce to only GeneTreeMember leaves
 #       $phymltree->flatten_tree;
 #       # $tree->print_tree(20) if($self->{verbose});
 #       foreach my $node (@{$phymltree->get_all_leaves}) {
-#         next if($node->isa('Bio::EnsEMBL::Compara::AlignedMember'));
+#         next if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
 #         $node->disavow_parent;
 #       }
 
@@ -13862,7 +13857,7 @@ sub _compare_treefam
         keep_leaves($self);
         foreach my $leaf (@{$self->{'tree'}->get_all_leaves}) {
           my $name = $leaf->name;
-          bless $leaf, "Bio::EnsEMBL::Compara::AlignedMember";
+          bless $leaf, "Bio::EnsEMBL::Compara::GeneTreeMember";
           $leaf->name($name);
           $leaf->{'_dbID'} = $leaf_to_member{$name};
           $leaf->{'_genome_db_id'} = $leaf_to_genome_db_id{$name};
@@ -14167,7 +14162,7 @@ sub dumpTreeToWorkdir {
 #   }
   
 #   if (!($tree_node->equals($self->{'protein_tree'}))) {
-#     if ($tree_node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+#     if ($tree_node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
 #       $newick .= sprintf("%s", $tree_node->member_id,);
 #     }
 #     $newick .= sprintf(":%1.4f", $tree_node->distance_to_parent);
@@ -14182,13 +14177,13 @@ sub dumpTreeToWorkdir {
 #     my $tree = $self->{'protein_tree'};
   
 #     #cleanup old tree structure- 
-#     #  flatten and reduce to only AlignedMember leaves
+#     #  flatten and reduce to only GeneTreeMember leaves
 #     #  unset duplication tags
 #     $tree->flatten_tree;
 #     #  $tree->print_tree($self->{'tree_scale'}) if($self->debug>2);
 #     foreach my $node (@{$tree->get_all_leaves}) {
 #       $node->add_tag("Duplication", 0);
-#       unless($node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+#       unless($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
 #         $node->disavow_parent;
 #       }
 #     }

@@ -956,7 +956,7 @@ sub _internal_nhx_format {
   
   if($format_mode eq "full" || $format_mode eq "full_web" || $format_mode eq "display_label" || $format_mode eq "display_label_composite" || $format_mode eq "treebest_ortho" || $format_mode eq "transcript_id" || $format_mode eq "gene_id" || $format_mode eq "protein_id" || $format_mode eq "member_id_taxon_id") { 
       #full: name and distance on all nodes
-      if($self->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+      if($self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
 	  if ($format_mode eq "transcript_id") {
 	      $self->description =~ /Transcript:(\w+)/;
 	      my $transcript_stable_id = $1;
@@ -1025,7 +1025,7 @@ sub _internal_nhx_format {
         $nhx .= ":B=$bootstrap_value";
     }
     my $taxon_id;
-    if($self->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+    if($self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
       my $gene_stable_id;
       eval { $gene_stable_id = $self->gene_member->stable_id;};
       if (defined $gene_stable_id && $format_mode eq "transcript_id") {
@@ -1287,7 +1287,7 @@ sub _internal_newick_format {
     if($self->parent) {
       if($self->is_leaf) {
         my $species_name;
-        if ($self->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+        if ($self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
           $species_name = $self->genome_db->name;
         } else {
           $species_name = $self->name;
@@ -1302,7 +1302,7 @@ sub _internal_newick_format {
     if($self->parent) {
       if($self->is_leaf) {
         my $species_name;
-        if ($self->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+        if ($self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
           $species_name = $self->genome_db->short_name;
         } else {
           $species_name = $self->short_name;

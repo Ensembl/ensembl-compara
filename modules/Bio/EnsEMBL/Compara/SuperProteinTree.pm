@@ -11,7 +11,7 @@ ProteinTree - DESCRIPTION of Object
 =head1 DESCRIPTION
 
 Specific subclass of NestedSet to add functionality when the leaves of
-this tree are AlignedMember objects and the tree is a representation
+this tree are GeneTreeMember objects and the tree is a representation
 of a protein multiple sequence alignment with a star topology.
 
 =head1 CONTACT

@@ -191,7 +191,7 @@ my $taxon_id_cb = sub {
 my $sp_name_cb = sub {
   my ($self) = @_;
   my $species_name;
-  if ($self->{tree}->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+  if ($self->{tree}->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
     $species_name = $self->{tree}->genome_db->name;
     $species_name =~ s/\ /\_/g;
     return $species_name

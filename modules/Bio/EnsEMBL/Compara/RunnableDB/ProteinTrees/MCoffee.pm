@@ -411,7 +411,7 @@ sub update_single_peptide_tree {
   my $tree   = shift;
 
   foreach my $member (@{$tree->get_all_leaves}) {
-    next unless($member->isa('Bio::EnsEMBL::Compara::AlignedMember'));
+    next unless($member->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
     next unless($member->sequence);
     $member->cigar_line(length($member->sequence)."M");
     $self->compara_dba->get_ProteinTreeAdaptor->store($member);
@@ -469,7 +469,7 @@ sub dumpProteinTreeToWorkdir {
     }
     ####
 
-      return undef unless ($member->isa("Bio::EnsEMBL::Compara::AlignedMember"));
+      return undef unless ($member->isa("Bio::EnsEMBL::Compara::GeneTreeMember"));
       next if($seq_id_hash->{$member->sequence_id});
       $seq_id_hash->{$member->sequence_id} = 1;
 

@@ -116,8 +116,8 @@ sub fetch_input {
       $node->node_id($pmember_id);
       $cluster->add_child($node);
       $cluster->clusterset_id($self->param('clusterset_id'));
-      #leaves are NestedSet objects, bless to make into AlignedMember objects
-      bless $node, "Bio::EnsEMBL::Compara::AlignedMember";
+      #leaves are NestedSet objects, bless to make into GeneTreeMember objects
+      bless $node, "Bio::EnsEMBL::Compara::GeneTreeMember";
 
       #the building method uses member_id's to reference unique nodes
       #which are stored in the node_id value, copy to member_id

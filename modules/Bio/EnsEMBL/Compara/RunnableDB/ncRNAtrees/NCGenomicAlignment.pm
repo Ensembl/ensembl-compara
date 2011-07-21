@@ -186,7 +186,7 @@ sub update_single_peptide_tree
   my $tree   = shift;
 
   foreach my $member (@{$tree->get_all_leaves}) {
-    next unless($member->isa('Bio::EnsEMBL::Compara::AlignedMember'));
+    next unless($member->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
     next unless($member->sequence);
     $member->cigar_line(length($member->sequence)."M");
     $self->compara_dba->get_NCTreeAdaptor->store($member);

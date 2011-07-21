@@ -15,7 +15,7 @@ Bio::EnsEMBL::Compara::NCTree - A class representing an NCTree
 =head1 DESCRIPTION
 
 Specific subclass of NestedSet to add functionality when the leaves of this tree
-are AlignedMember objects and the tree is a representation of a NC derived
+are GeneTreeMember objects and the tree is a representation of a NC derived
 Phylogenetic tree
 
 =head1 CONTACT

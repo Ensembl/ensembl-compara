@@ -898,7 +898,7 @@ sub _fetch_sequence_cds_by_member_id {
 }
 
 
-sub create_AlignedMember_from_member_attribute {
+sub create_AlignedMember_from_member_attribute {    # deprecated method?
   my $self = shift;
   my $member_attribute = shift;
 

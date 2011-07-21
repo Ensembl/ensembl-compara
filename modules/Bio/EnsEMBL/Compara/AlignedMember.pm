@@ -28,21 +28,14 @@ AlignedMember - DESCRIPTION of Object
 
 =head1 DESCRIPTION
 
-A subclass of Member which extends it to allow it to be aligned with other
-AlignedMember objects.  General enough to allow for global, local, pair-wise and 
-multiple alignments.  To be used primarily in NestedSet Tree data-structure.
-
-Currently the AlignedMember objects are used in the ProteinTree, SuperProteinTree
-and NCTree structures to represent the leaves of the trees. Each leaf contains an
-aligned sequence, which is represented as an AlignedMember object.
+A subclass of Member which extends it to allow it to be aligned with other AlignedMember objects.
+General enough to allow for global, local, pair-wise and multiple alignments.
+At the moment used primarily in NestedSet Tree data-structure, but there are plans to extend its usage.
 
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::AlignedMember
   +- Bio::EnsEMBL::Compara::Member
-  +- Bio::EnsEMBL::Compara::NestedSet
-   +- Bio::EnsEMBL::Compara::Graph::Node
-    +- Bio::EnsEMBL::Compara::Graph::CGObject
 
 =head1 METHODS
 
@@ -53,7 +46,7 @@ package Bio::EnsEMBL::Compara::AlignedMember;
 use strict;
 use Bio::EnsEMBL::Utils::Exception;
 
-use base ('Bio::EnsEMBL::Compara::NestedSet', 'Bio::EnsEMBL::Compara::Member');
+use base ('Bio::EnsEMBL::Compara::Member');
 
 ##################################
 # overriden superclass methods
@@ -74,10 +67,10 @@ use base ('Bio::EnsEMBL::Compara::NestedSet', 'Bio::EnsEMBL::Compara::Member');
 sub copy {
   my $self = shift;
   
-  my $mycopy = $self->Bio::EnsEMBL::Compara::NestedSet::copy;
-               $self->Bio::EnsEMBL::Compara::Member::copy($mycopy);     # we should probably rename this method into topup() as it should not be needed by 'Member' class itself
+  my $mycopy = @_ ? shift : {};     # extending or from scratch?
+               $self->SUPER::copy($mycopy);
   bless $mycopy, 'Bio::EnsEMBL::Compara::AlignedMember';
-  
+
   $mycopy->cigar_line($self->cigar_line);
   $mycopy->cigar_start($self->cigar_start);
   $mycopy->cigar_end($self->cigar_end);
@@ -89,61 +82,6 @@ sub copy {
   return $mycopy;
 }
 
-
-=head2 print_node (overrides default method in Bio::EnsEMBL::Compara::NestedSet)
-
-  Arg [1]     : none
-  Example     : $aligned_member->print_node();
-  Description : Outputs the info for this AlignedMember. First, the node_id, the
-                left and right indexes are printed, then the species name. If the
-                gene member can be determined, the methods prints the stable_id,
-                the display label and location of the gene member, otherwise the
-                member_id and stable_id of the object are printed.
-  Returntype  : none
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub print_node {
-  my $self  = shift;
-  printf("(%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
-    if($self->genome_db_id and $self->adaptor) {
-      my $genome_db = $self->genome_db;
-      if (!defined($genome_db)) {
-        $DB::single=1;1;
-      }
-      printf(" %s", $genome_db->name) 
-    }
-  if($self->gene_member) {
-    printf(" %s %s %s:%d-%d",
-      $self->gene_member->stable_id, $self->gene_member->display_label || '', $self->gene_member->chr_name,
-      $self->gene_member->chr_start, $self->gene_member->chr_end);
-  } elsif($self->stable_id) {
-    printf(" (%d) %s", $self->member_id, $self->stable_id);
-  }
-  print("\n");
-}
-
-
-
-=head2 name (overrides default method in Bio::EnsEMBL::Compara::Graph::CGObject)
-
-  Arg [1]     : none
-  Example     : $aligned_member->name();
-  Description : Returns the stable_id of the object (from the Bio::EnsEMBL::Compara::Member object).
-  Returntype  : string
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub name {
-  my $self = shift;
-  return $self->stable_id(@_);
-}
 
 #####################################################
 

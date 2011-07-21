@@ -536,7 +536,7 @@ sub get_ancestor_species_hash
   my $duplication_hash = {};
   my $is_dup=0;
 
-  if($node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+  if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
     my $node_genome_db_id = $node->genome_db_id;
     $species_hash->{$node_genome_db_id} = 1;
     $node->add_tag('species_hash', $species_hash);

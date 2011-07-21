@@ -302,11 +302,11 @@ sub parse_newick_into_nctree
   my $nc_tree = $self->param('nc_tree');
   
   #cleanup old tree structure- 
-  #  flatten and reduce to only AlignedMember leaves
+  #  flatten and reduce to only GeneTreeMember leaves
   $nc_tree->flatten_tree;
   $nc_tree->print_tree(20) if($self->debug);
   foreach my $node (@{$nc_tree->get_all_leaves}) {
-    next if($node->isa('Bio::EnsEMBL::Compara::AlignedMember'));
+    next if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
     $node->disavow_parent;
   }
 
@@ -349,11 +349,11 @@ sub parse_newick_into_nctree
   $newtree->release_tree;
 
   $nc_tree->print_tree if($self->debug);
-  # check here on the leaf to test if they all are AlignedMembers as
+  # check here on the leaf to test if they all are GeneTreeMember as
   # minimize_tree/minimize_node might not work properly
   foreach my $leaf (@{$self->param('nc_tree')->get_all_leaves}) {
-    unless($leaf->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
-      $self->throw("TreeBestMMerge tree does not have all leaves as AlignedMember\n");
+    unless($leaf->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
+      $self->throw("TreeBestMMerge tree does not have all leaves as GeneTreeMembers\n");
     }
   }
 

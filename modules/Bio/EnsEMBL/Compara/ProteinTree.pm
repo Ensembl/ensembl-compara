@@ -7,7 +7,7 @@ ProteinTree - DESCRIPTION of Object
 =head1 DESCRIPTION
 
 Specific subclass of NestedSet to add functionality when the leaves of this tree
-are AlignedMember objects and the tree is a representation of a Protein derived
+are GeneTreeMember objects and the tree is a representation of a Protein derived
 Phylogenetic tree
 
 =head1 CONTACT
@@ -93,7 +93,7 @@ sub get_SimpleAlign {
 
   my $seq_id_hash = {};
   foreach my $member (@{$self->get_all_leaves}) {
-    next unless($member->isa('Bio::EnsEMBL::Compara::AlignedMember'));
+    next unless($member->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
     next if($unique_seqs and $seq_id_hash->{$member->sequence_id});
     $seq_id_hash->{$member->sequence_id} = 1;
 

@@ -50,7 +50,7 @@ package Bio::EnsEMBL::Compara::DBSQL::NCTreeAdaptor;
 
 use strict;
 use Bio::EnsEMBL::Compara::NCTree;
-use Bio::EnsEMBL::Compara::AlignedMember;
+use Bio::EnsEMBL::Compara::GeneTreeMember;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 use Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor;
@@ -116,7 +116,7 @@ sub fetch_by_gene_Member_root_id {
                             );
 
   Description: Fetches from the database the nc_tree that contains the member_id
-  Returntype : Bio::EnsEMBL::Compara::AlignedMember
+  Returntype : Bio::EnsEMBL::Compara::GeneTreeMember
   Exceptions :
   Caller     :
 
@@ -148,7 +148,7 @@ sub fetch_AlignedMember_by_member_id_root_id {
                             );
 
   Description: Fetches from the database the nc_tree that contains the member_id
-  Returntype : Bio::EnsEMBL::Compara::AlignedMember
+  Returntype : Bio::EnsEMBL::Compara::GeneTreeMember
   Exceptions :
   Caller     :
 
@@ -257,7 +257,7 @@ sub store_node {
   $node->adaptor($self);
   $sth->finish;
 
-  if($node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+  if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
     $sth = $self->prepare("INSERT ignore INTO nc_tree_member 
                                (node_id,
                                 root_id,
@@ -306,7 +306,7 @@ sub update_node {
   $node->adaptor($self);
   $sth->finish;
 
-  if($node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+  if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
     my $sql = "UPDATE nc_tree_member SET ". 
               "cigar_line='". $node->cigar_line . "'";
     $sql .= ", cigar_start=" . $node->cigar_start if($node->cigar_start);
@@ -490,7 +490,7 @@ sub create_instance_from_rowhash {
 
   my $node;
   if($rowhash->{'member_id'}) {
-    $node = new Bio::EnsEMBL::Compara::AlignedMember;
+    $node = new Bio::EnsEMBL::Compara::GeneTreeMember;
   } else {
     $node = new Bio::EnsEMBL::Compara::NCTree;
   }

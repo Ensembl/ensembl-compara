@@ -61,6 +61,44 @@ sub new {
   return $self;
 }
 
+
+=head2 copy
+
+  Arg [1]    : object $parent_object (optional)
+  Example    :
+  Description: copies the object, optionally by topping up a given structure (to support multiple inheritance)
+  Returntype :
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub copy {
+  my $self = shift;
+  
+  my $mycopy = @_ ? shift : {};
+  bless $mycopy, 'Bio::EnsEMBL::Compara::Member';
+  
+  $mycopy->dbID($self->dbID);
+  $mycopy->stable_id($self->stable_id);
+  $mycopy->version($self->version);
+  $mycopy->description($self->description);
+  $mycopy->source_name($self->source_name);
+  #$mycopy->adaptor($self->adaptor);
+  $mycopy->chr_name($self->chr_name);
+  $mycopy->chr_start($self->chr_start);
+  $mycopy->chr_end($self->chr_end);
+  $mycopy->chr_strand($self->chr_strand);
+  $mycopy->taxon_id($self->taxon_id);
+  $mycopy->genome_db_id($self->genome_db_id);
+  $mycopy->sequence_id($self->sequence_id);
+  $mycopy->gene_member_id($self->gene_member_id);
+  $mycopy->display_label($self->display_label);
+  
+  return $mycopy;
+}
+
+
 =head2 new_fast
 
   Arg [1]    : hash reference $hashref
@@ -235,41 +273,6 @@ sub new_from_transcript {
   return $self;
 }
 
-=head2 copy
-
-  Arg [1]    : object $parent_object (optional)
-  Example    :
-  Description: copies the object, optionally by topping up a given structure (to support multiple inheritance)
-  Returntype :
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub copy {
-  my $self = shift;
-  
-  my $mycopy = @_ ? shift : {};
-  bless $mycopy, "Bio::EnsEMBL::Compara::Member";
-  
-  $mycopy->dbID($self->dbID);
-  $mycopy->stable_id($self->stable_id);
-  $mycopy->version($self->version);
-  $mycopy->description($self->description);
-  $mycopy->source_name($self->source_name);
-  #$mycopy->adaptor($self->adaptor);
-  $mycopy->chr_name($self->chr_name);
-  $mycopy->chr_start($self->chr_start);
-  $mycopy->chr_end($self->chr_end);
-  $mycopy->chr_strand($self->chr_strand);
-  $mycopy->taxon_id($self->taxon_id);
-  $mycopy->genome_db_id($self->genome_db_id);
-  $mycopy->sequence_id($self->sequence_id);
-  $mycopy->gene_member_id($self->gene_member_id);
-  $mycopy->display_label($self->display_label);
-  
-  return $mycopy;
-}
 
 =head2 member_id
 
@@ -1015,36 +1018,24 @@ sub translation {
 =cut
 
 sub get_canonical_peptide_Member {
-  my $self = shift;
+    my $self = shift;
 
-  return undef unless($self->adaptor);
-  my $canonicalPep = undef;
-  if($self->source_name eq 'ENSEMBLGENE') {
-    if ($self->adaptor) {
-      # Starting from a tree, a leaf is an AlignedMembers and the adaptor is a ProteinTreeAdaptor
-      # As of now (e! 57), all AlignedMembers are ENSEMBLPEP, but we will use the same check
-      # as below to be on the safe side
-      if (UNIVERSAL::isa($self->adaptor, "Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor")) {
-        $canonicalPep = $self->adaptor->fetch_canonical_peptide_member_for_gene_member_id($self->dbID);
-      } else {
-        $canonicalPep = $self->adaptor->db->get_MemberAdaptor->fetch_canonical_peptide_member_for_gene_member_id($self->dbID);
-      }
+    return unless($self->adaptor);
+
+    my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_canonical_peptide_member_for_gene_member_id')
+        ? $self->adaptor    # a MemberAdaptor or derivative
+        : $self->adaptor->db->get_MemberAdaptor;
+
+    if($self->source_name eq 'ENSEMBLGENE') {
+
+        return $able_adaptor->fetch_canonical_peptide_member_for_gene_member_id($self->dbID);
+
+    } elsif($self->source_name eq 'ENSEMBLPEP') {
+
+        my $geneMember = $self->gene_member or return;
+
+        return $able_adaptor->fetch_canonical_peptide_member_for_gene_member_id($geneMember->dbID);
     }
-    $canonicalPep = $self->adaptor->fetch_canonical_peptide_member_for_gene_member_id($self->dbID);
-  }
-  if($self->source_name eq 'ENSEMBLPEP') {
-    my $geneMember = $self->gene_member;
-    return undef unless($geneMember);
-    if ($self->adaptor) {
-      # Starting from a tree, a leaf is an AlignedMembers and the adaptor is a ProteinTreeAdaptor
-      if (UNIVERSAL::isa($self->adaptor, "Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor")) {
-        $canonicalPep = $self->adaptor->fetch_canonical_peptide_member_for_gene_member_id($geneMember->dbID);
-      } else {
-        $canonicalPep = $self->adaptor->db->get_MemberAdaptor->fetch_canonical_peptide_member_for_gene_member_id($geneMember->dbID);
-      }
-    }
-  }
-  return $canonicalPep;
 }
 
 
@@ -1065,35 +1056,24 @@ sub get_canonical_peptide_Member {
 =cut
 
 sub get_canonical_transcript_Member {
-  my $self = shift;
+    my $self = shift;
 
-  return undef unless($self->adaptor);
-  my $canonical_trans_member = undef;
-  if($self->source_name eq 'ENSEMBLGENE') {
-    if ($self->adaptor) {
-      # Starting from a tree, a leaf is an AlignedMembers and the adaptor is a ProteinTreeAdaptor
-      # As of now (e! 57), all AlignedMembers are ENSEMBLPEP, but we will use the same check
-      # as below to be on the safe side
-      if (UNIVERSAL::isa($self->adaptor, "Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor")) {
-        $canonical_trans_member = $self->adaptor->fetch_canonical_transcript_member_for_gene_member_id($self->dbID);
-      } else {
-        $canonical_trans_member = $self->adaptor->db->get_MemberAdaptor->fetch_canonical_transcript_member_for_gene_member_id($self->dbID);
-      }
+    return unless($self->adaptor);
+
+    my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_canonical_transcript_member_for_gene_member_id')
+        ? $self->adaptor    # a MemberAdaptor or derivative
+        : $self->adaptor->db->get_MemberAdaptor;
+
+    if($self->source_name eq 'ENSEMBLGENE') {
+
+        return $able_adaptor->fetch_canonical_transcript_member_for_gene_member_id($self->dbID);
+
+    } elsif($self->source_name eq 'ENSEMBLPEP') {
+
+        my $geneMember = $self->gene_member or return;
+
+        return $able_adaptor->fetch_canonical_transcript_member_for_gene_member_id($geneMember->dbID);
     }
-  }
-  if($self->source_name eq 'ENSEMBLPEP') {
-    my $gene_member = $self->gene_member;
-    return undef unless($gene_member);
-    if ($self->adaptor) {
-      # Starting from a tree, a leaf is an AlignedMembers and the adaptor is a ProteinTreeAdaptor
-      if (UNIVERSAL::isa($self->adaptor, "Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor")) {
-        $canonical_trans_member = $self->adaptor->fetch_canonical_transcript_member_for_gene_member_id($gene_member->dbID);
-      } else {
-        $canonical_trans_member = $self->adaptor->db->get_MemberAdaptor->fetch_canonical_transcript_member_for_gene_member_id($gene_member->dbID);
-      }
-    }
-  }
-  return $canonical_trans_member;
 }
 
 

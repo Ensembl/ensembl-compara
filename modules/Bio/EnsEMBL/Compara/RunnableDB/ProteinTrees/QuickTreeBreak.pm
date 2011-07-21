@@ -394,11 +394,11 @@ sub generate_subtrees {
     my $protein_tree = $self->param('protein_tree');
 
   #cleanup old tree structure- 
-  #  flatten and reduce to only AlignedMember leaves
+  #  flatten and reduce to only GeneTreeMember leaves
   $protein_tree->flatten_tree;
   $protein_tree->print_tree(20) if($self->debug);
   foreach my $node (@{$protein_tree->get_all_leaves}) {
-    next if($node->isa('Bio::EnsEMBL::Compara::AlignedMember'));
+    next if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
     $node->disavow_parent;
   }
 
@@ -411,7 +411,7 @@ sub generate_subtrees {
     $quicktreebreak_name =~ /(\d+)\_\d+/;
     my $member_name = $1;
     $leaf->add_tag('name', $member_name);
-    bless $leaf, "Bio::EnsEMBL::Compara::AlignedMember";
+    bless $leaf, "Bio::EnsEMBL::Compara::GeneTreeMember";
     $leaf->member_id($member_name);
   }
 
