@@ -589,10 +589,11 @@ sub get_ancestor_taxon_level
 sub duplication_confidence_score {
   my $self = shift;
   my $ancestor = shift;
+  my $nc_tree_id = $self->param('nc_tree_id');
 
   # This assumes bifurcation!!! No multifurcations allowed
   my ($child_a, $child_b, $dummy) = @{$ancestor->children};
-  $self->throw("tree is multifurcated in duplication_confidence_score\n") if (defined($dummy));
+  $self->throw("tree $nc_tree_id is multifurcated in duplication_confidence_score\n") if (defined($dummy));
   my @child_a_gdbs = keys %{$self->get_ancestor_species_hash($child_a)};
   my @child_b_gdbs = keys %{$self->get_ancestor_species_hash($child_b)};
   my %seen = ();  my @gdb_a = grep { ! $seen{$_} ++ } @child_a_gdbs;
