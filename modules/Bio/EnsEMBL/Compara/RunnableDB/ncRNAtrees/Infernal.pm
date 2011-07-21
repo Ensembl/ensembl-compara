@@ -252,7 +252,7 @@ sub run_infernal {
   my $stk_output = $self->worker_temp_directory . "output.stk";
   my $nc_tree_id = $self->param('nc_tree_id');
 
-  my $infernal_executable = $self->analysis->program_file || $self->param('cmalign_exe') || '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign';
+  my $infernal_executable = $self->param('cmalign_exe') || '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign';
 
   die ("can't find a cmalign executable to run\n") unless(-e $infernal_executable);
 
