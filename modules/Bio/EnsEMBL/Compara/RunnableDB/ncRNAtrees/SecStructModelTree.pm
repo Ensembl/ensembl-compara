@@ -44,6 +44,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree;
 use strict;
 use Time::HiRes qw(time);                          # Needed *
 use Bio::EnsEMBL::Compara::Graph::NewickParser;    # Needed *
+use IPC::Open3;
+use File::Spec;
+use Symbol qw/gensym/;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -87,7 +90,7 @@ sub run {
     my $root_id = $nc_tree->node_id;
 
     my $raxml_tag = $root_id . "." . $self->worker->process_id . ".raxml";
-    my $raxml_executable = '/software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3';
+    my $raxml_executable = $self->param('raxml_exe') || '/software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3';
     $self->throw("can't find a raxml executable to run\n") unless(-e $raxml_executable);
 
     my $tag = 'ss_IT_' . $model;
@@ -110,6 +113,7 @@ sub run {
 
     # /software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3
     # -m GTRGAMMA -s nctree_20327.aln -S nctree_20327.struct -A S7D -n nctree_20327.raxml
+    my $worker_temp_directory = $self->worker_temp_directory;
     my $cmd = $raxml_executable;
     $cmd .= " -T 2";
     $cmd .= " -m GTRGAMMA";
@@ -118,15 +122,33 @@ sub run {
     $cmd .= " -A $model";
     $cmd .= " -n $raxml_tag.$model";
     $cmd .= " -N ".$bootstrap_num if (defined $bootstrap_num);
+#    $cmd .= " 2> $raxml_err_file";
 #     my $error_file = $worker_temp_directory."/RAxML_bestTree.$raxml_tag.$model.err";
 #     $cmd .= ">& $error_file";
 
 
-    my $worker_temp_directory = $self->worker_temp_directory;
     $self->compara_dba->dbc->disconnect_when_inactive(1);
     my $starttime = time()*1000;
-    unless(system("cd $worker_temp_directory; $cmd") == 0) {
-        $self->throw("error running raxml\ncd $worker_temp_directory; $cmd\n $!\n");
+    print STDERR "$cmd\n" if ($self->debug);
+#    unless(system("cd $worker_temp_directory; $cmd") == 0) {
+    # Assuming that if RAxML runs without problems, no stderr output will be generated.
+    # We are reading STDERR to get if RAxML fails and the error reported.
+    # If the error is an assertion error. We report, but no error is raised to msg table.
+    open (NULL, ">", File::Spec->devnull);
+    my $pid = open3(gensym, ">&NULL", \*PH, "cd $worker_temp_directory; $cmd");
+    my $err_msg = "";
+    while (<PH>) {
+        $err_msg .= $_;
+    }
+    if ($err_msg ne "") {
+        print STDERR "We have a problem running RAxML -- Inspecting error file\n";
+        if ($err_msg =~ /Assertion(.+)failed/) {
+            my $assertion_failed = $1;
+            $self->input_job->incomplete(0);
+            die "Assertion failed for RAxML: $assertion_failed\n";
+        } else {
+            $self->throw("error running raxml\ncd $worker_temp_directory; $cmd\n$err_msg\n");
+        }
     }
     my $runtime_msec = int(time()*1000-$starttime);
     $self->compara_dba->dbc->disconnect_when_inactive(0);
