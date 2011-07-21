@@ -1,300 +1,370 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
-
-=pod 
-
-=head1 NAME
-
-Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment
-
-=cut
-
-=head1 SYNOPSIS
-
-my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $ncgenomicalignment = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment->new
-  (
-   -db         => $db,
-   -input_id   => $input_id,
-   -analysis   => $analysis
-  );
-$ncgenomicalignment->fetch_input(); #reads from DB
-$ncgenomicalignment->run();
-$ncgenomicalignment->output();
-$ncgenomicalignment->write_output(); #writes to DB
-
-=cut
-
-
-=head1 DESCRIPTION
-
-This Analysis will take the sequences from a cluster, the cm from
-nc_profile and run a profiled alignment, storing the results as
-cigar_lines for each sequence.
-
-=cut
-
-
-=head1 CONTACT
-
-  Contact Albert Vilella on module implementation/design detail: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
-
-=cut
-
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
-
-=cut
-
-
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment;
 
 use strict;
-use Bio::AlignIO;
-use Bio::EnsEMBL::BaseAlignFeature;
+use warnings;
+use Data::Dumper;
+use Time::HiRes qw /time/;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use Bio::EnsEMBL::Compara::Member;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-
-=head2 fetch_input
-
-    Title   :   fetch_input
-    Usage   :   $self->fetch_input
-    Function:   Fetches input data for repeatmasker from the database
-    Returns :   none
-    Args    :   none
-
-=cut
-
-
+# We should receive:
+# nc_tree_id
 sub fetch_input {
-  my( $self) = @_;
+    my ($self) = @_;
+    my $nc_tree_id = $self->param('nc_tree_id');
+    my $nc_tree = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($nc_tree_id);
+    $self->throw("tree with id $nc_tree_id is undefined") unless (defined $nc_tree);
+    $self->param('nc_tree', $nc_tree);
+    $self->param('input_fasta', $self->dump_sequences_to_workdir($nc_tree));
 
-      # Fetch sequences:
-  $self->param('nc_tree', $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($self->param('nc_tree_id')) );
-  $self->param('input_fasta', $self->dump_sequences_to_workdir($self->param('nc_tree')) );
+    # Autovivification
+    $self->param("method_treefile", {});
 }
-
-
-=head2 run
-
-    Title   :   run
-    Usage   :   $self->run
-    Function:   runs hmmbuild
-    Returns :   none
-    Args    :   none
-
-=cut
 
 sub run {
-  my $self = shift;
+    my ($self) = @_;
+    if ($self->param('single_peptide_tree')) {
+        $self->input_job->incomplete(0);
+        die "single peptide tree\n";
+    }
 
-  return if ($self->param('single_peptide_tree'));
-  $self->run_ncgenomicalignment;
-  $self->run_ncgenomic_tree('phyml');
-  $self->run_ncgenomic_tree('nj'); # Useful for 3-membered trees
+    if ($self->param('tag_residue_count') > 150000) {  ## Likely to take too long
+        $self->run_mafft;
+        # We put the alignment into the db
+        $self->store_fasta_alignment('mafft_output');
+
+        $self->dataflow_output_id (
+                                   {
+                                    'nc_tree_id' => $self->param('nc_tree_id'),
+                                    'fastTreeTag' => "ftga_IT_nj",
+                                    'raxmlLightTag' => "ftga_IT_ml",
+                                    'alignment_id' => $self->param('alignment_id'),
+                                   },1
+                                  );
+
+        $self->input_job->incomplete(0);
+        my $tag_residue_count = $self->param('tag_residue_count');
+        die "Family too big for normal branch ($tag_residue_count bps) -- Only FastTrees will be generated\n";
+    }
+    if (($self->param('tag_residue_count') > 40000) && $self->param('inhugemem') != 1) { ## Big family -- queue in hugemem
+        $self->dataflow_output_id (
+                                   {
+                                    'nc_tree_id' => $self->param('nc_tree_id'),
+                                    'alignment_id' => $self->param('alignment_id'),
+                                    'inhugemem' => 1,
+                                   }, -1
+                                  );
+        # Should we die here? Nothing more to do in the Runnable?
+        $self->input_job->incomplete(0);
+        die "Re-scheduled in hugemem queue\n";
+    } else {
+        $self->run_mafft;
+        $self->fasta2phylip;
+        ## FIXME -- RAxML will fail for families with < 4 members.
+        $self->run_RAxML;
+        $self->run_prank;
+#    $self->run_ncgenomic_tree('phyml');
+#    $self->run_ncgenomic_tree('nj'); # Useful for 3-membered trees
+    }
 }
-
-
-=head2 write_output
-
-    Title   :   write_output
-    Usage   :   $self->write_output
-    Function:   stores nctree
-    Returns :   none
-    Args    :   none
-
-=cut
-
 
 sub write_output {
-  my $self = shift;
+    my ($self) = @_;
+#     if ($self->param("MEMLIMIT")) { ## We had a problem in RAxML -- re-schedule in hugemem
+#         $self->dataflow_output_id (
+#                                    {
+#                                     'nc_tree_id' => $self->param('nc_tree_id')
+#                                    }, -1
+#                                   );
+#     } else {
+        for my $method (qw/phyml nj/) {
+            $self->dataflow_output_id (
+                                       {
+                                        'nc_tree_id'   => $self->param('nc_tree_id'),
+                                        'method'       => $method,
+                                        'alignment_id' => $self->param('alignment_id'),
+                                       }, 2
+                                      );
+        }
+#    }
 }
-
-
-##########################################
-#
-# internal methods
-#
-##########################################
-
-1;
 
 sub dump_sequences_to_workdir {
-  my $self = shift;
-  my $cluster = shift;
+    my ($self,$cluster) = @_;
+    my $fastafile = $self->worker_temp_directory . "cluster_" . $cluster->node_id . ".fasta";
 
-  my $fastafile = $self->worker_temp_directory . "cluster_" . $cluster->node_id . ".fasta";
-  print("fastafile = '$fastafile'\n") if($self->debug);
+    my $member_list = $cluster->get_all_leaves;
+    $self->param('tag_gene_count', scalar (@{$member_list}) );
 
-  my $seq_id_hash;
-  my $residues = 0;
-  print "fetching sequences...\n" if ($self->debug);
-  my $member_list = $cluster->get_all_leaves;
-  $self->param('tag_gene_count', scalar(@{$member_list}) );
+    open (OUTSEQ, ">$fastafile") or $self->throw("Error opening $fastafile for writing: $!");
+    if (scalar @{$member_list} < 2) {
+        $self->param('single_peptide_tree', 1);
+        return 1;
+    }
 
-  open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write!");
-  my $count = 0;
-  if (2 > scalar @{$member_list}) {
-    $self->param('single_peptide_tree', 1);
-    return 1;
-  }
-  foreach my $member (@{$member_list}) {
-    my $description = $member->description;
-    $description =~ /Acc\:(\w+)/;
-    my $acc = $1;
-    my $gene_member = $member->gene_member;
-    $self->throw("Error fetching gene member") unless (defined($gene_member));
-    my $gene = $gene_member->get_Gene;
-    $self->throw("Error fetching gene") unless (defined($gene));
-    # We fetch a slice that is 500% the size of the gene
-    my $slice = $gene->slice->adaptor->fetch_by_Feature($gene,'500%');
-    $self->throw("Error fetching slice") unless (defined($slice));
-    my $seq = $slice->seq;
-    $residues += length($seq);
-    $seq =~ s/(.{72})/$1\n/g;
-    chomp $seq;
-    $count++;
-    print STDERR $member->stable_id. "\n" if ($self->debug);
-    print OUTSEQ ">". $member->member_id . "_" . $member->taxon_id . "\n$seq\n";
-    print STDERR "sequences $count\n" if ($count % 50 == 0);
-  }
-  close(OUTSEQ);
+    my $residues = 0;
+    my $count = 0;
+    foreach my $member (@{$member_list}) {
+        my $gene_member = $member->gene_member;
+        $self->throw("Error fetching gene member") unless (defined $gene_member) ;
+        my $gene = $gene_member -> get_Gene;
+        $self->throw("Error fetching gene") unless (defined $gene);
+        my $slice = $gene->slice->adaptor->fetch_by_Feature($gene, '500%');
+        $self->throw("Error fetching slice") unless (defined $slice);
+        my $seq = $slice->seq;
+        $residues += length($seq);
+        $seq =~ s/(.{72})/$1\n/g;
+        chomp $seq;
+        $count++;
+        print STDERR $member->stable_id. "\n" if ($self->debug);
+        print OUTSEQ ">" . $member->member_id . "\n$seq\n";
+        print STDERR "sequences $count\n" if ($count % 50 == 0);
+    }
+    close OUTSEQ;
 
-  if(scalar (@{$member_list}) <= 1) {
-    $self->update_single_peptide_tree($cluster);
-    $self->param('single_peptide_tree', 1);
-  }
+    if(scalar (@{$member_list}) <= 1) {
+        $self->update_single_peptide_tree($cluster);
+        $self->param('single_peptide_tree', 1);
+    }
 
-  $self->param('tag_residue_count', $residues);
+    $self->param('tag_residue_count', $residues);
 
-  return $fastafile;
+    return $fastafile;
 }
 
-sub update_single_peptide_tree
-{
-  my $self   = shift;
-  my $tree   = shift;
+sub update_single_peptide_tree {
+    my ($self, $tree) = @_;
 
-  foreach my $member (@{$tree->get_all_leaves}) {
-    next unless($member->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
-    next unless($member->sequence);
-    $member->cigar_line(length($member->sequence)."M");
-    $self->compara_dba->get_NCTreeAdaptor->store($member);
-    printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
-  }
+    foreach my $member (@{$tree->get_all_leaves}) {
+        next unless($member->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
+        next unless($member->sequence);
+        $member->cigar_line(length($member->sequence)."M");
+        $self->compara_dba->get_NCTreeAdaptor->store($member);
+        printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
+    }
 }
 
+sub run_mafft {
+    my ($self) = @_;
 
-sub run_ncgenomicalignment {
-  my $self = shift;
+#    return if ($self->param('too_few_sequences') == 1); # return? die? $self->throw?
+    my $nc_tree_id = $self->param('nc_tree_id');
+    my $input_fasta = $self->param('input_fasta');
+    my $mafft_output = $self->worker_temp_directory . "/mafft_".$nc_tree_id . ".msa";
+    $self->param('mafft_output',$mafft_output);
+    my $mafft_exe = $self->param('mafft_exe') || "/software/ensembl/compara/mafft-6.707/bin/mafft";
+    my $mafft_env = $self->param('mafft_binaries') || "/software/ensembl/compara/mafft-6.707/binaries";
+    $self->throw("I can't locate mafft binary in $mafft_exe") unless (-e $mafft_exe);
+    $self->throw("I can't locate mafft environment in $mafft_env") unless (-e $mafft_env);
+    $ENV{MAFFT_BINARIES} = $mafft_env;
+    my $cmd = "$mafft_exe --auto $input_fasta > $mafft_output";
+    print STDERR "Running mafft\n$cmd\n" if ($self->debug);
+    print STDERR "mafft_output has been set to " . $self->param('mafft_output') . "\n" if ($self->debug);
+    $self->compara_dba->dbc->disconnect_when_inactive(0);
+    unless ((my $err = system($cmd)) == 0) {
+        $self->throw("problem running command $cmd: $err\n");
+    }
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
 
-  return if ($self->param('single_peptide_tree'));
-  my $input_fasta = $self->param('input_fasta');
-
-  my $mfa_output = $self->worker_temp_directory . "output.mfa";
-
-  my $ncgenomicalignment_executable = $self->analysis->program_file || '/software/ensembl/compara/prank/090707/src/prank';
-  $self->throw("can't find a prank executable to run\n") unless(-e $ncgenomicalignment_executable);
-
-  my $cmd = $ncgenomicalignment_executable;
-  # /software/ensembl/compara/prank/090707/src/prank -noxml -notree -f=Fasta -o=/tmp/worker.904/cluster_17438.mfa -d=/tmp/worker.904/cluster_17438.fast
-
-  $cmd .= " -quiet " unless ($self->debug);
-  $cmd .= " -noxml -notree -f=Fasta -o=" . $mfa_output;
-  $cmd .= " -d=" . $input_fasta;
-
-  $self->compara_dba->dbc->disconnect_when_inactive(1);
-  print("$cmd\n") if($self->debug);
-  unless(system($cmd) == 0) {
-    $self->throw("error running ncgenomicalignment, $!\n");
-  }
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-
-  # Prank renames the output by adding ".2.fas"
-  my $fasta_output = $mfa_output . ".2.fas";
-
-  $self->param('ncgenomicalignment_output', $fasta_output);
+    return
 }
 
-sub run_ncgenomic_tree {
-  my $self = shift;
-  my $method = shift;
-  my $input_aln = $self->param('ncgenomicalignment_output');
+sub run_RAxML {
+    my ($self) = @_;
 
-  my $njtree_phyml_executable = "/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest/treebest";
+#    return if ($self->param('too_few_sequences') == 1);  # return? die? $self->throw? This has been checked before
+    my $nc_tree_id = $self->param('nc_tree_id');
+    my $aln_file = $self->param('phylip_output');
+    return unless (defined $aln_file);
 
-  # Defining a species_tree
-  # Option 1 is species_tree_string in nc_tree_tag, which then doesn't require tracking files around
-  # Option 2 is species_tree_file which should still work for compatibility
-  my $sql1 = "select value from nc_tree_tag where tag='species_tree_string'";
-  my $sth1 = $self->dbc->prepare($sql1);
-  $sth1->execute;
-  my $species_tree_string = $sth1->fetchrow_hashref;
-  $sth1->finish;
-  my $eval_species_tree;
-  eval {
-    $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string->{value});
-    my @leaves = @{$eval_species_tree->get_all_leaves};
-  };
+    my $raxml_outdir = $self->worker_temp_directory;
+    my $raxml_outfile = "raxml_${nc_tree_id}.raxml";
+    my $raxml_output = $raxml_outdir."/$raxml_outfile";
 
-  $self->throw("can't find species_tree\n") if ($@);
-  $self->param('species_tree_string', $species_tree_string->{value});
-  my $spfilename = $self->worker_temp_directory . "spec_tax.nh";
-  open SPECIESTREE, ">$spfilename" or die "$!";
-  print SPECIESTREE $self->param('species_tree_string');
-  close SPECIESTREE;
-  $self->param('species_tree_file', $spfilename);
+    $self->param('raxml_output',"$raxml_outdir/RAxML_bestTree.$raxml_outfile");
 
-  $self->param('newick_file',  $input_aln . ".treebest.$method.nh");
+    my $raxml_executable = $self->param('raxml_exe') || '/software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3';
+    my $bootstrap_num = 10;  ## Should be soft-coded?
+    my $raxml_err_file = $self->worker_temp_directory . "raxml.err";
+    my $cmd = $raxml_executable;
+    $cmd .= " -T 2";
+    $cmd .= " -m GTRGAMMA";
+    $cmd .= " -s $aln_file";
+    $cmd .= " -N $bootstrap_num";
+    $cmd .= " -n $raxml_outfile";
+    $cmd .= " 2> $raxml_err_file";
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
+#    my $bootstrap_starttime = time() * 1000;
 
-  my $cmd = $njtree_phyml_executable;
-  $cmd .= " $method ";
-  $cmd .= " -Snf " if ($method eq 'phyml');
-  $cmd .= " -s "   if ($method eq 'nj');
-  $cmd .= $self->param('species_tree_file');
-  $cmd .= " ". $input_aln;
-  $cmd .= " > " . $self->param('newick_file');
-  $self->compara_dba->dbc->disconnect_when_inactive(1);
-  print("$cmd\n") if($self->debug);
-  my $worker_temp_directory = $self->worker_temp_directory;
-  $DB::single=1;1;
-  unless(system("cd $worker_temp_directory; $cmd") == 0) {
-    print("$cmd\n");
-    $self->throw("error running treebest $method, $!\n");
-  }
+    print STDERR "$cmd\n" if ($self->debug);
+    unless (system("cd $raxml_outdir; $cmd") == 0) {
+        # memory problem?
+        print STDERR "We have a problem running RAxML -- Inspecting $raxml_err_file\n";
+        open my $raxml_err_fh, "<", $raxml_err_file or die $!;
+        while (<$raxml_err_fh>) {
+            chomp;
+            if (/malloc_aligned/) {
+                $self->dataflow_output_id (
+                                           {
+                                            'nc_tree_id' => $self->param('nc_tree_id'),
+                                           }, -1
+                                          );
+                $self->input_job->incomplete(0);
+                die "RAXML ERROR: $_";
+            }
+        }
+        close($raxml_err_fh);
+    }
 
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-
-  $self->store_newick_into_protein_tree_tag_string($method);
+    $self->compara_dba->dbc->disconnect_when_inactive(0);
+#    my $boostrap_msec = int(time() * 1000-$bootstrap_starttime);
+#    $self->_get_bootstraps($bootstrap_msec,$bootstrap_num);  # Don't needed -- we don't run the second RAxML for now
+    return
 }
 
-sub store_newick_into_protein_tree_tag_string {
-  my $self = shift;
+sub _get_bootstraps {
+    my ($self,$bootstrap_msec, $bootstrap_num) = @_;
 
-  my $method = shift;
-  my $newick_file =  $self->param('newick_file');
-  my $newick = '';
-  print("load from file $newick_file\n") if($self->debug);
-  open (FH, $newick_file) or $self->throw("Couldnt open newick file [$newick_file]");
-  while(<FH>) {
-    chomp $_;
-    $newick .= $_;
-  }
-  close(FH);
-  $newick =~ s/(\d+\.\d{4})\d+/$1/g; # We round up to only 4 digits
-  return if ($newick eq '_null_;');
-  my $tag = "pg_IT_" . $method;
-  $self->param('nc_tree')->store_tag($tag, $newick);
+    my $ideal_msec = 30000; # 5 minutes
+    my $time_per_sample = $bootstrap_msec / $bootstrap_num;
+    my $ideal_bootstrap_num = $ideal_msec / $time_per_sample;
+    if ($ideal_bootstrap_num < 5) {
+        $self->param('bootstrap_num',1);
+    } elsif ($ideal_bootstrap_num < 10) {
+        $self->param('bootstrap_num',10);
+    } elsif ($ideal_bootstrap_num > 100) {
+        $self->param('bootstrap_num',100)
+    } else {
+        $self->param('bootstrap_num',int ($ideal_bootstrap_num));
+    }
+    return
+}
+
+sub run_prank {
+    my ($self) = @_;
+
+#    return if ($self->param('too_few_sequences') == 1);  # return? die? $self->throw? This has been checked before
+    my $nc_tree_id = $self->param('nc_tree_id');
+    my $input_fasta = $self->param('input_fasta');
+    my $tree_file = $self->param('raxml_output');
+#    return unless (defined $tree_file);
+    $self->throw("$tree_file does not exist\n") unless (-e $tree_file);
+
+    ## FIXME -- The alignment has to be passed to NCGenomicTree. We have several options:
+    # 1.- Store the alignments in the database
+    # 2.- Store the alignments in a shared filesystem (i.e. lustre)
+    # 3.- Pass it in memory as a string.
+    # For now, we will be using #1
+    my $prank_output = $self->worker_temp_directory . "/prank_${nc_tree_id}.prank";
+#    my $prank_output = "/lustre/scratch103/ensembl/mp12/ncRNA_pipeline/prank_${nc_tree_id}.prank";
+
+    my $prank_exe = $self->param('prank_exe') || '/software/ensembl/compara/prank/090707/src/prank';
+    $self->throw('I can not locate prank in $prank_exe') unless (-e $prank_exe);
+    my $cmd = $prank_exe;
+    # /software/ensembl/compara/prank/090707/src/prank -noxml -notree -f=Fasta -o=/tmp/worker.904/cluster_17438.mfa -d=/tmp/worker.904/cluster_17438.fast -t=/tmp/worker.904/cluster17438/RAxML.tree
+    $cmd .= " -noxml -notree -once -f=Fasta";
+    $cmd .= " -t=$tree_file";
+    $cmd .= " -o=$prank_output";
+    $cmd .= " -d=$input_fasta";
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
+    print("$cmd\n") if($self->debug);
+    unless ((my $err = system ($cmd)) == 0) {
+        $self->throw("problem running prank $cmd: $err\n");
+    }
+
+    # prank renames the output by adding ".2.fas" => .1.fas" because it doesn't need to make the tree
+    print STDERR "Prank output : ${prank_output}.1.fas\n" if ($self->debug);
+    $self->param('prank_output',"${prank_output}.1.fas");
+    $self->store_fasta_alignment("prank_output");
+}
+
+sub fasta2phylip {
+    my ($self) = @_;
+#    return 1 if ($self->param('too_few_sequences') == 1); # This has been checked before
+    my $fasta_in = $self->param('mafft_output');
+    my $nc_tree_id = $self->param('nc_tree_id');
+    my $phylip_out = $self->worker_temp_directory . "/mafft_${nc_tree_id}.phylip";
+    my %seqs;
+    open my $msa, "<", $fasta_in or $self->throw("I can not open the prank msa file $fasta_in : $!\n");
+    my ($header,$seq);
+    while (<$msa>) {
+        chomp;
+        if (/^>/) {
+            $seqs{$header} = $seq if (defined $header);
+            $header = substr($_,1);
+            $seq = "";
+            next;
+        }
+        $seq .= $_;
+    }
+    $seqs{$header} = $seq;
+
+    close($msa);
+
+    my $nseqs = scalar(keys %seqs);
+    my $length = length($seqs{$header});
+
+    if ($nseqs < 4) {
+#        $self->param('too_few_sequences',1);
+        $self->input_job->incomplete(0);
+        die "Too few sequences (< 4), we can not compute RAxML tree";
+    }
+
+    open my $phy, ">", $phylip_out or $self->throw("I can not open the phylip output file $phylip_out : $!\n");
+    print $phy "$nseqs $length\n";
+    for my $h (keys %seqs) {
+        printf $phy ("%-9.9s ",$h);
+        $seqs{$h} =~ s/^-/A/;
+        print $phy $seqs{$h}, "\n";
+    }
+    close($phy);
+    $self->param('phylip_output',$phylip_out);
+}
+
+sub store_fasta_alignment {
+    my ($self, $param) = @_;
+
+    my $nc_tree_id = $self->param('nc_tree_id');
+    my $uniq_alignment_id = "$param" . "_" . $self->input_job->dbID ;
+    my $aln_file = $self->param($param);
+
+    # Insert a new alignment in the DB
+    my $sql_new_alignment = "INSERT IGNORE INTO alignment (alignment_id, compara_table, compara_key) VALUES (?, 'ncrna', ?)";
+    print STDERR "$sql_new_alignment\n" if ($self->debug);
+    my $sth_new_alignment = $self->dbc->prepare($sql_new_alignment);
+    $sth_new_alignment->execute($uniq_alignment_id, $nc_tree_id);
+    $sth_new_alignment->finish();
+
+    # read the alignment back from file
+    print "Reading alignment fasta file $aln_file\n" if ($self->debug());
+    open my $aln_fh, "<", $aln_file or die "I can't open $aln_file for reading\n";
+    my $aln_header;
+    my $aln_seq;
+    my $sql_new_alnseq = "INSERT INTO aligned_sequence (alignment_id, aligned_length, member_id, aligned_sequence) VALUES (?,?,?,?)";
+    my $sth_new_alnseq = $self->dbc->prepare($sql_new_alnseq);
+    while (<$aln_fh>) {
+        chomp;
+        if (/^>/) {
+            if (! defined ($aln_header)) {
+                ($aln_header) = $_ =~ />(.+)/;
+                next;
+            }
+            my $l = length($aln_seq);
+            print STDERR "INSERT INTO aligned_sequence (alignment_id, aligned_length, member_id, aligned_sequence) VALUES ($uniq_alignment_id, $l, $aln_header, $aln_seq)\n";
+            $sth_new_alnseq->execute($uniq_alignment_id, $l, $aln_header, $aln_seq);
+            ($aln_header) = $_ =~ />(.+)/;
+            $aln_seq = "";
+        } else {
+            $aln_seq .= $_;
+        }
+    }
+    my $l = length($aln_seq);
+    $sth_new_alnseq->execute($uniq_alignment_id, $l, $aln_header, $aln_seq);
+    $sth_new_alnseq->finish();
+
+    $self->param('alignment_id', $uniq_alignment_id);
+    return;
 }
 
 1;
