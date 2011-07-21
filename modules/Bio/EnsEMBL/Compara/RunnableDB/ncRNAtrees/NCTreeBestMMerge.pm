@@ -90,7 +90,7 @@ sub fetch_input {
   $self->load_species_tree;
 
       # Define executable:
-  my $treebest_mmerge_executable = $self->analysis->program_file || "/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest_ncrna/treebest";
+  my $treebest_mmerge_executable = $self->param('treebest_exe') || "/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest_ncrna/treebest";
   $self->throw("can't find a treebest executable to run\n") unless(-e $treebest_mmerge_executable);
   $self->param('treebest_mmerge_executable', $treebest_mmerge_executable);
 
@@ -206,8 +206,17 @@ sub calculate_branch_lengths {
   my $tree_with_blengths = $self->param('mmerge_output') . ".blengths.nh";
   my $input_aln = $self->param('input_aln');
   my $species_tree_file = $self->param('species_tree_file');
-  my $cmd = "$treebest_mmerge_executable nj -c $constrained_tree -s $species_tree_file $input_aln > $tree_with_blengths";
-  print("$cmd\n") if($self->debug);
+  my $cmd = $treebest_mmerge_executable;
+  $cmd .= " nj";
+  if ($treebest_mmerge_executable =~ /tracking/) {
+      $cmd .= " -I";
+  }
+  $cmd .= " -c $constrained_tree";
+  $cmd .= " -s $species_tree_file";
+  $cmd .= " $input_aln";
+  $cmd .= " > $tree_with_blengths";
+#  my $cmd = "$treebest_mmerge_executable nj -c $constrained_tree -s $species_tree_file $input_aln > $tree_with_blengths";
+  print STDERR +("$cmd\n") if($self->debug);
 
   unless(system("$cmd") == 0) {
     print("$cmd\n");
@@ -371,7 +380,7 @@ sub parse_newick_into_nctree
       $tmpnode->add_child($member, 0.0);
       $tmpnode->minimize_node; #tmpnode is now redundant so it is removed
     } else {
-      print("unable to find node in newick for member"); 
+      print("unable to find node in newick for member");
       $member->print_member;
     }
   }
