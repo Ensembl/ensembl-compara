@@ -280,6 +280,8 @@ sub build_hash_models {
           if ($transcript_model_id =~ /(mir-\d+)-\d+/) {
             $transcript_model_id = $1;
           }
+        } else {
+            print STDERR "$transcript_model_id is not a mirbase family and is not a mir or let gene\n"
         }
       }
     }
