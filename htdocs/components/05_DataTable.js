@@ -1,3 +1,5 @@
+// $Revision$
+
 Ensembl.DataTable = {
   dataTableInit: function () {
     var panel = this;
