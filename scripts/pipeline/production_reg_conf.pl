@@ -56,7 +56,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 );
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'compara1',
+    -host => 'compara4',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
