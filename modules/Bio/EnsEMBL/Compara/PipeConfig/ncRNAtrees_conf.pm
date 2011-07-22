@@ -30,11 +30,11 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'mlss_id'           => 40074,
+        'mlss_id'           => 40076,
         'max_gene_count'    => 1500,
 
-        'release'           => '63',
-        'rel_suffix'        => 'z',    # an empty string by default, a letter otherwise
+        'release'           => '64',
+        'rel_suffix'        => '',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
@@ -46,7 +46,7 @@ sub default_options {
 
         'pipeline_db' => {                                  # connection parameters
                           -driver => 'mysql',
-                          -host   => 'compara4',
+                          -host   => 'compara2',
                           -port   => 3306,
                           -user   => 'ensadmin',
                           -pass   => $self->o('password'),
@@ -68,16 +68,16 @@ sub default_options {
             'treebest_exe' => '/software/ensembl/compara/treebest.doubletracking',
 
         'reg1' => {
-#          -host   => 'ens-staging',
-                   -host => 'ens-livemirror',
+          -host   => 'ens-staging',
+#           -host => 'ens-livemirror',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
         },
 
         'reg2' => {
-#           -host   => 'ens-staging2',
-                   -host => 'ens-livemirror',
+           -host   => 'ens-staging2',
+#           -host => 'ens-livemirror',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
@@ -96,7 +96,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'sf5_ensembl_compara_62',
+            -dbname => 'lg4_ensembl_compara_63',
         },
     };
 }
