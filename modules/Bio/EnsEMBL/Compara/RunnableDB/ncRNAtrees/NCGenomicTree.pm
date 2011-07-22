@@ -12,6 +12,7 @@ sub fetch_input {
     my ($self) = @_;
     my $nc_tree_id = $self->param('nc_tree_id');
     my $nc_tree = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($nc_tree_id);
+    $self->param('nc_tree', $nc_tree);
     my $alignment_id = $self->param('alignment_id');
     print STDERR "ALN INPUT ID: " . $alignment_id . "\n" if ($self->debug);
     my $aln_file = $self->_load_and_dump_alignment();
@@ -22,7 +23,6 @@ sub fetch_input {
     $self->throw("need a method") unless (defined $self->param('method'));
     $self->throw("need an alignment output file to build the tree") unless (defined $self->param('aln_input'));
     $self->throw("tree with id $nc_tree_id is undefined") unless (defined $nc_tree);
-    $self->param('nc_tree', $nc_tree);
 
 }
 
@@ -141,10 +141,12 @@ sub _load_and_dump_alignment {
     my $all_aln_seq_hashref = $sth_load_alignment->fetchall_arrayref({});
 
     for my $row_hashref (@$all_aln_seq_hashref) {
-        my $seq_id = $row_hashref->{member_id};
+        my $mem_id = $row_hashref->{member_id};
+        my $member = $self->compara_dba->get_NCTreeAdaptor->fetch_AlignedMember_by_member_id_root_id($mem_id);
+        my $taxid = $member->taxon_id();
         my $aln_seq = $row_hashref->{aligned_sequence};
         $aln_seq =~ s/^N/A/;  # To avoid RAxML failure
-        print $outaln ">" . $seq_id. "\n" . $aln_seq . "\n";
+        print $outaln ">" . $mem_id. "_" . $taxid . "\n" . $aln_seq . "\n";
     }
     close($outaln);
 

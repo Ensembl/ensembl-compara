@@ -349,9 +349,11 @@ sub _load_and_dump_alignment {
         my $aln_fasta = $file_root . ".fa";
         open my $aln_fasta_fh, ">", $aln_fasta or $self->throw("Error opening $aln_fasta for writing");
         for my $row_hashref (@$all_aln_seq_hashref) {
-            my $seq_id = $row_hashref->{member_id};
+            my $mem_id = $row_hashref->{member_id};
+            my $member = $self->compara_dba->get_NCTreeAdaptor->fetch_AlignedMember_by_member_id_root_id($mem_id);
+            my $taxid = $member->taxon_id();
             my $aln_seq = $row_hashref->{aligned_sequence};
-            print $aln_fasta_fh ">" . $seq_id . "\n";
+            print $aln_fasta_fh ">" . $mem_id . "_" . $taxid . "\n";
             print $aln_fasta_fh $aln_seq . "\n";
         }
         close ($aln_fasta_fh);
@@ -360,12 +362,14 @@ sub _load_and_dump_alignment {
 
     print $outaln scalar(@$all_aln_seq_hashref), " ", $seqLen, "\n";
     for my $row_hashref (@$all_aln_seq_hashref) {
-        my $seq_id = $row_hashref->{member_id};
+        my $mem_id = $row_hashref->{member_id};
+        my $member = $self->compara_dba->get_NCTreeAdaptor->fetch_AlignedMember_by_member_id_root_id($mem_id);
+        my $taxid = $member->taxon_id();
         my $aln_seq = $row_hashref->{aligned_sequence};
-        print STDERR "$seq_id\t" if ($self->debug);
+        print STDERR "$mem_id\t" if ($self->debug);
         print STDERR substr($aln_seq, 0, 60), "...\n" if ($self->debug);
         $aln_seq =~ s/^N/A/;  # To avoid RAxML failure
-        print $outaln $seq_id, " ", $aln_seq, "\n";
+        print $outaln $mem_id, "_", $taxid, " ", $aln_seq, "\n";
     }
     close($outaln);
 
