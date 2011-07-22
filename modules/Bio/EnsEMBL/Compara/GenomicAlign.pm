@@ -391,7 +391,7 @@ sub genomic_align_block {
     ## Add adaptor to genomic_align_block object if possible and needed
     if (!defined($genomic_align_block->{'adaptor'}) and !defined($genomic_align_block->{'_adaptor'}) and defined($self->{'adaptor'})) {
 $DB::single=1;
-throw();
+#throw();
       $genomic_align_block->adaptor($self->adaptor->db->get_GenomicAlignBlockAdaptor);
     }
 
