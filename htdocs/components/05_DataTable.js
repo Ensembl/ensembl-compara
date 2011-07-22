@@ -69,9 +69,7 @@ Ensembl.DataTable = {
         }
       },
       fnInitComplete: function () {
-        var width = this.hasClass('fixed_width') ? this.outerWidth() : '100%';
-        
-        this.width(width).parent().width(width);
+        this.parent().width(this.outerWidth());
         this.not(':visible').parent().hide(); // Hide the wrapper of already hidden tables
       },
       fnDrawCallback: function (data) {
