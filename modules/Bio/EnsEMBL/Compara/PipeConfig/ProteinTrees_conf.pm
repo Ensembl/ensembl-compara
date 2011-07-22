@@ -70,11 +70,11 @@ sub default_options {
 
 
     # parameters that are likely to change from execution to another:
-#       'mlss_id'               => 40073,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '63',
+#       'mlss_id'               => 40075,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        'release'               => '64',
         'rel_suffix'            => '',    # an empty string by default, a letter otherwise
         'ensembl_cvs_root_dir'  => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, # make sure you have this variable defined & exported in your shell configs
-        'email'                 => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
+        'email'                 => $ENV{'USER'}.'@sanger.ac.uk',    # NB: your EBI address may differ from the Sanger one!
         'work_dir'              => '/lustre/scratch101/ensembl/'.$ENV{'USER'}.'/protein_trees_'.$self->o('rel_with_suffix'),
 
     # dependent parameters:
@@ -87,6 +87,8 @@ sub default_options {
     # blast parameters:
         'blast_options'             => '-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1',
         'blast_tmp_dir'             => '',  # if empty, will use Blast Analysis' default
+
+        'protein_members_range'     => 100000000, # highest member_id for a protein member
 
     # clustering parameters:
         'outgroups'                     => [119],   # affects 'hcluster_dump_input_per_genome'
@@ -110,7 +112,7 @@ sub default_options {
         'mafft_exe'                 => '',  # if empty, will use module built-in default
         'mafft_binaries'            => '',  # if empty, will use module built-in default
         'sreformat_exe'             => '/usr/local/ensembl/bin/sreformat',
-        'treebest_exe'              => '/software/ensembl/compara/treebest.double',
+        'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
         'codeml_exe'                => '/usr/local/ensembl/bin/codeml',
@@ -232,9 +234,7 @@ sub pipeline_analyses {
                            'RENAME TABLE peptide_align_feature_prod TO peptide_align_feature',
                 ],
             },
-            -input_ids  => [
-                { },
-            ],
+		-input_ids  => [ { } ],
             -flow_into => {
                 1 => [ 'copy_table_factory' ],
             },
@@ -397,24 +397,22 @@ sub pipeline_analyses {
                 'where'         => 'description LIKE "gdb:#genome_db_id# %"',
             },
             -wait_for => [ 'accumulate_reuse_ss' ], # to make sure some fresh members won't start because they were dataflown first (as this analysis can_be_empty)
-            -hive_capacity => 4,
             -can_be_empty  => 1,
-            -flow_into => {
-                 1 => [ 'subset_member_table_reuse' ],
-            },
+            -hive_capacity => 4,
+            -flow_into => [ 'subset_member_table_reuse' ],    # n_reused_species
         },
 
         {   -logic_name => 'subset_member_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                             'db_conn'    => $self->o('reuse_db'),
-                            'inputquery' => "SELECT sm.* FROM subset_member sm JOIN subset USING (subset_id) WHERE member_id<=100000000 AND description LIKE 'gdb:#genome_db_id# %'",
+                            'inputquery' => "SELECT sm.* FROM subset_member sm JOIN subset USING (subset_id) WHERE member_id<='.$self->o('protein_members_range').' AND description LIKE 'gdb:#genome_db_id# %'",
                             'fan_branch_code' => 2,
             },
-            -hive_capacity => 4,
             -can_be_empty  => 1,
+            -hive_capacity => 4,
             -flow_into => {
-                1 => [ 'member_table_reuse' ],
+                1 => [ 'member_table_reuse' ],    # n_reused_species
                 2 => [ 'mysql:////subset_member' ],
             },
         },
@@ -424,26 +422,24 @@ sub pipeline_analyses {
             -parameters => {
                 'src_db_conn'   => $self->o('reuse_db'),
                 'table'         => 'member',
-                'where'         => 'member_id<=100000000 AND genome_db_id = #genome_db_id#',
+                'where'         => 'member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
                 'mode'          => 'insertignore',
-            },
+		 },
             -wait_for => [ 'accumulate_reuse_ss' ], # to make sure some fresh members won't start because they were dataflown first (as this analysis can_be_empty)
-            -hive_capacity => 4,
             -can_be_empty  => 1,
-            -flow_into => {
-                1 => [ 'sequence_table_reuse' ],
-            },
+            -hive_capacity => 4,
+            -flow_into => [ 'sequence_table_reuse' ],   # n_reused_species
         },
 
         {   -logic_name => 'sequence_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                             'db_conn'    => $self->o('reuse_db'),
-                            'inputquery' => 'SELECT s.* FROM sequence s JOIN member USING (sequence_id) WHERE sequence_id<=100000000 AND genome_db_id = #genome_db_id#',
+                            'inputquery' => 'SELECT s.* FROM sequence s JOIN member USING (sequence_id) WHERE sequence_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
                             'fan_branch_code' => 2,
             },
-            -hive_capacity => 4,
             -can_be_empty  => 1,
+            -hive_capacity => 4,
             -flow_into => {
                 1 => [ 'store_sequences_factory', 'dump_subset_create_blastdb' ],
                 2 => [ 'mysql:////sequence' ],
@@ -495,7 +491,7 @@ sub pipeline_analyses {
             },
             -batch_size    =>  20,  # they can be really, really short
             -flow_into => {
-                1 => [ 'blast_factory' ],
+                1 => [ 'blast_factory' ],   # n_species
             },
         },
 
@@ -511,8 +507,8 @@ sub pipeline_analyses {
             },
             -hive_capacity => 10,
             -flow_into => {
-                2 => [ 'blastp_with_reuse' ],
-                1 => [ 'hcluster_dump_input_per_genome' ],
+                2 => [ 'blastp_with_reuse' ],  # fan n_members
+                1 => [ 'hcluster_dump_input_per_genome' ],   # n_species
             },
         },
 
@@ -540,10 +536,10 @@ sub pipeline_analyses {
                 'outgroups'     => $self->o('outgroups'),
                 'cluster_dir'   => $self->o('cluster_dir'),
             },
-            -wait_for => [ 'blastp_with_reuse' ],
+            -wait_for => [ 'blastp_with_reuse' ],  # funnel n_members
             -hive_capacity => 4,
             -flow_into => {
-                1 => [ 'per_genome_clusterset_qc' ],
+                1 => [ 'per_genome_clusterset_qc' ],  # n_species
             },
         },
 
@@ -568,13 +564,11 @@ sub pipeline_analyses {
                 'hcluster_exe'                  => $self->o('hcluster_exe'),
                 'cmd'                           => '#hcluster_exe# -m #clustering_max_gene_halfcount# -w 0 -s 0.34 -O -C #cluster_dir#/hcluster.cat -o #cluster_dir#/hcluster.out #cluster_dir#/hcluster.txt',
             },
-            -input_ids => [
-                { },    # backbone
-            ],
+		-input_ids  => [ { } ],
             -wait_for => [ 'hcluster_merge_inputs' ],
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into => {
-                1 => [ 'hcluster_parse_output' ],
+                1 => [ 'hcluster_parse_output' ],   # backbone
             },
             -rc_id => 1,
         },
@@ -588,7 +582,7 @@ sub pipeline_analyses {
             -hive_capacity => -1,
             -flow_into => {
                 1 => [ 'overall_clusterset_qc' ],   # backbone 
-                2 => [ 'mcoffee' ],                 # per-cluster
+                2 => [ 'mcoffee' ],                 # fan n_clusters
             },
         },
 
@@ -624,7 +618,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => 3,
             -flow_into => {
-                1 => [ 'overall_genetreeset_qc' ],
+                1 => [ 'dummy_wait_alltrees' ],    # backbone
             },
         },
 
@@ -637,7 +631,7 @@ sub pipeline_analyses {
             -wait_for => [ 'hcluster_parse_output' ],
             -hive_capacity => 3,
             -flow_into => {
-                1 => [ 'per_genome_genetreeset_qc' ],
+                1 => [ 'per_genome_genetreeset_qc' ],   # n_species
             },
         },
 
@@ -656,7 +650,8 @@ sub pipeline_analyses {
             -wait_for => [ 'store_sequences', 'overall_clusterset_qc', 'per_genome_clusterset_qc' ],    # funnel
             -hive_capacity        => 600,
             -flow_into => {
-               -1 => [ 'mcoffee_himem' ],
+               -2 => [ 'mcoffee_himem' ],  # RUNLIMIT
+               -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
                 1 => [ 'njtree_phyml' ],
                 3 => [ 'quick_tree_break' ],
             },
@@ -694,7 +689,6 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'ortho_tree' ],
                 2 => [ 'njtree_phyml' ],
-                # 3 => [ 'quick_tree_break' ],      # in most cases we do not want quick_tree_break to happen automatically!
             },
         },
 
@@ -747,10 +741,19 @@ sub pipeline_analyses {
             },
         },
 
+
+        {   -logic_name => 'dummy_wait_alltrees',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -parameters => {},
+            -wait_for => [ 'mcoffee', 'mcoffee_himem', 'njtree_phyml', 'ortho_tree', 'quick_tree_break' ],    # funnel n_clusters
+		-flow_into => [ 'overall_genetreeset_qc' ],  # backbone
+        },
+
+
         {   -logic_name => 'other_paralogs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OtherParalogs',
             -parameters => { },
-            -wait_for => [ 'mcoffee', 'mcoffee_himem', 'njtree_phyml', 'ortho_tree', 'build_HMM_aa', 'build_HMM_cds', 'quick_tree_break' ],
+            -wait_for => [ 'dummy_wait_alltrees' ],
             -hive_capacity        => 50,
             -failed_job_tolerance => 5,
         },
@@ -764,7 +767,6 @@ sub pipeline_analyses {
                 'cluster_dir'               => $self->o('cluster_dir'),
                 'groupset_tag'              => 'GeneTreesetQC',
             },
-            -wait_for => [ 'mcoffee', 'mcoffee_himem', 'njtree_phyml', 'ortho_tree', 'quick_tree_break' ],
             -hive_capacity => 3,
             -flow_into => {
                 1 => [ 'group_genomes_under_taxa' ],    # backbone
@@ -777,7 +779,7 @@ sub pipeline_analyses {
                 'reuse_db'                  => $self->o('reuse_db'),
                 'groupset_tag'              => 'GeneTreesetQC',
             },
-            -wait_for => [ 'mcoffee', 'mcoffee_himem', 'njtree_phyml', 'ortho_tree', 'quick_tree_break' ],
+            -wait_for => [ 'dummy_wait_alltrees' ],
             -hive_capacity => 3,
         },
 
