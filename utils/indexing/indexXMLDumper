@@ -55,7 +55,6 @@ my @ignore_indexes = split ',',$ignore_indexes_list;
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
 our $release = $SD->ENSEMBL_VERSION;
 our $nogzip = 1;    #try setting to 0 for on the fly gzipping (not tested)?
-our %cross_references;  #get a set of external_dbs so we can make sure we link to them all correctly if we ever need to
 our $parser =  new XML::Parser( 'ErrorContext' => 3 );
 my $sitetype = $SD->ENSEMBL_SITETYPE || 'Ensembl';
 my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/'
@@ -219,7 +218,6 @@ foreach my $subdir (<$dir/*>) {
   }
 }
 
-#print LOG "\nCross references are:\n",Dumper(\%cross_references) if %cross_references;
 print LOG "\nDumped $total_c records in total\n";
 print LOG "\nTotal time for dumping " . &elapsed_time($start_time) . "\n";
 exit;
@@ -1012,15 +1010,13 @@ sub GenomicAlignmentLine {
   my $xml = qq(
 <entry id="$id">
   <description>$desc</description>);
-  if ($db_name) {
-    $xml .= qq(
-  <cross_references>
-    <ref dbname="$db_name" dbkey="$id"/>
-  </cross_references>);
-    $cross_references{$db_name}++;
-  }
   $xml .= qq(
   <additional_fields>);
+  if ($db_name) {
+    $xml .= qq(
+    <field name="xref_source">$db_name</field>
+    <field name="xref">$id</field>);
+  }
   $xml .= &common_fields($species,$ftype);
   unless ($db eq 'core') {
     $xml .= qq(
@@ -2561,7 +2557,7 @@ sub dumpRegulatoryFeature {
           $dbname.coord_system cs,$dbname.status s, $dbname.status_name sn
     where ft.feature_type_id=ef.feature_type_id and fs.feature_set_id=ef.feature_set_id and
           fs.type='external' and ef.seq_region_id=sr.seq_region_id  and sr.coord_system_id=cs.coord_system_id
-          and cs.is_current=1 and  s.table_name='feature_set' and s.table_id=fs.feature_set_id and
+          and cs.is_current=1 and s.table_name='feature_set' and s.table_id=fs.feature_set_id and
           s.status_name_id=sn.status_name_id and sn.name='MART_DISPLAYABLE'
  group by ef.display_label"
   );
@@ -2635,11 +2631,11 @@ sub sort_lrgs {
         &p(LRGLine($dbspecies,$type,$prev_gsi,$prev_disp_label,$prev_db_name,$query_terms,$prev_length),
            $nogzip, $fh);
       }
-      $prev_gsi = $gsi;
+      $prev_gsi        = $gsi;
       $prev_disp_label = $rec->[1];
-      $prev_db_name = $rec->[2];
-      $query_terms = [ $rec->[3] ];
-      $prev_length = $rec->[4];
+      $prev_db_name    = $rec->[2];
+      $query_terms     = [ $rec->[3] ];
+      $prev_length     = $rec->[4];
     }
   }
 }
@@ -2652,11 +2648,9 @@ sub LRGLine {
 <entry id="$gsi">
   <description>$description</description>);
   $xml .= qq(
-  <cross_references>
-    <ref dbname="$dbname" dbkey="$dbkey"/>
-  </cross_references>);
-  $xml .= qq(
   <additional_fields>);
+  $xml .= qq(
+    <field name="xref">$dbkey</field>);
   $xml .= &common_fields($species,$type);
   $xml .= qq(
     <field name="action">LRG_Summary</field>);
