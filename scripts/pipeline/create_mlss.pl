@@ -83,7 +83,7 @@ the one set in ENSEMBL_REGISTRY will be used if defined, if not
 =item B<--compara compara_db_name_or_alias>
 
 The compara database to update. You can use either the original name or any of the
-aliases given in the registry_configuration_file. DEFAULT VALUE: compara-master
+aliases given in the registry_configuration_file. DEFAULT VALUE: compara_master
 
 =back
 
@@ -146,7 +146,7 @@ use ExtUtils::MakeMaker qw(prompt);
 my $help;
 
 my $reg_conf;
-my $compara = "compara-master";
+my $compara = "compara_master";
 my $yes = 0;
 my $method_link_type;
 my @input_genome_db_ids;

@@ -19,7 +19,7 @@ mysql -u$DBUSER -p$DBPASS -h$DBHOST -Danchor_gen_test <  ~/src/ensembl-compara/s
 mysql -u$DBUSER -p$DBPASS -h$DBHOST -Danchor_gen_test <  ~/src/ensembl-compara/sql/pipeline-tables.sql
 mysql -u$DBUSER -p$DBPASS -h$DBHOST -Danchor_gen_test < ~/src/ensembl-hive/sql/tables.sql
 
-Transfer the dnafrags and genome_db entries from the compara-master database.
+Transfer the dnafrags and genome_db entries from the compara_master database.
 
 load in the information from the 'anchor_gen.conf" file (see below).
 This file contains information regarding the "anchor_gen_test" database and the modules to use.
@@ -87,7 +87,7 @@ mysql -u$DBUSER -p$DBPASS -h$DBHOST -Dtest_ortheus_ancestral_core < ~/src/ensemb
 load the syntenic regions from the enredo.out file into the compara db
 see ~ensembl-compara/scripts/pipeline/comparaLoadOrtheus.example
 
-perl ~/src/ensembl-compara/scripts/pipeline/comparaLoadOrtheus.pl --reg-conf <ensembl_registry_file> --master <compara-master> \
+perl ~/src/ensembl-compara/scripts/pipeline/comparaLoadOrtheus.pl --reg-conf <ensembl_registry_file> --master <compara_master> \
   --to_db <to_db> --mlss_id <mlss_id> --species_tree <species_tree> --addMT 1 -i enredo.out
 
 run the beekeeper (as before).

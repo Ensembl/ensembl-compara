@@ -95,14 +95,14 @@ uscs and e! DBs and the two core DBs
  create the new method_link_species_set in the master database
 
 ~/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl \
---reg-conf ../reg.conf --master compara-master --method_link_type BLASTZ_NET \
+--reg-conf ../reg.conf --master compara_master --method_link_type BLASTZ_NET \
 --genome_db_id 22 --genome_db_id 39 --source ucsc \
 --url http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/
 
  populate tables with master data
 
 ~/src/ensembl_main/ensembl-compara/scripts/pipeline/populate_new_database.pl --reg-conf ../reg.conf \
---master compara-master --new ensemblHsapCfam --species "Homo sapiens" --species "Canis familiaris"
+--master compara_master --new ensemblHsapCfam --species "Homo sapiens" --species "Canis familiaris"
 
 
 (4)- Load data into e! DB

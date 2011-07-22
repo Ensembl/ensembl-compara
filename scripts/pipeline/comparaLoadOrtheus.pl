@@ -14,7 +14,7 @@ use Switch;
 
 my $reg_conf;
 my $compara_hive_conf;
-my $master = "compara-master";
+my $master = "compara_master";
 my $to_db;
 my $ortheus_mlss_id;
 my $species_tree;
@@ -51,7 +51,7 @@ my $description = q'
 	must be aliased in the reg-conf file). Also include the master db and the ancestral 
 	core db.
 	
-  --master <registry name of the master db> [default: compara-master] 
+  --master <registry name of the master db> [default: compara_master] 
 	This should correspond to "-species" value for the master db in the registry 
 	configuration file.
   
@@ -71,7 +71,7 @@ my $description = q'
         tables for MT alignments
 
  EXAMPLE: 
-  comparaLoadOrtheus.pl --reg-conf <ensembl_registry_file> --master <compara-master> \
+  comparaLoadOrtheus.pl --reg-conf <ensembl_registry_file> --master <compara_master> \
   --to_db <to_db> --mlss_id <mlss_id> --species_tree <species_tree> --addMT 1 -i enredo.out
 '; 
 

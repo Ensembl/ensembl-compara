@@ -89,7 +89,7 @@ the --insert-ignore option.
 =item B<--master master_compara_db_name>
 
 The master compara database. You can use either the original name or any of the
-aliases given in the registry_configuration_file. DEFAULT VALUE: compara-master
+aliases given in the registry_configuration_file. DEFAULT VALUE: compara_master
 
 Alternatively, you can use an URL for the MySQL database. The URL format is:
 mysql://username[:passwd]@host[:port]/db_name
@@ -169,7 +169,7 @@ my $help;
 
 my $reg_conf;
 my $skip_data = 0;
-my $master = "compara-master";
+my $master = "compara_master";
 my $old = undef;
 my $new = undef;
 my $species = [];

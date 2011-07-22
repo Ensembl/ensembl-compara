@@ -7,7 +7,7 @@
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportNCBItaxonomy_conf -ensembl_cvs_root_dir <path_to_your_ensembl_cvs_root> -password <your_password>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportNCBItaxonomy_conf -password <your_password> -ensembl_cvs_root_dir <path_to_your_ensembl_cvs_root>
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportNCBItaxonomy_conf -password <your_password>
 
 =head1 DESCRIPTION  
@@ -43,13 +43,14 @@ sub default_options {
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},     # it will make sense to set this variable if you are going to use ehive frequently
 
         'pipeline_name' => 'ncbi_taxonomy',            # name used by the beekeeper to prefix job names on the farm
+        'name_suffix'   => '',                         # use a non-empty value if you want to test the pipeline
 
         'pipeline_db' => {
             -host   => 'ens-livemirror',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => $self->o('pipeline_name').'_auto',   # the '_auto' suffix can be removed when the pipeline has been sufficiently tested
+            -dbname => $self->o('pipeline_name').$self->o('name_suffix'),
         },
 
         'taxdump_loc'   => 'ftp://ftp.ncbi.nih.gov/pub/taxonomy',   # the original location of the dump

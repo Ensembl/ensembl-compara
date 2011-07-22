@@ -30,7 +30,7 @@ sub options {
   _exit('No -type given', 1, 1) unless $opts->{type};
   
   if(! $opts->{master}) {
-    $opts->{master} = 'compara-master';
+    $opts->{master} = 'compara_master';
   }
   
   #Loading the registry finally
@@ -127,7 +127,7 @@ GeneTrees).
 
 =item B<--master>
 
-The master database name; will default to compara-master if not given
+The master database name; will default to compara_master if not given
 
 =item B<--help>
 

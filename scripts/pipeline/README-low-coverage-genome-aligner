@@ -68,7 +68,7 @@ new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
     -host => 'compara1',
     -user => 'ensro',
     -port => 3306,
-    -species => 'compara-master',
+    -species => 'compara_master',
     -dbname => 'kb3_ensembl_compara_master');
 
 new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
@@ -87,7 +87,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@ens-staging/53');
 * Populate the database with data from the master DB:
 
 ~/src/ensembl_main/ensembl-compara/scripts/pipeline/populate_new_database.pl \
-  --master compara-master --new kb3_epo_31way_53 --reg reg.conf  --species "Homo sapiens" --species "Macaca mulatta" --species "Pan troglodytes" --species "Mus musculus" --species "Rattus norvegicus" --species "Canis familiaris" --species "Bos taurus" --species "Equus caballus" --species "Pongo pygmaeus" --species "Tupaia belangeri" --species "Spermophilus tridecemlineatus" --species "Sorex araneus" --species "Otolemur garnettii" --species "Oryctolagus cuniculus" --species "Ochotona princeps" --species "Myotis lucifugus" --species "Cavia porcellus" --species "Echinops telfairi" --species "Erinaceus europaeus" --species "Loxodonta africana" --species "Felis catus" --species "Dasypus novemcinctus" --species "Microcebus murinus" --species "Pteropus vampyrus" --species "Tursiops truncatus" --species "Vicugna pacos" --species "Dipodomys ordii" --species "Procavia capensis" --species "Tarsius syrichta" --species "Gorilla gorilla" --species "Choloepus hoffmanni"
+  --master compara_master --new kb3_epo_31way_53 --reg reg.conf  --species "Homo sapiens" --species "Macaca mulatta" --species "Pan troglodytes" --species "Mus musculus" --species "Rattus norvegicus" --species "Canis familiaris" --species "Bos taurus" --species "Equus caballus" --species "Pongo pygmaeus" --species "Tupaia belangeri" --species "Spermophilus tridecemlineatus" --species "Sorex araneus" --species "Otolemur garnettii" --species "Oryctolagus cuniculus" --species "Ochotona princeps" --species "Myotis lucifugus" --species "Cavia porcellus" --species "Echinops telfairi" --species "Erinaceus europaeus" --species "Loxodonta africana" --species "Felis catus" --species "Dasypus novemcinctus" --species "Microcebus murinus" --species "Pteropus vampyrus" --species "Tursiops truncatus" --species "Vicugna pacos" --species "Dipodomys ordii" --species "Procavia capensis" --species "Tarsius syrichta" --species "Gorilla gorilla" --species "Choloepus hoffmanni"
 
 3- Choose a working directory with some disk space
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

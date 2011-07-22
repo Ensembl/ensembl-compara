@@ -513,9 +513,9 @@ create_mlss.pl script as follows;
       -user    => 'admin',
       -pass    => 'secret',
       -port    => 3306,
-      -species => 'compara-master',
+      -species => 'compara_master',
       -dbname  => 'my_ensembl_compara_45');
-  Bio::EnsEMBL::Registry->add_alias("compara-master","DEFAULT");
+  Bio::EnsEMBL::Registry->add_alias("compara_master","DEFAULT");
   1;
   ---
 
