@@ -868,7 +868,7 @@ sub gene_member {
   if(!defined($self->{'_gene_member'}) and
      defined($self->adaptor) and $self->dbID)
   {
-    $self->{'_gene_member'} = $self->adaptor->fetch_gene_for_peptide_member_id($self->dbID);
+    $self->{'_gene_member'} = $self->adaptor->db->get_MemberAdaptor->fetch_gene_for_peptide_member_id($self->dbID);
   }
   return $self->{'_gene_member'};
 }
