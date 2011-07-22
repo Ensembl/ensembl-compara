@@ -10,7 +10,7 @@ Achtung: a Hive pipeline exists now that does the same thing.
     # 2. edit ensembl-compara/scripts/taxonomy/ensembl_aliases.sql to ensembl aliases (if needed)
 
         # 3. initialize the pipeline:
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportNCBItaxonomy_conf -ensembl_cvs_root_dir <path_to_your_ensembl_cvs_root> -password <your_password>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportNCBItaxonomy_conf -password <your_password> -ensembl_cvs_root_dir <path_to_your_ensembl_cvs_root>
 
         # 4. run the pipeline:
     beekeeper.pl ... (specific command line(s) will be printed by init_pipeline.pl)
