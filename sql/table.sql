@@ -306,7 +306,7 @@ CREATE TABLE dnafrag_region (
 #    This table indexes the genomic alignments
 #
 -- All queries in the API uses the primary key as rows are always fetched using
---   the genomic_align_block_id. The key "method_link_species_set_id" is used by
+--   the genomic_align_block_id. The key 'method_link_species_set_id' is used by
 --   MART when fetching all the genomic_align_blocks corresponding to a given
 --   method_link_species_set_id.z
 
@@ -1115,8 +1115,8 @@ values
 	('super_protein_tree_node', 0);
 
 # Auto add schema version to database (this will override whatever hive puts there)
-REPLACE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "63");
+REPLACE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '64');
 
 #Add schema type
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_type", "compara");
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
