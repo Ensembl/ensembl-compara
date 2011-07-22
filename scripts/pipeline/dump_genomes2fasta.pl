@@ -23,6 +23,7 @@ my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor;
 
 foreach my $genome_db_id( @$genome_db_id_list ){
 	my $genome_db = $genome_db_adaptor->fetch_by_dbID( $genome_db_id );
+	$genome_db->db_adaptor->dbc->disconnect_when_inactive(0);
 	my $dump_dir = $ARGV[2] . "/" . $genome_db->name;
 	mkdir($dump_dir) or die;
 	open(IN, ">$dump_dir/genome_seq") or die "cant open $dump_dir\n";
