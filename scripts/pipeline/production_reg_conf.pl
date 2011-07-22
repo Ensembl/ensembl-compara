@@ -40,7 +40,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -host => 'compara1',
     -user => 'ensadmin',
-    -pass => 'ensembl',
+    -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_master',
     -dbname => 'sf5_ensembl_compara_master',
@@ -49,7 +49,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -host => 'compara1',
     -user => 'ensadmin',
-    -pass => 'ensembl',
+    -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_prev',
     -dbname => 'sf5_ensembl_compara_63',
@@ -58,7 +58,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -host => 'compara1',
     -user => 'ensadmin',
-    -pass => 'ensembl',
+    -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_curr',
     -dbname => 'lg4_ensembl_compara_64',
