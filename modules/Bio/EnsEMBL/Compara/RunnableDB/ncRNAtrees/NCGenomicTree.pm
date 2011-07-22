@@ -69,7 +69,7 @@ sub run_ncgenomic_tree {
     $self->param('newick_file', $newick_file);
     my $treebest_err_file = $self->worker_temp_directory . "treebest.err";
     my $cmd = $njtree_phyml_executable;
-    $cmd .= " $method ";
+    $cmd .= " $method";
     $cmd .= " -Snf " if ($method eq 'phyml');
     $cmd .= " -s " if ($method eq 'nj');
     $cmd .= $spfilename;
@@ -81,6 +81,8 @@ sub run_ncgenomic_tree {
     my $worker_temp_directory = $self->worker_temp_directory;
     $DB::single=1; $DB::single && 1; # To avoid warnings about $DB::single used only once
     $self->compara_dba->dbc->disconnect_when_inactive(0);
+
+    ## FIXME! -- I am not sure that $cmd will return errors. It will never dataflows!
     unless (system("cd $worker_temp_directory; $cmd") == 0) {
         print STDERR "We have a problem running treebest -- Inspecting $treebest_err_file\n";
         open my $treebest_err_fh, "<", $treebest_err_file or die $!;
@@ -102,13 +104,12 @@ sub run_ncgenomic_tree {
         $self->throw("error running treebest $method: $!\n");
     }
     $self->compara_dba->dbc->disconnect_when_inactive(1);
-    $self->store_newick_into_protein_tree_tag_string()
+    $self->store_newick_into_protein_tree_tag_string($method)
 }
 
 sub store_newick_into_protein_tree_tag_string {
-  my $self = shift;
+    my ($self, $method) = @_;
 
-  my $method = shift;
   my $newick_file =  $self->param('newick_file');
   my $newick = '';
   print STDERR "load from file $newick_file\n" if($self->debug);
@@ -143,7 +144,7 @@ sub _load_and_dump_alignment {
         my $seq_id = $row_hashref->{member_id};
         my $aln_seq = $row_hashref->{aligned_sequence};
         $aln_seq =~ s/^N/A/;  # To avoid RAxML failure
-        print $outaln "> " . $seq_id. "\n" . $aln_seq . "\n";
+        print $outaln ">" . $seq_id. "\n" . $aln_seq . "\n";
     }
     close($outaln);
 
