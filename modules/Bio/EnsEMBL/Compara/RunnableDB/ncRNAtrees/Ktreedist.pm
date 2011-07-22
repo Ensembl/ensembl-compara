@@ -148,6 +148,7 @@ sub run_ktreedist {
   print CTFILE "Begin TREES;\n\n";
   foreach my $method (keys %{$self->param('inputtrees_rooted')}) {
     my $inputtree = $self->param('inputtrees_rooted')->{$method};
+    die ($method." is not defined in inputtrees_rooted")  unless (defined $inputtree);
     my $comparison_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($inputtree);
     my $newick_string = $comparison_tree->newick_simple_format;
     $self->throw("error with newick tree") unless (defined($newick_string));
