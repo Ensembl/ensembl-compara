@@ -31,9 +31,11 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 =head2 parse_newick_into_tree
 
   Arg 1      : string $newick_tree
-  Example    : $tree = Bio::EnsEMBL::Compara::NestedSet::parse_newick_into_tree($newick_tree);
-  Description: Read the newick string and returns (the root of) a tree
-  Returntype : Bio::EnsEMBL::Compara::NestedSet
+  Arg 2      : string $class (optional)
+  Example    : $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_tree);
+  Description: Read the newick string and returns (the root of) a tree.
+               Tree nodes are instances of $class, or Bio::EnsEMBL::Compara::NestedSet by default.
+  Returntype : Bio::EnsEMBL::Compara::NestedSet or $class
   Exceptions : none
   Caller     : general
 
@@ -42,6 +44,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 sub parse_newick_into_tree
 {
   my $newick = shift;
+  my $class = shift;
 
   my $count=1;
   my $debug = 0;
@@ -59,6 +62,9 @@ sub parse_newick_into_tree
     switch ($state) {
       case 1 { #new node
         $node = new Bio::EnsEMBL::Compara::NestedSet;
+	  if (defined $class) {
+		  bless $node, $class;
+	  }
         $node->node_id($count++);
         $lastset->add_child($node) if($lastset);
         $root=$node unless($root);
