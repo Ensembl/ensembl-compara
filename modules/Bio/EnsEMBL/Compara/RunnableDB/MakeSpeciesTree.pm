@@ -29,7 +29,6 @@
 package Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree;
 
 use strict;
-use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
