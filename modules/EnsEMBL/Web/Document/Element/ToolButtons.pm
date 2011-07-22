@@ -91,6 +91,7 @@ sub init {
   $self->add_entry({
     caption => 'Manage your data',
     class   => 'modal_link',
+    rel     => 'modal_user_data',
     url     => $hub->url({
       time    => time,
       type    => 'UserData',
