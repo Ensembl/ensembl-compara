@@ -461,7 +461,7 @@ sub pipeline_analyses {
 # ---------------------------------------------[load the rest of members]------------------------------------------------------------
 
         {   -logic_name => 'load_fresh_members',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ReuseOrLoadMembers',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
             -parameters => { },
             -wait_for => [ 'accumulate_reuse_ss', 'subset_table_reuse', 'subset_member_table_reuse', 'member_table_reuse', 'sequence_table_reuse' ],
             -hive_capacity => -1,
