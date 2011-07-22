@@ -16,7 +16,7 @@
     #4. Run init_pipeline.pl script:
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -password <your_password> -mlss_id <your_current_PT_mlss_id>
 
-    #5. Sync and loop the beekeeperi.pl as shown in init_pipeline.pl's output
+    #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
 
 =head1 DESCRIPTION  
@@ -133,7 +133,10 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
         
         'mkdir -p '.$self->o('fasta_dir'),
-        'lfs setstripe '.$self->o('fasta_dir').' -c -1',    # stripe
+
+            # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
+        'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1',
+
         'mkdir -p '.$self->o('cluster_dir'),
     ];
 }
@@ -398,9 +401,14 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'blast_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::SubsetMemberFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
-                'fan_branch_code' => 2,
+                'adaptor_name'          => 'SubsetAdaptor',
+                'adaptor_method'        => 'fetch_by_description_pattern',
+                'method_param_list'     => [ 'gdb:#genome_db_id# % translations' ],
+                'object_method'         => 'member_id_list',
+                'column_names'          => [ 'member_id' ],
+                'fan_branch_code'       => 2,
             },
             -hive_capacity => 10,
             -flow_into => {
@@ -641,15 +649,20 @@ sub pipeline_analyses {
 # ---------------------------------------------[homology duplications QC step]-------------------------------------------------------
 
         {   -logic_name => 'homology_duplications_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSfactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
-                'input_id' => { 'is_ortho' => '#is_ortho#', 'mlss_id' => '#mlss_id#' },
-                'fan_branch_code' => 2,
+                'adaptor_name'          => 'MethodLinkSpeciesSetAdaptor',
+                'adaptor_method'        => 'fetch_all_by_method_link_type',
+
+                'column_names2getters'  => { 'mlss_id' => 'dbID' },
+                'input_id'              => { 'mlss_id' => '#mlss_id#', 'is_ortho' => '#is_ortho#' },
+
+                'fan_branch_code'       => 2,
             },
             -wait_for => [ 'per_genome_genetreeset_qc', 'overall_genetreeset_qc' ],    # funnel
             -input_ids => [
-                { 'method_link_type' => 'ENSEMBL_ORTHOLOGUES', 'is_ortho' => 1 },
-                { 'method_link_type' => 'ENSEMBL_PARALOGUES',  'is_ortho' => 0 },
+                { 'method_param_list' => [ 'ENSEMBL_ORTHOLOGUES' ], 'is_ortho' => 1 },
+                { 'method_param_list' => [ 'ENSEMBL_PARALOGUES'  ], 'is_ortho' => 0 },
             ],
             -hive_capacity => -1,
             -flow_into => {
