@@ -480,11 +480,11 @@ sub add_matching_predictions {
   foreach my $gene_stable_id_to_add (keys %{$self->param('predictions_to_add')}) {
     my $gene_member = $self->param('member_adaptor')->fetch_by_source_stable_id('ENSEMBLGENE',$gene_stable_id_to_add);
     # Incorporate this member into the cluster
-    my $node = new Bio::EnsEMBL::Compara::NestedSet;
+    my $node = new Bio::EnsEMBL::Compara::GeneTreeNode;
     $node->node_id($gene_member->get_canonical_peptide_Member->member_id);
     $self->param('nc_tree')->add_child($node);
     $self->param('nc_tree')->clusterset_id($self->param('clusterset_id'));
-    #leaves are NestedSet objects, bless to make into GeneTreeMember objects
+    #leaves are GeneTreeNode objects, bless to make into GeneTreeMember objects
     bless $node, "Bio::EnsEMBL::Compara::GeneTreeMember";
 
     #the building method uses member_id's to reference unique nodes

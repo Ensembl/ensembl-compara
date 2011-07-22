@@ -63,7 +63,7 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-use Bio::EnsEMBL::Compara::NestedSet;
+use Bio::EnsEMBL::Compara::GeneTreeNode;
 use LWP::Simple;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -187,15 +187,15 @@ sub run_rfamclassify {
         if    (defined($self->param('model_id_names')->{$cm_id})) { $model_name = $self->param('model_id_names')->{$cm_id}; }
         elsif (defined($self->param('model_name_ids')->{$cm_id})) { $model_name = $cm_id; }
 
-        my $cluster = new Bio::EnsEMBL::Compara::NestedSet;
+        my $cluster = new Bio::EnsEMBL::Compara::GeneTreeNode;
         $clusterset->add_child($cluster);
 
         foreach my $pmember_id (@cluster_list) {
-          my $node = new Bio::EnsEMBL::Compara::NestedSet;
+          my $node = new Bio::EnsEMBL::Compara::GeneTreeNode;
           $node->node_id($pmember_id);
           $cluster->add_child($node);
           $cluster->clusterset_id($self->param('clusterset_id'));
-          #leaves are NestedSet objects, bless to make into GeneTreeMember objects
+          #leaves are GeneTreeNode objects, bless to make into GeneTreeMember objects
           bless $node, "Bio::EnsEMBL::Compara::GeneTreeMember";
 
           #the building method uses member_id's to reference unique nodes

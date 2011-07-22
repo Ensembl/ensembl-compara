@@ -327,7 +327,7 @@ sub _write_tree {
   
   my %attr = (rooted => 'true');
   
-  if(check_ref($tree, 'Bio::EnsEMBL::Compara::ProteinTree')) {
+  if(check_ref($tree, 'Bio::EnsEMBL::Compara::GeneTreeNode')) {
     $attr{type} = 'gene tree';
   }
   

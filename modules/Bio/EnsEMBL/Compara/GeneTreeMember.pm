@@ -28,19 +28,21 @@ GeneTreeMember - DESCRIPTION of Object
 
 =head1 DESCRIPTION
 
-Currently the GeneTreeMember objects are used in the ProteinTree, SuperProteinTree
-and NCTree structures to represent the leaves of the trees.
+Currently the GeneTreeMember objects are used to represent the leaves of
+the gene trees (whether they contain proteins or non-coding RNas).
 
-Each GeneTreeMember object is simultaneously a tree node (inherits from NestedSet) and an aligned member (inherits from AlignedMember).
+Each GeneTreeMember object is simultaneously a tree node (inherits from
+GeneTreeNode) and an aligned member (inherits from AlignedMember).
 
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::GeneTreeMember
   +- Bio::EnsEMBL::Compara::AlignedMember
    +- Bio::EnsEMBL::Compara::Member
-  +- Bio::EnsEMBL::Compara::NestedSet
-   +- Bio::EnsEMBL::Compara::Graph::Node
-    +- Bio::EnsEMBL::Compara::Graph::CGObject
+  +- Bio::EnsEMBL::Compara::GeneTreeNode
+   +- Bio::EnsEMBL::Compara::NestedSet
+    +- Bio::EnsEMBL::Compara::Graph::Node
+     +- Bio::EnsEMBL::Compara::Graph::CGObject
 
 =head1 METHODS
 
@@ -50,7 +52,7 @@ package Bio::EnsEMBL::Compara::GeneTreeMember;
 
 use strict;
 
-use base ('Bio::EnsEMBL::Compara::AlignedMember', 'Bio::EnsEMBL::Compara::NestedSet');  # careful with the order; new() is currently inherited from Member-AlignedMember branch
+use base ('Bio::EnsEMBL::Compara::AlignedMember', 'Bio::EnsEMBL::Compara::GeneTreeNode');  # careful with the order; new() is currently inherited from Member-AlignedMember branch
 
 
 =head2 copy
@@ -68,7 +70,7 @@ use base ('Bio::EnsEMBL::Compara::AlignedMember', 'Bio::EnsEMBL::Compara::Nested
 sub copy {
   my $self = shift;
   
-  my $mycopy = $self->Bio::EnsEMBL::Compara::NestedSet::copy;
+  my $mycopy = $self->Bio::EnsEMBL::Compara::GeneTreeNode::copy;
                $self->Bio::EnsEMBL::Compara::AlignedMember::copy($mycopy);     # we could rename this method into topup() as it is not needed by 'AlignedMember' class itself
   bless $mycopy, 'Bio::EnsEMBL::Compara::GeneTreeMember';
   

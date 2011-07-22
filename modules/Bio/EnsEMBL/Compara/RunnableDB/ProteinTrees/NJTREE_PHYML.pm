@@ -216,7 +216,9 @@ sub run_njtree_phyml {
       }
       print STDERR "$full_cmd\n";
       open(ERRFILE, $errfile) or die "Could not open logfile '$errfile' for reading : $!\n";
+	my $logfile;
       while (<ERRFILE>) {
+	  $logfile .= $_;
         if ($_ =~ /NNI/) {
           # Do jack-knife treebest starting by the sequence with more Ns
           my $jackknife_value = $self->param('jackknife') if ($self->param('jackknife'));
@@ -231,7 +233,7 @@ sub run_njtree_phyml {
         }
       }
       $self->check_job_fail_options;
-      $self->throw("error running njtree phyml: $system_error\n");
+      $self->throw("error running njtree phyml: $system_error\n$logfile");
     }
 
     $self->compara_dba->dbc->disconnect_when_inactive(0);
@@ -298,11 +300,12 @@ sub check_job_fail_options {
   if( $segfault    # last system() crashed with Segmentation Fault
    or ($self->input_job->retry_count >= 1 and !$self->param('jackknife'))
   ) {
-        if(@{ $self->dataflow_output_id($self->input_id, 3) }) {
-            $self->DESTROY;
-            $self->input_job->incomplete(0);
-            die "job failed, dataflowing to QuickTreeBreak\n";
-        }
+        die "Unexpected job failure\n";
+        #if(@{ $self->dataflow_output_id($self->input_id, 3) }) {
+        #    $self->DESTROY;
+        #    $self->input_job->incomplete(0);
+        #    die "job failed, dataflowing to QuickTreeBreak\n";
+        #}
   }
 }
 
@@ -597,7 +600,7 @@ sub parse_newick_into_proteintree {
   close(FH);
 
   my $newtree = 
-    Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
+    Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
   $newtree->print_tree(20) if($self->debug > 1);
   # get rid of the taxon_id needed by njtree -- name tag
   foreach my $leaf (@{$newtree->get_all_leaves}) {

@@ -49,7 +49,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput;
 
 use strict;
-use Bio::EnsEMBL::Compara::NestedSet;
+use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
@@ -85,6 +85,9 @@ sub fetch_input {
     $clusterset = $self->param('ccEngine')->clusterset;
     $self->throw("no clusters generated") unless($clusterset);
 
+    #clusterset is a NestedSet object, bless to make into GeneTreeNode object
+    bless $clusterset, "Bio::EnsEMBL::Compara::GeneTreeNode";
+
     $clusterset->name("PROTEIN_TREES");
     $protein_tree_adaptor->store_node($clusterset);
     printf("clusterset_id %d\n", $clusterset->node_id);
@@ -106,17 +109,17 @@ sub fetch_input {
     # If it's a singleton, we don't store it as a protein tree
     next if (2 > scalar(@cluster_list));
 
-    my $cluster = new Bio::EnsEMBL::Compara::NestedSet;
+    my $cluster = new Bio::EnsEMBL::Compara::GeneTreeNode;
     $clusterset->add_child($cluster);
 
     foreach my $member_hcluster_id (@cluster_list) {
       my ($pmember_id,$genome_db_id) = split("_",$member_hcluster_id);
 
-      my $node = new Bio::EnsEMBL::Compara::NestedSet;
+      my $node = new Bio::EnsEMBL::Compara::GeneTreeNode;
       $node->node_id($pmember_id);
       $cluster->add_child($node);
       $cluster->clusterset_id($self->param('clusterset_id'));
-      #leaves are NestedSet objects, bless to make into GeneTreeMember objects
+      #leaves are GeneTreeNode objects, bless to make into GeneTreeMember objects
       bless $node, "Bio::EnsEMBL::Compara::GeneTreeMember";
 
       #the building method uses member_id's to reference unique nodes

@@ -731,7 +731,7 @@ sub get_TreeI {
 sub new_from_newick {
     my $class = shift;
     my $file = shift;
-
+    print "CALL\n";
     my $treein = new Bio::TreeIO
         (-file => $file,
          -format => 'newick');
@@ -750,7 +750,9 @@ sub new_from_TreeI {
     my $node = new $class;
 
     # Kick off the recursive, parallel node adding.
+    print "BEFORE", $node, "\n";
     _add_nodeI_to_node($node,$rootI);
+    print "AFTER", $node, "\n";
 
     return bless($node,$class);
 }

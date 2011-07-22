@@ -361,7 +361,7 @@ sub parse_newick_into_nctree
   while(<FH>) { $newick .= $_;  }
   close(FH);
 
-  my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
+  my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
   $newtree->print_tree(20) if($self->debug > 1);
   # get rid of the taxon_id needed by njtree -- name tag
   foreach my $leaf (@{$newtree->get_all_leaves}) {

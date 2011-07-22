@@ -1,20 +1,42 @@
-=head1 NAME
+=head1 LICENSE
 
-ProteinTree - DESCRIPTION of Object
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
 
-=head1 SYNOPSIS
+  This software is distributed under a modified Apache license.
+  For license details, please see
 
-=head1 DESCRIPTION
-
-Specific subclass of NestedSet to add functionality when the leaves of this tree
-are GeneTreeMember objects and the tree is a representation of a Protein derived
-Phylogenetic tree
+   http://www.ensembl.org/info/about/code_licence.html
 
 =head1 CONTACT
 
-  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
-  Contact Abel Ureta-Vidal on EnsEMBL compara project: abel@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::GeneTree
+
+=head1 SYNOPSIS
+
+Tree - Class for a gene tree, that can contain either proteins or ncRNAs
+
+=head1 DESCRIPTION
+
+Specific subclass of NestedSet to add functionality when the nodes of this tree
+are GeneTreeMember objects and the tree is a representation of a gene derived
+Phylogenetic tree
+
+=head1 INHERITANCE TREE
+
+  Bio::EnsEMBL::Compara::GeneTreeNode
+  +- Bio::EnsEMBL::Compara::NestedSet
+   +- Bio::EnsEMBL::Compara::Graph::Node
+    +- Bio::EnsEMBL::Compara::Graph::CGObject
+
 
 =head1 APPENDIX
 
@@ -22,9 +44,7 @@ The rest of the documentation details each of the object methods. Internal metho
 
 =cut
 
-
-
-package Bio::EnsEMBL::Compara::ProteinTree;
+package Bio::EnsEMBL::Compara::GeneTreeNode;
 
 use strict;
 use Bio::EnsEMBL::Compara::BaseRelation;
@@ -34,9 +54,9 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::SimpleAlign;
 use IO::File;
 
-use Bio::EnsEMBL::Compara::NestedSet;
-our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
+use base ('Bio::EnsEMBL::Compara::NestedSet');
 
+# FIXME remove because description_score is not relevant for gene trees
 =head2 description_score
 
   Arg [1]    : 
@@ -48,7 +68,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
 
 =cut
 
-sub description_score {
+sub description_score { # deprecated ?
   my $self = shift;
   $self->{'_description_score'} = shift if(@_);
   return $self->{'_description_score'};
@@ -58,10 +78,10 @@ sub get_leaf_by_Member {
   my $self = shift;
   my $member = shift;
 
-  if($member->isa('Bio::EnsEMBL::Compara::ProteinTree')) {
+  if($member->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
     return $self->find_leaf_by_node_id($member->node_id);
   } elsif ($member->isa('Bio::EnsEMBL::Compara::Member')) {
-    return $self->find_leaf_by_name($member->get_canonical_peptide_Member->stable_id);
+    return $self->find_leaf_by_name($self->adaptor->_get_canonical_Member($member)->stable_id);
   } else {
     die "Need a Member object!";
   }
@@ -184,6 +204,7 @@ sub consensus_cigar_line {
    return $cons_cigar;
 }
 
+# FIXME: remove because not computed any more
 sub get_SitewiseOmega_values {
   my $self = shift;
 
@@ -215,7 +236,7 @@ sub stable_id {
   Arg [1]     : arrayref of taxon_ids
   Example     : my $ret_tree = $tree->remove_nodes_by_taxon_ids($taxon_ids);
   Description : Returns the tree with removed nodes in taxon_id list.
-  Returntype  : Bio::EnsEMBL::Compara::ProteinTree object
+  Returntype  : Bio::EnsEMBL::Compara::GeneTreeNode object
   Exceptions  :
   Caller      : general
   Status      : At risk (behaviour on exceptions could change)
@@ -247,7 +268,7 @@ sub remove_nodes_by_taxon_ids {
   Arg [1]     : arrayref of taxon_ids
   Example     : my $ret_tree = $tree->keep_nodes_by_taxon_ids($taxon_ids);
   Description : Returns the tree with kept nodes in taxon_id list.
-  Returntype  : Bio::EnsEMBL::Compara::ProteinTree object
+  Returntype  : Bio::EnsEMBL::Compara::GeneTreeNode object
   Exceptions  :
   Caller      : general
   Status      : At risk (behaviour on exceptions could change)
