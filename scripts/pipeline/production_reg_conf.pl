@@ -25,14 +25,14 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 
 # Extra core databases that live on genebuilders' servers:
 
-Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => 'genebuild1',
-    -user => 'ensro',
-    -port => 3306,
-    -species => 'gorilla_gorilla',
-    -group => 'core',
-    -dbname => 'ba1_gorilla31_new',
-);
+#Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+#    -host => 'genebuild1',
+#    -user => 'ensro',
+#    -port => 3306,
+#    -species => 'gorilla_gorilla',
+#    -group => 'core',
+#    -dbname => 'ba1_gorilla31_new',
+#);
 
 
 # Compara databases used during the release (master, previous and current compara dbs)
@@ -52,7 +52,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_prev',
-    -dbname => 'sf5_ensembl_compara_63',
+    -dbname => 'lg4_ensembl_compara_63',
 );
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
