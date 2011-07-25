@@ -9,26 +9,29 @@
 
 =head1 SYNOPSIS
 
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $g_load_members = Bio::EnsEMBL::Compara::RunnableDB::LoadMembers->new (
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$g_load_members->fetch_input(); #reads from DB
-$g_load_members->run();
-$g_load_members->write_output(); #writes to DB
+        # load reference peptide+gene members of a particular genome_db (mouse)
+    standaloneJob.pl LoadMembers.pm -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara2/lg4_test_loadmembers" -genome_db_id 57
+
+        # load nonreference peptide+gene members of a particular genome_db (human)
+    standaloneJob.pl LoadMembers.pm -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara2/lg4_test_loadmembers" -genome_db_id 90 -include_nonreference 1 -include_reference 0
+
+        # load reference coding exon members of a particular genome_db (rat)
+    standaloneJob.pl LoadMembers.pm -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara2/lg4_test_loadmembers" -genome_db_id 3 -coding_exons 1 -min_length 20
 
 =cut
 
 =head1 DESCRIPTION
 
-This RunnableDB works in two modes, depending on the trueness of 'coding_exons' parameter.
+This RunnableDB works in two major modes, depending on the trueness of 'coding_exons' parameter.
 
 ProteinTree pipeline uses this module with $self->param('coding_exons') set to false.
 Which is a request to load peptide+gene members from a particular core database defined by $self->param('genome_db_id').
 
 MercatorPecan pipeline uses this module with $self->param('coding_exons') set to true.
 Which is a request to load coding exon members from a particular core database defined by $self->param('genome_db_id').
+
+You can also choose whether you want your members (peptides or coding exons) extracted from reference slices, nonreference slices (including LRGs) or both
+by using -include_reference <0|1> and -include_nonreference <0|1> parameters.
 
 =cut
 
@@ -42,8 +45,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::LoadMembers;
 
 use strict;
 use warnings;
-
-use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Subset;
@@ -118,23 +119,26 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $compara_dba             = $self->compara_dba();
+    my $compara_dba = $self->compara_dba();
+    my $core_dba    = $self->param('core_dba');
 
     $compara_dba->dbc->disconnect_when_inactive(0);
-    $self->param('core_dba')->dbc->disconnect_when_inactive(0);
+    $core_dba->dbc->disconnect_when_inactive(0);
 
-    my $unfiltered_slices = $self->param('core_dba')->get_SliceAdaptor->fetch_all('toplevel', $self->param('include_nonreference') ? (undef, 1, undef, 1) : ());
-    $self->throw("problem: no toplevel slices") unless(scalar(@$unfiltered_slices));
+    my $unfiltered_slices = $core_dba->get_SliceAdaptor->fetch_all('toplevel', $self->param('include_nonreference') ? (undef, 1, undef, 1) : ());
+    die "Could not fetch any toplevel slices from ".$core_dba->dbc->dbname() unless(scalar(@$unfiltered_slices));
 
     my $slices = $self->param('include_reference')
                     ? $unfiltered_slices
                     : [ grep { not $_->is_reference() } @$unfiltered_slices ];
 
+    die "No suitable toplevel slices found in ".$core_dba->dbc->dbname() unless(scalar(@$slices));
+
         # main routine to load members from a particular CoreDB:
     $self->loadMembersFromCoreSlices( $slices );
 
     $compara_dba->dbc->disconnect_when_inactive(1);
-    $self->param('core_dba')->dbc->disconnect_when_inactive(1);
+    $core_dba->dbc->disconnect_when_inactive(1);
 }
 
 
@@ -284,7 +288,7 @@ sub store_gene_and_all_transcripts {
     print("     transcript " . $transcript->stable_id ) if($self->param('verbose'));
 
     unless (defined $translation->stable_id) {
-      $self->throw("CoreDB error: does not contain translation stable id for translation_id ". $translation->dbID."\n");
+      die "CoreDB error: does not contain translation stable id for translation_id ". $translation->dbID;
     }
 
     my $description = $self->fasta_description($gene, $transcript);
@@ -348,6 +352,8 @@ sub store_all_coding_exons {
 
   return 1 if (scalar @$genes == 0);
 
+  my $min_exon_length = $self->param('min_length') or die "'min_length' is an obligatory parameter";
+
   my $member_adaptor = $self->compara_dba->get_MemberAdaptor();
   my $genome_db = $self->param('genome_db');
   my @exon_members = ();
@@ -405,7 +411,7 @@ sub store_all_coding_exons {
           next;
         }
         print(" len=",$exon_member->seq_length ) if($self->param('verbose'));
-        next if ($exon_member->seq_length < $self->param('min_length'));
+        next if ($exon_member->seq_length < $min_exon_length);
         push @exon_members, $exon_member;
       }
     }
