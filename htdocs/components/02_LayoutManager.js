@@ -82,8 +82,8 @@ Ensembl.LayoutManager.extend({
           Ensembl.EventManager.trigger('windowResize');
           
           if (Ensembl.dynamicWidth && Ensembl.width !== width) {
-            Ensembl.EventManager.trigger('imageResize');
             $('.navbar, div.info, div.hint, div.warning, div.error').width(Ensembl.width);
+            Ensembl.EventManager.trigger('imageResize');
           }
         }
         
