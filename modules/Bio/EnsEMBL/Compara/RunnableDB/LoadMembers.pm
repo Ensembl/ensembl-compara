@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::LoadMembers
+    Bio::EnsEMBL::Compara::RunnableDB::LoadMembers
 
 =cut
 
@@ -22,17 +22,19 @@ $g_load_members->write_output(); #writes to DB
 
 =head1 DESCRIPTION
 
-This RunnableDB has two modes, depending on the logic_name and whether the 'reuse' mode was actually requested.
+This RunnableDB works in two modes, depending on the trueness of 'coding_exons' parameter.
 
-In 'non-reuse' mode it loads peptide+gene members from a particular core database defined by $self->param('genome_db_id').
+ProteinTree pipeline uses this module with $self->param('coding_exons') set to false.
+Which is a request to load peptide+gene members from a particular core database defined by $self->param('genome_db_id').
 
-In 'reuse' mode it tries to reuse the peptide+gene members for a particular $self->param('genome_db_id') from the previous release's database.
+MercatorPecan pipeline uses this module with $self->param('coding_exons') set to true.
+Which is a request to load coding exon members from a particular core database defined by $self->param('genome_db_id').
 
 =cut
 
 =head1 CONTACT
 
-Describe contact details here
+Contact anybody in Compara.
 
 =cut
 
@@ -48,9 +50,12 @@ use Bio::EnsEMBL::Compara::Subset;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+
 sub param_defaults {
     return {
-        'store_genes'     => 1, # whether the genes are also stored as members
+        'include_reference'     => 1,
+        'include_nonreference'  => 0,
+        'store_genes'           => 1, # whether the genes are also stored as members
     };
 }
 
@@ -81,6 +86,12 @@ sub fetch_input {
         # this one will be used later for dataflow:
     $self->param('per_genome_suffix', $genome_db_name.'_'.$genome_db_id );
 
+    unless($self->param('include_reference') or $self->param('include_nonreference')) {
+        die "Either 'include_reference' or 'include_nonreference' or both have to be true";
+    }
+
+    my $ref_nonref = join('+', ($self->param('include_reference') ? ('ref') : ()), ($self->param('include_nonreference') ? ('nonref') : ()));
+
     if ($self->param('coding_exons')) {
 
         $self->param('exonSubset', Bio::EnsEMBL::Compara::Subset->new(
@@ -92,10 +103,10 @@ sub fetch_input {
     } else {
 
         $self->param('pepSubset', Bio::EnsEMBL::Compara::Subset->new(
-          -name=>"gdb:$genome_db_id $genome_db_name longest translations") );
+          -name=>"gdb:$genome_db_id $genome_db_name $ref_nonref canonical translations") );
 
         $self->param('geneSubset', Bio::EnsEMBL::Compara::Subset->new(
-          -name=>"gdb:$genome_db_id $genome_db_name genes") );
+          -name=>"gdb:$genome_db_id $genome_db_name $ref_nonref genes") );
 
             # This does an INSERT IGNORE or a SELECT if already exists:
         $compara_dba->get_SubsetAdaptor->store($self->param('pepSubset'));
@@ -107,14 +118,20 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $compara_dba    = $self->compara_dba();
-    my $genome_db_id   = $self->param('genome_db_id');
+    my $compara_dba             = $self->compara_dba();
 
     $compara_dba->dbc->disconnect_when_inactive(0);
     $self->param('core_dba')->dbc->disconnect_when_inactive(0);
 
+    my $unfiltered_slices = $self->param('core_dba')->get_SliceAdaptor->fetch_all('toplevel', $self->param('include_nonreference') ? (undef, 1, undef, 1) : ());
+    $self->throw("problem: no toplevel slices") unless(scalar(@$unfiltered_slices));
+
+    my $slices = $self->param('include_reference')
+                    ? $unfiltered_slices
+                    : [ grep { not $_->is_reference() } @$unfiltered_slices ];
+
         # main routine to load members from a particular CoreDB:
-    $self->loadMembersFromCoreSlices();
+    $self->loadMembersFromCoreSlices( $slices );
 
     $compara_dba->dbc->disconnect_when_inactive(1);
     $self->param('core_dba')->dbc->disconnect_when_inactive(1);
@@ -143,30 +160,26 @@ sub write_output {
 
 
 sub loadMembersFromCoreSlices {
-  my $self = shift @_;
+    my ($self, $slices) = @_;
 
         # initialize internal counters for tracking success of process:
     $self->param('sliceCount',      0);
     $self->param('geneCount',       0);
     $self->param('realGeneCount',   0);
     $self->param('transcriptCount', 0);
-    $self->param('longestCount',    0);
+    $self->param('canonicalCount',  0);
     $self->param('exonCount',       0);
 
   #from core database, get all slices, and then all genes in slice
   #and then all transcripts in gene to store as members in compara
 
-  my @slices = @{$self->param('core_dba')->get_SliceAdaptor->fetch_all('toplevel')};
-  print("fetched ",scalar(@slices), " slices to load from\n");
-  $self->throw("problem: no toplevel slices") unless(scalar(@slices));
+  my @genes;
 
-  my $genes;
-
-  SLICE: foreach my $slice (@slices) {
+  SLICE: foreach my $slice (@$slices) {
     $self->param('sliceCount', $self->param('sliceCount')+1 );
     #print("slice " . $slice->name . "\n");
 
-    @$genes = ();
+    @genes = ();
     my $current_end;
 
     foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes}) {
@@ -177,18 +190,16 @@ sub loadMembersFromCoreSlices {
 
       if (defined $self->param('coding_exons')) {
           $current_end = $gene->end unless (defined $current_end);
-          $self->param('geneCount', $self->param('geneCount')+1);
           if((lc($gene->biotype) eq 'protein_coding')) {
               $self->param('realGeneCount', $self->param('realGeneCount')+1 );
-    #	      print "gene_start " . $gene->start . " end $current_end\n";
               if ($gene->start <= $current_end) {
-                  push @$genes, $gene;
+                  push @genes, $gene;
                   $current_end = $gene->end if ($gene->end > $current_end);
               } else {
-                  $self->store_all_coding_exons($genes);
-                  @$genes = ();
+                  $self->store_all_coding_exons(\@genes);
+                  @genes = ();
                   $current_end = $gene->end;
-                  push @$genes, $gene;
+                  push @genes, $gene;
               }
           }
       } else {
@@ -207,7 +218,7 @@ sub loadMembersFromCoreSlices {
     } # foreach
 
     if ($self->param('coding_exons')) {
-        $self->store_all_coding_exons($genes);
+        $self->store_all_coding_exons(\@genes);
     }
   }
 
@@ -274,7 +285,6 @@ sub store_gene_and_all_transcripts {
 
     unless (defined $translation->stable_id) {
       $self->throw("CoreDB error: does not contain translation stable id for translation_id ". $translation->dbID."\n");
-      next;
     }
 
     my $description = $self->fasta_description($gene, $transcript);
@@ -326,7 +336,7 @@ sub store_gene_and_all_transcripts {
   if(@canonicalPeptideMember) {
     my ($transcript, $member) = @canonicalPeptideMember;
     $self->param('pepSubset')->add_member($member);
-    $self->param('longestCount', $self->param('longestCount') );
+    $self->param('canonicalCount', $self->param('canonicalCount') );
     # print("     LONGEST " . $transcript->stable_id . "\n");
   }
   return 1;
@@ -336,13 +346,13 @@ sub store_gene_and_all_transcripts {
 sub store_all_coding_exons {
   my ($self, $genes) = @_;
 
-  return 1 if (scalar @{$genes} == 0);
+  return 1 if (scalar @$genes == 0);
 
   my $member_adaptor = $self->compara_dba->get_MemberAdaptor();
   my $genome_db = $self->param('genome_db');
   my @exon_members = ();
 
-  foreach my $gene (@{$genes}) {
+  foreach my $gene (@$genes) {
       #print " gene " . $gene->stable_id . "\n";
 
     foreach my $transcript (@{$gene->get_all_Transcripts}) {
