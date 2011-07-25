@@ -161,7 +161,7 @@ sub check_job_fail_options {
   my $protein_tree = $self->param('protein_tree');
 
   if($self->input_job->retry_count >= 2) {
-    $self->dataflow_output_id($self->input_id, 3);
+    #$self->dataflow_output_id($self->input_id, 3);
 
     $self->DESTROY;
     $self->input_job->incomplete(0);
