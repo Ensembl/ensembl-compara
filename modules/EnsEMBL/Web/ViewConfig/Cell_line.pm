@@ -74,7 +74,10 @@ sub build_imageconfig_form {
   my $self         = shift;
   my $image_config = shift;
   
-  $_->set('controls', qq{<div style="width:auto"><a href="#Regulatory_evidence" class="modal_link">Configure Regulatory evidence</a></div>}) for grep $_->get('glyphset') eq 'fg_multi_wiggle', $image_config->get_tracks;
+  for (grep $_->get('glyphset') eq 'fg_multi_wiggle', $image_config->get_tracks) {
+    $_->set('controls', sprintf '<div style="width:auto"><a href="#Regulatory_evidence%s" class="modal_link">Configure Regulatory evidence</a></div>', $_->id =~ /core/ ? '' : ' .funcgen_matrix.other');
+  }
+  
   $self->SUPER::build_imageconfig_form($image_config);
 }
 
