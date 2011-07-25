@@ -81,23 +81,25 @@ sub fetch_input {
         # this one will be used later for dataflow:
     $self->param('per_genome_suffix', $genome_db_name.'_'.$genome_db_id );
 
-        #create subsets for the gene members, and the longest peptide members:
-    $self->param('pepSubset', Bio::EnsEMBL::Compara::Subset->new(
-      -name=>"gdb:$genome_db_id $genome_db_name longest translations") );
-
-    $self->param('geneSubset', Bio::EnsEMBL::Compara::Subset->new(
-      -name=>"gdb:$genome_db_id $genome_db_name genes") );
-
-        # This does an INSERT IGNORE or a SELECT if already exists:
-    $compara_dba->get_SubsetAdaptor->store($self->param('pepSubset'));
-    $compara_dba->get_SubsetAdaptor->store($self->param('geneSubset'));
-
-
     if ($self->param('coding_exons')) {
+
         $self->param('exonSubset', Bio::EnsEMBL::Compara::Subset->new(
           -name=>"gdb:$genome_db_id $genome_db_name coding exons") );
 
+            # This does an INSERT IGNORE or a SELECT if already exists:
         $compara_dba->get_SubsetAdaptor->store($self->param('exonSubset'));
+
+    } else {
+
+        $self->param('pepSubset', Bio::EnsEMBL::Compara::Subset->new(
+          -name=>"gdb:$genome_db_id $genome_db_name longest translations") );
+
+        $self->param('geneSubset', Bio::EnsEMBL::Compara::Subset->new(
+          -name=>"gdb:$genome_db_id $genome_db_name genes") );
+
+            # This does an INSERT IGNORE or a SELECT if already exists:
+        $compara_dba->get_SubsetAdaptor->store($self->param('pepSubset'));
+        $compara_dba->get_SubsetAdaptor->store($self->param('geneSubset'));
     }
 }
 
@@ -122,16 +124,14 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    my $genome_db_id      = $self->param('genome_db_id');
-    my $subset_id         = $self->param('pepSubset')->dbID;
-
-        #Overwrite subset_id if doing coding_exons (eg MercatorPecan pipeline) :
-    if ($self->param('coding_exons')) {
-        $subset_id = $self->param('exonSubset')->dbID;
-    }
-    my $per_genome_suffix = $self->param('per_genome_suffix');
-
-    $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'reuse_this' => 0, 'subset_id' => $subset_id, 'per_genome_suffix' => $per_genome_suffix } , 1);
+    $self->dataflow_output_id( {
+        'genome_db_id'      => $self->param('genome_db_id'),
+        'reuse_this'        => 0,
+        'subset_id'         => $self->param('coding_exons')
+                                ? $self->param('exonSubset')->dbID  # MercatorPecan pipeline
+                                : $self->param('pepSubset')->dbID,  # ProteinTrees pipeline
+        'per_genome_suffix' => $self->param('per_genome_suffix'),
+    } , 1);
 }
 
 
