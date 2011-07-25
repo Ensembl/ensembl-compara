@@ -9,6 +9,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     
     Ensembl.EventManager.register('hashChange',  this, this.getContent);
     Ensembl.EventManager.register('changeWidth', this, this.resize);
+    Ensembl.EventManager.register('imageResize', this, this.resize);
     
     if (!window.location.pathname.match(/\/Multi/)) {
       Ensembl.EventManager.register('ajaxComplete', this, function () { this.enabled = true; });
