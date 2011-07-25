@@ -444,8 +444,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     function addSection() {
       configDiv = $('<div>', {
-        'class':   'config view_config ' + active,
-        innerHTML: '<div class="spinner">Loading Content</div>'
+        'class': 'config view_config ' + active,
+        html:    '<div class="spinner">Loading Content</div>'
       }).appendTo(panel.elLk.form);
       
       panel.elLk.configDivs  = $('div.config', panel.elLk.form);
