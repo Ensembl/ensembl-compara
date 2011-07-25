@@ -96,7 +96,7 @@ sub fetch_input {
     if ($self->param('coding_exons')) {
 
         $self->param('exonSubset', Bio::EnsEMBL::Compara::Subset->new(
-          -name=>"gdb:$genome_db_id $genome_db_name coding exons") );
+          -name=>"gdb:$genome_db_id $genome_db_name $ref_nonref coding exons") );
 
             # This does an INSERT IGNORE or a SELECT if already exists:
         $compara_dba->get_SubsetAdaptor->store($self->param('exonSubset'));
