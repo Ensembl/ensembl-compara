@@ -121,7 +121,7 @@ sub default_options {
     # connection parameters to various databases:
 
         'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => 'compara4',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                    
@@ -167,7 +167,7 @@ sub default_options {
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'sf5_ensembl_compara_62',
+           -dbname => 'lg4_ensembl_compara_63',
         },
 
         ## mode for testing the non-Blast part of the pipeline: reuse all Blasts
@@ -406,7 +406,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                             'db_conn'    => $self->o('reuse_db'),
-                            'inputquery' => "SELECT sm.* FROM subset_member sm JOIN subset USING (subset_id) WHERE member_id<='.$self->o('protein_members_range').' AND description LIKE 'gdb:#genome_db_id# %'",
+                            'inputquery' => "SELECT sm.* FROM subset_member sm JOIN subset USING (subset_id) WHERE member_id<=".$self->o('protein_members_range')." AND description LIKE 'gdb:#genome_db_id# %'",
                             'fan_branch_code' => 2,
             },
             -can_be_empty  => 1,
