@@ -187,7 +187,7 @@ GetOptions(
     "species=s@" => $species,
     "mlss|method_link_species_sets=s@" => $mlsss,
     'exact_species_name_match' => \$exact_species_name_match,
-    'n' => \$only_show_intentions,
+    'n|intentions' => \$only_show_intentions,
   );
 
 
@@ -247,7 +247,7 @@ if($only_show_intentions) {
         print "\t".$genome_db->dbID.": ".$genome_db->name."\n";
     }
     print "MethodLinkSpeciesSet entries to be copied:\n";
-    foreach my $mlss (@$all_default_method_link_species_sets) {
+    foreach my $mlss (sort {$a->method_link_id <=> $b->method_link_id} @$all_default_method_link_species_sets) {
         print "\t".$mlss->dbID.": ".$mlss->name."\n";
     }
     print "SpeciesSet entries to be copied:\n";
