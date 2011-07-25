@@ -17,7 +17,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     Ensembl.EventManager.register('mouseUp',            this, this.dragStop);
     Ensembl.EventManager.register('hashChange',         this, this.hashChange);
     Ensembl.EventManager.register('changeFavourite',    this, this.changeFavourite);
-    Ensembl.EventManager.register('imageResize',        this, this.getContent);
+    Ensembl.EventManager.register('imageResize',        this, function () { if (this.xhr) { this.xhr.abort(); } this.getContent(); });
     Ensembl.EventManager.register('windowResize',       this, function () { delete this.imgOffset; });
     Ensembl.EventManager.register('changeWidth',        this, function () { Ensembl.EventManager.trigger('queuePageReload', this.id); });
     Ensembl.EventManager.register('highlightAllImages', this, function () { if (!this.align) { this.highlightAllImages(); } });
