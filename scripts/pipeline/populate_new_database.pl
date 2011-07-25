@@ -175,6 +175,7 @@ my $new = undef;
 my $species = [];
 my $mlsss = [];
 my $exact_species_name_match = 0;
+my $only_show_intentions = 0;
 
 GetOptions(
     "help" => \$help,
@@ -185,7 +186,8 @@ GetOptions(
     "new=s" => \$new,
     "species=s@" => $species,
     "mlss|method_link_species_sets=s@" => $mlsss,
-    'exact_species_name_match' => \$exact_species_name_match
+    'exact_species_name_match' => \$exact_species_name_match,
+    'n' => \$only_show_intentions,
   );
 
 
@@ -229,32 +231,49 @@ $new_dba->get_MetaContainer; # tests that the DB exists
 #
 ################################################
 
-## Sets the schema version for the new database
-update_schema_version($master_dba, $new_dba);
 
 ## Get all the genome_dbs with a default assembly
 my $all_default_genome_dbs = get_all_default_genome_dbs($master_dba, $species, $mlsss);
+
+## Get all the MethodLinkSpeciesSet for the default assemblies
+my $all_default_method_link_species_sets = get_all_method_link_species_sets($master_dba, $all_default_genome_dbs, $mlsss);
+
+## Get all the SpeciesSets with tags for the default assemblies
+my $all_default_species_sets = get_all_species_sets_with_tags($master_dba, $all_default_genome_dbs, $mlsss);
+
+if($only_show_intentions) {
+    print "GenomeDB entries to be copied:\n";
+    foreach my $genome_db (@$all_default_genome_dbs) {
+        print "\t".$genome_db->dbID.": ".$genome_db->name."\n";
+    }
+    print "MethodLinkSpeciesSet entries to be copied:\n";
+    foreach my $mlss (@$all_default_method_link_species_sets) {
+        print "\t".$mlss->dbID.": ".$mlss->name."\n";
+    }
+    print "SpeciesSet entries to be copied:\n";
+    foreach my $ss (@$all_default_species_sets) {
+        print "\t".$ss->dbID.": ".join(', ', map { $_->name } @{$ss->genome_dbs})."\n";
+    }
+    exit 0;
+}
+
+## Sets the schema version for the new database
+update_schema_version($master_dba, $new_dba);
 
 ## Copy taxa and method_link tables
 copy_table($master_dba, $new_dba, "ncbi_taxa_name");
 copy_table($master_dba, $new_dba, "ncbi_taxa_node");
 copy_table($master_dba, $new_dba, "method_link");
 
-## Store them in the new DB
+## Store all the genome_dbs in the new DB
 store_objects($new_dba->get_GenomeDBAdaptor, $all_default_genome_dbs,
     @$species?"default genome_dbs for ".join(", ", @$species):"all default genome_dbs");
 
-## Get all the MethodLinkSpeciesSet for the default assemblies
-my $all_default_method_link_species_sets = get_all_method_link_species_sets($master_dba, $all_default_genome_dbs, $mlsss);
-
-## Store them in the new DB
+## Store all the MethodLinkSpeciesSet entries in the new DB
 store_objects($new_dba->get_MethodLinkSpeciesSetAdaptor, $all_default_method_link_species_sets,
     "all previous valid method_link_species_sets");
 
-## Get all the SpeciesSet tags for the default assemblies
-my $all_default_species_sets = get_all_species_sets_with_tags($master_dba, $all_default_genome_dbs, $mlsss);
-
-## Store them in the new DB
+## Store all the SpeciesSets with tags in the new DB
 store_objects($new_dba->get_SpeciesSetAdaptor, $all_default_species_sets,
     "all previous valid species_sets");
 
