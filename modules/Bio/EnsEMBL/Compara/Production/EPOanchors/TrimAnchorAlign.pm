@@ -318,7 +318,7 @@ sub get_best_trimming_position {
     }
   }
 
-  die "Cannot find a good position" if ($best_position == 0 or $max_score < 0.8 * $ideal_score);
+  warn "Cannot find a good position" if ($best_position == 0 or $max_score < 0.8 * $ideal_score);
 
   return $best_position;
 }
