@@ -496,6 +496,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.elLk.configDivs.filter(function () { return this.style.display !== 'none'; }).hide();
     this.elLk.help.filter('.open').removeClass('open').attr('title', 'Click for more information').parent().siblings('div.desc').hide();
+    this.elLk.imageConfigNotes.show();
     
     this.lastQuery = false;
     
