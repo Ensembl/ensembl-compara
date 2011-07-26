@@ -171,8 +171,6 @@ sub loadMembersFromCoreSlices {
     $self->param('geneCount',       0);
     $self->param('realGeneCount',   0);
     $self->param('transcriptCount', 0);
-    $self->param('canonicalCount',  0);
-    $self->param('exonCount',       0);
 
   #from core database, get all slices, and then all genes in slice
   #and then all transcripts in gene to store as members in compara
@@ -230,7 +228,12 @@ sub loadMembersFromCoreSlices {
   print("       ".$self->param('geneCount')." genes\n");
   print("       ".$self->param('realGeneCount')." real genes\n");
   print("       ".$self->param('transcriptCount')." transcripts\n");
-  print("       ".$self->param('pepSubset')->count()." in Subset\n");
+
+  if($self->param('coding_exons')) {
+      print("       ".$self->param('exonSubset')->count()." in exonSubset\n");
+  } else {
+      print("       ".$self->param('pepSubset')->count()." in pepSubset\n");
+  }
 }
 
 
@@ -340,7 +343,6 @@ sub store_gene_and_all_transcripts {
   if(@canonicalPeptideMember) {
     my ($transcript, $member) = @canonicalPeptideMember;
     $self->param('pepSubset')->add_member($member);
-    $self->param('canonicalCount', $self->param('canonicalCount') );
     # print("     LONGEST " . $transcript->stable_id . "\n");
   }
   return 1;
@@ -437,7 +439,6 @@ sub store_all_coding_exons {
 	    print(" : stored\n") if($self->param('verbose'));
     };
     $self->param('exonSubset')->add_member($exon_member);
-    $self->param('exonCount', $self->param('exonCount')+1);
   }
 }
 
