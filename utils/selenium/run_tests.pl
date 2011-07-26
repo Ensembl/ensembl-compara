@@ -8,23 +8,24 @@ use vars qw( $SERVERROOT );
 
 BEGIN {
   $SERVERROOT = "$Bin/../..";
-  unshift @INC,"$SERVERROOT/public-plugins/ensembl/modules";  
+  unshift @INC,"$SERVERROOT/public-plugins/selenium/modules";  
   unshift @INC, "$SERVERROOT/conf";
   eval{ require SiteDefs };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;    
 }
 
-my $module='Generic';
+my $module;
 my $url = 'http://www.ensembl.org';
 my $host = '172.20.10.187';#'localhost'; 
 my $port = '4444';
 my $browser = '*firefox';
-my @test;
-my @skip;
+my $test;
+my $skip;
 my $verbose;
 my $species;
 my $timeout;
+my @species_list;
 
 GetOptions(
   'module=s'  => \$module,
@@ -32,8 +33,8 @@ GetOptions(
   'host=s'    => \$host,
   'port=s'    => \$port,
   'browser=s' => \$browser,
-  'test=s'    => \@test,
-  'skip=s'    => \@skip,
+  'test=s'    => \$test,
+  'skip=s'    => \$skip,
   'verbose'   => \$verbose,
   'species=s' => \$species,
   'timeout=s' => \$timeout,
@@ -63,8 +64,7 @@ my $object = $package->new(
   port => $port,
   browser => $browser,
   conf => {
-    timeout => $timeout, 
-    species => $species,
+    timeout => $timeout,
   },
   verbose => $verbose,  
 );
@@ -74,19 +74,35 @@ my $methods_called = 0;
 #FIRST CHECK IF WEBSITE IS UP.....
 $object->check_website;
 
+#TODO:: regex clear all spaces
+my @test = split(/,/, $test); 
+my @skip = split(/,/, $skip);
+@species_list = ($species =~ /,/) ? split(/,/, $species) : $species; #TODO::CHeck for invalid species like unknownspecies
+
+#getting all valid species for ensembl
+if($module eq 'Species' && !$species) {
+  my $SD = $object->get_species_def;
+  my @valid_species = $SD->valid_species;
+
+  @species_list = @valid_species;
+}
+
 # run tests
-foreach my $method (@methods) {
-  next if @test and !grep {$method =~ /^(test_)?$_$/i} @test;
-  next if @skip and grep {$method =~ /^(test_)?$_$/i} @skip;
+#run the test again for each species so only if module eq species run through loops
+foreach (@species_list) {
+  $object->set_species($_) if($_);
+  foreach my $method (@methods) {
+    next if @test and !grep {$method =~ /^(test_)?$_$/i} @test;
+    next if @skip and grep {$method =~ /^(test_)?$_$/i} @skip;  
   
-  print "\n****************************************\n";
-  print " $method\n";
-  print "****************************************\n";
-  $object->$method;
-  $methods_called++;
-  
-#   my $location = $object->get_location();
-#   print "\n URL:: $location \n" if ($verbose or grep {/^Error.*selenium/} @errors or $object->testmore_output =~ /not ok/m);
+    print "\n****************************************\n";
+    print " $_ $method\n";
+    print "****************************************\n";  
+    $object->$method;
+    $methods_called++;
+#    my $location = $object->get_location();
+#    print "\n URL:: $location \n" if ($verbose or grep {/^Error.*selenium/} @errors or $object->testmore_output =~ /not ok/m);    
+  }
 }
 
 # check for problems
