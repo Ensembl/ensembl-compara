@@ -14,7 +14,7 @@ closedir(DIR);
 print join("\t", "FILENAME", "high-conf(ACTG)", "perc", "low-conf(actg)", "perc", "fail(N)", "perc", "insertions(-)", "perc", "no coverage(.)", "perc", "total"), "\n";
 
 foreach my $this_file (@fasta_files) {
-  open(FASTA, $this_file) or die;
+  open(FASTA, $this_file) or die "Cannot open $this_file for reading.\n";
   my $uc = 0;
   my $base_A = 0;
   my $base_C = 0;
