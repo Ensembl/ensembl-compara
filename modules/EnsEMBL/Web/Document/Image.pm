@@ -310,10 +310,10 @@ sub hover_labels {
       $label->{'class'},
       $label->{'header'},
       $label->{'desc'}   ? qq{<img class="desc" src="${img_url}info_blue_13.png" alt="Info" title="Info" />} : '',
-      $renderers         ? qq{<img class="config" src="${img_url}config_13.png" alt="Change track renderer" title="Change track renderer" />} : '',
+      $renderers         ? qq{<img class="config" src="${img_url}config_13.png" alt="Change track style" title="Change track style" />} : '',
       $label->{'fav'}[0] ? ' selected' : '',
       $desc,
-      $renderers         ? "<p>Change track renderer:</p><ul>$renderers</ul>" : ''
+      $renderers         ? "<p>Change track style:</p><ul>$renderers</ul>" : ''
     );
   }
   
