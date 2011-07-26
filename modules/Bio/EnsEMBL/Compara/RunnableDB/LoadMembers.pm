@@ -132,13 +132,14 @@ sub run {
                     ? $unfiltered_slices
                     : [ grep { not $_->is_reference() } @$unfiltered_slices ];
 
-    die "No suitable toplevel slices found in ".$core_dba->dbc->dbname() unless(scalar(@$slices));
+    if(scalar(@$slices)) {
 
-        # main routine to load members from a particular CoreDB:
-    $self->loadMembersFromCoreSlices( $slices );
+        $self->loadMembersFromCoreSlices( $slices );
 
-    $compara_dba->dbc->disconnect_when_inactive(1);
-    $core_dba->dbc->disconnect_when_inactive(1);
+    } else {
+
+        $self->warning("No suitable toplevel slices found in ".$core_dba->dbc->dbname());
+    }
 }
 
 
