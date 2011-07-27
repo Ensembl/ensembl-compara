@@ -168,7 +168,15 @@ sub overall_groupset_qc {
 }
 
 
-sub fetch_groupset {
+
+# ---------------------------------------------------------------------------------------------------------------
+#       The following 3 subroutines have been re-written using proper classes in Bio::EnsEMBL::Compara::StableId,
+#       We should be using those instead of copy-pasting.
+#       Also see Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper on proper manupulating those objects.
+# ---------------------------------------------------------------------------------------------------------------
+
+
+sub fetch_groupset {        # see Bio::EnsEMBL::Compara::StableId::Adaptor::load_compara_ncs
   my $self = shift;
   my $given_compara_dba = shift;
 
@@ -209,7 +217,7 @@ sub fetch_groupset {
 }
 
 
-sub join_one_pair {
+sub join_one_pair {         # see Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink::compute_stats
   my ($self, $from_dba, $to_dba) = @_;
 
   my $from_dbname       = $self->generate_dbname( $from_dba );
@@ -288,7 +296,7 @@ sub join_one_pair {
 }
 
 
-sub cluster_mapping {
+sub cluster_mapping {       # see Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink::maximum_name_reuse
   my ($self, $link_filename, $from_dba, $to_dba) = @_;
 
   my $premap = ''; # premap will always be empty here
