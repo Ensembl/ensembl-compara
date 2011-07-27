@@ -46,7 +46,8 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'release'         => '63',
+#       'mlss_id'         => 30034,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        'release'         => '64',
         'rel_suffix'      => '',    # an empty string by default, a letter otherwise
         'rel_with_suffix' => $self->o('release').$self->o('rel_suffix'),
 
@@ -91,7 +92,7 @@ sub default_options {
 
             # homology database connection parameters (we inherit half of the members and sequences from there):
         'homology_db'  => {
-            -host   => 'compara4',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -103,7 +104,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'sf5_ensembl_compara_62',
+            -dbname => 'lg4_ensembl_compara_63',
         },
 
         'master_db' => {     # used by the StableIdMapper as the location of the master 'mapping_session' table
@@ -206,6 +207,37 @@ sub pipeline_analyses {
                 ],
             },
             -wait_for => [ 'copy_table_factory', 'copy_table' ],    # have to wait until the tables have been copied
+            -flow_into => {
+                    1 => [ 'genomedb_factory' ],
+            },
+        },
+
+        {   -logic_name => 'genomedb_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -parameters => {
+                'mlss_id'               => $self->o('mlss_id'),
+
+                'adaptor_name'          => 'MethodLinkSpeciesSetAdaptor',
+                'adaptor_method'        => 'fetch_by_dbID',
+                'method_param_list'     => [ '#mlss_id#' ],
+                'object_method'         => 'species_set',
+
+                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
+
+                'fan_branch_code'       => 2,
+            },
+            -flow_into => {
+                2 => [ 'load_nonref_members' ],
+            },
+        },
+
+        {   -logic_name => 'load_nonref_members',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
+            -parameters => {
+                'include_nonreference'  => 1,
+                'include_reference'     => 0,
+            },
+            -hive_capacity => -1,
         },
 
         {   -logic_name => 'load_uniprot_superfactory',
@@ -221,7 +253,7 @@ sub pipeline_analyses {
                 { 'input_id' => { 'uniprot_source' => 'SWISSPROT', 'tax_div' => '#tax_div#' } },
                 { 'input_id' => { 'uniprot_source' => 'SPTREMBL',  'tax_div' => '#tax_div#' } },
             ],
-            -wait_for => [ 'offset_and_innodbise_tables' ],
+            -wait_for => [ 'genomedb_factory', 'load_nonref_members' ],
             -flow_into => {
                 2 => [ 'load_uniprot_factory' ],
                 1 => { 'snapshot_after_load_uniprot' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#', 'blastdb_dir' => '#blastdb_dir#' } },
@@ -513,6 +545,20 @@ sub pipeline_analyses {
 1;
 
 =head1 STATS and TIMING
+
+=head2 rel.64 stats
+
+    sequences to cluster:       3,438,941           [ SELECT count(*) from sequence; ]
+    distances by Blast:         ?                   [ SELECT count(*) from mcl_sparse_matrix; ]
+
+    total running time:         ?
+    uniprot_loading time:       3h                  {20 x pfetch}
+    blasting time:              ?
+    mcxload running time:       ?
+    mcl running time:           ?
+
+    memory used by mcxload:     ?
+    memory used by mcl:         ?
 
 =head2 rel.63 stats
 
