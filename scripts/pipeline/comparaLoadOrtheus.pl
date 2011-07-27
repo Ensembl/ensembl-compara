@@ -67,7 +67,7 @@ my $description = q'
 	Can be presented as a string or a file
 
   --addMT <1> [default: 0]
-        if set, will add rows to analysis_job/dnafrag_region/synteny_region
+        if set, will add rows to job/dnafrag_region/synteny_region
         tables for MT alignments
 
  EXAMPLE: 
@@ -261,7 +261,7 @@ sub auto_increment_table {
   Example parse_and_store_enredo($input_file);
   Description:  reads the enredo input file and stores the segments 
 		in the dnafrag_region table and also populates the
-		synteny_region, analysis, analysis_data and analysis_job 
+		synteny_region, analysis, analysis_data and job 
 		tables.
   ReturnType: none
 
@@ -273,7 +273,7 @@ sub parse_and_store_enredo {
 	  add_analysis => "REPLACE INTO analysis (created, logic_name, parameters, module) VALUES 
 			((SELECT CURRENT_TIMESTAMP FROM DUAL),?,?,?)",
 	  get_analysis_id => "SELECT MAX(analysis_id) from analysis", 
-	  add_analysis_job => "REPLACE INTO analysis_job (analysis_id, input_id) values (?,?)",
+	  add_job => "REPLACE INTO job (analysis_id, input_id) values (?,?)",
 	  add_analysis_data => "REPLACE INTO analysis_data (data) VALUES (?)",
 	  get_analysis_data_id => "SELECT MAX(analysis_data_id) from analysis_data",
 	  add_synteny_region => "REPLACE INTO synteny_region (method_link_species_set_id) VALUES (?)",
@@ -354,7 +354,7 @@ sub _add_synt_dnafrag_regions {
 	##set analysis_job for this synteny_region
 	my $input_id = "{synteny_region_id=>" . $synteny_region_id . ",method_link_species_set_id=>" . 
 	$ortheus_mlss_id . ",tree_analysis_data_id=>" . $tree_id . "}";
-	$sql_statements->{'add_analysis_job'}->execute($analysis_id, $input_id);
+	$sql_statements->{'add_job'}->execute($analysis_id, $input_id);
 	##insert segments for this synteny_region into dnafrag_region table 
 	foreach my $this_dnafrag_region (@$dnafrag_regions) {
 		my($dnafrag,$start,$end,$strand) = @$this_dnafrag_region;
