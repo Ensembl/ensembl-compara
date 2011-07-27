@@ -26,7 +26,7 @@ new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
     -dbname   => "sf5_test_LoadOrtheus",
   );
 new Bio::EnsEMBL::DBSQL::DBAdaptor(
-    -species => "Ancestral sequences",
+    -species => "ancestral_sequences",
     -host     => "compara1",
     -port     => "3306",
     -user     => "xxxxx",
