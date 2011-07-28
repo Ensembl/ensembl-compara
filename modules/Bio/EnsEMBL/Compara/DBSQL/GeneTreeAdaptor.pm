@@ -523,7 +523,7 @@ sub delete_tag {
   my $tag = shift;
 
   my $prefix = $self->_get_table_prefix();
-  my $sth = $self->dbc->prepare("DELETE from ".$prefix."_tag where node_id=? and tag=?");
+  my $sth = $self->dbc->prepare("DELETE from ".$prefix."_tree_tag where node_id=? and tag=?");
   $sth->execute($node_id, $tag);
 }
 
