@@ -358,7 +358,7 @@ sub setup_jobs_for_TrimAlignAnchor {
  	my ($self, $input_analysis_id, $input_mlssid) = @_;
 	my $query = "SELECT DISTINCT(anchor_id) FROM anchor_align WHERE method_link_species_set_id = ? AND anchor_status IS NULL";
 	my $sth = $self->prepare($query);
-	my $insert = "INSERT INTO analysis_job (analysis_id, input_id) VALUES (?,?)";
+	my $insert = "INSERT INTO job (analysis_id, input_id) VALUES (?,?)";
 	my $sthi = $self->prepare($insert);
 	$sth->execute($input_mlssid);
 	foreach my $anchor_id (@{ $sth->fetchall_arrayref }) {	
