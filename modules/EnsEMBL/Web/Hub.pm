@@ -343,7 +343,7 @@ sub parse_referer {
   
   my @path = split /\//, $url;
   
-  unshift @path, 'common' unless $path[0] eq 'common' || $species_defs->valid_species($path[0]);
+  unshift @path, 'common' unless $path[0] =~ /(Multi|common)/ || $species_defs->valid_species($path[0]);
 
   return {absolute_url => $ENV{'HTTP_REFERER'}} unless $self->valid_type($path[1]);
 
