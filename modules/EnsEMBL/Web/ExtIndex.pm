@@ -76,6 +76,7 @@ sub _get_seq{
 
   if( $indexer && defined $args->{$type} ) {
     my $function='get_seq_by_'.lc($type);
+    if(! $indexer->can($function)){return [];}
     $self->{'indexers'}{$db}{'module'} || new
     return $indexer->$function( {
       'EXE'          => $self->{'databases'}{$db}{'exe'},

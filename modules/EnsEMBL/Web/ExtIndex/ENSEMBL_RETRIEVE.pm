@@ -11,6 +11,7 @@ sub get_seq_by_id {
 
   #get species name etc from stable ID
   my ($species, $type, $dbt) = $reg->get_species_and_object_type($ID);
+  if(!$species){ return []; }
 
   my $seq;
   my $pep_seq = '';
