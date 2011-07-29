@@ -216,9 +216,8 @@ sub run_njtree_phyml {
       }
       print STDERR "$full_cmd\n";
       open(ERRFILE, $errfile) or die "Could not open logfile '$errfile' for reading : $!\n";
-	my $logfile;
+	my $logfile = "";
       while (<ERRFILE>) {
-	  $logfile .= $_;
         if ($_ =~ /NNI/) {
           # Do jack-knife treebest starting by the sequence with more Ns
           my $jackknife_value = $self->param('jackknife') if ($self->param('jackknife'));
@@ -230,6 +229,8 @@ sub run_njtree_phyml {
           $self->param('protein_tree', undef);
           $self->input_job->incomplete(0);
           die "NNI error, dataflowing to NJTREE_PHYML+jackknife\n";
+        } elsif (!($_ =~ /^Large distance/)) {
+	     $logfile .= $_;
         }
       }
       $self->check_job_fail_options;
@@ -300,6 +301,7 @@ sub check_job_fail_options {
   if( $segfault    # last system() crashed with Segmentation Fault
    or ($self->input_job->retry_count >= 1 and !$self->param('jackknife'))
   ) {
+        $self->input_job->incomplete(0);
         die "Unexpected job failure\n";
         #if(@{ $self->dataflow_output_id($self->input_id, 3) }) {
         #    $self->DESTROY;
