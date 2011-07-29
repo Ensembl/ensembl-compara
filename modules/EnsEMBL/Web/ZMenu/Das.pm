@@ -33,7 +33,7 @@ sub content {
     -noproxy => $species_defs->ENSEMBL_NO_PROXY,
     -timeout => $species_defs->ENSEMBL_DAS_TIMEOUT
   );
-  
+ 
   my $features = $coordinator->fetch_Features($slice, ( feature => $feature_id, group => $group_id ));
   
   return unless $features && $features->{$logic_name};
@@ -50,32 +50,39 @@ sub content {
     
     next unless scalar @$objects;
     
-    my $nearest_feature = 1;    # Initialise so it exists
-    my $nearest         = 1e12; # Arbitrary large number
-    my ($left, $right, $min, @feat);
+    my (@feat, $nearest_feature);
     
-    foreach (@$objects) {
-      $left  = $_->seq_region_start - $click_start;
-      $right = $click_end - $_->seq_region_end;
-      
-      # If both are 0 or positive, feature is inside the click region.
-      # If both are negative, click is inside the feature.
-      if (($left >= 0 && $right >= 0) || ($left < 0 && $right < 0)) {
-        push @feat, $_;
+    if ($group_id) {
+      $nearest_feature = 1;    # Initialise so it exists
+      my $nearest = 1e12; # Arbitrary large number
+      my ($left, $right, $min);
+
+      foreach (@$objects) {
+        $left  = $_->seq_region_start - $click_start;
+        $right = $click_end - $_->seq_region_end;
         
-        $nearest_feature = undef;
-      } elsif ($nearest_feature) {
-        $min = [ sort { $a <=> $b } abs($left), abs($right) ]->[0];
-        
-        if ($min < $nearest) {
-          $nearest_feature = $_;
-          $nearest = $min;
+        # If both are 0 or positive, feature is inside the click region.
+        # If both are negative, click is inside the feature.
+        if (($left >= 0 && $right >= 0) || ($left < 0 && $right < 0)) {
+          push @feat, $_;
+          
+          $nearest_feature = undef;
+        } elsif ($nearest_feature) {
+          $min = [ sort { $a <=> $b } abs($left), abs($right) ]->[0];
+          
+          if ($min < $nearest) {
+            $nearest_feature = $_;
+            $nearest = $min;
+          }
         }
       }
+      
+      # Return the nearest feature if it's inside two click widths
+      push @feat, $nearest_feature if $nearest_feature && $nearest < 2 * ($click_end - $click_start);
+    } else {
+      # not grouped
+      @feat = @$objects[0];
     }
-    
-    # Return the nearest feature if it's inside two click widths
-    push @feat, $nearest_feature if $nearest_feature && $nearest < 2 * ($click_end - $click_start);
     
     foreach (@feat) {
       my $method = $_->method_label; 
