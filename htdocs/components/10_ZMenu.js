@@ -159,7 +159,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       }
     }
     
-    this.populateNoAjax(true); // Always parse the title tag
+    //this.populateNoAjax(true); // Always parse the title tag
     this.populateAjax(url);
   },
   
