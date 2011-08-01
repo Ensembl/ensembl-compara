@@ -1,0 +1,39 @@
+<html>
+<head>
+<meta name="order" content="1" />
+<title>Large File Formats</title>
+</head>
+
+<body>
+
+<h1>Large File Formats</h1>
+
+<p>Ensembl supports a number of large (multi-gigabyte) file formats for datasets that are too large to upload directly to the Ensembl servers. The file remains on the remote server and is accessed via its URL, with only small chunks of data being requested by the Ensembl webcode at any one time.</p>
+
+<p>All of these formats can be viewed in Ensembl by creating a custom data track using the 'Attach Remote File' function, in the lefthand menu when you click "Manage Your Data".</p>
+
+<img class="screenshot" src="/img/help/url.gif" alt="screenshot" />
+
+<h2 id="bam-format">BAM format</h2>
+<p>BAM files is a compressed version of the SAM (Sequence Alignment/Map) binary format. BAM uses an index file to give fast access to small sections of the file..</p>
+<p>Additional information about SAM/BAM is available at the <a href="http://samtools.sourceforge.net/">SAMtools development site</a>.
+
+
+<h2 id="bw-format">BigWig format</h2>
+
+<p>The BigWig format is designed for dense, continuous data that is intended to be displayed as a graph. Files can be created from WIG or BedGraph files using the appropriate utility program.</p>
+
+<p>Ensembl currently allows the following configuration options to be set when you upload the file:</p>
+
+<ul>
+<li>Track colour (10 choices)</li>
+</ul>
+
+<h2 id="vcf-format">VCF format</h2>
+
+<p>The VCF format is a tab delimited format for storing variant calls and and individual genotypes. It is able to store all variant calls from single nucleotide variants to large scale insertions and deletions.</p>
+
+<p>More information on this format, which is still under development, can be obtained from the <a href="http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40">1000 Genomes Wiki</a>.</p>
+
+</body>
+</html>
