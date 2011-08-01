@@ -110,8 +110,6 @@ sub fetch_input {
                                         or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
     $self->param('protein_tree', $protein_tree);
 
-    #$self->check_job_fail_options;
-
     $self->delete_old_homologies;
     $self->delete_old_orthotree_tags;
     $self->load_species_tree;
@@ -154,21 +152,6 @@ sub write_output {
     $self->store_homologies;
 }
 
-
-sub check_job_fail_options {
-  my $self = shift;
-
-  my $protein_tree = $self->param('protein_tree');
-
-  if($self->input_job->retry_count >= 2) {
-    #$self->dataflow_output_id($self->input_id, 3);
-
-    $self->DESTROY;
-    $self->input_job->incomplete(0);
-    die $self->analysis->logic_name()." job failed >=2 times; dataflowing to QuickTreeBreak\n";
-  }
-
-}
 
 sub DESTROY {
   my $self = shift;
