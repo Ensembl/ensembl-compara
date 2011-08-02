@@ -156,6 +156,7 @@ sub new {
   $self->source($source);
   $self->aligned($aligned);
   $self->no_sequences($no_sequences);
+  $self->no_release_trees($no_release_trees);
   
   
   return $self;
