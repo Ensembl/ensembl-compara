@@ -139,11 +139,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         var track   = menu.parent();
         var val     = li.attr('class');
         var countEl = panel.elLk.links.children('a.' + img.attr('class')).siblings('.count');
-        var count   = countEl.html().split(/\b/);
+        var count   = (countEl.html() || '').split(/\b/);
         var updated = {};
         
         if (track.hasClass('select_all')) {
-          track = track.next().find('li.track');
+          track = track.next().find('li.track:not(.hidden)');
           
           if (val === 'all_on') {
             // First li is off, so use the second (index 1) as default on setting.
@@ -336,13 +336,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.elLk.menus.hide();
     
     if (active) {
-      active = active.split(' ');
-      
-      if (active.length === 2) {
-        this.focusSelector = active[1];
-      }
-      
-      this.elLk.links.removeClass('active').find('.' + active[0]).parent().addClass('active');
+      this.elLk.links.removeClass('active').find('.' + active).parent().addClass('active');
     }
     
     this.base();
@@ -350,9 +344,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   },
   
   getContent: function () {
-    var panel   = this;
-    var active  = this.elLk.links.filter('.active').children('a')[0];
-    var focusEl = $(this.focusSelector, this.el);
+    var panel  = this;
+    var active = this.elLk.links.filter('.active').children('a')[0];
     var url, configDiv;
     
     function favouriteTracks() {
@@ -449,7 +442,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       ul = lis = null;
     }
     
-    function addSection(focusSelector) {
+    function addSection() {
       configDiv = $('<div>', {
         'class': 'config view_config ' + active,
         html:    '<div class="spinner">Loading Content</div>'
@@ -464,12 +457,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         dataType: 'json',
         success: function (json) {
           configDiv.html(json.content);
-          
-          var focusPos = $(focusSelector, configDiv).position();
-          
-          if (focusPos) {
-            panel.el.animate({ scrollTop: focusPos.top }, 0);
-          }
           
           var panelDiv = $('.js_panel', configDiv);
           
@@ -529,23 +516,16 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         configDiv = this.elLk.configDivs.filter('.' + active).show();
         
         if (url && !configDiv.length) {
-          addSection(this.focusSelector);
+          this.addTracks(this.elLk.links.filter('.active').parent().siblings('a').attr('class')); // Add the tracks in the parent panel, for safety
+          addSection();
         } else {
           configDiv.find('ul.config_menu li').filter(function () { return this.style.display === 'none'; }).show();
-          
-          if (focusEl.length) {
-            this.el.animate({ scrollTop: focusEl.position().top }, 0);
-          }
         }
         
         this.elLk.imageConfigNotes[configDiv.hasClass('view_config') ? 'hide' : 'show']();
     }
     
-    this.focusSelector = false;
-    
     this.styleTracks();
-    
-    focusEl = null;
   },
   
   updateConfiguration: function (delayReload) {
@@ -562,7 +542,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       var conf = Ensembl.EventManager.triggerSpecific('updateConfiguration', this, true);
       
       if (conf) {
-        $.extend(viewConfig, conf);
+        $.extend(viewConfig,  conf.viewConfig);
+        $.extend(imageConfig, conf.imageConfig);
         diff = true;
       }
     });
