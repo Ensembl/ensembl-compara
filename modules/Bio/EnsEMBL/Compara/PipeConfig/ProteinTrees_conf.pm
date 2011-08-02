@@ -828,36 +828,6 @@ sub pipeline_analyses {
             -hive_capacity => -1,
         },
 
-# ---------------------------------------------[homology duplications QC step]-------------------------------------------------------
-
-        {   -logic_name => 'homology_duplications_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
-            -parameters => {
-                'adaptor_name'          => 'MethodLinkSpeciesSetAdaptor',
-                'adaptor_method'        => 'fetch_all_by_method_link_type',
-
-                'column_names2getters'  => { 'mlss_id' => 'dbID' },
-                'input_id'              => { 'mlss_id' => '#mlss_id#', 'is_ortho' => '#is_ortho#' },
-
-                'fan_branch_code'       => 2,
-            },
-            -wait_for => [ 'threshold_on_dS' ],
-            -input_ids => [
-                { 'method_param_list' => [ 'ENSEMBL_ORTHOLOGUES' ], 'is_ortho' => 1 },
-                { 'method_param_list' => [ 'ENSEMBL_PARALOGUES'  ], 'is_ortho' => 0 },
-            ],
-            -hive_capacity => -1,
-            -flow_into => {
-                2 => [ 'homology_duplications' ],
-            },
-        },
-
-        {   -logic_name => 'homology_duplications',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HDupsQC',
-            -parameters => { },
-            -hive_capacity => 10,
-        },
-
     ];
 }
 

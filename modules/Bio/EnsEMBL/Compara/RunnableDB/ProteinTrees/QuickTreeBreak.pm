@@ -144,6 +144,9 @@ sub write_output {
 
     $self->check_if_exit_cleanly;
     $self->store_proteintrees;
+    if ($self->param('broken_tree')) {
+        $self->input_job->autoflow(0);
+    }
 }
 
 sub release_tree {
@@ -315,7 +318,7 @@ sub store_clusters {
 
     # Dataflow clusters
     # This will create a new MSA alignment job for each of the newly generated clusters
-    my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d}", 
+    my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d, 'broken_tree'=>1}", 
                             $node_id, $clusterset->node_id);
 
     $self->dataflow_output_id($output_id, 2);
