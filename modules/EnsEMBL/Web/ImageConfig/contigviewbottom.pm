@@ -151,8 +151,10 @@ sub init {
     # Turn on menus for core and supporting evidence track
     $self->modify_configs(
       [ "reg_feats_core_$cell_line", "reg_feats_other_$cell_line" ],
-      { menu => 'yes' }
+      { menu => 'hidden' }
     );
+    
+    $self->get_node($_)->set('menu', 'hidden') for qw(regulatory_features_core regulatory_features_other);
   }
 }
 
