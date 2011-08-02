@@ -549,7 +549,8 @@ sub build_imageconfig_menus {
       $node->append_child($ul);
       
       if ($node->get('menu') eq 'hidden') {
-        $ul->set_attribute('class', 'hidden') 
+        $ul->set_attribute('class', 'hidden');
+        $node->set_attribute('class', 'hidden');
       } elsif ($menu) {
         my $caption   = $node->get('caption');
         my %renderers = reverse %{$self->{'track_renderers'}->{$id}};
