@@ -13,67 +13,59 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     
     this.base();
     
-    this.startCell  = [];
-    this.dragCell   = [];
-    this.viewConfig = {};
+    this.startCell   = [];
+    this.dragCell    = [];
+    this.imageConfig = {};
+    this.viewConfig  = {};
     
-    this.elLk.tables = $('table.funcgen_matrix', this.el).each(function () {
-      var headerRow  = this.rows[0].cells;
-      var disallowed = { option: 1, disabled: 1, on: 1, filter: 1, 'default': 1, first: 1 };
-      
-      // Do this loop here so we don't have to look up the header row for every cell
-      $('.option', this).each(function () {
-        var classes = this.className.split(' ');
-        var cls, i;
-        
-        this.searchTerms = {
-          row:  this.parentNode.className.toLowerCase(),
-          col:  headerRow[$(this).index()].className.toLowerCase(),
-          cell: ''
-        };
-        
-        for (i in classes) {
-          cls = classes[i].toLowerCase();
-          
-          if (!disallowed[cls] && cls !== this.searchTerms.row && cls !== this.searchTerms.col) {
-            this.searchTerms.cell += cls + ' ';
-          }
-        }
-        
-        this.searchTerms.joined = $.trim([ this.searchTerms.row, this.searchTerms.col, this.searchTerms.cell ].join(' '));
-      });
-      
-      headerRow = null;
+    this.elLk.table = $('table.funcgen_matrix', this.el);
+    
+    var colClasses = $.map(this.elLk.table[0].rows[0].cells, function (el) { return el.className; });
+    
+    this.elLk.noResults  = $('.no_results',           this.el);
+    this.elLk.headers    = $('thead tr:first th',     this.elLk.table);
+    this.elLk.renderers  = $('thead tr.renderers th', this.elLk.table);
+    this.elLk.rows       = $('tbody tr',              this.elLk.table);
+    this.elLk.trackNames = $('.track_name',           this.elLk.renderers).each(function () { panel.imageConfig[this.name] = { renderer: this.value }; });
+    this.elLk.options    = $('.option',               this.elLk.rows).each(function () {      
+      this.configCode  = 'opt_cft_' + this.title; // configCode is used to set the correct values for the ViewConfig
+      this.searchTerms = $.trim(this.parentNode.className + ' ' + colClasses[$(this).index()]).toLowerCase(); // Do this here so we don't have to look up the header row for every cell
+      panel.viewConfig[this.configCode] = $(this).hasClass('on') ? 'on' : 'off';
+    }).bind('click', function () {
+      panel.resetSelectAll($(this).toggleClass('on'));
     });
     
     $('.help', this.el).bind('click', function () {
-      $(this).toggleClass('open').attr('title', function (i, title) { return title === 'Hide information' ? 'Click for more information' : 'Hide information'; })
-        .siblings('.desc').width($(this).parent().width() - 25).toggle();
+      $(this).toggleClass('open').attr('title', function (i, title) {
+        return title === 'Hide information' ? 'Click for more information' : 'Hide information';
+      }).siblings('.desc').width($(this).parent().width() - 25).toggle();
     });
     
-    $('input.filter', this.el).each(function () {
-      var related = $(this).parent().siblings();
+    $('select.filter', this.el).bind('change', function () {
+      panel.elLk.rows.removeClass('hidden');
       
-      $(this).data('table',     related.filter('.funcgen_matrix'));
-      $(this).data('noResults', related.filter('.no_results'));
+      if (this.value) {
+        panel.elLk.rows.not('.' + this.value).addClass('hidden');
+      }
       
-      related = null;
-    }).bind({
+      panel.elLk.noResults[panel.elLk.rows.filter(function () { return this.style.display !== 'none' && this.className.indexOf('hidden') === -1 }).length ? 'hide' : 'show']();
+    });
+    
+    $('input.filter', this.el).bind({
       keyup: function () {
-        var el = this;
+        var value = this.value;
         
-        if (this.value && this.value.length < 2) {
-          this.lastQuery = this.value;
+        if (value && value.length < 2) {
+          this.lastQuery = value;
         }
         
-        if (this.value !== this.lastQuery) {
+        if (value !== this.lastQuery) {
           if (this.searchTimer) {
             clearTimeout(this.searchTimer);
           }
           
           this.searchTimer = setTimeout(function () {
-            panel.filter(el);
-            el = null;
+            panel.filter(value);
           }, 250);
         }
       },
@@ -83,18 +75,17 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       },
       blur: function () {
         if (!this.value) {
-          panel.filter(this);
-          this.value = 'Search';
+          panel.filter();
+          this.value = 'Enter cell or evidence types';
           this.style.color = '#999';
         }
       }
     });
     
     if (!$('body').hasClass('ie')) { // IE 8 and below are too slow
-      this.elLk.tables.bind('mousedown', function (e) {
+      this.elLk.table.bind('mousedown', function (e) {
         // only for left clicks, create a highlight overlay to show which cells are being dragged over
         if ((!e.which || e.which === 1) && (e.target.nodeName === 'TD' || e.target.nodeName === 'P')) {
-          panel.dragTable = $(this);
           panel.dragStart(e);
         }
         
@@ -102,15 +93,8 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       });
     }
     
-    this.elLk.options = $('.option', this.elLk.tables).each(function () {      
-      this.configCode = 'opt_cft_' + this.title; // configCode is used to set the correct values for the ViewConfig
-      panel.viewConfig[this.configCode] = $(this).hasClass('on') ? 'on' : 'off';
-    }).bind('click', function () {
-      panel.resetSelectAll($(this).toggleClass('on'));
-    });
-    
     // Display a select all popup for columns
-    $('thead th:not(.disabled)', this.elLk.tables).hover(function () {
+    this.elLk.headers.not('.disabled').hover(function () {
       if (panel.mousemove) {
         return;
       }
@@ -120,12 +104,12 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       $(this).children('div').hide();
     }).find('.select_all_column input').bind('click', function () {
       var cls   = this.className;
-      var cells = $(this).parents('table').find('.' + this.name);
+      var cells = panel.elLk.rows.children('.' + this.name);
       
       switch (cls) {
         case ''     : break;
         case 'none' : cells.removeClass('on'); break;
-        case 'all'  : cells.addClass('on'); break;
+        case 'all'  : cells.addClass('on');    break;
         default     : cells.filter('.' + cls).addClass('on').end().not('.' + cls).removeClass('on');
       }
       
@@ -135,7 +119,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     });
     
     // Display a select all popup for rows
-    $('tbody th', this.elLk.tables).hover(function () {
+    $('th', this.elLk.rows).hover(function () {
       if (panel.mousemove) {
         return;
       }
@@ -154,11 +138,22 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       var input   = $('input', this);
       var checked = panel.allOnRow(this.parentNode);
       
-      panel.resetSelectAll($(this).parent().siblings()[checked ? 'removeClass' : 'addClass']('on'));
+      panel.resetSelectAll($(this).parent().siblings('.option')[checked ? 'removeClass' : 'addClass']('on'));
       
       input.prop('checked', !checked);
       input = null;
     });
+    
+    this.elLk.renderers.filter('.select_all').find('.popup_menu li').bind('click', function () {
+      $(this).parents('.popup_menu').hide().parent().siblings().find('.popup_menu li.' + this.className).trigger('click');
+      return false;
+    });
+    
+    // Fix z-index for popups in IE6 and 7
+    if ($('body').hasClass('ie67')) {
+      this.elLk.headers.css('zIndex',   function (i) { return 200 - i; });
+      this.elLk.renderers.css('zIndex', function (i) { return 100 - i; });
+    }
   },
   
   allOnRow: function (el) {
@@ -174,7 +169,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     }
     
     var radio = el.find('input');
-    var tds   = $(radio[0]).parents('table').find('.' + radio[0].name);
+    var tds   = this.elLk.rows.children('.' + radio[0].name);
     var on    = tds.filter('.on');
     var checked, i, cls, filtered;
     
@@ -219,30 +214,36 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
   // so they will be recalculated the next time the th mouseover is triggered.
   resetSelectAll: function (cells) {
     var reset = { row: {}, col: {} };
-    var table = cells.parents('table');
-    var i;
+    var i, className, renderer, off, on;
     
     cells.each(function () {
-      reset.row[$(this).parent().index() + 1] = 1;
+      reset.row[$(this).parent().index()] = 1;
       reset.col[$(this).index()] = 1;
     });  
     
     for (i in reset.row) {
-      $('th .select_all_row', table[0].rows[i]).data('selectAll', false);
+      $('th .select_all_row', this.elLk.rows[i]).data('selectAll', false);
     }
     
     for (i in reset.col) {
-      $('thead th:eq(' + i + ') .select_all_column ', table).data('selectAll', false);
+      className = $('.select_all_column', this.elLk.headers[i]).data('selectAll', false).parent().attr('class');
+      renderer  = this.elLk.renderers.filter('.' + className).find('.track_name');
+      off       = renderer.val() === 'off';
+      on        = !!this.elLk.rows.children('.' + className + '.on').length;
+      
+      if (off === on) {
+        renderer.siblings('.popup_menu').children(':eq(' + (on ? 1 : 0) + ')').trigger('click');
+      }
     }
     
-    cells = table = null;
+    cells = null;
   },
   
   // Called by triggerSpecific from the parent Configurator panel.
   // Does not cause an AJAX request, just returns the diff data.
   updateConfiguration: function () {
     var panel  = this;
-    var config = {};
+    var config = { viewConfig: {}, imageConfig: {} };
     var diff   = false;
     var on;
     
@@ -250,13 +251,21 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       on = $(this).hasClass('on') ? 'on' : 'off';
       
       if (panel.viewConfig[this.configCode] !== on) {
-        config[this.configCode] = on;
+        config.viewConfig[this.configCode] = on;
+        diff = true;
+      }
+    });
+    
+    this.elLk.trackNames.each(function () {
+      if (panel.imageConfig[this.name].renderer !== this.value) {
+        config.imageConfig[this.name] = { renderer: this.value };
         diff = true;
       }
     });
     
     if (diff) {
-      $.extend(true, this.viewConfig, config);
+      $.extend(true, this.viewConfig,  config.viewConfig);
+      $.extend(true, this.imageConfig, config.imageConfig);
       return config;
     }
   },
@@ -271,8 +280,8 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       return false;
     };
     
-    this.startCell = [ target.index(), target.parent().index() + 1 ]; // cell and row coordinates
-    this.dragTable.bind('mousemove', this.mousemove);
+    this.startCell = [ target.index(), target.parent().index() + 2 ]; // cell and row coordinates
+    this.elLk.table.bind('mousemove', this.mousemove);
     
     target = null;
   },
@@ -282,10 +291,9 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       return;
     }
     
-    this.resetSelectAll($('.highlight', this.dragTable).removeClass('highlight').not('.disabled').toggleClass('on'));
-    this.dragTable.unbind('mousemove', this.mousemove);
+    this.resetSelectAll($('.highlight', this.elLk.table).removeClass('highlight').not('.disabled').toggleClass('on'));
+    this.elLk.table.unbind('mousemove', this.mousemove);
     this.mousemove = false;
-    this.dragTable = null;
   },
   
   drag: function (e) {
@@ -296,7 +304,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       return;
     }
     
-    var cell = [ target.index(), target.parent().index() + 1 ];
+    var cell = [ target.index(), target.parent().index() + 2 ];
     
     if (cell[0] === this.dragCell[0] && cell[1] === this.dragCell[1]) {
       return; // Target is unchanged
@@ -308,14 +316,14 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     var i, j;
     
     for (i = y[0]; i <= y[1]; i++) {
-      if (this.dragTable[0].rows[i].style.display !== 'none') {
+      if (this.elLk.table[0].rows[i].style.display !== 'none' && this.elLk.table[0].rows[i].className !== 'gap') {
         for (j = x[0]; j <= x[1]; j++) {
-          cells.push(this.dragTable[0].rows[i].cells[j]); // Get the cells in the rows and columns between the current target and the start cell
+          cells.push(this.elLk.table[0].rows[i].cells[j]); // Get the cells in the rows and columns between the current target and the start cell
         }
       }
     }
     
-    $('.highlight', this.dragTable).not(cells).removeClass('highlight');
+    $('.highlight', this.elLk.table).not(cells).removeClass('highlight');
     $(cells).not('.highlight').addClass('highlight');
     
     this.dragCell = cell;
@@ -323,71 +331,42 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     target = cells = null;
   },
   
-  filter: function (el) {
-    var table      = $(el).data('table');
-    var noResults  = $(el).data('noResults').hide();
-    var value      = $.trim(el.value.toLowerCase()); // remove extra whitespace
-    var rowMatches = {};
+  filter: function (value) {
     var cells      = [];
     var rows       = [];
-    var values, r;
+    var rowMatches = {};
+    var i;
     
     if (value) {
-      values = value.split(' ');
+      value = $.trim(value.toLowerCase()).split(' '); // remove extra whitespace
       
-      $('.option', table).each(function () {
-        var searchTerms = this.searchTerms;
-        var i, j, checked, test;
-        
-        if (values.length > 1) {
-          checked = { matches: {} };
-        
-          for (i in searchTerms) {
-            if (typeof checked[i] === 'undefined') {
-              checked[i] = 0;
-            }
-            
-            // Loop through user's filter values, checking if they match the cell's search terms
-            // checked.matches[values[j]] is set to 1 to stop the same filter value being reused
-            // for example a search for "multi m" will only match multicell options with an m in 
-            // their feature type name because this flag is set
-            for (j in values) {
-              if (!checked.matches[values[j]] && searchTerms[i].indexOf(values[j]) !== -1) {
-                checked[i] = 1;
-                checked.matches[values[j]] = 1;
-                break;
-              }
-            }
+      this.elLk.options.each(function () {
+        for (i in value) {
+          if (this.searchTerms.indexOf(value[i]) !== -1) {
+            cells.push(this);
+            rowMatches[$(this.parentNode).index()] = true;
+            break;
           }
-          
-          test = checked.row + checked.col + checked.cell >= values.length; // Must match at least as many criteria as there are filter values
-        } else {
-          test = searchTerms.joined.indexOf(value) !== -1;
-        }
-        
-        if (test) {
-          cells.push(this);
-          rowMatches[$(this).parent().index() + 1] = 1;
         }
       });
       
       if (cells.length) {
-        for (r in rowMatches) {
-          rows.push(table[0].rows[r]);
+        for (i in rowMatches) {
+          rows.push(this.elLk.rows[i]);
         }
       
-        table.find('tbody tr').not(rows).hide();
-        table.find('.filter').removeClass('filter');
+        this.elLk.rows.not(rows).hide();
+        this.elLk.options.filter('.filter').removeClass('filter');
         $(rows).show();
         $(cells).addClass('filter');
       } else {
-        table.find('tbody tr').hide();
-        noResults.show();
+        this.elLk.rows.hide();
       }
     } else {
-      table.find('tbody tr').show().children('.filter').removeClass('filter');
+      this.elLk.rows.show();
+      this.elLk.options.filter('.filter').removeClass('filter');
     }
     
-    el = table = noResults = rows = cells = null;
+    this.elLk.noResults[this.elLk.rows.filter(function () { return this.style.display !== 'none' && this.className.indexOf('hidden') === -1 }).length ? 'hide' : 'show']();
   }
 });
