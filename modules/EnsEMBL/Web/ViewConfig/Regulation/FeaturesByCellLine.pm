@@ -9,9 +9,9 @@ use base qw(EnsEMBL::Web::ViewConfig::Cell_line);
 sub init {
   my $self = shift;
   
+  $self->add_image_config('regulation_view'); 
   $self->SUPER::init;
   $self->set_defaults({ opt_highlight => 'yes' });
-  $self->add_image_config('regulation_view') unless $self->hub->function eq 'Cell_line'; 
 }
 
 sub form_context {
