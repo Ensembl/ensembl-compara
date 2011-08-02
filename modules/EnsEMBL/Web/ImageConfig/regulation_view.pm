@@ -63,19 +63,19 @@ sub init {
     # Turn on reg_feats track
     $self->modify_configs(
       [ "reg_feats_$cell_line" ],
-      { display => 'normal', menu => 'yes' }
+      { display => 'normal' }
     );
     
     # Turn on core evidence track
     $self->modify_configs(
       [ "reg_feats_core_$cell_line" ],
-      { display => $display , menu => 'yes' }
+      { display => $display }
     );
-    
+   
     # Turn on supporting evidence track
     $self->modify_configs(
       [ "reg_feats_other_$cell_line" ],
-      { display => 'compact', menu => 'yes' }
+      { display => 'compact' }
     );
     
     push @{$self->{'tracks_to_remove'}}, "reg_feats_$cell_line", "reg_feats_core_$cell_line", "reg_feats_other_$cell_line";
