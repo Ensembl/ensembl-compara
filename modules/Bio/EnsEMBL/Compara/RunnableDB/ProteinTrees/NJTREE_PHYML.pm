@@ -77,6 +77,7 @@ sub param_defaults {
     return {
             'cdna'              => 1,   # always use cdna for njtree_phyml
             'bootstrap'         => 1,
+		'correction_mode'   => 'jackknife',   # can be either max_diff_lk or jackknife
     };
 }
 
@@ -84,7 +85,6 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->check_job_fail_options;      # we should fix this!
     $self->check_if_exit_cleanly;
 
     $self->param('member_adaptor',       $self->compara_dba->get_MemberAdaptor);
@@ -211,29 +211,49 @@ sub run_njtree_phyml {
       my $system_error = $!;
 
       if(my $segfault = (($rc != -1) and ($rc & 127 == 11))) {
-          $self->check_job_fail_options($segfault);
-          die "'$full_cmd' resulted in a segfault";
+          $self->throw("'$full_cmd' resulted in a segfault");
       }
       print STDERR "$full_cmd\n";
       open(ERRFILE, $errfile) or die "Could not open logfile '$errfile' for reading : $!\n";
 	my $logfile = "";
+	my $handled_failure = 0;
       while (<ERRFILE>) {
-        if ($_ =~ /NNI/) {
+        if (!($_ =~ /^Large distance/)) {
+	     $logfile .= $_;
+        }
+        if (($_ =~ /NNI/) || ($_ =~ /Optimize_Br_Len_Serie/) || ($_ =~ /Optimisation failed/) || ($_ =~ /Brent failed/))  {
+	     $handled_failure = 1;
+	  }
+	}
+	if ($handled_failure) {
+        if ($self->param("correction_mode") eq "jackknife") {
           # Do jack-knife treebest starting by the sequence with more Ns
           my $jackknife_value = $self->param('jackknife') if ($self->param('jackknife'));
           $jackknife_value++;
-          my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>1, 'jackknife'=>$jackknife_value}", $protein_tree->node_id);
+          my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d, 'jackknife'=>%d}", $protein_tree->node_id, $self->param('clusterset_id'), $jackknife_value);
           $self->input_job->input_id($output_id);
           $self->dataflow_output_id($output_id, 2);
           $protein_tree->release_tree;
           $self->param('protein_tree', undef);
           $self->input_job->incomplete(0);
-          die "NNI error, dataflowing to NJTREE_PHYML+jackknife\n";
-        } elsif (!($_ =~ /^Large distance/)) {
-	     $logfile .= $_;
+          die "PHYML error, dataflowing to NJTREE_PHYML+jackknife\n$logfile";
+
+        } elsif ($self->param("correction_mode") eq "max_diff_lk") {
+	    # Increase the tolerance max_diff_lk in the computation
+
+          my $max_diff_lk_value = $self->param('max_diff_lk') ?  $self->param('max_diff_lk') : 1e-5;
+          print STDERR sprintf("*%f*%f*\n", $self->param('max_diff_lk'), $max_diff_lk_value);
+	    $max_diff_lk_value *= 10;
+          print STDERR sprintf("*%f*%f*\n", $self->param('max_diff_lk'), $max_diff_lk_value);
+          my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d, 'max_diff_lk'=>%f}", $protein_tree->node_id, $self->param('clusterset_id'), $max_diff_lk_value);
+          $self->input_job->input_id($output_id);
+          $self->dataflow_output_id($output_id, 2);
+          $protein_tree->release_tree;
+          $self->param('protein_tree', undef);
+          $self->input_job->incomplete(0);
+          die "PHYML error, dataflowing to NJTREE_PHYML+max_diff_lk\n$logfile";
         }
       }
-      $self->check_job_fail_options;
       $self->throw("error running njtree phyml: $system_error\n$logfile");
     }
 
@@ -257,8 +277,7 @@ sub run_njtree_phyml {
     my $worker_temp_directory = $self->worker_temp_directory;
     if(system("cd $worker_temp_directory; $cmd")) {
       my $system_error = $!;
-      $self->check_job_fail_options;
-      die "Error running njtree phyml noboot (step 1 of 2) : $system_error";
+      $self->throw("Error running njtree phyml noboot (step 1 of 2) : $system_error");
     }
     # second part
     # nice -n 19 ./njtree sdi -s species_tree.nh $BASENAME.cons.nh > $BASENAME.cons.nhx
@@ -276,8 +295,7 @@ sub run_njtree_phyml {
     my $worker_temp_directory = $self->worker_temp_directory;
     if(system("cd $worker_temp_directory; $cmd")) {
       my $system_error = $!;
-      $self->check_job_fail_options;
-      die "Error running njtree phyml noboot (step 2 of 2) : $system_error";
+      $self->throw("Error running njtree phyml noboot (step 2 of 2) : $system_error");
     }
     $self->compara_dba->dbc->disconnect_when_inactive(0);
   } else {
@@ -290,25 +308,6 @@ sub run_njtree_phyml {
   my $runtime = time()*1000-$starttime;
 
   $protein_tree->store_tag('NJTREE_PHYML_runtime_msec', $runtime);
-}
-
-
-sub check_job_fail_options {
-  my $self     = shift @_;
-  my $segfault = shift @_ || 0;
-
-  # This will go to QuickTreeBreak
-  if( $segfault    # last system() crashed with Segmentation Fault
-   or ($self->input_job->retry_count >= 1 and !$self->param('jackknife'))
-  ) {
-        $self->input_job->incomplete(0);
-        die "Unexpected job failure\n";
-        #if(@{ $self->dataflow_output_id($self->input_id, 3) }) {
-        #    $self->DESTROY;
-        #    $self->input_job->incomplete(0);
-        #    die "job failed, dataflowing to QuickTreeBreak\n";
-        #}
-  }
 }
 
 
