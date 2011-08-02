@@ -316,7 +316,7 @@ sub _write_opening {
   $w->xmlDecl("UTF-8");
   $w->forceNSDecl($phylo_uri);
   $w->forceNSDecl($xsi_uri);
-  $w->startTag('phyloxml', [$xsi_uri, 'schemaLocation'] => 
+  $w->startTag($self->end_element, [$xsi_uri, 'schemaLocation'] => 
    "${phylo_uri} ${phylo_uri}/1.10/phyloxml.xsd");
   return;
 }
