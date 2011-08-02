@@ -548,7 +548,9 @@ sub build_imageconfig_menus {
     if ($ul) {
       $node->append_child($ul);
       
-      if ($menu) {
+      if ($node->get('menu') eq 'hidden') {
+        $ul->set_attribute('class', 'hidden') 
+      } elsif ($menu) {
         my $caption   = $node->get('caption');
         my %renderers = reverse %{$self->{'track_renderers'}->{$id}};
         
@@ -591,9 +593,11 @@ sub build_imageconfig_menus {
         }
       }
     }
-        
-    $self->{'enabled_tracks'}->{$menu_class}++ if $display ne 'off';
-    $self->{'total_tracks'}->{$menu_class}++;
+    
+    if ($node->get('menu') ne 'hidden') {
+      $self->{'enabled_tracks'}->{$menu_class}++ if $display ne 'off';
+      $self->{'total_tracks'}->{$menu_class}++;
+    }
     
     if ($desc) {
       $desc =~ s/&(?!\w+;)/&amp;/g;
@@ -607,7 +611,7 @@ sub build_imageconfig_menus {
       $help = qq{<div class="empty"></div>};
     }
     
-    $node->set_attribute('class', "$id track $external" . ($display eq 'off' ? '' : ' on') . ($self->{'favourite_tracks'}->{$id} ? ' fav' : ''));
+    $node->set_attribute('class', "$id track $external" . ($display eq 'off' ? '' : ' on') . ($self->{'favourite_tracks'}->{$id} ? ' fav' : '') . ($node->get('menu') eq 'hidden' ? ' hidden' : ''));
     $node->inner_HTML(qq{
       <ul class="popup_menu">$menu</ul>
       $selected<span class="menu_option">$icon$name</span>
