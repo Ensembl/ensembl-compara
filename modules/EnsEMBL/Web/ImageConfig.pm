@@ -1003,8 +1003,8 @@ sub load_tracks {
       'add_alignments'              # Add to compara_align tree
     ],
     funcgen => [
-      'add_regulation_features',    # Add to regulation_feature tree
       'add_regulation_builds',      # Add to regulation_feature tree
+      'add_regulation_features',    # Add to regulation_feature tree
       'add_oligo_probes'            # Add to oligo tree
     ],
     variation => [
@@ -1737,6 +1737,8 @@ sub add_regulation_features {
   
   return unless $menu;
   
+  my $reg_regions = $menu->append($self->create_submenu('other_reg_regions', 'Other regulatory regions'));
+  
   my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
   my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
   my %fg_data           = (%$data_1, %$data_2);
@@ -1754,7 +1756,7 @@ sub add_regulation_features {
       @renderers = qw(off Off normal Normal);
     }
     
-    $menu->append($self->create_track("${type}_${key}_$key_2", $fg_data{$key_2}{'name'}, { 
+    $reg_regions->append($self->create_track("${type}_${key}_$key_2", $fg_data{$key_2}{'name'}, { 
       db          => $key,
       glyphset    => $type,
       sources     => 'undef',
@@ -1769,7 +1771,7 @@ sub add_regulation_features {
     }));
     
     if ($fg_data{$key_2}{'description'} =~ /cisRED/) {
-      $menu->append($self->create_track("${type}_${key}_search", 'cisRED Search Regions', {
+      $reg_regions->append($self->create_track("${type}_${key}_search", 'cisRED Search Regions', {
         db          => $key,
         glyphset    => 'regulatory_search_regions',
         sources     => 'undef',
@@ -1799,6 +1801,10 @@ sub add_regulation_builds {
   
   return unless $type;
   
+  my $reg_feat = $menu->append($self->create_submenu('regulatory_features', 'Regulatory features'));
+  my $core     = $reg_feat->append($self->create_submenu('regulatory_features_core'));
+  my $other    = $reg_feat->append($self->create_submenu('regulatory_features_other'));
+  
   my @cell_lines = sort keys %{$db_tables->{'cell_type'}{'ids'}};
   my (@renderers, $multi_flag);
 
@@ -1827,9 +1833,7 @@ sub add_regulation_builds {
       $label = ": $cell_line";
     }
     
-    my $cell_line_menu = $self->create_submenu("regulatory_features $cell_line", "$cell_line tracks");
-    
-    $cell_line_menu->append($self->create_track($track_key, "$fg_data{$key_2}{'name'}$label", {
+    $reg_feat->append($self->create_track($track_key, "$fg_data{$key_2}{'name'}$label", {
       db          => $key,
       glyphset    => $type,
       sources     => 'undef',
@@ -1866,15 +1870,13 @@ sub add_regulation_builds {
     
     if (scalar @focus_sets && scalar @focus_sets <= scalar @ftypes) {
       # Add Core evidence tracks
-      $cell_line_menu->append($self->create_track("reg_feats_core_$cell_line", "Core evidence$label", { %options, type => 'core', description => $options{'description'}{'core'} }));
+      $core->append($self->create_track("reg_feats_core_$cell_line", "Core evidence$label", { %options, type => 'core', description => $options{'description'}{'core'} }));
     } 
 
     if (scalar @ftypes != scalar @focus_sets  && $cell_line ne 'MultiCell') {
       # Add 'Other' evidence tracks
-      $cell_line_menu->append($self->create_track("reg_feats_other_$cell_line", "Histones & Polymerases$label", { %options, type => 'other', description => $options{'description'}{'other'} }));
+      $other->append($self->create_track("reg_feats_other_$cell_line", "Histones & Polymerases$label", { %options, type => 'other', description => $options{'description'}{'other'} }));
     }
-    
-    $menu->append($cell_line_menu);
   }
   
   if ($db_tables->{'cell_type'}{'ids'}) {
