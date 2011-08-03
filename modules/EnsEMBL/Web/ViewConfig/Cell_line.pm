@@ -55,10 +55,16 @@ sub add_image_config {
   my ($self, $image_config) = @_;
   my $hub  = $self->hub;
   my $tree = $hub->get_imageconfig($image_config, 'funcgen_matrix')->tree;
+  
+  foreach my $type (qw(core other)) {
+    my $node = $tree->get_node("regulatory_features_$type");
     
-  foreach my $t (map [ $_, $tree->get_node("regulatory_features_$_")->get_all_nodes ], qw(core other)) {
-    push @{$self->{"$t->[0]_evidence_types"}}, { cell_line => [split '_', $_->id]->[-1], display => $_->get('display') } for @{$t->[1]};
-    $self->{'renderers'} ||= $t->[1][0]->get('renderers');
+    next unless $node;
+    
+    foreach ($node->nodes) {
+      push @{$self->{"${type}_evidence_types"}}, { cell_line => [split '_', $_->id]->[-1], display => $_->get('display') };
+      $self->{'renderers'} ||= $_->get('renderers');
+    }
   }
   
   $self->SUPER::add_image_config($image_config) if $hub->function ne 'Cell_line';
@@ -83,27 +89,27 @@ sub build_imageconfig_form {
   
   $self->SUPER::build_imageconfig_form($image_config);
   
-  my $menu = $tree->get_node('functional');
+  my $menu = $tree->get_node('regulatory_features');
+  
+  return unless $menu;
   
   foreach (qw(core other)) {
     $counts{$_}{'total'} = scalar @{$self->{"${_}_evidence_types"}};
     $counts{$_}{'on'}    = scalar grep { $_->{'display'} ne 'off' } @{$self->{"${_}_evidence_types"}}; 
   }
   
-  $menu->append($tree->create_node('regulatory_evidence_core', {
+  $menu->after($tree->create_node('regulatory_evidence_core', {
     url          => $hub->url('Config', { function => 'Cell_line', partial => 1, set => 'core' }),
     availability => 1,
     caption      => 'Open chromatin & TFBS',
     class        => 'Regulatory_evidence_core',
-    count        => "($counts{'core'}{'on'}/$counts{'core'}{'total'})"
-  }));
-  
-  $menu->append($tree->create_node('regulatory_evidence_other', {
+    count        => qq{(<span class="on">$counts{'core'}{'on'}</span>/$counts{'core'}{'total'})}
+  }))->after($tree->create_node('regulatory_evidence_other', {
     url          => $hub->url('Config', { function => 'Cell_line', partial => 1, set => 'other' }),
     availability => 1,
     caption      => 'Histone & polymerases',
     class        => 'Regulatory_evidence_other',
-    count        => "($counts{'other'}{'on'}/$counts{'other'}{'total'})"
+    count        => qq{(<span class="on">$counts{'other'}{'on'}</span>/$counts{'other'}{'total'})}
   }));
 }
 
