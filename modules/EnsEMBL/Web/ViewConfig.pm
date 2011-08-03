@@ -421,9 +421,9 @@ sub build_imageconfig_form {
     my @children = grep !$_->has_child_nodes, @{$n->child_nodes};
     
     if (scalar @children) {
-      my $internal = $image_config_tree->create_node($n->id . '_internal');
-      $internal->append($_) for @children;
-      $n->prepend($internal);
+      my $subset = $image_config_tree->create_node($n->id . '_subset');
+      $subset->append($_) for @children;
+      $n->prepend($subset);
     }
   }
   
@@ -475,7 +475,9 @@ sub build_imageconfig_form {
       if ($children) {
         my $popup  = $self->{'select_all_menu'}->{$n->id};
         my $header = $n->get('caption');
-      
+        
+        $node->data->{'content'} .= sprintf '<div class="subset %s"><h2 class="config_header">%s - %s</h2>', $n->id, $caption, $header;
+        
         if ($popup && $children > 1) {
           $header ||= 'tracks';
           $class   .= ' selectable';
@@ -493,12 +495,14 @@ sub build_imageconfig_form {
               <img title="Enable/disable all" alt="Enable/disable all" src="${img_url}render/off.gif" class="menu_option select_all" /><strong class="menu_option">Enable/disable all $header</strong>
             </div>
           };
-        } elsif ($header) {
+        } elsif ($header && $n->get('header') ne 'no') {
           $node->data->{'content'} .= "<h4>$header</h4>";
         }
+        
+        $node->data->{'content'} .= qq{<ul class="$class">$content</ul></div>};
+      } else {
+        $node->data->{'content'} .= qq{<ul class="$class">$content</ul>};
       }
-      
-      $node->data->{'content'} .= qq{<ul class="$class">$content</ul>};
       
       $i++;
       
@@ -513,8 +517,38 @@ sub build_imageconfig_form {
       url          => '#',
       availability => ($count > 0),
       class        => $id,
-      count        => $count ? "($on/$count)" : ''
+      count        => $count ? qq{(<span class="on">$on</span>/$count)} : ''
     }));
+  }
+  
+  # Add sub-menus to the navigation tree
+  foreach (@{$image_config_tree->child_nodes}) {
+    my @submenus = grep $_->{'data'}{'node_type'} eq 'menu', @{$_->child_nodes};
+    
+    next unless scalar @submenus > 1;
+    
+    foreach (@submenus) {
+      my $id = $_->id;
+      
+      my $parent_menu = $tree->get_node($_->parent_node->id);
+      
+      next unless $parent_menu;
+      
+      my @child_ids = map $_->id, grep { $_->{'data'}{'node_type'} eq 'track' && $_->{'data'}{'menu'} ne 'hidden' } $_->nodes;
+      my $count     = scalar @child_ids;
+      my $on        = 0;
+         $on       += $self->{'enabled_tracks'}->{$_} for @child_ids;
+      
+      my $node = $tree->get_node($id) || $tree->create_node($id, {
+        url          => '#',
+        availability => $count > 0,
+        caption      => $_->get('caption'),
+        class        => $parent_menu->id . "-$id",
+        count        => $count ? qq{(<span class="on">$on</span>/$count)} : ''
+      });
+      
+      $parent_menu->append($node);
+    }
   }
   
   my $form    = $self->get_form;
@@ -548,10 +582,10 @@ sub build_imageconfig_menus {
     if ($ul) {
       $node->append_child($ul);
       
-      if ($node->get('menu') eq 'hidden') {
-        $ul->set_attribute('class', 'hidden');
-        $node->set_attribute('class', 'hidden');
-      } elsif ($menu) {
+       if ($node->get('menu') eq 'hidden') {
+         $ul->set_attribute('class', 'hidden');
+         $node->set_attribute('class', 'hidden');
+       } elsif ($menu) {
         my $caption   = $node->get('caption');
         my %renderers = reverse %{$self->{'track_renderers'}->{$id}};
         
@@ -568,6 +602,9 @@ sub build_imageconfig_menus {
           }
         });
       }
+    } elsif ($i > 1) {
+      $node->after($node->first_child);
+      $node->remove;
     }
   } elsif ($node->get('menu') ne 'no') {
     my @states   = @{$node->get('renderers') || [ 'off', 'Off', 'normal', 'Normal' ]};
@@ -577,6 +614,7 @@ sub build_imageconfig_menus {
     my $controls = $node->get('controls');
     my $name     = encode_entities($node->get('name'));
     my $icon     = $external ? sprintf '<img src="%strack-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" />', $img_url, lc $external, $external, $external : ''; # DAS icons, etc
+    my @classes  = ($id, 'track', $external);
     my ($selected, $menu, $help);
     
     while (my ($val, $text) = splice @states, 0, 2) {
@@ -595,10 +633,13 @@ sub build_imageconfig_menus {
       }
     }
     
-    if ($node->get('menu') ne 'hidden') {
-      $self->{'enabled_tracks'}->{$menu_class}++ if $display ne 'off';
-      $self->{'total_tracks'}->{$menu_class}++;
+    if ($display ne 'off') {
+      $self->{'enabled_tracks'}->{$menu_class}++;
+      $self->{'enabled_tracks'}->{$id} = 1;
+      push @classes, 'on';
     }
+    
+    $self->{'total_tracks'}->{$menu_class}++;
     
     if ($desc) {
       $desc =~ s/&(?!\w+;)/&amp;/g;
@@ -612,7 +653,11 @@ sub build_imageconfig_menus {
       $help = qq{<div class="empty"></div>};
     }
     
-    $node->set_attribute('class', "$id track $external" . ($display eq 'off' ? '' : ' on') . ($self->{'favourite_tracks'}->{$id} ? ' fav' : '') . ($node->get('menu') eq 'hidden' ? ' hidden' : ''));
+    push @classes, 'fav'      if $self->{'favourite_tracks'}->{$id};
+    push @classes, 'external' if $external;
+    push @classes, 'hidden'   if $node->get('menu') eq 'hidden';
+    
+    $node->set_attribute('class', join ' ', @classes);
     $node->inner_HTML(qq{
       <ul class="popup_menu">$menu</ul>
       $selected<span class="menu_option">$icon$name</span>

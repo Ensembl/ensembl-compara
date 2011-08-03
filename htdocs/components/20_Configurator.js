@@ -78,7 +78,15 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.elLk.tracks.each(function () {
       var input = $('input.track_name', this)[0];
+      var type  = $('.popup_menu img', this)[0].className;
+      
+      $(this).data('links', [
+        'a.' + type, 
+        'a.' + type + '-' + $(this).parents('.subset').attr('class').replace(/subset|active|\s/g, '')
+      ].join(', '));
+      
       panel.imageConfig[input.name] = { renderer: input.value, favourite: $(this).hasClass('fav') };
+      
       input = null;
     });
     
@@ -138,12 +146,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         var menu    = li.parents('.popup_menu');
         var track   = menu.parent();
         var val     = li.attr('class');
-        var countEl = panel.elLk.links.children('a.' + img.attr('class')).siblings('.count');
-        var count   = (countEl.html() || '').split(/\b/);
+        var change  = 0;
         var updated = {};
         
         if (track.hasClass('select_all')) {
-          track = track.next().find('li.track:not(.hidden)');
+          track = track.next().find('li.track:not(.hidden, .external)');
           
           if (val === 'all_on') {
             // First li is off, so use the second (index 1) as default on setting.
@@ -163,7 +170,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           var input = $(this);
           
           if (input.val() === 'off' ^ val === 'off') {
-            count[1] = parseInt(count[1], 10) + (val === 'off' ? -1 : 1);
+            change += (val === 'off' ? -1 : 1);
           }
           
           input.val(input.data('newVal') || val).removeData('newVal');
@@ -181,7 +188,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           }).end()[val === 'off' ? 'removeClass' : 'addClass']('on');
         }
         
-        countEl.html(count.join(''));
+        panel.elLk.links.children(track.data('links')).siblings('.count').children('.on').html(function (i, html) {
+          return parseInt(html, 10) + change;
+        });
+        
         menu.hide();
         
         if (panel.sortable) {
@@ -196,7 +206,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           });
         }
         
-        menu = track = countEl = img = li = null;
+        menu = track = img = li = null;
       })
     );
     
@@ -217,7 +227,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           panel.searchTimer = setTimeout(function () {
             panel.elLk.links.removeClass('active');
             panel.elLk.searchResults.removeClass('disabled').parent().addClass('active');
-            panel.elLk.form.addClass('multi');
+            panel.elLk.form.addClass('multi').removeClass('subset');;
             panel.search(); 
           }, 250);
         }
@@ -275,7 +285,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     var panel    = this;
     var tracks   = this.params.tracks[type];
-    var configs  = this.elLk.configDivs.filter('.' + type).children('ul.config_menu');
+    var configs  = this.elLk.configDivs.filter('.' + type).find('div.subset > ul.config_menu');
     var existing = [];
     var i        = tracks.length;
     var j, track, li;
@@ -319,6 +329,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
         $(configs[i]).append(li);
       }
+      
+      $(configs[i]).find('.track').data('links', [
+        'a.' + type, 
+        'a.' + type + '-' + $(configs[i]).parents('.subset').attr('class').replace(/subset|active|\s/g, '')
+      ].join(', '));
     }
     
     this.updateElLk();
@@ -346,7 +361,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   getContent: function () {
     var panel  = this;
     var active = this.elLk.links.filter('.active').children('a')[0];
-    var url, configDiv;
+    var url, configDiv, subset;
     
     function favouriteTracks() {
       var added, trackName, li, favs, type;
@@ -365,7 +380,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
          li = panel.elLk.tracks.filter('.' + trackName);
           
           if (!li.length) {
-            li = $(panel.favourites[type][trackName][1]).appendTo(panel.elLk.configDivs.filter('.' + type).children('ul.config_menu').eq(panel.favourites[type][trackName][0]));
+            li = $(panel.favourites[type][trackName][1]).appendTo(panel.elLk.configDivs.filter('.' + type).find('ul.config_menu').eq(panel.favourites[type][trackName][0]));
             panel.imageConfig[trackName] = { renderer: 'off', favourite: 1 };
             added = true;
           }
@@ -378,7 +393,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         panel.updateElLk();
       }
       
-      favs = panel.elLk.configs.hide().filter('.track.fav').show().each(function () { $(this).show().parents('li, div.config').show(); }).length;
+      favs = panel.elLk.configs.hide().filter('.track.fav').show().each(function () { $(this).show().parents('li, div.subset, div.config').show(); }).length;
+      
       panel.elLk.favouritesMsg[favs ? 'hide' : 'show']();
     }
     
@@ -461,7 +477,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           var panelDiv = $('.js_panel', configDiv);
           
           if (panelDiv.length) {
-            Ensembl.EventManager.trigger('createPanel', panelDiv[0].id, json.panelType);
+            Ensembl.EventManager.trigger('createPanel', panelDiv[0].id, json.panelType, { links: [ panel.elLk.links.filter('.active').parent().siblings('a').attr('class'), active ] });
             panel.subPanels.push(panelDiv[0].id);
           } else {
             panel.elLk.viewConfigInputs = $(':input:not([name=select_all])', panel.elLk.viewConfigs);
@@ -481,6 +497,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       this.elLk.form[active.rel === 'multi' ? 'addClass' : 'removeClass']('multi');
     }
     
+    this.elLk.form.removeClass('subset');
     this.elLk.configDivs.filter(function () { return this.style.display !== 'none'; }).hide();
     this.elLk.help.filter('.open').removeClass('open').attr('title', 'Click for more information').parent().siblings('div.desc').hide();
     this.elLk.imageConfigNotes.show();
@@ -493,6 +510,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     active = active.className;
     
+    if (active.indexOf('-') !== -1) {
+      active = active.split('-');
+      subset = active[1];
+      active = active[0];
+    }
+    
     switch (active) {
       case 'search_results':
         this.elLk.search.val(this.query);
@@ -500,7 +523,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         return;
         
       case 'active_tracks':
-        this.elLk.configs.hide().filter('.on').show().parents('li, div.config').show();
+        this.elLk.configs.hide().filter('.on').show().parents('li, div.subset, div.config').show();
         break;
       
       case 'favourite_tracks':
@@ -514,6 +537,15 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       default:
         this.addTracks(active);
         configDiv = this.elLk.configDivs.filter('.' + active).show();
+        
+        if (subset) {
+          this.elLk.form.addClass('subset');
+          subset = configDiv.children('.' + subset).addClass('active').show();
+          configDiv.children(':not(.config_header)').not(subset).removeClass('active').hide();
+          subset = null;
+        } else {
+          configDiv.children().removeClass('active').show();
+        }
         
         if (url && !configDiv.length) {
           this.addTracks(this.elLk.links.filter('.active').parent().siblings('a').attr('class')); // Add the tracks in the parent panel, for safety
@@ -616,8 +648,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       dataType: 'json',
       async: false,
       success: function (json) {
-        var trackName;
-        
         if (json.updated) {
           Ensembl.EventManager.trigger('queuePageReload', panel.component, !delayReload);
           
@@ -681,7 +711,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       }
       
       return col[col.f *= -1];
-    } : function (i) {
+    } : function () {
       if (!this.previousSibling) {
         col.f = 1;
       }
@@ -726,7 +756,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       }
     }
     
-    this.elLk.configDivs.hide();
+    this.elLk.configDivs.hide().children('.subset').hide();;
     
     for (type in this.params.tracks) {
       div    = this.elLk.configDivs.filter('.' + type);
@@ -735,7 +765,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       i      = tracks.length;
       
       while (i--) {
-        menu = div.children('ul.config_menu').eq(i);
+        menu = div.find('div.subset').eq(i).children('ul.config_menu');
         
         for (j in tracks[i]) {
           track     = tracks[i][j];
@@ -760,7 +790,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       }
       
       if (show) {
-        div.show();
+        div.show().children('.subset').show();
       }
       
       div = null;
