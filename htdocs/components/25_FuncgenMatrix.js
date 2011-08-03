@@ -21,6 +21,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     this.elLk.table = $('table.funcgen_matrix', this.el);
     
     var colClasses = $.map(this.elLk.table[0].rows[0].cells, function (el) { return el.className; });
+    var linkData   = $.map(this.params.links, function (link) { return 'a.' + link; }).join(', ');
     
     this.elLk.noResults  = $('.no_results',           this.el);
     this.elLk.headers    = $('thead tr:first th',     this.elLk.table);
@@ -148,6 +149,8 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       $(this).parents('.popup_menu').hide().parent().siblings().find('.popup_menu li.' + this.className).trigger('click');
       return false;
     });
+    
+    this.elLk.renderers.not('.select_all').data('links', linkData);
     
     // Fix z-index for popups in IE6 and 7
     if ($('body').hasClass('ie67')) {
