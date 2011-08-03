@@ -36,6 +36,14 @@ form.configuration.multi div.config ul.config_menu                  { margin-lef
 form.configuration.multi div.favourite_tracks                       { margin-bottom: 0; }
 form.configuration.multi div.favourite_tracks img                   { margin: 0; padding: 0; width: auto; height: auto; }
 
+form.configuration div.config div.subset.active h2.config_header     { display: block; margin-bottom: -6px; }
+form.configuration div.config div.subset.active h4                   { visibility: hidden; margin: 0 0 -6px; }
+form.configuration div.config div.subset.active div.select_all.first { margin-top: 10px; }
+
+form.configuration.subset div.config h2.config_header,
+form.configuration        div.config div.subset h2.config_header,
+form.configuration.multi  div.config div.subset.active h2.config_header { display: none; }
+
 body.ie6 form.configuration div.config ul.config_menu li            { height: 21px; }
 body.ie6 form.configuration div.config ul.popup_menu li             { height: auto; }
 body.ie6 form.configuration div.config ul.popup_menu li img         { margin: 2px; }
