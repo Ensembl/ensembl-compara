@@ -1038,14 +1038,11 @@ sub load_configured_das {
   foreach my $source (sort { $a->caption cmp $b->caption } values %$internal_das_sources) {
     next unless $source->is_on($self->{'type'});
     
-    my $key  = $source->category . '_external';
-    my $node = $self->get_node($source->category);
-    my $menu = $self->get_node($key);
+    my ($category, $sub_category) = split ' ', $source->category;
+    my $key  = join '_', $category, $sub_category || 'external';
+    my $node = $self->get_node($category);
     
-    if (!$menu && $node) {
-      $menu = $self->create_submenu($key, 'External data sources');
-      $node->append($menu);
-    }
+    $node->append($self->create_submenu($key, 'External data sources')) if $node && !$node->get_node($key);
     
     $self->add_das_tracks($key, $source, @extra);
   }
@@ -1737,7 +1734,9 @@ sub add_regulation_features {
   
   return unless $menu;
   
-  my $reg_regions = $menu->append($self->create_submenu('other_reg_regions', 'Other regulatory regions'));
+  my $reg_regions = $menu->append($self->create_submenu('functional_reg_regions', 'Other regulatory regions'));
+  
+  $reg_regions->before($self->create_submenu('functional_methylation', 'DNA Methylation'));
   
   my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
   my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
