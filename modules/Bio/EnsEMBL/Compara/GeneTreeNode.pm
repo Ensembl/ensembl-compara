@@ -222,7 +222,7 @@ sub stable_id {
     return $self->{'_stable_id'};
   }
 
-  if(!defined($self->{'_stable_id'}))
+  if(!defined($self->{'_stable_id'}) and $self->adaptor->can('_fetch_stable_id_by_node_id'))
   {
     $self->{'_stable_id'} = $self->adaptor->_fetch_stable_id_by_node_id($self->node_id);
   }
