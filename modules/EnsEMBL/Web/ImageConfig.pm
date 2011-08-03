@@ -2053,11 +2053,11 @@ sub add_structural_variations {
   
 sub add_copy_number_variant_probes {
   my ($self, $key, $hashref) = @_;
-	my $menu = $self->get_node('variation');
+  my $menu = $self->get_node('variation');
   
   return unless $menu && $hashref->{'structural_variation'}{'rows'} > 0;
-	
-  my $cnv_probes = $self->create_submenu('cnv_probes', 'Copy Number Variant Probes');
+  
+  $menu = $self->get_node('structural_variation') || $self->create_submenu('structural_variation', 'Structural variants');
   
   my %options = (
     db         => $key,
@@ -2068,7 +2068,7 @@ sub add_copy_number_variant_probes {
     display    => 'off'
   );
   
-  $cnv_probes->append($self->create_track('variation_feature_cnv', 'CNVs probes (all sources)', {   
+  $menu->append($self->create_track('variation_feature_cnv', 'CNV probes (all sources)', {   
     %options,
     caption     => 'All Copy number variant probes',
     sources     => undef,
@@ -2080,7 +2080,7 @@ sub add_copy_number_variant_probes {
 	  my $description = $hashref->{'source'}{'descriptions'}{$key_2};
     (my $k = $key_2) =~ s/\W/_/g;
     
-    $cnv_probes->append($self->create_track("variation_feature_cnv_$k", "$key_2", {
+    $menu->append($self->create_track("variation_feature_cnv_$k", "$key_2", {
       %options,
       caption     => $key_2,
       source      => $key_2,
@@ -2088,8 +2088,6 @@ sub add_copy_number_variant_probes {
       description => $description
     }));  
   }
-  
-  $menu->append($cnv_probes);
 }
 
 sub add_somatic_mutations {
