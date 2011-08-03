@@ -155,21 +155,8 @@ sub file {
 
 sub finish {
   my ($self) = @_;
-  $self->_writer()->endTag($self->end_element());
+  $self->_write_closing();
   return;
-}
-
-=pod
-
-=head2 end_element()
-
-Alter to return the name of the end element so C<finish()> can use it. Must be
-overriden in the sub-class
-
-=cut
-
-sub end_element {
-  throw 'Unimplemented';
 }
 
 =pod
@@ -257,6 +244,20 @@ the writer instance is pushed into $self).
 
 sub _write_opening {
   my ($self, $w) = @_;
+  throw 'Unimplemented';
+}
+
+=pod 
+
+=head2 _write_closing()
+
+Override to write the ending tag along. The writer instance has now been
+pushed into $self.
+
+=cut
+
+sub _write_closing {
+  my ($self) = @_;
   throw 'Unimplemented';
 }
 

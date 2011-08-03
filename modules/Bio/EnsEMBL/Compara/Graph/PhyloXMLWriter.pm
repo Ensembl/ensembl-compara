@@ -158,24 +158,7 @@ sub new {
   $self->no_sequences($no_sequences);
   $self->no_release_trees($no_release_trees);
   
-  
   return $self;
-}
-
-=pod
-
-=head2 end_element()
-
-  Description : The starting/final element name
-  Returntype : String; phyloxml
-  Exceptions : None
-  Status     : Stable
-
-=cut
-
-sub end_element {
-  my ($self) = @_;
-  return 'phyloxml';
 }
 
 =pod
@@ -316,9 +299,14 @@ sub _write_opening {
   $w->xmlDecl("UTF-8");
   $w->forceNSDecl($phylo_uri);
   $w->forceNSDecl($xsi_uri);
-  $w->startTag($self->end_element, [$xsi_uri, 'schemaLocation'] => 
+  $w->startTag("phyloxml", [$xsi_uri, 'schemaLocation'] => 
    "${phylo_uri} ${phylo_uri}/1.10/phyloxml.xsd");
   return;
+}
+
+sub _write_closing {
+  my ($self) = @_;
+  $self->_writer()->endTag("phyloxml");
 }
 
 sub _write_tree {
@@ -354,10 +342,10 @@ sub _process {
 sub _dispatch_tag {
   my ($self, $node) = @_;
   if(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeMember')) {
-    return $self->_alignedmember_tag($node);
+    return $self->_genetreemember_tag($node);
   }
-  elsif(check_ref($node, 'Bio::EnsEMBL::Compara::NestedSet')) {
-    return $self->_nestedset_tag($node);
+  elsif(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode')) {
+    return $self->_genetreenode_tag($node);
   }
   my $ref = ref($node);
   throw("Cannot process type $ref");
@@ -366,10 +354,10 @@ sub _dispatch_tag {
 sub _dispatch_body {
   my ($self, $node) = @_;
   if(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeMember')) {
-    $self->_alignedmember_body($node);
+    $self->_genetreemember_body($node);
   }
-  elsif(check_ref($node, 'Bio::EnsEMBL::Compara::NestedSet')) {
-    $self->_nestedset_body($node);
+  elsif(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode')) {
+    $self->_genetreenode_body($node);
   }
   else {
     my $ref = ref($node);
@@ -382,13 +370,13 @@ sub _dispatch_body {
 
 #tags return [ 'tag', {attributes} ]
 
-sub _nestedset_tag {
+sub _genetreenode_tag {
   my ($self, $node) = @_;
   return ['clade', {branch_length => $node->distance_to_parent()}];
 }
 
 #body writes data
-sub _nestedset_body {
+sub _genetreenode_body {
   my ($self, $node, $defer_taxonomy) = @_;
   
   my $dup   = $node->get_tagvalue('Duplication');
@@ -431,16 +419,16 @@ sub _nestedset_body {
   return;
 }
 
-sub _alignedmember_tag {
+sub _genetreemember_tag {
   my ($self, $node) = @_;
-  return $self->_nestedset_tag($node);
+  return $self->_genetreenode_tag($node);
 }
 
-sub _alignedmember_body {
+sub _genetreemember_body {
   my ($self, $protein) = @_;
   
   my $w = $self->_writer();
-  $self->_nestedset_body($protein , 1); #Used to defer taxonomy writing
+  $self->_genetreenode_body($protein , 1); #Used to defer taxonomy writing
   
   my $gene = $protein->gene_member();
   my $taxon = $protein->taxon();
