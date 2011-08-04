@@ -41,26 +41,9 @@ Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter
 
 =head1 DESCRIPTION
 
-Used as a way of emitting Compara ProteinTrees in a format which conforms
+Used as a way of emitting Compara GeneTrees in a format which conforms
 to L<OrthoXML|http://www.orthoxml.org/>. The code is built to work with
-instances of L<Bio::EnsEMBL::Compara::ProteinTree> but can be extended to
-operate on any tree structure provided by the Compara Graph infrastructure.
-
-The code provides a number of property extensions to the existing OrthoXML
-standard:
-
-=over 8
-
-=item B<Compara:genome_db_name>
-
-Used to show the name of the GenomeDB of the species found. Useful when 
-taxonomy is not exact
-
-=item B<Compara:dubious_duplication> 
-
-Indicates locations of potential duplications we are unsure about
-
-=back
+instances of L<Bio::EnsEMBL::Compara::GeneTreeNode>.
 
 The same document is persistent between write_trees() calls so to create
 a new XML document create a new instance of this object.
@@ -112,7 +95,9 @@ my $ortho_uri = 'http://orthoXML.org';
 
 =head2 new()
 
-  Arg[SOURCE]           : String; the source of the stable identifiers.
+  Arg[SOURCE]           : String; the source of the dumped data.
+                          Defaults to B<Unknown>.
+  Arg[SOURCE_VERSION]   : String; the version source of the dumped data.
                           Defaults to B<Unknown>.
   Arg[HANDLE]           : IO::Handle; pass in an instance of IO::File or
                           an instance of IO::String so long as it behaves
@@ -236,27 +221,56 @@ sub source_version {
 
 sub write_trees {
   my ($self, $trees) = @_;
-  my $w = $self->_writer();
+
   $trees = wrap_array($trees);
 
   # Create a list of all members, groupes by species
   my $hash_members = {};
+  my $list_species = [];
   foreach my $tree (@{$trees}) {
-    $self->_get_members_list($tree, $hash_members);
+    $self->_get_members_list($tree, $list_species, $hash_members);
   }
 
-  # Prints each database
-  foreach my $species (keys %{$hash_members}) {
-    my $members = ${$hash_members}{$species};
-    my $genome_db = ${$members}{"GENOMEDB"};
+  return $self->write_data(
+    $list_species,
+    sub {
+      my ($species) = @_;
+	return ${$hash_members}{$species->dbID};
+    },
+    $trees
+  );
+}
 
-    $w->startTag("species", "NCBITaxId" => $genome_db->taxon_id, "name" => $genome_db->name);
-    $w->startTag("database", "name" => $self->source_version, "version" => sprintf("%s/%s", $genome_db->assembly, $genome_db->genebuild));
+=pod
+
+=head2 write_data()
+
+  Arg[0]      : List reference of all the species (must contain GenomeDB objects)
+  Arg[1]      : A function that, given a GenomeDB, returns a list of all the
+                members used in the trees for this species
+  Arg[2]      : List reference of all the trees
+  Description : Generic method to write the content
+  Returntype  : None
+  Exceptions  : Possible if there is an issue with retrieving data from the tree
+  instance
+  Status      : Stable  
+  
+=cut
+
+sub write_data {
+  my ($self, $list_species, $callback_list_members, $list_trees) = @_;
+  my $w = $self->_writer();
+
+  # Prints each database
+  foreach my $species (@$list_species) {
+    # species should be a GenomeDB instance
+
+    $w->startTag("species", "NCBITaxId" => $species->taxon_id, "name" => $species->name);
+    $w->startTag("database", "name" => $self->source_version, "version" => sprintf("%s/%s", $species->assembly, $species->genebuild));
     $w->startTag("genes");
 
-    foreach my $leaf (values %{$members}) {
-      next if check_ref($leaf, "Bio::EnsEMBL::Compara::GenomeDB");
-	$w->emptyTag("gene", "id" => $leaf->member_id, "geneId" => $leaf->gene_member->stable_id, ($leaf->source_name eq "ENSEMBLPEP" ? "protId" : "transcriptId") => $leaf->stable_id);
+    foreach my $member (@{$callback_list_members->($species)}) {
+	$w->emptyTag("gene", "id" => $member->member_id, "geneId" => $member->gene_member->stable_id, ($member->source_name eq "ENSEMBLPEP" ? "protId" : "transcriptId") => $member->stable_id);
     }
 
     $w->endTag("genes");
@@ -272,7 +286,7 @@ sub write_trees {
 
   # Prints each tree
   $w->startTag("groups");
-  foreach my $tree (@{$trees}) {
+  foreach my $tree (@{$list_trees}) {
     $self->_write_tree($tree);
     $tree->release_tree() if ! $self->no_release_trees;
   }
@@ -305,13 +319,14 @@ sub _write_closing {
 }
 
 sub _get_members_list {
-  my ($self, $tree, $hash_members) = @_;
+  my ($self, $tree, $list_species, $hash_members) = @_;
 
   foreach my $leaf (@{$tree->get_all_leaves}) {
     if (not defined ${$hash_members}{$leaf->genome_db_id}) {
-      ${$hash_members}{$leaf->genome_db_id} = {"GENOMEDB" => $leaf->genome_db};
+      push @{$list_species}, $leaf->genome_db;
+	${$hash_members}{$leaf->genome_db_id} = [];
     }
-    ${${$hash_members}{$leaf->genome_db_id}}{$leaf->member_id} = $leaf;
+    push @{${$hash_members}{$leaf->genome_db_id}}, $leaf;
   }
 }
 
@@ -335,7 +350,7 @@ sub _write_tree {
 sub _is_reliable_duplication {
   my $node = shift;
   my $sis = $node->get_tagvalue('duplication_confidence_score');
-  return ($node->get_tagvalue('Duplication') >= 2 and defined $sis and $sis >= 0.25);
+  return ($node->get_tagvalue('Duplication') ne '' and $node->get_tagvalue('Duplication') >= 2 and defined $sis and $sis >= 0.25);
 }
 
 sub _process {
