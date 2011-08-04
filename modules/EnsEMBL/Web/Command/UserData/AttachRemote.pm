@@ -5,7 +5,6 @@ package EnsEMBL::Web::Command::UserData::AttachRemote;
 use strict;
 
 use EnsEMBL::Web::Root;
-use Digest::MD5    qw(md5_hex);
 
 use base qw(EnsEMBL::Web::Command);
 
