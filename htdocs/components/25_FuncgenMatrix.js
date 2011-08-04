@@ -244,7 +244,11 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
   
   // Called by triggerSpecific from the parent Configurator panel.
   // Does not cause an AJAX request, just returns the diff data.
-  updateConfiguration: function () {
+  updateConfiguration: function (subPanel) {
+    if (!subPanel) {
+      return;
+    }
+    
     var panel  = this;
     var config = { viewConfig: {}, imageConfig: {} };
     var diff   = false;
