@@ -52,12 +52,25 @@ sub init {
 }
 
 sub add_image_config {
+  my $self = shift;
+  $self->set_evidence_types(@_);
+  $self->SUPER::add_image_config(@_) if $self->hub->function ne 'Cell_line';
+}
+
+sub reset {
+  my $self = shift;
+  $self->SUPER::reset(@_);
+  $self->set_evidence_types(@_);
+}
+
+sub set_evidence_types {
   my ($self, $image_config) = @_;
-  my $hub  = $self->hub;
-  my $tree = $hub->get_imageconfig($image_config, 'funcgen_matrix')->tree;
+  my $tree = (ref $image_config ? $image_config : $self->hub->get_imageconfig($image_config))->tree;
   
   foreach my $type (qw(core other)) {
     my $node = $tree->get_node("regulatory_features_$type");
+    
+    $self->{"${type}_evidence_types"} = [];
     
     next unless $node;
     
@@ -66,8 +79,6 @@ sub add_image_config {
       $self->{'renderers'} ||= $_->get('renderers');
     }
   }
-  
-  $self->SUPER::add_image_config($image_config) if $hub->function ne 'Cell_line';
 }
 
 sub form {
