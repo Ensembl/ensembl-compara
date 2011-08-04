@@ -15,6 +15,8 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 This script dumps all the trees in the OrthoXMl format, and works for both protein trees and ncRNA trees
 Works better with some database connection parameters
 
+./dumpAllTreesOrthoXML.pl -user ensro -port 4311 -host 127.0.0.1 -database lg4_ensembl_compara_63 -adaptor NCTree
+
 =cut
 
 my $opts = {};
