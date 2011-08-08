@@ -93,15 +93,24 @@ foreach (@species_list) {
   $object->set_species($_) if($_);
   foreach my $method (@methods) {
     next if @test and !grep {$method =~ /^(test_)?$_$/i} @test;
-    next if @skip and grep {$method =~ /^(test_)?$_$/i} @skip;  
-  
-    print "\n****************************************\n";
-    print " $_ $method\n";
-    print "****************************************\n";  
+    next if @skip and grep {$method =~ /^(test_)?$_$/i} @skip; 
+    
+    my $test_case = $method;
+    $test_case =~ s/test_//g;
+    $test_case = uc($test_case);
+    
+    if($_) {
+      print "\n****************************************\n";
+      print " Testing $_ \n";
+      print "****************************************\n";
+      print "TESTING $test_case \n";
+    }else {  
+      print "\n****************************************\n";
+      print " $_ $method\n";
+      print "****************************************\n";  
+    }
     $object->$method;
     $methods_called++;
-#    my $location = $object->get_location();
-#    print "\n URL:: $location \n" if ($verbose or grep {/^Error.*selenium/} @errors or $object->testmore_output =~ /not ok/m);    
   }
 }
 
