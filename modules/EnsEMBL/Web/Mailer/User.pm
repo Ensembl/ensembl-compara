@@ -21,12 +21,14 @@ sub send_activation_email {
   if ($object->param('lost')) {
     $self->subject = "$sitename account reactivation";
     
-    $message = sprintf('
+    $message = sprintf("
 Hello %s,
 
 We have received a request to reactivate your Ensembl account. If you
 submitted this request, click on the link below to update your password. If
-not, please disregard this email.',
+not, please disregard this email.
+
+",
       $user->name
     );
   } else {
@@ -38,7 +40,8 @@ Welcome to $sitename,
 Thanks for registering with $sitename.
 
 You just need to activate your account, using the link below:
-    ";
+
+";
   }
 
   $message .= $self->base_url . '/Account/Activate?email=' . $user->email . '&code=' . $user->salt;
