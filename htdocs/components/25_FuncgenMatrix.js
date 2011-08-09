@@ -28,6 +28,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     this.elLk.renderers  = $('thead tr.renderers th', this.elLk.table);
     this.elLk.rows       = $('tbody tr',              this.elLk.table);
     this.elLk.trackNames = $('.track_name',           this.elLk.renderers).each(function () { panel.imageConfig[this.name] = { renderer: this.value }; });
+    this.elLk.menus      = $('.popup_menu',           this.elLk.renderers);
     this.elLk.options    = $('.option',               this.elLk.rows).each(function () {      
       this.configCode  = 'opt_cft_' + this.title; // configCode is used to set the correct values for the ViewConfig
       this.searchTerms = $.trim(this.parentNode.className + ' ' + colClasses[$(this).index()]).toLowerCase(); // Do this here so we don't have to look up the header row for every cell
@@ -93,6 +94,10 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
         return false;
       });
     }
+    
+    $('.menu_option', this.elLk.renderers).bind('click', function () { 
+      panel.elLk.menus.not(this).hide(); 
+    });
     
     // Display a select all popup for columns
     this.elLk.headers.not('.disabled').hover(function () {
@@ -235,7 +240,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       on        = !!this.elLk.rows.children('.' + className + '.on').length;
       
       if (off === on) {
-        renderer.siblings('.popup_menu').children(':eq(' + (on ? 1 : 0) + ')').trigger('click');
+        renderer.siblings('.popup_menu').children(':not(.header):eq(' + (on ? 1 : 0) + ')').trigger('click');
       }
     }
     
