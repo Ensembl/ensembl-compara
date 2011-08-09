@@ -30,6 +30,7 @@ use constant {
   _FLAG_BUTTON              => '_is_button',
   _FLAG_STRIPED             => '_is_striped',
   _FLAG_REQUIRED            => '_is_required',
+  _FLAG_LEGEND              => '_is_legend'
 };
 
 sub render {
@@ -56,7 +57,7 @@ sub render {
   my $i = 0;
   if ($self->get_flag($self->_FLAG_STRIPED)) {
     for (@{$self->child_nodes}) {
-      next if $_->node_name =~ /^(input|legend)$/ || $_->get_flag($self->_FLAG_HONEYPOT) || $_->get_flag($self->_FLAG_BUTTON);#ignore hidden inputs, legend, honeypot and buttons
+      next if $_->node_name eq 'input' || $_->get_flag($self->_FLAG_LEGEND) || $_->get_flag($self->_FLAG_HONEYPOT) || $_->get_flag($self->_FLAG_BUTTON);#ignore hidden inputs, legend, honeypot and buttons
       $_->set_attribute('class', $i % 2 == 0 ? $self->CSS_EVEN_ROW : $self->CSS_ODD_ROW);
       $i++ if $_->get_flag($self->_FLAG_FIELD) || $_->get_flag($self->_FLAG_ELEMENT);
     }
@@ -99,11 +100,11 @@ sub inputs {
 sub legend {
   ## Modifies or adds a legend to the fieldset
   ## @params Inner html string
-  ## @return DOM::Node::Element::Legend object
+  ## @return DOM::Node::Element::H2 object
   my $self = shift;
   my $legend = $self->get_legend;
   unless ($legend) {
-    $legend = $self->dom->create_element('legend');
+    $legend = $self->dom->create_element('h2', {'flags' => $self->_FLAG_LEGEND});
     $self->prepend_child($legend);
   }
   $legend->inner_HTML(shift) if @_;
@@ -112,9 +113,9 @@ sub legend {
 
 sub get_legend {
   ## Gets the legend of the fieldset
-  ## @return DOM::Node::Element::Legend object or undef
+  ## @return DOM::Node::Element::H2 object or undef
   my $self = shift;
-  return $self->first_child && $self->first_child->node_name eq 'legend' ? $self->first_child : undef;
+  return $self->first_child && $self->first_child->get_flag($self->_FLAG_LEGEND) ? $self->first_child : undef;
 }
 
 sub add_field {
@@ -263,7 +264,7 @@ sub add_hidden {
   $hidden->set_attribute('id',    $params->{'id'})    if $params->{'id'};
   $hidden->set_attribute('class', $params->{'class'}) if $params->{'class'};
   my $reference = $self->first_child;
-  $reference = $reference->next_sibling while $reference && $reference->node_name =~ /^(input|legend)$/;
+  $reference = $reference->next_sibling while $reference && $reference->node_name eq 'input' || $reference->get_flag($self->_FLAG_LEGEND);
   return $reference ? $self->insert_before($hidden, $reference) : $self->append_child($hidden);
 }
 
