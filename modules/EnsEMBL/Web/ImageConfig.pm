@@ -9,6 +9,8 @@ use HTML::Entities qw(encode_entities);
 use JSON qw(from_json);
 use URI::Escape qw(uri_unescape);
 
+use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
+
 use Sanger::Graphics::TextHelper;
 
 use EnsEMBL::Web::DBSQL::DBConnection;
@@ -46,6 +48,7 @@ sub new {
     no_load          => undef,
     storable         => 1,
     altered          => 0,
+    has_das          => 1,
     _core            => undef,
     _tree            => new EnsEMBL::Web::Tree,
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene)],
@@ -201,6 +204,7 @@ sub modify {} # For plugins
 
 sub storable :lvalue { $_[0]->{'storable'}; } # Set to 1 if configuration can be altered
 sub altered  :lvalue { $_[0]->{'altered'};  } # Set to 1 if the configuration has been updated
+sub has_das  :lvalue { $_[0]->{'has_das'};  } # Set to 1 if there are DAS tracks
 
 sub hub                 { return $_[0]->{'hub'};                                                                     }
 sub code                { return $_[0]->{'code'};                                                                    }
@@ -472,8 +476,6 @@ sub load_user_tracks {
   my $menu = $self->get_node('user_data');
   
   return unless $menu;
-  
-  $self->tree->prepend($menu);
   
   my $hub  = $self->hub;
   my $user = $hub->user;
@@ -1056,8 +1058,10 @@ sub load_tracks {
 }
 
 sub load_configured_das {
-  my $self = shift;
-  my @extra = @_;
+  my $self          = shift;
+  my $extra         = ref $_[0] eq 'HASH' ? shift : {};
+  my %allowed_menus = map { $_ => 1 } @_;
+  my $all_menus     = !scalar @_;
   
   # Now we do the das stuff - to append to menus (if the menu exists)
   my $internal_das_sources = $self->species_defs->get_all_das;
@@ -1066,15 +1070,17 @@ sub load_configured_das {
     next unless $source->is_on($self->{'type'});
     
     my ($category, $sub_category) = split ' ', $source->category;
+    
+    next unless $all_menus || $allowed_menus{$category};
+    
     my $menu = $self->get_node($category);
+    my $key;
     
     if (!$menu && grep { $category eq $_ } @{$self->{'transcript_types'}}) {
       foreach (@{$self->{'transcript_types'}}) {
         $category = $_ and last if $menu = $self->get_node($_);
       }
     }
-        
-    my $key;
     
     if ($sub_category && $menu) {
       $key  = join '_', $category, $sub_category;
@@ -1093,14 +1099,47 @@ sub load_configured_das {
     
     if (!$menu) {
       $self->create_menus($category);
-      $menu = $self->get_node($category);
-      $self->get_node('external_data')->after($menu) if $menu;
+      
+      my $external = $self->get_node('external_data');
+         $menu     = $self->get_node($category);
+      
+      $external->after($menu) if $menu && $external;
     }
     
     $menu->append($self->create_submenu($key, 'External data (DAS)', { external => 1 })) if $menu && !$menu->get_node($key);
     
-    $self->add_das_tracks($key, $source, @extra);
+    $self->add_das_tracks($key, $source, $extra);
   }
+}
+
+# Attach all das sources from an image config
+sub attach_das {
+  my $self = shift;
+
+  # Look for all das sources which are configured and turned on
+  my @das_nodes = map { $_->get('glyphset') eq '_das' && $_->get('display') ne 'off' ? @{$_->get('logic_names')||[]} : () } $self->tree->nodes;
+  
+  return unless @das_nodes; # Return if no sources to be drawn
+  
+  my $hub = $self->hub;
+
+  # Check to see if they really exists, and get entries from get_all_das call
+  my %T = %{$hub->get_all_das};
+  my @das_sources = @T{@das_nodes};
+
+  return unless @das_sources; # Return if no sources exist
+  
+  my $species_defs = $hub->species_defs;
+
+  # Cache the DAS Coordinator object (with key das_coord)
+  $self->cache('das_coord',  
+    new Bio::EnsEMBL::ExternalData::DAS::Coordinator(
+      -sources => \@das_sources,
+      -proxy   => $species_defs->ENSEMBL_WWW_PROXY,
+      -noproxy => $species_defs->ENSEMBL_NO_PROXY,
+      -timeout => $species_defs->ENSEMBL_DAS_TIMEOUT
+    )
+  );
 }
 
 sub _merge {
@@ -1161,7 +1200,7 @@ sub generic_add {
 }
 
 sub add_das_tracks {
-  my ($self, $menu, $source, @extra) = @_;
+  my ($self, $menu, $source, $extra) = @_;
   my $node = $self->get_node($menu); 
   
   if (!$node && grep { $menu eq "${_}_external" } @{$self->{'transcript_types'}}) {
@@ -1182,7 +1221,7 @@ sub add_das_tracks {
   $desc .= sprintf ' [<a href="%s" rel="external">Homepage</a>]', $homepage if $homepage;
   
   my $track = $self->create_track('das_' . $source->logic_name, $source->label, {
-    @extra,
+    %{$extra || {}},
     _class      => 'DAS',
     glyphset    => '_das',
     display     => 'off',
@@ -1197,7 +1236,10 @@ sub add_das_tracks {
     ],
   });
   
-  $node->append($track) if $track;
+  if ($track) {
+    $node->append($track);
+    $self->has_das ||= 1;
+  }
 }
 
 #----------------------------------------------------------------------#
