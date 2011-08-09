@@ -17,7 +17,6 @@ use Text::Wrap qw(wrap);
 
 use Bio::EnsEMBL::DrawableContainer;
 use Bio::EnsEMBL::VDrawableContainer;
-use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 
 use EnsEMBL::Web::Document::Image;
 use EnsEMBL::Web::Document::Table;
@@ -212,36 +211,6 @@ sub glossary_mouseover {
   (my $text = $glossary{$entry}) =~ s/<.+?>//g;
 
   return $text ? qq{<span class="glossary_mouseover">$display_text<span class="floating_popup">$text</span></span>} : $display_text;
-}
-
-# Attach all das sources from an image config
-sub _attach_das {
-  my ($self, $image_config) = @_;
-
-  # Look for all das sources which are configured and turned on
-  my @das_nodes = map { $_->get('glyphset') eq '_das' && $_->get('display') ne 'off' ? @{$_->get('logic_names')||[]} : () } $image_config->tree->nodes;
-  
-  return unless @das_nodes; # Return if no sources to be drawn
-  
-  my $hub = $self->hub;
-
-  # Check to see if they really exists, and get entries from get_all_das call
-  my %T = %{$hub->get_all_das};
-  my @das_sources = @T{@das_nodes};
-
-  return unless @das_sources; # Return if no sources exist
-  
-  my $species_defs = $hub->species_defs;
-
-  # Cache the DAS Coordinator object (with key das_coord)
-  $image_config->cache('das_coord',  
-    Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
-      -sources => \@das_sources,
-      -proxy   => $species_defs->ENSEMBL_WWW_PROXY,
-      -noproxy => $species_defs->ENSEMBL_NO_PROXY,
-      -timeout => $species_defs->ENSEMBL_DAS_TIMEOUT
-    )
-  );
 }
 
 sub modal_form {
