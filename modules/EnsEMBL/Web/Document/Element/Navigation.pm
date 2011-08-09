@@ -95,7 +95,10 @@ sub content {
     my $counts     = $self->counts;
     my $all_params = !!$hub->object_types->{$hub->type};
     
-    $self->build_menu($_, $hub, $img_url, $counts, $all_params, $active, $nodes[-1]) for @nodes;
+    foreach (@nodes) {
+      $_->data->{'top_level'} = 1;
+      $self->build_menu($_, $hub, $img_url, $counts, $all_params, $active, $nodes[-1]);
+    }
     
     $menu .= $_->render for @nodes;
   }
@@ -122,7 +125,18 @@ sub build_menu {
   my $title        = $data->{'full_caption'} || $caption;
   my $count        = $data->{'count'};
   my $availability = $data->{'availability'};
-  my @append       = ([ 'img', scalar @children ? { src => "${img_url}open.gif", class => 'toggle' } : { src => "${img_url}leaf.gif" }]);
+  my @append;
+  my @classes;
+  
+  if ($self->renderer->{'_modal_dialog_'}) {
+    if ($data->{'top_level'}) {
+      @append = ([ 'img', { src => "${img_url}open2.gif", class => 'toggle' }]) if scalar @children;
+    } else {
+      @append = ([ 'img', { src => "${img_url}leaf.gif", class => 'toggle' }]);
+    }
+  } else {
+    @append = ([ 'img', scalar @children ? { src => "${img_url}open.gif", class => 'toggle' } : { src => "${img_url}leaf.gif" }]);
+  }
   
   if ($availability && $self->is_available($availability)) {
     # $node->data->{'code'} contains action and function where required, so setting function to undef is fine.
@@ -153,10 +167,15 @@ sub build_menu {
     }
     
     push @append, $ul;
+    push @classes, 'parent';
   }
   
+  push @classes, 'active'    if $node->id eq $active;
+  push @classes, 'top_level' if $data->{'top_level'};
+  push @classes, 'last'      if $node eq $last_child;
+  
   $node->node_name = 'li';
-  $node->set_attributes({ id => $data->{'id'}, class => ($node->id eq $active ? 'active' : '') . ($node eq $last_child ? ' last' : '') });
+  $node->set_attributes({ id => $data->{'id'}, class => join(' ', @classes) });
   $node->append_children(@append);
 }
 
