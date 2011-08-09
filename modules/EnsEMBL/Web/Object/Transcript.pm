@@ -1558,7 +1558,7 @@ sub get_genetic_variations {
   my $snp_data   = {};
 
   foreach my $sample (@samples) {
-    my $munged_transcript = $self->get_munged_slice($tsv_extent, 1);    
+    my $munged_transcript = $self->get_munged_slice('tsv_transcript', $tsv_extent, 1);    
     my $sample_slice      = $munged_transcript->[1]->get_by_strain($sample);
     my ($allele_info, $consequences) = $self->getAllelesConsequencesOnSlice($sample, 'tsv_transcript', $sample_slice);
     
