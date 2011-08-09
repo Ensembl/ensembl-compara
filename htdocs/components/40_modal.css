@@ -110,7 +110,7 @@ body.ie6  .modal_content .modal_nav ul.local_context li.parent li.last { padding
 
 #modal_panel .fixed_width .modal_nav               { width: 210px; float: none; position: absolute; margin: 0 -1px 0 3px; min-height: 100% }
 #modal_panel .fixed_width .modal_wrapper .panel    { margin-left: 220px; border-left: 1px solid [[PANEL_BORDER]]; }
-#modal_panel .fixed_width .no_local_context .panel { margin-left: 0; }
+#modal_panel .fixed_width .no_local_context .panel { margin-left: 0; border-left: 0; }
 
 body.ie6 #modal_panel .fixed_width .modal_wrapper        { margin-left: 0; }
 body.ie6 #modal_panel .fixed_width .modal_wrapper .panel { border-left: 0; }

@@ -16,7 +16,6 @@ div.modal_content div.species_select select { display: block; width: 100%; margi
 form.configuration div,
 form.configuration h2                                               { -webkit-margin-collapse: collapse; }
 form.configuration h1                                               { color: [[CONTRAST_HEADER]]; border-bottom: 1px solid [[PANEL_BORDER]]; display: none; padding: 2px; margin: 4px 0 6px; }
-form.configuration legend,
 form.configuration h1,
 form.configuration div.config h2                                    { cursor: pointer; font-size: 20px; }
 form.configuration div.config h2                                    { margin: 4px 0 9px; }
@@ -61,8 +60,11 @@ form.configuration div.track_order span.menu_option                 { cursor: n-
 form.configuration div.view_config fieldset                         { padding: 0; }
 form.configuration div.view_config fieldset legend                  { display: none; }
 form.configuration div.view_config fieldset div.form-field          { padding: 0 5px; }
+form.configuration div.view_config fieldset div.fnotes              { padding: 6px 5px; }
 
+form.export div.view_config h2,
 form.configuration.multi div.config h2                              { font-size: 15px; margin: 6px 0 2px; border-bottom-width: 0; }
+form.export div.view_config h2                                      { border-bottom-width: 1px; }
 form.configuration.multi div.config h3,
 form.configuration.multi div.config h4,
 form.configuration.multi div.config div.select_all                  { display: none!important; }
