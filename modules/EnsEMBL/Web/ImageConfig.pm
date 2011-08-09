@@ -116,38 +116,51 @@ sub new {
   # Add user defined data sources
   $self->load_user_tracks($session);
   
+  # Combine info and decorations into a single menu
+  my $decorations = $self->get_node('decorations') || $self->get_node('other');
+  my $information = $self->get_node('information');
+  
+  if ($decorations && $information) {
+    $decorations->set('caption', 'Information and decorations');
+    $decorations->append_children($information->nodes);
+  }
+  
   return $self;
 }
 
 sub menus {
   return $_[0]->{'menus'} ||= {
     # Sequence
-    sequence            => 'Sequence',
-    misc_feature        => 'Misc. regions',
-    marker              => 'Markers',
-    repeat              => 'Repeats',
+    seq_assembly        => 'Sequence and assembly',
+    sequence            => [ 'Sequence',        'seq_assembly' ],
+    misc_feature        => [ 'Misc. regions',   'seq_assembly' ],
+    marker              => [ 'Markers',         'seq_assembly' ],
+    simple              => [ 'Simple features', 'seq_assembly' ],
+    ditag               => [ 'Ditag features',  'seq_assembly' ],
     
     # Transcripts/Genes
-    transcript          => 'Genes',
-    prediction          => 'Prediction transcripts',
-    lrg                 => 'LRG transcripts',
+    gene_transcript     => 'Genes and transcripts',
+    transcript          => [ 'Genes',                  'gene_transcript' ],
+    prediction          => [ 'Prediction transcripts', 'gene_transcript' ],
+    lrg                 => [ 'LRG transcripts',        'gene_transcript' ],
+    rnaseq              => [ 'RNA-Seq models',         'gene_transcript' ],
     
     # Supporting evidence
     splice_sites        => 'Splice sites',
     evidence            => 'Evidence',
     
     # Alignments
-    dna_align_cdna      => 'cDNA/mRNA alignments',
-    dna_align_est       => 'EST alignments',
+    mrna_prot           => 'mRNA and protein alignments',
+    dna_align_cdna      => [ 'mRNA alignments',    'mrna_prot' ],
+    dna_align_est       => [ 'EST alignments',     'mrna_prot' ],
+    protein_align       => [ 'Protein alignments', 'mrna_prot' ],
+    protein_feature     => [ 'Protein features',   'mrna_prot' ],
     dna_align_other     => 'Other DNA alignments',
-    dna_align_rna       => 'RNA alignments',
-    rnaseq              => 'RNA-Seq',
+    dna_align_rna       => 'ncRNA',
     
     # Proteins
     domain              => 'Protein domains',
     gsv_domain          => 'Protein domains',
-    protein_align       => 'Protein alignments',
-    protein_feature     => 'Protein features',
     feature             => 'Protein features',
     
     # Variations
@@ -159,16 +172,17 @@ sub menus {
     functional          => 'Regulation',
     
     # Compara
-    pairwise_blastz     => 'BLASTz/LASTz alignments',
-    pairwise_other      => 'Pairwise alignment',
-    pairwise_tblat      => 'Translated blat alignments',
-    multiple_align      => 'Multiple alignments',
+    compara             => 'Comparative genomics',
+    pairwise_blastz     => [ 'BLASTz/LASTz alignments',    'compara' ],
+    pairwise_other      => [ 'Pairwise alignment',         'compara' ],
+    pairwise_tblat      => [ 'Translated blat alignments', 'compara' ],
+    multiple_align      => [ 'Multiple alignments',        'compara' ],
+    conservation        => [ 'Conservation regions',       'compara' ],
     synteny             => 'Synteny',
     
     # Other features
-    oligo               => 'Probe features',
-    ditag               => 'Ditag features',
-    simple              => 'Simple features',
+    repeat              => 'Repeat regions',
+    oligo               => 'Oligo probes',
     trans_associated    => 'Transcript features',
     
     # Info/decorations
@@ -349,15 +363,26 @@ sub remove_disabled_menus {
 # key and value pairs are the code and the text of the menu...
 sub create_menus {
   my $self = shift;
-  $self->tree->append_child($self->create_submenu($_, $self->menus->{$_})) for @_;
+  my $tree = $self->tree;
+  
+  foreach (@_) {
+    my $menu = $self->menus->{$_};
+    
+    if (ref $menu) {
+      my $parent = $tree->get_node($menu->[1]) || $tree->append_child($self->create_submenu($menu->[1], $self->menus->{$menu->[1]}));
+      $parent->append_child($self->create_submenu($_, $menu->[0]));
+    } else {
+      $tree->append_child($self->create_submenu($_, $menu));
+    }
+  }
 }
 
 sub create_submenu {
   my ($self, $code, $caption, $options) = @_;
   
   my $details = {
-    caption   => $caption, 
-    node_type => 'menu',
+    caption    => $caption, 
+    node_type  => 'menu',
     %{$options || {}}
   };
   
@@ -375,7 +400,7 @@ sub create_track {
   
   $details->{'strand'}    ||= 'b';      # Make sure we have a strand setting
   $details->{'display'}   ||= 'normal'; # Show unless we explicitly say no
-  $details->{'renderers'} ||= [qw(off Off normal Normal)];
+  $details->{'renderers'} ||= [qw(off Off normal On)];
   $details->{'colours'}   ||= $self->species_defs->colour($options->{'colourset'}) if exists $options->{'colourset'};
   $details->{'glyphset'}  ||= $code;
   $details->{'caption'}   ||= $caption;
@@ -447,6 +472,8 @@ sub load_user_tracks {
   my $menu = $self->get_node('user_data');
   
   return unless $menu;
+  
+  $self->tree->prepend($menu);
   
   my $hub  = $self->hub;
   my $user = $hub->user;
@@ -1027,7 +1054,7 @@ sub load_tracks {
   $self->add_options('information', [ 'opt_empty_tracks', 'Display empty tracks', undef, undef, 'off' ]);
   $self->tree->append_child($self->create_option('track_order')) if $self->get_parameter('sortable_tracks');
 }
- 
+
 sub load_configured_das {
   my $self = shift;
   my @extra = @_;
@@ -1039,10 +1066,38 @@ sub load_configured_das {
     next unless $source->is_on($self->{'type'});
     
     my ($category, $sub_category) = split ' ', $source->category;
-    my $key  = join '_', $category, $sub_category || 'external';
-    my $node = $self->get_node($category);
+    my $menu = $self->get_node($category);
     
-    $node->append($self->create_submenu($key, 'External data sources')) if $node && !$node->get_node($key);
+    if (!$menu && grep { $category eq $_ } @{$self->{'transcript_types'}}) {
+      foreach (@{$self->{'transcript_types'}}) {
+        $category = $_ and last if $menu = $self->get_node($_);
+      }
+    }
+        
+    my $key;
+    
+    if ($sub_category && $menu) {
+      $key  = join '_', $category, $sub_category;
+      
+      my $sub_menu = $menu->get_node($key);
+      my @children = $sub_menu ? @{$sub_menu->child_nodes} : ();
+      
+      # Make an external submenu unless the menu consist entirely of external sources
+      if (!$sub_menu || scalar(grep $_->get('_class'), @children) != scalar @children) {
+        $menu = $sub_menu || $menu->append($self->create_submenu($key, ucfirst $sub_category)) unless $menu->get_node("${key}_external");
+        $key  = "${key}_external";
+      }
+    } else {
+      $key = "${category}_external";
+    }
+    
+    if (!$menu) {
+      $self->create_menus($category);
+      $menu = $self->get_node($category);
+      $self->get_node('external_data')->after($menu) if $menu;
+    }
+    
+    $menu->append($self->create_submenu($key, 'External data (DAS)', { external => 1 })) if $menu && !$menu->get_node($key);
     
     $self->add_das_tracks($key, $source, @extra);
   }
@@ -1100,7 +1155,7 @@ sub generic_add {
   $menu->append($self->create_track($name, $data->{'name'}, {
     %$data,
     db        => $key,
-    renderers => [ 'off', 'Off', 'normal', 'Normal' ],
+    renderers => [ 'off', 'Off', 'normal', 'On' ],
     %$options
   }));
 }
@@ -1310,7 +1365,7 @@ sub add_qtl_features {
     colourset   => 'qtl',
     description => 'Quantative trait loci',
     display     => 'normal',
-    renderers   => [ 'off', 'Off', 'normal', 'Normal' ],
+    renderers   => [ 'off', 'Off', 'normal', 'On' ],
     strand      => 'r'
   }));
 }
@@ -1462,7 +1517,7 @@ sub add_repeat_features {
     description => 'All repeats',
     colourset   => 'repeat',
     display     => 'off',
-    renderers   => [qw(off Off normal Normal)],
+    renderers   => [qw(off Off normal On)],
     %options
   }));
   
@@ -1499,7 +1554,7 @@ sub add_repeat_features {
           colours     => $colours,
           description => "$data->{$key_2}{'desc'} ($key_3)",
           display     => 'off',
-          renderers   => [qw(off Off normal Normal)],
+          renderers   => [qw(off Off normal On)],
           %options
         }));
       }
@@ -1599,7 +1654,7 @@ sub add_synteny {
       description => qq{<a href="/info/docs/compara/analyses.html#synteny" class="cp-external">Synteny regions</a> between $self_label and $label},
       colours     => $colours,
       display     => 'off',
-      renderers   => [qw(off Off normal Normal)],
+      renderers   => [qw(off Off normal On)],
       height      => 4,
       strand      => 'r'
     }));
@@ -1680,7 +1735,7 @@ sub add_alignments {
         $options{'caption'}     = "$n_species way $program scores";
         $options{'description'} = qq{<a href="/info/docs/compara/analyses.html#conservation">$program conservation scores</a> based on the $row->{'name'}};
         
-        $alignments->{'multiple_align'}{"$row->{'id'}_scores"} = {
+        $alignments->{'conservation'}{"$row->{'id'}_scores"} = {
           %options,
           conservation_score => $row->{'conservation_score'},
           name               => "Conservation score for $row->{'name'}",
@@ -1689,13 +1744,13 @@ sub add_alignments {
           renderers          => [ 'off', 'Off', 'tiling', 'Tiling array' ],
         };
         
-        $alignments->{'multiple_align'}{"$row->{'id'}_constrained"} = {
+        $alignments->{'conservation'}{"$row->{'id'}_constrained"} = {
           %options,
           constrained_element => $row->{'constrained_element'},
           name                => "Constrained elements for $row->{'name'}",
           order               => sprintf('%12d::%s::%s', 1e12-$n_species*10+1, $row->{'type'}, $row->{'name'}),
           display             => $row->{'id'} == 352 ? 'compact' : 'off',
-          renderers           => [ 'off', 'Off', 'compact', 'Normal' ],
+          renderers           => [ 'off', 'Off', 'compact', 'On' ],
         };
       }
       
@@ -1705,7 +1760,7 @@ sub add_alignments {
         caption     => $row->{'name'},
         order       => sprintf('%12d::%s::%s', 1e12-$n_species*10-1, $row->{'type'}, $row->{'name'}),
         display     => 'off',
-        renderers   => [ 'off', 'Off', 'compact', 'Normal' ],
+        renderers   => [ 'off', 'Off', 'compact', 'On' ],
         description => qq{<a href="/info/docs/compara/analyses.html#conservation">$n_species way whole-genome multiple alignments</a>.; } . 
                        join('; ', sort map { $species_defs->species_label($_, 'no_formatting') } grep { $_ ne 'ancestral_sequences' } keys %{$row->{'species'}}),
       };
@@ -1752,7 +1807,7 @@ sub add_regulation_features {
     if ($fg_data{$key_2}{'renderers'}) {
       push @renderers, $_, $fg_data{$key_2}{'renderers'}{$_} for sort keys %{$fg_data{$key_2}{'renderers'}}; 
     } else {
-      @renderers = qw(off Off normal Normal);
+      @renderers = qw(off Off normal On);
     }
     
     $reg_regions->append($self->create_track("${type}_${key}_$key_2", $fg_data{$key_2}{'name'}, { 
@@ -1801,8 +1856,6 @@ sub add_regulation_builds {
   return unless $type;
   
   my $reg_feat = $menu->append($self->create_submenu('regulatory_features', 'Regulatory features'));
-  my $core     = $reg_feat->append($self->create_submenu('regulatory_features_core'));
-  my $other    = $reg_feat->append($self->create_submenu('regulatory_features_other'));
   
   my @cell_lines = sort keys %{$db_tables->{'cell_type'}{'ids'}};
   my (@renderers, $multi_flag);
@@ -1810,7 +1863,7 @@ sub add_regulation_builds {
   if ($fg_data{$key_2}{'renderers'}) {
     push @renderers, $_, $fg_data{$key_2}{'renderers'}{$_} for sort keys %{$fg_data{$key_2}{'renderers'}}; 
   } else {
-    @renderers = qw(off Off normal Normal);
+    @renderers = qw(off Off normal On);
   }
   
   # Add MultiCell first
@@ -1869,12 +1922,12 @@ sub add_regulation_builds {
     
     if (scalar @focus_sets && scalar @focus_sets <= scalar @ftypes) {
       # Add Core evidence tracks
-      $core->append($self->create_track("reg_feats_core_$cell_line", "Core evidence$label", { %options, type => 'core', description => $options{'description'}{'core'} }));
+      $reg_feat->append($self->create_track("reg_feats_core_$cell_line", "Core evidence$label", { %options, type => 'core', description => $options{'description'}{'core'} }));
     } 
 
     if (scalar @ftypes != scalar @focus_sets  && $cell_line ne 'MultiCell') {
       # Add 'Other' evidence tracks
-      $other->append($self->create_track("reg_feats_other_$cell_line", "Histones & Polymerases$label", { %options, type => 'other', description => $options{'description'}{'other'} }));
+      $reg_feat->append($self->create_track("reg_feats_other_$cell_line", "Histones & Polymerases$label", { %options, type => 'other', description => $options{'description'}{'other'} }));
     }
   }
   
@@ -2057,7 +2110,7 @@ sub add_copy_number_variant_probes {
   
   return unless $menu && $hashref->{'structural_variation'}{'rows'} > 0;
   
-  $menu = $self->get_node('structural_variation') || $self->create_submenu('structural_variation', 'Structural variants');
+  $menu = $self->get_node('structural_variation') || $menu->append($self->create_submenu('structural_variation', 'Structural variants'));
   
   my %options = (
     db         => $key,
