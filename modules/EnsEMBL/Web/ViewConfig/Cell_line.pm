@@ -68,13 +68,13 @@ sub set_evidence_types {
   my $tree = (ref $image_config ? $image_config : $self->hub->get_imageconfig($image_config))->tree;
   
   foreach my $type (qw(core other)) {
-    my $node = $tree->get_node("regulatory_features_$type");
+    my $node = $tree->get_node('regulatory_features');
     
     $self->{"${type}_evidence_types"} = [];
     
     next unless $node;
     
-    foreach ($node->nodes) {
+    foreach (grep $_->get('type') eq $type, $node->nodes) {
       push @{$self->{"${type}_evidence_types"}}, { cell_line => [split '_', $_->id]->[-1], display => $_->get('display') };
       $self->{'renderers'} ||= $_->get('renderers');
     }
@@ -129,12 +129,14 @@ sub form_evidence_types {
   my $hub           = $self->hub;
   my $set           = $hub->param('set');
   my $adaptor       = $hub->get_adaptor('get_FeatureTypeAdaptor', 'funcgen');
+  my %renderers     = @{$self->{'renderers'}};
   my $img_url       = $self->img_url;
   my @feature_types = map { sort { $a->name cmp $b->name } @{$adaptor->fetch_all_by_class($_)} } $set eq 'core' ? ('Open Chromatin', 'Transcription Factor') : qw(Polymerase Histone);
   my %filters       = ( '' => 'All classes' );
   my @columns       = @{$self->{"${set}_evidence_types"}};
   my $width         = (scalar @columns * 26) + 91; # Each td is 25px wide + 1px border. The first cell (th) is 90px + 1px border
-  my (@rows, $rows_html, @headers_html);
+  my $selected      = qq{<img class="tick" src="${img_url}tick.png" alt="Selected" title="Selected" /><span class="current">};
+  my (@rows, $rows_html, @headers_html, $last_class);
   
   $self->{'panel_type'} = 'FuncgenMatrix';
   
@@ -156,13 +158,10 @@ sub form_evidence_types {
   };
   
   my ($k, $v);
-  my %renderers      = @{$self->{'renderers'}};
-  my $renderer_html  = '<ul class="popup_menu">';
-  $renderer_html    .= qq{<li class="$k"><img title="$v" alt="$v" src="${img_url}render/$k.gif" class="Regulatory_evidence_$set" />$v</li>} while ($k, $v) = splice @{$self->{'renderers'}}, 0, 2;
-  $renderer_html    .= '</ul>';
-  $headers_html[1]   = $renderer_html;
-  
-  my $last_class;
+  my $renderer_html = qq{<ul class="popup_menu"><li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>};
+  $renderer_html   .= qq{<li class="$k"><img title="$v" alt="$v" src="${img_url}render/$k.gif" class="Regulatory_evidence_$set" /><span>$v</span></li>} while ($k, $v) = splice @{$self->{'renderers'}}, 0, 2;
+  $renderer_html   .= '</ul>';
+  $headers_html[1]  = $renderer_html;
   
   foreach (@feature_types) {
     my $feature_name = $_->name;
@@ -217,20 +216,22 @@ sub form_evidence_types {
   }
   
   foreach (@columns) {
-    my $c = $_->{'cell_line'};
-    my $d = $_->{'display'};
+    my $c     = $_->{'cell_line'};
+    my $d     = $_->{'display'};
+    (my $menu = $renderer_html) =~ s/(<li class="$d">.+?)<span>(.+?<\/li>)/$1$selected$2/;
     
     $headers_html[0] .= sprintf qq{<th class="$c"><p>$c</p>$select_all_col</th>}, $c, $c, $c, $c;
     $headers_html[2] .= qq{
       <th class="$c">
         <img class="menu_option" title="$renderers{$d}" alt="$renderers{$d}" src="${img_url}render/$d.gif">
         <input type="hidden" class="track_name" name="reg_feats_${set}_$c" value="$d">
-        $renderer_html
+        $menu
       </th>
     };
   }
   
   my $html = sprintf('
+    <h1>Regulation</h1>
     <div class="header_wrapper">
       <h2>%s</h2>
       <div class="help" title="Click for more information"></div>
@@ -251,7 +252,7 @@ sub form_evidence_types {
       <table class="funcgen_matrix" cellspacing="0" cellpadding="0">
         <thead>
           <tr><th class="first"></th>%s</tr>
-          <tr class="renderers"><th class="first select_all"><div class="menu_option"><h2>Track style:</h2><span>Enable/disable all</span></div>%s</th>%s</tr>
+          <tr class="renderers"><th class="first select_all"><div class="menu_option"><h2>Track style:</h2><em>Enable/disable all</em></div>%s</th>%s</tr>
         </thead>
         <tbody>
           %s
