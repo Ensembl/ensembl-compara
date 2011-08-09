@@ -55,11 +55,10 @@ sub init_config {
   my $hub         = $controller->hub;
   my $action      = $hub->action;
   my $view_config = $hub->get_viewconfig($action);
-  my $image_config;
+  my ($image_config, $search_box, $species_select);
   
   if ($view_config) {
     my $panel = $self->new_panel('Configurator', $controller, code => 'configurator');
-    my $species_select;
     
     $image_config = $hub->get_imageconfig($view_config->image_config, 'configurator', $hub->species);
     
@@ -70,8 +69,6 @@ sub init_config {
     $form->add_element(type => 'Hidden', name => 'component', value => $action, class => 'component');
     
     if ($image_config) {
-      my $top_panel = $self->new_panel('Configurator', $controller, code => 'configurator_top');
-    
       if ($image_config->multi_species) {
         foreach (@{$image_config->species_list}) {
           $species_select .= sprintf(
@@ -90,11 +87,11 @@ sub init_config {
           );
         }
         
-        $species_select = qq{<div style="float:left">Configure species: <select class="species">$species_select</select></div>} if $species_select;
+        $species_select = qq{<div class="species_select">Species to configure: <select class="species">$species_select</select></div>} if $species_select;
       }
       
-      $top_panel->set_content(qq{$species_select<div class="configuration_search"><input class="configuration_search_text" value="Find a track" /></div>});
-      $self->add_panel($top_panel);
+      $search_box = qq{<div class="configuration_search"><input class="configuration_search_text" value="Find a track" /></div>};
+      
       $self->active = $image_config->get_parameter('active_menu') || 'active_tracks';
     }
     
@@ -112,7 +109,7 @@ sub init_config {
       $panel->{'content'}   = join '', map $_->render, @{$form->child_nodes};
       $self->{'panel_type'} = $view_config->{'panel_type'} if $view_config->{'panel_type'};
     } else {
-      $panel->set_content($form->render);
+      $panel->set_content($species_select . $search_box . $form->render);
     }
     
     $self->add_panel($panel);
@@ -132,21 +129,25 @@ sub add_image_config_notes {
   my $img_url = $self->img_url;
   
   $panel->set_content(qq{
-    <h2>Key</h2>
-    <ul class="configuration_key">
-      <li><img src="${img_url}render/normal.gif" /><span>Track style</span></li>
-      <li><img src="${img_url}strand-f.png" /><span>Forward strand</span></li>
-      <li><img src="${img_url}strand-r.png" /><span>Reverse strand</span></li>
-      <li><img src="${img_url}star-on.png" /><span>Favourite track</span></li>
-      <li><img src="${img_url}info_blue_17.png" /><span>Track information</span></li>
-    </ul>
-    <h4>External tracks</h4>
-    <ul class="configuration_key">
-      <li><img src="${img_url}track-das.gif" /><span>Distributed Annotation Source</span></li>
-      <li><img src="${img_url}track-tmp.gif" /><span>Custom track - uploaded data</span></li>
-      <li><img src="${img_url}track-url.gif" /><span>Custom track - UCSC-style web resource</span></li>
-      <li><img src="${img_url}track-user.gif" /><span>Custom data saved to your user account</span></li>
-    </ul>
+    <div>
+      <h2>Key</h2>
+      <ul class="configuration_key">
+        <li><img src="${img_url}render/normal.gif" /><span>Track style</span></li>
+        <li><img src="${img_url}strand-f.png" /><span>Forward strand</span></li>
+        <li><img src="${img_url}strand-r.png" /><span>Reverse strand</span></li>
+        <li><img src="${img_url}star-on.png" /><span>Favourite track</span></li>
+        <li><img src="${img_url}info_blue_17.png" /><span>Track information</span></li>
+      </ul>
+    </div>
+    <div>
+      <h4>External tracks</h4>
+      <ul class="configuration_key">
+        <li><img src="${img_url}track-das.gif" /><span>Distributed Annotation Source</span></li>
+        <li><img src="${img_url}track-tmp.gif" /><span>Custom track - uploaded data</span></li>
+        <li><img src="${img_url}track-url.gif" /><span>Custom track - UCSC-style web resource</span></li>
+        <li><img src="${img_url}track-user.gif" /><span>Custom data saved to your user account</span></li>
+      </ul>
+    </div>
     <p class="space-below">Please note that the content of external tracks is not the responsibility of the Ensembl project.</p>
     <p>URL-based or DAS tracks may either slow down your ensembl browsing experience OR may be unavailable as these are served and stored from other servers elsewhere on the Internet.</p>
   });
