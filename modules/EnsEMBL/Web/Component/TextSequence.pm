@@ -256,6 +256,8 @@ sub get_sequence_data {
         @exons = grep { $_->seq_region_start <= $slice_end && $_->seq_region_end >= $slice_start } map @{$_->get_all_Exons}, @{$slice->get_all_PredictionTranscripts};
       } elsif ($exontype eq 'vega' || $exontype eq 'est') {
         @exons = map @{$_->get_all_Exons}, @{$slice->get_all_Genes('', $exontype)};
+      } elsif ($exontype eq 'core') {
+        @exons = map {($_->stable_id ne $config->{'gene_name'})?@{$_->get_all_Exons}:()} @{$slice->get_all_Genes}; 
       } else {
         @exons = map @{$_->get_all_Exons}, @{$slice->get_all_Genes};
       }
