@@ -278,7 +278,7 @@ sub add_fieldset {
   my $tree       = $self->tree;
   
   $fieldset->set_attribute('class', $class) if $class;
-  $fieldset->append_child('h2', { inner_HTML => $legend });
+  $fieldset->append_child('h2', { inner_HTML => $legend }) if $legend;
   
   $tree->append($tree->create_node(lc $div_class, { url => '#', availability => 1, caption => $legend, class => $div_class }));
   
