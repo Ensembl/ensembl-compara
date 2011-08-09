@@ -58,7 +58,6 @@ form.configuration div.config ul.popup_menu li:hover                { background
 form.configuration div.favourite_tracks img                         { vertical-align: top; }
 form.configuration div.track_order span.menu_option                 { cursor: n-resize; }
 form.configuration div.view_config fieldset                         { padding: 0; }
-form.configuration div.view_config fieldset legend                  { display: none; }
 form.configuration div.view_config fieldset div.form-field          { padding: 0 5px; }
 form.configuration div.view_config fieldset div.fnotes              { padding: 6px 5px; }
 
