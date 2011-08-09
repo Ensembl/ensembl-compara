@@ -35,11 +35,6 @@ sub append      { return $_[0]->append_child($_[1]);  }
 sub prepend     { return $_[0]->prepend_child($_[1]); }
 sub _flush_tree { $_[0]->{'user_data'} = {};          } # TODO: rename to flush_tree - called on Configuration tree in Document::Element::Configurator
 
-sub render {
-  my $self = shift;
-  return $self->{'display'} eq 'off' || $self->is_empty ? '' : $self->SUPER::render;
-}
-
 sub get_node {
   my ($self, $id) = @_;
   
