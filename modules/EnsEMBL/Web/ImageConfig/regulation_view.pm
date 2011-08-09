@@ -36,6 +36,7 @@ sub init {
   ));
   
   $self->load_tracks;
+  $self->load_configured_das('functional');
   
   $self->add_tracks('sequence',
     [ 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r' }]
@@ -79,7 +80,7 @@ sub init {
       { display => 'compact', menu => 'hidden' }
     );
     
-    push @{$self->{'tracks_to_remove'}}, "reg_feats_$cell_line", "reg_feats_core_$cell_line", "reg_feats_other_$cell_line";
+    $self->{'reg_feats_tracks'}{$_} = 1 for "reg_feats_$cell_line", "reg_feats_core_$cell_line", "reg_feats_other_$cell_line";
   }
   
   if ($self->{'code'} ne $self->{'type'}) {
@@ -97,24 +98,24 @@ sub init_top {
     [ 'fg_background_regulation', '', 'fg_background_regulation', { display => 'normal', strand => 'r', menu => 'no', tag => 0            }],
   );
   
-  $_->remove for map $self->get_node($_) || (), @{$self->{'tracks_to_remove'}};
+  $_->remove for map $self->get_node($_) || (), keys %{$self->{'reg_feats_tracks'}};
 }
 
 sub init_cell_line {
   my $self = shift;
-  $self->get_node($_)->remove for 'contig', 'transcript_core_ensembl';
+  $_->remove for grep !$self->{'reg_feats_tracks'}{$_->id}, $self->get_tracks;
 }
 
 sub init_bottom {
   my $self = shift;
+  
+  $_->remove for grep $_->id ne 'fg_regulatory_features_legend', $self->get_tracks;
   
   $self->add_tracks('other',
     [ 'fg_background_regulation', '', 'fg_background_regulation', { display => 'normal', strand => 'r', menu => 'no', tag => 0            }],
     [ 'scalebar',                 '', 'scalebar',                 { display => 'normal', strand => 'r', menu => 'no', name => 'Scale bar' }],
     [ 'ruler',                    '', 'ruler',                    { display => 'normal', strand => 'r', menu => 'no', name => 'Ruler'     }],
   );
-  
-  $_->remove for map $self->get_node($_) || (), @{$self->{'tracks_to_remove'}}, 'contig', 'transcript_core_ensembl';
   
   $self->modify_configs(
     [ 'fg_regulatory_features_legend' ],
