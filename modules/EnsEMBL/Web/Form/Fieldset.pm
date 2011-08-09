@@ -264,7 +264,7 @@ sub add_hidden {
   $hidden->set_attribute('id',    $params->{'id'})    if $params->{'id'};
   $hidden->set_attribute('class', $params->{'class'}) if $params->{'class'};
   my $reference = $self->first_child;
-  $reference = $reference->next_sibling while $reference && $reference->node_name eq 'input' || $reference->get_flag($self->_FLAG_LEGEND);
+  $reference = $reference->next_sibling while $reference && ($reference->node_name eq 'input' || $reference->get_flag($self->_FLAG_LEGEND));
   return $reference ? $self->insert_before($hidden, $reference) : $self->append_child($hidden);
 }
 
