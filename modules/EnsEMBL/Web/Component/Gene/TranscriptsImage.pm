@@ -30,8 +30,6 @@ sub content {
     image_width     => $object->param('i_width') || $self->image_width || 800,
     slice_number    => '1|1',
   });
-  
-  $self->_attach_das($image_config);
 
   my $key  = $image_config->get_track_key('transcript', $object);
   my $node = $image_config->get_node(lc $key);

@@ -49,9 +49,6 @@ sub content {
     $image_config->{'data_by_cell_line'} = $cell_line_data;
   } 
 
-  # Lets see if we have any das sources
-  $self->_attach_das($image_config);
-  
   $image_config->_update_missing($object);
   
   my $image = $self->new_image($slice, $image_config, $object->highlights);

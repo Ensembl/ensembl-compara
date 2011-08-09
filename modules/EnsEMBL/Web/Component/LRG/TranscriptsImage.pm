@@ -26,8 +26,6 @@ sub content {
     slice_number    => '1|1'
   });
   
-  $self->_attach_das($image_config);
-
   my $image = $self->new_image($slice, $image_config, [ $gene->stable_id ]);
   
   return if $self->_export_image($image);

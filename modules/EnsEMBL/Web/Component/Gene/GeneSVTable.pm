@@ -35,8 +35,6 @@ sub content {
     slice_number    => '1|1',
   });
   
-  $self->_attach_das($image_config);
-
 	# Transcript track
   my $key  = $image_config->get_track_key('transcript', $object);
   my $node = $image_config->get_node(lc $key);
