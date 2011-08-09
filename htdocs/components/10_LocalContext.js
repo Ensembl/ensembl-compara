@@ -8,11 +8,11 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
     this.elLk.links = $('ul.local_context li', this.el);
     
     $('img.toggle', this.elLk.links).bind('click', function () {
-      var li = $(this).parent(); 
+      var li  = $(this).parent();
       
-      li.toggleClass('open closed');
+      li.toggleClass('closed');
       
-      this.src = '/i/' + (li.hasClass('closed') ? 'closed' : 'open') + '.gif';
+      this.src = this.src.replace(/closed|open/, li.hasClass('closed') ? 'closed' : 'open');
       
       li = null;
       
