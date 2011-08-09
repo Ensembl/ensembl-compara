@@ -1,48 +1,76 @@
-div.configuration_search       { text-align: right; }
-div.configuration_search input { color: #999999; }
+div.config_wrapper                       { border-left: 1px solid [[PANEL_BORDER]]; }
+div.config_wrapper div.panel div.content { padding: 0 }
 
+body.ie6 div.config_wrapper              { border: 0 }
+
+div.modal_content div.configuration_search             { position: relative; float: right; top: 5px; }
+div.modal_content div.configuration_search img         { position: absolute; top: 2px; border: 1px solid; padding: 2px 3px; right: 3px; background: #FFF; }
+div.modal_content div.configuration_search input       { color: #999999; border: 1px solid #000; padding: 2px 3px; position: relative; right: 3px; width: 170px; }
+div.modal_content div.configuration_search input:hover { background: [[CONTRAST_BG]]; }
+
+div.modal_content div.species_select        { font-weight: bold; margin: 2px 0; padding: 0 10px; border-bottom: 1px solid [[PANEL_BORDER]]; }
+div.modal_content div.species_select select { display: block; width: 100%; margin-bottom: 5px; }
+
+/* configuration form */
+
+form.configuration div,
+form.configuration h2                                               { -webkit-margin-collapse: collapse; }
+form.configuration h1                                               { color: [[CONTRAST_HEADER]]; border-bottom: 1px solid [[PANEL_BORDER]]; display: none; padding: 2px; margin: 4px 0 6px; }
+form.configuration legend,
+form.configuration h1,
+form.configuration div.config h2                                    { cursor: pointer; font-size: 20px; }
+form.configuration div.config h2                                    { margin: 4px 0 9px; }
+form.configuration div.config h3                                    { margin: 10px 0 5px; color: [[PAGE_TEXT]]; text-decoration: underline; font-size: 14px; padding: 2px 5px; }
+form.configuration div.config h4                                    { margin: 10px 0 5px 5px; color: [[PAGE_TEXT]]; }
 form.configuration div.config img                                   { height: 17px; width: 17px; margin-right: 4px; padding: 2px; vertical-align: top; }
-form.configuration div.config div.select_all                        { margin-top: 10px; }
-form.configuration div.config div.select_all.first                  { margin-top: 0; }
+form.configuration div.config div.select_all                        { margin: 10px 0 5px; padding: 2px 0; }
+form.configuration div.config div.select_all strong                 { text-decoration: underline; font-size: 14px; padding: 2px 5px; }
+form.configuration div.config div.select_all ul.popup_menu          { margin: 18px 0 0 0; }
 form.configuration div.config .menu_option                          { cursor: pointer; vertical-align: middle; }
-form.configuration div.config h4                                    { margin: 10px 0 5px; }   
-form.configuration div.config h2.config_header                      { margin: 4px 0; cursor: pointer; border: 0; }
 form.configuration div.config ul.config_menu                        { margin: 0; padding: 0; list-style: none; }
-form.configuration div.config ul.config_menu li                     { margin: 0; padding: 0; list-style-image: none; font-weight: normal; clear: right; }
-form.configuration div.config ul.config_menu li div.desc            { margin: 5px 0 5px 25px; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid #CCC; }
+form.configuration div.config ul.config_menu li                     { margin: 0; padding: 0; list-style-image: none; font-weight: normal; clear: right; background-color: #FFF; }
+form.configuration div.config ul.config_menu li.track               { cursor: pointer; }
+form.configuration div.config ul.config_menu li.hidden              { display: none!important; }
+form.configuration div.config ul.config_menu li div.desc            { margin: 5px 0 5px 25px; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid [[PANEL_BORDER]]; }
 form.configuration div.config ul.config_menu li .controls           { float: right; margin: 2px -5px 0; height: 17px; }
-form.configuration div.config ul.config_menu li .controls div       { height: 100%; width: 17px; float: left; margin-right: 7px; cursor: pointer; }
+form.configuration div.config ul.config_menu li .controls div       { height: 100%; width: 17px; float: left; margin-right: 7px; }
 form.configuration div.config ul.config_menu li .controls .empty    { cursor: default; }
 form.configuration div.config ul.config_menu li .menu_help          { background: url(/i/info_toggle.png) no-repeat top left; }
 form.configuration div.config ul.config_menu li .menu_help.open     { background-position: bottom left; }
 form.configuration div.config ul.config_menu li .favourite          { background: url(/i/star.png) no-repeat top left; }
 form.configuration div.config ul.config_menu li.fav .favourite      { background-position: left bottom; }
-form.configuration div.config ul.selectable,                     
-form.configuration div.config ul.config_menu li ul.config_menu      { margin-left: 10px; }
-form.configuration div.config ul.config_menu li.col1                { background-color: [[IMAGE_BG1]]; }
-form.configuration div.config ul.config_menu li.col2                { background-color: [[IMAGE_BG2]]; }
-form.configuration div.config ul.config_menu li .strand             { background: url(/i/strand.png) no-repeat left top; cursor: default !important; }
+form.configuration div.config ul.config_menu                        { margin-left: 5px; }
+form.configuration div.config ul.config_menu li .strand             { background: url(/i/strand.png) no-repeat left top; cursor: default!important; }
 form.configuration div.config ul.config_menu li.r .strand           { background-position: bottom left; }
-form.configuration div.config ul.popup_menu                         { position: absolute; display: none; margin: 13px 0 0 11px; padding: 0; z-index: 3000; border: 1px solid #666; border-bottom: 0; cursor: pointer; }
-form.configuration div.config ul.popup_menu li                      { background: #EEE; color: #000; padding-right: 0.5em; margin: 0; font-weight: bold; border-bottom: 1px solid #666; list-style: none; list-style-image: none; }
+form.configuration div.config ul.popup_menu                         { position: absolute; display: none; margin: 13px 0 0 11px; padding: 0; z-index: 3000; border: 1px solid; cursor: pointer; }
+form.configuration div.config ul.popup_menu li                      { background-color: [[TINT_BG]]!important; color: #000; padding: 1px 6px 1px 0; margin: 0; font-weight: bold; list-style: none; list-style-image: none; }
+form.configuration div.config ul.popup_menu li.header               { background-color: [[BUTTON_BG]]!important; color: #FFF; text-align: center; padding: 2px 10px; border-bottom: 1px solid [[PAGE_TEXT]]; }
+form.configuration div.config ul.popup_menu li.header img           { position: absolute; top: -10px; right: -10px; border: 0; padding: 0; height: 20px; width: 20px; margin: 0; }
+form.configuration div.config ul.popup_menu li img.tick             { margin: 9px 0 0 -11px!important; padding: 2px 0; margin-left: 0; height: 11px; width: 11px; }
+form.configuration div.config ul.popup_menu li span                 { margin-left: 3px; }
+form.configuration div.config ul.popup_menu li span.current         { font-weight: normal; cursor: default; font-size: 0.9em; position: relative; top: 3px; }
+form.configuration div.config div.subset.first,
+form.configuration div.config div.subset.active                     { margin-top: -5px; }
+form.configuration div.config div.subset.active h4                  { display: block; margin-top: 10px; }
+form.configuration div.config div.select_all strong:hover,
+form.configuration div.config li.track:hover,
+form.configuration div.track_order ul.config_menu li:hover,
+form.configuration div.config ul.popup_menu li:hover                { background-color: [[CONFIG_HOVER]]; }
 form.configuration div.favourite_tracks img                         { vertical-align: top; }
 form.configuration div.track_order span.menu_option                 { cursor: n-resize; }
-form.configuration div.track_order ul.config_menu li                { background-color: [[IMAGE_BG1]]; }
+form.configuration div.view_config fieldset                         { padding: 0; }
+form.configuration div.view_config fieldset legend                  { display: none; }
+form.configuration div.view_config fieldset div.form-field          { padding: 0 5px; }
 
-form.configuration.multi div.config                                 { margin-bottom: 10px }
-form.configuration.multi div.config h4,                             
-form.configuration.multi div.config div.select_all                  { display: none !important; }
-form.configuration.multi div.config ul.config_menu                  { margin-left: 0 !important; }
+form.configuration.multi div.config h2                              { font-size: 15px; margin: 6px 0 2px; border-bottom-width: 0; }
+form.configuration.multi div.config h3,
+form.configuration.multi div.config h4,
+form.configuration.multi div.config div.select_all                  { display: none!important; }
+form.configuration.multi div.config ul.config_menu ul.config_menu   { margin-left: 0!important; }
 form.configuration.multi div.favourite_tracks                       { margin-bottom: 0; }
 form.configuration.multi div.favourite_tracks img                   { margin: 0; padding: 0; width: auto; height: auto; }
-
-form.configuration div.config div.subset.active h2.config_header     { display: block; margin-bottom: -6px; }
-form.configuration div.config div.subset.active h4                   { visibility: hidden; margin: 0 0 -6px; }
-form.configuration div.config div.subset.active div.select_all.first { margin-top: 10px; }
-
-form.configuration.subset div.config h2.config_header,
-form.configuration        div.config div.subset h2.config_header,
-form.configuration.multi  div.config div.subset.active h2.config_header { display: none; }
+form.configuration.multi div.config div.subset.first,
+form.configuration.multi div.config div.subset.active               { margin-top: 0; }
 
 body.ie6 form.configuration div.config ul.config_menu li            { height: 21px; }
 body.ie6 form.configuration div.config ul.popup_menu li             { height: auto; }
@@ -52,79 +80,83 @@ body.ie6 form.configuration div.config ul.config_menu li .controls  { margin-top
 body.ie7 form.configuration div.config ul.config_menu li .controls  { margin-top: -18px; }
 body.mac div.track_order span.menu_option                           { cursor: ns-resize; }
 
-div.funcgen_matrix h2                                           { margin-right: 5px; border: 0 !important; float: left; }
-div.funcgen_matrix div.header_wrapper                           { margin: 3px 0 10px 0; clear: both; }
-div.funcgen_matrix div.filter_wrapper                           { padding: 7px 0; border: 1px solid [[PANEL_BORDER]]; border-width: 1px 0; clear: both; }
-div.funcgen_matrix div.filter_wrapper h2                        { margin: 0 18px 18px 0; }
-div.funcgen_matrix div.filter_wrapper select                    { width: 185px; margin-bottom: 5px; }
-div.funcgen_matrix div.filter_wrapper input                     { width: 180px; }
-div.funcgen_matrix div.filter_wrapper .filter                   { position: relative; left: 3px; display: block; }
-div.funcgen_matrix input.filter                                 { color: #999999; }
-div.funcgen_matrix div.no_results                               { font-weight: bold; margin-top: 5px; display: none; }
-div.funcgen_matrix div.help                                     { background: url(/i/info_toggle.png) top left; position: relative; top: 2px; height: 17px; width: 17px; display: inline-block; cursor: pointer; }
-div.funcgen_matrix div.help.open                                { background-position: bottom left; }
-div.funcgen_matrix div.desc                                     { margin: 7px 0 2px; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid #CCC; text-align: left; clear: both; }
-div.matrix_key                                                  { margin-bottom: 45px; height: 41px; border-bottom: 1px solid [[PANEL_BORDER]]; clear: both; }
-div.matrix_key h2                                               { border: 0 !important; width: 75px; float: left; position: relative; top: 10px; }
-div.matrix_key div                                              { float: left; margin-right: 10px; font-weight: bold; position: relative; }
-div.matrix_key .key                                             { top: 7px; }
-div.matrix_key .key div                                         { display: block; top: 5px; }
-div.matrix_key .key .cell                                       { width: 25px; height: 25px; border: 1px solid black; top: 0; }
-table.funcgen_matrix                                            { border-collapse: collapse; cursor: pointer; clear: both; }
-table.funcgen_matrix tr                                         { height: 26px; }
-table.funcgen_matrix tr.hidden                                  { display: none!important; }
-table.funcgen_matrix tr th,                                     
-table.funcgen_matrix tr td                                      { width: 25px; height: 25px; padding: 0; }
-table.funcgen_matrix thead th p                                 { position: relative; left: 5px; bottom: -2px; width: 22px; font-size: 14px; }
-table.funcgen_matrix thead th p                                 { -webkit-transform: rotate(-45deg); -moz-transform: rotate(-45deg); -o-transform: rotate(-45deg); -ms-transform: rotate(-45deg); }
-table.funcgen_matrix thead th div.select_all_column             { width: auto; margin: 5px 0 0; padding: 2px 4px; z-index: 3001; opacity: 0.85; }
-table.funcgen_matrix thead th div.select_all_column div         { margin-top: 4px; }
-table.funcgen_matrix thead th div.select_all_column input       { margin: 0 3px; height: 16px; vertical-align: middle; }
-table.funcgen_matrix th.first                                   { width: 90px; vertical-align: middle; }
-table.funcgen_matrix th.first div.select_all_row                { width: 70px; margin-top: -22px; padding: 2px 4px; }
-table.funcgen_matrix th.first div.select_all_row input          { position: absolute; top: 5px; right: 2px; }
-table.funcgen_matrix td                                         { border: 1px solid black; }
-table.funcgen_matrix td.option,   div.matrix_key .key .off      { background: [[TINT_BG]]; }
-table.funcgen_matrix td.on,       div.matrix_key .key .on       { background: [[MH_BORDER]]; }
-table.funcgen_matrix td.disabled, div.matrix_key .key .disabled { background: #B5B5B5; }
-table.funcgen_matrix td.filter p                                { background: green; height: 25px; opacity: 0.4; filter: Alpha(Opacity=40); }
-table.funcgen_matrix td.highlight p                             { background: #DAA520; height: 25px; opacity: 0.4; filter: Alpha(Opacity=40); }
-table.funcgen_matrix tr.renderers                               { height: 30px; }
-table.funcgen_matrix tr.renderers th img.menu_option            { position: relative; left: 3px; top: 5px; }
-table.funcgen_matrix tr.renderers th ul.popup_menu              { margin-top: -2px; }
-table.funcgen_matrix tr.renderers th.first div                  { position: relative; top: -6px; }
-table.funcgen_matrix tr.renderers th.first ul.popup_menu        { margin: -6px 0 0; }
-table.funcgen_matrix tr.renderers th.first h2                   { margin: 0; padding: 0; float: none; }
-table.funcgen_matrix tr.renderers th.first span                 { font-size: 10px; font-weight: normal; color: #369; text-decoration: underline; display: block; }
-table.funcgen_matrix tr.gap                                     { height: 5px; }
-table.funcgen_matrix tr.gap td                                  { height: 5px; border: 0; }
+/* image config notes */
 
-body.ie table.funcgen_matrix th                                   { position: relative; }
-body.ie table.funcgen_matrix thead th p                           { filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3); position: absolute; bottom: 52px; width: 65px; font-weight: normal; }
-body.ie table.funcgen_matrix thead th div.select_all_column       { width: 140px; margin-top: 20px; filter: Alpha(Opacity=85); }
-body.ie table.funcgen_matrix thead th div.select_all_column div   { margin: 0; }
-body.ie table.funcgen_matrix th.first div.select_all_row          { left: 0; top: -6px; margin: 0; }
-   
-body.ie8 table.funcgen_matrix tr.renderers th ul.popup_menu       { width: 75px; }
-
-body.ie67 table.funcgen_matrix tr.renderers th ul.popup_menu      { margin: 19px 0 0 -20px; }
-
-body.ie7 table.funcgen_matrix thead th p                          { bottom: 3px; }
-body.ie7 table.funcgen_matrix thead th div.select_all_column      { margin-top: 25px; }
-body.ie7 table.funcgen_matrix tr.renderers th.first ul.popup_menu { margin: -6px 0 0; }
-   
-body.ie6 div.funcgen_matrix                                       { zoom: 1 }
-body.ie6 table.funcgen_matrix thead th p                          { bottom: 2px; }
-body.ie6 table.funcgen_matrix tr.renderers th.first div           { top: -8px; }
-body.ie6 table.funcgen_matrix tr.renderers th.first ul.popup_menu { margin: -8px 0 0; }
-body.ie6 table.funcgen_matrix th.first div.select_all_row         { width: 80px; }
-body.ie6 table.funcgen_matrix th.first div.select_all_row input   { right: 0; }
-
+div.image_config_notes                               { border-top: 1px solid [[PANEL_BORDER]]!important; padding: 5px; }
+div.image_config_notes .content div                  { float: left; margin-right: 30px; }
 div.image_config_notes ul.configuration_key          { list-style: none; padding: 0; margin-left: 5px; }
 div.image_config_notes ul.configuration_key li       { list-style-image: none; }
 div.image_config_notes ul.configuration_key li span,
 div.image_config_notes ul.configuration_key li img   { vertical-align: middle; padding-right: 5px; }
-div.image_config_notes h2                            { border: 0 !important; margin: 4px 0; }
-div.image_config_notes h4                            { margin: 0; }
+div.image_config_notes h2                            { border: 0!important; margin: 4px 0; }
+div.image_config_notes h4                            { margin: 4px 0; padding-top: 4px; }
 div.image_config_notes h4,
-div.image_config_notes p                             { padding-left: 3px; }
+div.image_config_notes p                             { clear: both; padding-left: 3px; }
+div.image_config_notes p.space-below                 { padding-top: 10px; border-top: 1px solid [[PANEL_BORDER]]; }
+
+/* funcgen matrix */
+
+div.config div.funcgen_matrix h1                                   { display: block; }
+div.config div.funcgen_matrix h2                                   { margin: 0 5px 0 0; border: 0; float: left; font-size: 15px; }
+div.config div.funcgen_matrix div.header_wrapper                   { margin: 3px 0 10px 0; clear: both; }
+div.config div.funcgen_matrix div.filter_wrapper                   { padding: 7px 0; border: 1px solid [[PANEL_BORDER]]; border-width: 1px 0; clear: both; }
+div.config div.funcgen_matrix div.filter_wrapper h2                { margin: 0 18px 18px 0; }
+div.config div.funcgen_matrix div.filter_wrapper select            { width: 185px; margin-bottom: 5px; }
+div.config div.funcgen_matrix div.filter_wrapper input             { width: 180px; }
+div.config div.funcgen_matrix div.filter_wrapper .filter           { position: relative; left: 3px; display: block; }
+div.config div.funcgen_matrix input.filter                         { color: #999999; }
+div.config div.funcgen_matrix div.no_results                       { font-weight: bold; margin-top: 5px; display: none; }
+div.config div.funcgen_matrix div.help                             { background: url(/i/info_toggle.png) top left; position: relative; top: 2px; height: 17px; width: 17px; display: inline-block; cursor: pointer; }
+div.config div.funcgen_matrix div.help.open                        { background-position: bottom left; }
+div.config div.funcgen_matrix div.desc                             { margin: 7px 0 2px; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid #CCC; text-align: left; clear: both; }
+div.config div.matrix_key                                          { margin-bottom: 45px; height: 41px; border-bottom: 1px solid [[PANEL_BORDER]]; clear: both; }
+div.config div.matrix_key h2                                       { border: 0; width: 75px; float: left; position: relative; top: 10px; }
+div.config div.matrix_key div                                      { float: left; margin-right: 10px; font-weight: bold; position: relative; }
+div.config div.matrix_key .key                                     { top: 7px; }
+div.config div.matrix_key .key div                                 { display: block; top: 5px; }
+div.config div.matrix_key .key .cell                               { width: 25px; height: 25px; border: 1px solid black; top: 0; }
+table.funcgen_matrix                                               { border-collapse: collapse; cursor: pointer; clear: both; }
+table.funcgen_matrix tr                                            { height: 26px; }
+table.funcgen_matrix tr.hidden                                     { display: none!important; }
+table.funcgen_matrix tr th,                                     
+table.funcgen_matrix tr td                                         { width: 25px; height: 25px; padding: 0; }
+table.funcgen_matrix thead th p                                    { position: relative; left: 5px; bottom: -2px; width: 22px; font-size: 14px; }
+table.funcgen_matrix thead th p                                    { -webkit-transform: rotate(-45deg); -moz-transform: rotate(-45deg); -o-transform: rotate(-45deg); -ms-transform: rotate(-45deg); }
+table.funcgen_matrix thead th div.select_all_column                { width: auto; margin: 5px 0 0; padding: 2px 4px; z-index: 3001; opacity: 0.85; }
+table.funcgen_matrix thead th div.select_all_column div            { margin-top: 4px; }
+table.funcgen_matrix thead th div.select_all_column input          { margin: 0 3px; height: 16px; vertical-align: middle; }
+table.funcgen_matrix th.first                                      { width: 90px; vertical-align: middle; }
+table.funcgen_matrix th.first div.select_all_row                   { width: 70px; margin-top: -22px; padding: 2px 4px; }
+table.funcgen_matrix th.first div.select_all_row input             { position: absolute; top: 5px; right: 2px; }
+table.funcgen_matrix td                                            { border: 1px solid black; }
+table.funcgen_matrix td.option,   div.matrix_key .key .off         { background-color: [[TINT_BG]]; }
+table.funcgen_matrix td.on,       div.matrix_key .key .on          { background-color: [[MH_BORDER]]; }
+table.funcgen_matrix td.disabled, div.matrix_key .key .disabled    { background-color: #B5B5B5; }
+table.funcgen_matrix td.filter p                                   { background-color: #008000; height: 25px; opacity: 0.4; filter: Alpha(Opacity=40); }
+table.funcgen_matrix td.highlight p                                { background-color: #DAA520; height: 25px; opacity: 0.4; filter: Alpha(Opacity=40); }
+table.funcgen_matrix tr.renderers                                  { height: 30px; }
+table.funcgen_matrix tr.renderers th img.menu_option               { position: relative; left: 3px; top: 5px; }
+table.funcgen_matrix tr.renderers th ul.popup_menu                 { margin-top: -2px; }
+table.funcgen_matrix tr.renderers th.first div                     { position: relative; top: -6px; }
+table.funcgen_matrix tr.renderers th.first ul.popup_menu           { margin: -6px 0 0; }
+table.funcgen_matrix tr.renderers th.first h2                      { margin: 0; padding: 0; float: none; }
+table.funcgen_matrix tr.renderers th.first em                      { font-size: 10px; font-weight: normal; font-style: normal; color: #369; text-decoration: underline; display: block; }
+table.funcgen_matrix tr.gap                                        { height: 5px; }
+table.funcgen_matrix tr.gap td                                     { height: 5px; border: 0; }
+
+body.ie   table.funcgen_matrix th                                  { position: relative; }
+body.ie   table.funcgen_matrix thead th p                          { filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3); position: absolute; bottom: 52px; width: 65px; font-weight: normal; }
+body.ie   table.funcgen_matrix thead th div.select_all_column      { width: 140px; margin-top: 20px; filter: Alpha(Opacity=85); }
+body.ie   table.funcgen_matrix thead th div.select_all_column div  { margin: 0; }
+body.ie   table.funcgen_matrix th.first div.select_all_row         { left: 0; top: -6px; margin: 0; }
+body.ie8  table.funcgen_matrix tr.renderers th ul.popup_menu       { width: 75px; }
+body.ie67 table.funcgen_matrix tr.renderers th ul.popup_menu       { margin: 19px 0 0 -20px; }
+body.ie7  table.funcgen_matrix thead th p                          { bottom: 3px; }
+body.ie7  table.funcgen_matrix thead th div.select_all_column      { margin-top: 25px; }
+body.ie7  table.funcgen_matrix tr.renderers th.first ul.popup_menu { margin: -6px 0 0; }
+body.ie6  div.funcgen_matrix                                       { zoom: 1 }
+body.ie6  table.funcgen_matrix thead th p                          { bottom: 2px; }
+body.ie6  table.funcgen_matrix tr.renderers th.first div           { top: -8px; }
+body.ie6  table.funcgen_matrix tr.renderers th.first ul.popup_menu { margin: -8px 0 0; }
+body.ie6  table.funcgen_matrix th.first div.select_all_row         { width: 80px; }
+body.ie6  table.funcgen_matrix th.first div.select_all_row input   { right: 0; }
