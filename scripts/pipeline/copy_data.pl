@@ -854,7 +854,7 @@ sub copy_constrained_elements {
   ## Check min and max of the relevant internal IDs in the FROM database
   my $sql = "SELECT MIN(ce.constrained_element_id), MAX(ce.constrained_element_id) FROM constrained_element ce WHERE "
         . ($trust_ce
-            ? " ce.ce.constrained_element_id BETWEEN $lower_limit AND $upper_limit "
+            ? " ce.constrained_element_id BETWEEN $lower_limit AND $upper_limit "
             : " ce.method_link_species_set_id = '$mlss_id'"
         );
 
