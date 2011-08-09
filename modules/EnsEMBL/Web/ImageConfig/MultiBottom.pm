@@ -24,19 +24,19 @@ sub init {
     marker
     transcript
     prediction
-    protein_align 
     dna_align_cdna
     dna_align_est 
     dna_align_rna 
     dna_align_other 
+    protein_align
     rnaseq
-    oligo 
     simple
     misc_feature
-    repeat
     variation 
     somatic 
     functional
+    oligo
+    repeat
     decorations 
     information 
   ));

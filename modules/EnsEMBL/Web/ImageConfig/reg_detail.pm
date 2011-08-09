@@ -19,13 +19,14 @@ sub init {
     transcript
     prediction
     dna_align_rna
-    oligo
     simple
     misc_feature
-    repeat
     functional
     multiple_align
+    conservation
     variation
+    oligo
+    repeat
     other
     information
   ));

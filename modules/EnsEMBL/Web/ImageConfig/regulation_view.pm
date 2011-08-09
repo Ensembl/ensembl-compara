@@ -23,13 +23,14 @@ sub init {
     transcript
     prediction
     dna_align_rna
-    oligo
     simple
     misc_feature
-    repeat
     functional
     multiple_align
+    conservation
     variation
+    oligo
+    repeat
     other
     information
   ));
@@ -69,13 +70,13 @@ sub init {
     # Turn on core evidence track
     $self->modify_configs(
       [ "reg_feats_core_$cell_line" ],
-      { display => $display }
+      { display => $display, menu => 'hidden' }
     );
    
     # Turn on supporting evidence track
     $self->modify_configs(
       [ "reg_feats_other_$cell_line" ],
-      { display => 'compact' }
+      { display => 'compact', menu => 'hidden' }
     );
     
     push @{$self->{'tracks_to_remove'}}, "reg_feats_$cell_line", "reg_feats_core_$cell_line", "reg_feats_other_$cell_line";

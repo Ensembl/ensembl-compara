@@ -27,27 +27,28 @@ sub init {
     trans_associated
     transcript
     prediction
-    protein_align
-    protein_feature
     dna_align_cdna
     dna_align_est
     dna_align_rna
     dna_align_other
+    protein_align
+    protein_feature
     rnaseq
-    oligo
     ditag
     external_data
     user_data
     simple
     misc_feature
-    repeat
     variation
     somatic
     functional
     multiple_align
+    conservation
     pairwise_blastz
     pairwise_tblat
     pairwise_other
+    oligo
+    repeat
     decorations
     information
   ));
@@ -153,8 +154,6 @@ sub init {
       [ "reg_feats_core_$cell_line", "reg_feats_other_$cell_line" ],
       { menu => 'hidden' }
     );
-    
-    $self->get_node($_)->set('menu', 'hidden') for qw(regulatory_features_core regulatory_features_other);
   }
 }
 
