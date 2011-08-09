@@ -21,6 +21,7 @@ sub init {
   });
   
   $self->create_menus(qw(
+    user_data
     sequence
     marker
     transcript
@@ -29,7 +30,6 @@ sub init {
     variation
     somatic
     external_data
-    user_data
     decorations
     information
   ));
@@ -76,7 +76,7 @@ sub init {
     { display => 'off', menu => 'yes' }
   );
 
-  $self->load_configured_das('strand' => 'r');
+  $self->load_configured_das({ strand => 'r' });
 
 
   $self->add_tracks('decorations',

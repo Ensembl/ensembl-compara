@@ -54,6 +54,8 @@ sub init {
     { depth => 25, height => 6 }
   );
   
+  $self->load_configured_das('functional');
+  
   # Turn off cell line wiggle tracks
   my @cell_lines = sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
   
