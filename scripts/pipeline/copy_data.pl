@@ -162,19 +162,23 @@ my $mlss_id = undef;
 #will only update the genomic_align table.
 my $trust_to = 0; 
 
+#If true, assume that the range of ce_ids does not need to be shifted.
+my $trust_ce = 0;
+
 #If true, then add new data to existing set of alignments
 my $merge = 0;
 
 GetOptions(
-    "help" => \$help,
+    "help"      => \$help,
     "reg-conf|reg_conf|registry=s" => \$reg_conf,
-    "from=s" => \$from_name,
-    "to=s" => \$to_name,
+    "from=s"    => \$from_name,
+    "to=s"      => \$to_name,
     "from_url=s" => \$from_url,
-    "to_url=s" => \$to_url,
+    "to_url=s"  => \$to_url,
     "mlss_id=i" => \$mlss_id,
-    "trust_to!"  => \$trust_to,
-    "merge!" => \$merge,
+    "trust_to!" => \$trust_to,
+    "merge!"    => \$merge,
+    'trust_ce!' => \$trust_ce,
   );
 
 # Print Help and exit if help is requested
@@ -844,19 +848,22 @@ sub copy_constrained_elements {
   exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
       "method_link_species_set_id = $mlss_id");
 
-  ## Check min and max of the relevant internal IDs in the FROM database
-  my $sth = $from_dba->dbc->prepare("SELECT
-        MIN(ce.constrained_element_id), MAX(ce.constrained_element_id)
-      FROM constrained_element ce
-      WHERE
-        ce.method_link_species_set_id = ?");
+  my $lower_limit = $mlss_id * 10**10;
+  my $upper_limit = ($mlss_id + 1) * 10**10;
 
-  $sth->execute($mlss_id);
+  ## Check min and max of the relevant internal IDs in the FROM database
+  my $sql = "SELECT MIN(ce.constrained_element_id), MAX(ce.constrained_element_id) FROM constrained_element ce WHERE "
+        . ($trust_ce
+            ? " ce.ce.constrained_element_id BETWEEN $lower_limit AND $upper_limit "
+            : " ce.method_link_species_set_id = '$mlss_id'"
+        );
+
+  my $sth = $from_dba->dbc->prepare( $sql );
+
+  $sth->execute();
   my ($min_ce, $max_ce) = $sth->fetchrow_array();
   $sth->finish();
 
-  my $lower_limit = $mlss_id * 10**10;
-  my $upper_limit = ($mlss_id + 1) * 10**10;
   my $fix;
   my $step = 10000;
 
