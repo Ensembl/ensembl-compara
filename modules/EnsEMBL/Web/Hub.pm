@@ -548,6 +548,7 @@ sub get_imageconfig {
   
   if ($image_config) {
     $session->apply_to_image_config($image_config, $type, $code);
+    $image_config->attach_das if $image_config->has_das;
     return $image_config;
   } else {
     $self->dynamic_use_failure($module_name);
