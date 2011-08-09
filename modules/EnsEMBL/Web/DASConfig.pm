@@ -279,6 +279,8 @@ sub _guess_views {
     contigviewtop
     contigviewbottom
     gene_summary
+    regulation_view
+    generegview
   ) if $positional;
 
   push @views, qw(
