@@ -125,6 +125,9 @@ sub pipeline_create_commands {
         
         'mkdir -p '.$self->o('work_dir'),
         'mkdir -p '.$self->o('blastdb_dir'),
+
+            # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
+        'which lfs && lfs getstripe '.$self->o('blastdb_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('blastdb_dir').' -c -1',
     ];
 }
 
@@ -549,16 +552,16 @@ sub pipeline_analyses {
 =head2 rel.64 stats
 
     sequences to cluster:       3,438,941           [ SELECT count(*) from sequence; ]
-    distances by Blast:         ?                   [ SELECT count(*) from mcl_sparse_matrix; ]
+    distances by Blast:         620,587,342         [ SELECT count(*) from mcl_sparse_matrix; ]
 
-    total running time:         ?
+    total running time:         5 days
     uniprot_loading time:       3h                  {20 x pfetch}
-    blasting time:              ?
-    mcxload running time:       ?
-    mcl running time:           ?
+    blasting time:              1.9 days
+    mcxload running time:       3.4h
+    mcl running time:           7.1h
 
-    memory used by mcxload:     ?
-    memory used by mcl:         ?
+    memory used by mcxload:     17G RAM + 17G SWAP  [ bacct -l [ SELECT max(process_id) FROM worker JOIN analysis USING(analysis_id) WHERE logic_name='mcxload_matrix' ] ]
+    memory used by mcl:         21G RAM + 21G SWAP  [ bacct -l [ SELECT max(process_id) FROM worker JOIN analysis USING(analysis_id) WHERE logic_name='mcl' ] ]
 
 =head2 rel.63 stats
 
