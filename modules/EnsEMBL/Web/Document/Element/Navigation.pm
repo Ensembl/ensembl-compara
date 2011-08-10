@@ -72,7 +72,7 @@ sub init {
  
   $self->tree($configuration->{'_data'}{'tree'});
   $self->active($action);
-  $self->caption(ref $object ? $object->short_caption : $configuration->short_caption);
+  $self->caption(ref $object && $object->short_caption ? $object->short_caption : $configuration->short_caption);
   $self->counts($object->counts) if ref $object;
   $self->availability(ref $object ? $object->availability : {});     
   
