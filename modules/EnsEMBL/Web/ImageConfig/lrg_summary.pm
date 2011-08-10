@@ -15,7 +15,6 @@ sub init {
   });
 
   $self->create_menus(qw(
-    user_data
     sequence
     transcript
     prediction
@@ -24,6 +23,7 @@ sub init {
     somatic
     functional
     external_data
+    user_data
     other
   ));
   

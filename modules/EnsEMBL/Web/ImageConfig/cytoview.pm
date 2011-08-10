@@ -21,7 +21,6 @@ sub init {
   });
   
   $self->create_menus(qw(
-    user_data
     sequence
     marker
     transcript
@@ -30,6 +29,7 @@ sub init {
     variation
     somatic
     external_data
+    user_data
     decorations
     information
   ));

@@ -22,7 +22,6 @@ sub init {
   
   # First add menus in the order you want them for this display
   $self->create_menus(qw(
-    user_data
     sequence
     marker
     trans_associated
@@ -49,6 +48,7 @@ sub init {
     oligo
     repeat
     external_data
+    user_data
     decorations
     information
   ));
