@@ -13,7 +13,7 @@
 
     A pipeline to create the EnsEMBL core database with ancestral sequences merged from different sources.
 
-    In rel.64 it took ? to run.
+    In rel.64 it took ~30min to run.
 
 =head1 CONTACT
 
@@ -40,6 +40,8 @@ sub default_options {
 
         'pipeline_name' => 'ensembl_ancestral_'.$self->o('rel_with_suffix'),        # name used by the beekeeper to prefix job names on the farm
 
+        'merge_script'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/copy_ancestral_core.pl',
+
         'pipeline_db' => {
             -host   => 'compara1',
             -port   => 3306,
@@ -57,7 +59,6 @@ sub default_options {
             -dbname => 'lg4_ensembl_ancestral_63',
         },
 
-        'merge_script'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/copy_ancestral_core.pl',
     };
 }
 
@@ -82,7 +83,6 @@ sub resource_classes {
 }
 
 
-
 sub pipeline_analyses {
     my ($self) = @_;
     return [
@@ -103,17 +103,17 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_merge_jobs',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'     => [
+                'inputlist'         => [        # this table needs to be edited prior to running the pipeline:
                         # copying from previous release:
-                    [ '505' => $self->dbconn_2_url('prev_ancestral_db'), ],             # 3-way birds
-                    [ '528' => $self->dbconn_2_url('prev_ancestral_db'), ],             # 5-way fish
+                    [ '505' => $self->dbconn_2_url('prev_ancestral_db'), ],                                                 # 3-way birds
+                    [ '528' => $self->dbconn_2_url('prev_ancestral_db'), ],                                                 # 5-way fish
 
                         # copying from new sources:
-                    [ '538' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_6way_64_ancestral_core' ],         # 6-way primates
-                    [ '537' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_12way_64_ancestral_core' ],        # 12-way mammals
+                    [ '538' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_6way_64_ancestral_core' ],   # 6-way primates
+                    [ '537' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_12way_64_ancestral_core' ],  # 12-way mammals
                 ],
-                'input_id'              => { 'mlss_id' => '#_0#', 'from_url' => '#_1#' },
-                'fan_branch_code'       => 2,
+                'input_id'          => { 'mlss_id' => '#_0#', 'from_url' => '#_1#' },
+                'fan_branch_code'   => 2,
             },
             -flow_into => {
                 2 => [ 'merge_an_ancestor' ],
