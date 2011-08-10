@@ -41,7 +41,7 @@ sub default_options {
         'pipeline_name' => 'ensembl_ancestral_'.$self->o('rel_with_suffix'),        # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {
-            -host   => 'compara2',
+            -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -52,8 +52,8 @@ sub default_options {
             -driver => 'mysql',
             -host   => 'compara1',
             -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
+            -user   => 'ensadmin',
+            -pass   => $self->o('password'),
             -dbname => 'lg4_ensembl_ancestral_63',
         },
 
@@ -72,6 +72,17 @@ sub pipeline_create_commands {
 }
 
 
+sub resource_classes {
+    my ($self) = @_;
+    return {
+         0 => { -desc => 'default',          'LSF' => '' },
+         1 => { -desc => 'urgent',           'LSF' => '-q yesterday' },
+         2 => { -desc => 'more_mem',         'LSF' => '-M5000000 -R "select[mem>5000] rusage[mem=5000]"' },
+    };
+}
+
+
+
 sub pipeline_analyses {
     my ($self) = @_;
     return [
@@ -86,6 +97,7 @@ sub pipeline_analyses {
             -flow_into  => {
                 1 => [ 'generate_merge_jobs' ],
             },
+            -rc_id => 1,
         },
 
         {   -logic_name => 'generate_merge_jobs',
@@ -97,19 +109,26 @@ sub pipeline_analyses {
                     [ '528' => $self->dbconn_2_url('prev_ancestral_db'), ],             # 5-way fish
 
                         # copying from new sources:
-                    [ '538' => 'mysql://ensro@compara3/sf5_compara_6way_64_ancestral_core' ],         # 6-way primates
-                    [ '537' => 'mysql://ensro@compara3/sf5_compara_12way_64_ancestral_core' ],        # 12-way mammals
+                    [ '538' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_6way_64_ancestral_core' ],         # 6-way primates
+                    [ '537' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_12way_64_ancestral_core' ],        # 12-way mammals
                 ],
-                'input_id'              => { 'mlss_id' => '#_0#', 'url' => '#_1#' },
+                'input_id'              => { 'mlss_id' => '#_0#', 'from_url' => '#_1#' },
                 'fan_branch_code'       => 2,
             },
             -flow_into => {
-                2 => [ 'merge_a_source' ],
+                2 => [ 'merge_an_ancestor' ],
             },
+            -rc_id => 1,
         },
 
-        {   -logic_name    => 'merge_a_source',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        {   -logic_name    => 'merge_an_ancestor',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters    => {
+                'to_url' => $self->dbconn_2_url('pipeline_db'),
+                'cmd'    => $self->o('merge_script').' --from_url #from_url# --to_url #to_url# --mlss_id #mlss_id#',
+            },
+            -hive_capacity  => 1,   # do them one-by-one
+            -rc_id => 2,
         },
     ];
 }
