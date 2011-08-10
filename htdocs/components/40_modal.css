@@ -69,8 +69,9 @@ body.ie6 .modal_title .modal_close { background-image: url(/i/cp_close.gif); }
 .modal_content .modal_nav ul.local_context li.last                { background-image: none; }
 .modal_content .modal_nav ul.local_context li                     { cursor: pointer; width: auto; }
 .modal_content .modal_nav ul.local_context li ul                  { padding: 0; }
-.modal_content .modal_nav ul.local_context li a                   { float: left; margin-left: 19px; }
-.modal_content .modal_nav ul.local_context li a.disabled          { color: [[PAGE_TEXT]]; cursor: text; }
+.modal_content .modal_nav ul.local_context li a,
+.modal_content .modal_nav ul.local_context li .disabled           { float: left; margin-left: 19px; }
+.modal_content .modal_nav ul.local_context li .disabled           { color: [[PAGE_TEXT]]; cursor: text; }
 .modal_content .modal_nav ul.local_context li img                 { float: left;  margin-top: 1px; } 
 .modal_content .modal_nav ul.local_context li ul                  { clear: both; }
 .modal_content .modal_nav ul.local_context li .count              { float: right; margin: 0 3px 0 10px; color: [[MH_BORDER]]; }
@@ -84,8 +85,10 @@ body.ie6 .modal_title .modal_close { background-image: url(/i/cp_close.gif); }
 .modal_content .modal_nav ul.local_context li.top_level li a,
 .modal_content .modal_nav ul.local_context li.top_level li .count { font-weight: normal; padding-bottom: 0; }
 .modal_content .modal_nav ul.local_context li.parent              { padding-bottom: 0; }
-.modal_content .modal_nav ul.local_context li.parent a            { margin-left: 0; }
-.modal_content .modal_nav ul.local_context li.parent li a         { margin-left: 7px; }
+.modal_content .modal_nav ul.local_context li.parent a,
+.modal_content .modal_nav ul.local_context li.parent .disabled    { margin-left: 0; }
+.modal_content .modal_nav ul.local_context li.parent li a,
+.modal_content .modal_nav ul.local_context li.parent li .disabled { margin-left: 7px; }
 .modal_content .modal_nav ul.local_context li.parent li,
 .modal_content .modal_nav ul.local_context li.parent ul           { background-image: url(/i/line.gif); background-repeat: repeat-y; }
 .modal_content .modal_nav ul.local_context li.parent li.last      { background-image: url(/i/last.gif); background-repeat: no-repeat; padding-bottom: 1px; }
