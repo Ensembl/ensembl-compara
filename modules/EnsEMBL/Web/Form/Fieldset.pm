@@ -194,7 +194,7 @@ sub _add_element {## TODO - remove prefixed underscore once compatibile
     push @$elements, $self->add_element($_) for @$params;
     return $elements;
   }
-  
+
   my $element = $self->dom->create_element('form-element-'.$params->{'type'});
 
   #error handling
@@ -227,6 +227,7 @@ sub _add_button {## TODO - remove prefixed underscore once compatibile
   ## @return Form::Field object with embedded buttons
   my ($self, $params) = @_;
   $params->{'elements'} = $params->{'buttons'} if $params->{'buttons'};
+  $params->{'type'} = $params->{'type'} eq 'button' ? 'button' : 'submit';
   $params->{'inline'} = 1;
   $params->{'field_class'} = $self->CSS_CLASS_BUTTON.'-'.$params->{'align'} if $params->{'align'} =~ /^(centre|center|left|right)$/;
   delete $params->{'buttons'};
