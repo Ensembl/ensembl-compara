@@ -1,3 +1,40 @@
+
+=pod 
+
+=head1 NAME
+
+    Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper
+
+=cut
+
+=head1 SYNOPSIS
+
+        # compute and store the mapping between TreeFam v.7 and ProteinTrees of rel.64:
+
+    time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper \
+        -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara3/mm14_compara_homology_64" -release 64 -tf_release 7 -tag_prefix ''
+
+
+        # compute and store the mapping between TreeFam v.8 and ProteinTrees of rel.64:
+
+    time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper \
+        -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara3/mm14_compara_homology_64" -release 64 -tf_release 8 -tag_prefix 'dev_'
+
+=cut
+
+=head1 DESCRIPTION
+
+This RunnableDB computes and stores mapping between TreeFams and ProteinTrees in ProteinTree tags.
+
+=cut
+
+=head1 CONTACT
+
+Contact anybody in Compara.
+
+=cut
+
+
 package Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper;
 
 use strict;
@@ -20,10 +57,10 @@ sub fetch_input {
     my $adaptor = Bio::EnsEMBL::Compara::StableId::Adaptor->new();
 
     my $from_ncs = $adaptor->fetch_ncs($tf_release, $tf_type);
-    my $to_ncs   = $adaptor->fetch_ncs($release,    't',     $self->db->dbc());
+    my $to_ncs   = $adaptor->fetch_ncs($release,    't',     $self->compara_dba->dbc);
     my $ncsl     = Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink->new(-FROM => $from_ncs, -TO => $to_ncs);
 
-    $self->dbc->disconnect_when_inactive(1);
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
 
     $self->param('adaptor', $adaptor);
     $self->param('ncsl', $ncsl);
@@ -49,7 +86,7 @@ sub write_output {
     my $accu       = $self->param('accu');
     my $tag_prefix = $self->param('tag_prefix');
 
-    $adaptor->store_tags($accu, $self->db->dbc(), $tag_prefix);
+    $adaptor->store_tags($accu, $self->compara_dba->dbc, $tag_prefix);
 
     return 1;
 }
