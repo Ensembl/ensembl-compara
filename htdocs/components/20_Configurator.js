@@ -297,7 +297,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
         change = null;
       }
-    }).parent().prependTo(this.el.find('.nav'));
+    }).parent().prependTo(this.el.find('.nav')); // Move to above the nav
+    
+    
+    this.elLk.links.has('.user_data').insertAfter(this.elLk.links.has('[rel=multi]').last()); // Move user data to below the multi entries (active tracks, favourites, search)
     
     this.getContent();
   },
