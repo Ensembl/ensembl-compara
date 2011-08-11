@@ -172,8 +172,8 @@ sub load_compara_ncs {
         LEFT JOIN protein_tree_member n2m ON ptn.node_id=n2m.node_id
         LEFT JOIN member m ON n2m.member_id=m.member_id
         }.(($schema_version<53) ? q{} :q{ LEFT JOIN protein_tree_stable_id ptsi ON ptn.node_id=ptsi.node_id}).
-        ( ($schema_version < 55) ? q{ WHERE ptn.parent_id = ptn.root_id } : q{ WHERE ptn.node_id= ptn.root_id }).
-        q{ OR m.stable_id IS NOT NULL ORDER BY left_index };
+        ( ($schema_version < 55) ? q{ WHERE (ptn.parent_id = ptn.root_id } : q{ WHERE (ptn.node_id = ptn.root_id }).
+        q{ OR m.stable_id IS NOT NULL) AND left_index AND right_index ORDER BY left_index };
 
     my $sth = $dbh->prepare($sql);
     warn "\t- waiting for the data to start coming\n";
@@ -253,12 +253,18 @@ sub store_history {
         my ($to_clid, $to_size) = @$topair;
         my $subhash = $ncsl->rev_contrib->{$to_clid};
 
-        my ($stid_to  , $ver_to  ) = split(/\./, $ncsl->to->clid2clname($to_clid));
+        my $to_fullname = $ncsl->to->clid2clname($to_clid)
+            or die "to_fullname($to_clid) is false, please investigate";
+
+        my ($stid_to, $ver_to) = split(/\./, $to_fullname);
 
         foreach my $frompair (sort { $b->[1] <=> $a->[1] } map { [$_,$subhash->{$_}] } keys %$subhash ) {
             my ($from_clid, $contrib) = @$frompair;
 
-            my ($stid_from, $ver_from) = split(/\./, $ncsl->from->clid2clname($from_clid));
+            my $from_fullname = $ncsl->from->clid2clname($from_clid)
+                or die "from_fullname is false, please investigate.";
+
+            my ($stid_from, $ver_from) = split(/\./, $from_fullname);
 
             $sth->execute($mapping_session_id, $stid_from, $ver_from, $stid_to, $ver_to, $contrib/$to_size*$self->hist_contrib_unit());
 
