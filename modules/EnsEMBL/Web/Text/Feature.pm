@@ -53,6 +53,12 @@ sub map {
   my $slice_start = $slice->start();
   return () unless $slice_start <= $end;
   $self->slide( 1 - $slice_start );
+  
+  if ($slice->strand == -1) {
+    my $flip = $slice->length + 1;
+    ($self->{'start'}, $self->{'end'}) = ($flip - $self->{'end'}, $flip - $self->{'start'});
+  }
+  
   return $self;
 }
 
