@@ -481,7 +481,7 @@ sub load_user_tracks {
   my $user = $hub->user;
   my $das  = $hub->get_all_das;
   my (%url_sources, %user_sources);
-
+  
   foreach my $source (sort { ($a->caption || $a->label) cmp ($b->caption || $b->label) } values %$das) {
     next if $self->get_node('das_' . $source->logic_name);
     
@@ -528,7 +528,7 @@ sub load_user_tracks {
       my ($display, $strand, $renderers) = $self->_user_track_settings($entry->{'style'});
       
       $menu->append($self->create_track("tmp_$entry->{'code'}", $entry->{'name'}, {
-        _class      => 'tmp',
+        external    => 'tmp',
         glyphset    => '_flat_file',
         colourset   => 'classes',
         sub_type    => 'tmp',
@@ -608,7 +608,7 @@ sub load_user_tracks {
       my $description = encode_entities($analysis->description) || 'User data from dataset ' . encode_entities($user_sources{$logic_name}{'source_name'});
       
       push @tracks, [ "user_$logic_name", $analysis->display_label, {
-        _class      => 'user',
+        external    => 'user',
         glyphset    => '_user_data',
         colourset   => 'classes',
         sub_type    => 'user',
@@ -659,7 +659,7 @@ sub _add_bam_track {
     'unlimited', 'Unlimited', 
     'histogram', 'Coverage only'
   ], {
-    _class   => 'bam',
+    external => 'url',
     sub_type => 'bam'
   }, $desc);
 }
@@ -669,7 +669,7 @@ sub _add_bigwig_track {
     'off',    'Off',
     'tiling', 'Wiggle plot',
   ], {
-    _class   => 'bigwig',
+    external => 'url',
     sub_type => 'bigwig',
     colour   => $_[1]->{'colour'} || 'red',
   });
@@ -681,6 +681,7 @@ sub _add_vcf_track {
     'histogram', 'Normal',
     'compact',   'Compact'
   ], {
+    external   => 'url',
     sources    => undef,
     depth      => 0.5,
     bump_width => 0,
@@ -700,7 +701,7 @@ sub _add_flat_file_track {
   my $track = $self->create_track($key, $name, {
     display     => $display,
     strand      => $strand,
-    _class      => 'url',
+    external    => 'url',
     glyphset    => '_flat_file',
     colourset   => 'classes',
     caption     => $name,
@@ -1089,7 +1090,7 @@ sub load_configured_das {
       my @children = $sub_menu ? @{$sub_menu->child_nodes} : ();
       
       # Make an external submenu unless the menu consist entirely of external sources
-      if (!$sub_menu || scalar(grep $_->get('_class'), @children) != scalar @children) {
+      if (!$sub_menu || scalar(grep $_->get('external'), @children) != scalar @children) {
         $menu = $sub_menu || $menu->append($self->create_submenu($key, ucfirst $sub_category)) unless $menu->get_node("${key}_external");
         $key  = "${key}_external";
       }
@@ -1222,7 +1223,7 @@ sub add_das_tracks {
   
   my $track = $self->create_track('das_' . $source->logic_name, $source->label, {
     %{$extra || {}},
-    _class      => 'DAS',
+    external    => 'DAS',
     glyphset    => '_das',
     display     => 'off',
     logic_names => [ $source->logic_name ],
