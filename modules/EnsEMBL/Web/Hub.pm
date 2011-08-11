@@ -236,7 +236,13 @@ sub url {
   my %pars;
   
   if ($all_params) {
+    # Parse the existing query string to get params if flag is on
     %pars = map { /^time=/ || /=$/ ? () : split /=/ } split /;|&/, uri_unescape($self->input->query_string);
+
+  } elsif ($params->{'__clear'}) {
+    # Skip adding the core params if clear flag is on
+    delete $params->{'__clear'};
+
   } else {
     %pars = %{$self->core_params};
 
@@ -244,25 +250,21 @@ sub url {
     foreach (keys %pars) {
       delete $pars{$_} unless $pars{$_};
     }
-    
-    if ($params->{'__clear'}) {
-      %pars = ();
-      delete $params->{'__clear'};
-    }
+  }
 
-    delete $pars{'t'}  if $params->{'pt'};
-    delete $pars{'pt'} if $params->{'t'};
-    delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
-    delete $pars{'time'};
+  delete $pars{'t'}  if $params->{'pt'};
+  delete $pars{'pt'} if $params->{'t'};
+  delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
+  delete $pars{'time'};
 
-    foreach (keys %$params) {
-      next if $_ =~ /^(species|type|action|function)$/;
+  # add the requested GET params to the query string
+  foreach (keys %$params) {
+    next if $_ =~ /^(species|type|action|function)$/;
 
-      if (defined $params->{$_}) {
-        $pars{$_} = $params->{$_};
-      } else {
-        delete $pars{$_};
-      }
+    if (defined $params->{$_}) {
+      $pars{$_} = $params->{$_};
+    } else {
+      delete $pars{$_};
     }
   }
 
