@@ -37,6 +37,7 @@ sub init {
     functional
     oligo
     repeat
+    user_data
     decorations 
     information 
   ));
