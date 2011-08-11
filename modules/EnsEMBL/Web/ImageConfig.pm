@@ -362,9 +362,7 @@ sub remove_disabled_menus {
   }
 }
 
-# create_menus - takes an "associate array" i.e. ordered key value pairs
-# to configure the menus to be seen on the display..
-# key and value pairs are the code and the text of the menu...
+# create_menus - takes an array to configure the menus to be seen on the display
 sub create_menus {
   my $self = shift;
   my $tree = $self->tree;
@@ -1064,10 +1062,10 @@ sub load_configured_das {
   my %allowed_menus = map { $_ => 1 } @_;
   my $all_menus     = !scalar @_;
   
-  # Now we do the das stuff - to append to menus (if the menu exists)
-  my $internal_das_sources = $self->species_defs->get_all_das;
+  my @adding;
+  my %seen;
   
-  foreach my $source (sort { $a->caption cmp $b->caption } values %$internal_das_sources) {
+  foreach my $source (sort { $a->caption cmp $b->caption } values %{$self->species_defs->get_all_das}) {
     next unless $source->is_on($self->{'type'});
     
     my ($category, $sub_category) = split ' ', $source->category;
@@ -1083,33 +1081,73 @@ sub load_configured_das {
       }
     }
     
-    if ($sub_category && $menu) {
-      $key  = join '_', $category, $sub_category;
+    if (!$menu) {
+      push @{$adding[0]}, $category unless $seen{$category}++;
+      push @{$adding[1]{$category}}, $sub_category if $sub_category && !$seen{$sub_category}++;
+      next;
+    }
+    
+    if ($sub_category) {
+      $key  = join '_', $category, lc $sub_category;
       
       my $sub_menu = $menu->get_node($key);
-      my @children = $sub_menu ? @{$sub_menu->child_nodes} : ();
       
-      # Make an external submenu unless the menu consist entirely of external sources
-      if (!$sub_menu || scalar(grep $_->get('external'), @children) != scalar @children) {
-        $menu = $sub_menu || $menu->append($self->create_submenu($key, ucfirst $sub_category)) unless $menu->get_node("${key}_external");
+      if (!$sub_menu) {
+        push @{$adding[1]{$category}}, $sub_category unless $seen{$sub_category}++;
+        next;
+      }
+      
+      if ($sub_menu && grep !$_->get('external'), @{$sub_menu->child_nodes}) {
+        $menu = $sub_menu;
         $key  = "${key}_external";
       }
     } else {
       $key = "${category}_external";
     }
     
-    if (!$menu) {
-      $self->create_menus($category);
-      
-      my $external = $self->get_node('external_data');
-         $menu     = $self->get_node($category);
-      
-      $external->after($menu) if $menu && $external;
-    }
-    
     $menu->append($self->create_submenu($key, 'External data (DAS)', { external => 1 })) if $menu && !$menu->get_node($key);
     
     $self->add_das_tracks($key, $source, $extra);
+  }
+  
+  # Add new menus, then run the function again - ensures that everything is printed in the right place
+  if (scalar @adding) {
+    my $external     = $self->get_node('external_data');
+    my $menus        = $self->menus;
+    my @new_menus    = @{$adding[0] || []};
+       %seen         = map { $_ => 1 } @new_menus;
+    
+    foreach (@new_menus) {
+      my $parent = ref $menus->{$_} ? $self->get_node($menus->{$_}[1]) : undef;
+      
+      my $menu = $self->get_node($_);
+      
+      $self->create_menus($_) unless $menu;
+      
+      $menu = $self->get_node($_);
+      
+      next unless $menu;
+      
+      $external->after(ref $menus->{$_} ? $self->get_node($menus->{$_}[1]) : $menu) unless $parent;
+    }
+    
+    foreach my $k (keys %{$adding[1]}) {
+      $self->create_menus(@{$adding[1]{$k}});
+      
+      foreach (@{$adding[1]{$k}}) {
+        my $menu    = $self->get_node($k);
+        my $submenu = $menu->get_node($_);
+        
+        if (!$submenu) {
+          (my $caption = $_) =~ s/_/ /g;
+          $menu->append($self->create_submenu("${k}_" . lc $_, $caption));
+        }
+      }
+      
+      push @new_menus, $k unless $seen{$_};
+    }
+    
+    $self->load_configured_das($extra, @new_menus) if scalar @new_menus;
   }
 }
 
@@ -1832,9 +1870,9 @@ sub add_regulation_features {
   
   return unless $menu;
   
-  my $reg_regions = $menu->append($self->create_submenu('functional_reg_regions', 'Other regulatory regions'));
+  my $reg_regions = $menu->append($self->create_submenu('functional_other_regulatory_regions', 'Other regulatory regions'));
   
-  $reg_regions->before($self->create_submenu('functional_methylation', 'DNA Methylation'));
+  $reg_regions->before($self->create_submenu('functional_dna_methylation', 'DNA Methylation'));
   
   my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
   my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
