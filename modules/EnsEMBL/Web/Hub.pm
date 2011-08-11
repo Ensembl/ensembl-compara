@@ -222,6 +222,16 @@ sub redirect {
 }
 
 sub url {
+  ## Gets the current or modified url
+  ## If no argument provided, gets the current url after removing unwanted params, and sorting remaining ones
+  ## @param Extra string that goes in the url path just after Species name and before type (optional)
+  ## @param Hashref of new params that will be added, or will override the existing params in the current url - can have following keys:
+  ##  - species, type, action, funtion: Overrides the existing corresponding values in the url path
+  ##  - __clear: Flag if on, prevents the core params to be added to the url
+  ##  - any other keys: will get serialised and joined to the url as query string
+  ## @param Flag if on, returns url as an arrayref [url path, hashref of name-value pair of GET params] - off by default
+  ## @param Flag if on, adds existing GET params to the new given GET params - off by default
+  ## @return URL string or ArrayRef of path and params
   my $self   = shift;
   my $extra  = $_[0] && !ref $_[0] ? shift : undef;
   my $params = shift || {};
