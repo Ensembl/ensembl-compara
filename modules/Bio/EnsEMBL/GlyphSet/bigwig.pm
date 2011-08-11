@@ -27,9 +27,10 @@ sub wiggle_features {
   my $slice = $self->{'container'};
   if (!exists($self->{_cache}->{wiggle_features})) {
     my $summary_e = $self->bigwig_adaptor->fetch_extended_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins);
-
-    my $binwidth = ($slice->length/$bins);
+    my $binwidth  = ($slice->length/$bins);
+    my $flip      = $slice->strand == -1 ? $slice->length + 1 : undef;
     my @features;
+    
     for (my $i=0; $i<$bins; $i++) {
       my $s = $summary_e->[$i];
       my $mean = $s->{validCount} > 0 ? $s->{sumData}/$s->{validCount} : 0;
@@ -40,7 +41,12 @@ sub wiggle_features {
 #                         'strand' => 1,
 #                         'score' => $mean,
 #                        } );
-      my $feat = { 'start' => ($i*$binwidth+1), 'end' => (($i+1)*$binwidth), 'score' => $mean };
+      my $feat = {
+        start => $flip ? $flip - (($i+1)*$binwidth) : ($i*$binwidth+1),
+        end   => $flip ? $flip - ($i*$binwidth+1)   : (($i+1)*$binwidth),
+        score => $mean
+      };
+      
       push @features,$feat;
     }
     

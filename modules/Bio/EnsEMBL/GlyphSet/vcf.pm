@@ -230,6 +230,11 @@ sub features {
                                : "";
           #vcf EOF 
 
+    if ($slice->strand == -1) {
+      my $flip = $slice->length + 1;
+      ($vs, $ve) = ($flip - $ve, $flip - $vs);
+    }
+          
 #	warn join "\t", $a->{CHROM}, $a->{POS}, $a->{POS}, $allele_string, '+', "\n";
 	  my $f1 =       {
 	      'start'    => $vs, 

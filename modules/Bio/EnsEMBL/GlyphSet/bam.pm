@@ -471,7 +471,8 @@ sub render_sequence_reads {
   my $slice = $self->{'container'};
 
   my $features = pre_filter_depth($fs, $options{max_depth},$ppbp,$slice->start,$slice->end);
-
+     $features = [reverse @$features] if $slice->strand == -1;
+  
   # text stuff
   my($font, $fontsize) = $self->get_font_details( $self->can('fixed') ? 'fixed' : 'innertext' );
   my($tmp1, $tmp2, $font_w, $font_h) = $self->get_text_width(0, 'X', '', 'font' => $font, 'ptsize' => $fontsize);
@@ -488,12 +489,11 @@ sub render_sequence_reads {
   my $row_height = 1.3 * $h;
   my $max_y = 0;
 
-  my $slicestart = $slice->start;
-  my $sliceend = $slice->end;
+  my $slicestart  = $slice->start;
+  my $sliceend    = $slice->end;
   my $slicelength = $slice->length;
-
-
-  my $read_colour      = $self->my_colour('read'),
+  my $slicestrand = $slice->strand;
+  my $read_colour = $self->my_colour('read'),
 
   # init bump
   $self->_init_bump(undef, $options{max_depth});
@@ -506,13 +506,18 @@ sub render_sequence_reads {
     next unless $fstart and $fend;
     
     # init
-    my $start = $fstart - $slicestart;
-    my $end = $fend - $slicestart;
+   # my $start = $fstart - $slicestart;
+   # my $end = $fend - $slicestart;
+    
+    my $start = $slicestrand == -1 ? $sliceend - $fend   + 1 : $fstart - $slicestart;
+    my $end   = $slicestrand == -1 ? $sliceend - $fstart + 1 : $fend   - $slicestart;
+    
+    
     $start = 0 if $start < 0;
     $end = 0 if $end < 0;
     $end = $slicelength if $end > $slicelength;
     my $width = $end - $start + 1;
-       
+    
     # bump it to the next row with enough free space
     my $bump_start = int($start * $ppbp);
     my $bump_end = $bump_start + int($width * $ppbp) + 1;
@@ -551,7 +556,7 @@ sub render_sequence_reads {
       
       # horizontal
       $composite->push($self->Rect({
-        'x' => $f->reversed ? $start : $end + 1 - ($line_length_pix / $ppbp),
+        'x' => $f->reversed ^ $slicestrand == -1 ? $start : $end + 1 - ($line_length_pix / $ppbp),
         'y' => 0,
         'width' => ($line_length_pix / $ppbp),
         'height' => $stroke_width_pix,
@@ -562,7 +567,7 @@ sub render_sequence_reads {
       if ($h ==8) {
         # vertical
         $composite->push($self->Rect({
-          'x' => $f->reversed ? $start : $end + 1 - ($stroke_width_pix / $ppbp),
+          'x' => $f->reversed ^ $slicestrand == -1 ? $start : $end + 1 - ($stroke_width_pix / $ppbp),
           'y' => 0,
           'width' => ($stroke_width_pix / $ppbp),
           'height' => $h,
@@ -789,7 +794,8 @@ sub calc_coverage {
   #print STDERR "sample_size =  " . $sample_size . "\n";
 
   my $coverage = $self->c_coverage($features, $sample_size, $lbin, $START);
-
+     $coverage = [reverse @$coverage] if $slice->strand == -1;
+  
   #print STDERR "Done coverage, ended with type " . ref($coverage) . "\n";
   return $coverage;
 }
