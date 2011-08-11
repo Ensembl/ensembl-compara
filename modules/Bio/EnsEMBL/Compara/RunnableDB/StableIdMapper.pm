@@ -1,4 +1,37 @@
+=pod 
+
+=head1 NAME
+
+    Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper
+
+=cut
+
+=head1 SYNOPSIS
+
+        # compute and store the stable_id mapping between trees of rel.63 and trees of rel.64:
+
+    time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper \
+        -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara3/mm14_compara_homology_64" \
+        -master_db "mysql://ensadmin:${ENSADMIN_PSW}@compara1/sf5_ensembl_compara_master" \
+        -prev_rel_db "mysql://ensro@compara1/lg4_ensembl_compara_63" -release 64 -type t
+
+=cut
+
+=head1 DESCRIPTION
+
+This RunnableDB computes and stores stable_id mapping of either for ProteinTrees or Families between releases.
+
+=cut
+
+=head1 CONTACT
+
+Contact anybody in Compara.
+
+=cut
+
+
 package Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper;
+
 
 use strict;
 use warnings;
