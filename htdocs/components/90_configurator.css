@@ -55,6 +55,7 @@ form.configuration div.config div.select_all strong:hover,
 form.configuration div.config li.track:hover,
 form.configuration div.track_order ul.config_menu li:hover,
 form.configuration div.config ul.popup_menu li:hover                { background-color: [[CONFIG_HOVER]]; }
+form.configuration div.config li.track:hover div.desc               { background-color: [[CONFIG_HOVER]]; border-color: [[CONFIG_HOVER]]; }
 form.configuration div.favourite_tracks img                         { vertical-align: top; }
 form.configuration div.track_order span.menu_option                 { cursor: n-resize; }
 form.configuration div.view_config fieldset                         { padding: 0; }
