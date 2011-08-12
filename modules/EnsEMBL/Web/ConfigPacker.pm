@@ -54,6 +54,9 @@ sub munge_config_tree {
   $self->_munge_variation;
   $self->_munge_website;
 
+  # get data about file formats from corresponding Perl modules
+  $self->_munge_file_formats;
+
   # parse the BLAST configuration
   $self->_configure_blast;
 }
@@ -1392,6 +1395,48 @@ sub _munge_website_multi {
 
   $self->tree->{'ENSEMBL_HELP'} = $self->db_tree->{'ENSEMBL_HELP'};
   $self->tree->{'ENSEMBL_GLOSSARY'} = $self->db_tree->{'ENSEMBL_GLOSSARY'};
+}
+
+sub _munge_file_formats {
+## TODO - change this to get the required information from
+## individual modules
+  my $self = shift;
+
+  my %unsupported = map {uc($_) => 1} @{$self->tree->{'UNSUPPORTED_FILE_FORMATS'}||[]};
+  my (@upload, @remote);
+
+  ## Get info on all formats
+  my %formats = (
+    'BED'       => {'ext' => 'bed', 'display' => 'feature'},
+    'bedGraph'  => {'ext' => 'bed', 'display' => 'graph'},
+    'GBrowse'   => {'ext' => 'txt',  'display' => 'feature'},
+    'GFF'       => {'ext' => 'gff', 'display' => 'feature'},
+    'GTF'       => {'ext' => 'gtf', 'display' => 'feature'},
+    'PSL'       => {'ext' => 'psl', 'display' => 'feature'},
+    'WIG'       => {'ext' => 'wig', 'display' => 'graph'},
+    'BAM'       => {'ext' => 'bam', 'display' => 'graph', 'indexed' => 1},
+    'BigWig'    => {'ext' => 'bw',  'display' => 'graph', 'indexed' => 1},
+    'VCF'       => {'ext' => 'vcf', 'display' => 'graph', 'indexed' => 1},
+  );
+
+  ## Munge into something useful to this website
+  while (my ($format, $details) = each (%formats)) {
+    my $uc_name = uc($format);
+    if ($unsupported{$uc_name}) {
+      delete $formats{$format};
+      next;
+    }
+    if ($details->{'indexed'}) {
+      push @remote, $format;
+    }
+    else {
+      push @upload, $format;
+    }
+  }
+
+  $self->tree->{'UPLOAD_FILE_FORMATS'} = \@upload;
+  $self->tree->{'REMOTE_FILE_FORMATS'} = \@remote;
+  $self->tree->{'DATA_FORMAT_INFO'} = \%formats;
 }
 
 sub _configure_blast {
