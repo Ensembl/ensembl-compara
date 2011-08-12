@@ -118,7 +118,7 @@ sub build_imageconfig_form {
   }))->after($tree->create_node('regulatory_evidence_other', {
     url          => $hub->url('Config', { function => 'Cell_line', partial => 1, set => 'other' }),
     availability => 1,
-    caption      => 'Histone & polymerases',
+    caption      => 'Histones & polymerases',
     class        => 'Regulatory_evidence_other',
     count        => qq{(<span class="on">$counts{'other'}{'on'}</span>/$counts{'other'}{'total'})}
   }));
