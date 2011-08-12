@@ -243,7 +243,7 @@ sub modal_form {
 sub new_image {
   my $self        = shift;
   my $hub         = $self->hub;
-  my %formats     = EnsEMBL::Web::Constants::FORMATS;
+  my %formats     = EnsEMBL::Web::Constants::EXPORT_FORMATS;
   my $export      = $hub->param('export');
   my $id          = $self->id;
   my $config_type = $self->view_config ? $self->view_config->image_config : undef;

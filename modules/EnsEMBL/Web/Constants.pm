@@ -5,6 +5,11 @@ use warnings;
 no warnings 'uninitialized';
 
 sub FORMATS {
+  warn "!!! DEPRECATED - PLEASE USE 'EXPORT_FORMATS' INSTEAD";
+  return &EXPORT_FORMATS;
+}
+
+sub EXPORT_FORMATS {
   return (
 	  'png'  => { 'name' => 'PNG', 'longname' => 'Portable Network Graphics',   'extn' => 'png', 'mime' => 'image/png' },
     'gif'  => { 'name' => 'GIF', 'longname' => 'Graphics Interchange Format', 'extn' => 'gif', 'mime' => 'image/gif' },
