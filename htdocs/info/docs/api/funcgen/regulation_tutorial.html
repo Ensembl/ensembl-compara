@@ -7,7 +7,29 @@
 
 <h1>Ensembl Regulation (funcgen) API Tutorial</h1>
 
-<h2>Introduction</h2>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#connecting">Connecting to the funcgen Database using the Registry</a></li>
+<li><a href="#regulatory">Regulatory Features</a></li>
+<li><a href="#multicell">Global 'MultiCell' Regulatory Features</a></li>
+<li><a href="#cellspecific">Cell-specific information for a Regulatory Feature</a></li>
+<li><a href="#annotated">Annotated Features: Processed data</a></li>
+<li><a href="#motif">Motif Features: TF Binding Sites</a></li>
+<li><a href="#featuresets">Feature Sets: Groups of related features</a></li>
+<li><a href="#external">External Features: Externally curated data</a></li>
+<li><a href="#featuretypes">Feature Types</a></li>
+<li><a href="#regft">Regulatory Feature Types</a></li>
+<li><a href="#extft">External Feature Types</a></li>
+<li><a href="#annft">Annotated Feature Types</a></li>
+<li><a href="#microarray">Microarrays and associated Information</a></li>
+<li><a href="#probesets">Fetch all ProbeSets from a specific Array</a></li>
+<li><a href="#micannot">Microarray Annotations</a></li>
+<li><a href="#furtherhelp">Further help</a></li>
+
+
+</ul>
+
+<h2 id="introduction">Introduction</h2>
 
 <p>
 The Ensembl Regulation team deals with functional genomics data. 
@@ -24,7 +46,7 @@ Please note that the Ensembl Core API must also be <a href="/info/docs/api/api_i
 
 
 
-<h2>Connecting to the funcgen Database using the Registry</h2>
+<h2 id="connecting">Connecting to the funcgen Database using the Registry</h2>
 
 
 <p>
@@ -57,7 +79,7 @@ following examples for brevity.
 
 </p>
 
-<h2>Regulatory Features</h2>
+<h2 id="regulatory">Regulatory Features</h2>
 
 <p>
 Regulatory Features are groups of overlapping features representing regions of open chromatin 
@@ -67,7 +89,7 @@ combines annotations across all available cell lines data to generate global 'Mu
 Regulatory Features. 
 </p>
 
-<h3>Global 'MultiCell' Regulatory Features</h3>
+<h3 id="multicell">Global 'MultiCell' Regulatory Features</h3>
 
 <p>
 To fetch Regulatory Features from the funcgen database, you need to use the corresponding adaptor. 
@@ -126,7 +148,7 @@ Regulatory Feature attributes can be of the type 'annotated' or 'motif'.
 Each of these types will be covered in a specific section later in this tutorial.
 </p>
 
-<h3>Cell-specific information for a Regulatory Feature</h3>
+<h3 id="cellspecific">Cell-specific information for a Regulatory Feature</h3>
 
 <p>
 We annotate Regulatory Features with cell-specific information. This includes extra boundaries 
@@ -162,7 +184,7 @@ foreach my $cell_rf (@{$rfs}){
 
 </pre>
 
-<h2>Annotated Features: Processed data</h2>
+<h2 id="annotated">Annotated Features: Processed data</h2>
 
 <p>
 Regulatory Features are built based on results from experiments like Dnase1 sensitivity assays (Dnase-Seq)
@@ -212,7 +234,7 @@ foreach my $annotated_feature (@annotated_features) {
 </pre>
 
 
-<h2>Motif Features: TF Binding Sites</h2>
+<h2 id="motif">Motif Features: TF Binding Sites</h2>
 
 
 <p>
@@ -269,7 +291,7 @@ my @motif_features = @{$annot_feat->get_associated_MotifFeatures()};
 
 </pre>
 
-<h2>Feature Sets: Groups of related features</h2>
+<h2 id="featuresets">Feature Sets: Groups of related features</h2>
 
 <p>
 Most features can be grouped according to the type of feature and analysis used to create them. 
@@ -328,7 +350,7 @@ foreach my $reg_fset (@reg_fsets) {
 
 </pre>
 
-<h2>External Features: Externally curated data</h2>
+<h2 id="external">External Features: Externally curated data</h2>
 
 <p>
 There are some Feature Sets that are either entirely or partially curated by external groups. 
@@ -368,7 +390,7 @@ foreach my $vista_feature (@{$vista_fset->get_all_Features()}){
 </pre>
 
 
-<h2>Feature Types</h2>
+<h2 id="featuretypes">Feature Types</h2>
 
 <p>
 Feature Types provide a biological annotation for the feature. They are divided in classes forming biologically 
@@ -383,7 +405,7 @@ my $ftype_adaptor = $registry->get_adaptor('Human', 'funcgen', 'featuretype');
 
 </pre>
 
-<h3>Regulatory Feature Types</h3>
+<h3 id="regft">Regulatory Feature Types</h3>
 
 <p>
 All 'MultiCell' regulatory features are of the generic "Regulatory Feature" Feature Type. Each individual 
@@ -392,14 +414,14 @@ annotation for a Regulatory Feature (promoter-associated, within a gene, far awa
 or insulator)). The annotation process is described in the <a href="/info/docs/funcgen/index.html">RegulatoryBuild</a> document.  
 </p>
 
-<h3>External Feature Types</h3>
+<h3 id="extft">External Feature Types</h3>
 
 <p>
 Feature Types for External Features have a meaning that is specific to the Feature Set. For example, for features of the Vista 
 Feature Set, the feature type indicates if the feature was active or inactive in an experiment.  
 </p>
 
-<h3>Annotated Feature Types</h3>
+<h3 id="annft">Annotated Feature Types</h3>
 
 <p>
 Feature Types for Annotated Feature Sets usually correspond to the antibody used in a ChIP experiment. We also group these 
@@ -419,7 +441,7 @@ foreach my $ft (@tfs){
 </pre>
 
 
-<h2>Microarrays and associated Information</h2>
+<h2 id="microarray">Microarrays and associated Information</h2>
 
 <p>
 This code demonstrates the use of adaptors, specifically the ArrayAdaptor. 
@@ -450,7 +472,7 @@ foreach my $array ( @array ){
 
 </pre>
 
-<h3>Fetch all ProbeSets from a specific Array</h3>
+<h3 id="probesets">Fetch all ProbeSets from a specific Array</h3>
 
 <p>
 In this example, probesets from the NIMBLEGEN HG17 tiling array are obtained.
@@ -477,7 +499,7 @@ foreach my $pfeature ( @pfeatures ){
 
 </pre>
 
-<h3>Microarray Annotations</h3>
+<h3 id="micannot">Microarray Annotations</h3>
 
 <p>
 In this example, the FOXP2 transcript is specified and all available ProbeSet annotations are printed.
@@ -518,7 +540,7 @@ More examples for accessing microarray data can be found in the funcgen API pack
 ensembl-functgenomics/scripts/examples/microarray_annotation_example.pl
 </p>
 
-<h2>Further help</h2>
+<h2 id="furtherhelp">Further help</h2>
 
 <p>
 Complete example scripts for the funcgen API can be found in the funcgen API package: ensembl-functgenomics/scripts/examples/
