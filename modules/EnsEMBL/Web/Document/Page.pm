@@ -379,6 +379,7 @@ sub render_HTML {
   # If this is an AJAX request then we will not render the page wrapper
   if ($renderer->{'_modal_dialog_'}) {
     my %json = map %{$elements->{$_}}, keys %$elements;
+    $json{'params'}{'url'} = $self->hub->url({ __clear => 1 });
     $content = $self->jsonify(\%json);
   } elsif ($renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
     $content = $elements->{'content'}; # Render content only for components
