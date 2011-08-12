@@ -34,10 +34,17 @@ sub content {
     $table    = $self->feature_tables($features,$sortable) if keys %$features;
   } 
 
+  my $display_name;
   while (my ($type, $feature_set) = each (%$features)) {
     if ($feature_set && @$feature_set) {
       $has_features = 1;
       push @all_features, @{$feature_set->[0]};
+      my $hash = $feature_set->[0][0];
+      if (!$display_name && $type eq 'Xref' && $hash) {
+        $display_name = $hash->{'extname'};
+        $display_name =~ s/ \[#\]//;
+      }
+
     }
   }
 
@@ -77,6 +84,10 @@ sub content {
       if ($has_features) { ## "FeatureView"
         my $text      = 'Locations of ';
         my $data_type = $hub->param('ftype');
+        my $data_name = $data_type;
+        if ($display_name && $data_type =~ /^Xref_MIM_/) {
+          $data_name = $display_name;
+        }
         my %names     = map { $_ => lc($_) . 's' } keys %$features;
         my @A         = keys %names;
         my $feature_names;
@@ -90,11 +101,11 @@ sub content {
             $feature_names = join ', ', sort values %names;  
           }
           
-          $text .= "$feature_names associated with $data_type";
+          $text .= "$feature_names associated with $data_name";
 
           my @ids = $hub->param('id');
           
-          if (@ids) {
+          if (@ids && $data_type !~ /Xref_MIM/) {
             if (@ids > 1) {
               $text .= 's ' . join ', ', @ids;
             } else {

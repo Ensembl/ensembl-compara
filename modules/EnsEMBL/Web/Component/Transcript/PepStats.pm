@@ -24,7 +24,14 @@ sub content {
   my $stats_to_show = '';
   my @attributes_pepstats = grep {$_->description =~ /Pepstats/} @{$attributes};
   foreach my $stat (sort {$a->name cmp $b->name} @attributes_pepstats) {
-      $stats_to_show .= sprintf("%s: %s<br />",$stat->name,$object->thousandify($stat->value));
+    my $stat_string = $object->thousandify($stat->value);
+    if ($stat->name =~ /weight/) {
+      $stat_string .= ' g/mol';
+    }
+    elsif ($stat->name =~ /residues/) {
+      $stat_string .= ' aa';
+    }
+    $stats_to_show .= sprintf("%s: %s<br />", $stat->name, $stat_string);
   }
   my $table  = new EnsEMBL::Web::Document::HTML::TwoCol;
   unless ($stats_to_show =~/^\w/){return;}
