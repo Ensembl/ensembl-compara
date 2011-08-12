@@ -288,7 +288,7 @@ sub search_SEQUENCE {
   $self->_fetch_results( 
     [ 'core', 'Sequence',
       "select count(*) from seq_region where name [[COMP]] '[[KEY]]'",
-      "select sr.name, cs.name,  sr.start, sr.end, sr.seq_region_id from seq_region as sr, coord_system as cs where cs.coord_system_id = sr.coord_system_id and sr.name [[COMP]] '[[KEY]]'" ],
+      "select sr.name, cs.name, 1, length, sr.seq_region_id from seq_region as sr, coord_system as cs where cs.coord_system_id = sr.coord_system_id and sr.name [[COMP]] '[[KEY]]'" ],
     [ 'core', 'Sequence',
       "select count(distinct misc_feature_id) from misc_attrib join attrib_type as at using(attrib_type_id) where at.code in ( 'name','clone_name','embl_acc','synonym','sanger_project') 
        and value [[COMP]] '[[KEY]]'", # Eagle change, added at.code in count so that it matches the number of results in the actual search query below. 
@@ -318,10 +318,9 @@ sub search_SEQUENCE {
   foreach ( @{$self->{_results}} ) {
     my $KEY =  $_->[2] < 1e6 ? 'contigview' : 'cytoview';
     $KEY = 'cytoview' if $self->species_defs->NO_SEQUENCE;
-    # The new link format is usually 'r=chr_name:start-end' 
+    # The new link format is usually 'r=chr_name:start-end'
+    my $slice = $sa->fetch_by_seq_region_id($_->[2], $_->[3], $_->[4] ); 
 
-    my $slice = $sa->fetch_by_seq_region_id($_->[4], $_->[2], $_->[3] ); 
-    
     $_ = {
 #      'URL'       => (lc($_->[1]) eq 'chromosome' && length($_->[0])<10) ? "$species_path/mapview?chr=$_->[0]" :
 #                        "$species_path/$KEY?$_->[3]=$_->[0]" ,
