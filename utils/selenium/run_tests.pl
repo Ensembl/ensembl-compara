@@ -16,7 +16,7 @@ BEGIN {
 }
 
 my $module;
-my $url = 'http://www.ensembl.org';
+my $url = 'http://test.ensembl.org';
 my $host = '172.20.10.187';#'localhost'; 
 my $port = '4444';
 my $browser = '*firefox';
@@ -75,12 +75,12 @@ my $methods_called = 0;
 $object->check_website;
 
 #TODO:: regex clear all spaces
-my @test = split(/,/, $test); 
+my @test = split(/,/, $test);
 my @skip = split(/,/, $skip);
 @species_list = ($species =~ /,/) ? split(/,/, $species) : $species; #TODO::CHeck for invalid species like unknownspecies
 
 #getting all valid species for ensembl
-if($module eq 'Species' && !$species) {
+if($species eq 'all') {
   my $SD = $object->get_species_def;
   my @valid_species = $SD->valid_species;
 
@@ -98,17 +98,12 @@ foreach (@species_list) {
     my $test_case = $method;
     $test_case =~ s/test_//g;
     $test_case = uc($test_case);
+
+    print "\n****************************************\n";
+    ($_) ? print " Testing $_ \n" : print " Testing $test_case\n"; 
+    print "****************************************\n";
+    print "TESTING $test_case \n" if($_);
     
-    if($_) {
-      print "\n****************************************\n";
-      print " Testing $_ \n";
-      print "****************************************\n";
-      print "TESTING $test_case \n";
-    }else {  
-      print "\n****************************************\n";
-      print " $_ $method\n";
-      print "****************************************\n";  
-    }
     $object->$method;
     $methods_called++;
   }
