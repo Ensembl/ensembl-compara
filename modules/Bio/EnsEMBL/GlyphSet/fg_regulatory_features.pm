@@ -64,7 +64,7 @@ sub fetch_features {
 sub colour_key {
   my ($self, $f) = @_;
   my $type = $f->feature_type->name();
-warn $type; 
+  
   if ($type =~/Promoter/){$type = 'Promoter_associated';}
   elsif ($type =~/Non/){$type = 'Non-genic';}
   elsif ($type =~/Gene/){$type = 'Genic';}
