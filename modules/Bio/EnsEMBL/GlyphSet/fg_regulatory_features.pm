@@ -63,10 +63,12 @@ sub fetch_features {
 
 sub colour_key {
   my ($self, $f) = @_;
-  my $type = $f->feature_type->name(); 
+  my $type = $f->feature_type->name();
+warn $type; 
   if ($type =~/Promoter/){$type = 'Promoter_associated';}
   elsif ($type =~/Non/){$type = 'Non-genic';}
   elsif ($type =~/Gene/){$type = 'Genic';}
+  elsif ($type =~/Pol/){warn $type; $type = 'poliii_associated'}
   else  {$type = 'Unclassified';}
   return lc($type);
 }
@@ -78,6 +80,7 @@ sub tag {
   if    ($type =~/Promoter/){$type = 'Promoter_associated';}
   elsif ($type =~/Non/){$type = 'Non-genic';}
   elsif ($type =~/Gene/){$type = 'Genic';}
+  elsif ($type =~/Pol/){$type = 'poliii_associated'}
   else {$type = 'Unclassified';}
 
   $type = lc($type);
