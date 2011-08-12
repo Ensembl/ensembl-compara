@@ -87,6 +87,23 @@ sub multi_species {
   }
 }
 
+sub nav_config {
+  my ($self, $hub) = @_;
+  my $session = $hub->session;
+  my %args    = ( type => 'nav', code => $hub->param('code') );
+  my %data    = %{$session->get_data(%args) || {}};
+  my $menu    = $hub->param('menu');
+  
+  if ($hub->param('state') eq 'closed') {
+    $data{$menu} = 1;
+  } else {
+    delete $data{$menu};
+  }
+  
+  $session->purge_data(%args);
+  $session->set_data(%args, %data) if scalar grep $_ !~ /(type|code)/, keys %data;
+}
+
 sub data_table_config {
   my ($self, $hub) = @_;
   my $sorting = $hub->param('sorting');

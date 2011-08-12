@@ -91,13 +91,15 @@ sub content {
   
   if ($tree->get_node($active) || $nodes[0]) {
     my $hub        = $self->{'hub'};
+    my $modal      = $self->renderer->{'_modal_dialog_'};
+    my $config     = $hub->session->get_data(type => 'nav', code => $modal ? $hub->url({ __clear => 1 }) : join('/', '', map $hub->$_ || (), qw(type action function))) || {};
     my $img_url    = $hub->species_defs->img_url;
     my $counts     = $self->counts;
     my $all_params = !!$hub->object_types->{$hub->type};
     
     foreach (@nodes) {
       $_->data->{'top_level'} = 1;
-      $self->build_menu($_, $hub, $img_url, $counts, $all_params, $active, $nodes[-1]);
+      $self->build_menu($_, $hub, $config, $img_url, $modal, $counts, $all_params, $active, $nodes[-1]);
     }
     
     $menu .= $_->render for @nodes;
@@ -114,7 +116,7 @@ sub content {
 }
 
 sub build_menu {
-  my ($self, $node, $hub, $img_url, $counts, $all_params, $active, $last_child) = @_;
+  my ($self, $node, $hub, $config, $img_url, $modal, $counts, $all_params, $active, $last_child) = @_;
   
   my $data = $node->data;
   
@@ -125,26 +127,27 @@ sub build_menu {
   my $title        = $data->{'full_caption'} || $caption;
   my $count        = $data->{'count'};
   my $availability = $data->{'availability'};
-  my @append;
-  my @classes;
+  my $class        = $data->{'class'};
+    ($class        = $caption) =~ s/ /_/g unless $class;
+  my $state        = $config->{$class} ? 'closed' : 'open';
+  my (@append, @classes);
   
-  if ($self->renderer->{'_modal_dialog_'}) {
+  if ($modal) {
     if ($data->{'top_level'}) {
-      @append = ([ 'img', { src => "${img_url}open2.gif", class => 'toggle' }]) if scalar @children;
+      @append = ([ 'img', { src => "$img_url${state}2.gif", class => "toggle $class" }]) if scalar @children;
     } else {
-      @append = ([ 'img', { src => "${img_url}leaf.gif", class => 'toggle' }]);
+      @append = ([ 'img', { src => "${img_url}leaf.gif" }]);
     }
   } else {
-    @append = ([ 'img', scalar @children ? { src => "${img_url}open.gif", class => 'toggle' } : { src => "${img_url}leaf.gif" }]);
+    @append = ([ 'img', scalar @children ? { src => "$img_url$state.gif", class => "toggle $class" } : { src => "${img_url}leaf.gif" }]);
   }
   
   if ($availability && $self->is_available($availability)) {
     # $node->data->{'code'} contains action and function where required, so setting function to undef is fine.
     # If function is NOT set to undef and you are on a page with a function, the generated url could be wrong
     # e.g. on Location/Compara_Alignments/Image the url for Alignments (Text) will also be Location/Compara_Alignments/Image, rather than Location/Compara_Alignments
-    my $url   = $data->{'url'} || $hub->url({ action => $data->{'code'}, function => undef }, undef, $all_params);
-    my $class = $data->{'class'};
-    my $rel   = $data->{'external'} ? 'external' : $data->{'rel'};
+    my $url = $data->{'url'} || $hub->url({ action => $data->{'code'}, function => undef }, undef, $all_params);
+    my $rel = $data->{'external'} ? 'external' : $data->{'rel'};
     
     for ($title, $caption) {
       s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
@@ -162,7 +165,7 @@ sub build_menu {
     my $ul = $node->dom->create_element('ul');
     
     foreach (@children) {
-      $self->build_menu($_, $hub, $img_url, $counts, $all_params, $active, $children[-1]);
+      $self->build_menu($_, $hub, $config, $img_url, $modal, $counts, $all_params, $active, $children[-1]);
       $ul->append_child($_);
     }
     
@@ -173,6 +176,7 @@ sub build_menu {
   push @classes, 'active'    if $node->id eq $active;
   push @classes, 'top_level' if $data->{'top_level'};
   push @classes, 'last'      if $node eq $last_child;
+  push @classes, 'closed'    if $state eq 'closed';
   
   $node->node_name = 'li';
   $node->set_attributes({ id => $data->{'id'}, class => join(' ', @classes) });
