@@ -104,6 +104,10 @@ sub init_top {
 sub init_cell_line {
   my $self = shift;
   $_->remove for grep !$self->{'reg_feats_tracks'}{$_->id}, $self->get_tracks;
+  
+  $self->add_tracks('other',
+    [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }]
+  );
 }
 
 sub init_bottom {

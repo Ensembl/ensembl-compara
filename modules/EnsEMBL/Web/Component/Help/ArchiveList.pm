@@ -178,7 +178,7 @@ sub _output_link {
 
   if ($current_geneset) {
     if ($current_geneset eq $initial_geneset) {
-      $string .= sprintf ' - new genebuild %s', $current_geneset;
+      $string .= sprintf ' - gene set updated %s', $current_geneset;
     }
     else {
       if ($current_geneset ne $previous_geneset) {

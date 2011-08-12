@@ -39,7 +39,7 @@ sub render {
   }
   else {
     ## Return dynamic content from the ensembl_website database
-    my $news_url     = '/info/website/news/index.html?id='.$release_id;
+    my $news_url     = '/info/website/news.html?id='.$release_id;
     my @items = ();
 
     my $first_production = $hub->species_defs->get_config('MULTI', 'FIRST_PRODUCTION_RELEASE');
