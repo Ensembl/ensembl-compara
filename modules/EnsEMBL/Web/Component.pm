@@ -330,7 +330,7 @@ sub _export_image {
   my ($format, $scale) = $hub->param('export') ? split /-/, $hub->param('export'), 2 : ('', 1);
   $scale eq 1 if $scale <= 0;
   
-  my %formats = EnsEMBL::Web::Constants::FORMATS;
+  my %formats = EnsEMBL::Web::Constants::EXPORT_FORMATS;
   
   if ($formats{$format}) {
     $image->drawable_container->{'config'}->set_parameter('sf',$scale);
