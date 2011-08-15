@@ -38,8 +38,8 @@ sub content_ajax {
   
   if ($data) {
     my $format = $data->{'format'};
-    my @remote = @{$hub->species_defs->USERDATA_REMOTE_FORMATS};
-    if (grep(/^$format$/, @remote)) {
+    my $formats = $hub->species_defs->REMOTE_FILE_FORMATS;
+    if (grep(/^$format$/i, @$formats)) {
       $html .= qq(<p>We cannot parse large file formats to navigate to the nearest feature. Please select appropriate coordinates after closing this window</p>);
     }
     else {

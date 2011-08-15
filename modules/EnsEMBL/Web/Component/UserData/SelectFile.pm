@@ -93,7 +93,7 @@ sub content {
     );
   }
 
-  $self->add_file_format_dropdown($form);
+  $self->add_file_format_dropdown($form, 'upload');
 
   $form->add_element( type => 'Text', name => 'text', label => 'Paste file' );
   $form->add_element( type => 'File', name => 'file', label => 'Upload file' );

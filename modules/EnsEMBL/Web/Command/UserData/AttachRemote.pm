@@ -27,8 +27,14 @@ sub process {
   my $format;
   my @bits = split /\./, $filename;
   my $extension = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
-  my @small_formats = @{$hub->species_defs->USERDATA_FILE_FORMATS};
-  my @big_formats   = @{$hub->species_defs->USERDATA_REMOTE_FORMATS};
+  ## Note - we want keys for small formats to compare with dropdown values,
+  ## but values for big formats to compare with file extensions
+  my $formats = $hub->species_defs->DATA_FILE_FORMATS;
+  my @small_formats = $hub->species_defs->UPLOAD_FILE_FORMATS;
+  my @big_exts;
+  foreach (my $f ($hub->species_defs->REMOTE_FILE_FORMATS)) {
+    push @big_exts, $formats->{$f}{'ext'};
+  }
 
   my $chosen_format = $hub->param('format');
   my $pattern = '^'.$extension.'$';
@@ -36,7 +42,7 @@ sub process {
   ## We have to do some intelligent checking here, in case the user
   ## doesn't select a format, or tries to attach a large format file
   ## with a small format selected in the form
-  if (!$chosen_format || (grep(/$chosen_format/i, @small_formats) && grep(/$pattern/i, @big_formats))) {
+  if (!$chosen_format || (grep(/$chosen_format/i, @small_formats) && grep(/$pattern/i, @big_exts))) {
     $format = uc($extension);
   }
   else {

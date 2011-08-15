@@ -26,7 +26,7 @@ sub content {
   $form->add_element(type => 'Hidden', name => 'code', value => $self->hub->param('code'));
   $form->add_element(type => 'Hidden', name => 'species', value => $species);
   $form->add_element(type => 'Information', value => 'Your file format could not be identified - please select an option:');
-  $self->add_file_format_dropdown($form);
+  $self->add_file_format_dropdown($form, 'upload');
 
   return $form->render;
 }

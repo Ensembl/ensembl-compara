@@ -17,14 +17,21 @@ sub get_assemblies {
 }
 
 sub add_file_format_dropdown {
-  my ($self, $form) = @_;
-  
-  my @formats = sort {lc($a) cmp lc($b)} @{$self->hub->species_defs->USERDATA_FILE_FORMATS || []};
+  my ($self, $form, $limit) = @_;
 
-  if (scalar @formats > 0) {
+  my @formats_to_display;
+  if ($limit) {
+    @formats_to_display = $limit eq 'remote' ? @{$self->hub->species_defs->REMOTE_FILE_FORMATS} 
+                                                : @{$self->hub->species_defs->UPLOAD_FILE_FORMATS}; 
+  }
+  else {
+    @formats_to_display = (@{$self->hub->species_defs->UPLOAD_FILE_FORMATS}, @{$self->hub->species_defs->REMOTE_FILE_FORMATS});
+  }
+ 
+  if (scalar @formats_to_display > 0) {
     my $values = [{'name' => '-- Choose --', 'value' => ''}];
-    foreach my $f (@formats) {
-      push @$values, {'name' => $f, 'value' => uc($f)};
+    foreach my $f (sort {uc($a) cmp uc($b)} @formats_to_display) {
+      push @$values, {'value' => uc($f), 'name' => $f};
     }
     $form->add_element(
       'type'    => 'DropDown',

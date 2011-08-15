@@ -99,7 +99,11 @@ sub upload {
       if ($ext =~ /gz/i) {
         $ext = $parts[-2];
       }
-      $format = uc $ext if grep(/$ext/i, @{$hub->species_defs->USERDATA_FILE_FORMATS});
+      my $extensions;
+      my $format_info = $hub->species_defs->DATA_FORMAT_INFO;
+      foreach my $f (@{$hub->species_defs->UPLOAD_FILE_FORMATS}) {
+        $format = uc $ext if ($format_info->{$f}{'ext'} =~ /$ext/i);
+      }
     }
   }
   $param->{'format'} = $format;

@@ -27,17 +27,20 @@ sub content {
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
 
   # URL-based section
-  my @attachable = @{$object->species_defs->USERDATA_FILE_FORMATS};
-  push @attachable, @{$object->species_defs->USERDATA_REMOTE_FORMATS};
-  my @all_formats = sort {lc($a) cmp lc($b)} @attachable;
-  my $formats = join(', ', @all_formats);
+  my @formats = sort {lc($a) cmp lc($b)} (@{$self->hub->species_defs->UPLOAD_FILE_FORMATS}, @{$self->hub->species_defs->REMOTE_FILE_FORMATS});
+  my $format_list = join(', ', @formats);
+
+  my $note = qq(
+Accessing data via a URL can be slow unless you use an indexed format such as BAM. 
+However it has the advantage that you always see the same data as the file on your own machine.<br /><br />
+We currently accept attachment of the following formats: $format_list.
+  );
+
+  $note .= ' VCF files must be indexed prior to attachment.' if grep(/VCF/, @formats);
 
   $form->add_notes({
     'heading' => 'Tip',
-    'text'    => qq(
-                    Accessing data via a URL can be slow unless you use an indexed format such as BAM. However it has the advantage that you always see the same data as the file on your own machine.<br /><br />
-                    We currently accept attachment of the following formats: $formats.
-                    VCF files must be indexed prior to attachment.)
+    'text'    => $note
   });
 
   $form->add_field([{
@@ -51,9 +54,9 @@ sub content {
     'type'      => 'dropdown',
     'name'      => 'format',
     'label'     => "Data format",
-    'values'    => [{'caption' => '-- Choose --', 'value' => ''}, map {{'caption' => $_, 'value' => uc $_}} @all_formats ],
+    'values'    => [{'caption' => '-- Choose --', 'value' => ''}, map {{'caption' => $_, 'value' => uc $_}} @formats ],
     'select'    => 'select',
-    'disabled'  => scalar @all_formats ? 0 : 1,
+    'disabled'  => scalar @formats ? 0 : 1,
   }, {
     'type'      => 'string',
     'name'      => 'name',
