@@ -693,7 +693,7 @@ sub _add_flat_file_track {
   $menu ||= $self->get_node('user_data');
   
   return unless $menu;
-  
+ 
   my ($display, $strand, $renderers) = $self->_user_track_settings($options{'style'});
 
   my $track = $self->create_track($key, $name, {
@@ -811,6 +811,7 @@ sub update_from_input {
 }
 
 sub update_from_url {
+## Tracks added "manually" in the URL (e.g. via a link)
   my ($self, @values) = @_;
   my $hub     = $self->hub;
   my $session = $hub->session;
@@ -823,11 +824,25 @@ sub update_from_url {
       my ($type, $p) = ($1, $2);
       
       if ($type eq 'url') {
-        $p = uri_unescape($p);
-        my @path = split(/\./, $p);
-        my $ext = $path[-1] eq 'gz' ? $path[-2] : $path[-1];
-        my $format = uc($ext);
-        
+        my $format = $hub->param('format');;
+        my $all_formats = $hub->species_defs->DATA_FORMAT_INFO;
+        if (!$format) {
+          $p = uri_unescape($p);
+          my @path = split(/\./, $p);
+          my $ext = $path[-1] eq 'gz' ? $path[-2] : $path[-1];
+          while (my ($name, $info) = each (%$all_formats)) {
+            if ($info->{'ext'} =~ /$ext/i) {
+              $format = $name;
+              last;
+            }  
+          }
+        }
+
+        my $style = $format; 
+        if ($all_formats->{$format}{'display'} eq 'graph') {
+          $style = 'wiggle';
+        }
+ 
         # We have to create a URL upload entry in the session
         my $code = md5_hex("$species:$p");
         my $n    =  $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
@@ -839,7 +854,7 @@ sub update_from_url {
           code    => $code, 
           name    => $n,
           format  => $format,
-          style   => $format,
+          style   => $style,
         );
         
         $session->add_data(
@@ -852,7 +867,7 @@ sub update_from_url {
         # We then have to create a node in the user_config
         $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
           sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
-          'url' => $p
+          'url' => $p, 'style' => $style
         );
         
         $self->update_track_renderer("url_$code", $renderer);
@@ -894,8 +909,14 @@ sub update_track_renderer {
   my %valid_renderers = @{$node->data->{'renderers'}};
   my $flag            = 0;
 
+  ## Set renderer to something sensible if user has specified invalid one
+  if ($renderer ne 'off' && !$valid_renderers{$renderer}) {
+    ## 'off' is usually first option, so take next one
+    $renderer = $node->data->{'renderers'}[2];
+  }
+
   # if $on_off == 1, only allow track enabling/disabling. Don't allow enabled tracks' renderer to be changed.
-  $flag += $node->set_user('display', $renderer) if $valid_renderers{$renderer} && (!$on_off || $renderer eq 'off' || $node->get('display') eq 'off');
+  $flag += $node->set_user('display', $renderer) if (!$on_off || $renderer eq 'off' || $node->get('display') eq 'off');
   
   $self->altered = 1 if $flag;
 }
