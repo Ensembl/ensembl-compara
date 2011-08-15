@@ -1611,6 +1611,10 @@ sub dumpGene {
     foreach (@$es) {
       $external_synonyms->{$_->[0]}{$_->[1]} = 1;
     }
+
+#    warn Data::Dumper::Dumper($external_synonyms);
+#    exit;
+
     my %xrefs = ();
     foreach my $type( qw(Gene Transcript Translation) ) {
 #      print LOG "starting memory usage for type $type = ".&date_and_mem()."\n";
@@ -1729,7 +1733,7 @@ sub dumpGene {
                        $old->{'desc'},
                        $old->{'xrefs'},
                        $old->{'xref_descriptions'},
-                       $old->{'name_synonyms'},
+                       $old->{'synonyms'},
                        $gene_locations->{$old->{'gsid'}},
                        $db,
                        $counter),
@@ -1747,7 +1751,7 @@ sub dumpGene {
           'ad_dl'     => $ad_dl,
           'xrefs'     => [],
           'xref_descriptions' => {},
-          'name_synonyms'  => [ @{$gene_trans_syns{$gsid}||[]}, @{$gene_trans_syns{$tsid}||[]} ],
+          'synonyms'  => [ @{$gene_trans_syns{$gsid}||[]}, @{$gene_trans_syns{$tsid}||[]} ],
           'disp_xref' => $disp_xref ? "$disp_xref" : "novel gene",
           'status'    => $status,
           'biotype'   => $biotype,
@@ -1778,7 +1782,7 @@ sub dumpGene {
       else {
         $old->{'tsids' }{$tsid }=1;
         $old->{'tlsids'}{$tlsid}=1 if $tlsid;
-        push @{$old->{'name_synonyms'}}, @{$gene_trans_syns{$tsid}||[]};
+        push @{$old->{'synonyms'}}, @{$gene_trans_syns{$tsid}||[]};
 
         #add xref details
         foreach my $type (qw(Gene Transcript Translation)) {
@@ -1811,7 +1815,7 @@ sub dumpGene {
                  $old->{'desc'},
                  $old->{'xrefs'},
                  $old->{'xref_descriptions'},
-                 $old->{'name_synonyms'},
+                 $old->{'synonyms'},
                  $gene_locations->{$old->{'gsid'}},
                  $db,
                  $counter),
@@ -1968,6 +1972,14 @@ sub GeneLine {
     foreach my $xref (@$xrefs) {
       my $dbname   = $xref->{'db_name'};
       my $dbkey    = $xref->{'label'};
+      #xref synonyms
+      foreach my $syn (@{$xref->{'synonyms'}}) {
+        next if $seen_syns{$syn};
+        $seen_syns{$syn} = 1;
+        $syn = &clean($syn,'syn');
+        $xml .= qq(
+  <field name="_xr_$dbname">$syn</field>);
+      }
       next if $seen_labels{$dbkey};
       $seen_labels{$dbkey} = 1;
       $dbkey = &clean($dbkey,'dbkey');
@@ -1984,14 +1996,6 @@ sub GeneLine {
           $seen_labels{$dbkey} = $k;
           $xml .= qq(
   <field name="_xr_$dbname">$k</field>);
-        }
-        #xref synonyms
-        foreach my $syn (@{$xref->{'synonyms'}}) {
-          next if $seen_syns{$syn};
-          $seen_syns{$syn} = 1;
-          $syn = &clean($syn,'syn');
-          $xml .= qq(
-  <field name="_xr_$dbname">$syn</field>);
         }
       }
     }
@@ -2062,6 +2066,13 @@ sub GeneLine {
     foreach my $xref (@$xrefs) {
       my $dbname   = $xref->{'db_name'};
       my $dbkey    = $xref->{'label'};
+      foreach my $syn (@{$xref->{'synonyms'}}) { 
+        next if $seen_syns{$syn};
+        $seen_syns{$syn} = 1;
+        $syn = &clean($syn,'syn');
+        $xml .= qq(
+    <field name="xref_synonym">$syn"</field>);
+      }
       next if $seen_labels{$dbkey};
       $seen_labels{$dbkey} = 1;
       $dbkey = &clean($dbkey,'dbkey');
@@ -2083,13 +2094,7 @@ sub GeneLine {
           $xml .= qq(
     <field name="xref_non_versioned">$k</field>);
         }
-        foreach my $syn (@{$xref->{'synonyms'}}) { 
-          next if $seen_syns{$syn};
-          $seen_syns{$syn} = 1;
-          $syn = &clean($syn,'syn');
-          $xml .= qq(
-    <field name="xref_synonym">$syn"</field>);
-        }
+
       }
     }
 
@@ -2316,7 +2321,7 @@ sub dumpTranscript {
                         $old->{'desc'},
                         $old->{'xrefs'},
                         $old->{'xref_descriptions'},
-                        $old->{'name_synonyms'},
+                        $old->{'synonyms'},
                         $trans_locations->{$old->{'tsid'}},
                         $db,
                         $counter),
@@ -2333,7 +2338,7 @@ sub dumpTranscript {
           'ad_dl'     => $ad_dl,
           'xrefs'     => [],
           'xref_descriptions' => {},
-          'name_synonyms'  => $trans_syns{$tsid} || [],
+          'synonyms'  => $trans_syns{$tsid} || [],
           'disp_xref' => $disp_xref ? "$disp_xref" : "novel transcript",
           'status'    => $status,
           'biotype'   => $biotype,
@@ -2362,7 +2367,7 @@ sub dumpTranscript {
       }
       else {
         $old->{'tlsids'}{$tlsid}=1 if $tlsid;
-        push @{$old->{'name_synonyms'}}, @{$trans_syns{$tsid}||[]};
+        push @{$old->{'synonyms'}}, @{$trans_syns{$tsid}||[]};
         #add xref details
         foreach my $type (qw(Transcript Translation)) {
           my $id = ($type eq 'Transcript')  ? $tid
@@ -2392,7 +2397,7 @@ sub dumpTranscript {
                   $old->{'desc'},
                   $old->{'xrefs'},
                   $old->{'xref_descriptions'},
-                  $old->{'name_synonyms'},
+                  $old->{'synonyms'},
                   $trans_locations->{$old->{'tsid'}},
                   $db,
                   $counter),
@@ -2417,10 +2422,17 @@ sub TransLine {
 
   $xml .= qq(
   <additional_fields>);
-  my (%seen_sources,%seen_labels,%seen_syns);
+  my (%seen_sources,%seen_syns,%seen_labels);
   foreach my $xref (@$xrefs) {
     my $dbname   = $xref->{'db_name'};
     my $dbkey    = $xref->{'label'};
+    foreach my $syn (@{$xref->{'synonyms'}}) {
+      next if $seen_syns{$syn};
+      $seen_syns{$syn} = 1;
+      $syn = &clean($syn,'syn');
+      $xml .= qq(
+    <field name="xref_synonym">$syn"</field>);
+    }
     next if $seen_labels{$dbkey};
     $seen_labels{$dbkey} = 1;
     $dbkey = &clean($dbkey,'dbkey');
@@ -2441,13 +2453,6 @@ sub TransLine {
         $seen_labels{$dbkey} = $k;
         $xml .= qq(
     <field name="xref_non_versioned">$k</field>);
-      }
-      foreach my $syn (@{$xref->{'synonyms'}}) {
-        next if $seen_syns{$syn};
-        $seen_syns{$syn} = 1;
-        $syn = &clean($syn,'syn');
-        $xml .= qq(
-    <field name="xref_synonym">$syn"</field>);
       }
     }
   }
