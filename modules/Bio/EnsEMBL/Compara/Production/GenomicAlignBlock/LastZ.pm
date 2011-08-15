@@ -123,6 +123,7 @@ sub configure_runnable {
             -options    => $self->options,
             -program    => $program,
             -analysis   => $self->analysis,
+	    -workdir    => $self->worker_temp_directory,
             );
     
     if($self->debug >1) {
