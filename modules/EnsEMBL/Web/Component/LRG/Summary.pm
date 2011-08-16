@@ -53,9 +53,6 @@ sub content {
 
     $description .= sprintf ' This LRG was created as a reference standard for the <a href="%s">%s</a> gene.', $gene_url, $db_entry->[0]->display_id;
     $description  =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
-    $description  =~ s/\[\w+:([-\w\/\_]+)\;\w+:(\w+)\]//g;
-    
-    $html        .= "<p>$description</p>";
     
     my $url = $hub->url({
       type   => 'Location',
@@ -74,6 +71,8 @@ sub content {
     
     $html .= qq{
       <dl class="summary">
+				<dt>Description</dt>
+				<dd>$description</dd>
         <dt>Location</dt>
         <dd>$location_html</dd>
       </dl>
