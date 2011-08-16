@@ -49,6 +49,9 @@ sub plugin {
     }
   };
   
+  
+  local $SIG{'__WARN__'} = sub { my $str = "@_"; print STDERR @_ unless $str =~ /Subroutine .+ redefined/; };
+  
   find($wanted, @plugin_dirs);
 }
 
