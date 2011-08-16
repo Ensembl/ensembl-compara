@@ -456,6 +456,7 @@ sub _sort_similarity_links {
   # Get the list of the mapped ontologies 
   my @mapped_ontologies = @{$hub->species_defs->SPECIES_ONTOLOGIES || ['GO']};
   my $ontologies = join '|', @mapped_ontologies, 'goslim_goa';
+  $ontologies =~ s/(\w+)/^$1\$/g;
 
   foreach my $type (sort {
     $b->priority        <=> $a->priority        ||
@@ -479,7 +480,7 @@ sub _sort_similarity_links {
     next if $externalDB eq 'Vega_translation';
     next if $externalDB eq 'OTTP' && $display_id =~ /^\d+$/;    # don't show vega translation internal IDs
     
-    if ($externalDB =~ /^$ontologies$/) {
+    if ($externalDB =~ /$ontologies/) {
       push @{$object->__data->{'links'}{'go'}}, $display_id;
       next;
     } elsif ($externalDB eq 'GKB') {
