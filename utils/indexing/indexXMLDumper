@@ -861,9 +861,8 @@ sub dumpStructuralVariations {
 
   my $scale           = $SD->ENSEMBL_GENOME_SIZE || 1;
   my $max_length      = $scale *= 1e6;
-
   my $T = $conf->{'dbh'}->selectall_arrayref(qq(
-    select v.structural_variation_id,
+    SELECT v.structural_variation_id,
            v.variation_name,
            s.name,
            s.description,
@@ -871,11 +870,12 @@ sub dumpStructuralVariations {
            v.seq_region_start,
            v.seq_region_end,
            group_concat(ssv.name)
-      from $VariationDB.structural_variation as v, $VariationDB.supporting_structural_variation as ssv, $VariationDB.source as s, $VariationDB.seq_region as r
-     where s.source_id = v.source_id 
-       and v.seq_region_id = r.seq_region_id
-       and v.structural_variation_id = ssv.structural_variation_id
-     group by v.structural_variation_id));
+      FROM $VariationDB.source as s,
+           $VariationDB.seq_region as r,
+           $VariationDB.structural_variation as v LEFT JOIN $VariationDB.supporting_structural_variation as ssv ON v.structural_variation_id = ssv.structural_variation_id
+     WHERE s.source_id = v.source_id
+        AND v.seq_region_id = r.seq_region_id
+   GROUP BY v.structural_variation_id));
   foreach my $row ( @$T ) {
     my $id = $row->[1];
     my $location = $row->[4] .":" . $row->[5] ."-". $row->[6];
@@ -883,7 +883,7 @@ sub dumpStructuralVariations {
     my $evidence =  $row->[7];
     my $action = ($length >> $max_length) ? 'Overview' : 'View';
     my $params = ($length >> $max_length) ? { 'cytoview' => 'variation_feature_structural=normal' }
-                                          : { 'contigviewbottom' => 'variation_feature_structural=normal' };
+      : { 'contigviewbottom' => 'variation_feature_structural=normal' };
     my $desc = qq(A structural variation from $row->[2], identified by $row->[3]. This variation has been mapped to chromosome $row->[4], from $row->[5] to $row->[6]. );
     &p( StrucVarLine( $dbspecies, $id, $evidence, $location, $desc, $action, $params, $counter ), $nogzip, $fh);
   }
