@@ -151,7 +151,7 @@ sub invalidate_cache {
     $cache,
     'session_id['.$self->session_id.']',
     'type['.$self->type.']',
-    ($self->type eq 'script') ? 'code['.$self->code.']' : (),
+    ($self->type =~ /^(image|view)_config$/) ? 'code['.$self->code.']' : (),
   );
 }
 
