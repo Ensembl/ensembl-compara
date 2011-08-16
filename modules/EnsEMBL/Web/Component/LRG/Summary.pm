@@ -41,7 +41,9 @@ sub content {
   } else {
     my $lrg         = $object->Obj;
     my $param       = $hub->param('lrg');
-    my $description = qq{LRG region <a rel="external" href="http://www.lrg-sequence.org/LRG/$param">$param</a>.};
+		my $href        = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{'LRG'};
+		   $href =~ s/###ID###/$param/;
+    my $description = qq{LRG region <a rel="external" href="$href">$param</a>.};
     my @genes       = @{$lrg->get_all_Genes('LRG_import')||[]};
     my $db_entry    = $genes[0]->get_all_DBLinks('HGNC');
     my $slice       = $lrg->feature_Slice;
@@ -54,6 +56,16 @@ sub content {
     $description .= sprintf ' This LRG was created as a reference standard for the <a href="%s">%s</a> gene.', $gene_url, $db_entry->[0]->display_id;
     $description  =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
     
+		my $source =  $genes[0]->source;
+		my $source_url;
+		$source = 'LRG' if ($source =~ /LRG/);
+		$source_url = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{uc($source)};
+		$source_url =~ s/###ID###//;
+		
+		if ($source_url) {
+			$description .= qq{ Source: <a rel="external" href="$source_url">$source</a>.};
+		}
+		
     my $url = $hub->url({
       type   => 'Location',
       action => 'View',
