@@ -95,7 +95,7 @@ SET @this_name_class='ensembl common name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=4932;
-SET @this_value='S.cerevisiae';
+SET @this_value='Saccharomyces cerevisiae';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
@@ -470,7 +470,7 @@ SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=59729;
-SET @this_value='Zebra Finch';
+SET @this_value='zebra finch';
 SET @this_name_class='ensembl common name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
@@ -586,12 +586,12 @@ insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class fr
 
 
 SET @this_taxon_id=9305;
-SET @this_value='Devil';
+SET @this_value='Tasmanian devil';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=9305;
-SET @this_value='Tasmanian devil';
+SET @this_value='tasmanian devil';
 SET @this_name_class='ensembl common name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
