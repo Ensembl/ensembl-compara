@@ -46,25 +46,28 @@ sub add_option {
   ## @params HashRef with following keys:
   ##  - id        Id attribute
   ##  - value     goes in value attribute of the option
-  ##  - caption   goes as innerText in <option> (is the actual name displayed)
+  ##  - caption   Text string (or hashref set of attributes including inner_HTML or inner_text, excluding 'value' and 'class' attrib) for <option>
   ##  - selected  flag to tell whether option is selected or not
   ##  - class     Class attribute - overrides the one added by option_class key in the element itself
   ##  - group     (optional) Label attribute for the parent Optgroup for the option - If optgroup does not exist, a new one's created before adding it
   ## @return newly added Node::Element::Option object
   my ($self, $params) = @_;
-  
+
   $params->{'value'}   = '' unless exists $params->{'value'} && defined $params->{'value'};
   $params->{'caption'} = '' unless exists $params->{'caption'} && defined $params->{'caption'};
   $params->{'class'} ||= $self->{'__option_class'} if exists $params->{'__option_class'};
-  
-  my $option = $self->dom->create_element('option', {'inner_HTML' => $params->{'caption'}, 'value' => $params->{'value'}, $params->{'class'} ? ('class' => $params->{'class'}) : ()});
-  $option->set_attribute('id', $params->{'id'}) if $params->{'id'};
-  $option->selected(1) if exists $params->{'selected'} && $params->{'selected'} == 1;
+
+  my $option = $self->dom->create_element('option', {(ref $params->{'caption'} eq 'HASH' ? %{$params->{'caption'}} : ('inner_HTML' => $params->{'caption'})),
+    'value' => $params->{'value'},
+    $params->{'class'}    ? ('class'    => $params->{'class'}) : (),
+    $params->{'id'}       ? ('id'       => $params->{'id'})    : (),
+    $params->{'selected'} ? ('selected' => 'selected')         : ()
+  });
 
   my $group = undef;
   if (exists $params->{'group'} && $params->{'group'} ne '') {
     $_->get_attribute('label') eq $params->{'group'} and $group = $_ and last for @{$self->get_elements_by_tag_name('optgroup')}; #find any matching one
-    $group = $self->append_child($self->dom->create_element('optgroup', {'label' => $params->{'group'}})) unless $group;          #new optgroup if no match
+    $group = $self->append_child('optgroup', {'label' => $params->{'group'}}) unless $group;                                      #new optgroup if no match
   }
   return ($group || $self)->append_child($option);
 }
