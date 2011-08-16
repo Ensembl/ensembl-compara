@@ -16,13 +16,6 @@ use constant {
   _ELEMENT_TYPE          => 'inputcheckbox'  ## Override in child class if required
 };
 
-sub render {
-  ## @overrides
-  my $self = shift;
-  eval { $_->get_elements_by_tag_name('label')->[0]->set_attribute('for', $_->get_elements_by_tag_name('input')->[0]->id); } for @{$self->get_elements_by_class_name($self->CSS_CLASS_INNER_WRAPPER)};
-  return $self->SUPER::render;
-}
-
 sub configure {
   ## @overrides
   my ($self, $params) = @_;
@@ -63,30 +56,30 @@ sub add_option {
   ## @params HashRef with following keys:
   ##  - id        Id attribute of <input>
   ##  - value     goes in value attribute of the option
-  ##  - caption   goes as innerText in <label>, appearing right side of the checkbox/radiobutton (is the actual name displayed)
+  ##  - caption   Text string (or hashref set of attributes including inner_HTML or inner_text) for <label>, appearing right side of the checkbox/radiobutton
   ##  - selected  flag to tell whether option is selected or not
   ##  - group     Subheading caption - If subheading does not exist, a new one's created before adding it
   ##  - class     Only needed to override the default class attribute for all options
   ##  - name      Only needed to override the default name attribute for all options
   ##  - disabled  Only needed to override the default enabled status for all options
-  ##  - is_text   Flag to be on if caption needs HTML escaping
   ## @return newly added Node::Element::P/Span object containg an input and a label
   my ($self, $params) = @_;
-
-  $params->{'value'}    = '' unless exists $params->{'value'};
-  $params->{'caption'}  = '' unless exists $params->{'caption'};
-  $params->{'class'}  ||= $self->{'__option_class'} if $self->{'__option_class'};
-  $params->{'id'}     ||= $self->unique_id          if $params->{'caption'} ne '';
   
-  my $wrapper = $self->dom->create_element($self->{'__inline'} ? 'span' : 'p', {'class' => $self->CSS_CLASS_INNER_WRAPPER});
-  my $input   = $self->dom->create_element($self->_ELEMENT_TYPE, {'value' => $params->{'value'}, 'name' => $params->{'name'} || $self->{'__option_name'}});
+  my $dom = $self->dom;
+
+  $params->{'value'}  ||= '';
+  $params->{'class'}  ||= $self->{'__option_class'} if $self->{'__option_class'};
+  $params->{'id'}     ||= $self->unique_id          if exists $params->{'caption'}; #'for' attrib for label if caption provided
+
+  my $wrapper = $dom->create_element($self->{'__inline'} ? 'span' : 'p', {'class' => $self->CSS_CLASS_INNER_WRAPPER});
+  my $input   = $dom->create_element($self->_ELEMENT_TYPE, {'value' => $params->{'value'}, 'name' => $params->{'name'} || $self->{'__option_name'}});
 
   $params->{$_} and $input->set_attribute($_, $params->{$_}) for qw(id class);
   $input->disabled(exists $params->{'disabled'} ? ($params->{'disabled'} ? 1 : 0) : $self->{'__option_disabled'});
   $input->checked(1) if exists $params->{'checked'} && $params->{'checked'} == 1;
 
   $wrapper->append_child($input);
-  $wrapper->append_child($self->dom->create_element('label', {'id' => $input->id, ($params->{'is_text'} ? 'inner_text' : 'inner_HTML') => $params->{'caption'}})) if $params->{'caption'} ne '';
+  $wrapper->append_child('label', {'for' => $input->id, ref $params->{'caption'} eq 'HASH' ? %{$params->{'caption'}} : 'inner_text' => $params->{'caption'}}) if exists $params->{'caption'};
 
   my $next_heading = undef;
   if (exists $params->{'group'} && defined $params->{'group'}) {
@@ -95,7 +88,7 @@ sub add_option {
       $match and $next_heading = $_ and last;
       $match = 1 if $_->inner_HTML eq $params->{'group'};
     }
-    $self->append_child($self->dom->create_element('p', {'inner_HTML' => $params->{'group'}, 'class' => $self->CSS_CLASS_SUBHEADING})) unless $match; #create new heading if no match found
+    $self->append_child('p', {'inner_HTML' => $params->{'group'}, 'class' => $self->CSS_CLASS_SUBHEADING}) unless $match; #create new heading if no match found
   }
   return defined $next_heading ? $self->insert_before($wrapper, $next_heading) : $self->append_child($wrapper);
 }
