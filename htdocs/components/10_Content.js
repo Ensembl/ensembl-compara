@@ -224,12 +224,14 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   
   hideHints: function () {
     this.elLk.hideHints.each(function () {
+      var div = $(this);
+      
       $('<img src="/i/close.gif" alt="Hide hint panel" title="Hide hint panel" />').bind('click', function () {
         var tmp = [];
         
-        $(this).hide();
+        div.hide();
         
-        Ensembl.hideHints[this.id] = 1;
+        Ensembl.hideHints[div[0].id] = 1;
         
         for (var i in Ensembl.hideHints) {
           tmp.push(i);
