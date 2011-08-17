@@ -108,6 +108,7 @@ sub upload {
   }
   $param->{'format'} = $format;
 
+  ## Set up parameters for file-writing
   if ($method eq 'url') {
     my $url = $hub->param('url');
     $url = 'http://'.$url unless $url =~ /^http/;
@@ -122,6 +123,8 @@ sub upload {
     #$args{'extension'} = $full_ext;
     $args{'tmp_filename'} = $hub->input->tmpFileName($hub->param($method));
   }
+
+  ## Add upload to session
   if ($error) {
     $param->{'filter_module'} = 'Data';
     $param->{'filter_code'} = 'no_response';
