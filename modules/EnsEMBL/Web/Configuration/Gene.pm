@@ -142,7 +142,7 @@ sub populate_tree {
   
   $var_menu->append($self->create_node('Variation_Gene/Image',  'Variation Image',
     [qw( image EnsEMBL::Web::Component::Gene::GeneSNPImage )],
-    { 'availability' => 'gene database:variation not_patch' }
+    { 'availability' => 'gene database:variation core not_patch' }
   ));
 	
 	$var_menu->append($self->create_node('StructuralVariation_Gene', 'Structural Variation',
