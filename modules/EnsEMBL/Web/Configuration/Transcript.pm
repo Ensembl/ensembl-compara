@@ -89,12 +89,12 @@ sub populate_tree {
     
   $var_menu->append($self->create_node('Population', 'Population comparison',
     [qw( snptable EnsEMBL::Web::Component::Transcript::TranscriptSNPTable )],
-    { 'availability' => 'strains database:variation' }
+    { 'availability' => 'strains database:variation core' }
   ));
   
   $var_menu->append($self->create_node('Population/Image', 'Comparison image',
     [qw( snps EnsEMBL::Web::Component::Transcript::SNPView )],
-    { 'availability' => 'strains database:variation' }
+    { 'availability' => 'strains database:variation core' }
   ));
   
   my $prot_menu = $self->create_submenu('Protein', 'Protein Information');
