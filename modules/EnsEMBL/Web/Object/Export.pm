@@ -208,10 +208,25 @@ sub modify_gene_options {
 sub params :lvalue {$_[0]->{'params'};  }
 sub string { return shift->output('string', @_); }
 sub html   { return shift->output('html',   @_); }
+sub image_width { return $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
+sub _warning { return shift->_info_panel('warning', @_ ); } # Error message, but not fatal
 
 sub html_format {
   my $self = shift;
   return $self->{'html_format'} = 'HTML';
+}
+
+sub _info_panel {
+  my ($self, $class, $caption, $desc, $width, $id) = @_;
+  
+  return $self->html_format ? sprintf(
+    '<div%s style="width:%s" class="%s"><h3>%s</h3><div class="error-pad">%s</div></div>',
+    $id ? qq{ id="$id"} : '',
+    $width || $self->image_width . 'px', 
+    $class, 
+    $caption, 
+    $desc
+  ) : '';
 }
 
 sub output {
