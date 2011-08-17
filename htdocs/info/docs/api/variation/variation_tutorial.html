@@ -700,23 +700,40 @@ my $host= 'ensembldb.ensembl.org';
 my $user= 'anonymous';
 
 $reg-&gt;load_registry_from_db(
-	-host =&gt; $host,
-    -user =&gt; $user
+  -host =&gt; $host,
+  -user =&gt; $user
 );
 
-# get exon adaptor from core
+#  Get adaptor to Slice object from core
 my $sa = $reg-&gt;get_adaptor("human", "core", "slice");
 
 my $slice = $sa-&gt;fetch_by_region('chromosome', 5, 1, 1000000);
 
-# get all structural variations on the slice
-my $svs = $slice-&gt;get_all_StructuralVariations();
+# get all structural variation features on the slice
+my $svfs = $slice-&gt;get_all_StructuralVariationFeatures();
 
-foreach my $sv(@$svs) {
-	print $sv-&gt;variation_name, " ", $sv-&gt;seq_region_name, ":", $sv-&gt;seq_region_start, "-", $sv-&gt;seq_region_end, " ", $sv-&gt;class, "\n";
+foreach my $svf (@$svfs) {
+  print $svf-&gt;variation_name, " ", $svf-&gt;seq_region_name, ":", $svf-&gt;seq_region_start, "-", $svf-&gt;seq_region_end, " ", 
+	$svf-&gt;var_class, " (SO term: ", $svf-&gt;class_SO_term, ")\n";
 }
 </pre>
+<p>
+You can also retrieve all the supporting evidences associated to a structural variant.
+</p>
+<pre class="code">
+# Get adaptor to StructuralVariation object from variation
+my $sva = $reg->get_adaptor("human", "variation", "structuralvariation");
 
+# Get the StructuralVariation object
+my $sv = $sva->fetch_by_name('esv214236');
+
+# Get the supporting evidences associated to the structural variation
+my $ssvs = $sv->get_all_SupportingStructuralVariants();
+
+foreach my $ssv (@$ssvs) {
+  print $ssv->name, " ",  $ssv->var_class, " (SO term: ", $ssv-&gt;class_SO_term, ")\n";
+}
+</pre>
 
 <h2 id="ld">LD calculation</h2>
 
