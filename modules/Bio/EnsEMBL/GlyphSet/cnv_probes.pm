@@ -14,9 +14,9 @@ sub features {
   my $var_features;
   
   if ($source =~ /^\w/) {
-    $var_features = $slice->get_all_CopyNumberVariantProbes($source);
+    $var_features = $slice->get_all_CopyNumberVariantProbeFeatures($source);
   } else {
-    $var_features = $slice->get_all_CopyNumberVariantProbes;
+    $var_features = $slice->get_all_CopyNumberVariantProbeFeatures;
   }
   
   return $var_features;  
