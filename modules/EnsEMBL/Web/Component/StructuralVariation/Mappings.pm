@@ -22,13 +22,17 @@ sub content {
 	
 	if (keys %mappings == 1) {
     ($v) = values %mappings;
-  } else { 
-    $v = $mappings{$hub->param('vf')};
+  } elsif (!$hub->param('svf')){
+		return $self->_info(
+      'A unique location can not be determined for this variation',
+      $object->not_unique_location);
+	} else { 
+    $v = $mappings{$hub->param('svf')};
   }
   
   if (!$v) { 
     return $self->_info(
-      '',
+      'Location problem',
       "<p>Unable to draw structural variant neighbourhood as we cannot uniquely determine the structural variant's location</p>"
     );
   }
