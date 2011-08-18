@@ -17,9 +17,9 @@ sub content {
   my $object = $self->object;
 	
   ## first check we have a location
-  if ($object->isa('Bio::EnsEMBL::Variation::Variation') && $object->not_unique_location) {
+	if ($object->not_unique_location) {
     return $self->_info(
-      'A unique location can not be determined for this Variation',
+      'A unique location can not be determined for this variation',
       $object->not_unique_location
     );
   }
@@ -36,21 +36,28 @@ sub content {
 	
 	# Different display and image configuration between Variation and Structural Variation
 	my $im_cfg = 'snpview';
+	if (keys %mappings == 1) {
+    ($v) = values %mappings;
+  }
+	
+	# Structural variation 
 	if ($object->isa('EnsEMBL::Web::Object::StructuralVariation')) {
 		$im_cfg = 'structural_variation';
+		if (!$v) { 
+    	$v = $mappings{$hub->param('svf')};
+  	}
 	}
-	
-  
-  if (keys %mappings == 1) {
-    ($v) = values %mappings;
-  } else { 
-    $v = $mappings{$hub->param('vf')};
-  }
+	# Variation
+	else {
+  	if (!$v) {
+    	$v = $mappings{$hub->param('vf')};
+  	}
+	}
   
   if (!$v) { 
     return $self->_info(
-      '',
-      "<p>Unable to draw SNP neighbourhood as we cannot uniquely determine the SNP's location</p>"
+      'Display',
+      "<p>Unable to draw SNP neighbourhood as we cannot uniquely determine the variation's location</p>"
     );
   }
 
@@ -162,21 +169,27 @@ sub structural_variation_table{
   
   my $rows;
 	
-	foreach my $sv (@{$slice->get_all_StructuralVariations}) {
-		my $name = $sv->variation_name;
-    next if $name eq $v;
-    # make PMID link for description
-    my $description = $sv->source_description;
-		my $ext_ref     = $sv->external_reference;
-	 	my $sv_class    = $sv->class;
+	foreach my $svf (@{$slice->get_all_StructuralVariationFeatures}) {
+		
+		my $name = $svf->variation_name;
+		next if $name eq $v;
+		my $sv   = $svf->structural_variation;
+    
+		my $description = $sv->source_description;
+		my $sv_class    = $sv->var_class;
 	  my $source      = $sv->source;
-	  my $study_url   = $sv->study_url;
+		
+		my ($ext_ref,$study_url,$study_name);
+		if ($sv->study) {
+			$ext_ref    = $sv->study->external_reference;
+			$study_name = $sv->study->name;
+		}
 		
 	  # Add study information
-	  if ($sv->study_name ne '') {
-	  	$source .= ":".$sv->study_name;
+	  if (defined($study_name)) {
+	  	$source .= ":".$study_name;
 			$source = sprintf ('<a rel="external" href="%s">%s</a>',$study_url,$source);
-			$description .= ': '.$sv->study_description;
+			$description .= ': '.$sv->study->description;
 	  }
       
     if ($ext_ref =~ /pubmed\/(.+)/) {
@@ -191,7 +204,7 @@ sub structural_variation_table{
         	sv      => $name
        	});      
 
-    my $loc_string = $sv->seq_region_name . ':' . $sv->seq_region_start . '-' . $sv->seq_region_end;
+    my $loc_string = $svf->seq_region_name . ':' . $svf->seq_region_start . '-' . $svf->seq_region_end;
         
     my $loc_link = $hub->url({
         	type   => 'Location',
@@ -235,20 +248,28 @@ sub cnv_probe_table{
   
   my $rows;
 	
-	foreach my $sv (@{$slice->get_all_CopyNumberVariantProbes}) {
-		my $name = $sv->variation_name;
-    next if $name eq $v;
-    # make PMID link for description
-    my $description = $sv->source_description;
-    my $ext_ref  = $sv->external_reference;
-	 	my $sv_class = $sv->class;
-	  my $source   = $sv->source;
-	  
+	foreach my $svf (@{$slice->get_all_CopyNumberVariantProbeFeatures}) {
+		
+		my $name = $svf->variation_name;
+		next if $name eq $v;
+		my $sv   = $svf->structural_variation;
+    
+		my $description = $sv->source_description;
+		my $sv_class    = $sv->var_class;
+	  my $source      = $sv->source;
+		
+		my ($ext_ref,$study_url,$study_name);
+		if ($sv->study) {
+			$ext_ref    = $sv->study->external_reference;
+			$study_name = $sv->study->name;
+		}
+		
 	  # Add study information
-	  if ($sv->study_name ne '') {
-	  	$source .= ":".$sv->study_name;
-			$description .= $sv->study_description;
+		if (defined($study_name)) {
+	  	$source .= ":".$study_name;
+			$description .= ': '.$sv->study->description;
 	  }
+		
     if ($ext_ref =~ /pubmed\/(.+)/) {
 			my $pubmed_id = $1;
 			my $pubmed_link = $hub->get_ExtURL('PUBMED', $pubmed_id);
@@ -261,7 +282,7 @@ sub cnv_probe_table{
         	sv      => $name
       	});      
 
-    my $loc_string = $sv->seq_region_name . ':' . $sv->seq_region_start . '-' . $sv->seq_region_end;
+    my $loc_string = $svf->seq_region_name . ':' . $svf->seq_region_start . '-' . $svf->seq_region_end;
         
     my $loc_link = $hub->url({
         	type   => 'Location',

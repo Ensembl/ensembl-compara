@@ -84,16 +84,34 @@ sub structural_variation_table{
   
   my $rows;
 	
-	foreach my $sv (@{$slice->get_all_StructuralVariations}) {
-		my $name        = $sv->variation_name;
-    my $description = $sv->source_description;
-		my $ext_ref     = $sv->external_reference;
-	 	my $sv_class    = $sv->class;
+	foreach my $svf (@{$slice->get_all_StructuralVariationFeatures}) {
+		my $name = $svf->variation_name;
+		my $sv   = $svf->structural_variation;
+    
+		my $description = $sv->source_description;
+		my $sv_class    = $sv->var_class;
 	  my $source      = $sv->source;
-		my $study_url   = $sv->study_url;
-	  
+		
+		my ($ext_ref,$study_url,$study_name);
+		if ($sv->study) {
+			$ext_ref    = $sv->study->external_reference;
+			$study_name = $sv->study->name;
+		}
+		
+		if (defined($study_name)) {
+	  	$source .= ":".$study_name;
+			$source = sprintf ('<a rel="external" href="%s">%s</a>',$study_url,$source);
+			$description .= ': '.$sv->study->description;
+	  }
+      
+    if ($ext_ref =~ /pubmed\/(.+)/) {
+			my $pubmed_id = $1;
+			my $pubmed_link = $hub->get_ExtURL('PUBMED', $pubmed_id);
+      $description =~ s/$pubmed_id/'<a href="'.$pubmed_link.'" target="_blank">'.$&.'<\/a>'/eg;
+    }
+		
 		# SV size (format the size with comma separations, e.g: 10000 to 10,000)
-		my $sv_size = ($sv->end-$sv->start+1);
+		my $sv_size = ($svf->end-$svf->start+1);
 		my $int_length = length($sv_size);
 		if ($int_length>3){
 			my $nb = 0;
@@ -106,19 +124,6 @@ sub structural_variation_table{
 			}	
 			$sv_size = "$sv_size,$int_string";
 		}	
-		
-	  # Add study information
-	  if ($sv->study_name ne '') {
-	  	$source .= ":".$sv->study_name;
-			$source = sprintf ('<a rel="external" href="%s">%s</a>',$study_url,$source);
-			$description .= ': '.$sv->study_description;
-	  }
-      
-    if ($ext_ref =~ /pubmed\/(.+)/) {
-			my $pubmed_id = $1;
-			my $pubmed_link = $hub->get_ExtURL('PUBMED', $pubmed_id);
-      $description =~ s/$pubmed_id/'<a href="'.$pubmed_link.'" target="_blank">'.$&.'<\/a>'/eg;
-    }
 			
     my $sv_link = $hub->url({
        		type    => 'StructuralVariation',
@@ -126,7 +131,7 @@ sub structural_variation_table{
         	sv      => $name
        	});      
 
-    my $loc_string = $sv->seq_region_name . ':' . $sv->seq_region_start . '-' . $sv->seq_region_end;
+    my $loc_string = $svf->seq_region_name . ':' . $svf->seq_region_start . '-' . $svf->seq_region_end;
         
     my $loc_link = $hub->url({
         	type   => 'Location',
@@ -163,18 +168,26 @@ sub cnv_probe_table{
   
   my $rows;
 	
-	foreach my $sv (@{$slice->get_all_CopyNumberVariantProbes}) {
-		my $name = $sv->variation_name;
-    my $description = $sv->source_description;
-    my $ext_ref  = $sv->external_reference;
-	 	my $sv_class = $sv->class;
-	  my $source   = $sv->source;
+	foreach my $svf (@{$slice->get_all_CopyNumberVariantProbeFeatures}) {
+		my $name = $svf->variation_name;
+		my $sv   = $svf->structural_variation;
+    
+		my $description = $sv->source_description;
+		my $sv_class    = $sv->var_class;
+	  my $source      = $sv->source;
+		
+		my ($ext_ref,$study_url,$study_name);
+		if ($sv->study) {
+			$ext_ref    = $sv->study->external_reference;
+			$study_name = $sv->study->name;
+		}
 	  
 	  # Add study information
-	  if ($sv->study_name ne '') {
-	  	$source .= ":".$sv->study_name;
-			$description .= $sv->study_description;
-	  }
+		if ($sv->study) {
+			$ext_ref    = $sv->study->external_reference;
+			$study_name = $sv->study->name;
+		}
+		
     if ($ext_ref =~ /pubmed\/(.+)/) {
 			my $pubmed_id = $1;
 			my $pubmed_link = $hub->get_ExtURL('PUBMED', $pubmed_id);
@@ -182,7 +195,7 @@ sub cnv_probe_table{
     }
 			
 		# SV size (format the size with comma separations, e.g: 10000 to 10,000)
-		my $sv_size = ($sv->end-$sv->start+1);
+		my $sv_size = ($svf->end-$svf->start+1);
 		my $int_length = length($sv_size);
 		if ($int_length>3){
 			my $nb = 0;
@@ -202,7 +215,7 @@ sub cnv_probe_table{
         	sv      => $name
       	});      
 
-    my $loc_string = $sv->seq_region_name . ':' . $sv->seq_region_start . '-' . $sv->seq_region_end;
+    my $loc_string = $svf->seq_region_name . ':' . $svf->seq_region_start . '-' . $svf->seq_region_end;
         
     my $loc_link = $hub->url({
         	type   => 'Location',
