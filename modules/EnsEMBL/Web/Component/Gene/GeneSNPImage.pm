@@ -20,7 +20,7 @@ sub content {
   my $object      = $self->object;
   my $image_width = $self->image_width     || 800;  
   my $context     = $hub->param('context') || 100; 
-  my $extent      = $context eq 'FULL' ? 1000 : $context;
+  my $extent      = $context eq 'FULL' ? 5000 : $context;
   my @confs       = qw(gene transcripts_top transcripts_bottom);
   my ($image_configs, $snp_counts);
   

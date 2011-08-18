@@ -365,7 +365,7 @@ sub variation_table {
 sub configure {
   my ($self, $context) = @_;
   my $object = $self->object;
-  my $extent = $context eq 'FULL' ? 1000 : $context;
+  my $extent = $context eq 'FULL' ? 5000 : $context;
   
   $object->get_gene_slices(
     undef,
