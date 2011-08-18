@@ -48,10 +48,10 @@ sub default_options {
     return {
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
-        'pipeline_name' => 'compara_homology_merged_63',    # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_homology_merged_64',    # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara4',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                        # a rule where a previously undefined parameter is used (which makes either of them obligatory)
@@ -68,20 +68,20 @@ sub default_options {
         'master_copy_tables' => [ 'genome_db', 'species_set', 'method_link', 'method_link_species_set', 'mapping_session', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set_tag' ],
 
         'prevrel_db' => {
-            -host   => 'ens-livemirror',
+            -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'ensembl_compara_62',
+            -dbname => 'lg4_ensembl_compara_63',
         },
         'prevrel_merge_tables' => [ 'stable_id_history' ],
         
         'genetrees_db' => {
-            -host   => 'compara4',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => 'mm14_compara_homology_63',
+            -dbname => 'mm14_compara_homology_64',
         },
         'genetrees_copy_tables'  => [ 'sequence_cds', 'sequence_exon_bounded', 'subset', 'subset_member' ],
         'genetrees_merge_tables' => [ 'stable_id_history', 'homology', 'homology_member', 'lr_index_offset' ],
@@ -91,17 +91,17 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => 'lg4_compara_families_63',
+            -dbname => 'lg4_compara_families_64',
         },
         'families_copy_tables'  => [ 'family', 'family_member' ],
         'families_merge_tables' => [ 'member', 'sequence', 'stable_id_history' ],
 
         'nctrees_db' => {
-            -host   => 'compara3',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => 'mp12_compara_nctrees_63',
+            -dbname => 'mp12_compara_nctrees_64',
         },
         'nctrees_copy_tables'  => [ 'nc_profile', 'nc_tree_member', 'nc_tree_node', 'nc_tree_tag' ],
         'nctrees_merge_tables' => [ 'member', 'sequence', 'homology', 'homology_member', 'lr_index_offset' ],
@@ -127,13 +127,15 @@ sub pipeline_create_commands {
 =head2 pipeline_analyses
 
     Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
-                  Here it defines three analyses:
+                  Here it defines four analyses:
 
-                    * 'generate_job_list'   generates a list of tables to be copied from master_db
+                    * 'lr_index_offset_correction'  removes unused entries from lr_index_offset table, to simplify the merger
 
-                    * 'copy_table'          dumps tables from source_db and re-creates them in pipeline_db
+                    * 'generate_job_list'           generates a list of tables to be copied from master_db
 
-                    * 'merge_table'         dumps tables from source_db and merges them into pipeline_db
+                    * 'copy_table'                  dumps tables from source_db and re-creates them in pipeline_db
+
+                    * 'merge_table'                 dumps tables from source_db and merges them into pipeline_db
 
 =cut
 
