@@ -153,7 +153,7 @@ foreach my $index (@indexes) {
 #      next if ($species =~ /^[N-Z]/);
 #      next unless $species =~ /Callithrix_jacchus|Meleagris_gallopavo|Nomascus_leucogenys|Oryctolagus_cuniculus/;
       $conf->{'species'}   = $species;
-      $conf->{'speciesname_list'}{$SD->get_config($species,'SPECIES_COMMON_NAME')}++;
+      $conf->{'speciescommonname_list'}{$SD->get_config($species,'SPECIES_COMMON_NAME')}++;
       $conf->{'speciesname_list'}{$species}++;
       $conf->{'authority'} = $SD->get_config($species,'AUTHORITY');
 
@@ -2751,6 +2751,10 @@ sub common_fields {
     foreach my $sp (keys %{$conf->{'speciesname_list'}}) {
       $xml .= qq(
     <field name="species_name">$sp</field>);
+    }
+    foreach my $sp (keys %{$conf->{'speciescommonname_list'}}) {
+      $xml .= qq(
+    <field name="species_common_name">$sp</field>);
     }
     $xml .= qq(
     <field name="featuretype">$feature_type</field>);
