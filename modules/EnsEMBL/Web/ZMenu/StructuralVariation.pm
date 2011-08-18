@@ -7,29 +7,51 @@ use base qw(EnsEMBL::Web::ZMenu);
 sub content {
   my $self = shift; 
   my $hub  = $self->hub;
-  my $v_id = $hub->param('vid');
+  my $v_id = $hub->param('sv');
   
   return unless $v_id;
   
   my $db_adaptor      = $hub->database('variation');
   my $var_adaptor     = $db_adaptor->get_StructuralVariation;
-  my $variation       = $var_adaptor->fetch_by_dbID($v_id); 
-  my $seq_region      = $variation->slice->seq_region_name; 
-  my $seq_region_type = $variation->slice->coord_system->name;
-  my $neat_sr_name    = $self->neat_sr_name($seq_region_type, $seq_region);
-  my $start           = ($variation->slice->start  + $variation->start) - 1;
-  my $formatted_start = $self->thousandify($start);
-  my $end             = ($variation->slice->start + $variation->end) - 1;
-  my $formatted_end   = $self->thousandify($end);
-  my $position        = $neat_sr_name . ':' . $formatted_start . '-' . $formatted_end;
-  my $length          = $end - $start;
+  my $variation       = $var_adaptor->fetch_by_name($v_id); 
+	my $svf_adaptor     = $db_adaptor->get_StructuralVariationFeatureAdaptor;
+  my $svf             = $svf_adaptor->fetch_all_by_StructuralVariation($variation);
   my $max_length      = ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1) * 1e6; 
+	my $class						= $variation->var_class;
+	my $vstatus         = $variation->get_all_validation_states;
 	my $pubmed_link     = '';
 	my $location_link;
-	my $study_name		  = $variation->study_name;
-	my $description     = $variation->study_description;
-	my $class						= $variation->class;
-	my $vstatus         = $variation->get_all_validation_states;
+	my $feature;
+	my $study_name;
+	my $description;
+	my $study_url;
+	my $study = $variation->study;
+	
+	if (defined($study)) {
+		$study_name	 = $study->name;
+		$description = $study->description;
+		$study_url   = $study->url; 
+	}
+
+	if (scalar @$svf == 1) {
+    $feature = $svf->[0];
+  } else {
+    foreach (@$svf) {
+      $feature = $_ if $_->dbID eq $hub->param('svf');
+    }
+  }
+	
+	my $start      = $feature->start;
+  my $end        = $feature->end;
+  my $seq_region = $feature->seq_region_name;
+  my $position   = "$seq_region:$start";
+  my $length     = $end - $start;
+	
+  if ($end < $start) {
+    $position = "$seq_region: between $end &amp; $start";
+  } elsif ($end > $start) {
+    $position = "$seq_region:$start-$end";
+  }
 	
 	if (! $description) {
 		$description = $variation->source_description;
@@ -61,14 +83,14 @@ sub content {
 	if ($class eq 'CNV_PROBE') {
 		$sv_caption = 'CNV probe: ';
 	}
-  $self->caption($sv_caption . $variation->variation_name);
+  $self->caption($sv_caption . $v_id);
 
   $self->add_entry({
-    label_html => $variation->variation_name.' properties',
+    label_html => $v_id.' properties',
     link       => $hub->url({
       type     => 'StructuralVariation',
       action   => 'Summary',
-      sv       => $variation->variation_name,
+      sv       => $v_id,
     })
   });
 
@@ -78,8 +100,7 @@ sub content {
   });
 	
 	
-	if ($study_name ne '') {
-		my $study_url = $variation->study_url;
+	if (defined($study_name)) {
 		$self->add_entry({
     	type  => 'Study',
     	label => $study_name,
