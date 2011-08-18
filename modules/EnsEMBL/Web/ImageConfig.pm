@@ -1082,7 +1082,6 @@ sub load_configured_das {
   my $extra         = ref $_[0] eq 'HASH' ? shift : {};
   my %allowed_menus = map { $_ => 1 } @_;
   my $all_menus     = !scalar @_;
-  
   my @adding;
   my %seen;
   
@@ -1090,6 +1089,11 @@ sub load_configured_das {
     next unless $source->is_on($self->{'type'});
     
     my ($category, $sub_category) = split ' ', $source->category;
+    
+    if ($category == 1) {
+      $self->add_das_tracks('external_data', $source, $extra); # Unconfigured, will go into External data section
+      next;
+    }
     
     next unless $all_menus || $allowed_menus{$category};
     
