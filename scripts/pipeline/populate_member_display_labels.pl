@@ -5,98 +5,57 @@ use warnings;
 
 use Pod::Usage;
 use Getopt::Long;
-use Scalar::Util qw(looks_like_number);
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater;
 
 my @OPTIONS = qw(
-  registry|reg_conf=s
-  compara=s
+  reg_conf|registry=s
+  reg_alias|compara=s
   species=s@
   replace
-  die_if_no_core
+  die_if_no_core_adaptor|die_if_no_core
   verbose
   help
   man
 );
 
-sub run {
-  my $options = _parse_options();
-  _load_registry($options);
+sub main {
+
+  warn "NB: This script is being phased out. It may still work, but please see POD for Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater for examples of how we run it.\n";
+
+  my $options = {};
+  GetOptions( $options, @OPTIONS) or pod2usage(1);
+    pod2usage( -exitstatus => 0, -verbose => 1 ) if $options->{help};
+	pod2usage( -exitstatus => 0, -verbose => 2 ) if $options->{man};
+
+  Bio::EnsEMBL::Registry->load_all($options->{reg_conf});
+
   my $dba = _compara_dba($options);
-  my $genome_db_ids = _genome_db_ids($options, $dba);
-  my $runnable = _build_runnable($options, $dba, $genome_db_ids);
+
+  my %args = (
+    -DB_ADAPTOR => $dba,
+    -REPLACE => $options->{replace},
+    -DIE_IF_NO_CORE_ADAPTOR => $options->{die_if_no_core_adaptor},
+    -SPECIES => $options->{species},
+    -DEBUG => $options->{verbose}
+  );
+  my $runnable = Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater->new_without_hive(%args);
   $runnable->run_without_hive();
-  return;
-}
-
-sub _parse_options {
-  my $hash = {};
-  GetOptions( $hash, @OPTIONS) or pod2usage(1);
-  pod2usage( -exitstatus => 0, -verbose => 1 ) if $hash->{help};
-	pod2usage( -exitstatus => 0, -verbose => 2 ) if $hash->{man};
-  return $hash;
-}
-
-sub _load_registry {
-  my ($options) = @_;
-  Bio::EnsEMBL::Registry->load_all($options->{registry});
-  return;
 }
 
 sub _compara_dba {
   my ($options) = @_;
-  my $synonym = $options->{compara};
-  my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($synonym, 'compara');
+  my $reg_alias = $options->{reg_alias};
+  my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_alias, 'compara');
   if(! defined $dba) {
-    my $reg = $options->{registry} || q{-};
-    print STDERR "Cannot find a compara DBAdaptor instance for the synonym ${synonym}. Check your registry (location ${reg}) to see if you have defined it\n";
+    my $reg = $options->{reg_conf} || q{-};
+    print STDERR "Cannot find a compara DBAdaptor instance for the registry alias ${reg_alias}. Check your registry (location ${reg}) to see if you have defined it\n";
     pod2usage( -exitstatus => 1, -verbose => 1 );
   }
   return $dba;
 }
 
-sub _genome_db_ids {
-  my ($options, $dba) = @_;
-  my $species = $options->{species};
-  
-  if(! defined $species) {
-    print STDOUT 'Working with all available GenomeDBs', "\n" if $options->{verbose};
-    return;
-  }
-  
-  my @genome_dbs;
-  foreach my $s (@{$species}) {
-    if(looks_like_number($s)) {
-      push(@genome_dbs, $s);
-    }
-    else {
-      my $gdb = $dba->get_GenomeDBAdaptor()->fetch_by_registry_name($s);
-      if(! defined $gdb) {
-        print STDERR "$s does not have a valid GenomeDB\n";
-        pod2usage( -exitstatus => 1, -verbose => 1 );
-      }
-      push(@genome_dbs, $gdb->dbID());
-    }
-  }
-  return \@genome_dbs;
-}
-
-sub _build_runnable {
-  my ($options, $dba, $genome_db_ids) = @_;
-  
-  my %args = (
-    -DB_ADAPTOR => $dba,
-    -REPLACE => $options->{replace},
-    -DIE_IF_NO_CORE_ADAPTOR => $options->{die_if_no_core},
-    -DEBUG => $options->{verbose}
-  );
-  $args{-GENOME_DB_IDS} = $genome_db_ids if defined $genome_db_ids;
-  return Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater->new_without_hive(%args);
-}
-
-#Only execute method
-run();
+main();
 exit 0;
 
 __END__
@@ -108,11 +67,11 @@ populate_member_display_label.pl
 
 =head1 SYNOPSIS
 
-  ./populate_member_display_label.pl --reg_conf my.reg --compara my_compara --species 'homo_sapiens' --replace
+  ./populate_member_display_label.pl --reg_conf my.reg --reg_alias my_compara --species 'homo_sapiens' --replace
   
-  ./populate_member_display_label.pl --reg_conf my.reg --compara my_compara --species 90 --species 91
+  ./populate_member_display_label.pl --reg_conf my.reg --reg_alias my_compara --species 90 --species 91
   
-  ./populate_member_display_label.pl --registry my.reg --compara my_compara
+  ./populate_member_display_label.pl --reg_conf my.reg --reg_alias my_compara
 
 =head1 DESCRIPTION
 
@@ -133,11 +92,11 @@ all GenomeDBs
 
 =over 8
 
-=item B<--registry | --reg_conf>
+=item B<--reg_conf>
 
 Specify a location of the registry file to load
 
-=item B<--compara>
+=item B<--reg_alias>
 
 Compara database to use e.g. multi
 
@@ -150,7 +109,7 @@ you can specify multiple options on the command line
 
 Replace any existing display labels
 
-=item B<--die_if_no_core>
+=item B<--die_if_no_core_adaptor>
 
 Cause the script to die if we encounter any GenomeDB without a Core DBAdaptor
 

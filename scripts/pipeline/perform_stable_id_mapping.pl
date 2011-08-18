@@ -8,8 +8,6 @@ use Getopt::Long;
 use Pod::Usage;
 use Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper;
 
-my $OPTIONS = options();
-run();
 
 sub options {
   my $opts = {};
@@ -42,14 +40,12 @@ sub options {
   return $opts;
 }
 
-sub run {
-  my $r = _build_runnable();
-  $r->run_without_hive();
-  return;
-}
+sub main {
+  warn "NB: This script is being phased out. It may still work, but please see POD for Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper for examples of how we run it.\n";
 
-sub _build_runnable {
-  my $r = Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper->new_without_hive(
+  my $OPTIONS = options();
+
+  my $runnable = Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper->new_without_hive(
     -DB_ADAPTOR => _get_dba($OPTIONS->{database}, 'compara'),
     -TYPE => $OPTIONS->{type},
     -RELEASE => $OPTIONS->{release},
@@ -57,8 +53,7 @@ sub _build_runnable {
     -PREV_RELEASE_DB => _get_dba($OPTIONS->{previous_database}, 'compara'),
     -MASTER_DB => _get_dba($OPTIONS->{master}, 'compara')
   );
-  
-  return $r;
+  $runnable->run_without_hive();
 }
 
 sub _get_dba {
@@ -76,7 +71,8 @@ sub _exit {
   pod2usage( -exitstatus => $status, -verbose => $verbose );
 }
 
-1;
+main();
+
 __END__
 
 =pod

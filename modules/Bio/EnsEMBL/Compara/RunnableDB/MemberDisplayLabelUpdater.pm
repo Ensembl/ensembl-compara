@@ -8,39 +8,26 @@ Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater
 
 =head1 SYNOPSIS
 
-Normally it is used as a RunnableDB however you can run it using the non-hive
-methods:
+This runnable can be used both as a Hive pipeline component or run in standalone mode.
+At the moment Compara runs it standalone, EnsEMBL Genomes runs it in both modes.
 
-	my $u = Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater->new_without_hive(
-	 -DB_ADAPTOR => $compara_dba,
-	 -REPLACE => 0,
-	 -DIE_IF_NO_CORE_ADAPTOR => 0,
-	 -GENOME_DB_IDS => [90],
-	 -DEBUG => 1 
-	);
-	$u->run_without_hive();
-	
-This would run an updater on the GenomeDB ID 90 (Homo sapiens normally) not
-dying if it cannot find a core DBAdaptor & printing debug messages to STDOUT. 
-By not specifying a GenomeDB ID you are asking to run this code over every
-GenomeDB. 
+In standalone mode you will need to set --reg_conf to your registry configuration file in order to access the core databases.
+You will have to refer to your compara database either via the full URL or (if you have a corresponding registry entry) via registry.
+Here are both examples:
 
-Using it in the hive manner expects the above values (lowercased) filled in 
-any of the fields Process can detect values in. The exception to 
-this is db_adaptor which is created from the current Hive DBAdaptor instance.
+    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --compara_db compara_homology_merged --debug 1
+
+    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --compara_db mysql://ensadmin:${ENSADMIN_PSW}@compara3:3306/lg4_compara_homology_merged_64 --debug 1
+
+You should be able to limit the set of species being updated by adding --species "[ 90, 3 ]" or --species "[ 'human', 'rat' ]"
 
 =head1 DESCRIPTION
 
-When run in hive mode the module loops through all genome db ids given via
-the parameter C<genome_db_ids> and attempts to update any gene/translation
-with the display identifier from the core database.
+The module loops through all genome_dbs given via the parameter C<species> and attempts to update any gene/translation with the display identifier from the core database.
+If the list of genome_dbs is not specified, it will attempt all genome_dbs with entries in the member table.
 
-When run in non-hive mode not specifying a set of genome db ids will cause
-the code to work over all genome dbs with entries in the member table.
-
-This code uses direct SQL statements because of the
-relationship between translations and their display labels being stored at the
-transcript level. If the DB changes this will break.
+This code uses direct SQL statements because of the relationship between translations and their display labels
+being stored at the transcript level. If the DB changes this will break.
 
 =head1 AUTHOR
 
@@ -64,6 +51,7 @@ Internal methods are usually preceded with a _
 use strict;
 use warnings;
 
+use Scalar::Util qw(looks_like_number);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref);
@@ -71,7 +59,9 @@ use Bio::EnsEMBL::Utils::SqlHelper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+
 #--- Non-hive methods
+
 =head2 new_without_hive()
 
   Arg [DB_ADAPTOR]              : (DBAdaptor) Compara DBAdaptor to use
@@ -96,48 +86,35 @@ sub new_without_hive {
   my $job = Bio::EnsEMBL::Hive::AnalysisJob->new();
   $self->input_job($job);
   
-  my ($db_adaptor, $replace, $die_if_no_core_adaptor, $genome_db_ids, $debug) = 
+  my ($db_adaptor, $replace, $die_if_no_core_adaptor, $species, $debug) = 
     rearrange(
-      [qw(db_adaptor replace die_if_no_core_adaptor genome_db_ids debug)], 
+      [qw(db_adaptor replace die_if_no_core_adaptor species debug)], 
       @params
   );
   
   $self->compara_dba($db_adaptor);
   $self->param('replace', $replace);
   $self->param('die_if_no_core_adaptor', $die_if_no_core_adaptor);
-  $self->param('genome_db_ids', $genome_db_ids);
+  $self->param('species', $species);
   $self->debug($debug);
-  
-  $self->_use_all_available_genomedbs() if ! check_ref($genome_db_ids, 'ARRAY');
-  
-  $self->_assert_state();
   
   return $self;
 }
 
 =head2 run_without_hive()
 
-Performs the run() and write_output() calls in one method.
+Performs fetch_input(), run() and write_output() calls in one method.
 
 =cut
 
 sub run_without_hive {
   my ($self) = @_;
+
+  $self->fetch_input();
   $self->run();
   $self->write_output();
-  return;
 }
 
-#Set all IDs into the available ones to run over; only available through the 
-#non-hive interface
-sub _use_all_available_genomedbs {
-  my ($self) = @_;
-  my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba()->dbc());
-  my $sql = q{select distinct genome_db_id from member where genome_db_id is not null and genome_db_id <> 0};
-  my $ids = $h->execute_simple( -SQL => $sql);
-  $self->param('genome_db_ids', $ids);
-  return;
-}
 
 #--- Hive methods
 
@@ -153,21 +130,27 @@ sub _use_all_available_genomedbs {
 
 sub fetch_input {
   my ($self) = @_;
-  $self->_assert_state();
-  $self->_print_params();
-  return 1;
-}
 
-sub _print_params {
-  my ($self) = @_;
-  return unless $self->debug();
-  my @params = qw(replace die_if_no_core_adaptor);
-  foreach my $param (@params) {
-    my $value = $self->param($param);
-    print "$param : ".(defined $value ? $value : q{}), "\n"; 
+  my $species_list = $self->param('species') || $self->param('genome_db_ids');
+
+  unless( $species_list ) {
+      my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba()->dbc());
+      my $sql = q{SELECT DISTINCT genome_db_id FROM member WHERE genome_db_id IS NOT NULL AND genome_db_id <> 0};
+      $species_list = $h->execute_simple( -SQL => $sql);
   }
-  print 'genome_db_ids: '.join(q{,}, @{$self->param('genome_db_ids')}), "\n";
-  return;
+
+  my $genome_db_adaptor = $self->compara_dba()->get_GenomeDBAdaptor();  
+
+  my @genome_dbs = ();
+  foreach my $species (@$species_list) {
+    my $genome_db = ( looks_like_number( $species )
+        ? $genome_db_adaptor->fetch_by_dbID( $species )
+        : $genome_db_adaptor->fetch_by_registry_name( $species ) )
+    or die "Could not fetch genome_db object given '$species'";
+
+    push @genome_dbs, $genome_db;
+  }
+  $self->param('genome_dbs', \@genome_dbs);
 }
 
 =head2 run
@@ -183,20 +166,18 @@ sub _print_params {
 sub run {
   my ($self) = @_;
   
-  my $genome_dbs = $self->_genome_dbs();
+  my $genome_dbs = $self->param('genome_dbs');
   if($self->debug()) {
-    my $names = join(q{, }, map { $_->name() } @{$genome_dbs});
+    my $names = join(q{, }, map { $_->name() } @$genome_dbs);
     print "Working with: [${names}]\n";
   }
   
   my $results = $self->param('results', {});
   
-  foreach my $genome_db (@{$genome_dbs}) {
+  foreach my $genome_db (@$genome_dbs) {
     my $output = $self->_process_genome_db($genome_db);
     $results->{$genome_db->dbID()} = $output;
   }
-  
-  return 1;
 }
 
 =head2 write_output
@@ -212,38 +193,15 @@ sub run {
 sub write_output {
   my ($self) = @_;
   
-  my $genome_dbs = $self->_genome_dbs();
-  foreach my $genome_db (@{$genome_dbs}) {
+  my $genome_dbs = $self->param('genome_dbs');
+  foreach my $genome_db (@$genome_dbs) {
     $self->_update_display_labels($genome_db);
   }
-  
-  return 1;
 }
+
 
 #--- Generic Logic
 
-sub _assert_state {
-  my ($self) = @_;
-  
-  my $dba = $self->compara_dba();
-  throw('A suitable Compara DBAdaptor was not found') unless defined $dba;
-  assert_ref($dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor');
-  
-  #Checking we have some genome dbs to work on
-  my $genome_db_ids = $self->param('genome_db_ids');
-  throw 'GenomeDB IDs array was not defined' if(! defined $genome_db_ids);
-  assert_ref($genome_db_ids, 'ARRAY');
-  throw 'GenomeDB IDs array was empty' if(! @{$genome_db_ids});
-  
-  return;
-}
-
-sub _genome_dbs {
-	my ($self) = @_;
-	my $ids = $self->param('genome_db_ids');
-  my $gdba = $self->compara_dba()->get_GenomeDBAdaptor();  
-  return [ map { $gdba->fetch_by_dbID($_) } @{$ids} ];
-}
 
 sub _process_genome_db {
 	my ($self, $genome_db) = @_;
@@ -281,10 +239,11 @@ sub _process {
   my @members_to_update;
   my $replace = $self->param('replace');
   
-  my $core_labels = $self->_get_display_label_lookup($genome_db, $source_name);
   my $members = $self->_get_members_by_source($genome_db, $source_name);
   
   if(%{$members}) {
+    my $core_labels = $self->_get_display_label_lookup($genome_db, $source_name);
+
     foreach my $stable_id (keys %{$members}) {
       my $member = $members->{$stable_id};
       
@@ -297,13 +256,12 @@ sub _process {
       $member->display_label($display_label);
       push(@members_to_update, $member);
     }
-  }
-  else {
+  } else {
     my $name = $genome_db->name();
     print "No members found for ${name} and ${source_name}\n" if $self->debug();
   }
 	
-	return \@members_to_update;
+  return \@members_to_update;
 }
 
 sub _need_to_process_genome_db_source {
@@ -349,11 +307,11 @@ join coord_system cs using (coord_system_id)
 where cs.species_id =?}
 	};
 	
-	my $dba = $genome_db->db_adaptor();
+  my $dba = $genome_db->db_adaptor();
   my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $dba->dbc());
   
-	my $sql = $sql_lookup->{$source_name};
-	my $params = [$dba->species_id()];
+  my $sql = $sql_lookup->{$source_name};
+  my $params = [$dba->species_id()];
 	
   my $hash = $h->execute_into_hash( -SQL => $sql, -PARAMS => $params );
   return $hash;
@@ -370,7 +328,7 @@ sub _update_display_labels {
 	  return;
 	}
 	
-  print "Writing members out for ${name}\n" if $self->debug();
+    print "Writing members out for ${name}\n" if $self->debug();
 	
 	my $total = 0;
 	
