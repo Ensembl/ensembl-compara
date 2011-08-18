@@ -14,9 +14,9 @@ sub features {
   my $var_features;
   
   if ($source =~ /^\w/) {
-    $var_features = $slice->get_all_StructuralVariations($source);
+    $var_features = $slice->get_all_StructuralVariationFeatures($source);
   } else {
-    $var_features = $slice->get_all_StructuralVariations;
+    $var_features = $slice->get_all_StructuralVariationFeatures;
   }
   
   return $var_features;  
@@ -31,12 +31,105 @@ sub colour_key  {
 sub tag {
   my ($self, $f) = @_;
   
-  return ({
-    style  => 'fg_ends',
-    colour => $self->my_colour($f->source),
-    start  => $f->start,
-    end    => $f->end
-  });
+	my $core_colour  = '#000000';
+	my $bound_colour = '#bfbfbf';
+	my $arrow_colour = '#bfbfbf';
+	
+	my @g_objects;
+	
+	my $inner_crossing = 0;
+	
+	my $outer_start = ($f->seq_region_start - $f->outer_start) - $f->start if (defined($f->outer_start));
+	my $inner_start = ($f->inner_start - $f->seq_region_start) + $f->start if (defined($f->inner_start));
+	my $inner_end   = $f->end - ($f->seq_region_end - $f->inner_end) if (defined($f->inner_end));
+	my $outer_end   = $f->end + ($f->outer_end - $f->seq_region_end) if (defined($f->outer_end));
+	
+	my $core_start = $f->start;
+	my $core_end   = $f->end;
+	
+	
+	# Check if inner_start < inner_end
+	if ($f->inner_start and $f->inner_end) {
+		$inner_crossing = 1 if ($f->inner_start >= $f->inner_end);
+	}
+
+  ## START ##
+	# outer & inner start
+	if ($f->outer_start and $f->inner_start) {
+		if ($f->outer_start != $f->inner_start && $inner_crossing == 0) {
+			push @g_objects, {
+    		style  => 'rect',
+    		colour => $bound_colour,
+    		start  => $f->start,
+    		end    => $inner_start
+  		};
+			$core_start = $inner_start;
+		}
+	}
+	# Only outer start
+	elsif ($f->outer_start) {
+		if ($f->outer_start == $f->seq_region_start || $inner_crossing) {
+			push @g_objects, {
+    		style  => 'triangle_right',
+    		colour => $arrow_colour,
+    		start  => $f->start
+  		};
+		}
+	}
+	# Only inner start
+	elsif ($f->inner_start) {
+		if ($f->inner_start == $f->seq_region_start && $inner_crossing == 0) {
+			push @g_objects, {
+    		style  => 'triangle_left',
+    		colour => $arrow_colour,
+    		start  => $f->start
+  		};
+		}
+	}
+	
+	## END ##
+	# outer & inner end
+	if ($f->outer_end and $f->inner_end) {
+		if ($f->outer_end != $f->inner_end && $inner_crossing == 0) {
+			push @g_objects, {
+    		style  => 'rect',
+    		colour => $bound_colour,
+    		start  => $inner_end,
+    		end    => $f->end
+  		};
+			$core_end = $inner_end;
+		}
+	}
+	# Only outer end
+	elsif ($f->outer_end) {
+		if ($f->outer_end == $f->seq_region_end || $inner_crossing) {
+			push @g_objects, {
+    		style  => 'triangle_left',
+    		colour => $arrow_colour,
+    		start  => $f->end
+  		};
+		}
+	}
+	# Only inner end
+	elsif ($f->inner_end) {
+		if ($f->inner_end == $f->seq_region_end && $inner_crossing == 0) {
+			push @g_objects, {
+    		style  => 'triangle_right',
+    		colour => $arrow_colour,
+    		start  => $f->end
+  		};
+		}
+	}
+	
+	# Central part of the structural variation
+	unshift @g_objects, {
+    	style  => 'rect',
+    	colour => $core_colour, #$self->my_colour($f->source),
+    	start  => $core_start,
+    	end    => $core_end
+  	};
+	
+	return @g_objects;
 } 
 
 sub href {
@@ -45,8 +138,8 @@ sub href {
   my $href = $self->_url({
     species =>  $self->species,
     action  => 'StructuralVariation',
-    vid     => $f->dbID,
-    vf      => $f->variation_name,
+    sv      => $f->variation_name,
+    svf     => $f->dbID,
     vdb     => 'variation'
   });
   
@@ -65,7 +158,7 @@ sub title {
 }
 
 sub highlight {
-  my ($self, $f, $composite,$pix_per_bp, $h) = @_;
+  my ($self, $f, $composite, $pix_per_bp, $h) = @_;
   my $id = $f->variation_name;
   my %highlights;
   @highlights{$self->highlights} = (1);
