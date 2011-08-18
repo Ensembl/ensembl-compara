@@ -4,6 +4,14 @@ use strict;
 
 use base qw(Bio::EnsEMBL::GlyphSet);
 
+
+sub my_label { 
+  my $self = shift;  
+  my $label = $self->{'my_config'}->id =~/somatic/ ?'Somatic Mutations' : 'Variations'; 
+  return $label; 
+}
+
+
 sub my_colour {
   my ($self, $key) = @_;
   $self->{'colour_map'} ||= $self->{'config'}->species_defs->colour('variation');
@@ -25,7 +33,10 @@ sub _init {
 
   return unless $snps;
   
+	my $is_somatic = $self->{'my_config'}->id =~/somatic/ ? 1 : 0;
+	
   foreach my $snp (@$snps) {
+		next if ($snp->{'vf'}->is_somatic != $is_somatic);
     my $x = $snp->{'position'};
     my ($colour, $legend) = $self->my_colour($snp->{'type'});
     
