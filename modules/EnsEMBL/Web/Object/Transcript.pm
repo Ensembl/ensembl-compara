@@ -612,7 +612,7 @@ sub valids {
 sub extent {
   my $self = shift;
   my $extent = $self->param('context');
-  $extent = 1000 if $extent eq 'FULL';
+  $extent = 5000 if $extent eq 'FULL';
   return $extent;
 }
 
@@ -1554,7 +1554,7 @@ sub get_genetic_variations {
   my $self       = shift;
   my @samples    = @_;
   my $hub        = $self->hub;
-  my $tsv_extent = $hub->param('context') eq 'FULL' ? 1000 : $hub->param('context');
+  my $tsv_extent = $hub->param('context') eq 'FULL' ? 5000 : $hub->param('context');
   my $snp_data   = {};
 
   foreach my $sample (@samples) {
@@ -1618,8 +1618,12 @@ sub get_genetic_variations {
 
 sub get_transcript_variations {
   my $self = shift;
+	
+	my $tva = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+	my $trans1 = $tva->fetch_all_by_Transcripts([ $self->Obj ]) || [];
+  my $trans2 = $tva->fetch_all_somatic_by_Transcripts([ $self->Obj ]) || [];
   
-  return $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_Transcripts([ $self->Obj ]) || [];
+	return [@$trans1,@$trans2];
 }
 
 sub variation_data {
@@ -1664,6 +1668,7 @@ sub variation_data {
         allele        => $vf->allele_string,
         pep_snp       => join(', ', split '/', $tva->pep_allele_string),
         type          => $tv->display_consequence,
+				class         => $vf->var_class,
         length        => $end - $start,
         indel         => $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '',
         codon_seq     => [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ],
