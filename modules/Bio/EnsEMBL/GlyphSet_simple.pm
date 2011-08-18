@@ -332,6 +332,42 @@ sub _init {
            'colour'    => $tag->{'colour'},
            'absolutey' => 1,
          });
+			} elsif($tag->{'style'} eq 'bound_triangle_left') {
+				 my $x       = $tag->{start} - ($h/2)/$pix_per_bp;
+				 my $y       = $h/2;
+				 my $height  = $y/$pix_per_bp;
+				 
+				 if ($img_start < $tag->{start} and $img_end > $tag->{end}) {
+				 		push @tag_glyphs, $self->Triangle({
+					 		'x'            => $x,
+					 		'y'            => 0,
+					 		'mid_point'    => [ $x, $y ],
+           		'colour'       => $tag->{'colour'},
+           		'absolutey'    => 1,
+					 		'width'        => $h,
+         	 		'height'       => $height,
+					 		'direction'    => 'left',
+							'bordercolour' => 'black',
+         		});
+				 }
+			} elsif($tag->{'style'} eq 'bound_triangle_right') {
+				 my $x       = $tag->{start} + ($h/2)/$pix_per_bp;
+				 my $y       = $h/2;
+				 my $height  = $y/$pix_per_bp;
+				 
+				 if ($img_start < $tag->{start} and $img_end > $tag->{end}) {
+				 		push @tag_glyphs, $self->Triangle({
+					 		'x'            => $x,
+					 		'y'            => 0,
+					 		'mid_point'    => [ $x, $y ],
+           		'colour'       => $tag->{'colour'},
+           		'absolutey'    => 1,
+					 		'width'        => $h,
+         	 		'height'       => $height,
+					 		'direction'    => 'right',
+							'bordercolour' => 'black',
+         		});
+				 }
       } elsif($tag->{'style'} eq 'right-snp') {
         next if($end < $f->end());
         my $triangle_start =  $end - 1/2 + 4/$pix_per_bp;
