@@ -70,7 +70,7 @@ sub tag {
 	elsif ($f->outer_start) {
 		if ($f->outer_start == $f->seq_region_start || $inner_crossing) {
 			push @g_objects, {
-    		style  => 'triangle_right',
+    		style  => 'bound_triangle_right',
     		colour => $arrow_colour,
     		start  => $f->start
   		};
@@ -80,7 +80,7 @@ sub tag {
 	elsif ($f->inner_start) {
 		if ($f->inner_start == $f->seq_region_start && $inner_crossing == 0) {
 			push @g_objects, {
-    		style  => 'triangle_left',
+    		style  => 'bound_triangle_left',
     		colour => $arrow_colour,
     		start  => $f->start
   		};
@@ -104,7 +104,7 @@ sub tag {
 	elsif ($f->outer_end) {
 		if ($f->outer_end == $f->seq_region_end || $inner_crossing) {
 			push @g_objects, {
-    		style  => 'triangle_left',
+    		style  => 'bound_triangle_left',
     		colour => $arrow_colour,
     		start  => $f->end
   		};
@@ -114,7 +114,7 @@ sub tag {
 	elsif ($f->inner_end) {
 		if ($f->inner_end == $f->seq_region_end && $inner_crossing == 0) {
 			push @g_objects, {
-    		style  => 'triangle_right',
+    		style  => 'bound_triangle_right',
     		colour => $arrow_colour,
     		start  => $f->end
   		};
