@@ -223,7 +223,7 @@ sub content {
             $save = qq{<a href="$dir/UserData/SaveUpload?$extra" class="modal_link">Save to account</a>} if ($logins && $user);
           }
           $share = sprintf('<a href="%s/UserData/SelectShare?%s" class="modal_link">Share</a>', $dir, $extra);
-          $rename = sprintf('<a href="%s/UserData/RenameTempData?code=%s" class="%s"%s>Rename</a>', $dir, $file->{'code'}, $delete_class, $title);
+          $rename = sprintf('<a href="%s/UserData/RenameTempData?type=%s;code=%s" class="%s"%s>Rename</a>', $dir, $file->{'type'}, $file->{'code'}, $delete_class, $title);
           $delete = qq{<a href="$dir/UserData/DeleteUpload?$extra" class="$delete_class"$title>Delete</a></p>};
           
           # Remove save and delete links if the data does not belong to the current user
