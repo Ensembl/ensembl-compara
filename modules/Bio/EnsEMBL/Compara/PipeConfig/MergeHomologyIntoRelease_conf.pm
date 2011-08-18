@@ -25,7 +25,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::MergeHomologyIntoRelease_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
 
 =head2 default_options
 
@@ -43,7 +43,7 @@ sub default_options {
     return {
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
-        'pipeline_name' => 'compara_full_merge_63',         # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_full_merge_64',         # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {
             -host   => 'compara4',
@@ -54,19 +54,19 @@ sub default_options {
         },
 
         'merged_homology_db' => {
-            -host   => 'compara4',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'lg4_compara_homology_merged_63',
+            -dbname => 'lg4_compara_homology_merged_64',
         },
 
         'rel_db' => {
-            -host   => 'compara1',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => 'lg4_ensembl_compara_63',
+            -dbname => 'lg4_ensembl_compara_64',
         },
 
         'skipped_tables' => [ 'meta', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set',
@@ -113,7 +113,7 @@ sub pipeline_analyses {
                 'fan_branch_code' => 2,
             },
             -input_ids => [
-                { 'inputquery' => "SELECT table_name table FROM information_schema.tables WHERE table_schema ='#mysql_dbname:db_conn#' AND table_name NOT IN (#csvq:skipped_tables#) AND table_rows" },
+                { 'inputquery' => "SELECT table_name AS `table` FROM information_schema.tables WHERE table_schema ='#mysql_dbname:db_conn#' AND table_name NOT IN (#csvq:skipped_tables#) AND table_rows" },
             ],
             -flow_into => {
                 2 => [ 'copy_table'  ],
