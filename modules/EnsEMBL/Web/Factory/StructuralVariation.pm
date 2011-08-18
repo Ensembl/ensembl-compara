@@ -35,17 +35,21 @@ sub createObjects {
   if ($structural_variation) { 
     $self->DataObjects($self->new_object('StructuralVariation', $structural_variation, $self->__data));
     
-    my $sv                  = $self->param('sv');
+    my @svf           = $self->param('svf');
     
-    if ($structural_variation) {
+    my @sv_features  = @{$structural_variation->get_all_StructuralVariationFeatures};
+    my ($sv_feature) = scalar @sv_features == 1 ? $sv_features[0] : $svf[0] ? grep $_->dbID eq $svf[0], @sv_features : undef;
+    
+		if ($sv_feature) {
       my $context = $self->param('context') || 500;
-      $self->generate_object('Location', $structural_variation->feature_Slice->expand($context, $context));
-    } elsif ($sv) {
-      $self->delete_param('sv');
+      $self->generate_object('Location', $sv_feature->feature_Slice->expand($context, $context));
+    	$self->param('svf', $sv_feature->dbID) unless scalar @svf > 1; # This check is needed
+		} elsif (scalar @svf) {
+      $self->delete_param('svf');
     }
     
     $self->param('vdb', 'variation');
-    $self->param('sv', $structural_variation->variation_name);
+    $self->param('sv', $structural_variation->variation_name) unless $self->param('sv'); # For same reason as svf check above;
   } else { 
     my $dbsnp_version = "";
     if ( $self->species_defs->databases->{'DATABASE_VARIATION'}->{'dbSNP_VERSION'}){

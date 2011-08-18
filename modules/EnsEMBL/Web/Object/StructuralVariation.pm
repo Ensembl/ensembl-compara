@@ -73,15 +73,16 @@ sub caption {
  return $caption;
 }
 
-sub name               { my $self = shift; return $self->Obj->variation_name;                      }
-sub class              { my $self = shift; return $self->Obj->class;                               }
-sub source             { my $self = shift; return $self->Obj->source;                              }
-sub source_description { my $self = shift; return $self->Obj->source_description;                  }
-sub study_name         { my $self = shift; return $self->Obj->study_name;                          }
-sub study_description  { my $self = shift; return $self->Obj->study_description;                   }
-sub study_url          { my $self = shift; return $self->Obj->study_url;                           }
-sub external_reference { my $self = shift; return $self->Obj->external_reference;                  }
-sub supporting_sv      { my $self = shift; return $self->Obj->get_all_SupportingStructuralVariants;}
+sub name               { my $self = shift; return $self->Obj->variation_name;                                         }
+sub class              { my $self = shift; return $self->Obj->var_class;                                              }
+sub source             { my $self = shift; return $self->Obj->source;                                                 }
+sub source_description { my $self = shift; return $self->Obj->source_description;                                     }
+sub study              { my $self = shift; return $self->Obj->study;                                                  }
+sub study_name         { my $self = shift; return (defined($self->study)) ? $self->study->name : undef;               }                
+sub study_description  { my $self = shift; return (defined($self->study)) ? $self->study->description : undef;        } 
+sub study_url          { my $self = shift; return (defined($self->study)) ? $self->study->url : undef;                }
+sub external_reference { my $self = shift; return (defined($self->study)) ? $self->study->external_reference : undef; }
+sub supporting_sv      { my $self = shift; return $self->Obj->get_all_SupportingStructuralVariants;                   }
 
 sub validation_status  { 
 	my $self = shift; 
@@ -94,17 +95,78 @@ sub validation_status  {
 	}
 }    
 
-sub variation_feature_mapping { 
-  my $self = shift;
-  my %data;
-	my $obj = $self->Obj;
-  my $id = $obj->dbID;
-  $data{$id}{Chr}            = $obj->slice->seq_region_name;
-  $data{$id}{start}          = $obj->start;
-  $data{$id}{end}            = $obj->end;
-  $data{$id}{strand}         = $obj->strand;
-  $data{$id}{transcript_vari} = undef;
+# SSV associated colours
+sub get_class_colour {
+	my $self  = shift;
+	my $class = shift;
+	
+	my %colour = (
+		'copy_number_variation'         => '#000000',
+		'insertion'                     => '#FFCC00',
+    'copy_number_gain'              => '#0000FF', 
+    'copy_number_loss'              => '#FF0000',
+		'inversion'                     => '#9933FF', 
+		'complex_structural_alteration' => '#99CCFF',
+    'tandem_duplication'            => '#0000FF',
+	);
+	my $c = $colour{$class};
+	$c = '#B2B2B2' if (!$c);
+	return $c;
+}
 
+
+# Structural Variation Feature ###########################################################
+
+sub variation_feature_mapping { 
+
+  ### Variation_mapping
+  ### Example    : my @sv_features = $object->variation_feature_mapping
+  ### Description: gets the Structural Variation features found on a structural variation object;
+  ### Returns Arrayref of Bio::EnsEMBL::Variation::StructuralVariationFeatures
+
+  my $self = shift;
+ 
+  my %data;
+  foreach my $sv_feature_obj (@{ $self->get_structural_variation_features }) { 
+     my $svf_id = $sv_feature_obj->dbID;
+     $data{$svf_id}{Chr}             = $sv_feature_obj->seq_region_name;
+     $data{$svf_id}{start}           = $sv_feature_obj->start;
+     $data{$svf_id}{end}             = $sv_feature_obj->end;
+     $data{$svf_id}{strand}          = $sv_feature_obj->strand;
+		 $data{$svf_id}{outer_start}     = $sv_feature_obj->outer_start;
+		 $data{$svf_id}{inner_start}     = $sv_feature_obj->inner_start;
+	   $data{$svf_id}{inner_end}       = $sv_feature_obj->inner_end;
+		 $data{$svf_id}{outer_end}       = $sv_feature_obj->outer_end;
+     $data{$svf_id}{transcript_vari} = undef;
+  }
   return \%data;
 }
+
+sub get_structural_variation_features {
+
+  ### Structural_Variation_features
+  ### Example    : my @sv_features = $object->get_structural_variation_features;
+  ### Description: gets the Structural Variation features found  on a variation object;
+  ### Returns Arrayref of Bio::EnsEMBL::Variation::StructuralVariationFeatures
+
+   my $self = shift; 
+   return $self->Obj ? $self->Obj->get_all_StructuralVariationFeatures : [];
+}
+
+sub not_unique_location {
+  my $self = shift;
+  unless ($self->hub->core_param('svf') ){
+    my %mappings = %{ $self->variation_feature_mapping };
+    my $count = scalar (keys %mappings);
+    my $html;
+    if ($count < 1) {
+      $html = "<p>This feature has not been mapped.<p>";
+    } elsif ($count > 1) { 
+      $html = "<p>You must select a location from the panel above to see this information</p>";
+    }
+    return  $html;
+  }
+  return;
+}
+
 1;
