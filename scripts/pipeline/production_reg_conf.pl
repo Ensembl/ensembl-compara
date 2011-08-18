@@ -64,4 +64,13 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -dbname => 'lg4_ensembl_compara_64',
 );
 
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'compara3',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 3306,
+    -species => 'compara_homology_merged',
+    -dbname => 'lg4_compara_homology_merged_64',
+);
+
 1;
