@@ -911,7 +911,7 @@ sub get_munged_slice {
   my $length        = $slice->length; 
   my $munged        = '0' x $length;
   my $context       = $self->param('context') || 100;
-  my $extent        = $context eq 'FULL' ? 1000 : $context;
+  my $extent        = $context eq 'FULL' ? 5000 : $context;
   my $features      = $slice->get_all_Genes(undef, $self->param('opt_db'));
   my @lengths;
   
