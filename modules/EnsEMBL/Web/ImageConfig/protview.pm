@@ -17,6 +17,7 @@ sub init {
     domain
     feature
     variation
+		somatic
     other
     information
   ));
@@ -30,6 +31,11 @@ sub init {
   
   $self->modify_configs(
     [ 'variation_feature_variation' ],
+    { menu => 'yes', glyphset => 'P_variation', display => 'normal', strand => 'r', colourset => 'protein_feature', depth => 1e5 }
+  );
+	
+	$self->modify_configs(
+    [ 'somatic_mutation_COSMIC' ],
     { menu => 'yes', glyphset => 'P_variation', display => 'normal', strand => 'r', colourset => 'protein_feature', depth => 1e5 }
   );
   
