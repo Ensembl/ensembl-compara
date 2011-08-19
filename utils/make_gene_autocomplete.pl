@@ -41,7 +41,7 @@ foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::ENSEMBL_DATASETS) {
   
   next unless $dbs;
   
-  my (%species_hash, $delete, $insert);
+  my (%species_hash, $delete, @insert);
   
   foreach my $db (grep $dbs->{'DATABASE_' . uc}, qw(core otherfeatures)) {
     my $adaptor = $hub->get_adaptor('get_GeneAdaptor', $db, $dataset);
@@ -94,13 +94,16 @@ foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::ENSEMBL_DATASETS) {
     
     $sth->execute;
     
-    $insert .= sprintf(qq{('$species_hash{$_->[2]}', '$_->[0]', %s, '$db'),\n}, $dbh->quote($_->[1])) for sort { $a->[1] cmp $b->[1] } grep { $_->[0] ne $_->[1] } @{$sth->fetchall_arrayref};
+    push(@insert, sprintf(qq{('$species_hash{$_->[2]}', '$_->[0]', %s, '$db')}, $dbh->quote($_->[1]))) for sort { $a->[1] cmp $b->[1] } grep { $_->[0] ne $_->[1] } @{$sth->fetchall_arrayref};
   }
   
-  $insert =~ s/,$//;
-  
   $dbh->do("DELETE FROM gene_autocomplete WHERE species IN ('$delete')") if $delete;
-  $dbh->do("INSERT INTO gene_autocomplete (species, stable_id, display_label, db) VALUES $insert") if $insert;
+  
+  # insert in batches of 10,000
+  while (@insert) {
+    my $values = join(',', splice(@insert, 0, 10000));
+    $dbh->do("INSERT INTO gene_autocomplete (species, stable_id, display_label, db) VALUES $values");
+  }  
 }
 
 $dbh->do("OPTIMIZE TABLE gene_autocomplete");
