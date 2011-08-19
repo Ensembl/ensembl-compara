@@ -50,7 +50,9 @@ sub content {
 	# Create graphs
 	foreach my $pop_name (sort(keys(%$pop_freq))) {
 		my $values = '';
-		my $p_name = (split(':',$pop_name))[1];
+		my @pop_names = (split(':',$pop_name));
+		shift @pop_names;
+		my $p_name = join(':',@pop_names);
 		$p_name =~ /pilot_1_(.+)_low_coverage_panel/; # Gets a shorter name for the display
 		my $short_name = ($1) ? $1 : $p_name;
 		
