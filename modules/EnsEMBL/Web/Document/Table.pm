@@ -104,7 +104,7 @@ sub render {
     $config
   };
   
-  if ($options->{'data_table'} ) {
+  if ($options->{'data_table'} && $options->{'exportable'} ne '0') {
     my $id       = $options->{'id'};
        $id       =~ s/[\W_]table//g;
     my $filename = join '-', grep $_, $id, $self->filename;
