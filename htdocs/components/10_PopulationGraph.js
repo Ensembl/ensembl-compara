@@ -17,7 +17,7 @@ Ensembl.Panel.PopulationGraph = Ensembl.Panel.extend({
   
   getContent: function () {
     var alleles   = [ 'A', 'T', 'G', 'C' ];
-    var acolours  = [ '#00FF00', '#FF0000', '#FFD700', '#0000FF' ];
+    var acolours  = [ '#00BB00', '#FF0000', '#FFD700', '#0000FF' ];
     var bcolours  = [ '#FF00FF', '#000000', '#008080', '#7B68EE' ]; // Other colours if the allele is not A, T, G or C
     var graphData = [];
     var i, j, k, raphael, pieData, pieColors, piePercent, b, colourFlag;
