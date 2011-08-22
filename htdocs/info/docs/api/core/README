@@ -9,4 +9,8 @@ To regenerate core_schema.html use script sql2html.pl in ensembl/misc-scripts/ w
 -sort_tables 0
 -d (database) Core
 
-Follow instructions in file html_to_append.html to complete the generated HTML and save as core_schema.html.  
+Follow instructions in file html_to_append.html to complete the generated HTML and save as core_schema.html. Change the schema version to the current release in the following paragraph:
+<p>
+This document refers to version <strong>64</strong> of the EnsEMBL
+core schema.
+</p>
