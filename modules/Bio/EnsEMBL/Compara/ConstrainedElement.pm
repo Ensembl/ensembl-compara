@@ -575,24 +575,5 @@ sub get_SimpleAlign {
 	return $sa;
 }
 
-=head2 summary_as_hash
-
-  Example       : $constrained_summary = $constrained_element->summary_as_hash();
-  Description   : Retrieves a textual summary of this ConstrainedElement object.
-	                      
-  Returns       : hashref of descriptive strings
-
-=cut
-
-sub summary_as_hash {
-  my $self = shift;
-  my %summary;
-  $summary{'start'} = $self->start;
-  $summary{'end'} = $self->end;
-  $summary{'strand'} = $self->strand;
-  $summary{'dbID'} = $self->dbID;
-  return \%summary;
-}   
-
 
 1;
