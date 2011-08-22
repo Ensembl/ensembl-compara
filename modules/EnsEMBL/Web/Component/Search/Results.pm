@@ -1,27 +1,5 @@
 package EnsEMBL::Web::Component::Search::Results;
 
-use strict;
-use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component);
-use EnsEMBL::Web::Document::HTML::HomeSearch;
-
-# --------------------------------------------------------------------
-# An updated version of Summary.pm enabling: 
-# - specification of the order the result categories are displayed in
-# - more user friendly descriptions of the search categories. 
-# - display of the search term above the results
-#  NJ, Eagle Genomics
-# Replaces UniSearch::Summary - ap5, Ensembl webteam
-# --------------------------------------------------------------------
-
-sub _init {
-  my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
-  $self->configurable( 0 );
-}
-
 sub content {
   my $self = shift;
   my $hub = $self->hub;
@@ -48,23 +26,32 @@ sub content {
       #foreach my $search_index ( sort keys %{$search->{'results'} } ) {
         if ( $search->{'results'}{$search_index} ) { 
 	        my( $results, $count ) = @{ $search->{'results'}{$search_index} };
-	        $html .= "<h3>$display_term</h3><p>$count entries matched your search strings.</p><ol>";
+                my $unique_res = {};
+                my $res_html   = '';
+                $count         = 0;  #it should count only the unique results
 	        foreach my $result ( @$results ) {
-	          $html .= sprintf(qq(<li><strong>%s:</strong> <a href="%s">%s</a>),
+                  #to avoid duplications:
+  	          next if exists $unique_res->{$result->{'subtype'}.$result->{'URL'}.$result->{'ID'}};
+                  $unique_res->{$result->{'subtype'}.$result->{'URL'}.$result->{'ID'}} = 1;
+                  $count++;
+	          $res_html .= sprintf(qq(<li><strong>%s:</strong> <a href="%s">%s</a>),
 			        $result->{'subtype'}, $result->{'URL'}, $result->{'ID'}
 			      );
 	          if( $result->{'URL_extra'} ) {
 	            foreach my $E ( @{[$result->{'URL_extra'}]} ) {
-	              $html .= sprintf(qq( [<a href="%s" title="%s">%s</a>]),
+	              $res_html .= sprintf(qq( [<a href="%s" title="%s">%s</a>]),
 			            $E->[2], $E->[1], $E->[0]
-			          );
+		      );
 	            }
 	          }
 	          if( $result->{'desc'} ) {
-	            $html .= sprintf(qq(<br />%s), $result->{'desc'});
+	            $res_html .= sprintf(qq(<br />%s), $result->{'desc'});
 	          }
-	          $html .= '</li>';
-	        }
+	          $res_html .= '</li>';
+	        } #foreach
+                
+                $html .= "<h3>$display_term</h3><p>$count entrie(s) matched your search strings.</p><ol>";
+                $html .= $res_html;
 	        $html .= '</ol>';
         }
       #}
