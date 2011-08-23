@@ -253,8 +253,8 @@ sub collapsed_nodes {
   my $highlight_genome_db_id = shift;
   my $highlight_gene         = shift;
   
-  die "Need a ProteinTree, not a $tree" unless $tree->isa('Bio::EnsEMBL::Compara::ProteinTree');
-  die "Need an AlignedMember, not a $node" if $node && !$node->isa('Bio::EnsEMBL::Compara::AlignedMember');
+  die "Need a GeneTreeNode, not a $tree" unless $tree->isa('Bio::EnsEMBL::Compara::GeneTreeNode');
+  die "Need an GeneTreeMember, not a $node" if $node && !$node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
 
   my %collapsed_nodes;
   my %expanded_nodes;
