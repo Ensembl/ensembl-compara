@@ -25,9 +25,10 @@ sub render {
   my $self = shift;
 
   my $tag         = $self->node_name;
-  my $attributes  = '';
-  $attributes    .= sprintf(' %s="%s"', $_, $self->get_attribute($_)) for keys %{$self->{'_attributes'}};
-  return $self->can_have_child ? "<$tag$attributes>".$self->inner_HTML."</$tag>" : "<$tag$attributes />";
+  my $attributes  = join '', map {sprintf(' %s="%s"', $_, $self->get_attribute($_))} keys %{$self->{'_attributes'}};
+  return $self->can_have_child
+    ? sprintf(qq(<$tag$attributes>%s</$tag>), $self->{'_text'} ne '' ? $self->{'_text'} : join '', map {$_->render} @{$self->{'_child_nodes'}})
+    : qq(<$tag$attributes />);
 }
 
 sub render_text {
@@ -230,7 +231,7 @@ sub inner_HTML {
   not $error and $error_message and warn $error_message or ref $error eq 'SCALAR' and $$error = $error_message;
   return $self->{'_text'} if $self->{'_text'} ne '';
   $html  = '';
-  $html .= $_->render for @{$self->{'_child_nodes'}};
+  $html .= $_->outer_HTML for @{$self->{'_child_nodes'}};
   return $html;
 }
 
@@ -245,8 +246,18 @@ sub inner_text {
     $self->append_child($self->dom->create_text_node($text));
   }
   my $text = '';
-  $text .= $_->render for @{$self->get_nodes_by_node_type($self->TEXT_NODE)};
+  $text .= $_->text for @{$self->get_nodes_by_node_type($self->TEXT_NODE)};
   return $text;
+}
+
+sub outer_HTML {
+  ## Returns actuall HTML represented by the node
+  ## @return HTML string
+  my $self = shift;
+
+  my $tag         = $self->node_name;
+  my $attributes  = join '', map {sprintf(' %s="%s"', $_, $self->get_attribute($_))} keys %{$self->{'_attributes'}};
+  return $self->can_have_child ? sprintf(qq(<$tag$attributes>%s</$tag>), $self->inner_HTML) : qq(<$tag$attributes />);
 }
 
 sub add_attribute {
