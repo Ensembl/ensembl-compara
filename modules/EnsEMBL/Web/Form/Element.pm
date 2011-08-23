@@ -102,6 +102,15 @@ sub map_element_class {
   });
 }
 
+sub render_shortnote {
+  ## Renders a shortnote for a given element
+  ## @param As expected by render method
+  ## @return HTML string
+  my $self = shift;
+
+  return exists $self->{'__shortnote'} ? $self->dom->create_element('span', {'class' => $self->CSS_CLASS_SHORTNOTE, 'inner_HTML' => ' '.$self->{'__shortnote'}})->render(@_) : '';
+}
+
 sub new {
   # This class can not be instantiated, but works only when child class has muliple inheritance. So leave a warning.
   warn "Web::Form::Element::new should never get called. Perhaps you forgot to inherit your element from one of the core Web::DOM::Node::Element::Input/Select/Textarea class before this class."
