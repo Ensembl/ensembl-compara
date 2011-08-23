@@ -31,7 +31,8 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       return false;
     });
     
-    this.elLk.links.bind('click', function () {
+    this.elLk.links.bind('click', function (e) {
+      e.stopPropagation();
       return $(this).children('a').trigger('click');
     });
     
