@@ -135,11 +135,11 @@ sub menus {
   return $_[0]->{'menus'} ||= {
     # Sequence
     seq_assembly        => 'Sequence and assembly',
-    sequence            => [ 'Sequence',        'seq_assembly' ],
-    misc_feature        => [ 'Misc. regions',   'seq_assembly' ],
-    marker              => [ 'Markers',         'seq_assembly' ],
-    simple              => [ 'Simple features', 'seq_assembly' ],
-    ditag               => [ 'Ditag features',  'seq_assembly' ],
+    sequence            => [ 'Sequence',               'seq_assembly' ],
+    misc_feature        => [ 'Misc. regions & clones', 'seq_assembly' ],
+    marker              => [ 'Markers',                'seq_assembly' ],
+    simple              => [ 'Simple features',        'seq_assembly' ],
+    ditag               => [ 'Ditag features',         'seq_assembly' ],
     
     # Transcripts/Genes
     gene_transcript     => 'Genes and transcripts',
@@ -228,7 +228,6 @@ sub set_width           { $_[0]->set_parameter('width', $_[1]);                 
 sub image_height        { return shift->parameter('image_height',    @_);                                            }
 sub image_width         { return shift->parameter('image_width',     @_);                                            }
 sub container_width     { return shift->parameter('container_width', @_);                                            }
-sub title               { return shift->parameter('title',           @_);                                            }
 sub slice_number        { return shift->parameter('slice_number',    @_);                                            } # TODO: delete?
 sub get_tracks          { return grep { $_->{'data'}{'node_type'} eq 'track' } $_[0]->tree->nodes;                   } # return a list of track nodes
 sub get_sortable_tracks { return grep { $_->get('sortable') && $_->get('menu') ne 'no' } @{$_[0]->glyphset_configs}; }
