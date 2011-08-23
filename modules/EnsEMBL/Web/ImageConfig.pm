@@ -2270,10 +2270,10 @@ sub add_somatic_mutations {
     my $description  = $hashref->{'source'}{'descriptions'}{$key_2};
     (my $k = $key_2) =~ s/\W/_/g;
 
-    $menu->append($self->create_track("somatic_mutation_$k", "$key_2 somatic mutations (all)", {
+    $menu->append($self->create_track("somatic_mutation_$k", "Somatic variants (all sources)", {
       %options,
-      caption     => $key_2,
-      description => $description
+      caption     => 'Somatic variants (all sources)',
+      description => 'Somatic variants from all sources'
     }));
 
     ## Add tracks for each tumour site
