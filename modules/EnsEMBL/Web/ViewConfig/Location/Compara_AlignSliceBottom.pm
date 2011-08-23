@@ -13,7 +13,7 @@ sub init {
   
   $self->add_image_config('alignsliceviewbottom', 'nodas');
   
-  $self->title            = 'Alignments image';
+  $self->title            = 'Alignments Image';
   $self->{'species_only'} = 1;
 }
 
