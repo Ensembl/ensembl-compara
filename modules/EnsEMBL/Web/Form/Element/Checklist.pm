@@ -67,7 +67,7 @@ sub add_option {
   
   my $dom = $self->dom;
 
-  $params->{'value'}  ||= '';
+  $params->{'value'}    = '' unless exists $params->{'value'} && defined $params->{'value'};
   $params->{'class'}  ||= $self->{'__option_class'} if $self->{'__option_class'};
   $params->{'id'}     ||= $self->unique_id          if exists $params->{'caption'}; #'for' attrib for label if caption provided
 
