@@ -10,7 +10,6 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title        => 'Chromosome panel',
     label        => 'above',
     band_labels  => 'on',
     image_height => 450,

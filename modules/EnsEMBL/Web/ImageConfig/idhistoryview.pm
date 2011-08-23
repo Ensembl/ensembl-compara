@@ -10,7 +10,6 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    title       => 'ID History Map',
     show_labels => 'no',
   });
 

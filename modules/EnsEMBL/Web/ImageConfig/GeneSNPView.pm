@@ -12,7 +12,6 @@ sub init {
   $self->{'colours'}{$_} = $self->species_defs->colour($_) for qw(variation haplotype);
   
   $self->set_parameters({
-    title            => 'Variation Image',
     label_width      => 100,  # width of labels on left-hand side
     opt_halfheight   => 0,    # glyphs are half-height [ probably removed when this becomes a track config ]
     opt_empty_tracks => 0,    # include empty tracks

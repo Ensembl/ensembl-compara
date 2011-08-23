@@ -10,7 +10,6 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    title           => 'Feature context',
     sortable_tracks => 1,
     opt_lines       => 1,
   });  

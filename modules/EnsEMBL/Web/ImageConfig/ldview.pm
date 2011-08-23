@@ -23,7 +23,6 @@ sub init {
   my $colours = $self->species_defs->colour('variation');
   
   $self->set_parameters({
-    title       => 'LD Panel',
     label_width => 100
   });
   

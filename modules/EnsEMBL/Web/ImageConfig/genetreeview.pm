@@ -10,7 +10,6 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title       => 'Gene tree panel',
     show_labels => 'no',
     bgcolor     => 'background1',
     bgcolour1   => 'background1',

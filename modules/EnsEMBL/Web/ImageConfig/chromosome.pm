@@ -8,10 +8,6 @@ use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
   my $self = shift;
-
-  $self->set_parameters({
-    title => 'Chromosome panel',
-  });
   
   $self->create_menus('decorations');
   

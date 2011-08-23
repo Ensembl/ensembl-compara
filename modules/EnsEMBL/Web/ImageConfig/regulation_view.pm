@@ -14,7 +14,6 @@ sub init {
   s/\:\d*// for @cell_lines;
   
   $self->set_parameters({
-    title     => 'Details by cell line',
     opt_lines => 1
   });
   

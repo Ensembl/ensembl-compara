@@ -10,7 +10,6 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    title           => 'Detailed panel',
     sortable_tracks => 1,     # allow the user to reorder tracks
   });
 

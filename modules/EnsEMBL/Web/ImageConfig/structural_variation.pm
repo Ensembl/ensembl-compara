@@ -10,7 +10,6 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title          => 'Structural Variation Context',
     opt_halfheight => 1,  # glyphs are half-height [ probably removed when this becomes a track config ]
     opt_lines      => 1,  # draw registry lines
   });

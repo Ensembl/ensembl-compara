@@ -8,7 +8,6 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title     => 'Gene - Structural Variation',
     opt_lines => 1, # draw registry lines
   });
 

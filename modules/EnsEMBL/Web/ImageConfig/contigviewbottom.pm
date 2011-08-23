@@ -13,7 +13,6 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    title             => 'Main panel',
     sortable_tracks   => 'drag', # allow the user to reorder tracks on the image
     opt_halfheight    => 0,      # glyphs are half-height [ probably removed when this becomes a track config ]
     opt_lines         => 1,      # draw registry lines

@@ -10,7 +10,6 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    title     => 'Feature context',
     opt_lines => 1,
   });  
   

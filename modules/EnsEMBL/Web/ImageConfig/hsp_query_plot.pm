@@ -10,7 +10,6 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title       => 'Alignment panel',
     label_width => 80, # width of labels on left-hand side
   });
 

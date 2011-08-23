@@ -7,11 +7,7 @@ use strict;
 use base qw(EnsEMBL::Web::ImageConfig);
 
 sub init {
-  my ($self) = @_;
-
-  $self->set_parameters({
-    title => 'Protein display',
-  });
+  my $self = shift;
 
   $self->create_menus(qw(
     domain

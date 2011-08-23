@@ -10,7 +10,6 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title     => 'Transcript panel',
     opt_lines => 1,  # draw registry lines
   });
 

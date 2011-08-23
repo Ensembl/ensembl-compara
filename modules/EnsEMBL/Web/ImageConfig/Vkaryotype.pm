@@ -10,7 +10,6 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title           => 'Karyotype panel',
     label           => 'below',
     band_labels     => 'off',
     top_margin      => 5,

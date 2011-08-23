@@ -10,7 +10,6 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title       => 'Transcript panel',
     show_labels => 'no'
   });
   

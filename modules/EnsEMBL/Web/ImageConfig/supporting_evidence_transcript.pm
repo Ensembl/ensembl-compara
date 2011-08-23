@@ -10,7 +10,6 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    title            => 'Supporting Evidence',
     label_width      => 100,
     opt_empty_tracks => 0,
   });

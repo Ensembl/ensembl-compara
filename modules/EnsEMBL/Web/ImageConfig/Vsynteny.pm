@@ -10,7 +10,6 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title           => 'Synteny panel',
     label           => 'above',
     band_labels     => 'off',
     image_height    => 500,

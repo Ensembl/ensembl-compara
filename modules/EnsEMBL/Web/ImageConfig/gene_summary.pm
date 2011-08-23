@@ -10,7 +10,6 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title           => 'Transcript panel',
     sortable_tracks => 1, # allow the user to reorder tracks
     opt_lines       => 1, # draw registry lines
   });

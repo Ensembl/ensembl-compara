@@ -10,7 +10,6 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    title            => 'Splice variants',
     label_width      => 100, # width of labels on left-hand side
     opt_halfheight   => 0,   # glyphs are half-height [ probably removed when this becomes a track config ]
     opt_empty_tracks => 0,   # include empty tracks..
