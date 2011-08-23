@@ -76,6 +76,7 @@ sub default_options {
         'ensembl_cvs_root_dir'  => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, # make sure you have this variable defined & exported in your shell configs
         'email'                 => $ENV{'USER'}.'@sanger.ac.uk',    # NB: your EBI address may differ from the Sanger one!
         'work_dir'              => '/lustre/scratch101/ensembl/'.$ENV{'USER'}.'/protein_trees_'.$self->o('rel_with_suffix'),
+        'do_not_reuse_list'     => [ ],     # species we don't want to reuse this time
 
     # dependent parameters:
         'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
@@ -358,10 +359,11 @@ sub pipeline_analyses {
         {   -logic_name => 'check_reusability',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability',
             -parameters => {
-                'reuse_db'      => $self->o('reuse_db'),
-                'registry_dbs'  => $self->o('reuse_core_sources_locs'),
-                'release'       => $self->o('release'),
-                'prev_release'  => $self->o('prev_release'),
+                'reuse_db'          => $self->o('reuse_db'),
+                'registry_dbs'      => $self->o('reuse_core_sources_locs'),
+                'release'           => $self->o('release'),
+                'prev_release'      => $self->o('prev_release'),
+                'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
             -hive_capacity => 10,    # allow for parallel execution
             -flow_into => {

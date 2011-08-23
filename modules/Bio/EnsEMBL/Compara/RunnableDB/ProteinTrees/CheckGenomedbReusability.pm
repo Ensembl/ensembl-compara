@@ -29,11 +29,14 @@ supported keys:
     'reuse_this'    => <0|1>
         (optional) if defined, the code is skipped and this value is passed to the output
 
+    'do_not_reuse_list' => <list_of_species_ids_or_names>
+        (optional)  is a 'veto' list of species we definitely do not want to be reused this time
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability;
 
 use strict;
+use Scalar::Util qw(looks_like_number);
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Compara::GenomeDB;
@@ -52,8 +55,31 @@ sub fetch_input {
     my $curr_release = $self->param('release');
     my $prev_release = $self->param('prev_release') || ($curr_release - 1);
 
-    my $genome_db    = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with genome_db_id='$genome_db_id'";
+    my $genome_db_adaptor   = $self->compara_dba->get_GenomeDBAdaptor;
+
+    my $genome_db    = $genome_db_adaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with genome_db_id='$genome_db_id'";
     my $species_name = $self->param('species_name', $genome_db->name());
+
+    my $do_not_reuse_list = $self->param('do_not_reuse_list') || [];
+    foreach my $do_not_reuse_candidate (@$do_not_reuse_list) {
+        if( looks_like_number( $do_not_reuse_candidate ) ) {
+
+            if( $do_not_reuse_candidate == $genome_db_id ) {
+                $self->param('reuse_this', 0);
+                return;
+            }
+
+        } else {    # not using registry names here to avoid clashes with previous release registry entries:
+
+            my $do_not_reuse_candidate_genome_db = $genome_db_adaptor->fetch_by_name_assembly( $do_not_reuse_candidate )
+                or die "Could not fetch genome_db with name='$do_not_reuse_candidate', please check the 'do_not_reuse_list' parameter";
+
+            if( $do_not_reuse_candidate_genome_db == $genome_db ) {
+                $self->param('reuse_this', 0);
+                return;
+            }
+        }
+    }
 
     my $reuse_db                = $self->param('reuse_db');
 
