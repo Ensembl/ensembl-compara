@@ -21,7 +21,6 @@
 60	9601	pongo_abelii	PPYG2	1	2007-10-Ensembl	
 61	9796	equus_caballus	EquCab2	1	2007-09-Ensembl	
 63	0	ancestral_sequences		1		
-64	9913	bos_taurus	Btau_4.0	1	2008-01-Ensembl	
 65	99883	tetraodon_nigroviridis	TETRAODON8	1	2007-11-Ensembl	
 66	9685	felis_catus	CAT	1	2008-02-Ensembl	
 67	9978	ochotona_princeps	pika	1	2008-01-Ensembl	
@@ -39,7 +38,6 @@
 91	9315	macropus_eugenii	Meug_1.0	1	2009-02-Ensembl	
 93	9823	sus_scrofa	Sscrofa9	1	2009-04-Ensembl	
 98	9785	loxodonta_africana	loxAfr3	1	2009-07-Ensembl	
-101	9593	gorilla_gorilla	gorGor3	1	2009-08-Ensembl	
 105	7227	drosophila_melanogaster	BDGP5.25	1	2010-02-FlyBase	
 108	9986	oryctolagus_cuniculus	oryCun2	1	2009-11-Ensembl	
 109	9646	ailuropoda_melanoleuca	ailMel1	1	2010-01-Ensembl	
@@ -52,3 +50,7 @@
 117	9483	callithrix_jacchus	C_jacchus3.2.1	1	2010-02-Ensembl	
 118	59463	myotis_lucifugus	Myoluc2.0	1	2010-12-Ensembl	
 119	4932	saccharomyces_cerevisiae	EF3	1	2009-07-SGD	
+120	7757	petromyzon_marinus	Petromyzon_marinus_7.0	1	2011-02-Ensembl	
+121	9305	sarcophilus_harrisii	DEVIL7.0	1	2011-03-Ensembl	
+122	9913	bos_taurus	UMD3.1	1	2011-04-Ensembl	
+123	9593	gorilla_gorilla	gorGor3.1	1	2009-08-Ensembl	
