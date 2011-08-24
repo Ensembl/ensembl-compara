@@ -8,7 +8,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     Ensembl.EventManager.register('modalClose',      this, this.hide);
     Ensembl.EventManager.register('queuePageReload', this, this.setPageReload);
     Ensembl.EventManager.register('addModalContent', this, this.addContent);
-    Ensembl.EventManager.register('setActivePanel',  this, this.setActivePanel);
+    Ensembl.EventManager.register('setActivePanel',  this, function (panelId) { this.activePanel = panelId;       });
+    Ensembl.EventManager.register('modalReload',     this, function (panelId) { this.modalReload[panelId] = true; });
   },
   
   init: function () {
@@ -27,22 +28,26 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     this.reloadURL     = false;
     this.pageReload    = false;
     this.sectionReload = {};
+    this.modalReload   = {};
     this.activePanel   = '';
     
-    // TODO: check functionality. panel.open() is probably wrong
-    $('.modal_confirm', '#' + this.id).live('click', function () {
-      var c = confirm(this.title + '\nAre you sure you want to continue?');
+    this.live.push(
+      $('.modal_confirm', this.el).live('click', function () {
+        var c = confirm(this.title + '\nAre you sure you want to continue?');
+        
+        this.title = '';
+        
+        if (c === true) {
+          panel.open(this);
+        }
+        
+        return false;
+      }),
       
-      this.title = '';
-      
-      if (c === true) {
-        panel.open(this);
-      }
-      
-      return false;
-    });
-    
-    $('.modal_close', '#' + this.id).live('click', function () { panel.hide(); });
+      $('.modal_close', this.el).live('click', function () {
+        panel.hide();
+      })
+    );
     
     this.elLk.content.each(function () {
       $(this).data('tab', panel.elLk.tabs.children('a.' + this.id).parent());
@@ -93,11 +98,13 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     
     this.elLk.caption.html('');
     
+    Ensembl.EventManager.trigger('modalHide');
+    
     if ((escape !== true && !Ensembl.EventManager.trigger('updateConfiguration') && (this.pageReload || this.sectionReload.count)) || this.pageReload === 'force') {
       this.setPageReload(false, true);
     }
   },
-   
+  
   getContent: function (url, id) {
     if (this.xhr) {
       this.xhr.abort();
@@ -112,6 +119,11 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     
     this.elLk.content.hide();
     this.activePanel = id;
+    
+    if (this.modalReload[id]) {
+      delete this.modalReload[id];
+      reload = true;
+    }
     
     if (reload) {
       contentEl.empty();
@@ -175,7 +187,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
           params.reset = url.match(/reset=(\w+)/)[1];
         }
         
-        Ensembl.EventManager.trigger('createPanel', id, $((json.content.match(/<input[^<]*class=".*?panel_type.*?".*?>/) || [])[0]).val() || json.panelType, params);
+        Ensembl.EventManager.trigger('createPanel', id, json.panelType || $((json.content.match(/<input[^<]*class=".*?panel_type.*?".*?>/) || [])[0]).val(), params);
         
         wrapper = nav = forceReload = null;
       },
@@ -236,9 +248,5 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       Ensembl.EventManager.trigger('reloadPage', !!this.pageReload || this.sectionReload, this.reloadURL);
       this.sectionReload = {};
     }
-  },
-  
-  setActivePanel: function (panelId) {
-    this.activePanel = panelId;
   }
 });
