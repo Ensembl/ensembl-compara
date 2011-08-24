@@ -122,6 +122,14 @@ sub has_attribute {
   return exists $self->{'_attributes'}{$attrib} ? 1 : 0;
 }
 
+sub has_class {
+  ## Checks if class attribute contains the given value
+  ## @param Class value
+  ## @return 1if class exists, 0 otherwise
+  my ($self, $class) = @_;
+  return exists $self->{'_attributes'}{'class'}{$class} ? 1 : 0;
+}
+
 sub remove_attribute {
   ## Removes attribute of the element
   ## If attribute can contain multiple values, and value agrument is provided, removes given value only
