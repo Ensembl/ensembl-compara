@@ -99,7 +99,7 @@ div.image_config_notes p.space-below                 { padding-top: 10px; border
 /* funcgen matrix */
 
 div.config div.funcgen_matrix h1                                   { display: block; }
-div.config div.funcgen_matrix h2                                   { margin: 0 5px 0 0; border: 0; float: left; font-size: 15px; }
+div.config div.funcgen_matrix h2                                   { margin: 0 4px 0 0; border: 0; float: left; font-size: 15px; }
 div.config div.funcgen_matrix div.header_wrapper                   { margin: 3px 0 10px 0; clear: both; }
 div.config div.funcgen_matrix div.filter_wrapper                   { padding: 7px 0; border: 1px solid [[PANEL_BORDER]]; border-width: 1px 0; clear: both; }
 div.config div.funcgen_matrix div.filter_wrapper h2                { margin: 0 18px 18px 0; }
