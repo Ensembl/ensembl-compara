@@ -127,7 +127,7 @@ sub pipeline_create_commands {
         'mkdir -p '.$self->o('blastdb_dir'),
 
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
-        'which lfs && lfs getstripe '.$self->o('blastdb_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('blastdb_dir').' -c -1',
+        'which lfs && lfs getstripe '.$self->o('blastdb_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('blastdb_dir').' -c -1 || echo "Striping is not available on this system" ',
     ];
 }
 
