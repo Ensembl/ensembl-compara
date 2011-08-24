@@ -16,7 +16,7 @@ table.ss   tr.highlight { background-color: #59E817;   }
  table.data_table                    { border: 1px solid [[PAGE_TEXT]]; }
 table.data_table th                  { cursor: pointer; padding: 2px 20px 2px 5px; }
 table.data_table th:first-child      { padding-left: 2px; }
-table.data_table th.sorting_disabled { cursor: text; }
+table.data_table th.sorting_disabled { cursor: text; padding-right: 5px; }
 table.data_table th div              { height: 19px; padding: 3px 0; }
 table.toggle_table th div            { padding: 0; }
 
