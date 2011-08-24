@@ -5,9 +5,10 @@ use strict;
 ## TODO - remove backward compatibility patches when ok to remove
 
 ## Structure of fieldset:
-##  - Every child node is appended at the end of the fieldset as they are added except legend & hidden inputs
+##  - While adding fields and elements, every child node is appended at the end of the fieldset (just before buttons), except legend & hidden inputs
 ##  - Legend is always added at the top
 ##  - Hidden inputs always come after the legend
+##  - Buttons always go at the bottom
 
 use EnsEMBL::Web::Form::Element;
 
@@ -173,7 +174,8 @@ sub add_field {
   }
 
   $field->set_flag($self->_FLAG_FIELD);
-  return $self->append_child($field);
+  my $last_field = $self->last_child;
+  return $last_field && $last_field->get_flag($self->_FLAG_BUTTON) ? $self->insert_before($field, $last_field) : $self->append_child($field);
 }
 
 sub add_matrix {
@@ -234,7 +236,7 @@ sub _add_button {## TODO - remove prefixed underscore once compatibile
   delete $params->{'buttons'};
   my $field = $self->add_field($params);
   $field->set_flag($self->_FLAG_BUTTON);
-  return $field;
+  return $self->append_child($field); ## to make sure it's added in the end if there are multiple buttons
 }
 
 sub add_hidden {
