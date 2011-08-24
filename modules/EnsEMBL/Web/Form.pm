@@ -243,7 +243,6 @@ sub force_reload_on_submit {
 
 ## Addition of new form elements is always done to last fieldset.
 sub add_field {           shift->fieldset->add_field(@_);           }
-sub add_honeypot_field {  shift->fieldset->add_honeypot_field(@_);  }
 sub add_hidden {          shift->fieldset->add_hidden(@_);          }
 sub add_matrix {          shift->fieldset->add_matrix(@_);          }
 sub add_button {          shift->fieldset->add_button(@_);          }
