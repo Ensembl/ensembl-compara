@@ -9,6 +9,8 @@ use strict;
 ##  - Legend is always added at the top
 ##  - Hidden inputs always come after the legend
 
+use EnsEMBL::Web::Form::Element;
+
 use base qw(EnsEMBL::Web::DOM::Node::Element::Fieldset);
 
 use constant {
@@ -29,14 +31,14 @@ use constant {
   _FLAG_HONEYPOT            => '_is_honeypot',
   _FLAG_BUTTON              => '_is_button',
   _FLAG_STRIPED             => '_is_striped',
-  _FLAG_REQUIRED            => '_is_required',
   _FLAG_LEGEND              => '_is_legend'
 };
 
 sub render {
   ## @overrides
   my $self = shift;
-  $self->add_notes($self->FOOT_NOTE_REQUIRED) if $self->get_flag($self->_FLAG_REQUIRED);
+
+  $_->has_class(EnsEMBL::Web::Form::Element::CSS_CLASS_REQUIRED) and $self->add_notes($self->FOOT_NOTE_REQUIRED) and last for @{$self->inputs};
 
   #css stuff
   my $css_class = {
@@ -168,7 +170,6 @@ sub add_field {
 
     $_->{'id'} ||= $self->_next_id;
     $field->add_element($_, $params->{'inline'} || 0);
-    $self->set_flag($self->_FLAG_REQUIRED) if exists $_->{'required'};
   }
 
   $field->set_flag($self->_FLAG_FIELD);
