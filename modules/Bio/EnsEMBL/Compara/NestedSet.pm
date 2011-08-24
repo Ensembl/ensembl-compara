@@ -1799,6 +1799,83 @@ sub find_leaf_by_node_id {
 }
 
 
+=head2 get_all_sorted_leaves
+
+  Arg [1]     : Bio::EnsEMBL::Compara::NestedSet $top_leaf
+  Arg [...]   : (optional) Bio::EnsEMBL::Compara::NestedSet $secondary_priority_leaf
+  Example     : my $sorted_leaves = $object->get_all_sorted_leaves($human_leaf);
+  Example     : my $sorted_leaves = $object->get_all_sorted_leaves($human_leaf, $mouse_leaf);
+  Description : Sorts the tree such as $top_leaf is the first leave and returns
+                all the other leaves in the order defined by the tree.
+                It is possible to define as many secondary top leaves as you require
+                to sort other branches of the tree. The priority to sort the trees
+                is defined by the order in which you specify the leaves.
+  Returntype  : listref of Bio::EnsEMBL::Compara::NestedSet (all sorted leaves)
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub get_all_sorted_leaves {
+  my ($self, @priority_leaves) = @_;
+
+  if (!@priority_leaves) {
+    return $self->get_all_leaves;
+  }
+
+  # Assign priority scores for all parent nodes of the priority leaves
+  my $score_by_node;
+  my $score = 0;
+  # Loop through all the priority leaves, starting from the last one (lowest score)
+  while (my $priority_leaf = pop @priority_leaves) {
+    $score++; # Increases the score, next priority leaves (earlier in the argument list) will overwrite the score if needed
+    my $this_node = $priority_leaf;
+    # Loop through all the parent node up to the root of the tree
+    do {
+      $score_by_node->{$this_node} = $score;
+      $this_node = $this_node->parent;
+    } while ($this_node);
+  }
+
+  my $sorted_leaves = $self->_recursive_get_all_sorted_leaves($score_by_node);
+
+  return $sorted_leaves;
+}
+
+=head2 _recursive_get_all_sorted_leaves
+
+  Arg [1]     : hashref $score_by_node
+  Example     : my $sorted_leaves = $object->_recursive_get_all_sorted_leaves($score_by_node);
+  Description : Recursive code for the get_all_sorted_leaves() method
+  Returntype  : listref of Bio::EnsEMBL::Compara::NestedSet (sorted leaves)
+  Exceptions  : none
+  Caller      : private
+  Status      : Stable
+
+=cut
+
+sub _recursive_get_all_sorted_leaves {
+  my $self = shift;
+  my $score_by_node = shift;
+
+  my $sorted_leaves = [];
+  my $children = $self->children;
+
+  if (@$children == 0) {
+    $sorted_leaves = [$self];
+  } else {
+    $children = [sort {
+        (defined($score_by_node->{$b})?$score_by_node->{$b}:0) <=> (defined($score_by_node->{$a})?$score_by_node->{$a}:0)
+      } @$children];
+    for (my $i = 0; $i < @$children; $i++) {
+      push(@$sorted_leaves, @{$children->[$i]->_recursive_get_all_sorted_leaves($score_by_node)});
+    }
+  }
+
+  return $sorted_leaves;
+}
+
 =head2 get_all_leaves
 
  Title   : get_all_leaves
