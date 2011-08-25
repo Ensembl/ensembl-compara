@@ -33,7 +33,13 @@ sub convert_to_drawing_parameters {
     }
 
     my @extra_results = $reg->analysis->description;
-    $extra_results[0] =~ s/(https?:\/\/\S+[\w\/])/<a rel="external" href="$1">$1<\/a>/ig;
+    ## Sort out any links/URLs
+    if ($extra_results[0] =~ /a href/i) {
+      $extra_results[0] =~ s/a href/a rel="external" href/ig;
+    }
+    else {
+      $extra_results[0] =~ s/(https?:\/\/\S+[\w\/])/<a rel="external" href="$1">$1<\/a>/ig;
+    }
 
     unshift (@extra_results, $gene_links);
 
