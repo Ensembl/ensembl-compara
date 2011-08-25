@@ -36,7 +36,6 @@ sub new {
     title            => undef,
     form             => undef,
     form_id          => sprintf('%s_%s_configuration', lc $type, lc $component),
-    custom           => $ENV{'ENSEMBL_CUSTOM_PAGE'} ? $hub->session->custom_page_config($type) : [],
     tree             => new EnsEMBL::Web::Tree,
   };
   
@@ -54,7 +53,6 @@ sub image_config     :lvalue { $_[0]->{'image_config'};     }
 sub image_config_das :lvalue { $_[0]->{'image_config_das'}; }
 sub has_images       :lvalue { $_[0]->{'has_images'};       }
 sub altered          :lvalue { $_[0]->{'altered'};          } # Set to one if the configuration has been updated
-sub custom           :lvalue { $_[0]->{'custom'};           }
 sub code             :lvalue { $_[0]->{'code'};             }
 sub species          { return $_[0]->{'species'};           }
 sub species_defs     { return $_[0]->{'species_defs'};      }
