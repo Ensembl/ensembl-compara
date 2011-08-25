@@ -9,9 +9,8 @@ use base qw(EnsEMBL::Web::Root Exporter);
 use Exporter;
 
 our @EXPORT_OK = qw(cache cache_print);
-our @EXPORT = @EXPORT_OK;
+our @EXPORT    = @EXPORT_OK;
 
-use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
 use Text::Wrap qw(wrap);
 
@@ -188,8 +187,8 @@ sub ajax_url {
   
   my $url  = join '/', $hub->species_defs->species_path, 'Component', $hub->type, $plugin, $module;
      $url .= "/$function_name" if $function_name && $self->can("content_$function_name");
-     $url .= '?_rmd=' . substr md5_hex($ENV{'REQUEST_URI'}), 0, 4; # sb23: This parameter stops the browser going into an infinte redirect loop on certain Command processes, but I have absolutely no idea how.
-     $url .= ";$ENV{'QUERY_STRING'}" unless $no_query_string;
+     $url .= '?';
+     $url .= $ENV{'QUERY_STRING'} unless $no_query_string;
   
   return $url;
 }
