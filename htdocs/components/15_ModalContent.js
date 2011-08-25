@@ -151,19 +151,25 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   },
   
   addSubPanel: function () {
-    var panel = this;
+    var panel  = this;
+    var params = [];
     
     $('.ajax', this.elLk.content).each(function () {
-      Ensembl.EventManager.trigger('createPanel', $(this).parents('.js_panel')[0].id, 'Content');
+      params.push([ $(this).parents('.js_panel')[0].id, 'Content' ]);
     });
     
     $('.js_panel', this.elLk.content).each(function () {
       var panelType = $('input.panel_type', this).val();
       
       if (panelType && !(panel instanceof Ensembl.Panel[panelType])) {
-        Ensembl.EventManager.trigger('createPanel', this.id, panelType);
+        params.push([ this.id, panelType ]);
       }
     });
+    
+    for (var i in params) {
+      Ensembl.EventManager.trigger('destroyPanel', params[i][0], 'empty');
+      Ensembl.EventManager.trigger('createPanel',  params[i][0], params[i][1]);
+    }
   },
   
   setSelectAll: function () {
