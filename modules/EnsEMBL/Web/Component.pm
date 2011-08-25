@@ -188,7 +188,8 @@ sub ajax_url {
   
   my $url  = join '/', $hub->species_defs->species_path, 'Component', $hub->type, $plugin, $module;
      $url .= "/$function_name" if $function_name && $self->can("content_$function_name");
-     $url .= "?$ENV{'QUERY_STRING'}" unless $no_query_string;
+     $url .= '?_rmd=' . substr md5_hex($ENV{'REQUEST_URI'}), 0, 4; # sb23: This parameter stops the browser going into an infinte redirect loop on certain Command processes, but I have absolutely no idea how.
+     $url .= ";$ENV{'QUERY_STRING'}" unless $no_query_string;
   
   return $url;
 }
