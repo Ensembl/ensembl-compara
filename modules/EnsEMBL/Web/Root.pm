@@ -262,6 +262,14 @@ sub pretty_date {
   }
 }
 
+# Splits camelcase "words" into a space-separated string
+sub decamel {
+  my ($self, $camel) = @_;
+  my @words = $camel =~ /([A-Z][a-z]*)/g;
+  my $string = join(' ', @words);
+  return $string;
+}
+
 # Retuns comma separated version of number
 sub thousandify {
   my ($self, $value) = @_;
