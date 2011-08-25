@@ -65,7 +65,7 @@ sub createObjects {
     }
 
     my $func  = "_create_$feature_type";
-    $features = $self->can($func) ? $self->$func($db, $subtype) : [];
+    $features = $self->can($func) ? $self->$func($db, $subtype) : {};
   }
   
   $self->DataObjects($self->new_object('Feature', $features, $self->__data)) if keys %$features;
