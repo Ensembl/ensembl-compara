@@ -55,21 +55,26 @@ sub createObjects {
     $self->param('v', $variation->name) unless $self->param('v'); # For same reason as vf check above
   } else { 
     my $dbsnp_version = $db->{'dbSNP_VERSION'} ? "which includes data from dbSNP $db->{'dbSNP_VERSION'}," : '';
-    my $help_message  = "Either $identifier does not exist in the current Ensembl database, $dbsnp_version or there was a problem retrieving it.";
-    return $self->problem('fatal', "Could not find variation $identifier", $self->_help($help_message));
+    my $help_message  ="Either $identifier does not exist in the current Ensembl database, $dbsnp_version or there was a problem retrieving it.";
+    my $help_extra;
+    if ($self->species eq 'Homo_sapiens') {
+      $help_extra = sprintf('Note: If the NCBI has released a new build since %s for Human, there may be new variants which have not yet been incorporated into Ensembl. If this is the case, you may find information about this %s on the NCBI website: <a href="http://www.ncbi.nlm.nih.gov/sites/entrez?db=snp&cmd=search&term=%s" target="external">http://www.ncbi.nlm.nih.gov/sites/entrez?db=snp&cmd=search&term=%s</a>.',
+                            $db->{'dbSNP_VERSION'},
+                            $identifier,$identifier,$identifier);
+    }
+    return $self->problem('fatal', "Could not find variation $identifier", $self->_help($help_message,$help_extra));
   }
 }
 
 sub _help {
-  my ($self, $string) = @_;
-
+  my ($self, $string, $help_extra) = @_;
   my %sample    = %{$self->species_defs->SAMPLE_DATA || {}};
   my $help_text = $string ? sprintf '<p>%s</p>', encode_entities($string) : '';
   my $url       = $self->hub->url({ __clear => 1, action => 'Summary', v => $sample{'VARIATION_PARAM'} });
-
+  $help_text .= "$help_extra" if $help_extra;
   $help_text .= sprintf('
     <p>
-      This view requires a variation identifier in the URL. For example:
+      <br />This view requires a variation identifier in the URL. For example:
     </p>
     <blockquote class="space-below"><a href="%s">%s</a></blockquote>',
     encode_entities($url),
