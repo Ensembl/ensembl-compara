@@ -14,7 +14,8 @@ sub get_seq_by_id {
   if(!$species){ return []; }
 
   my $seq;
-  my $pep_seq = '';
+  my $id;
+  my $obj_seq = '';
 
   #try and retrieve translation of Ensembl object
   my $adaptor = $reg->get_adaptor($species, $dbt, $type);
@@ -23,47 +24,53 @@ sub get_seq_by_id {
       #get longest translation from a gene
       foreach my $trans (@{$obj->get_all_Transcripts()}) {
 	if (my $trl = $trans->translation) {
-	  if ( length($trl->seq) > length($pep_seq) ) {
-	    $pep_seq =  $trl->seq;
-	    my $id = $trl->stable_id;
-	    $seq = [ ">$id\n" ];
+	  if ( length($trl->seq) > length($obj_seq) ) {
+	    $obj_seq =  $trl->seq;
+	    $id = $trl->stable_id;
 	  }
 	}
       }
     }
     if (ref($obj) eq 'Bio::EnsEMBL::Transcript') {
       if (my $trl = $obj->translation) {
-	$pep_seq  = $trl->seq;
-	my $id = $trl->stable_id;
-	$seq = [ ">$id\n" ];
+	$obj_seq  = $trl->seq;
+	$id = $trl->stable_id;
+      }
+      else {
+        $obj_seq = $obj->seq->seq;
+        $id = $obj->stable_id;
       }
     }
     if (ref($obj) eq 'Bio::EnsEMBL::Translation') {
-      $pep_seq = $obj->seq;
-      my $id = $obj->stable_id;
-      $seq = [ ">$id\n" ];
+      $obj_seq = $obj->seq;
+      $id = $obj->stable_id;
     }
 
-    if (! $pep_seq) {
+    if (! $obj_seq) {
+      #don't think this works
       my $archStableIdAdap = $reg->get_adaptor($species, $dbt, 'ArchiveStableId');
       if (my $obj = $archStableIdAdap->fetch_by_stable_id($ID,lc($type))) {
-	($seq, $pep_seq) = $self->transl_of_archive_stable_id($obj);
+	($seq, $obj_seq) = $self->transl_of_archive_stable_id($obj);
       }
+    }
+    else {
+      $seq = [ ">$id\n" ];
     }
   }
   else {
+    #don't think this works
     my $archStableIdAdap = $reg->get_adaptor($species, $dbt, 'ArchiveStableId');
     if (my $obj = $archStableIdAdap->fetch_by_stable_id($ID,lc($type))) {
-      ($seq, $pep_seq) = $self->transl_of_archive_stable_id($obj);
+      ($seq, $obj_seq) = $self->transl_of_archive_stable_id($obj);
     }
   }
 
-  return [] if (! $pep_seq);
+  return [] if (! $obj_seq);
 
-  #generate arrayref of header and amino acid sequence ready for using by WISE2
+  #generate arrayref of header and sequence ready for using by WISE2/Matcher
   my $pos = 0;
-  while ( $pos < length($pep_seq) ) {
-    my $substr = substr($pep_seq,$pos,60);
+  while ( $pos < length($obj_seq) ) {
+    my $substr = substr($obj_seq,$pos,60);
     $substr .= "\n";
     push @{$seq}, $substr;
     $pos += 60;
