@@ -49,8 +49,15 @@ sub content {
   $image->imagemap         = 'yes';
   $image->{'panel_number'} = 'chrom';
 
+  ## Add user tracks if turned on
+  my @pointers;
+  my $user_features = $self->create_user_features;
+  if (keys %$user_features) {
+    @pointers = $self->create_user_pointers($image, $user_features);
+  }
+
   my $script = $object->species_defs->NO_SEQUENCE ? 'Overview' : 'View';
-  $image->karyotype($self->hub, $object, undef, $config_name);
+  $image->karyotype($self->hub, $object, \@pointers, $config_name);
   $image->caption = 'Click on the image above to zoom into that point';
   return $image->render;
 }
