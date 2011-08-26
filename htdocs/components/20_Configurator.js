@@ -597,8 +597,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     var imageConfig = {};
     var viewConfig  = {};
     
-    $.each(this.subPanels, function () {
-      var conf = Ensembl.EventManager.triggerSpecific('updateConfiguration', this, true);
+    $.each(this.subPanels, function (i, id) {
+      var conf = Ensembl.EventManager.triggerSpecific('updateConfiguration', id, id);
       
       if (conf) {
         $.extend(viewConfig,  conf.viewConfig);
