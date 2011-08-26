@@ -43,26 +43,20 @@ sub content {
     push @hit_ids, $1;
   }
 
-  # As yet don't do anything if we have a DnaDnaAlignFeature as an ENS_ supporting_feature (only a limited number in Fugu at presents (e58))
-  # if we decide to use these then will have to modify ENSEMBL_RETRIEVE.pm
   my $strand_mismatch;
-  if ($hit_db_name =~ /ENS/ && $object->get_hit($hit_id)->isa('Bio::EnsEMBL::DnaDnaAlignFeature')) {
-    $ext_seq = '';
-  } else {
-    foreach my $id (@hit_ids) {
-      if (my $hit_object = $object->get_hit($id)) {
-        my $hit_strand = $hit_object->strand;
-        $strand_mismatch = $hit_strand != $transcript->strand ? 1 : 0;
 
-        my $rec = $hub->get_ext_seq($id, uc $query_db, $strand_mismatch);
+  foreach my $id (@hit_ids) {
+    if (my $hit_object = $object->get_hit($id)) {
+      my $hit_strand = $hit_object->strand;
+      $strand_mismatch = $hit_strand != $transcript->strand ? 1 : 0;
+      my $rec = $hub->get_ext_seq($id, uc $query_db, $strand_mismatch);
 
-        $ext_seq        = $rec->[0] || '';
-        $ext_seq_length = $rec->[1] || '';
+      $ext_seq        = $rec->[0] || '';
+      $ext_seq_length = $rec->[1] || '';
 
-        if ($ext_seq) {
-          $hit_id = $id;
-          last;
-        }
+      if ($ext_seq) {
+        $hit_id = $id;
+        last;
       }
     }
 
