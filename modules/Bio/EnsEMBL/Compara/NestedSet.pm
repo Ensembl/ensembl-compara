@@ -1866,7 +1866,7 @@ sub _recursive_get_all_sorted_leaves {
     $sorted_leaves = [$self];
   } else {
     $children = [sort {
-        (defined($score_by_node->{$b})?$score_by_node->{$b}:0) <=> (defined($score_by_node->{$a})?$score_by_node->{$a}:0)
+        ($score_by_node->{$b} || $score_by_node->{$a}) ? (($score_by_node->{$b} || 0)<=>($score_by_node->{$a} || 0)) : ($a->node_id <=> $b->node_id)
       } @$children];
     for (my $i = 0; $i < @$children; $i++) {
       push(@$sorted_leaves, @{$children->[$i]->_recursive_get_all_sorted_leaves($score_by_node)});

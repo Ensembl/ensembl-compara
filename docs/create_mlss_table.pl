@@ -1,4 +1,4 @@
-#!/usr/local/ensembl/bin/perl
+#!/usr/bin/env perl
 
 my $description = q{
 ###########################################################################
@@ -42,7 +42,7 @@ is intended for the web help pages.
 
 perl create_mlss_table.pl
     [--reg_conf registry_configuration_file]
-    [--dbname compara_db_name]
+    [--reg_alias compara_db_name]
     [--output_file filename]
 
 =head1 OPTIONS
@@ -67,7 +67,7 @@ the Bio::EnsEMBL::Registry configuration file. If none given,
 the one set in ENSEMBL_REGISTRY will be used if defined, if not
 ~/.ensembl_init will be used.
 
-=item B<[--dbname compara_db_name]>
+=item B<[--reg_alias compara_db_name]>
   
 the name of compara DB in the registry_configuration_file or any
 of its aliases. Uses "compara" by default.
@@ -87,6 +87,9 @@ standard output
 
 =cut
 
+use strict;
+use Getopt::Long;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 our $species;
@@ -117,10 +120,7 @@ perl create_mlss_table.pl
         the Bio::EnsEMBL::Registry configuration file. If none given,
         the one set in ENSEMBL_REGISTRY will be used if
         defined, if not ~/.ensembl_init will be used.
-    [--reg_url database_url]
-        the url for the database. Registry will be loaded automatically
-        from this database
-    [--dbname compara_db_name]
+    [--reg_alias compara_db_name]
         the name of compara DB in the registry_configuration_file or
         any of its aliases. Uses "compara" by default.
     [--method_link method_link_type]
@@ -137,11 +137,8 @@ perl create_mlss_table.pl
         standard output
 };
 
-use strict;
-use Getopt::Long;
 my $reg_conf;
-my $reg_url;
-my $dbname = "compara";
+my $reg_alias = 'compara_curr';
 my $method_link_type = undef;
 my $list = undef;
 my $blastz_net_list = undef;
@@ -150,13 +147,13 @@ my $use_names = undef;
 my $per_genome = undef;
 my $output_file = undef;
 my $species_tree_file = undef;
+my $species_tree_from_db = undef;
 my $help;
 
 GetOptions(
     "help" => \$help,
     "reg_conf=s" => \$reg_conf,
-    "reg_url=s" => \$reg_url,
-    "dbname=s" => \$dbname,
+    "reg_alias|dbname=s" => \$reg_alias,
     "method_link_type=s@" => \$method_link_type,
     "list" => \$list,
     "blastz_list" => \$blastz_net_list,
@@ -165,6 +162,7 @@ GetOptions(
     "per_genome" => \$per_genome,
     "output_file=s" => \$output_file,
     "species_tree_file=s" => \$species_tree_file,
+    "species_tree_from_db!" => \$species_tree_from_db,
   );
 
 # Print Help and exit
@@ -178,16 +176,12 @@ if ($output_file) {
 }
 
 # Configure the Bio::EnsEMBL::Registry
-if ($reg_url) {
-  eval{ require Bio::EnsEMBL::Registry };
-  Bio::EnsEMBL::Registry->load_registry_from_url($reg_url);
-} elsif ($reg_conf) {
+if ($reg_conf) {
   # Uses $reg_conf if supplied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses ~/.ensembl_init
   # if all the previous fail.
   eval{ require Bio::EnsEMBL::Registry };
   Bio::EnsEMBL::Registry->load_all($reg_conf);
-}
-else {
+} else {
   # Configuration necessary for this to run in web env ---------------
   use FindBin qw($Bin);
   use File::Path;
@@ -219,15 +213,13 @@ else {
                                    -species => 'compara',
                                    -dbname  => $db );
 }
-use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 ## Get the adaptor from the Registry
-my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'MethodLinkSpeciesSet');
-my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomeDB');
-
-my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomeDB');
-
-my $ncbi_taxon_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'NCBITaxon');
+my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor($reg_alias, 'compara', 'MethodLinkSpeciesSet');
+my $genome_db_adaptor       = Bio::EnsEMBL::Registry->get_adaptor($reg_alias, 'compara', 'GenomeDB');
+my $genome_db_adaptor       = Bio::EnsEMBL::Registry->get_adaptor($reg_alias, 'compara', 'GenomeDB');
+my $ncbi_taxon_adaptor      = Bio::EnsEMBL::Registry->get_adaptor($reg_alias, 'compara', 'NCBITaxon');
+my $species_tree_adaptor    = Bio::EnsEMBL::Registry->get_adaptor($reg_alias, 'compara', 'SpeciesTree');
 
 ## fetch all the method_link_species_sets
 my $all_method_link_species_sets = [];
@@ -242,36 +234,53 @@ if ($method_link_type) {
 
 #if defined species_tree_file, overwrite the species order given by the config
 #file and use the species tree instead
-if (defined $species_tree_file) {
-    open(TREE_FILE, $species_tree_file) or throw("Cannot open file ".$species_tree_file);
-    my $newick_species_tree = join("", <TREE_FILE>);
-    close(TREE_FILE);
-    $newick_species_tree =~ s/^\s*//;
-    $newick_species_tree =~ s/\s*$//;
-    $newick_species_tree =~ s/[\r\n]//g;
-    my $species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_species_tree);
+if (defined $species_tree_file or $species_tree_from_db) {
+    
+    my $species_tree;
+
+    if($species_tree_from_db) {
+        $species_tree = $species_tree_adaptor->create_species_tree();
+    } else {
+        open(TREE_FILE, $species_tree_file) or throw("Cannot open file ".$species_tree_file);
+        my $newick_string = join("", <TREE_FILE>);
+        close(TREE_FILE);
+        $newick_string =~ s/^\s*//;
+        $newick_string =~ s/\s*$//;
+        $newick_string =~ s/[\r\n]//g;
+        $species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_string);
+    }
 
     my $all_leaves = $species_tree->get_all_leaves;
-    $species = undef;
-    foreach my $this_leaf (@$all_leaves) {
-	my $name = $this_leaf->name;
-	my $long_name = $name;
-	$long_name =~ tr/_/ /d;
-	$name = lcfirst $name;
-	my $spp;
-	$spp->{long_name} = $long_name;
-	my $genome_db;
+    my @top_leaves = ();
+    foreach my $top_name ('Homo sapiens', 'Mus musculus', 'Danio rerio') {
+        foreach my $this_leaf (@$all_leaves) {
+            if ($this_leaf->name eq $top_name) {
+                push @top_leaves, $this_leaf;
+            }
+        }
+    }
+    $all_leaves = $species_tree->get_all_sorted_leaves(@top_leaves);
 
-	#not all species in the species tree are in the compara database so
-	#need to check
-	eval {
-	    $genome_db = $genome_db_adaptor->fetch_by_name_assembly($name);
-	};
-	unless ($@) {
-	    my $short_name = substr($genome_db->short_name, 0, 1) . "." . substr($genome_db->short_name, 1);
-	    $spp->{short_name} = $short_name;
-	}
-	push @$species, $spp;
+    $species = [];  # ignore the ones given in config file and load fresh ones from the ncbi_taxonomy leaves
+    foreach my $this_leaf (@$all_leaves) {
+
+        my $long_name = $this_leaf->name;
+        $long_name =~ tr/_/ /d;
+        my $spp = { 'long_name' => $long_name };
+
+        my $name = $this_leaf->name;
+        $name = lc $name;
+        $name =~ tr/ /_/d;
+
+        # not all species in the species tree are in the compara database so need to check
+        my $genome_db;
+        eval {
+            $genome_db = $genome_db_adaptor->fetch_by_name_assembly($name);
+        };
+        unless ($@) {
+            $spp->{short_name} = substr($genome_db->short_name, 0, 1) . "." . substr($genome_db->short_name, 1);
+        }
+        push @$species, $spp;
     }
 }
 
@@ -438,39 +447,32 @@ sub print_html_list {
 
   my $these_method_link_species_sets = [];
 
-  my $species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'SpeciesSet');
+  my $species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor($reg_alias, 'compara', 'SpeciesSet');
   my $species_set_tags = $species_set_adaptor->fetch_all_by_tag("name"); 
 
 
   foreach my $this_method_link_species_set (sort {scalar @{$a->species_set} <=> scalar @{$b->species_set}} @$all_method_link_species_sets) {
       my $species_set_name;
       foreach my $species_set_tag (@$species_set_tags) {
-	  if ($species_set_tag->dbID == $this_method_link_species_set->species_set_id) {
-	      $species_set_name = $species_set_tag->{_tags}->{name};
-	  }
+          if ($species_set_tag->dbID == $this_method_link_species_set->species_set_id) {
+              $species_set_name = $species_set_tag->{_tags}->{name};
+          }
       }
       if (defined $species_set_name) {
-	  my $type = $this_method_link_species_set->method_link_type;
-	  print "<h4>",
-	    $this_method_link_species_set->name,
-	      "</h4>";
-	    print "<h5>", 
-	      "(method_link_type=\"$type\" : species_set_name=\"$species_set_name\")",
-	      "</h5>";
-
+            my $type = $this_method_link_species_set->method_link_type;
+            print "<h4>", $this_method_link_species_set->name, "</h4>";
+            print "<h5>", "(method_link_type=\"$type\" : species_set_name=\"$species_set_name\")", "</h5>";
       } else {
-	  print "<h4>",
-	    $this_method_link_species_set->name,
-	      "</h4>\r\n";
+            print "<h4>", $this_method_link_species_set->name, "</h4>\r\n";
       }
 
       my $genome_ids;
       #store the other species which also have this reference
       foreach my $this_species (@{$this_method_link_species_set->species_set}) {
-	  push @$genome_ids, $this_species->dbID;
+          push @$genome_ids, $this_species->dbID;
       }
       foreach my $genome_id (sort order_tree @$genome_ids) {
-	  print getNameString($genome_id) . "<br />" . "\n";
+          print getNameString($genome_id) . "<br />" . "\n";
       }
       print "\r\n";
   }
