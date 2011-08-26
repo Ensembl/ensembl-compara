@@ -59,7 +59,9 @@ sub chr_list {
 
 ##---------------------------------------------------------------------------------------
 
-## POINTERS FOR VERTICAL DRAWING CODE
+## USER DATA DISPLAYS ON VERTICAL DRAWING CODE
+
+sub cell_style {my $self = shift; return 'padding:4px 10px';}
 
 sub pointer_default {
   my ($self, $feature_type) = @_;
@@ -76,108 +78,101 @@ sub pointer_default {
   return $hash{$feature_type};
 }
 
-# Adds a set of userdata pointers to vertical drawing code
-sub create_user_set {
-  my ($self, $image, $non_user_tracks) = @_;
+# Fetch user track(s) and turn into same data structure used by Component::Location::Genome;
+sub create_user_features {
+  my $self = shift;
   my $hub = $self->hub;
-
   my $user = $hub->user;
   my $image_config = $hub->get_imageconfig('Vkaryotype');
-  my $pointers = [];
-
-  # Key to track colours
-  my $has_table;
-  my $table = $self->new_table([], [], { width => '500px', margin => '1em 0px' });
-  
-  $table->add_columns(
-    {'key' => 'colour', 'title' => 'Track colour', 'align' => 'center' },
-    {'key' => 'track',  'title' => 'Track name',   'align' => 'center' },
-  );
-
-  my $i = 0;
+  my $features = {};
 
   foreach my $key (keys %{$image_config->tree->user_data}) {
-    
     my ($status, $type, $id) = split '-', $key;
     my $details = $image_config->get_node($key);
+    ## Only get data for tracks that are turned on
     my $display = $details->user_data->{$key}->{'display'};
     next if (!$display || $display eq 'off');
-    my ($render, $style) = split '_', $display;
-    
-    $has_table = 1;
+    my $data = $hub->get_tracks($key);
+    $features->{$key} = $data;
+  }
+  return $features;
+}
 
-    ## Create pointer configuration
-    my $tracks = $hub->get_tracks($key);
-    my @A = keys %$tracks;
-    while (my ($key, $track) = each (%$tracks)) {
-      my $colour; 
-      my @B = keys %{$track->{'config'}};
-      if ($track->{'config'} && $track->{'config'}{'color'}) {
-        $colour = $track->{'config'}{'color'};
-      }
-      else {
-        $colour = 'black';
-      }
-        
+## Create a set of highlights from a userdate set
+sub create_user_pointers {
+  my ($self, $image, $data) = @_;
+  my $hub = $self->hub;
+  my $image_config = $hub->get_imageconfig('Vkaryotype');
+  my @pointers = ();
+
+  while (my($key, $hash) = each(%$data)) {
+    my $display = $image_config->get_node($key)->user_data->{$key}{'display'};
+    while (my ($analysis, $track) = each (%$hash)) {
+      my ($render, $style) = split '_', $display;
+      my $colour = $self->_user_track_colour($track); 
+
       if ($render eq 'highlight') {
-        push @$pointers, $image->add_pointers( $hub, {
+        push @pointers, $image->add_pointers( $hub, {
           'config_name'   => 'Vkaryotype',
           'features'      => $track->{'features'},          
           'color'         => $colour,
           'style'         => $style,
         });
       }
-      if ($has_table) {
-        ## Create key entry
-        my $label = $track->{'config'}{'track_label'} || $key;
-        if ($key eq 'default') {
-          $label = $track->{'config'}{'name'};
-        }
-        
-        if ($colour =~ /,/) {
-          ## Convert RGB colours to hex, because rgb attributes getting stripped out of HTML
-          my @rgb = split ',', $colour;
-          $colour = '#'.Sanger::Graphics::ColourMap::hex_by_rgb(undef, \@rgb);
-        }
-        elsif ($colour =~ /^[0-9a-f]{6}$/i) { ## Hex with no initial hash symbol
-          $colour = '#'.$colour;
-        }
-        
-        my $swatch = qq{<span style="width:30px;height:15px;display:inline-block;background-color:$colour" title="$colour"></span>};
-        
-        $table->add_row({'colour' => $swatch, 'track' => $label});
-      }
     }
   }
-  
-  my $data_type = $hub->param('ftype');  
-  if( $data_type =~ 'Xref')
-  {    
-    $has_table = 1;    
-    my $hash;
-    
-    foreach my $row (@$non_user_tracks){             
-      my $style = $row->{'style'};
-      
-      #the right hand arrow is xref and is red
-      my $label = ($style eq 'rharrow') ? "Xref" : "Gene";
-      $hash->{$label} = ($style eq 'rharrow') ? "red" : "blue";     #using hash to remove duplicate when there are more than 1 xref and genes      
+  return @pointers;
+}
 
-      push @$pointers, $image->add_pointers( $hub, {
-          'config_name'   => 'Vkaryotype',
-          'features'      => [],
-          'color'         => $hash->{$label},
-          'style'         => $style,
-        });        
-                
-        my $swatch = qq{<span style="width:30px;height:15px;display:inline-block;background-color:$hash->{$label}" title="$hash->{$label}"></span>};
-        $table->add_row({'colour' => $swatch, 'track' => $label});
-      }      
-   }            
-  ## delete table if no tracks turned on
-  $table = undef unless $has_table;
-  
-  return ($pointers, $table );
+sub configure_UserData_table {
+  my ($self, $feature_type, $feature_set) = @_;
+  my $rows = [];
+
+  my $header = 'Key to user tracks';
+
+  my $column_order = [qw(colour track)];
+
+  while (my($key, $data) = each (%$feature_set)) {
+    while (my($analysis, $track) = each (%$data)) { 
+      ## Create key entry
+      my $label = $track->{'config'}{'track_label'} || $analysis;
+      if ($analysis eq 'default') {
+        $label = $track->{'config'}{'name'};
+      }
+        
+      my $colour = $self->_user_track_colour($track); 
+      if ($colour =~ /,/) {
+        ## Convert RGB colours to hex, because rgb attributes getting stripped out of HTML
+        my @rgb = split ',', $colour;
+        $colour = '#'.Sanger::Graphics::ColourMap::hex_by_rgb(undef, \@rgb);
+      }
+      elsif ($colour =~ /^[0-9a-f]{6}$/i) { ## Hex with no initial hash symbol
+        $colour = '#'.$colour;
+      }
+        
+      my $swatch = qq{<span style="width:30px;height:15px;display:inline-block;background-color:$colour" title="$colour"></span>};
+        
+      my $row = {
+              'colour' => {'value' => $swatch,  'style' => $self->cell_style},
+              'track'  => {'value' => $label,   'style' => $self->cell_style},
+      };
+      push @$rows, $row;
+    }
+  }
+  return ($header, $column_order, $rows);
+} 
+
+sub _user_track_colour {
+  my ($self, $track) = @_;
+  my $colour; 
+
+  if ($track->{'config'} && $track->{'config'}{'color'}) {
+    $colour = $track->{'config'}{'color'};
+  }
+  else {
+    $colour = 'black';
+  }
+  return $colour;      
 }
 
 1;

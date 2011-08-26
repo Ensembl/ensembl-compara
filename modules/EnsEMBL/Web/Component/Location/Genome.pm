@@ -18,56 +18,108 @@ sub _init {
   $self->ajaxable(1);
 }
 
+our $feature_display_name = {
+  'Xref'                => 'External Reference',
+  'DnaAlignFeature'     => 'Sequence Feature',
+  'ProteinAlignFeature' => 'Protein Feature',
+};
+
+our $column_info = {
+  'names'   => {'title' => 'Ensembl ID'},
+  'loc'     => {'title' => 'Genomic location (strand)'},
+  'extname' => {'title' => 'External names'},
+  'length'  => {'title' => 'Length'},
+  'lrg'     => {'title' => 'Name'},
+};
+
 sub content {
   my $self         = shift;
   my $hub          = $self->hub;
   my $species      = $hub->species;
   my $species_defs = $hub->species_defs;
+  my ($html, $total_features, $mapped_features, $unmapped_features);
+  my $features = {};
+ 
+  ## Get features to draw
+  my $object = $self->builder->create_objects('Feature', 'lazy') if $hub->param('id');
+  if ($object) {
+    $features = $object->convert_to_drawing_parameters;
+  }
+
   my $chromosomes  = $species_defs->ENSEMBL_CHROMOSOMES || [];
-  my $sortable; #to make the data table sortable
-  
-  my ($html, $table, $user_pointers, $usertable, $features, $has_features, @all_features);
-  if (my $id = $hub->param('id') || $hub->referer->{'ENSEMBL_TYPE'} eq 'LRG') { ## "FeatureView"
-    $features = $self->builder->create_objects('Feature', 'lazy');
-    $features = $features ? $features->convert_to_drawing_parameters : {};
-    $sortable = 1 if ($hub->param('ftype') eq 'Phenotype');
-    $table    = $self->feature_tables($features,$sortable) if keys %$features;
-  } 
-
-  my $display_name;
-  while (my ($type, $feature_set) = each (%$features)) {
-    if ($feature_set && @$feature_set) {
-      $has_features = 1;
-      push @all_features, @{$feature_set->[0]};
-      my $hash = $feature_set->[0][0];
-      if (!$display_name && $type eq 'Xref' && $hash) {
-        $display_name = $hash->{'extname'};
-        $display_name =~ s/ \[#\]//;
+  my %chromosome = map {$_ => 1} @$chromosomes;
+  while (my ($type, $set) = each (%$features)) {
+    foreach my $feature (@{$set->[0]}) {
+      if ($chromosome{$feature->{'region'}}) {
+        $mapped_features++;
       }
-
+      else {
+        $unmapped_features++;
+      }
+      $total_features++;
     }
   }
 
-  if (scalar @$chromosomes && $species_defs->MAX_CHR_LENGTH) {
-    ## Now check if we have any features mapped to chromosomes
-    my $draw_karyotype = $has_features ? 0 : 1;
-    my $not_drawn;
-    my %chromosome = map { $_ => 1 } @$chromosomes;
-   
-    foreach (@all_features) {
-      if (ref($_) eq 'HASH' && $chromosome{$_->{'region'}}) {
-        $draw_karyotype = 1;
-      } else {
-        $not_drawn++;
+  if ($hub->param('id') && $total_features < 1) {
+    my $ids = join(', ', $hub->param('id'));
+    return $self->_warning('Not found', sprintf('No mapping of %s found', $ids || 'unknown feature'));
+  }
+
+  ## Add in userdata tracks
+  my $user_features = $self->create_user_features;
+  while (my ($key, $data) = each (%$user_features)) {
+    while (my ($analysis, $track) = each (%$data)) {
+      foreach my $feature (@{$track->{'features'}}) {
+        if ($chromosome{$feature->{'chr'}}) {
+          $mapped_features++;
+        }
+        else {
+          $unmapped_features++;
+        }
+        $total_features++;
       }
     }
+  }
 
-    if ($draw_karyotype) {
-      my $image    = $self->new_karyotype_image;
-      my $config   = $hub->get_imageconfig('Vkaryotype'); ## Form with hidden elements for click-through
+  ## Draw features on karyotype, if any
+  if (scalar @$chromosomes && $species_defs->MAX_CHR_LENGTH) {
+    my $image    = $self->new_karyotype_image;
+    my $config   = $hub->get_imageconfig('Vkaryotype'); ## Form with hidden elements for click-through
+
+    ## Create pointers to be drawn
+    my $pointers = [];
+
+    if ($mapped_features) {
+      ## Title for image - a bit messy, but we want it to be human-readable!
+      my $title = 'Location';
+      $title .= 's' if $mapped_features > 1;
+      $title .= ' of ';
+      my $data_type = $hub->param('ftype');
+      my (%names, $data_name, @other_names, $name_string);
+      ## De-camelcase names
+      foreach (keys %$features) {
+        my $pretty = $feature_display_name->{$_} || $self->decamel($_);
+        if ($_ eq $data_type) {
+          $data_name = $pretty;
+        }
+        else {
+          push @other_names, $pretty;
+        }
+        $names{$_} = $pretty.'s';
+      }
+      my $feature_names;
+
+      if (scalar @other_names < 1) {
+          $title .= $data_name;
+      } else {
+        my $last_name = pop(@other_names);
+        if (scalar @other_names > 0) {
+          $name_string = join ', ', @other_names;
+          $name_string .= ' and '.$last_name;
+        }
+        $title .= "$name_string$last_name associated with $data_name";
+      }
      
-      my $pointers = [];
-
       ## Deal with pointer colours
       my %used_colour;
       my %pointer_default = (
@@ -80,321 +132,262 @@ sub content {
         Domain              => [ 'blue','lharrow' ], 
       );
       
-      ## Do internal Ensembl data
-      if ($has_features) { ## "FeatureView"
-        my $text      = 'Locations of ';
-        my $data_type = $hub->param('ftype');
-        my $data_name = $data_type;
-        if ($display_name && $data_type =~ /^Xref_MIM_/) {
-          $data_name = $display_name;
-        }
-        my %names     = map { $_ => lc($_) . 's' } keys %$features;
-        my @A         = keys %names;
-        my $feature_names;
-        
-        if (@A == 1 && $A[0] eq $data_type) {
-          $text .= $data_type;
-        } else {
-          if (scalar keys %names == 2) {
-            $feature_names = join ' and ', sort values %names;  
-          } else {
-            $feature_names = join ', ', sort values %names;  
-          }
-          
-          $text .= "$feature_names associated with $data_name";
+      $html .= "<h2>$title</h2>";        
 
-          my @ids = $hub->param('id');
+      ## Create pointers for Ensembl features
+      while (my ($feat_type, $set) = each (%$features)) {          
+        my $defaults    = $pointer_default{$set->[2]};
+        my $pointer_ref = $image->add_pointers($hub, {
+          config_name  => 'Vkaryotype',
+          features     => $set->[0],
+          feature_type => $feat_type,
+          color        => $hub->param('colour') || $defaults->[0],
+          style        => $hub->param('style')  || $defaults->[1],            
+        });
           
-          if (@ids && $data_type !~ /Xref_MIM/) {
-            if (@ids > 1) {
-              $text .= 's ' . join ', ', @ids;
-            } else {
-              $text .= ' ' . $ids[0];
-            }
-          }
-        
-          if ($hub->param('ftype') eq 'Phenotype'){
-            my $phenotype_name = encode_entities($hub->param('phenotype_name') || $hub->param('id'));            
-            $text = "Location of variants associated with phenotype $phenotype_name:";        
-          }
-        }        
+        push @$pointers, $pointer_ref;
+      }
+
+      ## Create pointers for userdata
+      if (keys %$user_features) {
+        push @$pointers, $self->create_user_pointers($image, $user_features);
+      } 
+
+    }
+
+    $image->image_name = @$pointers ? "feature-$species" : "karyotype-$species";
+    $image->imagemap   = @$pointers ? 'yes' : 'no';
+      
+    $image->set_button('drag', 'title' => 'Click on a chromosome');
+    $image->caption  = 'Click on the image above to jump to a chromosome, or click and drag to select a region';
+    $image->imagemap = 'yes';
+    $image->karyotype($hub, $self->object, $pointers, 'Vkaryotype');
+      
+    return if $self->_export_image($image,'no_text');
+      
+    $html .= $image->render;
  
-        $used_colour{$data_type}++;        
-        $html = "<h2>$text</h2>" unless $names{'LRG'};        
-                
-        $image->image_name = "feature-$species";
-        $image->imagemap   = 'yes';
-        while (my ($feat_type, $set) = each (%$features)) {          
-          my $defaults    = $pointer_default{$set->[2]};
-          my $pointer_ref = $image->add_pointers($hub, {
-            config_name  => 'Vkaryotype',
-            features     => $set->[0],
-            feature_type => $feat_type,
-            color        => $hub->param('colour') || $defaults->[0],
-            style        => $hub->param('style')  || $defaults->[1],            
-          });
-          
-          push @$pointers, $pointer_ref;
-        }
-      }       
-      
-      ($user_pointers, $usertable) = $self->create_user_set($image, $pointers);  #adding pointers to enable key display for non-user track for now its only xref
+    if ($unmapped_features > 0) {
+      my $message;
+      if ($mapped_features) {
+        my $do    = $unmapped_features > 1 ? 'features do' : 'feature does';
+        my $have  = $unmapped_features > 1 ? 'have' : 'has';
+        $message = "$unmapped_features $do not map to chromosomal coordinates and therefore $have not been drawn.";
+      }
+      else {
+        $message = 'No features map to chromosomal coordinates.'
+      }
+      $html .= $self->_info('Undrawn features', "<p>$message</p>");
+    }
 
-      ## Add some settings, if there is any user data
-      if (@$user_pointers) {
-        push @$pointers, @$user_pointers; 
-        $image->imagemap = 'no';
-      }
-      
-      if (!@$pointers) { ## Ordinary "KaryoView"
-        $image->image_name = "karyotype-$species";
-        $image->imagemap   = 'no';
-      }
-        
-      $image->set_button('drag', 'title' => 'Click on a chromosome');
-      $image->caption  = 'Click on the image above to jump to a chromosome, or click and drag to select a region';
-      $image->imagemap = 'yes';
-      $image->karyotype($hub, $self->object, $pointers, 'Vkaryotype');
-      
-      return if $self->_export_image($image,'no_text');
-      
-      $html .= $image->render;
-      
-      if ($hub->param('ftype') eq 'Phenotype' && $self->html_format) { # making colour scale for pointers
-        $html .= '<h3>Colour Scale:</h3>';
-        
-        my @colour_scale = $hub->colourmap->build_linear_gradient(30, '#0000FF', '#770088', '#BB0044', 'red'); # making an array of the colour scale to make the scale
-        
-        foreach my $colour (@colour_scale) {      
-          $html .= qq{<div style="border-style:solid;border-width:2px;float:left;width:20px;height:20px;background:#$colour"></div>};
-        }
-        
-        $html .= '
-        <br /><div style="clear:both"></div><span style="font-size:12px">1.0<div style="display: inline;  margin-left: 100px;"></div>3.0<div style="display: inline; margin-left: 55px;"></div>4.0<div style="display: inline;  margin-left: 60px;"></div>5.0<div style="display: inline; margin-left: 100px;"></div>7.0<div style="display: inline;  margin-left: 130px;"></div>9.0<div style="display: inline; margin-left: 140px;"></div>&gt;10.0</span><br />(Least Significant P Value) <div style="display: inline; margin-left: 420px;"></div> (Most Significant P Value)<br /><br />';
-      }
-    }
-    
-    if ($not_drawn) {
-      my $plural  = $not_drawn > 1 ? 's' : '';
-      my $message = $draw_karyotype ? 'therefore have not been drawn' : 'therefore the karyotype has not been drawn';
-      $not_drawn  = 'These' if $not_drawn == @all_features;
-      
-      $html .= $self->_info('Undrawn features', "<p>$not_drawn feature$plural do not map to chromosomal coordinates and $message.</p>");
-    }
-  } else {
+  } elsif (!scalar @$chromosomes) {
     $html .= $self->_info('Unassembled genome', '<p>This genome has yet to be assembled into chromosomes</p>');
   }
 
-  if ($table || $usertable) {
-    $html .= '<h3 style="margin-bottom:-5px">Key to tracks</h3>' . $usertable->render if $usertable;
-    $html .= $table if $table;    
-  } else {
-    $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/stats_$species.html");
-  }
-  
-  return $html;
-}
+  ## Create HTML tables for features, if any
+  while (my ($feat_type, $feature_set) = each (%$features)) {
+    my $method = '_configure_'.$feat_type.'_table';
+    if ($self->can($method)) {
+      my ($header, $column_order, $rows) = $self->$method($feat_type, $feature_set);
+      my $columns = [];
+      my $table_style = {};
+      my $cell_style = $self->cell_style;
+      my $col;
 
-sub feature_tables {
-  my $self         = shift;
-  my $feature_dets = shift;
-  my $sortable     = shift;
-  my $hub          = $self->hub;
-  my $data_type    = $hub->param('ftype');  
-  my $id           = $hub->param('id');
-  my ($html, $table_style);  
-  my @tables;  
-  
-  $table_style->{'exportable'} = qq{?ftype=$data_type;id=$id;db=core};  #make a complete url for the download view as csv
-
-  while (my ($feat_type, $feature_set) = each (%$feature_dets)) {
-    my $features      = $feature_set->[0];
-    my $extra_columns = $feature_set->[1];
-
-    # could show only gene links for xrefs, but probably not what is wanted:
-    # next SET if ($feat_type eq 'Gene' && $data_type =~ /Xref/);
-   
-    my $data_type = $feat_type eq 'Gene' ? 'Gene Information:'
-      : $feat_type eq 'Transcript' ? 'Transcript Information:'
-      : 'Feature Information:';
-
-    if ($feat_type eq 'Domain'){
-      my $domain_id     = $hub->param('id');
-      my $feature_count = scalar @$features;
-      $data_type        = "Domain $domain_id maps to $feature_count Genes. The gene Information is shown below:";
-    }
-
-    if($sortable){
-      $table_style->{'data_table'} = 1;
-      $table_style->{'sorting'} = [ 'extra_4 asc'] if($hub->param('ftype') eq 'Phenotype'); #making the p value field auto sorting by descending order
-    }
-    else{
-      $table_style->{'margin'} = '1em 0px';
-    }      
-    
-    my $table = $self->new_table([], [], $table_style);
-    
-    if ($feat_type =~ /Gene|Transcript|Domain/) {
-      $table->add_columns({ key => 'names',   title => 'Ensembl ID',               width => '25%',   align => 'left' });
-      $table->add_columns({ key => 'loc',     title => 'Genomic location(strand)', width => '170px', align => 'left' });    
-      $table->add_columns({ key => 'extname', title => 'External names',           width => '25%',   align => 'left' });
-    } elsif ($feat_type =~ /Variation/i) {
-      $table->add_columns({ key => 'loc',    title => 'Genomic location(strand)', width => '170px', align => 'left', sort => $sortable ?  'position_html' : 'none'});
-      $table->add_columns({ key => 'names',  title => 'Name(s)',                  width => '100px', align => 'left' });
-    } elsif ($feat_type eq 'LRG') {
-      $table->add_columns({ key => 'lrg',    title => 'Name',                     width => '15%', align => 'left' });
-      $table->add_columns({ key => 'loc',    title => 'Genomic location(strand)', width => '15%', align => 'left' });
-      $table->add_columns({ key => 'length', title => 'Genomic length',           width => '10%', align => 'left' });
-    } else {	    
-      $table->add_columns({ key => 'loc',    title => 'Genomic location(strand)', width => '15%', align => 'left' });
-      $table->add_columns({ key => 'length', title => 'Genomic length',           width => '10%', align => 'left' });
-      $table->add_columns({ key => 'names',  title => 'Name(s)',                  width => '25%', align => 'left' });
-    }
-
-    my $c = 1;    
-    foreach my $field (@{$extra_columns||[]}){
-      my $table_feature = { key => 'extra_' . $c++, title => $field, width => $feat_type =~ /Variation/i ? '300px' : '10%', align => 'left' };      
-      if ($hub->param('ftype') eq 'Phenotype'){
-        if($field =~ /P value/){
-          $table_feature->{'sort'} = 'numeric';
-        }
-        elsif($field =~ /Associated Phenotype/){
-          $table_feature->{'sort'} = 'none';
-        }
-        else{
-          $table_feature->{'sort'} = 'html';
-        }        
+      foreach $col (@$column_order) {
+        push @$columns, {'key' => $col, 'title' => $column_info->{$col}{'title'}, 'style' => $cell_style};
       }
-      $table->add_columns($table_feature)      
-    }
-            
-    my @data;
-    
-    if ($feat_type eq 'LRG') {
-      @data = sort { $a->{'lrg_number'} <=> $b->{'lrg_number'} } @$features;
-    } else {
-      @data = 
-        map  { $_->[0] }
-        sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
-        map  { [ $_, $_->{'region'} =~ /^(\d+)/ ? $1 : 1e20, $_->{'region'}, $_->{'start'} ] }
-        @$features;
-    }
 
-    foreach my $row (@data) {
-      my $contig_link = 'Unmapped';
-      my $names       = '';
-      my $data_row;
-
-      if ($row->{'region'}) {
-        $contig_link = sprintf(
-          '<a href="%s">%s:%d-%d(%d)</a>',
-          $hub->url({
-            action  => 'View',
-            r       => "$row->{'region'}:$row->{'start'}-$row->{'end'}",
-            h       => $row->{'label'},
-            __clear => 1
-          }),
-          $row->{'region'}, $row->{'start'}, $row->{'end'},
-          $row->{'strand'}
-        );
-
-        if ($feat_type =~ /Gene|Transcript|Domain/ && $row->{'label'}) {
-          $feat_type = 'Gene' if $feat_type eq 'Domain';
-          my $is_lrg_link = $row->{'label'} =~ /^LRG_/ ? 1 : 0; #not a very satisfying way of identifying that the link must be to LRG, but can't see any other way
-          my $param  = $is_lrg_link ? 'lrg' : $feat_type eq 'Gene' ? 'g' : 't';
-          my $url_params = {
-            type    => $is_lrg_link ? 'LRG' : $feat_type,
-            action  => 'Summary',
-            $param  => $row->{'label'},
-            __clear => 1
-          };
-          unless ($is_lrg_link) {
-            $url_params->{'r'} = "$row->{'region'}:$row->{'start'}-$row->{'end'}";
-          }
-          $names = sprintf(
-            '<a href="%s">%s</a>',
-            $hub->url($url_params),
-            $row->{'label'}
-          );
-          $data_row = { extname => $row->{'extname'}, names => $names, loc => $contig_link };
-        } else {
-          if ($feat_type !~ /align|RegulatoryFactor|ProbeFeature/i && $row->{'label'}) {
-            $names = sprintf(
-              '<a href="%s">%s</a>',
-              $hub->url({
-                type    => 'Gene',
-                action  => 'Summary',
-                r       => "$row->{'region'}:$row->{'start'}-$row->{'end'}",
-                g       => $row->{'label'},
-                __clear => 1
-              }),
-              $row->{'label'}
-            );            
-          }
-          
-          if ($feat_type =~ /Variation/i && $row->{'label'}) {
-            $contig_link = sprintf(
-              '<a href="%s">%s:%s-%s(%s)</a>',
-              $hub->url({
-                action           => 'View',
-                r                => "$row->{'region'}:$row->{'start'}-$row->{'end'}",
-                v                => $row->{'label'},
-                contigviewbottom => $row->{'somatic'} ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal',
-                __clear          => 1
-              }),
-              $row->{'region'}, $row->{'start'}, $row->{'end'}, $row->{'strand'}
-            );
-            
-            $names = sprintf(
-              '<a href="%s">%s</a>',
-              $hub->url({
-                type    => 'Variation',
-                action  => 'Phenotype',
-                v       => $row->{'label'},                
-                __clear => 1
-              }),
-              $row->{'label'}
-            );
-          } else {
-            $names  = $row->{'label'} if $row->{'label'};
-          }
-          
-          $data_row = { loc => $contig_link, length => $row->{'length'}, names => $names };
-          $data_row->{'class'} = $row->{'table_class'} if($row->{'table_class'});
-        }
+      my $extras = $feature_set->[1];
+      foreach $col (@$extras) {
+        push @$columns, {'key' => 'extra_'.lc($col), 'title' => $col, 'style' => $cell_style}; 
       }
-      
-      if ($feat_type eq 'LRG') {
-        $data_row->{'lrg'} = sprintf(
-          '<a href="%s/LRG/Summary?lrg=%s">%s</a>',
-          $hub->url({
-            type    => 'LRG',
-            action  => 'Summary',
-            lrg     => $row->{'lrg_name'},
-            __clear => 1
-          }),
-          $row->{'lrg_name'}
-        );
-      } 
-      
-      my $c = 1;
-      $data_row->{'extra_' . $c++} = $_ for @{$row->{'extra'}||[]};
-      
-      $c = 0;
-      $data_row->{'initial' . $c++} = $_ for @{$row->{'initial'}||[]};
-      
-      $table->add_row($data_row);
-    }
-    
-    if (@data) {
-      $html .= qq(<strong>$data_type</strong>);
+
+      $table_style->{'margin'}      = '1em 0px';
+      my $table = $self->new_table($columns, $rows, $table_style);
+      $html .= '<h2 style="margin-top:1em">'.$header.'</h2>';
       $html .= $table->render;
     }
   }
-  
-  $html ||= sprintf '<br /><br />No mapping of %s found<br /><br />', $hub->param('id') || 'unknown feature';
-  
+
+  ## User table
+  if (keys %$user_features) {
+    my ($header, $column_order, $rows) = $self->configure_UserData_table('UserData', $user_features);
+    my $columns = [];
+    my $table_style = {};
+    my $cell_style = $self->cell_style;
+    my $col;
+
+    foreach $col (@$column_order) {
+      push @$columns, {'key' => $col, 'title' => $column_info->{$col}{'title'}, 'style' => $cell_style};
+    }
+
+    $table_style->{'margin'}      = '1em 0px';
+    my $table = $self->new_table($columns, $rows, $table_style);
+    $html .= '<h2 style="margin-top:1em">'.$header.'</h2>';
+    $html .= $table->render;
+  }
+
+  unless (keys %$features || keys %$user_features) {
+    $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/stats_$species.html");
+  }
+
+  ## Done!
   return $html;
+}
+
+sub _configure_Gene_table {
+  my ($self, $feature_type, $feature_set) = @_;
+  my $rows = [];
+ 
+  my $header = 'Gene Information';
+  if ($self->hub->param('ftype') eq 'Domain') {
+    ## Override default header
+    my $domain_id = $self->hub->param('id');
+    my $count     = scalar @{$feature_set->[0]};
+    my $plural    = $count > 1 ? 'genes' : 'gene';
+    $header       = "Domain $domain_id maps to $count $plural. The gene information is shown below:";
+  }
+
+  my $column_order = [qw(names loc extname)];
+
+  my ($data, $extras) = @$feature_set;
+  foreach my $feature ($self->_sort_features_by_coords($data)) {
+    my ($loc_link);
+
+    my $row = {
+              'extname' => {'value' => $feature->{'extname'}, 'style' => $self->cell_style},
+              'names'   => {'value' => $self->_names_link($feature, $feature_type), 'style' => $self->cell_style},
+              'loc'     => {'value' => $self->_location_link($feature), 'style' => $self->cell_style},
+              };
+
+    my $i = 0;
+    foreach my $col (@$extras) {
+      $row->{'extra_'.lc($col)} = {'value' => $feature->{'extra'}[$i], 'style' => $self->cell_style};
+      $i++;
+    }
+    push @$rows, $row;
+  }
+
+  return ($header, $column_order, $rows); 
+}
+
+sub _configure_Transcript_table {
+  my ($self, $feature_type, $feature_set) = @_;
+  my ($header, $column_order, $rows) = $self->_configure_Gene_table($feature_type, $feature_set);
+  ## Override default header
+  $header = 'Transcript Information';
+  return ($header, $column_order, $rows);
+}
+
+sub _configure_ProbeFeature_table {
+  my ($self, $feature_type, $feature_set) = @_;
+  my $rows = [];
+  
+  my $column_order = [qw(loc length names)];
+
+  my $header = 'OligoProbe Information';
+ 
+  my ($data, $extras) = @$feature_set;
+  foreach my $feature ($self->_sort_features_by_coords($data)) {
+    my ($loc_link);
+
+    my $row = {
+              'loc'     => {'value' => $self->_location_link($feature), 'style' => $self->cell_style},
+              'length'  => {'value' => $feature->{'length'},            'style' => $self->cell_style}, 
+              'names'   => {'value' => $feature->{'label'},             'style' => $self->cell_style},
+              };
+
+    my $i = 0;
+    foreach my $col (@$extras) {
+      $row->{'extra_'.lc($col)} = {'value' => $feature->{'extra'}[$i], 'style' => $self->cell_style};
+      $i++;
+    }
+    push @$rows, $row;
+  }
+
+  return ($header, $column_order, $rows); 
+}
+
+sub _configure_RegulatoryFeature_table {
+  my ($self, $feature_type, $feature_set) = @_;
+  my ($header, $column_order, $rows) = $self->_configure_ProbeFeature_table($feature_type, $feature_set);
+  ## Override default header
+  my $rf_id     = $self->hub->param('id');
+  my $ids       = join(', ', $rf_id);
+  my $count     = scalar @{$feature_set->[0]};
+  my $plural    = $count > 1 ? 'Factors' : 'Factor';
+  $header = "Regulatory Features associated with Regulatory $plural $ids";
+  return ($header, $column_order, $rows);
+}
+
+sub _configure_Xref_table {
+  my ($self, $feature_type, $feature_set) = @_;
+  my ($header, $column_order, $rows) = $self->_configure_ProbeFeature_table($feature_type, $feature_set);
+  ## Override default header
+  $header = 'External References';
+  return ($header, $column_order, $rows);
+}
+
+sub _configure_DnaAlignFeature_table {
+  my ($self, $feature_type, $feature_set) = @_;
+  my ($header, $column_order, $rows) = $self->_configure_ProbeFeature_table($feature_type, $feature_set);
+  ## Override default header
+  $header = 'Sequence Feature Information';
+  return ($header, $column_order, $rows);
+}
+
+sub _configure_ProteinAlignFeature_table {
+  my ($self, $feature_type, $feature_set) = @_;
+  my ($header, $column_order, $rows) = $self->_configure_ProbeFeature_table($feature_type, $feature_set);
+  ## Override default header
+  $header = 'Protein Feature Information';
+  return ($header, $column_order, $rows);
+}
+
+sub _sort_features_by_coords {
+  my ($self, $data) = @_;
+
+  my @sorted =  map  { $_->[0] }
+                sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
+                map  { [ $_, $_->{'region'} =~ /^(\d+)/ ? $1 : 1e20, $_->{'region'}, $_->{'start'} ] }
+                @$data;
+
+  return @sorted;
+}
+
+sub _location_link {
+  my ($self, $f) = @_;
+  return 'Unmapped' unless $f->{'region'};
+  my $coords = $f->{'region'}.':'.$f->{'start'}.'-'.$f->{'end'};
+  my $link = sprintf(
+          '<a href="%s">%s:%d-%d(%d)</a>',
+          $self->hub->url({
+            action  => 'View',
+            r       => $coords, 
+            h       => $f->{'label'},
+            __clear => 1
+          }),
+          $f->{'region'}, $f->{'start'}, $f->{'end'},
+          $f->{'strand'}
+  );
+  return $link;
+}
+
+sub _names_link {
+  my ($self, $f, $type) = @_;
+  my $coords    = $f->{'region'}.':'.$f->{'start'}.'-'.$f->{'end'};
+  my $obj_param = $type eq 'Transcript' ? 't' : 'g';
+  my $params = {
+    'type'      => $type, 
+    'action'    => 'Summary',
+    $obj_param  => $f->{'label'},
+    'r'         => $coords, 
+    __clear     => 1
+  };
+
+  my $names = sprintf('<a href="%s">%s</a>', $self->hub->url($params), $f->{'label'});
+  return $names;
 }
 
 1;
