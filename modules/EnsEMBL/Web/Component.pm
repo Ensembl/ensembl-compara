@@ -186,7 +186,7 @@ sub ajax_url {
   
   $module .= "/$function" if $function && $self->can("content_$function");
   
-  return $self->hub->url('Component', { action => $plugin, function => $module, %$params, _c => $self->cache_key }, undef, !$params->{'__clear'});
+  return $self->hub->url('Component', { action => $plugin, function => $module, %$params }, undef, !$params->{'__clear'});
 }
 
 sub EC_URL {
