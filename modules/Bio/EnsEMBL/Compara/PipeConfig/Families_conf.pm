@@ -246,8 +246,6 @@ sub pipeline_analyses {
         {   -logic_name => 'load_uniprot_superfactory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'blastdb_dir'     => $self->o('blastdb_dir'),
-                'blastdb_name'    => $self->o('blastdb_name'),
                 'inputlist'       => ['FUN','HUM','MAM','ROD','VRT','INV'],
                 'column_names'    => [ 'tax_div' ],
                 'fan_branch_code' => 2,
@@ -259,7 +257,7 @@ sub pipeline_analyses {
             -wait_for => [ 'genomedb_factory', 'load_nonref_members' ],
             -flow_into => {
                 2 => [ 'load_uniprot_factory' ],
-                1 => { 'snapshot_after_load_uniprot' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#', 'blastdb_dir' => '#blastdb_dir#' } },
+                1 => [ 'fix_merged_taxa_in_members' ],
             },
             -rc_id => 1,
         },
@@ -286,15 +284,30 @@ sub pipeline_analyses {
             -rc_id => 0,
         },
 
-        {   -logic_name => 'snapshot_after_load_uniprot',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+        {   -logic_name => 'fix_merged_taxa_in_members',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
-                'cmd'       => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 0).' '.$self->o('pipeline_db','-dbname').' >#filename#',
-                'filename'  => $self->o('work_dir').'/'.$self->o('pipeline_name').'_snapshot_after_load_uniprot.sql',
+                'sql'   => [
+                    "UPDATE member m, ncbi_taxa_name ntn SET m.taxon_id=ntn.taxon_id WHERE m.taxon_id = ntn.name AND ntn.name_class='merged_taxon_id'",
+                ],
             },
             -wait_for  => [ 'load_uniprot_superfactory', 'load_uniprot_factory', 'load_uniprot' ],   # act as a funnel
             -flow_into => {
-                1 => [ 'dump_member_proteins' ],
+                1 => [ 'snapshot_after_load_uniprot' ],
+            },
+            -rc_id => 1,
+        },
+
+        {   -logic_name => 'snapshot_after_load_uniprot',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'blastdb_dir'   => $self->o('blastdb_dir'),
+                'blastdb_name'  => $self->o('blastdb_name'),
+                'cmd'           => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 0).' '.$self->o('pipeline_db','-dbname').' >#filename#',
+                'filename'      => $self->o('work_dir').'/'.$self->o('pipeline_name').'_snapshot_after_load_uniprot.sql',
+            },
+            -flow_into => {
+                1 => { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#', 'blastdb_dir' => '#blastdb_dir#' } },
             },
         },
         
