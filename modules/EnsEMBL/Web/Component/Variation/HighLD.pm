@@ -110,7 +110,7 @@ sub summary_table {
       
       # table
       my $id = $pop->dbID;
-      $url = $self->ajax_url . ";pop_id=$id;update_panel=1";
+      $url = $self->ajax_url(undef, { pop_id => $id, update_panel => 1 });
         
       $row->{table} = qq{
         <a href="$url" class="ajax_add toggle closed" rel="$id">

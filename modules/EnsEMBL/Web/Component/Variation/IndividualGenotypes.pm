@@ -197,7 +197,7 @@ sub content {
       my $row_count = scalar @{$rows{$pop}};
       my $pop_name = $all_pops{$pop};
       
-      my $url = $self->ajax_url . ";pop=$pop;update_panel=1";
+      my $url = $self->ajax_url(undef, { pop => $pop, update_panel => 1 });
       
       my $view_html = qq{
         <a href="$url" class="ajax_add toggle closed" rel="$pop">

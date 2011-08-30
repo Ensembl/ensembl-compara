@@ -33,7 +33,7 @@ sub content {
   $self->{'update'} = $hub->param('update_panel');
   
   my $values = [
-    $self->ajax_url(shift, 1) . ";r=$r",
+    $self->ajax_url(shift, { __clear => 1, r => $r }),
     $r,
     $self->nav_url($seq_region_start - 1e6, $seq_region_end - 1e6),
     $self->nav_url($seq_region_start - $wd, $seq_region_end - $wd),

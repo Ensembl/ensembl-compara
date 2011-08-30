@@ -174,7 +174,7 @@ sub stats_table {
   
   foreach my $con (keys %descriptions) {
     if (defined $counts{$con}) {
-      my $url = $self->ajax_url . ";sub_table=$con;update_panel=1";
+      my $url = $self->ajax_url(undef, { sub_table => $con, update_panel => 1 });
       my $warning = scalar keys %{$counts{$con}} > 10000 ? $warning_text : '';
       
       my $view_html = qq{
@@ -203,7 +203,7 @@ sub stats_table {
   
   # add the row for ALL variations if there are any
   if (my $total = scalar keys %total_counts) {
-    my $url         = $self->ajax_url . ';sub_table=ALL;update_panel=1';
+    my $url         = $self->ajax_url(undef, { sub_table => 'ALL', update_panel => 1 });
     my $hidden_span = qq{<span class="hidden">-</span>}; # create a hidden span to add so that ALL is always last in the table
     my $warning     = $total > 10000 ? $warning_text : '';
     my $view_html   = qq{

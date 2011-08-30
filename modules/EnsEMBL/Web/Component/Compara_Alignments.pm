@@ -65,7 +65,7 @@ sub content {
   
   if ($align && $slice_length >= $self->{'subslice_length'}) {
     my ($table, $padding) = $self->get_slice_table($slices, 1);
-    my $base_url = $self->ajax_url('sub_slice') . ";padding=$padding;length=$slice_length";
+    my $base_url = $self->ajax_url('sub_slice', { padding => $padding, length => $slice_length });
     
     $html .= '<div class="sequence_key"></div>' . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, $base_url) . $warnings;
   } else {
