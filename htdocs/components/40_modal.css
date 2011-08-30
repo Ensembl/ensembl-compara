@@ -101,12 +101,12 @@ body.ie6 .modal_title .modal_close { background-image: url(/i/cp_close.gif); }
 
 body.ie7  .modal_content .modal_nav ul.local_context li.top_level      { margin: 0 -2px 0 0; }
 body.ie7  .modal_content .modal_nav ul.local_context li.parent         { margin-bottom: 3px; }
-body.ie67 .modal_content .modal_nav                                    { width: 260px; }
+body.ie67 .modal_content .modal_nav                                    { width: 275px; }
 body.ie6  .modal_content .modal_nav                                    { border: 0 }
-body.ie6  .modal_content .modal_wrapper                                { margin-left: 263px; }
+body.ie6  .modal_content .modal_wrapper                                { margin-left: 278px; }
 body.ie6  .modal_content .panel                                        { margin-right: 4px; }
 body.ie6  .modal_content .modal_nav ul.local_context li img            { margin-left: -3px; } 
-body.ie6  .modal_content .modal_nav .tool_buttons                      { width: 248px; }
+body.ie6  .modal_content .modal_nav .tool_buttons                      { width: 263px; }
 body.ie6  .modal_content .modal_nav .tool_buttons p                    { margin-right: 0; }
 body.ie6  .modal_content .modal_nav ul.local_context li.top_level      { margin: 3px 0 0; }
 body.ie6  .modal_content .modal_nav ul.local_context li.parent li.last { padding-bottom: 0; }
