@@ -48,17 +48,18 @@ my $suffix_separator = '__cut_here__';
 sub fetch_input {
     my $self = shift @_;
 
-    return if(defined($self->param('reuse_this')));  # bypass fetch_input() and run() in case 'reuse_this' has already been passed
-
-
-    my $genome_db_id = $self->param('genome_db_id');
-    my $curr_release = $self->param('release');
-    my $prev_release = $self->param('prev_release') || ($curr_release - 1);
-
     my $genome_db_adaptor   = $self->compara_dba->get_GenomeDBAdaptor;
 
+    my $genome_db_id = $self->param('genome_db_id');
     my $genome_db    = $genome_db_adaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with genome_db_id='$genome_db_id'";
     my $species_name = $self->param('species_name', $genome_db->name());
+
+    unless($self->param('per_genome_suffix')) {
+        $self->param('per_genome_suffix', "${species_name}_${genome_db_id}");
+    }
+
+    return if(defined($self->param('reuse_this')));  # bypass fetch_input() and run() in case 'reuse_this' has already been passed
+
 
     my $do_not_reuse_list = $self->param('do_not_reuse_list') || [];
     foreach my $do_not_reuse_candidate (@$do_not_reuse_list) {
@@ -81,22 +82,20 @@ sub fetch_input {
         }
     }
 
-    my $reuse_db                = $self->param('reuse_db');
+    my $curr_release = $self->param('release');
+    my $prev_release = $self->param('prev_release') || ($curr_release - 1);
 
-    unless($self->param('per_genome_suffix')) {
-        $self->param('per_genome_suffix', ($genome_db->name . '_' . $genome_db_id));
-    }
+    if(my $reuse_db = $self->param('reuse_db')) {
 
-    if($reuse_db) {
             # Need to check that the genome_db_id has not changed (treat the opposite as a signal not to reuse) :
         my $reuse_compara_dba       = $self->go_figure_compara_dba($reuse_db);    # may die if bad parameters
         my $reuse_genome_db_adaptor = $reuse_compara_dba->get_GenomeDBAdaptor();
         my $reuse_genome_db;
         eval {
-            $reuse_genome_db = $reuse_genome_db_adaptor->fetch_by_name_assembly($genome_db->name, $genome_db->assembly);
+            $reuse_genome_db = $reuse_genome_db_adaptor->fetch_by_name_assembly($species_name, $genome_db->assembly);
         };
         unless($reuse_genome_db) {
-            $self->warning("Could not fetch genome_db object for name='".$genome_db->name."' and assembly='".$genome_db->assembly."' from reuse_db");
+            $self->warning("Could not fetch genome_db object for name='$species_name' and assembly='".$genome_db->assembly."' from reuse_db");
             $self->param('reuse_this', 0);
             return;
         }
@@ -107,37 +106,37 @@ sub fetch_input {
             $self->param('reuse_this', 0);
             return;
         }
-    } else {
-        $self->warning("reuse_db hash has not been set, so cannot reuse");
-        $self->param('reuse_this', 0);
-        return;
-    }
 
-    Bio::EnsEMBL::Registry->no_version_check(1);
+            # now use the registry to find the previous release core database candidate:
 
-        # load the prev.release registry:
-    foreach my $prev_reg_conn (@{ $self->param('registry_dbs') }) {
-        Bio::EnsEMBL::Registry->load_registry_from_db( %{ $prev_reg_conn }, -db_version => $prev_release, -species_suffix => $suffix_separator.$prev_release );
-    }
+        Bio::EnsEMBL::Registry->no_version_check(1);
 
-    if( my $prev_core_dba = $self->param('prev_core_dba', Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$suffix_separator.$prev_release, 'core')) ) {
-        my $curr_core_dba = $self->param('curr_core_dba', $genome_db->db_adaptor);
+            # load the prev.release registry:
+        foreach my $prev_reg_conn (@{ $self->param('registry_dbs') }) {
+            Bio::EnsEMBL::Registry->load_registry_from_db( %{ $prev_reg_conn }, -db_version => $prev_release, -species_suffix => $suffix_separator.$prev_release );
+        }
 
-        my $curr_assembly = $curr_core_dba->extract_assembly_name;
-        my $prev_assembly = $prev_core_dba->extract_assembly_name;
+        if( my $prev_core_dba = $self->param('prev_core_dba', Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$suffix_separator.$prev_release, 'core')) ) {
+            my $curr_core_dba = $self->param('curr_core_dba', $genome_db->db_adaptor);
 
-        if($curr_assembly ne $prev_assembly) {
+            my $curr_assembly = $curr_core_dba->extract_assembly_name;
+            my $prev_assembly = $prev_core_dba->extract_assembly_name;
 
-            $self->warning("Assemblies for '$species_name'($prev_assembly -> $curr_assembly) do not match, so cannot reuse");
+            if($curr_assembly ne $prev_assembly) {
 
+                $self->warning("Assemblies for '$species_name'($prev_assembly -> $curr_assembly) do not match, so cannot reuse");
+                $self->param('reuse_this', 0);
+            }
+
+        } else {
+            $self->warning("Could not find the previous core database for '$species_name', so reuse is naturally impossible");
             $self->param('reuse_this', 0);
         }
 
     } else {
-
-        $self->warning("Could not find the previous core database for '$species_name', so reuse is naturally impossible");
-
+        $self->warning("reuse_db hash has not been set, so cannot reuse");
         $self->param('reuse_this', 0);
+        return;
     }
 }
 
@@ -146,7 +145,6 @@ sub run {
     my $self = shift @_;
 
     return if(defined($self->param('reuse_this')));  # bypass run() in case 'reuse_this' has either been passed or already computed
-
 
     my $species_name    = $self->param('species_name');
     my $prev_core_dba   = $self->param('prev_core_dba');
