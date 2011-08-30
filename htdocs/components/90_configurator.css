@@ -122,7 +122,7 @@ table.funcgen_matrix tr                                            { height: 26p
 table.funcgen_matrix tr.hidden                                     { display: none!important; }
 table.funcgen_matrix tr th,                                     
 table.funcgen_matrix tr td                                         { width: 25px; height: 25px; padding: 0; }
-table.funcgen_matrix thead th p                                    { position: relative; left: 5px; bottom: -2px; width: 22px; font-size: 14px; }
+table.funcgen_matrix thead th p                                    { position: relative; left: 5px; bottom: -2px; width: 22px; font-size: 14px; white-space: nowrap; }
 table.funcgen_matrix thead th p                                    { -webkit-transform: rotate(-45deg); -moz-transform: rotate(-45deg); -o-transform: rotate(-45deg); -ms-transform: rotate(-45deg); }
 table.funcgen_matrix thead th div.select_all_column                { width: auto; margin: 5px 0 0; padding: 2px 4px; z-index: 3001; opacity: 0.85; }
 table.funcgen_matrix thead th div.select_all_column div            { margin-top: 4px; }
