@@ -12,7 +12,7 @@ our @EXPORT_OK = qw(cache cache_print);
 our @EXPORT    = @EXPORT_OK;
 
 use HTML::Entities qw(encode_entities);
-use Text::Wrap qw(wrap);
+use Text::Wrap     qw(wrap);
 
 use Bio::EnsEMBL::DrawableContainer;
 use Bio::EnsEMBL::VDrawableContainer;
@@ -140,7 +140,6 @@ sub html_format {
 sub site_name   { return $SiteDefs::SITE_NAME || $SiteDefs::ENSEMBL_SITETYPE; }
 sub image_width { return $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
 sub has_image   { return 0; }
-sub cache_key   { return undef; }
 sub caption     { return undef; }
 sub _init       { return; }
 
@@ -180,17 +179,14 @@ sub config_msg {
 }
 
 sub ajax_url {
-  my ($self, $function_name, $no_query_string) = @_;
+  my $self     = shift;
+  my $function = shift;
+  my $params   = shift || {};
+  my (undef, $plugin, undef, undef, $module) = split '::', ref $self;
   
-  my $hub = $self->hub;
-  my ($ensembl, $plugin, $component, $type, $module) = split '::', ref $self;
+  $module .= "/$function" if $function && $self->can("content_$function");
   
-  my $url  = join '/', $hub->species_defs->species_path, 'Component', $hub->type, $plugin, $module;
-     $url .= "/$function_name" if $function_name && $self->can("content_$function_name");
-     $url .= '?';
-     $url .= $ENV{'QUERY_STRING'} unless $no_query_string;
-  
-  return $url;
+  return $self->hub->url('Component', { action => $plugin, function => $module, %$params, _c => $self->cache_key }, undef, !$params->{'__clear'});
 }
 
 sub EC_URL {
