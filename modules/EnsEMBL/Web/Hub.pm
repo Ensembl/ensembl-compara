@@ -288,7 +288,7 @@ sub url {
   foreach my $p (sort keys %pars) {
     next unless defined $pars{$p};
 
-    # Don't escape :
+    # Don't escape colon or space
     $url .= sprintf '%s=%s;', uri_escape($p), uri_escape($_, "^A-Za-z0-9\-_ .!~*'():\/") for ref $pars{$p} ? @{$pars{$p}} : $pars{$p};
 
   }
