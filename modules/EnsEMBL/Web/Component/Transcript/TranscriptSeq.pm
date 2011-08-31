@@ -162,10 +162,12 @@ sub get_sequence_data {
       my $aa_change         = $consequence_type =~ /\b(NON_SYNONYMOUS_CODING|FRAMESHIFT_CODING|STOP_LOST|STOP_GAINED)\b/;
       my $type              = lc $snp->{'type'};
       
-      if ($var->strand == -1 && $trans_strand == -1) {
-        $ambigcode =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
-        $alleles   =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
-      }
+      if ($var) {
+        if ($var->strand == -1 && $trans_strand == -1) {
+          $ambigcode =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
+          $alleles   =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
+        }
+			}
       
       # Variation is an insert if start > end
       ($start, $end) = ($end, $start) if $start > $end;
