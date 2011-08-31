@@ -352,11 +352,11 @@ sub _export_image {
 
 sub _matches {
   my ($self, $key, $caption, @keys) = @_;
-  
   my $output_as_table = $keys[-1] eq 'RenderAsTables';
-  
-  pop @keys if $output_as_table; # if output_as_table the last value isn't maningful
-  
+  my $show_version    = ($keys[-1] eq 'show_version') ? 'show_version' : '';
+
+  pop @keys if ($output_as_table || $show_version) ; # if output_as_table or show_version then the last value isn't meaningful
+
   my $object       = $self->object;
   my $species_defs = $self->hub->species_defs;
   my $label        = $species_defs->translate($caption);
@@ -365,10 +365,8 @@ sub _matches {
   # Check cache
   if (!$object->__data->{'links'}) {
     my @similarity_links = @{$object->get_similarity_hash($obj)};
-    
     return unless @similarity_links;
-    
-    $self->_sort_similarity_links($output_as_table, @similarity_links);
+    $self->_sort_similarity_links($output_as_table, $show_version, @similarity_links);
   }
 
   my @links = map { @{$object->__data->{'links'}{$_}||[]} } @keys;
@@ -381,51 +379,50 @@ sub _matches {
 
   my @rows;
   my $html;
-  
+
   if ($species_defs->ENSEMBL_SITETYPE eq 'Vega') {
     $html = '<p></p>';
   } else {
     $html = "<p><strong>This $entry corresponds to the following database identifiers:</strong></p>";
   }
-  
+
   # use tables for formatting if we are not outputting a data table
   $html .= '<table cellpadding="4">' unless $output_as_table;
-  
+
   @links = $self->remove_redundant_xrefs(@links) if $keys[0] eq 'ALT_TRANS';
-  
+
   return unless @links;
 
-  my $list_html;  
-  
+  my $list_html;
+
   # in order to preserve the order, we use @links for acces to keys
   while (scalar @links) {
     my $key = $links[0][0];
     my $j   = 0;
     my $text;
-    
+
     $list_html .= '<div class="small">GO mapping is inherited from swissprot/sptrembl</div>' if $key eq 'GO';
-    $list_html .= '</td></tr>' if $key ne '';    
+    $list_html .= '</td></tr>' if $key ne '';
     $list_html .= qq{<tr><th style="white-space: nowrap; padding-right: 1em"><strong>$key:</strong></th><td>};
-    
+
     # display all other vales for the same key
     while ($j < scalar @links) {
       my ($other_key , $other_text) = @{$links[$j]};
-      
       if ($key eq $other_key) {
         $list_html .= $other_text;
         $text      .= "$other_text<br />";
-        
-        splice @links, $j, 1;          
+
+        splice @links, $j, 1;
       } else {
         $j++;
       }
     }
-    
+
     $list_html .= "</td></tr>";
-    
+
     push @rows, { dbtype => $key, dbid => $text };
   }
-  
+
   if ($output_as_table) {
     return $html . $self->new_table([ 
       { key => 'dbtype', align => 'left', title => 'External database type' },
@@ -438,8 +435,10 @@ sub _matches {
 
 sub _sort_similarity_links {
   my $self             = shift;
-  my $output_as_table  = shift || 0;  
+  my $output_as_table  = shift || 0;
+  my $show_version = shift || 0;
   my @similarity_links = @_;
+
   my $hub              = $self->hub;
   my $object           = $self->object;
   my $database         = $hub->database;
@@ -465,7 +464,7 @@ sub _sort_similarity_links {
 
     # hack for LRG
     $primary_id =~ s/_g\d*$// if $externalDB eq 'ENS_LRG_gene';
-   
+
     next if $type->status eq 'ORTH';                            # remove all orthologs
     next if lc $externalDB eq 'medline';                        # ditch medline entries - redundant as we also have pubmed
     next if $externalDB =~ /^flybase/i && $display_id =~ /^CG/; # ditch celera genes from FlyBase
@@ -473,7 +472,7 @@ sub _sort_similarity_links {
     next if $externalDB eq 'Vega_transcript';
     next if $externalDB eq 'Vega_translation';
     next if $externalDB eq 'OTTP' && $display_id =~ /^\d+$/;    # don't show vega translation internal IDs
-    
+
     if ($externalDB =~ /^($ontologies)$/) {
       push @{$object->__data->{'links'}{'go'}}, $display_id;
       next;
@@ -482,18 +481,17 @@ sub _sort_similarity_links {
       push @{$object->__data->{'links'}{'gkb'}->{$key}}, $type;
       next;
     }
-    
+
     my $text = $display_id;
-    
+
     (my $A = $externalDB) =~ s/_predicted//;
-    
+
     if ($urls && $urls->is_linked($A)) {
-#      my $link = $urls->get_url($A, $primary_id);
       $type->{ID} = $primary_id;
       $link = $urls->get_url($A, $type);
       my $word = $display_id;
       $word .= " ($primary_id)" if $A eq 'MARKERSYMBOL';
-      
+
       if ($link) {
         $text = qq{<a href="$link">$word</a>};
       } else {
@@ -504,42 +502,45 @@ sub _sort_similarity_links {
       $text .= ' <span class="small"> [Target %id: ' . $type->target_identity . '; Query %id: ' . $type->query_identity . ']</span>';
       $join_links = 1;
     }
-    
+
     if ($hub->species_defs->ENSEMBL_PFETCH_SERVER && $externalDB =~ /^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i && ref($object->Obj) eq 'Bio::EnsEMBL::Transcript' && $externalDB !~ /uniprot_genename/i) {
       my $seq_arg = $display_id;
       $seq_arg    = "LL_$seq_arg" if $externalDB eq 'LocusLink';
-      
+
       my $url = $self->hub->url({
         type     => 'Transcript',
         action   => 'Similarity/Align',
-        #fucntion => 'Align',
         sequence => $seq_arg,
         extdb    => lc $externalDB
       });
-      
+
       $text .= qq{ [<a href="$url">align</a>] };
     }
-    
+
     $text .= sprintf ' [<a href="%s">Search GO</a>]', $urls->get_url('GOSEARCH', $primary_id) if $externalDB =~ /^(SWISS|SPTREMBL)/i; # add Search GO link;
-    
+
+    if ($show_version && $type->version) {
+      my $version = $type->version;
+      $text .= " (version $version)";
+    }
+
     if ($type->description) {
       (my $D = $type->description) =~ s/^"(.*)"$/$1/;
-      
       $text .= '<br />' . encode_entities($D);
       $join_links = 1;
     }
-    
+
     if ($join_links) {
       $text = qq{\n <div>$text};
     } else {
       $text = qq{\n <div class="multicol">$text};
     }
-    
+
     # override for Affys - we don't want to have to configure each type, and
     # this is an internal link anyway.
     if ($externalDB =~ /^AFFY_/i) {
       next if $affy{$display_id} && $exdb{$type->db_display_name}; # remove duplicates
-      
+
       $text = qq{\n  <div class="multicol"> $display_id};
       $affy{$display_id}++;
       $exdb{$type->db_display_name}++;
@@ -553,27 +554,26 @@ sub _sort_similarity_links {
         action  => 'Genome',
         lrg     => $display_id,
       });
-    
+
       $text .= qq{ [<a href="$lrg_url">view all locations</a>]};
     } else {
       my $link_name = $fv_type eq 'OligoFeature' ? $display_id : $primary_id;
       my $link_type = $fv_type eq 'OligoFeature' ? $fv_type    : "${fv_type}_$externalDB";
-    
+
       my $k_url = $self->hub->url({
         type   => 'Location',
         action => 'Genome',
         id     => $link_name,
         ftype  => $link_type
       });
-    
       $text .= qq{  [<a href="$k_url">view all locations</a>]};
     }
-    
+
     $text .= '</div>' if $join_links;
-    
+
     my $label = $type->db_display_name || $externalDB;
     $label    = 'LRG' if $externalDB eq 'ENS_LRG_gene'; ## FIXME Yet another LRG hack!
-    
+
     push @{$object->__data->{'links'}{$type->type}}, [ $label, $text ];
   }
 }
