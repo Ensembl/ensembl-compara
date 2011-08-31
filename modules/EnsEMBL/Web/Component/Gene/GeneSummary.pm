@@ -25,9 +25,10 @@ sub content {
   my $matches      = $object->get_database_matches;
   my @CCDS         = grep $_->dbname eq 'CCDS', @{$object->Obj->get_all_DBLinks};
   my $db           = $object->get_db;
-  my $alt_genes    = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE');
+  my $alt_genes    = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
+
   my $disp_syn     = 0;
-  
+
   my ($display_name, $dbname, $ext_id, $dbname_disp, $info_text) = $object->display_xref;
   my ($prefix, $name, $disp_id_table, $HGNC_table, %syns, %text_info, $syns_html);
 
@@ -36,37 +37,32 @@ sub content {
     ($prefix, $name) = split ':', $display_name;
     $display_name = $name;
   }
-  
+
   my $linked_display_name = $hub->get_ExtURL_link($display_name, $dbname, $ext_id);
   $linked_display_name = $prefix . ':' . $linked_display_name if $prefix;
   $linked_display_name = $display_name if $dbname_disp =~ /^Projected/; # i.e. don't have a hyperlink
   $info_text = '';
-  
+
   $table->add_row('Name', "<p>$linked_display_name ($dbname_disp) $info_text</p>", 1) if $linked_display_name;
-  
-  $self->_sort_similarity_links(@$matches);
-  
+
   foreach my $link (@{$object->__data->{'links'}{'PRIMARY_DB_SYNONYM'}||[]}) {
     my ($key, $text) = @$link;
     my $id           = [split /\<|\>/, $text]->[4];
     my $synonyms     = $self->get_synonyms($id, @$matches);
-    
+
     $text =~ s/\<div\s*class="multicol"\>|\<\/div\>//g;
     $text =~ s/<br \/>.*$//gism;
-    
+
     if ($id =~ /$display_name/ && $synonyms =~ /\w/) {
       $disp_syn  = 1;
       $syns{$id} = $synonyms;
     }
-    
     $text_info{$id} = $text;
     $syns{$id}      = $synonyms if $synonyms =~ /\w/ && $id !~ /$display_name/;
   }
-  
   foreach my $k (keys %text_info) {
     my $syn = $syns{$k};
     my $syn_entry;
-    
     if ($disp_syn == 1) {
       my $url = $hub->url({
         type   => 'Location',
@@ -75,11 +71,10 @@ sub content {
         id     => $display_name,
         ftype  => 'Gene'
       });
-      
       $syns_html .= qq{<p>$syn [<span class="small">To view all $site_type genes linked to the name <a href="$url">click here</a>.</span>]</p></dd>};
     }
   }
-  
+
   $table->add_row('Synonyms', $syns_html, 1) if $syns_html;
 
   # add CCDS info
@@ -88,22 +83,19 @@ sub content {
     @CCDS = sort keys %temp;
     $table->add_row('CCDS', sprintf('<p>This gene is a member of the %s CCDS set: %s</p>', $species_defs->DISPLAY_NAME, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS), 1);
   }
-  
+
   ## LRG info
-  
   # first link to direct xrefs (i.e. this gene has an LRG)
   my @lrg_matches = grep {$_->dbname eq 'ENS_LRG_gene'} @$matches;
   my $lrg_html;
   my %xref_lrgs;    # this hash will store LRGs we don't need to re-print
-  
+
   if(scalar @lrg_matches) {
     my $lrg_link;
-    
     for my $i(0..$#lrg_matches) {
       my $lrg = $lrg_matches[$i];
-      
       my $link = $hub->get_ExtURL_link($lrg->display_id, 'ENS_LRG_gene', $lrg->display_id);
-      
+
       if($i == 0) { # first one
         $lrg_link .= $link;
       }
@@ -113,19 +105,17 @@ sub content {
       else { # any other
         $lrg_link .= ", ".$link;
       }
-      
       $xref_lrgs{$lrg->display_id} = 1;
     }
-    
     $lrg_link =
       $lrg_link." provide".
       (@lrg_matches > 1 ? "" : "s").
       " a stable genomic reference framework ".
       "for describing sequence variations for this gene";
-    
+
     $lrg_html .= $lrg_link;
   }
-  
+
   # now look for lrgs that contain or partially overlap this gene
   foreach my $attrib(@{$object->gene->get_all_Attributes('GeneInLRG')}, @{$object->gene->get_all_Attributes('GeneOverlapLRG')}) {
     next if $xref_lrgs{$attrib->value};
@@ -136,10 +126,10 @@ sub content {
       ($attrib->code =~ /overlap/i ? "partially " : " ").
       'overlapped by the stable genomic reference framework '.$link;
   }
-  
+
   # add a row to the table
   $table->add_row('LRG', $lrg_html, 1) if $lrg_html;
-  
+
   # add some Vega info
   if ($db eq 'vega') {
     my $type    = $object->gene_type;
@@ -148,7 +138,7 @@ sub content {
     my $m_date  = $object->mod_date;
     my $author  = $object->get_author_name;
     my $remarks = $object->retrieve_remarks;
- 
+
     $table->add_row('Gene type', qq{<p>$type [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html" target="external">Definition</a>]</p>}, 1);
     $table->add_row('Version & date', qq{<p>Version $version</p><p>Modified on $m_date (<span class="small">Created on $c_date</span>)<span></p>}, 1);
     $table->add_row('Author', "This transcript was annotated by $author");
@@ -164,45 +154,41 @@ sub content {
     my $type = $object->gene_type;
     $table->add_row('Gene type', $type) if $type;
   }
-  
+
   eval {
     # add prediction method
     my $label = ($db eq 'vega' || $site_type eq 'Vega' ? 'Curation' : 'Prediction') . ' Method';
     my $text  = "<p>No $label defined in database</p>";
     my $o     = $object->Obj;
-  
+
     if ($o && $o->can('analysis') && $o->analysis && $o->analysis->description) {
       $text = $o->analysis->description;
     } elsif ($object->can('gene') && $object->gene->can('analysis') && $object->gene->analysis && $object->gene->analysis->description) {
       $text = $object->gene->analysis->description;
     }
-    
+
     $table->add_row($label, "<p>$text</p>", 1);
   };
-  
-  $table->add_row('Alternative genes', "<p>$alt_genes</p>", 1) if $alt_genes; # add alternative transcript info
-  
+
+  $table->add_row('Alternative genes', "<p>$alt_genes</p>", 1) if $alt_genes; # add alternative gene info
+
   return $table->render;
 }
 
 sub get_synonyms {
   my ($self, $match_id, @matches) = @_;
   my ($ids, $syns);
-  
   foreach my $m (@matches) {
     my $dbname = $m->db_display_name;
     my $disp_id = $m->display_id;
-    
     if ($dbname =~/(HGNC|ZFIN)/ && $disp_id eq $match_id) {
       my $synonyms = $m->get_all_synonyms;
       $ids = '';
       $ids = $ids . ', ' . (ref $_ eq 'ARRAY' ? "@$_" : $_) for @$synonyms;
     }
   }
-  
   $ids  =~ s/^\,\s*//;
   $syns = $ids if $ids =~ /^\w/;
-  
   return $syns;
 }
 
