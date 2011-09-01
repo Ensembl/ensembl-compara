@@ -22,7 +22,7 @@ sub content {
   my $url  = $self->ajax_url('ajax', {
     r            => $hub->referer->{'params'}->{'r'}[0],
     code         => $hub->param('code'),
-    type         => $hub->param('type'),
+    _type        => $hub->param('type') || 'upload',
     update_panel => 1,
     __clear      => 1
   });
@@ -34,8 +34,8 @@ sub content_ajax {
   my $self    = shift;
   my $hub     = $self->hub;
   my $session = $hub->session;
-  my $type = $hub->param('type') || 'upload';
-  my $data  = $session->get_data('type' => $type, 'code' => $hub->param('code'));
+  my $type    = $hub->param('_type');
+  my $data    = $session->get_data('type' => $type, 'code' => $hub->param('code'));
   
   my $parser  = new EnsEMBL::Web::Text::FeatureParser($hub->species_defs, $hub->param('r'), $data->{'species'});
   my $html;
