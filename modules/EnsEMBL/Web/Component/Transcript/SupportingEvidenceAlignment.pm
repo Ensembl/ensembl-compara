@@ -101,7 +101,7 @@ sub content {
     }
 
     # get exon sequence
-    my ($e_sequence, $e_sequence_length) = @{$object->get_int_seq($exon, $seq_type, $transcript)};
+    my ($e_sequence, $e_sequence_length) = @{$object->get_int_seq($exon, $seq_type, $transcript)||[]};
 
     # get position of exon in the transcript
     my $cdna_start = $exon->cdna_start($transcript);
