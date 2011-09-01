@@ -15,7 +15,7 @@ sub content {
   my $hit_length = $hub->param('hit_length');
   my $hit_url    = $hub->get_ExtURL_link($link_name, $hit_db, $link_name);
   my $havana_derived = $hub->param('havana');
-  my $explanation = $havana_derived ? 'Supporting evidence from Havana' : 'Supporting evidence from Ensembl';
+  my $explanation = ($havana_derived || $hub->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? 'Supporting evidence from Havana' : 'Supporting evidence from Ensembl';
 
   $self->caption("$hit_name ($hit_db)");
   $self->add_entry({
