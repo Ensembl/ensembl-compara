@@ -352,11 +352,12 @@ sub _summarise_variation_db {
   return unless $dbh;
   push @{ $self->db_tree->{'variation_like_databases'} }, $db_name;
   $self->_summarise_generic( $db_name, $dbh );
-  my $t_aref = $dbh->selectall_arrayref( 'select source_id,name,description, if(somatic_status = "somatic", 1, 0) from source' );
+  my $t_aref = $dbh->selectall_arrayref( 'select source_id,name,description, if(somatic_status = "somatic", 1, 0), type from source' );
 #---------- Add in information about the sources from the source table
   my $temp = {map {$_->[0],[$_->[1],0]} @$t_aref};
   my $temp_description = {map {$_->[1],$_->[2]} @$t_aref};
   my $temp_somatic = { map {$_->[1],$_->[3]} @$t_aref};
+  my $temp_type = { map {$_->[1], $_->[4]} @$t_aref};
   foreach my $t (qw(variation variation_synonym)) {
     my $t_aref = $dbh->selectall_arrayref( "select source_id,count(*) from $t group by source_id" );
     foreach (@$t_aref) {
@@ -366,6 +367,7 @@ sub _summarise_variation_db {
   $self->db_details($db_name)->{'tables'}{'source'}{'counts'} = { map {@$_} values %$temp};
   $self->db_details($db_name)->{'tables'}{'source'}{'descriptions'} = \%$temp_description;
   $self->db_details($db_name)->{'tables'}{'source'}{'somatic'} = \%$temp_somatic;
+  $self->db_details($db_name)->{'tables'}{'source'}{'type'} = \%$temp_type;
 
 #---------- Store dbSNP version 
  my $s_aref = $dbh->selectall_arrayref( 'select version from source where name = "dbSNP"' );
