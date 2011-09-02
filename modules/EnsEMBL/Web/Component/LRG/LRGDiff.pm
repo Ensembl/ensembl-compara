@@ -37,8 +37,12 @@ sub content {
   my @rows;
   
   foreach my $diff (@{$lrg->get_all_differences}) {
+		
+		my $align_link .= '#'.$diff->{start};
+		my $align_page = qq{<a href="$align_link">[Show in alignment]</a>};
+		
     push @rows, {
-      location => $lrg->seq_region_name . ":$diff->{'start'}" . ($diff->{'end'} == $diff->{'start'} ? '' : "-$diff->{'end'}"),
+      location => $lrg->seq_region_name . ":$diff->{'start'}" . ($diff->{'end'} == $diff->{'start'} ? '' : "-$diff->{'end'}") . "  $align_page",
       type     => $diff->{'type'},
       lrg      => $diff->{'seq'},
       ref      => $diff->{'ref'},
