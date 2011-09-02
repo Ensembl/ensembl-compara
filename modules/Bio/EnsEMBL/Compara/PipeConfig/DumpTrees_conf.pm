@@ -42,38 +42,23 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');   # we don't need
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
+        %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'rel'               => 63,                                                  # current release number
+        'rel'               => 64,                                                  # current release number
         'rel_suffix'        => '',                                                  # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),              # for convenience
         'tree_type'         => 'protein_trees',                                     # either 'protein_trees' or 'ncrna_trees'
 
-        'pipeline_name' => $self->o('tree_type').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name'     => $self->o('tree_type').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
-        'pipeline_db' => {
-            -host   => 'compara2',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name'),
-        },
-
-        'rel_db' => {
-            -driver => 'mysql',
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -dbname => 'lg4_ensembl_compara_'.$self->o('rel'),
-        },
+        'rel_url'           => 'mysql://ensro@compara4:3306/lg4_ensembl_compara_'.$self->o('rel'),
 
         'capacity'    => 100,                                                       # how many trees can be dumped in parallel
         'batch_size'  => 25,                                                        # how may trees' dumping jobs can be batched together
         'name_root'   => 'Compara.'.$self->o('rel_with_suffix').'.'.$self->o('tree_type'),      # dump file name root
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs',
-        'target_dir'  => '/lustre/scratch101/ensembl/'.$ENV{'USER'}.'/'.$self->o('pipeline_name'),   # where the final dumps will be stored
+        'target_dir'  => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),   # where the final dumps will be stored
         'work_dir'    => $self->o('target_dir').'/dump_hash',                       # where directory hash is created and maintained
     };
 }
@@ -124,7 +109,7 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_tree_ids',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'db_conn'               => $self->o('rel_db'),
+                'db_conn'               => $self->o('rel_url'),
                 'protein_trees_query'      => "SELECT DISTINCT root_id FROM protein_tree_member ptm, protein_tree_tag ptt WHERE ptt.node_id=ptm.root_id AND ptt.tag='gene_count' AND ptt.value>1",
                 'ncrna_trees_query'     => "SELECT root_id FROM nc_tree_member ntm, nc_tree_tag ntt WHERE ntm.root_id=ntt.node_id AND ntt.tag='gene_count' AND ntt.value GROUP BY root_id HAVING sum(length(cigar_line))",
                 'inputquery'            => '#expr(($tree_type eq "protein_trees") ? $protein_trees_query : $ncrna_trees_query)expr#',
@@ -143,7 +128,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'dump_a_tree',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'db_url'             => $self->dbconn_2_url('rel_db'),
+                'db_url'             => $self->o('rel_url'),
                 'dump_script'        => $self->o('dump_script'),
                 'work_dir'           => $self->o('work_dir'),
                 'protein_trees_args' => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -nc 0',
