@@ -73,13 +73,13 @@ sub convert_to_drawing_parameters {
         'extname'  => $t->external_name,
         'label'    => $t->stable_id,
         'trans_id' => [ $t->stable_id ],
-        'extra'    => [ $desc ]
+        'extra'    => {'description' => $desc},
       }
 
     }
   }
-
-  return [$results, ['Description'], 'Transcript'];
+  my $extra_columns = [{'key' => 'description', 'title' => 'Description'}];
+  return [$results, $extra_columns];
 }
 
 1;

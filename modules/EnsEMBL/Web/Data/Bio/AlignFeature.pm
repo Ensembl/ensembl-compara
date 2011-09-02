@@ -53,19 +53,24 @@ sub convert_to_drawing_parameters {
         'length'   => $f->end-$f->start+1,
         'label'    => $f->display_id." (@{[$f->hstart]}-@{[$f->hend]})",
         'gene_id'  => ["@{[$f->hstart]}-@{[$f->hend]}"],
-        'extra' => [ $f->alignment_length, $f->hstrand * $f->strand, $f->percent_id, $f->score, $f->p_value ]
+        'extra' => { 
+                    'align'   => $f->alignment_length, 
+                    'ori'     => $f->hstrand * $f->strand, 
+                    'id'      => $f->percent_id, 
+                    'score'   => $f->score, 
+                    'p-value' => $f->p_value,
+                    }
       };
     } 
   }   
-  my $feature_mapped = 1; ## TODO - replace with $self->feature_mapped call once unmapped feature display is added
-  if ($feature_mapped) {
-    return [$results, [ 'Alignment length', 'Rel ori', '%id', 'score', 'p-value' ], $type];
-  }
-  else {
-    return [$results, [], $type];
-  }
-
-
+  my $extra_columns = [
+                    {'key' => 'align',  'title' => 'Alignment length', 'sort' => 'numeric'}, 
+                    {'key' => 'ori',    'title' => 'Rel ori'}, 
+                    {'key' => 'id',     'title' => '%id'}, 
+                    {'key' => 'score',  'title' => 'Score', 'sort' => 'numeric'}, 
+                    {'key' => 'p-value', 'title' => 'p-value', 'sort' => 'numeric'},
+  ];
+  return [$results, $extra_columns];
 }
 
 1;

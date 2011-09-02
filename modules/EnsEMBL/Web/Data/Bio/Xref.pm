@@ -40,13 +40,14 @@ sub convert_to_drawing_parameters {
         'end'      => $g->end,
         'region'   => $g->seq_region_name,
         'strand'   => $g->strand,
-        'extra'    => [ $g->description, $xref->dbname ],
+        'length'   => $g->end-$g->start+1,
+        'extra'    => {'description' => $g->description, 'dbname' => $xref->dbname},
         'href'     => $hub->url({ type => 'ZMenu', action => 'Feature', function => 'Xref', ftype => $ftype, id => $xref->primary_id, r => undef }),
       };
     }
   }  
-
-  return [$results, ['Description'], 'Xref'];
+  my $extra_columns = [{'key' => 'description', 'title' => 'Description'}];
+  return [$results, $extra_columns];
 }
 
 1;

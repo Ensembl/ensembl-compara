@@ -79,7 +79,7 @@ sub convert_to_drawing_parameters {
   
   push @$results, $tmp_row if $tmp_row;
 
-  return [$results, [], 'LRG'];
+  return [$results, []];
 }
 
 1;

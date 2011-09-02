@@ -35,7 +35,7 @@ sub convert_to_drawing_parameters {
         'label'    => $slice->name,
     };
   }
-  return ($result, []);
+  return [$result, []];
 
 }
 

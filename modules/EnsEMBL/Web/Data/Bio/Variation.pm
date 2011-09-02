@@ -95,17 +95,22 @@ sub convert_to_drawing_parameters {
       label          => $name,
       href           => $zmenu_url,       
       p_value        => $p_value_logs{$variation_id},
-      colour_scaling => 1,
       somatic        => $vf->is_somatic,
-      extra          => [
-        join(', ', map $associated_genes{$variation_id}{$_}, sort keys %{$associated_genes{$variation_id} || {}}),
-        join(', ', @{$associated_phenotypes{$variation_id} || []}),
-        ($p_value_logs{$variation_id} ? sprintf('%.1f', $p_value_logs{$variation_id}) : '') 
-      ]
+      extra          => {
+        'source'     => $vf->source,
+        'genes'      => join(', ', map $associated_genes{$variation_id}{$_}, sort keys %{$associated_genes{$variation_id} || {}}),
+        'phenotypes' => join(', ', @{$associated_phenotypes{$variation_id} || []}),
+        'p-values'   => ($p_value_logs{$variation_id} ? sprintf('%.1f', $p_value_logs{$variation_id}) : ''), 
+      },
     };
   }
-
-  return [ \@results, ['Associated Gene(s)','Associated Phenotype(s)','P value (negative log)'], 'Variation' ];
+  my $extra_columns = [
+        {'key' => 'source',     'title' => 'Source',                  'sort' => ''},
+        {'key' => 'genes',      'title' => 'Associated Gene(s)',      'sort' => 'html'},
+        {'key' => 'phenotypes', 'title' => 'Associated Phenotype(s)', 'sort' => ''},
+        {'key' => 'p-values',   'title' => 'P value (negative log)',  'sort' => 'numeric'},
+  ];
+  return [\@results, $extra_columns];
 }
 
 

@@ -39,12 +39,19 @@ sub convert_to_drawing_parameters {
           'length'   => $f->end-$f->start+1,
           'label'    => $names,
           'gene_id'  => [$names],
-          'extra'    => [ $f->mismatchcount, $f->cigar_string ]
-        }
+          'extra'    => {
+                        'mismatches'  => $f->mismatchcount, 
+                        'cigar'       => $f->cigar_string,
+          },
+        };
       }
     }
   }
-  return [$results, ['Mismatches', 'Cigar String'], 'ProbeFeature'];
+  my $extra_columns = [
+                        {'key' => 'mismatches', 'title' => 'Mismatches'}, 
+                        {'key' => 'cigar',      'title' => 'Cigar string'},
+  ];
+  return [$results, $extra_columns];
 
 }
 

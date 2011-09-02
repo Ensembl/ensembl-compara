@@ -41,8 +41,8 @@ sub convert_to_drawing_parameters {
     else {
       $extra_results[0] =~ s/(https?:\/\/\S+[\w\/])/<a rel="external" href="$1">$1<\/a>/ig;
     }
-
-    unshift (@extra_results, $gene_links);
+    ## Final value has to be a string, to aid auto-display
+    my $analyses = join(', ', @extra_results);
 
     push @$results, {
       'region'   => $reg->seq_region_name,
@@ -52,12 +52,17 @@ sub convert_to_drawing_parameters {
       'length'   => $reg->end-$reg->start+1,
       'label'    => $reg->display_label,
       'gene_id'  => \@stable_ids,
-      'extra'    => \@extra_results,
+      'extra'    => {
+                    'gene'      => $gene_links,
+                    'analysis'  => $analyses,
+      },
     }
   }
-  my $extras = ["Feature analysis"];
-  unshift @$extras, "Associated gene";
-  return [$results, $extras, 'RegulatoryFeature'];
+   my $extra_columns = [
+                    {'key' => 'gene',     'title' => 'Associated gene'},
+                    {'key' => 'analysis', 'title' => 'Feature analysis', 'sort' => 'html'},
+  ];
+  return [$results, $extra_columns];
 }
 
 1;
