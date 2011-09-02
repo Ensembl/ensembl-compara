@@ -951,6 +951,9 @@ sub gene_stat_and_biotype {
     return $type;
   } else {
     $type = $self->logic_name;
+    if ($type =~/^(proj|assembly_patch)/ ){
+      $type = ucfirst(lc($self->Obj->status))." ".$self->Obj->biotype;
+    }
     $type =~ s/^ccds/CCDS/;
   }
   $type ||= $db;
