@@ -53,21 +53,14 @@ The rest of the documentation details each of the object methods. Internal metho
 
 
 package Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor;
-use vars qw(@ISA);
-use strict;
 
+use strict;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Utils::Exception;
 
-# Hashes for storing a cross-referencing of compared genomes
-my %genome_consensus_xreflist;
-my %genome_query_xreflist;
-
-
-@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
-
+use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
 
 =head2 fetch_by_dbID
@@ -485,26 +478,6 @@ sub store{
 sub create_GenomeDBs {
   my ( $self ) = @_;
 
-  # Populate the hash array which cross-references the consensus
-  # and query dbs
-
-#   my $sth = $self->prepare("
-#      SELECT consensus_genome_db_id, query_genome_db_id, method_link_id
-#      FROM genomic_align_genome
-#   ");
-#
-#   $sth->execute;
-#
-#   while ( my @db_row = $sth->fetchrow_array() ) {
-#     my ( $con, $query, $method_link_id ) = @db_row;
-#
-#     $genome_consensus_xreflist{$con .":" .$method_link_id} ||= [];
-#     $genome_query_xreflist{$query .":" .$method_link_id} ||= [];
-#
-#     push @{ $genome_consensus_xreflist{$con .":" .$method_link_id}}, $query;
-#     push @{ $genome_query_xreflist{$query .":" .$method_link_id}}, $con;
-#   }
-
   # grab all the possible species databases in the genome db table
   my $sth = $self->prepare("
      SELECT genome_db_id, name, assembly, taxon_id, assembly_default, genebuild, locator
@@ -536,93 +509,6 @@ sub create_GenomeDBs {
 
   $self->sync_with_registry();
 }
-
-
-=head2 check_for_consensus_db [DEPRECATED]
-
-  DEPRECATED : consensus and query sequences are not used anymore.
-               Please, refer to Bio::EnsEMBL::Compara::GenomicAlignBlock
-               for more details.
-
-  Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $consensus_genomedb
-  Arg[2]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
-  Arg[3]     : int $method_link_id
-  Example    :
-  Description: Checks to see whether a consensus genome database has been
-               analysed against the specific query genome database.
-               Returns the dbID of the database of the query genomeDB if
-               one is found.  A 0 is returned if no match is found.
-  Returntype : int ( 0 or 1 )
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::Compara::GenomeDB.pm
-
-=cut
-
-
-sub check_for_consensus_db {
-  my ( $self, $query_gdb, $con_gdb, $method_link_id) = @_;
-
-  deprecate("consensus and query sequences are not used anymore.".
-              " Please, refer to Bio::EnsEMBL::Compara::GenomicAlignBlock".
-              " for more details");
-
-  # just to make things a wee bit more readable
-  my $cid = $con_gdb->dbID;
-  my $qid = $query_gdb->dbID;
-
-  if ( exists $genome_consensus_xreflist{$cid .":" .$method_link_id} ) {
-    for my $i ( 0 .. $#{$genome_consensus_xreflist{$cid .":" .$method_link_id}} ) {
-      if ( $qid == $genome_consensus_xreflist{$cid .":" .$method_link_id}[$i] ) {
-	return 1;
-      }
-    }
-  }
-  return 0;
-}
-
-
-=head2 check_for_query_db [DEPRECATED]
-
-  DEPRECATED : consensus and query sequences are not used anymore.
-               Please, refer to Bio::EnsEMBL::Compara::GenomicAlignBlock
-               for more details.
-
-  Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
-  Arg[2]     : Bio::EnsEMBL::Compara::GenomeDB $consensus_genomedb
-  Arg[3]     : int $method_link_id
-  Example    : none
-  Description: Checks to see whether a query genome database has been
-               analysed against the specific consensus genome database.
-               Returns the dbID of the database of the consensus
-               genomeDB if one is found.  A 0 is returned if no match is
-               found.
-  Returntype : int ( 0 or 1 )
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::Compara::GenomeDB.pm
-
-=cut
-
-sub check_for_query_db {
-  my ( $self, $con_gdb, $query_gdb,$method_link_id ) = @_;
-
-  deprecate("consensus and query sequences are not used anymore.".
-              " Please, refer to Bio::EnsEMBL::Compara::GenomicAlignBlock".
-              " for more details");
-
-  # just to make things a wee bit more readable
-  my $cid = $con_gdb->dbID;
-  my $qid = $query_gdb->dbID;
-
-  if ( exists $genome_query_xreflist{$qid .":" .$method_link_id} ) {
-    for my $i ( 0 .. $#{$genome_query_xreflist{$qid .":" .$method_link_id}} ) {
-      if ( $cid == $genome_query_xreflist{$qid .":" .$method_link_id}[$i] ) {
-	return 1;
-      }
-    }
-  }
-  return 0;
-}
-
 
 
 =head2 get_all_db_links
