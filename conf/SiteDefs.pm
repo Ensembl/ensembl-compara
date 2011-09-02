@@ -375,6 +375,8 @@ $OBJECT_TO_SCRIPT = {
   Marker              => 'Page',
   GeneTree            => 'Page',
   LRG                 => 'Page',
+  Phenotype           => 'Page',
+
   Blast               => 'Page',
   Tools               => 'Page',
   Info                => 'Page',
