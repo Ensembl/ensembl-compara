@@ -226,10 +226,12 @@ sub get_url{
   if(!defined($id_url)){
     $id_url = $self->idurl;
   }
-  $id_url =~ s/(###ID###)/$accession/g;
-  if(!$1){
-    $id_url .=$accession;
-  }  
+  if ($id_url) {
+    $id_url =~ s/(###ID###)/$accession/g;
+    if(!$1){
+      $id_url .=$accession;
+    }  
+  }
   return $id_url;
 }
 

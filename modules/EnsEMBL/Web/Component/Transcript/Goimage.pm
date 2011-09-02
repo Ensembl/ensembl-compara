@@ -24,7 +24,10 @@ sub content {
   my $go_sub_dir                  = '/GO/';  
   my $go_dir                      = $species_defs->ENSEMBL_TMP_DIR_IMG . $go_sub_dir;
   my $go_url                      =  $species_defs->ENSEMBL_TMP_URL_IMG . $go_sub_dir;
-  my $go_id_url                   = $species_defs->ENSEMBL_EXTERNAL_URLS->{'GO'};
+  # supply no default url pattern - if we default to GO we get broken links when a non-GO 
+  # ontology term exists but there is no external URL for that ontology.
+  my $go_id_url                   = ''; 
+#  my $go_id_url                   = $species_defs->ENSEMBL_EXTERNAL_URLS->{'GO'};
   my $get_relation_type_colour    = sub { return $species_defs->colour('goimage', shift); };
   my $image_background_colour     = $species_defs->colour('goimage', 'image_background');
   my $node_fill_colour            = $species_defs->colour('goimage', 'node_fill');
