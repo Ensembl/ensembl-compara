@@ -49,7 +49,7 @@ sub createObjects {
     if ($self->hub->type eq 'LRG') {
       $feature_type = 'LRG';
     } else {
-      $feature_type = $self->param('ftype') || $self->param('type') || 'ProbeFeature';
+      $feature_type = $self->param('ftype') || $self->param('type') || $self->hub->type;
     }
     
     if ($self->param('ftype') eq 'ProbeFeature') {
@@ -266,11 +266,19 @@ sub _create_Gene {
   ### Fetches all the genes for a given identifier (usually only one, but could be multiple
   ### Args: db
   ### Returns: hashref containing a Data::Bio::Gene object
+  my ($self, $db, $id) = @_;
+  ## Hack to allow fetching of associated gene objects by Factory::Phenotype
+  my ($genes_only, $real_id);
+  if ($id) {
+    $genes_only = 1;
+    $real_id = $id;
+  }
+  else {
+    $id = $self->param('id');
+  }
+  my $genes       = $self->_generic_create('Gene', $id =~ /^ENS/ ? 'fetch_by_stable_id' : 'fetch_all_by_external_name', $db, $real_id);
   
-  my ($self, $db) = @_;
-  my $genes       = $self->_generic_create('Gene', $self->param('id') =~ /^ENS/ ? 'fetch_by_stable_id' : 'fetch_all_by_external_name', $db);
-  
-  return { Gene => EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes) };
+  return $genes_only ? $genes : { Gene => EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes) };
 }
 
 sub _create_RegulatoryFactor {
@@ -289,8 +297,11 @@ sub _create_RegulatoryFactor {
   $id ||= $self->param('id');
   
   my $features = $fg_db->get_ExternalFeatureAdaptor->fetch_all_by_display_label($id) || [];
-warn scalar @$features;
   if (!@$features) {
+    unless ($self->param('fset')) {
+      $self->problem('fatal', 'No identifier', "No feature set provided.");
+      return undef;
+    }
     my $fset  = $fg_db->get_featureSetAdaptor->fetch_by_name($self->param('fset'));
     my $ftype = $fg_db->get_FeatureTypeAdaptor->fetch_by_name($id);
     $features = $fset->get_Features_by_FeatureType($ftype);
