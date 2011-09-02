@@ -18,6 +18,16 @@ use Digest::MD5 qw(md5_hex);
 
 use Bio::EnsEMBL::StableIdHistoryTree;
 use Bio::EnsEMBL::Utils::Exception qw(try catch);
+
+use Bio::EnsEMBL::Variation::Utils::VEP qw(
+  parse_line
+  get_slice
+  validate_vf
+  get_all_consequences
+  @OUTPUT_COLS
+  @REG_FEAT_TYPES
+);
+
 use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor;
 
@@ -738,105 +748,40 @@ sub calculate_consequence_data {
   my $data = $self->hub->fetch_userdata_by_id($file);
   my %slice_hash;
   my %consequence_results;
-  my ($f, @new_vfs);
+  my ($f, @snp_effects, @vfs);
   my $count =0;
   my $feature_count = 0;
   my $file_count = 0;
   my $nearest;
   my %slices;
   
-  # options
-  my $check_existing  = $self->param('check_existing');
-  my $coding_only     = $self->param('coding_only');
-  my $hgnc            = $self->param('hgnc');
-  my $hgvs            = $self->param('hgvs');
-  my $protein         = $self->param('protein');
-  my $cons_format     = $self->param('consequence_format');
-  my $regulatory      = $self->param('regulatory');
+  # build a config hash - used by all the VEP methods
+  my $vep_config = $self->configure_vep;
   
-  # frequency filtering
-  my $check_freqs     = $self->param('freq');
-  my $freq_filter     = $self->param('freq_filter');
-  my $freq_gt_lt      = $self->param('freq_gt_lt');
-  my $freq_freq       = $self->param('freq_freq');
-  my $freq_pop        = $self->param('freq_pop');
-  
-  my $freq_pop_name = (split /\_/, $freq_pop)[-1];
-  $freq_pop_name = undef if $freq_pop_name =~ /1kg|hap/;
-  
-  # non-syn preds
-  my %prog_options    = (
-    'sift'     => $self->param('sift'),
-    'polyphen' => $self->param('polyphen'),
-    'condel'   => $self->param('condel'),
-  );
-
-  ## Get some adaptors for assembling required information
-  my $transcript_variation_adaptor;
-  my %species_dbs =  %{$self->species_defs->get_config($self->param('species'), 'databases')};
-  if (exists $species_dbs{'DATABASE_VARIATION'} ){
-    $transcript_variation_adaptor = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation', $self->param('species'));
-  } else  { 
-    $transcript_variation_adaptor  = Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor->new_fake($self->param('species'));
-  }
-
-  my $slice_adaptor = $self->get_adaptor('get_SliceAdaptor', 'core', $self->param('species'));
-  my $gene_adaptor = $self->get_adaptor('get_GeneAdaptor', 'core', $self->param('species'));
-
   ## Convert the SNP features into SNP_EFFECT features
   if (my $parser = $data->{'parser'}){ 
     foreach my $track ($parser->{'tracks'}) {
       foreach my $type (keys %{$track}) { 
         my $features = $parser->fetch_features_by_tracktype($type);
-        my $sa = $self->get_adaptor('get_SliceAdaptor', 'core', $self->param('species'));
-        my ($vfa, $va);
-        my %species_dbs =  %{$self->species_defs->get_config($self->param('species'), 'databases')};
-        if (exists $species_dbs{'DATABASE_VARIATION'} ){
-          $vfa  = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation', $self->param('species'));
-          $va   = $self->get_adaptor('get_VariationAdaptor', 'variation', $self->param('species'));
-        } else  { 
-          $vfa = Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor->new_fake($self->param('species'));
-        }
         
         # include failed variations
-        $vfa->db->include_failed_variations(1) if defined($vfa->db) && $vfa->db->can('include_failed_variations');
+        $vep_config->{vfa}->db->include_failed_variations(1) if defined($vep_config->{vfa}->db) && $vep_config->{vfa}->db->can('include_failed_variations');
         
         while ( $f = shift @{$features}){
           $file_count++;
           next if $feature_count >= $size_limit; # $size_limit is max number of v to process, if hit max continue counting v's in file but do not process them
           $feature_count++;
           
-          # Get Slice
-          my $slice;
-          if (defined $slice_hash{$f->seqname}){
-            $slice = $slice_hash{$f->seqname};
-          } else {
-            eval { $slice = $sa->fetch_by_region('chromosome', $f->seqname); };
-            if(!defined($slice)) {
-              $slice = $sa->fetch_by_region(undef, $f->seqname);
-            }
-          }
-
-          if(!defined($slice)) {
-            warn "Could not get slice ", $f->seqname;
+          # if this is a variation ID or HGVS, we can use VEP.pm method to parse into VFs
+          if($f->isa('EnsEMBL::Web::Text::Feature::ID')) {            
+            push @vfs, @{parse_line($vep_config, $f->id)};
             next;
           }
-
-
-          my $pos;
-          if ($f->rawstart == $f->rawend){
-            $pos = $f->rawstart;
-          } else {
-            $pos = $f->rawstart .'-'. $f->rawend;
-          }
-
-          my $strand;
-          if($f->strand =~ /\-/) {
-            $strand = -1;
-          } else {
-            $strand = 1;
-          }
-
+          
+          # Get Slice
+          my $slice = get_slice($vep_config, $f->seqname);
+          next unless defined($slice);
+          
           unless ($f->can('allele_string')){
             my $html ='The uploaded data is not in the correct format.
               See <a href="/info/website/upload/index.html#Consequence">here</a> for more details.';
@@ -849,336 +794,64 @@ sub calculate_consequence_data {
           my $new_vf_name = $f->extra || $f->seqname.'_'.$f->rawstart.'_'.$f->allele_string;
           
           # Create VariationFeature
-          my $vf = Bio::EnsEMBL::Variation::VariationFeature->new(
-            -start          => $f->rawstart,
-            -end            => $f->rawend,
-            -slice          => $slice,
-            -allele_string  => $f->allele_string,
-            -strand         => $strand,
-            -map_weight     => 1,
-            -adaptor        => $vfa,
-            -variation_name => $new_vf_name,
-          );
-          # check we have a valid variation feature
-          unless ($vf->allele_string){
-            my $html ='The uploaded data is not in the correct format.
-              See <a href="/info/website/upload/index.html#Consequence">here</a> for more details about the expected format.';
-            my $error = 1;
-            return ($html, $error);
-          }
-
-          ## Turn the variation feature into a SNP_EFFECT feature
-
-          my $location = $vf->seq_region_name .":". $vf->seq_region_start;
-          unless ($vf->seq_region_start == $vf->seq_region_end){
-            $location .= '-' . $vf->seq_region_end;
-          }
+          my $vf = Bio::EnsEMBL::Variation::VariationFeature->new_fast({
+            start          => $f->rawstart,
+            end            => $f->rawend,
+            chr            => $f->seqname,
+            slice          => $slice,
+            allele_string  => $f->allele_string,
+            strand         => $f->strand,
+            map_weight     => 1,
+            adaptor        => $vep_config->{vfa},
+            variation_name => $new_vf_name,
+          });
           
-          my $snp = '-';
+          next unless &validate_vf($vep_config, $vf);
           
-          if($check_existing ne 'no' || $check_freqs eq 'yes') {
-            if(defined($vfa->db)) {
-              
-              my $sth = $vfa->db->dbc->prepare(qq{
-                SELECT variation_id, variation_name, source_id, allele_string
-                FROM variation_feature
-                WHERE seq_region_id = ?
-                AND seq_region_start = ?
-                AND seq_region_end = ?
-              });
-              
-              $sth->execute($vf->slice->get_seq_region_id, $vf->seq_region_start, $vf->seq_region_end);
-              
-              my ($var_id, $name, $source, $db_allele_string);
-              $sth->bind_columns(\$var_id, \$name, \$source, \$db_allele_string);
-              
-              my (%by_source, %var_ids, @user_alleles);
-              
-              if($check_existing eq 'allele') {
-                @user_alleles = split /\//, $vf->allele_string;
-              }
-              
-              while($sth->fetch) {
-                if($check_existing eq 'allele') {
-                  my $found_new_alleles = 0;
-                  
-                  my %db_alleles;
-                  $db_alleles{$_} = 1 for split /\//, $db_allele_string;
-                  
-                  foreach my $user_allele(@user_alleles) {
-                    $found_new_alleles = 1 unless defined $db_alleles{$user_allele};
-                  }
-                  
-                  unless($found_new_alleles) {
-                    push @{$by_source{$source}}, $name;
-                    $var_ids{$name} = $var_id;
-                  }
-                }
-                
-                else {
-                  push @{$by_source{$source}}, $name;
-                  $var_ids{$name} = $var_id;
-                }
-              }
-              
-              $sth->finish();
-              
-              if(scalar keys %by_source) {
-                  foreach my $s(sort {$a <=> $b} keys %by_source) {
-                      $snp = shift @{$by_source{$s}};
-                      last;
-                  }
-              }
-              
-              # check frequency stuff
-              my $pass = 0;
-              
-              if($check_freqs eq 'yes' && $freq_pop ne '-' && defined($va) && $snp ne '-') {
-                my $v = $va->fetch_by_dbID($var_ids{$snp});
-                
-                foreach my $a(@{$v->get_all_Alleles}) {
-                  next unless defined $a->{population} || defined $a->{'_population_id'};
-                  next unless defined $a->frequency;
-                  next if $a->frequency > 0.5;
-                  
-                  my $pop_name = $a->population->name;
-                  
-                  if($freq_pop =~ /1kg/) { next unless $pop_name =~ /^1000.+low.+/i; }
-                  if($freq_pop =~ /hap/) { next unless $pop_name =~ /^CSHL-HAPMAP/i; }
-                  if($freq_pop =~ /any/) { next unless $pop_name =~ /^(CSHL-HAPMAP)|(1000.+low.+)/i; }
-                  if(defined $freq_pop_name) { next unless $pop_name =~ /$freq_pop_name/; }
-                  
-                  $pass = 1 if $a->frequency >= $freq_freq and $freq_gt_lt eq 'gt';
-                  $pass = 1 if $a->frequency <= $freq_freq and $freq_gt_lt eq 'lt';
-                }
-              }
-              
-              next if $freq_filter eq 'exclude' and $pass == 1;
-              next if $freq_filter eq 'include' and $pass == 0;
-            }
-          }
-          
-          
-          my $term_method = $cons_format.'_term';
-          
-          if($coding_only ne 'yes' && $regulatory eq 'yes') {
-            my $line = {
-              Uploaded_variation  => $vf->variation_name,
-              Location            => $vf->seq_region_name.':'.&format_coords($vf->start, $vf->end),
-              Existing_variation  => $snp,
-              Extra               => {},
-            };
-            
-            for my $rfv (@{ $vf->get_all_RegulatoryFeatureVariations }) {
-            
-              my $rf = $rfv->regulatory_feature;
-              
-              $line->{Feature_type}   = 'RegulatoryFeature';
-              $line->{Feature}        = $rf->stable_id;
-              
-              # this currently always returns 'RegulatoryFeature', so we ignore it for now
-              #$line->{Extra}->{REG_FEAT_TYPE} = $rf->feature_type->name;
-              
-              for my $rfva (@{ $rfv->get_all_alternate_RegulatoryFeatureVariationAlleles }) {
-              
-                $line->{Allele}         = $rfva->variation_feature_seq;
-                $line->{Consequence}    = join ',', 
-                map { $_->$term_method || $_->display_term } 
-                @{ $rfva->get_all_OverlapConsequences };
-                
-                my $extra .= $_.'='.$line->{Extra}->{$_}.';' for keys %{$line->{Extra}};
-                
-                my $snp_effect = EnsEMBL::Web::Text::Feature::SNP_EFFECT->new([
-                    $line->{Uploaded_variation},
-                    $line->{Location},
-                    $line->{Allele},
-                    '-',                         # gene
-                    $line->{Feature},
-                    $line->{Feature_type},
-                    $line->{Consequence},
-                    '-',                         # cdna_pos
-                    '-',                         # cds_pos
-                    '-',                         # prot_pos
-                    '-',                         # aa_pos
-                    '-',                         # codons
-                    $snp,
-                    $extra
-                ]);
-  
-                push @new_vfs, $snp_effect;
-                
-                #print_line($line);
-              }
-            }
-            
-            for my $mfv (@{ $vf->get_all_MotifFeatureVariations }) {
-            
-              my $mf = $mfv->motif_feature;
-              
-              $line->{Feature_type}   = 'MotifFeature';
-              $line->{Feature}        = $mf->binding_matrix->name;
-             
-              for my $mfva (@{ $mfv->get_all_alternate_MotifFeatureVariationAlleles }) {
-                
-                $line->{Extra}->{MATRIX} = $mf->binding_matrix->description.'_'.$mf->display_label,
-                $line->{Extra}->{MATRIX} =~ s/\s+/\_/g;
-                
-                my $high_inf_pos = $mfva->in_informative_position;
-
-                if (defined $high_inf_pos) {
-                    $line->{Extra}->{HIGH_INF_POS}  = ($high_inf_pos ? 'Y' : 'N');
-                }
-              
-                $line->{Allele}         = $mfva->variation_feature_seq;
-                $line->{Consequence}    = join ',', 
-                map { $_->$term_method || $_->display_term } 
-                @{ $mfva->get_all_OverlapConsequences };
-                
-                my $extra;
-                
-                $extra .= $_.'='.$line->{Extra}->{$_}.';' for keys %{$line->{Extra}};
-                
-                my $snp_effect = EnsEMBL::Web::Text::Feature::SNP_EFFECT->new([
-                    $line->{Uploaded_variation},
-                    $line->{Location},
-                    $line->{Allele},
-                    '-',                         # gene
-                    $line->{Feature},
-                    $line->{Feature_type},
-                    $line->{Consequence},
-                    '-',                         # cdna_pos
-                    '-',                         # cds_pos
-                    '-',                         # prot_pos
-                    '-',                         # aa_pos
-                    '-',                         # codons
-                    $snp,
-                    $extra
-                ]);
-  
-                push @new_vfs, $snp_effect;
-                
-                #print_line($line);
-                
-              }
-            }
-          }
-
-          my $transcript_variations = $vf->get_all_TranscriptVariations();
-          
-          # intergenics have no transcript variations
-          if(!@$transcript_variations) {
-            my $snp_effect = EnsEMBL::Web::Text::Feature::SNP_EFFECT->new([
-                $vf->variation_name, $location, '-', '-', '-', '-',
-                $vf->display_consequence($cons_format) || $vf->display_consequence,
-                '-', '-', '-', '-', '-', $snp, '-'
-            ]);
-            
-            push @new_vfs, $snp_effect;
-          }
-          
-          foreach my $tv (@{$transcript_variations}){
-            
-            # exclude non-coding if requested
-            next if($coding_only eq 'yes' && !($tv->affects_transcript));
-            
-            foreach my $tva (@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
-              my $type = join ",", map {$_->$term_method} @{$tva->get_all_OverlapConsequences};
-              
-              ## Set default values
-              my $gene_id       = '-';
-              my $transcript_id = '-';
-              my $prot_id       = '-';
-              my $aa            = $tva->pep_allele_string || '-';
-              my $codons        = $tva->display_codon_allele_string || '-';
-              my $allele        = $tva->variation_feature_seq;
-              my $extra;
-              
-              if ($tv->transcript){
-                $transcript_id = $tv->transcript->stable_id;
-                my $gene = $gene_adaptor->fetch_by_transcript_id($tv->transcript->dbID);
-                $gene_id = $gene->stable_id;
-                
-                # HGNC gene ID
-                if($hgnc && $gene) {
-                  my @entries = grep {$_->database eq 'HGNC'} @{$gene->get_all_DBEntries()};
-                  my $hgnc_name = (scalar @entries ? $entries[0]->display_id : undef);
-                  
-                  $extra .= 'HGNC='.$hgnc_name.';' if $hgnc_name;
-                }
+          push @vfs, $vf;
+        }
         
-                # protein ID
-                if($protein && $tv->transcript->translation) {
-                    $extra .= 'ENSP='.$tv->transcript->translation->stable_id.';';
-                }
-              }
-              
-              # coords
-              my $cdna_pos = $self->format_coords($tv->cdna_start, $tv->cdna_end);
-              my $cds_pos  = $self->format_coords($tv->cds_start, $tv->cds_end);
-              my $prot_pos = $self->format_coords($tv->translation_start, $tv->translation_end);
-              
-              # HGVS
-              if($hgvs ne 'no') {
-                $extra .= 'HGVSc='.$tva->hgvs_coding.';' if defined($tva->hgvs_coding) && $hgvs =~ /coding/;
-        $extra .= 'HGVSp='.$tva->hgvs_protein.';' if defined($tva->hgvs_protein) && $hgvs =~ /protein/;
-              }
-              
-              # sift, polyphen and condel
-              foreach (['sift', 'SIFT'], ['polyphen', 'PolyPhen'], ['condel', 'Condel']) {
-                my ($prog, $key_name) = @{$_};
-                
-                if($prog_options{$prog} ne 'no') {
-                  my $method = $prog.'_prediction';
-                  my $pred = $tva->$method;
-                  
-                  if($pred) {                    
-                    my $string = '';
-                    if($prog_options{$prog} =~ /pred/) {
-                      $string = $pred;
-                      $string =~ s/\s+/\_/g;
-                    }
-                    if($prog_options{$prog} =~ /score/) {
-                      $method = $prog.'_score';
-                      
-                      if($string) {
-                        $string .= '('.$tva->$method.')';
-                      }
-                      else {
-                        $string .= $tva->$method;
-                      }
-                    }                    
-                    $extra .= $key_name.'='.$string.';';
-                  }
-                }
-              }
-              
-              $extra =~ s/\;$//g;
-              $extra ||= '-';
-              
-              my $snp_effect = EnsEMBL::Web::Text::Feature::SNP_EFFECT->new([
-                  $vf->variation_name, $location, $allele, $gene_id, $transcript_id, 
-                  'Transcript', $type, $cdna_pos, $cds_pos, $prot_pos, $aa, $codons, $snp, $extra
-              ]);
-
-              push @new_vfs, $snp_effect;
-
-              # if the array is "full" or there are no more items in @features
-              if(scalar @new_vfs == 1000 || scalar @$features == 0) { 
-                $count++;
-                next if scalar @new_vfs == 0;
-                my @feature_block = @new_vfs;
-                $consequence_results{$count} = \@feature_block;
-                @new_vfs = ();
-              }
-            }
+        foreach my $line(@{get_all_consequences($vep_config, \@vfs)}) {
+          foreach (@OUTPUT_COLS) {
+            $line->{$_} = '-' unless defined($line->{$_});
+          }
+          
+          $line->{Extra} = join ';', map { $_.'='.$line->{Extra}->{$_} } keys %{ $line->{Extra} || {} };
+          
+          my $snp_effect = EnsEMBL::Web::Text::Feature::SNP_EFFECT->new([
+            $line->{Uploaded_variation},
+            $line->{Location},
+            $line->{Allele},
+            $line->{Gene},
+            $line->{Feature},
+            $line->{Feature_type},
+            $line->{Consequence},
+            $line->{cDNA_position},
+            $line->{CDS_position},
+            $line->{Protein_position},
+            $line->{Amino_acids},
+            $line->{Codons},
+            $line->{Existing_variation},
+            $line->{Extra},
+          ]);
+          
+          push @snp_effects, $snp_effect;
+          
+          # if the array is "full" or there are no more items in @features
+          if(scalar @snp_effects == 1000 || scalar @$features == 0) {
+            $count++;
+            next if scalar @snp_effects == 0;
+            my @feature_block = @snp_effects;
+            $consequence_results{$count} = \@feature_block;
+            @snp_effects = ();
           }
         }
         
-        if(scalar @new_vfs) {
+        if(scalar @snp_effects) {
           $count++;
-          my @feature_block = @new_vfs;
+          my @feature_block = @snp_effects;
           $consequence_results{$count} = \@feature_block;
-          @new_vfs = ();
+          @snp_effects = ();
         }
       }
     }
@@ -1513,6 +1186,73 @@ sub render_sift_polyphen {
   }
   
   return qq{$type=<span style="color:$colours{$pred}">$pred$rank_str</span>};
+}
+
+sub configure_vep {
+  my $self = shift;
+  
+  my %vep_config;
+  
+  # get user defined config from $self->param
+  foreach my $param(qw(
+    check_existing
+    coding_only
+    hgnc
+    hgvs
+    protein
+    terms
+    regulatory
+    sift
+    polyphen
+    condel
+    check_frequency
+    freq_filter
+    freq_gt_lt
+    freq_freq
+    freq_pop
+  )) {
+    my $value = $self->param($param);
+    $vep_config{$param} = $value unless $value eq 'no' || $value eq '';
+  }
+  
+  # get adaptors
+  my $species = $self->param('species');
+  
+  my %species_dbs =  %{$self->species_defs->get_config($species, 'databases')};
+  if (exists $species_dbs{'DATABASE_VARIATION'} ){
+    $vep_config{tva} = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation', $species);
+    $vep_config{vfa} = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation', $species);
+    $vep_config{va} = $self->get_adaptor('get_VariationAdaptor', 'variation', $species);
+  } else  { 
+    $vep_config{tva} = Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor->new_fake($species);
+    $vep_config{vfa} = Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor->new_fake($species);
+  }
+
+  $vep_config{sa} = $self->get_adaptor('get_SliceAdaptor', 'core', $species);
+  $vep_config{ga} = $self->get_adaptor('get_GeneAdaptor', 'core', $species);
+  
+  if(defined($vep_config{regulatory})) {
+    foreach my $type(@REG_FEAT_TYPES) {
+      my $adaptor = $self->get_adaptor('get_'.$type.'Adaptor', 'funcgen', $species);
+      if(defined($adaptor)) {
+        $vep_config{$type.'_adaptor'} = $adaptor;
+      }
+      else {
+        delete $vep_config{regulatory};
+        last;
+      }
+    }
+  }
+  
+  # set some other values
+  $vep_config{gene}           = 1;
+  $vep_config{whole_genome}   = 1;
+  $vep_config{chunk_size}     = 50000;
+  $vep_config{quiet}          = 1;
+  $vep_config{check_alleles}  = 1 if $vep_config{check_existing} eq 'allele';
+  $vep_config{check_existing} = 1 if defined($vep_config{check_frequency}) && exists $species_dbs{'DATABASE_VARIATION'};
+  
+  return \%vep_config;
 }
 
 sub format_coords {
