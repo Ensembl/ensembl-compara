@@ -144,7 +144,7 @@ sub gene_links {
   return unless $data;
   
   my $hub   = $self->hub;
-  my @genes = split /,/, $data;
+  my @genes = split(',', $data);
   my @links;
   
   my $gene_adaptor = $hub->get_adaptor('get_GeneAdaptor', 'core');
@@ -152,6 +152,8 @@ sub gene_links {
   
   foreach my $g (@genes) {
     
+		$g =~ s/\s//g;
+		
     # try to fetch gene
     my $linkable = 0;
     
@@ -174,7 +176,7 @@ sub gene_links {
     }
   }
   
-  my $gene_links = join ',', @links; 
+  my $gene_links = join ', ', @links; 
   
   return $gene_links;
 }
