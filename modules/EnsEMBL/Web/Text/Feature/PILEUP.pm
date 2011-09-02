@@ -37,14 +37,15 @@ sub new {
   
   # indel
   else{
-	my @genotype=split /\//,$args->[3];
+	my %tmp_hash = map {$_ => 1} split /\//, $data[3];
+	my @genotype = keys %tmp_hash;
 	foreach my $allele(@genotype){
 	  if(substr($allele,0,1) eq "+") { #ins
 		@new_args = ($args->[0], $args->[1]+1, $args->[1], "-/".substr($allele,1), 1, undef);
 		last;
 	  }
 	  elsif(substr($allele,0,1) eq "-"){ #del
-		@new_args = ($args->[0], $args->[1], $args->[1]+length($args->[3])-4, substr($allele,1)."/-", 1, undef);
+		@new_args = ($args->[0], $args->[1] + 1, $args->[1]+length(substr($allele, 1)), substr($allele,1)."/-", 1, undef);
 	  }
 	}
   }
