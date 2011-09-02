@@ -38,12 +38,13 @@ sub content {
       substitutions, insertions and deletions as input, uploaded as a list of <a
       href="/info/website/upload/var.html" target="_blank">tab separated
       values</a>, <a href="http://www.1000genomes.org/wiki/Analysis/vcf4.0"
-      target="_blank">VCF</a> or Pileup format input.</p>
+      target="_blank">VCF</a> or Pileup format input. HGVS notations and variant
+      identifiers (e.g. rs123) are also accepted.</p>
       
       <p>Upload is limited to $variation_limit variants; lines after the limit
       will be ignored. Users with more than $variation_limit variations can
       split files into smaller chunks, use the standalone <a
-      href="ftp://ftp.ensembl.org/pub/misc-scripts/Variant_effect_predictor_2.0/"
+      href="ftp://ftp.ensembl.org/pub/misc-scripts/Variant_effect_predictor/"
       target="_blank">perl script</a> or the <a
       href="/info/docs/api/variation/variation_tutorial.html#Consequence"
       target="_blank">variation API</a>. See also <a
@@ -82,9 +83,11 @@ sub content {
       'name'    => 'format',
       'label'   => "Input file format",
       'values'  => [
-        { value => 'snp',     name => 'Ensembl default' },
-        { value => 'vep_vcf', name => 'VCF'             },
-        { value => 'pileup',  name => 'Pileup'          },
+        { value => 'snp',     name => 'Ensembl default'     },
+        { value => 'vep_vcf', name => 'VCF'                 },
+        { value => 'pileup',  name => 'Pileup'              },
+        { value => 'id',      name => 'Variant identifiers' },
+        { value => 'id',      name => 'HGVS notations'      },
       ],
       'value'   => 'snp',
       'select'  => 'select',
@@ -97,7 +100,7 @@ sub content {
   $form->add_element(
     type  => 'CheckBox',
     name  => "regulatory",
-    label => "Get regulatory region consequences",
+    label => "Get regulatory region consequences (human and mouse only)",
     value => 'yes',
     selected => 1
   );
@@ -106,7 +109,7 @@ sub content {
     type   => 'DropDown',
     select =>, 'select',
     label  => 'Type of consequences to display',
-    name   => 'consequence_format',
+    name   => 'terms',
     values => [
       { value => 'display',  name => 'Ensembl terms'           },
       { value => 'SO',       name => 'Sequence Ontology terms' },
@@ -177,10 +180,10 @@ sub content {
     label  => 'SIFT predictions',
     name   => 'sift',
     values => [
-      { value => 'no',         name => 'No'                   },
-      { value => 'pred',       name => 'Prediction only'      },
-      { value => 'score',      name => 'Score only'           },
-      { value => 'pred_score', name => 'Prediction and score' },
+      { value => 'no',    name => 'No'                   },
+      { value => 'pred',  name => 'Prediction only'      },
+      { value => 'score', name => 'Score only'           },
+      { value => 'both',  name => 'Prediction and score' },
     ],
     value  => 'no',
     select => 'select',
@@ -192,10 +195,10 @@ sub content {
     label  => 'PolyPhen predictions',
     name   => 'polyphen',
     values => [
-      { value => 'no',         name => 'No'                   },
-      { value => 'pred',       name => 'Prediction only'      },
-      { value => 'score',      name => 'Score only'           },
-      { value => 'pred_score', name => 'Prediction and score' },
+      { value => 'no',    name => 'No'                   },
+      { value => 'pred',  name => 'Prediction only'      },
+      { value => 'score', name => 'Score only'           },
+      { value => 'both',  name => 'Prediction and score' },
     ],
     value  => 'no',
     select => 'select',
@@ -207,10 +210,10 @@ sub content {
     label  => 'Condel consensus (SIFT/PolyPhen) predictions',
     name   => 'condel',
     values => [
-      { value => 'no',         name => 'No'                   },
-      { value => 'pred',       name => 'Prediction only'      },
-      { value => 'score',      name => 'Score only'           },
-      { value => 'pred_score', name => 'Prediction and score' },
+      { value => 'no',    name => 'No'                   },
+      { value => 'pred',  name => 'Prediction only'      },
+      { value => 'score', name => 'Score only'           },
+      { value => 'both',  name => 'Prediction and score' },
     ],
     value  => 'no',
     select => 'select',
@@ -221,7 +224,7 @@ sub content {
   
   $form->add_element(
     type  => 'CheckBox',
-    name  => "freq",
+    name  => "check_frequency",
     label => "Filter variants by frequency",
     value => 'yes',
     selected => 0,
