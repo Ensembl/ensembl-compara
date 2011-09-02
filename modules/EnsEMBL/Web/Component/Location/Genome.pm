@@ -206,7 +206,7 @@ sub content {
             $swatch .= qq{<div style="background:#$step;color:#fff;float:left;$swatch_style">$label</div>};
             $i++;
           }
-          $swatch .= '<br /><div style="clear:both;text-align:center">Less significant p-values &lt;-------------------------&gt; More significant p-values</div>';
+          $swatch .= '<br /><div style="clear:both;margin-left:120px">Less significant p-values &lt;-------------------------&gt; More significant p-values</div>';
         }
         else { 
           $swatch = qq{<span style="background-color:$colour;display:block;$swatch_style" title="$colour"></span>};
