@@ -48,7 +48,7 @@ sub default_options {
 
 #       'mlss_id'         => 30034,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'release'         => '64',
-        'rel_suffix'      => '',    # an empty string by default, a letter otherwise
+        'rel_suffix'      => 'a',    # an empty string by default, a letter otherwise
         'rel_with_suffix' => $self->o('release').$self->o('rel_suffix'),
 
         'pipeline_name'   => 'FAM_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
@@ -56,10 +56,9 @@ sub default_options {
         'email'           => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
 
             # code directories:
-        'sec_root_dir'    => '/software/ensembl/compara',
-        'blast_bin_dir'   => $self->o('sec_root_dir') . '/ncbi-blast-2.2.23+/bin',
-        'mcl_bin_dir'     => $self->o('sec_root_dir') . '/mcl-10-201/bin',
-        'mafft_root_dir'  => $self->o('sec_root_dir') . '/mafft-6.522',
+        'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.23+/bin',
+        'mcl_bin_dir'     => '/software/ensembl/compara/mcl-10-201/bin',
+        'mafft_root_dir'  => '/software/ensembl/compara/mafft-6.522',
             
             # data directories:
         'work_dir'        => '/lustre/scratch101/ensembl/'.$ENV{'USER'}.'/families_'.$self->o('rel_with_suffix'),
@@ -71,12 +70,14 @@ sub default_options {
 
         'blast_params'    => '', # By default C++ binary has composition stats on and -seg masking off
 
+        'first_n_big_families'  => 2,   # these are known to be big, so no point trying in small memory
+
             # resource requirements:
         'mcxload_gigs'    => 30,
         'mcl_gigs'        => 40,
         'mcl_procs'       =>  4,
         'himafft_gigs'    => 14,
-        'dbresource'      => 'my'.$self->o('pipeline_db', '-host'),   # will work for compara1..compara3, but will have to be set manually otherwise
+        'dbresource'      => 'my'.$self->o('pipeline_db', '-host'),   # will work for compara1..compara4, but will have to be set manually otherwise
         'blast_capacity'  => 1000,                                    # work both as hive_capacity and resource-level throttle
         'mafft_capacity'  =>  400,
         'cons_capacity'   =>  400,
@@ -430,12 +431,13 @@ sub pipeline_analyses {
         {   -logic_name => 'family_mafft_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'randomize'  => 1,
+                'randomize'             => 1,
+                'first_n_big_families'  => $self->o('first_n_big_families'),
             },
             -hive_capacity => 20, # to enable parallel branches
             -input_ids  => [
-                { 'fan_branch_code' => 2, 'inputlist'  => [ 1, 2 ], 'column_names' => [ 'family_id' ], },
-                { 'fan_branch_code' => 3, 'inputquery' => 'SELECT family_id FROM family_member WHERE family_id>2 GROUP BY family_id HAVING count(*)>1',},
+                { 'fan_branch_code' => 2, 'inputlist'  => '#expr([1..$first_n_big_families])expr#', 'column_names' => [ 'family_id' ], },
+                { 'fan_branch_code' => 3, 'inputquery' => 'SELECT family_id FROM family_member WHERE family_id>#first_n_big_families# GROUP BY family_id HAVING count(*)>1',},
             ],
             -wait_for => [ 'parse_mcl' ],
             -flow_into => {
@@ -446,18 +448,21 @@ sub pipeline_analyses {
             -rc_id => 1,
         },
 
+        {   -logic_name    => 'family_mafft_main',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
+            -hive_capacity => $self->o('mafft_capacity'),
+            -batch_size    =>  10,
+            -flow_into => {
+                -1 => [ 'family_mafft_big' ],
+            },
+            -rc_id => 6,
+        },
+
         {   -logic_name    => 'family_mafft_big',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
             -hive_capacity => 20,
             -batch_size    => 1,
             -rc_id => 5,
-        },
-
-        {   -logic_name    => 'family_mafft_main',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
-            -hive_capacity => $self->o('mafft_capacity'),
-            -batch_size    =>  10,
-            -rc_id => 6,
         },
 
         {   -logic_name => 'find_update_singleton_cigars',      # example of an SQL-session within a job (temporary table created, used and discarded)
