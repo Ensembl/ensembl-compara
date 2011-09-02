@@ -67,12 +67,15 @@ sub pointer_default {
   my ($self, $feature_type) = @_;
   
   my %hash = (
-      'DnaAlignFeature'     => [ 'red', 'rharrow' ],
-      'ProteinAlignFeature' => [ 'red', 'rharrow' ],
-      'RegulatoryFactor'    => [ 'red', 'rharrow' ],
-      'ProbeFeature'        => [ 'red', 'rharrow' ],
-      'Xref'                => [ 'red', 'rharrow' ],
-      'Gene'                => [ 'blue','lharrow' ]
+        DnaAlignFeature     => [ 'rharrow', 'red' ],
+        ProteinAlignFeature => [ 'rharrow', 'red' ],
+        RegulatoryFactor    => [ 'rharrow', 'red' ],
+        ProbeFeature        => [ 'rharrow', 'red' ],
+        Xref                => [ 'rharrow', 'red' ],
+        Gene                => [ 'lharrow', 'orange'],
+        Transcript          => [ 'lharrow', 'blue'],
+        Domain              => [ 'lharrow', 'blue' ],
+        Variation           => [ 'rharrow', 'gradient', [qw(90 #0000FF #770088 #BB0044 #CC0000)]],
   );
   
   return $hash{$feature_type};
@@ -159,7 +162,7 @@ sub configure_UserData_table {
       push @$rows, $row;
     }
   }
-  return ($header, $column_order, $rows);
+  return {'header' => $header, 'column_order' => $column_order, 'rows' => $rows};
 } 
 
 sub _user_track_colour {
