@@ -704,6 +704,21 @@ $reg-&gt;load_registry_from_db(
   -user =&gt; $user
 );
 
+# Get adaptor to StructuralVariation object
+my $sva = $reg->get_adaptor("human", "variation", "structuralvariation");
+
+# Get the StructuralVariation object
+my $sv = $sva->fetch_by_name('esv214236');
+
+print $sv->variation_name, " ",  $sv->var_class, " (SO term: ", $sv->class_SO_term, ")\n";
+
+# Get Study information
+if ($sv->study) {
+  print "This structural variation comes from the study ", $sv->source, "-", $sv->study->name, ": ", $sv->study->description, "\n";
+}
+</pre>
+<p>Like the variation, you can fetch the structural variations using a Slice.</p>
+<pre class="code">
 #  Get adaptor to Slice object from core
 my $sa = $reg-&gt;get_adaptor("human", "core", "slice");
 
@@ -712,6 +727,7 @@ my $slice = $sa-&gt;fetch_by_region('chromosome', 5, 1, 1000000);
 # get all structural variation features on the slice
 my $svfs = $slice-&gt;get_all_StructuralVariationFeatures();
 
+# StructuralVariationFeature objects
 foreach my $svf (@$svfs) {
   print $svf-&gt;variation_name, " ", $svf-&gt;seq_region_name, ":", $svf-&gt;seq_region_start, "-", $svf-&gt;seq_region_end, " ", 
 	$svf-&gt;var_class, " (SO term: ", $svf-&gt;class_SO_term, ")\n";
