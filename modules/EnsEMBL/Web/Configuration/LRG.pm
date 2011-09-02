@@ -86,14 +86,15 @@ sub populate_tree {
     { 'availability' => 'lrg', 'concise' => 'cDNA sequence' }
   ));
   
-$seq_menu->append($self->create_node('Sequence_Protein', 'Protein',
+	$seq_menu->append($self->create_node('Sequence_Protein', 'Protein',
     [qw( sequence EnsEMBL::Web::Component::LRG::ProteinSeq )],
     { 'availability' => 'lrg', 'concise' => 'Protein sequence' }
   ));
-	
 
   $self->create_node('Differences', 'Reference comparison',
-    [qw( exons EnsEMBL::Web::Component::LRG::LRGDiff )],
+    [qw( 
+		   exons EnsEMBL::Web::Component::LRG::LRGDiff 
+			 align EnsEMBL::Web::Component::LRG::LRGAlign)],
     { 'availability' => 'lrg' }
   );
  
