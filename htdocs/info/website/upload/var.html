@@ -50,14 +50,14 @@ containing five columns, all required:
 12601 on the forward strand of chromosome 8 is indicated as
 follows:</p>
 
-<pre>
+<pre class="code">
 8   12601     12600     -/C   +
 </pre>
 <p>A deletion is indicated by the exact nucleotide coordinates. For
 example, a three base pair deletion of nucleotides 12600, 12601, and
 12602 of the reverse strand of chromosome 8 will be:</p>
 
-<pre>
+<pre class="code">
 8   12600     12602     CGT/- -
 </pre>
 
@@ -68,9 +68,29 @@ example, a three base pair deletion of nucleotides 12600, 12601, and
 19,66520,66520,G/A,+
 8,150029,150029,A/T,+ -->
 
-<p> The popular VCF (<a href="http://www.1000genomes.org/wiki/Analysis/vcf4.0"
-target="_blank">version 4.0</a>) and pileup formats are also supported as input.
-</p>
+<p> The following input file formats are also supported: </p>
+
+<ul>
+    <li>Variant Call Format (VCF) - see <a
+    href="http://www.1000genomes.org/wiki/Analysis/vcf4.0"
+    target="_blank">http://www.1000genomes.org/wiki/Analysis/vcf4.0</a> for
+    details.</li>
+    <li>Pileup format</li>
+    <li>HGVS notations - see <a
+    href="http://www.hgvs.org/mutnomen/">http://www.hgvs.org/mutnomen/</a> for
+    details. These must be relative to genomic or Ensembl transcript
+    coordinates. It is possible, although less reliable, to <a
+    href="/info/docs/variation/vep/vep_script.html#hgvs">use notations relative
+    to RefSeq transcripts</a> in the VEP script.</li>
+    <li>Variant identifiers - these should be e.g. dbSNP rsIDs, or any synonym
+    for a variant present in the Ensembl Variation database. See <a
+    href="/info/docs/variation/sources_test.html">here</a> for a list of
+    identifier sources in Ensembl.</li>
+</ul>
+
+<p> When using the web VEP, ensure that you have the correct file format
+selected from the drop-down menu. The VEP script is able to auto-detect the
+format of the input file. </p>
 
 <h2 id="output">Output format</h2>
 
@@ -123,11 +143,12 @@ contains information about the databases connected to, and also a key describing
 the key/value pairs used in the extra column. </p>
 
 <pre class="code">
-## ENSEMBL VARIANT EFFECT PREDICTOR v2.1
-## Output produced at 2011-06-16 16:09:38
-## Connected to homo_sapiens_core_63_37 on ensembldb.ensembl.org
-## Using API version 63, DB version 63
+## ENSEMBL VARIANT EFFECT PREDICTOR v2.2
+## Output produced at 2011-09-16 16:09:38
+## Connected to homo_sapiens_core_64_37 on ensembldb.ensembl.org
+## Using API version 64, DB version 64
 ## Extra column keys:
+## CANONICAL    : Indicates if transcript is canonical for this gene
 ## HGNC         : HGNC gene identifier
 ## ENSP         : Ensembl protein identifer
 ## HGVSc        : HGVS coding sequence name
