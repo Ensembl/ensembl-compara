@@ -32,8 +32,8 @@ sub process {
       hgnc
       protein
       hgvs
-      consequence_format
-      freq
+      terms
+      check_frequency
       freq_filter
       freq_gt_lt
       freq_freq
