@@ -130,31 +130,34 @@ sub add_pointers {
   my $config_name = $extra->{'config_name'};
   my @data        = @{$extra->{'features'}};
   my $species     = $hub->species;
-  my $color       = lc($hub->param('col'))   || lc($extra->{'color'}) || 'red';     # set sensible defaults
-  my $style       = lc($hub->param('style')) || lc($extra->{'style'}) || 'rharrow'; # set style before doing chromosome layout, as layout may need tweaking for some pointer styles
+  my $color       = lc($extra->{'color'} || $hub->param('col')) || 'red';     # set sensible defaults
+  my $style       = lc($extra->{'style'} || $hub->param('style')) || 'rharrow'; # set style before doing chromosome layout, as layout may need tweaking for some pointer styles
   my $high        = { style => $style };
-  my ($p_value_sorted,$i, $html_id);
-  my $j = 1;
+  my ($p_value_sorted, $html_id, $max_colour);
+  my $i = 1;
   
-  # colour gradient bit for phenotype
-  if (grep $_->{'colour_scaling'}, @data) {    
-    my @colour_scale = $hub->colourmap->build_linear_gradient(90, '#0000FF', '#770088', '#BB0044', 'red'); # making an array of the colour scale
+  # colour gradient 
+  my @gradient = @{$extra->{'gradient'}||[]};
+  if ($color eq 'gradient' && scalar @gradient) {    
+    my @colour_scale = $hub->colourmap->build_linear_gradient(@gradient); # making an array of the colour scale
 
     foreach my $colour (@colour_scale) {
-      $p_value_sorted->{$j} = $colour;
-      $j = sprintf("%.1f", $j + 0.1);
+      $p_value_sorted->{$i} = $colour;
+      $i = sprintf("%.1f", $i + 0.1);
+      $max_colour = $colour;
     }
   }
 
   foreach my $row (@data) {
     my $chr = $row->{'chr'} || $row->{'region'};
     $html_id =  ($row->{'html_id'}) ? $row->{'html_id'} : '';    
-   
+    my $col = $p_value_sorted->{sprintf("%.1f",$row->{'p_value'})};
+
     my $point = {
       start   => $row->{'start'},
       end     => $row->{'end'},
       id      => $row->{'label'},
-      col     => $p_value_sorted->{sprintf("%.1f",$row->{'p_value'})} || $color,
+      col     => $p_value_sorted->{sprintf("%.1f",$row->{'p_value'})} || $max_colour || $color,
       href    => $row->{'href'},
       html_id => $html_id,
     };
