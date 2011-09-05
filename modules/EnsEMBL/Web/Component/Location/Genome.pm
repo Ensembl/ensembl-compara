@@ -28,8 +28,14 @@ sub content {
  
   ## Get features to draw
   if ($hub->param('id')) {
-    my $object = $self->object || $self->builder->create_objects('Feature', 'lazy');
-    if ($object) {
+    my $object;
+    if ($self->object->isa('EnsEMBL::Web::Object::Location')) {
+      $object = $self->builder->create_objects('Feature', 'lazy');
+    }
+    else {
+      $object = $self->object;
+    }
+    if ($object && $object->can('convert_to_drawing_parameters')) {
       $features = $object->convert_to_drawing_parameters;
     }
   }
