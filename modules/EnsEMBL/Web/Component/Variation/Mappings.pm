@@ -389,6 +389,7 @@ sub detail_panel {
     }
     
     $html .= qq{
+      <br/>
       <h2 style="float:left"><a href="#" class="toggle open" rel="$tr_id\_$vf_id\_$allele">Detail for $data{name} ($allele) in $tr_id</a></h2>
       <span style="float:right;"><a href="#$self->{'id'}_top">[back to top]</a></span>
       <p class="invisible">.</p>
