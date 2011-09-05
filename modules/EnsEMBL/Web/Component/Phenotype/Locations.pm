@@ -60,12 +60,15 @@ sub _var_location_link {
   my $link = sprintf(
           '<a href="%s">%s:%d-%d(%d)</a>',
           $self->hub->url({
+            type    => 'Location',
             action  => 'View',
             r       => $coords,
             v       => $f->{'label'},
+            id      => $self->hub->param('id'),
+            name    => $self->hub->param('name'),
             contigviewbottom => $f->{'somatic'} ? 'somatic_mutation_COSMIC=normal' 
                                                   : 'variation_feature_variation=normal',
-            __clear => 1
+            __clear => 1,
           }),
           $f->{'region'}, $f->{'start'}, $f->{'end'},
           $f->{'strand'}
@@ -79,6 +82,8 @@ sub _variation_link {
     'type'      => 'Variation',
     'action'    => 'Phenotype',
     'v'         => $f->{'label'},
+    id          => $self->hub->param('id'),
+    name        => $self->hub->param('name'),
     __clear     => 1
   };
 
