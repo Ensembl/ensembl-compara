@@ -196,10 +196,10 @@ sub init_label {
   my $node      = $config->get_node($track);
   my $component = $config->get_parameter('component');
   my $hover     = $component && !$hub->param('export') && $node->get('menu') ne 'no';
-  my $fav       = $config->get_favourite_tracks->{$track};
   (my $class    = $self->species . "_$track") =~ s/\W/_/g;
   
   if ($hover) {
+    my $fav       = $config->get_favourite_tracks->{$track};
     my @renderers = @{$node->get('renderers') || []};
     my @r;
     
@@ -495,6 +495,11 @@ sub my_colour {
     return defined( $default ) ? $default : 'Other (unknown)' if $part eq 'text';
     return '';
   }
+  
+  my $track_colour = $self->my_config('track_colour');
+  
+  return $track_colour if $track_colour;
+  
   if( $self->{'colours'} ) {
     return $self->{'colours'}->{$colour  }{$part}     if exists $self->{'colours'}->{$colour  }{$part    };
     return $self->{'colours'}->{'default'}{$part}     if exists $self->{'colours'}->{'default'}{$part    };
