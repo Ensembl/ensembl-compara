@@ -496,10 +496,6 @@ sub my_colour {
     return '';
   }
   
-  my $track_colour = $self->my_config('track_colour');
-  
-  return $track_colour if $track_colour;
-  
   if( $self->{'colours'} ) {
     return $self->{'colours'}->{$colour  }{$part}     if exists $self->{'colours'}->{$colour  }{$part    };
     return $self->{'colours'}->{'default'}{$part}     if exists $self->{'colours'}->{'default'}{$part    };
