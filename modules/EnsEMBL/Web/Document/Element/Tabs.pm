@@ -139,6 +139,9 @@ sub content {
   my $history = 0;
   
   foreach my $entry (@{$self->entries}) {
+    ## FIXME Hack for phenotype tab - can't change URL this release as already indexed!
+    next if ($entry->{'type'} eq 'Phenotype' && !$self->hub->param('name'));
+
     $entry->{'url'} ||= '#';
     
     my $name         = encode_entities($self->strip_HTML($entry->{'caption'}));
