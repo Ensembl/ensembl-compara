@@ -24,6 +24,7 @@ sub new {
   my $input = new CGI;
   
   my $object_params = [
+    [ 'Phenotype',           'id'  ],
     [ 'Location',            'r'   ],
     [ 'Gene',                'g'   ],
     [ 'Transcript',          't'   ],
@@ -33,7 +34,6 @@ sub new {
     [ 'Marker',              'm'   ],
     [ 'LRG',                 'lrg' ],
     [ 'GeneTree',            'gt'  ],
-    [ 'Phenotype',           'id'  ],
   ];
   
   my $object_types    = { map { $_->[0] => $_->[1] } @$object_params };
