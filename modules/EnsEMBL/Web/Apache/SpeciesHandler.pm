@@ -39,9 +39,8 @@ sub handler_species {
   $r->custom_response($_, "/$species/Info/Error/$_") for (NOT_FOUND, HTTP_BAD_REQUEST, FORBIDDEN, AUTH_REQUIRED);
     
   if ($flag && $script) {
-    $ENV{'ENSEMBL_FACTORY'}     = 'MultipleLocation' if $type eq 'Location' && $action =~ /^Multi(Ideogram.*|Top|Bottom)?$/;
-    $ENV{'ENSEMBL_COMPONENT'}   = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $action if $script eq 'Component';
-    $ENV{'ENSEMBL_CUSTOM_PAGE'} = 1 if $action eq 'Custom' || $script =~ /^(Config|Component)$/ && $ENV{'HTTP_REFERER'} =~ /\/Custom(\?|(?!.))/; # Make an ENV flag for custom pages
+    $ENV{'ENSEMBL_FACTORY'}   = 'MultipleLocation' if $type eq 'Location' && $action =~ /^Multi(Ideogram.*|Top|Bottom)?$/;
+    $ENV{'ENSEMBL_COMPONENT'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $action if $script eq 'Component';
     
     $redirect_if_different = 0;
   } else {
