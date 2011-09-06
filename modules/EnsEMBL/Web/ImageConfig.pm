@@ -92,6 +92,7 @@ sub new {
   #     Cache the user/session version.
   #
   # Check memcached for defaults
+  
   if (my $defaults = $cache ? $cache->get("::${class}::${species}::$code") : undef) {
     $self->{$_} = $defaults->{$_} for keys %$defaults;
   } else {
@@ -103,6 +104,7 @@ sub new {
       my $defaults = {
         _tree       => $self->{'_tree'},
         _parameters => $self->{'_parameters'},
+        extra_menus => $self->{'extra_menus'},
       };
       
       $cache->set("::${class}::${species}::$code", $defaults, undef, 'IMAGE_CONFIG', $species);
