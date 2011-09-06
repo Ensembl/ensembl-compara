@@ -810,7 +810,7 @@ Or you can use the order of species given in the species tree:
 
   $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/create_mlss_table.pl \
     --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --reg_alias compara_curr --species_tree_from_db \
-    --list --method_link TRANSLATED_BLAT_NET > tblat_net.inc
+    --trim --method_link TRANSLATED_BLAT_NET > tblat_net.inc
 
 # for blastz_net/lastz_net produce a simple list, because the table is getting too big:
   $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/create_mlss_table.pl \
