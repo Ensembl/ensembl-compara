@@ -975,16 +975,26 @@ sub consequence_table {
         $gene_string .= ';'.$hgnc_id if defined($hgnc_id);
       }
       
+      
+      $snp_string = '';
+      
       if ($snp_id =~ /^\w/){
-        my $snp_url =  $hub->url({
-          species => $species,
-          type    => 'Variation',
-          action  => 'Summary',
-          v       =>  $snp_id,
-        });
         
-        $snp_string = qq{<a href="$snp_url" rel="external">$snp_id</a>};
+        foreach my $s(split /\,/, $snp_id) {
+          my $snp_url =  $hub->url({
+            species => $species,
+            type    => 'Variation',
+            action  => 'Summary',
+            v       =>  $s,
+          });
+          
+          $snp_string .= qq{<a href="$snp_url" rel="external">$s</a>,};
+        }
+        
+        $snp_string =~ s/\,$//g;
       }
+      
+      $snp_string ||= '-';
       
       $consequence =~ s/\,/\,\<br\/>/g;
       
@@ -1228,8 +1238,9 @@ sub configure_vep {
     $vep_config{vfa} = Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor->new_fake($species);
   }
 
-  $vep_config{sa} = $self->get_adaptor('get_SliceAdaptor', 'core', $species);
-  $vep_config{ga} = $self->get_adaptor('get_GeneAdaptor', 'core', $species);
+  $vep_config{sa}  = $self->get_adaptor('get_SliceAdaptor', 'core', $species);
+  $vep_config{ga}  = $self->get_adaptor('get_GeneAdaptor', 'core', $species);;
+  $vep_config{csa} = $self->get_adaptor('get_CoordSystemAdaptor', 'core', $species);
   
   if(defined($vep_config{regulatory})) {
     foreach my $type(@REG_FEAT_TYPES) {
