@@ -391,12 +391,8 @@ sub store{
   my $genebuild = $gdb->genebuild;
   my $locator = $gdb->locator;
 
-  if ($taxon_id == 0 and !$assembly) {
-     $assembly = "";
-  } else {
-      unless($name && $assembly && $taxon_id) {
+  unless($name && $assembly && $taxon_id) {
 	  throw("genome db must have a name, assembly, and taxon_id");
-      }
   }
 
   my $sth = $self->prepare("
@@ -414,8 +410,6 @@ sub store{
 
   if(!$dbID) {
     #if the genome db has not been stored before, store it now
-   # my $sql = "INSERT into genome_db (name,assembly,taxon_id,assembly_default,genebuild,locator) ".
-    #          " VALUES ('$name','$assembly', $taxon_id, $assembly_default, '$genebuild', '$locator')";
 
      my $sql = qq(
            INSERT into genome_db (name,assembly,taxon_id,assembly_default,genebuild,locator)
@@ -443,8 +437,7 @@ sub store{
         $sth->finish();
       }
     }
-  }
-  else {
+  } else {
     my $sql = "UPDATE genome_db SET ".
               " assembly_default = '$assembly_default'".
               " ,locator = '$locator'".
