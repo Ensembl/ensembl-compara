@@ -113,6 +113,8 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
             }
             
             component = Ensembl.replaceTimestamp(url.join(';')) + referer;
+          } else {
+            component += '?';
           }
           
           panel.getContent(component, content, { updateURL: component + ';update_panel=1' });
