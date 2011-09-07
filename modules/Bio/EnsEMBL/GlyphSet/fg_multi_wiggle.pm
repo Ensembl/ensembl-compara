@@ -18,7 +18,7 @@ sub draw_features {
   if ($Config->isa('EnsEMBL::Web::ImageConfig::contigviewbottom')){ $object_type = 'Location'; }
   my $type = $self->my_config('type');  
   my $data = $Config->{'data_by_cell_line'}; 
-  my $label = $type eq 'core' ? 'Core' : 'Hists & Pols';
+  my $label = $type eq 'core' ? 'TFBS & DNase' : 'Hists & Pols';
   if (!$Config->{'colours'}){ $Config->{'colours'} = $self->get_colours; }
   my $colours = $Config->{'colours'};
   my $display_style = $self->my_config('display');
