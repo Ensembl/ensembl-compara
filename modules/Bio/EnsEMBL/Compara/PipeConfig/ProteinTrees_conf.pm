@@ -65,9 +65,9 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
+
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-
 
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40075,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
@@ -81,7 +81,6 @@ sub default_options {
         'pipeline_name'         => 'PT_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp_with_reuse'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
-
 
     # blast parameters:
         'blast_options'             => '-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1',
@@ -133,7 +132,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                    
-            -dbname => $self->('ENV', 'USER').'_compara_homology_'.$self->o('rel_with_suffix'),
+            -dbname => $self->o('ENV', 'USER').'_compara_homology_'.$self->o('rel_with_suffix'),
         },
 
         'master_db' => {                        # the master database for synchronization of various ids
@@ -194,14 +193,6 @@ sub default_options {
 }
 
 
-sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit everything from the base class
-    };
-}
-
-
 sub pipeline_create_commands {
     my ($self) = @_;
     return [
@@ -252,7 +243,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'      => $self->o('master_db'),
-                'inputlist'    => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
+                'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name', 'method_link', 'species_set', 'method_link_species_set' ],
                 'column_names' => [ 'table' ],
                 'input_id'     => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' },
                 'fan_branch_code' => 2,
