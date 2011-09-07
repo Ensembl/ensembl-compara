@@ -32,7 +32,7 @@ sub process {
   my $formats = $hub->species_defs->DATA_FILE_FORMATS;
   my @small_formats = $hub->species_defs->UPLOAD_FILE_FORMATS;
   my @big_exts;
-  foreach (my $f ($hub->species_defs->REMOTE_FILE_FORMATS)) {
+  foreach my $f ($hub->species_defs->REMOTE_FILE_FORMATS) {
     push @big_exts, $formats->{$f}{'ext'};
   }
 
