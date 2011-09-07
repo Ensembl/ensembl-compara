@@ -29,7 +29,8 @@ sub createObjects {
   my $id         = $self->param('id');   
   return $self->problem('fatal', 'No ID', $self->_help) unless $id;
   my $dbc        = $self->hub->database('variation');
-	$dbc->include_failed_variations(1);
+  return unless $dbc;
+  $dbc->include_failed_variations(1);
   my $a          = $dbc->get_adaptor('VariationFeature');
   my $func       = $self->param('somatic') ? 'fetch_all_somatic_with_annotation' : 'fetch_all_with_annotation';
   my $variations = $a->$func(undef, undef, $id);
