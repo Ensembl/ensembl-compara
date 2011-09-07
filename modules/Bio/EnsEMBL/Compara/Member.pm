@@ -1035,6 +1035,9 @@ sub get_canonical_peptide_Member {
         my $geneMember = $self->gene_member or return;
 
         return $able_adaptor->fetch_canonical_peptide_member_for_gene_member_id($geneMember->dbID);
+    } else {
+
+        return undef;
     }
 }
 
@@ -1068,11 +1071,14 @@ sub get_canonical_transcript_Member {
 
         return $able_adaptor->fetch_canonical_transcript_member_for_gene_member_id($self->dbID);
 
-    } elsif($self->source_name eq 'ENSEMBLPEP') {
+    } elsif($self->source_name eq 'ENSEMBLTRANS') {
 
         my $geneMember = $self->gene_member or return;
 
         return $able_adaptor->fetch_canonical_transcript_member_for_gene_member_id($geneMember->dbID);
+    } else {
+
+        return undef;
     }
 }
 
