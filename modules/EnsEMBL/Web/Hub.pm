@@ -247,12 +247,9 @@ sub url {
   
   if ($all_params) {
     # Parse the existing query string to get params if flag is on
-    %pars = map { /^time=/ || /=$/ ? () : split /=/ } split /;|&/, uri_unescape($self->input->query_string);
-
+    push @{$pars{$_->[0]}}, $_->[1] for map { /^time=/ || /=$/ ? () : [ split /=/ ]} split /;|&/, uri_unescape($self->input->query_string);
   } elsif ($params->{'__clear'}) {
-    # Skip adding the core params if clear flag is on
-    delete $params->{'__clear'};
-
+    delete $params->{'__clear'}; # Skip adding the core params if clear flag is on
   } else {
     %pars = %{$self->core_params};
 
@@ -289,7 +286,7 @@ sub url {
     next unless defined $pars{$p};
 
     # Don't escape colon or space
-    $url .= sprintf '%s=%s;', uri_escape($p), uri_escape($_, "^A-Za-z0-9\-_ .!~*'():\/") for ref $pars{$p} ? @{$pars{$p}} : $pars{$p};
+    $url .= sprintf '%s=%s;', uri_escape($p), uri_escape($_, "^A-Za-z0-9\-_ .!~*'():\/") for ref $pars{$p} ? sort @{$pars{$p}} : $pars{$p};
 
   }
 
