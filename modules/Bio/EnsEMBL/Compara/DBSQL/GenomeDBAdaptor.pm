@@ -376,84 +376,73 @@ sub get_species_name_from_core_MetaContainer {
 
 =cut
 
-sub store{
-  my ($self,$gdb) = @_;
+sub store {
+    my ($self, $gdb) = @_;
 
-  unless(defined $gdb && ref $gdb &&
-	 $gdb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
-    throw("Must have genomedb arg [$gdb]");
-  }
-
-  my $name = $gdb->name;
-  my $assembly = $gdb->assembly;
-  my $assembly_default = $gdb->assembly_default;
-  my $taxon_id = $gdb->taxon_id;
-  my $genebuild = $gdb->genebuild;
-  my $locator = $gdb->locator;
-
-  unless($name && $assembly && $taxon_id) {
-	  throw("genome db must have a name, assembly, and taxon_id");
-  }
-
-  my $sth = $self->prepare("
-      SELECT genome_db_id
-      FROM genome_db
-      WHERE taxon_id='$taxon_id' AND name = '$name'
-      AND assembly = '$assembly' AND genebuild = '$genebuild'
-   ");
-
-  $sth->execute;
-
-  my ($dbID) = $sth->fetchrow_array();
-
-  $sth->finish();
-
-  if(!$dbID) {
-    #if the genome db has not been stored before, store it now
-
-     my $sql = qq(
-           INSERT into genome_db (name,assembly,taxon_id,assembly_default,genebuild,locator)
-           VALUES (?,?,?,?,?,?)
-        );
-
-     #print("$sql\n");
-     $sth = $self->prepare($sql);
-     $sth->bind_param(1, $name, SQL_VARCHAR);
-     $sth->bind_param(2, $assembly, SQL_VARCHAR);
-     $sth->bind_param(3, $taxon_id, SQL_INTEGER);
-     $sth->bind_param(4, $assembly_default, SQL_TINYINT);
-     $sth->bind_param(5, $genebuild, SQL_VARCHAR);
-     $sth->bind_param(6, $locator, SQL_VARCHAR);
-
-    if($sth->execute()) {
-      $dbID = $sth->{'mysql_insertid'};
-      $sth->finish();
-
-      if($gdb->dbID) {
-        $sql = "UPDATE genome_db SET genome_db_id=".$gdb->dbID .
-               " WHERE genome_db_id=$dbID";
-        my $sth = $self->prepare($sql);
-        if($sth->execute()) { $dbID = $gdb->dbID; }
-        $sth->finish();
-      }
+    unless(defined $gdb && ref $gdb && $gdb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
+        throw("Must have genomedb arg [$gdb]");
     }
-  } else {
-    my $sql = "UPDATE genome_db SET ".
-              " assembly_default = '$assembly_default'".
-              " ,locator = '$locator'".
-              " WHERE genome_db_id=$dbID";
-    #print("$sql\n");
-    $sth = $self->prepare($sql);
-    $sth->execute();
-    $sth->finish();
-  }
 
-  #update the genomeDB object so that it's dbID and adaptor are set
-  $gdb->dbID($dbID);
-  $gdb->adaptor($self);
+    my $dbID                = $gdb->dbID;
+    my $name                = $gdb->name;
+    my $assembly            = $gdb->assembly;
+    my $genebuild           = $gdb->genebuild;
 
-  return $dbID;
+    my $taxon_id            = $gdb->taxon_id;
+    my $assembly_default    = $gdb->assembly_default;
+    my $locator             = $gdb->locator;
+
+    unless($name && $assembly && $genebuild && $taxon_id) {
+        throw("GenomeDB object must have a name, assembly, genebuild and taxon_id");
+    }
+
+    my $dbid_check = $dbID ? "genome_db_id=$dbID" : '0';
+    my @unique_key_data = ($name, $assembly, $genebuild);
+
+    my $sth_select = $self->prepare("SELECT genome_db_id, (name=? AND assembly=? AND genebuild=?) FROM genome_db WHERE $dbid_check OR (name=? AND assembly=? AND genebuild=?)");
+    $sth_select->execute( @unique_key_data, @unique_key_data );
+    my $vectors = $sth_select->fetchall_arrayref();
+    $sth_select->finish();
+
+    my $store_method;
+
+    if( scalar(@$vectors) == 0 ) { # none found, safe to insert
+
+        $store_method = 'INSERT';
+
+    } elsif( scalar(@$vectors) >= 2 ) {
+
+        die "Attempting to store a GenomeDB object with dbID=$dbID and name/assembly/genebuild=$name/$assembly/$genebuild experienced partial collisions both with dbID and UNIQUE KEY in the db";
+
+    } else {
+        my ($stored_dbID, $unique_key_check) = @{$vectors->[0]};
+
+        if(!$unique_key_check) {
+
+            die "Attempting to store a GenomeDB object with dbID=$dbID experienced a collision with same dbID but different data";
+
+        } elsif($dbID and ($dbID != $stored_dbID)) {
+
+            die "Attempting to store a GenomeDB object with name/assembly/genebuild=$name/$assembly/$genebuild experienced a collision with same UNIQUE KEY but different dbID";
+
+        } else {
+
+            $dbID = $stored_dbID;
+            $store_method = 'REPLACE';
+        }
+    }
+
+    my $sth_store = $self->prepare("$store_method INTO genome_db (genome_db_id, name, assembly, genebuild, taxon_id, assembly_default, locator) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $sth_store->execute( $dbID, $name, $assembly, $genebuild, $taxon_id, $assembly_default, $locator );
+
+    $dbID ||= $self->dbc->db_handle->last_insert_id(undef, undef, 'genome_db', 'genome_db_id');
+    $gdb->dbID( $dbID );
+    $gdb->adaptor( $self );
+    $sth_store->finish();
+
+    return $gdb;
 }
+
 
 =head2 create_GenomeDBs
 
