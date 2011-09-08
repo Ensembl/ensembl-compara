@@ -131,7 +131,7 @@ sub fetch_subtree_under_node {
   }
 
   unless ($node->left_index && $node->right_index) {
-    warning("fetch_tree_at_node_id subroutine assumes that left and right index has been built and store in the database.\n This does not seem to be the case for node_id=".$node->node_id.". Returning node.\n");
+    warning("fetch_subtree_under_node subroutine assumes that left and right index has been built and store in the database.\n This does not seem to be the case for node_id=".$node->node_id.". Returning node.\n");
     return $node;
   }
 
@@ -155,21 +155,7 @@ sub fetch_tree_at_node_id {
 
   my $node = $self->fetch_node_by_node_id($node_id);
 
-  unless ($node->left_index && $node->right_index) {
-    warning("fetch_tree_at_node_id subroutine assumes that left and right index has been built and store in the database.\n This does not seem to be the case for node_id=$node_id. Using fetch_node_by_node_id instead, and returning node.\n");
-    return $node;
-  }
-
-  my $table = $self->tables->[0]->[0];
-  my $alias = $self->tables->[0]->[1];
-
-  my $constraint = ", $table AS root_node WHERE $alias.left_index
-                         BETWEEN root_node.left_index AND root_node.right_index
-                    AND root_node.node_id=". $node_id;
-
-  my $all_nodes = $self->_generic_fetch($constraint);
-  my $root = $self->_build_tree_from_nodes($all_nodes);
-  return $root;
+  return $self->fetch_subtree_under_node($node);
 }
 
 
