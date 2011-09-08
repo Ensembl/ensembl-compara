@@ -74,7 +74,7 @@ sub default_options {
     #Dirs
 #    ensembl_cvs_root_dir  =>  '',
     exe_dir               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
-    base_dir              =>  '/nfs/panda/ensemblgenomes/production/compara/'.$ENV{USER}.'/hive',
+    base_dir              =>  '/nfs/panda/ensemblgenomes/production/compara/'.$self->o('ENV', 'USER').'/hive',
     work_dir              =>  $self->o('base_dir').'/'.$self->o('mlss_id').'/PT',
     blast_tmp_dir         =>  $self->o('work_dir').'/blastTmp',
 
@@ -150,7 +150,7 @@ sub default_options {
     reuse_core_sources_locs   => [],
     reuse_db                  => q{}, #Set to this to ignore reuse otherwise ....
 
-    ignore_reuse => [], # set this to empty or to the genome db names we should ignore
+    do_not_reuse_list => [], # set this to empty or to the genome db names we should ignore
 
 #    reuse_core_sources_locs   => [ $self->o('staging_2') ],
 #    curr_core_sources_locs    => [ $self->o('clusterprod_1') ],
