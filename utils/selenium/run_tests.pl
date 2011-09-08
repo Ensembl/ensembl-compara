@@ -18,7 +18,7 @@ BEGIN {
 
 # check to see if the selenium server is online
 my $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
-$ua->timeout(60);
+$ua->timeout(10);
 my $response = $ua->get("http://172.20.10.187:4444/selenium-server/driver/?cmd=testComplete");
 if($response->content ne 'OK') { print "\nSelenium Server is offline !!!!\n";exit;}
 

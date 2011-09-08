@@ -1,5 +1,4 @@
 #!/usr/local/bin/perl
-
 use strict;
 use lib '../modules';
 use Getopt::Long;
@@ -10,8 +9,6 @@ use LWP::UserAgent;
 my $start_time = time;
 my $output_dir = '.';
 my $cmd;
-
-
 my ($module, $url, $timeout, $browser);
 
 GetOptions(
@@ -27,7 +24,7 @@ my @module = split(/,/, $module) if($module);
 
 # check to see if the selenium server is online
 my $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
-$ua->timeout(60);
+$ua->timeout(10);
 my $response = $ua->get("http://172.20.10.187:4444/selenium-server/driver/?cmd=testComplete");
 if($response->content ne 'OK') { print "\nSelenium Server is offline !!!!\n";exit;}
 
@@ -71,12 +68,10 @@ foreach (@species_modules) {
   
   my $species = qq{--species "all"}; #by default all species
   $species    = qq{--species "mus_musculus"} if ($_ eq 'Regulation'); #Regulation test module needs to be run for mouse only
-  $species    = qq{--species "homo_sapiens"} if ($_ eq 'Variation'); #Variation test module needs to be run for human only
-  
+  $species    = qq{--species "homo_sapiens"} if ($_ eq 'Variation'); #Variation test module needs to be run for human only  
   
   $cmd = qq{perl run_tests.pl --module "$_" $species $timeout $url > "test_reports/$report" 2>&1 };
   #print "  $cmd\n";
   system $cmd;  
 }
-
 printf "\nRuntime was %s secs\n", time - $start_time;
