@@ -133,7 +133,7 @@ foreach my $index (@indexes) {
   }
 
   foreach my $species ( @species ) {
-    $conf->{'speciesname_list'} = undef;
+   $conf->{'speciescommonname_list'} = undef;
     my $single_species = 0;
     my %dbs = %{$SD->get_config($species,'databases')||{}};
     $conf->{'dbs'}                     = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
@@ -152,10 +152,10 @@ foreach my $index (@indexes) {
 
 #      next if ($species =~ /^[N-Z]/);
 #      next unless $species =~ /Callithrix_jacchus|Meleagris_gallopavo|Nomascus_leucogenys|Oryctolagus_cuniculus/;
-      $conf->{'species'}   = $species;
+      $conf->{'species'}                = $species;
+      $conf->{'speciesname'}            = $species;
+      $conf->{'authority'}              = $SD->get_config($species,'AUTHORITY');
       $conf->{'speciescommonname_list'}{$SD->get_config($species,'SPECIES_COMMON_NAME')}++;
-      $conf->{'speciesname_list'}{$species}++;
-      $conf->{'authority'} = $SD->get_config($species,'AUTHORITY');
 
     }
 
@@ -602,7 +602,9 @@ sub dumpVariation {
   $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
 
   my ($ssid_sth, $stmt,$ssid_hash);
-  if ($dbspecies ne 'Homo_sapiens') {
+  if (1) {
+    # if the human database gets so big that dumping in one go runs out of memory, then uncomment the next line and use in place of the one above
+    #  if ($dbspecies ne 'Homo_sapiens') {
     print LOG "    Preparing to get extra ssID info ", &date_and_mem, "\n";
     $stmt = qq{SELECT variation_id,
                       GROUP_CONCAT('ss',subsnp_id) as ssid
@@ -678,14 +680,14 @@ sub dumpVariation {
           $timed_out++;
         }
         if ($timed_out > 5) {
-          print LOG "WARNING: You'll need to reindex human Variations, can't maintain connection\n";
+          print LOG "WARNING: You'll need to reindex $dbspecies Variations, can't maintain connection\n";
           return 0;
         }
 
         (my $res) = $ssid_sth->fetchrow_arrayref();
         if ($conf->{'dbh'}->err) {
-          print LOG "Data retrieval for $variation_name terinated early:\n".$conf->{'dbh'}->errstr."\n";
-          print LOG "WARNING: You'll need to reindex human Variations, can't maintain connection\n";
+          print LOG "Data retrieval for $variation_name terminated early:\n".$conf->{'dbh'}->errstr."\n";
+          print LOG "WARNING: You'll need to reindex $dbspecies Variations, can't maintain connection\n";
           return 0;
         }
         $ssids = $res->[0];
@@ -862,20 +864,22 @@ sub dumpStructuralVariations {
   my $scale           = $SD->ENSEMBL_GENOME_SIZE || 1;
   my $max_length      = $scale *= 1e6;
   my $T = $conf->{'dbh'}->selectall_arrayref(qq(
-    SELECT v.structural_variation_id,
-           v.variation_name,
+    SELECT sv.structural_variation_id,
+           sv.variation_name,
            s.name,
            s.description,
-           r.name,
-           v.seq_region_start,
-           v.seq_region_end,
+           sr.name,
+           svf.seq_region_start,
+           svf.seq_region_end,
            group_concat(ssv.name)
       FROM $VariationDB.source as s,
-           $VariationDB.seq_region as r,
-           $VariationDB.structural_variation as v LEFT JOIN $VariationDB.supporting_structural_variation as ssv ON v.structural_variation_id = ssv.structural_variation_id
-     WHERE s.source_id = v.source_id
-        AND v.seq_region_id = r.seq_region_id
-   GROUP BY v.structural_variation_id));
+           $VariationDB.seq_region as sr,
+           $VariationDB.structural_variation_feature as svf,
+           $VariationDB.structural_variation as sv LEFT JOIN $VariationDB.supporting_structural_variation as ssv ON sv.structural_variation_id = ssv.structural_variation_id
+     WHERE s.source_id = sv.source_id
+       AND sv.structural_variation_id = svf.structural_variation_id
+       AND svf.seq_region_id = sr.seq_region_id
+  GROUP BY sv.structural_variation_id));
   foreach my $row ( @$T ) {
     my $id = $row->[1];
     my $location = $row->[4] .":" . $row->[5] ."-". $row->[6];
@@ -884,7 +888,8 @@ sub dumpStructuralVariations {
     my $action = ($length >> $max_length) ? 'Overview' : 'View';
     my $params = ($length >> $max_length) ? { 'cytoview' => 'variation_feature_structural=normal' }
       : { 'contigviewbottom' => 'variation_feature_structural=normal' };
-    my $desc = qq(A structural variation from $row->[2], identified by $row->[3]. This variation has been mapped to chromosome $row->[4], from $row->[5] to $row->[6]. );
+#    my $desc = qq(A structural variation from $row->[2], identified by $row->[3]. This variation has been mapped to chromosome $row->[4], from $row->[5] to $row->[6]. );
+    my $desc = qq(A structural variation from $row->[2], identified by $row->[3].);
     &p( StrucVarLine( $dbspecies, $id, $evidence, $location, $desc, $action, $params, $counter ), $nogzip, $fh);
   }
   return footer( $counter->(),$nogzip,$fh);
@@ -1208,7 +1213,7 @@ sub dumpFamily {
   my $taxon_id = ($t_sth->fetchrow);
   return unless $taxon_id;
 
-  my ($family_present) = $conf->{'dbh'}->selectrow_array(qq(SELECT count(*) from family));
+  my ($family_present) = $conf->{'dbh_compara'}->selectrow_array(qq(SELECT count(*) from family));
   return unless $family_present;
 
 
@@ -2748,10 +2753,9 @@ sub common_fields {
   if ($search_engine eq 'lucene') {
     $xml = qq(
     <field name="species">$species</field>);
-    foreach my $sp (keys %{$conf->{'speciesname_list'}}) {
+    my $sp = $conf->{'speciesname'};
       $xml .= qq(
     <field name="species_name">$sp</field>);
-    }
     foreach my $sp (keys %{$conf->{'speciescommonname_list'}}) {
       $xml .= qq(
     <field name="species_common_name">$sp</field>);
