@@ -5,6 +5,7 @@ use Getopt::Long;
 use Class::Inspector;
 use FindBin qw($Bin);
 use vars qw( $SERVERROOT );
+use LWP::UserAgent;
 
 BEGIN {
   $SERVERROOT = "$Bin/../..";
@@ -14,6 +15,12 @@ BEGIN {
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;    
 }
+
+# check to see if the selenium server is online
+my $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
+$ua->timeout(60);
+my $response = $ua->get("http://172.20.10.187:4444/selenium-server/driver/?cmd=testComplete");
+if($response->content ne 'OK') { print "\nSelenium Server is offline !!!!\n";exit;}
 
 my $module;
 my $url = 'http://test.ensembl.org';
