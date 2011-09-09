@@ -1262,9 +1262,8 @@ sub _sort_and_restrict_GenomicAlignBlocks {
       if ($this_genomic_align_block->reference_genomic_align->dnafrag_end > $last_end) {
         $this_genomic_align_block = $this_genomic_align_block->restrict_between_reference_positions($last_end + 1, undef);
       } else {
-        warning("Ignoring Bio::EnsEMBL::Compara::GenomicAlignBlock #".
-                ($this_genomic_align_block->dbID or "-unknown")." because it overlaps".
-                " previous Bio::EnsEMBL::Compara::GenomicAlignBlock");
+	  warning("Ignoring GenomicAlignBlock because it overlaps".
+                " previous GenomicAlignBlock");
         next;
       }
     }
@@ -1310,32 +1309,77 @@ sub _sort_GenomicAlignBlocks {
 
 sub _sort_gabs {
 
-  if ($a->reference_genomic_align->dnafrag_start == $b->reference_genomic_align->dnafrag_start) {
-    ## This may happen when a block has been splitted into small pieces and some of them contain
-    ## gaps only for the reference species. In this case, use another species for sorting these
-    ## genomic_align_blocks
-    for (my $i = 0; $i<@{$a->get_all_non_reference_genomic_aligns()}; $i++) {
-      for (my $j = 0; $j<@{$b->get_all_non_reference_genomic_aligns()}; $j++) {
-        next if ($a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_id !=
-            $b->get_all_non_reference_genomic_aligns->[$j]->dnafrag_id);
-        if (($a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_start !=
-                $b->get_all_non_reference_genomic_aligns->[$j]->dnafrag_start) and
-            ($a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_strand ==
-                $b->get_all_non_reference_genomic_aligns->[$j]->dnafrag_strand)) {
-          ## This other genomic_align is not a full gap and ca be used to sort these blocks
-          if ($a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_strand == 1) {
-            return $a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_start <=> 
-                $b->get_all_non_reference_genomic_aligns->[$j]->dnafrag_start
-          } else {
-            return $b->get_all_non_reference_genomic_aligns->[$j]->dnafrag_start <=> 
-                $a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_start
-          }
-        }
-      }
+    if (UNIVERSAL::isa($a, "Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+	_sort_genomic_align_block();
+    } else {
+	_sort_genomic_align_tree();
     }
-  } else {
-    return $a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start
-  }
+}
+
+sub _sort_genomic_align_block {
+    
+    if ($a->reference_genomic_align->dnafrag_start == $b->reference_genomic_align->dnafrag_start) {
+	## This may happen when a block has been split into small pieces and some of them contain
+	## gaps only for the reference species. In this case, use another species for sorting these
+	## genomic_align_blocks
+	for (my $i = 0; $i<@{$a->get_all_non_reference_genomic_aligns()}; $i++) {
+	    for (my $j = 0; $j<@{$b->get_all_non_reference_genomic_aligns()}; $j++) {
+		next if ($a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_id !=
+			 $b->get_all_non_reference_genomic_aligns->[$j]->dnafrag_id);
+		if (($a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_start !=
+		     $b->get_all_non_reference_genomic_aligns->[$j]->dnafrag_start) and
+		    ($a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_strand ==
+		     $b->get_all_non_reference_genomic_aligns->[$j]->dnafrag_strand)) {
+		    ## This other genomic_align is not a full gap and ca be used to sort these blocks
+		    if ($a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_strand == 1) {
+			return $a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_start <=> 
+			  $b->get_all_non_reference_genomic_aligns->[$j]->dnafrag_start;
+		    } else {
+			return $b->get_all_non_reference_genomic_aligns->[$j]->dnafrag_start <=> 
+			  $a->get_all_non_reference_genomic_aligns->[$i]->dnafrag_start;
+		    }
+		}
+	    }
+	}
+    } else {
+	return $a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start
+    }
+}
+
+sub _sort_genomic_align_tree {
+
+    if ($a->reference_genomic_align->dnafrag_start == $b->reference_genomic_align->dnafrag_start) {
+	## This may happen when a block has been split into small pieces and some of them contain
+	## gaps only for the reference species. In this case, use another species for sorting these
+	## genomic_align_blocks
+	my $a_leaves = $a->get_all_leaves;
+	my $b_leaves = $b->get_all_leaves;
+	
+	for (my $i = 0; $i < @$a_leaves; $i++) {
+	    for (my $j = 0; $j < @$b_leaves; $j++) {
+		#look at high coverage sequences only
+		my $a_gas = $a_leaves->[$i]->get_all_genomic_aligns_for_node;
+		next if (@$a_gas > 1);
+		my $a_ga = $a_gas->[0];
+		
+		my $b_gas = $b_leaves->[$j]->get_all_genomic_aligns_for_node;
+		next if (@$b_gas > 1);
+		my $b_ga = $b_gas->[0];
+		
+		next if ($a_ga->dnafrag_id != $b_ga->dnafrag_id);
+		if (($a_ga->dnafrag_start != $b_ga->dnafrag_start) and ($a_ga->dnafrag_strand == $b_ga->dnafrag_strand)) {
+		    ## This other genomic_align is not a full gap and ca be used to sort these blocks
+		    if ($a_ga->dnafrag_strand == 1) {
+			return $a_ga->dnafrag_start <=> $b_ga->dnafrag_start;
+		    } else {
+			return $b_ga->dnafrag_start <=> $a_ga->dnafrag_start;
+		    }
+		}
+	    }
+	}
+    } else {
+	return $a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start
+    }
 }
 
 =head2 _sort_and_compile_GenomicAlignBlocks
