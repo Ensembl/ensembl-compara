@@ -24,9 +24,16 @@ sub fetch_input {
 
 sub run {
     my ($self) = @_;
+    my $nc_tree_id = $self->param('nc_tree_id');
     if ($self->param('single_peptide_tree')) {
         $self->input_job->incomplete(0);
         die "single peptide tree\n";
+    }
+
+    if ($self->param('tag_gene_count') > 1000) { ## Too much
+        $self->input_job->incomplete(0);
+        my $tag_gene_count = $self->param('tag_gene_count');
+        die "family $nc_tree_id has too many member ($tag_gene_count). No genomic alignments will be computed\n";
     }
 
     if ($self->param('tag_residue_count') > 150000) {  ## Likely to take too long
@@ -40,7 +47,7 @@ sub run {
                                     'fastTreeTag' => "ftga_IT_nj",
                                     'raxmlLightTag' => "ftga_IT_ml",
                                     'alignment_id' => $self->param('alignment_id'),
-                                   },1
+                                   },3
                                   );
 
         $self->input_job->incomplete(0);
@@ -56,8 +63,9 @@ sub run {
                                    }, -1
                                   );
         # Should we die here? Nothing more to do in the Runnable?
+        my $tag_residue_count = $self->param('tag_residue_count');
         $self->input_job->incomplete(0);
-        die "Re-scheduled in hugemem queue\n";
+        die "Re-scheduled in hugemem queue ($tag_residue_count bps)\n";
     } else {
         $self->run_mafft;
         $self->fasta2phylip;
