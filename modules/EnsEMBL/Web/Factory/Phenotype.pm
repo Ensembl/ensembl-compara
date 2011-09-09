@@ -69,6 +69,25 @@ sub createObjects {
   $self->DataObjects($object);
 }
 
+sub _create_Gene {
+  ### Fetches all the genes for a given identifier (usually only one, but could be multiple
+  ### Args: db
+  ### Returns: hashref containing a Data::Bio::Gene object
+  my ($self, $db, $id) = @_;
+  my ($genes_only, $real_id);
+  
+  if ($id) {
+    $genes_only = 1;
+    $real_id = $id;
+  } else {
+    $id = $self->param('id');
+  }
+  
+  my $genes = $self->_generic_create('Gene', $id =~ /^ENS/ ? 'fetch_by_stable_id' : 'fetch_all_by_external_name', $db, $real_id, 'no_errors');
+  
+  return $genes_only ? $genes : { Gene => EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes) };
+}
+
 sub _help {
   my ($self, $string) = @_;
 
