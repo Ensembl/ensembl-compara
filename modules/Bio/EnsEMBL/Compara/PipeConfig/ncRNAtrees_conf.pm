@@ -46,7 +46,7 @@ sub default_options {
 
         'pipeline_db' => {                                  # connection parameters
                           -driver => 'mysql',
-                          -host   => 'compara2',
+                          -host   => 'compara4',
                           -port   => 3306,
                           -user   => 'ensadmin',
                           -pass   => $self->o('password'),
@@ -433,7 +433,7 @@ sub pipeline_analyses {
             -flow_into => {
                            -2 => ['genomic_alignment_long'],
                            -1 => ['genomic_alignment_long'],
-                           1  => ['fast_trees'],
+                           3  => ['fast_trees'],
                            2  => ['genomic_tree'],
                           },
         },
@@ -447,6 +447,7 @@ sub pipeline_analyses {
                              'parsimonator_exe' => $self->o('parsimonator_exe'),
                              'raxmlLight_exe' => $self->o('raxmlLight_exe'),
                             },
+             -can_be_empty => 1,
              -rc_id => 1,
             },
 
@@ -498,7 +499,7 @@ sub pipeline_analyses {
             -parameters => {
                             'treebest_exe' => $self->o('treebest_exe'),
                            },
-            -wait_for      => ['recover_epo', 'infernal','genomic_alignment', 'genomic_alignment_long', 'sec_struct_model_tree','sec_struct_model_tree_himem', 'genomic_tree', 'genomic_tree_himem', 'fast_trees' ],
+            -wait_for      => ['recover_epo', 'pre_sec_struct_tree','genomic_alignment', 'genomic_alignment_long', 'sec_struct_model_tree','sec_struct_model_tree_himem', 'genomic_tree', 'genomic_tree_himem', 'fast_trees' ],
             -failed_job_tolerance => 5,
             -flow_into => {
                            1 => [ 'orthotree', 'ktreedist' ],
@@ -530,7 +531,7 @@ sub pipeline_analyses {
 
         {
          -logic_name => 'orthotree_himem',
-         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCOrthotree',
+         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCOrthoTree',
          -hive_capacity => 200,
          -failed_job_tolerance => 5,
          -rc_id => 1,
