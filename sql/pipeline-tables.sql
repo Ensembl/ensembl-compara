@@ -14,7 +14,7 @@ CREATE TABLE genome_db_extn (
   locator                     mediumtext,
 
   UNIQUE KEY genome_db_id  (genome_db_id)
-);
+) ENGINE=InnoDB;
 
 
 -- ----------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ CREATE TABLE genome_db_stats (
     overlap_count   int(10) NOT NULL default 0,
 
     UNIQUE KEY genome_db_id_type (genome_db_id, data_type)
-);
+) ENGINE=InnoDB;
 
 
 -- ----------------------------------------------------------------------------------
@@ -116,14 +116,14 @@ CREATE TABLE dnafrag_chunk_set (
 --   foreign_id          - foreign key link to <table_name> table
 
 CREATE TABLE dna_collection (
- dna_collection_id      int(10) NOT NULL,
+ dna_collection_id      int(10) unsigned NOT NULL,
  table_name             varchar(80),
  foreign_id             int(10) NOT NULL,
  
  FOREIGN KEY (dna_collection_id) REFERENCES subset(subset_id),
 
  UNIQUE(dna_collection_id, table_name, foreign_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 
 CREATE TABLE genomic_align_block_job_track (
@@ -131,7 +131,7 @@ CREATE TABLE genomic_align_block_job_track (
   analysis_job_id         int NOT NULL,
 
   UNIQUE (genomic_align_block_id, analysis_job_id)
-);
+) ENGINE=InnoDB;
 
 -- ----------------------------------------------------------------------------------
 --
@@ -153,7 +153,7 @@ CREATE TABLE `anchor_sequence` (
   `length` int(20) unsigned default NULL,
   PRIMARY KEY  (`anchor_seq_id`),
   KEY `anchor_id_mlss_id` (`anchor_id`, `method_link_species_set_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
 
 --
@@ -178,7 +178,7 @@ CREATE TABLE `anchor_align` (
   `anchor_status` int(10) default NULL,
   PRIMARY KEY  (`anchor_align_id`),
   KEY `anchor_id_mlss_id` (`anchor_id`,`method_link_species_set_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
 
 -- ----------------------------------------------------------------------------------------------
@@ -228,7 +228,7 @@ CREATE TABLE peptide_align_feature_prod (
 #   FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
 
   PRIMARY KEY (peptide_align_feature_id)
-) MAX_ROWS = 300000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci PARTITION BY LINEAR HASH(peptide_align_feature_id) PARTITIONS 50;
+) ENGINE=InnoDB MAX_ROWS = 300000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci PARTITION BY LINEAR HASH(peptide_align_feature_id) PARTITIONS 50;
 
 -- ----------------------------------------------------------------------------------------------
 --

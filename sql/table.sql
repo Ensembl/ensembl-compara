@@ -28,7 +28,7 @@
 
 CREATE TABLE IF NOT EXISTS analysis (
 
-  analysis_id                 int(10) unsigned NOT NULL auto_increment, # unique internal id
+  analysis_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   created                     datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   logic_name                  varchar(40) not null,
   db                          varchar(120),
@@ -138,8 +138,8 @@ CREATE TABLE ncbi_taxa_name (
 #
 
 CREATE TABLE genome_db (
-  genome_db_id                int(10) unsigned NOT NULL auto_increment, # unique internal id
-  taxon_id                    int(10) unsigned DEFAULT 0 NOT NULL, # KF taxon.taxon_id
+  genome_db_id                int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  taxon_id                    int(10) unsigned NOT NULL, # KF taxon.taxon_id
   name                        varchar(40) DEFAULT '' NOT NULL,
   assembly                    varchar(100) DEFAULT '' NOT NULL,
   assembly_default            tinyint(1) DEFAULT 1,
@@ -161,7 +161,7 @@ CREATE TABLE genome_db (
 #
 
 CREATE TABLE species_set (
-  species_set_id              int(10) unsigned NOT NULL auto_increment,
+  species_set_id              int(10) unsigned NOT NULL AUTO_INCREMENT,
   genome_db_id                int(10) unsigned NOT NULL default 0,
 
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
@@ -199,7 +199,7 @@ CREATE TABLE species_set_tag (
 #
 
 CREATE TABLE method_link (
-  method_link_id              int(10) unsigned NOT NULL auto_increment, # unique internal id
+  method_link_id              int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   type                        varchar(50) DEFAULT '' NOT NULL,
   class                       varchar(50) DEFAULT '' NOT NULL,
 
@@ -243,7 +243,7 @@ CREATE TABLE method_link_species_set (
 #
 
 CREATE TABLE synteny_region (
-  synteny_region_id           int(10) unsigned NOT NULL auto_increment, # unique internal id
+  synteny_region_id           int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
@@ -265,7 +265,7 @@ CREATE TABLE synteny_region (
 --   because we store top-level dnafrags only.
 
 CREATE TABLE dnafrag (
-  dnafrag_id                  bigint unsigned NOT NULL auto_increment, # unique internal id
+  dnafrag_id                  bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   length                      int(11) DEFAULT 0 NOT NULL,
   name                        varchar(40) DEFAULT '' NOT NULL,
   genome_db_id                int(10) unsigned DEFAULT 0 NOT NULL, # FK genome_db.genome_db_id
@@ -456,7 +456,7 @@ CREATE TABLE constrained_element (
 #
 
 CREATE TABLE sequence (
-  sequence_id                 int(10) unsigned NOT NULL auto_increment, # unique internal id
+  sequence_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   length                      int(10) NOT NULL,
   sequence                    longtext NOT NULL,
 
@@ -470,7 +470,7 @@ CREATE TABLE sequence (
 #
 
 CREATE TABLE member (
-  member_id                   int(10) unsigned NOT NULL auto_increment, # unique internal id
+  member_id                   int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
   version                     int(10) DEFAULT 0,
   source_name                 ENUM('ENSEMBLGENE','ENSEMBLPEP','Uniprot/SPTREMBL','Uniprot/SWISSPROT','ENSEMBLTRANS','EXTERNALCDS') NOT NULL,
@@ -505,7 +505,7 @@ CREATE TABLE member (
 #
 
 CREATE TABLE subset (
- subset_id      int(10) NOT NULL auto_increment,
+ subset_id      int(10) unsigned NOT NULL AUTO_INCREMENT,
  description    varchar(255),
  dump_loc       varchar(255),
 
@@ -520,8 +520,8 @@ CREATE TABLE subset (
 #
 
 CREATE TABLE subset_member (
-  subset_id   int(10) NOT NULL,
-  member_id   int(10) NOT NULL,
+  subset_id   int(10) unsigned NOT NULL,
+  member_id   int(10) unsigned NOT NULL,
 
   FOREIGN KEY (subset_id) REFERENCES subset(subset_id),
   FOREIGN KEY (member_id) REFERENCES member(member_id),
@@ -537,7 +537,7 @@ CREATE TABLE subset_member (
 #
 
 CREATE TABLE sequence_exon_bounded (
-  sequence_exon_bounded_id    int(10) unsigned NOT NULL auto_increment, # unique internal id
+  sequence_exon_bounded_id    int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   member_id                   int(10) unsigned NOT NULL, # unique internal id
   length                      int(10) NOT NULL,
   sequence_exon_bounded       longtext NOT NULL,
@@ -555,7 +555,7 @@ CREATE TABLE sequence_exon_bounded (
 #
 
 CREATE TABLE sequence_cds (
-  sequence_cds_id             int(10) unsigned NOT NULL auto_increment, # unique internal id
+  sequence_cds_id             int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   member_id                   int(10) unsigned NOT NULL, # unique internal id
   length                      int(10) NOT NULL,
   sequence_cds                longtext NOT NULL,
@@ -595,7 +595,7 @@ CREATE TABLE sequence_cds (
 
 CREATE TABLE peptide_align_feature (
 
-  peptide_align_feature_id    int(10) unsigned NOT NULL auto_increment, # unique internal id
+  peptide_align_feature_id    int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   qmember_id                  int(10) unsigned NOT NULL, # FK member.member_id
   hmember_id                  int(10) unsigned NOT NULL, # FK member.member_id
   qgenome_db_id               int(10) unsigned NOT NULL, # FK genome.genome_id
@@ -636,7 +636,7 @@ CREATE TABLE peptide_align_feature (
 #
 
 CREATE TABLE homology (
-  homology_id                 int(10) unsigned NOT NULL auto_increment, # unique internal id
+  homology_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   stable_id                   varchar(40),
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
   description                 ENUM('ortholog_one2one','apparent_ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','putative_gene_split','contiguous_gene_split','between_species_paralog','possible_ortholog','UBRH','BRH','MBRH','RHS'),
@@ -693,7 +693,7 @@ CREATE TABLE homology_member (
 #
 
 CREATE TABLE family (
-  family_id                   int(10) unsigned NOT NULL auto_increment, # unique internal id
+  family_id                   int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   stable_id                   varchar(40) NOT NULL, # unique stable id, e.g. 'ENSFM'.'0053'.'1234567890'
   version                     INT UNSIGNED NOT NULL,# version of the stable_id (changes only when members move to/from existing families)
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
@@ -734,7 +734,7 @@ CREATE TABLE family_member (
 #
 
 CREATE TABLE domain (
-  domain_id                   int(10) unsigned NOT NULL auto_increment, # unique internal id
+  domain_id                   int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   stable_id                   varchar(40) NOT NULL,
 #  source_id                   int(10) NOT NULL,
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
@@ -784,7 +784,7 @@ CREATE TABLE domain_member (
 #      distance_to_parent    -- distance between node_id and its parent_id
 
 CREATE TABLE protein_tree_node (
-  node_id                         int(10) unsigned NOT NULL auto_increment, # unique internal id
+  node_id                         int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   parent_id                       int(10) unsigned NOT NULL,
   root_id                         int(10) unsigned NOT NULL,
   clusterset_id                   int(10) unsigned NOT NULL,
@@ -1043,7 +1043,7 @@ CREATE TABLE stable_id_history (
 #  constant,all_gaps,single_character,synonymous,default)
 
 CREATE TABLE sitewise_aln (
-  sitewise_id                 int(10) unsigned NOT NULL auto_increment, # unique internal id
+  sitewise_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   aln_position                int(10) unsigned NOT NULL,
   node_id                     int(10) unsigned NOT NULL,
   tree_node_id                int(10) unsigned NOT NULL,
