@@ -133,6 +133,43 @@ sub DESTROY {
 #
 ##########################################
 
+sub get_species_tree_file {
+    my $self = shift @_;
+
+    unless( $self->param('species_tree_file') ) {
+
+        unless( $self->param('species_tree_string') ) {
+
+            my $tag_table_name = 'protein_tree_tag';
+
+            my $sth = $self->dbc->prepare( "select value from $tag_table_name where tag='species_tree_string'" );
+            $sth->execute;
+            my ($species_tree_string) = $sth->fetchrow_array;
+            $sth->finish;
+
+            $self->param('species_tree_string', $species_tree_string)
+                or die "Could not fetch 'species_tree_string' from $tag_table_name";
+        }
+
+        my $species_tree_string = $self->param('species_tree_string');
+        eval {
+            my $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
+            my @leaves = @{$eval_species_tree->get_all_leaves};
+        };
+        if($@) {
+            die "Error parsing species tree from the string '$species_tree_string'";
+        }
+
+            # store the string in a local file:
+        my $species_tree_file = $self->worker_temp_directory . "spec_tax.nh";
+        open SPECIESTREE, ">$species_tree_file" or die "Could not open '$species_tree_file' for writing : $!";
+        print SPECIESTREE $species_tree_string;
+        close SPECIESTREE;
+        $self->param('species_tree_file', $species_tree_file);
+    }
+    return $self->param('species_tree_file');
+}
+
 
 sub run_njtree_phyml {
   my $self = shift;
@@ -154,32 +191,7 @@ sub run_njtree_phyml {
 
   $self->throw("can't find a njtree executable to run\n") unless(-e $treebest_exe);
 
-  # Defining a species_tree
-  # Option 1 is species_tree_string in protein_tree_tag, which then doesn't require tracking files around
-  # Option 2 is species_tree_file which should still work for compatibility
-  my $sql1 = "select value from protein_tree_tag where tag='species_tree_string'";
-  my $sth1 = $self->dbc->prepare($sql1);
-  $sth1->execute;
-  my $species_tree_string = $sth1->fetchrow_hashref;
-  $sth1->finish;
-  my $eval_species_tree;
-  eval {
-    $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string->{value});
-    my @leaves = @{$eval_species_tree->get_all_leaves};
-  };
-
-  if($@) {
-    unless(-e $self->param('species_tree_file')) {
-      $self->throw("can't find species_tree\n");
-    }
-  } else {
-    $self->param('species_tree_string', $species_tree_string->{value});
-    my $spfilename = $self->worker_temp_directory . "spec_tax.nh";
-    open SPECIESTREE, ">$spfilename" or die "Could not open '$spfilename' for writing : $!";
-    print SPECIESTREE $self->param('species_tree_string');
-    close SPECIESTREE;
-    $self->param('species_tree_file', $spfilename);
-  }
+  my $species_tree_file = $self->get_species_tree_file();
 
   # ./njtree best -f spec-v4.1.nh -p tree -o $BASENAME.best.nhx \
   # $BASENAME.nucl.mfa -b 100 2>&1/dev/null
@@ -190,8 +202,8 @@ sub run_njtree_phyml {
     if(my $max_diff_lk = $self->param('max_diff_lk')) {
         $cmd .= " -Z $max_diff_lk";
     }
-    if ($self->param('species_tree_file')) {
-      $cmd .= " -f ". $self->param('species_tree_file');
+    if ($species_tree_file) {
+      $cmd .= " -f ". $species_tree_file;
     }
     $cmd .= " ". $input_aln;
     $cmd .= " -p tree ";
@@ -263,8 +275,8 @@ sub run_njtree_phyml {
     # ./njtree phyml -nS -f species_tree.nh -p 0.01 -o $BASENAME.cons.nh $BASENAME.nucl.mfa
     $cmd = $treebest_exe;
     $cmd .= " phyml -nS";
-    if($self->param('species_tree_file')) {
-      $cmd .= " -f ". $self->param('species_tree_file');
+    if($species_tree_file) {
+      $cmd .= " -f ". $species_tree_file;
     }
     $cmd .= " ". $input_aln;
     $cmd .= " -p 0.01 ";
@@ -283,8 +295,8 @@ sub run_njtree_phyml {
     # nice -n 19 ./njtree sdi -s species_tree.nh $BASENAME.cons.nh > $BASENAME.cons.nhx
     $cmd = $treebest_exe;
     $cmd .= " sdi ";
-    if ($self->param('species_tree_file')) {
-      $cmd .= " -s ". $self->param('species_tree_file');
+    if ($species_tree_file) {
+      $cmd .= " -s ". $species_tree_file;
     }
     $cmd .= " ". $intermediate_newick_file;
     $cmd .= " 1> " . $newick_file;

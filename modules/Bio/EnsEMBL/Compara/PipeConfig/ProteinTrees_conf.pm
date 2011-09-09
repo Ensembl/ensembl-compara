@@ -72,7 +72,7 @@ sub default_options {
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40075,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'release'               => '64',
-        'rel_suffix'            => 'a',    # an empty string by default, a letter otherwise
+        'rel_suffix'            => 'b',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
         'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
 
@@ -258,8 +258,9 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
                 'mode'          => 'overwrite',
+                'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
-            -hive_capacity => 10,
+            -hive_capacity => 1,    # linearize all copying to make sure we don't go against foreign keys
         },
 
 # ---------------------------------------------[turn all tables except 'genome_db' to InnoDB]---------------------------------------------
@@ -267,13 +268,13 @@ sub pipeline_analyses {
         {   -logic_name => 'innodbise_table_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='".$self->o('pipeline_db','-dbname')."' AND table_name!='genome_db' AND engine='MyISAM' ",
+                'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='".$self->o('pipeline_db','-dbname')."' AND table_name!='meta' AND engine='MyISAM' ",
                 'fan_branch_code' => 2,
             },
             -wait_for  => [ 'copy_table' ],
             -flow_into => {
                 2 => [ 'innodbise_table'  ],
-                1 => [ 'generate_reuse_ss' ],           # backbone
+                1 => [ 'load_genomedb_factory' ],           # backbone
             },
         },
 
@@ -284,22 +285,6 @@ sub pipeline_analyses {
             },
             -hive_capacity => 10,
             -can_be_empty  => 1,
-        },
-
-# ---------------------------------------------[generate an empty species_set for reuse (to be filled in at a later stage) ]---------
-
-        {   -logic_name => 'generate_reuse_ss',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters => {
-                'sql' => [  "INSERT INTO species_set VALUES ()",   # inserts a dummy pair (auto_increment++, 0) into the table
-                            "DELETE FROM species_set WHERE species_set_id=#_insert_id_0#", # will delete the row previously inserted, but keep the auto_increment
-                ],
-            },
-            -wait_for  => [ 'innodbise_table_factory', 'innodbise_table' ], # have to wait for both, because subfan can be empty
-            -flow_into => {
-                2 => { 'mysql:////meta' => { 'meta_key' => 'reuse_ss_id', 'meta_value' => '#_insert_id_0#' } },     # dynamically record it as a pipeline-wide parameter
-                1 => [ 'load_genomedb_factory' ],       # backbone
-            },
         },
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
@@ -319,9 +304,10 @@ sub pipeline_analyses {
 
                 'fan_branch_code'       => 2,
             },
+            -wait_for  => [ 'innodbise_table' ], # have to wait for both, because subfan can be empty
             -flow_into => {
-                2 => [ 'load_genomedb' ],
-                1 => [ 'make_species_tree', 'accumulate_reuse_ss' ],  # backbone
+                2 => [ 'load_genomedb' ],           # fan
+                1 => [ 'load_genomedb_funnel' ],    # backbone
             },
         },
 
@@ -336,6 +322,29 @@ sub pipeline_analyses {
             },
         },
 
+        {   -logic_name => 'load_genomedb_funnel',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -wait_for => [ 'load_genomedb' ],
+            -flow_into => {
+                1 => [ 'make_species_tree', 'accumulate_reuse_ss', 'generate_reuse_ss' ],  # "backbone"
+            },
+        },
+
+
+# ---------------------------------------------[generate an empty species_set for reuse (to be filled in at a later stage) ]---------
+
+        {   -logic_name => 'generate_reuse_ss',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql' => [  "INSERT INTO species_set (genome_db_id) SELECT genome_db_id FROM genome_db LIMIT 1",   # inserts a dummy pair (auto_increment++, any_genome_db_id) into the table
+                            "DELETE FROM species_set WHERE species_set_id=#_insert_id_0#", # will delete the row previously inserted, but keep the auto_increment
+                ],
+            },
+            -flow_into => {
+                2 => { 'mysql:////meta' => { 'meta_key' => 'reuse_ss_id', 'meta_value' => '#_insert_id_0#' } },     # dynamically record it as a pipeline-wide parameter
+            },
+        },
+
 # ---------------------------------------------[load species tree]-------------------------------------------------------------------
 
         {   -logic_name    => 'make_species_tree',
@@ -343,10 +352,9 @@ sub pipeline_analyses {
             -parameters    => {
                 'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
             },
-            -wait_for => [ 'load_genomedb' ],  # a funnel
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into  => {
-                3 => { 'mysql:////protein_tree_tag' => { 'node_id' => 1, 'tag' => 'species_tree_string', 'value' => '#species_tree_string#' } },
+                3 => { 'mysql:////meta' => { 'meta_key' => 'species_tree_string', 'meta_value' => '#species_tree_string#' } },
             },
         },
 
@@ -361,9 +369,10 @@ sub pipeline_analyses {
                 'prev_release'      => $self->o('prev_release'),
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
+            -wait_for => [ 'generate_reuse_ss' ],
             -hive_capacity => 10,    # allow for parallel execution
             -flow_into => {
-                2 => { 'subset_table_reuse'         => undef,
+                2 => { 'sequence_table_reuse'       => undef,
                        'paf_table_reuse'            => undef,
                        'mysql:////species_set'      => { 'genome_db_id' => '#genome_db_id#', 'species_set_id' => '#reuse_ss_id#' },
                 },
@@ -375,16 +384,48 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',     # a non-standard use of JobFactory for iterative insertion
             -parameters => {
                 'inputquery'      => 'SELECT "reuse_ss_csv" meta_key, GROUP_CONCAT(genome_db_id) meta_value FROM species_set WHERE species_set_id=#reuse_ss_id#',
-                'fan_branch_code' => 3,
+                'fan_branch_code' => 2,
             },
-            -wait_for => [ 'load_genomedb', 'check_reusability' ],
+            -wait_for => [ 'check_reusability' ],
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into => {
-                3 => [ 'mysql:////meta' ],
+                2 => [ 'mysql:////meta' ],
             },
         },
 
 # ---------------------------------------------[reuse members and pafs]--------------------------------------------------------------
+
+        {   -logic_name => 'sequence_table_reuse',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                            'db_conn'    => $self->o('reuse_db'),
+                            'inputquery' => 'SELECT s.* FROM sequence s JOIN member USING (sequence_id) WHERE sequence_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
+                            'fan_branch_code' => 2,
+            },
+            -wait_for => [ 'accumulate_reuse_ss' ], # to make sure some fresh members won't start because they were dataflown first (as this analysis can_be_empty)
+            -can_be_empty  => 1,
+            -hive_capacity => 4,
+            -flow_into => {
+                1 => [ 'member_table_reuse' ],    # n_reused_species
+                2 => [ 'mysql:////sequence' ],
+            },
+        },
+
+        {   -logic_name => 'member_table_reuse',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => $self->o('reuse_db'),
+                'table'         => 'member',
+                'where'         => 'member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
+                'mode'          => 'insertignore',
+		    },
+            -wait_for => [ 'accumulate_reuse_ss' ], # to make sure some fresh members won't start because they were dataflown first (as this analysis can_be_empty)
+            -can_be_empty  => 1,
+            -hive_capacity => 4,
+            -flow_into => {
+                1 => [ 'subset_table_reuse' ],   # n_reused_species
+            },
+        },
 
         {   -logic_name => 'subset_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
@@ -397,7 +438,9 @@ sub pipeline_analyses {
             -wait_for => [ 'accumulate_reuse_ss' ], # to make sure some fresh members won't start because they were dataflown first (as this analysis can_be_empty)
             -can_be_empty  => 1,
             -hive_capacity => 4,
-            -flow_into => [ 'subset_member_table_reuse' ],    # n_reused_species
+            -flow_into => {
+                1 => [ 'subset_member_table_reuse' ],    # n_reused_species
+            },
         },
 
         {   -logic_name => 'subset_member_table_reuse',
@@ -410,37 +453,8 @@ sub pipeline_analyses {
             -can_be_empty  => 1,
             -hive_capacity => 4,
             -flow_into => {
-                1 => [ 'member_table_reuse' ],    # n_reused_species
-                2 => [ 'mysql:////subset_member' ],
-            },
-        },
-
-        {   -logic_name => 'member_table_reuse',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters => {
-                'src_db_conn'   => $self->o('reuse_db'),
-                'table'         => 'member',
-                'where'         => 'member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
-                'mode'          => 'insertignore',
-		 },
-            -wait_for => [ 'accumulate_reuse_ss' ], # to make sure some fresh members won't start because they were dataflown first (as this analysis can_be_empty)
-            -can_be_empty  => 1,
-            -hive_capacity => 4,
-            -flow_into => [ 'sequence_table_reuse' ],   # n_reused_species
-        },
-
-        {   -logic_name => 'sequence_table_reuse',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                            'db_conn'    => $self->o('reuse_db'),
-                            'inputquery' => 'SELECT s.* FROM sequence s JOIN member USING (sequence_id) WHERE sequence_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
-                            'fan_branch_code' => 2,
-            },
-            -can_be_empty  => 1,
-            -hive_capacity => 4,
-            -flow_into => {
                 1 => [ 'store_sequences_factory', 'dump_subset_create_blastdb' ],
-                2 => [ 'mysql:////sequence' ],
+                2 => [ 'mysql:////subset_member' ],
             },
         },
 
