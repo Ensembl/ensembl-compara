@@ -41,7 +41,7 @@ if (-d 'test_reports') {
 my @non_species_modules = qw(Generic);  
 
 #species related test modules .... running every thing by default, new one (species related) needs to be added here
-my @species_modules = qw(GenomeStatistics Karyotype Gene Location Transcript Regulation Variation);
+my @species_modules = qw(GenomeStatistics Gene Karyotype Location Regulation Transcript Variation);
 
 # running specific module from the command line e.g: -module Generic,Gene
 if(@module) {
