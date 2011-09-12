@@ -139,7 +139,7 @@ sub access_ok {
   
   my $self = shift;
   
-  my $filter = $self->not_allowed($self->hub);
+  my $filter = $self->not_allowed($self->hub, $self->object);
   
   if ($filter) {
     my $url = $filter->redirect_url;

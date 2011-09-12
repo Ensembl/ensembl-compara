@@ -186,7 +186,7 @@ sub get_module_names {
 
 # Loops through array of filters and returns the first one that fails
 sub not_allowed {
-  my ($self, $hub, $caller) = @_;
+  my ($self, $hub, $object) = @_;
   
   my $filters = $self->filters || [];
   
@@ -194,7 +194,7 @@ sub not_allowed {
     my $class = 'EnsEMBL::Web::Filter::'.$name;
     
     if ($self->dynamic_use($class)) {
-      my $filter = $class->new({ hub => $hub });
+      my $filter = $class->new({ hub => $hub , object => $object});
       $filter->catch;
       return $filter if $filter->error_code;
     }  else {
