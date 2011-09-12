@@ -1049,7 +1049,7 @@ sub _create_underlying_Slices {
   if ($species_order) {
       my $slices = $self->{_slices};
       for (my $i = (@$slices-1); $i >= 0; --$i) {
-	  if (!defined  $slices->[$i]->{'slice_mapper_pairs'}) {
+	  if (@{$slices->[$i]->{'slice_mapper_pairs'}} == 0) {
 	      #remove from {slices}
 	      delete $self->{slices}->{$slices->[$i]->genome_db->name};
 	      #remove from {_slices}
