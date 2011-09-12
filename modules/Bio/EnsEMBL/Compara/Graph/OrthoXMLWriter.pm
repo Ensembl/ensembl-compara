@@ -349,8 +349,9 @@ sub _write_tree {
 
 sub _is_reliable_duplication {
   my $node = shift;
+  my $dup = $node->get_tagvalue('Duplication');
   my $sis = $node->get_tagvalue('duplication_confidence_score');
-  return ($node->get_tagvalue('Duplication') ne '' and $node->get_tagvalue('Duplication') >= 2 and defined $sis and $sis >= 0.25);
+  return ((defined $dup) and ($dup ne '') and ($dup >= 2) and (defined $sis) and ($sis ne '') and ($sis >= 0.25));
 }
 
 sub _process {
