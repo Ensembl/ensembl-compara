@@ -842,7 +842,6 @@ sub get_all_constrained_elements {
 
 sub _create_underlying_Slices {
   my ($self, $genomic_align_blocks, $expanded, $solve_overlapping, $preserve_blocks, $species_order) = @_;
-
   my $strand = $self->reference_Slice->strand;
   
   my $align_slice_length = 0;
@@ -1045,7 +1044,22 @@ sub _create_underlying_Slices {
       }
     }
   }
+  #It is possible for the same region in the ref species (eg Gibbon) to align to 2 different blocks (pairwise to human in the case of the EPO low coverage alignments). In this case, although the incoming  $genomic_align_blocks will have 2 blocks, the $sorted_genomic_align_blocks will only contain 1 of the blocks. It may happen that one species occurs in one block (eg gorilla) but not in the other. However, the $species_order will contain gorilla but the $sorted_genomic_align_blocks may not. This results in a slice being created for gorilla but it has no slice_mapper_pairs. Must check the slices and remove any that have {'slice_mapper_pairs'} as undef (no alignment comes out as a GAP).
 
+  if ($species_order) {
+      my $slices = $self->{_slices};
+      for (my $i = (@$slices-1); $i >= 0; --$i) {
+	  if (!defined  $slices->[$i]->{'slice_mapper_pairs'}) {
+	      #remove from {slices}
+	      delete $self->{slices}->{$slices->[$i]->genome_db->name};
+	      #remove from {_slices}
+	      splice @$slices, $i, 1;
+	  }
+      }
+  }
+
+
+  
   return $self;
 }
 
