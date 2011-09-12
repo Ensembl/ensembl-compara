@@ -239,7 +239,7 @@ sub inner_HTML {
   not $error and $error_message and warn $error_message or ref $error eq 'SCALAR' and $$error = $error_message;
   return $self->{'_text'} if $self->{'_text'} ne '';
   $html  = '';
-  $html .= $_->outer_HTML for @{$self->{'_child_nodes'}};
+  $html .= $_->node_type eq $self->TEXT_NODE ? $_->text : $_->outer_HTML for @{$self->{'_child_nodes'}};
   return $html;
 }
 
