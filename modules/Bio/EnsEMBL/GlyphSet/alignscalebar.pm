@@ -44,7 +44,7 @@ sub render_align_gap {
   my $container = $self->{'container'};
   my $y = $self->strand > 0 ? 8 : 2;
   
-  my $mp = $container->{'slice_mapper_pairs'};
+  my $mp = $container->get_all_Slice_Mapper_pairs(1);
   my $si = 0;
   my $hs = $mp->[$si];
   my $gs = $hs->{'start'} - 1;
@@ -128,7 +128,7 @@ sub render_align_bar {
   my %colour_map2;
   my @colours = qw(antiquewhite1 mistyrose1 burlywood1 khaki1 cornsilk1 lavenderblush1 lemonchiffon2 darkseagreen2 lightcyan1 papayawhip seashell1);
 
-  foreach my $s (sort {$a->{'start'} <=> $b->{'start'}} @{$self->{'container'}->{'slice_mapper_pairs'}}) {
+  foreach my $s (sort {$a->{'start'} <=> $b->{'start'}} @{$self->{'container'}->get_all_Slice_Mapper_pairs(1)}) {
     my $s2        = $s->{'slice'};
     my $ss        = $s->{'start'};
     my $sst       = $s->{'strand'};
