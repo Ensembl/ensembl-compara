@@ -24,7 +24,6 @@ my @flags = qw(database=s user=s port=i host=s password=s help man adaptor=s out
 GetOptions($opts, @flags) or pod2usage(1);
 pod2usage( -exitstatus => 0, -verbose => 1 ) if $opts->{help};
 pod2usage( -exitstatus => 0, -verbose => 2 ) if $opts->{man};
-
 pod2usage( -exitstatus => 0, -verbose => 2 ) if scalar(keys %$opts) == 0;
 
 die "adaptor name (ProteinTree or NCTree) must be given\n" if not defined ${$opts}{adaptor};
@@ -34,7 +33,7 @@ my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => ${$opts}{host},
                                                      -user   => ${$opts}{user},
                                                      -dbname => ${$opts}{database},
 	                                               -pass   => ${$opts}{password});
-my $file_handle = IO::File->new(${$opts}{output}, 'w');
+my $file_handle = (defined ${$opts}{output} ? IO::File->new(${$opts}{output}, 'w') : *STDOUT);
 
 my $s = 'get_'.${$opts}{adaptor}.'Adaptor';
 my $ta = $db->$s;
