@@ -77,7 +77,7 @@ sub param_defaults {
     return {
             'cdna'              => 1,   # always use cdna for njtree_phyml
             'bootstrap'         => 1,
-		'correction_mode'   => 'jackknife',   # can be either max_diff_lk or jackknife
+            'correction_mode'   => 'max_diff_lk',   # can be either max_diff_lk or jackknife
     };
 }
 
