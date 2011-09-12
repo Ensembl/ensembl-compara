@@ -357,7 +357,7 @@ sub get_full_name {
   
   if (ref $slice eq 'Bio::EnsEMBL::Compara::AlignSlice::Slice') {
     my $species_name = $slice->seq_region_name;
-    my $chr_name     = $slice->{'slice_mapper_pairs'}->[0]->{'slice'}->{'seq_region_name'};
+    my $chr_name     = $slice->get_all_Slice_Mapper_pairs(1)->[0]->{'slice'}->{'seq_region_name'};
     
     $id = "$species_name:$chr_name";
   } else {
