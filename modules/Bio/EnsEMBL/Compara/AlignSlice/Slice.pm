@@ -149,6 +149,7 @@ sub new {
   $self->{display_Slice_name} = $self->{seq_region_name};
   $self->{display_Slice_name} =~ s/ /_/g;
   $self->{seq_region_length} = $length;
+  $self->{slice_mapper_pairs} = [];
 #   $self->{located_slices} = [];
 
   if (!$self->genome_db) {
