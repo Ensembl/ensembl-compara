@@ -36,9 +36,9 @@ RUNNING TESTS
 
   The following options are also supported:
     
-    --species_name 
+    --species
       specify  which species should be tested, e.g.
-      $ run_selenium_tests.pl --module Fungi --url http://fungi.ensembl.org --species_name "Aspergillus nidulans"
+      $ run_selenium_tests.pl --module Fungi --url http://fungi.ensembl.org --species "Aspergillus nidulans". Note -species all will run the script for all species.
     
     --timeout 
       specify the default timeout in milliseconds
@@ -64,6 +64,17 @@ RUNNING BATCH SCRIPT
   perl run_tests_batch.pl
 
   reports generated in test_reports/ 
+
+  The following options can be specified:
+
+    --module
+      specify which module to run and the report for the specific module will be generated e.g. --module Karyotype will run the module karyotype only. 
+
+    --url
+      specify which url to run the tests e.g. --url http://www.ensembl.org
+
+    --timeout
+      set a timeout for the tests to run, by default it is set to 5000ms. This is to increase the waiting time for the page to load for testing. e.g. --timeout 10000
 
 QUESTIONS
   
