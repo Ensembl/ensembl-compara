@@ -112,7 +112,7 @@ sub content {
     my $html;
     
     if ($class && $self->dynamic_use($class)) {
-      my $filter = $class->new;
+      my $filter = $class->new({hub => $self->hub});
       
       $html .= '<div class="panel print_hide">';
       $html .= sprintf '<div style="width:80%" class="error"><h3>Error</h3><div class="error-pad">%s</div></div>', $filter->error_message($self->filter_code);
@@ -142,7 +142,7 @@ sub get_json {
     my $class = 'EnsEMBL::Web::Filter::' . $self->filter_module;
     
     if ($class && $self->dynamic_use($class)) {
-      $filter   = $class->new;
+      $filter   = $class->new({hub => $self->hub});
       $content .= sprintf "<div style='width:80%' class='error print_hide'><h3>Error</h3><div class='error-pad'>%s</div></div>", $filter->error_message($self->filter_code);
     }
   }
