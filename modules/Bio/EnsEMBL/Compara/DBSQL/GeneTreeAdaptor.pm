@@ -400,9 +400,9 @@ sub delete_flattened_leaf {
 
   my $node_id = $node->node_id;
   my $prefix = $self->_get_table_prefix();
-  $self->dbc->do("DELETE from ".$prefix."_tree_node WHERE node_id = $node_id");
   $self->dbc->do("DELETE from ".$prefix."_tree_tag WHERE node_id = $node_id");
   $self->dbc->do("DELETE from ".$prefix."_tree_member WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from ".$prefix."_tree_node WHERE node_id = $node_id");
 }
 
 sub delete_node {
@@ -414,9 +414,9 @@ sub delete_node {
   my $prefix = $self->_get_table_prefix();
   $self->dbc->do("UPDATE ".$prefix."_tree_node dn, ".$prefix."_tree_node n SET ".
             "n.parent_id = dn.parent_id WHERE n.parent_id=dn.node_id AND dn.node_id=$node_id");
-  $self->dbc->do("DELETE from ".$prefix."_tree_node WHERE node_id = $node_id");
-  $self->dbc->do("DELETE from ".$prefix."_tree_tag WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from ".$prefix."_tree_tag    WHERE node_id = $node_id");
   $self->dbc->do("DELETE from ".$prefix."_tree_member WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from ".$prefix."_tree_node   WHERE node_id = $node_id");
 }
 
 sub delete_nodes_not_in_tree
@@ -437,44 +437,34 @@ sub delete_nodes_not_in_tree
   $dbtree->release_tree;
 }
 
-sub delete_node_and_under {
-  my $self = shift;
-  my $node = shift;
+sub store_flattened_supertree {
+    my $self = shift;
+    my $root_id = shift;
 
-  my $prefix = $self->_get_table_prefix();
-  my @all_subnodes = $node->get_all_subnodes;
-  foreach my $subnode (@all_subnodes) {
-    my $subnode_id = $subnode->node_id;
-    $self->dbc->do("DELETE from ".$prefix."_tree_node WHERE node_id = $subnode_id");
-    $self->dbc->do("DELETE from ".$prefix."_tree_tag WHERE node_id = $subnode_id");
-    $self->dbc->do("DELETE from ".$prefix."_tree_member WHERE node_id = $subnode_id");
-  }
-  my $node_id = $node->node_id;
-  $self->dbc->do("DELETE from ".$prefix."_tree_node WHERE node_id = $node_id");
-  $self->dbc->do("DELETE from ".$prefix."_tree_tag WHERE node_id = $node_id");
-  $self->dbc->do("DELETE from ".$prefix."_tree_member WHERE node_id = $node_id");
+    my $prefix  = $self->_get_table_prefix();
+
+    $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_node   SELECT * FROM ${prefix}_tree_node   WHERE node_id = $root_id");
+    $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_member SELECT * FROM ${prefix}_tree_member WHERE node_id = $root_id");
+    $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_tag    SELECT * FROM ${prefix}_tree_tag    WHERE node_id = $root_id");
+
+    $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_node   SELECT n.* FROM ${prefix}_tree_node n                                              WHERE n.root_id = $root_id");
+    $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_member SELECT m.* FROM ${prefix}_tree_node n JOIN ${prefix}_tree_member m USING (node_id) WHERE n.root_id = $root_id");
+    $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_tag    SELECT t.* FROM ${prefix}_tree_node n JOIN ${prefix}_tree_tag    t USING (node_id) WHERE n.root_id = $root_id");
 }
 
-sub store_supertree_node_and_under {
-  my $self = shift;
-  my $node = shift;
+sub delete_flattened_tree {
+    my $self = shift;
+    my $root_id = shift;
 
-  my $prefix = $self->_get_table_prefix();
-  $self->dbc->do("CREATE TABLE IF NOT EXISTS super_".$prefix."_tree_node like ".$prefix."_tree_node");
-  $self->dbc->do("CREATE TABLE IF NOT EXISTS super_".$prefix."_tree_member like ".$prefix."_tree_member");
-  $self->dbc->do("CREATE TABLE IF NOT EXISTS super_".$prefix."_tree_tag like ".$prefix."_tree_tag");
+    my $prefix  = $self->_get_table_prefix();
 
-  my @all_subnodes = $node->get_all_subnodes;
-  foreach my $subnode (@all_subnodes) {
-    my $subnode_id = $subnode->node_id;
-    $self->dbc->do("INSERT IGNORE into super_".$prefix."_tree_node SELECT * from ".$prefix."_tree_node WHERE node_id = $subnode_id");
-    $self->dbc->do("INSERT IGNORE into super_".$prefix."_tree_member SELECT * from ".$prefix."_tree_member WHERE node_id = $subnode_id");
-    $self->dbc->do("INSERT IGNORE into super_".$prefix."_tree_tag SELECT * from ".$prefix."_tree_tag WHERE node_id = $subnode_id");
-  }
-  my $node_id = $node->node_id;
-  $self->dbc->do("INSERT IGNORE into super_".$prefix."_tree_node SELECT * from ".$prefix."_tree_node WHERE node_id = $node_id");
-  $self->dbc->do("INSERT IGNORE into super_".$prefix."_tree_member SELECT * from ".$prefix."_tree_member WHERE node_id = $node_id");
-  $self->dbc->do("INSERT IGNORE into super_".$prefix."_tree_tag SELECT * from ".$prefix."_tree_tag WHERE node_id = $node_id");
+    $self->dbc->do("DELETE t FROM ${prefix}_tree_tag t    JOIN ${prefix}_tree_node n USING (node_id) WHERE n.root_id = $root_id");
+    $self->dbc->do("DELETE m FROM ${prefix}_tree_member m JOIN ${prefix}_tree_node n USING (node_id) WHERE n.root_id = $root_id");
+    $self->dbc->do("DELETE n FROM ${prefix}_tree_node n                                              WHERE n.root_id = $root_id");
+
+    $self->dbc->do("DELETE FROM ${prefix}_tree_tag    WHERE node_id = $root_id");
+    $self->dbc->do("DELETE FROM ${prefix}_tree_member WHERE node_id = $root_id");
+    $self->dbc->do("DELETE FROM ${prefix}_tree_node   WHERE node_id = $root_id");
 }
 
 

@@ -329,9 +329,8 @@ sub store_clusters {
 sub delete_original_cluster {
   my $self = shift;
 
-  my $delete_time = time();
   my $original_cluster_node_id = $self->param('original_cluster')->node_id;
-  $self->delete_old_orthotree_tags;
+#  $self->delete_old_orthotree_tags;
 
   my $tree_node_id = $original_cluster_node_id;
   my $sql1 = "delete h.*, hm.* from homology h, homology_member hm where h.homology_id=hm.homology_id and h.tree_node_id=$tree_node_id";
@@ -339,13 +338,8 @@ sub delete_original_cluster {
   $sth1->execute;
   $sth1->finish;
 
-  $self->param('original_cluster')->adaptor->store_supertree_node_and_under( $self->param('original_cluster') );
-  printf("%1.3f secs to copy old cluster $original_cluster_node_id into supertree tables\n", time()-$delete_time);
-  $self->param('original_cluster')->adaptor->delete_node_and_under($self->param('original_cluster'));
-  printf("%1.3f secs to delete old cluster $original_cluster_node_id\n", time()-$delete_time);
-
-  return 1;
-
+  $self->param('original_cluster')->adaptor->store_flattened_supertree( $original_cluster_node_id );
+  $self->param('original_cluster')->adaptor->delete_flattened_tree(     $original_cluster_node_id );
 }
 
 sub delete_old_orthotree_tags {
@@ -385,8 +379,6 @@ sub delete_old_orthotree_tags {
     $sth->finish;
     @list_ids = ();
   }
-
-  return undef;
 }
 
 sub generate_subtrees {
