@@ -45,8 +45,8 @@ sub href {
   my $href = $self->_url({
     species =>  $self->species,
     action  => 'StructuralVariation',
-    vid     => $f->dbID,
-    vf      => $f->variation_name,
+    sv      => $f->variation_name,
+		svf     => $f->dbID,
     vdb     => 'variation'
   });
   
