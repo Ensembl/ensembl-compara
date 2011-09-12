@@ -785,12 +785,14 @@ CREATE TABLE domain_member (
 
 CREATE TABLE protein_tree_node (
   node_id                         int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  parent_id                       int(10) unsigned NOT NULL,
-  root_id                         int(10) unsigned NOT NULL,
+  parent_id                       int(10) unsigned,
+  root_id                         int(10) unsigned,
   clusterset_id                   int(10) unsigned NOT NULL,
   left_index                      int(10) NOT NULL,
   right_index                     int(10) NOT NULL,
   distance_to_parent              double default 1.0 NOT NULL,
+
+  FOREIGN KEY (root_id) REFERENCES protein_tree_node(node_id),
 
   PRIMARY KEY (node_id),
   KEY (parent_id),
@@ -837,7 +839,7 @@ CREATE TABLE protein_tree_member (
   cigar_end                   int(10),
 
   FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
-  FOREIGN KEY (root_id) REFERENCES protein_tree_node(root_id),
+  FOREIGN KEY (root_id) REFERENCES protein_tree_node(node_id),
   FOREIGN KEY (member_id) REFERENCES member(member_id),
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
