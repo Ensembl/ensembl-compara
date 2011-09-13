@@ -262,6 +262,7 @@ sub save_data {
     
     my $code = $data->{'code'};
     
+    $data = {%$data};
     delete $data->{$_} for qw(type code);
     
     EnsEMBL::Web::Data::Session->set_config(
