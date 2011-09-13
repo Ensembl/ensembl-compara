@@ -262,6 +262,8 @@ sub save_data {
     
     my $code = $data->{'code'};
     
+    # Don't put type and code into the data column in the database, since they're already in the type and code columns.
+    # Make a new version of the data hash so that type and code don't get deleted from the cached data structure.
     $data = {%$data};
     delete $data->{$_} for qw(type code);
     
