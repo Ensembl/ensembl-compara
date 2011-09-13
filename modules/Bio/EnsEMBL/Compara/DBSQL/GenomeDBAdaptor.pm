@@ -404,11 +404,13 @@ sub store {
     my $vectors = $sth_select->fetchall_arrayref();
     $sth_select->finish();
 
-    my $store_method;
-
     if( scalar(@$vectors) == 0 ) { # none found, safe to insert
 
-        $store_method = 'INSERT';
+        my $sth_insert = $self->prepare("INSERT INTO genome_db (genome_db_id, name, assembly, genebuild, taxon_id, assembly_default, locator) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $sth_insert->execute( $dbID, $name, $assembly, $genebuild, $taxon_id, $assembly_default, $locator );
+
+        $dbID ||= $self->dbc->db_handle->last_insert_id(undef, undef, 'genome_db', 'genome_db_id');
+        $sth_insert->finish();
 
     } elsif( scalar(@$vectors) >= 2 ) {
 
@@ -427,18 +429,16 @@ sub store {
 
         } else {
 
-            $dbID = $stored_dbID;
-            $store_method = 'REPLACE';
+            $dbID ||= $stored_dbID;
+            
+            my $sth_update = $self->prepare("UPDATE genome_db SET taxon_id=?, assembly_default=?, locator=? WHERE genome_db_id=?");
+            $sth_update->execute( $taxon_id, $assembly_default, $locator, $stored_dbID );
+            $sth_update->finish();
         }
     }
 
-    my $sth_store = $self->prepare("$store_method INTO genome_db (genome_db_id, name, assembly, genebuild, taxon_id, assembly_default, locator) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $sth_store->execute( $dbID, $name, $assembly, $genebuild, $taxon_id, $assembly_default, $locator );
-
-    $dbID ||= $self->dbc->db_handle->last_insert_id(undef, undef, 'genome_db', 'genome_db_id');
     $gdb->dbID( $dbID );
     $gdb->adaptor( $self );
-    $sth_store->finish();
 
     return $gdb;
 }
