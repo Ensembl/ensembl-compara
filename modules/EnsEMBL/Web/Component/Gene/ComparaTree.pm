@@ -55,6 +55,7 @@ sub content {
   return $tree . $self->genomic_alignment_links($cdb) if $hub->param('g') && !$is_genetree && !defined $member;
 
   my $leaves               = $tree->get_all_leaves;
+  my $tree_stable_id       = $tree->stable_id;
   my $highlight_gene       = $hub->param('g1');
   my $highlight_ancestor   = $hub->param('anc');
   my $image_width          = $self->image_width            || 800;
@@ -66,10 +67,11 @@ sub content {
   my @collapsed_clades     = grep { $_ =~ /^group_/ && $hub->param($_) eq 'collapse' } $hub->param;
   my @highlights           = $gene && $member ? ($gene->stable_id, $member->genome_db->dbID) : (undef, undef);
   my $hidden_genes_counter = 0;
-  my ($hidden_genome_db_ids, $highlight_species, $highlight_genome_db_id, $html);
-
-  $html .= sprintf (qq(
-    <h3>GeneTree %s</h3>
+  my $link                 = $hub->type eq 'GeneTree' ? '' : sprintf ' <a href="%s">%s</a>', $hub->url({ species => 'Multi', type => 'GeneTree', action => undef, gt => $tree_stable_id, __clear => 1 }), $tree_stable_id;
+  my ($hidden_genome_db_ids, $highlight_species, $highlight_genome_db_id);
+  
+  my $html = sprintf('
+    <h3>GeneTree%s</h3>
       <dl class="summary">
         <dt style="width:15em">Number of genes</dt>
         <dd>%s</dd>
@@ -83,11 +85,11 @@ sub content {
         <dd>%s</dd>
       </dl>
       <p>&nbsp;</p>
-    ), 
-    $tree->root->stable_id, 
+    ',
+    $link,
     scalar(@$leaves),
-    $self->get_num_nodes_with_tag($tree, 'Duplication', undef, ['dubious_duplication']),
-    $self->get_num_nodes_with_tag($tree, "dubious_duplication", 1),
+    $self->get_num_nodes_with_tag($tree, 'Duplication', undef, [ 'dubious_duplication' ]),
+    $self->get_num_nodes_with_tag($tree, 'dubious_duplication', 1),
   );
 
   if ($highlight_gene) {
