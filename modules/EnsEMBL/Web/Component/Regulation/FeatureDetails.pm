@@ -8,8 +8,9 @@ use base qw(EnsEMBL::Web::Component::Regulation);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  1 );
+  $self->cacheable(0);
+  $self->ajaxable(1);
+  $self->has_image(1);
 }
 
 sub content {
