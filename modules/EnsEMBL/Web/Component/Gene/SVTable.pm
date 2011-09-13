@@ -107,7 +107,7 @@ sub table {
   
   my $sv_table = $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] });
   
-  return $self->display_table_with_toggle_button($title, $table_id, 1, $sv_table);
+  return $self->display_table_with_toggle_button($title, $table_id, $table_id eq 'sv', $sv_table);
 }
 
 sub cnv_probe_table {
