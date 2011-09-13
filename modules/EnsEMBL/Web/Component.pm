@@ -113,6 +113,12 @@ sub configurable {
   return $self->{'configurable'};
 }
 
+sub has_image {
+  my $self = shift;
+  $self->{'has_image'} = shift if @_;
+  return $self->{'has_image'} || 0;
+}
+
 sub cache {
   my ($panel, $obj, $type, $name) = @_;
   my $cache = new EnsEMBL::Web::TmpFile::Text(
@@ -139,7 +145,6 @@ sub html_format {
 
 sub site_name   { return $SiteDefs::SITE_NAME || $SiteDefs::ENSEMBL_SITETYPE; }
 sub image_width { return $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
-sub has_image   { return 0; }
 sub caption     { return undef; }
 sub _init       { return; }
 
