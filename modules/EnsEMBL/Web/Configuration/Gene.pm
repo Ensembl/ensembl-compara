@@ -151,7 +151,10 @@ sub populate_tree {
   ));
 	
 	$var_menu->append($self->create_node('StructuralVariation_Gene', 'Structural Variation',
-    [qw( svtable EnsEMBL::Web::Component::Gene::GeneSVTable )],
+    [qw(
+      svimage EnsEMBL::Web::Component::Gene::SVImage
+      svtable EnsEMBL::Web::Component::Gene::SVTable
+    )],
     { 'availability' => 'gene database:variation core not_patch' }
   ));
 
