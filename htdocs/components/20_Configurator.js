@@ -47,6 +47,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.elLk.viewConfigs       = this.elLk.configDivs.filter('.view_config');
     this.elLk.viewConfigInputs  = $(':input:not([name=select_all])', this.elLk.viewConfigs);
     this.elLk.imageConfigExtras = $('.image_config_notes, .configuration_search', this.el);
+    this.elLk.subPanelTracks    = $();
     
     this.component          = $('input.component', this.elLk.form).val();
     this.sortable           = !!this.elLk.trackOrder.length;
@@ -80,11 +81,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.elLk.tracks.each(function () {
       var input = $('input.track_name', this)[0];
-      var type  = $('.popup_menu img', this)[0].className;
+      var type  = $('.popup_menu img:not(.close)', this)[0].className;
       
       $(this).data('links', [
         'a.' + type, 
-        'a.' + type + '-' + $(this).parents('.subset').attr('class').replace(/subset|active|\s/g, '')
+        'a.' + type + '-' + $(this).parents('.subset').attr('class').replace(/subset|active|first|\s/g, '')
       ].join(', '));
       
       panel.imageConfig[input.name] = { renderer: input.value, favourite: $(this).hasClass('fav') };
@@ -210,7 +211,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
         if (panel.sortable) {
           $.each(updated, function (trackName, attrs) {
-            $.each([panel.elLk.tracks, panel.elLk.trackOrderList.children()], function () {
+            $.each([panel.elLk.tracks, panel.elLk.trackOrderList.children(), panel.elLk.subPanelTracks], function () {
               $(this).filter('.' + trackName).not(li).children('img.menu_option').attr({ 
                 src:   '/i/render/' + attrs[0] + '.gif', 
                 alt:   attrs[1],
@@ -251,7 +252,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
             panel.elLk.searchResults.removeClass('disabled').parent().addClass('active');
             panel.elLk.headers.hide().filter('.search_results').show();
             panel.elLk.imageConfigExtras.show();
-            panel.elLk.form.addClass('multi');
+            panel.elLk.form.addClass('multi').removeClass('single');
             panel.search(); 
           }, 250);
         }
@@ -361,7 +362,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       $(configs[i]).find('.track').data('links', [
         'a.' + type, 
-        'a.' + type + '-' + $(configs[i]).parents('.subset').attr('class').replace(/subset|active|\s/g, '')
+        'a.' + type + '-' + $(configs[i]).parents('.subset').attr('class').replace(/subset|active|first|\s/g, '')
       ].join(', '));
     }
     
@@ -508,6 +509,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           if (panelDiv.length) {
             Ensembl.EventManager.trigger('createPanel', panelDiv[0].id, json.panelType, { links: [ panel.elLk.links.filter('.active').parent().siblings('a').attr('class'), active ] });
             panel.subPanels.push(panelDiv[0].id);
+            panel.elLk.subPanelTracks = panel.elLk.subPanelTracks.add($('input.track_name', panelDiv).parent());
           } else {
             panel.elLk.viewConfigInputs = $(':input:not([name=select_all])', panel.elLk.viewConfigs);
             panel.setSelectAll();
@@ -523,7 +525,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.el.animate({ scrollTop: 0 }, 0);
     
     if (active.rel === 'multi' ^ this.elLk.form.hasClass('multi')) {
-      this.elLk.form[active.rel === 'multi' ? 'addClass' : 'removeClass']('multi');
+      this.elLk.form[active.rel === 'multi' ? 'addClass' : 'removeClass']('multi')[active.rel !== 'multi' ? 'addClass' : 'removeClass']('single');
     }
     
     this.elLk.configDivs.filter(function () { return this.style.display !== 'none'; }).hide();
