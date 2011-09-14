@@ -29,7 +29,6 @@ form.configuration div.config .menu_option                          { cursor: po
 form.configuration div.config ul.config_menu                        { margin: 0; padding: 0; list-style: none; }
 form.configuration div.config ul.config_menu li                     { margin: 0; padding: 0; list-style-image: none; font-weight: normal; clear: right; background-color: #FFF; }
 form.configuration div.config ul.config_menu li.track               { cursor: pointer; }
-form.configuration div.config ul.config_menu li.hidden              { display: none!important; }
 form.configuration div.config ul.config_menu li div.desc            { margin: 5px 0 5px 25px; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid [[PANEL_BORDER]]; }
 form.configuration div.config ul.config_menu li .controls           { float: right; margin: 2px -5px 0; height: 17px; }
 form.configuration div.config ul.config_menu li .controls div       { height: 100%; width: 17px; float: left; margin-right: 7px; }
@@ -61,6 +60,8 @@ form.configuration div.track_order span.menu_option                 { cursor: n-
 form.configuration div.view_config fieldset                         { padding: 0; }
 form.configuration div.view_config fieldset div.form-field          { padding: 0 5px; }
 form.configuration div.view_config fieldset div.fnotes              { padding: 6px 5px; }
+
+form.configuration.single div.config ul.config_menu li.hidden       { display: none!important; }
 
 form.export div.view_config h2,
 form.configuration.multi div.config h2                              { font-size: 15px; margin: 6px 0 2px; border-bottom-width: 0; }
