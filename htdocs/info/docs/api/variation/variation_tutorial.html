@@ -22,6 +22,7 @@
 	<li><a href="#ld">LD calculation</a></li>
 	<li><a href="#strains">Specific strain information</a></li>
 	<li><a href="#iterators">Fetching Iterators</a></li>
+	<li><a href="#slice">Fetching variation features or structural variation features from a Slice</a></li>
 	<li><a href="#help">Further help</a></li>
 </ul>
 
@@ -654,7 +655,8 @@ sub print_set {
   	
   	# Loop over the annotations and print the phenotypes
   	foreach my $annotation (@{$annotations}) {
-  		printf("\t\t\%s\t\%s\t\%s\n",$annotation->phenotype_description(),(defined($annotation->p_value) ? sprintf("(\%s, \%s study)",$annotation->p_value(),$annotation->study_type()) : ""),$annotation->study_name());
+  		printf("\t\t\%s\t\%s\t\%s\n",$annotation->phenotype_description(),(defined($annotation->p_value) ? sprintf("(\%s, \%s study)",
+  		        $annotation->p_value(),$annotation->study_type()) : ""),$annotation->study_name());
   	}
   	
   	$fetched++;
@@ -917,6 +919,60 @@ while ($cosmic_name_iter-&gt;has_next()) {
     print $cosmic_name_iter-&gt;next(), "\n";
 }
 
+</pre>
+
+<h2 id="slice">Fetching variation features or structural variation features from a Slice</h2>
+<p>Variation features and structural variation features can be fetched using a Slice object (from the <a href="/info/docs/api/core/core_tutorial.html#slices">Core API</a>).</p>
+<pre class="code">
+# Slice adaptor
+my $slice_adaptor = $registry->get_adaptor( 'Human', 'Core', 'Slice' );
+# Slice object
+my $slice = $slice_adaptor->fetch_by_region('chromosome', 3, 125439614, 125462946, 1);
+
+# Fetch the variation feature objects overlapping the Slice
+my @var_features = @{$slice->get_all_VariationFeatures()};
+
+# Fetch the structural variation feature objects overlapping the Slice
+my @sv_features = @{$slice->get_all_StructuralVariationFeatures()};
+
+print "Number of variations: ", scalar @var_features, "\n";
+print "Number of structural variations: ", scalar @sv_features, "\n";
+</pre>
+<p>It is also possible to fetch all the variation features overlapping a structural variation feature, using a Slice through a structural variation feature object.</p>
+
+<pre class="code">
+# Structural variation adaptor
+my $sv_adaptor = $registry->get_adaptor( 'human', 'variation', 'structuralvariation' );
+# Structural variation object
+my $sv = $sv_adaptor->fetch_by_name('esv54292');
+
+# Structural variation feature(s)
+foreach my $svf (@{$sv->get_all_StructuralVariationFeatures()}){
+  # Corresponding Slice
+  my $slice = $svf->feature_Slice();
+
+  # Fetch the variation feature objects overlapping the Slice
+  my @var_features = @{$slice->get_all_VariationFeatures()};
+  print "Number of variations: ", scalar (@var_features), "\n";
+}
+</pre>
+
+<p>And you can do the same with the variation features, for example.</p>
+<pre class="code">
+# Variation adaptor
+my $var_adaptor = $registry->get_adaptor( 'human', 'variation', 'variation' );
+# Variation object
+my $var = $var_adaptor->fetch_by_name('rs1333049');
+
+# Variation feature(s)
+foreach my $vf (@{$var->get_all_VariationFeatures()}){
+  # Corresponding Slice
+  my $slice = $vf->feature_Slice();
+
+  # Fetch the structural variation feature objects overlapping the Slice
+  my @svf_features = @{$slice->get_all_StructuralVariationFeatures()};
+  print "Number of structural variations: ", scalar (@svf_features), "\n";
+}
 </pre>
 
 
