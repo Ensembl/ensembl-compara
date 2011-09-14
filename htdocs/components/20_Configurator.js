@@ -80,12 +80,13 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
     
     this.elLk.tracks.each(function () {
-      var input = $('input.track_name', this)[0];
-      var type  = $('.popup_menu img:not(.close)', this)[0].className;
+      var input  = $('input.track_name', this)[0];
+      var type   = $('.popup_menu img:not(.close)', this)[0].className;
+      var subset = this.className.match(/\s*subset_(\w+)\s*/) || false;
       
       $(this).data('links', [
         'a.' + type, 
-        'a.' + type + '-' + $(this).parents('.subset').attr('class').replace(/subset|active|first|\s/g, '')
+        'a.' + (subset ? subset[1] : type + '-' + $(this).parents('.subset').attr('class').replace(/subset|active|first|\s/g, ''))
       ].join(', '));
       
       panel.imageConfig[input.name] = { renderer: input.value, favourite: $(this).hasClass('fav') };
@@ -316,7 +317,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     var configs  = this.elLk.configDivs.filter('.' + type).find('ul.config_menu');
     var existing = [];
     var i        = tracks.length;
-    var j, track, li;
+    var j, track, li, link;
     
     function setConfig(trackName) {
       if (!panel.imageConfig[trackName]) {
@@ -339,7 +340,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     while (i--) {
-      j = tracks[i].length;
+      j    = tracks[i].length;
+      link = $(configs[i]).parents('.subset').attr('class').replace(/subset|active|first|\s/g, '');
       
       while (j--) {
         track = tracks[i][j];
@@ -360,10 +362,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         $(configs[i]).prepend(li);
       }
       
-      $(configs[i]).find('.track').data('links', [
-        'a.' + type, 
-        'a.' + type + '-' + $(configs[i]).parents('.subset').attr('class').replace(/subset|active|first|\s/g, '')
-      ].join(', '));
+      $(configs[i]).find('.track').each(function () {
+        var subset = this.className.match(/\s*subset_(\w+)\s*/) || false;
+
+        $(this).data('links', [
+          'a.' + type,
+          'a.' + (subset ? subset[1] : type + '-' + link) 
+        ].join(', '));
+      });
     }
     
     this.updateElLk();
@@ -509,7 +515,24 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           if (panelDiv.length) {
             Ensembl.EventManager.trigger('createPanel', panelDiv[0].id, json.panelType, { links: [ panel.elLk.links.filter('.active').parent().siblings('a').attr('class'), active ] });
             panel.subPanels.push(panelDiv[0].id);
-            panel.elLk.subPanelTracks = panel.elLk.subPanelTracks.add($('input.track_name', panelDiv).parent());
+            
+            panel.elLk.subPanelTracks = panel.elLk.subPanelTracks.add($('input.track_name', panelDiv).each(function () {
+              var track = panel.elLk.tracks.filter('.' + this.name);
+              var val   = track.children('input.track_name').val();
+              
+              if (this.value !== val) {
+                $(this).siblings('.popup_menu').children('.' + val).trigger('click');
+                
+                // triggering the click above will cause counts to be changed twice, so compensate for that
+                if (val === 'off' || this.value === 'off') {
+                  panel.elLk.links.children(track.data('links')).siblings('.count').children('.on').html(function (i, html) {
+                    return parseInt(html, 10) + (val === 'off' ? 1 : -1);
+                  });
+                }
+              }
+              
+              track = null;
+            }).parent());
           } else {
             panel.elLk.viewConfigInputs = $(':input:not([name=select_all])', panel.elLk.viewConfigs);
             panel.setSelectAll();
