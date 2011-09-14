@@ -134,7 +134,7 @@ sub dumpMercatorFiles {
   close F;
 
   ## Create the anchor file for Mercator
-  my $ss = $ssa->fetch_by_set_description("gdb:".$gdb->dbID ." ". $gdb->name . ' coding exons');
+  my $ss = $ssa->fetch_by_set_description("gdb:".$gdb->dbID ." ". $gdb->name . ' ref coding exons');
   $file = $self->param('input_dir') . "/$gdb_id.anchors";
   open F, ">$file";
   foreach my $member (@{$ma->fetch_by_subset_id($ss->dbID)}) {
