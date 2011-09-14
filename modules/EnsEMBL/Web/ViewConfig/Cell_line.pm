@@ -222,7 +222,7 @@ sub form_evidence_types {
     
     $headers_html[0] .= sprintf qq{<th class="$c"><p>$c</p>$select_all_col</th>}, $c, $c, $c, $c;
     $headers_html[2] .= qq{
-      <th class="$c">
+      <th class="$c reg_feats_${set}_$c">
         <img class="menu_option" title="$renderers{$d}" alt="$renderers{$d}" src="${img_url}render/$d.gif">
         <input type="hidden" class="track_name" name="reg_feats_${set}_$c" value="$d">
         $menu
