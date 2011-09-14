@@ -34,7 +34,7 @@ sub content {
     $motif_features{$mf->start . ':' . $mf->end} = [ "$bm_ftname$other_names_txt", $mf->score, $mf->binding_matrix->name ];
   }
   
-  $self->caption('Regulatory Feature - ' . $feature_set->cell_type->name);
+  $self->caption($feature_set->feature_type->evidence_type_label);
   
   $self->add_entry({
     type  => 'Feature',

@@ -20,18 +20,18 @@ sub content {
   my $reg_objs            = $reg_feature_adaptor->fetch_all_by_stable_ID($rf);
   my $core_reg_obj;
   
-  foreach my $rf (@$reg_objs) {
+  foreach (@$reg_objs) {
     if ($cell_line) {
-      $core_reg_obj = $rf if $rf->feature_set->cell_type->name =~ /$cell_line/i;
-    } elsif ($rf->feature_set->cell_type->name =~ /multi/i) {
-      $core_reg_obj = $rf;
+      $core_reg_obj = $_ if $_->feature_set->cell_type->name =~ /$cell_line/i;
+    } elsif ($_->feature_set->cell_type->name =~ /multi/i) {
+      $core_reg_obj = $_;
     }
   }
 
   my $cell_line_specific_reg_object = $self->new_object('Regulation', $core_reg_obj, $object->__data);
   my %motif_features      = %{$cell_line_specific_reg_object->get_motif_features};
   
-  $self->caption('Regulatory Feature');
+  $self->caption('Regulatory Feature - ' . $core_reg_obj->feature_set->cell_type->name);
   
   $self->add_entry({
     type  => 'Stable ID',
