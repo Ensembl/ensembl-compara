@@ -535,6 +535,7 @@ sub build_imageconfig_menus {
     my $display  = $node->get('display')     || 'off';
     my $desc     = $node->get('description');
     my $controls = $node->get('controls');
+    my $subset   = $node->get('subset');
     my $name     = encode_entities($node->get('name'));
     my $icon     = $external ? sprintf '<img src="%strack-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" />', $img_url, lc $external, $external, $external : ''; # DAS icons, etc
     my @classes  = ($id, 'track', $external);
@@ -582,9 +583,10 @@ sub build_imageconfig_menus {
       $help = qq{<div class="empty"></div>};
     }
     
-    push @classes, 'fav'      if $self->{'favourite_tracks'}{$id};
-    push @classes, 'external' if $external;
-    push @classes, 'hidden'   if $menu_type eq 'hidden';
+    push @classes, 'fav'            if $self->{'favourite_tracks'}{$id};
+    push @classes, 'external'       if $external;
+    push @classes, 'hidden'         if $menu_type eq 'hidden';
+    push @classes, "subset_$subset" if $subset;
     
     my $child = $parent->append_child('li', {
       class      => join(' ', @classes),
