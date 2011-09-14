@@ -63,11 +63,16 @@ sub href {
   my $r = $f->seq_region_name.':'.$f->seq_region_start.'-'.$f->seq_region_end;
   my $action = $self->my_config('zmenu') ?  $self->my_config('zmenu') :  'Genome';
   my $ln = $f->can('analysis') ? $f->analysis->logic_name : '';
+  my $id = $f->display_id;
+  if ( $ln eq 'alt_seq_mapping'){
+    $id = $f->dbID;
+  }
+
   return $self->_url({
     'action'  => $action,
     'ftype'   => $self->my_config('object_type') || 'DnaAlignFeature',
     'r'       => $r,
-    'id'      => $f->display_id,
+    'id'      => $id,
     'db'      => $self->my_config('db'),
     'species' => $self->species,
     'ln'      => $ln,
@@ -87,6 +92,11 @@ sub render_unlimited {
 sub render_stack {
   my $self = shift;
   $self->render_normal( 1, 40 );
+}
+
+sub render_simple {
+  my $self = shift;
+  $self->render_normal();
 }
 
 sub render_half_height {
