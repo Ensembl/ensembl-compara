@@ -150,8 +150,13 @@ sub init {
     
     # Turn on menus for core and supporting evidence track
     $self->modify_configs(
-      [ "reg_feats_core_$cell_line", "reg_feats_other_$cell_line" ],
-      { menu => 'hidden' }
+      [ "reg_feats_core_$cell_line" ],
+      { menu => 'hidden', subset => 'Regulatory_evidence_core' }
+    );
+
+    $self->modify_configs(
+      [ "reg_feats_other_$cell_line" ],
+      { menu => 'hidden', subset => 'Regulatory_evidence_other' }
     );
   }
 }
