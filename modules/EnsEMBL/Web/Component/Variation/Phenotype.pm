@@ -98,9 +98,9 @@ sub table_data {
     if ($is_somatic) { 
       my @tumour_info      = split /\:/, $disorder;
       my $tissue           = $tumour_info[1];
+			$tissue              =~ s/^\s+//;
       my $tissue_formatted = $tissue;
       my $source_study     = uc($source_name) . '_STUDY'; 
-      $tissue              =~ s/^\s+//;
       $tissue_formatted    =~ s/\s+/\_/g; 
       $external_reference  = $hub->get_ExtURL_link($tissue, $source_study, $tissue_formatted);
     }
