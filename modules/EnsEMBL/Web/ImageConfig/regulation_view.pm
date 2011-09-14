@@ -70,13 +70,13 @@ sub init {
     # Turn on core evidence track
     $self->modify_configs(
       [ "reg_feats_core_$cell_line" ],
-      { display => $display, menu => 'hidden' }
+      { display => $display, menu => 'hidden', subset => 'Regulatory_evidence_core' }
     );
    
     # Turn on supporting evidence track
     $self->modify_configs(
       [ "reg_feats_other_$cell_line" ],
-      { display => 'compact', menu => 'hidden' }
+      { display => 'compact', menu => 'hidden', subset => 'Regulatory_evidence_other' }
     );
     
     $self->{'reg_feats_tracks'}{$_} = 1 for "reg_feats_$cell_line", "reg_feats_core_$cell_line", "reg_feats_other_$cell_line";
