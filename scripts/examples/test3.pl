@@ -1,18 +1,28 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
-use Getopt::Long;
-use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use warnings;
 
-my $reg_conf = shift;
-die("must specify registry conf file on commandline\n") unless($reg_conf);
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+use Bio::EnsEMBL::Registry;
+
+
+#
+# This script fetches all the alignments with the rat of the
+# DNA segment containing the given human gene
+#
+
+my $reg = 'Bio::EnsEMBL::Registry';
+
+$reg->load_registry_from_db(
+  -host=>'ensembldb.ensembl.org',
+  -user=>'anonymous', 
+);
+
 
 # get compara DBAdaptor
-my $comparaDBA = Bio::EnsEMBL::Registry->get_DBAdaptor('compara', 'compara');
-my $memberDBA = Bio::EnsEMBL::Registry->get_adaptor('compara', 'compara', 'Member');
-my $genomeDBA = Bio::EnsEMBL::Registry->get_adaptor('compara', 'compara', 'GenomeDB');
+my $comparaDBA = $reg->get_DBAdaptor('compara', 'compara');
+my $memberDBA = $comparaDBA->get_MemberAdaptor();
+my $genomeDBA = $comparaDBA->get_GenomeDBAdaptor();
 
 # get GenomeDB for human and mouse
 my $humanGDB = $genomeDBA->fetch_by_registry_name("human");
@@ -44,6 +54,4 @@ foreach my $this_genomic_align_block (@{$genomic_align_blocks}) {
       "\n";
   }
 }
-
-exit(0);
 
