@@ -146,7 +146,6 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-
   #Check whether can see exonerate to try to prevent errors in java where the autoloader doesn't seem to always work
   unless (-x $self->param('exonerate')) {
       throw("Pecan: Unable to execute " . $self->param('exonerate'));
@@ -170,7 +169,8 @@ sub run
   } or do {
       if ($@ =~ /Java heap space/ || 
 	 $@ =~ /GC overhead limit exceeded/ || 
-         $@ =~ /Cannot allocate memory/) {
+         $@ =~ /Cannot allocate memory/ ||
+	 $@ =~ /OutOfMemoryError/ ) {
 	  print "Failed due to insufficient heap space or memory\n";
 	  $self->param('more_heap', 1);
       } else {
@@ -186,7 +186,7 @@ sub write_output {
 
     #If job failed due to insufficient heap space, flow into new analysis
     if ($self->param('more_heap')) {
-	#Flow to next memory. But what happens in the end?
+	#Flow to next memory. 
 	my $num_jobs = $self->dataflow_output_id($self->input_id,2);
 
 	#Check if any jobs created (if none, then know that no flow was defined on this branch ie got to last pecan_mem(
@@ -750,7 +750,6 @@ sub _build_tree_string {
   $tree_string =~ s/\:0([^\.\d])/$1/g;
 
   $tree->release_tree;
-
   $self->param('pecan_tree_string', $tree_string);
 }
 
