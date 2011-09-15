@@ -151,7 +151,7 @@ sub stats_table {
 		}
 		
 		my $kview = '-';
-		if ($phe !~ /HGMD/) {
+		if ($phe !~ /HGMD/ && $phe !~ /COSMIC/) {
 			my $phe_id = $phenotypes->{$phe}{id}; 
 			my $kurl = $hub->url({ type => 'Phenotype', action => 'Locations', id => $phe_id, name => $phe }); 
 			$kview = qq{<a href="$kurl">[View on Karyotype]</a>};
