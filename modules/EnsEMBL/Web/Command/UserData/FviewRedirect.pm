@@ -24,19 +24,8 @@ sub process {
     'style' => $object->param('style'), 
     'reload' => 1,
   };
-
-=pod
-  my $chr = $object->param('chr');
-  if ($chr eq 'all') {
-    $url .= '/Genome';
-  }
-  else {
-    $url .= '/Chromosome';
-    push @params, 'chr='.$chr;
-  }
-=cut
-
-  $self->ajax_redirect($url, $params); 
+  
+  $self->ajax_redirect($url, $params, undef, 'page'); 
 }
 
 1;
