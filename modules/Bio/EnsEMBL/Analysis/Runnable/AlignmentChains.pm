@@ -139,12 +139,12 @@ sub run {
                                 -file   => ">$query_nib_dir/$query_name.fa");   
 
     # prevent extensive disconnections when fetching sequence length etc.
-    my $disco = $self->query_slice->adaptor()->db->disconnect_when_inactive(); 
-    $self->query_slice->adaptor()->db->disconnect_when_inactive(0);  
+    my $disco = $self->query_slice->adaptor()->dbc->disconnect_when_inactive(); 
+    $self->query_slice->adaptor()->dbc->disconnect_when_inactive(0);  
 
     $seqio->write_seq($self->query_slice); 
 
-    $self->query_slice->adaptor()->db->disconnect_when_inactive($disco);  
+    $self->query_slice->adaptor()->dbc->disconnect_when_inactive($disco);  
 
     $seqio->close;
     
