@@ -112,9 +112,9 @@ sub fetch_input {
   }
   $self->delete_old_homologies;
   $self->delete_old_ncorthotree_tags;
-  $self->load_species_tree;
+#  $self->load_species_tree;
+  $self->param('taxon_tree', $self->load_species_tree_from_string( $self->get_species_tree_string ) );
 
-  return 1;
 }
 
 
@@ -372,85 +372,36 @@ sub display_link_analysis
   return undef;
 }
 
-sub load_species_tree {
-  my $self = shift @_;
 
-  my $starttime = time();
+sub get_species_tree_string {
+    my $self = shift @_;
 
-  # FIXME -- this species_tree_string entry in nc_tree_tag is to
-  # avoid using lustre filesystem on cluster nodes but right now needs
-  # a bit of a cleanup because it's shared with NJTREE_PHYML -- we
-  # should have a single method for both, potentially in NestedSet
+    my $species_tree_string = $self->param('species_tree_string');
 
-  # Defining a species_tree: Option 1 is species_tree_string in
-  # nc_tree_tag, which then doesn't require tracking files
-  # around.  Option 2 is species_tree_file as defined in the config
-  # file, which should still work for compatibility
-  my $sql1 = "select value from nc_tree_tag where tag='species_tree_string'";
-  my $sth1 = $self->dbc->prepare($sql1);
-  $sth1->execute;
-  my $species_tree_string = $sth1->fetchrow_hashref;
-  $sth1->finish;
-  my $eval_species_tree;
-  eval {
-    $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string->{value});
-    my @leaves = @{$eval_species_tree->get_all_leaves};
-  };
-  if($@) {
-    unless(-e $self->param('species_tree_file')) {
-      $self->throw("can't find species_tree\n");
+    unless( $species_tree_string ) {
+        if( my $species_tree_file = $self->param('species_tree_file') ) {
+
+            $species_tree_string = $self->_slurp( $species_tree_file );
+
+        } else {
+            my $tag_table_name = 'nc_tree_tag';
+
+            my $sth = $self->dbc->prepare( "select value from $tag_table_name where tag='species_tree_string'" );
+            $sth->execute;
+            ($species_tree_string) = $sth->fetchrow_array;
+            $sth->finish;
+        }
     }
-  } else {
-    $self->param('species_tree_string', $species_tree_string->{value});
-    my $spfilename = $self->worker_temp_directory . "spec_tax.nh";
-    open SPECIESTREE, ">$spfilename" or die "$!";
-    print SPECIESTREE $self->param('species_tree_string');
-    close SPECIESTREE;
-    $self->param('species_tree_file', $spfilename);
-  }
-
-  my $tree = $self->param('species_tree_file')
-    ? $self->load_species_tree_from_file
-      : $self->load_species_tree_from_tax
-	;
-  $self->param('taxon_tree', $tree);
-
-  if($self->debug) {
-    $tree->print_tree(1);
-    printf("%1.3f secs for load species tree\n", time()-$starttime);
-  }
+    return $species_tree_string;
 }
 
-sub load_species_tree_from_tax
-{
-  my $self = shift;
 
-  printf("load_species_tree_from_tax\n") if($self->debug);
-  my $starttime = time();
-  my $taxonDBA = $self->compara_dba->get_NCBITaxonAdaptor;
-
-  my $gdb_list = $self->compara_dba->get_GenomeDBAdaptor->fetch_all;
-  my $root=undef;
-  foreach my $gdb (@$gdb_list) {
-    next if ($gdb->name =~ /ancestral/);
-    my $taxon = $taxonDBA->fetch_node_by_taxon_id($gdb->taxon_id);
-    $taxon->no_autoload_children;
-    # $taxon->add_tag("taxon_id") = $taxon->taxon_id; # homogenize with load_species_tree_from_file
-    $taxon->{_tags}{taxon_id} = $taxon->taxon_id; # line above seems to fail somehow
-    $root = $taxon->root unless($root);
-    $root->merge_node_via_shared_ancestor($taxon);
-  }
-  $root = $root->minimize_tree;
-  return $root;
-}
-
-sub load_species_tree_from_file {
-  my $self = shift @_;
+sub load_species_tree_from_string {
+  my ($self, $species_tree_string) = @_;
 
   my $taxonDBA = $self->compara_dba->get_NCBITaxonAdaptor;
-  print "load_species_tree_from_file\n" if $self->debug;
-  my $newick = $self->_slurp($self->param('species_tree_file'));
-  my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
+
+  my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
   foreach my $node (@{$tree->all_nodes_in_graph}) {
     my ($id) = split('-',$node->name);
     $id =~ s/\*//; # internal nodes have asterisk

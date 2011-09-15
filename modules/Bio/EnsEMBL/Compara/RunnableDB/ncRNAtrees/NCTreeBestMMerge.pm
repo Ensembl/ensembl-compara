@@ -87,7 +87,6 @@ sub fetch_input {
   $self->param('nc_tree', $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($self->param('nc_tree_id')) );
 
   $self->load_input_trees;
-  $self->load_species_tree;
 
       # Define executable:
   my $treebest_mmerge_executable = $self->param('treebest_exe') || "/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest_ncrna/treebest";
@@ -155,13 +154,48 @@ sub DESTROY {
 #
 ##########################################
 
-1;
+sub get_species_tree_file {
+    my $self = shift @_;
+
+    unless( $self->param('species_tree_file') ) {
+
+        unless( $self->param('species_tree_string') ) {
+
+            my $tag_table_name = 'nc_tree_tag';
+
+            my $sth = $self->dbc->prepare( "select value from $tag_table_name where tag='species_tree_string'" );
+            $sth->execute;
+            my ($species_tree_string) = $sth->fetchrow_array;
+            $sth->finish;
+
+            $self->param('species_tree_string', $species_tree_string)
+                or die "Could not fetch 'species_tree_string' from $tag_table_name";
+        }
+
+        my $species_tree_string = $self->param('species_tree_string');
+        eval {
+            my $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
+            my @leaves = @{$eval_species_tree->get_all_leaves};
+        };
+        if($@) {
+            die "Error parsing species tree from the string '$species_tree_string'";
+        }
+
+            # store the string in a local file:
+        my $species_tree_file = $self->worker_temp_directory . "spec_tax.nh";
+        open SPECIESTREE, ">$species_tree_file" or die "Could not open '$species_tree_file' for writing : $!";
+        print SPECIESTREE $species_tree_string;
+        close SPECIESTREE;
+        $self->param('species_tree_file', $species_tree_file);
+    }
+    return $self->param('species_tree_file');
+}
 
 sub run_treebest_mmerge {
   my $self = shift;
 
   my $root_id = $self->param('nc_tree')->node_id;
-  my $species_tree_file = $self->param('species_tree_file');
+  my $species_tree_file = $self->get_species_tree_file();
   my $treebest_mmerge_executable = $self->param('treebest_mmerge_executable');
   my $temp_directory = $self->worker_temp_directory;
 
@@ -179,7 +213,7 @@ sub run_treebest_mmerge {
   $DB::single=1;1;#??
   unless(system("$cmd") == 0) {
     print("$cmd\n");
-    $self->throw("error running treebest sdi, $!\n");
+    $self->throw("error running treebest mmerge, $!\n");
   }
 
   $self->param('mmerge_output', $mmerge_output_filename);
@@ -205,7 +239,7 @@ sub calculate_branch_lengths {
   my $constrained_tree = $self->param('mmerge_output');
   my $tree_with_blengths = $self->param('mmerge_output') . ".blengths.nh";
   my $input_aln = $self->param('input_aln');
-  my $species_tree_file = $self->param('species_tree_file');
+  my $species_tree_file = $self->get_species_tree_file();
   my $cmd = $treebest_mmerge_executable;
   $cmd .= " nj";
   if ($treebest_mmerge_executable =~ /tracking/) {
@@ -220,7 +254,7 @@ sub calculate_branch_lengths {
 
   unless(system("$cmd") == 0) {
     print("$cmd\n");
-    $self->throw("error running treebest sdi, $!\n");
+    $self->throw("error running treebest nj, $!\n");
   }
 
   $self->param('mmerge_blengths_output', $tree_with_blengths);
@@ -234,7 +268,7 @@ sub reroot_inputtrees {
   my $self = shift;
 
   my $root_id = $self->param('nc_tree')->node_id;
-  my $species_tree_file = $self->param('species_tree_file');
+  my $species_tree_file = $self->get_species_tree_file;
   my $treebest_mmerge_executable = $self->param('treebest_mmerge_executable');
 
   my $temp_directory = $self->worker_temp_directory;
@@ -305,38 +339,6 @@ sub load_input_trees {
   $sth1->finish;
 
   return 1;
-}
-
-sub load_species_tree {
-  my $self = shift;
-
-  # Defining a species_tree
-  # Option 1 is species_tree_string in nc_tree_tag, which then doesn't require tracking files around
-  # Option 2 is species_tree_file which should still work for compatibility
-  my $sql1 = "select value from nc_tree_tag where tag='species_tree_string'";
-  my $sth1 = $self->dbc->prepare($sql1);
-  $sth1->execute;
-  my $species_tree_string = $sth1->fetchrow_hashref;
-  $sth1->finish;
-  my $eval_species_tree;
-  eval {
-    $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string->{value});
-    my @leaves = @{$eval_species_tree->get_all_leaves};
-  };
-
-  if($@) {
-    unless(-e $self->param('species_tree_file')) {
-      $self->throw("can't find species_tree\n");
-    }
-  } else {
-    $self->param('species_tree_string', $species_tree_string->{value});
-    my $spfilename = $self->worker_temp_directory . "spec_tax.nh";
-    open SPECIESTREE, ">$spfilename" or die "$!";
-    print SPECIESTREE $self->param('species_tree_string');
-    close SPECIESTREE;
-    $self->param('species_tree_file', $spfilename);
-  }
-
 }
 
 sub parse_newick_into_nctree

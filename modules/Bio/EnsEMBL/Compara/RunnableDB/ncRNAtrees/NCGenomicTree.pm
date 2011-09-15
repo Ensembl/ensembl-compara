@@ -35,6 +35,43 @@ sub write_output {
     my ($self) = @_;
 }
 
+sub get_species_tree_file {
+    my $self = shift @_;
+
+    unless( $self->param('species_tree_file') ) {
+
+        unless( $self->param('species_tree_string') ) {
+
+            my $tag_table_name = 'nc_tree_tag';
+
+            my $sth = $self->dbc->prepare( "select value from $tag_table_name where tag='species_tree_string'" );
+            $sth->execute;
+            my ($species_tree_string) = $sth->fetchrow_array;
+            $sth->finish;
+
+            $self->param('species_tree_string', $species_tree_string)
+                or die "Could not fetch 'species_tree_string' from $tag_table_name";
+        }
+
+        my $species_tree_string = $self->param('species_tree_string');
+        eval {
+            my $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
+            my @leaves = @{$eval_species_tree->get_all_leaves};
+        };
+        if($@) {
+            die "Error parsing species tree from the string '$species_tree_string'";
+        }
+
+            # store the string in a local file:
+        my $species_tree_file = $self->worker_temp_directory . "spec_tax.nh";
+        open SPECIESTREE, ">$species_tree_file" or die "Could not open '$species_tree_file' for writing : $!";
+        print SPECIESTREE $species_tree_string;
+        close SPECIESTREE;
+        $self->param('species_tree_file', $species_tree_file);
+    }
+    return $self->param('species_tree_file');
+}
+
 sub run_ncgenomic_tree {
     my ($self, $method) = @_;
     my $cluster = $self->param('nc_tree');
@@ -47,24 +84,6 @@ sub run_ncgenomic_tree {
         die ("tree cluster $nc_tree_id has ".(scalar $cluster->get_all_leaves)." proteins - can not build a phyml tree\n");
     }
     my $njtree_phyml_executable = $self->param('treebest_exe') || "/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest/treebest";
-    # Defining a species_tree
-    # Option 1 is species_tree_string in nc_tree_tag, which then doesn't require tracking files around
-    # Option 2 is species_tree_file which should still work for compatibility
-    my $sql1 = "select value from nc_tree_tag where tag = 'species_tree_string'";
-    my $sth1 = $self->dbc->prepare($sql1);
-    $sth1->execute;
-    my $species_tree_string = $sth1->fetchrow_hashref;
-    $sth1->finish;
-    my $eval_species_tree;
-    eval {
-        $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string->{value});
-        my @leaves = @{$eval_species_tree->get_all_leaves};
-    };
-    $self->throw("Can't find species tree\n") if ($@);
-    my $spfilename = $self->worker_temp_directory . "spec_tax.nh";
-    open my $sptree_fh, ">$spfilename" or die $!;
-    print $sptree_fh $species_tree_string->{value};
-    close $sptree_fh;
     my $newick_file = $input_aln . ".treebest.$method.nh";
     $self->param('newick_file', $newick_file);
     my $treebest_err_file = $self->worker_temp_directory . "treebest.err";
@@ -72,7 +91,7 @@ sub run_ncgenomic_tree {
     $cmd .= " $method";
     $cmd .= " -Snf " if ($method eq 'phyml');
     $cmd .= " -s " if ($method eq 'nj');
-    $cmd .= $spfilename;
+    $cmd .= $self->get_species_tree_file();
     $cmd .= " " . $input_aln;
     $cmd .= " 2> ". $treebest_err_file;
     $cmd .= " > " . $newick_file;

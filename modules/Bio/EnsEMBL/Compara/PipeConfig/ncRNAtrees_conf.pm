@@ -34,7 +34,7 @@ sub default_options {
         'max_gene_count'    => 1500,
 
         'release'           => '64',
-        'rel_suffix'        => '',    # an empty string by default, a letter otherwise
+        'rel_suffix'        => 'fk',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
@@ -46,7 +46,7 @@ sub default_options {
 
         'pipeline_db' => {                                  # connection parameters
                           -driver => 'mysql',
-                          -host   => 'compara4',
+                          -host   => 'compara3',
                           -port   => 3306,
                           -user   => 'ensadmin',
                           -pass   => $self->o('password'),
@@ -158,6 +158,7 @@ sub pipeline_analyses {
                 'mode'          => 'overwrite',
             },
             -hive_capacity => 10,
+            -can_be_empty => 1,
         },
 
         {   -logic_name => 'offset_tables',
@@ -169,7 +170,7 @@ sub pipeline_analyses {
                     'ALTER TABLE homology AUTO_INCREMENT=100000001',
                 ],
             },
-            -wait_for => [ 'copy_table_factory', 'copy_table' ],    # have to wait until the tables have been copied
+            -wait_for => [ 'copy_table' ],    # have to wait until the tables have been copied
             -flow_into => {
                 1 => [ 'innodbise_table_factory' ],
             },
@@ -180,7 +181,7 @@ sub pipeline_analyses {
         {   -logic_name => 'innodbise_table_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='".$self->o('pipeline_db','-dbname')."' AND table_name!='genome_db' AND engine='MyISAM' ",
+                'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='".$self->o('pipeline_db','-dbname')."' AND table_name!='meta' AND engine='MyISAM' ",
                 'fan_branch_code' => 2,
             },
             -flow_into => {
@@ -195,20 +196,30 @@ sub pipeline_analyses {
                 'sql'         => "ALTER TABLE #table_name# ENGINE=InnoDB",
             },
             -hive_capacity => 10,
+            -can_be_empty => 1,
         },
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
 
-        {   -logic_name => 'load_genomedb_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadGenomedbFactory',
+                {   -logic_name => 'load_genomedb_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
-                'compara_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
-                'mlss_id'       => $self->o('mlss_id'),
+                'compara_db'            => $self->o('master_db'),   # that's where genome_db_ids come from
+                'mlss_id'               => $self->o('mlss_id'),
+
+                'adaptor_name'          => 'MethodLinkSpeciesSetAdaptor',
+                'adaptor_method'        => 'fetch_by_dbID',
+                'method_param_list'     => [ '#mlss_id#' ],
+                'object_method'         => 'species_set',
+
+                'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator' },
+
+                'fan_branch_code'       => 2,
             },
-            -wait_for  => [ 'innodbise_table_factory', 'innodbise_table' ],
+            -wait_for  => [ 'innodbise_table' ], # have to wait for both, because subfan can be empty
             -flow_into => {
-                2 => [ 'load_genomedb' ],
-                1 => [ 'make_species_tree', 'create_lca_species_set', 'load_rfam_models' ],
+                2 => [ 'load_genomedb' ],           # fan
+                1 => [ 'load_genomedb_funnel', 'load_rfam_models' ],    # backbone
             },
         },
 
@@ -223,6 +234,14 @@ sub pipeline_analyses {
             },
         },
 
+        {   -logic_name => 'load_genomedb_funnel',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -wait_for => [ 'load_genomedb' ],
+            -flow_into => {
+                           1 => [ 'make_species_tree', 'create_lca_species_set'],
+            },
+        },
+
 # ---------------------------------------------[load species tree]-------------------------------------------------------------------
 
 
@@ -233,10 +252,9 @@ sub pipeline_analyses {
                 'multifurcation_deletes_node'           => [ 33316, 129949, 314146 ],
                 'multifurcation_deletes_all_subnodes'   => [  9347, 186625,  32561 ],
             },
-            -wait_for => [ 'load_genomedb' ],  # have to wait for both to complete (so is a funnel)
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into  => {
-                3 => { 'mysql:////nc_tree_tag' => { 'node_id' => 1, 'tag' => 'species_tree_string', 'value' => '#species_tree_string#' } },
+                3 => { 'mysql:////meta' => { 'meta_key' => 'species_tree_string', 'meta_value' => '#species_tree_string#' } },
             },
         },
 
@@ -246,7 +264,7 @@ sub pipeline_analyses {
         {   -logic_name => 'create_lca_species_set',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
-                'sql' => [  "INSERT INTO species_set VALUES ()",   # insert a dummy pair (auto_increment++, 0) into the table
+                'sql' => [  "INSERT INTO species_set (genome_db_id) SELECT genome_db_id FROM genome_db LIMIT 1",   # insert a dummy pair (auto_increment++, <anything>) into the table
                             "DELETE FROM species_set WHERE species_set_id IN (#_insert_id_0#)",     # delete the previously inserted row, but keep the auto_increment
                 ],
             },
