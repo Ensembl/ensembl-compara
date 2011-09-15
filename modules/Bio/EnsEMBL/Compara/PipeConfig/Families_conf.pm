@@ -53,7 +53,7 @@ sub default_options {
 
         'pipeline_name'   => 'FAM_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
-        'email'           => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
+        'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
 
             # code directories:
         'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.23+/bin',
@@ -61,7 +61,7 @@ sub default_options {
         'mafft_root_dir'  => '/software/ensembl/compara/mafft-6.522',
             
             # data directories:
-        'work_dir'        => '/lustre/scratch101/ensembl/'.$ENV{'USER'}.'/families_'.$self->o('rel_with_suffix'),
+        'work_dir'        => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/families_'.$self->o('rel_with_suffix'),
         'blastdb_dir'     => $self->o('work_dir').'/blast_db',
         'blastdb_name'    => 'metazoa_'.$self->o('rel_with_suffix').'.pep',
         'tcx_name'        => 'families_'.$self->o('rel_with_suffix').'.tcx',
@@ -88,33 +88,17 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => $ENV{'USER'}.'_compara_families_'.$self->o('rel_with_suffix'),
+            -dbname => $self->o('ENV', 'USER').'_compara_families_'.$self->o('rel_with_suffix'),
         },
 
             # homology database connection parameters (we inherit half of the members and sequences from there):
-        'homology_db'  => {
-            -host   => 'compara3',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => 'mm14_compara_homology_'.$self->o('release'),
-        },
+        'homology_db'  => 'mysql://ensro@compara3/lg4_compara_homology_64b',
 
-        'prev_rel_db' => {     # used by the StableIdMapper as the reference
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -dbname => 'lg4_ensembl_compara_63',
-        },
+            # used by the StableIdMapper as the reference:
+        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/lg4_ensembl_compara_63',
 
-        'master_db' => {     # used by the StableIdMapper as the location of the master 'mapping_session' table
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => 'sf5_ensembl_compara_master',
-        },
+            # used by the StableIdMapper as the location of the master 'mapping_session' table:
+        'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ensembl_compara_master',    
     };
 }
 
@@ -178,7 +162,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'       => $self->o('homology_db'),
-                'inputlist'     => [ 'genome_db', 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node', 'member', 'sequence' ],
+                'inputlist'     => [ 'genome_db', 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_node', 'ncbi_taxa_name', 'sequence', 'member' ],
                 'column_names'  => [ 'table' ],
                 'input_id'      => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' },
                 'fan_branch_code' => 2,
@@ -204,8 +188,8 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql'   => [
-                    'ALTER TABLE member         AUTO_INCREMENT=100000001',
                     'ALTER TABLE sequence       AUTO_INCREMENT=100000001',
+                    'ALTER TABLE member         AUTO_INCREMENT=100000001',
                     'ALTER TABLE family         ENGINE=InnoDB',
                     'ALTER TABLE family_member  ENGINE=InnoDB',
                 ],
