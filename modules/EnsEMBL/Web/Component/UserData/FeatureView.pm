@@ -93,7 +93,7 @@ Using this form, you can select Ensembl features to display on a karyotype (form
       'select'  => 'select',
   );
 
-  $form->add_button('type' => 'Submit', 'name' => 'submit', 'value' => 'Show features', 'classes' => ['submit', 'modal_close']);
+  $form->add_button('type' => 'Submit', 'name' => 'submit', 'value' => 'Show features', 'class' => 'submit');
   $form->add_element('type' => 'ForceReload');
 
   $html .= $form->render;
