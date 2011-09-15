@@ -46,6 +46,8 @@ sub content {
   my $primary_image_config;
   my @images;
   
+  $methods->{'LASTZ_NET'} = $methods->{'BLASTZ_NET'};
+
   foreach (@$slices) {
     my $image_config   = $hub->get_imageconfig('MultiBottom', "contigview_bottom_$i", $_->{'species'});
     my $highlight_gene = $hub->param('g' . ($i - 1));
