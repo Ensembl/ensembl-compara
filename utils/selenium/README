@@ -37,7 +37,7 @@ RUNNING TESTS
   The following options are also supported:
     
     --species
-      specify  which species should be tested, e.g.
+      specify  which species should be tested (default is all), e.g.
       $ run_selenium_tests.pl --module Fungi --url http://fungi.ensembl.org --species "Aspergillus nidulans". Note -species all will run the script for all species.
     
     --timeout 
@@ -67,10 +67,10 @@ RUNNING BATCH SCRIPT
 
   The following options can be specified:
 
-    --module
+    --module (default are all species listed in the script)
       specify which module to run and the report for the specific module will be generated e.g. --module Karyotype will run the module karyotype only. 
 
-    --url
+    --url (default is http://test.ensembl.org)
       specify which url to run the tests e.g. --url http://www.ensembl.org
 
     --timeout

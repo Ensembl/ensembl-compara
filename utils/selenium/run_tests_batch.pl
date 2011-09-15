@@ -1,3 +1,4 @@
+# $Id$ 
 #!/usr/local/bin/perl
 use strict;
 use lib '../modules';
@@ -22,7 +23,7 @@ $timeout   = qq{-timeout $timeout} if($timeout);
 $url       = qq{-url $url} if($url);
 my @module = split(/,/, $module) if($module);
 
-# check to see if the selenium server is online
+# check to see if the selenium server is online(URL returns OK if server is online).
 my $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
 $ua->timeout(10);
 my $response = $ua->get("http://172.20.10.187:4444/selenium-server/driver/?cmd=testComplete");
@@ -30,8 +31,8 @@ if($response->content ne 'OK') { print "\nSelenium Server is offline !!!!\n";exi
 
 #prepare report dir
 if (-d 'test_reports') {
-  print "Emptying old reports dir\n";
-  `rm -f test_reports/*`;
+  print "Deleting old reports files\n";
+  `rm -f test_reports/*.txt`;
 } else {
   print "Creating reports dir\n";
   mkdir('test_reports');
