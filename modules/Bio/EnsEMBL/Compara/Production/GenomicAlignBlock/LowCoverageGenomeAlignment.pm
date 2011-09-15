@@ -85,6 +85,7 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
+use Bio::EnsEMBL::Utils::SqlHelper;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Hive::Process;
@@ -212,8 +213,27 @@ sub run
     Status     : At risk
 
 =cut
-
 sub write_output {
+    my ($self) = @_;
+
+    print "WRITE OUTPUT\n" if $self->debug;
+
+    if ($self->do_transactions) {
+	my $compara_conn = $self->{'comparaDBA'}->dbc;
+
+	my $compara_helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_conn);
+	$compara_helper->transaction(-CALLBACK => sub {
+	     $self->_write_output;
+         });
+    } else {
+	$self->_write_output;
+    }
+
+  return 1;
+
+}
+
+sub _write_output {
   my ($self) = @_;
 
   print "WRITE OUTPUT\n";
@@ -226,14 +246,24 @@ sub write_output {
       return 1;
   }
 
+  my $use_fresh_connection = 1;
+  my $skip_left_right_index = 0;
+
+  my $comparaDBA = $self->param('comparaDBA');
+
+  #Set use_autoincrement to 1 otherwise the GenomicAlignBlockAdaptor will use
+  #LOCK TABLES which does an implicit commit and prevent any rollback
+  $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
+
   if ($self->{'_runnable'}->{tree_to_save}) {
     my $meta_container = $self->{'comparaDBA'}->get_MetaContainer;
     $meta_container->store_key_value("synteny_region_tree_".$self->synteny_region_id,
         $self->{'_runnable'}->{tree_to_save});
   }
-
+  
   my $mlssa = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
   my $mlss = $mlssa->fetch_by_dbID($self->method_link_species_set_id);
+  my $mlss_id = $mlss->dbID;
   my $dnafrag_adaptor = $self->{'comparaDBA'}->get_DnaFragAdaptor;
   my $gaba = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
 #   $gaba->use_autoincrement(0);
@@ -248,6 +278,7 @@ sub write_output {
   my $slice_adaptor;
   my $ancestor_coord_system;
   my $ancestor_genome_db;
+  my $sth;
   if ($ancestors) { 
      $ancestor_genome_db = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("ancestral_sequences");
       my $ancestor_dba = $ancestor_genome_db->db_adaptor;
@@ -266,6 +297,8 @@ sub write_output {
 								);
 	  $ancestor_coord_system_adaptor->store($ancestor_coord_system);
       }
+     my $seq_region_sql = "UPDATE seq_region SET name = ? WHERE seq_region_id = ?";
+     $sth = $ancestor_coord_system_adaptor->prepare($seq_region_sql);
   }
 
   foreach my $genomic_align_tree (@{$self->{'_runnable'}->output}) {
@@ -284,20 +317,22 @@ sub write_output {
 
  		  my $length = length($genomic_align->original_sequence);
 
- 		  $slice_adaptor->dbc->db_handle->do("LOCK TABLES seq_region WRITE, dna WRITE");
- 		  my $last_id = $slice_adaptor->dbc->db_handle->selectrow_array("SELECT max(seq_region_id) FROM seq_region");
- 		  $last_id++;
- 		  my $name = "Ancestor$last_id";
+		  #Insert into seq_region with dummy name to get the seq_region_id and then update with the new name
+		  #"Ancestor_" . $mlss_id . "_$seq_region_id";
+		  #Need to make unique dummy name
+		  my $dummy_name = "dummy_" . $$;
  		  my $slice = new Bio::EnsEMBL::Slice(
- 						      -seq_region_name   => $name,
+ 						      -seq_region_name   => $dummy_name,
  						      -start             => 1,
  						      -end               => $length,
  						      -seq_region_length => $length,
  						      -strand            => 1,
  						      -coord_system      => $ancestor_coord_system,
  						     );
- 		  $slice_adaptor->store($slice, \$genomic_align->original_sequence);
- 		  $slice_adaptor->dbc->db_handle->do("UNLOCK TABLES");
+ 		  my $this_seq_region_id = $slice_adaptor->store($slice, \$genomic_align->original_sequence);
+		  my $name = "Ancestor_" . $mlss_id . "_" . $this_seq_region_id;
+		  $sth->execute($name, $this_seq_region_id);
+
  		  my $dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
 					   -name => $name,
 					   -genome_db => $ancestor_genome_db,
@@ -337,12 +372,13 @@ sub write_output {
 	       
 	   }
        } else {
-	   $gata->store($genomic_align_tree);
+	   $gata->store($genomic_align_tree, $skip_left_right_index, $use_fresh_connection);
 	   $self->_write_gerp_dataflow(
 			    $genomic_align_tree->modern_genomic_align_block_id,
 			    $mlss);
        }
    }
+
   chdir("$self->worker_temp_directory");
   foreach(glob("*")){
       #DO NOT COMMENT THIS OUT!!! (at least not permenantly). Needed
@@ -1167,6 +1203,11 @@ sub reference_species {
   return $self->{'_reference_species'};
 }
 
+sub do_transactions {
+  my $self = shift;
+  $self->{'_do_transactions'} = shift if(@_);
+  return $self->{'_do_transactions'};
+}
 
 
 ##########################################
@@ -1208,6 +1249,12 @@ sub get_params {
   }
   if(defined($params->{'max_block_size'})) {
     $self->{_max_block_size} = $params->{'max_block_size'};
+  }
+  if (defined($params->{'do_transactions'})) {
+      $self->{_do_transactions} = $params->{'do_transactions'};
+  } else {
+      #default is to do transactions
+      $self->{_do_transactions} = 1;
   }
 
   return 1;
