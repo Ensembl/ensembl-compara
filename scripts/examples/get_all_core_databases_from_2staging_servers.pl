@@ -1,9 +1,11 @@
-#!/usr/local/bin/perl -w
+#!/usr/bin/env perl
 
 # Generates a list of Bio::EnsEMBL::DBSQL::DBAdaptor objects for all core databases found on two staging servers
 # minus databases that contain ancestral sequences.
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Registry;
 
 Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs(

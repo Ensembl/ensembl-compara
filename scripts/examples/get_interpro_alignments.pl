@@ -1,13 +1,23 @@
-#!/usr/local/bin/perl
-use warnings;
+#!/usr/bin/env perl
+
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Registry;
-my $reg = "Bio::EnsEMBL::Registry";
 
-$reg->load_registry_from_db
-  ( -host => 'ensembldb.ensembl.org',
-    -user => 'anonymous');
+
+#
+# This script aligns all the groups of homologues containing a given
+# Interpro domain
+#
+
+my $reg = 'Bio::EnsEMBL::Registry';
+
+$reg->load_registry_from_db(
+  -host=>'ensembldb.ensembl.org',
+  -user=>'anonymous', 
+);
+
 
 my $human_gene_adaptor = $reg->get_adaptor("Homo sapiens", "core", "Gene");
 my $member_adaptor = $reg->get_adaptor("Multi", "compara", "Member");
@@ -54,11 +64,11 @@ sub get_interpro_alignment {
   ## Trim the tree and leave only proteins of interest (human, mouse, rat, dog, fruitfly)
   my $protein_tree = $protein_tree_adaptor->fetch_by_Member_root_id($peptide_member);
   foreach my $this_leaf (@{$protein_tree->get_all_leaves}) {
-    if ($this_leaf->genome_db->name ne "Homo sapiens" and
-        $this_leaf->genome_db->name ne "Mus musculus" and
-        $this_leaf->genome_db->name ne "Rattus norvegicus" and
-        $this_leaf->genome_db->name ne "Canis familiaris" and
-        $this_leaf->genome_db->name ne "Drosophila melanogaster") {
+    if ($this_leaf->genome_db->name ne "homo_sapiens" and
+        $this_leaf->genome_db->name ne "mus_musculus" and
+        $this_leaf->genome_db->name ne "rattus_norvegicus" and
+        $this_leaf->genome_db->name ne "canis_familiaris" and
+        $this_leaf->genome_db->name ne "drosophila_melanogaster") {
       ## This unlinks the leave
       $this_leaf->disavow_parent();
       ## This simplifies the tree (removes resulting nodes with 1 child only)
@@ -86,7 +96,7 @@ sub get_interpro_alignment {
     ##     gaps before, after or in-between
     ## 4. ((?:\-*\w\-*){$start}) The same for $length
     my ($pre, $this) = $alignment =~ /((?:\-*\w\-*){$start})((?:\-*\w\-*){$length})/;
-    ## Now we have in $pre as many numcleotides as defined by $start and whatever number
+    ## Now we have in $pre as many nucleotides as defined by $start and whatever number
     ## of gaps. The InterPro domains starts just after this $pre and lasts until the end
     ## of $this. Save the lengths of these regions and exit the loop:
     $aln_start = length($pre);

@@ -1,30 +1,34 @@
+#!/usr/bin/env perl
+
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::AlignIO;
 use Data::Dumper;
+
 
 #
 # Simple example to retrieve the constrained elements from the eutherian 
 # mammals 33way EPO_LOW_COVERAGE alignment
 #
 
+my $reg = 'Bio::EnsEMBL::Registry';
+
+$reg->load_registry_from_db(
+  -host=>'ensembldb.ensembl.org',
+  -user=>'anonymous', 
+);
+
+
 my $spp = "Homo sapiens";
 my $chr = "15";
 my $start = 76628758; 
 my $end = 76635191;
 
-my $version = 58;
-
-Bio::EnsEMBL::Registry->load_registry_from_db(-host =>'ensembldb.ensembl.org',
-					      -user => 'anonymous',
-					      -db_version => $version);
-
 # set up an AlignIO to format SimpleAlign output
-my $alignIO = Bio::AlignIO->newFh(-interleaved => 0,
-                                  -fh => \*STDOUT,
-				  -format => 'clustalw',
-                                  );
+my $alignIO = Bio::AlignIO->newFh(-interleaved => 0, -fh => \*STDOUT, -format => 'clustalw');
 
 #Create slice from $spp, $chr, $start and $end
 my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($spp, "core", "Slice");
@@ -56,6 +60,6 @@ foreach my $ce (@$cons) {
 	($ce->slice->start + $ce->end - 1) . " Constrained element score:" . $ce->score . 
 	" length:" . ($ce->end - $ce->start)  . " p_value:" . $ce->p_value . " taxonomic_level:" 
 	. "\"" .  $ce->taxonomic_level . "\"" . " dnafrag_id:". $ce->reference_dnafrag_id . "\n";
-	print $alignIO $ce->get_SimpleAlign($orig_mlss, "uc")->[0];
+	print $alignIO $ce->get_SimpleAlign($orig_mlss, "uc");
 }
 

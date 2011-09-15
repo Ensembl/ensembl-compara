@@ -1,9 +1,10 @@
-#!/usr/local/bin/perl -w
+#!/usr/bin/env perl
 
 # Dump EnsEMBL families into FASTA files, one file per family
 # by not using the Compara API (for speed)
 
 use strict;
+use warnings;
 use Getopt::Long;
 use DBI;
 

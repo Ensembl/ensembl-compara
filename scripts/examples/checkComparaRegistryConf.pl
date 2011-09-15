@@ -1,15 +1,21 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
-use Getopt::Long;
+use warnings;
+
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::SimpleAlign;
+
+
+#
+# This script checks a registry conf file by accessing the refered Compara
+# database and all its related core databases
+#
 
 my $reg_conf = shift;
 die("must specify registry conf file on commandline\n") unless($reg_conf);
 
 Bio::EnsEMBL::Registry->load_all($reg_conf);
+
 
 my $comparaDBA  = Bio::EnsEMBL::Registry->get_DBAdaptor('compara', 'compara');
 
@@ -55,7 +61,4 @@ foreach my $genomeDB (@{$genomes}) {
   }
 
 }
-
-
-exit(0);
 

@@ -1,13 +1,25 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
+
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Registry;
 
-Bio::EnsEMBL::Registry->load_registry_from_db
-  (-host=>"ensembldb.ensembl.org", 
-   -user=>"anonymous");
 
-my $taxonDBA =
-    Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "NCBITaxon");
+#
+# This script creates a species tree for a given list of species using
+# the NCBITaxon facilities of the Compara database
+#
+
+my $reg = 'Bio::EnsEMBL::Registry';
+
+$reg->load_registry_from_db(
+  -host=>'ensembldb.ensembl.org',
+  -user=>'anonymous', 
+);
+
+
+my $taxonDBA = $reg->get_adaptor("Compara", "compara", "NCBITaxon");
 
 my @list_of_species = ("Homo sapiens","Mus musculus","Drosophila melanogaster","Caenorhabditis elegans");
 my $root;
@@ -30,4 +42,3 @@ $root = $root->minimize_tree;
 print "MRCA is ", $root->name, "\t", $root->taxon_id, "\n";
 $root->print_tree(10);
 
-1;

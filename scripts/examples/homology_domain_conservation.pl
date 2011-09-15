@@ -18,29 +18,19 @@ Bio::EnsEMBL::Registry->load_registry_from_db
    -user=>"anonymous", 
    -db_version=>'58');
 Bio::EnsEMBL::Registry->no_version_check;
-my $human_gene_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Homo sapiens", "core", "Gene");
-my $member_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Compara", "compara", "Member");
-my $homology_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Compara", "compara", "Homology");
-my $proteintree_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Compara", "compara", "ProteinTree");
 
-my $genes = $human_gene_adaptor->
-  fetch_all_by_external_name('ENPP1');
+my $human_gene_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Homo sapiens", "core", "Gene");
+my $member_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "Member");
+my $homology_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "Homology");
+my $proteintree_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "ProteinTree");
+
+my $genes = $human_gene_adaptor->fetch_all_by_external_name('ENPP1');
 
 foreach my $gene (@$genes) {
-  my $member = $member_adaptor->
-    fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
+  my $member = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
   die "no members" unless (defined $member);
   # Fetch the proteintree
-  my $root =  $proteintree_adaptor->
-    fetch_by_Member_root_id($member);
+  my $root =  $proteintree_adaptor->fetch_by_Member_root_id($member);
   die "no tree" unless (defined $root);
   my @leaves = @{$root->get_all_leaves};
   my $member_domain;

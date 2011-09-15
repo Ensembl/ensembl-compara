@@ -1,10 +1,17 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
+
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Registry;
 use Getopt::Long;
 
-# Fetch a list of ENSG ids and get the protein alignment for them. Print
-# the alignment in clustalw format on a list of files
+
+#
+# This script reads a list of human gene ids, and then, for each one
+# of them, queries the Compara database to fetch its gene tree and prints
+# its multiple sequence alignment
+#
 
 my ($inputfile,$debug);
 
@@ -13,21 +20,20 @@ GetOptions(
            'd|debug:s' => \$debug,
           );
 
-Bio::EnsEMBL::Registry->load_registry_from_db
-  (-host=>"ensembldb.ensembl.org", 
-   -user=>"anonymous");
-my $human_gene_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Homo sapiens", "core", "Gene");
-my $member_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Compara", "compara", "Member");
-my $homology_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Compara", "compara", "Homology");
-my $proteintree_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Compara", "compara", "ProteinTree");
+my $reg = 'Bio::EnsEMBL::Registry';
+
+$reg->load_registry_from_db(
+  -host=>'ensembldb.ensembl.org',
+  -user=>'anonymous', 
+);
+
+
+my $human_gene_adaptor = $reg->get_adaptor("Homo sapiens", "core", "Gene");
+
+my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
+my $member_adaptor = $comparaDBA->get_MemberAdaptor;
+my $proteintree_adaptor = $comparaDBA->get_ProteinTreeAdaptor;
+
 
 open INPUT,"$inputfile" or die "$!\n";
 my @gene_ids;

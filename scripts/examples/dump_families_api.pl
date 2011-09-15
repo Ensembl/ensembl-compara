@@ -1,11 +1,11 @@
-#!/usr/local/bin/perl -w
+#!/usr/bin/env perl
 
 # Dump EnsEMBL families into FASTA files, one file per family.
 #
-# DO NOT USE it to dump the whole lot, as you will blow the memory on your computer and likely to lose patience.
 # It is more of an example of how to use the API to do things, but it is not optimal for dumping all and everything.
 
 use strict;
+use warnings
 use Getopt::Long;
 use Bio::EnsEMBL::Registry;
 
@@ -38,7 +38,7 @@ my $families = $family_adaptor->fetch_all();
 warn "Creating directory '$target_dir'\n";
 mkdir($target_dir);
 
-foreach my $f (@$families) {
+while (my $f = shift @$families) {
 
     my $family_name = $f->stable_id().'.'.$f->version();
     my $file_name   = "$target_dir/$family_name.fasta";

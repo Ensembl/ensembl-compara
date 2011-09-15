@@ -1,12 +1,13 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 #
 # Simple example to show how to get conservation scores for a slice.
-# Works for ensembl release 51
 #
 
 my $reg = "Bio::EnsEMBL::Registry";
@@ -14,12 +15,11 @@ my $species = "Homo sapiens";
 my $seq_region = "17";
 my $seq_region_start = 32020001;
 my $seq_region_end =   32020500;
-my $version = 58;
 
 $reg->load_registry_from_db(
       -host => "ensembldb.ensembl.org",
       -user => "anonymous",
-      -db_version => $version);
+);
 
 #get method_link_species_set adaptor
 my $mlss_adaptor = $reg->get_adaptor("Multi", "compara", "MethodLinkSpeciesSet");
@@ -52,3 +52,4 @@ foreach my $score (@$scores) {
 	printf("position %d observed %.4f expected %.4f difference %.4f\n",  $score->position, $score->observed_score, $score->expected_score, $score->diff_score);
     }
 }
+

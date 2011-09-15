@@ -1,30 +1,38 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
-use Getopt::Long;
+use warnings;
+
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-my $reg_conf = shift;
-die("must specify registry conf file on commandline\n") unless($reg_conf);
-Bio::EnsEMBL::Registry->load_all($reg_conf);
 
-# get compara DBAdaptor
-my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
+#
+# This script queries the Compara database to fetch a gene and its canonical
+# translation (brute force version)
+#
+
+my $reg = 'Bio::EnsEMBL::Registry';
+
+$reg->load_registry_from_db(
+  -host=>'ensembldb.ensembl.org',
+  -user=>'anonymous', 
+);
+
 
 # get GenomeDB for human
-my $humanGDB = $comparaDBA->get_GenomeDBAdaptor-> fetch_by_registry_name("human");
+my $genomedb_adaptor = $reg->get_adaptor('Multi', 'compara', 'GenomeDB');
+my $humanGDB = $genomedb_adaptor->fetch_by_registry_name("human");
 
 # simple example of getting members, back referencing to core,
 # and then back reference again to compara
 # not efficient since gene members are stored in compara, but demonstrates
 # the connections
 
-my $ma = $comparaDBA->get_MemberAdaptor;
-my $m1 = $ma->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000060069");
+my $member_adaptor = $reg->get_adaptor('Multi', 'compara', 'Member');
+my $m1 = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000060069");
 $m1->print_member;
 
-my $members = $ma->fetch_by_source_taxon("ENSEMBLPEP", $humanGDB->taxon_id);
+my $members = $member_adaptor->fetch_by_source_taxon("ENSEMBLPEP", $humanGDB->taxon_id);
 printf("fetched %d members\n", scalar(@$members));
 
 foreach my $m2 (@{$members}) {
@@ -38,6 +46,4 @@ foreach my $m2 (@{$members}) {
     last;
   }
 }
-
-exit(0);
 

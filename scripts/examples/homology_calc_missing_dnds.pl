@@ -1,28 +1,36 @@
-#!/usr/bin/perl
-use strict;
-use Bio::EnsEMBL::Registry;
+#!/usr/bin/env perl
 
+use strict;
+use warnings;
+
+use Bio::EnsEMBL::Registry;
 use Getopt::Long;
+
+
+#
+# This script computes dn/ds values for pairs of homologues, when it hasn't
+# been done by Compara
+#
+
 
 my ($input,$species2,$debug);
 
 GetOptions(
-	   'i|input:s' => \$input,
-	   'sp2|species2:s' => \$species2,
-           'd|debug:s' => \$debug,
-          );
+        'i|input:s' => \$input,
+        'sp2|species2:s' => \$species2,
+        'd|debug:s' => \$debug,
+);
 
-Bio::EnsEMBL::Registry->load_registry_from_db
-    (-host=>"ensembldb.ensembl.org", 
-     -user=>"anonymous",
-    -db_version=>'59');
-Bio::EnsEMBL::Registry->no_version_check(1) unless ($debug);
-my $member_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-    ("Compara", "compara", "Member");
-my $homology_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-    ("Compara", "compara", "Homology");
+my $reg = "Bio::EnsEMBL::Registry";
+$reg->load_registry_from_db(
+    -host=>"ensembldb.ensembl.org", 
+    -user=>"anonymous",
+    -db_version=>'59'
+);
+$reg->no_version_check(1) unless ($debug);
+
+my $member_adaptor = $reg->get_adaptor("Compara", "compara", "Member");
+my $homology_adaptor = $reg->get_adaptor("Compara", "compara", "Homology");
 
 my $bioperl_dnastats = 0;
 eval {require Bio::Align::DNAStatistics;};
@@ -84,3 +92,4 @@ foreach my $gene_id (split(':',$input)) {
     print "$spa,$labela,$spb,$labelb,$dn,$ds\n";
   }
 }
+

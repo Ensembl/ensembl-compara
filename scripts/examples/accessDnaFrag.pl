@@ -1,13 +1,24 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
-use Getopt::Long;
-use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use warnings;
 
-my $reg_conf = shift;
-die("must specify registry conf file on commandline\n") unless($reg_conf);
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+use Bio::EnsEMBL::Registry;
+
+
+#
+# This script show how to fetch a Compara DNAFrag object, that can linked
+# to a core Slice object (for example to find genes)
+#
+
+my $reg = 'Bio::EnsEMBL::Registry';
+
+$reg->load_registry_from_db(
+  -host=>'ensembldb.ensembl.org',
+  -user=>'anonymous', 
+);
+
+
 
 # get compara DBAdaptor
 my $comparaDBA = Bio::EnsEMBL::Registry->get_DBAdaptor('compara', 'compara');
@@ -29,6 +40,4 @@ my $genes = $slice->get_all_Genes;
 foreach my $gene (@{$genes}) {
   printf("%s\n", $gene->stable_id);
 }
-
-exit(0);
 

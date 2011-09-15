@@ -1,20 +1,22 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
-use Getopt::Long;
-use Time::HiRes qw { time };
+use warnings;
+
 use Bio::EnsEMBL::Registry;
 
-use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
-use Bio::EnsEMBL::Compara::Homology;
-use Bio::EnsEMBL::Compara::Member;
-use Bio::EnsEMBL::Compara::Attribute;
 
+#
+# This script retrieves all the orthologues of a given gene
+#
 
-my $reg_conf = shift;
-die("must specify registry conf file on commandline\n") unless($reg_conf);
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+my $reg = 'Bio::EnsEMBL::Registry';
+
+$reg->load_registry_from_db(
+  -host=>'ensembldb.ensembl.org',
+  -user=>'anonymous', 
+);
+
 
 ###########################
 # 
@@ -43,10 +45,8 @@ foreach my $homology (@{$homologies}) {
     my $peptide_member = $memberAdaptor->fetch_by_dbID($atrb->peptide_member_id);
     $peptide_member->print_member;
     my $transcript = $peptide_member->get_Transcript;
-    my $utr3_bioseq = $transcript ->three_prime_utr;
+    my $utr3_bioseq = $transcript->three_prime_utr;
     print("  3UTR\n") if(defined($utr3_bioseq));
   }
 }
 
-
-exit(0);

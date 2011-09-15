@@ -1,26 +1,33 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
+
 use strict;
+use warnings;
+
+
+#
+# This scripts fetches the tree of a given gene, and prints the subtree of it
+# which contains only genes from primates
+#
+
 use Bio::EnsEMBL::Registry;
-use Bio::AlignIO;
 
-Bio::EnsEMBL::Registry->load_registry_from_db
-  (-host=>"ensembldb.ensembl.org", 
-   -user=>"anonymous", 
-   -db_version=>'57');
-my $human_gene_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Homo sapiens", "core", "Gene");
-my $member_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Compara", "compara", "Member");
-my $proteintree_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Compara", "compara", "ProteinTree");
+my $reg = 'Bio::EnsEMBL::Registry';
 
-my $genes = $human_gene_adaptor->
-  fetch_all_by_external_name('FRY');
+$reg->load_registry_from_db(
+  -host=>'ensembldb.ensembl.org',
+  -user=>'anonymous', 
+);
 
-my @list = ("Homo sapiens","Pan troglodytes","Pongo pygmaeus","Macaca mulatta","Gorilla gorilla");
+
+my $human_gene_adaptor = $reg->get_adaptor("Homo sapiens", "core", "Gene");
+
+my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
+my $member_adaptor = $comparaDBA->get_MemberAdaptor;
+my $proteintree_adaptor = $comparaDBA->get_ProteinTreeAdaptor;
+
+my $genes = $human_gene_adaptor->fetch_all_by_external_name('FRY');
+
+my @list = ("homo_sapiens", "pan_troglodytes", "pongo_pygmaeus", "macaca_mulatta", "gorilla_gorilla");
 my $wanted_species;
 foreach my $id (@list) {
   $wanted_species->{$id} = 1;
@@ -38,17 +45,12 @@ foreach my $gene (@$genes) {
   my @discarded_nodes;
   foreach my $leaf (@{$proteintree->get_all_leaves}) {
     my $stable_id = $leaf->stable_id;
-    # since you are interested in Euteleostomi, means you need to get
-    # rid of the cionas and anything which stable_id doesn't start by
-    # ENS
     unless ($wanted_species->{$leaf->genome_db->name}) {
-    # The following commented line would do the same but it's much slower
-    # if ($leaf->genome_db->taxon->classification !~ /Euteleostomi/) {}
       push @discarded_nodes, $leaf;
     }
   }
   my $ret_tree = $proteintree->remove_nodes(\@discarded_nodes);
-  print $ret_tree->newick_format,"\n";
+  print $ret_tree->newick_format("full"), "\n";
 
 #   my $sa = $ret_tree->get_SimpleAlign;
 #   # We can use bioperl to print out the aln in fasta format

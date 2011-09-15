@@ -1,46 +1,39 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
-use Getopt::Long;
-use Time::HiRes qw { time };
+use warnings;
 
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
-use Bio::EnsEMBL::Compara::Homology;
-use Bio::EnsEMBL::Compara::Member;
-use Bio::EnsEMBL::Compara::Attribute;
 
-my $reg_conf = shift;
+
+#
+# This script gets the orthologue clusters starting from
+# a specific gene and following the links (with a
+#
+
+my $reg = 'Bio::EnsEMBL::Registry';
+
+$reg->load_registry_from_db(
+  -host=>'ensembldb.ensembl.org',
+  -user=>'anonymous', 
+);
+
+
 my $gene_name = shift;
 $gene_name="ENSDARG00000052960" unless(defined($gene_name));
 
-die("must specify registry conf file on commandline\n") unless($reg_conf);
-Bio::EnsEMBL::Registry->load_all($reg_conf);
-
-###########################
-# 
-# advanced example which uses a recursive approach
-# to build single linkage clusters within the orthologues
-# by starting at a specific gene and following the links
-#
-###########################
 
 # get compara DBAdaptor
 my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
-
-
 my $MA = $comparaDBA->get_MemberAdaptor;
 my $gene_member = $MA->fetch_by_source_stable_id("ENSEMBLGENE", $gene_name);
 
-my $start = time();
 my $ortho_set = {};
 my $member_set = {};
 get_orthologue_cluster($gene_member, $ortho_set, $member_set, 0);
 
 printf("cluster has %d links\n", scalar(keys(%{$ortho_set})));
 printf("cluster has %d genes\n", scalar(keys(%{$member_set})));
-printf("%1.3f msec\n", 1000.0*(time() - $start));
 
 foreach my $homology (values(%{$ortho_set})) {
   $homology->print_homology;
@@ -49,8 +42,6 @@ foreach my $member (values(%{$member_set})) {
   $member->print_member;
 }
 
-
-exit(0);
 
 
 sub get_orthologue_cluster {
@@ -84,5 +75,3 @@ sub get_orthologue_cluster {
   printf("done with search query %s\n", $gene->stable_id) if($debug);
 }
 
-
-1;

@@ -1,29 +1,33 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
+
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Registry;
 
-Bio::EnsEMBL::Registry->load_registry_from_db
-  (-host=>"ensembldb.ensembl.org", 
-   -user=>"anonymous", 
-   -db_version=>'58');
-my $human_gene_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Homo sapiens", "core", "Gene");
-my $member_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Compara", "compara", "Member");
-my $homology_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Compara", "compara", "Homology");
-my $proteintree_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Compara", "compara", "ProteinTree");
-my $mlss_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Compara", "compara", "MethodLinkSpeciesSet");
 
-my $genes = $human_gene_adaptor->
-  fetch_all_by_external_name('BRCA2');
+#
+# This script queries the Compara database to fetch all the homologies
+# attached to a given gene, and then prints information about last
+# common ancestor and branch length using the gene tree
+#
+
+my $reg = 'Bio::EnsEMBL::Registry';
+
+$reg->load_registry_from_db(
+  -host=>'ensembldb.ensembl.org',
+  -user=>'anonymous', 
+);
+
+
+my $human_gene_adaptor = $reg->get_adaptor("Homo sapiens", "core", "Gene");
+
+my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
+my $member_adaptor = $comparaDBA->get_MemberAdaptor;
+my $homology_adaptor = $comparaDBA->get_HomologyAdaptor;
+my $proteintree_adaptor = $comparaDBA->get_ProteinTreeAdaptor;
+
+my $genes = $human_gene_adaptor->fetch_all_by_external_name('BRCA2');
 
 my $verbose = 0;
 foreach my $gene (@$genes) {

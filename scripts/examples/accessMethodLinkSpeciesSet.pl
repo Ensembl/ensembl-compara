@@ -1,20 +1,26 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
-use Getopt::Long;
+use warnings;
+
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Time::HiRes qw { time };
 
-my $reg_conf = shift;
-die("must specify registry conf file on commandline\n") unless($reg_conf);
-Bio::EnsEMBL::Registry->load_all($reg_conf);
 
-# get compara DBAdaptor
-my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
+#
+# This script queries the Compara database to fetch all the MethodLinkSpeciesSet
+# objects used by orthologies
+#
 
-my $mlss_list = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
-        fetch_all_by_method_link_type('ENSEMBL_ORTHOLOGUES');
+my $reg = 'Bio::EnsEMBL::Registry';
+
+$reg->load_registry_from_db(
+  -host=>'ensembldb.ensembl.org',
+  -user=>'anonymous', 
+);
+
+
+my $mlss_adaptor = $reg->get_adaptor('Multi', 'compara', 'MethodLinkSpeciesSet');
+my $mlss_list = $mlss_adaptor->fetch_all_by_method_link_type('ENSEMBL_ORTHOLOGUES');
 
 foreach my $mlss (@{$mlss_list}) {
   my $species_names = '';
@@ -23,6 +29,4 @@ foreach my $mlss (@{$mlss_list}) {
   }
   printf("mlss(%d) %s : %s\n", $mlss->dbID, $mlss->method_link_type, $species_names);
 }
-
-exit(0);
 

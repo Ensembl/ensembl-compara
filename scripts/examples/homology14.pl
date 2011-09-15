@@ -1,23 +1,32 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
+
 use strict;
+use warnings;
+
+
+#
+# This script queries the Compara database to fetch all the one2one
+# homologies, and prints the percentage of identity with the alignment
+# length
+#
+
 use Bio::EnsEMBL::Registry;
 
-Bio::EnsEMBL::Registry->load_registry_from_db
-    (-host=>"ensembldb.ensembl.org", 
-     -user=>"anonymous",
-     -db_version=>'58');
-my $human_gene_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-    ("Homo sapiens", "core", "Gene");
-my $member_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-    ("Compara", "compara", "Member");
-my $homology_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-    ("Compara", "compara", "Homology");
+my $reg = 'Bio::EnsEMBL::Registry';
 
-my $genes = $human_gene_adaptor->
-   fetch_all_by_external_name('CTDP1');
+$reg->load_registry_from_db(
+  -host=>'ensembldb.ensembl.org',
+  -user=>'anonymous', 
+);
+
+
+my $human_gene_adaptor = $reg->get_adaptor("Homo sapiens", "core", "Gene");
+
+my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
+my $member_adaptor = $comparaDBA->get_MemberAdaptor;
+my $homology_adaptor = $comparaDBA->get_HomologyAdaptor;
+
+my $genes = $human_gene_adaptor->fetch_all_by_external_name('CTDP1');
 
 foreach my $gene (@$genes) {
   my $member = $member_adaptor->
@@ -43,3 +52,4 @@ foreach my $gene (@$genes) {
     print "\n";
   }
 }
+

@@ -1,23 +1,30 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
+
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Registry;
 
-Bio::EnsEMBL::Registry->load_registry_from_db
-  (-host=>"ensembldb.ensembl.org", 
-   -user=>"anonymous",
-  -db_version=>'59');
 
-my $homology_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "Homology");
+#
+# This script fetches clusters of one2one orthologies between a
+# given set of species
+#
 
-my $mlss_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "MethodLinkSpeciesSet");
+my $reg = 'Bio::EnsEMBL::Registry';
 
-my $genomedb_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "GenomeDB");
+$reg->load_registry_from_db(
+  -host=>'ensembldb.ensembl.org',
+  -user=>'anonymous', 
+);
 
-# my @list_of_species = ("homo_sapiens","pan_troglodytes","macaca_mulatta");
-my @list_of_species = ("homo_sapiens","pan_troglodytes","macaca_mulatta","mus_musculus","rattus_norvegicus","canis_familiaris","bos_taurus","sus_scrofa","monodelphis_domestica","ornithorhynchus_anatinus","gallus_gallus","danio_rerio");
+
+my $homology_adaptor = $reg->get_adaptor("Compara", "compara", "Homology");
+my $mlss_adaptor = $reg->get_adaptor("Compara", "compara", "MethodLinkSpeciesSet");
+my $genomedb_adaptor = $reg->get_adaptor("Compara", "compara", "GenomeDB");
+
+my @list_of_species = ("homo_sapiens","pan_troglodytes","macaca_mulatta");
+#my @list_of_species = ("homo_sapiens","pan_troglodytes","macaca_mulatta","mus_musculus","rattus_norvegicus","canis_familiaris","bos_taurus","sus_scrofa","monodelphis_domestica","ornithorhynchus_anatinus","gallus_gallus","danio_rerio");
 my $hash_of_species;
 my @gdbs;
 foreach my $species_binomial (@list_of_species) {
@@ -79,4 +86,3 @@ foreach my $stable_id (keys %$present_in_all) {
 # my $mlss_para = $mlss_adaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$sp1_gdb, $sp2_gdb]);
 # my @paralogies = @{$homology_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss_para)};
 
-1;

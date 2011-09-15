@@ -1,23 +1,37 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
+
 use strict;
+use warnings;
+
+use Bio::AlignIO;
 use Bio::EnsEMBL::Registry;
 
-Bio::EnsEMBL::Registry->load_registry_from_db
-  (-host=>"ensembldb.ensembl.org", 
-   -user=>"anonymous", 
-   -db_version=>'58');
 
-my $human_gene_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor("Homo sapiens", "core", "Gene");
-my $member_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "Member");
-my $homology_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "Homology");
-my $proteintree_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-  ("Compara", "compara", "ProteinTree");
+#
+# This script fetches the gene tree associated to a given gene, and
+# filters it to keep only one2one orthologs (with respect to the
+# initial gene). It finally prints the multiple alignment of the
+# remaining genes
+#
+
+my $reg = 'Bio::EnsEMBL::Registry';
+
+$reg->load_registry_from_db(
+  -host=>'ensembldb.ensembl.org',
+  -user=>'anonymous', 
+);
+
+
+my $human_gene_adaptor = $reg->get_adaptor("Homo sapiens", "core", "Gene");
+
+my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
+my $member_adaptor = $comparaDBA->get_MemberAdaptor;
+my $homology_adaptor = $comparaDBA->get_HomologyAdaptor;
+my $proteintree_adaptor = $comparaDBA->get_ProteinTreeAdaptor;
 
 my $genes = $human_gene_adaptor->fetch_all_by_external_name('PAX2');
+
+my $stdout_alignio = Bio::AlignIO->newFh(-format => 'clustalw');
 
 foreach my $gene (@$genes) {
   my $member = $member_adaptor->
@@ -55,5 +69,7 @@ foreach my $gene (@$genes) {
   }
   # Obtain the MSA for human and all one2ones
   my $protein_align = $proteintree->get_SimpleAlign;
+  print $stdout_alignio $protein_align;
   $proteintree->release_tree;
 }
+
