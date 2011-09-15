@@ -393,13 +393,13 @@ sub _combine_genomic_align_trees {
   ## First, rely on the right_node_id, then on the species_name. If $next_tree has a new species_name,
   ## include it. If no good position has been found, append the node to the end of the $species_order.
   foreach my $this_genomic_align_node (@{$next_tree->get_all_sorted_genomic_align_nodes}) {
-    next if (!@{$this_genomic_align_node->get_all_GenomicAligns});
-    my $this_genomic_align = $this_genomic_align_node->get_all_GenomicAligns->[0];
+    next if (!@{$this_genomic_align_node->get_all_genomic_aligns_for_node});
+    my $this_genomic_align = $this_genomic_align_node->get_all_genomic_aligns_for_node->[0];
     my $this_genome_db = $this_genomic_align->genome_db;
     my $this_node_id = $this_genomic_align_node->node_id;
     my $this_right_node_id = _get_right_node_id($this_genomic_align_node);
     my $these_genomic_align_ids = [];
-    foreach my $each_genomic_align (@{$this_genomic_align_node->get_all_GenomicAligns}) {
+    foreach my $each_genomic_align (@{$this_genomic_align_node->get_all_genomic_aligns_for_node}) {
       push (@$these_genomic_align_ids, $each_genomic_align->dbID);
     }
     ## DEBUG info
