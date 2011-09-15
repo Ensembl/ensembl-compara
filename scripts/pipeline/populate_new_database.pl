@@ -160,6 +160,7 @@ and skip the method_link_species_sets corresponding to these IDs.
 
 =cut
 
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Getopt::Long;
@@ -195,6 +196,7 @@ GetOptions(
 if ($help or !$master or !$new) {
   exec("/usr/bin/env perldoc $0");
 }
+
 
 #################################################
 ## Get the DBAdaptors from the Registry
@@ -232,6 +234,12 @@ $new_dba->get_MetaContainer; # tests that the DB exists
 ################################################
 
 
+#Allow species to be specified as either --species spp1 --species spp2 --species spp3 or --species spp1,spp2,spp3
+@$species = split(/,/, join(',', @$species));
+
+#Allow method_link_species_sets to be specified as either --mlss mlss1 --mlss mlss2 --mlss mlss3 or --mlss mlss1,mlss2,mlss3
+@$mlsss = split(/,/, join(',', @$mlsss));
+
 ## Get all the genome_dbs with a default assembly
 my $all_default_genome_dbs = get_all_default_genome_dbs($master_dba, $species, $mlsss);
 
@@ -261,8 +269,8 @@ if($only_show_intentions) {
 update_schema_version($master_dba, $new_dba);
 
 ## Copy taxa and method_link tables
-copy_table($master_dba, $new_dba, "ncbi_taxa_name");
 copy_table($master_dba, $new_dba, "ncbi_taxa_node");
+copy_table($master_dba, $new_dba, "ncbi_taxa_name");
 copy_table($master_dba, $new_dba, "method_link");
 
 ## Store all the genome_dbs in the new DB
