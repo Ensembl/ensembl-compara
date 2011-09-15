@@ -754,8 +754,14 @@ sub build_GeneTreeSystem
   my $create_Hdups_qc_jobs_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'CreateHDupsQCJobs',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSfactory',
-      -parameters      => "{ 'input_id' => { 'is_ortho' => '#is_ortho#', 'mlss_id' => '#mlss_id#' }, 'fan_branch_code' => 2 }",
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+      -parameters      => qq{                
+                        'adaptor_name'          => 'MethodLinkSpeciesSetAdaptor',   
+                        'adaptor_method'        => 'fetch_all_by_method_link_type',   
+                        'column_names2getters'  => { 'mlss_id' => 'dbID' },    
+                        'input_id'              => { 'mlss_id' => '#mlss_id#', 'is_ortho' => '#is_ortho#' },  
+                        'fan_branch_code'       => 2,
+     },
   );
   $analysisDBA->store($create_Hdups_qc_jobs_analysis);
 
@@ -978,12 +984,12 @@ sub build_GeneTreeSystem
     );
 
     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-        -input_id       => "{ 'method_link_type' => 'ENSEMBL_ORTHOLOGUES', 'is_ortho' => 1 }",
+        -input_id       => "{ 'method_param_list' => [ 'ENSEMBL_ORTHOLOGUES' ], 'is_ortho' => 1 }",
         -analysis       => $create_Hdups_qc_jobs_analysis,
     );
 
     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-        -input_id       => "{ 'method_link_type' => 'ENSEMBL_PARALOGUES', 'is_ortho' => 0 }",
+        -input_id       => "{ 'method_param_list' => [ 'ENSEMBL_PARALOGUES' ], 'is_ortho' => 0 }",
         -analysis       => $create_Hdups_qc_jobs_analysis,
     );
 
