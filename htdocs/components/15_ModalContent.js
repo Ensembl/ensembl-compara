@@ -118,12 +118,12 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       dataType: 'json',
       context: this,
       success: function (json) {
-        if (json.redirectURL) {
+        if (json.redirectURL && json.redirectType === 'modal') {
           return this.getContent(undefined, json.redirectURL);
         }
         
-        if (json.success === true) {
-          Ensembl.EventManager.trigger('reloadPage');
+        if (json.success === true || json.redirectType === 'page') {
+          Ensembl.EventManager.trigger('reloadPage', false, json.redirectType === 'page' ? json.redirectURL : false);
         } else if (this.el.is(':visible')) {
           this.updateContent(json);
         }
