@@ -482,7 +482,6 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'load_fresh_members',
-#            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ReuseOrLoadMembers',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
             -parameters => {'coding_exons' => 1,
 			    'min_length' => 20 },
