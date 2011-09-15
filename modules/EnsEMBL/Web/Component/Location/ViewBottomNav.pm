@@ -47,6 +47,8 @@ sub content {
   
   unshift @$values, $ramp if $self->{'update'};
   
+  $ENV{'CACHE_KEY'} .= join '::', '', grep $_, $hub->action, $hub->function if $hub->cache;
+
   return $self->{'update'} ? $self->jsonify($values) : $self->navbar($ramp, $wd, $values);
 }
 
@@ -56,7 +58,7 @@ sub navbar {
   my $hub          = $self->hub;
   my $img_url      = $self->img_url;
   my $image_width  = $self->image_width . 'px';
-  my $url          = $hub->url({ %{$hub->multi_params(0)}, function => undef, r => undef, g => undef }, 1);
+  my $url          = $hub->url({ %{$hub->multi_params(0)}, r => undef, g => undef }, 1);
   my $psychic      = $hub->url({ type => 'psychic', action => 'Location', __clear => 1 });
   my $extra_inputs = join '', map { sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]->{$_}) } keys %{$url->[1] || {}};
   my $g            = $hub->param('g');
