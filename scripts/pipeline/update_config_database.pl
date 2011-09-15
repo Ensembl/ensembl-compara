@@ -10,7 +10,7 @@ Kathryn Beal (kbeal@ebi.ac.uk)
 
 =head1 COPYRIGHT
 
-This modules is part of the Ensembl project http://www.ensembl.org
+This module is part of the Ensembl project http://www.ensembl.org
 
 =head1 DESCRIPTION
 
@@ -179,6 +179,10 @@ my $non_ref_alignment_bed;
 my $non_ref_species;
 my $ensembl_release;
 my $download_url;
+my $output_dir = "./";
+my $pair_aligner_options;
+my $ref_dna_collection_str;
+my $non_ref_dna_collection_str;
 
 #blastz parameters corresponding to the blastz_parameters table.  
 my $possible_blastz_params = {T => 1,
@@ -218,6 +222,7 @@ GetOptions(
     "ref_species=s" => \$species,
     "ensembl_release=i" => \$ensembl_release,
     "download_url=s" => \$download_url,
+    "dump_features=s" => \$dump_features,
     "bed_file_location=s" => \$bed_file_location,
     "ref_genome_bed=s" => \$ref_genome_bed,
     "ref_coding_exons_bed=s" => \$ref_coding_exons_bed,
@@ -225,6 +230,10 @@ GetOptions(
     "non_ref_coding_exons_bed=s" => \$non_ref_coding_exons_bed,
     "ref_alignment_bed=s" => \$ref_alignment_bed,
     "non_ref_alignment_bed=s" => \$non_ref_alignment_bed,
+    "output_dir=s" => \$output_dir,
+    "pair_aligner_options=s" => \$pair_aligner_options,
+    "ref_dna_collection=s" => \$ref_dna_collection_str,
+    "non_ref_dna_collection=s" => \$non_ref_dna_collection_str,
   );
 
 # Print Help and exit
@@ -254,6 +263,8 @@ if (defined $mlss_id) {
 } else {
     throw "Must define method_link_species_set_id";
 } 
+
+my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
 
 #Find ensembl release version from compara meta container if not defined
 if (defined $ensembl_release) {
@@ -287,18 +298,37 @@ if ($reg_conf) {
     }
 }
 
+my $ref_genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_registry_name($species);
 $species = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_registry_name($species)->name;
+
+my $ref_dna_collection = eval($ref_dna_collection_str);
+my $non_ref_dna_collection = eval($non_ref_dna_collection_str);
 
 #
 #Write config parameters to config database if defined
 #
 my $pair_aligner_id;
+my $meta_container = $self->compara_dba->get_MetaContainer;
 if (defined $config_file) {
     $self->parse_conf($config_file);
     $pair_aligner_id = $self->write_config_params($config_url);
 } else {
-    #If no config file available, then fill in as much as possible
-    $pair_aligner_id = $self->write_default_config_params($species);
+    if (defined $ref_dna_collection) {
+	my $species_set = $mlss->species_set;
+	foreach my $gdb (@$species_set) {
+	    print "genome_db " . $gdb->dbID . "\n";
+	    if ($gdb->dbID == $ref_genome_db->dbID) {
+		$ref_dna_collection->{'genome_db_id'} = $gdb->dbID;
+	    } else {
+		$non_ref_dna_collection->{'genome_db_id'} = $gdb->dbID;
+	    }
+	}
+
+	$pair_aligner_id = $self->write_config_params($pair_aligner_options, $ref_dna_collection, $non_ref_dna_collection);
+    } else {
+	#If no config file available, then fill in as much as possible
+	$pair_aligner_id = $self->write_default_config_params($species);
+    }
 }
 
 #
@@ -317,45 +347,30 @@ if (defined $config_url) {
 #Store configuration parameters
 #
 sub write_config_params {
-    my ($self, $config_url) = @_;
+    my ($self, $pair_aligner_options, $reference_collection, $non_reference_collection) = @_;
     my $pair_aligner_id;
 
     #Find method_link_type
     my $method_link_species_set = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->mlss_id);
     my $method_link_type = $method_link_species_set->method_link_type;
 
-    #Find asssembly
-    #my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_registry_name($self->species);
-
     my $reference_dna_collection;
     my $non_reference_dna_collection;
-    #Assume only have single set of configuration parameters
-    foreach my $pairAlignerConf (@{$self->{'pair_aligner_conf_list'}}) {
-	my $parameters= eval($pairAlignerConf->{analysis_template}->{-parameters})->{options};
 
-	#Deal with cases of very old configuration files where we have query_collection_name and target_collection_name
-	if (!defined $pairAlignerConf->{reference_collection_name} && defined $pairAlignerConf->{target_collection_name}) {
-	    $pairAlignerConf->{reference_collection_name} = $pairAlignerConf->{target_collection_name};
-	}
-	if (!defined $pairAlignerConf->{non_reference_collection_name} && defined $pairAlignerConf->{query_collection_name}) {
-	    $pairAlignerConf->{non_reference_collection_name} = $pairAlignerConf->{query_collection_name};
-	}
-
-	#Write dna_collection
-	$self->{reference_dna_collection} = $self->write_dna_collection($pairAlignerConf->{reference_collection_name});
-	$self->{non_reference_dna_collection} = $self->write_dna_collection($pairAlignerConf->{non_reference_collection_name});
+    #Write dna_collection
+    $self->{reference_dna_collection} = $self->write_dna_collection($reference_collection);
+    $self->{non_reference_dna_collection} = $self->write_dna_collection($non_reference_collection);
 	
-	#Add pair_aligner_config
-	$pair_aligner_id = $self->write_pair_aligner_config($method_link_type, $self->{reference_dna_collection}->{dna_collection_id}, $self->{non_reference_dna_collection}->{dna_collection_id});
-
-	#Add specific parameters
-	if ($method_link_type eq "BLASTZ_NET" ||
-	    $method_link_type eq "LASTZ_NET") {
-	    $self->write_blastz_params($parameters, $pair_aligner_id);
-	} elsif($method_link_type eq "TRANSLATED_BLAT_NET") {
-	    $self->write_tblat_params($parameters, $pair_aligner_id);
-	}
+    #Add pair_aligner_config
+    $pair_aligner_id = $self->write_pair_aligner_config($method_link_type, $self->{reference_dna_collection}->{dna_collection_id}, $self->{non_reference_dna_collection}->{dna_collection_id});
+    #Add specific parameters
+    if ($method_link_type eq "BLASTZ_NET" ||
+	$method_link_type eq "LASTZ_NET") {
+	$self->write_blastz_params($pair_aligner_options, $pair_aligner_id);
+    } elsif($method_link_type eq "TRANSLATED_BLAT_NET") {
+	$self->write_tblat_params($pair_aligner_options, $pair_aligner_id);
     }
+
     return($pair_aligner_id);
 }
 
@@ -412,54 +427,46 @@ sub parse_params {
 #Store the dna_collection data in the configuration database
 #
 sub write_dna_collection {
-    my ($self, $collection_name) = @_;
+    my ($self, $dnaCollectionConf) = @_;
 
     #Don't try to store anything in the database
-    return if (!defined $self->config_dbh);
+    #return if (!defined $self->config_dbh);
 
     my $id;
     my $dna_collection_conf;
 
     my $method_link_species_set = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->mlss_id);
     my $species_set = $method_link_species_set->species_set;
-
-    foreach my $dnaCollectionConf (@{$self->{'dna_collection_conf_list'}}) {
-	next if ($dnaCollectionConf->{collection_name} ne $collection_name);
-
-	#my ($name, $assembly) = split ":",  $dnaCollectionConf->{genome_name_assembly};
-	#change name if necessary
-	#if ($name =~ /\w* \w*/) {
-	 #   $name = lcfirst($name);
-	  #  $name =~ s/ /_/;
-	#}
-	my $genome_db_id = $dnaCollectionConf->{genome_db_id};
-
-	#Check that the name exists in the species_set of the mlss
-	my $found = 0;
-	my $name;
-	foreach my $genome_db (@$species_set) {
-	    if ($genome_db->dbID == $genome_db_id) {
-		$name = $genome_db->name;
-		$found = 1;
-	    }
+    
+    my $genome_db_id = $dnaCollectionConf->{genome_db_id};
+    
+    #Check that the name exists in the species_set of the mlss
+    my $found = 0;
+    my $name;
+    foreach my $genome_db (@$species_set) {
+	if ($genome_db->dbID == $genome_db_id) {
+	    $name = $genome_db->name;
+	    $found = 1;
 	}
-	if (!$found) {
-	    throw("$genome_db_id is not part of method link specices set $mlss_id");
+    }
+    if (!$found) {
+	throw("$genome_db_id is not part of method link specices set $mlss_id");
+    }
+    
+    #Find common name
+    my $common_name = $reg->get_adaptor($name, "core", "MetaContainer")->list_value_by_key('species.ensembl_alias_name')->[0];
+    
+    my $masking_options;
+    if (defined $dnaCollectionConf->{masking_options_file}) {
+	$masking_options = $dnaCollectionConf->{masking_options_file};
+    } elsif (defined $dnaCollectionConf->{masking_options}) {
+	$masking_options = $dnaCollectionConf->{masking_options};
+	if ($masking_options eq "{default_soft_masking => 1}") {
+	    $masking_options = "default_soft_masking";
 	}
+    }
 
-	#Find common name
-	my $common_name = $reg->get_adaptor($name, "core", "MetaContainer")->list_value_by_key('species.ensembl_alias_name')->[0];
-
-	my $masking_options;
-	if (defined $dnaCollectionConf->{masking_options_file}) {
-	    $masking_options = $dnaCollectionConf->{masking_options_file};
-	} elsif (defined $dnaCollectionConf->{masking_options}) {
-	    $masking_options = $dnaCollectionConf->{masking_options};
-	    if ($masking_options eq "{default_soft_masking => 1}") {
-		$masking_options = "default_soft_masking";
-	    }
-	}
-	
+    if (defined $self->config_dbh) {
 	#Check if already exists in database
 	my $check_sql = "SELECT dna_collection_id FROM dna_collection WHERE name = ? AND chunk_size = ? AND group_set_size = ? AND overlap = ? AND masking_options = ?";
 	my $check_sth = $self->config_dbh->prepare($check_sql);
@@ -478,7 +485,6 @@ sub write_dna_collection {
 
 	#If doesn't exist, then add it
 	if (!defined $id) {
-#	    my $sql = "INSERT IGNORE dna_collection (name, common_name, chunk_size, overlap, group_set_size, masking_options) VALUES (\"$name\", " . $dnaCollectionConf->{chunk_size} . "," . $dnaCollectionConf->{overlap} . "," . $dnaCollectionConf->{group_set_size} . ",\"" . $masking_options . "\")";
 	    my $sql = "INSERT IGNORE dna_collection (name, common_name, chunk_size, overlap, group_set_size, masking_options) VALUES (?,?,?,?,?,?)";
 	    #print "$sql\n";
 	    my $sth = $self->config_dbh->prepare($sql);
@@ -486,17 +492,20 @@ sub write_dna_collection {
 	    $id = $sth->{'mysql_insertid'};
 	    $sth->finish();
 	}
-
-	#Make object
-	%$dna_collection_conf = (
-				dna_collection_id => $id,
-				name => $name,
-				common_name => $common_name,
-				chunk_size => $dnaCollectionConf->{chunk_size},
-				group_set_size => $dnaCollectionConf->{group_set_size},
-				overlap => $dnaCollectionConf->{overlap},
-				masking_options => $masking_options);	
+    } else {
+	print "dna_collection ". join (" ", $name, $common_name, $dnaCollectionConf->{chunk_size}, $dnaCollectionConf->{overlap}, $dnaCollectionConf->{group_set_size}, $masking_options) . "\n";
+	$id = -1; #set id 
     }
+    #Make object
+    %$dna_collection_conf = (
+			     dna_collection_id => $id,
+			     name => $name,
+			     common_name => $common_name,
+			     chunk_size => $dnaCollectionConf->{chunk_size},
+			     group_set_size => $dnaCollectionConf->{group_set_size},
+			     overlap => $dnaCollectionConf->{overlap},
+			     masking_options => $masking_options);	
+    
     return ($dna_collection_conf);
 }
 
@@ -578,15 +587,18 @@ sub write_pair_aligner_config {
     my ($self, $method_link_type, $reference_id, $non_reference_id) = @_;
 
     #Don't try to store anything in the database
-    return if (!defined $self->config_dbh);
+    if (defined $self->config_dbh) {
 
-    my $sql = "INSERT INTO pair_aligner_config (method_link_species_set_id, method_link_type, ensembl_release, reference_id, non_reference_id, download_url) VALUES (?,?,?,?,?,?)";
-
-    my $sth = $self->config_dbh->prepare($sql);
-    $sth->execute($self->mlss_id, $method_link_type, $self->ensembl_release, $reference_id, $non_reference_id, $self->download_url);
-    $pair_aligner_id = $sth->{'mysql_insertid'};
-    $sth->finish;
-    return $pair_aligner_id;
+	my $sql = "INSERT INTO pair_aligner_config (method_link_species_set_id, method_link_type, ensembl_release, reference_id, non_reference_id, download_url) VALUES (?,?,?,?,?,?)";
+	
+	my $sth = $self->config_dbh->prepare($sql);
+	$sth->execute($self->mlss_id, $method_link_type, $self->ensembl_release, $reference_id, $non_reference_id, $self->download_url);
+	$pair_aligner_id = $sth->{'mysql_insertid'};
+	$sth->finish;
+	return $pair_aligner_id;
+    } else {
+	print "write_pair_aligner_config " . join (" ", $self->mlss_id, $method_link_type, $self->ensembl_release, $reference_id, $non_reference_id, $self->download_url) . "\n";
+    }
 }
 
 #
@@ -597,7 +609,7 @@ sub write_blastz_params {
     my $blastz_params = parse_params($parameters);
 
     #Don't try to store anything in the database
-    return if (!defined $self->config_dbh);
+    #return if (!defined $self->config_dbh);
 
     my @key_array;
     my @value_array;
@@ -621,11 +633,14 @@ sub write_blastz_params {
     $sql .= join ",", @value_array;
     $sql .= ")";
     #print "sql $sql\n";
-    my $sth = $self->config_dbh->prepare($sql);
-    $sth->execute();
-    my $blastz_parameter_id = $sth->{'mysql_insertid'};
-    $sth->finish;
-
+    if (defined $self->config_dbh) {
+	my $sth = $self->config_dbh->prepare($sql);
+	$sth->execute();
+	my $blastz_parameter_id = $sth->{'mysql_insertid'};
+	$sth->finish;
+    } else {
+	print "blastz_params: $sql\n";
+    }
 }
 
 #
@@ -636,7 +651,7 @@ sub write_tblat_params {
     my $tblat_params = parse_params($parameters);
 
     #Don't try to store anything in the database
-    return if (!defined $self->config_dbh);
+    #return if (!defined $self->config_dbh);
 
     my @key_array;
     my @value_array;
@@ -663,10 +678,14 @@ sub write_tblat_params {
     $sql .= ")";
 
     #print "sql $sql\n";
-    my $sth = $self->config_dbh->prepare($sql);
-    $sth->execute();
-    my $tblat_parameter_id = $sth->{'mysql_insertid'};
-    $sth->finish;
+    if (defined $self->config_dbh) {
+	my $sth = $self->config_dbh->prepare($sql);
+	$sth->execute();
+	my $tblat_parameter_id = $sth->{'mysql_insertid'};
+	$sth->finish;
+    } else {
+	print "tblat params: $sql\n";
+    }
 
 }
 
@@ -746,6 +765,10 @@ sub write_pairaligner_statistics {
     #Store the results in the configuration database
     if (defined $config_url) {
 	write_compare_bed_output($config_url, $pair_aligner_id, $num_blocks, $ref_genome_db, $ref_coverage, $ref_coding_coverage, $ref_alignment_coding, $non_ref_genome_db, $non_ref_coverage, $non_ref_coding_coverage, $non_ref_alignment_coding);
+    } else {
+	#print information
+	print "Ref:" . (join " ", ($ref_genome_db->dbID, $ref_genome_db->name, $ref_genome_db->assembly, $ref_coverage->{total}, $ref_coding_coverage->{both})) . "\n";
+	print "Non-ref:" . (join " ", ($non_ref_genome_db->dbID, $non_ref_genome_db->name, $non_ref_genome_db->assembly, $non_ref_coverage->{total}, $ref_coding_coverage->{both})) . "\n";
     }
 }
 
@@ -791,12 +814,16 @@ sub calc_stats {
     #dump alignment_bed if not defined
     if (!defined $alignment_bed) {
 	my $feature = "mlss_" . $self->mlss_id;
-	$alignment_bed = $feature . "." . $species . ".bed";
+	$alignment_bed = $output_dir . "/" . $feature . "." . $species . ".bed";
 	if ($reg_conf) {
+	    print "$dump_features --reg_conf $reg_conf --compara_url $compara_url --species $species --feature $feature > $alignment_bed\n";
+
 	    unless (system("$dump_features --reg_conf $reg_conf --compara_url $compara_url --species $species --feature $feature > $alignment_bed") == 0) {
 		throw("$dump_features --reg_conf $reg_conf --compara_url $compara_url --species $species --feature $feature execution failed\n");
 	    }
 	} else {
+	    print "$dump_features --url $url --compara_url $compara_url --species $species --feature $feature > $alignment_bed\n";
+
 	    unless (system("$dump_features --url $url --compara_url $compara_url --species $species --feature $feature > $alignment_bed") == 0) {
 		throw("$dump_features --url $url --compara_url $compara_url --species $species --feature $feature execution failed\n");
 	    }
