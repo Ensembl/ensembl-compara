@@ -27,9 +27,9 @@ This module is inteded to run automatic checks at the end of a pipeline (or at a
 
 =head1 OPTIONS
 
-This module has been designed to run one test per analysis_job. All the options are specific to
+This module has been designed to run one test per job. All the options are specific to
 the test iself and therefore you shouldn't set any parameters in the analysis table. Use the input_id
-column of the analysis_job to set these values.
+column of the job to set these values.
 
 =head2 test
 
@@ -123,81 +123,35 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::HealthCheck;
 
 use strict;
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;;
-use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
+#use Bio::EnsEMBL::Utils::Exception;
 
-use Bio::EnsEMBL::Hive::Process;
-
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
-
-
-=head2 fetch_input
-
-  Implementation of the Bio::EnsEMBL::Hive::Process interface
-
-=cut
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
   my ($self) = @_;
 
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-  $self->{'hiveDBA'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-DBCONN => $self->{'comparaDBA'}->dbc);
-  $self->get_params($self->parameters);
-  $self->get_params($self->input_id);
-
   return 1;
 }
 
-
-=head2 run
-
-  Implementation of the Bio::EnsEMBL::Hive::Process interface
-
-=cut
 
 sub run
 {
   my $self = shift;
-  if ($self->{'hc_output_dir'}) {
-      open OLDOUT, ">&STDOUT";
-      open OLDERR, ">&STDERR";
-      open WORKER_STDOUT, ">>".$self->{'hc_output_dir'} ."/healthcheck.$$.out";
-      open WORKER_STDERR, ">>".$self->{'hc_output_dir'} ."/healthcheck.$$.err";
-      close STDOUT;
-      close STDERR;
-      open STDOUT, ">&WORKER_STDOUT";
-      open STDERR, ">&WORKER_STDERR";
-  }
 
-  if ($self->test()) {
-    ## Run the method called <_run_[TEST_NAME]_test>
-    my $method = "_run_".$self->test()."_test";
-    if ($self->can($method)) {
-      print "Running test ", $self->test(), "\n";
-      $self->$method($self->parameters);
-      print "OK.\n";
-    } else {
-      die "There is no test called ".$self->test()."\n";
-    }
-  }
-  if ($self->{'hc_output_dir'}) {
-      close STDOUT;
-      close STDERR;
-      close WORKER_STDOUT;
-      close WORKER_STDERR;
-      open STDOUT, ">&", \*OLDOUT;
-      open STDERR, ">&", \*OLDERR;
-
+  if ($self->param('test')) {
+      ## Run the method called <_run_[TEST_NAME]_test>
+      my $method = "_run_".$self->param('test')."_test";
+      if ($self->can($method)) {
+	  $self->warning("Running test ", $self->param('test'));
+	  $self->$method;
+	  $self->warning("OK.");
+      } else {
+	  die "There is no test called ".$self->param('test')."\n";
+      }
   }
   return 1;
 }
-
-
-=head2 write_output
-
-  Implementation of the Bio::EnsEMBL::Hive::Process interface
-
-=cut
 
 sub write_output {
   my ($self) = @_;
@@ -206,106 +160,19 @@ sub write_output {
 }
 
 
-=head2 get_params
-
-  Arg [1]     : (optional) string $parameters
-  Example     : $self->get_params("{blah=>'foo'}");
-  Description : Reads and parses a string representing a hash
-                with parameters for this job.
-  Returntype  :
-  Exceptions  : none
-  Caller      : fetch_input
-  Status      : Stable
-
-=cut
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n");
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  if (defined($params->{'test'})) {
-    $self->test($params->{'test'});
-  }
-
-  if (defined($params->{'params'})) {
-    $self->parameters($params->{'params'});
-  }
-
-  if (defined($params->{'hc_output_dir'})) {
-      $self->{'hc_output_dir'} = $params->{'hc_output_dir'};
-  }
-
-  return 1;
-}
-
-
-=head2 test
-
-  Arg [1]     : (optional) string $test
-  Example     : $object->test($test);
-  Example     : $test = $object->test();
-  Description : Getter/setter for the test attribute, i.e. the
-                name of the test to be run
-  Returntype  : string
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub test {
-  my $self = shift;
-  if (@_) {
-    $self->{_test} = shift;
-  }
-  return $self->{_test};
-}
-
-=head2 parameters
-
-  Arg [1]     : (optional) string $parameters
-  Example     : $object->parameters($parameters);
-  Example     : $parameters = $object->parameters();
-  Description : Getter/setter for the parameters attribute
-  Returntype  : string representing a hashref
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub parameters {
-  my $self = shift;
-  if (@_) {
-    $self->{_parameters} = shift;
-  }
-  return $self->{_parameters};
-}
-
-
-=head2 test_table
-
-=cut
-
 sub test_table {
   my ($self, $table_name) = @_;
 
   die "Cannot test table with no name\n" if (!$table_name);
 
   ## check the table is not empty
-  my $count = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
+  my $count = $self->compara_dba->dbc->db_handle->selectrow_array(
       "SELECT COUNT(*) FROM $table_name");
 
   if ($count == 0) {
     die("There are no entries in the $table_name table!\n");
   } else {
-    print "Table $table_name contains data: OK.\n";
+    $self->warning("Table $table_name contains data: OK.");
   }
 
 }
@@ -335,34 +202,26 @@ sub _run_conservation_jobs_test {
   my $logic_name = "Gerp";
   my $method_link_type = "PECAN";
 
-  if ($parameters) {
-    if (defined($parameters->{'logic_name'})) {
-      $logic_name = $parameters->{'logic_name'};
-    }
-    if (defined($parameters->{'from_method_link_type'})) {
-      $method_link_type = $parameters->{'from_method_link_type'};
-    }
-    if (defined($parameters->{'method_link_type'})) {
-      $method_link_type = $parameters->{'method_link_type'};
-    }
-  }
+  $logic_name = $self->param('logic_name') if (defined($self->param('logic_name')));
+  $method_link_type = $self->param('from_method_link_type') if (defined($self->param('from_method_link_type')));
+  $method_link_type = $self->param('method_link_type') if (defined($self->param('method_link_type')));
 
-  ## Get the number of analysis_jobs for Gerp (or any other specified analysis)
-  my $count1 = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
-      "SELECT COUNT(*) FROM analysis LEFT JOIN analysis_job ".
+  ## Get the number of jobs for Gerp (or any other specified analysis)
+  my $count1 = $self->compara_dba->dbc->db_handle->selectrow_array(
+      "SELECT COUNT(*) FROM analysis LEFT JOIN job ".
       " USING (analysis_id) WHERE logic_name = \"$logic_name\"");
 
   ## Get the number of Pecan (or any other specified method_link_type) alignments
-  my $count2 = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
+  my $count2 = $self->compara_dba->dbc->db_handle->selectrow_array(
       "SELECT COUNT(*) FROM method_link".
       " LEFT JOIN method_link_species_set USING (method_link_id)".
       " LEFT JOIN genomic_align_block USING (method_link_species_set_id)".
       " WHERE method_link.type = \"$method_link_type\"");
 
   if ($count1 != $count2) {
-    die("There are $count1 analysis_jobs for $logic_name while there are $count2 $method_link_type alignments!\n");
+    die("There are $count1 jobs for $logic_name while there are $count2 $method_link_type alignments!\n");
   } elsif ($count1 == 0) {
-    die("There are no analysis_jobs for $logic_name and no $method_link_type alignments!\n");
+    die("There are no jobs for $logic_name and no $method_link_type alignments!\n");
   }
 }
 
@@ -390,30 +249,25 @@ sub _run_conservation_scores_test {
   my ($self, $parameters) = @_;
 
   my $method_link_species_set_id = 0;
-  if ($parameters) {
-    if (defined($parameters->{'method_link_species_set_id'})) {
-      $method_link_species_set_id = $parameters->{'method_link_species_set_id'};
-    }
-    if (defined($parameters->{'mlss_id'})) {
-      $method_link_species_set_id = $parameters->{'mlss_id'};
-    }
-  }
+  $method_link_species_set_id = $self->param('method_link_species_set_id') if (defined($self->param('method_link_species_set_id')));
+
+  $method_link_species_set_id = $self->param('mlss_id') if (defined($self->param('mlss_id')));
 
   $self->test_table("conservation_score");
   $self->test_table("genomic_align_block");
   $self->test_table("meta");
 
-  my $count1 = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
+  my $count1 = $self->compara_dba->dbc->db_handle->selectrow_array(
       "SELECT COUNT(*) FROM conservation_score LEFT JOIN genomic_align_block ".
       " USING (genomic_align_block_id) WHERE genomic_align_block.genomic_align_block_id IS NULL");
 
   if ($count1 > 0) {
     die("There are $count1 orphan conservation scores!\n");
   } else {
-    print "conservation score external references are OK.\n";
+    $self->warning("conservation score external references are OK.");
   }
 
-  my $meta_container = $self->{'comparaDBA'}->get_MetaContainer();
+  my $meta_container = $self->compara_dba->get_MetaContainer();
 
   my $method_link_species_set_ids;
 
@@ -424,23 +278,23 @@ sub _run_conservation_scores_test {
     }
     $method_link_species_set_ids = [$aln_mlss_id];
   } else {
-    $method_link_species_set_ids = $self->{'comparaDBA'}->dbc->db_handle->selectcol_arrayref(
+    $method_link_species_set_ids = $self->compara_dba->dbc->db_handle->selectcol_arrayref(
         "SELECT DISTINCT method_link_species_set_id FROM conservation_score LEFT JOIN genomic_align_block ".
         " USING (genomic_align_block_id)");
   }
 
   foreach my $this_method_link_species_set_id (@$method_link_species_set_ids) {
-    my $gerp_key = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
+    my $gerp_key = $self->compara_dba->dbc->db_handle->selectrow_array(
         "SELECT meta_key FROM meta WHERE meta_key LIKE \"gerp_%\" AND meta_value".
         " = \"$this_method_link_species_set_id\"");
     if (!$gerp_key) {
       die "There is no gerp_% entry in the meta table for mlss=".$this_method_link_species_set_id.
           "alignments!\n";
     } else {
-      print "meta entry for $gerp_key: OK.\n";
+      $self->warning("meta entry for $gerp_key: OK.");
     }
 
-    my ($values) = $self->{'comparaDBA'}->dbc->db_handle->selectcol_arrayref(
+    my ($values) = $self->compara_dba->dbc->db_handle->selectcol_arrayref(
         "SELECT genomic_align_block.genomic_align_block_id FROM genomic_align_block LEFT JOIN genomic_align".
         " ON (genomic_align_block.genomic_align_block_id = genomic_align.genomic_align_block_id)".
         " LEFT JOIN conservation_score".
@@ -451,12 +305,12 @@ sub _run_conservation_scores_test {
 
     if (@$values) {
 	foreach my $value (@$values) {
-	    print "gab_id $value\n";
+	    $self->warning("gab_id $value");
 	}
       die "There are ".scalar(@$values)." blocks (mlss=".$this_method_link_species_set_id.
           ") with more than 3 seqs and no conservation score!\n";
     } else {
-      print "All alignments for mlss=$this_method_link_species_set_id and more than 3 seqs have cons.scores: OK.\n";
+      $self->warning("All alignments for mlss=$this_method_link_species_set_id and more than 3 seqs have cons.scores: OK.");
     }
   }
 }
@@ -491,22 +345,13 @@ sub _run_pairwise_gabs_test {
   my $method_link_type;
   my $genome_db_ids;
 
-  print "_run_pairwise_gabs_test\n";
+  #print "_run_pairwise_gabs_test\n";
 
-  if ($parameters) {
-    if (defined($parameters->{'method_link_species_set_id'})) {
-      $method_link_species_set_id = $parameters->{'method_link_species_set_id'};
-    }
-    if (defined($parameters->{'mlss_id'})) {
-      $method_link_species_set_id = $parameters->{'mlss_id'};
-    }
-    if (defined($parameters->{'method_link_type'})) {
-      $method_link_type = $parameters->{'method_link_type'};
-    }
-    if (defined($parameters->{'genome_db_ids'})) {
-	$genome_db_ids = eval($parameters->{'genome_db_ids'});
-    }
-  }
+  my $method_link_species_set_id = $self->param('method_link_species_set_id') if (defined($self->param('method_link_species_set_id')));
+
+  my $method_link_species_set_id = $self->param('mlss_id') if (defined($self->param('mlss_id')));
+  my $method_link_type = $self->param('method_link_type')  if (defined($self->param('method_link_type')));
+  my $genome_db_ids = eval($self->param('genome_db_ids'))   if (defined($self->param('genome_db_ids')));
 
   $self->test_table("genomic_align_block");
   $self->test_table("genomic_align");
@@ -515,7 +360,7 @@ sub _run_pairwise_gabs_test {
   if ($method_link_species_set_id) {
       $method_link_species_set_ids = [$method_link_species_set_id];
   } elsif ($method_link_type && $genome_db_ids) {
-      my $mlss_adaptor = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
+      my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
       throw ("No method_link_species_set") if (!$mlss_adaptor);
       my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, ${genome_db_ids});
 
@@ -523,26 +368,26 @@ sub _run_pairwise_gabs_test {
 	  $method_link_species_set_ids = [$mlss->dbID];
       }
   } else {
-      $method_link_species_set_ids = $self->{'comparaDBA'}->dbc->db_handle->selectcol_arrayref(
+      $method_link_species_set_ids = $self->compara_dba->dbc->db_handle->selectcol_arrayref(
 	 "SELECT DISTINCT method_link_species_set_id FROM genomic_align_block");
   }
 
   foreach my $this_method_link_species_set_id (@$method_link_species_set_ids) {
 
       ## Get the number of genomic_align_blocks
-      my $count1 = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
+      my $count1 = $self->compara_dba->dbc->db_handle->selectrow_array(
 		    "SELECT COUNT(*) FROM genomic_align_block WHERE method_link_species_set_id = \"$this_method_link_species_set_id\"");
 
       ## Get the number of genomic_aligns
-      my $count2 = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
+      my $count2 = $self->compara_dba->dbc->db_handle->selectrow_array(
                      "SELECT COUNT(*) FROM genomic_align_block gab LEFT JOIN genomic_align USING (genomic_align_block_id) WHERE gab.method_link_species_set_id = \"$this_method_link_species_set_id\"");
 
       ## Get the number of genomic_align_blocks which don't have 2 genomic_aligns
-      my $count3 =  $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
+      my $count3 =  $self->compara_dba->dbc->db_handle->selectrow_array(
 	"SELECT COUNT(*) FROM (SELECT * FROM genomic_align WHERE method_link_species_set_id = \"$this_method_link_species_set_id\" GROUP BY genomic_align_block_id HAVING COUNT(*)!=2) cnt");
 
       #get the name for the method_link_species_set_id
-      my $name = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
+      my $name = $self->compara_dba->dbc->db_handle->selectrow_array(
 		   "SELECT name FROM method_link_species_set WHERE method_link_species_set_id = \"$this_method_link_species_set_id\"");
 
       #should be twice as many genomic_aligns as genomic_align_blocks for
@@ -555,9 +400,9 @@ sub _run_pairwise_gabs_test {
 	  die("There are $count3 genomic_align_blocks which don't have 2 genomic_aligns for $name!\n");
       }
 
-      print "Number of genomic_align_blocks for $name = $count1\n";
-      print "Number of genomic_aligns for $name = $count2 2*$count1=" . ($count1*2) . "\n";
-      print "Number of genomic_align_blocks which don't have 2 genomic_aligns for $name = $count3\n";
+      $self->warning("Number of genomic_align_blocks for $name = $count1");
+      $self->warning("Number of genomic_aligns for $name = $count2 2*$count1=" . ($count1*2));
+      $self->warning("Number of genomic_align_blocks which don't have 2 genomic_aligns for $name = $count3");
   }
 }
 
@@ -592,64 +437,47 @@ sub _run_pairwise_gabs_test {
 
 
 sub _run_compare_to_previous_db_test {
-  my ($self, $parameters) = @_;
+  my ($self) = @_;
 
-  print "_run_compare_to_previous_db_test\n";
-
-  my $previous_mlss_id;
-  my $current_mlss_id;
+  #print "_run_compare_to_previous_db_test\n";
+  
   my $max_percent_diff = 20;
-  my $previous_db_url;
-  my $method_link_type;
-  my $previous_genome_db_ids;
-  my $current_genome_db_ids;
-  my $species_set;
-  my $previous_gdbs;
+  
+  my $previous_mlss_id = $self->param('previous_method_link_species_set_id') if (defined($self->param('previous_method_link_species_set_id')));
+  
+  my $current_mlss_id = $self->param('current_method_link_species_set_id') if (defined($self->param('current_method_link_species_set_id')));
 
-  if ($parameters) {
-    if (defined($parameters->{'previous_method_link_species_set_id'})) {
-      $previous_mlss_id = $parameters->{'previous_method_link_species_set_id'};
-    }
-    if (defined($parameters->{'current_method_link_species_set_id'})) {
-      $current_mlss_id = $parameters->{'current_method_link_species_set_id'};
-    }
-    if (defined($parameters->{'previous_mlss_id'})) {
-      $previous_mlss_id = $parameters->{'previous_mlss_id'};
-    }
-    if (defined($parameters->{'current_mlss_id'})) {
-      $current_mlss_id = $parameters->{'current_mlss_id'};
-    }
-    if (defined($parameters->{'previous_db_url'})) {
-      $previous_db_url = $parameters->{'previous_db_url'};
-    }
-    if (defined($parameters->{'method_link_type'})) {
-      $method_link_type = $parameters->{'method_link_type'};
-    }
-    if (defined($parameters->{'current_genome_db_ids'})) {
-	$current_genome_db_ids = eval($parameters->{'current_genome_db_ids'});
-    }
-    if (defined($parameters->{'max_percentage_diff'})) {
-      $max_percent_diff = $parameters->{'max_percentage_diff'};
-    }
+  my $previous_mlss_id = $self->param('previous_mlss_id') if (defined($self->param('previous_mlss_id')));
+
+  my $current_mlss_id = $self->param('current_mlss_id') if (defined($self->param('current_mlss_id')));
+  $current_mlss_id = $self->param('mlss_id') if (defined($self->param('mlss_id')));
+
+  my $previous_db = $self->param('previous_db') if (defined($self->param('previous_db')));
+
+  my $method_link_type = $self->param('method_link_type') if (defined($self->param('method_link_type')));
+  my $current_genome_db_ids = eval($self->param('current_genome_db_ids')) if (defined($self->param('current_genome_db_ids')));
+  $max_percent_diff = $self->param('max_percentage_diff') if (defined($self->param('max_percentage_diff')));
+
+  my $ensembl_release = $self->param('ensembl_release');
+  my $prev_release;
+  if ($self->param('prev_release') == 0) {
+      $self->param('prev_release', ($ensembl_release-1));
   }
 
-  $self->throw("Must define previous database url") if (!defined($previous_db_url));
+  $self->throw("Must define previous database") if (!defined($self->param('previous_db')));
 
   $self->test_table("genomic_align_block");
   $self->test_table("genomic_align");
   $self->test_table("method_link_species_set");
 
-  #Load previous url
-  Bio::EnsEMBL::Registry->load_registry_from_url($previous_db_url);
-  my $previous_compara_dba;
-
-  #if the database name is defined in the url, then open that
-  if ($previous_db_url =~ /mysql:\/\/.*@.*\/.+/) {
-      $previous_compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$previous_db_url);
-  } else {
-      #open the most recent compara database
-      $previous_compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor("Multi", "compara");
+  #Check if $previous_db is a hash
+  if ((ref($previous_db) eq "HASH") && !defined($previous_db->{'-dbname'})) {
+      my $dbname = "ensembl_compara_" . $self->param('prev_release');
+      $previous_db->{'-dbname'} = $dbname;
   }
+  
+  #Load previous url
+  my $previous_compara_dba = $self->go_figure_compara_dba($previous_db);
 
   #get the previous method_link_species_set adaptor
   my $previous_mlss_adaptor = $previous_compara_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -660,34 +488,40 @@ sub _run_compare_to_previous_db_test {
 
 
   #get the current method_link_species_set adaptor
-  my $current_mlss_adaptor = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
+  my $current_mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   throw ("No method_link_species_set") if (!$current_mlss_adaptor);
 
   #get the current genome_db adaptor
-  my $current_genome_db_adaptor = $self->{'comparaDBA'}->get_GenomeDBAdaptor;
+  my $current_genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
   throw ("No genome_db_adaptor") if (!$current_genome_db_adaptor);
 
   #get the current method_link_species_set object from method_link_type and
   #current genome_db_ids
-  if (defined $method_link_type && defined $current_genome_db_ids) {
-      my $current_mlss = $current_mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, $current_genome_db_ids);
+  if (defined $self->param('method_link_type') && defined $self->param('current_genome_db_ids')) {
+      my $current_mlss = $current_mlss_adaptor->fetch_by_method_link_type_genome_db_ids($self->param('method_link_type'), $self->param('current_genome_db_ids'));
       if (defined $current_mlss) {
 	  $current_mlss_id = $current_mlss->dbID;
       }
-  } elsif (!defined $current_mlss_id) {
+  } elsif (defined $current_mlss_id) {
+      my $mlss = $current_mlss_adaptor->fetch_by_dbID($current_mlss_id);
+      $method_link_type = $mlss->method_link_type;
+      @$current_genome_db_ids = map {$_->dbID} @{$mlss->species_set};
+  } else {
       $self->throw("No current_mlss_id or method_link_type and current_genome_db_ids set\n");
   }
 
   #get the previous method_link_species_set object from the method_link_type and
   #species corresponding to the current genome_db_ids
   if (defined $method_link_type && defined $current_genome_db_ids) {
+      my $previous_gdbs;
+
       #covert genome_db_ids into species names
       foreach my $g_db_id (@$current_genome_db_ids) {
 	  my $g_db = $current_genome_db_adaptor->fetch_by_dbID($g_db_id);
 
 	  my $previous_gdb = eval{$previous_genome_db_adaptor->fetch_by_name_assembly($g_db->name)};
 	  if (!$previous_gdb) {
-	      print $g_db->name, " does not exist in the previous database ($previous_db_url)\n";
+	      $self->warning($g_db->name, " does not exist in the previous database (" . $previous_compara_dba->dbc->dbname . ")");
 	      return;
 	  }
 	  push @$previous_gdbs, $previous_gdb->dbID;
@@ -696,14 +530,15 @@ sub _run_compare_to_previous_db_test {
       #find corresponding method_link_species_set in previous database
       my $previous_mlss;
       eval {
-	  $previous_mlss = $previous_mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, ${previous_gdbs});
+	  $previous_mlss = $previous_mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, $previous_gdbs);
       };
 
       #Catch throw if these species do not exist in the previous database
       #and return success.
       if ($@ || !defined $previous_mlss) {
         my @names = map { $previous_genome_db_adaptor->fetch_by_dbID($_)->name() } @$previous_gdbs;
-	  print "This pair of species (" .(join ",", @names) . ") with this method_link $method_link_type not do exist in this database $previous_db_url \n";
+	print ("This pair of species (" .(join ",", @names) . ") with this method_link $method_link_type not do exist in this database " . $previous_compara_dba->dbc->dbname . "\n");
+	  $self->warning("This pair of species (" .(join ",", @names) . ") with this method_link $method_link_type not do exist in this database " . $previous_compara_dba->dbc->dbname);
 	  return;
       }
       $previous_mlss_id = $previous_mlss->dbID;
@@ -715,7 +550,7 @@ sub _run_compare_to_previous_db_test {
   my $previous_name = $previous_compara_dba->dbc->db_handle->selectrow_array(
 	"SELECT name FROM method_link_species_set WHERE method_link_species_set_id = \"$previous_mlss_id\"");
 
-  my $current_name = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
+  my $current_name = $self->compara_dba->dbc->db_handle->selectrow_array(
 	"SELECT name FROM method_link_species_set WHERE method_link_species_set_id = \"$current_mlss_id\"");
 
   ## Get the number of genomic_align_blocks of previous db
@@ -723,7 +558,7 @@ sub _run_compare_to_previous_db_test {
       "SELECT COUNT(*) FROM genomic_align_block WHERE method_link_species_set_id = \"$previous_mlss_id\"");
 
   ## Get number of genomic_align_blocks of current db
-  my $current_count = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
+  my $current_count = $self->compara_dba->dbc->db_handle->selectrow_array(
       "SELECT COUNT(*) FROM genomic_align_block WHERE method_link_species_set_id = \"$current_mlss_id\"");
 
 
@@ -735,8 +570,8 @@ sub _run_compare_to_previous_db_test {
   if ($current_percent_diff > $max_percent_diff) {
       die("The percentage difference between the number of genomic_align_blocks of the current database of $current_name results ($current_count) and the previous database of $previous_name results ($previous_count) is $c_perc% and is greater than $max_percent_diff%!\n");
   }
-
-  print "The percentage difference between the number of genomic_align_blocks of the current database of $current_name results ($current_count) and the previous database of $previous_name results ($previous_count) is $c_perc% and is less than $max_percent_diff%!\n";
+  
+  $self->warning("The percentage difference between the number of genomic_align_blocks of the current database of $current_name results ($current_count) and the previous database of $previous_name results ($previous_count) is $c_perc% and is less than $max_percent_diff%!");
 
 }
 
@@ -758,14 +593,14 @@ sub _run_left_and_right_links_in_gat_test {
   my $table_name = "genomic_align_tree";
 
   ## check the table is not empty
-  my $count = $self->{'comparaDBA'}->dbc->db_handle->selectrow_array(
+  my $count = $self->compara_dba->dbc->db_handle->selectrow_array(
       "SELECT count(*) FROM $table_name gat1 LEFT JOIN $table_name gat2 ON (gat1.node_id = gat2.root_id)".
       " WHERE gat1.parent_id = 0 GROUP BY gat1.node_id".
       " HAVING GROUP_CONCAT(gat2.left_node_id ORDER BY gat2.left_node_id) LIKE \"0%,0\"".
       "  AND GROUP_CONCAT(gat2.right_node_id ORDER BY gat2.right_node_id) LIKE \"0%,0\"");
 
   if ($count == 0) {
-    print "All trees in $table_name are linked to their neighbours: OK.\n";
+    $self->warning("All trees in $table_name are linked to their neighbours: OK.");
   } else {
     die("Some entries ($count) in the $table_name table are not linked!\n");
   }
