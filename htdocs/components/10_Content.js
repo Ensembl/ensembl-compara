@@ -78,7 +78,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     this.elLk.ajaxLoad.each(function () {
       var el   = $(this);
-      var urls = $('input.ajax_load', this).map(function () { return this.value; });
+      var urls = $('input.ajax_load', this).map(function () { return this.value; }).toArray();
       var content, caption, component, referer, url, params, i, j;
       
       if (!urls.length) {
