@@ -217,6 +217,47 @@ sub fetch_root_by_node {
 }
 
 
+=head2 fetch_first_shared_ancestor_indexed
+
+  Arg [1]    : Bio::EnsEMBL::Compara::NestedSet $node1
+  Arg [2]    : Bio::EnsEMBL::Compara::NestedSet $node2
+  Arg [n]    : Bio::EnsEMBL::Compara::NestedSet $node_n
+  Example    : $lca = $nested_set_adaptor->fetch_first_shared_ancestor_indexed($node1, $node2);
+  Description: Returns the first node of the tree that is an ancestor of all the nodes passed
+               as arguments. There must be at least one argument, and all the nodes must share
+               the same root
+  Returntype : Bio::EnsEMBL::Compara::NestedSet
+  Exceptions : thrown if the nodes don't share the same root_id
+
+=cut
+use Data::Dumper;
+sub fetch_first_shared_ancestor_indexed {
+  my $self = shift;
+  
+  my $node1 = shift;
+  #print Dumper($node1), "\n";
+  my $root_id = $node1->_root_id;
+  my $min_left = $node1->left_index;
+  my $max_right = $node1->right_index;
+
+  while (my $node2 = shift) {
+    if ($node2->_root_id != $root_id) {
+      throw("Nodes must have the same root in fetch_first_shared_ancestor_indexed ($root_id != ".($node2->_root_id).")\n");
+    }
+    $min_left = $node2->left_index if $node2->left_index < $min_left;
+    $max_right = $node2->right_index if $node2->right_index > $max_right;
+  }
+
+  my $alias = $self->tables->[0]->[1];
+  my $constraint = "WHERE $alias.root_id=$root_id AND $alias.left_index < $min_left";
+  $constraint .= " AND $alias.right_index > $max_right";
+  $constraint .= " ORDER BY ($alias.right_index-$alias.left_index) LIMIT 1";
+  
+  my $ancestor = $self->_generic_fetch($constraint, [], ' ')->[0];
+  return $ancestor;
+}
+
+
 
 ###########################
 # STORE methods
