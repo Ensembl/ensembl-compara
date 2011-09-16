@@ -168,6 +168,7 @@ sub columns {
           't.parent_id',
           't.left_index',
           't.right_index',
+          't.root_id',
           't.rank',
           't.genbank_hidden_flag',
           'n.name'
