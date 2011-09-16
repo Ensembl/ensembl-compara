@@ -27,7 +27,7 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
     this.filter($('fieldset.general_options', this.el).find('select.output_type').val());
   },
   
-  formSubmit: function (form, event) {
+  formSubmit: function (form) {
     var panel   = this;
     var checked = $.extend({}, this.config);
     var data    = {};
@@ -57,7 +57,7 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
     
     this.elLk.outputTypes.unbind();
     
-    return this.base(form, event, data);
+    return this.base(form, data);
   },
   
   updateContent: function (json) {

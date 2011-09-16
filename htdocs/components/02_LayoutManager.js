@@ -131,7 +131,7 @@ Ensembl.LayoutManager.extend({
   
   validateForms: function (context) {
     $('form.check', context).validate().bind('submit', function (e) {
-      return $(this).parents('#modal_panel').length ? Ensembl.EventManager.trigger('modalFormSubmit', $(this), e) : true;
+      return $(this).parents('#modal_panel').length ? Ensembl.EventManager.trigger('modalFormSubmit', $(this)) : true;
     });
   },
   

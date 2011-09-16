@@ -96,7 +96,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     });
   },
   
-  formSubmit: function (form, event, data) {
+  formSubmit: function (form, data) {
     if (!form.parents('#' + this.id).length) {
       return undefined;
     }
@@ -104,8 +104,6 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     if (form.hasClass('upload')) {
       return true;
     }
-    
-    event.preventDefault();
     
     data = data || form.serialize();
     
