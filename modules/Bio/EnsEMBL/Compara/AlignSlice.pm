@@ -931,12 +931,13 @@ sub _create_underlying_Slices {
     $original_genomic_align_block->{_alignslice_start} = $align_slice_length;
     if ($expanded) {
       $align_slice_length += CORE::length($reference_genomic_align->aligned_sequence("+FAKE_SEQ"));
+      $reference_genomic_align->genomic_align_block->end($align_slice_length);
       $big_mapper->add_Mapper($reference_genomic_align->get_Mapper(0));
     } else {
       $align_slice_length += $reference_genomic_align->dnafrag_end - $reference_genomic_align->dnafrag_start + 1;
+      $reference_genomic_align->genomic_align_block->end($align_slice_length);
       $big_mapper->add_Mapper($reference_genomic_align->get_Mapper(0,1));
     }
-    $reference_genomic_align->genomic_align_block->end($align_slice_length);
     $reference_genomic_align->genomic_align_block->slice($self);
 
     if ($strand == 1) {
