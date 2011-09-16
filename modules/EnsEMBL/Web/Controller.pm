@@ -293,6 +293,8 @@ sub set_cache_params {
     $ENV{'CACHE_TAGS'}{$ENV{'HTTP_REFERER'}} = 1;
     $ENV{'CACHE_KEY'} .= "::WIDTH[$ENV{ENSEMBL_IMAGE_WIDTH}]" if $ENV{'ENSEMBL_IMAGE_WIDTH'};
   }
+ 
+  $ENV{'CACHE_KEY'} .= '::NO_AJAX' unless $self->hub->check_ajax;
 }
 
 sub get_cached_content {
