@@ -365,7 +365,7 @@ sub moveable_tracks {
   my ($self, $image) = @_;
   my $config = $self->drawable_container->{'config'};
   
-  return unless $config->get_parameter('sortable_tracks') eq 'drag';
+  return unless $config->hub->check_ajax && $config->get_parameter('sortable_tracks') eq 'drag';
   
   my $species = $config->species;
   my $url     = $image->URL;
