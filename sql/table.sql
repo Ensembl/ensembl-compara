@@ -796,9 +796,8 @@ CREATE TABLE protein_tree_node (
 
   PRIMARY KEY (node_id),
   KEY (parent_id),
-  KEY (root_id),
-  KEY (left_index),
-  KEY (right_index)
+  KEY (root_id,left_index),
+  KEY (root_id,right_index)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 

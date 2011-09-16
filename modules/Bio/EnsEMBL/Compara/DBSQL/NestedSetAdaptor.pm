@@ -115,12 +115,12 @@ sub fetch_all_leaves_indexed {
   my $table= $self->tables->[0]->[1];
   my $left_index = $node->left_index;
   my $right_index = $node->right_index;
-  my $constraint = "WHERE ($table.right_index - $table.left_index) = 1 AND $table.left_index > $left_index AND $table.right_index < $right_index";
+  my $root_id = $node->_root_id;
+  my $constraint = "WHERE ($table.root_id = $root_id) AND (($table.right_index - $table.left_index) = 1) AND ($table.left_index > $left_index) AND ($table.right_index < $right_index)";
   my @leaves = @{$self->_generic_fetch($constraint)};
 
   return \@leaves;
 }
-
 
 sub fetch_subtree_under_node {
   my $self = shift;
@@ -135,15 +135,13 @@ sub fetch_subtree_under_node {
     return $node;
   }
 
-  my $table = $self->tables->[0]->[0];
   my $alias = $self->tables->[0]->[1];
 
-  my $constraint = ", $table AS root_node WHERE $alias.left_index
-                         BETWEEN root_node.left_index AND root_node.right_index
-                    AND root_node.node_id=". $node->node_id;
-
+  my $left_index = $node->left_index;
+  my $right_index = $node->right_index;
+  my $root_id = $node->_root_id;
+  my $constraint = "WHERE ($alias.root_id = $root_id) AND ($alias.left_index >= $left_index) AND ($alias.right_index <= $right_index)";
   my $all_nodes = $self->_generic_fetch($constraint);
-  push @{$all_nodes}, $node;
   $self->_build_tree_from_nodes($all_nodes);
   return $node;
 }
@@ -175,8 +173,9 @@ sub fetch_subroot_by_left_right_index {
   }
   my $left_index = $node->left_index;
   my $right_index = $node->right_index;
+  my $root_id = $node->_root_id;
 
-  my $constraint = "WHERE parent_id = root_id";
+  my $constraint = "WHERE parent_id = $root_id";
   $constraint .= " AND left_index<=$left_index";
   $constraint .= " AND right_index>=$right_index";
   return $self->_generic_fetch($constraint)->[0];
@@ -197,7 +196,6 @@ sub fetch_subroot_by_left_right_index {
   Caller     : $nested_set->root
 
 =cut
-
 sub fetch_root_by_node {
   my ($self, $node) = @_;
 
@@ -209,8 +207,9 @@ sub fetch_root_by_node {
 
   my $left_index = $node->left_index;
   my $right_index = $node->right_index;
+  my $root_id = $node->_root_id;
 
-  my $constraint = "WHERE $alias.left_index <= $left_index AND $alias.right_index >= $right_index";
+  my $constraint = "WHERE ($alias.root_id = $root_id) AND ($alias.left_index <= $left_index) AND ($alias.right_index >= $right_index)";
   my $nodes = $self->_generic_fetch($constraint);
   my $root = $self->_build_tree_from_nodes($nodes);
 
@@ -554,7 +553,6 @@ sub _generic_fetch {
 
   #print STDERR $sql,"\n";
   my $node_list = [];
-
   my $sth = $self->prepare($sql);
   $sth->execute;
   $node_list = $self->_objs_from_sth($sth);

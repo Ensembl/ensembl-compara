@@ -352,7 +352,7 @@ sub delete_old_orthotree_tags {
   my $tree_root_node_id = $self->param('protein_tree')->node_id;
   # Include the root_id as well as the rest of the nodes within the tree
   push @node_ids, $tree_root_node_id;
-  my $sql = "select ptn.node_id from protein_tree_node ptn where ptn.left_index>$left_index and ptn.right_index<$right_index";
+  my $sql = "select ptn.node_id from protein_tree_node ptn where ptn.root_id=$tree_root_node_id AND ptn.left_index>$left_index and ptn.right_index<$right_index";
   my $sth = $self->dbc->prepare($sql);
   $sth->execute;
   while (my $aref = $sth->fetchrow_arrayref) {

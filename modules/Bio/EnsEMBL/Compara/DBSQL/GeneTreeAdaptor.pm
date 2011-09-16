@@ -559,6 +559,9 @@ sub default_where_clause {
   return "";
 }
 
+sub _get_starting_lr_index {
+  return 1;
+}
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
