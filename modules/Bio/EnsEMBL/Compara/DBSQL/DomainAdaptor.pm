@@ -193,12 +193,12 @@ sub _default_where_clause {
 
 =head2 store
 
- Arg [1]    : Bio::EnsEMBL::ExternalData:Family::Family $fam
- Example    : $FamilyAdaptor->store($fam)
- Description: Stores a family object into a family  database
+ Arg [1]    : Bio::EnsEMBL::Compara::Domain $dom
+ Example    : $DomainAdaptor->store($dom)
+ Description: Stores a domain object into a family  database
  Returntype : int 
-              been the database family identifier, if family stored correctly
- Exceptions : when isa if Arg [1] is not Bio::EnsEMBL::Compara::Family
+              been the database family identifier, if domain stored correctly
+ Exceptions : when isa if Arg [1] is not Bio::EnsEMBL::Compara::Domain
  Caller     : general
 
 =cut

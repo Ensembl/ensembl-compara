@@ -1,7 +1,6 @@
 #!/usr/local/ensembl/bin/perl -w
 
 use strict;
-use Bio::EnsEMBL::ExternalData::Family::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Domain;
 use Bio::EnsEMBL::Compara::Member;
@@ -18,7 +17,7 @@ my $compara_db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
 
 
 my $gdb = $compara_db->get_GenomeDBAdaptor;
-my $TaxonAdaptor = $compara_db->get_TaxonAdaptor;
+my $NCBITaxonAdaptor = $compara_db->get_NCBITaxonAdaptor;
 my $DomainAdaptor = $compara_db->get_DomainAdaptor;
 
 foreach my $genomedb (@{$gdb->fetch_all}) {
@@ -28,7 +27,7 @@ foreach my $genomedb (@{$gdb->fetch_all}) {
 
   my %domain;
   my %member_added_to_domain_ip;
-  my $taxon = $TaxonAdaptor->fetch_by_dbID($genomedb->taxon_id);
+  my $taxon = $NCBITaxonAdaptor->fetch_node_by_taxon_id($genomedb->taxon_id);
   
   my $dba = $compara_db->get_db_adaptor($genomedb->name,$genomedb->assembly);
   my $tla = $dba->get_TranslationAdaptor;

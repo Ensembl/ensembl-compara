@@ -237,7 +237,7 @@ sub _default_where_clause {
 
 =head2 store
 
- Arg [1]    : Bio::EnsEMBL::ExternalData:Family::Family $fam
+ Arg [1]    : Bio::EnsEMBL::Compara::Family $fam
  Example    : $FamilyAdaptor->store($fam)
  Description: Stores a family object into a family  database
  Returntype : int 

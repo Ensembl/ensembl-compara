@@ -498,10 +498,10 @@ sub create_taxon_tree {
   $root->node_id($count++);
   $root->name('ROOT');
   
-  my $taxonDBA = $self->{'comparaDBA'}->get_TaxonAdaptor;
+  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
   my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
   foreach my $gdb (@$gdb_list) {
-    my $taxon = $taxonDBA->fetch_by_dbID($gdb->taxon_id);
+    my $taxon = $taxonDBA->fetch_node_by_taxon_id($gdb->taxon_id);
     my @levels = reverse($taxon->classification);
     my $taxon_info = join(":", @levels);
     warn("$taxon_info\n");
