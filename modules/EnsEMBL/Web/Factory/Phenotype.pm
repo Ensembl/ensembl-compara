@@ -25,12 +25,14 @@ sub createObjects {
   my $self     = shift;
   my $db       = $self->param('db') || 'core';
   my $features = {};
-  
-  my $id         = $self->param('id');   
+ 
+  ## Accept both parameters for now, to avoid breaking links from elsewhere in code 
+  my $id         = $self->param('ph') || $self->param('id');   
+
   return $self->problem('fatal', 'No ID', $self->_help) unless $id;
   my $dbc        = $self->hub->database('variation');
   return unless $dbc;
-  $dbc->include_failed_variations(1);
+	$dbc->include_failed_variations(1);
   my $a          = $dbc->get_adaptor('VariationFeature');
   my $func       = $self->param('somatic') ? 'fetch_all_somatic_with_annotation' : 'fetch_all_with_annotation';
   my $variations = $a->$func(undef, undef, $id);
