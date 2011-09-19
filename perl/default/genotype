@@ -14,26 +14,16 @@ my $file    = $cgi->param('vcf');
 my $pos_param     = $cgi->param('pos');
 my $species = $cgi->param('sp');
 
-my ($chr, $s, $e) = $pos_param =~ /(\d+?):(\d+?)-(\d+?)(?:%3A|;|$)/;
+my ($chr, $s, $e) = $pos_param =~ /(.+?):(\d+?)-(\d+?)(?:%3A|;|$)/;
 
-my $vcf_adaptor = Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor->new($file);
+my $vcf;
+eval {
+  $vcf = Vcf->new(file=>$file, region=>$chr.":".$s."-".$e, print_header=>1); #print_header allows print sample name rather than column index
+};
 
-my $consensus   = $vcf_adaptor->fetch_variations($chr, $s, $e);
-
-my $header_columns =   $vcf_adaptor->parse_header_columns($chr, $s, $e);
-
-my @cols = split (/\s/, $header_columns);
-my $reserved_cols = ['CHROM','POS','ID','REF','ALT','QUAL','FILTER','INFO','FORMAT'];
-my $cindex = 1;
-my @sample_names;
-
-foreach my $col (@cols) {
-  next if (grep /$col$/, @$reserved_cols);
-  $sample_names[$cindex] = $col;
-  $cindex++;  
-}
-
-my $fnum =  scalar(@$consensus);
+return "error:Error reading VCF file" unless ($vcf);
+$vcf->parse_header();
+my $a = $vcf->next_data_hash();
 
 my $table1000    = new EnsEMBL::Web::Document::SpreadSheet([], [], {  data_table => 1, sorting => [ 'Individual asc' ], exportable => 0, id => "1000Genomes_table"  });
 $table1000->add_columns(
@@ -43,8 +33,6 @@ $table1000->add_columns(
         { key => 'Description', title => 'Description',         width => '55%', sort => 'html'                       },
       );
 
-#foreach my $a (@$consensus) {
-  my $a = $consensus->[0];
   my $row_count = keys %{$a->{'gtypes'}} ;
   my $pos   = $a->{'POS'};
   my @substit;
@@ -124,8 +112,9 @@ $table1000->add_columns(
 			sort => 'html' }
   );
   my @add_row;
-  for ($count = 1; $count <= $row_count; $count++) {
-    my $sample = $a->{'gtypes'}->{$count};
+#  for ($count = 1; $count <= $row_count; $count++) {
+   foreach my $individual (keys %{$$a{gtypes}}) {
+    my $sample = $a->{'gtypes'}->{$individual};
     my $GT     = $sample->{'GT'};
 
     my $format = { 'HQ' => 'Haplotype quality: ', 
@@ -147,7 +136,7 @@ $table1000->add_columns(
 
     my $genotype = $GT =~ /[\|\/]{1}/ ? $gt1.$delim.$gt2 : $gt1;
     my $row = {
-        'Individual'  => $sample_names[$count],
+        'Individual'  => $individual,
         'Genotype'    => $genotype,
         'Description' => "$format_desc",
     };
