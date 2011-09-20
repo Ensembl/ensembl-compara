@@ -80,8 +80,8 @@ sub default_options {
         'wublastp_exe'              => 'wublastp',
         'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         'mcoffee_exe'               => '/software/ensembl/compara/tcoffee-7.86b/t_coffee',
-        'mafft_exe'                 => '',  # if empty, will use module built-in default
-        'mafft_binaries'            => '',  # if empty, will use module built-in default
+        'mafft_exe'                 => '/software/ensembl/compara/mafft-6.707/bin/mafft',
+        'mafft_binaries'            => '/software/ensembl/compara/mafft-6.707/binaries',
         'sreformat_exe'             => '/usr/local/ensembl/bin/sreformat',
         'treebest_exe'              => '/nfs/users/nfs_m/mm14/workspace/treebest.qfo/treebest',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
@@ -419,13 +419,13 @@ sub pipeline_analyses {
 
         {   -logic_name         => 'blastp_with_reuse',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
-            -program_file       => $self->o('wublastp_exe'),
             -parameters         => {
                 'mlss_id'                   => $self->o('qfo_mlss_id'),
                 'reuse_db'                  => $self->o('reuse_db'),
                 'blast_options'             => $self->o('blast_options'),
                 'blast_tmp_dir'             => $self->o('blast_tmp_dir'),
                 'fasta_dir'                 => $self->o('fasta_dir'),
+                'wublastp_exe'              => $self->o('wublastp_exe'),
             },
             #-wait_for => [ 'dump_subset_create_blastdb', 'paf_create_empty_table', 'copy_paf_table' ],
             -batch_size    =>  40,
@@ -523,11 +523,11 @@ sub pipeline_analyses {
 
         {   -logic_name => 'mcoffee',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
-            -program_file       => $self->o('mcoffee_exe'),
             -parameters => {
                 'method'                    => 'cmcoffee',      # presumably, at the moment it refers to the 'initial' method
                 'use_exon_boundaries'       => $self->o('use_exon_boundaries'),
                 'max_gene_count'            => $self->o('tree_max_gene_count'),
+                'mcoffee_exe'               => $self->o('mcoffee_exe'),
                 'mafft_exe'                 => $self->o('mafft_exe'),
                 'mafft_binaries'            => $self->o('mafft_binaries'),
             },
@@ -543,11 +543,11 @@ sub pipeline_analyses {
 
         {   -logic_name => 'mcoffee_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
-            -program_file       => $self->o('mcoffee_exe'),
             -parameters => {
                 'method'                    => 'cmcoffee',      # presumably, at the moment it refers to the 'initial' method
                 'use_exon_boundaries'       => $self->o('use_exon_boundaries'),
                 'max_gene_count'            => $self->o('tree_max_gene_count'),
+                'mcoffee_exe'               => $self->o('mcoffee_exe'),
                 'mafft_exe'                 => $self->o('mafft_exe'),
                 'mafft_binaries'            => $self->o('mafft_binaries'),
             },
@@ -562,12 +562,12 @@ sub pipeline_analyses {
 
         {   -logic_name => 'njtree_phyml',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML',
-            -program_file       => $self->o('treebest_exe'),
             -parameters => {
                 'cdna'                      => 0,
                 'bootstrap'                 => 1,
-		    'check_split_genes'         => 0,
+		        'check_split_genes'         => 0,
                 'use_genomedb_id'           => $self->o('use_genomedb_id'),
+                'treebest_exe'              => $self->o('treebest_exe'),
             },
             -hive_capacity        => 0,
             -failed_job_tolerance => 5,
@@ -593,10 +593,10 @@ sub pipeline_analyses {
 
         {   -logic_name => 'quick_tree_break',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::QuickTreeBreak',
-            -program_file       => $self->o('quicktree_exe'),
             -parameters => {
-                'sreformat_exe'     => $self->o('sreformat_exe'),
                 'mlss_id'           => $self->o('qfo_mlss_id'),
+                'quicktree_exe'     => $self->o('quicktree_exe'),
+                'sreformat_exe'     => $self->o('sreformat_exe'),
             },
             -hive_capacity        => 1, # this one seems to slow the whole loop down; why can't we have any more of these?
             -can_be_empty         => 1,
