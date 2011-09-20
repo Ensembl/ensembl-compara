@@ -15,6 +15,18 @@ sub set_default_action {
   $self->{'_data'}->{'default'} = $self->object ? $self->object->default_action : 'Genome';
 }
 
+sub init {
+  my $self = shift;
+  my $hub  = $self->hub;
+  
+  $self->SUPER::init;
+  
+  if (!scalar grep /^s\d+$/, keys %{$hub->multi_params}) {
+    my $multi_species = $hub->session->get_data(type => 'multi_species', code => 'multi_species');
+    $self->tree->get_node('Multi')->set('url', $hub->url({ action => 'Multi', function => undef, %{$multi_species->{$hub->species}} })) if $multi_species && $multi_species->{$hub->species};
+  }
+}
+
 sub populate_tree {
   my $self = shift;
   my $hub  = $self->hub;
@@ -74,13 +86,6 @@ sub populate_tree {
     { 'availability' => 'slice database:compara has_alignments', 'concise' => 'Alignments (text)' }
   ));
   
-  my $multi_url;
-  
-  if (!scalar grep /^s\d+$/, keys %{$hub->multi_params}) {
-    my $multi_species = $hub->session->get_data(type => 'multi_species', code => 'multi_species');
-    $multi_url = $hub->url({ action => 'Multi', function => undef, %{$multi_species->{$hub->species}} }) if $multi_species && $multi_species->{$hub->species};
-  }
-  
   $align_menu->append($self->create_node('Multi', 'Multi-species view ([[counts::pairwise_alignments]])',
     [qw(
       selector EnsEMBL::Web::Component::Location::MultiSpeciesSelector
@@ -88,7 +93,7 @@ sub populate_tree {
       botnav   EnsEMBL::Web::Component::Location::MultiBottomNav
       bottom   EnsEMBL::Web::Component::Location::MultiBottom
     )],
-    { 'availability' => 'slice database:compara has_pairwise_alignments', 'concise' => 'Multi-species view', 'url' => $multi_url }
+    { 'availability' => 'slice database:compara has_pairwise_alignments', 'concise' => 'Multi-species view' }
   ));
   
   $align_menu->append($self->create_subnode('ComparaGenomicAlignment', '',
