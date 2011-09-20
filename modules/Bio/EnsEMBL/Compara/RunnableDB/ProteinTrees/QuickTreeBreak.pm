@@ -77,13 +77,6 @@ use Bio::AlignIO;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub param_defaults {
-    return {
-        'sreformat_exe'         => '/usr/local/ensembl/bin/sreformat',
-    };
-}
-
-
 =head2 fetch_input
 
     Title   :   fetch_input
@@ -187,14 +180,10 @@ sub run_quicktreebreak {
 
   my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $self->param('protein_tree') ) or return;
 
-  my $quicktree_exe = $self->analysis->program_file || '';
+  my $quicktree_exe = $self->param('quicktree_exe')
+        or die "'quicktree_exe' is an obligatory parameter";
 
-  unless (-e $quicktree_exe) {
-    $quicktree_exe = '/software/ensembl/compara/quicktree_1.1/bin/quicktree';
-  }
-
-  die "Could not find a quicktree executable to run. Tried '$quicktree_exe'" 
-    unless(-e $quicktree_exe);
+  die "Cannot execute '$quicktree_exe'" unless(-x $quicktree_exe);
 
   my $cmd = $quicktree_exe;
   $cmd .= " -out t -in a";
@@ -263,7 +252,10 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   print STDERR "Using sreformat to change to stockholm format\n" if ($self->debug);
   my $stk_file = $file_root . '.stk';
   
-  my $sreformat_exe = $self->param('sreformat_exe');
+  my $sreformat_exe = $self->param('sreformat_exe')
+        or die "'sreformat_exe' is an obligatory parameter";
+
+  die "Cannot execute '$sreformat_exe'" unless(-x $sreformat_exe);
   
   my $cmd = "$sreformat_exe stockholm $aln_file > $stk_file";
 

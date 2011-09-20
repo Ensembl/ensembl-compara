@@ -73,7 +73,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
             'cdna'                  => 0,
-            'sreformat_exe'         => '/usr/local/ensembl/bin/sreformat',
     };
 }
 
@@ -226,11 +225,10 @@ sub run_buildhmm {
 
   my $hmm_file = $self->param('hmm_file', $stk_file . '_hmmbuild.hmm');
 
-  my $buildhmm_exe = $self->analysis->program_file || '';
-  unless (-e $buildhmm_exe) {
-      $buildhmm_exe = '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild';
-  }
-  die "can't find a hmmbuild executable to run, tried '$buildhmm_exe'" unless(-e $buildhmm_exe);
+  my $buildhmm_exe = $self->param('buildhmm_exe')
+        or die "'buildhmm_exe' is an obligatory parameter";
+
+  die "Cannot execute '$buildhmm_exe'" unless(-x $buildhmm_exe);
 
   ## as in treefam
   # $hmmbuild --amino -g -F $file.hmm $file >/dev/null
@@ -308,7 +306,12 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   }
 
   my $stk_file = $file_root . '.stk';
-  my $sreformat_exe = $self->param('sreformat_exe');
+
+  my $sreformat_exe = $self->param('sreformat_exe')
+        or die "'sreformat_exe' is an obligatory parameter";
+
+  die "Cannot execute '$sreformat_exe'" unless(-x $sreformat_exe);
+
   my $cmd = "$sreformat_exe stockholm $aln_file > $stk_file";
   if(system($cmd)) {
     my $system_error = $!;

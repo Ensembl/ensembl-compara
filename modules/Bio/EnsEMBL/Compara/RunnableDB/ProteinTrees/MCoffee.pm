@@ -326,39 +326,26 @@ sub run_mcoffee {
     my $prefix    = '';
     if ($self->param('method') eq 'mafft') {
 
-        my ($mafft_exe, $mafft_binaries);
+        my $mafft_exe      = $self->param('mafft_exe')
+            or die "'mafft_exe' is an obligatory parameter";
 
-        if($self->param('mafft_exe') and $self->param('mafft_binaries')) {
-            $mafft_exe      = $self->param('mafft_exe');
-            $mafft_binaries = $self->param('mafft_binaries');
-        } elsif(!$self->param('mafft_exe') and !$self->param('mafft_binaries')) {
-            $mafft_exe      = '/software/ensembl/compara/mafft-6.707/bin/mafft';
-            $mafft_binaries = '/software/ensembl/compara/mafft-6.707/binaries';
-        } else {
-            die "Either 'mafft_exe' or 'mafft_binaries' parameter has not been properly defined";
-        }
+        die "Cannot execute '$mafft_exe'" unless(-x $mafft_exe);
 
-        unless(-x $mafft_exe) {
-            die "Cannot execute the mafft binary '$mafft_exe'. Check your setup & try again";
-        }
+        my $mafft_binaries = $self->param('mafft_binaries')
+            or die "'mafft_binaries' is an obligatory parameter";
 
         $ENV{MAFFT_BINARIES} = $mafft_binaries;
 
-        print "Using '$mafft_exe' for mafft location and '$mafft_binaries' for mafft binaries location\n" if $self->debug();
         $self->param('mcoffee_scores', undef); #these wont have scores
 
         $cmd = "$mafft_exe --auto $input_fasta > $msa_output";
 
     } else {
 
-        my $mcoffee_exe = $self->analysis->program_file || '';
-        unless (-x $mcoffee_exe) {
-            print "Using default T-Coffee executable!\n";
-            $mcoffee_exe = '/software/ensembl/compara/tcoffee-7.86b/t_coffee';
-                # path to t_coffee components:
-            $ENV{'PATH'}=$ENV{'PATH'}.':/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux';
-        }
-        die "Cannot execute M-Coffee executable '$mcoffee_exe'" unless(-x $mcoffee_exe);
+        my $mcoffee_exe = $self->param('mcoffee_exe')
+            or die "'mcoffee_exe' is an obligatory parameter";
+
+        die "Cannot execute '$mcoffee_exe'" unless(-x $mcoffee_exe);
 
         $cmd = $mcoffee_exe;
         $cmd .= ' '.$input_fasta unless ($self->param('redo'));

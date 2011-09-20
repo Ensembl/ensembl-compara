@@ -184,12 +184,10 @@ sub run_njtree_phyml {
 
   my $newick_file = $input_aln . "_njtree_phyml_tree.txt ";
 
-  my $treebest_exe = $self->analysis->program_file || '';
-  unless (-e $treebest_exe) {
-      $treebest_exe = '/software/ensembl/compara/treebest/treebest';
-  }
+  my $treebest_exe = $self->param('treebest_exe')
+      or die "'treebest_exe' is an obligatory parameter";
 
-  $self->throw("can't find a njtree executable to run\n") unless(-e $treebest_exe);
+  die "Cannot execute '$treebest_exe'" unless(-x $treebest_exe);
 
   my $species_tree_file = $self->get_species_tree_file();
 

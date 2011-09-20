@@ -140,7 +140,8 @@ sub run {
 
     my $fasta_dir         = $self->param('fasta_dir') or die "'fasta_dir' is an obligatory parameter";
 
-    my $wublastp_exe      = $self->analysis->program_file || 'wublastp';
+    my $wublastp_exe      = $self->param('wublastp_exe') or die "'wublastp_exe' is an obligatory parameter";
+    die "Cannot execute '$wublastp_exe'" unless(-x $wublastp_exe);
 
     my $blast_tmp_dir     = $self->param('blast_tmp_dir');
 
