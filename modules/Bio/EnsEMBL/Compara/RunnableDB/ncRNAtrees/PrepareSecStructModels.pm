@@ -89,6 +89,7 @@ sub fetch_input {
     my $nc_tree    = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($nc_tree_id) or $self->throw("Could not fetch nc_tree with id=$nc_tree_id");
     $self->param('nc_tree', $nc_tree);
 
+### !! Struct files are not used in this first tree!!
     if(my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
         $self->param('input_aln', $input_aln);
     } else {
@@ -115,6 +116,12 @@ sub run {
                                    {
                                     'nc_tree_id' => $nc_tree_id,
                                    }, -1
+                                  );
+        $self->dataflow_output_id (
+                                   {
+                                    'clusterset_id' => 1,
+                                    'nc_tree_id' => $nc_tree_id,
+                                   }, 1
                                   );
         # Should we die here? Nothing more to do in the Runnable
         $self->input_job->incomplete(0);
@@ -147,6 +154,7 @@ sub write_output {
     my $nc_tree_id = $self->param('nc_tree_id');
     my $models = $self->param('models');
     my $bootstrap_num = $self->param('bootstrap_num');
+    print STDERR "Bootstrap_num: $bootstrap_num\n" if ($self->debug());
 
     for my $model (@$models) {
         $self->dataflow_output_id ( {
@@ -162,6 +170,12 @@ sub write_output {
 
 sub _run_bootstrap_raxml {
     my $self = shift;
+
+
+    ## Regarding RAxML 7.2.8 (http://www.phylo.org/tools/raxmlhpc2.html)
+#In RAxML 7.0.4, a run specified with the model GTRGAMMA (command line = -m GTRGAMMA -x -f a) performed rapid bootstrapping using the GTRCAT model, followed by an ML search using the GTRGAMMA model. That is, GTRGAMMA was used only for the ML search, while GTRCAT was used during the bootstrapping for improved efficiency. Similarly, RAxML 7.0.4 offered the option GTRMIX conducted inference under GRTCAT and calculated best tree under GTRGAMMA. The GTRMIX option (which conducted inference under GRTCAT and calculated best tree under GTRGAMMA) is no longer offered for RAxML 7.1.0 and above.
+
+#For RAxML 7.2.8, selecting the GTRGAMMA model has a very different effect (command line = -m GTRGAMMA -x -f a). This option causes GTRGAMMA to be used both during the rapid bootstrapping AND inference of the best tree. The result is that it takes much longer to produce results using GTRGAMMA in RAxML 7.0.4, and the analysis is different from the one run using RAxML 7.0.4, where GTRCAT was used to conduct the bootstrapping phase. If you wish to run the same analysis you ran using RAxML 7.0.4, you must instead choose the model GTRCAT (-m GTRCAT -x -f a)
 
   my $aln_file = $self->param('input_aln');
   return unless (defined($aln_file));
