@@ -5,6 +5,26 @@
 
 Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB
 
+=head1 SYNOPSIS
+
+        # load a genome_db given a class/keyvalue locator (genome_db_id will be generated)
+    standaloneJob.pl LoadOneGenomeDB.pm -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara2/lg4_test_load1genome" \
+        -locator 'Bio::EnsEMBL::DBSQL::DBAdaptor/host=ens-staging;port=3306;user=ensro;pass=;dbname=homo_sapiens_core_64_37;species=homo_sapiens;species_id=1;disconnect_when_inactive=1'
+
+        # load a genome_db given a url-style locator
+    standaloneJob.pl LoadOneGenomeDB.pm -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara2/lg4_test_load1genome" \
+        -locator "mysql://ensro@ens-staging2/mus_musculus_core_64_37"
+
+        # load a genome_db given a reg_conf and species_name as locator
+    standaloneJob.pl LoadOneGenomeDB.pm -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara2/lg4_test_load1genome" \
+        -reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
+        -locator 'mus_musculus'
+
+        # load a genome_db given a reg_conf and species_name as locator with a specific genome_db_id
+    standaloneJob.pl LoadOneGenomeDB.pm -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara2/lg4_test_load1genome" \
+        -reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
+        -locator 'homo_sapiens' -genome_db_id 90
+
 =head1 DESCRIPTION
 
 This Runnable loads one entry into 'genome_db' table and passes on the genome_db_id.
@@ -57,20 +77,24 @@ sub fetch_input {
     my $self = shift @_;
 
     my $assembly_name = $self->param('assembly_name');
-    my $genebuild = $self->param('genebuild');
     my $core_dba;
+
     if(my $locator = $self->param('locator') ) {   # use the locator and skip the registry
 
         eval {
             $core_dba = Bio::EnsEMBL::DBLoader->new($locator);
-
-            $assembly_name ||= $core_dba->extract_assembly_name();
         };
-        if($assembly_name and $self->param('assembly_name') and ($assembly_name ne $self->param('assembly_name')) ) {
-            die "The required assembly_name '".$self->param('assembly_name')."' is different from the one found in the database: '$assembly_name', please investigate";
+
+        unless($core_dba) {     # assume this is a hive-type locator and try more tricks:
+            my $dbc = $self->go_figure_dbc( $locator, 'core' )
+                or die "Could not connect to '$locator' as DBC";
+
+            $core_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( -DBCONN => $dbc );
         }
 
     } elsif( my $species_name = $self->param('species_name') ) {    # perform our tricky multiregistry search: find the last one still suitable
+
+        my $genebuild = $self->param('genebuild');
 
         my $registry_dbs = $self->param('registry_dbs') || die "unless 'locator' is specified, 'registry_dbs' becomes obligatory parameter";
 
@@ -102,7 +126,9 @@ sub fetch_input {
 
     if( $core_dba ) {
         $self->param('core_dba', $core_dba);
-        $self->param('assembly_name', $assembly_name);
+        if($assembly_name) {
+            $self->param('assembly_name', $assembly_name);
+        }
     } else {
         die "Could not find species_name='".$self->param('species_name')."', assembly_name='".$self->param('assembly_name')."' on the servers provided, please investigate";
     }
@@ -111,20 +137,22 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $species_name    = $self->param('species_name');
-    my $assembly_name   = $self->param('assembly_name');
     my $core_dba        = $self->param('core_dba');
-    my $genome_db_id    = $self->param('genome_db_id') || undef;
     my $meta_container  = $core_dba->get_MetaContainer;
+
+    my $assembly_name   = $self->param('assembly_name') || $core_dba->extract_assembly_name();
+    if($assembly_name ne $core_dba->extract_assembly_name()) {
+        die "The required assembly_name '".$self->param('assembly_name')."' is different from the one found in the database: '$assembly_name', please investigate";
+    }
 
     my $taxon_id        = $self->param('taxon_id')  || $meta_container->get_taxonomy_id;
     if($taxon_id != $meta_container->get_taxonomy_id) {
         die "taxon_id parameter ($taxon_id) is different from the one defined in the database (".$meta_container->get_taxonomy_id."), please investigate";
     }
 
-    my $genebuild       = $meta_container->get_genebuild || '';
-
-    my $genome_name = $meta_container->get_production_name() or die "Could not fetch production_name, please investigate";
+    my $genome_db_id    = $self->param('genome_db_id')      || undef;
+    my $genebuild       = $meta_container->get_genebuild    || '';
+    my $genome_name     = $meta_container->get_production_name() or die "Could not fetch production_name, please investigate";
 
     my $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new();
     $genome_db->dbID( $genome_db_id );
