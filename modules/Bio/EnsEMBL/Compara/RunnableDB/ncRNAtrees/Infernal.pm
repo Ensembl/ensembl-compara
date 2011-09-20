@@ -125,6 +125,8 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
+    # It would be better to die!? We can't do nothing with single peptide trees.
+    # Hopefully single peptide trees doesn't reach this runnable
     return if ($self->param('single_peptide_tree'));
     $self->run_infernal;
 }
