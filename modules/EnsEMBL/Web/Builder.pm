@@ -81,8 +81,8 @@ sub create_objects {
   }
   
   if ($self->object_types->{$type} && $hub->param('r')) {
-    $factory = $self->create_factory('Location');
-    $data    = $factory->__data;
+    $factory = $self->create_factory('Location', undef, 'r');
+    $data    = $factory->__data if $factory;
   }
   
   $new_factory = $self->create_factory($type, $data) unless $type eq 'Location' && $factory; # If it's a Location page with an r parameter, don't duplicate the Location factory
@@ -140,16 +140,19 @@ sub create_factory {
   my $factory = $self->new_factory($type, $data);
   
   if ($factory) {
-    my $problem = $factory->createObjects;
+    $factory->createObjects;
     
-    if ($problem && ref $problem eq 'HASH' && $problem->{'fatal'}) {
+    if ($hub->get_problem_type('fatal')) {
       $hub->delete_param($param);
+      $hub->clear_problem_type('fatal') if $type ne $hub->type; # If this isn't the critical factory for the page, ignore the problem. Deleting the parameter will cause a redirect to a working URL.
     } else {
       $self->object($_->__objecttype, $_) for @{$factory->DataObjects};
       
       return $factory;
     }
   }
+  
+  return undef;
 }
 
 sub create_data_object_of_type {
