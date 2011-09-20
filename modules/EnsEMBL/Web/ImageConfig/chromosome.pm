@@ -13,10 +13,13 @@ sub init {
   
   $self->add_tracks('decorations', 
     [ 'ideogram', 'Ideogram', 'ideogram',  { display => 'normal', strand => 'r', colourset => 'ideogram' }],
-    [ 'draggable', '',        'draggable', { display => 'normal' }]
   );
   
   $self->load_tracks;
+  
+  $self->add_tracks('decorations',
+    [ 'draggable', '', 'draggable', { display => 'normal' }]
+  );
   
   $self->modify_configs(
     [ 'decorations' ],
