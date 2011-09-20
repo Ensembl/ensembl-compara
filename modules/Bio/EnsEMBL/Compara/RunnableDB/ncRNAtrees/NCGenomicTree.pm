@@ -83,11 +83,17 @@ sub run_ncgenomic_tree {
         $self->input_job->incomplete(0);
         die ("tree cluster $nc_tree_id has ".(scalar $cluster->get_all_leaves)." proteins - can not build a phyml tree\n");
     }
-    my $njtree_phyml_executable = $self->param('treebest_exe') || "/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest/treebest";
+
+    my $treebest_exe = $self->param('treebest_exe')
+          or die "'treebest_exe' is an obligatory parameter";
+
+    die "Cannot execute '$treebest_exe'" unless(-x $treebest_exe);
+
     my $newick_file = $input_aln . ".treebest.$method.nh";
     $self->param('newick_file', $newick_file);
     my $treebest_err_file = $self->worker_temp_directory . "treebest.err";
-    my $cmd = $njtree_phyml_executable;
+
+    my $cmd = $treebest_exe;
     $cmd .= " $method";
     $cmd .= " -Snf " if ($method eq 'phyml');
     $cmd .= " -s " if ($method eq 'nj');

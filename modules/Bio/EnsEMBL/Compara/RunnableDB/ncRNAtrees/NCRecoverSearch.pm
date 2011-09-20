@@ -144,8 +144,10 @@ sub run_ncrecoversearch {
 
   next unless(keys %{$self->param('recovered_members')});
 
-  my $cmsearch_executable = $self->analysis->program_file || '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmsearch';
-  die "can't find a cmsearch executable to run\n" unless(-e $cmsearch_executable);
+  my $cmsearch_exe = $self->param('cmsearch_exe')
+      or die "'cmsearch_exe' is an obligatory parameter";
+
+  die "Cannot execute '$cmsearch_exe'" unless(-x $cmsearch_exe);
 
   my $worker_temp_directory = $self->worker_temp_directory;
   my $root_id = $self->param('nc_tree')->node_id;
@@ -184,7 +186,7 @@ sub run_ncrecoversearch {
     die "Failed to find '$model_id' both in 'model_id' and 'name' fields of 'nc_profile' table";
   }
 
-  my $cmd = $cmsearch_executable;
+  my $cmd = $cmsearch_exe;
   # /nfs/users/nfs_a/avilella/src/infernal/infernal-1.0/src/cmsearch --tabfile 110257.tab snoU89_profile.cm 110257.db
 
   return 1;   # FIXME: this is not ready -- disabling

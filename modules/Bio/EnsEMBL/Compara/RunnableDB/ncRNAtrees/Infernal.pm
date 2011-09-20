@@ -69,8 +69,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
             'method'      => 'Infernal',
-            'cmbuild_exe' => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmbuild',
-            'cmalign_exe' => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign'
            };
 }
 
@@ -254,9 +252,11 @@ sub run_infernal {
   my $stk_output = $self->worker_temp_directory . "output.stk";
   my $nc_tree_id = $self->param('nc_tree_id');
 
-  my $infernal_executable = $self->param('cmalign_exe') || '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign';
+  my $cmalign_exe = $self->param('cmalign_exe')
+    or die "'cmalign_exe' is an obligatory parameter";
 
-  die ("can't find a cmalign executable to run\n") unless(-e $infernal_executable);
+  die "Cannot execute '$cmalign_exe'" unless(-x $cmalign_exe);
+
 
   my $model_id;
 
@@ -289,7 +289,7 @@ sub run_infernal {
   }
 
 
-  my $cmd = $infernal_executable;
+  my $cmd = $cmalign_exe;
   # infernal -o cluster_6357.stk RF00599_profile.cm cluster_6357.fasta
 
   $cmd .= " --mxsize 4000 " if($self->input_job->retry_count >= 1); # large alignments FIXME separate Infernal_huge
@@ -324,7 +324,13 @@ sub run_infernal {
   # cmbuild --refine output.stk.new -F mir-32_profile.cm.new output.stk
   my $refined_stk_output = $stk_output . ".refined";
   my $refined_profile = $self->param('profile_file') . ".refined";
-  $cmd = $self->param('cmbuild_exe');
+
+  my $cmbuild_exe = $self->param('cmbuild_exe')
+    or die "'cmbuild_exe' is an obligatory parameter";
+
+  die "Cannot execute '$cmbuild_exe'" unless(-x $cmbuild_exe);
+
+  $cmd = $cmbuild_exe;
   $cmd .= " --refine $refined_stk_output";
   $cmd .= " -F $refined_profile";
   $cmd .= " $stk_output";

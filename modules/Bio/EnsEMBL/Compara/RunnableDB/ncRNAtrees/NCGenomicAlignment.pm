@@ -161,11 +161,17 @@ sub run_mafft {
     my $input_fasta = $self->param('input_fasta');
     my $mafft_output = $self->worker_temp_directory . "/mafft_".$nc_tree_id . ".msa";
     $self->param('mafft_output',$mafft_output);
-    my $mafft_exe = $self->param('mafft_exe') || "/software/ensembl/compara/mafft-6.707/bin/mafft";
-    my $mafft_env = $self->param('mafft_binaries') || "/software/ensembl/compara/mafft-6.707/binaries";
-    $self->throw("I can't locate mafft binary in $mafft_exe") unless (-e $mafft_exe);
-    $self->throw("I can't locate mafft environment in $mafft_env") unless (-e $mafft_env);
-    $ENV{MAFFT_BINARIES} = $mafft_env;
+
+    my $mafft_exe      = $self->param('mafft_exe')
+        or die "'mafft_exe' is an obligatory parameter";
+
+    die "Cannot execute '$mafft_exe'" unless(-x $mafft_exe);
+
+    my $mafft_binaries = $self->param('mafft_binaries')
+        or die "'mafft_binaries' is an obligatory parameter";
+
+    $ENV{MAFFT_BINARIES} = $mafft_binaries;
+
     my $cmd = "$mafft_exe --auto $input_fasta > $mafft_output";
     print STDERR "Running mafft\n$cmd\n" if ($self->debug);
     print STDERR "mafft_output has been set to " . $self->param('mafft_output') . "\n" if ($self->debug);
@@ -174,8 +180,6 @@ sub run_mafft {
         $self->throw("problem running command $cmd: $err\n");
     }
     $self->compara_dba->dbc->disconnect_when_inactive(1);
-
-    return
 }
 
 sub run_RAxML {
@@ -192,10 +196,14 @@ sub run_RAxML {
 
     $self->param('raxml_output',"$raxml_outdir/RAxML_bestTree.$raxml_outfile");
 
-    my $raxml_executable = $self->param('raxml_exe') || '/software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3';
+    my $raxml_exe = $self->param('raxml_exe')
+        or die "'raxml_exe' is an obligatory parameter";
+
+    die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
+
     my $bootstrap_num = 10;  ## Should be soft-coded?
     my $raxml_err_file = $self->worker_temp_directory . "raxml.err";
-    my $cmd = $raxml_executable;
+    my $cmd = $raxml_exe;
     $cmd .= " -T 2";
     $cmd .= " -m GTRGAMMA";
     $cmd .= " -s $aln_file";
@@ -267,8 +275,11 @@ sub run_prank {
     my $prank_output = $self->worker_temp_directory . "/prank_${nc_tree_id}.prank";
 #    my $prank_output = "/lustre/scratch103/ensembl/mp12/ncRNA_pipeline/prank_${nc_tree_id}.prank";
 
-    my $prank_exe = $self->param('prank_exe') || '/software/ensembl/compara/prank/090707/src/prank';
-    $self->throw('I can not locate prank in $prank_exe') unless (-e $prank_exe);
+    my $prank_exe = $self->param('prank_exe')
+        or die "'prank_exe' is an obligatory parameter";
+
+    die "Cannot execute '$prank_exe'" unless(-x $prank_exe);
+
     my $cmd = $prank_exe;
     # /software/ensembl/compara/prank/090707/src/prank -noxml -notree -f=Fasta -o=/tmp/worker.904/cluster_17438.mfa -d=/tmp/worker.904/cluster_17438.fast -t=/tmp/worker.904/cluster17438/RAxML.tree
     $cmd .= " -noxml -notree -once -f=Fasta";

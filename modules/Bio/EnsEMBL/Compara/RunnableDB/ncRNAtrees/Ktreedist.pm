@@ -81,12 +81,10 @@ sub fetch_input {
 
   $self->load_input_trees;
 
-  # Define executable
-  my $ktreedist_executable = $self->param('ktreedist_exe') || "/software/ensembl/compara/ktreedist/Ktreedist.pl";
-  $self->throw("can't find a ktreedist executable to run\n") unless(-e $ktreedist_executable);
-  $self->param('ktreedist_executable', $ktreedist_executable);
+  my $ktreedist_exe = $self->param('ktreedist_exe')
+      or die "'ktreedist_exe' is an obligatory parameter";
 
-  return 1;
+  die "Cannot execute '$ktreedist_exe'" unless(-x $ktreedist_exe);
 }
 
 
@@ -173,7 +171,7 @@ sub run_ktreedist {
 
   my $root_id = $self->param('nc_tree')->node_id;
 #  my $species_tree_file = $self->param('species_tree_file');
-  my $ktreedist_executable = $self->param('ktreedist_executable');
+  my $ktreedist_exe = $self->param('ktreedist_exe');
   my $temp_directory = $self->worker_temp_directory;
 
   my $comparisonfilename = $temp_directory . $root_id . ".ct";
@@ -201,7 +199,7 @@ sub run_ktreedist {
   print CTFILE "End;\n\n";
   close RTFILE;
 
-  my $cmd = "$ktreedist_executable -a -rt $referencefilename -ct $comparisonfilename";
+  my $cmd = "$ktreedist_exe -a -rt $referencefilename -ct $comparisonfilename";
   print("$cmd\n") if($self->debug);
   my $run; my $exit_status;
   open($run, "$cmd |") or $self->throw("Cannot run ktreedist with: $cmd");
@@ -256,10 +254,14 @@ sub reroot_inputtrees {
 
   my $root_id = $self->param('nc_tree')->node_id;
   my $species_tree_file = $self->get_species_tree_file();
-  my $treebest_mmerge_executable = '/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest_ncrna/treebest';
+
+  my $treebest_exe = $self->param('treebest_exe')
+    or die "'treebest_exe' is an obligatory parameter";
+
+  die "Cannot execute '$treebest_exe'" unless(-x $treebest_exe);
 
   my $temp_directory = $self->worker_temp_directory;
-  my $template_cmd = "$treebest_mmerge_executable sdi -rs $species_tree_file";
+  my $template_cmd = "$treebest_exe sdi -rs $species_tree_file";
 
   foreach my $method (keys %{$self->param('inputtrees_unrooted')}) {
     my $cmd = $template_cmd;

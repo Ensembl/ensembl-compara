@@ -144,13 +144,16 @@ sub _run_fasttree {
 
     my $root_id = $self->param('nc_tree')->node_id;
     my $fasttree_tag = $root_id . ".". $self->worker->process_id . ".fasttree";
-    my $fasttree_executable = $self->param('fasttree_exe') || "/software/ensembl/compara/fasttree/FastTree";
-    $self->throw("can't find fasttree executable to run in $fasttree_executable\n") unless (-e $fasttree_executable);
-    $self->throw("Not an executable: $fasttree_executable\n") unless (-x $fasttree_executable);
+
+    my $fasttree_exe = $self->param('fasttree_exe')
+        or die "'fasttree_exe' is an obligatory parameter";
+
+    die "Cannot execute '$fasttree_exe'" unless(-x $fasttree_exe);
+
     my $fasttree_output = $self->worker_temp_directory . "FastTree.$fasttree_tag";
     my $tag = defined $self->param('fastTreeTag') ? $self->param('fastTreeTag') : 'ft_IT_nj';
 #    my $tag = 'ft_IT_nj';
-    my $cmd = $fasttree_executable;
+    my $cmd = $fasttree_exe;
     $cmd .= " -nt -quiet -nopr";
     $cmd .= " $aln_file";
     $cmd .= " > $fasttree_output";
@@ -176,11 +179,13 @@ sub _run_parsimonator {
 
     my $root_id = $self->param('nc_tree')->node_id;
     my $parsimonator_tag = $root_id . "." . $self->worker->process_id . ".parsimonator";
-    my $parsimonator_executable = $self->param('parsimonator_exe') || "/software/ensembl/compara/parsimonator/Parsimonator-1.0.2/parsimonator-SSE3";
-    $self->throw("can't find parsimonator executable to run in $parsimonator_executable\n") unless (-e $parsimonator_executable);
-    $self->throw("Not an executable: $parsimonator_executable\n") unless (-x $parsimonator_executable);
 
-    my $cmd = $parsimonator_executable;
+    my $parsimonator_exe = $self->param('parsimonator_exe')
+        or die "'parsimonator_exe' is an obligatory parameter";
+
+    die "Cannot execute '$parsimonator_exe'" unless(-x $parsimonator_exe);
+
+    my $cmd = $parsimonator_exe;
     $cmd .= " -s $aln_file";
     $cmd .= " -n $parsimonator_tag";
     $cmd .= " -p 12345";
@@ -206,12 +211,15 @@ sub _run_raxml_light {
     my $root_id = $self->param('nc_tree')->node_id;
 
     my $raxmlight_tag = $root_id . "." . $self->worker->process_id . ".raxmlight";
-    my $raxmlight_executable = $self->param('raxmlLight_exe') || "/software/ensembl/compara/raxml/RAxML-Light-1.0.5/raxmlLight";
-    $self->throw("can't find a raxmlLight executable to run: $raxmlight_executable\n") unless(-e $raxmlight_executable);
-    $self->throw("Not an executable program: $raxmlight_executable\n") unless(-x $raxmlight_executable);
+
+    my $raxmlLight_exe = $self->param('raxmlLight_exe')
+        or die "'raxmlLight_exe' is an obligatory parameter";
+
+    die "Cannot execute '$raxmlLight_exe'" unless(-x $raxmlLight_exe);
+
     my $tag = defined $self->param('raxmlLightTag') ? $self->param('raxmlLightTag') : 'ft_IT_ml';
 #    my $tag = 'ft_IT_ml';
-    my $cmd = $raxmlight_executable;
+    my $cmd = $raxmlLight_exe;
     $cmd .= " -m GTRGAMMA";
     $cmd .= " -s $aln_file";
     $cmd .= " -t $parsimony_tree";

@@ -88,12 +88,10 @@ sub fetch_input {
 
   $self->load_input_trees;
 
-      # Define executable:
-  my $treebest_mmerge_executable = $self->param('treebest_exe') || "/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest_ncrna/treebest";
-  $self->throw("can't find a treebest executable to run\n") unless(-e $treebest_mmerge_executable);
-  $self->param('treebest_mmerge_executable', $treebest_mmerge_executable);
-
-  return 1;
+  my $treebest_exe = $self->param('treebest_exe')
+          or die "'treebest_exe' is an obligatory parameter";
+                  
+  die "Cannot execute '$treebest_exe'" unless(-x $treebest_exe);
 }
 
 
@@ -196,7 +194,7 @@ sub run_treebest_mmerge {
 
   my $root_id = $self->param('nc_tree')->node_id;
   my $species_tree_file = $self->get_species_tree_file();
-  my $treebest_mmerge_executable = $self->param('treebest_mmerge_executable');
+  my $treebest_exe = $self->param('treebest_exe');
   my $temp_directory = $self->worker_temp_directory;
 
   my $mmergefilename = $temp_directory . $root_id . ".mmerge";
@@ -208,7 +206,7 @@ sub run_treebest_mmerge {
   }
   close FILE;
 
-  my $cmd = "$treebest_mmerge_executable mmerge -s $species_tree_file $mmergefilename > $mmerge_output_filename";
+  my $cmd = "$treebest_exe mmerge -s $species_tree_file $mmergefilename > $mmerge_output_filename";
   print("$cmd\n") if($self->debug);
   $DB::single=1;1;#??
   unless(system("$cmd") == 0) {
@@ -235,21 +233,21 @@ sub calculate_branch_lengths {
     return;
   }
 
-  my $treebest_mmerge_executable = $self->param('treebest_mmerge_executable');
+  my $treebest_exe = $self->param('treebest_exe');
   my $constrained_tree = $self->param('mmerge_output');
   my $tree_with_blengths = $self->param('mmerge_output') . ".blengths.nh";
   my $input_aln = $self->param('input_aln');
   my $species_tree_file = $self->get_species_tree_file();
-  my $cmd = $treebest_mmerge_executable;
+  my $cmd = $treebest_exe;
   $cmd .= " nj";
-  if ($treebest_mmerge_executable =~ /tracking/) {
+  if ($treebest_exe =~ /tracking/) {
       $cmd .= " -I";
   }
   $cmd .= " -c $constrained_tree";
   $cmd .= " -s $species_tree_file";
   $cmd .= " $input_aln";
   $cmd .= " > $tree_with_blengths";
-#  my $cmd = "$treebest_mmerge_executable nj -c $constrained_tree -s $species_tree_file $input_aln > $tree_with_blengths";
+#  my $cmd = "$treebest_exe nj -c $constrained_tree -s $species_tree_file $input_aln > $tree_with_blengths";
   print STDERR +("$cmd\n") if($self->debug);
 
   unless(system("$cmd") == 0) {
@@ -269,10 +267,10 @@ sub reroot_inputtrees {
 
   my $root_id = $self->param('nc_tree')->node_id;
   my $species_tree_file = $self->get_species_tree_file;
-  my $treebest_mmerge_executable = $self->param('treebest_mmerge_executable');
+  my $treebest_exe = $self->param('treebest_exe');
 
   my $temp_directory = $self->worker_temp_directory;
-  my $template_cmd = "$treebest_mmerge_executable sdi -rs $species_tree_file";
+  my $template_cmd = "$treebest_exe sdi -rs $species_tree_file";
 
   foreach my $method (keys %{$self->param('inputtrees_unrooted')}) {
     my $cmd = $template_cmd;

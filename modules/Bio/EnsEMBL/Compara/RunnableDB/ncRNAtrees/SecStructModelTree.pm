@@ -90,8 +90,11 @@ sub run {
     my $root_id = $nc_tree->node_id;
 
     my $raxml_tag = $root_id . "." . $self->worker->process_id . ".raxml";
-    my $raxml_executable = $self->param('raxml_exe') || '/software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3';
-    $self->throw("can't find a raxml executable to run\n") unless(-e $raxml_executable);
+
+    my $raxml_exe = $self->param('raxml_exe')
+        or die "'raxml_exe' is an obligatory parameter";
+
+    die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
 
     my $tag = 'ss_IT_' . $model;
     my $sql1 = "select value from nc_tree_tag where node_id=$root_id and tag='$tag'";
@@ -114,7 +117,7 @@ sub run {
     # /software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3
     # -m GTRGAMMA -s nctree_20327.aln -S nctree_20327.struct -A S7D -n nctree_20327.raxml
     my $worker_temp_directory = $self->worker_temp_directory;
-    my $cmd = $raxml_executable;
+    my $cmd = $raxml_exe;
     $cmd .= " -T 2";
     $cmd .= " -m GTRGAMMA";
     $cmd .= " -s $aln_file";

@@ -57,6 +57,7 @@ sub default_options {
             # executable locations:
             'cmalign_exe' => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign',
             'cmbuild_exe' => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmbuild',
+            'cmsearch_exe' => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmsearch',
             'mafft_exe' => '/software/ensembl/compara/mafft-6.707/bin/mafft',
             'mafft_binaries' => '/software/ensembl/compara/mafft-6.707/binaries',
             'raxml_exe' => '/software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3',
@@ -559,6 +560,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Ktreedist',
             -hive_capacity => -1,
             -parameters => {
+                            'treebest_exe'  => $self->o('treebest_exe'),
                             'ktreedist_exe' => $self->o('ktreedist_exe'),
                            },
             -failed_job_tolerance =>  5,    # that many per cent jobs are allowed to fail
@@ -572,6 +574,7 @@ sub pipeline_analyses {
          -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Ktreedist',
          -hive_capacity => -1,
          -parameters => {
+                         'treebest_exe'  => $self->o('treebest_exe'),
                          'ktreedist_exe' => $self->o('ktreedist_exe'),
                         },
          -failed_job_tolerance => 5,

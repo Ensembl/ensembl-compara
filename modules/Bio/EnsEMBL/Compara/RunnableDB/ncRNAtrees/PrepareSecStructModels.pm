@@ -181,9 +181,11 @@ sub _run_bootstrap_raxml {
   return unless (defined($aln_file));
 
   my $raxml_tag = $self->param('nc_tree')->node_id . "." . $self->worker->process_id . ".raxml";
-  my $raxml_executable = $self->param('raxml_exe') || '/software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3';
-  $self->throw("can't find a raxml executable to run: $raxml_executable\n") unless(-e $raxml_executable);
-  $self->throw("Not an executable program: $raxml_executable\n") unless(-x $raxml_executable);
+
+  my $raxml_exe = $self->param('raxml_exe')
+    or die "'raxml_exe' is an obligatory parameter";
+
+  die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
 
   my $bootstrap_num = 10;
   my $root_id = $self->param('nc_tree')->node_id;
@@ -210,7 +212,7 @@ sub _run_bootstrap_raxml {
 
   # /software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3
   # -m GTRGAMMA -s nctree_20327.aln -N 10 -n nctree_20327.raxml.10
-  my $cmd = $raxml_executable;
+  my $cmd = $raxml_exe;
   $cmd .= " -T 2"; # ATTN, you need the PTHREADS version of raxml for this
   $cmd .= " -m GTRGAMMA";
   $cmd .= " -s $aln_file";
