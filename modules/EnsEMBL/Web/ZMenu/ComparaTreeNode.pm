@@ -73,7 +73,7 @@ sub content {
       link  => $hub->url({
         type     => $hub->type,
         action   => $action,
-        collapse => '' 
+        collapse => 'none' 
       })
     });
   }
