@@ -4,7 +4,7 @@ use strict;
 
 use Sanger::Graphics::ColourMap;
 use Sanger::Graphics::Bump;
-use Bio::EnsEMBL::Glyph::Symbol::box; 
+#use Bio::EnsEMBL::Glyph::Symbol::box; 
 use POSIX; #floor
 
 use base qw(Bio::EnsEMBL::GlyphSet);
