@@ -104,7 +104,7 @@ sub fetch_input {
 sub run {
     my ($self) = @_;
 
-#    $self->_run_fasttree;
+    $self->_run_fasttree;
     $self->_run_parsimonator;
     $self->_run_raxml_light;
 }
@@ -209,7 +209,7 @@ sub _run_raxml_light {
     my $raxmlight_executable = $self->param('raxmlLight_exe') || "/software/ensembl/compara/raxml/RAxML-Light-1.0.5/raxmlLight";
     $self->throw("can't find a raxmlLight executable to run: $raxmlight_executable\n") unless(-e $raxmlight_executable);
     $self->throw("Not an executable program: $raxmlight_executable\n") unless(-x $raxmlight_executable);
-    my $tag = defined $self->param('raxmlLightTag') ? $self->param('raxmlLightTag') : 'ft_IT_nj';
+    my $tag = defined $self->param('raxmlLightTag') ? $self->param('raxmlLightTag') : 'ft_IT_ml';
 #    my $tag = 'ft_IT_ml';
     my $cmd = $raxmlight_executable;
     $cmd .= " -m GTRGAMMA";
