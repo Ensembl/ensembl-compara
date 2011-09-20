@@ -128,7 +128,9 @@ sub table_export {
        $str =~ s/<br.*?>/ /g;
        $str =~ s/&nbsp;/ /g;
        $str = $self->strip_HTML($str);
-       $str =~ s/"/""/g;
+       $str =~ s/"/""/g; 
+       $str =~ s/^\s+//;
+       $str =~ s/\s+$//g; 
     return $str;
   };
   
