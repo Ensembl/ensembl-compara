@@ -13,12 +13,17 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.draggables       = [];
     this.speciesCount     = 0;
     
+    function resetOffset() {
+      delete this.imgOffset;
+    }
+    
     Ensembl.EventManager.register('highlightImage',     this, this.highlightImage);
     Ensembl.EventManager.register('mouseUp',            this, this.dragStop);
     Ensembl.EventManager.register('hashChange',         this, this.hashChange);
     Ensembl.EventManager.register('changeFavourite',    this, this.changeFavourite);
     Ensembl.EventManager.register('imageResize',        this, function () { if (this.xhr) { this.xhr.abort(); } this.getContent(); });
-    Ensembl.EventManager.register('windowResize',       this, function () { delete this.imgOffset; });
+    Ensembl.EventManager.register('windowResize',       this, resetOffset);
+    Ensembl.EventManager.register('ajaxLoaded',         this, resetOffset); // Adding content could cause scrollbars to appear, changing the offset, but this does not fire the window resize event
     Ensembl.EventManager.register('changeWidth',        this, function () { Ensembl.EventManager.trigger('queuePageReload', this.id); });
     Ensembl.EventManager.register('highlightAllImages', this, function () { if (!this.align) { this.highlightAllImages(); } });
   },
