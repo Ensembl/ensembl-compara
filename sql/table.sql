@@ -357,23 +357,6 @@ CREATE TABLE genomic_align (
 ) MAX_ROWS = 1000000000 AVG_ROW_LENGTH = 60 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
-#
-# Table structure for table 'genomic_align_group'
-#
-#   This table can store several groupings of the genomic aligned sequences
-#
-
-CREATE TABLE genomic_align_group (
-  node_id                    bigint unsigned NOT NULL AUTO_INCREMENT, # internal id, groups genomic_align_ids
-  genomic_align_id            bigint unsigned NOT NULL, # FK genomic_align.genomic_align_id
-
-  FOREIGN KEY (genomic_align_id) REFERENCES genomic_align(genomic_align_id),
-
-  KEY node_id (node_id),
-  UNIQUE KEY genomic_align_id (genomic_align_id)
-
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
 
 #
 # Table structure for table 'genomic_align_tree'
@@ -395,13 +378,30 @@ CREATE TABLE genomic_align_tree (
   right_node_id               bigint(10) NOT NULL default 0,
   distance_to_parent          double NOT NULL default 1,
 
-  FOREIGN KEY (node_id) REFERENCES genomic_align_group(node_id),
-
   PRIMARY KEY node_id (node_id),
   KEY parent_id (parent_id),
   KEY root_id (root_id),
   KEY left_index (left_index),
   KEY right_index (right_index)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+#
+# Table structure for table 'genomic_align_group'
+#
+#   This table can store several groupings of the genomic aligned sequences
+#
+
+CREATE TABLE genomic_align_group (
+  #node_id                    bigint unsigned NOT NULL AUTO_INCREMENT, # internal id, groups genomic_align_ids
+  node_id                     bigint unsigned NOT NULL, # internal id, groups genomic_align_ids
+  genomic_align_id            bigint unsigned NOT NULL, # FK genomic_align.genomic_align_id
+
+  FOREIGN KEY (genomic_align_id) REFERENCES genomic_align(genomic_align_id),
+  FOREIGN KEY (node_id) REFERENCES genomic_align_tree(node_id),
+
+  KEY node_id (node_id),
+  UNIQUE KEY genomic_align_id (genomic_align_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
