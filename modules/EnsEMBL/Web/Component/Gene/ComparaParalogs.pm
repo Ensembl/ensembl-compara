@@ -4,6 +4,8 @@ package EnsEMBL::Web::Component::Gene::ComparaParalogs;
 
 use strict;
 
+use HTML::Entities qw(encode_entities);
+
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -26,9 +28,8 @@ sub content {
   my $columns = [
     { key => 'Type',                align => 'left', width => '10%', sort => 'html'          },
     { key => 'Ancestral taxonomy',  align => 'left', width => '10%', sort => 'html'          },
-    { key => 'Gene identifier',     align => 'left', width => '20%', sort => 'html'          },
-    { key => 'Gene name (Xref)',    align => 'left', width => '25%', sort => 'none'          },
-    { key => 'Compare',             align => 'left', width => '15%', sort => 'none'          },
+    { key => 'identifier',          align => 'left', width => '15%', sort => 'html', title => $self->html_format ? 'Ensembl identifier &amp; gene name' : 'Ensembl identifier'},    
+    { key => 'Compare',             align => 'left', width => '10%', sort => 'none'          },
     { key => 'Location',            align => 'left', width => '20%', sort => 'position_html' },
     { key => 'Target %id',          align => 'left', width => '5%',  sort => 'numeric'       },
     { key => 'Query %id',           align => 'left', width => '5%',  sort => 'numeric'       },
@@ -40,15 +41,22 @@ sub content {
     foreach my $stable_id (sort {$paralogue_list{$species}{$a}{'order'} <=> $paralogue_list{$species}{$b}{'order'}} keys %{$paralogue_list{$species}}) {
       my $paralogue = $paralogue_list{$species}{$stable_id};
       
-      my $description = $paralogue->{'description'};
+      my $description = encode_entities($paralogue->{'description'});
          $description = 'No description' if $description eq 'NULL';
       
+      if ($description =~ s/\[\w+:([-\w\/]+)\;\w+:(\w+)\]//g) {
+        my ($edb, $acc) = ($1, $2);
+        $description .= '[' . $hub->get_ExtURL_link("Source: $edb ($acc)", $edb, $acc). ']' if $acc;
+      }
+      
+      my @external = (qq{<span class="small">$description</span>});
+      unshift @external, $paralogue->{'display_id'} if $paralogue->{'display_id'};
       my $paralogue_desc              = $paralogue_map{$paralogue->{'homology_desc'}} || $paralogue->{'homology_desc'};
       my $paralogue_subtype           = $paralogue->{'homology_subtype'}              || '&nbsp;';
       my $paralogue_dnds_ratio        = $paralogue->{'homology_dnds_ratio'}           || '&nbsp;';
       (my $spp = $paralogue->{'spp'}) =~ tr/ /_/;
       
-      my $link = $hub->url({
+      my $link_url = $hub->url({
         action => 'Summary',
         g => $stable_id,
         r => undef
@@ -61,8 +69,10 @@ sub content {
         g      => $stable_id
       });
       
+      my $id_info = qq{<p class="space-below"><a href="$link_url">$stable_id</a></p>} . join '<br />', @external;
+
       my $links = sprintf (
-        '<a href="%s" class="notext">Multi-location view</a>',
+        '<ul class="compact"><li class="first"><a href="%s" class="notext">Multi-species view</a></li>',
         $hub->url({
           type   => 'Location',
           action => 'Multi',
@@ -80,27 +90,21 @@ sub content {
             function => "Alignment". ($cdb=~/pan/ ? '_pan_compara' : ''),, 
             g1       => $stable_id
         });
-        $links .= sprintf('<br /><a href="%s" class="notext">Alignment (protein)</a>', $align_url);
+        $links .= sprintf '<li><a href="%s" class="notext">Alignment (protein)</a></li>', $align_url;
         $align_url .= ';seq=cDNA';
-        $links .= sprintf('<br /><a href="%s" class="notext">Alignment (cDNA)</a>', $align_url);
+        $links .= sprintf '<li><a href="%s" class="notext">Alignment (cDNA)</a></li>', $align_url;
         
         ($target, $query) = ($paralogue->{'target_perc_id'}, $paralogue->{'query_perc_id'});
         $alignview = 1;
       }
+
+      $links .= '</ul>';
       
-      if ($description =~ s/\[\w+:([-\w\/]+)\;\w+:(\w+)\]//g) {
-        my ($edb, $acc) = ($1, $2);
-        $description .= '[' . $hub->get_ExtURL_link("Source: $edb ($acc)", $edb, $acc). ']' if $acc;
-      }
-      
-      my @external = qq{<span class="small">$description</span>};
-      unshift @external, $paralogue->{'display_id'} if $paralogue->{'display_id'};
       
       push @rows, {
         'Type'                => ucfirst $paralogue_desc,
         'Ancestral taxonomy'  => $paralogue_subtype,
-        'Gene identifier'     => qq{<a href="$link">$stable_id</a>},
-        'Gene name (Xref)'    => join('<br />', @external),
+        'identifier' => $self->html_format ? $id_info : $stable_id,
         'Compare'             => $self->html_format ? qq{<span class="small">$links</span>} : '',
         'Location'            => qq{<a href="$location_link">$paralogue->{'location'}</a>},
         'Target %id'          => $target,

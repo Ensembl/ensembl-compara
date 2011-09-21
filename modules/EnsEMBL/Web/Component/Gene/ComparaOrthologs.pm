@@ -158,7 +158,7 @@ sub content {
       }
       
       $target_links .= sprintf(
-        '<li><a href="%s" class="notext">Gene Tree (image)</a></li>',
+        '<li><a href="%s" class="notext">Gene Tree (image)</a></li></ul>',
         $hub->url({
           type   => 'Gene',
           action => 'Compara_Tree' . ($cdb =~ /pan/ ? '/pan_compara' : ''),
@@ -198,21 +198,13 @@ sub content {
         g       => $stable_id,
         __clear => 1
       });
-
-      my ($region, $coords, $strand) = split /:/, $orthologue->{'location'};
-      my ($start, $end)              = split /-/, $coords;
-      
-      my $region_string  = grep($region, @{$species_defs->get_config($species, 'ENSEMBL_CHROMOSOMES') || []}) ? 'Chromosome ' : '';
-         $region_string .= $region;
-         
-      my $location_text = qq{Region: <a href="$location_link">$region_string</a><br />Start: $start<br />End: $end<br />Strand: $strand<br />};
       
       my $table_details = {
         'Species'    => join('<br />(', split /\s*\(/, $species_defs->species_label($species)),
         'Type'       => ucfirst $orthologue_desc,
         'dN/dS'      => $orthologue_dnds_ratio,
         'identifier' => $self->html_format ? $id_info : $stable_id,
-        'Location'   => $location_text,
+        'Location'   => qq{<a href="$location_link">$orthologue->{'location'}</a>},
         $column_name => $self->html_format ? qq{<span class="small">$target_links</span>} : $description,
         'Target %id' => $target,
         'Query %id'  => $query,
