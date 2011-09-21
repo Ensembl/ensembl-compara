@@ -50,7 +50,7 @@ sub default_options {
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'release'               => '64',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
-        'ensembl_cvs_root_dir'  => $ENV{'HOME'}.'/src/ensembl_main',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
+        'ensembl_cvs_root_dir'  => $ENV{'HOME'}.'/src/ensembl_main', 
 	'dbname'                => $ENV{USER}.'_pecan_19way_'.$self->o('release').$self->o('release_suffix'),
         'work_dir'              => '/lustre/scratch101/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('dbname'),
 	'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
@@ -65,17 +65,11 @@ sub default_options {
 	'blast_params'          => "-num_alignments 20 -seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.1 -use_sw_tback",
         'blast_capacity'        => 100,
 
-       'sec_root_dir'           => '/software/ensembl/compara',
-       'blast_bin_dir'          => $self->o('sec_root_dir') . '/ncbi-blast-2.2.23+/bin',
-
     #location of full species tree, will be pruned
         'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh', 
 
     #master database
         'master_db_name' => 'sf5_ensembl_compara_master', 
-
-    # executable locations:
-	'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl", 
 
     # Mercator default parameters
     'strict_map'        => 1,
@@ -97,7 +91,14 @@ sub default_options {
     #Gerp default parameters
     'window_sizes'      => "[1,10,100,500]",
     'gerp_version'      => 2.1,
-    'gerp_program_file' => '/software/ensembl/compara/gerp/GERPv2.1',
+
+	    
+    #Location of executables (or paths to executables)
+    'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl", 
+    'gerp_exe_dir'              => '/software/ensembl/compara/gerp/GERPv2.1',
+    'mercator_exe'              => '/software/ensembl/compara/mercator',
+    'blast_exe_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.23+/bin',
+
 
     # connection parameters to various databases:
 
@@ -525,7 +526,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
 		'fasta_dir'     => $self->o('blastdb_dir'),
-		'blast_bin_dir' => $self->o('blast_bin_dir'),
+		'blast_bin_dir' => $self->o('blast_exe_dir'),
                 'cmd' => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_dir#/make_blastdb.log -in #fasta_name#',
             },
 	    -wait_for  => [ 'reuse_dump_subset_fasta' , 'fresh_dump_subset_fasta' ],
@@ -604,7 +605,6 @@ sub pipeline_analyses {
                  'method_link_species_set_id' => $self->o('mlss_id'),
 		 'jar_file'                   => $self->o('jar_file'),
              },
-#             -wait_for => [ 'mercator' ],
              -max_retry_count => 1,
              -hive_capacity => 500,
              -flow_into => {
@@ -668,12 +668,12 @@ sub pipeline_analyses {
          {   -logic_name    => 'gerp',
              -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
 	     -program_version => $self->o('gerp_version'),
-	     -program_file => $self->o('gerp_program_file'),
              -parameters    => {
                  'window_sizes' => $self->o('window_sizes'),
+		 'gerp_exe_dir' => $self->o('gerp_exe_dir'),
 #                 'constrained_element_method_link_type' => $self->o('constrained_element_type'),
              },
-             -wait_for => [ 'mercator' ],
+#             -wait_for => [ 'mercator' ],
              -hive_capacity => 500,  
          },
 
