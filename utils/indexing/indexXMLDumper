@@ -1869,21 +1869,21 @@ sub dumpGene {
           $other_count++;
           my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to the following current identifiers: @current_sis);
           $desc .= @deprecated_sis ? qq(; and the following deprecated identifiers: @deprecated_sis) : '';
-          &p (&GeneStableIdMappingLine($dbspecies,$desc,$osi,\@current_sis,\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
+          &p (&StableIdMappingLine($dbspecies,$desc,$osi,\@current_sis,\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
         }
         elsif( @deprecated_sis ) {
           $other_count++;
           my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to the following identifiers: @deprecated_sis);
-          &p (&GeneStableIdMappingLine($dbspecies,$desc,$osi,[],\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
+          &p (&StableIdMappingLine($dbspecies,$desc,$osi,[],\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
         }
         else {
           $other_count++;
           my $desc = qq(Ensembl $type $osi is no longer in the database and has not been mapped to any newer identifiers);
-          &p (&GeneStableIdMappingLine($dbspecies,$desc,$osi,[],[],$type,$db,$counter),$nogzip, $fh);
+          &p (&StableIdMappingLine($dbspecies,$desc,$osi,[],[],$type,$db,$counter),$nogzip, $fh);
         }
       }
     }
-    print LOG "    Stable_id mapping querying done ".&date_and_mem()."\n";
+    print LOG "    Stable_id mapping querying done, added $other_count ".&date_and_mem()."\n";
     $total_c += footer( $counter->(),$nogzip,$fh);
 
     while (0) {
@@ -1969,7 +1969,7 @@ sub GeneLine {
   if ($search_engine eq 'solr') {
     $xml = qq(
 <doc>
-  <field name="id">$gsid"</field>
+  <field name="id">$gsid</field>
   <field name="name">$disp_xref</field>
   <field name="description">$description</field>);
     $xml .= &common_fields($species,'Gene');
@@ -2150,7 +2150,7 @@ sub GeneLine {
   }
 }
 
-sub GeneStableIdMappingLine {
+sub StableIdMappingLine {
   my ($species,$desc,$osi,$current_sis,$deprecated_sis,$type,$db,$counter) = @_;
   $species =~ s/_/ /;
   my $xml = qq(
@@ -2408,6 +2408,64 @@ sub dumpTranscript {
                   $counter),
         $nogzip, $fh) if ($old->{'gsid'});
     print LOG "    Transcript info query done ".&date_and_mem()."\n";
+
+    my $other_count = 0;
+    my %current_stable_ids =();
+    foreach my $type (qw(transcript translation)) {
+      $current_stable_ids{$type} = { map {@$_} @{$conf->{'dbh'}->selectall_arrayref( "select stable_id,1 from $COREDB.".$type."_stable_id" )}};
+    }
+    my $species = $conf->{'species'};
+    my $sth = $conf->{'dbh'}->prepare( qq(
+    SELECT sie.type, sie.old_stable_id, if(isnull(sie.new_stable_id),'NULL',sie.new_stable_id),
+           ms.old_release*1.0 as X, ms.new_release*1.0 as Y
+      FROM $dbname.mapping_session as ms, $dbname.stable_id_event as sie
+     WHERE ms.mapping_session_id = sie.mapping_session_id and ( old_stable_id != new_stable_id or isnull(new_stable_id) )
+     ORDER by Y desc, X desc
+  ));
+
+    $sth->execute();
+    my %mapping = ();
+    while( my($type,$osi,$nsi) = $sth->fetchrow_array() ) {
+      next if $current_stable_ids{$type}{$osi}; ## Don't need to cope with current IDS already searchable...
+      $mapping{$type}{$osi}{$nsi} = 1;
+      if($mapping{$type}{$nsi}) {
+        foreach( keys %{$mapping{$type}{$nsi}} ) {
+          $mapping{$type}{$osi}{$_} = 1;
+        }
+      }
+    }
+    foreach my $type ( keys %mapping ) {
+      foreach my $osi ( keys %{$mapping{$type}} ) {
+        my @current_sis = ();
+        my @deprecated_sis = ();
+        foreach ( keys %{$mapping{$type}{$osi}} ) {
+          next if $osi eq $_;
+          if( $current_stable_ids{$_} ) {
+            push @current_sis,$_;
+          } elsif( $_ ne 'NULL' ) {
+            push @deprecated_sis,$_;
+          }
+        }
+        if( @current_sis ) {
+          $other_count++;
+          my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to the following current identifiers: @current_sis);
+          $desc .= @deprecated_sis ? qq(; and the following deprecated identifiers: @deprecated_sis) : '';
+          &p (&StableIdMappingLine($dbspecies,$desc,$osi,\@current_sis,\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
+        }
+        elsif( @deprecated_sis ) {
+          $other_count++;
+          my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to the following identifiers: @deprecated_sis);
+          &p (&StableIdMappingLine($dbspecies,$desc,$osi,[],\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
+        }
+        else {
+          $other_count++;
+          my $desc = qq(Ensembl $type $osi is no longer in the database and has not been mapped to any newer identifiers);
+          &p (&StableIdMappingLine($dbspecies,$desc,$osi,[],[],$type,$db,$counter),$nogzip, $fh);
+        }
+      }
+    }
+
+    print LOG "    Stable_id mapping querying done, added $other_count ".&date_and_mem()."\n";
     $total_c += footer( $counter->(),$nogzip,$fh);
   }
   return $total_c;
