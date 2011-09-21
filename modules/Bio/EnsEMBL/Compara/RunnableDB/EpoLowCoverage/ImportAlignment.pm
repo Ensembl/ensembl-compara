@@ -58,8 +58,7 @@ sub fetch_input {
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with $self->db (Hive DBAdaptor)
-  $self->param('comparaDBA', Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc));
-  $self->param('comparaDBA')->dbc->disconnect_when_inactive(0);
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
 
   my $reg = "Bio::EnsEMBL::Registry";
   $reg->load_registry_from_url($self->param('from_db_url'));
@@ -115,7 +114,7 @@ sub importAlignment {
 	#open the most recent compara database
 	$self->param('from_comparaDBA', Bio::EnsEMBL::Registry->get_DBAdaptor("Multi", "compara"));
     }
-    my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name("ImportAlignment");
+    my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name("import_alignment");
     
     my $dbname = $self->param('from_comparaDBA')->dbc->dbname;
     my $analysis_id = $analysis->dbID;
@@ -146,26 +145,26 @@ sub importAlignment {
     my $dnafrag_id;
 
     #Copy the method_link_species_set
-    copy_data($self->param('from_comparaDBA'), $self->param('comparaDBA'),
+    copy_data($self->param('from_comparaDBA'), $self->compara_dba,
 	      "method_link_species_set",
 	      undef, undef, undef,
 	      "SELECT * FROM method_link_species_set WHERE method_link_species_set_id = $mlss_id");
 
     #Copy the species_set
-    copy_data($self->param('from_comparaDBA'), $self->param('comparaDBA'),
+    copy_data($self->param('from_comparaDBA'), $self->compara_dba,
 	      "species_set",
 	      undef, undef, undef,
 	      "SELECT species_set.* FROM species_set JOIN method_link_species_set USING (species_set_id) WHERE method_link_species_set_id = $mlss_id");
 
     #copy genomic_align_block table
     if ($dnafrag_id) {
-	copy_data($self->param('from_comparaDBA'), $self->param('comparaDBA'),
+	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
 		  "genomic_align_block",
 		  "genomic_align_block_id",
 		  $min_gab, $max_gab,
 		  "SELECT gab.* FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id) WHERE ga.method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
     } else {
-	copy_data($self->param('from_comparaDBA'), $self->param('comparaDBA'),
+	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
 		  "genomic_align_block",
 		  "genomic_align_block_id",
 		  $min_gab, $max_gab,
@@ -174,7 +173,7 @@ sub importAlignment {
 
     #copy genomic_align table
     if ($dnafrag_id) {
-	copy_data($self->param('from_comparaDBA'), $self->param('comparaDBA'),
+	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
 		  "genomic_align",
 		  "genomic_align_id",
 		  $min_ga, $max_ga,
@@ -192,7 +191,7 @@ sub importAlignment {
 #		  " WHERE method_link_species_set_id = $mlss_id");
 
 	#Don't copy over ancestral genomic_aligns 
-	copy_data($self->param('from_comparaDBA'), $self->param('comparaDBA'),
+	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
 		  "genomic_align",
 		  "genomic_align_id",
 		  $min_ga, $max_ga,
@@ -200,29 +199,9 @@ sub importAlignment {
 		  " FROM genomic_align JOIN dnafrag USING (dnafrag_id)".
 		  " WHERE method_link_species_set_id = $mlss_id AND genome_db_id != 63");
     }
-    #copy genomic_align_group table
-    if ($dnafrag_id) {
-	copy_data($self->param('from_comparaDBA'), $self->param('comparaDBA'),
-		  "genomic_align_group",
-		  "gag.node_id", 
-		  $min_gag, $max_gag,
-		  "SELECT gag.*".
-		  " FROM genomic_align_group gag LEFT JOIN genomic_align USING (genomic_align_id)".
-		  " WHERE gag.node_id IS NOT NULL AND method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
-    } else {
-	copy_data($self->param('from_comparaDBA'), $self->param('comparaDBA'),
-		  "genomic_align_group",
-		  "gag.node_id", 
-		  $min_gag, $max_gag,
-		  "SELECT gag.*".
-		  " FROM genomic_align ga ".
-		  " JOIN dnafrag USING (dnafrag_id)".
-		  " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
-		  " WHERE gag.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id AND genome_db_id != 63");
-    }
     #copy genomic_align_tree table
     if ($dnafrag_id) {
-	copy_data($self->param('from_comparaDBA'), $self->param('comparaDBA'),
+	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
 		  "genomic_align_tree",
 		  "root_id",
 		  $min_root_id, $max_root_id,
@@ -232,7 +211,7 @@ sub importAlignment {
 		  " WHERE node_id IS NOT NULL AND method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
 
     } else {
-	copy_data($self->param('from_comparaDBA'), $self->param('comparaDBA'),
+	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
 		  "genomic_align_tree",
 		  "root_id",
 		  $min_root_id, $max_root_id,
@@ -241,6 +220,26 @@ sub importAlignment {
 		  " JOIN dnafrag USING (dnafrag_id)".
 		  " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
 		  " LEFT JOIN genomic_align_tree gat USING (node_id) WHERE gag.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id AND genome_db_id != 63");
+    }
+    #copy genomic_align_group table
+    if ($dnafrag_id) {
+	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
+		  "genomic_align_group",
+		  "gag.node_id", 
+		  $min_gag, $max_gag,
+		  "SELECT gag.*".
+		  " FROM genomic_align_group gag LEFT JOIN genomic_align USING (genomic_align_id)".
+		  " WHERE gag.node_id IS NOT NULL AND method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
+    } else {
+	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
+		  "genomic_align_group",
+		  "gag.node_id", 
+		  $min_gag, $max_gag,
+		  "SELECT gag.*".
+		  " FROM genomic_align ga ".
+		  " JOIN dnafrag USING (dnafrag_id)".
+		  " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
+		  " WHERE gag.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id AND genome_db_id != 63");
     }
 }
 
@@ -365,7 +364,7 @@ sub importAlignment_quick {
 	#open the most recent compara database
 	$self->param('from_comparaDBA', Bio::EnsEMBL::Registry->get_DBAdaptor("Multi", "compara"));
     }
-    my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name("ImportAlignment");
+    my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name("import_alignment");
     
     my $dbname = $self->param('from_comparaDBA')->dbc->dbname;
     my $analysis_id = $analysis->dbID;
@@ -374,28 +373,28 @@ sub importAlignment_quick {
     #my $sql = "INSERT INTO genomic_align_block SELECT * FROM ?.genomic_align_block WHERE method_link_species_set_id = ?\n";
     my $sql = "INSERT INTO genomic_align_block SELECT * FROM $dbname.genomic_align_block\n";
 
-    my $sth = $self->param('comparaDBA')->dbc->prepare($sql);
+    my $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute();
     #$sth->execute($dbname, $mlss_id);
     $sth->finish();
 
      #$sql = "INSERT INTO genomic_align SELECT genomic_align.* FROM ?.genomic_align LEFT JOIN WHERE method_link_species_set_id = ?\n";
     $sql = "INSERT INTO genomic_align SELECT * FROM $dbname.genomic_align\n";
-    my $sth = $self->param('comparaDBA')->dbc->prepare($sql);
+    my $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute();
     #$sth->execute($dbname, $mlss_id);
     $sth->finish();
 
     #$sql = "INSERT INTO genomic_align_group SELECT genomic_align_group.* FROM ?.genomic_align_group LEFT JOIN ?.genomic_align USING (genomic_align_id) LEFT JOIN ?.genomic_align_block USING (genomic_align_block_id) WHERE genomic_align_block.method_link_species_set_id = ?\n";
     $sql = "INSERT INTO genomic_align_group SELECT * FROM $dbname.genomic_align_group\n";
-    my $sth = $self->param('comparaDBA')->dbc->prepare($sql);
+    my $sth = $self->compara_dba->dbc->prepare($sql);
     #$sth->execute($dbname, $dbname, $mlss_id);
     $sth->execute();
     $sth->finish();
 
     #$sql = "INSERT INTO genomic_align_tree SELECT genomic_align_tree.* FROM ?.genomic_align_tree LEFT JOIN ?.genomic_align_group USING (node_id) LEFT JOIN ?.genomic_align USING (genomic_align_id) LEFT JOIN ?.genomic_align_block WHERE genomic_align_block.method_link_species_set_id = ?\n";
     $sql = "INSERT INTO genomic_align_tree SELECT * FROM $dbname.genomic_align_tree\n";
-    my $sth = $self->param('comparaDBA')->dbc->prepare($sql);
+    my $sth = $self->compara_dba->dbc->prepare($sql);
 
     #$sth->execute($dbname, $dbname, $dbname, $dbname, $mlss_id);
     $sth->execute();
