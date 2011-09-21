@@ -139,7 +139,7 @@ table.funcgen_matrix td.filter p                                   { background-
 table.funcgen_matrix td.highlight p                                { background-color: #DAA520; height: 25px; opacity: 0.4; filter: Alpha(Opacity=40); }
 table.funcgen_matrix tr.renderers                                  { height: 30px; }
 table.funcgen_matrix tr.renderers th img.menu_option               { position: relative; left: 3px; top: 5px; }
-table.funcgen_matrix tr.renderers th ul.popup_menu                 { margin-top: -2px; }
+table.funcgen_matrix tr.renderers th ul.popup_menu                 { width: 145px; margin-top: -2px; }
 table.funcgen_matrix tr.renderers th.first div                     { position: relative; top: -6px; }
 table.funcgen_matrix tr.renderers th.first ul.popup_menu           { margin: -6px 0 0; }
 table.funcgen_matrix tr.renderers th.first h2                      { margin: 0; padding: 0; float: none; }
@@ -152,7 +152,6 @@ body.ie   table.funcgen_matrix thead th p                          { filter: pro
 body.ie   table.funcgen_matrix thead th div.select_all_column      { width: 140px; margin-top: 20px; filter: Alpha(Opacity=85); }
 body.ie   table.funcgen_matrix thead th div.select_all_column div  { margin: 0; }
 body.ie   table.funcgen_matrix th.first div.select_all_row         { left: 0; top: -6px; margin: 0; }
-body.ie8  table.funcgen_matrix tr.renderers th ul.popup_menu       { width: 75px; }
 body.ie67 table.funcgen_matrix tr.renderers th ul.popup_menu       { margin: 19px 0 0 -20px; }
 body.ie7  table.funcgen_matrix thead th p                          { bottom: 3px; }
 body.ie7  table.funcgen_matrix thead th div.select_all_column      { margin-top: 25px; }
