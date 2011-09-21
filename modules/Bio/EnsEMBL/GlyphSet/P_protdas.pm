@@ -436,7 +436,7 @@ sub render_grouped {
     next if ($bump_start > $bitmap_length);
     my $bump_end = $bump_start + floor($Composite->width()*$pix_per_bp);
     my $row = $self->bump_row( $bump_start, $bump_end );
-    );
+#    );
     $Composite->y($Composite->y() + $row * ($h + 2) );
     $self->push($Composite);
 
