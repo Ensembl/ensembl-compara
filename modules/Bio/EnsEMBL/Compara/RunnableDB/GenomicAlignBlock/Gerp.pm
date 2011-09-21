@@ -58,13 +58,6 @@ use Bio::EnsEMBL::Utils::SqlHelper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-#location of gerp version 1
-my %BIN_DIR;
-$BIN_DIR{"1"} = "/software/ensembl/compara/gerp/GERP_03292006";
-
-#location of gerp version 2.1
-$BIN_DIR{"2.1"} = "/software/ensembl/compara/gerp/GERPv2.1";
-
 #default program_version
 my $program_version = 2.1;
 
@@ -382,18 +375,10 @@ sub run_gerp {
     #change directory to where the temporary mfa and tree file are written
     chdir $self->worker_temp_directory;
 
-    unless (defined $self->param('program_file')) {
-	if (defined($self->analysis) and defined($self->analysis->program_file)) {
-	    $self->param('program_file', $self->analysis->program_file);
-	} else {
-	    $self->param('program_file', "$BIN_DIR{$self->param('program_version')}/GERP.pl");
-	}
-    }
+    throw($self->param('gerp_exe') . " is not executable Gerp::run ")
+	unless ($self->param('gerp_exe') && -x $self->param('gerp_exe'));
 
-    throw($self->param('program_file') . " is not executable Gerp::run ")
-	unless ($self->param('program_file') && -x $self->param('program_file'));
-
-    my $command = $self->param('program_file');
+    my $command = $self->param('gerp_exe');
 
     if ($self->param('param_file')) {
 	$command .= " " . $self->param('param_file_tmp');
@@ -406,23 +391,17 @@ sub run_gerp {
 
 #run gerp version 2.1
 sub run_gerp_v2 {
-    my ($self, $bin_dir) = @_;
-    my @program_files;
+    my ($self) = @_;
     my $gerpcol_path;
     my $gerpelem_path;
 
     #change directory to where the temporary mfa and tree file are written
     chdir $self->worker_temp_directory;
+    
+    $gerpcol_path = $self->param('gerp_exe_dir') . "/gerpcol"; 
+    $gerpelem_path = $self->param('gerp_exe_dir') . "/gerpelem"; 
 
-    unless (defined $self->param('program_file')) {
-	if (defined($self->analysis) and defined($self->analysis->program_file)) {
-	    $gerpcol_path = $self->analysis->program_file . "/gerpcol";
-	    $gerpelem_path = $self->analysis->program_file . "/gerpelem";
-	} else {
-	    $gerpcol_path = "$BIN_DIR{$self->param('program_version')}/gerpcol";
-	    $gerpelem_path = "$BIN_DIR{$self->param('program_version')}/gerpelem";
-	}
-    }
+
     throw($gerpcol_path . " is not executable Gerp::run ")
       unless ($gerpcol_path && -x $gerpcol_path);
 
