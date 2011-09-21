@@ -63,8 +63,7 @@ sub fetch_input {
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with $self->db (Hive DBAdaptor)
-  $self->param('comparaDBA', Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc));
-  $self->param('comparaDBA')->dbc->disconnect_when_inactive(0);
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
 }
 
 sub run {
@@ -74,9 +73,9 @@ sub run {
 
     my $mlss_id = $self->param('method_link_species_set_id');
 
-    my $method_link_species_set_adaptor = $self->param('comparaDBA')->get_MethodLinkSpeciesSetAdaptor();
-    my $genomic_align_tree_adaptor = $self->param('comparaDBA')->get_GenomicAlignTreeAdaptor();
-    my $genomic_align_block_adaptor = $self->param('comparaDBA')->get_GenomicAlignBlockAdaptor();
+    my $method_link_species_set_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor();
+    my $genomic_align_tree_adaptor = $self->compara_dba->get_GenomicAlignTreeAdaptor();
+    my $genomic_align_block_adaptor = $self->compara_dba->get_GenomicAlignBlockAdaptor();
     
     my $method_link_species_set;
      if ($mlss_id) {
