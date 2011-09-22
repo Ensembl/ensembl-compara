@@ -114,12 +114,14 @@ sub build_imageconfig_form {
     availability => 1,
     caption      => 'Open chromatin & TFBS',
     class        => 'Regulatory_evidence_core',
+    li_class     => 'overflow',
     count        => qq{(<span class="on">$counts{'core'}{'on'}</span>/$counts{'core'}{'total'})}
   }))->after($tree->create_node('regulatory_evidence_other', {
     url          => $hub->url('Config', { function => 'Cell_line', partial => 1, set => 'other' }),
     availability => 1,
     caption      => 'Histones & polymerases',
     class        => 'Regulatory_evidence_other',
+    li_class     => 'overflow',
     count        => qq{(<span class="on">$counts{'other'}{'on'}</span>/$counts{'other'}{'total'})}
   }));
 }
