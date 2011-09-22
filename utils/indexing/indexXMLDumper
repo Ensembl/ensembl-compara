@@ -134,7 +134,6 @@ foreach my $index (@indexes) {
   }
 
   foreach my $species ( @species ) {
-   $conf->{'speciescommonname_list'} = undef;
     my $single_species = 0;
     my %dbs = %{$SD->get_config($species,'databases')||{}};
     $conf->{'dbs'}                     = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
@@ -150,13 +149,12 @@ foreach my $index (@indexes) {
     }
 
     else {
-
 #      next if ($species =~ /^[N-Z]/);
 #      next unless $species =~ /Callithrix_jacchus|Meleagris_gallopavo|Nomascus_leucogenys|Oryctolagus_cuniculus/;
-      $conf->{'species'}                = $species;
+      $conf->{'species'}                = $search_engine eq 'solr' ? $SD->get_config($species,'SPECIES_COMMON_NAME') : $species;
       $conf->{'speciesname'}            = $species;
       $conf->{'authority'}              = $SD->get_config($species,'AUTHORITY');
-      $conf->{'speciescommonname_list'}{$SD->get_config($species,'SPECIES_COMMON_NAME')}++;
+      $conf->{'speciescommonname'}      = $SD->get_config($species,'SPECIES_COMMON_NAME') unless $search_engine eq 'solr';
     }
 
     my $no_success = 1;
@@ -1813,7 +1811,7 @@ sub dumpGene {
                  $db,
                  $counter),
         $nogzip, $fh) if ($old->{'gsid'});
-    print LOG "    Gene info query done ".&date_and_mem()."\n";
+    print LOG "    Gene info query done and xml generated ".&date_and_mem()."\n";
 
     my $other_count = &do_archive_stable_ids( $dbname, $db, $fh, $counter, [ qw(gene transcript translation) ]);
 
@@ -1985,7 +1983,7 @@ sub GeneLine {
     }
     $xml .= qq(
   <field name="source">$ad_label</field>
-  <field name= "domain_url">$url</field>
+  <field name="domain_url">$url</field>
   <field name="database">$db</field>);
     $xml .= qq(
 </doc>);
@@ -2774,27 +2772,22 @@ sub common_fields {
   my ($species,$feature_type) = @_;
   my $xml;
   if ($search_engine eq 'solr') {
+    my $species_name = $conf->{'speciesname'};
     $xml = qq(
   <field name="website">$website_url</field>
-  <field name="species">$species</field>);
-    foreach my $sp (keys %{$conf->{'speciescommonname_list'}}) {
-      $xml .= qq(
-  <field name="species_alias">$sp</field>);
-    }
-    $xml .= qq(
+  <field name="species">$species</field>
+  <field name="species_name">$species_name</field>
   <field name="featuretype">$feature_type</field>);
   }
   elsif ($search_engine eq 'lucene') {
     $xml = qq(
     <field name="species">$species</field>);
     my $sp = $conf->{'speciesname'};
-      $xml .= qq(
-    <field name="species_name">$sp</field>);
-    foreach my $sp (keys %{$conf->{'speciescommonname_list'}}) {
-      $xml .= qq(
-    <field name="species_common_name">$sp</field>);
-    }
     $xml .= qq(
+    <field name="species_name">$sp</field>);
+    $sp = $conf->{'speciescommonname'};
+    $xml .= qq(
+    <field name="species_common_name">$sp</field>
     <field name="featuretype">$feature_type</field>);
   }
   return $xml;
