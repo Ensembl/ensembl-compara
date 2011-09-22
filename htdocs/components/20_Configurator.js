@@ -575,7 +575,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       case 'search_results':
         this.elLk.search.val(this.query);
         this.search();
-        return;
+        break;
         
       case 'active_tracks':
         this.elLk.configs.hide().filter('.on').show().parents('li, div.subset, div.config').show();
@@ -587,7 +587,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       case 'track_order':
         trackOrder();
-        return;
+        break;
         
       default:
         this.addTracks(active);
@@ -609,6 +609,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         }
         
         this.elLk.imageConfigExtras[configDiv.hasClass('view_config') ? 'hide' : 'show']();
+    }
+    
+    if (this.elLk.links.filter('.active').is('.overflow') && !$('body').hasClass('ie67')) {
+      this.elLk.content.addClass('overflow').css('marginLeft', $('.modal_nav', this.el).outerWidth() + 2);
+    } else {
+      this.elLk.content.removeClass('overflow').css('marginLeft', 0);
     }
   },
   
