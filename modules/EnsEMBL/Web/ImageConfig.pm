@@ -1839,13 +1839,13 @@ sub add_alignments {
       if ($row->{'conservation_score'}) {
         my ($program) = $hashref->{'CONSERVATION_SCORES'}{$row->{'conservation_score'}}{'type'} =~ /(.+)_CONSERVATION_SCORE/;
         
-        $options{'caption'}     = "$n_species way $program scores";
         $options{'description'} = qq{<a href="/info/docs/compara/analyses.html#conservation">$program conservation scores</a> based on the $row->{'name'}};
         
         $alignments->{'conservation'}{"$row->{'id'}_scores"} = {
           %options,
           conservation_score => $row->{'conservation_score'},
           name               => "Conservation score for $row->{'name'}",
+          caption            => "$n_species way $program scores",
           order              => sprintf('%12d::%s::%s', 1e12-$n_species*10, $row->{'type'}, $row->{'name'}),
           display            => $row->{'id'} == 352 ? 'tiling' : 'off',
           renderers          => [ 'off', 'Off', 'tiling', 'Tiling array' ],
@@ -1855,6 +1855,7 @@ sub add_alignments {
           %options,
           constrained_element => $row->{'constrained_element'},
           name                => "Constrained elements for $row->{'name'}",
+          caption            => "$n_species way $program elements",
           order               => sprintf('%12d::%s::%s', 1e12-$n_species*10+1, $row->{'type'}, $row->{'name'}),
           display             => $row->{'id'} == 352 ? 'compact' : 'off',
           renderers           => [ 'off', 'Off', 'compact', 'On' ],
