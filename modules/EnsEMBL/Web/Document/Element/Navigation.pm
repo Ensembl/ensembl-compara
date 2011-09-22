@@ -130,7 +130,8 @@ sub build_menu {
   my $class        = $data->{'class'};
     ($class        = $caption) =~ s/ /_/g unless $class;
   my $state        = $config->{$class} ? 'closed' : 'open';
-  my (@append, @classes);
+  my @classes      = $data->{'li_class'} || ();
+  my @append;
   
   if ($modal) {
     if ($data->{'top_level'}) {
