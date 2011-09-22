@@ -29,14 +29,14 @@ use CGI;
 
 $| = 1;
 
-my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$search_engine,$debug,$dry_run,$log,$dir,$help);
+my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$search_engine,$debug,$dump_real,$log,$dir,$help);
 GetOptions('species=s' => \$species_list,
            'ignore_species=s' => \$ignore_species_list,
            'index=s'   => \$indexes_list,
            'ignore_index=s' => \$ignore_indexes_list,
            'engine=s'  => \$search_engine,
            'debug'     => \$debug,
-           'dry_run|n' => \$dry_run,
+           'dump_real' => \$dump_real,
            'log=s'     => \$log,
            'dir=s'     => \$dir,
 	   'help'      => \$help,
@@ -104,16 +104,18 @@ else {
   }
 }
 
-# EnsEMBL::Web::IndexSupport takes path to conf, path to files, species
-my $conf = {};
-$dir ||= $debug ? 'input' 
-       : ($search_engine eq 'solr') ? "/nfs/eureka/data/solr/".lc($sitetype)
-       : "/nfs/eureka/data/".lc($sitetype)."_$release";
+# path to files
+my $index_root = '/nfs/web_data/search/';
+my $file_root = ($search_engine eq 'solr') ? "solr/".lc($sitetype)."_$release" : "lucene/".lc($sitetype)."_$release";
+my $dir = $dir ? $dir : $dump_real ? $index_root.$file_root : 'input';
 print LOG "Dumping xml files to $dir\n";
 mkdir $dir, 0777 unless -e "$dir";
+exit;
 
 my $start_time = time;
 my $total_c;
+my $conf = {};
+
 foreach my $index (@indexes) {
 
   my $start = time;
@@ -156,7 +158,6 @@ foreach my $index (@indexes) {
       $conf->{'speciesname'}            = $species;
       $conf->{'authority'}              = $SD->get_config($species,'AUTHORITY');
       $conf->{'speciescommonname_list'}{$SD->get_config($species,'SPECIES_COMMON_NAME')}++;
-
     }
 
     my $no_success = 1;
@@ -1598,15 +1599,6 @@ sub dumpGene {
     print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
     header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
 
-    #commented out since removed from Gene in e60
-#    if ($db eq 'core') {
-#      my $lrgs = &dumpLRGs($conf);
-#      if (@$lrgs) {
-#        &sort_lrgs($dbspecies,'Gene',$fh,$lrgs); 
-#        print LOG "    Printed LRGs to $file ... ".&date_and_mem()."\n";
-#      }
-#    }
-
     my $external_dbs = $conf->{'dbh'}->selectall_hashref(
       'select external_db_id, db_name, db_display_name
          from external_db', 'external_db_id'
@@ -1616,9 +1608,6 @@ sub dumpGene {
     foreach (@$es) {
       $external_synonyms->{$_->[0]}{$_->[1]} = 1;
     }
-
-#    warn Data::Dumper::Dumper($external_synonyms);
-#    exit;
 
     my %xrefs = ();
     foreach my $type( qw(Gene Transcript Translation) ) {
@@ -1826,63 +1815,9 @@ sub dumpGene {
                  $counter),
         $nogzip, $fh) if ($old->{'gsid'});
     print LOG "    Gene info query done ".&date_and_mem()."\n";
-#    exit;
 
-    my $other_count = 0;
-    my %current_stable_ids =();
-    foreach my $type (qw(gene transcript translation)) {
-      $current_stable_ids{$type} = { map {@$_} @{$conf->{'dbh'}->selectall_arrayref( "select stable_id,1 from $COREDB.".$type."_stable_id" )}};
-    }
-    my $species = $conf->{'species'};
-    my $sth = $conf->{'dbh'}->prepare( qq(
-    SELECT sie.type, sie.old_stable_id, if(isnull(sie.new_stable_id),'NULL',sie.new_stable_id),
-           ms.old_release*1.0 as X, ms.new_release*1.0 as Y
-      FROM $dbname.mapping_session as ms, $dbname.stable_id_event as sie
-     WHERE ms.mapping_session_id = sie.mapping_session_id and ( old_stable_id != new_stable_id or isnull(new_stable_id) )
-     ORDER by Y desc, X desc
-  ));
+    my $other_count = &do_archive_stable_ids( $dbname, $db, $fh, $counter, [ qw(gene transcript translation) ]);
 
-    $sth->execute();
-    my %mapping = ();
-    while( my($type,$osi,$nsi) = $sth->fetchrow_array() ) {
-      next if $current_stable_ids{$type}{$osi}; ## Don't need to cope with current IDS already searchable...
-      $mapping{$type}{$osi}{$nsi} = 1;
-      if($mapping{$type}{$nsi}) {
-        foreach( keys %{$mapping{$type}{$nsi}} ) {
-          $mapping{$type}{$osi}{$_} = 1;
-        }
-      }
-    }
-    foreach my $type ( keys %mapping ) {
-      foreach my $osi ( keys %{$mapping{$type}} ) {
-        my @current_sis = ();
-        my @deprecated_sis = ();
-        foreach ( keys %{$mapping{$type}{$osi}} ) {
-          next if $osi eq $_;
-          if( $current_stable_ids{$_} ) {
-            push @current_sis,$_;
-          } elsif( $_ ne 'NULL' ) {
-            push @deprecated_sis,$_;
-          }
-        }
-        if( @current_sis ) {
-          $other_count++;
-          my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to the following current identifiers: @current_sis);
-          $desc .= @deprecated_sis ? qq(; and the following deprecated identifiers: @deprecated_sis) : '';
-          &p (&StableIdMappingLine($dbspecies,$desc,$osi,\@current_sis,\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
-        }
-        elsif( @deprecated_sis ) {
-          $other_count++;
-          my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to the following identifiers: @deprecated_sis);
-          &p (&StableIdMappingLine($dbspecies,$desc,$osi,[],\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
-        }
-        else {
-          $other_count++;
-          my $desc = qq(Ensembl $type $osi is no longer in the database and has not been mapped to any newer identifiers);
-          &p (&StableIdMappingLine($dbspecies,$desc,$osi,[],[],$type,$db,$counter),$nogzip, $fh);
-        }
-      }
-    }
     print LOG "    Stable_id mapping querying done, added $other_count ".&date_and_mem()."\n";
     $total_c += footer( $counter->(),$nogzip,$fh);
 
@@ -1955,7 +1890,7 @@ sub dumpGene {
 
 sub GeneLine {
   my ($species, $gsid, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $xref_descriptions, $synonyms, $gene_loc, $db, $counter) = @_;
-  my $url = sprintf(qq(%s/Gene/Summary/g=%s&amp;db=%s),
+  my $url = sprintf(qq(%s/Gene/Summary?g=%s&amp;db=%s),
                     $species,
                     $gsid,
                     $db);
@@ -2051,13 +1986,10 @@ sub GeneLine {
     }
     $xml .= qq(
   <field name="source">$ad_label</field>
-  <field name= "domain_url">$url</field>);
-
+  <field name= "domain_url">$url</field>
+  <field name="database">$db</field>);
     $xml .= qq(
 </doc>);
-
-    $counter->();
-    return $xml;
   }
 
   elsif ($search_engine eq 'lucene') {
@@ -2099,7 +2031,6 @@ sub GeneLine {
           $xml .= qq(
     <field name="xref_non_versioned">$k</field>);
         }
-
       }
     }
 
@@ -2143,36 +2074,14 @@ sub GeneLine {
     <field name="exon">$esi</field>);
     }
     $xml .= qq(
-  </additional_fields>);
-    $counter->();
-    return $xml . qq(
+  </additional_fields>
 </entry>);
   }
-}
 
-sub StableIdMappingLine {
-  my ($species,$desc,$osi,$current_sis,$deprecated_sis,$type,$db,$counter) = @_;
-  $species =~ s/_/ /;
-  my $xml = qq(
-<entry id="$osi">
-  <description>$desc</description>
-  <name>"Retired Ensembl $type stable ID"</name>
-  <additional_fields>);
-  $type = 'IDHistory_'.lc($type);
-
-  $xml .= &common_fields($species,$type);
-  foreach my $id (@$current_sis,@$deprecated_sis) {
-    $xml .= qq(
-    <field name="old_id">$id</field>);
-  }
-  $xml .= qq(
-    <field name="action">Idhistory</field>
-    <field name="db">$db</field>
-  </additional_fields>);
   $counter->();
-  return $xml . qq(
-</entry>);
+  return $xml;
 }
+
 
 ########################################################################## Transcripts
 
@@ -2409,61 +2318,7 @@ sub dumpTranscript {
         $nogzip, $fh) if ($old->{'gsid'});
     print LOG "    Transcript info query done ".&date_and_mem()."\n";
 
-    my $other_count = 0;
-    my %current_stable_ids =();
-    foreach my $type (qw(transcript translation)) {
-      $current_stable_ids{$type} = { map {@$_} @{$conf->{'dbh'}->selectall_arrayref( "select stable_id,1 from $COREDB.".$type."_stable_id" )}};
-    }
-    my $species = $conf->{'species'};
-    my $sth = $conf->{'dbh'}->prepare( qq(
-    SELECT sie.type, sie.old_stable_id, if(isnull(sie.new_stable_id),'NULL',sie.new_stable_id),
-           ms.old_release*1.0 as X, ms.new_release*1.0 as Y
-      FROM $dbname.mapping_session as ms, $dbname.stable_id_event as sie
-     WHERE ms.mapping_session_id = sie.mapping_session_id and ( old_stable_id != new_stable_id or isnull(new_stable_id) )
-     ORDER by Y desc, X desc
-  ));
-
-    $sth->execute();
-    my %mapping = ();
-    while( my($type,$osi,$nsi) = $sth->fetchrow_array() ) {
-      next if $current_stable_ids{$type}{$osi}; ## Don't need to cope with current IDS already searchable...
-      $mapping{$type}{$osi}{$nsi} = 1;
-      if($mapping{$type}{$nsi}) {
-        foreach( keys %{$mapping{$type}{$nsi}} ) {
-          $mapping{$type}{$osi}{$_} = 1;
-        }
-      }
-    }
-    foreach my $type ( keys %mapping ) {
-      foreach my $osi ( keys %{$mapping{$type}} ) {
-        my @current_sis = ();
-        my @deprecated_sis = ();
-        foreach ( keys %{$mapping{$type}{$osi}} ) {
-          next if $osi eq $_;
-          if( $current_stable_ids{$_} ) {
-            push @current_sis,$_;
-          } elsif( $_ ne 'NULL' ) {
-            push @deprecated_sis,$_;
-          }
-        }
-        if( @current_sis ) {
-          $other_count++;
-          my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to the following current identifiers: @current_sis);
-          $desc .= @deprecated_sis ? qq(; and the following deprecated identifiers: @deprecated_sis) : '';
-          &p (&StableIdMappingLine($dbspecies,$desc,$osi,\@current_sis,\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
-        }
-        elsif( @deprecated_sis ) {
-          $other_count++;
-          my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to the following identifiers: @deprecated_sis);
-          &p (&StableIdMappingLine($dbspecies,$desc,$osi,[],\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
-        }
-        else {
-          $other_count++;
-          my $desc = qq(Ensembl $type $osi is no longer in the database and has not been mapped to any newer identifiers);
-          &p (&StableIdMappingLine($dbspecies,$desc,$osi,[],[],$type,$db,$counter),$nogzip, $fh);
-        }
-      }
-    }
+    my $other_count = &do_archive_stable_ids( $dbname, $db, $fh, $counter, [ qw(transcript translation) ]);
 
     print LOG "    Stable_id mapping querying done, added $other_count ".&date_and_mem()."\n";
     $total_c += footer( $counter->(),$nogzip,$fh);
@@ -2477,6 +2332,7 @@ sub TransLine {
   $biotype =~ s/_/ /;
   $desc = &clean($desc,'desc');
   $disp_xref = &clean($disp_xref,'name');
+
   my $description = $desc . " [Type: $biotype $ad_label]";
   my $xml = qq(
 <entry id="$tsid">
@@ -2565,6 +2421,116 @@ sub TransLine {
   return $xml . qq(
 </entry>);
 }
+
+## methods for archive stable IDs (called by genes and transcripts) ##
+
+sub do_archive_stable_ids {
+  my ($dbname,$db,$fh,$counter,$types) = @_;
+  my $dbspecies = $conf->{'species'};
+  my $COREDB    = $conf->{'dbs'}->{'DATABASE_CORE'};
+  my %current_stable_ids =();
+  foreach my $type (@$types) {
+    $current_stable_ids{$type} = { map {@$_} @{$conf->{'dbh'}->selectall_arrayref( "select stable_id,1 from $COREDB.".$type."_stable_id" )}};
+  }
+  my $species = $conf->{'species'};
+  my $sth = $conf->{'dbh'}->prepare( qq(
+    SELECT sie.type, sie.old_stable_id, if(isnull(sie.new_stable_id),'NULL',sie.new_stable_id),
+           ms.old_release*1.0 as X, ms.new_release*1.0 as Y
+      FROM $dbname.mapping_session as ms, $dbname.stable_id_event as sie
+     WHERE ms.mapping_session_id = sie.mapping_session_id and ( old_stable_id != new_stable_id or isnull(new_stable_id) )
+     ORDER by Y desc, X desc
+  ));
+
+  $sth->execute();
+  my %mapping = ();
+  while( my($type,$osi,$nsi) = $sth->fetchrow_array() ) {
+    next if $current_stable_ids{$type}{$osi}; ## Don't need to cope with current IDS already searchable...
+    $mapping{$type}{$osi}{$nsi} = 1;
+    if($mapping{$type}{$nsi}) {
+      foreach( keys %{$mapping{$type}{$nsi}} ) {
+        $mapping{$type}{$osi}{$_} = 1;
+      }
+    }
+  }
+  my $other_count = 0;
+  foreach my $type ( keys %mapping ) {
+    foreach my $osi ( keys %{$mapping{$type}} ) {
+      my @current_sis = ();
+      my @deprecated_sis = ();
+      foreach ( keys %{$mapping{$type}{$osi}} ) {
+        next if $osi eq $_;
+        if( $current_stable_ids{$type}{$_} ) {
+          push @current_sis,$_;
+        } elsif( $_ ne 'NULL' ) {
+          push @deprecated_sis,$_;
+        }
+      }
+      if( @current_sis ) {
+        $other_count++;
+        my $current_id_c = scalar(@current_sis );
+        my $deprecated_id_c = scalar(@deprecated_sis);
+        my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to $current_id_c current identifiers);
+        $desc .= $deprecated_id_c ? qq( and $deprecated_id_c deprecated identifiers) : '';
+        $desc .= '.';
+        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter),$nogzip, $fh);
+      }
+      elsif( @deprecated_sis ) {
+        $other_count++;
+        my $deprecated_id_c = scalar(@deprecated_sis);
+        my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to $deprecated_id_c deprecated identifiers.);
+        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter),$nogzip, $fh);
+      }
+      else {
+        $other_count++;
+        my $desc = qq(Ensembl $type $osi is no longer in the database and has not been mapped to any newer identifiers.);
+        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter),$nogzip, $fh);
+      }
+    }
+  }
+  return $other_count;
+}
+
+sub StableIdMappingLine {
+  my ($species,$desc,$osi,$type,$db,$counter) = @_;
+  $species =~ s/_/ /;
+  my $xml;
+  if ($search_engine eq 'solr') {
+    my $url = sprintf(qq(%s/%s/Idhistory?%s),
+                      $species,
+                      ucfirst($type),
+                      $type eq 'gene' ? "g=$osi" : $type eq 'transcript' ? "t=$osi" : "protein=$osi");
+    $xml = qq(
+<doc>
+  <field name="id">$osi</field>
+  <field name="description">$desc</field>);
+    $xml .= &common_fields($species,$type);
+    $xml .= qq(
+  <field name="database">$db</field>
+  <field name="domain_url">$url</field>);
+    $xml .= qq(
+</doc>);
+  }
+  elsif ($search_engine eq 'lucene') {
+    $xml = qq(
+<entry id="$osi">
+  <description>$desc</description>
+  <name>"Retired Ensembl $type stable ID"</name>
+  <additional_fields>);
+    $type = 'IDHistory_'.lc($type);
+
+    $xml .= &common_fields($species,$type);
+    $xml .= qq(
+    <field name="action">Idhistory</field>
+    <field name="db">$db</field>
+  </additional_fields>);
+    $xml .= qq(
+</entry>);
+  }
+
+  $counter->();
+  return $xml;
+}
+
 
 
 ########################################################################## Regulatory Features
@@ -2777,7 +2743,7 @@ sub header {
     p("<entries>",$nogzip,$fh,1);
   }
   elsif ($search_engine eq 'solr') {
-    p("<add>",$nogzip,$fh,1);
+    p(q(<add overwrite="true" commitWithin="10000">),$nogzip,$fh,1);
   }
   else {
     print LOG "Incorrect data format -$search_engine- specified. Please correct\n";
@@ -2808,7 +2774,18 @@ sub footer {
 sub common_fields {
   my ($species,$feature_type) = @_;
   my $xml;
-  if ($search_engine eq 'lucene') {
+  if ($search_engine eq 'solr') {
+    $xml = qq(
+  <field name="website">$website_url</field>
+  <field name="species">$species</field>);
+    foreach my $sp (keys %{$conf->{'speciescommonname_list'}}) {
+      $xml .= qq(
+  <field name="species_alias">$sp</field>);
+    }
+    $xml .= qq(
+  <field name="featuretype">$feature_type</field>);
+  }
+  elsif ($search_engine eq 'lucene') {
     $xml = qq(
     <field name="species">$species</field>);
     my $sp = $conf->{'speciesname'};
@@ -2820,17 +2797,6 @@ sub common_fields {
     }
     $xml .= qq(
     <field name="featuretype">$feature_type</field>);
-  }
-  elsif ($search_engine eq 'solr') {
-    $xml = qq(
-  <field name="website">$website_url</field>
-  <field name="species">$species</field>);
-    foreach my $sp (keys %{$conf->{'speciesname_list'}}) {
-      $xml .= qq(
-  <field name="species_alias">$sp</field>);
-    }
-    $xml .= qq(
-  <field name="featuretype">$feature_type</field>);
   }
   return $xml;
 }
@@ -2849,9 +2815,7 @@ sub p {
   # TODO - encoding
   $str .= "\n";
   if ($nogzip) {
-    if (! $dry_run) {
-      print $fh $str or die "Can't write to file ", $!;
-    }
+    print $fh $str or die "Can't write to file ", $!;
   }
   else {
     print $fh $str or die "Can't write string: $str";
@@ -2894,7 +2858,7 @@ sub about {
   print STDERR <<ABOUT_END;
 
 usage:
-./indexXMLDumper --species=aaa,bbb|ALL --index=vvv,xxx|ALL (--ignore_species=ccc,ddd) (--ignore_index=yyy,zzz) (--debug) (--log=index.log) (--dir=dir) (--dry_run|n)
+./indexXMLDumper --species=aaa,bbb|ALL --index=vvv,xxx|ALL (--ignore_species=ccc,ddd) (--ignore_index=yyy,zzz) (--debug) (-dump_real) (--log=index.log) (--dir=dir)
 
 'ALL' can be used for both 'species' and 'index'
 
@@ -2903,7 +2867,7 @@ unless --debug is specified in which case it will exit on the first failure.
 
 In the abscence of --debug option, STDOUT and STDERR are sent to a log file (dumping_$release.log unless specified otherwise). If you run with --debug then output is sent to STDOUT
 
-The locations of the actual xml files can be specified with the dir option. If not specified then it is dumped locally with debug, or in the correct location for indexing without (/nfs/eureka/data/ensembl_$release - note you have to be a member of the www-search UNIX group to write here)
+The locations of the actual xml files can be specified with the dir option. If not specified then it is dumped to 'input' unless the -dump_real option is chosen, in which case it dumps to the correct location for indexing (/nfs/web_data/search/lucene|solr/ensembl_$release - note you have to be a member of the www-search UNIX group to write here)
 
 Examine the log file for 'WARNING' messages, particularly 'WARNING XML' - this will identify any entries identified by XML::Parser as not being well formed and which would crash index production. These are not added to the xml file but the record count in the footer *will* include them. Either manaully fix and add the entry(ies) to the xml file, or else fix the database / script to account for it and rerun.
 
@@ -2911,11 +2875,11 @@ Examine the log file for 'WARNING' messages, particularly 'WARNING XML' - this w
 
 Examples:
 
-./indexXMLDumper --species=ALL --index=ALL --debug --log=debug.log  #all log output to debug.log; xml to input; all indices for all species
-./indexXMLDumper --species=ALL --index=ALL                          #all log output to dumping_$release.log; xml to /nfs/eureka/data/ensembl_$release; all indices for all species
+./indexXMLDumper --species=ALL --index=ALL --debug --log=debug.log  #all log output to debug.log; xml to input; all indices for all species, only each one once
+./indexXMLDumper --species=ALL --index=ALL --dump_real              #all log output to dumping_$release.log; xml to /nfs/web_data/search/lucene/ensembl_$release; all indices for all species
 ./indexXMLDumper --species=ALL --index=ALL --dir=input              #all log output to dumping_$release.log; xml to input; all indices for all species
-./indexXMLDumper --species=ALL --ignore_species=Homo_sapiens --index=Variation --log=no_hs_variations.log #log output to no_hs_variations; xml to /nfs/eureka/data/ensembl_$release"; Variations for all species but human
-./indexXMLDumper --species=ALL --ignore_index=Variation --log=no_variations.log #log output to no_variations; xml to /nfs/eureka/data/ensembl_$release"; All indexes apart from Variations for for all species
+./indexXMLDumper --species=ALL --ignore_species=Homo_sapiens --index=Variation --log=no_hs_variations.log #log output to no_hs_variations; xml to /nfs/web_data/search/lucene/ensembl_$release; Variations for all species but human
+./indexXMLDumper --species=ALL --ignore_index=Variation --log=no_variations.log  #log output to no_variations.log; xml to  /nfs/web_data/search/lucene/ensembl_$release; All indexes apart from Variations for for all species
 ./indexXMLDumper --species=ALL --index=Gene --engine solr  -log dumping.log #output in format for solr (for testing, only works for genes as yet)
 
 ABOUT_END
