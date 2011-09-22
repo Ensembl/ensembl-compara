@@ -20,10 +20,10 @@
 
     #4. Run init_pipeline.pl script:
         Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --dbname hsap_ggor_lastz_64 --password <your_password) --mlss_id 536 --dump_dir /lustre/scratch103/ensembl/kb3/scratch/hive/release_64/hsap_ggor_nib_files/ --pair_aligner_options "T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=/nfs/users/nfs_k/kb3/work/hive/data/primate.matrix --ambiguous=iupac"
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --dbname hsap_ggor_lastz_64 --password <your_password) --mlss_id 536 --dump_dir /lustre/scratch103/ensembl/kb3/scratch/hive/release_64/hsap_ggor_nib_files/ --pair_aligner_options "T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=/nfs/users/nfs_k/kb3/work/hive/data/primate.matrix --ambiguous=iupac" --config_url mysql://user:pass\@host:port/db_name
 
         Using a configuration file:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --password ensembl --reg_conf reg.conf --conf_file input.conf
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --password ensembl --reg_conf reg.conf --conf_file input.conf --config_url mysql://user:pass\@host:port/db_name
 
     #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
 
@@ -34,7 +34,7 @@
 
     You may need to provide a registry configuration file if the core databases have not been added to staging (--reg_conf).
 
-    A single pair of species can be run either by using a configuration file or by providing specific parameters on the command line and using the default values set in this file. On the command line, you must provide the LASTZ_NET mlss which should have been added to the master database (--mlss_id). The directory to which the nib files will be dumped can be specified using --dump_dir or the default location will be used. All the necessary directories are automatically created if they do not already exist. It may be necessary to change the pair_aligner_options default if, for example, doing primate-primate alignments. It is recommended that you provide a meaningful database name (--dbname). The username is automatically prefixed to this, ie -dbname hsap_ggor_lastz_64 will become kb3_hsap_ggor_lastz_64
+    A single pair of species can be run either by using a configuration file or by providing specific parameters on the command line and using the default values set in this file. On the command line, you must provide the LASTZ_NET mlss which should have been added to the master database (--mlss_id). The directory to which the nib files will be dumped can be specified using --dump_dir or the default location will be used. All the necessary directories are automatically created if they do not already exist. It may be necessary to change the pair_aligner_options default if, for example, doing primate-primate alignments. It is recommended that you provide a meaningful database name (--dbname). The username is automatically prefixed to this, ie -dbname hsap_ggor_lastz_64 will become kb3_hsap_ggor_lastz_64. To write to the pairwise configuration database, you must provide the correct config_url. 
 
 
 =head1 CONTACT
@@ -56,8 +56,8 @@ sub default_options {
 
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
 
-	'release'               => '64',
-        'release_suffix'        => 'c',    # an empty string by default, a letter otherwise
+	'release'               => '65',
+        'release_suffix'        => '',    # an empty string by default, a letter otherwise
         'ensembl_cvs_root_dir'  => $ENV{'HOME'}.'/src/ensembl_main', 
 	'dbname'               => 'pairwise_lastz_'.$self->o('release').$self->o('release_suffix'),
 
@@ -77,8 +77,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-#            -dbname => 'sf5_ensembl_compara_master', 
-            -dbname => 'kb3_test_db_multi_compara_20070424_105807', 
+            -dbname => 'sf5_ensembl_compara_master', 
 	    -driver => 'mysql',
        },
 	'staging_loc1' => {
@@ -98,7 +97,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -db_version => 63,
+	    -db_version => 64,
         },
 
 	'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
@@ -161,7 +160,6 @@ sub default_options {
 	'pair_aligner_program' => 'lastz',
 	'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ',
 	'pair_aligner_options' => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', #hsap vs mammal
-	# 'pair_aligner_options' => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=/nfs/users/nfs_k/kb3/work/hive/data/primate.matrix --ambiguous=iupac',  #hsap vs ggor
 	'pair_aligner_hive_capacity' => 100,
 	'pair_aligner_batch_size' => 10,
 	    
@@ -193,10 +191,8 @@ sub default_options {
         #
 	#Default pairaligner config
 	#
-#	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
-#	'config_url' => 'mysql://ensadmin:ensembl\@compara1:3306/kb3_pair_aligner_config',
-	'bed_dir' => '/lustre/scratch103/ensembl/kb3/scratch/hive/tests/test_pairaligner_conf/bed_files/',
-	'config_url' => 'mysql://ensadmin:ensembl\@compara1:3306/kb3_pair_aligner_config_test',
+	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
+	'config_url' => '', #Location of pairwise config database. Must define on command line
 	'output_dir' => '/lustre/scratch101/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
     };
@@ -290,6 +286,8 @@ sub pipeline_analyses {
 			     },
 	    },
 
+	    #Need reg_conf, conf_file or registry_dbs to define the location of the core dbs
+	    # The work of load_genomedb is currently done by parse_pair_aligner_conf but should be moved to LoadOneGenomeDB really
   	    {   -logic_name    => 'parse_pair_aligner_conf',
   		-module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ParsePairAlignerConf',
   		-parameters    => { 
@@ -320,18 +318,6 @@ sub pipeline_analyses {
 			      },
  		-wait_for  => [ 'populate_new_database' ],
   	    },
-
-# The work of load_genomedb is currently done by parse_pair_aligner_conf but should be moved to LoadOneGenomeDB really
-# 	    {  -logic_name => 'load_genomedb',
-# 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
-# 	       -parameters => {
-# 			       'registry_dbs' => [ $self->o('reg3') ],
-# 			      },
-# 	       -input_ids => [
-# 			      { 'gdb' => $self->o('ref_gdb'), 'species_name' => $self->o('ref_species_name')},
-# 			      { 'gdb' => $self->o('non_ref_gdb'), 'species_name' => $self->o('non_ref_species_name')},
-# 			     ],
-# 	    },
 
  	    {  -logic_name => 'chunk_and_group_dna',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna',
