@@ -75,6 +75,9 @@ form.configuration.multi div.favourite_tracks img                   { margin: 0;
 form.configuration.multi div.config div.subset.first,
 form.configuration.multi div.config div.subset.active               { margin-top: 0; }
 
+div.config_wrapper.overflow                                         { position: relative; overflow: visible; }
+div.config_wrapper.overflow div.config                              { display: inline-block; width: 100%; }
+
 body.ie6 form.configuration div.config ul.config_menu li            { height: 21px; }
 body.ie6 form.configuration div.config ul.popup_menu li             { height: auto; }
 body.ie6 form.configuration div.config ul.popup_menu li img         { margin: 2px; }
@@ -125,7 +128,7 @@ table.funcgen_matrix tr th,
 table.funcgen_matrix tr td                                         { width: 25px; height: 25px; padding: 0; }
 table.funcgen_matrix thead th p                                    { position: relative; left: 5px; bottom: -2px; width: 22px; font-size: 14px; white-space: nowrap; }
 table.funcgen_matrix thead th p                                    { -webkit-transform: rotate(-45deg); -moz-transform: rotate(-45deg); -o-transform: rotate(-45deg); -ms-transform: rotate(-45deg); }
-table.funcgen_matrix thead th div.select_all_column                { width: auto; margin: 5px 0 0; padding: 2px 4px; z-index: 3001; opacity: 0.85; }
+table.funcgen_matrix thead th div.select_all_column                { width: auto; margin: 5px 0 0; padding: 2px 4px; z-index: 3001; opacity: 0.85; white-space: nowrap; }
 table.funcgen_matrix thead th div.select_all_column div            { margin-top: 4px; }
 table.funcgen_matrix thead th div.select_all_column input          { margin: 0 3px; height: 16px; vertical-align: middle; }
 table.funcgen_matrix th.first                                      { width: 90px; vertical-align: middle; }
