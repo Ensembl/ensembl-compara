@@ -110,7 +110,6 @@ my $file_root = ($search_engine eq 'solr') ? "solr/".lc($sitetype)."_$release" :
 my $dir = $dir ? $dir : $dump_real ? $index_root.$file_root : 'input';
 print LOG "Dumping xml files to $dir\n";
 mkdir $dir, 0777 unless -e "$dir";
-exit;
 
 my $start_time = time;
 my $total_c;
