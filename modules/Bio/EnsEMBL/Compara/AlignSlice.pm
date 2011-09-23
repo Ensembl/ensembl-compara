@@ -742,27 +742,27 @@ sub _get_condensed_conservation_scores {
 }
 
 
-=head2 get_all_constrained_elements
+=head2 get_all_ConstrainedElements
 
   Arg  1     : (opt) string $method_link_type (default = GERP_CONSTRAINED_ELEMENT)
   Arg  2     : (opt) listref Bio::EnsEMBL::Compara::GenomeDB $species_set
                (default, the set of species from the MethodLinkSpeciesSet used
                to build this AlignSlice)
   Example    : my $constrained_elements =
-                    $align_slice->get_all_constrained_elements();
+                    $align_slice->get_all_ConstrainedElements();
   Description: Retrieve the corresponding constrained elements for these alignments.
                Objects will be located on this AlignSlice, i.e. the
                reference_slice, reference_slice_start, reference_slice_end
                and reference_slice_strand will refer to this AlignSlice
                object
-  Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConstrainedElement
                objects.
   Caller     : object::methodname
   Status     : At risk
 
 =cut
 
-sub get_all_constrained_elements {
+sub get_all_ConstrainedElements {
   my ($self, $method_link_type, $species_set) = @_;
   my $all_constrained_elements = [];
 
