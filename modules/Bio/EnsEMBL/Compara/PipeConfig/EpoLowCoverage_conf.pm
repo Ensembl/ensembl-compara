@@ -324,8 +324,8 @@ sub pipeline_analyses {
 # ---------------------------------------------------------------[Gerp]-------------------------------------------------------------------
 	    {   -logic_name => 'gerp',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
-		-program_version => $self->o('gerp_version'),
 		-parameters => {
+				'program_version' => $self->o('gerp_version'),
 				'window_sizes' => $self->o('gerp_window_sizes'),
 				'gerp_exe_dir' => $self->o('gerp_exe_dir'),
 			       },
