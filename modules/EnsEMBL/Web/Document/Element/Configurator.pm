@@ -70,20 +70,20 @@ sub init_config {
     
     if ($image_config) {
       if ($image_config->multi_species) {
+        if ($image_config->get_parameter('global_options')) {
+          $species_select = sprintf(
+            '<option value="%s"%s>All species</option><option value="">-----</option>', 
+            $hub->url('Config', { species => 'Multi', __clear => 1 }),
+            $hub->species eq 'Multi' ? ' selected="selected"' : ''
+          );
+        }
+        
         foreach (@{$image_config->species_list}) {
           $species_select .= sprintf(
             '<option value="%s"%s>%s</option>', 
             $hub->url('Config', { species => $_->[0], __clear => 1 }), 
             $hub->species eq $_->[0] ? ' selected="selected"' : '',
             $_->[1]
-          );
-        }
-        
-        if ($image_config->get_parameter('global_options')) {
-          $species_select .= sprintf(
-            '<option value="">-----</option><option value="%s"%s>All species</option>', 
-            $hub->url('Config', { species => 'Multi', __clear => 1 }),
-            $hub->species eq 'Multi' ? ' selected="selected"' : ''
           );
         }
         
