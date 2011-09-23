@@ -58,9 +58,6 @@ use Bio::EnsEMBL::Utils::SqlHelper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-#default program_version
-my $program_version = 2.1;
-
 #temporary files written to worker_temp_directory
 my $ALIGN_FILE = "gerp_alignment.mfa";
 my $TREE_FILE = "gerp_tree.nw";
@@ -74,6 +71,13 @@ my $CONS_FILE_SUFFIX = ".elems";
 
 
 $| = 1;
+
+
+sub param_defaults {
+    return {
+	    'program_version' => 2.1,
+    };
+}
 
 
 =head2 fetch_input
@@ -97,14 +101,6 @@ sub fetch_input {
   #set default to do transactions
   if (!defined $self->param('do_transactions')) {
       $self->param('do_transactions', 1);
-  }
-
-  unless (defined $self->param('program_version')) {
-      if (defined($self->analysis) and defined($self->analysis->program_version)) {
-	  $self->param('program_version', $self->analysis->program_version);
-      } else {
-	  $self->param('program_version', $program_version);
-      }
   }
 
   #flag as to whether to write out conservation scores to the conservation_score
