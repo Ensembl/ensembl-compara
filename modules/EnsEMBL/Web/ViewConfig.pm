@@ -383,6 +383,12 @@ sub build_form {
     
     $wrapper_div->append_child($_->parent_node->replace_child($wrapper_div, $_));
   }
+  
+  if ($image_config) {
+    my $extra_menus = $image_config->{'extra_menus'};
+    my $tree        = $self->tree;
+    $_->remove for map $extra_menus->{$_} == 0 ? $tree->get_node($_) || () : (), keys %$extra_menus;
+  }
 }
 
 sub build_imageconfig_form {
