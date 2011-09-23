@@ -2240,8 +2240,7 @@ sub GeneTransLine {
     }
     $xml .= qq(
   <field name="source">$ad_label</field>
-  <field name="domain_url">$url</field>
-  <field name="database">$db</field>);
+  <field name="domain_url">$url</field>);
     $xml .= qq(
 </doc>);
   }
