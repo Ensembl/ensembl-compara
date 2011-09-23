@@ -89,8 +89,10 @@ sub form {
     
     $self->add_form_element($other_markup_options{'title_display'});
   }
-    
-  my $species      = $self->species;
+  
+  return unless $self->species eq 'Multi';
+  
+  my $species      = $self->hub->referer->{'ENSEMBL_SPECIES'};
   my $species_defs = $self->species_defs;
   my $alignments   = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
   
