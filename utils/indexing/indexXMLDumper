@@ -151,10 +151,10 @@ foreach my $index (@indexes) {
     else {
 #      next if ($species =~ /^[N-Z]/);
 #      next unless $species =~ /Callithrix_jacchus|Meleagris_gallopavo|Nomascus_leucogenys|Oryctolagus_cuniculus/;
-      $conf->{'species'}                = $search_engine eq 'solr' ? $SD->get_config($species,'SPECIES_COMMON_NAME') : $species;
-      $conf->{'speciesname'}            = $species;
+      $conf->{'species'}                = $species;
+      $conf->{'species_sci_name'}       = $species;
       $conf->{'authority'}              = $SD->get_config($species,'AUTHORITY');
-      $conf->{'speciescommonname'}      = $SD->get_config($species,'SPECIES_COMMON_NAME') unless $search_engine eq 'solr';
+      $conf->{'species_common_name'}    = $SD->get_config($species,'SPECIES_COMMON_NAME');
     }
 
     my $no_success = 1;
@@ -1713,7 +1713,8 @@ sub dumpGene {
       if( $old->{'gid'} != $gid ) {
         if( $old->{'gid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
-          &p( GeneLine($dbspecies,
+          &p( GeneTransLine('Gene',
+                       $dbspecies,
                        $old->{'gsid'},
                        $old->{'tsids'},
                        $old->{'tlsids'},
@@ -1795,7 +1796,8 @@ sub dumpGene {
         }
       }
     }
-    &p( GeneLine($dbspecies,
+    &p( GeneTransLine('Gene',
+                 $dbspecies,
                  $old->{'gsid'},
                  $old->{'tsids'},
                  $old->{'tlsids'},
@@ -1813,6 +1815,7 @@ sub dumpGene {
         $nogzip, $fh) if ($old->{'gsid'});
     print LOG "    Gene info query done and xml generated ".&date_and_mem()."\n";
 
+    #archive Stable IDs
     my $other_count = &do_archive_stable_ids( $dbname, $db, $fh, $counter, [ qw(gene transcript translation) ]);
 
     print LOG "    Stable_id mapping querying done, added $other_count ".&date_and_mem()."\n";
@@ -1883,200 +1886,6 @@ sub dumpGene {
     close O;
   }
   return $total_c;
-}
-
-sub GeneLine {
-  my ($species, $gsid, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $xref_descriptions, $synonyms, $gene_loc, $db, $counter) = @_;
-  my $url = sprintf(qq(%s/Gene/Summary?g=%s&amp;db=%s),
-                    $species,
-                    $gsid,
-                    $db);
-  $species =~ s/_/ /;
-  $biotype =~ s/_/ /;
-  $desc = &clean($desc,'desc');
-  $disp_xref = &clean($disp_xref,'name');
-  my $description = $desc . " [Type: $biotype $ad_label]";
-  my $xml;
-
-  if ($search_engine eq 'solr') {
-    $xml = qq(
-<doc>
-  <field name="id">$gsid</field>
-  <field name="name">$disp_xref</field>
-  <field name="description">$description</field>);
-    $xml .= &common_fields($species,'Gene');
-    my (%seen_labels,%seen_syns);
-    foreach my $xref (@$xrefs) {
-      my $dbname   = $xref->{'db_name'};
-      my $dbkey    = $xref->{'label'};
-      #xref synonyms
-      foreach my $syn (@{$xref->{'synonyms'}}) {
-        next if $seen_syns{$syn};
-        $seen_syns{$syn} = 1;
-        $syn = &clean($syn,'syn');
-        $xml .= qq(
-  <field name="_xr_$dbname">$syn</field>);
-      }
-      next if $seen_labels{$dbkey};
-      $seen_labels{$dbkey} = 1;
-      $dbkey = &clean($dbkey,'dbkey');
-      if (! $dbname) {
-        print LOG "WARNING: $gsid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
-      }
-      else {
-        $xml .= qq(
-  <field name="_xr_$dbname">$dbkey"</field>);
-        #non-versioned
-        if ($dbkey =~ /^(\w+)\.\d+$/) {
-          my $k = $1;
-          next if $seen_labels{$k};
-          $seen_labels{$dbkey} = $k;
-          $xml .= qq(
-  <field name="_xr_$dbname">$k</field>);
-        }
-      }
-    }
-    foreach my $xref_description (keys %{$xref_descriptions}) {
-      if ($xref_description) {
-        $xref_description = &clean($xref_description,'xref description');
-        $xml .= qq(
-  <field name="xref_description">$xref_description</field>);
-      }
-    }
-    my %seen_syns;
-    foreach my $syn (@$synonyms) {
-      next if $seen_syns{$syn};
-      $seen_syns{$syn} = 1;
-      $xml .= qq(
-  <field name="name_synonym">$syn"</field>);
-    }
-    if (my $t_count = keys %$tsids) {
-      $xml .= qq(
-  <field name="transcript_count">$t_count</field>);
-      foreach my $tsi (keys %$tsids) {
-        $xml .= qq(
-  <field name="transcript">$tsi</field>);
-      }
-    }
-    if (my $tl_count = keys %$tlsids) {
-      $xml .= qq(
-  <field name="translation_count">$tl_count</field>);
-      foreach my $tlsi (keys %$tlsids) {
-        $xml .= qq(
-  <field name="peptide">$tlsi</field>);
-      }
-    }
-    if (my $e_count = keys %$exons) {
-      $xml .= qq(
-  <field name="exon_count">$e_count</field>);
-      foreach my $esi (keys %$exons) {
-        $xml .= qq(
-  <field name="exon">$esi</field>);
-      }
-    }
-
-    #these are not to be searchable
-    if ($gene_loc) {
-      my $loc = $gene_loc->{'sr_name'} .':'. $gene_loc->{'seq_region_start'} .'-'. $gene_loc->{'seq_region_end'} .':'. $gene_loc->{'seq_region_strand'};
-      $xml .= qq(
-  <field name="location">$loc</field>);
-    }
-    $xml .= qq(
-  <field name="source">$ad_label</field>
-  <field name="domain_url">$url</field>
-  <field name="database">$db</field>);
-    $xml .= qq(
-</doc>);
-  }
-
-  elsif ($search_engine eq 'lucene') {
-    $xml = qq(
-<entry id="$gsid">
-  <name>$disp_xref</name>
-  <description>$description</description>);
-    $xml .= qq(
-  <additional_fields>);
-    my (%seen_sources,%seen_labels,%seen_syns);
-    foreach my $xref (@$xrefs) {
-      my $dbname   = $xref->{'db_name'};
-      my $dbkey    = $xref->{'label'};
-      foreach my $syn (@{$xref->{'synonyms'}}) { 
-        next if $seen_syns{$syn};
-        $seen_syns{$syn} = 1;
-        $syn = &clean($syn,'syn');
-        $xml .= qq(
-    <field name="xref_synonym">$syn"</field>);
-      }
-      next if $seen_labels{$dbkey};
-      $seen_labels{$dbkey} = 1;
-      $dbkey = &clean($dbkey,'dbkey');
-      if (! $dbname) {
-        print LOG "WARNING: $gsid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
-      }
-      else {
-        unless ($seen_sources{$dbname}) {
-          $xml .= qq(
-    <field name="xref_source">$dbname</field>);
-        }
-        $seen_sources{$dbname} = 1;
-        $xml .= qq(
-    <field name="xref">$dbkey</field>);
-        if ($dbkey =~ /^(\w+)\.\d+$/) {
-          my $k = $1;
-          next if $seen_labels{$k};
-          $seen_labels{$dbkey} = $k;
-          $xml .= qq(
-    <field name="xref_non_versioned">$k</field>);
-        }
-      }
-    }
-
-    foreach my $xref_description (keys %{$xref_descriptions}) {
-      if ($xref_description) {
-        $xref_description = &clean($xref_description,'xref description');
-        $xml .= qq(
-    <field name="xref_description">$xref_description</field>);
-      }
-    }
-
-    $xml .= &common_fields($species,'Gene');
-    $xml .= qq(
-    <field name="action">Summary</field>
-    <field name="source">$ad_label</field>);
-    foreach my $syn (@$synonyms) {
-      next if $seen_syns{$syn};
-      $seen_syns{$syn} = 1;
-      $xml .= qq(
-    <field name="name_synonym">$syn"</field>);
-    }
-    if ($gene_loc) {
-      my $loc = $gene_loc->{'sr_name'} .':'. $gene_loc->{'seq_region_start'} .'-'. $gene_loc->{'seq_region_end'} .':'. $gene_loc->{'seq_region_strand'};
-      $xml .= qq(
-    <field name="location">$loc</field>);
-    }
-    unless ($db eq 'core') {
-      $xml .= qq(
-    <field name="db">$db</field>);
-    }
-    foreach my $tsi (keys %$tsids) {
-      $xml .= qq(
-    <field name="transcript">$tsi</field>);
-    }
-    foreach my $tlsi (keys %$tlsids) {
-      $xml .= qq(
-    <field name="peptide">$tlsi</field>);
-    }
-    foreach my $esi (keys %$exons) {
-      $xml .= qq(
-    <field name="exon">$esi</field>);
-    }
-    $xml .= qq(
-  </additional_fields>
-</entry>);
-  }
-
-  $counter->();
-  return $xml;
 }
 
 
@@ -2222,8 +2031,10 @@ sub dumpTranscript {
       if( $old->{'tid'} != $tid ) {
         if( $old->{'tid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
-          &p( TransLine($dbspecies,
+          &p( GeneTransLine('Transcript',
+                        $dbspecies,
                         $old->{'tsid'},
+                        {},
                         $old->{'tlsids'},
                         $old->{'exons'},
                         $old->{'biotype'},
@@ -2298,8 +2109,10 @@ sub dumpTranscript {
         }
       }
     }
-    &p( TransLine($dbspecies,
+    &p( GeneTransLine('Transcript',
+                  $dbspecies,
                   $old->{'tsid'},
+                  {},
                   $old->{'tlsids'},
                   $old->{'exons'},
                   $old->{'biotype'},
@@ -2313,7 +2126,7 @@ sub dumpTranscript {
                   $db,
                   $counter),
         $nogzip, $fh) if ($old->{'gsid'});
-    print LOG "    Transcript info query done ".&date_and_mem()."\n";
+    print LOG "    Transcript info query done and xml generated ".&date_and_mem()."\n";
 
     my $other_count = &do_archive_stable_ids( $dbname, $db, $fh, $counter, [ qw(transcript translation) ]);
 
@@ -2323,100 +2136,202 @@ sub dumpTranscript {
   return $total_c;
 }
 
-sub TransLine {
-  my ($species, $tsid, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $xref_descriptions, $synonyms, $trans_loc, $db, $counter) = @_;
+sub GeneTransLine {
+  my ($type, $species, $sid, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $xref_descriptions, $synonyms, $feat_loc, $db, $counter) = @_;
+  my $url = sprintf(qq(%s/%s/Summary?%s=%s&amp;db=%s),
+                    $species,
+                    $type,
+                    ($type eq 'Gene') ?  'g' : 't',
+                    $sid,
+                    $db);
+  my $loc;
+  if ($feat_loc) {
+    $loc = $feat_loc->{'sr_name'} .':'. $feat_loc->{'seq_region_start'} .'-'. $feat_loc->{'seq_region_end'} .':'. $feat_loc->{'seq_region_strand'};
+  }
   $species =~ s/_/ /;
   $biotype =~ s/_/ /;
   $desc = &clean($desc,'desc');
   $disp_xref = &clean($disp_xref,'name');
-
   my $description = $desc . " [Type: $biotype $ad_label]";
-  my $xml = qq(
-<entry id="$tsid">
+
+  my $xml;
+
+  if ($search_engine eq 'solr') {
+    $xml = qq(
+<doc>
+  <field name="id">$sid</field>
+  <field name="name">$disp_xref</field>
+  <field name="description">$description</field>);
+    $xml .= &common_fields($species,$type,$db);
+    my (%seen_labels,%seen_syns);
+    foreach my $xref (@$xrefs) {
+      my $dbname   = $xref->{'db_name'};
+      my $dbkey    = $xref->{'label'};
+      #xref synonyms
+      foreach my $syn (@{$xref->{'synonyms'}}) {
+        next if $seen_syns{$syn};
+        $seen_syns{$syn} = 1;
+        $syn = &clean($syn,'syn');
+        $xml .= qq(
+  <field name="_xr_$dbname">$syn</field>);
+      }
+      next if $seen_labels{$dbkey};
+      $seen_labels{$dbkey} = 1;
+      $dbkey = &clean($dbkey,'dbkey');
+      if (! $dbname) {
+        print LOG "WARNING: $sid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
+      }
+      else {
+        $xml .= qq(
+  <field name="_xr_$dbname">$dbkey"</field>);
+        #non-versioned
+        if ($dbkey =~ /^(\w+)\.\d+$/) {
+          my $k = $1;
+          next if $seen_labels{$k};
+          $seen_labels{$dbkey} = $k;
+          $xml .= qq(
+  <field name="_xr_$dbname">$k</field>);
+        }
+      }
+    }
+    foreach my $xref_description (keys %{$xref_descriptions}) {
+      if ($xref_description) {
+        $xref_description = &clean($xref_description,'xref description');
+        $xml .= qq(
+  <field name="xref_description">$xref_description</field>);
+      }
+    }
+    my %seen_syns;
+    foreach my $syn (@$synonyms) {
+      next if $seen_syns{$syn};
+      $seen_syns{$syn} = 1;
+      $xml .= qq(
+  <field name="name_synonym">$syn"</field>);
+    }
+    if (my $t_count = keys %$tsids) {
+      $xml .= qq(
+  <field name="transcript_count">$t_count</field>);
+      foreach my $tsi (keys %$tsids) {
+        $xml .= qq(
+  <field name="transcript">$tsi</field>);
+      }
+    }
+    if (my $tl_count = keys %$tlsids) {
+      $xml .= qq(
+  <field name="translation_count">$tl_count</field>);
+      foreach my $tlsi (keys %$tlsids) {
+        $xml .= qq(
+  <field name="peptide">$tlsi</field>);
+      }
+    }
+    if (my $e_count = keys %$exons) {
+      $xml .= qq(
+  <field name="exon_count">$e_count</field>);
+      foreach my $esi (keys %$exons) {
+        $xml .= qq(
+  <field name="exon">$esi</field>);
+      }
+    }
+
+    #these are not to be searchable, but would be good to facete on database
+    if ($loc) {
+      $xml .= qq(
+  <field name="location">$loc</field>);
+    }
+    $xml .= qq(
+  <field name="source">$ad_label</field>
+  <field name="domain_url">$url</field>
+  <field name="database">$db</field>);
+    $xml .= qq(
+</doc>);
+  }
+
+  else {
+    $xml = qq(
+<entry id="$sid">
   <name>$disp_xref</name>
   <description>$description</description>);
 
-  $xml .= qq(
+    $xml .= qq(
   <additional_fields>);
-  my (%seen_sources,%seen_syns,%seen_labels);
-  foreach my $xref (@$xrefs) {
-    my $dbname   = $xref->{'db_name'};
-    my $dbkey    = $xref->{'label'};
-    foreach my $syn (@{$xref->{'synonyms'}}) {
-      next if $seen_syns{$syn};
-      $seen_syns{$syn} = 1;
-      $syn = &clean($syn,'syn');
-      $xml .= qq(
+    my (%seen_sources,%seen_syns,%seen_labels);
+    foreach my $xref (@$xrefs) {
+      my $dbname   = $xref->{'db_name'};
+      my $dbkey    = $xref->{'label'};
+      foreach my $syn (@{$xref->{'synonyms'}}) {
+        next if $seen_syns{$syn};
+        $seen_syns{$syn} = 1;
+        $syn = &clean($syn,'syn');
+        $xml .= qq(
     <field name="xref_synonym">$syn"</field>);
-    }
-    next if $seen_labels{$dbkey};
-    $seen_labels{$dbkey} = 1;
-    $dbkey = &clean($dbkey,'dbkey');
-    if (! $dbname) {
-      print LOG "WARNING: $tsid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
-    }
-    else {
-      unless ($seen_sources{$dbname}) {
-        $xml .= qq(
+      }
+      next if $seen_labels{$dbkey};
+      $seen_labels{$dbkey} = 1;
+      $dbkey = &clean($dbkey,'dbkey');
+      if (! $dbname) {
+        print LOG "WARNING: $sid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
+      }
+      else {
+        unless ($seen_sources{$dbname}) {
+          $xml .= qq(
     <field name="xref_source">$dbname</field>);
-      }
-      $seen_sources{$dbname} = 1;
-      $xml .= qq(
-    <field name="xref">$dbkey</field>);
-      if ($dbkey =~ /^(\w+)\.\d+$/) {
-        my $k = $1;
-        next if $seen_labels{$k};
-        $seen_labels{$dbkey} = $k;
+        }
+        $seen_sources{$dbname} = 1;
         $xml .= qq(
+    <field name="xref">$dbkey</field>);
+        if ($dbkey =~ /^(\w+)\.\d+$/) {
+          my $k = $1;
+          next if $seen_labels{$k};
+          $seen_labels{$dbkey} = $k;
+          $xml .= qq(
     <field name="xref_non_versioned">$k</field>);
+        }
       }
     }
-  }
-
-  foreach my $xref_description (keys %{$xref_descriptions}) {
-    if ($xref_description) {
-      $xref_description = &clean($xref_description,'xref description');
-      $xml .= qq(
+    foreach my $xref_description (keys %{$xref_descriptions}) {
+      if ($xref_description) {
+        $xref_description = &clean($xref_description,'xref description');
+        $xml .= qq(
     <field name="xref_description">$xref_description</field>);
     }
   }
-
   foreach my $syn (@$synonyms) {
     next if $seen_syns{$syn};
     $seen_syns{$syn} = 1;
     $xml .= qq(
     <field name="name_synonym">$syn"</field>);
   }
-
-  $xml .= &common_fields($species,'Transcript');
-  $xml .= qq(
+    $xml .= &common_fields($species,$type);
+    $xml .= qq(
     <field name="action">Summary</field>
     <field name="source">$ad_label</field>);
-  if ($trans_loc) {
-    my $loc = $trans_loc->{'sr_name'} .':'. $trans_loc->{'seq_region_start'} .'-'. $trans_loc->{'seq_region_end'} .':'. $trans_loc->{'seq_region_strand'};
-    $xml .= qq(
+    if ($loc) {
+      $xml .= qq(
     <field name="location">$loc</field>);
-  }
-
-  unless ($db eq 'core') {
-    $xml .= qq(
+    }
+    unless ($db eq 'core') {
+      $xml .= qq(
     <field name="db">$db</field>);
-  }
-  foreach my $tlsi (keys %$tlsids) {
-    $xml .= qq(
+    }
+    foreach my $tsi (keys %$tsids) {
+      $xml .= qq(
+    <field name="transcript">$tsi</field>);
+    }
+    foreach my $tlsi (keys %$tlsids) {
+      $xml .= qq(
     <field name="peptide">$tlsi</field>);
-  }
-  foreach my $esi (keys %$exons) {
-    $xml .= qq(
+    }
+    foreach my $esi (keys %$exons) {
+      $xml .= qq(
     <field name="exon">$esi</field>);
+    }
+    $xml .= qq(
+  </additional_fields>
+</entry>);
   }
-  $xml .= qq(
-  </additional_fields>);
 
   $counter->();
-
-  return $xml . qq(
-</entry>);
+  return $xml;
 }
 
 ## methods for archive stable IDs (called by genes and transcripts) ##
@@ -2465,16 +2380,21 @@ sub do_archive_stable_ids {
       if( @current_sis ) {
         $other_count++;
         my $current_id_c = scalar(@current_sis );
+        my $id = $current_id_c > 1 ? 'identifiers' : 'identifier';
         my $deprecated_id_c = scalar(@deprecated_sis);
-        my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to $current_id_c current identifiers);
-        $desc .= $deprecated_id_c ? qq( and $deprecated_id_c deprecated identifiers) : '';
+        my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to $current_id_c current $id);
+        if ($deprecated_id_c) {
+          $id = $deprecated_id_c > 1 ? 'identifiers' : 'identifier';
+          $desc .= qq( and $deprecated_id_c deprecated $id);
+        }
         $desc .= '.';
         &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter),$nogzip, $fh);
       }
       elsif( @deprecated_sis ) {
         $other_count++;
         my $deprecated_id_c = scalar(@deprecated_sis);
-        my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to $deprecated_id_c deprecated identifiers.);
+        my $id = $deprecated_id_c > 1 ? 'identifiers' : 'identifier';
+        my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to $deprecated_id_c deprecated $id.);
         &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter),$nogzip, $fh);
       }
       else {
@@ -2489,20 +2409,19 @@ sub do_archive_stable_ids {
 
 sub StableIdMappingLine {
   my ($species,$desc,$osi,$type,$db,$counter) = @_;
-  $species =~ s/_/ /;
   my $xml;
   if ($search_engine eq 'solr') {
     my $url = sprintf(qq(%s/%s/Idhistory?%s),
                       $species,
                       ucfirst($type),
                       $type eq 'gene' ? "g=$osi" : $type eq 'transcript' ? "t=$osi" : "protein=$osi");
+    $species =~ s/_/ /;
     $xml = qq(
 <doc>
   <field name="id">$osi</field>
   <field name="description">$desc</field>);
-    $xml .= &common_fields($species,$type);
+    $xml .= &common_fields($species,$type,$db);
     $xml .= qq(
-  <field name="database">$db</field>
   <field name="domain_url">$url</field>);
     $xml .= qq(
 </doc>);
@@ -2769,25 +2688,25 @@ sub footer {
 }
 
 sub common_fields {
-  my ($species,$feature_type) = @_;
+  my ($species,$feature_type,$db) = @_;
   my $xml;
+  my $sci_name = $conf->{'species_sci_name'};
   if ($search_engine eq 'solr') {
-    my $species_name = $conf->{'speciesname'};
+    my $species_name = $conf->{'species_common_name'};
+    $sci_name =~ s/_/ /g;
     $xml = qq(
-  <field name="website">$website_url</field>
-  <field name="species">$species</field>
-  <field name="species_name">$species_name</field>
-  <field name="featuretype">$feature_type</field>);
+  <field name="site">$website_url</field>
+  <field name="species">$species_name</field>
+  <field name="species_name">$sci_name</field>
+  <field name="feature_type">$feature_type</field>
+  <field name="database_type">$db</field>);
   }
   elsif ($search_engine eq 'lucene') {
+    my $sp_common_name = $conf->{'species_common_name'};
     $xml = qq(
-    <field name="species">$species</field>);
-    my $sp = $conf->{'speciesname'};
-    $xml .= qq(
-    <field name="species_name">$sp</field>);
-    $sp = $conf->{'speciescommonname'};
-    $xml .= qq(
-    <field name="species_common_name">$sp</field>
+    <field name="species">$species</field>
+    <field name="species_name">$sci_name</field>
+    <field name="species_common_name">$sp_common_name</field>
     <field name="featuretype">$feature_type</field>);
   }
   return $xml;
