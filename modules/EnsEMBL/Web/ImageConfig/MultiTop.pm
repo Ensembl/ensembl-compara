@@ -52,7 +52,7 @@ sub init {
       { render => 'gene_label', strand => 'r' }
     );
     
-    delete $self->{'extra_menus'}->{'display_options'};
+    $self->{'extra_menus'}->{'display_options'} = 0;
   } else {
     $self->set_parameters({
       active_menu     => 'options',

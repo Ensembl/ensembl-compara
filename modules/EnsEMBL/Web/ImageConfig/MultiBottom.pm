@@ -69,7 +69,7 @@ sub init {
     
     $_->set('display', 'off') for grep $_->id =~ /^chr_band_/, $self->get_node('decorations')->nodes; # Turn off chromosome bands by default
     
-    delete $self->{'extra_menus'}->{'display_options'};
+    $self->{'extra_menus'}->{'display_options'} = 0;
   } else {
     $self->set_parameters({
       active_menu     => 'options',
