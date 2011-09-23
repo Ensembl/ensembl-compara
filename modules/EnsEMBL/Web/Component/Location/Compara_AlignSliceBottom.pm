@@ -22,6 +22,8 @@ sub content {
   my $object       = $self->object;
   my $threshold    = 1000100 * ($species_defs->ENSEMBL_GENOME_SIZE || 1);
   my $align_params = $hub->param('align');
+  my $multi_config = $hub->get_imageconfig('alignsliceviewbottom', 'Multi', 'Multi');
+  my %options      = ( scores => $multi_config->get_option('opt_conservation_scores'), constrained => $multi_config->get_option('opt_constrained_elements') );
   my ($align)      = split '--', $align_params;
   
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
@@ -75,6 +77,11 @@ sub content {
     $panel_caption   .= " $slice_name" if $slice_name;
 
     $image_config->get_node('alignscalebar')->set('caption', $panel_caption);
+    
+    foreach (grep $options{$_}, keys %options) {
+      my $node = $image_config->get_node("alignment_compara_$align_details->{'id'}_$_");
+      $node->set('display', $options{$_}) if $node;
+    }
     
     push @images, $_->{'slice'}, $image_config;
     $i++;
