@@ -36,17 +36,15 @@ sub get_details {
 }
 
 sub content {
-  my $self            = shift;
-  my $cdb             = shift || 'compara';
-  my $hub             = $self->hub;
-  my $object          = $self->object;
-  my $is_genetree     = $object->isa('EnsEMBL::Web::Object::GeneTree') ? 1 : 0;
-  my $collapsed_nodes = $hub->param('collapse');
+  my $self        = shift;
+  my $cdb         = shift || 'compara';
+  my $hub         = $self->hub;
+  my $object      = $self->object;
+  my $is_genetree = $object->isa('EnsEMBL::Web::Object::GeneTree') ? 1 : 0;
   my ($gene, $member, $tree, $node);
   
   if ($is_genetree) {
     $tree   = $object->Obj;
-    $node   = $tree->find_node_by_node_id($collapsed_nodes) if $collapsed_nodes;
     $member = undef;
   } else {
     $gene = $object;
@@ -150,6 +148,8 @@ sub content {
     cdb             => $cdb
   });
   
+  # Keep track of collapsed nodes
+  my $collapsed_nodes = $hub->param('collapse');
   my ($collapsed_to_gene, $collapsed_to_para);
   
   if (!$is_genetree) {
