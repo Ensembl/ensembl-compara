@@ -1771,7 +1771,7 @@ sub add_synteny {
 sub add_alignments {
   my ($self, $key, $hashref, $species) = @_;
   
-  return unless grep $self->get_node($_), qw(multiple_align pairwise_tblat pairwise_blastz pairwise_other);
+  return unless grep $self->get_node($_), qw(multiple_align pairwise_tblat pairwise_blastz pairwise_other conservation);
   
   my $species_defs = $self->species_defs;
   
