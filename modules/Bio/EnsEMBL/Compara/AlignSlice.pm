@@ -780,20 +780,20 @@ sub get_all_constrained_elements {
         $method_link_type, $self->{_method_link_species_set}->species_set);
 
     if ($method_link_species_set) {
-      my $genomic_align_block_adaptor = $self->adaptor->db->get_GenomicAlignBlockAdaptor();
-      $all_constrained_elements = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+      my $constrained_element_adaptor = $self->adaptor->db->get_ConstrainedElementAdaptor();
+      $all_constrained_elements = $constrained_element_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
           $method_link_species_set, $self->reference_Slice);
       my $big_mapper = $self->{_reference_Mapper};
-      foreach my $this_genomic_align_block (@{$all_constrained_elements}) {
+      foreach my $this_constrained_element (@{$all_constrained_elements}) {
         my $reference_slice_start;
         my $reference_slice_end;
         my $reference_slice_strand;
 
         my @alignment_coords = $big_mapper->map_coordinates(
             "sequence", # $self->genomic_align->dbID,
-            $this_genomic_align_block->start + $this_genomic_align_block->slice->start - 1,
-            $this_genomic_align_block->end + $this_genomic_align_block->slice->start - 1,
-            $this_genomic_align_block->strand,
+            $this_constrained_element->start + $this_constrained_element->slice->start - 1,
+            $this_constrained_element->end + $this_constrained_element->slice->start - 1,
+            $this_constrained_element->strand,
             "sequence" # $from_mapper->from
         );
         foreach my $alignment_coord (@alignment_coords) {
@@ -811,10 +811,10 @@ sub get_all_constrained_elements {
             }
           }
         }
-        $this_genomic_align_block->slice($self);
-        $this_genomic_align_block->start($reference_slice_start);
-        $this_genomic_align_block->end($reference_slice_end);
-        $this_genomic_align_block->strand($reference_slice_strand);
+        $this_constrained_element->slice($self);
+        $this_constrained_element->start($reference_slice_start);
+        $this_constrained_element->end($reference_slice_end);
+        $this_constrained_element->strand($reference_slice_strand);
       }
     }
     $self->{$key_cache} = $all_constrained_elements;
