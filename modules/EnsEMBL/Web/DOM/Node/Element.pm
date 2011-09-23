@@ -233,7 +233,7 @@ sub inner_HTML {
       $self->append_child($_) for @{$self->_parse_HTML_to_nodes($html, \$error_message)};
     }
     else {
-      $self->{'_text'} = $html;
+      $self->{'_text'} = "$html";
     }
   }
   not $error and $error_message and warn $error_message or ref $error eq 'SCALAR' and $$error = $error_message;
