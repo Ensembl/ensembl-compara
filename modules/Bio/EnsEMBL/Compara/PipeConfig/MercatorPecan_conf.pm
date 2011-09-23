@@ -312,7 +312,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -wait_for => [ 'load_genomedb' ],
             -flow_into => {
-                1 => [ 'make_species_tree', 'accumulate_reuse_ss', 'generate_reuse_ss' ],  # "backbone"
+                1 => [ 'accumulate_reuse_ss', 'generate_reuse_ss' ],  # "backbone"
             },
         },
 
@@ -341,6 +341,7 @@ sub pipeline_analyses {
 				   {'blength_tree_file' => $self->o('species_tree_file'), 'newick_format' => 'simple' }, #species_tree
 				  ],
 		-hive_capacity => -1,   # to allow for parallelization
+		-wait_for => [ 'load_genomedb_funnel' ],
 		-flow_into => {
 			       4 => { 'mysql:////meta' => { 'meta_key' => 'tree_string', 'meta_value' => '#species_tree_string#' } },
 			      },
@@ -358,7 +359,7 @@ sub pipeline_analyses {
 		'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
             -hive_capacity => 10,    # allow for parallel execution
-	    -wait_for => [ 'generate_reuse_ss' ],
+	    -wait_for => [ 'generate_reuse_ss', 'make_species_tree' ],
             -flow_into => {
                 2 => { 
 		      'check_reuse_db'            => undef,
@@ -667,10 +668,10 @@ sub pipeline_analyses {
 
          {   -logic_name    => 'gerp',
              -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
-	     -program_version => $self->o('gerp_version'),
              -parameters    => {
-                 'window_sizes' => $self->o('window_sizes'),
-		 'gerp_exe_dir' => $self->o('gerp_exe_dir'),
+		 'program_version' => $self->o('gerp_version'),
+                 'window_sizes'    => $self->o('window_sizes'),
+		 'gerp_exe_dir'    => $self->o('gerp_exe_dir'),
 #                 'constrained_element_method_link_type' => $self->o('constrained_element_type'),
              },
 #             -wait_for => [ 'mercator' ],
