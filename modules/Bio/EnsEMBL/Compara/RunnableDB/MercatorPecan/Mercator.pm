@@ -91,7 +91,7 @@ sub run
      -output_dir => $self->param('output_dir'),
      -genome_names => $self->param('genome_db_ids'),
      -analysis => $self->analysis,
-     -program => $self->analysis->program_file);
+     -program => $self->param('mercator_exe'));
   $self->param('runnable', $runnable);
   $runnable->run_analysis;
 }
