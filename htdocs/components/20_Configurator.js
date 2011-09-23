@@ -278,8 +278,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     $('select.species', this.el).bind('change', function () {
       if (this.value) {
-        var species = this.selectedIndex === 0 ? '' : '_' + this.value.split('/')[1];
-        var id      = 'modal_config_' + (panel.component + species).toLowerCase();
+        var species = this.value.split('/')[1];
+        var id      = 'modal_config_' + (panel.component + (species === Ensembl.species ? '' : '_' + species)).toLowerCase();
         var change  = $('#' + id);
         
         panel.hide();
