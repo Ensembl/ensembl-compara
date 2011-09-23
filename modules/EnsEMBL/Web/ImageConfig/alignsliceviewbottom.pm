@@ -7,31 +7,54 @@ use strict;
 use base qw(EnsEMBL::Web::ImageConfig::MultiSpecies);
 
 sub init {
-  my $self = shift;
+  my $self    = shift;
+  my $species = $self->species;
   
   $self->set_parameters({
-    sortable_tracks => 1,     # allow the user to reorder tracks
+    sortable_tracks => 1, # allow the user to reorder tracks
+    global_options  => 1,
   });
 
   $self->create_menus(qw(
+    options
     sequence
     transcript
     repeat
     variation
     somatic
+    conservation
     information
   ));
   
-  $self->add_track('sequence', 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' });
-  $self->add_tracks('information', 
-    [ 'alignscalebar',     '',                  'alignscalebar',     { display => 'normal', strand => 'b', menu => 'no' }],
-    [ 'ruler',             '',                  'ruler',             { display => 'normal', strand => 'f', menu => 'no' }],
-    [ 'draggable',         '',                  'draggable',         { display => 'normal', strand => 'b', menu => 'no' }], # TODO: get this working
-    [ 'alignslice_legend', 'AlignSlice Legend', 'alignslice_legend', { display => 'normal', strand => 'r' }]
-  );
+  my $options = $self->get_node('options');
   
-  if ($self->species_defs->valid_species($self->species)) {
-    $self->load_tracks;
+  $options->set('caption', 'Comparative features');
+  
+  $self->add_options( 
+    [ 'opt_conservation_scores',  'Conservation scores',  {qw(off 0 tiling  tiling )}, [qw(off Off tiling  On)], 'off' ],
+    [ 'opt_constrained_elements', 'Constrained elements', {qw(off 0 compact compact)}, [qw(off Off compact On)], 'off' ],
+  );  
+  
+  if ($self->species_defs->valid_species($species) || $species eq 'common') {
+    if ($species eq 'common') {
+      $self->set_parameters({
+        active_menu     => 'sequence',
+        sortable_tracks => 0
+      });
+    } else {
+      $self->load_tracks;
+    }
+    
+    $self->add_track('sequence', 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' });
+    
+    $self->add_tracks('information', 
+      [ 'alignscalebar',     '',                  'alignscalebar',     { display => 'normal', strand => 'b', menu => 'no' }],
+      [ 'ruler',             '',                  'ruler',             { display => 'normal', strand => 'f', menu => 'no' }],
+      [ 'draggable',         '',                  'draggable',         { display => 'normal', strand => 'b', menu => 'no' }], # TODO: get this working
+      [ 'alignslice_legend', 'AlignSlice Legend', 'alignslice_legend', { display => 'normal', strand => 'r' }]
+    );
+    
+    $options->remove;
     
     $self->modify_configs(
       [ 'transcript' ],
@@ -43,11 +66,20 @@ sub init {
         as_collapsed_nolabel  => 'Collapsed without labels' 
       ]}
     );
+    
+    $self->modify_configs(
+      [ 'conservation' ],
+      { menu => 'no' }
+    );
+    
+    $self->{'extra_menus'}->{'display_options'} = 0;
   } else {
     $self->set_parameters({
-      active_menu     => 'sequence',
+      active_menu     => 'options',
       sortable_tracks => 0
     });
+    
+    $self->{'extra_menus'} = { display_options => 1 };
   }
 }
 
@@ -58,15 +90,15 @@ sub species_list {
     my $species_defs = $self->species_defs;
     my $referer      = $self->hub->referer;
     my ($align)      = split '--', $referer->{'params'}{'align'}[0];
-    my $species      = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'species'};
+    my $alignment    = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'species'} || {};
     my $primary      = $referer->{'ENSEMBL_SPECIES'};
-    my @species;
+    my @species      = scalar keys %$alignment ? () : ([ $primary, $species_defs->SPECIES_COMMON_NAME($primary) ]);
     
-    foreach (sort { $a->[1] cmp $b->[1] } map [ $_, $species_defs->SPECIES_COMMON_NAME($_) ], keys %{$species || {}}) {
+    foreach (sort { $a->[1] cmp $b->[1] } map [ $_, $species_defs->SPECIES_COMMON_NAME($_) ], keys %$alignment) {
       if ($_->[0] eq $primary) {
         unshift @species, $_;
       } elsif ($_->[0] eq 'ancestral_sequences') {
-        push @species, [ 'Multi', 'Ancestral sequences' ]; # Cheating: set species to Multi to stop errors due to invalid species.
+        push @species, [ 'common', 'Ancestral sequences' ]; # Cheating: set species to common to stop errors due to invalid species.
       } else {
         push @species, $_;
       }
