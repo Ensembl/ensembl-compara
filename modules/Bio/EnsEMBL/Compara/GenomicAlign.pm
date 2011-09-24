@@ -953,9 +953,9 @@ sub length {
     my $cigar_line = $self->{cigar_line};
     my @cig = ( $cigar_line =~ /(\d*[GMDXI])/g );
     for my $cigElem ( @cig ) {
-      my $cigType = substr( $cigElem, -1, 1 );
-      my $cigCount = substr( $cigElem, 0 ,-1 );
-      $cigCount = 1 unless ($cigCount =~ /^\d+$/);
+      my $cigType = substr( $cigElem, -1, 1);
+      my $cigCount = substr( $cigElem, 0 , -1);
+      $cigCount = 1 if ($cigCount eq "");
       $length += $cigCount unless ($cigType eq "I");
     }
     return $length;
@@ -1297,7 +1297,7 @@ sub _get_fake_aligned_sequence_from_cigar_line {
   for my $cigElem ( @cig ) {
     my $cigType = substr( $cigElem, -1, 1 );
     my $cigCount = substr( $cigElem, 0 ,-1 );
-    $cigCount = 1 unless ($cigCount =~ /^\d+$/);
+    $cigCount = 1 if ($cigCount eq "");
 
     if( $cigType eq "M" ) {
       $fake_aligned_sequence .= "N" x $cigCount;
@@ -1479,7 +1479,7 @@ sub get_Mapper {
 
       $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
 
-      my $rel_strand = $self->dnafrag_strand;
+      my $rel_strand = $self->dnafrag_strand; # This call ensures all direct attribs have been fetched
       my $ref_cigar_line = $self->genomic_align_block->reference_genomic_align->cigar_line;
 
       my $aln_pos = (eval{$self->genomic_align_block->start} or 1);
@@ -1488,9 +1488,9 @@ sub get_Mapper {
       if ($self eq $self->genomic_align_block->reference_genomic_align) {
 	  $mapper->add_map_coordinates(
               'sequence',
-              $self->dnafrag_start,
-              $self->dnafrag_end,
-              $self->dnafrag_strand,
+              $self->{'dnafrag_start'},
+              $self->{'dnafrag_end'},
+              $self->{'dnafrag_strand'},
               'alignment',
 	      $self->genomic_align_block->start,
 	      $self->genomic_align_block->end,
@@ -1506,7 +1506,7 @@ sub get_Mapper {
 
       my $insertions = 0;
       my $target_cigar_pieces;
-      @$target_cigar_pieces = $self->cigar_line =~ /(\d*[GMDXI])/g;
+      @$target_cigar_pieces = $self->{'cigar_line'} =~ /(\d*[GMDXI])/g;
       my $ref_cigar_pieces;
       @$ref_cigar_pieces = $ref_cigar_line =~ /(\d*[GMDXI])/g;
       my $i = 0;
@@ -1930,9 +1930,9 @@ sub _get_Mapper_from_cigar_line {
   my @cigar_pieces = ($cigar_line =~ /(\d*[GMDXI])/g);
   if ($rel_strand == 1) {
     foreach my $cigar_piece (@cigar_pieces) {
-      my $cigar_type = substr($cigar_piece, -1, 1 );
-      my $cigar_count = substr($cigar_piece, 0 ,-1 );
-      $cigar_count = 1 unless ($cigar_count =~ /^\d+$/);
+      my $cigar_type = substr($cigar_piece, -1, 1);
+      my $cigar_count = substr($cigar_piece, 0, -1);
+      $cigar_count = 1 if ($cigar_count eq "");
       next if ($cigar_count < 1);
   
       if( $cigar_type eq "M" ) {
@@ -1956,9 +1956,9 @@ sub _get_Mapper_from_cigar_line {
     }
   } else {
     foreach my $cigar_piece (@cigar_pieces) {
-      my $cigar_type = substr($cigar_piece, -1, 1 );
-      my $cigar_count = substr($cigar_piece, 0 ,-1 );
-      $cigar_count = 1 unless ($cigar_count =~ /^\d+$/);
+      my $cigar_type = substr($cigar_piece, -1, 1);
+      my $cigar_count = substr($cigar_piece, 0 ,-1);
+      $cigar_count = 1 if ($cigar_count eq "");
       next if ($cigar_count < 1);
   
       if( $cigar_type eq "M" ) {
@@ -2125,7 +2125,8 @@ sub restrict {
     ## Loop through the cigar pieces
     while (my $cigar = shift(@cigar)) {
       # Parse each cigar piece
-      my ($num, $type) = ($cigar =~ /^(\d*)([GDMXI])/);
+      my $type = substr( $cigar, -1, 1 );
+      my $num = substr( $cigar, 0 ,-1 );
       $num = 1 if ($num eq "");
 
       # Insertions are not part of the alignment, don't count them
@@ -2156,7 +2157,8 @@ sub restrict {
 
         ## We don't want to start with an insertion. Trim it!
         while (@cigar and $cigar[0] =~ /[I]/) {
-          my ($num, $type) = ($cigar[0] =~ /^(\d*)([DIGMX])/);
+          my $type = substr( $cigar, -1, 1 );
+          my $num = substr( $cigar, 0 ,-1 );
           $num = 1 if ($num eq "");
           $counter_of_trimmed_base_pairs += $num;
           shift(@cigar);
@@ -2178,7 +2180,8 @@ sub restrict {
     ## Loop through the cigar pieces
     while (my $cigar = pop(@cigar)) {
       # Parse each cigar piece
-      my ($num, $type) = ($cigar =~ /^(\d*)([GDMIX])/);
+      my $type = substr( $cigar, -1, 1 );
+      my $num = substr( $cigar, 0 ,-1 );
       $num = 1 if ($num eq "");
 
       # Insertions are not part of the alignment, don't count them
@@ -2208,7 +2211,8 @@ sub restrict {
 
         ## We don't want to end with an insertion. Trim it!
         while (@cigar and $cigar[-1] =~ /[I]/) {
-          my ($num, $type) = ($cigar[-1] =~ /^(\d*)([DIGMX])/);
+          my $type = substr( $cigar, -1, 1 );
+          my $num = substr( $cigar, 0 ,-1 );
           $num = 1 if ($num eq "");
           $counter_of_trimmed_base_pairs += $num;
           pop(@cigar);
@@ -2224,7 +2228,6 @@ sub restrict {
   }
 
   ## Save genomic_align's cigar_line
-  $restricted_genomic_align->aligned_sequence(0);
   $restricted_genomic_align->cigar_line(join("", @cigar));
 
   return $restricted_genomic_align;
