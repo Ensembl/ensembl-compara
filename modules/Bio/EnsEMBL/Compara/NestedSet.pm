@@ -605,7 +605,6 @@ sub load_children_if_needed {
     #print("load_children_if_needed : "); $self->print_node;
     $self->adaptor->fetch_all_children_for_node($self);
   }
-  return $self;
 }
 
 sub no_autoload_children {
