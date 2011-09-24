@@ -407,8 +407,13 @@ sub fetch_all {
   my $all_method_link_species_sets;
   my $gdba = $self->db->get_GenomeDBAdaptor;
 
-  while (my ($method_link_species_set_id, $method_link_id, $name, $source, $url,
-      $species_set_id, $genome_db_id, $type, $class) = $sth->fetchrow_array()) {
+  my $all_genome_dbs = {map{$_->{dbID}, $_} @{$gdba->fetch_all()}};
+
+  my ($method_link_species_set_id, $method_link_id, $name, $source, $url,
+      $species_set_id, $genome_db_id, $type, $class);
+  $sth->bind_columns(\$method_link_species_set_id, \$method_link_id, \$name, \$source, \$url,
+      \$species_set_id, \$genome_db_id, \$type, \$class);
+  while ($sth->fetch()) {
     $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_ID'} = $method_link_id;
     $all_method_link_species_sets->{$method_link_species_set_id}->{'NAME'} = $name;
     $all_method_link_species_sets->{$method_link_species_set_id}->{'SOURCE'} = $source;
@@ -417,34 +422,33 @@ sub fetch_all {
     $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_TYPE'} = $type;
     $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_CLASS'} = $class;
     push(@{$all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET'}},
-        $gdba->fetch_by_dbID($genome_db_id));
+        $all_genome_dbs->{$genome_db_id});
   }
 
   $sth->finish();
 
   foreach my $method_link_species_set_id (keys %$all_method_link_species_sets) {
     my $this_method_link_species_set;
-    eval { $this_method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
-            -adaptor => $self,
-            -dbID => $method_link_species_set_id,
-            -method_link_id =>
+    $this_method_link_species_set = new_fast Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
+            {'adaptor' => $self,
+            'dbID' => $method_link_species_set_id,
+            'method_link_id' =>
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_ID'},
-            -method_link_type =>
+            'method_link_type' =>
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_TYPE'},
-            -method_link_class =>
+            'method_link_class' =>
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_CLASS'},
-            -name =>
+            'name' =>
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'NAME'},
-            -source =>
+            'source' =>
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'SOURCE'},
-            -url =>
+            'url' =>
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'URL'},
-            -species_set_id =>
+            'species_set_id' =>
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET_ID'},
-            -species_set =>
+            'species_set' =>
                 $all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET'},
-        );
-    };
+        });
     push(@$method_link_species_sets, $this_method_link_species_set) if (defined($this_method_link_species_set));
   }
 
