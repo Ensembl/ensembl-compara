@@ -145,8 +145,8 @@ sub get_neighbor {
   my $self = shift;
   my $node = shift;
   
-  return $self->{'_link_node2'} if($node->equals($self->{'_link_node1'}));
-  return $self->{'_link_node1'} if($node->equals($self->{'_link_node2'}));
+  return $self->{'_link_node2'} if($node eq $self->{'_link_node1'});
+  return $self->{'_link_node1'} if($node eq $self->{'_link_node2'});
   return undef;
 }
 
@@ -174,8 +174,7 @@ sub equals {
   my $other = shift;
 #  throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Link] not a [$other]")
 #        unless($other and $other->isa('Bio::EnsEMBL::Compara::Graph::Link')); # BEWARE speed up change uncommented
-  return 1 if($self->obj_id eq $other->obj_id); # BEWARE speed up change below
-  # return 1 if($self->{'_cgobject_id'} eq $other->{'_cgobject_id'});
+  return 1 if($self eq $other);
   return 0;
 }
 
