@@ -351,8 +351,9 @@ sub children {
   foreach my $link (@{$self->links}) {
     next unless(defined($link));
     my $neighbor = $link->get_neighbor($self);
-    next unless($neighbor->parent_link);
-    next unless($neighbor->parent_link->equals($link));
+    my $parent_link = $neighbor->parent_link;
+    next unless($parent_link);
+    next unless($parent_link eq $link);
     push @kids, $neighbor;
   }
   return \@kids;
@@ -598,7 +599,7 @@ sub get_child_count {
 
 sub load_children_if_needed {
   my $self = shift;
-  if($self->adaptor and !defined($self->{'_children_loaded'})) {
+  if(!defined($self->{'_children_loaded'}) and $self->adaptor) {
     #define _children_id_hash thereby signally that I've tried to load my children
     $self->{'_children_loaded'} = 1; 
     #print("load_children_if_needed : "); $self->print_node;
