@@ -469,18 +469,19 @@ sub create_GenomeDBs {
 
   # build a genome db for each species
   $self->{'_cache'} = undef;
-  while ( my @db_row = $sth->fetchrow_array() ) {
-    my ($dbid, $name, $assembly, $taxon_id, $assembly_default, $genebuild, $locator) = @db_row;
+  my ($dbid, $name, $assembly, $taxon_id, $assembly_default, $genebuild, $locator);
+  $sth->bind_columns(\$dbid, \$name, \$assembly, \$taxon_id, \$assembly_default, \$genebuild, \$locator);
+  while ($sth->fetch()) {
 
-    my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new();
-    $gdb->name($name);
-    $gdb->assembly($assembly);
-    $gdb->taxon_id($taxon_id);
-    $gdb->assembly_default($assembly_default);
-    $gdb->dbID($dbid);
-    $gdb->adaptor( $self );
-    $gdb->genebuild($genebuild);
-    $gdb->locator($locator);
+    my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new_fast(
+        {'name' => $name,
+        'dbID' => $dbid,
+        'adaptor' => $self,
+        'assembly' => $assembly,
+        'assembly_default' => $assembly_default,
+        'genebuild' => $genebuild,
+        'taxon_id' => $taxon_id,
+        'locator' => $locator});
 
     $self->{'_cache'}->{$dbid} = $gdb;
   }
