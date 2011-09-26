@@ -22,4 +22,19 @@ sub init {
   $self->add_image_config('ldview', 'nodas'); 
 }
 
+sub extra_tabs {
+  my $self = shift;
+  my $hub  = $self->hub;
+  
+  return [
+    'Select populations',
+    $hub->url('Component', {
+      action   => 'Web',
+      function => 'SelectPopulation/ajax',
+      time     => time,
+      %{$hub->multi_params}
+    })
+  ];
+}
+
 1;
