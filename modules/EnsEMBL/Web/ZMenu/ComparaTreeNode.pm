@@ -188,7 +188,7 @@ sub content {
         link  => $hub->url({
           type     => $hub->type,
           action   => $action,
-          collapse => join(',', grep $_ != $node_id, keys %collapsed_ids)
+          collapse => (grep $_ != $node_id, keys %collapsed_ids) ? join(',', grep $_ != $node_id, keys %collapsed_ids) : 'none'
         })
       });
     } else {
