@@ -149,7 +149,7 @@ sub element_features {
   my ($features, @rtn);
   
   if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
-    $features = $slice->get_all_constrained_elements;
+    return $slice->{'_align_slice'}->get_all_ConstrainedElements;
   } else {
     my $db                  = $self->dbadaptor('multi', $self->my_config('db'));
     my $constrained_element = $self->my_config('constrained_element');
