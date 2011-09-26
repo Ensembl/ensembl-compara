@@ -78,6 +78,7 @@ sub default_options {
             -user   => 'ensro',
             -pass   => '',
             -dbname => 'sf5_ensembl_compara_master', 
+	    #-dbname => 'kb3_test_db_multi_compara_20070424_105807',
 	    -driver => 'mysql',
        },
 	'staging_loc1' => {
@@ -264,7 +265,7 @@ sub pipeline_analyses {
 				  'conf_file' => $self->o('conf_file'),
 				  'get_species_list' => 1,
 				  }, 
-		-wait_for  => [ 'innodbise_table_factory', 'innodbise_table' ],
+		-wait_for  => [ 'innodbise_table' ],
 		-flow_into      => {
 				    1 => ['populate_new_database'],
 				   }
@@ -280,7 +281,6 @@ sub pipeline_analyses {
 				  'reg_conf'        => $self->o('reg_conf'),
 				  'cmd'            => "#program# --master " . $self->dbconn_2_url('master_db') . " --new " . $self->dbconn_2_url('pipeline_db') . " --species #speciesList# --mlss #mlss_id# --reg-conf #reg_conf# ",
 				 },
-	       -wait_for  => [ 'get_species_list' ],
 	       -flow_into => {
 			      1 => [ 'parse_pair_aligner_conf' ],
 			     },
@@ -316,7 +316,6 @@ sub pipeline_analyses {
 			       8 => [ 'healthcheck' ],			       
 			       9 => [ 'dump_dna' ],
 			      },
- 		-wait_for  => [ 'populate_new_database' ],
   	    },
 
  	    {  -logic_name => 'chunk_and_group_dna',
@@ -355,7 +354,9 @@ sub pipeline_analyses {
  	       -module     => $self->o('pair_aligner_module'),
  	       -hive_capacity => $self->o('pair_aligner_hive_capacity'),
  	       -batch_size => $self->o('pair_aligner_batch_size'),
- 	       -pair_aligner_exe => $self->o('pair_aligner_exe'),
+	       -parameters => { 
+			       'pair_aligner_exe' => $self->o('pair_aligner_exe'),
+			      },
 	       -flow_into => {
 			      -1 => [ $self->o('pair_aligner_logic_name') . '_himem1' ],  # MEMLIMIT
 			     },
@@ -365,9 +366,6 @@ sub pipeline_analyses {
  	       -hive_capacity => $self->o('pair_aligner_hive_capacity'),
  	       -batch_size => $self->o('pair_aligner_batch_size'),
  	       -program    => $self->o('pair_aligner_program'), 
-	       -flow_into => {
-			      -1 => [ $self->o('pair_aligner_logic_name') . '_himem2' ],  # MEMLIMIT
-			     },
 	       -can_be_empty  => 1, 
 	       -rc_id => 3,
 	    },
@@ -376,32 +374,27 @@ sub pipeline_analyses {
  	       -parameters => { 
 			       'quick' => $self->o('quick'),
 			      },
- 	       -wait_for =>  [ $self->o('pair_aligner_logic_name') ],
+ 	       -wait_for =>  [ $self->o('pair_aligner_logic_name'), $self->o('pair_aligner_logic_name') . "_himem1" ],
  	    },
  	    {  -logic_name => 'create_filter_duplicates_jobs', #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs',
  	       -parameters => { },
  	       -wait_for =>  [ 'update_max_alignment_length_before_FD' ],
 	        -flow_into => {
-			       2 => [ 'query_filter_duplicates', 'target_filter_duplicates' ], 
+			       2 => [ 'filter_duplicates' ], 
 			     }
  	    },
- 	     {  -logic_name => 'query_filter_duplicates',
+ 	     {  -logic_name => 'filter_duplicates',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
  	       -parameters => {},
  	       -wait_for =>  [ 'create_filter_duplicates_jobs' ],
- 	    },
- 	     {  -logic_name => 'target_filter_duplicates',
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
- 	       -parameters => {},
- 	       -wait_for =>  [ 'query_filter_duplicates' ],
  	    },
  	    {  -logic_name => 'update_max_alignment_length_after_FD',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
  	       -parameters => {
 			       'quick' => $self->o('quick'),
 			      },
- 	       -wait_for =>  [ 'query_filter_duplicates','target_filter_duplicates' ],
+ 	       -wait_for =>  [ 'filter_duplicates' ],
  	    },
 #
 #Second half of the pipeline
@@ -446,7 +439,7 @@ sub pipeline_analyses {
 			      1 => [ 'update_max_alignment_length_after_chain' ],
 			      2 => [ 'alignment_chains' ],
 			     },
- 	       -wait_for => [ 'dump_large_nib_for_chains' ],
+ 	       -wait_for => [ 'dump_large_nib_for_chains', 'dump_large_nib_for_chains_himem' ],
  	    },
  	    {  -logic_name => 'alignment_chains',
  	       -hive_capacity => $self->o('chain_hive_capacity'),
@@ -470,7 +463,7 @@ sub pipeline_analyses {
  	       -parameters => { 
 			       'quick' => $self->o('quick'),
 			      },
- 	       -wait_for =>  [ 'alignment_chains' ],
+ 	       -wait_for =>  [ 'alignment_chains', 'alignment_chains_himem' ],
  	    },
  	    {  -logic_name => 'create_alignment_nets_jobs',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentNetsJobs',
@@ -503,7 +496,7 @@ sub pipeline_analyses {
  	       -parameters => { 
 			       'quick' => $self->o('quick'),
 			      },
- 	       -wait_for =>  [ 'alignment_nets' ],
+ 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem' ],
  	    },
 	    { -logic_name => 'healthcheck',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
