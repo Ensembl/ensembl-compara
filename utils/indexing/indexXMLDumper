@@ -2128,9 +2128,11 @@ sub dumpTranscript {
         $nogzip, $fh) if ($old->{'gsid'});
     print LOG "    Transcript info query done and xml generated ".&date_and_mem()."\n";
 
-    my $other_count = &do_archive_stable_ids( $dbname, $db, $fh, $counter, [ qw(transcript translation) ]);
-
-    print LOG "    Stable_id mapping querying done, added $other_count ".&date_and_mem()."\n";
+    #don't add archive stable IDs for solr, only need them in the gene
+    if ($search_engine ne 'solr') {
+      my $other_count = &do_archive_stable_ids( $dbname, $db, $fh, $counter, [ qw(transcript translation) ]);
+      print LOG "    Stable_id mapping querying done, added $other_count ".&date_and_mem()."\n";
+    }
     $total_c += footer( $counter->(),$nogzip,$fh);
   }
   return $total_c;
@@ -2399,7 +2401,7 @@ sub do_archive_stable_ids {
       else {
         $other_count++;
         my $desc = qq(Ensembl $type $osi is no longer in the database and has not been mapped to any newer identifiers.);
-        &p (&StableIdMappingLine($dbspecies,$desc,$osi,$type,$db,$counter),$nogzip, $fh);
+        &p (&StableIdMappingLine($dbspecies,$desc,$osi,ucfirst($type),$db,$counter),$nogzip, $fh);
       }
     }
   }
@@ -2419,7 +2421,7 @@ sub StableIdMappingLine {
 <doc>
   <field name="id">$osi</field>
   <field name="description">$desc</field>);
-    $xml .= &common_fields($species,$type,$db);
+    $xml .= &common_fields($species,'Archived Stable ID',$db);
     $xml .= qq(
   <field name="domain_url">$url</field>);
     $xml .= qq(
