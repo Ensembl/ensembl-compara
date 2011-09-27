@@ -604,7 +604,7 @@ sub _generic_fetch {
 
   my $sql = $self->_construct_sql_query($constraint, $join, $final_clause);
 
-  print STDERR $sql,"\n";
+#  print STDERR $sql,"\n";
   my $node_list = [];
   my $sth = $self->prepare($sql);
   $sth->execute;
