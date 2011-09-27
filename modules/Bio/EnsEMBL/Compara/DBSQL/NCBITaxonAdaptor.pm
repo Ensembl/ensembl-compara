@@ -41,6 +41,11 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
 
 sub fetch_node_by_taxon_id {
   my ($self, $taxon_id) = @_;
+
+  if (! defined $taxon_id) {
+    throw ("taxon_id is not defined");
+  }
+
   my $constraint = "WHERE t.taxon_id = $taxon_id";
   my ($node) = @{$self->_generic_fetch($constraint)};
   unless ($node) {
@@ -57,7 +62,11 @@ sub fetch_node_by_taxon_id {
 }
 
 sub fetch_node_id_by_merged_taxon_id {
-  my ($self, $taxon_id) = @_; 
+  my ($self, $taxon_id) = @_;
+
+  if (! defined $taxon_id) {
+    throw "taxon_id is undefined";
+  }
 
   my $sql = "SELECT t.taxon_id FROM ncbi_taxa_node t, ncbi_taxa_name n WHERE n.name = ? and n.name_class = 'merged_taxon_id' AND t.taxon_id = n.taxon_id";
 
@@ -85,6 +94,11 @@ sub fetch_node_id_by_merged_taxon_id {
 
 sub fetch_node_by_name {
   my ($self, $name) = @_;
+
+  if (! defined $name) {
+    throw ("name is undefined");
+  }
+
   my $constraint = "WHERE n.name = '$name'";
   my ($node) = @{$self->_generic_fetch($constraint)};
   return $node;
@@ -105,6 +119,11 @@ sub fetch_node_by_name {
 
 sub fetch_node_by_genome_db_id {
   my ($self, $gdbID) = @_;
+
+  if (! defined $gdbID) {
+    throw "gdbID is undefined";
+  }
+
   my $constraint = "JOIN genome_db gdb ON ( t.taxon_id = gdb.taxon_id) 
                     WHERE gdb.genome_db_id=$gdbID";
   my ($node) = @{$self->_generic_fetch($constraint)};

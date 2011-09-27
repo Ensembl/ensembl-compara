@@ -58,6 +58,10 @@ sub fetch_all {
 sub fetch_node_by_node_id {
   my ($self, $node_id) = @_;
 
+  if (! defined $node_id) {
+    throw("node_id is undefined")
+  }
+
   my $table= $self->tables->[0]->[1];
   my $constraint = "WHERE $table.node_id = $node_id";
   my ($node) = @{$self->_generic_fetch($constraint)};
@@ -66,6 +70,10 @@ sub fetch_node_by_node_id {
 
 sub fetch_node_by_node_id_with_super {
   my ($self, $node_id, $super) = @_;
+
+  if (! defined $node_id) {
+    throw ("node_id is undefined");
+  }
 
   my $table= $self->tables->[0]->[1];
   if ($super eq 'super') {
@@ -150,6 +158,10 @@ sub fetch_subtree_under_node {
 sub fetch_tree_at_node_id {
   my $self = shift;
   my $node_id = shift;
+
+  if (! defined $node_id) {
+    throw ("node_id is undefined");
+  }
 
   my $node = $self->fetch_node_by_node_id($node_id);
 
@@ -592,7 +604,7 @@ sub _generic_fetch {
 
   my $sql = $self->_construct_sql_query($constraint, $join, $final_clause);
 
-  #print STDERR $sql,"\n";
+  print STDERR $sql,"\n";
   my $node_list = [];
   my $sth = $self->prepare($sql);
   $sth->execute;
