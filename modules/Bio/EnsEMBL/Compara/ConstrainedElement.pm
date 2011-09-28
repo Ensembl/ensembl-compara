@@ -591,7 +591,7 @@ sub summary_as_hash {
   $summary_ref->{'start'} = $self->start;
   $summary_ref->{'end'} = $self->start;
   $summary_ref->{'strand'} = $self->strand;
-
+  $summary_ref->{'seq_region_name'} = $self->slice->seq_region_name;
   $summary_ref->{'score'} = $self->score;
   return $summary_ref;
 }
