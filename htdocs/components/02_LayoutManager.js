@@ -212,7 +212,9 @@ Ensembl.LayoutManager.extend({
   },
   
   toggleContent: function (rel) {
-    $('a.toggle[rel="' + rel + '"]').toggleClass('open closed');
+    if (rel) {
+      $('a.toggle[rel="' + rel + '"]').toggleClass('open closed');
+    }
   },
   
   changeWidth: function () {
