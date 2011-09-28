@@ -166,7 +166,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       rel += i++;
     }
     
-    newContent.attr('id', rel);
+    newContent.attr('id', rel + 'Panel');
     
     this.getContent(url, newContent, this.params, true);
     
@@ -197,7 +197,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       
       return false;
     }).filter('.closed[rel]').each(function () {
-      if (Ensembl.hash.indexOf(';' + this.rel + ';') !== -1 || Ensembl.hash.indexOf('?' + this.rel + ';') !== -1) {
+      if (Ensembl.hash.indexOf(';' + this.rel + 'Panel;') !== -1 || Ensembl.hash.indexOf('?' + this.rel + 'Panel;') !== -1) {
         toTrigger[this.rel] = this; // Ensures that only one matching link with same rel is triggered (two triggers would revert to closed state)
       }
     });
@@ -211,7 +211,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     if (!rel) {
       el.toggleClass('open closed').siblings('.toggleable').toggle();
     } else {
-      if (this.id === rel) {
+      if (this.id === rel + 'Panel') {
         $('.toggleable', this.el).toggle();
       } else {
         if (!this.elLk[rel]) {
