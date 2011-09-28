@@ -94,12 +94,15 @@ span.sequence { font-family: Courier New, Courier, monospace; }
 /*----------------------------------------------------------------------
  Links 
 ----------------------------------------------------------------------*/
-a         { color: [[PAGE_LINK]];    } /* neutral style for anchor target */
-a:visited { color: [[PAGE_VISITED]]; }
-a:hover   { color: [[PAGE_HOVER]];   }
-a:active  { color: [[PAGE_HOVER]];   }
-a.button  { background-color: [[TINT_BG]]; border: 1px outset [[TINT_BG]]; padding: 2px; font-weight: bold; text-decoration: none; }
-span.link { color: [[PAGE_LINK]]; cursor: pointer; text-decoration: underline; }
+a               { color: [[PAGE_LINK]];    } /* neutral style for anchor target */
+a:visited       { color: [[PAGE_VISITED]]; }
+a:hover         { color: [[PAGE_HOVER]];   }
+a:active        { color: [[PAGE_HOVER]];   }
+a.button        { background-color: [[TINT_BG]]; border: 1px outset [[TINT_BG]]; padding: 2px; font-weight: bold; text-decoration: none; }
+span.link       { color: [[PAGE_LINK]]; cursor: pointer; text-decoration: underline; }
+a.toggle        { color: [[PAGE_TEXT]]; background: url(/i/open2.gif) no-repeat right bottom; text-decoration: none; padding-right: 20px; outline: 0 none; }
+a.toggle.closed { background-image: url(/i/closed2.gif); }
+a.ajax_add      { background: none!important; }
 
 /*----------------------------------------------------------------------
   Tables

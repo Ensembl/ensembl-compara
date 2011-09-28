@@ -95,7 +95,6 @@ ul.no-bullet, ul.no-bullet li {list-style-image:none; list-style:none;}
 div.reorder_species ul li          { cursor: n-resize; }
 body.mac div.reorder_species ul li { cursor: ns-resize; }
 
-
-div.toggleable_table                   { margin: 5px 0; }
-div.toggleable_table h2                { float: left; padding: 5px 3px 0 0; }
-div.toggleable_table .toggle_button em { margin: 5px; }
+div.toggleable_table             { margin: 8px 0; clear: both; }
+div.toggleable_table h2          { float: left; padding-bottom: 10px; }
+div.toggleable_table h2 a.toggle { color: [[CONTRAST_HEADER]]; background-position: right 50%; }

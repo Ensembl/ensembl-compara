@@ -21,7 +21,7 @@
 #masthead ul.tabs li.active a,
 #masthead ul.tabs li.active span.dropdown { color: [[PAGE_TEXT]]; font-weight: bold; }
 #masthead ul.tabs span.dropdown a         { display: inline; }
-#masthead ul.tabs span.dropdown a.toggle  { cursor: pointer; padding: 0; font-size: 85%; }
+#masthead ul.tabs span.dropdown a.toggle  { cursor: pointer; padding: 0; font-size: 85%; background-image: none; }
 #masthead ul.tabs span.disabled           { padding: 3px 8px 2px; outline: 0; }
 #masthead ul.tabs span.disabled.toggle    { cursor: pointer; }
 #masthead div.dropdown                    { position: absolute; top: 21px; display: none; background-color: [[TINT_BG]]; border: 1px solid [[TINT_BORDER_DARK]]; padding-bottom: 5px; }
@@ -58,7 +58,6 @@ body.ie #masthead ul.tabs span.dropdown           { background: url(/i/tab_off_l
 body.ie #masthead ul.tabs li.active               { background-image: url(/i/tab_on_r.gif); }
 body.ie #masthead ul.tabs li.active a,
 body.ie #masthead ul.tabs li.active span.dropdown { background-image: url(/i/tab_on_l.gif); color: [[PAGE_TEXT]]; font-weight: bold; }
-body.ie #masthead ul.tabs span.dropdown a.toggle  { background-image: none; }
 
 body.ie67 #masthead                               { z-index: 9999; }
 body.ie67 #masthead .tabs_holder                  { z-index: -1; }
