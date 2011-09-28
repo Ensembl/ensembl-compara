@@ -17,7 +17,7 @@ Ensembl.DataTable = {
       var exportable = table.hasClass('exportable');
       var options    = panel.getOptions(table, noToggle, exportable);
       
-      $.fn.dataTableExt.oStdClasses.sWrapper = table.hasClass('toggle_table') ? 'toggleTable_wrapper' : 'dataTables_wrapper';
+      $.fn.dataTableExt.oStdClasses.sWrapper = table.hasClass('toggle_table') ? 'toggleable toggleTable_wrapper' : 'dataTables_wrapper';
       
       var dataTable = table.dataTable(options);
       var settings  = dataTable.fnSettings();
@@ -71,8 +71,12 @@ Ensembl.DataTable = {
         }
       },
       fnInitComplete: function () {
-        this.parent().width(this.outerWidth());
-        this.not(':visible').parent().hide(); // Hide the wrapper of already hidden tables
+        if (this.not(':visible').length) {
+          this.show(); // show table momentarily (not noticable in the browser) so that width is correct
+          this.parent().width(this.outerWidth()).hide(); // Hide the wrapper of already hidden table
+        } else {
+          this.parent().width(this.outerWidth());
+        }
       },
       fnDrawCallback: function (data) {
         $('.dataTables_info, .dataTables_paginate, .dataTables_bottom', data.nTableWrapper)[data._iDisplayLength === -1 ? 'hide' : 'show']();
