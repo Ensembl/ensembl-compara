@@ -52,17 +52,19 @@ sub render {
   my $align       = $options->{'align'}       || 'autocenter';
   my $table_id    = $options->{'id'} ? qq{ id="$options->{'id'}"} : '';
   my $data_table  = $options->{'data_table'};
+  my $toggleable  = $options->{'toggleable'};
   my %table_class = map { $_ => 1 } split ' ', $options->{'class'};
+  my $config;
   
   if ($table_class{'fixed_width'}) {
     $width = 'auto';
     $align = '';
   }
   
-  $table_class{$align} = 1 if $align;
-  $table_class{'ss'}   = 1;
-  
-  my $config;
+  $table_class{$align}         = 1 if $align;
+  $table_class{'toggle_table'} = 1 if $toggleable;
+  $table_class{'toggleable'}   = 1 if $toggleable && !$data_table;
+  $table_class{'ss'}           = 1;
   
   if ($data_table) {
     $table_class{'data_table'} = 1;
@@ -72,7 +74,7 @@ sub render {
   }
   
   my $class   = join ' ', keys %table_class;
-  my $wrapper = $width ne '100%' && $table_class{'autocenter'} ? 'autocenter_wrapper' : $data_table ? '' : undef;
+  my $wrapper = join ' ', grep $_, $width ne '100%' && $table_class{'autocenter'} ? 'autocenter_wrapper' : '', $toggleable && $options->{'id'} ? $options->{'id'} : '';
   my ($head, $body) = $self->process;
   my ($thead, $tbody);
   
@@ -104,7 +106,7 @@ sub render {
     $config
   };
   
-  if ($options->{'data_table'} && $options->{'exportable'} ne '0') {
+  if ($data_table && $options->{'exportable'} ne '0') {
     my $id       = $options->{'id'};
        $id       =~ s/[\W_]table//g;
     my $filename = join '-', grep $_, $id, $self->filename;
@@ -120,7 +122,7 @@ sub render {
   $table .= sprintf qq{<div class="other_tool"><p><a class="export" href="%s;_format=Excel" title="Download all tables as CSV">Download view as CSV</a></p></div>}, $self->export_url if $self->export_url;
   
   # A wrapper div is needed for data tables so that export and config forms can be found by checking the table's siblings
-  if (defined $wrapper) {
+  if ($data_table) {
     $wrapper = qq{ class="$wrapper"} if $wrapper; 
     $table   = qq{<div$wrapper>$table</div>};
   }
@@ -261,7 +263,9 @@ sub add_option {
   my $self = shift;
   my $key  = shift;
   
-  if (ref $self->{'options'}->{$key} eq 'HASH') {
+  if ($key eq 'class') {
+    $self->{'options'}->{'class'} .= ($self->{'options'}->{'class'} ? ' ' : '') . $_[0];
+  } elsif (ref $self->{'options'}->{$key} eq 'HASH') {
     $self->{'options'}->{$key} = { %{$self->{'options'}->{$key}}, %{$_[0]} };
   } elsif (ref $self->{'options'}->{$key} eq 'ARRAY') {
     push @{$self->{'options'}->{$key}}, @_;

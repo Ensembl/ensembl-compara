@@ -638,10 +638,10 @@ sub transcript_table {
       $description .= qq( <span class="small">@{[ $link ]}</span>) if $acc && $acc ne 'content';
     }
     
-    $description = qq(<dl class="summary">
+    $description = qq{
       <dt>Description</dt>
       <dd>$description</dd>
-    </dl>);
+    };
   }
   
   my $seq_region_name  = $object->seq_region_name;
@@ -720,13 +720,10 @@ sub transcript_table {
   }
   
   my $html = qq{
-    $description
     <dl class="summary">
+      $description
       <dt>Location</dt>
-      <dd>
-        $location_html
-      </dd>
-    </dl>
+      <dd>$location_html</dd>
   };
   
   my $gene = $object->gene;
@@ -763,7 +760,7 @@ sub transcript_table {
       $label = qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a> - $label};
     }
     
-    my $hide    = $hub->get_cookies('ENSEMBL_transcripts') eq 'close';
+    my $hide    = $hub->get_cookies('toggle_transcripts_table') eq 'closed';
     my @columns = (
        { key => 'name',       sort => 'string',  title => 'Name'          },
        { key => 'transcript', sort => 'html',    title => 'Transcript ID' },
@@ -828,25 +825,24 @@ sub transcript_table {
     my $table = $self->new_table(\@columns, \@rows, {
       data_table        => 1,
       data_table_config => { asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' } },
-      class             => 'toggle_table fixed_width',
+      toggleable        => 1,
+      class             => 'fixed_width' . ($hide ? ' hide' : ''),
       id                => 'transcripts_table',
-      style             => $hide ? 'display:none' : '',
       exportable        => 0
     });
     
     $html .= sprintf(qq{
-      <dl class="summary">
-        <dt id="transcripts" class="toggle_button" title="Click to toggle the transcript table"><span>%s</span><em class="%s"></em></dt>
+        <dt><a rel="transcripts_table" class="toggle set_cookie %s" href="#" title="Click to toggle the transcript table">%s</a></dt>
         <dd>%s</dd>
-        <dd class="toggle_info"%s>Click the plus to show the transcript table</dd>
       </dl>
       %s}, 
-      $page_type eq 'gene' ? 'Transcripts' : 'Gene',
       $hide ? 'closed' : 'open',
+      $page_type eq 'gene' ? 'Transcripts' : 'Gene',
       $label,
-      $hide ? '' : ' style="display:none"',
       $table->render
     );
+  } else {
+    $html .= '</dl>';
   }
   
   return qq{<div class="summary_panel">$html</div>};
@@ -939,20 +935,32 @@ sub structrual_variation_table {
 }
 
 sub toggleable_table {
-  my ($self, $title, $id, $table, $open) = @_;
+  my ($self, $title, $id, $table, $open, $extra_html) = @_;
   my @state = $open ? qw(show open) : qw(hide closed);
   
-  $table->add_option('data_table', "toggle_table $state[0]");
+  $table->add_option('class', $state[0]);
+  $table->add_option('toggleable', 1);
   $table->add_option('id', "${id}_table");
   
   return sprintf('
     <div class="toggleable_table">
-      <h2>%s</h2><span class="toggle_button" id="%s"><em class="%s"></em></span>
-      <p class="invisible">.</p>
+      <a rel="%s_table" class="toggle %s" href="#%s_table"><h2>%s</h2></a>
+      %s
       %s
     </div>',
-    $title, $id, $state[1], $table->render
+    $id, $state[1], $id, $title, $extra_html, $table->render
   ); 
+}
+
+sub ajax_add {
+  my ($self, $url, $rel, $open) = @_;
+  
+  return sprintf('
+    <a href="%s" class="ajax_add toggle %s" rel="%s_table">
+      <span class="closed">Show</span><span class="open">Hide</span>
+      <input type="hidden" class="url" value="%s" />
+    </a>', $url, $open ? 'open' : 'closed', $rel, $url
+  );
 }
 
 # Simple subroutine to dump a formatted "warn" block to the error logs - useful when debugging complex

@@ -2,19 +2,15 @@
 
 Ensembl.Panel.Content = Ensembl.Panel.extend({
   init: function () {
-    var panel = this;
-    
     this.base();
     
     this.xhr = false;
     
     var fnEls = {
-      ajaxLoad:    $('.ajax', this.el),
-      hideHints:   $('.hint', this.el),
-      toggleTable: $('.toggle_table', this.el),
-      toggleList:  $('a.collapsible', this.el),
-      glossary:    $('.glossary_mouseover', this.el),
-      dataTable:   $('table.data_table', this.el)
+      ajaxLoad:  $('.ajax', this.el),
+      hideHints: $('.hint', this.el),
+      glossary:  $('.glossary_mouseover', this.el),
+      dataTable: $('table.data_table', this.el)
     };
     
     if (this.el.hasClass('ajax')) {
@@ -46,29 +42,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       });
     }
     
-    $('a.toggle[rel], .ajax_add', this.el).bind('click', function (e) {
-      if ($(this).hasClass('ajax_add')) {
-        var url = $('input.url', this).val();
-        
-        if (url) {
-          if (panel.elLk[this.rel]) {
-            panel.toggleContent(this.rel);
-            window.location.hash = panel.elLk[this.rel][0].id;
-          } else {
-            $(this).toggleClass('open closed');
-            panel.elLk[this.rel] = panel.addContent(url, this.rel);
-          }
-        }
-      } else {
-        panel.toggleContent(this.rel);
-      }
-      
-      return false;
-    }).filter('.closed').each(function () {
-      if (Ensembl.hash.indexOf(';' + this.rel + ';') !== -1 || Ensembl.hash.indexOf('?' + this.rel + ';') !== -1) {
-        $(this).trigger('click');
-      }
-    });
+    this.toggleable();
   },
   
   ajaxLoad: function () {
@@ -199,18 +173,62 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     return newContent;
   },
   
-  toggleContent: function (rel) {
-    if (this.id === rel) {
-      $('.toggleable', this.el).toggle();
-    } else {
-      if (!this.elLk[rel]) {
-        this.elLk[rel] = $('.' + rel, this.el);
+  toggleable: function () {
+    var panel     = this;
+    var toTrigger = {};
+    
+    $('.toggle, .ajax_add', this.el).bind('click', function () {
+      Ensembl.EventManager.trigger('toggleContent', this.rel);
+      
+      if ($(this).hasClass('ajax_add')) {
+        var url = $('input.url', this).val();
+        
+        if (url) {
+          if (panel.elLk[this.rel]) {
+            panel.toggleContent($(this));
+            window.location.hash = panel.elLk[this.rel][0].id;
+          } else {
+            panel.elLk[this.rel] = panel.addContent(url, this.rel);
+          }
+        }
+      } else {
+        panel.toggleContent($(this));
       }
       
-      $('.toggleable', this.elLk[rel]).toggle();
+      return false;
+    }).filter('.closed[rel]').each(function () {
+      if (Ensembl.hash.indexOf(';' + this.rel + ';') !== -1 || Ensembl.hash.indexOf('?' + this.rel + ';') !== -1) {
+        toTrigger[this.rel] = this; // Ensures that only one matching link with same rel is triggered (two triggers would revert to closed state)
+      }
+    });
+    
+    $.each(toTrigger, function () { $(this).trigger('click'); });
+  },
+  
+  toggleContent: function (el) {
+    var rel = el.attr('rel');
+    
+    if (!rel) {
+      el.toggleClass('open closed').siblings('.toggleable').toggle();
+    } else {
+      if (this.id === rel) {
+        $('.toggleable', this.el).toggle();
+      } else {
+        if (!this.elLk[rel]) {
+          this.elLk[rel] = $('.' + rel, this.el);
+        }
+        
+        if (!$('.toggleable', this.elLk[rel]).toggle().length) {
+          el.siblings('.toggleable').toggle();
+        }
+      }
+      
+      if (el.hasClass('set_cookie')) {
+        Ensembl.cookie.set('toggle_' + rel, el.hasClass('open') ? 'open' : 'closed');
+      }
     }
     
-    Ensembl.EventManager.trigger('toggleContent', rel);
+    el = null;
   },
   
   hashChange: function () {
@@ -241,23 +259,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         
         Ensembl.cookie.set('ENSEMBL_HINTS', tmp.join(':'));
       }).prependTo(this.firstChild);
-    });
-  },
-  
-  toggleTable: function () {
-    var panel = this;
-    
-    $('.toggle_button', this.el).bind('click', function () {
-      var visible = panel.elLk.toggleTable.filter('#' + this.id + '_table').toggle().parent('.toggleTable_wrapper').toggle().end().is(':visible');
-      $(this).siblings('.toggle_info').toggle().end().children('em').toggleClass('open closed');
-      Ensembl.cookie.set('ENSEMBL_' + this.id, visible ? 'open' : 'close');
-    }).children('em').show();
-  },
-  
-  toggleList: function () {
-    this.elLk.toggleList.bind('click', function () {
-      $(this).toggleClass('open').siblings('ul.shut').toggle();
-      return false;
     });
   },
   
