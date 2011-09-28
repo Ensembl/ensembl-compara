@@ -4,6 +4,8 @@ package EnsEMBL::Web::Component::Variation::HighLD;
 
 use strict;
 
+use HTML::Entities qw(encode_entities);
+
 use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
 
 use base qw(EnsEMBL::Web::Component::Variation);
@@ -28,117 +30,85 @@ sub content {
   return unless $self->builder->object('Location') && $species_defs->databases->{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'};
   
   my $selected_pop = $hub->param('pop_id');
-  my $html;
   
-  if(defined $selected_pop) {
-    $html = $self->linked_var_table($selected_pop);
-  }
-  
-  else {
-    $html = $self->summary_table();
-  }
-  
-  return $html;
+  return $selected_pop ? $self->linked_var_table($selected_pop) : $self->summary_table;
 }
 
 sub summary_table {
-  my $self      = shift;
-  my $object    = $self->object; 
-  my $variation = $object->Obj;
-  my $v         = $variation->name;
-  my $hub       = $self->hub;
-  
-  my $available_pops = $self->ld_populations;
-  
-  my @pops = @{$variation->adaptor->db->get_PopulationAdaptor->fetch_all_LD_Populations};
-  
-  # create table
-  my $table  = $self->new_table([], [], { data_table => 1, sorting => ['name asc'] });
-  
-  # add header row
-  $table->add_columns(
+  my $self               = shift;
+  my $object             = $self->object; 
+  my $variation          = $object->Obj;
+  my $v                  = $variation->name;
+  my $hub                = $self->hub;
+  my $available_pops     = $self->ld_populations;
+  my @pops               = @{$variation->adaptor->db->get_PopulationAdaptor->fetch_all_LD_Populations};
+  my $table_with_no_rows = 0;
+  my $table              = $self->new_table([
     { key => 'name',   title => 'Population',              sort => 'html',   align => 'left'   },
     { key => 'desc',   title => 'Description',             sort => 'string', align => 'left'   },
     { key => 'tag',    title => 'Tag SNP',                 sort => 'string', align => 'center' },
     { key => 'table',  title => 'Linked variations table', sort => 'none',   align => 'center' },
     { key => 'plot',   title => 'LD plot (image)',         sort => 'none',   align => 'center' },
     { key => 'export', title => 'LD plot (table)',         sort => 'none',   align => 'center' },
-  );
+  ], [], { data_table => 1, sorting => [ 'name asc' ] });
   
-  my $tables_with_no_rows;
   
-  # add rows
-  foreach my $pop(@pops) {
-    my $row;
-    
-    # name and description
-    $row->{name} = $self->hub->get_ExtURL_link($pop->name, 'DBSNPPOP', $pop->get_all_synonyms("dbSNP")->[0]);
-    
+  foreach my $pop (@pops) {
     my $description = $pop->description;
     
-    if(length($description) > 30) {
-      my $full_desc = $description;
-      $full_desc =~ s/\<.*?\>//g;
+    if (length $description > 30) {
+      my $full_desc = $self->strip_HTML($description);
       
-      while($description =~ m/^.{30}.*?(\s|\,|\.)/g) {
-        $description =
-          '<span title="'.$full_desc.'">'.
-          substr($description, 0, (pos $description) - 1).'...(more)'.
-          '</span>';
+      while ($description =~ m/^.{30}.*?(\s|\,|\.)/g) {
+        $description = sprintf '<span title="%s">%s...(more)</span>', $full_desc, substr($description, 0, (pos $description) - 1);
         last;
       }
     }
     
-    $row->{desc} = $description;
+    my $row = {
+      name => $self->hub->get_ExtURL_link($pop->name, 'DBSNPPOP', $pop->get_all_synonyms('dbSNP')->[0]),
+      desc => $description,
+      tag  => $object->tagged_snp->{$pop->name} ? 'Yes' : 'No',
+    };
     
-    # tag
-    $row->{tag} = $object->tagged_snp->{$pop->name} ? 'Yes' : 'No';
-    
-    if($available_pops->{$pop->name}) {
+    if ($available_pops->{$pop->name}) {
       # plot
       my $url = $hub->url({
-        type => 'Location',
+        type   => 'Location',
         action => 'LD',
-        r => $object->ld_location,
-        v => $object->name,
-        vf => $hub->param('vf'),
-        pop1 => $pop->name ,
-        focus => 'variation'
+        r      => $object->ld_location,
+        v      => $object->name,
+        vf     => $hub->param('vf'),
+        pop1   => $pop->name ,
+        focus  => 'variation'
       });
       
-      $row->{plot} = qq{<a href="$url">Show</a>};
+      $row->{'plot'} = qq{<a href="$url">Show</a>};
       
-      # table
-      my $id = $pop->dbID;
-      $url = $self->ajax_url(undef, { pop_id => $id, update_panel => 1 });
-        
-      $row->{table} = qq{
-        <a href="$url" class="ajax_add toggle closed" rel="$id">
-          <span class="closed">Show</span><span class="open">Hide</span>
-          <input type="hidden" class="url" value="$url" />
-        </a>
-      };
+      my $id  = $pop->dbID;
+      
+      $row->{'table'} = $self->ajax_add($self->ajax_url(undef, { pop_id => $id, update_panel => 1 }), $id);
       
       # export table
       $url = $hub->url({
-        type => 'Export/Output',
-        action => 'Location',
-        r => $object->ld_location,
-        v => $object->name,
-        vf => $hub->param('vf'),
-        pop1 => $pop->name ,
-        focus => 'variation',
+        type    => 'Export/Output',
+        action  => 'Location',
+        r       => $object->ld_location,
+        v       => $object->name,
+        vf      => $hub->param('vf'),
+        pop1    => $pop->name ,
+        focus   => 'variation',
         _format => 'HTML',
-        output => 'ld',
+        output  => 'ld',
       });
       
-      $row->{export} = qq{<a href="$url">Show</a>};
-    }
-    else {
-      $row->{plot}   = '-';
-      $row->{table}  = '-';
-      $row->{export} = '-';
-      $tables_with_no_rows = 1;
+      $row->{'export'} = qq{<a href="$url">Show</a>};
+    } else {
+      $row->{'plot'}   = '-';
+      $row->{'table'}  = '-';
+      $row->{'export'} = '-';
+      
+      $table_with_no_rows = 1;
     }
     
     $table->add_row($row);
@@ -146,15 +116,17 @@ sub summary_table {
   
   my $html = '<h2>Links to linkage disequilibrium data by population</h2>';
   
-  $html .= $self->_hint("HighLD", "Linked variation information", qq{
-    A variation may have no LD data in a given population for the following reasons:
-    <ul>
-      <li>Linked variations are being filtered out by page configuration</li>
-      <li>Variation $v has a minor allele frequency close or equal to 0</li>
-      <li>Variation $v does not have enough genotypes to calculate LD values</li>
-      <li>Estimated r<sup>2</sup> values are below 0.05 and have been filtered out</li>
-    </ul>
-  }, '80%') if $tables_with_no_rows;
+  if ($table_with_no_rows) {
+    $html .= $self->_hint('HighLD', 'Linked variation information', qq{
+      A variation may have no LD data in a given population for the following reasons:
+      <ul>
+        <li>Linked variations are being filtered out by page configuration</li>
+        <li>Variation $v has a minor allele frequency close or equal to 0</li>
+        <li>Variation $v does not have enough genotypes to calculate LD values</li>
+        <li>Estimated r<sup>2</sup> values are below 0.05 and have been filtered out</li>
+      </ul>
+    }, '80%');
+  }
   
   $html .= $table->render;
   
@@ -163,13 +135,11 @@ sub summary_table {
   
 sub linked_var_table {
   my ($self, $selected_pop) = @_;
-  
   my $object       = $self->object; 
   my $variation    = $object->Obj;
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
-  
-  my $pop = $variation->adaptor->db->get_PopulationAdaptor->fetch_by_dbID($selected_pop);
+  my $pop          = $variation->adaptor->db->get_PopulationAdaptor->fetch_by_dbID($selected_pop);
   
   ## set path information for LD calculations  
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
@@ -186,7 +156,7 @@ sub linked_var_table {
   my $only_phenotypes = $hub->param('only_phenotypes') eq 'yes';
   my @colour_scale    = $hub->colourmap->build_linear_gradient(40, '#0000FF', '#770088', '#BB0044', 'red'); # define a colour scale for p-values
   my %mappings        = %{$object->variation_feature_mapping};  # first determine correct SNP location 
-  my ($vf, $loc, $html);
+  my ($vf, $loc);
   
   if (keys %mappings == 1) {
     ($loc) = values %mappings;
@@ -202,19 +172,14 @@ sub linked_var_table {
     }
   }
   
-  my $vf_dbID    = $vf->dbID;
-  my $vf_start   = $vf->seq_region_start;
-  my $vf_end     = $vf->seq_region_end;
-  my $temp_slice = $vf->feature_Slice->expand($max_distance, $max_distance);
-  
-  my $tables_with_no_rows;
-  
-  my $pop_id   = $pop->dbID;
-  my $pop_name = $pop->name;
-  my $table    = $self->new_table([], [], { data_table => 1 });
-  
-  # add header row
-  $table->add_columns(
+  my $vf_dbID             = $vf->dbID;
+  my $vf_start            = $vf->seq_region_start;
+  my $vf_end              = $vf->seq_region_end;
+  my $temp_slice          = $vf->feature_Slice->expand($max_distance, $max_distance);
+  my $pop_id              = $pop->dbID;
+  my $pop_name            = $pop->name;
+  my $tables_with_no_rows = 0;
+  my $table               = $self->new_table([
     { key => 'variation',   title => 'Variation',               align => 'center', sort => 'html'                 },
     { key => 'location',    title => 'Location',                align => 'center', sort => 'position_html'        },
     { key => 'distance',    title => 'Distance (bp)',           align => 'center', sort => 'numeric'              },
@@ -223,24 +188,24 @@ sub linked_var_table {
     { key => 'tag',         title => 'Tag SNP',                 align => 'center', sort => 'string'               },
     { key => 'genes',       title => 'Located in gene(s)',      align => 'center', sort => 'html'                 },
     { key => 'annotations', title => 'Associated phenotype(s)', align => 'center', sort => 'html', width => '30%' },
-  );
+  ], [], { data_table => 1 });
   
   # do some filtering
   my @old_values = @{$ldca->fetch_by_Slice($temp_slice, $pop)->get_all_ld_values};
-  my @new_values;
-  my @other_vfs;
+  my (@new_values, @other_vfs);
   
   foreach my $ld (@old_values) {
     next unless $ld->{'variation1'}->dbID == $vf_dbID || $ld->{'variation2'}->dbID == $vf_dbID;
     next unless $ld->{'sample_id'} == $pop_id;
-    next unless $ld->{'r2'}      >= $min_r2;
-    next unless $ld->{'d_prime'} >= $min_d_prime;
+    next unless $ld->{'r2'}        >= $min_r2;
+    next unless $ld->{'d_prime'}   >= $min_d_prime;
     
     my $other_vf = $ld->{'variation1'}->dbID == $vf_dbID ? $ld->{'variation2'} : $ld->{'variation1'};
+    
     $ld->{'other_vf'} = $other_vf;
     
     push @new_values, $ld;
-    push @other_vfs, $other_vf;
+    push @other_vfs,  $other_vf;
   }
   
   if (@new_values) {
@@ -261,19 +226,19 @@ sub linked_var_table {
     foreach my $ld (@sorted) {
       next if $only_phenotypes && !defined $ld->{'annotations'};
       
-      my $ld_vf = $ld->{'other_vf'};
+      my $ld_vf          = $ld->{'other_vf'};
       my $variation_name = $ld_vf->variation_name;
       my $ld_vf_dbID     = $ld_vf->dbID;
       
       # switch start and end to avoid faff
       my ($start, $end) = ($ld_vf->seq_region_start, $ld_vf->seq_region_end);
-      ($start, $end)    = ($end, $start) if $start > $end;
+         ($start, $end) = ($end, $start) if $start > $end;
       
       my $va_string;
       
       # check if any VAs for this variation
       if ($ld->{'annotations'}) {
-        $va_string .= '<table style="border:none; width:100%; padding:0px; margin:0px;">';
+        $va_string .= '<table style="border:none;width:100%;padding:0;margin:0">';
         
         # iterate through all VAs
         foreach my $va (values %{$ld->{'annotations'}}) {
@@ -290,18 +255,14 @@ sub linked_var_table {
             vf             => $ld_vf_dbID,
           });
           
-          $va_string .=
-            '<tr><td style="padding:0px; margin:0px;"><a href="'.
-            $va_url.'">'.
-            ($va->phenotype_name || $phenotype_description).
-            '</a></td><td style="padding:0px; margin:0px;">';
+          $va_string .= sprintf '<tr><td style="padding:0;margin:0"><a href="%s">%s</a></td><td style="padding:0;margin:;">', $va_url, $va->phenotype_name || $phenotype_description;
           
           # p value part
           if (defined $p_value) {
             my $p_scaled = sprintf '%.0f', (-log($p_value)/log(10)); # scale the p-value to an integer that might fall in @colour_scale
-            my $colour  = $colour_scale[$p_scaled > $#colour_scale ? $#colour_scale : $p_scaled]; # set a colour
+            my $colour   = $colour_scale[$p_scaled > $#colour_scale ? $#colour_scale : $p_scaled]; # set a colour
             
-            $va_string .= sprintf '<span style="float:right;color:#%s;white-space:nowrap;">(%s)</span>', $colour, $p_value;
+            $va_string .= sprintf '<span style="float:right;color:#%s;white-space:nowrap">(%s)</span>', $colour, $p_value;
           }
             
           $va_string .= '</td></tr>';
@@ -357,16 +318,10 @@ sub linked_var_table {
       });
     }
   }
-    
-  $html = qq{
-    <h2 style="float:left"><a href="#" class="toggle open" rel="$pop_id">Variations linked to $v in $pop_name</a></h2>
-    <span style="float:right;"><a href="#$self->{'id'}_top">[back to top]</a></span>
-    <p class="invisible">.</p>
-  };
   
-  $html .= sprintf '<div class="toggleable">%s</div>', ($table->has_rows ? $table->render : '<h3>No variations found</h3><br /><br />');
-  
-  return $html;
+  return $table->has_rows ?
+    $self->toggleable_table("Variations linked to $v in $pop_name", $pop_id, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>}) :
+    '<h3>No variations found</h3><br /><br />';
 }
 
 sub ld_populations {
@@ -375,9 +330,9 @@ sub ld_populations {
   ### with LD info for this SNP
   ### Returns  hashref
 
-  my $self      = shift;
-  my $object    = $self->object;
-  my $pop_ids   = $object->ld_pops_for_snp;
+  my $self    = shift;
+  my $object  = $self->object;
+  my $pop_ids = $object->ld_pops_for_snp;
   
   return {} unless @$pop_ids;
 

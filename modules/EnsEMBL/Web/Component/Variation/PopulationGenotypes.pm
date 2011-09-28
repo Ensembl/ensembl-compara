@@ -23,49 +23,27 @@ sub content {
   
   return $self->_info('Variation: ' . $object->name, '<p>No genotypes for this variation</p>') unless %$freq_data;
   
-  my $html;
   my $table_array = $self->format_frequencies($freq_data);
+  my $html        = '<a id="IndividualGenotypesPanel_top"></a>';
   
-  $html .= qq{<a id="IndividualGenotypesPanel_top"></a>};
-  
-  # count how many tables there are
-  my $count = scalar @{$table_array};
-  
-  # only one table to render (non-human or if no 1KG data)
-  if($count == 1) {
-    $html .= $table_array->[0]->[1]->render;
-  }
-  
-  # more than one table
-  else {
+  if (scalar @$table_array == 1) {
+    $html .= $table_array->[0]->[1]->render; # only one table to render (non-human or if no 1KG data)
+  } else {
     my %table_order = (
-      '1000'   => 1,
-      'HapMap' => 2,
-      'Other'  => 3,
-      'Failed' => 4,
+      1000   => 1,
+      HapMap => 2,
+      Other  => 3,
+      Failed => 4,
     );
     
-    foreach my $sub_array(sort {$table_order{(split /\s+/, $a->[0])[0]} <=> $table_order{(split /\s+/, $b->[0])[0]}} @{$table_array}) {
-      
-      my ($title, $table) = @{$sub_array};
+    foreach (sort {$table_order{(split /\s+/, $a->[0])[0]} <=> $table_order{(split /\s+/, $b->[0])[0]}} @$table_array) {
+      my ($title, $table) = @$_;
       
       # hide "other" and "failed" table
       if ($title =~ /other|failed/i) {
-        my $id = ($title =~ /other/i ? 'other_table' : 'failed_table');
-        $table->add_option('data_table', 'toggle_table hide');
-        $table->add_option('id', $id.'_table');
-        
-        $html .= sprintf('
-          <div class="toggle_button" id="%s">
-            <h2 style="float:left">%s</h2>
-            <em class="closed" style="margin:3px"></em>
-            <p class="invisible">.</p>
-          </div>
-          %s
-        ', $id, $title, $table->render);
-      }
-      
-      else {     
+        my $id = $title =~ /other/i ? 'other' : 'failed';
+        $html .= $self->toggleable_table($title, $id, $table);
+      } else {     
         $html .= "<h2>$title</h2>" . $table->render;
       }
     }
@@ -78,122 +56,85 @@ sub format_frequencies {
   my ($self, $freq_data, $tg_flag) = @_;
   my $hub        = $self->hub;
   my $is_somatic = $self->object->Obj->is_somatic;
-  my %columns;
-  my @rows;
-  
-  my $table_array;
+  my (%columns, @rows, @table_array);
   
   my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'pop asc', 'submitter asc' ] });
   
   # split off 1000 genomes, HapMap and failed if present
-  if(!defined($tg_flag)) {
+  if (!$tg_flag) {
     my ($tg_data, $hm_data, $fv_data);
     
-    foreach my $pop_id(keys %$freq_data) {
-      foreach my $ssid(keys %{$freq_data->{$pop_id}}) {
-        if($freq_data->{$pop_id}{$ssid}{failed_desc}) {
-          $fv_data->{$pop_id}{$ssid} = $freq_data->{$pop_id}{$ssid};
-          $fv_data->{$pop_id}{$ssid}{failed_desc} =~ s/Variation submission/$& $ssid/;
-          delete $freq_data->{$pop_id}{$ssid};
-        }
-        elsif($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'} =~ /^1000genomes\:.*/i) {
-          $tg_data->{$pop_id}{$ssid} = $freq_data->{$pop_id}{$ssid};
-          delete $freq_data->{$pop_id}{$ssid};
-        }
-        elsif($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'} =~ /^cshl\-hapmap/i) {
-          $hm_data->{$pop_id}{$ssid} = $freq_data->{$pop_id}{$ssid};
-          delete $freq_data->{$pop_id}{$ssid};
+    foreach my $pop_id (keys %$freq_data) {
+      foreach my $ssid (keys %{$freq_data->{$pop_id}}) {
+        my $name = $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'};
+        
+        if ($freq_data->{$pop_id}{$ssid}{'failed_desc'}) {
+          $fv_data->{$pop_id}{$ssid}                = delete $freq_data->{$pop_id}{$ssid};
+          $fv_data->{$pop_id}{$ssid}{'failed_desc'} =~ s/Variation submission/$& $ssid/;
+        } elsif ($name =~ /^1000genomes\:.*/i) {
+          $tg_data->{$pop_id}{$ssid} = delete $freq_data->{$pop_id}{$ssid};
+        } elsif ($name =~ /^cshl\-hapmap/i) {
+          $hm_data->{$pop_id}{$ssid} = delete $freq_data->{$pop_id}{$ssid};
         }
       }
     }
     
     # recurse this method with just the tg_data and a flag to indicate it
-    push @{$table_array},  @{$self->format_frequencies($tg_data, '1000 genomes')} if $tg_data;
-    push @{$table_array},  @{$self->format_frequencies($hm_data, 'HapMap')} if $hm_data;
-    push @{$table_array},  @{$self->format_frequencies($fv_data, 'Failed data')} if $fv_data;
+    push @table_array,  @{$self->format_frequencies($tg_data, '1000 genomes')} if $tg_data;
+    push @table_array,  @{$self->format_frequencies($hm_data, 'HapMap')}       if $hm_data;
+    push @table_array,  @{$self->format_frequencies($fv_data, 'Failed data')}  if $fv_data;
   }
-
+    
   foreach my $pop_id (keys %$freq_data) {
     foreach my $ssid (keys %{$freq_data->{$pop_id}}) {
+      my $data = $freq_data->{$pop_id}{$ssid};
       my %pop_row;
       
-      # SSID + Submitter  -----------------------------------------
-      if (defined($freq_data->{$pop_id}{$ssid}{'ssid'})) {
-        my $submitter         = $freq_data->{$pop_id}{$ssid}{'submitter'};
-        $pop_row{'ssid'}      = $hub->get_ExtURL_link($freq_data->{$pop_id}{$ssid}{'ssid'}, 'DBSNPSS', $freq_data->{$pop_id}{$ssid}{'ssid'}) unless $ssid eq 'ss0';
-        $pop_row{'submitter'} = $hub->get_ExtURL_link($submitter, 'DBSNPSSID', $submitter);
+      # SSID + Submitter
+      if (defined $data->{'ssid'}) {
+        $pop_row{'ssid'}      = $hub->get_ExtURL_link($data->{'ssid'}, 'DBSNPSS', $data->{'ssid'}) unless $ssid eq 'ss0';
+        $pop_row{'submitter'} = $hub->get_ExtURL_link($data->{'submitter'}, 'DBSNPSSID', $data->{'submitter'});
       }  
       
-      # Freqs alleles ---------------------------------------------
-      my @allele_freq = @{$freq_data->{$pop_id}{$ssid}{'AlleleFrequency'}};
+      # Freqs alleles
+      my @allele_freq = @{$data->{'AlleleFrequency'}};
       
-      foreach my $gt (@{$freq_data->{$pop_id}{$ssid}{'Alleles'}}) {
+      foreach my $gt (@{$data->{'Alleles'}}) {
         next unless $gt =~ /(\w|\-)+/;
         
-        my $allele_count = shift @{$freq_data->{$pop_id}{$ssid}{'AlleleCount'}} || undef;
-        $pop_row{"Allele count"}{$gt} = $allele_count.' <strong>('.$gt.')</strong>' if defined $allele_count;
+        my $allele_count = shift @{$data->{'AlleleCount'}} || undef;
         
-        my $freq = $self->format_number(shift @allele_freq);
-        $pop_row{"Alleles&nbsp;<br />$gt"} = $freq;
+        $pop_row{'Allele count'}{$gt}      = "$allele_count <strong>($gt)</strong>" if defined $allele_count;
+        $pop_row{"Alleles&nbsp;<br />$gt"} = $self->format_number(shift @allele_freq);
       }
       
-      $pop_row{"Allele count"} = join " / ", sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{"Allele count"}} if $pop_row{"Allele count"};
+      $pop_row{'Allele count'} = join ' / ', sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{'Allele count'}} if $pop_row{'Allele count'};
       
-      # Freqs genotypes ---------------------------------------------
-      my @genotype_freq = @{$freq_data->{$pop_id}{$ssid}{'GenotypeFrequency'} || []};
+      # Freqs genotypes
+      my @genotype_freq = @{$data->{'GenotypeFrequency'} || []};
       
-      foreach my $gt (@{$freq_data->{$pop_id}{$ssid}{'Genotypes'}}) {
-        my $freq = $self->format_number(shift @genotype_freq);
-        $pop_row{"Genotypes&nbsp;<br />$gt"} = $freq;
+      foreach my $gt (@{$data->{'Genotypes'}}) {
+        my $genotype_count = shift @{$data->{'GenotypeCount'}} || undef;
         
-        my $allele_count = shift @{$freq_data->{$pop_id}{$ssid}{'GenotypeCount'}} || undef;
-        $pop_row{"Genotype count"}{$gt} = $allele_count.' <strong>('.$gt.')</strong>' if defined $allele_count;
+        $pop_row{'Genotype count'}{$gt}      = "$genotype_count <strong>($gt)</strong>" if defined $genotype_count;
+        $pop_row{"Genotypes&nbsp;<br />$gt"} = $self->format_number(shift @genotype_freq);
       }
       
-      $pop_row{"Genotype count"} = join " / ", sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{"Genotype count"}} if $pop_row{"Genotype count"};
-      
-      
-      # Add a name, size and description if it exists ---------------------------
-      $pop_row{'pop'} =
-        $self->pop_url(
-          $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'},
-          $freq_data->{$pop_id}{$ssid}{'pop_info'}{'PopLink'}
-        );
-        #' ('.($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Size'} || '-').')';
-        
-      $pop_row{'Description'} = $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Description'} if $is_somatic;
-      
-      $pop_row{'failed'} = $freq_data->{$pop_id}{$ssid}{failed_desc} if $tg_flag =~ /failed/i;
-      
-      # Super and sub populations ----------------------------------------------
-      my $super_string = $self->sort_extra_pops($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Super-Population'});
-      $pop_row{'Super-Population'} = $super_string;
-
-      my $sub_string = $self->sort_extra_pops($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Sub-Population'});
-      $pop_row{'Sub-Population'} = $sub_string;
-      
-      my $url = $hub->url('Component', {
-        action       => 'Web',
-        function     => 'IndividualGenotypes',
-        pop          => $pop_id,
-        update_panel => 1
-      });
-      
-      my $view_html = qq{
-        <a href="$url" class="ajax_add toggle closed" rel="$pop_id">
-          <span class="closed">Show</span><span class="open">Hide</span>
-          <input type="hidden" class="url" value="$url" />
-        </a>
-      };
-      
-      $pop_row{'detail'} = $view_html;
+      $pop_row{'Genotype count'}   = join ' / ', sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{'Genotype count'}} if $pop_row{'Genotype count'};
+      $pop_row{'pop'}              = $self->pop_url($data->{'pop_info'}{'Name'}, $data->{'pop_info'}{'PopLink'});
+      $pop_row{'Description'}      = $data->{'pop_info'}{'Description'} if $is_somatic;
+      $pop_row{'failed'}           = $data->{'failed_desc'}             if $tg_flag =~ /failed/i;
+      $pop_row{'Super-Population'} = $self->sort_extra_pops($data->{'pop_info'}{'Super-Population'});
+      $pop_row{'Sub-Population'}   = $self->sort_extra_pops($data->{'pop_info'}{'Sub-Population'});
+      $pop_row{'detail'}           = $self->ajax_add($self->ajax_url(undef, { function => 'IndividualGenotypes', pop => $pop_id, update_panel => 1 }), $pop_id);
 
       push @rows, \%pop_row;
-      map { $columns{$_} = 1 } grep $pop_row{$_}, keys %pop_row;
+      
+      $columns{$_} = 1 for grep $pop_row{$_}, keys %pop_row;
     }
   }
   
- # Format table columns ------------------------------------------------------
+  # Format table columns
   my @header_row;
   
   foreach my $col (sort { $b cmp $a } keys %columns) {
@@ -206,35 +147,19 @@ sub format_frequencies {
     unshift @header_row, { key => 'ssid',      align => 'left', title => 'ssID',      sort => 'string' };
   }
   
-  if (exists $columns{'Description'}) {
-    unshift @header_row, { key => 'Description', align => 'left', title => 'Description', sort => 'none' };
-  }
-  
-  unshift @header_row, { key => 'pop', align =>'left', title => ($is_somatic ? 'Sample' : 'Population'), sort => 'html' };
-  
-  if (exists $columns{'Allele count'}) {
-    push @header_row, { key => 'Allele count', align => 'left', title => 'Allele count', sort => 'none' };
-  }
-  
-  if (exists $columns{'Genotype count'}) {
-    push @header_row, { key => 'Genotype count', align => 'left', title => 'Genotype count', sort => 'none' };
-  }
-  
-  if($self->object->counts->{'individuals'}) {
-    push @header_row, { key => 'detail', align => 'left', title => 'Genotype detail', sort => 'none'};
-  }
-  
-  if($columns{'failed'}) {
-    push @header_row, { key => 'failed', align => 'left', title => 'Comment', sort => 'string', width => '25%'};
-  }
+  unshift @header_row, { key => 'Description',    align => 'left', title => 'Description',                           sort => 'none'   } if exists $columns{'Description'};
+  unshift @header_row, { key => 'pop',            align => 'left', title => ($is_somatic ? 'Sample' : 'Population'), sort => 'html'   };
+  push    @header_row, { key => 'Allele count',   align => 'left', title => 'Allele count',                          sort => 'none'   } if exists $columns{'Allele count'};
+  push    @header_row, { key => 'Genotype count', align => 'left', title => 'Genotype count',                        sort => 'none'   } if exists $columns{'Genotype count'};
+  push    @header_row, { key => 'detail',         align => 'left', title => 'Genotype detail',                       sort => 'none'   } if $self->object->counts->{'individuals'};
+  push    @header_row, { key => 'failed',         align => 'left', title => 'Comment', width => '25%',               sort => 'string' } if $columns{'failed'};
   
   $table->add_columns(@header_row);
   $table->add_rows(@rows);
   
-  
-  push @{$table_array}, [($tg_flag ? $tg_flag : 'Other data').' ('.(scalar @rows).')', $table];
+  push @table_array, [ sprintf('%s (%s)', $tg_flag || 'Other data', scalar @rows), $table ];
 
-  return $table_array;
+  return \@table_array;
 }
 
 sub format_number {
@@ -260,7 +185,7 @@ sub sort_extra_pops {
   foreach my $pop_id (keys %$extra_pop) {
     my $display_pop = $self->pop_url($extra_pop->{$pop_id}{'Name'}, $extra_pop->{$pop_id}{'PopLink'});
     my $size        = $extra_pop->{$pop_id}{'Size'};
-    $size           = " (Size: $size)" if $size;
+       $size        = " (Size: $size)" if $size;
     my $string      = "$display_pop$size";
        $string     .= "<br /><small>$extra_pop->{$pop_id}{'Description'}</small>" if $extra_pop->{$pop_id}{'Description'};
   }
@@ -276,8 +201,7 @@ sub pop_url {
    ### Returns  string
 
   my ($self, $pop_name, $pop_dbSNP) = @_;
-  return $pop_name unless $pop_dbSNP;
-  return $self->hub->get_ExtURL_link($pop_name, 'DBSNPPOP', $pop_dbSNP->[0]);
+  return $pop_dbSNP ? $self->hub->get_ExtURL_link($pop_name, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_name;
 }
 
 

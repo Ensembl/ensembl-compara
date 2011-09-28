@@ -39,14 +39,13 @@ sub content {
   
   if ($consequence_type || $count < 25) {
     $consequence_type ||= 'ALL';
+    
     my $table_rows = $self->variation_table($consequence_type, \@transcripts);
     my $table      = $table_rows ? $self->make_table($table_rows, $consequence_type) : undef;
     
     return $self->render_content($table, $consequence_type);
   } else {
-    my $table = $self->stats_table(\@transcripts); # no sub-table selected, just show stats
-    
-    return $html . $self->render_content($table);
+    return $html . $self->render_content($self->stats_table(\@transcripts)); # no sub-table selected, just show stats
   }
 }
 
@@ -85,16 +84,10 @@ sub render_content {
   my $html;
   
   if ($consequence_type) {
-    $html = qq{
-      <h2 style="float:left"><a href="#" class="toggle open" rel="$consequence_type">$consequence_type variants</a></h2>
-      <span style="float:right;"><a href="#$self->{'id'}_top">[back to top]</a></span>
-      <p class="invisible">.</p>
-    };
+    $html = $self->toggleable_table("$consequence_type variants", $consequence_type, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
   } else {
-    $html = qq{<a id="$self->{'id'}_top"></a><h2>Summary of variations in $stable_id by consequence type</h2>};
+    $html = qq{<a id="$self->{'id'}_top"></a><h2>Summary of variations in $stable_id by consequence type</h2>} . $table->render;
   }
-  
-  $html .= sprintf '<div class="toggleable">%s</div>', $table->render;
   
   return $html;
 }
@@ -112,13 +105,9 @@ sub stats_table {
     { key => 'desc',  title => 'Description',        sort => 'none',           width => '55%'                    },
   ];
   
-  my %counts;
-  my %total_counts;
-  my %ranks;
-  my %descriptions;
-  my %labels;
+  my (%counts, %total_counts, %ranks, %descriptions, %labels);
   
-  my @all_cons = grep {$_->feature_class =~ /transcript/i} values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  my @all_cons = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   
   foreach my $con(@all_cons) {
     next if $con->SO_accession =~ /x/i;
@@ -153,7 +142,7 @@ sub stats_table {
     foreach (@$gene_snps) {
       my ($snp, $chr, $start, $end) = @$_;
       my $vf_id = $snp->dbID;
-      my $tv = $tvs->{$vf_id};
+      my $tv    = $tvs->{$vf_id};
       
       if ($tv && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
         foreach my $tva (@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
@@ -173,22 +162,14 @@ sub stats_table {
   my @rows;
   
   foreach my $con (keys %descriptions) {
-    if (defined $counts{$con}) {
-      my $url = $self->ajax_url(undef, { sub_table => $con, update_panel => 1 });
+    if ($counts{$con}) {
       my $warning = scalar keys %{$counts{$con}} > 10000 ? $warning_text : '';
-      
-      my $view_html = qq{
-        <a href="$url" class="ajax_add toggle closed" rel="$con">
-          <span class="closed">Show</span><span class="open">Hide</span>
-          <input type="hidden" class="url" value="$url" />
-        </a>
-      };
       
       push @rows, {
         type  => qq{<span class="hidden">$ranks{$con}</span>$labels{$con}},
         desc  => $descriptions{$con}.' '.$warning,
         count => scalar keys %{$counts{$con}},
-        view  => $view_html
+        view  => $self->ajax_add($self->ajax_url(undef, { sub_table => $con, update_panel => 1 }), $con)
       };
     } else {
       push @rows, {
@@ -203,19 +184,12 @@ sub stats_table {
   
   # add the row for ALL variations if there are any
   if (my $total = scalar keys %total_counts) {
-    my $url         = $self->ajax_url(undef, { sub_table => 'ALL', update_panel => 1 });
     my $hidden_span = qq{<span class="hidden">-</span>}; # create a hidden span to add so that ALL is always last in the table
     my $warning     = $total > 10000 ? $warning_text : '';
-    my $view_html   = qq{
-      <a href="$url" class="ajax_add toggle closed" rel="ALL">
-        <span class="closed">Show</span><span class="open">Hide</span>
-        <input type="hidden" class="url" value="$url" />
-      </a>
-    };
     
     push @rows, {
       type  => $hidden_span . 'ALL',
-      view  => $view_html,
+      view  => $self->ajax_add($self->ajax_url(undef, { sub_table => 'ALL', update_panel => 1 }), 'ALL'),
       desc  => "All variations $warning",
       count => $hidden_span . $total,
     };

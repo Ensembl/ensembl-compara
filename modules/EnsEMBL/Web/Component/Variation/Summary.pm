@@ -192,12 +192,15 @@ sub variation_sets {
     $html = sprintf '<dt>Present in</dt><dd>%s</dd>', join ',', @variation_sets
   } else { # Collapsed div display 
     my $count_1000 = scalar grep { /1000 genomes/i } @variation_sets;
+    my $show       = $self->hub->get_cookies('toggle_variation_sets') eq 'open';
     
     $html = sprintf('
-      <dt><a class="toggle closed" href="#variation_sets" rel="variation_sets" title="Click to toggle sets names">Present in</a></dt>
+      <dt><a class="toggle %s set_cookie" href="#" rel="variation_sets" title="Click to toggle sets names">Present in</a></dt>
       <dd>This feature is present in %s sets - click the plus to show all sets</dd>
-      <dd class="variation_sets"><div class="toggleable" style="display:none;font-weight:normal;">%s</div></dd>',
+      <dd class="variation_sets"><div class="toggleable" style="font-weight:normal;%s">%s</div></dd>',
+      $show ? 'open' : 'closed',
       $count_1000 ? sprintf('<b>1000 genomes</b> and <b>%s</b> other', $count - $count_1000) : "<b>$count</b>",
+      $show ? '' : 'display:none',
       sprintf('<ul><li>%s</li></ul>', join '</li><li>', @variation_sets)
     );
   }
@@ -390,12 +393,18 @@ sub hgvs {
   
   # Wrap the html
   if ($count) {
-    my $several = $count > 1 ? 's' : '';
-    $html = qq{
-      <dt><a class="toggle closed" href="#HGVS_names" rel="HGVS_names" title="Click to toggle HGVS names">HGVS names</a></dt>
-      <dd>This feature has $count HGVS name$several - click the plus to show</dd>
-      <dd class="HGVS_names"><div class="toggleable" style="display:none;font-weight:normal;">$html</div></dd>
-    };
+    my $show = $self->hub->get_cookies('toggle_HGVS_names') eq 'open';
+    my $s    = $count > 1 ? 's' : '';
+    
+    $html = sprintf('
+      <dt><a class="toggle %s set_cookie" href="#" rel="HGVS_names" title="Click to toggle HGVS names">HGVS names</a></dt>
+      <dd>This feature has %s HGVS name%s - click the plus to show</dd>
+      <dd class="HGVS_names"><div class="toggleable" style="font-weight:normal;%s">%s</div></dd>',
+      $show ? 'open' : 'closed',
+      $count, $s,
+      $show ? '' : 'display:none',
+      $html
+    );
   } else {
     $html = qq{<dt>HGVS names</dt><dd><h5>None</h5></dd>};
   }
