@@ -34,6 +34,7 @@ sub get_ld_values          { return shift->get_location_object->get_ld_values(@_
 sub get_samples            { return shift->get_object->get_samples(@_);                                 }
 sub get_genetic_variations { return shift->get_object->get_genetic_variations(@_);                      }
 sub stable_id              { return shift->get_object->stable_id;                                       }
+sub availability           { return shift->get_object->availability;                                    }
 
 sub slice {
   my $self     = shift;
@@ -507,6 +508,7 @@ sub features {
   my $params        = $self->params;
   my @common_fields = qw(seqname source feature start end score strand frame);
   my @extra_fields  = $format eq 'gtf' ? qw(gene_id transcript_id) : qw(hid hstart hend genscan gene_id transcript_id exon_id gene_type variation_name probe_name);  
+  my $availability  = $self->availability;
   
   $self->{'config'} = {
     extra_fields  => \@extra_fields,
@@ -550,7 +552,7 @@ sub features {
     }
   }
 
-  if($params->{'probe'}) {
+  if($params->{'probe'} && $availability->{'database:funcgen'}) {
     my $fg_db = $self->database('funcgen'); 
     my $probe_feature_adaptor = $fg_db->get_ProbeFeatureAdaptor;     
     my @probe_features = @{$probe_feature_adaptor->fetch_all_by_Slice($slice)};
