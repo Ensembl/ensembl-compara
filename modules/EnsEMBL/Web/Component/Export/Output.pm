@@ -32,8 +32,9 @@ sub ld_dump {
   my %pop_params = map { $hub->param("pop$_") => $_ } grep s/^pop(\d+)$/$1/, $hub->param;    
   warn 'ERROR: No population defined' and return unless %pop_params;
 
-  foreach (values %pop_params) {
+  foreach (values %pop_params) { 
     my $pop_param       = $hub->param("pop$_");
+    $pop_param          = $object->get_pop_name($pop_param);
     my $zoom            = 20000; # Currently non-configurable
     my @colour_gradient = ('ffffff', $hub->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red'));
     my $ld_values       = $object->get_ld_values($pop_param, $v, $zoom);
