@@ -90,19 +90,19 @@ sub form {
     $self->add_form_element($other_markup_options{'title_display'});
   }
   
-  return unless $self->species eq 'Multi';
-  
   my $species      = $self->hub->referer->{'ENSEMBL_SPECIES'};
   my $species_defs = $self->species_defs;
   my $alignments   = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
   
   # Order by number of species (name is in the form "6 primates EPO"
   foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
-    my $sp = $row->{'species'};
+    my $sp   = $row->{'species'};
+    my @name = split '_', $row->{'name'};
+    my $n    = shift @name;
     
     $sp->{$_} = $species_defs->species_label($_) for keys %$sp;
     
-    $self->add_fieldset($row->{'name'});
+    $self->add_fieldset(join ' ', $n, map lc, @name);
     
     foreach (sort { ($sp->{$a} =~ /^<.*?>(.+)/ ? $1 : $sp->{$a}) cmp ($sp->{$b} =~ /^<.*?>(.+)/ ? $1 : $sp->{$b}) } keys %$sp) {
       $self->add_form_element({
