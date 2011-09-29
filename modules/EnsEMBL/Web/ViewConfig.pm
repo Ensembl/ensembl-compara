@@ -175,7 +175,7 @@ sub update_from_input {
 
 # Loop through the parameters and update the config based on the parameters passed
 sub update_from_url {
-  my ($self, $r) = @_;
+  my ($self, $r, $delete_params) = @_;
   my $hub     = $self->hub;
   my $session = $hub->session;
   my $input   = $hub->input;
@@ -219,8 +219,10 @@ sub update_from_url {
       );
     }
     
-    $params_removed = 1;
-    $input->delete('config');
+    if ($delete_params) {
+      $params_removed = 1;
+      $input->delete('config');
+    }
   }
   
   if (scalar @das) {
@@ -244,8 +246,10 @@ sub update_from_url {
     
     $hub->action = $action; # Reset the action
     
-    $input->delete('das');
-    $params_removed = 1;
+    if ($delete_params) {
+      $input->delete('das');
+      $params_removed = 1;
+    }
   }
   
   my $image_config = $self->image_config;
@@ -253,6 +257,11 @@ sub update_from_url {
   
   if (@values) {
     $input->delete($image_config); 
+    $params_removed = 1;
+  }
+  
+  if ($delete_params && $input->param('toggle_tracks')) {
+    $input->delete('toggle_tracks');
     $params_removed = 1;
   }
   
