@@ -122,11 +122,11 @@ sub get_location_link {
     my $f_start  = $f->start + $f_offset;
     my $f_end    = $f->end   + $f_offset;
     $position    = "$seq_name:$f_start-$f_end";
-    $type        = 'regulatory_regions_funcgen_feature_set=normal';
+    $type        = sprintf 'regulatory_regions_funcgen_%s=normal', $f->feature_set->analysis->logic_name;
   } else {
     my $offset = $object->get_extended_reg_region_slice->start - 1;
     $position  = $f->location_string($offset);
-    $type      = 'fg_regulatory_features_funcgen_reg_feats=normal';
+    $type      = 'reg_feats_MultiCell=normal';
   }
 
   my $position_url = $self->hub->url({
