@@ -1125,15 +1125,17 @@ sub newick_format {
   my $format_mode = shift;
 
   my $newick;
-  if ($format_mode eq "ryo") {
+  if (not defined $format_mode) {
+    $newick = $self->_internal_newick_format_ryo($ryo_modes{'full'});
+
+  } elsif ($format_mode eq "ryo") {
     my $fmt = shift @_;
     $newick = $self->_internal_newick_format_ryo($fmt);
   
   } elsif (defined $ryo_modes{$format_mode}) {
     $newick = $self->_internal_newick_format_ryo($ryo_modes{$format_mode});
-  
+
   } else {
-    $format_mode="full" unless(defined($format_mode));
     $newick = $self->_internal_newick_format($format_mode);
   }
   $newick .= ";";
