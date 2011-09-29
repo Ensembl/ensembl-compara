@@ -1102,6 +1102,24 @@ sub _internal_nhx_format {
 
 =cut
 
+my %ryo_modes = (
+    'member_id' => '%{^-m}:%{d}',
+    'member_id_taxon_id' => '%{^-m}%{^"_"-x}:%{d}',
+    'display_label_composite' => '%{-l"_"}%{n}%{"_"-s}:%{d}',
+    'full_common' => '%{n}%{" "-c}%{"."-g}%{"_"-t"_MYA"}:%{d}',
+    'gene_stable_id_composite' => '%{-i"_"}%{n}%{"_"-s}:%{d}',
+    'gene_stable_id' => '%{-i}:%{d}',
+    'ncbi_taxon' => '%{o}',
+    'ncbi_name' => '%{n}',
+    'simple' => '%{^-n}:%{d}',
+    'full' => '%{n}:%{d}',
+    'species' => '%{^-S|p}',
+    'species_short_name' => '%{^-s|p}',
+    'otu_id' => '%{-s"|"}%{-l}%{n}:%{d}',
+    'int_node_id' => '%{-n}%{o-}:%{d}',
+    'full_web' => '%{n-}%{-n|p}%{"_"-s"_"}%{":"d}',
+);
+
 sub newick_format {
   my $self = shift;
   my $format_mode = shift;
@@ -1110,6 +1128,10 @@ sub newick_format {
   if ($format_mode eq "ryo") {
     my $fmt = shift @_;
     $newick = $self->_internal_newick_format_ryo($fmt);
+  
+  } elsif (defined $ryo_modes{$format_mode}) {
+    $newick = $self->_internal_newick_format_ryo($ryo_modes{$format_mode});
+  
   } else {
     $format_mode="full" unless(defined($format_mode));
     $newick = $self->_internal_newick_format($format_mode);
@@ -1149,184 +1171,6 @@ sub _internal_newick_format {
     $newick .= ")";
   }
 
-  if($format_mode eq "full") { 
-    #full: name and distance on all nodes
-#    print "-CALLED IN: ", $newick, "\n";
-#    print "NAME: ",$self->name, "\n";
-#    print "DIST: ",$self->distance_to_parent, "\n";
-    $newick .= sprintf("%s", $self->name);
-    $newick .= sprintf(":%1.4f", $self->distance_to_parent);
-  }
-  if($format_mode eq "full_common") { 
-    #full: name and distance on all nodes
-    my $name = $self->name;
-    my $full_common_name = $name;
-    if ($self->is_leaf) {
-      my $common = uc($self->get_tagvalue('genbank common name'));
-      $common = uc($self->get_tagvalue('ensembl common name')) if (1 > length($common));
-      $common =~ s/\,//g;
-      $common =~ s/\ /\./g;
-      $common =~ s/\'//g;
-      $full_common_name .= " " . $common if (1 < length($common));
-      my $gdb_id = undef;
-      eval { $gdb_id = $self->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->taxon_id)->dbID; };
-      $full_common_name .= ".$gdb_id" if (defined($gdb_id));
-    } else {
-      my $mya = $self->get_tagvalue('ensembl timetree mya');
-      $full_common_name .= "_" . $mya . "_MYA" unless($mya eq '');
-    }
-    $newick .= sprintf("%s", $full_common_name);
-    $newick .= sprintf(":%1.4f", $self->distance_to_parent);
-  }
-  if($format_mode eq "int_node_id") { 
-    #full: name and distance on all nodes
-    $newick .= sprintf("%s", $self->name) if ($self->is_leaf);
-    $newick .= sprintf("%s", $self->node_id) if (!$self->is_leaf);
-    $newick .= sprintf(":%1.4f", $self->distance_to_parent);
-  }
-  if($format_mode eq "display_label_composite") { 
-    #display_label: external name and distance on all nodes
-    my $display_label;
-    if($self->is_leaf) {
-      $display_label = $self->gene_member->display_label;
-    }
-    if (defined($display_label)) {
-      $newick .= $display_label . "_";
-    }
-    $newick .= $self->name;
-    if ($self->is_leaf) {
-      $newick .= "_" . $self->genome_db->short_name;
-    }
-    $newick .= sprintf(":%1.4f", $self->distance_to_parent);
-  }
-  if($format_mode eq "gene_stable_id_composite") { 
-    #display_label: external name and distance on all nodes
-    my $display_label;
-    if($self->is_leaf) {
-      $display_label = $self->gene_member->stable_id;
-    }
-    if (defined($display_label)) {
-      $newick .= $display_label . "_";
-    }
-    $newick .= $self->name;
-    if ($self->is_leaf) {
-      $newick .= "_" . $self->genome_db->short_name;
-    }
-    $newick .= sprintf(":%1.4f", $self->distance_to_parent);
-  }
-  if($format_mode eq "full_web") { 
-    #display_label: external name and distance on all nodes
-    my $display_label = $self->name;
-    if($self->is_leaf) {
-      my $prot_member;
-      eval {$prot_member = $self->get_canonical_peptide_Member;};
-      $display_label = $prot_member->stable_id if (defined($prot_member));
-      #my $gene_member = $self->gene_member;
-      my $short_name;
-      eval { $short_name = $self->genome_db->short_name;};
-      $display_label = $display_label . '_' . $short_name . '_' ;
-    }
-    $newick .= $display_label;
-    $newick .= sprintf(":%1.4f", $self->distance_to_parent);
-  }
-  if($format_mode eq "gene_stable_id") { 
-    #display_label: external name and distance on all nodes
-    my $display_label;
-    if($self->is_leaf) {
-      $display_label = $self->gene_member->stable_id;
-    }
-    if (defined($display_label)) {
-      $newick .= $display_label;
-    }
-    $newick .= sprintf(":%1.4f", $self->distance_to_parent);
-  }
-  if($format_mode eq "otu_id") { 
-    #out_id: species name then "|" then external name
-    my $display_label;
-    if($self->is_leaf) {
-      $display_label = $self->gene_member->display_label;
-    }
-    if ($self->is_leaf) {
-      $newick .= $self->genome_db->short_name . "|";
-    }
-    if (defined($display_label)) {
-      $newick .= $display_label;
-    }
-    $newick .= $self->name;
-    $newick .= sprintf(":%1.4f", $self->distance_to_parent);
-  }
-  if($format_mode eq 'simple') { 
-    #simplified: name only on leaves, dist only if has parent
-    if($self->parent) {
-      if($self->is_leaf) {
-        $newick .= sprintf("%s", $self->name);
-      }
-      $newick .= sprintf(":%1.4f", $self->distance_to_parent);
-    }
-  }
-  if($format_mode eq 'member_id_taxon_id') { 
-    #simplified: name only on leaves, dist only if has parent
-    if($self->parent) {
-      if($self->is_leaf) {
-        $newick .= $self->member_id;
-        $newick .= "_";
-        $newick .= $self->taxon_id;
-      }
-      $newick .= sprintf(":%1.4f", $self->distance_to_parent);
-    }
-  }
-  if($format_mode eq 'member_id') { 
-    #simplified: name only on leaves, dist only if has parent
-    if($self->parent) {
-      if($self->is_leaf) {
-        $newick .= $self->member_id;
-      }
-      $newick .= sprintf(":%1.4f", $self->distance_to_parent);
-    }
-  }
-  if($format_mode eq 'species') { 
-    #simplified: name only on leaves, dist only if has parent
-    if($self->parent) {
-      if($self->is_leaf) {
-        my $species_name;
-        if ($self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
-          $species_name = $self->genome_db->name;
-        } else {
-          $species_name = $self->name;
-        }
-        $species_name =~ s/\ /\_/g;
-        $newick .= sprintf("%s", $species_name);
-      }
-    }
-  }
-  if($format_mode eq 'species_short_name') { 
-    #simplified: name only on leaves, dist only if has parent
-    if($self->parent) {
-      if($self->is_leaf) {
-        my $species_name;
-        if ($self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
-          $species_name = $self->genome_db->short_name;
-        } else {
-          $species_name = $self->short_name;
-        }
-        $newick .= sprintf("%s", $species_name);
-      }
-    }
-  }
-  if($format_mode eq 'ncbi_taxon') { 
-    #name leaves an internal nodes by ncbi taxon_id
-    if($self->parent) {
-      my $ncbi_taxon_id = $self->node_id;
-      $newick .= sprintf("%s", $ncbi_taxon_id);
-    }
-  }
-  if($format_mode eq 'ncbi_name') { 
-    #name leaves an internal nodes by ncbi taxon_id
-    if($self->parent) {
-      my $ncbi_name = $self->name;
-      $newick .= sprintf("%s", $ncbi_name);
-    }
-  }
   if($format_mode eq 'njtree') { 
     #name leaves an internal nodes by ncbi taxon_id
     #add * for leaves
