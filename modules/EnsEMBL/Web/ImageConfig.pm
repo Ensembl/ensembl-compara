@@ -1297,7 +1297,7 @@ sub add_das_tracks {
       'off',      'Off', 
       'nolabels', 'No labels', 
       'normal',   'Normal', 
-      'labels',   '(force) Labels'
+      'labels',   'Labels'
     ],
   });
   
