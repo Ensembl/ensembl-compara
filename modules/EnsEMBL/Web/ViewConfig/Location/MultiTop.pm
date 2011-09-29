@@ -10,7 +10,7 @@ sub init {
   my $self = shift;
 
   $self->set_defaults({
-    show_panel => 'yes'
+    show_top_panel => 'yes'
   });
   
   $self->add_image_config('MultiTop', 'nodas');
