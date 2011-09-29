@@ -15,10 +15,26 @@ sub init {
   
   $self->add_image_config('MultiTop', 'nodas');
   $self->title = 'Overview Image';
+  
+  $self->set_defaults({
+    opt_join_genes => 'off',
+  });
 }
 
 sub form {
   my $self = shift;
+  
+  $self->add_fieldset('Comparative features');
+  
+  $self->add_form_element({
+    type  => 'CheckBox', 
+    label => 'Join genes',
+    name  => 'opt_join_genes',
+    value => 'on',
+  });
+  
+  $self->add_fieldset('Display options');
+  
   $self->add_form_element({ type => 'YesNo', name => 'show_panel', select => 'select', label => 'Show panel' });
 }
 
