@@ -70,7 +70,7 @@ use Bio::SimpleAlign;
 use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::RunnableDB::OrthoTree; # check_for_split_gene method
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::OrthoTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree');
 
 
 sub param_defaults {
