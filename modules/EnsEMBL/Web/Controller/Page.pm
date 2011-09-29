@@ -47,12 +47,13 @@ sub update_configuration_from_url {
   ### If either exist, returns 1 to force a redirect to the updated page
   ### This function is only called during main page (EnsEMBL::Web::Magic::stuff) requests
   
-  my $self      = shift;
-  my $r         = $self->r;
-  my $input     = $self->input;
-  my $hub       = $self->hub;
-  my $session   = $hub->session;
-  my @share_ref = $input->param('share_ref');
+  my $self       = shift;
+  my $r          = $self->r;
+  my $input      = $self->input;
+  my $hub        = $self->hub;
+  my $session    = $hub->session;
+  my @share_ref  = $input->param('share_ref');
+  my @components = @{$self->configuration->get_configurable_components};
   my $new_url;
   
   if (@share_ref) {
@@ -61,7 +62,7 @@ sub update_configuration_from_url {
     $new_url = 1;
   }
   
-  $new_url += $hub->get_viewconfig($_)->update_from_url($r) for @{$self->configuration->get_configurable_components}; # This should push a message onto the message queue
+  $new_url += $hub->get_viewconfig($components[$_])->update_from_url($r, $_ == $#components) for 0..$#components; # This should push a message onto the message queue
   
   if ($new_url) {
     $input->param('time', time); # Add time to cache-bust the browser
