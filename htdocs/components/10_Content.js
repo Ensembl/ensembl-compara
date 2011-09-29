@@ -176,6 +176,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   toggleable: function () {
     var panel     = this;
     var toTrigger = {};
+    var regex;
     
     $('.toggle, .ajax_add', this.el).bind('click', function () {
       Ensembl.EventManager.trigger('toggleContent', this.rel);
@@ -197,7 +198,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       
       return false;
     }).filter('.closed[rel]').each(function () {
-      if (Ensembl.hash.indexOf(';' + this.rel + 'Panel;') !== -1 || Ensembl.hash.indexOf('?' + this.rel + 'Panel;') !== -1) {
+      regex = '[;\?]' + this.rel + '(Panel)?;'
+      
+      if (Ensembl.hash.match(new RegExp(regex))) {
         toTrigger[this.rel] = this; // Ensures that only one matching link with same rel is triggered (two triggers would revert to closed state)
       }
     });
