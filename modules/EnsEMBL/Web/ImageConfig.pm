@@ -887,7 +887,7 @@ sub update_from_url {
         }
       }
     } else {
-      $self->update_track_renderer($key, $renderer, 1);
+      $self->update_track_renderer($key, $renderer, $hub->param('toggle_tracks'));
     }
   }
   
