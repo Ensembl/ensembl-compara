@@ -110,7 +110,7 @@ Ensembl.LayoutManager.extend({
         '</div>'
       ].join('')).prependTo('#main').find('h3 img, a').click(function () {
         $(this).parents('div.hint').remove();
-        Ensembl.cookie.set('user_message', '', -1);
+        Ensembl.cookie.set('user_message', '');
       });
     }
   },

@@ -44,7 +44,7 @@ Ensembl.extend({
       var cookie = [
         unescaped === true ? (name + '=' + (value || '')) : (escape(name) + '=' + escape(value || '')),
         '; expires=',
-        (expiry === -1 ? 'Thu, 01 Jan 1970' : 'Tue, 19 Jan 2038'),
+        ((expiry === -1 || value === '') ? 'Thu, 01 Jan 1970' : 'Tue, 19 Jan 2038'),
         ' 00:00:00 GMT; path=/'
       ].join('');
       
@@ -72,7 +72,7 @@ Ensembl.extend({
     
     if (changed) {
       this.cookie.set('ENSEMBL_WIDTH', this.width);
-      this.cookie.set('DYNAMIC_WIDTH', 1, numeric ? -1 : 1);
+      this.cookie.set('DYNAMIC_WIDTH', numeric ? '' : 1);
       this.dynamicWidth = !numeric;
     }
     
