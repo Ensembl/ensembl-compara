@@ -6,8 +6,6 @@ package EnsEMBL::Web::Controller::Config;
 
 use strict;
 
-use CGI::Cookie;
-
 use base qw(EnsEMBL::Web::Controller::Modal);
 
 sub page_type { return 'Configurator'; }
