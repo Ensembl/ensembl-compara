@@ -4,6 +4,7 @@
 
 div.summary_panel dl.summary dd              { margin-left: 9em; }
 div.summary_panel dl.summary dt              { width: 9em; }
+div.summary_panel dl.summary a.toggle        { color: [[PAGE_TEXT]]; }
 
 div.summary_panel table.toggle_table         { border-collapse: collapse; margin: 0.5em 0 0.5em 9em; cursor: pointer; }
 div.summary_panel table.toggle_table td,
