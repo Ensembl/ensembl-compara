@@ -8,8 +8,7 @@ use Bio::EnsEMBL::Registry;
 
 #
 # This script fetches all the Compara peptide members lying in the first
-# 10Mb of the rat chromosome 2, and queries all their homologies with
-# human
+# 10Mb of the rat chromosome 2, and having a 5' UTR
 #
 
 my $reg = 'Bio::EnsEMBL::Registry';

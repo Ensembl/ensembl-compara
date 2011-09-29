@@ -42,6 +42,7 @@ foreach my $gene (@$genes) {
   my $proteintree =  $proteintree_adaptor->
     fetch_by_Member_root_id($member);
 
+  # List of unwanted leaves
   my @discarded_nodes;
   foreach my $leaf (@{$proteintree->get_all_leaves}) {
     my $stable_id = $leaf->stable_id;
@@ -49,7 +50,12 @@ foreach my $gene (@$genes) {
       push @discarded_nodes, $leaf;
     }
   }
+
+  # Compute the new tree
   my $ret_tree = $proteintree->remove_nodes(\@discarded_nodes);
+
+  # Print it
+  $ret_tree->print_tree(10);
   print $ret_tree->newick_format("full"), "\n";
 
 #   my $sa = $ret_tree->get_SimpleAlign;

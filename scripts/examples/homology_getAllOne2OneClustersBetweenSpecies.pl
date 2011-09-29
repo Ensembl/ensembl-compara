@@ -69,7 +69,7 @@ foreach my $stable_id (keys %$present_in_all) {
   my $output_string;
   if (scalar keys %$present == scalar @list) {
     next if (defined($tagged_stable_id->{$stable_id})); #Print only once
-    $tagged_stable_id->{$stable_id};
+    $tagged_stable_id->{$stable_id} = 1;
     $output_string = "$stable_id";
     my $stable_ids;
     $stable_ids->{$stable_id} = 1;

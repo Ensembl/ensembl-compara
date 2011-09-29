@@ -21,7 +21,6 @@ Bio::EnsEMBL::Registry->no_version_check;
 
 my $human_gene_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Homo sapiens", "core", "Gene");
 my $member_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "Member");
-my $homology_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "Homology");
 my $proteintree_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "ProteinTree");
 
 my $genes = $human_gene_adaptor->fetch_all_by_external_name('ENPP1');

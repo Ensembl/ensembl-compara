@@ -23,20 +23,18 @@ $reg->load_registry_from_db(
 
 my $human_gene_adaptor = $reg->get_adaptor ("Homo sapiens", "core", "Gene");
 my $member_adaptor = $reg->get_adaptor ("Compara", "compara", "Member");
-my $homology_adaptor = $reg->get_adaptor ("Compara", "compara", "Homology");
 my $proteintree_adaptor = $reg->get_adaptor ("Compara", "compara", "ProteinTree");
-my $mlss_adaptor = $reg->get_adaptor ("Compara", "compara", "MethodLinkSpeciesSet");
 
 my $genes = $human_gene_adaptor-> fetch_all_by_external_name('PAX6');
 
 foreach my $gene (@$genes) {
   my $member = $member_adaptor-> fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
   die "no members" unless (defined $member);
-  my $all_homologies = $homology_adaptor->fetch_by_Member($member);
 
   # Fetch the proteintree
   my $proteintree =  $proteintree_adaptor->fetch_by_Member_root_id($member);
-  my $all_leaves = $proteintree->get_all_leaves_indexed();
+  # get_all_leaves_indexed would be much faster, but it would crash find_first_shared_ancestor
+  my $all_leaves = $proteintree->get_all_leaves();
 
   my $node_h;
   my $node_z;
@@ -54,6 +52,8 @@ foreach my $gene (@$genes) {
   print "root to zebra: ", $node_z->distance_to_ancestor($proteintree), "\n";
 
   my $ancestor = $node_z->find_first_shared_ancestor($node_h);
+  print "lca: ";
+  $ancestor->print_node;
   print "lca to human: ", $node_h->distance_to_ancestor($ancestor), "\n";
   print "lca to zebra: ", $node_z->distance_to_ancestor($ancestor), "\n";
   

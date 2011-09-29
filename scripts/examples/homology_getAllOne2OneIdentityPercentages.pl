@@ -40,16 +40,15 @@ foreach my $gene (@$genes) {
     $this_homology->get_all_Member_Attribute();
     my $first_found = 0;
     foreach my $ma (@$all_member_attributes) {
-      1;#??
       my ($mb, $attr) = @$ma;
       my $label = $mb->display_label || $mb->stable_id;
       print $mb->genome_db->short_name, ",", $label, "\t";
     }
     my $pairwise_alignment_from_multiple = $this_homology->get_SimpleAlign;
     my $overall_pid = $pairwise_alignment_from_multiple->overall_percentage_identity;
-    print sprintf("%0.3f",$overall_pid),",";
+    print sprintf("%0.3f",$overall_pid),"%, ";
     print $pairwise_alignment_from_multiple->length;
-    print "\n";
+    print "bp\n";
   }
 }
 

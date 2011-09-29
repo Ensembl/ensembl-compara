@@ -7,8 +7,8 @@ use Bio::EnsEMBL::Registry;
 
 
 #
-# This script maps the exons of pairs of orthologues onto the
-# alignment
+# This script maps the exons of pairs of orthologues onto their
+# peptide alignments
 #
 
 my $reg = 'Bio::EnsEMBL::Registry';

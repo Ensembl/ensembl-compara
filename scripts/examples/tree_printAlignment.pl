@@ -5,14 +5,13 @@ use warnings;
 
 
 #
-# This script queries the Compara database and prints all the homologs
-# of a given human gene (via the gene tree object). Then, it prints
-# the gene tree in Newick and NHX formats, and the multiple alignment
-# on the standard output (FASTA format) and in a file (Phylip format)
+# This script fetches the gene tree of a given human gene, and prints
+# the multiple alignment of the family
 #
 
 use Bio::EnsEMBL::Registry;
 
+## Load the registry automatically
 my $reg = 'Bio::EnsEMBL::Registry';
 
 $reg->load_registry_from_db(
@@ -37,15 +36,6 @@ foreach my $gene (@$genes) {
   # Fetch the proteintree
   my $proteintree =  $proteintree_adaptor->
     fetch_by_gene_Member_root_id($member);
-
-  foreach my $leaf (@{$proteintree->get_all_leaves}) {
-      print $leaf->description, "\n";
-  }
-
-  # Show the tree
-  print "\n", $proteintree->newick_format("display_label_composite"), "\n\n";
-  print $proteintree->nhx_format("display_label_composite"), "\n\n";
-  $proteintree->print_tree(10);
 
   # Get the protein multialignment and the back-translated CDS alignment
   my $protein_align = $proteintree->get_SimpleAlign;

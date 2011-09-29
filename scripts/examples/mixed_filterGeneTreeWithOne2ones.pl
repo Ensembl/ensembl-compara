@@ -59,14 +59,16 @@ foreach my $gene (@$genes) {
 
   # Delete the part that is not one2one wrt the human gene
   foreach my $leaf (@{$proteintree->get_all_leaves}) {
-    my $leaf_description = $leaf->description;
-    $leaf_description =~ /Gene\:(\S+)/;
-    my $gene_name = $1;
+    my $gene_name = $leaf->gene_member->stable_id;
     unless (defined $leaves_names{$gene_name}) {
       $leaf->disavow_parent;
       $proteintree = $proteintree->minimize_tree;
     }
   }
+
+  # Print the minimized tree
+  $proteintree->print_tree;
+
   # Obtain the MSA for human and all one2ones
   my $protein_align = $proteintree->get_SimpleAlign;
   print $stdout_alignio $protein_align;
