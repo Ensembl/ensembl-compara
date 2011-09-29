@@ -295,6 +295,7 @@ sub set_cache_params {
   }
  
   $ENV{'CACHE_KEY'} .= '::NO_AJAX' unless $self->hub->check_ajax;
+  $ENV{'CACHE_KEY'} .= join '::', '', map $_->name =~ /^toggle_/ ? sprintf '%s[%s]', $_->name, $_->value : (), values %{$self->hub->cookies};
 }
 
 sub get_cached_content {
