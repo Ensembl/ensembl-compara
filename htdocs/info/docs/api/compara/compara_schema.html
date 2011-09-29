@@ -3552,21 +3552,29 @@ Contains the data structure of each tree.</p>
   </tbody>
 </table>
 
-<p>
-FIXME: the following explanation may need updating/extending because of introduction of clustreset_id.
-</p>
 
-<p>When parent_id=0, then node_id is the root. In our data structure, all trees are arbitrarily connected to the same root. This allows storing in the same database the data from independant tree building analysis. Hence the "biological root" of each tree are the children nodes of the main root. For instance the following SQL query</p>
+<p>The database is able to contain several sets of trees computed on the same genes. We call these analysis "clustersets" and they can be distinguished with the clusterset_id field. So far, all the compara databases have contained only one clusterset (clusterset_id=1), but it may be different in the future. The following SQL query retrieves all the clustersets (usually, only one row in the resultset)<p>
 
-<pre>mysql&gt; SELECT COUNT(*) FROM protein_tree_node WHERE parent_id = root_id;
+<pre>
+mysql&gt; SELECT * FROM protein_tree_node WHERE parent_id = 0;
++---------+-----------+---------+---------------+------------+-------------+--------------------+
+| node_id | parent_id | root_id | clusterset_id | left_index | right_index | distance_to_parent |
++---------+-----------+---------+---------------+------------+-------------+--------------------+
+|       1 |         0 |       0 |             1 |          0 |           0 |                  0 | 
++---------+-----------+---------+---------------+------------+-------------+--------------------+
+</pre>
+
+<p>In our data structure, all the trees of a given clusterset are arbitrarily connected to the same root. This eases to store and query in the same database the data from independant tree building analysis. Hence the "biological roots" of the trees are the children nodes of the main clusterset root. For instance the following SQL query</p>
+
+<pre>mysql&gt; SELECT COUNT(*) FROM protein_tree_node WHERE parent_id = 1;
 +----------+
 | COUNT(*) |
 +----------+
-|    27514 |
+|    18809 |
 +----------+
 </pre>
 
-<p>will return the number of independant trees stored in the database.</p>
+<p>will return the number of independant trees stored in the database, and linked to to the default clusterset (id=1).</p>
 
 
 <!--
