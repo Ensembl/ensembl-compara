@@ -138,6 +138,23 @@ sub get_cookies {
   return scalar keys %cookies > 1 ? \%cookies : [ values %cookies ]->[0];
 }
 
+sub set_cookie {
+  my ($self, $name, $value) = @_;
+  
+  my $cookie = new CGI::Cookie(
+    -name    => $name,
+    -value   => $value,
+    -domain  => $self->species_defs->ENSEMBL_COOKIEHOST,
+    -path    => '/',
+    -expires => 'Monday, 31-Dec-2037 23:59:59 GMT'
+  );
+  
+  $self->apache_handle->headers_out->add('Set-cookie' => $cookie);
+  $self->apache_handle->err_headers_out->add('Set-cookie' => $cookie);
+  
+  return !!$cookie;
+}
+
 sub problem {
   my $self = shift;
   push @{$self->{'_problem'}{$_[0]}}, new EnsEMBL::Web::Problem(@_) if @_;
@@ -220,8 +237,10 @@ sub data_species {
 # Does an ordinary redirect
 sub redirect {
   my ($self, $url) = @_;
-  $self->input->redirect($url);
+  $self->input->redirect($url || $self->current_url);
 }
+
+sub current_url { return $_[0]->url(undef, undef, 1); }
 
 sub url {
   ## Gets the current or modified url
