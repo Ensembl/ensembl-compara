@@ -575,7 +575,6 @@ sub _store_tree_tags {
     my $pta = $self->compara_dba->get_NCTreeAdaptor;
 
     print "Storing Tree tags...\n";
-    $nc_tree->_load_tags();
 
     my @leaves = @{$nc_tree->get_all_leaves};
     my @nodes = @{$nc_tree->get_all_nodes};

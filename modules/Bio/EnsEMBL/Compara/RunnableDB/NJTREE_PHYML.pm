@@ -483,7 +483,6 @@ sub store_tags
 
   if($self->param('jackknife')) {
     my $leaf_count = $protein_tree->num_leaves;
-    $protein_tree->adaptor->delete_tag( $protein_tree->node_id, 'gene_count' );
     $protein_tree->store_tag( 'gene_count', $leaf_count );
   }
 
@@ -652,7 +651,6 @@ sub _store_tree_tags {
     my $pta = $self->compara_dba->get_ProteinTreeAdaptor;
 
     print "Storing Tree tags...\n";
-    $protein_tree->_load_tags();
 
     my @leaves = @{$protein_tree->get_all_leaves};
     my @nodes = @{$protein_tree->get_all_nodes};

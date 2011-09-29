@@ -316,14 +316,9 @@ sub duplication_confidence_score {
     my $ancestor_node_id="";
     $duplication_confidence_score = (($scalar_isect)/$scalar_union) unless (0 == $scalar_isect);
     my $msplit="NA"; 
-    #Check if gene  was already merged by the pipeline    
-    my @tags=$protein_tree->get_all_tags;
-    foreach my $tag (@tags){
-    if ( $tag eq "msplit_${child_a_id}_${child_b_id}" or $tag eq "msplit_${child_b_id}_${child_a_id}")
-    {
-	$msplit=$tag;
-    }
-    }
+    #Check if gene  was already merged by the pipeline
+    $msplit = "msplit_${child_a_id}_${child_b_id}" if $protein_tree->has_tag("msplit_${child_a_id}_${child_b_id}");
+    $msplit = "msplit_${child_b_id}_${child_a_id}" if $protein_tree->has_tag("msplit_${child_b_id}_${child_a_id}");
 
     # subroutine won't tried to write on the database, it's not the point here.
     $protein_tree->{_readonly} = 1;
@@ -409,16 +404,6 @@ sub get_ancestor_species_hash {
 	} 
     } 
     return ($species_hash); 
-} 
-
-sub _load_tags { 
-    my $self = shift; 
-    return if(defined($self->{'_tags'})); 
-    $self->{'_tags'} = {}; 
-    if($self->adaptor and $self->adaptor->can("_load_tagvalues")) 
-    { 
-	$self->adaptor->_load_tagvalues($self); 
-    } 
 } 
 
 1;
