@@ -90,6 +90,8 @@ sub fetch_input {
                 or die "Could not connect to '$locator' as DBC";
 
             $core_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( -DBCONN => $dbc );
+
+            $self->param('locator', $core_dba->locator() );  # substitute the given locator by one in conventional format
         }
 
     } elsif( my $species_name = $self->param('species_name') ) {    # perform our tricky multiregistry search: find the last one still suitable
@@ -137,22 +139,25 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $core_dba        = $self->param('core_dba');
-    my $meta_container  = $core_dba->get_MetaContainer;
+    my $core_dba            = $self->param('core_dba');
+    my $meta_container      = $core_dba->get_MetaContainer;
 
-    my $assembly_name   = $self->param('assembly_name') || $core_dba->extract_assembly_name();
-    if($assembly_name ne $core_dba->extract_assembly_name()) {
-        die "The required assembly_name '".$self->param('assembly_name')."' is different from the one found in the database: '$assembly_name', please investigate";
+    my $assembly_name_in_db = $core_dba->extract_assembly_name();
+    my $assembly_name       = $self->param('assembly_name') || $assembly_name_in_db;
+    if($assembly_name ne $assembly_name_in_db) {
+        die "The required assembly_name ('$assembly_name') is different from the one found in the database ('$assembly_name_in_db'), please investigate";
     }
 
-    my $taxon_id        = $self->param('taxon_id')  || $meta_container->get_taxonomy_id;
-    if($taxon_id != $meta_container->get_taxonomy_id) {
-        die "taxon_id parameter ($taxon_id) is different from the one defined in the database (".$meta_container->get_taxonomy_id."), please investigate";
+    my $taxon_id_in_db      = $meta_container->get_taxonomy_id();
+    my $taxon_id            = $self->param('taxon_id')  || $taxon_id_in_db;
+    if($taxon_id != $taxon_id_in_db) {
+        die "taxon_id parameter ($taxon_id) is different from the one defined in the database ($taxon_id_in_db), please investigate";
     }
 
     my $genome_db_id    = $self->param('genome_db_id')      || undef;
-    my $genebuild       = $meta_container->get_genebuild    || '';
+    my $genebuild       = $meta_container->get_genebuild()    || '';
     my $genome_name     = $meta_container->get_production_name() or die "Could not fetch production_name, please investigate";
+    my $locator		    = $self->param('locator') || $core_dba->locator();
 
     my $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new();
     $genome_db->dbID( $genome_db_id );
@@ -160,7 +165,7 @@ sub run {
     $genome_db->name( $genome_name );
     $genome_db->assembly( $assembly_name );
     $genome_db->genebuild( $genebuild );
-    $genome_db->locator( $core_dba->locator );
+    $genome_db->locator( $locator );
 
     $self->param('genome_db', $genome_db);
 }
