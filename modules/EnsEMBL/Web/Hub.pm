@@ -152,6 +152,8 @@ sub set_cookie {
   $self->apache_handle->headers_out->add('Set-cookie' => $cookie);
   $self->apache_handle->err_headers_out->add('Set-cookie' => $cookie);
   
+  $self->cookies->{$name} = $cookie;
+  
   return !!$cookie;
 }
 
@@ -284,6 +286,7 @@ sub url {
   delete $pars{'pt'} if $params->{'t'};
   delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
   delete $pars{'time'};
+  delete $pars{'expand'};
 
   # add the requested GET params to the query string
   foreach (keys %$params) {
@@ -305,10 +308,9 @@ sub url {
   # Sort the keys so that the url is the same for a given set of parameters
   foreach my $p (sort keys %pars) {
     next unless defined $pars{$p};
-
+    
     # Don't escape colon or space
     $url .= sprintf '%s=%s;', uri_escape($p), uri_escape($_, "^A-Za-z0-9\-_ .!~*'():\/") for ref $pars{$p} ? sort @{$pars{$p}} : $pars{$p};
-
   }
 
   $url =~ s/;$//;
