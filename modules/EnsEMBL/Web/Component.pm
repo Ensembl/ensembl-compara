@@ -42,6 +42,8 @@ sub new {
   
   bless $self, $class;
   
+  $hub->set_cookie("toggle_$_", 'open') for grep $_, $hub->param('expand');
+  
   $self->_init;
   
   return $self;
@@ -944,7 +946,7 @@ sub toggleable_table {
   
   return sprintf('
     <div class="toggleable_table">
-      <a rel="%s_table" class="toggle %s" href="#%s_table"><h2>%s</h2></a>
+      <h2><a rel="%s_table" class="toggle %s" href="#%s_table">%s</a></h2>
       %s
       %s
     </div>',
