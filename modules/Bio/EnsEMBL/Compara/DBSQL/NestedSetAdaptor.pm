@@ -242,12 +242,10 @@ sub fetch_root_by_node {
   Exceptions : thrown if the nodes don't share the same root_id
 
 =cut
-use Data::Dumper;
 sub fetch_first_shared_ancestor_indexed {
   my $self = shift;
   
   my $node1 = shift;
-  #print Dumper($node1), "\n";
   my $root_id = $node1->_root_id;
   my $min_left = $node1->left_index;
   my $max_right = $node1->right_index;
