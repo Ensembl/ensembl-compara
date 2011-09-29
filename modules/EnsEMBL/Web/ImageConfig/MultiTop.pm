@@ -13,12 +13,10 @@ sub init {
     sortable_tracks   => 1,     # allow the user to reorder tracks
     opt_empty_tracks  => 0,     # include empty tracks
     opt_lines         => 1,     # draw registry lines
-    opt_restrict_zoom => 1,     # when we get "zoom" working draw restriction enzyme info on it
-    global_options    => 1   
+    opt_restrict_zoom => 1,     # when we get "zoom" working draw restriction enzyme info on it 
   });
 
   $self->create_menus(qw(
-    options
     sequence
     marker
     transcript
@@ -26,41 +24,22 @@ sub init {
     decorations
     information
   ));
+    
+  $self->add_track('sequence',    'contig', 'Contigs',     'stranded_contig', { display => 'normal', strand => 'f' });
+  $self->add_track('information', 'info',   'Information', 'text',            { display => 'normal' });
   
-  $self->get_node('options')->set('caption', 'Comparative features');
-  
-  $self->add_options( 
-    [ 'opt_join_genes', 'Join genes', undef, undef, 'off' ]
+  $self->load_tracks;
+
+  $self->add_tracks('decorations',
+    [ 'scalebar',  '', 'scalebar',  { display => 'normal', strand => 'b', menu => 'no' }],
+    [ 'ruler',     '', 'ruler',     { display => 'normal', strand => 'f', menu => 'no' }],
+    [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }]
   );
   
-  if ($self->species_defs->valid_species($self->species)) {
-    $self->get_node('opt_join_genes')->set('menu', 'no');
-    
-    $self->add_track('sequence',    'contig', 'Contigs',     'stranded_contig', { display => 'normal', strand => 'f' });
-    $self->add_track('information', 'info',   'Information', 'text',            { display => 'normal' });
-    
-    $self->load_tracks;
-
-    $self->add_tracks('decorations',
-      [ 'scalebar',  '', 'scalebar',  { display => 'normal', strand => 'b', menu => 'no' }],
-      [ 'ruler',     '', 'ruler',     { display => 'normal', strand => 'f', menu => 'no' }],
-      [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }]
-    );
-    
-    $self->modify_configs(
-      [ 'transcript' ],
-      { render => 'gene_label', strand => 'r' }
-    );
-    
-    $self->{'extra_menus'}->{'display_options'} = 0;
-  } else {
-    $self->set_parameters({
-      active_menu     => 'options',
-      sortable_tracks => 0
-    });
-    
-    $self->{'extra_menus'} = { display_options => 1 };
-  }
+  $self->modify_configs(
+    [ 'transcript' ],
+    { render => 'gene_label', strand => 'r' }
+  );
 }
 
 sub join_genes {

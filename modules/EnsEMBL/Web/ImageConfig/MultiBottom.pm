@@ -12,13 +12,11 @@ sub init {
   $self->set_parameters({
     sortable_tracks => 1,  # allow the user to reorder tracks
     opt_lines       => 1,  # register lines
-    global_options  => 1,
     spritelib       => { default => $self->species_defs->ENSEMBL_SERVERROOT . '/htdocs/img/sprites' }
   });
 
   # Add menus in the order you want them for this display
   $self->create_menus(qw(
-    options 
     sequence
     marker
     transcript
@@ -41,43 +39,22 @@ sub init {
     information 
   ));
   
-  $self->get_node('options')->set('caption', 'Comparative features');
+  # Add in additional tracks
+  $self->load_tracks;
+  $self->load_configured_das;
   
-  $self->add_options( 
-    [ 'opt_pairwise_blastz', 'BLASTz/LASTz net pairwise alignments',    {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
-    [ 'opt_pairwise_tblat',  'Translated BLAT net pairwise alignments', {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
-    [ 'opt_join_genes',      'Join genes', undef, undef, 'off' ]
+  $self->add_tracks('sequence', 
+    [ 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' }]
   );
   
-  if ($self->species_defs->valid_species($self->species)) {
-    $_->set('menu', 'no') for map $self->get_node($_), qw(opt_pairwise_blastz opt_pairwise_tblat opt_join_genes);
-    
-    # Add in additional tracks
-    $self->load_tracks;
-    $self->load_configured_das;
-    
-    $self->add_tracks('sequence', 
-      [ 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' }]
-    );
-    
-    $self->add_tracks('decorations',
-      [ 'scalebar',  '', 'scalebar',   { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
-      [ 'ruler',     '', 'ruler',      { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
-      [ 'draggable', '', 'draggable',  { display => 'normal', strand => 'b', menu => 'no' }],
-      [ 'nav',       '', 'navigation', { display => 'normal', strand => 'b', menu => 'no' }]
-    );
-    
-    $_->set('display', 'off') for grep $_->id =~ /^chr_band_/, $self->get_node('decorations')->nodes; # Turn off chromosome bands by default
-    
-    $self->{'extra_menus'}->{'display_options'} = 0;
-  } else {
-    $self->set_parameters({
-      active_menu     => 'options',
-      sortable_tracks => 0
-    });
-    
-    $self->{'extra_menus'} = { display_options => 1 };
-  }
+  $self->add_tracks('decorations',
+    [ 'scalebar',  '', 'scalebar',   { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
+    [ 'ruler',     '', 'ruler',      { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
+    [ 'draggable', '', 'draggable',  { display => 'normal', strand => 'b', menu => 'no' }],
+    [ 'nav',       '', 'navigation', { display => 'normal', strand => 'b', menu => 'no' }]
+  );
+  
+  $_->set('display', 'off') for grep $_->id =~ /^chr_band_/, $self->get_node('decorations')->nodes; # Turn off chromosome bands by default
 }
 
 sub multi {
@@ -134,11 +111,6 @@ sub multi {
   # Double up for non primary species in the middle of the image
   $alignments{2} = $alignments{1} if $pos != 1 && scalar @strands == 2 && scalar keys %alignments == 1;
   
-  my %renderers = (
-    BLASTZ_NET          => $self->get_node('opt_pairwise_blastz')->get('renderers'),
-    TRANSLATED_BLAT_NET => $self->get_node('opt_pairwise_tblat')->get('renderers')
-  );
-  
   my $decorations = $self->get_node('decorations');
   
   foreach (sort keys %alignments) {
@@ -160,7 +132,6 @@ sub multi {
           ori                        => $align->{'other_ori'},
           method_link_species_set_id => $align->{'id'},
           join                       => 1,
-          renderers                  => $renderers{$align->{'type'}}
         })
       );
     }

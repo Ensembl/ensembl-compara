@@ -28,7 +28,7 @@ sub content {
   my $i               = 1;
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
   my $compara_db      = new EnsEMBL::Web::DBSQL::DBConnection($primary_species)->_get_compara_database;
-  my $join_genes      = $hub->get_imageconfig('MultiTop', 'Multi', 'Multi')->get_option('opt_join_genes', 'values');
+  my $join_genes      = $hub->param('opt_join_genes') eq 'on';
   my @images;
   
   foreach (@$slices) {

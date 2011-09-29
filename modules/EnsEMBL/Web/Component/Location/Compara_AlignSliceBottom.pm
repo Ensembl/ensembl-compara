@@ -22,8 +22,7 @@ sub content {
   my $object       = $self->object;
   my $threshold    = 1000100 * ($species_defs->ENSEMBL_GENOME_SIZE || 1);
   my $align_params = $hub->param('align');
-  my $multi_config = $hub->get_imageconfig('alignsliceviewbottom', 'Multi', 'Multi');
-  my %options      = ( scores => $multi_config->get_option('opt_conservation_scores'), constrained => $multi_config->get_option('opt_constrained_elements') );
+  my %options      = ( scores => $hub->param('opt_conservation_scores'), constrained => $hub->param('opt_constrained_elements') );
   my ($align)      = split '--', $align_params;
   
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;

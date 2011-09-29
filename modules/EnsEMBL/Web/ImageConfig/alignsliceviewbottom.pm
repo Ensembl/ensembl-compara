@@ -12,11 +12,9 @@ sub init {
   
   $self->set_parameters({
     sortable_tracks => 1, # allow the user to reorder tracks
-    global_options  => 1,
   });
 
   $self->create_menus(qw(
-    options
     sequence
     transcript
     repeat
@@ -26,61 +24,36 @@ sub init {
     information
   ));
   
-  my $options = $self->get_node('options');
-  
-  $options->set('caption', 'Comparative features');
-  
-  $self->add_options( 
-    [ 'opt_conservation_scores',  'Conservation scores',  {qw(off 0 tiling  tiling )}, [qw(off Off tiling  On)], 'off' ],
-    [ 'opt_constrained_elements', 'Constrained elements', {qw(off 0 compact compact)}, [qw(off Off compact On)], 'off' ],
-  );  
-  
-  if ($self->species_defs->valid_species($species) || $species eq 'common') {
-    if ($species eq 'common') {
-      $self->set_parameters({
-        active_menu     => 'sequence',
-        sortable_tracks => 0
-      });
-    } else {
-      $self->load_tracks;
-    }
-    
-    $self->add_track('sequence', 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' });
-    
-    $self->add_tracks('information', 
-      [ 'alignscalebar',     '',                  'alignscalebar',     { display => 'normal', strand => 'b', menu => 'no' }],
-      [ 'ruler',             '',                  'ruler',             { display => 'normal', strand => 'f', menu => 'no' }],
-      [ 'draggable',         '',                  'draggable',         { display => 'normal', strand => 'b', menu => 'no' }], # TODO: get this working
-      [ 'alignslice_legend', 'AlignSlice Legend', 'alignslice_legend', { display => 'normal', strand => 'r' }]
-    );
-    
-    $options->remove;
-    
-    $self->modify_configs(
-      [ 'transcript' ],
-      { renderers => [ 
-        off                   => 'Off', 
-        as_transcript_label   => 'Expanded with labels',
-        as_transcript_nolabel => 'Expanded without labels',
-        as_collapsed_label    => 'Collapsed with labels',
-        as_collapsed_nolabel  => 'Collapsed without labels' 
-      ]}
-    );
-    
-    $self->modify_configs(
-      [ 'conservation' ],
-      { menu => 'no' }
-    );
-    
-    $self->{'extra_menus'}->{'display_options'} = 0;
+  if ($species eq 'Multi') {
+    $self->set_parameter('sortable_tracks', 0);
   } else {
-    $self->set_parameters({
-      active_menu     => 'options',
-      sortable_tracks => 0
-    });
-    
-    $self->{'extra_menus'} = { display_options => 1 };
+    $self->load_tracks;
   }
+  
+  $self->add_track('sequence', 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' });
+  
+  $self->add_tracks('information', 
+    [ 'alignscalebar',     '',                  'alignscalebar',     { display => 'normal', strand => 'b', menu => 'no' }],
+    [ 'ruler',             '',                  'ruler',             { display => 'normal', strand => 'f', menu => 'no' }],
+    [ 'draggable',         '',                  'draggable',         { display => 'normal', strand => 'b', menu => 'no' }], # TODO: get this working
+    [ 'alignslice_legend', 'AlignSlice Legend', 'alignslice_legend', { display => 'normal', strand => 'r' }]
+  );
+  
+  $self->modify_configs(
+    [ 'transcript' ],
+    { renderers => [ 
+      off                   => 'Off', 
+      as_transcript_label   => 'Expanded with labels',
+      as_transcript_nolabel => 'Expanded without labels',
+      as_collapsed_label    => 'Collapsed with labels',
+      as_collapsed_nolabel  => 'Collapsed without labels' 
+    ]}
+  );
+  
+  $self->modify_configs(
+    [ 'conservation' ],
+    { menu => 'no' }
+  );
 }
 
 sub species_list {
@@ -98,7 +71,7 @@ sub species_list {
       if ($_->[0] eq $primary) {
         unshift @species, $_;
       } elsif ($_->[0] eq 'ancestral_sequences') {
-        push @species, [ 'common', 'Ancestral sequences' ]; # Cheating: set species to common to stop errors due to invalid species.
+        push @species, [ 'Multi', 'Ancestral sequences' ]; # Cheating: set species to Multi to stop errors due to invalid species.
       } else {
         push @species, $_;
       }

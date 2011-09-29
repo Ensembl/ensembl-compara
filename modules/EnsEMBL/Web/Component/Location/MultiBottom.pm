@@ -37,10 +37,9 @@ sub content {
   my $base_url        = $hub->url($hub->multi_params);
   my $s               = $hub->get_viewconfig('MultiTop')->get('show_panel') eq 'yes' ? 3 : 2;
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
-  my $multi_config    = $hub->get_imageconfig('MultiBottom', 'Multi', 'Multi');
-  my $methods         = { BLASTZ_NET => $multi_config->get_option('opt_pairwise_blastz', 'values'), TRANSLATED_BLAT_NET => $multi_config->get_option('opt_pairwise_tblat', 'values') };
-  my $join_alignments = grep $_, values %$methods;
-  my $join_genes      = $multi_config->get_option('opt_join_genes', 'values');
+  my $methods         = { BLASTZ_NET => $hub->param('opt_pairwise_blastz'), TRANSLATED_BLAT_NET => $hub->param('opt_pairwise_tblat') };
+  my $join_alignments = grep $_ ne 'off', values %$methods;
+  my $join_genes      = $hub->param('opt_join_genes') eq 'on';
   my $compara_db      = $join_genes ? new EnsEMBL::Web::DBSQL::DBConnection($primary_species)->_get_compara_database : undef;
   my $i               = 1;
   my $primary_image_config;
