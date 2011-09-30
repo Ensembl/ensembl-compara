@@ -51,7 +51,7 @@ Internal methods are usually preceded with a _
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::UpdateMaxAlignmentLength;
+package Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength;
 
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
