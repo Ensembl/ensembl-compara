@@ -18,7 +18,7 @@ sub content {
   my $hub    = $self->hub;
   my $object = $self->object;
 
-  return if $hub->param('show_panel') eq 'no';
+  return if $hub->param('show_top_panel') eq 'no';
   
   my $threshold    = 1e6 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
   my $image_config = $hub->get_imageconfig('contigviewtop');

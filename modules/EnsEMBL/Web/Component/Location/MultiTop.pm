@@ -18,7 +18,7 @@ sub content {
   my $self = shift;
   my $hub  = $self->hub;
   
-  return if $hub->param('show_panel') eq 'no';
+  return if $hub->param('show_top_panel') eq 'no';
   
   my $threshold       = 1e6 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1); # get a slice corresponding to the region to be shown for Navigational Overview
   my $image_width     = $self->image_width;
