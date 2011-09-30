@@ -998,9 +998,8 @@ sub _internal_nhx_format {
 	  } elsif ($format_mode eq "protein_id") {
             $nhx .= sprintf("%s", $self->name);
 
-	  elsif (ref $format_mode eq "HASH") {
+	  } elsif (ref $format_mode eq "HASH") {
             $nhx .= $format_mode->{name}->($self);
-	  }
 
 	  } elsif ($format_mode eq "treebest_ortho") {
             $nhx .= $self->member_id . "_" . $self->taxon_id;
@@ -1013,7 +1012,6 @@ sub _internal_nhx_format {
 
         } elsif (ref $format_mode eq "HASH") {        	
         	$nhx .= $format_mode->{name}->($self);
-        }
 
         } else {
           my $name = sprintf("%s", $self->name);
@@ -1052,12 +1050,11 @@ sub _internal_nhx_format {
 
       } elsif (defined $gene_stable_id && ref $format_mode eq "HASH") {
         $nhx .= $format_mode->{gene_stable_id}->($self); 
-      }
 
-       } elsif (defined $gene_stable_id && $format_mode eq "treebest_ortho") {
+      } elsif (defined $gene_stable_id && $format_mode eq "treebest_ortho") {
 # #         $nhx .= ":O=" . $self->stable_id;
 # #         $nhx .= ":G=$gene_stable_id";
-       }
+      }
       $taxon_id = $self->taxon_id;
     } else {
       $taxon_id = $self->get_tagvalue("taxon_id");
@@ -1085,7 +1082,8 @@ sub _internal_nhx_format {
       	if (ref $format_mode eq "HASH") {
       		$nhx .= $format_mode->{name}->($self);
       	} else {
-	  $nhx .= sprintf("%s", $self->name);
+          $nhx .= sprintf("%s", $self->name);
+        }
       }
       $nhx .= sprintf(":%1.4f", $self->distance_to_parent);
     }
