@@ -35,6 +35,7 @@ use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Compara::FormatTree;
 use Bio::TreeIO;
 use Bio::EnsEMBL::Compara::Graph::Node;
+use Bio::EnsEMBL::Compara::Member;
 our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node);
 
 #################################################
@@ -956,7 +957,7 @@ sub _internal_nhx_format {
     $nhx .= ")";
   }
   
-  if($format_mode eq "full" || $format_mode eq "full_web" || $format_mode eq "display_label" || $format_mode eq "display_label_composite" || $format_mode eq "treebest_ortho" || $format_mode eq "transcript_id" || $format_mode eq "gene_id" || $format_mode eq "protein_id" || $format_mode eq "member_id_taxon_id") { 
+  if($format_mode eq "full" || $format_mode eq "full_web" || $format_mode eq "display_label" || $format_mode eq "display_label_composite" || $format_mode eq "treebest_ortho" || $format_mode eq "transcript_id" || $format_mode eq "gene_id" || $format_mode eq "protein_id" || $format_mode eq "member_id_taxon_id" || ref $format_mode eq "HASH") { 
       #full: name and distance on all nodes
       if($self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
 	  if ($format_mode eq "transcript_id") {
@@ -996,6 +997,11 @@ sub _internal_nhx_format {
             $nhx .= $self->genome_db->short_name;
 	  } elsif ($format_mode eq "protein_id") {
             $nhx .= sprintf("%s", $self->name);
+
+	  elsif (ref $format_mode eq "HASH") {
+            $nhx .= $format_mode->{name}->($self);
+	  }
+
 	  } elsif ($format_mode eq "treebest_ortho") {
             $nhx .= $self->member_id . "_" . $self->taxon_id;
           }
@@ -1004,6 +1010,11 @@ sub _internal_nhx_format {
           my $node_id = $self->node_id;
           my $taxon_id = $self->get_tagvalue("taxon_id");
           $nhx .= $node_id . "_" . $taxon_id;
+
+        } elsif (ref $format_mode eq "HASH") {        	
+        	$nhx .= $format_mode->{name}->($self);
+        }
+
         } else {
           my $name = sprintf("%s", $self->name);
           $name = sprintf("%s", $self->get_tagvalue("taxon_name")) if ($name eq '');
@@ -1038,6 +1049,11 @@ sub _internal_nhx_format {
         $nhx .= ":G=$transcript_stable_id";
       } elsif (defined $gene_stable_id && $format_mode eq "protein_id") {
         $nhx .= ":G=$gene_stable_id";
+
+      } elsif (defined $gene_stable_id && ref $format_mode eq "HASH") {
+        $nhx .= $format_mode->{gene_stable_id}->($self); 
+      }
+
        } elsif (defined $gene_stable_id && $format_mode eq "treebest_ortho") {
 # #         $nhx .= ":O=" . $self->stable_id;
 # #         $nhx .= ":G=$gene_stable_id";
@@ -1066,7 +1082,10 @@ sub _internal_nhx_format {
     #simplified: name only on leaves, dist only if has parent
     if($self->parent) {
       if($self->is_leaf) {
-        $nhx .= sprintf("%s", $self->name);
+      	if (ref $format_mode eq "HASH") {
+      		$nhx .= $format_mode->{name}->($self);
+      	} else {
+	  $nhx .= sprintf("%s", $self->name);
       }
       $nhx .= sprintf(":%1.4f", $self->distance_to_parent);
     }
