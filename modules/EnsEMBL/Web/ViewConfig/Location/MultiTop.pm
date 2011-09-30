@@ -35,7 +35,7 @@ sub form {
   
   $self->add_fieldset('Display options');
   
-  $self->add_form_element({ type => 'YesNo', name => 'show_panel', select => 'select', label => 'Show panel' });
+  $self->add_form_element({ type => 'YesNo', name => 'show_top_panel', select => 'select', label => 'Show panel' });
 }
 
 1;
