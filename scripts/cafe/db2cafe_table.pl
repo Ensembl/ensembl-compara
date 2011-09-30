@@ -32,7 +32,7 @@ my @species_names = map {$_->name} @$species_set;
 my $nctree_adaptor = $reg->get_adaptor("multi", "compara", "NCTree");
 my $all_trees = $nctree_adaptor->fetch_all();
 
-print "FAMILYDESC\tFAMILY\t", join("\t", map {ucfirst} @species_names), "\n";
+print "FAMILYDESC\tFAMILY\t", join("\t", @species_names), "\n";
 for my $tree (@$all_trees) {
   my $root_id = $tree->node_id();
   my $nctree = $nctree_adaptor->fetch_node_by_node_id($root_id);
