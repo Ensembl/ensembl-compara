@@ -8,6 +8,7 @@ use Clone qw(clone);
 use Data::Dumper;
 
 use EnsEMBL::Web::DOM;
+use EnsEMBL::Web::Exceptions;
 use EnsEMBL::Web::Tools::RandomString;
 
 use constant {
@@ -136,7 +137,7 @@ sub get_nodes_by_node_type {
 sub get_element_by_id {
   ## Typical getElementById
   ## @param Element id
-  ## @return Element object
+  ## @return Element object, undef if no element found
   my ($self, $id) = @_;
 
   #works for document and element only
@@ -408,22 +409,22 @@ sub parent_node {
 sub appendable {
   ## Checks if a given node can be appended in this node
   ## @param Node to be appended
-  ## @param (Optional) Reference to a SCALAR string to which error will be saved if any
+  ## @param (Optional) Reference to a SCALAR string to which 'reason why node can't be appended' will be saved if any
   ## @return 1 if appendable, 0 otherwise
-  my ($self, $node, $error_ref) = @_;
+  my ($self, $node, $reason) = @_;
     
-  my $no_error = $error_ref && ref($error_ref) eq 'SCALAR' ? 0 : 1;
+  my $ignore_reason = $reason && ref($reason) eq 'SCALAR' ? 0 : 1;
 
   #first filter - if the node can not have any child by default
-  ($no_error or $$error_ref = "Node can not have any child node.") and return 0 unless $self->can_have_child;
+  ($ignore_reason or $$reason = "Node can not have any child node.") and return 0 unless $self->can_have_child;
 
   #second filter - if invalid node
-  ($no_error or $$error_ref = "Node tried to append is invalid.") and return 0 unless defined $node && $node->isa(__PACKAGE__);
+  ($ignore_reason or $$reason = "Node tried to append is invalid.") and return 0 unless defined $node && ref $node && $node->isa(__PACKAGE__);
 
   #third filter - if the node being appended as child is one of this node's ancestors
   my $ancestor = $self->parent_node;
   while (defined $ancestor) {
-    ($no_error or $$error_ref = "Node tried to append is one of node's ancestors.") and return 0 if $ancestor->is_same_node($node);
+    ($ignore_reason or $$reason = "Node being appended is one of node's ancestors.") and return 0 if $ancestor->is_same_node($node);
     $ancestor = $ancestor->parent_node;
   }
   return 1;
@@ -444,7 +445,8 @@ sub append_child {
   ##    $node->append_child({'node_name' => 'text', 'text' => 'this is a text node'})                     - creates a text node with given text
   ##    $node->append_child('text', {'text' => 'this is a text node'})                                    - same as above
   ##    $node->append_child('text', 'this is a text node')                                                - same as above
-  my ($self, $child) = shift->_normalise_arguments(@_) or return;
+  ## @exception DOMException as thrown by &_normalise_arguments or &_append_child
+  my ($self, $child) = shift->_normalise_arguments(@_);
   return $self->_append_child($child);
 }
 
@@ -452,6 +454,7 @@ sub append_children {
   ## Appends multiple children (wrapper around append_child)
   ## @param List (NOT ArrayRef) of nodes (or argument as accpeted by append child - only one argument per child - OR for multiple arguments per child, provide ref to the array of arguments)
   ## @return ArrayRef or List of newly appended nodes or undef indexed at any unsuccessful addition in the list
+  ## @exception DOMException as thrown by &append_child
   my $self  = shift;
   my @nodes = map {$self->append_child(ref $_ eq 'ARRAY' ? @$_ : $_)} @_;
   return wantarray ? @nodes : \@nodes;
@@ -460,6 +463,7 @@ sub append_children {
 sub prepend_child {
   ## Appends a child node at the beginning (or also creates a new one before prepending)
   ## @params as accepted by append_child
+  ## @exception DOMException as thrown by &append_child or &insert_before
   my $self = shift;
   return $self->has_child_nodes
     ? $self->insert_before(@_, $self->first_child)
@@ -471,28 +475,29 @@ sub insert_before {
   ## @params As accpeted by append_child
   ## @param  Reference node (mandatory)
   ## @return New Node object if successfully added, undef otherwise
+  ## @exception DOMException as thrown by &_normalise_arguments or &_append_child or if reference node is invalid
   my $reference_node = pop @_;
-  my ($self, $new_node) = shift->_normalise_arguments(@_) or return;
+  my ($self, $new_node) = shift->_normalise_arguments(@_);
 
-  if (defined $reference_node && $self->is_same_node($reference_node->parent_node) && !$reference_node->is_same_node($new_node)) {
-  
-    $self->_append_child($new_node) or return;
-    $new_node->previous_sibling->{'_next_sibling'} = 0;
-    $new_node->{'_next_sibling'} = $reference_node;
-    $new_node->{'_previous_sibling'} = $reference_node->previous_sibling || 0;
-    $reference_node->previous_sibling->{'_next_sibling'} = $new_node if $reference_node->previous_sibling;
-    $reference_node->{'_previous_sibling'} = $new_node;
-    $self->_adjust_child_nodes;
-    return $new_node;
-  }
-  warn 'Reference node is missing or is same as new node or does not belong to the same parent node.';
-  return undef;
+  throw exception('DOMException', 'Reference node is missing')                         if not defined $reference_node;
+  throw exception('DOMException', 'Reference node does not belong to the same parent') if !$self->is_same_node($reference_node->parent_node);
+  throw exception('DOMException', 'Reference node is same as the new node')            if $reference_node->is_same_node($new_node);
+
+  $self->_append_child($new_node);
+  $new_node->previous_sibling->{'_next_sibling'} = 0;
+  $new_node->{'_next_sibling'} = $reference_node;
+  $new_node->{'_previous_sibling'} = $reference_node->previous_sibling || 0;
+  $reference_node->previous_sibling->{'_next_sibling'} = $new_node if $reference_node->previous_sibling;
+  $reference_node->{'_previous_sibling'} = $new_node;
+  $self->_adjust_child_nodes;
+  return $new_node;
 }
 
 sub insert_after {
   ## Appends a child node after a given reference node
   ## @params As accepted by insert_before
   ## @return New node if success, undef otherwise
+  ## @exception DOMException as thrown by &append_child or &insert_before
   my $self = shift;
   my $reference_node = pop @_;
 
@@ -505,11 +510,9 @@ sub before {
   ## Places a new node before the node. An extra to DOM functionality to make it easy to insert nodes.
   ## @params As accepted by append_child
   ## @return New Node if success, undef otherwise
+  ## @exception DOMException as thrown by &insert_before or if parent node not found
   my $self = shift;
-  unless ($self->parent_node) {
-    warn "New node could not be inserted. Either the reference node is top level or has not been added to the DOM tree yet.";
-    return undef;
-  }
+  throw exception('DOMException', 'New node could not be inserted. Either the reference node is top level or has not been added to the DOM tree yet.') unless $self->parent_node;
   return $self->parent_node->insert_before(@_, $self);
 }
 
@@ -517,11 +520,9 @@ sub after {
   ## Places a new node after the node. An extra to DOM functionality to make it easy to insert nodes.
   ## @param As accepted by append_child
   ## @return New Node if success, undef otherwise
+   ## @exception DOMException as thrown by &insert_after or if parent node not found
   my $self = shift;
-  unless ($self->parent_node) {
-    warn "New node could not be inserted. Either the reference node is top level or has not been added to the DOM tree yet.";
-    return undef;
-  }
+  throw exception('DOMException', 'New node could not be inserted. Either the reference node is top level or has not been added to the DOM tree yet.') unless $self->parent_node;
   return $self->parent_node->insert_after(@_, $self);
 }
 
@@ -561,6 +562,7 @@ sub remove_child {
   ## Removes a child node
   ## @param Node to be removed
   ## @return Removed node
+  ## @exception DOMException if node to be removed not found in the parent node
   my ($self, $child) = @_;
   if ($self->is_same_node($child->parent_node)) {
     $child->previous_sibling->{'_next_sibling'} = $child->next_sibling || 0 if defined $child->previous_sibling;
@@ -571,12 +573,12 @@ sub remove_child {
     $self->_adjust_child_nodes;
     return $child;
   }
-  warn 'Node was not found in the parent node.';
-    return undef;
+  throw exception('DOMException', 'Node to be removed was not found in the parent node.');
 }
 
 sub remove {
   ## Removes the child from it's parent node. An extra to DOM function to make it easy to remove nodes
+  ## @return The node being removed itself
   my $self = shift;
   $self->parent_node->remove_child($self) if defined $self->parent_node;
   return $self;
@@ -597,6 +599,7 @@ sub replace_child {
   ## @params As accepted by append_child
   ## @param Old Node
   ## @return Removed node
+  ## @exception DOMException
   my $self = shift;
   my $old_node = pop @_;
   return $self->remove_child($old_node) if $self->insert_before(@_, $old_node);
@@ -702,6 +705,7 @@ sub _adjust_child_nodes {
 
 sub _normalise_arguments {
   ## private method to normalise the arguments provided for methods append_child, insert_before etc
+  ## @exception DOMException if node_name missing for any new node required to be created
   my ($self, $arg1, $arg2) = @_;
 
   # normalise the arguments
@@ -709,8 +713,8 @@ sub _normalise_arguments {
 
   # create new node if intended
   if (ref $arg1 eq 'HASH') {
-    warn "Node can not be created: 'node_name' not provided for new node" and return unless exists $arg1->{'node_name'};
-    $arg1 = $arg1->{'node_name'} eq 'text' ? $self->dom->create_text_node($arg1->{'text'}) : $self->dom->create_element(delete $arg1->{'node_name'}, $arg1) or return;
+    throw exception({'type' => 'DOMException', 'message' => "Node can not be created: 'node_name' not provided for new node", 'ignore' => 1}) unless exists $arg1->{'node_name'};
+    $arg1 = $arg1->{'node_name'} eq 'text' ? $self->dom->create_text_node($arg1->{'text'}) : $self->dom->create_element(delete $arg1->{'node_name'}, $arg1);
   }
   return ($self, $arg1);
 }
@@ -718,10 +722,11 @@ sub _normalise_arguments {
 sub _append_child {
   ## private method to actually append the child
   ## this method is only called if arguments are normalised
+  ## @exception DOMException if node is not &appendable
   my ($self, $child) = @_;
 
-  my $error = "";
-  if ($self->appendable($child, \$error)) {
+  my $reason = "";
+  if ($self->appendable($child, \$reason)) {
     $self->{'_text'} = ''; #remove text if any
     $child->remove; #remove from present parent node, if any
     $child->{'_parent_node'} = $self;
@@ -732,9 +737,7 @@ sub _append_child {
     push @{$self->{'_child_nodes'}}, $child;
     return $child;
   }
-  warn 'Node cannot be inserted at the specified point in the hierarchy. '.$error;
-  return undef;
+  throw exception({'type' => 'DOMException', 'message' => 'Node cannot be inserted at the specified point in the hierarchy. '.$reason, 'ignore' => 1});
 }
 
 1;
-

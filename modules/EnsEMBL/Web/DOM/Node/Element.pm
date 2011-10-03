@@ -2,6 +2,8 @@ package EnsEMBL::Web::DOM::Node::Element;
 
 use strict;
 
+use EnsEMBL::Web::Exceptions;
+
 use base qw(EnsEMBL::Web::DOM::Node);
 
 use constant {
@@ -222,10 +224,10 @@ sub inner_HTML {
   ## If intended to set parsed HTML, string is converted to tree format and appended to the node after removing the existing child nodes.
   ## @param innerHTML string (or ArrayRef of all the three arguments)
   ## @param flag to tell whether or not to parse the HTML - off (no parsing) by default.
-  ## @param A flag kept on to ignore parsing error, OR reference to a scalar to save parsing error if any (only if html parsing is on)
   ## @return final HTML string
-  my ($self, $html, $do_parse, $error) = @_;
-  ($html, $do_parse, $error) = @$html if ref $html eq 'ARRAY';
+  ## @exception HTMLParsingException if there is some error in parsing the HTML
+  my ($self, $html, $do_parse) = @_;
+  ($html, $do_parse) = @$html if ref $html eq 'ARRAY';
   my $error_message = "";
   if (defined $html) {
     $self->remove_children;
@@ -236,7 +238,7 @@ sub inner_HTML {
       $self->{'_text'} = "$html";
     }
   }
-  not $error and $error_message and warn $error_message or ref $error eq 'SCALAR' and $$error = $error_message;
+  throw exception('DOMException::HTMLParsingException', $error_message) if $error_message;
   return $self->{'_text'} if $self->{'_text'} ne '';
   $html  = '';
   $html .= $_->node_type eq $self->TEXT_NODE ? $_->text : $_->outer_HTML for @{$self->{'_child_nodes'}};
@@ -269,7 +271,7 @@ sub outer_HTML {
 }
 
 sub add_attribute {
-  #warn "Use set_attribute(), not add_attribute()!";
+  #Use &set_attribute, not &add_attribute
   return shift->set_attribute(@_);
 }
 
@@ -319,15 +321,18 @@ sub _parse_HTML_to_nodes {
     elsif ($_->{'type'} eq 'end_tag') {
       my $expected    = pop @lifo;
       $current_node   = $current_node->parent_node, next if $_->{'name'} eq $expected;
-      $$error_ref     = sprintf('HTML parsing error: Unexpected closing tag found - %s as in %s, expected %s tag.', $_->{'name'}, $_->{'string'}, $expected || 'no');
+      $$error_ref     = sprintf('Unexpected closing tag found - %s as in %s, expected %s tag.', $_->{'name'}, $_->{'string'}, $expected || 'no');
       return $nodes; #return the parsed ones
     }
     else {
-      my $node = $self->dom->create_element($_->{'name'}, $_->{'attr'}, 1);
-      if (!$node) {
-        $$error_ref = sprintf("HTML parsing error: Could not create HTML element '%s' from %s", $_->{'name'}, $_->{'string'});
-        return $nodes; #return the parsed ones
+      my $node;
+      try {
+        $node = $self->dom->create_element($_->{'name'}, $_->{'attr'});
       }
+      catch {
+        $$error_ref = $_->message(1);
+      };
+      return $nodes if !$node; #return the parsed ones
       $current_node ? $current_node->append_child($node) : push @$nodes, $node;
       push @lifo, $_->{'name'} and $current_node = $node if $_->{'type'} eq 'start_tag';
     }
