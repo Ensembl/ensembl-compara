@@ -4,9 +4,10 @@ package EnsEMBL::Web::DOM;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Root);
-
+use EnsEMBL::Web::Exceptions;
 use EnsEMBL::Web::DOM::Node::Element::Generic;
+
+use base qw(EnsEMBL::Web::Root);
 
 use constant {
   POSSIBLE_HTML_ELEMENTS => [qw(
@@ -53,7 +54,8 @@ sub create_element {
   ##   - inner_HTML/inner_text: value as accepted by the methods resp.
   ##   - flags: value as accepted by Node::set_flags
   ##   - children: ref to an array that is accepted by append_children method
-  ## @return Element subclass object or undef if unknown node_name
+  ## @return Element subclass object
+  ## @exception DOMException - if node name is not valid
   my ($self, $element_name, $attributes)  = @_;
 
   $element_name = lc $element_name;
@@ -68,7 +70,7 @@ sub create_element {
     if (!$self->dynamic_use($node_class)) {
       $node_class = undef;
       $_ eq $element_name and $node_class = 'EnsEMBL::Web::DOM::Node::Element::Generic' and last for @{$self->POSSIBLE_HTML_ELEMENTS};
-      return unless $node_class;
+      throw exception('DOMException', "Element with node name '$element_name' can not be created.") unless $node_class;
     }
     $self->[0]{$element_name} = $node_class;
   }
@@ -80,6 +82,7 @@ sub create_element {
   }
   if (exists $attributes->{'inner_HTML'}) {
     $element->inner_HTML(delete $attributes->{'inner_HTML'});
+    delete $attributes->{'inner_text'};
   }
   elsif (exists $attributes->{'inner_text'}) {
     $element->inner_text(delete $attributes->{'inner_text'});
