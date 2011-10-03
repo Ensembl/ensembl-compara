@@ -187,7 +187,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
           params.reset = url.match(/reset=(\w+)/)[1];
         }
         
-        Ensembl.EventManager.trigger('createPanel', id, json.panelType || $((json.content.match(/<input[^<]*class=".*?panel_type.*?".*?>/) || [])[0]).val(), params);
+        Ensembl.EventManager.trigger('createPanel', id, json.panelType || $((json.content.match(/<input[^<]*class="[^<]*panel_type[^<]*"[^<]*>/) || [])[0]).val(), params);
         
         wrapper = nav = forceReload = null;
       },
