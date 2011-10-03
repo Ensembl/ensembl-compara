@@ -4,7 +4,6 @@ package EnsEMBL::Web::ViewConfig;
 
 use strict;
 
-use CGI::Cookie;
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
 use JSON qw(from_json);
@@ -188,28 +187,15 @@ sub update_from_url {
     foreach my $v (split /,/, $config) {
       my ($k, $t) = split /=/, $v, 2;
       
-      if ($k =~ /^(cookie|image)_width$/) {
-        my $cookie_host  = $self->species_defs->ENSEMBL_COOKIEHOST;
-        
+      if ($k =~ /^(cookie|image)_width$/ && $t != $ENV{'ENSEMBL_IMAGE_WIDTH'}) {
         # Set width
-        if ($t != $ENV{'ENSEMBL_IMAGE_WIDTH'}) {
-          my $cookie = new CGI::Cookie(
-            -name    => 'ENSEMBL_WIDTH',
-            -value   => $t,
-            -domain  => $cookie_host,
-            -path    => '/',
-            -expires => $t =~ /\d+/ ? 'Monday, 31-Dec-2037 23:59:59 GMT' : 'Monday, 31-Dec-1970 00:00:01 GMT'
-          );
-          
-          $r->headers_out->add('Set-cookie' => $cookie);
-          $r->err_headers_out->add('Set-cookie' => $cookie);
-          $self->altered = 1;
-        }
+        $hub->set_cookie('ENSEMBL_WIDTH', $t);
+        $self->altered = 1;
       }
       
       $self->set($k, $t);
     }
-
+    
     if ($self->altered) {
       $session->add_data(
         type     => 'message',
@@ -300,10 +286,7 @@ sub get_fieldset {
   if (int $i eq $i) {
     $fieldset = $fieldsets->[$i];
   } else {
-    for (@$fieldsets) {
-      $fieldset = $_;
-      last if $_->get_legend && $_->get_legend->inner_HTML eq $i;
-    }
+    ($fieldset) = grep { $_->get_legend && $_->get_legend->inner_HTML eq $i } @$fieldsets;
   }
   
   return $fieldset;
@@ -327,6 +310,8 @@ sub build_form {
   
   $self->build_imageconfig_form($image_config) if $image_config;
   
+  $self->form($object);
+  
   if ($self->has_images) {
     my $fieldset = $self->get_fieldset('Display options') || $self->add_fieldset('Display options');
     
@@ -341,8 +326,6 @@ sub build_form {
       ]
     });
   }
-  
-  $self->form($object);
   
   foreach my $fieldset (@{$self->get_form->fieldsets}) {
     next if $fieldset->get_flag($self->SELECT_ALL_FLAG); 
