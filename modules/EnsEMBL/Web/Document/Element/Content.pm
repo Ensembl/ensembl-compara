@@ -231,15 +231,7 @@ sub content_panel {
     caption     => $node->data->{'full_caption'} || $node->data->{'concise'} || $node->data->{'caption'},
     omit_header => $controller->page_type eq 'Popup' ? 1 : 0,
     help        => { $hub->species_defs->multiX('ENSEMBL_HELP') }->{join '/', map $hub->$_ || (), qw(type action function)},
-    previous    => $node->previous,
-    next        => $node->next
   );
-  
-  # don't show tabs for 'no_menu' nodes
-  foreach my $node ('previous', 'next') {
-    $params{$node} = $params{$node}->$node while defined $params{$node} && ($params{$node}->get('type') ne 'view' || !$self->is_available($params{$node}->get('availability')));
-    $params{$node} = $params{$node}->data if $params{$node};
-  }
 
   my $panel = $self->new_panel('Navigation', $controller, %params);
   
