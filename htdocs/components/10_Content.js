@@ -197,15 +197,15 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       
       return false;
     }).filter('[rel]').each(function () {
-      var closed = Ensembl.cookie.get('toggle_' + this.rel) === 'closed';
+      var cookie = Ensembl.cookie.get('toggle_' + this.rel);
       
       if ($(this).hasClass('closed')) {
         var regex = '[;\?]' + this.rel + '(Panel)?;'
         
-        if (!closed || Ensembl.hash.match(new RegExp(regex))) {
+        if (cookie === 'open' || Ensembl.hash.match(new RegExp(regex))) {
           toTrigger[this.rel] = this; 
         }
-      } else if (closed) {
+      } else if ($(this).hasClass('open') && cookie === 'closed') {
         toTrigger[this.rel] = this;
       }
     });
