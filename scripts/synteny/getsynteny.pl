@@ -38,7 +38,7 @@ my $host = 'ensembldb.ensembl.org';
 my $user = 'anonymous';
 my $pass;
 my $dbname = 'ensembl_compara_41';
-my $port;
+my $port = 3306;
 
 my $species1 = 'Homo sapiens';
 my $species1_assembly;
