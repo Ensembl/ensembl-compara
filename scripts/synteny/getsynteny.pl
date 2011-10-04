@@ -38,6 +38,7 @@ my $host = 'ensembldb.ensembl.org';
 my $user = 'anonymous';
 my $pass;
 my $dbname = 'ensembl_compara_41';
+my $port;
 
 my $species1 = 'Homo sapiens';
 my $species1_assembly;
@@ -51,6 +52,7 @@ $| = 1;
 
 &GetOptions('help' => \$help,
             'host:s' => \$host,
+	    'port:i' => \$port,
             'user:s' => \$user,
             'dbname:s' => \$dbname,
             'pass:s' => \$pass,
@@ -67,6 +69,7 @@ if ($help) {
 }
 
 my $dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host        => $host,
+						       -port        => $port,
                                                        -user        => $user,
                                                        -pass        => $pass,
                                                        -dbname      => $dbname);
