@@ -63,6 +63,13 @@ my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/'
 
 $search_engine ||= 'lucene';
 
+my %species_boost = (
+  Human => '10.0',
+  Mouse => '8.0',
+  Zebrafish => '6.0',
+);
+
+
 #redirect STDOUT and maybe STDERR to a file
 $log ||= $debug ? '>-' : "dumping_${release}.log";
 open (LOG,    ">$log") or die "Can't open $log: $!";
@@ -289,7 +296,7 @@ sub helpLine {
   $hs->eof;
 
   #remove markup from headers and escape just to be sure
-  $name =~ s/<\/*.+>?//g;
+  $name =~ s/<\/?\w+>//g;
   $name = &clean($name);
 
   my $xml = qq(
@@ -2187,6 +2194,7 @@ sub GeneTransLine {
         $xml .= qq(
   <field name="_xr_$dbname">$dbkey"</field>);
         #non-versioned
+#        if ($species eq 'Human') {
         if ($dbkey =~ /^(\w+)\.\d+$/) {
           my $k = $1;
           next if $seen_labels{$k};
@@ -2194,6 +2202,7 @@ sub GeneTransLine {
           $xml .= qq(
   <field name="_xr_$dbname">$k</field>);
         }
+#        }
       }
     }
     foreach my $xref_description (keys %{$xref_descriptions}) {
@@ -2692,12 +2701,17 @@ sub common_fields {
   my ($species,$feature_type,$db) = @_;
   my $xml;
   my $sci_name = $conf->{'species_sci_name'};
+
   if ($search_engine eq 'solr') {
     my $species_name = $conf->{'species_common_name'};
+    my $boost = '';
+    if (my $boost_value = $species_boost{$species_name}) {
+      $boost = ' boost="'.$boost_value.'"';
+    }
     $sci_name =~ s/_/ /g;
     $xml = qq(
   <field name="site">$website_url</field>
-  <field name="species">$species_name</field>
+  <field name="species"$boost>$species_name</field>
   <field name="species_name">$sci_name</field>
   <field name="feature_type">$feature_type</field>
   <field name="database_type">$db</field>);
