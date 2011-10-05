@@ -27,11 +27,20 @@ sub _das_query_object {
   return $self->object->Obj;
 }
 
+sub ajax_url {
+  my $self     = shift;
+  my $function = shift;
+  my $params   = shift || {};
+  my (undef, $plugin, undef, undef, $module) = split '::', ref $self;
+
+  return $self->hub->url('Component', { action => $plugin, function => "$module/" . $self->hub->function, %$params }, undef, !$params->{'__clear'});
+}
+
 sub content {
   my $self         = shift;
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
-  my $logic_name   = $hub->referer->{'ENSEMBL_FUNCTION'} || $hub->function; # The DAS source this page represents
+  my $logic_name   = $hub->function; # The DAS source this page represents
 
   return $self->_error('No DAS source specified', 'No parameter passed!', '100%') unless $logic_name;
   
