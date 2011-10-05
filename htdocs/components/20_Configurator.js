@@ -417,6 +417,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           
           if (!li.length) {
             li = $(panel.favourites[type][trackName][1]).appendTo(panel.elLk.configDivs.filter('.' + type).find('ul.config_menu').eq(panel.favourites[type][trackName][0]));
+            li.data('links', [
+              'a.' + type,
+              'a.' + (subset ? subset[1] : type + '-' + li.parents('.subset').attr('class').replace(/subset|active|first|\s/g, '')) 
+            ].join(', '));
+            
             panel.imageConfig[trackName] = { renderer: 'off', favourite: 1 };
             added = true;
           }
