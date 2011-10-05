@@ -31,12 +31,13 @@ sub content {
      $summary           .= $self->hgvs;
   
   return qq{
-  <div class="summary_panel">
-    $failed
-    <dl class="summary">
-      $summary
-    </dl>
-  </div>};
+    <div class="summary_panel">
+      $failed
+      <dl class="summary">
+        $summary
+      </dl>
+    </div>
+  };
 }
 
 sub failed {
@@ -93,7 +94,7 @@ sub variation_class {
       @links = ($hub->get_ExtURL_link($name, 'HGMD', { ID => $_->associated_gene, ACC => $name }), $hub->get_ExtURL_link($_->source_name . $version, 'HGMD-PUBLIC', ''));
       last;
     }
-	} elsif ($source =~ /LSDB/) {
+  } elsif ($source =~ /LSDB/) {
     @links = ($name, $hub->get_ExtURL_link($source . ($version ? " ($version)" : ''), $source, $name));
   } else {
     @links = ($name, $url ? qq{<a href="$url">$source$version</a>} : "$source $version");
@@ -294,7 +295,7 @@ sub location {
     my @locations = ({ value => 'null', name => 'None selected' });
     
     # add locations for each mapping
-    foreach (sort { $mappings{$a}->{'Chr'} cmp $mappings{$b}->{'Chr'} || $mappings{$a}->{'start'} <=> $mappings{$b}->{'start'}} keys %mappings) {
+    foreach (sort { $mappings{$a}->{'Chr'} cmp $mappings{$b}{'Chr'} || $mappings{$a}{'start'} <=> $mappings{$b}{'start'}} keys %mappings) {
       my $region = $mappings{$_}{'Chr'}; 
       my $start  = $mappings{$_}{'start'};
       my $end    = $mappings{$_}{'end'};
