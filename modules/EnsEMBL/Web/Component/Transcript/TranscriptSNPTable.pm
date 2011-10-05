@@ -139,7 +139,7 @@ sub get_page_data {
       # Codon - make the letter for the SNP position in the codon bold
       if ($codons) {
         my $position = ($conseq_type->cds_start % 3 || 3) - 1;
-        $codons =~ s/[ACGT]/'<b>'.$&.'<\/b>'/eg;
+        $codons =~ s/([ACGT])/<b>$1<\/b>/g;
         $codons =~ tr/acgt/ACGT/;
       }
       

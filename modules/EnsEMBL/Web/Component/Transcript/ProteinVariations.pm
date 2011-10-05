@@ -29,7 +29,7 @@ sub content {
     my $codons = $snp->{'codons'} || '-';
     
     if ($codons ne '-') {
-      $codons =~ s/[ACGT]/'<b>'.$&.'<\/b>'/eg;
+      $codons =~ s/([ACGT])/<b>$1<\/b>/g;
       $codons =~ tr/acgt/ACGT/;
     }
     
@@ -38,7 +38,7 @@ sub content {
     my $var_allele = $tva->variation_feature_seq;
     
     $allele =~ s/(.{20})/$1\n/g;
-    $allele =~ s/$var_allele/<b>$&<\/b>/ if $allele =~ /\//;
+    $allele =~ s/$var_allele/<b>$var_allele<\/b>/ if $allele =~ /\//;
     
     # consequence type
     my $type;

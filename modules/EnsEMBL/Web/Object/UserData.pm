@@ -1003,12 +1003,12 @@ sub consequence_table {
       $extra =~ s/(SIFT|PolyPhen|HGNC|ENSP|Condel|HGVSc|HGVSp|MATRIX|HIGH_INF_POS)\=/<b>$&<\/b>/g;
       $extra =~ s/\;/\;\<br\/>/g;
       
-      $extra =~ s/ENSP\d+/'<a href="'.$hub->url({
+      $extra =~ s/(ENSP\d+)/'<a href="'.$hub->url({
         species => $species,
         type    => 'Transcript',
         action  => 'ProteinSummary',
         t       =>  $transcript_id,
-      }).'" rel="external">'.$&.'<\/a>'/e;
+      }).'" rel="external">'.$1.'<\/a>'/e;
       
       #$consequence = qq{<span class="hidden">$ranks{$consequence}</span>$consequence};
 
