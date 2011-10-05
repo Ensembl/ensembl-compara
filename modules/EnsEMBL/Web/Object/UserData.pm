@@ -1000,7 +1000,7 @@ sub consequence_table {
       
       # format extra string nicely
       $extra = join ";", map {$self->render_sift_polyphen($_)} split /\;/, $extra;
-      $extra =~ s/(SIFT|PolyPhen|HGNC|ENSP|Condel|HGVSc|HGVSp|MATRIX|HIGH_INF_POS)\=/<b>$&<\/b>/g;
+      $extra =~ s/(SIFT|PolyPhen|HGNC|ENSP|Condel|HGVSc|HGVSp|MATRIX|HIGH_INF_POS)=/<b>$1=<\/b>/g;
       $extra =~ s/\;/\;\<br\/>/g;
       
       $extra =~ s/(ENSP\d+)/'<a href="'.$hub->url({
