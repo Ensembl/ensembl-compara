@@ -12,6 +12,33 @@ sub _init {
   $self->ajaxable(0);
 }
 
+sub content {
+  my $self               = shift;
+  my $hub                = $self->hub;
+  my $object             = $self->object;
+  my $variation          = $object->Obj;
+  my $vf                 = $hub->param('vf');
+  my $variation_features = $variation->get_all_VariationFeatures;
+  my ($feature_slice)    = map { $_->dbID == $vf ? $_->feature_Slice : () } @$variation_features; # get slice for variation feature
+  my $failed             = $variation->failed_description ? $self->failed($feature_slice) : ''; ## First warn if variation has been failed
+  my $summary            = $self->variation_class;
+     $summary           .= $self->co_located($feature_slice) if $feature_slice;
+     $summary           .= $self->synonyms;
+     $summary           .= $self->variation_sets;
+     $summary           .= $self->alleles($feature_slice);
+     $summary           .= $self->location;
+     $summary           .= $self->validation_status;
+     $summary           .= $self->hgvs;
+  
+  return qq{
+  <div class="summary_panel">
+    $failed
+    <dl class="summary">
+      $summary
+    </dl>
+  </div>};
+}
+
 sub failed {
   my ($self, $feature_slice) = @_;
   my @descs = @{$self->object->Obj->get_all_failed_descriptions};
@@ -20,8 +47,8 @@ sub failed {
   if ($feature_slice) {
     for (0..$#descs) {
       my $seq    = $feature_slice->seq || '-';
-         $seq    =~ s/.{60}/$&\n/g;
-      $descs[$_] =~ s/reference allele/$& ($seq)/ if $descs[$_] =~ /match.+reference allele/ && $feature_slice;
+         $seq    =~ s/(.{60})/$1\n/g;
+      $descs[$_] =~ s/reference allele/reference allele ($seq)/ if $descs[$_] =~ /match.+reference allele/ && $feature_slice;
     }
   }
   
@@ -73,10 +100,8 @@ sub variation_class {
   }
   
   return sprintf('
-    <dl class="summary">
-      <dt>Variation class</dt> 
-      <dd>%s (%s source %s - %s)</dd>
-    </dl>',
+    <dt>Variation class</dt> 
+    <dd>%s (%s source %s - %s)</dd>',
     uc $object->vari_class, @links, $object->source_description
   );
 }
@@ -117,10 +142,8 @@ sub co_located {
       }
 
       $html = qq{
-        <dl class="summary">
-          <dt>Co-located </dt>
-          <dd>with $html</dd>
-        </dl>
+        <dt>Co-located</dt>
+        <dd>with $html</dd>
       };
     }
   }
@@ -171,10 +194,8 @@ sub synonyms {
   $html ||= 'None currently in the database';
  
   return qq{
-    <dl class="summary">
-      <dt>Synonyms</dt>
-      <dd>$html</dd>
-    </dl>
+    <dt>Synonyms</dt>
+    <dd>$html</dd>
   }; 
 }
 
@@ -205,7 +226,7 @@ sub variation_sets {
     );
   }
   
-  return qq{<dl class="summary">$html</dl>};
+  return $html;
 }
 
 sub alleles {
@@ -223,13 +244,13 @@ sub alleles {
     
     if ($allele =~ /^[ACGTN]+$/) {
       my $seq   = length $sequence == 1 ? 'base': 'sequence';
-      $sequence =~ s/.{60}/$&<br\/>/g;
+      $sequence =~ s/(.{60})/$1<br \/>/g;
       $html    .= "<br /><em>Note</em>: The reference $seq for this mutation ($allele) does not match the Ensembl reference $seq ($sequence) at this location." if $sequence ne $allele;
     }
   }
   
-  $html  = qq{<dl class="summary"><dt>Alleles</dt><dd>$html</dd></dl>};
-  $html .= qq{<dl class="summary"><dt>Ancestral allele</dt><dd>$ancestor</dd></dl>} if $ancestor;
+  $html  = qq{<dt>Alleles</dt><dd>$html</dd>};
+  $html .= qq{<dt>Ancestral allele</dt><dd>$ancestor</dd>} if $ancestor;
   
   return $html;
 }
@@ -246,64 +267,6 @@ sub location {
   my $vf  = $hub->param('vf');
   my $id  = $object->name;
   my ($html, $location, $location_link);
-  
-  if ($count > 1) {
-    my $params = $hub->core_params;
-    my @values;
-    
-    # create form
-    my $form = $self->new_form({
-      name   => 'select_loc',
-      action => $hub->url({ vf => undef, v => $id, source => $object->source }), 
-      method => 'get', 
-      class  => 'nonstd check'
-    });
-    
-    push @values, { value => 'null', name => 'None selected' }; # add default value
-    
-    # add values for each mapping
-    foreach (sort { $mappings{$a}->{'Chr'} cmp $mappings{$b}->{'Chr'} || $mappings{$a}->{'start'} <=> $mappings{$b}->{'start'}} keys %mappings) {
-      my $region = $mappings{$_}{'Chr'}; 
-      my $start  = $mappings{$_}{'start'};
-      my $end    = $mappings{$_}{'end'};
-      my $str    = $mappings{$_}{'strand'};
-      
-      push @values, {
-        value => $_,
-        name  => sprintf('%s (%s strand)', ($start == $end ? "$region:$start" : "$region:$start-$end"), ($str > 0 ? 'forward' : 'reverse'))
-      };
-    }
-    
-    # add dropdown
-    $form->add_element(
-      type   => 'DropDown',
-      select => 'select',
-      name   => 'vf',
-      values => \@values,
-      value  => $vf,
-    );
-    
-    # add submit
-    $form->add_element(
-      type  => 'Submit',
-      value => 'Go',
-    );
-    
-    # add hidden values for all other params
-    foreach (grep defined $params->{$_}, keys %$params) {
-      next if $_ eq 'vf' || $_ eq 'r'; # ignore vf and region as we want them to be overwritten
-      
-      $form->add_element(
-        type  => 'Hidden',
-        name  => $_,
-        value => $params->{$_},
-      );
-    }
-    
-    $html = "This feature maps to $count genomic locations" . $form->render;                    # render to string
-    $html =~ s/\<\/?(div|tr|th|td|table|tbody|fieldset)+.*?\>\n?//g;                            # strip off unwanted HTML layout tags from form
-    $html =~ s/\<form.*?\>/$&.'<span style="font-weight: bold;">Selected location: <\/span>'/e; # insert text
-  }    
   
   if ($vf) {
     my $variation = $object->Obj;
@@ -326,13 +289,53 @@ sub location {
     );
   }
   
-  if ($count == 1) {
-    $html .= "This feature maps to $location$location_link";
+  if ($count > 1) {
+    my $params    = $hub->core_params;
+    my @locations = ({ value => 'null', name => 'None selected' });
+    
+    # add locations for each mapping
+    foreach (sort { $mappings{$a}->{'Chr'} cmp $mappings{$b}->{'Chr'} || $mappings{$a}->{'start'} <=> $mappings{$b}->{'start'}} keys %mappings) {
+      my $region = $mappings{$_}{'Chr'}; 
+      my $start  = $mappings{$_}{'start'};
+      my $end    = $mappings{$_}{'end'};
+      my $str    = $mappings{$_}{'strand'};
+      
+      push @locations, {
+        value    => $_,
+        name     => sprintf('%s (%s strand)', ($start == $end ? "$region:$start" : "$region:$start-$end"), ($str > 0 ? 'forward' : 'reverse')),
+        selected => $vf == $_ ? ' selected' : ''
+      };
+    }
+    
+    # ignore vf and region as we want them to be overwritten
+    my $core_params = join '', map $params->{$_} && $_ ne 'vf' && $_ ne 'r' ? qq{<input name="$_" value="$params->{$_}" type="hidden" />} : (), keys %$params;
+    my $options     = join '', map qq{<option value="$_->{'value'}"$_->{'selected'}>$_->{'name'}</option>}, @locations;
+    
+    $html = sprintf('
+        This feature maps to %s genomic locations
+      </dd>
+      <dt>Selected location</dt>
+      <dd>
+        <form action="%s" method="get">
+          %s
+          <select name="vf" class="fselect">
+            %s
+          </select>
+          <input value="Go" class="fbutton" type="submit">
+          %s
+        </form>
+      </dd>',
+      $count,
+      $hub->url({ vf => undef, v => $id, source => $object->source }),
+      $core_params,
+      $options,
+      $location_link
+    );
   } else {
-    $html =~ s/<\/form>/$location_link<\/form>/;
+    $html = "This feature maps to $location$location_link";
   }
   
-  return qq{<dl class="summary"><dt>Location</dt><dd>$html</dd></dl>};
+  return qq{<dt>Location</dt><dd>$html</dd>};
 }
 
 sub validation_status {
@@ -369,10 +372,8 @@ sub validation_status {
   }
   
   return qq{
-    <dl class="summary">
-      <dt>Validation status</dt>
-      <dd>$stat</dd>
-    </dl>
+    <dt>Validation status</dt>
+    <dd>$stat</dd>
   };
 }
 
@@ -409,30 +410,7 @@ sub hgvs {
     $html = qq{<dt>HGVS names</dt><dd><h5>None</h5></dd>};
   }
   
-  return qq{<dl class="summary">$html</dl>};
-}
-
-sub content {
-  my $self               = shift;
-  my $hub                = $self->hub;
-  my $object             = $self->object;
-  my $variation          = $object->Obj;
-  my $vf                 = $hub->param('vf');
-  my $variation_features = $variation->get_all_VariationFeatures;
-  my ($feature_slice)    = map { $_->dbID == $vf ? $_->feature_Slice : () } @$variation_features; # get slice for variation feature
-  my $html;
-  
-  $html .= $self->failed($feature_slice) if $variation->failed_description; ## First warn if variation has been failed
-  $html .= $self->variation_class;
-  $html .= $self->co_located($feature_slice) if $feature_slice;
-  $html .= $self->synonyms;
-  $html .= $self->variation_sets;
-  $html .= $self->alleles($feature_slice);
-  $html .= $self->location;
-  $html .= $self->validation_status;
-  $html .= $self->hgvs;
-  
-  return qq{<div class="summary_panel">$html</div>};
+  return $html;
 }
 
 1;
