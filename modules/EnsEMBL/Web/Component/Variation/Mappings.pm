@@ -141,7 +141,7 @@ sub content {
       my $codon = $transcript_data->{'codon'} || '-';
       
       if ($codon ne '-') {
-        $codon =~ s/[ACGT]/'<b>'.$&.'<\/b>'/eg;
+        $codon =~ s/([ACGT])/<b>$1<\/b>/g;
         $codon =~ tr/acgt/ACGT/;
       }
       

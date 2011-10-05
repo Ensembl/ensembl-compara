@@ -70,7 +70,7 @@ sub format_frequencies {
         
         if ($freq_data->{$pop_id}{$ssid}{'failed_desc'}) {
           $fv_data->{$pop_id}{$ssid}                = delete $freq_data->{$pop_id}{$ssid};
-          $fv_data->{$pop_id}{$ssid}{'failed_desc'} =~ s/Variation submission/$& $ssid/;
+          $fv_data->{$pop_id}{$ssid}{'failed_desc'} =~ s/Variation submission/Variation submission $ssid/;
         } elsif ($name =~ /^1000genomes\:.*/i) {
           $tg_data->{$pop_id}{$ssid} = delete $freq_data->{$pop_id}{$ssid};
         } elsif ($name =~ /^cshl\-hapmap/i) {

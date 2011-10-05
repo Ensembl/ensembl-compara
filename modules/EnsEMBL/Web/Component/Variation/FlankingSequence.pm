@@ -303,7 +303,7 @@ sub content {
     $f_html =~ s/(([a-z]|\/|-|\[|\])+)/'<span class="alt_allele">'.uc("$1").'<\/span>'/eg;
     
     # colour differences blue
-    $f_html =~ s/[\!\£\$\%\@\*]+/'<span style="color:blue;">'.uc("$&").'<\/span>'/eg;
+    $f_html =~ s/([\!\£\$\%\@\*]+)/'<span style="color:blue">'.uc("$1").'<\/span>'/eg;
     
     # turn encoded bases back to original base
     $f_html =~ tr/\!\£\$\%\@\*/ACGTN\-/;
