@@ -294,10 +294,10 @@ sub variation_table {
           
           # highlight variant allele in allele string
           my $vf_allele  = $tva->variation_feature_seq;
-          $allele_string =~ s/$vf_allele/<b>$&\<\/b>/ if $allele_string =~ /\//;
+          $allele_string =~ s/$vf_allele/<b>$vf_allele<\/b>/g if $allele_string =~ /\//;
           
           # sort out consequence type string
-          my $type = join ',<br/>', map {$self->select_consequence_label($_, $cons_format)} @{$tva->get_all_OverlapConsequences || []};
+          my $type = join ',<br />', map {$self->select_consequence_label($_, $cons_format)} @{$tva->get_all_OverlapConsequences || []};
           $type  ||= '-';
           
           my $sift = $self->render_sift_polyphen(
@@ -378,12 +378,12 @@ sub get_hgvs {
   my $hgvs_p = $tva->hgvs_protein;
   
   if ($hgvs_c) {
-    $hgvs_c =~ s/.{35}/$&\n/g;
+    $hgvs_c =~ s/(.{35})/$1\n/g;
     $hgvs  .= $hgvs_c;
   }
   
   if ($hgvs_p) {
-    $hgvs_p =~ s/.{35}/$&\n/g;
+    $hgvs_p =~ s/(.{35})/$1\n/g;
     $hgvs  .= "<br />$hgvs_p";
   }
   
