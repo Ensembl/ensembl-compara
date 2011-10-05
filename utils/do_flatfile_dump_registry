@@ -400,6 +400,7 @@ foreach my $spp (@species) {
   my $inc_nonref = 1;   # include non-reference regions like haplotypes?
 
   my @seq_region_ids;
+  my @seq_region_data;
   my %chr_sorter;
   {
     # Get slices --------------------------------------------------
@@ -455,18 +456,25 @@ foreach my $spp (@species) {
       }
     }
 
-    @seq_region_ids = map { $_->get_seq_region_id() } reverse(@slices);
+    foreach my $slice ( reverse @slices){
+      push @seq_region_data, { seq_region_id => $slice->get_seq_region_id,
+			       start         => $slice->start,
+			       end           => $slice->end};
+    }
+    @slices = ();
 
     if( !keys %chr_sorter ) { #order by seq_region as checkpoint need slices in the same order.
-      @seq_region_ids = sort @seq_region_ids;
+      @seq_region_data = sort by_seq_region @seq_region_data;
     }
   }
 
   my $slice_adaptor = $reg->get_adaptor( $spp, 'Core', 'Slice' );
 
   print("There are "
-      . scalar(@seq_region_ids)
+      . scalar(@seq_region_data)
       . " seq_regions to be processed for $spp\n" );
+
+
 
   my $chk_start = 0;
   if(-e "$dump_directory/$spp.chkpt"){
@@ -476,8 +484,8 @@ foreach my $spp (@species) {
     print "Using checkpoint of $chk_start\n";
   }
 
-  while ( my $seq_region_id = shift(@seq_region_ids) ) {
-    my $slice = $slice_adaptor->fetch_by_seq_region_id($seq_region_id);
+  while ( my $region = shift(@seq_region_data) ) {
+    my $slice = $slice_adaptor->fetch_by_seq_region_id($$region{seq_region_id}, $$region{start}, $$region{end});
 
     # generate list of 'unbreakable' blocks around genes
     my ( $blocks, $too_long ) = generate_blocklist( $slice, $spp );
@@ -702,6 +710,11 @@ sub generate_blocklist {
 # else make chunk with next block and warn if bigger than 1.5 maxsize
 
 # blocklist - for each slice a list of lists on where not to break
+
+sub by_seq_region {
+  $a->{seq_region_id} <=> $b->{seq_region_id}
+    ||  $a->{start} <=> $b->{start};
+}
 
 sub chunk_seq_region {
   my $slice     = shift;
