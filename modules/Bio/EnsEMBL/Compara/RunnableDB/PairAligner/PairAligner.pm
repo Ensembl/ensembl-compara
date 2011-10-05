@@ -160,11 +160,18 @@ sub fetch_input {
   $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
   $self->param('method_link_species_set', $mlss);
 
-  my $sth = $self->compara_dba->dbc->prepare("SELECT count(*) FROM genomic_align_block".
-					     " WHERE method_link_species_set_id = ".$mlss->dbID);
-  $sth->execute();
-  my ($num_alignments) = $sth->fetchrow_array();
-  $sth->finish();
+  if (defined $self->param('max_alignments')) {
+      my $sth = $self->compara_dba->dbc->prepare("SELECT count(*) FROM genomic_align_block".
+						 " WHERE method_link_species_set_id = ".$mlss->dbID);
+      $sth->execute();
+      my ($num_alignments) = $sth->fetchrow_array();
+      $sth->finish();
+      if ($num_alignments >= $self->max_alignments) {
+	  throw("Too many alignments ($num_alignments) have been stored already for MLSS ".$mlss->dbID."\n".
+		"  Try changing the parameters or increase the max_alignments option if you think\n".
+		"  your system can cope with so many alignments.");
+      }
+  }
 
   #
   # execute subclass configure_runnable method
