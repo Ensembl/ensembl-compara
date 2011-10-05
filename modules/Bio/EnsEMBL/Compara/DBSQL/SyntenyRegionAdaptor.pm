@@ -110,6 +110,8 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor;
 
 use strict;
+use warnings;
+use Data::Dumper;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::SyntenyRegion;
 
@@ -147,9 +149,10 @@ sub fetch_by_dbID{
 
    my $dfra = $self->db->get_DnaFragRegionAdaptor;
    my $dfrs = $dfra->fetch_by_synteny_region_id($dbID);
-   while (my $dfr = shift @{$dfrs}) {
-     $sr->add_child($dfr);
-   }
+   $sr->regions($dfrs);
+   # while (my $dfr = shift @{$dfrs}) {
+   #   $sr->add_child($dfr);
+   # }
    return $sr;
 }
 
@@ -175,15 +178,15 @@ sub store{
    }
 
    my $sth = $self->prepare("insert into synteny_region (method_link_species_set_id) VALUES (?)");
-   
+
    $sth->execute($sr->method_link_species_set_id);
    my $synteny_region_id = $sth->{'mysql_insertid'};
-   
+
    $sr->dbID($synteny_region_id);
    $sr->adaptor($self);
-   
+
    my $dfra = $self->db->get_DnaFragRegionAdaptor;
-   foreach my $dfr (@{$sr->children}) {
+   foreach my $dfr (@{$sr->regions}) {
      $dfr->synteny_region_id($synteny_region_id);
      $dfra->store($dfr);
    }
@@ -301,15 +304,16 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   $sth->bind_columns(\$synteny_region_id);
   my @srs;
   while ($sth->fetch) {
-    my $sr = new Bio::EnsEMBL::Compara::SyntenyRegion;
+    my $sr = Bio::EnsEMBL::Compara::SyntenyRegion->new();
     $sr->dbID($synteny_region_id);
     $sr->method_link_species_set_id($mlss->dbID);
 
     my $dfra = $self->db->get_DnaFragRegionAdaptor;
     my $dfrs = $dfra->fetch_by_synteny_region_id($synteny_region_id);
-    while (my $dfr = shift @{$dfrs}) {
-      $sr->add_child($dfr);
-    }
+    $sr->regions($dfrs);
+    # while (my $dfr = shift @{$dfrs}) {
+    #   $sr->add_child($dfr);
+    # }
 
     push @srs, $sr;
   }
@@ -354,9 +358,10 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 
     my $dfra = $self->db->get_DnaFragRegionAdaptor;
     my $dfrs = $dfra->fetch_by_synteny_region_id($synteny_region_id);
-    while (my $dfr = shift @{$dfrs}) {
-      $sr->add_child($dfr);
-    }
+    $sr->regions($dfrs);
+    # while (my $dfr = shift @{$dfrs}) {
+    #   $sr->add_child($dfr);
+    # }
 
     push @srs, $sr;
   }

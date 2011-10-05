@@ -82,8 +82,8 @@ use strict;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
-use Bio::EnsEMBL::Compara::NestedSet;
-our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
+#use Bio::EnsEMBL::Compara::NestedSet;
+#our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
 
 
 =head2 new_fast
@@ -101,8 +101,8 @@ our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
 
 sub new {
   my ($class, @args) = @_;
-  my $self = $class->SUPER::new(@args);
-#  my $self = bless {}, $class;
+#  my $self = $class->SUPER::new(@args);
+  my $self = bless {}, $class;
   
   if (scalar @args) {
     #do this explicitly.

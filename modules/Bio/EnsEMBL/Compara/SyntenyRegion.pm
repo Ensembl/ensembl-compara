@@ -71,8 +71,8 @@ use strict;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
-use Bio::EnsEMBL::Compara::NestedSet;
-our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
+#use Bio::EnsEMBL::Compara::NestedSet;
+#our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
 
 =head2 new_fast
 
@@ -93,16 +93,17 @@ our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
 sub new {
   my ($class, @args) = @_;
 
-  my $self = $class->SUPER::new(@args);
+#  my $self = $class->SUPER::new(@args);
 
-#  my $self = bless {}, $class;
+  my $self = bless {}, $class;
 
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $method_link_species_set_id, $adaptor) =
-        rearrange([qw(DBID METHOD_LINK_SPECIES_SET_ID ADAPTOR)], @args);
+    my ($dbid, $method_link_species_set_id, $adaptor, $regions) =
+        rearrange([qw(DBID METHOD_LINK_SPECIES_SET_ID ADAPTOR REGIONS)], @args);
 
     $dbid && $self->dbID($dbid);
+    $regions && $self->regions($regions);
     $method_link_species_set_id && $self->method_link_species_set_id($method_link_species_set_id);
     $adaptor && $self->adaptor($adaptor);
   }
@@ -240,7 +241,18 @@ sub adaptor {
 sub get_all_DnaFragRegions {
   my $obj = shift;
 
-  return $obj->children();
+  return $obj->regions();
+#  return $obj->children();
+}
+
+sub regions {
+  my ($obj, $value) = @_;
+
+  if (defined $value) {
+    $obj->{'regions'} = $value;
+  }
+
+  return $obj->{'regions'};
 }
 
 1;
