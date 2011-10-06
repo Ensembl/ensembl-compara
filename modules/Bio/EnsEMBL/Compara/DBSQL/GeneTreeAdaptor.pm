@@ -365,9 +365,10 @@ sub delete_flattened_leaf {
 
   my $node_id = $node->node_id;
   my $prefix = $self->_get_table_prefix();
-  $self->dbc->do("DELETE from ".$prefix."_tree_tag WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from ".$prefix."_tree_tag    WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from ".$prefix."_tree_attr   WHERE node_id = $node_id");
   $self->dbc->do("DELETE from ".$prefix."_tree_member WHERE node_id = $node_id");
-  $self->dbc->do("DELETE from ".$prefix."_tree_node WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from ".$prefix."_tree_node   WHERE node_id = $node_id");
 }
 
 sub delete_node {
@@ -380,6 +381,7 @@ sub delete_node {
   $self->dbc->do("UPDATE ".$prefix."_tree_node dn, ".$prefix."_tree_node n SET ".
             "n.parent_id = dn.parent_id WHERE n.parent_id=dn.node_id AND dn.node_id=$node_id");
   $self->dbc->do("DELETE from ".$prefix."_tree_tag    WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from ".$prefix."_tree_attr   WHERE node_id = $node_id");
   $self->dbc->do("DELETE from ".$prefix."_tree_member WHERE node_id = $node_id");
   $self->dbc->do("DELETE from ".$prefix."_tree_node   WHERE node_id = $node_id");
 }
@@ -410,10 +412,12 @@ sub store_flattened_supertree {
 
     $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_node   SELECT * FROM ${prefix}_tree_node   WHERE node_id = $root_id");
     $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_member SELECT * FROM ${prefix}_tree_member WHERE node_id = $root_id");
+    $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_attr   SELECT * FROM ${prefix}_tree_attr   WHERE node_id = $root_id");
     $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_tag    SELECT * FROM ${prefix}_tree_tag    WHERE node_id = $root_id");
 
     $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_node   SELECT n.* FROM ${prefix}_tree_node n                                              WHERE n.root_id = $root_id");
     $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_member SELECT m.* FROM ${prefix}_tree_node n JOIN ${prefix}_tree_member m USING (node_id) WHERE n.root_id = $root_id");
+    $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_attr   SELECT t.* FROM ${prefix}_tree_node n JOIN ${prefix}_tree_attr   t USING (node_id) WHERE n.root_id = $root_id");
     $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_tag    SELECT t.* FROM ${prefix}_tree_node n JOIN ${prefix}_tree_tag    t USING (node_id) WHERE n.root_id = $root_id");
 }
 
@@ -424,10 +428,12 @@ sub delete_flattened_tree {
     my $prefix  = $self->_get_table_prefix();
 
     $self->dbc->do("DELETE t FROM ${prefix}_tree_tag t    JOIN ${prefix}_tree_node n USING (node_id) WHERE n.root_id = $root_id");
+    $self->dbc->do("DELETE t FROM ${prefix}_tree_attr t   JOIN ${prefix}_tree_node n USING (node_id) WHERE n.root_id = $root_id");
     $self->dbc->do("DELETE m FROM ${prefix}_tree_member m JOIN ${prefix}_tree_node n USING (node_id) WHERE n.root_id = $root_id");
     $self->dbc->do("DELETE n FROM ${prefix}_tree_node n                                              WHERE n.root_id = $root_id");
 
     $self->dbc->do("DELETE FROM ${prefix}_tree_tag    WHERE node_id = $root_id");
+    $self->dbc->do("DELETE FROM ${prefix}_tree_attr   WHERE node_id = $root_id");
     $self->dbc->do("DELETE FROM ${prefix}_tree_member WHERE node_id = $root_id");
     $self->dbc->do("DELETE FROM ${prefix}_tree_node   WHERE node_id = $root_id");
 }
@@ -440,47 +446,117 @@ sub delete_flattened_tree {
 ###################################
 
 sub _load_tagvalues {
-  my $self = shift;
-  my $node = shift;
+    my $self = shift;
+    my $node = shift;
 
-  unless($node->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::GeneTreeNode] not a $node");
-  }
+    unless($node->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+        throw("set arg must be a [Bio::EnsEMBL::Compara::GeneTreeNode] not a $node");
+    }
+    my $prefix = $self->_get_table_prefix();
+    
+    # Updates the list of attribute names
+    if (not exists $self->{'_attr_list'}) {
+        $self->{'_attr_list'} = {};
+        eval {
+            my $sth = $self->dbc->db_handle->column_info(undef, undef, $prefix."_tree_attr", '%');
+            $sth->execute();
+            while (my $row = $sth->fetchrow_hashref()) {
+                ${$self->{'_attr_list'}}{${$row}{'COLUMN_NAME'}} = 1;
+            }
+            $sth->finish;
+        };
+        if ($@) {
+            warn "${prefix}_tree_attr not available in this database\n";
+        }
+    }
 
-  my $prefix = $self->_get_table_prefix();
-  my $sth = $self->prepare("SELECT tag,value from ".$prefix."_tree_tag where node_id=?");
-  $sth->execute($node->node_id);
-  while (my ($tag, $value) = $sth->fetchrow_array()) {
-    $node->add_tag($tag,$value);
-  }
-  $sth->finish;
+    # Tags (multiple values are allowed)
+    my $sth = $self->prepare("SELECT tag,value FROM ".$prefix."_tree_tag WHERE node_id=?");
+    $sth->execute($node->node_id);
+    while (my ($tag, $value) = $sth->fetchrow_array()) {
+        $node->add_tag($tag, $value, 1);
+    }
+    $sth->finish;
+
+    # Attributes (multiple values are forbidden)
+    if (%{$self->{'_attr_list'}}) {  # Only if some attributes are defined
+        $sth = $self->prepare("SELECT * FROM ${prefix}_tree_attr WHERE node_id=?");
+        $sth->execute($node->node_id);
+        # Retrieve data
+        my $attrs = $sth->fetchrow_hashref();
+        if (defined $attrs) {
+            foreach my $key (keys %$attrs) {
+                if (($key ne 'node_id') and defined(${$attrs}{$key})) {
+                    $node->add_tag($key, ${$attrs}{$key});
+                }
+            }
+        }
+        $sth->finish;
+    }
 }
 
 sub _store_tagvalue {
-  my $self = shift;
-  my $node_id = shift;
-  my $tag = shift;
-  my $value = shift;
+    my $self = shift;
+    my $node_id = shift;
+    my $tag = shift;
+    my $value = shift;
+    my $allow_overloading = shift;
+    
+    my $prefix = $self->_get_table_prefix();
+  
+    if (exists $self->{'_attr_list'}->{$tag}) {
+        # It is an attribute
+        my $sth = $self->prepare("INSERT IGNORE INTO ".$prefix."_tree_attr (node_id) VALUES (?)");
+        $sth->execute($node_id);
+        $sth->finish;
+        $sth = $self->prepare("UPDATE ".$prefix."_tree_attr SET $tag=? WHERE node_id=?");
+        $sth->execute($value, $node_id);
+        $sth->finish;
 
-  $value="" unless(defined($value));
-
-  my $prefix = $self->_get_table_prefix();
-  my $sth = $self->prepare("INSERT ignore into ".$prefix."_tree_tag (node_id,tag) values (?, ?)");
-  $sth->execute($node_id, $tag);
-
-  $sth = $self->prepare("UPDATE ".$prefix."_tree_tag set value=? where node_id=? and tag=?");
-  $sth->execute($value, $node_id, $tag);
+    } elsif ($allow_overloading) {
+        # It is a tag with multiple values allowed
+        my $sth = $self->prepare("INSERT IGNORE INTO ".$prefix."_tree_tag (node_id, tag, value) VALUES (?, ?, ?)");
+        $sth->execute($node_id, $tag, $value);
+        $sth->finish;
+    } else {
+        # It is a tag with only one value allowed
+        my $sth = $self->prepare("DELETE FROM ".$prefix."_tree_tag WHERE node_id=? AND tag=?");
+        $sth->execute($node_id, $tag);
+        $sth->finish;
+        $sth = $self->prepare("INSERT INTO ".$prefix."_tree_tag (node_id, tag, value) VALUES (?, ?, ?)");
+        $sth->execute($node_id, $tag, $value);
+        $sth->finish;
+    }
 }
 
-sub delete_tag {
-  my $self = shift;
-  my $node_id = shift;
-  my $tag = shift;
+sub _delete_tagvalue {
+    my $self = shift;
+    my $node_id = shift;
+    my $tag = shift;
+    my $value = shift;
+    
+    my $prefix = $self->_get_table_prefix();
+  
+    if (exists $self->{'_attr_list'}->{$tag}) {
+        # It is an attribute
+        my $sth = $self->prepare("UPDATE ".$prefix."_tree_attr SET $tag=NULL WHERE node_id=?");
+        $sth->execute($node_id);
+        $sth->finish;
 
-  my $prefix = $self->_get_table_prefix();
-  my $sth = $self->dbc->prepare("DELETE from ".$prefix."_tree_tag where node_id=? and tag=?");
-  $sth->execute($node_id, $tag);
+    } else {
+        # It is a tag
+        if (defined $value) {
+            my $sth = $self->prepare("DELETE FROM ".$prefix."_tree_tag WHERE node_id=? AND tag=? AND value=?");
+            $sth->execute($node_id, $tag, $value);
+            $sth->finish;
+        } else {
+            my $sth = $self->prepare("DELETE FROM ".$prefix."_tree_tag WHERE node_id=? AND tag=?");
+            $sth->execute($node_id, $tag);
+            $sth->finish;
+        }
+    }
 }
+
 
 
 ##################################

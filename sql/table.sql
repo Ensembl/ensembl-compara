@@ -908,12 +908,13 @@ CREATE TABLE protein_tree_member_score (
 
 CREATE TABLE protein_tree_tag (
   node_id                int(10) unsigned NOT NULL,
-  tag                    varchar(50),
-  value                  mediumtext,
+  tag                    varchar(50) NOT NULL,
+  value                  mediumtext NOT NULL,
 
   FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
 
-  UNIQUE tag_node_id (node_id, tag),
+  KEY node_id_tag (node_id, tag),
+  KEY tag_node_id (tag, node_id),
   KEY (node_id),
   KEY (tag)
 
@@ -932,6 +933,54 @@ CREATE TABLE super_protein_tree_tag LIKE protein_tree_tag;
 #
 
 CREATE TABLE nc_tree_tag LIKE protein_tree_tag;
+
+
+#
+# Table structure for table 'protein_tree_attr'
+#
+# overview:
+#    to allow attributes for nodes
+#
+# semantics:
+#    node_id                         -- node_id foreign key from protein_tree_node table
+#    duplication                     -- Currently 0 for speciations, 2 for well supported duplications, 1 for dubious duplications or duplications at the root
+#    taxon_id                        -- Only present after reconciliation, links to ncbi_taxa_node
+#    taxon_name                      -- Only present after reconciliation, the name of the species refered to by taxon_id
+#    bootstrap                       -- A bootstrap value
+#    duplication_confidence_score    -- Only for duplications: the ratio between the number of species in the intersection by the number of the species in the union
+
+CREATE TABLE protein_tree_attr (
+  node_id                         INT(10) UNSIGNED NOT NULL,
+  duplication                     TINYINT UNSIGNED,
+  taxon_id                        INT(10) UNSIGNED,
+  taxon_name                      VARCHAR(255),
+  bootstrap                       TINYINT UNSIGNED,
+  duplication_confidence_score    DOUBLE(5,4),
+
+  FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
+  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
+
+  PRIMARY KEY (node_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+CREATE TABLE nc_tree_attr (
+  node_id                         INT(10) UNSIGNED NOT NULL,
+  duplication                     TINYINT UNSIGNED,
+  taxon_id                        INT(10) UNSIGNED,
+  taxon_name                      VARCHAR(255),
+  bootstrap                       TINYINT UNSIGNED,
+  duplication_confidence_score    DOUBLE(5,4),
+  species_intersection_score      TINYINT UNSIGNED,
+  acc_name                        VARCHAR(50),
+
+
+  FOREIGN KEY (node_id) REFERENCES nc_tree_node(node_id),
+
+  PRIMARY KEY (node_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
 CREATE TABLE nc_profile (
