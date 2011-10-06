@@ -532,7 +532,7 @@ sub store_tags
       if ($self->debug) {
         printf("store lost_taxon_id : $taxon "); $node->print_node;
       }
-      $node->store_tag('lost_taxon_id', $taxon);
+      $node->store_tag('lost_taxon_id', $taxon, 1);
     }
   }
   if (defined($node->get_tagvalue("SISi"))) {
