@@ -2192,17 +2192,7 @@ sub GeneTransLine {
       }
       else {
         $xml .= qq(
-  <field name="_xr_$dbname">$dbkey"</field>);
-        #non-versioned
-#        if ($species eq 'Human') {
-        if ($dbkey =~ /^(\w+)\.\d+$/) {
-          my $k = $1;
-          next if $seen_labels{$k};
-          $seen_labels{$dbkey} = $k;
-          $xml .= qq(
-  <field name="_xr_$dbname">$k</field>);
-        }
-#        }
+  <field name="_xr_$dbname">$dbkey</field>);
       }
     }
     foreach my $xref_description (keys %{$xref_descriptions}) {
