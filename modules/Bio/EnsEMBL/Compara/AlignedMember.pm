@@ -125,8 +125,8 @@ sub cigar_line {
                 alignments, this represent the starting point of the local
                 alignment.
                 Currently the data provided as AlignedMembers (leaves of the
-                ProteinTree, SuperProteinTree and NCTree) are obtained using
-                global alignments and the cigar_start is always undefined.
+                GeneTree) are obtained using global alignments and the
+                cigar_start is always undefined.
   Returntype  : integer
   Exceptions  : none
   Caller      : general
@@ -150,8 +150,8 @@ sub cigar_start {
                 alignments, this represent the ending point of the local
                 alignment.
                 Currently the data provided as AlignedMembers (leaves of the
-                ProteinTree, SuperProteinTree and NCTree) are obtained using
-                global alignments and the cigar_end is always undefined.
+                GeneTree) are obtained using global alignments and the
+                cigar_end is always undefined.
   Returntype  : integer
   Exceptions  : none
   Caller      : general
@@ -175,9 +175,8 @@ sub cigar_end {
                 alignments, this represent the coverage of the alignment in
                 percentage of the total length of the sequence.
                 Currently the data provided as AlignedMembers (leaves of the
-                ProteinTree, SuperProteinTree and NCTree) are obtained using
-                global alignments (the whole sequence is always included) and
-                the perc_cov is always undefined.
+                GeneTree) are obtained using global alignments (the whole
+                sequence is always included) and the perc_cov is always undefined.
   Returntype  : integer
   Exceptions  : none
   Caller      : general
@@ -202,8 +201,8 @@ sub perc_cov {
                 reprensents the number of positions that are identical in
                 the alignment in both sequences.
                 Currently the data provided as AlignedMembers (leaves of the
-                ProteinTree, SuperProteinTree and NCTree) are obtained using
-                multiple alignments and the perc_id is always undefined.
+                GeneTree) are obtained using multiple alignments and the
+                perc_id is always undefined.
   Returntype  : integer
   Exceptions  : none
   Caller      : general
@@ -229,8 +228,8 @@ sub perc_id {
                 the alignment in both sequences. Currently, this is calculated
                 for protein sequences using the BLOSUM62 scoring matrix.
                 Currently the data provided as AlignedMembers (leaves of the
-                ProteinTree, SuperProteinTree and NCTree) are obtained using
-                multiple alignments and the perc_cov is always undefined.
+                GeneTree) are obtained using multiple alignments and the
+                perc_cov is always undefined.
   Returntype  : integer
   Exceptions  : none
   Caller      : general

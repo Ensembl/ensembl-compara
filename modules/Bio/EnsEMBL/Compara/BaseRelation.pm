@@ -32,9 +32,9 @@ Bio::EnsEMBL::Compara::Domain.
 
 A superclass for pairwise and multiple relationships
 
-Currently the AlignedMember objects are used in the ProteinTree, SuperProteinTree
-and NCTree structures to represent the leaves of the trees. Each leaf contains an
-aligned sequence, which is represented as an AlignedMember object.
+Currently the AlignedMember objects are used in the GeneTree structure
+to represent the leaves of the trees. Each leaf contains an aligned
+sequence, which is represented as an AlignedMember object.
 
 =head1 INHERITANCE TREE
 
