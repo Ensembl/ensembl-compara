@@ -885,7 +885,7 @@ sub structrual_variation_table {
       if ($ext_ref =~ /pubmed\/(.+)/) {
         my $pubmed_id   = $1;
         my $pubmed_link = $hub->get_ExtURL('PUBMED', $pubmed_id);
-           $description =~ s/$pubmed_id/'<a href="'.$pubmed_link.'" target="_blank">'.$&.'<\/a>'/eg;
+           $description =~ s/$pubmed_id/<a href="$pubmed_link" target="_blank">$pubmed_id<\/a>/g;
       }
     }
     
