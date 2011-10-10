@@ -144,7 +144,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
   pageResize: function () {
     this.setDimensions();
     
-    if (this.visible) {
+    if (this.el.is(':visible')) {
       Ensembl.EventManager.trigger('modalPanelResize');
     }
   }
