@@ -203,7 +203,15 @@ sub data_table_config {
   $config .= sprintf '<input type="hidden" name="hiddenColumns" value="%s" />', $self->jsonify($hidden) if scalar @$hidden;
   
   foreach (keys %{$self->{'options'}{'data_table_config'}}) {
-    (my $val = $self->jsonify($self->{'options'}{'data_table_config'}{$_})) =~ s/"/'/g;
+    my $option = $self->{'options'}{'data_table_config'}{$_};
+    my $val;
+    
+    if (ref $option) {
+      ($val = $self->jsonify($option)) =~ s/"/'/g;
+    } else {
+      $val = $option;
+    }
+    
     $config .= qq{<input type="hidden" name="$_" value="$val" />};
   }
   
