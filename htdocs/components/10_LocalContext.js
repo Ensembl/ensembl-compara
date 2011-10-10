@@ -23,7 +23,7 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
         data: {
           code:  panel instanceof Ensembl.Panel.ModalContent ? panel.params.url : window.location.pathname.replace(Ensembl.speciesPath, ''),
           menu:  this.className.replace(/toggle|\s/g, ''),
-          state: state
+          state: state === 'closed' ^ li.hasClass('default_closed') ? 1 : 0
         }
       });
       

@@ -94,7 +94,7 @@ sub nav_config {
   my %data    = %{$session->get_data(%args) || {}};
   my $menu    = $hub->param('menu');
   
-  if ($hub->param('state') eq 'closed') {
+  if ($hub->param('state')) {
     $data{$menu} = 1;
   } else {
     delete $data{$menu};

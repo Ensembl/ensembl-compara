@@ -129,18 +129,19 @@ sub build_menu {
   my $availability = $data->{'availability'};
   my $class        = $data->{'class'};
     ($class        = $caption) =~ s/ /_/g unless $class;
-  my $state        = $config->{$class} ? 'closed' : 'open';
+  my $state        = $config->{$class} ^ $data->{'closed'};
+  my $toggle       = $state ? 'closed' : 'open';
   my @classes      = $data->{'li_class'} || ();
   my @append;
   
   if ($modal) {
     if ($data->{'top_level'}) {
-      @append = ([ 'img', { src => "$img_url${state}2.gif", class => "toggle $class" }]) if scalar @children;
+      @append = ([ 'img', { src => "$img_url${toggle}2.gif", class => "toggle $class" }]) if scalar @children;
     } else {
       @append = ([ 'img', { src => "${img_url}leaf.gif" }]);
     }
   } else {
-    @append = ([ 'img', scalar @children ? { src => "$img_url$state.gif", class => "toggle $class" } : { src => "${img_url}leaf.gif" }]);
+    @append = ([ 'img', scalar @children ? { src => "$img_url$toggle.gif", class => "toggle $class" } : { src => "${img_url}leaf.gif" }]);
   }
   
   if ($availability && $self->is_available($availability)) {
@@ -174,10 +175,11 @@ sub build_menu {
     push @classes, 'parent';
   }
   
-  push @classes, 'active'    if $node->id eq $active;
-  push @classes, 'top_level' if $data->{'top_level'};
-  push @classes, 'last'      if $node eq $last_child;
-  push @classes, 'closed'    if $state eq 'closed';
+  push @classes, 'active'         if $node->id eq $active;
+  push @classes, 'top_level'      if $data->{'top_level'};
+  push @classes, 'last'           if $node eq $last_child;
+  push @classes, 'closed'         if $toggle eq 'closed';
+  push @classes, 'default_closed' if $data->{'closed'};
   
   $node->node_name = 'li';
   $node->set_attributes({ id => $data->{'id'}, class => join(' ', @classes) });
