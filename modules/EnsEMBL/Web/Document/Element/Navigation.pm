@@ -92,7 +92,7 @@ sub content {
   if ($tree->get_node($active) || $nodes[0]) {
     my $hub        = $self->{'hub'};
     my $modal      = $self->renderer->{'_modal_dialog_'};
-    my $config     = $hub->session->get_data(type => 'nav', code => $modal ? $hub->url({ __clear => 1 }) : join('/', '', map $hub->$_ || (), qw(type action function))) || {};
+    my $config     = $hub->session->get_data(type => 'nav', code => $hub->type) || {};
     my $img_url    = $hub->species_defs->img_url;
     my $counts     = $self->counts;
     my $all_params = !!$hub->object_types->{$hub->type};

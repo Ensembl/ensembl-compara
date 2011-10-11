@@ -15,13 +15,15 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
       li.toggleClass('closed');
       
       var state = li.hasClass('closed') ? 'closed' : 'open';
+      var modal = panel instanceof Ensembl.Panel.ModalContent;
+      var code  = (modal ? panel.params.url : window.location.pathname).replace(Ensembl.speciesPath + '/', '').split('/')[0];
       
       $(this).attr('src', function (i, src) { return src.replace(/closed|open/, state); });
       
       $.ajax({
         url: '/Ajax/nav_config',
         data: {
-          code:  panel instanceof Ensembl.Panel.ModalContent ? panel.params.url : window.location.pathname.replace(Ensembl.speciesPath, ''),
+          code:  code,
           menu:  this.className.replace(/toggle|\s/g, ''),
           state: state === 'closed' ^ li.hasClass('default_closed') ? 1 : 0
         }
