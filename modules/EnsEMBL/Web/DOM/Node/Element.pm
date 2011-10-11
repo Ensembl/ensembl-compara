@@ -270,6 +270,15 @@ sub outer_HTML {
   return $self->can_have_child ? sprintf(qq(<$tag$attributes>%s</$tag>), $self->inner_HTML) : qq(<$tag$attributes />);
 }
 
+sub append_HTML {
+  ## Appends an HTML string to the existing inner_HTML
+  ## If existing inner_HTML is in form of Nodes, it will be converted to string HTML before appending the new HTML to it.
+  ## @param HTML string
+  ## @return final inner_HTML string
+  my ($self, $html) = @_;
+  return $self->inner_HTML(sprintf '%s%s', $self->inner_HTML, $html);
+}
+
 sub add_attribute {
   #Use &set_attribute, not &add_attribute
   return shift->set_attribute(@_);
