@@ -926,7 +926,7 @@ sub string_node {
   if(defined $self->get_tagvalue("Bootstrap") && $self->get_tagvalue("Bootstrap") ne '') { my $bootstrap_value = $self->get_tagvalue("Bootstrap"); $str .= "B=$bootstrap_value "; }
   if(defined $self->get_tagvalue("taxon_name") && $self->get_tagvalue("taxon_name") ne '') { my $taxon_name_value = $self->get_tagvalue("taxon_name"); $str .="T=$taxon_name_value "; }
   $str .= sprintf("%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
-  $str .= sprintf("%s\n", $self->name);
+  $str .= sprintf("%s\n", $self->name || '');
   return $str;
 }
 
