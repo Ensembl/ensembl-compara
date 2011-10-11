@@ -5,7 +5,6 @@ use strict;
 use DBI;
 use File::Basename qw(dirname);
 use FindBin qw($Bin);
-use JSON qw(to_json);
 use Data::Dumper;
 use Time::HiRes;
 $Data::Dumper::Indent   = 0;
@@ -28,52 +27,46 @@ my $sd  = $hub->species_defs;
 
 my $dbh = DBI->connect(
   sprintf('DBI:mysql:database=%s;host=%s;port=%s', $sd->ENSEMBL_USERDB_NAME, $sd->ENSEMBL_USERDB_HOST, $sd->ENSEMBL_USERDB_PORT),
-  $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS, { AutoCommit => 0 }
+  $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS
 );
 
 $dbh->do('CREATE TABLE session_record_tmp LIKE session_record');
 $dbh->do('INSERT INTO session_record_tmp SELECT * FROM session_record');
-$dbh->commit;
 
-my $sth = $dbh->prepare('SELECT session_id, code, data FROM session_record_tmp WHERE type="script"');
+my $sth = $dbh->prepare('SELECT session_record_id, session_id, code, data FROM session_record_tmp WHERE type="nav"');
 $sth->execute;
 
-my $i;
+my %records;
+my %valid_species = map { $_ => 1 } $sd->valid_species, 'Multi', 'common';
+my @to_delete;
 
 foreach (@{$sth->fetchall_arrayref}) {
-  my ($session_id, $code, $data_string) = @$_;
+  my ($session_record_id, $session_id, $code, $data_string) = @$_;
+  
+  my @new_code = split '/', $code;
+  shift @new_code;
+  shift @new_code if $valid_species{$new_code[0]};
   
   my $data = eval $data_string;
   
-  if ($data->{'image_configs'}) {
-    foreach my $ic_code (grep scalar keys %{$data->{'image_configs'}->{$_}}, keys %{$data->{'image_configs'}}) {
-      my $image_config = Dumper $data->{'image_configs'}->{$ic_code};
-      $image_config =~ s/^\$VAR1 = //;
-      
-      if ($ic_code =~ /^genesnpview_(gene|transcript)$/ && $code eq 'Gene::Splice') {
-        $ic_code = "genespliceview_$1";
-      }
-      
-      $dbh->do(sprintf "INSERT INTO session_record_tmp VALUES ('', $session_id, 0, 'image_config', '$ic_code', %s, now(), now(), '0000-00-00 00:00:00')", $dbh->quote($image_config));
-      $i++;
-    }
-  }
+  $records{$session_id}{$new_code[0]} = { %{$records{$session_id}{$new_code[0]} || {}}, %$data };
   
-  if ($data->{'diffs'} && scalar keys %{$data->{'diffs'}}) {
-    my $view_config = Dumper $data->{'diffs'};
-    $view_config =~ s/^\$VAR1 = //;
-    
-    $dbh->do(sprintf "INSERT INTO session_record_tmp VALUES ('', $session_id, 0, 'view_config', '$code', %s, now(), now(), '0000-00-00 00:00:00')", $dbh->quote($view_config));
-    $i++;
+  if ($records{$session_id}{'session_record_id'}{$new_code[0]}) {
+    push @to_delete, $session_record_id;
+  } else {
+    $records{$session_id}{'session_record_id'}{$new_code[0]} = $session_record_id;
   }
-  
-  $dbh->commit unless $i % 5000;
 }
 
-$dbh->commit;
-$dbh->do('DELETE FROM session_record_tmp WHERE type="script"');
-$dbh->do("ALTER TABLE session_record_tmp MODIFY type varchar(255) NOT NULL DEFAULT ''");
-$dbh->do("ALTER TABLE session_record_tmp DROP COLUMN type_id");
+foreach my $session_id (keys %records) {
+  foreach (keys %{$records{$session_id}{'session_record_id'}}) {
+    (my $data = Dumper $records{$session_id}{$_}) =~ s/^\$VAR1 = //;
+    $dbh->do(sprintf 'UPDATE session_record_tmp SET code="%s", data="%s" WHERE session_record_id=%s', $_, $dbh->quote($data), $records{$session_id}{'session_record_id'}{$_});
+  }
+}
+
+$dbh->do(sprintf 'DELETE FROM session_record_tmp WHERE session_record_id in (%s)', join ',', @to_delete);
+
 $dbh->do('RENAME TABLE session_record TO session_record2, session_record_tmp TO session_record');
 #$dbh->do('DROP TABLE session_record2'); ********* DO THIS MANUALLY ONCE YOU'VE CHECKED EVERYTHING IS OK *********
 $dbh->disconnect;
