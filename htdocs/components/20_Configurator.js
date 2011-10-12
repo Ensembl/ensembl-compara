@@ -779,10 +779,17 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         if (panel.imageConfig[n]) {
           li.show().parents('li').show();
         } else {
-          menu.append(li).parents('li').show();
+          menu.append(li.show()).parents('li').show();
           panel.imageConfig[n] = { renderer: 'off', favourite: !!panel.favourites[type] && panel.favourites[type][n] };
           panel.externalFavourite(n, li);
           added = true;
+          
+          var subset = li[0].className.match(/\s*subset_(\w+)\s*/) || false;
+       
+          li.data('links', [
+            'a.' + type,
+            'a.' + (subset ? subset[1] : type + '-' + menu.parents('.subset').attr('class').replace(/subset|active|first|\s/g, '')) 
+          ].join(', '));
         }
         
         show      = true;
