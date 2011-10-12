@@ -308,8 +308,8 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
       join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set}), "\n",
         "  Name: ", $mlss->name, "\n",
           "  Source: ", $mlss->source, "\n",
-            "  URL: $url\n",
-	    "  SpeciesSetTag: $species_set_tag\n";
+            "  URL: $url\n";
+    print "  SpeciesSetTag: $species_set_tag\n" if (defined $species_set_tag);
     print "  MethodLinkSpeciesSet has dbID: ", $mlss->dbID, "\n";
     $name = undef if ($pairwise || $singleton);
     next;
@@ -334,8 +334,8 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
     join(" - ", map {$_->name."(".$_->assembly.")"} @$all_genome_dbs), "\n",
       "  Name: $name\n",
         "  Source: $source\n",
-          "  URL: $url\n",
-	  " SpeciesSetTag: $species_set_tag\n";
+          "  URL: $url\n";
+    print "  SpeciesSetTag: $species_set_tag\n" if (defined $species_set_tag);
   unless ($force) {
     print "\nDo you want to continue? [y/N]? ";
     
