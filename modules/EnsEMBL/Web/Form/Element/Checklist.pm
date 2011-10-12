@@ -12,8 +12,8 @@ use constant {
   CSS_CLASS_INNER_WRAPPER => 'ff-checklist',
   SELECT_DESELECT_CAPTION => '<u><b>Select/deselect all</b></u>',
   
-  _IS_MULTIPLE           => 1,               ## Override in child class if required
-  _ELEMENT_TYPE          => 'inputcheckbox'  ## Override in child class if required
+  _IS_MULTIPLE           => 1,               ## Overridden in Radiolist
+  _ELEMENT_TYPE          => 'inputcheckbox'  ## Overridden in Radiolist
 };
 
 sub configure {
@@ -54,14 +54,15 @@ sub configure {
 sub add_option {
   ## Adds an option to the dropdown
   ## @params HashRef with following keys:
-  ##  - id        Id attribute of <input>
-  ##  - value     goes in value attribute of the option
-  ##  - caption   Text string (or hashref set of attributes including inner_HTML or inner_text) for <label>, appearing right side of the checkbox/radiobutton
-  ##  - selected  flag to tell whether option is selected or not
-  ##  - group     Subheading caption - If subheading does not exist, a new one's created before adding it
-  ##  - class     Only needed to override the default class attribute for all options
-  ##  - name      Only needed to override the default name attribute for all options
-  ##  - disabled  Only needed to override the default enabled status for all options
+  ##  - id          Id attribute of <input>
+  ##  - value       goes in value attribute of the option
+  ##  - caption     Text string (or hashref set of attributes including inner_HTML or inner_text) for <label>, appearing right side of the checkbox/radiobutton
+  ##  - label_first flag if on, will add the label on the left if the checkbox/radiobutton
+  ##  - selected    flag to tell whether option is selected or not
+  ##  - group       Subheading caption - If subheading does not exist, a new one's created before adding it
+  ##  - class       Only needed to override the default class attribute for all options
+  ##  - name        Only needed to override the default name attribute for all options
+  ##  - disabled    Only needed to override the default enabled status for all options
   ## @return newly added Node::Element::P/Span object containg an input and a label
   my ($self, $params) = @_;
   
@@ -77,9 +78,9 @@ sub add_option {
   $params->{$_} and $input->set_attribute($_, $params->{$_}) for qw(id class);
   $input->disabled(exists $params->{'disabled'} ? ($params->{'disabled'} ? 1 : 0) : $self->{'__option_disabled'});
   $input->checked(1) if exists $params->{'checked'} && $params->{'checked'} == 1;
-
-  $wrapper->append_child($input);
-  $wrapper->append_child('label', {'for' => $input->id, ref $params->{'caption'} eq 'HASH' ? %{$params->{'caption'}} : 'inner_text' => $params->{'caption'}}) if exists $params->{'caption'};
+  
+  my @children = ($input, exists $params->{'caption'} ? {'node_name' => 'label', 'for' => $input->id, ref $params->{'caption'} eq 'HASH' ? %{$params->{'caption'}} : 'inner_text' => $params->{'caption'}} : ());
+  $wrapper->append_children($params->{'label_first'} ? reverse @children : @children);
 
   my $next_heading = undef;
   if (exists $params->{'group'} && defined $params->{'group'}) {
