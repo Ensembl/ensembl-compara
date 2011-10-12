@@ -151,7 +151,7 @@ sub variation_content {
     }
   }
   
-  push @{$self->{'entries'}}, \@entries;
+  unshift @{$self->{'entries'}}, \@entries;
 }
 
 1;
