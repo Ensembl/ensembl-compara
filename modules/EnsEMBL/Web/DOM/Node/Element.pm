@@ -228,17 +228,17 @@ sub inner_HTML {
   ## @exception HTMLParsingException if there is some error in parsing the HTML
   my ($self, $html, $do_parse) = @_;
   ($html, $do_parse) = @$html if ref $html eq 'ARRAY';
-  my $error_message = "";
   if (defined $html) {
     $self->remove_children;
     if ($do_parse) {
+      my $error_message = '';
       $self->append_child($_) for @{$self->_parse_HTML_to_nodes($html, \$error_message)};
+      throw exception('DOMException::HTMLParsingException', $error_message) if $error_message;
     }
     else {
       $self->{'_text'} = "$html";
     }
   }
-  throw exception('DOMException::HTMLParsingException', $error_message) if $error_message;
   return $self->{'_text'} if $self->{'_text'} ne '';
   $html  = '';
   $html .= $_->node_type eq $self->TEXT_NODE ? $_->text : $_->outer_HTML for @{$self->{'_child_nodes'}};
@@ -272,11 +272,23 @@ sub outer_HTML {
 
 sub append_HTML {
   ## Appends an HTML string to the existing inner_HTML
-  ## If existing inner_HTML is in form of Nodes, it will be converted to string HTML before appending the new HTML to it.
   ## @param HTML string
-  ## @return final inner_HTML string
-  my ($self, $html) = @_;
-  return $self->inner_HTML(sprintf '%s%s', $self->inner_HTML, $html);
+  ## @param Flag to tell whether to parse the html to nodes or not
+  ##  - false: if existing inner_HTML is in form of Nodes, it will be converted to string HTML before appending the new HTML to it (default)
+  ##  - true:  parses the HTML string to Nodes and append then as child nodes (this will ignore existing inner_HTML if it's unparsed string)
+  ## @return Boolean true unless exception
+  ## @exception HTMLParsingException if there is some error in parsing the HTML
+  my ($self, $html, $do_parse) = @_;
+  if ($do_parse) {
+    $self->{'_text'}  = '';
+    my $error_message = '';
+    $self->append_child($_) for @{$self->_parse_HTML_to_nodes($html, \$error_message)};
+    throw exception('DOMException::HTMLParsingException', $error_message) if $error_message;
+  }
+  else {
+    $self->inner_HTML(sprintf '%s%s', $self->inner_HTML, $html);
+  }
+  return 1;
 }
 
 sub add_attribute {
