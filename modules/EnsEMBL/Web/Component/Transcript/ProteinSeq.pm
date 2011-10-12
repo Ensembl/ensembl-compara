@@ -52,7 +52,7 @@ sub get_sequence_data {
         )};
     }
     
-    foreach my $snp (@{$object->variation_data}) {
+    foreach my $snp (reverse @{$object->variation_data}) {
       my $pos  = $snp->{'position'} - 1;
       my $dbID = $snp->{'vdbid'};
       

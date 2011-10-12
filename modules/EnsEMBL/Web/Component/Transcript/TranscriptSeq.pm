@@ -142,7 +142,7 @@ sub get_sequence_data {
         )};
     }
     
-    foreach my $snp (@{$object->variation_data($config->{'utr'})}) {
+    foreach my $snp (reverse @{$object->variation_data($config->{'utr'})}) {
       my $tv = $snp->{'tv'};
       my ($start, $end) = ($tv->cdna_start, $tv->cdna_end);
       
