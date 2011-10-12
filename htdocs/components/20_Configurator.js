@@ -770,7 +770,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     var lis       = [];
     var added     = false;
     var noResults = 'show';
-    var div, show, menu, tracks, track, trackName, i, j, match, type;
+    var div, show, menu, tracks, track, trackName, i, j, match, type, subset;
     
     function search(n, li) {
       match = li.children('span.menu_option').text().match(panel.regex);
@@ -782,9 +782,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           menu.append(li.show()).parents('li').show();
           panel.imageConfig[n] = { renderer: 'off', favourite: !!panel.favourites[type] && panel.favourites[type][n] };
           panel.externalFavourite(n, li);
-          added = true;
-          
-          var subset = li[0].className.match(/\s*subset_(\w+)\s*/) || false;
+          added  = true;
+          subset = li[0].className.match(/\s*subset_(\w+)\s*/) || false;
        
           li.data('links', [
             'a.' + type,
