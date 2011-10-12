@@ -310,7 +310,7 @@ sub url {
     next unless defined $pars{$p};
     
     # Don't escape colon or space
-    $url .= sprintf '%s=%s;', uri_escape($p), uri_escape($_, "^A-Za-z0-9\-_ .!~*'():\/") for ref $pars{$p} ? sort @{$pars{$p}} : $pars{$p};
+    $url .= sprintf '%s=%s;', uri_escape($p), uri_escape($_, "^A-Za-z0-9\-_ .!~*'():\/") for ref $pars{$p} ? @{$pars{$p}} : $pars{$p};
   }
 
   $url =~ s/;$//;
