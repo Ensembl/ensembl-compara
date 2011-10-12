@@ -24,11 +24,11 @@ sub configure {
   $self->set_attribute('class', $params->{'wrapper_class'}) if exists $params->{'wrapper_class'};
 
   # default attributes for the checkboxs/radiobuttons
-  $self->{'__option_name'}      = $params->{'name'} || '';
-  $self->{'__option_disabled'}  = $params->{'disabled'} ? 1 : 0;
-  $self->{'__option_class'}     = $params->{'class'} if exists $params->{'class'};
-  
-  $self->{'__inline'}           = exists $params->{'inline'} && $params->{'inline'} == 1 ? 1 : 0;
+  $self->{'__option_name'}        = $params->{'name'} || '';
+  $self->{'__option_disabled'}    = $params->{'disabled'} ? 1 : 0;
+  $self->{'__option_class'}       = $params->{'class'} if exists $params->{'class'};
+  $self->{'__option_label_first'} = $params->{'label_first'} if exists $params->{'label_first'};
+  $self->{'__inline'}             = exists $params->{'inline'} && $params->{'inline'} == 1 ? 1 : 0;
 
   my $checked_values = {};
   if (exists $params->{'value'}) {
@@ -68,9 +68,10 @@ sub add_option {
   
   my $dom = $self->dom;
 
-  $params->{'value'}    = '' unless exists $params->{'value'} && defined $params->{'value'};
-  $params->{'class'}  ||= $self->{'__option_class'} if $self->{'__option_class'};
-  $params->{'id'}     ||= $self->unique_id          if exists $params->{'caption'}; #'for' attrib for label if caption provided
+  $params->{'value'}         = '' unless exists $params->{'value'} && defined $params->{'value'};
+  $params->{'class'}       ||= $self->{'__option_class'}       if $self->{'__option_class'};
+  $params->{'label_first'} ||= $self->{'__option_label_first'} if $self->{'__option_label_first'};
+  $params->{'id'}          ||= $self->unique_id                if exists $params->{'caption'}; #'for' attrib for label if caption provided
 
   my $wrapper = $dom->create_element($self->{'__inline'} ? 'span' : 'p', {'class' => $self->CSS_CLASS_INNER_WRAPPER});
   my $input   = $dom->create_element($self->_ELEMENT_TYPE, {'value' => $params->{'value'}, 'name' => $params->{'name'} || $self->{'__option_name'}});
