@@ -1,19 +1,18 @@
 package EnsEMBL::Web::Form::Element;
 
 ### How to add new element class?
-### 1. Create the required package (class) with name Web::Form::Element::$new_element
+### 1. Create the required package (class) with name Web::Form::Element::MyElement
 ### 2. Inherit from one of the existing Element class in Web::Form::Element::* (in this folder or any plugins)
-###    (eg. as in Web::Form::Element::String)
+###    (eg. as in Web::Form::Element::Radiolist)
 ###    OR
 ###    Inherit from the required element class in DOM::Node::Element::* and this class respectively (MI)
 ###    (eg. as in Web::Form::Element::String)
-### 3. Create a subroutine configure() in the new class which reads the params (check this class's configure method) and
+### 3. In the new class, create a subroutine configure() that accepts a set of params (check this class's configure method) and
 ###    configures the element accordingly
-### 4. Add a key with a "form-element-$short_name" with value equal to the new class's name to &map_element_class in this class
+### 4. Add a key with a "form-element-my_element" with value equal to the new class's name to &map_element_class in this class
 ###    (eg. 'form-element-dropdown' => 'EnsEMBL::Web::Form::Element::Dropdown') "form-element-" is always the prefix
-###    This short name will be used as argument in ->dom::create_element().
-### 5. DONE - call dom::create_element method to create this element instead using the constructor straight away.
-###           call $new_element->configure() immidiately after to configure the element
+###    This short name will be used as value to the 'type' key in argument to &Fieldset::add_field or &Field::add_element
+### 5. DONE - check any Form::Element::* file as example
 
 use strict;
 
@@ -38,13 +37,14 @@ sub configure {
   ##  - inline          Flag stating whether checkbox/radio buttons are to be disaplayed in a horizontal line in case of checklist/radiolist
   ##  - size            Size attribute for text input, password input or select.
   ##  - selectall       Flag to tell whether or not we need a selectall checkbox in case of a checklist
-  ##  - values          ArrayRef of either string values, or Hashref with following keys (for each option, checkbox or radio)
+  ##  - values          ArrayRef of either string values, or Hashrefs with following keys (for each option, checkbox or radio)
   ##    - id            Id attribute for the option
   ##    - value         Value of the option
   ##    - name          name attribute incase of checkboxes. This will override the default name attribute (the one for the whole list)
   ##    - caption       Text string (or hashref set of attributes including inner_HTML or inner_text) for <option> OR <label> for checkboxes and radio buttons
   ##    - class         Class attribute for the option/checkbox/radio button
   ##    - group         If option needs to go in any <optgroup> in case of <option> or a sub heading in case of checkbox/radio
+  ##    - label_first   Flag if on, keeps the label to the left of the checkbox/radiobutton (off by default)
   ##  - no_input        Flag to prevent a hidden input automatically being added from NoEdit element
   ##  - is_html         Flag kept on if the value is HTML (in case of NoEdit only)
   ##  - caption         String to be displayed in NoEdit element if different from value attribute of the hidden input
