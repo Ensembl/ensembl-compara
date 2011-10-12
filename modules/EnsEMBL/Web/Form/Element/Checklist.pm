@@ -57,7 +57,7 @@ sub add_option {
   ##  - id          Id attribute of <input>
   ##  - value       goes in value attribute of the option
   ##  - caption     Text string (or hashref set of attributes including inner_HTML or inner_text) for <label>, appearing right side of the checkbox/radiobutton
-  ##  - label_first flag if on, will add the label on the left if the checkbox/radiobutton
+  ##  - label_first flag if on, will add the label to the left of the checkbox/radiobutton - overrides the 'label_first' flag provided to the element
   ##  - selected    flag to tell whether option is selected or not
   ##  - group       Subheading caption - If subheading does not exist, a new one's created before adding it
   ##  - class       Only needed to override the default class attribute for all options
