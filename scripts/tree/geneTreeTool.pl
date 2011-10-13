@@ -14054,7 +14054,7 @@ sub add_tags {
       $lost_taxa{$taxon} = 1;
     }
     foreach my $taxon (keys %lost_taxa) {
-      $node->add_tag('lost_taxon_id', $taxon);
+      $node->add_tag('lost_taxon_id', $taxon, 1);
     }
   }
   if (defined($node->get_tagvalue("SISi"))) {
