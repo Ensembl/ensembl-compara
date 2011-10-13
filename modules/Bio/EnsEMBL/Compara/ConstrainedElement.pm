@@ -38,6 +38,8 @@ GET / SET VALUES
   $constrained_element->slice($slice);
   $constrained_element->start($constrained_element_start - $slice_start + 1);
   $constrained_element->end($constrained_element_end - $slice_start + 1);
+  $constrained_element->seq_region_start($self->slice->start + $self->{'start'} - 1);
+  $constrained_element->seq_region_end($self->slice->start + $self->{'end'} - 1);
   $constrained_element->strand($strand);
   $constrained_element->reference_dnafrag_id($dnafrag_id);
 
@@ -80,6 +82,14 @@ corresponds to a constrained_element.dnafrag_start (in slice coordinates)
 =item end
 
 corresponds to a constrained_element.dnafrag_end (in slice coordinates)
+
+=item seq_region_start
+
+corresponds to a constrained_element.dnafrag_start (in genomic (absolute) coordinates)
+
+=item seq_region_end
+
+corresponds to a constrained_element.dnafrag_end (in genomic (absolute) coordinates)
 
 =item strand
 
@@ -437,7 +447,7 @@ sub start {
   Arg [1]    : (optional) int $end
   Example    : $end = $constrained_element->end;
   Example    : $constrained_element->end($end);
-  Description: Getter/Setter for the attribute end.
+  Description: Getter/Setter for the attribute end relative to the begining of the slice.
   Returntype : int
   Exceptions : returns undef if no ref.end
   Caller     : object::methodname
@@ -453,6 +463,54 @@ sub end {
 
   return $self->{'end'};
 }
+
+
+=head2 seq_region_start
+
+  Arg [1]    : (optional) int $seq_region_start
+  Example    : $seq_region_start = $constrained_element->seq_region_start;
+  Example    : $constrained_element->seq_region_start($seq_region_start);
+  Description: Getter/Setter for the attribute start relative to the begining of the dnafrag (genomic coords).
+  Returntype : int
+  Exceptions : returns undef if no ref.seq_region_start
+  Caller     : object::methodname
+
+=cut
+sub seq_region_start {
+	my ($self, $seq_region_start) = @_;
+	
+	if(defined($seq_region_start)) {
+		$self->{'seq_region_start'} = $seq_region_start;
+	} else {
+		$self->{'seq_region_start'} = $self->slice->start + $self->{'start'} - 1;
+	}
+	return $self->{'seq_region_start'};
+}
+
+
+=head2 seq_region_end
+
+  Arg [1]    : (optional) int $seq_region_end
+  Example    : $seq_region_end = $constrained_element->seq_region_end
+  Example    : $constrained_element->seq_region_end($seq_region_end);
+  Description: Getter/Setter for the attribute end relative to the begining of the dnafrag (genomic coords).
+  Returntype : int
+  Exceptions : returns undef if no ref.seq_region_end
+  Caller     : object::methodname
+
+=cut
+sub seq_region_end {
+	my ($self, $seq_region_end) = @_;
+	
+	if(defined($seq_region_end)) {
+		$self->{'seq_region_end'} = $seq_region_end;
+	} else {
+		$self->{'seq_region_end'} = $self->slice->start + $self->{'end'} - 1;
+	}
+	return $self->{'seq_region_end'};
+}
+
+
 
 =head2 strand
 
