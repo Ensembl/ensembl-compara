@@ -638,7 +638,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC',
             -parameters => {
                 'reuse_db'                  => $self->o('reuse_db'),
-                'groupset_tag'              => 'ClustersetQC',
+                'groupset_tag'              => 'Clusterset',
             },
             -wait_for => [ 'hcluster_parse_output' ],
             -hive_capacity => 3,
@@ -789,7 +789,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC',
             -parameters => {
                 'reuse_db'                  => $self->o('reuse_db'),
-                'groupset_tag'              => 'GeneTreesetQC',
+                'groupset_tag'              => 'GeneTreeset',
             },
             -wait_for => [ 'dummy_wait_alltrees' ],
             -hive_capacity => 3,

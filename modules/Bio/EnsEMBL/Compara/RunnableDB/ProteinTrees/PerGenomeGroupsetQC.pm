@@ -65,20 +65,17 @@ sub run {
 
     my $genome_db_id            = $self->param('genome_db_id') or die "'genome_db_id' is an obligatory parameter";
     my $groupset_tag            = $self->param('groupset_tag') or die "'groupset_tag' is an obligatory parameter";
-    my $groupset_node           = $self->compara_dba->get_ProteinTreeAdaptor->fetch_all_roots->[0] or die "Could not fetch groupset node";
 
     my $this_orphans            = $self->fetch_gdb_orphan_genes($self->compara_dba, $genome_db_id);
     my $total_orphans_num       = scalar keys (%$this_orphans);
     my $total_num_genes         = scalar @{ $self->compara_dba->get_MemberAdaptor->fetch_all_by_source_genome_db_id('ENSEMBLGENE',$genome_db_id) };
-    my $proportion_orphan_genes = $total_orphans_num/$total_num_genes;
 
-    $groupset_node->store_tag("$genome_db_id".'_total_orphans_num' . '_' . $groupset_tag, $total_orphans_num);
-    $groupset_node->store_tag("$genome_db_id".'_prop_orphans' . '_' . $groupset_tag, $proportion_orphan_genes);
+    $self->param('total_orphans_num', $total_orphans_num);
+    $self->param('prop_orphan',       $total_orphans_num/$total_num_genes);
 
     return unless $self->param('reuse_this');
 
     my $reuse_db                = $self->param('reuse_db') or die "'reuse_db' connection parameters hash has to be defined in reuse mode";
-
     my $reuse_compara_dba       = $self->go_figure_compara_dba($reuse_db);    # may die if bad parameters
 
     my $reuse_orphans           = $self->fetch_gdb_orphan_genes($reuse_compara_dba, $genome_db_id);
@@ -91,11 +88,33 @@ sub run {
             $new_orphans{$this_orphan_id} = 1;
         }
     }
-    my $common_orphans_num = scalar keys (%common_orphans);
-    my $new_orphans_num    = scalar keys (%new_orphans);
+    $self->param('common_orphans_num', scalar keys (%common_orphans));
+    $self->param('new_orphans_num',    scalar keys (%new_orphans));
 
-    $groupset_node->store_tag("$genome_db_id".'_common_orphans_num' . '_' . $groupset_tag, $common_orphans_num);
-    $groupset_node->store_tag("$genome_db_id".'_new_orphans_num' . '_' . $groupset_tag, $new_orphans_num);
+}
+
+sub write_output {
+
+    my $self = shift @_;
+
+    my $genome_db_id            = $self->param('genome_db_id');
+    my $groupset_tag            = $self->param('groupset_tag');
+    my $groupset_node           = $self->compara_dba->get_ProteinTreeAdaptor->fetch_all_roots->[0] or die "Could not fetch groupset node";
+
+    my $sql = "INSERT IGNORE INTO protein_tree_qc (clusterset_id, genome_db_id) VALUES (?,?)";
+    my $sth = $self->compara_dba->dbc->prepare($sql);
+    $sth->execute($groupset_node->node_id, $genome_db_id);
+
+    my $sql = "UPDATE protein_tree_qc SET total_orphans_num_$groupset_tag=?, prop_orphans_$groupset_tag=? WHERE clusterset_id=? AND genome_db_id=?";
+    my $sth = $self->compara_dba->dbc->prepare($sql);
+    $sth->execute($self->param('total_orphans_num'), $self->param('prop_orphan'), $groupset_node->node_id, $genome_db_id);
+
+    return unless $self->param('reuse_this');
+
+    my $sql = "UPDATE protein_tree_qc SET common_orphans_num_$groupset_tag=?, new_orphans_num_$groupset_tag=? WHERE clusterset_id=? AND genome_db_id=?";
+    my $sth = $self->compara_dba->dbc->prepare($sql);
+    $sth->execute($self->param('common_orphans_num'), $self->param('new_orphans_num'), $groupset_node->node_id, $genome_db_id);
+
 }
 
 
