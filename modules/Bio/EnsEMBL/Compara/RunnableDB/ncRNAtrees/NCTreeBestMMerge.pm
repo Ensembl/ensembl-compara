@@ -447,7 +447,7 @@ sub store_tags
       if ($self->debug) {
         printf("store bootstrap : $bootstrap_value "); $node->print_node;
       }
-      $node->store_tag('Bootstrap', $bootstrap_value);
+      $node->store_tag('bootstrap', $bootstrap_value);
     }
   }
   if (defined($node->get_tagvalue("DD"))) {
