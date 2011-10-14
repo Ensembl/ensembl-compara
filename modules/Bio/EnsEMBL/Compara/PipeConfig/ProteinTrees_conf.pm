@@ -70,11 +70,11 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     # parameters that are likely to change from execution to another:
-#       'mlss_id'               => 40075,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '64',
-        'rel_suffix'            => 'b',    # an empty string by default, a letter otherwise
+#       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        'release'               => '65',
+        'rel_suffix'            => '',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
-        'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
+        'do_not_reuse_list'     => [ 123 ],     # names of species we don't want to reuse this time
 
     # dependent parameters:
         'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
@@ -89,7 +89,7 @@ sub default_options {
         'protein_members_range'     => 100000000, # highest member_id for a protein member
 
     # clustering parameters:
-        'outgroups'                     => [119],   # affects 'hcluster_dump_input_per_genome'
+        'outgroups'                     => [127],   # affects 'hcluster_dump_input_per_genome'
         'clustering_max_gene_halfcount' => 750,     # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
 
     # tree building parameters:
@@ -128,7 +128,7 @@ sub default_options {
     # connection parameters to various databases:
 
         'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => 'compara3',
+            -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                    
@@ -170,11 +170,11 @@ sub default_options {
         'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
         'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
         'reuse_db' => {   # usually previous release database on compara1
-           -host   => 'compara1',
+           -host   => 'compara4',
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'lg4_ensembl_compara_63',
+           -dbname => 'lg4_ensembl_compara_64',
         },
 
         ## mode for testing the non-Blast part of the pipeline: reuse all Blasts
