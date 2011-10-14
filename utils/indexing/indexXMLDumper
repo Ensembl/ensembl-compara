@@ -1376,7 +1376,7 @@ sub dumpSequence {
         else {
           if ($old_ID) {
             my ($name, $synonyms) = &sort_mf_names($NAMES,\@name_order);
-            &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,$ftype,$sanger,$counter), $nogzip, $fh);
+            &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,[],$ftype,$sanger,$counter), $nogzip, $fh);
             $NAMES = undef;
             $ftype = undef;
           }
@@ -1393,7 +1393,7 @@ sub dumpSequence {
         }
       }
       my ( $name, $synonyms) = sort_mf_names($NAMES,\@name_order);
-      &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,$ftype,$sanger,$counter), $nogzip, $fh);
+      &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,[],$ftype,$sanger,$counter), $nogzip, $fh);
 
     }
     if ($db ne 'core') {
@@ -1426,6 +1426,22 @@ sub dumpSequence {
       $mapped_ids->{$prev_coord_system_id}{$prev_name}{'length'} = $new_length;
     }
 
+    #for vega - get ensembl chromosome names if they're different from the vega names
+    my %enames = {};
+    if ($sitetype eq 'Vega') {
+      $sth = $conf->{'dbh'}->prepare(qq(
+       SELECT sr.name, sra.value
+         FROM seq_region sr, seq_region_attrib sra, attrib_type at
+        WHERE sr.seq_region_id = sra.seq_region_id
+          AND sra.attrib_type_id = at.attrib_type_id
+          AND sr.name != sra.value
+          AND at.code = 'ensembl_name'));
+      $sth->execute;
+      while (my ($v_name, $e_name) = $sth->fetchrow_array() ) {
+        $enames{$v_name} = $e_name;
+      }
+    }
+
     #get all seq_regions
     $sth = $conf->{'dbh'}->prepare(qq(
        SELECT sr.name, sr.length, cs.name, cs.coord_system_id, srs.synonym
@@ -1435,6 +1451,7 @@ sub dumpSequence {
     $sth->execute();
     my ($old_name,$old_type,$old_length);
     my $synonyms = [];
+    my $other_names = [];
     while( my($name,$length,$type,$cs_id,$syn) = $sth->fetchrow_array() ) {
       my ($prev_name,$prev_length,$mapping_text);
       next if $type eq 'lrg';
@@ -1448,7 +1465,7 @@ sub dumpSequence {
           next;
         }
         else {
-          print LOG "WARNING: not dumping $name on coord_system $cs_id since it's an old assembly with no mapping - investigate what this means!\n";
+          print LOG "Not dumping $name on coord_system $cs_id since it's an old assembly with no mapping\n";
           next;
         }
       }
@@ -1457,16 +1474,20 @@ sub dumpSequence {
       }
       else {
 	if ($old_name) {
-	  &p( SeqLine($dbspecies,$old_name,$old_type,1,$old_length,$old_length,$old_name,$synonyms,$old_type,$sanger,$counter), $nogzip, $fh);
+	  &p( SeqLine($dbspecies,$old_name,$old_type,1,$old_length,$old_length,$old_name,$synonyms,$other_names,$old_type,$sanger,$counter), $nogzip, $fh);
 	}
 	$old_name = $name;
 	$old_type = $type;
 	$old_length = $length;
 	$synonyms = [];
-	push @$synonyms, $syn if $syn;
+        $other_names = [];
+        if (my $ename = $enames{$name}) {
+          push @$other_names, $ename;
+        }
+        push @$synonyms, $syn if $syn;
       }
     }
-    &p( SeqLine($dbspecies,$old_name,$old_type,1,$old_length,$old_length,$old_name,$synonyms,$old_type,$sanger,$counter), $nogzip, $fh);
+    &p( SeqLine($dbspecies,$old_name,$old_type,1,$old_length,$old_length,$old_name,$synonyms,$other_names,$old_type,$sanger,$counter), $nogzip, $fh);
 
     $total_c += footer( $counter->(),$nogzip,$fh);
   }
@@ -1491,7 +1512,7 @@ sub sort_mf_names {
 }
 
 sub SeqLine {
-  my($species,$sr,$sr_type,$start,$end,$len,$name,$synonyms,$type,$sanger,$counter) = @_;
+  my($species,$sr,$sr_type,$start,$end,$len,$name,$synonyms,$other_names,$type,$sanger,$counter) = @_;
   $species =~ s/_/ /;
   print LOG "WARNING: no type set for $name" unless $type;
   my $action = $len > 0.5e6 ? 'Overview' : 'View';
@@ -1529,7 +1550,7 @@ sub SeqLine {
   $xml .= qq(
     <field name="location">$r</field>
     <field name="action">$action</field>);
-  foreach my $syn (@$synonyms) {
+  foreach my $syn (@$synonyms, @$other_names) {
     $xml .= qq(
     <field name="synonym">$syn</field>);
   }
