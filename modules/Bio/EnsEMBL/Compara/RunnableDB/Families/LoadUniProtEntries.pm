@@ -106,6 +106,14 @@ sub fetch_and_store_a_chunk {
 
     my $ncbi_taxon_id = $seq->species && $seq->species->ncbi_taxid;
 
+    my $taxon = $self->compara_dba()->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($ncbi_taxon_id);
+    if($taxon) {
+        $ncbi_taxon_id = $taxon->dbID;  # could have changed because of merged taxa
+    } else { # if taxon has not been loaded into compara at all, do not store the member and warn:
+        warn "Taxon id $ncbi_taxon_id from $source_name ". $seq->accession_number ." not in the database. Member not stored.";
+        next;
+    }
+
     ####################################################################
     # This bit is to avoid duplicated entries btw Ensembl and Uniprot
     # It only affects the Ensembl species dbs, and right now I am using
@@ -131,12 +139,6 @@ sub fetch_and_store_a_chunk {
       }
     }
     ####################################################################
-
-        # if taxon is not loaded into compara, do not store the member and warn:
-    unless(my $taxon = $self->compara_dba()->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($ncbi_taxon_id)) {
-        warn "Taxon id $ncbi_taxon_id from $source_name ". $seq->accession_number ." not in the database. Member not stored.";
-        next;
-    }
 
     if(my $member_id = $self->store_bioseq($seq, $source_name, $ncbi_taxon_id)) {
         print STDERR "adding member $member_id\n";
