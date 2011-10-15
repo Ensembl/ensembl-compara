@@ -46,9 +46,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-#       'mlss_id'         => 30034,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'         => '64',
-        'rel_suffix'      => 'a',    # an empty string by default, a letter otherwise
+#       'mlss_id'         => 30035,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        'release'         => '65',
+        'rel_suffix'      => '',    # an empty string by default, a letter otherwise
         'rel_with_suffix' => $self->o('release').$self->o('rel_suffix'),
 
         'pipeline_name'   => 'FAM_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
@@ -84,7 +84,7 @@ sub default_options {
 
             # family database connection parameters (our main database):
         'pipeline_db' => {
-            -host   => 'compara2',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -92,10 +92,10 @@ sub default_options {
         },
 
             # homology database connection parameters (we inherit half of the members and sequences from there):
-        'homology_db'  => 'mysql://ensro@compara3/lg4_compara_homology_64b',
+        'homology_db'  => 'mysql://ensro@compara2/mm14_compara_homology_65',
 
             # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/lg4_ensembl_compara_63',
+        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara4/lg4_ensembl_compara_64',
 
             # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ensembl_compara_master',    
@@ -242,7 +242,7 @@ sub pipeline_analyses {
             -wait_for => [ 'genomedb_factory', 'load_nonref_members' ],
             -flow_into => {
                 2 => [ 'load_uniprot_factory' ],
-                1 => [ 'fix_merged_taxa_in_members' ],
+                1 => [ 'snapshot_after_load_uniprot' ],
             },
             -rc_id => 1,
         },
@@ -269,20 +269,6 @@ sub pipeline_analyses {
             -rc_id => 0,
         },
 
-        {   -logic_name => 'fix_merged_taxa_in_members',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters => {
-                'sql'   => [
-                    "UPDATE member m, ncbi_taxa_name ntn SET m.taxon_id=ntn.taxon_id WHERE m.taxon_id = ntn.name AND ntn.name_class='merged_taxon_id'",
-                ],
-            },
-            -wait_for  => [ 'load_uniprot_superfactory', 'load_uniprot_factory', 'load_uniprot' ],   # act as a funnel
-            -flow_into => {
-                1 => [ 'snapshot_after_load_uniprot' ],
-            },
-            -rc_id => 1,
-        },
-
         {   -logic_name => 'snapshot_after_load_uniprot',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
@@ -291,6 +277,7 @@ sub pipeline_analyses {
                 'cmd'           => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 0).' '.$self->o('pipeline_db','-dbname').' >#filename#',
                 'filename'      => $self->o('work_dir').'/'.$self->o('pipeline_name').'_snapshot_after_load_uniprot.sql',
             },
+            -wait_for  => [ 'load_uniprot_superfactory', 'load_uniprot_factory', 'load_uniprot' ],   # act as a funnel
             -flow_into => {
                 1 => { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#', 'blastdb_dir' => '#blastdb_dir#' } },
             },
