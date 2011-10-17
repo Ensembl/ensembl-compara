@@ -82,7 +82,7 @@ sub init_config {
         $species_select = qq{<div class="species_select">Species to configure: <select class="species">$species_select</select></div>} if $species_select;
       }
       
-      $search_box = qq{<div class="configuration_search"><input class="configuration_search_text" value="Find a track" /></div>};
+      $search_box = qq{<div class="configuration_search"><input class="configuration_search_text" value="Find a track" name="configuration_search_text" /></div>};
       
       $self->active = $image_config->get_parameter('active_menu') || 'active_tracks';
     }
