@@ -223,27 +223,14 @@ GRAPHIC_FONTSIZE     = 8                               ; Default font-size for g
 <h2>public-plugins/mirror/conf/ini-files/MULTI.ini</h2>
 
 <p>Create this file to configure the multi species databases.  Configure the [general] section for connection to the MySQL server, as for the species-specific ini files.
-In the [databases] section, change the values of DATABASE_COMPARA and the various _MART entries
-to match the name of the ensembl_compara and ensembl_mart databases that you created.</p>
+In the [databases] section, change the values of DATABASE_COMPARA entry
+to match the name of the ensembl_compara database that you created.</p>
 
 <p>In addition, if you chose to install a local GO database you can configure it here by adding an entry:</p>
 <pre class="code">
 DATABASE_GO = your_go_database_name
 </pre>
-<p>to the [databases] section along with DATABASE_COMPARA and the BioMart datbases.</p>
-
-<p>As in the other species.ini files, you can override the database connection settings for a particular
-database by adding a section similar to the following:</p>
-<pre class="code">
-[DATBASE_MART_ENSEMBL]
-USER=mysqluser2
-PASS=dbpass
-HOST=mysqlserver2
-PORT=4444
-</pre>
-
-<p>The Mart configuration automatically creates a simplified BioMart configuration file martRegistry.xml in the conf directory at server start up. Read the BioMart install document how to edit this to create a more functional BioMart registry
-which leverages BioMart's advanced features such as federated searches.</p>
+<p>to the [databases] section along with DATABASE_COMPARA.</p>
 
 <h2>BLAST</h2>
 <p>BLAST is not installed by default.  You have to configure blast for a local installation. See documentation describing how to <a href="blast.html">configure BLAST</a>.</p>
