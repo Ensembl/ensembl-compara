@@ -71,11 +71,13 @@ Ensembl.DataTable = {
         }
       },
       fnInitComplete: function () {
-        if (this.not(':visible').length) {
-          this.show(); // show table momentarily (not noticable in the browser) so that width is correct
-          this.parent().width(this.outerWidth()).hide(); // Hide the wrapper of already hidden table
-        } else {
-          this.parent().width(this.outerWidth());
+        if (this[0].style.width !== '100%') {
+          if (this.not(':visible').length) {
+            this.show(); // show table momentarily (not noticable in the browser) so that width is correct
+            this.parent().width(this.outerWidth()).hide(); // Hide the wrapper of already hidden table
+          } else {
+            this.parent().width(this.outerWidth());
+          }
         }
       },
       fnDrawCallback: function (data) {
