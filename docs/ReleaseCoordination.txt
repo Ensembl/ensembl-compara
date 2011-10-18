@@ -19,7 +19,7 @@ Remember that compara has one additional day after the declaration of intentions
 3. Set up a web page with intentions in the Confluence wiki system to
 allow easy tracking of the progress.
 
-Note: The current (rel.64) compara_master database is sf5_ensembl_compara_master on compara1 
+Note: The current (rel.65) compara_master database is sf5_ensembl_compara_master on compara1 
 
 #============================================================================
 # Important environment variables to be set
@@ -43,7 +43,7 @@ to run a mini Hive pipeline that does everything (you'll have to review/edit a c
 The execution of the pipeline normally takes about 2.5-3h.
 
 # rel.64: 2.7 hours
-
+# rel.65: 2.2 hours
 
 5.2 Update the ncbi_taxa_node and ncbi_taxa_name in the master DB using the
 ncbi_taxonomy database located in mysql://ens-livemirror:3306/ncbi_taxonomy
@@ -54,6 +54,7 @@ ncbi_taxa_node ncbi_taxa_name | mysql -u ensadmin -p${ENSADMIN_PSW} -h compara1 
 
 # rel.60: 1 min
 # rel.64: 45 sec
+# rel.65: 47 sec
 
 #============================================================================
 # Master compara database (handover to compara)
@@ -66,8 +67,15 @@ Make sure to have edited the release numbers, added external core databases and 
 
 Then check that file back into the CVS for everyone else to use.
 
+6.1 Update the schema_version in master
 
-6.1 Add in the master compara database
+>> update meta set meta_value = XX where meta_key = 'schema_version';
+
+6.2 Check the free space in the compara servers. Use this url:
+http://www.ebi.ac.uk/~mp/compara_servers_disk_load.html
+Assign the d
+
+6.3 Add in the master compara database
 (compara1:3306/sf5_ensembl_compara_master) the new entries in the
 genome_db and dnafrag tables. You can set up your registry and use the
 $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl script. This script
@@ -75,15 +83,20 @@ sets the new genome_dbs as the default assemblies.
 You have to create new genome_db_id (dnafrag) when it is a new assembly, or a new species. 
 Sometimes it's done by the pairwise guys as they want to start building earlier. 
 
-eg. 
-perl update_genome.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --compara compara_master --species bushbaby
-
-eg.
+eg. (May have been run by kb3 or sf5 -- please ask. Make sure that the genomedb_id is added in the confluence page)
 perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl \
  --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
- --compara compara_master --species "Ochotona princeps"
+ --compara compara_master --species "gadus_morhua"
 
-6.2 Add in extra non-reference patches 
+This script may take a while if the species you are adding is new. You can check the progress by counting dnaFrag entries in the master database:
+
+>> select count( *) from dnafrag;
+
+(If it is a new genebuild but the assembly doesn't change you can just edit the entry in master (genome_db table) introducing the new genebuild from meta.genebuild.start_date in the core database)
+
+>> update genome_db set genebuild ="2011-07-FlyBase" where genome_db_id = 105;
+
+6.4 Add in extra non-reference patches. (May have been run by kb3 or sf5 -- please ask)
 
 To add extra non-reference patches to an assembly, eg human, you need the -force option to just add those dnafrags which aren't already in the database.
 
@@ -91,7 +104,7 @@ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl --r
         --compara compara_master --species human --force
 
 
-7. New method_link_species_set entries might be added using the
+7. (May have been run by kb3 or sf5 -- please ask). New method_link_species_set entries might be added using the
 $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl script. The release
 coordinator (or any team member) should create a new
 method_link_species_set in the master database before starting a new
@@ -123,6 +136,7 @@ eg. for the pairwise alignment
     export MLSS_DIR="/tmp/mlss_creation"
     mkdir $MLSS_DIR
 
+## 
 
 ## run the loading script several times:
 
@@ -165,7 +179,7 @@ echo -e "301\n" | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/cr
 ## ,otherwise *PANIC*
 
 
-7.2. Update the species_set_tags.
+7.2. Update the species_set_tags. (May have been run by kb3 -- please ask!!)
 Run the script: update_species_sets.pl
 
 eg
@@ -177,20 +191,22 @@ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_species_sets.
 # Note that fish will already have had a species_set_tag added by the above script.
 
 # 6way epo
-INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33896,"name","primates");
+INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33896,"name","primates"); ## Be careful with the IDs! They are ss_ids
 
 # 12way epo
-INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33895,"name","mammals");
+INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33895,"name","mammals");  ## Be careful with the IDs!
 
 # 19way mercator/pecan
-INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33898,"name","amniotes");
+INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33898,"name","amniotes");  ## Be careful with the IDs!
 
 # 35way low coverage
-INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33899,"name","mammals");
+INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33899,"name","mammals");  ## Be careful with the IDs!
+
+# FISHES!? (New one. Check with kb3?)
 
 #
 # TODO: create_mlss should perform this insert if --species_set_name option has been provided on the command line
-#
+# (Check this! make sure this is the case)
  
 
 7.3. Wait for the handover before starting to build the new database in case
