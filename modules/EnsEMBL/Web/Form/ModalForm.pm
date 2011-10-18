@@ -68,12 +68,15 @@ sub render {
   }
   
   $self->add_hidden(\@hiddens);
-  my $buttons_field = $self->add_button({'buttons' => \@buttons, 'align' => $params->{'buttons_align'} || 'default'});
   
-  if ($params->{'buttons_on_top'}) {
-    $buttons_field = $buttons_field->clone_node(1);
-    my $fieldset = $self->fieldsets->[0] || $self->add_fieldset;
-    $fieldset->prepend_child($buttons_field);
+  if (@buttons) {
+    my $buttons_field = $self->add_button({'buttons' => \@buttons, 'align' => $params->{'buttons_align'} || 'default'});
+    
+    if ($params->{'buttons_on_top'}) {
+      $buttons_field = $buttons_field->clone_node(1);
+      my $fieldset = $self->fieldsets->[0] || $self->add_fieldset;
+      $fieldset->prepend_child($buttons_field);
+    }
   }
 
   return $self->SUPER::render;
