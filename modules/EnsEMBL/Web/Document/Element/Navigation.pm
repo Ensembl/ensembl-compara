@@ -136,12 +136,12 @@ sub build_menu {
   
   if ($modal) {
     if ($data->{'top_level'}) {
-      @append = ([ 'img', { src => "$img_url${toggle}2.gif", class => "toggle $class" }]) if scalar @children;
+      @append = ([ 'img', { src => "$img_url${toggle}2.gif", class => "toggle $class", alt => '' }]) if scalar @children;
     } else {
-      @append = ([ 'img', { src => "${img_url}leaf.gif" }]);
+      @append = ([ 'img', { src => "${img_url}leaf.gif", alt => '' }]);
     }
   } else {
-    @append = ([ 'img', scalar @children ? { src => "$img_url$toggle.gif", class => "toggle $class" } : { src => "${img_url}leaf.gif" }]);
+    @append = ([ 'img', scalar @children ? { src => "$img_url$toggle.gif", class => "toggle $class", alt => '' } : { src => "${img_url}leaf.gif", alt => '' }]);
   }
   
   if ($availability && $self->is_available($availability)) {
