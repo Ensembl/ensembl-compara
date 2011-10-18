@@ -1,16 +1,24 @@
 <html>
   <head>
-    <title>Installing Ensembl/BioMart code</title>
+    <title>Installing Ensembl code</title>
   </head>
 <body> 
 
 <p><strong>Back to</strong>: <a href="/info/docs/webcode/install/build.html">&larr; Installing the code components</a></p>
 
-<h1>Installing the Ensembl, BioPerl, and BioMart modules</h1>
+<h1>Installing the Ensembl and BioPerl modules</h1>
 
 <p>If you review the Site Structure part of this document, you will recall that the site is based around a
-single server-root directory. The Ensembl, BioPerl and BioMart modules are all installed into this
-directory. Choose a suitable location, and create your server-root directory. For the purposes of
+single server-root directory. The Ensembl and BioPerl modules are all installed into this
+directory.</p>
+
+<p><strong>Please note</strong>: we no longer recommend installing BioMart as part of your Ensembl site.
+We have had to hack the code to integrate it, and our hacks are not in public CVS. If you would like to
+use BioMart, we suggest either linking to a public BioMart or, for your own data, setting up a BioMart
+instance using the new standalone Tomcat-based interface, available from 
+<a href="http://www.biomart.org/">biomart.org</a> (currently version 0.8, rc6).</p>
+
+<p>Choose a suitable location, and create your server-root directory. For the purposes of
 illustration, we will use /usr/local/ensembl. When following these instructions, replace /usr/local/ensembl 
 with your chosen server-root.</p>
 
@@ -67,16 +75,6 @@ $ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co -r branch-ensembl
   <p>N.B. You can also <a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/?root=ensembl" rel="external">view the Ensembl CVS repository</a> in your web browser.</p>
 </li>
 
-<li id="cvs_cobiomart"><strong>Install the BioMart modules (BioMart 0.6)</strong>
-  <p>If you haven't already done so, log into the Sanger CVS server as per the instructions above.</p>
-  <p>Check the BioMart code out of CVS (downloads the code from the Sanger CVS server onto your local
-machine):</p>
-  <pre class="code">
-$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/biomart co -r release-0_6 biomart-perl</pre>
-
-<p>More information on  <a href="biomart.html">tweaking and configuring BioMart to work within the Ensembl website</a> is available; for general instructions on installing biomart (including creating the cached configuration file and templates) see the <a href="http://www.biomart.org/install.html" rel="external">biomart website</a>.</p>
-</li>
-
 <li><strong>Install the BioPerl modules</strong>
 
 <div class="embedded-box info-box">
@@ -106,7 +104,6 @@ the Ensembl BLAST interface and parser.</p>
       <td>
       apache2/<br />
       bioperl-live/<br />
-      biomart-perl/
       </td>
       <td>
       conf/<br />
