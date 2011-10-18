@@ -49,7 +49,14 @@ sub content {
 
     my $form = $self->modal_form('select', $hub->species_path($current_species) . "/UserData/CheckConvert");
     $form->add_notes({'heading' => 'Tips',
-  'text' => qq(<p class="space-below">Map your data to the current assembly. Accepted file formats: GFF, GTF, BED, PSL</p>
+  'text' => qq(<p class="space-below">Map your data to the current assembly. 
+  The tool accepts a <a href="/info/website/upload/bed.html#required">list of simple coordinates</a>, 
+  or files in these formats: 
+  <a href="/info/website/upload/gff.html">GFF</a>,
+  <a href="/info/website/upload/gff.html">GTF</a>,
+  <a href="/info/website/upload/bed.html">BED</a>,
+  <a href="/info/website/upload/psl.html">PSL</a>
+</p>
 <p class="space-below">N.B. Export is currently in GFF only</p>
 <p>For large data sets, you may find it more efficient to use our <a href="ftp://ftp.ensembl.org/pub/misc-scripts/Assembly_mapper_1.0/">ready-made converter script</a>.</p>)
   });
