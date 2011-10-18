@@ -236,6 +236,7 @@ DATABASE_GO = your_go_database_name
 <p>BLAST is not installed by default.  You have to configure blast for a local installation. See documentation describing how to <a href="blast.html">configure BLAST</a>.</p>
 <p>All relevant fasta files are on <a href="ftp://ftp.ensembl.org/pub">ftp://ftp.ensembl.org/pub</a>.</p>
 
+<!--
 <h2 id="ssaha">SSAHA</h2>
 <p>SSAHA2 is not installed by default as it requires a large amount of memory to put the look
 up tables in memory. 
@@ -253,16 +254,25 @@ DATASOURCE_TYPE = dna
 LATESTGP        = host:port        ; for unmased dna
 CDNA_ALL        = host:port        ; for cDNA data 
 </pre>
+-->
 
 
 <h2>Note on Ensembl Web Site Search</h2>
 
-<p>The Ensembl web site uses the Exalead search engine (<a href="http://www.exalead.com/software/">http://www.exalead.com/</a>).  Previously it used AltaVista (<a href="http://www.altavista.com/">http://www.altavista.com/</a>). This software
-requires a user license and cannot be distributed as part of the Ensembl web code.</p>
+<p>By default, local installations of Ensembl use a simple search that just does SQL
+searches against the database. This method is rather slow and crude, however. Also, it 
+does not do cross species queries (too time consuming for MySQL queries).</p>
 
-<p>By default, local installations of Ensembl use a simple search page called Unisearch that just does SQL
-searches against the database. This method is rather slow and crude, however. Also, Unisearch does not do cross species queries (too time consuming
-for the Unisearch's MySQL queries).</p>
+<p>The Ensembl web site uses the open-source Java-based 
+<a href="http://lucene.apache.org/java/docs/index.html">Lucene search engine</a>.
+If you wish to use this search engine, you will need to download the Lucene software
+and set up a suitable webservice, as well as generate your own search indices. A
+utility script for generating indices is provided in /utils/indexing, and the Ensembl 
+Lucene plugin (/public-plugins/lucene) can be used to connect to the webservice and 
+provide a web interface.</p> 
+
+<p>(Prior to release 63, Ensembl used <a href="http://www.exalead.com/software">Exalead</a>, which
+requires a user license and could not be distributed as part of the Ensembl web code).</p>
 
 <h2>Site Preparation</h2>
 <p>cd into your server root and run the following commands:</p>
