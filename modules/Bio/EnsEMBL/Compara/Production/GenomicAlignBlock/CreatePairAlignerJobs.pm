@@ -41,7 +41,7 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
 =cut
-
+$| = 1;
 package Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreatePairAlignerJobs;
 
 use strict;

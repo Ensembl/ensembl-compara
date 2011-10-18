@@ -35,7 +35,7 @@ my %compara_conf;
 $compara_conf{'-port'} = 3306;
 
 #list of compara tables to be changed to InnoDB
-my @dna_pipeline_tables = qw(genomic_align_block genomic_align genomic_align_group genomic_align_tree sequence dnafrag_region constrained_element conservation_score);
+my @dna_pipeline_tables = qw(genomic_align_block genomic_align genomic_align_group genomic_align_tree sequence dnafrag_region conservation_score);
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
@@ -227,7 +227,7 @@ sub preparePairAlignerSystem
   }     
 
   # get dump loc out of target collection name 
-  for my $dc ( @dna_col_conf ) {  
+  for my $dc ( @dna_col_conf ) { 
     if ( $dc->{'collection_name'} =~m/$target_collection_name/ ) {  
       $dump_chunks = $dc->{dump_chunks}; 
       $dump_chunks_loc = $dc->{dump_chunks_loc}; 
@@ -235,7 +235,7 @@ sub preparePairAlignerSystem
   }  
  
   if (! -e $dump_chunks_loc ) {  
-    throw ("your speciefied dump_chunks_loc for chunks and chunk sets does not exist !\n"); 
+    throw ("your specified dump_chunks_loc for chunks and chunk sets does not exist !\n"); 
   }  
 
   if ( $dump_chunks == 1  ) { 

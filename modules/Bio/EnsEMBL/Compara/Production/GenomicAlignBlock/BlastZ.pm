@@ -122,12 +122,12 @@ sub configure_runnable {
   my $program = $self->analysis->program_file;
   $program = 'blastz' unless($program);
 
-  if($self->debug) {
+#  if($self->debug) {
     print("running with analysis '".$self->analysis->logic_name."'\n");
     print("  options : ", $self->options, "\n");
     print("  program : $program\n");
-  }
-  
+    # }
+     print "chunk files: $qyChunkFile,@db_chunk_files\n";
   $self->delete_fasta_dumps_but_these([$qyChunkFile,@db_chunk_files]);
 
   foreach my $dbChunkFile (@db_chunk_files) {  

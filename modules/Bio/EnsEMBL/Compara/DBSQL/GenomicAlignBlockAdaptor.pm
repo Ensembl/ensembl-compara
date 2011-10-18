@@ -574,7 +574,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   my ($self, $method_link_species_set, $dnafrag, $start, $end, $limit_number, $limit_index_start, $restrict) = @_;
 
   my $genomic_align_blocks = []; # returned object
-
+  print STDERR $dnafrag."\n";
   throw("[$dnafrag] is not a Bio::EnsEMBL::Compara::DnaFrag object")
       unless ($dnafrag and ref $dnafrag and $dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"));
   my $dnafrag_id = $dnafrag->dbID;
