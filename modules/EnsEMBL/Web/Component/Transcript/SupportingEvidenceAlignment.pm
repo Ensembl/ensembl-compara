@@ -30,7 +30,9 @@ sub content {
   my ($cds_aa_length, $cds_length, $e_alignment, $html);
 
   # get external sequence and type (DNA or PEP) - refseq try with and without version
-  my ($query_db, $ext_seq, $ext_seq_length);
+  my $query_db = '';
+  my $ext_seq = '';
+  my $ext_seq_length = 0;
   my @hit_ids = ($hit_id);
   $query_db   = $hit_db_name;
 
@@ -51,8 +53,12 @@ sub content {
       $strand_mismatch = $hit_strand != $transcript->strand ? 1 : 0;
       my $rec = $hub->get_ext_seq($id, uc $query_db, $strand_mismatch);
 
-      $ext_seq        = $rec->[0] || '';
-      $ext_seq_length = $rec->[1] || '';
+      if ($rec->[0]) {
+        if ($rec->[0] =~ /^>/) {
+          $ext_seq        = $rec->[0];
+          $ext_seq_length = $rec->[1];
+        }
+      }
 
       if ($ext_seq) {
         $hit_id = $id;
@@ -76,7 +82,9 @@ sub content {
 
   if ($ext_seq) {
     my $hit_url = $hub->get_ExtURL_link($hit_id, $hit_db_name, $hit_id);
-    $table->add_row('External record', "$hit_url ($hit_db_name), length = $ext_seq_length $label", 1);
+    my $txt = "$hit_url ($hit_db_name)";
+    $txt   .= ", length = $ext_seq_length $label" if $ext_seq_length;
+    $table->add_row('External record', "$txt", 1);
   } else {
     $table->add_row('External record', "<p>Unable to retrieve sequence for $hit_id</p>", 1);
   }
@@ -140,7 +148,8 @@ sub content {
       if (!$e_sequence && $seq_type eq 'PEP') {
         $table->add_row('Exon alignment:', "Unable to retrieve translation for $exon_id", 1);
         $html .= $table->render;
-      } else {
+      }
+      else {
         # get exon alignment
         my $e_alignment = $object->get_alignment($ext_seq, $e_sequence, $seq_type);
         $e_alignment =~ s/$hit_id/$hit_id .' (reverse complement)'/e if $strand_mismatch;
@@ -149,17 +158,21 @@ sub content {
         $html .= $table->render;
         $html .= "<p><br /><pre>$e_alignment</pre></p>";
       }
-    } else {
+    }
+    else {
+      $table->add_row('Exon alignment:', "Unable to show alignment", 1);
       $html .= $table->render;
     }
   }
+  else {
+    $html .= $table->render;
+  }
 
+  my $type   = $seq_type eq 'PEP' ? 'Translation' : 'Transcript';
+  my $table2 = new EnsEMBL::Web::Document::HTML::TwoCol;
   if ($ext_seq) {
     # get transcript sequence
     my $trans_sequence = $object->get_int_seq($transcript, $seq_type)->[0];
-    my $table2         = new EnsEMBL::Web::Document::HTML::TwoCol;
-    my $type           = $seq_type eq 'PEP' ? 'Translation' : 'Transcript';
-
     if (!$trans_sequence && $seq_type eq 'PEP') {
       $table2->add_row("$type alignment:", "Unable to retrieve translation for $tsi", 1);
       $html .= $table2->render;
@@ -167,13 +180,15 @@ sub content {
       # get transcript alignment
       my $trans_alignment = $object->get_alignment($ext_seq, $trans_sequence, $seq_type);
       $trans_alignment =~ s/$hit_id/$hit_id .' (reverse complement)'/e if $strand_mismatch;
-
       $table2->add_row("$type alignment:", '', 1);
       $html .= $table2->render;
       $html .= "<p><br /><br /><pre>$trans_alignment</pre></p>";
     }
   }
-
+  else {
+    $table2->add_row("$type alignment:", "Unable to show alignment", 1);
+    $html .= $table2->render;
+  }
   return $html;
 }
 1;
