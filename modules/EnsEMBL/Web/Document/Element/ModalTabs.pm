@@ -22,9 +22,16 @@ sub init {
   foreach (@{$self->entries}) {
     if (($type eq 'Config' && $_->{'id'} eq $config) || ($type eq 'UserData' && $_->{'id'} eq 'user_data')) {
       $_->{'class'} = 'active';
+      $self->active = 'modal_' . lc $_->{'id'};
       last;
     }
   }
+}
+
+sub get_json {
+  my $self    = shift;
+  my $content = $self->content;
+  return $content ? { tabs => $content, activeTab => $self->active } : {};
 }
 
 1;
