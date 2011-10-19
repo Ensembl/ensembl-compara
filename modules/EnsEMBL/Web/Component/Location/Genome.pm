@@ -19,31 +19,39 @@ sub _init {
 }
 
 sub content {
-  my $self         = shift;
-  my $hub          = $self->hub;
-  my $species      = $hub->species;
-  my $species_defs = $hub->species_defs;
-  my ($html, $total_features, $mapped_features, $unmapped_features);
+  my $self = shift;
+  my $id   = $self->hub->param('id'); 
   my $features = {};
- 
+
+  #configure two Vega tracks in one
+  my $config = $self->hub->get_imageconfig('Vkaryotype');
+  if ($config->get_node('Vannotation_status_left') & $config->get_node('Vannotation_status_right')) {
+    $config->get_node('Vannotation_status_left')->set('display', $config->get_node('Vannotation_status_right')->get('display'));
+  }
+
   ## Get features to draw
-  if ($hub->param('id')) {
-    my $object;
-    if ($self->object->isa('EnsEMBL::Web::Object::Location')) {
-      $object = $self->builder->create_objects('Feature', 'lazy');
-    }
-    else {
-      $object = $self->object;
-    }
+  if ($id) {
+    my $object = $self->builder->create_objects('Feature', 'lazy');
     if ($object && $object->can('convert_to_drawing_parameters')) {
       $features = $object->convert_to_drawing_parameters;
     }
   }
+  my $html = $self->_render_features($id, $features);
+  return $html;
+}
+
+sub _render_features {
+  my ($self, $id, $features) = @_;
+  my $hub          = $self->hub;
+  my $species      = $hub->species;
+  my $species_defs = $hub->species_defs;
+  my ($html, $total_features, $mapped_features, $unmapped_features, $has_internal_data, $has_userdata);
 
   my $chromosomes  = $species_defs->ENSEMBL_CHROMOSOMES || [];
   my %chromosome = map {$_ => 1} @$chromosomes;
   while (my ($type, $set) = each (%$features)) {
     foreach my $feature (@{$set->[0]}) {
+      $has_internal_data++;
       if ($chromosome{$feature->{'region'}}) {
         $mapped_features++;
       }
@@ -54,8 +62,8 @@ sub content {
     }
   }
 
-  if ($hub->param('id') && $total_features < 1) {
-    my $ids = join(', ', $hub->param('id'));
+  if ($id && $total_features < 1) {
+    my $ids = join(', ', $id);
     return $self->_warning('Not found', sprintf('No mapping of %s found', $ids || 'unknown feature'));
   }
 
@@ -64,6 +72,7 @@ sub content {
   while (my ($key, $data) = each (%$user_features)) {
     while (my ($analysis, $track) = each (%$data)) {
       foreach my $feature (@{$track->{'features'}}) {
+        $has_userdata++;
         if ($chromosome{$feature->{'chr'}}) {
           $mapped_features++;
         }
@@ -103,42 +112,50 @@ sub content {
     my ($legend_info, $has_gradient);
 
     if ($mapped_features) {
+
       ## Title for image - a bit messy, but we want it to be human-readable!
-      my $title = 'Location';
-      $title .= 's' if $mapped_features > 1;
-      $title .= ' of ';
-      my ($data_type, $assoc_name);
-      my $ftype = $hub->param('ftype');
-      if (grep (/$ftype/, keys %$features)) {
-        $data_type = $ftype;
+      my $title;
+      if ($has_internal_data) { 
+        $title = 'Location';
+        $title .= 's' if $mapped_features > 1;
+        $title .= ' of ';
+        my ($data_type, $assoc_name);
+        my $ftype = $hub->param('ftype');
+        if (grep (/$ftype/, keys %$features)) {
+          $data_type = $ftype;
+        }
+        else {
+          my @A = sort keys %$features;
+          $data_type = $A[0];
+          $assoc_name = $hub->param('name');
+          unless ($assoc_name) {
+            $assoc_name = $xref_type.' ';
+            $assoc_name .= $id;
+            $assoc_name .= " ($xref_name)";
+          }
+        }
+
+        my %names;
+        ## De-camelcase names
+        foreach (sort keys %$features) {
+          my $pretty = $feature_display_name->{$_} || $self->decamel($_);
+          $pretty .= 's' if $mapped_features > 1;
+          $names{$_} = $pretty;
+        }
+
+        my @feat_names = sort values %names;
+        my $last_name = pop(@feat_names);
+        if (scalar @feat_names > 0) {
+          $title .= join ', ', @feat_names;
+          $title .= ' and ';
+        }
+        $title .= $last_name;
+        $title .= " associated with $assoc_name" if $assoc_name;
       }
       else {
-        my @A = sort keys %$features;
-        $data_type = $A[0];
-        $assoc_name = $hub->param('name');
-        unless ($assoc_name) {
-          $assoc_name = $xref_type.' ';
-          $assoc_name .= $hub->param('id');
-          $assoc_name .= " ($xref_name)";
-        }
+        $title = 'Location of your feature';
+        $title .= 's' if $has_userdata > 1;
       }
-
-      my %names;
-      ## De-camelcase names
-      foreach (sort keys %$features) {
-        my $pretty = $feature_display_name->{$_} || $self->decamel($_);
-        $pretty .= 's' if $mapped_features > 1;
-        $names{$_} = $pretty;
-      }
-
-      my @feat_names = sort values %names;
-      my $last_name = pop(@feat_names);
-      if (scalar @feat_names > 0) {
-        $title .= join ', ', @feat_names;
-        $title .= ' and ';
-      }
-      $title .= $last_name;
-      $title .= " associated with $assoc_name" if $assoc_name;
       $html .= "<h3>$title</h3>";        
      
       ## Create pointers for Ensembl features
@@ -288,19 +305,20 @@ sub content {
   ## User table
   if (keys %$user_features) {
     my ($header, $column_order, $rows, $custom_columns) = $self->configure_UserData_table('UserData', $user_features);
+    my $table_info = $self->configure_UserData_table('UserData', $user_features);
     my $column_info = $custom_columns || $default_column_info;
     my $columns = [];
-    my $table_style = {};
+    my $table_style = $table_info->{'table_style'} || {};
     my $cell_style = $self->cell_style;
     my $col;
 
-    foreach $col (@$column_order) {
+    foreach $col (@{$table_info->{'column_order'}||[]}) {
       push @$columns, {'key' => $col, 'title' => $column_info->{$col}{'title'}, 'style' => $cell_style};
     }
 
     $table_style->{'margin'}      = '1em 0px';
-    my $table = $self->new_table($columns, $rows, $table_style);
-    $html .= '<h3 style="margin-top:1em">'.$header.'</h3>';
+    my $table = $self->new_table($columns, $table_info->{'rows'}, $table_style);
+    $html .= '<h3 style="margin-top:1em">'.$table_info->{'header'}.'</h3>';
     $html .= $table->render;
   }
 
@@ -407,7 +425,7 @@ sub _configure_Xref_table {
 
 sub _configure_DnaAlignFeature_table {
   my ($self, $feature_type, $feature_set) = @_;
-  my $info = $self->_configure_ProbeFeature_table($feature_type, $feature_set);
+  my $info = $self->_configure_Xref_table($feature_type, $feature_set);
   ## Override default header
   $info->{'header'} = 'Sequence Feature Information';
   return $info; 
@@ -415,7 +433,7 @@ sub _configure_DnaAlignFeature_table {
 
 sub _configure_ProteinAlignFeature_table {
   my ($self, $feature_type, $feature_set) = @_;
-  my $info = $self->_configure_ProbeFeature_table($feature_type, $feature_set);
+  my $info = $self->_configure_Xref_table($feature_type, $feature_set);
   ## Override default header
   $info->{'header'} = 'Protein Feature Information';
   return $info; 

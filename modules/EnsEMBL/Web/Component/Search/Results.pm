@@ -29,7 +29,9 @@ sub content {
   my $html;
 
   if ($hub->species ne 'Multi' && $hub->param('q')) {
-    $html = "<p><strong>You searched for \'" . $hub->param('q')  . "\'</strong</p>";
+    $html = "<p>Your search for <strong>" . $hub->param('q')  . "</strong> returned <strong>"
+              .$search->{total_hits}."</strong> hits.</p>";
+    $html .= "<p>Please note that because this site uses a direct MySQL search,  we limit the search to 10 results per category and search term, in order to avoid overloading the database server.";
 
     # Eagle change to order the results differently
     # we can either order the results by our own @order_results array, the species.ini files ( @idxs ), or just by sorting by keys as below. 	
@@ -47,7 +49,8 @@ sub content {
       my $display_term = $search_ref->[1]; 
       #foreach my $search_index ( sort keys %{$search->{'results'} } ) {
         if ( $search->{'results'}{$search_index} ) { 
-	        my( $results, $count ) = @{ $search->{'results'}{$search_index} };
+	        my( $results ) = @{ $search->{'results'}{$search_index} };
+          my $count = scalar(@$results);
 	        $html .= "<h3>$display_term</h3><p>$count entries matched your search strings.</p><ol>";
 	        foreach my $result ( @$results ) {
 	          $html .= sprintf(qq(<li><strong>%s:</strong> <a href="%s">%s</a>),

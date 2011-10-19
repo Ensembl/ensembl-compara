@@ -30,22 +30,15 @@ sub content {
   my $html;
 
   if (scalar @$data) {
-    my $table = $self->new_table([], [], { width => $self->image_width . 'px', margin => '0 auto' }); 
+    my $table = $self->new_table([], [], { exportable => 1, data_table => 1 }); 
 
-    $table->add_spanning_headers(
-      { title => "<i>$sp_tidy</i> Genes",         colspan => 2, width => '45%' },
-      { title => ''                                                            }, ## empty header for arrows 
-      { title => "<i>$other_tidy</i> Homologues", colspan => 2, width => '45%' },
-      { title => ''                                                            }  ## empty header for multi species link 
-    );
-    
     $table->add_columns(
-      { key => 'gene_ids', title => 'ID',       width => '20%', align => 'left'   },
-      { key => 'gene_loc', title => 'Location', width => '15%', align => 'left'   },
-      { key => 'arrow',    title => ' ',        width => '10%', align => 'center' },
-      { key => 'homo_ids', title => 'ID',       width => '20%', align => 'left'   },
-      { key => 'homo_loc', title => 'Location', width => '15%', align => 'left'   },
-      { key => 'multi',    title => ' ',        width => '10%', align => 'left'   }
+      { key => 'gene_ids', title => "<i>$sp_tidy</i> genes",  width => '20%', align => 'left',    sort => 'html'   },
+      { key => 'gene_loc', title => 'Location',               width => '15%', align => 'left',    sort => 'position_html' },
+      { key => 'arrow',    title => ' ',                      width => '10%', align => 'center',  sort => 'none' },
+      { key => 'homo_ids', title => "<i>$other_tidy</i> homologues",  width => '20%', align => 'left',  sort => 'html'   },
+      { key => 'homo_loc', title => 'Location',               width => '15%', align => 'left',    sort => 'position_html' },
+      { key => 'multi',    title => ' ',                      width => '10%', align => 'left',    sort => 'none'   }
     );
     
     my $old_id;

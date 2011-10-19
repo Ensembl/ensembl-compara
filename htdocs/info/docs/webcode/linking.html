@@ -91,7 +91,7 @@
 </p>
 
 <kbd>
-  config=panel_top=no
+  config=show_top_panel=no
 </kbd>
 
 <p>
@@ -100,7 +100,7 @@
 </p>
 
 <kbd>
-  <a href="http://www.ensembl.org/Homo_sapiens/Location/View?r=1:1000-2000;config=panel_top=no">http://www.ensembl.org/Homo_sapiens/Location/View?r=1:1000-2000;config=panel_top=no</a>
+  <a href="http://www.ensembl.org/Homo_sapiens/Location/View?r=1:1000-2000;config=show_top_panel=no">http://www.ensembl.org/Homo_sapiens/Location/View?r=1:1000-2000;config=show_top_panel=no</a>
 </kbd>
 
 <p>
@@ -172,7 +172,7 @@
 </p>
 
 <kbd>
-  <a href="http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=transcript_core_ensembl=collapsed_nolabel;config=panel_top=no">http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=transcript_core_ensembl=collapsed_nolabel;config=panel_top=no</a>
+  <a href="http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=transcript_core_ensembl=collapsed_nolabel;config=show_top_panel=no">http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=transcript_core_ensembl=collapsed_nolabel;config=show_top_panel=no</a>
 </kbd>
 
 <h3>Attaching External Data</h3>
@@ -199,7 +199,7 @@
 </p>
 
 <ul>
-  <li>URL data: the same as for alignment tracks (see above).</li>
+  <li>URL data: the same as for alignment tracks (see above), or for wiggle/graph data, either off or tiling.</li>
   <li>DAS tracks: <em>normal</em> (use the DAS server's stylesheet), <em>labels</em> (force display of labels),
   <em>nolabels</em> (hide labels) and <em>off</em>.</li>
 </ul>
@@ -207,14 +207,19 @@
 <h4 id="attachurl">Examples - attach external data</h4>
 
 <p>
-  To attach an example data file by URL and display the features in an ungrouped
+  To attach an example data file by URL and display the features in a half_height
   style:
 </p>
 
 <kbd>
-  <a href="http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=url:http://www.ensembl.org/info/website/upload/sample_files/example.bed=ungrouped">http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=url:http://www.ensembl.org/info/website/upload/sample_files/example.bed=ungrouped</a>
+  <a href="http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000130544;contigviewbottom=url:http://www.ensembl.org/info/website/upload/sample_files/example.bed=half-height">http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000130544;contigviewbottom=url:http://www.ensembl.org/info/website/upload/sample_files/example.bed=half_height</a>
 </kbd>
 
+<p><strong>Note on bedGraph format</strong> If attaching a bedGraph file, please add the parameter 'format=bedGraph' to the URL, e.g.</p>
+
+<kbd>
+  <a href="http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=url:http://www.ensembl.org/info/website/upload/sample_files/example.bed=ungrouped">http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=url:http://www.abcd.edu/myprojects/data.bed=tiling;format=bedGraph</a>
+</kbd>
 <p>
   To attach the Ensembl transcripts DAS source and display the features according to the server's instructions (stylesheet):
 </p>

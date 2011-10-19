@@ -58,7 +58,8 @@ sub fetch_changelog {
         AND c.release_id = ?
         AND s.name = ?
       ORDER BY
-        c.team
+        c.team,
+        c.priority DESC
     );
     push @args, $criteria->{'species'};
   }
@@ -74,7 +75,8 @@ sub fetch_changelog {
         AND c.content != ''
         AND c.status = 'handed_over'
       ORDER BY
-        c.team
+        c.team,
+        c.priority DESC
     );
   }
 

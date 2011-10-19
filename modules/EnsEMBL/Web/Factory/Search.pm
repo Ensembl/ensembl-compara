@@ -13,11 +13,17 @@ sub createObjects {
   my $search_method = "search_".uc($idx);
   if( $self->param('q') ) {
     if( $self->can($search_method) ) {
-      $self->{to_return} = 30;
+      $self->{to_return} = 10;
       $self->{_result_count} = 0;
       $self->{_results}      = [];
       $self->$search_method();
-      $self->DataObjects($self->new_object( 'Search', { 'idx' => $idx , 'q' => $self->param('q'), 'results' => $self->{results} }, $self->__data ));
+
+      ## Count what we actually got!
+      while (my ($type, $r) = each(%{$self->{results}})) {
+        $self->{_result_count} += scalar(@{$r->[0]||[]});
+      }
+
+      $self->DataObjects($self->new_object( 'Search', { 'idx' => $idx , 'q' => $self->param('q'), 'results' => $self->{results}, 'total_hits' => $self->{_result_count} }, $self->__data ));
     } else {
       $self->problem( 'fatal', 'Unknown search method', qq(
       <p>
@@ -25,7 +31,7 @@ sub createObjects {
       </p>) );
     }
   } else {
-    $self->DataObjects($self->new_object( 'Search', { 'idx' => $idx , 'q' => '', 'results' => {} }, $self->__data ));
+    $self->DataObjects($self->new_object( 'Search', { 'idx' => $idx , 'q' => '', 'results' => {}, 'total_hits' => 0 }, $self->__data ));
   }
 
 }
@@ -33,8 +39,24 @@ sub createObjects {
 sub terms {
   my $self = shift;
   my @list = ();
-  foreach my $kw ( split /\s+/, join ' ',$self->param('q') ) {
-    my $seq = $kw =~ s/\*+$/%/ ? 'like' : '=';
+  my @qs = $self->param('q');
+  my @clean_kws;
+
+  ## deal with quotes and multiple keywords
+  foreach my $q (@qs) {
+    $q =~ s/\*+$/%/;
+    ## pull out terms with quotes around them (and drop the quotes whilst we're at it)
+    my @quoted = $q =~ /['"]([^'"]+)['"]/g;
+    $q =~ s/(['"][^'"]+['"])//g;
+    push @clean_kws, @quoted;
+    ## split remaining terms on whitespace
+    $q =~ s/^\s|\s$//;
+    push @clean_kws, split /\s+/, $q;
+  }
+
+  ## create SQL criteria
+  foreach my $kw ( @clean_kws ) {
+    my $seq = $kw =~ /%/ ? 'like' : '=';
     push @list, [ $seq, $kw ];
   }
   return @list;
@@ -51,7 +73,6 @@ sub count {
   (my $t = $sql ) =~ s/'\[\[KEY\]\]'/$kw/g;
                $t =~ s/\[\[COMP\]\]/$comp/g;
                $t =~ s/\[\[FULLTEXTKEY\]\]/$full_kw/g; # Eagle extra regexp as we can have ' ' around our search term using full text search 
-  #my( $res ) = $dbh->db_handle->selectrow_array( $t );
   my( $res ) = $dbh->dbc->db_handle->selectrow_array( $t );
   # check which database we are connected to here!! 
   my @check = $dbh->dbc->db_handle->selectrow_array( "select database()" );
@@ -69,9 +90,8 @@ sub _fetch {
   (my $t = $search_SQL ) =~ s/'\[\[KEY\]\]'/$kw/g;
   $t =~ s/\[\[COMP\]\]/$comparator/g;
   $t =~ s/\[\[FULLTEXTKEY\]\]/$full_kw/g;
-  #my $res = $dbh->db_handle->selectall_arrayref( "$t limit $limit" );
   my $res = $dbh->dbc->db_handle->selectall_arrayref( "$t limit $limit" );
-  push @{$self->{_results}}, @$res;
+  return $res;
 }
 
 sub search_ALL {
@@ -109,9 +129,7 @@ sub search_ALL {
   my @ALL = ();
   
   foreach my $method (@valid_methods) {
-    $self->{_result_count} = 0;
     $self->{_results}      = [];
-    $self->{to_return} = 10;
     if( $self->can($method) ) {
       $self->$method;
     }
@@ -127,18 +145,10 @@ sub _fetch_results {
     my( $db, $subtype, $count_SQL, $search_SQL ) = @$query;
     
     foreach my $term (@terms ) {
-	my $count_new = $self->count( $db, $count_SQL, $term->[0], $term->[1] );
-      if( $count_new ) {
-        if( $self->{to_return} > 0) {
-          my $limit = $self->{to_return} < $count_new ? $self->{to_return} : $count_new; 
-          $self->_fetch( $db, $search_SQL, $term->[0], $term->[1], $limit );
-          $self->{to_return} -= $count_new;
-        }
-        $self->{'_result_count'} += $count_new;
-      }
+      my $results = $self->_fetch( $db, $search_SQL, $term->[0], $term->[1], $self->{to_return} );
+      push @{$self->{_results}}, @$results;
     }
   }
-
 }
 
 sub search_SNP {
@@ -523,7 +533,14 @@ sub search_GENE {
               not(x.dbprimary_acc [[COMP]] '[[KEY]]')" ]
   );
   }
+
+  ## Remove duplicate hits
+  my (%gene_id, @unique);
+
   foreach ( @{$self->{_results}} ) {
+
+      next if $gene_id{$_->[0]};
+      $gene_id{$_->[0]}++;
 
       # $_->[0] - Ensembl ID/name
       # $_->[1] - description 
@@ -541,20 +558,18 @@ sub search_GENE {
       my $summary = 'Summary';  # Summary is used in URL for Gene and Transcript pages, but not for protein
       $summary = 'ProteinSummary' if $page_name_short eq 'p'; 
 
-    $_ = {
-#      'URL'       => "$species_path/$_->[3]?db=$_->[2];$_->[4]=$_->[0]", # current ( v58 ) link format  
-      'URL'       => "$species_path/$_->[3]/$summary?$page_name_short=$_->[0];db=$_->[2]",
-#      'URL_extra' => [ 'C', 'View marker in ContigView', "$species_path/$KEY?db=$_->[2];$_->[4]=$_->[0]" ], # current ( v58 ) link format  
-      'URL_extra' => [ 'Region in detail', 'View marker in LocationView', "$species_path/$KEY/View?$page_name_long=$_->[0];db=$_->[2]" ],
-      'idx'       => 'Gene',
-      'subtype'   => ucfirst($_->[4]),
-      'ID'        => $_->[0],
-      'desc'      => $_->[1],
-      'species'   => $species
-    };
+      push @unique, {
+        'URL'       => "$species_path/$_->[3]/$summary?$page_name_short=$_->[0];db=$_->[2]",
+        'URL_extra' => [ 'Region in detail', 'View marker in LocationView', "$species_path/$KEY/View?$page_name_long=$_->[0];db=$_->[2]" ],
+        'idx'       => 'Gene',
+        'subtype'   => ucfirst($_->[4]),
+        'ID'        => $_->[0],
+        'desc'      => $_->[1],
+        'species'   => $species
+      };
 
   }
-  $self->{'results'}{'Gene'} = [ $self->{_results}, $self->{_result_count} ];
+  $self->{'results'}{'Gene'} = [ \@unique, $self->{_result_count} ];
 }
 
 ## Result hash contains the following fields...

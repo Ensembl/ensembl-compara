@@ -19,18 +19,19 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
+  my $hub = $self->hub;
+  my $sd  = $hub->species_defs;
   my $html;
 
-  my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
-  my $current_species = $object->data_species;
+  my $sitename = $sd->ENSEMBL_SITETYPE;
+  my $current_species = $hub->data_species;
 
   ## Should default to 5.0MB :)
-  my $max_upload_size = sprintf("%.1f", $object->species_defs->CGI_POST_MAX / 1048576).'MB';
+  my $max_upload_size = sprintf("%.1f", $sd->CGI_POST_MAX / 1048576).'MB';
 
-  my $form = $self->modal_form('select', $object->species_path($current_species) . "/UserData/UploadFile", {'label'=>'Upload'});
+  my $form = $self->modal_form('select', $hub->species_path($current_species) . "/UserData/UploadFile", {'label'=>'Upload'});
 
-  if (!$object->param('filter_module')) { ## No errors
+  if (!$hub->param('filter_module')) { ## No errors
     $form->add_notes({'id' => 'upload_notes', 'heading' => 'IMPORTANT NOTE', 'text' => qq{
       We are only able to store single-species datasets, containing data on $sitename coordinate systems. There is also a $max_upload_size limit on data uploads. 
       If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL" class="modal_link">attach it to $sitename</a> without uploading.<br />
@@ -42,8 +43,8 @@ sub content {
 
   ## Species is set automatically for the page you are on
   my @species;
-  foreach my $sp ($object->species_defs->valid_species) {
-    push @species, {'value' => $sp, 'name' => $object->species_defs->species_label($sp, 1)};
+  foreach my $sp ($sd->valid_species) {
+    push @species, {'value' => $sp, 'name' => $sd->species_label($sp, 1)};
   }
   @species = sort {$a->{'name'} cmp $b->{'name'}} @species;
   $form->add_element(
@@ -57,8 +58,8 @@ sub content {
 
   ## Are mappings available?
   ## FIXME - reinstate auto-mapping option when we have a solution!
-  my $mappings; # = $object->species_defs->ASSEMBLY_MAPPINGS;
-  my $current_assembly = $object->species_defs->get_config($current_species, 'ASSEMBLY_NAME');
+  my $mappings; # = $sd->ASSEMBLY_MAPPINGS;
+  my $current_assembly = $sd->get_config($current_species, 'ASSEMBLY_NAME');
   if ($mappings && ref($mappings) eq 'ARRAY') {
     my @values = {'name' => $current_assembly, 'value' => $current_assembly};
     foreach my $string (reverse sort @$mappings) { 

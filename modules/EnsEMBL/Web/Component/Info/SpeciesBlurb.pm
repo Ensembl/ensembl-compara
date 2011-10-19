@@ -22,18 +22,22 @@ sub content {
   my $file1       = '/ssi/species/'.$species.'_assembly.html';
   my $file2       = '/ssi/species/'.$species.'_annotation.html';
 
-  $species        =~ s/_/ /g;
-  my $name_string = $common_name =~ /\./ ? "<i>$species</i>" : "$common_name (<i>$species</i>)";
+  (my $species_name = $species)  =~ s/_/ /g;
+  my $name_string   = $common_name =~ /\./ ? "<i>$species_name</i>" : "$common_name (<i>$species_name</i>)";
   my $html = "<h1>$name_string</h1>";
+
+  my $ensembl_version   = $hub->species_defs->ENSEMBL_VERSION;
+  my $current_assembly  = $hub->species_defs->ASSEMBLY_NAME;
 
   ## Assembly blurb
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $file1);
 
-  ## Insert dropdown list of old assemblies
-  my $ensembl_version   = $hub->species_defs->ENSEMBL_VERSION;
-  my $current_assembly  = $hub->species_defs->ASSEMBLY_NAME;
-  my $species           = $hub->species;
+  ## Link to FTP site
+  my $ftp_url = 'ftp://ftp.ensembl.org/pub/release-'.$ensembl_version.'/fasta/'.lc($species).'/dna/';
+  $html .= qq(<p style="margin-top:1em"><a href=$ftp_url"><img src="/i/helix.gif" alt="" /></a>
+                <a href="$ftp_url">Download $common_name genome sequence</a> (FASTA)</p>);
 
+  ## Insert dropdown list of old assemblies
   my %archive = %{$hub->species_defs->get_config($species, 'ENSEMBL_ARCHIVES')||{}};
   my %assemblies = %{$hub->species_defs->get_config($species, 'ASSEMBLIES')||{}};
 

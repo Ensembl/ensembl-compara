@@ -29,6 +29,7 @@ sub render {
     'mysql'   => 'All Ensembl MySQL databases are available in text format as are the SQL table definition files',
     'emf'     => 'Alignments of resequencing data from the ensembl_compara database',
     'gvf'     => 'Variation data in GVF format',
+    'vep'     => 'Cache files for use with the VEP script',
     'funcgen' => 'Regulation data in GFF format',
     'coll'    => 'Additional regulation data (not in database)',
     'bed'     => 'Constrained elements calculated using GERP',
@@ -39,6 +40,7 @@ sub render {
 
   my $EMF = $title{'emf'};
   my $BED = $title{'bed'};
+  my $XML = $title{'xml'};
 
   my $html = qq(
 <h3>Multi-species data</h3>
@@ -48,18 +50,22 @@ sub render {
 <th></th>
 <th></th>
 <th></th>
+<th></th>
 </tr>
 <tr class="bg1">
 <td>Comparative genomics</td>
 <td style="text-align:center"><a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">MySQL</a></td>
 <td style="text-align:center"><a rel="external" title="$EMF" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/emf/ensembl-compara/">EMF</a></td>
 <td style="text-align:center"><a rel="external" title="$BED" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/bed/">BED</a></td>
+<td style="text-align:center"><a rel="external" title="$XML" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/xml/ensembl-compara/homologies/">XML</a></td>
+
 </tr>
 <tr class="bg2">
 <td>BioMart</td>
 <td style="text-align:center"><a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">MySQL</a></td>
 <td>-</td>
 <td>-</td>
+<td></td>
 </tr>
 </table>
 );
@@ -84,6 +90,7 @@ sub render {
     { key => 'mysql',   title => 'Whole databases',     align => 'center', width => '10%', sort => 'none' },
     { key => 'var1',    title => 'Variation (EMF)',     align => 'center', width => '10%', sort => 'html' },
     { key => 'var2',    title => 'Variation (GVF)',     align => 'center', width => '10%', sort => 'html' },
+    { key => 'var3',    title => 'Variation (VEP)',     align => 'center', width => '10%', sort => 'html' },
     { key => 'funcgen', title => 'Regulation (GFF)',    align => 'center', width => '10%', sort => 'html' },
     { key => 'files',   title => 'Data files',          align => 'center', width => '10%', sort => 'html' },
   );
@@ -98,7 +105,11 @@ sub render {
     my $common = $species_defs->get_config($spp, 'DISPLAY_NAME');
     my $variation = '-'; 
     if ($sp_dir =~ /bos_taurus|canis_familiaris|danio_rerio|drosophila_melanogaster|equus_caballus|felis_catus|gallus_gallus|homo_sapiens|saccharomyces_cerevisiae|monodelphis_domestica|mus_musculus|ornithorhynchus_anatinus|pan_troglodytes|pongo_pygmaeus|rattus_norvegicus|sus_scrofa|taeniopygia_guttata|tetraodon_nigroviridis/) {
-      $variation = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/%s/">GVF</a>', $title{'gvf'}, $rel, $sp_dir;
+      $variation = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/gvf/%s/">GVF</a>', $title{'gvf'}, $rel, $sp_dir;
+    }
+    my $vep = '-';
+    if ($sp_dir =~/bos_taurus|danio_rerio|homo_sapiens|mus_musculus|rattus_norvegicus/){
+      $vep = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/VEP/%s/">VEP</a>', $title{'vep'}, $rel, $sp_dir;
     }
     my $emf   = '-';
     if ($sp_dir =~ /homo_sapiens|mus_musculus|rattus_norvegicus/) {
@@ -125,6 +136,7 @@ sub render {
       'mysql'         => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/mysql/">MySQL</a>', $title{'mysql'}, $rel),
       'var1'          => $emf,
       'var2'          => $variation,
+      'var3'          => $vep,
       'funcgen'       => $funcgen,
       'files'         => $extra,
     });

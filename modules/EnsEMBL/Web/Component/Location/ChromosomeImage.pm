@@ -42,6 +42,11 @@ sub content {
 
   $config->get_node('Videogram')->set('label',   ucfirst($object->seq_region_type) );
   $config->get_node('Videogram')->set('label_2', $chr_name );
+
+  #configure two Vega tracks in one
+  if ($config->get_node('Vannotation_status_left') && $config->get_node('Vannotation_status_right')) {
+    $config->get_node('Vannotation_status_left')->set('display', $config->get_node('Vannotation_status_right')->get('display'));
+  }
   my $image    = $self->new_karyotype_image($config);
   $image->image_type         = 'chromosome';
   $image->image_name         = $species.'-'.$chr_name;
