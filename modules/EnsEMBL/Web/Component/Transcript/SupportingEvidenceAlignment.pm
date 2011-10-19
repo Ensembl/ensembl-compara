@@ -49,7 +49,7 @@ sub content {
 
   foreach my $id (@hit_ids) {
     if (my $hit_object = $object->get_hit($id)) {
-      my $hit_strand = $hit_object->strand;
+      my $hit_strand = $hit_object->strand * $hit_object->hstrand ;
       $strand_mismatch = $hit_strand != $transcript->strand ? 1 : 0;
       my $rec = $hub->get_ext_seq($id, uc $query_db, $strand_mismatch);
 
