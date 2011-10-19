@@ -392,8 +392,8 @@ sub store {
     my $assembly_default    = $gdb->assembly_default;
     my $locator             = $gdb->locator;
 
-    unless($name && $assembly && $genebuild && $taxon_id) {
-        throw("GenomeDB object must have a name, assembly, genebuild and taxon_id");
+    if($taxon_id and not ($name && $assembly && $genebuild)) {
+        throw("GenomeDB object with a non-zero taxon_id must have a name, assembly and genebuild");
     }
 
     my $dbid_check = $dbID ? "genome_db_id=$dbID" : '0';
