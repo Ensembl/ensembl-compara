@@ -188,8 +188,12 @@ sub check_vcf_data {
     warn "Failed to open VCF $url\n $@\n " unless $dba;
           
     if ($@ or !$dba) {
-      $error = "Unable to open/index remote VCF file: $url<br>Ensembl can only display sorted, indexed VCF files
-<br>Ensure you have sorted and indexed your file and that your web server is accessible to the Ensembl site";
+      $error = qq{
+        Unable to open/index remote VCF file: $url
+        <br />Ensembl can only display sorted, indexed VCF files
+        <br />Ensure you have sorted and indexed your file and that your web server is accessible to the Ensembl site 
+        <br />For more information on the type of file expected please see the large file format <a href="/info/website/upload/large.html">documentation.</a>
+      };
     }
   }
   return $error;

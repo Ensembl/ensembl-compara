@@ -746,16 +746,23 @@ sub _add_file_format_track {
 sub _user_track_settings {
   my ($self, $style) = @_;
   my $renderers      = $self->{'alignment_renderers'};
+  ## "Ungrouped" option not valid for user tracks at the moment
+  ## TODO - can we fix drawing code to allow ungrouped?
+  my $user_renderers;
+  foreach (@$renderers) {
+    push (@$user_renderers, $_) unless $_ =~ /ungrouped/i;
+  }
+  
   my $strand         = 'b'; 
   my $display        = 'normal';
       
   if ($style eq 'wiggle' || $style eq 'WIG') {
     $display   = 'tiling';
     $strand    = 'r';
-    $renderers = [ 'off', 'Off', 'tiling', 'Wiggle plot' ];
+    $user_renderers = [ 'off', 'Off', 'tiling', 'Wiggle plot' ];
   }
   
-  return ($display, $strand, $renderers);
+  return ($display, $strand, $user_renderers);
 }
 
 sub _compare_assemblies {
@@ -832,7 +839,7 @@ sub update_from_url {
           my @path = split(/\./, $p);
           my $ext = $path[-1] eq 'gz' ? $path[-2] : $path[-1];
           while (my ($name, $info) = each (%$all_formats)) {
-            if ($info->{'ext'} =~ /$ext/i) {
+            if ($ext =~ /^$name$/i) {
               $format = $name;
               last;
             }  
@@ -1339,6 +1346,11 @@ sub add_dna_align_features {
       
       my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$self->{'alignment_renderers'}}) ? $data->{$key_2}{'display'} : 'off'; # needed because the same logic_name can be a gene and an alignment
       
+      if ($data->{$key_2}{'display'} && $data->{$key_2}{'display'} eq 'simple'){
+        $display = 'simple';
+        $alignment_renderers = ['off', 'Off', 'simple', 'On'];  
+      }
+
       $self->generic_add($menu, $key, "dna_align_${key}_$key_2", $data->{$key_2}, {
         glyphset  => '_alignment',
         sub_type  => lc $k,
@@ -2030,7 +2042,7 @@ sub add_regulation_builds {
     
     if (scalar @focus_sets && scalar @focus_sets <= scalar @ftypes) {
       # Add Core evidence tracks
-      $reg_feat->append($self->create_track("reg_feats_core_$cell_line", "Core evidence$label", { %options, type => 'core', description => $options{'description'}{'core'} }));
+      $reg_feat->append($self->create_track("reg_feats_core_$cell_line", "Open chromatin & TFBS$label", { %options, type => 'core', description => $options{'description'}{'core'} }));
     } 
 
     if (scalar @ftypes != scalar @focus_sets  && $cell_line ne 'MultiCell') {

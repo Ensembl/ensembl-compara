@@ -24,7 +24,7 @@ sub new {
   my $input = new CGI;
   
   my $object_params = [
-    [ 'Phenotype',           'id'  ],
+    [ 'Phenotype',           'ph'  ],
     [ 'Location',            'r'   ],
     [ 'Gene',                'g'   ],
     [ 'Transcript',          't'   ],

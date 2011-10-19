@@ -22,21 +22,22 @@ sub content {
   my ($display_name, $dbname, $ext_id, $dbname_disp, $info_text) = $object->display_xref;
   
   # Gene phenotypes  
-  my $html = $self->gene_phenotypes('RenderAsTables', ['MIM disease']);
+  my $html = $phenotype ? '' : $self->gene_phenotypes('RenderAsTables', [ 'MIM disease' ]);
   
-	# Check if a variation database exists for the species.
-	if ($self->hub->database('variation')) {
-  	# Variation phenotypes
-  	if ($phenotype){
-    	$phenotype   ||= 'ALL';
-			my $table_rows = $self->variation_table($phenotype, $display_name);
-    	my $table      = $table_rows ? $self->make_table($table_rows, $phenotype) : undef;
-    	return $self->render_content($table, $phenotype);
-  	} else {
-    	return $html . $self->render_content($self->stats_table($display_name)); # no sub-table selected, just show stats
-  	}
-	}
-	return $html;
+  # Check if a variation database exists for the species.
+  if ($hub->database('variation')) {
+    # Variation phenotypes
+    if ($phenotype) {
+      my $table_rows = $self->variation_table($phenotype, $display_name);
+      my $table      = $table_rows ? $self->make_table($table_rows, $phenotype) : undef;
+
+      $html .= $self->render_content($table, $phenotype);
+    } else {
+      $html .= $self->render_content($self->stats_table($display_name)); # no sub-table selected, just show stats
+    }
+  }
+  
+  return $html;
 }
 
 sub make_table {
