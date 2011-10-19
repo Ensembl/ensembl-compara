@@ -119,17 +119,17 @@ sub get_attribute {
 sub has_attribute {
   ## Checks if an attribute exists
   ## @param Attribute name
-  ## @return 1 if attribute exists, 0 otherwise
+  ## @return 1 if attribute exists, undef otherwise
   my ($self, $attrib) = @_;
-  return exists $self->{'_attributes'}{$attrib} ? 1 : 0;
+  return exists $self->{'_attributes'}{$attrib} ? 1 : undef;
 }
 
 sub has_class {
   ## Checks if class attribute contains the given value
   ## @param Class value
-  ## @return 1if class exists, 0 otherwise
+  ## @return 1 if class exists, undef otherwise
   my ($self, $class) = @_;
-  return exists $self->{'_attributes'}{'class'}{$class} ? 1 : 0;
+  return exists $self->{'_attributes'}{'class'} && exists $self->{'_attributes'}{'class'}{$class} ? 1 : undef;
 }
 
 sub remove_attribute {
