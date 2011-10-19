@@ -16,26 +16,33 @@ use constant {
 sub configure {
   ## @overrides
   my ($self, $params) = @_;
-  
+
+  my $das               = $params->{'das'};
+  my $logic_name        = $das->logic_name;
   $params->{'name'}   ||= 'logic_name';
-  $params->{'value'}  ||= $params->{'das'}->logic_name;
-  $params->{'label'}  ||= $params->{'das'}->label;
+  $params->{'value'}  ||= $logic_name;
+  $params->{'label'}  ||= $das->label;
   $params->{'id'}     ||= $self->unique_id;
 
-  $self->set_attribute('class', $self->CSS_CLASS.' '.($params->{'wrapper_class'} || ''));
-  $self->set_attribute('id', $params->{'wrapper_id'}) if $params->{'wrapper_id'};
-  
-  my $checkbox = $self->dom->create_element('inputcheckbox', {'id' => $params->{'id'}, 'name' => $params->{'name'}, 'value', $params->{'value'}});
-  $checkbox->set_attribute('class', $params->{'class'}) if $params->{'class'};
-  $checkbox->checked(1)  if $params->{'checked'};
-  $checkbox->disabled(1) if $params->{'disabled'};
-
-  $self->append_child($self->dom->create_element('p', {'class' => $self->CSS_CLASS_CHECKBOX_WRAPPER}))->append_child($checkbox);
-  $self->append_child($self->dom->create_element('div', {
-    'inner_HTML'  => sprintf(qq(<p><label for="$params->{'id'}">$params->{'label'}) . ($params->{'das'}->logic_name eq  $params->{'label'} ? '' : ' ('.$params->{'das'}->logic_name.')') . qq(</label></p><div>$params->{'das'}->{'description'}  %s </div>), $params->{'das'}->{'homepage'} ? qq([<a href="$params->{'das'}->{'homepage'}">Homepage</a>]) : '' ),
-    'class'       => $self->CSS_CLASS_TEXT
-  }));
+  $self->set_attributes({'class' => [$self->CSS_CLASS, $params->{'wrapper_class'} || ()], $params->{'wrapper_id'} ? ('id' => $params->{'wrapper_id'}) : ()});
+  $self->append_children({
+    'node_name'   => 'p',
+    'class'       => $self->CSS_CLASS_CHECKBOX_WRAPPER,
+    'children'    => [{
+      'node_name'               => 'inputcheckbox',
+      (map {$params->{$_} ? ($_ => $params->{$_}) : ()} qw(id name value class)),
+      (map {$params->{$_} ? ($_ => $_)            : ()} qw(checked disabled)),
+    }]
+  }, {
+    'node_name'   => 'div',
+    'class'       => $self->CSS_CLASS_TEXT,
+    'inner_HTML'  => sprintf(
+      q(<p><label for="%s">%s</label></p><div>%s%s</div>),
+      $params->{'id'},
+      $params->{'label'} eq $logic_name ? $params->{'label'} : "$params->{'label'} ($logic_name)",
+      $das->{'description'},
+      $das->{'homepage'} ? qq( [<a href="$das->{'homepage'}">Homepage</a>]) : ''),
+  });  
 }
 
 1;
-
