@@ -13,6 +13,8 @@ my $url;
 my $compara_url;
 my $species_name = "Homo sapiens";
 my $alignment_set = "primates";
+my $mlss_id;
+my $dir = '';
 
 GetOptions(
   "help" => \$help,
@@ -21,6 +23,8 @@ GetOptions(
   "conf|registry=s" => \$registry_file,
   "species=s" => \$species_name,
   "alignment_set=s" => \$alignment_set,
+  "mlss_id=i" => \$mlss_id,
+  "dir=s" => \$dir,
 );
 
 if ($registry_file) {
@@ -43,6 +47,13 @@ if ($compara_url) {
 my $species_scientific_name = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_scientific_name();
 my $species_production_name = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_production_name();
 my $species_assembly = $reg->get_adaptor($species_name, "core", "CoordSystem")->fetch_all->[0]->version();
+my $ensembl_version = $reg->get_adaptor($species_name, "core", "MetaContainer")->list_value_by_key('schema_version')->[0];
+
+if (!$dir) {
+  $dir = "${species_production_name}_ancestor_${species_assembly}_e${ensembl_version}";
+}
+
+system("mkdir -p $dir");
 
 my $slice_adaptor = $reg->get_adaptor($species_name, "core", "Slice");
 
@@ -50,7 +61,12 @@ my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdap
 
 my $genomic_align_tree_adaptor = $compara_dba->get_GenomicAlignTreeAdaptor;
 
-my $mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name("EPO", $alignment_set);
+my $mlss;
+if ($mlss_id) {
+  $mlss = $method_link_species_set_adaptor->fetch_by_dbID($mlss_id);
+} else {
+  $mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name("EPO", $alignment_set);
+}
 
 my $compara_dbc = $compara_dba->dbc;
 
@@ -63,9 +79,9 @@ foreach my $slice (@$slices) {
   next unless (!$ARGV[0] or $slice->seq_region_name eq $ARGV[0] or
       $slice->coord_system_name eq $ARGV[0]);
   my $length = $slice->length;
-  open(FASTA, ">${species_production_name}_ancestor_".$slice->seq_region_name.".fa") or die;
+  open(FASTA, ">$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".fa") or die;
   print FASTA ">ANCESTOR_for_", $slice->name, "\n";
-  open(BED, ">${species_production_name}_ancestor_".$slice->seq_region_name.".bed") or die;
+  open(BED, ">$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".bed") or die;
   my $num_of_blocks = 0;
   for (my $start = 1; $start <= $length; $start += $step) {
     my $end = $start + $step - 1;
@@ -202,7 +218,7 @@ sub deep_clean {
       foreach my $key (keys %$this_genomic_align) {
         if ($key eq "genomic_align_block") {
           next if (!$this_genomic_align->{$key});
-          foreach my $this_ga (@{$this_genomic_align->{$key}->get_all_GenomicAligns}) {
+          foreach my $this_ga (@{$this_genomic_align->{$key}->get_all_genomic_aligns_for_node}) {
               my $gab = $this_ga->{genomic_align_block};
               next if (!$gab);
               my $gas = $gab->{genomic_align_array};
@@ -230,7 +246,7 @@ sub print_header {
   my $database = $compara_dbc->dbname . '@' . $compara_dbc->host . ':' . $compara_dbc->port;
   my $mlss_name = $mlss->name . " (" . $mlss->dbID . ")";
 
-  open(README, ">README") or die "Cannot open README file\n";
+  open(README, ">$dir/README") or die "Cannot open README file\n";
   print README qq"This directory contains the ancestral sequences for $species_name ($species_assembly).
 
 The data have been extracted from the following alignment set:
