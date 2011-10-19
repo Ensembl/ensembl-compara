@@ -102,7 +102,7 @@ my %callbacks = ();
 
 my $name_cb = sub {
   my ($self) = @_;
-  return sprintf ("%s",$self->{tree}->name);
+  return sprintf ("%s",$self->{tree}->name || '');
 };
 
 my $distance_to_parent_cb = sub {
@@ -224,9 +224,13 @@ my $sp_name_cb = sub {
 
 
 # Maybe leaves and internal nodes should be formatted different?
+my %cache;
 sub new {
   my ($class,$fmt) = @_;
   $fmt = "%{n}" unless (defined $fmt); # "full" by default
+  if (defined $cache{$fmt}) {
+    return $cache{$fmt};
+  }
   my $obj = bless ({
 		    'fmt' => $fmt,
 		    'tokens' => [],
@@ -239,6 +243,7 @@ sub new {
     die $@ if ($@ =~ /Parse::RecDescent/);
     die "Bad format : $fmt\n";
   }
+  $cache{$fmt} = $obj;
   return $obj;
 }
 
