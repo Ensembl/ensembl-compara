@@ -964,6 +964,7 @@ CREATE TABLE protein_tree_attr (
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
+CREATE TABLE super_protein_tree_attr LIKE protein_tree_attr;
 
 CREATE TABLE nc_tree_attr (
   node_id                         INT(10) UNSIGNED NOT NULL,
