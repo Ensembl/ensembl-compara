@@ -156,7 +156,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         }
         
         if (json.activeTab) {
-          this.changeTab(this.elLk.tabs.filter(function () { return $(this).text().match(json.activeTab); }));
+          this.changeTab(this.elLk.tabs.has('.' + json.activeTab));
         }
         
         Ensembl.EventManager.trigger('destroyPanel', id, 'empty'); // clean up handlers, save memory
