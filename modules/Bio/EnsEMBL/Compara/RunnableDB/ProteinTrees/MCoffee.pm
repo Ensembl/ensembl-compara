@@ -626,12 +626,12 @@ sub parse_and_store_alignment_into_proteintree {
         #
         my $table_name = $self->param('output_table') . "_score";
         my $sth = $self->param('tree_adaptor')->prepare("INSERT ignore INTO $table_name
-                               (node_id,member_id,method_link_species_set_id,cigar_line)  VALUES (?,?,?,?)");
+                               (node_id,member_id,root_id,method_link_species_set_id,cigar_line)  VALUES (?,?,?,?,?)");
         my $score_string = $score_hash{$member->sequence_id} || '';
         $score_string =~ s/[^\d-]/9/g;   # Convert non-digits and non-dashes into 9s. This is necessary because t_coffee leaves some leftover letters.
         printf("Updating $table_name %s : %s\n",$member->stable_id,$score_string) if ($self->debug);
 
-        $sth->execute($member->node_id,$member->member_id,$member->method_link_species_set_id,$score_string);
+        $sth->execute($member->node_id,$member->member_id, $tree->node_id, $member->method_link_species_set_id,$score_string);
         $sth->finish;
       }
   }
