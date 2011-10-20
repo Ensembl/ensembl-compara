@@ -59,7 +59,7 @@ sub default_options {
 	'release'               => '65',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
         'ensembl_cvs_root_dir'  => $ENV{'HOME'}.'/src/ensembl_main', 
-	'dbname'               => 'pairwise_lastz_'.$self->o('release').$self->o('release_suffix'),
+	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
 
          # dependent parameters:
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
@@ -78,7 +78,6 @@ sub default_options {
             -user   => 'ensro',
             -pass   => '',
             -dbname => 'sf5_ensembl_compara_master', 
-	    #-dbname => 'kb3_test_db_multi_compara_20070424_105807',
 	    -driver => 'mysql',
        },
 	'staging_loc1' => {
@@ -169,7 +168,11 @@ sub default_options {
         #
 	'chain_input_method_link' => [1001, 'LASTZ_RAW'],
 	'chain_output_method_link' => [1002, 'LASTZ_CHAIN'],
-  	'chain_parameters' => {'max_gap'=>'50','linear_gap'=>'medium', 'faToNib' => $self->o('faToNib_exe'), 'lavToAxt'=> $self->o('lavToAxt_exe'), 'axtChain'=>$self->o('axtChain_exe')}, 
+
+	 #linear_gap=>medium for more closely related species, 'loose' for more distant
+	'linear_gap' => 'medium',
+
+  	'chain_parameters' => {'max_gap'=>'50','linear_gap'=> $self->o('linear_gap'), 'faToNib' => $self->o('faToNib_exe'), 'lavToAxt'=> $self->o('lavToAxt_exe'), 'axtChain'=>$self->o('axtChain_exe')}, 
   	'chain_batch_size' => 1,
   	'chain_hive_capacity' => 20,
 
@@ -195,7 +198,8 @@ sub default_options {
 	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
 	'config_url' => '', #Location of pairwise config database. Must define on command line
 	'output_dir' => '/lustre/scratch101/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
-
+	'ref_url' => '\"\"',      #If not set, use reg.conf
+	'non_ref_url' => '\"\"',  #If not set, use reg.conf
     };
 }
 
@@ -384,10 +388,11 @@ sub pipeline_analyses {
 			       2 => [ 'filter_duplicates' ], 
 			     }
  	    },
- 	     {  -logic_name => 'filter_duplicates',
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
- 	       -parameters => {},
- 	       -wait_for =>  [ 'create_filter_duplicates_jobs' ],
+ 	     {  -logic_name   => 'filter_duplicates',
+ 	       -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
+ 	       -parameters    => {},
+	       -hive_capacity => 50,
+	       -batch_size    => 3,
  	    },
  	    {  -logic_name => 'update_max_alignment_length_after_FD',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
@@ -417,7 +422,6 @@ sub pipeline_analyses {
 			       'dump_nib'=>1,
 			      },
 	       -hive_capacity => 10,
- 	       -wait_for => [ 'no_chunk_and_group_dna' ],
 	       -flow_into => {
 			      -1 => [ 'dump_large_nib_for_chains_himem' ],  # MEMLIMIT
 			     },
@@ -519,6 +523,8 @@ sub pipeline_analyses {
 			      'config_url' => $self->o('config_url'),
 			      'reg_conf' => $self->o('reg_conf'),
 			      'output_dir' => $self->o('output_dir'),
+			      'ref_url' => $self->o('ref_url'),
+			      'non_ref_url' => $self->o('non_ref_url'),
 			     },
 	      -wait_for =>  [ 'healthcheck' ],
 	    },
