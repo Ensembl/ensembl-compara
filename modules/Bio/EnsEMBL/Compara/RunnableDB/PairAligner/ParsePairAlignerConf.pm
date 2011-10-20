@@ -958,7 +958,6 @@ sub print_pair_aligner {
 #
 sub get_locator {
     my ($self, $genome_db) = @_;
-
     my $no_alias_check = 1;
     my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($genome_db->name, 'core', $no_alias_check);
     if (!defined $this_core_dba) {
@@ -977,7 +976,8 @@ sub get_locator {
     if($this_assembly eq $assembly_name && $this_start_date eq $genebuild) {
 	$core_dba = $this_core_dba;
     } else {
-	warn "Found assembly '$this_assembly' when looking for '$assembly_name' or '$this_start_date' when looking for '$genebuild'";
+	#The assembly.default and coord_system.version names should be the same
+	throw "Found assembly '$this_assembly' when looking for '$assembly_name' or '$this_start_date' when looking for '$genebuild'";
     }
     
     if (defined $core_dba) {
