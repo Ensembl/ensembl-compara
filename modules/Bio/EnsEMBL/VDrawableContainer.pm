@@ -32,19 +32,23 @@ sub new {
     $config->{'transform'}->{'scalex'}         = $scalex;
     $config->{'transform'}->{'absolutescalex'} = 1;
     $config->{'transform'}->{'translatex'}    += $config->get_parameter('top_margin');
-   
+  
     foreach my $chr (@chromosomes) {
       $container->{'chr'} = $chr;
-      
+     
+      ## Turn off band labels if we have pointer tracks 
       foreach my $row_config (@configs) {
         my $display = $row_config->get('display') || ($row_config->get('on') eq 'on' ? 'normal' : 'off');
-     
         if ($display =~ /highlight/) {
           $config->set_parameter('band_labels', 'off');
         }
-   
+      }
+
+      foreach my $row_config (@configs) {
+        my $display = $row_config->get('display') || ($row_config->get('on') eq 'on' ? 'normal' : 'off');
+    
         next if $display eq 'off' || $display =~ /highlight/;
-        
+       
         my $classname = "$self->{'prefix'}::GlyphSet::" . $row_config->get('glyphset');
         
         next unless $self->dynamic_use($classname);
