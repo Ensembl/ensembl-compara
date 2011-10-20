@@ -300,12 +300,12 @@ sub run_update_config_database {
     my ($self) = @_;
 
     my $cmd = "perl " . $self->param('update_config_database') . 
-      " --config_url " . $self->param('config_url') . 
       " --ref_species " . $self->param('ref_species') . 
       " --compara_url " . $self->compara_dba->dbc->url . 
       " --mlss_id " . $self->param('mlss_id') . 
       " --ensembl_release " . $self->param('ensembl_release');
 
+    $cmd .= " --config_url " . $self->param('config_url') if (defined $self->param('config_url'));
     $cmd .= " --config_file " . $self->param('config_file') if (defined $self->param('config_file')); 
     $cmd .= " --ref_url " . $self->param('ref_url') if (defined $self->param('ref_url'));
     $cmd .= " --non_ref_url " . $self->param('non_ref_url') if (defined $self->param('non_ref_url'));
