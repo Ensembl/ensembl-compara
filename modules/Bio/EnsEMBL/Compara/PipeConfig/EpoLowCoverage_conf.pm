@@ -9,16 +9,18 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');  # All Hive
 sub default_options {
     my ($self) = @_;
     return {
+	%{$self->SUPER::default_options},   # inherit the generic ones
+
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
 
-	'release'       => 64,
-	'prev_release'  => 63,
-        'release_suffix'=> 'b', # set it to '' for the actual release
+	'release'       => 65,
+	'prev_release'  => 64,
+        'release_suffix'=> '', # set it to '' for the actual release
         'pipeline_name' => 'LOW35_'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
 
 	#location of new pairwise mlss if not in the pairwise_default_location eg:
-	#'pairwise_exception_location' => { 517 => 'mysql://ensro@compara4/kb3_hsap_nleu_lastz_62'},
-	'pairwise_exception_location' => { },
+	'pairwise_exception_location' => { 545 => 'mysql://ensro@compara1/kb3_hsap_ogar_lastz_65'},
+	#'pairwise_exception_location' => { },
 
         'pipeline_db' => {
             -host   => 'compara1',
@@ -337,9 +339,7 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
 		-parameters => {
 				'sql' => [
-					  'DELETE genomic_align_tree FROM genomic_align_tree LEFT JOIN genomic_align_group USING (node_id) LEFT JOIN genomic_align USING (genomic_align_id) WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id'),
-					  'DELETE genomic_align_group FROM genomic_align_group LEFT JOIN genomic_align using (genomic_align_id) WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id'),
-					  'DELETE FROM genomic_align WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id'),
+					  'DELETE gag, gat, ga FROM genomic_align_group gag JOIN genomic_align_tree gat USING (node_id) JOIN genomic_align ga USING (genomic_align_id) WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id'),
 					  'DELETE FROM genomic_align_block WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id'),
 					 ],
 			       },
