@@ -18,7 +18,7 @@ use Data::Dumper;
 use Carp                  qw(cluck);
 use File::Path            qw(mkpath);
 use File::Spec::Functions qw(splitpath);
-use List::MoreUtils        qw(first_index);
+use List::MoreUtils       qw(first_index);
 use HTML::Entities        qw(encode_entities);
 use JSON                  qw(to_json);
 use Text::Wrap;
@@ -224,20 +224,24 @@ sub pretty_date {
   my ($self, $datetime, $format) = @_;
 
   my @long_months  = ('', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
-  my @short_months = ('', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
+  my @short_months = map { substr $_, 0, 3 } @long_months;
  
-  my ($date, $time, $year, $mon, $day);
-  if ($datetime =~ / /) { 
-    ($date, $time) = split ' |T', $datetime;
-    ($year, $mon, $day) = split '-', $date;
-  }
-  elsif ($datetime =~ /\-/) {
+  my ($year, $mon, $day, $hour, $min, $sec);
+  
+  if ($datetime =~ / /) {
+    my ($date, $time)   = split ' |T', $datetime;
+    ($year, $mon, $day) = split '-',   $date;
+    ($hour, $min, $sec) = split ':',   $time;
+  } elsif ($datetime =~ /\-/) {
     ($year, $mon, $day) = split '-', $datetime;
-  }
-  elsif ($datetime =~ /[a-zA-Z]{3}[0-9]{4}/) {
-    my $mname = substr($datetime, 0, 3);
-    $mon = first_index {$_ eq $mname} @short_months; 
-    $year = substr($datetime, 3, 4);
+  } elsif ($datetime =~ /[a-zA-Z]{3}[0-9]{4}/) {
+    my $mname = substr $datetime, 0, 3;
+       $mon   = first_index { $_ eq $mname } @short_months; 
+       $year  = substr $datetime, 3, 4;
+  } elsif ($datetime =~ /^\d+$/) {
+    ($sec, $min, $hour, $day, $mon, $year) = localtime($datetime);
+    $mon++;
+    $year += 1900;
   }
   
   return '-' unless $year > 0;
@@ -245,20 +249,13 @@ sub pretty_date {
   $day =~ s/^0//;
   
   if ($format && $format eq 'simple_datetime') {
-    my ($hour, $min, $sec) = split(':', $time);
     return sprintf '%02d/%02d/%s at %02d:%02d', $day, $mon, substr($year, 2, 2), $hour, $min;
-  } 
-  elsif ($format && $format eq 'short') {
-    return $short_months[$mon] . ' ' . $year;
-  }
-  elsif ($format && $format eq 'daymon') {
-    return $long_months[$mon].' '.$day;
-  }
-  else {
-    my $pretty;
-    $pretty = "$day " if $day;
-    $pretty .= $long_months[$mon] . ' ' . $year;
-    return $pretty;
+  } elsif ($format && $format eq 'short') {
+    return "$short_months[$mon] $year";
+  } elsif ($format && $format eq 'daymon') {
+    return "$long_months[$mon] $day";
+  } else {
+    return join ' ', grep $_, $day, $long_months[$mon], $year;
   }
 }
 
