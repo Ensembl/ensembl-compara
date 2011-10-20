@@ -356,7 +356,7 @@ sub delete_old_orthotree_tags {
   foreach my $id (@node_ids) {
     push @list_ids, $id;
     if (scalar @list_ids == 2000) {
-      my $sql = "delete from protein_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
+      my $sql = "delete from protein_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
       my $sth = $self->dbc->prepare($sql);
       $sth->execute;
       $sth->finish;
@@ -365,7 +365,7 @@ sub delete_old_orthotree_tags {
   }
   
   if (scalar @list_ids) {
-    my $sql = "delete from protein_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
+    my $sql = "delete from protein_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
     my $sth = $self->dbc->prepare($sql);
     $sth->execute;
     $sth->finish;
