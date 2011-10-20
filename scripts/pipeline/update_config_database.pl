@@ -282,6 +282,9 @@ if (defined $download_url) {
 }
 
 #Open connection to config database
+if (defined $config_url && $config_url eq "") {
+    $config_url = undef;
+}
 if (defined $config_url) {
     $self->open_db_connection($config_url);
 }
