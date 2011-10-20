@@ -79,7 +79,19 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my( $self) = @_;
+
+    #Convert chunkSetID into DnaFragChunkSet object
+    if(defined($self->param('chunkSetID'))) {
+	my $chunkset = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('chunkSetID'));
+	$self->param('dnaFragChunkSet', $chunkset);
+    }
     
+    #Convert chunkID into DnaFragChunk object
+    if(defined($self->param('chunkID'))) {
+	my $chunk = $self->compara_dba->get_DnaFragChunkAdaptor->fetch_by_dbID($self->param('chunkID'));
+	$self->param('dnaFragChunk', $chunk);
+    }
+   
     return 1;
 }
 
