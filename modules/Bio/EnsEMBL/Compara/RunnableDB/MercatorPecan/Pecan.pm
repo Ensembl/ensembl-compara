@@ -648,12 +648,15 @@ sub _load_DnaFragRegions {
   my $sra = $self->compara_dba->get_SyntenyRegionAdaptor;
   my $sr = $sra->fetch_by_dbID($self->param('synteny_region_id'));
 
-  foreach my $dfr (@{$sr->children}) {  
-    $dfr->disavow_parent;
+  my $regions = $sr->regions();
+
+  #foreach my $dfr (@{$sr->children}) {  
+  foreach my $dfr (@$regions) {  
+    #$dfr->disavow_parent;
     push(@{$dnafrag_regions}, $dfr);
   }
 
-  $sr->release_tree;
+  #$sr->release_tree;
 
   $self->param('dnafrag_regions', $dnafrag_regions);
 }

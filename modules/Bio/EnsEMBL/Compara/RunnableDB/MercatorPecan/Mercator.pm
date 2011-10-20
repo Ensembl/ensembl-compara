@@ -166,12 +166,13 @@ sub store_synteny {
          -dnafrag_start => $start+1, # because half-open coordinate system
          -dnafrag_end => $end,
          -dnafrag_strand => $strand);
-      $synteny_region->add_child($dnafrag_region);
+      my $regions = $synteny_region->regions;
+      push @$regions, $dnafrag_region;
+      $synteny_region->regions($regions);
     }
     $sra->store($synteny_region);
     push @{$synteny_region_ids}, $synteny_region->dbID;
     push @{$run_ids2synteny_and_constraints->{$run_id}}, $synteny_region->dbID;
-    $synteny_region->release;
   }
 
   return $synteny_region_ids;
