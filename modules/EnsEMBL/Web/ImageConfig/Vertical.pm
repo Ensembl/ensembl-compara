@@ -28,24 +28,17 @@ sub load_user_tracks {
   my %remote_formats = map { lc $_ => 1 } @{$hub->species_defs->USERDATA_REMOTE_FORMATS};
   my (@user_tracks, %user_sources);
   
-  my @density_renderers = (
-    'off',             'Off',
-    'density_line',    'Density plot - line graph',
-    'density_bar',     'Density plot - filled bar chart',
-    'density_outline', 'Density plot - outline bar chart',
+  my @renderers = (
+    'off',                'Off',
+    'highlight_lharrow',  'Arrow on lefthand side',
+    'highlight_rharrow',  'Arrow on righthand side',
+    'highlight_bowtie',   'Arrows on both sides',
+    'highlight_wideline', 'Line',
+    'highlight_widebox',  'Box',
+    'density_line',       'Density plot - line graph',
+    'density_bar',        'Density plot - filled bar chart',
+    'density_outline',    'Density plot - outline bar chart',
   );
-  
-  my @all_renderers = @density_renderers;
-  
-  if (ref($self) !~ /mapview/) {
-    push @all_renderers, (
-      'highlight_lharrow',  'Arrow on lefthand side',
-      'highlight_rharrow',  'Arrow on righthand side',
-      'highlight_bowtie',   'Arrows on both sides',
-      'highlight_wideline', 'Line',
-      'highlight_widebox',  'Box',
-    );
-  }
   
   foreach my $type (keys %types) {
     my @tracks = $session->get_data(type => $type);
@@ -119,6 +112,7 @@ sub load_user_tracks {
         format      => $entry->{'format'},
         glyphset    => 'Vuserdata',
         colourset   => 'densities',
+        renderers   => \@renderers,
         maxmin      => 1,
         logic_name  => $entry->{'logic_name'},
         caption     => $entry->{'name'},
@@ -128,9 +122,7 @@ sub load_user_tracks {
         width       => $width,
         strand      => 'b'
       };
-      
-      $settings->{'renderers'} = $entry->{'render'} eq 'density' ? \@density_renderers : \@all_renderers;
-      
+
       $menu->append($self->create_track($entry->{'id'}, $entry->{'name'}, $settings));
     }
   }
