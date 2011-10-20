@@ -68,7 +68,7 @@ sub fetch_input {
 	my $genome_db_name = $genome_db->name;
 
 	my $species = $genome_db->name;
-	my $set_description = "gdb:" . $self->param('genome_db_id') . " $species coding exons";
+	my $set_description = "gdb:" . $self->param('genome_db_id') . " $species ref coding exons";
 
 	my $subsetAdaptor = $self->compara_dba->get_SubsetAdaptor;
 	$subset = $subsetAdaptor->fetch_by_set_description($set_description);
