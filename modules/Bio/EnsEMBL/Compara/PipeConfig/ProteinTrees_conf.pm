@@ -104,7 +104,7 @@ sub default_options {
         'filter_high_coverage'      => 1,   # affects 'group_genomes_under_taxa'
 
     # executable locations:
-        'wublastp_exe'              => 'wublastp',
+        'wublastp_exe'              => '/usr/local/ensembl/bin/wublastp',
         'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         'mcoffee_exe'               => '/software/ensembl/compara/tcoffee-7.86b/t_coffee',
         'mafft_exe'                 => '/software/ensembl/compara/mafft-6.707/bin/mafft',
