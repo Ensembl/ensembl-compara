@@ -734,8 +734,7 @@ sub transcript_table {
     my $transcript  = $page_type eq 'transcript' ? $object->stable_id : $hub->param('t');
     my $transcripts = $gene->get_all_Transcripts;
     my $count       = @$transcripts;
-    my $plural_1    = 'are';
-    my $plural_2    = 'transcripts';
+    my $plural    = 'transcripts';
     my $action      = $hub->action;
     my %biotype_rows;
     
@@ -745,11 +744,10 @@ sub transcript_table {
     );
     
     if ($count == 1) { 
-      $plural_1 = 'is';
-      $plural_2 =~ s/s$//;
+      $plural =~ s/s$//;
     }
     
-    my $label = "There $plural_1 $count $plural_2 in this gene";
+    my $label = "This gene has $count $plural";
     
     if ($page_type eq 'transcript') {
       my $gene_id  = $gene->stable_id;
