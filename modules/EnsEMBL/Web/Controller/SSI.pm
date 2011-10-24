@@ -104,7 +104,7 @@ sub set_cache_params {
   $ENV{'CACHE_KEY'} .= "::USER[$self->{'user_id'}]" if $self->{'user_id'};
   $ENV{'CACHE_KEY'} .= '::NO_AJAX'                  unless $self->hub->check_ajax;
   $ENV{'CACHE_KEY'} .= '::MAC'                      if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
-  $ENV{'CACHE_KEY'} .= "::IE$1"                     if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d)/;
+  $ENV{'CACHE_KEY'} .= "::IE$1"                     if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/;
   $ENV{'CACHE_KEY'} .= '::SEARCHBOT'                if $ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/;
 }
 

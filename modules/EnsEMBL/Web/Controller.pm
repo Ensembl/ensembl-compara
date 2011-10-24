@@ -281,7 +281,7 @@ sub set_cache_params {
     $ENV{'CACHE_KEY'} .= "::SESSION[$self->{'session_id'}]"
   } else {
     $ENV{'CACHE_KEY'} .= '::MAC'  if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
-    $ENV{'CACHE_KEY'} .= "::IE$1" if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d)/;
+    $ENV{'CACHE_KEY'} .= "::IE$1" if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/;
   }
   
   $ENV{'CACHE_KEY'} .= '::BOT' if $ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/;

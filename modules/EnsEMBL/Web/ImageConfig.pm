@@ -113,7 +113,7 @@ sub new {
   
   my $sortable = $self->get_parameter('sortable_tracks');
   
-  $self->set_parameter('sortable_tracks', 1)  if $sortable eq 'drag' && $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d)/ && $1 < 7; # No sortable tracks on images for IE6 and lower
+  $self->set_parameter('sortable_tracks', 1)  if $sortable eq 'drag' && $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/ && $1 < 7; # No sortable tracks on images for IE6 and lower
   $self->{'extra_menus'}->{'track_order'} = 1 if $sortable;
   
   $self->{'no_image_frame'} = 1;
