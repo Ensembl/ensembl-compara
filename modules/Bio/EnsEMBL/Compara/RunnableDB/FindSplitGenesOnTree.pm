@@ -328,7 +328,7 @@ sub duplication_confidence_score {
 			   ) unless ($protein_tree->{'_readonly'});
     my $rounded_duplication_confidence_score = (int((100.0 * $scalar_isect / $scalar_union + 0.5))); 
     my $species_intersection_score = $ancestor->get_tagvalue("species_intersection_score");
-    unless (defined($species_intersection_score) && $species_intersection_score ne '') 
+    unless (defined($species_intersection_score)) 
     { 
 	$ancestor_node_id = $ancestor->node_id;
 	#warn("Difference in the ProteinTree: duplication_confidence_score [$duplication_confidence_score] whereas species_intersection_score [$species_intersection_score] is undefined in njtree - ancestor $ancestor_node_id\n");
@@ -382,25 +382,11 @@ sub get_ancestor_species_hash {
     $node->add_tag("species_hash", $species_hash); 
     if($is_dup && !($protein_tree->{'_treefam'})) 
     { 
-	my $original_duplication_value = $node->get_tagvalue("Duplication");
-	$original_duplication_value = 0 unless (defined $original_duplication_value && $original_duplication_value ne '');
-	if ($original_duplication_value == 0) 
+      if ($node->get_tagvalue('node_type', '') eq 'speciation')
 	{ 
             # RAP did not predict a duplication here 
-	    $node->add_tag("duplication_hash", $duplication_hash);
-	    $node->store_tag("Duplication", 1) unless ($protein_tree->{'_readonly'});
-	    $node->store_tag("Duplication_alg", 'species_count') unless ($protein_tree->{'_readonly'});
-	} 
-	elsif ($original_duplication_value == 1) 
-	{ 
-	    my $dup_alg = $node->get_tagvalue("Duplication_alg");
-	    if (defined $dup_alg and $dup_alg ne 'species_count') 
-	    { 
-                # RAP did predict a duplication here but not species_count 
-		$node->add_tag("duplication_hash", $duplication_hash); 
-		$node->store_tag("Duplication", 2) unless ($protein_tree->{'_readonly'}); 
-		$node->store_tag("Duplication_alg", 'species_count') unless ($protein_tree->{'_readonly'}); 
-	    } 
+	    $node->add_tag('duplication_hash', $duplication_hash);
+	    $node->store_tag('node_type', 'duplication') unless ($protein_tree->{'_readonly'});
 	} 
     } 
     return ($species_hash); 

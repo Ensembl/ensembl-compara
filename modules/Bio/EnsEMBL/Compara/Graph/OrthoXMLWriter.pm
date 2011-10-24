@@ -280,7 +280,7 @@ sub write_data {
 
   # Prints the score definition
   $w->startTag("scores");
-  $w->emptyTag("scoreDef", "id" => "Bootstrap", "desc" => "Reliability of the branch");
+  $w->emptyTag("scoreDef", "id" => "bootstrap", "desc" => "Reliability of the branch");
   $w->emptyTag("scoreDef", "id" => "duplication_confidence_score", "desc" => "Reliability of the duplication");
   $w->endTag("scores");
 
@@ -349,9 +349,9 @@ sub _write_tree {
 
 sub _is_reliable_duplication {
   my $node = shift;
-  my $dup = $node->get_tagvalue('Duplication');
+  my $node_type = $node->get_tagvalue('node_type');
   my $sis = $node->get_tagvalue('duplication_confidence_score');
-  return ((defined $dup) and ($dup ne '') and ($dup >= 2) and (defined $sis) and ($sis ne '') and ($sis >= 0.25));
+  return ((defined $node_type) and ($node_type eq 'duplication') and (defined $sis) and ($sis >= 0.25));
 }
 
 sub _process {
@@ -387,7 +387,7 @@ sub _genetreenode_body {
   my $w = $self->_writer();
   
    # Scores
-  foreach my $tag (qw(duplication_confidence_score Bootstrap)) {
+  foreach my $tag (qw(duplication_confidence_score bootstrap)) {
     my $value = $node->get_tagvalue($tag);
     if (defined $value and $value ne '') {
       $w->emptyTag('score', 'id' => $tag, 'value' => $value);
@@ -395,11 +395,16 @@ sub _genetreenode_body {
   }
   
   # Properties
-  foreach my $tag (qw(dubious_duplication taxon_id taxon_name)) {
+  foreach my $tag (qw(taxon_id taxon_name)) {
     my $value = $node->get_tagvalue($tag);
     if (defined $value and $value ne '') {
       $w->emptyTag('property', 'name' => $tag, 'value' => $value);
     }
+  }
+
+  # dubious_duplication is in another field
+  if ($node->get_tagvalue('node_type', '') eq 'dubious') {
+     $w->emptyTag('property', 'name' => 'dubious_duplication', 'value' => 1);
   }
   
   if($node->get_child_count()) {

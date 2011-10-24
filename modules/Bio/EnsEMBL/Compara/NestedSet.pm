@@ -894,40 +894,30 @@ sub print_node {
 }
 
 sub string_node {
-  my $self  = shift;
-  my $str = '(';
+    my $self  = shift;
+    my $str = '(';
 
-  if(defined $self->get_tagvalue("Duplication") 
-     && $self->get_tagvalue("Duplication") ne '' 
-     && $self->get_tagvalue("Duplication") > 0 
-     && $self->get_tagvalue("dubious_duplication") ne '1') 
-    {
-      my $taxon_name = $self->get_tagvalue('taxon_name');
-      if ($taxon_name =~ /\S+\ \S+/) {
-        $str .= "Dup ";
-      } else {
-        $str .= "DUP ";
-      }
-    } elsif (defined $self->get_tagvalue("Duplication") 
-     && $self->get_tagvalue("Duplication") ne '' 
-     && $self->get_tagvalue("Duplication") > 0 
-     && $self->get_tagvalue("dubious_duplication") eq '1'
-            ) 
-    {
-      $str .= "DD  ";
+    my $isdup = 0;
+    $isdup = 1 if ($self->get_tagvalue('Duplication', 0) > 0 and not $self->get_tagvalue('dubious_duplication', 0));
+    $isdup = 1 if $self->get_tagvalue('node_type') eq 'duplication');
+
+    my $isdub = ($self->get_tagvalue('node_type') eq 'dubious');
+
+    if ($isdup) {
+        my $taxon_name = $self->get_tagvalue('taxon_name');
+        if ($taxon_name =~ /\S+\ \S+/) {
+            $str .= "Dup ";
+        } else {
+            $str .= "DUP ";
+        }
+    } elsif ($isdub) {
+        $str .= "DD  ";
     }
-  if(defined $self->get_tagvalue("TID") 
-     && $self->get_tagvalue("TID") ne '' 
-     && $self->get_tagvalue("TID") > 0 ) 
-    {
-      my $taxon_id = $self->get_tagvalue('TID');
-      $str .= "TID=$taxon_id ";
-    }
-  if(defined $self->get_tagvalue("Bootstrap") && $self->get_tagvalue("Bootstrap") ne '') { my $bootstrap_value = $self->get_tagvalue("Bootstrap"); $str .= "B=$bootstrap_value "; }
-  if(defined $self->get_tagvalue("taxon_name") && $self->get_tagvalue("taxon_name") ne '') { my $taxon_name_value = $self->get_tagvalue("taxon_name"); $str .="T=$taxon_name_value "; }
-  $str .= sprintf("%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
-  $str .= sprintf("%s\n", $self->name || '');
-  return $str;
+    if($self->has_tag("bootstrap")) { my $bootstrap_value = $self->get_tagvalue("bootstrap"); $str .= "B=$bootstrap_value "; }
+    if($self->has_tag("taxon_name")) { my $taxon_name_value = $self->get_tagvalue("taxon_name"); $str .="T=$taxon_name_value "; }
+    $str .= sprintf("%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
+    $str .= sprintf("%s\n", $self->name || '');
+    return $str;
 }
 
 sub nhx_format {
@@ -1022,7 +1012,7 @@ sub _internal_nhx_format {
       }
     $nhx .= sprintf(":%1.4f", $self->distance_to_parent);
     $nhx .= "[&&NHX";
-    if(defined $self->get_tagvalue("Duplication") && $self->get_tagvalue("Duplication") ne '' && $self->get_tagvalue("Duplication") > 0) { 
+    if(defined $self->get_tagvalue("node_type") && ($self->get_tagvalue("node_type") eq 'duplication' || $self->get_tagvalue("node_type") eq 'dubious' )) { 
         # mark as duplication
         $nhx .= ":D=Y";
     } else {
@@ -1030,8 +1020,8 @@ sub _internal_nhx_format {
         # method and the reason we can safely add this here
         $nhx .= ":D=N";
     }
-    if(defined $self->get_tagvalue("Bootstrap") && $self->get_tagvalue("Bootstrap") ne '') { 
-      my $bootstrap_value = $self->get_tagvalue("Bootstrap");
+    if($self->has_tag("bootstrap")) { 
+      my $bootstrap_value = $self->get_tagvalue("bootstrap");
         # mark as duplication
         $nhx .= ":B=$bootstrap_value";
     }
@@ -1195,7 +1185,7 @@ sub _internal_newick_format {
     #add * for leaves
       my $ncbi_taxon_id = $self->node_id;
       if($self->is_leaf) { 
-        my $is_incomplete = $self->get_tagvalue("is_incomplete");
+        my $is_incomplete = $self->get_tagvalue("is_incomplete", 0);
         $ncbi_taxon_id .= "*" unless ('1' eq $is_incomplete);
       }
       $newick .= sprintf("%s", $ncbi_taxon_id);

@@ -457,134 +457,75 @@ sub dumpTreeMultipleAlignmentToWorkdir {
 
 sub store_proteintree
 {
-  my $self = shift;
+    my $self = shift;
 
     my $protein_tree = $self->param('protein_tree') or return;
     my $protein_tree_adaptor = $self->param('protein_tree_adaptor');
 
-  printf("PHYML::store_proteintree\n") if($self->debug);
+    printf("PHYML::store_proteintree\n") if($self->debug);
 
-  $protein_tree_adaptor->sync_tree_leftright_index( $protein_tree );
-  $protein_tree->clusterset_id( $self->param('clusterset_id') );
-  $protein_tree_adaptor->store( $protein_tree );
-  $protein_tree_adaptor->delete_nodes_not_in_tree( $protein_tree );
+    $protein_tree_adaptor->sync_tree_leftright_index( $protein_tree );
+    $protein_tree->clusterset_id( $self->param('clusterset_id') );
+    $protein_tree_adaptor->store( $protein_tree );
+    $protein_tree_adaptor->delete_nodes_not_in_tree( $protein_tree );
 
-  if($self->debug >1) {
-    print("done storing - now print\n");
-    $protein_tree->print_tree;
-  }
+    if($self->debug >1) {
+        print("done storing - now print\n");
+        $protein_tree->print_tree;
+    }
 
-  $protein_tree->store_tag('PHYML_alignment', 'njtree_phyml');
-  $protein_tree->store_tag('reconciliation_method', 'njtree_best');
-  $self->store_tags( $protein_tree );
+    $self->store_tags( $protein_tree );
 
-  $self->_store_tree_tags;
+    if($self->param('jackknife')) {
+        my $leaf_count = $protein_tree->num_leaves;
+        $protein_tree->store_tag( 'gene_count', $leaf_count );
+    }
+    $self->_store_tree_tags;
 
-  return undef;
 }
 
 sub store_tags
 {
-  my $self = shift;
-  my $node = shift;
+    my $self = shift;
+    my $node = shift;
 
-    my $protein_tree = $self->param('protein_tree');
+    if (not $node->is_leaf) {
+        my $node_type = $node->get_tagvalue('Duplication', '') eq '1' ? 'duplication' : 'speciation';
+        $node_type = 'dubious' if $node->get_tagvalue("DD", 0);
+        $node->store_tag('node_type', $node_type);
+        if ($self->debug) {
+            print "store node_type: $node_type"; $node->print_node;
+        }
+    }
 
-  if($self->param('jackknife')) {
-    my $leaf_count = $protein_tree->num_leaves;
-    $protein_tree->store_tag( 'gene_count', $leaf_count );
-  }
+    if ($node->has_tag("E")) {
+        my $n_lost = $node->get_tagvalue("E");
+        $n_lost =~ s/.{2}//;        # get rid of the initial $-
+        my @lost_taxa = split('-', $n_lost);
+        foreach my $taxon (@lost_taxa) {
+            if ($self->debug) {
+                printf("store lost_taxon_id : $taxon "); $node->print_node;
+            }
+            $node->store_tag('lost_taxon_id', $taxon, 1);
+        }
+    }
 
-  if($node->get_tagvalue("Duplication") eq '1') {
-    if($self->debug) { printf("store duplication : "); $node->print_node; }
-    $node->store_tag('Duplication', 1);
-  } else {
-    $node->store_tag('Duplication', 0);
-  }
+    my %mapped_tags = ('B' => 'bootstrap', 'SIS' => 'species_intersection_score', 'T' => 'tree_support');
+    foreach my $tag (keys %mapped_tags) {
+        if ($node->has_tag($tag)) {
+            my $value = $node->get_tagvalue($tag);
+            my $db_tag = $mapped_tags{$tag};
+            $db_tag = 'duplication_confidence_score' if ($node->get_tagvalue('node_type') eq 'dubious' and $tag eq 'SIS');
+            $node->store_tag($db_tag, $value);
+            if ($self->debug) {
+                printf("store $tag as $db_tag: $value"); $node->print_node;
+            }
+        }
+    }
 
-  if (defined($node->get_tagvalue("B"))) {
-    my $bootstrap_value = $node->get_tagvalue("B");
-    if (defined($bootstrap_value) && $bootstrap_value ne '') {
-      if ($self->debug) {
-        printf("store bootstrap : $bootstrap_value "); $node->print_node;
-      }
-      $node->store_tag('Bootstrap', $bootstrap_value);
+    foreach my $child (@{$node->children}) {
+        $self->store_tags($child);
     }
-  }
-  if (defined($node->get_tagvalue("DD"))) {
-    my $dubious_dup = $node->get_tagvalue("DD");
-    if (defined($dubious_dup) && $dubious_dup ne '') {
-      if ($self->debug) {
-        printf("store dubious_duplication : $dubious_dup "); $node->print_node;
-      }
-      $node->store_tag('dubious_duplication', $dubious_dup);
-    }
-  }
-  if (defined($node->get_tagvalue("E"))) {
-    my $n_lost = $node->get_tagvalue("E");
-    $n_lost =~ s/.{2}//;        # get rid of the initial $-
-    my @lost_taxa = split('-',$n_lost);
-    my %lost_taxa;
-    foreach my $taxon (@lost_taxa) {
-      $lost_taxa{$taxon} = 1;
-    }
-    foreach my $taxon (keys %lost_taxa) {
-      if ($self->debug) {
-        printf("store lost_taxon_id : $taxon "); $node->print_node;
-      }
-      $node->store_tag('lost_taxon_id', $taxon, 1);
-    }
-  }
-  if (defined($node->get_tagvalue("SISi"))) {
-    my $sis_score = $node->get_tagvalue("SISi");
-    if (defined($sis_score) && $sis_score ne '') {
-      if ($self->debug) {
-        printf("store SISi : $sis_score "); $node->print_node;
-      }
-      $node->store_tag('SISi', $sis_score);
-    }
-  }
-  if (defined($node->get_tagvalue("SISu"))) {
-    my $sis_score = $node->get_tagvalue("SISu");
-    if (defined($sis_score) && $sis_score ne '') {
-      if ($self->debug) {
-        printf("store SISu : $sis_score "); $node->print_node;
-      }
-      $node->store_tag('SISu', $sis_score);
-    }
-  }
-  if (defined($node->get_tagvalue("SIS"))) {
-    my $sis_score = $node->get_tagvalue("SIS");
-    if (defined($sis_score) && $sis_score ne '') {
-      if ($self->debug) {
-        printf("store species_intersection_score : $sis_score "); $node->print_node;
-      }
-      $node->store_tag('species_intersection_score', $sis_score);
-    }
-  }
-  if (defined($node->get_tagvalue("SIS1"))) {
-    my $sis_score = $node->get_tagvalue("SIS1");
-    if (defined($sis_score) && $sis_score ne '') {
-      if ($self->debug) {
-        printf("store SIS1 : $sis_score "); $node->print_node;
-      }
-      $node->store_tag('SIS1', $sis_score);
-    }
-  }
-  if (defined($node->get_tagvalue("SIS2"))) {
-    my $sis_score = $node->get_tagvalue("SIS2");
-    if (defined($sis_score) && $sis_score ne '') {
-      if ($self->debug) {
-        printf("store SIS2 : $sis_score "); $node->print_node;
-      }
-      $node->store_tag('SIS2', $sis_score);
-    }
-  }
-
-  foreach my $child (@{$node->children}) {
-    $self->store_tags($child);
-  }
-  return undef;
 }
 
 sub parse_newick_into_proteintree {
@@ -692,8 +633,8 @@ sub _store_tree_tags {
     my $num_dups = 0;
     my $num_specs = 0;
     foreach my $node (@{$protein_tree->get_all_nodes}) {
-	my $dup = $node->get_tagvalue("Duplication");
-	if ($dup ne '' && $dup > 0) {
+	my $node_type = $node->get_tagvalue("node_type");
+	if ((defined $node_type) and ($node_type ne 'speciation')) {
 	    $num_dups++;
 	} else {
 	    $num_specs++;

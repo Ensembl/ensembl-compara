@@ -948,14 +948,16 @@ CREATE TABLE nc_tree_tag LIKE protein_tree_tag;
 #    taxon_name                      -- Only present after reconciliation, the name of the species refered to by taxon_id
 #    bootstrap                       -- A bootstrap value
 #    duplication_confidence_score    -- Only for duplications: the ratio between the number of species in the intersection by the number of the species in the union
+#    tree_support                    -- Set of the 5 different trees that we compute that are supporting the node
 
 CREATE TABLE protein_tree_attr (
   node_id                         INT(10) UNSIGNED NOT NULL,
-  duplication                     TINYINT UNSIGNED,
+  node_type                       ENUM("duplication", "dubious", "speciation", "gene_split"),
   taxon_id                        INT(10) UNSIGNED,
   taxon_name                      VARCHAR(255),
   bootstrap                       TINYINT UNSIGNED,
   duplication_confidence_score    DOUBLE(5,4),
+  tree_support                    SET('phyml_nt', 'nj_ds', 'phyml_aa', 'nj_dn', 'nj_mm'),
 
   FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),

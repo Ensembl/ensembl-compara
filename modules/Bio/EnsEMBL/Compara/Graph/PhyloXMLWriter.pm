@@ -379,9 +379,8 @@ sub _genetreenode_tag {
 sub _genetreenode_body {
   my ($self, $node, $defer_taxonomy) = @_;
   
-  my $dup   = $node->get_tagvalue('Duplication');
-  my $dubi  = $node->get_tagvalue('dubious_duplication');
-  my $boot  = $node->get_tagvalue('Bootstrap');
+  my $type  = $node->get_tagvalue('node_type');
+  my $boot  = $node->get_tagvalue('bootstrap');
   my $taxid = $node->get_tagvalue('taxon_id');
   my $tax   = $node->get_tagvalue('taxon_name');
   
@@ -395,15 +394,15 @@ sub _genetreenode_body {
     $self->_write_taxonomy($taxid, $tax);
   }
   
-  if($dup) {
+  if((defined $type) and ($type eq "duplication" || $type eq "dubious")) {
     $w->startTag('events');
     $w->dataElement('type', 'speciation_or_duplication');
     $w->dataElement('duplications', 1);
     $w->endTag();
   }
   
-  if($dubi) {
-    $w->dataElement('property', $dubi, 
+  if((defined $type) and ($type eq "dubious")) {
+    $w->dataElement('property', 'dubious_duplication', 
       'datatype' => 'xsd:int', 
       'ref' => 'Compara:dubious_duplication', 
       'applies_to' => 'clade'
