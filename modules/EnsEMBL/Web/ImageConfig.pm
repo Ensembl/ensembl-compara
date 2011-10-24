@@ -196,7 +196,7 @@ sub menus {
     other               => 'Additional decorations',
     
     # External data
-    user_data           => 'User attached data',
+    user_data           => 'Your data',
     external_data       => 'External data',
   };
 }
