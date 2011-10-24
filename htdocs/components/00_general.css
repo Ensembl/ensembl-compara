@@ -102,7 +102,7 @@ a.button        { background-color: [[TINT_BG]]; border: 1px outset [[TINT_BG]];
 span.link       { color: [[PAGE_LINK]]; cursor: pointer; text-decoration: underline; }
 a.toggle        { background: url(/i/open2.gif) no-repeat right bottom; text-decoration: none; padding-right: 20px; outline: 0 none; }
 a.toggle.closed { background-image: url(/i/closed2.gif); }
-a.ajax_add      { background: none!important; }
+a.ajax_add      { background: none!important; padding-right: 0; }
 
 /*----------------------------------------------------------------------
   Tables
