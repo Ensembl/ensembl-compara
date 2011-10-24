@@ -303,6 +303,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     
     this.elLk.links.has('.user_data').insertAfter(this.elLk.links.has('[rel=multi]').last()); // Move user data to below the multi entries (active tracks, favourites, search)
+    this.elLk.configDivs.filter('.user_data').insertBefore(this.elLk.configDivs.first());
     
     this.getContent();
   },
