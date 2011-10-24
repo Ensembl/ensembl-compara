@@ -11,9 +11,12 @@ table.ss   tr.bg1       { background-color: [[PANEL_BG]];   }
 table.ss   tr.bg2       { background-color: [[NEUTRAL_BG]]; } 
 table.tint tr.bg2       { background-color: [[TINT_BG]];    }
 table.ss   tr.highlight { background-color: #59E817;   }
- 
 
- table.data_table                    { border: 1px solid [[PAGE_TEXT]]; }
+table.fixed         { table-layout: fixed }
+table.fixed th.wrap,
+table.fixed td.wrap { word-wrap: break-word; word-break: break-all; }
+ 
+table.data_table                     { border: 1px solid [[PAGE_TEXT]]; }
 table.data_table th                  { cursor: pointer; padding: 2px 20px 2px 5px; }
 table.data_table th:first-child      { padding-left: 2px; }
 table.data_table th.sorting_disabled { cursor: text; padding-right: 5px; }
