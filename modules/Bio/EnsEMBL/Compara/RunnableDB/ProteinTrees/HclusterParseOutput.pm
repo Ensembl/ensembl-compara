@@ -1,15 +1,26 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=cut
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput
-
-=cut
 
 =head1 SYNOPSIS
 
@@ -22,20 +33,10 @@ my $rdb = new Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutp
 $rdb->fetch_input
 $rdb->run;
 
-=cut
-
 =head1 DESCRIPTION
 
 This is the RunnableDB that parses the output of Hcluster, stores the clusters as trees without internal structure
 (each tree will have one root and several leaves) and dataflows the cluster_ids down branch #2.
-
-=cut
-
-=head1 CONTACT
-
-  Contact Albert Vilella on module implemetation/design detail: avilella@ebi.ac.uk
-  Contact Abel Ureta-Vidal on EnsEMBL/Compara: abel@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =cut
 
