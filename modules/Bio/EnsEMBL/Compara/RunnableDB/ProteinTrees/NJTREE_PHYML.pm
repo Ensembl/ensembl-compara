@@ -77,6 +77,7 @@ sub param_defaults {
     return {
             'cdna'              => 1,   # always use cdna for njtree_phyml
             'bootstrap'         => 1,
+		'check_split_genes' => 1,
             'correction_mode'   => 'max_diff_lk',   # can be either max_diff_lk or jackknife
     };
 }
@@ -181,7 +182,7 @@ sub run_njtree_phyml {
 
   my $starttime = time()*1000;
 
-  $self->check_for_split_genes;
+  $self->check_for_split_genes if ($self->param('check_split_genes')) ;
 
   my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $protein_tree ) or return;
 
