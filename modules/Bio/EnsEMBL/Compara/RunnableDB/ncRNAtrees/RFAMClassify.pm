@@ -56,6 +56,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify;
 
 use strict;
+use Data::Dumper;
 use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
@@ -148,9 +149,9 @@ sub run_rfamclassify {
   $self->param('rfamcms', {});
 
   $self->build_hash_cms('model_id');
-  $self->build_hash_cms('name');
-  $self->build_hash_models;
-  $self->load_model_id_names;
+  $self->load_names_model_id();
+#  $self->build_hash_cms('name');
+  $self->build_hash_models();
 
   my $nctree_adaptor = $self->compara_dba->get_NCTreeAdaptor;
 
@@ -172,25 +173,30 @@ sub run_rfamclassify {
   # Classify the cluster that already have an RFAM id or mir id
   print STDERR "Storing clusters...\n" if ($self->debug);
   my $counter = 1;
-  foreach my $field ('model_id','name') {
-    foreach my $cm_id (keys %{$self->param('rfamcms')->{$field}}) {
+#  foreach my $field ('model_id','name') {
+    foreach my $cm_id (keys %{$self->param('rfamcms')->{'model_id'}}) {
+        print STDERR "++ $cm_id\n" if ($self->debug);
       if (defined($self->param('rfamclassify')->{$cm_id})) {
         my @cluster_list = keys %{$self->param('rfamclassify')->{$cm_id}};
 
+        print STDERR Dumper \@cluster_list if ($self->debug);
         # If it's a singleton, we don't store it as a nc tree
-        next if (2 > scalar(@cluster_list));
+        next if (scalar(@cluster_list < 2));
 
-        printf("%10d clusters\n", $counter) if ($counter % 20 == 0);
+#        printf("%10d clusters\n", $counter) if (($counter % 20 == 0) && ($self->debug));
         $counter++;
 
-        my $model_name = undef;
+        my $model_name;
         if    (defined($self->param('model_id_names')->{$cm_id})) { $model_name = $self->param('model_id_names')->{$cm_id}; }
         elsif (defined($self->param('model_name_ids')->{$cm_id})) { $model_name = $cm_id; }
+
+        print STDERR "ModelName: $model_name\n" if ($self->debug);
 
         my $cluster = new Bio::EnsEMBL::Compara::GeneTreeNode;
         $clusterset->add_child($cluster);
 
         foreach my $pmember_id (@cluster_list) {
+            print STDERR "Adding $pmember_id\n" if ($self->debug);
           my $node = new Bio::EnsEMBL::Compara::GeneTreeNode;
           $node->node_id($pmember_id);
           $cluster->add_child($node);
@@ -210,7 +216,10 @@ sub run_rfamclassify {
         #calc residue count total
         my $leaves = $cluster->get_all_leaves;
         if (defined($model_name)) {
-          foreach my $leaf (@$leaves) { $leaf->store_tag('acc_name',$model_name); }
+          foreach my $leaf (@$leaves) { 
+              print STDERR "Storing acc_name ($model_name) for " . $leaf->node_id() . "\n" if ($self->debug);
+              $leaf->store_tag('acc_name',$model_name);
+          }
         }
         my $leafcount = scalar @$leaves;
         $cluster->store_tag('gene_count', $leafcount);
@@ -218,7 +227,7 @@ sub run_rfamclassify {
         $cluster->store_tag('model_name', $model_name) if (defined($model_name));
       }
     }
-  }
+#}
 
   # Flow the members that havent been associated to a cluster at this
   # stage to the search for all models
@@ -281,11 +290,15 @@ sub build_hash_models {
             $transcript_model_id = $1;
           }
         } else {
-            print STDERR "$transcript_model_id is not a mirbase family and is not a mir or let gene\n"
+            print STDERR "$transcript_model_id is not a mirbase family and is not a mir or let gene\n" if ($self->debug);
         }
       }
     }
     # A simple hash classified by the Acc model ids
+    if (defined $self->param('model_name_ids')->{$transcript_model_id}) {
+        print STDERR "$transcript_model_id has been converted to id " . $self->param('model_name_ids')->{$transcript_model_id} . "\n" if ($self->debug);
+        $transcript_model_id = $self->param('model_name_ids')->{$transcript_model_id};
+    }
     $self->param('rfamclassify')->{$transcript_model_id}{$transcript_member_id} = 1;
 
     # Store list of orphan ids
@@ -302,18 +315,17 @@ sub build_hash_cms {
   my $self = shift;
   my $field = shift;
 
-  my $sql = "SELECT $field, type from nc_profile";
+  my $sql = "SELECT $field from nc_profile";
   my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute;
   while( my $ref  = $sth->fetchrow_arrayref() ) {
-    my ($field_value, $type) = @$ref;
+    my ($field_value) = @$ref;
     $self->param('rfamcms')->{$field}{$field_value} = 1;
   }
 }
 
-sub load_model_id_names {
+sub load_names_model_id {
   my $self = shift;
-  my $field = shift;
 
     # vivification:
   $self->param('model_id_names', {});
