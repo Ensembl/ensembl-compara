@@ -111,6 +111,9 @@ sub write_output {
 
   $self->check_if_exit_cleanly;
   $self->store_proteintree;
+  if (defined $self->param('output_dir')) {
+    system("zip -r -9 ".($self->param('output_dir'))."/".($self->param('protein_tree_id')).".zip ".$self->worker_temp_directory);
+  }
 }
 
 
@@ -147,7 +150,7 @@ sub run_njtree_phyml {
 
   my $newick_file = $input_aln . "_njtree_phyml_tree.txt ";
 
-  my $treebest_exe = $self->analysis->program_file || '';
+  my $treebest_exe = defined $self->analysis ? $self->analysis->program_file || '' : '';
   unless (-e $treebest_exe) {
       $treebest_exe = '/software/ensembl/compara/treebest/treebest';
   }
@@ -158,7 +161,7 @@ sub run_njtree_phyml {
   # Option 1 is species_tree_string in protein_tree_tag, which then doesn't require tracking files around
   # Option 2 is species_tree_file which should still work for compatibility
   my $sql1 = "select value from protein_tree_tag where tag='species_tree_string'";
-  my $sth1 = $self->dbc->prepare($sql1);
+  my $sth1 = $self->compara_dba->dbc->prepare($sql1);
   $sth1->execute;
   my $species_tree_string = $sth1->fetchrow_hashref;
   $sth1->finish;
@@ -191,7 +194,7 @@ sub run_njtree_phyml {
       $cmd .= " -f ". $self->param('species_tree_file');
     }
     $cmd .= " ". $input_aln;
-    $cmd .= " -p tree ";
+    $cmd .= " -p interm ";
     $cmd .= " -o " . $newick_file;
     my $logfile = $self->worker_temp_directory. "proteintree_". $protein_tree->node_id . ".log";
     my $errfile = $self->worker_temp_directory. "proteintree_". $protein_tree->node_id . ".err";
@@ -199,7 +202,7 @@ sub run_njtree_phyml {
     #     $cmd .= " 2>&1 > /dev/null" unless($self->debug);
 
     my $worker_temp_directory = $self->worker_temp_directory;
-    my $full_cmd = "cd $worker_temp_directory; $cmd";
+    my $full_cmd = defined $worker_temp_directory ? "cd $worker_temp_directory; $cmd" : $cmd;
     print STDERR "Running:\n\t$full_cmd\n" if($self->debug);
 
     $self->compara_dba->dbc->disconnect_when_inactive(1);
