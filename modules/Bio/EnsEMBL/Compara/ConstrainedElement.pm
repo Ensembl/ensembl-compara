@@ -646,8 +646,8 @@ sub summary_as_hash {
   my $self = shift;
   my $summary_ref;
   $summary_ref->{'ID'} = $self->dbID;
-  $summary_ref->{'start'} = $self->start;
-  $summary_ref->{'end'} = $self->start;
+  $summary_ref->{'start'} = $self->seq_region_start;
+  $summary_ref->{'end'} = $self->seq_region_end;
   $summary_ref->{'strand'} = $self->strand;
   $summary_ref->{'seq_region_name'} = $self->slice->seq_region_name;
   $summary_ref->{'score'} = $self->score;
