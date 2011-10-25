@@ -111,6 +111,9 @@ sub write_output {
 
   $self->check_if_exit_cleanly;
   $self->store_proteintree;
+  if (defined $self->param('output_dir')) {
+    system("zip -r -9 ".($self->param('output_dir'))."/".($self->param('protein_tree_id')).".zip ".$self->worker_temp_directory);
+  }
 }
 
 
@@ -204,7 +207,7 @@ sub run_njtree_phyml {
       $cmd .= " -f ". $species_tree_file;
     }
     $cmd .= " ". $input_aln;
-    $cmd .= " -p tree ";
+    $cmd .= " -p interm ";
     $cmd .= " -o " . $newick_file;
     my $logfile = $self->worker_temp_directory. "proteintree_". $protein_tree->node_id . ".log";
     my $errfile = $self->worker_temp_directory. "proteintree_". $protein_tree->node_id . ".err";
