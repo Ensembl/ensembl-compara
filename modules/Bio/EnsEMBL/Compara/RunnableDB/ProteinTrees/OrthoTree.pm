@@ -670,10 +670,18 @@ sub delete_old_homologies {
   # New method all in one go -- requires key on tree_node_id
   my $delete_time = time();
   my $tree_node_id = $self->param('protein_tree')->node_id;
-  my $sql1 = "delete h.*, hm.* from homology h, homology_member hm where h.homology_id=hm.homology_id and h.tree_node_id=$tree_node_id";
+
+  # Delete first the members
+  my $sql1 = 'DELETE homology_member FROM homology JOIN homology_member USING (homology_id) WHERE tree_node_id=?';
   my $sth1 = $self->dbc->prepare($sql1);
-  $sth1->execute;
+  $sth1->execute($tree_node_id);
   $sth1->finish;
+
+  # And then the homologies
+  my $sql2 = 'DELETE FROM homology WHERE tree_node_id=?';
+  my $sth2 = $self->dbc->prepare($sql2);
+  $sth2->execute($tree_node_id);
+  $sth2->finish;
   printf("%1.3f secs build links and features\n", time()-$delete_time);
 
   $self->param('old_homologies_deleted', 1);
