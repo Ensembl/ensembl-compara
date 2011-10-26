@@ -26,6 +26,7 @@ Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basi
 package Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable;
 
 use strict;
+use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 use base ('Bio::EnsEMBL::Hive::Process');
@@ -82,6 +83,10 @@ sub go_figure_compara_dba {
     } elsif(UNIVERSAL::can($foo, 'db') and UNIVERSAL::can($foo->db, 'dbc') and UNIVERSAL::isa($foo->db->dbc, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # another data adaptor or Runnable:
 
         return Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -DBCONN => $foo->db->dbc );
+
+    } elsif(!ref($foo) and $foo=~m{^\w*://}) {
+
+        return Bio::EnsEMBL::Hive::URLFactory->fetch( $foo . ';type=compara' );
 
     } else {
     
