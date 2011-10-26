@@ -56,23 +56,6 @@ use IO::File;
 
 use base ('Bio::EnsEMBL::Compara::NestedSet');
 
-# FIXME remove because description_score is not relevant for gene trees
-=head2 description_score
-
-  Arg [1]    : 
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
-
-=cut
-
-sub description_score { # deprecated ?
-  my $self = shift;
-  $self->{'_description_score'} = shift if(@_);
-  return $self->{'_description_score'};
-}
 
 sub get_leaf_by_Member {
   my $self = shift;
@@ -204,14 +187,6 @@ sub consensus_cigar_line {
    return $cons_cigar;
 }
 
-# FIXME: remove because not computed any more
-sub get_SitewiseOmega_values {
-  my $self = shift;
-
-  my @values = @{$self->adaptor->db->get_SitewiseOmegaAdaptor->fetch_all_by_ProteinTreeId($self->node_id)};
-
-  return \@values;
-}
 
 # Get the internal Ensembl GeneTree stable_id from the separate table
 sub stable_id {
