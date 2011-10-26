@@ -153,12 +153,10 @@ sub run_otherparalogs {
   printf("build paralogs graph\n") if($self->debug);
   my @genepairlinks;
   my $graphcount = 0;
-  my $tree_node_id = $tree->node_id;
   while (my $protein1 = shift @all_protein_leaves) {
     foreach my $protein2 (@all_protein_leaves) {
       next unless ($protein1->genome_db_id == $protein2->genome_db_id);
       my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link ( $protein1, $protein2, 0 );
-      $genepairlink->add_tag("tree_node_id", $tree_node_id);
       push @genepairlinks, $genepairlink;
       print STDERR "build graph $graphcount\n" if ($graphcount++ % 10 == 0);
     }
@@ -211,8 +209,6 @@ sub store_gene_link_as_homology {
   my $type = $genepairlink->get_tagvalue('orthotree_type');
   return unless($type);
   my $subtype = $genepairlink->get_tagvalue('orthotree_subtype');
-  my $tree_node_id = $genepairlink->get_tagvalue('tree_node_id');
-  warn("Tag tree_node_id undefined\n") unless(defined($tree_node_id) && $tree_node_id ne '');
 
   my ($protein1, $protein2) = $genepairlink->get_nodes;
   # Check is stored as within_species_paralog
@@ -238,8 +234,8 @@ sub store_gene_link_as_homology {
   $homology->description($type);
   $homology->subtype($subtype);
   # $homology->node_id($ancestor->node_id);
-  $homology->ancestor_node_id($tree_node_id);
-  $homology->tree_node_id($tree_node_id);
+  $homology->ancestor_node_id($self->param('protein_tree_id'));
+  $homology->tree_node_id($self->param('protein_tree_id'));
   $homology->method_link_type($mlss->method_link_type);
   $homology->method_link_species_set($mlss);
 
@@ -284,7 +280,6 @@ sub store_gene_link_as_homology {
     my $member_id1 = $protein1->gene_member->member_id;
     my $member_id2 = $protein2->gene_member->member_id;
     if ($member_id1 == $member_id2) {
-      my $tree_id = $self->param('protein_tree')->node_id;
       my $pmember_id1 = $protein1->member_id; my $pstable_id1 = $protein1->stable_id;
       my $pmember_id2 = $protein2->member_id; my $pstable_id2 = $protein2->stable_id;
       $self->throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
