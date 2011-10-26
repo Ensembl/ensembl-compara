@@ -38,21 +38,19 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
+
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-
     # parameters that are likely to change from execution to another:
+	  'mlss_id'           => 100,
         'release'               => '2011_04',
         'rel_suffix'            => 'b',    # an empty string by default, a letter otherwise
-        'ensembl_cvs_root_dir'  => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, # make sure you have this variable defined & exported in your shell configs
-        'email'                 => $ENV{'USER'}.'@sanger.ac.uk',    # NB: your EBI address may differ from the Sanger one!
         'work_dir'              => '/lustre/scratch101/ensembl/'.$ENV{'USER'}.'/quest_for_orthologs_'.$self->o('rel_with_suffix'),
         'data_dir'              => $self->o('work_dir').'/fasta',
 	  'qfo_method_link_id'    => 401,
 	  'qfo_species_set_id'    => 1,
 	  'reuse_species_set_id'  => 2,
-	  'qfo_mlss_id'           => 100,
 
     # dependent parameters:
         'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
@@ -77,7 +75,7 @@ sub default_options {
 
 
     # executable locations:
-        'wublastp_exe'              => 'wublastp',
+        'wublastp_exe'              => '/usr/local/ensembl/bin/wublastp',
         'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         'mcoffee_exe'               => '/software/ensembl/compara/tcoffee-7.86b/t_coffee',
         'mafft_exe'                 => '/software/ensembl/compara/mafft-6.707/bin/mafft',
@@ -86,6 +84,15 @@ sub default_options {
         'treebest_exe'              => '/nfs/users/nfs_m/mm14/workspace/treebest.qfo/treebest',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
 
+    # hive_capacity values for some analyses:
+        'store_sequences_capacity'  => 200,
+        'blastp_capacity'           => 450,
+        'mcoffee_capacity'          => 600,
+        'njtree_phyml_capacity'     => 400,
+        'ortho_tree_capacity'       => 200,
+        'build_hmm_capacity'        => 200,
+        'other_paralogs_capacity'   =>  50,
+        'homology_dNdS_capacity'    => 200,
 
     # connection parameters to various databases:
 
@@ -117,16 +124,6 @@ sub default_options {
 }
 
 
-sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-
-        'email'             => $self->o('email'),           # for (future) automatic notifications (may be unsupported by your Meadows)
-    };
-}
-
-
 sub pipeline_create_commands {
     my ($self) = @_;
     return [
@@ -135,7 +132,7 @@ sub pipeline_create_commands {
         'mkdir -p '.$self->o('fasta_dir'),
 
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
-        'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1',
+        'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1 || echo "Striping is not available on this system" ',
 
         'mkdir -p '.$self->o('cluster_dir'),
     ];
@@ -354,7 +351,7 @@ sub pipeline_analyses {
             -parameters => {
 		    'sql'           => [
 		    		'INSERT INTO method_link (method_link_id,type,class) VALUES ('.$self->o('qfo_method_link_id').', "QUEST_FOR_ORTHOLOGS_PROTEIN_TREES", "ProteinTree.protein_tree_node")',
-		    		'INSERT INTO method_link_species_set (method_link_species_set_id,method_link_id,species_set_id,name) VALUES ('.$self->o('qfo_mlss_id').', '.$self->o('qfo_method_link_id').', '.$self->o('qfo_species_set_id').', "protein trees" ) ' 
+		    		'INSERT INTO method_link_species_set (method_link_species_set_id,method_link_id,species_set_id,name) VALUES ('.$self->o('mlss_id').', '.$self->o('qfo_method_link_id').', '.$self->o('qfo_species_set_id').', "protein trees" ) ' 
 		    ],
             },
 		-flow_into => [ 'make_species_tree' ],  # backbone
@@ -420,16 +417,15 @@ sub pipeline_analyses {
         {   -logic_name         => 'blastp_with_reuse',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
             -parameters         => {
-                'mlss_id'                   => $self->o('qfo_mlss_id'),
+                'mlss_id'                   => $self->o('mlss_id'),
                 'reuse_db'                  => $self->o('reuse_db'),
                 'blast_options'             => $self->o('blast_options'),
                 'blast_tmp_dir'             => $self->o('blast_tmp_dir'),
                 'fasta_dir'                 => $self->o('fasta_dir'),
                 'wublastp_exe'              => $self->o('wublastp_exe'),
             },
-            #-wait_for => [ 'dump_subset_create_blastdb', 'paf_create_empty_table', 'copy_paf_table' ],
             -batch_size    =>  40,
-            -hive_capacity => 450,
+            -hive_capacity => $self->o('blastp_capacity'),
         },
 
 # ---------------------------------------------[clustering step]---------------------------------------------------------------------
@@ -437,7 +433,7 @@ sub pipeline_analyses {
         {   -logic_name => 'hcluster_dump_input_per_genome',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepare',
             -parameters => {
-                'mlss_id'       => $self->o('qfo_mlss_id'),
+                'mlss_id'       => $self->o('mlss_id'),
                 'outgroups'     => $self->o('outgroups'),
                 'cluster_dir'   => $self->o('cluster_dir'),
             },
@@ -481,7 +477,7 @@ sub pipeline_analyses {
         {   -logic_name => 'hcluster_parse_output',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput',
             -parameters => {
-                'mlss_id'                   => $self->o('qfo_mlss_id'),
+                'mlss_id'                   => $self->o('mlss_id'),
                 'cluster_dir'               => $self->o('cluster_dir'),
             },
             -hive_capacity => -1,
@@ -510,7 +506,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC',
             -parameters => {
                 'reuse_db'                  => $self->o('reuse_db'),
-                'groupset_tag'              => 'ClustersetQC',
+                'groupset_tag'              => 'Clusterset',
             },
             -wait_for => [ 'hcluster_parse_output' ],
             -hive_capacity => 3,
@@ -532,7 +528,7 @@ sub pipeline_analyses {
                 'mafft_binaries'            => $self->o('mafft_binaries'),
             },
             -wait_for => [ 'overall_clusterset_qc', 'per_genome_clusterset_qc' ],    # funnel
-            -hive_capacity        => 600,
+            -hive_capacity        => $self->o('mcoffee_capacity'),
             -flow_into => {
                -2 => [ 'mcoffee_himem' ],  # RUNLIMIT
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
@@ -551,7 +547,7 @@ sub pipeline_analyses {
                 'mafft_exe'                 => $self->o('mafft_exe'),
                 'mafft_binaries'            => $self->o('mafft_binaries'),
             },
-            -hive_capacity        => 600,
+            -hive_capacity        => $self->o('mcoffee_capacity'),
             -can_be_empty         => 1,
             -flow_into => {
                 1 => [ 'njtree_phyml' ],
@@ -565,16 +561,14 @@ sub pipeline_analyses {
             -parameters => {
                 'cdna'                      => 0,
                 'bootstrap'                 => 1,
-		        'check_split_genes'         => 0,
+                'check_split_genes'         => 0,
                 'use_genomedb_id'           => $self->o('use_genomedb_id'),
                 'treebest_exe'              => $self->o('treebest_exe'),
             },
-            -hive_capacity        => 0,
+            -hive_capacity        => $self->o('njtree_phyml_capacity'),
             -failed_job_tolerance => 5,
 		-wait_for => [ 'make_species_tree' ],
             -flow_into => {
-               -2 => [ 'quick_tree_break' ],  # RUNLIMIT
-               -1 => [ 'quick_tree_break' ],  # MEMLIMIT
                 1 => [ 'ortho_tree' ],
                 2 => [ 'njtree_phyml' ],
             },
@@ -585,7 +579,7 @@ sub pipeline_analyses {
             -parameters => {
                 'use_genomedb_id'           => $self->o('use_genomedb_id'),
             },
-            -hive_capacity        => 200,
+            -hive_capacity        => $self->o('ortho_tree_capacity'),
             -failed_job_tolerance => 5,
             -flow_into => {
             },
@@ -594,7 +588,7 @@ sub pipeline_analyses {
         {   -logic_name => 'quick_tree_break',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::QuickTreeBreak',
             -parameters => {
-                'mlss_id'           => $self->o('qfo_mlss_id'),
+                'mlss_id'           => $self->o('mlss_id'),
                 'quicktree_exe'     => $self->o('quicktree_exe'),
                 'sreformat_exe'     => $self->o('sreformat_exe'),
             },
@@ -620,7 +614,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OtherParalogs',
             -parameters => { },
             -wait_for => [ 'dummy_wait_alltrees' ],
-            -hive_capacity        => 50,
+            -hive_capacity        => $self->o('other_paralogs_capacity'),
             -failed_job_tolerance => 5,
         },
 
@@ -640,41 +634,12 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC',
             -parameters => {
                 'reuse_db'                  => $self->o('reuse_db'),
-                'groupset_tag'              => 'GeneTreesetQC',
+                'groupset_tag'              => 'GeneTreeset',
             },
             -wait_for => [ 'dummy_wait_alltrees' ],
             -hive_capacity => 3,
         },
 
-# ---------------------------------------------[homology duplications QC step]-------------------------------------------------------
-
-        {   -logic_name => 'homology_duplications_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
-            -parameters => {
-                'adaptor_name'          => 'MethodLinkSpeciesSetAdaptor',
-                'adaptor_method'        => 'fetch_all_by_method_link_type',
-
-                'column_names2getters'  => { 'mlss_id' => 'dbID' },
-                'input_id'              => { 'mlss_id' => '#mlss_id#', 'is_ortho' => '#is_ortho#' },
-
-                'fan_branch_code'       => 2,
-            },
-            -wait_for => [ 'per_genome_genetreeset_qc', 'overall_genetreeset_qc' ],    # funnel
-            -input_ids => [
-                { 'method_param_list' => [ 'ENSEMBL_ORTHOLOGUES' ], 'is_ortho' => 1 },
-                { 'method_param_list' => [ 'ENSEMBL_PARALOGUES'  ], 'is_ortho' => 0 },
-            ],
-            -hive_capacity => -1,
-            -flow_into => {
-                2 => [ 'homology_duplications' ],
-            },
-        },
-
-        {   -logic_name => 'homology_duplications',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HDupsQC',
-            -parameters => { },
-            -hive_capacity => 10,
-        },
 
     ];
 }
