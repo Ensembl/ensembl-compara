@@ -1079,8 +1079,10 @@ sub store_gene_link_as_homology {
         && (1000000 > abs($gene_member1->chr_start - $gene_member2->chr_start)) 
         && $gene_member1->chr_strand eq $gene_member2->chr_strand ) {
       $homology->description('contiguous_gene_split');
-      $ancestor->store_tag('node_type', 'gene_split')
-        unless ($self->param('_readonly'));
+      if (scalar(@{$ancestor->get_all_leaves}) == 2) {
+        $ancestor->store_tag('node_type', 'gene_split')
+          unless ($self->param('_readonly'));
+      }
       $self->param('orthotree_homology_counts')->{'contiguous_gene_split'}++;
     } else {
       $homology->description('putative_gene_split');
