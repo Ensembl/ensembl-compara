@@ -1263,10 +1263,10 @@ sub _munge_meta {
   my $meta_info = $self->_meta_info('DATABASE_CORE') || {};
   my @sp_count  = grep { $_ > 0 } keys %$meta_info;
 
-  if (scalar @sp_count > 1) {
-    ## Database contains more than one species
-    $self->tree->{'SPP_ARE_GROUPED'} = 1;
+  ## How many species in database?
+  $self->tree->{'SPP_IN_DB'} = scalar @sp_count;
     
+  if (scalar @sp_count > 1) {
     if ($meta_info->{0}{'species.group'}) {
       $self->tree->{'DISPLAY_NAME'} = $meta_info->{0}{'species.group'};
     } else {
