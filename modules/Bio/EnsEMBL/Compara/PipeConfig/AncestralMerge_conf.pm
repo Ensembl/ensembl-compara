@@ -125,7 +125,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
                 'to_url' => $self->dbconn_2_url('pipeline_db'),
-                'cmd'    => $self->o('merge_script').' --from_url #from_url# --to_url #to_url# --mlss_id #mlss_id#',
+                'cmd'    => 'perl ' . $self->o('merge_script').' --from_url #from_url# --to_url #to_url# --mlss_id #mlss_id#',
             },
             -hive_capacity  => 1,   # do them one-by-one
             -rc_id => 2,
