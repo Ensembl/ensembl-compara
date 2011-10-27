@@ -1,43 +1,49 @@
+# $Id$
+
 package EnsEMBL::Web::Command::ShareRecord;
 
 use strict;
-use warnings;
 
 use EnsEMBL::Web::Data::Group;
+use EnsEMBL::Web::Data::Record;
 
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
-  my $self = shift;
-  my $object = $self->object;
-
-  my $user = $object->user;
-
-  my $url = $object->species_path($object->data_species) . '/';
-  my $param = {};
-
-  my $group = EnsEMBL::Web::Data::Group->new($object->param('webgroup_id'));
-  my @ids = ($object->param('id'));
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $user  = $hub->user;
+  my $group = new EnsEMBL::Web::Data::Group($hub->param('webgroup_id'));
+  my %url_params;
 
   if ($group && $user->is_administrator_of($group)) {
-    foreach my $id (@ids) {
-      next unless $id;
-      my $user_record = EnsEMBL::Web::Data::Record->new('owner' => 'user', 'id' => $id);
+    foreach (grep $_, $hub->param('id')) {
+      my $user_record = new EnsEMBL::Web::Data::Record(owner => 'user', id => $_);
+      
       next unless $user_record && $user_record->user_id == $user->id;
+      
       my $clone = $user_record->clone;
+      
       $clone->owner($group);
       $clone->save;
     }
-    $param->{'id'} = $group->id;
-    $url .= 'Account/Group/List';
-  } 
-  else {
-    $param->{'filter_module'} = 'Shareable';
-    $param->{'filter_code'} = 'no_group';
-    $url .= 'UserData/ManageData';
+    
+    %url_params = (
+      type     => 'Account',
+      action   => 'Group',
+      function => 'List',
+      id       => $group->id,
+    );
+  } else {
+    %url_params = (
+      type          => 'UserData',
+      action        => 'ManageData',
+      filter_module => 'Shareable',
+      filter_code   => 'no_group',
+    );
   }
  
-  $self->ajax_redirect($url, $param);
+  $self->ajax_redirect($hub->url(\%url_params));
 }
 
 1;
