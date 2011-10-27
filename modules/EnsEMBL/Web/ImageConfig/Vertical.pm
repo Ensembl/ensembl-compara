@@ -5,6 +5,8 @@ package EnsEMBL::Web::ImageConfig::Vertical;
 ## Alternative configuration for karyotype used in BlastView
 use strict;
 
+use HTML::Entities qw(encode_entities);
+
 use EnsEMBL::Web::DBSQL::DBConnection;
 
 # use EnsEMBL::Web::Tools::Misc qw(style_by_filesize); # DO NOT UNCOMMENT OR DELETE THIS LINE - It can cause circular references.
@@ -46,12 +48,17 @@ sub load_user_tracks {
     
     foreach my $track (@tracks) {
       push @user_tracks, {
-        id      => "temp-$type-$track->{'code'}", 
-        species => $track->{'species'},
-        source  => $track->{$field},
-        format  => $track->{'format'},
-        render  => EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'}),
-        name    => $track->{'name'} || $track->{$field}
+        id          => join('_', $type, $track->{'code'}), 
+        species     => $track->{'species'},
+        source      => $track->{$field},
+        format      => $track->{'format'},
+        render      => EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'}),
+        name        => $track->{'name'} || $track->{$field},
+        on          => $track->{'default_configs'}{$self->{'type'}},
+        external    => $type eq 'upload' ? 'tmp' : $type,
+        description => $type eq 'upload' ? 'Data that has been temporarily uploaded to the web server.' : sprintf('
+          Data retrieved from an external webserver. This data is attached to the session, and comes from URL: %s', encode_entities($track->{'url'})
+        ),
       };
     }
   }
@@ -59,7 +66,7 @@ sub load_user_tracks {
   # Add saved tracks, if any
   if ($user) {
     foreach my $entry ($user->uploads) {
-      next unless  $entry->species eq $self->{'species'};
+      next unless $entry->species eq $self->{'species'};
       
       foreach my $analysis (split /, /, $entry->analyses) {
         $user_sources{$analysis} = {
@@ -69,6 +76,7 @@ sub load_user_tracks {
           filesize    => $entry->filesize,
           species     => $entry->species,
           assembly    => $entry->assembly,
+          on          => $entry->{'default_configs'}{$self->{'type'}},
         };
         
         $self->_compare_assemblies($entry, $session);
@@ -93,7 +101,9 @@ sub load_user_tracks {
           description => $analysis->description,
           style       => $analysis->web_data,
           display     => $source->{'display'},
-          render      => EnsEMBL::Web::Tools::Misc::style_by_filesize($source->{'filesize'})
+          on          => $source->{'on'},
+          external    => 'user',
+          render      => EnsEMBL::Web::Tools::Misc::style_by_filesize($source->{'filesize'}),
         };
       }
     }
@@ -117,10 +127,11 @@ sub load_user_tracks {
         logic_name  => $entry->{'logic_name'},
         caption     => $entry->{'name'},
         description => $entry->{'description'},
-        display     => $entry->{'display'} || ($format eq 'wiggle' || $format eq 'WIG' ? 'density_bar' : 'density_line'),
+        display     => $entry->{'on'} ? $entry->{'display'} || ($format eq 'wiggle' || $format eq 'WIG' ? 'density_bar' : 'density_line') : 'off',
         style       => $entry->{'style'},
+        external    => $entry->{'external'},
         width       => $width,
-        strand      => 'b'
+        strand      => 'b',
       };
 
       $menu->append($self->create_track($entry->{'id'}, $entry->{'name'}, $settings));
