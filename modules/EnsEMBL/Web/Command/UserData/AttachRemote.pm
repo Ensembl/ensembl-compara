@@ -4,121 +4,98 @@ package EnsEMBL::Web::Command::UserData::AttachRemote;
 
 use strict;
 
+use Digest::MD5 qw(md5_hex);
+
 use EnsEMBL::Web::Root;
 
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
-  my $self     = shift;
-  my $hub      = $self->hub;
-  my $object   = $self->object;
-  my $session  = $hub->session;
-  my $redirect = $hub->species_path($hub->data_species) . '/UserData/';
-  my $name     = $hub->param('name');
-  my $param    = {};
-  my $options  = {};
-  my $error;
-
-  my @path = split '/', $hub->param('url');
-  my $filename = $path[-1];
-  $name ||= $filename;
-
-  ## Check file format
-  my $format;
-  my @bits = split /\./, $filename;
-  my $extension = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
-  ## Note - we want keys for small formats to compare with dropdown values,
-  ## but values for big formats to compare with file extensions
-  my $formats = $hub->species_defs->DATA_FILE_FORMATS;
-  my @small_formats = $hub->species_defs->UPLOAD_FILE_FORMATS;
-  my @big_exts;
-  foreach my $f ($hub->species_defs->REMOTE_FILE_FORMATS) {
-    push @big_exts, $formats->{$f}{'ext'};
-  }
-
+  my $self          = shift;
+  my $hub           = $self->hub;
+  my $object        = $self->object;
+  my $species_defs  = $hub->species_defs;
+  my $session       = $hub->session;
+  my $redirect      = $hub->species_path($hub->data_species) . '/UserData/';
+  my $url           = $hub->param('url');
+  my $filename      = [split '/', $url]->[-1];
+  my $name          = $hub->param('name') || $filename;
   my $chosen_format = $hub->param('format');
-  my $pattern = '^'.$extension.'$';
+  my $formats       = $species_defs->DATA_FILE_FORMATS;
+  my @small_formats = $species_defs->UPLOAD_FILE_FORMATS;
+  my @big_exts      = map $formats->{$_}{'ext'}, $species_defs->REMOTE_FILE_FORMATS;
+  my @bits          = split /\./, $filename;
+  my $extension     = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
+  my $pattern       = "^$extension\$";
+  my %params;
 
   ## We have to do some intelligent checking here, in case the user
   ## doesn't select a format, or tries to attach a large format file
   ## with a small format selected in the form
-  if (!$chosen_format || (grep(/$chosen_format/i, @small_formats) && grep(/$pattern/i, @big_exts))) {
-    $format = uc($extension);
-  }
-  else {
-    $format = $chosen_format;
-  }
+  my $format = !$chosen_format || (grep(/$chosen_format/i, @small_formats) && grep(/$pattern/i, @big_exts)) ? uc $extension : $chosen_format;
 
-  unless ($format) {
+  if (!$format) {
     $redirect .= 'SelectRemote';
+    
     $session->add_data(
-        'type'  => 'message',
-        'code'  => 'AttachURL',
-        'message' => 'Unknown format',
-        function => '_error'
+      type     => 'message',
+      code     => 'AttachURL',
+      message  => 'Unknown format',
+      function => '_error'
     );
   }
 
-  if (my $url = $hub->param('url')) {
-
-    my $check_method = 'check_'.lc($format).'_data';
-    if ($object->can($check_method)) {
-      ($error, $options) = $object->$check_method($url);
-    }
-    else {
-      ($error, $options) = $object->check_url_data($url);
-    }
-
+  if ($url) {
+    my $check_method      = sprintf 'check_%s_data', lc $format;
+    my ($error, $options) = $object->can($check_method) ? $object->$check_method($url) : $object->check_url_data($url);
+    
     if ($error) {
       $redirect .= 'SelectRemote';
+      
       $session->add_data(
-          'type'  => 'message',
-          'code'  => 'AttachURL',
-          'message' => $error,
-          function => '_error'
+        type     => 'message',
+        code     => 'AttachURL',
+        message  => $error,
+        function => '_error'
       );
-    }
-    else {
+    } else {
       ## This next bit is a hack - we need to implement userdata configuration properly! 
-      if ($format eq 'BIGWIG') {
-        $redirect .= 'ConfigureBigWig';
-      }
-      else {
-        $redirect .= 'RemoteFeedback';
-      }
+      $redirect .= $format eq 'BIGWIG' ? 'ConfigureBigWig' : 'RemoteFeedback';
+      
       my $data = $session->add_data(
         type      => 'url',
+        code      => join('_', md5_hex($url), $session->session_id),
         url       => $url,
         name      => $name,
         format    => $format,
         style     => $format,
         species   => $hub->data_species,
-        timestamp => time(),
+        timestamp => time,
         %$options,
       );
-      my $config_method = 'configure_'.lc($format).'_views';
-      if ($session->can($config_method)) {
-        $session->$config_method($data);
-        $session->store;
-      }
-      if ($hub->param('save')) {
-        $self->object->move_to_user(type => 'url', code => $data->{'code'});
-      }
-      $param->{'format'} = $format;
-      $param->{'type'} = 'url';
-      $param->{'code'} = $data->{'code'};
+      
+      $session->configure_user_data('url', $data);
+      $session->store;
+      
+      $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
+      
+      %params = (
+        format => $format,
+        type   => 'url',
+        code   => $data->{'code'},
+      );
     }
   } else {
     $redirect .= 'SelectRemote';
       $session->add_data(
-          'type'  => 'message',
-          'code'  => 'AttachURL',
-          'message' => 'No URL was provided',
-          function => '_error'
+        type     => 'message',
+        code     => 'AttachURL',
+        message  => 'No URL was provided',
+        function => '_error'
       );
   }
-
-  $self->ajax_redirect($redirect, $param);  
+  
+  $self->ajax_redirect($redirect, \%params);  
 }
 
 1;

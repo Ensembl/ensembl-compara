@@ -3,8 +3,6 @@
 package EnsEMBL::Web::Command::UserData::UploadFile;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use HTML::Entities qw(encode_entities);
 
@@ -14,37 +12,32 @@ use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
-  my $self = shift;
-  my $object = $self->object;
-  my $hub = $self->hub;
-  my $url = $object->species_path($object->data_species);
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $url   = $hub->species_path($hub->data_species);
   my $param = {};
   my $error = $hub->input->cgi_error;
 
   if ($error =~ /413/) {
     $param->{'filter_module'} = 'Data';
-    $param->{'filter_code'} = 'too_big';
+    $param->{'filter_code'}   = 'too_big';
   }
 
   my @methods = qw(text file url);
   my $method;
-  foreach my $M (@methods) {
-    if ($hub->param($M)) {
-      $method = $M;
+  
+  foreach (@methods) {
+    if ($hub->param($_)) {
+      $method = $_;
       last;
     }
   }
 
   if ($hub->param($method)) {
-    $param = upload($method, $hub);
-    if (!$param->{'format'}) {
-      $url .= '/UserData/MoreInput';
-    }
-    else {
-      $url .= '/UserData/UploadFeedback';
-    } 
-  }
-  else {
+    $param = $self->upload($method);
+    
+    $url .= $param->{'format'} ? '/UserData/UploadFeedback' : '/UserData/MoreInput';
+  } else {
     $url .= '/UserData/SelectFile';
   }
 
@@ -67,104 +60,101 @@ sub process {
 
 sub upload {
 ## Separate out the upload, to make code reuse easier
-  my ($method, $hub) = @_;
-  my $param = {};
+  my ($self, $method) = @_;
+  my $hub       = $self->hub;
+  my $param     = {};
+  my @orig_path = split '/', $hub->param($method);
+  my $filename  = $orig_path[-1];
+  my $name      = $hub->param('name');
+  my $f_param   = $hub->param('format');
   my ($error, $format, $full_ext, %args);
-  my @orig_path = split('/', $hub->param($method));
-  my $filename = $orig_path[-1];
-
-  my $name = $hub->param('name');
+  
   ## Need the filename (for handling zipped files)
   if ($method eq 'text') {
     $name = 'Data' unless $name;
-  }
-  else {
+  } else {
     my @orig_path = split('/', $hub->param($method));
-    $filename = $orig_path[-1];
+    
+    $filename         = $orig_path[-1];
+    $name             = $filename unless $name;
     $args{'filename'} = $filename;
-    $name = $filename unless $name;
   }
+  
   $param->{'name'} = $name;
 
   ## Has the user specified a format?
-  my $f_param = $hub->param('format');
   if ($f_param) {
     $format = $f_param;
-  }
-  else {
+  } elsif ($method ne 'text') {
     ## Try to guess the format from the extension
-    unless ($method eq 'text') {
-      my @parts = split('\.', $filename);
-      my $ext = $parts[-1];
-      if ($ext =~ /gz/i) {
-        $ext = $parts[-2];
-      }
-      my $extensions;
-      my $format_info = $hub->species_defs->DATA_FORMAT_INFO;
-      foreach my $f (@{$hub->species_defs->UPLOAD_FILE_FORMATS}) {
-        $format = uc $ext if ($format_info->{$f}{'ext'} =~ /$ext/i);
-      }
+    my @parts       = split('\.', $filename);
+    my $ext         = $parts[-1] =~ /gz/i ? $parts[-2] : $parts[-1];
+    my $format_info = $hub->species_defs->DATA_FORMAT_INFO;
+    my $extensions;
+    
+    foreach (@{$hub->species_defs->UPLOAD_FILE_FORMATS}) {
+      $format = uc $ext if $format_info->{$_}{'ext'} =~ /$ext/i;
     }
   }
+  
   $param->{'format'} = $format;
 
   ## Set up parameters for file-writing
   if ($method eq 'url') {
-    my $url = $hub->param('url');
-    $url = 'http://'.$url unless $url =~ /^http/;
+    my $url      = $hub->param('url');
+       $url      = "http://$url" unless $url =~ /^http/;
     my $response = get_url_content($url);
-    $error = $response->{'error'};
+    
+    $error           = $response->{'error'};
     $args{'content'} = $response->{'content'};
-  }
-  elsif ($method eq 'text') {
+  } elsif ($method eq 'text') {
     $args{'content'} = $hub->param('text');
-  }
-  else {
-    #$args{'extension'} = $full_ext;
+  } else {
     $args{'tmp_filename'} = $hub->input->tmpFileName($hub->param($method));
   }
 
   ## Add upload to session
   if ($error) {
     $param->{'filter_module'} = 'Data';
-    $param->{'filter_code'} = 'no_response';
-  }
-  else {
+    $param->{'filter_code'}   = 'no_response';
+  } else {
     my $file = new EnsEMBL::Web::TmpFile::Text(prefix => 'user_upload', %args);
   
     if ($file->content) {
       if ($file->save) {
-        my $code = $file->md5 . '_' . $hub->session->session_id;
-        my ($sec, $min, $hr, $mday, $mon, $year) = localtime();
-        my $timestamp = sprintf '%s-%s-%s %s:%s:%s', (1900 + $year), ($mon + 1), $mday, $hr, $min, $sec;
+        my $session = $hub->session;
+        my $code    = join '_', $file->md5, $session->session_id;
 
         $param->{'species'} = $hub->param('species') || $hub->species;
+        
         ## Attach data species to session
-        $hub->session->add_data(
+        my $data = $session->add_data(
           type      => 'upload',
           filename  => $file->filename,
           filesize  => length($file->content),
           code      => $code,
           md5       => $file->md5,
           name      => $name,
-          species   => $hub->param('species'),
+          species   => $param->{'species'},
           format    => $format,
           assembly  => $hub->param('assembly'),
-          timestamp => $timestamp,
+          timestamp => time,
         );
-
+        
+        $session->configure_user_data('upload', $data);
+        $session->store;
+        
         $param->{'code'} = $code;
-      }
-      else {
+      } else {
         $param->{'filter_module'} = 'Data';
-        $param->{'filter_code'} = 'no_save';
+        $param->{'filter_code'}   = 'no_save';
       }
-    }
-    else {
+    } else {
       $param->{'filter_module'} = 'Data';
-      $param->{'filter_code'} = 'empty';
+      $param->{'filter_code'}   = 'empty';
     }
   }
+  
   return $param;
 }
 
