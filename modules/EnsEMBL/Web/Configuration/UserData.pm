@@ -130,10 +130,6 @@ sub populate_tree {
    [qw(show_remote EnsEMBL::Web::Component::UserData::ShowRemote)], 
     { 'availability' => 1, 'no_menu_entry' => 1 }
   );
-  $self->create_node( 'SaveRemote', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::SaveRemote', 
-    'availability' => 1, 'no_menu_entry' => 1 }
-  );
   $self->create_node( 'ConfigureBigWig', '',
    [qw(remote_feedback EnsEMBL::Web::Component::UserData::ConfigureBigWig)], 
     { 'availability' => 1, 'no_menu_entry' => 1 }
@@ -148,6 +144,14 @@ sub populate_tree {
     [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageData)
     ], { 'availability' => 1, 'concise' => 'Manage Data' }
   );
+  
+  $self->create_node( 'ModifyData', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::UserData::ModifyData',
+     'no_menu_entry' => 1 }
+  );
+  
+  
+  
   $self->create_node( 'RenameRecord', '',
     [qw(manage_remote EnsEMBL::Web::Component::UserData::RenameRecord)
     ], { 'availability' => 1, 'no_menu_entry' => 1 }
@@ -156,28 +160,8 @@ sub populate_tree {
     [qw(manage_remote EnsEMBL::Web::Component::UserData::RenameTempData)
     ], { 'availability' => 1, 'no_menu_entry' => 1 }
   );
-  $self->create_node( 'SaveRecord', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::SaveRecord',
-     'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'SaveTempData', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::SaveTempData',
-     'no_menu_entry' => 1 }
-  );
   $self->create_node( 'ShareRecord', '',
     [], { 'command' => 'EnsEMBL::Web::Command::ShareRecord',
-     'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'SaveUpload', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::SaveUpload',
-     'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'DeleteUpload', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::DeleteUpload',
-     'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'DeleteRemote', '',
-    [], { 'command' => 'EnsEMBL::Web::Command::UserData::DeleteRemote',
      'no_menu_entry' => 1 }
   );
   $self->create_node( 'IDConversion', "Stable ID Conversion", 
