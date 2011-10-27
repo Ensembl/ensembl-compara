@@ -51,7 +51,7 @@ sub configure {
     for my $type (keys %{$self->{'conf'}->{'_storage'}{$species}{'databases'}}){
       ## Grab the configuration information from the SpeciesDefs object
       my $TEMP = $self->{'conf'}->{'_storage'}{$species}{'databases'}{$type};
-      
+     
       ## Skip if the name hasn't been set (mis-configured database)
       if ($sp ne 'ancestral_sequences') {
         warn((' ' x 10) . "[WARN] no NAME for $sp $type") unless $TEMP->{'NAME'};
@@ -60,7 +60,9 @@ sub configure {
       
       next unless $TEMP->{'NAME'} && $TEMP->{'USER'};
 
-      my %arg = ( '-species' => $species, '-dbname' => $TEMP->{'NAME'}, '-species_id' =>  $self->{'conf'}->{'_storage'}{$species}->{SPECIES_META_ID} || 1 );
+      my $is_collection = $self->{'conf'}->{'_storage'}{$species}{'SPP_IN_DB'} > 1 ? 1 : 0;
+ 
+      my %arg = ( '-species' => $species, '-dbname' => $TEMP->{'NAME'}, '-species_id' =>  $self->{'conf'}->{'_storage'}{$species}->{SPECIES_META_ID} || 1, '-multispecies_db' => $is_collection );
       
       ## Copy through the other parameters if defined
       foreach (qw(host pass port user driver)) {
