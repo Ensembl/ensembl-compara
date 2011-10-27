@@ -17,7 +17,7 @@ sub process {
   my @share_ids  = $hub->param('share_id');
   my $url_params = { __clear => 1 };
   my $param;
-
+  
   if ($group_id) { ## Share with group
     ## Check if it is already shared
     my $group         = new EnsEMBL::Web::Data::Group($group_id);
@@ -28,22 +28,24 @@ sub process {
       $url_params->{'action'}      = 'ShareRecord';
       $url_params->{'webgroup_id'} = $group_id;
       $url_params->{'id'}          = \@shareables;
-      $url_params->{'type'}        = $hub->param('type');
+      $url_params->{'source'}      = $hub->param('source');
     } else {
       $url_params->{'action'}        = 'SelectShare';
       $url_params->{'filter_module'} = 'Shareable';
       $url_params->{'filter_code'}   = 'shared';
     }
   } else { ## Share via URL
-    my @shares;
+    my @shares = grep /^\d+$/, @share_ids;
     
-    foreach my $code (@share_ids) {
-      if ($code !~ /^d+$/) {
-        my $data = $session->get_data(type => 'upload', code => $code);
-        
-        if ($data->{'filename'}) {
-          my $ref = $object->store_data(type => 'upload', code => $code);
-        
+    foreach (grep !/^\d+$/, @share_ids) {
+      my $data = $session->get_data(type => 'upload', code => $_);
+      
+      if ($data) {
+        if ($data->{'analyses'}) {
+          push @shares, $_;
+        } else {
+          my $ref = $object->store_data(type => $data->{'type'}, code => $_);
+          
           if ($ref) {
             push @shares, $ref;
           } else {
@@ -51,6 +53,8 @@ sub process {
             $url_params->{'filter_code'}   = 'no_save';
           }
         }
+      } elsif ($session->get_data(type => 'url', code => $_)) {
+        push @shares, $_;
       }
     }
     
