@@ -5,6 +5,7 @@ use warnings;
 use Data::Dumper;
 use Time::HiRes qw /time/;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
+use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -121,6 +122,10 @@ sub dump_sequences_to_workdir {
         my $slice = $gene->slice->adaptor->fetch_by_Feature($gene, '500%');
         $self->throw("Error fetching slice") unless (defined $slice);
         my $seq = $slice->seq;
+        # fetch_by_Feature returns always the + strand
+        if ($gene->strand() < 0) {
+            reverse_comp(\$seq);
+        }
         $residues += length($seq);
         $seq =~ s/(.{72})/$1\n/g;
         chomp $seq;
