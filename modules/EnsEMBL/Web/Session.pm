@@ -33,7 +33,6 @@ use strict;
 
 use Digest::MD5    qw(md5_hex);
 use HTML::Entities qw(encode_entities);
-use Time::HiRes    qw(time);
 
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
 
@@ -293,18 +292,17 @@ sub receive_shared_data {
       $record = new EnsEMBL::Web::Data::Record::Upload::User($id);
     } else {
       # Session record:
-      $record = EnsEMBL::Web::Data::Session->retrieve(
-        session_id => [ split '_', $share_ref ]->[1],
-        type       => 'upload',
-        code       => $share_ref
-      );
+      $record = 
+        EnsEMBL::Web::Data::Session->retrieve(session_id => [ split '_', $share_ref ]->[1], type => 'upload', code => $share_ref) ||
+        EnsEMBL::Web::Data::Session->retrieve(session_id => [ split '_', $share_ref ]->[1], type => 'url',    code => $share_ref);
     }
     
     if ($record) {
       my $user = $self->hub->user;
       
       if (!($record->{'session_id'} == $self->session_id) && !($record->{'user_id'} && $user && $record->{'user_id'} == $user->id)) {
-        $self->add_data(%{$record->data});
+      warn $record->{'type'};
+        $self->add_data(type => $record->{'type'}, code => $share_ref, %{$record->data});
         push @success, $record->data->{'name'};
       }
     } else {
@@ -581,12 +579,8 @@ sub configure_das_views {
   }
 }
 
-sub configure_bam_views    { shift->configure_user_attached_data('bam',    'normal',    @_); };
-sub configure_bigwig_views { shift->configure_user_attached_data('bigwig', 'tiling',    @_); };
-sub configure_vcf_views    { shift->configure_user_attached_data('vcf',    'histogram', @_); };
-
-sub configure_user_attached_data {
-  my ($self, $track_type, $default_display, $track, $track_options) = @_;
+sub configure_user_data {
+  my ($self, $track_type, $track) = @_;
   my $hub = $self->hub;
 
   return unless $track->{'species'} eq $hub->species;
@@ -594,24 +588,9 @@ sub configure_user_attached_data {
   my $referer = $hub->referer;
   my $type    = $referer->{'ENSEMBL_TYPE'}   || $hub->type;
   my $action  = $referer->{'ENSEMBL_ACTION'} || $hub->action;
+  my %configs = map { $_ => 1 } map { $hub->get_viewconfig($_, $type)->image_config || () } @{$hub->components};
   
-  foreach (@{$hub->components}) {
-    my $view_config  = $hub->get_viewconfig($_, $type);
-    my $image_config = $view_config->image_config;
-    
-    next unless $image_config;
-    
-    $track_options->{'display'} ||= $default_display;
-
-    $image_config = $hub->get_imageconfig($image_config);
-    
-    my $node = $image_config->get_node(join '_', $track_type, $track->{'timestamp'}, md5_hex("$track->{'species'}:$track->{'url'}"));
-
-    if ($node) {
-      $node->set_user($_, $track_options->{$_}) for keys %$track_options;
-      $image_config->altered = 1;
-    }
-  }
+  $self->set_data(type => $track_type, code => $track->{'code'}, default_configs => \%configs) if scalar keys %configs;
 }
 
 1;
