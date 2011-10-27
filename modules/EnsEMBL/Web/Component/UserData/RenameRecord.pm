@@ -1,54 +1,48 @@
+# $Id$
+
 package EnsEMBL::Web::Component::UserData::RenameRecord;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
-
-use EnsEMBL::Web::Form;
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
-}
-
-sub caption {
-  my $self = shift;
-  return '';
+  $self->cacheable(0);
+  $self->ajaxable(0);
 }
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
-
-  my $form = EnsEMBL::Web::Form->new('rename_record', $object->species_path($object->data_species) . '/UserData/SaveRecord', 'post');
-
-  my $user = $object->user;
-  my $method = $object->param('accessor');
-  my ($record) = $user->$method($object->param('id'));
+  my $self     = shift;
+  my $hub      = $self->hub;
+  my $form     = $self->new_form({ action => $hub->url({ action => 'ModifyData', function => 'rename_user_record' }, 1)->[0], method => 'post' });
+  my $user     = $hub->user;
+  my $method   = $hub->param('source') eq 'url' ? 'urls' : 'uploads';
+  my $id       = $hub->param('id');
+  my ($record) = $user->$method($id);
+  
   return unless $record;
 
   $form->add_element(
-    'type'  => 'String',
-    'name'  => 'name',
-    'label' => 'Name',
-    'value' => $record->name,
+    type  => 'String',
+    name  => 'name',
+    label => 'Name',
+    value => $record->name,
   );
+  
   $form->add_element(
-    'type'  => 'Hidden',
-    'name'  =>  'id',
-    'value' => $object->param('id'),
+    type  => 'Hidden',
+    name  => 'id',
+    value => $id,
   );
+  
   $form->add_element(
-    'type'  => 'Hidden',
-    'name'  =>  'accessor',
-    'value' => $object->param('accessor'),
+    type  => 'Hidden',
+    name  => 'source',
+    value => $method,
   );
-
-  ## navigation elements
-  $form->add_element( 'type' => 'Submit', 'value' => 'Save');
+  
+  $form->add_element(type => 'Submit', value => 'Save');
 
   return $form->render;
 }

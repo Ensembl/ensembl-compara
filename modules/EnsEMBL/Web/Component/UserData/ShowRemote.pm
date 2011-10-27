@@ -20,7 +20,7 @@ sub content {
   my $self     = shift;
   my $hub      = $self->hub;
   my $session  = $hub->session;
-  my $form     = $self->modal_form('show_remote', $hub->species_path($hub->data_species). '/UserData/SaveRemote', { wizard => 1 });
+  my $form     = $self->modal_form('show_remote', $hub->species_path($hub->data_species). '/UserData/ModifyData/save_remote', { wizard => 1 });
   my $fieldset = $form->add_fieldset;
   my $has_data = 0;
   my $das      = $session->get_all_das;

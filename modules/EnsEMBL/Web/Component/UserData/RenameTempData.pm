@@ -15,33 +15,34 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my $hub  = $self->hub;
+  my $self   = shift;
+  my $hub    = $self->hub;
+  my $form   = $self->new_form({ action => $hub->url({ action => 'ModifyData', function => 'rename_session_record' }, 1)->[0], method => 'post' });
+  my $type   = $hub->param('source') eq 'url' ? 'url' : 'upload';
+  my $record = $hub->session->get_data(type => $type, code => $hub->param('code'));
 
-  my $form = EnsEMBL::Web::Form->new('rename_tempdata', $hub->species_path($hub->data_species).'/UserData/SaveTempData', 'post');
-
-  my $tempdata = $hub->session->get_data('type' => $hub->param('type'), 'code' => $hub->param('code'));
-
-  return unless $tempdata;
+  return unless $record;
 
   $form->add_element(
-    'type'  => 'String',
-    'name'  => 'name',
-    'label' => 'Name',
-    'value' => $tempdata->{'name'},
+    type  => 'String',
+    name  => 'name',
+    label => 'Name',
+    value => $record->{'name'},
   );
+  
   $form->add_element(
-    'type'  => 'Hidden',
-    'name'  =>  'code',
-    'value' => $hub->param('code'),
+    type  => 'Hidden',
+    name  => 'code',
+    value => $hub->param('code'),
   );
+  
   $form->add_element(
-    'type'  => 'Hidden',
-    'name'  =>  'type',
-    'value' => $hub->param('type'),
+    type  => 'Hidden',
+    name  => 'source',
+    value => $type,
   );
-  ## navigation elements
-  $form->add_element('type' => 'Submit', 'value' => 'Save');
+  
+  $form->add_element(type => 'Submit', value => 'Save');
 
   return $form->render;
 }
