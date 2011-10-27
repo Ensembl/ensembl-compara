@@ -9,67 +9,60 @@ use EnsEMBL::Web::Data::Group;
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
-  my $self    = shift;
-  my $hub     = $self->hub;
-  my $object  = $self->object;
-  my $session = $hub->session;
-  my $url     = $hub->species_path($hub->data_species) . '/UserData/';
+  my $self       = shift;
+  my $hub        = $self->hub;
+  my $object     = $self->object;
+  my $session    = $hub->session;
+  my $group_id   = $hub->param('webgroup_id');
+  my @share_ids  = $hub->param('share_id');
+  my $url_params = { __clear => 1 };
   my $param;
 
-  if (my $group_id = $hub->param('webgroup_id')) { ## Share with group
+  if ($group_id) { ## Share with group
     ## Check if it is already shared
-    my @ids = ($hub->param('share_id'));
-    my @shareables;
-
-    my $group = EnsEMBL::Web::Data::Group->new($group_id);
-    my @group_records = $group->records;
-
-    foreach my $id (@ids) {
-      next unless $id;
-      my $shared = grep { $id == $_->cloned_from } $group->records;
-      push @shareables, $id unless $shared;
-    }
+    my $group         = new EnsEMBL::Web::Data::Group($group_id);
+    my %group_records = map { $_->cloned_from => 1 } $group->records;
+    my @shareables    = map { $_ && $group_records{$_} ? () : $_ } @share_ids;
     
-    if (@shareables) {
-      $url .= 'ShareRecord';
-      $param->{'webgroup_id'} = $group_id;
-      $param->{'id'}          = \@shareables;
-      $param->{'type'}        = $hub->param('type');
+    if (scalar @shareables) {
+      $url_params->{'action'}      = 'ShareRecord';
+      $url_params->{'webgroup_id'} = $group_id;
+      $url_params->{'id'}          = \@shareables;
+      $url_params->{'type'}        = $hub->param('type');
     } else {
-      $url .= 'SelectShare';
-      unless ($param->{'filter_module'}) {
-        $param->{'filter_module'} = 'Shareable';
-        $param->{'filter_code'} = 'shared';
-      }
+      $url_params->{'action'}        = 'SelectShare';
+      $url_params->{'filter_module'} = 'Shareable';
+      $url_params->{'filter_code'}   = 'shared';
     }
-  }
-  else { ## Share via URL
-    my @shares = ($hub->param('share_id'));
-    foreach my $code (@shares) {
+  } else { ## Share via URL
+    my @shares;
+    
+    foreach my $code (@share_ids) {
       if ($code !~ /^d+$/) {
         my $data = $session->get_data(type => 'upload', code => $code);
         
         if ($data->{'filename'}) {
-          if (my $ref = $object->store_data(type => 'upload', code => $code)) {
-            @shares = grep {$_ ne $code} @shares;
+          my $ref = $object->store_data(type => 'upload', code => $code);
+        
+          if ($ref) {
             push @shares, $ref;
           } else {
-            $param->{'filter_module'} = 'Data';
-            $param->{'filter_code'} = 'no_save';
+            $url_params->{'filter_module'} = 'Data';
+            $url_params->{'filter_code'}   = 'no_save';
           }
         }
       }
     }
     
-    if (@shares) {
-      $url .= 'ShareURL';
-      $param->{'share_id'} = \@shares;
+    if (scalar @shares) {
+      $url_params->{'action'}   = 'ShareURL';
+      $url_params->{'share_id'} = \@shares;
     } else {
-      $url .= 'SelectShare';
+      $url_params->{'action'} = 'ShareRecord';
     }
   }
-
-  $self->ajax_redirect($url, $param);
+  
+  $self->ajax_redirect($hub->url($url_params));
 }
 
 1;
