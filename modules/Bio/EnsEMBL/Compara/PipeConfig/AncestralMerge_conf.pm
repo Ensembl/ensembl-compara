@@ -14,6 +14,7 @@
     A pipeline to create the EnsEMBL core database with ancestral sequences merged from different sources.
 
     In rel.64 it took ~30min to run.
+    In rel.65 it took ~38min to run.
 
 =head1 CONTACT
 
