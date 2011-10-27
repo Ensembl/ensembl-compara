@@ -34,7 +34,7 @@ sub default_options {
     return {
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
-        'rel'               => 64,                                                  # current release number
+        'rel'               => 65,                                                  # current release number
         'rel_suffix'        => '',                                                  # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),              # for convenience
 
@@ -56,7 +56,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => 'lg4_ensembl_ancestral_63',
+            -dbname => 'lg4_ensembl_ancestral_64',
         },
 
     };
@@ -109,8 +109,8 @@ sub pipeline_analyses {
                     [ '528' => $self->dbconn_2_url('prev_ancestral_db'), ],                                                 # 5-way fish
 
                         # copying from new sources:
-                    [ '538' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_6way_64_ancestral_core' ],   # 6-way primates
-                    [ '537' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_12way_64_ancestral_core' ],  # 12-way mammals
+                    [ '548' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_6way_65_ancestral_core' ],   # 6-way primates
+                    [ '547' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_12way_65_ancestral_core' ],  # 12-way mammals
                 ],
                 'input_id'          => { 'mlss_id' => '#_0#', 'from_url' => '#_1#' },
                 'fan_branch_code'   => 2,
