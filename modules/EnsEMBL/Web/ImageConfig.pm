@@ -479,12 +479,12 @@ sub load_user_tracks {
   my $hub  = $self->hub;
   my $user = $hub->user;
   my $das  = $hub->get_all_das;
-  my (%url_sources, %user_sources);
+  my (%url_sources, %upload_sources);
   
   foreach my $source (sort { ($a->caption || $a->label) cmp ($b->caption || $b->label) } values %$das) {
-    next if $self->get_node('das_' . $source->logic_name);
+    next if     $self->get_node('das_' . $source->logic_name);
+    next unless $source->is_on($self->{'type'});
     
-    $source->is_on($self->{'type'}) || next;
     $self->add_das_tracks('user_data', $source);
   }
 
@@ -494,10 +494,8 @@ sub load_user_tracks {
   # Now we deal with the url sources... again flat file
   foreach my $entry ($session->get_data(type => 'url')) {
     next unless $entry->{'species'} eq $self->{'species'};
- 
-    my $time  = $entry->{'timestamp'} || time(); 
-    my $key   = $entry->{'url'}."_$time";
-    $url_sources{$key} = {
+    
+    $url_sources{"url_$entry->{'code'}"} = {
       source_type => 'session',
       source_name => $entry->{'name'} || $entry->{'url'},
       source_url  => $entry->{'url'},
@@ -506,19 +504,21 @@ sub load_user_tracks {
       style       => $entry->{'style'},
       colour      => $entry->{'colour'},
       display     => $entry->{'display'},
-      timestamp   => $time,
+      timestamp   => $entry->{'timestamp'} || time,
+      on          => $entry->{'default_configs'}{$self->{'type'}},
     };
   }
   
-  foreach my $entry ($session->get_data( type => 'upload' )) {
+  foreach my $entry ($session->get_data(type => 'upload')) {
     next unless $entry->{'species'} eq $self->{'species'};
     
     if ($entry->{'analyses'}) {
       foreach my $analysis (split /, /, $entry->{'analyses'}) {
-        $user_sources{$analysis} = {
+        $upload_sources{$analysis} = {
           source_name => $entry->{'name'},
           source_type => 'session',
-          assembly    => $entry->{'assembly'}
+          assembly    => $entry->{'assembly'},
+          on          => $entry->{'default_configs'}{$self->{'type'}},
         };
         
         $self->_compare_assemblies($entry, $session);
@@ -526,7 +526,7 @@ sub load_user_tracks {
     } elsif ($entry->{'species'} eq $self->{'species'}) {
       my ($display, $strand, $renderers) = $self->_user_track_settings($entry->{'style'});
       
-      $menu->append($self->create_track("tmp_$entry->{'code'}", $entry->{'name'}, {
+      $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
         external    => 'tmp',
         glyphset    => '_flat_file',
         colourset   => 'classes',
@@ -536,15 +536,17 @@ sub load_user_tracks {
         caption     => $entry->{'name'},
         renderers   => $renderers,
         description => 'Data that has been temporarily uploaded to the web server.',
-        display     => $display,
+        display     => $entry->{'default_configs'}{$self->{'type'}} ? $display : 'off',
         strand      => $strand,
       }));
     }
   }
   
   if ($user) {
-    foreach my $entry (grep $_->species eq $self->{'species'}, $user->urls) {
-      $url_sources{$entry->url} = {
+    my @groups  = $user->groups;
+    
+    foreach my $entry (grep $_->species eq $self->{'species'}, map $_->urls, $user, @groups) {
+      $url_sources{'url_' . $entry->code} = {
         source_name => $entry->name || $entry->url,
         source_type => 'user', 
         source_url  => $entry->url,
@@ -554,17 +556,19 @@ sub load_user_tracks {
         colour      => $entry->colour,
         display     => $entry->display,
         timestamp   => $entry->timestamp,
+        on          => $entry->{'default_configs'}{$self->{'type'}},
       };
     }
     
-    foreach my $entry (grep $_->species eq $self->{'species'}, $user->uploads) {
+    foreach my $entry (grep $_->species eq $self->{'species'}, map $_->uploads, $user, @groups) {
       my ($name, $assembly) = ($entry->name, $entry->assembly);
       
       foreach my $analysis (split /, /, $entry->analyses) {
-        $user_sources{$analysis} = {
+        $upload_sources{$analysis} = {
           source_name => $name,
           source_type => 'user',
           assembly    => $assembly,
+          on          => $entry->{'default_configs'}{$self->{'type'}},
         };
         
         $self->_compare_assemblies($entry, $session);
@@ -572,52 +576,52 @@ sub load_user_tracks {
     }
   }
 
-  foreach my $url (sort { $url_sources{$a}{'source_name'} cmp $url_sources{$b}{'source_name'} } keys %url_sources) {
-    my $add_method = '_add_' . lc($url_sources{$url}{'format'}) . '_track';
+  foreach my $code (sort { $url_sources{$a}{'source_name'} cmp $url_sources{$b}{'source_name'} } keys %url_sources) {
+    my $add_method = lc "_add_$url_sources{$code}{'format'}_track";
     
     if ($self->can($add_method)) {
-      $self->$add_method($menu, $url_sources{$url});
+      $self->$add_method($menu, $code, $url_sources{$code});
     } else {
-      my $k = 'url_' . md5_hex($self->{'species'} . ':' . $url);
-        
-      $self->_add_flat_file_track($menu, 'url', $k, $url_sources{$url}{'source_name'}, sprintf('
+      $self->_add_flat_file_track($menu, 'url', $code, $url_sources{$code}{'source_name'},
+        sprintf('
           Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s',
-          encode_entities($url_sources{$url}{'source_type'}), encode_entities($url)
+          encode_entities($url_sources{$code}{'source_type'}), encode_entities($url_sources{$code}{'source_url'})
         ),
-        'url'     => $url_sources{$url}{'source_url'},
-        'format'  => $url_sources{$url}{'format'},
-        'style'   => $url_sources{$url}{'style'},
+        url    => $url_sources{$code}{'source_url'},
+        format => $url_sources{$code}{'format'},
+        style  => $url_sources{$code}{'style'},
+        on     => $url_sources{$code}{'on'},
       );
     }
   }
   
   # We now need to get a userdata adaptor to get the analysis info
-  if (keys %user_sources) {
+  if (keys %upload_sources) {
     my $dbs        = new EnsEMBL::Web::DBSQL::DBConnection($self->{'species'});
     my $dba        = $dbs->get_DBAdaptor('userdata');
     my $an_adaptor = $dba->get_adaptor('Analysis');
     my @tracks;
     
-    foreach my $logic_name (keys %user_sources) {
+    foreach my $logic_name (keys %upload_sources) {
       my $analysis = $an_adaptor->fetch_by_logic_name($logic_name);
       
       next unless $analysis;
       
       my ($display, $strand, $renderers) = $self->_user_track_settings($analysis->program_version);
-      my $description = encode_entities($analysis->description) || 'User data from dataset ' . encode_entities($user_sources{$logic_name}{'source_name'});
+      my $description = encode_entities($analysis->description) || 'User data from dataset ' . encode_entities($upload_sources{$logic_name}{'source_name'});
       
-      push @tracks, [ "user_$logic_name", $analysis->display_label, {
+      push @tracks, [ $logic_name, $analysis->display_label, {
         external    => 'user',
         glyphset    => '_user_data',
         colourset   => 'classes',
         sub_type    => 'user',
         renderers   => $renderers,
-        source_name => $user_sources{$logic_name}{'source_name'},
+        source_name => $upload_sources{$logic_name}{'source_name'},
         logic_name  => $logic_name,
         caption     => $analysis->display_label,
         data_type   => $analysis->module,
         description => $description,
-        display     => $display,
+        display     => $upload_sources{$logic_name}{'on'} ? $display : 'off',
         style       => $analysis->web_data,
         strand      => $strand,
       }];
@@ -698,7 +702,7 @@ sub _add_flat_file_track {
   my ($display, $strand, $renderers) = $self->_user_track_settings($options{'style'});
 
   my $track = $self->create_track($key, $name, {
-    display     => $display,
+    display     => $options{'on'} ? $display : 'off',
     strand      => $strand,
     external    => 'url',
     glyphset    => '_flat_file',
@@ -729,7 +733,7 @@ sub _add_file_format_track {
   );
   
   my $track = $self->create_track($key, $source->{'source_name'}, {
-    display     => $source->{'display'} || $renderers->[2] || 'off',
+    display     => $source->{'on'} ? $source->{'display'} || $renderers->[2] || 'off' : 'off',
     strand      => 'f',
     glyphset    => lc $type,
     colourset   => lc $type,
@@ -745,24 +749,19 @@ sub _add_file_format_track {
 
 sub _user_track_settings {
   my ($self, $style) = @_;
-  my $renderers      = $self->{'alignment_renderers'};
-  ## "Ungrouped" option not valid for user tracks at the moment
-  ## TODO - can we fix drawing code to allow ungrouped?
-  my $user_renderers;
-  foreach (@$renderers) {
-    push (@$user_renderers, $_) unless $_ =~ /ungrouped/i;
-  }
-  
-  my $strand         = 'b'; 
-  my $display        = 'normal';
+  my ($display, $strand, @user_renderers);
       
-  if ($style eq 'wiggle' || $style eq 'WIG') {
-    $display   = 'tiling';
-    $strand    = 'r';
-    $user_renderers = [ 'off', 'Off', 'tiling', 'Wiggle plot' ];
+  if ($style =~ /^(wiggle|WIG)$/) {
+    $display        = 'tiling';
+    $strand         = 'r';
+    @user_renderers = ( 'off', 'Off', 'tiling', 'Wiggle plot' );
+  } else {
+    $display        = 'normal';
+    $strand         = 'b'; 
+    @user_renderers = grep !/ungrouped/i, @{$self->{'alignment_renderers'}}; ## "Ungrouped" option not valid for user tracks at the moment. TODO - can we fix drawing code to allow ungrouped?
   }
   
-  return ($display, $strand, $user_renderers);
+  return ($display, $strand, \@user_renderers);
 }
 
 sub _compare_assemblies {
@@ -832,12 +831,15 @@ sub update_from_url {
       my ($type, $p) = ($1, $2);
       
       if ($type eq 'url') {
-        my $format = $hub->param('format');;
+        my $format      = $hub->param('format');
         my $all_formats = $hub->species_defs->DATA_FORMAT_INFO;
+        
         if (!$format) {
           $p = uri_unescape($p);
+          
           my @path = split(/\./, $p);
-          my $ext = $path[-1] eq 'gz' ? $path[-2] : $path[-1];
+          my $ext  = $path[-1] eq 'gz' ? $path[-2] : $path[-1];
+          
           while (my ($name, $info) = each (%$all_formats)) {
             if ($ext =~ /^$name$/i) {
               $format = $name;
@@ -846,23 +848,20 @@ sub update_from_url {
           }
         }
 
-        my $style = $format; 
-        if ($all_formats->{$format}{'display'} eq 'graph') {
-          $style = 'wiggle';
-        }
- 
-        # We have to create a URL upload entry in the session
-        my $code = md5_hex("$species:$p");
-        my $n    =  $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
+        my $style = $all_formats->{$format}{'display'} eq 'graph' ? 'wiggle' : $format;
+        my $code  = md5_hex("$species:$p");
+        my $n     = $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
         
+        # We have to create a URL upload entry in the session
         $session->set_data(
-          type    => 'url',
-          url     => $p,
-          species => $species,
-          code    => $code, 
-          name    => $n,
-          format  => $format,
-          style   => $style,
+          type            => 'url',
+          url             => $p,
+          species         => $species,
+          code            => $code, 
+          name            => $n,
+          format          => $format,
+          style           => $style,
+          default_configs => { $self->{'type'} => 1 }
         );
         
         $session->add_data(
@@ -875,7 +874,9 @@ sub update_from_url {
         # We then have to create a node in the user_config
         $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
           sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
-          'url' => $p, 'style' => $style
+          url   => $p,
+          style => $style,
+          on    => 1
         );
         
         $self->update_track_renderer("url_$code", $renderer);
