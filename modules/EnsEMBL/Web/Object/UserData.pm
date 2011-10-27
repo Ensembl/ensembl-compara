@@ -303,7 +303,7 @@ sub store_data {
   
   my $tmp_data = $session->get_data(%args);
   $tmp_data->{'name'} = $hub->param('name') if $hub->param('name');
-
+  
   my $report = $self->save_to_db(%args);
   
   unless ($report->{'errors'}) {
@@ -363,78 +363,80 @@ sub store_data {
 }
   
 sub delete_upload {
-  my $self    = shift;
-  my $hub     = $self->hub;
-  my $type    = $hub->param('type');
-  my $code    = $hub->param('code');
-  my $id      = $hub->param('id');
-  my $user    = $hub->user;
-  my $session = $hub->session;
+  my $self = shift;
+  my $hub  = $self->hub;
+  my $code = $hub->param('code');
+  my $id   = $hub->param('id');
+  my $user = $hub->user;
   
-  if ($type eq 'upload') { 
-    my $upload = $session->get_data(type => $type, code => $code);
-    
-    if ($upload->{'filename'}) {
-      EnsEMBL::Web::TmpFile::Text->new(filename => $upload->{'filename'})->delete;
-    } else {
-      my @analyses = split(', ', $upload->{'analyses'});
-      $self->_delete_datasource($upload->{'species'}, $_) for @analyses;
-    } 
-    
-    $session->purge_data(type => $type, code => $code);
-  } elsif ($id && $user) {
+  if ($user && $id) {
     my ($upload) = $user->uploads($id);
     
     if ($upload) {
-      my @analyses = split(', ', $upload->analyses);
+      my @analyses = split ', ', $upload->analyses;
       $code = $upload->code;
-      $type = $upload->type;
       
       $self->_delete_datasource($upload->species, $_) for @analyses;
       $upload->delete;
     }
+  } else {
+    my $session    = $hub->session;
+    my $session_id = $session->session_id;
+    my $upload     = $session->get_data(type => 'upload', code => $code);
+    
+    if ($upload->{'filename'}) {
+      EnsEMBL::Web::TmpFile::Text->new(filename => $upload->{'filename'})->delete;
+    } else {
+      my @analyses = split ', ', $upload->{'analyses'};
+      $self->_delete_datasource($upload->{'species'}, $_) for @analyses;
+    }
+    
+    $session->purge_data(type => 'upload', code => $code);
+    
+    $code = undef unless $code =~ /_$session_id$/;
   }
   
-  # Remove all shared data with this code and type
-  EnsEMBL::Web::Data::Session->search(code => $code, type => $type)->delete_all if $code && $type;
+  # Remove all shared data with this code and source
+  EnsEMBL::Web::Data::Session->search(code => $code, type => 'upload')->delete_all if $code;
 }
 
 sub delete_remote {
   my $self    = shift;
   my $hub     = $self->hub;
-  my $type    = $hub->param('type');
+  my $source  = $hub->param('source');
   my $code    = $hub->param('code');
   my $id      = $hub->param('id');
   my $user    = $hub->user;
   my $session = $hub->session;
   
-  if ($code && $type =~ /^(url)$/) {
-    $session->purge_data(type => $type, code => $code);
-  }
-  elsif ($self->param('logic_name')) {
+ if ($user && $id) {
+    if ($source eq 'das') {
+      my ($das) = $user->dases($id);
+      $das->delete if $das;
+    } else {
+      my ($url) = $user->urls($id);
+      $url->delete if $url;
+    }
+  } elsif ($source eq 'das') {
     my $temp_das = $session->get_all_das;
-    if ($temp_das) {
-      my $das = $temp_das->{$self->param('logic_name')};
-      $das->mark_deleted if $das;
+    my $das      = $temp_das ? $temp_das->{$code} : undef;
+    
+    if ($das) {
+      $das->mark_deleted;
       $session->save_das;
     }
-  } 
-  elsif ($id && $user) {
-    if ($type eq 'das') {
-      my ($das) = $user->dases($id);
-      if ($das) {
-        $das->delete;
-      }
-    }
-    elsif ($type eq 'url') {
-      my ($url) = $user->urls($id);
-      if ($url) {
-        $url->delete;
-      }
-    }
+  } else {
+    my $session_id = $session->session_id;
+    my $url        = $session->get_data(type => 'url', code => $code);
+    
+    $session->purge_data(type => 'url', code => $code);
+    
+    $code = undef unless $code =~ /_$session_id$/;
   }
+  
+  # Remove all shared data with this code and source
+  EnsEMBL::Web::Data::Session->search(code => $code, type => 'url')->delete_all if $code;
 }
-
 
 sub _store_user_track {
   my ($self, $config, $track) = @_;
