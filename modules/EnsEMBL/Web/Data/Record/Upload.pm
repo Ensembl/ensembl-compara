@@ -7,21 +7,22 @@ use base qw(EnsEMBL::Web::Data::Record);
 __PACKAGE__->set_type('upload');
 
 __PACKAGE__->add_fields(
-  filename  => 'text',
-  filesize  => 'int',
-  name      => 'text',
-  code      => 'text',
-  md5       => 'text',
-  format    => 'text',
-  species   => 'text',
-  assembly  => 'text',
-  share_id  => 'int',
-  analyses  => 'text',
+  filename         => 'text',
+  filesize         => 'int',
+  name             => 'text',
+  code             => 'text',
+  md5              => 'text',
+  format           => 'text',
+  species          => 'text',
+  assembly         => 'text',
+  share_id         => 'int',
+  analyses         => 'text',
   browser_switches => 'text',
-  style     => 'text',
-  display   => 'text',
-  nearest   => 'text',
-  timestamp => 'datetime',
+  style            => 'text',
+  display          => 'text',
+  nearest          => 'text',
+  timestamp        => 'int',
+  default_configs  => 'text',
 );
 
 1;
