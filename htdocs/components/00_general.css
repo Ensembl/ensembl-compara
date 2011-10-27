@@ -148,6 +148,9 @@ div.hint h3 img { float: right; vertical-align: top; }
 
 .ajax_error { color: [[ALERT_TEXT]]; background-color: [[ALERT_BG]]; border: solid 1px [[ALERT_TEXT]]; font-weight: bold; margin: 1em; padding: 1em; }
 
+div.notes    { padding: 4px; margin-bottom: 10px; background-color: [[CONTRAST_BG]]; border: 1px [[CONTRAST_BORDER]] solid; }
+div.notes h4 { background: url(/i/infoicon.gif) top left no-repeat; margin: 0 0 5px 0; padding-left: 16px; }
+
 /***********************************************************************
 **
 ** Basic printer styles

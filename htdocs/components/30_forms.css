@@ -6,20 +6,6 @@ form fieldset {
   border: none;
 }
 
-form.std div.notes {
-  padding:4px;
-  margin-bottom:10px; 
-  background-color:[[CONTRAST_BG]]; border:1px [[CONTRAST_BORDER]] solid;
-}
-
-form.std div.notes h4 {
-  background-image: url('/i/infoicon.gif');
-  background-repeat: no-repeat;
-  background-position: top left;
-  margin:0 0 5px 0;
-  padding-left:16px;
-}
-
 form.std label, form.nonstd label { font-weight:bold; }
 
 form.std fieldset { padding: 0 0.5em; text-align: left; margin: 0; }
