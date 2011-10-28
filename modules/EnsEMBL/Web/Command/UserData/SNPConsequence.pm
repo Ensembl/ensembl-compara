@@ -1,30 +1,29 @@
+# $Id$
+
 package EnsEMBL::Web::Command::UserData::SNPConsequence;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
-
-use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Web::TmpFile::Text;
 
-use base qw(EnsEMBL::Web::Command);
+use base qw(EnsEMBL::Web::Command::UserData);
 
 sub process {
-  my $self   = shift;
-  my $object = $self->object;
-  my $hub    = $self->hub;
-
-  my $url    = $object->species_path($object->data_species) . '/UserData/SelectOutput';
-  my @files  = ($object->param('convert_file'));
-  my $temp_files = [];
-  my $size_limit =  $object->param('variation_limit');
+  my $self       = shift;
+  my $object     = $self->object;
+  my $hub        = $self->hub;
+  my @files      = $hub->param('convert_file');
+  my $size_limit = $hub->param('variation_limit');
+  my $species    = $hub->param('species') || $hub->species;
+  my @temp_files;
   my $output;
   
-  my $param  = {
-    _time    => $object->param('_time') || '',
-    species  => $object->param('species') || $self->species,
-    consequence_mapper  => $object->param('consequence_mapper') || 0,
+  my $url_params = {
+    species            => $species,
+    action             => 'SelectOutput',
+    consequence_mapper => $hub->param('consequence_mapper') || 0,
+    _time              => $hub->param('_time')              || '',
+    __clear            => 1,
   };
   
   foreach my $file_name (@files) {
@@ -43,41 +42,30 @@ sub process {
     
     $temp_file->print($table->render_Text);
     
-    push @$temp_files, $temp_file->filename . ':' . $name;
+    push @temp_files, $temp_file->filename . ':' . $name;
  
     ## Resave this file location to the session
-    my @split = split('-', $file);
-    my $code = $split[-1];
-    my $session_data = $hub->session->get_data('code' => $code);
+    my @split        = split '-', $file;
+    my $code         = $split[-1];
+    my $session_data = $hub->session->get_data(code => $code);
+    
     $session_data->{'filename'} = $temp_file->filename;
-    $session_data->{'filesize'} = length($temp_file->content);
+    $session_data->{'filesize'} = length $temp_file->content;
     $session_data->{'format'}   = 'SNP_EFFECT';
     $session_data->{'md5'}      = $temp_file->md5;
     $session_data->{'nearest'}  = $nearest;
+    $session_data->{'assembly'} = $hub->species_defs->get_config($species, 'ASSEMBLY_NAME');
 
     $hub->session->set_data(%$session_data);
-    $param->{'code'} = $code;
-    $param->{'count'} = $file_count;
-    $param->{'size_limit'} = $size_limit;
+    
+    $url_params->{'code'}       = $code;
+    $url_params->{'count'}      = $file_count;
+    $url_params->{'size_limit'} = $size_limit;
   }
  
-  $param->{'convert_file'} = $temp_files;
-
-  $url = encode_entities($self->url($url, $param));
-
-  $self->r->content_type('text/html; charset=utf-8');
-
-  print qq#
-    <html>
-    <head>
-      <script type="text/javascript">
-        if (!window.parent.Ensembl.EventManager.trigger('modalOpen', { href: '$url', title: 'File uploaded' })) {
-          window.parent.location = '$url';
-        }
-      </script>
-    </head>
-    <body><p>UP</p></body>
-    </html>#;
+  $url_params->{'convert_file'} = \@temp_files;
+  
+  $self->file_uploaded($url_params);
 }
 
 1;

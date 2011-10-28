@@ -5,95 +5,61 @@ package EnsEMBL::Web::Command::UserData::CheckConvert;
 ### Upload some data and add relevant parameters to the wizard workflow
 
 use strict;
-use warnings;
 
 use HTML::Entities qw(encode_entities);
 
 use Bio::EnsEMBL::Variation::Utils::VEP qw(@VEP_WEB_CONFIG);
 
-use EnsEMBL::Web::Command::UserData::UploadFile;
-
-use base qw(EnsEMBL::Web::Command);
+use base qw(EnsEMBL::Web::Command::UserData);
 
 sub process {
-  my $self = shift;
-  my $object = $self->object;
-  my $url;
-  my $param;
+  my $self               = shift;
+  my $hub                = $self->hub;
+  my $id_mapper          = $hub->param('id_mapper');
+  my $consequence_mapper = $hub->param('consequence_mapper');
+  my $url_params         = { __clear => 1 };
+  my ($method)           = grep $hub->param($_), qw(text file url);
+  my @files_to_convert;
 
-  if ($object->param('id_mapper')){
-    $param->{'id_mapper'} = $object->param('id_mapper');
-    $url = $object->species_path($object->data_species).'/UserData/SelectOutput';
-  } elsif ($object->param('consequence_mapper')) {
-    $param->{'consequence_mapper'} = $object->param('consequence_mapper');
-    $url = $object->species_path($object->data_species).'/UserData/SNPConsequence';
-    foreach my $p(@VEP_WEB_CONFIG) {
-      $param->{$p} = $object->param($p);
-    }
+  if ($id_mapper) {
+    $url_params->{'action'}    = 'SelectOutput';
+    $url_params->{'id_mapper'} = $id_mapper;
+  } elsif ($consequence_mapper) {
+    $url_params->{'action'}             = 'SNPConsequence';
+    $url_params->{'consequence_mapper'} = $consequence_mapper;
+    $url_params->{$_}                   = $hub->param($_) for 'format', @VEP_WEB_CONFIG;
   } else {
-    $url = $object->species_path($object->data_species).'/UserData/ConvertFeatures';
+    $url_params->{'action'} = 'ConvertFeatures';
   }
-
-  my @methods = qw(text file url);
-  my $method;
-  foreach my $M (@methods) {
-    if ($object->param($M)) {
-      $method = $M;
-      last;
-    }
-  }
-
-  my $files_to_convert = [];
+  
   if ($method) {
-    my $upload_response = EnsEMBL::Web::Command::UserData::UploadFile::upload($method, $self->hub);    
-    foreach my $p (keys %$upload_response) {
-      if ($p eq 'code') {
-        push @$files_to_convert, 'temp-upload-'.$upload_response->{'code'}.':'.$upload_response->{'name'};
-      }
-      else {
-        $param->{$p} = $upload_response->{$p};
+    my $upload_response = $self->upload($method);
+    
+    foreach (keys %$upload_response) {
+      if ($_ eq 'code') {
+        push @files_to_convert, "temp-upload-$upload_response->{'code'}:$upload_response->{'name'}";
+      } else {
+        $url_params->{$_} = $upload_response->{$_};
       }
     }
   }
-  if ($object->param('convert_file')) {
-    push @$files_to_convert, $object->param('convert_file');
-  }
-  $param->{'convert_file'} = $files_to_convert;
-  unless ($object->param('id_mapper') || $object->param('consequence_mapper')){
-    $param->{'conversion'} = $object->param('conversion');
-  }
-  if ($object->param('id_limit')) {
-    $param->{'id_limit'} = $object->param('id_limit');
-  }
-  if ($object->param('variation_limit')) {
-    $param->{'variation_limit'} = $object->param('variation_limit');
-  }
-
+  
+  push @files_to_convert, $hub->param('convert_file');
+  
+  $url_params->{'convert_file'} = \@files_to_convert;
+  $url_params->{'conversion'}   = $hub->param('conversion') unless $id_mapper || $consequence_mapper;
+  $url_params->{$_}             = $hub->param($_) for qw(id_limit variation_limit);
+  
   ## This will need changing if we add more tools
   ## FIXME - this wizard structure is getting a bit crazy!
-  my $next_node = $object->param('consequence_mapper') ? 'command' : 'component';
-
+  my $next_node = $consequence_mapper ? 'command' : 'component';
+  
   ## Go from a modal form (with file upload) directly to another web page
-  if ($next_node eq 'component' && $object->param('uploadto') eq 'iframe') {
-    $url = encode_entities($self->url($url, $param));
-
-    $self->r->content_type('text/html; charset=utf-8');
-
-    print qq{
-    <html>
-    <head>
-      <script type="text/javascript">
-        if (!window.parent.Ensembl.EventManager.trigger('modalOpen', { href: '$url', title: 'File uploaded' })) {
-          window.parent.location = '$url';
-        }
-      </script>
-    </head>
-    <body><p>UP</p></body>
-    </html>};
+  if ($next_node eq 'component' && $hub->param('uploadto') eq 'iframe') {
+    $self->file_uploaded($url_params);
   } else {
-    $self->ajax_redirect($url, $param);
-  }   
-
+    $self->ajax_redirect($hub->url($url_params));
+  }
 }
 
 1;
