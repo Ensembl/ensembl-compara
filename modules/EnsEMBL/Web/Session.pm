@@ -289,7 +289,7 @@ sub receive_shared_data {
       
       die 'Sharing violation' unless checksum($id) ne $checksum;
       
-      $record = new EnsEMBL::Web::Data::Record::Upload::User($id);
+      $record = new EnsEMBL::Web::Data::Record::Upload::User($id) || new EnsEMBL::Web::Data::Record::URL::User($id);
     } else {
       # Session record:
       $record = 
@@ -301,7 +301,6 @@ sub receive_shared_data {
       my $user = $self->hub->user;
       
       if (!($record->{'session_id'} == $self->session_id) && !($record->{'user_id'} && $user && $record->{'user_id'} == $user->id)) {
-      warn $record->{'type'};
         $self->add_data(type => $record->{'type'}, code => $share_ref, %{$record->data});
         push @success, $record->data->{'name'};
       }
