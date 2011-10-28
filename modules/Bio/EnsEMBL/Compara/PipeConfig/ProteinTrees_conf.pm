@@ -75,6 +75,7 @@ sub default_options {
         'rel_suffix'            => '',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
         'do_not_reuse_list'     => [ 123 ],     # names of species we don't want to reuse this time
+        # For rel 65, we're not reusing the gorilla, because the sequence table was messed up in 64
 
     # dependent parameters:
         'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
@@ -389,6 +390,7 @@ sub pipeline_analyses {
             -wait_for => [ 'check_reusability' ],
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into => {
+                1 => [ 'hcluster_run' ],
                 2 => [ 'mysql:////meta' ],
             },
         },
@@ -580,10 +582,24 @@ sub pipeline_analyses {
             -wait_for => [ 'hcluster_merge_inputs' ],
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into => {
-                1 => [ 'hcluster_parse_output' ],   # backbone
+                1 => [ 'generate_clusterset' ],   # backbone
             },
             -rc_id => 1,
         },
+
+        {   -logic_name => 'generate_clusterset',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql' => [  "INSERT INTO protein_tree_node (node_id, parent_id, root_id, clusterset_id, left_index, right_index, distance_to_parent) VALUES (NULL,NULL,NULL,0, 0,0,0)",   # inserts a generic node that will contain all the clusters
+                            "UPDATE protein_tree_node SET clusterset_id=#_insert_id_0# WHERE node_id=#_insert_id_0#", # updates the previously inserted row to have the right clusterset_id value
+                ],
+            },
+            -flow_into => {
+                1 => [ 'hcluster_parse_output' ],
+                2 => { 'mysql:////meta' => { 'meta_key' => 'clusterset_id', 'meta_value' => '#_insert_id_0#' } },     # dynamically record it as a pipeline-wide parameter
+            },
+        },
+
 
         {   -logic_name => 'hcluster_parse_output',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput',

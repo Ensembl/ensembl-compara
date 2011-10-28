@@ -62,7 +62,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub run {
     my $self = shift @_;
-
     my $genome_db_id            = $self->param('genome_db_id') or die "'genome_db_id' is an obligatory parameter";
     my $groupset_tag            = $self->param('groupset_tag') or die "'groupset_tag' is an obligatory parameter";
 
@@ -99,7 +98,7 @@ sub write_output {
 
     my $genome_db_id            = $self->param('genome_db_id');
     my $groupset_tag            = $self->param('groupset_tag');
-    my $groupset_node           = $self->compara_dba->get_ProteinTreeAdaptor->fetch_all_roots->[0] or die "Could not fetch groupset node";
+    my $groupset_node           = $self->compara_dba->get_ProteinTreeAdaptor->fetch_node_by_node_id($self->param('clusterset_id')) or die "Could not fetch groupset node";
 
     my $sql = "INSERT IGNORE INTO protein_tree_qc (clusterset_id, genome_db_id) VALUES (?,?)";
     my $sth = $self->compara_dba->dbc->prepare($sql);

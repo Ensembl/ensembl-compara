@@ -83,8 +83,7 @@ sub fetch_input {
 
     $self->param('protein_tree_adaptor', $self->compara_dba->get_ProteinTreeAdaptor);
     $self->param('member_adaptor', $self->compara_dba->get_MemberAdaptor);
-
-    $self->param('groupset_node', $self->param('protein_tree_adaptor')->fetch_all_roots->[0]) or die "Could not fetch groupset node";
+    $self->param('groupset_node', $self->param('protein_tree_adaptor')->fetch_node_by_node_id($self->param('clusterset_id'))) or die "Could not fetch groupset node";
 
 }
 
