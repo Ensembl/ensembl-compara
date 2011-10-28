@@ -10,6 +10,7 @@ sub init {
   my $self         = shift;
   my @feature_sets = ('cisRED', 'VISTA', 'miRanda', 'NestedMICA', 'REDfly CRM', 'REDfly TFBS', 'search');
   my @cell_lines   = sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}{'tables'}{'cell_type'}{'ids'}};
+
   
   s/\:\d*// for @cell_lines;
   
@@ -23,7 +24,7 @@ sub init {
     prediction
     dna_align_rna
     simple
-    misc_feature
+    misc_feature    
     functional
     multiple_align
     conservation
@@ -50,7 +51,7 @@ sub init {
     [ map "regulatory_regions_funcgen_$_", @feature_sets ],
     { menu => 'yes' }
   );
-  
+
   $self->modify_configs(
     [ 'information' ],
     { menu => 'no', display => 'off' }
@@ -60,12 +61,12 @@ sub init {
   
   foreach my $cell_line (@cell_lines) {
     my $display = $cell_line =~ /^(MultiCell|CD4)$/ ? 'tiling_feature' : 'compact';
-
-    # Turn on reg_feats track
-    $self->modify_configs(
-      [ "reg_feats_$cell_line" ],
-      { display => 'normal' }
-    );
+    my $feat    = $self->get_node("reg_feats_$cell_line");
+    my $seg     = $self->get_node("seg_$cell_line");
+    
+    $feat->after($seg) if $self->{'code'} eq 'cell_line';
+    
+    $_->set('display', 'normal') for $feat, $seg; # Turn on track
     
     # Turn on core evidence track
     $self->modify_configs(
@@ -79,10 +80,10 @@ sub init {
       { display => 'compact', menu => 'hidden', subset => 'Regulatory_evidence_other' }
     );
     
-    $self->{'reg_feats_tracks'}{$_} = 1 for "reg_feats_$cell_line", "reg_feats_core_$cell_line", "reg_feats_other_$cell_line";
+    $self->{'reg_feats_tracks'}{$_} = 1 for "reg_feats_$cell_line", "reg_feats_core_$cell_line", "reg_feats_other_$cell_line", "seg_$cell_line";
   }
-  
-  if ($self->{'code'} ne $self->{'type'}) {
+
+  if ($self->{'code'} ne $self->{'type'}) {    
     my $func = "init_$self->{'code'}";
     $self->$func if $self->can($func);
   }
