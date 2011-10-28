@@ -9,6 +9,8 @@ use warnings;
 
 use HTML::Entities qw(encode_entities);
 
+use Bio::EnsEMBL::Variation::Utils::VEP qw(@VEP_WEB_CONFIG);
+
 use EnsEMBL::Web::Command::UserData::UploadFile;
 
 use base qw(EnsEMBL::Web::Command);
@@ -25,24 +27,7 @@ sub process {
   } elsif ($object->param('consequence_mapper')) {
     $param->{'consequence_mapper'} = $object->param('consequence_mapper');
     $url = $object->species_path($object->data_species).'/UserData/SNPConsequence';
-    foreach my $p(qw(
-      format
-      check_existing
-      coding_only
-      hgnc
-      protein
-      hgvs
-      terms
-      check_frequency
-      freq_filter
-      freq_gt_lt
-      freq_freq
-      freq_pop
-      sift
-      polyphen
-      condel
-      regulatory)
-    ) {
+    foreach my $p(@VEP_WEB_CONFIG) {
       $param->{$p} = $object->param($p);
     }
   } else {

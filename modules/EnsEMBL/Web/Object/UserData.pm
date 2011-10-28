@@ -26,6 +26,7 @@ use Bio::EnsEMBL::Variation::Utils::VEP qw(
   get_all_consequences
   @OUTPUT_COLS
   @REG_FEAT_TYPES
+  @VEP_WEB_CONFIG
 );
 
 use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
@@ -942,7 +943,7 @@ sub consequence_table {
         contigviewbottom => 'variation_feature_variation=normal',
       });
       
-      if ($transcript_id =~ /^ENST/) {
+      if ($transcript_id =~ /^ENS.{0,3}T/) {
         my $transcript_url = $hub->url({
           species => $species,
           type    => 'Transcript',
@@ -952,7 +953,7 @@ sub consequence_table {
         
         $transcript_string = qq{<a href="$transcript_url" rel="external">$transcript_id</a>};
       }
-      elsif ($transcript_id =~ /^ENSR/) {
+      elsif ($transcript_id =~ /^ENS.{0,3}R/) {
         my $transcript_url = $hub->url({
           species => $species,
           type    => 'Regulation',
@@ -1006,7 +1007,7 @@ sub consequence_table {
       
       # format extra string nicely
       $extra = join ";", map {$self->render_sift_polyphen($_)} split /\;/, $extra;
-      $extra =~ s/(SIFT|PolyPhen|HGNC|ENSP|Condel|HGVSc|HGVSp|MATRIX|HIGH_INF_POS)=/<b>$1=<\/b>/g;
+      $extra =~ s/(SIFT|PolyPhen|HGNC|ENSP|Condel|HGVSc|HGVSp|MATRIX|HIGH_INF_POS|CANONICAL|CCDS)\=/<b>$&<\/b>/g;
       $extra =~ s/\;/\;\<br\/>/g;
       
       $extra =~ s/(ENSP\d+)/'<a href="'.$hub->url({
@@ -1210,23 +1211,7 @@ sub configure_vep {
   my %vep_config;
   
   # get user defined config from $self->param
-  foreach my $param(qw(
-    check_existing
-    coding_only
-    hgnc
-    hgvs
-    protein
-    terms
-    regulatory
-    sift
-    polyphen
-    condel
-    check_frequency
-    freq_filter
-    freq_gt_lt
-    freq_freq
-    freq_pop
-  )) {
+  foreach my $param(@VEP_WEB_CONFIG) {
     my $value = $self->param($param);
     $vep_config{$param} = $value unless $value eq 'no' || $value eq '';
   }
