@@ -296,7 +296,9 @@ sub store_clusters {
 
   my $clusters = $clusterset->children;
   foreach my $cluster (@{$clusters}) {
+    $cluster->distance_to_parent($self->param('distance_to_parent') / 2);
     my $node_id = $protein_tree_adaptor->store($cluster);
+    $cluster->store_tag('distance_to_parent', $self->param('distance_to_parent') / 2);
     # Although the leaves wont have the right root_id pointing to the $cluster->node_id,
     # this will be solved when we store back the results after the new MSA job.
 
@@ -423,6 +425,7 @@ sub generate_subtrees {
       $keep_breaking = 0;
     }
   }
+  $self->param('distance_to_parent', $self->param('max_subtree')->distance_to_parent);
 
   # Create a copy of what is not max_subtree
   $self->param('remaining_subtree', $self->param('protein_tree')->copy);
