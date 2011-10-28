@@ -891,7 +891,7 @@ sub consequence_data_from_file {
 sub consequence_table {
   my ($self, $consequence_data) = @_;
   my $hub     = $self->hub;
-  my $species = $self->param('species');
+  my $species = $self->param('species') || $hub->species;
   my $columns = [
     { key => 'var',      title =>'Uploaded Variation',   align => 'center', sort => 'string'        },
     { key => 'location', title =>'Location',             align => 'center', sort => 'position_html' },
@@ -1211,13 +1211,13 @@ sub configure_vep {
   my %vep_config;
   
   # get user defined config from $self->param
-  foreach my $param(@VEP_WEB_CONFIG) {
+  foreach my $param (@VEP_WEB_CONFIG) {
     my $value = $self->param($param);
     $vep_config{$param} = $value unless $value eq 'no' || $value eq '';
   }
   
   # get adaptors
-  my $species = $self->param('species');
+  my $species = $self->param('species') || $self->species;
   
   my %species_dbs =  %{$self->species_defs->get_config($species, 'databases')};
   if (exists $species_dbs{'DATABASE_VARIATION'} ){
