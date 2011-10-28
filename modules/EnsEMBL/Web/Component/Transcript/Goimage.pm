@@ -87,9 +87,9 @@ sub content {
   my @goslim_subset = ("goslim_generic");
   if (%$go_hash) {
     $html .= sprintf(
-      '<p><strong>The chart shows the ancestry of the ontology terms that have been mapped to this entity. <br/>
+      '<p><strong>The chart shows the ancestry of the ontology terms that have been annotated to this entity. <br/>
 The nodes are clickable links to the ontology websites. </strong>
-<br/><strong>Terms:</strong> <span style="width:20px"> &nbsp; </span> <span style="color:#ffffff;background:%s"> Mapped terms </span> &nbsp;<span style="width:20px">&nbsp;</span>',
+<br/><strong>Terms:</strong> <span style="width:20px"> &nbsp; </span> <span style="color:#ffffff;background:%s"> Annotated terms </span> &nbsp;<span style="width:20px">&nbsp;</span>',
       $ontovis->node_fill_colour
     );
     
@@ -105,7 +105,7 @@ The nodes are clickable links to the ontology websites. </strong>
     $terms_found = 1;
   }
 
-  return "<p>No ontology terms have been mapped to this entry.</p>"  unless $terms_found;   
+  return "<p>No ontology terms have been annotated to this entry.</p>"  unless $terms_found;   
 
   $ontovis->normal_term_accessions(keys %$go_hash);
   $ontovis->highlighted_subsets(@goslim_subset);

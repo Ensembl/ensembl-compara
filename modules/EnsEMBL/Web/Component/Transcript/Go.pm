@@ -24,7 +24,7 @@ sub content {
 
   my $label = 'Ontology';
 
-  my $html          =  '<p><h3>The following ontology terms have been mapped to this entry:</h3></p>';
+  my $html          =  '<p><h3>The following ontology terms have been annotated to this entry:</h3></p>';
   my $columns       = [   
     { key => 'go',              title => 'Accession',      width => '5%',  align => 'left'   },
     { key => 'description',     title => 'Term',           width => '30%', align => 'left'   },
@@ -70,7 +70,7 @@ sub content {
     }
   }
 
-  return '<p>No ontology terms have been mapped to this entity.</p>' unless $terms_found; 
+  return '<p>No ontology terms have been annotated to this entity.</p>' unless $terms_found; 
 
   return "</p>$html";
 }

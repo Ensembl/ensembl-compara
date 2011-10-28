@@ -75,9 +75,9 @@ sub populate_tree {
   ));
   
   my $go_menu = $self->create_submenu('GO', 'Ontology ([[counts::go]])');
-  $go_menu->append($self->create_node('Ontology/Image', 'Ontology chart ([[counts::go]])',
+  $go_menu->append($self->create_node('Ontology/Image', 'Ontology graph ([[counts::go]])',
     [qw( go EnsEMBL::Web::Component::Transcript::Goimage )],
-    { 'availability' => 'transcript has_go', 'concise' => 'Ontology chart' }
+    { 'availability' => 'transcript has_go', 'concise' => 'Ontology graph' }
   ));
 
   $go_menu->append($self->create_node('Ontology/Table', 'Ontology table ([[counts::go]])',
