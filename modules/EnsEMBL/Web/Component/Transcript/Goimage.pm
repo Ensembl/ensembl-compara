@@ -96,7 +96,7 @@ The nodes are clickable links to the ontology websites. </strong>
     #if (%$go_slim_hash) {
     if (@goslim_subset){
       $html .= sprintf(
-        ' &nbsp;<span style="border:2px solid orange">GO Slim generic terms </span>',
+        ' &nbsp;<span style="border:2px solid orange">Generic GO Slim terms </span>',
         $ontovis->highlighted_fill_colour
       )
     }
