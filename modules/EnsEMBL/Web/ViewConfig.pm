@@ -414,7 +414,7 @@ sub build_imageconfig_form {
   foreach my $node (grep $_->get('node_type') eq 'menu', $image_config->tree->nodes) {
     my @child_menus = grep $_->get('node_type') eq 'menu', @{$node->child_nodes};
     
-    if (scalar @child_menus == 1 && scalar(grep !$_->get('external'), @child_menus) == 1) {
+    if (scalar @child_menus == 1 && scalar @{$node->child_nodes} == 1 && scalar(grep !$_->get('external'), @child_menus) == 1) {
       $child_menus[0]->before($_) for @{$child_menus[0]->child_nodes};
       $child_menus[0]->remove;
     }
@@ -510,7 +510,6 @@ sub build_imageconfig_menus {
   
   if ($node->get('node_type') eq 'menu') {
     my $caption  = $node->get('caption');
-    
     
     if ($parent->node_name eq 'ul') {
       if ($external) {
