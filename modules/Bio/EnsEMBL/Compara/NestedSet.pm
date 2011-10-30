@@ -899,12 +899,12 @@ sub string_node {
 
     my $isdup = 0;
     $isdup = 1 if ($self->get_tagvalue('Duplication', 0) > 0 and not $self->get_tagvalue('dubious_duplication', 0));
-    $isdup = 1 if $self->get_tagvalue('node_type') eq 'duplication';
+    $isdup = 1 if $self->get_tagvalue('node_type', '') eq 'duplication';
 
-    my $isdub = ($self->get_tagvalue('node_type') eq 'dubious');
+    my $isdub = ($self->get_tagvalue('node_type', '') eq 'dubious');
 
     if ($isdup) {
-        my $taxon_name = $self->get_tagvalue('taxon_name');
+        my $taxon_name = $self->get_tagvalue('taxon_name', '');
         if ($taxon_name =~ /\S+\ \S+/) {
             $str .= "Dup ";
         } else {
