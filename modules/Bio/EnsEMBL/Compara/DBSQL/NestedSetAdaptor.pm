@@ -263,7 +263,7 @@ sub fetch_first_shared_ancestor_indexed {
   $constraint .= " AND $alias.right_index > $max_right";
   $constraint .= " ORDER BY ($alias.right_index-$alias.left_index) LIMIT 1";
   
-  my $ancestor = $self->_generic_fetch($constraint, [], ' ')->[0];
+  my $ancestor = $self->_generic_fetch($constraint)->[0];
   return $ancestor;
 }
 
