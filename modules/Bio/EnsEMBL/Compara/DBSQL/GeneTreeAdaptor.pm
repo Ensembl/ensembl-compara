@@ -591,13 +591,13 @@ sub tables {
 }
 
 sub left_join_clause {
-  my $self = shift;
-  my $prefix = $self->_get_table_prefix();
-  return "left join ".$prefix."_tree_member tm on t.node_id = tm.node_id left join member m on tm.member_id = m.member_id";
+    my $self = shift;
+    my $prefix = $self->_get_table_prefix();
+    return "LEFT JOIN ".$prefix."_tree_member tm ON t.node_id = tm.node_id LEFT JOIN member m ON tm.member_id = m.member_id";
 }
 
 sub default_where_clause {
-  return "";
+    return "";
 }
 
 sub _get_starting_lr_index {
@@ -634,26 +634,25 @@ sub create_instance_from_rowhash {
 
 
 sub init_instance_from_rowhash {
-  my $self = shift;
-  my $node = shift;
-  my $rowhash = shift;
+    my $self = shift;
+    my $node = shift;
+    my $rowhash = shift;
 
-  #SUPER is NestedSetAdaptor
-  $self->SUPER::init_instance_from_rowhash($node, $rowhash);
-   if($rowhash->{'member_id'}) {
-    Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->init_instance_from_rowhash($node, $rowhash);
+    # SUPER is NestedSetAdaptor
+    $self->SUPER::init_instance_from_rowhash($node, $rowhash);
+    if ($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
+        # here is a gene leaf
+        Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->init_instance_from_rowhash($node, $rowhash);
 
-    $node->cigar_line($rowhash->{'cigar_line'});
-    $node->method_link_species_set_id($rowhash->{method_link_species_set_id});
-# cigar_start and cigar_end does not need to be set.
-#    $node->cigar_start($rowhash->{'cigar_start'});
-#    $node->cigar_end($rowhash->{'cigar_end'});
-  }
-  # print("  create node : ", $node, " : "); $node->print_node;
+        $node->cigar_line($rowhash->{'cigar_line'});
+        $node->method_link_species_set_id($rowhash->{method_link_species_set_id});
+    } else {
+        # here is an internal node
+    }
+    # print("  create node : ", $node, " : "); $node->print_node;
+    $node->adaptor($self);
 
-  $node->adaptor($self);
-
-  return $node;
+    return $node;
 }
 
 
