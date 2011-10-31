@@ -109,16 +109,14 @@ sub data_table_config {
   my $session = $hub->session;
   my $sorting = $hub->param('sorting');
   my $hidden  = $hub->param('hidden_columns');
-  my %data    = (
-    type => 'data_table',
-    code => $hub->param('id')
-  );
+  my %args    = ( type => 'data_table', code => $hub->param('id') );
+  my %data;
   
   $data{'sorting'}        = "[$sorting]" if length $sorting;
   $data{'hidden_columns'} = "[$hidden]"  if length $hidden;
   
-  $session->purge_data(%data);
-  $session->set_data(%data);
+  $session->purge_data(%args);
+  $session->set_data(%args, %data) if scalar keys %data;
 }
 
 sub table_export {
