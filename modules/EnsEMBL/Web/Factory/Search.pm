@@ -83,7 +83,7 @@ sub count {
 sub _fetch {
   my( $self, $db, $search_SQL, $comparator, $kw, $limit ) = @_;
   my $dbh = $self->database( $db );
-  return unless $dbh;
+  return [] unless $dbh;
   my $full_kw = $kw; 
   $full_kw =~ s/\%/\*/g; 
   $kw = $dbh->dbc->db_handle->quote($kw);
