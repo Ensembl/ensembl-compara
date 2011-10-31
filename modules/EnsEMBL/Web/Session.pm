@@ -583,13 +583,26 @@ sub configure_user_data {
   my $hub = $self->hub;
 
   return unless $track->{'species'} eq $hub->species;
-
-  my $referer = $hub->referer;
-  my $type    = $referer->{'ENSEMBL_TYPE'}   || $hub->type;
-  my $action  = $referer->{'ENSEMBL_ACTION'} || $hub->action;
-  my %configs = map { $_ => 1 } map { $hub->get_viewconfig($_, $type)->image_config || () } @{$hub->components};
   
-  $self->set_data(type => $track_type, code => $track->{'code'}, default_configs => \%configs) if scalar keys %configs;
+  my $type = $hub->referer->{'ENSEMBL_TYPE'} || $hub->type;
+  
+  foreach my $view_config (map { $hub->get_viewconfig($_, $type) || () } @{$hub->components}) {
+    my $ic_code = $view_config->image_config;
+    
+    next unless $ic_code;
+    
+    my $image_config = $hub->get_imageconfig($ic_code);
+    my $node         = $image_config->get_node("${track_type}_$track->{'code'}");
+    
+    if ($node) {
+      $node->set_user('display', $node->get('renderers')->[2]);
+      $image_config->altered = 1;
+      $view_config->altered  = 1;
+    }
+  }
+  
+  $self->store;
 }
+
 
 1;
