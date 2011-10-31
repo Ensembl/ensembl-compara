@@ -87,6 +87,7 @@ Ensembl.DataTable = {
           return;
         }
         
+        this.fnSettings().fnInitComplete.call(this);
         this.data('export', false);
         
         var sorting = $.map(data.aaSorting, function (s) { return '"' + s.join(' ') + '"'; }).join(',');
@@ -203,7 +204,6 @@ Ensembl.DataTable = {
             
             $.each(tables, function () {
               this.fnSetColumnVis(col, visibility);
-              this.fnSettings().fnInitComplete.call(this);
             });
           }
         
