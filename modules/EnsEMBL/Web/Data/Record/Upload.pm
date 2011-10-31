@@ -22,7 +22,6 @@ __PACKAGE__->add_fields(
   display          => 'text',
   nearest          => 'text',
   timestamp        => 'int',
-  default_configs  => 'text',
 );
 
 1;
