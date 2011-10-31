@@ -117,7 +117,7 @@ sub data_table_config {
   $data{'sorting'}        = "[$sorting]" if length $sorting;
   $data{'hidden_columns'} = "[$hidden]"  if length $hidden;
   
-  $session->purge_data(%args);
+  $session->purge_data(%data);
   $session->set_data(%data);
 }
 
