@@ -79,16 +79,16 @@ $.extend($.fn.dataTableExt.oSort, {
     return ((x < y) ? 1 : ((x > y) ? -1 : 0));
   },
   'string_hidden-asc': function (a, b) {
-    return this['string-asc'](a.replace(/<.*?>.*?<\/.*?>/g, ''), b.replace(/<.*?>.*?<\/.*?>/g, ''));
+    return this['string-asc']((a.match(/<.*?>(.+)<\/.*?>/) || ['', a])[1], (b.match(/<.*?>(.+)<\/.*?>/) || ['', b])[1]);
   },
   'string_hidden-desc': function (a, b) {
-    return this['string-desc'](a.replace(/<.*?>.*?<\/.*?>/g, ''), b.replace(/<.*?>.*?<\/.*?>/g, ''));
+    return this['string-desc']((a.match(/<.*?>(.+)<\/.*?>/) || ['', a])[1], (b.match(/<.*?>(.+)<\/.*?>/) || ['', b])[1]);
   },
   'numeric_hidden-asc': function (a, b) {
-    return this['numeric-asc'](a.replace(/<.*?>.*?<\/.*?>/g, ''), b.replace(/<.*?>.*?<\/.*?>/g, ''));
+    return this['numeric-asc']((a.match(/<.*?>(.+)<\/.*?>/) || a.match(/^(\d+)$/) || [])[1], (b.match(/<.*?>(.+)<\/.*?>/) || b.match(/^(\d+)$/) || [])[1]);
   },
   'numeric_hidden-desc': function (a, b) {
-    return this['numeric-desc'](a.replace(/<.*?>.*?<\/.*?>/g, ''), b.replace(/<.*?>.*?<\/.*?>/g, ''));
+    return this['numeric-desc']((a.match(/<.*?>(.+)<\/.*?>/) || a.match(/^(\d+)$/) || [])[1], (b.match(/<.*?>(.+)<\/.*?>/) || b.match(/^(\d+)$/) || [])[1]);
   },
   'html-asc': function (a, b) {
     return this['string-asc'](a.replace(/<.*?>/g, ''), b.replace(/<.*?>/g, ''));
