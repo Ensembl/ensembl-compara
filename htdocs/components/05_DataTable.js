@@ -203,6 +203,7 @@ Ensembl.DataTable = {
             
             $.each(tables, function () {
               this.fnSetColumnVis(col, visibility);
+              this.fnSettings().fnInitComplete.call(this);
             });
           }
         
