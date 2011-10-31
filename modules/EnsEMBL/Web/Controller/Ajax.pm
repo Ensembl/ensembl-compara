@@ -106,6 +106,7 @@ sub nav_config {
 
 sub data_table_config {
   my ($self, $hub) = @_;
+  my $session = $hub->session;
   my $sorting = $hub->param('sorting');
   my $hidden  = $hub->param('hidden_columns');
   my %data    = (
@@ -116,7 +117,8 @@ sub data_table_config {
   $data{'sorting'}        = "[$sorting]" if length $sorting;
   $data{'hidden_columns'} = "[$hidden]"  if length $hidden;
   
-  $hub->session->set_data(%data);
+  $session->purge_data(%args);
+  $session->set_data(%data);
 }
 
 sub table_export {
