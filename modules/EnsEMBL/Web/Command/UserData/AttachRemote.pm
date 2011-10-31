@@ -75,7 +75,6 @@ sub process {
       );
       
       $session->configure_user_data('url', $data);
-      $session->store;
       
       $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
       

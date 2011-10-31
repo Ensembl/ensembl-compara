@@ -95,7 +95,6 @@ sub upload {
         );
         
         $session->configure_user_data('upload', $data);
-        $session->store;
         
         $params->{'code'} = $code;
       } else {
