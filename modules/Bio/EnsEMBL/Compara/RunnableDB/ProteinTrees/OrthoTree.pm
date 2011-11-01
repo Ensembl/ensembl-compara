@@ -341,17 +341,16 @@ sub display_link_analysis
   } else { printf("%5s ", ""); }
 
   print("ancestor:(");
-  my $node_type = $ancestor->get_tagvalue('node_type');
-  if (defined $node_type) {
-    if ($node_type eq 'duplication') {
-      print "DUP ";
-    } elsif ($node_type eq 'dubious') {
-      print "DD  ";
-    } else {
-      print "    ";
-    }
+  my $node_type = $ancestor->get_tagvalue('node_type', '');
+  if ($node_type eq 'duplication') {
+    print "DUP ";
+  } elsif ($node_type eq 'dubious') {
+    print "DD  ";
+  } elsif ($node_type eq 'gene_split') {
+    print "SPL ";
+  } else {
+    print "    ";
   }
-  else{print"    ";}
   printf("%9s)", $ancestor->node_id);
 
   my $taxon_level = $ancestor->get_tagvalue('taxon_level');
