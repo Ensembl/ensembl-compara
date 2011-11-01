@@ -624,9 +624,6 @@ sub load_user_tracks {
     
     $menu->append($self->create_track(@$_)) for sort { lc($a->[2]{'source_name'}) cmp lc($b->[2]{'source_name'}) || lc($a->[1]) cmp lc($b->[1]) } @tracks;
   }
-    
-    $menu->append($self->create_track(@$_)) for sort { lc($a->[2]{'source_name'}) cmp lc($b->[2]{'source_name'}) || lc($a->[1]) cmp lc($b->[1]) } @tracks;
-  }
 }
 
 sub load_configured_bam    { shift->load_file_format('bam');    }
