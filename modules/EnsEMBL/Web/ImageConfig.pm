@@ -601,16 +601,17 @@ sub load_user_tracks {
       
       next unless $analysis;
       
-      my ($strand, $renderers) = $self->_user_track_settings($analysis->program_version);
-      my $description = encode_entities($analysis->description) || 'User data from dataset ' . encode_entities($upload_sources{$logic_name}{'source_name'});
+      my ($display, $strand, $renderers) = $self->_user_track_settings($analysis->program_version);
+      my $source_name = encode_entities($upload_sources{$logic_name}{'source_name'});
+      my $description = encode_entities($analysis->description) || "User data from dataset $source_name";
       
-      push @tracks, [ $logic_name, $analysis->display_label, {
+      push @tracks, [ $logic_name, "$source_name: " . $analysis->display_label, {
         external    => 'user',
         glyphset    => '_user_data',
         colourset   => 'classes',
         sub_type    => 'user',
         renderers   => $renderers,
-        source_name => $upload_sources{$logic_name}{'source_name'},
+        source_name => $source_name,
         logic_name  => $logic_name,
         caption     => $analysis->display_label,
         data_type   => $analysis->module,
@@ -620,6 +621,9 @@ sub load_user_tracks {
         strand      => $strand,
       }];
     }
+    
+    $menu->append($self->create_track(@$_)) for sort { lc($a->[2]{'source_name'}) cmp lc($b->[2]{'source_name'}) || lc($a->[1]) cmp lc($b->[1]) } @tracks;
+  }
     
     $menu->append($self->create_track(@$_)) for sort { lc($a->[2]{'source_name'}) cmp lc($b->[2]{'source_name'}) || lc($a->[1]) cmp lc($b->[1]) } @tracks;
   }
