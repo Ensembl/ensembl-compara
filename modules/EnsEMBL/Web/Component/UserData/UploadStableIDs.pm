@@ -37,11 +37,12 @@ sub content {
     select => 'select',
   );
 
-  $form->add_element(type => 'Hidden', name => 'species',   value => $species);
-  $form->add_element(type => 'Hidden', name => 'id_mapper', value => 1);
-  $form->add_element(type => 'Hidden', name => 'id_limit',  value => $id_limit);
-  $form->add_element(type => 'Hidden', name => 'filetype',  value => 'ID History Converter');
-  $form->add_element(type => 'SubHeader',                   value => 'Upload file');
+  $form->add_element(type => 'Hidden', name => 'species',       value => $species);
+  $form->add_element(type => 'Hidden', name => 'id_mapper',     value => 1);
+  $form->add_element(type => 'Hidden', name => 'id_limit',      value => $id_limit);
+  $form->add_element(type => 'Hidden', name => 'filetype',      value => 'ID History Converter');
+  $form->add_element(type => 'Hidden', name => 'nonpositional', value => 1);
+  $form->add_element(type => 'SubHeader',                       value => 'Upload file');
   $form->add_element(type => 'String', name => 'name', label => 'Name for this upload (optional)');
   $form->add_element(type => 'Text',   name => 'text', label => 'Paste file');
   $form->add_element(type => 'File',   name => 'file', label => 'Upload file');
