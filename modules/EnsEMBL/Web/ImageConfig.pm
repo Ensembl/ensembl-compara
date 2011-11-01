@@ -601,11 +601,12 @@ sub load_user_tracks {
       
       next unless $analysis;
       
-      my ($display, $strand, $renderers) = $self->_user_track_settings($analysis->program_version);
+      my ($strand, $renderers) = $self->_user_track_settings($analysis->program_version);
       my $source_name = encode_entities($upload_sources{$logic_name}{'source_name'});
+      my $caption     = encode_entities($analysis->display_label);
       my $description = encode_entities($analysis->description) || "User data from dataset $source_name";
       
-      push @tracks, [ $logic_name, "$source_name: " . $analysis->display_label, {
+      push @tracks, [ $logic_name, $caption eq $source_name ? $source_name : "$source_name: $caption", {
         external    => 'user',
         glyphset    => '_user_data',
         colourset   => 'classes',
@@ -613,7 +614,7 @@ sub load_user_tracks {
         renderers   => $renderers,
         source_name => $source_name,
         logic_name  => $logic_name,
-        caption     => $analysis->display_label,
+        caption     => $caption,
         data_type   => $analysis->module,
         description => $description,
         display     => 'off',
