@@ -143,16 +143,18 @@ sub fetch_input {
   #Find the non_ref_species name
   if (!defined $self->param('non_ref_species')) {
       my $species_set = $mlss->species_set;
+
+      if (@$species_set == 1) {
+	  $self->param('non_ref_species', $self->param('ref_species'));
+      }
       foreach my $genome_db (@$species_set) {
 	  if ($self->param('ref_species') ne $genome_db->name) {
 	      $self->param('non_ref_species', $genome_db->name);
 	  }
       }
   }
-
   my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
 
-  
   my $ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('ref_species'));
   my $non_ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('non_ref_species'));
 
@@ -305,7 +307,7 @@ sub run_update_config_database {
       " --mlss_id " . $self->param('mlss_id') . 
       " --ensembl_release " . $self->param('ensembl_release');
 
-    $cmd .= " --config_url " . $self->param('config_url') if (defined $self->param('config_url'));
+    $cmd .= " --config_url " . $self->param('config_url') if (defined $self->param('config_url') && $self->param('config_url') ne "");
     $cmd .= " --config_file " . $self->param('config_file') if (defined $self->param('config_file')); 
     $cmd .= " --ref_url " . $self->param('ref_url') if (defined $self->param('ref_url'));
     $cmd .= " --non_ref_url " . $self->param('non_ref_url') if (defined $self->param('non_ref_url'));
@@ -334,7 +336,10 @@ sub run_create_pair_aligner_page {
 
     my $cmd = "perl " . $self->param('create_pair_aligner_page') . 
       " --config_url " . $self->param('config_url') . 
-      " --mlss_id " . $self->param('mlss_id') . " > ./mlss_" . $self->param('mlss_id') . ".html";
+      " --mlss_id " . $self->param('mlss_id');
+
+    $cmd .= " --ucsc_url " . $self->param('ucsc_url') if (defined $self->param('ucsc_url') && $self->param('ucsc_url') ne "");
+    $cmd .= " > ./mlss_" . $self->param('mlss_id') . ".html";
 
     unless (system($cmd) == 0) {
 	die("$cmd execution failed\n");
