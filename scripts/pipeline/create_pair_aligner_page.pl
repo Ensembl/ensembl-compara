@@ -67,7 +67,7 @@ use Getopt::Long;
 use DBI;
 use HTML::Template;
 use Number::Format qw(:subs :vars);
-
+use File::Basename;
 
 my $usage = qq{
 perl update_config_database.pl
@@ -91,12 +91,16 @@ my $help;
 my $mlss_id;
 my $config_url;
 my $ensembl_release;
+my $ucsc_url;
 my $image_dir = "./"; #location to write image files
 my $R_prog = "/software/R-2.9.0/bin/R ";
 
-my $blastz_template= "/nfs/users/nfs_k/kb3/work/projects/tests/test_config/pair_aligner_blastz_page.tmpl";
-my $tblat_template= "/nfs/users/nfs_k/kb3/work/projects/tests/test_config/pair_aligner_tblat_page.tmpl";
-my $no_config_template= "/nfs/users/nfs_k/kb3/work/projects/tests/test_config/pair_aligner_no_config_page.tmpl";
+my $this_directory = dirname($0);
+
+my $blastz_template= "$this_directory/pair_aligner_blastz_page.tmpl";
+my $tblat_template= "$this_directory/pair_aligner_tblat_page.tmpl";
+my $no_config_template= "$this_directory/pair_aligner_no_config_page.tmpl";
+my $ucsc_template = "$this_directory/pair_aligner_ucsc_page.tmpl";
 
 my $references = {
        BlastZ => "<a href=\"http://www.genome.org/cgi/content/abstract/13/1/103\">Schwartz S et al., Genome Res.;13(1):103-7</a>, <a href=\"http://www.pnas.org/cgi/content/full/100/20/11484\">Kent WJ et al., Proc Natl Acad Sci U S A., 2003;100(20):11484-9</a>",
@@ -109,7 +113,8 @@ GetOptions(
 	   "config_url=s" => \$config_url,
 	   "mlss|mlss_id|method_link_species_set_id=s" => \$mlss_id,
 	   "ensembl_release=s" => \$ensembl_release,
-	   "image_location=s" => \$image_dir
+	   "image_location=s" => \$image_dir,
+	   "ucsc_url=s" => \$ucsc_url,
   );
 
 # Print Help and exit
@@ -129,7 +134,11 @@ my ($alignment_results, $ref_results, $non_ref_results, $pair_aligner_config, $b
 # open the correct html template
 my $template;
 
-if ($pair_aligner_config->{method_link_type} eq "BLASTZ_NET" || 
+if (defined $ucsc_url) {
+    $template = HTML::Template->new(filename => $ucsc_template);
+    my $ucsc_html = "<a href=\"" . $ucsc_url . "\">UCSC</a>";
+    $template->param(UCSC_URL => $ucsc_html);
+} elsif ($pair_aligner_config->{method_link_type} eq "BLASTZ_NET" || 
     $pair_aligner_config->{method_link_type} eq "LASTZ_NET") {
 
     #Check if have results
@@ -175,8 +184,13 @@ $template->param(NON_REF_SPECIES => pretty_name($non_ref_dna_collection_config->
 $template->param(REF_ASSEMBLY => $ref_results->{assembly});
 $template->param(NON_REF_ASSEMBLY => $non_ref_results->{assembly});
 $template->param(METHOD_TYPE => $type);
-$template->param(REFERENCE => $references->{$type});
 $template->param(ENSEMBL_RELEASE => $pair_aligner_config->{ensembl_release});
+
+#Parameters NOT used for ucsc page
+unless (defined $ucsc_url) {
+    $template->param(REFERENCE => $references->{$type});
+
+}
 
 #Set html template variables for configuration parameters
 if ($pair_aligner_config->{method_link_type} eq "BLASTZ_NET" || 
