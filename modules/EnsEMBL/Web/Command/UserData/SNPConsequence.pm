@@ -9,12 +9,14 @@ use EnsEMBL::Web::TmpFile::Text;
 use base qw(EnsEMBL::Web::Command::UserData);
 
 sub process {
-  my $self       = shift;
-  my $object     = $self->object;
-  my $hub        = $self->hub;
-  my @files      = $hub->param('convert_file');
-  my $size_limit = $hub->param('variation_limit');
-  my $species    = $hub->param('species') || $hub->species;
+  my $self         = shift;
+  my $object       = $self->object;
+  my $hub          = $self->hub;
+  my $species_defs = $hub->species_defs;
+  my $session      = $hub->session;
+  my @files        = $hub->param('convert_file');
+  my $size_limit   = $hub->param('variation_limit');
+  my $species      = $hub->param('species') || $hub->species;
   my @temp_files;
   my $output;
   
@@ -45,18 +47,18 @@ sub process {
     push @temp_files, $temp_file->filename . ':' . $name;
  
     ## Resave this file location to the session
-    my @split        = split '-', $file;
-    my $code         = $split[-1];
-    my $session_data = $hub->session->get_data(code => $code);
+    my $code         = [ split '-', $file ]->[-1];
+    my $session_data = $session->get_data(code => $code);
     
     $session_data->{'filename'} = $temp_file->filename;
     $session_data->{'filesize'} = length $temp_file->content;
+    $session_data->{'filetype'} = 'Variant Effect Predictor';
     $session_data->{'format'}   = 'SNP_EFFECT';
     $session_data->{'md5'}      = $temp_file->md5;
     $session_data->{'nearest'}  = $nearest;
-    $session_data->{'assembly'} = $hub->species_defs->get_config($species, 'ASSEMBLY_NAME');
+    $session_data->{'assembly'} = $species_defs->get_config($species, 'ASSEMBLY_NAME');
 
-    $hub->session->set_data(%$session_data);
+    $session->set_data(%$session_data);
     
     $url_params->{'code'}       = $code;
     $url_params->{'count'}      = $file_count;
