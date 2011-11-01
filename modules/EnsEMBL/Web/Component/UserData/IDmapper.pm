@@ -31,7 +31,7 @@ sub content {
     my $table            = $self->format_mapped_ids($ids);
     
     $html .= $table;
-    $html .= $self->_info('Information', '<p>The numbers in the above table indicate the version of a stable ID present in a particular release.</p>');
+    $html .= $self->_info('Information', '<p>The numbers in the above table indicate the version of a stable ID present in a particular release.</p>', '100%');
     $html .= $self->add_unmapped_ids($unmapped) if scalar keys %$unmapped > 0;
   }
 
