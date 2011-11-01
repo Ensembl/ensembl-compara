@@ -1,0 +1,99 @@
+<html>
+<head>
+  <meta name="navigation" content="Comparative Genomics">
+  <title>Pairwise Alignments</title>
+  <link rel="stylesheet" type="text/css" media="all" href="85_spreadsheet_table.css" />
+  <link rel="stylesheet" type="text/css" media="all" href="95_static_content.css" />
+</head>
+
+<body>
+
+<h2><TMPL_VAR NAME=REF_NAME> vs <TMPL_VAR NAME=NON_REF_NAME> <TMPL_VAR NAME=METHOD_TYPE> alignments</h2>
+
+<p><TMPL_VAR NAME=REF_NAME> (<i><TMPL_VAR NAME=REF_SPECIES></i>, <TMPL_VAR NAME=REF_ASSEMBLY>) and <TMPL_VAR NAME=NON_REF_NAME> (<i><TMPL_VAR NAME=NON_REF_SPECIES></i>, <TMPL_VAR NAME=NON_REF_ASSEMBLY>) were aligned using the <TMPL_VAR NAME=METHOD_TYPE> alignment algorithm (<TMPL_VAR NAME=REFERENCE>)
+in Ensembl release <TMPL_VAR NAME=ENSEMBL_RELEASE>. <TMPL_VAR NAME=REF_NAME>  was used as the reference species. After running <TMPL_VAR NAME=METHOD_TYPE> , the raw <TMPL_VAR NAME=METHOD_TYPE>  alignment blocks are chained according to their location in both genomes. During the final netting process, the best sub-chain is chosen in each region on the reference species.</p>
+
+<a href="/info/docs/compara/analyses.html" class="cp-external">Full list of 
+pairwise alignments</a>
+
+<h3>Configuration parameters</h3>
+
+<table class="ss tint species-stats">
+<tr class="bg2">
+<td class="data" style="width:75%">Minimum score (minScore)</td>
+<td class="value"><TMPL_VAR NAME=TBLAT_MINSCORE></td>
+</tr>
+<tr>
+<td class="data">Database type (t)</td>
+<td class="value"><TMPL_VAR NAME=TBLAT_T></td>
+</tr>
+<tr class="bg2">
+<td class="data">Query type (q)</td>
+<td class="value"><TMPL_VAR NAME=TBLAT_Q></td>
+</tr>
+<tr>
+<td class="data">Mask out repeats (mask)</td>
+<td class="value"><TMPL_VAR NAME=TBLAT_MASK></td>
+</tr>
+<tr class="bg2">
+<td class="data">Mask out repeats on query (qmask)
+</td>
+<td class="value"><TMPL_VAR NAME=TBLAT_QMASK>
+</td>
+</tr>
+</table>
+
+
+<h3>Results</h3>
+
+<p>Number of alignment blocks: <TMPL_VAR NAME=NUM_BLOCKS></p>
+<table style="text-align: left; width: 100%;" border="0" cellpadding="2"
+cellspacing="2">
+<tbody>
+<tr>
+<td style="vertical-align: top;">
+</td>
+<th style="vertical-align: top;">Genome coverage(bp)
+</th>
+<th style="vertical-align: top;">Coding exon coverage (bp)
+</th>
+</tr>
+<tr>
+<th style="vertical-align: middle;"><TMPL_VAR NAME=REF_NAME></th>
+<td style="vertical-align: top;"><img style="width: 200px; height: 200px;" alt=""
+src="<TMPL_VAR NAME=REF_ALIGN_PIE>"/>
+</td>
+<td style="vertical-align: top;"><img style="width: 200px; height: 200px;" alt=""
+src="<TMPL_VAR NAME=REF_ALIGN_CODEXON_PIE>"/>
+</td>
+</tr>
+<tr>
+<td></td>
+<td style="vertical-align: top;"><TMPL_VAR NAME=REF_ALIGN> out of <TMPL_VAR NAME=REF_GENOME_SIZE>
+</td>
+<td style="vertical-align: top;"><TMPL_VAR NAME=REF_ALIGN_CODEXON> out of <TMPL_VAR NAME=REF_CODEXON>
+</td>
+</tr>
+<tr>
+<th style="vertical-align: middle;"><TMPL_VAR NAME=NON_REF_NAME>
+</th>
+<td style="vertical-align: top;"><img style="width: 200px; height: 200px;" alt=""
+src="<TMPL_VAR NAME=NON_REF_ALIGN_PIE>"/>
+</td>
+<td style="vertical-align: top;"><img style="width: 200px; height: 200px;" alt=""
+src="<TMPL_VAR NAME=NON_REF_ALIGN_CODEXON_PIE>"/>
+</td>
+</tr>
+<tr>
+<td></td>
+<td style="vertical-align: top;"><TMPL_VAR NAME=NON_REF_ALIGN> out of <TMPL_VAR NAME=NON_REF_GENOME_SIZE>
+</td>
+<td style="vertical-align: top;"><TMPL_VAR NAME=NON_REF_ALIGN_CODEXON> out of <TMPL_VAR NAME=NON_REF_CODEXON>
+</td>
+</tr>
+</tbody>
+</table>
+
+
+</body>
+</html>
