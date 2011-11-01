@@ -519,6 +519,8 @@ sub write_dna_collection {
 sub write_default_config_params {
     my ($self, $species) = @_;
 
+    return if (!defined $self->config_dbh);
+
     my $method_link_species_set = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->mlss_id);
     
     if (!$method_link_species_set) {
@@ -536,6 +538,12 @@ sub write_default_config_params {
 	    $non_ref_species = $genome_db->name;
 	}
     }
+
+    #self alignment
+    if (@$species_set == 1) {
+	$non_ref_species = $ref_species;
+    }
+
     if (!defined $species) {
 	throw("Unable to find species $species in method_link_species_set_id " . $self->mlss_id);
     }
@@ -761,10 +769,17 @@ sub write_pairaligner_statistics {
 	}
     }
 
+    #self alignments
+    if (@$species_set == 1) {
+	$non_ref_genome_db = $ref_genome_db;
+	$non_ref_url = $ref_url;
+    }
+
     #Calculate the statistics
     my ($ref_coverage, $ref_coding_coverage, $ref_alignment_coding) = calc_stats($reg_conf, $ref_url, $ref_genome_db, $ref_genome_bed, $ref_coding_exons_bed, $ref_alignment_bed);
+
     my ($non_ref_coverage, $non_ref_coding_coverage, $non_ref_alignment_coding) = calc_stats($reg_conf, $non_ref_url, $non_ref_genome_db, $non_ref_genome_bed, $non_ref_coding_exons_bed, $non_ref_alignment_bed);
-    
+   
     #Store the results in the configuration database
     if (defined $config_url) {
 	write_compare_bed_output($config_url, $pair_aligner_id, $num_blocks, $ref_genome_db, $ref_coverage, $ref_coding_coverage, $ref_alignment_coding, $non_ref_genome_db, $non_ref_coverage, $non_ref_coding_coverage, $non_ref_alignment_coding);
