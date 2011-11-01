@@ -77,7 +77,8 @@ sub upload {
       if ($file->save) {
         my $session = $hub->session;
         my $code    = join '_', $file->md5, $session->session_id;
-
+        my %inputs  = map $_->[1] ? @$_ : (), map [ $_, $hub->param($_) ], qw(filetype assembly nonpositional);
+        
         $params->{'species'} = $hub->param('species') || $hub->species;
         
         ## Attach data species to session
@@ -91,9 +92,8 @@ sub upload {
           species   => $params->{'species'},
           format    => $format,
           timestamp => time,
+          %inputs
         );
-        
-        $data->{$_} = $_ for map $hub->param($_) || (), qw(filetype assembly);
         
         $session->configure_user_data('upload', $data);
         
