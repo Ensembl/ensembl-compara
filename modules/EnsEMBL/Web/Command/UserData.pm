@@ -90,9 +90,10 @@ sub upload {
           name      => $name,
           species   => $params->{'species'},
           format    => $format,
-          assembly  => $hub->param('assembly') || '',
           timestamp => time,
         );
+        
+        $data->{$_} = $_ for map $hub->param($_) || (), qw(filetype assembly);
         
         $session->configure_user_data('upload', $data);
         
