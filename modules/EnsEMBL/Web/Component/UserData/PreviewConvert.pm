@@ -40,13 +40,13 @@ sub content {
 
     ## Fetch content
     my $tmpfile = new EnsEMBL::Web::TmpFile::Text(
-                    filename => $file, prefix => 'export', extension => 'gff'
+                    filename => $file, prefix => 'user_upload', extension => 'gff'
     );
     next unless $tmpfile->exists;
     my $data = $tmpfile->retrieve;
     if ($data) {
       my $newname = $name || 'converted_data_'.$i.'.gff';
-      $html .= sprintf('<h3>File <a href="/%s/download?file=%s;name=%s;prefix=export;format=gff">%s</a></h3>', $object->species, $file, $newname, $newname);
+      $html .= sprintf('<h3>File <a href="/%s/download?file=%s;name=%s;prefix=user_upload;format=gff">%s</a></h3>', $object->species, $file, $newname, $newname);
       my $gaps = $gaps ? $gaps : 0;
       $html .= "<p>This data includes $gaps gaps where the input coordinates could not be mapped directly to the output assembly.</p>";
       $html .= '<pre>';
