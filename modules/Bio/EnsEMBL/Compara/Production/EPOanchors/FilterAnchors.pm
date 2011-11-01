@@ -48,7 +48,7 @@ use Data::Dumper;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-use Bio::EnsEMBL::Compara::Production::Anchors::AnchorAlign;
+use Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 use constant MAX_NUMBER_OF_DNAFRAGS_HIT => 5; #max number of dnafrags hit per genome
