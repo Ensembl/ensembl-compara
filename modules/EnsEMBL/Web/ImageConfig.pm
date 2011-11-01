@@ -306,8 +306,14 @@ sub set_user_settings {
   foreach my $key (keys %$data) {
     my $node = $self->get_node($key);
     
-    if ($node) {
-      $node->set_user($_, $data->{$key}->{$_}) for keys %{$data->{$key}};
+    next unless $node;
+    
+    foreach (keys %{$data->{$key}}) {
+      if ($_ eq 'display' && !grep $data->{$key}{$_}, @{$node->data->{'renderers'}}) {
+        $node->set_user($_, $node->data->{'renderers'}->[2]); # index 2 contains the code for the first "on" renderer
+      } else {
+        $node->set_user($_, $data->{$key}{$_});
+      }
     }
   }
 }
@@ -520,7 +526,7 @@ sub load_user_tracks {
         
         $self->_compare_assemblies($entry, $session);
       }
-    } elsif ($entry->{'species'} eq $self->{'species'}) {
+    } elsif ($entry->{'species'} eq $self->{'species'} && !$entry->{'nonpositional'}) {
       my ($strand, $renderers) = $self->_user_track_settings($entry->{'style'});
       
       $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
