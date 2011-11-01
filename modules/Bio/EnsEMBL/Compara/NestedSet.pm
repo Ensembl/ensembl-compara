@@ -910,8 +910,11 @@ sub string_node {
         } else {
             $str .= "DUP ";
         }
+       my $sis = $self->get_tagvalue('duplication_confidence_score', 0) * 100;
+       $str .= sprintf('SIS=%d ', $sis);
     } elsif ($isdub) {
         $str .= "DD  ";
+       $str .= 'SIS=0 ';
     }
     if($self->has_tag("bootstrap")) { my $bootstrap_value = $self->get_tagvalue("bootstrap"); $str .= "B=$bootstrap_value "; }
     if($self->has_tag("taxon_name")) { my $taxon_name_value = $self->get_tagvalue("taxon_name"); $str .="T=$taxon_name_value "; }
