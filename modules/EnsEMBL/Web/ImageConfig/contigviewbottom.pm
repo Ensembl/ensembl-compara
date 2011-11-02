@@ -158,6 +158,12 @@ sub init {
       [ "reg_feats_other_$cell_line" ],
       { menu => 'hidden', subset => 'Regulatory_evidence_other' }
     );
+       
+    # Turn off segmentation track
+    $self->modify_configs(
+      [ "seg_$cell_line"],
+      { display => 'off' }
+    );
   }
 }
 
