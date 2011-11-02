@@ -116,8 +116,6 @@ sub variation_source {
   my $description = $object->source_description;
   $description =~ s/(\w+) \[(http:\/\/[\w\.\/]+)\]/<a href="$2">$1<\/a>/; 
 
-  warn ">>> URL $1 = $2";
-
   return sprintf('
     <dt>Source</dt> 
     <dd>%s - %s</dd>',
