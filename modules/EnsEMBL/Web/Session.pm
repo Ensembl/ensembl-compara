@@ -277,7 +277,7 @@ sub save_data {
 
 sub receive_shared_data {
   my ($self, @share_refs) = @_; 
-  my (@success, @failure);
+  my (@success, @failure, @track_data);
   
   foreach my $share_ref (@share_refs) {
     my $record;
@@ -304,6 +304,8 @@ sub receive_shared_data {
         $self->add_data(type => $record->{'type'}, code => $share_ref, %{$record->data});
         push @success, $record->data->{'name'};
       }
+      
+      push @track_data, $record->{'type'}, { code => $share_ref, %{$record->data} };
     } else {
       push @failure, $share_ref;
     }
@@ -331,6 +333,8 @@ sub receive_shared_data {
       message  => "The following added tracks are shared data:$tracks", 
       function => '_info'
     );
+    
+    $self->configure_user_data(@track_data);
   }
 }
 
@@ -579,25 +583,31 @@ sub configure_das_views {
 }
 
 sub configure_user_data {
-  my ($self, $track_type, $track) = @_;
-  my $hub = $self->hub;
-
-  return unless $track->{'species'} eq $hub->species;
-  
-  my $type = $hub->referer->{'ENSEMBL_TYPE'} || $hub->type;
+  my ($self, @track_data) = @_;
+  my $hub     = $self->hub;
+  my $type    = $hub->referer->{'ENSEMBL_TYPE'} || $hub->type;
+  my $species = $hub->species;
   
   foreach my $view_config (map { $hub->get_viewconfig($_, $type) || () } @{$hub->components}) {
     my $ic_code = $view_config->image_config;
     
     next unless $ic_code;
     
-    my $image_config = $hub->get_imageconfig($ic_code);
-    my $node         = $image_config->get_node("${track_type}_$track->{'code'}");
+    my $image_config = $hub->get_imageconfig($ic_code, $ic_code . time);
     
-    if ($node) {
-      $node->set_user('display', $node->get('renderers')->[2]);
-      $image_config->altered = 1;
-      $view_config->altered  = 1;
+    while (@track_data) {
+      my ($track_type, $track) = (shift @track_data, shift @track_data);
+      
+      next unless $track->{'species'} eq $species;
+      
+      my @nodes = grep $_, $track->{'analyses'} ? map $image_config->get_node($_), split(', ', $track->{'analyses'}) : $image_config->get_node("${track_type}_$track->{'code'}");
+      
+      if (scalar @nodes) {
+        $_->set_user('display', $_->get('renderers')->[2]) for @nodes;
+        $image_config->{'code'} = $ic_code;
+        $image_config->altered  = 1;
+        $view_config->altered   = 1;
+      }
     }
   }
   
