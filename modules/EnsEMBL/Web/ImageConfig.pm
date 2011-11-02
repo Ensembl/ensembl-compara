@@ -113,7 +113,7 @@ sub new {
   
   my $sortable = $self->get_parameter('sortable_tracks');
   
-  $self->set_parameter('sortable_tracks', 1)  if $sortable eq 'drag' && $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/ && $1 < 7; # No sortable tracks on images for IE6 and lower
+  $self->set_parameter('sortable_tracks', 1)  if $sortable eq 'drag' && $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d)/ && $1 < 7; # No sortable tracks on images for IE6 and lower
   $self->{'extra_menus'}->{'track_order'} = 1 if $sortable;
   
   $self->{'no_image_frame'} = 1;
@@ -174,7 +174,7 @@ sub menus {
     ld_population       => 'Population features',
     
     # Regulation
-    functional          => 'Regulation',
+    functional          => 'Regulation',    
     
     # Compara
     compara             => 'Comparative genomics',
@@ -196,7 +196,7 @@ sub menus {
     other               => 'Additional decorations',
     
     # External data
-    user_data           => 'Your data',
+    user_data           => 'User attached data',
     external_data       => 'External data',
   };
 }
@@ -306,14 +306,8 @@ sub set_user_settings {
   foreach my $key (keys %$data) {
     my $node = $self->get_node($key);
     
-    next unless $node;
-    
-    foreach (keys %{$data->{$key}}) {
-      if ($_ eq 'display' && !grep $data->{$key}{$_}, @{$node->data->{'renderers'}}) {
-        $node->set_user($_, $node->data->{'renderers'}->[2]); # index 2 contains the code for the first "on" renderer
-      } else {
-        $node->set_user($_, $data->{$key}{$_});
-      }
+    if ($node) {
+      $node->set_user($_, $data->{$key}->{$_}) for keys %{$data->{$key}};
     }
   }
 }
@@ -485,12 +479,12 @@ sub load_user_tracks {
   my $hub  = $self->hub;
   my $user = $hub->user;
   my $das  = $hub->get_all_das;
-  my (%url_sources, %upload_sources);
+  my (%url_sources, %user_sources);
   
   foreach my $source (sort { ($a->caption || $a->label) cmp ($b->caption || $b->label) } values %$das) {
-    next if     $self->get_node('das_' . $source->logic_name);
-    next unless $source->is_on($self->{'type'});
+    next if $self->get_node('das_' . $source->logic_name);
     
+    $source->is_on($self->{'type'}) || next;
     $self->add_das_tracks('user_data', $source);
   }
 
@@ -500,8 +494,10 @@ sub load_user_tracks {
   # Now we deal with the url sources... again flat file
   foreach my $entry ($session->get_data(type => 'url')) {
     next unless $entry->{'species'} eq $self->{'species'};
-    
-    $url_sources{"url_$entry->{'code'}"} = {
+ 
+    my $time  = $entry->{'timestamp'} || time(); 
+    my $key   = $entry->{'url'}."_$time";
+    $url_sources{$key} = {
       source_type => 'session',
       source_name => $entry->{'name'} || $entry->{'url'},
       source_url  => $entry->{'url'},
@@ -509,27 +505,28 @@ sub load_user_tracks {
       format      => $entry->{'format'},
       style       => $entry->{'style'},
       colour      => $entry->{'colour'},
-      timestamp   => $entry->{'timestamp'} || time,
+      display     => $entry->{'display'},
+      timestamp   => $time,
     };
   }
   
-  foreach my $entry ($session->get_data(type => 'upload')) {
+  foreach my $entry ($session->get_data( type => 'upload' )) {
     next unless $entry->{'species'} eq $self->{'species'};
     
     if ($entry->{'analyses'}) {
       foreach my $analysis (split /, /, $entry->{'analyses'}) {
-        $upload_sources{$analysis} = {
+        $user_sources{$analysis} = {
           source_name => $entry->{'name'},
           source_type => 'session',
-          assembly    => $entry->{'assembly'},
+          assembly    => $entry->{'assembly'}
         };
         
         $self->_compare_assemblies($entry, $session);
       }
-    } elsif ($entry->{'species'} eq $self->{'species'} && !$entry->{'nonpositional'}) {
-      my ($strand, $renderers) = $self->_user_track_settings($entry->{'style'});
+    } elsif ($entry->{'species'} eq $self->{'species'}) {
+      my ($display, $strand, $renderers) = $self->_user_track_settings($entry->{'style'});
       
-      $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
+      $menu->append($self->create_track("tmp_$entry->{'code'}", $entry->{'name'}, {
         external    => 'tmp',
         glyphset    => '_flat_file',
         colourset   => 'classes',
@@ -539,17 +536,15 @@ sub load_user_tracks {
         caption     => $entry->{'name'},
         renderers   => $renderers,
         description => 'Data that has been temporarily uploaded to the web server.',
-        display     => 'off',
+        display     => $display,
         strand      => $strand,
       }));
     }
   }
   
   if ($user) {
-    my @groups = $user->groups;
-    
-    foreach my $entry (grep $_->species eq $self->{'species'}, map $_->urls, $user, @groups) {
-      $url_sources{'url_' . $entry->code} = {
+    foreach my $entry (grep $_->species eq $self->{'species'}, $user->urls) {
+      $url_sources{$entry->url} = {
         source_name => $entry->name || $entry->url,
         source_type => 'user', 
         source_url  => $entry->url,
@@ -557,16 +552,16 @@ sub load_user_tracks {
         format      => $entry->format,
         style       => $entry->style,
         colour      => $entry->colour,
-        display     => 'off',
+        display     => $entry->display,
         timestamp   => $entry->timestamp,
       };
     }
     
-    foreach my $entry (grep $_->species eq $self->{'species'}, map $_->uploads, $user, @groups) {
+    foreach my $entry (grep $_->species eq $self->{'species'}, $user->uploads) {
       my ($name, $assembly) = ($entry->name, $entry->assembly);
       
       foreach my $analysis (split /, /, $entry->analyses) {
-        $upload_sources{$analysis} = {
+        $user_sources{$analysis} = {
           source_name => $name,
           source_type => 'user',
           assembly    => $assembly,
@@ -577,53 +572,52 @@ sub load_user_tracks {
     }
   }
 
-  foreach my $code (sort { $url_sources{$a}{'source_name'} cmp $url_sources{$b}{'source_name'} } keys %url_sources) {
-    my $add_method = lc "_add_$url_sources{$code}{'format'}_track";
+  foreach my $url (sort { $url_sources{$a}{'source_name'} cmp $url_sources{$b}{'source_name'} } keys %url_sources) {
+    my $add_method = '_add_' . lc($url_sources{$url}{'format'}) . '_track';
     
     if ($self->can($add_method)) {
-      $self->$add_method($menu, $code, $url_sources{$code});
+      $self->$add_method($menu, $url_sources{$url});
     } else {
-      $self->_add_flat_file_track($menu, 'url', $code, $url_sources{$code}{'source_name'},
-        sprintf('
+      my $k = 'url_' . md5_hex($self->{'species'} . ':' . $url);
+        
+      $self->_add_flat_file_track($menu, 'url', $k, $url_sources{$url}{'source_name'}, sprintf('
           Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s',
-          encode_entities($url_sources{$code}{'source_type'}), encode_entities($url_sources{$code}{'source_url'})
+          encode_entities($url_sources{$url}{'source_type'}), encode_entities($url)
         ),
-        url    => $url_sources{$code}{'source_url'},
-        format => $url_sources{$code}{'format'},
-        style  => $url_sources{$code}{'style'},
+        'url'     => $url_sources{$url}{'source_url'},
+        'format'  => $url_sources{$url}{'format'},
+        'style'   => $url_sources{$url}{'style'},
       );
     }
   }
   
   # We now need to get a userdata adaptor to get the analysis info
-  if (keys %upload_sources) {
+  if (keys %user_sources) {
     my $dbs        = new EnsEMBL::Web::DBSQL::DBConnection($self->{'species'});
     my $dba        = $dbs->get_DBAdaptor('userdata');
     my $an_adaptor = $dba->get_adaptor('Analysis');
     my @tracks;
     
-    foreach my $logic_name (keys %upload_sources) {
+    foreach my $logic_name (keys %user_sources) {
       my $analysis = $an_adaptor->fetch_by_logic_name($logic_name);
       
       next unless $analysis;
       
-      my ($strand, $renderers) = $self->_user_track_settings($analysis->program_version);
-      my $source_name = encode_entities($upload_sources{$logic_name}{'source_name'});
-      my $caption     = encode_entities($analysis->display_label);
-      my $description = encode_entities($analysis->description) || "User data from dataset $source_name";
+      my ($display, $strand, $renderers) = $self->_user_track_settings($analysis->program_version);
+      my $description = encode_entities($analysis->description) || 'User data from dataset ' . encode_entities($user_sources{$logic_name}{'source_name'});
       
-      push @tracks, [ $logic_name, $caption eq $source_name ? $source_name : "$source_name: $caption", {
+      push @tracks, [ "user_$logic_name", $analysis->display_label, {
         external    => 'user',
         glyphset    => '_user_data',
         colourset   => 'classes',
         sub_type    => 'user',
         renderers   => $renderers,
-        source_name => $source_name,
+        source_name => $user_sources{$logic_name}{'source_name'},
         logic_name  => $logic_name,
-        caption     => $caption,
+        caption     => $analysis->display_label,
         data_type   => $analysis->module,
         description => $description,
-        display     => 'off',
+        display     => $display,
         style       => $analysis->web_data,
         strand      => $strand,
       }];
@@ -701,10 +695,10 @@ sub _add_flat_file_track {
   
   return unless $menu;
  
-  my ($strand, $renderers) = $self->_user_track_settings($options{'style'});
+  my ($display, $strand, $renderers) = $self->_user_track_settings($options{'style'});
 
   my $track = $self->create_track($key, $name, {
-    display     => 'off',
+    display     => $display,
     strand      => $strand,
     external    => 'url',
     glyphset    => '_flat_file',
@@ -720,12 +714,13 @@ sub _add_flat_file_track {
 }
 
 sub _add_file_format_track {
-  my ($self, $menu, $key, $source, $type, $renderers, $options, $description) = @_;
+  my ($self, $menu, $source, $type, $renderers, $options, $description) = @_;
   
   $menu ||= $self->get_node('user_data');
   
   return unless $menu;
-  
+
+  my $key  = lc "${type}_$source->{'timestamp'}_" . md5_hex("$self->{'species'}:$source->{'source_url'}");
   my $desc = sprintf(
     "Data retrieved from a $type file on an external webserver.
     $description
@@ -733,13 +728,11 @@ sub _add_file_format_track {
     encode_entities($source->{'source_type'}), encode_entities($source->{'source_url'})
   );
   
-  $type = lc $type;
-  
   my $track = $self->create_track($key, $source->{'source_name'}, {
-    display     => 'off',
+    display     => $source->{'display'} || $renderers->[2] || 'off',
     strand      => 'f',
-    glyphset    => $type,
-    colourset   => $type,
+    glyphset    => lc $type,
+    colourset   => lc $type,
     renderers   => $renderers,
     caption     => $source->{'source_name'},
     url         => $source->{'source_url'},
@@ -752,17 +745,17 @@ sub _add_file_format_track {
 
 sub _user_track_settings {
   my ($self, $style) = @_;
-  my ($strand, @user_renderers);
+  my $renderers      = $self->{'alignment_renderers'};
+  my $strand         = 'b'; 
+  my $display        = 'normal';
       
-  if ($style =~ /^(wiggle|WIG)$/) {
-    $strand         = 'r';
-    @user_renderers = ( 'off', 'Off', 'tiling', 'Wiggle plot' );
-  } else {
-    $strand         = 'b'; 
-    @user_renderers = grep !/ungrouped/i, @{$self->{'alignment_renderers'}}; ## "Ungrouped" option not valid for user tracks at the moment. TODO - can we fix drawing code to allow ungrouped?
+  if ($style eq 'wiggle' || $style eq 'WIG') {
+    $display   = 'tiling';
+    $strand    = 'r';
+    $renderers = [ 'off', 'Off', 'tiling', 'Wiggle plot' ];
   }
   
-  return ($strand, \@user_renderers);
+  return ($display, $strand, $renderers);
 }
 
 sub _compare_assemblies {
@@ -832,28 +825,29 @@ sub update_from_url {
       my ($type, $p) = ($1, $2);
       
       if ($type eq 'url') {
-        my $format      = $hub->param('format');
+        my $format = $hub->param('format');;
         my $all_formats = $hub->species_defs->DATA_FORMAT_INFO;
-        
         if (!$format) {
           $p = uri_unescape($p);
-          
           my @path = split(/\./, $p);
-          my $ext  = $path[-1] eq 'gz' ? $path[-2] : $path[-1];
-          
+          my $ext = $path[-1] eq 'gz' ? $path[-2] : $path[-1];
           while (my ($name, $info) = each (%$all_formats)) {
-            if ($ext =~ /^$name$/i) {
+            if ($info->{'ext'} =~ /$ext/i) {
               $format = $name;
               last;
             }  
           }
         }
 
-        my $style = $all_formats->{$format}{'display'} eq 'graph' ? 'wiggle' : $format;
-        my $code  = md5_hex("$species:$p");
-        my $n     = $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
-        
+        my $style = $format; 
+        if ($all_formats->{$format}{'display'} eq 'graph') {
+          $style = 'wiggle';
+        }
+ 
         # We have to create a URL upload entry in the session
+        my $code = md5_hex("$species:$p");
+        my $n    =  $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
+        
         $session->set_data(
           type    => 'url',
           url     => $p,
@@ -874,8 +868,7 @@ sub update_from_url {
         # We then have to create a node in the user_config
         $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
           sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
-          url   => $p,
-          style => $style
+          'url' => $p, 'style' => $style
         );
         
         $self->update_track_renderer("url_$code", $renderer);
@@ -894,7 +887,7 @@ sub update_from_url {
         }
       }
     } else {
-      $self->update_track_renderer($key, $renderer, $hub->param('toggle_tracks'));
+      $self->update_track_renderer($key, $renderer, 1);
     }
   }
   
@@ -1059,7 +1052,7 @@ sub load_tracks {
       'add_synteny',                # Add to synteny tree
       'add_alignments'              # Add to compara_align tree
     ],
-    funcgen => [
+    funcgen => [      
       'add_regulation_builds',      # Add to regulation_feature tree
       'add_regulation_features',    # Add to regulation_feature tree
       'add_oligo_probes'            # Add to oligo tree
@@ -1074,10 +1067,11 @@ sub load_tracks {
   
   foreach my $type (keys %data_types) {
     my ($check, $databases) = $type eq 'compara' ? ($species_defs->multi_hash, $species_defs->compara_like_databases) : ($dbs_hash, $self->sd_call("${type}_like_databases"));
-    
+
     foreach my $db (grep exists $check->{$_}, @{$databases || []}) {
-      my $key = lc substr $db, 9;
-      $self->$_($key, $check->{$db}{'tables'} || $check->{$db}, $species) for @{$data_types{$type}}; # Look through tables in databases and add data from each one
+
+      my $key = lc substr $db, 9;      
+      $self->$_($key, $check->{$db}{'tables'} || $check->{$db}, $species) for @{$data_types{$type}}; # Look through tables in databases and add data from each one      
     }
   }
   
@@ -1304,7 +1298,7 @@ sub add_das_tracks {
       'off',      'Off', 
       'nolabels', 'No labels', 
       'normal',   'Normal', 
-      'labels',   'Labels'
+      'labels',   '(force) Labels'
     ],
   });
   
@@ -1346,11 +1340,6 @@ sub add_dna_align_features {
       
       my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$self->{'alignment_renderers'}}) ? $data->{$key_2}{'display'} : 'off'; # needed because the same logic_name can be a gene and an alignment
       
-      if ($data->{$key_2}{'display'} && $data->{$key_2}{'display'} eq 'simple'){
-        $display = 'simple';
-        $alignment_renderers = ['off', 'Off', 'simple', 'On'];  
-      }
-
       $self->generic_add($menu, $key, "dna_align_${key}_$key_2", $data->{$key_2}, {
         glyphset  => '_alignment',
         sub_type  => lc $k,
@@ -1906,20 +1895,22 @@ sub add_alignments {
 sub add_regulation_features {
   my ($self, $key, $hashref) = @_;  
   my $menu = $self->get_node('functional');
-  
-  return unless $menu;
+    
+  return unless $menu; 
   
   my $reg_regions = $menu->append($self->create_submenu('functional_other_regulatory_regions', 'Other regulatory regions'));
   
   $reg_regions->before($self->create_submenu('functional_dna_methylation', 'DNA Methylation'));
+
   
   my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
   my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
+  
   my %fg_data           = (%$data_1, %$data_2);
   
-  foreach my $key_2 (sort grep { !/RegulatoryRegion/ } @$keys_1, @$keys_2) {
+  foreach my $key_2 (sort grep { !/RegulatoryRegion|seg_/ } @$keys_1, @$keys_2) {
     my $type = $fg_data{$key_2}{'type'};
-    
+ 
     next if !$type || $type eq 'ctcf';
     
     my @renderers;
@@ -1975,7 +1966,8 @@ sub add_regulation_builds {
   
   return unless $type;
   
-  my $reg_feat = $menu->append($self->create_submenu('regulatory_features', 'Regulatory features'));
+  my $reg_feat = $menu->append($self->create_submenu('regulatory_features', 'Regulatory features')); 
+  my $reg_segmentation = $self->create_submenu('segmentation_features', 'Segmentation features');  #segmentation features track 
   
   my @cell_lines = sort keys %{$db_tables->{'cell_type'}{'ids'}};
   my (@renderers, $multi_flag);
@@ -2004,7 +1996,7 @@ sub add_regulation_builds {
     } else {
       $label = ": $cell_line";
     }
-    
+
     $reg_feat->append($self->create_track($track_key, "$fg_data{$key_2}{'name'}$label", {
       db          => $key,
       glyphset    => $type,
@@ -2015,8 +2007,24 @@ sub add_regulation_builds {
       description => $fg_data{$key_2}{'description'}{'reg_feats'},
       display     => $display,
       renderers   => \@renderers,
-      cell_line   => $cell_line
+      cell_line   => $cell_line,      
     }));
+    
+    my $seg_caption = "Reg. Segs $cell_line"; #Nathan just dont want the colon on the track name on the view!!!!!
+    $reg_segmentation->append($self->create_track("seg_$cell_line", "Reg. Segs: $cell_line", {
+      db          => $key,
+      glyphset    => "fg_segmentation_features",
+      sources     => 'undef',
+      strand      => 'r',
+      labels      => 'on',
+      depth       => 0.5,
+      colourset   => 'fg_segmentation_features',
+      display     => 'off',
+      description => "Segmentation features description",
+      renderers   => \@renderers,
+      cell_line   => $cell_line,
+      caption     => "$seg_caption",
+    })) if(%fg_data->{"seg_$cell_line"}->{'key'} eq "seg_$cell_line");
     
     ### Add tracks for cell_line peaks and wiggles only if we have data to display
     my @ftypes     = keys %{$db_tables->{'meta'}{'feature_type_ids'}{$cell_line}      || {}};  
@@ -2038,22 +2046,24 @@ sub add_regulation_builds {
         'tiling',         'Signal', 
         'tiling_feature', 'Both' 
       ],         
-    );
-    
+    );   
+      
     if (scalar @focus_sets && scalar @focus_sets <= scalar @ftypes) {
       # Add Core evidence tracks
-      $reg_feat->append($self->create_track("reg_feats_core_$cell_line", "Open chromatin & TFBS$label", { %options, type => 'core', description => $options{'description'}{'core'} }));
+      $reg_feat->append($self->create_track("reg_feats_core_$cell_line", "Core evidence$label", { %options, type => 'core', description => $options{'description'}{'core'} }));
     } 
 
     if (scalar @ftypes != scalar @focus_sets  && $cell_line ne 'MultiCell') {
       # Add 'Other' evidence tracks
       $reg_feat->append($self->create_track("reg_feats_other_$cell_line", "Histones & Polymerases$label", { %options, type => 'other', description => $options{'description'}{'other'} }));
     }
-  }
-  
-  if ($db_tables->{'cell_type'}{'ids'}) {
-    $self->add_track('information', 'fg_regulatory_features_legend', 'Reg. Features Legend',          'fg_regulatory_features_legend', { strand => 'r', colourset => 'fg_regulatory_features' });
-    $self->add_track('information', 'fg_multi_wiggle_legend',        'Cell/Tissue Regulation Legend', 'fg_multi_wiggle_legend',        { strand => 'r', display => 'off' });
+  } 
+  $reg_feat->append($reg_segmentation);
+
+  if ($db_tables->{'cell_type'}{'ids'}) {    
+    $self->add_track('information',  'fg_regulatory_features_legend',   'Reg. Features Legend',          'fg_regulatory_features_legend',   { strand => 'r', colourset => 'fg_regulatory_features'});        
+    $self->add_track('information', 'fg_segmentation_features_legend', 'Seg. Features Legend',          'fg_segmentation_features_legend', { strand => 'r', colourset => 'fg_segmentation_features'});
+    $self->add_track('information',  'fg_multi_wiggle_legend',          'Cell/Tissue Regulation Legend', 'fg_multi_wiggle_legend',          { strand => 'r', display => 'off' });
   }
 }
 
@@ -2144,7 +2154,7 @@ sub add_sequence_variations {
       sort { $a->{'name'} cmp $b->{'name'} } 
       values %{$hashref->{'variation_set'}{'supersets'}}
     ) {
-      my $name          = $toplevel_set->{'name'};
+      my $name          = $toplevel_set->{'name'};      
       my $caption       = $name . (scalar @{$toplevel_set->{'subsets'}} ? ' (all data)' : '');
       my $key           = $toplevel_set->{'short_name'};
       my $set_variation = scalar @{$toplevel_set->{'subsets'}} ? $self->create_submenu("set_variation_$key", $name) : $variation_sets;
@@ -2157,7 +2167,7 @@ sub add_sequence_variations {
         set_name    => $name,
         description => $toplevel_set->{'description'},
       }));
-      
+
       # add in sub sets
       if (scalar @{$toplevel_set->{'subsets'}}) {
         foreach my $subset_id (sort @{$toplevel_set->{'subsets'}}) {
@@ -2165,7 +2175,7 @@ sub add_sequence_variations {
           my $sub_set_name        = $sub_set->{'name'}; 
           my $sub_set_description = $sub_set->{'description'};
           my $sub_set_key         = $sub_set->{'short_name'};
-          
+        
           $set_variation->append($self->create_track("variation_set_$sub_set_key", $sub_set_name, {
             %options,
             caption     => $sub_set_name,
@@ -2175,7 +2185,7 @@ sub add_sequence_variations {
             description => $sub_set_description
           }));
         }
-       
+      
         $variation_sets->append($set_variation);
       }
     }
