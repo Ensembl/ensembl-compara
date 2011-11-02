@@ -30,11 +30,11 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'mlss_id'           => 40076,
+        'mlss_id'           => 40078,
         'max_gene_count'    => 1500,
 
-        'release'           => '64',
-        'rel_suffix'        => 'fk',    # an empty string by default, a letter otherwise
+        'release'           => '65',
+        'rel_suffix'        => '',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
@@ -93,11 +93,11 @@ sub default_options {
         },
 
         'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
-            -host   => 'compara1',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'lg4_ensembl_compara_63',
+            -dbname => 'lg4_ensembl_compara_64',
         },
     };
 }
@@ -153,14 +153,15 @@ sub pipeline_analyses {
             },
         },
 
-        {   -logic_name    => 'copy_table',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters    => {
-                'mode'          => 'overwrite',
+            {   -logic_name    => 'copy_table',
+                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+                -parameters    => {
+                                   'mode'          => 'overwrite',
+                                   'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
+                                  },
+                -hive_capacity => 10,
+                -can_be_empty => 1,
             },
-            -hive_capacity => 10,
-            -can_be_empty => 1,
-        },
 
         {   -logic_name => 'offset_tables',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
@@ -272,18 +273,29 @@ sub pipeline_analyses {
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into => {
                 2 => {
-                    'store_lca_species_set'     => { 'lca_species_set_id' => '#_insert_id_0#' },     # pass it on to the query
+                    'generate_pre_species_set'     => { 'lca_species_set_id' => '#_insert_id_0#' },     # pass it on to the query
                     'mysql:////species_set_tag' => { 'species_set_id' => '#_insert_id_0#', 'tag' => 'name', 'value' => 'low-coverage-assembly' },   # record the id in ss_tag table
                 },
+            },
+        },
+
+        {   -logic_name => 'generate_pre_species_set',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',    # another non-stardard use of JobFactory for iterative insertion
+            -parameters => {
+                'db_conn'         => $self->o('epo_db'),
+                'inputquery'      => "SELECT #lca_species_set_id# as lca_species_set_id, GROUP_CONCAT(DISTINCT g.genome_db_id) as pre_species_set FROM genome_db g JOIN species_set ss USING(genome_db_id) JOIN method_link_species_set mlss USING(species_set_id) WHERE assembly_default AND mlss.name LIKE '%EPO_LOW_COVERAGE%' AND g.genome_db_id NOT IN (SELECT DISTINCT(g2.genome_db_id) FROM genome_db g2 JOIN species_set ss2 USING(genome_db_id) JOIN method_link_species_set mlss2 USING(species_set_id) WHERE assembly_default AND mlss2.name LIKE '%EPO')",
+                'fan_branch_code' => 3,
+            },
+            -hive_capacity => -1,   # to allow for parallelization
+            -flow_into => {
+                           3 => [ 'store_lca_species_set' ],
             },
         },
 
         {   -logic_name => 'store_lca_species_set',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',    # another non-stardard use of JobFactory for iterative insertion
             -parameters => {
-                'db_conn'         => $self->o('epo_db'),
-                'inputquery'      => "SELECT DISTINCT g.genome_db_id FROM genome_db g JOIN species_set ss USING(genome_db_id) JOIN method_link_species_set mlss USING(species_set_id) WHERE assembly_default AND mlss.name LIKE '%EPO_LOW_COVERAGE%' AND g.genome_db_id NOT IN (SELECT DISTINCT(g2.genome_db_id) FROM genome_db g2 JOIN species_set ss2 USING(genome_db_id) JOIN method_link_species_set mlss2 USING(species_set_id) WHERE assembly_default AND mlss2.name LIKE '%EPO')",
-                'input_id'        => { 'species_set_id' => '#lca_species_set_id#', 'genome_db_id' => '#genome_db_id#' },
+                'inputquery'      => "SELECT #lca_species_set_id# as species_set_id, genome_db_id FROM genome_db where genome_db_id in (#pre_species_set#)",
                 'fan_branch_code' => 3,
             },
             -hive_capacity => -1,   # to allow for parallelization
@@ -328,7 +340,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'mlss_id'        => $self->o('mlss_id'),
             },
-            -wait_for => [ 'make_species_tree', 'create_lca_species_set', 'store_lca_species_set', 'load_members_factory', 'load_members' ], # mega-funnel
+            -wait_for => [ 'make_species_tree', 'store_lca_species_set', 'load_members_factory', 'load_members' ], # mega-funnel
             -flow_into => {
                            2 => [ 'recover_epo' ],
                            1 => ['db_snapshot_after_Rfam_classify']
@@ -418,7 +430,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree', ## SecStrucModels
             -hive_capacity => 200,
             -parameters => {
-                            'raxml' => $self->o('raxml_exe'),
+                            'raxml_exe' => $self->o('raxml_exe'),
                            },
             -failed_job_tolerance => 3,
             -flow_into => {
@@ -578,6 +590,7 @@ sub pipeline_analyses {
                          'ktreedist_exe' => $self->o('ktreedist_exe'),
                         },
          -failed_job_tolerance => 5,
+         -rc_id => 1,
         },
 
     ];
