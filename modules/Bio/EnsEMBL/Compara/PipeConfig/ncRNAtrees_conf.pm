@@ -557,6 +557,7 @@ sub pipeline_analyses {
             -hive_capacity => 200,
             -flow_into => {
                            -1 => ['orthotree_himem' ],
+                           -2 => ['orthotree_himem' ],
                           },
         },
 
