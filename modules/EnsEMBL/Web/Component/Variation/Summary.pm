@@ -21,14 +21,15 @@ sub content {
   my $variation_features = $variation->get_all_VariationFeatures;
   my ($feature_slice)    = map { $_->dbID == $vf ? $_->feature_Slice : () } @$variation_features; # get slice for variation feature
   my $failed             = $variation->failed_description ? $self->failed($feature_slice) : ''; ## First warn if variation has been failed
-  my $summary            = $self->variation_class;
-     $summary           .= $self->co_located($feature_slice) if $feature_slice;
-     $summary           .= $self->synonyms;
-     $summary           .= $self->variation_sets;
-     $summary           .= $self->alleles($feature_slice);
-     $summary           .= $self->location;
-     $summary           .= $self->validation_status;
-     $summary           .= $self->hgvs;
+  my $summary; #            = $self->variation_class;
+    $summary            .= $self->variation_source;
+    $summary            .= $self->alleles($feature_slice);
+    $summary            .= $self->location;
+    $summary            .= $self->validation_status;
+    $summary            .= $self->co_located($feature_slice) if $feature_slice;
+    $summary            .= $self->variation_sets;
+    $summary            .= $self->synonyms;
+    $summary            .= $self->hgvs;
   
   return qq{
     <div class="summary_panel">
@@ -68,11 +69,22 @@ sub variation_class {
   my $self    = shift;
   my $hub     = $self->hub;
   my $object  = $self->object;
+  return sprintf('
+    <dt>Class</dt> 
+    <dd>%s</dd>',
+    uc $object->vari_class
+  );
+}
+
+sub variation_source {
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $object  = $self->object;
   my $name    = $object->name;
   my $source  = $object->source;
   my $version = $object->source_version;
   my $url     = $object->source_url;
-  my @links;
+  my $source_link;
   
   # Date version
   if ($version =~ /^(20\d{2})(\d{2})/) {
@@ -82,28 +94,34 @@ sub variation_class {
   }
   
   if ($source eq 'dbSNP') {
-    @links = ($hub->get_ExtURL_link($name, 'DBSNP', $name), $hub->get_ExtURL_link("$source$version", 'DBSNP_HOME', $name));
+    $source_link = $hub->get_ExtURL_link("$source$version", 'DBSNP', $name);
   } elsif ($source =~ /SGRP/) {
-    @links = ($name, $hub->get_ExtURL_link("$source$version", 'SGRP', $name));
+    $source_link = $hub->get_ExtURL_link("$source$version", 'SGRP', $name);
   } elsif ($source =~ /COSMIC/) {
-    @links = ($hub->get_ExtURL_link($name, 'COSMIC_ID', $name), $hub->get_ExtURL_link("$source$version", 'COSMIC', $name));
+    $source_link = $hub->get_ExtURL_link("$source$version", 'COSMIC', $name);
   } elsif ($source =~ /HGMD/) {
     # HACK - should get its link properly somehow
     foreach (@{$hub->get_adaptor('get_VariationAnnotationAdaptor', 'variation')->fetch_all_by_Variation($object->Obj)}) {
       next unless $_->source_name =~ /HGMD/;
-      @links = ($hub->get_ExtURL_link($name, 'HGMD', { ID => $_->associated_gene, ACC => $name }), $hub->get_ExtURL_link($_->source_name . $version, 'HGMD-PUBLIC', ''));
+      $source_link = $hub->get_ExtURL_link($_->source_name . $version, 'HGMD-PUBLIC', '');
       last;
     }
   } elsif ($source =~ /LSDB/) {
-    @links = ($name, $hub->get_ExtURL_link($source . ($version ? " ($version)" : ''), $source, $name));
+    $source_link = $hub->get_ExtURL_link($source . ($version ? " ($version)" : ''), $source, $name);
   } else {
-    @links = ($name, $url ? qq{<a href="$url">$source$version</a>} : "$source $version");
+    $source_link = $url ? qq{<a href="$url">$source$version</a>} : "$source $version";
   }
-  
+ 
+  ## parse description for links
+  my $description = $object->source_description;
+  $description =~ s/(\w+) \[(http:\/\/[\w\.\/]+)\]/<a href="$2">$1<\/a>/; 
+
+  warn ">>> URL $1 = $2";
+
   return sprintf('
-    <dt>Variation class</dt> 
-    <dd>%s (%s source %s - %s)</dd>',
-    uc $object->vari_class, @links, $object->source_description
+    <dt>Source</dt> 
+    <dd>%s - %s</dd>',
+    $source_link, $description
   );
 }
 
@@ -157,8 +175,9 @@ sub synonyms {
   my $hub      = $self->hub;
   my $object   = $self->object;
   my $synonyms = $object->dblinks;
-  my $html;
+  my $count;
   
+  my $html = '<ul>';
   foreach my $db (sort { lc $a cmp lc $b } keys %$synonyms) {
     my @ids = @{$synonyms->{$db}};
     my @urls;
@@ -188,16 +207,32 @@ sub synonyms {
     } else {
       @urls = @ids;
     }
-
-    $html .= "<b>$db</b> " . (join ', ', @urls) . '<br />';
+    $count += scalar(@urls);
+    $html .= "<li><strong>$db</strong> " . (join ', ', @urls) . '</li>';
   }
 
-  $html ||= 'None currently in the database';
+  $html .= '</ul>';
  
-  return qq{
-    <dt>Synonyms</dt>
-    <dd>$html</dd>
-  }; 
+  # Large text display
+  if ($count) { # Collapsed div display 
+    my $show       = $self->hub->get_cookies('toggle_variation_synonyms') eq 'open';
+    
+    return sprintf('
+      <dt><a class="toggle %s set_cookie" href="#" rel="variation_synonyms" title="Click to toggle sets names">Synonyms</a></dt>
+      <dd>This feature has <strong>%s</strong> synonyms - click the plus to show</dd>
+      <dd class="variation_synonyms"><div class="toggleable" style="font-weight:normal;%s">%s</div></dd>',
+      $show ? 'open' : 'closed',
+      $count,
+      $show ? '' : 'display:none',
+      $html
+    );
+  }
+  else {
+    return qq{
+      <dt>Synonyms</dt>
+      <dd>None currently in the database</dd>
+    }; 
+  }
 }
 
 sub variation_sets {
@@ -233,15 +268,28 @@ sub variation_sets {
 sub alleles {
   my ($self, $feature_slice) = @_;
   my $object   = $self->object;
-  my $alleles  = $object->alleles;
+
+  my @alleles  = split('/', $object->alleles);
+  my $ref_allele = shift @alleles;
+  my $alt_string = 'Alternative';
+  $alt_string .= 's' if (scalar @alleles > 1);
+  $alt_string .= ': <strong>'.join(', ', @alleles).'</strong>';
   my $ancestor = $object->ancestor;
-  my $html     = "<b>$alleles</b>";
-     $html    .= sprintf ' (Ambiguity code: <strong>%s</strong>)', $alleles =~ /HGMD/ ? 'not available' : $object->Obj->ambig_code if lc $object->vari_class eq 'snp';
+  my $ambiguity;
+  if (lc $object->vari_class eq 'snp') {
+    $ambiguity = $object->alleles =~ /HGMD/ ? 'not available' : $object->Obj->ambig_code;
+  }
+
+  my $html      = sprintf 'Reference: <strong>%s</strong> | %s | Ancestral: <strong>%s</strong> | Ambiguity code: <strong>%s</strong>',
+                  $ref_allele, $alt_string, $ancestor, $ambiguity;
+
+ # my $html     = "<b>$alleles</b>";
+ #    $html    .= sprintf ' (Ambiguity code: <strong>%s</strong>)', $alleles =~ /HGMD/ ? 'not available' : $object->Obj->ambig_code if lc $object->vari_class eq 'snp';
 
   # Check somatic mutation base matches reference
   if ($feature_slice) {
     my $sequence = $feature_slice->seq;
-    my ($allele) = split /\//, $alleles;
+    my ($allele) = split /\//, $object->alleles;
     
     if ($allele =~ /^[ACGTN]+$/) {
       my $seq   = length $sequence == 1 ? 'base': 'sequence';
@@ -251,7 +299,7 @@ sub alleles {
   }
   
   $html  = qq{<dt>Alleles</dt><dd>$html</dd>};
-  $html .= qq{<dt>Ancestral allele</dt><dd>$ancestor</dd>} if $ancestor;
+  #$html .= qq{<dt>Ancestral allele</dt><dd>$ancestor</dd>} if $ancestor;
   
   return $html;
 }
