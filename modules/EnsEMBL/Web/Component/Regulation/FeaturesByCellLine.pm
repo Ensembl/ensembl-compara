@@ -61,6 +61,7 @@ sub content {
   });
     
   $image_config_bottom->{'fg_regulatory_features_legend_features'}->{'fg_regulatory_features'} = { priority => 1020, legend => [] };
+  $image_config_bottom->{'fg_segmentation_features_legend_features'}->{'fg_segmentation_features'} = { priority => 1020, legend => [] };
   
   push @containers_and_configs, $slice, $image_config_bottom; 
 

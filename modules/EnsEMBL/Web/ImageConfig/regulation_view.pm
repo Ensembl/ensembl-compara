@@ -58,7 +58,7 @@ sub init {
   );
   
   $self->get_node('opt_empty_tracks')->set('display', 'normal');
-  
+
   foreach my $cell_line (@cell_lines) {
     my $display = $cell_line =~ /^(MultiCell|CD4)$/ ? 'tiling_feature' : 'compact';
     my $feat    = $self->get_node("reg_feats_$cell_line");
@@ -66,7 +66,8 @@ sub init {
     
     $feat->after($seg) if $self->{'code'} eq 'cell_line';
     
-    $_->set('display', 'normal') for $feat, $seg; # Turn on track
+    $_->set('display', 'normal') for $feat; # Turn on track
+    if($seg) { $_->set('display', 'normal') for $seg; }# Turn on track if there is segmentation track
     
     # Turn on core evidence track
     $self->modify_configs(
@@ -86,7 +87,7 @@ sub init {
   if ($self->{'code'} ne $self->{'type'}) {    
     my $func = "init_$self->{'code'}";
     $self->$func if $self->can($func);
-  }
+  }  
 }
 
 sub init_top {
@@ -112,19 +113,25 @@ sub init_cell_line {
 
 sub init_bottom {
   my $self = shift;
-  
-  $_->remove for grep $_->id ne 'fg_regulatory_features_legend', $self->get_tracks;
-  
+
+  $_->remove for grep $_->id !~ /fg_regulatory_features_legend|fg_segmentation_features_legend/, $self->get_tracks;
+
   $self->add_tracks('other',
     [ 'fg_background_regulation', '', 'fg_background_regulation', { display => 'normal', strand => 'r', menu => 'no', tag => 0            }],
     [ 'scalebar',                 '', 'scalebar',                 { display => 'normal', strand => 'r', menu => 'no', name => 'Scale bar' }],
     [ 'ruler',                    '', 'ruler',                    { display => 'normal', strand => 'r', menu => 'no', name => 'Ruler'     }],
   );
-  
+
   $self->modify_configs(
     [ 'fg_regulatory_features_legend' ],
-    { display => 'normal' }
+    { display => 'normal' },
   );
+  
+  $self->modify_configs(
+    [ 'fg_segmentation_features_legend' ],
+    { display => 'normal' }
+  );  
+  
 }
 
 1;
