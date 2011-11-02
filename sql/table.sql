@@ -950,6 +950,11 @@ CREATE TABLE nc_tree_tag LIKE protein_tree_tag;
 #    duplication_confidence_score    -- Only for duplications: the ratio between the number of species in the intersection by the number of the species in the union
 #    tree_support                    -- Set of the 5 different trees that we compute that are supporting the node
 
+# The following foreign key is honoured in Ensembl Compara
+#  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
+# In Ensembl Genomes, it should be
+#  FOREIGN KEY (taxon_id) REFERENCES genome_db(genome_db_id),
+
 CREATE TABLE protein_tree_attr (
   node_id                         INT(10) UNSIGNED NOT NULL,
   node_type                       ENUM("duplication", "dubious", "speciation", "gene_split"),
@@ -960,7 +965,6 @@ CREATE TABLE protein_tree_attr (
   tree_support                    SET('phyml_nt', 'nj_ds', 'phyml_aa', 'nj_dn', 'nj_mm'),
 
   FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
-  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
 
   PRIMARY KEY (node_id)
 
