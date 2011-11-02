@@ -17,7 +17,17 @@ sub caption {
   my $self         = shift;
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
-  return sprintf 'Search %s %s', $species_defs->ENSEMBL_SITETYPE, $hub->species eq 'Multi' ? '' : $species_defs->SPECIES_COMMON_NAME;
+  my ($heading, $subhead);
+
+  my $common_name = $species_defs->SPECIES_COMMON_NAME;
+  if ($common_name =~ /\./) {
+    $heading = $species_defs->SPECIES_BIO_NAME;
+  }
+  else {
+    $heading = $common_name;
+    $subhead = '('.$species_defs->SPECIES_BIO_NAME.')';
+  }
+  return [$heading, $subhead];
 }
 
 sub short_caption { return 'About this species'; }

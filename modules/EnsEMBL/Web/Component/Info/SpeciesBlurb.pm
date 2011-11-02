@@ -17,20 +17,16 @@ sub content {
   my $self        = shift;
   my $hub         = $self->hub;
   my $species     = $hub->species;
+  my $common_name = $hub->species_defs->SPECIES_COMMON_NAME;
 
-  my $common_name = $hub->species_defs->get_config($species, 'SPECIES_COMMON_NAME');
   my $file1       = '/ssi/species/'.$species.'_assembly.html';
   my $file2       = '/ssi/species/'.$species.'_annotation.html';
-
-  (my $species_name = $species)  =~ s/_/ /g;
-  my $name_string   = $common_name =~ /\./ ? "<i>$species_name</i>" : "$common_name (<i>$species_name</i>)";
-  my $html = "<h1>$name_string</h1>";
 
   my $ensembl_version   = $hub->species_defs->ENSEMBL_VERSION;
   my $current_assembly  = $hub->species_defs->ASSEMBLY_NAME;
 
   ## Assembly blurb
-  $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $file1);
+  my $html = EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $file1);
 
   ## Link to FTP site
   my $ftp_url = 'ftp://ftp.ensembl.org/pub/release-'.$ensembl_version.'/fasta/'.lc($species).'/dna/';
