@@ -114,10 +114,18 @@ sub short_caption {
 
 sub caption {
   my $self = shift;
-  return "Karyotype" unless $self->seq_region_name;
-  return $self->neat_sr_name($self->seq_region_type,$self->seq_region_name).': '.$self->thousandify($self->seq_region_start).'-'.
-                                     $self->thousandify($self->seq_region_end);
+  my $caption;
+  if ($self->seq_region_name) {
+    $caption .= $self->neat_sr_name($self->seq_region_type, $self->seq_region_name).': '
+                  .$self->thousandify($self->seq_region_start).'-'
+                  .$self->thousandify($self->seq_region_end);
+  }
+  else {
+    $caption .= 'Whole Genome';
+  }
+  return $caption;
 }
+
 sub centrepoint      { return ( $_[0]->Obj->{'seq_region_end'} + $_[0]->Obj->{'seq_region_start'} ) / 2; }
 sub length           { return   $_[0]->Obj->{'seq_region_end'} - $_[0]->Obj->{'seq_region_start'} + 1; }
 

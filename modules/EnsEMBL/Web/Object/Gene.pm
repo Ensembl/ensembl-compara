@@ -393,14 +393,19 @@ sub short_caption {
 
 sub caption {
   my $self = shift;
+  my $heading = $self->type_name.': ';
+  my $subhead;
+
   my( $disp_id ) = $self->display_xref;
-  my $caption = $self->type_name.': ';
-  if( $disp_id ) {
-    $caption .= "$disp_id (".$self->stable_id.")";
-  } else {
-    $caption .= $self->stable_id;
+  if( $disp_id && $disp_id ne $self->stable_id ) {
+    $heading .= $disp_id;
+    $subhead = $self->stable_id;
   }
-  return $caption;
+  else {
+    $heading .= $self->stable_id;
+  }
+
+  return [$heading, $subhead];
 }
 
 sub gene                        { return $_[0]->Obj;             }

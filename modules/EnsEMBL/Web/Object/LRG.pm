@@ -500,17 +500,21 @@ sub short_caption {
 
 sub caption {
   my $self = shift;
-  my ($disp_id) = $self->display_xref;
-  my $caption   = $self->type_name . ': ';
-  
-  if ($disp_id && $disp_id ne $self->stable_id) {
-    $caption .= sprintf '%s (%s)', $disp_id, $self->stable_id;
-  } else {
-    $caption .= $self->stable_id;
+  my $heading = $self->type_name.': ';
+  my $subhead;
+
+  my( $disp_id ) = $self->display_xref;
+  if( $disp_id && $disp_id ne $self->stable_id ) {
+    $heading .= $disp_id;
+    $subhead = $self->stable_id;
   }
-  
-  return $caption;
+  else {
+    $heading .= $self->stable_id;
+  }
+
+  return [$heading, $subhead];
 }
+
 sub type_name         { return 'LRG';                                         }
 sub stable_id         { return $_[0]->Obj->stable_id;                         }
 sub feature_type      { return $_[0]->Obj->type;                              }

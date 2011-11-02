@@ -147,9 +147,7 @@ sub short_caption {
 
 sub caption {
  my $self = shift; 
- my $type = $self->Obj->is_somatic ? 'Somatic mutation' : 'Variation';
- my $caption = $type.': '.$self->name;
-
+ my $caption = [$self->name, uc $self->vari_class];
  return $caption;
 }
 
