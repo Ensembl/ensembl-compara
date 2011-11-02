@@ -385,16 +385,18 @@ sub delete_upload {
     my $session_id = $session->session_id;
     my $upload     = $session->get_data(type => 'upload', code => $code);
     
-    if ($upload->{'filename'}) {
-      EnsEMBL::Web::TmpFile::Text->new(filename => $upload->{'filename'})->delete;
+    if ($code =~ /_$session_id$/) {
+      if ($upload->{'filename'}) {
+        EnsEMBL::Web::TmpFile::Text->new(filename => $upload->{'filename'})->delete;
+      } else {
+        my @analyses = split ', ', $upload->{'analyses'};
+        $self->_delete_datasource($upload->{'species'}, $_) for @analyses;
+      }
     } else {
-      my @analyses = split ', ', $upload->{'analyses'};
-      $self->_delete_datasource($upload->{'species'}, $_) for @analyses;
+      $code = undef;
     }
     
     $session->purge_data(type => 'upload', code => $code);
-    
-    $code = undef unless $code =~ /_$session_id$/;
   }
   
   # Remove all shared data with this code and source
@@ -413,10 +415,15 @@ sub delete_remote {
  if ($user && $id) {
     if ($source eq 'das') {
       my ($das) = $user->dases($id);
+      
       $das->delete if $das;
     } else {
       my ($url) = $user->urls($id);
-      $url->delete if $url;
+      
+      if ($url) {
+        $code = $url->code;
+        $url->delete;
+      }
     }
   } elsif ($source eq 'das') {
     my $temp_das = $session->get_all_das;
