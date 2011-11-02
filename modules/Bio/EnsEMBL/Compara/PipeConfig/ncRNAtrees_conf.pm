@@ -535,6 +535,7 @@ sub pipeline_analyses {
             -flow_into => {
                            1 => [ 'orthotree', 'ktreedist' ],
                            -1 => [ 'treebest_mmerge_himem' ],
+                           -2 => [ 'treebest_mmerge_himem' ],
             },
         },
 
