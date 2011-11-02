@@ -273,7 +273,27 @@ sub content_Text {
   $self->renderer->print($value)
 }
 
-sub _caption_with_helplink {
+sub _caption_h1 {
+  my $self    = shift;
+  my ($head, $subhead);
+  my $html = '<h1 class="summary-heading">';
+
+  if (ref($self->{'caption'}) eq 'ARRAY') {
+    my ($head, $subhead) = @{$self->{'caption'} || []};
+    $html .= $head;
+    if ($subhead) { 
+      $html .= ' <span class="summary-subhead">'.$subhead.'</span>'; 
+    }
+  }
+  else {
+    $html .= $self->{'caption'};
+  }
+
+  $html .= '</h1>';
+  return $html;
+}
+
+sub _caption_h2_with_helplink {
   my $self    = shift;
   my $img_url = $self->hub ? $self->img_url : undef;
   my $id      = $self->{'help'};
@@ -297,7 +317,17 @@ sub content {
   my $panel_type = $self->renderer->{'_modal_dialog_'} ? 'ModalContent' : 'Content';
   
   if (!$self->{'omit_header'}) {
-    my $caption = exists $self->{'caption'} ? $self->_caption_with_helplink : '';
+
+    my $caption = '';
+    if (exists $self->{'caption'}) {
+      my $summary = $self->{'code'} eq 'summary_panel' ? 1 : 0;
+      if ($summary) {
+        $caption = $self->_caption_h1;
+      }
+      else {
+        $caption = $self->_caption_h2_with_helplink;
+      }
+    }
     
     $content = qq{
       <div class="nav-heading">
