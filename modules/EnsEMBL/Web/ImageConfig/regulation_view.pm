@@ -64,7 +64,7 @@ sub init {
     my $feat    = $self->get_node("reg_feats_$cell_line");
     my $seg     = $self->get_node("seg_$cell_line");
     
-    $feat->after($seg) if $self->{'code'} eq 'cell_line';
+    $feat->after($seg) if ($self->{'code'} eq 'cell_line' && $seg);
     
     $_->set('display', 'normal') for $feat; # Turn on track
     if($seg) { $_->set('display', 'normal') for $seg; }# Turn on track if there is segmentation track
