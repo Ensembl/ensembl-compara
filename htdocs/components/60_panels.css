@@ -5,21 +5,25 @@
 }
 
 .panel h2                 { padding: 2px; margin: 0; }
-.panel h2.legend          { padding: 2px; margin: 5px 0; }
-.panel h2.normal          { border:none; padding: 2px; margin: 10px 0 0 0; }
+.panel h2.legend          { padding: 2px; margin: 8px 0; }
+.panel h2.normal          { border:none; padding: 2px; margin: 8px 0 0 0; }
 
 .panel p                  { margin: 0; padding: 0; }
 .panel p.space-below      { margin-bottom:0.5em; }
-.panel div.content        { padding: 5px; margin: 0; }
+.panel div.content        { padding: 8px; margin: 0; }
 .panel dl.summary         { margin: 0; position: relative; clear: left; }
 .panel dl.summary dt      { margin-bottom:0.5em; clear: left; float: left; width: 11em; }
 .panel dl.summary dd      { margin: 0.5em 0 0.5em 11em; }  
 .panel dl.normal dt       { clear: none; float: none; width: 100%; margin: 0.5em 0 0 0; font-weight: bold; }
 .panel dl.normal dd       { margin: 0.5em 0 0 2em; }
-.panel .nav-heading h2    { border: 0; border-bottom: 0; padding: 0; text-align: center; margin: 0.5em 0; }
+
+.panel h1.summary-heading   { color:[[CONTRAST_HEADER]]; margin:8px 0 0 8px; }
+.panel span.summary-subhead { color:[[PANEL_TEXT]]; font-size: 0.7em; }
+
+.panel .nav-heading h2    { border: 0; border-bottom: 0; padding: 0; margin: 8px 0 0 8px; }
 .panel .nav-heading div   { width: 16em; padding: 1px;  }
 .panel .nav-heading div span,
-.panel .nav-heading div a { height: 1.4em; overflow: hidden; text-decoration: none; margin: 2px; font-weight: bold; display:block; padding: 0 0.5em; text-align: center; }
+.panel .nav-heading div a { height: 1.4em; overflow: hidden; text-decoration: none; margin: 2px; font-weight: bold; display:block; padding: 0 0.5em; }
 .panel .nav-heading div a { background-color: [[TINT_BG]]; border:1px outset [[TINT_BORDER]]; font-size: 0.9em}
 
 .left-button  { float: left;  }
