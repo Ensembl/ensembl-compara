@@ -20,11 +20,11 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
+  my $hub = $self->hub;
 
-  my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
-  my $current_species = $object->data_species;
-  my $action_url = $object->species_path($current_species)."/UserData/CheckConvert";
+  my $sitename = $hub->species_defs->ENSEMBL_SITETYPE;
+  my $current_species = $hub->data_species;
+  my $action_url = $hub->species_path($current_species)."/UserData/CheckConvert";
   my $variation_limit = 750;
 
   my $html;
@@ -56,8 +56,8 @@ sub content {
    ## Species now set automatically for the page you are on
   my @species;
   
-  foreach my $sp ($object->species_defs->valid_species) {
-    push @species, {'value' => $sp, 'name' => $object->species_defs->species_label($sp, 1).': '.$object->species_defs->get_config($sp, 'ASSEMBLY_NAME')};
+  foreach my $sp ($hub->species_defs->valid_species) {
+    push @species, {'value' => $sp, 'name' => $hub->species_defs->species_label($sp, 1).': '.$hub->species_defs->get_config($sp, 'ASSEMBLY_NAME')};
   }
   @species = sort {$a->{'name'} cmp $b->{'name'}} @species;
 
