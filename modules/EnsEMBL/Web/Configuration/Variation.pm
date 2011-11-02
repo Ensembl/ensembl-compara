@@ -8,7 +8,7 @@ use base qw(EnsEMBL::Web::Configuration);
 
 sub set_default_action {
   my $self = shift;
-  $self->{'_data'}->{'default'} = 'Sequence';
+  $self->{'_data'}->{'default'} = 'Explore';
 }
 
 sub user_tree { return 1; }
@@ -25,6 +25,13 @@ sub populate_tree {
   my $self    = shift;
 	my $somatic = $self->object ? $self->object->Obj->is_somatic : undef;
 
+  $self->create_node('Explore', 'Explore this variation',
+    [qw(
+      explore EnsEMBL::Web::Component::Variation::Explore
+    )],
+    { 'availability' => 'variation' }
+  );
+    
   $self->create_node('Sequence', 'Flanking sequence',
     [qw(
       flanking EnsEMBL::Web::Component::Variation::FlankingSequence
