@@ -173,7 +173,9 @@ sub load_compara_ncs {
         LEFT JOIN member m ON n2m.member_id=m.member_id
         }.(($schema_version<53) ? q{} :q{ LEFT JOIN protein_tree_stable_id ptsi ON ptn.node_id=ptsi.node_id}).
         ( ($schema_version < 55) ? q{ WHERE (ptn.parent_id = ptn.root_id } : q{ WHERE (ptn.node_id = ptn.root_id }).
-        q{ OR m.stable_id IS NOT NULL) AND left_index AND right_index ORDER BY left_index };
+        q{ OR m.stable_id IS NOT NULL) AND left_index AND right_index ORDER BY
+        }.(($schema_version < 65) ? q{} : q{root_id,}).
+        q{left_index };
 
     my $sth = $dbh->prepare($sql);
     warn "\t- waiting for the data to start coming\n";
