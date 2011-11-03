@@ -33,6 +33,7 @@ use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::ViewConfig;
+use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -689,7 +690,7 @@ sub get_data_from_session {
   my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs, undef, $species);
 
   if ($type eq 'url') {
-    my $response = get_url_content($tempdata->{'url'});
+    my $response = EnsEMBL::Web::Tools::Misc::get_url_content($tempdata->{'url'});
     $content     = $response->{'content'};
   } else {
     my $file = new EnsEMBL::Web::TmpFile::Text(filename => $tempdata->{'filename'});
