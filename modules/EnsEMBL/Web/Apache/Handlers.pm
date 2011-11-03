@@ -288,8 +288,6 @@ sub handler {
   my @raw_path = split m|/|, $file;
   shift @raw_path; # Always empty
 
-  my %species_lookup = map { $_ => 1 } $species_defs->valid_species;
-  
   my %species_map = (
     common => 'common',
     multi  => 'Multi',
@@ -330,9 +328,23 @@ sub handler {
       return HTTP_MOVED_PERMANENTLY;
     }
   }
-  
+
+  my %lookup = map { $_ => 1 } $species_defs->valid_species;
+  my $lookup_args = {
+    'sd'      => $species_defs,
+    'map'     => \%species_map,
+    'lookup'  => \%lookup,
+    'uri'     => $r->unparsed_uri,
+  };
+
   foreach (@raw_path) {
-    if ($species_lookup{$species_map{lc $_}} && !$species) {
+    $lookup_args->{'dir'} = $_;
+    my $check = _check_species($lookup_args);
+    if ($check && $check =~ /^http/) {
+      $r->headers_out->set( Location => $check );
+      return REDIRECT;
+    }
+    elsif ($check && !$species) {
       $species = $_;
     } else {
       push @path_segments, $_;
@@ -466,6 +478,14 @@ sub handler {
   $ENSEMBL_WEB_REGISTRY->timer_push('Handler "DECLINED"', undef, 'Apache');
   
   return DECLINED;
+}
+
+sub _check_species {
+## Do this in a private function so it's more easily pluggable, e.g. on Pre!
+## This default version just checks if this is a valid species for the site
+  my $args = shift;
+  my %lookup = map { $_ => 1 } $args->{'sd'}->valid_species;
+  return $lookup{$args->{'map'}{lc $args->{'dir'}}};
 }
 
 sub logHandler {
