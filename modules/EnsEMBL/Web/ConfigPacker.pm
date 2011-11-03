@@ -723,6 +723,13 @@ sub _summarise_website_db {
     $self->db_tree->{'ENSEMBL_ARCHIVES'}->{$row->[0]}{$row->[1]}=$row->[2];
   }
 
+  $t_aref = $dbh->selectall_arrayref('select name, common_name, code from species');
+  foreach my $row ( @$t_aref ) {
+    $self->db_tree->{'ALL_WEB_SPECIES'}{$row->[0]}    = 1;
+    $self->db_tree->{'ALL_WEB_SPECIES'}{lc $row->[1]} = 1;
+    $self->db_tree->{'ALL_WEB_SPECIES'}{$row->[2]}    = 1;
+  }
+
   $dbh->disconnect();
 }
 
@@ -1338,7 +1345,7 @@ sub _munge_meta {
     $self->tree->{$species}{'GENEBUILD_RELEASE'} = "$months[$A[1]] $A[0]";
     
     @A = split '-', $meta_hash->{'genebuild.last_geneset_update'}[0];
-    
+
     $self->tree->{$species}{'GENEBUILD_LATEST'} = "$months[$A[1]] $A[0]";
     
     @A = split '-', $meta_hash->{'assembly.date'}[0];
