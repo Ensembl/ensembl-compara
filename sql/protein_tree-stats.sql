@@ -30,6 +30,7 @@ ALTER TABLE tmp_coverage ADD PRIMARY KEY (taxon_id);
 OPTIMIZE TABLE tmp_coverage;
 
 SELECT
+	taxon_id,
 	genome_db.name,
 	nb_pep,
 	nb_genes AS nb_can_pep,
