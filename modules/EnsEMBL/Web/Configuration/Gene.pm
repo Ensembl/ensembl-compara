@@ -135,7 +135,7 @@ sub populate_tree {
   
 	$self->create_node('Phenotype',  'Phenotype',
     [qw( phenotype EnsEMBL::Web::Component::Gene::GenePhenotype )],
-    { 'availability' => 'gene' }
+    { 'availability' => 'phenotype' }
   );
 	
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
