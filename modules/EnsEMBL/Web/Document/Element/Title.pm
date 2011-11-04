@@ -39,7 +39,16 @@ sub init {
     my $object       = $controller->object;
     my $hub          = $self->hub;
     my $species_defs = $hub->species_defs;
-    my $caption      = $object ? "@{$object->caption}[0](@{$object->caption}[1])" : undef;
+    my $caption;
+    if ($object) {
+      if (ref($object->caption) eq 'ARRAY') {
+        $caption = $object->caption->[0];
+        $caption .= ' ('.$object->caption->[1].')' if $object->caption->[1];
+      }
+      else {
+        $caption = $object->caption;
+      }
+    }
     my $title        = $node->data->{'concise'} || $node->data->{'caption'};
     $title           =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
     
