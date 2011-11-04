@@ -236,27 +236,6 @@ DATABASE_GO = your_go_database_name
 <p>BLAST is not installed by default.  You have to configure blast for a local installation. See documentation describing how to <a href="blast.html">configure BLAST</a>.</p>
 <p>All relevant fasta files are on <a href="ftp://ftp.ensembl.org/pub">ftp://ftp.ensembl.org/pub</a>.</p>
 
-<!--
-<h2 id="ssaha">SSAHA</h2>
-<p>SSAHA2 is not installed by default as it requires a large amount of memory to put the look
-up tables in memory. 
-(Ensembl currently uses 10 4G machines for our SSAHA servers).</p>
-
-<p>All relevant fasta files are on <a href="ftp://ftp.ensembl.org/pub">ftp://ftp.ensembl.org/pub</a>. 
- These need processing to produce the appropriate files.  SSAHA2 servers can be configured for any DNA based data.</p>
-
-<p>SSAHA2 software is at: <a href="http://www.sanger.ac.uk/resources/software/ssaha2/">http://www.sanger.ac.uk/resources/software/ssaha2/</a>.</p>
-
-<p>Each species ini file (<kbd>public-plugins/mirror/conf/ini-files/&lt;Genus_species.ini&gt;</kbd>) needs the following:</p>
-<pre class="code">
-[SSAHA2_DATASOURCES]
-DATASOURCE_TYPE = dna
-LATESTGP        = host:port        ; for unmased dna
-CDNA_ALL        = host:port        ; for cDNA data 
-</pre>
--->
-
-
 <h2>Note on Ensembl Web Site Search</h2>
 
 <p>By default, local installations of Ensembl use a simple search that just does SQL
