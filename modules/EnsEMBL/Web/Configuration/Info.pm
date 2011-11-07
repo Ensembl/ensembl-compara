@@ -143,6 +143,7 @@ sub populate_tree {
     }  
   }
 
+  ## Generic node for including arbitrary HTML files about a species
   $self->create_node('Content', '',
     [qw(content EnsEMBL::Web::Component::Info::Content)],
     { no_menu_entry => 1 }
