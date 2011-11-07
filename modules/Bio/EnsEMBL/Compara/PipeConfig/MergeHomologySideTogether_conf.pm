@@ -46,16 +46,16 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
+        %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'compara_homology_merged_64',    # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_homology_merged_65',    # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
             -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                        # a rule where a previously undefined parameter is used (which makes either of them obligatory)
-            -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),    # a rule where a previously defined parameter is used (which makes both of them optional)
+            -dbname => $self->o('ENV', 'USER').'_'.$self->o('pipeline_name'),    # a rule where a previously defined parameter is used (which makes both of them optional)
         },
 
         'master_db' => {
@@ -68,43 +68,43 @@ sub default_options {
         'master_copy_tables' => [ 'genome_db', 'species_set', 'method_link', 'method_link_species_set', 'mapping_session', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set_tag' ],
 
         'prevrel_db' => {
-            -host   => 'compara1',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'lg4_ensembl_compara_63',
+            -dbname => 'lg4_ensembl_compara_64',
         },
         'prevrel_merge_tables' => [ 'stable_id_history' ],
         
         'genetrees_db' => {
-            -host   => 'compara3',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => 'mm14_compara_homology_64',
-        },
-        'genetrees_copy_tables'  => [ 'sequence_cds', 'sequence_exon_bounded', 'subset', 'subset_member' ],
-        'genetrees_merge_tables' => [ 'stable_id_history', 'homology', 'homology_member', 'lr_index_offset' ],
-
-        'families_db' => {
             -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => 'lg4_compara_families_64',
+            -dbname => 'mm14_compara_homology_65',
+        },
+        'genetrees_copy_tables'  => [ 'sequence_cds', 'sequence_exon_bounded', 'subset', 'subset_member' ],
+        'genetrees_merge_tables' => [ 'stable_id_history', 'homology', 'homology_member' ],
+
+        'families_db' => {
+            -host   => 'compara4',
+            -port   => 3306,
+            -user   => 'ensadmin',
+            -pass   => $self->o('password'),
+            -dbname => 'lg4_compara_families_65',
         },
         'families_copy_tables'  => [ 'family', 'family_member' ],
         'families_merge_tables' => [ 'member', 'sequence', 'stable_id_history' ],
 
         'nctrees_db' => {
-            -host   => 'compara4',
+            -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => 'mp12_compara_nctrees_64',
+            -dbname => 'mp12_compara_nctrees_65',
         },
-        'nctrees_copy_tables'  => [ 'nc_profile', 'nc_tree_member', 'nc_tree_node', 'nc_tree_tag' ],
-        'nctrees_merge_tables' => [ 'member', 'sequence', 'homology', 'homology_member', 'lr_index_offset' ],
+        'nctrees_copy_tables'  => [ 'nc_profile' ],
+        'nctrees_merge_tables' => [ 'member', 'sequence', 'homology', 'homology_member' ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
     };
@@ -142,17 +142,17 @@ sub pipeline_create_commands {
 sub pipeline_analyses {
     my ($self) = @_;
     return [
-        {   -logic_name => 'lr_index_offset_correction',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters => {
-                'sql' => 'DELETE FROM lr_index_offset WHERE lr_index=0',
-            },
-            -input_ids => [
-                { 'db_conn' => $self->o('pipeline_db') },
-                { 'db_conn' => $self->o('genetrees_db') },
-                { 'db_conn' => $self->o('nctrees_db') },
-            ],
-        },
+#         {   -logic_name => 'lr_index_offset_correction',
+#             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+#             -parameters => {
+#                 'sql' => 'DELETE FROM lr_index_offset WHERE lr_index=0',
+#             },
+#             -input_ids => [
+#                 { 'db_conn' => $self->o('pipeline_db') },
+#                 { 'db_conn' => $self->o('genetrees_db') },
+#                 { 'db_conn' => $self->o('nctrees_db') },
+#             ],
+#         },
 
         {   -logic_name => 'generate_job_list',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -173,10 +173,11 @@ sub pipeline_analyses {
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('genetrees_db'), 'inputlist' => $self->o('genetrees_copy_tables') },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputlist' => $self->o('genetrees_merge_tables') },
 
+                { 'fan_branch_code' => 2, 'db_conn' => $self->o('nctrees_db'),   'inputquery' => "SHOW TABLES LIKE 'nc\_tree\_%'" },
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('nctrees_db'),   'inputlist' => $self->o('nctrees_copy_tables') },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputlist' => $self->o('nctrees_merge_tables') },
             ],
-            -wait_for => [ 'lr_index_offset_correction' ],
+#            -wait_for => [ 'lr_index_offset_correction' ],
             -flow_into => {
                 2 => [ 'copy_table'  ],
                 4 => [ 'merge_table' ],
