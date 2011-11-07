@@ -111,8 +111,9 @@ sub html_tag {
 
 # AJAX-friendly redirect, for use in control panel
 # $redirect_type can be 'page' or 'modal' (defaults to 'modal') - this determines whether the whole page or just the modal panel will be reloaded
+# $modal_tab is an optional string to force the modal panel to switch to the tab with that id
 sub ajax_redirect {
-  my ($self, $url, $redirect_type) = @_;
+  my ($self, $url, $redirect_type, $modal_tab) = @_;
   
   my $r         = $self->renderer->{'r'};
   my $back      = $self->{'input'}->param('wizard_back');
@@ -125,9 +126,10 @@ sub ajax_redirect {
     if (!$self->{'ajax_redirect_url'}) {
       $self->{'ajax_redirect_url'} = $url;
       $redirect_type ||= 'modal';
+      $modal_tab     ||= '';
       
       $r->content_type('text/plain');
-      print qq({"redirectURL":"$url", "redirectType":"$redirect_type"});
+      print qq({"redirectURL":"$url", "redirectType":"$redirect_type", "modalTab":"$modal_tab"});
     }
   } else {
     $r->headers_out->set('Location' => $url);
