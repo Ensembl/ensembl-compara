@@ -14,6 +14,9 @@ sub process {
   my $hub          = $self->hub;
   my $user         = EnsEMBL::Web::Data::User->find(email => $hub->param('email'));
   my $species_defs = $hub->species_defs;
+  my $site         = $species_defs->ENSEMBL_SITE_URL;
+  my $then         = $hub->param('then');
+  my $url          = $then !~ /^http/ || $then =~ /^$site/ ? $then : $site;
   
   if (!$ENV{'ENSEMBL_USER_ID'}) {
     if ($user && $user->id) {
@@ -38,24 +41,23 @@ sub process {
 
   ## Convert any accepted invitations to memberships
   $user->update_invitations;
-
+  
   if ($hub->param('activated') || ($hub->param('popup') && $hub->param('popup') eq 'no')) {
-    $hub->redirect($species_defs->ENSEMBL_STYLE->{'SITE_LOGO_HREF'} || '/'); ## URL can't be blank
+    $hub->redirect($url);
   } else {
     ## We need to close down the popup window if using AJAX and refresh the page!
     my $r         = $self->r;
     my $ajax_flag = $r && $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
-    my $next      = $hub->param('next');
     
     if ($ajax_flag) { 
-      if ($next) {
-        $self->ajax_redirect($next, undef, undef, undef, $hub->param('modal_tab'));
+      if ($url eq $then) {
+        $self->ajax_redirect($url, undef, undef, undef, $hub->param('modal_tab'));
       } else {
         $r->content_type('text/plain');
         print '{"success":true}';
       }
     } else {
-      $hub->redirect($next || $hub->url({ action => 'Links' }));
+      $hub->redirect($url);
     }
   }
 }
