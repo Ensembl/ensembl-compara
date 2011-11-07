@@ -90,7 +90,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       },
       error: function (e) {
         if (e.status !== 0) {
-          this.elLk.content.html('<p class="ajax_error>Sorry, the page request failed to load.</p>');
+          this.elLk.content.html('<p class="ajax_error">Sorry, the page request failed to load.</p>');
         }
       }
     });
@@ -117,7 +117,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       context: this,
       success: function (json) {
         if (json.redirectURL && json.redirectType === 'modal') {
-          return this.getContent(undefined, json.redirectURL);
+          return json.modalTab ? Ensembl.EventManager.trigger('modalOpen', { href: json.redirectURL, rel: json.modalTab }) : this.getContent(undefined, json.redirectURL);
         }
         
         if (json.success === true || json.redirectType === 'page') {
