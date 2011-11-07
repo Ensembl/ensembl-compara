@@ -90,7 +90,7 @@ sub _fetch {
   (my $t = $search_SQL ) =~ s/'\[\[KEY\]\]'/$kw/g;
   $t =~ s/\[\[COMP\]\]/$comparator/g;
   $t =~ s/\[\[FULLTEXTKEY\]\]/$full_kw/g;
-  my $res = $dbh->dbc->db_handle->selectall_arrayref( "$t limit $limit" );
+  my $res = $dbh->dbc->db_handle->selectall_arrayref( "$t limit $limit" ) || [];
   return $res;
 }
 
@@ -453,21 +453,21 @@ sub search_GENE {
 
       # Search Gene, Transcript, Translation stable ids.. 
     [ $db, 'Gene',
-      "select count(*) from gene_stable_id WHERE stable_id [[COMP]] '[[KEY]]'",
-      "SELECT gsi.stable_id, g.description, '$db', 'Gene', 'gene' FROM gene_stable_id as gsi, gene as g WHERE gsi.gene_id = g.gene_id and gsi.stable_id [[COMP]] '[[KEY]]'" ],
+      "select count(*) from gene WHERE stable_id [[COMP]] '[[KEY]]'",
+      "SELECT g.stable_id, g.description, '$db', 'Gene', 'gene' FROM gene as g WHERE g.stable_id [[COMP]] '[[KEY]]'" ],
     [ $db, 'Gene',
-      "select count(*) from transcript_stable_id WHERE stable_id [[COMP]] '[[KEY]]'",
-      "SELECT gsi.stable_id, g.description, '$db', 'Transcript', 'transcript' FROM transcript_stable_id as gsi, transcript as g WHERE gsi.transcript_id = g.transcript_id and gsi.stable_id [[COMP]] '[[KEY]]'" ],
+      "select count(*) from transcript WHERE stable_id [[COMP]] '[[KEY]]'",
+      "SELECT g.stable_id, g.description, '$db', 'Transcript', 'transcript' FROM transcript as g WHERE g.stable_id [[COMP]] '[[KEY]]'" ],
     [ $db, 'Gene',
-      "select count(*) from translation_stable_id WHERE stable_id [[COMP]] '[[KEY]]'",
-      "SELECT gsi.stable_id, x.description, '$db', 'Transcript', 'peptide' FROM translation_stable_id as gsi, translation as g, transcript as x WHERE g.transcript_id = x.transcript_id and gsi.translation_id = g.translation_id and gsi.stable_id [[COMP]] '[[KEY]]'" ],
+      "select count(*) from translation WHERE stable_id [[COMP]] '[[KEY]]'",
+      "SELECT g.stable_id, x.description, '$db', 'Transcript', 'peptide' FROM translation as g, transcript as x WHERE g.transcript_id = x.transcript_id and g.stable_id [[COMP]] '[[KEY]]'" ],
 
       # search dbprimary_acc ( xref) of type 'Gene'
     [ $db, 'Gene',
       "select count( * ) from object_xref as ox, xref as x
         where ox.ensembl_object_type = 'Gene' and ox.xref_id = x.xref_id and x.dbprimary_acc [[COMP]] '[[KEY]]'",
-      "SELECT gsi.stable_id, concat( display_label, ' - ', g.description ), '$db', 'Gene', 'gene' from gene_stable_id as gsi, gene as g, object_xref as ox, xref as x
-        where gsi.gene_id = ox.ensembl_id and ox.ensembl_object_type = 'Gene' and gsi.gene_id = g.gene_id and
+      "SELECT g.stable_id, concat( display_label, ' - ', g.description ), '$db', 'Gene', 'gene' from gene as g, object_xref as ox, xref as x
+        where g.gene_id = ox.ensembl_id and ox.ensembl_object_type = 'Gene' and
               ox.xref_id = x.xref_id and x.dbprimary_acc [[COMP]] '[[KEY]]'" ],
       # search display_label(xref) of type 'Gene' where NOT match dbprimary_acc !! - could these two statements be done better as one using 'OR' ?? !! 
       # Eagle change  - added 2 x distinct clauses to prevent returning duplicate stable ids caused by multiple xref entries for one gene
@@ -475,8 +475,8 @@ sub search_GENE {
       "select count( distinct(ensembl_id) ) from object_xref as ox, xref as x
         where ox.ensembl_object_type = 'Gene' and ox.xref_id = x.xref_id and
               x.display_label [[COMP]] '[[KEY]]' and not(x.dbprimary_acc [[COMP]] '[[KEY]]')",
-      "SELECT distinct(gsi.stable_id), concat( display_label, ' - ', g.description ), '$db', 'Gene', 'gene' from gene_stable_id as gsi, gene as g, object_xref as ox, xref as x
-        where gsi.gene_id = ox.ensembl_id and ox.ensembl_object_type = 'Gene' and gsi.gene_id = g.gene_id and
+      "SELECT distinct(g.stable_id), concat( display_label, ' - ', g.description ), '$db', 'Gene', 'gene' from gene as g, object_xref as ox, xref as x
+        where g.gene_id = ox.ensembl_id and ox.ensembl_object_type = 'Gene' and
               ox.xref_id = x.xref_id and x.display_label [[COMP]] '[[KEY]]' and
               not(x.dbprimary_acc [[COMP]] '[[KEY]]')" ],
 
@@ -484,16 +484,16 @@ sub search_GENE {
       [ $db, 'Gene', 
       "SELECT count(distinct(g.gene_id)) from  gene as g, object_xref as ox, xref as x where g.gene_id = ox.ensembl_id and ox.ensembl_object_type = 'Gene' 
            and ox.xref_id = x.xref_id and match(g.description) against('+[[FULLTEXTKEY]]' IN BOOLEAN MODE) and not(x.display_label [[COMP]] '[[KEY]]' ) and not(x.dbprimary_acc [[COMP]] '[[KEY]]')",
-      "SELECT distinct(gsi.stable_id), concat( display_label, ' - ', g.description ), 'core', 'Gene', 'gene' from gene_stable_id as gsi, gene as g, object_xref as ox, xref as x
-         where gsi.gene_id = ox.ensembl_id and ox.ensembl_object_type = 'Gene' and gsi.gene_id = g.gene_id and ox.xref_id = x.xref_id 
+      "SELECT distinct(g.stable_id), concat( display_label, ' - ', g.description ), 'core', 'Gene', 'gene' from gene as g, object_xref as ox, xref as x
+         where g.gene_id = ox.ensembl_id and ox.ensembl_object_type = 'Gene' and ox.xref_id = x.xref_id 
          and match(g.description) against('+[[FULLTEXTKEY]]' IN BOOLEAN MODE) and not(x.display_label [[COMP]] '[[KEY]]' ) and not(x.dbprimary_acc [[COMP]] '[[KEY]]')" ],
 
       # Eagle added this to search external_synonym.  Could really do with an index on description field, but still works. 
       [ $db, 'Gene', 
       "SELECT count(distinct(g.gene_id)) from  gene as g, object_xref as ox, xref as x, external_synonym as es  where g.gene_id = ox.ensembl_id and ox.ensembl_object_type = 'Gene' 
            and ox.xref_id = x.xref_id and es.xref_id = x.xref_id and es.synonym [[COMP]] '[[KEY]]' and not(match(g.description) against('+[[FULLTEXTKEY]]' IN BOOLEAN MODE)) and not(x.display_label [[COMP]] '[[KEY]]' ) and not(x.dbprimary_acc [[COMP]] '[[KEY]]')",
-      "SELECT distinct(gsi.stable_id), concat( display_label, ' - ', g.description ), 'core', 'Gene', 'gene' from gene_stable_id as gsi, gene as g, object_xref as ox, xref as x, external_synonym as es
-         where gsi.gene_id = ox.ensembl_id and ox.ensembl_object_type = 'Gene' and gsi.gene_id = g.gene_id and ox.xref_id = x.xref_id  and es.xref_id = x.xref_id
+      "SELECT distinct(g.stable_id), concat( display_label, ' - ', g.description ), 'core', 'Gene', 'gene' from gene as g, object_xref as ox, xref as x, external_synonym as es
+         where g.gene_id = ox.ensembl_id and ox.ensembl_object_type = 'Gene' and ox.xref_id = x.xref_id  and es.xref_id = x.xref_id
          and es.synonym [[COMP]] '[[KEY]]' and not( match(g.description) against('+[[FULLTEXTKEY]]' IN BOOLEAN MODE)) and not(x.display_label [[COMP]] '[[KEY]]' ) and not(x.dbprimary_acc [[COMP]] '[[KEY]]')" ],
 
 
@@ -502,16 +502,16 @@ sub search_GENE {
     [ $db, 'Gene',
       "select count( * ) from object_xref as ox, xref as x
         where ox.ensembl_object_type = 'Transcript' and ox.xref_id = x.xref_id and x.dbprimary_acc [[COMP]] '[[KEY]]'",
-      "SELECT gsi.stable_id, concat( display_label, ' - ', g.description ), '$db', 'Transcript', 'transcript' from transcript_stable_id as gsi, transcript as g, object_xref as ox, xref as x
-        where gsi.transcript_id = ox.ensembl_id and ox.ensembl_object_type = 'Transcript' and gsi.transcript_id = g.transcript_id and
+      "SELECT g.stable_id, concat( display_label, ' - ', g.description ), '$db', 'Transcript', 'transcript' from transcript as g, object_xref as ox, xref as x
+        where g.transcript_id = ox.ensembl_id and ox.ensembl_object_type = 'Transcript' and
               ox.xref_id = x.xref_id and x.dbprimary_acc [[COMP]] '[[KEY]]'" ],
       # search display_label(xref) of type 'Transcript' where NOT match dbprimary_acc !! - could these two statements be done better as one using 'OR' ?? !! -- See also comment about combining with Genes above
     [ $db, 'Gene',
       "select count( distinct(ensembl_id) ) from object_xref as ox, xref as x
         where ox.ensembl_object_type = 'Transcript' and ox.xref_id = x.xref_id and
               x.display_label [[COMP]] '[[KEY]]' and not(x.dbprimary_acc [[COMP]] '[[KEY]]')",
-      "SELECT distinct(gsi.stable_id), concat( display_label, ' - ', g.description ), '$db', 'Transcript', 'transcript' from transcript_stable_id as gsi, transcript as g, object_xref as ox, xref as x
-        where gsi.transcript_id = ox.ensembl_id and ox.ensembl_object_type = 'Transcript' and gsi.transcript_id = g.transcript_id and
+      "SELECT distinct(g.stable_id), concat( display_label, ' - ', g.description ), '$db', 'Transcript', 'transcript' from transcript as g, object_xref as ox, xref as x
+        where g.transcript_id = ox.ensembl_id and ox.ensembl_object_type = 'Transcript' and
               ox.xref_id = x.xref_id and x.display_label [[COMP]] '[[KEY]]' and
               not(x.dbprimary_acc [[COMP]] '[[KEY]]')" ],
 
@@ -520,15 +520,15 @@ sub search_GENE {
     [ $db, 'Gene',
       "select count( * ) from object_xref as ox, xref as x
         where ox.ensembl_object_type = 'Translation' and ox.xref_id = x.xref_id and x.dbprimary_acc [[COMP]] '[[KEY]]'",
-      "SELECT gsi.stable_id, concat( display_label ), '$db', 'Transcript', 'peptide' from translation_stable_id as gsi, object_xref as ox, xref as x
-        where gsi.translation_id = ox.ensembl_id and ox.ensembl_object_type = 'Translation' and 
+      "SELECT concat( display_label ), '$db', 'Transcript', 'peptide' from object_xref as ox, xref as x
+        where g.translation_id = ox.ensembl_id and ox.ensembl_object_type = 'Translation' and 
               ox.xref_id = x.xref_id and x.dbprimary_acc [[COMP]] '[[KEY]]'" ],
     [ $db, 'Gene',
       "select count( distinct(ensembl_id) ) from object_xref as ox, xref as x
         where ox.ensembl_object_type = 'Translation' and ox.xref_id = x.xref_id and
               x.display_label [[COMP]] '[[KEY]]' and not(x.dbprimary_acc [[COMP]] '[[KEY]]')",
-      "SELECT distinct(gsi.stable_id), concat( display_label ), '$db', 'Transcript', 'peptide' from translation_stable_id as gsi, object_xref as ox, xref as x
-        where gsi.translation_id = ox.ensembl_id and ox.ensembl_object_type = 'Translation' and 
+      "SELECT distinct(g.stable_id), concat( display_label ), '$db', 'Transcript', 'peptide' from object_xref as ox, xref as x
+        where g.translation_id = ox.ensembl_id and ox.ensembl_object_type = 'Translation' and 
               ox.xref_id = x.xref_id and x.display_label [[COMP]] '[[KEY]]' and
               not(x.dbprimary_acc [[COMP]] '[[KEY]]')" ]
   );
