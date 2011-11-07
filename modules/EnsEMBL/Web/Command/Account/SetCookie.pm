@@ -49,8 +49,8 @@ sub process {
     my $r         = $self->r;
     my $ajax_flag = $r && $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
     
-    if ($ajax_flag) { 
-      if ($url eq $then) {
+    if ($ajax_flag) {
+      if ($url eq $then && $url ne $hub->referer->{'absolute_url'}) {
         $self->ajax_redirect($url, undef, undef, undef, $hub->param('modal_tab'));
       } else {
         $r->content_type('text/plain');
