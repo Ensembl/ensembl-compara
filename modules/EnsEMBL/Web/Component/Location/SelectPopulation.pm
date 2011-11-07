@@ -15,7 +15,6 @@ sub _init {
   $self->{'included_header'} = 'Selected Populations';
   $self->{'excluded_header'} = 'Unselected Populations';
   $self->{'url_param'}       = 'pop';
-  $self->{'active_tab'}      = $self->{'link_text'};
   $self->{'rel'}             = 'modal_select_populations';
 }
 
