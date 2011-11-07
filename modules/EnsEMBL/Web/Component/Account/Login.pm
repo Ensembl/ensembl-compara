@@ -21,9 +21,10 @@ sub content {
   my $fieldset = $form->add_fieldset;
   
   $fieldset->add_hidden([
-    { name => 'url',   value => $hub->param('url')   },
-    { name => 'popup', value => $hub->param('popup') },
-    { name => 'next',  value => $hub->param('next')  },
+    { name => 'url',       value => $hub->param('url')       },
+    { name => 'popup',     value => $hub->param('popup')     },
+    { name => 'next',      value => $hub->param('next')      },
+    { name => 'modal_tab', value => $hub->param('modal_tab') },
   ]);
 
   $fieldset->add_field([

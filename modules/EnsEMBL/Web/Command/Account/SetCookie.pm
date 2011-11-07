@@ -49,7 +49,7 @@ sub process {
     
     if ($ajax_flag) { 
       if ($next) {
-        $self->ajax_redirect($next);
+        $self->ajax_redirect($next, undef, undef, undef, $hub->param('modal_tab'));
       } else {
         $r->content_type('text/plain');
         print '{"success":true}';
