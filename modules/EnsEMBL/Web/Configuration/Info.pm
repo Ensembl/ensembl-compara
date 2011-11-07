@@ -124,6 +124,15 @@ sub populate_tree {
       ));
     }
 
+    if ($sample_data->{'PHENOTYPE_PARAM'}) {
+      my $phenotype_url  = "$species_path/Phenotype/Locations?ph=$sample_data->{'PHENOTYPE_PARAM'}";
+      my $phenotype_text = $sample_data->{'PHENOTYPE_TEXT'} || 'not available';
+      
+      $data_menu->append($self->create_node('Phenotype', "Phenotype ($phenotype_text)", [],
+        { availability => 1, url => $phenotype_url, raw => 1 }
+      ));
+    }
+
     if ($sample_data->{'REGULATION_PARAM'}){
       my $regulation_url  = "$species_path/Regulation/Cell_line?fdb=funcgen;rf=$sample_data->{'REGULATION_PARAM'}";
       my $regulation_text = $sample_data->{'REGULATION_TEXT'} || 'not_available';
