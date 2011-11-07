@@ -20,10 +20,10 @@ sub init {
 
 sub catch {
   my $self     = shift;
-  my $hub   = $self->hub;
+  my $hub      = $self->hub;
   my $password = $hub->param('password');
   
-  $self->redirect = '/Account/Login';
+  $self->redirect = sprintf '/Account/Login?then=%s;modal_tab=%s', $hub->param('then'), $hub->param('modal_tab');
   
   if ($password) {
     my $user = EnsEMBL::Web::Data::User->find(email => $hub->param('email'));
