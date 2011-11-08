@@ -35,16 +35,16 @@ sub process {
       $url_params->{'filter_code'}   = 'shared';
     }
   } else { ## Share via URL
-    my @shares = grep /^\d+$/, @share_ids;
+    my @shares = grep /^\d+$/, @share_ids; # user data being shared
     
-    foreach (grep !/^\d+$/, @share_ids) {
+    foreach (grep !/^\d+$/, @share_ids) { # session data being shared
       my $data = $session->get_data(type => 'upload', code => $_);
       
       if ($data) {
         if ($data->{'analyses'}) {
           push @shares, $_;
         } else {
-          my $ref = $object->store_data(type => $data->{'type'}, code => $_);
+          my $ref = $object->store_data(share => 1, type => $data->{'type'}, code => $_);
           
           if ($ref) {
             push @shares, $ref;
