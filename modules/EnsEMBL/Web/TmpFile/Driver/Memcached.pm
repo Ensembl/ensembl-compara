@@ -43,7 +43,7 @@ sub save {
     $obj->URL,
     $obj->content,
     $obj->exptime,
-    ( 'TMP', $obj->extension, keys %{ $ENV{CACHE_TAGS}||{} } ),
+    ('TMP', $obj->extension, values %{$ENV{'CACHE_TAGS'} || {}}),
   );
 }
 
