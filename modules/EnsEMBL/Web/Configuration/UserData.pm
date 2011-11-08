@@ -150,16 +150,6 @@ sub populate_tree {
      'no_menu_entry' => 1 }
   );
   
-  
-  
-  $self->create_node( 'RenameRecord', '',
-    [qw(manage_remote EnsEMBL::Web::Component::UserData::RenameRecord)
-    ], { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
-  $self->create_node( 'RenameTempData', '',
-    [qw(manage_remote EnsEMBL::Web::Component::UserData::RenameTempData)
-    ], { 'availability' => 1, 'no_menu_entry' => 1 }
-  );
   $self->create_node( 'ShareRecord', '',
     [], { 'command' => 'EnsEMBL::Web::Command::ShareRecord',
      'no_menu_entry' => 1 }

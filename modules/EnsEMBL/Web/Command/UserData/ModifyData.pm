@@ -94,7 +94,7 @@ sub delete_remote {
 sub rename_session_record {
   my $self = shift;
   my $hub  = $self->hub;
-  my $name = $hub->param('name');
+  my $name = $hub->param('value');
   
   $hub->session->set_data(type => $hub->param('source'), code => $hub->param('code'), name => $name) if $name;
   
@@ -104,10 +104,10 @@ sub rename_session_record {
 sub rename_user_record {
   my $self = shift;
   my $hub  = $self->hub;
-  my $name = $hub->param('name');
+  my $name = $hub->param('value');
   
   if ($name) {
-    my $method   = $hub->param('source');
+    my $method   = $hub->param('source') . 's';
     my ($record) = $hub->user->$method($hub->param('id'));
     $record->name($name);
     $record->save;
