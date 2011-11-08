@@ -8,7 +8,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     Ensembl.EventManager.register('modalClose',      this, this.hide);
     Ensembl.EventManager.register('queuePageReload', this, this.setPageReload);
     Ensembl.EventManager.register('addModalContent', this, this.addContent);
-    Ensembl.EventManager.register('setActivePanel',  this, function (panelId) { this.activePanel = panelId;       });
+    Ensembl.EventManager.register('setActivePanel',  this, function (panelId) { this.activePanel = panelId; this.elLk.content.filter('#' + panelId).addClass('active'); });
     Ensembl.EventManager.register('modalReload',     this, function (panelId) { this.modalReload[panelId] = true; });
   },
   
@@ -205,11 +205,13 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   addContent: function (el, url, id, tab) {
     tab = this.elLk.tabs.children('a.' + (tab || id));
     
-    this.elLk.content.filter(':last').after(el);
-    this.elLk.content = $('.modal_content', this.el);
-    
-    tab.data('panels').push(el[0]);
-    el.data('tab', tab.parent());
+    if (el) {
+      this.elLk.content.filter(':last').after(el);
+      this.elLk.content = $('.modal_content', this.el);
+      
+      tab.data('panels').push(el[0]);
+      el.data('tab', tab.parent());
+    }
     
     this.getContent(url, id);
     
