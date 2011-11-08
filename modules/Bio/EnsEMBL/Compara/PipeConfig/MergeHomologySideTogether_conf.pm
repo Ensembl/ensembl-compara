@@ -198,6 +198,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
                 'mode'          => 'topup',
+                'filter_cmd'    => 'sed "s/ENGINE=InnoDB/ENGINE=MyISAM/"',
             },
             -hive_capacity => 1,    # prevent several workers from updating the same table (brute force)
         },
