@@ -55,64 +55,63 @@ sub init_config {
   my $hub         = $controller->hub;
   my $action      = $hub->action;
   my $view_config = $hub->get_viewconfig($action);
-  my ($image_config, $search_box, $species_select);
   
-  if ($view_config) {
-    my $panel = $self->new_panel('Configurator', $controller, code => 'configurator');
-    
-    $image_config = $hub->get_imageconfig($view_config->image_config, 'configurator', $hub->species);
-    
-    $view_config->build_form($controller->object, $image_config);
-    
-    my $form = $view_config->get_form;
-    
-    $form->add_element(type => 'Hidden', name => 'component', value => $action, class => 'component');
-    
-    if ($image_config) {
-      if ($image_config->multi_species) {
-        foreach (@{$image_config->species_list}) {
-          $species_select .= sprintf(
-            '<option value="%s"%s>%s</option>', 
-            $hub->url('Config', { species => $_->[0], __clear => 1 }), 
-            $hub->species eq $_->[0] ? ' selected="selected"' : '',
-            $_->[1]
-          );
-        }
-        
-        $species_select = qq{<div class="species_select">Species to configure: <select class="species">$species_select</select></div>} if $species_select;
+  return unless $view_config;
+  
+  my $panel        = $self->new_panel('Configurator', $controller, code => 'configurator');
+  my $image_config = $view_config->image_config ? $hub->get_imageconfig($view_config->image_config, 'configurator', $hub->species) : undef;
+  my ($search_box, $species_select);
+  
+  $view_config->build_form($controller->object, $image_config);
+  
+  my $form = $view_config->get_form;
+  
+  $form->add_element(type => 'Hidden', name => 'component', value => $action, class => 'component');
+  
+  if ($image_config) {
+    if ($image_config->multi_species) {
+      foreach (@{$image_config->species_list}) {
+        $species_select .= sprintf(
+          '<option value="%s"%s>%s</option>', 
+          $hub->url('Config', { species => $_->[0], __clear => 1 }), 
+          $hub->species eq $_->[0] ? ' selected="selected"' : '',
+          $_->[1]
+        );
       }
       
-      $search_box = qq{<div class="configuration_search"><input class="configuration_search_text" value="Find a track" name="configuration_search_text" /></div>};
-      
-      $self->active = $image_config->get_parameter('active_menu') || 'active_tracks';
+      $species_select = qq{<div class="species_select">Species to configure: <select class="species">$species_select</select></div>} if $species_select;
     }
     
-    if (!$view_config->tree->get_node($self->active)) {
-      my @nodes     = @{$view_config->tree->child_nodes};
-      $self->active = undef;
-      
-      while (!$self->active && scalar @nodes) {
-        my $node      = shift @nodes;
-        $self->active = $node->id if $node->data->{'class'};
-      }
-    }
+    $search_box = qq{<div class="configuration_search"><input class="configuration_search_text" value="Find a track" name="configuration_search_text" /></div>};
     
-    if ($hub->param('partial')) {
-      $panel->{'content'}   = join '', map $_->render, @{$form->child_nodes};
-      $self->{'panel_type'} = $view_config->{'panel_type'} if $view_config->{'panel_type'};
-    } else {
-      $panel->set_content($species_select . $search_box . $form->render);
-    }
-    
-    $self->add_panel($panel);
-    
-    $self->tree    = $view_config->tree;
-    $self->caption = 'Configure view';
-    
-    $self->{$_} = $view_config->{$_} || {} for qw(tracks track_order);
+    $self->active = $image_config->get_parameter('active_menu') || 'active_tracks';
   }
   
-  $self->add_image_config_notes($controller) if $view_config->has_images;
+  if (!$view_config->tree->get_node($self->active)) {
+    my @nodes     = @{$view_config->tree->child_nodes};
+    $self->active = undef;
+    
+    while (!$self->active && scalar @nodes) {
+      my $node      = shift @nodes;
+      $self->active = $node->id if $node->data->{'class'};
+    }
+  }
+  
+  if ($hub->param('partial')) {
+    $panel->{'content'}   = join '', map $_->render, @{$form->child_nodes};
+    $self->{'panel_type'} = $view_config->{'panel_type'} if $view_config->{'panel_type'};
+  } else {
+    $panel->set_content($species_select . $search_box . $form->render . $self->save_as($hub->user, $view_config, $view_config->image_config));
+  }
+  
+  $self->add_panel($panel);
+  
+  $self->tree    = $view_config->tree;
+  $self->caption = 'Configure view';
+  
+  $self->{$_} = $view_config->{$_} || {} for qw(tracks track_order);
+  
+  $self->add_image_config_notes($controller) if $image_config;
 }
 
 sub add_image_config_notes {
@@ -145,6 +144,54 @@ sub add_image_config_notes {
   });
 
   $self->add_panel($panel);
+}
+
+sub save_as {
+  my ($self, $user, $view_config, $image_config) = @_;
+  
+  my $hub  = $self->hub;
+  my $data = $hub->config_adaptor->filtered_configs({ code => $image_config ? [ $view_config->code, $image_config ] : $view_config->code, active => '' });
+  my ($configs, %seen);
+  
+  foreach (sort { $a->{'name'} cmp $b->{'name'} } values %$data) {
+    next if $seen{$_->{'record_id'}};
+    $configs .= sprintf '<option value="%s" class="%s">%s</option>', $_->{'record_id'}, $_->{'record_id'}, $_->{'name'};
+    $seen{$_} = 1 for $_->{'record_id'}, $_->{'link_id'};
+  }
+  
+  my $existing = sprintf('
+    <div%s>
+      <label>Existing configuration:</label>
+      <select name="overwrite" class="existing%s">
+        <option value="">----------</option>
+        %s
+      </select>
+      <h2>Or</h2>
+    </div>',
+    $configs ? '' : ' style="display:none"',
+    $configs ? '' : ' disabled',
+    $configs
+  );
+  
+  my $save_to = $user ? qq{
+    <p><label>Save to:</label><span>Account <input type="radio" name="record_type" value="user" class="default" checked /></span><span>Session <input type="radio" name="record_type" value="session" /></span></p>
+  } : qq{
+    <input type="hidden" name="record_type" value="session" />
+  };
+  
+  return qq{
+    <div class="config_save_as">
+      <img class="close" src="/i/close.png" alt="close" title="Cancel" />
+      <h1>Save configuration</h1>
+      <form>
+        $existing
+        $save_to
+        <p><label>Name:</label><input class="name" type="text" name="name" maxlength="255" /></p>
+        <p><label>Description:</label><textarea class="desc" name="description" rows="5"/></p>
+        <p style="margin-bottom:0"><input class="fbutton disabled" type="button" value="Save" /></p>
+      </form>
+    </div>
+  };
 }
 
 1;
