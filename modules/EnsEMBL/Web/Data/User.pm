@@ -2,9 +2,14 @@ package EnsEMBL::Web::Data::User;
 
 use strict;
 use warnings;
+
 use base qw(EnsEMBL::Web::Data::Trackable);
-use EnsEMBL::Web::DBSQL::UserDBConnection (__PACKAGE__->species_defs);
+
+use Data::Dumper;
+
 use EnsEMBL::Web::DASConfig;
+use EnsEMBL::Web::Data::Record::FavouriteTracks;
+use EnsEMBL::Web::DBSQL::UserDBConnection (__PACKAGE__->species_defs);
 
 __PACKAGE__->table('user');
 __PACKAGE__->set_primary_key('user_id');
@@ -26,18 +31,19 @@ __PACKAGE__->add_fields(
 );
 
 __PACKAGE__->add_has_many(
-  records        => 'EnsEMBL::Web::Data::Record',
-  bookmarks      => 'EnsEMBL::Web::Data::Record::Bookmark',
-  configurations => 'EnsEMBL::Web::Data::Record::Configuration',
-  annotations    => 'EnsEMBL::Web::Data::Record::Annotation',
-  dases          => 'EnsEMBL::Web::Data::Record::DAS',
-  newsfilters    => 'EnsEMBL::Web::Data::Record::NewsFilter',
-  sortables      => 'EnsEMBL::Web::Data::Record::Sortable',
-  currentconfigs => 'EnsEMBL::Web::Data::Record::CurrentConfig',
-  specieslists   => 'EnsEMBL::Web::Data::Record::SpeciesList',
-  uploads        => 'EnsEMBL::Web::Data::Record::Upload',
-  urls           => 'EnsEMBL::Web::Data::Record::URL',
-  histories      => 'EnsEMBL::Web::Data::Record::History',
+  records          => 'EnsEMBL::Web::Data::Record',
+  bookmarks        => 'EnsEMBL::Web::Data::Record::Bookmark',
+  configurations   => 'EnsEMBL::Web::Data::Record::Configuration',
+  annotations      => 'EnsEMBL::Web::Data::Record::Annotation',
+  dases            => 'EnsEMBL::Web::Data::Record::DAS',
+  newsfilters      => 'EnsEMBL::Web::Data::Record::NewsFilter',
+  sortables        => 'EnsEMBL::Web::Data::Record::Sortable',
+  currentconfigs   => 'EnsEMBL::Web::Data::Record::CurrentConfig',
+  specieslists     => 'EnsEMBL::Web::Data::Record::SpeciesList',
+  uploads          => 'EnsEMBL::Web::Data::Record::Upload',
+  urls             => 'EnsEMBL::Web::Data::Record::URL',
+  histories        => 'EnsEMBL::Web::Data::Record::History',
+  favourite_tracks => 'EnsEMBL::Web::Data::Record::FavouriteTracks',
 );
 
 __PACKAGE__->has_many(_groups => ['EnsEMBL::Web::Data::Membership' => 'webgroup']);
@@ -136,6 +142,29 @@ sub favourite_species {
   return \@favourites;
 }
 
+sub get_favourite_tracks {
+  my $self   = shift;
+  my ($data) = map $_->{'tracks'}, $self->favourite_tracks;
+     $data   = eval($data) if $data;
+  
+  return $data || {};
+}
+
+sub set_favourite_tracks {
+  my ($self, $data) = @_;
+  my ($favourites)  = $self->favourite_tracks;
+      $favourites ||= new EnsEMBL::Web::Data::Record::FavouriteTracks::User({ user_id => $self->id });
+  
+  if ($data) {
+    local $Data::Dumper::Indent = 0;
+    (my $data_string = Dumper $data) =~ s/^\$VAR1 = //;
+    $favourites->tracks($data_string);
+    $favourites->save;
+  } else {
+    $favourites->delete;
+  }
+}
+
 ###################################################################################################
 ##
 ## Cache related stuff
@@ -146,13 +175,12 @@ sub invalidate_cache {
   my $self  = shift;
   my $cache = shift;
   
-  $self->SUPER::invalidate_cache($cache, 'user['.$self->id.']');
+  $self->SUPER::invalidate_cache($cache, 'USER['.$self->id.']');
 }
 
 sub propagate_cache_tags {
   my $self = shift;
-  $self->SUPER::propagate_cache_tags('user['.$self->id.']')
-    if ref $self;
+  $self->SUPER::propagate_cache_tags('USER['.$self->id.']') if ref $self;
 }
 
 1;
