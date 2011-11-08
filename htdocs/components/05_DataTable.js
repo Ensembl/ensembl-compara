@@ -305,7 +305,16 @@ Ensembl.DataTable = {
         } else {
           $.ajax({
             url: input.siblings('a.save').attr('href'),
-            data: { param: input.attr('name'), value: value }
+            data: { param: input.attr('name'), value: value },
+            success: function (response) {
+              if (response === 'reload') {
+                if (panel instanceof Ensembl.Panel.ModalContent) {
+                  panel.el.append('<div class="modal_reload"></div>');
+                } else {
+                  Ensembl.EventManager.trigger('queuePageReload', '', false, false);
+                }
+              }
+            }
           });
         }
         
