@@ -295,72 +295,64 @@ sub move_to_user {
 
 sub store_data {
   ## Parse file and save to genus_species_userdata
-  my $self = shift;
-  my %args = @_;
-  
-  my $hub     = $self->hub;
-  my $user    = $hub->user;
-  my $session = $hub->session;
-  
+  my $self     = shift;
+  my %args     = @_;
+  my $share    = delete $args{'share'};
+  my $hub      = $self->hub;
+  my $user     = $hub->user;
+  my $session  = $hub->session;
   my $tmp_data = $session->get_data(%args);
+  
   $tmp_data->{'name'} = $hub->param('name') if $hub->param('name');
   
-  my $report = $self->save_to_db(%args);
+  my $report = $tmp_data->{'analyses'} ? $tmp_data : $self->save_to_db(%args);
   
-  unless ($report->{'errors'}) {
-    ## Delete cached file
-    my $file = new EnsEMBL::Web::TmpFile::Text(
-      filename => $tmp_data->{'filename'}
+  if ($report->{'errors'}) {
+    warn Dumper($report->{'errors'});
+    return undef;
+  }
+  
+  new EnsEMBL::Web::TmpFile::Text(filename => $tmp_data->{'filename'})->delete if $tmp_data->{'filename'}; ## Delete cached file
+  
+  ## logic names
+  my $analyses    = $report->{'analyses'};
+  my @logic_names = ref $analyses eq 'ARRAY' ? @$analyses : ($analyses);
+  my $session_id  = $session->session_id;    
+  
+  if ($user && !$share) {
+    my $upload = $user->add_to_uploads(
+      %$tmp_data,
+      type             => 'upload',
+      filename         => '',
+      analyses         => join(', ', @logic_names),
+      browser_switches => $report->{'browser_switches'} || {}
     );
     
-    $file->delete;
-
-    ## logic names
-    my $analyses = $report->{'analyses'};
-    my @logic_names = ref($analyses) eq 'ARRAY' ? @$analyses : ($analyses);
-
-    my $session_id = $session->session_id;    
-    
-    if ($user) {
-      my $upload = $user->add_to_uploads(
-        %$tmp_data,
-        type     => 'upload',
-        filename => '',
-        analyses => join(', ', @logic_names),
-        browser_switches => $report->{'browser_switches'}||{}
-      );
+    if ($upload) {
+      $session->purge_data(%args);
       
-      if ($upload) {
-        if (!$tmp_data->{'filename'}) {
-          my $session_record = EnsEMBL::Web::Data::Session->retrieve(session_id => $session_id, code => $tmp_data->{'code'}) if $session_id && $tmp_data->{'code'};
-
-          $session_record->session_id(EnsEMBL::Web::Data::Session->create_session_id);
-          $session_record->save;
-        }
-        
-        $session->purge_data(%args);
-        
-        return $upload->id;
-      }
+      # uploaded track keys change when saved, so update configurations accordingly
+      $self->update_configs([ "upload_$args{'code'}" ], \@logic_names) if $args{'type'} eq 'upload';
       
-      warn 'ERROR: Can not save user record.';
-      
-      return undef;
-    } else {
-      $session->set_data(
-         %$tmp_data,
-         %args,
-         filename => '',
-         analyses => join(', ', @logic_names),
-         browser_switches => $report->{'browser_switches'}||{},
-      );
-      
-      return $args{code};
+      return $upload->id;
     }
+    
+    warn 'ERROR: Can not save user record.';
+    
+    return undef;
+  } else {
+    $session->set_data(
+      %$tmp_data,
+      %args,
+      filename         => '',
+      analyses         => join(', ', @logic_names),
+      browser_switches => $report->{'browser_switches'} || {},
+    );
+    
+    $self->update_configs([ "upload_$args{'code'}" ], \@logic_names) if $args{'type'} eq 'upload';
+    
+    return $args{'code'};
   }
-
-  warn Dumper($report->{'errors'}) if $report->{'errors'};
-  return undef;
 }
   
 sub delete_upload {
@@ -369,12 +361,14 @@ sub delete_upload {
   my $code = $hub->param('code');
   my $id   = $hub->param('id');
   my $user = $hub->user;
+  my @track_names;
   
   if ($user && $id) {
     my ($upload) = $user->uploads($id);
     
     if ($upload) {
       my @analyses = split ', ', $upload->analyses;
+      push @track_names, @analyses;
       $code = $upload->code;
       
       $self->_delete_datasource($upload->species, $_) for @analyses;
@@ -384,23 +378,28 @@ sub delete_upload {
     my $session    = $hub->session;
     my $session_id = $session->session_id;
     my $upload     = $session->get_data(type => 'upload', code => $code);
+    my $owner      = $code =~ /_$session_id$/;
     
-    if ($code =~ /_$session_id$/) {
-      if ($upload->{'filename'}) {
-        EnsEMBL::Web::TmpFile::Text->new(filename => $upload->{'filename'})->delete;
-      } else {
-        my @analyses = split ', ', $upload->{'analyses'};
+    if ($upload->{'filename'}) {
+      push @track_names, "upload_$code";
+      EnsEMBL::Web::TmpFile::Text->new(filename => $upload->{'filename'})->delete if $owner;
+    } else {
+      my @analyses = split ', ', $upload->{'analyses'};
+      push @track_names, @analyses;
+      
+      if ($owner) {
         $self->_delete_datasource($upload->{'species'}, $_) for @analyses;
       }
-    } else {
-      $code = undef;
     }
     
     $session->purge_data(type => 'upload', code => $code);
+    $code = undef unless $owner;
   }
   
   # Remove all shared data with this code and source
   EnsEMBL::Web::Data::Session->search(code => $code, type => 'upload')->delete_all if $code;
+  
+  $self->update_configs(\@track_names) if scalar @track_names;
 }
 
 sub delete_remote {
@@ -411,17 +410,22 @@ sub delete_remote {
   my $id      = $hub->param('id');
   my $user    = $hub->user;
   my $session = $hub->session;
+  my $track_name;
   
  if ($user && $id) {
     if ($source eq 'das') {
       my ($das) = $user->dases($id);
       
-      $das->delete if $das;
+      if ($das) {
+        $track_name = 'das_' . $das->logic_name;
+        $das->delete;
+      }
     } else {
       my ($url) = $user->urls($id);
       
       if ($url) {
-        $code = $url->code;
+        $code       = $url->code;
+        $track_name = "url_$code";
         $url->delete;
       }
     }
@@ -430,12 +434,14 @@ sub delete_remote {
     my $das      = $temp_das ? $temp_das->{$code} : undef;
     
     if ($das) {
+      $track_name = "das_$code";
       $das->mark_deleted;
       $session->save_das;
     }
   } else {
     my $session_id = $session->session_id;
     my $url        = $session->get_data(type => 'url', code => $code);
+       $track_name = "url_$url->{'code'}";
     
     $session->purge_data(type => 'url', code => $code);
     
@@ -444,6 +450,50 @@ sub delete_remote {
   
   # Remove all shared data with this code and source
   EnsEMBL::Web::Data::Session->search(code => $code, type => 'url')->delete_all if $code;
+  
+  $self->update_configs([ $track_name ]) if $track_name;
+}
+
+sub update_configs {
+  my ($self, $old_tracks, $new_tracks) = @_;
+  my $hub            = $self->hub;
+  my $session        = $hub->session;
+  my $config_adaptor = $hub->config_adaptor;
+  my $updated;
+  
+  foreach my $config (values %{$config_adaptor->all_configs}) {
+    my $update;
+    
+    foreach (@$old_tracks) {
+      my $old_track = delete $config->{'data'}{$_};
+      
+      if ($old_track) {
+        $config->{'data'}{$_}{'display'} = $old_track->{'display'} for @$new_tracks;
+        $update  = 1;
+        $updated = 1;
+      }
+    }
+    
+    $config_adaptor->set_config(%$config) if $update;
+  }
+  
+  if ($updated) {
+    my $user       = $hub->user;
+    my $favourites = $session->get_data(type => 'favourite_tracks', code => 'favourite_tracks') || {};
+    
+    if (grep delete $favourites->{'tracks'}{$_}, @$old_tracks) {
+      $favourites->{'tracks'}{$_} = 1 for @$new_tracks;
+      
+      if (scalar keys %{$favourites->{'tracks'}}) {
+        $session->set_data(%$favourites);
+      } else {
+        delete $favourites->{'tracks'};
+        $session->purge_data(%$favourites);
+      }
+      
+      $user->set_favourite_tracks($favourites->{'tracks'}) if $user;
+    }
+  }
 }
 
 sub _store_user_track {
