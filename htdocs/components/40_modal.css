@@ -124,7 +124,7 @@ body.ie6 #modal_panel .fixed_width .modal_wrapper .panel { border-left: 0; }
 .multi_selector_list ul.included li             { background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; border: 1px solid [[TINT_BORDER]]; }
 .multi_selector_list ul.excluded li             { background-color: #EEE; color: [[CONTRAST_TEXT]]; border: 1px solid [[NEUTRAL_BORDER]]; }
 .multi_selector_list ul li span                 { position: absolute; margin-top: 3px; }
-.multi_selector_list ul li span.switch          { height: 22px; width: 22px; margin: 0; right: 0; }
+.multi_selector_list ul li span.switch          { height: 16px; width: 22px; background-repeat: no-repeat; background-position: 3px 0; right: 0; }
 .multi_selector_list ul.included li span.switch { background-image: url(/i/remove.png); }
 .multi_selector_list ul.excluded li span.switch { background-image: url(/i/add.png); }
 
