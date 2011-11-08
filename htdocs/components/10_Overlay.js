@@ -115,7 +115,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
   setMinMax: function () {
     this.maxWidth  = Math.round(this.window.width()  * 0.9);
     this.maxHeight = Math.round(this.window.height() * 0.8);
-    this.minWidth  = Math.min(700, this.maxWidth);
+    this.minWidth  = Math.min(900, this.maxWidth);
     this.minHeight = Math.min(500, this.maxHeight);
   },
   
