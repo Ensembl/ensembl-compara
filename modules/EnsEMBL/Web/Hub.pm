@@ -24,6 +24,7 @@ use Bio::EnsEMBL::ColourMap;
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::DBSQL::DBConnection;
+use EnsEMBL::Web::DBSQL::ConfigAdaptor;
 use EnsEMBL::Web::ExtIndex;
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::Problem;
@@ -81,6 +82,8 @@ sub new {
   
   $self->set_core_params;
   
+  $self->{'_config_adaptor'} = new EnsEMBL::Web::DBSQL::ConfigAdaptor($self);
+  
   return $self;
 }
 
@@ -98,15 +101,16 @@ sub timer       :lvalue { $_[0]{'_timer'};       }
 sub components  :lvalue { $_[0]{'_components'};  }
 sub viewconfig  :lvalue { $_[0]{'_viewconfig'};  } # Store viewconfig so we don't have to keep getting it from session
 
-sub input         { return $_[0]{'_input'};         }
-sub cookies       { return $_[0]{'_cookies'};       }
-sub databases     { return $_[0]{'_databases'};     }
-sub object_types  { return $_[0]{'_object_types'};  }
-sub core_params   { return $_[0]{'_core_params'};   }
-sub apache_handle { return $_[0]{'_apache_handle'}; }
-sub ExtURL        { return $_[0]{'_ext_url'};       }
-sub user_details  { return $_[0]{'_user_details'};  }
-sub species_defs  { return $_[0]{'_species_defs'};  }
+sub input          { return $_[0]{'_input'};          }
+sub cookies        { return $_[0]{'_cookies'};        }
+sub databases      { return $_[0]{'_databases'};      }
+sub object_types   { return $_[0]{'_object_types'};   }
+sub core_params    { return $_[0]{'_core_params'};    }
+sub apache_handle  { return $_[0]{'_apache_handle'};  }
+sub ExtURL         { return $_[0]{'_ext_url'};        }
+sub user_details   { return $_[0]{'_user_details'};   }
+sub species_defs   { return $_[0]{'_species_defs'};   }
+sub config_adaptor { return $_[0]{'_config_adaptor'}; }
 
 sub timer_push        { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? shift->timer->push(@_) : undef;    }
 sub referer           { return $_[0]{'referer'}    ||= $_[0]->parse_referer;                                  }
