@@ -92,34 +92,30 @@ sub store {
   ### Write to the database if configs have been altered
   
   my $self       = shift;
-  my $data       = [];
   my $session_id = $self->create_session_id;
+  my $adaptor    = $self->hub->config_adaptor;
+  my %params     = ( record_type => 'session', record_type_id => $session_id, active => 'y' );
+  my (@data, %links);
   
   foreach my $type (qw(view_config image_config)) {
     foreach my $config (values %{$self->{"${type}s"}}) {
       ## Only store if config has changed
       if ($config->storable && $config->altered) {
-        push @$data, {
+        push @data, {
           code => $config->code,
           type => $type,
-          data => $config->get_user_settings
+          data => $config->get_user_settings,
         };
+        
+        if ($type eq 'view_config' && $config->image_config) {
+          $links{$config->code}         = [ 'image_config', $config->image_config ];
+          $links{$config->image_config} = [ 'view_config',  $config->code ];
+        }
       }
     }
   }
   
-  foreach (@$data) {
-    if (scalar keys %{$_->{'data'}}) {
-      EnsEMBL::Web::Data::Session->set_config(
-        session_id => $session_id,
-        type       => $_->{'type'},
-        code       => $_->{'code'},
-        data       => $_->{'data'},
-      );
-    } else {
-      $self->purge_data(type => $_->{'type'}, code => $_->{'code'});
-    }
-  }
+  $adaptor->link_configs(map { id => $adaptor->set_config(%params, %$_), code => $_->{'code'}, link => $links{$_->{'code'}} }, @data);
   
   $self->save_das;
 }
@@ -140,24 +136,12 @@ sub apply_to_config {
   my ($self, $config_type, $config, $type, $cache_code, $config_code) = @_;
   my $session_id = $self->session_id;
   
-  EnsEMBL::Web::Data::Session->propagate_cache_tags(
-    session_id => $session_id,
-    type       => $type,
-    code       => $cache_code
-  );
-  
   if ($session_id && $config->storable) {
-    # Let us see if there is an entry in the database and load it into the script config and store any other data which comes back
-    my $session_data = EnsEMBL::Web::Data::Session->get_config(
-      session_id => $session_id,
-      type       => $config_type,
-      code       => $config_code
-    );
-    
-    $config->set_user_settings($session_data->data) if $session_data && $session_data->data;
+    my $config_data = $self->hub->config_adaptor->get_config($config_type, $config_code);
+    $config->set_user_settings($config_data) if $config_data;
   }
   
-  $self->{$config_type . 's'}->{$cache_code} = $config;
+  $self->{"${config_type}s"}->{$cache_code} = $config;
 }
 
 sub get_cached_data {
@@ -186,11 +170,7 @@ sub get_data {
   
   my %args = ( type => 'upload', @_ );
   
-  EnsEMBL::Web::Data::Session->propagate_cache_tags(
-    session_id => $session_id,
-    type       => $args{'type'},
-    code       => $args{'code'},
-  );
+  EnsEMBL::Web::Data::Session->propagate_cache_tags(type => $args{'type'});
   
   return $self->get_cached_data(%args) if $self->get_cached_data(%args);
   
@@ -382,18 +362,17 @@ sub get_all_das {
   
   return ({}, {}) unless $session_id;
   
-  my %args    = ( session_id => $session_id, type => 'das' );
   my $species = shift || $self->hub->species;
      $species = '' if $species eq 'common';
   
-  EnsEMBL::Web::Data::Session->propagate_cache_tags(%args);
+  EnsEMBL::Web::Data::Session->propagate_cache_tags(type => 'das');
   
   # If the cache hasn't been initialised, do it
   if (!$self->{'das_sources'}) {
     $self->{'das_sources'} = {};
     
     # Retrieve all DAS configurations from the database
-    my @configs = EnsEMBL::Web::Data::Session->get_config(%args);
+    my @configs = EnsEMBL::Web::Data::Session->get_config(session_id => $session_id, type => 'das');
     
     foreach (map $_->data || (), @configs) {
       my $das = EnsEMBL::Web::DASConfig->new_from_hashref({ %$_, category => 'session' });
