@@ -18,6 +18,7 @@
 
     A pipeline to merge together the "homology side" of the Compara release: gene_trees, families and ncrna_trees.
     (Took 2.7h to execute for release 63)
+    (Took 10h to execute for release 65)
 
 =head1 CONTACT
 
