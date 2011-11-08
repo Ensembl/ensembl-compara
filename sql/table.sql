@@ -473,7 +473,7 @@ CREATE TABLE member (
   member_id                   int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
   version                     int(10) DEFAULT 0,
-  source_name                 ENUM('ENSEMBLGENE','ENSEMBLPEP','Uniprot/SPTREMBL','Uniprot/SWISSPROT','ENSEMBLTRANS','EXTERNALCDS') NOT NULL,
+  source_name                 ENUM('ENSEMBLGENE','ENSEMBLPEP','Uniprot/SPTREMBL','Uniprot/SWISSPROT','ENSEMBLTRANS','EXTERNALCDS', 'ENSEMBLPROJ') NOT NULL,
   taxon_id                    int(10) unsigned NOT NULL, # FK taxon.taxon_id
   genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
   sequence_id                 int(10) unsigned, # FK sequence.sequence_id
@@ -639,7 +639,7 @@ CREATE TABLE homology (
   homology_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   stable_id                   varchar(40),
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-  description                 ENUM('ortholog_one2one','apparent_ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','putative_gene_split','contiguous_gene_split','between_species_paralog','possible_ortholog','UBRH','BRH','MBRH','RHS'),
+  description                 ENUM('ortholog_one2one','apparent_ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','putative_gene_split','contiguous_gene_split','between_species_paralog','possible_ortholog','UBRH','BRH','MBRH','RHS', 'projection_unchanged','projection_altered'),
   subtype                     varchar(40) NOT NULL DEFAULT '',
   dn                          float(10,5),
   ds                          float(10,5),
