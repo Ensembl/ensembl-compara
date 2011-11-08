@@ -110,7 +110,7 @@ sub fetch_help_by_ids {
 
 sub fetch_faqs {
   my ($self, $criteria) = @_;
-  return unless $self->db;
+  return [] unless $self->db;
   my $records = [];
 
   my @args = ('live', 'faq');
