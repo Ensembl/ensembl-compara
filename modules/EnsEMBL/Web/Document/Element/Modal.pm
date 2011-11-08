@@ -34,7 +34,7 @@ sub content {
   foreach my $entry (@{$self->entries}) {
     my $id    = lc $entry->{'id'};
     $panels  .= qq{<div id="modal_$id" class="modal_content js_panel $entry->{'class'}" style="display:none"></div>};
-    $content .= sprintf '<li class="%s"><a class="modal_%s" href="%s">%s</a></li>', $entry->{'class'}, $id, $entry->{'url'} || '#', encode_entities($self->strip_HTML($entry->{'caption'}));
+    $content .= sprintf '<li><a class="modal_%s" href="%s">%s</a></li>', $id, $entry->{'url'} || '#', encode_entities($self->strip_HTML($entry->{'caption'}));
   }
   
   $content = qq{
@@ -50,6 +50,7 @@ sub content {
     </div>
     $panels
     <div id="modal_default" class="modal_content js_panel fixed_width" style="display:none"></div>
+    <div id="config_save_as_bg"></div>
   </div>
   };
   
@@ -60,24 +61,25 @@ sub init {
   my $self       = shift;
   my $controller = shift;
   my $hub        = $controller->hub;
+  my $components = $hub->components;
   my (%done, @extra);
   
-  foreach my $component (@{$hub->components}) {
+  foreach my $component (@$components) {
     my $view_config = $hub->get_viewconfig($component);
-    
+
     if ($view_config && !$done{$component}) {
       $self->add_entry({
         id      => "config_$component",
-        caption => 'Configure ' . ($view_config->title || 'Page'),
+        caption => 'Configure ' . (scalar @$components > 1 ? $view_config->title : '' || 'Page'),
         url     => $hub->url('Config', {
           action    => $component,
           function  => undef
         })
       });
-      
+
       foreach ($view_config->extra_tabs) {
         (my $id = $_->[0]) =~ s/ /_/g;
-        
+
         push @extra, {
           id      => $id,
           class   => 'fixed_width',
@@ -85,9 +87,23 @@ sub init {
           url     => $_->[1]
         };
       }
-      
+
       $done{$component} = 1;
     }
+  }
+  
+  if (scalar keys %done) {
+    push @extra, {
+      id      => 'manage_cfg',
+      class   => 'fixed_width',
+      caption => 'Manage Configurations',
+      url     => $hub->url({
+        type    => 'UserConfig',
+        action  => 'ManageConfigs',
+        time    => time,
+        __clear => 1
+      })
+    };
   }
   
   $self->add_entry(@extra);
@@ -104,5 +120,4 @@ sub init {
      })
   });
 }
-
 1;
