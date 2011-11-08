@@ -48,6 +48,7 @@ sub process {
           
           if ($ref) {
             push @shares, $ref;
+            $url_params->{'reload'} = 1;
           } else {
             $url_params->{'filter_module'} = 'Data';
             $url_params->{'filter_code'}   = 'no_save';
