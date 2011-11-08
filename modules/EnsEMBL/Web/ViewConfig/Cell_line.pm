@@ -234,6 +234,7 @@ sub form_evidence_types {
   
   my $html = sprintf('
     <h1>Regulation</h1>
+    <div class="toggle_tutorial"></div>
     <div class="header_wrapper">
       <h2>%s</h2>
       <div class="help" title="Click for more information"></div>
@@ -243,25 +244,36 @@ sub form_evidence_types {
       <h2>Filter by</h2>
       <select class="filter">%s</select>
       <input type="text" class="filter" value="Enter cell or evidence types" />
+      <div class="tutorial fil"></div>
     </div>
     <div class="matrix_key">
       <h2>Key</h2>
       <div class="key"><div>On</div><div class="cell on"></div></div>
       <div class="key"><div>Off</div><div class="cell off"></div></div>
-      <div class="key"><div>Unavailable</div><div class="cell disabled"></div></div>
+      <div class="key"><div>No Data</div><div class="cell disabled"></div></div>
+      <div class="key"><h2>Filtered:</h2></div>
+      <div class="key"><div>On</div><div class="cell on filter"><p></p></div></div>
+      <div class="key"><div>Off</div><div class="cell off filter"><p></p></div></div>
     </div>
-    <div style="width:%spx">
-      <table class="funcgen_matrix" cellspacing="0" cellpadding="0">
-        <thead>
-          <tr><th class="first"></th>%s</tr>
-          <tr class="renderers"><th class="first select_all"><div class="menu_option"><h2>Track style:</h2><em>Enable/disable all</em></div>%s</th>%s</tr>
-        </thead>
-        <tbody>
-          %s
-        </tbody>
-      </table>
+    <div class="funcgen_matrix_wrapper">
+      <div class="tutorial track"></div>
+      <div class="tutorial all_track"></div>
+      <div class="tutorial col"></div>
+      <div class="tutorial row"></div>
+      <div class="tutorial drag"></div>
+      <div style="width:%spx">
+        <table class="funcgen_matrix" cellspacing="0" cellpadding="0">
+          <thead>
+            <tr><th class="first"></th>%s</tr>
+            <tr class="renderers"><th class="first select_all"><div class="menu_option"><h2>Track style:</h2><em>Enable/disable all</em></div>%s</th>%s</tr>
+          </thead>
+          <tbody>
+            %s
+          </tbody>
+        </table>
+      </div>
+      <div class="no_results">No results found</div>
     </div>
-    <div class="no_results">No results found</div>
     ',
     $set eq 'core' ? 'Open chromatin &amp; Transcription Factor Binding Sites' : 'Histones &amp; Polymerases',
     $self->{'type_descriptions'}{$set},
