@@ -77,16 +77,18 @@ sub render {
   if ($page_species eq 'Multi') {
     $sample_data = $species_defs->get_config('MULTI', 'GENERIC_DATA') || {};
   } else {
-    $sample_data = { %{$species_defs->SAMPLE_DATA} };
+    $sample_data = { %{$species_defs->SAMPLE_DATA || {}} };
     $sample_data->{'GENE_TEXT'} = "$sample_data->{'GENE_TEXT'}" if $sample_data->{'GENE_TEXT'};
   }
   
-  my @examples = map $sample_data->{$_} || (), qw(GENE_TEXT LOCATION_TEXT SEARCH_TEXT);
+  if (keys %$sample_data) {
+    my @examples = map $sample_data->{$_} || (), qw(GENE_TEXT LOCATION_TEXT SEARCH_TEXT);
   
-  $html .= sprintf '<p>e.g. %s</p>', join ' or ', map qq{<strong><a href="$search_url?q=$_" style="text-decoration:none">$_</a></strong>}, @examples if scalar @examples;
-  $html .= '
-    </div></form>
-  </div>';
+    $html .= sprintf '<p>e.g. %s</p>', join ' or ', map qq{<strong><a href="$search_url?q=$_" style="text-decoration:none">$_</a></strong>}, @examples if scalar @examples;
+    $html .= '
+      </div></form>
+    </div>';
+  }
 
   return $html;
 }
