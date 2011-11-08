@@ -2,7 +2,7 @@
 
 package EnsEMBL::Web::Document::Element::ModalButtons;
 
-# Generates the tools buttons below the control panel left menu - add track, reset configuration
+# Generates the tools buttons below the control panel left menu - add track, reset configuration, save configuration
 
 use strict;
 
@@ -12,7 +12,8 @@ sub label_classes {
   return {
     'Add custom track'    => 'data',
     'Reset configuration' => 'config',
-    'Reset track order'   => 'config'
+    'Reset track order'   => 'config',
+    'Save as...'          => 'save'
   };
 }
 
@@ -33,6 +34,16 @@ sub init {
       rel     => $rel,
       url     => $hub->url('Config', {
         reset => 1
+      })
+    });
+    
+    $self->add_entry({
+      caption => 'Save as...',
+      class   => 'save_configuration',
+      url     => $hub->url({
+        type    => 'UserData',
+        action  => 'SaveConfig',
+        __clear => 1 
       })
     });
     
