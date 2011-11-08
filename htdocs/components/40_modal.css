@@ -118,16 +118,47 @@ body.ie6  .modal_content .modal_nav ul.local_context li.parent li.last { padding
 body.ie6 #modal_panel .fixed_width .modal_wrapper        { margin-left: 0; }
 body.ie6 #modal_panel .fixed_width .modal_wrapper .panel { border-left: 0; }
 
-.multi_selector_list                            { width: 48%; font-weight: normal; float: left; margin: 0 0.5%; }
-.multi_selector_list ul                         { padding: 0; margin-left: 5px; margin-right: 5px; list-style: none; }
-.multi_selector_list li                         { position: relative; height: 22px; padding-left: 10px; list-style-image: none; cursor: pointer; clear: both; }
-.multi_selector_list ul.included li             { background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; border: 1px solid [[TINT_BORDER]]; }
-.multi_selector_list ul.excluded li             { background-color: #EEE; color: [[CONTRAST_TEXT]]; border: 1px solid [[NEUTRAL_BORDER]]; }
-.multi_selector_list ul li span                 { position: absolute; margin-top: 3px; }
-.multi_selector_list ul li span.switch          { height: 16px; width: 22px; background-repeat: no-repeat; background-position: 3px 0; right: 0; }
-.multi_selector_list ul.included li span.switch { background-image: url(/i/remove.png); }
-.multi_selector_list ul.excluded li span.switch { background-image: url(/i/add.png); }
+/* multi selectors */
 
-.multi_selector_hint    { width: 200px; border: 1px [[CONTRAST_BORDER]] solid; padding: 4px; background-color: [[CONTRAST_BG]]; overflow: hidden; }
-.multi_selector_hint h4 { background-image: url(/i/infoicon.gif); background-repeat: no-repeat; background-position: top left; margin: 0 0 5px 10px; padding-left: 16px; }
-.multi_selector_hint p  { padding-left: 10px; }
+.modal_content .multi_selector_list                            { width: 48%; font-weight: normal; float: left; margin: 0 0.5%; }
+.modal_content .multi_selector_list ul                         { padding: 0; margin-left: 5px; margin-right: 5px; list-style: none; }
+.modal_content .multi_selector_list li                         { position: relative; height: 22px; padding-left: 10px; list-style-image: none; cursor: pointer; clear: both; }
+.modal_content .multi_selector_list ul.included li             { background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; border: 1px solid [[TINT_BORDER]]; }
+.modal_content .multi_selector_list ul.excluded li             { background-color: #EEE; color: [[CONTRAST_TEXT]]; border: 1px solid [[NEUTRAL_BORDER]]; }
+.modal_content .multi_selector_list ul li span                 { position: absolute; margin-top: 3px; }
+.modal_content .multi_selector_list ul li span.switch          { height: 16px; width: 22px; background-repeat: no-repeat; background-position: 3px 0; right: 0; }
+.modal_content .multi_selector_list ul.included li span.switch { background-image: url(/i/remove.png); }
+.modal_content .multi_selector_list ul.excluded li span.switch { background-image: url(/i/add.png); }
+
+.modal_content .multi_selector_hint                            { width: 200px; border: 1px [[CONTRAST_BORDER]] solid; padding: 4px; background-color: [[CONTRAST_BG]]; overflow: hidden; }
+.modal_content .multi_selector_hint h4                         { background-image: url(/i/infoicon.gif); background-repeat: no-repeat; background-position: top left; margin: 0 0 5px 10px; padding-left: 16px; }
+.modal_content .multi_selector_hint p                          { padding-left: 10px; }
+
+/* config manager */
+
+.modal_content .config_manager p                              { margin: 10px 2px; }
+.modal_content .config_manager h2                             { margin: 0 0 5px 0; }
+.modal_content .config_manager td > div                       { position: relative; }
+.modal_content .config_manager td div.heightWrap              { overflow: hidden; height: 16px; line-height: 16px; margin-right: 20px; }
+.modal_content .config_manager td div.open                    { overflow: auto; height: auto!important; }
+.modal_content .config_manager td img.toggle                  { position: absolute; right: 4px; top: 2px; display: none; }
+.modal_content .config_manager table tbody tr                 { height: 20px; }
+.modal_content .config_manager table tr.active,
+.modal_content .config_manager table tr.added                 { background-color: #80cc74; }
+.modal_content .config_manager table tr.disabled              { background-color: #AAA; }
+.modal_content .config_manager table tr.disabled *            { color: #666!important; }
+.modal_content .config_manager tr a.add_to_set                { display: block; width: 16px; height: 16px; background-image: url(/i/add.png); position: absolute; right: 0; }
+.modal_content .config_manager tr.added    a.add_to_set       { background-image: url(/i/remove.png); }
+.modal_content .config_manager tr.disabled a.add_to_set       { display: none; }
+.modal_content .config_manager table td ul                    { margin: 0 0 -0.5em 0; padding: 0; list-style: none; }
+.modal_content .config_manager table td ul li                 { padding: 0; list-style-image: none; clear: both; }
+.modal_content .config_manager table td ul li span            { display: block; }
+.modal_content .config_manager .edit_set                      { display: none; margin: 0 9px; }
+.modal_content .config_manager .edit_set h4                   { color: [[PAGE_TEXT]]; margin: 10px 0; }
+.modal_content .config_manager .new_set .form-field,
+.modal_content .config_manager .new_set .fnotes               { display: none; }
+.modal_content .config_manager .sets a.toggle                 { background-image: none; text-decoration: underline; }
+.modal_content .config_manager .sets a.create_set             { font-weight: bold; }
+.modal_content .config_manager .sets a.create_set span.cancel { display: none; float: right; margin-right: 9px; text-decoration: underline; cursor: pointer; }
+
+body.ie7 .modal_content .config_manager td img.toggle         { top: 4px; }
