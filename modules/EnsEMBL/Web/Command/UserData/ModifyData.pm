@@ -7,17 +7,21 @@ use strict;
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
-  my $self       = shift;
-  my $hub        = $self->hub;
-  my $func       = $hub->function;
-  my $url_params = $self->$func();
+  my $self = shift;
+  my $hub  = $self->hub;
+  my $func = $hub->function;
+  my $rtn  = $self->$func();
   
-  $self->ajax_redirect($hub->url({
-    action   => 'ManageData',
-    function => undef,
-    __clear  => 1,
-    %$url_params,
-  }));
+  if (ref $rtn eq 'HASH') {
+    $self->ajax_redirect($hub->url({
+      action   => 'ManageData',
+      function => undef,
+      __clear  => 1,
+      %$rtn,
+    }));
+  } else {
+    print $rtn;
+  }
 }
 
 sub save_upload {
@@ -98,7 +102,7 @@ sub rename_session_record {
   
   $hub->session->set_data(type => $hub->param('source'), code => $hub->param('code'), name => $name) if $name;
   
-  return {};
+  return 'reload';
 }
 
 sub rename_user_record {
@@ -113,7 +117,7 @@ sub rename_user_record {
     $record->save;
   }
   
-  return {};
+  return 'reload';
 }
 
 1;
