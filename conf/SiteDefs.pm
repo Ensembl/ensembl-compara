@@ -387,6 +387,7 @@ $OBJECT_TO_SCRIPT = {
   News                => 'Page',
   
   Account             => 'Modal',
+  UserConfig          => 'Modal',
   UserData            => 'Modal',
   Help                => 'Modal',  
 };
