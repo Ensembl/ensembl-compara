@@ -412,7 +412,7 @@ sub component_content {
       eval {
         my $func = $ajax_request ? lc $function : $content_function;
         $func    = "content_$func" if $func;
-        $content = $func && $component->can($func) ? $component->$func : $component->content;
+        $content = $component->get_content($func);
       };
       
       if ($@) {
