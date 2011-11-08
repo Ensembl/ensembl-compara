@@ -6,6 +6,8 @@ Ensembl.DataTable = {
     
     this.hideFilter = $('body').hasClass('ie67');
     
+    this.elLk.colToggle = $('.col_toggle', this.el);
+    
     this.elLk.dataTable.each(function (i) {
       // Because dataTables is written to create alert messages if you try to reinitialise a table, block any attempts here.
       if ($.fn.dataTableSettings[i] && $.fn.dataTableSettings[i].nTable === this) {
@@ -39,6 +41,10 @@ Ensembl.DataTable = {
       
       if (exportable) {
         panel.makeExportable(settings.nTableWrapper);
+      }
+      
+      if (table.hasClass('editable')) {
+        panel.makeEditable($('.editable', table));
       }
       
       panel.dataTables = panel.dataTables || [];
@@ -172,8 +178,6 @@ Ensembl.DataTable = {
     var toggleList = $('<ul class="floating_popup"></ul>');
     var toggle     = $('<div class="toggle">Show/hide columns</div>').append(toggleList).bind('click', function (e) { if (e.target === this) { toggleList.toggle(); } });
     
-    this.elLk.colToggle = $('.col_toggle', this.el);
-    
     $.each(columns, function (col) {
       var th = $(this.nTh);
       
@@ -281,6 +285,53 @@ Ensembl.DataTable = {
     });
     
     wrapper = null;
+  },
+  
+  makeEditable: function (editable) {
+    var panel = this;
+    
+    function saveEdit(input) {
+      var td    = input.parents('td');
+      var value = input.hide().val().replace(/<[^>]+>/g, ''); // strip HTML tags
+      
+      input.siblings().show();
+      
+      if (input.data('oldVal') !== value) {
+        input.data('oldVal', value);
+        input.parent().find('.val').html(value.replace(/\n/g, '<br />'));
+        
+        if (typeof panel.saveEdit === 'function') {
+          panel.saveEdit(input, value);
+        } else {
+          $.ajax({
+            url: input.siblings('a.save').attr('href'),
+            data: { param: input.attr('name'), value: value }
+          });
+        }
+        
+        input.parents('table').dataTable().fnUpdate(td.html(), td.parent()[0], td.index());
+      }
+      
+      input = td = null;
+    }
+    
+    this.live.push(
+      editable.live('click', function (e) {
+        if ($(e.target).is('.val')) {
+          $(this).find(':input').val(
+            $(this).find('.val').html().replace(/\n/g, '').replace(/<br( \/)?>/g, '\n').replace(/<[^>]+>/g, '')
+          ).show().trigger('focus').siblings().hide();
+        }
+      }),
+      
+      $(':input', editable).live({
+        blur:    function ()  { saveEdit($(this));                                          },
+        keydown: function (e) { if (e.keyCode === 13 && !e.shiftKey) { return false;      } },
+        keyup:   function (e) { if (e.keyCode === 13 && !e.shiftKey) { saveEdit($(this)); } }
+      })
+    );
+    
+    editable = null;
   },
   
   // Data tables can be controlled by external filters - checkboxes with values matching classnames on table rows
