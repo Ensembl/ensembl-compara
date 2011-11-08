@@ -2026,7 +2026,7 @@ sub add_regulation_builds {
       sources     => 'undef',
       strand      => 'r',
       labels      => 'on',
-      depth       => 0.5,
+      depth       => 0,
       colourset   => 'fg_segmentation_features',
       display     => 'off',
       description => "Segmentation features description",
