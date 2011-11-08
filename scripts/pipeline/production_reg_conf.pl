@@ -70,7 +70,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## TO BE FIXED BEFORE HOMOLOGY MER
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_homology_merged',
-    -dbname => 'lg4_compara_homology_merged_64',
+    -dbname => 'mp12_compara_homology_merged_65',
 );
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## HAS TO BE CREATED (FINAL DB)
