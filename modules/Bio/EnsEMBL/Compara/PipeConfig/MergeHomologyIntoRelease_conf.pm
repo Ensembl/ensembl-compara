@@ -41,16 +41,17 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
-        'pipeline_name' => 'compara_full_merge_64',         # name used by the beekeeper to prefix job names on the farm
+            %{$self->SUPER::default_options},
+
+        'pipeline_name' => 'compara_full_merge_65',         # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {
-            -host   => 'compara4',
+            -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),
+            -dbname => $self->o('ENV', 'USER').'_'.$self->o('pipeline_name'),
         },
 
         'merged_homology_db' => {
@@ -58,15 +59,15 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'lg4_compara_homology_merged_64',
+            -dbname => 'mp12_compara_homology_merged_65',
         },
 
         'rel_db' => {
-            -host   => 'compara4',
+            -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => 'lg4_ensembl_compara_64',
+            -dbname => 'mp12_ensembl_compara_65',
         },
 
         'skipped_tables' => [ 'meta', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set',
