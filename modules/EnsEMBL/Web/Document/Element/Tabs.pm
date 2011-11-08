@@ -57,7 +57,7 @@ sub init {
  
   push @data, { type => $object->type,        action => $object->default_action,        caption => $object->short_caption('global')       } if $object && !@data;
   push @data, { type => $configuration->type, action => $configuration->default_action, caption => $configuration->{'_data'}->{'default'} } if $type eq 'Location' && !@data;
-  
+ 
   foreach my $row (@data) {
     next if $row->{'type'} eq 'Location' && $type eq 'LRG';
     
@@ -133,9 +133,6 @@ sub content {
   my $history = 0;
   
   foreach my $entry (@{$self->entries}) {
-    ## FIXME Hack for phenotype tab - can't change URL this release as already indexed!
-    next if ($entry->{'type'} eq 'Phenotype' && !$self->hub->param('name'));
-
     $entry->{'url'} ||= '#';
     
     my $name         = encode_entities($self->strip_HTML($entry->{'caption'}));
