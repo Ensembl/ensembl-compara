@@ -71,22 +71,21 @@ sub new {
     %$args
   };
   
-  my $species_defs = $hub->species_defs;
-  
-  if ($self->{'cache'}) {
-    # Add parameters useful for caching functions
-    $self = {
-      %$self,
-      session_id  => $hub->session->session_id,
-      user_id     => $hub->user,
-      url_tag     => $species_defs->ENSEMBL_BASE_URL . $ENV{'REQUEST_URI'},
-      cache_debug => $species_defs->ENSEMBL_DEBUG_FLAGS & $species_defs->ENSEMBL_DEBUG_MEMCACHED
-    }
-  }
-  
   bless $self, $class;
   
+  my $species_defs = $hub->species_defs;
+  
   $CGI::POST_MAX = $species_defs->CGI_POST_MAX; # Set max upload size
+  
+  if ($self->cache && $self->request ne 'modal') {
+    # Add parameters useful for caching functions
+    $self->{'session_id'}  = $hub->session->session_id;
+    $self->{'user_id'}     = $hub->user;
+    $self->{'url_tag'}     = $hub->url({ update_panel => undef }, undef, 1);
+    $self->{'cache_debug'} = $species_defs->ENSEMBL_DEBUG_FLAGS & $species_defs->ENSEMBL_DEBUG_MEMCACHED;
+    
+    $self->set_cache_params;
+  }
   
   $self->init;
   
@@ -222,7 +221,7 @@ sub render_page {
   
   my $page_content = $page->render($content);
   
-  $self->set_cached_content($page_content) if $page->{'format'} eq 'HTML' && !$self->hub->has_a_problem;
+  $self->set_cached_content($page_content) if $self->page_type =~ /^(Static|Dynamic)$/ && $page->{'format'} eq 'HTML' && !$self->hub->has_a_problem;
 }
 
 sub update_user_history {
@@ -270,32 +269,38 @@ sub update_user_history {
 }
 
 sub set_cache_params {
-  my ($self, $type) = @_;
+  my $self = shift;
+  my $hub  = $self->hub;
+  my %tags = (
+    url       => $self->{'url_tag'},
+    page_type => $self->page_type,
+  );
   
-  $ENV{'CACHE_TAGS'}{'DYNAMIC'} = 1;
-  $ENV{'CACHE_TAGS'}{'AJAX'}    = 1;
-
-  $ENV{'CACHE_KEY'}  = $ENV{'REQUEST_URI'};
+  $tags{'session'} = "SESSION[$self->{'session_id'}]" if $self->{'session_id'};
+  $tags{'user'}    = "USER[$self->{'user_id'}]"       if $self->{'user_id'};
+  $tags{'mac'}     = 'MAC'                            if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
+  $tags{'ie'}      = "IE$1"                           if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/;
+  $tags{'bot'}     = 'BOT'                            if $ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/;
+  $tags{'ajax'}    = 'NO_AJAX'                        unless $hub->check_ajax;
   
-  if ($self->{'session_id'}) {
-    $ENV{'CACHE_KEY'} .= "::SESSION[$self->{'session_id'}]"
-  } else {
-    $ENV{'CACHE_KEY'} .= '::MAC'  if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
-    $ENV{'CACHE_KEY'} .= "::IE$1" if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/;
+  $ENV{'CACHE_KEY'}  = join '::', map $tags{$_} || (), qw(url page_type session user mac ie bot ajax);
+  $ENV{'CACHE_KEY'} .= join '::', '', map $_->name =~ /^toggle_/ ? sprintf '%s[%s]', $_->name, $_->value : (), values %{$hub->cookies};
+  
+  if ($self->request !~ /^(page|ssi)$/) {
+    my $referer = $hub->referer;
+    (my $tag    = $referer->{'uri'}) =~ s/\?.+/?/;
+    my @params;
+    
+    foreach my $p (sort keys %{$referer->{'params'}}) {
+      push @params, "$p=$_" for @{$referer->{'params'}{$p}};
+    }
+    
+    $tag .= join ';', @params;
+    $tags{'referer'} = $tag if $tag;
   }
   
-  $ENV{'CACHE_KEY'} .= '::BOT' if $ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/;
   
-  if ($type eq 'page') {
-    $ENV{'CACHE_TAGS'}{$self->{'url_tag'}} = 1;
-    $ENV{'CACHE_KEY'} .= "::USER[$self->{'user_id'}]" if $self->{'user_id'};
-  } else {
-    $ENV{'CACHE_TAGS'}{$ENV{'HTTP_REFERER'}} = 1;
-    $ENV{'CACHE_KEY'} .= "::WIDTH[$ENV{ENSEMBL_IMAGE_WIDTH}]" if $ENV{'ENSEMBL_IMAGE_WIDTH'};
-  }
- 
-  $ENV{'CACHE_KEY'} .= '::NO_AJAX' unless $self->hub->check_ajax;
-  $ENV{'CACHE_KEY'} .= join '::', '', map $_->name =~ /^toggle_/ ? sprintf '%s[%s]', $_->name, $_->value : (), values %{$self->hub->cookies};
+  $ENV{'CACHE_TAGS'}{$_} = $tags{$_} for keys %tags;  
 }
 
 sub get_cached_content {
@@ -308,11 +313,9 @@ sub get_cached_content {
   
   return unless $cache;
   return if $r->method eq 'POST';
-  return unless $type =~ /^(page|component)$/;
+  return unless $type eq 'page';
   
-  $self->set_cache_params($type);
-  
-  my $content = $cache->get($ENV{'CACHE_KEY'}, keys %{$ENV{'CACHE_TAGS'}});
+  my $content = $cache->get($ENV{'CACHE_KEY'}, values %{$ENV{'CACHE_TAGS'}});
   
   if ($content) {
     $r->headers_out->set('X-MEMCACHED' => 'yes');     
@@ -339,7 +342,7 @@ sub set_cached_content {
   return unless $ENV{'CACHE_KEY'};
   return if $self->r->method eq 'POST';
   
-  $cache->set($ENV{'CACHE_KEY'}, $content, 60*60*24*7, keys %{$ENV{'CACHE_TAGS'}});
+  $cache->set($ENV{'CACHE_KEY'}, $content, 60*60*24*7, values %{$ENV{'CACHE_TAGS'}});
   
   warn "CONTENT CACHE SET:  $ENV{'CACHE_KEY'}" if $self->{'cache_debug'};
 }
@@ -356,9 +359,9 @@ sub clear_cached_content {
     my @tags = ($self->{'url_tag'});
     
     if ($self->request eq 'ssi') {
-      push @tags, "user[$self->{'user_id'}]" if $self->{'user_id'};
+      push @tags, "USER[$self->{'user_id'}]" if $self->{'user_id'};
     } else {
-      push @tags, "session_id[$self->{'session_id'}]" if $self->{'session_id'};
+      push @tags, "SESSION[$self->{'session_id'}]" if $self->{'session_id'};
     }
     
     $cache->delete_by_tags(@tags);

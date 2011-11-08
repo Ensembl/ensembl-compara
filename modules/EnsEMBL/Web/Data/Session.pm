@@ -149,19 +149,25 @@ sub invalidate_cache {
   
   $self->SUPER::invalidate_cache(
     $cache,
-    'session_id['.$self->session_id.']',
+    'SESSION['.$self->session_id.']',
     'type['.$self->type.']',
-    ($self->type =~ /^(image|view)_config$/) ? 'code['.$self->code.']' : (),
+    #$self->code ? 'code['.$self->code.']' : (),
   );
 }
 
 sub propagate_cache_tags {
   my $class = shift;
-  my %args = @_;
-
   my @tags;
-  while (my ($key, $value) = each %args) {
-    push @tags, $key.'['.$value.']' if $key && $value;
+  
+  if (scalar @_) {
+    my %args = @_;
+    
+    while (my ($key, $value) = each %args) {
+      push @tags, "${key}[$value]" if $key && $value;
+    }
+  } elsif (ref $class) {
+    my $type = $class->type;
+    push @tags, "type[$type]" if $type;
   }
   
   $class->SUPER::propagate_cache_tags(@tags);

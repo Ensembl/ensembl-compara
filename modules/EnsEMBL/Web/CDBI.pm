@@ -12,10 +12,10 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use base qw/EnsEMBL::Web::DBSQL::MySQLAdaptor/;
+use base qw(EnsEMBL::Web::DBSQL::MySQLAdaptor);
 
 use EnsEMBL::Web::Cache;
-use Data::Dumper qw//;
+use Data::Dumper;
 
 
 #----------------------------------------------------------------------
@@ -96,11 +96,7 @@ sub save {
 ##
 sub insert_blessed {
 	my $self = shift;
-
-  if ( $self->cache ) {
-      $self->cache->set( $self->_staleness_cache_key, time() );
-  }
-
+  
 	$self->call_trigger('before_create');
 	$self->call_trigger('deflate_for_create');
 
@@ -413,48 +409,36 @@ sub tie_a {
 ## Set caching object
 ## Any cache object that has a get, set, and remove method is supported
 if (my $cache = new EnsEMBL::Web::Cache) {
-
-  __PACKAGE__->add_trigger(select => sub { $_[0]->propagate_cache_tags } );
+  __PACKAGE__->add_trigger(select =>        sub { $_[0]->propagate_cache_tags     } );
   __PACKAGE__->add_trigger(after_create  => sub { $_[0]->invalidate_cache($cache) } );
   __PACKAGE__->add_trigger(after_update  => sub { $_[0]->invalidate_cache($cache) } );
   __PACKAGE__->add_trigger(before_delete => sub { $_[0]->invalidate_cache($cache) } );
 
   ## ->search must propogate tags
   sub search {
-      my $proto = shift;
-      $proto->propagate_cache_tags;
-      $proto->SUPER::search(@_);
+    my $proto = shift;
+    $proto->propagate_cache_tags;
+    $proto->SUPER::search(@_);
   }
-
+  
   ## Some calls use direct sql query so
   ## ->sth_to_objects must propogate tags
   sub sth_to_objects {  
-      my $proto = shift;
-      $proto->propagate_cache_tags;
-      $proto->SUPER::sth_to_objects(@_);
+    my $proto = shift;
+    $proto->propagate_cache_tags;
+    $proto->SUPER::sth_to_objects(@_);
   }
-  
 }
 
 sub invalidate_cache {
   my $self  = shift;
   my $cache = shift;
-  
-  my @tags = (@_, $self->table);
-
-  return $cache->delete_by_tags(@tags);
-  #  my $items = $cache->delete_by_tags(@tags);
-  #  ## TODO: Kill this warn:
-  #  warn ' - - - - -  Delete by tags '. Data::Dumper::Dumper(\@tags);
-  #  warn $items. ' items deleted';
+  return $cache->delete_by_tags(@_, $self->table);
 }
 
 sub propagate_cache_tags {
-  my $self = shift;
-  my @tags = (@_, $self->table);
-  
-  $ENV{CACHE_TAGS} ||= {};
-  $ENV{CACHE_TAGS}->{$_} = 1 for @tags;
+  my $self  = shift;
+  $ENV{'CACHE_TAGS'}{$_} = $_ for @_, $self->table;
 }
 
 ###################################################################################################
@@ -463,10 +447,8 @@ sub propagate_cache_tags {
 ##
 ###################################################################################################
 
-
 sub find_all { shift->retrieve_all(@_) }
 sub find     { shift->retrieve(@_) }
 sub destroy  { shift->delete(@_) }
-
 
 1;

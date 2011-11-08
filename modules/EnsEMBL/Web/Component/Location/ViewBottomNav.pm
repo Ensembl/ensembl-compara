@@ -10,8 +10,8 @@ use base qw(EnsEMBL::Web::Component::Location);
 
 sub _init {
   my $self = shift;
-  $self->cacheable(0);
-  $self->ajaxable(1); # Must be ajaxable for slider/button nav stuff to work properly.
+  $self->ajaxable(1);  # Must be ajaxable for slider/button nav stuff to work properly.
+  $self->has_image(1); # Cache key and tags depend on image width, so lie about having images so that they are correct
 }
 
 sub content_region {
@@ -46,8 +46,6 @@ sub content {
   my $ramp = $self->ramp($ramp_entries, $wd, $cp);
   
   unshift @$values, $ramp if $self->{'update'};
-  
-  $ENV{'CACHE_KEY'} .= join '::', '', grep $_, $hub->action, $hub->function if $hub->cache;
 
   return $self->{'update'} ? $self->jsonify($values) : $self->navbar($ramp, $wd, $values);
 }

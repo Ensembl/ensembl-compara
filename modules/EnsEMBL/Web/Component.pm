@@ -6,7 +6,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::Root Exporter);
 
-use Exporter;
+use Digest::MD5 qw(md5_hex);
 
 our @EXPORT_OK = qw(cache cache_print);
 our @EXPORT    = @EXPORT_OK;
@@ -85,6 +85,7 @@ sub content_ensembl_pan_compara {
   my $self = shift;
   return $self->content_ensembl('compara_pan_ensembl');
 }
+
 sub content_other_pan_compara {
   my $self = shift;
   return $self->content_other('compara_pan_ensembl');
@@ -121,6 +122,28 @@ sub has_image {
   return $self->{'has_image'} || 0;
 }
 
+sub get_content {
+  my ($self, $function) = @_;
+  my $cache = $self->ajaxable && !$self->renderer->{'_modal_dialog_'} ? $self->hub->cache : undef;
+  my $content;
+  
+  if ($cache) {
+    $self->set_cache_params;
+    $content = $cache->get($ENV{'CACHE_KEY'});
+  }
+  
+  if (!$content) {
+    $content = $function && $self->can($function) ? $self->$function : $self->content;
+    
+    if ($cache && $content) {
+      $self->set_cache_key;
+      $cache->set($ENV{'CACHE_KEY'}, $content, 60*60*24*7, values %{$ENV{'CACHE_TAGS'}});
+    }
+  }
+  
+  return $content;
+}
+
 sub cache {
   my ($panel, $obj, $type, $name) = @_;
   my $cache = new EnsEMBL::Web::TmpFile::Text(
@@ -129,6 +152,57 @@ sub cache {
   );
   return $cache;
 }
+
+sub set_cache_params {
+  my $self           = shift;
+  my $hub            = $self->hub;  
+  my $view_config    = $self->view_config;
+  my $config_adaptor = $hub->config_adaptor;
+  my $key;
+  
+  # FIXME: check cacheable flag
+  if ($self->has_image) {
+    my $width = sprintf 'IMAGE_WIDTH[%s]', $self->image_width;
+    $ENV{'CACHE_TAGS'}{'image_width'} = $width;
+    $ENV{'CACHE_KEY'} .= "::$width";
+  }
+  
+  if ($view_config) {
+    $hub->get_imageconfig($view_config->image_config) if $view_config->image_config;
+    $key = $self->set_cache_key;
+  }
+  
+  if (!$key) {
+    $ENV{'CACHE_KEY'} =~ s/::(SESSION|USER)\[\w+\]//g;
+    delete $ENV{'CACHE_TAGS'}{$_} for qw(session user);
+  }
+}
+
+sub set_cache_key {
+  my $self = shift;
+  my $hub  = $self->hub;
+  my $key  = join '::', map $ENV{'CACHE_TAGS'}{$_} || (), qw(view_config image_config user_data);
+  my $page = sprintf '::PAGE[%s]', md5_hex(join '/', grep $_, $hub->action, $hub->function);
+    
+  if ($key) {
+    $key = sprintf '::COMPONENT[%s]', md5_hex($key);
+    
+    if ($ENV{'CACHE_KEY'} =~ /::COMPONENT\[\w+\]/) {
+      $ENV{'CACHE_KEY'} =~ s/::COMPONENT\[\w+\]/$key/;
+    } else {
+      $ENV{'CACHE_KEY'} .= $key;
+    }
+  }
+  
+  if ($ENV{'CACHE_KEY'} =~ /::PAGE\[\w+\]/) {
+    $ENV{'CACHE_KEY'} =~ s/::PAGE\[\w+\]/$page/;
+  } else {
+    $ENV{'CACHE_KEY'} .= $page;
+  }
+  
+  return $key;
+}
+
 
 sub cache_print {
   my ($cache, $string_ref) = @_;

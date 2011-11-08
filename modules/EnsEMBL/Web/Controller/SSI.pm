@@ -97,15 +97,10 @@ sub render_page {
 sub set_cache_params {
   my $self = shift;
   
-  $ENV{'CACHE_TAGS'}{'STATIC'}           = 1;
-  $ENV{'CACHE_TAGS'}{$self->{'url_tag'}} = 1;
+  $self->{'url_tag'} = $ENV{'REQUEST_URI'};
+  delete $self->{'session_id'};
   
-  $ENV{'CACHE_KEY'}  = $ENV{'REQUEST_URI'};
-  $ENV{'CACHE_KEY'} .= "::USER[$self->{'user_id'}]" if $self->{'user_id'};
-  $ENV{'CACHE_KEY'} .= '::NO_AJAX'                  unless $self->hub->check_ajax;
-  $ENV{'CACHE_KEY'} .= '::MAC'                      if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
-  $ENV{'CACHE_KEY'} .= "::IE$1"                     if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/;
-  $ENV{'CACHE_KEY'} .= '::SEARCHBOT'                if $ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/;
+  $self->SUPER::set_cache_params;
 }
 
 sub template_SPECIESINFO {

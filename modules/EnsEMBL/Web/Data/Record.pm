@@ -101,19 +101,16 @@ sub clone {
 
 sub propagate_cache_tags {
   my $proto = shift;
-
-  $proto->SUPER::propagate_cache_tags($proto->_type);
+  $proto->SUPER::propagate_cache_tags(sprintf 'type[%s]', $proto->_type);
 }
 
-
 sub invalidate_cache {
-  my $self  = shift;
-  my $cache = shift;
-
+  my $self       = shift;
+  my $cache      = shift;
   my $owner_type = $self->owner_type;
-  my $owner = $self->$owner_type;
-
-  $self->SUPER::invalidate_cache($cache, "${owner_type}[$owner]", $self->type);
+  my $owner      = $self->$owner_type;
+  
+  $self->SUPER::invalidate_cache($cache, uc($owner_type) . "[$owner]", $self->type);
 }
 
 1;
