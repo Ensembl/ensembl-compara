@@ -162,6 +162,40 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       this.elLk.headers.css('zIndex',   function (i) { return 200 - i; });
       this.elLk.renderers.css('zIndex', function (i) { return 100 - i; });
     }
+    
+    this.tutorial();
+  },
+  
+  tutorial: function () {
+    var panel = this;
+    
+    this.showTutorial = Ensembl.cookie.get('funcgen_matrix_tutorial') !== 'off';
+    
+    var col = panel.elLk.headers.length > 4 ? panel.elLk.headers.length < 12 ? -1 : 11 : 3;
+    
+    this.elLk.tutorial = $('div.tutorial', this.el)[this.showTutorial ? 'show' : 'hide']().each(function () {
+      var css, pos, tmp;
+      
+      switch (this.className.replace(/tutorial /, '')) {
+        case 'track':     css = { top: panel.elLk.renderers.eq(1).position().top - 73 }; break;
+        case 'all_track': pos = panel.elLk.renderers.first().position(); css = { top: pos.top + 25, left: pos.left + 50 }; break;
+        case 'col':       css = { top: panel.elLk.rows.eq(5).find('th').position().top + 15 }; break;
+        case 'row':       tmp = panel.elLk.headers.eq(col); pos = tmp.position(); css = { top: pos.top - 50, left: pos.left + tmp.width() }; break;
+        case 'drag':      tmp = panel.elLk.rows.eq(4); css = { top: tmp.position().top, left: tmp.children().eq(col).position().left + 10 }; break;
+        default:          return;
+      }
+      
+      $(this).css(css);
+      
+      tmp = null;
+    });
+    
+    $('.toggle_tutorial', this.el).bind('click', function () {
+      panel.showTutorial = !panel.showTutorial;
+      panel.elLk.tutorial.toggle();
+      $(this)[panel.showTutorial ? 'addClass' : 'removeClass']('on');
+      Ensembl.cookie.set('funcgen_matrix_tutorial', panel.showTutorial ? 'on' : 'off');
+    })[panel.showTutorial ? 'addClass' : 'removeClass']('on');
   },
   
   allOnRow: function (el) {
