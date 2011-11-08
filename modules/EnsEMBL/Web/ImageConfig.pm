@@ -287,8 +287,12 @@ sub get_favourite_tracks {
   my $self = shift;
   
   if (!$self->{'favourite_tracks'}) {
-    my $data = $self->hub->session->get_data(type => 'favourite_tracks', code => 'favourite_tracks') || {};
+    my $hub  = $self->hub;
+    my $user = $hub->user;
+    my $data = $hub->session->get_data(type => 'favourite_tracks', code => 'favourite_tracks') || {};
+    
     $self->{'favourite_tracks'} = $data->{'tracks'} || {};
+    $self->{'favourite_tracks'} = { %{$self->{'favourite_tracks'}}, %{$user->get_favourite_tracks} } if $user;
   }
   
   return $self->{'favourite_tracks'};
@@ -509,6 +513,7 @@ sub load_user_tracks {
       format      => $entry->{'format'},
       style       => $entry->{'style'},
       colour      => $entry->{'colour'},
+      display     => $entry->{'display'},
       timestamp   => $entry->{'timestamp'} || time,
     };
   }
@@ -546,7 +551,7 @@ sub load_user_tracks {
   }
   
   if ($user) {
-    my @groups = $user->groups;
+    my @groups  = $user->groups;
     
     foreach my $entry (grep $_->species eq $self->{'species'}, map $_->urls, $user, @groups) {
       $url_sources{'url_' . $entry->code} = {
@@ -608,15 +613,17 @@ sub load_user_tracks {
       next unless $analysis;
       
       my ($strand, $renderers) = $self->_user_track_settings($analysis->program_version);
+      my $external    = $upload_sources{$logic_name}{'source_type'} eq 'user' ? 'user' : 'tmp';
       my $source_name = encode_entities($upload_sources{$logic_name}{'source_name'});
-      my $caption     = encode_entities($analysis->display_label);
       my $description = encode_entities($analysis->description) || "User data from dataset $source_name";
+      my $caption     = encode_entities($analysis->display_label);
+         $caption     = "$source_name: $caption" unless $caption eq $upload_sources{$logic_name}{'source_name'};
       
-      push @tracks, [ $logic_name, $caption eq $source_name ? $source_name : "$source_name: $caption", {
-        external    => 'user',
+      push @tracks, [ $logic_name, $caption, {
+        external    => $external,
         glyphset    => '_user_data',
         colourset   => 'classes',
-        sub_type    => 'user',
+        sub_type    => $external,
         renderers   => $renderers,
         source_name => $source_name,
         logic_name  => $logic_name,
@@ -631,6 +638,8 @@ sub load_user_tracks {
     
     $menu->append($self->create_track(@$_)) for sort { lc($a->[2]{'source_name'}) cmp lc($b->[2]{'source_name'}) || lc($a->[1]) cmp lc($b->[1]) } @tracks;
   }
+  
+  $ENV{'CACHE_TAGS'}{'user_data'} = sprintf 'USER_DATA[%s]', md5_hex(join '|', map $_->id, $menu->nodes) if $menu->has_child_nodes;
 }
 
 sub load_configured_bam    { shift->load_file_format('bam');    }
@@ -931,23 +940,29 @@ sub update_track_renderer {
 
 sub update_favourite_tracks {
   my ($self, $diff) = @_;
-  my $session = $self->hub->session;
+  my $hub     = $self->hub;
+  my $session = $hub->session;
+  my $user    = $hub->user;
   my %args    = ( type => 'favourite_tracks', code => 'favourite_tracks' );
-  my $data    = $session->get_data(%args) || \%args;
+  
+  $args{'tracks'} = $self->get_favourite_tracks;
   
   foreach (grep exists $diff->{$_}->{'favourite'}, keys %$diff) {
     if ($diff->{$_}->{'favourite'} == 1) {
-      $data->{'tracks'}{$_} = 1;
+      $args{'tracks'}{$_} = 1;
     } elsif (exists $diff->{$_}->{'favourite'}) {
-      delete $data->{'tracks'}{$_};
+      delete $args{'tracks'}{$_};
     }
   }
   
-  if (scalar keys %{$data->{'tracks'}}) {
-    $session->set_data(%$data);
+  if (scalar keys %{$args{'tracks'}}) {
+    $session->set_data(%args);
   } else {
-    $session->purge_data(type => 'favourite_tracks', code => 'favourite_tracks');
+    delete $args{'tracks'};
+    $session->purge_data(%args);
   }
+  
+  $user->set_favourite_tracks($args{'tracks'}) if $user;
   
   delete $self->{'favourite_tracks'};
 }
