@@ -72,3 +72,10 @@ body.ie67 .col_toggle ul     { margin: 18px 0 0 -125px; }
 .sorting_desc { background: url(/i/sort_desc.png) no-repeat right center; }
 
 .toggle_table .sorting { background-image: url(/i/sort_both.png); }
+
+table.editable td.editable .val     { cursor: pointer; }
+table.editable td.editable input,
+table.editable td.editable textarea { width: 95%; display: none; }
+table.editable td.editable a.save   { display: none!important; }
+
+body.ie6 table.editable td.editable { position: relative; }
