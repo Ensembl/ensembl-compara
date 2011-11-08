@@ -73,7 +73,7 @@ sub content {
           }
         }
 
-        $html .= sprintf(qq(<li><a href="/Help/Faq?id=%s" id="faq%s">%s</a></li>\n), $faq->{'id'}, $faq->{'id'}, $faq->{'question'});
+        $html .= sprintf(qq(<li><a href="/Help/Faq?id=%s" id="faq%s" class="popup">%s</a></li>\n), $faq->{'id'}, $faq->{'id'}, $faq->{'question'});
         if ($hub->param('feedback') && $hub->param('feedback') == $faq->{'id'}) {
           $html .= qq(<div style="$style">Thank you for your feedback</div>);
         } 
