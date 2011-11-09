@@ -83,14 +83,13 @@ sub convert_to_drawing_parameters {
       p_value => $p_value_logs{$variation_id}
     });
 
-    #the html id and table class is used to match the SNP on the karyotype (html_id in area tag) with the row in the feature table (table_class in the table row)
+    #the html id is used to match the SNP on the karyotype (html_id in area tag) with the row in the feature table (table_class in the table row)
     push @results, {
       region         => $seq_region,
       start          => $start,
       end            => $end,
       strand         => $vf->strand,
       html_id        => qq{${name}_$dbID},
-      table_class    => qq{${name}_$dbID},
       label          => $name,
       href           => $zmenu_url,       
       p_value        => $p_value_logs{$variation_id},
