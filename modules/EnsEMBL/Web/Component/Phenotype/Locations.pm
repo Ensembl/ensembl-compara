@@ -61,6 +61,7 @@ sub _configure_Variation_table {
     my $row = {
               'loc'     => {'value' => $self->_var_location_link($feature), 'style' => $self->cell_style},
               'names'   => {'value' => $self->_variation_link($feature, $feature_type), 'style' => $self->cell_style},
+              'options' => {'class' => $feature->{'html_id'}},
               };
 
     $self->add_extras($row, $feature, $extras);
