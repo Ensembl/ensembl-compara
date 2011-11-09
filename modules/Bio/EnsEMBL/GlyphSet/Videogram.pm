@@ -390,110 +390,110 @@ sub _init {
       my $aggregate_colour = $config->{'_aggregate_colour'};
 
       if($highlight_set->{$chr}) {
-          # Firstly create a highlights array which contains merged entries!
-          my @temp_highlights = @{$highlight_set->{$chr}};
-          my @highlights;
+        # Firstly create a highlights array which contains merged entries!
+        my @temp_highlights = @{$highlight_set->{$chr}};
+        my @highlights;
 
-          if($highlight_set->{'merge'} && $highlight_set->{'merge'} eq 'no') {
-            @highlights = @temp_highlights;
-          } else {
-            my @bin_flag;
-            my $bin_length = $padding * ( $highlight_style eq 'arrow' ? 1.5 : 1 ) * $bpperpx;
+        if($highlight_set->{'merge'} && $highlight_set->{'merge'} eq 'no') {
+          @highlights = @temp_highlights;
+        } 
+        else {
+          my @bin_flag;
+          my $bin_length = $padding * ( $highlight_style eq 'arrow' ? 1.5 : 1 ) * $bpperpx;
 
           my $is_aggregated = 0;
-            foreach (@temp_highlights) {
-              my $bin_id = int (2 * $v_offset+ $_->{'start'}+$_->{'end'}) / 2 / $bin_length;
-              if ($bin_id < 0) {
-                $bin_id = 0;
+          foreach (@temp_highlights) {
+            my $bin_id = int (2 * $v_offset+ $_->{'start'}+$_->{'end'}) / 2 / $bin_length;
+            if ($bin_id < 0) {
+              $bin_id = 0;
+            }
+
+            if(my $offset = $bin_flag[$bin_id]) { # We already have a highlight in this bin - so add this one to it!
+
+            ## Build zmenu
+            my $zmenu_length = keys %{$highlights[$offset-1]->{'zmenu'}};
+            for my $entry (sort keys %{$_->{'zmenu'}}) {
+              if($entry eq 'caption') {
+                 next;
               }
 
-              if(my $offset = $bin_flag[$bin_id]) { # We already have a highlight in this bin - so add this one to it!
+              my $value = $_->{'zmenu'}->{$entry};
+              $entry    =~ s/\d\d+://mx;
 
-              ## Build zmenu
-                my $zmenu_length = keys %{$highlights[$offset-1]->{'zmenu'}};
-                for my $entry (sort keys %{$_->{'zmenu'}}) {
-                    if($entry eq 'caption') {
-                      next;
-                    }
+              $highlights[$offset-1]->{'zmenu'}->{ sprintf q(%03d:%s), $zmenu_length++, $entry } = $value;
 
-                    my $value = $_->{'zmenu'}->{$entry};
-                    $entry    =~ s/\d\d+://mx;
-
-                    $highlights[$offset-1]->{'zmenu'}->{ sprintf q(%03d:%s), $zmenu_length++, $entry } = $value;
-
-                    if ($highlights[$offset-1]->{'start'} > $_->{'start'}) {
-                      $highlights[$offset-1]->{'start'} = $_->{'start'};
-                    }
-
-                    if ($highlights[$offset-1]->{'end'} < $_->{'end'}) {
-                      $highlights[$offset-1]->{'end'}   = $_->{'end'};
-                    }
-                }
-
-              ## Deal with colour aggregation
-              if ($_->{'col'} eq $aggregate_colour) {
-                $is_aggregated = 1;
+              if ($highlights[$offset-1]->{'start'} > $_->{'start'}) {
+                $highlights[$offset-1]->{'start'} = $_->{'start'};
               }
-              if ($is_aggregated) {
-                $highlights[$offset-1]->{'col'} = $aggregate_colour;
-              }
-              } 
-            else { # We don't
-                push @highlights, $_;
-                $bin_flag[$bin_id] = @highlights;
-              $is_aggregated = 0;
+
+              if ($highlights[$offset-1]->{'end'} < $_->{'end'}) {
+                $highlights[$offset-1]->{'end'}   = $_->{'end'};
               }
             }
+
+            ## Deal with colour aggregation
+            if ($_->{'col'} eq $aggregate_colour) {
+              $is_aggregated = 1;
+            }
+            if ($is_aggregated) {
+              $highlights[$offset-1]->{'col'} = $aggregate_colour;
+            }
+          } 
+          else { # We don't
+            push @highlights, $_;
+            $bin_flag[$bin_id] = @highlights;
+            $is_aggregated = 0;
           }
+        }
+      }
 
     #########
     # Now we render the points
     #
-          my $high_flag    = 'l';
-          my @starts       = map { $_->{'start'} } @highlights;
-          my @sorting_keys = sort { $starts[$a] <=> $starts[$b] } 0..$#starts;
-          my @flags        = ();
-          my $flag         = 'l';
+      my $high_flag    = 'l';
+      my @starts       = map { $_->{'start'} } @highlights;
+      my @sorting_keys = sort { $starts[$a] <=> $starts[$b] } 0..$#starts;
+      my @flags        = ();
+      my $flag         = 'l';
 
-          foreach (@sorting_keys) {
-            $flags[$_] = $flag = $flag eq 'l' ? 'r' : 'l';
-          }
+      foreach (@sorting_keys) {
+        $flags[$_] = $flag = $flag eq 'l' ? 'r' : 'l';
+      }
 
-          foreach (@highlights) {
-            my $start = $v_offset + $_->{'start'};
-            my $end   = $v_offset + $_->{'end'};
+      foreach (@highlights) {
+        my $start = $v_offset + $_->{'start'};
+        my $end   = $v_offset + $_->{'end'};
 
-            if ($highlight_style eq 'arrow') {
-              $high_flag = shift @flags;
-              $type      = "highlight_${high_flag}h$highlight_style";
-            }
+        if ($highlight_style eq 'arrow') {
+          $high_flag = shift @flags;
+          $type      = "highlight_${high_flag}h$highlight_style";
+        }
 
-            my $zmenu = $_->{'zmenu'};
-            my $col   = $_->{'col'};
-            my $html_id = $_->{'html_id'} ? $_->{'html_id'} : '';
+        my $zmenu = $_->{'zmenu'};
+        my $col   = $_->{'col'};
+        my $html_id = $_->{'html_id'} ? $_->{'html_id'} : '';
 
       #########
       # dynamic require of the right type of renderer
-      #
-            if($self->can($type)) {
-              my $g = $self->$type( {
-                              'chr'       => $chr,
-                              'start'     => $start,
-                              'end'       => $end,
-                              'mid'       => ($start+$end)/2,
-                              'h_offset'  => $h_offset,
-                              'wid'       => $wid,
-                              'padding'   => $padding,
-                              'padding2'  => $padding * $bpperpx * sqrt(3)/2,
-                              'href'      => $_->{'href'},
-                              'col'       => $col,
-                              'id'        => $_->{'id'},
-                              'html_id'   => $html_id,
-                              'strand'    => $_->{'strand'},
-                            } );
-              $g and $self->push($g);
-            }
+        if($self->can($type)) {
+          my $g = $self->$type( {
+                      'chr'       => $chr,
+                      'start'     => $start,
+                      'end'       => $end,
+                      'mid'       => ($start+$end)/2,
+                      'h_offset'  => $h_offset,
+                      'wid'       => $wid,
+                      'padding'   => $padding,
+                      'padding2'  => $padding * $bpperpx * sqrt(3)/2,
+                      'href'      => $_->{'href'},
+                      'col'       => $col,
+                      'id'        => $_->{'id'},
+                      'html_id'   => $html_id,
+                      'strand'    => $_->{'strand'},
+                   } );
+           $g and $self->push($g);
           }
+        }
       }
     }
   }
