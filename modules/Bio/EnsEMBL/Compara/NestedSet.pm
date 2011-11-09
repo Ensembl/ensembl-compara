@@ -1189,7 +1189,7 @@ sub _internal_newick_format {
       my $ncbi_taxon_id = $self->node_id;
       if($self->is_leaf) { 
         my $is_incomplete = $self->get_tagvalue("is_incomplete", 0);
-        $ncbi_taxon_id .= "*" unless ('1' eq $is_incomplete);
+        $ncbi_taxon_id .= "*" unless $is_incomplete;
       }
       $newick .= sprintf("%s", $ncbi_taxon_id);
   }
