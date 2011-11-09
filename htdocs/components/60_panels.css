@@ -20,7 +20,7 @@
 .panel h1.summary-heading   { color:[[CONTRAST_HEADER]]; margin:8px 0 0 8px; }
 .panel span.summary-subhead { color:[[PANEL_TEXT]]; font-size: 0.7em; }
 
-.panel .nav-heading h2    { border: 0; border-bottom: 0; padding: 0; margin: 8px 0 0 8px; }
+.panel .nav-heading h2    { text-align: center; border: 0; border-bottom: 0; padding: 0; margin: 8px 0 0 8px; }
 .panel .nav-heading div   { width: 16em; padding: 1px;  }
 .panel .nav-heading div span,
 .panel .nav-heading div a { height: 1.4em; overflow: hidden; text-decoration: none; margin: 2px; font-weight: bold; display:block; padding: 0 0.5em; }
