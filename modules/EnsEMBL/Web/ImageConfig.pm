@@ -313,7 +313,7 @@ sub set_user_settings {
     next unless $node;
     
     foreach (keys %{$data->{$key}}) {
-      if ($_ eq 'display' && !grep $data->{$key}{$_}, @{$node->data->{'renderers'}}) {
+      if ($_ eq 'display' && !grep /$data->{$key}{$_}/, @{$node->data->{'renderers'}}) {
         $node->set_user($_, $node->data->{'renderers'}->[2]); # index 2 contains the code for the first "on" renderer
       } else {
         $node->set_user($_, $data->{$key}{$_});
