@@ -52,7 +52,7 @@ sub _configure_Variation_table {
   my $column_order = [qw(loc names)];
   my $column_info = {
     'names'   => {'title' => 'Name(s)', 'sort' => 'html'},
-    'loc'     => {'title' => 'Genomic location (strand)' => 'position_html'},
+    'loc'     => {'title' => 'Genomic location (strand)', 'sort' => 'position_html'},
   };
 
 
