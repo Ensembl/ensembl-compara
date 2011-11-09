@@ -32,6 +32,10 @@ sub convert_to_drawing_parameters {
     my $xref = shift @$array;  
     
     foreach my $g (@$array) {      
+      my $loc   = $g->seq_region_name.':'.$g->start.'-'.$g->end;
+      my $name  = $xref->display_id;
+      $name     =~ s/ \[#\]//;
+      $name     =~ s/^ //;
       push @$results, {
         'label'    => $xref->db_display_name,
         'xref_id'  => [ $xref->primary_id ],
@@ -42,10 +46,21 @@ sub convert_to_drawing_parameters {
         'strand'   => $g->strand,
         'length'   => $g->end-$g->start+1,
         'extra'    => {'description' => $g->description, 'dbname' => $xref->dbname},
-        'href'     => $hub->url({ type => 'ZMenu', action => 'Feature', function => 'Xref', ftype => $ftype, id => $xref->primary_id, r => undef }),
+        'href'     => $hub->url({ 
+                        type      => 'ZMenu', 
+                        action    => 'Feature', 
+                        function  => 'Xref', 
+                        ftype     => $ftype, 
+                        id        => $xref->primary_id, 
+                        name      => $name,
+                        r         => $loc, 
+                        g         => $g->stable_id, 
+                        desc      => $g->description,
+                      }),
       };
     }
   }  
+
   my $extra_columns = [{'key' => 'description', 'title' => 'Description'}];
   return [$results, $extra_columns];
 }
