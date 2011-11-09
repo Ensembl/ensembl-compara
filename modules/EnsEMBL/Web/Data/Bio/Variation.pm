@@ -21,8 +21,7 @@ sub convert_to_drawing_parameters {
   my $self         = shift;
   my $data         = $self->data_objects;
   my $hub          = $self->hub;
-  my $phenotype_id = $hub->param('id'); # getting associated phenotype with the variation
-  my $ftype        = $hub->param('ftype');
+  my $phenotype_id = $hub->param('ph') || $hub->param('id');
   my $species      = $hub->species;
   my $vardb        = $hub->database('variation');
   my $vaa          = $vardb->get_adaptor('VariationAnnotation');
@@ -76,7 +75,7 @@ sub convert_to_drawing_parameters {
     # make zmenu link
     my $zmenu_url = $hub->url({
       type    => 'ZMenu',
-      ftype   => $ftype,
+      ftype   => 'Xref',
       action  => 'Variation',
       v       => $name,
       vf      => $dbID,
