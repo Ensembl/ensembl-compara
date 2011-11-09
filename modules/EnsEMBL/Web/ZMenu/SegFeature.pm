@@ -36,8 +36,8 @@ sub content {
   });
   
   $self->add_entry ({
-    type   => 'Analysis',
-    label  => $seg_feat->analysis->description,
+    type        => 'Analysis',
+    label_html  => $seg_feat->analysis->description,
   });
       
 }
