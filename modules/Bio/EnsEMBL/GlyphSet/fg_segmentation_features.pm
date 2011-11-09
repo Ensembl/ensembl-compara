@@ -31,17 +31,22 @@ sub fetch_features {
 
   my $cell_line = $self->my_config('cell_line');  
   my $fsa = $db->get_FeatureSetAdaptor();
+  my $cta = $db->get_CellTypeAdaptor;
   my @rf_ref;
   
-  if (!$fsa) {
+  if (!$fsa || !$cta) {
     warn ("Cannot get get adaptors: $fsa");
     return [];
   }
-     
-  foreach my $set (@{$fsa->fetch_all_displayable_by_type('segmentation')}) {
-    next unless $set->name =~/$cell_line/;
-    push(@rf_ref, @{$set->get_Features_by_Slice($slice)});    
+  
+  my $ctype = $cta->fetch_by_name($cell_line);
+  my @fsets = @{$fsa->fetch_all_displayable_by_type('segmentation', $ctype)}; 
+  
+  if(scalar(@fsets) != 1){
+ 	  warn("Failed to get unique $cell_line segmentation feature set");
   }
+  
+  push(@rf_ref, @{$fsets[0]->get_Features_by_Slice($slice)});
   
   $self->{'config'}->{'fg_segmentation_features_legend_features'}->{'fg_segmentation_features'} = { 'priority' => 1020, 'legend' => [] };  
   return \@rf_ref;
