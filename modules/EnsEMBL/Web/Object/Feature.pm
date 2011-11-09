@@ -7,6 +7,13 @@ use base qw(EnsEMBL::Web::Object);
 
 sub features { return $_[0]->Obj->{$_[1]}; }
 
+sub get_feature_by_id {
+  my ($self, $type, $param, $id) = @_;
+  foreach (@{$self->Obj->{$type}->data_objects||[]}) {
+    return $_->[0] if $_->[0]->$param eq $id;
+  }
+}
+
 sub feature_types {
   return keys %{$_[0]->Obj};
 }
