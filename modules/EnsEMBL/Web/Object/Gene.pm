@@ -57,10 +57,15 @@ sub availability {
       $availability->{'not_patch'}     = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1;
 
       ## This is a tad hacky - only applies to human right now
-      my $hgnc_name = (grep {$_->dbname =~ /hgnc/i} @{$obj->get_all_DBEntries})[0]->display_id;
-      if ($self->database('variation') && $hgnc_name) {
-        my $vaa = Bio::EnsEMBL::Registry->get_adaptor($self->species, 'variation', 'VariationAnnotation');
-        $availability->{'phenotype'} = scalar(@{$vaa->fetch_all_by_associated_gene($hgnc_name)});
+      if ($self->database('variation')) { 
+        my @hgncs = grep {$_->dbname =~ /hgnc/i} @{$obj->get_all_DBEntries||[]};
+        if ($hgncs[0]) {
+          my $hgnc_name = $hgncs[0]->display_id;
+          if ($hgnc_name) {
+            my $vaa = Bio::EnsEMBL::Registry->get_adaptor($self->species, 'variation', 'VariationAnnotation');
+            $availability->{'phenotype'} = scalar(@{$vaa->fetch_all_by_associated_gene($hgnc_name)});
+          }
+        }
       }
 
       if ($self->database('compara_pan_ensembl')) {
