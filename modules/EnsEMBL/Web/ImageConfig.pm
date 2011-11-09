@@ -1553,6 +1553,7 @@ sub add_prediction_transcripts {
     $self->generic_add($menu, $key, "transcript_${key}_$_", $data->{$_}, {
       glyphset    => '_prediction_transcript',
       colourset   => 'prediction',
+      label_key   => '[display_label]',
       colour_key  => lc $_,
       renderers   => [ 'off', 'Off', 'transcript_nolabel', 'No labels', 'transcript_label', 'With labels' ],
       strand      => 'b',
