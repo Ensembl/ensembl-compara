@@ -65,6 +65,8 @@ my $registry = 'Bio::EnsEMBL::Registry';
 $registry->load_registry_from_db(
     -host => 'ensembldb.ensembl.org',
     -user => 'anonymous'
+    #The Registry automatically picks port 5306 for ensembl db
+    #-verbose => 1, #specificy verbose to see exactly what it loaded
 );
 
 </pre>
@@ -226,7 +228,7 @@ foreach my $annotated_feature (@annotated_features) {
 	#Analysis-depends property
 	print $annotated_feature->score."\n";
 	#Summit is usually present, but may not exist
-	if(annotated_feature->analysis->logic_name =~ /SWEmbl/){
+	if($annotated_feature->analysis->logic_name =~ /SWEmbl/){
 		print $annotated_feature->summit."\n";
 	}
 }
