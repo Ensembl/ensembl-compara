@@ -66,7 +66,8 @@ my $daf_a = Bio::EnsEMBL::Registry->get_adaptor(
 my $patch_align_features = $daf_a->fetch_all_by_logic_name("alt_seq_mapping");
 
 foreach my $patch_align(@$patch_align_features){
-	my ($contig_bases) = $patch_align->cigar_string=~/(\d+)M/;	
+	my ($contig_bases) = $patch_align->cigar_string=~/(\d+)M/;
+	my ($ref_strand, $patch_strand) = ($patch_align->hstrand, $patch_align->seq_region_strand);
 	push(@{ $aligned_patch{$patch_align->hseqname}{$patch_align->seq_region_name} }, 
 		{
 			ref_genomic_align_id => undef,
@@ -74,11 +75,11 @@ foreach my $patch_align(@$patch_align_features){
 			genomic_align_block_id => undef,
 			ref_start => $patch_align->hstart,
 			ref_end => $patch_align->hend,
-			ref_strand => $patch_align->hstrand,
+			ref_strand => $ref_strand,
 			ref_aln_bases => [$contig_bases],
 			patch_start => $patch_align->seq_region_start,
 			patch_end => $patch_align->seq_region_end,
-			patch_strand => $patch_align->seq_region_strand,
+			patch_strand => $patch_strand,
 			patch_aln_bases => [$contig_bases],
 			gab_perc_num => $contig_bases,
 		}
@@ -93,29 +94,64 @@ foreach my $ref_name(keys %aligned_patch){
 		*arr = \$aligned_patch{$ref_name}{$patch_name};
 		@$arr = sort {$a->{ref_start} <=> $b->{ref_start}} @$arr; # sort on the basis of the reference (non-patch) coords
 		for(my$i=0;$i<@$arr-1;$i++){
-			unless ( # reasons to break the alignment block
-				$arr->[$i]->{ref_strand} != $arr->[$i+1]->{ref_strand} || 
-				$arr->[$i]->{patch_end} > $arr->[$i+1]->{patch_start} || 
-				( $arr->[$i]->{ref_end} + 1 != $arr->[$i+1]->{ref_start} && 
-				$arr->[$i]->{patch_end} + 1 != $arr->[$i+1]->{patch_start} )	
-			){ 
-				if($arr->[$i]->{ref_end} + 1 == $arr->[$i+1]->{ref_start}){ # if the reference coords are adjacent add a gap to the reference and append a D
+			my $split_here = 0;
+			# reasons to break the alignment block
+			next if( $arr->[$i]->{ref_strand} != $arr->[$i+1]->{ref_strand}); 
+			next if($arr->[$i]->{ref_end} + 1 != $arr->[$i+1]->{ref_start} && $arr->[$i]->{patch_end} + 1 != $arr->[$i+1]->{patch_start} );	
+			next if( $arr->[$i]->{ref_strand} == -1 && ($arr->[$i+1]->{patch_end} > $arr->[$i]->{patch_start}) );
+			next if($arr->[$i]->{ref_strand} == 1 && ($arr->[$i+1]->{patch_end} < $arr->[$i]->{patch_end}) );
+			if($arr->[$i]->{ref_strand} == -1){
+				my @patch_arr = sort {$b->{patch_start} <=> $a->{patch_start}} @$arr; # reverse sort (ref strand is -ve) on the basis of the patch coords 
+				if($arr->[$i]->{ref_end} + 1 == $arr->[$i+1]->{ref_start}){ # ref seqs are contiguous
+					for(my$x=0;$x<@patch_arr-1;$x++){
+						if($patch_arr[$x]->{ref_start} == $arr->[$i]->{ref_start}){
+							unless($patch_arr[$x+1]->{patch_start} == $arr->[$i+1]->{patch_start}){
+								$split_here = 1; 
+								last;
+							}
+						}
+					}
+					next if $split_here; # the patch seqs are NOT adjacent, so the block ends here
+					my $patch_del = $arr->[$i]->{patch_start} - $arr->[$i+1]->{patch_end} - 1;
+					push(@{ $arr->[$i]->{ref_aln_bases} }, $patch_del . "D",  @{ $arr->[$i+1]->{ref_aln_bases} });
+					push(@{ $arr->[$i]->{patch_aln_bases} }, $patch_del, @{ $arr->[$i+1]->{patch_aln_bases} });
+					$arr->[$i]->{patch_start} = $arr->[$i+1]->{patch_start};
+				}
+				else { # patch seqs are contiguous 
+					my $ref_del = $arr->[$i+1]->{ref_start} - $arr->[$i]->{ref_end} - 1;
+					push(@{ $arr->[$i]->{patch_aln_bases} }, $ref_del . "D",  @{ $arr->[$i+1]->{patch_aln_bases} });
+					push(@{ $arr->[$i]->{ref_aln_bases} }, $ref_del, @{ $arr->[$i+1]->{ref_aln_bases} });
+					$arr->[$i]->{patch_start} = $arr->[$i+1]->{patch_start};
+				}
+			}
+			else{ # ref seq is +ve
+				my @patch_arr = sort {$a->{patch_start} <=> $b->{patch_start}} @$arr; # sort on the basis of the patch coords
+				if($arr->[$i]->{ref_end} + 1 == $arr->[$i+1]->{ref_start}){ # ref seqs are contiguous
+					for(my$x=0;$x<@patch_arr-1;$x++){
+						if($patch_arr[$x]->{ref_start} == $arr->[$i]->{ref_start}){
+							unless($patch_arr[$x+1]->{patch_start} == $arr->[$i+1]->{patch_start}){
+								$split_here = 1;
+								last;
+							}
+						}
+					}
+					next if $split_here;
 					my $patch_del = $arr->[$i+1]->{patch_start} - $arr->[$i]->{patch_end} - 1;
 					push(@{ $arr->[$i]->{ref_aln_bases} }, $patch_del . "D", @{ $arr->[$i+1]->{ref_aln_bases} });
 					push(@{ $arr->[$i]->{patch_aln_bases} }, $patch_del, @{ $arr->[$i+1]->{patch_aln_bases} });
-							
-				}else{ # otherwise the patch coords are adjacent, so add the gap to the patch and append a D
+				}else{ # patch seq are contiguous
 					my $ref_del = $arr->[$i+1]->{ref_start} - $arr->[$i]->{ref_end} - 1;
 					push(@{ $arr->[$i]->{patch_aln_bases} }, $ref_del . "D", @{ $arr->[$i+1]->{patch_aln_bases} });
 					push(@{ $arr->[$i]->{ref_aln_bases} }, $ref_del, @{ $arr->[$i+1]->{ref_aln_bases} });
 				}
-				$arr->[$i]->{gab_perc_num} += $arr->[$i+1]->{gab_perc_num};
-				$arr->[$i]->{ref_end} = $arr->[$i+1]->{ref_end};
 				$arr->[$i]->{patch_end} = $arr->[$i+1]->{patch_end};
-				splice(@$arr, $i+1, 1);
-				$i--;
-			} 
+			}
+			$arr->[$i]->{gab_perc_num} += $arr->[$i+1]->{gab_perc_num};
+			$arr->[$i]->{ref_end} = $arr->[$i+1]->{ref_end};
+			splice(@$arr, $i+1, 1);
+			$i--;
 		}
+		# generate the cigar string
 		for(my$j=0;$j<@$arr;$j++){
 			$arr->[$j]->{genomic_align_block_id} = $gab_id++;
 			$arr->[$j]->{ref_genomic_align_id} = $ga_id++;
@@ -130,8 +166,8 @@ foreach my $ref_name(keys %aligned_patch){
 					$k--;
 				}
 			}
-			$arr->[$j]->{ref_aln_bases} = join("", @{$arr->[$j]->{ref_aln_bases}}) . "M"; # make the reference cigar line
-			for(my$l=0;$l<@{ $arr->[$j]->{patch_aln_bases} }-1;$l++){ # create proto cigar line for the patch
+			$arr->[$j]->{ref_aln_bases} = join("", @{$arr->[$j]->{ref_aln_bases}}) . "M";
+			for(my$l=0;$l<@{ $arr->[$j]->{patch_aln_bases} }-1;$l++){
 				if($arr->[$j]->{patch_aln_bases}->[$l+1]=~/D/){
 					$arr->[$j]->{patch_aln_bases}->[$l] .= "M" . $arr->[$j]->{patch_aln_bases}->[$l+1];
 					splice(@{ $arr->[$j]->{patch_aln_bases} }, $l+1, 1);
@@ -141,12 +177,13 @@ foreach my $ref_name(keys %aligned_patch){
 					$l--;
 				}
 			}
-			$arr->[$j]->{patch_aln_bases} = join("", @{$arr->[$j]->{patch_aln_bases}}) . "M"; # make the patch cigar line
-			
-			($arr->[$j]->{patch_strand}, $arr->[$j]->{ref_strand}) = ($arr->[$j]->{ref_strand}, $arr->[$j]->{patch_strand}) if $arr->[$j]->{ref_strand} == -1; #reverse the strand sign so that the reference is always 1
+			$arr->[$j]->{patch_aln_bases} = join("", @{$arr->[$j]->{patch_aln_bases}}) . "M";
+			# reverse the strand sign so that the reference is always 1	
+			($arr->[$j]->{patch_strand}, $arr->[$j]->{ref_strand}) = ($arr->[$j]->{ref_strand}, $arr->[$j]->{patch_strand}) if $arr->[$j]->{ref_strand} == -1;
 		}
 	}
 }
+
 
 my $mlss_pref = $mlssid . "0000000000";
 foreach my $ref_name(keys %aligned_patch){
@@ -159,6 +196,8 @@ foreach my $ref_name(keys %aligned_patch){
 			$align_len = eval $align_len . 0;
 			$gab->{ref_aln_bases}=~s/M1D/MD/g;
 			$gab->{patch_aln_bases}=~s/M1D/MD/g;
+			$gab->{ref_aln_bases}=~s/M0D/M/g; # just in case (should never be used)
+			$gab->{patch_aln_bases}=~s/M0D/M/g; # just in case (should never be used)
 			my $gab_perc_id = int($gab->{gab_perc_num} / $align_len * 100);
 			print join("\t", "GenomicAlignBlock", ($gab->{genomic_align_block_id} + $mlss_pref), 
 				$mlssid, '\N', $gab_perc_id, $align_len, '\N'), "\n";
