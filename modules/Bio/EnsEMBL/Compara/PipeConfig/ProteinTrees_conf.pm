@@ -223,21 +223,6 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
 
-# ---------------------------------------------[rename PAF tables]-----------------------------------------------------------------------
-
-        {   -logic_name    => 'rename_paf_tables',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters    => {
-                'sql' => [ 'RENAME TABLE peptide_align_feature TO peptide_align_feature_orig',
-                           'RENAME TABLE peptide_align_feature_prod TO peptide_align_feature',
-                ],
-            },
-		-input_ids  => [ { } ],
-            -flow_into => {
-                1 => [ 'copy_table_factory' ],
-            },
-        },
-
 # ---------------------------------------------[copy tables from master and fix the offsets]---------------------------------------------
 
         {   -logic_name => 'copy_table_factory',
@@ -465,6 +450,7 @@ sub pipeline_analyses {
             -parameters => {
                 'src_db_conn'   => $self->o('reuse_db'),
                 'table'         => 'peptide_align_feature_#per_genome_suffix#',
+                'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                 'where'         => 'hgenome_db_id IN (#reuse_ss_csv#)',
             },
             -wait_for   => [ 'accumulate_reuse_ss' ],     # have to wait until reuse_ss_csv is computed
@@ -488,7 +474,7 @@ sub pipeline_analyses {
         {   -logic_name => 'paf_create_empty_table',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
-                'sql' => [  'CREATE TABLE IF NOT EXISTS peptide_align_feature_#per_genome_suffix# like peptide_align_feature',
+                'sql' => [  'CREATE TABLE IF NOT EXISTS peptide_align_feature_#per_genome_suffix# LIKE peptide_align_feature',
                             'ALTER TABLE peptide_align_feature_#per_genome_suffix# DISABLE KEYS',
                 ],
             },
