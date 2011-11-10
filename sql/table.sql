@@ -981,6 +981,7 @@ CREATE TABLE nc_tree_attr (
   duplication_confidence_score    DOUBLE(5,4),
   species_intersection_score      TINYINT UNSIGNED,
   acc_name                        VARCHAR(50),
+  node_type                       ENUM("duplication", "dubious", "speciation"),
 
 
   FOREIGN KEY (node_id) REFERENCES nc_tree_node(node_id),
