@@ -56,7 +56,7 @@ sub content {
 
   ## Add user tracks if turned on
   my @pointers;
-  my $user_features = $self->create_user_features;
+  my $user_features = $config->create_user_features;
   if (keys %$user_features) {
     @pointers = $self->create_user_pointers($image, $user_features);
   }

@@ -592,81 +592,33 @@ sub get_imageconfig {
   }
 }
 
-sub get_tracks {
-  my ($self, $key) = @_;
-  my $data   = $self->fetch_userdata_by_id($key);
-  my $tracks = {};
- 
-  if (my $parser = $data->{'parser'}) {
-    while (my ($type, $track) = each (%{$parser->get_all_tracks})) {
-      my @rows;
-      
-      foreach my $feature (@{$track->{'features'}}) {
-        my $data_row = {
-          chr     => $feature->seqname || $feature->slice->name,
-          start   => $feature->rawstart,
-          end     => $feature->rawend,
-          label   => $feature->id,
-          gene_id => $feature->id,
-        };
-        
-        push @rows, $data_row;
-      }
-      
-      $track->{'config'}{'name'} = $data->{'name'};
-      $tracks->{$type} = { features => \@rows, config => $track->{'config'} };
-    }
-  } else {
-    while (my ($analysis, $track) = each(%{$data})) {
-      my @rows;
-     
-      foreach my $f (
-        map  { $_->[0] }
-        sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
-        map  {[ $_, $_->{'slice'}->seq_region_name, $_->{'start'}, $_->{'end'} ]}
-        @{$track->{'features'}}
-      ) {
-        my $data_row = {
-          chr     => $f->{'slice'}->seq_region_name,
-          start   => $f->{'start'},
-          end     => $f->{'end'},
-          length  => $f->{'length'},
-          label   => $f->{'start'}.'-'.$f->{'end'},
-          gene_id => $f->{'gene_id'},
-        };
-        
-        push @rows, $data_row;
-      }
-      
-      $tracks->{$analysis} = {'features' => \@rows, 'config' => $track->{'config'}};
-    }
-  }
-
-  return $tracks;
-}
-
 sub fetch_userdata_by_id {
   my ($self, $record_id) = @_;
+  
   return unless $record_id;
-
+  
+  my ($type, $code) = split '_', $record_id, 2;
   my $data = {};
-  my ($status, $type, $id) = split '-', $record_id;
-
-  if ($type eq 'url' || ($type eq 'upload' && $status eq 'temp')) {
-    $data = $self->get_data_from_session($status, $type, $id);
-  } 
-  else {
-    my $user = $self->user;
-    my ($type, $user_id, $track_id) = split '_', $record_id;
-    return unless $user && $user->id == $user_id;
+  
+  if ($type eq 'user') {
+    my $user    = $self->user;
+    my $user_id = [ split '_', $record_id ]->[1];
     
-    my $fa        = $self->database('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
-    my $aa        = $self->database('userdata', $self->species)->get_AnalysisAdaptor;
-    my $features  = $fa->fetch_all_by_logic_name($record_id);
-    my $analysis  = $aa->fetch_by_logic_name($record_id);
-    my $config    = $analysis->web_data;
-    $config->{'track_name'} = $analysis->description || $record_id;
+    return unless $user && $user->id == $user_id;
+  } else {
+    $data = $self->get_data_from_session($type, $code);
+  }
+  
+  if (!scalar keys %$data) {
+    my $fa       = $self->get_adaptor('get_DnaAlignFeatureAdaptor', 'userdata');
+    my $aa       = $self->get_adaptor('get_AnalysisAdaptor',        'userdata');
+    my $features = $fa->fetch_all_by_logic_name($record_id);
+    my $analysis = $aa->fetch_by_logic_name($record_id);
+    my $config   = $analysis->web_data;
+    
+    $config->{'track_name'}  = $analysis->description   || $record_id;
     $config->{'track_label'} = $analysis->display_label || $analysis->description || $record_id;
+    
     $data->{$record_id} = { features => $features, config => $config };
   }
   
@@ -674,38 +626,29 @@ sub fetch_userdata_by_id {
 }
 
 sub get_data_from_session {
-  my ($self, $status, $type, $id) = @_;
-  my ($content, $format, $name);
-  my $tempdata = {};
+  my ($self, $type, $code) = @_;
   my $species  = $self->param('species') || $self->species;
-
-  if ($status eq 'temp') {
-    $tempdata = $self->session->get_data('type' => $type, 'code' => $id);
-    $name     = $tempdata->{'name'};
-  } else {
-    my $user   = $self->user;
-    my $record = $user->urls($id);
-    $tempdata  = { url => $record->url };
-    $name      = $record->url;
-  }
+  my $tempdata = $self->session->get_data(type => $type, code => $code);
+  my $name     = $tempdata->{'name'};
+  my ($content, $format);
 
   # NB this used to be new EnsEMBL::Web... etc but this does not work with the
   # FeatureParser module for some reason, so have to use FeatureParser->new()
   my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs, undef, $species);
-
+  
   if ($type eq 'url') {
     my $response = EnsEMBL::Web::Tools::Misc::get_url_content($tempdata->{'url'});
-    $content     = $response->{'content'};
+       $content  = $response->{'content'};
   } else {
-    my $file = new EnsEMBL::Web::TmpFile::Text(filename => $tempdata->{'filename'});
-    $content = $file->retrieve;
+    my $file    = new EnsEMBL::Web::TmpFile::Text(filename => $tempdata->{'filename'});
+       $content = $file->retrieve;
     
     return {} unless $content;
   }
    
   $parser->parse($content, $tempdata->{'format'});
 
-  return { 'parser' => $parser, 'name' => $name };
+  return { parser => $parser, name => $name };
 }
 
 sub initialize_user {

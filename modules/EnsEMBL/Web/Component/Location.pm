@@ -75,49 +75,31 @@ sub pointer_default {
   return $hash{$feature_type};
 }
 
-# Fetch user track(s) and turn into same data structure used by Component::Location::Genome;
-sub create_user_features {
-  my $self = shift;
-  my $hub = $self->hub;
-  my $user = $hub->user;
-  my $image_config = $hub->get_imageconfig('Vkaryotype');
-  my $features = {};
-
-  foreach my $key (keys %{$image_config->tree->user_data}) {
-    my ($status, $type, $id) = split '-', $key;
-    my $details = $image_config->get_node($key);
-    ## Only get data for tracks that are turned on
-    my $display = $details->user_data->{$key}->{'display'};
-    next if (!$display || $display eq 'off');
-    my $data = $hub->get_tracks($key);
-    $features->{$key} = $data;
-  }
-  return $features;
-}
-
 ## Create a set of highlights from a userdate set
 sub create_user_pointers {
   my ($self, $image, $data) = @_;
-  my $hub = $self->hub;
+  my $hub          = $self->hub;
   my $image_config = $hub->get_imageconfig('Vkaryotype');
-  my @pointers = ();
+  my @pointers     = ();
 
-  while (my($key, $hash) = each(%$data)) {
-    my $display = $image_config->get_node($key)->user_data->{$key}{'display'};
-    while (my ($analysis, $track) = each (%$hash)) {
+  while (my ($key, $hash) = each %$data) {
+    my $display = $image_config->get_node($key)->get('display');
+    
+    while (my ($analysis, $track) = each %$hash) {
       my ($render, $style) = split '_', $display;
       my $colour = $self->_user_track_colour($track); 
 
       if ($render eq 'highlight') {
-        push @pointers, $image->add_pointers( $hub, {
-          'config_name'   => 'Vkaryotype',
-          'features'      => $track->{'features'},          
-          'color'         => $colour,
-          'style'         => $style,
+        push @pointers, $image->add_pointers($hub, {
+          config_name => 'Vkaryotype',
+          features    => $track->{'features'},          
+          color       => $colour,
+          style       => $style,
         });
       }
     }
   }
+  
   return @pointers;
 }
 
@@ -138,6 +120,7 @@ sub configure_UserData_table {
       }
         
       my $colour = $self->_user_track_colour($track); 
+      
       if ($colour =~ /,/) {
         ## Convert RGB colours to hex, because rgb attributes getting stripped out of HTML
         my @rgb = split ',', $colour;

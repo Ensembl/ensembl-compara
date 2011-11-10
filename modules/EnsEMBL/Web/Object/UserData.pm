@@ -204,45 +204,41 @@ sub check_vcf_data {
 #---------------------------------- userdata DB functionality ----------------------------------
 
 sub save_to_db {
-  my $self     = shift;
-  my %args     = @_;
-  my $session  = $self->hub->session;
+  my ($self, $share, %args) = @_;
+  my $hub      = $self->hub;
+  my $session  = $hub->session;
+  my $user     = $hub->user;
   my $tmpdata  = $session->get_data(%args);
   my $assembly = $tmpdata->{'assembly'};
-
-  ## TODO: proper error exceptions !!!!!
-  my $file = new EnsEMBL::Web::TmpFile::Text(
-    filename => $tmpdata->{'filename'}
-  );
+  my $file     = new EnsEMBL::Web::TmpFile::Text(filename => $tmpdata->{'filename'}); ## TODO: proper error exceptions !!!!!
   
   return unless $file->exists;
   
-  my $data = $file->retrieve or die "Can't get data out of the file $tmpdata->{'filename'}";
-  
+  my $data   = $file->retrieve or die "Can't get data out of the file $tmpdata->{'filename'}";
   my $format = $tmpdata->{'format'};
-  my $report;
-
   my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs);
-  $parser->parse($data, $format);
-
+  my (@analyses, @messages, @errors);
+  
   my $config = {
-    action   => 'new', # or append
-    species  => $tmpdata->{'species'},
-    assembly => $tmpdata->{'assembly'},
-    default_track_name => $tmpdata->{'name'}
+    action             => 'new', # or append
+    species            => $tmpdata->{'species'},
+    assembly           => $tmpdata->{'assembly'},
+    default_track_name => $tmpdata->{'name'},
+    file_format        => $format
   };
-
-  if (my $user = $self->user) {
-    $config->{'id'} = $user->id;
+  
+  if ($user && !$share) {
+    $config->{'id'}         = $user->id;
     $config->{'track_type'} = 'user';
   } else {
-    $config->{'id'} = $session->session_id;
+    $config->{'id'}         = $session->session_id;
     $config->{'track_type'} = 'session';
   }
   
-  $config->{'file_format'} = $format; 
-  my (@analyses, @messages, @errors);
+  $parser->parse($data, $format);
+  
   my @tracks = $parser->get_all_tracks;
+  
   push @errors, "Sorry, we couldn't parse your data." unless @tracks;
   
   foreach my $track (@tracks) {
@@ -250,17 +246,18 @@ sub save_to_db {
     
     foreach my $key (keys %$track) {
       my $track_report = $self->_store_user_track($config, $track->{$key});
+      
       push @analyses, $track_report->{'logic_name'} if $track_report->{'logic_name'};
-      push @messages, $track_report->{'feedback'} if $track_report->{'feedback'};
-      push @errors, $track_report->{'error'} if $track_report->{'error'};
+      push @messages, $track_report->{'feedback'}   if $track_report->{'feedback'};
+      push @errors,   $track_report->{'error'}      if $track_report->{'error'};
     }
   }
 
-
-  $report->{'browser_switches'} = $parser->{'browser_switches'};
-  $report->{'analyses'} = \@analyses if @analyses;
-  $report->{'feedback'} = \@messages if @messages;
-  $report->{'errors'}   = \@errors   if @errors;
+  my $report = { browser_switches => $parser->{'browser_switches'} };
+  
+  $report->{'analyses'} = \@analyses if scalar @analyses;
+  $report->{'feedback'} = \@messages if scalar @messages;
+  $report->{'errors'}   = \@errors   if scalar @errors;
   
   return $report;
 }
@@ -305,7 +302,7 @@ sub store_data {
   
   $tmp_data->{'name'} = $hub->param('name') if $hub->param('name');
   
-  my $report = $tmp_data->{'analyses'} ? $tmp_data : $self->save_to_db(%args);
+  my $report = $tmp_data->{'analyses'} ? $tmp_data : $self->save_to_db($share, %args);
   
   if ($report->{'errors'}) {
     warn Dumper($report->{'errors'});

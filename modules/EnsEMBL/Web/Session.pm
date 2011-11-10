@@ -573,6 +573,7 @@ sub configure_user_data {
     next unless $ic_code;
     
     my $image_config = $hub->get_imageconfig($ic_code, $ic_code . time);
+    my $vertical     = $image_config->isa('EnsEMBL::Web::ImageConfig::Vertical');
     
     while (@track_data) {
       my ($track_type, $track) = (shift @track_data, shift @track_data);
@@ -582,7 +583,7 @@ sub configure_user_data {
       my @nodes = grep $_, $track->{'analyses'} ? map $image_config->get_node($_), split(', ', $track->{'analyses'}) : $image_config->get_node("${track_type}_$track->{'code'}");
       
       if (scalar @nodes) {
-        $_->set_user('display', $_->get('renderers')->[2]) for @nodes;
+        $_->set_user('display', $vertical ? EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'}) : $_->get('renderers')->[2]) for @nodes;
         $image_config->{'code'} = $ic_code;
         $image_config->altered  = 1;
         $view_config->altered   = 1;

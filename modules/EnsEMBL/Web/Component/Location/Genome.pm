@@ -36,12 +36,12 @@ sub content {
       $features = $object->convert_to_drawing_parameters;
     }
   }
-  my $html = $self->_render_features($id, $features);
+  my $html = $self->_render_features($id, $features, $config);
   return $html;
 }
 
 sub _render_features {
-  my ($self, $id, $features) = @_;
+  my ($self, $id, $features, $image_config) = @_;
   my $hub          = $self->hub;
   my $species      = $hub->species;
   my $species_defs = $hub->species_defs;
@@ -68,7 +68,7 @@ sub _render_features {
   }
 
   ## Add in userdata tracks
-  my $user_features = $self->create_user_features;
+  my $user_features = $image_config->create_user_features;
   while (my ($key, $data) = each (%$user_features)) {
     while (my ($analysis, $track) = each (%$data)) {
       foreach my $feature (@{$track->{'features'}}) {
@@ -86,8 +86,7 @@ sub _render_features {
 
   ## Draw features on karyotype, if any
   if (scalar @$chromosomes && $species_defs->MAX_CHR_LENGTH) {
-    my $image    = $self->new_karyotype_image;
-    my $config   = $hub->get_imageconfig('Vkaryotype'); ## Form with hidden elements for click-through
+    my $image = $self->new_karyotype_image;
 
     ## Map some user-friendly display names
     my $feature_display_name = {

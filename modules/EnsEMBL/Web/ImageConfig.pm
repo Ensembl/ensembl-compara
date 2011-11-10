@@ -632,6 +632,7 @@ sub load_user_tracks {
         description => $description,
         display     => 'off',
         style       => $analysis->web_data,
+        format      => $analysis->program_version,
         strand      => $strand,
       }];
     }
@@ -685,7 +686,7 @@ sub _add_bigwig_track {
   ], {
     external => 'url',
     sub_type => 'bigwig',
-    colour   => $_[1]->{'colour'} || 'red',
+    colour   => $_[2]->{'colour'} || 'red',
   });
 }
 
@@ -729,24 +730,25 @@ sub _add_flat_file_track {
 }
 
 sub _add_file_format_track {
-  my ($self, $menu, $key, $source, $type, $renderers, $options, $description) = @_;
+  my ($self, $menu, $key, $source, $format, $renderers, $options, $description) = @_;
   
   $menu ||= $self->get_node('user_data');
   
   return unless $menu;
   
   my $desc = sprintf(
-    "Data retrieved from a $type file on an external webserver.
+    "Data retrieved from a $format file on an external webserver.
     $description
     This data is attached to the %s, and comes from URL: %s",
     encode_entities($source->{'source_type'}), encode_entities($source->{'source_url'})
   );
   
-  $type = lc $type;
+  my $type = lc $format;
   
   my $track = $self->create_track($key, $source->{'source_name'}, {
     display     => 'off',
     strand      => 'f',
+    format      => $format,
     glyphset    => $type,
     colourset   => $type,
     renderers   => $renderers,
