@@ -13,32 +13,47 @@ use Data::Dumper;
 
 sub new {
   my ($class, $species_defs, $location, $data_species) = @_;
+  
   $data_species ||= $ENV{'ENSEMBL_SPECIES'};
   
+  my $drawn_chrs   = $species_defs->get_config($data_species, 'ENSEMBL_CHROMOSOMES');
+  my $all_chrs     = $species_defs->get_config($data_species, 'ALL_CHROMOSOMES');
+  my $colourlist   = $species_defs->TRACK_COLOUR_ARRAY || [qw(black red blue green)];
+  my %valid_coords = map { $_ => $all_chrs->{$_} } @$drawn_chrs;
+  
   my $self = {
-  'format'            => '',
-  'style'             => '',
-  'feature_count'     => 0,
-  'current_location'  => $location,
-  'nearest'           => undef,
-  'drawn_chrs'        => $species_defs->get_config($data_species, 'ENSEMBL_CHROMOSOMES'),
-  'valid_coords'      => {},
-  'browser_switches'  => {},
-  'tracks'            => {},
-  'colourmap'         => {},
-  'filter'            => undef,
-  '_current_key'      => 'default',
-  '_find_nearest'     => {},
+    current_location => $location,
+    drawn_chrs       => $drawn_chrs,
+    valid_coords     => { map { $_ => $all_chrs->{$_} } @$drawn_chrs },
+    colourlist       => $colourlist,
+    colourmap        => { map { $_ => 0 } @$colourlist },
   };
-  my $all_chrs = $species_defs->get_config($data_species, 'ALL_CHROMOSOMES');
-  foreach my $chr (@{$self->{'drawn_chrs'}}) {
-    $self->{'valid_coords'}{$chr} = $all_chrs->{$chr};  
-  }
+  
   bless $self, $class;
-  $self->{'colourlist'} = $species_defs->TRACK_COLOUR_ARRAY || [qw(black red blue green)];
-  my %colourmap         = map { $_ => 0} @{$self->{'colourlist'}};
-  $self->{'colourmap'}  = \%colourmap; 
+  
+  $self->reset;
+  
   return $self;
+}
+
+sub defaults {
+  return (
+    format           => '',
+    style            => '',
+    feature_count    => 0,
+    nearest          => undef,
+    browser_switches => {},
+    tracks           => {},
+    filter           => undef,
+    _current_key     => 'default',
+    _find_nearest    => {},
+  );
+}
+
+sub reset {
+  my $self     = shift;
+  my %defaults = $self->defaults;
+  $self->{$_} = $defaults{$_} for keys %defaults;
 }
 
 sub get_all_tracks{$_[0]->{'tracks'}}
