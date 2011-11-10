@@ -227,7 +227,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
         menu.hide();
         
-        if (panel.sortable) {
+        if (panel.sortable || panel.elLk.subPanelTracks.length) {
           $.each(updated, function (trackName, attrs) {
             $.each([panel.elLk.tracks, panel.elLk.trackOrderList.children(), panel.elLk.subPanelTracks], function () {
               $(this).filter('.' + trackName).not(li).children('img.menu_option').attr({ 
