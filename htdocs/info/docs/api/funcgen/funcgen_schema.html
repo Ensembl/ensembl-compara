@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="CONTENT-TYPE" content="text/html; charset=utf-8" />
-<title> Schema Documentation</title>
+<title>Funcgen (Regulation) Schema Documentation</title>
 
 <script language="Javascript" type="text/javascript">
 	// Function to show/hide the columns table
@@ -25,23 +25,26 @@
 </head>
 
 <body>
-<h1>Ensembl  Schema Documentation</h1>
+<h1>Ensembl Funcgen (Regulation) Schema Documentation</h1>
 
 <h2>Introduction</h2>
 
-
 <p>
-This document gives a describes the tables that make up the Ensembl 'Funcgen' schema. Tables are grouped logically by their function, and the purpose of each table is explained. This document refers to version 62 of the Ensembl variation schema.<br>
+This document gives a describes the tables that make up the Ensembl funcgen schema. Tables are grouped logically by their function, and the purpose of each table is explained. This document refers to version 65 of the Ensembl funcgen schema.<br>
 <br>
-A simplified entity relationship diagram of the schema is available <a href="./Funcgen_62_trimmed_schema.png">here</a>.
-</p>
 
-<h3>List of the tables:</h3>
+
+A simplified entity relationship diagram of the schema is available <a href="./trimmed_funcgen_schema.png">here</a>. Core, core like and some ancilliary tables have been cropped from the schema diagram.<br>
+<br>
+A colour legend is available at the <a href="#legend">bottom of the page</a>.
+</p>
+<h3 id="top">List of the tables:</h3>
 <h2>Main feature tables</h2>
-<table><tr><td>
+<table><tr><td \><td>
  <ul>
 		<li><a href="#regulatory_feature"><b>regulatory_feature</b></a></li>
 		<li><a href="#regulatory_attribute"><b>regulatory_attribute</b></a></li>
+		<li><a href="#segmentation_feature"><b>segmentation_feature</b></a></li>
 		<li><a href="#annotated_feature"><b>annotated_feature</b></a></li>
 		<li><a href="#motif_feature"><b>motif_feature</b></a></li>
 		<li><a href="#associated_motif_feature"><b>associated_motif_feature</b></a></li>
@@ -49,6 +52,8 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 		<li><a href="#external_feature"><b>external_feature</b></a></li>
 		<li><a href="#result_feature"><b>result_feature</b></a></li>
 		<li><a href="#probe_feature"><b>probe_feature</b></a></li>
+		<li><a href="#feature_type"><b>feature_type</b></a></li>
+		<li><a href="#associated_feature_type"><b>associated_feature_type</b></a></li>
 		</ul>
 </td></tr></table>
 <h2>Set tables</h2>
@@ -88,8 +93,6 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 <h2>Ancilliary tables</h2>
 <table><tr><td>
  <ul>
-		<li><a href="#feature_type"><b>feature_type</b></a></li>
-		<li><a href="#associated_feature_type"><b>associated_feature_type</b></a></li>
 		<li><a href="#cell_type"><b>cell_type</b></a></li>
 		<li><a href="#experimental_design"><b>experimental_design</b></a></li>
 		<li><a href="#design_type"><b>design_type</b></a></li>
@@ -126,29 +129,34 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 <h2>Main feature tables</h2>
 <p>These define the various genomics features and their relevant associated tables.</p>
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="regulatory_feature" style="font-size:11pt;font-weight:bold">regulatory_feature</span></td>
-<td style="width:100px;text-align:right"><a id="a_regulatory_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('regulatory_feature')">Show</a> columns</td>
-</tr></table>
-<p>The table contains imports from externally curated resources e.g. cisRED, miRanda, VISTA, redFLY etc.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="regulatory_feature" style="font-size:11pt;font-weight:bold">regulatory_feature</span></td>
+      <td style="width:180px;text-align:right"><a id="a_regulatory_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('regulatory_feature')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>The table contains the features resulting from the regulatory build process.</p>
 
 	<div id="div_regulatory_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>regulatory_feature_id</b></td><td>int(10)</td><td></td><td>Internal ID </td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>seq_region_id</b></td><td>int(10)</td><td></td><td><a href="#seq_region">seq_region</a> table ID</td><td>key: seq_region_idx</td></tr>
-		<tr class="bg1"><td><b>seq_region_start</b></td><td>int(10)</td><td></td><td>Start position of this feature</td><td>key: seq_region_idx</td></tr>
-		<tr class="bg2"><td><b>seq_region_end</b></td><td>int(10)</td><td></td><td>End position of this feature</td><td></td></tr>
-		<tr class="bg1"><td><b>seq_region_strand</b></td><td>tinyint(1)</td><td></td><td>Strand orientation of this feature</td><td></td></tr>
-		<tr class="bg2"><td><b>display_label</b></td><td>varchar(80)</td><td>NULL</td><td>Text display label </td><td></td></tr>
-		<tr class="bg1"><td><b>feature_type_id</b></td><td>int(10)</td><td>NULL</td><td><a href="#feature_type">feature_type</a> table ID</td><td>key: feature_type_idx</td></tr>
-		<tr class="bg2"><td><b>feature_set_id</b></td><td>int(10)</td><td>NULL</td><td><a href="#feature_set">feature_set</a> table ID</td><td>key: feature_set_idx</td></tr>
-		<tr class="bg1"><td><b>stable_id</b></td><td>mediumint(8)</td><td>NULL</td><td>Integer stable ID without ENSR prefix</td><td>key: stable_id_idx</td></tr>
-		<tr class="bg2"><td><b>bound_seq_region_start</b></td><td>int(10)</td><td></td><td>Bound start position of this feature</td><td></td></tr>
-		<tr class="bg1"><td><b>bound_seq_region_end</b></td><td>int(10)</td><td></td><td>Bound end position of this feature</td><td></td></tr>
-		<tr class="bg2"><td><b>binary_string</b></td><td>varchar(255)</td><td>NULL</td><td>Binary representation for the underlying feature sets/types </td><td></td></tr>
-		<tr class="bg1"><td><b>projected</b></td><td>boolean</td><td>FALSE</td><td>Boolean, defines whether reg feat structure has been projected to this cell type </td><td></td></tr>
+		<tr class="bg1"><td><b>regulatory_feature_id</b></td><td></td><td></td><td>Internal ID </td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_id</b></td><td></td><td></td><td><a href="#seq_region">seq_region</a> table ID</td><td></td></tr>
+		<tr class="bg1"><td><b>seq_region_start</b></td><td></td><td></td><td>Start position of this feature</td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_end</b></td><td></td><td></td><td>End position of this feature</td><td></td></tr>
+		<tr class="bg1"><td><b>seq_region_strand</b></td><td></td><td></td><td>Strand orientation of this feature</td><td></td></tr>
+		<tr class="bg2"><td><b>display_label</b></td><td></td><td></td><td>Text display label </td><td></td></tr>
+		<tr class="bg1"><td><b>feature_type_id</b></td><td></td><td></td><td><a href="#feature_type">feature_type</a> table ID</td><td></td></tr>
+		<tr class="bg2"><td><b>feature_set_id</b></td><td></td><td></td><td><a href="#feature_set">feature_set</a> table ID</td><td></td></tr>
+		<tr class="bg1"><td><b>stable_id</b></td><td></td><td></td><td>Integer stable ID without ENSR prefix</td><td></td></tr>
+		<tr class="bg2"><td><b>bound_seq_region_start</b></td><td></td><td></td><td>Bound start position of this feature</td><td></td></tr>
+		<tr class="bg1"><td><b>bound_seq_region_end</b></td><td></td><td></td><td>Bound end position of this feature</td><td></td></tr>
+		<tr class="bg2"><td><b>binary_string</b></td><td></td><td></td><td>Binary representation for the underlying feature sets/types </td><td></td></tr>
+		<tr class="bg1"><td><b>projected</b></td><td></td><td></td><td>Boolean, defines whether reg feat structure has been projected to this cell type </td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -159,19 +167,24 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="regulatory_attribute" style="font-size:11pt;font-weight:bold">regulatory_attribute</span></td>
-<td style="width:100px;text-align:right"><a id="a_regulatory_attribute" style="cursor:pointer;text-decoration:underline" onclick="show_hide('regulatory_attribute')">Show</a> columns</td>
-</tr></table>
-<p>Denormalised table defining links between a @link regulatory_feature and it's constituent 'attribute' features.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="regulatory_attribute" style="font-size:11pt;font-weight:bold">regulatory_attribute</span></td>
+      <td style="width:180px;text-align:right"><a id="a_regulatory_attribute" style="cursor:pointer;text-decoration:underline" onclick="show_hide('regulatory_attribute')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Denormalised table defining links between a regulatory_feature and it's constituent 'attribute' features.</p>
 
 	<div id="div_regulatory_attribute" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>regulatory_feature_id</b></td><td>int(10)</td><td></td><td>Internal ID </td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>attribute_feature_id</b></td><td>int(10)</td><td></td><td>Table ID of attribute feature </td><td>primary key</td></tr>
-		<tr class="bg1"><td><b>attribute_feature_table</b></td><td>enum('annotated', 'external', 'motif')</td><td>NULL</td><td>Table name of attribute feature</td><td>primary key</td></tr>
+		<tr class="bg1"><td><b>regulatory_feature_id</b></td><td></td><td></td><td>Internal ID </td><td></td></tr>
+		<tr class="bg2"><td><b>attribute_feature_id</b></td><td></td><td></td><td>Table ID of attribute feature </td><td></td></tr>
+		<tr class="bg1"><td><b>attribute_feature_table</b></td><td></td><td></td><td>Table name of attribute feature</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -181,25 +194,64 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="annotated_feature" style="font-size:11pt;font-weight:bold">annotated_feature</span></td>
-<td style="width:100px;text-align:right"><a id="a_annotated_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('annotated_feature')">Show</a> columns</td>
-</tr></table>
-<p>Represents a genomic feature as the result of an analysis i.e. a ChIP or DNase1 peak call.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="segmentation_feature" style="font-size:11pt;font-weight:bold">segmentation_feature</span></td>
+      <td style="width:180px;text-align:right"><a id="a_segmentation_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('segmentation_feature')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Represents a genomic segment feature as the result of an segmentation  analysis i.e. Segway or ChromHmm</p>
+
+	<div id="div_segmentation_feature" style="display:none">
+
+	<table style="border:1px outset #222222">
+		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
+		<tr class="bg1"><td><b>segmentation_feature_id</b></td><td></td><td></td><td>Internal ID </td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_id</b></td><td></td><td></td><td><a href="#seq_region">seq_region</a> table ID</td><td></td></tr>
+		<tr class="bg1"><td><b>seq_region_start</b></td><td></td><td></td><td>Start position of this feature</td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_end</b></td><td></td><td></td><td>End position of this feature</td><td></td></tr>
+		<tr class="bg1"><td><b>seq_region_strand</b></td><td></td><td></td><td>Strand orientation of this feature</td><td></td></tr>
+		<tr class="bg2"><td><b>feature_set_id</b></td><td></td><td></td><td><a href="#feature_set">feature_set</a> table ID</td><td></td></tr>
+		<tr class="bg1"><td><b>feature_type_id</b></td><td></td><td></td><td><a href="#feature_type">feature_type</a> table ID.</td><td></td></tr>
+		<tr class="bg2"><td><b>score</b></td><td></td><td></td><td>Score derived from software</td><td></td></tr>
+		<tr class="bg1"><td><b>display_label</b></td><td></td><td></td><td>Text display label </td><td></td></tr>
+</table>
+</div>
+<p><b>See also:</b></p>
+<ul>
+	<li><a href="#seq_region">seq_region</a></li>
+	<li><a href="#feature_set">feature_set</a></li>
+	<li><a href="#feature_type">feature_type</a></li>
+</ul>
+
+<br />
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="annotated_feature" style="font-size:11pt;font-weight:bold">annotated_feature</span></td>
+      <td style="width:180px;text-align:right"><a id="a_annotated_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('annotated_feature')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Represents a genomic feature as the result of an analysis i.e. a ChIP or DNase1 peak call.</p>
 
 	<div id="div_annotated_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>annotated_feature_id</b></td><td>int(10)</td><td></td><td>Internal ID </td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>seq_region_id</b></td><td>int(10)</td><td></td><td><a href="#seq_region">seq_region</a> table ID</td><td>unique key: seq_region_feature_set_idx</td></tr>
-		<tr class="bg1"><td><b>seq_region_start</b></td><td>int(10)</td><td></td><td>Start position of this feature</td><td>unique key: seq_region_feature_set_idx</td></tr>
-		<tr class="bg2"><td><b>seq_region_end</b></td><td>int(10)</td><td></td><td>End position of this feature</td><td></td></tr>
-		<tr class="bg1"><td><b>seq_region_strand</b></td><td>tinyint(1)</td><td></td><td>Strand orientation of this feature</td><td></td></tr>
-		<tr class="bg2"><td><b>display_label</b></td><td>varchar(60)</td><td>NULL</td><td>Text display label </td><td></td></tr>
-		<tr class="bg1"><td><b>score</b></td><td>double</td><td>NULL</td><td>Score derived from software</td><td></td></tr>
-		<tr class="bg2"><td><b>feature_set_id</b></td><td>int(10)</td><td></td><td><a href="#feature_set">feature_set</a> table ID</td><td>unique key: seq_region_feature_set_idx<br />key: feature_set_idx</td></tr>
-		<tr class="bg1"><td><b>summit</b></td><td>int(10)</td><td>NULL</td><td>Represents peak summit for those analyses which provide it (e.g. Swembl)</td><td></td></tr>
+		<tr class="bg1"><td><b>annotated_feature_id</b></td><td></td><td></td><td>Internal ID </td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_id</b></td><td></td><td></td><td><a href="#seq_region">seq_region</a> table ID</td><td></td></tr>
+		<tr class="bg1"><td><b>seq_region_start</b></td><td></td><td></td><td>Start position of this feature</td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_end</b></td><td></td><td></td><td>End position of this feature</td><td></td></tr>
+		<tr class="bg1"><td><b>seq_region_strand</b></td><td></td><td></td><td>Strand orientation of this feature</td><td></td></tr>
+		<tr class="bg2"><td><b>display_label</b></td><td></td><td></td><td>Text display label </td><td></td></tr>
+		<tr class="bg1"><td><b>score</b></td><td></td><td></td><td>Score derived from software</td><td></td></tr>
+		<tr class="bg2"><td><b>feature_set_id</b></td><td></td><td></td><td><a href="#feature_set">feature_set</a> table ID</td><td></td></tr>
+		<tr class="bg1"><td><b>summit</b></td><td></td><td></td><td>Represents peak summit for those analyses which provide it (e.g. Swembl)</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -209,71 +261,91 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="motif_feature" style="font-size:11pt;font-weight:bold">motif_feature</span></td>
-<td style="width:100px;text-align:right"><a id="a_motif_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('motif_feature')">Show</a> columns</td>
-</tr></table>
-<p>The table contains genomic alignments of @link binding_matrix PWMs.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="motif_feature" style="font-size:11pt;font-weight:bold">motif_feature</span></td>
+      <td style="width:180px;text-align:right"><a id="a_motif_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('motif_feature')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>The table contains genomic alignments of binding_matrix PWMs.</p>
 
 	<div id="div_motif_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>motif_feature_id</b></td><td>int(10)</td><td></td><td>Primary key, internal ID </td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>binding_matrix_id</b></td><td>INT(10)</td><td></td><td>Foreign key to <a href="#binding_matrix">binding_matrix</a> table</td><td>key: binding_matrix_idx</td></tr>
-		<tr class="bg1"><td><b>seq_region_id</b></td><td>int(10)</td><td></td><td>Foreign key to <a href="#seq_region">seq_region</a> table</td><td>key: seq_region_idx</td></tr>
-		<tr class="bg2"><td><b>seq_region_start</b></td><td>int(10)</td><td></td><td>Start position of this feature</td><td>key: seq_region_idx</td></tr>
-		<tr class="bg1"><td><b>seq_region_end</b></td><td>int(10)</td><td></td><td>End position of this feature</td><td></td></tr>
-		<tr class="bg2"><td><b>seq_region_strand</b></td><td>tinyint(1)</td><td></td><td>Strand orientation of this feature</td><td></td></tr>
-		<tr class="bg1"><td><b>display_label</b></td><td>varchar(60)</td><td>NULL</td><td>Text display label </td><td></td></tr>
-		<tr class="bg2"><td><b>score</b></td><td>double</td><td>NULL</td><td>Score derived from alignment software (e.g.MOODS)</td><td></td></tr>
-		<tr class="bg1"><td><b>interdb_stable_id</b></td><td>mediumint(8)</td><td>NULL</td><td>Unique key, provides linkability between DBs       </td><td>unique key: interdb_stable_id_idx</td></tr>
+		<tr class="bg1"><td><b>motif_feature_id</b></td><td></td><td></td><td>Primary key, internal ID </td><td></td></tr>
+		<tr class="bg2"><td><b>binding_matrix_id</b></td><td></td><td></td><td>Foreign key to <a href="#binding_matrix">binding_matrix</a> table</td><td></td></tr>
+		<tr class="bg1"><td><b>seq_region_id</b></td><td></td><td></td><td>Foreign key to <a href="#seq_region">seq_region</a> table</td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_start</b></td><td></td><td></td><td>Start position of this feature</td><td></td></tr>
+		<tr class="bg1"><td><b>seq_region_end</b></td><td></td><td></td><td>End position of this feature</td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_strand</b></td><td></td><td></td><td>Strand orientation of this feature</td><td></td></tr>
+		<tr class="bg1"><td><b>display_label</b></td><td></td><td></td><td>Text display label </td><td></td></tr>
+		<tr class="bg2"><td><b>score</b></td><td></td><td></td><td>Score derived from alignment software (e.g.MOODS)</td><td></td></tr>
+		<tr class="bg1"><td><b>interdb_stable_id</b></td><td></td><td></td><td>Unique key, provides linkability between DBs       </td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
 <ul>
 	<li><a href="#associated_motif_feature">associated_motif_feature</a></li>
 	<li><a href="#regulatory_attribute">regulatory_attribute</a></li>
+	<li><a href="#binding_matrix">binding_matrix</a></li>
+	<li><a href="#seq_region">seq_region</a></li>
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="associated_motif_feature" style="font-size:11pt;font-weight:bold">associated_motif_feature</span></td>
-<td style="width:100px;text-align:right"><a id="a_associated_motif_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('associated_motif_feature')">Show</a> columns</td>
-</tr></table>
-<p>The table provides links between motif_features and annotated_features representing peaks of the relevant transcription factor.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="associated_motif_feature" style="font-size:11pt;font-weight:bold">associated_motif_feature</span></td>
+      <td style="width:180px;text-align:right"><a id="a_associated_motif_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('associated_motif_feature')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>The table provides links between motif_features and annotated_features representing peaks of the relevant transcription factor.</p>
 
 	<div id="div_associated_motif_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>annotated_feature_id</b></td><td>int(10)</td><td></td><td><a href="#annotated_feature">annotated_feature</a> table ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>motif_feature_id</b></td><td>int(10)</td><td></td><td><a href="#motif_feature">motif_feature</a> table ID</td><td>primary key<br />key: motif_feature_idx</td></tr>
+		<tr class="bg1"><td><b>annotated_feature_id</b></td><td></td><td></td><td><a href="#annotated_feature">annotated_feature</a> table ID</td><td></td></tr>
+		<tr class="bg2"><td><b>motif_feature_id</b></td><td></td><td></td><td><a href="#motif_feature">motif_feature</a> table ID</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
 <ul>
 	<li><a href="#associated_motif_feature">associated_motif_feature</a></li>
 	<li><a href="#regulatory_attribute">regulatory_attribute</a></li>
+	<li><a href="#annotated_feature">annotated_feature</a></li>
+	<li><a href="#motif_feature">motif_feature</a></li>
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="binding_matrix" style="font-size:11pt;font-weight:bold">binding_matrix</span></td>
-<td style="width:100px;text-align:right"><a id="a_binding_matrix" style="cursor:pointer;text-decoration:underline" onclick="show_hide('binding_matrix')">Show</a> columns</td>
-</tr></table>
-<p>Contains information defining a specific binding matrix(PWM) as defined by the linked analysis e.g. Jaspar.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="binding_matrix" style="font-size:11pt;font-weight:bold">binding_matrix</span></td>
+      <td style="width:180px;text-align:right"><a id="a_binding_matrix" style="cursor:pointer;text-decoration:underline" onclick="show_hide('binding_matrix')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Contains information defining a specific binding matrix(PWM) as defined by the linked analysis e.g. Jaspar.</p>
 
 	<div id="div_binding_matrix" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>binding_matrix_id</b></td><td>INT(10)</td><td></td><td>Internal table ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>name</b></td><td>VARCHAR(45)</td><td></td><td>Name of PWM</td><td>key: name_analysis_idx</td></tr>
-		<tr class="bg1"><td><b>feature_type_id</b></td><td>int(10)</td><td></td><td><a href="#feature_type">feature_type</a> table ID.</td><td>key: feature_type_idx</td></tr>
-		<tr class="bg2"><td><b>frequencies</b></td><td>VARCHAR(1000)</td><td></td><td>Matrix defining frequencing for each base at each position</td><td></td></tr>
-		<tr class="bg1"><td><b>description</b></td><td>VARCHAR(255)</td><td></td><td>Text description</td><td></td></tr>
-		<tr class="bg2"><td><b>analysis_id</b></td><td>int(10)</td><td></td><td><a href="#analysis">analysis</a> table ID</td><td>key: name_analysis_idx</td></tr>
+		<tr class="bg1"><td><b>binding_matrix_id</b></td><td></td><td></td><td>Internal table ID</td><td></td></tr>
+		<tr class="bg2"><td><b>name</b></td><td></td><td></td><td>Name of PWM</td><td></td></tr>
+		<tr class="bg1"><td><b>feature_type_id</b></td><td></td><td></td><td><a href="#feature_type">feature_type</a> table ID.</td><td></td></tr>
+		<tr class="bg2"><td><b>frequencies</b></td><td></td><td></td><td>Matrix defining frequencing for each base at each position</td><td></td></tr>
+		<tr class="bg1"><td><b>description</b></td><td></td><td></td><td>Text description</td><td></td></tr>
+		<tr class="bg2"><td><b>analysis_id</b></td><td></td><td></td><td><a href="#analysis">analysis</a> table ID</td><td></td></tr>
+		<tr class="bg1"><td><b>threshold</b></td><td></td><td></td><td>Minimum score for Motif Features for this matrix</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -284,24 +356,29 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="external_feature" style="font-size:11pt;font-weight:bold">external_feature</span></td>
-<td style="width:100px;text-align:right"><a id="a_external_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('external_feature')">Show</a> columns</td>
-</tr></table>
-<p>The table contains imports from externally curated resources e.g. cisRED, miRanda, VISTA, redFLY etc.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="external_feature" style="font-size:11pt;font-weight:bold">external_feature</span></td>
+      <td style="width:180px;text-align:right"><a id="a_external_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('external_feature')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>The table contains imports from externally curated resources e.g. cisRED, miRanda, VISTA, redFLY etc.</p>
 
 	<div id="div_external_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>external_feature_id</b></td><td>int(10)</td><td></td><td>Internal ID </td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>seq_region_id</b></td><td>int(10)</td><td></td><td><a href="#seq_region">seq_region</a> table ID</td><td>key: seq_region_idx</td></tr>
-		<tr class="bg1"><td><b>seq_region_start</b></td><td>int(10)</td><td></td><td>Start position of this feature</td><td>key: seq_region_idx</td></tr>
-		<tr class="bg2"><td><b>seq_region_end</b></td><td>int(10)</td><td></td><td>End position of this feature</td><td></td></tr>
-		<tr class="bg1"><td><b>seq_region_strand</b></td><td>tinyint(1)</td><td></td><td>Strand orientation of this feature</td><td></td></tr>
-		<tr class="bg2"><td><b>display_label</b></td><td>varchar(60)</td><td>NULL</td><td>Text display label </td><td></td></tr>
-		<tr class="bg1"><td><b>feature_type_id</b></td><td>int(10)</td><td>NULL</td><td><a href="#feature_type">feature_type</a> table ID</td><td>key: feature_type_idx</td></tr>
-		<tr class="bg2"><td><b>feature_set_id</b></td><td>int(10)</td><td></td><td><a href="#feature_set">feature_set</a> table ID</td><td>key: feature_set_idx</td></tr>
+		<tr class="bg1"><td><b>external_feature_id</b></td><td></td><td></td><td>Internal ID </td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_id</b></td><td></td><td></td><td><a href="#seq_region">seq_region</a> table ID</td><td></td></tr>
+		<tr class="bg1"><td><b>seq_region_start</b></td><td></td><td></td><td>Start position of this feature</td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_end</b></td><td></td><td></td><td>End position of this feature</td><td></td></tr>
+		<tr class="bg1"><td><b>seq_region_strand</b></td><td></td><td></td><td>Strand orientation of this feature</td><td></td></tr>
+		<tr class="bg2"><td><b>display_label</b></td><td></td><td></td><td>Text display label </td><td></td></tr>
+		<tr class="bg1"><td><b>feature_type_id</b></td><td></td><td></td><td><a href="#feature_type">feature_type</a> table ID</td><td></td></tr>
+		<tr class="bg2"><td><b>feature_set_id</b></td><td></td><td></td><td><a href="#feature_set">feature_set</a> table ID</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -312,24 +389,29 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="result_feature" style="font-size:11pt;font-weight:bold">result_feature</span></td>
-<td style="width:100px;text-align:right"><a id="a_result_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('result_feature')">Show</a> columns</td>
-</tr></table>
-<p>Represents the mapping of a raw/normalised signal. This is optimised for the web display in two ways:<br> &nbsp;&nbsp;&nbsp;&nbsp;1 Data compression by collection into different sized windows or bins.<br><br> &nbsp;&nbsp;&nbsp;&nbsp;2 For array data it also provides an optimised view of a @link probe_feature and associated @link result. 	<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FFCC66 	"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="result_feature" style="font-size:11pt;font-weight:bold">result_feature</span></td>
+      <td style="width:180px;text-align:right"><a id="a_result_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('result_feature')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Represents the mapping of a raw/normalised signal. This is optimised for the web display in two ways:<br> &nbsp;&nbsp;&nbsp;&nbsp;1 Data compression by collection into different sized windows or bins.<br><br> &nbsp;&nbsp;&nbsp;&nbsp;2 For array data it also provides an optimised view of a probe_feature and associated result.</p>
 
 	<div id="div_result_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>result_feature_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>key: result_feature_idx</td></tr>
-		<tr class="bg2"><td><b>result_set_id</b></td><td>int(10)</td><td></td><td><a href="#result_set">result_set</a> table ID </td><td>key: set_window_seq_region_idx</td></tr>
-		<tr class="bg1"><td><b>seq_region_id</b></td><td>int(10)</td><td></td><td>Foreign key to <a href="#seq_region">seq_region</a> table</td><td>key: set_window_seq_region_idx</td></tr>
-		<tr class="bg2"><td><b>seq_region_start</b></td><td>int(10)</td><td></td><td>Start position of this feature</td><td>key: set_window_seq_region_idx</td></tr>
-		<tr class="bg1"><td><b>seq_region_end</b></td><td>int(10)</td><td></td><td>End position of this feature</td><td></td></tr>
-		<tr class="bg2"><td><b>seq_region_strand</b></td><td>tinyint(4)</td><td></td><td>Strand orientation of this feature</td><td></td></tr>
-		<tr class="bg1"><td><b>window_size</b></td><td>smallint(5)</td><td></td><td>Size of window in base pairs</td><td>key: set_window_seq_region_idx</td></tr>
-		<tr class="bg2"><td><b>scores</b></td><td>longblob</td><td></td><td>BLOB of window scores for this region </td><td></td></tr>
+		<tr class="bg1"><td><b>result_feature_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>result_set_id</b></td><td></td><td></td><td><a href="#result_set">result_set</a> table ID </td><td></td></tr>
+		<tr class="bg1"><td><b>seq_region_id</b></td><td></td><td></td><td>Foreign key to <a href="#seq_region">seq_region</a> table</td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_start</b></td><td></td><td></td><td>Start position of this feature</td><td></td></tr>
+		<tr class="bg1"><td><b>seq_region_end</b></td><td></td><td></td><td>End position of this feature</td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_strand</b></td><td></td><td></td><td>Strand orientation of this feature</td><td></td></tr>
+		<tr class="bg1"><td><b>window_size</b></td><td></td><td></td><td>Size of window in base pairs</td><td></td></tr>
+		<tr class="bg2"><td><b>scores</b></td><td></td><td></td><td>BLOB of window scores for this region </td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -339,25 +421,30 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="probe_feature" style="font-size:11pt;font-weight:bold">probe_feature</span></td>
-<td style="width:100px;text-align:right"><a id="a_probe_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('probe_feature')">Show</a> columns</td>
-</tr></table>
-<p>The table contains genomic alignments @link probe entries.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="probe_feature" style="font-size:11pt;font-weight:bold">probe_feature</span></td>
+      <td style="width:180px;text-align:right"><a id="a_probe_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('probe_feature')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>The table contains genomic alignments @link probe entries.</p>
 
 	<div id="div_probe_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>probe_feature_id</b></td><td>int(10)</td><td></td><td>Internal ID </td><td>primary key<br />key: seq_region_probe_probe_feature_idx</td></tr>
-		<tr class="bg2"><td><b>seq_region_id</b></td><td>int(10)</td><td></td><td>Foreign key to <a href="#seq_region">seq_region</a> table</td><td>key: seq_region_probe_probe_feature_idx</td></tr>
-		<tr class="bg1"><td><b>seq_region_start</b></td><td>int(10)</td><td></td><td>Start position of this feature</td><td>key: seq_region_probe_probe_feature_idx</td></tr>
-		<tr class="bg2"><td><b>seq_region_end</b></td><td>int(10)</td><td></td><td>End position of this feature</td><td>key: seq_region_probe_probe_feature_idx</td></tr>
-		<tr class="bg1"><td><b>seq_region_strand</b></td><td>tinyint(4)</td><td></td><td>Strand orientation of this feature</td><td></td></tr>
-		<tr class="bg2"><td><b>probe_id</b></td><td>int(10)</td><td></td><td><a href="#probe">probe</a> table ID</td><td>key: probe_idx<br />key: seq_region_probe_probe_feature_idx</td></tr>
-		<tr class="bg1"><td><b>analysis_id</b></td><td>smallint(5)</td><td></td><td><a href="#analysis">analysis</a> table ID</td><td></td></tr>
-		<tr class="bg2"><td><b>mismatches</b></td><td>tinyint(4)</td><td></td><td>Integer, the number of bp matches for this alignment</td><td></td></tr>
-		<tr class="bg1"><td><b>cigar_line</b></td><td>varchar(50)</td><td>NULL</td><td>Extended cigar line format representation of the alignment as defined here http://samtools.sourceforge.net/SAM-1.3.pdf.<br>In summary: <br>&nbsp;&nbsp;&nbsp;&nbsp;= Seq/Alignment Match <br>&nbsp;&nbsp;&nbsp;&nbsp;M Alignment match/Seq mismatch <br>&nbsp;&nbsp;&nbsp;&nbsp;X Seq/Alignment mismatch <br>&nbsp;&nbsp;&nbsp;&nbsp;D Deletion <br>&nbsp;&nbsp;&nbsp;&nbsp;S Soft clipping, used for overhanging cdna alignments where genomic seq is unknown  </td><td></td></tr>
+		<tr class="bg1"><td><b>probe_feature_id</b></td><td></td><td></td><td>Internal ID </td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_id</b></td><td></td><td></td><td>Foreign key to <a href="#seq_region">seq_region</a> table</td><td></td></tr>
+		<tr class="bg1"><td><b>seq_region_start</b></td><td></td><td></td><td>Start position of this feature</td><td></td></tr>
+		<tr class="bg2"><td><b>seq_region_end</b></td><td></td><td></td><td>End position of this feature</td><td></td></tr>
+		<tr class="bg1"><td><b>seq_region_strand</b></td><td></td><td></td><td>Strand orientation of this feature</td><td></td></tr>
+		<tr class="bg2"><td><b>probe_id</b></td><td></td><td></td><td><a href="#probe">probe</a> table ID</td><td></td></tr>
+		<tr class="bg1"><td><b>analysis_id</b></td><td></td><td></td><td><a href="#analysis">analysis</a> table ID</td><td></td></tr>
+		<tr class="bg2"><td><b>mismatches</b></td><td></td><td></td><td>Integer, the number of bp matches for this alignment</td><td></td></tr>
+		<tr class="bg1"><td><b>cigar_line</b></td><td></td><td></td><td>Extended cigar line format representation of the alignment as defined here http://samtools.sourceforge.net/SAM-1.3.pdf.<br>In summary: <br>&nbsp;&nbsp;&nbsp;&nbsp;= Seq/Alignment Match <br>&nbsp;&nbsp;&nbsp;&nbsp;M Alignment match/Seq mismatch <br>&nbsp;&nbsp;&nbsp;&nbsp;X Seq/Alignment mismatch <br>&nbsp;&nbsp;&nbsp;&nbsp;D Deletion <br>&nbsp;&nbsp;&nbsp;&nbsp;S Soft clipping, used for overhanging cdna alignments where genomic seq is unknown  </td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -366,24 +453,92 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 	<li><a href="#seq_region">seq_region</a></li>
 	<li><a href="#analysis">analysis</a></li>
 </ul>
+
+<br />
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="feature_type" style="font-size:11pt;font-weight:bold">feature_type</span></td>
+      <td style="width:180px;text-align:right"><a id="a_feature_type" style="cursor:pointer;text-decoration:underline" onclick="show_hide('feature_type')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Contains information about different types/classes of feature e.g. Brno nomenclature, Transcription Factor names etc.</p>
+
+	<div id="div_feature_type" style="display:none">
+
+	<table style="border:1px outset #222222">
+		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
+		<tr class="bg1"><td><b>feature_type_id</b></td><td></td><td></td><td>Primary key, internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>name</b></td><td></td><td></td><td>Name of feature_type</td><td></td></tr>
+		<tr class="bg1"><td><b>class</b></td><td></td><td></td><td>Class of feature_type</td><td></td></tr>
+		<tr class="bg2"><td><b>analysis_id</b></td><td></td><td></td><td><a href="#analysis">analysis</a> table ID</td><td></td></tr>
+		<tr class="bg1"><td><b>description</b></td><td></td><td></td><td>Text description</td><td></td></tr>
+		<tr class="bg2"><td><b>so_accession</b></td><td></td><td></td><td>Sequence ontology accession</td><td></td></tr>
+		<tr class="bg1"><td><b>so_name</b></td><td></td><td></td><td>Sequence ontology name</td><td></td></tr>
+</table>
+</div>
+<p><b>See also:</b></p>
+<ul>
+	<li><a href="#associated_feature_type ">associated_feature_type </a></li>
+	<li><a href="#feature_set ">feature_set </a></li>
+	<li><a href="#result_set ">result_set </a></li>
+	<li><a href="#input_set ">input_set </a></li>
+	<li><a href="#experimental_chip ">experimental_chip </a></li>
+	<li><a href="#regulatory_feature ">regulatory_feature </a></li>
+	<li><a href="#external_feature">external_feature</a></li>
+	<li><a href="#analysis">analysis</a></li>
+</ul>
+
+<br />
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="associated_feature_type" style="font-size:11pt;font-weight:bold">associated_feature_type</span></td>
+      <td style="width:180px;text-align:right"><a id="a_associated_feature_type" style="cursor:pointer;text-decoration:underline" onclick="show_hide('associated_feature_type')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Link table providing many to many mapping for feature_type entries.</p>
+
+	<div id="div_associated_feature_type" style="display:none">
+
+	<table style="border:1px outset #222222">
+		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
+		<tr class="bg1"><td><b>table_id</b></td><td></td><td></td><td>Internal table_id of linked table</td><td></td></tr>
+		<tr class="bg2"><td><b>table_name</b></td><td></td><td></td><td>Name of linked table</td><td></td></tr>
+		<tr class="bg1"><td><b>feature_type_id</b></td><td></td><td></td><td>Internal table_id of linked <a href="#feature_type">feature_type</a></td><td></td></tr>
+</table>
+</div>
+<p><b>See also:</b></p>
+<ul>
+	<li><a href="#feature_type">feature_type</a></li>
+</ul>
 <br />
 <hr />
 <h2>Set tables</h2>
-<p>Sets are containers for distinct sets of raw and/or processed data.</p>
+
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="data_set" style="font-size:11pt;font-weight:bold">data_set</span></td>
-<td style="width:100px;text-align:right"><a id="a_data_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('data_set')">Show</a> columns</td>
-</tr></table>
-<p>Defines highest level data container for associating the result of an analysis and the input data to that analysis e.g. Seq alignments(Input/ResultSet) and peak calls (FeatureSet)<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#66CCFF"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="data_set" style="font-size:11pt;font-weight:bold">data_set</span></td>
+      <td style="width:180px;text-align:right"><a id="a_data_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('data_set')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Defines highest level data container for associating the result of an analysis and the input data to that analysis e.g. Seq alignments(Input/ResultSet) and peak calls (FeatureSet)</p>
 
 	<div id="div_data_set" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>data_set_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>feature_set_id</b></td><td>int(10)</td><td>'0'</td><td>Product <a href="#feature_set">feature_set</a> table ID</td><td>primary key</td></tr>
-		<tr class="bg1"><td><b>name</b></td><td>varchar(100)</td><td>NULL</td><td>Name of data set</td><td>unique key: name_idx</td></tr>
+		<tr class="bg1"><td><b>data_set_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>feature_set_id</b></td><td></td><td></td><td>Product <a href="#feature_set">feature_set</a> table ID</td><td></td></tr>
+		<tr class="bg1"><td><b>name</b></td><td></td><td></td><td>Name of data set</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -393,19 +548,24 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="supporting_set" style="font-size:11pt;font-weight:bold">supporting_set</span></td>
-<td style="width:100px;text-align:right"><a id="a_supporting_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('supporting_set')">Show</a> columns</td>
-</tr></table>
-<p>Defines association between @link data_set and underlying/supporting data.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#66CCFF"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="supporting_set" style="font-size:11pt;font-weight:bold">supporting_set</span></td>
+      <td style="width:180px;text-align:right"><a id="a_supporting_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('supporting_set')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Defines association between @link data_set and underlying/supporting data.</p>
 
 	<div id="div_supporting_set" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>data_set_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>supporting_set_id</b></td><td>int(10)</td><td></td><td>Table ID of supporting set</td><td>primary key</td></tr>
-		<tr class="bg1"><td><b>type</b></td><td>enum('result','feature','input')</td><td>NULL</td><td>Type of supporting set e.g. result, feature or input set.</td><td>key: type_idx</td></tr>
+		<tr class="bg1"><td><b>data_set_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>supporting_set_id</b></td><td></td><td></td><td>Table ID of supporting set</td><td></td></tr>
+		<tr class="bg1"><td><b>type</b></td><td></td><td></td><td>Type of supporting set e.g. result, feature or input set.</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -417,24 +577,29 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="feature_set" style="font-size:11pt;font-weight:bold">feature_set</span></td>
-<td style="width:100px;text-align:right"><a id="a_feature_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('feature_set')">Show</a> columns</td>
-</tr></table>
-<p>Container for genomic features defined by the result of an analysis e.g. peaks calls or regulatory features.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#66CCFF"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="feature_set" style="font-size:11pt;font-weight:bold">feature_set</span></td>
+      <td style="width:180px;text-align:right"><a id="a_feature_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('feature_set')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Container for genomic features defined by the result of an analysis e.g. peaks calls or regulatory features.</p>
 
 	<div id="div_feature_set" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>feature_set_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>feature_type_id</b></td><td>int(10)</td><td></td><td>Table ID for <a href="#feature_type">feature_type</a></td><td>key: feature_type_idx</td></tr>
-		<tr class="bg1"><td><b>analysis_id</b></td><td>smallint(5)</td><td></td><td>Table ID for <a href="#analysis">analysis</a></td><td></td></tr>
-		<tr class="bg2"><td><b>cell_type_id</b></td><td>int(10)</td><td>NULL</td><td>Table ID for <a href="#cell_type">cell_type</a></td><td></td></tr>
-		<tr class="bg1"><td><b>name</b></td><td>varchar(100)</td><td>NULL</td><td>Name for this feature set</td><td>unique key: name_idx</td></tr>
-		<tr class="bg2"><td><b>type</b></td><td>enum('annotated', 'regulatory', 'external')</td><td>NULL</td><td>Type of features contained e.g. annotated, external or regualtory</td><td></td></tr>
-		<tr class="bg1"><td><b>description</b></td><td>varchar(80)</td><td>NULL</td><td>Text description</td><td></td></tr>
-		<tr class="bg2"><td><b>display_label</b></td><td>varchar(80)</td><td>NULL</td><td>Shorter more readable version of name</td><td></td></tr>
+		<tr class="bg1"><td><b>feature_set_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>feature_type_id</b></td><td></td><td></td><td>Table ID for <a href="#feature_type">feature_type</a></td><td></td></tr>
+		<tr class="bg1"><td><b>analysis_id</b></td><td></td><td></td><td>Table ID for <a href="#analysis">analysis</a></td><td></td></tr>
+		<tr class="bg2"><td><b>cell_type_id</b></td><td></td><td></td><td>Table ID for <a href="#cell_type">cell_type</a></td><td></td></tr>
+		<tr class="bg1"><td><b>name</b></td><td></td><td></td><td>Name for this feature set</td><td></td></tr>
+		<tr class="bg2"><td><b>type</b></td><td></td><td></td><td>Type of features contained e.g. annotated, external or regualtory</td><td></td></tr>
+		<tr class="bg1"><td><b>description</b></td><td></td><td></td><td>Text description</td><td></td></tr>
+		<tr class="bg2"><td><b>display_label</b></td><td></td><td></td><td>Shorter more readable version of name</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -449,21 +614,26 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="result_set" style="font-size:11pt;font-weight:bold">result_set</span></td>
-<td style="width:100px;text-align:right"><a id="a_result_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('result_set')">Show</a> columns</td>
-</tr></table>
-<p>Container for raw/signal data, used as input to an analysis or for visualisation of the raw signal i.e. a wiggle track.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#66CCFF"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="result_set" style="font-size:11pt;font-weight:bold">result_set</span></td>
+      <td style="width:180px;text-align:right"><a id="a_result_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('result_set')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Container for raw/signal data, used as input to an analysis or for visualisation of the raw signal i.e. a wiggle track.</p>
 
 	<div id="div_result_set" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>result_set_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>analysis_id</b></td><td>smallint(5)</td><td></td><td>Table ID for <a href="#analysis">analysis</a></td><td>unique key: unique_idx</td></tr>
-		<tr class="bg1"><td><b>name</b></td><td>varchar(100)</td><td>NULL</td><td>Name for this feature set</td><td>unique key: unique_idx</td></tr>
-		<tr class="bg2"><td><b>feature_type_id</b></td><td>int(10)</td><td>NULL</td><td>Table ID for <a href="#feature_type">feature_type</a></td><td>unique key: unique_idx</td></tr>
-		<tr class="bg1"><td><b>cell_type_id</b></td><td>int(10)</td><td>NULL</td><td>Table ID for <a href="#cell_type">cell_type</a></td><td>unique key: unique_idx</td></tr>
+		<tr class="bg1"><td><b>result_set_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>analysis_id</b></td><td></td><td></td><td>Table ID for <a href="#analysis">analysis</a></td><td></td></tr>
+		<tr class="bg1"><td><b>name</b></td><td></td><td></td><td>Name for this feature set</td><td></td></tr>
+		<tr class="bg2"><td><b>feature_type_id</b></td><td></td><td></td><td>Table ID for <a href="#feature_type">feature_type</a></td><td></td></tr>
+		<tr class="bg1"><td><b>cell_type_id</b></td><td></td><td></td><td>Table ID for <a href="#cell_type">cell_type</a></td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -477,20 +647,25 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="result_set_input" style="font-size:11pt;font-weight:bold">result_set_input</span></td>
-<td style="width:100px;text-align:right"><a id="a_result_set_input" style="cursor:pointer;text-decoration:underline" onclick="show_hide('result_set_input')">Show</a> columns</td>
-</tr></table>
-<p>Link table between @link result_set and it's contstituents which can vary between an array experiment (@link experimental_chip/@link channel) and a sequencing experiment (@link input_set). Note the joint primary key as inputs can be re-used between result sets.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#66CCFF"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="result_set_input" style="font-size:11pt;font-weight:bold">result_set_input</span></td>
+      <td style="width:180px;text-align:right"><a id="a_result_set_input" style="cursor:pointer;text-decoration:underline" onclick="show_hide('result_set_input')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Link table between @link result_set and it's contstituents which can vary between an array experiment (experimental_chip / channel) and a sequencing experiment (input_set). Note the joint primary key as inputs can be re-used between result sets.</p>
 
 	<div id="div_result_set_input" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>result_set_input_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>result_set_id</b></td><td>int(10)</td><td></td><td><a href="#result_set">result_set</a> table ID </td><td>primary key<br />unique key: rset_table_idname_idx</td></tr>
-		<tr class="bg1"><td><b>table_id</b></td><td>int(10)</td><td></td><td>Table ID for input </td><td>unique key: rset_table_idname_idx</td></tr>
-		<tr class="bg2"><td><b>table_name</b></td><td>enum('experimental_chip','channel','input_set')</td><td>NULL</td><td>Table name for input e.g. <a href="#input_set">input_set</a>, @link experimental_chip, @link channel</td><td>unique key: rset_table_idname_idx</td></tr>
+		<tr class="bg1"><td><b>result_set_input_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>result_set_id</b></td><td></td><td></td><td><a href="#result_set">result_set</a> table ID </td><td></td></tr>
+		<tr class="bg1"><td><b>table_id</b></td><td></td><td></td><td>Table ID for input </td><td></td></tr>
+		<tr class="bg2"><td><b>table_name</b></td><td></td><td></td><td>Table name for input e.g. <a href="#input_set">input_set</a>, @link experimental_chip, @link channel</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -502,19 +677,24 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="dbfile_registry" style="font-size:11pt;font-weight:bold">dbfile_registry</span></td>
-<td style="width:100px;text-align:right"><a id="a_dbfile_registry" style="cursor:pointer;text-decoration:underline" onclick="show_hide('dbfile_registry')">Show</a> columns</td>
-</tr></table>
-<p>This generic table contains a simple registry of paths to support  flat file (DBFile) access. This should be left joined from the relevant adaptor e.g. ResultSetAdaptor.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#66CCFF"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="dbfile_registry" style="font-size:11pt;font-weight:bold">dbfile_registry</span></td>
+      <td style="width:180px;text-align:right"><a id="a_dbfile_registry" style="cursor:pointer;text-decoration:underline" onclick="show_hide('dbfile_registry')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>This generic table contains a simple registry of paths to support  flat file (DBFile) access. This should be left joined from the relevant adaptor e.g. ResultSetAdaptor.</p>
 
 	<div id="div_dbfile_registry" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>table_id</b></td><td>int(10)</td><td></td><td>Primary key of linked dbfile entity e.g. <a href="#result_set">result_set</a> or @link analysis</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>table_name</b></td><td>varchar(32)</td><td></td><td>Name of linked table</td><td>primary key</td></tr>
-		<tr class="bg1"><td><b>path</b></td><td>varchar(255)</td><td></td><td>Either a full filepath or a directory which the API will use to build the filepath</td><td></td></tr>
+		<tr class="bg1"><td><b>table_id</b></td><td></td><td></td><td>Primary key of linked dbfile entity e.g. <a href="#result_set">result_set</a> or @link analysis</td><td></td></tr>
+		<tr class="bg2"><td><b>table_name</b></td><td></td><td></td><td>Name of linked table</td><td></td></tr>
+		<tr class="bg1"><td><b>path</b></td><td></td><td></td><td>Either a full filepath or a directory which the API will use to build the filepath</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -523,24 +703,29 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="input_set" style="font-size:11pt;font-weight:bold">input_set</span></td>
-<td style="width:100px;text-align:right"><a id="a_input_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('input_set')">Show</a> columns</td>
-</tr></table>
-<p>Defines a distinct set input data which is not imported into the DB, but used for some analysis e.g. a BAM file.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#66CCFF"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="input_set" style="font-size:11pt;font-weight:bold">input_set</span></td>
+      <td style="width:180px;text-align:right"><a id="a_input_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('input_set')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Defines a distinct set input data which is not imported into the DB, but used for some analysis e.g. a BAM file.</p>
 
 	<div id="div_input_set" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>input_set_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>experiment_id</b></td><td>int(10)</td><td>NULL</td><td>Table ID for <a href="#experiment">experiment</a></td><td>key: experiment_idx</td></tr>
-		<tr class="bg1"><td><b>feature_type_id</b></td><td>int(10)</td><td>NULL</td><td>Table ID for <a href="#feature_type">feature_type</a></td><td>key: feature_type_idx</td></tr>
-		<tr class="bg2"><td><b>cell_type_id</b></td><td>int(10)</td><td>NULL</td><td>Table ID for <a href="#cell_type">cell_type</a></td><td>key: cell_type_idx</td></tr>
-		<tr class="bg1"><td><b>format</b></td><td>varchar(20)</td><td>NULL</td><td>Format of the experiment e.g. SEQUENCING</td><td></td></tr>
-		<tr class="bg2"><td><b>vendor</b></td><td>varchar(40)</td><td>NULL</td><td>Name of technology vendor if appropriate</td><td></td></tr>
-		<tr class="bg1"><td><b>name</b></td><td>varchar(100)</td><td></td><td>Name of input_set</td><td>unique key: name_idx</td></tr>
-		<tr class="bg2"><td><b>type</b></td><td>enum('annotated', 'result')</td><td>NULL</td><td>Type of feature imported as result of analysis e.g. result, annotated</td><td></td></tr>
+		<tr class="bg1"><td><b>input_set_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>experiment_id</b></td><td></td><td></td><td>Table ID for <a href="#experiment">experiment</a></td><td></td></tr>
+		<tr class="bg1"><td><b>feature_type_id</b></td><td></td><td></td><td>Table ID for <a href="#feature_type">feature_type</a></td><td></td></tr>
+		<tr class="bg2"><td><b>cell_type_id</b></td><td></td><td></td><td>Table ID for <a href="#cell_type">cell_type</a></td><td></td></tr>
+		<tr class="bg1"><td><b>format</b></td><td></td><td></td><td>Format of the experiment e.g. SEQUENCING</td><td></td></tr>
+		<tr class="bg2"><td><b>vendor</b></td><td></td><td></td><td>Name of technology vendor if appropriate</td><td></td></tr>
+		<tr class="bg1"><td><b>name</b></td><td></td><td></td><td>Name of input_set</td><td></td></tr>
+		<tr class="bg2"><td><b>type</b></td><td></td><td></td><td>Type of feature imported as result of analysis e.g. result, annotated</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -553,19 +738,24 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="input_subset" style="font-size:11pt;font-weight:bold">input_subset</span></td>
-<td style="width:100px;text-align:right"><a id="a_input_subset" style="cursor:pointer;text-decoration:underline" onclick="show_hide('input_subset')">Show</a> columns</td>
-</tr></table>
-<p>Defines a file from an input_set, required for import tracking and recovery.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#66CCFF"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="input_subset" style="font-size:11pt;font-weight:bold">input_subset</span></td>
+      <td style="width:180px;text-align:right"><a id="a_input_subset" style="cursor:pointer;text-decoration:underline" onclick="show_hide('input_subset')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Defines a file from an input_set, required for import tracking and recovery.</p>
 
 	<div id="div_input_subset" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>input_subset_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>input_set_id</b></td><td>int(10)</td><td></td><td><a href="#input_set">input_set</a> table ID</td><td>unique key: set_name_dx</td></tr>
-		<tr class="bg1"><td><b>name</b></td><td>varchar(100)</td><td></td><td>Name of input_subset e.g. file path</td><td>unique key: set_name_dx</td></tr>
+		<tr class="bg1"><td><b>input_subset_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>input_set_id</b></td><td></td><td></td><td><a href="#input_set">input_set</a> table ID</td><td></td></tr>
+		<tr class="bg1"><td><b>name</b></td><td></td><td></td><td>Name of input_subset e.g. file path</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -577,23 +767,28 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 <h2>Array design tables</h2>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="array" style="font-size:11pt;font-weight:bold">array</span></td>
-<td style="width:100px;text-align:right"><a id="a_array" style="cursor:pointer;text-decoration:underline" onclick="show_hide('array')">Show</a> columns</td>
-</tr></table>
-<p>Contains information defining an array or array set.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FF6666"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="array" style="font-size:11pt;font-weight:bold">array</span></td>
+      <td style="width:180px;text-align:right"><a id="a_array" style="cursor:pointer;text-decoration:underline" onclick="show_hide('array')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Contains information defining an array or array set.</p>
 
 	<div id="div_array" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>array_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>name</b></td><td>varchar(40)</td><td>NULL</td><td>Name of array</td><td>unique key: vendor_name_idx<br />unique key: class_name_idx</td></tr>
-		<tr class="bg1"><td><b>format</b></td><td>varchar(20)</td><td>NULL</td><td>Format of array e.g. EXPRESSION, TILED</td><td></td></tr>
-		<tr class="bg2"><td><b>vendor</b></td><td>varchar(40)</td><td>NULL</td><td>Name of array vendor e.g. AFFY</td><td>unique key: vendor_name_idx</td></tr>
-		<tr class="bg1"><td><b>description</b></td><td>varchar(255)</td><td>NULL</td><td>Text description</td><td></td></tr>
-		<tr class="bg2"><td><b>type</b></td><td>varchar(20)</td><td>NULL</td><td>Array type e.g. OLIGO, PCR</td><td></td></tr>
-		<tr class="bg1"><td><b>class</b></td><td>varchar(20)</td><td>NULL</td><td>Array class e.g. AFFY_ST, ILLUMINA_INFINIUM  </td><td>unique key: class_name_idx</td></tr>
+		<tr class="bg1"><td><b>array_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>name</b></td><td></td><td></td><td>Name of array</td><td></td></tr>
+		<tr class="bg1"><td><b>format</b></td><td></td><td></td><td>Format of array e.g. EXPRESSION, TILED</td><td></td></tr>
+		<tr class="bg2"><td><b>vendor</b></td><td></td><td></td><td>Name of array vendor e.g. AFFY</td><td></td></tr>
+		<tr class="bg1"><td><b>description</b></td><td></td><td></td><td>Text description</td><td></td></tr>
+		<tr class="bg2"><td><b>type</b></td><td></td><td></td><td>Array type e.g. OLIGO, PCR</td><td></td></tr>
+		<tr class="bg1"><td><b>class</b></td><td></td><td></td><td>Array class e.g. AFFY_ST, ILLUMINA_INFINIUM  </td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -602,20 +797,25 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="array_chip" style="font-size:11pt;font-weight:bold">array_chip</span></td>
-<td style="width:100px;text-align:right"><a id="a_array_chip" style="cursor:pointer;text-decoration:underline" onclick="show_hide('array_chip')">Show</a> columns</td>
-</tr></table>
-<p>Represents the individual array chip design as part of an array or array set.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FF6666"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="array_chip" style="font-size:11pt;font-weight:bold">array_chip</span></td>
+      <td style="width:180px;text-align:right"><a id="a_array_chip" style="cursor:pointer;text-decoration:underline" onclick="show_hide('array_chip')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Represents the individual array chip design as part of an array or array set.</p>
 
 	<div id="div_array_chip" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>array_chip_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>design_id</b></td><td>varchar(20)</td><td>NULL</td><td>ID/Accession defined by vendor</td><td>unique key: array_design_idx</td></tr>
-		<tr class="bg1"><td><b>array_id</b></td><td>int(10)</td><td></td><td>Table ID from <a href="#array">array</a></td><td>unique key: array_design_idx</td></tr>
-		<tr class="bg2"><td><b>name</b></td><td>varchar(40)</td><td>NULL</td><td>Name of array_chip</td><td></td></tr>
+		<tr class="bg1"><td><b>array_chip_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>design_id</b></td><td></td><td></td><td>ID/Accession defined by vendor</td><td></td></tr>
+		<tr class="bg1"><td><b>array_id</b></td><td></td><td></td><td>Table ID from <a href="#array">array</a></td><td></td></tr>
+		<tr class="bg2"><td><b>name</b></td><td></td><td></td><td>Name of array_chip</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -626,20 +826,25 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="probe_set" style="font-size:11pt;font-weight:bold">probe_set</span></td>
-<td style="width:100px;text-align:right"><a id="a_probe_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('probe_set')">Show</a> columns</td>
-</tr></table>
-<p>The table contains information about probe sets.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FF6666"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="probe_set" style="font-size:11pt;font-weight:bold">probe_set</span></td>
+      <td style="width:180px;text-align:right"><a id="a_probe_set" style="cursor:pointer;text-decoration:underline" onclick="show_hide('probe_set')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>The table contains information about probe sets.</p>
 
 	<div id="div_probe_set" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>probe_set_id</b></td><td>int(10)</td><td></td><td>Internal ID </td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>name</b></td><td>varchar(100)</td><td></td><td>Name of the probe set</td><td>key: name</td></tr>
-		<tr class="bg1"><td><b>size</b></td><td>smallint(6)</td><td></td><td>Integer size of the probe set i.e. how many probe is contains</td><td></td></tr>
-		<tr class="bg2"><td><b>family</b></td><td>varchar(20)</td><td>NULL</td><td>Generic descriptor for probe_set e.g. ENCODE_REGIONS, RANDOM etc. Currently not used</td><td></td></tr>
+		<tr class="bg1"><td><b>probe_set_id</b></td><td></td><td></td><td>Internal ID </td><td></td></tr>
+		<tr class="bg2"><td><b>name</b></td><td></td><td></td><td>Name of the probe set</td><td></td></tr>
+		<tr class="bg1"><td><b>size</b></td><td></td><td></td><td>Integer size of the probe set i.e. how many probe is contains</td><td></td></tr>
+		<tr class="bg2"><td><b>family</b></td><td></td><td></td><td>Generic descriptor for probe_set e.g. ENCODE_REGIONS, RANDOM etc. Currently not used</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -648,23 +853,28 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="probe" style="font-size:11pt;font-weight:bold">probe</span></td>
-<td style="width:100px;text-align:right"><a id="a_probe" style="cursor:pointer;text-decoration:underline" onclick="show_hide('probe')">Show</a> columns</td>
-</tr></table>
-<p>Defines individual probe designs across one or more array_chips. Note: The probe sequence is not stored. <p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FF6666"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="probe" style="font-size:11pt;font-weight:bold">probe</span></td>
+      <td style="width:180px;text-align:right"><a id="a_probe" style="cursor:pointer;text-decoration:underline" onclick="show_hide('probe')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Defines individual probe designs across one or more array_chips. Note: The probe sequence is not stored. </p>
 
 	<div id="div_probe" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>probe_id</b></td><td>int(10)</td><td></td><td>Tnternal ID </td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>probe_set_id</b></td><td>int(10)</td><td>NULL</td><td><a href="#probe_set">probe_set</a> table_id</td><td>key: probe_set_idx</td></tr>
-		<tr class="bg1"><td><b>name</b></td><td>varchar(100)</td><td></td><td>Name of the probe set</td><td>primary key<br />key: name_idx</td></tr>
-		<tr class="bg2"><td><b>length</b></td><td>smallint(6)</td><td></td><td>Integer bp length of the probe</td><td></td></tr>
-		<tr class="bg1"><td><b>array_chip_id</b></td><td>int(10)</td><td></td><td><a href="#array_chip">array_chip</a> table_id</td><td>primary key<br />key: array_chip_idx</td></tr>
-		<tr class="bg2"><td><b>class</b></td><td>varchar(20)</td><td>NULL</td><td>Class of the probe e.g. CONTROL, EXPERIMENTAL etc.</td><td></td></tr>
-		<tr class="bg1"><td><b>description</b></td><td>varchar(255)</td><td>NULL</td><td>Text description</td><td></td></tr>
+		<tr class="bg1"><td><b>probe_id</b></td><td></td><td></td><td>Tnternal ID </td><td></td></tr>
+		<tr class="bg2"><td><b>probe_set_id</b></td><td></td><td></td><td><a href="#probe_set">probe_set</a> table_id</td><td></td></tr>
+		<tr class="bg1"><td><b>name</b></td><td></td><td></td><td>Name of the probe set</td><td></td></tr>
+		<tr class="bg2"><td><b>length</b></td><td></td><td></td><td>Integer bp length of the probe</td><td></td></tr>
+		<tr class="bg1"><td><b>array_chip_id</b></td><td></td><td></td><td><a href="#array_chip">array_chip</a> table_id</td><td></td></tr>
+		<tr class="bg2"><td><b>class</b></td><td></td><td></td><td>Class of the probe e.g. CONTROL, EXPERIMENTAL etc.</td><td></td></tr>
+		<tr class="bg1"><td><b>description</b></td><td></td><td></td><td>Text description</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -672,23 +882,29 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 	<li><a href="#probe_feature">probe_feature</a></li>
 	<li><a href="#probe_set">probe_set</a></li>
 	<li><a href="#array_chip ">array_chip </a></li>
+	<li><a href="#array_chip">array_chip</a></li>
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="probe_design" style="font-size:11pt;font-weight:bold">probe_design</span></td>
-<td style="width:100px;text-align:right"><a id="a_probe_design" style="cursor:pointer;text-decoration:underline" onclick="show_hide('probe_design')">Show</a> columns</td>
-</tr></table>
-<p>Stores data from array design analyses.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#FF6666"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="probe_design" style="font-size:11pt;font-weight:bold">probe_design</span></td>
+      <td style="width:180px;text-align:right"><a id="a_probe_design" style="cursor:pointer;text-decoration:underline" onclick="show_hide('probe_design')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Stores data from array design analyses.</p>
 
 	<div id="div_probe_design" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>probe_id</b></td><td>int(10)</td><td></td><td>Internal ID </td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>analysis_id</b></td><td>smallint(5)</td><td></td><td><a href="#analysis">analysis</a> table ID</td><td>primary key</td></tr>
-		<tr class="bg1"><td><b>coord_system_id</b></td><td>int(10)</td><td></td><td><a href="#coord_system">coord_system</a> table ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>score</b></td><td>double</td><td>NULL</td><td>Double analysis score value</td><td></td></tr>
+		<tr class="bg1"><td><b>probe_id</b></td><td></td><td></td><td>Internal ID </td><td></td></tr>
+		<tr class="bg2"><td><b>analysis_id</b></td><td></td><td></td><td><a href="#analysis">analysis</a> table ID</td><td></td></tr>
+		<tr class="bg1"><td><b>coord_system_id</b></td><td></td><td></td><td><a href="#coord_system">coord_system</a> table ID</td><td></td></tr>
+		<tr class="bg2"><td><b>score</b></td><td></td><td></td><td>Double analysis score value</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -700,25 +916,32 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 <br />
 <hr />
 <h2>Experiment tables</h2>
-<p>These define the experimental meta and raw data .</p>
+
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="experiment" style="font-size:11pt;font-weight:bold">experiment</span></td>
-<td style="width:100px;text-align:right"><a id="a_experiment" style="cursor:pointer;text-decoration:underline" onclick="show_hide('experiment')">Show</a> columns</td>
-</tr></table>
-<p>Stores data high level meta data about individual experiments<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#00FF80"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="experiment" style="font-size:11pt;font-weight:bold">experiment</span></td>
+      <td style="width:180px;text-align:right"><a id="a_experiment" style="cursor:pointer;text-decoration:underline" onclick="show_hide('experiment')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Stores data high level meta data about individual experiments</p>
 
 	<div id="div_experiment" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>experiment_id</b></td><td>int(10)</td><td></td><td>Internal ID </td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>name</b></td><td>varchar(100)</td><td>NULL</td><td>Name of experiment</td><td>unique key: name_idx</td></tr>
-		<tr class="bg1"><td><b>experimental_group_id</b></td><td>smallint(6)</td><td>NULL</td><td><a href="#experimental_group">experimental_group</a> table ID</td><td>key: experimental_group_idx</td></tr>
-		<tr class="bg2"><td><b>date</b></td><td>date</td><td>'0000-00-00'</td><td>Date of experiment</td><td></td></tr>
-		<tr class="bg1"><td><b>primary_design_type</b></td><td>varchar(30)</td><td>NULL</td><td>e.g. binding_site_identification, preferably EFO term</td><td>key: design_idx</td></tr>
-		<tr class="bg2"><td><b>description</b></td><td>varchar(255)</td><td>NULL</td><td>Text description</td><td></td></tr>
-		<tr class="bg1"><td><b>mage_xml_id</b></td><td>int(10)</td><td>NULL</td><td><a href="#mage_xml">mage_xml</a> table_id for array experiments</td><td></td></tr>
+		<tr class="bg1"><td><b>experiment_id</b></td><td></td><td></td><td>Internal ID </td><td></td></tr>
+		<tr class="bg2"><td><b>name</b></td><td></td><td></td><td>Name of experiment</td><td></td></tr>
+		<tr class="bg1"><td><b>experimental_group_id</b></td><td></td><td></td><td><a href="#experimental_group">experimental_group</a> table ID</td><td></td></tr>
+		<tr class="bg2"><td><b>date</b></td><td></td><td></td><td>Date of experiment</td><td></td></tr>
+		<tr class="bg1"><td><b>primary_design_type</b></td><td></td><td></td><td>e.g. binding_site_identification, preferably EFO term</td><td></td></tr>
+		<tr class="bg2"><td><b>archive_id</b></td><td></td><td></td><td>ENA experiment identifier enabling access to specific raw data</td><td></td></tr>
+		<tr class="bg1"><td><b>data_url</b></td><td></td><td></td><td>When no accession_id exists, an alternative url to get the data </td><td></td></tr>
+		<tr class="bg2"><td><b>description</b></td><td></td><td></td><td>Text description</td><td></td></tr>
+		<tr class="bg1"><td><b>mage_xml_id</b></td><td></td><td></td><td><a href="#mage_xml">mage_xml</a> table_id for array experiments</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -730,21 +953,27 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="experimental_group" style="font-size:11pt;font-weight:bold">experimental_group</span></td>
-<td style="width:100px;text-align:right"><a id="a_experimental_group" style="cursor:pointer;text-decoration:underline" onclick="show_hide('experimental_group')">Show</a> columns</td>
-</tr></table>
-<p>Contains experimental group info i.e. who produced data sets.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#00FF80"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="experimental_group" style="font-size:11pt;font-weight:bold">experimental_group</span></td>
+      <td style="width:180px;text-align:right"><a id="a_experimental_group" style="cursor:pointer;text-decoration:underline" onclick="show_hide('experimental_group')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Contains experimental group info i.e. who produced data sets.</p>
 
 	<div id="div_experimental_group" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>experimental_group_id</b></td><td>smallint(6)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>name</b></td><td>varchar(40)</td><td></td><td>Name of group</td><td>unique key: name_idx</td></tr>
-		<tr class="bg1"><td><b>location</b></td><td>varchar(120)</td><td>NULL</td><td>Geographic location of group</td><td></td></tr>
-		<tr class="bg2"><td><b>contact</b></td><td>varchar(40)</td><td>NULL</td><td>Contact details e.g. email</td><td></td></tr>
-		<tr class="bg1"><td><b>description</b></td><td>varchar(255)</td><td>NULL</td><td>Text description</td><td></td></tr>
+		<tr class="bg1"><td><b>experimental_group_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>name</b></td><td></td><td></td><td>Name of group</td><td></td></tr>
+		<tr class="bg1"><td><b>location</b></td><td></td><td></td><td>Geographic location of group</td><td></td></tr>
+		<tr class="bg2"><td><b>contact</b></td><td></td><td></td><td>Contact details e.g. email</td><td></td></tr>
+		<tr class="bg1"><td><b>url</b></td><td></td><td></td><td>Url for Project page</td><td></td></tr>
+		<tr class="bg2"><td><b>description</b></td><td></td><td></td><td>Text description</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -753,18 +982,23 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="mage_xml" style="font-size:11pt;font-weight:bold">mage_xml</span></td>
-<td style="width:100px;text-align:right"><a id="a_mage_xml" style="cursor:pointer;text-decoration:underline" onclick="show_hide('mage_xml')">Show</a> columns</td>
-</tr></table>
-<p>Contains MAGE-XML for array based experiments.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#00FF80"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="mage_xml" style="font-size:11pt;font-weight:bold">mage_xml</span></td>
+      <td style="width:180px;text-align:right"><a id="a_mage_xml" style="cursor:pointer;text-decoration:underline" onclick="show_hide('mage_xml')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Contains MAGE-XML for array based experiments.</p>
 
 	<div id="div_mage_xml" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>mage_xml_id</b></td><td>int(10)</td><td></td><td>Internal table ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>xml</b></td><td>text</td><td></td><td>XML text field</td><td></td></tr>
+		<tr class="bg1"><td><b>mage_xml_id</b></td><td></td><td></td><td>Internal table ID</td><td></td></tr>
+		<tr class="bg2"><td><b>xml</b></td><td></td><td></td><td>XML text field</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -773,24 +1007,29 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="experimental_chip" style="font-size:11pt;font-weight:bold">experimental_chip</span></td>
-<td style="width:100px;text-align:right"><a id="a_experimental_chip" style="cursor:pointer;text-decoration:underline" onclick="show_hide('experimental_chip')">Show</a> columns</td>
-</tr></table>
-<p>Represents the physical instance of an @link array_chip used in an @link experiment.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#00FF80"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="experimental_chip" style="font-size:11pt;font-weight:bold">experimental_chip</span></td>
+      <td style="width:180px;text-align:right"><a id="a_experimental_chip" style="cursor:pointer;text-decoration:underline" onclick="show_hide('experimental_chip')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Represents the physical instance of an @link array_chip used in an @link experiment.</p>
 
 	<div id="div_experimental_chip" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>experimental_chip_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>unique_id</b></td><td>varchar(20)</td><td></td><td>Unique ID assigned by vendor</td><td>key: unique_id_idx</td></tr>
-		<tr class="bg1"><td><b>experiment_id</b></td><td>int(10)</td><td>NULL</td><td><a href="#experiment">experiment</a> table ID</td><td>key: experiment_idx</td></tr>
-		<tr class="bg2"><td><b>array_chip_id</b></td><td>int(10)</td><td>NULL</td><td><a href="#array_chip">array_chip</a> table ID</td><td></td></tr>
-		<tr class="bg1"><td><b>feature_type_id</b></td><td>int(10)</td><td>NULL</td><td><a href="#feature_type">feature_type</a> table ID</td><td>key: feature_type_idx</td></tr>
-		<tr class="bg2"><td><b>cell_type_id</b></td><td>int(10)</td><td>NULL</td><td><a href="#cell_type">cell_type</a> table ID</td><td></td></tr>
-		<tr class="bg1"><td><b>biological_replicate</b></td><td>varchar(100)</td><td>NULL</td><td>Name of biological replicate</td><td></td></tr>
-		<tr class="bg2"><td><b>technical_replicate</b></td><td>varchar(100)</td><td>NULL</td><td>Name of technical replicate</td><td></td></tr>
+		<tr class="bg1"><td><b>experimental_chip_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>unique_id</b></td><td></td><td></td><td>Unique ID assigned by vendor</td><td></td></tr>
+		<tr class="bg1"><td><b>experiment_id</b></td><td></td><td></td><td><a href="#experiment">experiment</a> table ID</td><td></td></tr>
+		<tr class="bg2"><td><b>array_chip_id</b></td><td></td><td></td><td><a href="#array_chip">array_chip</a> table ID</td><td></td></tr>
+		<tr class="bg1"><td><b>feature_type_id</b></td><td></td><td></td><td><a href="#feature_type">feature_type</a> table ID</td><td></td></tr>
+		<tr class="bg2"><td><b>cell_type_id</b></td><td></td><td></td><td><a href="#cell_type">cell_type</a> table ID</td><td></td></tr>
+		<tr class="bg1"><td><b>biological_replicate</b></td><td></td><td></td><td>Name of biological replicate</td><td></td></tr>
+		<tr class="bg2"><td><b>technical_replicate</b></td><td></td><td></td><td>Name of technical replicate</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -801,48 +1040,61 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 	<li><a href="#channel ">channel </a></li>
 	<li><a href="#feature_type">feature_type</a></li>
 	<li><a href="#cell_type">cell_type</a></li>
+	<li><a href="#experiment">experiment</a></li>
+	<li><a href="#array_chip">array_chip</a></li>
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="channel" style="font-size:11pt;font-weight:bold">channel</span></td>
-<td style="width:100px;text-align:right"><a id="a_channel" style="cursor:pointer;text-decoration:underline" onclick="show_hide('channel')">Show</a> columns</td>
-</tr></table>
-<p>Represents an individual channel from an @link experimental_chip.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#00FF80"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="channel" style="font-size:11pt;font-weight:bold">channel</span></td>
+      <td style="width:180px;text-align:right"><a id="a_channel" style="cursor:pointer;text-decoration:underline" onclick="show_hide('channel')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Represents an individual channel from an experimental_chip.</p>
 
 	<div id="div_channel" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>channel_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>experimental_chip_id</b></td><td>int(10)</td><td>NULL</td><td><a href="#external_chip">external_chip</a> table ID</td><td>key: experimental_chip_idx</td></tr>
-		<tr class="bg1"><td><b>sample_id</b></td><td>varchar(20)</td><td>NULL</td><td>Sample ID</td><td></td></tr>
-		<tr class="bg2"><td><b>dye</b></td><td>varchar(20)</td><td>NULL</td><td>Name of dye used for this channel e.g. Cy3, Cy5</td><td></td></tr>
-		<tr class="bg1"><td><b>type</b></td><td>varchar(20)</td><td>NULL</td><td>Type of channel i.e. EXPERIMENTAL or TOTAL (input)</td><td></td></tr>
+		<tr class="bg1"><td><b>channel_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>experimental_chip_id</b></td><td></td><td></td><td><a href="#external_chip">external_chip</a> table ID</td><td></td></tr>
+		<tr class="bg1"><td><b>sample_id</b></td><td></td><td></td><td>Sample ID</td><td></td></tr>
+		<tr class="bg2"><td><b>dye</b></td><td></td><td></td><td>Name of dye used for this channel e.g. Cy3, Cy5</td><td></td></tr>
+		<tr class="bg1"><td><b>type</b></td><td></td><td></td><td>Type of channel i.e. EXPERIMENTAL or TOTAL (input)</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
 <ul>
 	<li><a href="#experimental_chip">experimental_chip</a></li>
+	<li><a href="#external_chip">external_chip</a></li>
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="result" style="font-size:11pt;font-weight:bold">result</span></td>
-<td style="width:100px;text-align:right"><a id="a_result" style="cursor:pointer;text-decoration:underline" onclick="show_hide('result')">Show</a> columns</td>
-</tr></table>
-<p>Contains a score or intensity value for an associated probe location on a particular @experimental_chip.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#00FF80"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="result" style="font-size:11pt;font-weight:bold">result</span></td>
+      <td style="width:180px;text-align:right"><a id="a_result" style="cursor:pointer;text-decoration:underline" onclick="show_hide('result')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Contains a score or intensity value for an associated probe location on a particular experimental_chip.</p>
 
 	<div id="div_result" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>result_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>probe_id</b></td><td>int(10)</td><td>NULL</td><td><a href="#probe">probe</a> table ID </td><td>key: probe_idx</td></tr>
-		<tr class="bg1"><td><b>score</b></td><td>double</td><td>NULL</td><td>Intensity value (raw or normalised)</td><td></td></tr>
-		<tr class="bg2"><td><b>result_set_input_id</b></td><td>int(10)</td><td></td><td><a href="#result_set_input">result_set_input</a> table ID </td><td>key: result_set_input_idx</td></tr>
-		<tr class="bg1"><td><b>X</b></td><td>smallint(4)</td><td>NULL</td><td>X coordinate of probe location on experimental_chip</td><td></td></tr>
-		<tr class="bg2"><td><b>Y</b></td><td>smallint(4)</td><td>NULL</td><td>Y coordinate of probe location on experimental_chip</td><td></td></tr>
+		<tr class="bg1"><td><b>result_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>probe_id</b></td><td></td><td></td><td><a href="#probe">probe</a> table ID </td><td></td></tr>
+		<tr class="bg1"><td><b>score</b></td><td></td><td></td><td>Intensity value (raw or normalised)</td><td></td></tr>
+		<tr class="bg2"><td><b>result_set_input_id</b></td><td></td><td></td><td><a href="#result_set_input">result_set_input</a> table ID </td><td></td></tr>
+		<tr class="bg1"><td><b>X</b></td><td></td><td></td><td>X coordinate of probe location on experimental_chip</td><td></td></tr>
+		<tr class="bg2"><td><b>Y</b></td><td></td><td></td><td>Y coordinate of probe location on experimental_chip</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -853,74 +1105,29 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 <br />
 <hr />
 <h2>Ancilliary tables</h2>
-<p>These contain data types which are used across many of the above tables and are quite often denormalised to store generic associations to several table, this avoids the need for multiple sets of similar tables.</p>
-<br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="feature_type" style="font-size:11pt;font-weight:bold">feature_type</span></td>
-<td style="width:100px;text-align:right"><a id="a_feature_type" style="cursor:pointer;text-decoration:underline" onclick="show_hide('feature_type')">Show</a> columns</td>
-</tr></table>
-<p>Contains information about different types/classes of feature e.g. Brno nomenclature, Transcription Factor names etc.<p>
-
-	<div id="div_feature_type" style="display:none">
-
-	<table style="border:1px outset #222222">
-		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>feature_type_id</b></td><td>int(10)</td><td></td><td>Primary key, internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>name</b></td><td>varchar(40)</td><td></td><td>Name of feature_type</td><td>unique key: name_class_idx</td></tr>
-		<tr class="bg1"><td><b>class</b></td><td>enum('Insulator', 'DNA', 'Regulatory Feature', 'Histone', 'RNA', <br />'Polymerase', 'Transcription Factor', 'Transcription Factor Complex', <br />'Regulatory Motif',  'Enhancer', 'Expression', 'Pseudo', <br />'Open Chromatin', 'Search Region', 'Association Locus')</td><td>NULL</td><td>Class of feature_type</td><td>unique key: name_class_idx</td></tr>
-		<tr class="bg2"><td><b>description</b></td><td>varchar(255)</td><td>NULL</td><td>Text description</td><td></td></tr>
-		<tr class="bg1"><td><b>so_accession</b></td><td>varchar(64)</td><td>NULL</td><td>Sequence ontology accession</td><td>key: so_accession_idx</td></tr>
-		<tr class="bg2"><td><b>so_name</b></td><td>varchar(255)</td><td>NULL</td><td>Sequence ontology name</td><td></td></tr>
-</table>
-</div>
-<p><b>See also:</b></p>
-<ul>
-	<li><a href="#associated_feature_type ">associated_feature_type </a></li>
-	<li><a href="#feature_set ">feature_set </a></li>
-	<li><a href="#result_set ">result_set </a></li>
-	<li><a href="#input_set ">input_set </a></li>
-	<li><a href="#experimental_chip ">experimental_chip </a></li>
-	<li><a href="#regulatory_feature ">regulatory_feature </a></li>
-	<li><a href="#external_feature">external_feature</a></li>
-</ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="associated_feature_type" style="font-size:11pt;font-weight:bold">associated_feature_type</span></td>
-<td style="width:100px;text-align:right"><a id="a_associated_feature_type" style="cursor:pointer;text-decoration:underline" onclick="show_hide('associated_feature_type')">Show</a> columns</td>
-</tr></table>
-<p>Link table providing many to many mapping for @link feature_type entries.<p>
-
-	<div id="div_associated_feature_type" style="display:none">
-
-	<table style="border:1px outset #222222">
-		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>table_id</b></td><td>int(10)</td><td></td><td>Internal table_id of linked table</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>table_name</b></td><td>enum('annotated_feature', 'external_feature', 'regulatory_feature', 'feature_type')</td><td>NULL</td><td>Name of linked table</td><td>primary key</td></tr>
-		<tr class="bg1"><td><b>feature_type_id</b></td><td>int(10)</td><td></td><td>Internal table_id of linked <a href="#feature_type">feature_type</a></td><td>primary key<br />key: feature_type_index</td></tr>
-</table>
-</div>
-<p><b>See also:</b></p>
-<ul>
-	<li><a href="#feature_type">feature_type</a></li>
-</ul>
-
-<br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="cell_type" style="font-size:11pt;font-weight:bold">cell_type</span></td>
-<td style="width:100px;text-align:right"><a id="a_cell_type" style="cursor:pointer;text-decoration:underline" onclick="show_hide('cell_type')">Show</a> columns</td>
-</tr></table>
-<p>Contains information about cell/tissue types.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#808000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="cell_type" style="font-size:11pt;font-weight:bold">cell_type</span></td>
+      <td style="width:180px;text-align:right"><a id="a_cell_type" style="cursor:pointer;text-decoration:underline" onclick="show_hide('cell_type')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Contains information about cell/tissue types.</p>
 
 	<div id="div_cell_type" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>cell_type_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>name</b></td><td>varchar(120)</td><td></td><td>Name of cell/tissue</td><td>unique key: name_idx</td></tr>
-		<tr class="bg1"><td><b>display_label</b></td><td>varchar(20)</td><td>NULL</td><td>Short display label</td><td></td></tr>
-		<tr class="bg2"><td><b>description</b></td><td>varchar(80)</td><td>NULL</td><td>Text description</td><td></td></tr>
-		<tr class="bg1"><td><b>gender</b></td><td>enum('male', 'female')</td><td>NULL</td><td>Gender i.e. male or female</td><td></td></tr>
+		<tr class="bg1"><td><b>cell_type_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>name</b></td><td></td><td></td><td>Name of cell/tissue</td><td></td></tr>
+		<tr class="bg1"><td><b>display_label</b></td><td></td><td></td><td>Short display label</td><td></td></tr>
+		<tr class="bg2"><td><b>description</b></td><td></td><td></td><td>Text description</td><td></td></tr>
+		<tr class="bg1"><td><b>gender</b></td><td></td><td></td><td>Gender i.e. male or female</td><td></td></tr>
+		<tr class="bg2"><td><b>efo_id</b></td><td></td><td></td><td>Experimental Factor Ontology ID</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -932,19 +1139,24 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="experimental_design" style="font-size:11pt;font-weight:bold">experimental_design</span></td>
-<td style="width:100px;text-align:right"><a id="a_experimental_design" style="cursor:pointer;text-decoration:underline" onclick="show_hide('experimental_design')">Show</a> columns</td>
-</tr></table>
-<p>Denormalised link table to allow many to many design_type associations.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#808000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="experimental_design" style="font-size:11pt;font-weight:bold">experimental_design</span></td>
+      <td style="width:180px;text-align:right"><a id="a_experimental_design" style="cursor:pointer;text-decoration:underline" onclick="show_hide('experimental_design')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Denormalised link table to allow many to many design_type associations.</p>
 
 	<div id="div_experimental_design" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>design_type_id</b></td><td>int(10)</td><td></td><td><a href="#design_type">design_type</a> table ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>table_name</b></td><td>varchar(40)</td><td>NULL</td><td>Name of linked table</td><td>primary key</td></tr>
-		<tr class="bg1"><td><b>table_id</b></td><td>int(10)</td><td>NULL</td><td>Table ID of linked record</td><td>primary key</td></tr>
+		<tr class="bg1"><td><b>design_type_id</b></td><td></td><td></td><td><a href="#design_type">design_type</a> table ID</td><td></td></tr>
+		<tr class="bg2"><td><b>table_name</b></td><td></td><td></td><td>Name of linked table</td><td></td></tr>
+		<tr class="bg1"><td><b>table_id</b></td><td></td><td></td><td>Table ID of linked record</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -953,18 +1165,23 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="design_type" style="font-size:11pt;font-weight:bold">design_type</span></td>
-<td style="width:100px;text-align:right"><a id="a_design_type" style="cursor:pointer;text-decoration:underline" onclick="show_hide('design_type')">Show</a> columns</td>
-</tr></table>
-<p>Contains extra information about experimental designs, preferably ontology terms. <p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#808000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="design_type" style="font-size:11pt;font-weight:bold">design_type</span></td>
+      <td style="width:180px;text-align:right"><a id="a_design_type" style="cursor:pointer;text-decoration:underline" onclick="show_hide('design_type')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Contains extra information about experimental designs, preferably ontology terms. </p>
 
 	<div id="div_design_type" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>design_type_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>name</b></td><td>varchar(255)</td><td>NULL</td><td>Name of design type</td><td>key: design_name_idx</td></tr>
+		<tr class="bg1"><td><b>design_type_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>name</b></td><td></td><td></td><td>Name of design type</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -973,19 +1190,24 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="status" style="font-size:11pt;font-weight:bold">status</span></td>
-<td style="width:100px;text-align:right"><a id="a_status" style="cursor:pointer;text-decoration:underline" onclick="show_hide('status')">Show</a> columns</td>
-</tr></table>
-<p>Denormalised table associating funcgen records with a status.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#808000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="status" style="font-size:11pt;font-weight:bold">status</span></td>
+      <td style="width:180px;text-align:right"><a id="a_status" style="cursor:pointer;text-decoration:underline" onclick="show_hide('status')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Denormalised table associating funcgen records with a status.</p>
 
 	<div id="div_status" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>table_id</b></td><td>int(10)</td><td>NULL</td><td>Table ID of associated record</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>table_name</b></td><td>varchar(32)</td><td>NULL</td><td>Table name of associated record</td><td>primary key</td></tr>
-		<tr class="bg1"><td><b>status_name_id</b></td><td>int(10)</td><td></td><td><a href="#status_name">status_name</a> table ID</td><td>primary key</td></tr>
+		<tr class="bg1"><td><b>table_id</b></td><td></td><td></td><td>Table ID of associated record</td><td></td></tr>
+		<tr class="bg2"><td><b>table_name</b></td><td></td><td></td><td>Table name of associated record</td><td></td></tr>
+		<tr class="bg1"><td><b>status_name_id</b></td><td></td><td></td><td><a href="#status_name">status_name</a> table ID</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -994,18 +1216,23 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="status_name" style="font-size:11pt;font-weight:bold">status_name</span></td>
-<td style="width:100px;text-align:right"><a id="a_status_name" style="cursor:pointer;text-decoration:underline" onclick="show_hide('status_name')">Show</a> columns</td>
-</tr></table>
-<p>Simple table to predefine name of status.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#808000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="status_name" style="font-size:11pt;font-weight:bold">status_name</span></td>
+      <td style="width:180px;text-align:right"><a id="a_status_name" style="cursor:pointer;text-decoration:underline" onclick="show_hide('status_name')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Simple table to predefine name of status.</p>
 
 	<div id="div_status_name" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>status_name_id</b></td><td>int(10)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>name</b></td><td>varchar(20)</td><td>NULL</td><td>Name of status e.g. IMPORTED, DISPLAYBLE etc.</td><td>unique key: status_name_idx</td></tr>
+		<tr class="bg1"><td><b>status_name_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>name</b></td><td></td><td></td><td>Name of status e.g. IMPORTED, DISPLAYBLE etc.</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -1015,32 +1242,37 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 <br />
 <hr />
 <h2>Core tables</h2>
-<p>These are exact clones of the corresponding core schema tables. See <a href='../core/core_schema.html'>core schema docs</a> for more details.</p>
+
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="analysis" style="font-size:11pt;font-weight:bold">analysis</span></td>
-<td style="width:100px;text-align:right"><a id="a_analysis" style="cursor:pointer;text-decoration:underline" onclick="show_hide('analysis')">Show</a> columns</td>
-</tr></table>
-<p>Usually describes a program and some database that together are used to create a feature on a piece of sequence. Each feature is marked with an analysis_id. The most important column is logic_name, which is used by the webteam to render a feature correctly on contigview (or even retrieve the right feature). Logic_name is also used in the pipeline to identify the analysis which has to run in a given status of the pipeline. The module column tells the pipeline which Perl module does the whole analysis, typically a RunnableDB module.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="analysis" style="font-size:11pt;font-weight:bold">analysis</span></td>
+      <td style="width:180px;text-align:right"><a id="a_analysis" style="cursor:pointer;text-decoration:underline" onclick="show_hide('analysis')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Usually describes a program and some database that together are used to create a feature on a piece of sequence. Each feature is marked with an analysis_id. The most important column is logic_name, which is used by the webteam to render a feature correctly on contigview (or even retrieve the right feature). Logic_name is also used in the pipeline to identify the analysis which has to run in a given status of the pipeline. The module column tells the pipeline which Perl module does the whole analysis, typically a RunnableDB module.</p>
 
 	<div id="div_analysis" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>analysis_id</b></td><td>smallint(5)</td><td></td><td>Internal ID</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>created</b></td><td>datetime</td><td>'0000-00-00</td><td>Date to distinguish newer and older versions off the same analysis.</td><td></td></tr>
-		<tr class="bg1"><td><b>logic_name</b></td><td>varchar(100)</td><td></td><td>String to identify the analysis. Used mainly inside pipeline.</td><td>unique key: logic_name<br />key: logic_name_idx</td></tr>
-		<tr class="bg2"><td><b>db</b></td><td>varchar(120)</td><td>NULL</td><td>Database name.</td><td></td></tr>
-		<tr class="bg1"><td><b>db_version</b></td><td>varchar(40)</td><td>NULL</td><td>Database version.</td><td></td></tr>
-		<tr class="bg2"><td><b>db_file</b></td><td>varchar(120)</td><td>NULL</td><td>File system location of the database.</td><td></td></tr>
-		<tr class="bg1"><td><b>program</b></td><td>varchar(80)</td><td>NULL</td><td>The binary used to create a feature. </td><td></td></tr>
-		<tr class="bg2"><td><b>program_version</b></td><td>varchar(40)</td><td>NULL</td><td>The binary version.</td><td></td></tr>
-		<tr class="bg1"><td><b>program_file</b></td><td>varchar(80)</td><td>NULL</td><td>File system location of the binary.</td><td></td></tr>
-		<tr class="bg2"><td><b>parameters</b></td><td>text</td><td></td><td>A parameter string which is processed by the perl module.</td><td></td></tr>
-		<tr class="bg1"><td><b>module</b></td><td>varchar(80)</td><td>NULL</td><td>Perl module names (RunnableDBS usually) executing this analysis.</td><td></td></tr>
-		<tr class="bg2"><td><b>module_version</b></td><td>varchar(40)</td><td>NULL</td><td>Perl module version.</td><td></td></tr>
-		<tr class="bg1"><td><b>gff_source</b></td><td>varchar(40)</td><td>NULL</td><td>How to make a gff dump from features with this analysis.</td><td></td></tr>
-		<tr class="bg2"><td><b>gff_feature</b></td><td>varchar(40)</td><td>NULL</td><td>How to make a gff dump from features with this analysis.</td><td></td></tr>
+		<tr class="bg1"><td><b>analysis_id</b></td><td></td><td></td><td>Internal ID</td><td></td></tr>
+		<tr class="bg2"><td><b>created</b></td><td></td><td></td><td>Date to distinguish newer and older versions off the same analysis.</td><td></td></tr>
+		<tr class="bg1"><td><b>logic_name</b></td><td></td><td></td><td>String to identify the analysis. Used mainly inside pipeline.</td><td></td></tr>
+		<tr class="bg2"><td><b>db</b></td><td></td><td></td><td>Database name.</td><td></td></tr>
+		<tr class="bg1"><td><b>db_version</b></td><td></td><td></td><td>Database version.</td><td></td></tr>
+		<tr class="bg2"><td><b>db_file</b></td><td></td><td></td><td>File system location of the database.</td><td></td></tr>
+		<tr class="bg1"><td><b>program</b></td><td></td><td></td><td>The binary used to create a feature. </td><td></td></tr>
+		<tr class="bg2"><td><b>program_version</b></td><td></td><td></td><td>The binary version.</td><td></td></tr>
+		<tr class="bg1"><td><b>program_file</b></td><td></td><td></td><td>File system location of the binary.</td><td></td></tr>
+		<tr class="bg2"><td><b>parameters</b></td><td></td><td></td><td>A parameter string which is processed by the perl module.</td><td></td></tr>
+		<tr class="bg1"><td><b>module</b></td><td></td><td></td><td>Perl module names (RunnableDBS usually) executing this analysis.</td><td></td></tr>
+		<tr class="bg2"><td><b>module_version</b></td><td></td><td></td><td>Perl module version.</td><td></td></tr>
+		<tr class="bg1"><td><b>gff_source</b></td><td></td><td></td><td>How to make a gff dump from features with this analysis.</td><td></td></tr>
+		<tr class="bg2"><td><b>gff_feature</b></td><td></td><td></td><td>How to make a gff dump from features with this analysis.</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -1049,21 +1281,26 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="analysis_description" style="font-size:11pt;font-weight:bold">analysis_description</span></td>
-<td style="width:100px;text-align:right"><a id="a_analysis_description" style="cursor:pointer;text-decoration:underline" onclick="show_hide('analysis_description')">Show</a> columns</td>
-</tr></table>
-<p>Allows the storage of a textual description of the analysis, as well as a "display label", primarily for the EnsEMBL web site.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="analysis_description" style="font-size:11pt;font-weight:bold">analysis_description</span></td>
+      <td style="width:180px;text-align:right"><a id="a_analysis_description" style="cursor:pointer;text-decoration:underline" onclick="show_hide('analysis_description')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Allows the storage of a textual description of the analysis, as well as a "display label", primarily for the EnsEMBL web site.</p>
 
 	<div id="div_analysis_description" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>analysis_id</b></td><td>smallint(5)</td><td></td><td>Foreign key references to the <a href="#analysis">analysis</a> table.</td><td>unique key: analysis_idx</td></tr>
-		<tr class="bg2"><td><b>description</b></td><td>text</td><td></td><td>Textual description of the analysis.</td><td></td></tr>
-		<tr class="bg1"><td><b>display_label</b></td><td>varchar(255)</td><td></td><td>Display label for the EnsEMBL web site.</td><td></td></tr>
-		<tr class="bg2"><td><b>displayable</b></td><td>BOOLEAN</td><td>'1'</td><td>Flag indicating if the analysis description is to be displayed on the EnsEMBL web site.</td><td></td></tr>
-		<tr class="bg1"><td><b>web_data</b></td><td>text</td><td></td><td>Other data used by the EnsEMBL web site.</td><td></td></tr>
+		<tr class="bg1"><td><b>analysis_id</b></td><td></td><td></td><td>Foreign key references to the <a href="#analysis">analysis</a> table.</td><td></td></tr>
+		<tr class="bg2"><td><b>description</b></td><td></td><td></td><td>Textual description of the analysis.</td><td></td></tr>
+		<tr class="bg1"><td><b>display_label</b></td><td></td><td></td><td>Display label for the EnsEMBL web site.</td><td></td></tr>
+		<tr class="bg2"><td><b>displayable</b></td><td></td><td></td><td>Flag indicating if the analysis description is to be displayed on the EnsEMBL web site.</td><td></td></tr>
+		<tr class="bg1"><td><b>web_data</b></td><td></td><td></td><td>Other data used by the EnsEMBL web site.</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -1072,37 +1309,47 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="meta" style="font-size:11pt;font-weight:bold">meta</span></td>
-<td style="width:100px;text-align:right"><a id="a_meta" style="cursor:pointer;text-decoration:underline" onclick="show_hide('meta')">Show</a> columns</td>
-</tr></table>
-<p>Stores data about the data in the current schema. Unlike other tables, data in the meta table is stored as key-value pairs. These data include details about the database, RegulatoryBuild and patches.  The species_id field of the meta table is used in multi-species databases and makes it possible to have species-specific meta key-value pairs.  The species-specific meta key-value pairs needs to be repeated for each species_id.  Entries in the meta table that are not specific to any one species, such as the schema.version key and any other schema-related information must have their species_id field set to NULL . The default species_id, and the only species_id value allowed in single-species databases, is 1.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="meta" style="font-size:11pt;font-weight:bold">meta</span></td>
+      <td style="width:180px;text-align:right"><a id="a_meta" style="cursor:pointer;text-decoration:underline" onclick="show_hide('meta')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Stores data about the data in the current schema. Unlike other tables, data in the meta table is stored as key-value pairs. These data include details about the database, RegulatoryBuild and patches.  The species_id field of the meta table is used in multi-species databases and makes it possible to have species-specific meta key-value pairs.  The species-specific meta key-value pairs needs to be repeated for each species_id.  Entries in the meta table that are not specific to any one species, such as the schema.version key and any other schema-related information must have their species_id field set to NULL . The default species_id, and the only species_id value allowed in single-species databases, is 1.</p>
 
 	<div id="div_meta" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>meta_id</b></td><td>int(10)</td><td></td><td>Internal identifier.</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>species_id</b></td><td>int(10)</td><td>'1'</td><td>Indentifies the species for multi-species databases.</td><td>unique key: species_key_value_idx<br />key: species_value_idx</td></tr>
-		<tr class="bg1"><td><b>meta_key</b></td><td>varchar(46)</td><td></td><td>Name of the meta entry, e.g. "schema_version".</td><td>unique key: species_key_value_idx</td></tr>
-		<tr class="bg2"><td><b>meta_value</b></td><td>varchar(950)</td><td></td><td>Corresponding value of the key, e.g. "61".</td><td>unique key: species_key_value_idx<br />key: species_value_idx</td></tr>
+		<tr class="bg1"><td><b>meta_id</b></td><td></td><td></td><td>Internal identifier.</td><td></td></tr>
+		<tr class="bg2"><td><b>species_id</b></td><td></td><td></td><td>Indentifies the species for multi-species databases.</td><td></td></tr>
+		<tr class="bg1"><td><b>meta_key</b></td><td></td><td></td><td>Name of the meta entry, e.g. "schema_version".</td><td></td></tr>
+		<tr class="bg2"><td><b>meta_value</b></td><td></td><td></td><td>Corresponding value of the key, e.g. "61".</td><td></td></tr>
 </table>
 </div>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="meta_coord" style="font-size:11pt;font-weight:bold">meta_coord</span></td>
-<td style="width:100px;text-align:right"><a id="a_meta_coord" style="cursor:pointer;text-decoration:underline" onclick="show_hide('meta_coord')">Show</a> columns</td>
-</tr></table>
-<p>Describes which co-ordinate systems the different feature tables use.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="meta_coord" style="font-size:11pt;font-weight:bold">meta_coord</span></td>
+      <td style="width:180px;text-align:right"><a id="a_meta_coord" style="cursor:pointer;text-decoration:underline" onclick="show_hide('meta_coord')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Describes which co-ordinate systems the different feature tables use.</p>
 
 	<div id="div_meta_coord" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>table_name</b></td><td>varchar(40)</td><td></td><td>Ensembl database table name.</td><td>unique key: table_name</td></tr>
-		<tr class="bg2"><td><b>coord_system_id</b></td><td>int(10)</td><td></td><td>Table ID for <a href="#coord_system">coord_system</a></td><td>unique key: table_name</td></tr>
-		<tr class="bg1"><td><b>max_length</b></td><td>int(11)</td><td>NULL</td><td>Longest sequence length.    </td><td></td></tr>
+		<tr class="bg1"><td><b>table_name</b></td><td></td><td></td><td>Ensembl database table name.</td><td></td></tr>
+		<tr class="bg2"><td><b>coord_system_id</b></td><td></td><td></td><td>Table ID for <a href="#coord_system">coord_system</a></td><td></td></tr>
+		<tr class="bg1"><td><b>max_length</b></td><td></td><td></td><td>Longest sequence length.    </td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -1111,11 +1358,16 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="identity_xref" style="font-size:11pt;font-weight:bold">identity_xref</span></td>
-<td style="width:100px;text-align:right"><a id="a_identity_xref" style="cursor:pointer;text-decoration:underline" onclick="show_hide('identity_xref')">Show</a> columns</td>
-</tr></table>
-<p>Describes how well a particular xref object matches the EnsEMBL object.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="identity_xref" style="font-size:11pt;font-weight:bold">identity_xref</span></td>
+      <td style="width:180px;text-align:right"><a id="a_identity_xref" style="cursor:pointer;text-decoration:underline" onclick="show_hide('identity_xref')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Describes how well a particular xref object matches the EnsEMBL object.</p>
 
 	<div id="div_identity_xref" style="display:none">
 
@@ -1139,11 +1391,16 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="external_synonym" style="font-size:11pt;font-weight:bold">external_synonym</span></td>
-<td style="width:100px;text-align:right"><a id="a_external_synonym" style="cursor:pointer;text-decoration:underline" onclick="show_hide('external_synonym')">Show</a> columns</td>
-</tr></table>
-<p>Some xref objects can be referred to by more than one name. This table relates names to xref IDs.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="external_synonym" style="font-size:11pt;font-weight:bold">external_synonym</span></td>
+      <td style="width:180px;text-align:right"><a id="a_external_synonym" style="cursor:pointer;text-decoration:underline" onclick="show_hide('external_synonym')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Some xref objects can be referred to by more than one name. This table relates names to xref IDs.</p>
 
 	<div id="div_external_synonym" style="display:none">
 
@@ -1159,11 +1416,16 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="external_db" style="font-size:11pt;font-weight:bold">external_db</span></td>
-<td style="width:100px;text-align:right"><a id="a_external_db" style="cursor:pointer;text-decoration:underline" onclick="show_hide('external_db')">Show</a> columns</td>
-</tr></table>
-<p>Stores data about the external databases in which the objects described in the xref table are stored.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="external_db" style="font-size:11pt;font-weight:bold">external_db</span></td>
+      <td style="width:180px;text-align:right"><a id="a_external_db" style="cursor:pointer;text-decoration:underline" onclick="show_hide('external_db')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Stores data about the external databases in which the objects described in the xref table are stored.</p>
 
 	<div id="div_external_db" style="display:none">
 
@@ -1189,11 +1451,16 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="ontology_xref" style="font-size:11pt;font-weight:bold">ontology_xref</span></td>
-<td style="width:100px;text-align:right"><a id="a_ontology_xref" style="cursor:pointer;text-decoration:underline" onclick="show_hide('ontology_xref')">Show</a> columns</td>
-</tr></table>
-<p>This table associates ontology terms/accessions to Ensembl objects (primarily EFO/SO). NOTE: Currently not in use<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="ontology_xref" style="font-size:11pt;font-weight:bold">ontology_xref</span></td>
+      <td style="width:180px;text-align:right"><a id="a_ontology_xref" style="cursor:pointer;text-decoration:underline" onclick="show_hide('ontology_xref')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>This table associates ontology terms/accessions to Ensembl objects (primarily EFO/SO). NOTE: Currently not in use</p>
 
 	<div id="div_ontology_xref" style="display:none">
 
@@ -1207,22 +1474,28 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 <p><b>See also:</b></p>
 <ul>
 	<li><a href="#object_xref">object_xref</a></li>
+	<li><a href="#xref">xref</a></li>
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="unmapped_reason" style="font-size:11pt;font-weight:bold">unmapped_reason</span></td>
-<td style="width:100px;text-align:right"><a id="a_unmapped_reason" style="cursor:pointer;text-decoration:underline" onclick="show_hide('unmapped_reason')">Show</a> columns</td>
-</tr></table>
-<p>Describes the reason why a mapping failed.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="unmapped_reason" style="font-size:11pt;font-weight:bold">unmapped_reason</span></td>
+      <td style="width:180px;text-align:right"><a id="a_unmapped_reason" style="cursor:pointer;text-decoration:underline" onclick="show_hide('unmapped_reason')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Describes the reason why a mapping failed.</p>
 
 	<div id="div_unmapped_reason" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>unmapped_reason_id</b></td><td>smallint(5)</td><td></td><td>Internal identifier.</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>summary_description</b></td><td>varchar(255)</td><td>NULL</td><td>Summarised description.</td><td></td></tr>
-		<tr class="bg1"><td><b>full_description</b></td><td>varchar(255)</td><td>NULL</td><td>Full description.</td><td></td></tr>
+		<tr class="bg1"><td><b>unmapped_reason_id</b></td><td></td><td></td><td>Internal identifier.</td><td></td></tr>
+		<tr class="bg2"><td><b>summary_description</b></td><td></td><td></td><td>Summarised description.</td><td></td></tr>
+		<tr class="bg1"><td><b>full_description</b></td><td></td><td></td><td>Full description.</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -1232,13 +1505,18 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 <br />
 <hr />
 <h2>Core like tables</h2>
-<p>These are almost exact clones of the corresponding core schema tables. Some contain extra fields or different enum values to support the funcgen schema</p>
+
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="xref" style="font-size:11pt;font-weight:bold">xref</span></td>
-<td style="width:100px;text-align:right"><a id="a_xref" style="cursor:pointer;text-decoration:underline" onclick="show_hide('xref')">Show</a> columns</td>
-</tr></table>
-<p>Holds data about objects which are external to EnsEMBL, but need to be associated with EnsEMBL objects. Information about the database that the external object is stored in is held in the external_db table entry referred to by the external_db column.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="xref" style="font-size:11pt;font-weight:bold">xref</span></td>
+      <td style="width:180px;text-align:right"><a id="a_xref" style="cursor:pointer;text-decoration:underline" onclick="show_hide('xref')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Holds data about objects which are external to EnsEMBL, but need to be associated with EnsEMBL objects. Information about the database that the external object is stored in is held in the external_db table entry referred to by the external_db column.</p>
 
 	<div id="div_xref" style="display:none">
 
@@ -1263,11 +1541,16 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="object_xref" style="font-size:11pt;font-weight:bold">object_xref</span></td>
-<td style="width:100px;text-align:right"><a id="a_object_xref" style="cursor:pointer;text-decoration:underline" onclick="show_hide('object_xref')">Show</a> columns</td>
-</tr></table>
-<p>Describes links between Ensembl objects and objects held in external databases.  The Ensembl object can be one of several types; the type is held in the ensembl_object_type column.  The ID of the particular Ensembl gene, translation or whatever is given in the ensembl_id column.  The xref_id points to the entry in the xref table that holds data about the external object.  Each Ensembl object can be associated with zero or more xrefs. An xref object can be associated with one or more Ensembl objects.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="object_xref" style="font-size:11pt;font-weight:bold">object_xref</span></td>
+      <td style="width:180px;text-align:right"><a id="a_object_xref" style="cursor:pointer;text-decoration:underline" onclick="show_hide('object_xref')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Describes links between Ensembl objects and objects held in external databases.  The Ensembl object can be one of several types; the type is held in the ensembl_object_type column.  The ID of the particular Ensembl gene, translation or whatever is given in the ensembl_id column.  The xref_id points to the entry in the xref table that holds data about the external object.  Each Ensembl object can be associated with zero or more xrefs. An xref object can be associated with one or more Ensembl objects.</p>
 
 	<div id="div_object_xref" style="display:none">
 
@@ -1275,7 +1558,7 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>object_xref_id</b></td><td>INT(10)</td><td></td><td>Internal identifier.</td><td>primary key</td></tr>
 		<tr class="bg2"><td><b>ensembl_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the ensembl_object_type table e.g. <a href="#probe_set">probe_set</a></td><td>unique key: xref_idx<br />key: ensembl_idx</td></tr>
-		<tr class="bg1"><td><b>ensembl_object_type</b></td><td>ENUM('RegulatoryFeature', 'ExternalFeature', 'AnnotatedFeature', 'FeatureType', 'ProbeSet', 'Probe', 'ProbeFeature')</td><td></td><td>Ensembl object type e.g ProbeSet etc.</td><td>unique key: xref_idx<br />key: ensembl_idx</td></tr>
+		<tr class="bg1"><td><b>ensembl_object_type</b></td><td>ENUM('Experiment', 'RegulatoryFeature', 'ExternalFeature', 'AnnotatedFeature', 'FeatureType', 'ProbeSet', 'Probe', 'ProbeFeature')</td><td></td><td>Ensembl object type e.g ProbeSet etc.</td><td>unique key: xref_idx<br />key: ensembl_idx</td></tr>
 		<tr class="bg2"><td><b>xref_id</b></td><td>INT</td><td></td><td>Foreign key references to the <a href="#xref">xref</a> table.</td><td>unique key: xref_idx</td></tr>
 		<tr class="bg1"><td><b>linkage_annotation</b></td><td>VARCHAR(255)</td><td>NULL</td><td>Additional annotation on the linkage.</td><td></td></tr>
 		<tr class="bg2"><td><b>analysis_id</b></td><td>SMALLINT(5)</td><td></td><td>Foreign key references to the <a href="#analysis">analysis</a> table.</td><td>unique key: xref_idx<br />key: analysis_idx</td></tr>
@@ -1285,30 +1568,37 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 <ul>
 	<li><a href="#xref">xref</a></li>
 	<li><a href="#identity_xref">identity_xref</a></li>
+	<li><a href="#probe_set">probe_set</a></li>
+	<li><a href="#analysis">analysis</a></li>
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="unmapped_object" style="font-size:11pt;font-weight:bold">unmapped_object</span></td>
-<td style="width:100px;text-align:right"><a id="a_unmapped_object" style="cursor:pointer;text-decoration:underline" onclick="show_hide('unmapped_object')">Show</a> columns</td>
-</tr></table>
-<p>Describes why a particular external entity was not mapped to an ensembl one.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="unmapped_object" style="font-size:11pt;font-weight:bold">unmapped_object</span></td>
+      <td style="width:180px;text-align:right"><a id="a_unmapped_object" style="cursor:pointer;text-decoration:underline" onclick="show_hide('unmapped_object')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Describes why a particular external entity was not mapped to an ensembl one.</p>
 
 	<div id="div_unmapped_object" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>unmapped_object_id</b></td><td>int(10)</td><td></td><td>Internal identifier.</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>type</b></td><td>enum('xref', 'probe2transcript', 'array_mapping')</td><td></td><td>UnmappedObject type e.g. probe2transcript</td><td></td></tr>
-		<tr class="bg1"><td><b>analysis_id</b></td><td>smallint(5)</td><td></td><td>Foreign key references to the <a href="#analysis">analysis</a> table.</td><td>key: anal_idx<br />key: anal_exdb_idx</td></tr>
-		<tr class="bg2"><td><b>external_db_id</b></td><td>smallint(5)</td><td>NULL</td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td>key: anal_exdb_idx</td></tr>
-		<tr class="bg1"><td><b>identifier</b></td><td>varchar(255)</td><td></td><td>External database identifier.</td><td>key: id_idx</td></tr>
-		<tr class="bg2"><td><b>unmapped_reason_id</b></td><td>smallint(5)</td><td></td><td>Foreign key references to the <a href="#unmapped_reason">unmapped_reason</a> table.</td><td></td></tr>
-		<tr class="bg1"><td><b>query_score</b></td><td>double</td><td>NULL</td><td>Actual mapping query score.</td><td></td></tr>
-		<tr class="bg2"><td><b>target_score</b></td><td>double</td><td>NULL</td><td>Target mapping query score.</td><td></td></tr>
-		<tr class="bg1"><td><b>ensembl_id</b></td><td>int(10)</td><td>'0'</td><td>Foreign key references the table_if of the Ensembl object table e.g. <a href="#probe_set">probe_set</a></td><td>key: object_type_idx</td></tr>
-		<tr class="bg2"><td><b>ensembl_object_type</b></td><td>enum('RegulatoryFeature','ExternalFeature','AnnotatedFeature','FeatureType', 'Probe', 'ProbeSet', 'ProbeFeature')</td><td></td><td>Ensembl object type e.g. ProbeSet</td><td>key: object_type_idx</td></tr>
-		<tr class="bg1"><td><b>parent</b></td><td>varchar(255)</td><td>NULL</td><td>Foreign key references to the <a href="#dependent_xref">dependent_xref</a> table, in case the unmapped object is dependent on a primary external reference which wasn't mapped to an ensembl one. Not currently used for efg.</td><td></td></tr>
+		<tr class="bg1"><td><b>unmapped_object_id</b></td><td></td><td></td><td>Internal identifier.</td><td></td></tr>
+		<tr class="bg2"><td><b>type</b></td><td></td><td></td><td>UnmappedObject type e.g. probe2transcript</td><td></td></tr>
+		<tr class="bg1"><td><b>analysis_id</b></td><td></td><td></td><td>Foreign key references to the <a href="#analysis">analysis</a> table.</td><td></td></tr>
+		<tr class="bg2"><td><b>external_db_id</b></td><td></td><td></td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td></td></tr>
+		<tr class="bg1"><td><b>identifier</b></td><td></td><td></td><td>External database identifier.</td><td></td></tr>
+		<tr class="bg2"><td><b>unmapped_reason_id</b></td><td></td><td></td><td>Foreign key references to the <a href="#unmapped_reason">unmapped_reason</a> table.</td><td></td></tr>
+		<tr class="bg1"><td><b>query_score</b></td><td></td><td></td><td>Actual mapping query score.</td><td></td></tr>
+		<tr class="bg2"><td><b>target_score</b></td><td></td><td></td><td>Target mapping query score.</td><td></td></tr>
+		<tr class="bg1"><td><b>ensembl_id</b></td><td></td><td></td><td>Foreign key references the table_if of the Ensembl object table e.g. <a href="#probe_set">probe_set</a></td><td></td></tr>
+		<tr class="bg2"><td><b>ensembl_object_type</b></td><td></td><td></td><td>Ensembl object type e.g. ProbeSet</td><td></td></tr>
+		<tr class="bg1"><td><b>parent</b></td><td></td><td></td><td>Foreign key references to the <a href="#dependent_xref">dependent_xref</a> table, in case the unmapped object is dependent on a primary external reference which wasn't mapped to an ensembl one. Not currently used for efg.</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -1316,28 +1606,35 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 	<li><a href="#unmapped_reason">unmapped_reason</a></li>
 	<li><a href="#external_db">external_db</a></li>
 	<li><a href="#analysis">analysis</a></li>
+	<li><a href="#probe_set">probe_set</a></li>
+	<li><a href="#dependent_xref">dependent_xref</a></li>
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="coord_system" style="font-size:11pt;font-weight:bold">coord_system</span></td>
-<td style="width:100px;text-align:right"><a id="a_coord_system" style="cursor:pointer;text-decoration:underline" onclick="show_hide('coord_system')">Show</a> columns</td>
-</tr></table>
-<p>Stores information about the available co-ordinate systems for the species identified through the species_id field. For each species, there must be one co-ordinate system that has the attribute "top_level" and one that has the attribute "sequence_level".  NOTE: This has been extended from the core implementation to support multiple assemblies by referencing multiple core DBs.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="coord_system" style="font-size:11pt;font-weight:bold">coord_system</span></td>
+      <td style="width:180px;text-align:right"><a id="a_coord_system" style="cursor:pointer;text-decoration:underline" onclick="show_hide('coord_system')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Stores information about the available co-ordinate systems for the species identified through the species_id field. For each species, there must be one co-ordinate system that has the attribute "top_level" and one that has the attribute "sequence_level".  NOTE: This has been extended from the core implementation to support multiple assemblies by referencing multiple core DBs.</p>
 
 	<div id="div_coord_system" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>coord_system_id</b></td><td>int(10)</td><td></td><td>Internal identifier</td><td>key: coord_system_id_idx</td></tr>
-		<tr class="bg2"><td><b>name</b></td><td>varchar(40)</td><td></td><td>Co-oridinate system name, e.g. 'chromosome', 'contig', 'scaffold' etc. </td><td>primary key<br />key: name_version_idx</td></tr>
-		<tr class="bg1"><td><b>version</b></td><td>varchar(255)</td><td>''</td><td>Assembly</td><td>primary key<br />key: name_version_idx</td></tr>
-		<tr class="bg2"><td><b>rank</b></td><td>int(11)</td><td></td><td>Co-oridinate system rank</td><td></td></tr>
-		<tr class="bg1"><td><b>attrib</b></td><td>set('default_version','sequence_level')</td><td>_version'</td><td>Co-oridinate system attrib (e.g. "top_level", "sequence_level")     </td><td></td></tr>
-		<tr class="bg2"><td><b>schema_build</b></td><td>varchar(10)</td><td>''</td><td>Indentifies the schema_build version for the source core DB       </td><td>primary key</td></tr>
-		<tr class="bg1"><td><b>core_coord_system_id</b></td><td>int(10)</td><td></td><td>Table ID of the coord_system in the source core DB</td><td></td></tr>
-		<tr class="bg2"><td><b>species_id</b></td><td>int(10)</td><td>'1'</td><td>Indentifies the species for multi-species databases       </td><td>primary key<br />key: coord_species_idx</td></tr>
-		<tr class="bg1"><td><b>is_current</b></td><td>boolean</td><td>True</td><td>This flags which coord_system entries are current with respect to mart(/website)</td><td></td></tr>
+		<tr class="bg1"><td><b>coord_system_id</b></td><td></td><td></td><td>Internal identifier</td><td></td></tr>
+		<tr class="bg2"><td><b>name</b></td><td></td><td></td><td>Co-oridinate system name, e.g. 'chromosome', 'contig', 'scaffold' etc. </td><td></td></tr>
+		<tr class="bg1"><td><b>version</b></td><td></td><td></td><td>Assembly</td><td></td></tr>
+		<tr class="bg2"><td><b>rank</b></td><td></td><td></td><td>Co-oridinate system rank</td><td></td></tr>
+		<tr class="bg1"><td><b>attrib</b></td><td></td><td></td><td>Co-oridinate system attrib (e.g. "top_level", "sequence_level")     </td><td></td></tr>
+		<tr class="bg2"><td><b>schema_build</b></td><td></td><td></td><td>Indentifies the schema_build version for the source core DB       </td><td></td></tr>
+		<tr class="bg1"><td><b>core_coord_system_id</b></td><td></td><td></td><td>Table ID of the coord_system in the source core DB</td><td></td></tr>
+		<tr class="bg2"><td><b>species_id</b></td><td></td><td></td><td>Indentifies the species for multi-species databases       </td><td></td></tr>
+		<tr class="bg1"><td><b>is_current</b></td><td></td><td></td><td>This flags which coord_system entries are current with respect to mart(/website)</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -1347,28 +1644,43 @@ A simplified entity relationship diagram of the schema is available <a href="./F
 </ul>
 
 <br />
-<table style="border: 2px groove #CCCCCC;height:10px;background-color:#FAFAFF"><tr style="vertical-align:middle;height:10px">
-<td style="width:500px;text-align:left;height:10px"><span id="seq_region" style="font-size:11pt;font-weight:bold">seq_region</span></td>
-<td style="width:100px;text-align:right"><a id="a_seq_region" style="cursor:pointer;text-decoration:underline" onclick="show_hide('seq_region')">Show</a> columns</td>
-</tr></table>
-<p>Stores information about sequence regions from various core DBs.<p>
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="seq_region" style="font-size:11pt;font-weight:bold">seq_region</span></td>
+      <td style="width:180px;text-align:right"><a id="a_seq_region" style="cursor:pointer;text-decoration:underline" onclick="show_hide('seq_region')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Stores information about sequence regions from various core DBs.</p>
 
 	<div id="div_seq_region" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>seq_region_id</b></td><td>int(10)</td><td></td><td>Internal identifier.</td><td>key: seq_region_id_idx</td></tr>
-		<tr class="bg2"><td><b>name</b></td><td>varchar(40)</td><td></td><td>Sequence region name.  </td><td>primary key</td></tr>
-		<tr class="bg1"><td><b>coord_system_id</b></td><td>int(10)</td><td></td><td>Foreign key references to the <a href="#coord_system">coord_system</a> table.   </td><td>primary key<br />key: coord_system_id</td></tr>
-		<tr class="bg2"><td><b>core_seq_region_id</b></td><td>int(10)</td><td></td><td>Table ID of the seq_region in the source core DB</td><td></td></tr>
-		<tr class="bg1"><td><b>schema_build</b></td><td>varchar(10)</td><td>''</td><td>Indentifies the schema_build version for the source core DB       </td><td>primary key</td></tr>
+		<tr class="bg1"><td><b>seq_region_id</b></td><td></td><td></td><td>Internal identifier.</td><td></td></tr>
+		<tr class="bg2"><td><b>name</b></td><td></td><td></td><td>Sequence region name.  </td><td></td></tr>
+		<tr class="bg1"><td><b>coord_system_id</b></td><td></td><td></td><td>Foreign key references to the <a href="#coord_system">coord_system</a> table.   </td><td></td></tr>
+		<tr class="bg2"><td><b>core_seq_region_id</b></td><td></td><td></td><td>Table ID of the seq_region in the source core DB</td><td></td></tr>
+		<tr class="bg1"><td><b>schema_build</b></td><td></td><td></td><td>Indentifies the schema_build version for the source core DB       </td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
 <ul>
 	<li><a href="#coord_system">coord_system</a></li>
 </ul>
-
+<br />
+<hr />
+<h3 id="legend">Colour legend</h3>
+<table>
+<tr><td style="width:25px;height:15px;background-color:#FFCC66"></td><td>Main feature tables</td></tr>
+<tr><td style="width:25px;height:15px;background-color:#66CCFF"></td><td>Set tables</td></tr>
+<tr><td style="width:25px;height:15px;background-color:#FF6666"></td><td>Array design tables</td></tr>
+<tr><td style="width:25px;height:15px;background-color:#00FF80"></td><td>Experiment tables</td></tr>
+<tr><td style="width:25px;height:15px;background-color:#808000"></td><td>Ancilliary tables (Some omitted from schema diagram)</td></tr>
+<tr><td style="width:25px;height:15px;background-color:#000000"></td><td>Core/Core like tables (Omited from schema diagram)</td></tr>
+</table>
 
 </body>
 </html>
