@@ -5,11 +5,9 @@ package EnsEMBL::Web::ImageConfig::Vertical;
 ## Alternative configuration for karyotype used in BlastView
 use strict;
 
-use HTML::Entities qw(encode_entities);
-
-use EnsEMBL::Web::DBSQL::DBConnection;
-
-# use EnsEMBL::Web::Tools::Misc qw(style_by_filesize); # DO NOT UNCOMMENT OR DELETE THIS LINE - It can cause circular references.
+use EnsEMBL::Web::Text::FeatureParser;
+use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::Tools::Misc;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
@@ -23,14 +21,11 @@ sub load_user_tracks {
   
   return unless $menu;
   
-  my $hub            = $self->hub;
-  my %types          = (upload => 'filename', url => 'url');
-  my $user           = $hub->user;
-  my $width          = $self->get_parameter('all_chromosomes') eq 'yes' ? 10 : 60;
-  my %remote_formats = map { lc $_ => 1 } @{$hub->species_defs->USERDATA_REMOTE_FORMATS};
-  my (@user_tracks, %user_sources);
+  $self->SUPER::load_user_tracks($session);
   
-  my @renderers = (
+  my $width          = $self->get_parameter('all_chromosomes') eq 'yes' ? 10 : 60;
+  my %remote_formats = map { lc $_ => 1 } @{$self->hub->species_defs->USERDATA_REMOTE_FORMATS};
+  my @renderers      = (
     'off',                'Off',
     'highlight_lharrow',  'Arrow on lefthand side',
     'highlight_rharrow',  'Arrow on righthand side',
@@ -42,98 +37,206 @@ sub load_user_tracks {
     'density_outline',    'Density plot - outline bar chart',
   );
   
-  foreach my $type (keys %types) {
-    my @tracks = $session->get_data(type => $type);
-    my $field  = $types{$type};
+  foreach ($menu->nodes) {
+    if ($remote_formats{lc $_->get('format')}) {
+      $_->remove;
+    } else {
+      $_->set('renderers', \@renderers);
+      $_->set('glyphset',  'Vuserdata');
+      $_->set('colourset', 'densities');
+      $_->set('maxmin',    1);
+      $_->set('width',     $width);
+      $_->set('strand',    'b');
+    }
+  }
+}
+
+sub load_user_track_data {
+  my ($self, $chromosomes) = @_;
+  my $hub          = $self->hub;
+  my $species_defs = $hub->species_defs;
+  my $bins         = 150;
+  my $bin_size     = int($self->container_width / $bins);
+  my $track_width  = $self->get_parameter('width') || 80;
+  my @colours      = qw(darkred darkblue darkgreen purple grey red blue green orange brown magenta violet darkgrey);
+  my ($feature_adaptor, $slice_adaptor, $parser, %data, $max);
+  
+  foreach ($self->get_node('user_data')->nodes) {
+    my $display = $_->get('display');
     
-    foreach my $track (@tracks) {
-      push @user_tracks, {
-        id          => join('_', $type, $track->{'code'}), 
-        species     => $track->{'species'},
-        source      => $track->{$field},
-        format      => $track->{'format'},
-        render      => EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'}),
-        name        => $track->{'name'} || $track->{$field},
-        external    => $type eq 'upload' ? 'tmp' : $type,
-        description => $type eq 'upload' ? 'Data that has been temporarily uploaded to the web server.' : sprintf('
-          Data retrieved from an external webserver. This data is attached to the session, and comes from URL: %s', encode_entities($track->{'url'})
-        ),
+    next if $display eq 'off';
+    
+    my $logic_name = $_->get('logic_name');
+    my $colour     = \@colours;
+    my $max_value;
+    
+    unshift @$colour, 'black' if $display eq 'density_graph'; 
+    
+    if ($logic_name) {
+      $feature_adaptor ||= $hub->get_adaptor('get_DnaAlignFeatureAdaptor', 'userdata');
+      $slice_adaptor   ||= $hub->get_adaptor('get_SliceAdaptor');
+      
+      ($data{$_->id}, $max_value) = $self->get_dna_align_features($logic_name, $feature_adaptor, $slice_adaptor, $bins, $bin_size, $chromosomes, $colour->[0]);
+    } else {
+      if ($parser) {
+        $parser->reset;
+      } else {
+        $parser = EnsEMBL::Web::Text::FeatureParser->new($species_defs);
+        $parser->no_of_bins($bins);
+        $parser->bin_size($bin_size);
+        $parser->filter($chromosomes->[0]) if scalar @$chromosomes == 1;
+      }
+      
+      ($data{$_->id}, $max_value) = $self->get_parsed_features($_, $parser, $bins, $colour);
+    }
+    
+    if ($max_value) {
+      my $scale = $track_width / $max_value;
+      
+      foreach my $id (keys %data) {
+        foreach my $chr (keys %{$data{$id}}) {
+          foreach my $track (values %{$data{$id}{$chr}}) {
+            $_ *= $scale for @{$track->{'scores'} || []};
+          }
+        }
+      }
+      
+      $max = $max_value if $max_value > $max;
+    }
+  }
+  
+  $self->set_parameter('bins',      $bins);
+  $self->set_parameter('max_value', $max);
+  
+  return \%data;
+}
+
+sub get_dna_align_features {
+  my ($self, $logic_name, $feature_adaptor, $slice_adaptor, $bins, $bin_size, $chromosomes, $colour) = @_;
+  my (%data, $max);
+  
+  foreach my $chr (@$chromosomes) {
+    my $start = 1;
+    my $end   = $bin_size;
+    my @scores;
+    
+    for (0..$bins-1) {
+      my $features = $feature_adaptor->fetch_all_by_Slice($slice_adaptor->fetch_by_region('chromosome', $chr, $start, $end), $logic_name); ## Fetch data from the userdata db, for this chr only
+      my $count    = scalar @$features;
+      
+      $_  += $bin_size for $start, $end;
+      $max = $count if $max < $count;
+      
+      push @scores, $count;
+    }
+    
+    if ($max) {
+      $data{$chr}{'dnaAlignFeature'} = {
+        scores => \@scores,
+        colour => $colour,
+        sort   => 0,
       };
     }
   }
+  
+  return (\%data, $max);
+}
 
-  # Add saved tracks, if any
-  if ($user) {
-    foreach my $entry ($user->uploads) {
-      next unless $entry->species eq $self->{'species'};
-      
-      foreach my $analysis (split /, /, $entry->analyses) {
-        $user_sources{$analysis} = {
-          id          => $analysis,
-          source_name => $entry->name,
-          source_type => 'user',
-          filesize    => $entry->filesize,
-          species     => $entry->species,
-          assembly    => $entry->assembly,
-        };
-        
-        $self->_compare_assemblies($entry, $session);
-      }
+sub get_parsed_features {
+  my ($self, $track, $parser, $bins, $colours) = @_;
+  my $url     = $track->get('url');
+  my $content = $url ? EnsEMBL::Web::Tools::Misc::get_url_content($url)->{'content'} : new EnsEMBL::Web::TmpFile::Text(filename => $track->get('file'))->retrieve;
+  
+  return undef unless $content;
+  
+  $parser->parse($content, $track->get('format'));
+  
+  my $max_values = $parser->max_values;
+  my $sort       = 0;
+  my (%data, $max);
+  
+  while (my ($name, $track_data) = each %{$parser->get_all_tracks}) {
+    my $count;
+    
+    while (my ($chr, $results) = each %{$track_data->{'bins'}}) {
+      $data{$chr}{$name} = {
+        scores => [ map $results->[$_], 0..$bins-1 ],
+        colour => $track_data->{'config'}{'color'} || $colours->[$count],
+        sort   => $sort
+      };
     }
     
-    if (keys %user_sources) {
-      my $dbs = new EnsEMBL::Web::DBSQL::DBConnection($self->{'species'});
-      my $dba = $dbs->get_DBAdaptor('userdata');
-      my $ana = $dba->get_adaptor('Analysis');
+    $max = $max_values->{$name} if $max < $max_values->{$name};
+    
+    $count++ unless $track->{'config'}{'color'};
+    $sort++;
+  }
+  
+  return (\%data, $max);
+}
 
-      while (my ($logic_name, $source) = each (%user_sources)) {
-        my $analysis = $ana->fetch_by_logic_name($logic_name);
+sub create_user_features {
+  my $self   = shift;
+  my $hub    = $self->hub;
+  my $menu   = $self->get_node('user_data');
+  my $tracks = {};
+  
+  return $tracks unless $menu;
+  
+  foreach my $id (map $_->get('display') eq 'off' ? $_->id : (), $menu->nodes) {
+    my $data   = $hub->fetch_userdata_by_id($id);
+    my $parser = $data->{'parser'};
+    
+    if ($parser) {
+      while (my ($type, $track) = each %{$parser->get_all_tracks}) {
+        my @rows;
         
-        next unless $analysis;
-
-        push @user_tracks, {
-          id          => $source->{'id'}, 
-          species     => $source->{'species'},
-          name        => $analysis->display_label,
-          logic_name  => $logic_name,
-          description => $analysis->description,
-          style       => $analysis->web_data,
-          display     => 'off',
-          external    => 'user',
-          render      => EnsEMBL::Web::Tools::Misc::style_by_filesize($source->{'filesize'}),
+        foreach my $feature (@{$track->{'features'}}) {
+          push @rows, {
+            chr     => $feature->seqname || $feature->slice->name,
+            start   => $feature->rawstart,
+            end     => $feature->rawend,
+            label   => $feature->id,
+            gene_id => $feature->id,
+          };
+        }
+        
+        $track->{'config'}{'name'} = $data->{'name'};
+        
+        $tracks->{$id}{$type} = {
+          features => \@rows,
+          config   => $track->{'config'}
+        };
+      }
+    } else {
+      while (my ($analysis, $track) = each %$data) {
+        my @rows;
+       
+        foreach my $f (
+          map  { $_->[0] }
+          sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
+          map  {[ $_, $_->{'slice'}->seq_region_name, $_->{'start'}, $_->{'end'} ]}
+          @{$track->{'features'}}
+        ) {
+          push @rows, {
+            chr     => $f->{'slice'}->seq_region_name,
+            start   => $f->{'start'},
+            end     => $f->{'end'},
+            length  => $f->{'length'},
+            label   => "$f->{'start'}-$f->{'end'}",
+            gene_id => $f->{'gene_id'},
+          };
+        }
+        
+        $tracks->{$id}{$analysis} = {
+          features => \@rows,
+          config   => $track->{'config'}
         };
       }
     }
   }
   
-  # Now add these tracks to the menu
-  foreach my $entry (@user_tracks) {
-    if ($entry->{'species'} eq $self->{'species'}) {
-      my $format = $entry->{'format'};
-      
-      next if $remote_formats{lc $format};
-      
-      my $settings = {
-        id          => $entry->{'id'},
-        source      => $entry->{'source'},
-        format      => $entry->{'format'},
-        glyphset    => 'Vuserdata',
-        colourset   => 'densities',
-        renderers   => \@renderers,
-        maxmin      => 1,
-        logic_name  => $entry->{'logic_name'},
-        caption     => $entry->{'name'},
-        description => $entry->{'description'},
-        display     => 'off',
-        style       => $entry->{'style'},
-        external    => $entry->{'external'},
-        width       => $width,
-        strand      => 'b',
-      };
-
-      $menu->append($self->create_track($entry->{'id'}, $entry->{'name'}, $settings));
-    }
-  }
+  return $tracks;
 }
 
 1;
