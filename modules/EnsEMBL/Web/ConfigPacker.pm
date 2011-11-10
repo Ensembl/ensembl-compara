@@ -758,11 +758,14 @@ sub _summarise_compara_db {
   
   my $constrained_elements = {};
   my %valid_species = map {($_, 1)} keys %{$self->full_tree};
-  
-  foreach my $row (@$res_aref) {
+  # Check if contains a species not in vega - use to determine whether or not to run vega specific queries
+  my $not_vega = 0;
+      
+  foreach my $row (@$res_aref) { 
     my ($class, $type, $species, $name, $id, $species_set_id) = ($row->[0], uc $row->[1], ucfirst $row->[2], $row->[3], $row->[4], $row->[5]);
     my $key = 'ALIGNMENTS';
-    
+
+    if ($species eq 'Sarcophilus_harrisii') {$not_vega = 1 ;}    
     if ($class =~ /ConservationScore/ || $type =~ /CONSERVATION_SCORE/) {
       $key  = 'CONSERVATION_SCORES';
       $name = 'Conservation scores';
@@ -845,7 +848,7 @@ sub _summarise_compara_db {
   # if there are intraspecies alignments then get full details of all genomic alignments, ie start and stop
   # currently these are only needed for Vega where there are only strictly defined regions in compara
   # but this could be extended to e! if we needed to know this
-  if (scalar @$v_results) {
+  if (@$v_results && $not_vega != 1) { warn 'HERE'; 
     # get details of seq_regions in the database
     $q = '
       select df.dnafrag_id, df.name, df.coord_system_name, gdb.name
@@ -868,7 +871,7 @@ sub _summarise_compara_db {
       };
     }
     
-#    warn "genomic regions are ",Dumper(\%genomic_regions);
+  #  warn "genomic regions are ",Dumper(\%genomic_regions);
 
     # get details of methods in the database -
     $q = '
@@ -1499,4 +1502,4 @@ sub _configure_blast {
 }
 
 
-1;
+ 1;
