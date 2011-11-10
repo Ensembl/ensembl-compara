@@ -304,10 +304,10 @@ sub need_dna {
 =cut
 
   my $web_db_connection = Bio::EnsEMBL::DBSQL::DBConnection->new(
-    -host => 'ensdb-1-13',
-    -port => 5307,
+    -host => 'ensdb-1-11',
+    -port => 5319,
     -user => 'ensro',
-    -dbname =>  'ensembl_website'
+    -dbname =>  'ensembl_website_64'
   );
 
   my $sth = $web_db_connection->prepare(
@@ -440,7 +440,7 @@ sub create_dirs_for_dumps {
 
 
   # Create dirs ------------------------------------------
-  my $filehandles;
+  my $filehandles = {};
   my $dna = 0;
 
   foreach my $type ( @$types) {
@@ -541,6 +541,7 @@ sub get_data {
   ### and value is the Bio::SeqIO
 
   my $dbAdaptor  = shift || die( 'Need a DBAdaptor' );
+  $dbAdaptor->dbc()->reconnect_when_lost(1);
   my $species    = shift || die( 'Need a species' );
   my $fhs      = shift || die( 'Need a hashref of types to dump' );
   my $sp_folder = shift;
@@ -580,8 +581,10 @@ sub get_data {
       }
     } 
   }
+ 
+  $dbAdaptor->dbc()->disconnect_if_idle();
 
- # Sort these by incr slice length for more efficient memory usage
+  # Sort these by incr slice length for more efficient memory usage
   foreach my $slice( sort {$a->seq_region_length <=> $b->seq_region_length} @{$sliceAdaptor->fetch_all('toplevel', undef, 1, undef, undef,)} ){
     info( 1, "Start toplevel ". $slice->name. " length:". $slice->seq_region_length );
     my $coord_system = $slice->coord_system->name;
@@ -599,7 +602,15 @@ sub get_data {
                            |_NT_
                            |scaffold_
                            |cutchr
-                           |unplaced  
+                           |unplaced 
+                           |chunk
+                           |clone
+                           |contig
+                           |genescaffold
+                           |group
+                           |reftig
+                           |supercontig
+                           |ultracontig        
                            /x)  ) {
 
         if ( my $seqio = $fhs->{'dna_toplevel'} ){
@@ -699,6 +710,7 @@ sub dump_data_for_gene {
   ### Returns 1
   my ($gene, $fhs) = @_;
   foreach my $transcript( @{$gene->get_all_Transcripts} ){
+
     my $logic_name = lc($gene->analysis->logic_name);
     my $subtype;
     if ( $logic_name =~/ncrna/ && $transcript->biotype =~ /RNA/i) {
@@ -810,6 +822,7 @@ sub dump_pep {
   ### Returns 1
 
   my ($seqio, $transcript, $type, $gene) = @_;
+
   return if $no_data;
   my $translation = $transcript->translation;
   if( ! $translation ){
@@ -990,7 +1003,7 @@ sub blast_indexes {
 #        warn "scp -i $key_file $xd_file $blast_machine:/$blastdir/$file_name";
 #        system("scp -i $key_file $xd_file $blast_machine:/$blastdir/$file_name");
         warn "scp $xd_file $blast_machine:/$blastdir/$file_name";
-#        system("scp $xd_file $blast_machine:/$blastdir/$file_name");
+        system("scp $xd_file $blast_machine:/$blastdir/$file_name");
 
       }
       unlink($xd_file) || warn "Can't delete $xd_file: $!" unless $file eq $fh;
