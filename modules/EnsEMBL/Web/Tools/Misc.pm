@@ -98,13 +98,10 @@ sub _get_http_error {
 
 
 sub style_by_filesize {
-  my $filesize = shift || 0;
-
+  my $filesize     = shift || 0;
   my $max_filesize = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->MAX_HIGHLIGHT_FILESIZE || MAX_HIGHLIGHT_FILESIZE;
-  return $filesize > $max_filesize
-       ? 'density' 
-       : 'highlight'
-       ;
+  warn "$filesize > $max_filesize";
+  return $filesize > $max_filesize ? 'density_line' : 'highlight_lharrow';
 }
 
 1;
