@@ -129,8 +129,12 @@ sub _init {
     # Node glyph, coloured for for duplication/speciation
     my ($node_colour, $label_colour, $collapsed_colour, $bold);
     my $bold_colour = "white";
-    if ($f->{_dup}) {
-      $node_colour = ($f->{_dubious_dup} ? 'turquoise' : 'red3');
+    if ($f->{_node_type} eq 'duplication') {
+      $node_colour = 'red3';
+    } elsif ($f->{_node_type} eq 'dubious') {
+      $node_colour = 'turquoise';
+    } elsif ($f->{_node_type} eq 'gene_split') {
+      $node_colour = 'SandyBrown';
     }
 
     if ($f->{label}) {
@@ -211,6 +215,17 @@ sub _init {
             'href'   => $node_href,
           });
       push @node_glyphs, $node_glyph;
+      if ($f->{_node_type} eq 'gene_split') {
+        push @node_glyphs, Sanger::Graphics::Glyph::Rect->new
+            ({
+              'x'         => $f->{x},
+              'y'         => $f->{y},
+              'width'     => 5,
+              'height'    => 5,
+              'bordercolour' => 'navyblue',
+              'href'      => $node_href,
+            });
+      }
 
     }
     elsif( $f->{_child_count} ){ # Expanded internal node
@@ -222,7 +237,7 @@ sub _init {
             'width'     => 5 + 2 * $bold,
             'height'    => 5 + 2 * $bold,
             'colour'    => $node_colour,
-            'zindex'    => ($f->{_dup} ? 40 : -20),
+            'zindex'    => ($f->{_node_type} ne 'speciation' ? 40 : -20),
             'href'      => $node_href
           });
       push @node_glyphs, $node_glyph;
@@ -234,10 +249,22 @@ sub _init {
               'width'     => 5,
               'height'    => 5,
               'bordercolour' => "white",
-              'zindex'    => ($f->{_dup} ? 40 : -20),
+              'zindex'    => ($f->{_node_type} ne 'speciation' ? 40 : -20),
               'href'      => $node_href
             });
         push @node_glyphs, $node_glyph;
+      }
+      if ($f->{_node_type} eq 'gene_split') {
+        push @node_glyphs, Sanger::Graphics::Glyph::Rect->new
+            ({
+              'x'         => $f->{x},
+              'y'         => $f->{y},
+              'width'     => 5,
+              'height'    => 5,
+              'bordercolour' => 'navyblue',
+              'zindex'    => -20,
+              'href'      => $node_href,
+            });
       }
 
     }
@@ -492,8 +519,7 @@ sub features {
   my $f = {
     _distance    => $distance,
     _x_offset    => $x_offset,
-    _dup         => $tree->get_tagvalue('Duplication'),
-    _dubious_dup => $tree->get_tagvalue('dubious_duplication'),
+    _node_type   => $tree->get_tagvalue('node_type'),
     _id          => $node_id, 
     _rank        => $rank++,
     _parent      => $parent_id,

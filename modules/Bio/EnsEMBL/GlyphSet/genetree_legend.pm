@@ -32,6 +32,7 @@ sub render_normal {
     ['speciation node', 'navyblue'],
     ['duplication node', 'red3'],
     ['ambiguous node', 'turquoise'],
+    ['gene split event', 'SandyBrown', 'border'],
   );
   if ($highlight_ancestor) {
     push(@nodes, ['ancestor node', '444444', "bold"]);
@@ -140,12 +141,12 @@ sub render_normal {
 
   ($x, $y) = (2, 0);
   foreach my $node (@nodes) {
-    my $bold;
-    ($legend, $colour, $bold) = @$node;
-    $bold = 1 if ($bold);
+    my $modifier;
+    ($legend, $colour, $modifier) = @$node;
+    my $bold = (defined $modifier and ($modifier eq 'bold'));
     $self->push($self->Rect({
         'x'         => $im_width * $x/$NO_OF_COLUMNS - $bold,
-        'y'         => $y * ( $th + 3 ) + 5 + $th - $bold,
+        'y'         => $y * ( $th + 3 ) + $th - $bold,
         'width'     => 5 + 2 * $bold,
         'height'    => 5 + 2 * $bold,
         'colour'    => $colour,
@@ -154,14 +155,24 @@ sub render_normal {
     if ($bold) {
       $self->push($self->Rect({
             'x'         => $im_width * $x/$NO_OF_COLUMNS,
-            'y'         => $y * ( $th + 3 ) + 5 + $th,
+            'y'         => $y * ( $th + 3 ) + $th,
             'width'     => 5,
             'height'    => 5,
             'bordercolour' => "white",
           })
         );
     }
-    $label = $self->_create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH - 20, $th, $fontsize, $fontname, $legend);
+    if (defined $modifier and ($modifier eq 'border')) {
+      $self->push($self->Rect({
+            'x'         => $im_width * $x/$NO_OF_COLUMNS - $bold,
+            'y'         => $y * ( $th + 3 ) + $th - $bold,
+            'width'     => 5 + 2 * $bold,
+            'height'    => 5 + 2 * $bold,
+            'bordercolour' => 'navyblue',
+          })
+        );
+    }
+    $label = $self->_create_label($im_width, $x, $y - 4 / ($th+3), $NO_OF_COLUMNS, $BOX_WIDTH - 20, $th, $fontsize, $fontname, $legend);
     $self->push($label);
     $y++;
   }
