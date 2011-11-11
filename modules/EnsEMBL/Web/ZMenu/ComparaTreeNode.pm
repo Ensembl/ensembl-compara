@@ -50,7 +50,7 @@ sub content {
   # Bootstrap
   $self->add_entry({
     type => 'Bootstrap',
-    label => $tagvalues->{'Bootstrap'},
+    label => (defined $tagvalues->{'bootstrap'} ? $tagvalues->{'bootstrap'} : "NA"),
     order => 4
   });
 
@@ -123,20 +123,28 @@ sub content {
     }
   } else {
     # Duplication confidence
-    my $dup = $tagvalues->{'Duplication'};
+    my $node_type = $tagvalues->{'node_type'};
     
-    if (defined $dup) {
-      my $con = sprintf '%.3f', $tagvalues->{'duplication_confidence_score'} || $dup || 0;
+    if (defined $node_type) {
+      my $con = sprintf '%.3f', $tagvalues->{'duplication_confidence_score'} || 0;
       
-      $con = 'dubious' if $tagvalues->{'dubious_duplication'};
+      $con = 'dubious' if $node_type eq 'dubious';
       
       $self->add_entry({
         type  => 'Type',
-        label => $dup ? "Duplication (confidence $con)" : 'Speciation',
+        label => ($node_type eq 'speciation') ? 'Speciation' : "Duplication (confidence $con)",
         order => 5
       });
     }
     
+    if (defined $tagvalues->{'tree_support'}) {
+      $self->add_entry({
+        type  => 'Support',
+        label => $tagvalues->{'tree_support'},
+        order => 5.5
+      });
+    }
+
     if ($node->stable_id) {
       # GeneTree StableID
       $self->add_entry({

@@ -76,6 +76,10 @@ sub content {
         <dd>%s</dd>
       </dl>
       <dl class="summary">
+        <dt style="width:15em">Number of speciation nodes</dt>
+        <dd>%s</dd>
+      </dl>
+      <dl class="summary">
         <dt style="width:15em">Number of duplication nodes</dt>
         <dd>%s</dd>
       </dl>
@@ -83,12 +87,18 @@ sub content {
         <dt style="width:15em">Number of ambiguous nodes</dt>
         <dd>%s</dd>
       </dl>
+      <dl class="summary">
+        <dt style="width:15em">Number of gene split events</dt>
+        <dd>%s</dd>
+      </dl>
       <p>&nbsp;</p>
     ',
     $link,
     scalar(@$leaves),
-    $self->get_num_nodes_with_tag($tree, 'Duplication', undef, [ 'dubious_duplication' ]),
-    $self->get_num_nodes_with_tag($tree, 'dubious_duplication', 1),
+    $self->get_num_nodes_with_tag($tree, 'node_type', 'speciation'),
+    $self->get_num_nodes_with_tag($tree, 'node_type', 'duplication'),
+    $self->get_num_nodes_with_tag($tree, 'node_type', 'dubious'),
+    $self->get_num_nodes_with_tag($tree, 'node_type', 'gene_split'),
   );
 
   if ($highlight_gene) {
@@ -290,7 +300,7 @@ sub collapsed_nodes {
     foreach my $tnode(@{$tree->get_all_nodes}) {
       next if $tnode->is_leaf;
       
-      if ($tnode->get_tagvalue('dubious_duplication') || !$tnode->get_tagvalue('Duplication')) {
+      if ($tnode->get_tagvalue('node_type', '') ne 'duplication') {
         $collapsed_nodes{$tnode->node_id} = $tnode;
         next;
       }
