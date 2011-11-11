@@ -132,7 +132,7 @@ sub content {
       
       $self->add_entry({
         type  => 'Type',
-        label => ($node_type eq 'speciation') ? 'Speciation' : "Duplication (confidence $con)",
+        label => (($node_type eq 'gene_split') ? 'Gene split' : (($node_type eq 'speciation') ? 'Speciation' : "Duplication (confidence $con)")),
         order => 5
       });
     }
