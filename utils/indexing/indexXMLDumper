@@ -1201,7 +1201,7 @@ sub GenomicAlignmentLine {
     }
     $xml .= qq(
   </additional_fields>
-</entry);
+</entry>);
   }
   $counter->();
   return $xml;
