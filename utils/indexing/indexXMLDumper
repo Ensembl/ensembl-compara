@@ -115,6 +115,7 @@ else {
 my $index_root = '/nfs/web_data/search/';
 my $file_root = ($search_engine eq 'solr') ? "solr/".lc($sitetype)."_$release" : "lucene/".lc($sitetype)."_$release";
 my $dir = $dir ? $dir : $dump_real ? $index_root.$file_root : 'input';
+
 print LOG "Dumping xml files to $dir\n";
 mkdir $dir, 0777 unless -e "$dir";
 
@@ -299,25 +300,40 @@ sub helpLine {
   $name =~ s/<\/?\w+>//g;
   $name = &clean($name);
 
-  my $xml = qq(
+  my $xml;
+  if ($search_engine eq 'solr') {
+    my $url = '';
+    $xml = qq(
+<doc>
+  <field name="id">$id</field>);
+
+    # feature specific code here
+    $xml .= &common_fields('All',$type,'');
+    $xml .= qq(
+  <field name="domain_url">$url</field>
+</doc>);
+  }
+  else {
+    $xml = qq(
 <entry id="$id">
   <description>$description</description>
   <additional_fields>
     <field name="featuretype">$type</field>
     <field name="displayname">$name</field>);
-  foreach my $kw (@keywords) {
+    foreach my $kw (@keywords) {
+      $xml .= qq(
+    <field name="keyword">$kw</field>);
+    }
+    foreach my $kw (@$extra) {
+      $xml .= qq(
+    <field name="keyword">$kw</field>);
+    }
     $xml .= qq(
-    <field name="keyword">$kw</field>);
-  }
-  foreach my $kw (@$extra) {
-       $xml .= qq(
-    <field name="keyword">$kw</field>);
-  }
-  $xml .= qq(
-  </additional_fields>);
-  $counter->();
-  return $xml . qq(
+  </additional_fields>
 </entry>);
+  }
+  $counter->();
+  return $xml;
 }
 
 ########################################################################## Markers
@@ -376,31 +392,47 @@ LEFT JOIN marker_synonym as ms2 on ms2.marker_synonym_id = m.display_marker_syno
 
 sub markerLine {
   my( $species, $IDS, $params, $counter ) = @_;
+  my $url = '';
   $species =~ s/_/ /;
+  my $xml;
   my @synonyms = sort @$IDS;
   my $key = pop @synonyms;
   my $desc = 'A marker with '.@synonyms.' synonym';
   $desc .= 's' if (@synonyms > 1);
   $desc .= 's' unless (@synonyms);
   return '' unless $key;
-  my $xml = qq(
+  if ($search_engine eq 'solr') {
+    $xml = qq(
+<doc>
+  <field name="id">$key</field>);
+
+    # feature specific code here
+
+    $xml .= &common_fields($species,'Marker','core');
+    $xml .= qq(
+  <field name="domain_url">$url</field>
+</doc>);
+  }
+  else {
+    $xml = qq(
 <entry id="$key">
   <description>$desc</description>
   <additional_fields>);
-  $xml .= &common_fields($species,'Marker');
-  foreach my $syn (@synonyms) {
-    $xml .= qq(
+    $xml .= &common_fields($species,'Marker');
+    foreach my $syn (@synonyms) {
+      $xml .= qq(
     <field name="synonym">$syn</field>);
-  }
-  while (my ($param,$value) = each %$params) {
-    $xml .= qq(
+    }
+    while (my ($param,$value) = each %$params) {
+      $xml .= qq(
     <field name="$param">$value</field>);
-  }
-  $xml .= qq(
-  </additional_fields>);
-  $counter->();
-  return $xml . qq(
+    }
+    $xml .= qq(
+  </additional_fields>
 </entry>);
+  }
+  $counter->();
+  return $xml;
 }
 
 
@@ -492,22 +524,41 @@ sub dumpQTL {
 sub QTLLine {
   my ($species, $key, $pos, $action, $IDS, $desc, $counter ) = @_;
   return '' unless $key;
+
+  my $url = '';
   $species =~ s/_/ /;
-  my $xml = qq(
+
+  my $xml;
+  if ($search_engine eq 'solr') {
+    $xml = qq(
+<doc>
+  <field name="id">$key</field>);
+
+    # feature specific code here
+
+    $xml .= &common_fields($species,'QTL','core');
+    $xml .= qq(
+  <field name="domain_url">$url</field>
+</doc>);
+  }
+  else {
+    $xml = qq(
 <entry id="$key">
   <description>$desc</description>
   <additional_fields>);
-  $xml .= &common_fields($species,'QTL');
-  foreach my $id (@$IDS) {
-    $xml .= qq(
+    $xml .= &common_fields($species,'QTL');
+    foreach my $id (@$IDS) {
+      $xml .= qq(
     <field name="synonym">$id</field>);
-  }
-  $xml .= qq(
+    }
+    $xml .= qq(
     <field name="action">$action</field>
     <field name="location">$pos</field>
-  </additional_fields>);
+  </additional_fields>
+</entry>);
+  }
   $counter->();
-  return $xml . '</entry>';
+  return $xml;
 }
 
 ########################################################################## Variations
@@ -739,10 +790,10 @@ sub dumpVariation {
                        @genes       ? ' Gene Association(s): ' .(join ', ', @genes)      . '.' : '',
                        $failed_desc ? " $failed_desc."                                         : '');
       if ($somatic_mutation){
-        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, $locs, $snp_source, $desc, $counter2 ), $nogzip, $fh2);
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, $locs, $type, $snp_source, $desc, $counter2 ), $nogzip, $fh2);
       }
       else {
-        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, $locs, $snp_source, $desc, $counter ), $nogzip, $fh);
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@genes, \@phenotypes, \@studies, $locs, $type, $snp_source, $desc, $counter ), $nogzip, $fh);
       }
     }
   }
@@ -761,38 +812,82 @@ sub dumpVariation {
 }
 
 sub VariationLine {
-  my ($species, $name, $synonyms, $genes, $phenotypes, $studys, $locs, $source, $desc, $counter ) = @_;
+  my ($species, $name, $synonyms, $genes, $phenotypes, $studys, $type, $locs, $source, $desc, $counter ) = @_;
+  my $url = '';
+  my $url = sprintf(qq(%s/Variation/Summary?v=%s),
+                    $species,
+                    $name);
+
   $species =~ s/_/ /;
-  my $xml = qq(
+
+  my $xml;
+  if ($search_engine eq 'solr') {
+    $xml = qq(
+<doc>
+  <field name="id">$name</field>
+  <field name="description">$desc</field>);
+#
+#Variation originally wanted locations but then found users were following these rather than the real link so don't put in XML#    foreach (@$locs) {
+#      $xml .= qq(
+#    <field name="location">$_</field>);
+#    }
+    foreach (@$synonyms) {
+      $xml .= qq(
+  <field name="synonym">$_</field>);
+    }
+    foreach (@$genes) {
+      $xml .= qq(
+  <field name="assoc_gene">$_</field>);
+    }
+    foreach (@$phenotypes) {
+      $xml .= qq(
+  <field name="phenotype">$_</field>);
+    }
+    foreach (@$studys ) {
+      $xml .= qq(
+  <field name="study">$_</field>);
+    }
+    $xml .= qq(
+  <field name="variation_source">$source</field>);
+    $xml .= &common_fields($species,$type,'variation');
+    $xml .= qq(
+  <field name="domain_url">$url</field>
+</doc>);
+  }
+  else {
+    $xml = qq(
 <entry id="$name">
   <description>$desc</description>
   <additional_fields>);
-  $xml .= &common_fields($species,'Variation');
-  foreach (@$locs) {
-    $xml .= qq(
+    $xml .= &common_fields($species,'Variation');
+    foreach (@$locs) {
+      $xml .= qq(
     <field name="location">$_</field>);
-  }
-  foreach (@$synonyms) {
-    $xml .= qq(
+    }
+    foreach (@$synonyms) {
+      $xml .= qq(
     <field name="synonym">$_</field>);
-  }
-  foreach (@$genes) {
-    $xml .= qq(
+    }
+    foreach (@$genes) {
+      $xml .= qq(
     <field name="assoc_gene">$_</field>);
-  }
-  foreach (@$phenotypes) {
-    $xml .= qq(
+    }
+    foreach (@$phenotypes) {
+      $xml .= qq(
     <field name="phenotype">$_</field>);
-  }
-  foreach (@$studys ) {
-    $xml .= qq(
+    }
+    foreach (@$studys ) {
+      $xml .= qq(
     <field name="study">$_</field>);
-  }
-  $xml .= qq(
+    }
+    $xml .= qq(
     <field name="source">$source</field>
-  </additional_fields>);
+  </additional_fields>
+</entry>);
+  }
+
   $counter->();
-  return $xml . '</entry>';
+  return $xml;
 }
 
 ########################################################################## Variation Phenotypes
@@ -830,16 +925,34 @@ sub dumpVariationPhenotype {
 
 sub VariationPhenLine {
   my ($species, $name, $id, $counter ) = @_;
+
+  my $url = '';
   $species =~ s/_/ /;
-  my $xml = qq(
+  my $xml;
+  if ($search_engine eq 'solr') {
+    $xml = qq(
+<doc>
+  <field name="id">$id</field>);
+
+    # feature specific code here
+
+    $xml .= &common_fields($species,'Phenotype','variation');
+    $xml .= qq(
+  <field name="domain_url">$url</field>
+</doc>);
+  }
+  else {
+    $xml = qq(
 <entry id="$id">
   <description>$name</description>
   <additional_fields>);
-  $xml .= &common_fields($species,'Phenotype');
-  $xml .= qq(
-  </additional_fields>);
+    $xml .= &common_fields($species,'Phenotype');
+    $xml .= qq(
+  </additional_fields>
+</entry>);
+  }
   $counter->();
-  return $xml . '</entry>';
+  return $xml;
 }
 
 ########################################################################## StructuralVariations
@@ -902,27 +1015,45 @@ sub dumpStructuralVariations {
 
 sub StrucVarLine {
   my ($species, $id, $evidence, $location, $desc, $action, $params, $counter ) = @_;
+  my $url = '';
   $species =~ s/_/ /;
-  my $xml = qq(
+
+  my $xml;
+  if ($search_engine eq 'solr') {
+    $xml = qq(
+<doc>
+  <field name="id">$id</field>);
+
+    # feature specific code here
+
+    $xml .= &common_fields($species,'StructuralVariation','variation');
+    $xml .= qq(
+  <field name="domain_url">$url</field>
+</doc>);
+  }
+  else {
+    $xml = qq(
 <entry id="$id">
   <description>$desc</description>
   <additional_fields>);
-  $xml .= &common_fields($species,'StructuralVariation');
-  foreach (split ',', $evidence) {
-    $xml .= qq(
+    $xml .= &common_fields($species,'StructuralVariation');
+    foreach (split ',', $evidence) {
+      $xml .= qq(
     <field name="evidence">$_</field>);
-  }
-  $xml .= qq(
+    }
+    $xml .= qq(
     <field name="location">$location</field>
     <field name="action">$action</field>);
-  while (my ($param,$value) = each %$params) {
-    $xml .= qq(
+    while (my ($param,$value) = each %$params) {
+      $xml .= qq(
     <field name="$param">$value</field>);
+    }
+    $xml .= qq(
+  </additional_fields>
+</entry>);
   }
-  $xml .= qq(
-  </additional_fields>);
   $counter->();
-  return $xml . '</entry>';
+  return $xml;
 }
 
 
@@ -946,7 +1077,9 @@ sub dumpGenomicAlignment {
   my $total_af_c;
   foreach my $db ( sort { $b cmp $a } keys %dbs) {
 
-#    next unless ($db eq 'rnaseq');
+#    warn $db;
+
+    next if ($db eq 'core');
 
     my $counter    = make_counter(0);
     my $dbname     = $dbs{$db};
@@ -1016,34 +1149,62 @@ sub dumpGenomicAlignment {
 
 sub GenomicAlignmentLine {
   my ($species, $id, $desc, $db_name, $db, $ftype, $params, $counter ) = @_;
+
+  #####
+  #url needed for solr (note that %params contains what's needed to switch the track on region in detail
+  #but there's no point in using it since we get to this via Location/Genome and lose the parameter)
+  ####
+  my $url = sprintf(qq(%s/Location/Genome?ftype=%s;id=%s%s),
+                    $species,
+                    $ftype,
+                    $id,
+                    $db ne 'core' ? ";db=$db" : '');
   $species =~ s/_/ /;
-  my $xml = qq(
+  my $xml;
+  if ($search_engine eq 'solr') {
+    $xml = qq(
+<doc>
+  <field name="id">$id</field>
+  <field name="description">$desc</field>);
+    $xml .= &common_fields($species,$ftype,$db);
+    if ($db_name) {
+      $xml .= qq(
+  <field name="external_source">$db_name</field>);
+    }
+    $xml .= qq(
+  <field name="domain_url">$url</field>
+</doc>);
+  }
+  else {
+    $xml = qq(
 <entry id="$id">
   <description>$desc</description>);
-  $xml .= qq(
-  <additional_fields>);
-  if ($db_name) {
     $xml .= qq(
+  <additional_fields>);
+    if ($db_name) {
+      $xml .= qq(
     <field name="xref_source">$db_name</field>
     <field name="xref">$id</field>);
-  }
-  $xml .= &common_fields($species,$ftype);
-  unless ($db eq 'core') {
-    $xml .= qq(
+    }
+    $xml .= &common_fields($species,$ftype);
+    unless ($db eq 'core') {
+      $xml .= qq(
     <field name="db">$db</field>);
-  }
-  while (my ($param,$value) = each %$params) {
-    $xml .= qq(
+    }
+    while (my ($param,$value) = each %$params) {
+      $xml .= qq(
     <field name="$param">$value</field>);
-  }
-  if ( $id =~ /^(\w+)\.\d+$/) {
-    $xml .= qq(
+    }
+    if ( $id =~ /^(\w+)\.\d+$/) {
+      $xml .= qq(
     <field name="non_versioned">$1</field>);
+    }
+    $xml .= qq(
+  </additional_fields>
+</entry);
   }
-  $xml .= qq(
-  </additional_fields>);
   $counter->();
-  return $xml . '</entry>';
+  return $xml;
 }
 
 
@@ -1114,20 +1275,38 @@ sub dumpOligoProbe {
 }
 
 sub OligoProbeLine {
-  my ($species,$hid,$desc,$pset,$db,$counter) = @_;
+  my ($species,$hid,$desc,$pset,$db,$counter) = @_; 
+  my $url = '';
   $species =~ s/_/ /;
-  my $xml = qq(
+
+  my $xml;
+  if ($search_engine eq 'solr') {
+    $xml = qq(
+<doc>
+  <field name="id">$hid</field>);
+
+    # feature specific code here
+
+    $xml .= &common_fields($species,'ProbeFeature',$db);
+    $xml .= qq(
+  <field name="domain_url">$url</field>
+</doc>);
+  }
+  else {
+    $xml = qq(
 <entry id="$hid">
   <description>$desc</description>);
-  $xml .= qq(
+    $xml .= qq(
   <additional_fields>);
-  $xml .= &common_fields($species,'ProbeFeature');
-  $xml .= qq(
+    $xml .= &common_fields($species,'ProbeFeature');
+    $xml .= qq(
     <field name="db">$db</field>
     <field name="ptype">$pset</field>
-  </additional_fields>);
+  </additional_fields>
+</entry>);
+  }
   $counter->();
-  return $xml . '</entry>';
+  return $xml;
 }
 
 
@@ -1188,22 +1367,40 @@ sub dumpDomain {
 
 sub DomainLine {
   my($species, $acc, $desc, $IDS, $count, $counter) = @_;
+  my $url = '';
   $species =~ s/_/ /;
+
   my $ids = join ',', @$IDS;
   my $description = "$desc $count associated external database identifiers: $ids";
-  my $xml = qq(
+  my $xml;
+  if ($search_engine eq 'solr') {
+    $xml = qq(
+<doc>
+  <field name="id">$acc</field>);
+
+    # feature specific code here
+
+    $xml .= &common_fields($species,'Domain','core');
+    $xml .= qq(
+  <field name="domain_url">$url</field>
+</doc>);
+  }
+  else {
+    $xml = qq(
 <entry id="$acc">
   <description>$description</description>
   <additional_fields>);
-  $xml .= &common_fields($species,'Domain');
-  foreach my $id (@$IDS) {
-    $xml .= qq(
+    $xml .= &common_fields($species,'Domain');
+    foreach my $id (@$IDS) {
+      $xml .= qq(
     <field name="synonym">$id</field>);
   }
-  $xml .= qq(
-  </additional_fields>);
+    $xml .= qq(
+  </additional_fields>
+</entry>);
+  }
   $counter->();
-  return $xml . '</entry>';
+  return $xml;
 }
 
 
@@ -1276,17 +1473,35 @@ sub dumpFamily {
 
 sub FamilyLine {
   my($species, $fid, $desc, $counter) = @_;
+  my $url = '';
   $species =~ s/_/ /;
-  my $xml = qq(
+
+  my $xml;
+  if ($search_engine eq 'solr') {
+    $xml = qq(
+<doc>
+  <field name="id">$fid</field>);
+
+    # feature specific code here
+
+    $xml .= &common_fields($species,'Family','core');
+    $xml .= qq(
+  <field name="domain_url">$url</field>
+</doc>);
+  }
+  else {
+    $xml = qq(
 <entry id="$fid">
   <description>$desc</description>);
-  $xml .= qq(
+    $xml .= qq(
   <additional_fields>);
-  $xml .= &common_fields($species,'Family');
-  $xml .= qq(
-  </additional_fields>);
+    $xml .= &common_fields($species,'Family');
+    $xml .= qq(
+  </additional_fields>
+</entry>);
+  }
   $counter->();
-  return $xml . '</entry>';
+  return $xml;
 }
 
 ########################################################################## Sequences
@@ -1296,41 +1511,32 @@ sub dumpSequence {
   my $sanger = sanger_project_names( $conf );
   my @misc_feat_disallowed = (); #features that we know we don't want to dump if we ever decide to do this (not implemented)
   my @name_order = (qw(name well_name clone_name sanger_project synonym embl_acc)); #defines the order of attribute_type we use to get the name for misc_features (comes from B::E::G::_clone.pm)
-  my $COREDB   = $conf->{'dbs'}->{'DATABASE_CORE'};
-  my $OTFEATDB = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
-  my %dbs      = ( 'core' => $COREDB );
-  $dbs{'otherfeatures'} =  $OTFEATDB if $OTFEATDB;
+  my $dbname    = $conf->{'dbs'}{'DATABASE_CORE'};
+  my $counter   = make_counter(0);
+  my $dbspecies = $conf->{'species'};
+  my $file = $conf->{'directory'}."/${dbname}_Sequence.xml";
+  $file .= ".gz" unless $nogzip;
+  my $start_time = time;
+  my $db = 'core';
+  my $fh;
+  unless ($nogzip) {
+    $fh = new IO::Zlib;
+    $fh->open( "$file", "wb9" )
+      or die("Can't open compressed stream to $file: $!");
+  }
+  else {
+    open( $fh, ">$file" ) or die "Can't open $file: $!";
+  }
+  print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+  header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
 
-  my $total_c;
- DB:
-  foreach my $db ( sort { $b cmp $a } keys %dbs) {
-    my $dbname    = $dbs{$db};
-    my $counter   = make_counter(0);
-    my $dbspecies = $conf->{'species'};
-    my $file = $conf->{'directory'}."/${dbname}_Sequence.xml";
-    $file .= ".gz" unless $nogzip;
-    my $start_time = time;
-    my $fh;
-    unless ($nogzip) {
-      $fh = new IO::Zlib;
-      $fh->open( "$file", "wb9" )
-        or die("Can't open compressed stream to $file: $!");
-    }
-    else {
-      open( $fh, ">$file" ) or die "Can't open $file: $!";
-    }
-    print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
-    header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
+  my $lrgs = &findLRGs($conf);
+  if (@$lrgs) {
+    &sort_lrgs($dbspecies,'Sequence',$fh,$lrgs);
+  }
 
-    if ($db eq 'core') {
-      my $lrgs = &findLRGs($conf);
-      if (@$lrgs) {
-        &sort_lrgs($dbspecies,'Sequence',$fh,$lrgs);
-      }
-    }
-
-    #get all types of misc features - used for 'type' label
-    my $feat_types = $conf->{'dbh'}->selectall_hashref(qq(
+  #get all types of misc features - used for 'type' label
+  my $feat_types = $conf->{'dbh'}->selectall_hashref(qq(
                   SELECT ms.code, ms.misc_set_id, ma.value as type 
                     FROM $dbname.attrib_type at, $dbname.misc_attrib ma, $dbname.misc_feature_misc_set mfms, $dbname.misc_set ms
                    WHERE at.attrib_type_id = ma.attrib_type_id
@@ -1338,10 +1544,10 @@ sub dumpSequence {
                      AND mfms.misc_set_id = ms.misc_set_id 
                      AND at.code = 'type'
                    GROUP by ms.code, ma.value), 'misc_set_id');
-    if (%$feat_types) {
-      my $mapsets = join ',', keys %$feat_types;
-      #get all misc_features
-      my $sth = $conf->{'dbh'}->prepare(qq(
+  if (%$feat_types) {
+    my $mapsets = join ',', keys %$feat_types;
+    #get all misc_features
+    my $sth = $conf->{'dbh'}->prepare(qq(
        SELECT mf.misc_feature_id, sr.name, cs.name, mf.seq_region_start, mf.seq_region_end,
               mf.seq_region_end-mf.seq_region_start+1 as len, ms.misc_set_id, at.code, ma.value
          FROM $dbname.misc_feature_misc_set as ms,
@@ -1357,60 +1563,55 @@ sub dumpSequence {
           AND mf.misc_feature_id = ma.misc_feature_id
           AND ma.attrib_type_id = at.attrib_type_id
         ORDER by mf.misc_feature_id, at.code));
-      $sth->execute();
+    $sth->execute();
 
-      my ($old_ID,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$NAMES,$ftype);
-      while( my($ID,$sr,$sr_type,$start,$end,$len,$ms_id,$code,$val) = $sth->fetchrow_array() ) {
-        if($ID == $old_ID) {
-          if (! $ftype && $code eq 'type') {
-            $ftype = $feat_types->{$ms_id}{'type'};
-            #some hacks for the display of the type
-            $ftype =~ s/_/ /;
-            $ftype =~ s/arrayclone/clone/;
-            $ftype = ucfirst($ftype);
-          }
-          if (grep {$code eq $_} @name_order) {
-            push @$NAMES, [$code,$val];
-          }
+    my ($old_ID,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$NAMES,$ftype);
+    while( my($ID,$sr,$sr_type,$start,$end,$len,$ms_id,$code,$val) = $sth->fetchrow_array() ) {
+      if($ID == $old_ID) {
+        if (! $ftype && $code eq 'type') {
+          $ftype = $feat_types->{$ms_id}{'type'};
+          #some hacks for the display of the type
+          $ftype =~ s/_/ /;
+          $ftype =~ s/arrayclone/clone/;
+          $ftype = ucfirst($ftype);
         }
-        else {
-          if ($old_ID) {
-            my ($name, $synonyms) = &sort_mf_names($NAMES,\@name_order);
-            &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,[],$ftype,$sanger,$counter), $nogzip, $fh);
-            $NAMES = undef;
-            $ftype = undef;
-          }
-          if (! $ftype && $code eq 'type') {
-            $ftype = $feat_types->{$ms_id}{'type'};
-            $ftype =~ s/_/ /;
-            $ftype =~ s/arrayclone/clone/;
-            $ftype = ucfirst($ftype);
-          }
-          if (grep {$code eq $_} @name_order) {
-            push @$NAMES, [$code,$val];
-          }
-          ($old_ID,$old_sr,$old_sr_type,$old_start,$old_end,$old_len) = ($ID,$sr,$sr_type,$start,$end,$len);
+        if (grep {$code eq $_} @name_order) {
+          push @$NAMES, [$code,$val];
         }
       }
-      my ( $name, $synonyms) = sort_mf_names($NAMES,\@name_order);
-      &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,[],$ftype,$sanger,$counter), $nogzip, $fh);
-
+      else {
+        if ($old_ID) {
+          my ($name, $synonyms) = &sort_mf_names($NAMES,\@name_order);
+          &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,[],$ftype,$sanger,$counter), $nogzip, $fh);
+          $NAMES = undef;
+          $ftype = undef;
+        }
+        if (! $ftype && $code eq 'type') {
+          $ftype = $feat_types->{$ms_id}{'type'};
+          $ftype =~ s/_/ /;
+          $ftype =~ s/arrayclone/clone/;
+          $ftype = ucfirst($ftype);
+        }
+        if (grep {$code eq $_} @name_order) {
+          push @$NAMES, [$code,$val];
+        }
+        ($old_ID,$old_sr,$old_sr_type,$old_start,$old_end,$old_len) = ($ID,$sr,$sr_type,$start,$end,$len);
+      }
     }
-    if ($db ne 'core') {
-      $total_c += footer( $counter->(),$nogzip,$fh);
-      next DB;
-    };
+    my ( $name, $synonyms) = sort_mf_names($NAMES,\@name_order);
+    &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,[],$ftype,$sanger,$counter), $nogzip, $fh);
+  }
 
-    #identify current default top level
-    (my $current_cs_id) = $conf->{'dbh'}->selectrow_array(qq(
+  #identify current default top level
+  (my $current_cs_id) = $conf->{'dbh'}->selectrow_array(qq(
        SELECT cs.coord_system_id
          FROM coord_system cs, meta m
         WHERE cs.version = m.meta_value
           AND cs.name = 'chromosome'
           AND m.meta_key = 'assembly.default'));
 
-    #get mappings between toplevel assemblies - used to check there are no name changes on the different assemblies
-    my $sth = $conf->{'dbh'}->prepare(qq(
+  #get mappings between toplevel assemblies - used to check there are no name changes on the different assemblies
+  my $sth = $conf->{'dbh'}->prepare(qq(
        SELECT distinct sr1.name, sr1.length, sr2.name, cs2.coord_system_id
          FROM coord_system cs1, seq_region sr1, assembly a, seq_region sr2, coord_system cs2
         WHERE cs1.coord_system_id = sr1.coord_system_id
@@ -1419,79 +1620,76 @@ sub dumpSequence {
           AND sr2.coord_system_id = cs2.coord_system_id
           AND cs1.name = 'chromosome'
           AND cs2.name = 'chromosome'));
-    my $mapped_ids;
-    $sth->execute;
-    while (my ($new_name,$new_length,$prev_name,$prev_coord_system_id) =  $sth->fetchrow_array() ) {
-      $mapped_ids->{$prev_coord_system_id}{$prev_name}{'name'}   = $new_name;
-      $mapped_ids->{$prev_coord_system_id}{$prev_name}{'length'} = $new_length;
-    }
+  my $mapped_ids;
+  $sth->execute;
+  while (my ($new_name,$new_length,$prev_name,$prev_coord_system_id) =  $sth->fetchrow_array() ) {
+    $mapped_ids->{$prev_coord_system_id}{$prev_name}{'name'}   = $new_name;
+    $mapped_ids->{$prev_coord_system_id}{$prev_name}{'length'} = $new_length;
+  }
 
-    #for vega - get ensembl chromosome names if they're different from the vega names
-    my %enames = {};
-    if ($sitetype eq 'Vega') {
-      $sth = $conf->{'dbh'}->prepare(qq(
+  #for vega - get ensembl chromosome names if they're different from the vega names
+  my %enames = {};
+  if ($sitetype eq 'Vega') {
+    $sth = $conf->{'dbh'}->prepare(qq(
        SELECT sr.name, sra.value
          FROM seq_region sr, seq_region_attrib sra, attrib_type at
         WHERE sr.seq_region_id = sra.seq_region_id
           AND sra.attrib_type_id = at.attrib_type_id
           AND sr.name != sra.value
           AND at.code = 'ensembl_name'));
-      $sth->execute;
-      while (my ($v_name, $e_name) = $sth->fetchrow_array() ) {
-        $enames{$v_name} = $e_name;
-      }
+    $sth->execute;
+    while (my ($v_name, $e_name) = $sth->fetchrow_array() ) {
+      $enames{$v_name} = $e_name;
     }
+  }
 
-    #get all seq_regions
-    $sth = $conf->{'dbh'}->prepare(qq(
+  #get all seq_regions
+  $sth = $conf->{'dbh'}->prepare(qq(
        SELECT sr.name, sr.length, cs.name, cs.coord_system_id, srs.synonym
          FROM coord_system as cs, seq_region as sr
          LEFT JOIN seq_region_synonym as srs on sr.seq_region_id = srs.seq_region_id
         WHERE sr.coord_system_id = cs.coord_system_id));
-    $sth->execute();
-    my ($old_name,$old_type,$old_length);
-    my $synonyms = [];
-    my $other_names = [];
-    while( my($name,$length,$type,$cs_id,$syn) = $sth->fetchrow_array() ) {
-      my ($prev_name,$prev_length,$mapping_text);
-      next if $type eq 'lrg';
-      if ($type eq 'chromosome' && $cs_id != $current_cs_id) {
-        # if this is an old seq_region mapped to a new one of the same name then skip it
-        if ($mapped_ids->{$cs_id}{$name}) {
-          $prev_name   = $mapped_ids->{$cs_id}{$name}{'name'};
-          if ($prev_name ne $name) {
-            print LOG "WARNING: found assembly mapped seq_region $prev_name instead of $name - please check this is correct since this we haven't come across this before\n";
-          }
-          next;
+  $sth->execute();
+  my ($old_name,$old_type,$old_length);
+  my $synonyms = [];
+  my $other_names = [];
+  while( my($name,$length,$type,$cs_id,$syn) = $sth->fetchrow_array() ) {
+    my ($prev_name,$prev_length,$mapping_text);
+    next if $type eq 'lrg';
+    if ($type eq 'chromosome' && $cs_id != $current_cs_id) {
+      # if this is an old seq_region mapped to a new one of the same name then skip it
+      if ($mapped_ids->{$cs_id}{$name}) {
+        $prev_name   = $mapped_ids->{$cs_id}{$name}{'name'};
+        if ($prev_name ne $name) {
+          print LOG "WARNING: found assembly mapped seq_region $prev_name instead of $name - please check this is correct since this we haven't come across this before\n";
         }
-        else {
-          print LOG "Not dumping $name on coord_system $cs_id since it's an old assembly with no mapping\n";
-          next;
-        }
-      }
-      if ($old_name eq $name) {
-	push @$synonyms, $syn if $syn;
+        next;
       }
       else {
-	if ($old_name) {
-	  &p( SeqLine($dbspecies,$old_name,$old_type,1,$old_length,$old_length,$old_name,$synonyms,$other_names,$old_type,$sanger,$counter), $nogzip, $fh);
-	}
-	$old_name = $name;
-	$old_type = $type;
-	$old_length = $length;
-	$synonyms = [];
-        $other_names = [];
-        if (my $ename = $enames{$name}) {
-          push @$other_names, $ename;
-        }
-        push @$synonyms, $syn if $syn;
+        print LOG "Not dumping $name on coord_system $cs_id since it's an old assembly with no mapping\n";
+        next;
       }
     }
-    &p( SeqLine($dbspecies,$old_name,$old_type,1,$old_length,$old_length,$old_name,$synonyms,$other_names,$old_type,$sanger,$counter), $nogzip, $fh);
-
-    $total_c += footer( $counter->(),$nogzip,$fh);
+    if ($old_name eq $name) {
+      push @$synonyms, $syn if $syn;
+    }
+    else {
+      if ($old_name) {
+        &p( SeqLine($dbspecies,$old_name,$old_type,1,$old_length,$old_length,$old_name,$synonyms,$other_names,$old_type,$sanger,$counter), $nogzip, $fh);
+      }
+      $old_name = $name;
+      $old_type = $type;
+      $old_length = $length;
+      $synonyms = [];
+      $other_names = [];
+      if (my $ename = $enames{$name}) {
+        push @$other_names, $ename;
+      }
+      push @$synonyms, $syn if $syn;
+    }
   }
-  return $total_c;
+  &p( SeqLine($dbspecies,$old_name,$old_type,1,$old_length,$old_length,$old_name,$synonyms,$other_names,$old_type,$sanger,$counter), $nogzip, $fh);
+  return footer( $counter->(),$nogzip,$fh);
 }
 
 #decide which of the possible many name entries we should be using, the rest will be synonyms
@@ -1513,7 +1711,11 @@ sub sort_mf_names {
 
 sub SeqLine {
   my($species,$sr,$sr_type,$start,$end,$len,$name,$synonyms,$other_names,$type,$sanger,$counter) = @_;
+
+  my $url = '';
+
   $species =~ s/_/ /;
+
   print LOG "WARNING: no type set for $name" unless $type;
   my $action = $len > 0.5e6 ? 'Overview' : 'View';
   my $r = "$sr:$start-$end";
@@ -1541,23 +1743,40 @@ sub SeqLine {
 
   $desc .= $extra_desc;
 
-  my $xml = qq(
+  my $xml;
+  if ($search_engine eq 'solr') {
+    $xml = qq(
+<doc>
+  <field name="id">$name</field>);
+
+    # feature specific code here
+
+    $xml .= &common_fields($species,'Sequence','core');
+    $xml .= qq(
+  <field name="domain_url">$url</field>
+</doc>);
+  }
+
+  else {
+    $xml = qq(
 <entry id="$name">
   <description>$desc</description>);
-  $xml .= qq(
+    $xml .= qq(
   <additional_fields>);
-  $xml .= &common_fields($species,'Sequence');
-  $xml .= qq(
+    $xml .= &common_fields($species,'Sequence');
+    $xml .= qq(
     <field name="location">$r</field>
     <field name="action">$action</field>);
-  foreach my $syn (@$synonyms, @$other_names) {
-    $xml .= qq(
+    foreach my $syn (@$synonyms, @$other_names) {
+      $xml .= qq(
     <field name="synonym">$syn</field>);
+    }
+    $xml .= qq(
+  </additional_fields>
+</entry>);
   }
-  $xml .= qq(
-  </additional_fields>);
   $counter->();
-  return $xml . '</entry>';
+  return $xml;
 }
 
 #retrieve sanger project name details
@@ -1852,7 +2071,7 @@ sub dumpGene {
     while (0) {
       $other_count = 0;
       my %unmapped_queries = (
-      'None' => qq(
+        'None' => qq(
       select a.logic_name, e.db_display_name,
              uo.identifier, ur.summary_description,
              'Not mapped'
@@ -1863,7 +2082,7 @@ sub dumpGene {
              uo.unmapped_reason_id = ur.unmapped_reason_id and
                uo.ensembl_id = 0
     ),
-      'Transcript' => qq(
+        'Transcript' => qq(
       select a.logic_name, e.db_display_name,
              uo.identifier, ur.summary_description,
              concat( 'Transcript: ', tsi.stable_id, '; Gene: ',gsi.stable_id )
@@ -1878,7 +2097,7 @@ sub dumpGene {
              t.transcript_id = tsi.transcript_id and
              t.gene_id       = gsi.gene_id
     ),
-      'Translation' => qq(
+        'Translation' => qq(
       select a.logic_name, e.db_display_name, uo.identifier, ur.summary_description,
              concat( 'Protein: ',trsi.stable_id,'; Transcript: ', tsi.stable_id, '; Gene: ',gsi.stable_id )
         from $dbname.analysis as a, $dbname.external_db as e, $dbname.unmapped_object as uo,
@@ -2468,8 +2687,6 @@ sub StableIdMappingLine {
   return $xml;
 }
 
-
-
 ########################################################################## Regulatory Features
 
 sub dumpRegulatoryFeature {
@@ -2545,25 +2762,43 @@ sub dumpRegulatoryFeature {
 
 sub RegulatoryFeatureLine {
   my ($species,$desc,$id,$ids,$ftype,$params,$db,$counter) = @_;
+
+  my $url = '';
   $species =~ s/_/ /;
-  my $xml = qq(
+
+  my $xml;
+  if ($search_engine eq 'solr') {
+    $xml = qq(
+<doc>
+  <field name="id">$id</field>);
+
+    # feature specific code here
+
+    $xml .= &common_fields($species,$ftype,'regulatoryfeatures');
+    $xml .= qq(
+  <field name="domain_url">$url</field>
+</doc>);
+  }
+  else {
+    $xml = qq(
 <entry id="$id">
   <description>$desc</description>
   <additional_fields>);
-  $xml .= &common_fields($species,$ftype);
-  foreach my $syn (@$ids) {
-    $xml .= qq(
+    $xml .= &common_fields($species,$ftype);
+    foreach my $syn (@$ids) {
+      $xml .= qq(
     <field name="synonym">$syn</field>);
-  }
-  while (my ($param,$value) = each %$params) {
-    $xml .= qq(
+    }
+    while (my ($param,$value) = each %$params) {
+      $xml .= qq(
     <field name="$param">$value</field>);
-  }
-  $xml .= qq(
-  </additional_fields>);
-  $counter->();
-  return $xml . qq(
+    }
+    $xml .= qq(
+  </additional_fields>
 </entry>);
+  }
+    $counter->();
+    return $xml;
 }
 
 ########################################################################## LRGs
@@ -2613,25 +2848,43 @@ sub sort_lrgs {
 
 sub LRGLine {
   my ($species,$type,$gsi,$dbkey,$dbname,$tsids,$length) = @_;
+
+  my $url = '';
   $species =~ s/_/ /;
   my $description = "$gsi is a fixed reference sequence of length $length with a fixed transcript(s) for reporting purposes. It was created for $dbname gene $dbkey";
-  my $xml = qq(
+  my $xml;
+  if ($search_engine eq 'solr') {
+    $xml = qq(
+<doc>
+  <field name="id">$gsi</field>);
+
+    # feature specific code here
+
+    $xml .= &common_fields($species,$type,'core');
+    $xml .= qq(
+  <field name="domain_url">$url</field>
+</doc>);
+  }
+  else {
+    $xml = qq(
 <entry id="$gsi">
   <description>$description</description>);
-  $xml .= qq(
-  <additional_fields>);
-  $xml .= qq(
-    <field name="xref">$dbkey</field>);
-  $xml .= &common_fields($species,$type);
-  $xml .= qq(
-    <field name="action">LRG_Summary</field>);
-  foreach my $tsi (@$tsids) {
     $xml .= qq(
+  <additional_fields>);
+    $xml .= qq(
+    <field name="xref">$dbkey</field>);
+    $xml .= &common_fields($species,$type);
+    $xml .= qq(
+    <field name="action">LRG_Summary</field>);
+    foreach my $tsi (@$tsids) {
+      $xml .= qq(
     <field name="transcript">$tsi</field>);
-  }
-  return $xml . qq(
+    }
+    $xml .= qq(
   </additional_fields>
 </entry>);
+  }
+  return $xml
 }
 
 #######################################################################
@@ -2711,24 +2964,33 @@ sub footer {
 sub common_fields {
   my ($species,$feature_type,$db) = @_;
   my $xml;
-  my $sci_name = $conf->{'species_sci_name'};
-
   if ($search_engine eq 'solr') {
     my $species_name = $conf->{'species_common_name'};
     my $boost = '';
     if (my $boost_value = $species_boost{$species_name}) {
       $boost = ' boost="'.$boost_value.'"';
     }
-    $sci_name =~ s/_/ /g;
     $xml = qq(
   <field name="site">$website_url</field>
+  <field name="feature_type">$feature_type</field>);
+    if ($species eq 'ALL') {
+      $xml .= qq(
+  <field name="species">All</field>);
+    }
+    else {
+      $xml .= qq(
   <field name="species"$boost>$species_name</field>
-  <field name="species_name">$sci_name</field>
-  <field name="feature_type">$feature_type</field>
+  <field name="species_name">$species</field>);
+    }
+    if ($db) {
+      $xml .= qq(
   <field name="database_type">$db</field>);
+    }
   }
-  elsif ($search_engine eq 'lucene') {
+
+  else {
     my $sp_common_name = $conf->{'species_common_name'};
+    my $sci_name = $conf->{'species_sci_name'};
     $xml = qq(
     <field name="species">$species</field>
     <field name="species_name">$sci_name</field>
