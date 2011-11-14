@@ -333,7 +333,12 @@ sub _init {
            'absolutey' => 1,
          });
 			} elsif($tag->{'style'} eq 'bound_triangle_left') {
-				 my $x       = $tag->{start} - ($h/2)/$pix_per_bp;
+				 my $x = $tag->{start};
+				 if ($tag->{'out'}) {
+				   $x += ($h/10)/$pix_per_bp;
+				 } else {
+				   $x -= ($h/1.6)/$pix_per_bp;
+				 }
 				 my $y       = $h/2;
 				 my $height  = $y/$pix_per_bp;
 				 
@@ -351,7 +356,12 @@ sub _init {
          		});
 				 }
 			} elsif($tag->{'style'} eq 'bound_triangle_right') {
-				 my $x       = $tag->{start} + ($h/2)/$pix_per_bp;
+			   my $x = $tag->{start};
+				 if ($tag->{'out'}) {
+				   $x -= ($h/10)/$pix_per_bp;
+				 } else {
+				   $x += ($h/1.6)/$pix_per_bp;
+				 }
 				 my $y       = $h/2;
 				 my $height  = $y/$pix_per_bp;
 				 
