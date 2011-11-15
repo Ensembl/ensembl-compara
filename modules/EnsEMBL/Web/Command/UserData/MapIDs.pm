@@ -10,6 +10,7 @@ use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
+  my $hub = $self->hub;
   my $object = $self->object;
   my $url = $object->species_path($object->data_species).'/UserData/PreviewConvertIDs';
   my $param;
@@ -24,7 +25,7 @@ sub process {
   foreach my $file_name (@files) {
     next unless $file_name;
     my ($file, $name) = split(':', $file_name);
-    my $data = $object->fetch_userdata_by_id($file);
+    my $data = $hub->fetch_userdata_by_id($file);
     my ($ids, $unmapped) = @{$object->get_stable_id_history_data($file, $size_limit)};
     $output .= process_data($ids); 
     $output .= $self->add_unmapped($unmapped);

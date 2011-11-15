@@ -773,7 +773,7 @@ sub _save_genomic_features {
 
 sub get_stable_id_history_data {
   my ($self, $file, $size_limit) = @_;
-  my $data = $self->fetch_userdata_by_id($file);
+  my $data = $self->hub->fetch_userdata_by_id($file);
   my (@fs, $class, $output, %stable_ids, %unmapped);
 
   if (my $parser = $data->{'parser'}) { 

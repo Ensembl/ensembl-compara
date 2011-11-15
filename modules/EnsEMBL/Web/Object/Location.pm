@@ -586,7 +586,7 @@ sub _generic_create {
 
 sub get_tracks {
   my ($self, $key) = @_;
-  my $data = $self->fetch_userdata_by_id($key);
+  my $data = $self->hub->fetch_userdata_by_id($key);
   my $tracks = {};
 
   if (my $parser = $data->{'parser'}) {

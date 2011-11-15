@@ -659,8 +659,7 @@ sub get_user_data {
   my $self = shift; 
   my $format = shift;
   
-  my $hub    = $self->hub;
-  my $object = $self->get_object;   
+  my $hub  = $self->hub;
   my $user = $hub->user;
   my (@fs, $class, $start, $end, $seqname);
   
@@ -670,7 +669,7 @@ sub get_user_data {
      next unless ($row->{'code'} && $row->{'format'} eq $format);
      my $file = 'temp-upload-'.$row->{'code'};
      my $name = $row->{'name'};
-     my $data = $object->fetch_userdata_by_id($file);     
+     my $data = $hub->fetch_userdata_by_id($file);     
   
      if (my $parser = $data->{'parser'}) {
        foreach my $type (keys %{$parser->{'tracks'}}) {

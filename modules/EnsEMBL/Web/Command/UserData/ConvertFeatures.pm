@@ -30,7 +30,7 @@ sub process {
   foreach my $id (grep $_, $hub->param('convert_file')) {
     ## Get data for remapping
     my ($file, $name) = split ':', $id;
-    my $data     = $object->fetch_userdata_by_id($file);
+    my $data     = $hub->fetch_userdata_by_id($file);
     my $parser   = $data->{'parser'};
     my $skip     = join '|', map "^$_\$", qw(_type source feature_type score frame);
     my $exporter = new EnsEMBL::Web::Object::Export($hub);
