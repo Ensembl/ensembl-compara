@@ -68,7 +68,7 @@ sub _render_features {
   }
 
   ## Add in userdata tracks
-  my $user_features = $image_config->create_user_features;
+  my $user_features = $image_config ? $image_config->create_user_features : {};
   while (my ($key, $data) = each (%$user_features)) {
     while (my ($analysis, $track) = each (%$data)) {
       foreach my $feature (@{$track->{'features'}}) {
