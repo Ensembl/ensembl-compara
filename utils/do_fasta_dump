@@ -49,6 +49,8 @@ our $cdna_ssaha_server = sub { $_[0]%2 ? 'ensarc-1-11' : 'ensarc-1-12' };
 our $no_data;
 our $no_dumpdata;
 my ($no_compress, $no_log, $no_indexes, $no_ssaha, $no_remotedirs, $no_blat);
+my $seq_id_prefix = '';
+my $no_subdirs;
 our @TYPES;
 our $release;
 my (@SPECIES, @DATABASES);
@@ -57,7 +59,6 @@ my ($logfile, $email);
 my $minimise_memory;
 my ($start_with, $end_with);
 my ($help, $info);
-
 
 &GetOptions(
   'type:s'          => \@TYPES,        # obligatory
@@ -82,6 +83,9 @@ my ($help, $info);
   'end_with:s'      => \$end_with,     # optional
   'help'            => \$help,         # info
   'info'            => \$info,
+  
+  'seq_id_prefix:s' => \$seq_id_prefix, # optional
+  'no_subdirs' => \$no_subdirs, # optional 
 ) || pod2usage(2);
 
 pod2usage(-verbose => 2) if $info;
@@ -113,11 +117,15 @@ if( my $sitedefs_release =  $SiteDefs::ENSEMBL_VERSION ne $release) {
 
 my $blast_dir = $SPECIES_DEFS->get_config($SPECIES[0],"ENSEMBL_BLAST_DATA_PATH");
 
-if( $blast_dir !~ /$release/ ) {
-  if( $TYPES[0] eq 'all') {
-    die "[*DIE] Ensembl release version requested is $release but blast dir is configured to be $blast_dir";
+unless (grep /ensemblgenomes/, @TYPES) { # don't want these checks for EG - are they even relevent for Ensembl any more?
+  if( $blast_dir !~ /$release/ ) {
+    if( $TYPES[0] eq 'all') {
+      die "[*DIE] Ensembl release version requested is $release but blast dir is configured to be $blast_dir";
+    }
+    utils::Tool::warning (1, "WILL PUSH BLAST FILES TO $blast_dir.  Kill job if not correct.");
   }
-  utils::Tool::warning (1, "WILL PUSH BLAST FILES TO $blast_dir.  Kill job if not correct.");
+  
+  info(2, "Will push blast files to $blast_dir") unless $no_indexes;
 }
 
 # Times and log file
@@ -128,8 +136,6 @@ unless( $no_log) {
   print STDERR "Using logfile $logfile\n";
   open(STDERR, "> $logfile") || die "Can't create file:$!\n";
 }
-
-info(2, "Will push blast files to $blast_dir") unless $no_indexes;
 
 # Start with a species further down in the alphabet
 @SPECIES  = @{ utils::Tool::start_with_species($start_with, \@SPECIES) } if $start_with;
@@ -159,53 +165,69 @@ unless( $no_remotedirs ) {
   }
 }
 
-# For each species ----------------------------------------------------------
-for my $sp( sort @SPECIES ){  # users selected spp
-  my $species_time = time ();
+# For each dataset ----------------------------------------------------------
+for my $dataset( sort @SPECIES ){  # users selected spp
+  
+  info(2, "DATASET: $dataset");
+  
+  my $dataset_time = time ();
 
-  # Work out species folder name and empty if you are dumping --type all
-  my $sp_release = $SPECIES_DEFS->get_config($sp,"SPECIES_RELEASE_VERSION");
-     $sp_release =~ s/\.//g;
-   my $sp_folder = "$DUMPDIR"."fasta/". lc($sp);
-
-  if ( -e $sp_folder && $TYPES[0] eq 'all' && !$no_dumpdata) {
-    info( 1, "Removing existing copies of $sp_folder" );
-    system("rm -rf $sp_folder") && die "Couldn't delete $sp_folder";
-  }
-
-  my $dbConnection = EnsEMBL::Web::DBSQL::DBConnection->new($sp, $SPECIES_DEFS);
+  my $dbConnection = EnsEMBL::Web::DBSQL::DBConnection->new($dataset, $SPECIES_DEFS);
 
   foreach my $db( @DATABASES || "DATABASE_CORE"){
-    my $db_adaptor = $dbConnection->get_DBAdaptor( $db_names{$db} ) ||
-      ( utils::Tool::warning( 1, "DB $db is not valid for $sp" ) && next );
-    info( 2, "Dumping @TYPES from \n$db $sp - $DUMPDIR" );
+    
+    my $dataset_db_adaptor = $dbConnection->get_DBAdaptor( $db_names{$db} ) ||
+      ( utils::Tool::warning( 1, "DB $db is not valid for $dataset" ) && next );
+    
+    my @species = @{$dataset_db_adaptor->all_species};
+    
+    my $dataset_dir = $DUMPDIR . "fasta/";
+    $dataset_dir .= "/$dataset" if $dataset_db_adaptor->is_multispecies;
+    mkdir $dataset_dir unless -e $dataset_dir;
+    
+    # For each species ----------------------------------------------------------
+    foreach my $sp (@species) {  
+      info(2, "SPECIES: $sp");
+      
+      my $sp_folder = $dataset_dir . ($no_subdirs ? '' : '/' . lc $sp);
+      
+      if ( -e $sp_folder && $TYPES[0] eq 'all' && !$no_dumpdata) {
+        info( 1, "Removing existing copies of $sp_folder" );
+        system("rm -rf $sp_folder") && die "Couldn't delete $sp_folder";
+      }
+      
+      my $db_adaptor = Bio::EnsEMBL::Registry->get_DBAdaptor( $sp, $db_names{$db} );
+            
+      info( 2, "Dumping @TYPES from \n$db $sp - $DUMPDIR" );
+      
+      # Create directories and filehandles for dumps
+      my ( $chr_toplevel, $created_files) =
+        create_dirs_for_dumps( $sp, $SPECIES_DEFS, $sp_folder, $types,  $db_adaptor);
+      # Do dumps
+      $created_files = get_data($db_adaptor, $sp, $created_files, $chr_toplevel ) unless $no_dumpdata;
+    
+      # Make blast indexes and copy to blastsrv machine $BLASTSRV
+      $created_files = blast_indexes( $created_files, $sp ) unless $no_indexes;
   
-    # Create directories and filehandles for dumps
-    my ( $chr_toplevel, $created_files) =
-      create_dirs_for_dumps( $sp, $SPECIES_DEFS, $sp_folder, $types,  $db_adaptor);
-    # Do dumps
-    $created_files = get_data($db_adaptor, $sp, $created_files, $chr_toplevel ) unless $no_dumpdata;
+      # Make ssaha servers
+      $created_files = ssaha_servers( $created_files, $sp, $sp_folder, $db_adaptor ) unless $no_ssaha;
   
-    # Make blast indexes and copy to blastsrv machine $BLASTSRV
-    $created_files = blast_indexes( $created_files, $sp ) unless $no_indexes;
-
-    # Make ssaha servers
-    $created_files = ssaha_servers( $created_files, $sp, $sp_folder, $db_adaptor ) unless $no_ssaha;
-
-    # Make blat indexes 
-    $created_files = blat_indexes( $created_files, $sp, $sp_folder, $db_adaptor) unless $no_blat;
-
-    # Compress (gzip files)
-    compress( $created_files ) unless $no_compress;
-
-    # Empty vars
-    $created_files = undef;
-    my $spec = lc($sp);
-    system("scp -r $DUMPDIR/fasta/$spec  $dump_machine:/$DUMPDIR/fasta");
+      # Make blat indexes 
+      $created_files = blat_indexes( $created_files, $sp, $sp_folder, $db_adaptor) unless $no_blat;
+  
+      # Compress (gzip files)
+      compress( $created_files ) unless $no_compress;
+  
+      # Empty vars
+      $created_files = undef;
+      my $spec = lc($sp);
+      system("scp -r $DUMPDIR/fasta/$spec  $dump_machine:/$DUMPDIR/fasta");
+  
+    }
   }
-  my $sp_time_taken = time - $species_time;
-  my $hours         = localtime(time -$species_time)->hour - 1;
-  info(2, "Species time $sp $hours hours". localtime($sp_time_taken)->min."mins");
+  my $dataset_time_taken = time - $dataset_time;
+  my $hours         = localtime(time -$dataset_time)->hour - 1;
+  info(2, "Species time $dataset $hours hours". localtime($dataset_time_taken)->min."mins");
 }
 
 
@@ -244,14 +266,15 @@ sub check_types {
 
 
   my %compound_types = (
-    dna     => [ qw( dna_seqlevel dna_seqlevel_masked dna_toplevel dna_toplevel_masked        )],
-    cdna    => [ qw( cdna_all cdna_known cdna_novel cdna_pseudo cdna_abinitio                 )],
-    pep     => [ qw( pep_all pep_known pep_novel pep_abinitio                                 )],
-    rna     => [ qw( ncrna                                                                    )],
-    blast   => [ qw( rna cdna pep dna_seqlevel dna_seqlevel_masked                            )],
-    pre     => [ qw( dna_toplevel rna cdna pep dna_seqlevel dna_seqlevel_masked               )],
-    all     => [ qw( cdna pep dna rna                                                         )],
-    not_dna => [ qw( cdna pep rna                                                             )],
+    dna            => [ qw( dna_seqlevel dna_seqlevel_masked dna_toplevel dna_toplevel_masked        )],
+    cdna           => [ qw( cdna_all cdna_known cdna_novel cdna_pseudo cdna_abinitio                 )],
+    pep            => [ qw( pep_all pep_known pep_novel pep_abinitio                                 )],
+    rna            => [ qw( ncrna                                                                    )],
+    blast          => [ qw( rna cdna pep dna_seqlevel dna_seqlevel_masked                            )],
+    pre            => [ qw( dna_toplevel rna cdna pep dna_seqlevel dna_seqlevel_masked               )],
+    all            => [ qw( cdna pep dna rna                                                         )],
+    not_dna        => [ qw( cdna pep rna                                                             )],
+    ensemblgenomes => [ qw( dna_toplevel dna_toplevel_masked cdna_known cdna_novel cdna_pseudo pep_known pep_novel ncrna )],
   );
 
   return utils::Tool::validate_types(\%valid_types, \%compound_types, $types);
@@ -282,13 +305,15 @@ sub create_dirs_for_dumps {
   my $dna = 0;
   foreach my $type ( @$types) {
     my( $master_type ) = split( '_', $type );
-    my $thisdir = $sp_folder."/$master_type"; 
+    my $thisdir = $sp_folder.($no_subdirs ? '' : "/$master_type"); 
     if ($master_type eq "dna"){ $dna = 1;  }
     unless ( -e $thisdir ) {
       utils::Tool::check_dir( $thisdir );
-      open(README, '>'."$thisdir/README") or die "Couldn't open file $thisdir/README: $!\n";
-      print README readme($master_type);
-      close README;
+      unless ($no_subdirs) {
+        open(README, '>'."$thisdir/README") or die "Couldn't open file $thisdir/README: $!\n";
+        print README readme($master_type);
+        close README;
+      }
     }
 
     # Work out types of directories needed ------------------------
@@ -317,21 +342,21 @@ sub create_dirs_for_dumps {
   }
   my $chr_toplevel;   
   if ($dna == 1){
-   my $thisdir = $sp_folder."/dna/";
+   my $thisdir = $sp_folder . ($no_subdirs ? '' : "/dna/");
    my $file_top = $thisdir . $file_details .".dna.toplevel.fa";
    $filehandles->{'dna_toplevel_top'} = Bio::SeqIO->new(
             '-format' => 'Fasta',
-   	    '-file'   => '>'.$file_top
-	     );
-		     
-		  
+        '-file'   => '>'.$file_top
+       );
+         
+      
    my $file_top_rm = $thisdir . $file_details .".dna_rm.toplevel.fa";
    $filehandles->{'dna_toplevel_top_rm'} = Bio::SeqIO->new(
               '-format' => 'Fasta',
- 	      '-file'   => '>'.$file_top_rm
- 	      );
-				    
-   $chr_toplevel = "$sp_folder/dna/$file_details";
+        '-file'   => '>'.$file_top_rm
+        );
+            
+   $chr_toplevel = "$sp_folder" . ($no_subdirs ? '' : '/dna') . "/$file_details";
   }
 
   return ( $chr_toplevel, $filehandles );
@@ -390,21 +415,21 @@ sub get_data {
                            |scaffold_
                            /x)  ) {
         if ( my $seqio = $fhs->{'dna_toplevel'} ){
-									
-	  dump_dna( $seqio, $slice, 'dna',);
+                  
+    dump_dna( $seqio, $slice, 'dna',);
           my $seqio_top = $fhs->{"dna_toplevel_top"}; 
           dump_dna( $seqio_top, $slice, 'dna',);
-	  
+    
           
          # $fhs->{"dna_toplevel_top"} = $seq_top;  
         }        
 
         if ( my $seqio_masked = $fhs->{'dna_toplevel_masked'} ){
-	                      
+                        
           dump_dna( $seqio_masked, $slice->get_repeatmasked_seq(\@analyses), 'dna_rm' );
           my $seqio_top_rm = $fhs->{"dna_toplevel_top_rm"};
-	  dump_dna( $seqio_top_rm, $slice->get_repeatmasked_seq(\@analyses), 'dna_rm');
-			   
+    dump_dna( $seqio_top_rm, $slice->get_repeatmasked_seq(\@analyses), 'dna_rm');
+         
           #$fhs->{"dna_toplevel_top_rm"} = $seq_top_rm;
    
        }
@@ -421,10 +446,10 @@ sub get_data {
           dump_dna( $seqio, $slice, 'dna' );
        
           system("cat $chr_toplevel.dna.chromosome.$seq_name.fa >> $chr_toplevel.dna.toplevel.fa") == 0 or   warn "Can't concat fasta files";
-	  #my $top_file = $chr_toplevel . ".dna.toplevel.fa";
-	  #my $seq_top =  Bio::SeqIO->new('-format' => 'Fasta',
-          #	                          '-file'   =>  $top_file);
-				 
+    #my $top_file = $chr_toplevel . ".dna.toplevel.fa";
+    #my $seq_top =  Bio::SeqIO->new('-format' => 'Fasta',
+          #                           '-file'   =>  $top_file);
+         
           # Need to add these so they are closed and gzipped
           $fhs->{"$chr_toplevel.dna.chromosome.$seq_name.fa"} = $seqio;
          # $fhs->{"dna_toplevel_top"} = $seq_top;
@@ -439,13 +464,13 @@ sub get_data {
           dump_dna_masked( $seqio_masked, $slice, mask_sequence($slice, \@analyses), 'dna_rm' );
  
           system("cat $chr_toplevel.dna_rm.chromosome.$seq_name.fa >> $chr_toplevel.dna_rm.toplevel.fa") == 0 or warn "Can't concat fasta files";
-	  #my $top_file_rm = $chr_toplevel . ".dna_rm.toplevel.fa";
-	  # my $seq_top_rm =  Bio::SeqIO->new('-format' => 'Fasta',
-          #	                             '-file'   =>  $top_file_rm);
-						       
+    #my $top_file_rm = $chr_toplevel . ".dna_rm.toplevel.fa";
+    # my $seq_top_rm =  Bio::SeqIO->new('-format' => 'Fasta',
+          #                              '-file'   =>  $top_file_rm);
+                   
           # Need to add these so they are closed and gzipped
           $fhs->{"$chr_toplevel.dna_rm.chromosome.$seq_name.fa"} = $seqio_masked;
-          #$fhs->{"dna_toplevel_rm"} = $seq_top_rm;	  
+          #$fhs->{"dna_toplevel_rm"} = $seq_top_rm;   
         }
       }
     }
@@ -481,7 +506,7 @@ sub get_data {
         my $coord_system = $slice->coord_system;
         my $location = join( ':', 
           $coord_system->name, $coord_system->version, $slice->seq_region_name,
-  	$segment->from_start, $segment->from_end, $segment->to_Slice->strand
+    $segment->from_start, $segment->from_end, $segment->to_Slice->strand
         ); 
         if( my $seqio = $fhs->{'dna_seqlevel'} ){
           dump_dna( $seqio, $segment->to_Slice, 'dna:seqlevel', $location );
@@ -495,7 +520,7 @@ sub get_data {
     #info( 1, "End toplevel ". $slice->name );
   }
   
-			    
+          
   # Delete empty files ----------------------------------------------------
   foreach my $type (keys %$fhs) {
     my $seqio = $fhs->{$type};
@@ -606,6 +631,7 @@ sub dump_cdna_rna {
   my $seq = $transcript->seq();
   $seq->description( join( " ", $type, $location, $label) );
   #info( 1, "CDNA>".$seq->display_id );
+  $seq->display_id( $seq_id_prefix . $seq->display_id ) if $seq_id_prefix;
   $seqio->write_seq($seq);
   return 1;
 }
@@ -635,7 +661,7 @@ sub dump_pep {
              $transcript->seq_region_end,
              $transcript->seq_region_strand );
 
-  my $display_id = $translation->stable_id || $transcript->stable_id;
+  my $display_id = $seq_id_prefix . ($translation->stable_id || $transcript->stable_id);
   my $label;
   $label = "gene:".$gene->stable_id if $gene;
   $label .=" transcript:".$transcript->stable_id;
@@ -670,7 +696,7 @@ sub dump_dna{
 
   my $seq = new Bio::Seq(
     -seq     => $pad_start . $slice->seq() . $pad_end,
-    -display_id  => $slice->seq_region_name 
+    -display_id  => $seq_id_prefix . $slice->seq_region_name 
   );
   $seq->description( "$type:". $slice->coord_system->name(). " $location" );
   #info( 1, "DNA>".$seq->display_id );
@@ -698,7 +724,7 @@ sub dump_dna_masked{
 
   my $seq = new Bio::Seq(
     -seq     => $pad_start . $seqstr . $pad_end,
-    -display_id  => $slice->seq_region_name
+    -display_id  => $seq_id_prefix . $slice->seq_region_name
   );
   $seq->description( "$type:". $slice->coord_system->name(). " $location" );
   #info( 1, "DNA>".$seq->display_id );
@@ -897,7 +923,7 @@ sub xdformat_blast_indexes {
      (my $file_name = $file) =~ s#.*/##;
      utils::Tool::warning(1, "Error producing file $file") && next unless -s "$file";
       if ($file_name =~/\.dn/){ 
-        system ("mv $file $xdformat_dna_dir/$file_name");	
+        system ("mv $file $xdformat_dna_dir/$file_name"); 
       } else {
        system ("mv $file $xdformat_dir/$file_name");
       }
@@ -922,7 +948,7 @@ sub blat_indexes {
    } else {
      $blat_dir = "$basedir$release_dir/blat/";
     }
-		      
+          
   warn "BLAT_DIR " . $blat_dir;
   my $ini_datasources = $SPECIES_DEFS->get_config($sp, "BLAT_DATASOURCES");
   my @dna_files;
@@ -942,8 +968,8 @@ sub blat_indexes {
         system("gunzip $fh.gz");
       } else {
         undef( $created_files->{$types} );
-	warn "Skipping $types";
-	next;
+  warn "Skipping $types";
+  next;
       }
     }
     warn "FH $fh"; 
@@ -1573,6 +1599,12 @@ B<--start_with>
 
 B<--end_with>
   Optional: give it a species name and it will skip all species after this in the alphabet.
+
+B<--seq_id_prefix>
+  Optional: string to prepend to seq id, (e.g. Ensembl Genomes uses prefix 'EG:')
+
+B<--no_subdirs>
+  Optional: If set, dumped files will not be divided into sub folders (except for collection folders in the case of multispecies dbs)
 
 =head1 DESCRIPTION
 
