@@ -667,7 +667,7 @@ sub get_user_data {
 
   foreach my $row (@user_file) {
      next unless ($row->{'code'} && $row->{'format'} eq $format);
-     my $file = 'temp-upload-'.$row->{'code'};
+     my $file = "upload_$row->{'code'}";
      my $name = $row->{'name'};
      my $data = $hub->fetch_userdata_by_id($file);     
   
