@@ -2130,8 +2130,81 @@ sub add_oligo_probes {
 sub add_sequence_variations {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('variation');
-    
+  
   return unless $menu && $hashref->{'variation_feature'}{'rows'} > 0;
+  
+  if(defined($hashref->{'menu'})) {
+    $self->add_sequence_variations_meta($key, $hashref);
+  }
+  else {
+    $self->add_sequence_variations_default($key, $hashref);
+  }
+}
+
+# adds variation tracks in structure defined in variation meta table
+sub add_sequence_variations_meta {
+  my ($self, $key, $hashref) = @_;
+  my $menu = $self->get_node('variation');
+  
+  my %options = (
+    db         => $key,
+    glyphset   => '_variation',
+    strand     => 'r',
+    depth      => 0.5,
+    bump_width => 0,
+    colourset  => 'variation',
+    display    => 'off'
+  );
+  
+  foreach my $menu_item(@{$hashref->{'menu'}}) {
+    
+    my $node;
+    
+    # just a named submenu
+    if($menu_item->{type} eq 'menu') {
+      $node = $self->create_submenu($menu_item->{key}, $menu_item->{long_name});
+    }
+    
+    # source type
+    elsif($menu_item->{type} eq 'source') {
+      my $temp_name = $menu_item->{long_name};
+      $temp_name =~ s/ variants$//;
+      
+      $node = $self->create_track($menu_item->{key}, $menu_item->{long_name}, {
+        %options,
+        caption     => $menu_item->{long_name},
+        sources     => ($menu_item->{long_name} =~ /all other sources/ ? undef : [ $menu_item->{long_name} ]),
+        description => ($menu_item->{long_name} =~ /all other sources/ ? "Sequence variants from all sources" : $hashref->{'source'}{'descriptions'}{$temp_name}),
+      });
+    }
+    
+    # set type
+    elsif($menu_item->{type} eq 'set') {
+      
+      my $temp_name = $menu_item->{key};
+      $temp_name =~ s/^variation_set_//;
+      
+      $node = $self->create_track($menu_item->{key}, $menu_item->{long_name}, {
+        %options,
+        caption     => $menu_item->{long_name},
+        sources     => undef,
+        sets        => [ $menu_item->{long_name} ],
+        set_name    => $menu_item->{long_name},
+        description => $hashref->{'variation_set'}{'descriptions'}{$temp_name}
+      });
+    }
+    
+    # get the node onto which we're going to add this item, then append it
+    my $curr_node = $self->get_node($menu_item->{parent}) || $menu;
+    
+    $curr_node->append($node);
+  }
+}
+
+# adds variation tracks the old, hacky way
+sub add_sequence_variations_default {
+  my ($self, $key, $hashref) = @_;
+  my $menu = $self->get_node('variation');
   
   my %options = (
     db         => $key,
