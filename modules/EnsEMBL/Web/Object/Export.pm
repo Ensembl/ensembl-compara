@@ -23,6 +23,7 @@ use EnsEMBL::Web::Component::Compara_Alignments;
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::SeqDumper;
 use Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter;
+use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -159,11 +160,22 @@ sub config {
         [ 'aligned', 'Aligned sequences with gaps' ],
         [ 'no_sequences', 'Omit sequences' ],
       ]
+    },
+    homologies => {
+      label => 'Homologies',
+      formats => [
+        [ 'orthoxml',    'OrthoXML from Compara' ],
+        [ 'orthopan',    'OrthoXML from Pan-taxonomic Compara' ]
+      ],
+      params => [
+        [ 'possible_orthologs', 'Treat not supported duplications as speciations (makes a non species-tree-compliant tree)' ],
+      ]
     }  
   };
 
 if(! $self->get_object->can('get_GeneTree') ){
 	delete $self->__data->{'config'}{'genetree'};
+	delete $self->__data->{'config'}{'homologies'};
 }
   
   my $func = sprintf 'modify_%s_options', lc $self->function;
@@ -295,6 +307,8 @@ sub process {
       alignment => sub { return $self->alignment;       },
       phyloxml  => sub { return $self->phyloxml('compara');},
       phylopan  => sub { return $self->phyloxml('compara_pan_ensembl');},
+      orthoxml  => sub { return $self->orthoxml('compara');},
+      orthopan  => sub { return $self->orthoxml('compara_pan_ensembl');},
       %$custom_outputs
     };
 
@@ -312,7 +326,7 @@ sub process {
   if ($html_format) {
     $string = "<pre>$string</pre>" if $string;
   } else {    
-    if($o ne "phyloxml" && $o ne "phylopan"){
+    if($o ne "phyloxml" && $o ne "phylopan" && $o ne "orthoxml" && $o ne "orthopan"){
       s/<.*?>//g for $string, $html; # Strip html tags;
     }
     $string .= "\r\n" if $string && $html;
@@ -324,8 +338,6 @@ sub process {
 sub phyloxml{
   my ($self,$cdb) = @_;
   my $params = $self->params;
-  my $hub             = $self->hub;
-  my $object          = $self->get_object;
   my $handle          = IO::String->new();
   my $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(
           -SOURCE => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
@@ -334,6 +346,24 @@ sub phyloxml{
           -NO_SEQUENCES => $params->{'no_sequences'},
           -HANDLE => $handle
   ); 
+  $self->writexml($cdb, $handle, $w);
+}
+sub orthoxml{
+  my ($self,$cdb) = @_;
+  my $params = $self->params;
+  my $handle          = IO::String->new();
+  my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(
+          -SOURCE => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
+	    -SOURCE_VERSION => $SiteDefs::SITE_RELEASE_VERSION, 
+          -HANDLE => $handle,
+          -POSSIBLE_ORTHOLOGS => $params->{'possible_orthologs'},
+  ); 
+  $self->writexml($cdb, $handle, $w);
+}
+sub writexml{
+  my ($self,$cdb,$handle,$w) = @_;
+  my $hub             = $self->hub;
+  my $object          = $self->get_object;
   if(! $object->can('get_GeneTree')){return $self->string('no data');}
   my $tree = $object->get_GeneTree($cdb);
   $w->write_trees($tree);

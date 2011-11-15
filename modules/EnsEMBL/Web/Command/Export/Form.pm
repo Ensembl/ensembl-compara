@@ -80,7 +80,9 @@ sub get_formats {
       pipmaker => 'pip',
       vista    => 'pip',
       phyloxml => 'genetree',
-      phylopan => 'genetree'
+      phylopan => 'genetree',
+      orthoxml => 'homologies',
+      orthopan => 'homologies',
     };
     
     my $key = $map->{$output} || $output;
