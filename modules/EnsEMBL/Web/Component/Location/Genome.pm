@@ -303,12 +303,11 @@ sub _render_features {
 
   ## User table
   if (keys %$user_features) {
-    my ($header, $column_order, $rows, $custom_columns) = $self->configure_UserData_table('UserData', $user_features);
-    my $table_info = $self->configure_UserData_table('UserData', $user_features);
-    my $column_info = $custom_columns || $default_column_info;
-    my $columns = [];
+    my $table_info  = $self->configure_UserData_table($image_config);
+    my $column_info = $default_column_info;
+    my $columns     = [];
     my $table_style = $table_info->{'table_style'} || {};
-    my $cell_style = $self->cell_style;
+    my $cell_style  = $self->cell_style;
     my $col;
 
     foreach $col (@{$table_info->{'column_order'}||[]}) {
@@ -321,7 +320,7 @@ sub _render_features {
     $html .= $table->render;
   }
 
-  unless (keys %$features || keys %$user_features) {
+  unless (keys %$features) {
     $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/stats_$species.html");
   }
 
