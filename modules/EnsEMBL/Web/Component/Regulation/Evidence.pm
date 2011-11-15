@@ -48,8 +48,9 @@ sub content {
         my $f_start = ($object_slice->start + $f->start) -1;
         my $f_end = ($object_slice->start + $f->end) -1;
         my $location = $f->slice->seq_region_name .":".$f_start ."-" . $f_end;
+        
         my $row = { 
-          'type'      => 'Core',
+          'type'      => $f->feature_type->evidence_type_label,
           'location'  => $location,
           'feature'   => $feature_name,
           'cell'      => $cell_line
@@ -71,7 +72,7 @@ sub content {
         my $f_end = ($object_slice->start + $f->end) -1;
         my $location = $f->slice->seq_region_name .":".$f_start ."-" . $f_end;
         my $row = {
-          'type'      => 'Hists & Pols',
+          'type'      => $f->feature_type->evidence_type_label,
           'location'  => $location,
           'feature'   => $feature_name,
           'cell'      => $cell_line
@@ -95,10 +96,9 @@ sub get_motif_rows {
     my ($name, $binding_matrix_name)   = split(/:/, $mf->display_label);
     my $link = $self->hub->get_ExtURL_link($binding_matrix_name, 'JASPAR', $binding_matrix_name);
     my $feature_name = sprintf '%s (%s)', $name, $link;
-    my $location = $mf->seq_region_name .':' . $mf->seq_region_start .'-'. $mf->seq_region_end;   
- 
+    my $location = $mf->seq_region_name .':' . $mf->seq_region_start .'-'. $mf->seq_region_end;
     my $row = {
-      'type'      => 'Core PWM',
+      'type'      => $f->feature_type->evidence_type_label,
       'location'  => $location,
       'feature'   => $feature_name,
       'cell'      => $cell_line
