@@ -1886,9 +1886,9 @@ sub dumpGene {
     if ($sitetype eq 'Vega') {
       print LOG "    Getting gene and transcript synonyms ".&date_and_mem()."\n";
       my $sql = qq(
-         SELECT gsi.stable_id, ga.value
-           FROM $dbname.gene_stable_id gsi, $dbname.gene_attrib ga, $dbname.attrib_type at
-          WHERE gsi.gene_id = ga.gene_id
+         SELECT g.stable_id, ga.value
+           FROM $dbname.gene g, $dbname.gene_attrib ga, $dbname.attrib_type at
+          WHERE i.gene_id = ga.gene_id
             AND ga.attrib_type_id = at.attrib_type_id
             AND at.code = 'synonym');
       my $T = $conf->{'dbh'}->selectall_arrayref($sql);
@@ -1896,9 +1896,9 @@ sub dumpGene {
         push @{$gene_trans_syns{$_->[0]}},$_->[1];
       }
       $sql = qq(
-         SELECT tsi.stable_id, ta.value
-           FROM $dbname.transcript_stable_id tsi, $dbname.transcript_attrib ta, $dbname.attrib_type at
-          WHERE tsi.transcript_id = ta.transcript_id
+         SELECT t.stable_id, ta.value
+           FROM $dbname.transcript t, $dbname.transcript_attrib ta, $dbname.attrib_type at
+          WHERE t.transcript_id = ta.transcript_id
             AND ta.attrib_type_id = at.attrib_type_id
             AND at.code = 'synonym');
       $T = $conf->{'dbh'}->selectall_arrayref($sql);
@@ -1915,10 +1915,10 @@ sub dumpGene {
 
     my %exons = ();
     my $sql = qq(
-       SELECT distinct t.gene_id, esi.stable_id
-         FROM $dbname.transcript as t, $dbname.exon_transcript as et, $dbname.exon_stable_id as esi
+       SELECT distinct t.gene_id, e.stable_id
+         FROM $dbname.transcript as t, $dbname.exon_transcript as et, $dbname.exon as e
         WHERE t.transcript_id = et.transcript_id
-          AND et.exon_id = esi.exon_id);
+          AND et.exon_id = e.exon_id);
     my $sth = $conf->{'dbh'}->prepare($sql);
     $sth->execute;
     while (my $r = $sth->fetchrow_arrayref()) {
@@ -1928,38 +1928,34 @@ sub dumpGene {
     print LOG "    Exon query done ".&date_and_mem()."\n";
 
     my $gene_locations = $conf->{'dbh'}->selectall_hashref(qq(
-      SELECT gsi.stable_id, sr.name as sr_name, g.seq_region_start, g.seq_region_end, g.seq_region_strand, cs.name as sr_type, cs.version
-        FROM $dbname.gene_stable_id gsi, $dbname.gene g, $dbname.seq_region sr, $dbname.coord_system cs
-       WHERE gsi.gene_id = g.gene_id
-         AND g.seq_region_id = sr.seq_region_id
+      SELECT g.stable_id, sr.name as sr_name, g.seq_region_start, g.seq_region_end, g.seq_region_strand, cs.name as sr_type, cs.version
+        FROM $dbname.gene g, $dbname.seq_region sr, $dbname.coord_system cs
+       WHERE g.seq_region_id = sr.seq_region_id
          AND sr.coord_system_id = cs.coord_system_id),
       'stable_id');
 
     $sql = qq(
-      SELECT gsi.gene_id, tsi.transcript_id, trsi.translation_id,
-             gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
+      SELECT g.gene_id, t.transcript_id, tr.translation_id,
+             g.stable_id as gsid, t.stable_id as tsid, tr.stable_id as trsid,
              g.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, g.status, g.biotype, a.logic_name
-        FROM ((( $dbname.gene_stable_id as gsi, $dbname.gene as g,
-             $dbname.transcript_stable_id as tsi,
-             $dbname.analysis_description as ad,
+        FROM (( $dbname.gene as g,
              $dbname.analysis as a,
+             $dbname.analysis_description as ad,
              $dbname.transcript as t) left join
              $dbname.translation as tr on t.transcript_id = tr.transcript_id) left join
-             $dbname.translation_stable_id as trsi on tr.translation_id = trsi.translation_id) left join
              $dbname.xref as x on g.display_xref_id = x.xref_id
-       WHERE t.gene_id = gsi.gene_id 
-         AND t.transcript_id = tsi.transcript_id
-         AND t.gene_id = g.gene_id
-         AND g.analysis_id = ad.analysis_id
+       WHERE t.gene_id = g.gene_id
          AND g.analysis_id = a.analysis_id
+         AND g.analysis_id = ad.analysis_id
          AND a.logic_name != 'LRG_import'
-       ORDER by gsi.stable_id, tsi.stable_id);
+       ORDER by g.stable_id, t.stable_id);
     $sth = $conf->{'dbh'}->prepare($sql);
     $sth->execute();
 
     my $old;
     my ($gid,$tid,$tlid,$gsid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln);
     while (my $r = $sth->fetchrow_arrayref()) {
+#      warn "yes, $gis";
       ($gid,$tid,$tlid,$gsid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln) = @$r;
       my $wd = eval($webdata);
       next if $wd->{'gene'}{'do_not_display'};
@@ -2092,34 +2088,28 @@ sub dumpGene {
         'Transcript' => qq(
       select a.logic_name, e.db_display_name,
              uo.identifier, ur.summary_description,
-             concat( 'Transcript: ', tsi.stable_id, '; Gene: ',gsi.stable_id )
+             concat( 'Transcript: ', t.stable_id, '; Gene: ',g.stable_id )
         from $dbname.analysis as a, $dbname.external_db as e, $dbname.unmapped_object as uo,
-             $dbname.unmapped_reason as ur, $dbname.transcript_stable_id as tsi,
-             $dbname.transcript as t, $dbname.gene_stable_id as gsi
+             $dbname.unmapped_reason as ur, $dbname.transcript as t, $dbname.gene as g
        where a.analysis_id = uo.analysis_id and
              uo.external_db_id = e.external_db_id and
              uo.unmapped_reason_id = ur.unmapped_reason_id and
              uo.ensembl_id = t.transcript_id and
              uo.ensembl_object_type = 'Transcript' and
-             t.transcript_id = tsi.transcript_id and
-             t.gene_id       = gsi.gene_id
+             t.gene_id       = g.gene_id
     ),
         'Translation' => qq(
       select a.logic_name, e.db_display_name, uo.identifier, ur.summary_description,
-             concat( 'Protein: ',trsi.stable_id,'; Transcript: ', tsi.stable_id, '; Gene: ',gsi.stable_id )
+             concat( 'Protein: ',tr.stable_id,'; Transcript: ', t.stable_id, '; Gene: ',g.stable_id )
         from $dbname.analysis as a, $dbname.external_db as e, $dbname.unmapped_object as uo,
-             $dbname.unmapped_reason as ur, $dbname.transcript_stable_id as tsi,
-             $dbname.translation as tr, $dbname.translation_stable_id as trsi,
-             $dbname.transcript as t, $dbname.gene_stable_id as gsi
-       where a.analysis_id = uo.analysis_id and 
+             $dbname.unmapped_reason as ur, $dbname.translation as tr, $dbname.transcript as t, $dbname.gene as g
+       where a.analysis_id = uo.analysis_id and
              uo.external_db_id = e.external_db_id and
              uo.unmapped_reason_id = ur.unmapped_reason_id and
-             uo.ensembl_id = tr.translation_id and 
+             uo.ensembl_id = tr.translation_id and
              tr.transcript_id = t.transcript_id and
-             trsi.translation_id = tr.translation_id and
              uo.ensembl_object_type = 'Translation' and
-             t.transcript_id = tsi.transcript_id and
-             t.gene_id       = gsi.gene_id
+             t.gene_id = gsi.gene_id
     )
     );
 
@@ -2209,9 +2199,9 @@ sub dumpTranscript {
     if ($sitetype eq 'Vega') {
       print LOG "    Getting transcript synonyms ".&date_and_mem()."\n";
       my $sql = qq(
-         SELECT tsi.stable_id, ta.value
-           FROM $dbname.transcript_stable_id tsi, $dbname.transcript_attrib ta, $dbname.attrib_type at
-          WHERE tsi.transcript_id = ta.transcript_id
+         SELECT t.stable_id, ta.value
+           FROM $dbname.transcript t, $dbname.transcript_attrib ta, $dbname.attrib_type at
+          WHERE t.transcript_id = ta.transcript_id
             AND ta.attrib_type_id = at.attrib_type_id
             AND at.code = 'synonym');
       my $T = $conf->{'dbh'}->selectall_arrayref($sql);
@@ -2228,10 +2218,10 @@ sub dumpTranscript {
 
     my %exons = ();
     my $sql = qq(
-       SELECT t.transcript_id, esi.stable_id
-         FROM $dbname.transcript as t, $dbname.exon_transcript as et, $dbname.exon_stable_id as esi
+       SELECT t.transcript_id, e.stable_id
+         FROM $dbname.transcript as t, $dbname.exon_transcript as et, $dbname.exon as e
         WHERE t.transcript_id = et.transcript_id
-          AND et.exon_id = esi.exon_id);
+          AND et.exon_id = e.exon_id);
     my $sth = $conf->{'dbh'}->prepare($sql);
     $sth->execute;
     while (my $r = $sth->fetchrow_arrayref()) {
@@ -2248,33 +2238,29 @@ sub dumpTranscript {
      'transcript_id');
 
     my $trans_locations = $conf->{'dbh'}->selectall_hashref(qq(
-      SELECT tsi.stable_id, sr.name as sr_name, t.seq_region_start, t.seq_region_end, t.seq_region_strand, cs.name as sr_type, cs.version
-        FROM $dbname.transcript_stable_id tsi, $dbname.transcript t, $dbname.seq_region sr, $dbname.coord_system cs
-       WHERE tsi.transcript_id = t.transcript_id
-         AND t.seq_region_id = sr.seq_region_id
+      SELECT t.stable_id, sr.name as sr_name, t.seq_region_start, t.seq_region_end, t.seq_region_strand, cs.name as sr_type, cs.version
+        FROM $dbname.transcript t, $dbname.seq_region sr, $dbname.coord_system cs
+       WHERE t.seq_region_id = sr.seq_region_id
          AND sr.coord_system_id = cs.coord_system_id),
       'stable_id');
 
     $sql = qq(
-      SELECT tsi.transcript_id, trsi.translation_id,
-             tsi.stable_id as tsid, trsi.stable_id as trsid,
+      SELECT t.transcript_id, tr.translation_id, t.stable_id as tsid, tr.stable_id as trsid,
              t.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, t.status, t.biotype, a.logic_name
-        FROM ((( $dbname.transcript_stable_id as tsi,
-             $dbname.analysis_description as ad,
+        FROM (( $dbname.analysis_description as ad,
              $dbname.analysis as a,
              $dbname.transcript as t) left join
              $dbname.translation as tr on t.transcript_id = tr.transcript_id) left join
-             $dbname.translation_stable_id as trsi on tr.translation_id = trsi.translation_id) left join
              $dbname.xref as x on t.display_xref_id = x.xref_id
-       WHERE t.transcript_id = tsi.transcript_id
-         AND t.analysis_id = ad.analysis_id
-         AND t.analysis_id = a.analysis_id
+       WHERE t.analysis_id = a.analysis_id
+         AND a.analysis_id = ad.analysis_id
          AND a.logic_name != 'LRG_import'
-       ORDER by tsi.stable_id);
+       ORDER by t.stable_id);
     $sth = $conf->{'dbh'}->prepare($sql);
     $sth->execute();
 
     my $old;
+    my $c = 0;
     my ($tid,$tlid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln);
     while (my $r = $sth->fetchrow_arrayref()) {
       ($tid,$tlid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln) = @$r;
@@ -2285,6 +2271,8 @@ sub dumpTranscript {
       if( $old->{'tid'} != $tid ) {
         if( $old->{'tid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
+          $c++;
+          warn "one $c";
           &p( GeneTransLine('Transcript',
                         $dbspecies,
                         $old->{'tsid'},
@@ -2363,6 +2351,8 @@ sub dumpTranscript {
         }
       }
     }
+    $c++;
+    warn "two $c--" . $old->{'gsid'};
     &p( GeneTransLine('Transcript',
                   $dbspecies,
                   $old->{'tsid'},
@@ -2379,7 +2369,7 @@ sub dumpTranscript {
                   $trans_locations->{$old->{'tsid'}},
                   $db,
                   $counter),
-        $nogzip, $fh) if ($old->{'gsid'});
+        $nogzip, $fh) if ($old->{'tsid'});
     print LOG "    Transcript info query done and xml generated ".&date_and_mem()."\n";
 
     #don't add archive stable IDs for solr, only need them in the gene
@@ -2589,7 +2579,7 @@ sub do_archive_stable_ids {
   my $COREDB    = $conf->{'dbs'}->{'DATABASE_CORE'};
   my %current_stable_ids =();
   foreach my $type (@$types) {
-    $current_stable_ids{$type} = { map {@$_} @{$conf->{'dbh'}->selectall_arrayref( "select stable_id,1 from $COREDB.".$type."_stable_id" )}};
+    $current_stable_ids{$type} = { map {@$_} @{$conf->{'dbh'}->selectall_arrayref( "select stable_id,1 from $COREDB.$type" )}};
   }
   my $species = $conf->{'species'};
   my $sth = $conf->{'dbh'}->prepare( qq(
@@ -2813,20 +2803,18 @@ sub RegulatoryFeatureLine {
 sub findLRGs {
   my $conf = shift;
   return $conf->{'dbh'}->selectall_arrayref(
-        qq(SELECT gsi.stable_id, x.display_label, edb.db_name, tsi.stable_id, sr.length
-             FROM gene_stable_id gsi, gene g, analysis a, object_xref ox, xref x, external_db edb, transcript t, transcript_stable_id tsi, seq_region sr
-            WHERE gsi.gene_id = g.gene_id
-              AND g.analysis_id = a.analysis_id
+        qq(SELECT g.stable_id, x.display_label, edb.db_name, t.stable_id, sr.length
+             FROM gene g, analysis a, object_xref ox, xref x, external_db edb, transcript t, seq_region sr
+            WHERE g.analysis_id = a.analysis_id
               AND g.gene_id = ox.ensembl_id
               AND ox.xref_id = x.xref_id
               AND x.external_db_id = edb.external_db_id
               AND g.gene_id = t.gene_id
-              AND t.transcript_id = tsi.transcript_id
-              AND gsi.stable_id = sr.name
+              AND g.stable_id = sr.name
               AND ox.ensembl_object_type = 'Gene'
               AND edb.db_name = 'HGNC'
               AND a.logic_name = 'LRG_import'
-            ORDER by gsi.stable_id, tsi.stable_id)
+            ORDER by g.stable_id, t.stable_id)
       );
 }
 
