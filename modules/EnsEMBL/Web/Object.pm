@@ -175,58 +175,6 @@ sub gene_description {
   }
 }
 
-sub fetch_userdata_by_id {
-  my ($self, $record_id) = @_;
-  
-  return unless $record_id;
-  
-  my $user = $self->user;
-  my $data = {};
-
-  my ($status, $type, $id) = split '-', $record_id;
-
-  if ($type eq 'url' || ($type eq 'upload' && $status eq 'temp')) {
-    my ($content, $format);
-
-    my $tempdata = {};
-    if ($status eq 'temp') {
-      $tempdata = $self->hub->session->get_data('type' => $type, 'code' => $id);
-    } else {
-      my $record = $user->urls($id);
-      $tempdata = { 'url' => $record->url };
-    }
-    
-    my $parser = new EnsEMBL::Web::Text::FeatureParser($self->species_defs);
-    
-    if ($type eq 'url') {
-      my $response = get_url_content($tempdata->{'url'});
-      $content = $response->{'content'};
-    } else {
-      my $file = new EnsEMBL::Web::TmpFile::Text(filename => $tempdata->{'filename'});
-      $content = $file->retrieve;
-      return {} unless $content;
-    }
-    
-    $parser->parse($content, $tempdata->{'format'});
-    $data = { 'parser' => $parser };
-  } else {
-    my $fa = $self->database('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
-    my @records = $user->uploads($id);
-    my $record = $records[0];
-    
-    if ($record) {
-      my @analyses = ($record->analyses);
-      
-      foreach (@analyses) {
-        next unless $_;
-        $data->{$_} = {'features' => $fa->fetch_all_by_logic_name($_), 'config' => {}};
-      }
-    }
-  }
-  
-  return $data;
-}
-
 # There may be occassions when a script needs to work with features of
 # more than one type. in this case we create a new {{EnsEMBL::Web::Proxy::Factory}}
 # object for the alternative data type and retrieves the data (based on the standard URL
