@@ -332,7 +332,6 @@ sub print_blastz_net_list {
     my $mlss_ids;
     #find reference species by parsing name field of mlss table
     foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
-	
         if ($this_method_link_species_set->method_link_type ne "BLASTZ_NET" && 
 	   $this_method_link_species_set->method_link_type ne "LASTZ_NET") {
             print "only to be used for BLASTZ_NET or LASTZ_NET not " . $this_method_link_species_set->method_link_type . "\n";
