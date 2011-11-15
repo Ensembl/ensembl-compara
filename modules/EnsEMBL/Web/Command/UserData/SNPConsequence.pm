@@ -45,10 +45,10 @@ sub process {
     $temp_file->print($table->render_Text);
     
     push @temp_files, $temp_file->filename . ':' . $name;
- 
+    
     ## Resave this file location to the session
-    my $code         = [ split '-', $file ]->[-1];
-    my $session_data = $session->get_data(code => $code);
+    my ($type, $code) = split '_', $file, 2;
+    my $session_data  = $session->get_data(type => $type, code => $code);
     
     $session_data->{'filename'} = $temp_file->filename;
     $session_data->{'filesize'} = length $temp_file->content;
