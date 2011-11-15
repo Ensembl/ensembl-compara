@@ -104,55 +104,35 @@ sub create_user_pointers {
 }
 
 sub configure_UserData_table {
-  my ($self, $feature_type, $feature_set) = @_;
-  my $rows = [];
-
-  my $header = 'Key to user tracks';
-
+  my ($self, $image_config) = @_;
+  my $header       = 'Key to user tracks';
   my $column_order = [qw(colour track)];
-
-  while (my($key, $data) = each (%$feature_set)) {
-    while (my($analysis, $track) = each (%$data)) { 
-      ## Create key entry
-      my $label = $track->{'config'}{'track_label'} || $analysis;
-      if ($analysis eq 'default') {
-        $label = $track->{'config'}{'name'};
-      }
-        
-      my $colour = $self->_user_track_colour($track); 
-      
-      if ($colour =~ /,/) {
-        ## Convert RGB colours to hex, because rgb attributes getting stripped out of HTML
-        my @rgb = split ',', $colour;
-        $colour = '#'.Sanger::Graphics::ColourMap::hex_by_rgb(undef, \@rgb);
-      }
-      elsif ($colour =~ /^[0-9a-f]{6}$/i) { ## Hex with no initial hash symbol
-        $colour = '#'.$colour;
-      }
-        
-      my $swatch = qq{<span style="width:30px;height:15px;display:inline-block;background-color:$colour" title="$colour"></span>};
-        
-      my $row = {
-              'colour' => {'value' => $swatch,  'style' => $self->cell_style},
-              'track'  => {'value' => $label,   'style' => $self->cell_style},
-      };
-      push @$rows, $row;
+  my @rows;
+  
+  foreach (grep $_->get('display') ne 'off', $image_config->get_node('user_data')->nodes) {
+    my $colour = $_->get('colour');
+    my $label  = $_->get('caption');
+    
+    if ($colour =~ /,/) {
+      $colour = '#' . Sanger::Graphics::ColourMap::hex_by_rgb(undef, [ split ',', $colour ]); ## Convert RGB colours to hex, because rgb attributes getting stripped out of HTML
+    } elsif ($colour =~ /^[0-9a-f]{6}$/i) { 
+      $colour = "#$colour"; ## Hex with no initial hash symbol
     }
+      
+    my $swatch = qq{<span style="width:30px;height:15px;display:inline-block;background-color:$colour" title="$colour"></span>};
+      
+    push @rows, {
+      colour => { value => $swatch, style => $self->cell_style },
+      track  => { value => $label,  style => $self->cell_style },
+    };
   }
-  return {'header' => $header, 'column_order' => $column_order, 'rows' => $rows};
+  
+  return { header => $header, column_order => $column_order, rows => \@rows };
 } 
 
 sub _user_track_colour {
   my ($self, $track) = @_;
-  my $colour; 
-
-  if ($track->{'config'} && $track->{'config'}{'color'}) {
-    $colour = $track->{'config'}{'color'};
-  }
-  else {
-    $colour = 'black';
-  }
-  return $colour;      
+  return $track->{'config'} && $track->{'config'}{'color'} ? $track->{'config'}{'color'} : 'black';      
 }
 
 1;
