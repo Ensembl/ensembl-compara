@@ -666,6 +666,13 @@ sub dumpVariation {
                       GROUP_CONCAT('ss',subsnp_id) as ssid
                  FROM $VariationDB.subsnp_map
              GROUP BY variation_id};
+
+    #if variation forget to build subsnp_map then can use this, but slower
+#    $stmt = qq{SELECT a.variation_id,
+#                      GROUP_CONCAT(DISTINCT CONCAT('ss',a.subsnp_id)) AS ssid
+# 	  	 FROM $VariationDB.allele a
+#                WHERE a.subsnp_id IS NOT NULL
+#             GROUP BY a.variation_id};
     $ssid_sth = $conf->{'dbh'}->prepare($stmt);
     $ssid_sth->execute();
     print LOG "     ...executed SQL, now retrieving data ", &date_and_mem, "\n";
@@ -812,7 +819,7 @@ sub dumpVariation {
 }
 
 sub VariationLine {
-  my ($species, $name, $synonyms, $genes, $phenotypes, $studys, $type, $locs, $source, $desc, $counter ) = @_;
+  my ($species, $name, $synonyms, $genes, $phenotypes, $studys, $locs, $type, $source, $desc, $counter ) = @_;
   my $url = '';
   my $url = sprintf(qq(%s/Variation/Summary?v=%s),
                     $species,
