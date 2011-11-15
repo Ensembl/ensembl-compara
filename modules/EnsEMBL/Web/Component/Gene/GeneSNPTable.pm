@@ -310,6 +310,18 @@ sub variation_table {
             $show_scores eq 'yes' ? $tva->polyphen_score : undef
           );
           
+          # Adds LSDB/LRG sources
+          if ($self->isa('EnsEMBL::Web::Component::LRG::LRGSNPTable')) {
+            my $var = $snp->variation;
+            my $syn_sources = $var->get_all_synonym_sources;
+            foreach my $s_source (@$syn_sources) {
+              next if ($s_source !~ /LSDB|LRG/);
+              
+              my $synonym = ($var->get_all_synonyms($s_source))->[0];
+              $source .= ", ".$hub->get_ExtURL_link($s_source, $s_source, $synonym);
+            }
+          }
+          
           my $row = {
             ID         => qq{<a href="$url">$variation_name</a>},
             class      => $var_class,
