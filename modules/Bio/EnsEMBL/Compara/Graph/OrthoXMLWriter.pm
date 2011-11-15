@@ -107,6 +107,8 @@ my $ortho_uri = 'http://orthoXML.org';
   Arg[NO_RELEASE_TREES] : Boolean; if set to true this will force the writer
                           to avoid calling C<release_tree()> on every tree
                           given. Defaults to false
+  Arg[POSSIBLE_ORTHOLOGS] : Boolean: if set to true, duplication nodes with a
+                            score < 0.25 are considered as speciations
   Description : Creates a new tree writer object. 
   Returntype  : Instance of the writer
   Exceptions  : None
@@ -122,16 +124,18 @@ sub new {
   $class = ref($class) || $class;
   my $self = $class->SUPER::new(@args);
   
-  my ($source, $source_version, $no_release_trees) = 
-    rearrange([qw(source source_version no_release_trees)], @args);
+  my ($source, $source_version, $no_release_trees, $possible_orthologs) = 
+    rearrange([qw(source source_version no_release_trees possible_orthologs)], @args);
 
   $source ||= 'Unknown';
   $source_version ||= 'Unknown';
-  
+  $possible_orthologs = 0 unless defined $possible_orthologs;
+
   $self->source($source);
   $self->source_version($source_version);
   $self->no_release_trees($no_release_trees);
-  
+  $self->possible_orthologs($possible_orthologs);
+
   return $self;
 }
 
@@ -154,7 +158,7 @@ sub namespaces {
 
 =head2 no_release_trees()
 
-  Arg [0] : Boolean; indiciates if we need to avoid releasing trees
+  Arg [0] : Boolean; indicates if we need to avoid releasing trees
   Returntype : Boolean
   Exceptions : None
   Status     : Stable
@@ -205,6 +209,22 @@ sub source_version {
 }
 
 =pod
+
+=head2 possible_orthologs()
+
+  Arg [0] : Boolean; indicates if we want to treat not-supported duplications as speciations
+  Returntype : Boolean
+  Exceptions : None
+  Status     : Stable
+ 
+=cut
+
+sub possible_orthologs {
+  my ($self, $possible_orthologs) = @_;
+  $self->{possible_orthologs} = $possible_orthologs if defined $possible_orthologs;
+  return $self->{possible_orthologs};
+}
+
 
 =head2 write_trees()
 
@@ -334,7 +354,7 @@ sub _write_tree {
   my ($self, $tree) = @_;
   
   # an OrthoXML file must begin with a orthologGroup
-  if (_is_reliable_duplication($tree)) {
+  if (_is_reliable_duplication($self, $tree)) {
     # Goes recursively until the next speciation node
     foreach my $child (@{$tree->children()}) {
       $self->_write_tree($child);
@@ -348,10 +368,15 @@ sub _write_tree {
 }
 
 sub _is_reliable_duplication {
+  my $self = shift;
   my $node = shift;
   my $node_type = $node->get_tagvalue('node_type');
+  return 0 unless defined $node_type;
+  return 0 if $node_type eq 'speciation';
+  return 1 if $node_type eq 'gene_split';
+  return 1 if not $self->possible_orthologs();
   my $sis = $node->get_tagvalue('duplication_confidence_score');
-  return ((defined $node_type) and ($node_type eq 'duplication') and (defined $sis) and ($sis >= 0.25));
+  return ((defined $sis) and ($sis >= 0.25));
 }
 
 sub _process {
@@ -361,7 +386,7 @@ sub _process {
     return $self->_writer->emptyTag("geneRef", "id" => $node->member_id);
   }
   elsif(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode')) {
-    my $tagname = _is_reliable_duplication($node) ? "paralogGroup" : "orthologGroup";
+    my $tagname = _is_reliable_duplication($self, $node) ? "paralogGroup" : "orthologGroup";
 
     my $w = $self->_writer();
     $w->startTag(
