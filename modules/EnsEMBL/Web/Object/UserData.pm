@@ -930,7 +930,7 @@ sub consequence_data_from_file {
   my ($self, $code) = @_;
   my $results = {};
 
-  my $data = $self->hub->get_data_from_session('temp', 'upload', $code);
+  my $data = $self->hub->get_data_from_session('upload', $code);
   if (my $parser = $data->{'parser'}){ 
     foreach my $track ($parser->{'tracks'}) {
       foreach my $type (keys %{$track}) { 
