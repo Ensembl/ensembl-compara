@@ -77,14 +77,23 @@ Ensembl.DataTable = {
         }
       },
       fnInitComplete: function () {
+        var hidden = this.is(':hidden');
+        var parent = this.parent();
+        
         if (this[0].style.width !== '100%') {
-          if (this.not(':visible').length) {
+          if (hidden) {
             this.show(); // show table momentarily (not noticable in the browser) so that width is correct
-            this.parent().width(this.outerWidth()).hide(); // Hide the wrapper of already hidden table
-          } else {
-            this.parent().width(this.outerWidth());
           }
+          
+          parent.width(this.outerWidth());
         }
+        
+        if (hidden) {
+          parent.hide(); // Hide the wrapper of already hidden table
+          this.removeClass('hide');
+        }
+        
+        parent = null;
       },
       fnDrawCallback: function (data) {
         $('.dataTables_info, .dataTables_paginate, .dataTables_bottom', data.nTableWrapper)[data._iDisplayLength === -1 ? 'hide' : 'show']();
