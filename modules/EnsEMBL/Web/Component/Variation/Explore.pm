@@ -75,7 +75,7 @@ sub content {
       $img .= '.png';
       $html .=
         '<a href="'.$url.'" title="'.$title.'">'.
-          '<img src="/i/'.$img.'" class="portal" style="padding: 5px; width:'.$size.'px;height:'.$size.'px;" alt="'.$title.'" />'.
+          '<img src="/img/'.$img.'" class="portal" style="padding: 5px; width:'.$size.'px;height:'.$size.'px;" alt="'.$title.'" />'.
         '</a>';
     }
     else {
