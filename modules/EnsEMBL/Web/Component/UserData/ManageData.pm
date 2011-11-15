@@ -144,7 +144,7 @@ sub table_row {
   
   if ($file->{'nearest'}) {
     $name .= sprintf(
-      '<a href="%s">View sample location</a><br />',
+      '<a href="%s;contigviewbottom=%s">View sample location</a><br />',
       $hub->url({
         species  => $file->{'species'},
         type     => 'Location',
@@ -152,7 +152,8 @@ sub table_row {
         function => undef,
         r        => $file->{'nearest'},
         __clear  => 1
-      })
+      }),
+      join ',', map $_ ? "$_=on" : (), $file->{'analyses'} ? split ', ', $file->{'analyses'} : join '_', $user_record ? 'user' : $file->{'type'}, $file->{'code'}
     );
   }
   
