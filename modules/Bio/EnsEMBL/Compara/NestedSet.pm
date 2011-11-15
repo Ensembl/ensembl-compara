@@ -1630,7 +1630,7 @@ sub find_leaf_by_name {
   my $self = shift;
   my $name = shift;
 
-  return $self if($name eq $self->name);
+  return $self if((defined $self->name) and ($name eq $self->name));
 
   my $leaves = $self->get_all_leaves;
   foreach my $leaf (@$leaves) {
