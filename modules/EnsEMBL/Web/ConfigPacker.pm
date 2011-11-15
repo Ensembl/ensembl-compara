@@ -352,6 +352,20 @@ sub _summarise_variation_db {
   return unless $dbh;
   push @{ $self->db_tree->{'variation_like_databases'} }, $db_name;
   $self->_summarise_generic( $db_name, $dbh );
+  
+  # get menu config from meta table if it exists
+  my $v_conf_aref = $dbh->selectall_arrayref('select meta_value from meta where meta_key = "web_config" order by meta_id asc');
+  foreach my $row(@$v_conf_aref) {
+	my ($type, $long_name, $key, $parent) = split /\#/, $row->[0];
+	
+	push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
+	  type       => $type,
+	  long_name  => $long_name,
+	  key        => $key,
+	  parent     => $parent
+	};
+  }
+  
   my $t_aref = $dbh->selectall_arrayref( 'select source_id,name,description, if(somatic_status = "somatic", 1, 0), type from source' );
 #---------- Add in information about the sources from the source table
   my $temp = {map {$_->[0],[$_->[1],0]} @$t_aref};
@@ -431,7 +445,7 @@ sub _summarise_variation_db {
 
 #--------- Add in Variation set information
   # First get all toplevel sets
-  my (%super_sets, %sub_sets);
+  my (%super_sets, %sub_sets, %set_descriptions);
 
   my $st_aref = $dbh->selectall_arrayref('
     select vs.variation_set_id, vs.name, vs.description, a.value
@@ -454,6 +468,8 @@ sub _summarise_variation_db {
       short_name  => $_->[3],
       subsets     => [],
     };
+	
+	$set_descriptions{$_->[3]} = $_->[2];
     
     my $ss_aref = $dbh->selectall_arrayref("
       select vs.variation_set_id, vs.name, vs.description, a.value 
@@ -471,11 +487,14 @@ sub _summarise_variation_db {
         description => $sub_set->[2],
         short_name  => $sub_set->[3],
       };
+	  
+	  $set_descriptions{$sub_set->[3]} = $sub_set->[2];
     } 
   }
 
-  $self->db_details($db_name)->{'tables'}{'variation_set'}{'supersets'} = \%super_sets;  
-  $self->db_details($db_name)->{'tables'}{'variation_set'}{'subsets'}   = \%sub_sets;
+  $self->db_details($db_name)->{'tables'}{'variation_set'}{'supersets'}    = \%super_sets;  
+  $self->db_details($db_name)->{'tables'}{'variation_set'}{'subsets'}      = \%sub_sets;
+  $self->db_details($db_name)->{'tables'}{'variation_set'}{'descriptions'} = \%set_descriptions;
 
 #--------- Add in somatic mutation information
   my %somatic_mutations;
