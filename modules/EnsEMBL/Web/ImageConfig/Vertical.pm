@@ -61,12 +61,12 @@ sub load_user_track_data {
   my @colours      = qw(darkred darkblue darkgreen purple grey red blue green orange brown magenta violet darkgrey);
   my ($feature_adaptor, $slice_adaptor, $parser, %data, $max);
   
-  foreach ($self->get_node('user_data')->nodes) {
-    my $display = $_->get('display');
+  foreach my $track ($self->get_node('user_data')->nodes) {
+    my $display = $track->get('display');
     
     next if $display eq 'off';
     
-    my $logic_name = $_->get('logic_name');
+    my $logic_name = $track->get('logic_name');
     my $colour     = \@colours;
     my $max_value;
     
@@ -76,7 +76,7 @@ sub load_user_track_data {
       $feature_adaptor ||= $hub->get_adaptor('get_DnaAlignFeatureAdaptor', 'userdata');
       $slice_adaptor   ||= $hub->get_adaptor('get_SliceAdaptor');
       
-      ($data{$_->id}, $max_value) = $self->get_dna_align_features($logic_name, $feature_adaptor, $slice_adaptor, $bins, $bin_size, $chromosomes, $colour->[0]);
+      ($data{$track->id}, $max_value) = $self->get_dna_align_features($logic_name, $feature_adaptor, $slice_adaptor, $bins, $bin_size, $chromosomes, $colour->[0]);
     } else {
       if ($parser) {
         $parser->reset;
@@ -87,21 +87,22 @@ sub load_user_track_data {
         $parser->filter($chromosomes->[0]) if scalar @$chromosomes == 1;
       }
       
-      ($data{$_->id}, $max_value) = $self->get_parsed_features($_, $parser, $bins, $colour);
+      ($data{$track->id}, $max_value) = $self->get_parsed_features($track, $parser, $bins, $colour);
     }
     
-    if ($max_value) {
-      my $scale = $track_width / $max_value;
-      
-      foreach my $id (keys %data) {
-        foreach my $chr (keys %{$data{$id}}) {
-          foreach my $track (values %{$data{$id}{$chr}}) {
-            $_ *= $scale for @{$track->{'scores'} || []};
-          }
+    $max = $max_value if $max_value > $max;
+  }
+  
+  if ($max) {
+    my $scale = $track_width / $max;
+    
+    foreach my $id (keys %data) {
+      foreach my $chr (keys %{$data{$id}}) {
+        foreach my $track_data (values %{$data{$id}{$chr}}) {
+          $_ *= $scale for @{$track_data->{'scores'} || []};
+          $self->get_node($id)->set('colour', $track_data->{'colour'});
         }
       }
-      
-      $max = $max_value if $max_value > $max;
     }
   }
   
