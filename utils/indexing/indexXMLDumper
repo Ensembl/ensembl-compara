@@ -2272,7 +2272,6 @@ sub dumpTranscript {
         if( $old->{'tid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
           $c++;
-          warn "one $c";
           &p( GeneTransLine('Transcript',
                         $dbspecies,
                         $old->{'tsid'},
@@ -2352,7 +2351,6 @@ sub dumpTranscript {
       }
     }
     $c++;
-    warn "two $c--" . $old->{'gsid'};
     &p( GeneTransLine('Transcript',
                   $dbspecies,
                   $old->{'tsid'},
