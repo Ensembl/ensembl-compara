@@ -33,15 +33,11 @@ sub process {
   }
   
   if ($method) {
-    my $upload_response = $self->upload($method);
+    my $response = $self->upload($method);
+    my $code     = delete $response->{'code'};
     
-    foreach (keys %$upload_response) {
-      if ($_ eq 'code') {
-        push @files_to_convert, "temp-upload-$upload_response->{'code'}:$upload_response->{'name'}";
-      } else {
-        $url_params->{$_} = $upload_response->{$_};
-      }
-    }
+    $url_params->{$_} = $response->{$_} for keys %$response;
+    push @files_to_convert, "upload_$code:$response->{'name'}";
   }
   
   push @files_to_convert, $hub->param('convert_file');
