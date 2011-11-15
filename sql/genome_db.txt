@@ -6,14 +6,12 @@
 33	9371	echinops_telfairi	TENREC	1	2006-01-Ensembl	
 36	69293	gasterosteus_aculeatus	BROADS1	1	2006-06-Ensembl	
 37	8090	oryzias_latipes	MEDAKA1	1	2006-05-Ensembl	
-38	9598	pan_troglodytes	CHIMP2.1	1	2008-02-Ensembl	
 39	9615	canis_familiaris	BROADD2	1	2006-11-Ensembl	
 42	9031	gallus_gallus	WASHUC2	1	2006-08-Ensembl	
 43	9258	ornithorhynchus_anatinus	OANA5	1	2007-01-Ensembl	
 46	13616	monodelphis_domestica	BROADO5	1	2007-02-Ensembl	
 48	37347	tupaia_belangeri	TREESHREW	1	2006-10-Ensembl	
 49	9365	erinaceus_europaeus	HEDGEHOG	1	2006-10-Ensembl	
-51	30611	otolemur_garnettii	BUSHBABY1	1	2007-02-Ensembl	
 52	43179	spermophilus_tridecemlineatus	SQUIRREL	1	2006-10-Ensembl	
 55	42254	sorex_araneus	COMMON_SHREW1	1	2007-04-Ensembl	
 57	10090	mus_musculus	NCBIM37	1	2010-04-Ensembl	
@@ -38,7 +36,7 @@
 91	9315	macropus_eugenii	Meug_1.0	1	2009-02-Ensembl	
 93	9823	sus_scrofa	Sscrofa9	1	2009-04-Ensembl	
 98	9785	loxodonta_africana	loxAfr3	1	2009-07-Ensembl	
-105	7227	drosophila_melanogaster	BDGP5.25	1	2010-02-FlyBase	
+105	7227	drosophila_melanogaster	BDGP5	1	2011-07-FlyBase	
 108	9986	oryctolagus_cuniculus	oryCun2	1	2009-11-Ensembl	
 109	9646	ailuropoda_melanoleuca	ailMel1	1	2010-01-Ensembl	
 110	7955	danio_rerio	Zv9	1	2010-06-Ensembl	
@@ -49,8 +47,11 @@
 116	8364	xenopus_tropicalis	JGI_4.2	1	2010-09-Ensembl	
 117	9483	callithrix_jacchus	C_jacchus3.2.1	1	2010-02-Ensembl	
 118	59463	myotis_lucifugus	Myoluc2.0	1	2010-12-Ensembl	
-119	4932	saccharomyces_cerevisiae	EF3	1	2009-07-SGD	
-120	7757	petromyzon_marinus	Petromyzon_marinus_7.0	1	2011-02-Ensembl	
+120	7757	petromyzon_marinus	Pmarinus_7.0	1	2011-02-Ensembl	
 121	9305	sarcophilus_harrisii	DEVIL7.0	1	2011-03-Ensembl	
 122	9913	bos_taurus	UMD3.1	1	2011-04-Ensembl	
 123	9593	gorilla_gorilla	gorGor3.1	1	2009-08-Ensembl	
+124	30611	otolemur_garnettii	OtoGar3	1	2011-06-Ensembl	
+125	9598	pan_troglodytes	CHIMP2.1.4	1	2011-05-Ensembl	
+126	8049	gadus_morhua	gadMor1	1	2010-01-Ensembl	
+127	4932	saccharomyces_cerevisiae	EF4	1	2011-09-SGD	
