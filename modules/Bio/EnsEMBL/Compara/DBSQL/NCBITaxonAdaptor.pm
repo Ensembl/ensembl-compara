@@ -210,7 +210,6 @@ sub create_instance_from_rowhash {
   
   $node = new Bio::EnsEMBL::Compara::NCBITaxon;
   $self->init_instance_from_rowhash($node, $rowhash);
-  $self->_load_tagvalues($node);
   
   # The genebuilders has troubles with load_taxonomy.pl when the
   # following line was commented out
@@ -239,7 +238,7 @@ sub init_instance_from_rowhash {
 sub _load_tagvalues {
   my $self = shift;
   my $node = shift;
-  
+
   unless($node->isa('Bio::EnsEMBL::Compara::NCBITaxon')) {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NCBITaxon] not a $node");
   }
