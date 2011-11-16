@@ -11,6 +11,7 @@ sub content {
   my $hub                 = $self->hub;
   my $db_adaptor          = $hub->database($hub->param('fdb'));
   my $feature_set         = $db_adaptor->get_FeatureSetAdaptor->fetch_by_name($hub->param('fs')); 
+  my $experiment          = $feature_set->get_Experiment;
   my ($chr, $start, $end) = split /\:|\-/g, $hub->param('pos'); 
   my $length              = $end - $start + 1;
   my $slice               = $hub->database('core')->get_SliceAdaptor->fetch_by_region('toplevel', $chr, $start, $end);
@@ -40,7 +41,17 @@ sub content {
     type  => 'Feature',
     label => $feature_set->display_label
   });
-  
+
+  if ($experiment) {
+    $self->add_entry({
+      type        => 'Source',
+      label_html  => sprintf('<a href="%s">%s</a>',
+        $hub->url({'type' => 'Experiment', 'action' => 'Features', 'ex' => 'name-'.$feature_set->name}),
+        $experiment->source_info->[0]
+      )}
+    );
+  }
+
   $self->add_entry({
     type  => 'bp',
     label => $hub->param('pos')
