@@ -490,7 +490,7 @@ sub restrict_between_positions {
     }
 
     if ($first_idx <= $last_idx) {
-      @new_chain = @{@$chain}[$first_idx..$last_idx];
+      @new_chain = @{$chain}[$first_idx..$last_idx];
     }
     
     # may be necessary to cut the boundary blocks
