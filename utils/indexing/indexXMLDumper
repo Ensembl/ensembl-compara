@@ -2999,8 +2999,8 @@ sub p {
   unless ($no_parse) {
     eval { $parser->parse($str); };
     if ($@) {
-      print LOG "\n\nWARNING XML - Error in record, ignoring (although the record count is correct):\nError is $@\nRecord is:\n$str";
-      return;
+      print LOG "\n\nWARNING XML - Error in XML, please fix and rerun:\nError is $@\n";
+      exit;
     }
   }
 
