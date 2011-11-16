@@ -787,7 +787,7 @@ sub dump_data_for_gene {
 #---------------------------------------------------------------------
 #FORMAT >STABLE_ID TYPE:SUBTYPE TOPLEVEL:SLICE_NAME gene:genename
 #>ENST00000289823 cdna:known chromosome:NCBI34:8:21922367:21927699:1
-#gene:ENSG00000158815
+#gene:ENSG00000158815 gene_biotype:proten_coding transcript_biotype:protein_coding
 
 sub dump_cdna_rna {
 
@@ -805,7 +805,9 @@ sub dump_cdna_rna {
              $transcript->seq_region_end,
              $transcript->seq_region_strand );
 
-  my $label = $gene ? "gene:".$gene->stable_id : " ";
+  my $label = $gene ? "gene:".$gene->stable_id ." gene_biotype:" .$gene->biotype ." ": " ";
+  $label =~s/^\s+//;
+  $label .= "transcript_biotype:" .$transcript->biotype;
   my $seq = $transcript->seq();
   $seq->description( join( " ", $type, $location, $label) );
   #info( 1, "CDNA>".$seq->display_id );
@@ -815,7 +817,8 @@ sub dump_cdna_rna {
 
 #------------------------------------------------------------------------------
 #>ENSP00000328693 pep:novel chromosome:NCBI34:1:904515:910768:1
-#>gene:ENSG00000158815:transcript:ENST00000328693
+#gene:ENSG00000158815 transcript:ENST00000328693 gene_biotype:protein_coding 
+#transcript_biotype:protein_coding
 
 sub dump_pep {
 
@@ -843,6 +846,8 @@ sub dump_pep {
   my $label;
   $label = "gene:".$gene->stable_id if $gene;
   $label .=" transcript:".$transcript->stable_id;
+  $label .=" gene_biotype:".$gene->biotype if $gene;
+  $label .=" transcript_biotype:".$transcript->biotype;
 
   my $seq = $transcript->translate;
   unless ($seq) {
@@ -1296,9 +1301,9 @@ General format:
 
 Example of Ensembl Peptide header:
 
->ENSP00000328693 pep:novel chromosome:NCBI35:1:904515:910768:1 gene:ENSG00000158815:transcript:ENST00000328693
- ^               ^   ^     ^                                   ^                    ^
- ID              |   |  LOCATION                          GENE:stable gene ID       |
+>ENSP00000328693 pep:novel chromosome:NCBI35:1:904515:910768:1 gene:ENSG00000158815:transcript:ENST00000328693 gene_biotype: protein_coding transcript_biotype: protein_coding
+ ^               ^   ^     ^                                   ^                    ^                          ^                            ^ 
+ ID              |   |  LOCATION                          GENE:stable gene ID       |                       GENE: gene biotype           TRANSCRIPT: transcript biotype
                  | STATUS                                           TRANSCRIPT: stable transcript ID
                SEQTYPE
 \n",
@@ -1362,9 +1367,9 @@ General format:
 
 Example of an Ensembl cDNA header:
 
->ENST00000289823 cdna:known chromosome:NCBI35:8:21922367:21927699:1 gene:ENSG00000158815
- ^               ^    ^     ^                                       ^
- ID              |    |  LOCATION                         GENE: gene stable ID
+>ENST00000289823 cdna:known chromosome:NCBI35:8:21922367:21927699:1 gene:ENSG00000158815 gene_biotype:protein_coding transcript_biotype:protein_coding
+ ^               ^    ^     ^                                       ^                    ^                           ^       
+ ID              |    |  LOCATION                         GENE: gene stable ID        GENE: gene biotype        TRANSCRIPT: transcript biotype
                  |  STATUS
               SEQTYPE
 
@@ -1405,9 +1410,9 @@ for the sequence to be identified outside the context of the FASTA file.
 
 General format:
 
->ENST00000347977 ncrna:miRNA chromosome:NCBI35:1:217347790:217347874:-1 gene:ENSG00000195671
-   ^             ^     ^     ^                                          ^
-   ID            |     |  LOCATION                            GENE: gene stable ID
+>ENST00000347977 ncrna:miRNA chromosome:NCBI35:1:217347790:217347874:-1 gene:ENSG00000195671 gene_biotype:protein_coding transcript_biotype:protein_coding
+   ^             ^     ^     ^                                          ^                    ^                           ^ 
+   ID            |     |  LOCATION                            GENE: gene stable ID       GENE: gene biotype           TRANSCRIPT: transcript biotype   
                  |   STATUS
               SEQTYPE
 
