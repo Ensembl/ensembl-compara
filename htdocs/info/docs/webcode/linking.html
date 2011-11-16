@@ -206,42 +206,59 @@
 
 <h4 id="attachurl">Examples - attach external data</h4>
 
-<p>
-  To attach an example data file by URL and display the features in a half_height
-  style:
-</p>
+<p>To attach an example data file by URL and display the features with the default renderer:</p>
 
 <kbd>
-  <a href="http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000130544;contigviewbottom=url:http://www.ensembl.org/info/website/upload/sample_files/example.bed=half-height">http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000130544;contigviewbottom=url:http://www.ensembl.org/info/website/upload/sample_files/example.bed=half_height</a>
+  <a href="http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000130544;contigviewbottom=url:http://www.ensembl.org/info/website/upload/sample_files/example.bed">
+    http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000130544;contigviewbottom=url:http://www.ensembl.org/info/website/upload/sample_files/example.bed
+  </a>
+</kbd>
+
+<p>To attach an example data file by URL and display the features in a half_height style:</p>
+
+<kbd>
+  <a href="http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000130544;contigviewbottom=url:http://www.ensembl.org/info/website/upload/sample_files/example.bed=half-height">
+    http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000130544;contigviewbottom=url:http://www.ensembl.org/info/website/upload/sample_files/example.bed=half_height
+  </a>
 </kbd>
 
 <p><strong>Note on bedGraph format</strong> If attaching a bedGraph file, please add the parameter 'format=bedGraph' to the URL, e.g.</p>
 
 <kbd>
-  <a href="http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=url:http://www.ensembl.org/info/website/upload/sample_files/example.bed=ungrouped">http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=url:http://www.abcd.edu/myprojects/data.bed=tiling;format=bedGraph</a>
+  <a href="http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=url:http://www.ensembl.org/info/website/upload/sample_files/example.bed=ungrouped">
+    http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=url:http://www.abcd.edu/myprojects/data.bed=tiling;format=bedGraph
+  </a>
 </kbd>
+
+<br />
+<br />
+<p style="color: red"><strong>IMPORTANT:</strong> You <strong>must</strong> encode any = & or ; characters in your URL for the attachment to work correctly.</p>
+<br />
+
 <p>
   To attach the Ensembl transcripts DAS source and display the features according to the server's instructions (stylesheet):
 </p>
 
 <kbd>
-  http://www.ensembl.org/Mus_musculus/Location/View?g=ENSMUSG00000049878;r=4:120817978-120887689;contigviewbottom=das:http://das.sanger.ac.uk/das/ikmc_products=normal
+  <a href="http://www.ensembl.org/Mus_musculus/Location/View?g=ENSMUSG00000049878;r=4:120817978-120887689;contigviewbottom=das:http://das.sanger.ac.uk/das/ikmc_products=normal">
+    http://www.ensembl.org/Mus_musculus/Location/View?g=ENSMUSG00000049878;r=4:120817978-120887689;contigviewbottom=das:http://das.sanger.ac.uk/das/ikmc_products=normal
+  </a>
 </kbd>
 
-<p>
-  To attach a DAS source from the DAS registry (in this case human SNPs from ASTD) and force the display of labels:
-</p>
+<p>To attach a DAS source from the DAS registry (in this case human SNPs from ASTD) and force the display of labels:</p>
 
 <kbd>
-  http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=das:http://www.dasregistry.org/das/sources/DS_560=labels
+  <a href="http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=das:http://www.dasregistry.org/das/sources/DS_560=labels">
+    http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=das:http://www.dasregistry.org/das/sources/DS_560=labels
+  </a>
 </kbd>
 
-<p>
-  To attach a text-based DAS source (one which will not be displayed on an image):
-</p>
+<p>To attach a text-based DAS source (one which will not be displayed on an image):</p>
 
 <kbd>
-  http://www.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000139618;r=13:32889611-32973347;t=ENST00000380152;das=http://www.genenames.org/das/HGNC/
+  <a href="http://www.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000139618;r=13:32889611-32973347;t=ENST00000380152;das=http://www.genenames.org/das/HGNC/">
+    http://www.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000139618;r=13:32889611-32973347;t=ENST00000380152;das=http://www.genenames.org/das/HGNC/
+  </a>
 </kbd>
 
 <h4>Important Note</h4>
