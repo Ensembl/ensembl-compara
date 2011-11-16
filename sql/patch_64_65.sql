@@ -44,8 +44,7 @@ INSERT INTO nc_tree_attr (node_id, acc_name) SELECT node_id, value FROM nc_tree_
 DELETE FROM nc_tree_tag WHERE tag IN ('acc_name', 'Duplication', 'Bootstrap', 'taxon_id', 'taxon_name', 'duplication_confidence_score', 'species_intersection_score');
 
 # nc_tree_node.parent_id and nc_tree_node.root_id defaults to NULL
-ALTER TABLE nc_tree_node MODIFY (parent_id int(10) unsigned DEFAULT NULL,
-root_id int(10) unsigned DEFAULT NULL);
+ALTER TABLE nc_tree_node MODIFY COLUMN parent_id int(10) unsigned DEFAULT NULL, MODIFY COLUMN root_id int(10) unsigned DEFAULT NULL;
 
 # keys in nc_tree_node have changed
 ALTER TABLE nc_tree_node DROP KEY `root_id`;
@@ -54,9 +53,8 @@ ALTER TABLE nc_tree_node DROP KEY `left_index`;
 ALTER TABLE nc_tree_node ADD KEY `root_id` (`root_id`,`left_index`);
 ALTER TABLE nc_tree_node ADD KEY `root_id_2` (`root_id`, `right_index`);
 
-# nc_tree_tag.tag and nc_tree_tag.value can't be NULL
-ALTER TABLE nc_tree_tag MODIFY (`tag` varchar(50) NOT NULL,
-`value` mediumtext NOT NULL);
+# nc_tree_tag.tag and nc_tree_tag.value cannot be NULL
+ALTER TABLE nc_tree_tag MODIFY COLUMN `tag` varchar(50) NOT NULL, MODIFY COLUMN `value` mediumtext NOT NULL;
 
 # changes in keys in nc_tree_tag
 ALTER TABLE nc_tree_tag DROP KEY `tag_node_id`;
@@ -97,8 +95,8 @@ DELETE FROM protein_tree_tag WHERE tag IN ('taxon_id', 'taxon_name', 'Bootstrap'
 
 
 # Changes in protein_tree_node
-ALTER TABLE protein_tree_node MODIFY (`parent_id` int(10) unsigned DEFAULT NULL,
-`root_id` int(10) unsigned DEFAULT NULL);
+ALTER TABLE protein_tree_node MODIFY COLUMN `parent_id` int(10) unsigned DEFAULT NULL, MODIFY COLUMN `root_id` int(10) unsigned DEFAULT NULL;
+
 ALTER TABLE protein_tree_node DROP KEY `root_id`;
 ALTER TABLE protein_tree_node DROP KEY `left_index`;
 ALTER TABLE protein_tree_node DROP KEY `right_index`;
@@ -107,8 +105,7 @@ ALTER TABLE protein_tree_node ADD KEY `root_id_2` (`root_id`,`right_index`);
 
 
 # Changes in protein_tree_tag
-ALTER TABLE protein_tree_tag MODIFY (`tag` varchar(50) NOT NULL,
-`value` mediumtext NOT NULL);
+ALTER TABLE protein_tree_tag MODIFY COLUMN `tag` varchar(50) NOT NULL, MODIFY COLUMN `value` mediumtext NOT NULL;
 ALTER TABLE DROP KEY `tag_node_id`;
 ALTER TABLE ADD KEY `node_id_tag` (`node_id`,`tag`);
 ALTER TABLE ADD KEY `tag_node_id` (`tag`,`node_id`);
@@ -117,8 +114,7 @@ ALTER TABLE ADD KEY `tag_node_id` (`tag`,`node_id`);
 ALTER TABLE subset MODIFY COLUMN `subset_id` int(10) unsigned NOT NULL AUTO_INCREMENT;
 
 # Changes in subset_member
-ALTER TABLE subset_member MODIFY (`subset_id` int(10) unsigned NOT NULL,
-`member_id` int(10) unsigned NOT NULL);
+ALTER TABLE subset_member MODIFY COLUMN `subset_id` int(10) unsigned NOT NULL, MODIFY COLUMN `member_id` int(10) unsigned NOT NULL;
 
 # New table super_protein_tree_attr
 SET @saved_cs_client     = @@character_set_client;
@@ -147,8 +143,7 @@ DELETE FROM protein_tree_tag WHERE tag in ('Duplication', 'dubious_duplication',
 
 
 # Changes in super_protein_tree_node
-ALTER TABLE super_protein_tree_node MODIFY (`parent_id` int(10) unsigned DEFAULT NULL,
-`root_id` int(10) unsigned DEFAULT NULL);
+ALTER TABLE super_protein_tree_node MODIFY COLUMN `parent_id` int(10) unsigned DEFAULT NULL, MODIFY COLUMN `root_id` int(10) unsigned DEFAULT NULL;
 ALTER TABLE super_protein_tree_node DROP KEY `root_id`;
 ALTER TABLE super_protein_tree_node DROP KEY `left_index`;
 ALTER TABLE super_protein_tree_node DROP KEY `right_index`;
@@ -156,8 +151,7 @@ ALTER TABLE super_protein_tree_node ADD KEY `root_id` (`root_id`,`left_index`);
 ALTER TABLE super_protein_tree_node ADD KEY `root_id_2` (`root_id`,`right_index`);
 
 # Changes in super_protein_tree_tag
-ALTER TABLE super_protein_tree_tag MODIFY (`tag` varchar(50) NOT NULL,
-`value` mediumtext NOT NULL);
+ALTER TABLE super_protein_tree_tag MODIFY COLUMN `tag` varchar(50) NOT NULL, MODIFY COLUMN `value` mediumtext NOT NULL;
 ALTER TABLE super_protein_tree_tag DROP KEY `tag_node_id`;
 ALTER TABLE super_protein_tree_tag ADD KEY `node_id_tag` (`node_id`,`tag`);
 ALTER TABLE super_protein_tree_tag ADD KEY `tag_node_id` (`tag`,`node_id`);
