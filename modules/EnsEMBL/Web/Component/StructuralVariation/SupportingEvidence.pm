@@ -30,9 +30,12 @@ sub supporting_evidence_table {
 	my $table_id = 'evidence';
 	
   my $columns = [
-		 { key => 'ssv',   sort => 'string',        title => 'Supporting evidence' },
-		 { key => 'class', sort => 'string',        title => 'Allele type'         },
-		 { key => 'pos',   sort => 'position_html', title => 'Chr:bp'              },
+		 { key => 'ssv',    sort => 'string',        title => 'Supporting evidence'   },
+		 { key => 'pos',    sort => 'position_html', title => 'Chr:bp'                },
+		 { key => 'class',  sort => 'string',        title => 'Allele type'           },
+		 { key => 'clin',   sort => 'string',        title => 'Clinical significance' },
+     { key => 'sample', sort => 'string',        title => 'Sample'                },   
+     { key => 'strain', sort => 'string',        title => 'Strain'                },
   ];
 
   my $rows = ();
@@ -44,47 +47,75 @@ sub supporting_evidence_table {
 			my $name = $ssv->name;
 			$name =~ /(\d+)$/;
 			my $ssv_nb = $1;
-    	$ssv_names->{$1}{'name'}    = $name;
-			$ssv_names->{$1}{'class'}   = $ssv->var_class;
-			$ssv_names->{$1}{'SO_term'} = $ssv->class_SO_term;
-			$ssv_names->{$1}{'sv'}      = $ssv->is_structural_variation;
+    	$ssv_names->{$1} = $ssv;
 		}
+		
 		foreach my $ssv_n (sort {$a <=> $b} (keys(%$ssv_names))) {
-			my $name = $ssv_names->{$ssv_n}{'name'};
+			my $ssv_obj = $ssv_names->{$ssv_n};
+			my $name = $ssv_obj->variation_name;
 			my $loc;
-			if ($ssv_names->{$ssv_n}{'sv'} ne '') {
-				my $sv_obj = $ssv_names->{$ssv_n}{'sv'};
+			
+			# Location(s)
+      foreach my $svf (@{$ssv_obj->get_all_StructuralVariationFeatures}) {
+        my $sv_name;
+				my $chr_bp = $svf->seq_region_name . ':' . $svf->seq_region_start . '-' . $svf->seq_region_end;
+        my $loc_url;
 				
-				# Name
+				my $loc_hash = {
+      		  type   => 'Location',
+      		  action => 'View',
+      	    r      => $chr_bp,
+    		  };
+				$loc_hash->{sv} = $name if ($ssv_obj->is_evidence == 0);
+				  
+				my $loc_url = $hub->url($loc_hash);
+				$loc .= <br /> if ($loc);
+			  $loc .= qq{<a href="$loc_url">$chr_bp</a>};
+			}
+			$loc = '-' if (!$loc);
+	
+			# Name
+			if ($ssv_obj->is_evidence == 0) {
 				my $sv_link = $hub->url({
       									type   => 'StructuralVariation',
       									action => 'Summary',
       									sv     => $name,
 											});
 				$name = qq{<a href="$sv_link">$name</a>};
-				
-				# Location
-        foreach my $svf (@{$sv_obj->get_all_StructuralVariationFeatures}) {
-          my $chr_bp = $svf->seq_region_name . ':' . $svf->seq_region_start . '-' . $svf->seq_region_end;
-          my $loc_url = $hub->url({
-      		  type   => 'Location',
-      		  action => 'View',
-					  sv     => $name,
-      		  r      => $chr_bp,
-    		  });
-				  $loc .= <br /> if ($loc);
-				  $loc .= qq{<a href="$loc_url">$chr_bp</a>};
-				}
-    	}
-			$loc = '-' if (!$loc);
+			}
 	
 			# Class + class colour
-			my $colour = $object->get_class_colour($ssv_names->{$ssv_n}{'SO_term'});
-			my $sv_class = '<table style="border-spacing:0px"><tr><td style="background-color:'.$colour.';width:5px"></td><td style="margin:0px;padding:0px">&nbsp;'.$ssv_names->{$ssv_n}{'class'}.'</td></tr></table>';
-     	my %row = (
-									ssv   => $name,
-									class => $sv_class,
-									pos   => $loc
+			my $colour = $object->get_class_colour($ssv_obj->class_SO_term);
+			my $sv_class = '<table style="border-spacing:0px"><tr><td style="background-color:'.$colour.';width:5px"></td><td style="margin:0px;padding:0px">&nbsp;'.$ssv_obj->var_class.'</td></tr></table>';
+     	
+			# Annotation(s)
+			my ($clin, $sample, $strain);
+			foreach my $annot (@{$ssv_obj->get_all_StructuralVariationAnnotations}) {
+				my $aclin = $annot->clinical_significance;
+				my $asample = $annot->sample_name;
+				my $astrain = $annot->strain_name;
+				
+				if ($aclin) {
+					$clin .= '<br />' if ($clin);
+					$clin = $aclin;
+				}
+				if ($asample) {
+					$sample .= '<br />' if ($sample);
+					$sample = $asample;
+				}
+				if ($astrain) {
+					$strain .= '<br />' if ($strain);
+					$strain = $astrain;
+				}
+			}
+			
+			my %row = (
+									ssv    => $name,
+									class  => $sv_class,
+									pos    => $loc,
+									clin   => $clin ? $clin : '-',
+									sample => $sample ? $sample : '-',
+									strain => $strain ? $strain : '-',
       					);
 				
       push @$rows, \%row;
