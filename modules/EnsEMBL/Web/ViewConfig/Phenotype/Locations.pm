@@ -17,7 +17,7 @@ sub init {
     rows       => scalar @{$self->species_defs->ENSEMBL_CHROMOSOMES} >= 26 ? 2 : 1,
   });
 
-  $self->add_image_config('Vkaryotype', 'nodas');
+  $self->add_image_config('VPhenotype', 'nodas');
   $self->title = 'Location on Genome';
 }
 
