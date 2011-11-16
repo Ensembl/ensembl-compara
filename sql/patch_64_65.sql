@@ -136,10 +136,7 @@ INSERT INTO super_protein_tree_attr (node_id, taxon_id) SELECT super_protein_tre
 UPDATE super_protein_tree_attr JOIN super_protein_tree_tag USING (node_id) SET taxon_name = value WHERE tag = 'taxon_name';
 UPDATE super_protein_tree_attr JOIN super_protein_tree_tag USING (node_id) SET bootstrap = value WHERE tag = 'Bootstrap';
 UPDATE super_protein_tree_attr JOIN super_protein_tree_tag USING (node_id) SET duplication_confidence_score = value WHERE tag = 'duplication_confidence_score';
-UPDATE super_protein_tree_attr JOIN super_protein_tree_tag USING (node_id) SET node_type = 'speciation' WHERE tag = 'Duplication' AND value = 0;
-UPDATE super_protein_tree_attr JOIN super_protein_tree_tag USING (node_id) SET node_type = 'duplication' WHERE tag = 'Duplication' AND value = 1;
-UPDATE super_protein_tree_attr JOIN super_protein_tree_tag USING (node_id) SET node_type = 'dubious' WHERE tag = 'dubious_duplication';
-DELETE FROM protein_tree_tag WHERE tag in ('Duplication', 'dubious_duplication', 'duplication_confidence_score', 'Bootstrap', 'taxon_name', 'taxon_id');
+DELETE FROM super_protein_tree_tag WHERE tag in ('Duplication', 'dubious_duplication', 'duplication_confidence_score', 'Bootstrap', 'taxon_name', 'taxon_id');
 
 
 # Changes in super_protein_tree_node
