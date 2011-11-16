@@ -56,6 +56,7 @@ sub new {
       'evidence_label'      => $evidence_label,
       'cell_type_name'      => $cell_type_name,
       'efo_id'              => $cell_type->efo_id,
+      'feature_set_name'    => $feature_set_name,
       'feature_type_name'   => $feature_type->name,
       'xref_genes'          => [ map $_->primary_id, @{$feature_type->get_all_Gene_DBEntries} ],
       'binding_motifs'      => [ map {$_->name} map { @{$binding_matrix_adaptor->fetch_all_by_FeatureType($_)} } ($feature_type, @{$feature_type->associated_feature_types}) ]
@@ -92,7 +93,7 @@ sub short_caption {
   if ($self->hub->param('ex') =~ /^name\-/) {
     my $feature_set_info = $self->get_feature_sets_info;
     if (@$feature_set_info) {
-      return 'Experiment: '.$feature_set_info->[0]->{'feature_type_name'};
+      return 'Experiment: '.$feature_set_info->[0]->{'feature_set_name'};
     }
   }
   return 'Experiment';
