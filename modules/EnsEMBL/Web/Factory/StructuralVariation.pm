@@ -22,7 +22,8 @@ sub createObjects {
     return $self->problem('fatal', 'Database Error', 'Could not connect to the core database.') unless $dbs;
     
     my $variation_db = $dbs->{'variation'};
-    
+    $variation_db->include_failed_variations(1);
+     
     return $self->problem('fatal', 'Database Error', 'Could not connect to the variation database.') unless $variation_db;
     
     $identifier = $self->param('sv');
