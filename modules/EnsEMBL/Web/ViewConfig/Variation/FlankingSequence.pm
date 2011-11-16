@@ -14,6 +14,8 @@ sub init {
     show_mismatches => 'yes',
     display_type    => 'align'
   });
+
+  $self->title = 'Flanking sequence';
 }
 
 sub form {

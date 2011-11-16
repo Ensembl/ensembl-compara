@@ -17,6 +17,8 @@ sub init {
     seq         => 'Protein',
     text_format => 'clustalw',
   });
+
+  $self->title= 'Homologs';
 }
 
 sub form {

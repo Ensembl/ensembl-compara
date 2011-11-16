@@ -29,6 +29,8 @@ sub init {
     strand         => 1,
     %strains
   });
+
+  $self->title = 'Resequencing';
 }
 
 sub form {

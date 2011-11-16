@@ -14,7 +14,7 @@ sub init {
   });
   
   $self->add_image_config('MultiTop', 'nodas');
-  $self->title = 'Overview Image';
+  $self->title = 'Multi-species Overview';
   
   $self->set_defaults({
     opt_join_genes => 'off',

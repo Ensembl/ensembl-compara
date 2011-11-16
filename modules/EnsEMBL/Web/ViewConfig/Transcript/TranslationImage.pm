@@ -9,6 +9,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my $self = shift;
   $self->add_image_config('protview');
+  $self->title = 'Protein summary';
 }
 
 1;

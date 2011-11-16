@@ -19,6 +19,8 @@ sub init {
     min_frequency     => 0.1,
     number            => 'no'
   });
+
+  $self->title = 'Protein Sequence';
 }
 
 sub form {

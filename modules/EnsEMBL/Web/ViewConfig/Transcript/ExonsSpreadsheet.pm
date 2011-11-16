@@ -24,6 +24,8 @@ sub init {
     population_filter => 'off',
     min_frequency     => 0.1
   });
+
+  $self->title = 'Exons';
 }
 
 sub form {

@@ -20,6 +20,7 @@ sub init {
 	
   $self->set_defaults($defaults);
   $self->add_image_config('snpview', 'nodas');
+  $self->title = 'Genomic context';
 }
 
 sub form {

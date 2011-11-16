@@ -10,6 +10,7 @@ sub init {
   my $self = shift;
   $self->set_defaults({ context => 100 });
   $self->add_image_config('supporting_evidence_transcript');
+  $self->title = 'Supporting evidence';
 }
 
 sub form {

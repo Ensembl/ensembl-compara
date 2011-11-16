@@ -32,7 +32,8 @@ sub init {
     %defaults
   });
   
-  $self->code = $self->hub->type . '::Compara_Alignments';
+  $self->code  = $self->hub->type . '::Compara_Alignments';
+  $self->title = 'Alignments';
 }
 
 sub form {

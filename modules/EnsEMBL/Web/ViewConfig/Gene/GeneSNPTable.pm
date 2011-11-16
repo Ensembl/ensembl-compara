@@ -35,6 +35,8 @@ sub init {
   }
   
   $self->set_defaults($defaults);
+
+  $self->title = 'Variations';
 }
 
 sub form {

@@ -18,6 +18,7 @@ sub init {
   });
 
   $self->add_image_config('Vkaryotype', 'nodas');
+  $self->title = 'Genome';
 }
 
 sub form {

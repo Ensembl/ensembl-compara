@@ -9,6 +9,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my $self = shift;
   $self->set_defaults({ map { $_->{'name'} => $_->{'priority'} > 100 ? 'yes' : 'off' } $self->get_xref_types });
+  $self->title = 'External references';
 }
 
 sub form {

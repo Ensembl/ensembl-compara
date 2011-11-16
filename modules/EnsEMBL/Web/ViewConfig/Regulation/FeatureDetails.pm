@@ -18,6 +18,7 @@ sub init {
   });
 
   $self->add_image_config('reg_detail');
+  $self->title = 'Summary';
 }
 
 sub form {

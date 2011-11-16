@@ -20,6 +20,7 @@ sub init {
 	
   $self->set_defaults($defaults);
   $self->add_image_config('structural_variation', 'nodas');
+  $self->title = 'Genomic context';
 }
 
 sub form {

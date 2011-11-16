@@ -16,6 +16,8 @@ sub init {
     only_phenotypes => 'no',
     min_p_log       => 0
   });
+
+  $self->title = 'Linkage disequilibrium';
 }
 
 sub form {

@@ -22,6 +22,8 @@ sub init {
     min_frequency     => 0.1,
     line_numbering    => 'off',
   });
+
+  $self->title = 'Sequence';
 }
 
 sub form {

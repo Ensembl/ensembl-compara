@@ -24,6 +24,8 @@ sub init {
     min_frequency     => 0.1,
     number            => 'yes'
   });
+  
+  $self->title = 'cDNA sequence';
 }
 
 sub form {

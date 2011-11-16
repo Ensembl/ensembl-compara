@@ -12,6 +12,7 @@ sub init {
   $self->add_image_config('regulation_view'); 
   $self->SUPER::init;
   $self->set_defaults({ opt_highlight => 'yes' });
+  $self->title = 'Details by cell line';
 }
 
 sub form_context {

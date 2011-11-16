@@ -13,6 +13,8 @@ sub init {
     consequence_format => 'ensembl',
     show_scores        => 'no'
   });
+
+  $self->title = 'Protein Variations';
 }
 
 sub form {

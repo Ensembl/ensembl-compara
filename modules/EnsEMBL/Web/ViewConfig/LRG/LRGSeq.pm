@@ -20,6 +20,8 @@ sub init {
     snp_display    => 'snp_link',
     line_numbering => 'sequence'
   });
+
+  $self->title = 'Sequence';
 }
 
 sub form {
