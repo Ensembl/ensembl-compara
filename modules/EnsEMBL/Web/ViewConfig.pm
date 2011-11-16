@@ -175,12 +175,13 @@ sub update_from_input {
 # Loop through the parameters and update the config based on the parameters passed
 sub update_from_url {
   my ($self, $r, $delete_params) = @_;
-  my $hub     = $self->hub;
-  my $session = $hub->session;
-  my $input   = $hub->input;
-  my $species = $hub->species;
-  my $config  = $input->param('config');
-  my @das     = $input->param('das');
+  my $hub          = $self->hub;
+  my $session      = $hub->session;
+  my $input        = $hub->input;
+  my $species      = $hub->species;
+  my $config       = $input->param('config');
+  my @das          = $input->param('das');
+  my $image_config = $self->image_config;
   my $params_removed;
   
   if ($config) {
@@ -238,8 +239,8 @@ sub update_from_url {
     }
   }
   
-  my $image_config = $self->image_config;
-  my @values       = split /,/, $input->param($image_config);
+  # Can't use $input->param($image_config) because the param function unescapes the value, which breaks attaching urls with = in them
+  my @values = map s/^$image_config=(.+)$// ? split /,/, $1 : (), split /[;&]/, $hub->apache_handle->args;
   
   if (@values) {
     $input->delete($image_config); 
