@@ -523,10 +523,17 @@ sub build_imageconfig_menus {
     # If the only submenu present is an external data one, an h3 has already been added. Otherwise, add an "External data" h4.
     $parent->append_child('h4', { inner_HTML => $caption }) if $external && $caption && scalar @{$node->parent_node->child_nodes} > 1;
     
-    my $config_menu = $parent->append_child('ul', { class => 'config_menu' . ($menu_type eq 'hidden' ? ' hidden' : '') });
+    my $element;
     
-    $self->build_imageconfig_menus($_, $config_menu, $menu_class) for @{$node->child_nodes};
-    $self->add_select_all($node, $config_menu, $id);
+    # If the children are all non external menus, add another wrapping div so there can be distinct groups in a submenu, with unlinked enable/disable all controls
+    if (!scalar(grep $_->get('node_type') ne 'menu', @{$node->child_nodes}) && scalar(grep !$_->get('external'), @{$node->child_nodes})) {
+      $element = $parent->append_child('div', { class => $menu_type eq 'hidden' ? ' hidden' : '' });
+    } else {
+      $element = $parent->append_child('ul', { class => 'config_menu' . ($menu_type eq 'hidden' ? ' hidden' : '') });
+    }
+    
+    $self->build_imageconfig_menus($_, $element, $menu_class) for @{$node->child_nodes};
+    $self->add_select_all($node, $element, $id) if $element->node_name eq 'ul';
   } else {
     my $img_url  = $self->img_url;
     my @states   = @{$node->get('renderers') || [ 'off', 'Off', 'normal', 'On' ]};
@@ -625,18 +632,21 @@ sub add_select_all {
   my $parent      = $node->parent_node;
   my $single_menu = !$parent->get('node_type') || scalar @{$parent->child_nodes} == 1; # If there are 0 or 1 submenus
   my @child_nodes = @{$node->child_nodes};
+  my $external    = scalar grep $_->get('external'), @child_nodes;
   my $caption     = $node->get('caption');
   
   # Don't add a select all if there are less than 2 children, or if all children are external sources
-  if (scalar @child_nodes < 2 || scalar @child_nodes eq scalar grep $_->get('external'), @child_nodes) {
+  if (scalar @child_nodes < 2 || scalar @child_nodes eq $external) {
     # Add an h3 caption if there are more than 1 submenus and this submenu isn't external
     $menu->before('h3', { inner_HTML => $caption }) if !$single_menu && $caption && !$node->get('external');
     
     return;
   }
   
-  # Add a select all if there is more than one non menu child (node_type can be track or option)
-  if (scalar(grep $_->get('node_type') ne 'menu', @child_nodes) > 1) {
+  my $child_tracks = scalar grep $_->get('node_type') ne 'menu', @child_nodes;
+  
+  # Add a select all if there is more than one non menu child (node_type can be track or option), or if there is one child track and some non external menus
+  if ($child_tracks > 1 || $child_tracks == 1 && scalar(@child_nodes) - $external > 1) {
     my $img_url = $self->img_url;
     my %counts  = reverse %{$self->{'track_renderers'}{$id}};
     my $popup;
