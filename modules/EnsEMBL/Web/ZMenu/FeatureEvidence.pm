@@ -47,7 +47,7 @@ sub content {
       type        => 'Source',
       label_html  => sprintf('<a href="%s">%s</a>',
         $hub->url({'type' => 'Experiment', 'action' => 'Features', 'ex' => 'name-'.$feature_set->name}),
-        $experiment->source_info->[0]
+        $experiment->source_info->[0] || View
       )}
     );
   }
