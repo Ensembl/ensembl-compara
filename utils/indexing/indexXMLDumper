@@ -989,39 +989,49 @@ sub dumpStructuralVariations {
   my $scale           = $SD->ENSEMBL_GENOME_SIZE || 1;
   my $max_length      = $scale *= 1e6;
   my $T = $conf->{'dbh'}->selectall_arrayref(qq(
-    SELECT sv.structural_variation_id,
-           sv.variation_name,
-           s.name,
+    SELECT v.structural_variation_id,
+           v.variation_name,
+           s.name as source,
            s.description,
-           sr.name,
-           svf.seq_region_start,
-           svf.seq_region_end,
-           group_concat(ssv.name)
-      FROM $VariationDB.source as s,
-           $VariationDB.seq_region as sr,
-           $VariationDB.structural_variation_feature as svf,
-           $VariationDB.structural_variation as sv LEFT JOIN $VariationDB.supporting_structural_variation as ssv ON sv.structural_variation_id = ssv.structural_variation_id
-     WHERE s.source_id = sv.source_id
-       AND sv.structural_variation_id = svf.structural_variation_id
-       AND svf.seq_region_id = sr.seq_region_id
-  GROUP BY sv.structural_variation_id));
+           st.name as study,
+           r.name as seq_region,
+           vf.seq_region_start,
+           vf.seq_region_end,
+           group_concat(ssv.variation_name) as ssv
+      FROM $VariationDB.structural_variation as v LEFT JOIN $VariationDB.study as st ON st.study_id=v.study_id 
+        LEFT JOIN $VariationDB.structural_variation_association as sva ON v.structural_variation_id = sva.structural_variation_id
+        LEFT JOIN $VariationDB.structural_variation as ssv ON ssv.structural_variation_id = sva.supporting_structural_variation_id,
+           $VariationDB.source as s,
+           $VariationDB.seq_region as r,
+           $VariationDB.structural_variation_feature as vf
+     WHERE s.source_id = v.source_id
+       AND vf.structural_variation_id=v.structural_variation_id
+       AND vf.seq_region_id = r.seq_region_id
+  GROUP BY v.structural_variation_id));
+
   foreach my $row ( @$T ) {
     my $id = $row->[1];
-    my $location = $row->[4] .":" . $row->[5] ."-". $row->[6];
-    my $length = $row->[6] - $row->[5] + 1;
-    my $evidence =  $row->[7];
+    my $location = $row->[5] .":" . $row->[6] ."-". $row->[7];
+    my $length = $row->[7] - $row->[6] + 1;
+    my $evidence =  $row->[8];
+    my $study  = $row->[4];
     my $action = ($length >> $max_length) ? 'Overview' : 'View';
     my $params = ($length >> $max_length) ? { 'cytoview' => 'variation_feature_structural=normal' }
       : { 'contigviewbottom' => 'variation_feature_structural=normal' };
-#    my $desc = qq(A structural variation from $row->[2], identified by $row->[3]. This variation has been mapped to chromosome $row->[4], from $row->[5] to $row->[6]. );
-    my $desc = qq(A structural variation from $row->[2], identified by $row->[3].);
-    &p( StrucVarLine( $dbspecies, $id, $evidence, $location, $desc, $action, $params, $counter ), $nogzip, $fh);
+    my $desc;
+    if ($study) {
+      $desc = qq(A structural variation from $row->[2], identified by $row->[3] (study $study).);
+      }
+    else {
+      $desc = qq(A structural variation from $row->[2], identified by $row->[3].);
+    }
+    &p( StrucVarLine( $dbspecies, $id, $evidence, $study, $location, $desc, $action, $params, $counter ), $nogzip, $fh);
   }
   return footer( $counter->(),$nogzip,$fh);
 }
 
 sub StrucVarLine {
-  my ($species, $id, $evidence, $location, $desc, $action, $params, $counter ) = @_;
+  my ($species, $id, $evidence, $study, $location, $desc, $action, $params, $counter ) = @_;
   my $url = '';
   $species =~ s/_/ /;
 
@@ -1047,6 +1057,10 @@ sub StrucVarLine {
     foreach (split ',', $evidence) {
       $xml .= qq(
     <field name="evidence">$_</field>);
+    }
+    if ($study) {
+      $xml .= qq(
+    <field name="study">$study</field>);
     }
     $xml .= qq(
     <field name="location">$location</field>
