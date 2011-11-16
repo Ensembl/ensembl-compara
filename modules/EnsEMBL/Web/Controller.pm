@@ -31,6 +31,7 @@ sub new {
     [ 'Variation',           'v'   ],
     [ 'StructuralVariation', 'sv'  ],
     [ 'Regulation',          'rf'  ],
+    [ 'Experiment',          'ex'  ],
     [ 'Marker',              'm'   ],
     [ 'LRG',                 'lrg' ],
     [ 'GeneTree',            'gt'  ],
