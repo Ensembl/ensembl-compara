@@ -106,9 +106,9 @@ ALTER TABLE protein_tree_node ADD KEY `root_id_2` (`root_id`,`right_index`);
 
 # Changes in protein_tree_tag
 ALTER TABLE protein_tree_tag MODIFY COLUMN `tag` varchar(50) NOT NULL, MODIFY COLUMN `value` mediumtext NOT NULL;
-ALTER TABLE DROP KEY `tag_node_id`;
-ALTER TABLE ADD KEY `node_id_tag` (`node_id`,`tag`);
-ALTER TABLE ADD KEY `tag_node_id` (`tag`,`node_id`);
+ALTER TABLE protein_tree_tag DROP KEY `tag_node_id`;
+ALTER TABLE protein_tree_tag ADD KEY `node_id_tag` (`node_id`,`tag`);
+ALTER TABLE protein_tree_tag ADD KEY `tag_node_id` (`tag`,`node_id`);
 
 # Changes in subset
 ALTER TABLE subset MODIFY COLUMN `subset_id` int(10) unsigned NOT NULL AUTO_INCREMENT;
