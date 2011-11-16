@@ -13,6 +13,7 @@
 	<li><a href="#connect">Connecting an Ensembl variation database</a></li>
 	<li><a href="#genome">Variations in the genome</a></li>
 	<li><a href="#alleles">Alleles and frequencies</a></li>
+	<li><a href="#genotypes">Genotypes</a></li>
 	<li><a href="#Consequence">Consequence type of variations</a></li>
 	<li><a href="#flanks">Variations, Flanking sequences and Genes</a></li>
 	<li><a href="#failed_variations">Failed variations</a></li>
@@ -172,6 +173,35 @@ my $alleles = $variation-&gt;get_all_Alleles();
 foreach my $allele(@{$alleles}) {
 	print "Allele ", $allele-&gt;allele, " has frequency ", $allele-&gt;frequency,
 		" in population ", $allele-&gt;population-&gt;name, "\n";
+}
+</pre>
+
+<h2 id="genotypes">Genotypes</h2>
+
+<p>
+Many variations in the Ensembl Variation database, especially those genotyped in the HapMap or 1000 Genomes projects, have associated genotypes. Genotypes are stored per individual as IndividualGenotype objects, and are associated with a Variation and Individual object. They can be retrieved from an IndividualGenotypeAdaptor, or directly from a Variation object.
+</p>
+
+<pre class="code">
+use strict;
+use warnings;
+use Bio::EnsEMBL::Registry;
+
+my $registry = 'Bio::EnsEMBL::Registry';
+
+$registry-&gt;load_registry_from_db(
+    -host =&gt; 'ensembldb.ensembl.org',
+    -user =&gt; 'anonymous'
+);
+
+my $variation_adaptor = $registry-&gt;get_adaptor('homo_sapiens', 'variation', 'variation');
+
+my $variation = $variation_adaptor-&gt;fetch_by_name('rs1333049');
+
+my $genotypes = $variation-&gt;get_all_IndividualGenotypes();
+
+foreach my $genotype(@{$genotypes}) {
+	print "Individual ", $genotype-&gt;individual->name, " has genotype ", $genotype-&gt;genotype_string, "\n";
 }
 </pre>
 
