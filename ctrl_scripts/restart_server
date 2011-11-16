@@ -111,8 +111,8 @@ my $stop_args = $delay ? "-d $delay" : "";
 my $start_args = join(" ", $rmconfig ? "-r" : "", $single ? "-X" : "", $flush ? "-f" : "");
 
 # stop and start the server
-system("$Bin/stop_server $stop_args") == 0 or exit;
-system("$Bin/start_server $start_args") == 0 or exit;
+system("perl $Bin/stop_server $stop_args") == 0 or exit;
+system("perl $Bin/start_server $start_args") == 0 or exit;
 warn "Restart OK.\n";
 
 if ($tail) {
