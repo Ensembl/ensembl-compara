@@ -13,7 +13,8 @@ sub label_classes {
     'Add custom track'    => 'data',
     'Reset configuration' => 'config',
     'Reset track order'   => 'config',
-    'Save as...'          => 'save'
+    'Save as...'          => 'save',
+    'Load configuration'  => 'load'
   };
 }
 
@@ -29,21 +30,32 @@ sub init {
        $rel         .= '_' . lc $hub->species if $image_config && $image_config->multi_species && $hub->referer->{'ENSEMBL_SPECIES'} ne $hub->species;
 
     $self->add_entry({
-      caption => 'Reset configuration',
-      class   => 'modal_link',
-      rel     => $rel,
-      url     => $hub->url('Config', {
-        reset => 1
-      })
-    });
-    
-    $self->add_entry({
       caption => 'Save as...',
       class   => 'save_configuration',
       url     => $hub->url({
         type    => 'UserData',
         action  => 'SaveConfig',
         __clear => 1 
+      })
+    });
+    
+    $self->add_entry({
+      caption => 'Load configuration',
+      class   => 'modal_link',
+      rel     => 'modal_manage_cfg',
+      url     => $hub->url({
+        type    => 'UserConfig',
+        action  => 'ManageConfigs',
+        __clear => 1 
+      })
+    });
+    
+    $self->add_entry({
+      caption => 'Reset configuration',
+      class   => 'modal_link',
+      rel     => $rel,
+      url     => $hub->url('Config', {
+        reset => 1
       })
     });
     

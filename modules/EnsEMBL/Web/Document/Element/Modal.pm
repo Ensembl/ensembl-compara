@@ -92,7 +92,7 @@ sub init {
     }
   }
   
-  if (scalar keys %done) {
+  if ($hub->type eq 'UserConfig' || scalar keys %done) {
     push @extra, {
       id      => 'manage_cfg',
       class   => 'fixed_width',

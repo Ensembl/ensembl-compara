@@ -20,7 +20,7 @@ sub init {
   $self->EnsEMBL::Web::Document::Element::Modal::init($controller);
   
   foreach (@{$self->entries}) {
-    if (($type eq 'Config' && $_->{'id'} eq $config) || ($type eq 'UserData' && $_->{'id'} eq 'user_data')) {
+    if (($type eq 'Config' && $_->{'id'} eq $config) || ($type eq 'UserData' && $_->{'id'} eq 'user_data') || ($type eq 'UserConfig' && $_->{'id'} eq 'manage_cfg')) {
       $_->{'class'} = 'active';
       $self->active = 'modal_' . lc $_->{'id'};
       last;
