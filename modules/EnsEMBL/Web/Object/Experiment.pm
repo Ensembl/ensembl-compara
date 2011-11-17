@@ -10,26 +10,53 @@ use base qw(EnsEMBL::Web::Object);
 sub new {
   ## @overrides
   ## @constructor
-  ## Populates data from the database and caches them for further use, after creating the object
-  my $self = shift->SUPER::new(@_);
-  my $hub  = $self->hub;
+  ## Populates the data from the db and caches it before returning the object
+  my $self                  = shift->SUPER::new(@_);
+  my $param                 = $self->hub->param('ex');
 
-  my $funcgen_db_adaptor          = $hub->database('funcgen');
-  my $feature_set_adaptor         = $funcgen_db_adaptor->get_FeatureSetAdaptor;
-  my $feature_type_adaptor        = $funcgen_db_adaptor->get_FeatureTypeAdaptor;
+  my $funcgen_db_adaptor    = $self->hub->database('funcgen');
+  my $feature_set_adaptor   = $funcgen_db_adaptor->get_FeatureSetAdaptor;
+
+  my $param_to_filter_map   = $self->{'_param_to_filter_map'}   = {'all' => 'All', 'cell_type' => 'Cell/Tissue', 'evidence_type' => 'Evidence type', 'project' => 'Project'};
+  my $grouped_feature_sets  = $self->{'_grouped_feature_sets'}  = $funcgen_db_adaptor->get_ExperimentAdaptor->fetch_experiment_filter_counts;
+  my $feature_sets_info     = $self->{'_feature_sets_info'}     = [];
+  my $feature_sets          = [];
+
+  $self->{'_filter_to_param_map'} = { reverse %{$self->{'_param_to_filter_map'}} };
+
+  # Get the feature set according to the url param
+  if ($param =~ /^name\-(.+)$/) {
+    $feature_sets = [ $feature_set_adaptor->fetch_by_name($1) || () ];
+  }
+  else {
+    my $constraints = {};
+    if ($param ne 'all') {
+      my $delimiter = chop $param;
+      my $filters   = { split /$delimiter/, $param };
+      exists $param_to_filter_map->{$_} or delete $filters->{$_} for keys %$filters;
+      
+      $self->{'_param_filters'} = $filters;
+  
+      while (my ($filter, $value) = each(%$filters)) {
+        if ($filter eq 'cell_type') {
+          $constraints->{'cell_type'} = $funcgen_db_adaptor->get_CellTypeAdaptor->fetch_by_name($value);
+        }
+        elsif ($filter eq 'evidence_type') {
+          $constraints->{'evidence_type'} = $value;
+        }
+        elsif ($filter eq 'project') {
+          $constraints->{'project'} = $funcgen_db_adaptor->get_ExperimentalGroupAdaptor->fetch_by_name($value);
+        }
+      }
+    }
+    $feature_sets = $feature_set_adaptor->fetch_all_displayable_by_type('annotated', keys %$constraints ? {'constraints' => $constraints} : ());
+  }
+
   my $binding_matrix_adaptor      = $funcgen_db_adaptor->get_BindingMatrixAdaptor;
+  my $regulatory_evidence_labels  = $funcgen_db_adaptor->get_FeatureTypeAdaptor->get_regulatory_evidence_labels;
 
-  my $regulatory_evidence_labels  = $feature_type_adaptor->get_regulatory_evidence_labels;
-
-  # Initialise summary filter caches
-  my $all_cache           = {};
-  my $cell_tissue_cache   = {};
-  my $evidence_type_cache = {};
-  my $project_cache       = {};
-  my $feature_name_cache  = {};
-
-  # Cache filters for each FeatureSet
-  for my $feature_set (@{$feature_set_adaptor->fetch_all_displayable_by_type('annotated')}) {
+  # Get info for all feature sets and pack it in an array of hashes
+  foreach my $feature_set (@$feature_sets) {
 
     my $experiment = $feature_set->get_Experiment;
     if (!$experiment) {
@@ -40,101 +67,115 @@ sub new {
     my $experiment_group  = $experiment->experimental_group;
     $experiment_group     = undef unless $experiment_group->is_project;
     my $project_name      = $experiment_group ? $experiment_group->name : '';
-    my $project_url       = $experiment_group ? $experiment_group->url : '';
-    my $source_info       = $experiment->source_info; # return [ source_label, source_link ]
+    my $source_info       = $experiment->source_info; # returns [ source_label, source_link ]
     my $cell_type         = $feature_set->cell_type;
     my $cell_type_name    = $cell_type->name;
     my $feature_type      = $feature_set->feature_type;
     my $evidence_label    = $feature_type->evidence_type_label;
-    my $feature_set_name  = $feature_set->name;
 
-    my $feature_set_info  = {
+    push @$feature_sets_info, {
       'source_label'        => $source_info->[0],
       'source_link'         => $source_info->[1],
       'project_name'        => $project_name,
-      'project_url'         => $project_url,
+      'project_url'         => $experiment_group ? $experiment_group->url : '',
+      'feature_set_name'    => $feature_set->name,
+      'feature_type_name'   => $feature_type->name,
       'evidence_label'      => $evidence_label,
       'cell_type_name'      => $cell_type_name,
       'efo_id'              => $cell_type->efo_id,
-      'feature_set_name'    => $feature_set_name,
-      'feature_type_name'   => $feature_type->name,
       'xref_genes'          => [ map $_->primary_id, @{$feature_type->get_all_Gene_DBEntries} ],
       'binding_motifs'      => [ map {$_->name} map { @{$binding_matrix_adaptor->fetch_all_by_FeatureType($_)} } ($feature_type, @{$feature_type->associated_feature_types}) ]
     };
 
-    #Cache info wrt Cell/Tissue, Evidence types, project names and feature set name
-    $all_cache->{'All'}                       ||= {'feature_sets' => [], 'description'  => 'All Experiments'                                            };
-    $cell_tissue_cache->{$cell_type_name}     ||= {'feature_sets' => [], 'description'  => $cell_type->description                                      };
-    $evidence_type_cache->{$evidence_label}   ||= {'feature_sets' => [], 'description'  => $regulatory_evidence_labels->{$evidence_label}{'long_name'}  };
-    $project_cache->{$project_name}           ||= {'feature_sets' => [], 'description'  => $experiment_group ? $experiment_group->description : ''      };
-    $feature_name_cache->{$feature_set_name}  ||= [];
-
-    push @{$all_cache->{'All'}{'feature_sets'}},                      $feature_set_info;
-    push @{$cell_tissue_cache->{$cell_type_name}{'feature_sets'}},    $feature_set_info;
-    push @{$evidence_type_cache->{$evidence_label}{'feature_sets'}},  $feature_set_info;
-    push @{$project_cache->{$project_name}{'feature_sets'}},          $feature_set_info;
-    push @{$feature_name_cache->{$feature_set_name}},                 $feature_set_info;
+    $cell_type_name and $grouped_feature_sets->{'Cell/Tissue'}{$cell_type_name}{'filtered'}++;
+    $evidence_label and $grouped_feature_sets->{'Evidence type'}{$evidence_label}{'filtered'}++;
+    $project_name   and $grouped_feature_sets->{'Project'}{$project_name}{'filtered'}++;
   }
-
-  $self->{'_feature_set_cache'} = {
-    'All'           => $all_cache,
-    'Cell/Tissue'   => $cell_tissue_cache,
-    'Evidence Type' => $evidence_type_cache,
-    'Project'       => $project_cache
-  };
-  
-  $self->{'_feature_set_by_name_cache'} = $feature_name_cache;
 
   return $self;
 }
 
 sub short_caption {
+  ## @return short caption for the tab
   my $self = shift;
   if ($self->hub->param('ex') =~ /^name\-/) {
     my $feature_set_info = $self->get_feature_sets_info;
-    if (@$feature_set_info) {
-      return 'Experiment: '.$feature_set_info->[0]->{'feature_set_name'};
-    }
+    return 'Experiment: '.$feature_set_info->[0]->{'feature_set_name'} if @$feature_set_info;
   }
   return 'Experiment';
 }
 
-sub caption                   { 'Experiment'                          }
-sub default_action            { 'Features'                            }
-sub get_grouped_feature_sets  { return shift->{'_feature_set_cache'}; } ## Returns the cached hash for all feature type wrt Cell/Tissue, Evidence types and project names
+sub caption         { 'Experiment'  }
+sub default_action  { 'Features'    }
+
+sub get_grouped_feature_sets {
+  ## Gets a data structure of feature sets grouped according to Project, Cell/Tissue and Evidence Type
+  ## @return HashRef with keys Project, Cell/Tissue, Evidence Type and All
+  return shift->{'_grouped_feature_sets'};
+}
 
 sub get_feature_sets_info {
-  ## Gets the array of all information about all feature sets saved in the cache, according to the url param 'ex'
+  ## Gets the array of all information about all feature sets according to the url param 'ex'
   ## @return ArrayRef
-  my $self    = shift;
-  my $param   = $self->hub->param('ex');
-
-  if ($param =~ /^([^\-]+)\-(.+)$/) {
-
-    return $self->{'_feature_set_by_name_cache'}{$2} || [] if $1 eq 'name';
-    return $self->{'_feature_set_cache'}{$self->get_filter_from_url_param($1)}{$2}{'feature_sets'} || [];
-  }
-  return [];
+  return shift->{'_feature_sets_info'};
 }
 
-sub get_url_param_for_filter {
-  ## Takes a filter name and returns corresponding param name for the url
-  ## @param Filter name - as in keys on the cached hash
+sub allow_multiple_filtering {
+  ## Tells whether ot not to allow multiple filtering based on the ex param
+  my $self = shift;
+  return $self->hub->param('ex') =~ /^name\-/ ? undef :  1;
+}
+
+sub applied_filters {
+  ## Returns the filters applied to filter the feature sets info
+  ## @return HashRef with keys as filter names
+  return { map {$_} %{shift->{'_param_filters'} || {}} };
+}
+
+sub is_filter_applied {
+  ## Checks whether a filter is already applied or not
+  ## @return 1 or undef accordingly
+  my ($self, $filter_name, $value) = @_;
+
+  return 1 if $self->{'_filter_to_param_map'}{$filter_name} && exists $self->applied_filters->{$self->{'_filter_to_param_map'}{$filter_name}} && $self->applied_filters->{$self->{'_filter_to_param_map'}{$filter_name}} eq $value;
+  return undef;
+}
+
+sub get_url_param {
+  ## Takes filter name(s) and value(s) and returns corresponding param name for the url
+  ## @param Hashref with keys as filter names and values as filter values
+  ## @param Flag to tell whether to add, remove the given filters from existing filters, or ignore the existing filters
+  ##  - 0  Ignore the existing filters
+  ##  - 1  Add the given filters to existing ones
+  ##  - -1 Remove the given filters from the existing ones
   ## @return String to go inside the URL param 'ex' as value
-  my ($self, $filter, $_reverse) = @_;
-  my $map = {'All' => 'All', 'Cell/Tissue' => 'CellTissue', 'Evidence Type' => 'EvidenceType', 'Project' => 'Project'};
-  if ($_reverse) {
-    return {reverse %{$map}}->{$filter};
-  }
-  return $map->{$filter};
-}
+  my ($self, $filters, $flag) = @_;
 
-sub get_filter_from_url_param {
-  ## Takes a param name for the url and returns corresponding filter name
-  ## @param Prifix in the value of param 'ex'
-  ## @return String Filter name - as in keys on the cached hash
-  my ($self, $param) = @_;
-  return $self->get_url_param_for_filter($param, 1);
+  return 'all' if !scalar keys %$filters || exists $filters->{'All'};
+
+  $self->{'_filter_to_param_map'} ||= { reverse %{$self->{'_param_to_filter_map'}} };
+
+  my $params = $flag ? $self->applied_filters : {};
+  while (my ($filter, $value) = each %$filters) {
+    if (my $param_for_filter = $self->{'_filter_to_param_map'}{$filter}) {
+      if ($flag >= 0) {
+        $params->{$param_for_filter} = $value;
+      }
+      else {
+        if ($params->{$param_for_filter} eq $value) {
+          delete $params->{$param_for_filter};
+        }
+      }
+    }
+  }
+
+  my $param_str   = join '', @{ [ %$params ] };
+  my $delimiters  = [ qw(_ . ,), ('a'..'z'), ('A'..'Z'), (1..9) ];
+  my $counter     = 0;
+  my $delimiter   = '-';
+  $delimiter      = $delimiters->[$counter++] while $delimiter && index($param_str, $delimiter) >= 0;
+
+  return join $delimiter, @{ [ map {$_, $params->{$_}} sort keys %$params ] }, '';
 }
 
 1;
