@@ -168,6 +168,9 @@ concepts will be described later.
 </p>
 
 <pre class="code">
+# get a slice adaptor for the human core database
+my $slice_adaptor = $registry-&gt;get_adaptor( 'Human', 'Core', 'Slice' );
+
 # Fetch all clones from a slice adaptor (returns a list reference)
 my $clones_ref = $slice_adaptor-&gt;fetch_all('clone');
 
@@ -379,6 +382,9 @@ The following are several examples of how to use the
 </p>
 
 <pre class="code">
+# get a slice adaptor for the human core database
+my $slice_adaptor = $registry-&gt;get_adaptor( 'Human', 'Core', 'Slice' );
+
 # Obtain a slice covering the entire chromosome X
 my $slice = $slice_adaptor-&gt;fetch_by_region( 'chromosome', 'X' );
 
@@ -1040,9 +1046,11 @@ instead.
 The above example could be shortened by using the following:
 </p>
 
-<pre class="code">
+<p>
+<code>
 print_DBEntries( $gene-&gt;get_all_DBLinks() );
-</pre>
+</code>
+</p>
 
 <h2 id="coordinates">Coordinates</h2>
 
@@ -1099,7 +1107,8 @@ Consider, for example, the following figure of two features associated
 with a slice:
 </p>
 
-<pre class="code">
+<p>
+<code>
  [-----] (Feature A)
 
     |================================| (Slice)
@@ -1108,7 +1117,8 @@ with a slice:
 
  A  C  T  A  A  A  T  C  T  T  G   (Sequence)
  1  2  3  4  5  6  7  8  9  10 11 12 13
-</pre>
+</code>
+</p>
 
 <p>
 The slice itself has a start of 2, an end of 13, and a length of 12 even
@@ -1252,13 +1262,15 @@ tiling path relationship between chromosome and contig coordinate
 systems:
 </p>
 
-<pre class="code">
+<p>
+<code>
                   |~~~~~~~| (Feature A) |~~~~| (Feature B)
 
  (ctg 1) [=============]
          (ctg 2) (------==========] (ctg 2)
                       (ctg 3)   (--============] (ctg3)
-</pre>
+</code>
+</p>
 
 <p>
 Both Feature A and Feature B are defined in the chromosomal coordinate
@@ -1405,7 +1417,7 @@ used to easily obtain a feature's absolute coordinates.
 <pre class="code">
 # Shortcuts to doing $feat-&gt;slice()-&gt;coord_system()-&gt;name() and
 # $feat-&gt;slice()-&gt;seq_region_name();
-print $feat-&gt;coord_system_name(), ' ', $feat-&gt;seq_region_name(), ' ';
+print $feature-&gt;coord_system_name(), ' ', $feature-&gt;seq_region_name(), ' ';
 
 # Get and display the feature's position on the sequence region
 printf( "%d-%d (%+d)\n",
@@ -1442,7 +1454,7 @@ $feature_slice = $feature-&gt;feature_Slice();
 print $feature_slice-&gt;seq(), "\n";
 
 # Display the sequence of the feature region + 5000bp flanking sequence
-print $feat_slice-&gt;expand( 5000, 5000 )-&gt;seq(), "\n";
+print $feature_slice-&gt;expand( 5000, 5000 )-&gt;seq(), "\n";
 
 # Get all genes which overlap the feature
 $genes = $feature_slice-&gt;get_all_Genes();
