@@ -2090,7 +2090,7 @@ sub add_regulation_builds {
 
   if ($db_tables->{'cell_type'}{'ids'}) {    
     $self->add_track('information',  'fg_regulatory_features_legend',   'Reg. Features Legend',          'fg_regulatory_features_legend',   { strand => 'r', colourset => 'fg_regulatory_features'});        
-    $self->add_track('information', 'fg_segmentation_features_legend', 'Seg. Features Legend',          'fg_segmentation_features_legend', { strand => 'r', colourset => 'fg_segmentation_features'});
+    $self->add_track('information', 'fg_segmentation_features_legend', 'Reg. Segments Legend',          'fg_segmentation_features_legend', { strand => 'r', colourset => 'fg_segmentation_features'});
     $self->add_track('information',  'fg_multi_wiggle_legend',          'Cell/Tissue Regulation Legend', 'fg_multi_wiggle_legend',          { strand => 'r', display => 'off' });
   }
 }
