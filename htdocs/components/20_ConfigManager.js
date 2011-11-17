@@ -71,7 +71,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       }),
       
       $('a.edit_record', this.el).live('click', function () {
-        var els   = $('.edit_set, .edit_set .dataTables_wrapper, form .save, a.create_set', panel.el).toggle();
+        var els   = $('.edit_set, form .save, a.create_set', panel.el).toggle();
         var show  = $('form', panel.el).toggleClass('edit_configs').find('[name=name]').val('editing').end().hasClass('edit_configs');
         var group = $(this).parents('.config_group');
         
@@ -100,6 +100,10 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
   initialize: function () {
     this.base();
     this.wrapping();
+    
+    $.each(this.dataTables, function () {
+      $(this.fnSettings().nTableWrapper).show();
+    });
   },
   
   wrapping: function (els) {
