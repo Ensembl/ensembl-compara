@@ -376,7 +376,7 @@ sub handler {
     push @tags, "/$species";
   }
   
-  $ENV{'CACHE_TAGS'}{$_} = 1 for @tags; # /memcached tags
+  $ENV{'CACHE_TAGS'}{$_} = $_ for @tags;
   
   my $Tspecies  = $species;
   my $script    = undef;
