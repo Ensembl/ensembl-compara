@@ -9,7 +9,7 @@
 
 
 <p>
-This document refers to the schema of EnsEMBL Compara version <strong>60</strong>.
+This document refers to the schema of EnsEMBL Compara version <strong>65</strong>.
 </p>
 
 
@@ -23,7 +23,9 @@ EnsEMBL Compara DB is divided into two parts:
   <dt>Genomic Alignments</dt>
   <dd><p>This part is dedicated to DNA-DNA alignments. It includes alignments made with different alignment tools, and a list of syntenic regions.</p></dd>
   <dt>Homologues and Families (or Protein Clusters)</dt>
-  <dd><p>This part is dedicated to protein-protein alignments and it includes protein families, protein trees and homologues defined from the protein trees.</p>
+  <dd><p>This part is dedicated to gene-gene alignments and it
+  includes protein families, protein trees and homologues defined
+  from the protein trees. It also includes ncRNA families, alignments and trees. </p>
     <p>
 The protein families are clusters of proteins. They are defined using
 the full set of Ensembl proteins plus all the metazoan proteins from
@@ -32,6 +34,10 @@ SwissProt and SPTrEMBL.
     <p>
 The protein trees are built using the longest transcript of each
 protein coding Ensembl gene. Homologies are derived from them.
+    </p>
+    <p>
+The ncRNA trees are based on RFAM families and alignments based on
+secondary structure and genomic alignments.
     </p>
   </dd>
 </dl>
@@ -77,7 +83,7 @@ protein coding Ensembl gene. Homologies are derived from them.
   </li>
 
   <li>
-    <p><strong>Orthologues and Protein Tree Tables</strong>
+    <p><strong>Orthologues and Protein Tree / ncRNA Tree Tables</strong>
     </p>
     <ul>
       <li><a href="#member">member</a></li>
@@ -87,11 +93,10 @@ protein coding Ensembl gene. Homologies are derived from them.
       <li><a href="#homology_member">homology_member</a></li>
       <li><a href="#family">family</a></li>
       <li><a href="#family_member">family_member</a></li>
-      <li><a href="#domain">domain</a></li>
-      <li><a href="#domain_member">domain_member</a></li>
-      <li><a href="#protein_tree_node">protein_tree_node / super_protein_tree_node</a></li>
-      <li><a href="#protein_tree_tag">protein_tree_tag / super_protein_tree_tag</a></li>
-      <li><a href="#protein_tree_member">protein_tree_member / super_protein_tree_member</a></li>
+      <li><a href="#protein_tree_node">protein_tree_node / super_protein_tree_node / nc_tree_node</a></li>
+      <li><a href="#protein_tree_tag">protein_tree_tag / super_protein_tree_tag / nc_tree_tag </a></li>
+      <li><a href="#protein_tree_attr">protein_tree_attr</a></li>
+      <li><a href="#protein_tree_member">protein_tree_member / super_protein_tree_member / nc_tree_member</a></li>
       <li><a href="#protein_tree_member_score">protein_tree_member_score</a></li>
       <li><a href="#sitewise_aln">sitewise_aln</a></li>
 
@@ -141,7 +146,7 @@ TABLE META
   <tbody>
     <tr>
       <td>meta_id</td>
-      <td>int(10) unsigned</td>
+      <td>int(11)</td>
       <td>NO</td>
       <td>PRI</td>
       <td>NULL</td>
@@ -168,7 +173,7 @@ TABLE META
     </tr>
     <tr>
       <td>meta_value</td>
-      <td>varchar(255)</td>
+      <td>text</td>
       <td>NO</td>
       <td>MUL</td>
       <td></td>
@@ -238,7 +243,7 @@ the <a href="#ncbi_taxa_name">ncbi_taxa_name</a> table</p>
       <td>char(32)</td>
       <td>NO</td>
       <td>MUL</td>
-      <td></td>
+      <td>''</td>
       <td></td>
       <td>e.g. kingdom, family, genus, etc.</td>
     </tr>
@@ -329,7 +334,7 @@ TABLE NCBI_TAXA_NAME
     </tr>
     <tr>
       <td>name_class</td>
-      <td>varchar(255)</td>
+      <td>varchar(50)</td>
       <td>YES</td>
       <td>MUL</td>
       <td>NULL</td>
@@ -480,12 +485,12 @@ assemblies used in this database.</p>
 <p>Eg the rows:</p>
 
 
-<pre>mysql&gt; SELECT * FROM genome_db WHERE name IN ("Homo sapiens", "Gallus gallus");
+<pre>mysql&gt; SELECT * FROM genome_db WHERE name IN ("Homo_sapiens", "Gallus_gallus");
 +--------------+----------+---------------+----------+------------------+-----------------+---------+
 | genome_db_id | taxon_id | name          | assembly | assembly_default | genebuild       | locator |
 +--------------+----------+---------------+----------+------------------+-----------------+---------+
-|           42 |     9031 | Gallus gallus | WASHUC2  |                1 | 2006-08-Ensembl |         |
-|           22 |     9606 | Homo sapiens  | NCBI36   |                1 | 2006-12-Ensembl |         |
+|           42 |     9031 | gallus_gallus | WASHUC2  |                1 | 2006-08-Ensembl |         |
+|           90 |     9606 | homo_sapiens  | GRCh37   |                1 | 2010-07-Ensembl |         |
 +--------------+----------+---------------+----------+------------------+-----------------+---------+
 </pre>
 
@@ -526,7 +531,7 @@ table.</p>
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>internal (non-unique) ID</td>
     </tr>
@@ -546,23 +551,23 @@ table.</p>
 <p>E.g. the rows</p>
 
 
-<pre>mysql&gt; SELECT * FROM species_set WHERE species_set_id = 171;
+<pre>mysql&gt; SELECT * FROM species_set WHERE species_set_id = 32279;
 +----------------+--------------+
 | species_set_id | genome_db_id |
 +----------------+--------------+
-|            171 |            3 |
-|            171 |           22 |
+|          32279 |            3 |
+|          32279 |           90 |
 +----------------+--------------+
 </pre>
 
 
 <p>correspond to the species_set for the Human and Rat genomes:</p>
-<pre>mysql&gt; SELECT species_set_id, name, assembly FROM species_set LEFT JOIN genome_db USING (genome_db_id) WHERE species_set_id = 171;
+<pre>mysql&gt; SELECT species_set_id, name, assembly FROM species_set LEFT JOIN genome_db USING (genome_db_id) WHERE species_set_id = 32279;
 +----------------+-------------------+----------+
 | species_set_id | name              | assembly |
 +----------------+-------------------+----------+
-|            171 | Rattus norvegicus | RGSC3.4  |
-|            171 | Homo sapiens      | NCBI36   |
+|          32279 | rattus_norvegicus | RGSC3.4  |
+|          32279 | homo_sapiens      | GRCh37   |
 +----------------+-------------------+----------+
 </pre>
 
@@ -576,8 +581,7 @@ TABLE SPECIES_SET_TAG
 
 
 <p>Contains descriptive tags for the species_set_ids in the 
-<a href="#species_set">species_set</a>
-table.</p>
+<a href="#species_set">species_set</a> table.</p>
 
 
 <table class="spreadsheet">
@@ -600,7 +604,7 @@ table.</p>
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>MUL</td>
-      <td>NULL</td>
+      <td></td>
       <td>0</td>
       <td>internal (non-unique) ID</td>
     </tr>
@@ -609,8 +613,8 @@ table.</p>
       <td>varchar(50)</td>
       <td>NO</td>
       <td>MUL</td>
-      <td>NULL</td>
-      <td>0</td>
+      <td></td>
+      <td></td>
       <td>external reference to <a href="#species_set">species_set.species_set_id</a></td>
     </tr>
     <tr>
@@ -619,7 +623,7 @@ table.</p>
       <td>YES</td>
       <td></td>
       <td></td>
-      <td>0</td>
+      <td></td>
       <td>more informative description for the species_set_id</td>
     </tr>
   </tbody>
@@ -632,7 +636,7 @@ table.</p>
 +----------------+------+-------+
 | species_set_id | tag  | value |
 +----------------+------+-------+
-|          32729 | name | fish  | 
+|          34341 | name | fish  | 
 +----------------+------+-------+
 </pre>
 
@@ -666,7 +670,7 @@ TABLE METHOD_LINK
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>internal unique ID</td>
     </tr>
@@ -696,31 +700,33 @@ TABLE METHOD_LINK
 
 
 <pre>mysql&gt; SELECT * FROM method_link;
-+----------------+--------------------------+---------------------------------------+
-| method_link_id | type                     | class                                 |
-+----------------+--------------------------+---------------------------------------+
-|              1 | BLASTZ_NET               | GenomicAlignBlock.pairwise_alignment  |
-|              6 | TRANSLATED_BLAT          | GenomicAlignBlock.pairwise_alignment  |
-|              7 | TRANSLATED_BLAT_NET      | GenomicAlignBlock.pairwise_alignment  |
-|            101 | SYNTENY                  | SyntenyRegion.synteny                 |
-|            201 | ENSEMBL_ORTHOLOGUES      | Homology.homology                     |
-|            202 | ENSEMBL_PARALOGUES       | Homology.homology                     |
-|            301 | FAMILY                   | Family.family                         |
-|              9 | MLAGAN                   | GenomicAlignBlock.multiple_alignment  |
-|            401 | PROTEIN_TREES            | ProteinTree.protein_tree_node         |
-|            204 | ENSEMBL_HOMOLOGUES       | Homology.homology                     |
-|             10 | PECAN                    | GenomicAlignBlock.multiple_alignment  |
-|             11 | GERP_CONSTRAINED_ELEMENT | GenomicAlignBlock.constrained_element |
-|            501 | GERP_CONSERVATION_SCORE  | ConservationScore.conservation_score  |
-|             12 | ORTHEUS                  | GenomicAlignTree.tree_alignment       |
-+----------------+--------------------------+---------------------------------------+
++----------------+--------------------------+----------------------------------------+
+| method_link_id | type                     | class                                  |
++----------------+--------------------------+----------------------------------------+
+|              1 | BLASTZ_NET               | GenomicAlignBlock.pairwise_alignment   |
+|              7 | TRANSLATED_BLAT_NET      | GenomicAlignBlock.pairwise_alignment   |
+|             10 | PECAN                    | GenomicAlignBlock.multiple_alignment   |
+|             11 | GERP_CONSTRAINED_ELEMENT | ConstrainedElement.constrained_element |
+|             13 | EPO                      | GenomicAlignTree.ancestral_alignment   |
+|             14 | EPO_LOW_COVERAGE         | GenomicAlignTree.tree_alignment        |
+|             16 | LASTZ_NET                | GenomicAlignBlock.pairwise_alignment   |
+|            101 | SYNTENY                  | SyntenyRegion.synteny                  |
+|            201 | ENSEMBL_ORTHOLOGUES      | Homology.homology                      |
+|            202 | ENSEMBL_PARALOGUES       | Homology.homology                      |
+|            205 | ENSEMBL_PROJECTIONS      | Homology.homology                      |
+|            301 | FAMILY                   | Family.family                          |
+|            401 | PROTEIN_TREES            | ProteinTree.protein_tree_node          |
+|            402 | NC_TREES                 | NCTree.nc_tree_node                    |
+|            501 | GERP_CONSERVATION_SCORE  | ConservationScore.conservation_score   |
+|             19 | LASTZ_PATCH              | GenomicAlignBlock.pairwise_alignment   |
++----------------+--------------------------+----------------------------------------+
 </pre>
 
 
 <p>NOTE: We use method_link_ids between 1 and 100 for DNA-DNA
 alignments, between 101 and 200 for genomic syntenies,
 between 201 and 300 for protein homologies, between 301 and 400 for
-protein families and between 401 and 500 for protein trees. Each
+protein families and between 401 and 500 for protein and ncRNA trees. Each
 category corresponds to data stored in different tables</p>
 
 
@@ -756,7 +762,7 @@ relates a <a href="#method_link">method_link.method_link_id</a> with a set of sp
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>internal unique ID.</td>
     </tr>
@@ -812,16 +818,16 @@ relates a <a href="#method_link">method_link.method_link_id</a> with a set of sp
 <p>E.g. the rows</p>
 
 
-<pre>mysql&gt; SELECT * FROM method_link_species_set WHERE method_link_id = 12;
-+----------------------------+----------------+----------------+---------------------------+---------+-----+
-| method_link_species_set_id | method_link_id | species_set_id | name                      | source  | url |
-+----------------------------+----------------+----------------+---------------------------+---------+-----+
-|                        340 |             12 |          31348 | 4 catarrhini primates EPO | ensembl |     |
-|                        341 |             12 |          31349 | 9 eutherian mammals EPO   | ensembl |     |
-|                        342 |             12 |          31350 | 21 eutherian mammals EPO  | ensembl |     |
-+----------------------------+----------------+----------------+---------------------------+---------+-----+
+<pre>mysql&gt; SELECT * FROM method_link_species_set WHERE method_link_id = 13;
++----------------------------+----------------+----------------+--------------------------+---------+-----+
+| method_link_species_set_id | method_link_id | species_set_id | name                     | source  | url |
++----------------------------+----------------+----------------+--------------------------+---------+-----+
+|                        528 |             13 |          33241 | 5 teleost fish EPO       | ensembl |     |
+|                        505 |             13 |          33554 | 3 neognath birds EPO     | ensembl |     |
+|                        547 |             13 |          34114 | 12 eutherian mammals EPO | ensembl |     |
+|                        548 |             13 |          34115 | 6 primates EPO           | ensembl |     |
++----------------------------+----------------+----------------+--------------------------+---------+-----+
 </pre>
-
 
 <p>
 correspond to all the EPO alignments in this database.
@@ -857,7 +863,7 @@ TABLE ANALYSIS
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>internal unique ID</td>
     </tr>
@@ -898,7 +904,7 @@ TABLE ANALYSIS
     </tr>
     <tr>
       <td>db_file</td>
-      <td>varchar(120)</td>
+      <td>varchar(255)</td>
       <td>YES</td>
       <td></td>
       <td>NULL</td>
@@ -907,7 +913,7 @@ TABLE ANALYSIS
     </tr>
     <tr>
       <td>program</td>
-      <td>varchar(80)</td>
+      <td>varchar(255)</td>
       <td>YES</td>
       <td></td>
       <td>NULL</td>
@@ -924,7 +930,7 @@ TABLE ANALYSIS
     </tr>
     <tr>
       <td>program_file</td>
-      <td>varchar(80)</td>
+      <td>varchar(255)</td>
       <td>YES</td>
       <td></td>
       <td>NULL</td>
@@ -941,7 +947,7 @@ TABLE ANALYSIS
     </tr>
     <tr>
       <td>module</td>
-      <td>varchar(80)</td>
+      <td>varchar(255)</td>
       <td>YES</td>
       <td></td>
       <td>NULL</td>
@@ -1096,10 +1102,10 @@ to define syntenic regions.
   <tbody>
     <tr>
       <td>dnafrag_id</td>
-      <td>int(10) unsigned</td>
+      <td>bigint(20) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>internal unique ID</td>
     </tr>
@@ -1154,18 +1160,18 @@ to define syntenic regions.
 <p>E.g. the row</p>
 
 
-<pre>mysql&gt; SELECT dnafrag.* FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) WHERE dnafrag.name = "14" AND genome_db.name = "Homo sapiens";
-+------------+-----------+------+--------------+-------------------+
-| dnafrag_id | length    | name | genome_db_id | coord_system_name |
-+------------+-----------+------+--------------+-------------------+
-|     905410 | 106368585 | 14   |           22 | chromosome        |
-+------------+-----------+------+--------------+-------------------+
+<pre>mysql&gt; SELECT dnafrag.* FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) WHERE dnafrag.name = "14" AND genome_db.name = "homo_sapiens";
++------------+-----------+------+--------------+-------------------+--------------+
+| dnafrag_id | length    | name | genome_db_id | coord_system_name | is_reference |
++------------+-----------+------+--------------+-------------------+--------------+
+|   12179421 | 107349540 | 14   |           90 | chromosome        |            1 |
++------------+-----------+------+--------------+-------------------+--------------+
 </pre>
 
 
 <p>
-refer to the chromosome 14 of the Human genome (<a href="#genome_db">genome_db.genome_db_id</a> = 22 refers
-to Human genome in this example) which is 106368585 nucleotides long.
+refer to the chromosome 14 of the Human genome (<a href="#genome_db">genome_db.genome_db_id</a> = 90 refers
+to Human genome in this example) which is 107349540 nucleotides long.
 </p>
 
 
@@ -1208,7 +1214,7 @@ in this table. This allows the user to also access the tree alignments as normal
       <td>bigint(20) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>internal unique ID</td>
     </tr>
@@ -1264,18 +1270,18 @@ in this table. This allows the user to also access the tree alignments as normal
 <p>E.g. the row</p>
 
 
-<pre>mysql&gt; SELECT * FROM genomic_align_block WHERE genomic_align_block_id = 3400000000010;
+<pre>mysql&gt; SELECT * FROM genomic_align_block WHERE genomic_align_block_id = 5480000000010;
 +------------------------+----------------------------+-------+---------+--------+----------+
 | genomic_align_block_id | method_link_species_set_id | score | perc_id | length | group_id |
 +------------------------+----------------------------+-------+---------+--------+----------+
-|          3400000000010 |                        340 |  NULL |    NULL |   2448 |     NULL |
+|          5480000000010 |                        548 |  NULL | NULL    |  21571 |     NULL |
 +------------------------+----------------------------+-------+---------+--------+----------+
 </pre>
 
 
 <p>
 will refer to a primates EPO alignment (<a href="#method_link_species_set">method_link_species_set.method_link_species_set_id</a>
-= 340) with a length of 2448 nucleotides. The actual sequences corresponding to this aligment are defined in the
+= 548) with a length of 21571 nucleotides. The actual sequences corresponding to this aligment are defined in the
 <a href="#genomic_align">genomic_align</a> table.
 </p>
 
@@ -1383,7 +1389,7 @@ some space), 3 matches/mismatches,
       <td>bigint(20) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>unique internal id</td>
     </tr>
@@ -1411,7 +1417,7 @@ table but it is used to speed up the queries</td>
     </tr>
     <tr>
       <td>dnafrag_id</td>
-      <td>int(10) unsigned</td>
+      <td>bigint(20) unsigned</td>
       <td>NO</td>
       <td>MUL</td>
       <td>0</td>
@@ -1475,14 +1481,16 @@ level_id
 <p>E.g. the rows</p>
 
 
-<pre>mysql&gt; SELECT * FROM genomic_align WHERE genomic_align_block_id = 3400000000010;
-+------------------+------------------------+----------------------------+------------+---------------+-------------+----------------+-----------------------------------------------------------------------+----------+
-| genomic_align_id | genomic_align_block_id | method_link_species_set_id | dnafrag_id | dnafrag_start | dnafrag_end | dnafrag_strand | cigar_line                                                            | level_id |
-+------------------+------------------------+----------------------------+------------+---------------+-------------+----------------+-----------------------------------------------------------------------+----------+
-|    3400000000019 |          3400000000010 |                        340 |    1045571 |      29797288 |    29799670 |              1 | 31MD30M4D234M9D8M2D76M7D812M3D350M6D72MD395M9D28M10D156M6D36M4D155M3D |        1 |
-|    3400000000020 |          3400000000010 |                        340 |    2046338 |      30364209 |    30366482 |              1 | 68M6D102MD133M7D658M4D126MD19M18D787M110D197M4D177M23D7M              |        1 |
-|    3400000000021 |          3400000000010 |                        340 |     905386 |      29989810 |    29992066 |              1 | 68M6D102MD133M9D656M4D126MD19M18D787M110D10M10D25M2D150M4D177M23D4M3D |        1 |
-+------------------+------------------------+----------------------------+------------+---------------+-------------+----------------+-----------------------------------------------------------------------+----------+
+<pre>mysql&gt; SELECT * FROM genomic_align WHERE genomic_align_block_id = 5480000000010;
++------------------+------------------------+----------------------------+------------+---------------+-------------+----------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------+
+| genomic_align_id | genomic_align_block_id | method_link_species_set_id | dnafrag_id | dnafrag_start | dnafrag_end | dnafrag_strand | cigar_line | level_id |
++------------------+------------------------+----------------------------+------------+---------------+-------------+----------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------+
+|    5480000000019 |          5480000000010 | 548 |    1045560 | 49963980  |    49974667 |              1 | 401MD210MD16M6706D64M2D125MD20MD96M3D24M987D167M9D190M3D16M4D153M11D72M14D88MD36MD22M2D59MD186M5D216M15D4M5D83M3D55MD73M137D109M2D89MD61MD158MD123MD323MD20MD25M3D22MD66M1044D45M387D5M6D251MD107MD9M2D238M3D33M7D38M16D63M3D144MD218MD50M11D60M9D191MD158M4D41M13D59M2D49M3D39MD32MD58M2D17M5D55M3D30M5D185M7D7M9D10M633D99M32D2M9D69M2DMD9M7D44M6D98MD11MD194MD28MD137MD384M2D11M14D154M4D3MD394M582D3MD64M4D95MD46M6D3M2D17M15D230MD362MD107M3D344M5DMD417M5D27M2D58M20D286MD84M4D44M4D186M14D16M10D162MD157M4D88MD231MD429M4D29M |            1 |
+|    5480000000020 |          5480000000010 | 548 |   12179431 |      70205099 |    70215984 |              1 | 355M5D85M4D180M6706D64M2D270M987D64M3D318M4D89M18D47M5D31MD22M6D17M14D432M10D37MD43MD112M5D134M3D4MD73M137D2MD66M40D29MD406MD298M3D43MD25M2D23MD66M1044D45M387D5M6D79M99D73MD107MD285M7D38M16D40M5D18M3D61M14D288MD50M11D60M9D401M10D56M2D91MD110M5D50M3D2M3D148M10D62MD13M9D10M262D11M3D2M6D315M10D131M6D41MD56M2D62M54D50MD58M7D34M2D6M6D5M3D241MD10MD70MD313M2D11M14D154M8D394M582D214M6D3M18DM15D230MD817M5DMD212MD204M5D27M2D363MD79M4D2M4D81M3D83M4D56M2D37M4D166MD297M2DMD180MD7M4D241M2D24M15D169M |        1 |
+|    5480000000021 |          5480000000010 | 548 |   13113625 |      45200028 |    45220283 |             -1 | 355M5D27M4D51M7D11M10D36MD18M4D71MD13M5D6803M2D70M2D51MD1174M3D185MD16M17D192M18D46M17D20MD40M2D47M3D92M2D120MD184MD66M4D45M2D36M2D136M4D47M3D19M8D21MD168MD36MD29M42D27MDM8D83MD281MD40MD14M4D413MD1582M127D65MD117M4D3MD208M5D134MD6M5D3M3D19MD57M14D4M2D48MD13MDM2D155M6D288M2D39M8D113M2D21M2D31MD69MD4M16D16M3D90M4D19MD22MD21M3DMD58M2D56MD15M3D36M2D55M2D44M2D12M10D62MDM629DM10D161M12D5MD64M13D53MD152M7D32M9DM6D5M3D30M2D8M3D180MD17MD22M2D47M2D8MD96M4D109MD164MD118M75D179M4D34MD17M4D739M4D57M8D27M3D164M4D122MD243MD335MD437MD119M7D232MD86M4D198MD2M2D78M4D84M8D84M4D56M6D28M6D22M4D6M3D114MD16MD297M4D105M2D129MD222M5D179M |        1 |
+|    5480000000022 |          5480000000010 | 548 |   13203833 |      52175893 |    52186820 |              1 | 355M5D85M4D180M6706D64M2D185M2D83M987D64M3D119MD198M4D89M18D47M5D5M3D23MD45M14D255MD176M10D81MD112M5D83M3D48M3D4MD73M137D2MD66M42D27MD372M4D30MD298M3D43MD25M2D23MD66M1044D45M387D5M6D79M99D73MD107MD285M7D38M16D40M5D18M3D62M4DM8D288MD50M11D60M9D467M2D91MD91M2D17M5D50M3D2M3D148M10D62MD352M9D10M108D18M134D17M6D118M6D27MD13MD56M2D62M54D50MD58M7D42M6D5M3D241MD10MD70MD313M2D11M14D65M3D7M4D477M582D212M8D3M18DM15D230MD817M5DMD417M5D27M2D363M2D78M4D2M4D81M3D180M6D464M2D182MD7M4D267M15D169M |        1 |
+|    5480000000023 |          5480000000010 | 548 |   13211513 |      69435755 |    69446651 |              1 | 143M4D208M5D85M4D14M7D159M6706D64M2D270M987D64M3D318M4D89M18D83MD45M14D432M10D37MD43MD112M5D84MD49M3D4MD73M137D2MD66M40D29MD406MD298M3D43MD25M2D23MD66M1044D45M387D5M6D79M99D73MD107MD276MD8M7D38M16D40M5D18M3D67M8D69MD63M4D151MD50M11D60M9D467M2D91MD32MD58M2D17M5D50M3D2M3D148M10D76M9D10M262D11M3D2M6D280MD34M10D131M6D24M6D11MD56M2D62M54D50MD18M2D38M7D33M3D6M6D5M3D241MD10MD70MD313M2D11M14D556M582D210M12DM18DM15D230MD817M5DMD417M5D27M2D363M2D78M4D2M4D81M3D352MD297M2DMD180MD7M4D267M15D169M |        1 |
++------------------+------------------------+----------------------------+------------+---------------+-------------+----------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------+
 </pre>
 
 
@@ -1491,18 +1499,10 @@ correspond to the three sequences included in the alignment
 described above (see
 <a href="#genomic_align_block">genomic_align_block</a>
 table description). The first sequence includes the nucleotides from
-29797288 to 29799670 in the forward strand of the chromosome 9 of the
-Rhesus genome
-(<a href="#dnafrag">dnafrag.dnafrag_id</a> =
-1045571).
-The second sequence includes the nucleotides from 30364209 to 30366482 in
-the forward
-strand of the chromosome 10 of the Chimp genome
-(<a href="#dnafrag">dnafrag.dnafrag_id</a> = 2046338). Last, the third
-sequence includes the nucleotides from 29989810 to 29992066 in
-the forward
-strand of the chromosome 10 of the Human genome
-(<a href="#dnafrag">dnafrag.dnafrag_id</a> = 905386)
+49963980 to 49974667 in the forward strand of the chromosome 17 of the
+macaca_mulatta genome
+(<a href="#dnafrag">dnafrag.dnafrag_id</a> = 1045560).
+And so on
 </p>
 
 
@@ -1511,15 +1511,28 @@ and <a href="#genome_db">genome_db</a> tables:
 </p>
 
 
-<pre>mysql&gt; SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand str, cigar_line
-  FROM genomic_align LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id) WHERE genomic_align_block_id = 3400000000010;
-+-----------------+------+---------------+-------------+-----+-----------------------------------------------------------------------+
-| name            | name | dnafrag_start | dnafrag_end | str | cigar_line                                                            |
-+-----------------+------+---------------+-------------+-----+-----------------------------------------------------------------------+
-| Macaca mulatta  | 9    |      29797288 |    29799670 |   1 | 31MD30M4D234M9D8M2D76M7D812M3D350M6D72MD395M9D28M10D156M6D36M4D155M3D |
-| Pan troglodytes | 10   |      30364209 |    30366482 |   1 | 68M6D102MD133M7D658M4D126MD19M18D787M110D197M4D177M23D7M              |
-| Homo sapiens    | 10   |      29989810 |    29992066 |   1 | 68M6D102MD133M9D656M4D126MD19M18D787M110D10M10D25M2D150M4D177M23D4M3D |
-+-----------------+------+---------------+-------------+-----+-----------------------------------------------------------------------+
+<pre>mysql&gt; SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand str, cigar_line FROM genomic_align LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id) WHERE genomic_align_block_id = 5480000000010;
++--------------------+------+---------------+-------------+-----+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| name               | name | dnafrag_start | dnafrag_end | str |
+  cigar_line
+  |
++--------------------+------+---------------+-------------+-----+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| macaca_mulatta     | 17   |      49963980 |    49974667 |   1 |
+  401MD210MD16M6706D64M2D125MD20MD96M3D24M987D167M9D190M3D16M4D153M11D72M14D88MD36MD22M2D59MD186M5D216M15D4M5D83M3D55MD73M137D109M2D89MD61MD158MD123MD323MD20MD25M3D22MD66M1044D45M387D5M6D251MD107MD9M2D238M3D33M7D38M16D63M3D144MD218MD50M11D60M9D191MD158M4D41M13D59M2D49M3D39MD32MD58M2D17M5D55M3D30M5D185M7D7M9D10M633D99M32D2M9D69M2DMD9M7D44M6D98MD11MD194MD28MD137MD384M2D11M14D154M4D3MD394M582D3MD64M4D95MD46M6D3M2D17M15D230MD362MD107M3D344M5DMD417M5D27M2D58M20D286MD84M4D44M4D186M14D16M10D162MD157M4D88MD231MD429M4D29M
+  |
+| homo_sapiens       | 13   |      70205099 |    70215984 |   1 |
+  355M5D85M4D180M6706D64M2D270M987D64M3D318M4D89M18D47M5D31MD22M6D17M14D432M10D37MD43MD112M5D134M3D4MD73M137D2MD66M40D29MD406MD298M3D43MD25M2D23MD66M1044D45M387D5M6D79M99D73MD107MD285M7D38M16D40M5D18M3D61M14D288MD50M11D60M9D401M10D56M2D91MD110M5D50M3D2M3D148M10D62MD13M9D10M262D11M3D2M6D315M10D131M6D41MD56M2D62M54D50MD58M7D34M2D6M6D5M3D241MD10MD70MD313M2D11M14D154M8D394M582D214M6D3M18DM15D230MD817M5DMD212MD204M5D27M2D363MD79M4D2M4D81M3D83M4D56M2D37M4D166MD297M2DMD180MD7M4D241M2D24M15D169M
+  |
+| callithrix_jacchus | 1    |      45200028 |    45220283 |  -1 |
+  355M5D27M4D51M7D11M10D36MD18M4D71MD13M5D6803M2D70M2D51MD1174M3D185MD16M17D192M18D46M17D20MD40M2D47M3D92M2D120MD184MD66M4D45M2D36M2D136M4D47M3D19M8D21MD168MD36MD29M42D27MDM8D83MD281MD40MD14M4D413MD1582M127D65MD117M4D3MD208M5D134MD6M5D3M3D19MD57M14D4M2D48MD13MDM2D155M6D288M2D39M8D113M2D21M2D31MD69MD4M16D16M3D90M4D19MD22MD21M3DMD58M2D56MD15M3D36M2D55M2D44M2D12M10D62MDM629DM10D161M12D5MD64M13D53MD152M7D32M9DM6D5M3D30M2D8M3D180MD17MD22M2D47M2D8MD96M4D109MD164MD118M75D179M4D34MD17M4D739M4D57M8D27M3D164M4D122MD243MD335MD437MD119M7D232MD86M4D198MD2M2D78M4D84M8D84M4D56M6D28M6D22M4D6M3D114MD16MD297M4D105M2D129MD222M5D179M
+  |
+| gorilla_gorilla    | 13   |      52175893 |    52186820 |   1 |
+  355M5D85M4D180M6706D64M2D185M2D83M987D64M3D119MD198M4D89M18D47M5D5M3D23MD45M14D255MD176M10D81MD112M5D83M3D48M3D4MD73M137D2MD66M42D27MD372M4D30MD298M3D43MD25M2D23MD66M1044D45M387D5M6D79M99D73MD107MD285M7D38M16D40M5D18M3D62M4DM8D288MD50M11D60M9D467M2D91MD91M2D17M5D50M3D2M3D148M10D62MD352M9D10M108D18M134D17M6D118M6D27MD13MD56M2D62M54D50MD58M7D42M6D5M3D241MD10MD70MD313M2D11M14D65M3D7M4D477M582D212M8D3M18DM15D230MD817M5DMD417M5D27M2D363M2D78M4D2M4D81M3D180M6D464M2D182MD7M4D267M15D169M
+  |
+| pan_troglodytes    | 13   |      69435755 |    69446651 |   1 |
+  143M4D208M5D85M4D14M7D159M6706D64M2D270M987D64M3D318M4D89M18D83MD45M14D432M10D37MD43MD112M5D84MD49M3D4MD73M137D2MD66M40D29MD406MD298M3D43MD25M2D23MD66M1044D45M387D5M6D79M99D73MD107MD276MD8M7D38M16D40M5D18M3D67M8D69MD63M4D151MD50M11D60M9D467M2D91MD32MD58M2D17M5D50M3D2M3D148M10D76M9D10M262D11M3D2M6D280MD34M10D131M6D24M6D11MD56M2D62M54D50MD18M2D38M7D33M3D6M6D5M3D241MD10MD70MD313M2D11M14D556M582D210M12DM18DM15D230MD817M5DMD417M5D27M2D363M2D78M4D2M4D81M3D352MD297M2DMD180MD7M4D267M15D169M
+  |
++--------------------+------+---------------+-------------+-----+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 </pre>
 
 
@@ -1539,7 +1552,7 @@ TABLE GENOMIC_ALIGN_TREE
 
 
 <p>This table is used to index tree alignments, e.g. EPO alignments. These alignments include inferred ancestral sequences. The tree required
-to index these sequences is stored in this table. This table stores the sturcture of the tree. Each node links to an entry in the <a href="#genomic_align_group">genomic_align_group</a> table, which links to one or several entries in the <a href="#genomic_align">genomic_align</a> table.</p>
+to index these sequences is stored in this table. This table stores the structure of the tree. Each node links to an entry in the <a href="#genomic_align_group">genomic_align_group</a> table, which links to one or several entries in the <a href="#genomic_align">genomic_align</a> table.</p>
 
 
 <table class="spreadsheet">
@@ -1562,7 +1575,7 @@ to index these sequences is stored in this table. This table stores the sturctur
       <td>bigint(20) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>internal unique id</td>
     </tr>
@@ -1634,11 +1647,11 @@ to index these sequences is stored in this table. This table stores the sturctur
 
 <p>E.g. the row</p>
 
-<pre>mysql &gt; SELECT * FROM genomic_align_tree WHERE node_id = 3400000000017;
+<pre>mysql &gt; SELECT * FROM genomic_align_tree WHERE node_id = 5050000000384;
 +---------------+-----------+---------------+------------+-------------+--------------+---------------+--------------------+
 | node_id       | parent_id | root_id       | left_index | right_index | left_node_id | right_node_id | distance_to_parent |
 +---------------+-----------+---------------+------------+-------------+--------------+---------------+--------------------+
-| 3400000000017 |         0 | 3400000000017 |         33 |          42 |            0 |             0 |                  0 |
+| 5050000000384 |         0 | 5050000000384 |  700000767 |   700000780 |            0 |             0 |              1e-05 |
 +---------------+-----------+---------------+------------+-------------+--------------+---------------+--------------------+
 </pre>
 
@@ -1646,26 +1659,30 @@ to index these sequences is stored in this table. This table stores the sturctur
 correspond to the root of a tree, because parent_id = 0 and root_id = node_id. In order to fetch all the nodes of this tree, one can use the left_index and right_index values:
 </p>
 
-<pre>mysql &gt; SELECT * FROM genomic_align_tree WHERE left_index &gt;= 33 and left_index &lt;= 42;
+<pre>mysql &gt; SELECT * FROM genomic_align_tree WHERE left_index &gt;= 700000767 and left_index &lt;= 700000780;
 +---------------+---------------+---------------+------------+-------------+---------------+---------------+--------------------+
 | node_id       | parent_id     | root_id       | left_index | right_index | left_node_id  | right_node_id | distance_to_parent |
 +---------------+---------------+---------------+------------+-------------+---------------+---------------+--------------------+
-| 3400000000017 |             0 | 3400000000017 |         33 |          42 |             0 |             0 |                  0 |
-| 3400000000018 | 3400000000017 | 3400000000017 |         34 |          39 | 3400000001404 | 3400000000683 |                  0 |
-| 3400000000021 | 3400000000018 | 3400000000017 |         35 |          36 | 3400000001400 | 3400000000686 |                  0 |
-| 3400000000020 | 3400000000018 | 3400000000017 |         37 |          38 | 3400000001402 | 3400000000689 |                  0 |
-| 3400000000019 | 3400000000017 | 3400000000017 |         40 |          41 | 3400000001403 | 3400000000687 |                  0 |
+| 5050000000384 |             0 | 5050000000384 |  700000767 |   700000780 |             0 |             0 |              1e-05 |
+| 5050000000385 | 5050000000384 | 5050000000384 |  700000768 |   700000773 |             0 |             0 |              1e-05 |
+| 5050000000387 | 5050000000385 | 5050000000384 |  700000769 |   700000770 | 5050000017109 | 5050000018754 |           0.005763 |
+| 5050000000386 | 5050000000385 | 5050000000384 |  700000771 |   700000772 | 5050000004222 | 5050000006029 |            0.00664 |
+| 5050000000388 | 5050000000384 | 5050000000384 |  700000774 |   700000779 | 5050000022808 | 5050000018751 |           0.281407 |
+| 5050000000390 | 5050000000388 | 5050000000384 |  700000775 |   700000776 | 5050000022809 | 5050000018752 |           0.033656 |
+| 5050000000389 | 5050000000388 | 5050000000384 |  700000777 |   700000778 | 5050000022810 | 5050000018753 |           0.041709 |
 +---------------+---------------+---------------+------------+-------------+---------------+---------------+--------------------+
 </pre>
 
 <p>
 The API rebuilds the tree using this information. In this example, the tree is:</p>
 
-<pre>3400000000017 (root)
-+-3400000000018 (internal_node)
-| +-3400000000021 (leaf)
-| +-3400000000020 (leaf)
-+-3400000000019 (leaf)</pre>
+<pre>(5050000000384 700000767,700000780)Tgut-Mgal-Ggal-Tgut[4]
+|-(5050000000385 700000768,700000773)Tgut-Tgut[2]
+| |-(5050000000387 700000769,700000770)Tgut_1A_67082846_67096418[-]
+| |-(5050000000386 700000771,700000772)Tgut_Un_165936071_165946337[+]
+|-----------------------------(5050000000388 700000774,700000779)Mgal-Ggal[2]
+                              |----(5050000000390 700000775,700000776)Ggal_1_58700491_58713206[-]
+                              |-----(5050000000389 700000777,700000778)Mgal_1_57744366_57757821[-]</pre>
 
 <p>Please, refer to the <a href="#genomic_align_group">genomic_align_group</a> table for more examples on how to access tree alignments
 </p>
@@ -1699,22 +1716,13 @@ into very small regions. We can use more than one of these regions in one single
   </thead>
   <tbody>
     <tr>
-      <td>group_id</td>
+      <td>node_id</td>
       <td>bigint(20) unsigned</td>
       <td>NO</td>
       <td>MUL</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>external reference to <a href="#genomic_align_tree">genomic_align_tree.node_id</a></td>
-    </tr>
-    <tr>
-      <td>type</td>
-      <td>varchar(40)</td>
-      <td>NO</td>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td>This field allow us to group genomic_aligns in several ways (types)</td>
     </tr>
     <tr>
       <td>genomic_align_id</td>
@@ -1733,30 +1741,28 @@ into very small regions. We can use more than one of these regions in one single
 <p>E.g. the rows</p>
 
 
-<pre>mysql&gt; SELECT * FROM genomic_align_group WHERE group_id = 3420000000097;
-+---------------+------+------------------+
-| group_id      | type | genomic_align_id |
-+---------------+------+------------------+
-| 3420000000097 | epo  |    3420000000328 |
-| 3420000000097 | epo  |    3420000000329 |
-| 3420000000097 | epo  |    3420000000330 |
-| 3420000000097 | epo  |    3420000000331 |
-| 3420000000097 | epo  |    3420000000332 |
-+---------------+------+------------------+
+<pre>mysql&gt; SELECT * FROM genomic_align_group WHERE group_id = 5530000000071;
++---------------+------------------+
+| node_id       | genomic_align_id |
++---------------+------------------+
+| 5530000000071 |    5530000000044 |
+| 5530000000071 |    5530000000045 |
+| 5530000000071 |    5530000000046 |
+| 5530000000071 |    5530000000047 |
++---------------+------------------+
 </pre>
 
-<p>correspond to several segments from a 2X genome (Mouse lemur in this case) that are linked together in this EPO alignment.</p>
+<p>correspond to several segments from a 2X genome (the hedgehog in this case) that are linked together in this EPO alignment.</p>
 
-<pre>mysql&gt; SELECT group_id, genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand FROM genomic_align_group LEFT JOIN genomic_align USING (genomic_align_id) LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id) WHERE group_id = 3420000000097;
-+---------------+--------------------+-------------------+---------------+-------------+----------------+
-| group_id      | name               | name              | dnafrag_start | dnafrag_end | dnafrag_strand |
-+---------------+--------------------+-------------------+---------------+-------------+----------------+
-| 3420000000097 | Microcebus murinus | GeneScaffold_762  |        110550 |      111895 |              1 |
-| 3420000000097 | Microcebus murinus | GeneScaffold_358  |         15752 |       15933 |              1 |
-| 3420000000097 | Microcebus murinus | GeneScaffold_613  |        199673 |      200191 |              1 |
-| 3420000000097 | Microcebus murinus | GeneScaffold_3358 |          1003 |        4254 |             -1 |
-| 3420000000097 | Microcebus murinus | GeneScaffold_613  |        200192 |      204424 |              1 |
-+---------------+--------------------+-------------------+---------------+-------------+----------------+
+<pre>mysql&gt; SELECT genomic_align_group.node_id, genome_db.name AS species, dnafrag.name AS chromosome, dnafrag_start, dnafrag_end, dnafrag_strand FROM genomic_align_group JOIN genomic_align USING (genomic_align_id) JOIN dnafrag USING (dnafrag_id) JOIN genome_db USING (genome_db_id) WHERE genomic_align_group.node_id = 5530000000071;
++---------------+-------------------+-----------------+---------------+-------------+----------------+
+| node_id       | species           | chromosome      | dnafrag_start | dnafrag_end | dnafrag_strand |
++---------------+-------------------+-----------------+---------------+-------------+----------------+
+| 5530000000071 | echinops_telfairi | scaffold_299909 |          3719 |        3770 |              1 |
+| 5530000000071 | echinops_telfairi | scaffold_299909 |          3771 |        4500 |              1 |
+| 5530000000071 | echinops_telfairi | scaffold_299909 |          8019 |        8729 |              1 |
+| 5530000000071 | echinops_telfairi | scaffold_299909 |         10830 |       11408 |              1 |
++---------------+-------------------+-----------------+---------------+-------------+----------------+
 </pre>
 
 <!--
@@ -1828,7 +1834,7 @@ TABLE CONSERVATION SCORE
       <td></td>
       <td>MUL</td>
       <td></td>
-      <td>diff_score is teh difference between the expected and observed variation, i.e. the conservation score.</td>
+      <td>diff_score is the difference between the expected and observed variation, i.e. the conservation score.</td>
     </tr>
   </tbody>
 </table>
@@ -1936,7 +1942,7 @@ TABLE CONSTRAINED ELEMENT
     <tr>
       <td>dnafrag_strand</td>
       <td>int(2)</td>
-      <td></td>
+      <td>YES</td>
       <td></td>
       <td>NULL</td>
       <td></td>
@@ -1949,7 +1955,14 @@ TABLE CONSTRAINED ELEMENT
 <p>E.g. the row</p>
 
 
-<pre>mysql&gt; select * from constrained_element limit 1;
+<pre>mysql&gt; SELECT * FROM constrained_element LIMIT 1;
++------------------------+------------+---------------+-------------+----------------+----------------------------+-------------+-----------------+-------+
+| constrained_element_id | dnafrag_id | dnafrag_start | dnafrag_end | dnafrag_strand | method_link_species_set_id | p_value     | taxonomic_level | score |
++------------------------+------------+---------------+-------------+----------------+----------------------------+-------------+-----------------+-------+
+|          5060000000001 |   12160541 |        403245 |      403580 |            -1  |                        506 | 1.53905e-11 | neognath birds  | 104.6 |
++------------------------+------------+---------------+-------------+----------------+----------------------------+-------------+-----------------+-------+
+
+
 +------------------------+------------+---------------+-------------+----------------------------+---------+---------------------+-------+
 | constrained_element_id | dnafrag_id | dnafrag_start | dnafrag_end | method_link_species_set_id | p_value | taxonomic_level     | score |
 +------------------------+------------+---------------+-------------+----------------------------+---------+---------------------+-------+
@@ -1959,9 +1972,20 @@ TABLE CONSTRAINED ELEMENT
 
 
 <p>
-refers to a constrained element from human chromosome 7 located between nucleotide positions 114071407 and 114071438.
+refers to a constrained element from chromosome 1A_random of
+taeniopygia_guttata located between nucleotide positions 403245 and 403580.
 </p>
 
+<p>There are 2 other elements in the same constrained_element:</p>
+<pre>mysql&gt; SELECT constrained_element_id, genome_db.name, dnafrag.name FROM constrained_element JOIN dnafrag USING (dnafrag_id) JOIN genome_db USING (genome_db_id) WHERE constrained_element_id = 5060000000001;
++------------------------+---------------------+-----------+
+| constrained_element_id | name                | name      |
++------------------------+---------------------+-----------+
+|          5060000000001 | taeniopygia_guttata | 1A_random |
+|          5060000000001 | gallus_gallus       | 1         |
+|          5060000000001 | meleagris_gallopavo | 1         |
++------------------------+---------------------+-----------+
+</pre>
 
 <!--
 #####################################################################
@@ -1993,7 +2017,7 @@ orientation of both syntenic regions.</p>
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>internal unique ID</td>
     </tr>
@@ -2014,18 +2038,29 @@ orientation of both syntenic regions.</p>
 <p>E.g. the row</p>
 
 
-<pre>mysql&gt; SELECT * FROM synteny_region WHERE synteny_region_id = 27845;
+<pre>mysql&gt; SELECT * FROM synteny_region WHERE synteny_region_id = 33234;
 +-------------------+----------------------------+
 | synteny_region_id | method_link_species_set_id |
 +-------------------+----------------------------+
-|             27845 |                      10003 |
+|             33234 |                      10021 |
 +-------------------+----------------------------+
 </pre>
 
 
 <p>
-means that the syntenic region 27845 corresponds to a synteny
-relationship between the Human and Rat genomes.
+means that the syntenic region 33234 corresponds to a synteny
+relationship between the Mouse and Rat genomes.
+</p>
+
+<pre>mysql&gt; SELECT synteny_region_id, name FROM synteny_region join method_link_species_set USING(method_link_species_set_id) WHERE synteny_region_id = 33234;
++-------------------+---------------------+
+| synteny_region_id | name                |
++-------------------+---------------------+
+|             33234 | M.mus-R.nor synteny |
++-------------------+---------------------+
+</pre>
+
+<p>
 See <a href="#dnafrag_region">dnafrag_region</a>
 table for more details.
 </p>
@@ -2070,7 +2105,7 @@ There are two genomic regions for every synteny relationship.
     </tr>
     <tr>
       <td>dnafrag_id</td>
-      <td>int(10) unsigned</td>
+      <td>bigint(20) unsigned</td>
       <td>NO</td>
       <td>MUL</td>
       <td>0</td>
@@ -2111,12 +2146,12 @@ There are two genomic regions for every synteny relationship.
 <p>E.g. the rows</p>
 
 
-<pre>mysql&gt; SELECT * FROM dnafrag_region WHERE synteny_region_id = 27845;
+<pre>mysql&gt; SELECT * FROM dnafrag_region WHERE synteny_region_id = 33234;
 +-------------------+------------+---------------+-------------+----------------+
 | synteny_region_id | dnafrag_id | dnafrag_start | dnafrag_end | dnafrag_strand |
 +-------------------+------------+---------------+-------------+----------------+
-|             27845 |     175248 |           498 |    12057776 |             -1 |
-|             27845 |     905405 |     115311888 |   125710881 |              1 |
+|             33234 |     175243 |        106695 |    16719004 |             -1 |
+|             33234 |    3997580 |       3000306 |    17925237 |              1 |
 +-------------------+------------+---------------+-------------+----------------+
 </pre>
 
@@ -2126,7 +2161,14 @@ and <a href="#genome_db">genome_db</a> tables:
 </p>
 
 
-<pre>A<br />mysql&gt; SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand FROM dnafrag_region LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id) WHERE synteny_region_id = 27845;
+<pre>A<br />mysql&gt; SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand FROM dnafrag_region LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id) WHERE synteny_region_id = 33234;
++-------------------+------+---------------+-------------+----------------+
+| name              | name | dnafrag_start | dnafrag_end | dnafrag_strand |
++-------------------+------+---------------+-------------+----------------+
+| rattus_norvegicus | 5    |        106695 |    16719004 |             -1 |
+| mus_musculus      | 1    |       3000306 |    17925237 |              1 |
++-------------------+------+---------------+-------------+----------------+
+
 +-------------------+------+---------------+-------------+----------------+
 | name              | name | dnafrag_start | dnafrag_end | dnafrag_strand |
 +-------------------+------+---------------+-------------+----------------+
@@ -2136,16 +2178,16 @@ and <a href="#genome_db">genome_db</a> tables:
 </pre>
 
 <p>
-correspond to both genomic regions of the synteny region 27845.
+correspond to both genomic regions of the synteny region 33234.
 In this case, the first genomic region corresponds to the negative
 strand
-of the sequence from 498 to 12057776 of the chromosome X of the
+of the sequence from 106695 to 16719004 of the chromosome 5 of the
 Rat genome
-(<a href="#dnafrag">dnafrag_id</a> = 175248 for this
+(<a href="#dnafrag">dnafrag_id</a> = 175243 for this
 chromosome) and the
-second one corresponds to the sequence from 115311888 to 125710881
-of the chromosome X of the Human genome
-(<a href="#dnafrag">dnafrag_id</a> = 905405 for this
+second one corresponds to the sequence from 3000306 to 17925237
+of the chromosome 1 of the Mouse genome
+(<a href="#dnafrag">dnafrag_id</a> = 3997580 for this
 chromosome).
 </p>
 
@@ -2192,7 +2234,7 @@ external DBs.</p>
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>internal unique ID</td>
     </tr>
@@ -2216,7 +2258,7 @@ external DBs.</p>
     </tr>
     <tr>
       <td>source_name</td>
-  <td>enum('ENSEMBLGENE', 'ENSEMBLPEP', 'Uniprot/SPTREMBL', 'Uniprot/SWISSPROT', 'ENSEMBLTRANS', 'EXTERNALCDS')</td>
+      <td>enum('ENSEMBLGENE', 'ENSEMBLPEP', 'Uniprot/SPTREMBL', 'Uniprot/SWISSPROT', 'ENSEMBLTRANS', 'EXTERNALCDS', 'ENSEMBLPROJ')</td>
       <td>NO</td>
       <td>MUL</td>
       <td>NULL</td>
@@ -2325,24 +2367,24 @@ May be 0 when the sequence is not available in the <a href="#sequence">sequence<
 +-----------+-----------------+---------+-------------+----------+--------------+-------------+----------------+-...
 | member_id | stable_id       | version | source_name | taxon_id | genome_db_id | sequence_id | gene_member_id | 
 +-----------+-----------------+---------+-------------+----------+--------------+-------------+----------------+-...
-|     41115 | ENSP00000309431 |       3 | ENSEMBLPEP  |     9606 |           22 |       22932 |          41114 | 
+|  4356858  | ENSP00000309431 |       4 | ENSEMBLPEP  |     9606 |           90 |    1544338  |      4356847   | 
 +-----------+-----------------+---------+-------------+----------+--------------+-------------+----------------+-...
 
 ...+------------------------------------------------------------------------------+----------+-----------+---------+------------+---------------+
    | description                                                                  | chr_name | chr_start | chr_end | chr_strand | display_label |
 ...+------------------------------------------------------------------------------+----------+-----------+---------+------------+---------------+
-   | Transcript:ENST00000308911 Gene:ENSG00000173213 Chr:18 Start:37358 End:39626 | 18       |     37390 |   39557 |         -1 | NULL          |
+   | Transcript:ENST00000308911 Gene:ENSG00000173213 Chr:18 Start:47390 End:49557 | 18       |     47390 |   49557 |         -1 | RP11-683L23.1 |
 ...+------------------------------------------------------------------------------+----------+-----------+---------+------------+---------------+
 </pre>
 
 
 <p>
 refers to the human (<a href="#ncbi_taxa_node">ncbi_taxa_node.taxon_id</a> =
-9606 or <a href="#genome_db">genome_db_id</a> = 22)
+9606 or <a href="#genome_db">genome_db_id</a> = 90)
 peptide ENSP00000309431 which is located in the chromosome 18 (from
-37390 to 39557, in the reverse strand).
+47390 to 49557, in the reverse strand).
 This peptide is described as "Transcript:ENST00000308911
-Gene:ENSG00000173213 Chr:18 Start:37358 End:39626"
+Gene:ENSG00000173213 Chr:18 Start:47390 End:49557"
 and the sequence can be found on the <a href="#sequence">sequence</a>
 table.
 </p>
@@ -2381,7 +2423,7 @@ EnsEMBL Compara DB.
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>internal unique ID</td>
     </tr>
@@ -2410,18 +2452,16 @@ EnsEMBL Compara DB.
 <p>E.g. the row</p>
 
 
-<pre>mysql&gt; SELECT * FROM sequence WHERE sequence_id = 118;
-+-------------+--------+----------------------------------------------+
-| sequence_id | length | sequence                                     |
-+-------------+--------+----------------------------------------------+
-|         118 |     44 | FGLLPQHPESPFKSFLRVVPRHRITVRRVILAPFFLSSCAYELP |
-+-------------+--------+----------------------------------------------+
+<pre>mysql&gt; SELECT * FROM sequence WHERE sequence_id = 30;
++-------------+--------+--------------------------------------------+
+| sequence_id | length | sequence                                   |
++-------------+--------+--------------------------------------------+
+|          30 |     42 | MLVESEYGDEILNAIAAIVNPSTKLAGEVGAAAQLVQKTARK |
++-------------+--------+--------------------------------------------+
 </pre>
 
 
-<p>contains a 44 aminoacids long sequence.</p>
-
-
+<p>contains a 42 aminoacids long sequence.</p>
 
 
 <!--
@@ -2457,7 +2497,7 @@ BLAST run it is translated from a FeaturePair object.
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>internal unique ID</td>
     </tr>
@@ -2630,35 +2670,36 @@ BLAST run it is translated from a FeaturePair object.
 <p>E.g. the rows:</p>
 
 
-<pre>mysql&gt; SELECT * FROM peptide_align_feature_homo_sapiens_22 WHERE peptide_align_feature_id = 139843937;
+<pre>mysql&gt; SELECT * FROM peptide_align_feature_homo_sapiens_22 WHERE peptide_align_feature_id = 5003775;
 +--------------------------+------------+------------+---------------+---------------+-...
 | peptide_align_feature_id | qmember_id | hmember_id | qgenome_db_id | hgenome_db_id | 
 +--------------------------+------------+------------+---------------+---------------+-...
-|                139843937 |     439410 |     439488 |            22 |            22 | 
+|                  5003775 |    4907705 |    3472156 |            90 |           116 | 
 +--------------------------+------------+------------+---------------+---------------+-...
 
 ...+-------------+--------+------+--------+------+----------+---------+--------------+...
    | analysis_id | qstart | qend | hstart | hend | score    | evalue  | align_length |
 ...+-------------+--------+------+--------+------+----------+---------+--------------+...
-   |          67 |      1 |  124 |      1 |  124 | 649.0000 | 7.2e-65 |          124 |
+   |          22 |      6 |  630 |      4 |  629 |2951.0000 |       0 |          626 |
 ...+-------------+--------+------+--------+------+----------+---------+--------------+...
 
 ...+-------------------+------------+------------------+----------+----------+------------+
    | identical_matches | perc_ident | positive_matches | perc_pos | hit_rank | cigar_line |
 ...+-------------------+------------+------------------+----------+----------+------------+
-   |               123 |         99 |              123 |       99 |        2 |            |
+   |               554 |         88 |              602 |       96 |        1 |  571MD54M  |
 ...+-------------------+------------+------------------+----------+----------+------------+
 </pre>
 
 
-<p>corresponds to a particular hit found between two human protiens:</p>
+<p>corresponds to a particular hit found between a Homo sapiens protein and a
+  Xenopus tropicalis protein:</p>
 
-<pre>mysql&gt; SELECT m1.stable_id, m2.stable_id, score, evalue FROM peptide_align_feature_homo_sapiens_22 LEFT JOIN member m1 ON (qmember_id = m1.member_id) LEFT JOIN member m2 ON (hmember_id = m2.member_id) WHERE peptide_align_feature_id = 139843937;
-+-----------------+-----------------+----------+---------+
-| stable_id       | stable_id       | score    | evalue  |
-+-----------------+-----------------+----------+---------+
-| ENSP00000320207 | ENSP00000350502 | 649.0000 | 7.2e-65 |
-+-----------------+-----------------+----------+---------+
+<pre>mysql&gt; SELECT g1.name as qgenome, m1.stable_id as qstable_id, g2.name as hgenome, m2.stable_id as hstable_id, score, evalue FROM peptide_align_feature_homo_sapiens_90 LEFT JOIN member m1 ON (qmember_id = m1.member_id) LEFT JOIN member m2 ON (hmember_id = m2.member_id) LEFT JOIN genome_db g1 ON (qgenome_db_id = g1.genome_db_id) LEFT JOIN genome_db g2 ON (hgenome_db_id = g2.genome_db_id) WHERE peptide_align_feature_id = 5003775;
++--------------+-----------------+--------------------+--------------------+-----------+--------+
+| qgenome      | qstable_id      | hgenome            | hstable_id         | score     | evalue |
++--------------+-----------------+--------------------+--------------------+-----------+--------+
+| homo_sapiens | ENSP00000348163 | xenopus_tropicalis | ENSXETP00000007942 | 2951.0000 |      0 |
++--------------+-----------------+--------------------+--------------------+-----------+--------+
 </pre>
 
 
@@ -2695,7 +2736,7 @@ handle more than just pairwise relations.
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>internal unique ID</td>
     </tr>
@@ -2719,21 +2760,12 @@ handle more than just pairwise relations.
     </tr>
     <tr>
       <td>description</td>
-      <td>varchar(40)</td>
+      <td>enum('ortholog_one2one','apparent_ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','putative_gene_split','contiguous_gene_split','between_species_paralog','possible_ortholog','UBRH','BRH','MBRH','RHS','projection_unchanged','projection_altered')</td>
       <td>YES</td>
       <td></td>
       <td>NULL</td>
       <td></td>
-      <td>describes the type of homology found:
-      <ul>
-        <li><strong>ortholog_one2one</strong></li>
-        <li><strong>apparent_ortholog_one2one</strong></li>
-        <li><strong>ortholog_one2many</strong></li>
-        <li><strong>ortholog_many2many</strong></li>
-        <li><strong>between_species_paralog</strong></li>
-        <li><strong>within_species_paralog</strong></li>
-      </ul>
-      </td>
+      <td>describes the type of homology found</td>
     </tr>
     <tr>
       <td>subtype</td>
@@ -2843,17 +2875,23 @@ package.
 
 
 <pre>mysql&gt; SELECT * FROM homology WHERE homology_id = 4650;
-+-------------+-----------+----------------------------+------------------------+--------------+------+------+------+------+------+-----------------+------------------+--------------+
-| homology_id | stable_id | method_link_species_set_id | description            | subtype      | dn   | ds   | n    | s    | lnl  | threshold_on_ds | ancestor_node_id | tree_node_id |
-+-------------+-----------+----------------------------+------------------------+--------------+------+------+------+------+------+-----------------+------------------+--------------+
-|        4650 | NULL      |                      20239 | within_species_paralog | Homo sapiens | NULL | NULL | NULL | NULL | NULL |            NULL |           706673 |        10159 |
-+-------------+-----------+----------------------------+------------------------+--------------+------+------+------+------+------+-----------------+------------------+--------------+
++-------------+-----------+----------------------------+-------------------+----------+---------+---------+-------+------+----------+-----------------+------------------+--------------+
+| homology_id | stable_id | method_link_species_set_id | description       | subtype  | dn      | ds      | n     | s    | lnl      | threshold_on_ds | ancestor_node_id | tree_node_id |
++-------------+-----------+----------------------------+-------------------+----------+---------+---------+-------+------+----------+-----------------+------------------+--------------+
+|        4650 | NULL      |                      25276 | possible_ortholog | Eutheria | 0.19210 | 0.82390 | 241.1 | 82.9 | -687.349 |            NULL |          1078947 |       504362 |
++-------------+-----------+----------------------------+-------------------+----------+---------+---------+-------+------+----------+-----------------+------------------+--------------+
 </pre>
 
 
-<p>defines a pair of within-species paralogues. See <a href="#homology_member">homology_member</a> for more details</p>
-
-
+<p>defines a pair of of possible orthologs between pongo_abelii and sus_scrofa. See <a href="#homology_member">homology_member</a> for more details</p>
+<pre>mysql&gt;
+SELECT homology_id, description, group_concat(genome_db.name) as species FROM homology LEFT JOIN method_link_species_set USING (method_link_species_set_id) LEFT JOIN species_set USING (species_set_id) LEFT JOIN genome_db USING(genome_db_id) WHERE homology_id = 4650 group by homology_id;
++-------------+-------------------+-------------------------+
+| homology_id | description       | species                 |
++-------------+-------------------+-------------------------+
+|        4650 | possible_ortholog | pongo_abelii,sus_scrofa |
++-------------+-------------------+-------------------------+
+</pre>
 
 
 <!--
@@ -3133,17 +3171,17 @@ mismatches and deletions in the alignment.
 +-------------+-----------+-------------------+--------------------------+------------+-------------+-----------+----------+---------+----------+
 | homology_id | member_id | peptide_member_id | peptide_align_feature_id | cigar_line | cigar_start | cigar_end | perc_cov | perc_id | perc_pos |
 +-------------+-----------+-------------------+--------------------------+------------+-------------+-----------+----------+---------+----------+
-|        4650 |    805594 |            805595 |                     NULL | 387M       |        NULL |      NULL |      100 |      96 |       97 |
-|        4650 |    808352 |            808461 |                     NULL | 387M       |        NULL |      NULL |      100 |      96 |       97 |
+|        4650 |    423179 |            423181 |                     NULL | 108MD      |        NULL |      NULL |      100 |      71 |       81 |
+|        4650 |   3704522 |           3704523 |                     NULL | 109M       |        NULL |      NULL |      100 |      71 |       80 |
 +-------------+-----------+-------------------+--------------------------+------------+-------------+-----------+----------+---------+----------+
 </pre>
 
 
 <p>
 refer to the two homologue sequences defined by the <a href="#homology">homology.homology_id</a> 4650. The
-gene corresponding to the first sequence can be retrieved using the <a href="#member">member.member_id</a> 805594 and the
+gene corresponding to the first sequence can be retrieved using the <a href="#member">member.member_id</a> 423179 and the
 corresponding peptide using the <a href="#member">member.member_id</a>
-805595. Gene and peptide sequence of the second homologue can retrieved in
+423181. Gene and peptide sequence of the second homologue can retrieved in
 the same way.
 </p>
 
@@ -3180,7 +3218,7 @@ for each family entry.
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>internal unique ID</td>
     </tr>
@@ -3236,12 +3274,12 @@ for each family entry.
 <p>E.g. the row</p>
 
 
-<pre>mysql&gt; SELECT * FROM family WHERE family_id = 30208;
-+-----------+-------------------+----------------------------+--------------+-------------------+
-| family_id | stable_id         | method_link_species_set_id | description  | description_score |
-+-----------+-------------------+----------------------------+--------------+-------------------+
-|     30208 | fam51v00000030208 |                      30017 | CATHELICIDIN |               100 |
-+-----------+-------------------+----------------------------+--------------+-------------------+
+<pre>mysql&gt; SELECT * FROM family WHERE family_id = 25452;
++-----------+---------------------+---------+----------------------------+--------------+-------------------+
+| family_id | stable_id           | version | method_link_species_set_id | description  | description_score |
++-----------+---------------------+---------+----------------------------+--------------+-------------------+
+|     25452 | ENSFM00350000109081 |       2 |                      30035 | CATHELICIDIN |               100 |
++-----------+---------------------+---------+----------------------------+--------------+-------------------+
 </pre>
 
 
@@ -3309,156 +3347,23 @@ Contains the proteins corresponding to protein family relationship found. There 
 <p>E.g. the rows</p>
 
 
-<pre>mysql&gt; SELECT * FROM family_member WHERE family_id = 30208;
-+-----------+-----------+------------+
-| family_id | member_id | cigar_line |
-+-----------+-----------+------------+
-|     30208 |   2221971 | 148M       |
-|     30208 |   2241749 | 11D137M    |
-|     30208 |   2241750 | 148M       |
-|     30208 |   2258940 | 132M4D12M  |
-+-----------+-----------+------------+
+<pre>mysql&gt; SELECT * FROM family_member WHERE family_id = 54177;
++-----------+-----------+------------------------------+
+| family_id | member_id | cigar_line                   |
++-----------+-----------+------------------------------+
+|     54177 | 101618064 | 21D6M149D219M                |
+|     54177 | 102232470 | M19D159M108D24M8D16M24D8M28D |
+|     54177 | 102345121 | 395M                         |
+|     54177 | 102454547 | 5M5D17M149D219M              |
++-----------+-----------+------------------------------+
 </pre>
 
 
 <p>
-refer to the four members of the protein family 30208. The proteins can
-be retieved using the
-<a href="#member">member_id</a>s. The multiple
+refer to the four members of the protein family 54177. The proteins can
+be retieved using the <a href="#member">member_id</a>s. The multiple
 alignment can be restored using the cigar_lines.
 </p>
-
-
-<!--
-#####################################################################
-TABLE DOMAIN
-#####################################################################
--->
-<h4 id="domain">domain</h4>
-
-
-<p>
-<span style="color: red;">Not used by now</span>
-</p>
-
-
-<table class="spreadsheet">
-  <caption>domain table description</caption>
-  <thead><tr>
-    <th>Field</th>
-    <th>Type</th>
-    <th>Null</th>
-    <th>Key</th>
-    <th>Default</th>
-    <th>Extra</th>
-    <th>Description</th>
-  </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>domain_id</td>
-      <td>int(10) unsigned</td>
-      <td></td>
-      <td>PRI</td>
-      <td>NULL</td>
-      <td>auto_increment</td>
-      <td>internal unique ID</td>
-    </tr>
-    <tr>
-      <td>stable_id</td>
-      <td>varchar(40)</td>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>method_link_species_set</td>
-      <td>int(10) unsigned</td>
-      <td></td>
-      <td></td>
-      <td>0</td>
-      <td></td>
-      <td>external reference to <a href="#method_link_species_set">method_link_species_set.method_link_species_set_id</a></td>
-    </tr>
-    <tr>
-      <td>description</td>
-      <td>varchar(255)</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td></td>
-    </tr>
-  </tbody>
-</table>
-
-
-<!--
-#####################################################################
-TABLE DOMAIN_MEMBER
-#####################################################################
--->
-<h4 id="domain_member">domain_member</h4>
-
-
-<p>
-<span style="color: red;">Not used by now</span>
-</p>
-
-
-<table class="spreadsheet">
-  <caption>domain_member table description</caption>
-  <thead><tr>
-    <th>Field</th>
-    <th>Type</th>
-    <th>Null</th>
-    <th>Key</th>
-    <th>Default</th>
-    <th>Extra</th>
-    <th>Description</th>
-  </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>domain_id</td>
-      <td>int(10) unsigned</td>
-      <td></td>
-      <td>MUL</td>
-      <td>0</td>
-      <td></td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>member_id</td>
-      <td>int(10) unsigned</td>
-      <td></td>
-      <td>MUL</td>
-      <td>0</td>
-      <td></td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>member_start</td>
-      <td>int(10)</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>member_end</td>
-      <td>int(10)</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td></td>
-    </tr>
-  </tbody>
-</table>
 
 
 <!--
@@ -3466,7 +3371,7 @@ TABLE DOMAIN_MEMBER
 TABLE PROTEIN_TREE_NODE
 #####################################################################
 -->
-<h4 id="protein_tree_node">protein_tree_node / super_protein_tree_node</h4>
+<h4 id="protein_tree_node">protein_tree_node / super_protein_tree_node / nc_tree_node</h4>
 
 
 <p>
@@ -3474,7 +3379,7 @@ Contains the data structure of each tree.</p>
 
 
 <table class="spreadsheet">
-  <caption>protein_tree_node / super_protein_tree_node table description</caption>
+  <caption>protein_tree_node / super_protein_tree_node / nc_tree_node table description</caption>
   <thead><tr>
     <th>Field</th>
     <th>Type</th>
@@ -3491,25 +3396,25 @@ Contains the data structure of each tree.</p>
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>internal unique ID</td>
     </tr>
     <tr>
       <td>parent_id</td>
       <td>int(10) unsigned</td>
-      <td>NO</td>
+      <td>YES</td>
       <td>MUL</td>
-      <td></td>
+      <td>NULL</td>
       <td></td>
       <td>link to the parent node</td>
     </tr>
     <tr>
       <td>root_id</td>
       <td>int(10) unsigned</td>
-      <td></td>
+      <td>YES</td>
       <td>MUL</td>
-      <td>0</td>
+      <td>NULL</td>
       <td></td>
       <td>link to the root node</td>
     </tr>
@@ -3518,32 +3423,32 @@ Contains the data structure of each tree.</p>
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td></td>
-      <td>NULL</td>
+      <td></td>
       <td></td>
       <td>node id of the set of clusters</td>
     </tr>
     <tr>
       <td>left_index</td>
       <td>int(10)</td>
-      <td></td>
+      <td>NO</td>
       <td>MUL</td>
-      <td>0</td>
+      <td></td>
       <td></td>
       <td>internal index. See below</td>
     </tr>
     <tr>
       <td>right_index</td>
       <td>int(10)</td>
-      <td></td>
+      <td>NO</td>
       <td>MUL</td>
-      <td>0</td>
+      <td></td>
       <td></td>
       <td>internal index. See below</td>
     </tr>
     <tr>
       <td>distance_to_parent</td>
       <td>double</td>
-      <td></td>
+      <td>NO</td>
       <td></td>
       <td>1</td>
       <td></td>
@@ -3556,11 +3461,11 @@ Contains the data structure of each tree.</p>
 <p>The database is able to contain several sets of trees computed on the same genes. We call these analysis "clustersets" and they can be distinguished with the clusterset_id field. So far, all the compara databases have contained only one clusterset (clusterset_id=1), but it may be different in the future. The following SQL query retrieves all the clustersets (usually, only one row in the resultset)<p>
 
 <pre>
-mysql&gt; SELECT * FROM protein_tree_node WHERE parent_id = 0;
+mysql&gt; SELECT * FROM protein_tree_node WHERE parent_id IS NULL;
 +---------+-----------+---------+---------------+------------+-------------+--------------------+
 | node_id | parent_id | root_id | clusterset_id | left_index | right_index | distance_to_parent |
 +---------+-----------+---------+---------------+------------+-------------+--------------------+
-|       1 |         0 |       0 |             1 |          0 |           0 |                  0 | 
+|       1 |      NULL |    NULL |             1 |          0 |           0 |                  1 |
 +---------+-----------+---------+---------------+------------+-------------+--------------------+
 </pre>
 
@@ -3570,7 +3475,7 @@ mysql&gt; SELECT * FROM protein_tree_node WHERE parent_id = 0;
 +----------+
 | COUNT(*) |
 +----------+
-|    18809 |
+|    19217 |
 +----------+
 </pre>
 
@@ -3582,13 +3487,15 @@ mysql&gt; SELECT * FROM protein_tree_node WHERE parent_id = 0;
 TABLE PROTEIN_TREE_MEMBER
 #####################################################################
 -->
-<h4 id="protein_tree_member">protein_tree_member / super_protein_tree_member</h4>
+<h4 id="protein_tree_member">protein_tree_member / super_protein_tree_member / nc_tree_member</h4>
 
 
 <p>
-Contains the data about the leaf (joining the table with a member_id from the member table, all ENSEMBLPEP members)<br />
+Contains the data about the leaf (joining the table with a member_id
+from the member table, all ENSEMBLPEP members (ENSEMBLTRANS for ncRNAs)<br />
 present in each tree. The method_link_species_set should link to an
-entry that has a method_link.type="PROTEIN_TREES". For the aligment,
+entry that has a method_link.type="PROTEIN_TREES" (for protein trees)
+or "NC TREES" (for ncRNA trees). For the aligment,
 the cigar_* column hold the needed information to rebuild the alignment
 using the Perl API, as it is done in the family/family_member tables.
 As we store global multiple aligment you will notice that cigar_start
@@ -3597,7 +3504,7 @@ multiple alignment, then cigar_start/cigar_end should be set to their
 correct value.</p>
 
 <table class="spreadsheet">
-  <caption>protein_tree_member / super_protein_tree_member table description</caption>
+  <caption>protein_tree_member / super_protein_tree_member / nc_tree_member table description</caption>
   <thead><tr>
     <th>Field</th>
     <th>Type</th>
@@ -3623,7 +3530,7 @@ correct value.</p>
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>NUL</td>
-      <td>NULL</td>
+      <td></td>
       <td></td>
       <td>the id of the tree root</td>
     </tr>
@@ -3713,8 +3620,8 @@ to allow certain nodes (leaves) to have aligned protein member_scores attached t
       <td>root_id</td>
       <td>int(10) unsigned</td>
       <td>NO</td>
-      <td>NUL</td>
-      <td>NULL</td>
+      <td>MUL</td>
+      <td></td>
       <td></td>
       <td>the id of the tree root</td>
     </tr>
@@ -3772,7 +3679,7 @@ to allow certain nodes (leaves) to have aligned protein member_scores attached t
 TABLE PROTEIN_TREE_TAG
 #####################################################################
 -->
-<h4 id="protein_tree_tag">protein_tree_tag / super_protein_tree_tag</h4>
+<h4 id="protein_tree_tag">protein_tree_tag / super_protein_tree_tag / nc_tree_tag</h4>
 
 
 <p>
@@ -3781,7 +3688,7 @@ Contains several tag/value data attached to node_ids
 
 
 <table class="spreadsheet">
-  <caption>protein_tree_tag / super_protein_tree_tag table description</caption>
+  <caption>protein_tree_tag / super_protein_tree_tag / nc_tree_tag table description</caption>
   <thead><tr>
     <th>Field</th>
     <th>Type</th>
@@ -3805,20 +3712,234 @@ Contains several tag/value data attached to node_ids
     <tr>
       <td>tag</td>
       <td>varchar(50)</td>
-      <td>YES</td>
+      <td>NO</td>
       <td>MUL</td>
-      <td>NULL</td>
+      <td></td>
       <td></td>
       <td></td>
     </tr>
     <tr>
       <td>value</td>
       <td>mediumtext</td>
+      <td>NO</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+
+<!--
+#####################################################################
+TABLE PROTEIN_TREE_ATTR
+#####################################################################
+-->
+<h4 id="protein_tree_attr">protein_tree_attr</h4>
+
+
+<p>
+Contains several protein tree attributes data attached to node_ids
+</p>
+
+
+<table class="spreadsheet">
+  <caption>protein_tree_attr table description</caption>
+  <thead><tr>
+    <th>Field</th>
+    <th>Type</th>
+    <th>Null</th>
+    <th>Key</th>
+    <th>Default</th>
+    <th>Extra</th>
+    <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>node_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>PRI</td>
+      <td></td>
+      <td></td>
+      <td>external reference to protein_tree_node.node_id</td>
+    </tr>
+    <tr>
+      <td>node_type</td>
+      <td>enum('duplication','dubious','speciation','gene_split')</td>
+      <td>YES</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>type of homology</td>
+    </tr>
+    <tr>
+      <td>taxon_id</td>
+      <td>int(10) unsigned</td>
+      <td>YES</td>
+      <td>MUL</td>
+      <td>NULL</td>
+      <td></td>
+      <td>refers to ncbi_taxa_node.node_id</td>
+    </tr>
+    <tr>
+      <td>taxon_name</td>
+      <td>varchar(255)</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>refers to ncbi_taxa_name.name where ncbi_taxa_name.name_class='scientific name'</td>
+    </tr>
+    <tr>
+      <td>bootstrap</td>
+      <td>tinyint(3) unsigned</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>the bootstrap value of the node in the tree</td>
+    </tr>
+    <tr>
+      <td>duplication_confidence_score</td>
+      <td>double(4,5)</td>
       <td>YES</td>
       <td></td>
       <td>NULL</td>
       <td></td>
       <td></td>
+    </tr>
+    <tr>
+      <td>tree_suport</td>
+      <td>set('phyml_nt','nj_ds','phyml_aa','nj_dn','nj_mm')</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>All the final trees are the result of merging different
+      trees.</br>This column gives information about what trees
+      support this node after the merge:
+        <ul>
+          <li><strong>phyml_aa</strong>: phyml tree built with the amino-acid model WAG</li>
+          <li><strong>phyml_nt</strong>: phyml tree built with the nucleotide model HKY</li>
+          <li><strong>nj_dn</strong>: Neighbor-joining tree built using dn as a distance (number of non-synonymous changes)</li>
+          <li><strong>nj_ds</strong>: Neighbor-joining tree built using ds as a distance (number of synonymous changes)</li>
+          <li><strong>nj_mm</strong>: Neighbor-joining tree built using the "p-distance"</li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+
+<!--
+#####################################################################
+TABLE NC_TREE_TAG
+#####################################################################
+-->
+<h4 id="protein_tree_attr">nc_tree_attr</h4>
+
+
+<p>
+Contains several nc tree attributes for ncRNA node_ids
+</p>
+
+
+<table class="spreadsheet">
+  <caption>nc_tree_attr table description</caption>
+  <thead><tr>
+    <th>Field</th>
+    <th>Type</th>
+    <th>Null</th>
+    <th>Key</th>
+    <th>Default</th>
+    <th>Extra</th>
+    <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>node_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>PRI</td>
+      <td></td>
+      <td></td>
+      <td>external reference to protein_tree_node.node_id</td>
+    </tr>
+    <tr>
+      <td>duplication</td>
+      <td>tinyint(3) unsigned</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>if the gene is involved in a duplication or not</td>
+    </tr>
+    <tr>
+      <td>taxon_id</td>
+      <td>int(10) unsigned</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>refers to ncbi_taxa_node.node_id</td>
+    </tr>
+    <tr>
+      <td>taxon_name</td>
+      <td>varchar(255)</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>refers to ncbi_taxa_name.name where ncbi_taxa_name.name_class='scientific name'</td>
+    </tr>
+    <tr>
+      <td>bootstrap</td>
+      <td>tinyint(3) unsigned</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>the bootstrap value of the node in tree</td>
+    </tr>
+    <tr>
+      <td>duplication_confidence_score</td>
+      <td>double(5,4)</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>species_intersection_score</td>
+      <td>tinyint(3) unsigned</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>acc_name</td>
+      <td>varchar(50)</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>name of the (RFAM) family this node belongs to</td>
+    </tr>
+    <tr>
+      <td>node_type</td>
+      <td>enum('duplication','dubious','speciation')</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>type of homology</td>
     </tr>
   </tbody>
 </table>
@@ -3968,7 +4089,7 @@ which contains the type, the date of the mapping, and which releases were linked
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td>auto_increment</td>
       <td>internal unique ID</td>
     </tr>
@@ -3982,7 +4103,7 @@ which contains the type, the date of the mapping, and which releases were linked
       <td>Type of stable_ids that were mapped during this session</td>
     </tr>
     <tr>
-      <td>when mapped</td>
+      <td>when_mapped</td>
       <td>timestamp</td>
       <td>NO</td>
       <td></td>
@@ -4007,6 +4128,15 @@ which contains the type, the date of the mapping, and which releases were linked
       <td>NULL</td>
       <td></td>
       <td>rel.number to which the stable_ids were mapped during this session. rel_from &lt; rel_to </td>
+    </tr>
+    <tr>
+      <td>prefix</td>
+      <td>char(4)</td>
+      <td>NO</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
     </tr>
   </tbody>
 </table>
@@ -4053,7 +4183,7 @@ If both neither stable_id_from nor stable_id_to is empty, these members are trul
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td></td>
       <td></td>
     </tr>
@@ -4137,7 +4267,7 @@ to allow protein trees have trackable stable_ids
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
-      <td>NULL</td>
+      <td></td>
       <td></td>
       <td>node_id of the root of the tree</td>
     </tr>
@@ -4146,7 +4276,7 @@ to allow protein trees have trackable stable_ids
       <td>varchar(40)</td>
       <td>NO</td>
       <td>UNI</td>
-      <td>NULL</td>
+      <td></td>
       <td></td>
       <td>the main part of the stable_id ( follows the pattern: label(5).release_introduced(4).unique_id(10)</td>
     </tr>
