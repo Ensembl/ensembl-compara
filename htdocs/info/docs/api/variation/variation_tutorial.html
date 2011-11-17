@@ -779,7 +779,7 @@ my $sv = $sva->fetch_by_name('esv214236');
 my $ssvs = $sv->get_all_SupportingStructuralVariants();
 
 foreach my $ssv (@$ssvs) {
-  print $ssv->name, " ",  $ssv->var_class, " (SO term: ", $ssv-&gt;class_SO_term, ")\n";
+  print $ssv->variation_name, " ",  $ssv->var_class, " (SO term: ", $ssv-&gt;class_SO_term, ")\n";
 }
 </pre>
 
