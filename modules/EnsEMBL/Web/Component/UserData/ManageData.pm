@@ -91,6 +91,7 @@ sub content {
   return qq{
     <div class="notes">
       <h4>Help</h4>
+      <p class="space-below">You can rename your uploads and attached URLs by clicking on their current name in the Source column</p><br />
       <p class="space-below"><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
     </div>
     <h2 class="legend">Your data</h2>
@@ -116,7 +117,7 @@ sub table_row {
   my $delete       = sprintf '<a href="%%s" class="%s"%s><img src="%sdelete.png" alt="delete" title="Delete" /></a>', $delete_class, $title, $img_url;
   my $share        = qq{<a href="%s" class="modal_link"><img src="${img_url}share.png" alt="share" title="Share" /></a>};
   my $user_record  = ref($file) =~ /Record/;
-  my $name         = qq{<div><strong class="val">$file->{'name'}</strong>};
+  my $name         = qq{<div><strong class="val" title="Click here to rename your data">$file->{'name'}</strong>};
   my %url_params   = ( __clear => 1, source => $file->{'url'} ? 'url' : 'upload' );
   my $save;
   

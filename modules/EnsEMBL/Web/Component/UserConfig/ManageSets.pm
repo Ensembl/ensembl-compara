@@ -14,6 +14,10 @@ sub content {
     <input type="hidden" class="panel_type" value="ConfigManager" />
     <div class="config_manager">
       <div class="sets">
+        <div class="notes">
+          <h4>Help</h4>
+          <p class="space-below">You change names and descriptions by clicking on them in the table</p>
+        </div>
         <h2>Your configuration sets</h2>
         %s
         <p><a href="#" class="create_set"><span class="create">Create a new configuration set</span><span class="cancel">[Cancel]</span></a></p>
@@ -42,7 +46,7 @@ sub sets_table {
   
   my $configs  = $adaptor->all_configs;
   my $img_url  = $self->img_url;
-  my $editable = qq{<div><div class="heightWrap"><div class="val">%s</div></div><img class="toggle" src="${img_url}closed2.gif" />%s<a href="%s" class="save"></a></div>};
+  my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div><img class="toggle" src="${img_url}closed2.gif" />%s<a href="%s" class="save"></a></div>};
   my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div><img class="toggle" src="${img_url}closed2.gif" /></div>};
   my @rows;
   

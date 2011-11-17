@@ -15,6 +15,10 @@ sub content {
     <input type="hidden" class="panel_type" value="ConfigManager" />
     <div class="config_manager">
       <div class="sets">
+        <div class="notes">
+          <h4>Help</h4>
+          <p class="space-below">You change names and descriptions by clicking on them in the table</p>
+        </div>
         <h2>Your configurations for this page</h2>
         %s
       </div>
@@ -38,7 +42,7 @@ sub records_table {
   
   if (scalar @components) {
     my $img_url  = $self->img_url;
-    my $editable = qq{<div><div class="heightWrap"><div class="val">%s</div></div><img class="toggle" src="${img_url}closed2.gif" />%s<a rel="%s" href="%s" class="save"></a></div>};
+    my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div><img class="toggle" src="${img_url}closed2.gif" />%s<a rel="%s" href="%s" class="save"></a></div>};
     my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div><img class="toggle" src="${img_url}closed2.gif" /></div>};
     my (%configs, %rows);
     
