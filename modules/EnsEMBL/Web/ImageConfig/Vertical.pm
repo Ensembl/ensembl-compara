@@ -184,7 +184,7 @@ sub create_user_features {
   
   return $tracks unless $menu;
   
-  foreach my $id (map $_->get('display') eq 'off' ? $_->id : (), $menu->nodes) {
+  foreach my $id (map $_->get('display') ne 'off' ? $_->id : (), $menu->nodes) {
     my $data   = $hub->fetch_userdata_by_id($id);
     my $parser = $data->{'parser'};
     
