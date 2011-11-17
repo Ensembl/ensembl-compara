@@ -108,10 +108,16 @@ sub get_class_colour {
 		'inversion'                     => '#9933FF', 
 		'complex_structural_alteration' => '#99CCFF',
     'tandem_duplication'            => '#0000FF',
+		'mobile_element_insertion'      => '#FFCC00',
 	);
 	my $c = $colour{$class};
 	$c = '#B2B2B2' if (!$c);
 	return $c;
+}
+
+sub get_structural_variation_annotations {
+  my $self = shift;
+	return $self->Obj->get_all_StructuralVariationAnnotations;
 }
 
 
@@ -129,6 +135,7 @@ sub variation_feature_mapping {
   my %data;
   foreach my $sv_feature_obj (@{ $self->get_structural_variation_features }) { 
      my $svf_id = $sv_feature_obj->dbID;
+		 $data{$svf_id}{Type}            = $sv_feature_obj->slice->coord_system_name;
      $data{$svf_id}{Chr}             = $sv_feature_obj->seq_region_name;
      $data{$svf_id}{start}           = $sv_feature_obj->start;
      $data{$svf_id}{end}             = $sv_feature_obj->end;
