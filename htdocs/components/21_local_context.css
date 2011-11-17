@@ -34,3 +34,4 @@ body.ie67 .nav ul.local_context li img { margin: 0; vertical-align: top; }
 .tool_buttons .bookmark { background-image: url(/i/bookmark.png); background-repeat: no-repeat; }
 .tool_buttons .find     { background-image: url(/i/find.png);     background-repeat: no-repeat; }
 .tool_buttons .save     { background-image: url(/i/save.png);     background-repeat: no-repeat; }
+.tool_buttons .load     { background-image: url(/i/load.png);     background-repeat: no-repeat; }
