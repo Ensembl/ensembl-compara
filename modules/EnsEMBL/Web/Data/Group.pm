@@ -86,12 +86,12 @@ sub invalidate_cache {
   my $self  = shift;
   my $cache = shift;
 
-  $self->SUPER::invalidate_cache($cache, 'group['.$self->id.']');
+  $self->SUPER::invalidate_cache($cache, 'GROUP['.$self->id.']');
 }
 
 sub propagate_cache_tags {
   my $self = shift;
-  $self->SUPER::propagate_cache_tags('group['.$self->id.']')
+  $self->SUPER::propagate_cache_tags('GROUP['.$self->id.']')
     if ref $self;
 }
 

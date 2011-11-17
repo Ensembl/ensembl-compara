@@ -30,8 +30,8 @@ sub invalidate_cache {
   my $self  = shift;
   my $cache = shift;
 
-  $cache->delete_by_tags('user['.$self->user_id.']');
-  $cache->delete_by_tags('group['.$self->webgroup_id.']');
+  $cache->delete_by_tags('USER['.$self->user_id.']');
+  $cache->delete_by_tags('GROUP['.$self->webgroup_id.']');
 }
 
 1;
