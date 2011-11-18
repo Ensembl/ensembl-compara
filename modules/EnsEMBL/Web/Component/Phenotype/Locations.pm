@@ -38,7 +38,7 @@ sub content {
 sub _configure_Gene_table {
   my ($self, $feature_type, $feature_set) = @_;
   my $info = $self->SUPER::_configure_Gene_table($feature_type, $feature_set);
-  $info->{'header'} = 'Genes associated with phenotype '.$self->hub->param('name');
+  $info->{'header'} = 'Genes associated with phenotype '.$self->object->get_phenotype_desc;
   return $info; 
 }
 
@@ -46,7 +46,7 @@ sub _configure_Variation_table {
   my ($self, $feature_type, $feature_set) = @_;
   my $rows = [];
 
-  my $header = 'Variants associated with phenotype '.$self->hub->param('name');
+  my $header = 'Variants associated with phenotype '.$self->object->get_phenotype_desc;
   my $table_style = {'sorting' => ['p-values asc']};
 
   my $column_order = [qw(loc names)];
