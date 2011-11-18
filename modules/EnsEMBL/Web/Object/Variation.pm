@@ -1026,12 +1026,12 @@ sub variation_feature_mapping { ## used for snpview
   my %data;
   foreach my $vari_feature_obj (@{ $self->get_variation_features }) { 
      my $varif_id = $vari_feature_obj->dbID;
+     $data{$varif_id}{Type}           = $vari_feature_obj->slice->coord_system_name;
      $data{$varif_id}{Chr}            = $self->region_name($vari_feature_obj);
      $data{$varif_id}{start}          = $self->start($vari_feature_obj);
      $data{$varif_id}{end}            = $vari_feature_obj->end;
      $data{$varif_id}{strand}         = $vari_feature_obj->strand;
      $data{$varif_id}{transcript_vari} = $self->transcript_variation($vari_feature_obj);
-
   }
   return \%data;
 }
