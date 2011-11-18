@@ -282,28 +282,25 @@ sub add_variations {
   my $transcript         = $self->object->Obj;
   my $variation_features = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;
   my $length             = scalar @$sequence - 1;
-  my %href;
+  my (%href, %class);
   
-  foreach my $vf (@$variation_features) {
+  foreach my $vf (map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->length, $_->most_severe_OverlapConsequence->rank, $_ ], @$variation_features) {
     my $transcript_variation = $vf->get_all_TranscriptVariations([$transcript])->[0];
     
     next unless $transcript_variation;
     
-    my $class = lc $transcript_variation->display_consequence;
-    my $name  = $vf->variation_name;
-    my $start = $vf->start - 1;
-    my $end   = $vf->end   - 1;
+    my $consequence = lc $transcript_variation->display_consequence;
+    my $name        = $vf->variation_name;
+    my $start       = $vf->start - 1;
+    my $end         = $vf->end   - 1;
     
     $start = 0 if $start < 0;
     $end   = $length if $end > $length;
     
-    $config->{'key'}->{'variations'}->{$class} = 1;
-    $class = " $class";
+    $config->{'key'}->{'variations'}->{$consequence} = 1;
     
     for ($start..$end) {
-      $sequence->[$_]->{'class'} .= $class;
-      $sequence->[$_]->{'title'}  = $name;
-       
+      $class{$_}  = $consequence;
       $href{$_} ||= {
         type        => 'ZMenu',
         action      => 'TextSequence',
@@ -315,7 +312,8 @@ sub add_variations {
     }
   }
   
-  $sequence->[$_]->{'href'} = $self->hub->url($href{$_}) for keys %href;
+  $sequence->[$_]->{'class'} .= " $class{$_}"       for keys %class;
+  $sequence->[$_]->{'href'}   = $self->hub->url($href{$_}) for keys %href;
 }
 
 sub add_line_numbers {
