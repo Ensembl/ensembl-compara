@@ -60,28 +60,29 @@ sub sets_table {
   );
   
   foreach (sort { $a->{'name'} cmp $b->{'name'} } @sets) {
-    my $record_id  = $_->{'record_id'};
-    (my $desc      = $_->{'description'}) =~ s/\n/<br \/>/g;
-    my %url_params = ( action => 'ModifyConfig', __clear => 1, record_id => $record_id, is_set => 1 );
-    my @confs;
+    my $record_id = $_->{'record_id'};
+    (my $desc     = $_->{'description'}) =~ s/\n/<br \/>/g;
+    my %params    = ( action => 'ModifyConfig', __clear => 1, record_id => $record_id, is_set => 1 );
+    my (@confs, @rel);
     
     foreach (map $configs->{$_} || (), keys %{$_->{'records'}}) {
       my $view_config = $hub->get_viewconfig(reverse split '::', $_->{'type'} eq 'view_config' ? $_->{'code'} : $_->{'link_code'});
       my $config_type = join ' - ', $view_config->type, $view_config->title;
       push @confs, [ $config_type, $_->{'record_id'}, "$_->{'name'} </a><span>$config_type</span>" ];
+      push @rel, [split '::', $view_config->code]->[-1];
     }
     
     push @rows, {
-      name    => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $hub->url({ function => 'edit_details', %url_params })), class => 'editable'      },
-      desc    => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $hub->url({ function => 'edit_details', %url_params })), class => 'editable wrap' },
+      name    => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $hub->url({ function => 'edit_details', %params })), class => 'editable'      },
+      desc    => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
       configs => scalar @confs ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[2]</li>}, sort { $a->[0] cmp $b->[0] } @confs) : 'There are no configurations in this set',
-      active  => sprintf('<a class="edit" href="%s"><img src="%sactivate.png" alt="activate" title="Activate" /></a>', $hub->url({ function => 'activate_set', %url_params }), $img_url),
+      active  => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sactivate.png" alt="use" title="Use this configuration set" /></a>', $hub->url({ function => 'activate_set', %params }), join(' ', @rel), $img_url),
       edit    => sprintf('<a class="edit_record" href="#" rel="%s"><img src="%sedit.png" alt="edit" title="Edit configurations" /></a>', $record_id, $img_url),
-      delete  => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sdelete.png" alt="delete" title="Delete" /></a>', $hub->url({ function => 'delete_set', %url_params }), $record_id, $img_url),
+      delete  => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sdelete.png" alt="delete" title="Delete" /></a>', $hub->url({ function => 'delete_set', %params }), $record_id, $img_url),
     };
   }
   
-  return $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
+  return $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render . '<p class="activated">Configuration set applied</p>';
 }
 
 sub records_table {

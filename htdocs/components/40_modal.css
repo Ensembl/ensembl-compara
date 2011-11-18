@@ -144,7 +144,7 @@ body.ie6 #modal_panel .fixed_width .modal_wrapper .panel { border-left: 0; }
 .modal_content .config_manager td img.toggle                  { position: absolute; right: 4px; top: 2px; display: none; }
 .modal_content .config_manager table tbody tr                 { height: 20px; }
 .modal_content .config_manager table tr.active,
-.modal_content .config_manager table tr.added                 { background-color: #80cc74; }
+.modal_content .config_manager table tr.added                 { background-color: #80CC74; }
 .modal_content .config_manager table tr.disabled              { background-color: #AAA; }
 .modal_content .config_manager table tr.disabled *            { color: #666!important; }
 .modal_content .config_manager tr a.add_to_set                { display: block; width: 16px; height: 16px; background-image: url(/i/add.png); position: absolute; right: 0; }
@@ -160,5 +160,6 @@ body.ie6 #modal_panel .fixed_width .modal_wrapper .panel { border-left: 0; }
 .modal_content .config_manager .sets a.toggle                 { background-image: none; text-decoration: underline; }
 .modal_content .config_manager .sets a.create_set             { font-weight: bold; }
 .modal_content .config_manager .sets a.create_set span.cancel { display: none; float: right; margin-right: 9px; text-decoration: underline; cursor: pointer; }
+.modal_content .config_manager p.activated                    { display: none; position: absolute; margin: 0; line-height: 20px; text-align: center; background: #80CC74; color: #000; }
 
 body.ie7 .modal_content .config_manager td img.toggle         { top: 4px; }

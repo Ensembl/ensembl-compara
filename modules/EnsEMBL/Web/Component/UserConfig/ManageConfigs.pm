@@ -41,6 +41,8 @@ sub records_table {
   my $html;
   
   if (scalar @components) {
+    my $adaptor  = $hub->config_adaptor;
+    my $sets     = $adaptor->all_sets;
     my $img_url  = $self->img_url;
     my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div><img class="toggle" src="${img_url}closed2.gif" />%s<a rel="%s" href="%s" class="save"></a></div>};
     my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div><img class="toggle" src="${img_url}closed2.gif" /></div>};
@@ -51,9 +53,10 @@ sub records_table {
       { key => 'desc',   title => 'Description', width => '50%',  align => 'left', class => 'wrap'  },
       { key => 'sets',   title => 'Sets',        width => '24%',  align => 'left'                   },
       { key => 'active', title => '',            width => '20px', align => 'center', sort => 'none' },
-      { key => 'edit',   title => '',            width => '20px', align => 'center', sort => 'none' },
-      { key => 'delete', title => '',            width => '20px', align => 'center', sort => 'none' },
     );
+    
+    push @columns, { key => 'edit',   title => '', width => '20px', align => 'center', sort => 'none' } if scalar keys %$sets;
+    push @columns, { key => 'delete', title => '', width => '20px', align => 'center', sort => 'none' };
     
     foreach (@components) {
       my $type        = $referer->{'ENSEMBL_TYPE'};
@@ -65,27 +68,26 @@ sub records_table {
          $configs{$_} = { component => $component, title => $title } for grep $_, $code, $view_config->image_config;
     }
     
-    my $adaptor          = $hub->config_adaptor;
     my $filtered_configs = $adaptor->filtered_configs({ code => [ sort keys %configs ] });
     my @config_records   = values %$filtered_configs;
     my %active_configs   = map  { $_->{'code'} => $_->{'data'} } grep $_->{'active'} eq 'y', @config_records;
-    my $sets             = $adaptor->all_sets;
+    
     
     foreach (sort { $a->{'name'} cmp $b->{'name'} } grep { !$_->{'active'} && !($_->{'type'} eq 'image_config' && $_->{'link_id'}) } @config_records) {
-      my $record_id  = $_->{'record_id'};
-      my $code       = $_->{'type'} eq 'image_config' && $_->{'link_code'} ? $_->{'link_code'} : $_->{'code'};
-      (my $desc      = $_->{'description'}) =~ s/\n/<br \/>/g;
-      my %url_params = ( action => 'ModifyConfig', __clear => 1, record_id => $record_id );
-      my $active     = $active_configs{$_->{'code'}} eq $_->{'data'} && $active_configs{$_->{'link_code'}} eq $filtered_configs->{$_->{'link_id'}}{'data'} ? ' checked' : '';
-      my @sets       = map [ $sets->{$_}{'name'}, $sets->{$_}{'record_id'} ], $adaptor->record_to_sets($record_id);
+      my $record_id = $_->{'record_id'};
+      my $code      = $_->{'type'} eq 'image_config' && $_->{'link_code'} ? $_->{'link_code'} : $_->{'code'};
+      (my $desc     = $_->{'description'}) =~ s/\n/<br \/>/g;
+      my %params    = ( action => 'ModifyConfig', __clear => 1, record_id => $record_id );
+      my $active    = $active_configs{$_->{'code'}} eq $_->{'data'} && $active_configs{$_->{'link_code'}} eq $filtered_configs->{$_->{'link_id'}}{'data'} ? ' checked' : '';
+      my @sets      = map [ $sets->{$_}{'name'}, $sets->{$_}{'record_id'} ], $adaptor->record_to_sets($record_id);
       
       push @{$rows{$code}}, {
-        name   => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $_->{'record_id'}, $hub->url({ function => 'edit_details', %url_params })), class => 'editable'      },
-        desc   => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $_->{'record_id'}, $hub->url({ function => 'edit_details', %url_params })), class => 'editable wrap' },
+        name   => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $_->{'record_id'}, $hub->url({ function => 'edit_details', %params })), class => 'editable'      },
+        desc   => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $_->{'record_id'}, $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
         sets   => scalar @sets ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[0]</li>}, sort { $a->[0] cmp $b->[0] } @sets) : '',
-        active => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sactivate.png" alt="activate" title="Activate" /></a>', $hub->url({ function => 'activate', %url_params }), $configs{$code}{'component'}, $img_url),
+        active => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sactivate.png" alt="use" title="Use this configuration" /></a>', $hub->url({ function => 'activate', %params }), $configs{$code}{'component'}, $img_url),
         edit   => sprintf('<a class="edit_record" href="#" rel="%s"><img src="%sedit.png" alt="edit" title="Edit sets" /></a>', $record_id, $img_url),
-        delete => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sdelete.png" alt="delete" title="Delete" /></a>', $hub->url({ function => 'delete',   %url_params, link_id => $_->{'link_id'} }), $record_id, $img_url),
+        delete => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sdelete.png" alt="delete" title="Delete" /></a>', $hub->url({ function => 'delete', %params, link_id => $_->{'link_id'} }), $record_id, $img_url),
       };
     }
     
@@ -99,6 +101,8 @@ sub records_table {
         $self->new_table(\@columns, $rows{$_}, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render,
       );
     }
+    
+    $html .= '<p class="activated">Configuration applied</p>';
   }
   
   return $html || '<p>You have no custom configurations for this page.</p>';
