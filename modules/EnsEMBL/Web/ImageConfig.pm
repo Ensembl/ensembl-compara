@@ -2037,22 +2037,23 @@ sub add_regulation_builds {
       renderers   => \@renderers,
       cell_line   => $cell_line
     }));
-    
-    my $seg_caption = "Reg. Segs $cell_line"; #Nathan just dont want the colon on the track name on the view!!!!!
-    $reg_segmentation->append($self->create_track("seg_$cell_line", "Reg. Segs: $cell_line", {
-      db          => $key,
-      glyphset    => "fg_segmentation_features",
-      sources     => 'undef',
-      strand      => 'r',
-      labels      => 'on',
-      depth       => 0,
-      colourset   => 'fg_segmentation_features',
-      display     => 'off',
-      description => "Segmentation features description",
-      renderers   => \@renderers,
-      cell_line   => $cell_line,
-      caption     => "$seg_caption",
-    })) if(%fg_data->{"seg_$cell_line"}->{'key'} eq "seg_$cell_line");
+        
+    if(%fg_data->{"seg_$cell_line"}->{'key'} eq "seg_$cell_line") {
+      $reg_segmentation->append($self->create_track("seg_$cell_line", "Reg. Segs: $cell_line", {
+        db          => $key,
+        glyphset    => "fg_segmentation_features",
+        sources     => 'undef',
+        strand      => 'r',
+        labels      => 'on',
+        depth       => 0,
+        colourset   => 'fg_segmentation_features',
+        display     => 'off',
+        description => $fg_data{"seg_$cell_line"}{description},
+        renderers   => \@renderers,
+        cell_line   => $cell_line,
+        caption     => "Reg. Segs $cell_line",
+      }));
+    }
     
     ### Add tracks for cell_line peaks and wiggles only if we have data to display
     my @ftypes     = keys %{$db_tables->{'meta'}{'feature_type_ids'}{$cell_line}      || {}};  
@@ -2090,7 +2091,7 @@ sub add_regulation_builds {
 
   if ($db_tables->{'cell_type'}{'ids'}) {    
     $self->add_track('information',  'fg_regulatory_features_legend',   'Reg. Features Legend',          'fg_regulatory_features_legend',   { strand => 'r', colourset => 'fg_regulatory_features'});        
-    $self->add_track('information', 'fg_segmentation_features_legend', 'Reg. Segments Legend',          'fg_segmentation_features_legend', { strand => 'r', colourset => 'fg_segmentation_features'});
+    $self->add_track('information', 'fg_segmentation_features_legend',  'Reg. Segments Legend',          'fg_segmentation_features_legend', { strand => 'r', colourset => 'fg_segmentation_features'});
     $self->add_track('information',  'fg_multi_wiggle_legend',          'Cell/Tissue Regulation Legend', 'fg_multi_wiggle_legend',          { strand => 'r', display => 'off' });
   }
 }
