@@ -31,18 +31,16 @@ sub populate_tree {
     )],
     { 'availability' => 'variation' }
   );
-    
-  $self->create_node('Sequence', 'Flanking sequence',
-    [qw(
-      flanking EnsEMBL::Web::Component::Variation::FlankingSequence
-    )],
-    { 'availability' => 'variation' }
+  
+	my $context_menu = $self->create_node('Context', 'Genomic context',
+    [qw( summary EnsEMBL::Web::Component::Variation::Context )],
+    { 'availability' => 'variation', 'concise' => 'Context' }
   );
-    
-  $self->create_node('Mappings', 'Gene/Transcript  ([[counts::transcripts]])',
+	
+  $context_menu->append($self->create_node('Mappings', 'Gene/Transcript  ([[counts::transcripts]])',
     [qw( summary EnsEMBL::Web::Component::Variation::Mappings )],
     { 'availability' => 'variation has_transcripts', 'concise' => 'Gene/Transcript' }
-  );
+  ));
     
   $self->create_node('Population', 'Population genetics ([[counts::populations]])',
     [qw( 
@@ -61,11 +59,6 @@ sub populate_tree {
     [qw( summary EnsEMBL::Web::Component::Variation::IndividualGenotypes )],
     { 'availability' => 'variation has_individuals not_somatic', 'concise' => 'Individual genotypes', 'no_menu_entry' => $somatic }
   ); 
-
-  $self->create_node('Context', 'Genomic context',
-    [qw( summary EnsEMBL::Web::Component::Variation::Context )],
-    { 'availability' => 'variation', 'concise' => 'Context' }
-  );
   
   $self->create_node('HighLD', 'Linkage disequilibrium',
     [qw( summary EnsEMBL::Web::Component::Variation::HighLD )],
@@ -85,6 +78,12 @@ sub populate_tree {
     { 'availability' => 'variation database:compara has_alignments', 'concise' => 'Phylogenetic Context' }
   );
 	
+	$self->create_node('Sequence', 'Flanking sequence',
+    [qw(
+      flanking EnsEMBL::Web::Component::Variation::FlankingSequence
+    )],
+    { 'availability' => 'variation' }
+  );
 	
   # External Data tree, including non-positional DAS sources
   my $external = $self->create_node('ExternalData', 'External Data',
