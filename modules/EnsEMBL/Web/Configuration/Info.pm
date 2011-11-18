@@ -116,7 +116,7 @@ sub populate_tree {
     ));
     
     if ($sample_data->{'VARIATION_PARAM'}) {
-      my $variation_url  = "$species_path/Variation/Summary?v=$sample_data->{'VARIATION_PARAM'}";
+      my $variation_url  = "$species_path/Variation/Explore?v=$sample_data->{'VARIATION_PARAM'}";
       my $variation_text = $sample_data->{'VARIATION_TEXT'} || 'not available';
       
       $data_menu->append($self->create_node('Variation', "Variation ($variation_text)", [],
