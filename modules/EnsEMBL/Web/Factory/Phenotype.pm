@@ -33,16 +33,23 @@ sub createObjects {
   my $dbc        = $self->hub->database('variation');
   return unless $dbc;
 	$dbc->include_failed_variations(1);
-  my $a          = $dbc->get_adaptor('VariationFeature');
-  my $func       = $self->param('somatic') ? 'fetch_all_somatic_with_annotation' : 'fetch_all_with_annotation';
-  my $variations = $a->$func(undef, undef, $id);
-  
+
+  my $variations = [];
+  my $genes = [];
+  my $adaptor    = $dbc->get_adaptor('VariationFeature');
+
+  push @$variations, @{$adaptor->fetch_all_with_annotation(undef, undef, $id) || []};
+  #warn ">>> VARS ".@$variations;
+  push @$variations, @{$adaptor->fetch_all_somatic_with_annotation(undef, undef, $id) || []};
+  #warn "... VARS ".@$variations;
+
   if ($variations and scalar @$variations > 0) {
     $features->{'Variation'} = EnsEMBL::Web::Data::Bio::Variation->new($self->hub, @$variations);
 
     ## Get associated genes
     my $vardb        = $self->hub->database('variation');
     my $vaa          = $vardb->get_adaptor('VariationAnnotation');
+
     my %associated_gene;
   
     foreach my $va (@{$vaa->fetch_all_by_VariationFeature_list($variations) || []}) {
@@ -59,13 +66,19 @@ sub createObjects {
       }
     } 
     if (keys %associated_gene) {
-      my $genes;
       while (my ($gene_id, $gene_objects) = each(%associated_gene)) {
         push @$genes, @{$gene_objects || []};
       }
-      $features->{'Gene'} = EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes);
     }
   }
+
+## TODO - Get genes with no associated variation 
+
+  ## Add all genes
+  if (scalar(@$genes)) {
+    $features->{'Gene'} = EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes);
+  }
+
   my $object = $self->new_object('Phenotype', $features, $self->__data);
 
   $self->DataObjects($object);
