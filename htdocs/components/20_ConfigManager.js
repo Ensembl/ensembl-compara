@@ -56,7 +56,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       
       $('a.create_set', this.el).live('click', function () {
         var els  = $('.sets > div, .edit_set', panel.el).toggle();
-        var func = $(this).children().toggle().filter(':visible').attr('class') === 'cancel' ? 'show' : 'hide'
+        var func = $(this).children().toggle().filter(':visible').attr('class') === 'cancel' ? 'show' : 'hide';
         
         $('form', panel.el).find('fieldset > div')[func]().find('[name=name], [name=description]').val('').removeClass('valid');
         
@@ -104,6 +104,12 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     $.each(this.dataTables, function () {
       $(this.fnSettings().nTableWrapper).show();
     });
+    
+    var tr = $('.sets table tbody tr:first', this.el);
+    
+    this.elLk.activated = $('p.activated', this.el).css({ width: tr.outerWidth(), height: tr.outerHeight() });
+    
+    tr = null;
   },
   
   wrapping: function (els) {
@@ -151,15 +157,26 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     input = save = null;
   },
   
-  activateRecord: function (tr, component) {
-    var bg = tr.css('backgroundColor');
+  activateRecord: function (tr, components) {
+    var panel    = this;
+    var bg       = tr.css('backgroundColor');
+    var position = tr.position();
     
-    tr.addClass('active').delay(2000).animate({ backgroundColor: bg }, 1000, function () { $(this).removeClass('active').css('backgroundColor', '') });
+    tr.addClass('active').siblings('.active').removeClass('active').css('backgroundColor', '');
     
-    Ensembl.EventManager.trigger('queuePageReload', component);
-    Ensembl.EventManager.trigger('activateConfig',  component);  
+    clearTimeout(this.elLk.activated.stop(true).delay);
     
-    tr = null;
+    this.elLk.activated.css({ top: position.top, left: position.left, display: 'block', opacity: 1 }).delay = setTimeout(function () {
+      tr.animate({ backgroundColor: bg }, 1, function () { $(this).removeClass('active').css('backgroundColor', ''); })
+      panel.elLk.activated.fadeOut(1000);
+    }, 2000);
+    
+    $.each(components.split(' '), function (i, component) {
+      if (Ensembl.PanelManager.panels[component]) {
+        Ensembl.EventManager.trigger('queuePageReload', component, true);
+        Ensembl.EventManager.trigger('activateConfig',  component);
+      }
+    });
   },
   
   deleteRecord: function (tr, configId) {
