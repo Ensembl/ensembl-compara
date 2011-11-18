@@ -27,8 +27,9 @@ sub content {
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
 
   # URL-based section
-  my @formats = sort {lc($a) cmp lc($b)} (@{$self->hub->species_defs->UPLOAD_FILE_FORMATS}, @{$self->hub->species_defs->REMOTE_FILE_FORMATS});
-  my $format_list = join(', ', @formats);
+  my $format_info = $self->hub->species_defs->DATA_FORMAT_INFO;
+  my %format_name = map {$format_info->{$_}{'label'} => 1} (@{$self->hub->species_defs->UPLOAD_FILE_FORMATS}, @{$self->hub->species_defs->REMOTE_FILE_FORMATS});
+  my $format_list = join(', ', (sort {lc($a) cmp lc($b)} keys %format_name));
 
   my $note = qq(
 Accessing data via a URL can be slow unless you use an indexed format such as BAM. 
@@ -36,7 +37,7 @@ However it has the advantage that you always see the same data as the file on yo
 We currently accept attachment of the following formats: $format_list.
   );
 
-  $note .= ' VCF files must be indexed prior to attachment.' if grep(/VCF/, @formats);
+  $note .= ' <strong>Note</strong>: VCF files must be indexed prior to attachment.' if grep(/vcf/i, keys %format_name);
 
   $form->add_notes({
     'heading' => 'Tip',
