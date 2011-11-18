@@ -21,13 +21,12 @@ sub content {
   my $variation_features = $variation->get_all_VariationFeatures;
   my ($feature_slice)    = map { $_->dbID == $vf ? $_->feature_Slice : () } @$variation_features; # get slice for variation feature
   my $failed             = $variation->failed_description ? $self->failed($feature_slice) : ''; ## First warn if variation has been failed
-  my $summary; #            = $self->variation_class;
+  my $summary;
     $summary            .= $self->variation_source;
     $summary            .= $self->alleles($feature_slice);
     $summary            .= $self->location;
-    $summary            .= $self->validation_status;
     $summary            .= $self->co_located($feature_slice) if $feature_slice;
-    $summary            .= $self->variation_sets;
+    $summary            .= $self->validation_status;
     $summary            .= $self->synonyms;
     $summary            .= $self->hgvs;
   
@@ -65,16 +64,6 @@ sub failed {
   return $self->_warning('This variation has been flagged as failed', $html, '50%');
 }
 
-sub variation_class {
-  my $self    = shift;
-  my $hub     = $self->hub;
-  my $object  = $self->object;
-  return sprintf('
-    <dt>Class</dt> 
-    <dd>%s</dd>',
-    uc $object->vari_class
-  );
-}
 
 sub variation_source {
   my $self    = shift;
@@ -85,6 +74,8 @@ sub variation_source {
   my $version = $object->source_version;
   my $url     = $object->source_url;
   my $source_link;
+  my $home_link;
+  my $sname;
   
   # Date version
   if ($version =~ /^(20\d{2})(\d{2})/) {
@@ -93,28 +84,35 @@ sub variation_source {
     $version = " $version";
   }
   
+  ## parse description for links
+  my $description = $object->source_description;
+  $description =~ s/(\w+) \[(http:\/\/[\w\.\/]+)\]/<a href="$2">$1<\/a>/; 
+  
+  # Source link
   if ($source eq 'dbSNP') {
-    $source_link = $hub->get_ExtURL_link("$source$version", 'DBSNP', $name);
+    $sname = 'DBSNP';
+    $source_link = $hub->get_ExtURL_link("$source$version", $sname, $name);
+    $home_link = $hub->get_ExtURL_link($source, $sname.'_HOME', $name);
+    $description =~ s/$sname/$home_link/i;
   } elsif ($source =~ /SGRP/) {
     $source_link = $hub->get_ExtURL_link("$source$version", 'SGRP', $name);
   } elsif ($source =~ /COSMIC/) {
-    $source_link = $hub->get_ExtURL_link("$source$version", 'COSMIC', $name);
+    $sname = 'COSMIC';
+    $source_link = $hub->get_ExtURL_link("$source$version", $sname.'_ID', $name);
+    $home_link = $hub->get_ExtURL_link($source, $sname, $name);
+    $description =~ s/$sname/$home_link/i;
   } elsif ($source =~ /HGMD/) {
-    # HACK - should get its link properly somehow
-    foreach (@{$hub->get_adaptor('get_VariationAnnotationAdaptor', 'variation')->fetch_all_by_Variation($object->Obj)}) {
-      next unless $_->source_name =~ /HGMD/;
-      $source_link = $hub->get_ExtURL_link($_->source_name . $version, 'HGMD-PUBLIC', '');
-      last;
-    }
+    my $va = ($hub->get_adaptor('get_VariationAnnotationAdaptor', 'variation')->fetch_all_by_Variation($object->Obj))->[0];
+    my $asso_gene = $va->associated_gene;
+    $sname = 'HGMD-PUBLIC';
+    $source_link = $hub->get_ExtURL_link("$source$version", 'HGMD', { ID => $asso_gene, ACC => $name });
+    $home_link = $hub->get_ExtURL_link($source, $sname, $name);
+    $description =~ s/$sname/$home_link/i;
   } elsif ($source =~ /LSDB/) {
     $source_link = $hub->get_ExtURL_link($source . ($version ? " ($version)" : ''), $source, $name);
   } else {
     $source_link = $url ? qq{<a href="$url">$source$version</a>} : "$source $version";
   }
- 
-  ## parse description for links
-  my $description = $object->source_description;
-  $description =~ s/(\w+) \[(http:\/\/[\w\.\/]+)\]/<a href="$2">$1<\/a>/; 
 
   return sprintf('
     <dt>Source</dt> 
@@ -122,6 +120,7 @@ sub variation_source {
     $source_link, $description
   );
 }
+
 
 sub co_located {
   my ($self, $feature_slice) = @_;
@@ -233,56 +232,36 @@ sub synonyms {
   }
 }
 
-sub variation_sets {
-  my $self           = shift;
-  my @variation_sets = sort @{$self->object->get_variation_set_string};
-  my $count          = scalar @variation_sets; 
-  
-  return unless $count;
-  
-  my $html;
-  
-  # Large text display
-  if ($count < 6) {
-    $html = sprintf '<dt>Present in</dt><dd>%s</dd>', join ',', @variation_sets
-  } else { # Collapsed div display 
-    my $count_1000 = scalar grep { /1000 genomes/i } @variation_sets;
-    my $show       = $self->hub->get_cookies('toggle_variation_sets') eq 'open';
-    
-    $html = sprintf('
-      <dt><a class="toggle %s set_cookie" href="#" rel="variation_sets" title="Click to toggle sets names">Present in</a></dt>
-      <dd>This feature is present in %s sets - click the plus to show all sets</dd>
-      <dd class="variation_sets"><div class="toggleable" style="font-weight:normal;%s">%s</div></dd>',
-      $show ? 'open' : 'closed',
-      $count_1000 ? sprintf('<b>1000 genomes</b> and <b>%s</b> other', $count - $count_1000) : "<b>$count</b>",
-      $show ? '' : 'display:none',
-      sprintf('<ul><li>%s</li></ul>', join '</li><li>', @variation_sets)
-    );
-  }
-  
-  return $html;
-}
 
 sub alleles {
   my ($self, $feature_slice) = @_;
   my $object   = $self->object;
 
-  my @alleles  = split('/', $object->alleles);
-  my $ref_allele = shift @alleles;
-  my $alt_string = 'Alternative';
-  $alt_string .= 's' if (scalar @alleles > 1);
-  $alt_string .= ': <strong>'.join(', ', @alleles).'</strong>';
+  # Ref/Alt
+  my $alleles = $object->alleles;
+  my $c_alleles  = scalar (split('/', $alleles));
+  my $alt_string;
+  $alt_string = 's' if ($c_alleles > 2);
+  
+  # Ancestral
   my $ancestor = $object->ancestor;
-  my $ambiguity;
-  if (lc $object->vari_class eq 'snp') {
-    $ambiguity = $object->alleles =~ /HGMD/ ? 'not available' : $object->Obj->ambig_code;
+  $ancestor = qq{ | Ancestral: <strong>$ancestor</strong>} if ($ancestor);
+  
+  # Ambiguity
+  my $ambiguity = $object->Obj->ambig_code;
+  if ($object->source =~ /HGMD/) {
+    $ambiguity = 'not available';
   }
-
-  my $html      = sprintf 'Reference: <strong>%s</strong> | %s | Ancestral: <strong>%s</strong> | Ambiguity code: <strong>%s</strong>',
-                  $ref_allele, $alt_string, $ancestor, $ambiguity;
-
- # my $html     = "<b>$alleles</b>";
- #    $html    .= sprintf ' (Ambiguity code: <strong>%s</strong>)', $alleles =~ /HGMD/ ? 'not available' : $object->Obj->ambig_code if lc $object->vari_class eq 'snp';
+  $ambiguity = qq{ | Ambiguity code: <strong>$ambiguity</strong>} if ($ambiguity);
+  
+  # MAF
+  my $maf = $object->Obj->minor_allele;
+  my $freq = sprintf("%.2f", $object->Obj->minor_allele_frequency);
+  $freq = "&lt; 0.01" if ($freq eq '0.00'); # Frequency lower than 1%
+  $maf = " | MAF: <strong>$freq</strong> ($maf)" if ($maf);
+  
+  my $html = sprintf 'Reference/Alternative%s: <span style="font-weight:bold;font-size:1.2em">%s</span>%s%s%s',
+                      $alt_string, $alleles, $ancestor, $ambiguity, $maf;
 
   # Check somatic mutation base matches reference
   if ($feature_slice) {
@@ -296,11 +275,9 @@ sub alleles {
     }
   }
   
-  $html  = qq{<dt>Alleles</dt><dd>$html</dd>};
-  #$html .= qq{<dt>Ancestral allele</dt><dd>$ancestor</dd>} if $ancestor;
-  
-  return $html;
+  return qq{<dt>Alleles</dt><dd>$html</dd>};
 }
+
 
 sub location {
   my $self     = shift;
@@ -317,10 +294,11 @@ sub location {
   
   if ($vf) {
     my $variation = $object->Obj;
-    my $region    = $mappings{$vf}{'Chr'}; 
-    my $start     = $mappings{$vf}{'start'};
-    my $end       = $mappings{$vf}{'end'};
-       $location  = ($start == $end ? "$region:$start" : "$region:$start-$end") . ' (' . ($mappings{$vf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
+    my $type     = $mappings{$vf}{'Type'};
+    my $region   = $mappings{$vf}{'Chr'}; 
+    my $start    = $mappings{$vf}{'start'};
+    my $end      = $mappings{$vf}{'end'};
+       $location = ucfirst(lc $type).' <b>'.($start == $end ? "$region:$start" : "$region:$start-$end") . '</b> (' . ($mappings{$vf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
     
     $location_link = sprintf(
       ' | <a href="%s">View in location tab</a>',
@@ -341,7 +319,7 @@ sub location {
     my @locations = ({ value => 'null', name => 'None selected' });
     
     # add locations for each mapping
-    foreach (sort { $mappings{$a}->{'Chr'} cmp $mappings{$b}{'Chr'} || $mappings{$a}{'start'} <=> $mappings{$b}{'start'}} keys %mappings) {
+    foreach (sort { $mappings{$a}{'Chr'} cmp $mappings{$b}{'Chr'} || $mappings{$a}{'start'} <=> $mappings{$b}{'start'}} keys %mappings) {
       my $region = $mappings{$_}{'Chr'}; 
       my $start  = $mappings{$_}{'start'};
       my $end    = $mappings{$_}{'end'};
@@ -379,50 +357,86 @@ sub location {
       $location_link
     );
   } else {
-    $html = "This feature maps to $location$location_link";
+    $html = "$location$location_link";
   }
   
   return qq{<dt>Location</dt><dd>$html</dd>};
 }
+
 
 sub validation_status {
   my $self   = shift;
   my $hub    = $self->hub;
   my $object = $self->object;
   my $status = $object->status;
-  my $stat;
+
+  my @variation_sets = sort @{$self->object->get_variation_set_string};
+  
+  my @status_list;
+  my %main_status;
+  my $html;
   
   if (scalar @$status) {
     my $snp_name = $object->name;
-    my (@status_list, $hapmap);
-
     foreach (@$status) {
+       my $st;
       if ($_ eq 'hapmap') {
-        $hapmap = '<b>HapMap variant</b>', $hub->get_ExtURL_link($snp_name, 'HAPMAP', $snp_name);
-      } elsif ($_ ne 'failed') {
-        push @status_list, $_ eq 'freq' ? 'frequency' : $_;
+        $st = 'HapMap', $hub->get_ExtURL_link($snp_name, 'HAPMAP', $snp_name);
+        $main_status{'HapMap'} = 1;
+        next;
       }
+      elsif ( $_ =~ /1000Genome/i) {
+        $st = '1000 Genomes';
+        $main_status{'1000 Genomes'} = 1;
+        next;
+      }
+      elsif ($_ ne 'failed') {
+        $st = $_ eq 'freq' ? 'frequency' : $_;
+      }
+      push (@status_list, $st);
     }
-
-    $stat = join ', ', @status_list;
-    
-    if ($stat eq 'observed' || $stat eq 'non-polymorphic') {
-      $stat = '<b>' . ucfirst $stat . '</b> ';
-    } elsif ($stat) {
-      $stat = "Proven by <b>$stat</b> ";
-    }
-
-    $stat .= $hapmap;
-    $stat  = 'Undefined' unless $stat =~ /^\w/;
-  } else {
-    $stat = 'Unknown';
   }
   
-  return qq{
-    <dt>Validation status</dt>
-    <dd>$stat</dd>
-  };
+  if (!$main_status{'HapMap'} && !$main_status{'1000 Genomes'}) {
+    foreach my $vs (@variation_sets) {
+      if ($vs =~ /1000 Genomes/i && !$main_status{'1000 Genomes'}) {
+        $main_status{'1000 Genomes'} = 1;
+      }
+      elsif ($vs =~ /hapmap/i && !$main_status{'HapMap'}) {
+        $main_status{'HapMap'} = 1;
+      }
+    }
+  }
+  
+  my $status_count = scalar @status_list;
+  
+  my $html = qq{This variation is validated by };
+  
+  
+  return unless ($status_count);
+  
+  my $status_data;
+  if ($main_status{'HapMap'} || $main_status{'1000 Genomes'}) {
+    my $show = $self->hub->get_cookies('toggle_status') eq 'open';
+    
+    my $showed_line;
+    foreach my $st (sort(keys(%main_status))) {
+      $showed_line .= ', ' if ($showed_line);
+      $showed_line .= "<b>$st</b>";
+      $status_count --;
+    }
+    if ($status_count > 0) {
+      $showed_line .= " and also ".join ', ', sort(@status_list);
+    }
+    
+    $html .= $showed_line;
+  }
+  else {
+    $html .= join ', ', sort(@status_list);
+  }
+  return qq{ <dt>Validation status</dt><dd>$html</dd>};
 }
+
 
 sub hgvs {
   my $self      = shift;
@@ -440,7 +454,7 @@ sub hgvs {
   }
   
   # Wrap the html
-  if ($count) {
+  if ($count > 1) {
     my $show = $self->hub->get_cookies('toggle_HGVS_names') eq 'open';
     my $s    = $count > 1 ? 's' : '';
     
@@ -453,8 +467,10 @@ sub hgvs {
       $show ? '' : 'display:none',
       $html
     );
+  } elsif ($count == 1){
+    $html = qq{<dt>HGVS name</dt><dd>$html</dd>};  
   } else {
-    $html = qq{<dt>HGVS names</dt><dd><h5>None</h5></dd>};
+    $html = qq{<dt>HGVS name</dt><dd>None</dd>};
   }
   
   return $html;
