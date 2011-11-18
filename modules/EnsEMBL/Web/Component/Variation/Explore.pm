@@ -47,14 +47,14 @@ sub content {
   }
 
   my @buttons = (
+    {'title' => 'Genomic context',        'img' => 'genomic_context',        'url' => $context_url},
+    {'title' => 'Gene/Transcript',        'img' => 'gene_transcript',        'url' => $gt_url},
+    {'title' => 'Population genetics',    'img' => 'population_genetics',    'url' => $pop_url},
+    {'title' => 'Individual genotypes',   'img' => 'individual_genotypes',   'url' => $geno_url},
+    {'title' => 'Linkage disequilibrium', 'img' => 'linkage_disequilibrium', 'url' => $ld_url},
+    {'title' => 'Phenotype data',         'img' => 'phenotype_data',         'url' => $pheno_url},
+    {'title' => 'Phylogenetic context',   'img' => 'phylogenetic_context',   'url' => $phylo_url},
     {'title' => 'Sequence',               'img' => 'flanking_sequence',      'url' => $seq_url},
-    {'title' => 'Gene/Transcript',        'img' => 'gene_transcript',       'url' => $gt_url},
-    {'title' => 'Population genetics',    'img' => 'population_genetics',      'url' => $pop_url},
-    {'title' => 'Individual genotypes',   'img' => 'individual_genotypes',     'url' => $geno_url},
-    {'title' => 'Genomic context',        'img' => 'genomic_context',  'url' => $context_url},
-    {'title' => 'Linkage disequilibrium', 'img' => 'linkage_disequilibrium',       'url' => $ld_url},
-    {'title' => 'Phenotype data',         'img' => 'phenotype_data',    'url' => $pheno_url},
-    {'title' => 'Phylogenetic context',   'img' => 'phylogenetic_context',    'url' => $phylo_url},
   );
 
   my $html;
