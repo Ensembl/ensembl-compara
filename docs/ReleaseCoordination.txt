@@ -914,3 +914,4 @@ CVS commit the changes.
 
 22d. Report the locations of the dumps to the main Release Coordinator and/or the web people.
 
+23. Don't forget to cvs commit this document (if you have made any change)
