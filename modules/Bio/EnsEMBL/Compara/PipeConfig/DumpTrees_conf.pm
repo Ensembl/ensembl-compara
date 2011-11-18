@@ -44,21 +44,21 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'rel'               => 64,                                                  # current release number
+        'rel'               => 65,                                                  # current release number
         'rel_suffix'        => '',                                                  # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),              # for convenience
         'tree_type'         => 'protein_trees',                                     # either 'protein_trees' or 'ncrna_trees'
 
         'pipeline_name'     => $self->o('tree_type').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
-        'rel_url'           => 'mysql://ensro@compara4:3306/lg4_ensembl_compara_'.$self->o('rel'),
+        'rel_url'           => 'mysql://ensro@compara1:3306/mp12_ensembl_compara_'.$self->o('rel'),
 
         'capacity'    => 100,                                                       # how many trees can be dumped in parallel
         'batch_size'  => 25,                                                        # how may trees' dumping jobs can be batched together
         'name_root'   => 'Compara.'.$self->o('rel_with_suffix').'.'.$self->o('tree_type'),      # dump file name root
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs',
-        'target_dir'  => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),   # where the final dumps will be stored
+        'target_dir'  => '/lustre/scratch103/ensembl/'.$self->o('ENV', 'USER').'/dumps/'.$self->o('pipeline_name'),   # where the final dumps will be stored
         'work_dir'    => $self->o('target_dir').'/dump_hash',                       # where directory hash is created and maintained
     };
 }
