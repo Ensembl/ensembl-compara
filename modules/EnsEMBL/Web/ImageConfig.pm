@@ -861,7 +861,7 @@ sub update_from_url {
           }
         }
 
-        my $style = $all_formats->{$format}{'display'} eq 'graph' ? 'wiggle' : $format;
+        my $style = $all_formats->{lc($format)}{'display'} eq 'graph' ? 'wiggle' : $format;
         my $code  = md5_hex("$species:$p");
         my $n     = $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
         

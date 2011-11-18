@@ -46,7 +46,7 @@ sub upload {
     my $extensions;
     
     foreach (@{$hub->species_defs->UPLOAD_FILE_FORMATS}) {
-      $format = uc $ext if $format_info->{$_}{'ext'} =~ /$ext/i;
+      $format = uc $ext if $format_info->{lc($_)}{'ext'} =~ /$ext/i;
     }
   }
   

@@ -19,19 +19,20 @@ sub get_assemblies {
 sub add_file_format_dropdown {
   my ($self, $form, $limit) = @_;
 
-  my @formats_to_display;
+  my @formats;
   if ($limit) {
-    @formats_to_display = $limit eq 'remote' ? @{$self->hub->species_defs->REMOTE_FILE_FORMATS} 
+    @formats = $limit eq 'remote' ? @{$self->hub->species_defs->REMOTE_FILE_FORMATS} 
                                                 : @{$self->hub->species_defs->UPLOAD_FILE_FORMATS}; 
   }
   else {
-    @formats_to_display = (@{$self->hub->species_defs->UPLOAD_FILE_FORMATS}, @{$self->hub->species_defs->REMOTE_FILE_FORMATS});
+    @formats = (@{$self->hub->species_defs->UPLOAD_FILE_FORMATS}, @{$self->hub->species_defs->REMOTE_FILE_FORMATS});
   }
+  my $format_info = $self->hub->species_defs->DATA_FORMAT_INFO;
  
-  if (scalar @formats_to_display > 0) {
+  if (scalar @formats > 0) {
     my $values = [{'name' => '-- Choose --', 'value' => ''}];
-    foreach my $f (sort {uc($a) cmp uc($b)} @formats_to_display) {
-      push @$values, {'value' => uc($f), 'name' => $f};
+    foreach my $f (sort {$a cmp $b} @formats) {
+      push @$values, {'value' => uc($f), 'name' => $format_info->{$f}{'label'}};
     }
     $form->add_element(
       'type'    => 'DropDown',
