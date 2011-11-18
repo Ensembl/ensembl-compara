@@ -50,14 +50,11 @@ We currently accept attachment of the following formats: $format_list.
     'size'      => '30',
     'value'     => $object->param('url') || '',
     'notes'     => '( e.g. http://www.example.com/MyProject/mydata.gff )'
-  }, {
-    'type'      => 'dropdown',
-    'name'      => 'format',
-    'label'     => "Data format",
-    'values'    => [{'caption' => '-- Choose --', 'value' => ''}, map {{'caption' => $_, 'value' => uc $_}} @formats ],
-    'select'    => 'select',
-    'disabled'  => scalar @formats ? 0 : 1,
-  }, {
+  }]);
+
+  $self->add_file_format_dropdown($form);
+
+  $form->add_field([{
     'type'      => 'string',
     'name'      => 'name',
     'label'     => 'Name for this track',
