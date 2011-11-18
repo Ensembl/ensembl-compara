@@ -179,30 +179,30 @@ echo -e "301\n" | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/cr
 ## ,otherwise *PANIC*
 
 
-7.2. Update the species_set_tags. (May have been run by kb3 -- please ask!!)
+7.2. Update the species_set_tags.
 Run the script: update_species_sets.pl
 
 eg
 perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_species_sets.pl \
     --conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --dbname compara_master > update_species_sets.out 2> update_species_sets.err
+# CHECK THAT IT INSERTS THE LOW-COVERAGE ENTRY IN SPECIES_SET_TAG / SPECIES_SET (IN REL.65 IT DIDN'T??)
 
-
-# Add/Update any dna tags if necessary. There should be a tag for each of the multiple alignments.
+# Add/Update any dna tags if necessary (they may be already present). There should be a tag for each of the multiple alignments.
 # Note that fish will already have had a species_set_tag added by the above script.
 
 # 6way epo
-INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33896,"name","primates"); ## Be careful with the IDs! They are ss_ids
+INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (34115,"name","primates"); ## Be careful with the IDs! They are ss_ids
 
 # 12way epo
-INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33895,"name","mammals");  ## Be careful with the IDs!
+INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (34114,"name","mammals");  ## Be careful with the IDs!
 
 # 19way mercator/pecan
-INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33898,"name","amniotes");  ## Be careful with the IDs!
+INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (34117,"name","amniotes");  ## Be careful with the IDs!
 
 # 35way low coverage
-INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33899,"name","mammals");  ## Be careful with the IDs!
+INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (34338,"name","mammals");  ## Be careful with the IDs!
 
-# FISHES!? (New one. Check with kb3?)
+# Check FISHES and BIRDS if there is any new alignments
 
 #
 # TODO: create_mlss should perform this insert if --species_set_name option has been provided on the command line
@@ -227,8 +227,8 @@ fresh new database with the tables already created. The script will
 copy relevant data from the master and the old database into the new
 one. 
 
-mysql --defaults-group-suffix=_compara4 -e "CREATE DATABASE lg4_ensembl_compara_64"
-mysql --defaults-group-suffix=_compara4 lg4_ensembl_compara_64 < $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/sql/table.sql
+mysql --defaults-group-suffix=_compara1 -e "CREATE DATABASE mp12_ensembl_compara_65"
+mysql --defaults-group-suffix=_compara1 mp12_ensembl_compara_65 < $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/sql/table.sql
 
 # Before you start copying, make a dry run of the populate_new_database.pl with -intentions flag to review the list of mlss_ids to be copied:
 
@@ -250,6 +250,7 @@ time $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/populate_new_databas
 # took 2:09 hours for rel.59 (copied from rel.58)
 # took 3 hours for rel. 60 (copied from rel.59)
 # rel.64:   2.6h
+# rel.65:   2.5h
 
 If new method_link_species_sets are added in the master after this, you use this
 script again to copy the new relevant data. In such case, you will have to skip
@@ -259,12 +260,11 @@ syntenies again.
 $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/populate_new_database.pl \
     --reg-conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --master compara_master --new compara_curr
 
-
-8.1. Copy the species_set_tag table -- CAREFUL: this may have generated the species_set_tag mess we have in rel.63!
-This needs to be added to the populate_new_database script and not just copied from the master where all old tags need to be deleted.
-But copy from master till this is done.
-INSERT INTO species_set_tag SELECT * FROM sf5_ensembl_compara_master.species_set_tag;
-
+[This doesn't have to be done for rel65. Check for rel66!]
+# 8.1. Copy the species_set_tag table -- CAREFUL: this may have generated the species_set_tag mess we have in rel.63!
+# This needs to be added to the populate_new_database script and not just copied from the master where all old tags need to be deleted.
+# But copy from master till this is done.
+# INSERT INTO species_set_tag SELECT * FROM sf5_ensembl_compara_master.species_set_tag;
 
 8.2. Add new species to phylogenetic tree
 The easiest way to use this is to use the phylowidget.
@@ -272,7 +272,7 @@ From the EnsEMBL home page:
 View full list of all Ensembl species
 Species tree (Requires Java)
 
-Select Arrow and select where you want the new species to go (use ncbi taxonomy or wikipedia etc) eg  Canis familiaris
+Select Arrow and select where you want the new species to go (use ncbi taxonomy or wikipedia etc) eg Gadus morhua
 Tree Edit
 Add
 Sister
@@ -284,6 +284,8 @@ The tree should appear in the Toolbox but if not, then save the tree
 Copy the new tree into
     $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/species_tree_blength.nh
 cvs commit
+
+## rel.65 -- Added Gadus morhua
 
 9. Check that primary data (species data, dnafrags...) in the new compara DB
 match the data in the corresponding core databases using the healthchecks. You
@@ -314,12 +316,15 @@ cd ensj-healthcheck
 cvs update -Pd
 
 Recompile:
-export JAVA_HOME=/software/jdk
-bsub -Is ant
+Only one of these (random?) will make it possible to run ant afterwards.
+    export JAVA_HOME=/software/jdk
+    export JAVA_HOME=/software/jdk1.6.0_01
+Then run
+     ant
 
 Now you can run the compara-compara_external_foreign_keys healthchecks:
 
-time ./run-healthcheck.sh -d lg4_ensembl_compara_64 -type compara -d2 .+_core_64_.+ compara_external_foreign_keys
+time ./run-healthcheck.sh -d mp12_ensembl_compara_65 -type compara -d2 .+_core_65_.+ compara_external_foreign_keys
 
 ...and correct mismatches if any!
 
@@ -445,6 +450,24 @@ time ./run-healthcheck.sh -d lg4_ensembl_compara_64 -type compara -d2 .+_core_64
 #           44m   to copy over 35way mammal LC EPO GERP_CONSTRAINED_ELEMENTS (in trust_ce mode!)
 #           1h    to copy over 35way mammal LC EPO GERP_CONSERVATION_SCORES
 
+# rel.65
+#	    70m to copy over Human-vs-Chimpanzee LASTZ
+#	    86m to copy over Human-vs-Bushbaby LASTZ
+#	    73m to copy over Cod-vs-Danio rerio LASTZ
+#	    74m to copy over Cod-vs-Stickleback LASTZ
+
+#	    76m to copy over Human-vs-Cod TBLAT
+
+#	    81m to copy over 6way primate EPO
+#	    2h39m to copy over 12way mammal EPO
+
+#	    1h58m to copy over 19way amniota PECAN
+#	    14m to copy over 19way amniota PECAN GERP_CONSTRAINED_ELEMENTS
+#	    60m to copy over 19way amniota PECAN GERP_CONSERVATION_SCORES
+
+#	    3h7m to copy over 35way mammal LC EPO
+#	    72m to copy over 35way mammal LC EPO GERP_CONSTRAINED_ELEMENTS
+#	    78m co copy over 35way mammal LC EPO GERP_CONSERVATION_SCORES
 
 
 10.2 Syntenies
@@ -455,7 +478,7 @@ time ./run-healthcheck.sh -d lg4_ensembl_compara_64 -type compara -d2 .+_core_64
         point at the latest (staging) versions of the core databases.
     
     2) Then run something like:
-    $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/synteny/LoadSyntenyData.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
+    perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/synteny/LoadSyntenyData.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
         --dbname compara_curr -qy "Homo sapiens" -tg "Callithrix jacchus" \
         /lustre/scratch101/ensembl/kb3/scratch/hive/release_64/kb3_hsap_cjac_synteny_64/synteny/all.100000.100000.BuildSynteny
 
@@ -495,10 +518,7 @@ time ./run-healthcheck.sh -d lg4_ensembl_compara_64 -type compara -d2 .+_core_64
 
 10.4.2  Make sure you have performed TreeFam mapping step on ProteinTrees (done manually)
 
-10.4.3  Make sure you have mapped "lost taxa" back in Families (should move into the Family pipeline!):
-            create temporary table lost_taxa SELECT distinct member.taxon_id FROM member LEFT JOIN ncbi_taxa_name ON member.taxon_id = ncbi_taxa_name.taxon_id WHERE ncbi_taxa_name.taxon_id iS NULL;
-            create temporary table lost_taxa_mapping select name as was_id, taxon_id as became_id from ncbi_taxa_name where name_class='merged_taxon_id' and name in (select taxon_id from lost_taxa);
-            update member m join lost_taxa_mapping l on m.taxon_id=l.was_id set m.taxon_id=l.became_id;
+(10.4.3 -- Removed)
 
 10.4.4  Actually perform the merging step:
 
@@ -513,11 +533,15 @@ time ./run-healthcheck.sh -d lg4_ensembl_compara_64 -type compara -d2 .+_core_64
         nctrees_db   - should point to the current ncRNAtrees pipeline database
 
     Save the changes, exit the editor and run init_pipeline.pl with this file:
-        init_pipeline.pl MergeHomologySideTogether_conf.pm -password $ENSADMIN_PSW
+        init_pipeline.pl MergeHomologySideTogether_conf.pm
 
     Then run both -sync and -loop variations of the beekeeper.pl command suggested by init_pipeline.pl .
     This pipeline will create a database with protein side pipeline databases merged together.
 
+#                 2.7h to execute for release 63
+#                 9.6h to execute for release 65
+
+10.4.5 Ask Matthieu to run the script patch_genes_projections.pl (or something like that). ** Matthieu is going to update this **
 
 10.5 Final merger of "protein side" into the release database is done by running another mini-pipeline.
 
@@ -534,6 +558,7 @@ time ./run-healthcheck.sh -d lg4_ensembl_compara_64 -type compara -d2 .+_core_64
     Then run both -sync and -loop variations of the beekeeper.pl command suggested by init_pipeline.pl .
     This pipeline will merge the protein side tables into the main release database.
 
+# 2.6h for rel65
 
 10.6 Cleanup and CVS commit
 
@@ -562,17 +587,15 @@ This step has to happen ASAP, but AFTER the Core name projections have been done
 !MAKE SURE YOU ARE IN SYNC WITH THE REST OF THE WORLD!
 )
 
-I made a backup of the member table before starting:
-RENAME TABLE member TO member_orig;
-CREATE TABLE member LIKE member_orig;
-INSERT INTO member SELECT * FROM member_orig;
-
 12.1 Ensure your registry is correct
 
 The registry file which is used should point to the server where all updated
 Xref projections are located. This will mean staging servers 1 and 2. To load
 the data from these two servers you can use the 
 Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs() call on both servers.
+
+Check the file
+ensembl-compara/scripts/pipeline/production_reg_conf.pl
 
 12.2 Run the command
 
@@ -581,77 +604,58 @@ Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs() call on both servers.
 
 # To update member display_labels of the intermediate result of the merger:
 time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --compara_db compara_homology_merged --debug 1
-# rel.64    12m
+# If it is run on the final merged db use "--compara_db compara_curr"
 
-# Or, if you do not have the 'compara_homology_merged' in the Registry, you can specify compara_db using an URL:
-time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --compara_db mysql://ensadmin:${ENSADMIN_PSW}@compara3:3306/lg4_compara_homology_merged_64 --debug 1
-
-# An old way of doing the same thing (before we had standaloneJob.pl) was to run a dedicated script:
-# bsub -o populate_member_display_labels.out -e populate_member_display_labels.err -R "select[mem>5000] rusage[mem=5000]" -M5000000 time perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/populate_member_display_labels.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --reg_alias compara_curr --verbose
 # rel59 real    9m44.754s
 # rel60 real    10m23.002s
 # rel62 real    11m
 # rel63 real    11m
+# rel.64    12m
+# rel.65    24m
 
-This will iterate over all GenomeDBs and update any label which is empty. Should
-you wish to replace existing labels then rerun with the -replace switch. 
-
-Ran a few tests:
-
-mysql -hcompara1 -uensro kb3_ensembl_compara_60 -e "select count(*) from member_orig mo, member m where m.member_id=mo.member_id and m.display_label IS NOT NULL and mo.display_label IS NULL"
-+----------+
-| count(*) |
-+----------+
-|  1278014 |
-+----------+
-
-mysql -hens-livemirror -uensro ensembl_compara_59 -e "select stable_id, display_label from member m where m.display_label IS NOT NULL" | sort > 59.display_label.tsv 
-mysql -hcompara1 -uensro kb3_ensembl_compara_60 -e "select stable_id,display_label from member m where m.display_label IS NOT NULL" | sort > 60.display_label.tsv 
-join 59.display_label.tsv 60.display_label.tsv | wc -l
-3017840
-join -v 1 59.display_label.tsv 60.display_label.tsv | wc -l
-42957
-join -v 2 59.display_label.tsv 60.display_label.tsv | wc -l
-126040
-
-These look fine.
-
-Remember to DROP TABLE member_orig if made a backup.
+# Or, if you do not have the 'compara_homology_merged' in the Registry, you can specify compara_db using an URL:
+time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --compara_db mysql://ensadmin:${ENSADMIN_PSW}@compara3:3306/lg4_compara_homology_merged_64 --debug 1
 
 13. Run the healthchecks:
 
 13.1 Run the healthchecks for ancestral database:
 
-    time ./run-healthcheck.sh -d lg4_ensembl_ancestral_64 compara-ancestral
+    time ./run-healthcheck.sh -d mp12_ensembl_ancestral_65 compara-ancestral
 # rel.62: 4sec, all successful
 # rel.63: 14sec, all successful after analyzing 3 tables
+# rel.65: 13sec, all successful after analyzing the tables.
 
 13.2 Update the max_alignment_length. You can use the corresponding healthcheck with the -repair option:
 
-    time ./run-healthcheck.sh -d lg4_ensembl_compara_64 -type compara -repair Meta
+    time ./run-healthcheck.sh -d mp12_ensembl_compara_65 -type compara -repair Meta
 # rel.61: 6m30, "no repair needed" (probably after Stephen has already done it)
 # rel.63: 8m (full repair)
+# rel.65: 9m "No repair needed"
+
 
 13.3 Now run the remaining healthchecks:
 
-    time ./run-healthcheck.sh -d lg4_ensembl_compara_64 -type compara -d2 .+_core_64_.+ compara_external_foreign_keys
+    time ./run-healthcheck.sh -d mp12_ensembl_compara_65 -type compara -d2 .+_core_65_.+ compara_external_foreign_keys
 # in rel.56 everything passed apart from CheckTaxon - according to Javier in this particular case it was not a problem
 # in rel.pre57 it took 20 minutes (all passed).
 # in rel.57 it took ?? minutes ('genbank common name' for 4 species had to be copied from their 'ensembl common name' in ncbi_taxa_name table)
 # rel.58:   22m
 # rel.61:   32m, 1 failure
 # rel.63:   23m, 1 failure ( taeniopygia_guttata_core_63_1: common_name::zebra finch is not in lg4_ensembl_compara_63 )
+# rel.65:   25m, 1 failure ( taeniopygia_guttata_core_65_1: common_name::zebra finch is not in mp12_ensembl_compara_65 )
 
-    time ./run-healthcheck.sh -d lg4_ensembl_compara_64 -type compara compara_genomic
+    time ./run-healthcheck.sh -d mp12_ensembl_compara_65 -type compara compara_genomic
 # rel.58:   47m, 7 failures
 # rel.61:   51m, 3 failures
 # rel.63:   84m, (2.5 errors that are "ok")
+# rel.65:   75m, (5 errors that are "ok")
 
-    time ./run-healthcheck.sh -d lg4_ensembl_compara_64 -type compara compara_homology
+    time ./run-healthcheck.sh -d mp12_ensembl_compara_65 -type compara compara_homology
 # rel.58:   14m, 5 failures
 # rel.61:   30m, 3 failures
 # rel.62:   3m, 1 failure (CheckSpeciesSetTag, ok?)
 # rel.63:   52m, success (after some fixing, of course)
+# rel.65:   48m, 3 errors
 
 ...and correct mismatches if any!
 
@@ -660,6 +664,7 @@ Remember to DROP TABLE member_orig if made a backup.
 
 Upon confirmation from the release coordinator ask other members of Compara to go to
     http://staging.ensembl.org/
+
 and check their data.
 
 
@@ -669,7 +674,12 @@ and check their data.
 # So if you (suspect that you) have changed anything in the database, do run these two commands just in case -
 # a dry run of each doesn't even take a minute.
 
-time mysqlcheck --analyze --verbose --host=compara4 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases lg4_ensembl_compara_64
+time mysqlcheck --analyze --verbose --host=compara1 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases mp12_ensembl_compara_65
+
+For rel65 I had to remove the partitioning for the peptide_align_* tables that were new:
+alter table peptide_align_feature_ailuropoda_melanoleuca_109 remove partitioning;
+etc... (~2m / each)
+
 # rel.56    12min
 # rel.pre57 30+105min
 # rel.57    9+4+5min
@@ -677,24 +687,29 @@ time mysqlcheck --analyze --verbose --host=compara4 --port=3306 --user=ensadmin 
 # rel.62    6min
 # rel.63    25m
 # rel.64    16m
+# rel.65    21m
 
-time mysqlcheck --optimize --verbose --host=compara4 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases lg4_ensembl_compara_64
+
+time mysqlcheck --optimize --verbose --host=compara1 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases mp12_ensembl_compara_65
 # rel.56    2.5 hours
 # rel.pre57 : took several iterations (not all tables were MyISAM initially), last one 132min.
 # rel.57    2+1.6 hours
 # rel.62    32min
 # rel.63    61m
 # rel.64    1.5h
+# rel.65    3h
 
-time mysqlcheck --analyze --verbose --host=compara1 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases lg4_ensembl_ancestral_64
+time mysqlcheck --analyze --verbose --host=compara1 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases mp12_ensembl_ancestral_65
 # rel.57    took seconds to complete
 # rel.62    1sec
 # rel.63    3sec
+# rel.65    1sec
 
-time mysqlcheck --optimize --verbose --host=compara1 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases lg4_ensembl_ancestral_64
+time mysqlcheck --optimize --verbose --host=compara1 --port=3306 --user=ensadmin --password=$ENSADMIN_PSW --databases mp12_ensembl_ancestral_65
 # rel.57    took seconds to complete
 # rel.62
 # rel.63    14m
+# rel.65    3.2s
 
 
 16. WHEN EVERYBODY IS HAPPY ABOUT THE DATABASES, actually copy them to the two staging servers
@@ -710,11 +725,11 @@ bash
 
 16.2. Create a file that will contain one line with the source/destination parameters, like this:
 
-cat <<EOF >/tmp/lg4_ensembl_compara_64.copy_options
+cat <<EOF >/tmp/mp12_ensembl_compara_65.copy_options
 #from_host      from_port   from_dbname                 to_host         to_port     to_dbname
 #
-compara4        3306        lg4_ensembl_compara_64      ens-staging     3306        ensembl_compara_64
-compara1        3306        lg4_ensembl_ancestral_64    ens-staging     3306        ensembl_ancestral_64
+compara1        3306        mp12_ensembl_compara_65      ens-staging     3306        ensembl_compara_65
+compara1        3306        mp12_ensembl_ancestral_65    ens-staging     3306        ensembl_ancestral_65
 EOF
 
 16.3. Set the password into the environment variable
@@ -723,8 +738,8 @@ EOF
 
 16.4. Run the script to actually copy the data:
 
-time perl ~lg4/work/ensembl/misc-scripts/CopyDBoverServer.pl -pass $ENSADMIN_PSW \
-        -noflush /tmp/lg4_ensembl_compara_64.copy_options > /tmp/lg4_ensembl_compara_64.copy.err 2>&1
+time perl ~mp12/ensembl_main/ensembl/misc-scripts/CopyDBoverServer.pl -pass $ENSADMIN_PSW \
+        -noflush /tmp/mp12_ensembl_compara_65.copy_options > /tmp/mp12_ensembl_compara_65.copy.err 2>&1
 
 # copying of rel_56 took 2 hours (SUCCESSFUL for both databases - you should check the output file)
 # copying of ensembl_compara_pre57 took 2 hours (SUCCESSFUL)
@@ -734,7 +749,7 @@ time perl ~lg4/work/ensembl/misc-scripts/CopyDBoverServer.pl -pass $ENSADMIN_PSW
 # copying of ensembl_compara_62 and ensembl_ancestral_62 took 2h38
 # copying of ensembl_compara_63 and ensembl_ancestral_63 took 2h
 # copying of ensembl_compara_64 and ensembl_ancestral_64 took 2h15m
-
+# rel65 2h51m
 
 16.4 Do the same thing in parallel on ens-staging2 :
 
@@ -744,10 +759,10 @@ bash
 
 # NB: the ancestral database doesn't need to be copied to the second staging server
 
-cat <<EOF >/tmp/lg4_ensembl_compara_64.copy_options
+cat <<EOF >/tmp/mp12_ensembl_compara_65.copy_options
 #from_host      from_port   from_dbname                 to_host         to_port     to_dbname
 #
-compara4        3306        lg4_ensembl_compara_64      ens-staging2     3306        ensembl_compara_64
+compara1        3306        mp12_ensembl_compara_65      ens-staging2     3306        ensembl_compara_65
 EOF
 
 16.5. Set the password into the environment variable
@@ -755,13 +770,13 @@ EOF
 
 16.6. Run the script to actually copy the data:
 
-time perl ~lg4/work/ensembl/misc-scripts/CopyDBoverServer.pl -pass $ENSADMIN_PSW \
-        -noflush /tmp/lg4_ensembl_compara_64.copy_options > /tmp/lg4_ensembl_compara_64.copy.err 2>&1
+time perl ~mp12/ensembl_main/ensembl/misc-scripts/CopyDBoverServer.pl -pass $ENSADMIN_PSW \
+        -noflush /tmp/mp12_ensembl_compara_65.copy_options > /tmp/mp12_ensembl_compara_65.copy.err 2>&1
 # copying of ensembl_compara_58 took 1:15h
 # copying of ensembl_compara_62 took 1:34h
 # copying of ensembl_compara_63 took 3:44h
 # copying of ensembl_compara_64 took 3h51m
-
+# rel65 3h28m
 
 #### At this point you are "handing over the databases" to the person running Compara Mart (usually Rhoda).
 #### Let the main Release Coordinator and Rhoda know about it.
@@ -774,12 +789,14 @@ time perl ~lg4/work/ensembl/misc-scripts/CopyDBoverServer.pl -pass $ENSADMIN_PSW
 
 # The patch should include at least an update of the schema_version in the meta table!
 #
-mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table sf5_ensembl_compara_63 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >old_schema.sql
-mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table lg4_ensembl_compara_64 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >new_schema.sql
+
+mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table lg4_ensembl_compara_64 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >old_schema.sql
+mysqldump --defaults-group-suffix=_compara1 --no-data --skip-add-drop-table mp12_ensembl_compara_65 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >new_schema.sql
+
 #
 sdiff -b old_schema.sql new_schema.sql | less
 #
-# (create the patch_63_64.sql file by hand)
+# (create the patch_64_65.sql file by hand)
 
 17.2 Generate an empty database from the old schema, apply the patch, dump it, and check that you get the new schema.
 
@@ -788,17 +805,16 @@ mysql --defaults-group-suffix=_compara4 lg4_schema_patch_test < old_schema.sql
 mysql --defaults-group-suffix=_compara4 lg4_schema_patch_test < patch_63_64.sql
 mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table lg4_schema_patch_test | sed 's/AUTO_INCREMENT=[0-9]*\b//' >patched_old_schema.sql
 #
-sdiff -bs patched_old_schema.sql new_schema.sql | less
+sdiff -w 200 -bs patched_old_schema.sql new_schema.sql | less
 
 17.3 CVS commit the patch.
-
 
 18. Update the files in the $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/sql directory:
 
 cd $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/sql/
 
-mysql --defaults-group-suffix=_compara4 -N -e "SELECT * FROM genome_db order by genome_db_id asc" lg4_ensembl_compara_64 > genome_db.txt
-mysql --defaults-group-suffix=_compara4 -N -e "SELECT * FROM method_link order by method_link_id asc" lg4_ensembl_compara_64 > method_link.txt
+mysql --defaults-group-suffix=_compara1 -N -e "SELECT * FROM genome_db order by genome_db_id asc" mp12_ensembl_compara_65 > genome_db.txt
+mysql --defaults-group-suffix=_compara1 -N -e "SELECT * FROM method_link order by method_link_id asc" mp12_ensembl_compara_65 > method_link.txt
 
 # You will have to change the default schema_version in the table.sql file (last line of the file)
 
@@ -844,11 +860,11 @@ CVS commit these files.
 
 cd $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/pipeline_diagrams
 
-$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara3/mm14_compara_homology_64 -output ProteinTrees.png
-$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara4/mp12_compara_nctrees_64 -output ncRNAtrees.png
-$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara2/lg4_compara_families_64 -output Families.png
-$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara1/kb3_pecan_19way_64 -output MercatorPecan.png
-$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara1/kb3_epo_35way_64 -output EpoLowCoverage.png
+$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara2/mm14_compara_homology_65 -output ProteinTrees.png
+$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara2/mp12_compara_nctrees_65 -output ncRNAtrees.png
+$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara4/lg4_compara_families_65 -output Families.png
+$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara1/kb3_pecan_19way_65 -output MercatorPecan.png
+$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara1/kb3_epo_35way_65 -output EpoLowCoverage.png
 
 CVS commit these files.
 
@@ -883,6 +899,7 @@ CVS commit the changes.
 
 # rel_60: took 5 hours on a "bad lustre" day. On one of such days you're better off pointing at your home directory!
 # rel_64: 48m
+# rel65: 2h5m
     
 22b. Stay in the same directory, but now create another pipeline from the same config file:
         init_pipeline.pl DumpTrees_conf.pm -tree_type ncrna_trees -host compara2
@@ -890,9 +907,9 @@ CVS commit the changes.
     Then run both -sync and -loop variations of the beekeeper.pl command suggested by init_pipeline.pl .
     This pipeline will produce ncrna_tree dumps in the directory pointed at by 'target_dir' parameter.
 
-# rel_60: 8m, the other extreme.
-# rel_64: 5m
-
+# rel60: 8m, the other extreme.
+# rel64: 5m
+# rel65: 7m
 22c. Commit the DumpTrees_conf.pm file into the CVS if you'd like to keep the changes.
 
 22d. Report the locations of the dumps to the main Release Coordinator and/or the web people.
