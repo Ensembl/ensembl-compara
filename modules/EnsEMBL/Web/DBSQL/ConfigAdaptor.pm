@@ -9,6 +9,8 @@ use DBI;
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
 
+my $DBH; # package database handle for persistence
+
 sub new {
   my ($class, $hub) = @_;
   my $species_defs  = $hub->species_defs;
@@ -19,13 +21,9 @@ sub new {
     servername => $species_defs->ENSEMBL_SERVERNAME,
     version    => $species_defs->ENSEMBL_VERSION,
     cache_tags => [],
-    dbh        => DBI->connect(sprintf(
-      'DBI:mysql:database=%s;host=%s;port=%s',
-      $species_defs->ENSEMBL_USERDB_NAME,
-      $species_defs->ENSEMBL_USERDB_HOST,
-      $species_defs->ENSEMBL_USERDB_PORT
-    ), $species_defs->ENSEMBL_USERDB_USER, $species_defs->ENSEMBL_USERDB_PASS)
   };
+  
+  dbh($species_defs);
   
   bless $self, $class;
   
@@ -33,12 +31,22 @@ sub new {
 }
 
 sub hub        { return $_[0]{'hub'};        }
-sub dbh        { return $_[0]{'dbh'};        }
 sub session_id { return $_[0]{'session_id'}; }
 sub user_id    { return $_[0]{'user_id'};    }
 sub servername { return $_[0]{'servername'}; }
 sub version    { return $_[0]{'version'};    }
 sub cache_tags { return $_[0]{'cache_tags'}; }
+
+sub dbh {
+  my $species_defs = shift;
+  
+  return $DBH ||= DBI->connect(sprintf(
+    'DBI:mysql:database=%s;host=%s;port=%s',
+    $species_defs->ENSEMBL_USERDB_NAME,
+    $species_defs->ENSEMBL_USERDB_HOST,
+    $species_defs->ENSEMBL_USERDB_PORT
+  ), $species_defs->ENSEMBL_USERDB_USER, $species_defs->ENSEMBL_USERDB_PASS);
+}
 
 sub record_type_query {
   my $self = shift;
@@ -477,6 +485,13 @@ sub edit_record_sets {
 sub set_cache_tags {
   my ($self, $config) = @_;
   $ENV{'CACHE_TAGS'}{$config->{'type'}} = sprintf '%s[%s]', uc($config->{'type'}), md5_hex(join '::', $config->{'code'}, $self->serialize_data($config->{'data'})) if $config;
+}
+
+# not currently used, but written in case we need it in future
+sub disconnect {
+  return unless $DBH;
+  $DBH->disconnect;
+  undef $DBH;
 }
 
 1;
