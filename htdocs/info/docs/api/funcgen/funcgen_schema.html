@@ -20,11 +20,40 @@
 			}
 		}
 	}
+	
+	// Function to show/hide all the tables
+	function show_hide_all () {
+		expand_flag = document.getElementById('expand');
+		divs = document.getElementsByName('sqltable');
+		for(var i=0; i < divs.length; i++){
+			param = divs[i].id.substring(4);
+			div   = document.getElementById('div_'+param);
+		  alink = document.getElementById('a_'+param);
+			
+			if (expand_flag.value=='0') {
+				div.style.display='inline';
+				alink.innerHTML='Hide';
+			}
+			else {
+				div.style.display='none';
+				alink.innerHTML='Show';
+			}
+		}
+		if (expand_flag.value=='0') {
+			expand_flag.value='1';
+		}
+		else {
+			expand_flag.value='0';
+		}
+	}
 </script>
 
 </head>
 
 <body>
+[[INCLUDE::/info/docs/api/funcgen/doc_links.html]]
+
+
 <h1>Ensembl Funcgen (Regulation) Schema Documentation</h1>
 
 <h2>Introduction</h2>
@@ -36,11 +65,17 @@ This document gives a describes the tables that make up the Ensembl funcgen sche
 
 A simplified entity relationship diagram of the schema is available <a href="./trimmed_funcgen_schema.png">here</a>. Core, core like and some ancilliary tables have been cropped from the schema diagram.<br>
 <br>
-A colour legend is available at the <a href="#legend">bottom of the page</a>.
-</p>
+
+
+	
+
 <h3 id="top">List of the tables:</h3>
-<h2>Main feature tables</h2>
-<table><tr><td \><td>
+		  <table style="border: 1px solid #CCCCCC;padding:0px;margin:0px;background-color:#FAFAFF"><tr>
+		    <td style="background-color:#FFCC66;width:10px"></td>
+        <td><h2 style="margin:5px;">Main feature tables</h2></td>
+		  </tr></table>
+
+		<table><tr><td>
  <ul>
 		<li><a href="#regulatory_feature"><b>regulatory_feature</b></a></li>
 		<li><a href="#regulatory_attribute"><b>regulatory_attribute</b></a></li>
@@ -56,8 +91,12 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
 		<li><a href="#associated_feature_type"><b>associated_feature_type</b></a></li>
 		</ul>
 </td></tr></table>
-<h2>Set tables</h2>
-<table><tr><td>
+		  <table style="border: 1px solid #CCCCCC;padding:0px;margin:0px;background-color:#FAFAFF"><tr>
+		    <td style="background-color:#66CCFF;width:10px"></td>
+        <td><h2 style="margin:5px;">Set tables</h2></td>
+		  </tr></table>
+
+		<table><tr><td>
  <ul>
 		<li><a href="#data_set"><b>data_set</b></a></li>
 		<li><a href="#supporting_set"><b>supporting_set</b></a></li>
@@ -69,8 +108,12 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
 		<li><a href="#input_subset"><b>input_subset</b></a></li>
 		</ul>
 </td></tr></table>
-<h2>Array design tables</h2>
-<table><tr><td>
+		  <table style="border: 1px solid #CCCCCC;padding:0px;margin:0px;background-color:#FAFAFF"><tr>
+		    <td style="background-color:#FF6666;width:10px"></td>
+        <td><h2 style="margin:5px;">Array design tables</h2></td>
+		  </tr></table>
+
+		<table><tr><td>
  <ul>
 		<li><a href="#array"><b>array</b></a></li>
 		<li><a href="#array_chip"><b>array_chip</b></a></li>
@@ -79,8 +122,12 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
 		<li><a href="#probe_design"><b>probe_design</b></a></li>
 		</ul>
 </td></tr></table>
-<h2>Experiment tables</h2>
-<table><tr><td>
+		  <table style="border: 1px solid #CCCCCC;padding:0px;margin:0px;background-color:#FAFAFF"><tr>
+		    <td style="background-color:#00FF80;width:10px"></td>
+        <td><h2 style="margin:5px;">Experiment tables</h2></td>
+		  </tr></table>
+
+		<table><tr><td>
  <ul>
 		<li><a href="#experiment"><b>experiment</b></a></li>
 		<li><a href="#experimental_group"><b>experimental_group</b></a></li>
@@ -90,8 +137,12 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
 		<li><a href="#result"><b>result</b></a></li>
 		</ul>
 </td></tr></table>
-<h2>Ancilliary tables</h2>
-<table><tr><td>
+		  <table style="border: 1px solid #CCCCCC;padding:0px;margin:0px;background-color:#FAFAFF"><tr>
+		    <td style="background-color:#808000;width:10px"></td>
+        <td><h2 style="margin:5px;">Ancilliary tables</h2></td>
+		  </tr></table>
+
+		<table><tr><td>
  <ul>
 		<li><a href="#cell_type"><b>cell_type</b></a></li>
 		<li><a href="#experimental_design"><b>experimental_design</b></a></li>
@@ -100,8 +151,12 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
 		<li><a href="#status_name"><b>status_name</b></a></li>
 		</ul>
 </td></tr></table>
-<h2>Core tables</h2>
-<table><tr><td>
+		  <table style="border: 1px solid #CCCCCC;padding:0px;margin:0px;background-color:#FAFAFF"><tr>
+		    <td style="background-color:#000000;width:10px"></td>
+        <td><h2 style="margin:5px;">Core tables</h2></td>
+		  </tr></table>
+
+		<table><tr><td>
  <ul>
 		<li><a href="#analysis"><b>analysis</b></a></li>
 		<li><a href="#analysis_description"><b>analysis_description</b></a></li>
@@ -114,8 +169,12 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
 		<li><a href="#unmapped_reason"><b>unmapped_reason</b></a></li>
 		</ul>
 </td></tr></table>
-<h2>Core like tables</h2>
-<table><tr><td>
+		  <table style="border: 1px solid #CCCCCC;padding:0px;margin:0px;background-color:#FAFAFF"><tr>
+		    <td style="background-color:#000000;width:10px"></td>
+        <td><h2 style="margin:5px;">Core like tables</h2></td>
+		  </tr></table>
+
+		<table><tr><td>
  <ul>
 		<li><a href="#xref"><b>xref</b></a></li>
 		<li><a href="#object_xref"><b>object_xref</b></a></li>
@@ -124,7 +183,9 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
 		<li><a href="#seq_region"><b>seq_region</b></a></li>
 		</ul>
 </td></tr></table>
-<br />
+	  <input type="button" onclick="show_hide_all()" style="background-color:#933;color:#FFF;cursor:pointer" value="Show/hide all" />
+		<input type="hidden" id="expand" value="0" />
+	<br />
 <hr />
 <h2>Main feature tables</h2>
 <p>These define the various genomics features and their relevant associated tables.</p>
@@ -140,7 +201,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>The table contains the features resulting from the regulatory build process.</p>
 
-	<div id="div_regulatory_feature" style="display:none">
+	<div id="div_regulatory_feature" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -178,7 +239,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Denormalised table defining links between a regulatory_feature and it's constituent 'attribute' features.</p>
 
-	<div id="div_regulatory_attribute" style="display:none">
+	<div id="div_regulatory_attribute" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -205,7 +266,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Represents a genomic segment feature as the result of an segmentation  analysis i.e. Segway or ChromHmm</p>
 
-	<div id="div_segmentation_feature" style="display:none">
+	<div id="div_segmentation_feature" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -239,7 +300,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Represents a genomic feature as the result of an analysis i.e. a ChIP or DNase1 peak call.</p>
 
-	<div id="div_annotated_feature" style="display:none">
+	<div id="div_annotated_feature" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -272,7 +333,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>The table contains genomic alignments of binding_matrix PWMs.</p>
 
-	<div id="div_motif_feature" style="display:none">
+	<div id="div_motif_feature" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -307,7 +368,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>The table provides links between motif_features and annotated_features representing peaks of the relevant transcription factor.</p>
 
-	<div id="div_associated_motif_feature" style="display:none">
+	<div id="div_associated_motif_feature" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -335,7 +396,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Contains information defining a specific binding matrix(PWM) as defined by the linked analysis e.g. Jaspar.</p>
 
-	<div id="div_binding_matrix" style="display:none">
+	<div id="div_binding_matrix" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -367,7 +428,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>The table contains imports from externally curated resources e.g. cisRED, miRanda, VISTA, redFLY etc.</p>
 
-	<div id="div_external_feature" style="display:none">
+	<div id="div_external_feature" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -391,7 +452,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
 <br />
   <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
     <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#FFCC66 	"></td>
+      <td style="padding:0px;width:10px;background-color:#FFCC66"></td>
       <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="result_feature" style="font-size:11pt;font-weight:bold">result_feature</span></td>
       <td style="width:180px;text-align:right"><a id="a_result_feature" style="cursor:pointer;text-decoration:underline" onclick="show_hide('result_feature')">Show</a> columns
@@ -400,7 +461,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Represents the mapping of a raw/normalised signal. This is optimised for the web display in two ways:<br> &nbsp;&nbsp;&nbsp;&nbsp;1 Data compression by collection into different sized windows or bins.<br><br> &nbsp;&nbsp;&nbsp;&nbsp;2 For array data it also provides an optimised view of a probe_feature and associated result.</p>
 
-	<div id="div_result_feature" style="display:none">
+	<div id="div_result_feature" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -432,7 +493,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>The table contains genomic alignments @link probe entries.</p>
 
-	<div id="div_probe_feature" style="display:none">
+	<div id="div_probe_feature" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -466,7 +527,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Contains information about different types/classes of feature e.g. Brno nomenclature, Transcription Factor names etc.</p>
 
-	<div id="div_feature_type" style="display:none">
+	<div id="div_feature_type" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -503,7 +564,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Link table providing many to many mapping for feature_type entries.</p>
 
-	<div id="div_associated_feature_type" style="display:none">
+	<div id="div_associated_feature_type" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -519,7 +580,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
 <br />
 <hr />
 <h2>Set tables</h2>
-
+<p>Sets are containers for distinct sets of raw and/or processed data.</p>
 <br />
   <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
     <tr style="vertical-align:middle">
@@ -532,7 +593,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Defines highest level data container for associating the result of an analysis and the input data to that analysis e.g. Seq alignments(Input/ResultSet) and peak calls (FeatureSet)</p>
 
-	<div id="div_data_set" style="display:none">
+	<div id="div_data_set" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -559,7 +620,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Defines association between @link data_set and underlying/supporting data.</p>
 
-	<div id="div_supporting_set" style="display:none">
+	<div id="div_supporting_set" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -588,7 +649,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Container for genomic features defined by the result of an analysis e.g. peaks calls or regulatory features.</p>
 
-	<div id="div_feature_set" style="display:none">
+	<div id="div_feature_set" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -625,7 +686,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Container for raw/signal data, used as input to an analysis or for visualisation of the raw signal i.e. a wiggle track.</p>
 
-	<div id="div_result_set" style="display:none">
+	<div id="div_result_set" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -658,7 +719,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Link table between @link result_set and it's contstituents which can vary between an array experiment (experimental_chip / channel) and a sequencing experiment (input_set). Note the joint primary key as inputs can be re-used between result sets.</p>
 
-	<div id="div_result_set_input" style="display:none">
+	<div id="div_result_set_input" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -688,7 +749,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>This generic table contains a simple registry of paths to support  flat file (DBFile) access. This should be left joined from the relevant adaptor e.g. ResultSetAdaptor.</p>
 
-	<div id="div_dbfile_registry" style="display:none">
+	<div id="div_dbfile_registry" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -714,7 +775,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Defines a distinct set input data which is not imported into the DB, but used for some analysis e.g. a BAM file.</p>
 
-	<div id="div_input_set" style="display:none">
+	<div id="div_input_set" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -749,7 +810,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Defines a file from an input_set, required for import tracking and recovery.</p>
 
-	<div id="div_input_subset" style="display:none">
+	<div id="div_input_subset" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -778,7 +839,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Contains information defining an array or array set.</p>
 
-	<div id="div_array" style="display:none">
+	<div id="div_array" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -808,7 +869,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Represents the individual array chip design as part of an array or array set.</p>
 
-	<div id="div_array_chip" style="display:none">
+	<div id="div_array_chip" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -837,7 +898,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>The table contains information about probe sets.</p>
 
-	<div id="div_probe_set" style="display:none">
+	<div id="div_probe_set" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -864,7 +925,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Defines individual probe designs across one or more array_chips. Note: The probe sequence is not stored. </p>
 
-	<div id="div_probe" style="display:none">
+	<div id="div_probe" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -897,7 +958,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Stores data from array design analyses.</p>
 
-	<div id="div_probe_design" style="display:none">
+	<div id="div_probe_design" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -916,7 +977,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
 <br />
 <hr />
 <h2>Experiment tables</h2>
-
+<p>These define the experimental meta and raw data.</p>
 <br />
   <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
     <tr style="vertical-align:middle">
@@ -929,7 +990,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Stores data high level meta data about individual experiments</p>
 
-	<div id="div_experiment" style="display:none">
+	<div id="div_experiment" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -964,7 +1025,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Contains experimental group info i.e. who produced data sets.</p>
 
-	<div id="div_experimental_group" style="display:none">
+	<div id="div_experimental_group" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -993,7 +1054,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Contains MAGE-XML for array based experiments.</p>
 
-	<div id="div_mage_xml" style="display:none">
+	<div id="div_mage_xml" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1018,7 +1079,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Represents the physical instance of an @link array_chip used in an @link experiment.</p>
 
-	<div id="div_experimental_chip" style="display:none">
+	<div id="div_experimental_chip" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1056,7 +1117,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Represents an individual channel from an experimental_chip.</p>
 
-	<div id="div_channel" style="display:none">
+	<div id="div_channel" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1085,7 +1146,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Contains a score or intensity value for an associated probe location on a particular experimental_chip.</p>
 
-	<div id="div_result" style="display:none">
+	<div id="div_result" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1105,7 +1166,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
 <br />
 <hr />
 <h2>Ancilliary tables</h2>
-
+<p>These contain data types which are used across many of the above tables and  are quite often denormalised to store generic associations to several table,  this avoids the need for multiple sets of similar tables. Some of these tables  have been omitted from the schema diagram.</p>
 <br />
   <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
     <tr style="vertical-align:middle">
@@ -1118,7 +1179,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Contains information about cell/tissue types.</p>
 
-	<div id="div_cell_type" style="display:none">
+	<div id="div_cell_type" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1150,7 +1211,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Denormalised link table to allow many to many design_type associations.</p>
 
-	<div id="div_experimental_design" style="display:none">
+	<div id="div_experimental_design" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1176,7 +1237,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Contains extra information about experimental designs, preferably ontology terms. </p>
 
-	<div id="div_design_type" style="display:none">
+	<div id="div_design_type" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1201,7 +1262,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Denormalised table associating funcgen records with a status.</p>
 
-	<div id="div_status" style="display:none">
+	<div id="div_status" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1227,7 +1288,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Simple table to predefine name of status.</p>
 
-	<div id="div_status_name" style="display:none">
+	<div id="div_status_name" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1242,7 +1303,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
 <br />
 <hr />
 <h2>Core tables</h2>
-
+<p>These are exact clones of the corresponding core schema tables, hence have been omitted  from the schema diagram. See <a href='../core/core_schema.html'>core schema docs</a> for more details.</p>
 <br />
   <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
     <tr style="vertical-align:middle">
@@ -1255,7 +1316,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Usually describes a program and some database that together are used to create a feature on a piece of sequence. Each feature is marked with an analysis_id. The most important column is logic_name, which is used by the webteam to render a feature correctly on contigview (or even retrieve the right feature). Logic_name is also used in the pipeline to identify the analysis which has to run in a given status of the pipeline. The module column tells the pipeline which Perl module does the whole analysis, typically a RunnableDB module.</p>
 
-	<div id="div_analysis" style="display:none">
+	<div id="div_analysis" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1292,7 +1353,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Allows the storage of a textual description of the analysis, as well as a "display label", primarily for the EnsEMBL web site.</p>
 
-	<div id="div_analysis_description" style="display:none">
+	<div id="div_analysis_description" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1320,7 +1381,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Stores data about the data in the current schema. Unlike other tables, data in the meta table is stored as key-value pairs. These data include details about the database, RegulatoryBuild and patches.  The species_id field of the meta table is used in multi-species databases and makes it possible to have species-specific meta key-value pairs.  The species-specific meta key-value pairs needs to be repeated for each species_id.  Entries in the meta table that are not specific to any one species, such as the schema.version key and any other schema-related information must have their species_id field set to NULL . The default species_id, and the only species_id value allowed in single-species databases, is 1.</p>
 
-	<div id="div_meta" style="display:none">
+	<div id="div_meta" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1343,7 +1404,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Describes which co-ordinate systems the different feature tables use.</p>
 
-	<div id="div_meta_coord" style="display:none">
+	<div id="div_meta_coord" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1369,7 +1430,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Describes how well a particular xref object matches the EnsEMBL object.</p>
 
-	<div id="div_identity_xref" style="display:none">
+	<div id="div_identity_xref" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1402,7 +1463,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Some xref objects can be referred to by more than one name. This table relates names to xref IDs.</p>
 
-	<div id="div_external_synonym" style="display:none">
+	<div id="div_external_synonym" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1427,7 +1488,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Stores data about the external databases in which the objects described in the xref table are stored.</p>
 
-	<div id="div_external_db" style="display:none">
+	<div id="div_external_db" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1462,7 +1523,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>This table associates ontology terms/accessions to Ensembl objects (primarily EFO/SO). NOTE: Currently not in use</p>
 
-	<div id="div_ontology_xref" style="display:none">
+	<div id="div_ontology_xref" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1489,7 +1550,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Describes the reason why a mapping failed.</p>
 
-	<div id="div_unmapped_reason" style="display:none">
+	<div id="div_unmapped_reason" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1505,7 +1566,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
 <br />
 <hr />
 <h2>Core like tables</h2>
-
+<p>These are almost exact clones of the corresponding core schema tables. Some contain extra fields or different enum values to support the funcgen schema. These have been omitted from the schema diagram.</p>
 <br />
   <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
     <tr style="vertical-align:middle">
@@ -1518,7 +1579,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Holds data about objects which are external to EnsEMBL, but need to be associated with EnsEMBL objects. Information about the database that the external object is stored in is held in the external_db table entry referred to by the external_db column.</p>
 
-	<div id="div_xref" style="display:none">
+	<div id="div_xref" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1552,7 +1613,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Describes links between Ensembl objects and objects held in external databases.  The Ensembl object can be one of several types; the type is held in the ensembl_object_type column.  The ID of the particular Ensembl gene, translation or whatever is given in the ensembl_id column.  The xref_id points to the entry in the xref table that holds data about the external object.  Each Ensembl object can be associated with zero or more xrefs. An xref object can be associated with one or more Ensembl objects.</p>
 
-	<div id="div_object_xref" style="display:none">
+	<div id="div_object_xref" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1584,7 +1645,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Describes why a particular external entity was not mapped to an ensembl one.</p>
 
-	<div id="div_unmapped_object" style="display:none">
+	<div id="div_unmapped_object" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1622,7 +1683,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Stores information about the available co-ordinate systems for the species identified through the species_id field. For each species, there must be one co-ordinate system that has the attribute "top_level" and one that has the attribute "sequence_level".  NOTE: This has been extended from the core implementation to support multiple assemblies by referencing multiple core DBs.</p>
 
-	<div id="div_coord_system" style="display:none">
+	<div id="div_coord_system" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1655,7 +1716,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
   </table>
 <p>Stores information about sequence regions from various core DBs.</p>
 
-	<div id="div_seq_region" style="display:none">
+	<div id="div_seq_region" name="sqltable" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1670,17 +1731,7 @@ A colour legend is available at the <a href="#legend">bottom of the page</a>.
 <ul>
 	<li><a href="#coord_system">coord_system</a></li>
 </ul>
-<br />
-<hr />
-<h3 id="legend">Colour legend</h3>
-<table>
-<tr><td style="width:25px;height:15px;background-color:#FFCC66"></td><td>Main feature tables</td></tr>
-<tr><td style="width:25px;height:15px;background-color:#66CCFF"></td><td>Set tables</td></tr>
-<tr><td style="width:25px;height:15px;background-color:#FF6666"></td><td>Array design tables</td></tr>
-<tr><td style="width:25px;height:15px;background-color:#00FF80"></td><td>Experiment tables</td></tr>
-<tr><td style="width:25px;height:15px;background-color:#808000"></td><td>Ancilliary tables (Some omitted from schema diagram)</td></tr>
-<tr><td style="width:25px;height:15px;background-color:#000000"></td><td>Core/Core like tables (Omited from schema diagram)</td></tr>
-</table>
+
 
 </body>
 </html>

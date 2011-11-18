@@ -1,23 +1,32 @@
 <html>
 <head>
-<title>Funcgen database and API</title>
+<title>Funcgen Database and API</title>
 </head>
 
 <body>
+[[INCLUDE::/info/docs/api/funcgen/doc_links.html]]
 
-<h1>Ensembl Functional Genomics</h1> 
+<!-- <a href="/info/docs/api/funcgen/index.html">Ensembl Funcgen Summary</a> |
+<a href="/info/docs/api/funcgen/funcgen_schema.html">Database Description</a> |
+<a href="/info/docs/api/funcgen/trimmed_funcgen_schema.png">Database Schema Diagram</a> 
+<hr><br /><br /> -->
+
+
+<h1>Ensembl Funcgen Summary</h1> 
 
 
 <h2>Database Description</h2>
 
 <p>
-The Ensembl Funcgen database and API are developed and maintained by the Ensembl Regulation team. The main focus of the 'funcgen' database is on experimental data which may elucidate transcriptional regulation.  The schema was originally designed to support ChIP on Chip tiling array experiments but soon expanded to support other sequence based technologies.  The original requirements supported use as a local data storage and analysis platform, as such the funcgen data bases supports multiple coordinate systems.
+The Ensembl funcgen database and API are developed and maintained by the Ensembl Regulation team. The main focus of the 'funcgen' database is on experimental data which may elucidate transcriptional regulation.  The schema was originally designed to support ChIP on Chip tiling array experiments but soon expanded to support other sequence based technologies.  The original requirements supported use as a local data storage and analysis platform, as such the funcgen data bases supports multiple coordinate systems.
 
 The database content includes:
 </p>
 
+<!-- ensembl-webcode/htdocs links here need to be absolute, as a mirror site may not have the ensembl public-plugin configured -->
+
 <ul>
-<li>The <a href="/info/docs/funcgen/index.html">Ensembl Regulatory Build</a> - Regulatory features generated from a combined analysis of all of the above.</li>
+<li>The <a href='http://www.ensembl.org/info/docs/funcgen/index.html'>Ensembl Regulatory Build</a> - Regulatory features generated from a combined analysis of all of the above.</li>
 <li>Experimental data and meta data from functional genomics experiments using the following technologies:
   <ul>
   <li>Chromatin immunoprecipitation using tiling arrays (ChIP-chip)</li>
