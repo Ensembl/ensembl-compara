@@ -46,7 +46,7 @@ sub content {
     $self->add_entry({
       type        => 'Source',
       label_html  => sprintf('<a href="%s">%s</a>',
-        $hub->url({'type' => 'Experiment', 'action' => 'Features', 'ex' => 'name-'.$feature_set->name}),
+        $hub->url({'type' => 'Experiment', 'action' => 'Sources', 'ex' => 'name-'.$feature_set->name}),
         $experiment->source_info->[0] || 'View'
       )}
     );
