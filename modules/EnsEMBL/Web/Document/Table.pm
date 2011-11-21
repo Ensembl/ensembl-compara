@@ -215,7 +215,7 @@ sub data_table_config {
     $config .= qq{<input type="hidden" name="$_" value="$val" />};
   }
   
-  return qq{<form class="data_table_config">$config</form>};
+  return qq{<form class="data_table_config" action="#">$config</form>};
 }
 
 sub process {
