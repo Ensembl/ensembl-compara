@@ -851,7 +851,6 @@ sub build_sequence {
       if ($config->{'number'}) {
         my $pad1 = ' ' x ($config->{'padding'}->{'pre_number'} - length $num->{'label'});
         my $pad2 = ' ' x ($config->{'padding'}->{'number'}     - length $num->{'start'});
-        warn ">>> NUMBER $num->{'start'}";
 
         $line = $config->{'h_space'} . sprintf('%6s ', "$pad1$num->{'label'}$pad2$num->{'start'}") . $line;
       }
