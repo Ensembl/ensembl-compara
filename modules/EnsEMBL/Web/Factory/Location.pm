@@ -715,24 +715,13 @@ sub _create_from_slice {
     my $projection = $slice->project($self->__level);
     
     if ($projection) {
-      my $projected_slice = shift @$projection; # take first element
+      my ($projected_slice) = map $_->[2]->is_reference ? $_->[2] : (), @$projection;
       
-      $slice = $projected_slice->[2];
+      $slice = $projected_slice || $projection->[0][2];
       
       my $start  = $slice->start;
       my $end    = $slice->end;
       my $region = $slice->seq_region_name;
-      
-      # take all other elements in case something has gone wrong
-      foreach (@$projection) {
-        if ($_->[2]->seq_region_name ne $region) {
-          $self->problem('fatal', 'Slice does not map to single ' . $self->__level, 'end and start on different seq regions');
-          return undef;
-        }
-        
-        $start = $_->[2]->start if $_->[2]->start < $start;
-        $end   = $_->[2]->end   if $_->[2]->end   > $end;
-      }
       
       if ($slice->seq_region_name ne $real_chr) {
         my $feat = new Bio::EnsEMBL::Feature(
