@@ -2,6 +2,8 @@ package EnsEMBL::Web::Component::Experiment::Filter;
 
 use strict;
 
+use HTML::Entities qw(encode_entities);
+
 use base qw(EnsEMBL::Web::Component::Experiment);
 
 sub caption       { 'Experiment Summary' }
@@ -61,9 +63,9 @@ sub content {
             'add_filter'    => $add_filter_label
           )
         ),
-        'filter_value'  => $filter_value,
-        'filter_type'   => $filter_type,
-        'desc'          => $grouped_feature_types->{'description'}
+        'filter_value'  => encode_entities($filter_value),
+        'filter_type'   => encode_entities($filter_type),
+        'desc'          => encode_entities($grouped_feature_types->{'description'})
       });
     }
   }

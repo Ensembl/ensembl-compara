@@ -30,12 +30,14 @@ sub content {
   my $feature_sets_info = $object->get_feature_sets_info;
 
   for my $feature_set_info (@$feature_sets_info) {
+    my $source_label = encode_entities($feature_set_info->{'source_label'});
+    my $project_name = encode_entities($feature_set_info->{'project_name'});
     $table->add_row({
-      'source'        => $feature_set_info->{'source_link'} ? sprintf('<a href="%s">%s</a>', $feature_set_info->{'source_link'}, $feature_set_info->{'source_label'}) : $feature_set_info->{'source_label'},
-      'project'       => $feature_set_info->{'project_url'} ? sprintf('<a href="%s">%s</a>', $feature_set_info->{'project_url'}, $feature_set_info->{'project_name'}) : $feature_set_info->{'project_name'},
-      'evidence_type' => $feature_set_info->{'evidence_label'},
-      'cell_type'     => $feature_set_info->{'cell_type_name'},
-      'feature_type'  => $feature_set_info->{'feature_type_name'},
+      'source'        => $feature_set_info->{'source_link'} ? sprintf('<a href="%s">%s</a>', $feature_set_info->{'source_link'}, $source_label) : $source_label,
+      'project'       => $feature_set_info->{'project_url'} ? sprintf('<a href="%s">%s</a>', $feature_set_info->{'project_url'}, $project_name) : $project_name,
+      'evidence_type' => encode_entities($feature_set_info->{'evidence_label'}),
+      'cell_type'     => encode_entities($feature_set_info->{'cell_type_name'}),
+      'feature_type'  => encode_entities($feature_set_info->{'feature_type_name'}),
       'gene'          => join(', ', map {sprintf('<a href="%s">%s</a>', $hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => $_}), $_)} @{$feature_set_info->{'xref_genes'}} ),
       'motif'         => join(', ', map {sprintf('<a href="%s">%s</a>', $self->motif_link($_), $_)} @{$feature_set_info->{'binding_motifs'}} ),
     });
@@ -53,7 +55,7 @@ sub content {
   else {
     my @filters = values %{$object->applied_filters};
     $html = sprintf('<p class="space-below">Filters applied: %s</p><p class="space-below">Showing %s/%s experiments</p>',
-       join(' and ', reverse (pop(@filters), join(', ', @filters) || ())),
+       encode_entities(join(' and ', reverse (pop(@filters), join(', ', @filters) || ()))),
        $shown_experiments,
        $total_experiments
     );
