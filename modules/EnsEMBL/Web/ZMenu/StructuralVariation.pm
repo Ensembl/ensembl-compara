@@ -133,7 +133,7 @@ sub content {
     my $s = (scalar(@allele_types) > 1) ? 's' : '';
     $self->add_entry({
       type  => "Allele type$s",
-      label => join('<br />',@allele_types),
+      label => join(', ',@allele_types),
     });
   }
 
