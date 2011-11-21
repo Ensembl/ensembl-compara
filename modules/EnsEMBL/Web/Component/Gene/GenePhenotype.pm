@@ -45,13 +45,13 @@ sub make_table {
   my ($self, $table_rows, $phenotype) = @_;
     
   my $columns = [
-    { key => 'ID',       sort => 'html'                                                        },
-    { key => 'chr' ,     sort => 'position',  title => 'Chr: bp'                               },
+    { key => 'ID',       sort => 'html'                                                       },
+    { key => 'chr' ,     sort => 'position',  title => 'Chr: bp'                              },
     { key => 'Alleles',  sort => 'string',                                  align => 'center' },
-    { key => 'class',    sort => 'string',    title => 'Class',              align => 'center' },
+    { key => 'class',    sort => 'string',    title => 'Class',             align => 'center' },
     { key => 'psource',  sort => 'string',    title => 'Phenotype Sources'                    },
-    { key => 'pstudy',    sort => 'string',    title => 'Phenotype Studies'                    },
-    { key => 'status',   sort => 'string',    title => 'Validation',         align => 'center' },
+    { key => 'pstudy',   sort => 'string',    title => 'Phenotype Studies'                    },
+    { key => 'status',   sort => 'string',    title => 'Validation',        align => 'center' },
   ];
 
   my $table_id = $phenotype;
@@ -243,7 +243,7 @@ sub variation_table {
 
       foreach my $ref (@{$list_sources{$var_name}{$p_source}}) {
         # Source link 
-        my $s_link = $self->source_link($p_source, $ref, $var_name);
+        my $s_link = $self->source_link($p_source, $ref, $var_name, $gene_name);
         if (!grep {$s_link eq $_} @sources_list) {
           push(@sources_list, $s_link);
         }
@@ -276,26 +276,31 @@ sub variation_table {
 
 
 sub source_link {
-  my ($self, $source, $ext_id, $vname) = @_;
+  my ($self, $source, $ext_id, $vname, $gname) = @_;
   
   my $source_uc = uc $source;
   $source_uc    = 'OPEN_ACCESS_GWAS_DATABASE' if $source_uc =~ /OPEN/;
+	$source_uc   .= '_ID' if $source_uc =~ /COSMIC/;
+	$source_uc    = $1 if $source_uc =~ /(HGMD)/;
   my $url       = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
   
   if ($ext_id && $ext_id ne 'no-ref') {
     if ($url =~ /ega/) {
       $url       =~ s/###ID###/$ext_id/;
     } elsif ($url =~/gwastudies/) {
-      $ext_id    =~ s/pubmed\///; 
-      $url          =~ s/###ID###/$ext_id/;
+      $ext_id =~ s/pubmed\///; 
+      $url    =~ s/###ID###/$ext_id/;
     } elsif ($url =~/omim/) {
       if ($vname) {
         $vname = "search?search=".$vname;
-        $url  =~ s/###ID###/$vname/; 
+        $url =~ s/###ID###/$vname/; 
       } else {
         $ext_id    =~ s/MIM\://; 
-        $url  =~ s/###ID###/$ext_id/;
-      }     
+        $url =~ s/###ID###/$ext_id/;
+      }
+		} elsif ($url =~/hgmd/) {
+			$url =~ s/###ID###/$gname/;
+			$url =~ s/###ACC###/$vname/;
     } else {
       $url =~ s/###ID###/$vname/;
     }
