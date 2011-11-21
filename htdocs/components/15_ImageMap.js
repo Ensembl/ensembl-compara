@@ -345,7 +345,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         
         Ensembl.EventManager.triggerSpecific('changeTrackOrder', 'modal_config_' + panel.id.toLowerCase(), track, order);
       }
-    }).css('visibility', 'visible').parent().delay(1).show(1); // Firefox requires boundary wrapper to be hidden in css, then use of delay(1).show(1) here in order to avoid an orange flash from the ul's bg colour
+    }).css('visibility', 'visible');
   },
   
   sortUpdate: function (track, order) {

@@ -42,7 +42,7 @@
 body.ie6 .hover_label div.config li { margin: 5px 0 0; }
 body.ie67 .hover_label a.favourite  { position: relative; top: -2px; left: 3px; }
 
-div.boundaries_wrapper                         { position: absolute; width: 100%; display: none; }
+div.boundaries_wrapper                         { position: absolute; width: 100%; }
 div.boundaries_wrapper ul                      { position: relative; width: 100%; list-style: none; margin: 0; padding: 0; background-color: #DAA520; visibility: hidden; }
 div.boundaries_wrapper ul li                   { list-style-image: none; margin: 0; padding: 0; }
 div.boundaries_wrapper ul li p                 { width: 10px; border: solid [[BUTTON_BG]]; border-width: 0 1px 0 0; position: relative; background: [[BUTTON_BG]]; }
