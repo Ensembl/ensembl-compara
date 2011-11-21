@@ -145,15 +145,16 @@ sub content {
       });
     }
 
-    if (defined $tagvalues->{'lost_taxon_id'}) {
-      my $lost_taxa = $tagvalues->{'lost_taxon_id'};
-      $lost_taxa = [$lost_taxa] if ref($lost_taxa) ne 'ARRAY';
-      $self->add_entry({
-        type  => 'Lost taxa',
-        label => join(',', map {$hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$_} || "taxon_id: $_"}  @$lost_taxa ),
-        order => 5.6
-      });
-    }
+    # Hidden until the data is correct
+    #if (defined $tagvalues->{'lost_taxon_id'}) {
+    #  my $lost_taxa = $tagvalues->{'lost_taxon_id'};
+    #  $lost_taxa = [$lost_taxa] if ref($lost_taxa) ne 'ARRAY';
+    #  $self->add_entry({
+    #    type  => 'Lost taxa',
+    #    label => join(',', map {$hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$_} || "taxon_id: $_"}  @$lost_taxa ),
+    #    order => 5.6
+    #  });
+    #}
 
     if ($node->stable_id) {
       # GeneTree StableID
