@@ -84,7 +84,7 @@ sub table_data {
     my $id           			 = $va->{'_phenotype_id'};
     my $source_name  			 = $va->source_name;
 		my $study_name         = $va->study_name;
-    my $disease_url  			 = $hub->url({ type => 'Phenotype', action => 'Locations', id => $id, name => $disorder }); 
+    my $disease_url  			 = $hub->url({ type => 'Phenotype', action => 'Locations', ph => $id, name => $disorder }); 
 		my $source             = $self->source_link($source_name, $study_name, $va->external_reference, 1);
 		my $external_reference = $self->external_reference_link($va->external_reference) || $va->external_reference; # use raw value if can't be made into a link
     my $associated_studies = $va->associated_studies; # List of Study objects
