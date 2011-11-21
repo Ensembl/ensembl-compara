@@ -34,9 +34,9 @@ sub new {
       my $delimiter = chop $param;
       my $filters   = { split /$delimiter/, $param };
       exists $param_to_filter_map->{$_} or delete $filters->{$_} for keys %$filters;
-      
+
       $self->{'_param_filters'} = $filters;
-  
+
       while (my ($filter, $value) = each(%$filters)) {
         if ($filter eq 'cell_type') {
           $constraints->{'cell_type'} = $funcgen_db_adaptor->get_CellTypeAdaptor->fetch_by_name($value);
@@ -95,18 +95,9 @@ sub new {
   return $self;
 }
 
-sub short_caption {
-  ## @return short caption for the tab
-  my $self = shift;
-  if ($self->hub->param('ex') =~ /^name\-/) {
-    my $feature_set_info = $self->get_feature_sets_info;
-    return 'Experiment: '.$feature_set_info->[0]->{'feature_set_name'} if @$feature_set_info;
-  }
-  return 'Experiment';
-}
-
+sub short_caption   { 'Experiment'  }
 sub caption         { 'Experiment'  }
-sub default_action  { 'Features'    }
+sub default_action  { 'Sources'     }
 
 sub get_grouped_feature_sets {
   ## Gets a data structure of feature sets grouped according to Project, Cell/Tissue and Evidence Type
@@ -120,10 +111,16 @@ sub get_feature_sets_info {
   return shift->{'_feature_sets_info'};
 }
 
-sub allow_multiple_filtering {
-  ## Tells whether ot not to allow multiple filtering based on the ex param
+sub is_single_feature_view {
+  ## Tells whether a single feature should be displayed - acc to the ex param
   my $self = shift;
-  return $self->hub->param('ex') =~ /^name\-/ ? undef :  1;
+  return $self->hub->param('ex') =~ /^name\-/ ? 1 : undef;
+}
+
+sub total_experiments {
+  ## Gets the number of all experiments without any filter applied
+  ## @return int
+  return shift->{'_grouped_feature_sets'}{'All'}{'All'}{'count'} || 0;
 }
 
 sub applied_filters {
@@ -169,13 +166,13 @@ sub get_url_param {
     }
   }
 
-  my $param_str   = join '', @{ [ %$params ] };
-  my $delimiters  = [ qw(_ . ,), ('a'..'z'), ('A'..'Z'), (1..9) ];
+  my $param_str   = join '', %$params;
+  my $delimiters  = [ qw(_ ,), ('a'..'z'), ('A'..'Z'), (1..9) ];
   my $counter     = 0;
   my $delimiter   = '-';
   $delimiter      = $delimiters->[$counter++] while $delimiter && index($param_str, $delimiter) >= 0;
 
-  return join $delimiter, @{ [ map {$_, $params->{$_}} sort keys %$params ] }, '';
+  return join($delimiter, (map {$_, $params->{$_}} sort keys %$params), '') || 'all';
 }
 
 1;
