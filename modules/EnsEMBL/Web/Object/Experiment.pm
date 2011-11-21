@@ -5,6 +5,8 @@ package EnsEMBL::Web::Object::Experiment;
 
 use strict;
 
+use URI::Escape qw(uri_escape uri_unescape);
+
 use base qw(EnsEMBL::Web::Object);
 
 sub new {
@@ -33,7 +35,7 @@ sub new {
     if ($param ne 'all') {
       my $delimiter = chop $param;
       my $filters   = { split /$delimiter/, $param };
-      exists $param_to_filter_map->{$_} or delete $filters->{$_} for keys %$filters;
+      exists $param_to_filter_map->{$_} and $filters->{$_} = uri_unescape($filters->{$_}) or delete $filters->{$_} for keys %$filters;
 
       $self->{'_param_filters'} = $filters;
 
@@ -172,7 +174,7 @@ sub get_url_param {
   my $delimiter   = '-';
   $delimiter      = $delimiters->[$counter++] while $delimiter && index($param_str, $delimiter) >= 0;
 
-  return join($delimiter, (map {$_, $params->{$_}} sort keys %$params), '') || 'all';
+  return join($delimiter, (map {$_, uri_escape($params->{$_})} sort keys %$params), '') || 'all';
 }
 
 1;
