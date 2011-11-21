@@ -114,18 +114,26 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
   
   wrapping: function (els) {
     (els || $('.heightWrap', this.el)).each(function () {
-      var el   = $(this);
-      var open = el.hasClass('open');
+      var el    = $(this);
+      var open  = el.hasClass('open');
+      var val   = el.children();
+      var empty = val.text() === '';
       
       if (open) {
         el.removeClass('open');
       }
       
+      val[empty ? 'addClass' : 'removeClass']('empty');
+      
       // check if content is hidden by overflow: hidden
-      el.next('img.toggle')[$(this).height() < $(this).children().height() ? 'show' : 'hide']();
+      el.next('img.toggle')[el.height() < val.height() ? 'show' : 'hide']();
       
       if (open) {
         el.addClass('open');
+        
+        if (empty) {
+          el.siblings('img.toggle').trigger('click');
+        }
       }
       
       el = null;
