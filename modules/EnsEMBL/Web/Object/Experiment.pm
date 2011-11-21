@@ -77,9 +77,9 @@ sub new {
 
     push @$feature_sets_info, {
       'source_label'        => $source_info->[0],
-      'source_link'         => $source_info->[1],
+      'source_link'         => uri_escape($source_info->[1]),
       'project_name'        => $project_name,
-      'project_url'         => $experiment_group ? $experiment_group->url : '',
+      'project_url'         => $experiment_group ? uri_escape($experiment_group->url) : '',
       'feature_set_name'    => $feature_set->name,
       'feature_type_name'   => $feature_type->name,
       'evidence_label'      => $evidence_label,
