@@ -26,7 +26,7 @@ sub content {
   my $slice        = $object->slice;
   my $length       = $slice->end - $slice->start + 1;
   my $image_config = $hub->get_imageconfig('contigviewbottom');
-  my $s            = $hub->get_viewconfig('ViewTop')->get('show_panel') eq 'yes' ? 3 : 2;
+  my $s            = $hub->get_viewconfig('ViewTop')->get('show_top_panel') eq 'yes' ? 3 : 2;
   
   $image_config->set_parameters({
     container_width => $length,
