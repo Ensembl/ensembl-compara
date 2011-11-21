@@ -684,8 +684,8 @@ sub markup_line_numbers {
         
         $start = $row_start if $seq_length;
         
-        # If the line starts -- or -= it is at the end of a protein section, so take one off the line number
-        $start-- if $start > $data->{'start'} && $segment =~ /^-\W/;
+        # If the line starts --,  =- or -= it is at the end of a protein section, so take one off the line number
+        $start-- if $start > $data->{'start'} && $segment =~ /^([=-]{2})/;
         
         # Next line starts at current end + 1 for forward strand, or - 1 for reverse strand
         $row_start = $end + $data->{'dir'} if $start && $end;
@@ -851,6 +851,7 @@ sub build_sequence {
       if ($config->{'number'}) {
         my $pad1 = ' ' x ($config->{'padding'}->{'pre_number'} - length $num->{'label'});
         my $pad2 = ' ' x ($config->{'padding'}->{'number'}     - length $num->{'start'});
+        warn ">>> NUMBER $num->{'start'}";
 
         $line = $config->{'h_space'} . sprintf('%6s ', "$pad1$num->{'label'}$pad2$num->{'start'}") . $line;
       }
@@ -864,7 +865,7 @@ sub build_sequence {
         
         $line .= $config->{'h_space'} . sprintf ' %6s', "$pad1$n$pad2$num->{'end'}";
       }
-      
+     
       $line = "$_->[$x]->{'pre'}$line" if $_->[$x]->{'pre'};
       $line .= $_->[$x]->{'post'}      if $_->[$x]->{'post'};
       $html .= "$line\n";
