@@ -33,8 +33,8 @@ sub content {
     my $source_label = encode_entities($feature_set_info->{'source_label'});
     my $project_name = encode_entities($feature_set_info->{'project_name'});
     $table->add_row({
-      'source'        => $feature_set_info->{'source_link'} ? sprintf('<a href="%s">%s</a>', $feature_set_info->{'source_link'}, $source_label) : $source_label,
-      'project'       => $feature_set_info->{'project_url'} ? sprintf('<a href="%s">%s</a>', $feature_set_info->{'project_url'}, $project_name) : $project_name,
+      'source'        => $feature_set_info->{'source_link'} ? sprintf('<a href="%s">%s</a>', encode_entities($feature_set_info->{'source_link'}), $source_label) : $source_label,
+      'project'       => $feature_set_info->{'project_url'} ? sprintf('<a href="%s">%s</a>', encode_entities($feature_set_info->{'project_url'}), $project_name) : $project_name,
       'evidence_type' => encode_entities($feature_set_info->{'evidence_label'}),
       'cell_type'     => encode_entities($feature_set_info->{'cell_type_name'}),
       'feature_type'  => encode_entities($feature_set_info->{'feature_type_name'}),
