@@ -28,8 +28,9 @@ sub render {
 
   my $tag         = $self->node_name;
   my $attributes  = join '', map {sprintf(' %s="%s"', $_, $self->get_attribute($_))} keys %{$self->{'_attributes'}};
+
   return $self->can_have_child
-    ? sprintf(qq(<$tag$attributes>%s</$tag>), $self->{'_text'} ne '' ? $self->{'_text'} : join '', map {$_->render} @{$self->{'_child_nodes'}})
+    ? sprintf('<%s%s>%s</%1$s>', $tag, $attributes, $self->{'_text'} ne '' ? $self->{'_text'} : join('', map {$_->render} @{$self->{'_child_nodes'}}))
     : qq(<$tag$attributes />);
 }
 
