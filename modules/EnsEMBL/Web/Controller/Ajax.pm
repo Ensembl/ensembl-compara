@@ -6,7 +6,8 @@ package EnsEMBL::Web::Controller::Ajax;
 
 use strict;
 
-use JSON qw(from_json);
+use HTML::Entities qw(decode_entities);
+use JSON           qw(from_json);
 
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Hub;
@@ -126,8 +127,7 @@ sub table_export {
   my $clean = sub {
     my $str = shift;
        $str =~ s/<br.*?>/ /g;
-       $str =~ s/&nbsp;/ /g;
-       $str = $self->strip_HTML($str);
+       $str = $self->strip_HTML(decode_entities($str));
        $str =~ s/"/""/g; 
        $str =~ s/^\s+//;
        $str =~ s/\s+$//g; 
