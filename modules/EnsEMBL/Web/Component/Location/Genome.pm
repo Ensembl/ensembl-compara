@@ -463,9 +463,11 @@ sub _location_link {
   my $link = sprintf(
           '<a href="%s">%s:%d-%d(%d)</a>',
           $self->hub->url({
+            type    => 'Location',
             action  => 'View',
             r       => $coords, 
             h       => $f->{'label'},
+            ph      => $self->hub->param('ph'),
             __clear => 1
           }),
           $f->{'region'}, $f->{'start'}, $f->{'end'},
@@ -483,6 +485,7 @@ sub _names_link {
     'action'    => 'Summary',
     $obj_param  => $f->{'label'},
     'r'         => $coords, 
+    'ph'        => $self->hub->param('ph'),
     __clear     => 1
   };
 

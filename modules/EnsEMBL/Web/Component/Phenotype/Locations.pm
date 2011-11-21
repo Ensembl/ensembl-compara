@@ -82,8 +82,7 @@ sub _var_location_link {
             action  => 'View',
             r       => $coords,
             v       => $f->{'label'},
-            id      => $self->hub->param('ph') || $self->hub->param('id'),
-            name    => $self->hub->param('name'),
+            ph      => $self->hub->param('ph'),
             contigviewbottom => $f->{'somatic'} ? 'somatic_mutation_COSMIC=normal' 
                                                   : 'variation_feature_variation=normal',
             __clear => 1,
@@ -100,8 +99,7 @@ sub _variation_link {
     'type'      => 'Variation',
     'action'    => 'Phenotype',
     'v'         => $f->{'label'},
-    id      => $self->hub->param('ph') || $self->hub->param('id'),
-    name        => $self->hub->param('name'),
+    ph          => $self->hub->param('ph'),
     __clear     => 1
   };
 
