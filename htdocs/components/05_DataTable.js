@@ -197,7 +197,7 @@ Ensembl.DataTable = {
           var tables, visibility, index, textCheck;
           
           if (!input.attr('disabled')) {
-            tables     = panel.dataTables;
+            tables     = $.grep(panel.dataTables, function (table) { return !table.is('.no_col_toggle'); });
             visibility = !columns[col].bVisible;
             
             if (panel.elLk.colToggle.length === 1) {
