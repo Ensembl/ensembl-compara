@@ -40,23 +40,29 @@ sub content {
   return $html;
 }
 
+
 sub make_table {
   my ($self, $table_rows, $phenotype) = @_;
     
   my $columns = [
-    { key => 'ID',         sort => 'html'                                                            },
-    { key => 'chr' ,       sort => 'position',      title => 'Chr: bp'                               },
-    { key => 'Alleles',    sort => 'string',                                       align => 'center' },
-    { key => 'class',      sort => 'string',        title => 'Class',              align => 'center' },
-    { key => 'psource',    sort => 'string',        title => 'Phenotype Sources'                    },
-    { key => 'status',     sort => 'string',        title => 'Validation',         align => 'center' },
+    { key => 'ID',       sort => 'html'                                                        },
+    { key => 'chr' ,     sort => 'position',  title => 'Chr: bp'                               },
+    { key => 'Alleles',  sort => 'string',                                  align => 'center' },
+    { key => 'class',    sort => 'string',    title => 'Class',              align => 'center' },
+    { key => 'psource',  sort => 'string',    title => 'Phenotype Sources'                    },
+    { key => 'pstudy',    sort => 'string',    title => 'Phenotype Studies'                    },
+    { key => 'status',   sort => 'string',    title => 'Validation',         align => 'center' },
   ];
 
   my $table_id = $phenotype;
      $table_id =~ s/[^\w]/_/g;
   
-  return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 0, id => "${table_id}_table" });
+  my $table_id = $phenotype;
+  $table_id =~ s/[^\w]/_/g;
+  
+  return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => $table_id."_table" });
 }
+
 
 sub render_content {
   my ($self, $table, $phenotype) = @_;
@@ -85,7 +91,7 @@ sub stats_table {
     { key => 'count',   title => 'Number of variants', sort => 'numeric_hidden', width => '10%', align => 'right'  },   
     { key => 'view',    title => '',                   sort => 'none',           width => '5%',  align => 'center' },
     { key => 'phen',    title => 'Phenotype',          sort => 'string',         width => '45%'                    },
-    { key => 'source',  title => 'Source(s)',           sort => 'string',         width => '30%'                    },
+    { key => 'source',  title => 'Source(s)',          sort => 'string',         width => '30%'                    },
     { key => 'kview',   title => 'Karyotype',          sort => 'none',           width => '10%'                    },
   ];
   
@@ -113,7 +119,7 @@ sub stats_table {
     my $warning      = $phe_count > 10000 ? $warning_text : '';
     my $sources_list = join ', ', map $self->source_link($_), @{$phenotype->{'source'}};
     my $kview        = '-';
-       $kview        = sprintf '<a href="%s">[View on Karyotype]</a>', $hub->url({ type => 'Phenotype', action => 'Locations', id => $phenotype->{'id'}, name => $_ }) unless /(HGMD|COSMIC)/;
+       $kview        = sprintf '<a href="%s">[View on Karyotype]</a>', $hub->url({ type => 'Phenotype', action => 'Locations', ph => $phenotype->{'id'}, name => $_ }) unless /HGMD/;
        
     push @rows, {
       phen   => "$_ $warning",
@@ -163,8 +169,17 @@ sub variation_table {
     source => undef,
   });
   
+  my $phenotype_sql = $phenotype;
+  $phenotype_sql =~ s/'/\\'/; # Escape quote character
+  
+  my $va_adaptor = $self->hub->database('variation')->get_VariationAnnotationAdaptor;
+  
+  my %list_sources;
+  my $list_variations;
+      
   foreach my $va (@{$va_adaptor->fetch_all_by_associated_gene($gene_name)}) {
-    next if $phenotype ne $va->phenotype_description && $phenotype ne 'ALL';
+      
+    next if ($phenotype ne $va->phenotype_description && $phenotype ne 'ALL');
     
     #### Phenotype ####
     my $var        = $va->variation;
@@ -173,34 +188,35 @@ sub variation_table {
     my $list_sources;
 
     if (!$list_variations->{$var_name}) {
+      
       my $location;
       my $allele;
-      
-      foreach my $vf (@{$var->get_all_VariationFeatures}) {
+      foreach my $vf (@{$var->get_all_VariationFeatures()}) {
         my $vf_region = $vf->seq_region_name;
         my $vf_start  = $vf->start;
         my $vf_end    = $vf->end;
         my $vf_allele = $vf->allele_string;
-           $vf_allele =~ s/(.{20})/$1\n/g;
         
-        $_ .= '<br />' for grep { $_ } $location, $allele;
+        $vf_allele =~ s/(.{20})/$1\n/g;
         
+        $location .= '<br />' if ($location);
+        $allele   .= '<br />' if ($allele);
         if ($vf_region eq $g_region && $vf_start >= $g_start && $vf_end <= $g_end) {
           $location = "$vf_region:$vf_start" . ($vf_start == $vf_end ? '' : "-$vf_end");
           $allele   = $vf_allele;
           last;
-        } else {
+        }
+        else {
           $location .= "$vf_region:$vf_start" . ($vf_start == $vf_end ? '' : "-$vf_end");
           $allele   .= $vf_allele;
         }
       }
     
-      $list_variations->{$var_name} = {
-        class      => $var->var_class,
-        validation => (join(', ',  @$validation) || '-'),
-        chr        => $location,
-        allele     => $allele
-      };
+      $list_variations->{$var_name} = { 'class'      => $var->var_class,
+                                        'validation' =>  (join(', ',  @$validation) || '-'),
+                                        'chr'        => $location,
+                                        'allele'     => $allele
+                                      };
     }
       
     # List the phenotype sources for the variation
@@ -208,63 +224,113 @@ sub variation_table {
     my $ref_source = $va->external_reference;
     
     if ($list_sources{$var_name}{$phe_source}) {
-      push @{$list_sources{$var_name}{$phe_source}}, $ref_source if $ref_source;
-    } else {
+      push (@{$list_sources{$var_name}{$phe_source}}, $ref_source) if $ref_source;
+    }
+    else {
       if ($ref_source) {
-        $list_sources{$var_name}{$phe_source} = [ $ref_source ];
-      } else {
-        $list_sources{$var_name}{$phe_source} = [ 'no_ref' ];
+        $list_sources{$var_name}{$phe_source} = [$ref_source];
+      }
+      else {
+        $list_sources{$var_name}{$phe_source} = ['no_ref'];
       }
     }
-  }
+  }  
 
-  foreach my $var_name (sort keys %list_sources) {
+  foreach my $var_name (sort (keys %list_sources)) {
     my @sources_list;
-    
-    foreach my $p_source (sort keys %{$list_sources{$var_name}}) {
+    my @ext_ref_list;
+    foreach my $p_source (sort (keys (%{$list_sources{$var_name}}))) {
+
       foreach my $ref (@{$list_sources{$var_name}{$p_source}}) {
-        my $s_link = $self->source_link($p_source, $ref);
-        push @sources_list, $s_link unless grep $s_link eq $_, @sources_list;
+        # Source link 
+        my $s_link = $self->source_link($p_source, $ref, $var_name);
+        if (!grep {$s_link eq $_} @sources_list) {
+          push(@sources_list, $s_link);
+        }
+        # Study link
+        my $ext_link = $self->external_reference_link($p_source, $ref, $phenotype);
+        if (!grep {$ext_link eq $_} @ext_ref_list) {
+          push(@ext_ref_list, $ext_link);
+        }
       }
+      
     }
+    if (scalar(@sources_list)) {  
+      my $var_url    = "$base_url;v=$var_name";
     
-    if (scalar @sources_list) {
-      push @rows, {
-        ID      => qq{<a href="$base_url;v=$var_name">$var_name</a>},
-        class   => $list_variations->{$var_name}{'class'},
-        Alleles => $list_variations->{$var_name}{'allele'},
-        status  => $list_variations->{$var_name}{'validation'},
-        chr     => $list_variations->{$var_name}{'chr'},
-        psource => join(', ',@sources_list),
-      };
+      my $row = {
+            ID      => qq{<a href="$var_url">$var_name</a>},
+            class   => $list_variations->{$var_name}{'class'},
+            Alleles => $list_variations->{$var_name}{'allele'},
+            status  => $list_variations->{$var_name}{'validation'},
+            chr     => $list_variations->{$var_name}{'chr'},
+            psource => join(', ',@sources_list),
+            pstudy  => join(', ',@ext_ref_list),
+          };
+          
+          push @rows, $row;
     }
-  }
-  
+  }    
   return \@rows;
 }
 
+
 sub source_link {
-  my ($self, $source, $ext_id) = @_;
+  my ($self, $source, $ext_id, $vname) = @_;
   
   my $source_uc = uc $source;
-     $source_uc = 'OPEN_ACCESS_GWAS_DATABASE' if $source_uc =~ /OPEN/;
+  $source_uc    = 'OPEN_ACCESS_GWAS_DATABASE' if $source_uc =~ /OPEN/;
   my $url       = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
   
   if ($ext_id && $ext_id ne 'no-ref') {
-    # With study link
-    if ($url =~ /gwastudies/i) {
-      $ext_id =~ s/pubmed\///;
-      $url    =~ s/###ID###/$ext_id/;
-    } elsif ($url =~ /omim/i) {
-      $ext_id  =~ s/MIM\://;
-      $url     =~ s/###ID###/$ext_id/;
-      $source .= ":$ext_id";
+    if ($url =~ /ega/) {
+      $url       =~ s/###ID###/$ext_id/;
+    } elsif ($url =~/gwastudies/) {
+      $ext_id    =~ s/pubmed\///; 
+      $url          =~ s/###ID###/$ext_id/;
+    } elsif ($url =~/omim/) {
+      if ($vname) {
+        $vname = "search?search=".$vname;
+        $url  =~ s/###ID###/$vname/; 
+      } else {
+        $ext_id    =~ s/MIM\://; 
+        $url  =~ s/###ID###/$ext_id/;
+      }     
+    } else {
+      $url =~ s/###ID###/$vname/;
     }
   } else {
     $url =~ s/###ID###//; # Only general source link
   }
-  
   return $url ? qq{<a rel="external" href="$url">[$source]</a>} : $source;
+}
+
+
+sub external_reference_link {
+  my ($self, $source, $study, $phenotype) = @_;
+  my $hub = $self->hub;
+  
+  if ($study =~ /pubmed/) {
+    return qq{<a rel="external" href="http://www.ncbi.nlm.nih.gov/$study">$study</a>};
+  }
+  elsif ($study =~ /^MIM\:/) {
+    my $id = (split /\:/, $study)[-1];
+    my $link = $hub->get_ExtURL_link($study, 'OMIM', $id);
+    $link =~ s/^\, //g;
+    return $link;
+  }
+  elsif ($phenotype =~ /cosmic/i) {
+    my @tumour_info      = split /\:/, $phenotype;
+    my $tissue           = pop(@tumour_info);
+    $tissue              =~ s/^\s+//;
+    my $tissue_formatted = $tissue;
+    my $source_study     = uc($source) . '_STUDY'; 
+    $tissue_formatted    =~ s/\s+/\_/g; 
+    return $hub->get_ExtURL_link($tissue, $source_study, $tissue_formatted);
+  }
+  else {
+    return '-';
+  }
 }
 
 
