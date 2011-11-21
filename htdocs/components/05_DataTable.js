@@ -6,8 +6,6 @@ Ensembl.DataTable = {
     
     this.hideFilter = $('body').hasClass('ie67');
     
-    this.elLk.colToggle = $('.col_toggle', this.el);
-    
     this.elLk.dataTable.each(function (i) {
       // Because dataTables is written to create alert messages if you try to reinitialise a table, block any attempts here.
       if ($.fn.dataTableSettings[i] && $.fn.dataTableSettings[i].nTable === this) {
@@ -52,6 +50,8 @@ Ensembl.DataTable = {
       
       table = dataTable = null;
     });
+    
+    this.elLk.colToggle = $('.col_toggle', this.el);
     
     this.tableFilters();
   },
