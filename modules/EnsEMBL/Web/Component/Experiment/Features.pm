@@ -47,7 +47,7 @@ sub content {
   my $shown_experiments = @$feature_sets_info;
   my $html;
   if ($object->is_single_feature_view) {
-    $html = "Showing single experiment out of $total_experiments experiments";
+    $html = "Showing a single experiment out of $total_experiments experiments";
   }
   elsif ($total_experiments == $shown_experiments) {
     $html = "Showing all  $total_experiments experiments";
@@ -66,7 +66,7 @@ sub content {
 
 sub motif_link {
   ## TODO?
-  return "http://jaspar.genereg.net/cgi-bin/jaspar_db.pl?ID=$_[1]&rm=present&collection=CORE";
+  return "http://jaspar.genereg.net/cgi-bin/jaspar_db.pl?ID=$_[1]&amp;rm=present&amp;collection=CORE";
 }
 
 1;
