@@ -15,7 +15,7 @@ sub content {
   my $hub     = $self->hub;
 
   my $grouped_feature_sets = $object->get_grouped_feature_sets;
-#   my $total_feature_sets   = scalar @{$object->get_feature_sets_info};
+  my $total_feature_sets   = scalar @{$object->get_feature_sets_info};
   my $applied_filters      = $object->applied_filters;
 
   my $table   = $self->new_table(
@@ -24,8 +24,7 @@ sub content {
       { 'key' => 'show',          'title' => '', 'sort' => 'none', 'align' => 'center' },
       (
         $object->is_single_feature_view ? () : (
-#           { 'key' => 'count_filter',  'title' => 'Displayed',  'align' => 'right', 'width' => '150px', 'sort' => 'numeric_hidden' },
-          { 'key' => 'add_filter',    'title' => '', 'sort' => 'none', 'align' => 'center' }
+          { 'key' => 'add_filter',    'title' => '', 'sort' => 'none'}
         )
       ),
       { 'key' => 'filter_value',  'title' => ''             },
@@ -46,11 +45,11 @@ sub content {
       my $new_filter_label  = $all_count
           ? $filter_applied && scalar keys %$applied_filters == 1
           ? 'Displayed'
-          : sprintf('<a href="%s">Show</a>', $hub->url({'ex' => $object->get_url_param({$filter_type, $filter_value})}))
+          : sprintf('<a href="%s">Show all</a>', $hub->url({'ex' => $object->get_url_param({$filter_type, $filter_value})}))
           : '';
       my $add_filter_label  = !$filter_applied 
           ? $filtered_count
-          ? sprintf('<a href="%s">Add filter</a> (%s)', $hub->url({'ex' => $object->get_url_param({$filter_type, $filter_value}, 1)}), $filtered_count)
+          ? sprintf('<a href="%s">Filter</a> (%s/%s)', $hub->url({'ex' => $object->get_url_param({$filter_type, $filter_value}, 1)}), $filtered_count, $total_feature_sets)
           : ' - '
           : sprintf('<a href="%s">Remove filter</a>', $hub->url({'ex' => $object->get_url_param({$filter_type, $filter_value}, -1)}));
 
@@ -59,7 +58,6 @@ sub content {
         'show'          => $new_filter_label,
         (
           $object->is_single_feature_view ? () : (
-#             'count_filter'  => $filter_value eq 'All' ? '' : qq(<span class="hide">$filtered_count</span>$filtered_count/$total_feature_sets),
             'add_filter'    => $add_filter_label
           )
         ),
