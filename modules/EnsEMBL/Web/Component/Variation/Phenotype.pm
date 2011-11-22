@@ -30,8 +30,8 @@ sub content {
    
 
   $table->add_columns(
-    { key => 'disease', title => 'Disease/Trait',         align => 'left', sort => 'html' },  
-    { key => 'source',  title => 'Source(s)',             align => 'left', sort => 'html' },
+    { key => 'disease', title => 'Disease/Trait', align => 'left', sort => 'html' },  
+    { key => 'source',  title => 'Source(s)',     align => 'left', sort => 'html' },
   );
   if ($supporting_evidence!=0) {
   	 $table->add_columns(
@@ -40,15 +40,15 @@ sub content {
   }
   
   $table->add_columns(
-		{ key => 'study',   title => $study,                  align => 'left', sort => 'html' },
-    { key => 'genes',   title => 'Associated Gene(s)',    align => 'left', sort => 'none' },
-    { key => 'variant', title => 'Associated variant',    align => 'left', sort => 'none' },
+		{ key => 'study',   title => $study,               align => 'left', sort => 'html' },
+    { key => 'genes',   title => 'Reported gene(s)',   align => 'left', sort => 'none' },
+    { key => 'variant', title => 'Associated variant', align => 'left', sort => 'none' },
   );
   
   if (!$is_somatic) {
     $table->add_columns(
       { key => 'allele',  title => 'Most associated allele', align => 'left', sort => 'none'    },
-      { key => 'pvalue',  title => 'P value',               align => 'left', sort => 'numeric' }
+      { key => 'pvalue',  title => 'P value',                align => 'left', sort => 'numeric' }
     );
   }
   
