@@ -14,16 +14,18 @@ sub content {
   my $object  = $self->object;
   my $hub     = $self->hub;
 
-  my $grouped_feature_sets = $object->get_grouped_feature_sets;
-  my $total_feature_sets   = scalar @{$object->get_feature_sets_info};
-  my $applied_filters      = $object->applied_filters;
+  my $grouped_feature_sets  = $object->get_grouped_feature_sets;
+  my $total_feature_sets    = scalar @{$object->get_feature_sets_info};
+  my $count_applied_filters = scalar keys %{$object->applied_filters};
+
+  my $hide_filters_column   = $object->is_single_feature_view || $object->total_experiments == $total_feature_sets;
 
   my $table   = $self->new_table(
     [
       { 'key' => 'count',         'title' => 'Number of experiments', 'align' => 'right', 'width' => '150px', 'sort' => 'numeric' },
       { 'key' => 'show',          'title' => '', 'sort' => 'none', 'align' => 'center' },
       (
-        $object->is_single_feature_view ? () : (
+        $hide_filters_column ? () : (
           { 'key' => 'add_filter',    'title' => '', 'sort' => 'none'}
         )
       ),
@@ -43,9 +45,9 @@ sub content {
       my $filter_applied    = $object->is_filter_applied($filter_type, $filter_value);
 
       my $new_filter_label  = $all_count
-          ? $filter_applied && scalar keys %$applied_filters == 1
+          ? $filter_applied && $count_applied_filters == 1 || $filter_type eq 'All' && !$count_applied_filters
           ? 'Displayed'
-          : sprintf('<a href="%s">Show all</a>', $hub->url({'ex' => $object->get_url_param({$filter_type, $filter_value})}))
+          : sprintf('<a href="%s">Show</a>', $hub->url({'ex' => $object->get_url_param({$filter_type, $filter_value})}))
           : '';
       my $add_filter_label  = !$filter_applied 
           ? $filtered_count
@@ -57,7 +59,7 @@ sub content {
         'count'         => $all_count,
         'show'          => $new_filter_label,
         (
-          $object->is_single_feature_view ? () : (
+          $hide_filters_column ? () : (
             'add_filter'    => $add_filter_label
           )
         ),
