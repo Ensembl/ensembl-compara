@@ -70,15 +70,12 @@ sub records_table {
     
     my $filtered_configs = $adaptor->filtered_configs({ code => [ sort keys %configs ] });
     my @config_records   = values %$filtered_configs;
-    my %active_configs   = map  { $_->{'code'} => $_->{'data'} } grep $_->{'active'} eq 'y', @config_records;
-    
     
     foreach (sort { $a->{'name'} cmp $b->{'name'} } grep { !$_->{'active'} && !($_->{'type'} eq 'image_config' && $_->{'link_id'}) } @config_records) {
       my $record_id = $_->{'record_id'};
       my $code      = $_->{'type'} eq 'image_config' && $_->{'link_code'} ? $_->{'link_code'} : $_->{'code'};
       (my $desc     = $_->{'description'}) =~ s/\n/<br \/>/g;
       my %params    = ( action => 'ModifyConfig', __clear => 1, record_id => $record_id );
-      my $active    = $active_configs{$_->{'code'}} eq $_->{'data'} && $active_configs{$_->{'link_code'}} eq $filtered_configs->{$_->{'link_id'}}{'data'} ? ' checked' : '';
       my @sets      = map [ $sets->{$_}{'name'}, $sets->{$_}{'record_id'} ], $adaptor->record_to_sets($record_id);
       
       push @{$rows{$code}}, {
