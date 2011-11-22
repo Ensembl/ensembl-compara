@@ -70,7 +70,7 @@ sub default_options {
             -dbname => 'mp12_ensembl_compara_65',
         },
 
-        'skipped_tables' => [ 'meta', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set',
+        'skipped_tables' => [ 'protein_tree_qc', 'meta', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set',
                               'analysis', 'analysis_data', 'job', 'job_file', 'job_message', 'analysis_stats', 'analysis_stats_monitor', 'analysis_ctrl_rule',
                               'dataflow_rule', 'worker', 'monitor', 'resource_description' ],
 
