@@ -37,6 +37,9 @@ sub content {
     {'data_table' => 1, 'class' => 'no_col_toggle', 'exportable' => 0}
   );
 
+
+  use Data::Dumper; warn Dumper $grouped_feature_sets;
+
   for my $filter_type (sort keys %$grouped_feature_sets) {
     my $filter_values = $grouped_feature_sets->{$filter_type};
     while (my ($filter_value, $grouped_feature_types) = each %$filter_values) {
@@ -45,7 +48,7 @@ sub content {
       my $filter_applied    = $object->is_filter_applied($filter_type, $filter_value);
 
       my $new_filter_label  = $all_count
-          ? $filter_applied && $count_applied_filters == 1 || $filter_type eq 'All' && !$count_applied_filters
+          ? $filter_applied && $count_applied_filters == 1 || $filter_type eq 'All' && !$count_applied_filters && !$object->is_single_feature_view
           ? 'Displayed'
           : sprintf('<a href="%s">Show</a>', $hub->url({'ex' => $object->get_url_param({$filter_type, $filter_value})}))
           : '';
