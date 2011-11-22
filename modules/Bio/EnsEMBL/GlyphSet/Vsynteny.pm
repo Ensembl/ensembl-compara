@@ -78,10 +78,10 @@ sub _init {
   my $highlights_main = { $chr => [] };
   my $CANSEE_OTHER = $config->{'other_species_installed'};
 
-  foreach my $box (@$synteny_data) {
+  foreach my $synteny_region (@$synteny_data) {
     my ($main_dfr, $other_dfr);
     
-    foreach my $dfr (@{$box->children}) {
+    foreach my $dfr (@{$synteny_region->get_all_DnaFragRegions}) {
       if ($dfr->dnafrag->genome_db->name eq $other_production_name) {
         $other_dfr = $dfr;
       } else {
@@ -122,7 +122,7 @@ sub _init {
     });
     
     push @{$highlights_main->{$chr}}, {
-      'id'     => $box->dbID,
+      'id'     => $synteny_region->dbID,
       'start'  => $main_dfr->dnafrag_start,
       'end'    => $main_dfr->dnafrag_end,
       'col'    => $COL,
@@ -147,7 +147,7 @@ sub _init {
       
       push @{$highlights_secondary->{$other_chr}}, {
         'rel_ori' => $main_dfr->dnafrag_strand * $other_dfr->dnafrag_strand,
-        'id'      => $box->dbID,
+        'id'      => $synteny_region->dbID,
         'start'   => $other_dfr->dnafrag_start,
         'end'     => $other_dfr->dnafrag_end,
         'col'     => $COL,
