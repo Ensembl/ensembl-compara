@@ -143,6 +143,7 @@ body.ie6 #modal_panel .fixed_width .modal_wrapper .panel { border-left: 0; }
 .modal_content .config_manager td div.heightWrap .val         { height: auto!important; }
 .modal_content .config_manager td div.heightWrap .val.empty   { height: 100%!important; }
 .modal_content .config_manager td div.open                    { overflow: auto; height: auto!important; }
+.modal_content .config_manager td div.open .ellipsis          { display: none; }
 .modal_content .config_manager td img.toggle                  { position: absolute; right: 4px; top: 2px; display: none; }
 .modal_content .config_manager table tbody tr                 { height: 20px; }
 .modal_content .config_manager table tr.active,
