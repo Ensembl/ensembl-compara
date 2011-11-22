@@ -72,16 +72,17 @@ sub records_table {
     my @config_records   = values %$filtered_configs;
     
     foreach (sort { $a->{'name'} cmp $b->{'name'} } grep { !$_->{'active'} && !($_->{'type'} eq 'image_config' && $_->{'link_id'}) } @config_records) {
-      my $record_id = $_->{'record_id'};
-      my $code      = $_->{'type'} eq 'image_config' && $_->{'link_code'} ? $_->{'link_code'} : $_->{'code'};
-      (my $desc     = $_->{'description'}) =~ s/\n/<br \/>/g;
-      my %params    = ( action => 'ModifyConfig', __clear => 1, record_id => $record_id );
-      my @sets      = map [ $sets->{$_}{'name'}, $sets->{$_}{'record_id'} ], $adaptor->record_to_sets($record_id);
+      my $record_id   = $_->{'record_id'};
+      my $code        = $_->{'type'} eq 'image_config' && $_->{'link_code'} ? $_->{'link_code'} : $_->{'code'};
+      (my $desc       = $_->{'description'}) =~ s/\n/<br \/>/g;
+      my %params      = ( action => 'ModifyConfig', __clear => 1, record_id => $record_id );
+      my @sets        = sort { $a->[0] cmp $b->[0] } map [ $sets->{$_}{'name'}, $sets->{$_}{'record_id'} ], $adaptor->record_to_sets($record_id);
+         $sets[0][0] .= qq{ <b class="ellipsis">...</b>} if scalar @sets > 1;
       
       push @{$rows{$code}}, {
         name   => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $_->{'record_id'}, $hub->url({ function => 'edit_details', %params })), class => 'editable'      },
         desc   => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $_->{'record_id'}, $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
-        sets   => scalar @sets ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[0]</li>}, sort { $a->[0] cmp $b->[0] } @sets) : '',
+        sets   => scalar @sets ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[0]</li>}, @sets) : '',
         active => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sactivate.png" alt="use" title="Use this configuration" /></a>', $hub->url({ function => 'activate', %params }), $configs{$code}{'component'}, $img_url),
         edit   => sprintf('<a class="edit_record" href="#" rel="%s"><img src="%sedit.png" alt="edit" title="Edit sets" /></a>', $record_id, $img_url),
         delete => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sdelete.png" alt="delete" title="Delete" /></a>', $hub->url({ function => 'delete', %params, link_id => $_->{'link_id'} }), $record_id, $img_url),

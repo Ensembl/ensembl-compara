@@ -68,7 +68,7 @@ sub sets_table {
     foreach (map $configs->{$_} || (), keys %{$_->{'records'}}) {
       my $view_config = $hub->get_viewconfig(reverse split '::', $_->{'type'} eq 'view_config' ? $_->{'code'} : $_->{'link_code'});
       my $config_type = join ' - ', $view_config->type, $view_config->title;
-      push @confs, [ $config_type, $_->{'record_id'}, "$_->{'name'} </a><span>$config_type</span>" ];
+      push @confs, [ $config_type, $_->{'record_id'}, qq{$_->{'name'} <b class="ellipsis">...</b><span>$config_type</span>} ];
       push @rel, [split '::', $view_config->code]->[-1];
     }
     
