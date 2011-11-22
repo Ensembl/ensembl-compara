@@ -49,10 +49,10 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'compara_homology_merged_65',    # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_homology_merged_65_test',    # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara3',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                        # a rule where a previously undefined parameter is used (which makes either of them obligatory)
@@ -168,7 +168,8 @@ sub pipeline_analyses {
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('families_db'),  'inputlist' => $self->o('families_copy_tables') },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('families_db'),  'inputlist' => $self->o('families_merge_tables') },
 
-                { 'fan_branch_code' => 2, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'protein\_tree\_%'" },
+                { 'fan_branch_code' => 2, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES WHERE Tables_in_".$self->o('genetrees_db', '-dbname')." LIKE 'protein\_tree\_%' AND Tables_in_".$self->o('genetrees_db','-dbname')." NOT LIKE '%_qc';" },
+#                { 'fan_branch_code' => 2, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'protein\_tree\_%'" },
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'super\_protein\_tree\_%'" },
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'peptide\_align\_feature\_%'" },
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('genetrees_db'), 'inputlist' => $self->o('genetrees_copy_tables') },
