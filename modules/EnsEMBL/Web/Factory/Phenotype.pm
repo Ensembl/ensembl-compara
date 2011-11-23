@@ -39,9 +39,7 @@ sub createObjects {
   my $adaptor    = $dbc->get_adaptor('VariationFeature');
 
   push @$variations, @{$adaptor->fetch_all_with_annotation(undef, undef, $id) || []};
-  #warn ">>> VARS ".@$variations;
   push @$variations, @{$adaptor->fetch_all_somatic_with_annotation(undef, undef, $id) || []};
-  #warn "... VARS ".@$variations;
 
   if ($variations and scalar @$variations > 0) {
     $features->{'Variation'} = EnsEMBL::Web::Data::Bio::Variation->new($self->hub, @$variations);
@@ -66,8 +64,13 @@ sub createObjects {
       }
     } 
     if (keys %associated_gene) {
+      my %seen;
       while (my ($gene_id, $gene_objects) = each(%associated_gene)) {
-        push @$genes, @{$gene_objects || []};
+        foreach (@{$gene_objects || []}) {
+          next if $seen{$_->stable_id};
+          push @$genes, $_; 
+          $seen{$_->stable_id}++;
+        }
       }
     }
   }
