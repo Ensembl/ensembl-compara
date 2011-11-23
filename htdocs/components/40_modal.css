@@ -138,7 +138,10 @@ body.ie6 #modal_panel .fixed_width .modal_wrapper .panel { border-left: 0; }
 
 .modal_content .config_manager p                              { margin: 10px 2px; }
 .modal_content .config_manager h2                             { margin: 0 0 5px 0; }
+.modal_content .config_manager .dataTables_wrapper,
+.modal_content .config_manager table,
 .modal_content .config_manager td > div                       { position: relative; }
+.modal_content .config_manager td div.config_used             { position: absolute; left: 1px; display: none; width: 100%; background: #80CC74; margin-top: -18px; text-align: center; z-index: 100; }
 .modal_content .config_manager td div.heightWrap              { overflow: hidden; height: 16px; line-height: 16px; margin-right: 20px; }
 .modal_content .config_manager td div.heightWrap .val         { height: auto!important; }
 .modal_content .config_manager td div.heightWrap .val.empty   { height: 100%!important; }
@@ -163,6 +166,5 @@ body.ie6 #modal_panel .fixed_width .modal_wrapper .panel { border-left: 0; }
 .modal_content .config_manager .sets a.toggle                 { background-image: none; text-decoration: underline; }
 .modal_content .config_manager .sets a.create_set             { font-weight: bold; }
 .modal_content .config_manager .sets a.create_set span.cancel { display: none; float: right; margin-right: 9px; text-decoration: underline; cursor: pointer; }
-.modal_content .config_manager p.activated                    { display: none; position: absolute; margin: 0; line-height: 20px; text-align: center; background: #80CC74; color: #000; }
 
 body.ie7 .modal_content .config_manager td img.toggle         { top: 4px; }

@@ -48,6 +48,7 @@ sub sets_table {
   my $img_url  = $self->img_url;
   my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div><img class="toggle" src="${img_url}closed2.gif" />%s<a href="%s" class="save"></a></div>};
   my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div><img class="toggle" src="${img_url}closed2.gif" /></div>};
+  my $active   = qq{<a class="edit" href="%s" rel="%s"><img src="${img_url}activate.png" alt="use" title="Use this configuration set" /></a><div class="config_used">Configuration set applied</div>};
   my @rows;
   
   my @columns = (
@@ -76,13 +77,13 @@ sub sets_table {
       name    => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $hub->url({ function => 'edit_details', %params })), class => 'editable'      },
       desc    => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
       configs => scalar @confs ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[2]</li>}, sort { $a->[0] cmp $b->[0] } @confs) : 'There are no configurations in this set',
-      active  => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sactivate.png" alt="use" title="Use this configuration set" /></a>', $hub->url({ function => 'activate_set', %params }), join(' ', @rel), $img_url),
+      active  => sprintf($active, $hub->url({ function => 'activate_set', %params }), join ' ', @rel),
       edit    => sprintf('<a class="edit_record" href="#" rel="%s"><img src="%sedit.png" alt="edit" title="Edit configurations" /></a>', $record_id, $img_url),
       delete  => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sdelete.png" alt="delete" title="Delete" /></a>', $hub->url({ function => 'delete_set', %params }), $record_id, $img_url),
     };
   }
   
-  return $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render . '<p class="activated">Configuration set applied</p>';
+  return $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
 }
 
 sub records_table {

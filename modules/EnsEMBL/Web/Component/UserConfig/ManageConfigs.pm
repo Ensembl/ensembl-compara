@@ -46,6 +46,7 @@ sub records_table {
     my $img_url  = $self->img_url;
     my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div><img class="toggle" src="${img_url}closed2.gif" />%s<a rel="%s" href="%s" class="save"></a></div>};
     my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div><img class="toggle" src="${img_url}closed2.gif" /></div>};
+    my $active   = qq{<a class="edit" href="%s" rel="%s"><img src="${img_url}activate.png" alt="use" title="Use this configuration" /></a><div class="config_used">Configuration applied</div>};
     my (%configs, %rows);
     
     my @columns = (
@@ -83,7 +84,7 @@ sub records_table {
         name   => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $_->{'record_id'}, $hub->url({ function => 'edit_details', %params })), class => 'editable'      },
         desc   => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $_->{'record_id'}, $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
         sets   => scalar @sets ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[0]</li>}, @sets) : '',
-        active => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sactivate.png" alt="use" title="Use this configuration" /></a>', $hub->url({ function => 'activate', %params }), $configs{$code}{'component'}, $img_url),
+        active => sprintf($active, $hub->url({ function => 'activate', %params }), $configs{$code}{'component'}),
         edit   => sprintf('<a class="edit_record" href="#" rel="%s"><img src="%sedit.png" alt="edit" title="Edit sets" /></a>', $record_id, $img_url),
         delete => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sdelete.png" alt="delete" title="Delete" /></a>', $hub->url({ function => 'delete', %params, link_id => $_->{'link_id'} }), $record_id, $img_url),
       };
@@ -99,8 +100,6 @@ sub records_table {
         $self->new_table(\@columns, $rows{$_}, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render,
       );
     }
-    
-    $html .= '<p class="activated">Configuration applied</p>';
   }
   
   return $html || '<p>You have no custom configurations for this page.</p>';
