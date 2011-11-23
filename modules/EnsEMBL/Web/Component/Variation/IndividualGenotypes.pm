@@ -44,6 +44,7 @@ sub content {
     
     foreach my $pop(@{$data->{'Population'}}) {
       my $pop_id = $pop->{'ID'};
+      next unless $pop_id;
       
       $populations{$pop_id} = 1;
       $all_pops{$pop_id}    = $self->pop_url($pop->{'Name'}, $pop->{'Link'});
