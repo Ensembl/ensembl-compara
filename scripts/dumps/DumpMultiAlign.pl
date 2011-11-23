@@ -329,9 +329,11 @@ use Bio::LocatableSeq;
 use Getopt::Long;
 use Devel::Size qw (size total_size);
 
+my $reg = "Bio::EnsEMBL::Registry";
 my $reg_conf;
-my $db = 'mysql://anonymous@ensembldb.ensembl.org';
+my $dbs = ['mysql://anonymous@ensembldb.ensembl.org'];
 my $dbname = "Multi";
+my $compara_url;
 my $species;
 my $skip_species;
 my $coord_system;
@@ -351,12 +353,14 @@ my $split_size = 0;
 my $chunk_num;
 my $file_of_genomic_align_block_ids;
 my $help;
+my $compara_dba;
 
 GetOptions(
     "help" => \$help,
     "reg_conf=s" => \$reg_conf,
-    "db=s" => \$db,
+    "db=s@" => \$dbs,
     "dbname=s" => \$dbname,
+    "compara_url=s" => \$compara_url,
     "species=s" => \$species,
     "skip_species=s" => \$skip_species,
     "coord_system=s" => \$coord_system,
@@ -386,18 +390,32 @@ if ($help) {
 # Configure the Bio::EnsEMBL::Registry
 # Uses $reg_conf if supllied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses ~/.ensembl_init
 # if all the previous fail.
-Bio::EnsEMBL::Registry->no_version_check(1);
+$reg->no_version_check(1);
 if ($reg_conf) {
-  Bio::EnsEMBL::Registry->load_all($reg_conf);
+  $reg->load_all($reg_conf);
 } else {
-  Bio::EnsEMBL::Registry->load_registry_from_url($db);
+    #Bio::EnsEMBL::Registry->load_registry_from_url($db);
+    #Allow multiple dbs to be input 
+    @$dbs = split(/,/, join(',', @$dbs));
+    foreach my $db (@$dbs) {
+	$reg->load_registry_from_url($db);
+    }
 }
 
+#Set compara_dba
+if ($compara_url) {
+    $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$compara_url);
+} else {
+    $compara_dba = $reg->get_DBAdaptor($dbname, "compara");
+}
+
+#print "Connecting to compara_db " . $compara_dba->dbc->dbname . "\n";
+
 # Getting Bio::EnsEMBL::Compara::MethodLinkSpeciesSet obejct
-my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
-    $dbname, 'compara', 'MethodLinkSpeciesSet');
-throw("Registry configuration file has no data for connecting to <$dbname>")
+my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
+throw("Unable to connect to compara adaptor")
     if (!$method_link_species_set_adaptor);
+
 my $method_link_species_set;
 if ($method_link_species_set_id) {
   $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set_id);
@@ -414,11 +432,12 @@ if ($method_link_species_set_id) {
   throw("The database do not contain any $alignment_type data for $set_of_species!")
       if (!$method_link_species_set);
 }
+
+my $meta_container = $compara_dba->get_MetaContainer();
+
 my $conservation_score_mlss;
 if ($method_link_species_set->method_link_class eq "ConservationScore.conservation_score") {
   $conservation_score_mlss = $method_link_species_set;
-  my $meta_container = Bio::EnsEMBL::Registry->get_adaptor(
-    $dbname, 'compara', 'MetaContainer');
   my $mlss_id = $meta_container->list_value_by_key('gerp_'.$conservation_score_mlss->dbID)->[0];
   $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($mlss_id);
   throw("I cannot find the link from the conservation scores to the original alignments!")
@@ -431,7 +450,7 @@ print STDERR "Dumping ", $method_link_species_set->name, "\n";
 my @query_slices;
 if ($species and !$skip_species and ($coord_system or $seq_region)) {
   my $slice_adaptor;
-  $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, 'core', 'Slice');
+  $slice_adaptor = $reg->get_adaptor($species, 'core', 'Slice');
   throw("Registry configuration file has no data for connecting to <$species>")
       if (!$slice_adaptor);
   if ($coord_system and !$seq_region) {
@@ -466,19 +485,15 @@ if ($species and !$skip_species and ($coord_system or $seq_region)) {
 # Get the GenomicAlignBlockAdaptor or the GenomicAlignTreeAdaptor:
 my $genomic_align_set_adaptor;
 if ($method_link_species_set->method_link_class =~ /GenomicAlignTree/) {
-  $genomic_align_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
-      $dbname, 'compara', 'GenomicAlignTree');
+  $genomic_align_set_adaptor = $compara_dba->get_GenomicAlignTreeAdaptor;
 } else {
-  $genomic_align_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
-      $dbname, 'compara', 'GenomicAlignBlock');
+  $genomic_align_set_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
 }
 
 #Need if get genomic_align_blocks from file_of_genomic_align_block_ids
-my  $genomic_align_block_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
-      $dbname, 'compara', 'GenomicAlignBlock');
+my  $genomic_align_block_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
 
-my $release = Bio::EnsEMBL::Registry->get_adaptor(
-    $dbname, 'compara', 'MetaContainer')->list_value_by_key("schema_version")->[0];
+my $release = $meta_container->list_value_by_key("schema_version")->[0];
 my $date = scalar(localtime());
 
 
@@ -507,7 +522,7 @@ if (!$use_several_files) {
 ## Do not do this if have defined a $file_of_genomic_align_block_ids
 my $skip_genomic_align_blocks = [];
 if ($skip_species && !$file_of_genomic_align_block_ids) {
-  my $this_meta_container_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
+  my $this_meta_container_adaptor = $reg->get_adaptor(
       $skip_species, 'core', 'MetaContainer');
   throw("Registry configuration file has no data for connecting to <$skip_species>")
       if (!$this_meta_container_adaptor);
