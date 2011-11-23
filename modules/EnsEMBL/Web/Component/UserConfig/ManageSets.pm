@@ -53,7 +53,7 @@ sub sets_table {
   
   my @columns = (
     { key => 'name',    title => 'Name',           width => '20%',  align => 'left'                   },
-    { key => 'desc',    title => 'Description',    width => '40%',  align => 'left',  class => 'wrap' },
+    { key => 'desc',    title => 'Description',    width => '40%',  align => 'left'                   },
     { key => 'configs', title => 'Configurations', width => '34%',  align => 'left',   sort => 'none' },
     { key => 'active',  title => '',               width => '20px', align => 'center', sort => 'none' },
     { key => 'edit',    title => '',               width => '20px', align => 'center', sort => 'none' },
@@ -74,9 +74,9 @@ sub sets_table {
     }
     
     push @rows, {
-      name    => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $hub->url({ function => 'edit_details', %params })), class => 'editable'      },
+      name    => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
       desc    => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
-      configs => scalar @confs ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[2]</li>}, sort { $a->[0] cmp $b->[0] } @confs) : 'There are no configurations in this set',
+      configs => { value => scalar @confs ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[2]</li>}, sort { $a->[0] cmp $b->[0] } @confs) : 'There are no configurations in this set', class => 'wrap' },
       active  => sprintf($active, $hub->url({ function => 'activate_set', %params }), join ' ', @rel),
       edit    => sprintf('<a class="edit_record" href="#" rel="%s"><img src="%sedit.png" alt="edit" title="Edit configurations" /></a>', $record_id, $img_url),
       delete  => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sdelete.png" alt="delete" title="Delete" /></a>', $hub->url({ function => 'delete_set', %params }), $record_id, $img_url),
@@ -95,11 +95,11 @@ sub records_table {
   my (%configs, %entries, @rows);
   
   my @columns = (
-    { key => 'type',        title => 'Type',        width => '10%',  align => 'left'                  },
-    { key => 'title',       title => 'Title',       width => '15%',  align => 'left'                  },
-    { key => 'name',        title => 'Name',        width => '15%',  align => 'left'                  },
-    { key => 'description', title => 'Description', width => '55%',  align => 'left', class => 'wrap' },
-    { key => 'add',         title => '',            width => '20px', align => 'center'                },
+    { key => 'type',        title => 'Type',        width => '10%',  align => 'left'   },
+    { key => 'title',       title => 'Title',       width => '15%',  align => 'left'   },
+    { key => 'name',        title => 'Name',        width => '15%',  align => 'left'   },
+    { key => 'description', title => 'Description', width => '55%',  align => 'left'   },
+    { key => 'add',         title => '',            width => '20px', align => 'center' },
   );
   
   push @{$configs{$_->{'type'}}{$_->{'code'}}}, $_ for values %{$hub->config_adaptor->filtered_configs({ active => '' })};
@@ -123,7 +123,7 @@ sub records_table {
         push @rows, {
           type        => $type,
           title       => $_->{'title'},
-          name        => sprintf($wrap, $_->{'name'}),
+          name        => { value => sprintf($wrap, $_->{'name'}),        class => 'wrap' },
           description => { value => sprintf($wrap, $_->{'description'}), class => 'wrap' },
           add         => sprintf($add,  $code, $_->{'record_id'}),
           options     => { class => $code }
