@@ -190,7 +190,7 @@ for my $sp( sort @SPECIES ){  # users selected spp
   # Work out species folder name
   my $sp_release = $SPECIES_DEFS->get_config($sp,"SPECIES_RELEASE_VERSION");
   $sp_release =~ s/\.//g;
-  $dumpdir   ||= "/dumps/release-$release";
+  $dumpdir   ||= "/exalead-data/dumps/release-$release";
 
   my $sp_folder = "$dumpdir/gtf/". lc($sp);
   utils::Tool::check_dir($sp_folder);
