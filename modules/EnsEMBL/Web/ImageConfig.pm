@@ -658,7 +658,7 @@ sub load_file_format {
     my $menu   = $self->get_node($internal_sources->{$source_name});
     my $source = $menu ? $self->sd_call($source_name) : undef;
     
-    $self->$function($menu, $source) if $source;
+    $self->$function('menu' => $menu, 'source' => $source, 'internal' => 1) if $source;
   }
 }
 
@@ -669,44 +669,58 @@ sub _add_bam_track {
     Green = both mates mapped to the same chromosome, Blue = second mate was not mapped, Red = second mate mapped to a different chromosome.
   ';
   
-  $self->_add_file_format_track(@_, 'BAM', [
-    'off',       'Off', 
-    'normal',    'Normal', 
-    'unlimited', 'Unlimited', 
-    'histogram', 'Coverage only'
-  ], {
-    external => 'url',
-    sub_type => 'bam'
-  }, $desc);
+  $self->_add_file_format_track(
+    'format'      => 'BAM', 
+    'renderers'   => [
+                    'off',       'Off', 
+                    'normal',    'Normal', 
+                    'unlimited', 'Unlimited', 
+                    'histogram', 'Coverage only'
+                    ], 
+    'options'     => {
+                    external => 'url',
+                    sub_type => 'bam'
+                    }, 
+    'description' => $desc,
+    @_);
 }
 
 sub _add_bigwig_track {
-  shift->_add_file_format_track(@_, 'BigWig', [
-    'off',    'Off',
-    'tiling', 'Wiggle plot',
-  ], {
-    external => 'url',
-    sub_type => 'bigwig',
-    colour   => $_[2]->{'colour'} || 'red',
-  });
+  shift->_add_file_format_track(
+    'format'    => 'BigWig', 
+    'renderers' =>  [
+                      'off',    'Off',
+                      'tiling', 'Wiggle plot',
+                      ], 
+    'options'   => {
+                      external => 'url',
+                      sub_type => 'bigwig',
+                      colour   => $_[2]->{'colour'} || 'red',
+                      },
+    @_);
 }
 
 sub _add_vcf_track {
-  shift->_add_file_format_track(@_, 'VCF', [
-    'off',       'Off',
-    'histogram', 'Normal',
-    'compact',   'Compact'
-  ], {
-    external   => 'url',
-    sources    => undef,
-    depth      => 0.5,
-    bump_width => 0,
-    colourset  => 'variation'
-  });
+  shift->_add_file_format_track(
+    'format'    => 'VCF', 
+    'renderers' => [
+                    'off',       'Off',
+                    'histogram', 'Normal',
+                    'compact',   'Compact'
+                    ], 
+    'options'   => {
+                    external   => 'url',
+                    sources    => undef,
+                    depth      => 0.5,
+                    bump_width => 0,
+                    colourset  => 'variation'
+                    },
+    @_);
 }
 
 sub _add_flat_file_track {
   my ($self, $menu, $sub_type, $key, $name, $description, %options) = @_;
+  warn ">>> $key = $name";
   
   $menu ||= $self->get_node('user_data');
   
@@ -731,32 +745,42 @@ sub _add_flat_file_track {
 }
 
 sub _add_file_format_track {
-  my ($self, $menu, $key, $source, $format, $renderers, $options, $description) = @_;
+  my ($self, %args) = @_;
   
-  $menu ||= $self->get_node('user_data');
+  my $menu = $args{menu} || $self->get_node('user_data');
   
   return unless $menu;
   
-  my $desc = sprintf(
-    "Data retrieved from a $format file on an external webserver.
-    $description
-    This data is attached to the %s, and comes from URL: %s",
-    encode_entities($source->{'source_type'}), encode_entities($source->{'source_url'})
-  );
+  my $desc;
+  my $article = ($args{format} =~ /^[aeiou]/) ? 'an' : 'a';
+  if ($args{internal}) {
+    $desc = sprintf('Data served from a %s file: %s', $args{format}, $args{description});
+  }
+  else {
+    $desc = sprintf(
+      "Data retrieved from %s %s file on an external webserver. %s
+      This data is attached to the %s, and comes from URL: %s",
+      $article,
+      $args{format},
+      $args{description},
+      encode_entities($args{source}->{'source_type'}), 
+      encode_entities($args{source}->{'source_url'})
+    );
+  }
   
-  my $type = lc $format;
+  my $type = lc $args{format};
   
-  my $track = $self->create_track($key, $source->{'source_name'}, {
+  my $track = $self->create_track($args{key}, $args{source}->{'source_name'}, {
     display     => 'off',
     strand      => 'f',
-    format      => $format,
+    format      => $args{format},
     glyphset    => $type,
     colourset   => $type,
-    renderers   => $renderers,
-    caption     => $source->{'source_name'},
-    url         => $source->{'source_url'},
+    renderers   => $args{renderers},
+    caption     => $args{source}->{'source_name'},
+    url         => $args{source}->{'source_url'},
     description => $desc,
-    %$options
+    %{$args{options}}
   });
  
   $menu->append($track) if $track;
