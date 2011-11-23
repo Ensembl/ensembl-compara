@@ -300,6 +300,11 @@ Ensembl.DataTable = {
     var panel = this;
     
     function saveEdit(input) {
+      if (input.is(':hidden')) {
+        input = null;
+        return false;
+      }
+      
       var td    = input.parents('td');
       var value = input.hide().val().replace(/<[^>]+>/g, ''); // strip HTML tags
       
