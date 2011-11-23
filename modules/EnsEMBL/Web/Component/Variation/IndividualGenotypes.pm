@@ -39,7 +39,7 @@ sub content {
     
     my $father      = $self->format_parent($data->{'Father'});
     my $mother      = $self->format_parent($data->{'Mother'});
-    my $description = uc $data->{'Description'} || '-';
+    my $description = $data->{'Description'} || '-';
     my %populations;
     
     foreach my $pop(@{$data->{'Population'}}) {
