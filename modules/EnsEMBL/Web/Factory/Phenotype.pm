@@ -76,11 +76,12 @@ sub createObjects {
   }
 
 ## TODO - Get genes with no associated variation 
-
+=pod
   ## Add all genes
   if (scalar(@$genes)) {
     $features->{'Gene'} = EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes);
   }
+=cut
 
   my $object = $self->new_object('Phenotype', $features, $self->__data);
 
