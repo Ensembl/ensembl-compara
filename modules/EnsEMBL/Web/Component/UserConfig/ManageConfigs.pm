@@ -51,7 +51,7 @@ sub records_table {
     
     my @columns = (
       { key => 'name',   title => 'Name',        width => '20%',  align => 'left',                  },
-      { key => 'desc',   title => 'Description', width => '50%',  align => 'left', class => 'wrap'  },
+      { key => 'desc',   title => 'Description', width => '50%',  align => 'left',                  },
       { key => 'sets',   title => 'Sets',        width => '24%',  align => 'left'                   },
       { key => 'active', title => '',            width => '20px', align => 'center', sort => 'none' },
     );
@@ -81,9 +81,9 @@ sub records_table {
          $sets[0][0] .= qq{ <b class="ellipsis">...</b>} if scalar @sets > 1;
       
       push @{$rows{$code}}, {
-        name   => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $_->{'record_id'}, $hub->url({ function => 'edit_details', %params })), class => 'editable'      },
+        name   => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $_->{'record_id'}, $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
         desc   => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $_->{'record_id'}, $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
-        sets   => scalar @sets ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[0]</li>}, @sets) : '',
+        sets   => { value => scalar @sets ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[0]</li>}, @sets) : '', class => 'wrap' },
         active => sprintf($active, $hub->url({ function => 'activate', %params }), $configs{$code}{'component'}),
         edit   => sprintf('<a class="edit_record" href="#" rel="%s"><img src="%sedit.png" alt="edit" title="Edit sets" /></a>', $record_id, $img_url),
         delete => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sdelete.png" alt="delete" title="Delete" /></a>', $hub->url({ function => 'delete', %params, link_id => $_->{'link_id'} }), $record_id, $img_url),
