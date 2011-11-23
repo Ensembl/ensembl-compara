@@ -669,7 +669,7 @@ sub pop_genotypes {
   ### Returns String
 
   my ($self, $pop_genotype_obj)  = @_;
-  return join '|', sort($pop_genotype_obj->allele1, $pop_genotype_obj->allele2);
+  return $pop_genotype_obj->genotype_string;
 }
 
 
@@ -889,7 +889,7 @@ sub individual_genotype {
   ### Returns String
 
   my ($self, $individual)  = @_;
-  return $individual->allele1."|".$individual->allele2;
+  return $individual->genotype_string;
 
 }
 
