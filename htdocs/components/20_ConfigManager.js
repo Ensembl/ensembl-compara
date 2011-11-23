@@ -105,10 +105,6 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
       $(this.fnSettings().nTableWrapper).show();
     });
     
-    var tr = $('.sets table tbody tr:first', this.el);
-    
-    this.elLk.activated = $('p.activated', this.el).css({ width: tr.outerWidth(), height: tr.outerHeight() });
-    
     tr = null;
   },
   
@@ -166,18 +162,14 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
   },
   
   activateRecord: function (tr, components) {
-    var panel    = this;
-    var bg       = tr.css('backgroundColor');
-    var position = tr.position();
+    var panel  = this;
+    var bg     = tr.css('backgroundColor');
+    var height = tr.height() + 'px';
     
-    tr.addClass('active').siblings('.active').removeClass('active').css('backgroundColor', '');
+    tr.siblings('.active').stop(true, true).removeClass('active').css('backgroundColor', '').find('.config_used').stop(true, true).hide();
     
-    clearTimeout(this.elLk.activated.stop(true).delay);
-    
-    this.elLk.activated.css({ top: position.top, left: position.left, display: 'block', opacity: 1 }).delay = setTimeout(function () {
-      tr.animate({ backgroundColor: bg }, 1, function () { $(this).removeClass('active').css('backgroundColor', ''); })
-      panel.elLk.activated.fadeOut(1000);
-    }, 2000);
+    tr.addClass('active').delay(1000).animate({ backgroundColor: bg }, 1000, function () { $(this).removeClass('active').css('backgroundColor', ''); });
+    tr.find('.config_used').css({ height: height, lineHeight: height, width: tr.width(), display: 'block' }).delay(1000).fadeOut(500);
     
     $.each(components.split(' '), function (i, component) {
       if (Ensembl.PanelManager.panels[component]) {
@@ -185,6 +177,8 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
         Ensembl.EventManager.trigger('activateConfig',  component);
       }
     });
+    
+    tr = null;
   },
   
   deleteRecord: function (tr, configId) {
