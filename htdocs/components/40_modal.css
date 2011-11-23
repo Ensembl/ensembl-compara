@@ -167,6 +167,7 @@ body.ie6 #modal_panel .fixed_width .modal_wrapper .panel { border-left: 0; }
 .modal_content .config_manager .sets a.create_set             { font-weight: bold; }
 .modal_content .config_manager .sets a.create_set span.cancel { display: none; float: right; margin-right: 9px; text-decoration: underline; cursor: pointer; }
 
+body.ie67 .modal_content .config_manager td div.config_used   { margin-top: -1px; }
 body.ie6 .modal_content .config_manager td div.heightWrap     { overflow: auto; height: auto; line-height: auto; margin-right: 0; }
 body.ie6 .modal_content .config_manager td .ellipsis          { display: none; }
 body.ie7 .modal_content .config_manager td img.toggle         { top: 4px; }

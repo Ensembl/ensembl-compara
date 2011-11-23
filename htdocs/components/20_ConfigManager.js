@@ -166,10 +166,11 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     var bg     = tr.css('backgroundColor');
     var height = tr.height() + 'px';
     
-    tr.siblings('.active').stop(true, true).removeClass('active').css('backgroundColor', '').find('.config_used').stop(true, true).hide();
+    tr.siblings('.active').stop(true, true).removeClass('active').css('backgroundColor', '')
+      .find('.config_used').stop(true, true).hide();
     
-    tr.addClass('active').delay(1000).animate({ backgroundColor: bg }, 1000, function () { $(this).removeClass('active').css('backgroundColor', ''); });
-    tr.find('.config_used').css({ height: height, lineHeight: height, width: tr.width(), display: 'block' }).delay(1000).fadeOut(500);
+    tr.addClass('active').delay(1000).animate({ backgroundColor: bg }, 1000, function () { $(this).removeClass('active').css('backgroundColor', ''); })
+      .find('.config_used').css({ height: height, lineHeight: height, width: tr.width() - 1, display: 'block' }).delay(1000).fadeOut(500);
     
     $.each(components.split(' '), function (i, component) {
       if (Ensembl.PanelManager.panels[component]) {
