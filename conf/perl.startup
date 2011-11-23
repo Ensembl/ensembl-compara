@@ -187,6 +187,8 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
 
  Ensembl version:    %d
 
+ Database Host:      %s
+
  External address:   %s/
  Real address:       %s://%s:%s
 
@@ -207,6 +209,8 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
 
 ',
   $conf->ENSEMBL_VERSION,
+
+  $conf->DATABASE_HOST,
 
   $conf->ENSEMBL_BASE_URL,
   $conf->ENSEMBL_PROTOCOL, $conf->ENSEMBL_SERVER,     $conf->ENSEMBL_PORT,
