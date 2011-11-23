@@ -720,7 +720,6 @@ sub _add_vcf_track {
 
 sub _add_flat_file_track {
   my ($self, $menu, $sub_type, $key, $name, $description, %options) = @_;
-  warn ">>> $key = $name";
   
   $menu ||= $self->get_node('user_data');
   
