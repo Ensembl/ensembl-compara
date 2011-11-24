@@ -925,6 +925,10 @@ CVS commit the changes.
 # rel65: 7m
 22c. Commit the DumpTrees_conf.pm file into the CVS if you'd like to keep the changes.
 
-22d. Report the locations of the dumps to the main Release Coordinator and/or the web people.
+22d. Ask Matthieu to run some OrthoXML dumps (all the trees merged in one file)
+
+22e. Report the locations of the dumps to the main Release Coordinator and/or the web people.
+     'target_dir'/emf should go to /emf/ensembl-compara/homologies/ on the ftp
+     'target_dir'/xml should go to /xml/ensembl-compara/homologies/ on the ftp
 
 23. Don't forget to cvs commit this document (if you have made any change)
