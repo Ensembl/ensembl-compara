@@ -130,8 +130,19 @@ Ensembl.LayoutManager.extend({
   },
   
   validateForms: function (context) {
-    $('form.check', context).validate().bind('submit', function (e) {
-      return $(this).parents('#modal_panel').length ? Ensembl.EventManager.trigger('modalFormSubmit', $(this)) : true;
+    $('form.check', context).validate().bind('submit', function () {
+      var form = $(this);
+      
+      if (form.parents('#modal_panel').length) {
+        var panels = form.parents('.js_panel').map(function () { return this.id; }).toArray();
+        var rtn;
+        
+        while (panels.length && typeof rtn === 'undefined') {
+          rtn = Ensembl.EventManager.triggerSpecific('modalFormSubmit', panels.shift(), form);
+        }
+        
+        return rtn;
+      }
     });
   },
   
