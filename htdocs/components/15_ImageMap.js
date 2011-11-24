@@ -35,6 +35,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.imageConfig = $('input.image_config', this.el).val();
     this.lastImage   = this.el.parents('.image_panel')[0] === Ensembl.images.last;
+    this.hashChangeReload = this.lastImage || $('.hash_change_reload', this.el).length;
     
     this.params.highlight = (Ensembl.images.total === 1 || !this.lastImage);
     
@@ -74,7 +75,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     if (Ensembl.images.total === 1) {
       this.highlightAllImages();
-    } else if (this.lastImage) {
+    } else if (this.hashChangeReload) {
       this.base();
     } else if (!this.multi) {
       var range = this.highlightRegions[0][0].region.range;
