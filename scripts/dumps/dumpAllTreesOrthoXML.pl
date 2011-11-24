@@ -20,7 +20,7 @@ Works better with some database connection parameters
 =cut
 
 my $opts = {};
-my @flags = qw(database=s user=s port=i host=s password=s help man adaptor=s output=s);
+my @flags = qw(database=s user=s port=i host=s password=s help man adaptor=s output=s possible_orth=i);
 GetOptions($opts, @flags) or pod2usage(1);
 pod2usage( -exitstatus => 0, -verbose => 1 ) if $opts->{help};
 pod2usage( -exitstatus => 0, -verbose => 2 ) if $opts->{man};
@@ -39,7 +39,8 @@ my $s = 'get_'.${$opts}{adaptor}.'Adaptor';
 my $ta = $db->$s;
 
 my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(
-   -HANDLE => $file_handle
+   -HANDLE => $file_handle,
+   -POSSIBLE_ORTHOLOGS => ${$opts}{possible_orth},
 );
 my $gdba = $db->get_GenomeDBAdaptor;
 my $ma = $db->get_MemberAdaptor;
