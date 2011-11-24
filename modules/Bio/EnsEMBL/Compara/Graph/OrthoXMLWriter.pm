@@ -359,7 +359,7 @@ sub _write_tree {
     foreach my $child (@{$tree->children()}) {
       $self->_write_tree($child);
     }
-  } else {
+  } elsif (not $tree->is_leaf) {
     # Can now write the tree
     $self->_process($tree);
   }
