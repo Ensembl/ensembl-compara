@@ -541,7 +541,11 @@ time ./run-healthcheck.sh -d mp12_ensembl_compara_65 -type compara -d2 .+_core_6
 #                 2.7h to execute for release 63
 #                 9.6h to execute for release 65
 
-10.4.5 Ask Matthieu to run the script patch_genes_projections.pl (or something like that). ** Matthieu is going to update this **
+10.4.5 Run the script to include projections of genes as homologies (first update the databases names)
+
+   perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline -core_host 127.0.0.1 -core_port 4304 -core_user ensro -core_dbname homo_sapiens_core_65_37 -of_host 127.0.0.1 -of_port 4304 -of_user ensro -of_dbname homo_sapiens_otherfeatures_65_37 -comp_url mysql://ensadmin:ensembl@127.0.0.1:4313/mp12_compara_homology_merged_65  -species homo_sapiens
+
+#         30min for release 65
 
 10.5 Final merger of "protein side" into the release database is done by running another mini-pipeline.
 
