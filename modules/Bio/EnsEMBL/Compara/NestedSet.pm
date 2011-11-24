@@ -1007,8 +1007,7 @@ sub _internal_nhx_format {
         	$nhx .= $format_mode->{name}->($self);
 
         } else {
-          my $name = sprintf("%s", $self->name);
-          $name = sprintf("%s", $self->get_tagvalue("taxon_name")) if ($name eq '');
+          my $name = sprintf("%s", $self->has_tag('name') ? $self->get_tagvalue('name') :  $self->get_tagvalue('taxon_name', ''));
           $name =~ s/\ /\_/g;
           $nhx .= $name;
         }
@@ -1062,7 +1061,7 @@ sub _internal_nhx_format {
         $nhx .= ":TID=$tid_value";
     }
     # GJ 2009-02-01 : Add img tags to string if necessary.
-      if ($self->get_tagvalue("img") ne '') {
+      if ($self->has_tag('img')) {
 	  $nhx .= ":IMG=".$self->get_tagvalue("img");
       }
 
