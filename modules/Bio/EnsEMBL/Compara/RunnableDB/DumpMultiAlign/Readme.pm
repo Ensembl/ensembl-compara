@@ -103,30 +103,22 @@ sub write_output {
 sub _create_specific_readme {
     my ($self) = @_;
 
-    my $compara_dba;
     #
     #Load registry
     #
     if ($self->param('reg_conf')) {
 	Bio::EnsEMBL::Registry->load_all($self->param('reg_conf'),1);
-	$compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($self->param('compara_dbname'), "compara");
-    } elsif ($self->param('compara_url')) {
-	#If define compara_url, must also define core_url(s)
-	Bio::EnsEMBL::Registry->load_registry_from_url($self->param('compara_url'));
-	if (!defined($self->param('core_url'))) {
-	    $self->throw("Must define core_url if define compara_url");
+    } elsif ($self->param('db_url')) {
+	my $db_urls = $self->param('db_url');
+	foreach my $db_url (@$db_urls) {
+	    Bio::EnsEMBL::Registry->load_registry_from_url($db_url);
 	}
-	my @core_urls = split ",", $self->param('core_url');
-
-	foreach my $core_url (@core_urls) {
-	    Bio::EnsEMBL::Registry->load_registry_from_url($self->param('core_url'));
-	}
-	$compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url=>$self->param('compara_url'));
     } else {
 	Bio::EnsEMBL::Registry->load_all();
-	$compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($self->param('compara_dbname'), "compara");
     }
-    
+
+    my $compara_dba = $self->go_figure_compara_dba($self->param('compara_db'));
+ 
     #Get meta_container adaptor
     my $meta_container = $compara_dba->get_MetaContainer;
 
