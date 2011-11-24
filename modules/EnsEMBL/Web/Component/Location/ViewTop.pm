@@ -20,6 +20,7 @@ sub content {
 
   return if $hub->param('show_top_panel') eq 'no';
   
+  my $flanking     = $hub->param('flanking');
   my $threshold    = 1e6 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
   my $image_config = $hub->get_imageconfig('contigviewtop');
   my ($seq_region_type, $seq_region_name, $seq_region_length) = map $object->$_, qw(seq_region_type seq_region_name seq_region_length);
@@ -29,6 +30,8 @@ sub content {
     $slice = $object->slice;
   } elsif ($seq_region_length < $threshold) {
     $slice = $hub->database('core')->get_SliceAdaptor->fetch_by_region($seq_region_type, $seq_region_name, 1, $seq_region_length, 1);
+  } elsif ($flanking && $object->length + (2 * $flanking) <= $threshold) {
+    $slice = $object->slice->expand($flanking, $flanking);
   } else {
     my $c = int $object->centrepoint;
     my $s = ($c - $threshold/2) + 1;
@@ -80,7 +83,7 @@ sub content {
   $image->{'panel_number'} = 'top';
   $image->set_button('drag', 'title' => 'Click or drag to centre display');
   
-  return $image->render;
+  return $image->render . ($flanking && $flanking * 2 < $threshold ? '<span class="hash_change_reload"></span>' : '');
 }
 
 1;
