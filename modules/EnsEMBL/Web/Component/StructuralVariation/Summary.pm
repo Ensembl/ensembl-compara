@@ -18,21 +18,41 @@ sub content {
   my $source       = $object->source;
   my $mappings     = $object->variation_feature_mapping;
   my $validation   = $object->validation_status;
-  my $summary      = sprintf '<dt>Variation class</dt><dd>%s (%s)</dd>', $object->class, $object->name;
+  my $failed       = $object->Obj->failed_description ? $self->failed() : ''; ## First warn if the SV has been failed
+  my $summary      = sprintf '<dt>Variation class</dt><dd>%s</dd>', $object->class;
      $summary     .= $self->get_allele_types($source);
      $summary     .= $self->get_source($source, $object->source_description);
      $summary     .= $self->get_study; 
+     $summary     .= $self->get_annotations;
      $summary     .= $self->location($mappings);
      $summary     .= $self->size($mappings);
      $summary     .= "<dt>Validation status</dt><dd>$validation</dd>" if $validation; 
-  
+     
   return qq{
     <div class="summary_panel">
+      $failed
       <dl class="summary">
         $summary
       </dl>
     </div>
   };
+}
+
+
+sub failed {
+  my $self = shift;
+  my @descs = @{$self->object->Obj->get_all_failed_descriptions};
+  my $html;
+  
+  if (scalar @descs > 1) {
+    $html  = '<p><ul>';
+    $html .= "<li>$_</li>" foreach @descs;
+    $html .= '</ul></p>';
+  } else {
+    $html = $descs[0];
+  }
+  
+  return $self->_warning('This structural variation has been flagged as failed', $html, '50%');
 }
 
 # Returns the list of the allele types (supporting evidence classes) with the associate colour
@@ -140,10 +160,11 @@ sub location {
   my ($location_link, $html, $location);
   
   if ($svf) {
+    my $type     = $mappings->{$svf}{'Type'};
     my $region   = $mappings->{$svf}{'Chr'}; 
     my $start    = $mappings->{$svf}{'start'};
     my $end      = $mappings->{$svf}{'end'};
-       $location = ($start == $end ? "$region:$start" : "$region:$start-$end") . ' (' . ($mappings->{$svf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
+       $location = ucfirst(lc $type).' <b>'.($start == $end ? "$region:$start" : "$region:$start-$end") . '</b> (' . ($mappings->{$svf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
     
     $location_link = sprintf(
       ' | <a href="%s">View in location tab</a>',
@@ -203,7 +224,7 @@ sub location {
   } else {
     my $current_svf = $mappings->{$svf};
     
-    $html .= "This feature maps to $location$location_link";
+    $html .= "$location$location_link";
     $html .= $self->get_outer_coordinates($current_svf);
     $html .= $self->get_inner_coordinates($current_svf);
   }
@@ -238,6 +259,19 @@ sub size {
   my $mappings = shift;
   my $svf      = $self->hub->param('svf');
   return sprintf '<dt>Genomic size</dt><dd>%s bp</dd>', $self->thousandify($mappings->{$svf}{'end'} - $mappings->{$svf}{'start'} + 1) if $svf || scalar(keys %$mappings) == 1;
+}
+
+sub get_annotations {
+  my $self   = shift;
+  my $object = $self->object;
+  my @strain;
+  my $html;
+  foreach my $sva (@{$object->get_structural_variation_annotations}) {
+    push(@strain,$sva->strain_name) if ($sva->strain_name);
+  }
+  $html .= '<dt>Strain</dt><dd>'.join(', ',@strain).'</dd>' if (scalar @strain);
+  
+  return $html;
 }
 
 1;
