@@ -244,7 +244,7 @@ sub write_trees {
 
   $trees = wrap_array($trees);
 
-  # Create a list of all members, groupes by species
+  # Create a list of all members, grouped by species
   my $hash_members = {};
   my $list_species = [];
   foreach my $tree (@{$trees}) {
