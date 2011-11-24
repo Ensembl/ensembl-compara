@@ -69,6 +69,24 @@ sub run {
 
     #substitute any hashes in analysis parameters with the correct values from analysis_job
     $cmd = $self->param_substitute($cmd);
+
+    #Convert compara_db into either a url or a name
+    if ($self->param('compara_db') =~ /^mysql:\/\//) {
+	$cmd .= " --compara_url " . $self->param('compara_db');
+    } else {
+	$cmd .= " --dbname " . $self->param('compara_db');
+    }
+
+    #Convert db_urls into a string
+    if ($self->param('db_urls')) {
+	my $str = join ",", @{$self->param('db_urls')};
+	$cmd .= (" --db '" . $str . "'");
+    }
+
+    if ($self->param('reg_conf')) {
+	$cmd .= " --reg_conf " . $self->param('reg_conf');
+    }
+
     #print "cmd $cmd \n";
 
     #
@@ -94,20 +112,27 @@ sub write_output {
     #Create emf2maf job if necesary
     #
     if ($self->param('maf_output_dir')) {
-	my $output_ids = "{\"output_file\"=>\"" . $self->param('dumped_output_file') . "\", \"num_blocks\" => \"" . $self->param('num_blocks') . "\"}";
+	my $output_ids = {'output_file'=>$self->param('dumped_output_file'),
+			  'num_blocks' =>$self->param('num_blocks')};
 
 	$self->dataflow_output_id($output_ids, 2);
 
     } else {
 	#Send dummy jobs to emf2maf
-	$self->dataflow_output_id("{}", 2);
+	#$self->dataflow_output_id("{}", 2);
+
+	#Send to compress
+	my $output_ids = {"output_file"=>$self->param('dumped_output_file')};
+	$self->dataflow_output_id($output_ids, 1);
+	
     }
 
     #
-    #Create Compress jobs
+    #Create Compress jobs - could this be put in the else and then emf2maf calls compress with both emf and maf?
     #
-    my $output_ids = "{\"output_file\"=>\"" . $self->param('dumped_output_file') . "\"}";
-    $self->dataflow_output_id($output_ids, 1);
+
+    #my $output_ids = "{\"output_file\"=>\"" . $self->param('dumped_output_file') . "\"}";
+    #$self->dataflow_output_id($output_ids, 1);
 }
 
 #
