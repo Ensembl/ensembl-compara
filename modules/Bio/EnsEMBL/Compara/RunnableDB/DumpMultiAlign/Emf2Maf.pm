@@ -44,9 +44,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =cut
 
-sub strict_hash_format {
-    return 0;
-}
+#sub strict_hash_format {
+#    return 0;
+#}
 
 sub fetch_input {
     my $self = shift;
@@ -59,7 +59,7 @@ sub run {
     #
     #Check if dummy jobs
     #
-    if ($self->param('output_file') eq "") {
+    if (!$self->param('output_file')) {
 	return 1;
     }
 
@@ -85,12 +85,17 @@ sub write_output {
     #
     #Check if dummy jobs
     #
-    if ($self->param('output_file') eq "") {
+    if (!$self->param('output_file')) {
 	return 1;
     }
 
+    #Create emf Compress job
+    my $emf_file = $self->param('output_file');
+    my $emf_output_ids = {"output_file"=>$emf_file};
+    $self->dataflow_output_id($emf_output_ids, 2);
+
     #
-    #Create Compress jobs
+    #Create maf Compress jobs
     #
     my $maf_file = $self->param('output_file');
     $maf_file =~ s/\.emf$/.maf/;
@@ -102,6 +107,8 @@ sub write_output {
     $output_ids .= "}";
 
     $self->dataflow_output_id($output_ids, 2);
+
+
 }
 
 #
