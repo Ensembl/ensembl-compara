@@ -680,6 +680,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
   },
   
+  formSubmit: function () {
+    return false;
+  },
+  
   updateConfiguration: function (delayReload, saveAs) {
     if ($('input.invalid', this.elLk.form).length) {
       return;
