@@ -999,7 +999,7 @@ sub render_genes {
   $self->_init_bump;
   
   if ($length > $max_length * 1001) {
-    $self->errorTrack('Genes only displayed for less than $max_length Kb.');
+    $self->errorTrack("Genes only displayed for less than $max_length Kb.");
     return;
   }
   
