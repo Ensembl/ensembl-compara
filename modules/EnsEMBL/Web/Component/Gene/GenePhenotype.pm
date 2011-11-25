@@ -92,7 +92,7 @@ sub stats_table {
     { key => 'view',    title => '',                   sort => 'none',           width => '5%',  align => 'center' },
     { key => 'phen',    title => 'Phenotype',          sort => 'string',         width => '45%'                    },
     { key => 'source',  title => 'Source(s)',          sort => 'string',         width => '30%'                    },
-    { key => 'kview',   title => 'Karyotype',          sort => 'none',           width => '10%'                    },
+    { key => 'lview',   title => 'Link',               sort => 'none',           width => '10%'                    },
   ];
   
   foreach my $va (@{$va_adaptor->fetch_all_by_associated_gene($gene_name)}) {
@@ -111,35 +111,57 @@ sub stats_table {
   my $warning_text = qq{<span style="color:red">(WARNING: table may not load for this number of variants!)</span>};
   my ($url, @rows);
   
+  
+  my $mart_somatic_url = 'http://www.ensembl.org/biomart/martview?VIRTUALSCHEMANAME=default'.
+                         '&ATTRIBUTES=hsapiens_snp_som.default.snp.refsnp_id|hsapiens_snp_som.default.snp.chr_name|'.
+                         'hsapiens_snp_som.default.snp.chrom_start|hsapiens_snp_som.default.snp.associated_gene'.
+                         '&FILTERS=hsapiens_snp_som.default.filters.phenotype_description.&quot;###PHE###&quot;'.
+                         '&VISIBLEPANEL=resultspanel';
+  my $max_lines = 1000;
+  
   foreach (sort keys %phenotypes) {
     my $phenotype    = $phenotypes{$_};
     my $table_id     = $_;
        $table_id     =~ s/[^\w]/_/g;
     my $phe_count    = scalar @{$phenotype->{'count'}};
-    my $warning      = $phe_count > 10000 ? $warning_text : '';
+    my $warning      = $phe_count > $max_lines ? $warning_text : '';
     my $sources_list = join ', ', map $self->source_link($_), @{$phenotype->{'source'}};
-    my $kview        = '-';
-       $kview        = sprintf '<a href="%s">[View on Karyotype]</a>', $hub->url({ type => 'Phenotype', action => 'Locations', ph => $phenotype->{'id'}, name => $_ }) unless /HGMD/;
+    my $lview        = '-';
+    
+    # BioMart link
+    my $bm_flag = 0;
+    if (grep {$_ eq 'COSMIC'} @{$phenotype->{source}}) {
+      if (scalar @{$va_adaptor->fetch_all_by_phenotype_id_source_name($phenotype->{'id'})} > 250) {
+        my $mart_phe_url = $mart_somatic_url;
+        $mart_phe_url =~ s/###PHE###/$_/;
+        $lview = qq{<a href="$mart_phe_url">[View list in BioMart]</a>};
+        $bm_flag = 1;
+      }
+    }
+    # Karyotype link
+    if ($bm_flag == 0) {
+      $lview = sprintf '<a href="%s">[View on Karyotype]</a>', $hub->url({ type => 'Phenotype', action => 'Locations', ph => $phenotype->{'id'}, name => $_ }) unless /HGMD/;
+    }
        
     push @rows, {
       phen   => "$_ $warning",
       count  => $phe_count,
       view   => $self->ajax_add($self->ajax_url(undef, { sub_table => $_ }), $table_id),
       source => $sources_list,
-      kview  => $kview
+      lview  => $lview
     };
   }
   
   # add the row for ALL variations if there are any
   if (my $total = scalar keys %$total_counts) {
-    my $warning = $total > 10000 ? $warning_text : '';
+    my $warning = $total > $max_lines ? $warning_text : '';
   
     push @rows, {
       phen   => "All variations with a phenotype annotation $warning",
       count  => qq{<span class="hidden">-</span>$total}, # create a hidden span to add so that ALL is always last in the table
       view   => $self->ajax_add($self->ajax_url(undef, { sub_table => 'ALL' }), 'ALL'),
       source => '-',
-      kview  => '-'
+      lview  => '-'
     };
   }
   
@@ -280,8 +302,8 @@ sub source_link {
   
   my $source_uc = uc $source;
   $source_uc    = 'OPEN_ACCESS_GWAS_DATABASE' if $source_uc =~ /OPEN/;
-	$source_uc   .= '_ID' if $source_uc =~ /COSMIC/;
-	$source_uc    = $1 if $source_uc =~ /(HGMD)/;
+  $source_uc   .= '_ID' if $source_uc =~ /COSMIC/;
+  $source_uc    = $1 if $source_uc =~ /(HGMD)/;
   my $url       = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
   
   if ($ext_id && $ext_id ne 'no-ref') {
@@ -298,9 +320,9 @@ sub source_link {
         $ext_id    =~ s/MIM\://; 
         $url =~ s/###ID###/$ext_id/;
       }
-		} elsif ($url =~/hgmd/) {
-			$url =~ s/###ID###/$gname/;
-			$url =~ s/###ACC###/$vname/;
+    } elsif ($url =~/hgmd/) {
+      $url =~ s/###ID###/$gname/;
+      $url =~ s/###ACC###/$vname/;
     } else {
       $url =~ s/###ID###/$vname/;
     }

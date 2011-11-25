@@ -34,13 +34,13 @@ sub content {
     { key => 'source',  title => 'Source(s)',     align => 'left', sort => 'html' },
   );
   if ($supporting_evidence!=0) {
-  	 $table->add_columns(
+     $table->add_columns(
       { key => 's_evidence', title => 'Supporting evidence(s)', align => 'left', sort => 'html' }
-	);
+  );
   }
   
   $table->add_columns(
-		{ key => 'study',   title => $study,               align => 'left', sort => 'html' },
+    { key => 'study',   title => $study,               align => 'left', sort => 'html' },
     { key => 'genes',   title => 'Reported gene(s)',   align => 'left', sort => 'none' },
     { key => 'variant', title => 'Associated variant', align => 'left', sort => 'none' },
   );
@@ -53,7 +53,7 @@ sub content {
   }
   
   $table->add_rows(@$_) for values %$table_rows;
-	
+  
   return $table->render;
 };
 
@@ -66,8 +66,16 @@ sub table_data {
   my %rows;
   my $has_evidence = 0;
    
+  my $mart_somatic_url = 'http://www.ensembl.org/biomart/martview?VIRTUALSCHEMANAME=default'.
+                         '&ATTRIBUTES=hsapiens_snp_som.default.snp.refsnp_id|hsapiens_snp_som.default.snp.chr_name|'.
+                         'hsapiens_snp_som.default.snp.chrom_start|hsapiens_snp_som.default.snp.associated_gene'.
+                         '&FILTERS=hsapiens_snp_som.default.filters.phenotype_description.&quot;###PHE###&quot;'.
+                         '&VISIBLEPANEL=resultspanel';
+                 
+                 
   foreach my $va (@$external_data) { 
-    my $disorder = $va->phenotype_description;
+    my $phenotype = $va->phenotype_description;
+    my $disorder  = $phenotype;
     
     if ($is_somatic) {
       $disorder =~ s/\:/ /;
@@ -81,24 +89,24 @@ sub table_data {
       @data_row = @{$rows{lc $disorder}};
     }
     
-    my $id           			 = $va->{'_phenotype_id'};
-    my $source_name  			 = $va->source_name;
-		my $study_name         = $va->study_name;
-    my $disease_url  			 = $hub->url({ type => 'Phenotype', action => 'Locations', ph => $id, name => $disorder }); 
-		my $source             = $self->source_link($source_name, $study_name, $va->external_reference, 1);
-		my $external_reference = $self->external_reference_link($va->external_reference) || $va->external_reference; # use raw value if can't be made into a link
+    my $id                 = $va->{'_phenotype_id'};
+    my $source_name        = $va->source_name;
+    my $study_name         = $va->study_name;
+    my $disease_url        = $hub->url({ type => 'Phenotype', action => 'Locations', ph => $id, name => $disorder }); 
+    my $source             = $self->source_link($source_name, $study_name, $va->external_reference, 1);
+    my $external_reference = $self->external_reference_link($va->external_reference) || $va->external_reference; # use raw value if can't be made into a link
     my $associated_studies = $va->associated_studies; # List of Study objects
-		
-		# Add the supporting evidence source(s)
-		my $a_study_source='';
-		if (defined($associated_studies)) {
-			$a_study_source = $self->supporting_evidence_link($associated_studies, $va->external_reference);
-		}
+    
+    # Add the supporting evidence source(s)
+    my $a_study_source = '';
+    if (defined($associated_studies)) {
+      $a_study_source = $self->supporting_evidence_link($associated_studies, $va->external_reference);
+    }
 
     if ($is_somatic) { 
       my @tumour_info      = split /\:/, $disorder;
       my $tissue           = $tumour_info[1];
-			$tissue              =~ s/^\s+//;
+      $tissue              =~ s/^\s+//;
       my $tissue_formatted = $tissue;
       my $source_study     = uc($source_name) . '_STUDY'; 
       $tissue_formatted    =~ s/\s+/\_/g; 
@@ -110,12 +118,23 @@ sub table_data {
     my $variant_link = $self->variation_link($va->variation->name);
     my $pval         = $va->p_value;
     
-    my $disease;
-    $disease  = qq{<b>$disorder</b>} if $disorder =~ /^\w+/;
-    $disease .= qq{<br /><a href="$disease_url">[View on Karyotype]</a>} unless ($disease =~ /HGMD/ or $disease =~ /COSMIC/);
+    my $disease  = qq{<b>$disorder</b>} if $disorder =~ /^\w+/;
     
-	
-	
+    # BioMart link
+    my $bm_flag = 0;
+    if ($disease =~ /COSMIC/) { 
+      if (scalar @{$va->adaptor->fetch_all_by_phenotype_id_source_name($id)} > 250) {
+        $disease_url = $mart_somatic_url;
+        $disease_url =~ s/###PHE###/$phenotype/;
+        $disease .= qq{<br /><a href="$disease_url">[View list in BioMart]</a>};
+        $bm_flag = 1;
+      }
+    }
+    # Karyotype link
+    if ($bm_flag == 0) {
+      $disease .= qq{<br /><a href="$disease_url">[View on Karyotype]</a>} unless ($disease =~ /HGMD/);
+    }
+  
     my $row = {
       disease => $disease,
       source  => $source,
@@ -125,11 +144,11 @@ sub table_data {
       variant => $variant_link,
       pvalue  => $pval
     };
-	
-	if ($a_study_source ne ''){
-		$row->{s_evidence} = $a_study_source;
-		$has_evidence = 1;
-	}
+  
+    if ($a_study_source ne ''){
+      $row->{s_evidence} = $a_study_source;
+      $has_evidence = 1;
+    }
     
     push @data_row, $row;
     $rows{lc $va->phenotype_description} = \@data_row;
@@ -152,8 +171,8 @@ sub gene_links {
   
   foreach my $g (@genes) {
     
-		$g =~ s/\s//g;
-		
+    $g =~ s/\s//g;
+    
     # try to fetch gene
     my $linkable = 0;
     
@@ -194,20 +213,20 @@ sub source_link {
   } elsif ($url =~/gwastudies/) {
     $ext_id    =~ s/pubmed\///; 
     $url          =~ s/###ID###/$ext_id/;
-	} elsif ($url =~/omim/) {
-		if ($code) {
-			my $vname = "search?search=".$self->object->name;
-			$url  =~ s/###ID###/$vname/; 
-		}
-		else {
-    	$ext_id    =~ s/MIM\://; 
-    	$url  =~ s/###ID###/$ext_id/;
-		}     
+  } elsif ($url =~/omim/) {
+    if ($code) {
+      my $vname = "search?search=".$self->object->name;
+      $url  =~ s/###ID###/$vname/; 
+    }
+    else {
+      $ext_id    =~ s/MIM\://; 
+      $url  =~ s/###ID###/$ext_id/;
+    }     
   } else {
     my $name = $self->object->Obj->name;
     $url =~ s/###ID###/$name/;
   }
-	return $source if $url eq "";
+  return $source if $url eq "";
   
   return qq{<a rel="external" href="$url">[$source]</a>};
 }
@@ -225,19 +244,19 @@ sub external_reference_link {
     
     foreach my $mim (split /\,\s*/, $study) {
       my $id = (split /\:/, $mim)[-1];
-			my $sub_link;
-			# Most associated allele
-			if (defined($allele)) {
-      	$sub_link = $self->hub->get_ExtURL_link($mim, 'OMIM', '');
-      	my @parts = split /\"/, $sub_link;
-      	$parts[1] .= 'entry/'.$id.'#'.$allele;
-      	$parts[-1] =~ s/\>[^\<]+\</\>$allele\</;
-				$sub_link = join('"', @parts);
-			}
-			# Study
+      my $sub_link;
+      # Most associated allele
+      if (defined($allele)) {
+        $sub_link = $self->hub->get_ExtURL_link($mim, 'OMIM', '');
+        my @parts = split /\"/, $sub_link;
+        $parts[1] .= 'entry/'.$id.'#'.$allele;
+        $parts[-1] =~ s/\>[^\<]+\</\>$allele\</;
+        $sub_link = join('"', @parts);
+      }
+      # Study
       else {
-				$sub_link = $self->hub->get_ExtURL_link($mim, 'OMIM', $id);
-			}
+        $sub_link = $self->hub->get_ExtURL_link($mim, 'OMIM', $id);
+      }
       $link .= ', '.$sub_link;
       $link =~ s/^\, //g;
     }
@@ -252,37 +271,37 @@ sub external_reference_link {
 
 # Supporting evidence links
 sub supporting_evidence_link {
-	my ($self, $associated, $ext_id) = @_;
-	my $as_html = '';
-	my $count = 0;
-	my $se_by_line = 2;
-	foreach my $st (@{$associated}) {
-		if ($as_html ne '') { $as_html .= ', '; }
-		if ($count==$se_by_line) {
-			$as_html .= '<br />';
-			$count = 0;
-		}
-		my $a_url = $st->url;
-		if (!defined($a_url)) {
-			$as_html .= $self->source_link($st->source,$st->name,$ext_id);
-		}
-		else {
-			my $a_source = $st->source;
-			if ($st->name) { $a_source = $st->name; }
-			$as_html .= qq{<a rel="external" href="$a_url">[$a_source]</a>};
-		}
-		$count++;
-	}
-	return $as_html;
+  my ($self, $associated, $ext_id) = @_;
+  my $as_html = '';
+  my $count = 0;
+  my $se_by_line = 2;
+  foreach my $st (@{$associated}) {
+    if ($as_html ne '') { $as_html .= ', '; }
+    if ($count==$se_by_line) {
+      $as_html .= '<br />';
+      $count = 0;
+    }
+    my $a_url = $st->url;
+    if (!defined($a_url)) {
+      $as_html .= $self->source_link($st->source,$st->name,$ext_id);
+    }
+    else {
+      my $a_source = $st->source;
+      if ($st->name) { $a_source = $st->name; }
+      $as_html .= qq{<a rel="external" href="$a_url">[$a_source]</a>};
+    }
+    $count++;
+  }
+  return $as_html;
 }
 
 
 sub allele_link {
-	my ($self, $study, $allele) = @_;
-	
-	# Only create allele-specific link if the study is a OMIM record and the allele is defined
-	return '' unless ($study =~ /^MIM\:/ && defined($allele));
-	return $self->external_reference_link($study,$allele);
+  my ($self, $study, $allele) = @_;
+  
+  # Only create allele-specific link if the study is a OMIM record and the allele is defined
+  return '' unless ($study =~ /^MIM\:/ && defined($allele));
+  return $self->external_reference_link($study,$allele);
 }
 
 
