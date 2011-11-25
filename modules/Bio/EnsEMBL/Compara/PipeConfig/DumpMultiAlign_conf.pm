@@ -15,6 +15,7 @@
 #
 #low coverage epo 35 way
 #init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --password **** --mlss_id 50036 --output_dir /lustre/scratch101/ensembl/kb3/scratch/hive/release_65/emf_dumps/epo_35_eutherian --species human --high_coverage_mlss_id 547 -dbname dumpMultiAlign_35way_eutherian_65 -pipeline_name DUMP_35_65
+#43 hours (1.8 days)
 #
 
 package Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf;
