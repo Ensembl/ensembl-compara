@@ -69,7 +69,7 @@ sub fetch_input {
     my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
     my $sql = "select homology_id from homology where method_link_species_set_id = ?";
-    my $sth = $self->db->dbc->prepare($sql);
+    my $sth = $self->compara_dba->dbc->prepare($sql);
 
     my @homology_ids = ();
     foreach my $species_set (@$species_sets) {
