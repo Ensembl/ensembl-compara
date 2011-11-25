@@ -81,7 +81,7 @@ sub content {
     else {
       $img   .= '.png';
       $title .= ' (NOT AVAILABLE)';
-      $html .= '<img src="/i/'.$img.'" class="portal" style="opacity:0.3; filter:alpha(opacity=30); zoom:1; padding: 5px; width:'.$size.'px; height:'.$size.'px;" alt="" title="'.$title.'" />';
+      $html .= '<img src="/img/'.$img.'" class="portal" style="opacity:0.3; filter:alpha(opacity=30); zoom:1; padding: 5px; width:'.$size.'px; height:'.$size.'px;" alt="" title="'.$title.'" />';
     }
     $i++;
     if ($i > 0 && ($i % $break) == 0) {
