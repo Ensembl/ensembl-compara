@@ -20,20 +20,21 @@ sub render {
 
   my %title = (
     'dna'     => 'Masked and unmasked genome sequences associated with the assembly (contigs, chromosomes etc.)',
-    'cdna'    => 'cDNA sequences for Ensembl or "ab initio" predicted genes',
-    'prot'    => 'Protein sequences for Ensembl or "ab initio" predicted genes',
-    'rna'     => 'Non-coding RNA gene predictions',
-    'embl'    => 'Ensembl database dumps in EMBL nucleotide sequence database format',
-    'genbank' => 'Ensembl database dumps in GenBank nucleotide sequence database format',
-    'gtf'     => 'Gene sets for each species. These files include annotations of both coding and non-coding genes',
-    'mysql'   => 'All Ensembl MySQL databases are available in text format as are the SQL table definition files',
-    'emf'     => 'Alignments of resequencing data from the ensembl_compara database',
-    'gvf'     => 'Variation data in GVF format',
-    'vep'     => 'Cache files for use with the VEP script',
-    'funcgen' => 'Regulation data in GFF format',
-    'coll'    => 'Additional regulation data (not in database)',
-    'bed'     => 'Constrained elements calculated using GERP',
-    'extra'   => 'Additional release data stored as flat files rather than MySQL for performance reasons',
+    'cdna'       => 'cDNA sequences for Ensembl or "ab initio" predicted genes',
+    'prot'       => 'Protein sequences for Ensembl or "ab initio" predicted genes',
+    'rna'        => 'Non-coding RNA gene predictions',
+    'embl'       => 'Ensembl database dumps in EMBL nucleotide sequence database format',
+    'genbank'    => 'Ensembl database dumps in GenBank nucleotide sequence database format',
+    'gtf'        => 'Gene sets for each species. These files include annotations of both coding and non-coding genes',
+    'mysql'      => 'All Ensembl MySQL databases are available in text format as are the SQL table definition files',
+    'emf'        => 'Alignments of resequencing data from the ensembl_compara database',
+    'gvf'        => 'Variation data in GVF format',
+    'vep'        => 'Cache files for use with the VEP script',
+    'funcgen'    => 'Regulation data in GFF format',
+    'coll'       => 'Additional regulation data (not in database)',
+    'bed'        => 'Constrained elements calculated using GERP',
+    'extra'      => 'Additional release data stored as flat files rather than MySQL for performance reasons',
+    'ancestral' => 'Ancestral Allele data in FASTA format',
   );
   
   $title{$_} = encode_entities($title{$_}) for keys %title;
@@ -41,12 +42,14 @@ sub render {
   my $EMF = $title{'emf'};
   my $BED = $title{'bed'};
   my $XML = $title{'xml'};
+  my $ANC = $title{'ancestral'};
 
   my $html = qq(
 <h3>Multi-species data</h3>
 <table class="ss tint" cellpadding="4">
 <tr>
 <th>Database</th>
+<th></th>
 <th></th>
 <th></th>
 <th></th>
@@ -58,14 +61,16 @@ sub render {
 <td style="text-align:center"><a rel="external" title="$EMF" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/emf/ensembl-compara/">EMF</a></td>
 <td style="text-align:center"><a rel="external" title="$BED" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/bed/">BED</a></td>
 <td style="text-align:center"><a rel="external" title="$XML" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/xml/ensembl-compara/homologies/">XML</a></td>
+<td style="text-align:center"><a rel="external" title="$ANC" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/fasta/ancestral_alleles">Ancestral Alleles</a></td>
 
 </tr>
 <tr class="bg2">
 <td>BioMart</td>
 <td style="text-align:center"><a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">MySQL</a></td>
-<td>-</td>
-<td>-</td>
-<td></td>
+<td style="text-align:center">-</td>
+<td style="text-align:center">-</td>
+<td style="text-align:center">-</td>
+<td style="text-align:center">-</td>
 </tr>
 </table>
 );
