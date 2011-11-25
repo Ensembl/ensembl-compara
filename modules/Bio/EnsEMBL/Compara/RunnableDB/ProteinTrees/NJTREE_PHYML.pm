@@ -519,6 +519,7 @@ sub store_tags
         if ($node->has_tag($tag)) {
             my $value = $node->get_tagvalue($tag);
             my $db_tag = $mapped_tags{$tag};
+            # Because the duplication_confidence_score won't be computed for dubious nodes
             $db_tag = 'duplication_confidence_score' if ($node->get_tagvalue('node_type') eq 'dubious' and $tag eq 'SIS');
             $node->store_tag($db_tag, $value);
             if ($self->debug) {
