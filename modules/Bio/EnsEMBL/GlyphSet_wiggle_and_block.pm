@@ -116,7 +116,7 @@ sub draw_block_features {
       while ( my ($mf_start, $mf_end) = splice (@mf_loci, 0, 2) ){  
         my $mf_length = ($mf_end - $mf_start) +1;
         $self->push($self->Rect({
-          'x'         => $mf_start,
+          'x'         => $mf_start -1,
           'y'         => $y,
           'height'    => $h,
           'width'     => $mf_length,
