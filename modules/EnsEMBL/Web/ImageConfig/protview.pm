@@ -9,6 +9,8 @@ use base qw(EnsEMBL::Web::ImageConfig);
 sub init {
   my $self = shift;
 
+  $self->set_parameters({ sortable_tracks => 'drag' });
+  
   $self->create_menus(qw(
     domain
     feature
@@ -21,17 +23,12 @@ sub init {
   $self->load_tracks;
   
   $self->modify_configs(
-    [ 'variation' ],
+    [ 'variation', 'somatic' ],
     { menu => 'no' }
   );
   
   $self->modify_configs(
-    [ 'variation_feature_variation' ],
-    { menu => 'yes', glyphset => 'P_variation', display => 'normal', strand => 'r', colourset => 'protein_feature', depth => 1e5 }
-  );
-	
-	$self->modify_configs(
-    [ 'somatic_mutation_COSMIC' ],
+    [ 'variation_feature_variation', 'somatic_mutation_COSMIC' ],
     { menu => 'yes', glyphset => 'P_variation', display => 'normal', strand => 'r', colourset => 'protein_feature', depth => 1e5 }
   );
   
