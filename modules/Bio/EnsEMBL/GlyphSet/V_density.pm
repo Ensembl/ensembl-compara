@@ -22,11 +22,9 @@ sub build_tracks {
   my $chr = $self->{'chr'} || $self->{'container'}->{'chr'};
   my $image_config  = $self->{'config'};
   my $track_config  = $self->{'my_config'};
-  unless ($data) {
-    my $data_id = $track_config->get('id');
-    $data = $self->{'data'}{$chr}{$data_id};
-  }
-
+  
+  $data ||= $self->{'data'}{$chr};
+  
   ## Translate legacy styles into internal ones
   my $display       = $self->{'display'};
   if ($display) {
@@ -76,9 +74,9 @@ sub build_tracks {
 	  }
     push @settings, $T;
   }
-
+  
   ## Add max/min lines if required
-  if ($display eq '_line' && $track_config->get('maxmin')) {
+  if ($display eq '_line' && $track_config->get('maxmin') && scalar @settings) {
     my $label2        = $track_config->get( 'labels' );
     $self->label2( $self->Text({
        'text'      => 'Min:'.$chr_min_data.' Max:'.$chr_max_data,

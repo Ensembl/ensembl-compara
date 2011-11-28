@@ -17,6 +17,7 @@ sub new {
     my @chromosomes = ($container->{'chr'});
     my @configs     = $config->get_tracks;
     my $scalex      = $config->get_parameter('image_height') / $config->get_parameter('container_width');
+    my $user_data   = $config->get_node('user_data');
     my $pos         = 100000;
     my $tmp         = {};
     my $flag        = 0;
@@ -32,21 +33,17 @@ sub new {
     $config->{'transform'}->{'scalex'}         = $scalex;
     $config->{'transform'}->{'absolutescalex'} = 1;
     $config->{'transform'}->{'translatex'}    += $config->get_parameter('top_margin');
-  
+    
+    $self->{'storage'} = { %{$self->{'storage'} || {}}, %{$config->load_user_track_data(\@chromosomes)} } if $user_data; ## Parse and cache data for use on subsequent chromosomes
+    
     foreach my $chr (@chromosomes) {
       $container->{'chr'} = $chr;
-     
-      ## Turn off band labels if we have pointer tracks 
+      
       foreach my $row_config (@configs) {
         my $display = $row_config->get('display') || ($row_config->get('on') eq 'on' ? 'normal' : 'off');
-        if ($display =~ /highlight/) {
-          $config->set_parameter('band_labels', 'off');
-        }
-      }
-
-      foreach my $row_config (@configs) {
-        my $display = $row_config->get('display') || ($row_config->get('on') eq 'on' ? 'normal' : 'off');
-    
+        
+        $config->set_parameter('band_labels', 'off') if $display =~ /highlight/; ## Turn off band labels if we have pointer tracks 
+        
         next if $display eq 'off' || $display =~ /highlight/;
        
         my $classname = "$self->{'prefix'}::GlyphSet::" . $row_config->get('glyphset');
@@ -73,20 +70,9 @@ sub new {
 	        next;
         }
         
-        $glyphset->{'chr'} = $chr; 
-
-        ## Parse and/or cache data for use on subsequent chromosomes
-        if ($row_config->get('id')) {
-          my $data = $self->{'storage'}{$row_config->get('id')};
-          
-          unless (defined($data->{$chr})) {
-            $data = $glyphset->data(\@chromosomes); 
-            $self->{'storage'}{$row_config->get('id')} = $data;
-          }
-          
-          $glyphset->{'data'} = $data;
-        }
-
+        $glyphset->{'chr'}    = $chr;
+        $glyphset->{'data'} ||= $self->{'storage'}{$row_config->id};
+        
         $glyphset->render_normal;
 
         if (@{$glyphset->{'glyphs'} || []}) {
@@ -97,7 +83,7 @@ sub new {
 	        $chr_glyphset_counts{$chr}++;
         }
       }
-    }    
+    }
 
     ## Firstly lets work how many entries to draw per row!
     ## Then work out the minimum start for each of these rows
