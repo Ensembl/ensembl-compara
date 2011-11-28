@@ -77,8 +77,11 @@ sub upload {
       if ($file->save) {
         my $session = $hub->session;
         my $code    = join '_', $file->md5, $session->session_id;
+        my $format  = $hub->param('format');
+           $format  = 'BED' if $format =~ /bedgraph/i;
         my %inputs  = map $_->[1] ? @$_ : (), map [ $_, $hub->param($_) ], qw(filetype assembly nonpositional);
         
+        $inputs{'format'}    = $format if $format;
         $params->{'species'} = $hub->param('species') || $hub->species;
         
         ## Attach data species to session
