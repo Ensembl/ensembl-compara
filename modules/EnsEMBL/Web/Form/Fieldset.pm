@@ -11,6 +11,7 @@ use strict;
 ##  - Buttons always go at the bottom
 
 use EnsEMBL::Web::Form::Element;
+use EnsEMBL::Web::Exceptions;
 
 use base qw(EnsEMBL::Web::DOM::Node::Element::Fieldset);
 
@@ -43,26 +44,26 @@ sub render {
 
   #css stuff
   my $css_class = {
-    'inputtext'     => $self->CSS_CLASS_TEXT_INPUT,
-    'inputpassword' => $self->CSS_CLASS_TEXT_INPUT,
-    'inputfile'     => $self->CSS_CLASS_FILE_INPUT,
-    'inputsubmit'   => $self->CSS_CLASS_BUTTON,
-    'inputbutton'   => $self->CSS_CLASS_BUTTON,
-    'inputreset'    => $self->CSS_CLASS_BUTTON,
+    'text'          => $self->CSS_CLASS_TEXT_INPUT,
+    'password'      => $self->CSS_CLASS_TEXT_INPUT,
+    'file'          => $self->CSS_CLASS_FILE_INPUT,
+    'submit'        => $self->CSS_CLASS_BUTTON,
+    'button'        => $self->CSS_CLASS_BUTTON,
+    'reset'         => $self->CSS_CLASS_BUTTON,
     'select'        => $self->CSS_CLASS_SELECT,
     'textarea'      => $self->CSS_CLASS_TEXTAREA
   };
   for (@{$self->inputs}) {
-    my $key = $_->node_name eq 'input' ? 'input'.$_->get_attribute('type') : $_->node_name;
+    my $key = $_->node_name eq 'input' ? $_->get_attribute('type') : $_->node_name;
     $_->set_attribute('class', $css_class->{$key}) if exists $css_class->{$key};
   }
 
   my $i = 0;
-  if ($self->get_flag($self->_FLAG_STRIPED)) {
+  if ($self->has_flag($self->_FLAG_STRIPED)) {
     for (@{$self->child_nodes}) {
-      next if $_->node_name eq 'input' || $_->get_flag($self->_FLAG_LEGEND) || $_->get_flag($self->_FLAG_HONEYPOT) || $_->get_flag($self->_FLAG_BUTTON);#ignore hidden inputs, legend, honeypot and buttons
+      next if $_->node_name eq 'input' || $_->has_flag($self->_FLAG_LEGEND) || $_->has_flag($self->_FLAG_HONEYPOT) || $_->has_flag($self->_FLAG_BUTTON);#ignore hidden inputs, legend, honeypot and buttons
       $_->set_attribute('class', $i % 2 == 0 ? $self->CSS_EVEN_ROW : $self->CSS_ODD_ROW);
-      $i++ if $_->get_flag($self->_FLAG_FIELD) || $_->get_flag($self->_FLAG_ELEMENT);
+      $i++ if $_->has_flag($self->_FLAG_FIELD) || $_->has_flag($self->_FLAG_ELEMENT);
     }
   }
 
@@ -73,8 +74,6 @@ sub configure {
   ## Configures the fieldset with some extra flags and variables
   ## @return Configured fieldset
   my ($self, $params) = @_;
-  $self->{'__id'}   = $params->{'form_name'}  if $params->{'form_name'};
-  $self->{'__name'} = $params->{'name'}       if $params->{'name'};
   $self->legend($params->{'legend'})          if $params->{'legend'};
   $self->set_flag($self->_FLAG_STRIPED)       if $params->{'stripes'};
   return $self;
@@ -118,7 +117,7 @@ sub get_legend {
   ## Gets the legend of the fieldset
   ## @return DOM::Node::Element::H2 object or undef
   my $self = shift;
-  return $self->first_child && $self->first_child->get_flag($self->_FLAG_LEGEND) ? $self->first_child : undef;
+  return $self->first_child && $self->first_child->has_flag($self->_FLAG_LEGEND) ? $self->first_child : undef;
 }
 
 sub add_field {
@@ -129,9 +128,9 @@ sub add_field {
   ##  - label             innerHTML for <label>
   ##  - notes             innerHTML for foot notes
   ##  - head_notes        innerHTML for head notes
+  ##  - inline            Flag to tell whether all elements are to be displayed in a horizontal line
   ##  - elements          HashRef with keys as accepted by Form::Element::configure() OR ArrayRef of similar HashRefs in case of multiple elements
   ##                      In case of only one element, 'elements' key can be missed giving all child keys of 'elements' hashref to parent hashref.
-  ##  - inline            Flag to tell whether all elements are to be displayed in a horizontal line
   ##  - Other keys can also be considered - see elements key.
   my ($self, $params) = @_;
 
@@ -141,41 +140,28 @@ sub add_field {
     return $return;
   }
 
-  my $field = $self->dom->create_element('form-field');
-  $field->set_attribute('class', $params->{'field_class'}) if exists $params->{'field_class'};
-  $field->label($params->{'label'}) if exists $params->{'label'};
+  my $field_params  = { map {exists $params->{$_} ? ($_, delete $params->{$_}) : ()} qw(field_class label head_notes notes inline) };
+  my $elements      = exists $params->{'elements'} ? ref($params->{'elements'}) eq 'HASH' ? [ $params->{'elements'} ] : $params->{'elements'} : [ $params ];
+  my $is_honeypot   = 0;
 
-  # add notes
-  $field->head_notes($params->{'head_notes'}) if (exists $params->{'head_notes'});
-  $field->foot_notes($params->{'notes'})      if (exists $params->{'notes'});
+  for (@$elements) {
 
-  # find out which elements are to be added
-  my $elements = [];
-  if (exists $params->{'elements'}) {
-    $elements = ref($params->{'elements'}) eq 'HASH' ? [ $params->{'elements'} ] : $params->{'elements'};
-  }
-  else {
-    exists $params->{$_} and delete $params->{$_} for qw(field_class label head_notes notes);
-    $elements = [ $params ];
-  }
-  
-  # add elements
-  for (@{$elements}) {
-  
     # if honeypot element
     if (lc $_->{'type'} eq 'honeypot') {
       $_->{'type'} = 'text';
-      $field->set_attribute('class', 'hidden');
-      $field->set_flag($self->_FLAG_HONEYPOT);
+      $field_params->{'field_class'} = sprintf('hidden %s', $field_params->{'field_class'} || '');
+      $is_honeypot = 1;
     }
 
     $_->{'id'} ||= $self->_next_id;
-    $field->add_element($_, $params->{'inline'} || 0);
   }
 
+  my $field = $self->dom->create_element('form-field')->configure({%$field_params, 'elements', $elements});
+
+  $field->set_flag($self->_FLAG_HONEYPOT) if $is_honeypot;
   $field->set_flag($self->_FLAG_FIELD);
   my $last_field = $self->last_child;
-  return $last_field && $last_field->get_flag($self->_FLAG_BUTTON) ? $self->insert_before($field, $last_field) : $self->append_child($field);
+  return $last_field && $last_field->has_flag($self->_FLAG_BUTTON) ? $self->insert_before($field, $last_field) : $self->append_child($field);
 }
 
 sub add_matrix {
@@ -201,19 +187,16 @@ sub _add_element {## TODO - remove prefixed underscore once compatibile
   my $element = $self->dom->create_element('form-element-'.$params->{'type'});
 
   #error handling
-  if (!$element) {
-    warn qq(DOM Could not create element "$params->{'type'}". Perhaps there's no corresponding class in Form::Element, or has not been mapped in Form::Element::map_element_class);
-    return undef;
-  }
+  throw exception(
+    'FormException::UnknownElementException',
+    qq(DOM Could not create element "$params->{'type'}". Perhaps there's no corresponding class in Form::Element, or has not been mapped in Form::Element::map_element_class)
+  ) unless $element;
 
   $params->{'id'} ||= $self->_next_id;
   $element->configure($params);
-  if ($element->node_name ne 'div') {
-    my $div = $self->dom->create_element('div');
-    $div->append_child($element);
-    return $self->append_child($div);
-  }
+  $element = $self->dom->create_element('div', {'children' => [ $element ]}) if $element->node_name ne 'div';
   $element->set_flag($self->_FLAG_ELEMENT);
+
   return $self->append_child($element);
 }
 
@@ -268,7 +251,7 @@ sub add_hidden {
   $hidden->set_attribute('id',    $params->{'id'})    if $params->{'id'};
   $hidden->set_attribute('class', $params->{'class'}) if $params->{'class'};
   my $reference = $self->first_child;
-  $reference = $reference->next_sibling while $reference && ($reference->node_name eq 'input' || $reference->get_flag($self->_FLAG_LEGEND));
+  $reference = $reference->next_sibling while $reference && ($reference->node_name eq 'input' || $reference->has_flag($self->_FLAG_LEGEND));
   return $reference ? $self->insert_before($hidden, $reference) : $self->append_child($hidden);
 }
 
@@ -286,34 +269,26 @@ sub add_notes {
     push @$return, $self->add_notes($_) for @$params;
     return $return;
   }
-  
-  my $notes = $self->dom->create_element('div');
-  $params = { 'text' => $params, 'class' => $self->CSS_CLASS_NOTES } if ref $params ne 'HASH';
-  
-  if (exists $params->{'text'}) {
-    $notes->inner_HTML($params->{'text'});
-  }
-  
-  if (exists $params->{'list'}) {
-    my $list = $self->dom->create_element($params->{'serialise'} ? 'ol' : 'ul');
-    $list->append_child($self->dom->create_element('li', { inner_HTML => $_ })) for @{$params->{'list'}};
-    $notes->append_child($list);
-  }
-  
-  $notes->set_attribute('class', exists $params->{'class'} ? $params->{'class'} : $self->CSS_CLASS_NOTES);
-  $self->append_child($notes);
-  
+
+  $params = { 'text' => $params } unless ref $params eq 'HASH';
+
+  my $notes = $self->append_child('div', {'class' => $params->{'class'} || $self->CSS_CLASS_NOTES});
+
+  $notes->inner_HTML($params->{'text'}) if exists $params->{'text'};
+  $notes->append_child({
+    'node_name' => $params->{'serialise'} ? 'ol' : 'ul',
+    'children'  => [ map {'node_name' => 'li', 'inner_HTML' => $_}, @{$params->{'list'}} ],
+  }) if exists $params->{'list'};
+
   return $notes;
 }
-
 
 ## Other helper methods
 sub _next_id {
   my $self = shift;
-  $self->{'__set_id'} ||= 1;
-  $self->{'__id'} ||= $self->form->id;
-  $self->{'__name'} ||= $self->unique_id;
-  return $self->{'__id'}.'_'.$self->{'__name'}.'_'.($self->{'__set_id'}++);
+  $self->{'__next_id'}    ||= 1;
+  $self->{'__unique_id'}  ||= $self->unique_id;
+  return $self->{'__unique_id'}.'_'.($self->{'__next_id'}++);
 }
 
 
