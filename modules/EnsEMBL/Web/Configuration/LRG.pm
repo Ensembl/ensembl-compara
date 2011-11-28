@@ -91,6 +91,14 @@ sub populate_tree {
     { 'availability' => 'lrg', 'concise' => 'Protein sequence' }
   ));
 
+  $self->create_node('ProteinSummary', 'Protein summary',
+    [qw(
+      image      EnsEMBL::Web::Component::LRG::TranslationImage
+    )],
+    { 'availability' => 'lrg', 'concise' => 'Protein summary' }
+  );
+
+
   $self->create_node('Differences', 'Reference comparison',
     [qw( 
 		   exons EnsEMBL::Web::Component::LRG::LRGDiff 
