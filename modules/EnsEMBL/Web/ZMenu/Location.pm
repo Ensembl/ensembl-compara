@@ -15,6 +15,7 @@ sub content {
   my $r             = $hub->param('r');
   my $alt_assembly  = $hub->param('assembly'); # code for alternative assembly
   my $alt_clone     = $hub->param('jump_loc'); # code for alternative clones
+  my $class         = $hub->param('class'); # code for patch regions
   my $threshold     = 1000100 * ($species_defs->ENSEMBL_GENOME_SIZE||1);
   my $this_assembly = $species_defs->ASSEMBLY_NAME;
   my ($chr, $loc)   = split ':', $r;
@@ -61,6 +62,25 @@ sub content {
     $self->add_entry({
       label => "Status: $status"
     });
+
+  } elsif ($class && $class =~/^patch/){
+    my $db_adaptor = $hub->database('core');
+    my $slice  = $db_adaptor->get_SliceAdaptor->fetch_by_region('chromosome', $chr);
+    my $projections = $slice->project('supercontig');
+    my $synonym = '';
+    foreach my $projection_slice (@$projections) { 
+      my $seqlevel_slice = $projection_slice->to_Slice();
+      my @synonyms = @{$seqlevel_slice->get_all_synonyms()};
+      foreach (@synonyms) {
+        $synonym .= $_->name .', ';
+      } 
+    }
+    if ($synonym =~/^\w/) {
+      $synonym =~s/,\s$//;
+      $self->add_entry({
+        label => "Synonyms: $synonym"
+      });
+    }
   }
 
   $self->caption($caption || $r);
