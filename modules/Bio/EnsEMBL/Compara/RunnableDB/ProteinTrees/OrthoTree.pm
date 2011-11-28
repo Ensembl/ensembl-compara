@@ -352,6 +352,7 @@ sub display_link_analysis
     print "    ";
   }
   printf("%9s)", $ancestor->node_id);
+  printf(" %.4f ", $ancestor->get_tagvalue('duplication_confidence_score'));
 
   my $taxon_level = $ancestor->get_tagvalue('taxon_level');
   printf(" %s %s %s\n", 
@@ -973,7 +974,7 @@ sub store_homologies {
     $self->display_link_analysis($genepairlink) if($self->debug>2);
 
     my $type = $genepairlink->get_tagvalue("orthotree_type");
-    my $dcs = $genepairlink->{duplication_confidence_score};
+    my $dcs = $genepairlink->get_tagvalue('ancestor')->get_tagvalue('duplication_confidence_score');
     next if ($type eq 'possible_ortholog' and $dcs > $self->param('no_between'));
 
     my $homology = $self->store_gene_link_as_homology($genepairlink);
