@@ -20,7 +20,7 @@ sub content {
   my $html;
 
   if ($upload) {
-    my $format  = $upload->{'format'};
+    my $format  = $upload->{'format'} || $hub->param('format');
     my $species = $upload->{'species'} ? $hub->species_defs->get_config($upload->{'species'}, 'SPECIES_SCIENTIFIC_NAME') : '';
     
     $html = sprintf('
