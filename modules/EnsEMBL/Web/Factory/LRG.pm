@@ -29,13 +29,15 @@ sub createObjects {
       $self->delete_param('lrg');
     }
   }
+  elsif (!$self->hub->param('lrg') && $self->hub->action ne 'Genome') {
+    return $self->problem('fatal', 'LRG ID required', $self->_help('An LRG ID is required to build this page.'))
+  }
 }
 
 sub _help {
   my ($self, $string) = @_;
-  my %sample    = %{$self->species_defs->SAMPLE_DATA ||{}};
   my $help_text = $string ? sprintf '<p>%s</p>', encode_entities($string) : '';
-  my $url       = $self->hub->url({ __clear => 1, action => 'Summary', lrg => $sample{'LRG_PARAM'} });
+  my $url       = $self->hub->url({ __clear => 1, action => 'Summary', lrg => 'LRG_1' });
 
   $help_text .= sprintf('
     <p>
