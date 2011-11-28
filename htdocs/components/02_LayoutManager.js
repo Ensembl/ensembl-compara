@@ -212,7 +212,7 @@ Ensembl.LayoutManager.extend({
     
     $('input[name=r]', 'form:not(#core_params)').val(r);
     
-    $('h2.caption').html(function (i, html) {
+    $('h1.summary-heading').html(function (i, html) {
       return html.replace(/^(Chromosome ).+/, '$1' + text);
     });
     
