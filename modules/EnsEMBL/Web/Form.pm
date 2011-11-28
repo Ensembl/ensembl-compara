@@ -75,8 +75,8 @@ sub new {
 sub render {
   ## @overrides
   ## Modifies the form before calling the inherited render method  
-  my ($self) = @_; 
-  return '' if($self->format ne 'HTML');  #dont return any form stuff if the format is not HTML (webpage) (eg: csv)
+  my ($self) = @_;
+  return '' if $self->format ne 'HTML';  #dont return any form stuff if the format is not HTML (webpage) (eg: csv)
   
   ## change form attributes for uploading a file
   for (@{$self->get_elements_by_tag_name('input')}) {
@@ -90,7 +90,7 @@ sub render {
       last;
     }
   }
-  return $self->SUPER::render();
+  return $self->SUPER::render;
 }
 
 sub fieldsets {
@@ -132,11 +132,7 @@ sub add_fieldset {
   ## @return Form::Fieldset object
   my $self = shift;
   my $fieldset = $self->dom->create_element('form-fieldset');
-  if (@_) {
-    my $params = ref($_[0]) eq 'HASH' ? $_[0] : {'legend' => $_[0]};
-    $params->{'form_name'} = $self->id;
-    $fieldset->configure($params);
-  }
+  $fieldset->configure(ref($_[0]) eq 'HASH' ? $_[0] : {'legend' => $_[0]}) if @_;
 
   my $foot_notes = $self->foot_notes;
   return scalar @$foot_notes ? $self->insert_before($fieldset, $foot_notes->[0]) : $self->append_child($fieldset);
@@ -152,15 +148,8 @@ sub heading {
   ## Gets existing or modifies existing or adds new heading at the top of the form
   ## @param Heading text (is not escaped before adding)
   ## @return DOM::Node::Element::H? object
-  my $self = shift;
-  my $heading = undef;
-  if ($self->first_child && $self->first_child->node_name eq $self->HEADING_TAG) {
-    $heading = $self->first_child;
-  }
-  else {
-    $heading = $self->dom->create_element($self->HEADING_TAG);
-    $self->prepend_child($heading); #always in the beginning
-  }
+  my $self    = shift;
+  my $heading = $self->first_child && $self->first_child->node_name eq $self->HEADING_TAG ? $self->first_child : $self->prepend_child($self->HEADING_TAG);
   $heading->inner_HTML(shift) if @_;
   return $heading;
 }
@@ -186,49 +175,35 @@ sub add_notes {
   $params->{'location'} = 'head' if exists $params->{'heading'};
   return $self->fieldset->add_notes($params) unless exists $params->{'location'};
 
-  my $location = $params->{'location'} eq 'foot' ? 'foot' : 'head';
-  
-  my $notes = $self->dom->create_element('div', {'class' => $params->{'class'} || $self->CSS_CLASS_NOTES});
-  $notes->set_attribute('id', $params->{'id'}) if exists $params->{'id'};
-  
-  if (exists $params->{'heading'}) {
-    my $heading = $self->dom->create_element($self->NOTES_HEADING_TAG);
-    $heading->inner_HTML($params->{'heading'});
-    $notes->append_child($heading);
-  }
-  
-  if (exists $params->{'text'}) {
-    my $text = $self->dom->create_element('div');
-    $text->inner_HTML($params->{'text'});
-    $notes->append_child($text);
-  }
-  
-  if (exists $params->{'list'}) {
-    my $list = $self->dom->create_element($params->{'serialise'} ? 'ol' : 'ul');
-    for (@{$params->{'list'}}) {
-      my $li = $self->dom->create_element('li');
-      $li->inner_HTML($_);
-      $list->append_child($li);
-    }
-    $notes->append_child($list);
-  }
-  
-  # if foot notes
-  if ($location eq 'foot') {
-    $notes->set_flag($self->_FLAG_FOOT_NOTE);
-    return $self->append_child($notes);
-  }
-  
-  # else if head notes
-  $notes->set_flag($self->_FLAG_HEAD_NOTE);
-  
-  my $fieldsets = $self->fieldsets;
-  return $self->insert_before($notes, $fieldsets->[0]) if scalar @$fieldsets;   # insert head note before fieldset
+  my $notes = $self->dom->create_element('div', {
+    'flags' => $params->{'location'} eq 'foot' ? $self->_FLAG_FOOT_NOTE : $self->_FLAG_HEAD_NOTE,
+    'class' => $params->{'class'} || $self->CSS_CLASS_NOTES,
+    (exists $params->{'id'} ? ('id' => $params->{'id'}) : ()),
+  });
 
-  my $foot_notes = $self->foot_notes;
-  return $self->insert_before($notes, $foot_notes->[0]) if scalar @$foot_notes; # insert head note before foot note if no fieldset found
+  $notes->append_child({
+    'node_name'   => $self->NOTES_HEADING_TAG,
+    'inner_HTML'  => $params->{'heading'}
+  }) if exists $params->{'heading'};
 
-  return $self->append_child($notes);                                           # just append to the form if nothing found
+  $notes->append_child({
+    'node_name'   => 'div',
+    'inner_HTML'  => $params->{'text'}
+  }) if exists $params->{'text'};
+
+  $notes->append_child({
+    'node_name'   => $params->{'serialise'} ? 'ol' : 'ul',
+    'children'    => [ map {'node_name' => 'li', 'inner_HTML' => $_}, @{$params->{'list'}}]
+  }) if exists $params->{'list'};
+  
+  # if head notes
+  if ($params->{'location'} eq 'head') {
+    return $self->insert_before($notes, $_) for @{$self->fieldsets};  # insert head note before first fieldset
+    return $self->insert_before($notes, $_) for @{$self->foot_notes}; # insert head note before foot note if no fieldset found
+  }
+
+  # if foot notes, or if head notes but nothing added to the form yet
+  return $self->append_child($notes);
 }
 
 sub force_reload_on_submit {
@@ -242,12 +217,13 @@ sub force_reload_on_submit {
 }
 
 ## Addition of new form elements is always done to last fieldset.
-sub add_field {           shift->fieldset->add_field(@_);           }
-sub add_hidden {          shift->fieldset->add_hidden(@_);          }
-sub add_matrix {          shift->fieldset->add_matrix(@_);          }
-sub add_button {          shift->fieldset->add_button(@_);          }
-sub add_element {         shift->fieldset->add_element(@_);         }
-sub format      {         return shift->{_format};                 }
+sub add_field   { shift->fieldset->add_field(@_);   }
+sub add_hidden  { shift->fieldset->add_hidden(@_);  }
+sub add_matrix  { shift->fieldset->add_matrix(@_);  }
+sub add_button  { shift->fieldset->add_button(@_);  }
+sub add_element { shift->fieldset->add_element(@_); }
+
+sub format      { shift->{'_format'};               }
 
 
 ##################################
