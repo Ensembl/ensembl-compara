@@ -240,6 +240,11 @@ sub populate_tree {
     )
   );
 
+    $self->create_node( 'DropUpload', '',
+    [], { 'availability' => 1, 'no_menu_entry' => 1,
+    'command' => 'EnsEMBL::Web::Command::UserData::DropUpload'}
+  );
+  
   ## Add "invisible" nodes used by interface but not displayed in navigation
   $self->create_node( 'Message', '',
     [qw(message EnsEMBL::Web::Component::CommandMessage
