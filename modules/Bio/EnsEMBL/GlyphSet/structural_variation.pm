@@ -143,11 +143,10 @@ sub href {
   my ($self, $f) = @_;
   
   my $href = $self->_url({
-    species =>  $self->species,
-    action  => 'StructuralVariation',
-    sv      => $f->variation_name,
-    svf     => $f->dbID,
-    vdb     => 'variation'
+    type => 'StructuralVariation',
+    sv   => $f->variation_name,
+    svf  => $f->dbID,
+    vdb  => 'variation'
   });
   
   return $href;
