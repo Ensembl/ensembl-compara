@@ -64,6 +64,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
     }
     
+    if (typeof FileReader !== 'undefined') {
+      this.dropFileUpload();
+    }
+    
     $('.iexport a', this.el).click(function () {
       panel.elLk.exportMenu.css({ left: parseInt($(this).offset().left, 10) - 1, top: $(this).parent().position().top + $(this).height() + 2 }).toggle();
       return false;
@@ -73,15 +77,15 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   hashChange: function (r) {
     this.params.updateURL = Ensembl.urlFromHash(this.params.updateURL);
     
-    if (Ensembl.images.total === 1) {
-      this.highlightAllImages();
-    } else if (this.hashChangeReload) {
+    if (this.hashChangeReload) {
       this.base();
+    } else if (Ensembl.images.total === 1) {
+      this.highlightAllImages();
     } else if (!this.multi) {
       var range = this.highlightRegions[0][0].region.range;
       r = r.split(/\W/);
       
-      if (parseInt(r[1], 10) < range.start || parseInt(r[2], 10) > range.end) {
+      if (parseInt(r[1], 10) < range.start || parseInt(r[2], 10) > range.end || this.highlightRegions[0][0].region.a.href.split('|')[4] !== r[0]) {
         this.base();
       }
     }
@@ -716,5 +720,56 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     return Math.abs(t/Math.PI/2) > 0.01;
+  },
+  
+  dropFileUpload: function () {
+    var panel = this;
+    var el    = this.el[0];
+    
+    function noop(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      return false;
+    }
+    
+    el.addEventListener('dragenter', noop, false);
+    el.addEventListener('dragexit',  noop, false);
+    el.addEventListener('dragover',  noop, false);
+    
+    if ($('.drop_upload', this.el).length && !this.multi) {
+      el.addEventListener('drop', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+         
+        var files = e.dataTransfer.files;
+         
+        // Only call the handler if 1 or more files was dropped.
+        if (files.length > 0) {
+          var reader = new FileReader();
+          
+          reader.onloadend = function (e) {
+            text = e.target.result;
+            
+            $.ajax({
+              url: '/' + Ensembl.species + '/UserData/DropUpload',
+              data: { text: text, name: files[0].name, assembly: 'GRCh37' },
+              type: 'POST',
+              success: function (r) {
+                if (r) {
+                  panel.hashChangeReload = true;
+                  window.location.hash = 'r=' + r;
+                }
+              }
+            });
+          };
+          
+          reader.readAsText(files[0]);
+        }
+      }, false);
+    } else {
+      el.addEventListener('drop',  noop, false);
+    }
+    
+    el = null;
   }
 });
