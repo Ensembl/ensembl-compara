@@ -86,7 +86,7 @@ sub _render_features {
 
   ## Draw features on karyotype, if any
   if (scalar @$chromosomes && $species_defs->MAX_CHR_LENGTH) {
-    my $image = $self->new_karyotype_image;
+    my $image = $self->new_karyotype_image($image_config);
 
     ## Map some user-friendly display names
     my $feature_display_name = {
