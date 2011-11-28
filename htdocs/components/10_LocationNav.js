@@ -129,7 +129,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
   getContent: function () {
     var panel = this;
     
-    if (this.reload === true) {
+    if (this.reload === true || Ensembl.lastR.split(':')[0] !== Ensembl.coreParams.r.split(':')[0]) {
       $.ajax({
         url: Ensembl.urlFromHash(panel.elLk.updateURL.val()),
         dataType: 'html',
