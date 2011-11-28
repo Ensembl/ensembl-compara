@@ -527,7 +527,11 @@ sub render {
   }
 
   $html .= $self->tailnote;
-  $html .= qq{<input type="hidden" class="image_config" value="$self->{'image_configs'}[0]{'type'}" />};
+  
+  if ($self->{'image_configs'}[0]) {
+    $html .= qq{<input type="hidden" class="image_config" value="$self->{'image_configs'}[0]{'type'}" />};
+    $html .= '<span class="hidden drop_upload"></span>' if $self->{'image_configs'}[0]->get_node('user_data');
+  }
   
   $self->{'width'} = $image->width;
   $self->{'species_defs'}->timer_push('Image->render ending', undef, 'draw');
