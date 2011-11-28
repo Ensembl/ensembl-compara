@@ -39,13 +39,13 @@ sub new {
 
       while (my ($filter, $value) = each(%$filters)) {
         if ($filter eq 'cell_type') {
-          $constraints->{'cell_type'} = $funcgen_db_adaptor->get_CellTypeAdaptor->fetch_by_name($value);
+          $constraints->{'cell_types'} = [ $funcgen_db_adaptor->get_CellTypeAdaptor->fetch_by_name($value) ];
         }
         elsif ($filter eq 'evidence_type') {
-          $constraints->{'evidence_type'} = $value;
+          $constraints->{'evidence_types'} = [ $value ];
         }
         elsif ($filter eq 'project') {
-          $constraints->{'project'} = $funcgen_db_adaptor->get_ExperimentalGroupAdaptor->fetch_by_name($value);
+          $constraints->{'projects'} = [ $funcgen_db_adaptor->get_ExperimentalGroupAdaptor->fetch_by_name($value) ];
         }
       }
     }
