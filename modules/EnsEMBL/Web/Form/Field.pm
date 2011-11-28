@@ -49,6 +49,25 @@ sub render {
   return $self->SUPER::render;
 }
 
+sub configure {
+  ## Configures a field
+  ## @params HashRef with following keys. (or ArrayRef of similar HashRefs in case of multiple fields)
+  ##  - field_class   Extra CSS className for the field div
+  ##  - label         innerHTML for <label>
+  ##  - notes         innerHTML for foot notes
+  ##  - head_notes    innerHTML for head notes
+  ##  - elements      ArrayRef of hashRefs with keys as accepted by Form::Element::configure()
+  my ($self, $params) = @_;
+
+  $self->set_attribute('class', $params->{'field_class'}) if exists $params->{'field_class'};
+  $self->label($params->{'label'})                        if exists $params->{'label'};
+  $self->head_notes($params->{'head_notes'})              if exists $params->{'head_notes'};
+  $self->foot_notes($params->{'notes'})                   if exists $params->{'notes'};
+  $self->add_element($_, $params->{'inline'} || 0)        for @{$params->{'elements'} || []};
+  
+  return $self;
+}
+
 sub label {
   ## Gets, modifies or adds new label to field
   ## @params String innerHTML for label
