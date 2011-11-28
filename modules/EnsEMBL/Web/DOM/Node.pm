@@ -70,6 +70,14 @@ sub get_flag {
   return exists $self->{'_flags'}{$flag} ? $self->{'_flags'}{$flag} : undef;
 }
 
+sub has_flag {
+  ## Tells whether a flag has been set or not
+  ## @param Flag name
+  ## @return 1 or 0 accordingly
+  my ($self, $flag) = @_;
+  return exists $self->{'_flags'}{$flag} ? 1 : 0;
+}
+
 sub reset_flags {
   ## Removes all the flags set
   shift->{'_flags'} = {};
@@ -463,6 +471,7 @@ sub append_children {
 sub prepend_child {
   ## Appends a child node at the beginning (or also creates a new one before prepending)
   ## @params as accepted by append_child
+  ## @return New node if success, undef otherwise
   ## @exception DOMException as thrown by &append_child or &insert_before
   my $self = shift;
   return $self->has_child_nodes
