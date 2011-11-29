@@ -37,9 +37,6 @@ sub content {
     {'data_table' => 1, 'class' => 'no_col_toggle', 'exportable' => 0}
   );
 
-
-  use Data::Dumper; warn Dumper $grouped_feature_sets;
-
   for my $filter_type (sort keys %$grouped_feature_sets) {
     my $filter_values = $grouped_feature_sets->{$filter_type};
     while (my ($filter_value, $grouped_feature_types) = each %$filter_values) {
