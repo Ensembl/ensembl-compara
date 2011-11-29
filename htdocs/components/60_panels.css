@@ -17,7 +17,7 @@
 .panel dl.normal dt       { clear: none; float: none; width: 100%; margin: 0.5em 0 0 0; font-weight: bold; }
 .panel dl.normal dd       { margin: 0.5em 0 0 2em; }
 
-.panel h1.summary-heading   { color:[[CONTRAST_HEADER]]; margin:8px 0 0 8px; }
+.panel h1.summary-heading   { color:[[CONTRAST_HEADER]]; margin:8px 0 0 8px; text-align:center; }
 .panel span.summary-subhead { color:[[PANEL_TEXT]]; font-size: 0.7em; }
 
 .panel .nav-heading h2    { text-align: center; border: 0; border-bottom: 0; padding: 0; margin: 8px 0 0 8px; }
