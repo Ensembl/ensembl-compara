@@ -361,7 +361,7 @@ sub new_vimage {
 
 sub new_karyotype_image {
   my ($self, $image_config) = @_;  
-  my $image = new EnsEMBL::Web::Document::Image($self->hub->species_defs, [ $image_config ]);
+  my $image = new EnsEMBL::Web::Document::Image($self->hub->species_defs, $image_config ? [ $image_config ] : undef);
   $image->{'object'} = $self->object;
   
   return $image;
