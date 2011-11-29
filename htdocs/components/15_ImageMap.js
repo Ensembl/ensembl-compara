@@ -723,13 +723,50 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   dropFileUpload: function () {
-    var panel = this;
-    var el    = this.el[0];
+    var panel   = this;
+    var el      = this.el[0];
+    var reader  = new FileReader();
+    var uploads = [];
+    var r;
     
     function noop(e) {
       e.stopPropagation();
       e.preventDefault();
       return false;
+    }
+    
+    function readFile(files) {
+      if (!files.length) {
+        if (r) {
+          panel.hashChangeReload = true;
+          window.location.hash = 'r=' + r;
+        }
+        
+        return;
+      }
+      
+      var file = files.shift();
+      
+      if (file.size > 5 * Math.pow(1024, 2)) {
+        return readFile(files);
+      }
+      
+      reader.readAsText(file);
+      
+      reader.onloadend = function (e) {
+        uploads.push($.ajax({
+          url: '/' + Ensembl.species + '/UserData/DropUpload',
+          data: { text: e.target.result, name: file.name },
+          type: 'POST',
+          success: function (response) {
+            if (response) {
+              r = response;
+            }
+            
+            readFile(files);
+          }
+        }));
+      };
     }
     
     el.addEventListener('dragenter', noop, false);
@@ -740,34 +777,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       el.addEventListener('drop', function (e) {
         e.stopPropagation();
         e.preventDefault();
-         
-        var files = e.dataTransfer.files;
-         
-        // Only call the handler if 1 or more files was dropped.
-        if (files.length > 0) {
-          var reader = new FileReader();
-          
-          reader.onloadend = function (e) {
-            text = e.target.result;
-            
-            $.ajax({
-              url: '/' + Ensembl.species + '/UserData/DropUpload',
-              data: { text: text, name: files[0].name, assembly: 'GRCh37' },
-              type: 'POST',
-              success: function (r) {
-                if (r) {
-                  panel.hashChangeReload = true;
-                  window.location.hash = 'r=' + r;
-                }
-              }
-            });
-          };
-          
-          reader.readAsText(files[0]);
-        }
+        readFile([].slice.call(e.dataTransfer.files).sort(function (a, b) { return a.name.toLowerCase() > b.name.toLowerCase(); }));
       }, false);
     } else {
-      el.addEventListener('drop',  noop, false);
+      el.addEventListener('drop', noop, false);
     }
     
     el = null;
