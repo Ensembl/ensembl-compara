@@ -154,10 +154,9 @@ sub cache {
 }
 
 sub set_cache_params {
-  my $self           = shift;
-  my $hub            = $self->hub;  
-  my $view_config    = $self->view_config;
-  my $config_adaptor = $hub->config_adaptor;
+  my $self        = shift;
+  my $hub         = $self->hub;  
+  my $view_config = $self->view_config;
   my $key;
   
   # FIXME: check cacheable flag
@@ -167,10 +166,9 @@ sub set_cache_params {
     $ENV{'CACHE_KEY'} .= "::$width";
   }
   
-  if ($view_config) {
-    $hub->get_imageconfig($view_config->image_config) if $view_config->image_config;
-    $key = $self->set_cache_key;
-  }
+  $hub->get_imageconfig($view_config->image_config) if $view_config && $view_config->image_config; # sets user_data cache tag
+  
+  $key = $self->set_cache_key;
   
   if (!$key) {
     $ENV{'CACHE_KEY'} =~ s/::(SESSION|USER)\[\w+\]//g;
