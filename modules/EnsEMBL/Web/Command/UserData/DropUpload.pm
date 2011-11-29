@@ -16,15 +16,18 @@ sub process {
   return if $hub->input->cgi_error =~ /413/; # TOO BIG
   return unless $hub->param('text');
   
+  my $species_defs = $hub->species_defs;
+  
+  $hub->param('assembly', $species_defs->ASSEMBLY_NAME;
+  
   my $upload = $self->upload('text');
   
   if ($upload->{'code'}) {
-    my $species_defs = $hub->species_defs;
-    my $session      = $hub->session;
-    my $data         = $session->get_data(code => $upload->{'code'});
-    my $parser       = new EnsEMBL::Web::Text::FeatureParser($species_defs, $hub->referer->{'params'}{'r'}[0], $data->{'species'});
-    my $format       = $data->{'format'};
-    my $formats      = $hub->species_defs->REMOTE_FILE_FORMATS;
+    my $session = $hub->session;
+    my $data    = $session->get_data(code => $upload->{'code'});
+    my $parser  = new EnsEMBL::Web::Text::FeatureParser($species_defs, $hub->referer->{'params'}{'r'}[0], $data->{'species'});
+    my $format  = $data->{'format'};
+    my $formats = $hub->species_defs->REMOTE_FILE_FORMATS;
 
     return if grep /^$data->{'format'}$/i, @$formats; # large formats aren't parsable
     
