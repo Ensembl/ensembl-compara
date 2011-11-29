@@ -18,7 +18,7 @@ sub process {
   
   my $species_defs = $hub->species_defs;
   
-  $hub->param('assembly', $species_defs->ASSEMBLY_NAME;
+  $hub->param('assembly', $species_defs->ASSEMBLY_NAME);
   
   my $upload = $self->upload('text');
   
