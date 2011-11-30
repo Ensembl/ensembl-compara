@@ -266,7 +266,7 @@ sub update_genome_db {
   my ($species_dba, $compara_dba, $force) = @_;
 
   my $slice_adaptor = $species_dba->get_adaptor("Slice");
-	my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
+  my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
   my $meta_container = $species_dba->get_MetaContainer;
 
   my $primary_species_binomial_name;
@@ -382,8 +382,8 @@ sub update_genome_db {
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
   Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Description : This method deletes from the genomic_align,
-                genomic_align_block and genomic_align_group tables
+  Description : This method deletes from the genomic_align and 
+                genomic_align_block tables
                 all the rows that refer to the species identified
                 by the $genome_db_id
   Returns     : -none-
@@ -405,15 +405,14 @@ sub delete_genomic_align_data {
   throw $compara_dba->dbc->errstr if (!$rows);
   print "$rows elements found.\n";
 
-  print "Deleting corresponding genomic_align, genomic_align_block and genomic_align_group rows...";
+  print "Deleting corresponding genomic_align and genomic_align_block rows...";
   $rows = $compara_dba->dbc->do(qq{
       DELETE
-        genomic_align, genomic_align_block, genomic_align_group
+        genomic_align, genomic_align_block
       FROM
         list
         LEFT JOIN genomic_align_block USING (genomic_align_block_id)
         LEFT JOIN genomic_align USING (genomic_align_block_id)
-        LEFT JOIN genomic_align_group USING (genomic_align_id)
       WHERE
         list.genomic_align_block_id = genomic_align.genomic_align_block_id
     });

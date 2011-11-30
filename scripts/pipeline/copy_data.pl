@@ -381,20 +381,18 @@ sub copy_genomic_align_blocks {
         MIN(gab.genomic_align_block_id), MAX(gab.genomic_align_block_id),
         MIN(gab.group_id), MAX(gab.group_id),
         MIN(ga.genomic_align_id), MAX(ga.genomic_align_id),
-        MIN(gag.node_id), MAX(gag.node_id),
 	MIN(gat.node_id), MAX(gat.node_id),
         MIN(gat.root_id), MAX(gat.root_id),
 	MIN(gat.left_index)
       FROM genomic_align_block gab
         LEFT JOIN genomic_align ga using (genomic_align_block_id)
-        LEFT JOIN genomic_align_group gag using (genomic_align_id)
-	LEFT JOIN genomic_align_tree gat ON gat.node_id = gag.node_id
+	LEFT JOIN genomic_align_tree gat ON gat.node_id = ga.node_id
       WHERE
         gab.method_link_species_set_id = ?");
 
   $sth->execute($mlss_id);
-  my ($min_gab, $max_gab, $min_gab_gid, $max_gab_gid, $min_ga, $max_ga, $min_gag, 
-		$max_gag, $min_gat, $max_gat, $min_root_id, $max_root_id, $from_index_range_start) =
+  my ($min_gab, $max_gab, $min_gab_gid, $max_gab_gid, $min_ga, $max_ga, 
+		$min_gat, $max_gat, $min_root_id, $max_root_id, $from_index_range_start) =
       $sth->fetchrow_array();
 
   $sth->finish();
@@ -402,41 +400,40 @@ sub copy_genomic_align_blocks {
   my $fix_gab;
   my $fix_ga;
   my $fix_gab_gid;
-  my $fix_gag;
+  my $fix_gat;
 
   #Want to add more data. Must find out current max(genomic_align_block) in TO
   #database and start from there
   #Currently only tested for pairwise alignments
-  my ($to_min_gab, $to_max_gab, $to_min_gab_gid, $to_max_gab_gid, $to_min_ga, $to_max_ga, $to_min_gag, $to_max_gag, $to_min_gat, $to_max_gat, $to_min_root_id, $to_max_root_id, $to_from_index_range_start);
+  my ($to_min_gab, $to_max_gab, $to_min_gab_gid, $to_max_gab_gid, $to_min_ga, $to_max_ga, $to_min_gat, $to_max_gat, $to_min_root_id, $to_max_root_id, $to_from_index_range_start);
 
   if ($merge) {
       my $sth = $to_dba->dbc->prepare("SELECT
         MIN(gab.genomic_align_block_id), MAX(gab.genomic_align_block_id),
         MIN(gab.group_id), MAX(gab.group_id),
         MIN(ga.genomic_align_id), MAX(ga.genomic_align_id),
-        MIN(gag.node_id), MAX(gag.node_id),
 	MIN(gat.node_id), MAX(gat.node_id),
         MIN(gat.root_id), MAX(gat.root_id),
 	MIN(gat.left_index)
       FROM genomic_align_block gab
         LEFT JOIN genomic_align ga using (genomic_align_block_id)
-        LEFT JOIN genomic_align_group gag using (genomic_align_id)
-	LEFT JOIN genomic_align_tree gat ON gat.node_id = gag.node_id
+	LEFT JOIN genomic_align_tree gat ON gat.node_id = ga.node_id
       WHERE
         gab.method_link_species_set_id = ?");
 
       $sth->execute($mlss_id);
-      ($to_min_gab, $to_max_gab, $to_min_gab_gid, $to_max_gab_gid, $to_min_ga, $to_max_ga, $to_min_gag, $to_max_gag, $to_min_gat, $to_max_gat, $to_min_root_id, $to_max_root_id, $to_from_index_range_start) =  $sth->fetchrow_array();
+      ($to_min_gab, $to_max_gab, $to_min_gab_gid, $to_max_gab_gid, $to_min_ga, $to_max_ga, $to_min_gat, $to_max_gat, $to_min_root_id, $to_max_root_id, $to_from_index_range_start) =  $sth->fetchrow_array();
 
       $sth->finish();
       $fix_gab = $to_max_gab-$min_gab+1;
       $fix_ga = $to_max_ga-$min_ga+1;
+      $fix_gat = $to_max_gat-$min_gat+1;
       $fix_gab_gid = $to_max_gab_gid-$min_gab_gid+1;
 
       #print "to max_gab $to_max_gab min_gab $to_min_gab max_ga $to_max_ga min_ga $to_min_ga max_gab_gid $to_max_gab_gid min_gab_gid $to_min_gab_gid\n";
   }
 
-  #print "max_gab $max_gab min_gab $min_gab max_ga $max_ga min_ga $min_ga max_gab_gid $max_gab_gid min_gab_gid $min_gab_gid\n";
+  print "max_gab $max_gab min_gab $min_gab max_ga $max_ga min_ga $min_ga max_gab_gid $max_gab_gid min_gab_gid $min_gab_gid\n";
 
 
   my $lower_limit = $mlss_id * 10**10;
@@ -477,20 +474,20 @@ sub copy_genomic_align_blocks {
       }
   }
 
-  if (!defined $fix_gag) {
-      if (defined($max_gag)) {
-	  if ($max_gag < 10**10) {
-	      $fix_gag = $lower_limit;
-	  } elsif ($min_gag >= $lower_limit and $max_gag < $upper_limit) {
-	      $fix_gag = 0;
+  if (!defined $fix_gat) {
+      if (defined($max_gat)) {
+	  if ($max_gat < 10**10) {
+	      $fix_gat = $lower_limit;
+	  } elsif ($min_gat >= $lower_limit and $max_gat < $upper_limit) {
+	      $fix_gat = 0;
 	  } else {
-	      die " ** ERROR **  Internal IDs are funny: genomic_align_block.group_ids between $min_gab_gid and $max_gab_gid\n";
+	      die " ** ERROR **  Internal IDs are funny: genomic_align_tree.node_ids between $min_gat and $max_gat\n";
 	  }
       } else {
-	  $fix_gag = 0;
+	  $fix_gat = 0;
       }
   }
-
+  
   ## Check availability of the internal IDs in the TO database
   $sth = $to_dba->dbc->prepare("SELECT count(*)
       FROM genomic_align_block
@@ -516,21 +513,6 @@ sub copy_genomic_align_blocks {
       " ** ERROR **  genomic_align table with IDs within the range defined by the\n",
       " ** ERROR **  convention!\n";
     exit(1);
-  }
-
-  if(defined($max_gag)) {
-    $sth = $to_dba->dbc->prepare("SELECT count(*)
-        FROM genomic_align_group
-        WHERE node_id >= $lower_limit
-            AND node_id < $upper_limit");
-    $sth->execute();
-    ($count) = $sth->fetchrow_array();
-    if ($count) {
-      print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
-        " ** ERROR **  genomic_align_group table with IDs within the range defined by the\n",
-        " ** ERROR **  convention!\n";
-      exit(1);
-    }
   }
 
   if(defined($max_gat)) {
@@ -559,6 +541,43 @@ sub copy_genomic_align_blocks {
    $index_offset = $to_index_range_start-$from_index_range_start; # may go negative, it's fine
   }
 
+
+  #copy genomic_align_block table
+   copy_data($from_dba, $to_dba,
+       "genomic_align_block",
+       "genomic_align_block_id",
+       $min_gab, $max_gab,
+       "SELECT genomic_align_block_id+$fix_gab, method_link_species_set_id, score, perc_id, length, group_id+$fix_gab_gid, level_id".
+         " FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id");
+
+  #copy genomic_align_tree table
+  #Fixes node_id, parent_id, root_id, left_node_id, right_node_id 
+  #Needs to correct parent_id, left_node_id, right_node_id if these were 0
+  if(defined($max_gat)) {
+    copy_data($from_dba, $to_dba,
+        "genomic_align_tree",
+        "root_id",
+        $min_root_id, $max_root_id,
+        "SELECT node_id+$fix_gat, parent_id+$fix_gat, root_id+$fix_gat, left_index+$index_offset, right_index+$index_offset, left_node_id+$fix_gat, right_node_id+$fix_gat, distance_to_parent".
+        " FROM genomic_align_tree ".
+	"WHERE root_id >= $min_root_id AND root_id <= $max_root_id");
+    #Reset the appropriate nodes to zero. Only needs to be done if fix_lower 
+    #has been applied.
+    if ($fix_gat != 0) {
+
+	#NEED TO CHECK THIS ONE!!
+        foreach my $gt_field( qw/ parent_id node_id left_node_id right_node_id / ) {
+            my $gt_sth = $to_dba->dbc->prepare("UPDATE genomic_align_tree SET $gt_field = ($gt_field - ?)
+                                        WHERE $gt_field = ?");
+            $gt_sth->execute($fix_gat, $fix_gat);
+        }
+    }
+  }
+  my $class = $mlss->method_link_class;
+  if ($class eq "GenomicAlignTree.ancestral_alignment") {
+      copy_ancestral_dnafrags($from_dba, $to_dba, $mlss_id, $lower_limit, $upper_limit);
+  }
+
   #copy genomic_align table. Need to update dnafrag column
   if ($trust_to && $fix_dnafrag) {
 
@@ -572,7 +591,7 @@ sub copy_genomic_align_blocks {
 	    "genomic_align_id", 
             $min_ga, $max_ga,
   	    "SELECT genomic_align_id+$fix_ga, genomic_align_block_id+$fix_gab, method_link_species_set_id,".
-  	    " dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, level_id".
+  	    " dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, visible, node_id+$fix_gat".
   	    " FROM $temp_genomic_align".
   	    " WHERE method_link_species_set_id = $mlss_id");
 
@@ -584,56 +603,14 @@ sub copy_genomic_align_blocks {
 		"genomic_align_id", 
 		$min_ga, $max_ga,
 		"SELECT genomic_align_id+$fix_ga, genomic_align_block_id+$fix_gab, method_link_species_set_id,".
-		" dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, level_id".
+		" dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, visible, node_id+$fix_gat".
 		" FROM genomic_align".
 		" WHERE method_link_species_set_id = $mlss_id");
   }
 
-  #copy genomic_align_block table
-   copy_data($from_dba, $to_dba,
-       "genomic_align_block",
-       "genomic_align_block_id",
-       $min_gab, $max_gab,
-       "SELECT genomic_align_block_id+$fix_gab, method_link_species_set_id, score, perc_id, length, group_id+$fix_gab_gid".
-         " FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id");
 
-  #copy genomic_align_group table
-  if(defined($max_gag)) {
-    copy_data($from_dba, $to_dba,
-        "genomic_align_group",
-        "gag.node_id",
-        $min_gag, $max_gag,
-        "SELECT gag.node_id+$fix_gag, gag.genomic_align_id+$fix_ga".
-          " FROM genomic_align".
-          " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
-          " WHERE gag.node_id IS NOT NULL AND method_link_species_set_id = $mlss_id");
-  }
-  #copy genomic_align_tree table
-  #Fixes node_id, parent_id, root_id, left_node_id, right_node_id 
-  #Needs to correct parent_id, left_node_id, right_node_id if these were 0
-  if(defined($max_gat)) {
-    copy_data($from_dba, $to_dba,
-        "genomic_align_tree",
-        "root_id",
-        $min_root_id, $max_root_id,
-        "SELECT node_id+$fix_gag, parent_id+$fix_gag, root_id+$fix_gag, left_index+$index_offset, right_index+$index_offset, left_node_id+$fix_gag, right_node_id+$fix_gag, distance_to_parent".
-        " FROM genomic_align_tree ".
-	"WHERE root_id >= $min_root_id AND root_id <= $max_root_id");
-    #Reset the appropriate nodes to zero. Only needs to be done if fix_lower 
-    #has been applied.
-    if ($fix_gag != 0) {
-        foreach my $gt_field( qw/ parent_id node_id left_node_id right_node_id / ) {
-            my $gt_sth = $to_dba->dbc->prepare("UPDATE genomic_align_tree SET $gt_field = ($gt_field - ?)
-                                        WHERE $gt_field = ?");
-            $gt_sth->execute($fix_gag, $fix_gag);
-        }
-    }
-  }
 
-  my $class = $mlss->method_link_class;
-  if ($class eq "GenomicAlignTree.ancestral_alignment") {
-      copy_ancestral_dnafrags($from_dba, $to_dba, $mlss_id, $lower_limit, $upper_limit);
-  }
+
 }
 
 
