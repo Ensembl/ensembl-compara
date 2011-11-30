@@ -39,24 +39,9 @@ sub get_sequence_data {
   }
   
   if ($config->{'variation'}) {
-    my $hub    = $self->hub;
-    my $filter = $hub->param('population_filter');
-    my $slice  = $translation->get_Slice;
-    my %population_filter;
-    
-    if ($filter && $filter ne 'off') {
-      %population_filter = map { $_->dbID => $_ }
-        @{$slice->get_all_VariationFeatures_by_Population(
-          $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter), 
-          $hub->param('min_frequency')
-        )};
-    }
-    
-    foreach my $snp (reverse @{$object->variation_data}) {
+    foreach my $snp (reverse @{$object->variation_data($translation->get_Slice)}) {
       my $pos  = $snp->{'position'} - 1;
       my $dbID = $snp->{'vdbid'};
-      
-      next if keys %population_filter && !$population_filter{$dbID};
       
       $markup->{'variations'}->{$pos}->{'type'}    = lc $snp->{'type'};
       $markup->{'variations'}->{$pos}->{'alleles'} = $snp->{'allele'};

@@ -64,11 +64,7 @@ sub availability {
   return $self->{'_availability'};
 }
 
-sub default_action {
-  my $self         = shift;
-  my $availability = $self->availability;
-  return $availability->{'either'} ? 'Summary' : $availability->{'idhistory'} ? 'Idhistory' : 'Summary';
-}
+sub default_action { return $_[0]->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ? 'Idhistory' : 'Summary'; }
 
 sub counts {
   my $self = shift;
@@ -118,10 +114,8 @@ sub count_prot_domains {
 
 sub count_prot_variations {
   my $self = shift;
-  
   return 0 unless $self->species_defs->databases->{'DATABASE_VARIATION'};
-  
-  return scalar grep {$_->translation_start} @{$self->get_transcript_variations};
+  return scalar grep $_->translation_start, @{$self->get_transcript_variations};
 }
 
 sub count_supporting_evidence {
@@ -1627,65 +1621,67 @@ sub get_genetic_variations {
 
 sub get_transcript_variations {
   my $self = shift;
-	
-	my $tva = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
-	my $trans1 = $tva->fetch_all_by_Transcripts([ $self->Obj ]) || [];
-  my $trans2 = $tva->fetch_all_somatic_by_Transcripts([ $self->Obj ]) || [];
-  
-	return [@$trans1,@$trans2];
+	return $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_Transcripts_with_constraint([ $self->Obj ]);
 }
 
 sub variation_data {
-  my ($self, $include_utr) = @_;
+  my ($self, $slice, $include_utr) = @_;
   
   return [] unless $self->species_defs->databases->{'DATABASE_VARIATION'};
-  
-  my @data;
   
   my $transcript      = $self->Obj;
   my $cd_start        = $transcript->cdna_coding_start;
   my $cd_end          = $transcript->cdna_coding_end;
-  my $trans_strand    = $transcript->strand;
   my @coding_sequence = split '', substr $transcript->seq->seq, $cd_start - 1, $cd_end - $cd_start + 1;
-  my $i               = 0;
-  my %seen;
+  my (@data, %population_filter);
+  
+  if ($slice) {
+    my $hub    = $self->hub;
+    my $filter = $hub->param('population_filter');
+    
+    if ($filter && $filter ne 'off') {
+      %population_filter = map { $_->dbID => $_ }
+        @{$slice->get_all_VariationFeatures_by_Population(
+          $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter), 
+          $hub->param('min_frequency')
+        )};
+    }
+  }
   
   foreach my $tv (@{$self->get_transcript_variations}) {
-    foreach my $tva (@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
-      my $vf  = $tv->variation_feature;
-      my $key = join ':', $vf->dbID, $vf->variation_name;
-      
-      next if $seen{$key};
-      
-      my $pos = $tv->translation_start;
-
-      next if !$include_utr && !$pos;
-      
-      my $start = $vf->start;
-      my $end   = $vf->end;
-      
-      push @data, {
-        tva           => $tva,
-        tv            => $tv,
-        vf            => $vf,
-        position      => $pos,
-        snp_source    => $vf->source,
-        vdbid         => $vf->dbID,
-        snp_id        => $vf->variation_name,
-        ambigcode     => $vf->ambig_code,
-        codons        => join(', ', split '/', $tva->display_codon_allele_string),
-        allele        => $vf->allele_string,
-        pep_snp       => join(', ', split '/', $tva->pep_allele_string),
-        type          => $tv->display_consequence,
-				class         => $vf->var_class,
-        length        => $end - $start,
-        indel         => $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '',
-        codon_seq     => [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ],
-        codon_var_pos => ($tv->cds_start + 2) - ($pos * 3)
-      };
-      
-      $seen{$key} = 1;
-    }
+    my $pos = $tv->translation_start;
+    
+    next if !$include_utr && !$pos;
+    next unless $tv->cdna_start && $tv->cdna_end;
+    
+    my $vf    = $tv->variation_feature;
+    my $vdbid = $vf->dbID;
+    
+    next if scalar keys %population_filter && !$population_filter{$vdbid};
+    
+    my $start = $vf->start;
+    my $end   = $vf->end;
+    my $tva   = $tv->get_all_alternate_TranscriptVariationAlleles->[0];
+    
+    push @data, {
+      tva           => $tva,
+      tv            => $tv,
+      vf            => $vf,
+      position      => $pos,
+      vdbid         => $vdbid,
+      snp_source    => $vf->source,
+      snp_id        => $vf->variation_name,
+      ambigcode     => $vf->ambig_code,
+      codons        => $pos ? join(', ', split '/', $tva->display_codon_allele_string) : '',
+      allele        => $vf->allele_string,
+      pep_snp       => join(', ', split '/', $tva->pep_allele_string),
+      type          => $tv->display_consequence,
+      class         => $vf->var_class,
+      length        => $end - $start,
+      indel         => $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '',
+      codon_seq     => [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ],
+      codon_var_pos => ($tv->cds_start + 2) - ($pos * 3)
+    };
   }
   
   @data = map $_->[2], sort { $a->[0] <=> $b->[0] || $a->[1] <=> $b->[1] } map [ $_->{'vf'}->length, $_->{'vf'}->most_severe_OverlapConsequence->rank, $_ ], @data;

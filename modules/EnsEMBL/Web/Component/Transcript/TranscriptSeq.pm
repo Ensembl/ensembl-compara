@@ -130,37 +130,22 @@ sub get_sequence_data {
   }
   
   if ($config->{'variation'}) {
-    my $slice  = $trans->feature_Slice;
-    my $filter = $hub->param('population_filter');
-    my %population_filter;
+    my $slice = $trans->feature_Slice;
     
-    if ($filter && $filter ne 'off') {
-      %population_filter = map { $_->dbID => $_ }
-        @{$slice->get_all_VariationFeatures_by_Population(
-          $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter), 
-          $hub->param('min_frequency')
-        )};
-    }
-    
-    foreach my $snp (reverse @{$object->variation_data($config->{'utr'})}) {
-      my $tv = $snp->{'tv'};
-      my ($start, $end) = ($tv->cdna_start, $tv->cdna_end);
-      
-      next unless $start && $end;
-      
-      my $var  = $snp->{'vf'}->transfer($slice);
-      my $dbID = $snp->{'vdbid'};
-      
-      next if keys %population_filter && !$population_filter{$dbID};
-      
+    foreach my $snp (reverse @{$object->variation_data($slice, $config->{'utr'})}) {
+      my $dbID              = $snp->{'vdbid'};
+      my $tv                = $snp->{'tv'};
+      my $var               = $snp->{'vf'}->transfer($slice);
       my $variation_name    = $snp->{'snp_id'};
       my $alleles           = $snp->{'allele'};
       my $ambigcode         = $snp->{'ambigcode'} || '*';
-      my $pep_allele_string = $tv->pep_allele_string;
       my $amino_acid_pos    = $snp->{'position'} * 3 + $cd_start - 4 - $start_pad;
+      my $type              = lc $snp->{'type'};
+      my $start             = $tv->cdna_start;
+      my $end               = $tv->cdna_end;
+      my $pep_allele_string = $tv->pep_allele_string;
       my $consequence_type  = join ' ', @{$tv->consequence_type};
       my $aa_change         = $consequence_type =~ /\b(NON_SYNONYMOUS_CODING|FRAMESHIFT_CODING|STOP_LOST|STOP_GAINED)\b/;
-      my $type              = lc $snp->{'type'};
       
       if ($var) {
         if ($var->strand == -1 && $trans_strand == -1) {
