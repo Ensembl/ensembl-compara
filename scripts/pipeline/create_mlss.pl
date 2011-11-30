@@ -142,6 +142,7 @@ perl create_mlss.pl --method_link_type PECAN --genome_db_id 1,2,3,4 --name "4 sp
 
 =cut
 
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
@@ -198,7 +199,13 @@ if ($help) {
 ## Get the adaptors from the Registry
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
-my $compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
+my $compara_dba;
+if ($compara =~ /mysql:\/\//) {
+    $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$compara);
+} else {
+    $compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
+}
+
 if (!$compara_dba) {
   die "Cannot connect to compara database <$compara>.";
 }
