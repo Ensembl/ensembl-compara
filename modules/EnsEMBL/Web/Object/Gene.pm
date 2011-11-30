@@ -87,6 +87,8 @@ sub analysis {
   return $self->Obj->analysis;
 }
 
+sub default_action { return $_[0]->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ? 'Idhistory' : $_[0]->Obj->isa('Bio::EnsEMBL::Compara::Family') ? 'Family' : 'Summary'; }
+
 sub counts {
   my $self = shift;
   my $obj = $self->Obj;
@@ -1193,12 +1195,6 @@ sub can_export {
   my $self = shift;
   
   return $self->action =~ /^Export$/ ? 0 : $self->availability->{'gene'};
-}
-
-sub default_action {
-  my $self         = shift;
-  my $availability = $self->availability;  
-  return $availability->{'gene'} ? 'Summary' : $availability->{'idhistory'} ? 'Idhistory' : $availability->{'family'} ? 'Family' : 'Summary';
 }
 
 1;
