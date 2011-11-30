@@ -13,15 +13,6 @@ Bio::EnsEMBL::Compara::RunnableDB::CreateDefaultPairwiseMlss
 
 =head1 SYNOPSIS
 
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $low_coverage_aligment = Bio::EnsEMBL::Pipeline::RunnableDB::CreateDefaultPairwiseMlss->new (
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$create_default_pairwise_mlss->fetch_input(); #reads from DB
-$create_default_pairwise_mlss->run();
-$create_default_pairwise_mlss->write_output(); #writes to DB
-
 =cut
 
 =head1 DESCRIPTION
@@ -97,7 +88,6 @@ sub create_default_mlss {
     my $pairwise_genome_db_adaptor = $pairwise_dba->get_GenomeDBAdaptor;
     my $pairwise_mlss_adaptor = $pairwise_dba->get_MethodLinkSpeciesSetAdaptor;
 
-    $DB::single = 1;
     my $base_locator;
     if ($self->param('base_location') =~ /mysql:\/\/.*@.*\/.+/) {
 	#open database defined in url
