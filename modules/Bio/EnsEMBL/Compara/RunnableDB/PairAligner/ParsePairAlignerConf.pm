@@ -22,6 +22,12 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ParsePairAlignerConf
 
 =head1 SYNOPSIS
 
+If master_db defined then use populate_new_database which needs either mlss_id or a list of species provided from the conf_file. Use conf_file when adding multiple pairwise analyses. If have only one pairwise, then define mlss_id in the master.
+
+If master_db is not defined, must populate the compara database from either core databases defined in conf_file or in default_options (core_dbs). Create genome_dbs, the genome_db_id is defined in the conf_file but not in the default_options. Create mlss_ids.
+
+ERROR:
+If no master_db, no conf_file and no core_dbs.
 
 =head1 DESCRIPTION
 
@@ -35,7 +41,7 @@ use strict;
 use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
 
 my $verbose = 0;
 
@@ -45,19 +51,26 @@ sub fetch_input {
     my ($self) = @_;
 
     #must be better way of doing this
-    #Return if no conf file and trying to get the species list
-    if ($self->param('conf_file') eq "" &&  $self->param('get_species_list')) {
+    #Return if no conf file and trying to get the species list or there is no master_db in which case cannot call
+    #populate_new_database
+    if (!$self->param('conf_file') &&  $self->param('get_species_list') || !$self->param('master_db')) {
 	return;
     }
+    $DB::single = 1;
 
     #
     #Must load the registry first
     #
-    if ($self->param('reg_conf') ne "") {
+    if ($self->param('reg_conf')) {
 	Bio::EnsEMBL::Registry->load_all($self->param('reg_conf'));
-    } elsif (defined $self->param('registry_dbs')) {
-
+    } elsif ($self->param('registry_dbs')) {
 	load_registry_dbs($self->param('registry_dbs'));
+    } elsif ($self->param('core_dbs')) {
+	#list of individual core databases
+	foreach my $core_db (@{$self->param('core_dbs')}) {
+	    new Bio::EnsEMBL::DBSQL::DBAdaptor(%$core_db);
+	}
+
     }
 
     #Set default reference speices. Should be set by init_pipeline module
@@ -70,24 +83,25 @@ sub run {
     my ($self) = @_;
 
     #must be better way to doing this
-    if ($self->param('conf_file') eq "" &&  $self->param('get_species_list')) {
+    #Return if no conf file and trying to get the species list or there is no master_db in which case cannot call
+    #populate_new_database
+    if ($self->param('get_species_list') && (!$self->param('conf_file') || !$self->param('master_db'))) {
 	return;
     }
 
     #If no pair_aligner configuration file, use the defaults
-    if ($self->param('conf_file') eq "") {
-	$self->parse_defaults();
-    } else {
+    if ($self->param('conf_file')) {
 	#parse configuration file
 	$self->parse_conf($self->param('conf_file'));
+    } else {
+	$self->parse_defaults();
     }
 }
 
 sub write_output {
     my ($self) = @_;
-
-    #No configuration file, so no species list. Flow an empty speciesList
-    if ($self->param('conf_file') eq "" &&  $self->param('get_species_list')) {
+    #No configuration file or no master_db, so no species list. Flow an empty speciesList
+    if ($self->param('get_species_list') && (!$self->param('conf_file') || !$self->param('master_db'))) {
 	my $output_id = "{'speciesList'=>'\"\"'}";
 	$self->dataflow_output_id($output_id,1);
 	return;
@@ -101,6 +115,7 @@ sub write_output {
     }
 
     print "WRITE OUTPUT\n" if ($self->debug);
+
 
     #Store locator for genome_db
     my $speciesList = $self->param('species');
@@ -172,9 +187,9 @@ sub parse_conf {
     
     my $speciesList;
     my $dna_collections;
-    my $pair_aligners;
-    my $chain_configs;
-    my $net_configs;
+    my $pair_aligners = [];
+    my $chain_configs= [];
+    my $net_configs = [];
 
     foreach my $confPtr (@conf_list) {
 	my $type = $confPtr->{TYPE};
@@ -195,15 +210,27 @@ sub parse_conf {
 
     #parse only the SPECIES fields to get a species_list only
     if ($self->param('get_species_list')) {
-	$self->get_species($speciesList, $self->param('compara_url'));
 
 	my @spp_names;
-	foreach my $species (@{$speciesList}) {
-	    push @spp_names, $species->{genome_db}->name,
+	if ($self->param('master_db')) {
+	    $self->get_species($speciesList, $self->param('master_db'));
+	    foreach my $species (@{$speciesList}) {
+		push @spp_names, $species->{genome_db}->name,
+	    }
 	}
+
 	my $species_list = join ",", @spp_names;
 	$self->param('species_list', $species_list);
 	return;
+    }
+
+    #No master, so copy dnafrags from core_db
+    unless ($self->param('master_db')) {
+	foreach my $species (@{$speciesList}) {
+	    #populate_database if necessary
+	    #Need to load from core database
+	    $self->populate_database_from_core_db($species);
+	}
     }
 
     #Adding missing information in hash lists with default values
@@ -220,6 +247,7 @@ sub parse_conf {
 
     #Make a collection of pair_aligners, chain_configs and net_configs
     my $all_configs;
+
     push @$all_configs, @$pair_aligners, @$chain_configs, @$net_configs;
     $self->param('all_configs', $all_configs);
 
@@ -229,12 +257,12 @@ sub parse_conf {
 #Get species fields
 #
 sub get_species {
-    my ($self, $speciesList, $compara_url) = @_;
+    my ($self, $speciesList, $master_db) = @_;
 
     print "SPECIES\n" if ($self->debug);
     my $gdb_adaptor;
-    if (defined $compara_url) {
-	my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url=>$compara_url);
+    if ($master_db) {
+	my $compara_dba = $self->go_figure_compara_dba( $master_db );
 	$gdb_adaptor = $compara_dba->get_GenomeDBAdaptor;
     } else {
 	$gdb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
@@ -244,13 +272,14 @@ sub get_species {
     foreach my $species (@{$speciesList}) {
 	#get genome_db
 	my $genome_db;
+
 	if (defined $species->{genome_db_id}) {
 	    $genome_db = $gdb_adaptor->fetch_by_dbID($species->{genome_db_id});
 	} else {
-	    unless(defined $species->{name}) {
+	    unless(defined $species->{species}) {
 		die ("Need a name to fetch genome_db");
 	    }
-	    $genome_db = $gdb_adaptor->fetch_by_name_assembly($species->{name});
+	    $genome_db = $gdb_adaptor->fetch_by_name_assembly($species->{species});
 	}
 	$species->{'genome_db'} = $genome_db;
 	$self->get_locator($genome_db);
@@ -313,11 +342,16 @@ sub get_pair_aligner {
 	unless (defined $pair_aligner->{'method_link'}) {
 	    $pair_aligner->{'method_link'} = $self->param('default_pair_aligner');
 	}
-	unless (defined $pair_aligner->{'analysis_template'}{'-parameters'}{'options'}) {
-	    $pair_aligner->{'analysis_template'}{'-parameters'}{'options'} = $self->param('default_parameters');
+
+	my $params = eval($pair_aligner->{'analysis_template'}{'-parameters'});
+	print "options " . $params->{'options'} . "\n";
+	if ($params->{'options'}) {
+	    $pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $params->{'options'};
+	} else {
+	    $pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $self->param('default_parameters');
 	}
-	#print_conf($pair_aligner);
-	#print "\n";
+	print_conf($pair_aligner);
+	print "\n";
     }
     $self->param('pair_aligners', $pair_aligners);
 }
@@ -527,60 +561,85 @@ sub parse_defaults {
     my $chain_configs;
     my $net_configs;
 
+    #parse only the SPECIES fields to get a species_list only
+
+    my $genome_dbs;
+    my $mlss;
+
+    #No master, so copy dnafrags from core_db
+    unless ($self->param('master_db')) {
+	if ($self->param('core_dbs')) {
+	    foreach my $core_db (@{$self->param('core_dbs')}) {
+		push @$genome_dbs, ($self->populate_database_from_core_db($core_db));
+	    }
+	} else {
+	    die "Must define location of core dbs to load dnafrags";
+	}
+    }
+
     #Should be able to provide a list of mlss_ids
     if ($self->param('mlss_id')) {
 	my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-	my $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
-	my $genome_dbs = $mlss->species_set;
-	my $pair_aligner = {};
-	$pair_aligner->{'method_link'} = $self->param('default_pair_aligner');
-	$pair_aligner->{'analysis_template'}{'-parameters'}{'options'} = $self->param('default_parameters');
+	$mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
+	$genome_dbs = $mlss->species_set;
+    } 
 
-	my $chain_config = {};
-	%$chain_config = ('input_method_link' => $self->param('default_chain_input'),
-			  'output_method_link' => $self->param('default_chain_output'));
-
-	my $net_config = {};
-	%$net_config = ('input_method_link' => $self->param('default_net_input'),
-			'output_method_link' => $self->param('default_net_output'));
-
-	#create dna_collections
-	foreach my $genome_db (@$genome_dbs) {
-
-	    #get and store locator
-	    $self->get_locator($genome_db);
-	    $self->compara_dba->get_GenomeDBAdaptor->store($genome_db);
-
-	    my $raw_name = $genome_db->name . " raw";
-	    my $chain_name = $genome_db->name . " for chain";
-	    my $dump_loc = $self->param('dump_dir') . "/" . $genome_db->name . "_nib_for_chain";
-
-	    %{$dna_collections->{$raw_name}} = ('genome_db' => $genome_db);
-	    %{$dna_collections->{$chain_name}} = ('genome_db' => $genome_db,
-						  'dump_loc' => $dump_loc);
-
-	    #create pair_aligners
-	    if ($genome_db->name eq $self->param('ref_species')) {
-		$pair_aligner->{'reference_collection_name'} = $raw_name;
-		$chain_config->{'reference_collection_name'} = $chain_name;
-		$net_config->{'reference_collection_name'} = $chain_name;
-	    } else {
-		$pair_aligner->{'non_reference_collection_name'} = $raw_name;
-		$chain_config->{'non_reference_collection_name'} = $chain_name;
-		$net_config->{'non_reference_collection_name'} = $chain_name;
-	    }
-	}
-	throw ("Unable to find " . $self->param('ref_species') . " in this mlss " . $mlss->name . " (" . $mlss->dbID . ")") unless (defined $pair_aligner->{'reference_collection_name'});
-
-	#Set default dna_collection chunking values if required
-	get_default_chunking($dna_collections->{$pair_aligner->{'reference_collection_name'}}, $self->param('default_chunks')->{'reference'});	
-	get_default_chunking($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}, $self->param('default_chunks')->{'non_reference'});
+    my $pair_aligner = {};
+    $pair_aligner->{'method_link'} = $self->param('default_pair_aligner');
+    $pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $self->param('default_parameters');
+    
+    my $chain_config = {};
+    %$chain_config = ('input_method_link' => $self->param('default_chain_input'),
+		      'output_method_link' => $self->param('default_chain_output'));
+    
+    my $net_config = {};
+    %$net_config = ('input_method_link' => $self->param('default_net_input'),
+		    'output_method_link' => $self->param('default_net_output'));
+    
+    #create dna_collections
+    foreach my $genome_db (@$genome_dbs) {
 	
-
-	push @$pair_aligners, $pair_aligner;
-	push @$chain_configs, $chain_config;
-	push @$net_configs, $net_config;
+	#get and store locator
+	$self->get_locator($genome_db);
+	$self->compara_dba->get_GenomeDBAdaptor->store($genome_db);
+	
+	my $raw_name = $genome_db->name . " raw";
+	my $chain_name = $genome_db->name . " for chain";
+	my $dump_loc = $self->param('dump_dir') . "/" . $genome_db->name . "_nib_for_chain";
+	
+	%{$dna_collections->{$raw_name}} = ('genome_db' => $genome_db);
+	%{$dna_collections->{$chain_name}} = ('genome_db' => $genome_db,
+					      'dump_loc' => $dump_loc);
+	
+	#create pair_aligners
+	if ($genome_db->name eq $self->param('ref_species')) {
+	    $pair_aligner->{'reference_collection_name'} = $raw_name;
+	    $chain_config->{'reference_collection_name'} = $chain_name;
+	    $net_config->{'reference_collection_name'} = $chain_name;
+	} else {
+	    $pair_aligner->{'non_reference_collection_name'} = $raw_name;
+	    $chain_config->{'non_reference_collection_name'} = $chain_name;
+	    $net_config->{'non_reference_collection_name'} = $chain_name;
+	}
     }
+
+    unless ($pair_aligner->{'reference_collection_name'}) {
+	if ($mlss) {
+	    throw ("Unable to find " . $self->param('ref_species') . " in this mlss " . $mlss->name . " (" . $mlss->dbID . ")") 
+	} else {
+	    throw ("Unable to find " . $self->param('ref_species') . " in these genome_dbs (" . join ",", @$genome_dbs . ")")
+	}
+    }
+
+    #Set default dna_collection chunking values if required
+    get_default_chunking($dna_collections->{$pair_aligner->{'reference_collection_name'}}, $self->param('default_chunks')->{'reference'});	
+    get_default_chunking($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}, $self->param('default_chunks')->{'non_reference'});
+    
+    
+    push @$pair_aligners, $pair_aligner;
+    push @$chain_configs, $chain_config;
+    push @$net_configs, $net_config;
+    
     $self->param('dna_collections', $dna_collections);
     $self->param('pair_aligners', $pair_aligners);
     $self->param('chain_configs', $chain_configs);
@@ -629,7 +688,7 @@ sub write_parameters_to_meta {
 	#Write pair aligner options to meta table for use with PairAligner jobs (eg lastz)
 	my $key = "options_" . $pair_aligner->{'mlss_id'};
 	my $meta_container = $self->compara_dba->get_MetaContainer;
-	$meta_container->store_key_value($key, $pair_aligner->{'analysis_template'}->{'-parameters'}{'options'});
+	$meta_container->store_key_value($key, $pair_aligner->{'analysis_template'}->{'parameters'}{'options'});
 	
 	#Write chunk options to meta table for use with FilterDuplicates
 	my $ref_dna_collection = $dna_collections->{$pair_aligner->{'reference_collection_name'}};
@@ -759,9 +818,9 @@ sub create_pair_aligner_dataflows {
 	    $dump_dna_hash->{"collection_name"} = $pair_aligner->{'reference_collection_name'};
 	    $self->dataflow_output_id($dump_dna_hash, 9);
 	}
-	if (defined ($dna_collections->{$pair_aligner->{'target_collection_name'}}->{'dump_loc'})) {
+	if (defined ($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'dump_loc'})) {
 	    my $dump_dna_hash;
-	    $dump_dna_hash->{"collection_name"} = $pair_aligner->{'target_collection_name'};
+	    $dump_dna_hash->{"collection_name"} = $pair_aligner->{'non_reference_collection_name'};
 	    $self->dataflow_output_id($dump_dna_hash, 9);
 	}
     }
@@ -890,7 +949,7 @@ sub create_net_dataflows {
 			       'mlss_id' => $net_config->{'mlss_id'},
 			       'ref_dna_collection' => $ref_dna_collection,
 			       'non_ref_dna_collection' => $non_ref_dna_collection,
-			       'pair_aligner_options' => $pairaligner_config->{'analysis_template'}{'-parameters'}{'options'});
+			       'pair_aligner_options' => $pairaligner_config->{'analysis_template'}{'parameters'}{'options'});
 	$self->dataflow_output_id($pairaligner_hash,7);
     }
 }
@@ -1016,7 +1075,6 @@ sub load_registry_dbs {
     
     #my $registry_dbs = $these_registry_dbs->[0];
 
-
     #my $species_name = $self->param('species_name');
     for(my $r_ind=0; $r_ind<scalar(@$registry_dbs); $r_ind++) {
 	
@@ -1047,6 +1105,255 @@ sub load_registry_dbs {
     } # try next registry server
 
 }
+
+#
+#If no master is present, populate the compara database from the core databases. 
+#Assign genome_db from SPECIES config if one is given
+#
+sub populate_database_from_core_db {
+    my ($self, $species) = @_;
+
+    my $genome_db;
+    #Load from SPECIES tag in conf_file
+    if ($species->{dbname}) {
+	my $port = $species->{port} || 3306;
+	my $species_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(
+							     -host => $species->{host},
+							     -user => $species->{user},
+							     -port => $port,
+							     -species => $species->{species},
+							     -dbname => $species->{dbname});
+	$genome_db = update_genome_db($species_dba, $self->compara_dba, 0, $species->{genome_db_id});
+	update_dnafrags($self->compara_dba, $genome_db, $species_dba);
+
+    } elsif ($species->{-dbname}) {
+	#Load form curr_core_dbs_locs in default_options file
+	my $species_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(%$species);
+	$genome_db = update_genome_db($species_dba, $self->compara_dba, 0);
+	update_dnafrags($self->compara_dba, $genome_db, $species_dba);	
+    }
+
+    return ($genome_db);
+}
+
+
+#Taken from update_genome.pl
+sub update_genome_db {
+    my ($species_dba, $compara_dba, $force, $genome_db_id) = @_;
+    my $species_name;         #if not in core
+    my $taxon_id;             #if not in core
+    my $offset;               #offset to add to Genome DBs.
+
+    my $compara = $compara_dba->dbc->dbname;
+
+    my $slice_adaptor = $species_dba->get_adaptor("Slice");
+    my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
+    my $meta_container = $species_dba->get_MetaContainer;
+    
+    my $primary_species_binomial_name;
+    if (defined($species_name)) {
+	$primary_species_binomial_name = $species_name;
+    } else {
+	$primary_species_binomial_name = $genome_db_adaptor->get_species_name_from_core_MetaContainer($meta_container);
+	if (!$primary_species_binomial_name) {
+	    throw "Cannot get the species name from the database. Use the --species_name option";
+	}
+    }
+    my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
+    my $primary_species_assembly = $highest_cs->version();
+    my $genome_db = eval {$genome_db_adaptor->fetch_by_name_assembly(
+								     $primary_species_binomial_name,
+								     $primary_species_assembly
+								    )};
+    if ($genome_db and $genome_db->dbID) {
+	return $genome_db if ($force);
+	throw "GenomeDB with this name [$primary_species_binomial_name] and assembly".
+	  " [$primary_species_assembly] is already in the compara DB [$compara]\n".
+	    "You can use the --force option IF YOU REALLY KNOW WHAT YOU ARE DOING!!";
+    } elsif ($force) {
+	print "GenomeDB with this name [$primary_species_binomial_name] and assembly".
+	  " [$primary_species_assembly] is not in the compara DB [$compara]\n".
+	    "You don't need the --force option!!";
+	print "Press [Enter] to continue or Ctrl+C to cancel...";
+	<STDIN>;
+    }
+    
+    my ($assembly) = @{$meta_container->list_value_by_key('assembly.default')};
+    if (!defined($assembly)) {
+	warning "Cannot find assembly.default in meta table for $primary_species_binomial_name";
+	$assembly = $primary_species_assembly;
+    }
+    
+    my $genebuild = $meta_container->get_genebuild();
+    if (! $genebuild) {
+	warning "Cannot find genebuild.version in meta table for $primary_species_binomial_name";
+	$genebuild = '';
+    }
+    
+    print "New assembly and genebuild: ", join(" -- ", $assembly, $genebuild),"\n\n";
+    
+    #Have to define these since they were removed from the above meta queries
+    #and the rest of the code expects them to be defined
+    my $sql;
+    my $sth;
+    
+    $genome_db = eval {
+	$genome_db_adaptor->fetch_by_name_assembly($primary_species_binomial_name,
+						   $assembly)
+    };
+    
+    ## New genebuild!
+    if ($genome_db) {
+	$sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly =?, genebuild =?, WHERE genome_db_id =?');
+	$sth->execute($assembly, $genebuild, $genome_db->dbID());
+	$sth->finish();
+	
+	$genome_db = $genome_db_adaptor->fetch_by_name_assembly(
+								$primary_species_binomial_name,
+								$assembly
+							     );
+	
+    }
+    ## New genome or new assembly!!
+    else {
+	
+	if (!defined($taxon_id)) {
+	    ($taxon_id) = @{$meta_container->list_value_by_key('species.taxonomy_id')};
+	}
+	if (!defined($taxon_id)) {
+	    throw "Cannot find species.taxonomy_id in meta table for $primary_species_binomial_name.\n".
+	      "   You can use the --taxon_id option";
+	}
+	print "New genome in compara. Taxon #$taxon_id; Name: $primary_species_binomial_name; Assembly $assembly\n\n";
+
+	#Need to remove FOREIGN KEY to ncbi_taxa_node which is not necessary for pairwise alignments
+	#Check if foreign key exists
+	my $sql = "SHOW CREATE TABLE genome_db";
+
+	$sth = $compara_dba->dbc()->prepare($sql);
+	$sth->execute();
+
+	my $foreign_key = 0;
+	while (my $row = $sth->fetchrow_array) {
+	    if ($row =~ /FOREIGN KEY/) {
+		$foreign_key = 1;
+	    }
+	}
+	$sth->finish();
+
+	if ($foreign_key) {
+	    $compara_dba->dbc()->do('ALTER TABLE genome_db DROP FOREIGN KEY genome_db_ibfk_1');
+	}
+
+	$sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly_default = 0 WHERE name =?');
+	$sth->execute($primary_species_binomial_name);
+	$sth->finish();
+	
+	#New ID search if $offset is true
+	my @args = ($taxon_id, $primary_species_binomial_name, $assembly, $genebuild);
+	if($offset) {
+	    $sql = 'INSERT INTO genome_db (genome_db_id, taxon_id, name, assembly, genebuild) values (?,?,?,?,?)';
+	    $sth = $compara_dba->dbc->prepare('select max(genome_db_id) from genome_db where genome_db_id > ?');
+	    $sth->execute($offset);
+	    my ($max_id) = $sth->fetchrow_array();
+	    $sth->finish();
+	    if(!$max_id) {
+		$max_id = $offset;
+	    }
+	    unshift(@args, $max_id+1);
+	} elsif (defined $genome_db_id) {
+	    $sql = 'INSERT INTO genome_db (genome_db_id, taxon_id, name, assembly, genebuild) values (?,?,?,?,?)';
+	    unshift(@args, $genome_db_id);
+	}
+	else {
+	    $sql = 'INSERT INTO genome_db (taxon_id, name, assembly, genebuild) values (?,?,?,?)';
+	}
+	$sth = $compara_dba->dbc->prepare($sql);
+	$sth->execute(@args);
+	$sth->finish();
+
+	#Make sure the cache is up to date
+	$genome_db_adaptor->create_GenomeDBs();
+
+	$genome_db = $genome_db_adaptor->fetch_by_name_assembly(
+								$primary_species_binomial_name,
+								$assembly
+							       );
+    }
+    return $genome_db;
+}
+
+=head2 update_dnafrags
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Arg[3]      : Bio::EnsEMBL::DBSQL::DBAdaptor $species_dba
+  Description : This method fetches all the dnafrag in the compara DB
+                corresponding to the $genome_db. It also gets the list
+                of top_level seq_regions from the species core DB and
+                updates the list of dnafrags in the compara DB.
+  Returns     : -none-
+  Exceptions  :
+
+=cut
+
+sub update_dnafrags {
+  my ($compara_dba, $genome_db, $species_dba) = @_;
+
+  my $dnafrag_adaptor = $compara_dba->get_adaptor("DnaFrag");
+  my $old_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db);
+  my $old_dnafrags_by_id;
+  foreach my $old_dnafrag (@$old_dnafrags) {
+    $old_dnafrags_by_id->{$old_dnafrag->dbID} = $old_dnafrag;
+  }
+
+  my $sql1 = qq{
+      SELECT
+        cs.name,
+        sr.name,
+        sr.length
+      FROM
+        coord_system cs,
+        seq_region sr,
+        seq_region_attrib sra,
+        attrib_type at
+      WHERE
+        sra.attrib_type_id = at.attrib_type_id
+        AND at.code = 'toplevel'
+        AND sr.seq_region_id = sra.seq_region_id
+        AND sr.coord_system_id = cs.coord_system_id
+        AND cs.name != "lrg"
+        AND cs.species_id =?
+    };
+  my $sth1 = $species_dba->dbc->prepare($sql1);
+  $sth1->execute($species_dba->species_id());
+  my $current_verbose = verbose();
+  verbose('EXCEPTION');
+  while (my ($coordinate_system_name, $name, $length) = $sth1->fetchrow_array) {
+
+    #Find out if region is_reference or not
+    my $slice = $species_dba->get_SliceAdaptor->fetch_by_region($coordinate_system_name,$name);
+    my $is_reference = $slice->is_reference;
+
+    my $new_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
+            -genome_db => $genome_db,
+            -coord_system_name => $coordinate_system_name,
+            -name => $name,
+            -length => $length,
+            -is_reference => $is_reference
+        );
+    my $dnafrag_id = $dnafrag_adaptor->update($new_dnafrag);
+    delete($old_dnafrags_by_id->{$dnafrag_id});
+    throw() if ($old_dnafrags_by_id->{$dnafrag_id});
+  }
+  verbose($current_verbose);
+  print "Deleting ", scalar(keys %$old_dnafrags_by_id), " former DnaFrags...";
+  foreach my $deprecated_dnafrag_id (keys %$old_dnafrags_by_id) {
+    $compara_dba->dbc->do("DELETE FROM dnafrag WHERE dnafrag_id = ".$deprecated_dnafrag_id) ;
+  }
+  print "  ok!\n\n";
+}
+
 
 
 1;
