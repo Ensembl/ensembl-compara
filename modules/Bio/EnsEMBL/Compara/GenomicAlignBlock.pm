@@ -213,11 +213,11 @@ sub new {
   bless $self,$class;
     
   my ($adaptor, $dbID, $method_link_species_set, $method_link_species_set_id,
-          $score, $perc_id, $length, $group_id, $reference_genomic_align, $reference_genomic_align_id,
+          $score, $perc_id, $length, $group_id, $level_id, $reference_genomic_align, $reference_genomic_align_id,
           $genomic_align_array, $starting_genomic_align_id, $ungapped_genomic_align_blocks) = 
     rearrange([qw(
         ADAPTOR DBID METHOD_LINK_SPECIES_SET METHOD_LINK_SPECIES_SET_ID
-        SCORE PERC_ID LENGTH GROUP_ID REFERENCE_GENOMIC_ALIGN REFERENCE_GENOMIC_ALIGN_ID
+        SCORE PERC_ID LENGTH GROUP_ID LEVEL_ID REFERENCE_GENOMIC_ALIGN REFERENCE_GENOMIC_ALIGN_ID
         GENOMIC_ALIGN_ARRAY STARTING_GENOMIC_ALIGN_ID UNGAPPED_GENOMIC_ALIGN_BLOCKS)],
             @args);
 
@@ -235,6 +235,7 @@ sub new {
   $self->perc_id($perc_id) if (defined ($perc_id));
   $self->length($length) if (defined ($length));
   $self->group_id($group_id) if (defined ($group_id));
+  $self->level_id($level_id) if (defined ($level_id));
   $self->reference_genomic_align($reference_genomic_align)
       if (defined($reference_genomic_align));
   $self->reference_genomic_align_id($reference_genomic_align_id)
@@ -887,6 +888,42 @@ sub group_id {
     return $self->{'group_id'};
 }
 
+=head2 level_id
+
+  Arg [1]    : int $level_id
+  Example    : $level_id = $genomic_align->level_id;
+  Example    : $genomic_align->level_id(1);
+  Description: get/set for attribute level_id. If no argument is given, the level_id
+               is not defined but both the dbID and the adaptor are, it tries to
+               fetch and set all the direct attributes from the database using the
+               dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
+  Returntype : int
+  Exceptions : none
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
+  Status     : Stable
+
+=cut
+
+sub level_id {
+  my ($self, $level_id) = @_;
+
+  if (defined($level_id)) {
+    $self->{'level_id'} = $level_id;
+
+  } elsif (!defined($self->{'level_id'})) {
+    if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+      # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlignBlock object
+      $self->adaptor->retrieve_all_direct_attributes($self);
+    } else {
+#      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlignBlock->level_id".
+#          " You either have to specify more information (see perldoc for".
+#          " Bio::EnsEMBL::Compara::GenomicAlignBlock) or to set it up directly");
+    }
+  }
+
+  return $self->{'level_id'};
+}
 
 =head2 requesting_slice (DEPRECATED)
 
@@ -1403,6 +1440,7 @@ sub restrict_between_alignment_positions {
           -method_link_species_set => $self->method_link_species_set,
           -genomic_align_array => $new_genomic_aligns,
           -group_id => $self->group_id,
+	  -level_id => $self->level_id,
       );
   $genomic_align_block->{original_dbID} = ($self->dbID or $self->{original_dbID});
   $genomic_align_block->{_original_strand} = $self->{_original_strand};

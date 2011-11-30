@@ -500,16 +500,15 @@ sub _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures {
     my $ga_query_end = $query_genomic_align->dnafrag_end;
     my $ga_query_strand = $query_genomic_align->dnafrag_strand;
     my $qdf_name = $query_genomic_align->dnafrag->name;
-    my $ga_level_id = $consensus_genomic_align->level_id;
     my $ga_strands_reversed = 0;
     if ($consensus_genomic_align->dnafrag_strand == -1) {
       $ga_strands_reversed = 1;
       $ga_query_strand = -$ga_query_strand;
     }
 
-    #my $ga_group_id = $consensus_genomic_align->genomic_align_group_id_by_type("default");
-
+    #Stored on the genomic_align_block
     my $ga_group_id = $this_genomic_align_block->group_id();
+    my $ga_level_id = $this_genomic_align_block->level_id();
 
     my ($slice, $seq_name, $start, $end, $strand);
     if ($this_genomic_align_block->reference_slice) {
