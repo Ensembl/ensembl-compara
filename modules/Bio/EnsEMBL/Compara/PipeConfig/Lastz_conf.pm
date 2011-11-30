@@ -11,11 +11,34 @@ sub default_options {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 	    'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
+	    #Define location of core databases separately (over-ride curr_core_sources_locs in Pairwise_conf.pm)
+	    #'reference' => {
+	    #	-host           => "host_name",
+	    #	-port           => port,
+	    #	-user           => "user_name",
+	    #	-dbname         => "my_human_database",
+	    #	-species        => "homo_sapiens"
+	    #   },
+            #'non_reference' => {
+	    #	    -host           => "host_name",
+	    #	    -port           => port,
+	    #	    -user           => "user_name",
+	    #	    -dbname         => "my_bushbaby_database",
+	    #	    -species        => "otolemur_garnettii"
+	    #	  },
+	    
+	    #'curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],
+	    #'curr_core_sources_locs'=> '',
+
+	    #Define chunking
 	    'default_chunks' => {#human example
 			     'reference'   => {'chunk_size' => 30000000,
 					       'overlap'    => 0,
 					       'include_non_reference' => 1,
+#Should use this for human vs non-primate
 					       'masking_options_file' => '/nfs/users/nfs_k/kb3/work/hive/data/human36.spec'},
+#Should use this for human vs primate or use Lastz_primate_conf.pm
+#                                              'masking_options' => '{default_soft_masking => 1}'},
 			     #non human example
 #   			    'reference'     => {'chunk_size'      => 10000000,
 #   						'overlap'         => 0,
@@ -49,8 +72,6 @@ sub default_options {
 	    #
 	    'net_input_method_link' => [1002, 'LASTZ_CHAIN'],
 	    'net_output_method_link' => [16, 'LASTZ_NET'],
-				   
-
 	   };
 }
 
