@@ -105,6 +105,7 @@ my $track_name;
 my $description;
 my $version = $reg->get_adaptor($species_name, "core", "MetaContainer")->
     list_value_by_key("schema_version")->[0];
+
 if ($feature =~ /^top/) {
   $track_name = "top-level.e$version";
   $description = "All $species_name top-level seq-regions in Ensembl $version";
@@ -126,6 +127,9 @@ if ($feature =~ /^top/) {
 } elsif ($feature =~ /^cassette/) {
   $track_name = "cassette coding-exons.e$version";
   $description = "$species_name cassette coding-exons (for protein-coding genes only) in Ensembl $version";
+} elsif ($feature =~ /^transcript/) {
+  $track_name = "transcript.e$version";
+  $description = "$species_name transcript in Ensembl $version";
 } elsif ($feature =~ /^pseudogene/) {
   $track_name = "pseudogenes.e$version";
   $description = "$species_name pseudogenes in Ensembl $version";
@@ -256,6 +260,15 @@ foreach my $slice (sort {
     }
   } elsif ($feature =~ /^pseudogene/) {
     $all_features = $slice->get_all_Genes_by_type("pseudogene");
+  } elsif ($feature =~ /^transcript/) {
+     my $all_genes = $slice->get_all_Genes();
+     foreach my $this_gene (@$all_genes) {
+        my $transcripts = $this_gene->get_all_Transcripts;
+        foreach my $this_transcript (@$transcripts) {
+           push(@$all_features, $this_transcript);
+        }
+     }
+
   } elsif ($feature =~ /^repeat/) {
     my $all_repeats = $slice->get_all_RepeatFeatures(undef, $extra);
     foreach my $this_feature (sort {$a->start <=> $b->start} @$all_repeats) {
@@ -290,12 +303,20 @@ foreach my $slice (sort {
     $sth->finish();
     next;
   } elsif ($feature =~ /^mlss_?(\d+)/) {
+
+    if (!defined $dnafrag_adaptor->fetch_by_Slice($slice)) {
+         print STDERR "Unable to fetch " . $slice->name . "\n";
+         next;
+     }
+
     my $dnafrag_id = $dnafrag_adaptor->fetch_by_Slice($slice)->dbID;
     my $sql = "SELECT dnafrag_start, dnafrag_end FROM genomic_align WHERE".
         " dnafrag_id = $dnafrag_id and method_link_species_set_id = ".$mlss->dbID;
     if ($extra) {
-      $sql .= " AND level_id = $extra";
+      $sql = "SELECT dnafrag_start, dnafrag_end FROM genomic_align ga JOIN genomic_align_block USING (genomic_align_block_id) WHERE".
+        " dnafrag_id = $dnafrag_id and ga.method_link_species_set_id = ".$mlss->dbID . " AND level_id = $extra";
     }
+
     $sql .= " ORDER BY dnafrag_start";
     my $sth = $dnafrag_adaptor->db->dbc->prepare($sql);
     $sth->execute();
