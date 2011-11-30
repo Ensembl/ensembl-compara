@@ -1,0 +1,34 @@
+This README describes how to run the DumpMultiAlign pipeline 
+
+The dumps are grouped by the toplevel regions of the reference species. Alignments not containing the reference species are written to files called *.others_*. Each file contains split_size alignments (default 200). Alignments containing duplications in the reference species are dumped once per duplicated segment.
+
+
+1) Edit ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpMultiAlign_conf.pm
+The location of the compara and core databases containing the alignments can be defined either using the parameter 'db_urls' or 'reg_conf' and 'compara_db'. Defaults have been set in the DumpMultiAlign_conf.pm. Most options likely to change are done on the command line.
+
+Options most likely to need chaging are:
+mlss_id     => it is recommended this is changed on the command line
+release     => ensembl release
+ensembl_cvs_root_dir => location of ensembl cvs root directory
+
+pipeline_db               => production database
+staging_loc1,staging_loc1 => current ensembl core databases
+livemirror_loc		  => location of previous release core databases
+db_urls			  => location of core and optionally, compara databases
+reg_conf		  => ensembl registry configuration file to define location of core and optionally, compara databases
+compara_db		  => can either be a compara database name eg "Multi", "ensembl_compara_65" or a url eg mysql://user:pass@host:Port/db_name. The default set to "Multi" and uses the db_urls to define the staging servers containing the core and compara database.
+coord_system_name1        => "chromosome" or equivalent
+coord_system_name2        => "supercontig" or equivalent
+format			  => output format. Can be any format supported by the 
+
+
+2) Run init_pipeline.pl
+eg
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --password **** --mlss_id 548 --output_dir /lustre/scratch101/ensembl/kb3/scratch/hive/release_65/emf_dumps/epo_6_primate --species human -dbname dumpMultiAlign_6way_primate_65 -pipeline_name DUMP_6_65
+
+mlss_id       => method_link_species_set id of the data to be dumped. To dump conservation scores, use the GERP_CONSERVATION_SCORE method_link_species_set id
+output_dir    => location of where to write dump files
+species       => reference species. 
+dbname        => compara database for the pipeline
+pipeline_name => unique name for jobs
+
