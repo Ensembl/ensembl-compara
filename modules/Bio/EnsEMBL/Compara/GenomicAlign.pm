@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::GenomicAlign - Defines one of the sequences involved in a
           -dnafrag_end => 100050,
           -dnafrag_strand => -1,
           -aligned_sequence => "TTGCAGGTAGGCCATCTGCAAGC----TGAGGAGCAAGGACTCCAGTCGGAGTC"
-          -level_id => 1,
+          -visible => 1,
         );
 
 
@@ -51,7 +51,7 @@ SET VALUES
   $genomic_align->aligned_sequence("TTGCAGGTAGGCCATCTGCAAGC----TGAGGAGCAAGGACTCCAGTCGGAGTC");
   $genomic_align->original_sequence("TTGCAGGTAGGCCATCTGCAAGCTGAGGAGCAAGGACTCCAGTCGGAGTC");
   $genomic_align->cigar_line("23M4D27M");
-  $genomic_align->level_id(1);
+  $genomic_align->visible(1);
 
 GET VALUES
   $adaptor = $genomic_align->adaptor;
@@ -68,7 +68,7 @@ GET VALUES
   $aligned_sequence = $genomic_align->aligned_sequence;
   $original_sequence = $genomic_align->original_sequence;
   $cigar_line = $genomic_align->cigar_line;
-  $level_id = $genomic_align->level_id;
+  $visible = $genomic_align->visible;
   $slice = $genomic_align->get_Slice();
 
 =head1 DESCRIPTION
@@ -127,9 +127,9 @@ corresponds to genomic_align.dnafrag_strand
 
 corresponds to genomic_align.cigar_line
 
-=item level_id
+=item visible
 
-corresponds to genomic_align.level_id
+corresponds to genomic_align.visible
 
 =item aligned_sequence
 
@@ -202,9 +202,8 @@ use Bio::EnsEMBL::Mapper;
   Arg [-CIGAR_LINE]
               : (opt.) string $cigar_line (a compressed way of representing the indels in
                 the $aligned_sequence of this object)
-  Arg [-LEVEL_ID]
-              : (opt.) int $level_id (level of orhologous layer. 1 corresponds to the first
-                layer of orthologous sequences found, 2 and over are addiotional layers)
+  Arg [-VISIBLE]
+              : (opt.) int $visible. Used in self alignments to ensure only one Bio::EnsEMBL::Compara::GenomicAlignBlock is visible when you have more than 1 block covering the same region.
   Example     : my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
                         -adaptor => $genomic_align_adaptor,
                         -genomic_align_block => $genomic_align_block,
@@ -214,7 +213,7 @@ use Bio::EnsEMBL::Mapper;
                         -dnafrag_end => 100050,
                         -dnafrag_strand => -1,
                         -aligned_sequence => "TTGCAGGTAGGCCATCTGCAAGC----TGAGGAGCAAGGACTCCAGTCGGAGTC"
-                        -level_id => 1,
+                        -visible => 1,
                       );
   Description : Creates a new Bio::EnsEMBL::Compara::GenomicAlign object
   Returntype  : Bio::EnsEMBL::Compara::GenomicAlign object
@@ -234,14 +233,14 @@ sub new {
         $dbID, $genomic_align_block, $genomic_align_block_id, $method_link_species_set,
         $method_link_species_set_id, $dnafrag, $dnafrag_id,
         $dnafrag_start, $dnafrag_end, $dnafrag_strand,
-        $aligned_sequence, $level_id ) = 
+        $aligned_sequence, $visible, $node_id ) = 
       
       rearrange([qw(
           CIGAR_LINE ADAPTOR
           DBID GENOMIC_ALIGN_BLOCK GENOMIC_ALIGN_BLOCK_ID METHOD_LINK_SPECIES_SET
           METHOD_LINK_SPECIES_SET_ID DNAFRAG DNAFRAG_ID
           DNAFRAG_START DNAFRAG_END DNAFRAG_STRAND
-          ALIGNED_SEQUENCE LEVEL_ID)], @args);
+          ALIGNED_SEQUENCE VISIBLE NODE_ID)], @args);
 
     $self->adaptor( $adaptor ) if defined $adaptor;
     $self->cigar_line( $cigar_line ) if defined $cigar_line;
@@ -257,7 +256,8 @@ sub new {
     $self->dnafrag_end($dnafrag_end) if (defined($dnafrag_end));
     $self->dnafrag_strand($dnafrag_strand) if (defined($dnafrag_strand));
     $self->aligned_sequence($aligned_sequence) if (defined($aligned_sequence));
-    $self->level_id($level_id) if (defined($level_id));
+    $self->visible($visible) if (defined($visible));
+    $self->node_id($node_id) if (defined($node_id));
 
     return $self;
 }
@@ -1021,12 +1021,12 @@ sub cigar_line {
 }
 
 
-=head2 level_id
+=head2 visible
 
-  Arg [1]    : int $level_id
-  Example    : $level_id = $genomic_align->level_id;
-  Example    : $genomic_align->level_id(1);
-  Description: get/set for attribute level_id. If no argument is given, the level_id
+  Arg [1]    : int $visible
+  Example    : $visible = $genomic_align->visible
+  Example    : $genomic_align->visible(1);
+  Description: get/set for attribute visible. If no argument is given, visible
                is not defined but both the dbID and the adaptor are, it tries to
                fetch and set all the direct attributes from the database using the
                dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
@@ -1038,24 +1038,56 @@ sub cigar_line {
 
 =cut
 
-sub level_id {
-  my ($self, $level_id) = @_;
+sub visible {
+  my ($self, $visible) = @_;
 
-  if (defined($level_id)) {
-    $self->{'level_id'} = $level_id;
+  if (defined($visible)) {
+    $self->{'visible'} = $visible;
 
-  } elsif (!defined($self->{'level_id'})) {
+  } elsif (!defined($self->{'visible'})) {
     if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
       # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       $self->adaptor->retrieve_all_direct_attributes($self);
     } else {
-      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->level_id".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->visible".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }
   }
 
-  return $self->{'level_id'};
+  return $self->{'visible'};
+}
+
+=head2 node_id
+
+  Arg [1]    : [optional] int $node_id
+  Example    : $node_id = $genomic_align->node_id;
+  Example    : $genomic_align->node_id(5530000000004);
+  Description: get/set for the node_id.This links the Bio::EnsEMBL::Compara::GenomicAlign to the 
+               Bio::EnsEMBL::Compara::GenomicAlignTree. The default value is NULL. If no argument is given, the node_id
+               is not defined but both the dbID and the adaptor are, it tries to
+               fetch and set all the direct attributes from the database using the
+               dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
+  Returntype : int
+  Exceptions : none
+  Warning    : warns if getting data from other sources fails.
+  Caller     : object->methodname
+  Status     : At risk 
+
+=cut
+
+sub node_id {
+  my ($self, $node_id) = @_;
+
+  if (defined($node_id)) {
+    $self->{'node_id'} = $node_id;
+  } elsif (!defined($self->{'node_id'})) {
+    if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
+      # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
+      $self->adaptor->retrieve_all_direct_attributes($self);
+    }
+  }
+  return $self->{'node_id'};
 }
 
 =head2 genomic_align_group
@@ -1076,19 +1108,8 @@ sub level_id {
 sub genomic_align_group {
   my ($self, $genomic_align_group) = @_;
 
-  if (defined($genomic_align_group)) {
-    $self->{'genomic_align_group'} = $genomic_align_group;
-  } elsif (!defined($self->{'genomic_align_group'})) {
-    if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
-      # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
-      my $genomic_align_group_adaptor = $self->adaptor->db->get_GenomicAlignGroupAdaptor;
-      my $genomic_align_group = $genomic_align_group_adaptor->fetch_by_GenomicAlign($self);
-      $self->{'genomic_align_group'} = $genomic_align_group;
-      $self->{'genomic_align_group_id'} = $genomic_align_group->dbID;
+  deprecate("Removed genomic_align_group table");
 
-    }
-  }
-  return $self->{'genomic_align_group'};
 }
 
 
@@ -1110,23 +1131,7 @@ sub genomic_align_group {
 sub genomic_align_group_id {
   my ($self, $genomic_align_group_id) = @_;
 
-  if (defined($genomic_align_group_id)) {
-    $self->{'genomic_align_group_id'} = $genomic_align_group_id;
-  } elsif (!defined($self->{'genomic_align_group_id'})) {
-    if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
-      # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
-      my $genomic_align_group_adaptor = $self->adaptor->db->get_GenomicAlignGroupAdaptor;
-      my $genomic_align_group = $genomic_align_group_adaptor->fetch_by_GenomicAlign($self);
-      $self->{'genomic_align_group'} = $genomic_align_group;
-      $self->{'genomic_align_group_id'} = $genomic_align_group->dbID;
-    } else {
-      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_group_id_by_type".
-          " You either have to specify more information (see perldoc for".
-          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
-    }
-  }
-
-  return $self->{'genomic_align_group_id'};
+  deprecate("Removed genomic_align_group table");
 }
 
 
@@ -1158,7 +1163,6 @@ sub original_sequence {
 
   } elsif (!defined($self->{'original_sequence'})) {
     # Try to get the data from other sources...
-    
     if ($self->{'aligned_sequence'} and $self->{'cigar_line'} !~ /I/) {
       # ...from the aligned sequence
       $self->{'original_sequence'} = $self->{'aligned_sequence'};
@@ -1354,7 +1358,7 @@ sub _print {
   dnafrag_end = ".($self->dnafrag_end or "-undef-")."
   dnafrag_strand = ".($self->dnafrag_strand or "-undef-")."
   cigar_line = ".($self->cigar_line or "-undef-")."
-  level_id = ".($self->level_id or "-undef-")."
+  visible = ".($self->visible or "-undef-")."
   original_sequence = ".($self->original_sequence or "-undef-")."
   aligned_sequence = ".($self->aligned_sequence or "-undef-")."
   
