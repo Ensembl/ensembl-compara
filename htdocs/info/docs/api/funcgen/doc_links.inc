@@ -5,5 +5,5 @@
 	<a href="/info/docs/api/funcgen/funcgen_schema.html">Database Description</a> |
 	<a href="/info/docs/api/funcgen/trimmed_funcgen_schema.png">Schema Diagram</a> |
     <a href="/info/docs/api/funcgen/regulation_tutorial.html">API Tutorial</a>
-	<hr><br /><br />
+	<hr><br>
 </html>
