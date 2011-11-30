@@ -230,7 +230,7 @@ sub _write_output {
       foreach my $ga (@{$gab->genomic_align_array}) {
 	  $ga->adaptor($gaa);
 	  $ga->method_link_species_set($mlss);
-	  $ga->level_id(1);
+	  $ga->visible(1);
 	  unless (defined $gab->length) {
 	      $gab->length(length($ga->aligned_sequence));
 	  }

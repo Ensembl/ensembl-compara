@@ -128,7 +128,6 @@ sub _write_output {
 
       #store first block
       my $first_block = shift @$chain;
-
       $self->compara_dba->get_GenomicAlignBlockAdaptor->store($first_block);
     
       #Set the group_id if one doesn't already exist ie for chains, to be the
@@ -415,9 +414,11 @@ sub daf_cigar_from_compara_cigars {
 
 
 sub convert_output {
-  my ($self, $chains_of_dafs) = @_; 
+  my ($self, $chains_of_dafs, $t_visible) = @_; 
 
   my (@chains_of_blocks);
+  
+  $t_visible = 1 if (!defined $t_visible);
 
   foreach my $chain_of_dafs (@$chains_of_dafs) {
     my @chain_of_blocks;
@@ -438,23 +439,23 @@ sub convert_output {
         my $t_dnafrag = $self->param('target_DnaFrag_hash')->{$daf->hseqname};
         
         my $out_mlss = $self->param('output_MethodLinkSpeciesSet');
-        
+
         my $q_genomic_align = Bio::EnsEMBL::Compara::GenomicAlign->new
             (-dnafrag        => $q_dnafrag,
              -dnafrag_start  => $daf->start,
              -dnafrag_end    => $daf->end,
              -dnafrag_strand => $daf->strand,
              -cigar_line     => $q_cigar,
-             -level_id       => $daf->level_id ? $daf->level_id : 1,
+	     -visible        => 1,      #always set to true
              -method_link_species_set => $out_mlss);
-        
+  
         my $t_genomic_align = Bio::EnsEMBL::Compara::GenomicAlign->new
             (-dnafrag        => $t_dnafrag,
              -dnafrag_start  => $daf->hstart,
              -dnafrag_end    => $daf->hend,
              -dnafrag_strand => $daf->hstrand,
              -cigar_line     => $t_cigar,
-             -level_id       => $daf->level_id ? $daf->level_id : 1,
+	     -visible        => $t_visible, #will be false for example, self alignments
              -method_link_species_set => $out_mlss);
 
         my $gen_al_block = Bio::EnsEMBL::Compara::GenomicAlignBlock->new
@@ -462,8 +463,8 @@ sub convert_output {
              -score                   => $daf->score,
              -length                  => $al_len,
              -method_link_species_set => $out_mlss,
-	     -group_id                => $daf->group_id);
-        
+	     -group_id                => $daf->group_id,
+	     -level_id                => $daf->level_id ? $daf->level_id : 1);
         push @chain_of_blocks, $gen_al_block;
       }
     }

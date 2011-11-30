@@ -216,7 +216,7 @@ sub _write_output {
 	      $genomic_align->adaptor($gaa);
 	      
 	      $genomic_align->method_link_species_set($mlss);
-	      $genomic_align->level_id(1);
+	      $genomic_align->visible(1);
 	  }
       }
       my $split_trees;
@@ -1685,7 +1685,6 @@ sub _create_frag_array {
 
 	#need to save each match separately but still use same structure as
 	#create_span_frag_array in case we change our minds back again
-
 	foreach my $pairwise_gab (@$pairwise_gabs) {
 
 	    #should only have 1!

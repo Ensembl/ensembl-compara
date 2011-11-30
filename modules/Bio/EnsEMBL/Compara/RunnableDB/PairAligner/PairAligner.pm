@@ -398,7 +398,7 @@ sub store_featurePair_as_genomicAlignBlock
   $genomic_align1->dnafrag_start($qyChunk->seq_start + $fp->start -1);
   $genomic_align1->dnafrag_end($qyChunk->seq_start + $fp->end -1);
   $genomic_align1->dnafrag_strand($fp->strand);
-  $genomic_align1->level_id(1);
+  $genomic_align1->visible(1);
   
   my $cigar1 = $fp->cigar_string;
   $cigar1 =~ s/I/M/g;
@@ -412,7 +412,7 @@ sub store_featurePair_as_genomicAlignBlock
   $genomic_align2->dnafrag_start($dbChunk->seq_start + $fp->hstart -1);
   $genomic_align2->dnafrag_end($dbChunk->seq_start + $fp->hend -1);
   $genomic_align2->dnafrag_strand($fp->hstrand);
-  $genomic_align2->level_id(1);
+  $genomic_align2->visible(1);
 
   my $cigar2 = $fp->cigar_string;
   $cigar2 =~ s/D/M/g;
@@ -433,6 +433,7 @@ sub store_featurePair_as_genomicAlignBlock
   $GAB->score($fp->score);
   $GAB->perc_id($fp->percent_id);
   $GAB->length($fp->alignment_length);
+  $GAB->level_id(1);
 
   $self->compara_dba->get_GenomicAlignBlockAdaptor->store($GAB);
   
