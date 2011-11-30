@@ -159,7 +159,7 @@ sub fetch_input {
   my $non_ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('non_ref_species'));
 
   #Get ref_url and non_ref_url from genome_db table
-  unless (defined $self->param('ref_url')) {
+  unless ($self->param('ref_url')) {
       my $ref_db = $ref_genome_db->connect_to_genome_locator;
       #This doesn't not produce a valid "core" url ie it appends the database name instead of just the db_version so
       #load_registry_from_url doesn't work
@@ -168,7 +168,7 @@ sub fetch_input {
       my ($core_url, $db_version) = $url =~ /(.*\/)\w+_core_([0-9]+)_*/;
       $self->param('ref_url', "$core_url$db_version");
   }
-  unless (defined $self->param('non_ref_url')) {
+  unless ($self->param('non_ref_url')) {
       my $non_ref_db = $non_ref_genome_db->connect_to_genome_locator;
       #$self->param('non_ref_url', $non_ref_db->dbc->url);
       my $url = $non_ref_db->dbc->url;
@@ -177,7 +177,7 @@ sub fetch_input {
   }
 
   #Set up paths to various perl scripts
-  unless (defined $self->param('dump_features')) {
+  unless ($self->param('dump_features')) {
       $self->param('dump_features', $self->param('perl_path') . "/scripts/dumps/dump_features.pl");
   }
   
@@ -185,7 +185,7 @@ sub fetch_input {
       die(self->param('dump_features') . " does not exist");
   }
   
-  unless (defined $self->param('update_config_database')) {
+  unless ($self->param('update_config_database')) {
       $self->param('update_config_database', $self->param('perl_path') . "/scripts/pipeline/update_config_database.pl");
   }
   
@@ -193,7 +193,7 @@ sub fetch_input {
       die(self->param('update_config_database') . " does not exist");
   }
   
-  unless (defined $self->param('create_pair_aligner_page')) {
+  unless ($self->param('create_pair_aligner_page')) {
       $self->param('create_pair_aligner_page', $self->param('perl_path') . "/scripts/pipeline/create_pair_aligner_page.pl");
   }
   unless (-e $self->param('create_pair_aligner_page')) {
@@ -267,7 +267,7 @@ sub dump_bed_file {
     } else {
 	#Need to dump toplevel features
 	my $cmd;
-	if (defined $reg_conf && $reg_conf ne "") {
+	if ($reg_conf) {
 	    $cmd = $self->param('dump_features') . " --reg_conf " . $reg_conf ." --species $name --feature toplevel > $genome_bed_file";
 	} else {
 	    $cmd = $self->param('dump_features') . " --url " . $url ." --species $name --feature toplevel > $genome_bed_file";
@@ -284,7 +284,7 @@ sub dump_bed_file {
 #    }
     } else {
 	my $cmd;
-	if (defined $reg_conf && $reg_conf ne "") {
+	if ($reg_conf) {
 	    $cmd = $self->param('dump_features') . " --reg_conf " . $reg_conf ." --species $name --feature coding-exons > $exon_bed_file";
 	} else {
 	    $cmd = $self->param('dump_features') . " --url " . $url ." --species $name --feature coding-exons > $exon_bed_file";
@@ -307,16 +307,16 @@ sub run_update_config_database {
       " --mlss_id " . $self->param('mlss_id') . 
       " --ensembl_release " . $self->param('ensembl_release');
 
-    $cmd .= " --config_url " . $self->param('config_url') if (defined $self->param('config_url') && $self->param('config_url') ne "");
-    $cmd .= " --config_file " . $self->param('config_file') if (defined $self->param('config_file')); 
-    $cmd .= " --ref_url " . $self->param('ref_url') if (defined $self->param('ref_url'));
-    $cmd .= " --non_ref_url " . $self->param('non_ref_url') if (defined $self->param('non_ref_url'));
-    $cmd .= " --reg_conf " . $self->param('reg_conf') if (defined $self->param('reg_conf') && $self->param('reg_conf') ne "");
-    $cmd .= " --output_dir " . $self->param('output_dir') if (defined $self->param('output_dir'));
-    $cmd .= " --pair_aligner_options \'" . $self->param('pair_aligner_options') ."\'" if (defined $self->param('pair_aligner_options')) ;
-    $cmd .= " --ref_dna_collection \'" . stringify($self->param('ref_dna_collection')) ."\'" if (defined $self->param('ref_dna_collection'));
-    $cmd .= " --non_ref_dna_collection \'" . stringify($self->param('non_ref_dna_collection')) ."\'" if (defined $self->param('non_ref_dna_collection'));
-    $cmd .= " --bed_file_location " . $self->param('bed_dir') if (defined $self->param('bed_dir'));
+    $cmd .= " --config_url " . $self->param('config_url') if ($self->param('config_url'));
+    $cmd .= " --config_file " . $self->param('config_file') if ($self->param('config_file')); 
+    $cmd .= " --ref_url " . $self->param('ref_url') if ($self->param('ref_url'));
+    $cmd .= " --non_ref_url " . $self->param('non_ref_url') if ($self->param('non_ref_url'));
+    $cmd .= " --reg_conf " . $self->param('reg_conf') if ($self->param('reg_conf'));
+    $cmd .= " --output_dir " . $self->param('output_dir') if ($self->param('output_dir'));
+    $cmd .= " --pair_aligner_options \'" . $self->param('pair_aligner_options') ."\'" if ($self->param('pair_aligner_options')) ;
+    $cmd .= " --ref_dna_collection \'" . stringify($self->param('ref_dna_collection')) ."\'" if ($self->param('ref_dna_collection'));
+    $cmd .= " --non_ref_dna_collection \'" . stringify($self->param('non_ref_dna_collection')) ."\'" if ($self->param('non_ref_dna_collection'));
+    $cmd .= " --bed_file_location " . $self->param('bed_dir') if ($self->param('bed_dir'));
 
     print "$cmd\n";
     my $output;
@@ -334,11 +334,16 @@ sub run_update_config_database {
 sub run_create_pair_aligner_page {
     my ($self) = @_;
 
+    if (!$self->param('config_url')) {
+	print "Must before config_url to print out the page information. Stats info is written to the job_message table\n";
+	return;
+    }
+
     my $cmd = "perl " . $self->param('create_pair_aligner_page') . 
       " --config_url " . $self->param('config_url') . 
       " --mlss_id " . $self->param('mlss_id');
 
-    $cmd .= " --ucsc_url " . $self->param('ucsc_url') if (defined $self->param('ucsc_url') && $self->param('ucsc_url') ne "");
+    $cmd .= " --ucsc_url " . $self->param('ucsc_url') if ($self->param('ucsc_url'));
     $cmd .= " > ./mlss_" . $self->param('mlss_id') . ".html";
 
     unless (system($cmd) == 0) {
