@@ -88,7 +88,7 @@ sub fetch_all_by_MethodLinkSpeciesSet {
     $final_clause = " LIMIT $limit_index_start, $limit_number";
   }
 
-  my $sql = "SELECT distinct(gat.root_id) FROM genomic_align_tree gat, genomic_align_group gag, genomic_align ga  WHERE ga.method_link_species_set_id = $method_link_species_set_id AND gat.node_id = gag.node_id AND gag.genomic_align_id = ga.genomic_align_id" . $final_clause;
+  my $sql = "SELECT distinct(gat.root_id) FROM genomic_align_tree gat, genomic_align ga  WHERE ga.method_link_species_set_id = $method_link_species_set_id AND gat.node_id = ga.node_id " . $final_clause;
   my $sth = $self->prepare($sql);
   $sth->execute;
   while(my $rowhash = $sth->fetchrow_hashref) {
@@ -146,7 +146,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   ###########################################################################
   ## FIRST STEP:
   ## The query looks for GenomicAlign entries in the genomic region of interest
-  ## and links to the GenomicAlignGroup and GenomicAlignTree entries. We extract
+  ## and links to the GenomicAlignTree entries. We extract
   ## the list of node IDs for the root of the GenomicAlignTrees
   ###########################################################################
   my $constraint = "WHERE ga.method_link_species_set_id = $method_link_species_set_id
@@ -192,8 +192,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
     #my $genomic_align_nodes = $self->_generic_fetch($constraint);
 
     $sql = "SELECT " . join(",", @{$self->columns}) . 	 
-	   " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.node_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.root_id = $root_node_id"; 	 
-	  	 
+	   " FROM genomic_align_tree gat". " LEFT JOIN genomic_align ga USING (node_id) WHERE gat.root_id = $root_node_id";
+
     $sth = $self->prepare($sql); 	 
     $sth->execute; 	 
     my $genomic_align_nodes = $self->_objs_from_sth($sth); 	 
@@ -423,7 +423,6 @@ sub _fetch_by_genomic_align_block {
     return undef unless $genomic_align_block_id;
     
     my $sql = "SELECT root_id FROM genomic_align
-    LEFT JOIN genomic_align_group USING (genomic_align_id)
     LEFT JOIN genomic_align_tree USING (node_id)
     WHERE genomic_align_block_id = $genomic_align_block_id";
 
@@ -435,7 +434,7 @@ sub _fetch_by_genomic_align_block {
   #print STDERR "root_id $root_id\n";
   #whole tree
   $sql = "SELECT " . join(",", @{$self->columns}) .  
-    " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.node_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.root_id = $root_id";
+    " FROM genomic_align_tree gat". " LEFT JOIN genomic_align ga USING (node_id) WHERE gat.root_id = $root_id";
 
   $sth = $self->prepare($sql);
   $sth->execute;
@@ -449,7 +448,6 @@ sub _fetch_by_genomic_align_block {
 
  #my $constraint = "WHERE gat.node_id = $root_id";
  # my $genomic_align_trees = $self->_generic_fetch($constraint);
-
   if (@$genomic_align_trees > 1) {
     warning("Found more than 1 tree. This shouldn't happen. Returning the first one only");
   }
@@ -582,15 +580,19 @@ sub store {
       }
     }
   }
+
+  ## Store this node and, recursively, all the sub nodes
+  #Need to store node before store GenomicAlign via GenomicAlignBlock adaptor
+  $self->store_node($node);
+
   if (@{$ancestral_genomic_align_block->get_all_GenomicAligns} > 0) {
     $genomic_align_block_adaptor->store($ancestral_genomic_align_block);
   }
+
   $genomic_align_block_adaptor->store($modern_genomic_align_block);
   $node->ancestral_genomic_align_block_id($ancestral_genomic_align_block->dbID);
   $node->modern_genomic_align_block_id($modern_genomic_align_block->dbID);
 
-  ## Store this node and, recursively, all the sub nodes
-  $self->store_node($node);
 
   ## Set and store the left and right indexes unless otherwise stated
   if (!$skip_left_right_indexes) {
@@ -683,7 +685,6 @@ sub store_node {
     $parent_id = $node->parent->node_id ;
     $root_id = $node->root->node_id;
   }
-
   #printf("inserting parent_id = %d, root_id = %d\n", $parent_id, $root_id);
 
   my $sth = $self->prepare("INSERT INTO genomic_align_tree 
@@ -709,15 +710,9 @@ sub store_node {
   $node->adaptor($self);
 
   if ($node->genomic_align_group) {
-    my $genomic_align_group_adaptor = $self->db->get_GenomicAlignGroupAdaptor();
-    $node->genomic_align_group->dbID($node->node_id);
-    $genomic_align_group_adaptor->store($node->genomic_align_group);
-
-    if (!$node->genomic_align_group or !$node->genomic_align_group->dbID) {
-      throw("Cannot store before setting the genomic_align_group ID");
+    foreach my $genomic_align (@{$node->get_all_genomic_aligns_for_node}) {
+	$genomic_align->node_id($node->node_id);
     }
-    #print STDERR "NODE ", $node->node_id, " ", $node->name, " -- GROUP: ",
-    #  $node->genomic_align_group->dbID, "\n";
   } else {
     #print STDERR "NODE ", $node->node_id, " ", $node->name, " -- NO GROUP\n";
   }
@@ -814,7 +809,7 @@ sub fetch_all_children_for_node {
   }
 
   my $sql = "SELECT " . join(",", @{$self->columns}) .  
-     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.node_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.parent_id = " . $node->node_id;
+     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align ga ON (gat.node_id = ga.node_id) WHERE gat.parent_id = " . $node->node_id;
 
    my $sth = $self->prepare($sql);
    $sth->execute;
@@ -1156,7 +1151,7 @@ sub columns {
           'ga.dnafrag_end',
           'ga.dnafrag_strand',
           'ga.cigar_line',
-          'ga.level_id',
+          'ga.visible',
           ];
 }
 
@@ -1367,7 +1362,7 @@ sub _create_GenomicAlign_object_from_rowhash {
   $genomic_align->dnafrag_end($rowhash->{dnafrag_end});
   $genomic_align->dnafrag_strand($rowhash->{dnafrag_strand});
   $genomic_align->cigar_line($rowhash->{cigar_line});
-  $genomic_align->level_id($rowhash->{level_id});
+  $genomic_align->visible($rowhash->{visible});
 
   return $genomic_align;
 }

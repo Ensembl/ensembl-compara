@@ -158,8 +158,9 @@ sub store {
           dnafrag_end,
           dnafrag_strand,
           cigar_line,
-          level_id
-      ) VALUES (?,?,?, ?,?,?, ?,?,?)};
+          visible,
+          node_id
+      ) VALUES (?,?,?, ?,?,?, ?,?,?,?)};
   
   my $genomic_align_sth = $self->prepare($genomic_align_sql);
   
@@ -201,7 +202,8 @@ sub store {
             $ga->dnafrag_end,
             $ga->dnafrag_strand,
             ($ga->cigar_line or "NULL"),    # FIXME: please check that this "NULL" string in a mediumtext field is what you really want
-            ($ga->level_id or 1)
+            $ga->visible,
+	    ($ga->node_id or undef)
         );
 
     if ($lock_tables) {
@@ -221,7 +223,7 @@ sub store {
           "-".$ga->dnafrag_end."]".
           " (".$ga->dnafrag_strand.")".
           ", cgr=".($ga->cigar_line or "NULL").
-          ", lvl=".($ga->level_id or 1));
+          ", vis=".$ga->visible);
 
   }
 }
@@ -278,7 +280,8 @@ sub fetch_by_dbID {
               dnafrag_end,
               dnafrag_strand,
               cigar_line,
-              level_id
+              visible,
+              node_id
           FROM
               genomic_align
           WHERE
@@ -298,7 +301,8 @@ sub fetch_by_dbID {
           -dnafrag_end => $values[5],
           -dnafrag_strand => $values[6],
           -cigar_line => $values[7],
-          -level_id => $values[8],
+          -visible => $values[8],
+	  -node_id => $values[9],
       );
 
   return $genomic_align;
@@ -362,7 +366,8 @@ sub fetch_all_by_genomic_align_block_id {
               dnafrag_end,
               dnafrag_strand,
               cigar_line,
-              level_id
+              visible,
+              node_id
           FROM
               genomic_align
           WHERE
@@ -373,10 +378,10 @@ sub fetch_all_by_genomic_align_block_id {
   $sth->execute($incoming_genomic_align_block_id);
   my ($genomic_align_id, $genomic_align_block_id, $method_link_species_set_id,
       $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand, $cigar_line,
-      $level_id);
+      $visible, $node_id);
   $sth->bind_columns(\$genomic_align_id, \$genomic_align_block_id,
       \$method_link_species_set_id, \$dnafrag_id, \$dnafrag_start, \$dnafrag_end,
-      \$dnafrag_strand, \$cigar_line, \$level_id);
+      \$dnafrag_strand, \$cigar_line, \$visible, \$node_id);
   my $genomic_align_groups = {};
   while ($sth->fetchrow_arrayref()) {
     my $this_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -389,7 +394,8 @@ sub fetch_all_by_genomic_align_block_id {
             -dnafrag_end => $dnafrag_end,
             -dnafrag_strand => $dnafrag_strand,
             -cigar_line => $cigar_line,
-            -level_id => $level_id,
+            -visible => $visible,
+	    -node_id => $node_id
         );
     push(@$genomic_aligns, $this_genomic_align);
   }
@@ -397,42 +403,70 @@ sub fetch_all_by_genomic_align_block_id {
   return $genomic_aligns;
 }
 
+=head2 fetch_all_by_node_id
 
-=head2 store_daf (UNDER DEVELOPMENT)
-
-  Arg  1     : 
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
+  Arg  1     : integer $node_id
+  Example    : my $genomic_aligns =
+                    $genomic_align_adaptor->fetch_all_by_node_id(5530002705680);
+  Description: Retrieve the corresponding
+               Bio::EnsEMBL::Compara::GenomicAlign objects
+  Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlign objects
+  Exceptions : Returns a ref. to an empty array if there are no matching entries
+  Exceptions : Thrown if $node_id is not a number 
+  Caller     : object::methodname
+  Status     : At risk
 
 =cut
 
-sub store_daf {
-  my ($self, $dafs, $dnafrag, $hdnafrag, $alignment_type) = @_;
-  my @gas;
-  foreach my $daf (@{$dafs}) {
-    my $ga = Bio::EnsEMBL::Compara::GenomicAlign->new_fast
-      ('consensus_dnafrag' => $dnafrag,
-        'consensus_start' => $daf->start,
-        'consensus_end' => $daf->end,
-        'query_dnafrag' => $hdnafrag,
-        'query_start' => $daf->hstart,
-        'query_end' => $daf->hend,
-        'query_strand' => $daf->hstrand,
-        'alignment_type' => $alignment_type,
-        'score' => $daf->score,
-        'perc_id' => $daf->percent_id,
-        'group_id' => $daf->group_id,
-        'level_id' => $daf->level_id,
-        'cigar_line' => $daf->cigar_string
-       );
-          push @gas, $ga;
-  }
-  $self->store(\@gas);
-}
+sub fetch_all_by_node_id {
+  my ($self, $incoming_node_id) = @_;
+  my $genomic_aligns = [];
 
+  my $sql = qq{
+          SELECT
+              genomic_align_id,
+              genomic_align_block_id,
+              method_link_species_set_id,
+              dnafrag_id,
+              dnafrag_start,
+              dnafrag_end,
+              dnafrag_strand,
+              cigar_line,
+              level_id,
+              node_id
+          FROM
+              genomic_align
+          WHERE
+              node_id = ?
+      };
+
+  my $sth = $self->prepare($sql);
+  $sth->execute($incoming_node_id);
+  my ($genomic_align_id, $genomic_align_block_id, $method_link_species_set_id,
+      $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand, $cigar_line,
+      $level_id, $node_id);
+  $sth->bind_columns(\$genomic_align_id, \$genomic_align_block_id,
+      \$method_link_species_set_id, \$dnafrag_id, \$dnafrag_start, \$dnafrag_end,
+      \$dnafrag_strand, \$cigar_line, \$level_id, \$node_id);
+  while ($sth->fetchrow_arrayref()) {
+    my $this_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+            -dbID => $genomic_align_id,
+            -adaptor => $self,
+            -genomic_align_block_id => $genomic_align_block_id,
+            -method_link_species_set_id => $method_link_species_set_id,
+            -dnafrag_id => $dnafrag_id,
+            -dnafrag_start => $dnafrag_start,
+            -dnafrag_end => $dnafrag_end,
+            -dnafrag_strand => $dnafrag_strand,
+            -cigar_line => $cigar_line,
+            -level_id => $level_id,
+	    -node_id => $node_id
+        );
+    push(@$genomic_aligns, $this_genomic_align);
+  }
+
+  return $genomic_aligns;
+}
 
 =head2 retrieve_all_direct_attributes
 
@@ -460,7 +494,8 @@ sub retrieve_all_direct_attributes {
                     dnafrag_end,
                     dnafrag_strand,
                     cigar_line,
-                    level_id
+                    visible,
+                    node_id
                 FROM
                     genomic_align
                 WHERE
@@ -470,7 +505,7 @@ sub retrieve_all_direct_attributes {
   my $sth = $self->prepare($sql);
   $sth->execute($genomic_align->dbID);
   my ($genomic_align_block_id, $method_link_species_set_id, $dnafrag_id, $dnafrag_start, $dnafrag_end,
-          $dnfrag_strand, $cigar_line, $level_id) = $sth->fetchrow_array();
+          $dnfrag_strand, $cigar_line, $visible, $node_id) = $sth->fetchrow_array();
   
   ## Populate the object
   $genomic_align->adaptor($self);
@@ -481,7 +516,8 @@ sub retrieve_all_direct_attributes {
   $genomic_align->dnafrag_end($dnafrag_end) if (defined($dnafrag_end));
   $genomic_align->dnafrag_strand($dnfrag_strand) if (defined($dnfrag_strand));
   $genomic_align->cigar_line($cigar_line) if (defined($cigar_line));
-  $genomic_align->level_id($level_id) if (defined($level_id));
+  $genomic_align->visible($visible) if (defined($visible));
+  $genomic_align->node_id($node_id) if (defined($node_id));
 
   return $genomic_align;
 }
