@@ -139,7 +139,7 @@ CREATE TABLE ncbi_taxa_name (
 
 CREATE TABLE genome_db (
   genome_db_id                int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  taxon_id                    int(10) unsigned NOT NULL, # KF taxon.taxon_id
+  taxon_id                    int(10) unsigned DEFAULT NULL, # KF taxon.taxon_id
   name                        varchar(40) DEFAULT '' NOT NULL,
   assembly                    varchar(100) DEFAULT '' NOT NULL,
   assembly_default            tinyint(1) DEFAULT 1,
@@ -317,6 +317,7 @@ CREATE TABLE genomic_align_block (
   perc_id                     tinyint(3) unsigned DEFAULT NULL,
   length                      int(10),
   group_id                    bigint unsigned DEFAULT NULL,
+  level_id                    tinyint(2) unsigned DEFAULT 0 NOT NULL,
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
@@ -324,39 +325,6 @@ CREATE TABLE genomic_align_block (
   KEY method_link_species_set_id (method_link_species_set_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
-
-#
-# Table structure for table 'genomic_align'
-#
-#   This table stores the sequences belonging to the same genomic_align_block entry
-#
--- primary key is used when fecthing by dbID
--- key genomic_align_block_id is used when fetching by genomic_align_block_id
--- key dnafrag is used in all other queries
-
-CREATE TABLE genomic_align (
-  genomic_align_id            bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  genomic_align_block_id      bigint unsigned NOT NULL, # FK genomic_align_block.genomic_align_block_id
-  method_link_species_set_id  int(10) unsigned DEFAULT 0 NOT NULL, # FK method_link_species_set_id.method_link_species_set_id
-  dnafrag_id                  bigint unsigned DEFAULT 0 NOT NULL, # FK dnafrag.dnafrag_id
-  dnafrag_start               int(10) DEFAULT 0 NOT NULL,
-  dnafrag_end                 int(10) DEFAULT 0 NOT NULL,
-  dnafrag_strand              tinyint(4) DEFAULT 0 NOT NULL,
-  cigar_line                  mediumtext,
-  level_id                    tinyint(2) unsigned DEFAULT 0 NOT NULL,
-
-  FOREIGN KEY (genomic_align_block_id) REFERENCES genomic_align_block(genomic_align_block_id),
-  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
-  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
-
-  PRIMARY KEY genomic_align_id (genomic_align_id),
-  KEY genomic_align_block_id (genomic_align_block_id),
-  KEY method_link_species_set_id (method_link_species_set_id),
-  KEY dnafrag (dnafrag_id, method_link_species_set_id, dnafrag_start, dnafrag_end)
-) MAX_ROWS = 1000000000 AVG_ROW_LENGTH = 60 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
-
 
 #
 # Table structure for table 'genomic_align_tree'
@@ -366,10 +334,10 @@ CREATE TABLE genomic_align (
 #   ancestral sequence reconstruction. This table stores the tree underlying each tree
 #   alignments
 #
--- primary key is a foreign key to genomic_align_group.group_id
+-- primary key is a foreign key to genomic_align.node_id
 
 CREATE TABLE genomic_align_tree (
-  node_id                     bigint(20) unsigned NOT NULL AUTO_INCREMENT, # internal id, FK genomic_align_group.genomic_align_id
+  node_id                     bigint(20) unsigned NOT NULL AUTO_INCREMENT, # internal id, FK genomic_align.node_id
   parent_id                   bigint(20) unsigned NOT NULL default 0,
   root_id                     bigint(20) unsigned NOT NULL default 0,
   left_index                  int(10) NOT NULL default 0,
@@ -387,23 +355,37 @@ CREATE TABLE genomic_align_tree (
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 #
-# Table structure for table 'genomic_align_group'
+# Table structure for table 'genomic_align'
 #
-#   This table can store several groupings of the genomic aligned sequences
+#   This table stores the sequences belonging to the same genomic_align_block entry
 #
+-- primary key is used when fetching by dbID
+-- key genomic_align_block_id is used when fetching by genomic_align_block_id
+-- key dnafrag is used in all other queries
 
-CREATE TABLE genomic_align_group (
-  #node_id                    bigint unsigned NOT NULL AUTO_INCREMENT, # internal id, groups genomic_align_ids
-  node_id                     bigint unsigned NOT NULL, # internal id, groups genomic_align_ids
-  genomic_align_id            bigint unsigned NOT NULL, # FK genomic_align.genomic_align_id
+CREATE TABLE genomic_align (
+  genomic_align_id            bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  genomic_align_block_id      bigint unsigned NOT NULL, # FK genomic_align_block.genomic_align_block_id
+  method_link_species_set_id  int(10) unsigned DEFAULT 0 NOT NULL, # FK method_link_species_set_id.method_link_species_set_id
+  dnafrag_id                  bigint unsigned DEFAULT 0 NOT NULL, # FK dnafrag.dnafrag_id
+  dnafrag_start               int(10) DEFAULT 0 NOT NULL,
+  dnafrag_end                 int(10) DEFAULT 0 NOT NULL,
+  dnafrag_strand              tinyint(4) DEFAULT 0 NOT NULL,
+  cigar_line                  mediumtext,
+  visible                     tinyint(2) unsigned DEFAULT 1 NOT NULL,
+  node_id                     bigint(20) unsigned DEFAULT NULL,
 
-  FOREIGN KEY (genomic_align_id) REFERENCES genomic_align(genomic_align_id),
+  FOREIGN KEY (genomic_align_block_id) REFERENCES genomic_align_block(genomic_align_block_id),
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
   FOREIGN KEY (node_id) REFERENCES genomic_align_tree(node_id),
 
-  KEY node_id (node_id),
-  UNIQUE KEY genomic_align_id (genomic_align_id)
-
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+  PRIMARY KEY genomic_align_id (genomic_align_id),
+  KEY genomic_align_block_id (genomic_align_block_id),
+  KEY method_link_species_set_id (method_link_species_set_id),
+  KEY dnafrag (dnafrag_id, method_link_species_set_id, dnafrag_start, dnafrag_end),
+  KEY node_id (node_id)
+) MAX_ROWS = 1000000000 AVG_ROW_LENGTH = 60 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
 #
