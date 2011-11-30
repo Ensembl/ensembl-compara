@@ -24,16 +24,6 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ
 
 =head1 SYNOPSIS
 
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Analysis::RunnableDB::LastZ->new ( 
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$repmask->fetch_input(); #reads from DB
-$repmask->run();
-$repmask->output();
-$repmask->write_output(); #writes to DB
-
 =cut
 
 =head1 DESCRIPTION
@@ -41,7 +31,7 @@ $repmask->write_output(); #writes to DB
 This object wraps Bio::EnsEMBL::Analysis::Runnable::Lastz to add
 functionality to read and write to databases.
 The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters. A Bio::EnsEMBL::Pipeline::DBSQL::Obj is
+extraction of appropriate parameters. 
 required for databse access.
 
 =cut
@@ -59,6 +49,8 @@ use strict;
 use Bio::EnsEMBL::Analysis::Runnable::Lastz;
 
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
+use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
+
 our @ISA = qw(Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner);
 
 
@@ -115,6 +107,11 @@ sub configure_runnable {
 
   #Should be one entry in meta table
   my $options = $option_list[0][0];
+
+  #If not in meta table (new pipeline) try param (old pipeline)
+  if (!$options) {
+      $options = $self->param('options');
+  }
 
   throw("Unable to find options in meta table") unless (defined $options);
 
