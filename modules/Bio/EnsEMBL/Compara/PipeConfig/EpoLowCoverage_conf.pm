@@ -61,21 +61,21 @@ sub default_options {
         },
 	'populate_new_database_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
 
-	'reg1' => {
+	'staging_loc1' => {
             -host   => 'ens-staging1',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
 	    -db_version => $self->o('release'),
         },
-        'reg2' => {
+        'staging_loc2' => {
             -host   => 'ens-staging2',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
 	    -db_version => $self->o('release'),
         },  
-	'live_db' => {
+	'livemirror_loc' => {
             -host   => 'ens-livemirror',
             -port   => 3306,
             -user   => 'ensro',
@@ -87,13 +87,15 @@ sub default_options {
 	'high_epo_mlss_id' => $self->o('high_epo_mlss_id'), #mlss_id for high coverage epo alignment
 	'ce_mlss_id' => $self->o('ce_mlss_id'),             #mlss_id for low coverage constrained elements
 	'cs_mlss_id' => $self->o('cs_mlss_id'),             #mlss_id for low coverage conservation scores
-	'master_db_name' => 'sf5_ensembl_compara_master',   
+	#'master_db_name' => 'sf5_ensembl_compara_master',   
 	'ref_species' => 'homo_sapiens',                    #ref species for pairwise alignments
 	'max_block_size'  => 1000000,                       #max size of alignment before splitting 
 	'pairwise_default_location' => $self->dbconn_2_url('live_compara_db'), #default location for pairwise alignments
-	'gerp_version' => '2.1',                                               #gerp program version
-	'gerp_window_sizes'    => '[1,10,100,500]',                            #gerp window sizes
-	'no_gerp_conservation_scores' => 0,                                    #Not used in productions but is a valid argument
+
+	 #gerp parameters
+	'gerp_version' => '2.1',                            #gerp program version
+	'gerp_window_sizes'    => '[1,10,100,500]',         #gerp window sizes
+	'no_gerp_conservation_scores' => 0,                 #Not used in productions but is a valid argument
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh', #location of full species tree, will be pruned 
 	'newick_format' => 'simple',
 	'work_dir' => $self->o('work_dir'),                 #location to put pruned tree file 
@@ -164,7 +166,7 @@ sub pipeline_analyses {
 	       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
 	       -parameters    => {
 				  'program'        => $self->o('populate_new_database_program'),
-				  'master'         => $self->o('master_db_name'),
+				  #'master'         => $self->o('master_db_name'),
 				  'mlss_id'        => $self->o('low_epo_mlss_id'),
 				  'ce_mlss_id'     => $self->o('ce_mlss_id'),
 				  'cs_mlss_id'     => $self->o('cs_mlss_id'),
@@ -217,7 +219,7 @@ sub pipeline_analyses {
 	    {   -logic_name => 'load_genomedb',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
 		-parameters => {
-				'registry_dbs'  => [ $self->o('reg1'), $self->o('reg2'), $self->o('live_db')],
+				'registry_dbs'  => [ $self->o('staging_loc1'), $self->o('staging_loc2'), $self->o('livemirror_loc')],
 #				'registry_dbs'  => [ $self->o('live_db'), $self->o('reg1'), $self->o('reg2')],
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
