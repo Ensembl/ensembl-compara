@@ -124,17 +124,16 @@ sub importAlignment {
     my $sth = $self->param('from_comparaDBA')->dbc->prepare("SELECT
         MIN(gab.genomic_align_block_id), MAX(gab.genomic_align_block_id),
         MIN(ga.genomic_align_id), MAX(ga.genomic_align_id),
-        MIN(gag.node_id), MAX(gag.node_id),
+        MIN(gat.node_id), MAX(gat.node_id),
         MIN(gat.root_id), MAX(gat.root_id)
       FROM genomic_align_block gab
         LEFT JOIN genomic_align ga using (genomic_align_block_id)
-        LEFT JOIN genomic_align_group gag using (genomic_align_id)
-	LEFT JOIN genomic_align_tree gat ON gat.node_id = gag.node_id
+	LEFT JOIN genomic_align_tree gat ON gat.node_id = ga.node_id
       WHERE
         gab.method_link_species_set_id = ?");
     
     $sth->execute($mlss_id);
-    my ($min_gab, $max_gab, $min_ga, $max_ga, $min_gag, $max_gag, 
+    my ($min_gab, $max_gab, $min_ga, $max_ga, $min_node_id, $max_node_id, 
 	$min_root_id, $max_root_id) =
 	  $sth->fetchrow_array();
     
@@ -220,26 +219,6 @@ sub importAlignment {
 		  " JOIN dnafrag USING (dnafrag_id)".
 		  " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
 		  " LEFT JOIN genomic_align_tree gat USING (node_id) WHERE gag.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id AND genome_db_id != 63");
-    }
-    #copy genomic_align_group table
-    if ($dnafrag_id) {
-	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
-		  "genomic_align_group",
-		  "gag.node_id", 
-		  $min_gag, $max_gag,
-		  "SELECT gag.*".
-		  " FROM genomic_align_group gag LEFT JOIN genomic_align USING (genomic_align_id)".
-		  " WHERE gag.node_id IS NOT NULL AND method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
-    } else {
-	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
-		  "genomic_align_group",
-		  "gag.node_id", 
-		  $min_gag, $max_gag,
-		  "SELECT gag.*".
-		  " FROM genomic_align ga ".
-		  " JOIN dnafrag USING (dnafrag_id)".
-		  " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
-		  " WHERE gag.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id AND genome_db_id != 63");
     }
 }
 
@@ -383,13 +362,6 @@ sub importAlignment_quick {
     my $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute();
     #$sth->execute($dbname, $mlss_id);
-    $sth->finish();
-
-    #$sql = "INSERT INTO genomic_align_group SELECT genomic_align_group.* FROM ?.genomic_align_group LEFT JOIN ?.genomic_align USING (genomic_align_id) LEFT JOIN ?.genomic_align_block USING (genomic_align_block_id) WHERE genomic_align_block.method_link_species_set_id = ?\n";
-    $sql = "INSERT INTO genomic_align_group SELECT * FROM $dbname.genomic_align_group\n";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    #$sth->execute($dbname, $dbname, $mlss_id);
-    $sth->execute();
     $sth->finish();
 
     #$sql = "INSERT INTO genomic_align_tree SELECT genomic_align_tree.* FROM ?.genomic_align_tree LEFT JOIN ?.genomic_align_group USING (node_id) LEFT JOIN ?.genomic_align USING (genomic_align_id) LEFT JOIN ?.genomic_align_block WHERE genomic_align_block.method_link_species_set_id = ?\n";
