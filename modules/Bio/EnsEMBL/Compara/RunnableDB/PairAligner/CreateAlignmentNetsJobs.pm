@@ -24,15 +24,6 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentNetsJobs
 
 =head1 SYNOPSIS
 
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $runnableDB = Bio::EnsEMBL::Pipeline::RunnableDB::CreateAlignmentNetsJobs->new (
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$runnableDB->fetch_input(); #reads from DB
-$runnableDB->run();
-$runnableDB->output();
-$runnableDB->write_output(); #writes to DB
-
 =cut
 
 =head1 DESCRIPTION
@@ -84,15 +75,13 @@ sub fetch_input {
 }
 
 
-sub run
-{
+sub run {
   my $self = shift;
   return 1;
 }
 
 
-sub write_output
-{
+sub write_output {
   my $self = shift;
   $self->createAlignmentNetsJobs();
 
@@ -109,11 +98,8 @@ sub print_params {
 }
 
 
-sub createAlignmentNetsJobs
-{
+sub createAlignmentNetsJobs {
   my $self = shift;
-
-  #my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
 
   my $query_dna_list  = $self->param('collection')->get_all_dna_objects;
 
@@ -195,7 +181,7 @@ sub createAlignmentNetsJobs
   }
 
   #
-  #Flow to 'update_max_alignment_length_after_net' on branch 1
+  #Flow to 'set_internal_ids' and 'update_max_alignment_length_after_net' on branch 1
   #
   my $output_hash = {};
   %$output_hash = ('method_link_species_set_id' => $self->param('output_mlss_id'));
