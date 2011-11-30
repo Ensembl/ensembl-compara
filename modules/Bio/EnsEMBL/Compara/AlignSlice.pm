@@ -1635,7 +1635,7 @@ sub _compile_GenomicAlignBlocks {
             -dnafrag_strand => 1,
             -cigar_line => $this_genomic_align->cigar_line,
             -method_link_species_set => $this_genomic_align->method_link_species_set,
-            -level_id => 0
+            -visible => 1
         );
   }
   ##
@@ -1655,6 +1655,7 @@ sub _compile_GenomicAlignBlocks {
           -length => ($end_pos - $start_pos + 1),
           -genomic_align_array => $genomic_align_array,
           -reference_genomic_align => $reference_genomic_align,
+          -level_id => 0
       );
 
   if ($strand == -1) {
