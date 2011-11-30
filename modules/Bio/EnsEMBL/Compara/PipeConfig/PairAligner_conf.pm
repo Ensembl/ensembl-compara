@@ -34,7 +34,7 @@
 
     You may need to provide a registry configuration file if the core databases have not been added to staging (--reg_conf).
 
-    A single pair of species can be run either by using a configuration file or by providing specific parameters on the command line and using the default values set in this file. On the command line, you must provide the LASTZ_NET mlss which should have been added to the master database (--mlss_id). The directory to which the nib files will be dumped can be specified using --dump_dir or the default location will be used. All the necessary directories are automatically created if they do not already exist. It may be necessary to change the pair_aligner_options default if, for example, doing primate-primate alignments. It is recommended that you provide a meaningful database name (--dbname). The username is automatically prefixed to this, ie -dbname hsap_ggor_lastz_64 will become kb3_hsap_ggor_lastz_64. To write to the pairwise configuration database, you must provide the correct config_url. 
+    A single pair of species can be run either by using a configuration file or by providing specific parameters on the command line and using the default values set in this file. On the command line, you must provide the LASTZ_NET mlss which should have been added to the master database (--mlss_id). The directory to which the nib files will be dumped can be specified using --dump_dir or the default location will be used. All the necessary directories are automatically created if they do not already exist. It may be necessary to change the pair_aligner_options default if, for example, doing primate-primate alignments. It is recommended that you provide a meaningful database name (--dbname). The username is automatically prefixed to this, ie -dbname hsap_ggor_lastz_64 will become kb3_hsap_ggor_lastz_64. A basic healthcheck is run and output is written to the job_message table. To write to the pairwise configuration database, you must provide the correct config_url. Even if no config_url is given, the statistics are written to the job_message table.
 
 
 =head1 CONTACT
@@ -56,7 +56,7 @@ sub default_options {
 
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
 
-	'release'               => '65',
+	'release'               => '66',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
         'ensembl_cvs_root_dir'  => $ENV{'HOME'}.'/src/ensembl_main', 
 	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
@@ -66,7 +66,7 @@ sub default_options {
         'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara1',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'), 
@@ -101,6 +101,8 @@ sub default_options {
         },
 
 	'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
+	#'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
+	'curr_core_dbs_locs'        => '', #if defining core dbs with config file. Define in Lastz_conf.pm or TBlat_conf.pm
 
 	# executable locations:
 	'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
@@ -125,7 +127,7 @@ sub default_options {
 	'ref_species' => 'homo_sapiens',
 
 	#directory to dump nib files
-	'dump_dir' => '/lustre/scratch101/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	'dump_dir' => '/lustre/scratch103/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
 	#Use 'quick' method for finding max alignment length (ie max(genomic_align_block.length)) rather than the more
 	#accurate method of max(genomic_align.dnafrag_end-genomic_align.dnafrag_start+1)
@@ -197,9 +199,9 @@ sub default_options {
 	#
 	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
 	'config_url' => '', #Location of pairwise config database. Must define on command line
-	'output_dir' => '/lustre/scratch101/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
-	'ref_url' => '\"\"',      #If not set, use reg.conf
-	'non_ref_url' => '\"\"',  #If not set, use reg.conf
+	'output_dir' => '/lustre/scratch103/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	'ref_url' => '',      #If not set, use reg.conf
+	'non_ref_url' => '',  #If not set, use reg.conf
     };
 }
 
@@ -264,7 +266,8 @@ sub pipeline_analyses {
 	    {   -logic_name    => 'get_species_list',
 		-module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ParsePairAlignerConf',
 		-parameters    => { 
-				  'compara_url' => $self->dbconn_2_url('master_db'),
+				  #'compara_url' => $self->dbconn_2_url('master_db'),
+				   'master_db' => $self->o('master_db'),
 				  'reg_conf'  => $self->o('reg_conf'),
 				  'conf_file' => $self->o('conf_file'),
 				  'get_species_list' => 1,
@@ -308,6 +311,8 @@ sub pipeline_analyses {
   				  'default_net_input' => $self->o('net_input_method_link'),
 				  'mlss_id' => $self->o('mlss_id'),
 				  'registry_dbs' => $self->o('curr_core_sources_locs'),
+				  'core_dbs' => $self->o('curr_core_dbs_locs'),
+				  'master_db' => $self->o('master_db'),
   				  }, 
 		-flow_into => {
 			       1 => [ 'create_pair_aligner_jobs'],
@@ -473,10 +478,16 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentNetsJobs',
  	       -parameters => { },
 		-flow_into => {
-			       1 => [ 'update_max_alignment_length_after_net' ],
+			       1 => [ 'set_internal_ids', 'update_max_alignment_length_after_net' ],
 			       2 => [ 'alignment_nets' ],
 			      },
  	       -wait_for => [ 'update_max_alignment_length_after_chain' ],
+ 	    },
+ 	    {  -logic_name => 'set_internal_ids',
+ 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIds',
+ 	       -parameters => {
+			       'tables' => [ 'genomic_align_block', 'genomic_align' ],
+			      },
  	    },
  	    {  -logic_name => 'alignment_nets',
  	       -hive_capacity => $self->o('net_hive_capacity'),
@@ -486,6 +497,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ 'alignment_nets_himem' ],  # MEMLIMIT
 			     },
+	       -wait_for => [ 'set_internal_ids' ],
  	    },
 	    {  -logic_name => 'alignment_nets_himem',
  	       -hive_capacity => $self->o('net_hive_capacity'),
