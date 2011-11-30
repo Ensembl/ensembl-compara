@@ -33,11 +33,12 @@ sub default_options {
         'mlss_id'           => 40078,
         'max_gene_count'    => 1500,
 
-        'release'           => '65',
+        'release'           => '65b',
         'rel_suffix'        => '',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
+        'work_dir'             => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/nc_trees_'.$self->o('rel_with_suffix'),
         'work_dir'             => $ENV{'HOME'}.'/ncrna_trees_'.$self->o('rel_with_suffix'),
 
         'email'             => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
@@ -46,7 +47,7 @@ sub default_options {
 
         'pipeline_db' => {                                  # connection parameters
                           -driver => 'mysql',
-                          -host   => 'compara3',
+                          -host   => 'compara4',
                           -port   => 3306,
                           -user   => 'ensadmin',
                           -pass   => $self->o('password'),
@@ -55,18 +56,25 @@ sub default_options {
 
 
             # executable locations:
-            'cmalign_exe' => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign',
-            'cmbuild_exe' => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmbuild',
-            'cmsearch_exe' => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmsearch',
-            'mafft_exe' => '/software/ensembl/compara/mafft-6.707/bin/mafft',
-            'mafft_binaries' => '/software/ensembl/compara/mafft-6.707/binaries',
-            'raxml_exe' => '/software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3',
-            'prank_exe' => '/software/ensembl/compara/prank/090707/src/prank',
-            'raxmlLight_exe' => '/software/ensembl/compara/raxml/RAxML-Light-1.0.5/raxmlLight',
+            'cmalign_exe'      => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign',
+            'cmbuild_exe'      => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmbuild',
+            'cmsearch_exe'     => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmsearch',
+            'mafft_exe'        => '/software/ensembl/compara/mafft-6.707/bin/mafft',
+            'mafft_binaries'   => '/software/ensembl/compara/mafft-6.707/binaries',
+            'raxml_exe'        => '/software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3',
+            'prank_exe'        => '/software/ensembl/compara/prank/090707/src/prank',
+            'raxmlLight_exe'   => '/software/ensembl/compara/raxml/RAxML-Light-1.0.5/raxmlLight',
             'parsimonator_exe' => '/software/ensembl/compara/parsimonator/Parsimonator-1.0.2/parsimonator-SSE3',
-            'ktreedist_exe' => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
-            'fasttree_exe' => '/software/ensembl/compara/fasttree/FastTree',
-            'treebest_exe' => '/software/ensembl/compara/treebest.doubletracking',
+            'ktreedist_exe'    => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
+            'fasttree_exe'     => '/software/ensembl/compara/fasttree/FastTree',
+            'treebest_exe'     => '/software/ensembl/compara/treebest.doubletracking',
+            'cafe_shell'       => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
+
+            # Data needed for CAFE
+            'species_tree_meta_key' => 'full_species_tree_string',
+            'cafe_species'         =>  ['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus'],
+            'cafe_lambdas'         => '',  # in ncRNAs the lambda is calculated
+            'cafe_struct_tree_str' => '',  # Not set by default
 
         'reg1' => {
           -host   => 'ens-staging',
@@ -126,6 +134,7 @@ sub resource_classes {
             0 => { -desc => 'default', 'LSF' => '' },
             1 => { -desc => 'himem'  , 'LSF' => '-q hugemem -M15000000 -R"select[mem>15000] rusage[mem=15000]"' },
             2 => { -desc => 'long'   , 'LSF' => '-q long' },
+            3 => { -desc => 'CAFE'   , 'LSF' => '-S 1024 -q long' },
            };
 }
 
@@ -240,7 +249,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -wait_for => [ 'load_genomedb' ],
             -flow_into => {
-                           1 => [ 'make_species_tree', 'create_lca_species_set'],
+                           1 => [ 'make_species_tree', 'create_lca_species_set' ],
             },
         },
 
@@ -342,12 +351,12 @@ sub pipeline_analyses {
             },
             -wait_for => [ 'make_species_tree', 'store_lca_species_set', 'load_members_factory', 'load_members' ], # mega-funnel
             -flow_into => {
-                           2 => [ 'recover_epo' ],
-                           1 => ['db_snapshot_after_Rfam_classify']
+                           2 => [ 'recover_epo', 'treebest_mmerge' ],
+                           1 => ['db_snapshot_after_Rfam_classify', 'make_full_species_tree'],
             },
         },
 
-# ---------------------------------------------[by-cluster branches]----------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------------------
 
             {   -logic_name => 'db_snapshot_after_Rfam_classify',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
@@ -359,6 +368,72 @@ sub pipeline_analyses {
 
 #--------------------------------------------------------------------------------
 
+            {
+             -logic_name => 'make_full_species_tree',
+             -module => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
+             -parameters => {
+                             'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
+                             'species_tree_string' => '',
+                            },
+             -hive_capacity => -1,   # to allow for parallelization
+             -wait_for => ['db_snapshot_after_Rfam_classify'],
+             -flow_into  => {
+                             3 => { 'mysql:////meta' => { 'meta_key' => $self->o('species_tree_meta_key'), 'meta_value' => '#species_tree_string#' } },
+                             1 => ['CAFE_species_tree'],
+                            },
+            },
+
+            {
+             -logic_name => 'CAFE_species_tree',
+             -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::CAFESpeciesTree',
+             -parameters => {
+                             'cafe_species' => $self->o('cafe_species'),
+                             'species_tree_meta_key' => $self->o('species_tree_meta_key'),
+                            },
+             -hive_capacity => -1, # to allow for parallelization
+             -flow_into => {
+                            1 => ['CAFE_table'],
+                           },
+            },
+
+            {
+             -logic_name => 'CAFE_table',
+             -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::CAFETable',
+             -parameters => {
+                             'work_dir'     => $self->o('work_dir'),
+                             'cafe_species' => $self->o('cafe_species'),
+                             'mlss_id'      => $self->o('mlss_id'),
+                            },
+             -hive_capacity => -1,
+             -flow_into => {
+                            1 => ['CAFE_analysis'],
+                           },
+
+            },
+
+            {
+             -logic_name => 'CAFE_analysis',
+             -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::CAFEAnalysis',
+             -parameters => {
+                             'work_dir'             => $self->o('work_dir'),
+                             'cafe_lambdas'         => $self->o('cafe_lambdas'),
+#                             'cafe_struct_taxons'   => $self->o('cafe_'),
+                             'cafe_struct_tree_str' => $self->o('cafe_struct_tree_str'),
+                             'mlss_id'              => $self->o('mlss_id'),
+                             'cafe_shell'           => $self->o('cafe_shell'),
+                            },
+             -rc_id => 3,
+             -hive_capacity => -1,
+             -flow_into => {
+                            3 => {
+                                  'mysql:////meta' => { 'meta_key' => 'cafe_lambda', 'meta_value' => '#cafe_lambda#' },
+                                  'mysql:////meta' => { 'meta_key' => 'cafe_table_file', 'meta_value' => '#cafe_table_file#' },
+                                  'mysql:////meta' => { 'meta_key' => 'CAFE_tree_string', 'meta_value' => '#cafe_tree_string#' },
+                                 },
+                           }
+            },
+#----------------------------------------[by-cluster branches]----------------------------------------
+
         {   -logic_name    => 'recover_epo',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
             -parameters    => {
@@ -368,7 +443,7 @@ sub pipeline_analyses {
             -hive_capacity => 100,
             -wait_for => ['db_snapshot_after_Rfam_classify'],
             -flow_into => {
-                           1 => [ 'infernal','genomic_alignment' ],
+                           1 => [ 'genomic_alignment', 'infernal' ],
             },
         },
 
@@ -402,7 +477,6 @@ sub pipeline_analyses {
                              'raxml_exe' => $self->o('raxml_exe'),
                             },
              -flow_into => {
-                            1 => [ 'treebest_mmerge' ],
                             2 => [ 'sec_struct_model_tree'],
 #                            -1 => [ 'pre_sec_struct_tree_himem' ],
 #                            -2 => [ 'sec_struct_model_tree_himem' ],
@@ -530,7 +604,7 @@ sub pipeline_analyses {
             -parameters => {
                             'treebest_exe' => $self->o('treebest_exe'),
                            },
-            -wait_for      => ['recover_epo', 'pre_sec_struct_tree','genomic_alignment', 'genomic_alignment_long', 'sec_struct_model_tree','sec_struct_model_tree_himem', 'genomic_tree', 'genomic_tree_himem', 'fast_trees' ],
+            -wait_for      => ['recover_epo', 'pre_sec_struct_tree','genomic_alignment', 'genomic_alignment_long', 'sec_struct_model_tree','sec_struct_model_tree_himem', 'genomic_tree', 'genomic_tree_himem', 'fast_trees', 'infernal' ],
             -failed_job_tolerance => 5,
             -flow_into => {
                            1 => [ 'orthotree', 'ktreedist' ],
