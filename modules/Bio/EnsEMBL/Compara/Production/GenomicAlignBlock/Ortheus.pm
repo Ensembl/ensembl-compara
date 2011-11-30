@@ -301,7 +301,7 @@ sub _write_output {
 	   foreach my $genomic_align (@{$genomic_align_node->genomic_align_group->get_all_GenomicAligns}) {
  	      $genomic_align->adaptor($gaa);
  	      $genomic_align->method_link_species_set($mlss);
- 	      $genomic_align->level_id(1);
+ 	      $genomic_align->visible(1);
 
  	      if ($genomic_align->dnafrag_id == -1) {
  		  ## INTERNAL NODE, i.e. an ancestral sequence
@@ -736,7 +736,7 @@ sub parse_results {
 		my $this_leaf = $tree->find_node_by_name($name);
 		if (!$this_leaf) {
 		    print $tree->newick_format(), " ****\n" if ($self->debug);
-		    die "";
+		    die "Unable to find_node_by_name $name";
 		}
 		#print "$this_leaf\n";
 		#         print "****** $name -- $header -- ";
@@ -790,7 +790,6 @@ sub parse_results {
 		    #$self->{$this_leaf} = $genomic_align_group;
 		} else  {
 		    print "normal dnafrag_id " . $dfr->dnafrag_id . "\n" if $self->debug;
-
 
 		    $this_genomic_align->dnafrag_id($dfr->dnafrag_id);
 		    $this_genomic_align->dnafrag_start($dfr->dnafrag_start);
@@ -940,7 +939,6 @@ sub remove_empty_cols {
     ## Trim the sequences to remove gap-only cols.
     foreach my $this_leaf (@{$tree->get_all_nodes}) {
 	foreach my $this_genomic_align (@{$this_leaf->genomic_align_group->get_all_GenomicAligns}) {
-
 	    #set adaptor to get the aligned sequence using the dnafrag_id
 	    if (!defined $this_genomic_align->{'adaptor'}) {
 		$this_genomic_align->adaptor($gaa);
@@ -1215,12 +1213,10 @@ sub _load_DnaFragRegions {
   my $sra = $self->{'comparaDBA'}->get_SyntenyRegionAdaptor;
   my $sr = $sra->fetch_by_dbID($self->synteny_region_id);
 
-  foreach my $dfr (@{$sr->children}) {  
-    $dfr->disavow_parent;
+  my $regions = $sr->regions();
+  foreach my $dfr (@$regions) { 
     push(@{$dnafrag_regions}, $dfr);
   }
-
-  $sr->release_tree;
 
   $self->dnafrag_regions($dnafrag_regions);
 }
