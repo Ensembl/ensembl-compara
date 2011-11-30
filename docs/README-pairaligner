@@ -1,0 +1,140 @@
+This README describes how to set up the lastz or translated blat pairwise alignment system using the init_pipeline configuration system.
+This replaces ensembl-compara/scripts/pipeline/README-pairaligner and the ensembl-compara/scripts/pipeline/comparaLoadGenomes.pl, ensembl-compara/scripts/pipeline/loadMultipleAlignerSystem.pl and ensembl-compara/scripts/pipeline/loadChainNetSystem.pl scripts. This previous method is no longer supported after ensembl release 65. 
+
+The pipeline involves firstly running the pairwise executable (lastz or blat). The alignments are then chained according to their location in both genomes and finally nets are produced which chooses the best sub-chain on the reference species in each region. A basic healthcheck is performed to check database consistency and can be compared to a previous release. The final stage is to report some basic statistical information (eg coverage).
+
+The general configuration file for the pipeline is:
+
+ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/PairAligner_conf.pm
+
+and there are 3 specific configuration files:
+
+ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Lastz_conf.pm
+	Default parameters for running Lastz between mammals.
+
+ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Lastz_primate_conf.pm
+	Default parameters for running Lastz between primates
+
+ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/TBlat_conf.pm
+	Default parameters for running TBlat.
+
+
+It is possible to run the pipeline in several ways. 
+--------------------------------------------------
+1) Using a master database and mlss_id
+This is the recommended way and will work for a single pairwise alignment
+
+2) Using a master database and a configuration file
+This should work with several pairwise analyses in the same database
+The configuration file is the same as that used for the previous pipeline
+eg ensembl-compara/scripts/pipeline/compara-hive-pairaligner-chain-net.conf.example
+
+3) Using no master and a configuration file
+This should work with several pairwise analyses in the same database
+The configuration file is the same as that used for the previous pipeline
+eg ensembl-compara/scripts/pipeline/compara-hive-pairaligner-chain-net.conf.example
+
+4) Using no master and no configuration file
+This uses the defaults and species details set in the pipeline configuration file. Will only work for a single pairwise alignment
+
+
+1- Necessary code API and executables
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  bioperl-live (bioperl-1-2-3)
+  ensembl
+  ensembl-compara
+  ensembl-hive
+  ensebml-analysis
+
+  executables
+  ~~~~~~~~~~~
+  Lastz: (Set in Lastz_conf.pm or Lastz_primate_conf.pm)
+  lastz => /software/ensembl/compara/bin/lastz
+
+  Translated blat: (Set in TBlat_conf.pm)
+  blat => /usr/local/ensembl/bin/blat-32
+
+  Jim Kent's programs: (Set in PairAligner_conf.pm)
+  faToNib  =>  /software/ensembl/compara/bin/faToNib
+  lavToAxt => /software/ensembl/compara/bin/lavToAxt
+  axtChain => /software/ensembl/compara/bin/axtChain
+  chainNet => /software/ensembl/compara/bin/chainNet
+
+2- Update the master database
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To run the pipeline with a master database (recommended) it is necessary to create it if it does not already exist (see README-master_database for details on how to create an initial master database) and to update it with the new species and method_link_species_set.
+
+2.1- Update genome_db and dnafrag tables with any new species assembly using the update_genome.pl script
+eg
+The reg.conf should contain the compara_master and the location of the core database
+perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/update_genome.pl --reg_conf reg.conf --compara compara_master --species "homo_sapiens"
+
+2.2- Update method_link_species_set table with new method_link_species_set entry
+The reg.conf should contain the compara_master
+perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type LASTZ_NET --genome_db_id 90,124 --source "ensembl"  --reg_conf reg.conf --compara compara_master
+
+3- Configure the pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~
+You may need to modify the general and specific configuration files found in ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/. Values specified on the command-line overwrite those in the Lastz or TBlat conf files and those overwrite values in the PairAligner_conf.pm.
+
+3.1- PairAligner_conf.pm
+
+mlss_id                => it is recommened that this is set on the command line rather than in the conf file
+dbname                 => it is recommended that this is set on the command line. Note that the user name defined in
+		            $ENV{USER} is prepended to dbname so that a dbname of hsap_ptro_lastz will become 
+			    kb3_hsap_ptro_lastz
+release                => ensembl release. Used to create various filenames and default database name
+ensembl_cvs_root_dir   => location of ensembl cvs root directory
+ref_species            => Default is 'homo_sapiens'.
+
+faToNib_exe,lavToAxt_exe,axtChain_exe,chainNet_exe => location of Jim Kent's executables.
+
+pipeline_db		   => production database			
+master_db		   => master database
+staging_loc1,staging_loc1  => current ensembl core databases
+livemirror_loc		   => location of previous release core databases
+curr_core_sources_locs     => Location of core databases. These are used to fill in the 'location' field of the genome_db table.
+
+3.2- Lastz_conf.pm, Lastz_primate_conf.pm or TBlat_conf.pm
+a) default_chunks
+   These are the defaults for human vs another mammal.
+
+b) pair_aligner_options
+   This is the default for human vs another mammal
+
+4- Run init_pipeline.pl
+~~~~~~~~~~~~~~~~~~~~~~~
+Examples:
+
+a) master database, 2 primates, writing statistics to database
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_primate_conf --dbname hsap_pabe_lastz_66 --password *** --mlss_id 557 --config_url "mysql://user:pass@host:port/pair_aligner_config"
+
+b) master database, 2 mammals, using local core database (ie not on ens-livemirror or ens-staging) which is defined in reg.conf. 
+   init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf --dbname hsap_ogar_lastz_65 --password *** --reg_conf reg.conf --mlss_id 545 
+
+The location of the core databases could be defined directly in the Lastz_conf.pm by defining the databases and setting 'curr_core_dbs_locs'. You must undefine curr_core_sources_locs to override the values given in PairAligner_conf.pm
+
+'reference' => {
+		-host           => "host_name",
+		-port           => port,
+		-user           => "user_name",
+		-dbname         => "my_human_database",
+		-species        => "homo_sapiens"
+	       },
+'non_reference' => {
+		    -host           => "host_name",
+		    -port           => port,
+		    -user           => "user_name",
+		    -dbname         => "my_bushbaby_database",
+		    -species        => "otolemur_garnettii"
+		  },
+
+'curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],
+'curr_core_sources_locs'=> '',
+
+c) master database, use configuration file
+
+d) no master database, use configuration file
+
+Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
