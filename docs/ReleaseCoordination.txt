@@ -127,7 +127,7 @@ eg. for the pairwise alignment
 
 ## generate the species_set and check it :
 
-    export ALL_GENOMEDB_IDS=`mysql -hcompara1 -uensro sf5_ensembl_compara_master -N -e "select group_concat(genome_db_id order by genome_db_id) from genome_db where (assembly_default=1 and taxon_id!=0)" | cat`
+    export ALL_GENOMEDB_IDS=`mysql -hcompara1 -uensro sf5_ensembl_compara_master -N -e "select group_concat(genome_db_id order by genome_db_id) from genome_db where (assembly_default=1 and taxon_id is not NULL)" | cat`
     echo $ALL_GENOMEDB_IDS
 
 
