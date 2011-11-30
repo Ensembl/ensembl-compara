@@ -149,8 +149,6 @@ sub write_output {
     # Run RAxML with all selected secondary structure substitution models
     # $self->_run_ncsecstructtree;
 
-#    my $input_aln = $self->param('input_aln');
-#    my $struct_aln = $self->param('struct_aln');
     my $nc_tree_id = $self->param('nc_tree_id');
     my $models = $self->param('models');
     my $bootstrap_num = $self->param('bootstrap_num');
@@ -160,8 +158,6 @@ sub write_output {
         $self->dataflow_output_id ( {
                                      'model' => $model,
                                      'nc_tree_id' => $nc_tree_id,
-#                                     'input_aln' => $input_aln,
-#                                     'struct_aln' => $struct_aln,
                                      'bootstrap_num' => $bootstrap_num
                                     }, 2); # fan
     }
