@@ -51,6 +51,7 @@ use strict;
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
 use Bio::EnsEMBL::Analysis::Runnable::AlignmentNets;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing);
 
@@ -84,9 +85,12 @@ sub fetch_input {
   # get the compara data: MethodLinkSpeciesSet, reference DnaFrag, 
   # and GenomicAlignBlocks
   ################################################################
-
   my $mlss = $mlssa->fetch_by_dbID($self->param('input_mlss_id'));
-  
+  if (!$mlss) {
+      #try old pipeline
+      $mlss = $mlssa->fetch_by_dbID($self->param('method_link_species_set_id'));
+  }
+
   throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('input_mlss_id'))
       if not $mlss;
 
@@ -99,6 +103,11 @@ sub fetch_input {
   
   my $out_mlss = $mlssa->fetch_by_dbID($self->param('output_mlss_id'));
   
+  if (!$out_mlss) {
+      #Try old pipeline
+      $out_mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->param('output_method_link'), $mlss->species_set);
+   }
+
   throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('output_mlss_id'))
       if not $out_mlss;
 
@@ -112,7 +121,7 @@ sub fetch_input {
                              $self->param('start'),
                              $self->param('end'));
   }
-  
+
   my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss,
 							      $query_dnafrag,
 							      $self->param('start'),

@@ -65,6 +65,10 @@ my $DEFAULT_DUMP_MIN_SIZE = 11500000;
 sub fetch_input {
   my( $self) = @_;
 
+  if ($self->param('dna_collection_name')) {
+      $self->param('collection_name', $self->param('dna_collection_name'));
+  }
+
   die("Missing dna_collection_name") unless($self->param('collection_name'));
 
   unless ($self->param('dump_min_size')) {

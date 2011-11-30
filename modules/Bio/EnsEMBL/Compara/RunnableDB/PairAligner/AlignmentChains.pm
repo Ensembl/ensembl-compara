@@ -50,6 +50,7 @@ use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
 use Bio::EnsEMBL::Analysis::Runnable::AlignmentChains;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing);
 
@@ -95,13 +96,38 @@ sub fetch_input {
   ################################################################
   print "mlss: ",$self->param('input_method_link')," ",$qy_gdb->dbID," ",$tg_gdb->dbID,"\n";
 
-  my $mlss = $mlssa->fetch_by_dbID($self->param('input_mlss_id'));
-  
+  my $mlss;
+  if (defined $self->param('input_mlss_id')) { 
+      #new pipeline
+      $mlss = $mlssa->fetch_by_dbID($self->param('input_mlss_id'));
+  } else {
+      #old pipeline
+      if ($qy_gdb->dbID == $tg_gdb->dbID) {
+	  $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->param('input_method_link'),
+							      [$qy_gdb]);
+      } else {
+	  $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->param('input_method_link'),
+							      [$qy_gdb,
+							       $tg_gdb]);
+      }
+  }
   throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('input_mlss_id'))
       if not $mlss;
 
-  my $out_mlss = $mlssa->fetch_by_dbID($self->param('output_mlss_id'));
-  
+  my $out_mlss;
+  if (defined $self->param('output_mlss_id')) {
+      $out_mlss = $mlssa->fetch_by_dbID($self->param('output_mlss_id'));
+  } else {
+      #old pipeline
+      if ($qy_gdb->dbID == $tg_gdb->dbID) {
+	  $out_mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->param('output_method_link'),
+							      [$qy_gdb]);
+      } else {
+	  $out_mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->param('output_method_link'),
+							      [$qy_gdb,
+							       $tg_gdb]);
+      }
+  }
   throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('output_mlss_id'))
       if not $out_mlss;
 
