@@ -119,7 +119,6 @@ sub run {
   my $res_chains;
 
   my ($query_name) = keys %{$self->query_length_hash};
-  
   my $work_dir = $self->workdir . "/$query_name.$$.ChainNet";
   while (-e $work_dir) {
     $work_dir .= ".$$";
@@ -190,7 +189,7 @@ sub run {
                    $target_length_file, 
                    $query_net_file,
                    $target_net_file);
-  
+
   system($self->chainNet, @arg_list) 
       and throw("Something went wrong with chainNet");
   
@@ -225,7 +224,6 @@ sub run {
   
   unlink $chain_file, $query_length_file, $target_length_file, $query_net_file, $target_net_file;
   rmdir $work_dir;
-  
   $self->output($res_chains);    
   
   return 1;
@@ -383,7 +381,9 @@ sub parse_Net_file {
       my ($chain_id) = $rest =~ /id\s+(\d+)/;
 
       $new_chain_scores{$chain_id} += $score;
-      
+
+      next if (!defined $self->chains->[$chain_id-1]);
+
       my ($restricted_fps)
          = $self->restrict_between_positions($self->chains->[$chain_id-1],
                                             $q_start,
@@ -391,18 +391,12 @@ sub parse_Net_file {
 
       foreach my $fp (@$restricted_fps) {
         $fp->score($score);
-        if ($fp->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
-          foreach my $align (@{$fp->genomic_align_array}) {
-            $align->level_id($level_id);
-          }
-        } else {
-          $fp->level_id($level_id);
-        }
+	$fp->level_id($level_id);
       }
       
       if (@$restricted_fps) {
         push @{$new_chains{$chain_id}}, @$restricted_fps;
-        
+
         if ($indent > 0) {
           # the new alignment has been inserted into the parent gap
           # need to split parent chain into two:
@@ -446,14 +440,12 @@ sub parse_Net_file {
     };
 
   }
-
   foreach my $cid (keys %new_chains) {
     my $chain_score = $new_chain_scores{$cid};
     foreach my $fp (@{$new_chains{$cid}}) {
       $fp->score($chain_score);
     }
   }
-
   return [values %new_chains];
 }
 
