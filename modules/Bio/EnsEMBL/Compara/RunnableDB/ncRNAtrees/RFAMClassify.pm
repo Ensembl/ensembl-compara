@@ -242,9 +242,16 @@ sub dataflow_clusters {
 
     foreach my $cluster (@{$clusterset->children}) {
         $self->dataflow_output_id( {
-            'nc_tree_id'    => $cluster->node_id,
-            'clusterset_id' => $clusterset->node_id,
-        } , 2);
+                                    'nc_tree_id'    => $cluster->node_id,
+                                    'clusterset_id' => $clusterset->node_id,
+                                   } , 2);
+    }
+
+    foreach my $cluster (@{$clusterset->children}) {
+        $self->dataflow_output_id( {
+                                    'nc_tree_id' => $cluster->node_id,
+                                    'clusterset_id' => $clusterset->node_id,
+                                   }, 2);
     }
 }
 
