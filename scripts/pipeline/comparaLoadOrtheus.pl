@@ -29,7 +29,7 @@ my $addMT = 0;
 ##tables to change to innodb (I) or autoincrement (A) or both (AI). 
 my %tables2change = (
 	A  => ["dnafrag"],
-	AI => ["genomic_align", "genomic_align_block", "genomic_align_group", "genomic_align_tree"],
+	AI => ["genomic_align", "genomic_align_block", "genomic_align_tree"],
 	I  => ["dna", "seq_region"],
 );
 

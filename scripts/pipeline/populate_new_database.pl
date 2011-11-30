@@ -666,7 +666,7 @@ sub copy_all_dnafrags {
   Arg[3]      : listref Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $these_mlss
   Description : copy dna-dna alignments for the MethodLinkSpeciesSet listed
                 in $these_mlss. Dna-dna alignments are stored in the
-                genomic_aling_block, genomic_align and genomic_align_group
+                genomic_align_block, genomic_align and genomic_align_tree
                 tables.
   Returns     :
   Exceptions  : throw if argument test fails
@@ -694,7 +694,6 @@ sub copy_dna_dna_alignements {
 
   $new_dba->dbc->do("ALTER TABLE `genomic_align_block` DISABLE KEYS");
   $new_dba->dbc->do("ALTER TABLE `genomic_align` DISABLE KEYS");
-  $new_dba->dbc->do("ALTER TABLE `genomic_align_group` DISABLE KEYS");
   $new_dba->dbc->do("ALTER TABLE `genomic_align_tree` DISABLE KEYS");
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
     ## For DNA-DNA alignments, the method_link_id is < 100.
@@ -713,11 +712,11 @@ sub copy_dna_dna_alignements {
     $pipe = "$mysqldump -w \"$where\" genomic_align | $mysql";
     system($pipe);
     print ".";
-    $where = "node_id >= ".
-        ($this_method_link_species_set->dbID * 10**10)." AND node_id < ".
-        (($this_method_link_species_set->dbID + 1) * 10**10);
-    $pipe = "$mysqldump -w \"$where\" genomic_align_group | $mysql";
-    system($pipe);
+    #$where = "node_id >= ".
+    #    ($this_method_link_species_set->dbID * 10**10)." AND node_id < ".
+    #    (($this_method_link_species_set->dbID + 1) * 10**10);
+    #$pipe = "$mysqldump -w \"$where\" genomic_align_group | $mysql";
+    #system($pipe);
     $where = "node_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND node_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
@@ -727,7 +726,6 @@ sub copy_dna_dna_alignements {
   }
   $new_dba->dbc->do("ALTER TABLE `genomic_align_block` ENABLE KEYS");
   $new_dba->dbc->do("ALTER TABLE `genomic_align` ENABLE KEYS");
-  $new_dba->dbc->do("ALTER TABLE `genomic_align_group` ENABLE KEYS");
   $new_dba->dbc->do("ALTER TABLE `genomic_align_tree` ENABLE KEYS");
 }
 
