@@ -157,12 +157,9 @@ sub _create_ProbeFeatures_linked_transcripts {
 
   if ($ptype eq 'pset') {
     my $id = $self->param('id');
-    my $probe_feature_adaptor = $db_adaptor->get_ProbeFeatureAdaptor;
-    @probe_objs = @{$probe_feature_adaptor->fetch_all_by_probeset($id)};
-    foreach my $probe (@probe_objs){
-      my @entries = @{$probe->probe->probeset->get_all_Transcript_DBEntries};
-      push(@db_entries, @entries)
-    }
+    my $probe_set_adaptor = $db_adaptor->get_ProbeSetAdaptor;
+    my $probe_set = shift @{$probe_set_adaptor->fetch_all_by_name($id)};
+    @db_entries = @{$probe_set->get_all_Transcript_DBEntries};
   } else {
     my $probe_adaptor = $db_adaptor->get_ProbeAdaptor;
     @probe_objs = @{$probe_adaptor->fetch_all_by_name($self->param('id'))};
