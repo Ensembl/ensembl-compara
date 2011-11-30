@@ -689,13 +689,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   }
   my $sth = $self->prepare($sql);
 
-  eval {
-      $sth->execute();
-  };
-  if ($@) {
-      print "Failed with new schema. Try old schema\n";
-      return $self->fetch_all_by_MethodLinkSpeciesSet_DnaFragORIG($method_link_species_set, $dnafrag, $start, $end, $limit_number, $limit_index_start, $restrict);
-  }
+  $sth->execute();
   
   my $all_genomic_align_blocks;
   my $genomic_align_groups = {};
@@ -1221,13 +1215,7 @@ sub retrieve_all_direct_attributes {
 
   my $sth = $self->prepare($sql);
 
-  eval {
-      $sth->execute($genomic_align_block->dbID);
-  };
-  if ($@) {
-      print "retrieve_all_direct_attributes: New schema doesn't work. Try old schema\n";
-      return $self->retrieve_all_direct_attributesORIG($genomic_align_block);
-  }
+  $sth->execute($genomic_align_block->dbID);
 
   my ($method_link_species_set_id, $score, $perc_id, $length, $group_id, $level_id) = $sth->fetchrow_array();
   $sth->finish();
