@@ -1,0 +1,104 @@
+This README describes how to set up the multiple aligner system using the init_pipeline configuration system. 
+This pipeline has only been tested for the Mercator and Pecan combination. 
+This replaces ensembl-compara/scripts/pipeline/README-multiplealigner, compara-hive-multiplealigner.conf.example and the ensembl-compara/scripts/pipeline/loadMultipleAlignerSystem.pl script. This previous method is no longer supported after ensembl release 65. 
+
+General description of the pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TO COMPLETE!
+
+The pipeline involved running the orthologous map creator, Mercator and the multiple aligner program, Pecan. 
+
+
+Jobs failing due to memory are automatically rescheduled to run again with increased memory resources. 
+
+A basic healthcheck is performed to check database consistency and compared with a previous release.
+
+1- code API needed and executables
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  bioperl-live (bioperl-1-2-3)
+  ensembl
+  ensembl-compara
+  ensembl-hive
+  ensembl-analysis
+
+  executables
+  ~~~~~~~~~~~
+  mercator
+      using /software/ensembl/compara/mercator
+  ncbi blastz
+      using /software/ensembl/compara/ncbi-blast-2.2.23+/bin
+  gerp 
+      using /software/ensembl/compara/gerp/GERPv2.1
+
+
+1.2 Code checkout
+
+      cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r branch-07 bioperl-live
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-compara
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-hive
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-analysis
+
+in tcsh
+    setenv BASEDIR   /some/path/to/modules
+    setenv PERL5LIB  ${BASEDIR}/ensembl/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara:${BASEDIR}/ensembl-hive:${BASEDIR}/ensembl-analysis
+    setenv PATH $PATH:${BASEDIR}/ensembl-compara/script/pipeline:${BASEDIR}/ensembl-hive/scripts
+
+in bash
+    BASEDIR=/some/path/to/modules
+    PERL5LIB=${BASEDIR}/ensembl/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara:${BASEDIR}/ensembl-hive:${BASEDIR}/ensembl-hive
+    PATH=$PATH:${BASEDIR}/ensembl-compara/scripts/pipeline:${BASEDIR}/ensembl-hive/scripts
+
+2- Update the master database
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The pipeline requires a "master" database. This is a compara database containing information that is required to maintain consistency across several production and release databases. See README-master_database for details on how to create an initial master database. 
+
+2.1- Update genome_db and dnafrag tables with any new species assembly using the update_genome.pl script
+eg
+The reg.conf should contain the compara_master and the location of the core database
+perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/update_genome.pl --reg_conf reg.conf --compara compara_master --species "homo_sapiens"
+
+2.2- Update method_link_species_set table with new method_link_species_set entry
+For this pipeline, 3 new method_link_species_set entries (PECAN,GERP_CONSERVATION_SCORE and GERP_CONSTRAINED_ELEMENT) need to be added to the master using the ensembl-compara/scripts/pipeline/create_mlss.pl script.
+eg 
+perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type PECAN --genome_db_id <list_of_genome_db_ids>  --source "ensembl" --compara mysql://user:pass@host:port/compara_master
+
+perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type GERP_CONSERVATION_SCORE --genome_db_id <list_of_genome_db_ids>  --source "ensembl" --compara mysql://user:pass@host:port/compara_master
+
+perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type GERP_CONSTRAINED_ELEMENT --genome_db_id <list_of_genome_db_ids>  --source "ensembl" --compara mysql://user:pass@host:port/compara_master
+
+
+3- Configure the pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Modifiy ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/MercatorPecan_conf.pm file if necessary.
+Check that the default_options are set correctly.
+Options most likely to need changing are:
+mlss_id, ce_mlss_id, cs_mlss_id => it is recommended that these are set on the command line rather than in the conf file
+release                         => ensembl release
+ensembl_cvs_root_dir            => location of ensembl cvs root directory
+work_dir                        => directory for writing files needed by blast and mercator.
+jar_file                        => location of Pecan jar file
+gerp_exe_dir                    => location of gerp executable directory
+mercator_exe                    => location of mercator executable
+blast_exe_dir                   => location of ncbi blast executable
+master_db_name                  => name of "master" database
+
+pipeline_db			=> production database			
+master_db			=> master database
+staging_loc1,staging_loc1       => current ensembl core databases
+livemirror_loc			=> location of previous release core databases
+reuse_db			=> previous pecan production database
+
+4- Run init_pipeline.pl
+~~~~~~~~~~~~~~~~~~~~~~~
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf -password <your_password> -mlss_id <your_current_Pecan_mlss_id> --ce_mlss_id <constrained_element_mlss_id> --cs_mlss_id <conservation_score_mlss_id>
+
+Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
+
+
+5- Troubleshooting
+~~~~~~~~~~~~~~~~~~
+
+
