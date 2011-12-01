@@ -1,3 +1,11 @@
+
+*****************************************************************************************
+* This pipeline is not supported beyond Ensembl release 65.                             *
+* For details on how to use the replacement pipeline, please read the documentation in: *
+* ensembl-compara/docs/README-low-coverage-genome-aligner                               *
+*****************************************************************************************
+
+
 1- code API needed and executable
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -165,7 +173,7 @@ You will also need to add the paths for gerp and semphy if you want to run Gerp.
 
 For the LOW_COVERAGE_GENOME_ALIGNMENT and CONSERVATION_SCORE blocks you can specify
 the logic_name for the method. You can also specify the module name. If none is given, the hive will
-use the Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::$logic_name module.
+use the Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::$logic_name  or Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::$logic_name module.
 
 SET_INTERNAL_IDS is optional and if defined in the conf file will ensure that 
 the internals ids in the genomic_align_block, genomic_align, genomic_align_group and genomic_align_tree tables are unique across a release by adding $mlss_id*10**10.
@@ -205,6 +213,6 @@ beekeeper -help
   - Check you set up your environment so the main gerp script can find
     the remaining gerp scripts and the semphy program.
 
-  - Check the source code for the Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Gerp
+  - Check the source code for the Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp
     module. The path to the main Gerp script is hard-coded there.
 
