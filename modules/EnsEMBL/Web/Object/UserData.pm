@@ -1060,9 +1060,8 @@ sub consequence_table {
       $consequence =~ s/\,/\,\<br\/>/g;
       
       # format extra string nicely
-      $extra = join ";", map {$self->render_sift_polyphen($_)} split /\;/, $extra;
-      $extra =~ s/(^|\;)\w+?\=/<b>$&<\/b>/g;
-      $extra =~ s/\;/\;\<br\/>/g;
+      $extra = join ";", map {$self->render_sift_polyphen($_); s/(\w+?=)/<b>$1<\/b>/g; $_ } split /\;/, $extra;
+      $extra =~ s/;/;<br\/>/g;
       
       $extra =~ s/(ENSP\d+)/'<a href="'.$hub->url({
         species => $species,
