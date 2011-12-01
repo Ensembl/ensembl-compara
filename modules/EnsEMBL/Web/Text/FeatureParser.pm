@@ -148,6 +148,7 @@ sub parse {
     foreach my $row ( split /\n|\r/, $data ) { 
       ## Clean up the row
       next if $row =~ /^#/;
+      $row =~ s/^[\t\r\s]+//g;
       $row =~ s/[\t\r\s]+$//g;
       $row =~ tr/\x80-\xFF//d;
       next unless $row;
