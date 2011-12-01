@@ -29,6 +29,7 @@ sub new {
     component        => $component,
     code             => "${type}::$component",
     options          => {},
+    labels           => {},
     has_images       => 0,
     image_config     => undef,
     image_config_das => undef,
@@ -72,7 +73,14 @@ sub options {
 
 sub set_defaults {
   my ($self, $defaults) = @_;
-  $self->{'options'}{$_}{'default'} = $defaults->{$_} for keys %$defaults;
+  
+  foreach (keys %$defaults) {
+    if (ref $defaults->{$_}) {
+      ($self->{'labels'}{$_}, $self->{'options'}{$_}{'default'}) = @{$defaults->{$_}};
+    } else {
+      $self->{'options'}{$_}{'default'} = $defaults->{$_};
+    }
+  }
 }
 
 sub set {
@@ -295,7 +303,7 @@ sub get_fieldset {
 
 sub add_form_element {
   my ($self, $element) = @_;
-
+    
   if ($element->{'type'} eq 'CheckBox' || $element->{'type'} eq 'DASCheckBox') {
     $element->{'selected'} = $self->get($element->{'name'}) eq $element->{'value'} ? 1 : 0 ;
   } elsif (!exists $element->{'value'}) {
@@ -304,6 +312,8 @@ sub add_form_element {
   
   $self->add_fieldset('Display options') unless $self->get_form->has_fieldset;
   $self->get_form->add_element(%$element); ## TODO- modify it for the newer version of Form once all child classes are modified
+  
+  $self->{'labels'}{$element->{'name'}} ||= $element->{'label'};
 }
 
 sub build_form {
