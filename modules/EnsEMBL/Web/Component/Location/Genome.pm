@@ -277,7 +277,6 @@ sub _render_features {
       my $columns = [];
       my $col;
       my $cell_style = $self->cell_style;
-      my $table_style = $table_info->{'table_style'} || {};
 
       foreach $col (@{$table_info->{'column_order'}||[]}) {
         push @$columns, {'key' => $col, 'title' => $column_info->{$col}{'title'}, 'style' => $cell_style};
@@ -293,9 +292,8 @@ sub _render_features {
                     'style' => $cell_style,
                     }; 
       }
-      $table_style->{'margin'}      = '1em 0px';
-      $table_style->{'data_table'}  = 1;
-      my $table = $self->new_table($columns, $table_info->{'rows'}, $table_style);
+      
+      my $table = $self->new_table($columns, $table_info->{'rows'}, { data_table => 1 });
       $html .= '<h3 style="margin-top:1em">'.$table_info->{'header'}.'</h3>';
       $html .= $table->render;
     }
@@ -306,7 +304,6 @@ sub _render_features {
     my $table_info  = $self->configure_UserData_table($image_config);
     my $column_info = $default_column_info;
     my $columns     = [];
-    my $table_style = $table_info->{'table_style'} || {};
     my $cell_style  = $self->cell_style;
     my $col;
 
@@ -314,8 +311,7 @@ sub _render_features {
       push @$columns, {'key' => $col, 'title' => $column_info->{$col}{'title'}, 'style' => $cell_style};
     }
 
-    $table_style->{'margin'}      = '1em 0px';
-    my $table = $self->new_table($columns, $table_info->{'rows'}, $table_style);
+    my $table = $self->new_table($columns, $table_info->{'rows'}, { header => 'no' });
     $html .= '<h3 style="margin-top:1em">'.$table_info->{'header'}.'</h3>';
     $html .= $table->render;
   }
