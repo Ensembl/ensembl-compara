@@ -22,8 +22,7 @@ sub init {
 }
 
 sub form {
-  my ($self, $object) = @_;  
-  my $reg_object = $object->Obj;
+  my $self = shift;  
   
   $self->add_form_element({
     type   => 'DropDown',
@@ -42,7 +41,7 @@ sub form {
     ]
   });
   
-  $self->add_form_element({ type => 'YesNo', name => 'opt_focus', select => 'select', label => 'Show Core Evidence track' }) if $reg_object && $reg_object->get_focus_attributes;
+  $self->add_form_element({ type => 'YesNo', name => 'opt_focus', select => 'select', label => 'Show Core Evidence track' });
 }
 
 1;
