@@ -1633,20 +1633,23 @@ sub variation_data {
   my $cd_start        = $transcript->cdna_coding_start;
   my $cd_end          = $transcript->cdna_coding_end;
   my @coding_sequence = split '', substr $transcript->seq->seq, $cd_start - 1, $cd_end - $cd_start + 1;
-  my (@data, %population_filter);
+  my @data;
   
-  if ($slice) {
-    my $hub    = $self->hub;
-    my $filter = $hub->param('population_filter');
-    
-    if ($filter && $filter ne 'off') {
-      %population_filter = map { $_->dbID => $_ }
-        @{$slice->get_all_VariationFeatures_by_Population(
-          $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter), 
-          $hub->param('min_frequency')
-        )};
-    }
-  }
+  # Population filtered variations currently fail to return in a reasonable time
+  #my %population_filter;
+  
+  #if ($slice) {
+  #  my $hub    = $self->hub;
+  #  my $filter = $hub->param('population_filter');
+  #  
+  #  if ($filter && $filter ne 'off') {
+  #    %population_filter = map { $_->dbID => $_ }
+  #      @{$slice->get_all_VariationFeatures_by_Population(
+  #        $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter), 
+  #        $hub->param('min_frequency')
+  #      )};
+  #  }
+  #}
   
   foreach my $tv (@{$self->get_transcript_variations}) {
     my $pos = $tv->translation_start;
@@ -1657,7 +1660,7 @@ sub variation_data {
     my $vf    = $tv->variation_feature;
     my $vdbid = $vf->dbID;
     
-    next if scalar keys %population_filter && !$population_filter{$vdbid};
+    #next if scalar keys %population_filter && !$population_filter{$vdbid};
     
     my $start = $vf->start;
     my $end   = $vf->end;
