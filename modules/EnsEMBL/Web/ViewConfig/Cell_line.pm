@@ -32,20 +32,12 @@ sub init {
   my $defaults;
   
   foreach my $cell_line (keys %$cell_lines) {
-    $cell_line =~ s/\:\w*//;
-    
-    # allow all evdience for this sell type to be configured together  
-    $defaults->{"opt_cft_$cell_line:all"} = 'off';
+    $cell_line =~ s/:\w*//;
     
     foreach my $evidence_type (keys %$evidence_features) {
-      my ($evidence_name, $evidence_id) = split /\:/, $evidence_type;
-      $defaults->{"opt_cft_$cell_line:$evidence_name"} = exists $default_evidence_types{$evidence_name} && exists $self->{'feature_type_ids'}{$cell_line}{$evidence_id} ? 'on' : 'off';
+      my ($evidence_name, $evidence_id) = split /:/, $evidence_type;
+      $defaults->{"opt_cft_$cell_line:$evidence_name"} = [ "$cell_line - $evidence_name", exists $default_evidence_types{$evidence_name} && exists $self->{'feature_type_ids'}{$cell_line}{$evidence_id} ? 'on' : 'off' ];
     }
-  }
-  
-  foreach my $evidence_type (keys %$evidence_features) {
-    $evidence_type =~ s/\:\w*//;
-    $defaults->{"opt_cft_$evidence_type:all"} = 'off';
   }
   
   $self->set_defaults($defaults);

@@ -9,12 +9,17 @@ use EnsEMBL::Web::Constants;
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my $self       = shift;
-  my $alignments = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
+  my $self         = shift;
+  my $species_defs = $self->species_defs;
+  my $alignments   = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
   my %defaults;
   
   foreach my $key (grep { $alignments->{$_}{'class'} !~ /pairwise/ } keys %$alignments) {
-    $defaults{lc "species_${key}_$_"} = /ancestral/ ? 'off' : 'yes' for keys %{$alignments->{$key}{'species'}};
+    foreach (keys %{$alignments->{$key}{'species'}}) {
+      my @name = split '_', $alignments->{$key}{'name'};
+      my $n    = shift @name;
+      $defaults{lc "species_${key}_$_"} = [ join(' ', $n, map(lc, @name), '-', $species_defs->get_config($_, 'SPECIES_COMMON_NAME')), /ancestral/ ? 'off' : 'yes' ];
+    }
   }
   
   $self->set_defaults({
