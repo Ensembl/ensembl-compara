@@ -293,7 +293,7 @@ sub _render_features {
                     }; 
       }
       
-      my $table = $self->new_table($columns, $table_info->{'rows'}, { data_table => 1 });
+      my $table = $self->new_table($columns, $table_info->{'rows'}, { data_table => 1, id => "${feat_type}_table", %{$table_info->{'table_style'}} });
       $html .= '<h3 style="margin-top:1em">'.$table_info->{'header'}.'</h3>';
       $html .= $table->render;
     }

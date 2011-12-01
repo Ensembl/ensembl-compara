@@ -47,7 +47,7 @@ sub _configure_Variation_table {
   my $rows = [];
 
   my $header = 'Variants associated with phenotype '.$self->object->get_phenotype_desc;
-  my $table_style = {'sorting' => ['p-values asc']};
+  my $table_style = {'sorting' => ['p-values desc']};
 
   my $column_order = [qw(loc names)];
   my $column_info = {
