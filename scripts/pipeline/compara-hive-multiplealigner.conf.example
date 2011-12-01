@@ -1,3 +1,9 @@
+# *****************************************************************************************
+# * This pipeline is not supported beyond Ensembl release 65.                             *
+# * For details on how to use the replacement pipeline, please read the documentation in: *
+# * ensembl-compara/docs/README-multiplealigner                                           *
+# *****************************************************************************************
+
 [
  { # information to connect to compara/hive database
   TYPE => COMPARA,

@@ -1,4 +1,9 @@
 
+*****************************************************************************************
+* This pipeline is not supported beyond Ensembl release 65.                             *
+* For details on how to use the replacement pipeline, please read the documentation in: *
+* ensembl-compara/docs/README-pairaligner                                               *
+*****************************************************************************************
 
 1- code API needed and executable
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
