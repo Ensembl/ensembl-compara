@@ -1,5 +1,13 @@
 #!/usr/local/ensembl/bin/perl -w
 
+print "
+*****************************************************************************************
+* This pipeline is not supported beyond Ensembl release 65.                             *
+* For details on how to use the replacement pipeline, please read the documentation in: *
+* ensembl-compara/docs/README-multiplealigner                                           *
+*****************************************************************************************
+\n";
+
 use strict;
 use DBI;
 use Getopt::Long;
