@@ -234,6 +234,7 @@ sub pipeline_analyses {
                 'input_id'     => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' },
                 'fan_branch_code' => 2,
             },
+		-input_ids  => [ { } ],
             -flow_into => {
                 2 => [ 'copy_table'  ],
                 1 => [ 'innodbise_table_factory' ],     # backbone
