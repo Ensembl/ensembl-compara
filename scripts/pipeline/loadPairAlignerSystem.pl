@@ -1,5 +1,13 @@
 #!/software/bin/perl -w
 
+print "
+*****************************************************************************************
+* This pipeline is not supported beyond Ensembl release 65.                             *
+* For details on how to use the replacement pipeline, please read the documentation in: *
+* ensembl-compara/docs/README-pairaligner                                               *
+*****************************************************************************************
+\n";
+
 use strict;
 use DBI;
 use Getopt::Long;
@@ -33,7 +41,7 @@ my %compara_conf;
 $compara_conf{'-port'} = 3306;
 
 #list of compara tables to be changed to InnoDB
-my @dna_pipeline_tables = qw(genomic_align_block genomic_align genomic_align_group genomic_align_tree sequence dnafrag_region constrained_element conservation_score);
+my @dna_pipeline_tables = qw(genomic_align_block genomic_align genomic_align_tree sequence dnafrag_region constrained_element conservation_score);
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
@@ -106,7 +114,7 @@ foreach my $dnaCollectionConf (values %{$self->{'dna_collection_conf_selected_ha
   );
 
       #Create dataflow rule to create sequence storing jobs on branch 1
-  $self->{'dataflow_adaptor'}->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $self->{'storeSequenceAnalysis'},1);
+  $self->{'dataflow_adaptor'}->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $self->{'storeSequenceAnalysis'},2);
 }
 
 foreach my $pairAlignerConf (@{$self->{'pair_aligner_conf_list'}}) {
@@ -205,7 +213,8 @@ sub preparePairAlignerSystem {
   my $chunkAndGroupDnaAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'ChunkAndGroupDna',
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkAndGroupDna',
+#      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkAndGroupDna',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna',
       -parameters      => '{}',
     );
   $self->{'analysis_adaptor'}->store($chunkAndGroupDnaAnalysis);
@@ -223,7 +232,7 @@ sub preparePairAlignerSystem {
   my $storeSequenceAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'StoreSequence',
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::StoreSequence',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
       -parameters      => '{}',
     );
   $self->{'analysis_adaptor'}->store($storeSequenceAnalysis);
@@ -239,6 +248,8 @@ sub preparePairAlignerSystem {
   my $createPairAlignerJobsAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'CreatePairAlignerJobs',
+#can't use new method because it creates pairaligner jobs in a different way
+#      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs',
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreatePairAlignerJobs',
       -parameters      => '{}',
     );
@@ -364,7 +375,7 @@ sub createPairAlignerAnalysis {
       ## We want to dump the target collection for Blat. Set dump_min_size to 1 to ensure that all the toplevel seq_regions are dumped. 
       # The use of group_set_size in the target collection ensures that short seq_regions are grouped together. 
       my $dumpDnaAnalysis = Bio::EnsEMBL::Analysis->new(
-           -module => "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::DumpDnaCollection",
+           -module => "Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection",
            -parameters => $analysis_parameters, 
       );
       my $dump_dna_logic_name = "DumpDnaFor".$pair_aligner_conf->{'logic_name_prefix'}."-".$gdb_suffix;
@@ -381,7 +392,7 @@ sub createPairAlignerAnalysis {
 
       if ($target_dnaCollectionConf->{'dump_loc'}) {
           Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
-              -input_id       => { 'dna_collection_name' => $pair_aligner_conf->{'target_collection_name'} },
+              -input_id       => { 'collection_name' => $pair_aligner_conf->{'target_collection_name'} },
               -analysis       => $self->{'dump_dna_analysis'},
           );
       }
@@ -400,7 +411,7 @@ sub createPairAlignerAnalysis {
     my $updateMaxAlignmentLengthBeforeFDAnalysis = Bio::EnsEMBL::Analysis->new(
         -db_version      => '1',
         -logic_name      => 'UpdateMaxAlignmentLengthBeforeFD',
-        -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
         -parameters      => '{}',
     );
     
@@ -465,7 +476,7 @@ sub createPairAlignerAnalysis {
   my $nonrefFilterDuplicatesAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'NonrefFilterDuplicates-'.$gdb_suffix,
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterDuplicates',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
       -parameters      => $parameters,
   );
   $self->{'analysis_adaptor'}->store($nonrefFilterDuplicatesAnalysis);
@@ -488,7 +499,7 @@ sub createPairAlignerAnalysis {
       my $updateMaxAlignmentLengthAfterFDAnalysis = Bio::EnsEMBL::Analysis->new(
           -db_version      => '1',
           -logic_name      => 'UpdateMaxAlignmentLengthAfterFD',
-          -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+          -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
           -parameters      => '{}',
       );
       
@@ -566,7 +577,7 @@ sub createPairAlignerAnalysis {
   my $refFilterDuplicatesAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'RefFilterDuplicates-'.$gdb_suffix,
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterDuplicates',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
       -parameters      => $parameters,
   );
   $self->{'analysis_adaptor'}->store($refFilterDuplicatesAnalysis);
@@ -592,7 +603,7 @@ sub createPairAlignerAnalysis {
       my $updateMaxAlignmentLengthAfterFDAnalysis = Bio::EnsEMBL::Analysis->new(
           -db_version      => '1',
           -logic_name      => 'UpdateMaxAlignmentLengthAfterFD',
-          -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+          -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
           -parameters      => '{}',
       );
       
@@ -621,7 +632,7 @@ sub createPairAlignerAnalysis {
       my $createFilterDuplicatesJobsAnalysis = Bio::EnsEMBL::Analysis->new(
           -db_version      => '1',
           -logic_name      => 'CreateFilterDuplicatesJobs',
-          -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateFilterDuplicatesJobs',
+          -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs',
           -parameters      => '{}',
       );
       $self->{'analysis_adaptor'}->store($createFilterDuplicatesJobsAnalysis);

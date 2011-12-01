@@ -1,5 +1,14 @@
 #!/software/bin/perl -w
 
+print "
+*****************************************************************************************
+* This pipeline is not supported beyond Ensembl release 65.                             *
+* For details on how to use the replacement pipeline, please read the documentation in: *
+* ensembl-compara/docs/README-pairaligner                                               *
+*****************************************************************************************
+\n";
+
+
 use strict;
 use DBI;
 use Getopt::Long;
@@ -71,7 +80,7 @@ my $stats;
 my $noChunkAndGroupDnaAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'NoChunkAndGroupDna',
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkAndGroupDna',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna',
       -parameters      => ""
     );
 $self->{'analysis_adaptor'}->store($noChunkAndGroupDnaAnalysis);
@@ -116,7 +125,19 @@ foreach my $chainConf (@{$self->{'chain_conf_list'}}) {
                .'-'. $self->{'dna_collection_conf_selected_hash'}{$nonref_dna_collection_name}{'genome_db_id'};
 
     print "prepareChainSystem($gdb_suffix)\n";
-    $self->prepareChainSystem($chainConf, $gdb_suffix);
+
+    #
+    # creating output MethodLinkSpeciesSet entry
+    #
+    my ($output_method_link_id, $output_method_link_type) = @{$chainConf->{'output_method_link'}};
+    my $mlss = $self->create_mlss($output_method_link_id, $output_method_link_type,
+				  $self->{'dna_collection_conf_selected_hash'}{$ref_dna_collection_name}{'genome_db_id'},
+				  $self->{'dna_collection_conf_selected_hash'}{$nonref_dna_collection_name}{'genome_db_id'});
+
+    $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+
+
+    $self->prepareChainSystem($chainConf, $gdb_suffix, $mlss);
 
     #allow 'query_collection_name' or 'reference_collection_name'
     if ($chainConf->{'reference_collection_name'} && !$chainConf->{'query_collection_name'}) {
@@ -141,7 +162,18 @@ foreach my $netConf (@{$self->{'net_conf_list'}}) {
                .'-'. $self->{'dna_collection_conf_selected_hash'}{$nonref_dna_collection_name}{'genome_db_id'};
 
     print "prepareNetSystem($gdb_suffix)\n";
-    $self->prepareNetSystem($netConf, $gdb_suffix);
+
+
+    #
+    # creating output MethodLinkSpeciesSet entry
+    #
+    my ($output_method_link_id, $output_method_link_type) = @{$netConf->{'output_method_link'}};
+    my $mlss = $self->create_mlss($output_method_link_id, $output_method_link_type,
+				  $self->{'dna_collection_conf_selected_hash'}{$ref_dna_collection_name}{'genome_db_id'},
+				  $self->{'dna_collection_conf_selected_hash'}{$nonref_dna_collection_name}{'genome_db_id'});
+    $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+
+    $self->prepareNetSystem($netConf, $gdb_suffix, $mlss);
 }
 
 exit(0);
@@ -227,6 +259,7 @@ sub prepareChainSystem {
   return unless($chainConf);
 
   my $stats;
+  my $faToNib_exe = $chainConf->{'faToNib'};
 
   #
   # DumpLargeNibForChains Analysis
@@ -234,8 +267,8 @@ sub prepareChainSystem {
   my $dumpLargeNibForChainsAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'DumpLargeNibForChains',
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::DumpDnaCollection',
-      -parameters      => "{'dump_nib'=>1}"
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
+      -parameters      => "{'dump_nib'=>1, 'faToNib_exe'=>'" . $faToNib_exe . "'}"
     );
   $self->{'analysis_adaptor'}->store($dumpLargeNibForChainsAnalysis);
   $stats = $dumpLargeNibForChainsAnalysis->stats;
@@ -288,19 +321,22 @@ sub prepareChainSystem {
       $linear_gap = "medium";
   }
 
-	my @parameters_array = (
-		'input_method_link', $input_method_link_type,
-		'output_method_link', $output_method_link_type,
-		'max_gap', $max_gap,
-		'linear_gap', $linear_gap,
-	);
-	push(@parameters_array, ('bin_dir', $chainConf->{'bin_dir'})) if defined $chainConf->{'bin_dir'};
-	$parameters = generate_paramaters_string(@parameters_array);
+  my @parameters_array = (
+			  'input_method_link', $input_method_link_type,
+			  'output_method_link', $output_method_link_type,
+			  'max_gap', $max_gap,
+			  'linear_gap', $linear_gap,
+			  'faToNib', $chainConf->{'faToNib'},
+			  'lavToAxt', $chainConf->{'lavToAxt'},
+			  'axtChain', $chainConf->{'axtChain'}
+			 );
+  push(@parameters_array, ('bin_dir', $chainConf->{'bin_dir'})) if defined $chainConf->{'bin_dir'};
+  $parameters = generate_paramaters_string(@parameters_array);
 
   my $alignmentChainsAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'AlignmentChains-'.$gdb_suffix,
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::AlignmentChains',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains',
       -parameters      => $parameters
     );
   $self->{'analysis_adaptor'}->store($alignmentChainsAnalysis);
@@ -326,7 +362,7 @@ sub prepareChainSystem {
       my $updateMaxAlignmentLengthAfterChainAnalysis = Bio::EnsEMBL::Analysis->new
 	(-db_version      => '1',
 	 -logic_name      => 'UpdateMaxAlignmentLengthAfterChain',
-	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+	 -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
 	 -parameters      => $parameters);
       
       $self->{'analysis_adaptor'}->store($updateMaxAlignmentLengthAfterChainAnalysis);
@@ -413,18 +449,19 @@ sub prepareNetSystem {
   #
   my $max_gap = $netConf->{'max_gap'};
 
-	my @parameters_array = (
-		'input_method_link', $input_method_link_type,
-		'output_method_link', $output_method_link_type,
-		'max_gap', $max_gap,
-	);
-	push(@parameters_array, ('bin_dir', $netConf->{'bin_dir'})) if defined $netConf->{'bin_dir'};
-	my $parameters = generate_paramaters_string(@parameters_array);
+  my @parameters_array = (
+			  'input_method_link', $input_method_link_type,
+			  'output_method_link', $output_method_link_type,
+			  'max_gap', $max_gap,
+			  'chainNet', $netConf->{'chainNet'}
+			 );
+  push(@parameters_array, ('bin_dir', $netConf->{'bin_dir'})) if defined $netConf->{'bin_dir'};
+  my $parameters = generate_paramaters_string(@parameters_array);
 
   my $alignmentNetsAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'AlignmentNets-'.$gdb_suffix,
-      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::AlignmentNets',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets',
       -parameters      => $parameters
     );
   $self->{'analysis_adaptor'}->store($alignmentNetsAnalysis);
@@ -447,7 +484,7 @@ sub prepareNetSystem {
     my $updateMaxAlignmentLengthAfterNetAnalysis = Bio::EnsEMBL::Analysis->new
       (-db_version      => '1',
        -logic_name      => 'UpdateMaxAlignmentLengthAfterNet',
-       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
        -parameters      => $parameters);
 
     $self->{'analysis_adaptor'}->store($updateMaxAlignmentLengthAfterNetAnalysis);
@@ -474,7 +511,7 @@ sub prepareNetSystem {
       my $filterStackAnalysis = Bio::EnsEMBL::Analysis->new
 	(-db_version      => '1',
 	 -logic_name      => 'FilterStack',
-	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterStack',
+	 -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterStack',
 	 -parameters      => $parameters);
       
       $self->{'analysis_adaptor'}->store($filterStackAnalysis);
@@ -494,7 +531,7 @@ sub prepareNetSystem {
       my $updateMaxAlignmentLengthAfterStackAnalysis = Bio::EnsEMBL::Analysis->new
 	(-db_version      => '1',
 	 -logic_name      => 'UpdateMaxAlignmentLengthAfterStack',
-	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+	 -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
 	 -parameters      => $parameters);
       
       $self->{'analysis_adaptor'}->store($updateMaxAlignmentLengthAfterStackAnalysis);
@@ -521,7 +558,7 @@ sub create_set_internal_ids_analysis {
     
     my $setInternalIdsAnalysis = Bio::EnsEMBL::Analysis->new(
        -logic_name      => 'SetInternalIds',
-       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::SetInternalIds',
+       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetInternalIds',
      );
 
     $self->{'analysis_adaptor'}->store($setInternalIdsAnalysis);
@@ -893,6 +930,41 @@ sub generate_paramaters_string {
 	}
 	return '{'.join(',',@params).'}';
 }
+
+sub create_mlss {
+    my ($self, $method_link_id, $method_link_type, $gdb_id1, $gdb_id2) = @_;
+
+    if (defined($method_link_id) && defined($method_link_type)) {
+	my $sql = "INSERT ignore into method_link SET method_link_id=$method_link_id, type='$method_link_type'";
+	$self->{'comparaDBA'}->dbc->do($sql);
+    }
+
+    my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+    $mlss->method_link_type($method_link_type); 
+
+    my $gdb1 = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id1);
+    unless (defined $gdb1) {
+      print("\n__ERROR__\n");
+      print("There is no genomeDB for genome_db_id $gdb_id1\n");
+      print("You need to load the genomeDBs first, with comparaLoadGenomes.pl \n");
+      exit(2);
+    }
+    my $gdb2 = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id2);
+    unless (defined $gdb2) {
+      print("\n__ERROR__\n");
+      print("There is no genomeDB for genome_db_id $gdb_id2\n");
+      print("You need to load the genomeDBs first, with comparaLoadGenomes.pl \n");
+      exit(3);
+    }
+    if ($gdb1->dbID == $gdb2->dbID) {
+      $mlss->species_set([$gdb1]);
+    } else {
+      $mlss->species_set([$gdb1, $gdb2]);
+    }
+
+    return $mlss;
+}
+
 
 1;
 

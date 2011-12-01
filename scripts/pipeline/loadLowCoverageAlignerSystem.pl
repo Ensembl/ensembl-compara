@@ -1,5 +1,13 @@
 #!/usr/local/ensembl/bin/perl -w
 
+print "
+*****************************************************************************************
+* This pipeline is not supported beyond Ensembl release 65.                             *
+* For details on how to use the replacement pipeline, please read the documentation in: *
+* ensembl-compara/docs/README-low-coverage-genome-aligner                               *
+*****************************************************************************************
+\n";
+
 use strict;
 use DBI;
 use Getopt::Long;
@@ -29,7 +37,7 @@ my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor, $ensemb
 my ($subset_id, $genome_db_id, $prefix, $fastadir, $verbose);
 
 #list of compara tables to be changed to InnoDB
-my @dna_pipeline_tables = qw(genomic_align_block genomic_align genomic_align_group genomic_align_tree sequence dnafrag_region constrained_element conservation_score);
+my @dna_pipeline_tables = qw(genomic_align_block genomic_align genomic_align_tree sequence dnafrag_region constrained_element conservation_score);
 
 # ok this is a hack, but I'm going to pretend I've got an object here
 # by creating a blessed hash ref and passing it around like an object
@@ -461,7 +469,7 @@ sub createImportAlignmentAnalysis {
     my $importAlignmentAnalysis = Bio::EnsEMBL::Analysis->new(
         -db_version      => '1',
         -logic_name      => 'ImportAlignment',
-        -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ImportAlignment',
+        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::ImportAlignment',
 #        -parameters      => ""
       );
 
@@ -615,7 +623,7 @@ sub createUpdateMaxAlignmentLengthAnalysis {
     my $updateMaxAlignmentLengthAnalysis = Bio::EnsEMBL::Analysis->new(
         -db_version      => '1',
         -logic_name      => 'UpdateMaxAlignmentLength',
-        -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
 #        -parameters      => ""
       );
 
@@ -793,7 +801,7 @@ sub createSetNeighbourNodesAnalysis {
     my $createSetNeighbourNodesAnalysis = Bio::EnsEMBL::Analysis->new(
         -db_version      => '1',
         -logic_name      => 'SetNeighbourNodes',
-        -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::SetNeighbourNodes',
+        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
 #        -parameters      => ""
       );
 
