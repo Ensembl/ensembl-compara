@@ -45,11 +45,19 @@ sub content {
   if ($avail->{'has_alignments'}) {
     $phylo_url    = $hub->url({'action' => 'Compara_Alignments'});
   }
+  
+  my ($p_title, $p_img);
+  if($avail->{'not_somatic'}) {
+    ($p_title, $p_img) = ('Population genetics', 'population_genetics');
+  }
+  else {
+    ($p_title, $p_img) = ('Sample information', 'sample_information');
+  }
 
   my @buttons = (
     {'title' => 'Genomic context',        'img' => 'genomic_context',        'url' => $context_url},
     {'title' => 'Gene/Transcript',        'img' => 'gene_transcript',        'url' => $gt_url},
-    {'title' => 'Population genetics',    'img' => 'population_genetics',    'url' => $pop_url},
+    {'title' => $p_title,                 'img' => $p_img,                   'url' => $pop_url},
     {'title' => 'Individual genotypes',   'img' => 'individual_genotypes',   'url' => $geno_url},
     {'title' => 'Linkage disequilibrium', 'img' => 'linkage_disequilibrium', 'url' => $ld_url},
     {'title' => 'Phenotype data',         'img' => 'phenotype_data',         'url' => $pheno_url},
