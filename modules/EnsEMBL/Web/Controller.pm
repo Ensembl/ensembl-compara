@@ -250,7 +250,8 @@ sub update_user_history {
     } elsif ($referer_type eq 'Phenotype') {
       $name .= ': ' . $hub->get_adaptor('get_VariationAnnotationAdaptor', 'variation')->fetch_phenotype_description_by_id($value);
     } elsif ($referer_type eq 'Experiment') {
-      $name .= ': ' . join ', ', grep !/(cell_type|evidence_type|project|name)/, split chop $value, $value;
+      $value = $value eq 'all' ? 'All' : join(', ', grep !/(cell_type|evidence_type|project|name)/, split chop $value, $value) unless $value =~ s/^name-//;     
+      $name .= ": $value";
     } else {
       $name .= $name ? ": $value" : $value;
     }
