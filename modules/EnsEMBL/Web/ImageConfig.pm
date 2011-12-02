@@ -582,7 +582,7 @@ sub load_user_tracks {
     my $add_method = lc "_add_$url_sources{$code}{'format'}_track";
     
     if ($self->can($add_method)) {
-      $self->$add_method($menu, $code, $url_sources{$code});
+      $self->$add_method(key => $code, menu => $menu, source => $url_sources{$code});
     } else {
       $self->_add_flat_file_track($menu, 'url', $code, $url_sources{$code}{'source_name'},
         sprintf('
@@ -653,7 +653,7 @@ sub load_file_format {
     my $menu   = $self->get_node($internal_sources->{$source_name});
     my $source = $menu ? $self->sd_call($source_name) : undef;
     
-    $self->$function('menu' => $menu, 'source' => $source, 'internal' => 1) if $source;
+    $self->$function(key => $source_name, menu => $menu, source => $source, internal => 1) if $source;
   }
 }
 
@@ -744,40 +744,39 @@ sub _add_flat_file_track {
 sub _add_file_format_track {
   my ($self, %args) = @_;
   
-  my $menu = $args{menu} || $self->get_node('user_data');
+  my $menu = $args{'menu'} || $self->get_node('user_data');
   
   return unless $menu;
   
+  my $type    = lc $args{'format'};
+  my $article = $args{'format'} =~ /^[aeiou]/ ? 'an' : 'a';
   my $desc;
-  my $article = ($args{format} =~ /^[aeiou]/) ? 'an' : 'a';
-  if ($args{internal}) {
-    $desc = sprintf('Data served from a %s file: %s', $args{format}, $args{description});
-  }
-  else {
+  
+  if ($args{'internal'}) {
+    $desc = sprintf('Data served from a %s file: %s', $args{'format'}, $args{'description'});
+  } else {
     $desc = sprintf(
       "Data retrieved from %s %s file on an external webserver. %s
       This data is attached to the %s, and comes from URL: %s",
       $article,
-      $args{format},
-      $args{description},
-      encode_entities($args{source}->{'source_type'}), 
-      encode_entities($args{source}->{'source_url'})
+      $args{'format'},
+      $args{'description'},
+      encode_entities($args{'source'}{'source_type'}), 
+      encode_entities($args{'source'}{'source_url'})
     );
   }
   
-  my $type = lc $args{format};
-  
-  my $track = $self->create_track($args{key}, $args{source}->{'source_name'}, {
+  my $track = $self->create_track($args{'key'}, $args{'source'}{'source_name'}, {
     display     => 'off',
     strand      => 'f',
-    format      => $args{format},
+    format      => $args{'format'},
     glyphset    => $type,
     colourset   => $type,
-    renderers   => $args{renderers},
-    caption     => $args{source}->{'source_name'},
-    url         => $args{source}->{'source_url'},
+    renderers   => $args{'renderers'},
+    caption     => $args{'source'}{'source_name'},
+    url         => $args{'source'}{'source_url'},
     description => $desc,
-    %{$args{options}}
+    %{$args{'options'}}
   });
  
   $menu->append($track) if $track;
