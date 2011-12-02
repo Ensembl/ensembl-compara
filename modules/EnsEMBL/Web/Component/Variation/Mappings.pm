@@ -275,7 +275,7 @@ sub detail_panel {
     
     my %data = (
       allele     => $allele,
-      t_allel    => $t_allele,
+      t_allele   => $t_allele,
       name       => $object->name,
       gene       => qq{<a href="$gene_url">$gene_id</a>},
       transcript => qq{<a href="$tr_url">$tr_id</a>},
@@ -291,7 +291,9 @@ sub detail_panel {
     
     $data{'ncbi_term'} = (join ', ', @{$data{'ncbi_term'} || []}) || '-';
     
-    if ($tv->affects_transcript) {
+    if($tv->affects_transcript) {
+      $data{context} = $self->render_context($tv, $tva);
+      
       my $context_url = $hub->url({
         type   => 'Transcript',
         action => 'Sequence_cDNA',
@@ -302,6 +304,7 @@ sub detail_panel {
         v      => $object->name,
       });
       
+      #$data{'context'} = $self->render_context($tv, $tva);
       $data{'context'} = qq{<a href="$context_url">Show in transcript</a>};
       
       # work out which exon it is in
