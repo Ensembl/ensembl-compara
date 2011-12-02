@@ -30,12 +30,20 @@ sub content {
   my $feature_sets_info = $object->get_feature_sets_info;
 
   for my $feature_set_info (@$feature_sets_info) {
-    my $source_label = encode_entities($feature_set_info->{'source_label'});
-    my $project_name = encode_entities($feature_set_info->{'project_name'});
+    my $source_label  = encode_entities($feature_set_info->{'source_label'});
+    my $source_link   = encode_entities($feature_set_info->{'source_link'} || '');
+    my $project_name  = encode_entities($feature_set_info->{'project_name'});
+    my $project_link  = encode_entities($feature_set_info->{'project_url'} || '');
+    my $evidence_type = encode_entities($feature_set_info->{'evidence_label'});
+    
+    $source_link    ||= $self->srx_link($source_label) if $source_label =~ /^SRX/;
+    $evidence_type    =~ s/\s/&nbsp;/g;
+    $project_name     =~ s/\s/&nbsp;/g;
+
     $table->add_row({
-      'source'        => $feature_set_info->{'source_link'} ? sprintf('<a href="%s">%s</a>', encode_entities($feature_set_info->{'source_link'}), $source_label) : $source_label,
-      'project'       => $feature_set_info->{'project_url'} ? sprintf('<a href="%s">%s</a>', encode_entities($feature_set_info->{'project_url'}), $project_name) : $project_name,
-      'evidence_type' => encode_entities($feature_set_info->{'evidence_label'}),
+      'source'        => $source_link  ? sprintf('<a href="%s">%s</a>', $source_link, $source_label) : $source_label,
+      'project'       => $project_link ? sprintf('<a href="%s">%s</a>', $project_link, $project_name) : $project_name,
+      'evidence_type' => $evidence_type,
       'cell_type'     => encode_entities($feature_set_info->{'cell_type_name'}),
       'feature_type'  => encode_entities($feature_set_info->{'feature_type_name'}),
       'gene'          => join(', ', map {sprintf('<a href="%s">%s</a>', $hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => $_}), $_)} @{$feature_set_info->{'xref_genes'}} ),
@@ -53,11 +61,17 @@ sub content {
     $html = "Showing all  $total_experiments experiments";
   }
   else {
-    my @filters = values %{$object->applied_filters};
-    $html = sprintf('<p class="space-below">Filters applied: %s</p><p class="space-below">Showing %s/%s experiments</p>',
-       encode_entities(join(' and ', reverse (pop(@filters), join(', ', @filters) || ()))),
+    my $applied_filters = $object->applied_filters;
+    my $display_filters = {};
+    for my $filter_key (sort keys %$applied_filters) {
+      my $filter_title = $object->get_filter_title($filter_key);
+      $display_filters->{$filter_title} = [ map sprintf('%s (<a href="%s">remove</a>)', $_, $hub->url({'ex' => $object->get_url_param({$filter_title, $_}, -1)})), @{$applied_filters->{$filter_key}} ];
+    }
+
+    $html = sprintf('<p class="space-below">Showing %s/%s experiments</p><p class="space-below">Filters applied: %s</p>',
        $shown_experiments,
-       $total_experiments
+       $total_experiments,
+       join('', map sprintf('<p class="space-below"><b>%s</b>: %s</p>', $_, join(' and ', reverse (pop(@{$display_filters->{$_}}), join(', ', @{$display_filters->{$_}}) || ()))), sort keys %$display_filters)
     );
   }
 
@@ -65,8 +79,13 @@ sub content {
 }
 
 sub motif_link {
-  ## TODO?
+  ## TODO - move somewhere else
   return "http://jaspar.genereg.net/cgi-bin/jaspar_db.pl?ID=$_[1]&amp;rm=present&amp;collection=CORE";
+}
+
+sub srx_link {
+  ## TODO - move somewhere else
+  return "http://www.ebi.ac.uk/ena/data/view/$_[1]";
 }
 
 1;
