@@ -583,7 +583,12 @@ sub configure_user_data {
       my @nodes = grep $_, $track->{'analyses'} ? map $image_config->get_node($_), split(', ', $track->{'analyses'}) : $image_config->get_node("${track_type}_$track->{'code'}");
       
       if (scalar @nodes) {
-        $_->set_user('display', $vertical ? EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'}) : $_->get('renderers')->[2]) for @nodes;
+        foreach (@nodes) {
+          my $renderers = $_->get('renderers');
+          my %valid     = @$renderers;
+          $_->set_user('display', $vertical ? EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'}) : $valid{'normal'} ? 'normal' : $renderers->[2]);
+        }
+        
         $image_config->{'code'} = $ic_code;
         $image_config->altered  = 1;
         $view_config->altered   = 1;

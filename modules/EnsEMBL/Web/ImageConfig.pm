@@ -32,7 +32,6 @@ sub new {
   my $code    = shift;
   my $type    = $class =~ /([^:]+)$/ ? $1 : $class;
   my $style   = $hub->species_defs->ENSEMBL_STYLE || {};
-  my $session = $hub->session;
   my $cache   = $hub->cache;
   
   my $self = {
@@ -85,15 +84,7 @@ sub new {
   
   bless $self, $class;
   
-  # Check to see if we have a user/session saved copy of tree.... 
-  #   Load tree from cache...
-  #   If not check to see if we have a "common" saved copy of tree
-  #     If not generate and cache it!
-  #   If we have a (user/session) modify the common tree
-  #     Cache the user/session version.
-  #
   # Check memcached for defaults
-  
   if (my $defaults = $cache ? $cache->get("::${class}::${species}::$code") : undef) {
     $self->{$_} = $defaults->{$_} for keys %$defaults;
   } else {
@@ -120,7 +111,7 @@ sub new {
   $self->{'no_image_frame'} = 1;
   
   # Add user defined data sources
-  $self->load_user_tracks($session);
+  $self->load_user_tracks;
   
   # Combine info and decorations into a single menu
   my $decorations = $self->get_node('decorations') || $self->get_node('other');
@@ -313,9 +304,12 @@ sub set_user_settings {
     
     next unless $node;
     
+    my $renderers = $node->data->{'renderers'};
+    my %valid     = @$renderers;
+    
     foreach (keys %{$data->{$key}}) {
-      if ($_ eq 'display' && !grep /$data->{$key}{$_}/, @{$node->data->{'renderers'}}) {
-        $node->set_user($_, $node->data->{'renderers'}->[2]); # index 2 contains the code for the first "on" renderer
+      if ($_ eq 'display' && !$valid{$data->{$key}{$_}}) {
+        $node->set_user($_, $valid{'normal'} ? 'normal' : $renderers->[2]); # index 2 contains the code for the first "on" renderer
       } else {
         $node->set_user($_, $data->{$key}{$_});
       }
@@ -482,14 +476,15 @@ sub get_option {
 }
 
 sub load_user_tracks {
-  my ($self, $session) = @_;
+  my $self = shift;
   my $menu = $self->get_node('user_data');
   
   return unless $menu;
   
-  my $hub  = $self->hub;
-  my $user = $hub->user;
-  my $das  = $hub->get_all_das;
+  my $hub     = $self->hub;
+  my $session = $hub->session;
+  my $user    = $hub->user;
+  my $das     = $hub->get_all_das;
   my (%url_sources, %upload_sources);
   
   foreach my $source (sort { ($a->caption || $a->label) cmp ($b->caption || $b->label) } values %$das) {
@@ -670,52 +665,55 @@ sub _add_bam_track {
   ';
   
   $self->_add_file_format_track(
-    'format'      => 'BAM', 
-    'renderers'   => [
-                    'off',       'Off', 
-                    'normal',    'Normal', 
-                    'unlimited', 'Unlimited', 
-                    'histogram', 'Coverage only'
-                    ], 
-    'options'     => {
-                    external => 'url',
-                    sub_type => 'bam'
-                    }, 
-    'description' => $desc,
-    @_);
+    format      => 'BAM',
+    description => $desc,
+    renderers   => [
+      'off',       'Off', 
+      'normal',    'Normal', 
+      'unlimited', 'Unlimited', 
+      'histogram', 'Coverage only'
+    ], 
+    options => {
+      external => 'url',
+      sub_type => 'bam'
+    },
+    @_
+  );
 }
 
 sub _add_bigwig_track {
   shift->_add_file_format_track(
-    'format'    => 'BigWig', 
-    'renderers' =>  [
-                      'off',    'Off',
-                      'tiling', 'Wiggle plot',
-                      ], 
-    'options'   => {
-                      external => 'url',
-                      sub_type => 'bigwig',
-                      colour   => $_[2]->{'colour'} || 'red',
-                      },
-    @_);
+    format    => 'BigWig', 
+    renderers =>  [
+      'off',    'Off',
+      'tiling', 'Wiggle plot',
+    ], 
+    options => {
+      external => 'url',
+      sub_type => 'bigwig',
+      colour   => $_[2]->{'colour'} || 'red',
+    },
+    @_
+  );
 }
 
 sub _add_vcf_track {
   shift->_add_file_format_track(
-    'format'    => 'VCF', 
-    'renderers' => [
-                    'off',       'Off',
-                    'histogram', 'Normal',
-                    'compact',   'Compact'
-                    ], 
-    'options'   => {
-                    external   => 'url',
-                    sources    => undef,
-                    depth      => 0.5,
-                    bump_width => 0,
-                    colourset  => 'variation'
-                    },
-    @_);
+    format    => 'VCF', 
+    renderers => [
+      'off',       'Off',
+      'histogram', 'Normal',
+      'compact',   'Compact'
+    ], 
+    options => {
+      external   => 'url',
+      sources    => undef,
+      depth      => 0.5,
+      bump_width => 0,
+      colourset  => 'variation'
+    },
+    @_
+  );
 }
 
 sub _add_flat_file_track {
@@ -949,14 +947,12 @@ sub update_track_renderer {
   
   return unless $node;
   
-  my %valid_renderers = @{$node->data->{'renderers'}};
-  my $flag            = 0;
+  my $renderers = $node->data->{'renderers'};
+  my %valid     = @$renderers;
+  my $flag      = 0;
 
-  ## Set renderer to something sensible if user has specified invalid one
-  if ($renderer ne 'off' && !$valid_renderers{$renderer}) {
-    ## 'off' is usually first option, so take next one
-    $renderer = $node->data->{'renderers'}[2];
-  }
+  ## Set renderer to something sensible if user has specified invalid one. 'off' is usually first option, so take next one
+  $renderer = $valid{'normal'} ? 'normal' : $renderers->[2] if $renderer ne 'off' && !$valid{$renderer};
 
   # if $on_off == 1, only allow track enabling/disabling. Don't allow enabled tracks' renderer to be changed.
   $flag += $node->set_user('display', $renderer) if (!$on_off || $renderer eq 'off' || $node->get('display') eq 'off');

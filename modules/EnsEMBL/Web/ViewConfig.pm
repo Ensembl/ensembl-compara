@@ -547,7 +547,9 @@ sub build_imageconfig_menus {
   } else {
     my $img_url  = $self->img_url;
     my @states   = @{$node->get('renderers') || [ 'off', 'Off', 'normal', 'On' ]};
-    my $display  = $node->get('display')     || 'off';
+    my %valid    = @states;
+    my $display  = $node->get('display') || 'off';
+       $display  = $valid{'normal'} ? 'normal' : $states[2] unless $valid{$display};
     my $desc     = $node->get('description');
     my $controls = $node->get('controls');
     my $subset   = $node->get('subset');
