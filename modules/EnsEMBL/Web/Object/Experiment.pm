@@ -127,22 +127,19 @@ sub applied_filters {
   my $self = shift;
 
   if (@_) {
-    my $param     = shift;
-    my $delimiter = chop $param;
-    my @substrs   = split /$delimiter/, $param;
-    my $filters   = [];
-    for (@substrs) {
+    my $param   = shift;
+    my $filters = $self->{'_param_filters'} = [];
+    for (split chop $param, $param) {
       if (exists $self->{'_param_to_filter_map'}->{$_}) {
-        push @$filters, $_, [];
+        push @$filters, $_, {};
       }
       else {
-        $_ and ref $filters->[-1] and push @{$filters->[-1]}, $_;
+        $_ and ref $filters->[-1] and $filters->[-1]{$_} = 1;
       }
     }
-    $self->{'_param_filters'} = { map {ref $_ ? { map {$_ => 1} @$_ } : $_ } @$filters };
   }
 
-  return { map {ref $_ ? [ keys %$_ ] : $_} %{$self->{'_param_filters'} || {}} };
+  return { map {ref $_ ? [ keys %$_ ] : $_} @{$self->{'_param_filters'} || []} };
 }
 
 sub is_filter_applied {
