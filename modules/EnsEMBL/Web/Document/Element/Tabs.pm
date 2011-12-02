@@ -210,12 +210,12 @@ sub history {
   my %html;
   
   foreach my $type (grep scalar @{$self->{'history'}->{$_}}, keys %{$self->{'history'}}) {
-    my $history  = join '', map qq{<li><a href="$_->[0]" class="constant $_->[2]" >$_->[1]</a></li>}, @{$self->{'history'}->{$type}};
+    my $history  = join '', map sprintf('<li><a href="%s" class="constant %s">%s</a></li>', $_->[0], $_->[2], encode_entities($_->[1])), @{$self->{'history'}->{$type}};
     $html{$type} = qq{<h4>Recent ${type}s</h4><ul class="recent">$history</ul>};
   }
   
   foreach my $type (grep scalar @{$self->{'bookmarks'}->{$_}}, keys %{$self->{'bookmarks'}}) {
-    my $bookmarks = join '', map qq{<li><a href="$_->[0]" class="constant $_->[2]" >$_->[1]</a></li>}, @{$self->{'bookmarks'}->{$type}};
+    my $bookmarks = join '', map sprintf('<li><a href="%s" class="constant %s">%s</a></li>', $_->[0], $_->[2], encode_entities($_->[1])), @{$self->{'bookmarks'}->{$type}};
     $html{$type} .= sprintf qq{<h4>%s bookmarks</h4><ul class="bookmarks">$bookmarks</ul>}, ucfirst $type;
   }
   
