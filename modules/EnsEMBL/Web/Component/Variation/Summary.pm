@@ -173,8 +173,10 @@ sub synonyms {
   my $object   = $self->object;
   my $synonyms = $object->dblinks;
   my $count;
-  
-  my $html = '<ul>';
+  my $count_sources;
+   my @synonyms_list;
+  my $html;
+ 
   foreach my $db (sort { lc $a cmp lc $b } keys %$synonyms) {
     my @ids = @{$synonyms->{$db}};
     my @urls;
@@ -205,13 +207,15 @@ sub synonyms {
       @urls = @ids;
     }
     $count += scalar(@urls);
-    $html .= "<li><strong>$db</strong> " . (join ', ', @urls) . '</li>';
+    my $syn = "<strong>$db</strong> " . (join ', ', @urls);
+    push(@synonyms_list,$syn);
   }
-
-  $html .= '</ul>';
+  
+  $count_sources = scalar(@synonyms_list);
  
   # Large text display
-  if ($count) { # Collapsed div display 
+  if ($count_sources > 1) { # Collapsed div display 
+    $html = "<ul><li>".join('</li><li>',@synonyms_list)."</li></ul>";
     my $show       = $self->hub->get_cookies('toggle_variation_synonyms') eq 'open';
     
     return sprintf('
@@ -225,9 +229,10 @@ sub synonyms {
     );
   }
   else {
+    $html = ($count_sources) ? $synonyms_list[0] : 'None currently in the database';
     return qq{
       <dt>Synonyms</dt>
-      <dd>None currently in the database</dd>
+      <dd>$html</dd>
     }; 
   }
 }
