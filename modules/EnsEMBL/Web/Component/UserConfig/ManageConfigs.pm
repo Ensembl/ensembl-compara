@@ -141,9 +141,13 @@ sub records_table {
 
 sub image_config_description {
   my ($self, $image_config, $key, $data, $label) = @_;
-  my $node   = $image_config->get_node($key);
-  my %states = @{$node->get('renderers') || [ 'off', 'Off', 'normal', 'On' ]};
-  return [ join(' - ', grep $_, $label, $node->get('caption')), $states{$data->{'display'}} ];
+  my $node = $image_config->get_node($key);
+  
+  return () unless $node;
+  
+  my $renderers = $node->get('renderers') || [ 'off', 'Off', 'normal', 'On' ];
+  my %valid     = @$renderers;
+  return [ join(' - ', grep $_, $label, $node->get('caption')), $valid{$data->{'display'}} || $valid{'normal'} || $renderers->[3] ];
 }
 
 sub sets_table {
