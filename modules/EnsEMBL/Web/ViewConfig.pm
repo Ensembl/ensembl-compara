@@ -30,6 +30,7 @@ sub new {
     code             => "${type}::$component",
     options          => {},
     labels           => {},
+    value_labels     => {},
     has_images       => 0,
     image_config     => undef,
     image_config_das => undef,
@@ -313,7 +314,8 @@ sub add_form_element {
   $self->add_fieldset('Display options') unless $self->get_form->has_fieldset;
   $self->get_form->add_element(%$element); ## TODO- modify it for the newer version of Form once all child classes are modified
   
-  $self->{'labels'}{$element->{'name'}} ||= $element->{'label'};
+  $self->{'labels'}{$element->{'name'}}       ||= $element->{'label'};
+  $self->{'value_labels'}{$element->{'name'}} ||= { map { $_->{'value'} => $_->{'caption'} } @{$element->{'values'}} } if $element->{'values'};
 }
 
 sub build_form {
