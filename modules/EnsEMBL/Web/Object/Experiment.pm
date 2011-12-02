@@ -12,9 +12,10 @@ sub new {
   ## @constructor
   ## Populates the data from the db and caches it before returning the object
   my $self                  = shift->SUPER::new(@_);
-  my $param                 = $self->hub->param('ex');
+  my $hub                   = $self->hub;
+  my $param                 = $hub->param('ex');
 
-  my $funcgen_db_adaptor    = $self->hub->database('funcgen');
+  my $funcgen_db_adaptor    = $hub->database('funcgen');
   my $feature_set_adaptor   = $funcgen_db_adaptor->get_FeatureSetAdaptor;
 
   my $param_to_filter_map   = $self->{'_param_to_filter_map'}   = {'all' => 'All', 'cell_type' => 'Cell/Tissue', 'evidence_type' => 'Evidence type', 'project' => 'Project'};
@@ -31,21 +32,18 @@ sub new {
   else {
     my $constraints = {};
     if ($param ne 'all') {
-      my $delimiter = chop $param;
-      my $filters   = { split /$delimiter/, $param };
-      exists $param_to_filter_map->{$_} or delete $filters->{$_} for keys %$filters;
 
-      $self->{'_param_filters'} = $filters;
+      my $filters = $self->applied_filters($param);
 
       while (my ($filter, $value) = each(%$filters)) {
         if ($filter eq 'cell_type') {
-          $constraints->{'cell_types'} = [ $funcgen_db_adaptor->get_CellTypeAdaptor->fetch_by_name($value) ];
+          $constraints->{'cell_types'} = [ map $funcgen_db_adaptor->get_CellTypeAdaptor->fetch_by_name($_), @$value ];
         }
         elsif ($filter eq 'evidence_type') {
-          $constraints->{'evidence_types'} = [ $value ];
+          $constraints->{'evidence_types'} = $value;
         }
         elsif ($filter eq 'project') {
-          $constraints->{'projects'} = [ $funcgen_db_adaptor->get_ExperimentalGroupAdaptor->fetch_by_name($value) ];
+          $constraints->{'projects'} = [ map $funcgen_db_adaptor->get_ExperimentalGroupAdaptor->fetch_by_name($_), @$value ];
         }
       }
     }
@@ -126,18 +124,45 @@ sub total_experiments {
 sub applied_filters {
   ## Returns the filters applied to filter the feature sets info
   ## @return HashRef with keys as filter names
-  return { map {$_} %{shift->{'_param_filters'} || {}} };
+  my $self = shift;
+
+  if (@_) {
+    my $param     = shift;
+    my $delimiter = chop $param;
+    my @substrs   = split /$delimiter/, $param;
+    my $filters   = [];
+    for (@substrs) {
+      if (exists $self->{'_param_to_filter_map'}->{$_}) {
+        push @$filters, $_, [];
+      }
+      else {
+        $_ and ref $filters->[-1] and push @{$filters->[-1]}, $_;
+      }
+    }
+    $self->{'_param_filters'} = { map {ref $_ ? { map {$_ => 1} @$_ } : $_ } @$filters };
+  }
+
+  return { map {ref $_ ? [ keys %$_ ] : $_} %{$self->{'_param_filters'} || {}} };
 }
 
 sub is_filter_applied {
   ## Checks whether a filter is already applied or not
   ## @return 1 or undef accordingly
   my ($self, $filter_name, $value) = @_;
-  
+
   my $applied_filters = $self->applied_filters;
 
-  return 1 if ($filter_name = $self->{'_filter_to_param_map'}{$filter_name}) && exists $applied_filters->{$filter_name} && $applied_filters->{$filter_name} eq $value;
+  if ($filter_name = $self->{'_filter_to_param_map'}{$filter_name}) {
+    $_ eq $value and return 1 for @{$applied_filters->{$filter_name} || []};
+  }
   return undef;
+}
+
+sub get_filter_title {
+  ## Returns the title for a filter param based upon the param_to_filter_map
+  ## @param Filter param
+  ## @return Filter title or blank string
+  return shift->{'_param_to_filter_map'}{pop @_};
 }
 
 sub get_url_param {
@@ -157,24 +182,24 @@ sub get_url_param {
   my $params = $flag ? $self->applied_filters : {};
   while (my ($filter, $value) = each %$filters) {
     if (my $param_for_filter = $self->{'_filter_to_param_map'}{$filter}) {
+      $params->{$param_for_filter} ||= [];
       if ($flag >= 0) {
-        $params->{$param_for_filter} = $value;
+        push @{$params->{$param_for_filter}}, $value;
       }
       else {
-        if ($params->{$param_for_filter} eq $value) {
-          delete $params->{$param_for_filter};
-        }
+        $params->{$param_for_filter} = [ map {$_ eq $value ? () : $_} @{$params->{$param_for_filter}} ];
+        delete $params->{$param_for_filter} unless @{$params->{$param_for_filter}};
       }
     }
   }
 
-  my $param_str   = join '', %$params;
+  my $param_str   = join '', map {ref $_ ? @$_ : $_} %$params;
   my $delimiters  = [ qw(_ ,), ('a'..'z'), ('A'..'Z'), (1..9) ];
   my $counter     = 0;
   my $delimiter   = '-';
   $delimiter      = $delimiters->[$counter++] while $delimiter && index($param_str, $delimiter) >= 0;
 
-  return join($delimiter, (map {$_, $params->{$_}} sort keys %$params), '') || 'all';
+  return join($delimiter, (map {$_, sort @{$params->{$_}}} sort keys %$params), '') || 'all';
 }
 
 1;
