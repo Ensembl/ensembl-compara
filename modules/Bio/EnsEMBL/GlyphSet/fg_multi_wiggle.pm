@@ -179,23 +179,15 @@ sub process_wiggle_data {
 
 sub block_features_zmenu {
   my ($self, $f) = @_;
-  my $offset = $self->{'container'}->strand > 0 ? $self->{'container'}->start - 1 :  $self->{'container'}->end + 1;
-  my $pos = $f->slice->seq_region_name .":". ($offset + $f->start )."-".($f->end+$offset);
-  my $feature_set = $f->feature_set->name;
-  my $midpoint = $f->summit || 'undetermined'; 
-#  my $id = $self->{'config'}->core_objects->regulation->stable_id if $self->{'config'}->core_objects->regulation;
-  my $id;
-  my $href = $self->_url
-  ({
-    'action'  => 'FeatureEvidence',
-    'rf'      => $id,
-    'fdb'     => 'funcgen',
-    'pos'     => $pos,
-    'fs'      => $feature_set,
-    'ps'      => $midpoint,
+  my $offset     = $self->{'container'}->strand > 0 ? $self->{'container'}->start - 1 :  $self->{'container'}->end + 1;
+  
+  return $self->_url({
+    action => 'FeatureEvidence',
+    fdb    => 'funcgen',
+    pos    => sprintf('%s:%s-%s', $f->slice->seq_region_name, $offset + $f->start, $f->end + $offset),
+    fs     => $f->feature_set->name,
+    ps     => $f->summit || 'undetermined',
   });
-
-  return $href;
 }
 
 sub get_colours {
