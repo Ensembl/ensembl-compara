@@ -87,8 +87,13 @@ sub records_table {
       if ($vc) {
         my $view_config = $hub->get_viewconfig(reverse split '::', $vc->{'code'});
         my $settings    = eval $vc->{'data'} || {};
+        
         $view_config->build_form;
-        push @config, [ $view_config->{'labels'}{$_} || $_, ucfirst $settings->{$_} ] for sort keys %$settings;
+        
+        my $labels       = $view_config->{'labels'};
+        my $value_labels = $view_config->{'value_labels'};
+        
+        push @config, [ $labels->{$_} || $_, $value_labels->{$_}{$settings->{$_}} || ($settings->{$_} eq lc $settings->{$_} ? ucfirst $settings->{$_} : $settings->{$_}) ] for sort keys %$settings;
       }
       
       if ($ic) {
