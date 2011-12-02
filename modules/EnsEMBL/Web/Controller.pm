@@ -241,12 +241,16 @@ sub update_user_history {
     
     if ($referer_type =~ /^(Gene|Transcript)$/) {
       my $db           = $referer->{'params'}->{'db'}->[0] || 'core';
-      $db              = 'otherfeatures' if $db eq 'est';
+         $db           = 'otherfeatures' if $db eq 'est';
       my $func         = "get_${referer_type}Adaptor";
       my $feature      = $hub->get_adaptor($func, $db, $referer_species)->fetch_by_stable_id($value);
       my $display_xref = $feature ? $feature->display_xref : undef;
       
       $name .= ': ' . ($display_xref ? $display_xref->display_id : $value);
+    } elsif ($referer_type eq 'Phenotype') {
+      $name .= ': ' . $hub->get_adaptor('get_VariationAnnotationAdaptor', 'variation')->fetch_phenotype_description_by_id($value);
+    } elsif ($referer_type eq 'Experiment') {
+      $name .= ': ' . join ', ', grep !/(cell_type|evidence_type|project|name)/, split chop $value, $value;
     } else {
       $name .= $name ? ": $value" : $value;
     }
