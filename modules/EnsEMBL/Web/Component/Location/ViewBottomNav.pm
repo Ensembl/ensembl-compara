@@ -14,6 +14,12 @@ sub _init {
   $self->has_image(1); # Cache key and tags depend on image width, so lie about having images so that they are correct
 }
 
+sub set_cache_key {
+  my $self = shift;
+  $self->SUPER::set_cache_key;
+  $ENV{'CACHE_KEY'} .= ':JSON' if $self->hub->param('update_panel');
+}
+
 sub content_region {
   return shift->content([ [4,1e4], [6,5e4], [8,1e5], [10,5e5], [12,1e6], [14,2e6], [16,5e6], [18,1e7] ], 'region')
 }
