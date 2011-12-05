@@ -123,7 +123,7 @@ sub table_data {
     # BioMart link
     my $bm_flag = 0;
     if ($disease =~ /COSMIC/) { 
-      if (scalar @{$va->adaptor->fetch_all_by_phenotype_id_source_name($id)} > 250) {
+      if ($va->adaptor->fetch_annotation_number_by_phenotype_id($id) > 250) {
         $disease_url = $mart_somatic_url;
         $disease_url =~ s/###PHE###/$phenotype/;
         $disease .= qq{<br /><a href="$disease_url">[View list in BioMart]</a>};
