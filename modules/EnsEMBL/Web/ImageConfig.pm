@@ -2194,7 +2194,7 @@ sub add_sequence_variations_meta {
       $node = $self->create_track($menu_item->{key}, $menu_item->{long_name}, {
         %options,
         caption     => $menu_item->{long_name},
-        sources     => ($menu_item->{long_name} =~ /all other sources/ ? undef : [ $menu_item->{long_name} ]),
+        sources     => ($menu_item->{long_name} =~ /all other sources/ ? undef : [ $temp_name ]),
         description => ($menu_item->{long_name} =~ /all other sources/ ? "Sequence variants from all sources" : $hashref->{'source'}{'descriptions'}{$temp_name}),
       });
     }
@@ -2250,7 +2250,7 @@ sub add_sequence_variations_default {
     next if     $hashref->{'source'}{'somatic'}{$key_2} == 1;
     
     (my $k = $key_2) =~ s/\W/_/g;
-
+    
     $sequence_variation->append($self->create_track("variation_feature_${key}_$k", "$key_2 variations", {
       %options,
       caption     => $key_2,
