@@ -131,7 +131,7 @@ sub stats_table {
     # BioMart link
     my $bm_flag = 0;
     if (grep {$_ eq 'COSMIC'} @{$phenotype->{source}}) {
-      if (scalar @{$va_adaptor->fetch_all_by_phenotype_id_source_name($phenotype->{'id'})} > 250) {
+      if ($va_adaptor->fetch_annotation_number_by_phenotype_id($phenotype->{'id'}) > 250) {
         my $mart_phe_url = $mart_somatic_url;
         $mart_phe_url =~ s/###PHE###/$_/;
         $lview = qq{<a href="$mart_phe_url">[View list in BioMart]</a>};
