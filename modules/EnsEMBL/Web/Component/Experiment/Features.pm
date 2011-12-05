@@ -35,7 +35,7 @@ sub content {
     my $project_name  = encode_entities($feature_set_info->{'project_name'});
     my $project_link  = encode_entities($feature_set_info->{'project_url'} || '');
     my $evidence_type = encode_entities($feature_set_info->{'evidence_label'});
-    
+
     $source_link    ||= $self->srx_link($source_label) if $source_label =~ /^SRX/;
     $evidence_type    =~ s/\s/&nbsp;/g;
     $project_name     =~ s/\s/&nbsp;/g;
@@ -44,7 +44,7 @@ sub content {
       'source'        => $source_link  ? sprintf('<a href="%s">%s</a>', $source_link, $source_label) : $source_label,
       'project'       => $project_link ? sprintf('<a href="%s">%s</a>', $project_link, $project_name) : $project_name,
       'evidence_type' => $evidence_type,
-      'cell_type'     => encode_entities($feature_set_info->{'cell_type_name'}),
+      'cell_type'     => sprintf('<a href="%s">%s</a>', $self->efo_link(encode_entities($feature_set_info->{'efo_id'})), encode_entities($feature_set_info->{'cell_type_name'})),
       'feature_type'  => encode_entities($feature_set_info->{'feature_type_name'}),
       'gene'          => join(', ', map {sprintf('<a href="%s">%s</a>', $hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => $_}), $_)} @{$feature_set_info->{'xref_genes'}} ),
       'motif'         => join(', ', map {sprintf('<a href="%s">%s</a>', $self->motif_link($_), $_)} @{$feature_set_info->{'binding_motifs'}} ),
@@ -86,6 +86,11 @@ sub motif_link {
 sub srx_link {
   ## TODO - move somewhere else
   return "http://www.ebi.ac.uk/ena/data/view/$_[1]";
+}
+
+sub efo_link {
+  ## TODO - move somewhere else
+  return "http://bioportal.bioontology.org/ontologies/46432?p=terms&amp;conceptid=$_[1]";
 }
 
 1;
