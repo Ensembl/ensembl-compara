@@ -2161,8 +2161,9 @@ sub restrict {
 
         ## We don't want to start with an insertion. Trim it!
         while (@cigar and $cigar[0] =~ /[I]/) {
-          my $type = substr( $cigar, -1, 1 );
-          my $num = substr( $cigar, 0 ,-1 );
+	  my ($num, $type) = ($cigar[0] =~ /^(\d*)([DIGMX])/);  
+          #my $type = substr( $cigar, -1, 1 );
+          #my $num = substr( $cigar, 0 ,-1 );
           $num = 1 if ($num eq "");
           $counter_of_trimmed_base_pairs += $num;
           shift(@cigar);
@@ -2215,8 +2216,9 @@ sub restrict {
 
         ## We don't want to end with an insertion. Trim it!
         while (@cigar and $cigar[-1] =~ /[I]/) {
-          my $type = substr( $cigar, -1, 1 );
-          my $num = substr( $cigar, 0 ,-1 );
+	  my ($num, $type) = ($cigar[-1] =~ /^(\d*)([DIGMX])/);
+          #my $type = substr( $cigar, -1, 1 );
+          #my $num = substr( $cigar, 0 ,-1 );
           $num = 1 if ($num eq "");
           $counter_of_trimmed_base_pairs += $num;
           pop(@cigar);
@@ -2232,6 +2234,7 @@ sub restrict {
   }
 
   ## Save genomic_align's cigar_line
+  $restricted_genomic_align->aligned_sequence(0);
   $restricted_genomic_align->cigar_line(join("", @cigar));
 
   return $restricted_genomic_align;
