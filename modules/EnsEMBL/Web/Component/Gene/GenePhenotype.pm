@@ -302,9 +302,12 @@ sub source_link {
   
   my $source_uc = uc $source;
   $source_uc    = 'OPEN_ACCESS_GWAS_DATABASE' if $source_uc =~ /OPEN/;
-  $source_uc   .= '_ID' if $source_uc =~ /COSMIC/;
-  $source_uc    = $1 if $source_uc =~ /(HGMD)/;
-  my $url       = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
+  
+  if ($ext_id) {
+    $source_uc .= '_ID' if $source_uc =~ /COSMIC/;
+    $source_uc  = $1 if $source_uc =~ /(HGMD)/;
+  }
+  my $url = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
   
   if ($ext_id && $ext_id ne 'no-ref') {
     if ($url =~ /ega/) {
@@ -326,8 +329,9 @@ sub source_link {
     } else {
       $url =~ s/###ID###/$vname/;
     }
-  } else {
-    $url =~ s/###ID###//; # Only general source link
+  } 
+  elsif ($url =~ /(.+)\?/) { # Only general source link
+    $url = $1;
   }
   return $url ? qq{<a rel="external" href="$url">[$source]</a>} : $source;
 }
