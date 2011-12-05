@@ -68,6 +68,7 @@ use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::SimpleAlign;
 use Bio::AlignIO;
+use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::RunnableDB::OrthoTree; # check_for_split_gene method
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree');
@@ -562,8 +563,8 @@ sub parse_newick_into_proteintree {
   foreach my $leaf (@{$newtree->get_all_leaves}) {
     my $njtree_phyml_name = $leaf->get_tagvalue('name');
     $njtree_phyml_name =~ /(\d+)\_\d+/;
-    my $member_name = $1;
-    $leaf->add_tag('name', $member_name);
+    my $member_id = $1;
+    $leaf->add_tag('name', $member_id);
   }
 
   # Leaves of newick tree are named with member_id of members from
@@ -572,22 +573,25 @@ sub parse_newick_into_proteintree {
   foreach my $member (@{$protein_tree->get_all_leaves}) {
     my $tmpnode = $newtree->find_node_by_name($member->member_id);
     if($tmpnode) {
-      $tmpnode->add_child($member, 0.0);
-      $tmpnode->minimize_node; #tmpnode is now redundant so it is removed
+      $member->Bio::EnsEMBL::Compara::AlignedMember::copy($tmpnode);
+      bless $tmpnode, 'Bio::EnsEMBL::Compara::GeneTreeMember';
+      $tmpnode->node_id($member->node_id);
+      $tmpnode->adaptor($member->adaptor);
     } else {
       print("unable to find node in newick for member"); 
       $member->print_member;
     }
   }
 
-  # Merge the trees so that the children of the newick tree are now
-  # attached to the input tree's root node
-  $protein_tree->merge_children($newtree);
+  $newtree->node_id($protein_tree->node_id);
+  $newtree->adaptor($protein_tree->adaptor);
+  $self->param('protein_tree', $newtree);
+  $protein_tree->parent->add_child($newtree);
 
   # Newick tree is now empty so release it
-  $newtree->release_tree;
+  $protein_tree->release_tree;
 
-  $protein_tree->print_tree if($self->debug);
+  $newtree->print_tree if($self->debug);
   # check here on the leaf to test if they all are GeneTreeMembers as
   # minimize_tree/minimize_node might not work properly
   foreach my $leaf (@{$self->param('protein_tree')->get_all_leaves}) {
@@ -596,7 +600,6 @@ sub parse_newick_into_proteintree {
     }
   }
 
-  return undef;
 }
 
 sub _store_tree_tags {
