@@ -6,8 +6,8 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Component::Experiment);
 
-sub caption       { 'Experiment Summary' }
-sub short_caption { 'Experiment Summary' }
+sub caption       { 'Experiment Sources Summary' }
+sub short_caption { 'Experiment Sources Summary' }
 
 sub content {
   my $self    = shift;
