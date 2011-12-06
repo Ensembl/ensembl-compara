@@ -79,21 +79,7 @@ sub fetch_input {
   # order by cluster size this will make big clusters go first in the
   # alignment process, which makes sense since they are going to take
   # longer to process anyway
-  my $clusterset;
-  $clusterset = $protein_tree_adaptor->fetch_node_by_node_id($self->param('clusterset_id'));
-  if (!defined($clusterset)) {
-    $self->param('ccEngine', Bio::EnsEMBL::Compara::Graph::ConnectedComponents->new() );
-    $clusterset = $self->param('ccEngine')->clusterset;
-    $self->throw("no clusters generated") unless($clusterset);
-
-    #clusterset is a NestedSet object, bless to make into GeneTreeNode object
-    bless $clusterset, "Bio::EnsEMBL::Compara::GeneTreeNode";
-
-    $clusterset->name("PROTEIN_TREES");
-    $protein_tree_adaptor->store_node($clusterset);
-    printf("clusterset_id %d\n", $clusterset->node_id);
-    $self->param('clusterset_id', $clusterset->node_id);
-  }
+  my $clusterset = $protein_tree_adaptor->fetch_node_by_node_id($self->param('clusterset_id'));
 
   open(FILE, $filename) or die "Could not open '$filename' for reading : $!";
   while (<FILE>) {
@@ -144,14 +130,10 @@ sub write_output {
     my $self = shift;
 
     my $clusterset = $self->compara_dba->get_ProteinTreeAdaptor->fetch_node_by_node_id($self->param('clusterset_id'));
-    if (!defined($clusterset)) {
-        $clusterset = $self->param('ccEngine')->clusterset;
-    }
 
     foreach my $cluster (@{$clusterset->children()}) {
         $self->dataflow_output_id({
             'protein_tree_id'   => $cluster->node_id(),
-            'clusterset_id'     => $clusterset->node_id(),
         }, 2);
     }
 }

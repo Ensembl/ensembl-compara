@@ -312,8 +312,7 @@ sub store_clusters {
 
     # Dataflow clusters
     # This will create a new MSA alignment job for each of the newly generated clusters
-    my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d, 'broken_tree'=>1}", 
-                            $node_id, $clusterset->node_id);
+    my $output_id = sprintf("{'protein_tree_id'=>%d, 'broken_tree'=>1}", $node_id);
 
     $self->dataflow_output_id($output_id, 2);
     print STDERR "Created new cluster $node_id\n";

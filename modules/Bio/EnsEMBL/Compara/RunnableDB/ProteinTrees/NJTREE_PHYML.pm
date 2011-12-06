@@ -245,7 +245,7 @@ sub run_njtree_phyml {
           # Do jack-knife treebest starting by the sequence with more Ns
           my $jackknife_value = $self->param('jackknife') if ($self->param('jackknife'));
           $jackknife_value++;
-          my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d, 'jackknife'=>%d}", $protein_tree->node_id, $self->param('clusterset_id'), $jackknife_value);
+          my $output_id = sprintf("{'protein_tree_id'=>%d, 'jackknife'=>%d}", $protein_tree->node_id, $jackknife_value);
           $self->input_job->input_id($output_id);
           $self->dataflow_output_id($output_id, 2);
           $protein_tree->release_tree;
@@ -260,7 +260,7 @@ sub run_njtree_phyml {
           print STDERR sprintf("*%f*%f*\n", $self->param('max_diff_lk'), $max_diff_lk_value);
 	    $max_diff_lk_value *= 10;
           print STDERR sprintf("*%f*%f*\n", $self->param('max_diff_lk'), $max_diff_lk_value);
-          my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d, 'max_diff_lk'=>%f}", $protein_tree->node_id, $self->param('clusterset_id'), $max_diff_lk_value);
+          my $output_id = sprintf("{'protein_tree_id'=>%d, 'max_diff_lk'=>%f}", $protein_tree->node_id, $max_diff_lk_value);
           $self->input_job->input_id($output_id);
           $self->dataflow_output_id($output_id, 2);
           $protein_tree->release_tree;

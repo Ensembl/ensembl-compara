@@ -92,6 +92,7 @@ sub default_options {
     # clustering parameters:
         'outgroups'                     => [127],   # affects 'hcluster_dump_input_per_genome'
         'clustering_max_gene_halfcount' => 750,     # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
+        'clusterset_id'                 => 1,       # Default value also defined in the API
 
     # tree building parameters:
         'tree_max_gene_count'       => 400,     # affects 'mcoffee' and 'mcoffee_himem'
@@ -577,13 +578,11 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_clusterset',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
-                'sql' => [  "INSERT INTO protein_tree_node (node_id, parent_id, root_id, clusterset_id, left_index, right_index, distance_to_parent) VALUES (NULL,NULL,NULL,0, 0,0,0)",   # inserts a generic node that will contain all the clusters
-                            "UPDATE protein_tree_node SET clusterset_id=#_insert_id_0# WHERE node_id=#_insert_id_0#", # updates the previously inserted row to have the right clusterset_id value
-                ],
+                'clusterset_id' => $self->o('clusterset_id'),
+                'sql' => [  "INSERT INTO protein_tree_node (node_id, parent_id, root_id, clusterset_id) VALUES (#clusterset_id#, NULL, NULL, #clusterset_id#)" ]
             },
             -flow_into => {
                 1 => [ 'hcluster_parse_output' ],
-                2 => { 'mysql:////meta' => { 'meta_key' => 'clusterset_id', 'meta_value' => '#_insert_id_0#' } },     # dynamically record it as a pipeline-wide parameter
             },
         },
 
@@ -593,6 +592,7 @@ sub pipeline_analyses {
             -parameters => {
                 'mlss_id'                   => $self->o('mlss_id'),
                 'cluster_dir'               => $self->o('cluster_dir'),
+                'clusterset_id'             => $self->o('clusterset_id'),
             },
             -hive_capacity => -1,
             -flow_into => {
@@ -661,6 +661,7 @@ sub pipeline_analyses {
                 'mcoffee_exe'               => $self->o('mcoffee_exe'),
                 'mafft_exe'                 => $self->o('mafft_exe'),
                 'mafft_binaries'            => $self->o('mafft_binaries'),
+                'clusterset_id'             => $self->o('clusterset_id'),
             },
             -wait_for => [ 'store_sequences', 'overall_clusterset_qc', 'per_genome_clusterset_qc' ],    # funnel
             -hive_capacity        => $self->o('mcoffee_capacity'),
@@ -681,6 +682,7 @@ sub pipeline_analyses {
                 'mcoffee_exe'               => $self->o('mcoffee_exe'),
                 'mafft_exe'                 => $self->o('mafft_exe'),
                 'mafft_binaries'            => $self->o('mafft_binaries'),
+                'clusterset_id'             => $self->o('clusterset_id'),
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -can_be_empty         => 1,
@@ -698,6 +700,7 @@ sub pipeline_analyses {
                 'bootstrap'                 => 1,
                 'use_genomedb_id'           => $self->o('use_genomedb_id'),
                 'treebest_exe'              => $self->o('treebest_exe'),
+                'clusterset_id'             => $self->o('clusterset_id'),
             },
             -hive_capacity        => $self->o('njtree_phyml_capacity'),
             -failed_job_tolerance => 5,
@@ -746,6 +749,7 @@ sub pipeline_analyses {
                 'mlss_id'           => $self->o('mlss_id'),
                 'quicktree_exe'     => $self->o('quicktree_exe'),
                 'sreformat_exe'     => $self->o('sreformat_exe'),
+                'clusterset_id'     => $self->o('clusterset_id'),
             },
             -hive_capacity        => 1, # this one seems to slow the whole loop down; why can't we have any more of these?
             -can_be_empty         => 1,
@@ -781,6 +785,7 @@ sub pipeline_analyses {
                 'reuse_db'                  => $self->o('reuse_db'),
                 'cluster_dir'               => $self->o('cluster_dir'),
                 'groupset_tag'              => 'GeneTreesetQC',
+                'clusterset_id'             => $self->o('clusterset_id'),
             },
             -hive_capacity => 3,
             -flow_into => {
@@ -793,6 +798,7 @@ sub pipeline_analyses {
             -parameters => {
                 'reuse_db'                  => $self->o('reuse_db'),
                 'groupset_tag'              => 'GeneTreeset',
+                'clusterset_id'             => $self->o('clusterset_id'),
             },
             -wait_for => [ 'dummy_wait_alltrees' ],
             -hive_capacity => 3,
