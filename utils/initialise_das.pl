@@ -447,7 +447,7 @@ sub _coord_system_as_xml {
           goto CREATE;
         }
       } else {
-        print STDERR '[WARN] Skipping $NON_GENOMIC_COORDS{'.$type.'}{'.$authority.'} (Value not defined)';
+        print STDERR '[WARN] Skipping $NON_GENOMIC_COORDS{'.$type.'}{'.$authority.'} (Value not defined)'."\n";
       }
     }
   }
