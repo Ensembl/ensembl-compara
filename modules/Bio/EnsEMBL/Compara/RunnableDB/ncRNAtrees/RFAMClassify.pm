@@ -431,7 +431,7 @@ sub tag_assembly_coverage_depth {
       # Already stored, nothing needed
     } else {
       # We need to add the tag
-      $species_set_adaptor->_store_tagvalue($ss->species_set_id,'name','low-coverage');
+      $ss->store_tag('name','low-coverage');
     }
   } else {
     # We need to create the species_set, then add the tag
