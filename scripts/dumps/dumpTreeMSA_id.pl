@@ -5,6 +5,9 @@ use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::AlignIO;
 use File::Spec;
 use Getopt::Long;
+use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
+use Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter;
+use Bio::EnsEMBL::ApiVersion;
 
 my $tree_id_file;
 my $one_tree_id;
@@ -15,6 +18,9 @@ my $fasta_out;
 my $fasta_cds_out;
 my $nh_out;
 my $nhx_out;
+my $orthoxml_trees;
+my $orthoxml_with_poss_orthologs;
+my $phyloxml;
 my $aa = 1;
 my $nc = 0;
 my $verbose = 0;
@@ -31,6 +37,9 @@ GetOptions('help'           => \$help,
            'fc|fasta_cds_out=s' => \$fasta_cds_out,
            'nh|nh_out=s'    => \$nh_out,
            'nhx|nhx_out=s'  => \$nhx_out,
+           'oxml|orthoxml_trees' => \$orthoxml_trees,
+           'oxmlp|orthoxml_poss_orthol' => \$orthoxml_with_poss_orthologs,
+           'pxml|phyloxml'  => \$phyloxml,
            'nc=s'           => \$nc,
            'aa=s'           => \$aa,
            'verbose=s'      => \$verbose,
@@ -67,8 +76,8 @@ unless (defined $url) {
 my $dba = Bio::EnsEMBL::Hive::URLFactory->fetch( $url.';type=compara' );
 
 my ($prefix, $adaptor) = $nc
-    ? ('ncrna_trees_.', $dba->get_NCTreeAdaptor)
-    : ('protein_trees_.', $dba->get_ProteinTreeAdaptor);
+    ? ('ncrna_trees.', $dba->get_NCTreeAdaptor)
+    : ('protein_trees.', $dba->get_ProteinTreeAdaptor);
 
 my @tree_ids;
 if($tree_id_file and -r $tree_id_file) {
@@ -102,6 +111,9 @@ foreach my $tree_id (@tree_ids) {
   my $fh3;
   my $fh4;
   my $fh5;
+  my $fh6;
+  my $fh7;
+  my $fh8;
 
   last if (
            (-s "$dirpath/$tree_id.aln.emf") &&
@@ -115,12 +127,18 @@ foreach my $tree_id (@tree_ids) {
   if ($nhx_out) { open $fh3, ">$dirpath/$tree_id.nhx.emf" or die "couldnt open $dirpath/$tree_id.nhx.emf:$!\n"; }
   if ($fasta_out) { open $fh4, ">$dirpath/$tree_id.aa.fasta" or die "couldnt open $dirpath/$tree_id.aa.fasta:$!\n"; }
   if ($fasta_cds_out) { open $fh5, ">$dirpath/$tree_id.cds.fasta" or die "couldnt open $dirpath/$tree_id.cds.fasta:$!\n"; }
+  if ($orthoxml_trees) { open $fh6, ">$dirpath/$tree_id.tree.orthoxml.xml" or die "couldnt open $dirpath/$tree_id.tree.orthoxml.xml:$!\n"; }
+  if ($orthoxml_trees and $orthoxml_with_poss_orthologs) { open $fh7, ">$dirpath/$tree_id.tree_possorthol.orthoxml.xml" or die "couldnt open $dirpath/$tree_id.tree_possorthol.orthoxml.xml:$!\n"; }
+  if ($phyloxml) { open $fh8, ">$dirpath/$tree_id.tree.phyloxml.xml" or die "couldnt open $dirpath/$tree_id.tree.phyloxml.xml:$!\n"; }
 
   dumpTreeMultipleAlignment($root, $fh1) if ($aln_out);
   dumpNewickTree($root,$fh2,0)           if (defined $nh_out);
   dumpNewickTree($root,$fh3,1)           if (defined $nhx_out);
   dumpTreeFasta($root, $fh4,0)           if ($fasta_out);
   dumpTreeFasta($root, $fh5,1)           if ($fasta_cds_out);
+  dumpTreeOrthoXML($root, $fh6, 0)       if ($orthoxml_trees);
+  dumpTreeOrthoXML($root, $fh7, 1)       if ($orthoxml_trees and $orthoxml_with_poss_orthologs);
+  dumpTreePhyloXML($root, $fh8)          if ($phyloxml);
 
   $root->release_tree;
 
@@ -129,6 +147,9 @@ foreach my $tree_id (@tree_ids) {
   close $fh3 if (defined $fh3);
   close $fh4 if (defined $fh4);
   close $fh5 if (defined $fh5);
+  close $fh6 if (defined $fh6);
+  close $fh7 if (defined $fh7);
+  close $fh8 if (defined $fh8);
 }
 
 sub dumpTreeMultipleAlignment {
@@ -207,5 +228,24 @@ sub dumpTreeFasta {
                                      );
     print $alignIO $sa;
     print $fh "\n//\n\n";
+}
+
+sub dumpTreeOrthoXML {
+    my $tree = shift;
+    my $fh = shift;
+    my $poss_ortho = shift;
+
+    my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(-SOURCE => 'compara', -SOURCE_VERSION => software_version(), -HANDLE => $fh, -POSSIBLE_ORTHOLOGS => $poss_ortho, -NO_RELEASE_TREES => 1);
+    $w->write_trees($tree);
+    $w->finish();
+}
+
+sub dumpTreePhyloXML {
+    my $tree = shift;
+    my $fh = shift;
+
+    my $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(-SOURCE => 'compara', -NO_SEQUENCES => 1, -HANDLE => $fh, -NO_RELEASE_TREES => 1);
+    $w->write_trees($tree);
+    $w->finish();
 }
 
