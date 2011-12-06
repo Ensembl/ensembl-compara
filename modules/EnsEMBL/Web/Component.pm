@@ -38,11 +38,12 @@ sub new {
     id       => $id
   };
   
-  $self->{'view_config'} = $hub->get_viewconfig($id, $hub->type, 'cache') if $hub;
+  if ($hub) { 
+    $self->{'view_config'} = $hub->get_viewconfig($id, $hub->type, 'cache');
+    $hub->set_cookie("toggle_$_", 'open') for grep $_, $hub->param('expand');
+  }
   
   bless $self, $class;
-  
-  $hub->set_cookie("toggle_$_", 'open') for grep $_, $hub->param('expand');
   
   $self->_init;
   
