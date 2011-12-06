@@ -227,7 +227,10 @@ sub add_tag {
     $self->_load_tags;
     $tag = lc($tag);
 
-    return 0 if $allow_overloading and exists $self->{'_attr_list'} and exists $self->{'_attr_list'}->{$tag};
+    if ($allow_overloading and exists $self->{'_attr_list'} and exists $self->{'_attr_list'}->{$tag}) {
+        warn "Trying to overload the value of attribute '$tag' ! This is not allowed for $self\n";
+        return 0;
+    }
 
     # Stores the value in the PERL object
     if ( ! exists($self->{'_tags'}->{$tag}) || ! $allow_overloading ) {
@@ -275,6 +278,7 @@ sub store_tag {
             $self->adaptor->_store_tagvalue($self->node_id, lc($tag), $value, $allow_overloading);
             return 2;
         } else {
+            warn "Calling store_tag on $self but the adaptor ", $self->adaptor, " doesn't have such capabilities\n";
             return 1;
         }
     } else {
@@ -318,10 +322,17 @@ sub delete_tag {
         if ( ref($self->{'_tags'}->{$tag}) eq 'ARRAY' ) {
             my $arr = $self->{'_tags'}->{$tag};
             my $index = scalar(@$arr)-1;
-            $index-- until ($index<0) or ($arr->[$index] eq $value);
-            if ($index >= 0) {
-                splice(@$arr, $index, 1);
-                $ret = 1;
+            until ($index < 0) {
+                $index-- until ($index < 0) or ($arr->[$index] eq $value);
+                if ($index >= 0) {
+                    splice(@$arr, $index, 1);
+                    $ret = 1;
+                }
+            }
+            if (scalar(@$arr) == 0) {
+                delete $self->{'_tags'}->{$tag};
+            } elsif (scalar(@$arr) == 1) {
+                $self->{'_tags'}->{$tag} = $arr->[0];
             }
         } else {
             if ($self->{'_tags'}->{$tag} eq $value) {
