@@ -7,7 +7,7 @@ use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::SpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
 
-@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
 =head2 new
 
@@ -157,7 +157,6 @@ sub fetch_by_dbID {
      -dbID => $dbID,
      -genome_dbs => $genome_dbs
   );
-  $self->_load_tagvalues($species_set);
 
   return $species_set;
 }
@@ -352,38 +351,8 @@ sub fetch_all {
 #
 ###################################
 
-sub _load_tagvalues {
-  my $self = shift;
-  my $species_set = shift;
-
-  unless($species_set->isa('Bio::EnsEMBL::Compara::SpeciesSet')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::SpeciesSet] not a $species_set");
-  }
-
-  my $sth = $self->prepare("SELECT tag,value from species_set_tag where species_set_id=?");
-  $sth->execute($species_set->dbID);
-  while (my ($tag, $value) = $sth->fetchrow_array()) {
-    $species_set->add_tag($tag,$value);
-  }
-  $sth->finish;
-}
-
-
-sub _store_tagvalue {
-  my $self = shift;
-  my $species_set_id = shift;
-  my $tag = shift;
-  my $value = shift;
-
-  $value="" unless(defined($value));
-
-  my $sql = "INSERT ignore into species_set_tag (species_set_id,tag) values ($species_set_id,\"$tag\")";
-  #print("$sql\n");
-  $self->dbc->do($sql);
-
-  $sql = "UPDATE species_set_tag set value=\"$value\" where species_set_id=$species_set_id and tag=\"$tag\"";
-  #print("$sql\n");
-  $self->dbc->do($sql);
+sub _tag_capabilities {
+    return ("species_set_tag", undef, "species_set_id", "dbID");
 }
 
 

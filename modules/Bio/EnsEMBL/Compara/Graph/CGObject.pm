@@ -274,7 +274,7 @@ sub store_tag {
     my $allow_overloading = shift;
 
     if ($self->add_tag($tag, $value, $allow_overloading)) {
-        if($self->adaptor and $self->adaptor->can("_store_tagvalue")) {
+        if($self->adaptor and $self->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::TagAdaptor")) {
             $self->adaptor->_store_tagvalue($self->node_id, lc($tag), $value, $allow_overloading);
             return 2;
         } else {
@@ -347,7 +347,7 @@ sub delete_tag {
 
     # Update the database
     if ($ret) {
-        if($self->adaptor and $self->adaptor->can("_delete_tagvalue")) {
+        if($self->adaptor and $self->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::TagAdaptor")) {
             $self->adaptor->_delete_tagvalue($self->node_id, $tag, $value);
             return 2;
         } else {
@@ -459,7 +459,7 @@ sub _load_tags {
     my $self = shift;
     return if(defined($self->{'_tags'}));
     $self->{'_tags'} = {};
-    if($self->adaptor and $self->adaptor->can("_load_tagvalues")) {
+    if($self->adaptor and $self->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::TagAdaptor")) {
         $self->adaptor->_load_tagvalues($self);
     }
 }
