@@ -275,7 +275,7 @@ sub store_tag {
 
     if ($self->add_tag($tag, $value, $allow_overloading)) {
         if($self->adaptor and $self->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::TagAdaptor")) {
-            $self->adaptor->_store_tagvalue($self->node_id, lc($tag), $value, $allow_overloading);
+            $self->adaptor->_store_tagvalue($self, lc($tag), $value, $allow_overloading);
             return 2;
         } else {
             warn "Calling store_tag on $self but the adaptor ", $self->adaptor, " doesn't have such capabilities\n";
@@ -348,7 +348,7 @@ sub delete_tag {
     # Update the database
     if ($ret) {
         if($self->adaptor and $self->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::TagAdaptor")) {
-            $self->adaptor->_delete_tagvalue($self->node_id, $tag, $value);
+            $self->adaptor->_delete_tagvalue($self, $tag, $value);
             return 2;
         } else {
             return 1;

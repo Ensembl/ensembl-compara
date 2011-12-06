@@ -102,7 +102,7 @@ sub _load_tagvalues {
 
 sub _store_tagvalue {
     my $self = shift;
-    my $object_id = shift;
+    my $object = shift;
     my $tag = shift;
     my $value = shift;
     my $allow_overloading = shift;
@@ -112,31 +112,31 @@ sub _store_tagvalue {
     if (exists $self->{'_attr_list'}->{$tag}) {
         # It is an attribute
         my $sth = $self->prepare("INSERT IGNORE INTO $db_attrtable ($db_keyname) VALUES (?)");
-        $sth->execute($object_id);
+        $sth->execute($object->$perl_keyname);
         $sth->finish;
         $sth = $self->prepare("UPDATE $db_attrtable SET $tag=? WHERE $db_keyname=?");
-        $sth->execute($value, $object_id);
+        $sth->execute($value, $object->$perl_keyname);
         $sth->finish;
 
     } elsif ($allow_overloading) {
         # It is a tag with multiple values allowed
         my $sth = $self->prepare("INSERT IGNORE INTO $db_tagtable ($db_keyname, tag, value) VALUES (?, ?, ?)");
-        $sth->execute($object_id, $tag, $value);
+        $sth->execute($object->$perl_keyname, $tag, $value);
         $sth->finish;
     } else {
         # It is a tag with only one value allowed
         my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND tag=?");
-        $sth->execute($object_id, $tag);
+        $sth->execute($object->$perl_keyname, $tag);
         $sth->finish;
         $sth = $self->prepare("INSERT INTO $db_tagtable ($db_keyname, tag, value) VALUES (?, ?, ?)");
-        $sth->execute($object_id, $tag, $value);
+        $sth->execute($object->$perl_keyname, $tag, $value);
         $sth->finish;
     }
 }
 
 sub _delete_tagvalue {
     my $self = shift;
-    my $object_id = shift;
+    my $object = shift;
     my $tag = shift;
     my $value = shift;
     
@@ -145,18 +145,18 @@ sub _delete_tagvalue {
     if (exists $self->{'_attr_list'}->{$tag}) {
         # It is an attribute
         my $sth = $self->prepare("UPDATE $db_attrtable SET $tag=NULL WHERE $db_keyname=?");
-        $sth->execute($object_id);
+        $sth->execute($object->$perl_keyname);
         $sth->finish;
 
     } else {
         # It is a tag
         if (defined $value) {
             my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND tag=? AND value=?");
-            $sth->execute($object_id, $tag, $value);
+            $sth->execute($object->$perl_keyname, $tag, $value);
             $sth->finish;
         } else {
             my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND tag=?");
-            $sth->execute($object_id, $tag);
+            $sth->execute($object->$perl_keyname, $tag);
             $sth->finish;
         }
     }
