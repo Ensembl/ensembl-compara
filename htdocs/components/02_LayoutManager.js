@@ -218,7 +218,7 @@ Ensembl.LayoutManager.extend({
     
     $('#masthead li.Location a').each(function () {
       var attr   = this.title ? 'title' : 'innerHTML';
-      this[attr] = this[attr].replace(/^(Location: ).+/, '$1' + text);
+      this[attr] = this[attr].replace(/^(Location: ).+/, '$1' + text.replace(/: /, ':'));
     });
   },
   
