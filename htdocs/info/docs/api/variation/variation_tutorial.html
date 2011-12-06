@@ -371,7 +371,7 @@ my @rsIds = qw(rs1367827 rs1367830);
 foreach my $id (@rsIds){
 # get Variation object
   my $var = $va_adaptor-&gt;fetch_by_name($id); #get the Variation from the database using the name
-  &amp;get_VariationFeatures($var);
+  get_VariationFeatures($var);
 }
 
 sub get_VariationFeatures{
@@ -380,11 +380,11 @@ sub get_VariationFeatures{
   foreach my $vf (@{$vf_adaptor-&gt;fetch_all_by_Variation($var)}){
       print $vf-&gt;variation_name(),","; # print rsID
       print $vf-&gt;allele_string(),","; # print alleles
-      print join(",",@{$vf-&gt;get_consequence_type()}),","; # print consequenceType
+      print join(",",@{$vf-&gt;consequence_type()}),","; # print consequenceType
       print substr($var-&gt;five_prime_flanking_seq,-10) , "[",$vf-&gt;allele_string,"]"; #print the allele string
       print substr($var-&gt;three_prime_flanking_seq,0,10), ","; # print RefSeq
       print $vf-&gt;seq_region_name, ":", $vf-&gt;start,"-",$vf-&gt;end; # print position in Ref in format Chr:start-end
-      &amp;get_TranscriptVariations($vf); # get Transcript information
+      get_TranscriptVariations($vf); # get Transcript information
   }
 }
 
