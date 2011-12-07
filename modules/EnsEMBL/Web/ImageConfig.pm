@@ -682,7 +682,9 @@ sub _add_bam_track {
 }
 
 sub _add_bigwig_track {
-  shift->_add_file_format_track(
+  my ($self, %args) = @_;
+  
+  $self->_add_file_format_track(
     format    => 'BigWig', 
     renderers =>  [
       'off',    'Off',
@@ -691,7 +693,7 @@ sub _add_bigwig_track {
     options => {
       external => 'url',
       sub_type => 'bigwig',
-      colour   => $_[2]->{'colour'} || 'red',
+      colour   => $args{'menu'}{'colour'} || 'red',
     },
     @_
   );
