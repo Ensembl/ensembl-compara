@@ -2156,12 +2156,13 @@ sub add_sequence_variations {
   
   return unless $menu && $hashref->{'variation_feature'}{'rows'} > 0;
   
-  if(defined($hashref->{'menu'})) {
+  if ($hashref->{'menu'}) {
     $self->add_sequence_variations_meta($key, $hashref);
-  }
-  else {
+  } else {
     $self->add_sequence_variations_default($key, $hashref);
   }
+
+  $self->add_track('information', 'variation_legend', 'Variation Legend', 'variation_legend', { strand => 'r' });
 }
 
 # adds variation tracks in structure defined in variation meta table
@@ -2263,8 +2264,6 @@ sub add_sequence_variations_default {
   
   $menu->append($sequence_variation);
 
-  $self->add_track('information', 'variation_legend', 'Variation Legend', 'variation_legend', { strand => 'r' });
-  
   # add in variation sets
   if ($hashref->{'variation_set'}{'rows'} > 0) {
     my $variation_sets = $self->create_submenu('variation_sets', 'Variation sets');
