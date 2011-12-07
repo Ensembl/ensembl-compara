@@ -63,11 +63,13 @@ use strict;
 use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
+use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::SimpleAlign;
 use Bio::AlignIO;
+use Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs;
 use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::RunnableDB::OrthoTree; # check_for_split_gene method
 
@@ -362,6 +364,8 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   # njtree species_tree matching
   my %sa_params = $self->param('use_genomedb_id') ? ('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
 
+  my %split_genes;
+
   ########################################
   # Gene split mirroring code
   #
@@ -369,47 +373,40 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   # fragments of a gene split event together in a subtree
   #
   unless ($self->param('gs_mirror') =~ /FALSE/) {
-    foreach my $split_type (keys %$alignment_edits) {
-      foreach my $split_event (@{$alignment_edits->{$split_type}}) {
-        my ($protein1,$protein2) = $split_event->get_nodes;
-        my $cdna1 = $protein1->cdna_alignment_string;
-        my $cdna2 = $protein2->cdna_alignment_string;
-        # We start with the original cdna alignment string and add the
-        # position in the other cdna for every gap position
-        # e.g.
-        # cdna1 = AAA AAA AAA AAA AAA --- --- --- --- --- ---
-        # cdna2 = --- --- --- --- --- --- TTT TTT TTT TTT TTT
-        # become
-        # cdna1 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT
-        # cdna2 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT
-        $cdna1 =~ s/-/substr($cdna2, pos($cdna1), 1)/eg;
-        $cdna2 =~ s/-/substr($cdna1, pos($cdna2), 1)/eg;
-        # We then directly override the cached cdna_alignment_string
-        # hash, which will be used next time is called for
-        $protein1->{'cdna_alignment_string'} = $cdna1;
-        $protein2->{'cdna_alignment_string'} = $cdna2;
-        print STDERR "$split_type: Joining in ", $protein1->stable_id, " and ", $protein2->stable_id, " in input cdna alignment\n" if ($self->debug);
-
-        $protein_tree->store_tag('msplit_'.$protein1->stable_id."_".$protein2->stable_id,$split_type);
-        # In case of more than 2 fragments, the projection is going to
-        # be done incrementally, the closest pairs pairs first.
-        # e.g.
-        # Fragment 1 and 2 are closer together than with 3
+    my $holding_node = $alignment_edits->holding_node;
+    foreach my $link (@{$holding_node->links}) {
+      my $node1 = $link->get_neighbor($holding_node);
+      my $protein1 = $protein_tree->find_leaf_by_node_id($node1->node_id);
+      #print STDERR "node1 ", $node1, " ", $protein1, "\n";
+      my $name1 = ($protein1->member_id)."_".($self->param('use_genomedb_id') ? $protein1->genome_db_id : $protein1->taxon_id);
+      my $cdna = $protein1->cdna_alignment_string;
+      #print STDERR "cnda1 $cdna\n";
+      foreach my $node2 (@{$node1->all_nodes_in_graph}) {
+        my $protein2 = $protein_tree->find_leaf_by_node_id($node2->node_id);
+        #print STDERR "node2 ", $node2, " ", $protein2, "\n";
+        next if $node2->node_id eq $node1->node_id;
+        my $name2 = ($protein2->member_id)."_".($self->param('use_genomedb_id') ? $protein2->genome_db_id : $protein2->taxon_id);
+        $split_genes{$name2} = $name1;
+        #print STDERR Dumper(%split_genes);
+        print STDERR "Joining in ", $protein1->stable_id, " / $name1 and ", $protein2->stable_id, " / $name2 in input cdna alignment\n" if ($self->debug);
+        my $other_cdna = $protein2->cdna_alignment_string;
+        $cdna =~ s/-/substr($other_cdna, pos($cdna), 1)/eg;
+        #print STDERR "cnda2 $cdna\n";
+      }
+      $protein1->{'cdna_alignment_string'} = $cdna;
+        # We start with the original cdna alignment string of the first gene, and
+        # add the position in the other cdna for every gap position, and iterate
+        # through all the other cdnas
         # cdna1 = AAA AAA AAA AAA AAA --- --- --- --- --- --- --- --- --- --- --- ---
         # cdna2 = --- --- --- --- --- --- TTT TTT TTT TTT TTT --- --- --- --- --- ---
         # become
         # cdna1 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- --- --- --- --- ---
-        # cdna2 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- --- --- --- --- ---
-        #
         # and now then paired with 3, they becomes the full gene model:
-        #
-        # Original cdna3 will combine in pairs with previously merged cdna1/cdna2:
         # cdna3 = --- --- --- --- --- --- --- --- --- --- --- --- CCC CCC CCC CCC CCC
         # and form:
         # cdna1 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- CCC CCC CCC CCC CCC
-        # cdna2 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- CCC CCC CCC CCC CCC
-        # cdna3 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- CCC CCC CCC CCC CCC
-      }
+        # We then directly override the cached cdna_alignment_string
+        # hash, which will be used next time is called for
     }
   }
   ########################################
@@ -422,7 +419,14 @@ sub dumpTreeMultipleAlignmentToWorkdir {
      -stop2x => 1,
      %sa_params
     );
-  $sa->set_displayname_flat(1);
+  # Removing duplicate sequences of split genes
+  print STDERR "split_genes hash: ", Dumper(%split_genes), "\n" if $self->debug;
+  foreach my $gene_to_remove (keys %split_genes) {
+    $sa->remove_seq($sa->each_seq_with_id($gene_to_remove));
+  }
+  $sa = $sa->remove_gaps(undef, 1);
+  $self->param('split_genes', \%split_genes);
+
   if ($self->param('jackknife')) {
     # my $coverage_hash;
     my $empty_hash;
@@ -441,11 +445,11 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     my $i = 0;
     while ($i < $self->param('jackknife')) {
       $sa->remove_seq($sa->each_seq_with_id($empty_hash->{$lowest[$i]}));
-      $sa = $sa->remove_gaps(undef,1);
       $i++;
     }
-    $sa->set_displayname_flat(1);
+    $sa = $sa->remove_gaps(undef,1);
   }
+  $sa->set_displayname_flat(1);
 
   my $alignIO = Bio::AlignIO->newFh
     (
@@ -495,8 +499,16 @@ sub store_tags
     my $node = shift;
 
     if (not $node->is_leaf) {
-        my $node_type = $node->get_tagvalue('Duplication', '') eq '1' ? 'duplication' : 'speciation';
-        $node_type = 'dubious' if $node->get_tagvalue("DD", 0);
+        my $node_type;
+        if ($node->has_tag('node_type')) {
+            $node_type = $node->get_tagvalue('node_type');
+        } elsif ($node->get_tagvalue("DD", 0)) {
+            $node_type = 'dubious';
+        } elsif ($node->get_tagvalue('Duplication', '') eq '1') {
+            $node_type = 'duplication';
+        } else {
+            $node_type = 'speciation';
+        }
         $node->store_tag('node_type', $node_type);
         if ($self->debug) {
             print "store node_type: $node_type"; $node->print_node;
@@ -559,6 +571,27 @@ sub parse_newick_into_proteintree {
   my $newtree = 
     Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
   $newtree->print_tree(20) if($self->debug > 1);
+
+  my $nsplits = 0;
+  my $split_genes = $self->param('split_genes');
+  print STDERR "Retrieved split_genes hash: ", Dumper($split_genes) if $self->debug;
+
+  while ( my ($name, $other_name) = each(%{$split_genes})) {
+        print STDERR "$name is split_gene of $other_name\n" if $self->debug;
+        my $node = new Bio::EnsEMBL::Compara::GeneTreeNode;
+        $node->name($name);
+        my $othernode = $newtree->find_node_by_name($other_name);
+        print STDERR "$node is split_gene of $othernode\n" if $self->debug;
+        my $newnode = new Bio::EnsEMBL::Compara::GeneTreeNode;
+        $nsplits++;
+        $newnode->node_id(-$nsplits);
+        $othernode->parent->add_child($newnode);
+        $newnode->add_child($othernode);
+        $newnode->add_child($node);
+        $newnode->add_tag('node_type', 'gene_split');
+        $newnode->print_tree(10);
+    }
+
   # get rid of the taxon_id needed by njtree -- name tag
   foreach my $leaf (@{$newtree->get_all_leaves}) {
     my $njtree_phyml_name = $leaf->get_tagvalue('name');
@@ -566,6 +599,7 @@ sub parse_newick_into_proteintree {
     my $member_id = $1;
     $leaf->add_tag('name', $member_id);
   }
+  $newtree->print_tree(20) if($self->debug > 1);
 
   # Leaves of newick tree are named with member_id of members from
   # input tree move members (leaves) of input tree into newick tree to
@@ -658,7 +692,7 @@ sub check_for_split_genes {
   my $self = shift;
   my $protein_tree = $self->param('protein_tree');
 
-  my $alignment_edits = $self->param('alignment_edits', {});
+  my $alignment_edits = $self->param('alignment_edits', new Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs);
 
   my $tmp_time = time();
 
@@ -732,7 +766,7 @@ sub check_for_split_genes {
           }
           next;
         }
-        push @{$alignment_edits->{contiguous_gene_split}}, $genepairlink;
+        $alignment_edits->add_connection($protein1->node_id, $protein2->node_id);
       }
 
 
@@ -783,7 +817,7 @@ sub check_for_split_genes {
         if ($len1/$len2 > 10 && $perc_id1 > 2 && $perc_id2 > 2 && $perc_pos1 > 2 && $perc_pos2 > 2) {
           next;
         }
-        push @{$alignment_edits->{skidding_contiguous_gene_split}}, $genepairlink;
+        $alignment_edits->add_connection($protein1->node_id, $protein2->node_id);
       }
     }
   }
