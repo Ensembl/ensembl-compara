@@ -125,6 +125,8 @@ sub render {
       'absolutey' => 1
     }));
   }
+  
+  return undef; # stop text export
 }
 
 sub bp_to_nearest_unit {
