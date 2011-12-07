@@ -68,22 +68,6 @@ sub fetch_node_by_node_id {
   return $node;
 }
 
-sub fetch_node_by_node_id_with_super {
-  my ($self, $node_id, $super) = @_;
-
-  if (! defined $node_id) {
-    throw ("node_id is undefined");
-  }
-
-  my $table= $self->tables->[0]->[1];
-  if ($super eq 'super') {
-    $table = 'super_' . $table;
-  }
-  my $constraint = "WHERE $table.node_id = $node_id";
-  my ($node) = @{$self->_generic_fetch($constraint)};
-  return $node;
-}
-
 
 sub fetch_parent_for_node {
   my ($self, $node) = @_;
@@ -168,15 +152,7 @@ sub fetch_tree_at_node_id {
   return $self->fetch_subtree_under_node($node);
 }
 
-
-sub fetch_all_roots {
-  my $self = shift;
-
-  my $constraint = "WHERE t.root_id = 0";
-  return $self->_generic_fetch($constraint);
-}
-
-
+# UNUSED
 sub fetch_subroot_by_left_right_index {
   my ($self,$node) = @_;
 

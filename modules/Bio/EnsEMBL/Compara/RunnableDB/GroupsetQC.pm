@@ -104,7 +104,7 @@ sub fetch_input {
     $self->{reusable_gdb}{$reusable_gdb} = 1;
   }
 
-  $self->{groupset_node} = $self->{proteintreeDBA}->fetch_all_roots->[0];
+  $self->{groupset_node} = $self->{proteintreeDBA}->fetch_node_by_node_id(1);
   $self->throw("[GroupsetQC] Couldnt find clusterset node") unless (defined($self->{groupset_node}));
 
   unless (defined($self->{groupset_tag})) {
