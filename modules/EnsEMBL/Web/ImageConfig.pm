@@ -695,7 +695,7 @@ sub _add_bigwig_track {
       sub_type => 'bigwig',
       colour   => $args{'menu'}{'colour'} || 'red',
     },
-    @_
+    %args
   );
 }
 
