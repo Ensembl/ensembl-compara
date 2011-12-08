@@ -213,6 +213,9 @@ sub run_njtree_phyml {
     $cmd .= " ". $input_aln;
     $cmd .= " -p interm ";
     $cmd .= " -o " . $newick_file;
+    if ($self->param('extra_args')) {
+      $cmd .= " ".($self->param('extra_args')).' ';
+    }
     my $logfile = $self->worker_temp_directory. "proteintree_". $protein_tree->node_id . ".log";
     my $errfile = $self->worker_temp_directory. "proteintree_". $protein_tree->node_id . ".err";
     $cmd .= " 1>$logfile 2>$errfile";
