@@ -860,7 +860,9 @@ sub update_from_url {
   my $species = $hub->species;
   
   foreach my $v (@values) {
-    my ($key, $renderer) = split /=/, $v, 2;
+    my @split    = split /=/, $v;
+    my $renderer = pop @split;
+    my $key      = join '=', @split;
     
     if ($key =~ /^(\w+)[\.:](.*)$/) {
       my ($type, $p) = ($1, $2);
