@@ -34,7 +34,7 @@ warn "--------------------------------------------------------------------------
   close O;
 
  #Create a different Robots.txt for google sitemap
-  my $server_root = $sd->ENSEMBL_SERVERROOT;
+  my $server_root = $sd->ENSEMBL_SERVERROOT;  
   my $sitemap = `ls $server_root/htdocs/sitemaps/sitemap-index.xml 2>&1`;  
   if($sitemap !~ /No such file or directory/)
   {
@@ -49,16 +49,21 @@ warn "---------------------------------------------------------------
 Disallow: /Multi/
 Disallow: /biomart/
 Disallow: /Account/
-Disallow: /UserData/
-Disallow: */Export/
-Disallow: */Location/
-Disallow: */blastview/
 Disallow: /ExternalData/
 Disallow: /UserAnnotation/
-Disallow: */Search/
-Disallow: */Variation/
+Disallow: */Ajax/
+Disallow: */Config/
+Disallow: */blastview/
+Disallow: */Export/
+Disallow: */Experiment/
+Disallow: */Location/
+Disallow: */LRG/
+Disallow: */Phenotype/
 Disallow: */Regulation/
-Disallow: */LRG/);
+Disallow: */Search/
+Disallow: */UserConfig/
+Disallow: */UserData/
+Disallow: */Variation/);
 
     foreach my $row(@letters){
       if($row ne 'S')
