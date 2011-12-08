@@ -69,8 +69,8 @@ sub fetch_input {
 		}
 	}
 	# if all the sequences have 0 strand, use the first one as the target
-	unless(@$target_set){
-		@$target_set = shift(@$query_set);
+	unless(ref($target_set)){
+		@$target_set = splice(@$query_set,0,1);
 		push(@{ $target_set->[0] }, 1);
 		$query_offset--;
 	}
@@ -101,7 +101,7 @@ sub fetch_input {
 	##set the query strand to -1 or 1 depending on the average score from the blast results
 	if( keys %$matches) {
 		foreach my $query_name ( sort keys %{ $query_index } ) {
-			push(@{ $query_set->[ $query_index->{ $query_name } ] }, 
+			push(@{ $query_set->[ $query_index->{ $query_name } + $query_offset ] }, 
 				$matches->{ $query_name }{ "1" } > $matches->{ $query_name }{ "-1" } ? 1 : -1);
 		}
 	}
