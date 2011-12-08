@@ -102,12 +102,12 @@ sub gene_href {
 
 sub export_feature {
   my $self = shift;
-  my ($feature, $transcript_id, $transcript_name, $gene_id, $gene_name, $gene_type) = @_;
+  my ($feature, $transcript_id, $transcript_name, $gene_id, $gene_name, $gene_type, $gene_source) = @_;
   
   return $self->_render_text($feature, 'Exon', {
-    'headers' => [ 'gene_id', 'gene_name', 'transcript_id', 'transcript_name', 'exon_id', 'gene_type' ],
-    'values' => [ $gene_id, $gene_name, $transcript_id, $transcript_name, $feature->stable_id, $gene_type ]
-  });
+    headers => [ 'gene_id', 'gene_name', 'transcript_id', 'transcript_name', 'exon_id', 'gene_type' ],
+    values  => [ $gene_id, $gene_name, $transcript_id, $transcript_name, $feature->stable_id, $gene_type ]
+  }, { source => $gene_source });
 }
 
 1;

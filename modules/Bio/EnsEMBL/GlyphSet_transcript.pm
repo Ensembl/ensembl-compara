@@ -1222,8 +1222,9 @@ sub render_text {
     
     next if $target_gene && $gene_id ne $target_gene;
     
-    my $gene_type = $gene->status . '_' . $gene->biotype;
-    my $gene_name = $gene->can('display_xref') && $gene->display_xref ? $gene->display_xref->display_id : undef;
+    my $gene_type   = $gene->status . '_' . $gene->biotype;
+    my $gene_name   = $gene->can('display_xref') && $gene->display_xref ? $gene->display_xref->display_id : undef;
+    my $gene_source = $gene->source;
     
     if ($feature_type eq 'gene') {
       $export .= $self->_render_text($gene, 'Gene', { 
@@ -1256,7 +1257,7 @@ sub render_text {
             $exons->{$stable_id} = 1;
           }
            
-          $export .= $self->export_feature($_, $transcript_id, $transcript_name, $gene_id, $gene_name, $gene_type);
+          $export .= $self->export_feature($_, $transcript_id, $transcript_name, $gene_id, $gene_name, $gene_type, $gene_source);
         }
       }
     }
