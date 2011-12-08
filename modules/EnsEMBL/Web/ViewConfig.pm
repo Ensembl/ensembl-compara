@@ -248,8 +248,7 @@ sub update_from_url {
     }
   }
   
-  # Can't use $input->param($image_config) because the param function unescapes the value, which breaks attaching urls with = in them
-  my @values = map s/^$image_config=(.+)$// ? split /,/, $1 : (), split /[;&]/, $hub->apache_handle->args;
+  my @values  = split /,/, $input->param($image_config);
   
   if (@values) {
     $input->delete($image_config); 
