@@ -28,6 +28,15 @@ sub default_options {
 		-pass   => $self->o('password'),
 		-dbname => $self->o('ENV', 'USER').'_compara_epo'.$self->o('rel_with_suffix'),
    	},
+	 # ancestral seqs db
+	'ancestor_db' => {
+		-user => 'ensadmin',
+		-host => 'compara3',
+		-port => 3306,
+		-pass => $self->o('password'),
+		-name => 'ancestral_sequences',
+		-dbname => $self->o('ENV', 'USER').'_ancestral_core'.$self->o('rel_with_suffix'),
+	},
 	  # database containing the mapped anchors
 	'compara_mapped_anchor_db' => {
 		-user => 'ensro',
@@ -36,12 +45,13 @@ sub default_options {
 		-host => 'compara3',
 		-dbname => 'sf5_test_anc_map66',
 	},
+	 # master db
 	'compara_master' => {
 		-user => 'ensro',
 		-port => 3306,
 		-pass => '',
-		-host => 'compara1',
-		-dbname => 'sf5_ensembl_compara_master',
+		-host => 'compara3',
+		-dbname => 'sf5_compara_patch_master',
 	},
 	'main_core_dbs' => {
 		-user => 'ensro',
@@ -51,25 +61,31 @@ sub default_options {
 	},
 	other_core_dbs => {
 	},
-	
 	  # mlssid of mappings to use
 	'mapping_mlssid' => 6,
 	  # mlssid of ortheus alignments
 	'ortheus_mlssid' => 538,
+	  # species tree file
+	'species_tree_file' => '',
 	  # data directories:
 	'mapping_file' => $self->o('ENV', 'EPO_DUMP_PATH').'/enredo_friendly.'.$self->o('rel_with_suffix'),
 	'enredo_output_file' => $self->o('ENV', 'EPO_DUMP_PATH').'/enredo.out.'.$self->o('rel_with_suffix'),
+	'bl2seq_file' => $self->o('ENV', 'EPO_DUMP_PATH').'/bl2seq.'.$self->o('rel_with_suffix'),
 	  # code directories:
 	'enredo_bin_dir' => '/software/ensembl/compara/',
+	'bl2seq' => '/software/bin/bl2seq',
+	'core_cvs_sql_schema' => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR') . '/ensembl/sql/table.sql',
+	  # enredo parameters
 	'enredo_params' => ' --min-score 0 --max-gap-length 200000 --max-path-dissimilarity 4 --min-length 10000 --min-regions 2 --min-anchors 3 --max-ratio 3 --simplify-graph 7 --bridges -o ',
-	  	
+	  # add MT dnafrags separately (1) or not (0) to the dnafrag_region table
+	'addMT' => 1,
      }; 
 }
 
 sub pipeline_create_commands {
     my ($self) = @_; 
     return [
-        @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
+        @{$self->SUPER::pipeline_create_commands}, 
            ];  
 }
 
@@ -80,10 +96,15 @@ sub pipeline_wide_parameters {
 
 		'compara_mapped_anchor_db' => $self->o('compara_mapped_anchor_db'),
 		'compara_master' => $self->o('compara_master'),
+		'main_core_dbs' => $self->o('main_core_dbs'),
 		'mapping_mlssid' => $self->o('mapping_mlssid'),
 		'ortheus_mlssid' => $self->o('ortheus_mlssid'),
 		'mapping_file' => $self->o('mapping_file'),
 		'enredo_output_file' => $self->o('enredo_output_file'),
+		'ancestor_db' => $self->o('ancestor_db'),
+		'core_cvs_sql_schema' => $self->o('core_cvs_sql_schema'),
+		'bl2seq' => $self->o('bl2seq'),
+		'addMT' => $self->o('addMT'),
 	};
 }
 
@@ -120,10 +141,52 @@ return [
 	       -module    => 'Bio::EnsEMBL::Compara::Production::EPOanchors::ParseEnredo',
 	       -parameters => {
 				compara_master => $self->o('compara_master'),
-				main_core_dbs => $self->o('main_core_dbs'),
 				other_core_dbs => $self->o('other_core_dbs'),
 				ortheus_mlssid => $self->o('ortheus_mlssid'),
+				ancestor_db => $self->o('ancestor_db'),
 			      },
+		-flow_into => {
+				1 => [ 'find_dnafrag_region_strand' ],
+				2 => [ 'Ortheus' ],
+			},
+	  },
+	
+	  {	-logic_name => 'find_dnafrag_region_strand',
+		-module    => 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindStrand',
+		-parameters => {
+				bl2seq => $self->o('bl2seq'),
+				bl2seq_file => $self->o('bl2seq_file'),
+			       },
+		-flow_into => {
+				1 => [ 'set_internal_ids' ],
+			},
+	  },
+
+	  {	-logic_name => 'set_internal_ids',
+		-module => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+		-input_ids => [{}],
+		-wait_for => [ 'load_genomeDB_dnafrag_dnafragRegion' ],
+		-parameters => {
+				'ortheus_mlssid' => $self->o('ortheus_mlssid'),
+				'sql'   => [
+						'ALTER TABLE genomic_align_block AUTO_INCREMENT=#expr(($ortheus_mlssid * 10**10) + 1)expr#',
+						'ALTER TABLE genomic_align AUTO_INCREMENT=#expr(($ortheus_mlssid * 10**10) + 1)expr#',
+						'ALTER TABLE genomic_align_tree AUTO_INCREMENT=#expr(($ortheus_mlssid * 10**10) + 1)expr#',
+						'ALTER TABLE dnafrag AUTO_INCREMENT=#expr(($ortheus_mlssid * 10**10) + 1)expr#',
+					],
+			},
+		-flow_into => {
+				1 => [ 'Ortheus' ],
+			},
+	  },
+
+	  {	-logic_name => 'Ortheus',
+		-parameters => {
+				max_block_size=>1000000,
+				java_options=>'-server -Xmx1000M',
+			},
+		-module => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Ortheus',
+		-wait_for => [ 'set_internal_ids' ],
 	  },
 	
      ];
