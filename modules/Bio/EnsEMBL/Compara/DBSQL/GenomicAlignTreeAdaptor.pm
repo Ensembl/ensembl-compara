@@ -745,8 +745,7 @@ sub fetch_node_by_node_id {
   #my ($node) = @{$self->_generic_fetch($constraint)};
 
   my $sql = "SELECT " . join(",", @{$self->columns}) .  
-     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.node_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.node_id = " . $node_id;
-
+     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align ga USING (node_id) WHERE gat.node_id = " . $node_id;
    my $sth = $self->prepare($sql);
    $sth->execute;
    my ($node) = @{$self->_objs_from_sth($sth)};
@@ -779,7 +778,7 @@ sub fetch_node_by_node_id {
    #my ($parent) = @{$self->_generic_fetch($constraint)};
 
    my $sql = "SELECT " . join(",", @{$self->columns}) .  
-     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.node_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.node_id = " . $node->_parent_id;
+     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align ga USING (node_id) WHERE gat.node_id = " . $node->_parent_id;
 
    my $sth = $self->prepare($sql);
    $sth->execute;
@@ -851,7 +850,7 @@ sub fetch_all_children_for_node {
 
 
    my $sql = "SELECT " . join(",", @{$self->columns}) .  
-     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.node_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.left_index <= $left_index AND gat.right_index >= $right_index";
+     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align ga USING (node_id) WHERE gat.left_index <= $left_index AND gat.right_index >= $right_index";
 
    my $sth = $self->prepare($sql);
    $sth->execute;
@@ -894,14 +893,12 @@ sub delete {
 
   my $sth = $self->prepare(
       "DELETE
-        genomic_align_group.*,
         genomic_align_tree.*,
         genomic_align.*,
         genomic_align_block.*
       FROM
         genomic_align_tree
-        LEFT JOIN genomic_align_group USING (node_id)
-        LEFT JOIN genomic_align USING (genomic_align_id)
+        LEFT JOIN genomic_align USING (node_id)
         LEFT JOIN genomic_align_block USING (genomic_align_block_id)
       WHERE root_id = ?");
   $sth->execute($root->node_id);
@@ -971,7 +968,7 @@ sub set_neighbour_nodes_for_leaf {
   my $genomic_aligns = $node->genomic_align_group->get_all_GenomicAligns;
 
   my $sth = $self->prepare("SELECT node_id, dnafrag_start, dnafrag_end, dnafrag_strand
-      FROM genomic_align LEFT JOIN genomic_align_group USING (genomic_align_id)
+      FROM genomic_align LEFT JOIN genomic_align_tree USING (node_id)
       WHERE dnafrag_id = ?
         AND method_link_species_set_id = ?
         AND dnafrag_start <= ?
@@ -1171,7 +1168,6 @@ sub tables {
   my $self = shift;
   return [
       ['genomic_align_tree', 'gat'],
-      ['genomic_align_group', 'gag'],
       ['genomic_align', 'ga'],
       ];
 }
