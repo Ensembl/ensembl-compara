@@ -944,7 +944,8 @@ sub consequence_data_from_file {
 sub consequence_table {
   my ($self, $consequence_data) = @_;
   my $hub     = $self->hub;
-  my $species = $self->param('species') || $hub->species;
+  my $species = $hub->param('species') || $hub->species;
+  my $code    = $hub->param('code');
   my $columns = [
     { key => 'var',      title =>'Uploaded Variation',   align => 'center', sort => 'string'        },
     { key => 'location', title =>'Location',             align => 'center', sort => 'position_html' },
@@ -993,7 +994,7 @@ sub consequence_table {
         type             => 'Location',
         action           => 'View',
         r                =>  $url_location,
-        contigviewbottom => 'variation_feature_variation=normal',
+        contigviewbottom => "variation_feature_variation=normal,upload_$code=normal",
       });
       
       if ($transcript_id =~ /^ENS.{0,3}T/) {
