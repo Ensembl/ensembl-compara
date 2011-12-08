@@ -38,7 +38,7 @@ sub content {
     my $family     = $families->{$family_id};
     my $row        = { id => "$family_id<br /><br />" };
     my $genes      = $families->{$family_id}{'info'}{'genes'};
-    my $url_params = { function => "Genes$ckey", family => $family_id, g => $gene_stable_id };
+    my $url_params = { function => "Genes$ckey", family => $family_id, g => $gene_stable_id, cdb => $cdb };
     
     $row->{'id'}          .= scalar @$genes > 1 ? sprintf('(<a href="%s">%s genes</a>)', $hub->url($url_params), scalar @$genes) : '(1 gene)';
     $row->{'id'}          .= sprintf '<br />(<a href="%s">all proteins in family</a>)',  $hub->url({ function => "Proteins$ckey", family => $family_id });
