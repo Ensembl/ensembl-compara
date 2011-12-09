@@ -867,7 +867,7 @@ sub _summarise_compara_db {
   # if there are intraspecies alignments then get full details of all genomic alignments, ie start and stop
   # currently these are only needed for Vega where there are only strictly defined regions in compara
   # but this could be extended to e! if we needed to know this
-  if (@$v_results && $not_vega != 1) { warn 'HERE'; 
+  if (@$v_results && $not_vega != 1) {  
     # get details of seq_regions in the database
     $q = '
       select df.dnafrag_id, df.name, df.coord_system_name, gdb.name
