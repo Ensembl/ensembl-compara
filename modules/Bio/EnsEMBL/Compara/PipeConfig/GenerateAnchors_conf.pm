@@ -219,6 +219,11 @@ sub pipeline_analyses {
 		-hive_capacity => 50,
 		-failed_job_tolerance => 5, # % of jobs allowed to fail
    	   },
+
+            #
+            # Please consider switching to a newer version of Gerp module, 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp'
+            # (it has slightly different input parameters and doesn't need '-program_file' anymore)
+            #
 	   {
 		-logic_name    => 'gerp_constrained_element',
 		-module => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Gerp',
@@ -230,7 +235,7 @@ sub pipeline_analyses {
 		-batch_size    => 5,
 	   },
 				
-];
+    ];
 }	
 
 
