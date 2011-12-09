@@ -184,6 +184,7 @@ sub load_compara_ncs {
     my $counter = 0;
 
     my $cached_id = 0;
+    my $curr_cluster_size = 'NaN';  # need a fake value that evaluates to true to start loading
     while(my($cluster_id, $cluster_name, $member)=$sth->fetchrow()) {
 
         $cluster_name ||= 'NoName'; # we need some name here however bogus (for formatting purposes)
@@ -192,10 +193,20 @@ sub load_compara_ncs {
             $ncs->mname2clid($member, $cluster_id);
             $ncs->clid2clname($cluster_id, $cluster_name);
         } elsif($member) {
-            $ncs->mname2clid($member, $cached_id);
+            if($cached_id) {
+                $ncs->mname2clid($member, $cached_id);
+                $curr_cluster_size++;
+            } else {
+                die "The query '$sql' returns orphane members without cluster_id/cluster_name, please investigate";
+            }
         } else {
-            $cached_id = $cluster_id;
-            $ncs->clid2clname($cluster_id, $cluster_name);
+            if($curr_cluster_size) {
+                $cached_id = $cluster_id;
+                $ncs->clid2clname($cluster_id, $cluster_name);
+                $curr_cluster_size=0;
+            } else {
+                die "The query '$sql' attempted to load an empty cluster with cluster_id='$cached_id', please investigate";
+            }
         }
 
         unless(++$counter % $step) {
