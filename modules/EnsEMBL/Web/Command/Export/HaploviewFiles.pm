@@ -54,8 +54,8 @@ sub make_files {
   
   foreach my $individual (keys %ind_genotypes) {
     my $i      = $individuals{$individual};
-    (my $name  = $individual) =~ s/ /_/g;
-    my $output = join "\t", 'FAM' . $family++, $name, $i->{'father'}, $i->{'mother'}, $i->{'gender'}, "0\t";
+    my $output = join "\t", 'FAM' . $family++, $individual, $i->{'father'}, $i->{'mother'}, $i->{'gender'}, "0\t";
+       $output =~ s/ /_/g;
     
     foreach (@snps) {
       my $snp = $ind_genotypes{$individual}->{$_} || '00';
