@@ -1095,12 +1095,17 @@ sub get_canonical_transcript_Member {
 =cut
 
 sub get_all_peptide_Members {
-  my $self = shift;
+    my $self = shift;
 
-  throw("adaptor undefined, can access database") unless($self->adaptor);
-  throw("not an ENSEMBLGENE member") if($self->source_name ne 'ENSEMBLGENE'); 
+    throw("adaptor undefined, can access database") unless($self->adaptor);
+    throw("not an ENSEMBLGENE member") if($self->source_name ne 'ENSEMBLGENE'); 
 
-  return $self->adaptor->fetch_peptides_for_gene_member_id($self->dbID);
+    my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_peptides_for_gene_member_id')
+        ? $self->adaptor    # a MemberAdaptor or derivative
+        : $self->adaptor->db->get_MemberAdaptor;
+
+
+    return $able_adaptor->fetch_peptides_for_gene_member_id($self->dbID);
 }
  
 

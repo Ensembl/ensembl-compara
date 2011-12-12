@@ -56,26 +56,4 @@ sub _get_canonical_Member {
   return $member->get_canonical_peptide_Member;
 }
 
-
-##########################################################
-#
-# explicit method forwarding to MemberAdaptor
-#
-##########################################################
-
-sub fetch_gene_for_peptide_member_id {
-  my $self = shift;
-  return $self->db->get_MemberAdaptor->fetch_gene_for_peptide_member_id(@_);
-}
-
-sub fetch_peptides_for_gene_member_id {
-  my $self = shift;
-  return $self->db->get_MemberAdaptor->fetch_peptides_for_gene_member_id(@_);
-}
-
-sub fetch_longest_peptide_member_for_gene_member_id {
-  my $self = shift;
-  return $self->db->get_MemberAdaptor->fetch_longest_peptide_member_for_gene_member_id(@_);
-}
-
-1
+1;
