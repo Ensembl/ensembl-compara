@@ -57,40 +57,6 @@ sub _get_canonical_Member {
 }
 
 
-
-
-=head2 fetch_by_stable_id
-
-  Arg[1]     : string $protein_tree_stable_id
-  Example    : $protein_tree = $proteintree_adaptor->fetch_by_stable_id("ENSGT00590000083078");
-
-  Description: Fetches from the database the protein_tree for that stable ID
-  Returntype : Bio::EnsEMBL::Compara::GeneTreeNode
-  Exceptions : returns undef if $stable_id is not found.
-  Caller     :
-
-=cut
-
-sub fetch_by_stable_id {
-  my ($self, $stable_id) = @_;
-
-  my $root_id = $self->db->get_ProteinTreeStableIdAdaptor->fetch_node_id_by_stable_id($stable_id);
-  return undef unless (defined $root_id);
-
-  my $protein_tree = $self->fetch_node_by_node_id($root_id);
-
-  return $protein_tree;
-}
-
-
-
-# Fetch data from stable_id table -- similar in concept to fetching sequence from member
-sub _fetch_stable_id_by_node_id {
-  my ($self, $node_id) = @_;
-  return $self->db->get_ProteinTreeStableIdAdaptor->fetch_by_node_id($node_id);
-}
-
-
 ##########################################################
 #
 # explicit method forwarding to MemberAdaptor

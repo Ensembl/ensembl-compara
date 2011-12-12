@@ -288,7 +288,6 @@ sub get_available_adaptors {
       "ProteinTree" => "Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor",
       "SuperProteinTree" => "Bio::EnsEMBL::Compara::DBSQL::SuperProteinTreeAdaptor",
       "NCTree" => "Bio::EnsEMBL::Compara::DBSQL::NCTreeAdaptor",
-      "ProteinTreeStableId" => "Bio::EnsEMBL::Compara::DBSQL::ProteinTreeStableIdAdaptor",
       "Analysis" => "Bio::EnsEMBL::DBSQL::AnalysisAdaptor",
       "ConservationScore" => "Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor",
       "ConstrainedElement" => "Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor",

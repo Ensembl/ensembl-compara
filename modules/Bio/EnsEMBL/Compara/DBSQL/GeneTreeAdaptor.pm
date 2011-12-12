@@ -209,6 +209,58 @@ sub fetch_all_AlignedMembers_by_root_id {
 }
 
 ###########################
+# stable_id mapping
+###########################
+
+
+=head2 fetch_by_stable_id
+
+  Arg[1]     : string $protein_tree_stable_id
+  Example    : $protein_tree = $proteintree_adaptor->fetch_by_stable_id("ENSGT00590000083078");
+
+  Description: Fetches from the database the protein_tree for that stable ID
+  Returntype : Bio::EnsEMBL::Compara::GeneTreeNode
+  Exceptions : returns undef if $stable_id is not found.
+  Caller     :
+
+=cut
+
+sub fetch_by_stable_id {
+  my ($self, $stable_id) = @_;
+
+  my $prefix = $self->_get_table_prefix();
+  my $sql = "SELECT root_id FROM ${prefix}_tree_root WHERE stable_id=\"$stable_id\"";
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+
+  my ($root_id) = $sth->fetchrow_array();
+  $sth->finish();
+
+  return undef unless (defined $root_id);
+
+  my $protein_tree = $self->fetch_node_by_node_id($root_id);
+
+  return $protein_tree;
+}
+
+
+sub _fetch_stable_id_by_node_id {
+  my ($self, $node_id) = @_;
+
+  my $prefix = $self->_get_table_prefix();
+  my $sql = "SELECT stable_id FROM ${prefix}_tree_root WHERE root_id = ?";
+  my $sth = $self->prepare($sql);
+  $sth->execute($node_id);
+
+  my ($stable_id) = $sth->fetchrow_array();
+  $sth->finish();
+  return $stable_id;
+}
+
+
+
+
+###########################
 # STORE methods
 ###########################
 
