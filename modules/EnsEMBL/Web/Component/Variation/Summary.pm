@@ -21,14 +21,13 @@ sub content {
   my $variation_features = $variation->get_all_VariationFeatures;
   my ($feature_slice)    = map { $_->dbID == $vf ? $_->feature_Slice : () } @$variation_features; # get slice for variation feature
   my $failed             = $variation->failed_description ? $self->failed($feature_slice) : ''; ## First warn if variation has been failed
-  my $summary;
-    $summary            .= $self->variation_source;
-    $summary            .= $self->alleles($feature_slice);
-    $summary            .= $self->location;
-    $summary            .= $self->co_located($feature_slice) if $feature_slice;
-    $summary            .= $self->validation_status;
-    $summary            .= $self->synonyms;
-    $summary            .= $self->hgvs;
+  my $summary            = $self->variation_source;
+     $summary           .= $self->alleles($feature_slice);
+     $summary           .= $self->location;
+     $summary           .= $self->co_located($feature_slice) if $feature_slice;
+     $summary           .= $self->validation_status;
+     $summary           .= $self->synonyms;
+     $summary           .= $self->hgvs;
   
   return qq{
     <div class="summary_panel">
@@ -73,9 +72,7 @@ sub variation_source {
   my $source  = $object->source;
   my $version = $object->source_version;
   my $url     = $object->source_url;
-  my $source_link;
-  my $home_link;
-  my $sname;
+  my ($source_link, $home_link, $sname);
   
   # Date version
   if ($version =~ /^(20\d{2})(\d{2})/) {
@@ -85,29 +82,28 @@ sub variation_source {
   }
   
   ## parse description for links
-  my $description = $object->source_description;
-  $description =~ s/(\w+) \[(http:\/\/[\w\.\/]+)\]/<a href="$2">$1<\/a>/; 
+  (my $description = $object->source_description) =~ s/(\w+) \[(http:\/\/[\w\.\/]+)\]/<a href="$2">$1<\/a>/; 
   
   # Source link
   if ($source eq 'dbSNP') {
-    $sname = 'DBSNP';
+    $sname       = 'DBSNP';
     $source_link = $hub->get_ExtURL_link("$source$version", $sname, $name);
-    $home_link = $hub->get_ExtURL_link($source, $sname.'_HOME', $name);
+    $home_link   = $hub->get_ExtURL_link($source, "${sname}_HOME", $name);
     $description =~ s/$sname/$home_link/i;
   } elsif ($source =~ /SGRP/) {
     $source_link = $hub->get_ExtURL_link("$source$version", 'SGRP', $name);
   } elsif ($source =~ /COSMIC/) {
-    $sname = 'COSMIC';
-    $source_link = $hub->get_ExtURL_link("$source$version", $sname.'_ID', $name);
-    $home_link = $hub->get_ExtURL_link($source, $sname, $name);
+    $sname       = 'COSMIC';
+    $source_link = $hub->get_ExtURL_link("$source$version", "${sname}_ID", $name);
+    $home_link   = $hub->get_ExtURL_link($source, $sname, $name);
     $description =~ s/$sname/$home_link/i;
   } elsif ($source =~ /HGMD/) {
-    my $va = ($hub->get_adaptor('get_VariationAnnotationAdaptor', 'variation')->fetch_all_by_Variation($object->Obj))->[0];
-    my $asso_gene = $va->associated_gene;
-    $sname = 'HGMD-PUBLIC';
-    $source_link = $hub->get_ExtURL_link("$source$version", 'HGMD', { ID => $asso_gene, ACC => $name });
-    $home_link = $hub->get_ExtURL_link($source, $sname, $name);
-    $description =~ s/$sname/$home_link/i;
+    my $va          = ($hub->get_adaptor('get_VariationAnnotationAdaptor', 'variation')->fetch_all_by_Variation($object->Obj))->[0];
+    my $asso_gene   = $va->associated_gene;
+       $sname       = 'HGMD-PUBLIC';
+       $source_link = $hub->get_ExtURL_link("$source$version", 'HGMD', { ID => $asso_gene, ACC => $name });
+       $home_link   = $hub->get_ExtURL_link($source, $sname, $name);
+       $description =~ s/$sname/$home_link/i;
   } elsif ($source =~ /LSDB/) {
     $source_link = $hub->get_ExtURL_link($source . ($version ? " ($version)" : ''), $source, $name);
   } else {
@@ -172,20 +168,18 @@ sub synonyms {
   my $hub      = $self->hub;
   my $object   = $self->object;
   my $synonyms = $object->dblinks;
-  my $count;
-  my $count_sources;
-   my @synonyms_list;
-  my $html;
+  my ($count, $count_sources, @synonyms_list);
  
   foreach my $db (sort { lc $a cmp lc $b } keys %$synonyms) {
     my @ids = @{$synonyms->{$db}};
     my @urls;
 
     if ($db =~ /dbsnp rs/i) { # Glovar stuff
-      @urls = map { $hub->get_ExtURL_link($_, 'SNP', $_) } @ids;
+      @urls = map $hub->get_ExtURL_link($_, 'SNP', $_), @ids;
     } elsif ($db =~ /dbsnp/i) {
       foreach (@ids) {
         next if /^ss/; # don't display SSIDs - these are useless
+        
         push @urls, $hub->get_ExtURL_link($_, 'SNP', $_);
       }
       
@@ -193,7 +187,7 @@ sub synonyms {
     } elsif ($db =~ /HGVbase|TSC/) {
       next;
     } elsif ($db =~ /Uniprot/) { 
-      push @urls , $hub->get_ExtURL_link($_, 'UNIPROT_VARIATION', $_) for @ids;
+      push @urls, $hub->get_ExtURL_link($_, 'UNIPROT_VARIATION', $_) for @ids;
     } elsif ($db =~ /HGMD/) {
       # HACK - should get its link properly somehow
       my @annotations = grep $_->source_name =~ /HGMD/, @{$hub->get_adaptor('get_VariationAnnotationAdaptor', 'variation')->fetch_all_by_Variation($object->Obj)};
@@ -206,67 +200,54 @@ sub synonyms {
     } else {
       @urls = @ids;
     }
-    $count += scalar(@urls);
-    my $syn = "<strong>$db</strong> " . (join ', ', @urls);
-    push(@synonyms_list,$syn);
+    
+    $count += scalar @urls;
+    
+    push @synonyms_list, "<strong>$db</strong> " . (join ', ', @urls);
   }
   
-  $count_sources = scalar(@synonyms_list);
+  $count_sources = scalar @synonyms_list;
  
   # Large text display
   if ($count_sources > 1) { # Collapsed div display 
-    $html = "<ul><li>".join('</li><li>',@synonyms_list)."</li></ul>";
-    my $show       = $self->hub->get_cookies('toggle_variation_synonyms') eq 'open';
+    my $show = $self->hub->get_cookies('toggle_variation_synonyms') eq 'open';
     
     return sprintf('
       <dt><a class="toggle %s set_cookie" href="#" rel="variation_synonyms" title="Click to toggle sets names">Synonyms</a></dt>
       <dd>This feature has <strong>%s</strong> synonyms - click the plus to show</dd>
-      <dd class="variation_synonyms"><div class="toggleable" style="font-weight:normal;%s">%s</div></dd>',
+      <dd class="variation_synonyms"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></dd>',
       $show ? 'open' : 'closed',
       $count,
       $show ? '' : 'display:none',
-      $html
+      join('', map "<li>$_</li>", @synonyms_list)
     );
-  }
-  else {
-    $html = ($count_sources) ? $synonyms_list[0] : 'None currently in the database';
-    return qq{
+  } else {
+    return sprintf('
       <dt>Synonyms</dt>
-      <dd>$html</dd>
-    }; 
+      <dd>%s</dd>', 
+      $count_sources ? $synonyms_list[0] : 'None currently in the database'
+    ); 
   }
 }
 
 
 sub alleles {
   my ($self, $feature_slice) = @_;
-  my $object   = $self->object;
-
-  # Ref/Alt
-  my $alleles = $object->alleles;
-  my $c_alleles  = scalar (split('/', $alleles));
-  my $alt_string;
-  $alt_string = 's' if ($c_alleles > 2);
-  
-  # Ancestral
-  my $ancestor = $object->ancestor;
-  $ancestor = qq{ | Ancestral: <strong>$ancestor</strong>} if ($ancestor);
-  
-  # Ambiguity
-  my $ambiguity = $object->Obj->ambig_code;
-  if ($object->source =~ /HGMD/) {
-    $ambiguity = 'not available';
-  }
-  $ambiguity = qq{ | Ambiguity code: <strong>$ambiguity</strong>} if ($ambiguity);
-  
-  # MAF
-  my $maf = $object->Obj->minor_allele;
-  my $freq = sprintf("%.2f", $object->Obj->minor_allele_frequency);
-  $freq = "&lt; 0.01" if ($freq eq '0.00'); # Frequency lower than 1%
-  $maf = " | MAF: <strong>$freq</strong> ($maf)" if ($maf);
-  
-  my $html = sprintf 'Reference/Alternative%s: <span style="font-weight:bold;font-size:1.2em">%s</span>%s%s%s',
-                      $alt_string, $alleles, $ancestor, $ambiguity, $maf;
+  my $object     = $self->object;
+  my $variation  = $object->Obj;
+  my $alleles    = $object->alleles;
+  my $c_alleles  = scalar split '/', $alleles;
+  my $alt_string = $c_alleles > 2 ? 's' : '';
+  my $ancestor   = $object->ancestor;
+     $ancestor   = " | Ancestral: <strong>$ancestor</strong>" if $ancestor;
+  my $ambiguity  = $variation->ambig_code;
+     $ambiguity  = 'not available' if $object->source =~ /HGMD/;
+     $ambiguity  = " | Ambiguity code: <strong>$ambiguity</strong>" if $ambiguity;
+  my $freq       = sprintf '%.2f', $variation->minor_allele_frequency;
+     $freq       = '&lt; 0.01' if $freq eq '0.00'; # Frequency lower than 1%
+  my $maf        = $variation->minor_allele;
+     $maf        = " | MAF: <strong>$freq</strong> ($maf)" if $maf;
+  my $html       = qq{Reference/Alternative$alt_string: <span style="font-weight:bold;font-size:1.2em">$alleles</span>$ancestor$ambiguity$maf};
 
   # Check somatic mutation base matches reference
   if ($feature_slice) {
@@ -370,35 +351,32 @@ sub location {
 
 
 sub validation_status {
-  my $self   = shift;
-  my $hub    = $self->hub;
-  my $object = $self->object;
-  my $status = $object->status;
-
-  my @variation_sets = sort @{$self->object->get_variation_set_string};
-  
-  my @status_list;
-  my %main_status;
-  my $html;
+  my $self           = shift;
+  my $hub            = $self->hub;
+  my $object         = $self->object;
+  my $status         = $object->status;
+  my @variation_sets = sort @{$object->get_variation_set_string};
+  my (@status_list, %main_status);
   
   if (scalar @$status) {
     my $snp_name = $object->name;
+    
     foreach (@$status) {
-       my $st;
+      my $st;
+      
       if ($_ eq 'hapmap') {
         $st = 'HapMap', $hub->get_ExtURL_link($snp_name, 'HAPMAP', $snp_name);
         $main_status{'HapMap'} = 1;
         next;
-      }
-      elsif ( $_ =~ /1000Genome/i) {
+      } elsif ($_ =~ /1000Genome/i) {
         $st = '1000 Genomes';
         $main_status{'1000 Genomes'} = 1;
         next;
-      }
-      elsif ($_ ne 'failed') {
+      } elsif ($_ ne 'failed') {
         $st = $_ eq 'freq' ? 'frequency' : $_;
       }
-      push (@status_list, $st);
+      
+      push @status_list, $st;
     }
   }
   
@@ -406,8 +384,7 @@ sub validation_status {
     foreach my $vs (@variation_sets) {
       if ($vs =~ /1000 Genomes/i && !$main_status{'1000 Genomes'}) {
         $main_status{'1000 Genomes'} = 1;
-      }
-      elsif ($vs =~ /hapmap/i && !$main_status{'HapMap'}) {
+      } elsif ($vs =~ /hapmap/i && !$main_status{'HapMap'}) {
         $main_status{'HapMap'} = 1;
       }
     }
@@ -415,30 +392,26 @@ sub validation_status {
   
   my $status_count = scalar @status_list;
   
+  return unless $status_count;
+  
   my $html = qq{This variation is validated by };
   
-  
-  return unless ($status_count);
-  
-  my $status_data;
   if ($main_status{'HapMap'} || $main_status{'1000 Genomes'}) {
     my $show = $self->hub->get_cookies('toggle_status') eq 'open';
-    
     my $showed_line;
-    foreach my $st (sort(keys(%main_status))) {
-      $showed_line .= ', ' if ($showed_line);
+    
+    foreach my $st (sort keys %main_status) {
+      $showed_line .= ', ' if $showed_line;
       $showed_line .= "<b>$st</b>";
       $status_count --;
     }
-    if ($status_count > 0) {
-      $showed_line .= " and also ".join ', ', sort(@status_list);
-    }
     
-    $html .= $showed_line;
+    $showed_line .= ' and also ' . join ', ', sort @status_list if $status_count > 0;
+    $html        .= $showed_line;
+  } else {
+    $html .= join ', ', sort @status_list;
   }
-  else {
-    $html .= join ', ', sort(@status_list);
-  }
+  
   return qq{ <dt>Validation status</dt><dd>$html</dd>};
 }
 
@@ -460,8 +433,12 @@ sub hgvs {
   
   # Wrap the html
   if ($count > 1) {
-    my $show = $self->hub->get_cookies('toggle_HGVS_names') eq 'open';
+    my $hub  = $self->hub;
+    my $hgvs = $hub->param('hgvs');
+    my $show = ($hgvs || $hub->get_cookies('toggle_HGVS_names')) eq 'open';
     my $s    = $count > 1 ? 's' : '';
+    
+    $hub->set_cookie('toggle_HGVS_names', $hgvs) if $hgvs;
     
     $html = sprintf('
       <dt><a class="toggle %s set_cookie" href="#" rel="HGVS_names" title="Click to toggle HGVS names">HGVS names</a></dt>
@@ -472,7 +449,7 @@ sub hgvs {
       $show ? '' : 'display:none',
       $html
     );
-  } elsif ($count == 1){
+  } elsif ($count == 1) {
     $html = qq{<dt>HGVS name</dt><dd>$html</dd>};  
   } else {
     $html = qq{<dt>HGVS name</dt><dd>None</dd>};
