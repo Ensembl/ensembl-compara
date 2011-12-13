@@ -208,17 +208,6 @@ sub fetch_by_stable_id {
 }
 
 
-=head2 fetch_by_source
-
-=cut
-
-sub fetch_by_source {
-  my ($self,$source_name) = @_;
-  deprecate("Calling $self->fetch_all_by_method_link_type instead\n");
-
-  return $self->fetch_all_by_method_link_type($source_name);
-}
-
 sub fetch_all_by_method_link_type {
   my ($self,$method_link_type) = @_;
 

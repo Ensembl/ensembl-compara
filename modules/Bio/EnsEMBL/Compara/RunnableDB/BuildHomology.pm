@@ -354,9 +354,9 @@ sub process_species_pair
   my $startTime = time();
   my $memberDBA = $self->{'comparaDBA'}->get_MemberAdaptor();
   $memberDBA->_final_clause("ORDER BY m.chr_name, m.chr_start");
-  my $sortedMembers = $memberDBA->fetch_by_subset_id($subset_id);
+  my $sortedMembers = $memberDBA->fetch_all_by_subset_id($subset_id);
   if($self->debug) {
-    print(time()-$startTime . " sec memberDBA->fetch_by_subset_id\n");
+    print(time()-$startTime . " sec memberDBA->fetch_all_by_subset_id\n");
     print(scalar(@{$sortedMembers}) . " members to process for HOMOLOGY\n");
   }
 

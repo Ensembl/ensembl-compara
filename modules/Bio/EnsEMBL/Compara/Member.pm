@@ -1109,22 +1109,4 @@ sub get_all_peptide_Members {
 }
  
 
-# DEPRECATED METHODS
-####################
-
-=head2 get_longest_peptide_Member (deprecated)
-
-  DEPRECATED. Use the get_canonical_peptide_Member method instead.
-
-=cut
-
-# This method has been first deprecated in ensembl API 57
-sub get_longest_peptide_Member {
-  my $self = shift;
-
-  deprecate("Method deprecated. You can now use the get_canonical_peptide_Member method\n");
-  return $self->get_canonical_peptide_Member(@_);
-}
-
-
 1;

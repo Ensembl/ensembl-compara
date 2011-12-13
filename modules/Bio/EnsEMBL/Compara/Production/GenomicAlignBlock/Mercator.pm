@@ -405,7 +405,7 @@ sub dumpMercatorFiles {
     my $ss = $ssa->fetch_by_set_description("gdb:".$gdb->dbID ." ". $gdb->name . ' coding exons');
     $file = $self->input_dir . "/$gdb_id.anchors";
     open F, ">$file";
-    foreach my $member (@{$ma->fetch_by_subset_id($ss->dbID)}) {
+    foreach my $member (@{$ma->fetch_all_by_subset_id($ss->dbID)}) {
       my $strand = "+";
       $strand = "-" if ($member->chr_strand == -1);
       my $chr_name = $member->chr_name;

@@ -264,7 +264,7 @@ sub test_longest {
   my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', 'ENSG00000198125');
   $member->print_member() if($member);
 
-  my $longest = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_longest_peptide_member_for_gene_member_id($member->dbID);
+  my $longest = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_canonical_peptide_member_for_gene_member_id($member->dbID);
   $longest->print_member() if($longest);
 
   my $pafs = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor->fetch_all_by_qmember_id($longest->dbID);

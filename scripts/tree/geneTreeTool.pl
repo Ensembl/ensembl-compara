@@ -5423,7 +5423,6 @@ sub _interpro_coverage {
     my $stable_id = $gene->stable_id;
     my $canonical_peptide;
     eval { $canonical_peptide = $gene->get_canonical_peptide_Member;};
-    eval { $canonical_peptide = $gene->get_longest_peptide_Member;} if ($@);
     my $protein_stable_id = $canonical_peptide->stable_id;
     my $mcl_id = $canonical_peptide->member_id . "_" . $gdb_id;
     my @interpro_entries = @{$gene_adaptor->get_Interpro_by_geneid($stable_id)};

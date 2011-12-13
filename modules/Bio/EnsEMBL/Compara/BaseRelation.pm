@@ -388,7 +388,7 @@ sub get_all_Member_Attribute {
   unless (defined $self->{'_member_array'}) {
 
     my $MemberAdaptor = $self->adaptor->db->get_MemberAdaptor();
-    my $members = $MemberAdaptor->fetch_by_relation($self);
+    my $members = $MemberAdaptor->fetch_all_by_relation($self);
 
     $self->{'_member_array'} = [];
     $self->{'_members_by_source'} = {};

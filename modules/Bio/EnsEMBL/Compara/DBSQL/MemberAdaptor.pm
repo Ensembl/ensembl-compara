@@ -177,17 +177,6 @@ sub fetch_all {
 }
 
 
-=head2 fetch_by_source
-
-  DEPRECATED: use fetch_all_by_source instead
-
-=cut
-
-sub fetch_by_source {
-  my ($self, @args) = @_;
-  return $self->fetch_all_by_source(@args);
-}
-
 =head2 fetch_all_by_source
 
   Arg [1]    : string $source_name
@@ -328,17 +317,6 @@ sub get_source_taxon_count {
 }
 
 
-=head2 fetch_by_relation
-
-  DEPRECATED: use fetch_all_by_relation instead
-
-=cut
-
-sub fetch_by_relation {
-  my ($self, @args) = @_;
-  return $self->fetch_all_by_relation(@args);
-}
-
 =head2 fetch_all_by_relation
 
   Arg [1]    : 
@@ -396,151 +374,6 @@ sub fetch_all_by_relation {
   }
 
   return $self->_generic_fetch($constraint, $join);
-}
-
-
-=head2 fetch_by_relation_source
-
-  DEPRECATED: use fetch_all_by_relation_source instead
-
-=cut
-
-sub fetch_by_relation_source {
-  my ($self, @args) = @_;
-  return $self->fetch_all_by_relation_source(@args);
-}
-
-=head2 fetch_all_by_relation_source
-
-  Arg [1]    : 
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
-
-=cut
-
-sub fetch_all_by_relation_source {
-  my ($self, $relation, $source_name) = @_;
-
-  throw() 
-    unless (defined $relation && ref $relation);
-  
-  throw("source_name arg is required\n")
-    unless ($source_name);
-
-  my $join;
-  my $constraint = "m.source_name = '$source_name'";
-
-  if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
-    my $family_id = $relation->dbID;
-    $constraint .= " AND fm.family_id = $family_id";
-    my $extra_columns = [qw(fm.family_id
-                            fm.member_id
-                            fm.cigar_line)];
-    $join = [[['family_member', 'fm'], 'm.member_id = fm.member_id', $extra_columns]];
-  }
-  elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
-    my $domain_id = $relation->dbID;
-    $constraint .= " AND dm.domain_id = $domain_id";
-    my $extra_columns = [qw(dm.domain_id
-                            dm.member_id
-                            dm.member_start
-                            dm.member_end)];
-    $join = [[['domain_member', 'dm'], 'm.member_id = dm.member_id', $extra_columns]];
-  }
-  elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
-    my $homology_id = $relation->dbID;
-    $constraint .= " AND hm.homology_id = $homology_id";
-    my $extra_columns = [qw(hm.homology_id
-                            hm.member_id
-                            hm.peptide_member_id
-                            hm.peptide_align_feature_id
-                            hm.cigar_line
-                            hm.cigar_start
-                            hm.cigar_end
-                            hm.perc_cov
-                            hm.perc_id
-                            hm.perc_pos)];
-    $join = [[['homology_member', 'hm'], 'm.member_id = hm.member_id', $extra_columns]];
-  }
-  else {
-    throw();
-  }
-  return $self->_generic_fetch($constraint, $join);
-}
-
-
-=head2 fetch_by_relation_source_taxon
-
-  DEPRECATED: use fetch_all_by_relation_source_taxon instead
-
-=cut
-
-sub fetch_by_relation_source_taxon {
-  my ($self, @args) = @_;
-  return $self->fetch_all_by_relation_source_taxon(@args);
-}
-
-=head2 fetch_all_by_relation_source_taxon
-
-  Arg [1]    : 
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
-
-=cut
-
-sub fetch_all_by_relation_source_taxon {
-  my ($self, $relation, $source_name, $taxon_id) = @_;
-
-  throw()
-    unless (defined $relation && ref $relation);
-  
-  throw("source_name and taxon_id args are required") 
-    unless($source_name && $taxon_id);
-
-  my $join;
-  my $constraint = "m.source_name = '$source_name' AND m.taxon_id = $taxon_id";
-
-  if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
-    my $family_id = $relation->dbID;
-    $constraint .= " AND fm.family_id = $family_id";
-    my $extra_columns = [qw(fm.family_id
-                         fm.member_id
-                         fm.cigar_line)];
-    $join = [[['family_member', 'fm'], 'm.member_id = fm.member_id', $extra_columns]];
-  }
-  elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
-    my $domain_id = $relation->dbID;
-    $constraint .= " AND dm.domain_id = $domain_id";
-    my $extra_columns = [qw(dm.domain_id
-                         dm.member_id
-                         dm.member_start
-                         dm.member_end)];
-    $join = [[['domain_member', 'dm'], 'm.member_id = dm.member_id', $extra_columns]];
-  }
-#  elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
-#  }
-  else {
-    throw();
-  }
-  return $self->_generic_fetch($constraint, $join);
-}
-
-
-=head2 fetch_by_subset_id
-
-  DEPRECATED: use fetch_all_by_subset_id instead
-
-=cut
-
-sub fetch_by_subset_id {
-  my ($self, @args) = @_;
-  return $self->fetch_all_by_subset_id(@args);
 }
 
 
@@ -1084,14 +917,6 @@ sub store_gene_peptide_link {
   };
 }
 
-# DEPRECATED METHODS
-####################
-
-sub fetch_longest_peptide_member_for_gene_member_id {
-  my $self = shift;
-
-  throw("Method deprecated. You can now use the fetch_canonical_peptide_member_for_gene_member_id method\n");
-}
 
 1;
 

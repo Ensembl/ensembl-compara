@@ -287,30 +287,5 @@ sub store {
   return $fam->dbID;
 }
 
-sub fetch_by_Member_Family_source {
-  my ($self, $member, $source_name) = @_;
-  deprecate("fetch_by_Member_Family_source method is deprecated. Calling 
-fetch_all_by_Member_method_link_type instead");
-  return $self->fetch_all_by_Member_method_link_type($member, $source_name);
-}
-
-
-sub store_family_member {
-  my ($self, $member_attribute) = @_;
-
-  my ($member, $attribute) = @{$member_attribute};
-  unless (defined $member->dbID) {
-    $self->db->get_MemberAdaptor->store($member);
-  }
-  $attribute->member_id($member->dbID);
-  #$attribute->family_id($relation->dbID);
-  my $sql = "INSERT IGNORE INTO family_member (family_id, member_id, cigar_line) VALUES (?,?,?)";
-  my $sth = $self->prepare($sql);
-  $sth->execute($attribute->family_id, $attribute->member_id, $attribute->cigar_line);
-  $sth->finish;
-}
-
-
-  
 
 1;
