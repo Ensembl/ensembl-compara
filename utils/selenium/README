@@ -67,7 +67,7 @@ RUNNING BATCH SCRIPT
 
   The following options can be specified:
 
-    --module (default are all species listed in the script)
+    --module (default are all module listed in the script)
       specify which module to run and the report for the specific module will be generated e.g. --module Karyotype will run the module karyotype only. 
 
     --url (default is http://test.ensembl.org)
