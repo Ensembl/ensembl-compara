@@ -113,11 +113,6 @@ use Bio::EnsEMBL::Hive::Process;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-#used to skip the ortheus/pecan stage and use previously run results. Doesn't
-#work perfectly because the array which maps the mfa names to dnafrags may
-#not be correct
-my $do_hack = 0;
-
 #Padding character and max_pads to be added when creating the 2X genome
 #composite sequence
 my $pad_char = "N";
@@ -210,9 +205,7 @@ sub run
   #disconnect compara database
   $self->compara_dba->dbc->disconnect_if_idle;
 
-  if (!$do_hack) {
-      $runnable->run_analysis;
-  }
+  $runnable->run_analysis;
 
   $self->parse_results();
 }
@@ -534,17 +527,9 @@ sub parse_results {
 
     my $tree_file;
     my $workdir;
-    if ($do_hack) {
-	$workdir = "/lustre/work1/ensembl/kb3/hive/tests/test_ortheus/job_1087";
-	$tree_file = $workdir . "/output.$$.tree";
-	
-	#my $tree_file = $self->workdir . "/output.$$.tree";
-    } else {
-	#correct version
-	$tree_file = $self->worker_temp_directory . "/output.$$.tree";
-    }
+    $tree_file = $self->worker_temp_directory . "/output.$$.tree";
 
-    my $ordered_fasta_files = $self->param('fasta_files');
+    my $ordered_fasta_files = $self->fasta_files;
 
     if (-e $tree_file) {
 	## Ortheus estimated the tree. Overwrite the order of the fasta files and get the tree
@@ -573,15 +558,7 @@ sub parse_results {
 
     #my $alignment_file = $self->workdir . "/output.$$.mfa";
 
-    my $alignment_file;
-    if ($do_hack) {
-	$alignment_file = $workdir . "/output.6525.mfa";
-	
-	#my $alignment_file = $self->workdir . "/output.8139.mfa";
-    } else {
-	#correct version
-	$alignment_file = $self->worker_temp_directory . "/output.$$.mfa";
-    }
+    my $alignment_file = $self->worker_temp_directory . "/output.$$.mfa";
 
     my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
     
@@ -852,7 +829,7 @@ sub parse_results {
     print $tree->newick_format("simple"), "\n";
     print join(" -- ", map {$_."+".$_->node_id."+".$_->name} (@{$tree->get_all_nodes()})), "\n";
     #$self->output([$tree]);
-    $self->{'_runnable'}->output([$tree]);
+    $self->param('runnable')->output([$tree]);
 
 #     foreach my $ga_node (@{$tree->get_all_nodes}) {
 # 	if ($ga_node) {
@@ -926,7 +903,6 @@ sub remove_empty_cols {
     ## Trim the sequences to remove gap-only cols.
     foreach my $this_leaf (@{$tree->get_all_nodes}) {
 	foreach my $this_genomic_align (@{$this_leaf->genomic_align_group->get_all_GenomicAligns}) {
-print Dumper $this_genomic_align;
 	    #set adaptor to get the aligned sequence using the dnafrag_id
 	    if (!defined $this_genomic_align->{'adaptor'}) {
 		$this_genomic_align->adaptor($gaa);
