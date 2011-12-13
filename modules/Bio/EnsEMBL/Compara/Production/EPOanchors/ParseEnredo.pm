@@ -190,9 +190,10 @@ sub set_gdb_locator { # fill in the locator field in the genome_db table
 	Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs( $self->param('main_core_dbs') );
 	my @dbas = @{ Bio::EnsEMBL::Registry->get_all_DBAdaptors() };
 	foreach my $genome_db_name(split(",", $genome_db_names), $ancestor_db->{'-name'}){
+		my $core_genome_db_name = $genome_db_name . "_core_";
 		my($host,$port,$db_name,$user,$pass,$locator_string);
 		foreach my $dba(@dbas){
-			if($dba->species eq "$genome_db_name") {
+			if($dba->dbc->dbname=~m/$core_genome_db_name/) {
 				$host = $dba->dbc->host;
 				$port = $dba->dbc->port;
 				$db_name = $dba->dbc->dbname;
@@ -202,7 +203,7 @@ sub set_gdb_locator { # fill in the locator field in the genome_db table
 				last;
 			} 
 		} 
-		if ($genome_db_name eq $ancestor_db->{'-name'}){
+		if ($ancestor_db->{'-dbname'}=~m/$core_genome_db_name/){
 			$host = $ancestor_db->{'-host'};
 			$port = $ancestor_db->{'-port'};
 			$db_name = $ancestor_db->{'-dbname'};
