@@ -14,12 +14,14 @@ $self->write_output(); writes to database
 
 =head1 DESCRIPTION
 
+Module to set up the production database for generating multiple alignments usng Ortheus.
 
-=head1 AUTHOR - Stephen Fitzgerald
+
+=head1 AUTHOR - compara
 
 This modules is part of the Ensembl project http://www.ensembl.org
 
-Email compara@ebi.ac.uk
+Email ensembl-dev@ebi.ac.uk
 
 =head1 CONTACT
 
@@ -181,14 +183,14 @@ sub write_output {
 	$self->dataflow_output_id( \@synteny_region_ids, 2 );
 }
 
-sub set_gdb_locator {
+sub set_gdb_locator { # fill in the locator field in the genome_db table
 	my $self = shift;
 	my $ancestor_db = $self->param('ancestor_db');
 	my $genome_db_names = shift;
 	Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs( $self->param('main_core_dbs') );
 	my @dbas = @{ Bio::EnsEMBL::Registry->get_all_DBAdaptors() };
 	foreach my $genome_db_name(split(",", $genome_db_names), $ancestor_db->{'-name'}){
-		my($host,$port,$db_name,$user,$locator_string);
+		my($host,$port,$db_name,$user,$pass,$locator_string);
 		foreach my $dba(@dbas){
 			if($dba->species eq "$genome_db_name") {
 				$host = $dba->dbc->host;
@@ -205,7 +207,8 @@ sub set_gdb_locator {
 			$port = $ancestor_db->{'-port'};
 			$db_name = $ancestor_db->{'-dbname'};
 			$user = $ancestor_db->{'-user'};
-			$locator_string = "Bio::EnsEMBL::DBSQL::DBAdaptor/host=$host;port=$port;user=$user;". 
+			$pass = $ancestor_db->{'-pass'};
+			$locator_string = "Bio::EnsEMBL::DBSQL::DBAdaptor/host=$host;port=$port;user=$user;pass=$pass;". 
 				"dbname=$db_name;species=$genome_db_name;disconnect_when_inactive=1";
 		}
 		my $sth = $self->dbc->prepare("UPDATE genome_db SET locator=\"$locator_string\" WHERE name = \"$genome_db_name\"");
