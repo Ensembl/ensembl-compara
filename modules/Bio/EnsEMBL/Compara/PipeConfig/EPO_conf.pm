@@ -22,7 +22,7 @@ sub default_options {
 
 	   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
-		-host   => 'compara3',
+		-host   => 'compara1',
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
@@ -31,7 +31,7 @@ sub default_options {
 	 # ancestral seqs db
 	'ancestor_db' => {
 		-user => 'ensadmin',
-		-host => 'compara3',
+		-host => 'compara1',
 		-port => 3306,
 		-pass => $self->o('password'),
 		-name => 'ancestral_sequences',
@@ -42,7 +42,7 @@ sub default_options {
 		-user => 'ensro',
 		-port => 3306,
 		-pass => '',
-		-host => 'compara3',
+		-host => 'compara1',
 		-dbname => 'sf5_test_anc_map66',
 	},
 	 # master db
@@ -50,8 +50,8 @@ sub default_options {
 		-user => 'ensro',
 		-port => 3306,
 		-pass => '',
-		-host => 'compara3',
-		-dbname => 'sf5_compara_patch_master',
+		-host => 'compara1',
+		-dbname => 'sf5_ensembl_compara_master',
 	},
 	'main_core_dbs' => {
 		-user => 'ensro',
@@ -64,7 +64,7 @@ sub default_options {
 	  # mlssid of mappings to use
 	'mapping_mlssid' => 6,
 	  # mlssid of ortheus alignments
-	'ortheus_mlssid' => 538,
+	'ortheus_mlssid' => 548,
 	  # species tree file
 	'species_tree_file' => '',
 	  # data directories:
@@ -157,6 +157,7 @@ return [
 				bl2seq => $self->o('bl2seq'),
 				bl2seq_file => $self->o('bl2seq_file'),
 			       },
+		-hive_capacity => 10,
 		-flow_into => {
 				1 => [ 'set_internal_ids' ],
 			},
@@ -185,7 +186,8 @@ return [
 				max_block_size=>1000000,
 				java_options=>'-server -Xmx1000M',
 			},
-		-module => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Ortheus',
+		-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
+		-hive_capacity => 100,
 		-wait_for => [ 'set_internal_ids' ],
 	  },
 	

@@ -4,7 +4,7 @@
 # POD documentation - main docs before the code
 =head1 NAME
 
-Bio::EnsEMBL::Compara::Production::EPOanchors::ParseEnredo
+Bio::EnsEMBL::Compara::Production::EPOanchors::FindStrand
 
 =head1 SYNOPSIS
 
@@ -14,8 +14,10 @@ $self->write_output(); writes to database
 
 =head1 DESCRIPTION
 
+this module finds the strand of the dnafrag_region rows taken from the enredo output file, 
+where those dnafrag_regions have been designated 0 by enredo. It uses bl2seq to work out the strand.
 
-=head1 AUTHOR - Stephen Fitzgerald
+=head1 AUTHOR - compara
 
 This modules is part of the Ensembl project http://www.ensembl.org
 
@@ -90,7 +92,7 @@ sub fetch_input {
 			foreach my $target_name ( sort keys %{ $this_result->{ $query_name } }) {
 				foreach my $strand (sort keys %{ $this_result->{ $query_name }{ $target_name } } ) {
 					foreach my $num_of_results (sort keys %{ $this_result->{ $query_name }{ $target_name }{ $strand } } ) {
-						## get an average score for each query strand
+						# get an average score for each query strand
 						$matches->{ $query_name }{ $strand } +=
 						$this_result->{ $query_name }{ $target_name }{ $strand }{ $num_of_results } / $num_of_results;
 					}
@@ -98,7 +100,7 @@ sub fetch_input {
 			}
 		}
 	}
-	##set the query strand to -1 or 1 depending on the average score from the blast results
+	# set the query strand to -1 or 1 depending on the average score from the blast results
 	if( keys %$matches) {
 		foreach my $query_name ( sort keys %{ $query_index } ) {
 			push(@{ $query_set->[ $query_index->{ $query_name } + $query_offset ] }, 
@@ -137,35 +139,17 @@ sub write_files {
         return($q_fh, $t_fh);
 }
 
-=head2 print_to_file
-
-  Arg[1]  array_ref like this [dnafrag_object, seq_start, seq_end, seq_strand]
-  Arg[2]  string data type (query or target)
-  Example $file_name = print_to_file($this_query,"Q")
-  Description:  writes query and target sequences in FASTA format to disc
-  ReturnType: string (file_name)
-
-=cut
-
 sub print_to_file {
         my($slice_info, $type, $file_root) = @_; 
 	my $file_name = $file_root . join("_", @{ $slice_info }[0..2] ) . ".$type";
 	my $slice = $slice_info->[3]; 
 	my $seq = $slice->seq;
+	# format the sequence 
 	$seq =~ s/(.{60})/$1\n/g;
 	open(FH, ">>$file_name") or die "cant open $file_name";
 	print FH ">" . $slice->name . "\n$seq";
 	return $file_name;
 }
-
-=head2 parse_bl2seq
-
-  Arg[1]  file_handle of blast results file
-  Example open($bl2seq_fh, "$command |"); parse_bl2seq($bl2seq_fh);
-  Description:  parses the query/target blast results file 
-  ReturnType: hashref of the scores and the number of hits to each query strand
-
-=cut
 
 sub parse_bl2seq {
 	my $file2parse = shift;
