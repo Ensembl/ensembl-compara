@@ -520,14 +520,14 @@ sub search_GENE {
     [ $db, 'Gene',
       "select count( * ) from object_xref as ox, xref as x
         where ox.ensembl_object_type = 'Translation' and ox.xref_id = x.xref_id and x.dbprimary_acc [[COMP]] '[[KEY]]'",
-      "SELECT concat( display_label ), '$db', 'Transcript', 'peptide' from object_xref as ox, xref as x
+      "SELECT g.stable_id, concat( display_label ), '$db', 'Transcript', 'peptide' from translation as g, object_xref as ox, xref as x
         where g.translation_id = ox.ensembl_id and ox.ensembl_object_type = 'Translation' and 
               ox.xref_id = x.xref_id and x.dbprimary_acc [[COMP]] '[[KEY]]'" ],
     [ $db, 'Gene',
       "select count( distinct(ensembl_id) ) from object_xref as ox, xref as x
         where ox.ensembl_object_type = 'Translation' and ox.xref_id = x.xref_id and
               x.display_label [[COMP]] '[[KEY]]' and not(x.dbprimary_acc [[COMP]] '[[KEY]]')",
-      "SELECT distinct(g.stable_id), concat( display_label ), '$db', 'Transcript', 'peptide' from object_xref as ox, xref as x
+      "SELECT distinct(g.stable_id), concat( display_label ), '$db', 'Transcript', 'peptide' from translation as g, object_xref as ox, xref as x
         where g.translation_id = ox.ensembl_id and ox.ensembl_object_type = 'Translation' and 
               ox.xref_id = x.xref_id and x.display_label [[COMP]] '[[KEY]]' and
               not(x.dbprimary_acc [[COMP]] '[[KEY]]')" ]
