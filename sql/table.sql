@@ -985,24 +985,24 @@ CREATE TABLE nc_profile (
 
 
 #
-# Table structure for table 'protein_tree_stable_id'
+# Table structure for table 'protein_tree_root'
 #
 # overview:
 #     to allow protein trees have trackable stable_ids.
 #
 # semantics:
-#    node_id           - node_id of the root of the tree
+#    root_id           - node_id of the root of the tree
 #    stable_id         - the main part of the stable_id ( follows the pattern: label(5).release_introduced(4).unique_id(10) )
 #    version           - numeric version of the stable_id (changes only when members move to/from existing trees)
 
-CREATE TABLE protein_tree_stable_id (
-    node_id   INT(10) UNSIGNED NOT NULL,
+CREATE TABLE protein_tree_root (
+    root_id   INT(10) UNSIGNED NOT NULL,
     stable_id VARCHAR(40)  NOT NULL, # unique stable id, e.g. 'ENSGT'.'0053'.'1234567890'
     version   INT UNSIGNED NOT NULL, # version of the stable_id (changes only when members move to/from existing trees)
 
-    FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
+    FOREIGN KEY (root_id) REFERENCES protein_tree_node(node_id),
 
-    PRIMARY KEY ( node_id ),
+    PRIMARY KEY (root_id ),
     UNIQUE KEY ( stable_id )
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
