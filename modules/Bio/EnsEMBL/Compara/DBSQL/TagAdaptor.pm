@@ -63,7 +63,7 @@ sub _load_tagvalues {
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
     
     # Updates the list of attribute names
-    if (not exists $self->{'_attr_list'}) {
+    if ((not exists $self->{'_attr_list'}) and (defined $db_attrtable)) {
         $self->{'_attr_list'} = {};
         eval {
             my $sth = $self->dbc->db_handle->column_info(undef, undef, $db_attrtable, '%');
