@@ -36,7 +36,7 @@ and dnafrag_region tables
 
   my $synteny_region = $synteny_region_adaptor->fetch_by_dbID(1);
   my $synteny_regions = $synteny_region_adaptor->
-      fetch_by_MethodLinkSpeciesSet_DnaFrag(
+      fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
           $mlss, $dnafrag, $start, $end);
 
 
@@ -70,7 +70,7 @@ and dnafrag_region tables
   my $synteny_region_adaptor = $reg->get_adaptor(
       "Multi", "compara", "SyntenyRegion");
   my $synteny_regions = $synteny_region_adaptor->
-      fetch_by_MethodLinkSpeciesSet_DnaFrag(
+      fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
           $human_mouse_synteny_method_link_species_set,
           $dnafrag, 100000, 200000);
 
@@ -242,20 +242,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   }
 
   return $all_synteny_regions;
-}
-
-
-=head2 fetch_by_MethodLinkSpeciesSet_DnaFrag
-
- Status      : Deprecated. Use fetch_all_by_MethodLinkSpeciesSet_DnaFrag
-               instead
-
-=cut
-
-sub fetch_by_MethodLinkSpeciesSet_DnaFrag {
-  my $self = shift(@_);
-
-  return $self->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(@_);
 }
 
 
