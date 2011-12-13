@@ -42,7 +42,10 @@ use strict;
 
 
 sub _tag_capabilities {
-    die "_tag_capabilities must be redefined in the subclass\n";
+    my $self = shift;
+    my $object = shift;
+
+    die "_tag_capabilities for $object must be redefined in $self (or a subclass)\n";
     #return ("protein_tree_tag", "protein_tree_attr", "node_id", "node_id");
 }
 
@@ -57,7 +60,7 @@ sub _load_tagvalues {
     my $self = shift;
     my $object = shift;
 
-    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities();
+    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
     
     # Updates the list of attribute names
     if (not exists $self->{'_attr_list'}) {
@@ -107,7 +110,7 @@ sub _store_tagvalue {
     my $value = shift;
     my $allow_overloading = shift;
     
-    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities();
+    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
   
     if (exists $self->{'_attr_list'}->{$tag}) {
         # It is an attribute
@@ -140,7 +143,7 @@ sub _delete_tagvalue {
     my $tag = shift;
     my $value = shift;
     
-    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities();
+    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
   
     if (exists $self->{'_attr_list'}->{$tag}) {
         # It is an attribute
