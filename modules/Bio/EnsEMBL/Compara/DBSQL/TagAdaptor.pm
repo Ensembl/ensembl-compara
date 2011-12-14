@@ -20,19 +20,24 @@
 
 Bio::EnsEMBL::Compara::DBSQL::TagAdaptor
 
-=head1 SYNOPSIS
-
 =head1 DESCRIPTION
 
-TagAdaptor - Generic adaptor that gives a database backend for tags / attributes
+Generic adaptor that gives a database backend for tags / attributes (to
+use with Bio::EnsEMBL::Compara::Taggable). There can be any number of
+values for tags, but at most one for each attribute.
 
-=head1 INHERITANCE TREE
+=head1 MAINTAINER
 
-  Bio::EnsEMBL::Compara::DBSQL::TagAdaptor
+$Author$
+
+=head VERSION
+
+$Revision$
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with a _
 
 =cut
 
@@ -41,43 +46,48 @@ package Bio::EnsEMBL::Compara::DBSQL::TagAdaptor;
 use strict;
 
 
+=head2 _tag_capabilities
+
+  Description: returns the tag/attributes capabilities for the object. The
+               return value is an array with 4 entries:
+                - the name of the table to store tag
+                - the name of the table to store attribute
+                - the name of the key column in the tables
+                - the name of the perl method to have the key value
+  Arg [1]    : <scalar> reference object
+  Example    : return ("species_set_tag", undef, "species_set_id", "dbID");
+  Returntype : Array of 4 entries
+  Exceptions : none
+  Caller     : internal
+
+=cut
+
 sub _tag_capabilities {
-    my $self = shift;
-    my $object = shift;
+    my ($self, $object) = @_;
 
     die "_tag_capabilities for $object must be redefined in $self (or a subclass)\n";
     #return ("protein_tree_tag", "protein_tree_attr", "node_id", "node_id");
 }
 
 
-###################################
-#
-# tagging
-#
-###################################
+=head2 _load_tagvalues
+
+  Description: retrieves all the tags and attributes from the database and
+               calls add_tag to store them in the PERL hash
+  Arg [1]    : <scalar> reference object
+  Example    : $genetree_adaptor->_load_tagvalues($tree);
+  Returntype : none
+  Exceptions : none
+  Caller     : internal
+
+=cut
 
 sub _load_tagvalues {
     my $self = shift;
     my $object = shift;
 
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
-    
-    # Updates the list of attribute names
-    if (not exists $self->{'_attr_list'}) {
-        $self->{'_attr_list'} = {};
-        eval {
-            my $sth = $self->dbc->db_handle->column_info(undef, undef, $db_attrtable, '%');
-            $sth->execute();
-            while (my $row = $sth->fetchrow_hashref()) {
-                ${$self->{'_attr_list'}}{${$row}{'COLUMN_NAME'}} = 1;
-            }
-            $sth->finish;
-        } if defined $db_attrtable;
-        if ($@) {
-            warn "$db_attrtable not available in this database\n";
-        }
-    }
-
+ 
     # Tags (multiple values are allowed)
     my $sth = $self->prepare("SELECT tag, value FROM $db_tagtable WHERE $db_keyname=?");
     $sth->execute($object->$perl_keyname);
@@ -85,9 +95,26 @@ sub _load_tagvalues {
         $object->add_tag($tag, $value, 1);
     }
     $sth->finish;
+   
+    # Attributes ?
+    if (defined $db_attrtable) {
+        # Updates the list of attribute names
+        if (not exists $self->{"_attr_list_$db_attrtable"}) {
+            $self->{"_attr_list_$db_attrtable"} = {};
+            eval {
+                my $sth = $self->dbc->db_handle->column_info(undef, undef, $db_attrtable, '%');
+                $sth->execute();
+                while (my $row = $sth->fetchrow_hashref()) {
+                    ${$self->{"_attr_list_$db_attrtable"}}{${$row}{'COLUMN_NAME'}} = 1;
+                }
+                $sth->finish;
+            };
+            if ($@) {
+                warn "$db_attrtable not available in this database\n";
+            }
+        }
 
-    # Attributes (multiple values are forbidden)
-    if (%{$self->{'_attr_list'}}) {  # Only if some attributes are defined
+        # Attributes (multiple values are forbidden)
         $sth = $self->prepare("SELECT * FROM $db_attrtable WHERE $db_keyname=?");
         $sth->execute($object->$perl_keyname);
         # Retrieve data
@@ -103,6 +130,21 @@ sub _load_tagvalues {
     }
 }
 
+
+=head2 _store_tagvalue
+
+  Arg [1]    : <scalar> object
+  Arg [2]    : <string> tag
+  Arg [3]    : <string> value
+  Arg [4]    : (optional) <int> allows overloading the tag with different values
+               default is 0 (no overloading allowed, one tag points to one value)
+  Example    : $speciesset_adaptor->_store_tagvalue($species_set, "colour", "red");
+  Returntype : none
+  Exceptions : none
+  Caller     : internal
+
+=cut
+
 sub _store_tagvalue {
     my $self = shift;
     my $object = shift;
@@ -112,7 +154,8 @@ sub _store_tagvalue {
     
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
   
-    if (exists $self->{'_attr_list'}->{$tag}) {
+    if (exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
+        warn "Trying to overload the value of attribute '$tag' ! This is not allowed for $self\n" if $allow_overloading;
         # It is an attribute
         my $sth = $self->prepare("INSERT IGNORE INTO $db_attrtable ($db_keyname) VALUES (?)");
         $sth->execute($object->$perl_keyname);
@@ -137,6 +180,20 @@ sub _store_tagvalue {
     }
 }
 
+
+=head2 _delete_tagvalue
+
+  Description: removes a tag from the database
+  Arg [1]    : <scalar> object
+  Arg [2]    : <string> tag
+  Arg [3]    : (optional) <string> value
+  Example    : $speciesset_adaptor->_delete_tagvalue($species_set, "colour");
+  Returntype : none
+  Exceptions : none
+  Caller     : internal
+
+=cut
+
 sub _delete_tagvalue {
     my $self = shift;
     my $object = shift;
@@ -145,7 +202,7 @@ sub _delete_tagvalue {
     
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
   
-    if (exists $self->{'_attr_list'}->{$tag}) {
+    if (exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
         # It is an attribute
         my $sth = $self->prepare("UPDATE $db_attrtable SET $tag=NULL WHERE $db_keyname=?");
         $sth->execute($object->$perl_keyname);

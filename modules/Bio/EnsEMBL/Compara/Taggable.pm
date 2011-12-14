@@ -42,8 +42,6 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Taggable;
 
 use strict;
-use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Utils::Argument;
 
 
 =head2 add_tag
@@ -59,7 +57,7 @@ use Bio::EnsEMBL::Utils::Argument;
                default is 0 (no overloading allowed, one tag points to one value)
   Example    : $ns_node->add_tag('scientific name', 'Mammalia');
                $ns_node->add_tag('lost_taxon_id', 9593, 1);
-  Returntype : Boolean indicating if the tag could be stored
+  Returntype : Boolean indicating if the tag could be added
   Exceptions : none
   Caller     : general
 
@@ -72,17 +70,12 @@ sub add_tag {
     my $allow_overloading = shift;
 
     # Argument check
-    return 0 unless (defined $tag);
-    return 0 unless (defined $value);
+    unless (defined $tag)   {warn "add_tag called on $self with an undef \$tag\n"; return 0};
+    unless (defined $value) {warn "add_tag called on $self with an undef value for tag '$tag'\n"; return 0};
     $allow_overloading = 0 unless (defined $allow_overloading);
     
     $self->_load_tags;
     $tag = lc($tag);
-
-    if ($allow_overloading and exists $self->{'_attr_list'} and exists $self->{'_attr_list'}->{$tag}) {
-        warn "Trying to overload the value of attribute '$tag' ! This is not allowed for $self\n";
-        return 0;
-    }
 
     # Stores the value in the PERL object
     if ( ! exists($self->{'_tags'}->{$tag}) || ! $allow_overloading ) {
@@ -134,6 +127,7 @@ sub store_tag {
             return 1;
         }
     } else {
+        warn "add_tag has failed, store_tag is now skipped\n";
         return 0;
     }
 }
@@ -162,14 +156,14 @@ sub delete_tag {
     my $value = shift;
 
     # Arguments check
-    return 0 unless (defined $tag);
+    unless (defined $tag)   {warn "delete_tag called on $self with an undef \$tag\n"; return 0};
     $tag = lc($tag);
 
     $self->_load_tags;
-    return 0 unless exists($self->{'_tags'}->{$tag});
+    return 1 unless exists($self->{'_tags'}->{$tag});
 
     # Updates the PERL object
-    my $ret = 0;
+    my $found = 0;
     if (defined $value) {
         if ( ref($self->{'_tags'}->{$tag}) eq 'ARRAY' ) {
             my $arr = $self->{'_tags'}->{$tag};
@@ -178,7 +172,7 @@ sub delete_tag {
                 $index-- until ($index < 0) or ($arr->[$index] eq $value);
                 if ($index >= 0) {
                     splice(@$arr, $index, 1);
-                    $ret = 1;
+                    $found = 1;
                 }
             }
             if (scalar(@$arr) == 0) {
@@ -189,16 +183,16 @@ sub delete_tag {
         } else {
             if ($self->{'_tags'}->{$tag} eq $value) {
                 delete $self->{'_tags'}->{$tag};
-                $ret = 1;
+                $found = 1;
             }
         }
     } else {
         delete $self->{'_tags'}->{$tag};
-        $ret = 1;
+        $found = 1;
     }
 
     # Update the database
-    if ($ret) {
+    if ($found) {
         if($self->adaptor and $self->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::TagAdaptor")) {
             $self->adaptor->_delete_tagvalue($self, $tag, $value);
             return 2;
@@ -206,7 +200,7 @@ sub delete_tag {
             return 1;
         }
     } else {
-        return 0;
+        return 1;
     }
 }
 
@@ -235,12 +229,12 @@ sub has_tag {
 
 =head2 get_tagvalue
 
-  Description: returns the value of the tag, or $default (undef
+  Description: returns the value(s) of the tag, or $default (undef
                if not provided) if the tag doesn't exist.
   Arg [1]    : <string> tag
-  Arg [2]    : (optional) <string> default
+  Arg [2]    : (optional) <scalar> default
   Example    : $ns_node->get_tagvalue('scientific name');
-  Returntype : String
+  Returntype : Scalar or ArrayRef
   Exceptions : none
   Caller     : general
 
@@ -259,6 +253,62 @@ sub get_tagvalue {
     return $self->{'_tags'}->{$tag};
 }
 
+
+=head2 get_value_for_tag
+
+  Description: returns the value of the tag, or $default (undef
+               if not provided) if the tag doesn't exist. In case
+               of multiple values, the first one is returned.
+  Arg [1]    : <string> tag
+  Arg [2]    : (optional) <scalar> default
+  Example    : $ns_node->get_tagvalue('scientific name');
+  Returntype : Scalar
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_value_for_tag {
+    my $self = shift;
+    my $tag = shift;
+    my $default = shift;
+
+    my $ret = $self->get_tagvalue($tag, $default);
+    if ((defined $ret) and (ref($ret) eq 'ARRAY')) {
+        return $ret->[0];
+    } else {
+        return $ret;
+    }
+}
+
+
+=head2 get_all_values_for_tag
+
+  Description: returns all the values of the tag, or $default (undef
+               if not provided) if the tag doesn't exist. In case of
+               a single value, it is wrapped with an array
+  Arg [1]    : <string> tag
+  Arg [2]    : (optional) <scalar> default
+  Example    : $ns_node->get_tagvalue('scientific name');
+  Returntype : ArrayRef
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_all_values_for_tag {
+    my $self = shift;
+    my $tag = shift;
+    my $default = shift || [];
+
+    my $ret = $self->get_tagvalue($tag);
+    return $default if not defined $ret;
+    if (ref($ret) eq 'ARRAY') {
+        return $ret;
+    } else {
+        return [$ret];
+    }
+}
 
 =head2 get_all_tags
 
