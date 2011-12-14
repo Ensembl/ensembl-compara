@@ -322,56 +322,10 @@ sub store_clusters {
 sub delete_original_cluster {
   my $self = shift;
 
-  my $original_cluster_node_id = $self->param('original_cluster')->node_id;
-#  $self->delete_old_orthotree_tags;
-
-  my $tree_node_id = $original_cluster_node_id;
-  my $sql1 = "delete h.*, hm.* from homology h, homology_member hm where h.homology_id=hm.homology_id and h.tree_node_id=$tree_node_id";
-  my $sth1 = $self->dbc->prepare($sql1);
-  $sth1->execute;
-  $sth1->finish;
+  my $original_cluster_node_id = $self->param('protein_tree_id');
 
   $self->param('original_cluster')->adaptor->store_flattened_supertree( $original_cluster_node_id );
   $self->param('original_cluster')->adaptor->delete_flattened_tree(     $original_cluster_node_id );
-}
-
-sub delete_old_orthotree_tags {
-  my $self = shift;
-
-  print "deleting old orthotree tags\n" if ($self->debug);
-  my @node_ids;
-  my $left_index  = $self->param('protein_tree')->left_index;
-  my $right_index = $self->param('protein_tree')->right_index;
-  my $tree_root_node_id = $self->param('protein_tree')->node_id;
-  # Include the root_id as well as the rest of the nodes within the tree
-  push @node_ids, $tree_root_node_id;
-  my $sql = "select ptn.node_id from protein_tree_node ptn where ptn.root_id=$tree_root_node_id AND ptn.left_index>$left_index and ptn.right_index<$right_index";
-  my $sth = $self->dbc->prepare($sql);
-  $sth->execute;
-  while (my $aref = $sth->fetchrow_arrayref) {
-    my ($node_id) = @$aref;
-    push @node_ids, $node_id;
-  }
-
-  my @list_ids;
-  foreach my $id (@node_ids) {
-    push @list_ids, $id;
-    if (scalar @list_ids == 2000) {
-      my $sql = "delete from protein_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
-      my $sth = $self->dbc->prepare($sql);
-      $sth->execute;
-      $sth->finish;
-      @list_ids = ();
-    }
-  }
-  
-  if (scalar @list_ids) {
-    my $sql = "delete from protein_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
-    my $sth = $self->dbc->prepare($sql);
-    $sth->execute;
-    $sth->finish;
-    @list_ids = ();
-  }
 }
 
 sub generate_subtrees {
