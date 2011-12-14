@@ -433,12 +433,8 @@ sub hgvs {
   
   # Wrap the html
   if ($count > 1) {
-    my $hub  = $self->hub;
-    my $hgvs = $hub->param('hgvs');
-    my $show = ($hgvs || $hub->get_cookies('toggle_HGVS_names')) eq 'open';
+    my $show = $self->hub->get_cookies('toggle_HGVS_names') eq 'open';
     my $s    = $count > 1 ? 's' : '';
-    
-    $hub->set_cookie('toggle_HGVS_names', $hgvs) if $hgvs;
     
     $html = sprintf('
       <dt><a class="toggle %s set_cookie" href="#" rel="HGVS_names" title="Click to toggle HGVS names">HGVS names</a></dt>
