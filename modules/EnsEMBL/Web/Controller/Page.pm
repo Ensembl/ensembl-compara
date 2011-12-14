@@ -39,6 +39,14 @@ sub init {
 
 sub render_page {
   my $self = shift;
+  my $hub  = $self->hub;
+  
+  # Set cookies for toggleable content, then delete the param so it doesn't appear on any links in the page
+  foreach (grep /^toggle_.+/, $hub->param) {
+    $hub->set_cookie($_, $hub->param($_));
+    $hub->delete_param($_);
+  }
+  
   $self->SUPER::render_page if $self->access_ok && !$self->process_command;
 }
 
