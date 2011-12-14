@@ -102,17 +102,18 @@ sub create_objects {
   
   if ($request eq 'page') {
     my ($redirect) = $hub->get_problem_type('redirect');
-    my $new_url;
+    my ($new_url, $redirect_url);
     
     if ($redirect) {
-      $new_url = $redirect->name;
+      $new_url = $redirect_url = $redirect->name;
     } elsif (!$hub->has_fatal_problem) { # If there's a fatal problem, we want to show it, not redirect
       $hub->set_core_params;
-      $new_url = $hub->url($hub->multi_params);
+      $new_url      = $hub->url($hub->multi_params);
+      $redirect_url = $hub->current_url;
     }
     
     if ($new_url && $new_url ne $url) {
-      $hub->redirect($new_url);
+      $hub->redirect($redirect_url);
       return 'redirect';
     }
   }
