@@ -1,13 +1,14 @@
 #!/usr/local/ensembl/bin/perl -w
 
 use strict;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 use Getopt::Long;
 
 my $usage = "
 $0
   [--help]                      this menu
-   --dbname string              (e.g. compara23) one of the compara database Bio::EnsEMBL::Registry aliases
+   --dbname string              (e.g. compara23) one of the compara database Bio::EnsEMBL::Registry aliases or a valid url
    --seq_region string          (e.g. 22)
    --qy string                  (e.g. \"Homo sapiens\") the query species
                                 from which alignments are queried and seq_region refer to
@@ -21,7 +22,7 @@ $0
 
 my $help = 0;
 my $dbname;
-my $method_link_type = "BLASTZ_NET";
+my $method_link_type = "LASTZ_NET";
 my $seq_region;
 my $qy_species;
 my $tg_species;
@@ -47,12 +48,23 @@ if ($help) {
 # Take values from ENSEMBL_REGISTRY environment variable or from ~/.ensembl_init
 # if no reg_conf file is given.
 Bio::EnsEMBL::Registry->no_version_check(1);
-Bio::EnsEMBL::Registry->load_all($reg_conf);
 
-my $gdba = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomeDB');
-my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'MethodLinkSpeciesSet');
-my $dfa = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'DnaFrag');
-my $gaba = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomicAlignBlock');
+my $compara_dba;
+if ($reg_conf) {
+    Bio::EnsEMBL::Registry->load_all($reg_conf);
+}
+
+if ($dbname =~ /mysql:\/\//) {
+    $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$dbname);
+} else {
+    $compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($dbname, "compara");
+}
+die "Cannot connect to compara database: $dbname\n" if (!$compara_dba);
+
+my $gdba = $compara_dba->get_GenomeDBAdaptor;
+my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
+my $dfa = $compara_dba->get_DnaFragAdaptor;
+my $gaba = $compara_dba->get_GenomicAlignBlockAdaptor;
 
 my $qy_gdb = $gdba->fetch_by_name_assembly($qy_species);
 my $tg_gdb = $gdba->fetch_by_name_assembly($tg_species);
