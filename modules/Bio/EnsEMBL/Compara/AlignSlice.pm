@@ -1313,9 +1313,17 @@ sub _sort_GenomicAlignBlocks {
       push(@$sorted_genomic_align_blocks, $this_genomic_align_block);
       $last_end = $this_genomic_align_block->reference_genomic_align->dnafrag_end;
     } else {
-      warning("Ignoring Bio::EnsEMBL::Compara::GenomicAlignBlock #".
-              ($this_genomic_align_block->dbID or "-unknown")." because it overlaps".
-              " previous Bio::EnsEMBL::Compara::GenomicAlignBlock");
+	my $block_id;
+	if (UNIVERSAL::isa($a, "Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+	    warning("Ignoring Bio::EnsEMBL::Compara::GenomicAlignBlock #".
+		    ($this_genomic_align_block->dbID or "-unknown")." because it overlaps".
+		    " previous Bio::EnsEMBL::Compara::GenomicAlignBlock");
+	} else {
+	    warning("Ignoring Bio::EnsEMBL::Compara::GenomicAlignTree #".
+		    ($this_genomic_align_block->node_id or "-unknown")." because it overlaps".
+		    " previous Bio::EnsEMBL::Compara::GenomicAlignTree");
+	}
+
     }
   }
 
