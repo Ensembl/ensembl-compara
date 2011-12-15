@@ -154,12 +154,12 @@ sub fetch_input {
   ## DnaFragRegions are in random order
   $self->_load_DnaFragRegions($self->param('synteny_region_id'));
 
-  if ($self->param('dnafrag_regions')) {
-
+  if ($self->dnafrag_regions) {
     ## Get the tree string by taking into account duplications and deletions. Resort dnafrag_regions
     ## in order to match the name of the sequences in the tree string (seq1, seq2...)
-    if ($self->get_species_tree and $self->param('dnafrag_regions')) {
+    if ($self->get_species_tree and $self->dnafrag_regions) {
       $self->_build_tree_string;
+      print "seq_string ", $self->tree_string, "\n";
     }
     ## Dumps fasta files for the DnaFragRegions. Fasta files order must match the entries in the
     ## newick tree. The order of the files will match the order of sequences in the tree_string.
@@ -181,7 +181,7 @@ sub run
       -workdir => $self->worker_temp_directory,
       -fasta_files => $self->fasta_files,
       -tree_string => $self->tree_string,
-      -species_tree => $self->param("$species_tree_meta_key"),
+      -species_tree => $self->get_species_tree->newick_simple_format,
       -species_order => $self->species_order,
       -analysis => $self->analysis,
       -parameters => $self->param('java_options'),
@@ -198,7 +198,7 @@ sub run
   }
 
   #disconnect ancestral core database
-  my $ancestor_genome_db = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("ancestral_sequences");
+  my $ancestor_genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly("ancestral_sequences");
   my $ancestor_dba = $ancestor_genome_db->db_adaptor;
   $ancestor_dba->dbc->disconnect_if_idle;
 
@@ -959,25 +959,23 @@ sub _extract_sequence {
 # 
 ##########################################
 
-#sub input_dir {
-#  my $self = shift;
-#  $self->{'_input_dir'} = shift if(@_);
-#  return $self->{'_input_dir'};
-#}
-
-#sub synteny_region_id {
-#  my ($self, $value) = shift;
-#  $self->param('synteny_region_id') = shift if(@_);
-#  return $self->param('synteny_region_id');
-#}
-
-sub dnafrag_regions {
-  my ($self, $value) = @_;
-  my $dnafrag_regions = $self->param('dnafrag_regions');
-  push @$dnafrag_regions, $value;
-  $self->param('dnafrag_regions', $dnafrag_regions);
+sub input_dir {
+  my $self = shift;
+  $self->{'_input_dir'} = shift if(@_);
+  return $self->{'_input_dir'};
 }
 
+sub synteny_region_id {
+  my ($self, $value) = shift;
+  $self->param('synteny_region_id') = shift if(@_);
+  return $self->param('synteny_region_id');
+}
+
+sub dnafrag_regions {
+  my $self = shift;
+  $self->{'_dnafrag_regions'} = shift if(@_);
+  return $self->{'_dnafrag_regions'};
+}
 
 sub options {
   my $self = shift;
@@ -1052,9 +1050,9 @@ sub get_species_tree {
   	  throw("Unable to find genome_db_id $name in species_tree\n");
         }
     }
-    
-    $self->param('species_tree', $species_tree);
-  }
+  $self->param('species_tree', $species_tree);
+  return $self->param('species_tree');
+ }
 }
 
 sub tree_string {
@@ -1123,7 +1121,7 @@ sub _load_DnaFragRegions {
     push(@{$dnafrag_regions}, $dfr);
   }
 
-  $self->param('dnafrag_regions', $dnafrag_regions);
+  $self->dnafrag_regions($dnafrag_regions);
 }
 
 
@@ -1376,9 +1374,11 @@ sub _dump_fasta {
 
     print F ">SeqID" . $seq_id . "\n";
 
-    print ">DnaFrag", $dfr->dnafrag_id, "|", $dfr->dnafrag->name, ".",
-        $dfr->dnafrag_start, "-", $dfr->dnafrag_end, ":", $dfr->dnafrag_strand,"\n" if $self->debug;
+    print ">DnaFrag", $dfr->dnafrag_id, "|", $dfr->dnafrag->name, "|", $dfr->dnafrag->genome_db->name, "|", $dfr->dnafrag->genome_db_id, "|",
+        $dfr->dnafrag_start, "-", $dfr->dnafrag_end, ":", $dfr->dnafrag_strand," $seq_id***\n" if $self->debug;
 
+# my $slice = $dfr->dnafrag->slice->sub_Slice($dfr->dnafrag_start,$dfr->dnafrag_end,$dfr->dnafrag_strand);
+ 
     my $slice = $dfr->slice;
     throw("Cannot get slice for DnaFragRegion in DnaFrag #".$dfr->dnafrag_id) if (!$slice);
     my $seq = $slice->get_repeatmasked_seq(undef, 1)->seq;
@@ -1459,14 +1459,13 @@ sub _update_tree {
   my $self = shift;
   my $tree = shift;
 
-  my $all_dnafrag_regions = $self->param('dnafrag_regions');
+  my $all_dnafrag_regions = $self->dnafrag_regions;
   my $ordered_dnafrag_regions = [];
   my $ordered_2x_genomes = [];
 
   my $idx = 1;
   my $all_leaves = $tree->get_all_leaves;
   foreach my $this_leaf (@$all_leaves) {
-
     my $these_dnafrag_regions = [];
     my $these_2x_genomes = [];
     ## Look for DnaFragRegions belonging to this genome_db_id
@@ -1496,7 +1495,6 @@ sub _update_tree {
 
     } elsif (@$these_dnafrag_regions > 1) {
       ## If more than 1 has been found, let Ortheus estimate the Tree
-
 	#need to add on 2x genomes to dnafrag_regions array
 	my $dfa = $self->dnafrag_regions;
 	foreach my $ga_frags (@{$self->{ga_frag}}) {
@@ -1515,16 +1513,15 @@ sub _update_tree {
 	$this_leaf->name("seq".$idx++);
 	#push(@$ordered_2x_genomes, $these_2x_genomes->[0]);
 	push(@$ordered_dnafrag_regions, $ga_frags);
-   } else {
+  } else {
       ## If none has been found...
       $this_leaf->disavow_parent;
       $tree = $tree->minimize_tree;
     }
-  }
+ }
+ $self->dnafrag_regions($ordered_dnafrag_regions);
 
-  $self->dnafrag_regions($ordered_dnafrag_regions);
-
-  $self->{ordered_2x_genomes} = $ordered_2x_genomes;
+ $self->{ordered_2x_genomes} = $ordered_2x_genomes;
 
 
   #if (scalar(@$all_dnafrag_regions) != scalar(@$ordered_dnafrag_regions) or
@@ -1537,7 +1534,6 @@ sub _update_tree {
     $child->parent->merge_children($child);
     $child->disavow_parent;
   }
-
   return $tree;
 }
 
