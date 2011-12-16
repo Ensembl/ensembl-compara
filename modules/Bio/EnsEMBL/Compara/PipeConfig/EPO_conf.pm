@@ -15,7 +15,7 @@ sub default_options {
         'pipeline_name' => 'compara_EPO',
 
 	   # parameters that are likely to change from execution to another:
-	'release'               => '66',
+	'release'               => '65',
 	'rel_suffix'            => '',    # an empty string by default, a letter otherwise
 	   # dependent parameters:
 	'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
@@ -26,7 +26,7 @@ sub default_options {
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
-		-dbname => $self->o('ENV', 'USER').'_compara_epo'.$self->o('rel_with_suffix'),
+		-dbname => $self->o('ENV', 'USER').'_TEST_compara_epo_'.$self->o('rel_with_suffix'),
    	},
 	 # ancestral seqs db
 	'ancestor_db' => {
@@ -35,7 +35,7 @@ sub default_options {
 		-port => 3306,
 		-pass => $self->o('password'),
 		-name => 'ancestral_sequences',
-		-dbname => $self->o('ENV', 'USER').'_ancestral_core'.$self->o('rel_with_suffix'),
+		-dbname => $self->o('ENV', 'USER').'_TEST_ancestral_sequences_core_'.$self->o('rel_with_suffix'),
 	},
 	  # database containing the mapped anchors
 	'compara_mapped_anchor_db' => {
@@ -58,6 +58,7 @@ sub default_options {
 		-port => 3306,
 		-host => 'ens-livemirror',
 		-dbname => '',
+		-db_version => $self->o('release'),
 	},
 	other_core_dbs => {
 	},
@@ -158,9 +159,6 @@ return [
 				bl2seq_file => $self->o('bl2seq_file'),
 			       },
 		-hive_capacity => 10,
-		-flow_into => {
-				1 => [ 'set_internal_ids' ],
-			},
 	  },
 
 	  {	-logic_name => 'set_internal_ids',
@@ -176,9 +174,6 @@ return [
 						'ALTER TABLE dnafrag AUTO_INCREMENT=#expr(($ortheus_mlssid * 10**10) + 1)expr#',
 					],
 			},
-		-flow_into => {
-				1 => [ 'Ortheus' ],
-			},
 	  },
 
 	  {	-logic_name => 'Ortheus',
@@ -188,8 +183,41 @@ return [
 			},
 		-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
 		-hive_capacity => 100,
+		-flow_into => {
+                               1 => [ 'update_max_alignment_length' ],
+                     },
 		-wait_for => [ 'set_internal_ids' ],
 	  },
+
+	  {  -logic_name => 'update_max_alignment_length',
+             -module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::UpdateMaxAlignmentLength',
+	     -parameters => {
+				'method_link_species_set_id' => $self->o('ortheus_mlssid'),
+		},
+             -flow_into => {
+                              1 => [ 'create_neighbour_nodes_jobs_alignment' ],
+                     },  
+            },  
+	    {	-logic_name => 'create_neighbour_nodes_jobs_alignment',
+		-parameters => {
+				'inputquery' => 'SELECT root_id FROM genomic_align_tree WHERE parent_id = 0',
+				'fan_branch_code' => 1,
+				}, 
+		-module => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+		-wait_for => [ 'Ortheus' ],
+		-flow_into => {
+				1 => [ 'set_neighbour_nodes' ],
+			},
+	},
+	
+	{	-logic_name => 'set_neighbour_nodes',
+		-module => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
+		-parameters => {
+				'method_link_species_set_id' => $self->o('ortheus_mlssid'),
+			},
+		-batch_size    => 10,
+		-hive_capacity => 15,
+	},
 	
      ];
 }	
