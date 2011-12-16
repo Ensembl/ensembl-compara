@@ -117,7 +117,6 @@ sub update_meta_table {
 
   $dba->dbc->do("analyze table genomic_align_block");
   $dba->dbc->do("analyze table genomic_align");
-  $dba->dbc->do("analyze table genomic_align_group");
 
   #Don't like doing this but it looks to be the only way to avoid going mad WRT where & and clauses
   my @args;
@@ -167,14 +166,12 @@ sub remove_alignment_data_inconsistencies {
 
   $dba->dbc->do("analyze table genomic_align_block");
   $dba->dbc->do("analyze table genomic_align");
-  $dba->dbc->do("analyze table genomic_align_group");
 
   #Delete genomic align blocks which have no genomic aligns. Assume not many of these
   #
 
   my $sql_gab = "delete from genomic_align_block where genomic_align_block_id in ";
   my $sql_ga = "delete from genomic_align where genomic_align_id in ";
-  my $sql_gag = "delete from genomic_align_group where genomic_align_id in ";
 
   my $gab_sel = '';
   my @gab_args;
@@ -233,9 +230,8 @@ sub remove_alignment_data_inconsistencies {
   if (scalar @gab_ids) {
     my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ")";
     my $sql_ga_to_exec = $sql_ga . "(" . join(",", @ga_ids) . ")";
-    my $sql_gag_to_exec = $sql_gag . "(" . join(",", @ga_ids) . ")";
 
-    foreach my $sql ($sql_gab_to_exec,$sql_ga_to_exec,$sql_gag_to_exec) {
+    foreach my $sql ($sql_ga_to_exec,$sql_gab_to_exec) {
       my $sth = $dba->dbc->prepare($sql);
       $sth->execute;
       $sth->finish;
