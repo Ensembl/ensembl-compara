@@ -433,17 +433,6 @@ sub fetch_gene_for_peptide_member_id {
 
 =head2 fetch_all_peptides_for_gene_member_id
 
-  DEPRECATED: use fetch_all_peptides_for_gene_member_id instead
-
-=cut
-
-sub fetch_peptides_for_gene_member_id {
-  my ($self, @args) = @_;
-  return $self->fetch_all_peptides_for_gene_member_id(@args);
-}
-
-=head2 fetch_all_peptides_for_gene_member_id
-
   Arg [1]    : int member_id of a gene member
   Example    : @pepMembers = @{$memberAdaptor->fetch_all_peptides_for_gene_member_id($gene_member_id)};
   Description: given a member_id of a gene member,
@@ -472,9 +461,9 @@ sub fetch_all_peptides_for_gene_member_id {
 =head2 fetch_canonical_peptide_member_for_gene_member_id
 
   Arg [1]    : int member_id of a gene member
-  Example    : $pepMembers = $memberAdaptor->fetch_peptides_for_gene_member_id($gene_member_id);
+  Example    : $pepMembers = $memberAdaptor->fetch_canonical_peptide_member_for_gene_member_id($gene_member_id);
   Description: given a member_id of a gene member,
-               fetches all peptide members for this gene
+               fetches all canonical peptide members for this gene
   Returntype : Bio::EnsEMBL::Compara::Member object
   Exceptions :
   Caller     : general
@@ -509,9 +498,9 @@ sub fetch_canonical_peptide_member_for_gene_member_id {
 =head2 fetch_canonical_transcript_member_for_gene_member_id
 
   Arg [1]    : int member_id of a gene member
-  Example    : $pepMembers = $memberAdaptor->fetch_peptides_for_gene_member_id($gene_member_id);
+  Example    : $transMembers = $memberAdaptor->fetch_canonical_transcript_member_for_gene_member_id($gene_member_id);
   Description: given a member_id of a gene member,
-               fetches all peptide members for this gene
+               fetches all canonical transcript members for this gene
   Returntype : Bio::EnsEMBL::Compara::Member object
   Exceptions :
   Caller     : general

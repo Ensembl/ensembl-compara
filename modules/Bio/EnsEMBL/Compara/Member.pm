@@ -1100,12 +1100,12 @@ sub get_all_peptide_Members {
     throw("adaptor undefined, can access database") unless($self->adaptor);
     throw("not an ENSEMBLGENE member") if($self->source_name ne 'ENSEMBLGENE'); 
 
-    my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_peptides_for_gene_member_id')
+    my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_all_peptides_for_gene_member_id')
         ? $self->adaptor    # a MemberAdaptor or derivative
         : $self->adaptor->db->get_MemberAdaptor;
 
 
-    return $able_adaptor->fetch_peptides_for_gene_member_id($self->dbID);
+    return $able_adaptor->fetch_all_peptides_for_gene_member_id($self->dbID);
 }
  
 
