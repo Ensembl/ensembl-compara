@@ -17,15 +17,9 @@ BEGIN {
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;    
 }
 
-# check to see if the selenium server is online(URL returns OK if server is online).
-my $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
-$ua->timeout(10);
-my $response = $ua->get("http://172.20.10.187:4444/selenium-server/driver/?cmd=testComplete");
-if($response->content ne 'OK') { print "\nSelenium Server is offline !!!!\n";exit;}
-
 my $module;
 my $url = 'http://test.ensembl.org';
-my $host = '172.20.10.187';#'localhost'; 
+my $host = '172.20.11.66';#'172.20.10.187';#'localhost'; 
 my $port = '4444';
 my $browser = '*firefox';
 my $test;
@@ -47,6 +41,15 @@ GetOptions(
   'species=s' => \$species,
   'timeout=s' => \$timeout,
 );
+
+# check to see if the selenium server is online(URL returns OK if server is online).
+my $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
+$ua->timeout(10);
+my $response = $ua->get("http://$host:$port/selenium-server/driver/?cmd=testComplete");
+if($response->content ne 'OK') { 
+  print "\nSelenium Server is offline !!!!\n";
+  exit;
+}
 
 die "You must specify a test module, eg. --module Generic" unless $module;
 die "You must specify a url to test against, eg. --url http://www.ensembl.org" unless $url;
