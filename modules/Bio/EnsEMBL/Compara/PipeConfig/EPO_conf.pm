@@ -19,19 +19,20 @@ sub default_options {
 	'rel_suffix'            => '',    # an empty string by default, a letter otherwise
 	   # dependent parameters:
 	'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
+	'species_tag' 		=> 'primates_',
 
 	   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
-		-host   => 'compara1',
+		-host   => 'compara3',
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
-		-dbname => $self->o('ENV', 'USER').'_TEST_compara_epo_'.$self->o('rel_with_suffix'),
+		-dbname => $self->o('ENV', 'USER').'_TEST_compara_epo_'.$self->o('species_tag').$self->o('rel_with_suffix'),
    	},
 	 # ancestral seqs db
 	'ancestor_db' => {
 		-user => 'ensadmin',
-		-host => 'compara1',
+		-host => 'compara3',
 		-port => 3306,
 		-pass => $self->o('password'),
 		-name => 'ancestral_sequences',
@@ -42,8 +43,8 @@ sub default_options {
 		-user => 'ensro',
 		-port => 3306,
 		-pass => '',
-		-host => 'compara1',
-		-dbname => 'sf5_test_anc_map66',
+		-host => 'compara3',
+		-dbname => 'sf5_compara64_anc_align',
 	},
 	 # master db
 	'compara_master' => {
@@ -88,6 +89,17 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands}, 
            ];  
+}
+
+sub resource_classes {
+    my ($self) = @_; 
+    return {
+         0 => { -desc => 'default',  'LSF' => '' },
+         1 => { -desc => 'mem3500',  'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
+         2 => { -desc => 'mem7500',  'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },  
+         3 => { -desc => 'mem11400', 'LSF' => '-C0 -M11400000 -R"select[mem>11400] rusage[mem=11400]"' },  
+         4 => { -desc => 'mem14000', 'LSF' => '-C0 -M14000000 -R"select[mem>14000] rusage[mem=14000]"' },  
+    };  
 }
 
 sub pipeline_wide_parameters {
@@ -159,6 +171,8 @@ return [
 				bl2seq_file => $self->o('bl2seq_file'),
 			       },
 		-hive_capacity => 10,
+		-failed_job_tolerance => 5, # can start ortheus if a few jobs fail 
+		-rc_id => 3, # there should not be too many of these jobs, most of which do not require much memory, but a small number  will
 	  },
 
 	  {	-logic_name => 'set_internal_ids',
@@ -186,7 +200,7 @@ return [
 		-flow_into => {
                                1 => [ 'update_max_alignment_length' ],
                      },
-		-wait_for => [ 'set_internal_ids' ],
+		-wait_for => [ 'set_internal_ids', 'find_dnafrag_region_strand' ],
 	  },
 
 	  {  -logic_name => 'update_max_alignment_length',
