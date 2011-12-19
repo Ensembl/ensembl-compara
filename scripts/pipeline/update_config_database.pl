@@ -19,15 +19,15 @@ statistics on the final alignment, such as coverage.
 
 =head1 SYNOPSIS
 
-perl update_config_database.pl --conf_file ~/work/compara_releases/release_60/kb3_hsap_amel_lastz_60/lastz.conf --config_url mysql://user:pass@host:port/kb3_pair_aligner_config_test --ref_url mysql://user\@host/version --non_ref_url  mysql://user@host/version --compara_url mysql://user@host:port/kb3_hsap_amel_lastz_60 --ref_species homo_sapiens --mlss_id 483
+perl update_config_database.pl --conf_file ~/work/compara_releases/release_60/kb3_hsap_amel_lastz_60/lastz.conf --config_url mysql://user:pass@host:port/kb3_pair_aligner_config_test --ref_dbc_url mysql://user\@host/dbname --non_ref_dbc_url  mysql://user@host/dbname --compara_url mysql://user@host:port/dbname --ref_species homo_sapiens --mlss_id 483
 
 perl update_config_database.pl
    [--reg_conf registry configuration file]
    [--conf_file pair aligner configuration file]
    [--config_url pair aligner configuration database]
    --ref_species reference species
-   --ref_url core database for reference species
-   [--non_ref_url core database for non-reference species]
+   --ref_dbc_url core database for reference species
+   [--non_ref_dbc_url core database for non-reference species]
    --compara_url compara database
    --mlss_id method_link_species_set_id
    [--ensembl_release ensembl schema version]
@@ -61,11 +61,11 @@ Location of the compara database containing the pairwise alignment
 
 Species to be used as the reference
 
-=item B<--ref_url mysql://user[:passwd]@host[:port]/version>
+=item B<--ref_dbc_url mysql://user[:passwd]@host[:port]/dbname>
 
 Core database containing the species defined in ref_species
 
-=item B<[--non_ref_url mysql://user[:passwd]@host[:port]/version]>
+=item B<[--non_ref_dbc_url mysql://user[:passwd]@host[:port]/dbname]>
 
 Core database containing the other species in the pairwise alignment. This need not be defined 
 if both species are in the same core database
@@ -130,10 +130,10 @@ perl update_config_database.pl
     --ref_species species
        Species to be used as the reference
 
-    --ref_url mysql://user[:passwd]\@host[:port]/version
+    --ref_dbc_url mysql://user[:passwd]\@host[:port]/dbname
        Core database containing the species defined in ref_species
 
-    --non_ref_url mysql://user[:passwd]\@host[:port]/version]
+    --non_ref_dbc_url mysql://user[:passwd]\@host[:port]/dbname]
        Core database containing the other species in the pairwise alignment. This need not be defined 
        if both species are in the same core database
 
@@ -165,8 +165,8 @@ my $reg_conf;
 my $config_file;
 my $config_url;
 my $mlss_id;
-my $ref_url;
-my $non_ref_url;
+my $ref_dbc_url;
+my $non_ref_dbc_url;
 my $compara_url;
 my $compara_dba;
 my $species;
@@ -216,9 +216,9 @@ GetOptions(
     "config_file=s" => \$config_file,
     "config_url=s" => \$config_url,
     "mlss_id=i" => \$mlss_id,
-    "ref_url=s" => \$ref_url,
-    "non_ref_url=s" => \$non_ref_url,
     "compara_url=s" => \$compara_url,
+    "ref_dbc_url=s" => \$ref_dbc_url,
+    "non_ref_dbc_url=s" => \$non_ref_dbc_url,
     "ref_species=s" => \$species,
     "ensembl_release=i" => \$ensembl_release,
     "download_url=s" => \$download_url,
@@ -295,9 +295,25 @@ my $reg = "Bio::EnsEMBL::Registry";
 if ($reg_conf) {
     $reg->load_all($reg_conf);
 } else {
-    $reg->load_registry_from_url($ref_url);
-    if (defined $non_ref_url && ($non_ref_url ne $ref_url)) {
-	$reg->load_registry_from_url($non_ref_url);
+    if ($ref_dbc_url) {
+	my ($user, $host, $port, $dbname) = $ref_dbc_url =~ /mysql:\/\/(\w*)@(.*):(\d*)\/(.*)/;
+	new Bio::EnsEMBL::DBSQL::DBAdaptor(
+					   -host => $host,
+					   -user => $user,
+					   -port => $port,
+					   -species => $species, 
+					   -group => 'core',
+					   -dbname => $dbname);
+    }
+    if ($non_ref_dbc_url) {
+	my ($user, $host, $port, $dbname) = $non_ref_dbc_url =~ /mysql:\/\/(\w*)@(.*):(\d*)\/(.*)/;
+	new Bio::EnsEMBL::DBSQL::DBAdaptor(
+					   -host => $host,
+					   -user => $user,
+					   -port => $port,
+					   -species => $species, 
+					   -group => 'core',
+					   -dbname => $dbname);
     }
 }
 
@@ -337,7 +353,7 @@ if (defined $config_file) {
 #
 #Calculate and store statistics
 #
-$self->write_pairaligner_statistics($ref_url, $non_ref_url, $compara_url, $config_url, $pair_aligner_id);
+$self->write_pairaligner_statistics($ref_dbc_url, $non_ref_dbc_url, $compara_url, $config_url, $pair_aligner_id);
 
 if (defined $config_url) {
     $self->close_db_connection();
@@ -704,7 +720,7 @@ sub write_tblat_params {
 #Store pair-aligner statistics in pair_aligner_statistics table
 #
 sub write_pairaligner_statistics {
-    my ($self, $url1, $url2, $compara_url, $config_url, $pair_aligner_id) = @_;
+    my ($self, $dbc_url1, $dbc_url2, $compara_url, $config_url, $pair_aligner_id) = @_;
     my $verbose = 0;
 
     if ($compara_url =~ /^mysql/) {
@@ -731,7 +747,7 @@ sub write_pairaligner_statistics {
     my $species_set = $method_link_species_set->species_set;
     my $ref_genome_db;
     my $non_ref_genome_db;
-    my ($ref_url, $non_ref_url);
+    my ($ref_dbc_url, $non_ref_dbc_url);
 
     #Need to find "real" reference species as defined by the configuration file, not from the command line which is there to
     #assign species to url
@@ -740,31 +756,31 @@ sub write_pairaligner_statistics {
 	if (defined  $self->{reference_dna_collection}->{name} && 
 	    $genome_db->name eq $self->{reference_dna_collection}->{name}) {
 	    $ref_genome_db = $genome_db;
-	    if ($url1 && $url2) {
+	    if ($dbc_url1 && $dbc_url2) {
 		if ($genome_db->name eq $species) {
-		    $ref_url = $url1;
+		    $ref_dbc_url = $dbc_url1;
 		} else {
-		    $ref_url = $url2;
+		    $ref_dbc_url = $dbc_url2;
 		}
 	    }
 	} elsif (defined $self->{non_reference_dna_collection}->{name} && 
 		 $genome_db->name eq $self->{non_reference_dna_collection}->{name}) {
 	    $non_ref_genome_db = $genome_db;
-	    if ($url1 && $url2) {
+	    if ($dbc_url1 && $dbc_url2) {
 		if ($genome_db->name eq $species) {
-		    $non_ref_url = $url1;
+		    $non_ref_dbc_url = $dbc_url1;
 		} else {
-		    $non_ref_url = $url2;
+		    $non_ref_dbc_url = $dbc_url2;
 		}
 	    }
 	} else {
 	    #If no configuration file given, use ref_species as reference
 	    if ($genome_db->name eq $species) {
 		$ref_genome_db = $genome_db;
-		$ref_url = $url1 if ($url1);
+		$ref_dbc_url = $dbc_url1 if ($dbc_url1);
 	    } else {
 		$non_ref_genome_db = $genome_db;
-		$non_ref_url = $url2 if ($url2);
+		$non_ref_dbc_url = $dbc_url2 if ($dbc_url2);
 	    }
 	}
     }
@@ -772,13 +788,13 @@ sub write_pairaligner_statistics {
     #self alignments
     if (@$species_set == 1) {
 	$non_ref_genome_db = $ref_genome_db;
-	$non_ref_url = $ref_url;
+	$non_ref_dbc_url = $ref_dbc_url;
     }
 
     #Calculate the statistics
-    my ($ref_coverage, $ref_coding_coverage, $ref_alignment_coding) = calc_stats($reg_conf, $ref_url, $ref_genome_db, $ref_genome_bed, $ref_coding_exons_bed, $ref_alignment_bed);
+    my ($ref_coverage, $ref_coding_coverage, $ref_alignment_coding) = calc_stats($reg_conf, $ref_dbc_url, $ref_genome_db, $ref_genome_bed, $ref_coding_exons_bed, $ref_alignment_bed);
 
-    my ($non_ref_coverage, $non_ref_coding_coverage, $non_ref_alignment_coding) = calc_stats($reg_conf, $non_ref_url, $non_ref_genome_db, $non_ref_genome_bed, $non_ref_coding_exons_bed, $non_ref_alignment_bed);
+    my ($non_ref_coverage, $non_ref_coding_coverage, $non_ref_alignment_coding) = calc_stats($reg_conf, $non_ref_dbc_url, $non_ref_genome_db, $non_ref_genome_bed, $non_ref_coding_exons_bed, $non_ref_alignment_bed);
    
     #Store the results in the configuration database
     if (defined $config_url) {
@@ -799,7 +815,7 @@ sub write_pairaligner_statistics {
 #compare_beds.pl $coding_exons_bed $alignment_bed --stats
 #
 sub calc_stats {
-    my ($reg_conf, $url, $genome_db, $genome_bed, $coding_exons_bed, $alignment_bed) = @_;
+    my ($reg_conf, $dbc_url, $genome_db, $genome_bed, $coding_exons_bed, $alignment_bed) = @_;
     my $species = $genome_db->name;
     my $assembly_name = $genome_db->assembly;
 
@@ -840,10 +856,12 @@ sub calc_stats {
 		throw("$dump_features --reg_conf $reg_conf --compara_url $compara_url --species $species --feature $feature execution failed\n");
 	    }
 	} else {
-	    print "$dump_features --url $url --compara_url $compara_url --species $species --feature $feature > $alignment_bed\n";
+	    my ($user, $host, $port, $dbname) = $dbc_url =~ /mysql:\/\/(\w*)@(.*):(\d*)\/(.*)/;
 
-	    unless (system("$dump_features --url $url --compara_url $compara_url --species $species --feature $feature > $alignment_bed") == 0) {
-		throw("$dump_features --url $url --compara_url $compara_url --species $species --feature $feature execution failed\n");
+	    print "$dump_features --user $user --host $host --port $port --dbname $dbname --compara_url $compara_url --species $species --feature $feature > $alignment_bed\n";
+
+	    unless (system("$dump_features --user $user --host $host --port $port --dbname $dbname --compara_url $compara_url --species $species --feature $feature > $alignment_bed") == 0) {
+		throw("$dump_features --user $user --host $host --port $port --dbname $dbname --compara_url $compara_url --species $species --feature $feature execution failed\n");
 	    }
 	}
     }
