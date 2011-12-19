@@ -2,8 +2,9 @@ This README describes how to run the DumpMultiAlign pipeline
 
 The dumps are grouped by the toplevel regions of the reference species. Alignments not containing the reference species are written to files called *.others_*. Each file contains split_size alignments (default 200). Alignments containing duplications in the reference species are dumped once per duplicated segment.
 
+All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the cvs checkout)
 
-1) Edit ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpMultiAlign_conf.pm
+1) Edit $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpMultiAlign_conf.pm
 The location of the compara and core databases containing the alignments can be defined either using the parameter 'db_urls' or 'reg_conf' and 'compara_db'. Defaults have been set in the DumpMultiAlign_conf.pm. Most options likely to change are done on the command line.
 
 Options most likely to need chaging are:
