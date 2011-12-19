@@ -3,6 +3,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 my $reg = "Bio::EnsEMBL::Registry";
 $reg->no_version_check(1);
 
@@ -16,6 +17,10 @@ my $regions;
 my $feature = "";
 my $extra;
 my $from;
+my $host;
+my $user;
+my $dbname;
+my $port;
 my $help;
 
 my $desc = "
@@ -63,6 +68,10 @@ GetOptions(
   'feature=s' => \$feature,
   'extra=s' => \$extra,
   'from=s' => \$from,
+  'host=s' => \$host,
+  'user=s' => \$user,
+  'dbname=s' => \$dbname,
+  'port=s'   => \$port,
   'help' => \$help
   );
 
@@ -78,18 +87,33 @@ if ($help || !$feature) {
   exit(0);
 }
 
+my $compara_dba;
 if ($reg_conf) {
   $reg->load_all($reg_conf);
+  if ($compara_url) {
+    $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$compara_url);
+  } else { 
+    $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
+  }
+} elsif ($host && $user && $dbname) {
+   #load single, non-standard named core database
+   new Bio::EnsEMBL::DBSQL::DBAdaptor(
+    -host => $host,
+    -user => $user,
+    -port => $port,
+    -species => $species, 
+    -group => 'core',
+    -dbname => $dbname);
+  if ($compara_url) {
+    $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$compara_url);
+  }
 } else {
   $reg->load_registry_from_url($url);
-}
-
-my $compara_dba;
-if ($compara_url) {
-  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-  $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$compara_url);
-} else {
-  $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
+  if ($compara_url) {
+    $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$compara_url);
+  } else { 
+    $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
+  }
 }
 
 my $species_name = $reg->get_adaptor($species, "core", "MetaContainer")->get_production_name;
