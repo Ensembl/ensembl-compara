@@ -42,6 +42,7 @@ sub default_options {
 	    #
 	    'chain_input_method_link' => [1001, 'LASTZ_RAW'],
 	    'chain_output_method_link' => [1002, 'LASTZ_CHAIN'],
+	    'linear_gap' => 'medium',
 
 	    #
 	    #Default net 
