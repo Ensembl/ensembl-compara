@@ -1,0 +1,58 @@
+This README explains how to set up an initial master database and then update it for a new species or analysis
+The master database is used to maintain certain internal ids between different databases and ensembl releases. For example, the genome_db table contains information about a particular species assembly. By maintaining this table in the master and then copying to the production and release databases, the genome_db_id will be consistent for the same species and assembly, even between releases. 
+
+
+1- code API needed
+   ~~~~~~~~~~~~~~~
+
+  bioperl-live (bioperl-1-2-3)
+  ensembl
+  ensembl-compara
+  ensembl-hive
+  ensembl-analysis
+
+1.1 Code checkout
+
+      cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r branch-07 bioperl-live
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-compara
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-hive
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-analysis
+
+in tcsh
+    setenv ENSEMBL_CVS_ROOT_DIR  /some/path/to/modules
+    setenv PERL5LIB  ${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules:${ENSEMBL_CVS_ROOT_DIR}/bioperl-live:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive:${ENSEMBL_CVS_ROOT_DIR}/ensembl-analysis
+    setenv PATH $PATH:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/script/pipeline:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/scripts
+
+in bash
+    ENSEMBL_CVS_ROOT_DIR=/some/path/to/modules
+    PERL5LIB=${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules:${ENSEMBL_CVS_ROOT_DIR}/bioperl-live:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive
+    PATH=$PATH:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/scripts
+
+2- Create master database
+   ~~~~~~~~~~~~~~~~~~~~~~
+
+Create an empty database with the compara schema
+
+mysql -h HOST -P PORT -u USER -pPASS -e "create database kb3_ensembl_compara_master"
+mysql -h HOST -P PORT -u USER -pPASS kb3_ensembl_compara_master < $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/sql/table.sql
+
+
+3- Populate the master database
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+3.1 Add a new species or update the assembly of an existing species
+
+Use the $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl script.
+
+eg
+perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl --reg_conf master_reg.conf --compara compara_master --species "otolemur_garnettii"
+
+This command needs a registry configuration file to define the location of the compara_master database and the core database. For an example, see master_reg.conf
+
+3.2 Add a new method_link_species_set entry
+Use the $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl script
+
+Eg to add a pairwise method_link_species_set_id for species with genome_db_ids of 90 and 124. These must already be in the master database
+perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type LASTZ_NET --genome_db_id 90,124 --source "ensembl"  --compara mysql://user:pass@host:port/kb3_ensembl_compara_master 
+
