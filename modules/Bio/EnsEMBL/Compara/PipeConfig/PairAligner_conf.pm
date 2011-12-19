@@ -200,8 +200,6 @@ sub default_options {
 	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
 	'config_url' => '', #Location of pairwise config database. Must define on command line
 	'output_dir' => '/lustre/scratch103/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
-	'ref_url' => '',      #If not set, use reg.conf
-	'non_ref_url' => '',  #If not set, use reg.conf
     };
 }
 
@@ -535,8 +533,6 @@ sub pipeline_analyses {
 			      'config_url' => $self->o('config_url'),
 			      'reg_conf' => $self->o('reg_conf'),
 			      'output_dir' => $self->o('output_dir'),
-			      'ref_url' => $self->o('ref_url'),
-			      'non_ref_url' => $self->o('non_ref_url'),
 			     },
 	      -wait_for =>  [ 'healthcheck' ],
 	    },
