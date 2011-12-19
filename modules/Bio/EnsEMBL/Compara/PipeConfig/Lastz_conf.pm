@@ -30,6 +30,9 @@ sub default_options {
 	    #'curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],
 	    #'curr_core_sources_locs'=> '',
 
+	    #Reference species
+	    'ref_species' => 'homo_sapiens',
+
 	    #Define chunking
 	    'default_chunks' => {#human example
 			     'reference'   => {'chunk_size' => 30000000,
@@ -37,8 +40,6 @@ sub default_options {
 					       'include_non_reference' => 1,
 #Should use this for human vs non-primate
 					       'masking_options_file' => '/nfs/users/nfs_k/kb3/work/hive/data/human36.spec'},
-#Should use this for human vs primate or use Lastz_primate_conf.pm
-#                                              'masking_options' => '{default_soft_masking => 1}'},
 			     #non human example
 #   			    'reference'     => {'chunk_size'      => 10000000,
 #   						'overlap'         => 0,
@@ -59,13 +60,13 @@ sub default_options {
 	    'pair_aligner_logic_name' => 'LastZ',
 	    'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ',
 	    'pair_aligner_options' => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', #hsap vs mammal
-	    # 'pair_aligner_options' => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=/nfs/users/nfs_k/kb3/work/hive/data/primate.matrix --ambiguous=iupac',  #hsap vs ggor
 
 	    #
 	    #Default chain
 	    #
 	    'chain_input_method_link' => [1001, 'LASTZ_RAW'],
 	    'chain_output_method_link' => [1002, 'LASTZ_CHAIN'],
+	    'linear_gap' => 'medium',
 
 	    #
 	    #Default net 
