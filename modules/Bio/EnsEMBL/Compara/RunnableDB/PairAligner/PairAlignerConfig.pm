@@ -43,17 +43,9 @@ This module is intended to update the pair_aligner_conf database by firstly addi
 
 Reference species
 
-=item ref_url
-
-Location of the core database for the reference species
-
-=item non_ref_url
-
-Location of the core database for the non-reference species (if different from the ref_url)
-
 =item reg_conf
 
-Registry configuration file if not able to provide ref_url or non_ref_url (eg local genebuild database)
+Registry configuration file if not able to provide ref_dbc_url or non_ref_dbc_url (eg local genebuild database)
 
 =item [method_link_type]
 
@@ -91,7 +83,7 @@ Ensembl release if not the same as contained in the pair aligner compara databas
 
 =head1 EXAMPLES
 
-=item {'ref_species' => 'danio_rerio', 'ref_url' =>'mysql://USER@ens-livemirror:3306/60', 'non_ref_url' => 'mysql://USER@ens-livemirror:3306/59', 'method_link_type'=>'TRANSLATED_BLAT_NET', 'genome_db_ids'=>'[65,110]', 'bed_dir' => '/lustre/scratch103/ensembl/kb3/scratch/tests/test_config/pipeline', 'config_url' => 'mysql://USER:PASS@compara1:3306/kb3_pair_aligner_config_test', 'config_file' => '/nfs/users/nfs_k/kb3/work/projects/tests/test_config/tblat.conf',}
+=item {'ref_species' => 'danio_rerio', 'method_link_type'=>'TRANSLATED_BLAT_NET', 'genome_db_ids'=>'[65,110]', 'bed_dir' => '/lustre/scratch103/ensembl/kb3/scratch/tests/test_config/pipeline', 'config_url' => 'mysql://USER:PASS@compara1:3306/kb3_pair_aligner_config_test', 'config_file' => '/nfs/users/nfs_k/kb3/work/projects/tests/test_config/tblat.conf',}
 
 =back
 
@@ -158,23 +150,24 @@ sub fetch_input {
   my $ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('ref_species'));
   my $non_ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('non_ref_species'));
 
-  #Get ref_url and non_ref_url from genome_db table
-  unless ($self->param('ref_url')) {
+  #Get ref_dbc_url and non_ref_dbc_url from genome_db table
+  #unless ($self->param('ref_dbc_url')) {
       my $ref_db = $ref_genome_db->connect_to_genome_locator;
+      #$self->param('ref_db', $ref_db);
+
       #This doesn't not produce a valid "core" url ie it appends the database name instead of just the db_version so
-      #load_registry_from_url doesn't work
-      #$self->param('ref_url', $ref_db->dbc->url);
-      my $url = $ref_db->dbc->url;
-      my ($core_url, $db_version) = $url =~ /(.*\/)\w+_core_([0-9]+)_*/;
-      $self->param('ref_url', "$core_url$db_version");
-  }
-  unless ($self->param('non_ref_url')) {
+      #load_registry_from_url doesn't work but it is useful to store the database info
+      $self->param('ref_dbc_url', $ref_db->dbc->url);
+  #}
+  #unless ($self->param('non_ref_dbc_url')) {
+
       my $non_ref_db = $non_ref_genome_db->connect_to_genome_locator;
-      #$self->param('non_ref_url', $non_ref_db->dbc->url);
-      my $url = $non_ref_db->dbc->url;
-      my ($core_url, $db_version) = $url =~ /(.*\/)\w+_core_([0-9]+)_*/;
-      $self->param('non_ref_url', "$core_url$db_version");
-  }
+      #$self->param('non_ref_db', $non_ref_db);
+
+      #This doesn't not produce a valid "core" url ie it appends the database name instead of just the db_version so
+      #load_registry_from_url doesn't work but it is useful to store the database info
+      $self->param('non_ref_dbc_url', $non_ref_db->dbc->url);
+  #}
 
   #Set up paths to various perl scripts
   unless ($self->param('dump_features')) {
@@ -218,8 +211,8 @@ sub run {
   my $self = shift;
 
   #Dump bed files if necessary
-  $self->dump_bed_file($self->param('ref_species'), $self->param('ref_url'), $self->param('reg_conf'));
-  $self->dump_bed_file($self->param('non_ref_species'), $self->param('non_ref_url'), $self->param('reg_conf'));
+  $self->dump_bed_file($self->param('ref_species'), $self->param('ref_dbc_url'), $self->param('reg_conf'));
+  $self->dump_bed_file($self->param('non_ref_species'), $self->param('non_ref_dbc_url'), $self->param('reg_conf'));
 
   
   #Update the pair aligner configuaration database
@@ -251,7 +244,7 @@ sub write_output {
 #regions. If a file of that convention already exists, it will not be overwritten.
 #
 sub dump_bed_file {
-    my ($self, $species, $url, $reg_conf) = @_;
+    my ($self, $species, $dbc_url, $reg_conf) = @_;
 
     #Need assembly
     my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_registry_name($species);
@@ -270,7 +263,9 @@ sub dump_bed_file {
 	if ($reg_conf) {
 	    $cmd = $self->param('dump_features') . " --reg_conf " . $reg_conf ." --species $name --feature toplevel > $genome_bed_file";
 	} else {
-	    $cmd = $self->param('dump_features') . " --url " . $url ." --species $name --feature toplevel > $genome_bed_file";
+	    #Non-standard core name. Use DBAdaptor info
+	    my ($user, $host, $port, $dbname) = $dbc_url =~ /mysql:\/\/(\w*)@(.*):(\d*)\/(.*)/;
+	    $cmd = $self->param('dump_features') . " --host $host --user $user --port $port --dbname $dbname --species $name --feature toplevel > $genome_bed_file";
 	}
 	unless (system($cmd) == 0) {
 	    die("$cmd execution failed\n");
@@ -287,7 +282,9 @@ sub dump_bed_file {
 	if ($reg_conf) {
 	    $cmd = $self->param('dump_features') . " --reg_conf " . $reg_conf ." --species $name --feature coding-exons > $exon_bed_file";
 	} else {
-	    $cmd = $self->param('dump_features') . " --url " . $url ." --species $name --feature coding-exons > $exon_bed_file";
+	    #Non-standard core name. Use DBAdaptor info
+	    my ($user, $host, $port, $dbname) = $dbc_url =~ /mysql:\/\/(\w*)@(.*):(\d*)\/(.*)/;
+	    $cmd = $self->param('dump_features') . " --host $host --user $user --port $port --dbname $dbname --species $name --feature coding-exons > $exon_bed_file";
 	}
 	unless (system($cmd) == 0) {
 	    die("$cmd execution failed\n");
@@ -309,8 +306,8 @@ sub run_update_config_database {
 
     $cmd .= " --config_url " . $self->param('config_url') if ($self->param('config_url'));
     $cmd .= " --config_file " . $self->param('config_file') if ($self->param('config_file')); 
-    $cmd .= " --ref_url " . $self->param('ref_url') if ($self->param('ref_url'));
-    $cmd .= " --non_ref_url " . $self->param('non_ref_url') if ($self->param('non_ref_url'));
+    $cmd .= " --ref_dbc_url " . $self->param('ref_dbc_url') if ($self->param('ref_dbc_url'));
+    $cmd .= " --non_ref_dbc_url " . $self->param('non_ref_dbc_url') if ($self->param('non_ref_dbc_url'));
     $cmd .= " --reg_conf " . $self->param('reg_conf') if ($self->param('reg_conf'));
     $cmd .= " --output_dir " . $self->param('output_dir') if ($self->param('output_dir'));
     $cmd .= " --pair_aligner_options \'" . $self->param('pair_aligner_options') ."\'" if ($self->param('pair_aligner_options')) ;
