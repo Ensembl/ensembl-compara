@@ -11,6 +11,26 @@ sub default_options {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 	    'pipeline_name'         => 'TBLAT_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
+	    #Define location of core databases separately (over-ride curr_core_sources_locs in Pairwise_conf.pm)
+	    #'reference' => {
+	    #	-host           => "host_name",
+	    #	-port           => port,
+	    #	-user           => "user_name",
+	    #	-dbname         => "my_human_database",
+	    #	-species        => "homo_sapiens"
+	    #},
+            #'non_reference' => {
+	    #	    -host           => "host_name",
+	    #	    -port           => port,
+	    #	    -user           => "user_name",
+	    #	    -dbname         => "my_ciona_database",
+	    #	    -species        => "ciona_intestinalis"
+	    #	  },
+	    #'curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],
+	    #'curr_core_sources_locs'=> '',
+
+	    'ref_species' => 'homo_sapiens',
+
 	    #directory to dump dna files
 	    'dump_dna_dir' => '/lustre/scratch101/ensembl/' . $ENV{USER} . '/pair_aligner/dna_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
@@ -18,11 +38,12 @@ sub default_options {
 			     'reference'   => {'chunk_size' => 1000000,
 				               'overlap'    => 10000,
 					       'group_set_size' => 100000000,
-#					       'include_non_reference' => 1,
-#					       'masking_options_file' => '/nfs/users/nfs_k/kb3/work/hive/data/human36.spec'
-					       'masking_options' => '{default_soft_masking => 1}',
-#					       'dump_loc' => '/lustre/scratch101/ensembl/kb3/scratch/hive/tests/test_pairaligner_conf/chicken',
 					       'dump_dir' => $self->o('dump_dna_dir'),
+					       #human
+					       'include_non_reference' => 1,
+					       'masking_options_file' => '/nfs/users/nfs_k/kb3/work/hive/data/human36.spec',
+					       #non-human
+					       #'masking_options' => '{default_soft_masking => 1}',
 					      },
    			    'non_reference' => {'chunk_size'      => 25000,
    						'group_set_size'  => 10000000,
@@ -47,6 +68,7 @@ sub default_options {
 	    #
 	    'chain_input_method_link' => [1001, 'TRANSLATED_BLAT_RAW'],
 	    'chain_output_method_link' => [1002, 'TRANSLATED_BLAT_CHAIN'],
+	    'linear_gap' => 'loose',
 
 	    #
 	    #Default net 
