@@ -43,8 +43,6 @@ input_id/parameters format eg: "{'protein_tree_id'=>1234}"
 =head1 CONTACT
 
   Contact Albert Vilella on module implementation: avilella@ebi.ac.uk
-  Contact Jessica Severin on module design detail: jessica@ebi.ac.uk
-  Contact Abel Ureta-Vidal on EnsEMBL/Compara: abel@ebi.ac.uk
   Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =cut
@@ -73,9 +71,6 @@ use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
-use Bio::SimpleAlign;
-use Bio::AlignIO;
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -102,14 +97,21 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->param('homology_adaptor',     $self->compara_dba->get_HomologyAdaptor);
-    $self->param('protein_tree_adaptor', $self->compara_dba->get_ProteinTreeAdaptor);
+    $self->param('treeDBA', $self->compara_dba->get_ProteinTreeAdaptor);
+    $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
 
-    my $protein_tree_id     = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
-    my $protein_tree        = $self->param('protein_tree_adaptor')->fetch_node_by_node_id( $protein_tree_id )
-                                        or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
-    $self->param('protein_tree', $protein_tree);
+    my $starttime = time();
+    my $tree_id = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
+    my $gene_tree = $self->param('treeDBA')->fetch_node_by_node_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
+    $self->param('gene_tree', $gene_tree);
 
+    if($self->debug) {
+        $self->param('gene_tree')->print_tree($self->param('tree_scale'));
+        printf("time to fetch tree : %1.3f secs\n" , time()-$starttime);
+    }
+    unless($self->param('gene_tree')) {
+        $self->throw("undefined GeneTree as input\n");
+    }
     $self->delete_old_homologies;
     $self->delete_old_orthotree_tags;
     $self->param('taxon_tree', $self->load_species_tree_from_string( $self->get_species_tree_string ) );
@@ -156,14 +158,14 @@ sub write_output {
 sub DESTROY {
   my $self = shift;
 
-  if(my $protein_tree = $self->param('protein_tree')) {
-    printf("DESTROY  releasing protein_tree\n") if($self->debug);
-    $protein_tree->release_tree;
-    $self->param('protein_tree', undef);
+  if($self->param('gene_tree')) {
+    printf("OrthoTree::DESTROY  releasing gene_tree\n") if($self->debug);
+    $self->param('gene_tree')->release_tree;
+    $self->param('gene_tree', undef);
   }
-  if(my $taxon_tree = $self->param('taxon_tree')) {
-    printf("DESTROY  releasing taxon_tree\n") if($self->debug);
-    $taxon_tree->release_tree;
+  if($self->param('taxon_tree')) {
+    printf("OrthoTree::DESTROY  releasing taxon_tree\n") if($self->debug);
+    $self->param('taxon_tree')->release_tree;
     $self->param('taxon_tree', undef);
   }
 
@@ -183,20 +185,20 @@ sub run_analysis {
 
   my $starttime = time()*1000;
   my $tmp_time = time();
-  my $protein_tree = $self->param('protein_tree');
+  my $gene_tree = $self->param('gene_tree');
 
   print "Getting all leaves\n";
-  my @all_protein_leaves = @{$protein_tree->get_all_leaves};
-  my $tree_node_id = $protein_tree->node_id;
+  my @all_gene_leaves = @{$gene_tree->get_all_leaves};
+  my $tree_node_id = $gene_tree->node_id;
 
   #precalculate the ancestor species_hash (caches into the metadata of
   #nodes) also augments the Duplication tagging
   printf("Calculating ancestor species hash\n") if ($self->debug);
-  $self->get_ancestor_species_hash($protein_tree);
+  $self->get_ancestor_species_hash($gene_tree);
 
   if($self->debug) {
-    $protein_tree->print_tree($self->param('tree_scale'));
-    printf("%d proteins in tree\n", scalar(@all_protein_leaves));
+    $gene_tree->print_tree($self->param('tree_scale'));
+    printf("%d genes in tree\n", scalar(@all_gene_leaves));
   }
 
   #compare every gene in the tree with every other each gene/gene
@@ -209,18 +211,18 @@ sub run_analysis {
   printf("build fully linked graph\n") if($self->debug);
   my @genepairlinks;
   my $graphcount = 0;
-  while (my $protein1 = shift @all_protein_leaves) {
-    foreach my $protein2 (@all_protein_leaves) {
-      my $ancestor = $protein1->find_first_shared_ancestor($protein2);
+  while (my $gene1 = shift @all_gene_leaves) {
+    foreach my $gene2 (@all_gene_leaves) {
+      my $ancestor = $gene1->find_first_shared_ancestor($gene2);
       # Line below will only become faster than above if we find a way to calculate long parent->parent journeys.
       # This is probably doable by looking at the right1/left1 right2/left2 distances between the 2 proteins
-      # my $ancestor_indexed = $self->param('protein_tree_adaptor')->fetch_first_shared_ancestor_indexed($protein1,$protein2);
+      # my $ancestor = $self->param('treeDBA')->fetch_first_shared_ancestor_indexed($gene1,$gene2);
       my $taxon_level = $self->get_ancestor_taxon_level($ancestor);
-      my $distance = $protein1->distance_to_ancestor($ancestor) +
-                     $protein2->distance_to_ancestor($ancestor);
+      my $distance = $gene1->distance_to_ancestor($ancestor) +
+                     $gene2->distance_to_ancestor($ancestor);
       my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link
         (
-         $protein1, $protein2, $distance
+         $gene1, $gene2, $distance
         );
       $genepairlink->add_tag("hops", 0);
       $genepairlink->add_tag("ancestor", $ancestor);
@@ -233,7 +235,7 @@ sub run_analysis {
   printf("%1.3f secs build links and features\n", time()-$tmp_time) 
     if($self->debug>1);
 
-  $protein_tree->print_tree($self->param('tree_scale')) 
+  $gene_tree->print_tree($self->param('tree_scale')) 
     if($self->debug);
 
   #sort the gene/gene links by distance
@@ -258,11 +260,11 @@ sub run_analysis {
   
   #display summary stats of analysis 
   my $runtime = time()*1000-$starttime;  
-  $protein_tree->store_tag('OrthoTree_runtime_msec', $runtime) 
+  $gene_tree->store_tag('OrthoTree_runtime_msec', $runtime) 
     unless ($self->param('_readonly'));
 
   if($self->debug) {
-    printf("%d proteins in tree\n", scalar(@{$protein_tree->get_all_leaves}));
+    printf("%d genes in tree\n", scalar(@{$gene_tree->get_all_leaves}));
     printf("%d pairings\n", scalar(@genepairlinks));
     printf("%d old homologies\n", $self->param('old_homology_count'));
     printf("orthotree homologies\n");
@@ -280,7 +282,7 @@ sub analyze_genepairlink {
   my $self = shift;
   my $genepairlink = shift;
 
-  my ($protein1, $protein2) = $genepairlink->get_nodes;
+  my ($gene1, $gene2) = $genepairlink->get_nodes;
 
   #run feature detectors: precalcs and caches into metadata
   $self->genepairlink_check_dups($genepairlink);
@@ -296,8 +298,8 @@ sub analyze_genepairlink {
     printf
       (
        "OOPS!!!! %s - %s\n",
-       $protein1->gene_member->stable_id,
-       $protein2->gene_member->stable_id
+       $gene1->gene_member->stable_id,
+       $gene2->gene_member->stable_id
       );
   }
 
@@ -326,11 +328,11 @@ sub display_link_analysis
   my $genepairlink = shift;
 
   #display raw feature analysis
-  my ($protein1, $protein2) = $genepairlink->get_nodes;
+  my ($gene1, $gene2) = $genepairlink->get_nodes;
   my $ancestor = $genepairlink->get_tagvalue('ancestor');
   printf("%21s(%7d) - %21s(%7d) : %10.3f dist : %3d hops : ", 
-    $protein1->gene_member->stable_id, $protein1->gene_member->member_id,
-    $protein2->gene_member->stable_id, $protein2->gene_member->member_id,
+    $gene1->gene_member->stable_id, $gene1->gene_member->member_id,
+    $gene2->gene_member->stable_id, $gene2->gene_member->member_id,
     $genepairlink->distance_between, $genepairlink->get_tagvalue('hops'));
 
   if($genepairlink->get_tagvalue('has_dups')) { printf("%5s ", 'DUP');
@@ -633,7 +635,7 @@ sub delete_old_orthotree_tags
   print "deleting old orthotree tags\n" if ($self->debug);
   my @node_ids;
 
-  foreach my $node ($self->param('protein_tree')->get_all_subnodes) {
+  foreach my $node ($self->param('gene_tree')->get_all_subnodes) {
     push @node_ids, $node->node_id;
   }
 
@@ -669,7 +671,7 @@ sub delete_old_homologies {
 
   # New method all in one go -- requires key on tree_node_id
   my $delete_time = time();
-  my $tree_node_id = $self->param('protein_tree')->node_id;
+  my $tree_node_id = $self->param('gene_tree')->node_id;
 
   # Delete first the members
   my $sql1 = 'DELETE homology_member FROM homology JOIN homology_member USING (homology_id) WHERE tree_node_id=?';
@@ -960,7 +962,7 @@ sub outspecies_test
 
 ########################################################
 #
-# ProteinTree input/output section
+# Tree input/output section
 #
 ########################################################
 
@@ -972,7 +974,6 @@ sub store_homologies {
   my $hlinkscount = 0;
   foreach my $genepairlink (@{$self->param('homology_links')}) {
     $self->display_link_analysis($genepairlink) if($self->debug>2);
-
     my $type = $genepairlink->get_tagvalue("orthotree_type");
     my $dcs = $genepairlink->get_tagvalue('ancestor')->get_tagvalue('duplication_confidence_score');
     next if ($type eq 'possible_ortholog' and $dcs > $self->param('no_between'));
@@ -986,7 +987,7 @@ sub store_homologies {
 
   $self->check_homology_consistency;
 
-  $self->param('protein_tree')->store_tag(
+  $self->param('gene_tree')->store_tag(
       'OrthoTree_types_hashstr', 
       stringify($self->param('orthotree_homology_counts'))) unless ($self->param('_readonly'));
 
@@ -1005,7 +1006,7 @@ sub store_gene_link_as_homology {
   my $tree_node_id = $genepairlink->get_tagvalue('tree_node_id');
   warn("Tag tree_node_id undefined\n") unless(defined($tree_node_id) && $tree_node_id ne '');
 
-  my ($protein1, $protein2) = $genepairlink->get_nodes;
+  my ($gene1, $gene2) = $genepairlink->get_nodes;
 
   #
   # FIXME: the following snippet has to attempt to fetch the corresponding MLSS, and die if it wasn't possible.
@@ -1019,10 +1020,10 @@ sub store_gene_link_as_homology {
   $mlss->method_link_type("ENSEMBL_ORTHOLOGUES") 
     unless ($type eq 'possible_ortholog' || $type eq 'within_species_paralog');
   $mlss->method_link_type("ENSEMBL_PARALOGUES") if ($type eq 'possible_ortholog' || $type eq 'within_species_paralog');
-  if ($protein1->genome_db->dbID == $protein2->genome_db->dbID) {
-    $mlss->species_set([$protein1->genome_db]);
+  if ($gene1->genome_db->dbID == $gene2->genome_db->dbID) {
+    $mlss->species_set([$gene1->genome_db]);
   } else {
-    $mlss->species_set([$protein1->genome_db, $protein2->genome_db]);
+    $mlss->species_set([$gene1->genome_db, $gene2->genome_db]);
   }
   $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss) unless ($self->param('_readonly'));
 
@@ -1036,39 +1037,39 @@ sub store_gene_link_as_homology {
   $homology->method_link_type($mlss->method_link_type);
   $homology->method_link_species_set($mlss);
 
-  my $key = $mlss->dbID . "_" . $protein1->dbID;
+  my $key = $mlss->dbID . "_" . $gene1->dbID;
   $self->param('homology_consistency')->{$key}{$type} = 1;
   #$homology->dbID(-1);
 
   # NEED TO BUILD THE Attributes (ie homology_members)
   my ($cigar_line1, $perc_id1, $perc_pos1,
       $cigar_line2, $perc_id2, $perc_pos2) = 
-        $self->generate_attribute_arguments($protein1, $protein2,$type);
+        $self->generate_attribute_arguments($gene1, $gene2,$type);
 
   # QUERY member
   #
   my $attribute;
   $attribute = new Bio::EnsEMBL::Compara::Attribute;
-  $attribute->peptide_member_id($protein1->dbID);
+  $attribute->peptide_member_id($gene1->dbID);
   $attribute->cigar_line($cigar_line1);
   $attribute->perc_cov(100);
   $attribute->perc_id(int($perc_id1));
   $attribute->perc_pos(int($perc_pos1));
 
-  my $gene_member1 = $protein1->gene_member;
+  my $gene_member1 = $gene1->gene_member;
   $homology->add_Member_Attribute([$gene_member1, $attribute]);
 
   #
   # HIT member
   #
   $attribute = new Bio::EnsEMBL::Compara::Attribute;
-  $attribute->peptide_member_id($protein2->dbID);
+  $attribute->peptide_member_id($gene2->dbID);
   $attribute->cigar_line($cigar_line2);
   $attribute->perc_cov(100);
   $attribute->perc_id(int($perc_id2));
   $attribute->perc_pos(int($perc_pos2));
 
-  my $gene_member2 = $protein2->gene_member;
+  my $gene_member2 = $gene2->gene_member;
   $homology->add_Member_Attribute([$gene_member2, $attribute]);
 
   # Pre-tagging potential_gene_split paralogies
@@ -1092,16 +1093,16 @@ sub store_gene_link_as_homology {
 
   ## Check if it has already been stored, in which case we dont need to store again
   my $matching_homology = 0;
-  if ($self->input_job->retry_count > 0 and ! $self->param('old_homologies_deleted')) {
-    my $member_id1 = $protein1->gene_member->member_id;
-    my $member_id2 = $protein2->gene_member->member_id;
+  if (($self->input_job->retry_count > 0) and !defined($self->param('old_homologies_deleted'))) {
+    my $member_id1 = $gene1->gene_member->member_id;
+    my $member_id2 = $gene2->gene_member->member_id;
     if ($member_id1 == $member_id2) {
-      my $tree_id = $self->param('protein_tree')->node_id;
-      my $pmember_id1 = $protein1->member_id; my $pstable_id1 = $protein1->stable_id;
-      my $pmember_id2 = $protein2->member_id; my $pstable_id2 = $protein2->stable_id;
+      my $tree_id = $self->param('gene_tree')->node_id;
+      my $pmember_id1 = $gene1->member_id; my $pstable_id1 = $gene1->stable_id;
+      my $pmember_id2 = $gene2->member_id; my $pstable_id2 = $gene2->stable_id;
       $self->throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
     }
-    my $stored_homology = $self->param('homology_adaptor')->fetch_by_Member_id_Member_id($member_id1,$member_id2);
+    my $stored_homology = $self->param('homologyDBA')->fetch_by_Member_id_Member_id($member_id1,$member_id2);
     if (defined($stored_homology)) {
       $matching_homology = 1;
       $matching_homology = 0 if ($stored_homology->description ne $homology->description);
@@ -1125,15 +1126,15 @@ sub store_gene_link_as_homology {
       $sth2->finish;
     }
   }
-  if($self->param('store_homologies') and 0 == $matching_homology) {
-    $self->param('homology_adaptor')->store($homology);
+  if($self->param('store_homologies') and (0 == $matching_homology)) {
+    $self->param('homologyDBA')->store($homology);
   }
 
   my $stable_id;
-  if($protein1->taxon_id < $protein2->taxon_id) {
-    $stable_id = $protein1->taxon_id . "_" . $protein2->taxon_id . "_";
+  if($gene1->taxon_id < $gene2->taxon_id) {
+    $stable_id = $gene1->taxon_id . "_" . $gene2->taxon_id . "_";
   } else {
-    $stable_id = $protein2->taxon_id . "_" . $protein1->taxon_id . "_";
+    $stable_id = $gene2->taxon_id . "_" . $gene1->taxon_id . "_";
   }
   $stable_id .= sprintf ("%011.0d",$homology->dbID) if($homology->dbID);
   $homology->stable_id($stable_id);
@@ -1168,7 +1169,7 @@ sub check_homology_consistency {
 
 
 sub generate_attribute_arguments {
-  my ($self, $protein1, $protein2, $type) = @_;
+  my ($self, $gene1, $gene2, $type) = @_;
 
   my $new_aln1_cigarline = "";
   my $new_aln2_cigarline = "";
@@ -1191,11 +1192,11 @@ sub generate_attribute_arguments {
   my ($aln1state, $aln2state);
   my ($aln1count, $aln2count);
 
-  # my @aln1 = split(//, $protein1->alignment_string); # Speed up
-  # my @aln2 = split(//, $protein2->alignment_string);
-  my $alignment_string = $protein1->alignment_string;
+  # my @aln1 = split(//, $gene1->alignment_string); # Speed up
+  # my @aln2 = split(//, $gene2->alignment_string);
+  my $alignment_string = $gene1->alignment_string;
   my @aln1 = unpack("A1" x length($alignment_string), $alignment_string);
-  $alignment_string = $protein2->alignment_string;
+  $alignment_string = $gene2->alignment_string;
   my @aln2 = unpack("A1" x length($alignment_string), $alignment_string);
 
   for (my $i=0; $i <= $#aln1; $i++) {
@@ -1253,25 +1254,21 @@ sub generate_attribute_arguments {
   } else {
     $new_aln2_cigarline .= $aln2count.$aln2state;
   }
-  my $seq_length1 = $protein1->seq_length;
+  my $seq_length1 = $gene1->seq_length;
   unless (0 == $seq_length1) {
     $perc_id1  = (int((100.0 * $identical_matches / $seq_length1 + 0.5)));
     $perc_pos1 = (int((100.0 * $positive_matches  / $seq_length1 + 0.5)));
-#     $perc_id1 = $identical_matches*100.0/$seq_length1;
-#     $perc_pos1 = $positive_matches*100.0/$seq_length1;
   }
-  my $seq_length2 = $protein2->seq_length;
+  my $seq_length2 = $gene2->seq_length;
   unless (0 == $seq_length2) {
     $perc_id2  = (int((100.0 * $identical_matches / $seq_length2 + 0.5)));
     $perc_pos2 = (int((100.0 * $positive_matches  / $seq_length2 + 0.5)));
-#     $perc_id2 = $identical_matches*100.0/$seq_length2;
-#     $perc_pos2 = $positive_matches*100.0/$seq_length2;
   }
 
-#   my $perc_id1 = $identical_matches*100.0/$protein1->seq_length;
-#   my $perc_pos1 = $positive_matches*100.0/$protein1->seq_length;
-#   my $perc_id2 = $identical_matches*100.0/$protein2->seq_length;
-#   my $perc_pos2 = $positive_matches*100.0/$protein2->seq_length;
+#   my $perc_id1 = $identical_matches*100.0/$gene1->seq_length;
+#   my $perc_pos1 = $positive_matches*100.0/$gene1->seq_length;
+#   my $perc_id2 = $identical_matches*100.0/$gene2->seq_length;
+#   my $perc_pos2 = $positive_matches*100.0/$gene2->seq_length;
 
   return ($new_aln1_cigarline, $perc_id1, $perc_pos1, $new_aln2_cigarline, $perc_id2, $perc_pos2);
 }
@@ -1279,7 +1276,7 @@ sub generate_attribute_arguments {
 sub get_matrix_hash {
   my $self = shift;
 
-  return $self->param('matrix_hash') if ($self->param('matrix_hash'));
+  return $self->param('matrix_hash') if (defined $self->param('matrix_hash'));
 
   my $BLOSUM62 = "#  Matrix made by matblas from blosum62.iij
 #  * column uses minimum score
@@ -1347,7 +1344,8 @@ X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
     }
   }
 
-  return $self->param('matrix_hash', \%matrix_hash);
+  $self->param('matrix_hash', \%matrix_hash);
+  return $self->param('matrix_hash');
 }
 
 1;
