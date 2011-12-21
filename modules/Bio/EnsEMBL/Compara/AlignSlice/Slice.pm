@@ -335,9 +335,7 @@ sub get_all_Genes_by_type{
   Arg [1]    : (optional) string $logic_name
                The name of the analysis used to generate the genes to retrieve
   Arg [2]    : (optional) string $dbtype
-               The dbtype of genes to obtain.  This assumes that the db has
-               been added to the DBAdaptor under this name (using the
-               DBConnection::add_db_adaptor method).
+               The dbtype of genes to obtain.
   Arg [3]    : (optional) boolean $load_transcripts
                This option is always disabled for AlingSlices. It only exists for
                compatibility with the Bio::EnsEMBL::Slice objects.

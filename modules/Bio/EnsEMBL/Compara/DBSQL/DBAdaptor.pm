@@ -109,58 +109,6 @@ sub new {
 }
 
 
-=head2 add_db_adaptor [DEPRECATED]
-
-  Arg [1]    : Bio::EnsEMBL::DBSQL::DBConnection
-  Example    : $compara_db->add_db_adaptor($homo_sapiens_db);
-  Description: Adds a genome-containing database to compara.  This database
-               can be used by compara to obtain sequence for a genome on
-               on which comparative analysis has been performed.  The database
-               adaptor argument must define the get_MetaContainer argument
-               so that species name and assembly type information can be
-               extracted from the database.
-               DEPRECATED: see Bio::EnsEMBL::Registry module.
-  Returntype : 1 if success 0 otherwise
-  Exceptions : Thrown if the argument is not a Bio::EnsEMBL::DBConnection
-               or if the argument does not implement a get_MetaContainer
-               method.
-  Caller     : general
-
-=cut
-
-sub add_db_adaptor {
-  my ($self, $dba) = @_;
-
-  deprecate("add_db_adaptor is deprecated. Correct method is to call\n" .
-            "dba->get_GenomeDBAdaptor->fetch_by_name_assembly(<name>,<assembly>)->db_adaptor(<coreDBA>)\n".
-            "Or to use add_DBAdaptor using the Bio::EnsEMBL::Registry\n");
-
-  unless($dba && ref $dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) {
-    $self->throw("dba argument must be a Bio::EnsEMBL::DBSQL::DBAdaptor\n" .
-                 "not a [$dba]");
-  }
-
-  my $mc = $dba->get_MetaContainer;
-  my $csa = $dba->get_CoordSystemAdaptor;
-  
-  my $species = $mc->get_Species->binomial;
-  my ($cs) = @{$csa->fetch_all};
-  my $assembly = $cs ? $cs->version : '';
-  
-  my $gdb;
-  try {
-    $gdb = $self->get_GenomeDBAdaptor->fetch_by_name_assembly($species,$assembly);
-  } catch {
-    warning("Catched an exception, no GenomeDb defined\n$_\n");
-  };
-
-  return 0 unless (defined $gdb);
-
-  $gdb->db_adaptor($dba);
-  return 1;
-}
-
-
 =head2 get_db_adaptor [DEPRECATED]
 
   Arg [1]    : string $species

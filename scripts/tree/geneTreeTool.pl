@@ -1940,7 +1940,6 @@ sub _nytprof_get_homologous_peptide_ids_from_gene {
   foreach my $gene_id (@genes) {
     foreach my $species (@species) {
       $species =~ s/\_/\ /g;
-      # my $compara_db = $self->{'container'}->adaptor->db->get_db_adaptor('compara');
       my $compara_db = $self->{comparaDBA};
       return unless $compara_db;
       my $ma = $compara_db->get_MemberAdaptor;
