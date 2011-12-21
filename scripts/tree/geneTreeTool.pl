@@ -45,7 +45,6 @@ $self->{'analyze'} = 0;
 $self->{'drawtree'} = 0;
 $self->{'print_leaves'} = 0;
 
-my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
 my $url;
 
