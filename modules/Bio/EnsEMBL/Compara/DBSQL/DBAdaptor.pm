@@ -37,9 +37,6 @@ Post questions the the EnsEMBL developer list: <ensembl-dev@ebi.ac.uk>
 =cut
 
 
-# Let the code begin...
-
-
 package Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 use vars qw(@ISA);
@@ -106,50 +103,6 @@ sub new {
   my $self = $class->SUPER::new(@args);
 
   return $self;
-}
-
-
-=head2 get_db_adaptor [DEPRECATED]
-
-  Arg [1]    : string $species
-               the name of the species to obtain a genome DBAdaptor for.
-  Arg [2]    : string $assembly
-               the name of the assembly to obtain a genome DBAdaptor for.
-  Example    : $hs_db = $db->get_db_adaptor('Homo sapiens','NCBI_30');
-  Description: Obtains a DBAdaptor for the requested genome if it has been
-               specified in the configuration file passed into this objects
-               constructor, or subsequently added using the add_db_adaptor
-               method.  If the DBAdaptor is not available (i.e. has not
-               been specified by one of the abbove methods) undef is returned.
-               DEPRECATED: see Bio::EnsEMBL::Registry module.
-  Returntype : Bio::EnsEMBL::DBSQL::DBConnection or undef
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::Compara::GenomeDBAdaptor
-
-=cut
-
-sub get_db_adaptor {
-  my ($self, $species, $assembly) = @_;
-
-  deprecate("get_db_adaptor is deprecated. Correct method is to call\n".
-            "dba->get_GenomeDBAdaptor->fetch_by_name_assembly(<name>,<assembly>)->db_adaptor\n".
-            "Or to use get_DBAdaptor using the Bio::EnsEMBL::Registry\n");
-
-  unless($species && $assembly) {
-    throw("species and assembly arguments are required\n");
-  }
-  
-  my $gdb;
-
-  eval {
-    $gdb = $self->get_GenomeDBAdaptor->fetch_by_name_assembly($species, $assembly);
-  };
-  if ($@) {
-    warning("Catched an exception, here is the exception message\n$@\n");
-    return undef;
-  }
-
-  return $gdb->db_adaptor;
 }
 
 
