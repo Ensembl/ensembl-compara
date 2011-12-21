@@ -56,11 +56,6 @@ use Bio::EnsEMBL::Utils::Argument;
 =head2 new
 
   Arg [..]   : list of named arguments.  See Bio::EnsEMBL::DBConnection.
-               [-CONF_FILE] optional name of a file containing configuration
-               information for compara genome databases. An example of the conf file
-               can be found in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
-               *** WARNING *** -CONF_FILE is now deprecated. Compara now uses the more generic
-               Bio::EnsEMBL::Registry configuration file.
                [-URL mysql://user:pass@host:port/db_name] alternative way to specify the
                connection parameters. Pass and port are optional. If none is speciefied,
                the species name will be equal to the db_name.
@@ -86,7 +81,7 @@ use Bio::EnsEMBL::Utils::Argument;
 sub new {
   my ($class, @args) = @_;
 
-  my ($conf_file, $url, $species) = rearrange(['CONF_FILE', 'URL', 'SPECIES'], @args);
+  my ($url, $species) = rearrange(['URL', 'SPECIES'], @args);
 
   if ($url and $url =~ /mysql\:\/\/([^\@]+\@)?([^\:\/]+)(\:\d+)?\/(.+)/) {
     my $user_pass = $1;
@@ -109,55 +104,6 @@ sub new {
   }
 
   my $self = $class->SUPER::new(@args);
-
-  if(defined($conf_file) and $conf_file ne "") {
-    deprecate("Compara.conf file is deprecated. Compara is now using the\n" .
-              "more generic Bio::EnsEMBL::Registry configuration file\n");
-
-    #read configuration file from disk
-    my @conf = @{do $conf_file};
-
-    foreach my $genome (@conf) {
-      my ($species, $assembly, $db_hash) = @$genome;
-      my $db;
-
-      my $module = $db_hash->{'module'};
-      my $mod = $module;
-
-      eval {
-        # require needs /'s rather than colons
-        if ( $mod =~ /::/ ) {
-          $mod =~ s/::/\//g;
-        }
-        require "${mod}.pm";
-
-
-        $db = $module->new(-dbname => $db_hash->{'dbname'},
-                           -host   => $db_hash->{'host'},
-                           -user   => $db_hash->{'user'},
-                           -pass   => $db_hash->{'pass'},
-                           -port   => $db_hash->{'port'},
-                           -driver => $db_hash->{'driver'},
-                           -disconnect_when_inactive => $db_hash->{'disconnect_when_inactive'});
-      };
-
-      if($@) {
-        throw("could not load module specified in configuration file:$@");
-      }
-
-      unless($db && ref $db && $db->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) {
-        throw("[$db] specified in conf file is not a " .
-             "Bio::EnsEMBL::DBSQL::DBAdaptor");
-      }
-
-      if (defined $db) {
-        # The core db connection will be cached in the genomeDB object, which is itself
-        # cached in GenomeDBAdaptor.
-        my $gdb = $self->get_GenomeDBAdaptor->fetch_by_name_assembly($species,$assembly);
-        $gdb->db_adaptor($db);
-      }
-    }
-  }
 
   return $self;
 }

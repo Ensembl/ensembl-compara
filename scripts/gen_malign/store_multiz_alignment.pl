@@ -38,8 +38,7 @@ store_multiz_alignment.pl [-help]
   --dbuser db_username (default = 'ensro')
   --dbname ensembl_compara_database
   --port mysql_host_port (default = 3352)
-  --conf_file compara_conf_file
-      see an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
+  --reg_conf registry_conf_file
   --multiz_file file_containing_multiz_alignemnts
   --skip (ignores unknown genome assemblies and skips the whole alignment)
   --force (ignores unknown genome assemblies but stores the remaining sequences of the aligment)

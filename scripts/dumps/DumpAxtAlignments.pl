@@ -18,15 +18,12 @@ $0 [-help]
    -species2 (e.g. \"Mus musculus\") to which alignments are queried
    -assembly2 (e.g. MGSC3) assembly version of species2
    -alignment_type type of alignment stored e.g. BLASTZ_NET (default: BLASTZ_NET) 
-   -conf_file compara_conf_file
-              see an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
 ";
 
 my ($host,$dbname);
 my $dbuser = 'ensro';
 my ($seq_region,$seq_region_start,$seq_region_end);
 my ($species1,$assembly1,$species2,$assembly2);
-my $conf_file;
 my $help = 0;
 my $alignment_type = "BLASTZ_NET";
 my $limit = 0;
@@ -50,7 +47,6 @@ GetOptions('help' => \$help,
 	   'species2=s' => \$species2,
 	   'assembly2=s' => \$assembly2,
 	   'alignment_type=s' => \$alignment_type,
-	   'conf_file=s' => \$conf_file,
            'limit=i' => \$limit);
 
 $|=1;
@@ -62,11 +58,12 @@ if ($help) {
 
 # Connecting to compara database
 
-my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host => $host,
+my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (
+                              -host => $host,
 						      -user => $dbuser,
 						      -port => $port,
 						      -dbname => $dbname,
-						      -conf_file => $conf_file);
+                              );
 my $sliceadaptor = $db->get_db_adaptor($species1,$assembly1)->get_SliceAdaptor;
 
 

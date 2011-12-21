@@ -14,15 +14,12 @@ $0 [-help]
    -user username (default = 'ensro')
    -dbname ensembl_compara_database
    -port eg 3352 (default)
-   -conf_file compara_conf_file
-              see an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
 ";
 
 my $host = "127.0.0.1";
 my $dbname = "ensembl_compara_javi_22_1";
 my $dbuser = 'ensro';
 my $dbpass;
-my $conf_file = "Compara.conf";
 my $help = 0;
 my $port = 3352;
 
@@ -32,7 +29,6 @@ GetOptions('help' => \$help,
 	   'dbuser=s' => \$dbuser,
 	   'dbpass=s' => \$dbpass,
 	   'port=i'  => \$port,
-	   'conf_file=s' => \$conf_file,
            );
 
 $|=1;
@@ -47,7 +43,7 @@ my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host => $host,
 						      -pass => $dbpass,
 						      -port => $port,
 						      -dbname => $dbname,
-						      -conf_file => $conf_file);
+                              );
 my $dbh = $db->db_handle();
 
 

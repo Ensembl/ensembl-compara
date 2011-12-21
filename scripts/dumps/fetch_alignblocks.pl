@@ -15,7 +15,6 @@ fetch_alignblocks -host ecs1b.sanger.ac.uk
             -assembly1 NCBI30
             -species2 \"Mus musculus\"
             -assembly2 MGSC3
-            -conf_file Compara.conf
 
 $0 [-help]
    -host compara_db_host_server
@@ -28,15 +27,11 @@ $0 [-help]
    -assembly1 (e.g. NCBI30) assembly version of species1
    -species2 (e.g. \"Mus musculus\") to which alignments are queried
    -assembly2 (e.g. MGSC3) assembly version of species2
-   -conf_file comparadb_configuration_file
-              (see an example in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example)
 
 ";
 
 
 my ($host,$dbname,$dbuser,$chr_name,$chr_start,$chr_end,$species1,$assembly1,$species2,$assembly2);
-
-my $conf_file;
 
 my $help = 0;
 
@@ -51,7 +46,7 @@ GetOptions('help' => \$help,
 	   'assembly1=s' => \$assembly1,
 	   'species2=s' => \$species2,
 	   'assembly2=s' => \$assembly2,
-	   'conf_file=s' => \$conf_file);
+       );
 
 $|=1;
 
@@ -81,10 +76,11 @@ exit 2\n";
   exit 2;
 }
 
-my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host => $host,
+my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (
+                              -host => $host,
 						      -user => $dbuser,
 						      -dbname => $dbname,
-						      -conf_file => $conf_file);
+                              );
 
 
 my $species1_dbadaptor = $db->get_db_adaptor($species1,$assembly1);
