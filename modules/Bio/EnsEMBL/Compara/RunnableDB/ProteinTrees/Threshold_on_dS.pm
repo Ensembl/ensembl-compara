@@ -54,22 +54,11 @@ use Statistics::Descriptive;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub param_defaults {
-    return {
-            'method_link_types'  => ['ENSEMBL_ORTHOLOGUES'],
-    };
-}
-
-
 sub run {
     my $self = shift @_;
 
-    my $species_sets      = $self->param('species_sets') or die "'species_sets' is an obligatory parameter";
-    my $method_link_types = $self->param('method_link_types');
-
-    if(@$species_sets) {
-        $self->calc_threshold_on_dS($species_sets, $method_link_types);
-    }
+    my $mlss_id = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
+    $self->calc_threshold_on_dS($mlss_id);
 }
 
 
@@ -80,7 +69,7 @@ sub run {
 ##########################################
 
 sub calc_threshold_on_dS {
-    my ($self, $species_sets, $method_link_types) = @_;
+    my ($self, $mlss_id) = @_;
 
     my $compara_dbc = $self->compara_dba->dbc;
 
@@ -90,41 +79,32 @@ sub calc_threshold_on_dS {
     my $sql2 = "update homology set threshold_on_ds = ? where method_link_species_set_id = ?";
     my $sth2 = $compara_dbc->prepare($sql2);
 
-    my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-    foreach my $species_set (@{$species_sets}) {
-        while (my $genome_db_id1 = shift @{$species_set}) {
-            foreach my $genome_db_id2 (@{$species_set}) {
-                foreach my $method_link_type(@$method_link_types) {
+    $sth->execute($mlss_id);
 
-                    my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type,[$genome_db_id1,$genome_db_id2]);
-                    $sth->execute($mlss->dbID);
+    my $stats = new Statistics::Descriptive::Full;
+    my $count = 0;
+    my $dS;
 
-                    my $stats = new Statistics::Descriptive::Full;
-                    my $dS;
-                    $sth->bind_columns(\$dS);
-                    my $count = 0;
-                    while ($sth->fetch) {
-                        $stats->add_data($dS);
-                        $count++;
-                    }
-                    if ($count) {
-                        my $median = $stats->median;
-                        print STDERR "method_link_species_set_id: ",$mlss->dbID,"; median: ",$median,"; 2\*median: ",2*$median;
+    $sth->bind_columns(\$dS);
+    while ($sth->fetch) {
+        $stats->add_data($dS);
+        $count++;
+    }
 
-                        if($median >1.0) {
-                            print STDERR "  threshold exceeds 2.0 - to distant -> set to 2\n";
-                            $median = 1.0;
-                        }
-                        if($median <1.0) {
-                            print STDERR "  threshold below 1.0 -> set to 1\n";
-                            $median = 0.5;
-                        }
-                        $sth2->execute(2*$median, $mlss->dbID);
-                        print STDERR " stored\n";
-                    }
-                }
-            }
+    if ($count) {
+        my $median = $stats->median;
+        print STDERR "method_link_species_set_id: $mlss_id; median: $median; 2\*median: ",2*$median;
+
+        if($median >1.0) {
+            print STDERR "  threshold exceeds 2.0 - to distant -> set to 2\n";
+            $median = 1.0;
         }
+        if($median <1.0) {
+            print STDERR "  threshold below 1.0 -> set to 1\n";
+            $median = 0.5;
+        }
+        $sth2->execute(2*$median, $mlss_id);
+        print STDERR " stored\n";
     }
 
     $sth->finish;

@@ -72,7 +72,7 @@ sub default_options {
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'release'               => '65',
-        'rel_suffix'            => '',    # an empty string by default, a letter otherwise
+        'rel_suffix'            => 'd',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
         'do_not_reuse_list'     => [ 123 ],     # names of species we don't want to reuse this time
         # For rel 65, we're not reusing the gorilla, because the sequence table was messed up in 64
@@ -130,7 +130,7 @@ sub default_options {
     # connection parameters to various databases:
 
         'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => 'compara2',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                    
@@ -816,15 +816,23 @@ sub pipeline_analyses {
             -wait_for => [ 'per_genome_genetreeset_qc' ],   # funnel
             -hive_capacity => -1,
             -flow_into => {
+                2 => [ 'homology_mlss_factory' ],
+            },
+        },
+
+        {   -logic_name => 'homology_mlss_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
+            -parameters => {
+		    'method_link_types'  => ['ENSEMBL_ORTHOLOGUES', 'ENSEMBL_PARALOGUES'],
+		},
+            -hive_capacity => -1,
+            -flow_into => {
                 2 => [ 'homology_dNdS_factory' ],
             },
         },
 
         {   -logic_name => 'homology_dNdS_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyGroupingFactory',
-            -parameters => {
-		    'method_link_types'  => ['ENSEMBL_ORTHOLOGUES', 'ENSEMBL_PARALOGUES'],
-		},
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory',
             -hive_capacity => -1,
             -flow_into => {
                 1 => [ 'threshold_on_dS' ],
@@ -844,7 +852,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'threshold_on_dS',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS',
-            -parameters => { },
             -wait_for => [ 'homology_dNdS' ],
             -hive_capacity => -1,
         },
