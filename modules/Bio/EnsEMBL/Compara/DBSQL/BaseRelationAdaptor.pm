@@ -2,9 +2,9 @@ package Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 
 use strict;
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 
-our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
+
 
 =head2 generic_fetch
 
@@ -19,47 +19,16 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
                 # the join condition (mandatory)
                 [qw(fm.family_id fm.member_id fm.cigar_line)]]
                 # any additional columns that the join could imply (optional)
-                # as an arrayref
+                # as an arrayref 
   Example    : $arrayref = $a->generic_fetch($constraint, $join);
   Description: Performs a database fetch and returns BaseRelation-inherited objects
   Returntype : arrayref of Bio::EnsEMBL::Compara::BaseRelation-inherited objects
   Exceptions : none
-  Caller     : Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor::generic_fetch_sth
+  Caller     : various adaptors' specific fetch_ subroutines
 
 =cut
-   
+  
 sub generic_fetch {
-  my ($self, $constraint, $join) = @_;
-
-  my $sth = $self->generic_fetch_sth($constraint, $join);
-
-  return $self->_objs_from_sth($sth);
-  
-}
-
-=head2 generic_fetch_sth
-
-  Arg [1]    : (optional) string $constraint
-               An SQL query constraint (i.e. part of the WHERE clause)
-               e.g. "fm.family_id = $family_id"
-  Arg [2]    : (optional) arrayref $join
-               the arrayref $join should contain arrayrefs of this form
-               [['family_member', 'fm'],
-                # the table to join with synonym (mandatory) as an arrayref
-                'm.member_id = fm.member_id',
-                # the join condition (mandatory)
-                [qw(fm.family_id fm.member_id fm.cigar_line)]]
-                # any additional columns that the join could imply (optional)
-                # as an arrayref 
-  Example    : $sth = $a->generic_fetch_sth($constraint, $join);
-  Description: Performs a database fetch and returns the SQL state handle
-  Returntype : DBI::st
-  Exceptions : none
-  Caller     : BaseFeatureAdaptor, ProxyDnaAlignFeatureAdaptor::generic_fetch
-
-=cut
-  
-sub generic_fetch_sth {
   my ($self, $constraint, $join) = @_;
   
   my @tables = $self->_tables;
@@ -109,9 +78,12 @@ sub generic_fetch_sth {
 #  warn $sql;
 
   $sth->execute;
+  my $obj_list = $self->_objs_from_sth($sth);
+  $sth->finish();
 
-  return $sth;
+  return $obj_list;
 }
+
 
 sub fetch_all {
   my $self = shift;
@@ -119,29 +91,6 @@ sub fetch_all {
   return $self->generic_fetch();
 }
 
-
-sub list_dbIDs {
-  my $self = shift;
-  
-  my @tables = $self->_tables;
-  my ($name, $syn) = @{$tables[0]};
-  my $sql = "SELECT ${syn}.${name}_id from ${name} ${syn}";
-  
-  my $sth = $self->prepare($sql);
-  $sth->execute;  
-  
-  my $internal_id;
-  $sth->bind_columns(\$internal_id);
-
-  my @internal_ids;
-  while ($sth->fetch()) {
-    push @internal_ids, $internal_id;
-  }
-
-  $sth->finish;
-
-  return \@internal_ids;
-}
 
 =head2 fetch_by_dbID
 
@@ -156,8 +105,8 @@ sub list_dbIDs {
 
 =cut
 
-sub fetch_by_dbID{
-  my ($self,$id) = @_;
+sub fetch_by_dbID {
+  my ($self, $id) = @_;
 
   unless(defined $id) {
     $self->throw("fetch_by_dbID must have an id");
@@ -175,6 +124,7 @@ sub fetch_by_dbID{
   return $obj;
 }
 
+
 =head2 fetch_by_stable_id
 
   Arg [1]    : string $stable_id
@@ -183,13 +133,13 @@ sub fetch_by_dbID{
   Description: Returns the feature created from the database defined by the
                the id $id.
   Returntype : Bio::EnsEMBL::SeqFeature
-  Exceptions : thrown if $id is not defined
+  Exceptions : thrown if $stable_id is not defined
   Caller     : general
 
 =cut
 
 sub fetch_by_stable_id {
-  my ($self,$stable_id) = @_;
+  my ($self, $stable_id) = @_;
 
   unless(defined $stable_id) {
     $self->throw("fetch_by_stable_id must have an stable_id");
@@ -209,7 +159,7 @@ sub fetch_by_stable_id {
 
 
 sub fetch_all_by_method_link_type {
-  my ($self,$method_link_type) = @_;
+  my ($self, $method_link_type) = @_;
 
   $self->throw("method_link_type arg is required\n")
     unless ($method_link_type);
@@ -237,10 +187,6 @@ sub fetch_all_by_method_link_type {
   return $self->generic_fetch($constraint);
 }
 
-sub store_source {
-  my ($self,$source_name) = @_;
-  deprecate("store_source method is deprecated. Now this data has to be pre-stored in method_link table\n");
-}
 
 sub store_relation {
   my ($self, $member_attribute, $relation) = @_;
@@ -277,6 +223,7 @@ sub store_relation {
   }
 }
 
+
 sub update_relation {
   my ($self, $member_attribute) = @_;
 
@@ -294,14 +241,13 @@ sub update_relation {
 }
 
 
-
 =head2 _tables
 
   Args       : none
   Example    : $tablename = $self->_table_name()
   Description: ABSTRACT PROTECTED Subclasses are responsible for implementing
-               this method.  It should list of [tablename, alias] pairs.
-               Additionally the primary table (with the dbID, analysis_id, and
+               this method.  It should return list of [tablename, alias] pairs.
+               Additionally, the primary table (with the dbID, analysis_id, and
                score) should be the first table in the list.
                e.g:
                ( ['repeat_feature',   'rf'],
@@ -318,7 +264,6 @@ sub _tables {
 
   $self->throw("abstract method _tables not defined by implementing" .
                " subclass of BaseFeatureAdaptor");
-  return undef;
 }
 
 
@@ -342,6 +287,7 @@ sub _columns {
                " subclass of BaseFeatureAdaptor");
 }
 
+
 =head2 _objs_from_sth
 
   Arg [1]    : DBI::row_hashref $hashref containing key-value pairs
@@ -363,6 +309,7 @@ sub _objs_from_sth {
              . " subclass of BaseFeatureAdaptor");
 }
 
+
 =head2 _join
 
   Arg [1]    : none
@@ -381,6 +328,7 @@ sub _join {
 
   return '';
 }
+
 
 =head2 _default_where_clause
 
@@ -401,6 +349,7 @@ sub _default_where_clause {
 
   return '';
 }
+
 
 =head2 _final_clause
 
