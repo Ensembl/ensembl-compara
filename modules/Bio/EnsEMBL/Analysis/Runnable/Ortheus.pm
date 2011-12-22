@@ -274,8 +274,8 @@ sub run_ortheus {
   }
   print "Running ortheus: " . $command . "\n";
 
-  unless (system($command) == 0) {
-    throw("ortheus execution failed\n");
+  if (my $return_code = system($command)) {
+    throw("The following command failed (return_code=$return_code):\n\t$command\n");
   }
 }
 
