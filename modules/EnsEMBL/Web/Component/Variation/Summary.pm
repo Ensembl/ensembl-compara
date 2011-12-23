@@ -236,7 +236,8 @@ sub alleles {
   my $object     = $self->object;
   my $variation  = $object->Obj;
   my $alleles    = $object->alleles;
-  my $c_alleles  = scalar split '/', $alleles;
+  my @l_alleles  = split '/', $alleles;
+  my $c_alleles  = scalar @l_alleles;
   my $alt_string = $c_alleles > 2 ? 's' : '';
   my $ancestor   = $object->ancestor;
      $ancestor   = " | Ancestral: <strong>$ancestor</strong>" if $ancestor;
@@ -247,7 +248,40 @@ sub alleles {
      $freq       = '&lt; 0.01' if $freq eq '0.00'; # Frequency lower than 1%
   my $maf        = $variation->minor_allele;
      $maf        = " | MAF: <strong>$freq</strong> ($maf)" if $maf;
-  my $html       = qq{Reference/Alternative$alt_string: <span style="font-weight:bold;font-size:1.2em">$alleles</span>$ancestor$ambiguity$maf};
+  my $html;   
+     
+  # Check allele string size (for display issues)
+  my $large_allele = 0;
+  my $display_alleles;
+  if (length($alleles) > 50) {
+    foreach my $string_allele (@l_alleles) {
+      $display_alleles .= '/' if ($display_alleles);
+      $display_alleles .= substr($string_allele,0,50);
+      if (length($string_allele) > 50) {
+        $large_allele += 1;
+        $display_alleles .= '...';
+      }
+    }
+    if ($large_allele != 1) {
+      $display_alleles = substr($alleles,0,50).'...';
+      $large_allele = 1;
+    }
+    
+    $alleles = join("/<br />", @l_alleles);
+    my $show = $self->hub->get_cookies('toggle_Alleles') eq 'open';
+    $html = sprintf('Reference/Alternative%s: 
+      <a class="toggle %s set_cookie" href="#" rel="Alleles" style="font-weight:bold;font-size:1.2em" title="Click to toggle alleles">%s</a>
+      <small>Click the plus to show all of the alleles</small>%s
+      <div class="Alleles"><div class="toggleable" style="font-weight:normal;%s">%s</div></div>',
+      $alt_string,
+      $show ? 'open' : 'closed',
+      $display_alleles, "$ancestor$ambiguity$maf",
+      $show ? '' : 'display:none',
+      "<pre>$alleles</pre>");
+  }
+  else {
+    $html = qq{Reference/Alternative$alt_string: <span style="font-weight:bold;font-size:1.2em">$alleles</span>$ancestor$ambiguity$maf};
+  }
 
   # Check somatic mutation base matches reference
   if ($feature_slice) {
@@ -257,7 +291,27 @@ sub alleles {
     if ($allele =~ /^[ACGTN]+$/) {
       my $seq   = length $sequence == 1 ? 'base': 'sequence';
       $sequence =~ s/(.{60})/$1<br \/>/g;
-      $html    .= "<br /><em>Note</em>: The reference $seq for this mutation ($allele) does not match the Ensembl reference $seq ($sequence) at this location." if $sequence ne $allele;
+      
+      if ($sequence ne $allele) {
+        $html .= '<br />' if ($large_allele == 0);
+        if (length $sequence < 50) {
+          $html .= "<em>Note</em>: The reference $seq for this mutation ($allele) does not match the Ensembl reference $seq ($sequence) at this location.";
+        }
+        else {
+          $allele = substr($allele,0,50).'...' if (length $allele > 50);
+          my $show2 = $self->hub->get_cookies('toggle_Sequence') eq 'open';
+          $html  .= sprintf('<em>Note</em>: The reference %s for this mutation (%s) does not match the Ensembl reference %s at this location.
+                             <a class="toggle %s set_cookie" href="#" rel="Sequence" title="Click to toggle Sequence"></a><small>Click the plus to show all of the sequence</small>
+                             <div class="Sequence"><div class="toggleable" style="font-weight:normal;%s">%s</div></div>',
+                            $seq,
+                            $allele,
+                            $seq,
+                            $show2 ? 'open' : 'closed',
+                            $show2 ? '' : 'display:none',
+                            "<pre>$sequence</pre>"
+                           );
+        }
+      }
     }
   }
   
@@ -419,7 +473,7 @@ sub validation_status {
 sub hgvs {
   my $self      = shift;
   my $object    = $self->object;
-  my $hgvs_urls = $object->get_hgvs_names_url;
+  my $hgvs_urls = $object->get_hgvs_names_url(1);
   my $count     = 0;
   my $total     = scalar keys %$hgvs_urls;
   my $html;
