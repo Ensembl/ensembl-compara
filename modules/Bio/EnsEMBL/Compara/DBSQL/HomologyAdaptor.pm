@@ -46,18 +46,6 @@ sub fetch_all_by_Member {
 }
 
 
-=head2 fetch_by_Member_paired_species
-
-  DEPRECATED: use fetch_all_by_Member_paired_species instead
-
-=cut
-
-sub fetch_by_Member_paired_species {
-  my ($self, @args) = @_;
-  return $self->fetch_all_by_Member_paired_species(@args);
-}
-
-
 =head2 fetch_all_by_Member_paired_species
 
   Arg [1]    : Bio::EnsEMBL::Compara::Member $member

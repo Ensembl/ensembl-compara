@@ -35,7 +35,7 @@ foreach my $pep (@{$members}) {
   next unless($pep->chr_start < 10000000);
   if($pep->get_Transcript->five_prime_utr) {
     $pep->gene_member->print_member;
-    my $orths = $homologyDBA->fetch_by_Member_paired_species($pep->gene_member, 'homo_sapiens');
+    my $orths = $homologyDBA->fetch_all_by_Member_paired_species($pep->gene_member, 'homo_sapiens');
     foreach my $homology (@{$orths}) {
       $homology->print_homology;
     }

@@ -46,7 +46,7 @@ foreach my $gene_id (split(':',$input)) {
   next unless (defined($member));
   my $all_homologies;
   $all_homologies = $homology_adaptor->fetch_by_Member($member) unless (defined $species2);
-  $all_homologies = $homology_adaptor->fetch_by_Member_paired_species($member,$species2) if (defined $species2);
+  $all_homologies = $homology_adaptor->fetch_all_by_Member_paired_species($member,$species2) if (defined $species2);
   next unless (defined($all_homologies));
 
   foreach my $this_homology (@$all_homologies) {

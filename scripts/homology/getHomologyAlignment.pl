@@ -68,7 +68,7 @@ my $member;
 $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $self->{'gene_stable_id'});
 #$member->print_member() if($member);
 
-my ($homology) = @{$self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_Member_paired_species($member, $self->{'species'})};
+my ($homology) = @{$self->{'comparaDBA'}->get_HomologyAdaptor->fetch_all_by_Member_paired_species($member, $self->{'species'})};
 #$homology->print_homology() if($homology);
 
 my $queryMA;
