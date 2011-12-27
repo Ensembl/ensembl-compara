@@ -50,7 +50,7 @@ my $member = $ma->fetch_by_source_stable_id($source,$stable_id);
 
 ok($member);
 
-my $families = $fa->fetch_by_Member($member);
+my $families = $fa->fetch_all_by_Member($member);
 
 ok($families);
 ok (scalar @{$families} == 1);
