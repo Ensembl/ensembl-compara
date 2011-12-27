@@ -34,7 +34,7 @@ foreach my $gene (@$genes) {
   my $member = $member_adaptor->
     fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
   die "no members" unless (defined $member);
-  my $all_homologies = $homology_adaptor->fetch_by_Member($member);
+  my $all_homologies = $homology_adaptor->fetch_all_by_Member($member);
   foreach my $homology (@$all_homologies) {
     my @two_ids = map { $_->get_canonical_peptide_Member->member_id } @{$homology->gene_list};
     my $leaf_node_id = $homology->node_id;

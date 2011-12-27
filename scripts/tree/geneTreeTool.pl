@@ -13135,7 +13135,7 @@ sub _merge_split_genes {
 #     # my $string = $cluster->get_tagvalue("OrthoTree_types_hashstr");
 #     my $cluster_node_id = $cluster->node_id;
 #     foreach my $member (@{$cluster->get_all_leaves}) {
-#       # my $homologies = $self->{ha}->fetch_by_Member($member->gene_member);
+#       # my $homologies = $self->{ha}->fetch_all_by_Member($member->gene_member);
 #       # Generate a md5sum string to compare among databases
 #       1;                        #ONGOING
 #       my $gene_stable_id = $member->gene_member->stable_id;

@@ -29,7 +29,7 @@ FamilyAdaptor - DESCRIPTION of Object
 
   my $ma = $db->get_MemberAdaptor;
   my $member = $ma->fetch_by_source_stable_id('Uniprot/SWISSPROT', 'YSV4_CAEEL')};
-  my @fam = @{$fa->fetch_by_Member($member)};
+  my @fam = @{$fa->fetch_all_by_Member($member)};
 
   @fam = @{$fa->fetch_by_description_with_wildcards('interleukin',1)};
   @fam = @{$fa->fetch_all};
@@ -64,22 +64,11 @@ use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
-=head2 fetch_by_Member
-
-  DEPRECATED: use fetch_all_by_Member instead
-
-=cut
-
-sub fetch_by_Member {
-  my ($self, @args) = @_;
-  return $self->fetch_all_by_Member(@args);
-}
-
 
 =head2 fetch_all_by_Member
 
  Arg [1]    : Bio::EnsEMBL::Compara::Member $member
- Example    : $families = $FamilyAdaptor->fetch_by_Member($member);
+ Example    : $families = $FamilyAdaptor->fetch_all_by_Member($member);
  Description: find the families to which the given member belongs to
  Returntype : an array reference of Bio::EnsEMBL::Compara::Family objects
               (could be empty or contain more than one Family in the case of ENSEMBLGENE only)

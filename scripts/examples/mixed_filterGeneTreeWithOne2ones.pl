@@ -37,7 +37,7 @@ foreach my $gene (@$genes) {
   my $member = $member_adaptor->
     fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
   die "no members" unless (defined $member);
-  my $all_homologies = $homology_adaptor->fetch_by_Member($member);
+  my $all_homologies = $homology_adaptor->fetch_all_by_Member($member);
 
   my %leaves_names;
   $leaves_names{$gene->stable_id} = 1;

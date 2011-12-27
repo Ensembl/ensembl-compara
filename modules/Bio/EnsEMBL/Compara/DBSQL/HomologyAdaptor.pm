@@ -8,17 +8,6 @@ use Bio::EnsEMBL::Utils::Exception;
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 
-=head2 fetch_by_Member
-
-  DEPRECATED: use fetch_all_by_Member instead
-
-=cut
-
-sub fetch_by_Member {
-  my ($self, @args) = @_;
-  return $self->fetch_all_by_Member(@args);
-}
-
 =head2 fetch_all_by_Member
 
  Arg [1]    : Bio::EnsEMBL::Compara::Member $member
@@ -149,7 +138,7 @@ sub fetch_all_by_Member_method_link_type {
 
   $constraint .= " AND hm.member_id = " . $member->dbID;
 
-  # See in fetch_by_Member what is this internal variable for
+  # See in fetch_all_by_Member what is this internal variable for
   $self->{'_this_one_first'} = $member->stable_id;
 
   return $self->generic_fetch($constraint, $join);
@@ -190,7 +179,7 @@ sub fetch_all_by_Member_MethodLinkSpeciesSet {
 
   $constraint .= " AND hm.member_id = " . $member->dbID;
 
-  # See in fetch_by_Member what is this internal variable for
+  # See in fetch_all_by_Member what is this internal variable for
   $self->{'_this_one_first'} = $member->stable_id;
 
   return $self->generic_fetch($constraint, $join);
@@ -247,7 +236,7 @@ sub fetch_by_Member_Member_method_link_type {
   $constraint .= " AND hm2.member_id = " . $member2->dbID;
 #  $constraint .= " AND hm1.member_id<hm2.member_id ";
 
-  # See in fetch_by_Member what is this internal variable for
+  # See in fetch_all_by_Member what is this internal variable for
   $self->{'_this_one_first'} = $member1->stable_id;
 
   return $self->generic_fetch($constraint, $join);
@@ -277,7 +266,7 @@ sub fetch_by_Member_id_Member_id {
   my $constraint .= " hm1.member_id = " . $member_id1;
   $constraint .= " AND hm2.member_id = " . $member_id2;
 
-  # See in fetch_by_Member what is this internal variable for
+  # See in fetch_all_by_Member what is this internal variable for
   $self->{'_this_one_first'} = $member_id1;
 
   my $homology = $self->generic_fetch($constraint, $join);
@@ -535,7 +524,7 @@ sub _recursive_get_orthocluster {
   $gene->print_member("query gene\n") if($debug);
   $member_set->{$gene->dbID} = $gene;
 
-  my $homologies = $self->fetch_by_Member($gene);
+  my $homologies = $self->fetch_all_by_Member($gene);
   printf("fetched %d homologies\n", scalar(@$homologies)) if($debug);
 
   foreach my $homology (@{$homologies}) {

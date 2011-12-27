@@ -31,7 +31,7 @@ my $genes = $human_gene_adaptor->fetch_all_by_external_name('CTDP1');
 foreach my $gene (@$genes) {
   my $member = $member_adaptor->
   fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
-  my $all_homologies = $homology_adaptor->fetch_by_Member($member);
+  my $all_homologies = $homology_adaptor->fetch_all_by_Member($member);
 
   foreach my $this_homology (@$all_homologies) {
     my $description = $this_homology->description;

@@ -26,7 +26,7 @@ DomainAdaptor
 
   my $ma = $db->get_MemberAdaptor;
   my $member = $ma->fetch_by_source_stable_id('SWISSPROT', 'YSV4_CAEEL')};
-  my @dom = @{$da->fetch_by_Member($member)};
+  my @dom = @{$da->fetch_all_by_Member($member)};
 
 
   @dom = @{$da->fetch_by_description_with_wildcards('interleukin',1)};
@@ -61,20 +61,7 @@ use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 
-=head2 fetch_by_Member
-
- Arg [1]    : string $dbname
- Arg [2]    : string $member_stable_id
- Example    : $fams = $FamilyAdaptor->fetch_of_source_stable_id('SPTR', 'P01235');
- Description: find the family to which the given database and  member_stable_id belong
- Returntype : an array reference of Bio::EnsEMBL::Compara::Family objects
-              (could be empty or contain more than one Family in the case of ENSEMBLGENE only)
- Exceptions : when missing arguments
- Caller     : general
-
-=cut
-
-sub fetch_by_Member {
+sub fetch_all_by_Member {
   my ($self, $member) = @_;
 
   unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
