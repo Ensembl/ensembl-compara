@@ -23,7 +23,7 @@ use File::Basename qw( dirname );
 use Pod::Usage;
 use Getopt::Long;
 
-use vars qw( $SERVERROOT $PLUGIN_ROOT $SCRIPT_ROOT $DEBUG $FUDGE $NOINTERPRO $NOSUMMARY $help $info @user_spp $allgenetypes);
+use vars qw( $SERVERROOT $PLUGIN_ROOT $SCRIPT_ROOT $DEBUG $FUDGE $NOINTERPRO $NOSUMMARY $help $info @user_spp $allgenetypes $coordsys);
 
 BEGIN{
   &GetOptions( 
@@ -35,6 +35,7 @@ BEGIN{
                'nointerpro'=> \$NOINTERPRO,
                'nosummary' => \$NOSUMMARY,
                'plugin_root=s' => \$PLUGIN_ROOT,
+               'coordsys' => \$coordsys,
 	     );
 
   pod2usage(-verbose => 2) if $info;
@@ -64,6 +65,7 @@ use EnsEMBL::Web::DBSQL::DBConnection;
 ##---------------------------- SPECIES INFO ---------------------------------
 
 use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::Document::Table;
 
 my $SD = EnsEMBL::Web::SpeciesDefs->new();
 my $pre = $PLUGIN_ROOT =~ m#sanger-plugins/pre# ? 1 : 0;
@@ -169,7 +171,7 @@ foreach my $spp (@valid_spp) {
 
     ## logicnames for valid genes
     my $genetypes = "'ensembl', 'ensembl_havana_gene', 'havana', 'ensembl_projection',
-      'ensembl_ncRNA', 'ncRNA', 'tRNA', 'pseudogene', 'retrotransposed', 'human_ensembl_protein',
+      'ensembl_ncRNA', 'ncRNA', 'tRNA', 'pseudogene', 'retrotransposed', 'human_ensembl_proteins',
       'ncRNA_pseudogene', 'havana_ig_gene','ensembl_ig_gene', 'ensembl_lincrna', 'ensembl_havana_lincrna',
       'flybase', 'wormbase', 'vectorbase', 'sgd', 'HOX', 'CYT', 'GSTEN', 'MT_genbank_import'";
 
@@ -333,6 +335,37 @@ foreach my $spp (@valid_spp) {
 
     print "Golden path length: $gpl.\n" if $DEBUG;
 
+
+  ##-----------------------List all coord systems region counts----------------
+  my $b_coordsys="";
+  if($coordsys){
+    $b_coordsys=qq{<h3>Coordinate Systems</h3>\n<table class="ss tint species-stats">};
+    my $sa = $db_adaptor->get_adaptor('slice');
+    my $csa = $db_adaptor->get_adaptor('coordsystem');
+    my $row_count=0;
+    foreach my $cs (sort {$a->rank <=> $b->rank} @{$csa->fetch_all}){
+      my @regions = @{$sa->fetch_all($cs->name)};
+      my $count_regions = scalar @regions;
+      my $regions_html;
+      if(!$row_count){#$count_regions < 10000){
+        $regions_html = regions_table($spp,$cs->name,\@regions);
+      }
+      else{
+        $regions_html = sprintf("%d %s",$count_regions,($count_regions>1)?"sequences":"sequence");
+      }
+      $row_count++;
+      $b_coordsys .= sprintf(qq{
+        %s 
+        <td class="data">%s</td>
+        <td class="value">%s</td>
+        </tr>},
+        stripe_row($row_count),
+        $cs->name,
+        $regions_html);
+    }
+    $b_coordsys .= "</table>\n";
+  }
+    
   ##--------------------------- DO INTERPRO STATS -----------------------------
 
     my $ip_tables = do_interpro($db, $spp) unless $NOINTERPRO;
@@ -395,7 +428,9 @@ foreach my $spp (@valid_spp) {
       </tr>
   </table>
   );
-  
+ ######################
+######################
+ 
       print STATS qq(
   <h3>Gene counts</h3>
   <table class="ss tint species-stats">
@@ -498,7 +533,7 @@ foreach my $spp (@valid_spp) {
       );
     }
 
-    next unless ($genpept || $genfpept || $fgenpept || $snps || $strucvar );
+    next unless ($genpept || $genfpept || $fgenpept || $snps || $strucvar || $coordsys );
 
     print STATS qq(
   <h3>Other</h3>
@@ -557,6 +592,10 @@ foreach my $spp (@valid_spp) {
     }
 
     print STATS '</table>';
+    
+    if($coordsys){
+      print STATS $b_coordsys;
+    }
 
     close(STATS);
   }
@@ -779,6 +818,73 @@ sub nohits2html {
   close(HTML);
 }
 
+sub regions_table {
+  my ($species,$csname,$regions) = @_;
+  my $hide = 1;
+  my $table_rows = [];
+  my %table_row_data;
+  my $html = "";
+  my $num_regions = scalar @$regions;
+  foreach my $slice (@$regions){
+    my $start = $slice->length/2 - 2000;
+    my $end = $slice->length/2 + 2000;
+    $start = 1 if $start < 1;
+    $end = $slice->end if $end > $slice->end;
+    my $seqname=$slice->seq_region_name;
+    my $seq_order=0;
+    if($seqname =~ /([0-9.]+)$/){$seq_order=$1;}
+    my $seq_link=sprintf('<span class="hidden">%06d</span><a href="/%s/Location/View?r=%s:%d-%d">%s</a>',$seq_order,$species,$slice->seq_region_name,$start,$end,$seqname);
+    my $row_data = {order=>$seq_order, sequence=>$seq_link, length=>$slice->length};
+    $table_row_data{$seq_order}=[] unless $table_row_data{$seq_order};
+    push(@{$table_row_data{$seq_order}},$row_data);
+  # push(@{$table_rows},$row_data);
+  }
+  foreach my $seq_num ( sort {$a <=> $b} keys %table_row_data){
+    push(@$table_rows, @{$table_row_data{$seq_num}});
+  }
+    
+  my $data_table_config = {
+  };
+  if(10 < scalar @$table_rows){
+    $data_table_config->{iDisplayLength}=10;
+  }
+  my $table_id=$csname . "_table";
+  
+  my $table = new EnsEMBL::Web::Document::Table([
+    { key=>'sequence',  title=>'Sequence', align => 'left',  width=>'45%' },
+    { key=>'length',    sort=>'numeric',    title=>'Length (bp)',   align => 'right', width=>'10%' }, 
+    ],
+    $table_rows,
+    {
+      code=>1,
+      data_table => 1,
+      width => '400px',
+      sorting => [ 'sequence asc' ],
+      exportable => 0,
+      toggleable => 1,
+      id => $table_id,
+      class=>sprintf("toggle_table no_col_toggle%s", $hide?" hidden":""),
+      data_table_config => $data_table_config,
+      summary=>"coord system seq regions" 
+    }
+  );
+  $table->{code}=1; # flag needed to process data_table_config
+  my $_cs_label = sprintf("%d sequence%s",$num_regions,($num_regions>1)?"s":"");
+
+  $html .= sprintf(qq{
+      <dt><a rel="%s" class="toggle set_cookie %s" style="font-weight:normal;" href="#" title="Click to toggle the transcript table">%s</a></dt>
+      <dd>%s</dd>
+    </dl>
+    %s}, 
+    $table_id,
+    $hide ? 'closed' : 'open',
+    $_cs_label,
+    ' ',
+    $table->render
+  );
+    
+  return qq{<div class="summary_panel">$html</div>};
+}
 
 
 __END__
