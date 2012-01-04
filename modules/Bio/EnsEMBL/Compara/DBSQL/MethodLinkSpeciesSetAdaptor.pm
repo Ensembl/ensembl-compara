@@ -106,14 +106,14 @@ The rest of the documentation details each of the object methods. Internal metho
 
 
 package Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor;
-use vars qw(@ISA);
+
 use strict;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
 
-@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
 my $DEFAULT_MAX_ALIGNMENT = 20000;
 
@@ -1197,6 +1197,17 @@ sub fetch_by_method_link_id_genome_db_ids {
   }
 
   return $self->fetch_by_method_link_type_GenomeDBs($method_link_type, $genome_dbs);
+}
+
+
+###################################
+#
+# tagging 
+#
+###################################
+
+sub _tag_capabilities {
+    return ("method_link_species_set_tag", undef, "method_link_species_set_id", "dbID");
 }
 
 

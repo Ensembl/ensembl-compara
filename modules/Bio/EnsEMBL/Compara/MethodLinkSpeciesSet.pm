@@ -97,12 +97,11 @@ The rest of the documentation details each of the object methods. Internal metho
 =cut
 
 
-# Let the code begin...
-
 
 package Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-use vars qw(@ISA);
+
 use strict;
+use base ('Bio::EnsEMBL::Compara::Taggable');
 
 # Object preamble
 
