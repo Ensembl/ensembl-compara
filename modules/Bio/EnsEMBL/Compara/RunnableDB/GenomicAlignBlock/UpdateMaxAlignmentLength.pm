@@ -90,7 +90,6 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-  $self->remove_alignment_data_inconsistencies;
   $self->update_meta_table;
   return 1;
 }
@@ -157,86 +156,6 @@ sub update_meta_table {
 
   $sth->finish;
 
-}
-
-sub remove_alignment_data_inconsistencies {
-  my $self = shift;
-
-  my $dba = $self->compara_dba;
-
-  $dba->dbc->do("analyze table genomic_align_block");
-  $dba->dbc->do("analyze table genomic_align");
-
-  #Delete genomic align blocks which have no genomic aligns. Assume not many of these
-  #
-
-  my $sql_gab = "delete from genomic_align_block where genomic_align_block_id in ";
-  my $sql_ga = "delete from genomic_align where genomic_align_id in ";
-
-  my $gab_sel = '';
-  my @gab_args;
-  if($self->param('method_link_species_set_id')) {
-    $gab_sel = 'AND gab.method_link_species_set_id =?';
-    push(@gab_args, $self->param('method_link_species_set_id'));
-  }
-  my $sql = "SELECT gab.genomic_align_block_id FROM genomic_align_block gab LEFT JOIN genomic_align ga ON gab.genomic_align_block_id=ga.genomic_align_block_id WHERE ga.genomic_align_block_id IS NULL ${gab_sel}";
-
-	print "Running: ${sql}\n" if $self->debug();
-
-  my $sth = $dba->dbc->prepare($sql);
-  $sth->execute(@gab_args);
-
-  my @gab_ids;
-  while (my $aref = $sth->fetchrow_arrayref) {
-    my ($gab_id) = @$aref;
-    push @gab_ids, $gab_id;
-  }
-  $sth->finish;
-
-  #check if any results found
-  if (scalar @gab_ids) {
-    my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ");";
-    my $sth = $dba->dbc->prepare($sql_gab_to_exec);
-    $sth->execute;
-    $sth->finish;
-  }
-
-  #
-  #Delete genomic align blocks which have 1 genomic align. Assume not many of these
-  #
-  my @del_args;
-  if($self->param('method_link_species_set_id')) {
-    $sql = 'SELECT gab.genomic_align_block_id, ga.genomic_align_id FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id) WHERE gab.method_link_species_set_id =? GROUP BY genomic_align_block_id HAVING count(*)<2';
-    push(@del_args, $self->param('method_link_species_set_id'));
-  }
-  else {
-    $sql = 'SELECT genomic_align_block_id, genomic_align_id FROM genomic_align GROUP BY genomic_align_block_id HAVING count(*)<2';
-  }
-
-  print "Running: ${sql}\n" if $self->debug();
-
-  $sth = $dba->dbc->prepare($sql);
-  $sth->execute(@del_args);
-
-  @gab_ids = ();
-  my @ga_ids;
-  while (my $aref = $sth->fetchrow_arrayref) {
-    my ($gab_id, $ga_id) = @$aref;
-    push @gab_ids, $gab_id;
-    push @ga_ids, $ga_id;
-  }
-  $sth->finish;
-
-  if (scalar @gab_ids) {
-    my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ")";
-    my $sql_ga_to_exec = $sql_ga . "(" . join(",", @ga_ids) . ")";
-
-    foreach my $sql ($sql_ga_to_exec,$sql_gab_to_exec) {
-      my $sth = $dba->dbc->prepare($sql);
-      $sth->execute;
-      $sth->finish;
-    }
-  }
 }
 
 
