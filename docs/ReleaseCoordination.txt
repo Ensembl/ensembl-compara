@@ -931,4 +931,7 @@ CVS commit the changes.
      'target_dir'/emf should go to /emf/ensembl-compara/homologies/ on the ftp
      'target_dir'/xml should go to /xml/ensembl-compara/homologies/ on the ftp
 
-23. Don't forget to cvs commit this document (if you have made any change)
+23. Don't forget to cvs commit this document (if you have made any change).
+
+24. Dump the master database and place the copy in a safe place
+prev (rel65) /warehouse/ensembl01/sf5/Compara_master_dumpps/sf5_ensembl_compara_master.sql.04_01_12.gz
