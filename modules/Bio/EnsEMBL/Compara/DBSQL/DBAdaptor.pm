@@ -139,6 +139,14 @@ sub get_available_adaptors {
       "ConstrainedElement" => "Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor",
       "SitewiseOmega" => "Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor",
       "SpeciesTree" => "Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor",
+
+       #Production specific adaptors
+       "DnaFragChunk" => "Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor",
+       "DnaFragChunkSet" => "Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkSetAdaptor",
+       "DnaCollection" => "Bio::EnsEMBL::Compara::Production::DBSQL::DnaCollectionAdaptor",
+       "AnchorSeq" => "Bio::EnsEMBL::Compara::Production::DBSQL::AnchorSeqAdaptor",
+       "AnchorAlign" => "Bio::EnsEMBL::Compara::Production::DBSQL::AnchorAlignAdaptor",
+
         );
   return (\%pairs);
 }
