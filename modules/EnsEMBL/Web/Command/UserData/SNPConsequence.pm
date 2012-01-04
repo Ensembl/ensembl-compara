@@ -67,7 +67,7 @@ sub process {
  
   $url_params->{'convert_file'} = \@temp_files;
   
-  $self->file_uploaded($url_params);
+  $self->ajax_redirect($hub->url($url_params));
 }
 
 1;

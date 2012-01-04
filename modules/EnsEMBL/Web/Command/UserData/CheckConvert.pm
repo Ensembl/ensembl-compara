@@ -46,12 +46,8 @@ sub process {
   $url_params->{'conversion'}   = $hub->param('conversion') unless $id_mapper || $consequence_mapper;
   $url_params->{$_}             = $hub->param($_) for qw(id_limit variation_limit);
   
-  ## This will need changing if we add more tools
-  ## FIXME - this wizard structure is getting a bit crazy!
-  my $next_node = $consequence_mapper ? 'command' : 'component';
-  
   ## Go from a modal form (with file upload) directly to another web page
-  if ($next_node eq 'component' && $hub->param('uploadto') eq 'iframe') {
+  if ($hub->param('uploadto') eq 'iframe') {
     $self->file_uploaded($url_params);
   } else {
     $self->ajax_redirect($hub->url($url_params));
