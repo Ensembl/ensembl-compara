@@ -59,14 +59,14 @@ sub default_options {
 	'release'               => '66',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
         'ensembl_cvs_root_dir'  => $ENV{'HOME'}.'/src/ensembl_main', 
-	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
+	#'dbname'               => '', #Define on te command line. Compara database name eg hsap_ggor_lastz_64
 
          # dependent parameters:
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
         'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara4',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'), 
@@ -285,6 +285,8 @@ sub pipeline_analyses {
 				  'mlss_id'        => $self->o('mlss_id'),
 				  'reg_conf'        => $self->o('reg_conf'),
 				  'cmd'            => "#program# --master " . $self->dbconn_2_url('master_db') . " --new " . $self->dbconn_2_url('pipeline_db') . " --species #speciesList# --mlss #mlss_id# --reg-conf #reg_conf# ",
+				  #If no master set, then use notation below
+				  #'cmd'            => "#program# --master " . $self->o('master_db') . " --new " . $self->dbconn_2_url('pipeline_db') . " --species #speciesList# --mlss #mlss_id# --reg-conf #reg_conf# ",
 				 },
 	       -flow_into => {
 			      1 => [ 'parse_pair_aligner_conf' ],
@@ -353,7 +355,8 @@ sub pipeline_analyses {
 	       -hive_capacity => 10,
  	       -wait_for => [ 'store_sequence', 'chunk_and_group_dna', 'dump_dna'  ],
 	       -flow_into => {
-			       1 => [ 'update_max_alignment_length_before_FD', 'update_max_alignment_length_after_FD' ], 
+#			       1 => [ 'update_max_alignment_length_before_FD', 'update_max_alignment_length_after_FD' ], 
+			       1 => [ 'remove_inconsistencies_after_pairaligner' ],
 			       2 => [ $self->o('pair_aligner_logic_name')  ],
 			   },
  	    },
@@ -376,12 +379,22 @@ sub pipeline_analyses {
 	       -can_be_empty  => 1, 
 	       -rc_id => 3,
 	    },
+	    {  -logic_name => 'remove_inconsistencies_after_pairaligner',
+               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
+	       -parameters => { },
+ 	       -wait_for =>  [ $self->o('pair_aligner_logic_name'), $self->o('pair_aligner_logic_name') . "_himem1" ],
+	       -flow_into => {
+			      1 => [ 'update_max_alignment_length_before_FD' ],
+			     },
+	    },
  	    {  -logic_name => 'update_max_alignment_length_before_FD',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
  	       -parameters => { 
 			       'quick' => $self->o('quick'),
 			      },
- 	       -wait_for =>  [ $self->o('pair_aligner_logic_name'), $self->o('pair_aligner_logic_name') . "_himem1" ],
+	       -flow_into => {
+			      1 => [ 'update_max_alignment_length_after_FD' ],
+			     },
  	    },
  	    {  -logic_name => 'create_filter_duplicates_jobs', #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs',
@@ -389,7 +402,7 @@ sub pipeline_analyses {
  	       -wait_for =>  [ 'update_max_alignment_length_before_FD' ],
 	        -flow_into => {
 			       2 => [ 'filter_duplicates' ], 
-			     }
+			     },
  	    },
  	     {  -logic_name   => 'filter_duplicates',
  	       -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
@@ -443,7 +456,8 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentChainsJobs',
 		-parameters => { }, 
 		-flow_into => {
-			      1 => [ 'update_max_alignment_length_after_chain' ],
+#			      1 => [ 'update_max_alignment_length_after_chain' ],
+			      1 => [ 'remove_inconsistencies_after_chain' ],
 			      2 => [ 'alignment_chains' ],
 			     },
  	       -wait_for => [ 'dump_large_nib_for_chains', 'dump_large_nib_for_chains_himem' ],
@@ -465,18 +479,26 @@ sub pipeline_analyses {
 	       -can_be_empty  => 1, 
 	       -rc_id => 2,
  	    },
- 	    {  -logic_name => 'update_max_alignment_length_after_chain',
+	    {
+	     -logic_name => 'remove_inconsistencies_after_chain',
+	     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
+	     -flow_into => {
+			      1 => [ 'update_max_alignment_length_after_chain' ],
+			   },
+	     -wait_for =>  [ 'alignment_chains', 'alignment_chains_himem' ],
+	    },
+	    {  -logic_name => 'update_max_alignment_length_after_chain',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
  	       -parameters => { 
 			       'quick' => $self->o('quick'),
 			      },
- 	       -wait_for =>  [ 'alignment_chains', 'alignment_chains_himem' ],
  	    },
  	    {  -logic_name => 'create_alignment_nets_jobs',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentNetsJobs',
  	       -parameters => { },
 		-flow_into => {
-			       1 => [ 'set_internal_ids', 'update_max_alignment_length_after_net' ],
+#			       1 => [ 'set_internal_ids', 'update_max_alignment_length_after_net' ],
+			       1 => [ 'set_internal_ids', 'remove_inconsistencies_after_net' ],
 			       2 => [ 'alignment_nets' ],
 			      },
  	       -wait_for => [ 'update_max_alignment_length_after_chain' ],
@@ -505,12 +527,19 @@ sub pipeline_analyses {
 	       -can_be_empty  => 1, 
 	       -rc_id => 2,
  	    },
+	    {
+	     -logic_name => 'remove_inconsistencies_after_net',
+	     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
+	     -flow_into => {
+			       1 => [ 'update_max_alignment_length_after_net' ],
+			   },
+ 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem' ],
+	    },
  	    {  -logic_name => 'update_max_alignment_length_after_net',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
  	       -parameters => { 
 			       'quick' => $self->o('quick'),
 			      },
- 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem' ],
  	    },
 	    { -logic_name => 'healthcheck',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
