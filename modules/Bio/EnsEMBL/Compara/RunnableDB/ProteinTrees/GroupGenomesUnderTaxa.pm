@@ -51,7 +51,7 @@ sub fetch_input {
                     or die "Could not connect to core database adaptor";
 
             my $coverage_depth = $core_adaptor->get_MetaContainer()->list_value_by_key('assembly.coverage_depth')->[0]
-                    or die "'assembly.coverage_depth' is not defined in core database's meta table";
+                    or die "'assembly.coverage_depth' is not defined in core database's meta table". $core_adaptor->dbname; 
 
             if( ($coverage_depth eq 'high') or ($coverage_depth eq '6X')) {
                 push @selected_gdb_ids, $genome_db->dbID();
