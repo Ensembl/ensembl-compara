@@ -430,8 +430,9 @@ sub handler {
     
     return HTTP_MOVED_PERMANENTLY;
   }
-
-  return DECLINED if $species eq 'biomart' && $script =~ /^mart(service|results|view)/;
+  
+  #commenting this line out because we do want biomart to redirect. If this is causing problem put it back.
+  #return DECLINED if $species eq 'biomart' && $script =~ /^mart(service|results|view)/;
 
   my $path = join '/', $species || (), $script || (), $path_info || ();
   
