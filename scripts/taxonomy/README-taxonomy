@@ -11,11 +11,12 @@
             or any of "common name" available. If they don't exist you are free to invent one.
             This is used in the download page:
                 http://www.ensembl.org/info/data/download.html
+                http://www.ensembl.org/info/about/species.html
 
             The other source of info is here:
                 http://www.intlgenome.org/viewDatabase.cfm
 
-    # 2. edit ensembl-compara/scripts/taxonomy/web_name_patches.sql to patch web names if needed.
+    # 2. edit $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/taxonomy/web_name_patches.sql to patch web names if needed.
 
             For "ensembl alias name", it is used at the top of the web page of each species,
             when it says e.g. "e!EnsemblHuman" or "e!EnsemblMouse".
