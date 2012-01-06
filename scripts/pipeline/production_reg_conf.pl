@@ -37,6 +37,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 
 # Compara databases used during the release (master, previous and current compara dbs)
 
+# Master
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -host => 'compara1',
     -user => 'ensadmin',
@@ -46,22 +47,24 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -dbname => 'sf5_ensembl_compara_master',
 );
 
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'compara4',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 3306,
-    -species => 'compara_prev',
-    -dbname => 'lg4_ensembl_compara_64',
-);
-
+# Prev release
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -host => 'compara1',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
-    -species => 'compara_curr',
+    -species => 'compara_prev',
     -dbname => 'mp12_ensembl_compara_65',
+);
+
+# Curr
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'compara3',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 3306,
+    -species => 'compara_curr',
+    -dbname => 'mp12_ensembl_compara_66',
 );
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## TO BE FIXED BEFORE HOMOLOGY MERGE
@@ -70,7 +73,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## TO BE FIXED BEFORE HOMOLOGY MER
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_homology_merged',
-    -dbname => 'mp12_compara_homology_merged_65',
+    -dbname => 'mp12_compara_homology_merged_66',
 );
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## HAS TO BE CREATED (FINAL DB)
@@ -79,7 +82,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## HAS TO BE CREATED (FINAL DB)
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_staging',
-    -dbname => 'ensembl_compara_65',
+    -dbname => 'ensembl_compara_66',
 );
 
 1;
