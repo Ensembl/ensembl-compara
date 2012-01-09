@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
 
   This software is distributed under a modified Apache license.
@@ -45,6 +45,7 @@ package Bio::EnsEMBL::Compara::DBSQL::TagAdaptor;
 
 use strict;
 
+#use Data::Dumper;
 
 =head2 _tag_capabilities
 
@@ -86,7 +87,9 @@ sub _load_tagvalues {
     my $self = shift;
     my $object = shift;
 
+    #print STDERR "CALL _load_tagvalues $self/$object\n";
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
+    #print STDERR "_load_tagvalues = $db_tagtable/$db_attrtable\n";
  
     # Tags (multiple values are allowed)
     my $sth = $self->prepare("SELECT tag, value FROM $db_tagtable WHERE $db_keyname=?");
@@ -98,22 +101,6 @@ sub _load_tagvalues {
    
     # Attributes ?
     if (defined $db_attrtable) {
-        # Updates the list of attribute names
-        if (not exists $self->{"_attr_list_$db_attrtable"}) {
-            $self->{"_attr_list_$db_attrtable"} = {};
-            eval {
-                my $sth = $self->dbc->db_handle->column_info(undef, undef, $db_attrtable, '%');
-                $sth->execute();
-                while (my $row = $sth->fetchrow_hashref()) {
-                    ${$self->{"_attr_list_$db_attrtable"}}{${$row}{'COLUMN_NAME'}} = 1;
-                }
-                $sth->finish;
-            };
-            if ($@) {
-                warn "$db_attrtable not available in this database\n";
-            }
-        }
-
         # Attributes (multiple values are forbidden)
         $sth = $self->prepare("SELECT * FROM $db_attrtable WHERE $db_keyname=?");
         $sth->execute($object->$perl_keyname);
@@ -128,6 +115,43 @@ sub _load_tagvalues {
         }
         $sth->finish;
     }
+}
+
+
+=head2 _read_attr_list
+
+  Description: retrieves the column names of an attribute table
+  Arg [1]    : <scalar> table name
+  Example    : $genetree_adaptor->_read_attr_list('protein_tree_node_attr');
+  Returntype : none
+  Exceptions : none
+  Caller     : internal
+
+=cut
+
+sub _read_attr_list {
+    my $self = shift;
+    my $db_attrtable = shift;
+
+    # No table provided
+    return if not defined $db_attrtable;
+    # Column names already loaded
+    return if exists $self->{"_attr_list_$db_attrtable"};
+
+    $self->{"_attr_list_$db_attrtable"} = {};
+    eval {
+        my $sth = $self->dbc->db_handle->column_info(undef, undef, $db_attrtable, '%');
+        $sth->execute();
+        while (my $row = $sth->fetchrow_hashref()) {
+            ${$self->{"_attr_list_$db_attrtable"}}{${$row}{'COLUMN_NAME'}} = 1;
+            #print STDERR "adding ", ${$row}{'COLUMN_NAME'}, " to the attribute list $db_attrtable of adaptor $self\n";
+        }
+        $sth->finish;
+    };
+    if ($@) {
+        warn "$db_attrtable not available in this database\n";
+    }
+    #print STDERR "adaptor $self: ", Dumper($self);
 }
 
 
@@ -153,8 +177,11 @@ sub _store_tagvalue {
     my $allow_overloading = shift;
     
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
+    $self->_read_attr_list($db_attrtable);
+    #print STDERR "CALL _store_tagvalue $self/$object/$tag: ", Dumper($self->{"_attr_list_$db_attrtable"});
   
     if (exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
+        #print STDERR "attr\n";
         warn "Trying to overload the value of attribute '$tag' ! This is not allowed for $self\n" if $allow_overloading;
         # It is an attribute
         my $sth = $self->prepare("INSERT IGNORE INTO $db_attrtable ($db_keyname) VALUES (?)");
@@ -165,11 +192,13 @@ sub _store_tagvalue {
         $sth->finish;
 
     } elsif ($allow_overloading) {
+        #print STDERR "tag+\n";
         # It is a tag with multiple values allowed
         my $sth = $self->prepare("INSERT IGNORE INTO $db_tagtable ($db_keyname, tag, value) VALUES (?, ?, ?)");
         $sth->execute($object->$perl_keyname, $tag, $value);
         $sth->finish;
     } else {
+        #print STDERR "tag\n";
         # It is a tag with only one value allowed
         my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND tag=?");
         $sth->execute($object->$perl_keyname, $tag);
@@ -201,6 +230,7 @@ sub _delete_tagvalue {
     my $value = shift;
     
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
+    $self->_read_attr_list($db_attrtable);
   
     if (exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
         # It is an attribute

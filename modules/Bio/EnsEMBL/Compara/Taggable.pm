@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
 
   This software is distributed under a modified Apache license.
@@ -68,6 +68,7 @@ sub add_tag {
     my $tag = shift;
     my $value = shift;
     my $allow_overloading = shift;
+    #print STDERR "CALL add_tag $self/$tag/$value/$allow_overloading\n";
 
     # Argument check
     unless (defined $tag)   {warn "add_tag called on $self with an undef \$tag\n"; return 0};
@@ -117,6 +118,7 @@ sub store_tag {
     my $tag = shift;
     my $value = shift;
     my $allow_overloading = shift;
+    #print STDERR "CALL store_tag $self/$tag/$value/$allow_overloading\n";
 
     if ($self->add_tag($tag, $value, $allow_overloading)) {
         if($self->adaptor and $self->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::TagAdaptor")) {
@@ -359,6 +361,8 @@ sub get_tagvalue_hash {
 
 sub _load_tags {
     my $self = shift;
+    #print STDERR "CALL _load_tags $self\n";
+
     return if(defined($self->{'_tags'}));
     $self->{'_tags'} = {};
     if($self->adaptor and $self->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::TagAdaptor")) {
