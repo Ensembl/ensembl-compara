@@ -33,4 +33,5 @@
         # 5. clean up the target database by removing hive tables:
 
     mysql .... (specific connection parameters printed by init_pipeline.pl) -e 'call drop_hive_tables'
+    You may drop the analysis_description, analysis and meta tables "by hand".
 
