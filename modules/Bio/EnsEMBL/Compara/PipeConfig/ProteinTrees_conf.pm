@@ -122,7 +122,7 @@ sub default_options {
         'blastp_capacity'           => 450,
         'mcoffee_capacity'          => 600,
         'njtree_phyml_capacity'     => 400,
-        'ortho_tree_capacity'       => 200,
+        'ortho_tree_capacity'       => 100,
         'build_hmm_capacity'        => 200,
         'other_paralogs_capacity'   =>  50,
         'homology_dNdS_capacity'    => 200,
