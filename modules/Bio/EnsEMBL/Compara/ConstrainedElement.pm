@@ -1,13 +1,20 @@
-#
-# Ensembl module for Bio::EnsEMBL::Compara::ConstrainedElement
-#
-# Cared for by Stephen Fitzgerald <ensembl-compara@ebi.ac.uk>
-#
-# Copyright EMBL-ebi
-#
-# You may distribute this module under the same terms as perl itself
+=head1 LICENSE
 
-# pod documentation - main docs before the code
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -104,23 +111,6 @@ Each inner listref contains information about one of the species sequences which
 element block from the alignment. 
 
 =back
-
-=head1 AUTHOR
-
-Stephen Fitzgerald (ensembl-compara@ebi.ac.uk)
-
-=head1 COPYRIGHT
-
-Copyright (c) 2009. EnsEMBL Team
-
-You may distribute this module under the same terms as perl itself
-
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-ensembl-dev@ebi.ac.uk
 
 =head1 APPENDIX
 

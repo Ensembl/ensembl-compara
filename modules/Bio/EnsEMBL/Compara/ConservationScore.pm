@@ -1,13 +1,20 @@
-#
-# Ensembl module for Bio::EnsEMBL::Compara::ConservationScore
-#
-# Cared for by Kathryn Beal <kbeal@ebi.ac.uk>
-#
-# Copyright Ewan Birney
-#
-# You may distribute this module under the same terms as perl itself
+=head1 LICENSE
 
-# POD documentation - main docs before the code
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -53,19 +60,6 @@ floats and stored in a string. The scores can be stored and retrieved in
 either a packed or unpacked format. The unpacked format is as a space delimited
 string eg ("0.123 0.456 0.789"). The packed format is a single precision float 
 (4 bytes). It is recommended to use the unpacked format.
-
-=head1 AUTHOR - Kathryn Beal
-
-This modules is part of the Ensembl project http://www.ensembl.org
-
-Email kbeal@ebi.ac.uk
-
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-ensembl-dev@ebi.ac.uk
 
 =head1 APPENDIX
 
