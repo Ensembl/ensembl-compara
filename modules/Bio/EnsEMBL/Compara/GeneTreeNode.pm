@@ -87,15 +87,15 @@ sub root {
 
 #use Data::Dumper;
 
-sub string_node {
-    my $self = shift;
-    my $str = $self->SUPER::string_node;
-    if (defined $self->{'_tree'}) {
-        my $t = $self->{'_tree'};
-        $str = chop($str)." $t/root_id=".($self->{'_tree'}->root_id)."/".join("/", map { "$_ => ${$t}{$_}" } keys %$t)."\n";
-    }
-    return $str;
-}
+#sub string_node {
+#    my $self = shift;
+#    my $str = $self->SUPER::string_node;
+#    if (defined $self->{'_tree'}) {
+#        my $t = $self->{'_tree'};
+#        $str = chop($str)." $t/root_id=".($self->{'_tree'}->root_id)."/".join("/", map { "$_ => ${$t}{$_}" } keys %$t)."\n";
+#    }
+#    return $str;
+#}
 
 sub get_leaf_by_Member {
   my $self = shift;
@@ -227,23 +227,6 @@ sub consensus_cigar_line {
    return $cons_cigar;
 }
 
-
-# Get the internal Ensembl GeneTree stable_id from the separate table
-sub stable_id {
-  my $self = shift;
-
-  if(@_) {
-    $self->{'_stable_id'} = shift;
-    return $self->{'_stable_id'};
-  }
-
-  if(!defined($self->{'_stable_id'}) and $self->adaptor->can('_fetch_stable_id_by_node_id'))
-  {
-    $self->{'_stable_id'} = $self->adaptor->_fetch_stable_id_by_node_id($self->node_id);
-  }
-
-  return $self->{'_stable_id'};
-}
 
 
 =head2 remove_nodes_by_taxon_ids
