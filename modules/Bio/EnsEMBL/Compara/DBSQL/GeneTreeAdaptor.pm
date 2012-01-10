@@ -200,7 +200,6 @@ sub fetch_AlignedMember_by_member_id_mlssID {
 sub gene_member_id_is_in_tree {
   my ($self, $member_id) = @_;
 
-  my $prefix = $self->_get_table_prefix();
   my $sth = $self->prepare("SELECT ptm1.root_id FROM member m1, gene_tree_member ptm1 WHERE ptm1.member_id=m1.member_id AND m1.gene_member_id=? LIMIT 1");
   $sth->execute($member_id);
   my($root_id) = $sth->fetchrow_array;
@@ -241,7 +240,6 @@ sub fetch_all_AlignedMembers_by_root_id {
 sub fetch_by_stable_id {
   my ($self, $stable_id) = @_;
 
-  my $prefix = $self->_get_table_prefix();
   my $sql = "SELECT root_id FROM gene_tree_root WHERE stable_id=\"$stable_id\"";
   my $sth = $self->prepare($sql);
   $sth->execute();
@@ -260,7 +258,6 @@ sub fetch_by_stable_id {
 sub _fetch_stable_id_by_node_id {
   my ($self, $node_id) = @_;
 
-  my $prefix = $self->_get_table_prefix();
   my $sql = "SELECT stable_id FROM gene_tree_root WHERE root_id = ?";
   my $sth = $self->prepare($sql);
   $sth->execute($node_id);
@@ -360,7 +357,6 @@ sub store_node {
   }
   #print "inserting parent_id=$parent_id, root_id=$root_id\n";
 
-  my $prefix = $self->_get_table_prefix();
   my $sth = $self->prepare("INSERT INTO gene_tree_node (parent_id, root_id, left_index, right_index, distance_to_parent)  VALUES (?,?,?,?,?)");
   #print "INSERT INTO gene_tree_node (", $parent_id, " ", $root_id, " ", $node->left_index, " ", $node->right_index, " ", $node->distance_to_parent, "\n";
   $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent);
@@ -400,7 +396,6 @@ sub update_node {
   }
     $root_id = $node->root->node_id;
 
-  my $prefix = $self->_get_table_prefix();
   my $sth = $self->prepare("UPDATE gene_tree_node SET parent_id=?, root_id=?, left_index=?, right_index=?, distance_to_parent=?  WHERE node_id=?");
   #print "UPDATE gene_tree_node  (", $parent_id, ",", $root_id, ",", $node->left_index, ",", $node->right_index, ",", $node->distance_to_parent, ") for ", $node->node_id, "\n";
 
@@ -432,7 +427,6 @@ sub merge_nodes {
 
   # printf("MERGE children from parent %d => %d\n", $node2->node_id, $node1->node_id);
 
-  my $prefix = $self->_get_table_prefix();
   my $sth = $self->prepare("UPDATE gene_tree_node SET
                               parent_id=?
 			      WHERE parent_id=?");
@@ -449,9 +443,8 @@ sub delete_flattened_leaf {
   my $node = shift;
 
   my $node_id = $node->node_id;
-  my $prefix = $self->_get_table_prefix();
-  $self->dbc->do("DELETE from ".$prefix."_tree_node_tag    WHERE node_id = $node_id");
-  $self->dbc->do("DELETE from ".$prefix."_tree_node_attr   WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from gene_tree_node_tag    WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from gene_tree_node_attr   WHERE node_id = $node_id");
   $self->dbc->do("DELETE from gene_tree_member WHERE node_id = $node_id");
   $self->dbc->do("DELETE from gene_tree_node   WHERE node_id = $node_id");
 }
@@ -462,11 +455,10 @@ sub delete_node {
 
   my $node_id = $node->node_id;
   #print("delete node $node_id\n");
-  my $prefix = $self->_get_table_prefix();
   $self->dbc->do("UPDATE gene_tree_node dn, gene_tree_node n SET ".
             "n.parent_id = dn.parent_id WHERE n.parent_id=dn.node_id AND dn.node_id=$node_id");
-  $self->dbc->do("DELETE from ".$prefix."_tree_node_tag    WHERE node_id = $node_id");
-  $self->dbc->do("DELETE from ".$prefix."_tree_node_attr   WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from gene_tree_node_tag    WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from gene_tree_node_attr   WHERE node_id = $node_id");
   $self->dbc->do("DELETE from gene_tree_member WHERE node_id = $node_id");
   $self->dbc->do("DELETE from gene_tree_node   WHERE node_id = $node_id");
 }
@@ -529,7 +521,6 @@ sub fetch_subtree_under_node {
 sub _tag_capabilities {
     my $self = shift;
     my $object = shift;
-    #my $prefix = $self->_get_table_prefix();
     #print "CAPABILITIES $object ";
     if ($object->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
         #print " = NODE\n";
@@ -574,14 +565,11 @@ sub columns {
 
 sub tables {
   my $self = shift;
-  my $prefix = $self->_get_table_prefix();
   return [['gene_tree_node', 't']];
 }
 
 sub left_join_clause {
     my $self = shift;
-    my $prefix = $self->_get_table_prefix();
-    # FIXME The LEFT JOIN should be a JOIN
     return "LEFT JOIN gene_tree_member tm ON t.node_id = tm.node_id LEFT JOIN member m ON tm.member_id = m.member_id LEFT JOIN gene_tree_root tr ON t.root_id = tr.root_id";
 }
 

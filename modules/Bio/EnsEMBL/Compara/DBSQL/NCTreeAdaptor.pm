@@ -56,10 +56,6 @@ use strict;
 use base ('Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor');
 
 
-sub _get_table_prefix {
-	return "nc";
-}
-
 sub _get_canonical_Member {
   my $self = shift;
   my $member = shift;
