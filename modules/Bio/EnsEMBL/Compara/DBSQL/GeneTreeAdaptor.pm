@@ -72,6 +72,15 @@ sub fetch_all {
   return $nodes;
 }
 
+
+sub fetch_all_roots {
+  my $self = shift;
+
+  my $constraint = "WHERE t.root_id IS NULL";
+  return $self->_generic_fetch($constraint);
+}
+
+
 =head2 fetch_by_Member_root_id
 
   Arg[1]     : Bio::EnsEMBL::Compara::Member
