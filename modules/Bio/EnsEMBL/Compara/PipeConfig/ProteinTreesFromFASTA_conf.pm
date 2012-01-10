@@ -379,7 +379,7 @@ sub pipeline_analyses {
 		-wait_for => [ 'copy_ncbi_tables' ],
             -flow_into  => {
 		    1 => [ 'hcluster_merge_table_factory' ],  # backbone
-                3 => { 'mysql:////protein_tree_tag' => { 'node_id' => 1, 'tag' => 'species_tree_string', 'value' => '#species_tree_string#' } },
+                3 => { 'mysql:////gene_tree_root_tag' => { 'node_id' => 1, 'tag' => 'species_tree_string', 'value' => '#species_tree_string#' } },
             },
         },
 

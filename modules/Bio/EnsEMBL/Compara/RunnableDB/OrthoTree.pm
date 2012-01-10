@@ -396,16 +396,16 @@ sub load_species_tree {
 
   my $starttime = time();
 
-  # FIXME -- this species_tree_string entry in protein_tree_tag is to
+  # FIXME -- this species_tree_string entry in gene_tree_root_tag is to
   # avoid using lustre filesystem on cluster nodes but right now needs
   # a bit of a cleanup because it's shared with NJTREE_PHYML -- we
   # should have a single method for both, potentially in NestedSet
 
   # Defining a species_tree: Option 1 is species_tree_string in
-  # protein_tree_tag, which then doesn't require tracking files
+  # gene_tree_root_tag, which then doesn't require tracking files
   # around.  Option 2 is species_tree_file as defined in the config
   # file, which should still work for compatibility
-  my $sql1 = "select value from protein_tree_tag where tag='species_tree_string'";
+  my $sql1 = "select value from gene_tree_root_tag where tag='species_tree_string'";
   my $sth1 = $self->dbc->prepare($sql1);
   $sth1->execute;
   my $species_tree_string = $sth1->fetchrow_hashref;
@@ -731,7 +731,7 @@ sub delete_old_orthotree_tags
   foreach my $id (@node_ids) {
     push @list_ids, $id;
     if (scalar @list_ids == 2000) {
-      my $sql = "delete from protein_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
+      my $sql = "delete from gene_tree_root_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
       my $sth = $self->dbc->prepare($sql);
       $sth->execute;
       $sth->finish;
@@ -740,7 +740,7 @@ sub delete_old_orthotree_tags
   }
 
   if (scalar @list_ids) {
-    my $sql = "delete from protein_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
+    my $sql = "delete from gene_tree_root_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
     my $sth = $self->dbc->prepare($sql);
     $sth->execute;
     $sth->finish;

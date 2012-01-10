@@ -1,8 +1,24 @@
+=head1 LICENSE
+
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
 =head1 NAME
 
 NewickParser - DESCRIPTION of Object
-
-=head1 SYNOPSIS
 
 =head1 DESCRIPTION
 
@@ -10,14 +26,22 @@ Module which implements a newick string parser as a finite state machine which e
 to parse the full Newick specification.  Module does not need to be instantiated, the method
 can be called directly.
 
-=head1 CONTACT
+=head1 AUTHORSHIP
 
-  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+Ensembl Team. Individual contributions can be found in the CVS log.
+
+=head1 MAINTAINER
+
+$Author$
+
+=head VERSION
+
+$Revision$
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -129,7 +153,7 @@ sub parse_newick_into_tree
             #$node->distance_to_parent($token);
             # Force a duplication = 0 for some strange treefam internal nodes
             unless ($node->is_leaf) {
-              if (!defined($node->get_tagvalue("Duplication"))) {
+              if (not $node->has_tag("Duplication")) {
                 $node->add_tag("Duplication",0);
               }
             }

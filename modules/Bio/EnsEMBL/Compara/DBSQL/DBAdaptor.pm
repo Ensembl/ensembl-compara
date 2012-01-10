@@ -1,17 +1,28 @@
-#
-# BioPerl module for DBSQL::Obj
-#
-# Cared for by Ewan Birney <birney@sanger.ac.uk>
-#
-# Copyright Ewan Birney
-#
-# You may distribute this module under the same terms as perl itself
+=head1 LICENSE
 
-# POD documentation - main docs before the code
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
+
+=head1 DESCRIPTION
+
+This object represents the handle for a comparative DNA alignment database
 
 =head1 SYNOPSIS
 
@@ -25,29 +36,35 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
     $db = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
         -url => 'mysql://user:pass@host:port/db_name');
 
+=head1 AUTHORSHIP
 
-=head1 DESCRIPTION
+Ensembl Team. Individual contributions can be found in the CVS log.
 
-This object represents the handle for a comparative DNA alignment database
+=head1 MAINTAINER
 
-=head1 CONTACT
+$Author$
 
-Post questions the the EnsEMBL developer list: <ensembl-dev@ebi.ac.uk>
+=head VERSION
+
+$Revision$
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
-
 
 package Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 use vars qw(@ISA);
 use strict;
 
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBLoader;
-use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Exception;
 
-@ISA = qw( Bio::EnsEMBL::DBSQL::DBAdaptor );
+use base ('Bio::EnsEMBL::DBSQL::DBAdaptor');
 
 
 =head2 new
@@ -132,7 +149,6 @@ sub get_available_adaptors {
       "PeptideAlignFeature" => "Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor",
       "Sequence" => "Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor",
       "ProteinTree" => "Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor",
-      "SuperProteinTree" => "Bio::EnsEMBL::Compara::DBSQL::SuperProteinTreeAdaptor",
       "NCTree" => "Bio::EnsEMBL::Compara::DBSQL::NCTreeAdaptor",
       "Analysis" => "Bio::EnsEMBL::DBSQL::AnalysisAdaptor",
       "ConservationScore" => "Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor",

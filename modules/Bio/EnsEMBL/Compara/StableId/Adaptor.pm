@@ -353,7 +353,7 @@ sub store_tags {    # used to create cross-references from EnsEMBL GeneTrees to 
 
     my $step = 2000;
     
-    my $sql = qq{ REPLACE INTO protein_tree_tag(node_id, tag, value) VALUES (?, ?, ?) };
+    my $sql = qq{ REPLACE INTO gene_tree_root_tag VALUES (?, ?, ?) };
     my $sth = $dbh->prepare($sql);
 
     my $counter = 0;

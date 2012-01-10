@@ -1,15 +1,33 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML
 
-=cut
+=head1 DESCRIPTION
+
+This Analysis/RunnableDB is designed to take ProteinTree as input
+This must already have a multiple alignment run on it. It uses that alignment
+as input into the NJTREE PHYML program which then generates a phylogenetic tree
+
+input_id/parameters format eg: "{'protein_tree_id'=>1234}"
+    protein_tree_id : use 'id' to fetch a cluster from the ProteinTree
 
 =head1 SYNOPSIS
 
@@ -25,52 +43,41 @@ $njtree_phyml->run();
 $njtree_phyml->output();
 $njtree_phyml->write_output(); #writes to DB
 
-=cut
+=head1 AUTHORSHIP
 
+Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 DESCRIPTION
+=head1 MAINTAINER
 
-This Analysis/RunnableDB is designed to take ProteinTree as input
-This must already have a multiple alignment run on it. It uses that alignment
-as input into the NJTREE PHYML program which then generates a phylogenetic tree
+$Author$
 
-input_id/parameters format eg: "{'protein_tree_id'=>1234}"
-    protein_tree_id : use 'id' to fetch a cluster from the ProteinTree
+=head VERSION
 
-=cut
-
-
-=head1 CONTACT
-
-  Contact Albert Vilella on module implementation/design detail: avilella@ebi.ac.uk
-  Contact Abel Ureta-Vidal on EnsEMBL/Compara: abel@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
-
-=cut
-
+$Revision$
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
-
 
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML;
 
 use strict;
+
 use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Data::Dumper;
 
+use Bio::AlignIO;
+use Bio::SimpleAlign;
+
+use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use Bio::SimpleAlign;
-use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs;
-use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::RunnableDB::OrthoTree; # check_for_split_gene method
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree');
@@ -97,6 +104,7 @@ sub fetch_input {
     my $protein_tree_id     = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
     my $protein_tree        = $self->param('protein_tree_adaptor')->fetch_node_by_node_id( $protein_tree_id )
                                         or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
+    $protein_tree->print_tree(10) if($self->debug);
 
     $self->param('protein_tree', $protein_tree);
 }
@@ -147,7 +155,7 @@ sub get_species_tree_file {
 
         unless( $self->param('species_tree_string') ) {
 
-            my $tag_table_name = 'protein_tree_tag';
+            my $tag_table_name = 'gene_tree_root_tag';
 
             my $sth = $self->dbc->prepare( "select value from $tag_table_name where tag='species_tree_string'" );
             $sth->execute;
@@ -327,13 +335,13 @@ sub run_njtree_phyml {
 
   my $runtime = time()*1000-$starttime;
 
-  $protein_tree->store_tag('NJTREE_PHYML_runtime_msec', $runtime);
+  $protein_tree->tree->store_tag('NJTREE_PHYML_runtime_msec', $runtime);
 }
 
 
 ########################################################
 #
-# ProteinTree input/output section
+# GeneTree input/output section
 #
 ########################################################
 
@@ -466,31 +474,29 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   return $aln_file;
 }
 
-
 sub store_proteintree
 {
     my $self = shift;
 
-    my $protein_tree = $self->param('protein_tree') or return;
-    my $protein_tree_adaptor = $self->param('protein_tree_adaptor');
+    my $tree = $self->param('protein_tree') or return;
+    my $tree_adaptor = $self->param('protein_tree_adaptor');
 
     printf("PHYML::store_proteintree\n") if($self->debug);
 
-    $protein_tree_adaptor->sync_tree_leftright_index( $protein_tree );
-    $protein_tree->clusterset_id( $self->param('clusterset_id') );
-    $protein_tree_adaptor->store( $protein_tree );
-    $protein_tree_adaptor->delete_nodes_not_in_tree( $protein_tree );
+    $tree->build_leftright_indexing(1);
+    $tree_adaptor->store($tree);
+    $tree_adaptor->delete_nodes_not_in_tree($tree);
 
     if($self->debug >1) {
         print("done storing - now print\n");
-        $protein_tree->print_tree;
+        $tree->print_tree;
     }
 
-    $self->store_tags( $protein_tree );
+    $self->store_tags($tree);
 
     if($self->param('jackknife')) {
-        my $leaf_count = $protein_tree->num_leaves;
-        $protein_tree->store_tag( 'gene_count', $leaf_count );
+        my $leaf_count = $tree->num_leaves;
+        $tree->tree->store_tag( 'gene_count', $leaf_count );
     }
     $self->_store_tree_tags;
 
@@ -553,13 +559,13 @@ sub parse_newick_into_proteintree {
   my $self = shift;
   my $newick_file = shift;
 
-  my $protein_tree = $self->param('protein_tree');
+  my $tree = $self->param('protein_tree');
   
   #cleanup old tree structure- 
   #  flatten and reduce to only GeneTreeMember leaves
-  $protein_tree->flatten_tree;
-  $protein_tree->print_tree(20) if($self->debug);
-  foreach my $node (@{$protein_tree->get_all_leaves}) {
+  $tree->flatten_tree;
+  $tree->print_tree(20) if($self->debug);
+  foreach my $node (@{$tree->get_all_leaves}) {
     next if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
     $node->disavow_parent;
   }
@@ -571,8 +577,7 @@ sub parse_newick_into_proteintree {
   while(<FH>) { $newick .= $_;  }
   close(FH);
 
-  my $newtree = 
-    Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
+  my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
   $newtree->print_tree(20) if($self->debug > 1);
 
   my $nsplits = 0;
@@ -607,7 +612,7 @@ sub parse_newick_into_proteintree {
   # Leaves of newick tree are named with member_id of members from
   # input tree move members (leaves) of input tree into newick tree to
   # mirror the 'member_id' nodes
-  foreach my $member (@{$protein_tree->get_all_leaves}) {
+  foreach my $member (@{$tree->get_all_leaves}) {
     my $tmpnode = $newtree->find_node_by_name($member->member_id);
     if($tmpnode) {
       $member->Bio::EnsEMBL::Compara::AlignedMember::copy($tmpnode);
@@ -615,55 +620,57 @@ sub parse_newick_into_proteintree {
       $tmpnode->node_id($member->node_id);
       $tmpnode->adaptor($member->adaptor);
     } else {
-      print("unable to find node in newick for member"); 
+      print("unable to find node in newick for member");
       $member->print_member;
     }
   }
 
-  $newtree->node_id($protein_tree->node_id);
-  $newtree->adaptor($protein_tree->adaptor);
+  $newtree->node_id($tree->node_id);
+  $newtree->adaptor($tree->adaptor);
+  $newtree->tree($tree->tree);
   $self->param('protein_tree', $newtree);
-  $protein_tree->parent->add_child($newtree);
+  # to keep the link to the super-tree
+  if ($tree->has_parent) {
+      $tree->parent->add_child($newtree);
+   }
 
   # Newick tree is now empty so release it
-  $protein_tree->release_tree;
+  $tree->release_tree;
 
   $newtree->print_tree if($self->debug);
   # check here on the leaf to test if they all are GeneTreeMembers as
   # minimize_tree/minimize_node might not work properly
-  foreach my $leaf (@{$self->param('protein_tree')->get_all_leaves}) {
+  foreach my $leaf (@{$newtree->get_all_leaves}) {
     unless($leaf->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
       $self->throw("Phyml tree does not have all leaves as GeneTreeMembers\n");
     }
   }
-
 }
 
 sub _store_tree_tags {
     my $self = shift;
-
-  my $protein_tree = $self->param('protein_tree');
+    my $tree = $self->param('protein_tree');
     my $pta = $self->compara_dba->get_ProteinTreeAdaptor;
 
     print "Storing Tree tags...\n";
 
-    my @leaves = @{$protein_tree->get_all_leaves};
-    my @nodes = @{$protein_tree->get_all_nodes};
+    my @leaves = @{$tree->get_all_leaves};
+    my @nodes = @{$tree->get_all_nodes};
 
     # Tree number of leaves.
     my $tree_num_leaves = scalar(@leaves);
-    $protein_tree->store_tag("tree_num_leaves",$tree_num_leaves);
+    $tree->tree->store_tag("tree_num_leaves",$tree_num_leaves);
 
     # Tree number of human peptides contained.
     my $num_hum_peps = 0;
     foreach my $leaf (@leaves) {
 	$num_hum_peps++ if ($leaf->taxon_id == 9606);
     }
-    $protein_tree->store_tag("tree_num_human_peps",$num_hum_peps);
+    $tree->tree->store_tag("tree_num_human_peps",$num_hum_peps);
 
     # Tree max root-to-tip distance.
-    my $tree_max_length = $protein_tree->max_distance;
-    $protein_tree->store_tag("tree_max_length",$tree_max_length);
+    my $tree_max_length = $tree->max_distance;
+    $tree->tree->store_tag("tree_max_length",$tree_max_length);
 
     # Tree max single branch length.
     my $tree_max_branch = 0;
@@ -671,22 +678,21 @@ sub _store_tree_tags {
         my $dist = $node->distance_to_parent;
         $tree_max_branch = $dist if ($dist > $tree_max_branch);
     }
-    $protein_tree->store_tag("tree_max_branch",$tree_max_branch);
+    $tree->tree->store_tag("tree_max_branch",$tree_max_branch);
 
     # Tree number of duplications and speciations.
-    my $tree_num_leaves = scalar(@{$protein_tree->get_all_leaves});
     my $num_dups = 0;
     my $num_specs = 0;
-    foreach my $node (@{$protein_tree->get_all_nodes}) {
-	my $node_type = $node->get_tagvalue("node_type");
-	if ((defined $node_type) and ($node_type ne 'speciation')) {
-	    $num_dups++;
-	} else {
-	    $num_specs++;
-	}
+    foreach my $node (@nodes) {
+        my $node_type = $node->get_tagvalue("node_type");
+        if ((defined $node_type) and ($node_type ne 'speciation')) {
+            $num_dups++;
+        } else {
+            $num_specs++;
+        }
     }
-    $protein_tree->store_tag("tree_num_dup_nodes",$num_dups);
-    $protein_tree->store_tag("tree_num_spec_nodes",$num_specs);
+    $tree->tree->store_tag("tree_num_dup_nodes",$num_dups);
+    $tree->tree->store_tag("tree_num_spec_nodes",$num_specs);
 
     print "Done storing stuff!\n" if ($self->debug);
 }

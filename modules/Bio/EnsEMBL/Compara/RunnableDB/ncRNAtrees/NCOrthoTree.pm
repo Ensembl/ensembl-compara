@@ -258,7 +258,7 @@ sub run_analysis {
   
   #display summary stats of analysis 
   my $runtime = time()*1000-$starttime;  
-  $gene_tree->store_tag('OrthoTree_runtime_msec', $runtime) 
+  $gene_tree->tree->store_tag('OrthoTree_runtime_msec', $runtime) 
     unless ($self->param('_readonly'));
 
   if($self->debug) {
@@ -341,17 +341,18 @@ sub display_link_analysis
   } else { printf("%5s ", ""); }
 
   print("ancestor:(");
-  my $dup_value = $ancestor->get_tagvalue("Duplication");
-  my $sis_value = $ancestor->get_tagvalue("duplication_confidence_score");
-  if($dup_value eq '1' || $dup_value eq '2'){
-    if ($sis_value eq '0') {
-      print("DD  ");
-    } else {
-      print("DUP ");
-    }
+  my $node_type = $ancestor->get_tagvalue('node_type', '');
+  if ($node_type eq 'duplication') {
+    print "DUP ";
+  } elsif ($node_type eq 'dubious') {
+    print "DD  ";
+  } elsif ($node_type eq 'gene_split') {
+    print "SPL ";
+  } else {
+    print "    ";
   }
-  else{print"    ";}
   printf("%9s)", $ancestor->node_id);
+  printf(" %.4f ", $ancestor->get_tagvalue('duplication_confidence_score'));
 
   my $taxon_level = $ancestor->get_tagvalue('taxon_level');
   printf(" %s %s %s\n", 
@@ -375,7 +376,7 @@ sub get_species_tree_string {
             $species_tree_string = $self->_slurp( $species_tree_file );
 
         } else {
-            my $tag_table_name = 'nc_tree_tag';
+            my $tag_table_name = 'gene_tree_root_tag';
 
             my $sth = $self->dbc->prepare( "select value from $tag_table_name where tag='species_tree_string'" );
             $sth->execute;
@@ -461,27 +462,16 @@ sub get_ancestor_species_hash
   
   $node->add_tag("species_hash", $species_hash);
   if($is_dup && !($self->param('_treefam'))) {
-    my $original_duplication_value = $node->get_tagvalue("Duplication");
-    $original_duplication_value = 0 
-      unless (defined $original_duplication_value && $original_duplication_value ne '');
 
-    if ($original_duplication_value == 0) {
+    $node->add_tag("duplication_hash", $duplication_hash);
+
+    my $original_node_type = $node->get_tagvalue('node_type');
+    if ((not defined $original_node_type) or ($original_node_type eq 'speciation')) {
       # RAP did not predict a duplication here
-      $node->add_tag("duplication_hash", $duplication_hash);
-      $node->store_tag("Duplication", 1)  unless ($self->param('_readonly'));
-      $node->store_tag("Duplication_alg", 'species_count') 
-        unless ($self->param('_readonly'));
+      $node->store_tag('node_type', 'duplication') unless ($self->param('_readonly'));
 
-    } elsif ($original_duplication_value == 1) {
-      my $dup_alg = $node->get_tagvalue("Duplication_alg");
-      if (defined $dup_alg and $dup_alg ne 'species_count') {
-        # RAP did predict a duplication here but not species_count
-        $node->add_tag("duplication_hash", $duplication_hash);
-        $node->store_tag("Duplication", 2) unless ($self->param('_readonly'));
-        $node->store_tag("Duplication_alg", 'species_count') 
-          unless ($self->param('_readonly'));
-      }
-    }
+    } # The other values should not need any treatment
+
   }
   return $species_hash;
 }
@@ -498,8 +488,7 @@ sub get_ancestor_taxon_level {
   my $species_hash = $self->get_ancestor_species_hash($ancestor);
 
   foreach my $gdbID (keys(%$species_hash)) {
-    my $gdb = 
-      $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
+    my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
     my $taxon = $taxon_tree->find_node_by_node_id($gdb->taxon_id);
 
     unless($taxon) {
@@ -554,6 +543,20 @@ sub duplication_confidence_score {
      "duplication_confidence_score",
      $duplication_confidence_score
     ) unless ($self->param('_readonly'));
+
+  my $rounded_duplication_confidence_score = (int((100.0 * $scalar_isect / $scalar_union + 0.5)));
+  my $species_intersection_score = $ancestor->get_tagvalue("species_intersection_score");
+  unless (defined($species_intersection_score)) {
+    my $ancestor_node_id = $ancestor->node_id;
+    warn("Difference in the ProteinTree: duplication_confidence_score [$duplication_confidence_score] whereas species_intersection_score [$species_intersection_score] is undefined in njtree - ancestor $ancestor_node_id\n");
+    return;
+  }
+  if ($species_intersection_score ne $rounded_duplication_confidence_score && !defined($self->param('_readonly'))) {
+    my $ancestor_node_id = $ancestor->node_id;
+    $self->throw("Inconsistency in the ProteinTree: duplication_confidence_score [$duplication_confidence_score] != species_intersection_score [$species_intersection_score] -  $ancestor_node_id\n");
+  } else {
+    $ancestor->delete_tag('species_intersection_score');
+  }
 }
 
 
@@ -601,7 +604,8 @@ sub delete_old_orthotree_tags
   foreach my $id (@node_ids) {
     push @list_ids, $id;
     if (scalar @list_ids == 2000) {
-      my $sql = "delete from nc_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
+      # FIXME
+      my $sql = "delete from gene_tree_root_tag where root_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
       my $sth = $self->dbc->prepare($sql);
       $sth->execute;
       $sth->finish;
@@ -610,11 +614,6 @@ sub delete_old_orthotree_tags
   }
 
   if (scalar @list_ids) {
-    my $sql = "delete from nc_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
-    my $sth = $self->dbc->prepare($sql);
-    $sth->execute;
-    $sth->finish;
-    @list_ids = ();
   }
 
   return undef;
@@ -690,14 +689,8 @@ sub genepairlink_check_dups
   my $tnode = $pep1;
   do {
     $tnode = $tnode->parent;
-    my $dup_value = $tnode->get_tagvalue("Duplication");
-    my $sis_value = $tnode->get_tagvalue("duplication_confidence_score");
-    $dup_value = 0 unless (defined($dup_value) && $dup_value ne '');
-    $sis_value = 0 unless (defined($sis_value) && $sis_value ne '');
-    unless ($sis_value eq '0') {
-      if($dup_value > 0) {
-        $has_dup = 1;
-      }
+    if ($tnode->get_tagvalue('node_type', '') eq 'duplication') {
+      $has_dup = 1;
     }
     $nodes_between{$tnode->node_id} = $tnode;
   } while(!($tnode->equals($ancestor)));
@@ -705,15 +698,8 @@ sub genepairlink_check_dups
   $tnode = $pep2;
   do {
     $tnode = $tnode->parent;
-    my $dup_value = $tnode->get_tagvalue("Duplication");
-    my $sis_value = $tnode->get_tagvalue("duplication_confidence_score");
-    $dup_value = 0 unless (defined($dup_value) && $dup_value ne '');
-    $sis_value = 0 unless (defined($sis_value) && $sis_value ne '');
-    $genepairlink->{duplication_confidence_score} = $sis_value;
-    unless ($sis_value eq '0') {
-      if($dup_value > 0) {
-        $has_dup = 1;
-      }
+    if ($tnode->get_tagvalue('node_type', '') eq 'duplication') {
+      $has_dup = 1;
     }
     $nodes_between{$tnode->node_id} = $tnode;
   } while(!($tnode->equals($ancestor)));
@@ -830,16 +816,13 @@ sub ancient_residual_test
 
   # little hack to work around some weird treefam trees
   if ($self->param('_treefam')) {
-    my $dup_value = $ancestor->get_tagvalue("Duplication");
-    if ($dup_value eq '') {
-      $dup_value = 0;
-      $ancestor->add_tag("Duplication",0) ;
+    if(not $ancestor->has_tag('node_type')) {
+      $ancestor->add_tag('node_type', 'speciation');
     }
   }
 
 #  my $sis_value = $ancestor->get_tagvalue("species_intersection_score");
-  my $sis_value = $ancestor->get_tagvalue("duplication_confidence_score");
-  if($ancestor->get_tagvalue("Duplication") > 0 && $sis_value ne '0') {
+  if ($ancestor->get_tagvalue('node_type', '') eq 'duplication') {
 #    $self->delete_old_homologies_old($genepairlink) unless ($self->param('_readonly'));
     $genepairlink->add_tag("orthotree_type", 'apparent_ortholog_one2one');
     my $taxon = $self->get_ancestor_taxon_level($ancestor);
@@ -888,9 +871,7 @@ sub one2many_ortholog_test
      ($count1==1 and $count2>1) or ($count1>1 and $count2==1)
     );
 
-  my $dup_value = $ancestor->get_tagvalue("Duplication");
-  my $sis_value = $ancestor->get_tagvalue("duplication_confidence_score");
-  if($dup_value > 0 && $sis_value ne '0') {
+  if ($ancestor->get_tagvalue('node_type', '') eq 'duplication') {
     return undef;
   }
 
@@ -919,21 +900,18 @@ sub outspecies_test
   my $taxon = $self->get_ancestor_taxon_level($ancestor);
 
   #ultra simple ortho/paralog classification
-  my $dup_value = $ancestor->get_tagvalue("Duplication");
-  my $sis_value = $ancestor->get_tagvalue("duplication_confidence_score");
-  unless ($dup_value eq '') {
-    if($dup_value > 0 && $sis_value ne '0') {
-      $genepairlink->add_tag("orthotree_type", 'possible_ortholog');
-      $genepairlink->add_tag("orthotree_subtype", $taxon->name);
-      # Duplication_confidence_score
-      if ('' eq $ancestor->get_tagvalue("duplication_confidence_score")) {
-        $self->duplication_confidence_score($ancestor);
-       $genepairlink->{duplication_confidence_score} = $ancestor->get_tagvalue("duplication_confidence_score");
-      }
-    } else {
+  if ($ancestor->get_tagvalue('node_type', '') eq 'duplication') {
+    $genepairlink->add_tag("orthotree_type", 'possible_ortholog');
+    $genepairlink->add_tag("orthotree_subtype", $taxon->name);
+    # duplication_confidence_score
+    if (not $ancestor->has_tag("duplication_confidence_score")) {
+      $self->duplication_confidence_score($ancestor);
+     $genepairlink->{duplication_confidence_score} = $ancestor->get_tagvalue("duplication_confidence_score");
+    }
+  } else {
+#      $self->delete_old_homologies_old($genepairlink) unless ($self->param('_readonly'));
       $genepairlink->add_tag("orthotree_type", 'ortholog_many2many');
       $genepairlink->add_tag("orthotree_subtype", $taxon->name);
-    }
   }
   return 1;
 }
@@ -948,13 +926,15 @@ sub outspecies_test
 sub store_homologies {
   my $self = shift;
 
+  $self->param('homology_consistency', {});
+
   my $hlinkscount = 0;
   foreach my $genepairlink (@{$self->param('homology_links')}) {
     $self->display_link_analysis($genepairlink) if($self->debug>2);
     my $type = $genepairlink->get_tagvalue("orthotree_type");
-    my $dcs = $genepairlink->{duplication_confidence_score};
+    my $dcs = $genepairlink->get_tagvalue('ancestor')->get_tagvalue('duplication_confidence_score');
+    next if ($type eq 'possible_ortholog' and $dcs > $self->param('no_between'));
 
-    next if ($type eq 'possible_ortholog' && $dcs > $self->param('no_between'));
     $self->store_gene_link_as_homology($genepairlink);
     print STDERR "homology links $hlinkscount\n" if ($hlinkscount++ % 500 == 0);
   }
@@ -964,7 +944,7 @@ sub store_homologies {
 
   $self->check_homology_consistency;
 
-  $self->param('gene_tree')->store_tag(
+  $self->param('gene_tree')->tree->store_tag(
       'OrthoTree_types_hashstr', 
       stringify($self->param('orthotree_homology_counts'))) unless ($self->param('_readonly'));
 
@@ -1010,12 +990,6 @@ sub store_gene_link_as_homology {
   $homology->method_link_species_set($mlss);
 
   my $key = $mlss->dbID . "_" . $gene1->dbID;
-
-      # manual vivification needed:
-  unless($self->param('homology_consistency')) {
-        $self->param('homology_consistency', {});
-  }
-
   $self->param('homology_consistency')->{$key}{$type} = 1;
   #$homology->dbID(-1);
 

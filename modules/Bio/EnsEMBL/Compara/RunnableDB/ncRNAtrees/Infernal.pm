@@ -240,7 +240,7 @@ sub update_single_peptide_tree {
     next unless($member->sequence);
     $DB::single=1;1;
     $member->cigar_line(length($member->sequence)."M");
-    $self->compara_dba->get_NCTreeAdaptor->store($member);
+    $self->compara_dba->get_NCTreeAdaptor->update_node($member);
     printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
   }
 }
@@ -274,7 +274,7 @@ sub run_infernal {
   if (scalar keys %{$self->param('model_id_hash')} > 1) {
       print STDERR "WARNING: More than one model: ", join(",",keys %{$self->param('model_id_hash')}), "\n";
   }
-  $model_id = $self->param('nc_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
+  $model_id = $self->param('nc_tree')->tree->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
 
   $self->param('model_id', $model_id );
 
@@ -400,7 +400,7 @@ sub parse_and_store_alignment_into_tree {
     $ss_cons_string .= $1;
   }
   close(STKFILE);
-  $self->param('nc_tree')->store_tag('ss_cons', $ss_cons_string);
+  $self->param('nc_tree')->tree->store_tag('ss_cons', $ss_cons_string);
 
   #
   # parse alignment file into hash: combine alignment lines
@@ -485,7 +485,7 @@ sub parse_and_store_alignment_into_tree {
     }
     #
 #    printf("update nc_tree_member %s : %s\n",$member->stable_id, $member->cigar_line) if($self->debug);
-    $self->compara_dba->get_NCTreeAdaptor->store($member);
+    $self->compara_dba->get_NCTreeAdaptor->update_node($member);
   }
 
   return undef;
@@ -502,29 +502,28 @@ sub _store_aln_tags {
     my $sa = $tree->get_SimpleAlign;
     $DB::single=1;1;
     # Model id
-    $tree->store_tag("model_id",$self->param('model_id') );
+    $tree->tree->store_tag("model_id",$self->param('model_id') );
 
     # Alignment percent identity.
     my $aln_pi = $sa->average_percentage_identity;
-    $tree->store_tag("aln_percent_identity",$aln_pi);
+    $tree->tree->store_tag("aln_percent_identity",$aln_pi);
 
     # Alignment length.
     my $aln_length = $sa->length;
-    $tree->store_tag("aln_length",$aln_length);
+    $tree->tree->store_tag("aln_length",$aln_length);
 
     # Alignment runtime.
     my $aln_runtime = int(time()*1000-$self->param('infernal_starttime'));
-    $tree->store_tag("aln_runtime",$aln_runtime);
+    $tree->tree->store_tag("aln_runtime",$aln_runtime);
 
     # Alignment method.
     my $aln_method = $self->param('method');
-    $tree->store_tag("aln_method",$aln_method);
+    $tree->tree->store_tag("aln_method",$aln_method);
 
     # Alignment residue count.
     my $aln_num_residues = $sa->no_residues;
-    $tree->store_tag("aln_num_residues",$aln_num_residues);
+    $tree->tree->store_tag("aln_num_residues",$aln_num_residues);
 
-    return undef;
 }
 
 

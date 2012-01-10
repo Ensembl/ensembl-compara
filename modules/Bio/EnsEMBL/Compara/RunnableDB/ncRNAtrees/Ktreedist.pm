@@ -136,7 +136,7 @@ sub get_species_tree_file {
 
         unless( $self->param('species_tree_string') ) {
 
-            my $tag_table_name = 'nc_tree_tag';
+            my $tag_table_name = 'gene_tree_root_tag';
 
             my $sth = $self->dbc->prepare( "select value from $tag_table_name where tag='species_tree_string'" );
             $sth->execute;
@@ -222,17 +222,17 @@ sub run_ktreedist {
 }
 
 sub load_input_trees {
+
   my $self = shift;
+  my $tree = $self->param('nc_tree')->tree;
 
-  my $root_id = $self->param('nc_tree')->node_id;
+  foreach my $tag ($tree->get_all_tags) {
+    next unless $tag =~ m/_it_/;
+    my $inputtree_string = $tree->get_value_for_tag($tag);
 
-  my $sql1 = "select tag,value from nc_tree_tag where node_id=$root_id and tag like '%\\\_IT%'";
-  my $sth1 = $self->dbc->prepare($sql1);
-  $sth1->execute;
-  while (  my $inputtree_string = $sth1->fetchrow_hashref ) {
     my $eval_inputtree;
     eval {
-      $eval_inputtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($inputtree_string->{value});
+      $eval_inputtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($inputtree_string);
       my @leaves = @{$eval_inputtree->get_all_leaves};
     };
     unless ($@) {
@@ -240,11 +240,10 @@ sub load_input_trees {
       unless($self->param('inputtrees_unrooted')) {
           $self->param('inputtrees_unrooted', {});
       }
-      $self->param('inputtrees_unrooted')->{$inputtree_string->{tag}} = $inputtree_string->{value};
+
+      $self->param('inputtrees_unrooted')->{$tag} = $inputtree_string;
     }
   }
-  $sth1->finish;
-#  print STDERR Dumper $self->param('inputtrees_unrooted') if ($self->{'verbose'});
 
   return 1;
 }

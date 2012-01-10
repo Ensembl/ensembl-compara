@@ -42,7 +42,7 @@ sub get_species_tree_file {
 
         unless( $self->param('species_tree_string') ) {
 
-            my $tag_table_name = 'nc_tree_tag';
+            my $tag_table_name = 'gene_tree_root_tag';
 
             my $sth = $self->dbc->prepare( "select value from $tag_table_name where tag='species_tree_string'" );
             $sth->execute;
@@ -147,7 +147,7 @@ sub store_newick_into_protein_tree_tag_string {
   $newick =~ s/(\d+\.\d{4})\d+/$1/g; # We round up to only 4 digits
   return if ($newick eq '_null_;');
   my $tag = "pg_IT_" . $method;
-  $self->param('nc_tree')->store_tag($tag, $newick);
+  $self->param('nc_tree')->tree->store_tag($tag, $newick);
 }
 
 sub _load_and_dump_alignment {

@@ -292,7 +292,6 @@ FOREIGN KEY (alignment_id) REFERENCES alignment(alignment_id)
 --           Clusterset refers to the output of the clustering
 --           GeneTreeset refers to the final gene tree set
 -- semantics:
---   clusterset_id - id of the clusterset analyzed
 --   genome_db_id  - link to genome_db table id
 --   total_orphans_num   - number of orphaned genes (not in the set)
 --   prop_orphans        - proportion of orphaned genes, compared to the whole set
@@ -301,7 +300,6 @@ FOREIGN KEY (alignment_id) REFERENCES alignment(alignment_id)
 
 
 CREATE TABLE protein_tree_qc (
-    clusterset_id                      int(10) unsigned NOT NULL,
     genome_db_id                       int(10) unsigned NOT NULL,
 
     total_orphans_num_Clusterset       INT UNSIGNED,
@@ -314,7 +312,7 @@ CREATE TABLE protein_tree_qc (
     common_orphans_num_GeneTreeset     INT UNSIGNED,
     new_orphans_num_GeneTreeset        INT UNSIGNED,
 
-    PRIMARY KEY (clusterset_id,genome_db_id),
+    PRIMARY KEY (genome_db_id),
     FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id)
 
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

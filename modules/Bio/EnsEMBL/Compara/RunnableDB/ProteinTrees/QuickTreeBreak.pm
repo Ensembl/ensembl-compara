@@ -1,32 +1,24 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::QuickTreeBreak
-
-=cut
-
-=head1 SYNOPSIS
-
-my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $quicktreebreak = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::QuickTreeBreak->new
-  (
-   -db         => $db,
-   -input_id   => $input_id,
-   -analysis   => $analysis
-  );
-$quicktreebreak->fetch_input(); #reads from DB
-$quicktreebreak->run();
-$quicktreebreak->output();
-$quicktreebreak->write_output(); #writes to DB
-
-=cut
-
 
 =head1 DESCRIPTION
 
@@ -42,37 +34,54 @@ Google sreformat to get the sequence reformatter that switches from fasta to sto
 input_id/parameters format eg: "{'protein_tree_id'=>1234,'clusterset_id'=>1}"
     protein_tree_id : use 'id' to fetch a cluster from the ProteinTree
 
-=cut
+=head1 SYNOPSIS
 
+my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
+my $quicktreebreak = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::QuickTreeBreak->new
+  (
+   -db         => $db,
+   -input_id   => $input_id,
+   -analysis   => $analysis
+  );
+$quicktreebreak->fetch_input(); #reads from DB
+$quicktreebreak->run();
+$quicktreebreak->output();
+$quicktreebreak->write_output(); #writes to DB
 
-=head1 CONTACT
+=head1 AUTHORSHIP
 
-  Contact Albert Vilella on module implementation/design detail: avilella@ebi.ac.uk
-  Contact Javier Herrero on EnsEMBL/Compara: jherrero@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+Ensembl Team. Individual contributions can be found in the CVS log.
 
-=cut
+=head1 MAINTAINER
 
+$Author$
+
+=head VERSION
+
+$Revision$
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
-
 
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::QuickTreeBreak;
 
 use strict;
+
 use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
+use Bio::AlignIO;
+use Bio::SimpleAlign;
+
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use Bio::SimpleAlign;
-use Bio::AlignIO;
+use Bio::EnsEMBL::Compara::GeneTree;
+use Bio::EnsEMBL::Compara::GeneTreeNode;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -137,9 +146,6 @@ sub write_output {
 
     $self->check_if_exit_cleanly;
     $self->store_proteintrees;
-    if ($self->param('broken_tree')) {
-        $self->input_job->autoflow(0);
-    }
 }
 
 sub release_tree {
@@ -159,8 +165,6 @@ sub DESTROY {
 
     $self->release_tree('protein_tree');
     $self->release_tree('max_subtree');
-    $self->release_tree('new_subtree');
-    $self->release_tree('remaining_subtree');
 
     $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
 }
@@ -206,7 +210,7 @@ sub run_quicktreebreak {
   $self->generate_subtrees( $quicktree_newick_string );
 
   my $runtime = time()*1000-$starttime;
-  $self->param('protein_tree')->store_tag('QuickTreeBreak_runtime_msec', $runtime);
+  $self->param('protein_tree')->tree->store_tag('QuickTreeBreak_runtime_msec', $runtime);
 }
 
 
@@ -270,7 +274,6 @@ sub dumpTreeMultipleAlignmentToWorkdir {
 sub store_proteintrees {
   my $self = shift;
 
-  $self->delete_original_cluster;
   $self->store_clusters;
 
   if($self->debug >1) {
@@ -286,47 +289,25 @@ sub store_clusters {
   my $protein_tree_adaptor = $self->compara_dba->get_ProteinTreeAdaptor;
   my $starttime = time();
 
-  my $clusterset_id = $self->param('clusterset_id');
-  my $clusterset = $protein_tree_adaptor->fetch_node_by_node_id($clusterset_id)
-    or die "no clusterset found for $clusterset_id";
+  $protein_tree_adaptor->store($self->param('original_cluster'));
 
-  $clusterset->no_autoload_children; # Important so that only the two below are used
-  $clusterset->add_child($self->param('new_subtree'));
-  $clusterset->add_child($self->param('remaining_subtree'));
-
-  my $clusters = $clusterset->children;
-  foreach my $cluster (@{$clusters}) {
-    $cluster->distance_to_parent($self->param('distance_to_parent') / 2);
-    my $node_id = $protein_tree_adaptor->store($cluster);
-    $cluster->store_tag('distance_to_parent', $self->param('distance_to_parent') / 2);
-    # Although the leaves wont have the right root_id pointing to the $cluster->node_id,
-    # this will be solved when we store back the results after the new MSA job.
+  foreach my $cluster (@{$self->param('subclusters')}) {
+    my $node_id = $cluster->root_id;
 
     #calc residue count total
-    my $leafcount = scalar(@{$cluster->get_all_leaves});
+    my $leafcount = scalar(@{$cluster->root->get_all_leaves});
     $cluster->store_tag('gene_count', $leafcount);
-    $cluster->store_tag('original_cluster', $self->param('original_cluster')->node_id);
     print STDERR "Stored $node_id with $leafcount leaves\n" if ($self->debug);
-
-    next if($leafcount<2);
 
     # Dataflow clusters
     # This will create a new MSA alignment job for each of the newly generated clusters
-    my $output_id = sprintf("{'protein_tree_id'=>%d, 'broken_tree'=>1}", $node_id);
+    my $output_id = sprintf("{'protein_tree_id'=>%d}", $node_id);
 
     $self->dataflow_output_id($output_id, 2);
     print STDERR "Created new cluster $node_id\n";
   }
 }
 
-sub delete_original_cluster {
-  my $self = shift;
-
-  my $original_cluster_node_id = $self->param('protein_tree_id');
-
-  $self->param('original_cluster')->adaptor->store_flattened_supertree( $original_cluster_node_id );
-  $self->param('original_cluster')->adaptor->delete_flattened_tree(     $original_cluster_node_id );
-}
 
 sub generate_subtrees {
     my $self                    = shift @_;
@@ -339,10 +320,6 @@ sub generate_subtrees {
   #  flatten and reduce to only GeneTreeMember leaves
   $protein_tree->flatten_tree;
   $protein_tree->print_tree(20) if($self->debug);
-  foreach my $node (@{$protein_tree->get_all_leaves}) {
-    next if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
-    $node->disavow_parent;
-  }
 
   #parse newick into a new tree object structure
   my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($quicktree_newick_string);
@@ -378,46 +355,77 @@ sub generate_subtrees {
       $keep_breaking = 0;
     }
   }
-  $self->param('distance_to_parent', $self->param('max_subtree')->distance_to_parent);
 
-  # Create a copy of what is not max_subtree
-  $self->param('remaining_subtree', $self->param('protein_tree')->copy);
-  $self->param('new_subtree',       $self->param('protein_tree')->copy);
-  $self->param('new_subtree')->flatten_tree;
-  $self->param('remaining_subtree')->flatten_tree;
+  my $final_original_num = scalar @{$self->param('protein_tree')->get_all_leaves};
+  # Creating the supertree structure
+  my $supertree = $self->param('protein_tree');
+  $supertree->tree->tree_type('superproteintree');
+  my $supertree_leaf1 = new Bio::EnsEMBL::Compara::GeneTreeNode;
+  my $supertree_leaf2 = new Bio::EnsEMBL::Compara::GeneTreeNode;
+  $supertree_leaf1->tree($supertree->tree);
+  $supertree_leaf2->tree($supertree->tree);
+
+  my $cluster1_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
+  my $cluster1 = new Bio::EnsEMBL::Compara::GeneTree;
+  $cluster1->tree_type('proteintree');
+  $cluster1->method_link_species_set_id($supertree->tree->method_link_species_set_id);
+  $cluster1->clusterset_id($supertree->tree->clusterset_id);
+  $cluster1->root($cluster1_root);
+  $cluster1_root->tree($cluster1);
+  
+  my $cluster2_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
+  my $cluster2 = new Bio::EnsEMBL::Compara::GeneTree;
+  $cluster2->tree_type('proteintree');
+  $cluster2->method_link_species_set_id($supertree->tree->method_link_species_set_id);
+  $cluster2->clusterset_id($supertree->tree->clusterset_id);
+  $cluster2->root($cluster2_root);
+  $cluster2_root->tree($cluster2);
+
+
   my $subtree_leaves;
   foreach my $leaf (@{$self->param('max_subtree')->get_all_leaves}) {
     $subtree_leaves->{$leaf->member_id} = 1;
   }
-  foreach my $leaf (@{$self->param('new_subtree')->get_all_leaves}) {
-    unless (defined $subtree_leaves->{$leaf->member_id}) {
-      print $leaf->name," leaf disavowing parent\n" if $self->debug;
-      $leaf->disavow_parent;
-    }
-    $leaf->method_link_species_set_id($self->param('mlss_id'));
-  }
-  foreach my $leaf (@{$self->param('remaining_subtree')->get_all_leaves}) {
+  foreach my $leaf (@{$supertree->get_all_leaves}) {
     if (defined $subtree_leaves->{$leaf->member_id}) {
-      print $leaf->name," leaf disavowing parent\n" if $self->debug;
-      $leaf->disavow_parent;
+      $cluster1_root->add_child($leaf);
+      $leaf->tree($cluster1);
+    } else {
+      $cluster2_root->add_child($leaf);
+      $leaf->tree($cluster2);
     }
-    $leaf->method_link_species_set_id($self->param('mlss_id'));
   }
-  $self->param('remaining_subtree', $self->param('remaining_subtree')->minimize_tree);
-  $self->param('new_subtree',       $self->param('new_subtree')->minimize_tree);
+  $supertree->add_child($supertree_leaf1, $self->param('max_subtree')->distance_to_parent/2);
+  $supertree->add_child($supertree_leaf2, $self->param('max_subtree')->distance_to_parent/2);
+  $supertree->build_leftright_indexing(1);
+  
+  if ($self->debug) {
+    print "SUPERTREE " ;
+    $supertree->print_tree(20);
+    print "CLUSTER1 ";
+    $cluster1_root->print_tree(20);
+    print "CLUSTER2 ";
+    $cluster2_root->print_tree(20);
+  }
+  $supertree_leaf1->add_child($cluster1_root);
+  $supertree_leaf2->add_child($cluster2_root);
+
+  if ($self->debug) {
+    print "FINAL STRUCTURE ";
+    $supertree->print_tree(20);
+  }
+
+  $self->param('subclusters', [$cluster1, $cluster2]);
 
   # Some checks
-  die "Failed to generate subtrees: $!"  unless(defined($self->param('new_subtree')) && defined($self->param('remaining_subtree')));
-  my  $final_original_num = scalar @{$self->param('protein_tree')->get_all_leaves};
-  my       $final_max_num = scalar @{$self->param('new_subtree')->get_all_leaves};
-  my $final_remaining_num = scalar @{$self->param('remaining_subtree')->get_all_leaves};
+  my       $final_max_num = scalar @{$cluster1->root->get_all_leaves};
+  my $final_remaining_num = scalar @{$cluster2->root->get_all_leaves};
 
   if(($final_max_num + $final_remaining_num) != $final_original_num) {
     die "Incorrect sum of leaves [$final_max_num + $final_remaining_num != $final_original_num]";
   }
 
-  $self->param('original_cluster', $self->param('protein_tree'));
-  return undef;
+  $self->param('original_cluster', $supertree->tree);
 }
 
 1;

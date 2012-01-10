@@ -284,8 +284,8 @@ sub run_ncrecoverepo {
               my $description = $gene_member->description;
               $description =~ /Acc:(\w+)/;
               my $acc_description = $1 if (defined($1));
-              my $clustering_id = $self->param('nc_tree')->get_tagvalue('clustering_id');
-              my $model_id = $self->param('nc_tree')->get_tagvalue('model_id');
+              my $clustering_id = $self->param('nc_tree')->tree->get_tagvalue('clustering_id');
+              my $model_id = $self->param('nc_tree')->tree->get_tagvalue('model_id');
               if ($acc_description eq $clustering_id || $acc_description eq $model_id) {
                 $self->param('predictions_to_add')->{$found_gene_stable_id} = 1;
               } else {
@@ -468,7 +468,7 @@ sub remove_low_cov_predictions {
   }
   #calc residue count total
   my $leafcount = scalar(@{$self->param('nc_tree')->get_all_leaves});
-  $self->param('nc_tree')->store_tag('gene_count', $leafcount);
+  $self->param('nc_tree')->tree->store_tag('gene_count', $leafcount);
 
   return 1;
 }
@@ -481,25 +481,22 @@ sub add_matching_predictions {
     my $gene_member = $self->param('member_adaptor')->fetch_by_source_stable_id('ENSEMBLGENE',$gene_stable_id_to_add);
     # Incorporate this member into the cluster
     my $node = new Bio::EnsEMBL::Compara::GeneTreeNode;
-    $node->node_id($gene_member->get_canonical_peptide_Member->member_id);
     $self->param('nc_tree')->add_child($node);
-    $self->param('nc_tree')->clusterset_id($self->param('clusterset_id'));
     #leaves are GeneTreeNode objects, bless to make into GeneTreeMember objects
     bless $node, "Bio::EnsEMBL::Compara::GeneTreeMember";
 
     #the building method uses member_id's to reference unique nodes
     #which are stored in the node_id value, copy to member_id
-    $node->member_id($node->node_id);
+    $node->member_id($gene_member->get_canonical_peptide_Member->member_id);
     $node->method_link_species_set_id($self->param('mlss_id'));
     # We won't do the store until the end, otherwise it will affect the main loop
     print STDERR "adding matching prediction $gene_stable_id_to_add\n" if($self->debug);
+    $self->param('nctree_adaptor')->store($node);
   }
-  my $clusterset = $self->param('nctree_adaptor')->fetch_node_by_node_id($self->param('clusterset_id'));
-  $self->param('nctree_adaptor')->store($self->param('nc_tree'));
 
   #calc residue count total
   my $leafcount = scalar(@{$self->param('nc_tree')->get_all_leaves});
-  $self->param('nc_tree')->store_tag('gene_count', $leafcount);
+  $self->param('nc_tree')->tree->store_tag('gene_count', $leafcount);
 
   return 1;
 }

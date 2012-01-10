@@ -89,7 +89,7 @@ sub fetch_input {
     my $nc_tree    = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
     $self->param('nc_tree', $nc_tree);
 
-    $self->param('model_id', $nc_tree->get_tagvalue('clustering_id'));
+    $self->param('model_id', $nc_tree->tree->get_tagvalue('clustering_id'));
 
     $self->fetch_recovered_member_entries($nc_tree->node_id);
 

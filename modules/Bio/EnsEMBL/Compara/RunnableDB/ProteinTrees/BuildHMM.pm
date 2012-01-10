@@ -1,15 +1,33 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM
 
-=cut
+=head1 DESCRIPTION
+
+This Analysis/RunnableDB is designed to take a ProteinTree as input
+This must already have a multiple alignment run on it. It uses that alignment
+as input create a HMMER HMM profile
+
+input_id/parameters format eg: "{'protein_tree_id'=>1234}"
+    protein_tree_id : use 'id' to fetch a cluster from the ProteinTree
 
 =head1 SYNOPSIS
 
@@ -25,48 +43,38 @@ $buildhmm->run();
 $buildhmm->output();
 $buildhmm->write_output(); #writes to DB
 
-=cut
+=head1 AUTHORSHIP
 
+Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 DESCRIPTION
+=head1 MAINTAINER
 
-This Analysis/RunnableDB is designed to take a ProteinTree as input
-This must already have a multiple alignment run on it. It uses that alignment
-as input create a HMMER HMM profile
+$Author$
 
-input_id/parameters format eg: "{'protein_tree_id'=>1234}"
-    protein_tree_id : use 'id' to fetch a cluster from the ProteinTree
+=head VERSION
 
-=cut
-
-
-=head1 CONTACT
-
-  Contact Albert Vilella on module implementation/design detail: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
-
-=cut
-
+$Revision$
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
-
 
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM;
 
 use strict;
+
 use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
+use Bio::AlignIO;
+use Bio::SimpleAlign;
+
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use Bio::SimpleAlign;
-use Bio::AlignIO;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -75,16 +83,6 @@ sub param_defaults {
             'cdna'                  => 0,
     };
 }
-
-=head2 fetch_input
-
-    Title   :   fetch_input
-    Usage   :   $self->fetch_input
-    Function:   Fetches input data for repeatmasker from the database
-    Returns :   none
-    Args    :   none
-
-=cut
 
 
 sub fetch_input {
@@ -252,7 +250,7 @@ sub run_buildhmm {
   $self->compara_dba->dbc->disconnect_when_inactive(0);
   my $runtime = time()*1000-$starttime;
 
-  $self->param('protein_tree')->store_tag('BuildHMM_runtime_msec', $runtime);
+  $self->param('protein_tree')->tree->store_tag('BuildHMM_runtime_msec', $runtime);
 }
 
 

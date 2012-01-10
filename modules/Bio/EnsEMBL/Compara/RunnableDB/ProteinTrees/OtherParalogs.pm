@@ -1,15 +1,29 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OtherParalogs
 
-=cut
+=head1 DESCRIPTION
+
+This analysis will load a super protein tree alignment and insert the
+extra paralogs into the homology tables.
 
 =head1 SYNOPSIS
 
@@ -25,44 +39,36 @@ $otherparalogs->run();
 $otherparalogs->output();
 $otherparalogs->write_output(); #writes to DB
 
-=cut
+=head1 AUTHORSHIP
 
+Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 DESCRIPTION
+=head1 MAINTAINER
 
-This analysis will load a super protein tree alignment and insert the
-extra paralogs into the homology tables.
+$Author$
 
-=cut
+=head VERSION
 
-
-=head1 CONTACT
-
-  Contact Albert Vilella on module implementation/design detail: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
-
-=cut
-
+$Revision$
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
-
 
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OtherParalogs;
 
 use strict;
+
 use Time::HiRes qw(time gettimeofday tv_interval);
 
+use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Member;
+use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Graph::Link;
 use Bio::EnsEMBL::Compara::Graph::Node;
-use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-use Bio::EnsEMBL::Compara::Homology;
-
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -89,7 +95,7 @@ sub fetch_input {
     my $self = shift @_;
 
     my $protein_tree_id     = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
-    my $protein_tree        = $self->compara_dba->get_SuperProteinTreeAdaptor->fetch_node_by_node_id( $protein_tree_id )
+    my $protein_tree        = $self->compara_dba->get_ProteinTreeAdaptor->fetch_node_by_node_id( $protein_tree_id )
                                         or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
     $self->param('protein_tree', $protein_tree);
 
@@ -124,7 +130,6 @@ sub run {
 
 =cut
 
-
 sub write_output {
     my $self = shift @_;
 
@@ -144,17 +149,19 @@ sub run_otherparalogs {
 
   my $tmp_time = time();
 
-  my @all_protein_leaves = @{$tree->get_all_leaves};
+  my ($child1, $child2) = @{$tree->children};
+  my @all_protein_leaves_1 = @{$child1->get_all_leaves};
+  my @all_protein_leaves_2 = @{$child2->get_all_leaves};
   printf("%1.3f secs to fetch all leaves\n", time()-$tmp_time) if ($self->debug);
 
   if($self->debug) {
-    printf("%d proteins in tree\n", scalar(@all_protein_leaves));
+    printf("%d/%d proteins in tree\n", scalar(@all_protein_leaves_1), scalar(@all_protein_leaves_2));
   }
   printf("build paralogs graph\n") if($self->debug);
   my @genepairlinks;
   my $graphcount = 0;
-  while (my $protein1 = shift @all_protein_leaves) {
-    foreach my $protein2 (@all_protein_leaves) {
+  foreach my $protein1 (@all_protein_leaves_1) {
+    foreach my $protein2 (@all_protein_leaves_2) {
       next unless ($protein1->genome_db_id == $protein2->genome_db_id);
       my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link ( $protein1, $protein2, 0 );
       push @genepairlinks, $genepairlink;

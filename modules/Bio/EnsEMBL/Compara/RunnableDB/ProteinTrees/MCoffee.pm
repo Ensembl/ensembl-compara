@@ -1,15 +1,34 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee
 
-=cut
+=head1 DESCRIPTION
+
+This Analysis/RunnableDB is designed to take a protein_tree cluster as input
+Run an MCOFFEE multiple alignment on it, and store the resulting alignment
+back into the protein_tree_member and protein_tree_member_score table.
+
+input_id/parameters format eg: "{'protein_tree_id'=>726093}"
+    protein_tree_id       : use family_id to run multiple alignment on its members
+    options               : commandline options to pass to the 'mcoffee' program
 
 =head1 SYNOPSIS
 
@@ -23,46 +42,38 @@ $mcoffee->run();
 $mcoffee->output();
 $mcoffee->write_output(); #writes to DB
 
-=cut
+=head1 AUTHORSHIP
 
-=head1 DESCRIPTION
+Ensembl Team. Individual contributions can be found in the CVS log.
 
-This Analysis/RunnableDB is designed to take a protein_tree cluster as input
-Run an MCOFFEE multiple alignment on it, and store the resulting alignment
-back into the protein_tree_member and protein_tree_member_score table.
+=head1 MAINTAINER
 
-input_id/parameters format eg: "{'protein_tree_id'=>726093, 'clusterset_id'=>1}"
-    protein_tree_id       : use family_id to run multiple alignment on its members
-    options               : commandline options to pass to the 'mcoffee' program
+$Author$
 
-=cut
+=head VERSION
 
-=head1 CONTACT
-
-  Contact Albert Vilella on module implemetation/design detail: avilella@ebi.ac.uk
-  Contact Javier Herrero on EnsEMBL/Compara: jherrero@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
-
-=cut
+$Revision$
 
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with a _
+Internal methods are usually preceded with an underscore (_)
 
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee;
 
 use strict;
+
 use IO::File;
 use File::Basename;
 use File::Path;
+use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::BaseAlignFeature;
-use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
+
 use Bio::EnsEMBL::Compara::Member;
-use Time::HiRes qw(time gettimeofday tv_interval);
+use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -71,7 +82,7 @@ sub param_defaults {
     return {
         'use_exon_boundaries'   => 0,                       # careful: 0 and undef have different meanings here
         'method'                => 'fmcoffee',              # the style of MCoffee to be run for this alignment
-        'output_table'          => 'protein_tree_member',   # self-explanatory
+        #'output_table'          => 'protein_tree_member',   # uncomment to output results to a different table
         'options'               => '',
         'cutoff'                => 2,                       # for filtering
         'max_gene_count'        => 400,                     # if the resulting cluster is bigger, it is dataflown to QuickTreeBreak
@@ -120,7 +131,7 @@ sub fetch_input {
 
   # We check if it took more than two hours in the previous release. If
   # it did, then we go mafft
-  my $reuse_aln_runtime = $self->param('protein_tree')->get_tagvalue('reuse_aln_runtime');
+  my $reuse_aln_runtime = $self->param('protein_tree')->tree->get_tagvalue('reuse_aln_runtime');
   if ($reuse_aln_runtime ne '') {
     my $hours = $reuse_aln_runtime / 3600000;
     if ($hours > 2) { 
@@ -213,7 +224,7 @@ sub write_output {
 
 
     my $protein_tree   = $self->param('protein_tree');
-    my $gene_count     = $protein_tree && $protein_tree->get_tagvalue('gene_count');
+    my $gene_count     = $protein_tree && $protein_tree->tree->get_tagvalue('gene_count');
     my $max_gene_count = $self->param('max_gene_count');
 
     if($gene_count > $max_gene_count) {
@@ -516,7 +527,7 @@ sub parse_and_store_alignment_into_proteintree {
     $align_hash{$id} = $sequence;
     # Lowercase aminoacids in the output alignment -- decaf has found overalignments
     if (my @overalignments = $sequence =~ /([gastplimvdneqfywkrhcx]+)/g) {
-      eval { $tree->store_tag('decaf.'.$id, join(":",@overalignments));};
+      eval { $tree->tree->store_tag('decaf.'.$id, join(":",@overalignments));};
     }
   }
 
@@ -566,7 +577,7 @@ sub parse_and_store_alignment_into_proteintree {
     $align_hash{$id} = $self->_to_cigar_line(uc($alignment_string));
   }
 
-  if (defined($self->param('redo')) and ($self->param('output_table') eq 'protein_tree_member') ) {
+  if (defined($self->param('redo')) and (not defined $self->param('output_table'))) {
     # We clone the tree, attach it to the new clusterset_id, then store it.
     # protein_tree_member is now linked to the new one
     my ($from_clusterset_id, $to_clusterset_id) = split(':', $self->param('redo'));
@@ -605,15 +616,15 @@ sub parse_and_store_alignment_into_proteintree {
 	  $self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
       }
 
-      if ($self->param('output_table') eq 'protein_tree_member') {
+      my $table_name = $self->param('output_table');
+      unless (defined $table_name) {
 	  #
 	  # We can use the default store method for the $member.
-          $self->compara_dba->get_ProteinTreeAdaptor->store($member);
+          $self->compara_dba->get_ProteinTreeAdaptor->update_node($member);
       } else {
 	  #
 	  # Do a manual insert into the correct output table.
 	  #
-	  my $table_name = $self->param('output_table');
 	  printf("Updating $table_name %s : %s\n",$member->stable_id,$member->cigar_line) if ($self->debug);
 	  my $sth = $self->param('tree_adaptor')->prepare("INSERT ignore INTO $table_name
                                (node_id,member_id,method_link_species_set_id,cigar_line)  VALUES (?,?,?,?)");
@@ -624,14 +635,13 @@ sub parse_and_store_alignment_into_proteintree {
         #
         # Do a manual insert of the *scores* into the correct score output table.
         #
-        my $table_name = $self->param('output_table') . "_score";
-        my $sth = $self->param('tree_adaptor')->prepare("INSERT ignore INTO $table_name
-                               (node_id,member_id,root_id,method_link_species_set_id,cigar_line)  VALUES (?,?,?,?,?)");
+        my $table_name = 'protein_tree_member_score' if not defined $table_name;
+        my $sth = $self->param('tree_adaptor')->prepare("REPLACE INTO $table_name (node_id,member_id,cigar_line)  VALUES (?,?,?)");
         my $score_string = $score_hash{$member->sequence_id} || '';
         $score_string =~ s/[^\d-]/9/g;   # Convert non-digits and non-dashes into 9s. This is necessary because t_coffee leaves some leftover letters.
         printf("Updating $table_name %s : %s\n",$member->stable_id,$score_string) if ($self->debug);
 
-        $sth->execute($member->node_id,$member->member_id, $tree->node_id, $member->method_link_species_set_id,$score_string);
+        $sth->execute($member->node_id, $member->member_id, $score_string);
         $sth->finish;
       }
   }
@@ -661,7 +671,6 @@ sub _to_cigar_line {
 sub _store_aln_tags {
     my $self = shift;
     my $tree = shift || $self->param('protein_tree');
-    my $output_table = $self->param('output_table');
     my $pta = $self->compara_dba->get_ProteinTreeAdaptor;
 
     print "Storing Alignment tags...\n";
@@ -669,36 +678,36 @@ sub _store_aln_tags {
     #
     # Retrieve a tree with the "correct" cigar lines.
     #
-    if ($output_table ne "protein_tree_member") {
-        $tree = $self->_get_alternate_alignment_tree($pta,$tree->node_id,$output_table);
+    if (defined $self->param('output_table')) {
+        $tree = $self->_get_alternate_alignment_tree($pta,$tree->node_id, $self->param('output_table'));
     }
 
     my $sa = $tree->get_SimpleAlign;
 
     # Alignment percent identity.
     my $aln_pi = $sa->average_percentage_identity;
-    $tree->store_tag("aln_percent_identity",$aln_pi);
+    $tree->tree->store_tag("aln_percent_identity",$aln_pi);
 
     # Alignment length.
     my $aln_length = $sa->length;
-    $tree->store_tag("aln_length",$aln_length);
+    $tree->tree->store_tag("aln_length",$aln_length);
 
     # Alignment runtime.
     my $aln_runtime = int(time()*1000-$self->param('mcoffee_starttime'));
-    $tree->store_tag("aln_runtime",$aln_runtime);
+    $tree->tree->store_tag("aln_runtime",$aln_runtime);
 
     # Alignment method.
     my $aln_method = $self->param('method');
-    $tree->store_tag("aln_method",$aln_method);
+    $tree->tree->store_tag("aln_method",$aln_method);
 
     # Alignment residue count.
     my $aln_num_residues = $sa->no_residues;
-    $tree->store_tag("aln_num_residues",$aln_num_residues);
+    $tree->tree->store_tag("aln_num_residues",$aln_num_residues);
 
     # Alignment redo mapping.
     my ($from_clusterset_id, $to_clusterset_id) = split(':', $self->param('redo'));
     my $redo_tag = "MCoffee_redo_".$from_clusterset_id."_".$to_clusterset_id;
-    $tree->store_tag("$redo_tag",$self->param('protein_tree_id')) if ($self->param('redo'));
+    $tree->tree->store_tag("$redo_tag",$self->param('protein_tree_id')) if ($self->param('redo'));
 }
 
 sub _get_alternate_alignment_tree {

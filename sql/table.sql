@@ -630,63 +630,6 @@ CREATE TABLE peptide_align_feature (
 
 
 #
-# Table structure for table 'homology'
-#
-
-CREATE TABLE homology (
-  homology_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  stable_id                   varchar(40),
-  method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-  description                 ENUM('ortholog_one2one','apparent_ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','putative_gene_split','contiguous_gene_split','between_species_paralog','possible_ortholog','UBRH','BRH','MBRH','RHS', 'projection_unchanged','projection_altered'),
-  subtype                     varchar(40) NOT NULL DEFAULT '',
-  dn                          float(10,5),
-  ds                          float(10,5),
-  n                           float(10,1),
-  s                           float(10,1),
-  lnl                         float(10,3),
-  threshold_on_ds             float(10,5),
-  ancestor_node_id            int(10) unsigned NOT NULL,
-  tree_node_id                int(10) unsigned NOT NULL,
-
-  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
-
-  PRIMARY KEY (homology_id),
-  KEY (method_link_species_set_id),
-  KEY (tree_node_id)
-
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
-
-#
-# Table structure for table 'homology_member'
-#
-
-CREATE TABLE homology_member (
-  homology_id                 int(10) unsigned NOT NULL, # FK homology.homology_id
-  member_id                   int(10) unsigned NOT NULL, # FK member.member_id
-  peptide_member_id           int(10) unsigned, # FK member.member_id
-  peptide_align_feature_id    int(10) unsigned, # FK peptide_align_feature.peptide_align_feature_id
-  cigar_line                  mediumtext,
-  cigar_start                 int(10),
-  cigar_end                   int(10),
-  perc_cov                    int(10),
-  perc_id                     int(10),
-  perc_pos                    int(10),
-
-  FOREIGN KEY (homology_id) REFERENCES homology(homology_id),
-  FOREIGN KEY (member_id) REFERENCES member(member_id),
-  FOREIGN KEY (peptide_member_id) REFERENCES member(member_id),
-#  FOREIGN KEY (peptide_align_feature_id) REFERENCES peptide_align_feature(peptide_align_feature_id),
-
-  UNIQUE homology_member_id (homology_id,member_id),
-  KEY (homology_id),
-  KEY (member_id),
-  KEY (peptide_member_id),
-  KEY (peptide_align_feature_id)
-) MAX_ROWS = 300000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
-
-#
 # Table structure for table 'family'
 #
 
@@ -766,31 +709,29 @@ CREATE TABLE domain_member (
 
 
 #
-# Table structure for table 'protein_tree_node'
+# Table structure for table 'gene_tree_node'
 #
 # overview:
-#   This table holds the protein tree data structure, such as root, relation between
+#   This table holds the gene tree data structure, such as root, relation between
 #   parent and child, leaves
 #
 # semantics:
 #      node_id               -- PRIMARY node id
 #      parent_id             -- parent node id
 #      root_id               -- to quickly isolated nodes of the different rooted tree sets
-#      clusterset_id         -- node id of the set of clusters
 #      left_index            -- for fast nested set searching
 #      right_index           -- for fast nested set searching
 #      distance_to_parent    -- distance between node_id and its parent_id
 
-CREATE TABLE protein_tree_node (
+CREATE TABLE gene_tree_node (
   node_id                         int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   parent_id                       int(10) unsigned,
   root_id                         int(10) unsigned,
-  clusterset_id                   int(10) unsigned NOT NULL,
   left_index                      int(10) NOT NULL,
   right_index                     int(10) NOT NULL,
   distance_to_parent              double default 1.0 NOT NULL,
 
-  FOREIGN KEY (root_id) REFERENCES protein_tree_node(node_id),
+  FOREIGN KEY (root_id) REFERENCES gene_tree_node(node_id),
 
   PRIMARY KEY (node_id),
   KEY (parent_id),
@@ -801,63 +742,60 @@ CREATE TABLE protein_tree_node (
 
 
 #
-#   This table holds the few big super protein tree alignments that are then broken down.
-#
-
-CREATE TABLE super_protein_tree_node LIKE protein_tree_node;
-
-#
-#   This table holds the member information for the nc trees
-#
-
-CREATE TABLE nc_tree_node LIKE protein_tree_node;
-
-#
-# Table structure for table 'protein_tree_member'
+# Table structure for table 'gene_tree_root'
 #
 # overview:
-#   to allow certain nodes (leaves) to have aligned protein members attached to them
+#   This table holds the gene tree roots
+#
+# semantics:
+#    root_id           - node_id of the root of the tree
+#    stable_id         - the main part of the stable_id ( follows the pattern: label(5).release_introduced(4).unique_id(10) )
+#    version           - numeric version of the stable_id (changes only when members move to/from existing trees)
+
+CREATE TABLE gene_tree_root (
+    root_id   INT(10) UNSIGNED NOT NULL,
+    tree_type                        ENUM("clusterset", "superproteintree", "proteintree", "nctree" ) NOT NULL,
+    clusterset_id                   int(10) unsigned,
+    method_link_species_set_id                   int(10) unsigned,
+    stable_id VARCHAR(40)          , # unique stable id, e.g. 'ENSGT'.'0053'.'1234567890'
+    version   INT UNSIGNED         , # version of the stable_id (changes only when members move to/from existing trees)
+
+    FOREIGN KEY (root_id) REFERENCES gene_tree_node(node_id),
+    FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+
+    PRIMARY KEY (root_id ),
+    UNIQUE KEY ( stable_id )
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+
+#
+# Table structure for table 'gene_tree_member'
+#
+# overview:
+#   to allow certain nodes (leaves) to have aligned members attached to them
 # semantics:
 #    node_id                  -- the id of node associated with this name
-#    root_id                  -- the id of tree root node
 #    member_id                -- link to member.member_id in many-1 relation (single member per node)
-#    method_link_species_set_id -- foreign key from method_link_species_set table
 #    cigar_line               -- compressed alignment information
-#    cigar_start              -- protein start (0 if the whole protein is in the alignment)
-#    cigar_end                -- protein end (0 if the whole protein is in the alignment)
+#    cigar_start              -- gene start (0 if the whole gene is in the alignment)
+#    cigar_end                -- gene end (0 if the whole gene is in the alignment)
 
-CREATE TABLE protein_tree_member (
+CREATE TABLE gene_tree_member (
   node_id                     int(10) unsigned NOT NULL,
-  root_id                     int(10) unsigned NOT NULL,
   member_id                   int(10) unsigned NOT NULL,
-  method_link_species_set_id  int(10) unsigned NOT NULL,
   cigar_line                  mediumtext,
   cigar_start                 int(10),
   cigar_end                   int(10),
 
-  FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
-  FOREIGN KEY (root_id) REFERENCES protein_tree_node(node_id),
+  FOREIGN KEY (node_id) REFERENCES gene_tree_node(node_id),
   FOREIGN KEY (member_id) REFERENCES member(member_id),
-  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
   UNIQUE (node_id),
   KEY (member_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
-
-#
-#   This table holds the few big super protein tree alignments that are then broken down.
-#
-
-CREATE TABLE super_protein_tree_member LIKE protein_tree_member;
-
-
-#
-#   This table holds the member information for the nc trees
-#
-
-CREATE TABLE nc_tree_member LIKE protein_tree_member;
 
 
 #
@@ -867,49 +805,31 @@ CREATE TABLE nc_tree_member LIKE protein_tree_member;
 #   to allow certain nodes (leaves) to have aligned protein member_scores attached to them
 # semantics:
 #    node_id                  -- the id of node associated with this name
-#    root_id                  -- the id of the tree root
 #    member_id                -- link to member.member_id in many-1 relation (single member per node)
-#    method_link_species_set_id -- foreign key from method_link_species_set table
 #    cigar_line               -- string with the alignment score values 
 #    cigar_start              -- protein start (0 if the whole protein is in the alignment)
 #    cigar_end                -- protein end (0 if the whole protein is in the alignment)
 
-CREATE TABLE protein_tree_member_score (
-  node_id                     int(10) unsigned NOT NULL,
-  root_id                     int(10) unsigned NOT NULL,
-  member_id                   int(10) unsigned NOT NULL,
-  method_link_species_set_id  int(10) unsigned NOT NULL,
-  cigar_line                  mediumtext,
-  cigar_start                 int(10),
-  cigar_end                   int(10),
-
-  FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
-  FOREIGN KEY (root_id) REFERENCES protein_tree_node(root_id),
-  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
-
-  UNIQUE (node_id),
-  KEY (member_id)
-
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+CREATE TABLE protein_tree_member_score LIKE gene_tree_member;
 
 
 #
-# Table structure for table 'protein_tree_tag'
+# Table structure for table 'gene_tree_node_tag'
 #
 # overview:
-#    to allow for tagging nodes.
+#    to allow the tagging of nodes.
 #
 # semantics:
-#    node_id             -- node_id foreign key from protein_tree_node table
+#    node_id             -- node_id foreign key from gene_tree_node table
 #    tag                 -- tag used to fecth/store a value associated to it
 #    value               -- value associated with a particular tag
 
-CREATE TABLE protein_tree_tag (
+CREATE TABLE gene_tree_node_tag (
   node_id                int(10) unsigned NOT NULL,
   tag                    varchar(50) NOT NULL,
   value                  mediumtext NOT NULL,
 
-  FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
+  FOREIGN KEY (node_id) REFERENCES gene_tree_node(node_id),
 
   KEY node_id_tag (node_id, tag),
   KEY tag_node_id (tag, node_id),
@@ -920,27 +840,40 @@ CREATE TABLE protein_tree_tag (
 
 
 #
-#   This table holds the few big super protein tree alignments that are then broken down.
+# Table structure for table 'gene_tree_root_tag'
 #
+# overview:
+#    allows to tag trees, via their root
+#
+# semantics:
+#    root_id             -- root_id foreign key from gene_tree_root table
+#    tag                 -- tag used to fecth/store a value associated to it
+#    value               -- value associated with a particular tag
 
-CREATE TABLE super_protein_tree_tag LIKE protein_tree_tag;
+CREATE TABLE gene_tree_root_tag (
+  root_id                int(10) unsigned NOT NULL,
+  tag                    varchar(50) NOT NULL,
+  value                  mediumtext NOT NULL,
+
+  FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
+
+  KEY root_id_tag (root_id, tag),
+  KEY tag_root_id (tag, root_id),
+  KEY (root_id),
+  KEY (tag)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
 
 
 #
-#   This table holds the tag information for the nc trees
-#
-
-CREATE TABLE nc_tree_tag LIKE protein_tree_tag;
-
-
-#
-# Table structure for table 'protein_tree_attr'
+# Table structure for table 'gene_tree_node_attr'
 #
 # overview:
 #    to allow attributes for nodes
 #
 # semantics:
-#    node_id                         -- node_id foreign key from protein_tree_node table
+#    node_id                         -- node_id foreign key from gene_tree_node table
 #    duplication                     -- Currently 0 for speciations, 2 for well supported duplications, 1 for dubious duplications or duplications at the root
 #    taxon_id                        -- Only present after reconciliation, links to ncbi_taxa_node
 #    taxon_name                      -- Only present after reconciliation, the name of the species refered to by taxon_id
@@ -950,10 +883,10 @@ CREATE TABLE nc_tree_tag LIKE protein_tree_tag;
 
 # The following foreign key is honoured in Ensembl Compara
 #  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
-# In Ensembl Genomes, it should be
+# In some Ensembl Genomes, it should be
 #  FOREIGN KEY (taxon_id) REFERENCES genome_db(genome_db_id),
 
-CREATE TABLE protein_tree_attr (
+CREATE TABLE gene_tree_node_attr (
   node_id                         INT(10) UNSIGNED NOT NULL,
   node_type                       ENUM("duplication", "dubious", "speciation", "gene_split"),
   taxon_id                        INT(10) UNSIGNED,
@@ -962,31 +895,12 @@ CREATE TABLE protein_tree_attr (
   duplication_confidence_score    DOUBLE(5,4),
   tree_support                    SET('phyml_nt', 'nj_ds', 'phyml_aa', 'nj_dn', 'nj_mm'),
 
-  FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
+  FOREIGN KEY (node_id) REFERENCES gene_tree_node(node_id),
 
   PRIMARY KEY (node_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
-CREATE TABLE super_protein_tree_attr LIKE protein_tree_attr;
-
-CREATE TABLE nc_tree_attr (
-  node_id                         INT(10) UNSIGNED NOT NULL,
-  duplication                     TINYINT UNSIGNED,
-  taxon_id                        INT(10) UNSIGNED,
-  taxon_name                      VARCHAR(255),
-  bootstrap                       TINYINT UNSIGNED,
-  duplication_confidence_score    DOUBLE(5,4),
-  species_intersection_score      TINYINT UNSIGNED,
-  acc_name                        VARCHAR(50),
-  node_type                       ENUM("duplication", "dubious", "speciation"),
-
-
-  FOREIGN KEY (node_id) REFERENCES nc_tree_node(node_id),
-
-  PRIMARY KEY (node_id)
-
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
 CREATE TABLE nc_profile (
@@ -1000,28 +914,64 @@ CREATE TABLE nc_profile (
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
-#
-# Table structure for table 'protein_tree_root'
-#
-# overview:
-#     to allow protein trees have trackable stable_ids.
-#
-# semantics:
-#    root_id           - node_id of the root of the tree
-#    stable_id         - the main part of the stable_id ( follows the pattern: label(5).release_introduced(4).unique_id(10) )
-#    version           - numeric version of the stable_id (changes only when members move to/from existing trees)
 
-CREATE TABLE protein_tree_root (
-    root_id   INT(10) UNSIGNED NOT NULL,
-    stable_id VARCHAR(40)  NOT NULL, # unique stable id, e.g. 'ENSGT'.'0053'.'1234567890'
-    version   INT UNSIGNED NOT NULL, # version of the stable_id (changes only when members move to/from existing trees)
+#
+# Table structure for table 'homology'
+#
 
-    FOREIGN KEY (root_id) REFERENCES protein_tree_node(node_id),
+CREATE TABLE homology (
+  homology_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  stable_id                   varchar(40),
+  method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
+  description                 ENUM('ortholog_one2one','apparent_ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','putative_gene_split','contiguous_gene_split','between_species_paralog','possible_ortholog','UBRH','BRH','MBRH','RHS', 'projection_unchanged','projection_altered'),
+  subtype                     varchar(40) NOT NULL DEFAULT '',
+  dn                          float(10,5),
+  ds                          float(10,5),
+  n                           float(10,1),
+  s                           float(10,1),
+  lnl                         float(10,3),
+  threshold_on_ds             float(10,5),
+  ancestor_node_id            int(10) unsigned NOT NULL,
+  tree_node_id                int(10) unsigned NOT NULL,
 
-    PRIMARY KEY (root_id ),
-    UNIQUE KEY ( stable_id )
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+  FOREIGN KEY (ancestor_node_id) REFERENCES gene_tree_node(node_id),
+  FOREIGN KEY (tree_node_id) REFERENCES gene_tree_root(root_id),
+
+  PRIMARY KEY (homology_id),
+  KEY (method_link_species_set_id),
+  KEY (tree_node_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+#
+# Table structure for table 'homology_member'
+#
+
+CREATE TABLE homology_member (
+  homology_id                 int(10) unsigned NOT NULL, # FK homology.homology_id
+  member_id                   int(10) unsigned NOT NULL, # FK member.member_id
+  peptide_member_id           int(10) unsigned, # FK member.member_id
+  peptide_align_feature_id    int(10) unsigned, # FK peptide_align_feature.peptide_align_feature_id
+  cigar_line                  mediumtext,
+  cigar_start                 int(10),
+  cigar_end                   int(10),
+  perc_cov                    int(10),
+  perc_id                     int(10),
+  perc_pos                    int(10),
+
+  FOREIGN KEY (homology_id) REFERENCES homology(homology_id),
+  FOREIGN KEY (member_id) REFERENCES member(member_id),
+  FOREIGN KEY (peptide_member_id) REFERENCES member(member_id),
+#  FOREIGN KEY (peptide_align_feature_id) REFERENCES peptide_align_feature(peptide_align_feature_id),
+
+  UNIQUE homology_member_id (homology_id,member_id),
+  KEY (homology_id),
+  KEY (member_id),
+  KEY (peptide_member_id),
+  KEY (peptide_align_feature_id)
+) MAX_ROWS = 300000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
 #
@@ -1111,7 +1061,7 @@ CREATE TABLE sitewise_aln (
   threshold_on_branch_ds      float(10,5),
   type                        ENUM('single_character','random','all_gaps','constant','default','negative1','negative2','negative3','negative4','positive1','positive2','positive3','positive4','synonymous') NOT NULL,
 
-  FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
+  FOREIGN KEY (node_id) REFERENCES gene_tree_node(node_id),
 
   UNIQUE aln_position_node_id_ds (aln_position,node_id,threshold_on_branch_ds),
   PRIMARY KEY (sitewise_id),
@@ -1165,7 +1115,7 @@ CREATE TABLE lr_index_offset (
 INSERT INTO lr_index_offset (table_name, lr_index) 
 values 
 	('ncbi_taxa_node', 0), 
-	('genomic_align_tree', 0); 
+	('genomic_align_tree', 0);
 
 # Auto add schema version to database (this will override whatever hive puts there)
 REPLACE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '65');

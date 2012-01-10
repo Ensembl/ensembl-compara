@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
 
   This software is distributed under a modified Apache license.
@@ -18,11 +18,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::GeneTree
-
-=head1 SYNOPSIS
-
-Tree - Class for a gene tree, that can contain either proteins or ncRNAs
+Bio::EnsEMBL::Compara::GeneTreeNode
 
 =head1 DESCRIPTION
 
@@ -33,29 +29,73 @@ Phylogenetic tree
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::GeneTreeNode
-  +- Bio::EnsEMBL::Compara::NestedSet
-   +- Bio::EnsEMBL::Compara::Graph::Node
-    +- Bio::EnsEMBL::Compara::Graph::CGObject
+  `- Bio::EnsEMBL::Compara::NestedSet
+     `- Bio::EnsEMBL::Compara::Graph::CGObject
+        `- Bio::EnsEMBL::Compara::Taggable
 
+=head1 AUTHORSHIP
+
+Ensembl Team. Individual contributions can be found in the CVS log.
+
+=head1 MAINTAINER
+
+$Author$
+
+=head VERSION
+
+$Revision$
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
 
 package Bio::EnsEMBL::Compara::GeneTreeNode;
 
 use strict;
-use Bio::EnsEMBL::Compara::BaseRelation;
-use Bio::EnsEMBL::Compara::SitewiseOmega;
+
+use IO::File;
+
+use Bio::SimpleAlign;
+
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::SimpleAlign;
-use IO::File;
+
+use Bio::EnsEMBL::Compara::BaseRelation;
+use Bio::EnsEMBL::Compara::SitewiseOmega;
 
 use base ('Bio::EnsEMBL::Compara::NestedSet');
 
+
+sub tree {
+  my $self = shift;
+  $self->{'_tree'} = shift if(@_);
+  return $self->{'_tree'};
+}
+
+# tweaked to take into account the GeneTree object
+sub root {
+    my $self = shift;
+    if (defined $self->tree) {
+        return $self->tree->root;
+    } else {
+        return $self->SUPER::root;
+    }
+}
+
+#use Data::Dumper;
+
+sub string_node {
+    my $self = shift;
+    my $str = $self->SUPER::string_node;
+    if (defined $self->{'_tree'}) {
+        my $t = $self->{'_tree'};
+        $str = chop($str)." $t/root_id=".($self->{'_tree'}->root_id)."/".join("/", map { "$_ => ${$t}{$_}" } keys %$t)."\n";
+    }
+    return $str;
+}
 
 sub get_leaf_by_Member {
   my $self = shift;
@@ -270,5 +310,5 @@ sub keep_nodes_by_taxon_ids {
 
 }
 
-
 1;
+

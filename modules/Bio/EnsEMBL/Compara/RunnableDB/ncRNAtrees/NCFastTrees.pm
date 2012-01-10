@@ -328,10 +328,10 @@ sub _store_newick_into_nc_tree_tag_string {
   close(FH);
   $newick =~ s/(\d+\.\d{4})\d+/$1/g; # We round up to only 4 digits
 
-  $self->param('nc_tree')->store_tag($tag, $newick);
+  $self->param('nc_tree')->tree->store_tag($tag, $newick);
   if (defined($self->param('model'))) {
     my $bootstrap_tag = $self->param('model') . "_bootstrap_num";
-    $self->param('nc_tree')->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
+    $self->param('nc_tree')->tree->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
   }
 }
 

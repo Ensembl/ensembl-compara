@@ -1,29 +1,24 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree
-
-=cut
-
-=head1 SYNOPSIS
-
-my $db    = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $otree = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree->new ( 
-                                                    -db      => $db,
-                                                    -input_id   => $input_id,
-                                                    -analysis   => $analysis );
-$otree->fetch_input(); #reads from DB
-$otree->run();
-$otree->output();
-$otree->write_output(); #writes to DB
-
-=cut
 
 =head1 DESCRIPTION
 
@@ -38,37 +33,54 @@ each genepair.
 input_id/parameters format eg: "{'protein_tree_id'=>1234}"
     protein_tree_id : use 'id' to fetch a cluster from the ProteinTree
 
-=cut
+=head1 SYNOPSIS
 
-=head1 CONTACT
+my $db    = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
+my $otree = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree->new ( 
+                                                    -db      => $db,
+                                                    -input_id   => $input_id,
+                                                    -analysis   => $analysis );
+$otree->fetch_input(); #reads from DB
+$otree->run();
+$otree->output();
+$otree->write_output(); #writes to DB
 
-  Contact Albert Vilella on module implementation: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+=head1 AUTHORSHIP
 
-=cut
+Ensembl Team. Individual contributions can be found in the CVS log.
+
+=head1 MAINTAINER
+
+$Author$
+
+=head VERSION
+
+$Revision$
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree;
 
 use strict;
+
 use IO::File;
 use File::Basename;
-use Time::HiRes qw(time gettimeofday tv_interval);
-use Scalar::Util qw(looks_like_number);
 use List::Util qw(max);
+use Scalar::Util qw(looks_like_number);
+use Time::HiRes qw(time gettimeofday tv_interval);
 
-use Bio::EnsEMBL::Compara::Member;
-use Bio::EnsEMBL::Compara::Graph::Link;
-use Bio::EnsEMBL::Compara::Graph::Node;
-use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Homology;
+use Bio::EnsEMBL::Compara::Member;
+use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use Bio::EnsEMBL::Compara::Graph::Link;
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
+use Bio::EnsEMBL::Compara::Graph::Node;
+
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -127,7 +139,6 @@ sub fetch_input {
     Args    :   none
 
 =cut
-
 
 sub run {
     my $self = shift @_;
@@ -260,7 +271,7 @@ sub run_analysis {
   
   #display summary stats of analysis 
   my $runtime = time()*1000-$starttime;  
-  $gene_tree->store_tag('OrthoTree_runtime_msec', $runtime) 
+  $gene_tree->tree->store_tag('OrthoTree_runtime_msec', $runtime) 
     unless ($self->param('_readonly'));
 
   if($self->debug) {
@@ -378,7 +389,7 @@ sub get_species_tree_string {
             $species_tree_string = $self->_slurp( $species_tree_file );
 
         } else {
-            my $tag_table_name = 'protein_tree_tag';
+            my $tag_table_name = 'gene_tree_root_tag';
 
             my $sth = $self->dbc->prepare( "select value from $tag_table_name where tag='species_tree_string'" );
             $sth->execute;
@@ -643,23 +654,14 @@ sub delete_old_orthotree_tags
   foreach my $id (@node_ids) {
     push @list_ids, $id;
     if (scalar @list_ids == 2000) {
-      my $sql = "delete from protein_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
+        # FIXME
+      my $sql = "delete from gene_tree_node_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
       my $sth = $self->dbc->prepare($sql);
       $sth->execute;
       $sth->finish;
       @list_ids = ();
     }
   }
-
-  if (scalar @list_ids) {
-    my $sql = "delete from protein_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
-    my $sth = $self->dbc->prepare($sql);
-    $sth->execute;
-    $sth->finish;
-    @list_ids = ();
-  }
-
-  return undef;
 }
 
 sub delete_old_homologies {
@@ -978,7 +980,7 @@ sub store_homologies {
     my $dcs = $genepairlink->get_tagvalue('ancestor')->get_tagvalue('duplication_confidence_score');
     next if ($type eq 'possible_ortholog' and $dcs > $self->param('no_between'));
 
-    my $homology = $self->store_gene_link_as_homology($genepairlink);
+    $self->store_gene_link_as_homology($genepairlink);
     print STDERR "homology links $hlinkscount\n" if ($hlinkscount++ % 500 == 0);
   }
 
@@ -987,7 +989,7 @@ sub store_homologies {
 
   $self->check_homology_consistency;
 
-  $self->param('gene_tree')->store_tag(
+  $self->param('gene_tree')->tree->store_tag(
       'OrthoTree_types_hashstr', 
       stringify($self->param('orthotree_homology_counts'))) unless ($self->param('_readonly'));
 

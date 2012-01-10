@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
 
   This software is distributed under a modified Apache license.
@@ -20,8 +20,6 @@
 
 Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor
 
-=head1 SYNOPSIS
-
 =head1 DESCRIPTION
 
 Specialization of Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor for proteins
@@ -29,12 +27,25 @@ Specialization of Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor for proteins
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor
-  +- Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor
-   +- Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor
+  `- Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor
+     `- Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor
+
+=head1 AUTHORSHIP
+
+Ensembl Team. Individual contributions can be found in the CVS log.
+
+=head1 MAINTAINER
+
+$Author$
+
+=head VERSION
+
+$Revision$
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
 

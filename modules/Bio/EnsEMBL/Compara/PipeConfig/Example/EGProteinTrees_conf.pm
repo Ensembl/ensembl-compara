@@ -222,7 +222,7 @@ sub _new_analyses {
       -module => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
       -parameters => { },
       -flow_into => {
-        1 => { 'mysql:////protein_tree_tag' => { node_id => '#protein_tree_id#', tag => 'division', value => $self->o('division_name') } }
+        1 => { 'mysql:////gene_tree_root_tag' => { node_id => '#protein_tree_id#', tag => 'division', value => $self->o('division_name') } }
       }
     },
     {

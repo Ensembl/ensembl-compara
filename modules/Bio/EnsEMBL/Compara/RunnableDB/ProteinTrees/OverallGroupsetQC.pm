@@ -1,15 +1,30 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC
 
-=cut
+=head1 DESCRIPTION
+
+This Analysis will take the sequences from a cluster, the cm from
+nc_profile and run a profiled alignment, storing the results as
+cigar_lines for each sequence.
 
 =head1 SYNOPSIS
 
@@ -25,37 +40,29 @@ $sillytemplate->run();
 $sillytemplate->output();
 $sillytemplate->write_output(); #writes to DB
 
-=cut
+=head1 AUTHORSHIP
 
+Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 DESCRIPTION
+=head1 MAINTAINER
 
-This Analysis will take the sequences from a cluster, the cm from
-nc_profile and run a profiled alignment, storing the results as
-cigar_lines for each sequence.
+$Author$
 
-=cut
+=head VERSION
 
-
-=head1 CONTACT
-
-  Contact Albert Vilella on module implementation/design detail: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
-
-=cut
-
+$Revision$
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
-
 
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC;
 
 use strict;
+
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -83,7 +90,7 @@ sub fetch_input {
 
     $self->param('protein_tree_adaptor', $self->compara_dba->get_ProteinTreeAdaptor);
     $self->param('member_adaptor', $self->compara_dba->get_MemberAdaptor);
-    $self->param('groupset_node', $self->param('protein_tree_adaptor')->fetch_node_by_node_id($self->param('clusterset_id'))) or die "Could not fetch groupset node";
+    $self->param('groupset_tree', $self->param('protein_tree_adaptor')->fetch_node_by_node_id($self->param('clusterset_id'))->tree) or die "Could not fetch groupset tree";
 
 }
 
@@ -116,7 +123,6 @@ sub run {
     Args    :   none
 
 =cut
-
 
 sub write_output {
   my $self = shift;
@@ -184,7 +190,7 @@ sub fetch_groupset {        # see Bio::EnsEMBL::Compara::StableId::Adaptor::load
   my $default_noname = 'NoName';
   my $dataset;
 
-  my $sql = "SELECT ptm.root_id, m2.stable_id FROM protein_tree_member ptm, member m1, member m2 where ptm.member_id=m1.member_id and m1.gene_member_id=m2.member_id";
+  my $sql = "SELECT ptm.root_id, m2.stable_id FROM gene_tree_member ptm, member m1, member m2 where ptm.member_id=m1.member_id and m1.gene_member_id=m2.member_id";
 
   my $sth = $given_compara_dba->dbc->prepare($sql);
   $sth->execute();
@@ -454,7 +460,7 @@ sub quantify_mapping {
     next unless (defined($reuse_node_id));
     my $reuse_node = $reuse_protein_tree_adaptor->fetch_node_by_node_id($reuse_node_id);
     next unless (defined($reuse_node));
-    my $reuse_aln_runtime_value = $reuse_node->get_tagvalue('aln_runtime');
+    my $reuse_aln_runtime_value = $reuse_node->tree->get_tagvalue('aln_runtime');
     $reuse_node->release_tree;
     next if ($reuse_aln_runtime_value eq '');
     my $this_node = $self->param('protein_tree_adaptor')->fetch_node_by_node_id($mapped_cluster_id);
@@ -486,14 +492,14 @@ sub quantify_mapping {
   print STDERR "# Proportion novel clusters = $proportion_novel_clusters [$num_novel_clusters $num_mapped_clusters]\n";
   print STDERR "# Average contribution mapped clusters = $average_mapped_contribution\n";
 
-  my $groupset_node = $self->param('groupset_node');
+  my $groupset_tree = $self->param('groupset_tree');
   my $groupset_tag  = $self->param('groupset_tag');
 
-  $groupset_node->store_tag('sid_map_novel_cls' . '_' . $groupset_tag, $num_novel_clusters);
-  $groupset_node->store_tag('sid_map_mapped_cls' . '_' . $groupset_tag, $num_mapped_clusters);
-  $groupset_node->store_tag('sid_map_summary_contrib' . '_' . $groupset_tag, $sum_contrib);
-  $groupset_node->store_tag('sid_map_average_contrib' . '_' . $groupset_tag, $average_mapped_contribution);
-  $groupset_node->store_tag('sid_prop_novel_cls' . '_' . $groupset_tag, $proportion_novel_clusters);
+  $groupset_tree->store_tag('sid_map_novel_cls' . '_' . $groupset_tag, $num_novel_clusters);
+  $groupset_tree->store_tag('sid_map_mapped_cls' . '_' . $groupset_tag, $num_mapped_clusters);
+  $groupset_tree->store_tag('sid_map_summary_contrib' . '_' . $groupset_tag, $sum_contrib);
+  $groupset_tree->store_tag('sid_map_average_contrib' . '_' . $groupset_tag, $average_mapped_contribution);
+  $groupset_tree->store_tag('sid_prop_novel_cls' . '_' . $groupset_tag, $proportion_novel_clusters);
 
   my $unmap_tolerance = $self->param('unmap_tolerance');
   print STDERR "# Unmap tolerance parameter set to $unmap_tolerance\n";

@@ -1,15 +1,26 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=cut
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify
-
-=cut
 
 =head1 SYNOPSIS
 
@@ -20,12 +31,11 @@ my $rfamclassify = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify->
    -input_id   => $input_id,
    -analysis   => $analysis
   );
+
 $rfamclassify->fetch_input(); #reads from DB
 $rfamclassify->run();
 $rfamclassify->output();
 $rfamclassify->write_output(); #writes to DB
-
-=cut
 
 
 =head1 DESCRIPTION
@@ -40,14 +50,13 @@ to their RFAM id. It also takes into account information from mirBase.
 =head1 CONTACT
 
   Contact Albert Vilella on module implementation/design detail: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =cut
 
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. 
+The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
 =cut
@@ -69,21 +78,6 @@ use LWP::Simple;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    return {
-        'clusterset_id'  => 1,
-    };
-}
-
-=head2 fetch_input
-
-    Title   :   fetch_input
-    Usage   :   $self->fetch_input
-    Function:   Fetches input data for repeatmasker from the database
-    Returns :   none
-    Args    :   none
-
-=cut
 
 
 sub fetch_input {
@@ -99,16 +93,6 @@ sub fetch_input {
 }
 
 
-=head2 run
-
-    Title   :   run
-    Usage   :   $self->run
-    Function:   runs hmmbuild
-    Returns :   none
-    Args    :   none
-
-=cut
-
 sub run {
     my $self = shift @_;
 
@@ -116,17 +100,6 @@ sub run {
     $self->load_mirbase_families;
     $self->run_rfamclassify;
 }
-
-
-=head2 write_output
-
-    Title   :   write_output
-    Usage   :   $self->write_output
-    Function:   stores nctree
-    Returns :   none
-    Args    :   none
-
-=cut
 
 
 sub write_output {
@@ -143,47 +116,46 @@ sub write_output {
 ##########################################
 
 sub run_rfamclassify {
-  my $self = shift;
+    my $self = shift;
 
+    my $mlss_id = $self->param('mlss_id');
     # vivification:
-  $self->param('rfamcms', {});
+    $self->param('rfamcms', {});
 
-  $self->build_hash_cms('model_id');
-  $self->load_names_model_id();
-#  $self->build_hash_cms('name');
-  $self->build_hash_models();
+    $self->build_hash_cms('model_id');
+    $self->load_names_model_id();
+    #  $self->build_hash_cms('name');
+    $self->build_hash_models();
 
-  my $nctree_adaptor = $self->compara_dba->get_NCTreeAdaptor;
+    my $nctree_adaptor = $self->compara_dba->get_NCTreeAdaptor;
 
-  # Create the clusterset and associate mlss
-  my $clusterset;
-  eval {$clusterset = $nctree_adaptor->fetch_node_by_node_id($self->param('clusterset_id'));};
-  if (!defined($clusterset)) {
-    $self->param('ccEngine', new Bio::EnsEMBL::Compara::Graph::ConnectedComponents);
-    $clusterset = $self->param('ccEngine')->clusterset;
-    $self->throw("no clusters generated") unless($clusterset);
+    # Create the clusterset and associate mlss
+    my $clusterset = new Bio::EnsEMBL::Compara::GeneTree;
+    $clusterset->tree_type('clusterset');
+    $clusterset->method_link_species_set_id($mlss_id);
+    $self->param('clusterset', $clusterset);
 
-    $clusterset->name("NC_TREES"); # FIXME: NC_TREES?
-    $nctree_adaptor->store_node($clusterset);
-    printf("clusterset_id %d\n", $clusterset->node_id);
-    $self->param('clusterset_id', $clusterset->node_id);
-  }
-  my $mlss_id = $self->param('mlss_id');
+    my $clusterset_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
+    $clusterset->root($clusterset_root);
+    $nctree_adaptor->store($clusterset);
 
-  # Classify the cluster that already have an RFAM id or mir id
-  print STDERR "Storing clusters...\n" if ($self->debug);
-  my $counter = 1;
-#  foreach my $field ('model_id','name') {
+    my @allclusters;
+    $self->param('allclusters', \@allclusters);
+
+
+    # Classify the cluster that already have an RFAM id or mir id
+    print STDERR "Storing clusters...\n" if ($self->debug);
+    my $counter = 1;
     foreach my $cm_id (keys %{$self->param('rfamcms')->{'model_id'}}) {
         print STDERR "++ $cm_id\n" if ($self->debug);
-      if (defined($self->param('rfamclassify')->{$cm_id})) {
+        next if not defined($self->param('rfamclassify')->{$cm_id});
         my @cluster_list = keys %{$self->param('rfamclassify')->{$cm_id}};
 
         print STDERR Dumper \@cluster_list if ($self->debug);
         # If it's a singleton, we don't store it as a nc tree
         next if (scalar(@cluster_list < 2));
 
-#        printf("%10d clusters\n", $counter) if (($counter % 20 == 0) && ($self->debug));
+        #printf("%10d clusters\n", $counter) if (($counter % 20 == 0) && ($self->debug));
         $counter++;
 
         my $model_name;
@@ -192,67 +164,63 @@ sub run_rfamclassify {
 
         print STDERR "ModelName: $model_name\n" if ($self->debug);
 
-        my $cluster = new Bio::EnsEMBL::Compara::GeneTreeNode;
-        $clusterset->add_child($cluster);
+        my $clusterset_leaf = new Bio::EnsEMBL::Compara::GeneTreeNode;
+        $clusterset_leaf->no_autoload_children();
+        $clusterset_root->add_child($clusterset_leaf);
+
+        my $cluster = new Bio::EnsEMBL::Compara::GeneTree;
+        $cluster->tree_type('nctree');
+        $cluster->method_link_species_set_id($mlss_id);
+
+        my $cluster_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
+        $cluster->root($cluster_root);
+        $cluster_root->tree($cluster);
+        $clusterset_leaf->add_child($cluster_root);
 
         foreach my $pmember_id (@cluster_list) {
             print STDERR "Adding $pmember_id\n" if ($self->debug);
-          my $node = new Bio::EnsEMBL::Compara::GeneTreeNode;
-          $node->node_id($pmember_id);
-          $cluster->add_child($node);
-          $cluster->clusterset_id($self->param('clusterset_id'));
-          #leaves are GeneTreeNode objects, bless to make into GeneTreeMember objects
-          bless $node, "Bio::EnsEMBL::Compara::GeneTreeMember";
+            my $node = new Bio::EnsEMBL::Compara::GeneTreeNode;
+            $cluster_root->add_child($node);
+            #leaves are GeneTreeNode objects, bless to make into GeneTreeMember objects
+            bless $node, "Bio::EnsEMBL::Compara::GeneTreeMember";
 
-          #the building method uses member_id's to reference unique nodes
-          #which are stored in the node_id value, copy to member_id
-          $node->member_id($node->node_id);
-          $node->method_link_species_set_id($mlss_id);
+            #the building method uses member_id's to reference unique nodes
+            #which are stored in the node_id value, copy to member_id
+            $node->member_id($pmember_id);
         }
         $DB::single=1;1;
-        # Store the cluster
-        $nctree_adaptor->store($cluster);
 
-        #calc residue count total
-        my $leaves = $cluster->get_all_leaves;
-        if (defined($model_name)) {
-          foreach my $leaf (@$leaves) { 
-              print STDERR "Storing acc_name ($model_name) for " . $leaf->node_id() . "\n" if ($self->debug);
-              $leaf->store_tag('acc_name',$model_name);
-          }
-        }
-        my $leafcount = scalar @$leaves;
+        # Store the cluster:
+        $nctree_adaptor->store($clusterset_leaf);
+        push @allclusters, $cluster->root_id;
+
+        my $leafcount = scalar(@{$cluster->root->get_all_leaves});
+        print STDERR "cluster $cluster with $leafcount leaves\n" if $self->debug;
         $cluster->store_tag('gene_count', $leafcount);
         $cluster->store_tag('clustering_id', $cm_id);
         $cluster->store_tag('model_name', $model_name) if (defined($model_name));
-      }
+        $cluster_root->disavow_parent();
+
     }
-#}
+    $clusterset_root->build_leftright_indexing(1);
+    $nctree_adaptor->store($clusterset);
+    $self->param('clusterset_id', $clusterset_root->node_id);
+    my $leafcount = scalar(@{$clusterset->root->get_all_leaves});
+    print STDERR "clusterset $clusterset with $leafcount leaves\n" if $self->debug;
 
-  # Flow the members that havent been associated to a cluster at this
-  # stage to the search for all models
+    # Flow the members that havent been associated to a cluster at this
+    # stage to the search for all models
 
-  return 1;
+    return 1;
 }
 
 sub dataflow_clusters {
     my $self = shift;
 
-    my $clusterset = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($self->param('clusterset_id')) || $self->param('ccEngine')->clusterset;
-
-    foreach my $cluster (@{$clusterset->children}) {
-        $self->dataflow_output_id( {
-                                    'nc_tree_id'    => $cluster->node_id,
-                                    'clusterset_id' => $clusterset->node_id,
-                                   } , 2);
+    foreach my $tree_id (@{$self->param('allclusters')}) {
+        $self->dataflow_output_id({ 'nc_tree_id' => $tree_id, }, 2);
     }
 
-    foreach my $cluster (@{$clusterset->children}) {
-        $self->dataflow_output_id( {
-                                    'nc_tree_id' => $cluster->node_id,
-                                    'clusterset_id' => $clusterset->node_id,
-                                   }, 2);
-    }
 }
 
 sub build_hash_models {

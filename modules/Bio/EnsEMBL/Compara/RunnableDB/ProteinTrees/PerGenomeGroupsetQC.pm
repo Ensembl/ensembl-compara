@@ -1,15 +1,30 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC
 
-=cut
+=head1 DESCRIPTION
+
+This Analysis will take the sequences from a cluster, the cm from
+nc_profile and run a profiled alignment, storing the results as
+cigar_lines for each sequence.
 
 =head1 SYNOPSIS
 
@@ -25,33 +40,24 @@ $sillytemplate->run();
 $sillytemplate->output();
 $sillytemplate->write_output(); #writes to DB
 
-=cut
+=head1 AUTHORSHIP
 
+Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 DESCRIPTION
+=head1 MAINTAINER
 
-This Analysis will take the sequences from a cluster, the cm from
-nc_profile and run a profiled alignment, storing the results as
-cigar_lines for each sequence.
+$Author$
 
-=cut
+=head VERSION
 
-
-=head1 CONTACT
-
-  Contact Albert Vilella on module implementation/design detail: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
-
-=cut
-
+$Revision$
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
-
 
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC;
 
@@ -98,21 +104,20 @@ sub write_output {
 
     my $genome_db_id            = $self->param('genome_db_id');
     my $groupset_tag            = $self->param('groupset_tag');
-    my $groupset_node           = $self->compara_dba->get_ProteinTreeAdaptor->fetch_node_by_node_id($self->param('clusterset_id')) or die "Could not fetch groupset node";
 
-    my $sql = "INSERT IGNORE INTO protein_tree_qc (clusterset_id, genome_db_id) VALUES (?,?)";
+    my $sql = "INSERT IGNORE INTO protein_tree_qc (genome_db_id) VALUES (?)";
     my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($groupset_node->node_id, $genome_db_id);
+    $sth->execute($genome_db_id);
 
-    my $sql = "UPDATE protein_tree_qc SET total_orphans_num_$groupset_tag=?, prop_orphans_$groupset_tag=? WHERE clusterset_id=? AND genome_db_id=?";
+    my $sql = "UPDATE protein_tree_qc SET total_orphans_num_$groupset_tag=?, prop_orphans_$groupset_tag=? WHERE genome_db_id=?";
     my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($self->param('total_orphans_num'), $self->param('prop_orphan'), $groupset_node->node_id, $genome_db_id);
+    $sth->execute($self->param('total_orphans_num'), $self->param('prop_orphan'), $genome_db_id);
 
     return unless $self->param('reuse_this');
 
-    my $sql = "UPDATE protein_tree_qc SET common_orphans_num_$groupset_tag=?, new_orphans_num_$groupset_tag=? WHERE clusterset_id=? AND genome_db_id=?";
+    my $sql = "UPDATE protein_tree_qc SET common_orphans_num_$groupset_tag=?, new_orphans_num_$groupset_tag=? WHERE genome_db_id=?";
     my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($self->param('common_orphans_num'), $self->param('new_orphans_num'), $groupset_node->node_id, $genome_db_id);
+    $sth->execute($self->param('common_orphans_num'), $self->param('new_orphans_num'), $genome_db_id);
 
 }
 
@@ -122,7 +127,7 @@ sub fetch_gdb_orphan_genes {
 
     my %orphan_stable_id_hash = ();
 
-    my $sql = "SELECT m3.stable_id from member m2, member m3, subset_member sm where m3.member_id=m2.gene_member_id and m2.source_name='ENSEMBLPEP' and sm.member_id=m2.member_id and sm.member_id in (SELECT m1.member_id from member m1 left join protein_tree_member ptm on m1.member_id=ptm.member_id where ptm.member_id IS NULL and m1.genome_db_id=$genome_db_id)";
+    my $sql = "SELECT m3.stable_id from member m2, member m3, subset_member sm where m3.member_id=m2.gene_member_id and m2.source_name='ENSEMBLPEP' and sm.member_id=m2.member_id and sm.member_id in (SELECT m1.member_id from member m1 left join gene_tree_member ptm on m1.member_id=ptm.member_id where ptm.member_id IS NULL and m1.genome_db_id=$genome_db_id)";
 
     my $sth = $given_compara_dba->dbc->prepare($sql);
     $sth->execute();

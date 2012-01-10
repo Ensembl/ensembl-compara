@@ -1,9 +1,28 @@
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+   http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
   Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf
+
+=head1 DESCRIPTION
+
+    The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
 
 =head1 SYNOPSIS
 
@@ -17,11 +36,6 @@
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -password <your_password> -mlss_id <your_current_PT_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
-
-
-=head1 DESCRIPTION  
-
-    The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
 
 =head2 rel.63 stats
 
@@ -50,9 +64,22 @@
     total running time:         6 days              [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive;  ]
     blasting time:              1.4 days            [ SELECT (UNIX_TIMESTAMP(max(died))-UNIX_TIMESTAMP(min(born)))/3600/24 FROM hive JOIN analysis USING (analysis_id) WHERE logic_name like 'blast%' or logic_name like 'SubmitPep%'; ]
 
-=head1 CONTACT
+=head1 AUTHORSHIP
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+Ensembl Team. Individual contributions can be found in the CVS log.
+
+=head1 MAINTAINER
+
+$Author$
+
+=head VERSION
+
+$Revision$
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -72,7 +99,7 @@ sub default_options {
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'release'               => '65',
-        'rel_suffix'            => 'd',    # an empty string by default, a letter otherwise
+        'rel_suffix'            => '',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
         'do_not_reuse_list'     => [ 123 ],     # names of species we don't want to reuse this time
         # For rel 65, we're not reusing the gorilla, because the sequence table was messed up in 64
@@ -92,7 +119,6 @@ sub default_options {
     # clustering parameters:
         'outgroups'                     => [127],   # affects 'hcluster_dump_input_per_genome'
         'clustering_max_gene_halfcount' => 750,     # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
-        'clusterset_id'                 => 1,       # Default value also defined in the API
 
     # tree building parameters:
         'tree_max_gene_count'       => 400,     # affects 'mcoffee' and 'mcoffee_himem'
@@ -570,20 +596,9 @@ sub pipeline_analyses {
             -wait_for => [ 'hcluster_merge_inputs' ],
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into => {
-                1 => [ 'generate_clusterset' ],   # backbone
+                1 => [ 'hcluster_parse_output' ],   # backbone
             },
             -rc_id => 1,
-        },
-
-        {   -logic_name => 'generate_clusterset',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters => {
-                'clusterset_id' => $self->o('clusterset_id'),
-                'sql' => [  "INSERT INTO protein_tree_node (node_id, parent_id, root_id, clusterset_id) VALUES (#clusterset_id#, NULL, NULL, #clusterset_id#)" ]
-            },
-            -flow_into => {
-                1 => [ 'hcluster_parse_output' ],
-            },
         },
 
 
@@ -592,7 +607,6 @@ sub pipeline_analyses {
             -parameters => {
                 'mlss_id'                   => $self->o('mlss_id'),
                 'cluster_dir'               => $self->o('cluster_dir'),
-                'clusterset_id'             => $self->o('clusterset_id'),
             },
             -hive_capacity => -1,
             -flow_into => {
@@ -661,7 +675,6 @@ sub pipeline_analyses {
                 'mcoffee_exe'               => $self->o('mcoffee_exe'),
                 'mafft_exe'                 => $self->o('mafft_exe'),
                 'mafft_binaries'            => $self->o('mafft_binaries'),
-                'clusterset_id'             => $self->o('clusterset_id'),
             },
             -wait_for => [ 'store_sequences', 'overall_clusterset_qc', 'per_genome_clusterset_qc' ],    # funnel
             -hive_capacity        => $self->o('mcoffee_capacity'),
@@ -682,7 +695,6 @@ sub pipeline_analyses {
                 'mcoffee_exe'               => $self->o('mcoffee_exe'),
                 'mafft_exe'                 => $self->o('mafft_exe'),
                 'mafft_binaries'            => $self->o('mafft_binaries'),
-                'clusterset_id'             => $self->o('clusterset_id'),
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -can_be_empty         => 1,
@@ -700,7 +712,6 @@ sub pipeline_analyses {
                 'bootstrap'                 => 1,
                 'use_genomedb_id'           => $self->o('use_genomedb_id'),
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'clusterset_id'             => $self->o('clusterset_id'),
             },
             -hive_capacity        => $self->o('njtree_phyml_capacity'),
             -failed_job_tolerance => 5,
@@ -749,7 +760,6 @@ sub pipeline_analyses {
                 'mlss_id'           => $self->o('mlss_id'),
                 'quicktree_exe'     => $self->o('quicktree_exe'),
                 'sreformat_exe'     => $self->o('sreformat_exe'),
-                'clusterset_id'     => $self->o('clusterset_id'),
             },
             -hive_capacity        => 1, # this one seems to slow the whole loop down; why can't we have any more of these?
             -can_be_empty         => 1,
@@ -785,7 +795,6 @@ sub pipeline_analyses {
                 'reuse_db'                  => $self->o('reuse_db'),
                 'cluster_dir'               => $self->o('cluster_dir'),
                 'groupset_tag'              => 'GeneTreesetQC',
-                'clusterset_id'             => $self->o('clusterset_id'),
             },
             -hive_capacity => 3,
             -flow_into => {
@@ -798,7 +807,6 @@ sub pipeline_analyses {
             -parameters => {
                 'reuse_db'                  => $self->o('reuse_db'),
                 'groupset_tag'              => 'GeneTreeset',
-                'clusterset_id'             => $self->o('clusterset_id'),
             },
             -wait_for => [ 'dummy_wait_alltrees' ],
             -hive_capacity => 3,

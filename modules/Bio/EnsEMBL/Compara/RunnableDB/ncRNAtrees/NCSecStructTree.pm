@@ -157,27 +157,20 @@ sub run_bootstrap_raxml {
   die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
 
   my $bootstrap_num = 10;
-  my $root_id = $self->param('nc_tree')->node_id;
   my $tag = 'ml_IT_' . $bootstrap_num;
 
   # Checks if the bootstrap tree is already in the DB (is this a rerun?)
-  my $sql1 = "select value from nc_tree_tag where node_id=$root_id and tag='$tag'";
-  my $sth1 = $self->dbc->prepare($sql1);
-  $sth1->execute;
-  my $raxml_tree_string = $sth1->fetchrow_hashref;
-  $sth1->finish;
-  if ($raxml_tree_string->{value}) {
+  if ($self->param('nc_tree')->tree->has_tag($tag)) {
     my $eval_tree;
     # Checks the tree string can be parsed succsesfully
     eval {
-      $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($raxml_tree_string->{value});
+      $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($self->param('nc_tree')->tree->get_value_for_tag($tag));
     };
     if (defined($eval_tree) and !$@ and !$self->debug) {
       # The bootstrap RAxML tree has been obtained already and the tree can be parsed successfully.
       return;
     }
   }
-#  return 0 unless(!defined($raxml_tree_string->{value}) || $@ || $self->debug);
 
   # /software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-PTHREADS-SSE3
   # -m GTRGAMMA -s nctree_20327.aln -N 10 -n nctree_20327.raxml.10
@@ -236,28 +229,22 @@ sub run_ncsecstructtree {
 
   die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
 
-  my $root_id = $self->param('nc_tree')->node_id;
+  my $tree = $self->param('nc_tree')->tree;
   my $models = $self->param('models');
   $models = [split(/\W+/, $models)];
   foreach my $model (@$models) {
     my $tag = 'ss_IT_' . $model;
-    my $sql1 = "select value from nc_tree_tag where node_id=$root_id and tag='$tag'";
-    my $sth1 = $self->dbc->prepare($sql1);
-    $sth1->execute;
-    my $raxml_tree_string = $sth1->fetchrow_hashref;
-    $sth1->finish;
-    if ($raxml_tree_string->{value}) {
+    if ($tree->has_tag($tag)) {
       my $eval_tree;
       # Checks the tree string can be parsed succsesfully
       eval {
-        $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($raxml_tree_string->{value});
+        $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($tree->get_value_for_tag($tag));
       };
       if (defined($eval_tree) and !$@ and !$self->debug) {
         # The secondary structure RAxML tree for this model has been obtained already and the tree can be parsed successfully.
         next; # Go to next model
       }
     }
-#    next unless(!defined($raxml_tree_string->{value}) || $@ || $self->debug);
 
     # /software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3
     # -m GTRGAMMA -s nctree_20327.aln -S nctree_20327.struct -A S7D -n nctree_20327.raxml
@@ -298,7 +285,7 @@ sub run_ncsecstructtree {
 
     $self->store_newick_into_protein_tree_tag_string($tag,$raxml_output);
     my $model_runtime = $self->param('model') . "_runtime_msec";
-    $self->param('nc_tree')->store_tag($model_runtime, $runtime_msec);
+    $self->param('nc_tree')->tree->store_tag($model_runtime, $runtime_msec);
 
     # Unlink run files
     my $temp_dir = $self->worker_temp_directory;
@@ -363,7 +350,7 @@ sub dumpMultipleAlignmentStructToWorkdir {
   }
   close OUTSEQ;
 
-  my $struct_string = $self->param('nc_tree')->get_tagvalue('ss_cons');
+  my $struct_string = $self->param('nc_tree')->tree->get_tagvalue('ss_cons');
   # Allowed Characters are "( ) < > [ ] { } " and "."
   $struct_string =~ s/[^\(^\)^\<^\>^\[^\]^\{^\}^\.]/\./g;
   my $struct_file = $file_root . ".struct";
@@ -397,10 +384,10 @@ sub store_newick_into_protein_tree_tag_string {
   close(FH);
   $newick =~ s/(\d+\.\d{4})\d+/$1/g; # We round up to only 4 digits
 
-  $self->param('nc_tree')->store_tag($tag, $newick);
+  $self->param('nc_tree')->tree->store_tag($tag, $newick);
   if (defined($self->param('model'))) {
     my $bootstrap_tag = $self->param('model') . "_bootstrap_num";
-    $self->param('nc_tree')->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
+    $self->param('nc_tree')->tree->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
   }
 }
 

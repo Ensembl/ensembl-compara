@@ -1,12 +1,12 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2010 The European Bioinformatics Institute and
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
 
   This software is distributed under a modified Apache license.
   For license details, please see
 
-    http://www.ensembl.org/info/about/code_licence.html
+   http://www.ensembl.org/info/about/code_licence.html
 
 =head1 CONTACT
 
@@ -16,21 +16,31 @@
   Questions may also be sent to the Ensembl help desk at
   <helpdesk@ensembl.org>.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::CAFESpeciesTree
-
-=head1 SYNOPSIS
 
 =head1 DESCRIPTION
 
 This RunnableDB builds a CAFE-compliant species tree (binary & ultrametric with time units).
 
+=head1 SYNOPSIS
+
 =head1 INHERITANCE TREE
 
 Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable
+
+=head1 AUTHORSHIP
+
+Ensembl Team. Individual contributions can be found in the CVS log.
+
+=head1 MAINTAINER
+
+$Author$
+
+=head VERSION
+
+$Revision$
 
 =head1 APPENDIX
 
@@ -42,9 +52,12 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::CAFESpeciesTree;
 
 use strict;
-use Data::Dumper;
+
 use Scalar::Util qw(looks_like_number);
+use Data::Dumper;
+
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 fetch_input
@@ -137,7 +150,7 @@ sub get_species_tree_string {
 # Not used for now
 sub get_tree_from_db {
     my ($self) = @_;
-    my $sql1 = "select value from nc_tree_tag where tag='CAFE_species_tree_string'";
+    my $sql1 = "select value from gene_tree_root_tag where tag='CAFE_species_tree_string'";
     my $sth1 = $self->compara_dba->dbc->prepare($sql1);
     $sth1->execute();
     my $species_tree_string = $sth1->fetchrow_hashref;

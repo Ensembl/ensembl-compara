@@ -159,7 +159,7 @@ sub get_species_tree_file {
 
         unless( $self->param('species_tree_string') ) {
 
-            my $tag_table_name = 'nc_tree_tag';
+            my $tag_table_name = 'gene_tree_root_tag';
 
             my $sth = $self->dbc->prepare( "select value from $tag_table_name where tag='species_tree_string'" );
             $sth->execute;
@@ -312,17 +312,15 @@ sub reroot_inputtrees {
 
 sub load_input_trees {
   my $self = shift;
+  my $tree = $self->param('nc_tree')->tree;
 
-  my $root_id = $self->param('nc_tree')->node_id;
+  foreach my $tag ($tree->get_all_tags) {
+    next unless $tag =~ m/_it_/;
+    my $inputtree_string = $tree->get_value_for_tag($tag);
 
-  my $sql1 = "select tag,value from nc_tree_tag where node_id=$root_id and tag like '%\\\_IT\\\_%'";
-  my $sth1 = $self->dbc->prepare($sql1);
-  $sth1->execute;
-
-  while (  my $inputtree_string = $sth1->fetchrow_hashref ) {
     my $eval_inputtree;
     eval {
-      $eval_inputtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($inputtree_string->{value});
+      $eval_inputtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($inputtree_string);
       my @leaves = @{$eval_inputtree->get_all_leaves};
     };
     unless ($@) {
@@ -331,203 +329,21 @@ sub load_input_trees {
           $self->param('inputtrees_unrooted', {});
       }
 
-      $self->param('inputtrees_unrooted')->{$inputtree_string->{tag}} = $inputtree_string->{value};
+      $self->param('inputtrees_unrooted')->{$tag} = $inputtree_string;
     }
   }
-  $sth1->finish;
 
   return 1;
 }
 
-sub parse_newick_into_nctree
-{
-  my $self = shift;
-  my $newick_file =  $self->param('mmerge_blengths_output');
-  my $nc_tree = $self->param('nc_tree');
-  
-  #cleanup old tree structure- 
-  #  flatten and reduce to only GeneTreeMember leaves
-  $nc_tree->flatten_tree;
-  $nc_tree->print_tree(20) if($self->debug);
-  foreach my $node (@{$nc_tree->get_all_leaves}) {
-    next if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
-    $node->disavow_parent;
-  }
 
-  #parse newick into a new tree object structure
-  my $newick = '';
-  print("load from file $newick_file\n") if($self->debug);
-  open (FH, $newick_file) or $self->throw("Couldnt open newick file [$newick_file]");
-  while(<FH>) { $newick .= $_;  }
-  close(FH);
+########################################################
+#
+# GeneTree input/output section
+#
+########################################################
 
-  my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
-  $newtree->print_tree(20) if($self->debug > 1);
-  # get rid of the taxon_id needed by njtree -- name tag
-  foreach my $leaf (@{$newtree->get_all_leaves}) {
-    my $njtree_phyml_name = $leaf->get_tagvalue('name');
-    $njtree_phyml_name =~ /(\d+)\_\d+/;
-    my $member_name = $1;
-    $leaf->add_tag('name', $member_name);
-  }
-
-  # Leaves of newick tree are named with member_id of members from
-  # input tree move members (leaves) of input tree into newick tree to
-  # mirror the 'member_id' nodes
-  foreach my $member (@{$nc_tree->get_all_leaves}) {
-    my $tmpnode = $newtree->find_node_by_name($member->member_id);
-    if($tmpnode) {
-      $tmpnode->add_child($member, 0.0);
-      $tmpnode->minimize_node; #tmpnode is now redundant so it is removed
-    } else {
-      print("unable to find node in newick for member");
-      $member->print_member;
-    }
-  }
-
-  # Merge the trees so that the children of the newick tree are now
-  # attached to the input tree's root node
-  $nc_tree->merge_children($newtree);
-
-  # Newick tree is now empty so release it
-  $newtree->release_tree;
-
-  $nc_tree->print_tree if($self->debug);
-  # check here on the leaf to test if they all are GeneTreeMember as
-  # minimize_tree/minimize_node might not work properly
-  foreach my $leaf (@{$nc_tree->get_all_leaves}) {
-    unless($leaf->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
-      $self->throw("TreeBestMMerge tree does not have all leaves as GeneTreeMembers\n");
-    }
-  }
-
-  return undef;
-}
-
-sub store_nctree
-{
-  my $self = shift;
-
-  my $nc_tree = $self->param('nc_tree') or return;
-
-  printf("NCTreeBestMMerge::store_nctree\n") if($self->debug);
-  my $treeDBA = $self->compara_dba->get_NCTreeAdaptor;
-  $treeDBA->sync_tree_leftright_index($nc_tree);
-  $nc_tree->clusterset_id($self->param('clusterset_id'));
-  $treeDBA->store($nc_tree);
-  $treeDBA->delete_nodes_not_in_tree($nc_tree);
-
-  if($self->debug >1) {
-    print("done storing - now print\n");
-    $nc_tree->print_tree;
-  }
-
-  $self->store_tags($nc_tree);
-
-  $self->_store_tree_tags;
-
-  return undef;
-}
-
-sub store_tags
-{
-  my $self = shift;
-  my $node = shift;
-
-  if($node->get_tagvalue("Duplication") eq '1') {
-    if($self->debug) { printf("store duplication : "); $node->print_node; }
-    $node->store_tag('Duplication', 1);
-  } else {
-    $node->store_tag('Duplication', 0);
-  }
-
-  if (defined($node->get_tagvalue("B"))) {
-    my $bootstrap_value = $node->get_tagvalue("B");
-    if (defined($bootstrap_value) && $bootstrap_value ne '') {
-      if ($self->debug) {
-        printf("store bootstrap : $bootstrap_value "); $node->print_node;
-      }
-      $node->store_tag('bootstrap', $bootstrap_value);
-    }
-  }
-  if (defined($node->get_tagvalue("DD"))) {
-    my $dubious_dup = $node->get_tagvalue("DD");
-    if (defined($dubious_dup) && $dubious_dup ne '') {
-      if ($self->debug) {
-        printf("store dubious_duplication : $dubious_dup "); $node->print_node;
-      }
-      $node->store_tag('dubious_duplication', $dubious_dup);
-    }
-  }
-  if (defined($node->get_tagvalue("E"))) {
-    my $n_lost = $node->get_tagvalue("E");
-    $n_lost =~ s/.{2}//;        # get rid of the initial $-
-    my @lost_taxa = split('-',$n_lost);
-    my %lost_taxa;
-    foreach my $taxon (@lost_taxa) {
-      $lost_taxa{$taxon} = 1;
-    }
-    foreach my $taxon (keys %lost_taxa) {
-      if ($self->debug) {
-        printf("store lost_taxon_id : $taxon "); $node->print_node;
-      }
-      $node->store_tag('lost_taxon_id', $taxon, 1);
-    }
-  }
-  if (defined($node->get_tagvalue("SISi"))) {
-    my $sis_score = $node->get_tagvalue("SISi");
-    if (defined($sis_score) && $sis_score ne '') {
-      if ($self->debug) {
-        printf("store SISi : $sis_score "); $node->print_node;
-      }
-      $node->store_tag('SISi', $sis_score);
-    }
-  }
-  if (defined($node->get_tagvalue("SISu"))) {
-    my $sis_score = $node->get_tagvalue("SISu");
-    if (defined($sis_score) && $sis_score ne '') {
-      if ($self->debug) {
-        printf("store SISu : $sis_score "); $node->print_node;
-      }
-      $node->store_tag('SISu', $sis_score);
-    }
-  }
-  if (defined($node->get_tagvalue("SIS"))) {
-    my $sis_score = $node->get_tagvalue("SIS");
-    if (defined($sis_score) && $sis_score ne '') {
-      if ($self->debug) {
-        printf("store species_intersection_score : $sis_score "); $node->print_node;
-      }
-      $node->store_tag('species_intersection_score', $sis_score);
-    }
-  }
-  if (defined($node->get_tagvalue("SIS1"))) {
-    my $sis_score = $node->get_tagvalue("SIS1");
-    if (defined($sis_score) && $sis_score ne '') {
-      if ($self->debug) {
-        printf("store SIS1 : $sis_score "); $node->print_node;
-      }
-      $node->store_tag('SIS1', $sis_score);
-    }
-  }
-  if (defined($node->get_tagvalue("SIS2"))) {
-    my $sis_score = $node->get_tagvalue("SIS2");
-    if (defined($sis_score) && $sis_score ne '') {
-      if ($self->debug) {
-        printf("store SIS2 : $sis_score "); $node->print_node;
-      }
-      $node->store_tag('SIS2', $sis_score);
-    }
-  }
-
-  foreach my $child (@{$node->children}) {
-    $self->store_tags($child);
-  }
-  return undef;
-}
-
-sub dumpTreeMultipleAlignmentToWorkdir
-{
+sub dumpTreeMultipleAlignmentToWorkdir {
   my $self = shift;
   my $nc_tree = shift;
 
@@ -546,7 +362,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
 
   # Using append_taxon_id will give nice seqnames_taxonids needed for
   # njtree species_tree matching
-  my %sa_params = ($self->param('use_genomedb_id')) ?	('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
+  my %sa_params = $self->param('use_genomedb_id') ? ('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
 
   my $sa = $nc_tree->get_SimpleAlign
     (
@@ -569,66 +385,203 @@ sub dumpTreeMultipleAlignmentToWorkdir
   return $aln_file;
 }
 
+sub store_nctree
+{
+    my $self = shift;
+
+    my $tree = $self->param('nc_tree') or return;
+    my $tree_adaptor = $self->compara_dba->get_NCTreeAdaptor;
+
+    printf("NCTreeBestMMerge::store_nctree\n") if($self->debug);
+
+    $tree->build_leftright_indexing(1);
+    $tree->clusterset_id($self->param('clusterset_id'));
+    $tree_adaptor->store($tree);
+    $tree_adaptor->delete_nodes_not_in_tree($tree);
+
+    if($self->debug >1) {
+        print("done storing - now print\n");
+        $tree->print_tree;
+    }
+
+    $self->store_tags($tree);
+
+    $self->_store_tree_tags;
+
+}
+
+sub store_tags
+{
+    my $self = shift;
+    my $node = shift;
+
+    if (not $node->is_leaf) {
+        my $node_type;
+        if ($node->has_tag('node_type')) {
+            $node_type = $node->get_tagvalue('node_type');
+        } elsif ($node->get_tagvalue("DD", 0)) {
+            $node_type = 'dubious';
+        } elsif ($node->get_tagvalue('Duplication', '') eq '1') {
+            $node_type = 'duplication';
+        } else {
+            $node_type = 'speciation';
+        }
+        $node->store_tag('node_type', $node_type);
+        if ($self->debug) {
+            print "store node_type: $node_type"; $node->print_node;
+        }
+    }
+
+    if ($node->has_tag("E")) {
+        my $n_lost = $node->get_tagvalue("E");
+        $n_lost =~ s/.{2}//;        # get rid of the initial $-
+        my @lost_taxa = split('-', $n_lost);
+        foreach my $taxon (@lost_taxa) {
+            if ($self->debug) {
+                printf("store lost_taxon_id : $taxon "); $node->print_node;
+            }
+            $node->store_tag('lost_taxon_id', $taxon, 1);
+        }
+    }
+
+    my %mapped_tags = ('B' => 'bootstrap', 'SIS' => 'species_intersection_score', 'T' => 'tree_support');
+    foreach my $tag (keys %mapped_tags) {
+        if ($node->has_tag($tag)) {
+            my $value = $node->get_tagvalue($tag);
+            my $db_tag = $mapped_tags{$tag};
+            # Because the duplication_confidence_score won't be computed for dubious nodes
+            $db_tag = 'duplication_confidence_score' if ($node->get_tagvalue('node_type') eq 'dubious' and $tag eq 'SIS');
+            $node->store_tag($db_tag, $value);
+            if ($self->debug) {
+                printf("store $tag as $db_tag: $value"); $node->print_node;
+            }
+        }
+    }
+
+    foreach my $child (@{$node->children}) {
+        $self->store_tags($child);
+    }
+}
+
+sub parse_newick_into_nctree
+{
+  my $self = shift;
+  my $newick_file = $self->param('mmerge_blengths_output');
+
+  my $tree = $self->param('nc_tree');
+  
+  #cleanup old tree structure- 
+  #  flatten and reduce to only GeneTreeMember leaves
+  $tree->flatten_tree;
+  $tree->print_tree(20) if($self->debug);
+  foreach my $node (@{$tree->get_all_leaves}) {
+    next if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
+    $node->disavow_parent;
+  }
+
+  #parse newick into a new tree object structure
+  my $newick = '';
+  print("load from file $newick_file\n") if($self->debug);
+  open (FH, $newick_file) or $self->throw("Couldnt open newick file [$newick_file]");
+  while(<FH>) { $newick .= $_;  }
+  close(FH);
+
+  my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
+  $newtree->print_tree(20) if($self->debug > 1);
+
+  # get rid of the taxon_id needed by njtree -- name tag
+  foreach my $leaf (@{$newtree->get_all_leaves}) {
+    my $njtree_phyml_name = $leaf->get_tagvalue('name');
+    $njtree_phyml_name =~ /(\d+)\_\d+/;
+    my $member_id = $1;
+    $leaf->add_tag('name', $member_id);
+  }
+  $newtree->print_tree(20) if($self->debug > 1);
+
+  # Leaves of newick tree are named with member_id of members from
+  # input tree move members (leaves) of input tree into newick tree to
+  # mirror the 'member_id' nodes
+  foreach my $member (@{$tree->get_all_leaves}) {
+    my $tmpnode = $newtree->find_node_by_name($member->member_id);
+    if($tmpnode) {
+      $member->Bio::EnsEMBL::Compara::AlignedMember::copy($tmpnode);
+      bless $tmpnode, 'Bio::EnsEMBL::Compara::GeneTreeMember';
+      $tmpnode->node_id($member->node_id);
+      $tmpnode->adaptor($member->adaptor);
+    } else {
+      print("unable to find node in newick for member");
+      $member->print_member;
+    }
+  }
+
+  $newtree->node_id($tree->node_id);
+  $newtree->adaptor($tree->adaptor);
+  $newtree->tree($tree->tree);
+  $self->param('nc_tree', $newtree);
+  # to keep the link to the super-tree
+  if ($tree->has_parent) {
+      $tree->parent->add_child($newtree);
+   }
+
+  # Newick tree is now empty so release it
+  $tree->release_tree;
+
+  $newtree->print_tree if($self->debug);
+  # check here on the leaf to test if they all are GeneTreeMembers as
+  # minimize_tree/minimize_node might not work properly
+  foreach my $leaf (@{$newtree->get_all_leaves}) {
+    unless($leaf->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
+      $self->throw("TreeBestMMerge tree does not have all leaves as GeneTreeMembers\n");
+    }
+  }
+}
+
 sub _store_tree_tags {
     my $self = shift;
-    my $nc_tree = $self->param('nc_tree');
+    my $tree = $self->param('nc_tree');
     my $pta = $self->compara_dba->get_NCTreeAdaptor;
 
     print "Storing Tree tags...\n";
 
-    my @leaves = @{$nc_tree->get_all_leaves};
-    my @nodes = @{$nc_tree->get_all_nodes};
-
-    # Node is a root node (full tree).
-#     my $node_is_root = 0;
-#     my @roots = @{$pta->fetch_all_roots()};
-#     foreach my $root (@roots) {
-# 	$node_is_root = 1 if ($root->node_id == $nc_tree->parent->node_id);
-#     }
-#     $nc_tree->store_tag("node_is_root",$node_is_root);
-
-    # Node is leaf node.
-    my $node_is_leaf = 0;
-    $node_is_leaf = 1 if ($nc_tree->is_leaf);
-    $nc_tree->store_tag("node_is_leaf",$node_is_leaf);
+    my @leaves = @{$tree->get_all_leaves};
+    my @nodes = @{$tree->get_all_nodes};
 
     # Tree number of leaves.
     my $tree_num_leaves = scalar(@leaves);
-    $nc_tree->store_tag("tree_num_leaves",$tree_num_leaves);
+    $tree->tree->store_tag("tree_num_leaves",$tree_num_leaves);
 
     # Tree number of human peptides contained.
     my $num_hum_peps = 0;
     foreach my $leaf (@leaves) {
 	$num_hum_peps++ if ($leaf->taxon_id == 9606);
     }
-    $nc_tree->store_tag("tree_num_human_genes",$num_hum_peps);
+    $tree->tree->store_tag("tree_num_human_genes",$num_hum_peps);
 
     # Tree max root-to-tip distance.
-    my $tree_max_length = $nc_tree->max_distance;
-    $nc_tree->store_tag("tree_max_length",$tree_max_length);
+    my $tree_max_length = $tree->max_distance;
+    $tree->tree->store_tag("tree_max_length",$tree_max_length);
 
     # Tree max single branch length.
     my $tree_max_branch = 0;
     foreach my $node (@nodes) {
-	my $dist = $node->distance_to_parent;
-	$tree_max_branch = $dist if ($dist > $tree_max_branch);
+        my $dist = $node->distance_to_parent;
+        $tree_max_branch = $dist if ($dist > $tree_max_branch);
     }
-    $nc_tree->store_tag("tree_max_branch",$tree_max_branch);
+    $tree->tree->store_tag("tree_max_branch",$tree_max_branch);
 
     # Tree number of duplications and speciations.
-    my $tree_num_leaves = scalar(@{$nc_tree->get_all_leaves});
     my $num_dups = 0;
     my $num_specs = 0;
-    foreach my $node (@{$nc_tree->get_all_nodes}) {
-	my $dup = $node->get_tagvalue("Duplication");
-	if ($dup ne '' && $dup > 0) {
-	    $num_dups++;
-	} else {
-	    $num_specs++;
-	}
+    foreach my $node (@nodes) {
+        my $node_type = $node->get_tagvalue("node_type");
+        if ((defined $node_type) and ($node_type ne 'speciation')) {
+            $num_dups++;
+        } else {
+            $num_specs++;
+        }
     }
-    $nc_tree->store_tag("tree_num_dup_nodes",$num_dups);
-    $nc_tree->store_tag("tree_num_spec_nodes",$num_specs);
+    $tree->tree->store_tag("tree_num_dup_nodes",$num_dups);
+    $tree->tree->store_tag("tree_num_spec_nodes",$num_specs);
 
     print "Done storing stuff!\n" if ($self->debug);
 }

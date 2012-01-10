@@ -1,32 +1,61 @@
-=head1 NAME
+=head1 LICENSE
 
-NestedSetAdaptor - DESCRIPTION of Object
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
 
-=head1 SYNOPSIS
+  This software is distributed under a modified Apache license.
+  For license details, please see
 
-=head1 DESCRIPTION
+   http://www.ensembl.org/info/about/code_licence.html
 
 =head1 CONTACT
 
-  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor
+
+=head1 DESCRIPTION
+
+Base adaptor for objects inheriting from NestedSet
+
+=head1 INHERITANCE TREE
+
+=head1 AUTHORSHIP
+
+Ensembl Team. Individual contributions can be found in the CVS log.
+
+=head1 MAINTAINER
+
+$Author$
+
+=head VERSION
+
+$Revision$
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
 
 package Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor;
 
 use strict;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
-use Bio::EnsEMBL::Compara::NestedSet;
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-use Bio::EnsEMBL::Utils::SqlHelper;
-use Bio::EnsEMBL::DBSQL::DBConnection;
 
-our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use Bio::EnsEMBL::DBSQL::DBConnection;
+use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
+use Bio::EnsEMBL::Utils::SqlHelper;
+
+use Bio::EnsEMBL::Compara::NestedSet;
+
+use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
 
 ###########################
@@ -467,7 +496,6 @@ sub init_instance_from_rowhash {
   $node->left_index            ($rowhash->{'left_index'});
   $node->right_index           ($rowhash->{'right_index'});
   $node->distance_to_parent    ($rowhash->{'distance_to_parent'});
-  $node->clusterset_id         ($rowhash->{'clusterset_id'}) if defined $rowhash->{'clusterset_id'};
 
   return $node;
 }

@@ -174,9 +174,9 @@ sub run_njtree_phyml {
   $self->throw("can't find a njtree executable to run\n") unless(-e $njtree_phyml_executable);
 
   # Defining a species_tree
-  # Option 1 is species_tree_string in protein_tree_tag, which then doesn't require tracking files around
+  # Option 1 is species_tree_string in gene_tree_root_tag, which then doesn't require tracking files around
   # Option 2 is species_tree_file which should still work for compatibility
-  my $sql1 = "select value from protein_tree_tag where tag='species_tree_string'";
+  my $sql1 = "select value from gene_tree_root_tag where tag='species_tree_string'";
   my $sth1 = $self->dbc->prepare($sql1);
   $sth1->execute;
   my $species_tree_string = $sth1->fetchrow_hashref;

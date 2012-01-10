@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
 
   This software is distributed under a modified Apache license.
@@ -20,31 +20,45 @@
 
 Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor
 
-=head1 SYNOPSIS
-
 =head1 DESCRIPTION
 
-GeneTreeAdaptor - Generic adaptor for a tree, later derived as ProteinTreeAdaptor or NCTreeAdaptor
+Generic adaptor for a tree, later derived as ProteinTreeAdaptor or NCTreeAdaptor
 
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor
-  +- Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor
+  `- Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor
+
+=head1 AUTHORSHIP
+
+Ensembl Team. Individual contributions can be found in the CVS log.
+
+=head1 MAINTAINER
+
+$Author$
+
+=head VERSION
+
+$Revision$
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
 
 package Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor;
 
 use strict;
-use Bio::EnsEMBL::Compara::GeneTreeNode;
-use Bio::EnsEMBL::Compara::GeneTreeMember;
+
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
+use Bio::EnsEMBL::Compara::GeneTree;
+use Bio::EnsEMBL::Compara::GeneTreeNode;
+use Bio::EnsEMBL::Compara::GeneTreeMember;
 use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
+
 use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
 ###########################
@@ -66,8 +80,7 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compa
 sub fetch_all {
   my ($self, $clusterset_id) = @_;
   $clusterset_id = 1 if ! defined $clusterset_id;
-  my $table = $self->tables->[0]->[1];
-  my $constraint = "WHERE ${table}.node_id = ${table}.root_id and ${table}.clusterset_id = ${clusterset_id}";
+  my $constraint = "WHERE t.node_id = t.root_id and tr.clusterset_id = ${clusterset_id}";
   my $nodes = $self->_generic_fetch($constraint);
   return $nodes;
 }
@@ -147,7 +160,7 @@ sub fetch_AlignedMember_by_member_id_root_id {
   my ($self, $member_id, $clusterset_id) = @_;
 
   my $constraint = "WHERE tm.member_id = $member_id and m.member_id = $member_id";
-  $constraint .= " AND t.clusterset_id = $clusterset_id" if($clusterset_id and $clusterset_id>0);
+  $constraint .= " AND tr.clusterset_id = $clusterset_id" if($clusterset_id and $clusterset_id>0);
   my $final_clause = "order by tm.node_id desc";
   $self->final_clause($final_clause);
   my ($node) = @{$self->_generic_fetch($constraint)};
@@ -178,7 +191,7 @@ sub fetch_AlignedMember_by_member_id_mlssID {
   my ($self, $member_id, $mlss_id) = @_;
 
   my $constraint = "WHERE tm.member_id = $member_id and m.member_id = $member_id";
-  $constraint .= " AND tm.method_link_species_set_id = $mlss_id" if($mlss_id and $mlss_id>0);
+  $constraint .= " AND tr.method_link_species_set_id = $mlss_id" if($mlss_id and $mlss_id>0);
   my ($node) = @{$self->_generic_fetch($constraint)};
   return $node;
 }
@@ -188,7 +201,7 @@ sub gene_member_id_is_in_tree {
   my ($self, $member_id) = @_;
 
   my $prefix = $self->_get_table_prefix();
-  my $sth = $self->prepare("SELECT ptm1.root_id FROM member m1, ".$prefix."_tree_member ptm1 WHERE ptm1.member_id=m1.member_id AND m1.gene_member_id=? LIMIT 1");
+  my $sth = $self->prepare("SELECT ptm1.root_id FROM member m1, gene_tree_member ptm1 WHERE ptm1.member_id=m1.member_id AND m1.gene_member_id=? LIMIT 1");
   $sth->execute($member_id);
   my($root_id) = $sth->fetchrow_array;
 
@@ -229,7 +242,7 @@ sub fetch_by_stable_id {
   my ($self, $stable_id) = @_;
 
   my $prefix = $self->_get_table_prefix();
-  my $sql = "SELECT root_id FROM ${prefix}_tree_root WHERE stable_id=\"$stable_id\"";
+  my $sql = "SELECT root_id FROM gene_tree_root WHERE stable_id=\"$stable_id\"";
   my $sth = $self->prepare($sql);
   $sth->execute();
 
@@ -248,7 +261,7 @@ sub _fetch_stable_id_by_node_id {
   my ($self, $node_id) = @_;
 
   my $prefix = $self->_get_table_prefix();
-  my $sql = "SELECT stable_id FROM ${prefix}_tree_root WHERE root_id = ?";
+  my $sql = "SELECT stable_id FROM gene_tree_root WHERE root_id = ?";
   my $sth = $self->prepare($sql);
   $sth->execute($node_id);
 
@@ -264,24 +277,62 @@ sub _fetch_stable_id_by_node_id {
 # STORE methods
 ###########################
 
-
 sub store {
-  my ($self, $node) = @_;
+    my ($self, $object) = @_;
+    #print "GeneTreeAdaptor::store($object)\n";
 
-  unless($node->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::GeneTreeNode] not a $node");
-  }
+    if ($object->isa('Bio::EnsEMBL::Compara::GeneTree')) {
 
-  $self->store_node($node);
+        # We have a GeneTree object
+        return $self->store_tree($object);
 
-  # recursively do all the children
-  my $children = $node->children;
-  foreach my $child_node (@$children) {
-    $child_node->clusterset_id($node->clusterset_id) unless (defined($child_node->clusterset_id));
-    $self->store($child_node);
-  }
+    } elsif ($object->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
 
-  return $node->node_id;
+        # We have a GeneTreeNode object
+        my $node = $object;
+        # Firstly, store the node
+        $self->store_node($node);
+        # Secondly, recursively do all the children
+        my $children = $node->children;
+        foreach my $child_node (@$children) {
+            # Store the GeneTreeNode or the new GeneTree if different
+            if ((not defined $child_node->tree) or ($child_node->root eq $node->root)) {
+                $self->store($child_node);
+            } else {
+                $self->store_tree($child_node->tree);
+            }
+        }
+
+        return $node->node_id;
+
+    } else {
+        throw("arg must be a [Bio::EnsEMBL::Compara::GeneTreeNode] or a [Bio::EnsEMBL::Compara::GeneTree], but not a $object");
+    }
+}
+
+sub store_tree {
+    my ($self, $tree) = @_;
+
+    # Firstly, store the nodes
+    my $root_id = $self->store($tree->root);
+
+    # Secondly, the tree itself
+    if ($tree->adaptor and $tree->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor') and $tree->adaptor eq $self) {
+        # Update 
+        my $sth = $self->prepare("UPDATE gene_tree_root SET tree_type = ?, clusterset_id = ?, method_link_species_set_id = ?, stable_id = ?, version = ? WHERE root_id = ?");
+        #print "UPDATE INTO gene_tree_root (", $root_id, " ", $tree->tree_type, " ", $tree->clusterset_id, " ", $tree->method_link_species_set_id, " ", $tree->stable_id, " ", $tree->version, "\n";
+        $sth->execute($tree->tree_type, $tree->clusterset_id, $tree->method_link_species_set_id, $tree->stable_id, $tree->version, $root_id);
+        $sth->finish;
+    } else {
+        # Insert
+        $tree->adaptor($self);
+        my $sth = $self->prepare("INSERT INTO gene_tree_root (root_id, tree_type, clusterset_id, method_link_species_set_id, stable_id, version) VALUES (?,?,?,?,?,?)");
+        #print "INSERT INTRO gene_tree_root (", $root_id, " ", $tree->tree_type, " ", $tree->clusterset_id, " ", $tree->method_link_species_set_id, " ", $tree->stable_id, " ", $tree->version, "\n";
+        $sth->execute($root_id, $tree->tree_type, $tree->clusterset_id, $tree->method_link_species_set_id, $tree->stable_id, $tree->version);
+        $sth->finish;
+    }
+
+    return $root_id;
 }
 
 sub store_node {
@@ -299,44 +350,38 @@ sub store_node {
     return $self->update_node($node);
   }
 
-  my $parent_id = 0; my $root_id = 0; my $clusterset_id = undef;
+  my $parent_id = undef; my $root_id = undef;
   if($node->parent) {
     $parent_id = $node->parent->node_id;
-    if (ref($node->node_id)) {
-      # We got here because we haven't stored this node and so it
-      # doesn't have a node_id, returning a hashref (node object) for node_id
-      # instead of an integer
-      $root_id = $node->root->node_id;
-    } else {
-      $root_id = $node->subroot->node_id;
-    }
   }
-  $clusterset_id = $node->clusterset_id || 1;
-  #printf("inserting parent_id = %d, root_id = %d\n", $parent_id, $root_id);
+
+  if (($node ne $node->root) or not $node->node_id->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+    $root_id = $node->root->node_id;
+  }
+  #print "inserting parent_id=$parent_id, root_id=$root_id\n";
 
   my $prefix = $self->_get_table_prefix();
-  my $sth = $self->prepare("INSERT INTO ".$prefix."_tree_node
-                             (parent_id,
-                              root_id,
-                              clusterset_id,
-                              left_index,
-                              right_index,
-                              distance_to_parent)  VALUES (?,?,?,?,?,?)");
-  $sth->execute($parent_id, $root_id, $clusterset_id, $node->left_index, $node->right_index, $node->distance_to_parent);
+  my $sth = $self->prepare("INSERT INTO gene_tree_node (parent_id, root_id, left_index, right_index, distance_to_parent)  VALUES (?,?,?,?,?)");
+  #print "INSERT INTO gene_tree_node (", $parent_id, " ", $root_id, " ", $node->left_index, " ", $node->right_index, " ", $node->distance_to_parent, "\n";
+  $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent);
 
   $node->node_id( $sth->{'mysql_insertid'} );
   #printf("  new node_id %d\n", $node->node_id);
-  $node->adaptor($self);
+  $node->adaptor($self) if not defined $node->adaptor;
   $sth->finish;
 
+  if(not defined $root_id) {
+    $sth = $self->prepare("UPDATE gene_tree_node SET root_id=node_id WHERE node_id=?");
+    #print "UPDATE gene_tree_node SET root_id=node_id WHERE node_id=", $node->node_id, "\n";
+    $sth->execute($node->node_id);
+    $sth->finish;
+  }
+
+
   if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
-    $sth = $self->prepare("INSERT ignore INTO ".$prefix."_tree_member
-                               (node_id,
-                                root_id,
-                                member_id,
-                                method_link_species_set_id,
-                                cigar_line)  VALUES (?,?,?,?,?)");
-    $sth->execute($node->node_id, $root_id, $node->member_id, $node->method_link_species_set_id, $node->cigar_line);
+    $sth = $self->prepare("INSERT IGNORE INTO gene_tree_member (node_id, member_id, cigar_line)  VALUES (?,?,?)");
+    #print "INSERT IGNORE INTO gene_tree_member (", $node->node_id, " ", $node->member_id, " ", $node->cigar_line, "\n";
+    $sth->execute($node->node_id, $node->member_id, $node->cigar_line);
     $sth->finish;
   }
   return $node->node_id;
@@ -348,29 +393,17 @@ sub update_node {
   unless($node->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
     throw("set arg must be a [Bio::EnsEMBL::Compara::GeneTreeNode] not a $node");
   }
-
-  my $parent_id = 0; my $root_id = 0; my $clusterset_id = undef;
+  #print "UPDATING $node ";
+  my $parent_id = undef; my $root_id = undef;
   if($node->parent) {
     $parent_id = $node->parent->node_id;
-    if (ref($node->node_id)) {
-      # We got here because we haven't stored this node and so it
-      # doesn't have a node_id, returning a hashref (node object) for node_id
-      # instead of an integer
-      $root_id = $node->root->node_id;
-    } else {
-      $root_id = $node->subroot->node_id;
-    }
-    $clusterset_id = $node->clusterset_id || 1;
   }
+    $root_id = $node->root->node_id;
 
   my $prefix = $self->_get_table_prefix();
-  my $sth = $self->prepare("UPDATE ".$prefix."_tree_node SET
-                            parent_id=?,
-                            root_id=?,
-                            left_index=?,
-                            right_index=?,
-                            distance_to_parent=?
-                            WHERE node_id=?");
+  my $sth = $self->prepare("UPDATE gene_tree_node SET parent_id=?, root_id=?, left_index=?, right_index=?, distance_to_parent=?  WHERE node_id=?");
+  #print "UPDATE gene_tree_node  (", $parent_id, ",", $root_id, ",", $node->left_index, ",", $node->right_index, ",", $node->distance_to_parent, ") for ", $node->node_id, "\n";
+
   $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index,
                 $node->distance_to_parent, $node->node_id);
 
@@ -378,17 +411,17 @@ sub update_node {
   $sth->finish;
 
   if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
-    my $sql = "UPDATE ".$prefix."_tree_member SET ".
+    my $sql = "UPDATE gene_tree_member SET ".
               "cigar_line='". $node->cigar_line . "'";
     $sql .= ", cigar_start=" . $node->cigar_start if($node->cigar_start);
     $sql .= ", cigar_end=" . $node->cigar_end if($node->cigar_end);
-    $sql .= ", root_id=" . $root_id;
-    $sql .= ", method_link_species_set_id=" . $node->method_link_species_set_id if($node->method_link_species_set_id);
     $sql .= " WHERE node_id=". $node->node_id;
+    #print $sql, "\n";
     $self->dbc->do($sql);
   }
 
 }
+
 
 sub merge_nodes {
   my ($self, $node1, $node2) = @_;
@@ -400,13 +433,13 @@ sub merge_nodes {
   # printf("MERGE children from parent %d => %d\n", $node2->node_id, $node1->node_id);
 
   my $prefix = $self->_get_table_prefix();
-  my $sth = $self->prepare("UPDATE ".$prefix."_tree_node SET
+  my $sth = $self->prepare("UPDATE gene_tree_node SET
                               parent_id=?
 			      WHERE parent_id=?");
   $sth->execute($node1->node_id, $node2->node_id);
   $sth->finish;
 
-  $sth = $self->prepare("DELETE from ".$prefix."_tree_node WHERE node_id=?");
+  $sth = $self->prepare("DELETE from gene_tree_node WHERE node_id=?");
   $sth->execute($node2->node_id);
   $sth->finish;
 }
@@ -417,10 +450,10 @@ sub delete_flattened_leaf {
 
   my $node_id = $node->node_id;
   my $prefix = $self->_get_table_prefix();
-  $self->dbc->do("DELETE from ".$prefix."_tree_tag    WHERE node_id = $node_id");
-  $self->dbc->do("DELETE from ".$prefix."_tree_attr   WHERE node_id = $node_id");
-  $self->dbc->do("DELETE from ".$prefix."_tree_member WHERE node_id = $node_id");
-  $self->dbc->do("DELETE from ".$prefix."_tree_node   WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from ".$prefix."_tree_node_tag    WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from ".$prefix."_tree_node_attr   WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from gene_tree_member WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from gene_tree_node   WHERE node_id = $node_id");
 }
 
 sub delete_node {
@@ -430,12 +463,12 @@ sub delete_node {
   my $node_id = $node->node_id;
   #print("delete node $node_id\n");
   my $prefix = $self->_get_table_prefix();
-  $self->dbc->do("UPDATE ".$prefix."_tree_node dn, ".$prefix."_tree_node n SET ".
+  $self->dbc->do("UPDATE gene_tree_node dn, gene_tree_node n SET ".
             "n.parent_id = dn.parent_id WHERE n.parent_id=dn.node_id AND dn.node_id=$node_id");
-  $self->dbc->do("DELETE from ".$prefix."_tree_tag    WHERE node_id = $node_id");
-  $self->dbc->do("DELETE from ".$prefix."_tree_attr   WHERE node_id = $node_id");
-  $self->dbc->do("DELETE from ".$prefix."_tree_member WHERE node_id = $node_id");
-  $self->dbc->do("DELETE from ".$prefix."_tree_node   WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from ".$prefix."_tree_node_tag    WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from ".$prefix."_tree_node_attr   WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from gene_tree_member WHERE node_id = $node_id");
+  $self->dbc->do("DELETE from gene_tree_node   WHERE node_id = $node_id");
 }
 
 sub delete_nodes_not_in_tree
@@ -451,44 +484,40 @@ sub delete_nodes_not_in_tree
   my @all_db_nodes = $dbtree->get_all_subnodes;
   foreach my $dbnode (@all_db_nodes) {
     next if($tree->find_node_by_node_id($dbnode->node_id));
+    #print "Deleting unused node ", $dbnode->node_id, "\n";
     $self->delete_node($dbnode);
   }
   $dbtree->release_tree;
 }
 
-sub store_flattened_supertree {
-    my $self = shift;
-    my $root_id = shift;
+##
+##
 
-    my $prefix  = $self->_get_table_prefix();
 
-    $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_node   SELECT * FROM ${prefix}_tree_node   WHERE node_id = $root_id");
-    $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_member SELECT * FROM ${prefix}_tree_member WHERE node_id = $root_id");
-    $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_attr   SELECT * FROM ${prefix}_tree_attr   WHERE node_id = $root_id");
-    $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_tag    SELECT * FROM ${prefix}_tree_tag    WHERE node_id = $root_id");
-
-    $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_node   SELECT n.* FROM ${prefix}_tree_node n                                              WHERE n.root_id = $root_id");
-    $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_member SELECT m.* FROM ${prefix}_tree_node n JOIN ${prefix}_tree_member m USING (node_id) WHERE n.root_id = $root_id");
-    $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_attr   SELECT t.* FROM ${prefix}_tree_node n JOIN ${prefix}_tree_attr   t USING (node_id) WHERE n.root_id = $root_id");
-    $self->dbc->do("INSERT IGNORE INTO super_${prefix}_tree_tag    SELECT t.* FROM ${prefix}_tree_node n JOIN ${prefix}_tree_tag    t USING (node_id) WHERE n.root_id = $root_id");
+sub fetch_all_children_for_node {
+  my ($self, $node) = @_;
+  $self->{'_ref_tree'} = $node->{'_tree'};
+  my $result = $self->SUPER::fetch_all_children_for_node($node);
+  delete $self->{'_ref_tree'};
+  return $result;
 }
 
-sub delete_flattened_tree {
-    my $self = shift;
-    my $root_id = shift;
-
-    my $prefix  = $self->_get_table_prefix();
-
-    $self->dbc->do("DELETE t FROM ${prefix}_tree_tag t    JOIN ${prefix}_tree_node n USING (node_id) WHERE n.root_id = $root_id");
-    $self->dbc->do("DELETE t FROM ${prefix}_tree_attr t   JOIN ${prefix}_tree_node n USING (node_id) WHERE n.root_id = $root_id");
-    $self->dbc->do("DELETE m FROM ${prefix}_tree_member m JOIN ${prefix}_tree_node n USING (node_id) WHERE n.root_id = $root_id");
-    $self->dbc->do("DELETE n FROM ${prefix}_tree_node n                                              WHERE n.root_id = $root_id");
-
-    $self->dbc->do("DELETE FROM ${prefix}_tree_tag    WHERE node_id = $root_id");
-    $self->dbc->do("DELETE FROM ${prefix}_tree_attr   WHERE node_id = $root_id");
-    $self->dbc->do("DELETE FROM ${prefix}_tree_member WHERE node_id = $root_id");
-    $self->dbc->do("DELETE FROM ${prefix}_tree_node   WHERE node_id = $root_id");
+sub fetch_parent_for_node {
+  my ($self, $node) = @_;
+  $self->{'_ref_tree'} = $node->{'_tree'};
+  my $result = $self->SUPER::fetch_parent_for_node($node);
+  delete $self->{'_ref_tree'};
+  return $result;
 }
+
+sub fetch_subtree_under_node {
+  my ($self, $node) = @_;
+  $self->{'_ref_tree'} = $node->{'_tree'};
+  my $result = $self->SUPER::fetch_subtree_under_node($node);
+  delete $self->{'_ref_tree'};
+  return $result;
+}
+
 
 
 ###################################
@@ -499,8 +528,18 @@ sub delete_flattened_tree {
 
 sub _tag_capabilities {
     my $self = shift;
-    my $prefix = $self->_get_table_prefix();
-    return ("${prefix}_tree_tag", "${prefix}_tree_attr", "node_id", "node_id");
+    my $object = shift;
+    #my $prefix = $self->_get_table_prefix();
+    #print "CAPABILITIES $object ";
+    if ($object->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+        #print " = NODE\n";
+        return ("gene_tree_node_tag", "gene_tree_node_attr", "node_id", "node_id");
+    } elsif ($object->isa('Bio::EnsEMBL::Compara::GeneTree')) {
+        #print " = ROOT\n";
+        return ("gene_tree_root_tag", undef, "root_id", "root_id");
+    } else {
+        die "$self cannot handle tags/attributes for $object\n";
+    }
 }
 
 
@@ -515,15 +554,19 @@ sub columns {
   return ['t.node_id',
           't.parent_id',
           't.root_id',
-          't.clusterset_id',
           't.left_index',
           't.right_index',
           't.distance_to_parent',
 
+          'tr.stable_id',
+          'tr.tree_type',
+          'tr.version',
+          'tr.clusterset_id',
+          'tr.method_link_species_set_id',
+
           'tm.cigar_line',
           'tm.cigar_start',
           'tm.cigar_end',
-          'tm.method_link_species_set_id',
 
           @{Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->columns()}
           ];
@@ -532,13 +575,14 @@ sub columns {
 sub tables {
   my $self = shift;
   my $prefix = $self->_get_table_prefix();
-  return [[$prefix.'_tree_node', 't']];
+  return [['gene_tree_node', 't']];
 }
 
 sub left_join_clause {
     my $self = shift;
     my $prefix = $self->_get_table_prefix();
-    return "LEFT JOIN ".$prefix."_tree_member tm ON t.node_id = tm.node_id LEFT JOIN member m ON tm.member_id = m.member_id";
+    # FIXME The LEFT JOIN should be a JOIN
+    return "LEFT JOIN gene_tree_member tm ON t.node_id = tm.node_id LEFT JOIN member m ON tm.member_id = m.member_id LEFT JOIN gene_tree_root tr ON t.root_id = tr.root_id";
 }
 
 sub default_where_clause {
@@ -574,6 +618,7 @@ sub create_instance_from_rowhash {
   }
 
   $self->init_instance_from_rowhash($node, $rowhash);
+  $self->_add_GeneTree_wrapper($node, $rowhash);
   return $node;
 }
 
@@ -590,7 +635,6 @@ sub init_instance_from_rowhash {
         Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->init_instance_from_rowhash($node, $rowhash);
 
         $node->cigar_line($rowhash->{'cigar_line'});
-        $node->method_link_species_set_id($rowhash->{method_link_species_set_id});
     } else {
         # here is an internal node
     }
@@ -599,6 +643,39 @@ sub init_instance_from_rowhash {
 
     return $node;
 }
+
+use Data::Dumper;
+
+sub _add_GeneTree_wrapper {
+    my $self = shift;
+    my $node = shift;
+    my $rowhash = shift;
+
+    if ((defined $self->{'_ref_tree'}) and ($self->{'_ref_tree'}->root_id eq $rowhash->{root_id})) {
+        #print STDERR "REUSING GeneTree for $node :", $self->{'_ref_tree'};
+        $node->tree($self->{'_ref_tree'});
+    } else {
+
+        my $tree = new Bio::EnsEMBL::Compara::GeneTree;
+        $tree->tree_type($rowhash->{tree_type});
+        $tree->method_link_species_set_id($rowhash->{method_link_species_set_id});
+        $tree->stable_id($rowhash->{stable_id});
+        $tree->version($rowhash->{version});
+        $tree->adaptor($self);
+        $node->tree($tree);
+       
+        if ($node->node_id == $rowhash->{root_id}) {
+            $tree->root($node);
+        } else {
+            $self->{'_ref_tree'} = $tree;
+            my $root = $self->fetch_node_by_node_id($rowhash->{root_id});
+            $tree->root($root);
+            delete $self->{'_ref_tree'};
+        }
+        #print STDERR "NEW GeneTree for $node :", Dumper($tree);
+    }
+}
+
 
 
 ##########################################################

@@ -153,7 +153,7 @@ sub update_single_peptide_tree {
         next unless($member->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
         next unless($member->sequence);
         $member->cigar_line(length($member->sequence)."M");
-        $self->compara_dba->get_NCTreeAdaptor->store($member);
+        $self->compara_dba->get_NCTreeAdaptor->update_node($member);
         printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
     }
 }

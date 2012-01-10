@@ -110,8 +110,8 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'               => $self->o('rel_url'),
-                'protein_trees_query'      => "SELECT DISTINCT root_id FROM protein_tree_member ptm, protein_tree_tag ptt WHERE ptt.node_id=ptm.root_id AND ptt.tag='gene_count' AND ptt.value>1",
-                'ncrna_trees_query'     => "SELECT root_id FROM nc_tree_member ntm, nc_tree_tag ntt WHERE ntm.root_id=ntt.node_id AND ntt.tag='gene_count' AND ntt.value GROUP BY root_id HAVING sum(length(cigar_line))",
+                'protein_trees_query'   => "SELECT root_id FROM gene_tree_member JOIN gene_tree_node USING (node_id) GROUP BY root_id HAVING COUNT(*) > 1",
+                'ncrna_trees_query'     => "SELECT root_id FROM gene_tree_member JOIN gene_tree_node USING (node_id) GROUP BY root_id HAVING SUM(LENGTH(cigar_line))",
                 'inputquery'            => '#expr(($tree_type eq "protein_trees") ? $protein_trees_query : $ncrna_trees_query)expr#',
                 'input_id'              => { 'tree_type' => '#tree_type#', 'tree_id' => '#root_id#', 'hash_dir' => '#expr(dir_revhash($root_id))expr#' },
                 'fan_branch_code'       => 2,
