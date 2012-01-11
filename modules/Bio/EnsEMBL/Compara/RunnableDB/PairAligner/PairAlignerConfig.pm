@@ -112,6 +112,8 @@ use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 sub fetch_input {
   my ($self) = @_;
 
+  return if ($self->param('skip_pairaligner_config'));
+
   #Default directory containing bed files.
   if (!defined $self->param('bed_dir')) {
       $self->param('bed_dir', "/nfs/ensembl/compara/dumps/bed/");
@@ -210,6 +212,8 @@ sub fetch_input {
 sub run {
   my $self = shift;
 
+  return if ($self->param('skip_pairaligner_config'));
+
   #Dump bed files if necessary
   $self->dump_bed_file($self->param('ref_species'), $self->param('ref_dbc_url'), $self->param('reg_conf'));
   $self->dump_bed_file($self->param('non_ref_species'), $self->param('non_ref_dbc_url'), $self->param('reg_conf'));
@@ -260,8 +264,10 @@ sub dump_bed_file {
     } else {
 	#Need to dump toplevel features
 	my $cmd;
+	my $compara_url = $self->compara_dba->dbc->url;
 	if ($reg_conf) {
-	    $cmd = $self->param('dump_features') . " --reg_conf " . $reg_conf ." --species $name --feature toplevel > $genome_bed_file";
+	    #Need to define compara_url even though it isn't used to stop dump_features complaining
+	    $cmd = $self->param('dump_features') . " --reg_conf $reg_conf --species $name --feature toplevel --compara_url $compara_url > $genome_bed_file";
 	} else {
 	    #Non-standard core name. Use DBAdaptor info
 	    my ($user, $host, $port, $dbname) = $dbc_url =~ /mysql:\/\/(\w*)@(.*):(\d*)\/(.*)/;
