@@ -1,10 +1,20 @@
+=head1 LICENSE
 
-# Copyright EnsEMBL 2004
-#
-# Ensembl module for Bio::EnsEMBL::DBSQL::GenomicAlignBlockAdaptor
-# 
-# POD documentation - main docs before the code
-# 
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -82,21 +92,6 @@ This class inherits all the methods and attributes from Bio::EnsEMBL::DBSQL::Bas
  - Bio::EnsEMBL::SliceAdaptor
  - Bio::EnsEMBL::Compara::DnaFrag
  - Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor
-
-=head1 AUTHOR
-
-Javier Herrero (jherrero@ebi.ac.uk)
-
-=head1 COPYRIGHT
-
-Copyright (c) 2004. EnsEMBL Team
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org). You may distribute
-it under the same terms as EnsEMBL itself.
-
-=head1 CONTACT
-
-Questions can be posted to the ensembl-dev mailing list: ensembl-dev@ebi.ac.uk
 
 =head1 APPENDIX
 

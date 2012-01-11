@@ -1,13 +1,20 @@
-# Copyright EnsEMBL 1999-2003
-#
-# Ensembl module for Bio::EnsEMBL::DBSQL::GenomicAlignAdaptor
-#
-# Cared for by Ewan Birney <birney@ebi.ac.uk>
-#
-#
-# You may distribute this module under the same terms as perl itself
+=head1 LICENSE
 
-# POD documentation - main docs before the code
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -75,12 +82,6 @@ This class inherits all the methods and attributes from Bio::EnsEMBL::DBSQL::Bas
  - Bio::EnsEMBL::Compara::GenomicAlignBlock
  - Bio::EnsEMBL::Compara::GenomicAlign
  - Bio::EnsEMBL::Compara::DnaFrag;
-
-=head1 AUTHOR
-
-Javier Herrero (jherrero@ebi.ac.uk)
-
-This modules is part of the Ensembl project http://www.ensembl.org
 
 =head1 APPENDIX
 

@@ -1,13 +1,20 @@
-#
-# Ensembl module for Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
-#
-# Cared for by Ewan Birney <birney@ebi.ac.uk>
-#
-# Copyright Ewan Birney
-#
-# You may distribute this module under the same terms as perl itself
+=head1 LICENSE
 
-# POD documentation - main docs before the code
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -33,14 +40,6 @@ Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor - DESCRIPTION of Object
 =head1 DESCRIPTION
 
 This module is intended to access data in the genome_db table. The genome_db table stores information about each species including the taxon_id, species name, assembly, genebuild and the location of the core database
-
-=head1 AUTHOR - Ewan Birney
-
-This modules is part of the Ensembl project http://www.ensembl.org
-
-Email birney@ebi.ac.uk
-
-Describe contact details here
 
 =head1 APPENDIX
 
