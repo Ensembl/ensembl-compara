@@ -71,7 +71,7 @@ sub run {
     my $genome_db_id            = $self->param('genome_db_id') or die "'genome_db_id' is an obligatory parameter";
     my $groupset_tag            = $self->param('groupset_tag') or die "'groupset_tag' is an obligatory parameter";
 
-    my $this_orphans            = $self->fetch_gdb_orphan_genes($self->compara_dba, $genome_db_id);
+    my $this_orphans            = $self->fetch_gdb_orphan_genes($self->compara_dba, $genome_db_id, 'gene_tree_member');
     my $total_orphans_num       = scalar keys (%$this_orphans);
     my $total_num_genes         = scalar @{ $self->compara_dba->get_MemberAdaptor->fetch_all_by_source_genome_db_id('ENSEMBLGENE',$genome_db_id) };
 
@@ -83,7 +83,7 @@ sub run {
     my $reuse_db                = $self->param('reuse_db') or die "'reuse_db' connection parameters hash has to be defined in reuse mode";
     my $reuse_compara_dba       = $self->go_figure_compara_dba($reuse_db);    # may die if bad parameters
 
-    my $reuse_orphans           = $self->fetch_gdb_orphan_genes($reuse_compara_dba, $genome_db_id);
+    my $reuse_orphans           = $self->fetch_gdb_orphan_genes($reuse_compara_dba, $genome_db_id, 'protein_tree_member');
     my %common_orphans = ();
     my %new_orphans = ();
     foreach my $this_orphan_id (keys %$this_orphans) {
@@ -123,11 +123,11 @@ sub write_output {
 
 
 sub fetch_gdb_orphan_genes {
-    my ($self, $given_compara_dba, $genome_db_id) = @_;
+    my ($self, $given_compara_dba, $genome_db_id, $gene_member_table_name) = @_;
 
     my %orphan_stable_id_hash = ();
 
-    my $sql = "SELECT m3.stable_id from member m2, member m3, subset_member sm where m3.member_id=m2.gene_member_id and m2.source_name='ENSEMBLPEP' and sm.member_id=m2.member_id and sm.member_id in (SELECT m1.member_id from member m1 left join gene_tree_member ptm on m1.member_id=ptm.member_id where ptm.member_id IS NULL and m1.genome_db_id=$genome_db_id)";
+    my $sql = "SELECT m3.stable_id FROM member m2, member m3, subset_member sm WHERE m3.member_id=m2.gene_member_id AND m2.source_name='ENSEMBLPEP' AND sm.member_id=m2.member_id AND sm.member_id IN (SELECT m1.member_id FROM member m1 LEFT JOIN $gene_member_table_name ptm ON m1.member_id=ptm.member_id WHERE ptm.member_id IS NULL AND m1.genome_db_id=$genome_db_id)";
 
     my $sth = $given_compara_dba->dbc->prepare($sql);
     $sth->execute();
