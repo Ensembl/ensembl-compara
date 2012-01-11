@@ -1,17 +1,30 @@
+=head1 LICENSE
+
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor
 
 =head1 SYNOPSIS
 
-=head1 CONTACT
-
-Jessica Severin : jessica@ebi.ac.uk
-
 =head1 APPENDIX
 
 =cut
-
 
 package Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor;
 
@@ -49,22 +62,18 @@ sub store {
   return unless($dfc->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk'));
 
   my $query = "INSERT ignore INTO dnafrag_chunk".
-              "(dnafrag_id,sequence_id,seq_start,seq_end,masking_analysis_data_id) ".
-              "VALUES (?,?,?,?,?)";
+              "(dnafrag_id,sequence_id,seq_start,seq_end,method_link_species_set_id, masking_tag_name) ".
+              "VALUES (?,?,?,?,?,?)";
 
   $dfc->sequence_id($self->db->get_SequenceAdaptor->store($dfc->sequence));
-
-  if($dfc->masking_analysis_data_id==0 and defined($dfc->masking_options)) {
-    my $dataDBA = $self->db->get_AnalysisDataAdaptor;
-    $dfc->masking_analysis_data_id($dataDBA->store_if_needed($dfc->masking_options));
-  }
 
   #print("$query\n");
   my $sth = $self->prepare($query);
   my $insertCount =
      $sth->execute($dfc->dnafrag_id, $dfc->sequence_id,
                    $dfc->seq_start, $dfc->seq_end,
-                   $dfc->masking_analysis_data_id);
+                   $dfc->method_link_species_set_id,
+		  $dfc->masking_tag_name);
   if($insertCount>0) {
     #sucessful insert
     $dfc->dbID( $sth->{'mysql_insertid'} );
@@ -74,9 +83,10 @@ sub store {
     #UNIQUE(dnafrag_id,seq_start,seq_end,masking_analysis_data_id) prevented insert
     #since dnafrag_chunk was already inserted so get dnafrag_chunk_id with select
     my $sth2 = $self->prepare("SELECT dnafrag_chunk_id FROM dnafrag_chunk ".
-           " WHERE dnafrag_id=? and seq_start=? and seq_end=? and masking_analysis_data_id=?");
+           " WHERE dnafrag_id=? and seq_start=? and seq_end=? and method_link_species_set_id=? and masking_tag_name=?");
     $sth2->execute($dfc->dnafrag_id, $dfc->seq_start, $dfc->seq_end,
-                   $dfc->masking_analysis_data_id);
+                   $dfc->method_link_species_set_id,
+		  $dfc->masking_tag_name);
     my($id) = $sth2->fetchrow_array();
     warn("DnaFragChunkAdaptor: insert failed, but dnafrag_chunk_id select failed too") unless($id);
     $dfc->dbID($id);
@@ -129,7 +139,7 @@ sub update_sequence
   Returntype : Bio::EnsEMBL::Compara::Production::DnaFragChunk
   Exceptions : thrown if $id is not defined
   Caller     : general
-  
+
 =cut
 
 sub fetch_by_dbID{
@@ -242,7 +252,8 @@ sub _columns {
              dfc.dnafrag_id
              dfc.seq_start
              dfc.seq_end
-             dfc.masking_analysis_data_id
+             dfc.method_link_species_set_id
+	     dfc.masking_tag_name
              dfc.sequence_id
             );
 }
@@ -278,13 +289,16 @@ sub _objs_from_sth {
     $dfc->seq_end($column{'seq_end'});
     $dfc->sequence_id($column{'sequence_id'});
     $dfc->dnafrag_id($column{'dnafrag_id'});
-    $dfc->masking_analysis_data_id($column{'masking_analysis_data_id'});
+    $dfc->method_link_species_set_id($column{'method_link_species_set_id'});
+    $dfc->masking_tag_name($column{'masking_tag_name'});
 
-    if($column{'masking_analysis_data_id'}) {
-      $dfc->masking_options($self->_fetch_MaskingOptions_by_dbID($column{'masking_analysis_data_id'}));
+    if($column{'method_link_species_set_id'} && $column{'masking_tag_name'}) {
+      $dfc->masking_options($self->fetch_MaskingOptions_by_mlss_tag($column{'method_link_species_set_id'},$column{'masking_tag_name'}));
 
-      #reset masking_analysis_data_id second because setting masking_options internal clears ID
-      $dfc->masking_analysis_data_id($column{'masking_analysis_data_id'});
+      #reset method_link_species_set_id and masking_tag_name because setting masking_options clears these fields
+      $dfc->method_link_species_set_id($column{'method_link_species_set_id'});
+      $dfc->masking_tag_name($column{'masking_tag_name'});
+
     }
 
     #$dfc->display_short();
@@ -376,20 +390,22 @@ sub _fetch_DnaFrag_by_dbID
   return $self->db->get_DnaFragAdaptor->fetch_by_dbID($dnafrag_id);  
 }
 
-sub _fetch_MaskingOptions_by_dbID
+sub fetch_MaskingOptions_by_mlss_tag
 {
   my $self    = shift;
-  my $data_id = shift;
+  my $mlss_id = shift;
+  my $tag_name= shift;
 
-  $self->{'_masking_cache'} = {} unless(defined($self->{'_masking_cache'}));
+  my $cache_key = $mlss_id.':'.$tag_name;
 
-  if(!defined($self->{'_masking_cache'}->{$data_id})) {
-    #print("FETCH masking_options for data_id = $data_id\n");
-    my $dataDBA = new Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor($self->dbc);
-    $self->{'_masking_cache'}->{$data_id} = $dataDBA->fetch_by_dbID($data_id);
+  $self->{'_masking_cache'} ||= {};
+
+  unless($self->{'_masking_cache'}->{$cache_key}) {
+    my $mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "No MLSS object with id=$mlss_id";    
+    $self->{'_masking_cache'}->{$cache_key} = $mlss->get_value_for_tag($tag_name);
   }
   
-  return $self->{'_masking_cache'}->{$data_id};
+  return $self->{'_masking_cache'}->{$cache_key};
 }
 
 
