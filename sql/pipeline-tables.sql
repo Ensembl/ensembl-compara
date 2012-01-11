@@ -68,11 +68,13 @@ CREATE TABLE dnafrag_chunk (
   dnafrag_id                 int(10) NOT NULL DEFAULT 0,
   seq_start                  int(10) unsigned NOT NULL DEFAULT 0,
   seq_end                    int(10) unsigned NOT NULL DEFAULT 0,
-  masking_analysis_data_id   int(10) NOT NULL DEFAULT 0,
+#  masking_analysis_data_id   int(10) NOT NULL DEFAULT 0,
+  method_link_species_set_id int(10) unsigned DEFAULT NULL,
+  masking_tag_name           varchar(50) DEFAULT NULL,
   sequence_id                int(10) NOT NULL DEFAULT 0,
 
   PRIMARY KEY (dnafrag_chunk_id),
-  UNIQUE KEY uniq_chunk (dnafrag_id, seq_start, seq_end, masking_analysis_data_id),
+  UNIQUE KEY uniq_chunk (dnafrag_id, seq_start, seq_end, method_link_species_set_id, masking_tag_name),
   KEY (sequence_id)
 ) ENGINE=InnoDB;
 
