@@ -84,7 +84,7 @@ sub count_ega {
   my $self = shift;
   my @ega_links = @{$self->get_external_data};
   my $counts = scalar @ega_links || 0; 
-  return $counts;	
+  return $counts;  
 }
 sub count_transcripts {
   my $self = shift;
@@ -974,7 +974,7 @@ sub get_individuals_pops {
 
 sub get_variation_set_string {
   my $self = shift;
-	my @vs = ();
+  my @vs = ();
   my $vari_set_adaptor = $self->hub->database('variation')->get_VariationSetAdaptor;
   my $sets = $vari_set_adaptor->fetch_all_by_Variation($self->vari);
 
@@ -999,9 +999,9 @@ sub get_variation_set_string {
       $sub_set_string .= ")";
       $variation_string .= $sub_set_string;
     }
-		push(@vs,$variation_string);
+    push(@vs,$variation_string);
   }
-	return \@vs;
+  return \@vs;
 }
 
 sub get_variation_sets {
@@ -1026,7 +1026,7 @@ sub variation_feature_mapping { ## used for snpview
   my %data;
   foreach my $vari_feature_obj (@{ $self->get_variation_features }) { 
      my $varif_id = $vari_feature_obj->dbID;
-     $data{$varif_id}{Type}           = $vari_feature_obj->slice->coord_system_name;
+     $data{$varif_id}{Type}           = $self->region_type($vari_feature_obj);
      $data{$varif_id}{Chr}            = $self->region_name($vari_feature_obj);
      $data{$varif_id}{start}          = $self->start($vari_feature_obj);
      $data{$varif_id}{end}            = $vari_feature_obj->end;
@@ -1084,16 +1084,22 @@ sub region_type {
 
   ### Variation_features
   ### Args      : Bio::EnsEMBL::Variation::Variation::Feature
-  ### Example    : my $chr = $data->region_name($vari)
-  ### Description: gets the VariationFeature slice seq region name
+  ### Example    : my $type = $data->region_type($vari)
+  ### Description: gets the VariationFeature slice seq region type
   ### Returns String
 
   my ($self, $vari_feature) = @_;
   my $slice =  $vari_feature->slice;
-  return $slice->coord_system->name if $slice;
+  return $slice->coord_system_name if $slice;
 }
 
 sub region_name { 
+  ### Variation_features
+  ### Args      : Bio::EnsEMBL::Variation::Variation::Feature
+  ### Example    : my $chr = $data->region_name($vari)
+  ### Description: gets the VariationFeature slice seq region name
+  ### Returns String
+  
   my ($self, $vari_feature) = @_;
   my $slice =  $vari_feature->slice;
   return $slice->seq_region_name() if $slice;
@@ -1352,7 +1358,8 @@ sub hgvs {
 }
 
 sub get_hgvs_names_url {
-  my $self = shift;
+  my $self        = shift;
+  my $display_all = shift;
   
   # Get the HGVS names
   my $hgvs_hash = $self->hgvs(@_);
@@ -1362,7 +1369,7 @@ sub get_hgvs_names_url {
   
   foreach my $allele (keys %$hgvs_hash) {
     foreach my $hgvs (@{$hgvs_hash->{$allele}}) {
-      my $url = $self->hgvs_url($hgvs);
+      my $url = $self->hgvs_url($display_all,$hgvs);
       push @{$url{$allele}}, $url ? qq{<a href="$url->[0]">$url->[1]</a>$url->[2]} : $hgvs;
     }
   }
@@ -1382,12 +1389,13 @@ sub get_hgvs_names_url {
 =cut
 
 sub hgvs_url {
-  my $self       = shift;
-  my $hgvs       = shift || '';
-  my $params     = shift || {};
-  my $obj        = $self->Obj;
-  my $hub        = $self->hub;
-  my $max_length = 40;
+  my $self        = shift;
+  my $display_all = shift;
+  my $hgvs        = shift || '';
+  my $params      = shift || {};
+  my $obj         = $self->Obj;
+  my $hub         = $self->hub;
+  my $max_length  = 40;
   
   # Split the HGVS string into components. We are mainly interested in 1) Reference sequence, 2) Version (optional), 3) Notation type (optional) and 4) The rest of the description 
   my ($refseq, $version, $type, $description) = $hgvs =~ m/^((?:ENS[A-Z]*[GTP]\d+)|(?:LRG_\d+[^\.]*)|(?:[^\:]+?))(\.\d+)?\:(?:([mrcgp])\.)?(.*)$/;
@@ -1439,8 +1447,12 @@ sub hgvs_url {
   # Add or override the parameters with the ones supplied to the method
   $p->{$_} = $params->{$_} for keys %$params;
   
+  my $hgvs_string = $hgvs;
+  if (!$display_all) {
+    $hgvs_string = substr($hgvs, length $refseq, ($max_length - length $refseq)) . (length $hgvs > $max_length ? '...' : '');
+  }
   # Return an arrayref with the elements: [0] -> URL, [1] -> display_name, [2] -> the rest of the HGVS string (capped at a maximum length)
-  return [ $hub->url($p), $refseq, substr($hgvs, length $refseq, ($max_length - length $refseq)) . (length $hgvs > $max_length ? '...' : '') ];
+  return [ $hub->url($p), $refseq, $hgvs_string ];
 }
 
 1;
