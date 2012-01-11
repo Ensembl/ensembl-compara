@@ -1,5 +1,3 @@
-=pod
-
 =head1 NAME
 
  Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
@@ -59,27 +57,22 @@ sub default_options {
 	'release'               => '66',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
         'ensembl_cvs_root_dir'  => $ENV{'HOME'}.'/src/ensembl_main', 
-	#'dbname'               => '', #Define on te command line. Compara database name eg hsap_ggor_lastz_64
+	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
 
          # dependent parameters:
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
         'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara3',
+            -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'), 
             -dbname => $ENV{USER}.'_'.$self->o('dbname'),    
         },
-	master_db => {
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -dbname => 'sf5_ensembl_compara_master', 
-	    -driver => 'mysql',
-       },
+
+	'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+
 	'staging_loc1' => {
             -host   => 'ens-staging1',
             -port   => 3306,
@@ -97,7 +90,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -db_version => 64,
+	    -db_version => 65,
         },
 
 	'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
@@ -140,7 +133,7 @@ sub default_options {
 			     'reference'   => {'chunk_size' => 30000000,
 					       'overlap'    => 0,
 					       'include_non_reference' => 1,
-					       'masking_options_file' => '/nfs/users/nfs_k/kb3/work/hive/data/human36.spec'},
+					       'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec"},
 			     #non human example
 #   			    'reference'     => {'chunk_size'      => 10000000,
 #   						'overlap'         => 0,
@@ -197,6 +190,7 @@ sub default_options {
         #
 	#Default pairaligner config
 	#
+	'skip_pairaligner_config' => 0, #skip this module if set to 1
 	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
 	'config_url' => '', #Location of pairwise config database. Must define on command line
 	'output_dir' => '/lustre/scratch103/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
@@ -211,6 +205,7 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
        'mkdir -p '.$self->o('dump_dir'), #Make dump_dir directory
        'mkdir -p '.$self->o('output_dir'), #Make dump_dir directory
+       'mkdir -p '.$self->o('bed_dir'), #Make bed_dir directory
     ];
 }
 
@@ -284,9 +279,9 @@ sub pipeline_analyses {
 				  'program'        => $self->o('populate_new_database_exe'),
 				  'mlss_id'        => $self->o('mlss_id'),
 				  'reg_conf'        => $self->o('reg_conf'),
-				  'cmd'            => "#program# --master " . $self->dbconn_2_url('master_db') . " --new " . $self->dbconn_2_url('pipeline_db') . " --species #speciesList# --mlss #mlss_id# --reg-conf #reg_conf# ",
+#				  'cmd'            => "#program# --master " . $self->dbconn_2_url('master_db') . " --new " . $self->dbconn_2_url('pipeline_db') . " --species #speciesList# --mlss #mlss_id# --reg-conf #reg_conf# ",
 				  #If no master set, then use notation below
-				  #'cmd'            => "#program# --master " . $self->o('master_db') . " --new " . $self->dbconn_2_url('pipeline_db') . " --species #speciesList# --mlss #mlss_id# --reg-conf #reg_conf# ",
+				  'cmd'            => "#program# --master " . $self->o('master_db') . " --new " . $self->dbconn_2_url('pipeline_db') . " --species #speciesList# --mlss #mlss_id# --reg-conf #reg_conf# ",
 				 },
 	       -flow_into => {
 			      1 => [ 'parse_pair_aligner_conf' ],
@@ -322,7 +317,7 @@ sub pipeline_analyses {
 			       5 => [ 'create_alignment_chains_jobs' ],
 			       6 => [ 'create_alignment_nets_jobs' ],
 			       7 => [ 'pairaligner_config' ],
-			       8 => [ 'healthcheck' ],			       
+			       8 => [ 'healthcheck' ],
 			       9 => [ 'dump_dna' ],
 			      },
   	    },
@@ -554,6 +549,7 @@ sub pipeline_analyses {
 	    { -logic_name => 'pairaligner_config',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerConfig',
 	      -parameters => {
+			      'skip_pairaligner_config' => $self->o('skip_pairaligner_config'),
 			      'dump_features' => $self->o('dump_features_exe'),
 			      'update_config_database' => $self->o('update_config_database_exe'),
 			      'create_pair_aligner_page' => $self->o('create_pair_aligner_page_exe'),
