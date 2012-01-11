@@ -12,22 +12,22 @@ sub default_options {
 	    'pipeline_name'         => 'TBLAT_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
 	    #Define location of core databases separately (over-ride curr_core_sources_locs in Pairwise_conf.pm)
-	    #'reference' => {
-	    #	-host           => "host_name",
-	    #	-port           => port,
-	    #	-user           => "user_name",
-	    #	-dbname         => "my_human_database",
-	    #	-species        => "homo_sapiens"
-	    #},
-            #'non_reference' => {
-	    #	    -host           => "host_name",
-	    #	    -port           => port,
-	    #	    -user           => "user_name",
-	    #	    -dbname         => "my_ciona_database",
-	    #	    -species        => "ciona_intestinalis"
-	    #	  },
-	    #'curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],
-	    #'curr_core_sources_locs'=> '',
+#	    'reference' => {
+#	    	-host           => "host_name",
+#	    	-port           => port,
+#	    	-user           => "user_name",
+#	    	-dbname         => "my_human_database",
+#	    	-species        => "homo_sapiens"
+#	    },
+#            'non_reference' => {
+#	    	    -host           => "host_name",
+#	    	    -port           => port,
+#	    	    -user           => "user_name",
+#	    	    -dbname         => "my_ciona_database",
+#	    	    -species        => "ciona_intestinalis"
+#	    	  },
+#	    'curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],
+#	    'curr_core_sources_locs'=> '',
 
 	    'ref_species' => 'homo_sapiens',
 
@@ -41,7 +41,7 @@ sub default_options {
 					       'dump_dir' => $self->o('dump_dna_dir'),
 					       #human
 					       'include_non_reference' => 1,
-					       'masking_options_file' => '/nfs/users/nfs_k/kb3/work/hive/data/human36.spec',
+					       'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec",
 					       #non-human
 					       #'masking_options' => '{default_soft_masking => 1}',
 					      },
