@@ -179,12 +179,6 @@ sub add_child {
   return $link;
 }
 
-sub store_child {
-  my ($self, $child) = @_;
-  throw("store_child has been deprecated. Highly inefficient.".
-        "Use add_child, build in memory and store in one go\n");
-}
-
 
 =head2 disavow_parent
 
