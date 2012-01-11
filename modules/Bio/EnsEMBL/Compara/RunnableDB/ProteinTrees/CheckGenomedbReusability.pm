@@ -204,10 +204,9 @@ sub hash_all_exons_from_dbc {
     my $dbc = $dba->dbc();
 
     my $sql = qq{
-        SELECT CONCAT(tsi.stable_id, ':', e.seq_region_start, ':', e.seq_region_end)
-          FROM transcript_stable_id tsi, transcript t, exon_transcript et, exon e, seq_region sr, coord_system cs
-         WHERE tsi.transcript_id=t.transcript_id
-           AND t.transcript_id=et.transcript_id
+        SELECT CONCAT(t.stable_id, ':', e.seq_region_start, ':', e.seq_region_end)
+          FROM transcript t, exon_transcript et, exon e, seq_region sr, coord_system cs
+         WHERE t.transcript_id=et.transcript_id
            AND et.exon_id=e.exon_id
            AND t.seq_region_id = sr.seq_region_id
            AND sr.coord_system_id = cs.coord_system_id
