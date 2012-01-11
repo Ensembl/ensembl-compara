@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
 
   This software is distributed under a modified Apache license.
@@ -42,6 +42,7 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
+use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 my $verbose = 0;
 
@@ -50,27 +51,24 @@ my $suffix_separator = '__cut_here__';
 sub fetch_input {
     my ($self) = @_;
 
-    #must be better way of doing this
     #Return if no conf file and trying to get the species list or there is no master_db in which case cannot call
     #populate_new_database
     if (!$self->param('conf_file') &&  $self->param('get_species_list') || !$self->param('master_db')) {
 	return;
     }
-    $DB::single = 1;
 
     #
     #Must load the registry first
     #
-    if ($self->param('reg_conf')) {
-	Bio::EnsEMBL::Registry->load_all($self->param('reg_conf'));
-    } elsif ($self->param('registry_dbs')) {
-	load_registry_dbs($self->param('registry_dbs'));
-    } elsif ($self->param('core_dbs')) {
+    if ($self->param('core_dbs')) {
 	#list of individual core databases
 	foreach my $core_db (@{$self->param('core_dbs')}) {
 	    new Bio::EnsEMBL::DBSQL::DBAdaptor(%$core_db);
-	}
-
+	} 
+    } elsif ($self->param('registry_dbs')) {
+	load_registry_dbs($self->param('registry_dbs'));
+    } elsif ($self->param('reg_conf')) { 	    
+      Bio::EnsEMBL::Registry->load_all($self->param('reg_conf'));
     }
 
     #Set default reference speices. Should be set by init_pipeline module
@@ -82,7 +80,6 @@ sub fetch_input {
 sub run {
     my ($self) = @_;
 
-    #must be better way to doing this
     #Return if no conf file and trying to get the species list or there is no master_db in which case cannot call
     #populate_new_database
     if ($self->param('get_species_list') && (!$self->param('conf_file') || !$self->param('master_db'))) {
@@ -134,15 +131,19 @@ sub write_output {
 	
 	my $mlss = write_mlss_entry($self->compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db);
 	$pair_aligner->{'mlss_id'} = $mlss->dbID;
+
+	$pair_aligner->{'reference_masking_tag_name'} = "reference_masking_options";
+	$pair_aligner->{'non_reference_masking_tag_name'} = "non_reference_masking_options";
+
+	#Write masking options
+	$self->write_masking_options($dna_collections->{$pair_aligner->{'reference_collection_name'}}, $mlss, $pair_aligner->{'reference_masking_tag_name'});
+	$self->write_masking_options($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}, $mlss, $pair_aligner->{'non_reference_masking_tag_name'});
+
+
     }
 
     #Write options and chunks entries to meta table
     $self->write_parameters_to_meta();
-
-    #Write masking options
-    foreach my $dna_collection (values %$dna_collections) {
-	$self->write_masking_options($dna_collection);
-    }
 
     #Create dataflows for pair_aligner parts of the pipeline
     $self->create_pair_aligner_dataflows();
@@ -210,7 +211,6 @@ sub parse_conf {
 
     #parse only the SPECIES fields to get a species_list only
     if ($self->param('get_species_list')) {
-
 	my @spp_names;
 	if ($self->param('master_db')) {
 	    $self->get_species($speciesList, $self->param('master_db'));
@@ -282,6 +282,21 @@ sub get_species {
 	    $genome_db = $gdb_adaptor->fetch_by_name_assembly($species->{species});
 	}
 	$species->{'genome_db'} = $genome_db;
+
+	if ($species->{host}) {
+	    #already have core db location defined
+	    my $port = $species->{port} || 3306;
+	    my $core_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(
+							     -host => $species->{host},
+							     -user => $species->{user},
+							     -port => $port,
+							     -species => $species->{species},
+							     -dbname => $species->{dbname});
+	    $genome_db->locator($core_dba->locator);
+	    next;
+	}
+
+
 	$self->get_locator($genome_db);
     }
 }
@@ -383,8 +398,8 @@ sub get_chunking {
    unless (defined $dna_collection->{'dump_loc'}) {
        $dna_collection->{'dump_loc'} = $default_chunk->{'dump_loc'};
    }
-   #foreach my $key (keys %{$ref_dna_collection}) {
-   #print "$key " . $ref_dna_collection->{$key} . "\n";
+   #foreach my $key (keys %{$dna_collection}) {
+   #    print "$key " . $dna_collection->{$key} . "\n";
    #}
 
 }
@@ -407,6 +422,11 @@ sub get_default_chunking {
 	$dna_collection->{'overlap'} = $default_chunk->{'overlap'};
     }
 
+    #region
+    unless (defined $dna_collection->{'region'}) {
+	$dna_collection->{'region'} = $default_chunk->{'region'};
+    }
+ 
     #masking option file (currently only set for human which is always reference)
     unless (defined $dna_collection->{'masking_options_file'}) {
 	$dna_collection->{'masking_options_file'} = $default_chunk->{'masking_options_file'};
@@ -428,107 +448,8 @@ sub get_default_chunking {
 	}
     }
     
-    foreach my $key (keys %{$dna_collection}) {
-	print "    $key " . $dna_collection->{$key} . "\n";
-    }
-}
-
-#
-#Get chunking info for reference species. Use defaults to fill in missing information
-#
-sub get_reference_chunking {
-    my ($self, $pair_aligner, $dna_collections) = @_;
-
-    my $ref_collection_name = $pair_aligner->{'reference_collection_name'};
-    my $ref_dna_collection = $dna_collections->{$ref_collection_name};
-
-    my $default_chunks = $self->param('default_chunks');
-
-    #chunk_size
-    unless (defined $ref_dna_collection->{'chunk_size'}) {
-	$ref_dna_collection->{'chunk_size'} = $default_chunks->{'reference'}{'chunk_size'};
-    }
-    
-    #overlap
-    unless (defined $ref_dna_collection->{'overlap'}) {
-	$ref_dna_collection->{'overlap'} = $default_chunks->{'reference'}{'overlap'};
-    }
-    
-    #include_non_reference (haplotypes) and masking_options
-    unless (defined $ref_dna_collection->{'include_non_reference'}) {
-	$ref_dna_collection->{'include_non_reference'} = $default_chunks->{'reference'}{'include_non_reference'};
-    }
-    unless (defined $ref_dna_collection->{'masking_options_file'}) {
-	$ref_dna_collection->{'masking_options_file'} = $default_chunks->{'reference'}{'masking_options_file'};
-    }
-    unless (defined $ref_dna_collection->{'masking_options'}) {
-	$ref_dna_collection->{'masking_options'} = $default_chunks->{'reference'}{'masking_options'};
-    }
-
-    #Find location to dump dna for tblat analyses. Can either be specific dump_loc or a dump_dir
-    unless (defined $ref_dna_collection->{'dump_loc'}) {
-	$ref_dna_collection->{'dump_loc'} = $default_chunks->{'reference'}{'dump_loc'};
-    }
-    unless (defined $ref_dna_collection->{'dump_loc'}) {
-	if (defined $default_chunks->{'reference'}{'dump_dir'}) {
-	    $ref_dna_collection->{'dump_loc'} = $default_chunks->{'reference'}{'dump_dir'} . "/" . $ref_dna_collection->{'genome_db'}->name;
-	}
-    }
-
-    #foreach my $key (keys %{$ref_dna_collection}) {
-	#print "$key " . $ref_dna_collection->{$key} . "\n";
-    #}
-}
-
-#
-#Get chunking info for non-reference species. Use defaults to fill in missing information
-#
-sub get_non_reference_chunking {
-    my ($self, $pair_aligner, $dna_collections) = @_;
-
-    my $default_chunks = $self->param('default_chunks');
-
-    my $non_ref_collection_name = $pair_aligner->{'non_reference_collection_name'};
-    my $non_ref_dna_collection = $dna_collections->{$non_ref_collection_name};
-
-    #chunk_size
-    unless (defined $non_ref_dna_collection->{'chunk_size'}) {
-	$non_ref_dna_collection->{'chunk_size'} = $default_chunks->{'non_reference'}{'chunk_size'};
-    }
-
-    #group_set_size
-    unless (defined $non_ref_dna_collection->{'group_set_size'}) {
-	$non_ref_dna_collection->{'group_set_size'} = $default_chunks->{'non_reference'}{'group_set_size'};
-    }
-
-    #overlap
-    unless (defined $non_ref_dna_collection->{'overlap'}) {
-	$non_ref_dna_collection->{'overlap'} = $default_chunks->{'non_reference'}{'overlap'};
-    }
-
-    #masking option file (currently only set for human which is always reference)
-    unless (defined $non_ref_dna_collection->{'masking_options_file'}) {
-	$non_ref_dna_collection->{'masking_options_file'} = $default_chunks->{'non_reference'}{'masking_options_file'};
-    }
-
-    #masking_option
-    unless (defined $non_ref_dna_collection->{'masking_options'}) {
-	$non_ref_dna_collection->{'masking_options'} = $default_chunks->{'non_reference'}{'masking_options'};
-    }
-    
-    #dump location (currently never set for non-reference chunking)
-    unless (defined $non_ref_dna_collection->{'dump_loc'}) {
-	$non_ref_dna_collection->{'dump_loc'} = $default_chunks->{'non_reference'}{'dump_loc'};
-    }
-
-    unless (defined $non_ref_dna_collection->{'dump_loc'}) {
-	if (defined $default_chunks->{'non_reference'}{'dump_dir'}) {
-	    $non_ref_dna_collection->{'dump_loc'} = $default_chunks->{'non_reference'}{'dump_dir'} . "/" . $non_ref_dna_collection->{'genome_db'}->name;
-	}
-    }
-
-    #foreach my $key (keys %{$non_ref_dna_collection}) {
-	#print "    $key " . $non_ref_dna_collection->{$key} . "\n";
+    #foreach my $key (keys %{$dna_collection}) {
+	#print "    $key " . $dna_collection->{$key} . "\n";
     #}
 }
 
@@ -576,7 +497,6 @@ sub parse_defaults {
 	    die "Must define location of core dbs to load dnafrags";
 	}
     }
-
     #Should be able to provide a list of mlss_ids
     if ($self->param('mlss_id')) {
 	my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -592,13 +512,13 @@ sub parse_defaults {
     %$chain_config = ('input_method_link' => $self->param('default_chain_input'),
 		      'output_method_link' => $self->param('default_chain_output'));
     
+    
     my $net_config = {};
     %$net_config = ('input_method_link' => $self->param('default_net_input'),
 		    'output_method_link' => $self->param('default_net_output'));
     
     #create dna_collections
     foreach my $genome_db (@$genome_dbs) {
-	
 	#get and store locator
 	$self->get_locator($genome_db);
 	$self->compara_dba->get_GenomeDBAdaptor->store($genome_db);
@@ -635,6 +555,16 @@ sub parse_defaults {
     get_default_chunking($dna_collections->{$pair_aligner->{'reference_collection_name'}}, $self->param('default_chunks')->{'reference'});	
     get_default_chunking($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}, $self->param('default_chunks')->{'non_reference'});
     
+    #Store region, if defined, in the chain_config for use in no_chunk_and_group_dna
+    if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'region'}) {
+	$dna_collections->{$chain_config->{'reference_collection_name'}}->{'region'} = 
+	  $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'region'};
+    }
+    if ($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'}) {
+	$dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'region'} = 
+	  $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'};
+    }
+
     
     push @$pair_aligners, $pair_aligner;
     push @$chain_configs, $chain_config;
@@ -702,16 +632,15 @@ sub write_parameters_to_meta {
 }
 
 #
-#Write masking options to analysis_data table for now
+#Write masking options to method_link_species_set_tag table
 #
 sub write_masking_options {
-    my ($self, $dna_collection) = @_;
+    my ($self, $dna_collection, $mlss, $tag) = @_;
 
     my $masking_options_file = $dna_collection->{'masking_options_file'};
     if (defined $masking_options_file && ! -e $masking_options_file) {
 	throw("ERROR: masking_options_file $masking_options_file does not exist\n");
     }
-
     my $masking_options = $dna_collection->{'masking_options'};
 
     my $options_string = "";
@@ -731,12 +660,8 @@ sub write_masking_options {
 	#No masking options defined
 	return;
     }
+    $mlss->store_tag($tag, $options_string);
 
-    $dna_collection->{'masking_analysis_data_id'} =
-      $self->compara_dba->get_AnalysisDataAdaptor->store_if_needed($options_string);
-
-    #$dna_collection->{'masking_options'} = undef;
-    #$dna_collection->{'masking_options_file'} = undef;
 }
 
 
@@ -766,12 +691,10 @@ sub create_pair_aligner_dataflows {
 	#
 	#dataflow to create_filter_duplicates_jobs
 	#
-	#my $ref_output_id = "{'method_link_species_set_id'=>'$mlss_id','collection_name'=>'" . $pair_aligner->{'reference_collection_name'} . "'}";
 	my $ref_output_hash = {};
 	%$ref_output_hash = ('method_link_species_set_id'=>$mlss_id,
 			     'collection_name'=> $pair_aligner->{'reference_collection_name'});
 
-	#my $non_ref_output_id = "{'method_link_species_set_id'=>'$mlss_id','collection_name'=>'" . $pair_aligner->{'non_reference_collection_name'} . "'}";
 	my $non_ref_output_hash = {};
 	%$non_ref_output_hash = ('method_link_species_set_id'=>$mlss_id,
 				 'collection_name'=>$pair_aligner->{'non_reference_collection_name'});
@@ -784,12 +707,15 @@ sub create_pair_aligner_dataflows {
 	#
 	my $output_hash = {};
 	$output_hash->{'collection_name'} = $pair_aligner->{'reference_collection_name'};
+	$output_hash->{'method_link_species_set_id'} = $mlss_id;
+	$output_hash->{'masking_tag_name'} = $pair_aligner->{'reference_masking_tag_name'};
+
 	while (my ($key, $value) = each %{$dna_collections->{$pair_aligner->{'reference_collection_name'}}}) {
 	    if (not ref($value)) {
 		if (defined $value) {
 		    $output_hash->{$key} = $value;
 		}
-	    } else {
+	    } elsif ($key eq "genome_db") {
 		#genome_db_id
 		$output_hash->{'genome_db_id'} = $value->dbID;
 	    }
@@ -798,12 +724,15 @@ sub create_pair_aligner_dataflows {
 
 	$output_hash = {};
 	$output_hash->{'collection_name'} = $pair_aligner->{'non_reference_collection_name'};
+	$output_hash->{'method_link_species_set_id'} = $mlss_id;
+	$output_hash->{'masking_tag_name'} = $pair_aligner->{'non_reference_masking_tag_name'};
 	while (my ($key, $value) = each %{$dna_collections->{$pair_aligner->{'non_reference_collection_name'}}}) {
+
 	    if (not ref($value)) {
 		if (defined $value) {
 		    $output_hash->{$key} = $value;
 		}
-	    } else {
+	    } elsif ($key eq "genome_db") {
 		#genome_db_id
 		$output_hash->{'genome_db_id'} = $value->dbID;
 	    }
@@ -871,9 +800,6 @@ sub create_chain_dataflows {
 
 	my $pair_aligner = find_config($all_configs, $dna_collections, $input_method_link_type, $dna_collections->{$chain_config->{'reference_collection_name'}}->{'genome_db'}->name, $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'genome_db'}->name);
 	throw("Unable to find the corresponding pair_aligner for the chain_config") unless (defined $pair_aligner);
-
-	#my ($input_method_link_id, $input_method_link_type) = @{$pair_aligner->{'method_link'}};
-	#my ($output_method_link_id, $output_method_link_type) = @{$chain_config->{'method_link'}};
 
 	#
 	#dataflow to create_alignment_chains_jobs
@@ -1018,9 +944,10 @@ sub print_pair_aligner {
 sub get_locator {
     my ($self, $genome_db) = @_;
     my $no_alias_check = 1;
+
     my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($genome_db->name, 'core', $no_alias_check);
     if (!defined $this_core_dba) {
-	die("Unable to find a suitable core database from the registry\n");
+	die("Unable to find a suitable core database for ". $genome_db->name . " from the registry\n");
     }
     my $this_assembly = $this_core_dba->extract_assembly_name();
     my $this_start_date = $this_core_dba->get_MetaContainer->get_genebuild();
@@ -1135,7 +1062,6 @@ sub populate_database_from_core_db {
 
     return ($genome_db);
 }
-
 
 #Taken from update_genome.pl
 sub update_genome_db {
