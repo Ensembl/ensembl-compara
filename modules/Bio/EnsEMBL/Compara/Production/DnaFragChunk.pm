@@ -1,12 +1,26 @@
+=head1 LICENSE
+
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
 =head1 NAME - Bio::EnsEMBL::Compara::Production::DnaFragChunk
 
 =head1 SYNOPSIS
 
 =head1 DESCRIPTION
-
-=head1 CONTACT
-
-Jessica Severin <jessica@ebi.ac.uk>
 
 =head1 APPENDIX
 
@@ -95,7 +109,6 @@ sub fetch_masked_sequence {
   my $self = shift;
   
   return undef unless(my $slice = $self->slice());
-
 
   my $dcs = $slice->adaptor->db->dbc->disconnect_when_inactive();
   #print("fetch_masked_sequence disconnect=$dcs\n");
@@ -202,7 +215,6 @@ sub bioseq {
   my $self = shift;
 
   my $seq = undef;
-
   if(not defined($self->sequence())) {
     my $starttime = time();
 
@@ -312,20 +324,24 @@ sub masking_options {
   my $self = shift;
   if(@_) {
     $self->{'_masking_options'} = shift;
-    $self->masking_analysis_data_id(0);
+    $self->method_link_species_set_id(undef);
+    $self->masking_tag_name(undef);
   }
   return $self->{'_masking_options'};
 }
 
-#method for passing previously known and stored analysis_data_id reference around
-#so that there is no need to store it again
-sub masking_analysis_data_id {
+sub method_link_species_set_id {
   my $self = shift;
-  $self->{'masking_analysis_data_id'} = shift if(@_);
-  $self->{'masking_analysis_data_id'}=0 unless(defined($self->{'masking_analysis_data_id'}));
-  return $self->{'masking_analysis_data_id'};
+  $self->{'_method_link_species_set_id'} = shift if(@_);
+  return $self->{'_method_link_species_set_id'};
 }
 
+sub masking_tag_name {
+    my $self = shift;
+    $self->{'_masking_tag_name'} = shift if(@_);
+    return $self->{'_masking_tag_name'};
+
+}
 
 sub dump_to_fasta_file
 {
