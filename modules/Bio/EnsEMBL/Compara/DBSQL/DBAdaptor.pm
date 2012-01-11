@@ -150,6 +150,7 @@ sub get_available_adaptors {
       "Sequence" => "Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor",
       "ProteinTree" => "Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor",
       "NCTree" => "Bio::EnsEMBL::Compara::DBSQL::NCTreeAdaptor",
+      "CAFETree" => "Bio::EnsEMBL::Compara::DBSQL::CAFETreeAdaptor",
       "Analysis" => "Bio::EnsEMBL::DBSQL::AnalysisAdaptor",
       "ConservationScore" => "Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor",
       "ConstrainedElement" => "Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor",
