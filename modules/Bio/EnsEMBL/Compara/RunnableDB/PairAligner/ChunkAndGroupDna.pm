@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
 
   This software is distributed under a modified Apache license.
@@ -99,7 +99,6 @@ sub fetch_input {
   }
 
   throw("No genome_db specified") unless defined($self->param('genome_db_id'));
-  $self->print_params;
   
   #get the Compara::GenomeDB object for the genome_db_id
   $self->param('genome_db', $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id')));
@@ -159,23 +158,6 @@ sub write_output
 # subroutines
 #
 #####################################
-
-sub print_params {
-  my $self = shift;
-
-  print(" params:\n");
-  print("   genome_db_id             : ", $self->param('genome_db_id'),"\n");
-  print("   region                   : ", $self->param('region'),"\n") if($self->param('region'));
-  print("   store_seq                : ", $self->param('store_seq'),"\n");
-  print("   chunk_size               : ", $self->param('chunk_size'),"\n");
-  print("   overlap                  : ", $self->param('overlap') ,"\n");
-  print("   masking_analysis_data_id : ", $self->param('masking_analysis_data_id') ,"\n");
-  print("   masking_options          : ", $self->param('masking_options') ,"\n") if($self->param('masking_options'));
-  print("   include_non_reference    : ", $self->param('include_non_reference') ,"\n");
-  print("   include_duplicates       : ", $self->param('include_duplicates') ,"\n");
-
-}
-
 
 sub create_chunks
 {
@@ -361,22 +343,28 @@ sub create_dnafrag_chunks {
     }
     $chunk->seq_end($chunk_end);
 
-    $DB::single = 1;
-    $chunk->masking_analysis_data_id($self->param('masking_analysis_data_id'));
     if($self->param('masking_options')) {
       $chunk->masking_options($self->param('masking_options'));
+    } elsif ($self->param('method_link_species_set_id') && $self->param('masking_tag_name')) {
+	#ie have set $self->param('masking_options_file')
+
+      #These are unset by $chunk->masking_options - but why?
+      $chunk->method_link_species_set_id($self->param('method_link_species_set_id'));
+      $chunk->masking_tag_name($self->param('masking_tag_name'));
+
+      $chunk->masking_options($self->compara_dba->get_DnaFragChunkAdaptor->fetch_MaskingOptions_by_mlss_tag($chunk->method_link_species_set_id,
+														 $chunk->masking_tag_name));
     }
+
+    #Store these to retrieve values from method_link_species_set_tag table
+    $chunk->method_link_species_set_id($self->param('method_link_species_set_id'));
+    $chunk->masking_tag_name($self->param('masking_tag_name'));
 
     #Store the sequence at this point, rather than in the blastz analysis
     #only try to store the sequence if its length is less than that
     #allowed by myslwd max_allowed_packet=12M
     if($self->param('store_seq') && 
        ($chunk->seq_end - $chunk->seq_start + 1) <= 11500000) {
-
-	#Set the masking_options variable for the masking_analysis_data_id
-	if (!$self->param('_masking_options') && $chunk->masking_analysis_data_id) {
-	    $chunk->masking_options($self->compara_dba->get_DnaFragChunkAdaptor->_fetch_MaskingOptions_by_dbID($chunk->masking_analysis_data_id));
-	}
 
 	$chunk->bioseq; #fetches sequence and stores internally in ->sequence variable
     }
