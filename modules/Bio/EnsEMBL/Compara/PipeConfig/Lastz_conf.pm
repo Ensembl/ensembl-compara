@@ -39,7 +39,7 @@ sub default_options {
 					       'overlap'    => 0,
 					       'include_non_reference' => 1,
 #Should use this for human vs non-primate
-					       'masking_options_file' => '/nfs/users/nfs_k/kb3/work/hive/data/human36.spec'},
+					       'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec",
 			     #non human example
 #   			    'reference'     => {'chunk_size'      => 10000000,
 #   						'overlap'         => 0,
