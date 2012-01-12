@@ -371,5 +371,32 @@ sub _load_tags {
 }
 
 
+=head2 AUTOLOAD
+
+  Description: matches the get_value_for_XXX calls to get_value_for_tag('XXX') and other calls
+  Returntype : none
+  Exceptions : none
+  Caller     : system
+
+=cut
+
+our $AUTOLOAD;
+
+sub AUTOLOAD {
+    my $self = shift;
+    #print "AUTOLOAD $AUTOLOAD\n";
+    if ( $AUTOLOAD =~ m/::get_value_for_(\w+)$/ ) {
+        #print "MATCHED $1\n";
+        return $self->get_value_for_tag($1);
+    } elsif ( $AUTOLOAD =~ m/::get_all_values_for_(\w+)$/ ) {
+        return $self->get_all_values_for_tag($1);
+    } elsif ( $AUTOLOAD =~ m/::get_(\w+)_value$/ ) {
+        return $self->get_tagvalue($1);
+    } else {
+        die "$self does not understand method $AUTOLOAD\n";
+    }
+}
+
+
 1;
 
