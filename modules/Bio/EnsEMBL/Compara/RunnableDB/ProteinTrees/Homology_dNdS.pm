@@ -174,6 +174,13 @@ sub calc_genetic_distance {
   }
   my $MLmatrix = $result->get_MLmatrix();
 
+  if($MLmatrix->[0]->[1]->{'dS'} eq 'nan') {
+      # Can happen for spectacularly bad matches, behave as per
+      # Bio::Root::NotImplemented case above.
+      warn "dS is NaN. Ignoring as this can be generated from bad alignments";
+      return $homology;
+  } 
+
   #print "n = ", $MLmatrix->[0]->[1]->{'N'},"\n";
   #print "s = ", $MLmatrix->[0]->[1]->{'S'},"\n";
   #print "t = ", $MLmatrix->[0]->[1]->{'t'},"\n";
