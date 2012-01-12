@@ -73,8 +73,19 @@ sub fetch_input {
         # get the species you want to include and put then in $self->param('cafe_species')
     }
 
-    my $ncTree_Adaptor = $self->compara_dba->get_NCTreeAdaptor();
-    $self->param('ncTree_Adaptor', $ncTree_Adaptor);
+    unless ( $self->param('type') ) {
+        die ('type is mandatory [prot|nc]');
+    }
+
+    if ($self->param('type') eq 'nc') {
+        my $ncTree_Adaptor = $self->compara_dba->get_NCTreeAdaptor();
+        $self->param('adaptor', $ncTree_Adaptor);
+    } elsif ($self->param('type') eq 'prot') {
+        my $protTree_Adaptor = $self->compara_dba->get_ProteinTreeAdaptor();
+        $self->param('adaptor', $protTree_Adaptor);
+    } else {
+        die 'type must be [prot|nc]';
+    }
 
     return;
 }
@@ -116,28 +127,35 @@ sub get_cafe_tree_from_string {
 
 sub get_cafe_table_from_db {
     my ($self) = @_;
+    my $type = $self->param('type');
     my $species = $self->param('cafe_species');
-    my $ncTree_Adaptor = $self->param('ncTree_Adaptor');
+    my $adaptor = $self->param('adaptor');
 
     my $mlss_id = $self->param('mlss_id');
     my $cafe_table_output = $self->param('work_dir') . "/cafe_${mlss_id}.tbl";
     $self->param('cafe_table_file', $cafe_table_output);
 
+    print STDERR "CAFE_TABLE_OUTPUT: $cafe_table_output\n" if ($self->debug());
     open my $cafe_fh, ">", $cafe_table_output or die $!;
 
     print $cafe_fh "FAMILY_DESC\tFAMILY\t", join("\t", @$species), "\n";
 
-    my $clusterset = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($self->param('clusterset_id'));
+    print STDERR Dumper $adaptor if ($self->debug());
+    my $clusterset = $adaptor->fetch_node_by_node_id($self->param('clusterset_id'));
+#    my $clusterset = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($self->param('clusterset_id'));
     my $all_trees = $clusterset->children();
     print STDERR scalar @$all_trees, " trees to process\n" if ($self->debug());
     my $ok_fams = 0;
     for my $tree (@$all_trees) {
-        my $root_id = $tree->node_id();
-        my $nctree = $ncTree_Adaptor->fetch_node_by_node_id($root_id);
-        my $model_name = $nctree->get_tagvalue('model_name');
-        my $nctree_members = $nctree->get_all_leaves();
+        my $subtree = $tree->children->[0];
+        my $root_id = $subtree->node_id();
+        print STDERR "ROOT_ID: $root_id\n" if ($self->debug());
+        my $tree = $adaptor->fetch_node_by_node_id($root_id);
+        my $name = $self->get_name($tree);
+        print STDERR "MODEL_NAME: $name\n" if ($self->debug());
+        my $tree_members = $tree->get_all_leaves();
         my %species;
-        for my $member (@$nctree_members) {
+        for my $member (@$tree_members) {
             my $sp;
             eval {$sp = $member->genome_db->name};
             next if ($@);
@@ -145,7 +163,7 @@ sub get_cafe_table_from_db {
             $species{$sp}++;
         }
 
-        my @flds = ($model_name, $root_id);
+        my @flds = ($name, $root_id);
         for my $sp (@$species) {
             push @flds, ($species{$sp} || 0);
         }
@@ -185,6 +203,17 @@ sub get_leaf {
         }
     }
     return undef;
+}
+
+sub get_name {
+    my ($self, $tree) = @_;
+    my $name;
+    if ($self->param('type') eq 'nc') {
+        $name = $tree->tree->get_tagvalue('model_name');
+    } else {
+        $name = $tree->node_id();
+    }
+    return $name;
 }
 
 1;
