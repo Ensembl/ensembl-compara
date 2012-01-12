@@ -163,6 +163,35 @@ sub fetch_by_name_assembly {
   return $self->fetch_by_dbID($id);
 }
 
+sub _fetch_by_name {
+    my ($self, $name) = @_;
+
+    unless ($name) {
+        throw('name argument is required');
+    }
+
+    my $sth;
+    my $sql = "SELECT genome_db_id FROM genome_db WHERE name = ? AND assembly_default = 1";
+    $sth = $self->prepare($sql);
+    $sth->execute($name);
+
+    my @ids = $sth->fetchrow_array();
+    $sth->finish;
+
+    my $ret_cnt = scalar(@ids);
+    my $id;
+    if ($ret_cnt == 0) {
+        throw("No GenomeDB with this name [$name] has been found in the database");
+    } else {
+        ($id) = @ids;
+        if ($ret_cnt > 1) {
+            warning("name [$name] returned more than one row. Returning only the first one with ID [$id]");
+        }
+    }
+    return $self->fetch_by_dbID($id);
+}
+
+
 =head2 fetch_by_registry_name
 
   Arg [1]    : string $name
