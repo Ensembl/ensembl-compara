@@ -264,19 +264,6 @@ sub fetch_by_stable_id {
 }
 
 
-sub _fetch_stable_id_by_node_id {
-  my ($self, $node_id) = @_;
-
-  my $sql = "SELECT stable_id FROM gene_tree_root WHERE root_id = ?";
-  my $sth = $self->prepare($sql);
-  $sth->execute($node_id);
-
-  my ($stable_id) = $sth->fetchrow_array();
-  $sth->finish();
-  return $stable_id;
-}
-
-
 
 
 ###########################
@@ -491,8 +478,12 @@ sub delete_nodes_not_in_tree
   $dbtree->release_tree;
 }
 
-##
-##
+
+##############################################################
+#
+# Reimplemented methods that propagate the 'tree' reference
+#
+##############################################################
 
 
 sub fetch_all_children_for_node {
@@ -657,6 +648,7 @@ sub _add_GeneTree_wrapper {
         $tree->tree_type($rowhash->{tree_type});
         $tree->method_link_species_set_id($rowhash->{method_link_species_set_id});
         $tree->stable_id($rowhash->{stable_id});
+        $tree->clusterset_id($rowhash->{clusterset_id});
         $tree->version($rowhash->{version});
         $tree->adaptor($self);
         $node->tree($tree);
