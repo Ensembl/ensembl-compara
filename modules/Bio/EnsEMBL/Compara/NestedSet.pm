@@ -301,6 +301,7 @@ sub root {
   # Only if it's for release clusterset (1 genetrees - 0 genomic align trees)
   if (!defined($self->{'_parent_link'}) and $self->adaptor 
       and ($self->right_index-$self->left_index)>1
+      and (defined $self->{'_parent_id'})
       and (1==$self->{'_parent_id'})
      ) {
     return $self->adaptor->fetch_root_by_node($self);
@@ -1753,7 +1754,8 @@ sub _recursive_get_all_leaves {
   $leaves->{$self->obj_id} = $self if($self->is_leaf);
 
   foreach my $child (@{$self->children}) {
-    $child->_recursive_get_all_leaves($leaves);
+     no warnings 'recursion';
+     $child->_recursive_get_all_leaves($leaves);
   }
   return undef;
 }
