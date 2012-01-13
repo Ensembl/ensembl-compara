@@ -98,11 +98,10 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '65',
+        'release'               => '66',
         'rel_suffix'            => '',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
-        'do_not_reuse_list'     => [ 123 ],     # names of species we don't want to reuse this time
-        # For rel 65, we're not reusing the gorilla, because the sequence table was messed up in 64
+        'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
 
     # dependent parameters:
         'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
@@ -156,7 +155,7 @@ sub default_options {
     # connection parameters to various databases:
 
         'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => 'compara4',
+            -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                    
@@ -198,11 +197,11 @@ sub default_options {
         'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
         'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
         'reuse_db' => {   # usually previous release database on compara1
-           -host   => 'compara4',
+           -host   => 'compara1',
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'lg4_ensembl_compara_64',
+           -dbname => 'mp12_ensembl_compara_65',
         },
 
         ## mode for testing the non-Blast part of the pipeline: reuse all Blasts
@@ -610,7 +609,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => -1,
             -flow_into => {
-                1 => [ 'overall_clusterset_qc' ],   # backbone 
+                1 => [ 'dummy_wait_alltrees', 'overall_clusterset_qc' ],   # backbone 
                 2 => [ 'mcoffee' ],                 # fan n_clusters
             },
         },
@@ -646,9 +645,9 @@ sub pipeline_analyses {
                 'groupset_tag'              => 'ClustersetQC',
             },
             -hive_capacity => 3,
-            -flow_into => {
-                1 => [ 'dummy_wait_alltrees' ],    # backbone
-            },
+            #-flow_into => {
+            #    1 => [ 'dummy_wait_alltrees' ],    # backbone
+            #},
         },
 
         {   -logic_name => 'per_genome_clusterset_qc',
@@ -676,7 +675,7 @@ sub pipeline_analyses {
                 'mafft_exe'                 => $self->o('mafft_exe'),
                 'mafft_binaries'            => $self->o('mafft_binaries'),
             },
-            -wait_for => [ 'store_sequences', 'overall_clusterset_qc', 'per_genome_clusterset_qc' ],    # funnel
+            -wait_for => [ 'store_sequences', 'per_genome_clusterset_qc' ],    # funnel #should contain overall_clusterset_qc
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -flow_into => {
                -2 => [ 'mcoffee_himem' ],  # RUNLIMIT
@@ -775,7 +774,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -parameters => {},
             -wait_for => [ 'mcoffee', 'mcoffee_himem', 'njtree_phyml', 'ortho_tree', 'quick_tree_break' ],    # funnel n_clusters
-		-flow_into => [ 'overall_genetreeset_qc' ],  # backbone
+		-flow_into => [ 'group_genomes_under_taxa', 'overall_genetreeset_qc' ],  # backbone
         },
 
 
@@ -797,9 +796,9 @@ sub pipeline_analyses {
                 'groupset_tag'              => 'GeneTreesetQC',
             },
             -hive_capacity => 3,
-            -flow_into => {
-                1 => [ 'group_genomes_under_taxa' ],    # backbone
-            },
+            #-flow_into => {
+            #    1 => [ 'group_genomes_under_taxa' ],    # backbone
+            #},
         },
 
         {   -logic_name => 'per_genome_genetreeset_qc',
