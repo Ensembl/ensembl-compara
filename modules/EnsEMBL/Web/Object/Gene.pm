@@ -172,7 +172,7 @@ sub get_xref_available{
       eval { 
         @db_links = @{$my_transcripts[$i]->get_all_DBLinks};
       };
-      for (my $j=0;  !$available && ($i< scalar @db_links); $j++) {
+      for (my $j=0;  !$available && ($j< scalar @db_links); $j++) {
         $available = $available || ($db_links[$j]->type eq 'MISC') || ($db_links[$j]->type eq 'LIT');
       }      
     }
