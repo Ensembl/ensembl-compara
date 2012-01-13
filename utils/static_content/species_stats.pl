@@ -1,4 +1,4 @@
-#!/localsw/bin/perl
+#!/usr/bin/env perl
 
 ##############################################################################
 #
@@ -23,12 +23,13 @@ use File::Basename qw( dirname );
 use Pod::Usage;
 use Getopt::Long;
 
-use vars qw( $SERVERROOT $PLUGIN_ROOT $SCRIPT_ROOT $DEBUG $FUDGE $NOINTERPRO $NOSUMMARY $help $info @user_spp $allgenetypes $coordsys);
+use vars qw( $SERVERROOT $PLUGIN_ROOT $SCRIPT_ROOT $DEBUG $FUDGE $NOINTERPRO $NOSUMMARY $help $info @user_spp $allgenetypes $coordsys $list);
 
 BEGIN{
   &GetOptions( 
                'help'      => \$help,
                'info'      => \$info,
+               'list'      => \$list,
                'species=s' => \@user_spp,
 	       'a' => \$allgenetypes,
                'debug'     => \$DEBUG,
@@ -77,7 +78,9 @@ my @release_spp = $SD->valid_species;
 my %species_check;
 foreach my $sp (@release_spp) {
   $species_check{$sp}++;
+  print STDERR "$sp\n" if($list);
 }
+exit if ($list);
                                                                                 
 # check validity of user-provided species
 my @valid_spp;
@@ -102,6 +105,7 @@ else {
 
 my $dbconn = EnsEMBL::Web::DBSQL::DBConnection->new(undef, $SD);
 
+my ($count_spp,$total_spp) = (0,scalar @valid_spp);
 foreach my $spp (@valid_spp) {
 
 ## CONNECT TO APPROPRIATE DATABASES
@@ -129,6 +133,8 @@ foreach my $spp (@valid_spp) {
   else {
 
     ## PREPARE TO WRITE TO OUTPUT FILE
+    $count_spp++;
+    print STDERR "\nGetting stats for $spp ($count_spp of $total_spp)...\n";
     my $fq_path_dir = sprintf( STATS_PATH, $PLUGIN_ROOT);
     #print $fq_path_dir, "\n";
     &check_dir($fq_path_dir);
@@ -138,6 +144,7 @@ foreach my $spp (@valid_spp) {
     ### GET ASSEMBLY AND GENEBUILD INFO
     # Assembly ID ->should be in meta table
     my $db_adaptor = Bio::EnsEMBL::Registry->get_DBAdaptor($spp, "core");
+    my $spp_id = $db_adaptor->species_id;
     my $meta_container = $db_adaptor->get_MetaContainer();
 
     my( $a_id ) = ( @{$meta_container->list_value_by_key('assembly.name')},
@@ -186,146 +193,200 @@ foreach my $spp (@valid_spp) {
       ($known) = &query( $db,
         "select count(*)
         from gene
-        where biotype = 'protein_coding' 
+           join seq_region using (seq_region_id)
+           join coord_system using (coord_system_id)
+        where species_id=$spp_id
+        and biotype = 'protein_coding' 
         and status = 'KNOWN'
         ");    
-      print "Known Genes:$known\n" if $DEBUG;
+      print STDERR "Known Genes:$known\n" if $DEBUG;
 
       ($proj) = &query( $db,
         "select count(*)
         from gene
-        where biotype = 'protein_coding'
+           join seq_region using (seq_region_id)
+           join coord_system using (coord_system_id)
+        where species_id=$spp_id
+        and biotype = 'protein_coding'
         and status = 'KNOWN_BY_PROJECTION'
         ");
-      print "Projected Genes:$proj\n" if $DEBUG;
+      print STDERR "Projected Genes:$proj\n" if $DEBUG;
 
       ( $novel ) = &query( $db,
         "select count(*)
         from gene
-        where biotype = 'protein_coding' 
+           join seq_region using (seq_region_id)
+           join coord_system using (coord_system_id)
+        where species_id=$spp_id
+        and biotype = 'protein_coding' 
         and status = 'NOVEL'
         ");    
-      print "Novel Genes:$novel\n" if $DEBUG;
+      print STDERR "Novel Genes:$novel\n" if $DEBUG;
 
       ( $annotated ) = &query( $db,
         "select count(*)
-         from gene
-         where biotype = 'protein_coding'
-         and status = 'ANNOTATED'
+        from gene
+          join seq_region using (seq_region_id)
+          join coord_system using (coord_system_id)
+        where species_id=$spp_id
+        and biotype = 'protein_coding'
+        and status = 'ANNOTATED'
         ");
-      print "Annotated Genes:$annotated\n" if $DEBUG;
+      print STDERR "Annotated Genes:$annotated\n" if $DEBUG;
 
       ( $pseudo ) = &query( $db,
         "select count(*)
         from gene
-        where biotype like '%pseudogene' 
+           join seq_region using (seq_region_id)
+           join coord_system using (coord_system_id)
+        where species_id=$spp_id
+        and biotype like '%pseudogene' 
         or biotype = 'retrotransposed'
         ");    
-      print "Pseudogenes:$pseudo\n" if $DEBUG;
+      print STDERR "Pseudogenes:$pseudo\n" if $DEBUG;
 
       ( $rna ) = &query( $db,
         'select count(*)
         from gene
-        where biotype regexp "[\w]*RNA$" 
-        ');    
-      print "RNA genes:$rna\n" if $DEBUG;
+           join seq_region using (seq_region_id)
+           join coord_system using (coord_system_id)
+        where species_id=' . $spp_id . ' 
+        and biotype regexp "[\w]*RNA$" 
+        ');
+      print STDERR "RNA genes:$rna\n" if $DEBUG;
 
       ( $ig_segments )= &query( $db,
         "select count(distinct g.gene_id)
-        from gene g, analysis a
-        where g.analysis_id = a.analysis_id
+        from gene g, analysis a, seq_region sr, coord_system cs
+        where g.seq_region_id = sr.seq_region_id
+        and sr.coord_system_id = cs.coord_system_id
+        and cs.species_id=$spp_id
+        and g.analysis_id = a.analysis_id
         and a.logic_name in ('ensembl_ig_gene','havana_ig_gene')
         ");
-      print "Segments:$ig_segments\n" if $DEBUG;
+      print STDERR "Segments:$ig_segments\n" if $DEBUG;
 
     }
 
     ## DO OTHER RAW QUERIES
     my( $genpept ) = &query( $db,
     "select count( distinct p.prediction_transcript_id )
-      from prediction_transcript p, analysis a
-      where p.analysis_id = a.analysis_id and a.logic_name = 'Genscan'");
-    print "Genscans:$genpept\n" if $DEBUG;
+      from prediction_transcript p, analysis a, seq_region sr, coord_system cs
+      where p.seq_region_id = sr.seq_region_id
+      and sr.coord_system_id = cs.coord_system_id
+      and cs.species_id=$spp_id
+      and p.analysis_id = a.analysis_id
+      and a.logic_name = 'Genscan'
+    ");
+    print STDERR "Genscans:$genpept\n" if $DEBUG;
 
     my( $genfpept ) = &query( $db,
     "select count( distinct p.prediction_transcript_id )
-      from prediction_transcript p, analysis a
-      where p.analysis_id = a.analysis_id and a.logic_name = 'Genefinder'");
-    print "Genefinder:$genfpept\n" if $DEBUG;
+      from prediction_transcript p, analysis a, seq_region sr, coord_system cs
+      where p.seq_region_id = sr.seq_region_id
+      and sr.coord_system_id = cs.coord_system_id
+      and cs.species_id=$spp_id
+      and p.analysis_id = a.analysis_id
+      and a.logic_name = 'Genefinder'
+    ");
+    print STDERR "Genefinder:$genfpept\n" if $DEBUG;
 
     my( $fgenpept ) = &query( $db,
     "select count( distinct p.prediction_transcript_id )
-      from prediction_transcript p, analysis a
-      where p.analysis_id = a.analysis_id and a.logic_name like '%fgenesh%'");
-    print "Fgenesh:$fgenpept\n" if $DEBUG;
+      from prediction_transcript p, analysis a, seq_region sr, coord_system cs
+      where p.seq_region_id = sr.seq_region_id
+      and sr.coord_system_id = cs.coord_system_id
+      and cs.species_id=$spp_id
+      and p.analysis_id = a.analysis_id
+      and a.logic_name like '%fgenesh%'
+    ");
+    print STDERR "Fgenesh:$fgenpept\n" if $DEBUG;
 
     unless ($pre) {
 	if ($allgenetypes) {
 	    ( $transcripts )= &query( $db,
 				      "select count(distinct t.transcript_id)
-        from transcript t, gene g, analysis a
-        where t.gene_id = g.gene_id
+        from transcript t, gene g, analysis a, seq_region sr, coord_system cs
+        where t.seq_region_id = sr.seq_region_id
+        and sr.coord_system_id = cs.coord_system_id
+        and cs.species_id=$spp_id
+        and t.gene_id = g.gene_id
         and g.analysis_id = a.analysis_id
         ");
 	} else {
 	    ( $transcripts )= &query( $db,
 				      "select count(distinct t.transcript_id)
-        from transcript t, gene g, analysis a
-        where t.gene_id = g.gene_id
+        from transcript t, gene g, analysis a, seq_region sr, coord_system cs
+        where t.seq_region_id = sr.seq_region_id
+        and sr.coord_system_id = cs.coord_system_id
+        and cs.species_id=$spp_id
+        and t.gene_id = g.gene_id
         and g.analysis_id = a.analysis_id
         and a.logic_name in ($genetypes)
         ");
 	}
-      print "Transcripts:$transcripts\n" if $DEBUG;
+      print STDERR "Transcripts:$transcripts\n" if $DEBUG;
 	if ($allgenetypes) {
 	    ( $exons )= &query( $db,
 				"select count(distinct et.exon_id)
-      from exon_transcript et, transcript t, gene g, analysis a
+      from exon_transcript et, transcript t, gene g, analysis a, seq_region sr, coord_system cs
       where et.transcript_id = t.transcript_id
-      and  t.gene_id = g.gene_id
+      and t.seq_region_id = sr.seq_region_id
+      and sr.coord_system_id = cs.coord_system_id
+      and cs.species_id=$spp_id
+      and t.gene_id = g.gene_id
       and g.analysis_id = a.analysis_id
       ");
 	} else {
 	    ( $exons )= &query( $db,
 				"select count(distinct et.exon_id)
-      from exon_transcript et, transcript t, gene g, analysis a
+      from exon_transcript et, transcript t, gene g, analysis a, seq_region sr, coord_system cs
       where et.transcript_id = t.transcript_id
-      and  t.gene_id = g.gene_id
+      and t.seq_region_id = sr.seq_region_id
+      and sr.coord_system_id = cs.coord_system_id
+      and cs.species_id=$spp_id
+      and t.gene_id = g.gene_id
       and g.analysis_id = a.analysis_id
       and a.logic_name in ($genetypes)
       ");
 	}
-	    print "Exons:$exons\n" if $DEBUG;
+	    print STDERR "Exons:$exons\n" if $DEBUG;
 
       $snps = 0;
       $strucvar = 0;
       if ($var_db) {
-        ($snps) = &query ( $var_db,
-          "SELECT COUNT(DISTINCT variation_id) FROM variation_feature",
-          );
-        print "SNPs, etc:$snps\n" if $DEBUG;
+       ($snps) = &query ( $var_db,
+         "SELECT COUNT(DISTINCT variation_id) FROM variation_feature",
+         );
+       print STDERR "SNPs, etc:$snps\n" if $DEBUG;
         ($strucvar) = &query ( $var_db,
           "SELECT COUNT(DISTINCT structural_variation_id) FROM structural_variation",
           );
-        print "Structural variations:$strucvar\n" if $DEBUG;
+        print STDERR "Structural variations:$strucvar\n" if $DEBUG;
       }
     }
 
   ## Total number of base pairs
 
-    my ( $bp ) = &query( $db, "SELECT SUM(LENGTH(sequence)) FROM dna");    
+    my ( $bp ) = &query( $db,
+      "select sum(length(sequence))
+      from dna 
+         join seq_region using (seq_region_id)
+         join coord_system using (coord_system_id)
+      where species_id=$spp_id
+      ");    
 
-    print "Total base pairs: $bp.\n" if $DEBUG;
+    print STDERR "Total base pairs: $bp.\n" if $DEBUG;
 
   ## Golden path length
 
     my ( $gpl ) = &query( $db,
       "SELECT sum(length) 
         FROM seq_region sr, seq_region_attrib sra, attrib_type at, coord_system cs 
-        WHERE 
-          sr.seq_region_id = sra.seq_region_id
+        WHERE sr.seq_region_id = sra.seq_region_id
           AND sra.attrib_type_id = at.attrib_type_id 
           AND sr.coord_system_id = cs.coord_system_id 
+          AND cs.species_id = $spp_id
           AND at.code = 'toplevel' 
           AND cs.name != 'lrg' 
           AND sr.seq_region_id NOT IN 
@@ -333,7 +394,7 @@ foreach my $spp (@valid_spp) {
         "
     );
 
-    print "Golden path length: $gpl.\n" if $DEBUG;
+    print STDERR "Golden path length: $gpl.\n" if $DEBUG;
 
 
   ##-----------------------List all coord systems region counts----------------
@@ -371,6 +432,7 @@ foreach my $spp (@valid_spp) {
     my $ip_tables = do_interpro($db, $spp) unless $NOINTERPRO;
 
   ##--------------------------- OUTPUT STATS TABLE -----------------------------
+    print STDERR "...writing stats file...\n";
 
     print STATS qq(<h3 class="boxed">Summary</h3>
 
@@ -599,6 +661,7 @@ foreach my $spp (@valid_spp) {
 
     close(STATS);
   }
+  print STDERR "...$spp done.\n";
 } # end of species
 
 
@@ -620,7 +683,7 @@ sub check_dir {
   my $dir = shift;
   if( ! -e $dir ){
     system("mkdir -p $dir") == 0 or
-      ( print("Cannot create $dir: $!" ) && next );
+      ( print STDERR ("Cannot create $dir: $!" ) && next );
   }
   return;
 }
@@ -644,6 +707,7 @@ sub stripe_row {
 
 sub do_interpro {
   my ($db, $species) = @_;
+  print STDERR "Get top InterPro hits ($species)..." if $DEBUG;
 
   ## Best to do this using API!
   
@@ -665,11 +729,11 @@ sub do_interpro {
     $domain->{$acc}{count} += $count;
   }
 
-  warn "HEY ! ($species)";
 
   if (! keys %$domain) {
       nohits2html($PLUGIN_ROOT, "IPtop40.html", $species);
       nohits2html($PLUGIN_ROOT, "IPtop500.html", $species);
+      print STDERR "no hits, done\n" if $DEBUG;
       return 0;
   }
 
@@ -701,6 +765,7 @@ sub do_interpro {
   $bigtable = 1;
   hits2html($PLUGIN_ROOT, $domain, $number, $file, $bigtable, $species);
 
+  print STDERR "done\n" if $DEBUG;
   return 1;
 }
 
@@ -742,25 +807,24 @@ sub hits2html {
          </tr>
 );
 
-  my @class = ('class="bg2"', 'class="bg1"');
+  my @classes = ('class="bg2"', 'class="bg1"');
   for (my $i = 0; $i< $number/2; $i++){
     my $tmpdom1 = $domain->{$domids[$i]};
     my $tmpdom2 = $domain->{$domids[$i + $number/2]};
 
     my $name1  = $domids[$i];
-    my $gene1  = $tmpdom1->{genes};
+    my $gene1  = $tmpdom1->{genes} || "";
     my $count1 = $tmpdom1->{count};
     my $descr1 = $tmpdom1->{descr} || '&nbsp;';
 
     my $name2  = $domids[$i + $number/2];
-    my $gene2  = $tmpdom2->{genes};
+    my $gene2  = $tmpdom2->{genes} || "";
     my $count2 = $tmpdom2->{count};
     my $descr2 = $tmpdom2->{descr} || '&nbsp;';
 
     my $order1 = $i+1 || 0;
     my $order2 = $i+($number/2)+1 || 0;
-    my $class = shift @class;
-    push @class, $class;
+    my $class = $classes[$i % 2];
 
   print qq(
 <tr $class>
