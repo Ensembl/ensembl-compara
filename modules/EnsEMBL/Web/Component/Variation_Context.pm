@@ -109,8 +109,8 @@ sub content {
     $html     .= "<h2>Features overlapping $vname:</h2><br />";
   }
   
-  $html .= $self->structrual_variation_table($slice, 'Structural variants',         'sv',  'get_all_StructuralVariationFeatures', 1);
-  $html .= $self->structrual_variation_table($slice, 'Copy number variants probes', 'cnv', 'get_all_CopyNumberVariantProbeFeatures');
+  $html .= $self->structural_variation_table($slice, 'Structural variants',         'sv',  'get_all_StructuralVariationFeatures', 1);
+  $html .= $self->structural_variation_table($slice, 'Copy number variants probes', 'cnv', 'get_all_CopyNumberVariantProbeFeatures');
   $html .= $self->regulatory_feature_table($var_slice,  $vname, $image_config);
   $html .= $self->constrained_element_table($var_slice, $vname);
   

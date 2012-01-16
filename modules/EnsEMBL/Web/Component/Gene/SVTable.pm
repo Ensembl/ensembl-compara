@@ -17,8 +17,8 @@ sub content {
   my $hub     = $self->hub;
   my $object  = $self->object;  
   my $slice   = $object->slice;
-  my $html    = $self->structrual_variation_table($slice, 'Structural variants',         'sv',  'get_all_StructuralVariationFeatures', 1);
-     $html   .= $self->structrual_variation_table($slice, 'Copy number variants probes', 'cnv', 'get_all_CopyNumberVariantProbeFeatures');
+  my $html    = $self->structural_variation_table($slice, 'Structural variants',         'sv',  'get_all_StructuralVariationFeatures', 1);
+     $html   .= $self->structural_variation_table($slice, 'Copy number variants probes', 'cnv', 'get_all_CopyNumberVariantProbeFeatures');
   
   return $html;
 }

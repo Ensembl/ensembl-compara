@@ -921,7 +921,7 @@ sub transcript_table {
   return qq{<div class="summary_panel">$html</div>};
 }
 
-sub structrual_variation_table {
+sub structural_variation_table {
   my ($self, $slice, $title, $table_id, $function, $open) = @_;
   my $hub = $self->hub;
   my $rows;
