@@ -71,7 +71,6 @@ use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 use LWP::Simple;
