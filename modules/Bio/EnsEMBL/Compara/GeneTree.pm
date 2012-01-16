@@ -56,12 +56,36 @@ use strict;
 use base ('Bio::EnsEMBL::Compara::Taggable');
 
 
+
+=head2 new()
+
+  Description : Creates a new GeneTree object. 
+  Returntype  : Bio::EnsEMBL::Compara::GeneTree
+  Exceptions  : None
+  Example     : my $w = Bio::EnsEMBL::Compara::GeneTree->new();
+  Status      : Stable  
+  
+=cut
+
 sub new {
     my $class = shift;
     my $self = {};
     bless $self, $class;
     return $self;
 }
+
+
+=head2 tree_type()
+
+  Description : Getter/Setter for the tree_type field. This field can
+                currently be 'nctree', 'proteintree', 'superproteintree'
+                or 'clusterset'
+  Returntype  : String
+  Exceptions  : None
+  Example     : my $type = $tree->tree_type();
+  Status      : Stable  
+  
+=cut
 
 sub tree_type {
     my $self = shift;
@@ -75,6 +99,19 @@ sub clusterset_id {
     return $self->{'_clusterset_id'};
 }
 
+
+=head2 method_link_species_set_id()
+
+  Description : Getter/Setter for the method_link_species_set_id field.
+                This field should be a valid dbID of a MethodLinkSpeciesSet
+                object.
+  Returntype  : Integer
+  Exceptions  : None
+  Example     : $tree->method_link_species_set_id($mlss_id);
+  Status      : Stable  
+  
+=cut
+
 sub method_link_species_set_id {
     my $self = shift;
     $self->{'_method_link_species_set_id'} = shift if(@_);
@@ -82,11 +119,36 @@ sub method_link_species_set_id {
 }
 
 
+=head2 stable_id()
+
+  Description : Getter/Setter for the stable_id field. Currently, only the
+                'proteintree' have a stable id. This field should be empty
+                for other tree types.
+  Returntype  : String
+  Exceptions  : None
+  Example     : my $stable_id = $tree->stable_id();
+  Status      : Stable  
+  
+=cut
+
 sub stable_id {
     my $self = shift;
     $self->{'_stable_id'} = shift if(@_);
     return $self->{'_stable_id'};
 }
+
+
+=head2 version()
+
+  Description : Getter/Setter for the version field. It contains the numeric
+                version of a tree which keeps an identical stable id (when
+                members are removed / added)
+  Returntype  : Numeric
+  Exceptions  : None
+  Example     : my $version = $tree->version();
+  Status      : Stable  
+  
+=cut
 
 sub version {
     my $self = shift;
@@ -94,11 +156,37 @@ sub version {
     return $self->{'_version'};
 }
 
+
+=head2 root()
+
+  Description : Getter/Setter for the root node of the tree. This is
+                internally synchronised with the root_id() method and
+                vice-versa to ensure consistency.
+  Returntype  : Bio::EnsEMBL::Compara::GeneTreeNode
+  Exceptions  : None
+  Example     : my $root_node = $tree->root();
+  Status      : Stable
+  
+=cut
+
 sub root {
     my $self = shift;
     $self->{'_root'} = shift if(@_);
     return $self->{'_root'};
 }
+
+
+=head2 adaptor()
+
+  Description : Getter/Setter for the DB adaptor that is used for database
+                queries. This field is automatically populated when the
+                tree is queried.
+  Returntype  : Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor
+  Exceptions  : None
+  Example     : $tree->adaptor($genetree_adaptor);
+  Status      : Internal
+  
+=cut
 
 sub adaptor {
     my $self = shift;
@@ -107,8 +195,17 @@ sub adaptor {
 }
 
 
+=head2 root_id()
 
-
+  Description : Getter/Setter for the root_id of the root node of the tree.
+                This is internally synchronised with the root() method and
+                vice-versa to ensure consistency.
+  Returntype  : Integer
+  Exceptions  : None
+  Example     : my $root_node_id = $tree->root_id();
+  Status      : Stable
+  
+=cut
 
 sub root_id {
     my $self = shift;
