@@ -52,7 +52,7 @@ sub availability {
       $availability->{'regulation'}    = !!$funcgen_res; 
       $availability->{'family'}        = !!$counts->{families};
       $availability->{'has_gene_tree'} = $gene_tree_sub->('compara');
-      $availability->{"has_$_"}        = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons);
+      $availability->{"has_$_"}        = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation);
       ## TODO - e63 hack - may need rewriting for subsequent releases
       $availability->{'not_patch'}     = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1;
 
@@ -105,7 +105,8 @@ sub counts {
       exons              => scalar @{$obj->get_all_Exons},
 #      similarity_matches => $self->count_xrefs
       similarity_matches => $self->get_xref_available,
-      operons => 0
+      operons => 0,
+      structural_variation => scalar(@{$obj->slice->get_all_StructuralVariationFeatures}) + scalar(@{$obj->slice->get_all_CopyNumberVariantProbeFeatures})
     };
     if ($obj->feature_Slice->can('get_all_Operons')){
       $counts->{'operons'} = scalar @{$obj->feature_Slice->get_all_Operons};

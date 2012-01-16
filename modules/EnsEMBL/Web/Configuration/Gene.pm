@@ -155,7 +155,7 @@ sub populate_tree {
       svimage EnsEMBL::Web::Component::Gene::SVImage
       svtable EnsEMBL::Web::Component::Gene::SVTable
     )],
-    { 'availability' => 'gene database:variation core not_patch' }
+    { 'availability' => 'gene has_structural_variation' }
   ));
 
   # External Data tree, including non-positional DAS sources
