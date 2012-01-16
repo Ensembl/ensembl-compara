@@ -1,12 +1,12 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Copyright (c) 1999-2010 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
 
   This software is distributed under a modified Apache license.
   For license details, please see
 
-   http://www.ensembl.org/info/about/code_licence.html
+    http://www.ensembl.org/info/about/code_licence.html
 
 =head1 CONTACT
 
@@ -16,31 +16,21 @@
   Questions may also be sent to the Ensembl help desk at
   <helpdesk@ensembl.org>.
 
+=cut
+
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::CAFESpeciesTree
+
+=head1 SYNOPSIS
 
 =head1 DESCRIPTION
 
 This RunnableDB builds a CAFE-compliant species tree (binary & ultrametric with time units).
 
-=head1 SYNOPSIS
-
 =head1 INHERITANCE TREE
 
 Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
 
 =head1 APPENDIX
 
@@ -52,13 +42,18 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::CAFESpeciesTree;
 
 use strict;
-
-use Scalar::Util qw(looks_like_number);
 use Data::Dumper;
-
+use Scalar::Util qw(looks_like_number);
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+sub param_defaults {
+    return {
+            'tree_fmt' => '%{n}%{":"d}',
+           };
+}
+
 
 =head2 fetch_input
 
@@ -84,12 +79,12 @@ sub fetch_input {
     my $full_species_tree = $self->get_species_tree_string($species_tree_meta_key);
     $self->param('full_species_tree', $full_species_tree);
 
+    $self->param('tree_fmt', '%{n}%{":"d}'); # format for the tree
+
     my $cafe_species = $self->param('cafe_species');
     if (scalar $cafe_species == 0) {  # No species for the tree
         die "No species for the CAFE tree";
     }
-
-    $self->param('tree_fmt', '%{-n}%{":"d}'); # format for the tree
 
     return;
 }
@@ -97,11 +92,11 @@ sub fetch_input {
 sub run {
     my ($self) = @_;
     my $species_tree_string = $self->param('full_species_tree');
-    print STDERR "Species_tree_string:\n$species_tree_string\n\n";
     my $species = $self->param('cafe_species');
     my $fmt = $self->param('tree_fmt');
     print Dumper $species if ($self->debug());
     my $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
+
     $self->include_distance_to_parent($eval_species_tree);
     $self->ensembl_timetree_mya_to_distance_to_parent($eval_species_tree);
     $self->include_names($eval_species_tree);
@@ -113,6 +108,7 @@ sub run {
 #         $self->check_tree($cafeTree);
 #     }
     my $cafeTreeStr = $cafeTree->newick_format('ryo', $fmt);
+    print STDERR "$cafeTreeStr\n" if ($self->debug());
     $self->param('cafe_tree_string', $cafeTreeStr);
 }
 
@@ -136,11 +132,12 @@ sub get_species_tree_string {
     my ($self, $species_tree_meta_key) = @_;
 
     my $table_name = 'meta';
-    my $table_key = defined $species_tree_meta_key ? $species_tree_meta_key : 'meta_key';
-    my $table_value = 'meta_value';
+    my $table_key = 'meta_key';
+    my $table_column = 'meta_value';
+    my $table_value = $species_tree_meta_key;
 
-    my $sth = $self->dbc->prepare( "select $table_value from $table_name where $table_key=$table_key" );
-    $sth->execute;
+    my $sth = $self->dbc->prepare( "select $table_column from $table_name where $table_key=?" );
+    $sth->execute($table_value);
     my ($species_tree_string) = $sth->fetchrow_array;
     $sth->finish;
     return $species_tree_string;
@@ -324,6 +321,7 @@ sub _binarize {
                 $newBranch->add_child($c);
             }
             $binTree->add_child($newBranch);
+            $newBranch->name($newBranch->parent()->name());
         }
         $binTree->add_child($newNode);
         _binarize($child, $newNode);
