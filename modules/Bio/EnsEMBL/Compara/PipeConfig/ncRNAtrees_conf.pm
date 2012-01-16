@@ -30,10 +30,10 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'mlss_id'           => 40078,
+        'mlss_id'           => 40080,
         'max_gene_count'    => 1500,
 
-        'release'           => '65b',
+        'release'           => '66',
         'rel_suffix'        => '',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
@@ -101,11 +101,11 @@ sub default_options {
         },
 
         'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
-            -host   => 'compara4',
+            -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'lg4_ensembl_compara_64',
+            -dbname => 'mp12_ensembl_compara_65',
         },
     };
 }
