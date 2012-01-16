@@ -28,7 +28,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable;
 use strict;
 use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-
+use Carp;
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
@@ -102,7 +102,7 @@ sub go_figure_compara_dba {
             }
         }
 
-        die "Sorry, could not figure out how to make a Compara DBAdaptor out of $foo";
+        croak "Sorry, could not figure out how to make a Compara DBAdaptor out of $foo";
     }
 }
 
