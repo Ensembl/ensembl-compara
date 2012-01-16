@@ -30,30 +30,28 @@ Ensembl.LayoutManager.extend({
       
       this.hashChange(Ensembl.urlFromHash(window.location.href, true));
     }
-        
-    $('.modal_link').show().live('click', function () {
+    
+    $(document).on('click', '.modal_link', function () {
       if (Ensembl.EventManager.trigger('modalOpen', this)) {
         return false;
       }
-    });
-    
-    $('.popup').live('click', function () {
+    }).on('click', '.popup', function () {
       if (window.name.match(/^popup_/)) {
         return true;
       }
       
       window.open(this.href, 'popup_' + window.name, 'width=950,height=500,resizable,scrollbars');
       return false;
-    });
-    
-    $('a[rel="external"]').live('click', function () { 
+    }).on('click', 'a[rel="external"]', function () { 
       this.target = '_blank';
     });
+    
+    $('.modal_link').show();
     
     this.validateForms(document);
     
     // Close modal window if the escape key is pressed
-    $(document).bind({
+    $(document).on({
       keyup: function (event) {
         if (event.keyCode === 27) {
           Ensembl.EventManager.trigger('modalClose', true);
@@ -67,7 +65,7 @@ Ensembl.LayoutManager.extend({
       }
     });
     
-    this.window = $(window).bind({
+    this.window = $(window).on({
       resize: function () {
         // jquery ui 1.8.14 causes window.resize to fire on resizable when using jquery 1.6.2
         // This is a hack to stop the windowResize event being triggered in that situation, until the bug is fixed
@@ -108,7 +106,7 @@ Ensembl.LayoutManager.extend({
         ' <h3><img src="/i/close.gif" alt="Hide hint panel" title="Hide hint panel" />', userMessage[0], '</h3>',
         ' <p>', userMessage[1], '</p>',
         '</div>'
-      ].join('')).prependTo('#main').find('h3 img, a').click(function () {
+      ].join('')).prependTo('#main').find('h3 img, a').on('click', function () {
         $(this).parents('div.hint').remove();
         Ensembl.cookie.set('user_message', '');
       });
@@ -130,7 +128,7 @@ Ensembl.LayoutManager.extend({
   },
   
   validateForms: function (context) {
-    $('form.check', context).validate().bind('submit', function () {
+    $('form.check', context).validate().on('submit', function () {
       var form = $(this);
       
       if (form.parents('#modal_panel').length) {
@@ -183,7 +181,7 @@ Ensembl.LayoutManager.extend({
       a = existing = null;
     }).remove();
     
-    $('a.seq_blast', toolButtons).click(function () {
+    $('a.seq_blast', toolButtons).on('click', function () {
       $('form.seq_blast', toolButtons).submit();
       return false;
     });

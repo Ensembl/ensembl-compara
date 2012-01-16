@@ -31,7 +31,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     this.elLk.tools      = $('li', this.elLk.toolsUl);
     this.elLk.toolMore   = $('.more', tools);
     this.elLk.toolMoreUl = $('<ul class="more_tools" />').appendTo(this.elLk.toolMore);
-    this.elLk.dropdowns  = $('div.dropdown', tabsHolder).bind('click', function () {
+    this.elLk.dropdowns  = $('div.dropdown', tabsHolder).on('click', function () {
       $(this).css('zIndex', panel.zIndex++);
     });
     
@@ -41,7 +41,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     });
     
     // Send an ajax request to clear the user's history for a tab/dropdown
-    $('a.clear_history', this.elLk.dropdowns).bind('click', function () {
+    $('a.clear_history', this.elLk.dropdowns).on('click', function () {
       var li = $(this).parent();
       
       $.ajax({
@@ -66,7 +66,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     // Show the relevant dropdown when a toggle link is clicked
     $('.toggle', tabs).each(function () {
       $(this).data('cls', '.' + (this.rel || this.title)).removeAttr('title');
-    }).bind('click', function () {
+    }).on('click', function () {
       var cls      = $(this).data('cls');
       var dropdown = panel.elLk.dropdowns.filter(cls);
       
@@ -80,7 +80,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
       return false;
     });
     
-    this.elLk.toolMore.children('a').bind('click', function () {
+    this.elLk.toolMore.children('a').on('click', function () {
       $(this).toggleClass('open');
       panel.elLk.toolMoreUl.html(panel.elLk.toolsOverflow.clone()).toggle();
       panel.moreShown = true;

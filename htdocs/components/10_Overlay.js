@@ -54,7 +54,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
       });
     }
     
-    this.elLk.background = $('#modal_bg').bind('click', function () { panel.hide(); });
+    this.elLk.background = $('#modal_bg').on('click', function () { panel.hide(); });
   },
   
   setCookie: function () {

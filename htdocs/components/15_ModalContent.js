@@ -16,7 +16,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     
     this.elLk.content = $('.modal_wrapper', this.el);
     
-    $('a', this.elLk.links).bind('click', function () {
+    $('a', this.elLk.links).on('click', function () {
       if (!$(this).hasClass('disabled')) {
         var link = $(this).parent();
         
@@ -31,24 +31,18 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       return false;
     });
     
-    this.elLk.links.bind('click', function (e) {
+    this.elLk.links.on('click', function (e) {
       e.stopPropagation();
       return $(this).children('a').trigger('click');
     });
     
-    this.live.push(
-      $('a.delete_bookmark', this.elLk.content).live('click', function () {
-        Ensembl.EventManager.trigger('deleteBookmark', this.href.match(/id=(\d+)\b/)[1]);
-      }),
-    
-      $('form div.select_all input', this.elLk.content).live('click', function () {
-        $(this).parents('fieldset').find('input[type=checkbox]').prop('checked', this.checked);
-      }),
-      
-      $('form.wizard input.back', this.elLk.content).live('click', function () {
-        $(this).parents('form.wizard').append('<input type="hidden" name="wizard_back" value="1" />').submit();
-      })
-    );
+    this.elLk.content.on('click', 'a.delete_bookmark', function () {
+      Ensembl.EventManager.trigger('deleteBookmark', this.href.match(/id=(\d+)\b/)[1]);
+    }).on('click', 'form div.select_all input', function () {
+      $(this).parents('fieldset').find('input[type=checkbox]').prop('checked', this.checked);
+    }).on('click', 'form.wizard input.back', function () {
+      $(this).parents('form.wizard').append('<input type="hidden" name="wizard_back" value="1" />').submit();
+    });
     
     this.initialize();
   },

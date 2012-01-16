@@ -60,7 +60,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       if (this.elLk.img[0].complete) {
         panel.makeSortable();
       } else {
-        this.elLk.img.bind('load', function () { panel.makeSortable(); });
+        this.elLk.img.on('load', function () { panel.makeSortable(); });
       }
     }
     
@@ -68,7 +68,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.dropFileUpload();
     }
     
-    $('.iexport a', this.el).click(function () {
+    $('.iexport a', this.el).on('click', function () {
       panel.elLk.exportMenu.css({ left: parseInt($(this).offset().left, 10) - 1, top: $(this).parent().position().top + $(this).height() + 2 }).toggle();
       return false;
     });
@@ -149,7 +149,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.highlightAllImages();
     }
     
-    this.elLk.drag.bind({
+    this.elLk.drag.on({
       mousedown: function (e) {
         // Only draw the drag box for left clicks.
         // This property exists in all our supported browsers, and browsers without it will draw the box for all clicks
@@ -174,7 +174,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.elLk.hoverLabels.detach().appendTo('body'); // IE 6/7 can't do z-index, so move hover labels to body
     
-    this.elLk.drag.bind({
+    this.elLk.drag.on({
       mousemove: function (e) {
         if (panel.dragging !== false) {
           return;
@@ -228,7 +228,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
     });
     
-    this.elLk.hoverLabels.bind('mouseleave', function () {
+    this.elLk.hoverLabels.on('mouseleave', function () {
       $(this).hide().children('div').hide();
     });
     
@@ -243,7 +243,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       $.noop
     );
     
-    $('a.config', this.elLk.hoverLabels).bind('click', function () {
+    $('a.config', this.elLk.hoverLabels).on('click', function () {
       var config = this.rel;
       var update = this.href.split(';').reverse()[0].split('='); // update = [ trackName, renderer ]
       var fav    = '';
@@ -434,7 +434,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         return false;
       };
     
-      this.elLk.drag.bind('mousemove', this.mousemove);
+      this.elLk.drag.on('mousemove', this.mousemove);
     }
   },
   
@@ -442,7 +442,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var diff, range;
     
     if (this.mousemove) {
-      this.elLk.drag.unbind('mousemove', this.mousemove);
+      this.elLk.drag.off('mousemove', this.mousemove);
       this.mousemove = false;
     }
     

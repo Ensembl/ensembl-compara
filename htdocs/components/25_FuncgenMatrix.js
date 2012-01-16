@@ -33,17 +33,17 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       this.configCode  = 'opt_cft_' + this.title; // configCode is used to set the correct values for the ViewConfig
       this.searchTerms = $.trim(this.parentNode.className + ' ' + colClasses[$(this).index()]).toLowerCase(); // Do this here so we don't have to look up the header row for every cell
       panel.viewConfig[this.configCode] = $(this).hasClass('on') ? 'on' : 'off';
-    }).bind('click', function () {
+    }).on('click', function () {
       panel.resetSelectAll($(this).toggleClass('on'));
     });
     
-    $('.help', this.el).bind('click', function () {
+    $('.help', this.el).on('click', function () {
       $(this).toggleClass('open').attr('title', function (i, title) {
         return title === 'Hide information' ? 'Click for more information' : 'Hide information';
       }).siblings('.desc').width($(this).parent().width() - 25).toggle();
     });
     
-    $('select.filter', this.el).bind('change', function () {
+    $('select.filter', this.el).on('change', function () {
       panel.elLk.rows.removeClass('hidden');
       
       if (this.value) {
@@ -53,7 +53,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       panel.elLk.noResults[panel.elLk.rows.filter(function () { return this.style.display !== 'none' && this.className.indexOf('hidden') === -1; }).length ? 'hide' : 'show']();
     });
     
-    $('input.filter', this.el).bind({
+    $('input.filter', this.el).on({
       keyup: function () {
         var value = this.value;
         
@@ -85,7 +85,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     });
     
     if (!$('body').hasClass('ie')) { // IE 8 and below are too slow
-      this.elLk.table.bind('mousedown', function (e) {
+      this.elLk.table.on('mousedown', function (e) {
         // only for left clicks, create a highlight overlay to show which cells are being dragged over
         if ((!e.which || e.which === 1) && (e.target.nodeName === 'TD' || e.target.nodeName === 'P')) {
           panel.dragStart(e);
@@ -95,7 +95,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       });
     }
     
-    $('.menu_option', this.elLk.renderers).bind('click', function () { 
+    $('.menu_option', this.elLk.renderers).on('click', function () { 
       panel.elLk.menus.not(this).hide(); 
     });
     
@@ -108,7 +108,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       panel.selectAllCol($(this).children('div').show());
     }, function () {
       $(this).children('div').hide();
-    }).find('.select_all_column input').bind('click', function () {
+    }).find('.select_all_column input').on('click', function () {
       var cls   = this.className;
       var cells = panel.elLk.rows.children('.' + this.name);
       
@@ -140,7 +140,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       popup = null;
     }, function () {
       $(this).children().hide();
-    }).children('.select_all_row').bind('click', function () {
+    }).children('.select_all_row').on('click', function () {
       var input   = $('input', this);
       var checked = panel.allOnRow(this.parentNode);
       
@@ -150,7 +150,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       input = null;
     });
     
-    this.elLk.renderers.filter('.select_all').find('.popup_menu li').bind('click', function () {
+    this.elLk.renderers.filter('.select_all').find('.popup_menu li').on('click', function () {
       $(this).parents('.popup_menu').hide().parent().siblings().find('.popup_menu li.' + this.className).trigger('click');
       return false;
     });
@@ -190,7 +190,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
       tmp = null;
     });
     
-    $('.toggle_tutorial', this.el).bind('click', function () {
+    $('.toggle_tutorial', this.el).on('click', function () {
       panel.showTutorial = !panel.showTutorial;
       panel.elLk.tutorial.toggle();
       $(this)[panel.showTutorial ? 'addClass' : 'removeClass']('on');
@@ -327,7 +327,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     };
     
     this.startCell = [ target.index(), target.parent().index() + 2 ]; // cell and row coordinates
-    this.elLk.table.bind('mousemove', this.mousemove);
+    this.elLk.table.on('mousemove', this.mousemove);
     
     target = null;
   },
@@ -338,7 +338,7 @@ Ensembl.Panel.FuncgenMatrix = Ensembl.Panel.ModalContent.extend({
     }
     
     this.resetSelectAll($('.highlight', this.elLk.table).removeClass('highlight').not('.disabled').toggleClass('on'));
-    this.elLk.table.unbind('mousemove', this.mousemove);
+    this.elLk.table.off('mousemove', this.mousemove);
     this.mousemove = false;
   },
   

@@ -41,7 +41,7 @@ $.validator = function (options, form) {
   this.submitButtons = $('input[type="submit"]', form);
   this.result        = true;
   
-  $(form).bind('submit', function (e) {
+  $(form).on('submit', function (e) {
     validator.result = true;
     validator.validateInputs(null, 'showError');
     
@@ -81,7 +81,7 @@ $.validator = function (options, form) {
     el.data(input);
     
     el = null;
-  }).bind({
+  }).on({
     keyup:  function (e) { if (e.keyCode !== 9) { validator.validateInputs($(this), 'delay'); } }, // Ignored if the tab key is pressed, since this will cause blur to fire
     change: function ()  { validator.validateInputs($(this), 'delay'); },
     blur:   function ()  { validator.validateInputs($(this), 'showError'); }

@@ -24,15 +24,11 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
       '</div>'
     ].join(''));
     
-    $('.info_popup', this.el).live('mousedown', function () {
+    this.el.on('mousedown', '.info_popup', function () {
       $(this).css('zIndex', ++Ensembl.PanelManager.zIndex);
-    });
-    
-    $('.info_popup .close', this.el).live('click', function () {
+    }).on('click', '.info_popup .close', function () {
       $(this).parent().hide();
-    });
-    
-    $('pre a.sequence_info', this.el).live('click', function (e) {
+    }).on('click', 'pre a.sequence_info', function (e) {
         var el    = $(this);
         var data  = el.data();
         var popup = data.link.data('popup');
@@ -158,7 +154,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
               trs = rows.filter('.' + c);
               
               if (trs.length > 2) {
-                $(':first', trs[0]).addClass('closed').click(toggle);
+                $(':first', trs[0]).addClass('closed').on('click', toggle);
                 trs.not(':first').hide();
               }
             }

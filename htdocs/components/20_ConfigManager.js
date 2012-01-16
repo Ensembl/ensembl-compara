@@ -14,85 +14,75 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     
     this.editing = false;
     
-    this.live.push(      
-      $('img.toggle', this.el).live('click', function () {
-        this.src = this.src.match(/closed/) ? '/i/open2.gif' : '/i/closed2.gif';
-        $(this).siblings('.heightWrap').toggleClass('open');
-        return false;
-      }),
+    this.el.on('click', 'img.toggle', function () {
+      this.src = this.src.match(/closed/) ? '/i/open2.gif' : '/i/closed2.gif';
+      $(this).siblings('.heightWrap').toggleClass('open');
+      return false;
+    }).on('click', 'a.edit', function (e) {
+      e.preventDefault();
       
-      $('a.edit', this.el).live('click', function (e) {
-        e.preventDefault();
-        
-        $.ajax({
-          url: this.href,
-          context: this,
-          success: function (response) {
-            if (panel[response]) {
-              panel[response]($(this).parents('tr'), this.rel);
-            } else {
-              //an error
-            }
-          },
-          error: function () {
+      $.ajax({
+        url: this.href,
+        context: this,
+        success: function (response) {
+          if (panel[response]) {
+            panel[response]($(this).parents('tr'), this.rel);
+          } else {
             //an error
           }
-        });
-      }),
+        },
+        error: function () {
+          //an error
+        }
+      });
+    }).on('click', 'a.add_to_set', function () {
+      var tr = $(this).parents('tr');
       
-      $('a.add_to_set', this.el).live('click', function () {
-        var tr = $(this).parents('tr');
-        
-        if (!tr.hasClass('disabled')) {
-          tr.toggleClass('added').siblings('.' + (this.rel || '_')).toggleClass('disabled');
-        }
-        
-        $(this).attr('title', tr.hasClass('added') ? 'Remove from set' : 'Add to set');
-        
-        tr = null;
-        
-        return false;
-      }),
+      if (!tr.hasClass('disabled')) {
+        tr.toggleClass('added').siblings('.' + (this.rel || '_')).toggleClass('disabled');
+      }
       
-      $('a.create_set', this.el).live('click', function () {
-        var els  = $('.sets > div, .edit_set', panel.el).toggle();
-        var func = $(this).children().toggle().filter(':visible').attr('class') === 'cancel' ? 'show' : 'hide';
-        
-        $('form', panel.el).find('fieldset > div')[func]().find('[name=name], [name=description]').val('').removeClass('valid');
-        
-        if (func === 'show') {
-          panel.wrapping(els.find('.heightWrap'));
-          panel.editing = false;
-        }
-        
-        els = null;
-        
-        return false;
-      }),
+      $(this).attr('title', tr.hasClass('added') ? 'Remove from set' : 'Add to set');
       
-      $('a.edit_record', this.el).live('click', function () {
-        var els   = $('.edit_set, form .save, a.create_set', panel.el).toggle();
-        var show  = $('form', panel.el).toggleClass('edit_configs').find('[name=name]').val('editing').end().hasClass('edit_configs');
-        var group = $(this).parents('.config_group');
-        
-        if (group.length) {
-          $('.config_group', panel.el).not(group).toggle();
-        }
-        
-        if (show) {
-          panel.wrapping(els.find('.heightWrap'));
-          panel.editing = this.rel;
-        }
-        
-        $(this).parents('tr').siblings().toggle().end().find('ul li').each(function () {
-          $('input.update[value=' + this.className + ']', this.el).siblings('a.add_to_set').trigger('click');
-        });
-        
-        els = group = null;
-        
-        return false;
-      })
-    );
+      tr = null;
+      
+      return false;
+    }).on('click', 'a.create_set', function () {
+      var els  = $('.sets > div, .edit_set', panel.el).toggle();
+      var func = $(this).children().toggle().filter(':visible').attr('class') === 'cancel' ? 'show' : 'hide';
+      
+      $('form', panel.el).find('fieldset > div')[func]().find('[name=name], [name=description]').val('').removeClass('valid');
+      
+      if (func === 'show') {
+        panel.wrapping(els.find('.heightWrap'));
+        panel.editing = false;
+      }
+      
+      els = null;
+      
+      return false;
+    }).on('click', 'a.edit_record', function () {
+      var els   = $('.edit_set, form .save, a.create_set', panel.el).toggle();
+      var show  = $('form', panel.el).toggleClass('edit_configs').find('[name=name]').val('editing').end().hasClass('edit_configs');
+      var group = $(this).parents('.config_group');
+      
+      if (group.length) {
+        $('.config_group', panel.el).not(group).toggle();
+      }
+      
+      if (show) {
+        panel.wrapping(els.find('.heightWrap'));
+        panel.editing = this.rel;
+      }
+      
+      $(this).parents('tr').siblings().toggle().end().find('ul li').each(function () {
+        $('input.update[value=' + this.className + ']', this.el).siblings('a.add_to_set').trigger('click');
+      });
+      
+      els = group = null;
+      
+      return false;
+    });
     
     this.wrapping();
   },

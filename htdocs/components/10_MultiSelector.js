@@ -35,7 +35,7 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
       stop: function () { panel.setSelection(); }
     });
     
-    this.buttonWidth = spans.filter('.switch').bind('click', function () {
+    this.buttonWidth = spans.filter('.switch').on('click', function () {
       var li = $(this).parent();
       var excluded, i;
       

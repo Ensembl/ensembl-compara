@@ -26,7 +26,7 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
     
     // On gene form submit, stop the request going to psychic search if the user has selected a gene from the dropdown,
     // or has typed in something which matches (case insensitive) a name from the dropdown.
-    this.elLk.form.bind('submit', function () {
+    this.elLk.form.on('submit', function () {
       var form  = this;
       var g     = panel.elLk.g.val();
       var query = panel.elLk.input.val().toUpperCase();
@@ -44,7 +44,7 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
       }
     });
     
-    this.elLk.input.bind('keyup', function (e) {
+    this.elLk.input.on('keyup', function (e) {
       var input = this;
       var value = this.value;
             
@@ -156,7 +156,7 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
       lis.push('<li><span class="name">', results[i][0], '</span><span class="stable_id">', results[i][1], '</span><input type="hidden" class="db" value="', results[i][2], '" /></li>');
     }
     
-    this.elLk.list.html(lis.join('')).find('li').bind({
+    this.elLk.list.html(lis.join('')).find('li').on({
       click: function () {
         panel.elLk.input.val($('.name', this).text());
         panel.elLk.g.val($('.stable_id', this).text());

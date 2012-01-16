@@ -31,23 +31,19 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     this.modalReload   = {};
     this.activePanel   = '';
     
-    this.live.push(
-      $('.modal_confirm', this.el).live('click', function () {
-        var c = confirm(this.title + '\nAre you sure you want to continue?');
-        
-        this.title = '';
-        
-        if (c === true) {
-          panel.open(this);
-        }
-        
-        return false;
-      }),
+    this.el.on('click', '.modal_confirm', function () {
+      var c = confirm(this.title + '\nAre you sure you want to continue?');
       
-      $('.modal_close', this.el).live('click', function () {
-        panel.hide();
-      })
-    );
+      this.title = '';
+      
+      if (c === true) {
+        panel.open(this);
+      }
+      
+      return false;
+    }).on('click', '.modal_close', function () {
+      panel.hide();
+    });
     
     this.elLk.content.each(function () {
       $(this).data('tab', panel.elLk.tabs.children('a.' + this.id).parent());
@@ -55,7 +51,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     
     this.elLk.tabs.children('a').each(function () {
       $(this).data('panels', panel.elLk.content.filter('#' + this.className).addClass('active'));
-    }).bind('click', function () { // Changing tabs - update configuration and get new content
+    }).on('click', function () { // Changing tabs - update configuration and get new content
       var li = $(this).parent();
       
       if (!li.hasClass('active')) {

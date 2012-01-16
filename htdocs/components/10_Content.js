@@ -36,7 +36,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     // Links in a popup (help) window should make a new window in the main browser
     if (window.name.match(/^popup_/)) {
-      $('a:not(.cp-internal, .popup)', this.el).bind('click', function () {
+      $('a:not(.cp-internal, .popup)', this.el).on('click', function () {
         window.open(this.href, window.name.replace(/^popup_/, '') + '_1');
         return false;
       });
@@ -177,7 +177,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     var panel     = this;
     var toTrigger = {};
     
-    $('a.toggle, .ajax_add', this.el).bind('click', function () {
+    $('a.toggle, .ajax_add', this.el).on('click', function () {
       Ensembl.EventManager.trigger('toggleContent', this.rel);
       
       if ($(this).hasClass('ajax_add')) {
@@ -255,7 +255,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     this.elLk.hideHints.each(function () {
       var div = $(this);
       
-      $('<img src="/i/close.gif" alt="Hide hint panel" title="Hide hint panel" />').bind('click', function () {
+      $('<img src="/i/close.gif" alt="Hide hint panel" title="Hide hint panel" />').on('click', function () {
         var tmp = [];
         
         div.hide();
@@ -272,7 +272,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
   
   glossary: function () {
-    this.elLk.glossary.bind({
+    this.elLk.glossary.on({
       mouseover: function () {
         var el         = $(this);
         var popup      = el.children('.floating_popup');

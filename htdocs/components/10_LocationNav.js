@@ -68,7 +68,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     this.elLk.imageNav      = $('.image_nav', this.elLk.navbar);
     this.elLk.forms         = $('form', this.elLk.navbar);
     
-    this.elLk.navLinks = $('a', this.el).addClass('constant').bind('click', function (e) {
+    this.elLk.navLinks = $('a', this.el).addClass('constant').on('click', function (e) {
       var newR;
       
       if (panel.enabled === true) {

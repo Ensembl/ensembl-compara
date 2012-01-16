@@ -24,11 +24,6 @@ Ensembl.Panel = Base.extend({
       this.elLk[el] = null;
     }
     
-    for (el in this.live) {
-      this.live[el].die();
-      this.live[el] = null;
-    }
-    
     this.el = null;
   },
   
@@ -46,7 +41,6 @@ Ensembl.Panel = Base.extend({
     }
     
     this.elLk = {};
-    this.live = [];
     
     $('input.js_param', this.el).each(function () {
       if (!panel.params[this.name]) {

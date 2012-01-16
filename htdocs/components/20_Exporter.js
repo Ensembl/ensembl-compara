@@ -19,7 +19,7 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
   filterInit: function () {
     var panel = this;
     
-    this.elLk.outputTypes = $('fieldset.general_options', this.elLk.content).find('select.output_type').change(function () {
+    this.elLk.outputTypes = $('fieldset.general_options', this.elLk.content).find('select.output_type').on('change', function () {
       panel.filter(this.value);
     });
   
@@ -55,7 +55,7 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
       $.extend(true, this.config, diff);
     }
     
-    this.elLk.outputTypes.unbind();
+    this.elLk.outputTypes.off();
     
     return this.base(form, data);
   },

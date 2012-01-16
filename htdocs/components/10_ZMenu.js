@@ -62,11 +62,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.elLk.tbody   = $('tbody:last', this.el);
     this.elLk.loading = $('.loading',   this.el);
     
-    this.el.bind('mousedown', function () {
+    this.el.on('mousedown', function () {
       Ensembl.EventManager.trigger('panelToFront', panel.id);
     });
     
-    $('.close', this.el).bind('click', function () { 
+    $('.close', this.el).on('click', function () { 
       panel.hide();
     });
     
@@ -92,7 +92,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.el.addClass('coloured');
     }
     
-    $('a.expand', this.el).live('click', function () {
+    this.el.on('click', 'a.expand', function () {
       panel.populateAjax(this.href, $(this).parents('tr'));
       return false;
     });

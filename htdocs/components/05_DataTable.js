@@ -22,7 +22,7 @@ Ensembl.DataTable = {
       var dataTable = table.dataTable(options);
       var settings  = dataTable.fnSettings();
       
-      $('.dataTables_filter input', settings.nTableWrapper).after('<div class="overlay">Filter</div>').bind({
+      $('.dataTables_filter input', settings.nTableWrapper).after('<div class="overlay">Filter</div>').on({
         focus: function () {
           $(this).siblings('.overlay').hide();
         },
@@ -42,7 +42,7 @@ Ensembl.DataTable = {
       }
       
       if (table.hasClass('editable')) {
-        panel.makeEditable($('.editable', table));
+        panel.makeEditable(table);
       }
       
       panel.dataTables = panel.dataTables || [];
@@ -185,7 +185,7 @@ Ensembl.DataTable = {
     
     var columns    = settings.aoColumns;
     var toggleList = $('<ul class="floating_popup"></ul>');
-    var toggle     = $('<div class="toggle">Show/hide columns</div>').append(toggleList).bind('click', function (e) { if (e.target === this) { toggleList.toggle(); } });
+    var toggle     = $('<div class="toggle">Show/hide columns</div>').append(toggleList).on('click', function (e) { if (e.target === this) { toggleList.toggle(); } });
     
     $.each(columns, function (col) {
       var th = $(this.nTh);
@@ -247,7 +247,7 @@ Ensembl.DataTable = {
       over:     exportHover,
       out:      exportHover,
       interval: 300
-    }).bind('click', function (e) {
+    }).on('click', function (e) {
       var table    = $(this).parent().next();
       var settings = table.dataTable().fnSettings();
       var form     = $(settings.nTableWrapper).siblings('form.data_table_export');
@@ -296,7 +296,7 @@ Ensembl.DataTable = {
     wrapper = null;
   },
   
-  makeEditable: function (editable) {
+  makeEditable: function (table) {
     var panel = this;
     
     function saveEdit(input) {
@@ -338,23 +338,19 @@ Ensembl.DataTable = {
       input = td = null;
     }
     
-    this.live.push(
-      editable.live('click', function (e) {
-        if ($(e.target).is('.val')) {
-          $(this).find(':input').val(
-            $(this).find('.val').html().replace(/\n/g, '').replace(/<br( \/)?>/g, '\n').replace(/<[^>]+>/g, '')
-          ).show().trigger('focus').siblings().hide();
-        }
-      }),
-      
-      $(':input', editable).live({
-        blur:    function ()  { saveEdit($(this));                                          },
-        keydown: function (e) { if (e.keyCode === 13 && !e.shiftKey) { return false;      } },
-        keyup:   function (e) { if (e.keyCode === 13 && !e.shiftKey) { saveEdit($(this)); } }
-      })
-    );
+    table.on('click', '.editable', function (e) {
+      if ($(e.target).is('.val')) {
+        $(this).find(':input').val(
+          $(this).find('.val').html().replace(/\n/g, '').replace(/<br( \/)?>/g, '\n').replace(/<[^>]+>/g, '')
+        ).show().trigger('focus').siblings().hide();
+      }
+    }).on({
+      blur:    function ()  { saveEdit($(this));                                          },
+      keydown: function (e) { if (e.keyCode === 13 && !e.shiftKey) { return false;      } },
+      keyup:   function (e) { if (e.keyCode === 13 && !e.shiftKey) { saveEdit($(this)); } }
+    }, '.editable :input');
     
-    editable = null;
+    table = null;
   },
   
   // Data tables can be controlled by external filters - checkboxes with values matching classnames on table rows
@@ -388,7 +384,7 @@ Ensembl.DataTable = {
       }
     );
     
-    filters.bind('click', function () {
+    filters.on('click', function () {
       var classNames = [];
       var dataTable  = $('#' + this.name, panel.el).dataTable();
       var settings   = dataTable.fnSettings();

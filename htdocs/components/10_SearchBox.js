@@ -14,7 +14,7 @@ Ensembl.Panel.SearchBox = Ensembl.Panel.extend({
     
     var search = Ensembl.cookie.get('ENSEMBL_SEARCH');
     
-    $('dt', this.elLk.menu).bind('click', function () {
+    $('dt', this.elLk.menu).on('click', function () {
       var name = this.id.substr(3);
       
       panel.elLk.menu.hide();
@@ -24,7 +24,7 @@ Ensembl.Panel.SearchBox = Ensembl.Panel.extend({
       Ensembl.cookie.set('ENSEMBL_SEARCH', name);
     });
     
-    this.elLk.sites.bind('click', function () {
+    this.elLk.sites.on('click', function () {
       panel.elLk.menu.toggle();
     });
     

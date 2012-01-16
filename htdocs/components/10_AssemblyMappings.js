@@ -7,7 +7,7 @@ Ensembl.Panel.AssemblyMappings = Ensembl.Panel.extend({
     this.base();
     
     this.elLk.conversion = $('.conversion', this.el);
-    this.elLk.species    = $('.dropdown_remotecontrol', this.el).bind('change', function () { panel.showBySpecies(); });
+    this.elLk.species    = $('.dropdown_remotecontrol', this.el).on('change', function () { panel.showBySpecies(); });
     
     this.showBySpecies();
   },
