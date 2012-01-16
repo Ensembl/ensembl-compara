@@ -51,6 +51,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor;
 
 use strict;
+no strict 'refs';
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
@@ -632,7 +633,6 @@ sub init_instance_from_rowhash {
     return $node;
 }
 
-use Data::Dumper;
 
 sub _add_GeneTree_wrapper {
     my $self = shift;
@@ -640,26 +640,28 @@ sub _add_GeneTree_wrapper {
     my $rowhash = shift;
 
     if ((defined $self->{'_ref_tree'}) and ($self->{'_ref_tree'}->root_id eq $rowhash->{root_id})) {
+        # GeneTree was passed via _ref_tree
         #print STDERR "REUSING GeneTree for $node :", $self->{'_ref_tree'};
         $node->tree($self->{'_ref_tree'});
+
     } else {
 
+        # Must create a new GeneTree
         my $tree = new Bio::EnsEMBL::Compara::GeneTree;
-        $tree->tree_type($rowhash->{tree_type});
-        $tree->method_link_species_set_id($rowhash->{method_link_species_set_id});
-        $tree->stable_id($rowhash->{stable_id});
-        $tree->clusterset_id($rowhash->{clusterset_id});
-        $tree->version($rowhash->{version});
+
+        # Common Fields
+        foreach my $attr (qw(tree_type method_link_species_set_id clusterset_id stable_id version)) {
+            $tree->$attr($rowhash->{$attr});
+        }
         $tree->adaptor($self);
         $node->tree($tree);
        
+        # Lazy initialisation: only one of root() and root_id() is needed
         if ($node->node_id == $rowhash->{root_id}) {
+            # The node is the tree root
             $tree->root($node);
         } else {
-            $self->{'_ref_tree'} = $tree;
-            my $root = $self->fetch_node_by_node_id($rowhash->{root_id});
-            $tree->root($root);
-            delete $self->{'_ref_tree'};
+            $tree->root_id($rowhash->{root_id})
         }
         #print STDERR "NEW GeneTree for $node :", Dumper($tree);
     }

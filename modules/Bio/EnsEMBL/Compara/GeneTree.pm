@@ -171,7 +171,21 @@ sub version {
 
 sub root {
     my $self = shift;
-    $self->{'_root'} = shift if(@_);
+    my $new = shift;
+    if ($new) {
+        #print "DEFINE root=$new IN $self\n";
+        # defines the new root
+        $self->{'_root'} = $new;
+        #print "UPDATES $self for root_id\n";
+        $self->{'_root_id'} = $new->node_id;
+    } 
+
+    if (not defined $self->{'_root'} and defined $self->{'_root_id'} and defined $self->{'_adaptor'}) {
+        #print "UPDATES $self for root\n";
+        $self->{'_adaptor'}->{'_ref_tree'} = $self;
+        $self->{'_root'} = $self->{'_adaptor'}->fetch_node_by_node_id($self->{'_root_id'});
+        delete $self->{'_adaptor'}->{'_ref_tree'};
+    }
     return $self->{'_root'};
 }
 
@@ -209,8 +223,15 @@ sub adaptor {
 
 sub root_id {
     my $self = shift;
-    my $root = $self->root;
-    return $root->node_id if defined $root;
+    my $new = shift;
+    if ($new and ($self->{'_root_id'} ne $new)) {
+        #print "DEFINES root_id=$new IN $self\n";
+        # defines the new root_id
+        $self->{'_root_id'} = $new;
+        # should update the root object accordingly, but I prefer delaying the fetch_node_by_node_id
+        delete $self->{'_root'};
+    }
+    return $self->{'_root_id'};
 }
 
 1;
