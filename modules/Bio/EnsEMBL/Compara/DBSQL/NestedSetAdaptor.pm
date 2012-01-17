@@ -272,11 +272,11 @@ sub fetch_first_shared_ancestor_indexed {
   }
 
   my $alias = $self->tables->[0]->[1];
-  my $constraint = "WHERE $alias.root_id=$root_id AND $alias.left_index < $min_left";
-  $constraint .= " AND $alias.right_index > $max_right";
-  $constraint .= " ORDER BY ($alias.right_index-$alias.left_index) LIMIT 1";
+  my $constraint = "WHERE $alias.root_id=$root_id AND $alias.left_index <= $min_left";
+  $constraint .= " AND $alias.right_index >= $max_right";
+  my $final = " ORDER BY ($alias.right_index-$alias.left_index) LIMIT 1";
   
-  my $ancestor = $self->_generic_fetch($constraint)->[0];
+  my $ancestor = $self->_generic_fetch($constraint, '', $final)->[0];
   return $ancestor;
 }
 
