@@ -132,8 +132,11 @@ sub get_cafe_table_from_db {
     my $adaptor = $self->param('adaptor');
 
     my $mlss_id = $self->param('mlss_id');
-    my $cafe_table_output = $self->param('work_dir') . "/cafe_${mlss_id}.tbl";
-    $self->param('cafe_table_file', $cafe_table_output);
+
+    my $cafe_table_file = "cafe_${mlss_id}.tbl";
+
+    my $cafe_table_output = $self->param('work_dir') . $cafe_table_file;
+    $self->param('cafe_table_file', $cafe_table_file);
 
     print STDERR "CAFE_TABLE_OUTPUT: $cafe_table_output\n" if ($self->debug());
     open my $cafe_fh, ">", $cafe_table_output or die $!;
