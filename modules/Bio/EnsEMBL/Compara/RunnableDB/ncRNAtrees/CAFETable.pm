@@ -127,7 +127,6 @@ sub get_cafe_tree_from_string {
 
 sub get_cafe_table_from_db {
     my ($self) = @_;
-    my $type = $self->param('type');
     my $species = $self->param('cafe_species');
     my $adaptor = $self->param('adaptor');
 
