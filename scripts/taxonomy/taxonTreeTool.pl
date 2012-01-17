@@ -188,6 +188,7 @@ sub fetch_compara_ncbi_taxa {
 
   my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
   foreach my $gdb (@$gdb_list) {
+    next unless $gdb->taxon_id;
     my $taxon = $taxonDBA->fetch_node_by_taxon_id($gdb->taxon_id);
     $taxon->no_autoload_children;
 
@@ -200,6 +201,8 @@ sub fetch_compara_ncbi_taxa {
   
   my $newick = $root->newick_format;
   print("$newick\n");
+
+  print $root->newick_format('njtree'), "\n";
 
   $self->{'root'} = $root;
 #  drawPStree($self);
