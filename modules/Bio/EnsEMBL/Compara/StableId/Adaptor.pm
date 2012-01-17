@@ -157,25 +157,68 @@ sub load_compara_ncs {
     warn "\t- Detected DB Version is ${schema_version}\n";
 
     my $step = ($ncs->type() eq 'f') ? 100000 : 30000;
-    my $sql = ($ncs->type() eq 'f')
-    ? qq{
-        SELECT f.family_id, }.(($schema_version<53)?"f.stable_id":"CONCAT(f.stable_id,'.',f.version)").qq{,
-            IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
-        FROM family f, family_member fm, member m
-        WHERE f.family_id=fm.family_id
-        AND   fm.member_id=m.member_id
-        AND   m.source_name <> 'ENSEMBLGENE'
-    } : qq{
-        SELECT ptn.node_id, }.(($schema_version<53)?"CONCAT('Node_',ptn.node_id)":"IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id))").qq{,
-            IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
-        FROM protein_tree_node ptn
-        LEFT JOIN protein_tree_member n2m ON ptn.node_id=n2m.node_id
-        LEFT JOIN member m ON n2m.member_id=m.member_id
-        }.(($schema_version<53) ? q{} :q{ LEFT JOIN protein_tree_stable_id ptsi ON ptn.node_id=ptsi.node_id}).
-        ( ($schema_version < 55) ? q{ WHERE (ptn.parent_id = ptn.root_id } : q{ WHERE (ptn.node_id = ptn.root_id }).
-        q{ OR m.stable_id IS NOT NULL) AND left_index AND right_index ORDER BY
-        }.(($schema_version < 65) ? q{} : q{ptn.root_id,}).
-        q{left_index };
+    my $sql;
+    if ($ncs->type() eq 'f') {
+        $sql = qq{
+            SELECT f.family_id, }.(($schema_version<53)?"f.stable_id":"CONCAT(f.stable_id,'.',f.version)").qq{,
+                IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                    FROM family f, family_member fm, member m
+                    WHERE f.family_id=fm.family_id
+                    AND   fm.member_id=m.member_id
+                    AND   m.source_name <> 'ENSEMBLGENE'
+            } ;
+    } else {
+        if ($schema_version <= 52) {
+            $sql = qq{
+                SELECT ptn.node_id, CONCAT('Node_',ptn.node_id), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                    FROM protein_tree_node ptn
+                    LEFT JOIN protein_tree_member n2m ON ptn.node_id=n2m.node_id
+                    LEFT JOIN member m ON n2m.member_id=m.member_id
+                    WHERE (ptn.parent_id = ptn.root_id  OR m.stable_id IS NOT NULL) AND left_index AND right_index
+                    ORDER BY left_index 
+            };
+        } elsif ($schema_version <= 54) {
+            $sql = qq{
+                SELECT ptn.node_id, IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                    FROM protein_tree_node ptn
+                    LEFT JOIN protein_tree_member n2m ON ptn.node_id=n2m.node_id
+                    LEFT JOIN member m ON n2m.member_id=m.member_id
+                    LEFT JOIN protein_tree_stable_id ptsi ON ptn.node_id=ptsi.node_id
+                    WHERE (ptn.parent_id = ptn.root_id  OR m.stable_id IS NOT NULL) AND left_index AND right_index
+                    ORDER BY left_index 
+            };
+        } elsif ($schema_version <= 64) {
+            $sql = qq{
+                SELECT ptn.node_id, IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                    FROM protein_tree_node ptn
+                    LEFT JOIN protein_tree_member n2m ON ptn.node_id=n2m.node_id
+                    LEFT JOIN member m ON n2m.member_id=m.member_id
+                    LEFT JOIN protein_tree_stable_id ptsi ON ptn.node_id=ptsi.node_id
+                    WHERE (ptn.node_id = ptn.root_id  OR m.stable_id IS NOT NULL) AND left_index AND right_index
+                    ORDER BY left_index
+            };
+        } elsif ($schema_version == 65) {
+            $sql = qq{
+                SELECT ptn.node_id, IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                    FROM protein_tree_node ptn
+                    LEFT JOIN protein_tree_member n2m ON ptn.node_id=n2m.node_id
+                    LEFT JOIN member m ON n2m.member_id=m.member_id
+                    LEFT JOIN protein_tree_stable_id ptsi ON ptn.node_id=ptsi.node_id
+                    WHERE (ptn.node_id = ptn.root_id  OR m.stable_id IS NOT NULL) AND left_index AND right_index
+                    ORDER BY ptn.root_id,left_index
+            };
+        } else {
+            $sql = qq{
+                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                    FROM gene_tree_node gtn
+                    JOIN gene_tree_root gtr USING (root_id)
+                    LEFT JOIN gene_tree_member gtm USING (node_id)
+                    LEFT JOIN member m USING (member_id)
+                    WHERE (gtn.node_id = gtn.root_id OR m.stable_id IS NOT NULL) AND left_index AND right_index AND gtr.tree_type = 'proteintree'
+                    ORDER BY root_id, left_index
+            };
+        }
+    }
 
     my $sth = $dbh->prepare($sql);
     warn "\t- waiting for the data to start coming\n";
@@ -231,8 +274,7 @@ sub store_map {
         WHERE family_id = ?
     } : ($map->type eq 't')
     ? qq{
-        REPLACE INTO protein_tree_stable_id(stable_id, version, node_id)
-        VALUES (?, ?, ?)
+        UPDATE gene_tree_root SET stable_id=?, version=? WHERE root_id=?
     } : die "Cannot store mapping in database. Type must be either 'f' or 't'";
     my $sth = $dbh->prepare($sql);
 
