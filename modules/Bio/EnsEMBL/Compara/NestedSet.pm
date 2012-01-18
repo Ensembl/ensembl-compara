@@ -121,24 +121,6 @@ sub right_index {
   return $self->{'_right_index'};
 }
 
-=head2 clusterset_id
-
-  Arg [1]    : (opt.) integer clusterset_id
-  Example    : my $nsetID = $object->clusterset_id();
-  Example    : $object->clusterset_id(12);
-  Description: Getter/Setter for the clusterset_id of this object in the database
-  Returntype : integer clusterset_id
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub clusterset_id {
-  my $self = shift;
-  $self->{'_clusterset_id'} = shift if(@_);
-  return $self->{'_clusterset_id'};
-}
-
 
 #######################################
 # Set manipulation methods
