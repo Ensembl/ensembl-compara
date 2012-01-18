@@ -88,7 +88,8 @@ sub run {
     my $codeml_parameters = $self->param('codeml_parameters') || die "'codeml_parameters' is an obligatory parameter";
 
     foreach my $homology (@$homologies) {
-        $self->calc_genetic_distance($homology, $codeml_parameters);
+        # other_paralogs are not aligned together (they lie in different alignments)
+        $self->calc_genetic_distance($homology, $codeml_parameters) unless $homology->description eq 'other_paralog';
     }
 }
 
