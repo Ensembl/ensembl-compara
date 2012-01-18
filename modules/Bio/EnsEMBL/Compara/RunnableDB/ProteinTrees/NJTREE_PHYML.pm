@@ -435,7 +435,6 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   foreach my $gene_to_remove (keys %split_genes) {
     $sa->remove_seq($sa->each_seq_with_id($gene_to_remove));
   }
-  $sa = $sa->remove_gaps(undef, 1);
   $self->param('split_genes', \%split_genes);
 
   if ($self->param('jackknife')) {
