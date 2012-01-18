@@ -1,0 +1,39 @@
+#########################################################################################################
+#
+# Some stored functions, views and procedures used in hive:
+#
+
+
+#### prints a tree in an ASCII format #####################################################################
+#
+# Usage:
+#       call time_analysis(1);                # prints the clusterset tree
+#       call time_analysis(3);                # prints the first non-clusterset tree
+
+
+DROP PROCEDURE IF EXISTS print_tree;
+CREATE PROCEDURE print_tree(IN user_root_id INT)
+READS SQL DATA
+SELECT CONCAT(
+	GROUP_CONCAT( IF(pip.left_index IS NULL,'',CONCAT(IF(parent.left_index-pip.left_index=1, '|', ' '),'     ')) ORDER BY parent.left_index SEPARATOR ''),
+	IF(node.node_id=node.root_id,
+		CONCAT(IFNULL(CONCAT(root.stable_id, ' '), ''), root.tree_type, ' '),
+		CONCAT(IF(MIN(node.left_index-parent.left_index)=1, '+', '\\'), '----')
+	),
+	'(', node.node_id, ')',	' ',
+	IFNULL(m.stable_id, attr.node_type),
+	IFNULL(CONCAT('/sis=',ROUND(attr.duplication_confidence_score*100,2)), ''),
+	' [',	IFNULL(g.name, attr.taxon_name), ']'
+) AS the_tree
+FROM gene_tree_node AS node
+	LEFT JOIN gene_tree_root AS root ON root.root_id=node.node_id
+	LEFT JOIN gene_tree_node_attr AS attr ON attr.node_id=node.node_id
+	LEFT JOIN gene_tree_node AS parent ON node.root_id=parent.root_id AND parent.left_index<node.left_index AND node.right_index<parent.right_index
+	LEFT JOIN gene_tree_node pip ON pip.node_id=parent.parent_id
+	LEFT JOIN gene_tree_member ptm ON node.node_id=ptm.node_id
+	LEFT JOIN member m USING(member_id)
+	LEFT JOIN genome_db g USING(genome_db_id)
+WHERE node.root_id = user_root_id
+GROUP BY node.node_id
+ORDER BY node.left_index; 
+
