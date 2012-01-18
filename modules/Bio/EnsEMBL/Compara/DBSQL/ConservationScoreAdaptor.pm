@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
 
   This software is distributed under a modified Apache license.
@@ -251,7 +251,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 		cnt => 0,
 		size => $bucket_size,
 	       current => 0};
-
     foreach my $light_genomic_align (@$light_genomic_aligns) { 
 	my $genomic_align_block_id = $light_genomic_align->{genomic_align_block_id};
 	my $cigar_line = $light_genomic_align->{cigar_line};
@@ -283,8 +282,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 
 	#if want one score per base in the alignment, use faster method 
 	#doesn't bother with any binning
-	if ($display_size == ($slice->end - $slice->start + 1)) {
-	    $scores = _get_aligned_scores_from_cigar_line_fast($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $window_size, $scores);
+	if ($window_size == 1 && ($display_size == ($slice->end - $slice->start + 1))) {
+	    $scores = _get_aligned_scores_from_cigar_line_fast($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $scores);
 	} else {
 	    $scores = _get_aligned_scores_from_cigar_line($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $window_size, $scores);
 	    
@@ -1134,10 +1133,9 @@ sub _get_aligned_scores_from_cigar_line {
   Arg  7     : int $genomic_align_block_id (genomic align block id of current alignment block)
   Arg  8     : int $genomic_align_block_length (length of current alignment block)
   Arg  9     : string $display_type (either AVERAGE or MAX (plot average or max value))
-  Arg 10     : int $win_size (window size used)
-  Arg 11     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores in slice coords
+  Arg 10     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores in slice coords
 
-  Example    : $scores = $self->_get_aligned_scores_from_cigar_line_fast($genomic_align->cigar_line, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block->dbID, $genomic_align_block->length, $display_type, $window_size, $scores);
+  Example    : $scores = $self->_get_aligned_scores_from_cigar_line_fast($genomic_align->cigar_line, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block->dbID, $genomic_align_block->length, $display_type, $scores);
   Description: Faster method to than _get_aligned_scores_from_cigar_line. This
                method does not bin the scores and can be used if only require
                one score per base in the alignment
@@ -1149,7 +1147,7 @@ sub _get_aligned_scores_from_cigar_line {
 =cut
 
 sub _get_aligned_scores_from_cigar_line_fast {
-    my ($self, $cigar_line, $start_region, $end_region, $start_slice, $end_slice, $scores, $genomic_align_block_id, $genomic_align_block_length, $display_type, $win_size, $aligned_scores) = @_;
+    my ($self, $cigar_line, $start_region, $end_region, $start_slice, $end_slice, $scores, $genomic_align_block_id, $genomic_align_block_length, $display_type, $aligned_scores) = @_;
 
     return undef if (!$cigar_line);
     
@@ -1210,7 +1208,6 @@ sub _get_aligned_scores_from_cigar_line_fast {
 	}
 	push (@$score_lengths, $length);
     }
-
     #convert start_region into alignment coords and initialise total_chr_pos
     while ($total_chr_pos <= $chr_start) {
 
@@ -1230,15 +1227,16 @@ sub _get_aligned_scores_from_cigar_line_fast {
 	    $total_chr_pos += $cigLength;
 	}
     }
-    
+
     #find start of region in alignment coords 
     my $start_offset = $total_chr_pos - $chr_start;
     if ($cigType eq "M") {
-	$align_start = (int(($total_pos - $start_offset + $win_size)/$win_size) * $win_size);
+#	$align_start = (int(($total_pos - $start_offset + $win_size)/$win_size) * $win_size);
+	$align_start = $total_pos - $start_offset + 1;
     }
 
     #initialise start of region in chromosome coords
-    $chr_pos = $chr_start;
+    $chr_pos = $chr_start - 1; #Need subtract 1 to allow for a single base ie chr_start=chr_end.
 
     #Initialise array of index of positions to index in the scores array
 
@@ -1246,7 +1244,7 @@ sub _get_aligned_scores_from_cigar_line_fast {
 
     for (my $i = 0; $i < @$scores; $i++) {
 	my $score = $scores->[$i];
-	my $length = ($score_lengths->[$i] - 1) * $win_size;
+	my $length = $score_lengths->[$i] - 1;
 	my $start = $score->{position};
 	my $end = $score->{position} + $length;
 
@@ -1261,7 +1259,7 @@ sub _get_aligned_scores_from_cigar_line_fast {
     #one too many scores when the last bucket position equaled the slice length
     #eg for slice of 1000, last bucket position = 1000, get 1001 scores but
     #slice of 2000, last bucket position 1999, get 1000 scores.
-    for ($current_pos = $align_start; $current_pos <= $align_end && $chr_pos < $chr_end; $current_pos += $win_size) {
+    for ($current_pos = $align_start; $current_pos <= $align_end && $chr_pos < $chr_end; $current_pos += 1) {
 
 	#find conservation score row index containing current_pos. Returns -1
 	#if no score found
@@ -1274,7 +1272,7 @@ sub _get_aligned_scores_from_cigar_line_fast {
 	#if a score has been found, find the score in the score string and 
 	#unpack it.
 	unless ($cs_index == -1) {
-	    $csBlockCnt = int(($current_pos - $scores->[$cs_index]->{position})/$win_size);
+	    $csBlockCnt = $current_pos - $scores->[$cs_index]->{position};
 
 	    my $value;
 	    if ($PACKED) {
@@ -1310,6 +1308,8 @@ sub _get_aligned_scores_from_cigar_line_fast {
 	#now add the scores to the bucket
 	if ($cigType eq "M") {
 	    $chr_pos = $total_chr_pos - ($total_pos - $current_pos + 1);
+	    #print "chr_pos=$chr_pos total_chr_pos=$total_chr_pos total_pos=$total_pos current_pos=$current_pos diff_score=$diff_score\n";
+
 	    if ($cs_index != -1) {
 		#in cigar match and have conservation score
 
@@ -1318,10 +1318,11 @@ sub _get_aligned_scores_from_cigar_line_fast {
 		    $diff_score = $_no_score_value;
 		    $exp_score = $_no_score_value;
 		}
+		#print "final pos " . ($chr_pos - $start_slice + 1) .  " $diff_score\n";
 		$aligned_score = Bio::EnsEMBL::Compara::ConservationScore->new_fast(
 		      {'adaptor' => $self,
 		      'genomic_align_block_id' => $genomic_align_block_id,
-		      'window_size' => $win_size,
+		      'window_size' => 1,
 		      'position' => $chr_pos - $start_slice + 1,
 		      'seq_region_pos' => $chr_pos,
 		      'diff_score' => $diff_score,
@@ -1331,7 +1332,6 @@ sub _get_aligned_scores_from_cigar_line_fast {
 	    }
 	} else {
 	    $chr_pos = $total_chr_pos - 1;
-
 	    #not in cigar match so only add the next conservation score or
 	    #_no_score_value if this isn't a score
 	    if ($prev_position != $chr_pos) {
@@ -1339,7 +1339,7 @@ sub _get_aligned_scores_from_cigar_line_fast {
 		    $aligned_score = Bio::EnsEMBL::Compara::ConservationScore->new_fast(
 		      {'adaptor' => $self,
 		      'genomic_align_block_id' => $genomic_align_block_id,
-		      'window_size' => $win_size,
+		      'window_size' => 1,
 		      'position' => $chr_pos - $start_slice + 1,
 		      'seq_region_pos' => $chr_pos,
 		      'diff_score' => $diff_score,
