@@ -51,6 +51,11 @@ my $suffix_separator = '__cut_here__';
 sub fetch_input {
     my ($self) = @_;
 
+    if (!$self->param('master_db') && !$self->param('core_dbs') && !$self->param('conf_file')) {
+	throw("No master database is provided so you must set the define the location of core databases using a configuration file ('conf_file') or the 'curr_core_dbs_locs' parameter in the init_pipeline configuration file");
+    }
+
+
     #Return if no conf file and trying to get the species list or there is no master_db in which case cannot call
     #populate_new_database
     if (!$self->param('conf_file') &&  $self->param('get_species_list') || !$self->param('master_db')) {
