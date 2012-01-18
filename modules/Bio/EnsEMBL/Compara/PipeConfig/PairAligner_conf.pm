@@ -263,6 +263,7 @@ sub pipeline_analyses {
 				   'master_db' => $self->o('master_db'),
 				  'reg_conf'  => $self->o('reg_conf'),
 				  'conf_file' => $self->o('conf_file'),
+				  'core_dbs' => $self->o('curr_core_dbs_locs'),
 				  'get_species_list' => 1,
 				  }, 
 		-wait_for  => [ 'innodbise_table' ],
