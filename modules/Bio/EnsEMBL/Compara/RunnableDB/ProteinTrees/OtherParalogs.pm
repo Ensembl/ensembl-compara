@@ -164,6 +164,7 @@ sub run_otherparalogs {
     foreach my $protein2 (@all_protein_leaves_2) {
       next unless ($protein1->genome_db_id == $protein2->genome_db_id);
       my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link ( $protein1, $protein2, 0 );
+      $genepairlink->add_tag('taxon_name', $tree->get_tagvalue('taxon_name'));
       push @genepairlinks, $genepairlink;
       print STDERR "build graph $graphcount\n" if ($graphcount++ % 10 == 0);
     }
@@ -191,7 +192,7 @@ sub other_paralog {
   return undef unless($pep1->genome_db_id == $pep2->genome_db_id);
 
   $genepairlink->add_tag("orthotree_type", 'other_paralog');
-  $genepairlink->add_tag("orthotree_subtype", "Undetermined");
+  $genepairlink->add_tag("orthotree_subtype", $genepairlink->get_tagvalue('taxon_name'));
 
   return 1;
 }
