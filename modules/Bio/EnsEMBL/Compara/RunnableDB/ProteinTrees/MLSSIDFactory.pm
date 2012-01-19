@@ -67,9 +67,6 @@ sub fetch_input {
 
     my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
-    my $sql = "SELECT homology_id FROM homology WHERE method_link_species_set_id = ?";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-
     my @mlss_ids = ();
     foreach my $species_set (@$species_sets) {
         while (my $genome_db_id1 = shift @{$species_set}) {
