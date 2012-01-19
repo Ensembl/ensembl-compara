@@ -98,17 +98,7 @@ sub store {
     }
   }
 
-  # Add the tags if any
-  my $tag_value_hash = $species_set->get_tagvalue_hash();
-  if ($tag_value_hash) {
-    my $sql = "INSERT IGNORE INTO species_set_tag (species_set_id, tag, value) VALUES (?, ?, ?)";
-    my $sth = $self->prepare($sql);
-    while (my ($tag, $value) = each %$tag_value_hash) {
-#       print "$species_set_id, $tag, $value\n";
-      $sth->execute($species_set_id, $tag, $value);
-    }
-    $sth->finish;
-  }
+  $self->sync_tags_to_database($species_set);
 
   return $species_set;
 }
