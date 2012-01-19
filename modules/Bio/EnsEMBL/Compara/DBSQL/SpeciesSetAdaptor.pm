@@ -75,7 +75,6 @@ sub store {
       $sth->execute();
       $species_set_id = ($sth->fetchrow_array() or 0);
       $species_set_id++;
-      $species_set->dbID($species_set_id);
     }
     throw if (!$species_set_id);
 
@@ -97,6 +96,7 @@ sub store {
       $self->dbc->do("UNLOCK TABLES");
     }
   }
+  $species_set->dbID($species_set_id);
 
   $self->sync_tags_to_database($species_set);
 
