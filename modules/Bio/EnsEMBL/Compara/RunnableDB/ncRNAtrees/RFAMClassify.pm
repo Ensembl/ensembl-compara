@@ -391,26 +391,15 @@ sub tag_assembly_coverage_depth {
 
   my $species_set_adaptor = $self->compara_dba->get_SpeciesSetAdaptor;
 
-  my $ss = $species_set_adaptor->fetch_all_by_GenomeDBs(\@low_coverage);
-  if (defined($ss)) {
-    my $value = $ss->get_tagvalue('name');
-    if ($value eq 'low-coverage') {
-      # Already stored, nothing needed
-    } else {
-      # We need to add the tag
-      $ss->store_tag('name','low-coverage');
-    }
+  my $ss = new Bio::EnsEMBL::Compara::SpeciesSet(-genome_dbs => \@low_coverage);
+  # Stores if necessary. Updates $ss->dbID anyway
+  $species_set_adaptor->store($ss);
+  my $value = $ss->get_tagvalue('name');
+  if ($value eq 'low-coverage') {
+    # Already stored, nothing needed
   } else {
-    # We need to create the species_set, then add the tag
-    my $species_set_id;
-    my $sth2 = $self->dbc->prepare("INSERT INTO species_set VALUES (?, ?)");
-    foreach my $genome_db (@low_coverage) {
-      my $genome_db_id = $genome_db->dbID;
-      $sth2->execute(($species_set_id or undef), $genome_db_id);
-      $species_set_id = $sth2->{'mysql_insertid'};
-    }
-    $sth2->finish();
-    $species_set_adaptor->_store_tagvalue($species_set_id,'name','low-coverage');
+    # We need to add the tag
+    $ss->store_tag('name','low-coverage');
   }
 }
 
