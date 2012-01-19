@@ -18,12 +18,13 @@ CREATE TEMPORARY TABLE tmp_coverage
 		member.taxon_id,
 		SUM(source_name='ENSEMBLGENE') AS nb_genes,
 		SUM(source_name='ENSEMBLPEP') AS nb_pep,
-		SUM(protein_tree_attr.taxon_id = member.taxon_id) AS nb_pep_spectree,
-		SUM(protein_tree_attr.taxon_id IS NOT NULL AND protein_tree_attr.taxon_id != member.taxon_id) AS nb_pep_anctree
+		SUM(gene_tree_node_attr.taxon_id = member.taxon_id) AS nb_pep_spectree,
+		SUM(gene_tree_node_attr.taxon_id IS NOT NULL AND gene_tree_node_attr.taxon_id != member.taxon_id) AS nb_pep_anctree
 	FROM
 		member
-		LEFT JOIN protein_tree_member USING (member_id)
-		LEFT JOIN protein_tree_attr ON (protein_tree_member.root_id = protein_tree_attr.node_id)
+		LEFT JOIN gene_tree_member USING (member_id)
+		LEFT JOIN gene_tree_node USING (node_id)
+		LEFT JOIN gene_tree_node_attr ON (gene_tree_node.root_id = gene_tree_node_attr.node_id)
 	GROUP BY
 		member.taxon_id;
 ALTER TABLE tmp_coverage ADD PRIMARY KEY (taxon_id);
@@ -73,17 +74,18 @@ ORDER BY
 
 CREATE TEMPORARY TABLE tmp_root_properties
 	SELECT
-		protein_tree_attr.node_id,
-		protein_tree_attr.taxon_id,
-		protein_tree_attr.taxon_name,
+		gene_tree_node_attr.node_id,
+		gene_tree_node_attr.taxon_id,
+		gene_tree_node_attr.taxon_name,
 		COUNT(member_id) AS nb_pep,
 		COUNT(DISTINCT member.taxon_id) AS nb_spec
 	FROM
-		protein_tree_member
+		gene_tree_member
 		JOIN member USING (member_id)
-		JOIN protein_tree_attr ON protein_tree_attr.node_id=protein_tree_member.root_id
+		JOIN gene_tree_node USING (node_id)
+		JOIN gene_tree_node_attr ON gene_tree_node_attr.node_id=gene_tree_node.root_id
 	GROUP BY
-		protein_tree_attr.node_id;
+		gene_tree_node_attr.node_id;
 ALTER TABLE tmp_root_properties ADD KEY (taxon_id);
 OPTIMIZE TABLE tmp_root_properties;
 
@@ -141,13 +143,13 @@ SELECT
 	ROUND(AVG(IF(node_type="duplication",duplication_confidence_score,NULL)),2) AS avg_dupscore_nondub
 FROM
 	( 
-	(SELECT taxon_id, taxon_name, node_type, duplication_confidence_score FROM protein_tree_attr)
+	(SELECT taxon_id, taxon_name, node_type, duplication_confidence_score FROM gene_tree_node_attr)
 	UNION ALL
-	(SELECT 1e7+1, "Total (ancestral species)", node_type, duplication_confidence_score FROM protein_tree_attr WHERE taxon_name NOT LIKE "% %")
+	(SELECT 1e7+1, "Total (ancestral species)", node_type, duplication_confidence_score FROM gene_tree_node_attr WHERE taxon_name NOT LIKE "% %")
 	UNION ALL
-	(SELECT 1e7+2, "Total (extant species)", node_type, duplication_confidence_score FROM protein_tree_attr WHERE taxon_name LIKE "% %")
+	(SELECT 1e7+2, "Total (extant species)", node_type, duplication_confidence_score FROM gene_tree_node_attr WHERE taxon_name LIKE "% %")
 	UNION ALL
-	(SELECT 1e7+3, "Total", node_type, duplication_confidence_score FROM protein_tree_attr)
+	(SELECT 1e7+3, "Total", node_type, duplication_confidence_score FROM gene_tree_node_attr)
 	) tt
 	LEFT JOIN ncbi_taxa_node USING (taxon_id)
 GROUP BY
