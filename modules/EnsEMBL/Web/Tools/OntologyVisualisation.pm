@@ -59,7 +59,7 @@ Maurice Hendrix <mh18@sanger.ac.uk>
 
 =head1 CONTACT
 
-Post questions to the EnsEMBL development list ensembl-dev@ebi.ac.uk
+Post questions to the EnsEMBL development list dev@ensembl.org 
 
 =cut
 

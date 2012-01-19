@@ -26,7 +26,7 @@ $matrix->render();
 This modules is part of the Ensembl project http://www.ensembl.org
 
 Questions can be posted to the ensembl-dev mailing list:
-ensembl-dev@ebi.ac.uk
+dev@ensembl.org
 
 =head1 APPENDIX
 
