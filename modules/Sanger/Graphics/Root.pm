@@ -13,7 +13,7 @@ just a container for support functions.
 
 =head1 CONTACT
 
-Post questions to the EnsEMBL developer mailing list: <ensembl-dev@ebi.ac.uk>
+Post questions to the EnsEMBL developer mailing list: <dev@ensembl.org>
 
 =head1 APPENDIX
 
