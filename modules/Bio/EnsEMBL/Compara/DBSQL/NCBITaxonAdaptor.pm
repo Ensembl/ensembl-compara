@@ -24,7 +24,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Compara::NCBITaxon;
 
 use Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor;
-use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
+our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
 
 
 =head2 fetch_node_by_taxon_id
@@ -235,8 +235,20 @@ sub init_instance_from_rowhash {
   return $node;
 }
 
-sub _tag_capabilities {
-    return ("ncbi_taxa_name", undef, "taxon_id", "node_id");
+sub _load_tagvalues {
+  my $self = shift;
+  my $node = shift;
+
+  unless($node->isa('Bio::EnsEMBL::Compara::NCBITaxon')) {
+    throw("set arg must be a [Bio::EnsEMBL::Compara::NCBITaxon] not a $node");
+  }
+
+  my $sth = $self->prepare("SELECT name_class, name from ncbi_taxa_name where taxon_id=?");
+  $sth->execute($node->node_id);  
+  while (my ($tag, $value) = $sth->fetchrow_array()) {
+    $node->add_tag($tag,$value,1);
+  }
+  $sth->finish;
 }
 
 sub update {
