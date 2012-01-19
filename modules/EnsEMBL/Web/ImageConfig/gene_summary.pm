@@ -24,12 +24,18 @@ sub init {
     external_data
     user_data
     other
+    information
   ));
 
-  $self->add_tracks('other',
+  $self->add_tracks('other',    
     [ 'scalebar',  '', 'scalebar',  { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
     [ 'ruler',     '', 'ruler',     { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
     [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }],
+  );
+  
+  $self->add_tracks('information',
+    [ 'missing', '', 'text', { display => 'normal', strand => 'r', name => 'Disabled track summary', description => 'Show counts of number of tracks turned off by the user' }],
+    [ 'info',    '', 'text', { display => 'normal', strand => 'r', name => 'Information',            description => 'Details of the region shown in the image' }]
   );
   
   $self->add_tracks('sequence',
