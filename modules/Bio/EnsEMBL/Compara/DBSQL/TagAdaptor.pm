@@ -252,4 +252,39 @@ sub _delete_tagvalue {
     }
 }
 
+
+=head2 sync_tags_to_database
+
+  Description: rewrites all the tags from memory to the database
+  Arg [1]    : <scalar> object
+  Example    : $speciesset_adaptor->sync_tags_to_database($species_set);
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub sync_tags_to_database {
+    my $self = shift;
+    my $object = shift;
+
+    # To load the tags from the database
+    my $hash = $object->get_tagvalue_hash();
+    foreach my $tag (keys %$hash) {
+
+        # Wipe out any previous value
+        $self->_delete_tagvalue($object, $tag);
+
+        # Write the new one(s)
+        my $val = ${$hash}{$tag};
+        if (ref($val) eq 'ARRAY') {
+            foreach my $value (@$val) {
+                $self->_store_tagvalue($object, $tag, $value, 1);
+            }
+        } else {
+            $self->_store_tagvalue($object, $tag, $val, 0);
+        }
+    }
+}
+
 1;
