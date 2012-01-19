@@ -1109,8 +1109,9 @@ sub generate_attribute_arguments {
   my $perc_pos1 = 0;
   my $perc_id2 = 0;
   my $perc_pos2 = 0;
-  # This speeds up the pipeline for this portion of the homology table
-  if ($type eq 'possible_ortholog') {
+  # This speeds up the pipeline for this portion of the homology table. If no_between option is used,
+  # only the low SIS are dealt with, so we will calculate the cigar_lines
+  if ($type eq 'possible_ortholog' && !defined($self->param('no_between'))) {
     return ($new_aln1_cigarline, $perc_id1, $perc_pos1, $new_aln2_cigarline, $perc_id2, $perc_pos2);
   }
 
