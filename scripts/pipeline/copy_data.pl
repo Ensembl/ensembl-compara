@@ -427,14 +427,13 @@ sub copy_genomic_align_blocks {
       $sth->finish();
       $fix_gab = $to_max_gab-$min_gab+1;
       $fix_ga = $to_max_ga-$min_ga+1;
-      $fix_gat = $to_max_gat-$min_gat+1;
+      $fix_gat = $to_max_gat-$min_gat+1 if ($to_max_gat && $min_gat);
       $fix_gab_gid = $to_max_gab_gid-$min_gab_gid+1;
 
       #print "to max_gab $to_max_gab min_gab $to_min_gab max_ga $to_max_ga min_ga $to_min_ga max_gab_gid $to_max_gab_gid min_gab_gid $to_min_gab_gid\n";
   }
 
   print "max_gab $max_gab min_gab $min_gab max_ga $max_ga min_ga $min_ga max_gab_gid $max_gab_gid min_gab_gid $min_gab_gid\n";
-
 
   my $lower_limit = $mlss_id * 10**10;
   my $upper_limit = ($mlss_id + 1) * 10**10;
