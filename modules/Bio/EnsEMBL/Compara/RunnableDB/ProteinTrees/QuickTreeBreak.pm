@@ -290,6 +290,7 @@ sub store_clusters {
   my $starttime = time();
 
   $protein_tree_adaptor->store($self->param('original_cluster'));
+  $self->param('original_cluster')->root->store_tag('tree_support', 'quicktree');
 
   foreach my $cluster (@{$self->param('subclusters')}) {
     my $node_id = $cluster->root_id;

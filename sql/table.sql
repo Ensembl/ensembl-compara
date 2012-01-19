@@ -893,7 +893,7 @@ CREATE TABLE gene_tree_node_attr (
   taxon_name                      VARCHAR(255),
   bootstrap                       TINYINT UNSIGNED,
   duplication_confidence_score    DOUBLE(5,4),
-  tree_support                    SET('phyml_nt', 'nj_ds', 'phyml_aa', 'nj_dn', 'nj_mm'),
+  tree_support                    SET('phyml_nt', 'nj_ds', 'phyml_aa', 'nj_dn', 'nj_mm', 'quicktree'),
 
   FOREIGN KEY (node_id) REFERENCES gene_tree_node(node_id),
 
