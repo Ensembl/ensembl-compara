@@ -393,7 +393,7 @@ sub AUTOLOAD {
     } elsif ( $AUTOLOAD =~ m/::get_(\w+)_value$/ ) {
         return $self->get_tagvalue($1);
     } else {
-        die "$self does not understand method $AUTOLOAD\n";
+#        die "$self does not understand method $AUTOLOAD\n";
     }
 }
 
