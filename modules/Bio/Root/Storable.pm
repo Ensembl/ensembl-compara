@@ -612,7 +612,7 @@ sub _thaw {
   if( $BINARY ){ return thaw( $data ) }
   else{ 
     my $code; 
-    $code = eval( $data ) ;
+    eval( $data ) ;
     if($@) {
       die( "eval: $@" );
     }   
