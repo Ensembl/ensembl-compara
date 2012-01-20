@@ -432,6 +432,11 @@ sub get_default_chunking {
 	$dna_collection->{'region'} = $default_chunk->{'region'};
     }
  
+    #include_non_reference (haplotypes) and masking_options
+    unless (defined $dna_collection->{'include_non_reference'}) {
+	$dna_collection->{'include_non_reference'} = $default_chunk->{'include_non_reference'};
+    }
+
     #masking option file (currently only set for human which is always reference)
     unless (defined $dna_collection->{'masking_options_file'}) {
 	$dna_collection->{'masking_options_file'} = $default_chunk->{'masking_options_file'};
