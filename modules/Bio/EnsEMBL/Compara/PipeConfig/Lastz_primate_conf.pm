@@ -35,7 +35,7 @@ sub default_options {
 	    'pair_aligner_method_link' => [1001, 'LASTZ_RAW'],
 	    'pair_aligner_logic_name' => 'LastZ',
 	    'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ',
-	    'pair_aligner_options' => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=/nfs/users/nfs_k/kb3/work/hive/data/primate.matrix --ambiguous=iupac',
+	    'pair_aligner_options' => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/primate.matrix --ambiguous=iupac',
 
 	    #
 	    #Default chain
