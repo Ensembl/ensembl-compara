@@ -56,7 +56,6 @@ sub default_options {
 
 	'release'               => '66',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
-        'ensembl_cvs_root_dir'  => $ENV{'HOME'}.'/src/ensembl_main', 
 	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
 
          # dependent parameters:
