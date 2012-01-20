@@ -68,7 +68,6 @@ sub content {
   my $html;
   my $break = int(scalar(@buttons)/2);
   my $i = 0;
-  my $size = 110;
 
   foreach my $button (@buttons) {
     if (($i % $break) == 0) {
@@ -82,14 +81,14 @@ sub content {
     if ($url) {
       $img .= '.png';
       $html .=
-        '<a href="'.$url.'" title="'.$title.'">'.
-          '<img src="/img/'.$img.'" class="portal" style="padding: 5px; width:'.$size.'px;height:'.$size.'px;" alt="'.$title.'" />'.
+        '<a href="'.$url.'">'.
+          '<img src="/i/96/'.$img.'" class="portal" alt="'.$title.'" title"'.$title.'" />'.
         '</a>';
     }
     else {
-      $img   .= '.png';
+      $img   .= '_off.png';
       $title .= ' (NOT AVAILABLE)';
-      $html .= '<img src="/img/'.$img.'" class="portal" style="opacity:0.3; filter:alpha(opacity=30); zoom:1; padding: 5px; width:'.$size.'px; height:'.$size.'px;" alt="" title="'.$title.'" />';
+      $html .= '<img src="/i/96/'.$img.'" class="portal" alt="'.$title.'" title="'.$title.'" />';
     }
     $i++;
     if ($i > 0 && ($i % $break) == 0) {
