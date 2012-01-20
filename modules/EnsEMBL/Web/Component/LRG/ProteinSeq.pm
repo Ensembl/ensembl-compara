@@ -1,8 +1,10 @@
+# $Id$
+
 package EnsEMBL::Web::Component::LRG::ProteinSeq;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Transcript::ProteinSeq EnsEMBL::Web::Component::TextSequence);
+use base qw(EnsEMBL::Web::Component::Transcript::ProteinSeq);
 
 sub _init {
   my $self = shift;
