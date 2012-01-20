@@ -108,6 +108,8 @@ sub _generic_create {
 
 }
 
+sub slice { return $_[0]->Obj; }
+
 sub retrieve_features {
   my ($self, $features) = @_;
   my $method;
