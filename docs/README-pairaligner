@@ -58,12 +58,12 @@ Compiled binaries:
 
 in tcsh
     setenv ENSEMBL_CVS_ROOT_DIR  /some/path/to/modules
-    setenv PERL5LIB  ${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules:${ENSEMBL_CVS_ROOT_DIR}/bioperl-live:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive:${ENSEMBL_CVS_ROOT_DIR}/ensembl-analysis
+    setenv PERL5LIB  ${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules:${ENSEMBL_CVS_ROOT_DIR}/bioperl-live:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules:${ENSEMBL_CVS_ROOT_DIR}/ensembl-analysis/modules
     setenv PATH ${PATH}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/script/pipeline:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/scripts
 
 in bash
     ENSEMBL_CVS_ROOT_DIR=/some/path/to/modules
-    PERL5LIB=${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules:${ENSEMBL_CVS_ROOT_DIR}/bioperl-live:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive
+    PERL5LIB=${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules:${ENSEMBL_CVS_ROOT_DIR}/bioperl-live:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules
     PATH=$PATH:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/scripts
 
 Also refer to the following pages for tips about installation and setting up the environment:
