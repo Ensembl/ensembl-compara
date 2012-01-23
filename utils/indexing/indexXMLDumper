@@ -302,12 +302,21 @@ sub helpLine {
 
   my $xml;
   if ($search_engine eq 'solr') {
-    my $url = '';
+    my $url = $type eq 'FAQ'      ? "Help/Faq#faq$id"
+            : $type eq 'Glossary' ? "Help/Glossary?id=$id"
+            : $type eq 'View'     ? "Help/View?id=$id"
+            : '';
+    print LOG "NO URL available for feature type $type, please check\n" unless $url;
     $xml = qq(
 <doc>
-  <field name="id">$id</field>);
-
-    # feature specific code here
+  <field name="id">$id</field>
+  <field name="description">$description</field>
+  <field name="featuretype">$type</field>
+  <field name="displayname">$name</field>);
+    foreach my $kw (@keywords) {
+      $xml .= qq(
+  <field name="keyword">$kw</field>);
+    }
     $xml .= &common_fields('All',$type,'');
     $xml .= qq(
   <field name="domain_url">$url</field>
@@ -392,11 +401,13 @@ LEFT JOIN marker_synonym as ms2 on ms2.marker_synonym_id = m.display_marker_syno
 
 sub markerLine {
   my( $species, $IDS, $params, $counter ) = @_;
-  my $url = '';
-  $species =~ s/_/ /;
-  my $xml;
   my @synonyms = sort @$IDS;
   my $key = pop @synonyms;
+  my $url = sprintf(qq(%s/Marker/Details?m=%s),
+                    $species,
+                    $key);
+  $species =~ s/_/ /;
+  my $xml;
   my $desc = 'A marker with '.@synonyms.' synonym';
   $desc .= 's' if (@synonyms > 1);
   $desc .= 's' unless (@synonyms);
@@ -404,10 +415,16 @@ sub markerLine {
   if ($search_engine eq 'solr') {
     $xml = qq(
 <doc>
-  <field name="id">$key</field>);
-
-    # feature specific code here
-
+  <field name="id">$key</field>
+  <field name="description">$desc</field>);
+    foreach my $syn (@synonyms) {
+      $xml .= qq(
+  <field name="synonym">$syn</field>);
+    }
+    while (my ($param,$value) = each %$params) {
+      $xml .= qq(
+  <field name="$param">$value</field>);
+    }
     $xml .= &common_fields($species,'Marker','core');
     $xml .= qq(
   <field name="domain_url">$url</field>
@@ -516,7 +533,7 @@ sub dumpQTL {
       $old_qtl = $T->{qtl_id};
     }
   }
-  &p( QTLLine( $dbspecies, $old_ID, $old_pos, $IDS, $desc, $counter ), $nogzip, $fh);
+  &p( QTLLine( $dbspecies, $old_ID, $old_pos, $old_action, $IDS, $desc, $counter ), $nogzip, $fh);
   return footer( $counter->(),$nogzip,$fh);
 
 }
@@ -525,17 +542,22 @@ sub QTLLine {
   my ($species, $key, $pos, $action, $IDS, $desc, $counter ) = @_;
   return '' unless $key;
 
-  my $url = '';
-  $species =~ s/_/ /;
+  my $url = sprintf(qq(%s/Location/%s?r=%s),
+                    $species,
+                    $action,
+                    $pos);
 
+  $species =~ s/_/ /;
   my $xml;
   if ($search_engine eq 'solr') {
     $xml = qq(
 <doc>
-  <field name="id">$key</field>);
-
-    # feature specific code here
-
+  <field name="id">$key</field>
+  <field name="description">$desc</field>);
+    foreach my $id (@$IDS) {
+      $xml .= qq(
+  <field name="synonym">$id</field>);
+    }
     $xml .= &common_fields($species,'QTL','core');
     $xml .= qq(
   <field name="domain_url">$url</field>
@@ -820,13 +842,10 @@ sub dumpVariation {
 
 sub VariationLine {
   my ($species, $name, $synonyms, $genes, $phenotypes, $studys, $locs, $type, $source, $desc, $counter ) = @_;
-  my $url = '';
   my $url = sprintf(qq(%s/Variation/Summary?v=%s),
                     $species,
                     $name);
-
   $species =~ s/_/ /;
-
   my $xml;
   if ($search_engine eq 'solr') {
     $xml = qq(
@@ -834,9 +853,10 @@ sub VariationLine {
   <field name="id">$name</field>
   <field name="description">$desc</field>);
 #
-#Variation originally wanted locations but then found users were following these rather than the real link so don't put in XML#    foreach (@$locs) {
+#Variation originally wanted locations but then found users were following these rather than the real link so don't put in XML
+#    foreach (@$locs) {
 #      $xml .= qq(
-#    <field name="location">$_</field>);
+#  <field name="location">$_</field>);
 #    }
     foreach (@$synonyms) {
       $xml .= qq(
@@ -932,17 +952,16 @@ sub dumpVariationPhenotype {
 
 sub VariationPhenLine {
   my ($species, $name, $id, $counter ) = @_;
-
-  my $url = '';
+  my $url = sprintf(qq(%s/Phenotype/Locations?ph=%s),
+                    $species,
+                    $id);
   $species =~ s/_/ /;
   my $xml;
   if ($search_engine eq 'solr') {
     $xml = qq(
 <doc>
-  <field name="id">$id</field>);
-
-    # feature specific code here
-
+  <field name="id">$id</field>
+  <field name="description">$name</field>);
     $xml .= &common_fields($species,'Phenotype','variation');
     $xml .= qq(
   <field name="domain_url">$url</field>
@@ -2975,7 +2994,7 @@ sub common_fields {
     $xml = qq(
   <field name="site">$website_url</field>
   <field name="feature_type">$feature_type</field>);
-    if ($species eq 'ALL') {
+    if ($species eq 'All') {
       $xml .= qq(
   <field name="species">All</field>);
     }
