@@ -1289,6 +1289,7 @@ sub _munge_meta {
     species.ensembl_alias_name SPECIES_COMMON_NAME
     species.production_name    SPECIES_PRODUCTION_NAME
     species.scientific_name    SPECIES_SCIENTIFIC_NAME
+    assembly.accession         ASSEMBLY_ACCESSION
     assembly.default           ASSEMBLY_NAME
     assembly.name              ASSEMBLY_DISPLAY_NAME
     liftover.mapping           ASSEMBLY_MAPPINGS
