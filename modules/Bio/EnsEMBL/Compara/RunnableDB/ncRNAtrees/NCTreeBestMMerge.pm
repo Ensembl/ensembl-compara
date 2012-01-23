@@ -395,7 +395,6 @@ sub store_nctree
     printf("NCTreeBestMMerge::store_nctree\n") if($self->debug);
 
     $tree->build_leftright_indexing(1);
-    $tree->clusterset_id($self->param('clusterset_id'));
     $tree_adaptor->store($tree);
     $tree_adaptor->delete_nodes_not_in_tree($tree);
 
