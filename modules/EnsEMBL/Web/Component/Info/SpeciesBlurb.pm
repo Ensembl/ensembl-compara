@@ -28,6 +28,12 @@ sub content {
   ## Assembly blurb
   my $html = EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $file1);
 
+  ## Add in GCA link 
+  if ($hub->species_defs->ASSEMBLY_ACCESSION){
+    my $accession_link = $hub->get_ExtURL_link($hub->species_defs->ASSEMBLY_ACCESSION, 'GCA', $hub->species_defs->ASSEMBLY_ACCESSION);
+    $html .= qq(<p class="space-below">The genome assembly represented here corresponds to GenBank Assembly ID $accession_link</p>);
+  }
+
   ## Link to FTP site
   my $ftp_url = 'ftp://ftp.ensembl.org/pub/release-'.$ensembl_version.'/fasta/'.lc($species).'/dna/';
   $html .= qq(<p style="margin-top:1em"><a href=$ftp_url"><img src="/i/helix.gif" alt="" /></a>
