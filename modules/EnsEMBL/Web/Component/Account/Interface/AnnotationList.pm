@@ -131,7 +131,7 @@ sub content {
   }
 
   if (!$has_notes) {
-    $html .= sprintf '<p class="center"><img src="%s/img/help/note_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>', $self->static_server;
+    $html .= '<p class="center">You do not currently have any annotations.</p>';
   }
 
   if ($no_species) {
