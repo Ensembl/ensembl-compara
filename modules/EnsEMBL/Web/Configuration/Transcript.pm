@@ -104,7 +104,7 @@ sub populate_tree {
       image      EnsEMBL::Web::Component::Transcript::TranslationImage
       statistics EnsEMBL::Web::Component::Transcript::PepStats
     )],
-    { 'availability' => 'either', 'concise' => 'Protein summary' }
+    { 'availability' => 'either translation', 'concise' => 'Protein summary' }
   ));
   
   my $D = $self->create_node('Domains', 'Domains & features ([[counts::prot_domains]])',
