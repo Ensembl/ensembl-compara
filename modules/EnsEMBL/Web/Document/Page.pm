@@ -133,7 +133,6 @@ sub ajax_redirect {
     }
   } else {
     $r->headers_out->set('Location' => $url);
-    $r->err_headers_out->set('Location' => $url);
     $r->status(Apache2::Const::REDIRECT);
   }
 }
