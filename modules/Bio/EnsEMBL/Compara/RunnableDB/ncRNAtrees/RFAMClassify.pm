@@ -173,6 +173,7 @@ sub run_rfamclassify {
 
         my $cluster_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
         $cluster->root($cluster_root);
+        $cluster->clusterset_id($cluster_root->node_id);
         $cluster_root->tree($cluster);
         $clusterset_leaf->add_child($cluster_root);
 
