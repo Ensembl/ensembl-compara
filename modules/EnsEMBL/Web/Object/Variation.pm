@@ -1447,8 +1447,10 @@ sub hgvs_url {
   # Add or override the parameters with the ones supplied to the method
   $p->{$_} = $params->{$_} for keys %$params;
   
-  my $hgvs_string = $hgvs;
-  if (!$display_all) {
+  my $hgvs_string;
+  if ($display_all) {
+    $hgvs_string =   substr($hgvs, length $refseq);
+  } else {
     $hgvs_string = substr($hgvs, length $refseq, ($max_length - length $refseq)) . (length $hgvs > $max_length ? '...' : '');
   }
   # Return an arrayref with the elements: [0] -> URL, [1] -> display_name, [2] -> the rest of the HGVS string (capped at a maximum length)
