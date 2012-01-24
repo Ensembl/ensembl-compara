@@ -574,6 +574,15 @@ sub parse_defaults {
 	$dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'region'} = 
 	  $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'};
     }
+    #Store include_non_reference, if defined, in the chain_config for use in no_chunk_and_group_dna
+    if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'}) {
+	$dna_collections->{$chain_config->{'reference_collection_name'}}->{'include_non_reference'} = 
+	  $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'};
+    }
+    if ($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'include_non_reference'}) {
+	$dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'include_non_reference'} = 
+	  $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'include_non_reference'};
+    }
 
     
     push @$pair_aligners, $pair_aligner;
