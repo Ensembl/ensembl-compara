@@ -177,7 +177,7 @@ sub root {
         # defines the new root
         $self->{'_root'} = $new;
         #print "UPDATES $self for root_id\n";
-        $self->{'_root_id'} = $new->node_id;
+        $self->{'_root_id'} = $new->node_id unless ref($new->node_id);
     } 
 
     if (not defined $self->{'_root'} and defined $self->{'_root_id'} and defined $self->{'_adaptor'}) {
@@ -230,6 +230,9 @@ sub root_id {
         $self->{'_root_id'} = $new;
         # should update the root object accordingly, but I prefer delaying the fetch_node_by_node_id
         delete $self->{'_root'};
+    }
+    if (not defined $self->{'_root_id'} and defined $self->{'_root'}) {
+        $self->{'_root_id'} = $self->{'_root'}->node_id unless ref($self->{'_root'}->node_id);
     }
     return $self->{'_root_id'};
 }
