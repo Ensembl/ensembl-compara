@@ -321,7 +321,7 @@ sub _write_tree {
   }
   
   $w->startTag('phylogeny', %attr);
-  $w->dataElement('id', $tree->stable_id()) if $tree->stable_id();
+  $w->dataElement('id', $tree->stable_id()) if $tree->can("stable_id");
   $self->_process($tree);
   $w->endTag('phylogeny');
   

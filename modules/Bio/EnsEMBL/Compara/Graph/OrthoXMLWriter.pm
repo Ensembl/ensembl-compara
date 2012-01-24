@@ -391,7 +391,7 @@ sub _process {
     my $w = $self->_writer();
     $w->startTag(
       $tagname,
-      $node->stable_id() ? ("id" => $node->stable_id()) : ("id" => $node->node_id()),
+      $node->can("stable_id") ? ("id" => $node->stable_id()) : ("id" => $node->node_id()),
     );
  
     $self->_genetreenode_body($node);
