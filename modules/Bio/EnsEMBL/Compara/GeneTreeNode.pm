@@ -85,6 +85,29 @@ sub root {
     }
 }
 
+
+=head2 release_tree
+
+  Overview   : Removes the to/from GeneTree reference to
+               allow freeing memory 
+  Example    : $self->release_tree;
+  Returntype : undef
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub release_tree {
+    my $self = shift;
+
+    if (defined $self->tree) {
+        delete $self->{'_tree'}->{'_root'};
+        delete $self->{'_tree'};
+    }
+    return $self->SUPER::release_tree;
+}
+
+
 #use Data::Dumper;
 
 #sub string_node {

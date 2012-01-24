@@ -75,6 +75,22 @@ sub new {
 }
 
 
+=head2 DESTROY()
+
+  Description : Deletes the reference to the root node and breaks
+                the circular reference.
+  Returntype  : None
+  Exceptions  : None
+  Status      : System
+  
+=cut
+
+sub DESTROY {
+    my $self = shift;
+    delete $self->{'_root'};
+}
+
+
 =head2 tree_type()
 
   Description : Getter/Setter for the tree_type field. This field can
