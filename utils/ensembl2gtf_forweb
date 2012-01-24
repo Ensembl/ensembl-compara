@@ -314,10 +314,11 @@ sub write_transcript_gtf {
   my $instop = 0;
 
 
-  my $biotype_display;
+  my ($biotype_display, $transcript_biotype);
   {
     no warnings 'uninitialized';
     $biotype_display = $noncore_db eq 'vega' ? $gene->status.'_'.$gene->biotype : $gene->biotype;
+    $transcript_biotype = $noncore_db eq 'vega' ? $transcript->status.'_'.$transcript->biotype : $transcript->biotype;
   }
 
   foreach my $exon (@{$transcript->get_all_Exons}) {
@@ -336,14 +337,14 @@ sub write_transcript_gtf {
     }
 
     print $fh $idstr . "\t" . 
-              $biotype_display . "\t" . 
+              $transcript_biotype . "\t" . 
               'exon' . "\t" . 
               ($exon->start+$sliceoffset) . "\t". 
               ($exon->end+$sliceoffset) . "\t". 
               "." . "\t". 
               $strand . "\t". 
               "." . "\t";
-    print_attribs($fh,$gene,$transcript,$count,'exon');
+    print_attribs($fh,$gene,$biotype_display,$transcript,$count,'exon');
     print $fh "\n";
 
     if ($intrans) {
@@ -374,14 +375,14 @@ sub write_transcript_gtf {
           $exon_end >= $cdsexon->start &&
           !$instop) {
         print $fh $idstr . "\t" . 
-                  $biotype_display . "\t" . 
+                  $transcript_biotype . "\t" . 
                   'CDS' . "\t" . 
                   ($exon_start+$sliceoffset) . "\t". 
                   ($exon_end+$sliceoffset) . "\t". 
                   "." . "\t". 
                   $strand . "\t". 
                   $phase . "\t";
-        print_attribs($fh,$gene,$transcript,$count,'CDS');
+        print_attribs($fh,$gene,$biotype_display,$transcript,$count,'CDS');
         print $fh "\n";
       }
     }
@@ -390,14 +391,14 @@ sub write_transcript_gtf {
       my $tmpcnt = $count;
       foreach my $startc (@startcs) {
         print $fh $idstr . "\t" . 
-                  $biotype_display . "\t" . 
+                  $transcript_biotype . "\t" . 
                   'start_codon' . "\t" . 
                   ($startc->start+$sliceoffset) . "\t". 
                   ($startc->end+$sliceoffset) . "\t". 
                   "." . "\t". 
                   $strand . "\t". 
                   $startc->phase . "\t";
-        print_attribs($fh,$gene,$transcript,$tmpcnt++,'start_codon');
+        print_attribs($fh,$gene,$biotype_display,$transcript,$tmpcnt++,'start_codon');
         print $fh "\n";
       }
     }
@@ -407,14 +408,14 @@ sub write_transcript_gtf {
         my $tmpcnt = $count - $#endcs;
         foreach my $endc (@endcs) {
           print $fh $idstr . "\t" . 
-                    $biotype_display . "\t" . 
+                    $transcript_biotype . "\t" . 
                     'stop_codon' . "\t" . 
                     ($endc->start+$sliceoffset) . "\t". 
                     ($endc->end+$sliceoffset) . "\t". 
                     "." . "\t". 
                     $strand . "\t". 
                     $endc->phase . "\t";
-          print_attribs($fh,$gene,$transcript,$tmpcnt++,'stop_codon');
+          print_attribs($fh,$gene,$biotype_display,$transcript,$tmpcnt++,'stop_codon');
           print $fh "\n";
         }
       }
@@ -476,7 +477,7 @@ sub make_stop_codon_features {
 }
 
 sub print_attribs {
-  my ($fh,$gene,$transcript,$count,$type) = @_;
+  my ($fh,$gene,$gene_biotype,$transcript,$count,$type) = @_;
 
 
   my $gene_name;
@@ -491,6 +492,7 @@ sub print_attribs {
             " transcript_id \"" . get_transcript_id($transcript) . "\";";
   print $fh " exon_number \"$count\";";
   print $fh " gene_name \"" . $gene_name . "\";" if ($gene_name);
+  print $fh " gene_biotype \"" . $gene_biotype ."\";";
   print $fh " transcript_name \"" . $trans_name . "\";" if ($trans_name);
   if ($type eq 'CDS') {
     print $fh ' protein_id "' . get_translation_id($transcript->translation) . '";';
