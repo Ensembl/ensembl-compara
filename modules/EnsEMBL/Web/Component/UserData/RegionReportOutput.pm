@@ -4,6 +4,8 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use EnsEMBL::Web::Constants;
+
 use base qw(EnsEMBL::Web::Component::UserData);
 
 sub _init {
@@ -20,30 +22,43 @@ sub caption {
 sub content {
   my $self = shift;
   my $hub = $self->hub;
-  my $html;
-  warn ">>> OUTPUT";
+  my %data_error = EnsEMBL::Web::Constants::USERDATA_MESSAGES;
+  my ($html, $output, $error);
 
-  my $record = $hub->session->get_data('code' => $hub->param('code'));
-
-  my $filename = $record->{'filename'};
-  my $name     = $record->{'name'} || 'region_report';
-  $name .= '.txt';
-  my $tmpfile = new EnsEMBL::Web::TmpFile::Text(
-      filename  => $record->{'filename'}, 
-      prefix    => 'region_report', 
-  );
-  warn ">>> TMPFILE $tmpfile ($filename)";
-
-  if ($tmpfile->exists) {
-    my $data = $tmpfile->retrieve; 
-    warn ">>> DATA $data";
-    use Data::Dumper; warn Dumper($data);
-    $html .= sprintf('<h3>Download: <a href="/%s/download?file=%s;prefix=region_report" class="popup">%s</a></h3>', $hub->species, $filename, $name, $name);
-    $html .= qq(<pre>$data</pre>);
+  if ($hub->param('error_code')) {
+    $error = $data_error{$hub->param('error_code')};
   }
   else {
-    $html = qq(<p class="space-below">Sorry, your results file could not be retrieved from disk. Please try later.</p>);
+    my $record = $hub->session->get_data('code' => $hub->param('code'));
+
+    my $extension = $record->{'extension'};
+    my $filename = $record->{'filename'};
+    my $tmpfile = new EnsEMBL::Web::TmpFile::Text(
+      filename  => $filename, 
+      prefix    => 'download', 
+      extension => $extension,
+    );
+
+    if ($tmpfile->exists) {
+      my $data    = $tmpfile->retrieve; 
+      my $name    = $record->{'name'} || 'region_report';
+      $output .= sprintf('<h3>Download: <a href="/%s/download?file=%s;prefix=download;format=%s">%s</a></h3>', $hub->species, $filename, $extension, $name);
+      $output .= qq(<pre>$data</pre>);
+    }
+    else {
+      $error = $data_error{'load_file'};
+    }
   }
+
+  if ($error) {
+    my $param = $hub->param('code') ? {'code' => $hub->param('code')} : {};
+    $error->{'message'} .= sprintf(' Would you like to <a href="%s">try again</a> with different region(s)?',
+              $self->url($hub->species_path($hub->data_species) . '/UserData/SelectReportOptions', $param)
+              );
+
+    $html = $self->_info_panel($error->{'type'}, $error->{'title'}, $error->{'message'});
+  }
+  $html .= $output;
 
   return $html;
 }
