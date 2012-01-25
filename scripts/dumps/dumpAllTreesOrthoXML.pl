@@ -51,7 +51,7 @@ my $list_species = $gdba->fetch_all;
 sub callback_list_members {
   my ($species) = @_;
   my $constraint = 'm.genome_db_id = '.($species->dbID);
-  my $join = [[[$ta->_get_table_prefix().'_tree_member', 'tm'], 'm.member_id = tm.member_id', [qw(tm.member_id)]]];
+  my $join = [[['gene_tree_member', 'tm'], 'm.member_id = tm.member_id', [qw(tm.member_id)]]];
   return $ma->_generic_fetch($constraint, $join);
 }
 my $list_trees = $ta->fetch_all;
