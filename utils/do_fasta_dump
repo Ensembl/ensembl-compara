@@ -343,14 +343,14 @@ sub create_dirs_for_dumps {
   my $chr_toplevel;   
   if ($dna == 1){
    my $thisdir = $sp_folder . ($no_subdirs ? '' : "/dna/");
-   my $file_top = $thisdir . $file_details .".dna.toplevel.fa";
+   my $file_top = "$thisdir/$file_details.dna.toplevel.fa";
    $filehandles->{'dna_toplevel_top'} = Bio::SeqIO->new(
             '-format' => 'Fasta',
         '-file'   => '>'.$file_top
        );
          
       
-   my $file_top_rm = $thisdir . $file_details .".dna_rm.toplevel.fa";
+   my $file_top_rm = "$thisdir/$file_details.dna_rm.toplevel.fa";
    $filehandles->{'dna_toplevel_top_rm'} = Bio::SeqIO->new(
               '-format' => 'Fasta',
         '-file'   => '>'.$file_top_rm
