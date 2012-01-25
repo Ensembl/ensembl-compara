@@ -7,15 +7,15 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::HomologyGroupingFactory
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory
 
 =cut
 
 =head1 SYNOPSIS
 
 my $aa = $sdba->get_AnalysisAdaptor;
-my $analysis = $aa->fetch_by_logic_name('HomologyGroupingFactory');
-my $rdb = new Bio::EnsEMBL::Compara::RunnableDB::HomologyGroupingFactory(
+my $analysis = $aa->fetch_by_logic_name('MLSSIDFactory');
+my $rdb = new Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory(
                          -input_id   => [[1,2,3,14],[4,13],[11,16]]
                          -analysis   => $analysis);
 

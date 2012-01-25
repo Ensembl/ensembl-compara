@@ -15,7 +15,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory
 
 my $aa = $sdba->get_AnalysisAdaptor;
 my $analysis = $aa->fetch_by_logic_name('HomologyGroupingFactory');
-my $rdb = new Bio::EnsEMBL::Compara::RunnableDB::HomologyGroupingFactory(
+my $rdb = new Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory(
                          -input_id   => [[1,2,3,14],[4,13],[11,16]]
                          -analysis   => $analysis);
 
