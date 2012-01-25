@@ -23,8 +23,7 @@ use strict;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Compara::NCBITaxon;
 
-use Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor;
-our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor Bio::EnsEMBL::Compara::DBSQL::TagAdaptor);
+use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
 
 =head2 fetch_node_by_taxon_id
