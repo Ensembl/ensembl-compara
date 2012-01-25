@@ -20,7 +20,7 @@ Works better with some database connection parameters
 =cut
 
 my $opts = {};
-my @flags = qw(database=s user=s port=i host=s password=s help man adaptor=s output=s possible_orth=i);
+my @flags = qw(database=s user=s port=i host=s password=s help man adaptor=s output=s possible_orth=i url=s);
 GetOptions($opts, @flags) or pod2usage(1);
 pod2usage( -exitstatus => 0, -verbose => 1 ) if $opts->{help};
 pod2usage( -exitstatus => 0, -verbose => 2 ) if $opts->{man};
@@ -31,8 +31,10 @@ die "adaptor name (ProteinTree or NCTree) must be given\n" if not defined ${$opt
 my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host   => ${$opts}{host},
                                                      -port   => ${$opts}{port},
                                                      -user   => ${$opts}{user},
+                                                     -url    => ${$opts}{url},
                                                      -dbname => ${$opts}{database},
-	                                               -pass   => ${$opts}{password});
+	                                               -pass   => ${$opts}{password}
+                                                     );
 my $file_handle = (defined ${$opts}{output} ? IO::File->new(${$opts}{output}, 'w') : *STDOUT);
 
 my $s = 'get_'.${$opts}{adaptor}.'Adaptor';
