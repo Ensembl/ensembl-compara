@@ -43,14 +43,14 @@ sub process {
       my ($chr, $start, $end) = split(':|-|\.\.', $region);
       push @slices, {'chr' => $chr, 'start' => $start, 'end' => $end};
     }
-    #warn ">>> FOUND ".scalar(@slices)." slices";
+    warn ">>> FOUND ".scalar(@slices)." slices";
     ## Calculate total sequence length
     my $total_length;
     foreach my $slice (@slices) {
       my $l = $slice->{'start'} - $slice->{'end'};
       $total_length += abs($l);
     }
-    #warn ">>> LENGTH $total_length";
+    warn ">>> LENGTH $total_length";
     if ($total_length > $limit) {
       $param->{'error_code'} = 'location_toolarge';
     }
@@ -67,13 +67,16 @@ sub process {
   }
 
   if ($param->{'error_code'}) {
-    $url .= 'RegionReportOutput';
+    $param->{'action'} = 'RegionReportOutput';
+    $session->purge_data('code' => $param->{'code'});
+    ## Not really uploaded - name of method below is a bit misleading!
+    $self->file_uploaded($param);
   }
   else {
     $url .= 'RunRegionTool';
+    $self->ajax_redirect($url, $param);
   }
     
-  $self->ajax_redirect($url, $param);
 }
 
 1;
