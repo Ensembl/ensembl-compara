@@ -23,7 +23,13 @@ sub process {
     my $response = $self->upload($method);
     $data = $session->get_data(code => $response->{'code'});
     my $file = new EnsEMBL::Web::TmpFile::Text(filename => $data->{'filename'}, extension => $data->{'extension'});
-    $content = $file->retrieve;
+    if ($file) {
+      $content = $file->retrieve;
+      $param->{'code'} = $data->{'code'};
+    }
+    else {
+      $param->{'error_code'} = 'load_file';
+    }
   }
 
   ## Now limit by region length and feature type
@@ -37,6 +43,7 @@ sub process {
       my ($chr, $start, $end) = split(':|-|\.\.', $region);
       push @slices, {'chr' => $chr, 'start' => $start, 'end' => $end};
     }
+    #warn ">>> FOUND ".scalar(@slices)." slices";
     ## Calculate total sequence length
     my $total_length;
     foreach my $slice (@slices) {
@@ -45,24 +52,22 @@ sub process {
     }
     #warn ">>> LENGTH $total_length";
     if ($total_length > $limit) {
-      $param->{'filter_module'} = 'Region';
-      $param->{'filter_code'} = 'too_big';
+      $param->{'error_code'} = 'location_toolarge';
     }
     else {
       ## Pass checkbox options as a single string (same format used by API script)
       $param->{'include'}       = join('', $hub->param('include'));
-      $param->{'code'}          = $data->{'code'};
       $param->{'output_format'} = $data->{'format'};
     }
 
   }
   else {
-    $param->{'filter_module'} = 'Region';
-    $param->{'filter_code'} = 'no_input';
+    ## No identifiable regions
+    $param->{'error_code'} = 'location_unknown';
   }
 
-  if ($param->{'filter_module'}) {
-    $url .= 'SelectReportOptions';
+  if ($param->{'error_code'}) {
+    $url .= 'RegionReportOutput';
   }
   else {
     $url .= 'RunRegionTool';
