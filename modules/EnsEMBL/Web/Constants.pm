@@ -324,7 +324,80 @@ sub MESSAGE_PRIORITY {
   ); 
 }
 
-sub ERROR_MESSAGES {
+sub USERDATA_MESSAGES {
+  return (
+    no_url        => {
+                      'type'    => 'error', 
+                      'title'   => 'Input problem',
+                      'message' => 'No URL was entered. Please try again.',
+                      },
+    no_response   => {
+                      'type'    => 'error', 
+                      'title'   => 'File system error',
+                      'message' => 'We were unable to access your data file. If you continue to get this message, there may be an network issue, or your file may be too large for us to upload.',
+                      },
+    file_format   => {
+                      'type'    => 'error', 
+                      'title'   => 'Input problem',
+                      'message' => 'Your file does not appear to be in a valid format. Please try again.',
+                      },
+    file_empty    => {
+                      'type'    => 'error', 
+                      'title'   => 'Input problem',
+                      'message' => 'Your file appears to be empty. Please check that it contains correctly-formatted data.',
+                      },
+    file_size     => {
+                      'type'    => 'error', 
+                      'title'   => 'File system error',
+                      'message' => 'Your file is too big to upload. Please select a smaller file.',
+                      },
+    file_save     => {
+                      'type'    => 'error', 
+                      'title'   => 'File system error',
+                      'message' => 'Your data could not be saved. Please check the file contents and try again.'
+                      },
+
+    load_file     => {
+                      'type'    => 'error', 
+                      'title'   => 'File system error',
+                      'message' => 'There was an error retrieving your data from disk.'
+                      },
+
+    save_file     => {
+                      'type'    => 'error', 
+                      'title'   => 'Database error',
+                      'message' => 'Unable to save uploaded file contents to your account',
+                      },
+    save_das      => {
+                      'type'    => 'error', 
+                      'title'   => 'Database error',
+                      'message' => 'Unable to save DAS details to your account'}
+                      ,
+    save_url      => {
+                      'type'    => 'error', 
+                      'title'   => 'Database error',
+                      'message' => 'Unable to save remote URL to your account'
+                      },
+
+    no_features   => {
+                      'type'    => 'warning', 
+                      'title'   => 'Script warning',
+                      'message' => 'The script returned no features.',
+                      },
+    location_unknown  => {
+                            'type'    => 'warning', 
+                            'title'   => 'Input problem',
+                            'message' => "The selected region(s) lie outside the scope of this species' chromosomes.",
+                          },
+    location_toolarge => {
+                            'type'    => 'warning', 
+                            'title'   => 'Script aborted',
+                            'message' => 'The region(s) you selected are too large and will return too much data for the web interface to cope with.'
+                          },
+  );
+}
+
+sub ERROR_MESSAGES { 
   return (
     404 => [
       'Page not found' ,
