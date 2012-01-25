@@ -1106,6 +1106,7 @@ sub get_go_list {
   
   foreach my $goxref (sort { $a->display_id cmp $b->display_id } @goxrefs) {
     my $go = $goxref->display_id;
+    chomp $go; # Just in case
     next unless ($goxref->dbname =~ /^($dbname_to_match)$/);
 
     my ($otype, $go2) = $go =~ /([\w|\_]+):0*(\d+)/;
