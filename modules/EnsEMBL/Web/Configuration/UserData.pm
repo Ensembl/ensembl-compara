@@ -244,7 +244,34 @@ sub populate_tree {
     [], { 'availability' => 1, 'no_menu_entry' => 1,
     'command' => 'EnsEMBL::Web::Command::UserData::DropUpload'}
   );
-  
+ 
+  ## REGION REPORT
+  $convert_menu->append(
+    $self->create_node( 'SelectReportOptions', 'Region Report',
+      [qw(report_options EnsEMBL::Web::Component::UserData::SelectReportOptions)],
+      {'availability' => 1},
+    )
+  );
+  $convert_menu->append(
+    $self->create_node( 'CheckRegions', '', [],
+      {'command' => 'EnsEMBL::Web::Command::UserData::CheckRegions',
+      'availability' => 1, 'no_menu_entry' => 1},
+    )
+  );
+  $convert_menu->append(
+    $self->create_node( 'RunRegionTool', '', [],
+      {'command' => 'EnsEMBL::Web::Command::UserData::RunRegionTool',
+      'availability' => 1, 'no_menu_entry' => 1},
+    )
+  );
+  $convert_menu->append(
+    $self->create_node( 'RegionReportOutput', 'Region Report',
+      [qw(region_report EnsEMBL::Web::Component::UserData::RegionReportOutput)],
+      {'availability' => 1, 'no_menu_entry' => 1},
+    )
+  );
+
+ 
   ## Add "invisible" nodes used by interface but not displayed in navigation
   $self->create_node( 'Message', '',
     [qw(message EnsEMBL::Web::Component::CommandMessage
