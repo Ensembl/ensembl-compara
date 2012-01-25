@@ -83,7 +83,7 @@ Type of sequence: dna, rna, prot, dnax, rnax
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004, 2005. EnsEMBL Team
+Copyright (c) 1999-2012. EnsEMBL Team
 
 You may distribute this module under the same terms as perl itself
 

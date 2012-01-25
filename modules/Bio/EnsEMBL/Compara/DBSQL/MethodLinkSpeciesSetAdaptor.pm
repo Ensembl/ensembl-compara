@@ -1,4 +1,4 @@
-# Copyright EnsEMBL 2004
+# Copyright (c) 1999-2012
 #
 # Ensembl module for Bio::EnsEMBL::DBSQL::MethodLinkSpeciesAdaptor
 #
@@ -86,7 +86,7 @@ This modules is part of the Ensembl project http://www.ensembl.org
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004. EnsEMBL Team
+Copyright (c) 1999-2012. EnsEMBL Team
 
 This modules is part of the EnsEMBL project (http://www.ensembl.org). You may distribute
 it under the same terms as EnsEMBL itself.

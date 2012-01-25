@@ -29,7 +29,7 @@ Abel Ureta-Vidal
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006. EnsEMBL Team
+Copyright (c) 1999-2012. EnsEMBL Team
 
 You may distribute this module under the same terms as perl itself
 

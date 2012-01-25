@@ -6,7 +6,7 @@
 # Written by Abel Ureta-Vidal (abel@ebi.ac.uk)
 # Updated by Javier Herrero (jherrero@ebi.ac.uk)
 #
-# Copyright (c) 2004. EnsEMBL Team
+# Copyright (c) 1999-2012. EnsEMBL Team
 #
 # You may distribute this module under the same terms as perl itself
 
@@ -51,7 +51,7 @@ Javier Herrero (jherrero@ebi.ac.uk)
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004. EnsEMBL Team
+Copyright (c) 1999-2012. EnsEMBL Team
 
 You may distribute this module under the same terms as perl itself
 
