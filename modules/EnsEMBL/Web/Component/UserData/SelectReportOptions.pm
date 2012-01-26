@@ -50,7 +50,8 @@ sub content {
       'select'  => 'select',
   );
 
-  $form->add_element( type => 'Text', name => 'text', label => 'Paste region coordinates', 'notes' => 'One set of coordinates per line', 'value' => 'X:100000-110000');
+  my $sample_region = $hub->param('r') || '6:133017695-133161157';
+  $form->add_element( type => 'Text', name => 'text', label => 'Paste region coordinates', 'notes' => 'One set of coordinates per line', 'value' => $sample_region);
   $form->add_element( type => 'File', name => 'file', label => 'Upload file' );
   $form->add_element( type => 'URL',  name => 'url',  label => 'or provide file URL', size => 30 );
 
@@ -58,7 +59,7 @@ sub content {
     {'value' => 'g', 'caption' => 'Genes'},
     {'value' => 't', 'caption' => 'Transcripts'},
     {'value' => 'p', 'caption' => 'Proteins'},
-    {'value' => 'd', 'caption' => 'Genomic Sequence'},
+    {'value' => 'q', 'caption' => 'Genomic Sequence'},
     {'value' => 'c', 'caption' => 'Constrained Elements'},
     {'value' => 'v', 'caption' => 'Variations (SNPs and InDels)'},
     {'value' => 's', 'caption' => 'Structural Variations'},
@@ -77,6 +78,7 @@ sub content {
       'type'      => 'Radiolist',
       'name'      => 'format',
       'label'     => 'Output format',
+      'value'     => 'report',
       'values'    => [
                       {'value' => 'gff3',   'caption' => 'GFF3'}, 
                       {'value' => 'report', 'caption'  => 'Ensembl Region Report'}
