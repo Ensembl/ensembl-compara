@@ -42,7 +42,7 @@ sub content {
           <a href="/info/website/upload/psl.html">PSL</a>
         </p>
         <p class="space-below">N.B. Export is currently in GFF only</p>
-        <p>For large data sets, you may find it more efficient to use our <a href="ftp://ftp.ensembl.org/pub/misc-scripts/Assembly_mapper_1.0/">ready-made converter script</a>.</p>
+        <p>For large data sets, you may find it more efficient to use our <a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/assembly_converter/?root=ensembl">ready-made converter script</a>.</p>
       }
     });
     
