@@ -1,0 +1,54 @@
+<html>
+<head>
+<title>Ensembl: Data Tools - Assembly converter, ID History converter, Variant Effect Predictor</title>
+</head>
+<body>
+
+<p>We provide a number of ready-made tools for processing your data. At the moment, small datasets can be uploaded to our servers and processed online; for larger datasets, we provide an API script that can be downloaded (you will also need to <a href="/info/docs/api/">install our Perl API</a> to use these).</p>
+<p>In the near future we aim to offer an intermediate service, whereby medium-to-large data sets can be submitted to a queue, similar to BLAST.</p>
+<p>Currently available:</p>
+
+<table class="ss" style="width:100%">
+<tr>
+  <th style="width:20%">Tool</th>
+  <th style="width:40%">Description</th>
+  <th style="width:20%">&nbsp;</th>
+  <th style="width:20%">&nbsp;</th>
+</tr>
+
+<tr>
+  <td><a class="modal_link" href="/[[SPECIESDEFS::ENSEMBL_PRIMARY_SPECIES]]/UserData/SelectFeatures">Assembly converter</a></td>
+  <td>Map your data to the current assembly. Accepted file formats: 
+  <a href="/info/website/upload/gff.html">GFF</a>, 
+  <a href="/info/website/upload/gff.html">GTF</a>, 
+  <a href="/info/website/upload/bed.html">BED</a>, 
+  <a href="/info/website/upload/psl.html">PSL</a>
+  <br />N.B. Export is currently in GFF only</td>
+  <td><a href="/[[SPECIESDEFS::ENSEMBL_PRIMARY_SPECIES]]/UserData/SelectFeatures" class="modal_link" style="text-decoration:none"><img src="/i/globe_sm.gif" alt="globe" title="Web version" /> </a><a href="/[[SPECIESDEFS::ENSEMBL_PRIMARY_SPECIES]]/UserData/SelectFeatures" class="modal_link">Upload your data</a></td>
+  <td><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/assembly_converter/?root=ensembl" s/tyle="text-decoration:none"><img src="/i/code.gif" alt="code" title="Assembly converter API script" /> </a><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/assembly_converter/?root=ensembl">Download Perl script</a></td>
+</tr>
+
+<tr class="bg2">
+  <td><a class="modal_link" href="/[[SPECIESDEFS::ENSEMBL_PRIMARY_SPECIES]]/UserData/UploadStableIDs">ID History converter</a></td>
+  <td>Convert a set of Ensembl IDs from a previous release into their current equivalents.</td>
+  <td><a href="/[[SPECIESDEFS::ENSEMBL_PRIMARY_SPECIES]]/UserData/UploadStableIDs" class="modal_link" style="text-decoration:none"><img src="/i/globe_sm.gif" alt="globe" title="Web version" /> </a><a href="/[[SPECIESDEFS::ENSEMBL_PRIMARY_SPECIES]]/UserData/UploadStableIDs" class="modal_link">Upload your data</a><br />(max 30 ids)</td>
+  <td><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/id_history_converter/?root=ensembl" style="text-decoration:none"><img src="/i/code.gif" alt="code" title="ID History converter Perl script" /> </a><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/id_history_converter/?root=ensembl">Download Perl script</a></td>
+</tr>
+
+
+<tr>
+  <td><a class="modal_link" href="/[[SPECIESDEFS::ENSEMBL_PRIMARY_SPECIES]]/UserData/SelectReportOptions">Region Report</a></td>
+  <td>Export standard data sets (genes, sequence, variations, etc) from one or more regions, in either GFF or simple text format</td>
+  <td><a href="/[[SPECIESDEFS::ENSEMBL_PRIMARY_SPECIES]]/UserData/SelectReportOptions" class="modal_link" style="text-decoration:none"><img src="/i/globe_sm.gif" alt="globe" title="Web version" /> </a><a href="/[[SPECIESDEFS::ENSEMBL_PRIMARY_SPECIES]]/UserData/SelectReportOptions" class="modal_link">Upload your data</a><br />(max 5MB total, or 1MB for variation/regulation data)</td>
+  <td><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/region_reporter/?root=ensembl" style="text-decoration:none"><img src="/i/code.gif" alt="code" title="Region Report Perl script" /> </a><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/region_reporter/?root=ensembl">Download Perl script</a></td>
+</tr>
+<tr>
+  <td><a class="modal_link" href="/[[SPECIESDEFS::ENSEMBL_PRIMARY_SPECIES]]/UserData/UploadVariations">Variant Effect Predictor</a></td>
+  <td>(Formerly SNP Effect Predictor). Upload a set of variants in our <a href="/info/website/upload/var.html">standard format</a> or <a href="http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40" target="_blank">VCF format</a> and export a file containing consequence types. Uploaded tracks can also be viewed on Location pages. See also <a href="/info/docs/variation/vep/index.html" target="_blank">full documentation</a></td>
+  <td><a href="/[[SPECIESDEFS::ENSEMBL_PRIMARY_SPECIES]]/UserData/UploadVariations" class="modal_link" style="text-decoration:none"><img src="/i/globe_sm.gif" alt="globe" title="Web version" /> </a><a href="/[[SPECIESDEFS::ENSEMBL_PRIMARY_SPECIES]]/UserData/UploadVariations" class="modal_link">Upload your data</a><br />(max 750 variants)</td>
+  <td><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/variant_effect_predictor/?root=ensembl" s/tyle="text-decoration:none"><img src="/i/code.gif" alt="code" title="Variant Effect Predictor Perl script" /> </a><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/variant_effect_predictor/?root=ensembl">Download Perl script</a></td>
+</tr>
+</table>
+
+</body>
+</html>
