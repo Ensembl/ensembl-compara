@@ -79,18 +79,19 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compa
 =cut
 
 sub fetch_all {
-  my ($self, $clusterset_id) = @_;
-  $clusterset_id = 1 if ! defined $clusterset_id;
-  my $constraint = "WHERE t.node_id = t.root_id and tr.clusterset_id = ${clusterset_id}";
-  my $nodes = $self->_generic_fetch($constraint);
-  return $nodes;
+    my $self = shift;
+    my $constraint = "WHERE (t.node_id = t.root_id) AND (tr.tree_type NOT LIKE '%clusterset') AND (tr.tree_type NOT LIKE '%supertree')";
+
+    my $clusterset_id = shift;
+    $constraint .= " AND (tr.clusterset_id = ${clusterset_id})" if defined $clusterset_id;
+    return $self->_generic_fetch($constraint);
 }
 
 
 sub fetch_all_roots {
   my $self = shift;
 
-  my $constraint = "WHERE t.root_id IS NULL";
+  my $constraint = "WHERE (t.node_id = t.root_id) AND (tr.tree_type LIKE '%clusterset')";
   return $self->_generic_fetch($constraint);
 }
 

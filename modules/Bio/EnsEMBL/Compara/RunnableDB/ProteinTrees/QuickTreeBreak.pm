@@ -360,7 +360,7 @@ sub generate_subtrees {
   my $final_original_num = scalar @{$self->param('protein_tree')->get_all_leaves};
   # Creating the supertree structure
   my $supertree = $self->param('protein_tree');
-  $supertree->tree->tree_type('superproteintree');
+  $supertree->tree->tree_type('proteinsupertree');
   my $supertree_leaf1 = new Bio::EnsEMBL::Compara::GeneTreeNode;
   my $supertree_leaf2 = new Bio::EnsEMBL::Compara::GeneTreeNode;
   $supertree_leaf1->tree($supertree->tree);

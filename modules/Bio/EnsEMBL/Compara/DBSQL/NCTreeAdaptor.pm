@@ -55,6 +55,10 @@ use strict;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor');
 
+sub default_where_clause {
+    return "tr.tree_type IN ('ncrnaclusterset', 'ncrnatree')";
+}
+
 
 sub _get_canonical_Member {
   my $self = shift;

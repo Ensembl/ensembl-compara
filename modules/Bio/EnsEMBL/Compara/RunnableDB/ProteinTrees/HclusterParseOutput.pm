@@ -100,7 +100,7 @@ sub parse_hclusteroutput {
 
     # Create the clusterset and associate mlss
     my $clusterset = new Bio::EnsEMBL::Compara::GeneTree;
-    $clusterset->tree_type('clusterset');
+    $clusterset->tree_type('proteinclusterset');
     $clusterset->method_link_species_set_id($mlss_id);
     $self->param('clusterset', $clusterset);
 

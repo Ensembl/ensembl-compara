@@ -148,6 +148,7 @@ sub get_available_adaptors {
       "NCBITaxon" => "Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor",
       "PeptideAlignFeature" => "Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor",
       "Sequence" => "Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor",
+      "GeneTree" => "Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor",
       "ProteinTree" => "Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor",
       "NCTree" => "Bio::EnsEMBL::Compara::DBSQL::NCTreeAdaptor",
       "CAFETree" => "Bio::EnsEMBL::Compara::DBSQL::CAFETreeAdaptor",
