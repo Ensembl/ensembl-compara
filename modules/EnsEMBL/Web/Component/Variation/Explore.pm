@@ -15,6 +15,7 @@ sub content {
   my $hub                = $self->hub;
   my $object             = $self->object;
   my $variation          = $object->Obj;
+  my $species            = $hub->species;
 
   my $avail     = $self->object->availability;
 
@@ -109,6 +110,11 @@ sub content {
         <li><a href="/Help/Movie?id=211">SNPs and other Variations - 2 of 2</a></li>
         <li><a href="/Help/Movie?id=214">Clip: Genome Variation</a></li>
         <li><a href="/Help/Movie?id=284">BioMart: Variation IDs to HGNC Symbols</a></li>
+      </ul>
+
+      <h3>Interactive tools</h3>
+      <ul>
+        <li><a href="/$species/UserData/UploadVariations?db=core" class="modal_link">Variant Effect Predictor</a></li>
       </ul>
     </div>
 
