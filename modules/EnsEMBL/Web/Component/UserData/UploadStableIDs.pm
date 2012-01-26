@@ -24,7 +24,7 @@ sub content {
     heading => 'IMPORTANT NOTE:', 
     text    => qq{
       <p>Please note that we limit the number of ID's processed to $id_limit. If the uploaded file contains more entries than this only the first $id_limit will be mapped.</p>
-      <p>If you would like to convert more IDs, please use our <a href="ftp://ftp.ensembl.org/pub/misc-scripts/ID_mapper_1.0/">api script</a>.</p>
+      <p>If you would like to convert more IDs, please use our <a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/id_history_converter/?root=ensembl">api script</a>.</p>
     }
   });
 
