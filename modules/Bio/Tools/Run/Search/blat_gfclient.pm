@@ -104,7 +104,7 @@ sub command{
 
   my $command = join( ' ',
 		      $exe,
-		      "-out=wublast -stepSize=5 -minScore=20",
+		      "-out=wublast -stepSize=5 -minScore=0 -minIdentity=0",
 		      $host,
 		      $port,
 		      $nib_dir,
