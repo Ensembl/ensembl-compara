@@ -46,8 +46,8 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-#       'mlss_id'         => 30035,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'         => '65',
+#       'mlss_id'         => 30036,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        'release'         => '66',
         'rel_suffix'      => '',    # an empty string by default, a letter otherwise
         'rel_with_suffix' => $self->o('release').$self->o('rel_suffix'),
 
@@ -84,7 +84,7 @@ sub default_options {
 
             # family database connection parameters (our main database):
         'pipeline_db' => {
-            -host   => 'compara4',
+            -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -92,10 +92,10 @@ sub default_options {
         },
 
             # homology database connection parameters (we inherit half of the members and sequences from there):
-        'homology_db'  => 'mysql://ensro@compara2/mm14_compara_homology_65',
+        'homology_db'  => 'mysql://ensro@compara2/mm14_compara_homology_66',
 
             # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara4/lg4_ensembl_compara_64',
+        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/mp12_ensembl_compara_65',
 
             # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ensembl_compara_master',    
@@ -150,7 +150,7 @@ sub resource_classes {
 sub beekeeper_extra_cmdline_options {
     my ($self) = @_;
 
-    return '-lifespan 1200';
+    return '-lifespan 1440';
 }
 
 
@@ -165,14 +165,11 @@ sub pipeline_analyses {
                 'inputlist'     => [ 'genome_db', 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_node', 'ncbi_taxa_name', 'sequence', 'member' ],
                 'column_names'  => [ 'table' ],
                 'input_id'      => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' },
-                'fan_branch_code' => 2,
             },
-            -input_ids => [
-                {},
-            ],
+            -input_ids => [ { }, ],
             -flow_into => {
-                2 => [ 'copy_table'  ],
-                1 => [ 'offset_and_innodbise_tables' ],  # backbone
+                '2->A' => [ 'copy_table'  ],
+                'A->1' => [ 'offset_and_innodbise_tables' ],  # backbone
             },
         },
 
@@ -194,7 +191,7 @@ sub pipeline_analyses {
                     'ALTER TABLE family_member  ENGINE=InnoDB',
                 ],
             },
-            -wait_for => [ 'copy_table_factory', 'copy_table' ],    # have to wait until the tables have been copied
+#            -wait_for => [ 'copy_table' ],    # have to wait until the tables have been copied
             -flow_into => {
                     1 => [ 'genomedb_factory' ],
             },
@@ -211,11 +208,10 @@ sub pipeline_analyses {
                 'object_method'         => 'species_set',
 
                 'column_names2getters'  => { 'genome_db_id' => 'dbID' },
-
-                'fan_branch_code'       => 2,
             },
             -flow_into => {
-                2 => [ 'load_nonref_members' ],
+                '2->A' => [ 'load_nonref_members' ],
+                'A->1' => [ 'load_uniprot_superfactory' ],
             },
         },
 
@@ -231,18 +227,27 @@ sub pipeline_analyses {
         {   -logic_name => 'load_uniprot_superfactory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'       => ['FUN','HUM','MAM','ROD','VRT','INV'],
-                'column_names'    => [ 'tax_div' ],
-                'fan_branch_code' => 2,
+                'column_names'    => [ 'uniprot_source', 'tax_div' ],
+                'inputlist'       => [
+                    [ 'SWISSPROT', 'FUN' ],
+                    [ 'SWISSPROT', 'HUM' ],
+                    [ 'SWISSPROT', 'MAM' ],
+                    [ 'SWISSPROT', 'ROD' ],
+                    [ 'SWISSPROT', 'VRT' ],
+                    [ 'SWISSPROT', 'INV' ],
+
+                    [ 'SPTREMBL',  'FUN' ],
+                    [ 'SPTREMBL',  'HUM' ],
+                    [ 'SPTREMBL',  'MAM' ],
+                    [ 'SPTREMBL',  'ROD' ],
+                    [ 'SPTREMBL',  'VRT' ],
+                    [ 'SPTREMBL',  'INV' ],
+                ],
             },
-            -input_ids => [
-                { 'input_id' => { 'uniprot_source' => 'SWISSPROT', 'tax_div' => '#tax_div#' } },
-                { 'input_id' => { 'uniprot_source' => 'SPTREMBL',  'tax_div' => '#tax_div#' } },
-            ],
-            -wait_for => [ 'genomedb_factory', 'load_nonref_members' ],
+#            -wait_for => [ 'load_nonref_members' ],
             -flow_into => {
-                2 => [ 'load_uniprot_factory' ],
-                1 => [ 'snapshot_after_load_uniprot' ],
+                '2->A' => [ 'load_uniprot_factory' ],
+                'A->1' => [ 'snapshot_after_load_uniprot' ],
             },
             -rc_id => 1,
         },
@@ -277,7 +282,7 @@ sub pipeline_analyses {
                 'cmd'           => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 0).' '.$self->o('pipeline_db','-dbname').' >#filename#',
                 'filename'      => $self->o('work_dir').'/'.$self->o('pipeline_name').'_snapshot_after_load_uniprot.sql',
             },
-            -wait_for  => [ 'load_uniprot_superfactory', 'load_uniprot_factory', 'load_uniprot' ],   # act as a funnel
+#            -wait_for  => [ 'load_uniprot_superfactory', 'load_uniprot_factory', 'load_uniprot' ],   # act as a funnel
             -flow_into => {
                 1 => { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#', 'blastdb_dir' => '#blastdb_dir#' } },
             },
@@ -312,11 +317,10 @@ sub pipeline_analyses {
                 'inputquery'      => 'SELECT DISTINCT s.sequence_id seqid FROM member m, sequence s WHERE m.sequence_id=s.sequence_id AND m.source_name IN ("Uniprot/SPTREMBL", "Uniprot/SWISSPROT", "ENSEMBLPEP") ',
                 'input_id'        => { 'sequence_id' => '#_start_seqid#', 'minibatch' => '#_range_count#' },
                 'step'            => 100,
-                'fan_branch_code' => 2,
             },
             -flow_into => {
-                2 => [ 'family_blast' ],
-                1 => { 'snapshot_after_family_blast' => { 'tcx_name' => $self->o('tcx_name'), 'itab_name' => $self->o('itab_name'), 'mcl_name' => $self->o('mcl_name') } },
+                '2->A' => [ 'family_blast' ],
+                'A->1' => { 'snapshot_after_family_blast' => { 'tcx_name' => $self->o('tcx_name'), 'itab_name' => $self->o('itab_name'), 'mcl_name' => $self->o('mcl_name') } },
             },
             -rc_id => 1,
         },
@@ -342,7 +346,7 @@ sub pipeline_analyses {
                 'cmd'       => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 0).' '.$self->o('pipeline_db','-dbname').' >#filename#',
                 'filename'  => $self->o('work_dir').'/'.$self->o('pipeline_name').'_snapshot_after_family_blast.sql',
             },
-            -wait_for => [ 'family_blast' ],    # act as a funnel
+#            -wait_for => [ 'family_blast' ],    # act as a funnel
             -flow_into => {
                 1 => [ 'mcxload_matrix' ],
             },
@@ -366,9 +370,10 @@ sub pipeline_analyses {
                 'cmd' => "#mcl_bin_dir#/mcl #work_dir#/#tcx_name# -I 2.1 -t 4 -tf 'gq(50)' -scheme 6 -use-tab #work_dir#/#itab_name# -o #work_dir#/#mcl_name#",
             },
             -flow_into => {
-                1 => { 'archive_long_files' => { 'input_filenames' => '#work_dir#/#tcx_name# #work_dir#/#itab_name#' },
-                       'parse_mcl'          => { 'mcl_name' => '#work_dir#/#mcl_name#' },
+                '1->A' => { 'archive_long_files' => { 'input_filenames' => '#work_dir#/#tcx_name# #work_dir#/#itab_name#' },
+                            'parse_mcl'          => { 'mcl_name' => '#work_dir#/#mcl_name#' },
                 },
+                'A->1'  => [ 'family_idmap' ],
             },
             -rc_id => 4,
         },
@@ -376,13 +381,27 @@ sub pipeline_analyses {
         {   -logic_name => 'parse_mcl',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::ParseMCLintoFamilies',
             -parameters => {
-                'family_prefix' => 'fam'.$self->o('rel_with_suffix'),
+                'family_prefix'         => 'fam'.$self->o('rel_with_suffix'),
+                'first_n_big_families'  => $self->o('first_n_big_families'),
             },
             -hive_capacity => 20, # to enable parallel branches
             -flow_into => {
                 1 => {
-                    'archive_long_files'   => { 'input_filenames' => '#mcl_name#' },
+                    'archive_long_files'    => { 'input_filenames' => '#mcl_name#' },
+                    'consensifier_factory'  => [
+                        { 'step' => 1,   'inputquery' => 'SELECT family_id FROM family WHERE family_id<=200',},
+                        { 'step' => 100, 'inputquery' => 'SELECT family_id FROM family WHERE family_id>200',},
+                    ],
                 },
+                '1->A' => {
+                    'family_mafft_factory' => [
+                        { 'fan_branch_code' => 2, 'inputquery' => 'SELECT family_id FROM family_member WHERE family_id<=#first_n_big_families# GROUP BY family_id HAVING count(*)>1', },
+                        { 'fan_branch_code' => 3, 'inputquery' => 'SELECT family_id FROM family_member WHERE family_id >#first_n_big_families# GROUP BY family_id HAVING count(*)>1', },
+                    ],
+                },
+                'A->1' => {
+                    'find_update_singleton_cigars' => { },
+                }
             },
             -rc_id => 1,
         },
@@ -403,16 +422,10 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'randomize'             => 1,
-                'first_n_big_families'  => $self->o('first_n_big_families'),
             },
             -hive_capacity => 20, # to enable parallel branches
-            -input_ids  => [
-                { 'fan_branch_code' => 2, 'inputlist'  => '#expr([1..$first_n_big_families])expr#', 'column_names' => [ 'family_id' ], },
-                { 'fan_branch_code' => 3, 'inputquery' => 'SELECT family_id FROM family_member WHERE family_id>#first_n_big_families# GROUP BY family_id HAVING count(*)>1',},
-            ],
-            -wait_for => [ 'parse_mcl' ],
+#            -wait_for => [ 'parse_mcl' ],
             -flow_into => {
-                1 => { 'find_update_singleton_cigars' => { } },
                 2 => [ 'family_mafft_big'  ],
                 3 => [ 'family_mafft_main' ],
             },
@@ -447,7 +460,7 @@ sub pipeline_analyses {
                 ],
             },
             -hive_capacity => 20, # to enable parallel branches
-            -wait_for => [ 'family_mafft_big', 'family_mafft_main' ],    # act as a funnel
+#            -wait_for => [ 'family_mafft_big', 'family_mafft_main' ],    # act as a funnel
             -flow_into => {
                 1 => [ 'insert_redundant_peptides' ],
             },
@@ -481,14 +494,11 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'input_id'        => { 'family_id' => '#_start_family_id#', 'minibatch' => '#_range_count#'},
-                'fan_branch_code' => 2,
             },
             -hive_capacity => 20, # run the two in parallel and enable parallel branches
-            -input_ids  => [
-                { 'step' => 1,   'inputquery' => 'SELECT family_id FROM family WHERE family_id<=200',},
-                { 'step' => 100, 'inputquery' => 'SELECT family_id FROM family WHERE family_id>200',},
-            ],
-            -wait_for => [ 'parse_mcl' ],
+#            -input_ids  => [
+#            ],
+#            -wait_for => [ 'parse_mcl' ],
             -flow_into => {
                 2 => [ 'consensifier' ],
             },
@@ -507,14 +517,14 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper',
             -parameters    => {
                 'master_db'   => $self->o('master_db'),
-                'prev_rel_db' => $self->o('prev_rel_db')
+                'prev_rel_db' => $self->o('prev_rel_db'),
+                'type'        => 'f',
+                'release'     => $self->o('release'),
             },
-            -input_ids     => [
-                { 'type' => 'f', 'release' => $self->o('release'), },
-            ],
-            -wait_for => [ 'archive_long_files', 'insert_ensembl_genes', 'consensifier' ],
+#            -input_ids => [ {} ],
+#            -wait_for  => [ 'archive_long_files', 'insert_ensembl_genes', 'consensifier' ],
             -flow_into => {
-                1 => { 'notify_pipeline_completed' => { } },
+                1 => [ 'notify_pipeline_completed' ],
             },
             -rc_id => 5,    # NB: make sure you give it enough memory or it will crash
         },
