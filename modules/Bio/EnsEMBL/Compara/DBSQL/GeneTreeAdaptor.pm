@@ -481,38 +481,6 @@ sub delete_nodes_not_in_tree
 }
 
 
-##############################################################
-#
-# Reimplemented methods that propagate the 'tree' reference
-#
-##############################################################
-
-
-sub fetch_all_children_for_node {
-  my ($self, $node) = @_;
-  $self->{'_ref_tree'} = $node->{'_tree'};
-  my $result = $self->SUPER::fetch_all_children_for_node($node);
-  delete $self->{'_ref_tree'};
-  return $result;
-}
-
-sub fetch_parent_for_node {
-  my ($self, $node) = @_;
-  $self->{'_ref_tree'} = $node->{'_tree'};
-  my $result = $self->SUPER::fetch_parent_for_node($node);
-  delete $self->{'_ref_tree'};
-  return $result;
-}
-
-sub fetch_subtree_under_node {
-  my ($self, $node) = @_;
-  $self->{'_ref_tree'} = $node->{'_tree'};
-  my $result = $self->SUPER::fetch_subtree_under_node($node);
-  delete $self->{'_ref_tree'};
-  return $result;
-}
-
-
 
 ###################################
 #
@@ -680,5 +648,32 @@ sub _fetch_sequence_by_id {
   my $self = shift;
   return $self->db->get_MemberAdaptor->_fetch_sequence_by_id(@_);
 }
+
+
+
+###############################################################################
+#
+# Dynamic redefinition of functions to reuse the link to the GeneTree object
+#
+###############################################################################
+
+foreach my $func_name (qw(
+        fetch_all_children_for_node fetch_parent_for_node fetch_all_leaves_indexed
+        fetch_subtree_under_node fetch_subroot_by_left_right_index fetch_root_by_node
+        fetch_first_shared_ancestor_indexed
+    )) {
+    my $full_name = "Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor::$func_name";
+    my $super_name = "SUPER::$func_name";
+    *$full_name = sub {
+        my $self = shift;
+        $self->{'_ref_tree'} = $_[0]->{'_tree'};
+        my $ret = $self->$super_name(@_);
+        delete $self->{'_ref_tree'};
+        return $ret;
+    };
+    #print "REDEFINE $func_name\n";
+}
+
+
 
 1;
