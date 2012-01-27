@@ -44,10 +44,10 @@ sub default_options {
 
             %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'compara_full_merge_65',         # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_full_merge_66',         # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {
-            -host   => 'compara1',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -55,19 +55,19 @@ sub default_options {
         },
 
         'merged_homology_db' => {
-            -host   => 'compara3',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'mp12_compara_homology_merged_65',
+            -dbname => 'mp12_mp12_compara_homology_merged_66_test',
         },
 
         'rel_db' => {
-            -host   => 'compara1',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => 'mp12_ensembl_compara_65',
+            -dbname => 'mp12_ensembl_compara_66',
         },
 
         'skipped_tables' => [ 'protein_tree_qc', 'meta', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set',
