@@ -18,13 +18,8 @@ sub features {
   } else {
     $var_features = $slice->get_all_StructuralVariationFeatures;
   }
-  
-  my @sv_features;
-  foreach my $svf (@$var_features) {
-    push (@sv_features,$svf) if ($svf->structural_variation->is_evidence == 0);
-  }
 
-  return \@sv_features;  
+  return $var_features;  
 }
 
 
