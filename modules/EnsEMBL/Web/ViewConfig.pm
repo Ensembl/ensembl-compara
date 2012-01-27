@@ -159,9 +159,11 @@ sub update_from_input {
     $diff = from_json($diff);
     
     foreach my $key (grep exists $self->{'options'}{$_}, keys %$diff) {
-      my @values = ref $diff->{$key} eq 'ARRAY' ? @{$diff->{$key}} : ($diff->{$key});
+      my @values  = ref $diff->{$key} eq 'ARRAY' ? @{$diff->{$key}} : ($diff->{$key});
+      my $current = ref $self->{'options'}{$key}{'user'} eq 'ARRAY' ? join '', @{$self->{'options'}{$key}{'user'}} : $self->{'options'}{$key}{'user'};
+      my $new     = join('', @values);
       
-      if ($values[0] ne $self->{'options'}{$key}{'user'}) {
+      if ($new ne $current) {
         $flag = 1;
         
         if (scalar @values > 1) {
@@ -170,7 +172,7 @@ sub update_from_input {
           $self->set($key, $values[0]);
         }
         
-        $altered ||= $key if $values[0] !~ /^(off|no)$/;
+        $altered ||= $key if $new !~ /^(off|no)$/;
       }
     }
   }
@@ -307,7 +309,12 @@ sub add_form_element {
   if ($element->{'type'} eq 'CheckBox' || $element->{'type'} eq 'DASCheckBox') {
     $element->{'selected'} = $self->get($element->{'name'}) eq $element->{'value'} ? 1 : 0 ;
   } elsif (!exists $element->{'value'}) {
-    $element->{'value'} = $self->get($element->{'name'});
+    if ($element->{'multiple'}) {
+      my @value = $self->get($element->{'name'});
+      $element->{'value'} = \@value;
+    } else {
+      $element->{'value'} = $self->get($element->{'name'});
+    }
   }
   
   $self->add_fieldset('Display options') unless $self->get_form->has_fieldset;
