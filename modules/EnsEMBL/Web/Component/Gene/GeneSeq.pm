@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Gene::GeneSeq;
 
 use strict;
@@ -22,7 +24,7 @@ sub initialize {
   my $config = {
     display_width   => $hub->param('display_width') || 60,
     site_type       => ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
-    gene_name       => $object->stable_id,
+    gene_name       => $object->Obj->can('external_name') ? $object->Obj->external_name : $object->stable_id,
     species         => $hub->species,
     title_display   => 'yes',
     sub_slice_start => $start,
@@ -121,9 +123,9 @@ sub get_key {
   my ($self, $config) = @_;
   
   my $exon_type;
-  $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
-  $exon_type = $config->{'site_type'} if $exon_type eq 'core' || !$exon_type;
-  $exon_type = ucfirst $exon_type;
+     $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
+     $exon_type = 'All' if $exon_type eq 'core' || !$exon_type;
+     $exon_type = ucfirst $exon_type;
   
   my $key = {
     exons => {
