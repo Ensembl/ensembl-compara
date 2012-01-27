@@ -27,6 +27,7 @@
 	<li><a href="#help">Further help</a></li>
 </ul>
 
+<br />
 <h2 id="intro">Introduction</h2>
 
 <p>
@@ -42,13 +43,14 @@ http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-variation/schema/?root=ensemb
 , and while not necessary for this tutorial, an understanding of the database tables may help as many of the adaptor modules are table-specific.
 </p>
 
+<br />
 <h2 id="code">Code Conventions (and unconventions)</h2>
 
 <p>
 Refer to the Ensembl core tutorial for a good description of the coding conventions normally used in Ensembl. Please note that there may be exceptions to these rules in variation.
 </p>
 
-
+<br />
 <h2 id="connect">Connecting an Ensembl variation database</h2>
 
 <p>
@@ -116,6 +118,7 @@ Only some of these adaptors will be used for illustration as part of this tutori
 </p>
 
 
+<br />
 <h2 id="genome">Variations in the genome</h2>
 
 <p>
@@ -147,6 +150,8 @@ foreach my $vf (@{$vfs}){
 }
 </pre>
 
+
+<br />
 <h2 id="alleles">Alleles and frequencies</h2>
 
 <p>
@@ -176,6 +181,8 @@ foreach my $allele(@{$alleles}) {
 }
 </pre>
 
+
+<br />
 <h2 id="genotypes">Genotypes</h2>
 
 <p>
@@ -206,6 +213,7 @@ foreach my $genotype(@{$genotypes}) {
 </pre>
 
 
+<br />
 <h2 id="Consequence">Consequence type of variations</h2>
 
 <p>
@@ -343,6 +351,7 @@ foreach my $con(@{$new_vf->get_all_TranscriptVariations}) {
 </pre>
 
 
+<br />
 <h2 id="flanks">Variations, Flanking sequences and Genes</h2>
 
 <p>
@@ -407,9 +416,8 @@ sub get_TranscriptVariations{
 </pre>
 
 
-<h2 id="failed_variations">
-	Failed variations
-</h2>
+<br />
+<h2 id="failed_variations">Failed variations</h2>
 
 <p>
 	In the Variation pipeline, quality checks are performed in order to remove variations that contain errors or inconsistencies.
@@ -530,6 +538,8 @@ foreach my $vf (@{$vfs}) {
 	
 </pre>
 
+
+<br />
 <h2 id="annotation">Variation annotations</h2>
 
 <p>
@@ -586,9 +596,8 @@ foreach my $va (@{$va_adaptor->fetch_all_by_phenotype_description_source_name($p
 </pre>
 
 
-<h2 id="variation_sets">
-	Variation sets
-</h2>
+<br />
+<h2 id="variation_sets">Variation sets</h2>
 
 <p>
 	Variation sets provide functionality for grouping sets of variation that share some property. For example, we have grouped the variations identified in the three different
@@ -654,7 +663,7 @@ sub print_set {
 }
 </pre>
 <p>
-	Running the code in the example above on the e!63 human variation database produces a table similar to the one on the <a href="/info/docs/variation/index.html#variation_sets">About Variation Data</a> page.
+	Running the code in the example above on the human variation database produces a table similar to the one on the <a href="/info/docs/variation/index.html#variation_sets">About Variation Data</a> page.
 </p>
 <p>
 	In order to get objects for the variations assigned to a variation set, we use the get_Variation_Iterator method. Note that rather than returning a reference to a list of all variation objects, this 
@@ -715,7 +724,28 @@ sub print_set {
 		printf("\%s\t\%s\t\%s\n",$vf->variation_name(),join(",",@hgvs_coding),join(",",@hgvs_protein));
 	}
 </pre>
+<p>
+The variation sets can also be retrieved from the structural variations.
+</p>
+<pre class="code">
+# Get the StructuralVariation object
+my $sv_adaptor  = $registry->get_adaptor( 'human', 'variation', 'structuralvariation' );
+my $sv = $sv_adaptor->fetch_by_name('esv214236');
 
+# Get the structural variation features
+my $svfs = $sv->get_all_StructuralVariationFeatures();
+
+# Loop over the structural variation features and print the corresponding variation set(s)
+foreach my $svf (@{$svfs}) {
+  my $vss = $svf->get_all_VariationSets();
+  foreach my $vs (@{$vss}) {
+    print "The structural variation belongs to the set ", $vs->name, "\n";
+  }
+}
+</pre>
+
+
+<br />
 <h2 id="structural">Structural variations</h2>
 
 <p>
@@ -783,6 +813,8 @@ foreach my $ssv (@$ssvs) {
 }
 </pre>
 
+
+<br />
 <h2 id="ld">LD calculation</h2>
 
 <p>
@@ -837,6 +869,8 @@ Please note the following warning <code> MSG: variation features have no pairwis
 <p> Looking at other associated data will help to narrow down the reason. If there are variants in the region spanned by the LDFeatureContainer 
 with genotypes with a minor allele frequency greater than zero, then assume the r<sup>2</sup> is &lt; 0.05, which essentially means no correlation. </p>
 
+
+<br />
 <h2 id="strains">Specific strain information</h2>
 
 <p>
@@ -875,6 +909,8 @@ foreach my $diff (@differences){
 }
 </pre>
 
+
+<br />
 <h2 id="iterators">Fetching Iterators</h2>
 
 <p>
@@ -951,6 +987,8 @@ while ($cosmic_name_iter-&gt;has_next()) {
 
 </pre>
 
+
+<br />
 <h2 id="slice">Fetching variation features or structural variation features from a Slice</h2>
 <p>Variation features and structural variation features can be fetched using a Slice object (from the <a href="/info/docs/api/core/core_tutorial.html#slices">Core API</a>).</p>
 <pre class="code">
@@ -1006,6 +1044,7 @@ foreach my $vf (@{$var->get_all_VariationFeatures()}){
 </pre>
 
 
+<br />
 <h2 id="help">Further help</h2>
 
 <p>
