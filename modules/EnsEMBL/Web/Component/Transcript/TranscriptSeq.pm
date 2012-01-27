@@ -129,7 +129,7 @@ sub get_sequence_data {
     $protein_seq->{'seq'}->[$pos]->{'letter'} = $partial[$pos] while $pos--; # Replace . with as much of -X- as fits in the space
   }
   
-  if ($config->{'variation'}) {
+  if ($config->{'snp_display'}) {
     my $slice = $trans->feature_Slice;
     
     foreach my $snp (reverse @{$object->variation_data($slice, $config->{'utr'})}) {
@@ -140,7 +140,7 @@ sub get_sequence_data {
       my $alleles           = $snp->{'allele'};
       my $ambigcode         = $snp->{'ambigcode'} || '*';
       my $amino_acid_pos    = $snp->{'position'} * 3 + $cd_start - 4 - $start_pad;
-      my $type              = lc $snp->{'type'};
+      my $type              = lc($config->{'consequence_filter'} ? [ grep $config->{'consequence_filter'}{$_}, @{$tv->consequence_type} ]->[0] : $snp->{'type'});
       my $start             = $tv->cdna_start;
       my $end               = $tv->cdna_end;
       my $pep_allele_string = $tv->pep_allele_string;
@@ -247,27 +247,29 @@ sub get_sequence_data {
 }
 
 sub initialize {
-  my $self   = shift;
-  my $hub    = $self->hub;
-  my $object = $self->object;
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $object      = $self->object;
+  my @consequence = $hub->param('consequence_filter');
   
   my $config = { 
     display_width   => $hub->param('display_width') || 60,
     species         => $hub->species,
     maintain_colour => 1,
-    transcript      => 1
+    transcript      => 1,
   };
   
-  $config->{$_} = $hub->param($_) eq 'yes' ? 1 : 0 for qw(exons codons coding_seq translation rna variation number utr);
+  $config->{$_} = $hub->param($_) eq 'yes' ? 1 : 0 for qw(exons codons coding_seq translation rna snp_display number utr);
   
-  $config->{'codons'}    = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
-  $config->{'variation'} = 0 unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
+  $config->{'codons'}             = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
+  $config->{'snp_display'}        = 0 unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
+  $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
   
   my ($sequence, $markup, $raw_seq) = $self->get_sequence_data($object, $config);
   
   $self->markup_exons($sequence, $markup, $config)     if $config->{'exons'};
   $self->markup_codons($sequence, $markup, $config)    if $config->{'codons'};
-  $self->markup_variation($sequence, $markup, $config) if $config->{'variation'};  
+  $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};  
   $self->markup_line_numbers($sequence, $config)       if $config->{'number'};
   
   $config->{'v_space'} = "\n" if $config->{'coding_seq'} || $config->{'translation'} || $config->{'rna'};

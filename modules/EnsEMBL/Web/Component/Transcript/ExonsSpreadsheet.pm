@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Transcript::ExonsSpreadsheet;
 
 use strict;
 
-use RTF::Writer;
-
 use base qw(EnsEMBL::Web::Component::Transcript EnsEMBL::Web::Component::TextSequence);
 
 sub _init {
@@ -16,23 +14,24 @@ sub _init {
 
 sub initialize {
   my ($self, $export) = @_;
-  my $hub        = $self->hub;
-  my $only_exon  = $hub->param('oexon') eq 'yes'; # display only exons
-  my $entry_exon = $hub->param('exon');
-  my $object     = $self->object;
-  my $transcript = $object->Obj;
-  my @exons      = @{$transcript->get_all_Exons};
-  my $strand     = $exons[0]->strand;
-  my $chr_name   = $exons[0]->slice->seq_region_name;
-  my $i          = 0;
+  my $hub         = $self->hub;
+  my $only_exon   = $hub->param('oexon') eq 'yes'; # display only exons
+  my $entry_exon  = $hub->param('exon');
+  my @consequence = $hub->param('consequence_filter');
+  my $object      = $self->object;
+  my $transcript  = $object->Obj;
+  my @exons       = @{$transcript->get_all_Exons};
+  my $strand      = $exons[0]->strand;
+  my $chr_name    = $exons[0]->slice->seq_region_name;
+  my $i           = 0;
   my @data;
   
   my $config = {
-    display_width => $hub->param('seq_cols') || 60,
-    sscon         => $hub->param('sscon')    || 25,   # no of bp to show either side of a splice site
-    flanking      => $hub->param('flanking') || 50,   # no of bp up/down stream of transcript
-    full_seq      => $hub->param('fullseq') eq 'yes', # flag to display full sequence (introns and exons)
-    variation     => $hub->param('variation'),
+    display_width => $hub->param('display_width') || 60,
+    sscon         => $hub->param('sscon')         || 25,   # no of bp to show either side of a splice site
+    flanking      => $hub->param('flanking')      || 50,   # no of bp up/down stream of transcript
+    full_seq      => $hub->param('fullseq') eq 'yes',      # flag to display full sequence (introns and exons)
+    snp_display   => $hub->param('snp_display'),
     number        => $hub->param('line_numbering'),
     coding_start  => $transcript->coding_region_start,
     coding_end    => $transcript->coding_region_end,
@@ -40,12 +39,12 @@ sub initialize {
     export        => $export
   };
   
-  $config->{'end_number'}  = $config->{'number'};
-  $config->{'last_number'} = $config->{'coding_start'} - $config->{'flanking'} - 1 if $config->{'number'} eq 'slice';
+  $config->{'end_number'}         = $config->{'number'};
+  $config->{'last_number'}        = $config->{'coding_start'} - $config->{'flanking'} - 1 if $config->{'number'} eq 'slice';
+  $config->{'snp_display'}        = 'off' unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
+  $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
   
-  $config->{'variation'}  = 'off' unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
-  
-  if ($config->{'variation'} ne 'off') {
+  if ($config->{'snp_display'} ne 'off') {
     my $filter = $hub->param('population_filter');
     
     if ($filter && $filter ne 'off') {
@@ -137,7 +136,7 @@ sub content {
   );
   
   my $html = $self->tool_buttons . $table->render;
-     $html = sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $html if $config->{'variation'} ne 'off';
+     $html = sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $html if $config->{'snp_display'} ne 'off';
   
   return $html;
 }
@@ -188,7 +187,7 @@ sub get_exon_sequence_data {
     }
   }
 
-  $self->add_variations($config, $exon->feature_Slice, \@sequence) if $config->{'variation'} ne 'off';
+  $self->add_variations($config, $exon->feature_Slice, \@sequence) if $config->{'snp_display'} ne 'off';
   $self->add_line_numbers($config, $seq_length) if $config->{'number'} ne 'off';
 
   return \@sequence;
@@ -212,7 +211,7 @@ sub get_intron_sequence_data {
       $start->{'sequence'} = [ map {{ letter => $_, class => 'e1' }} split //, lc $start->{'slice'}->seq ];
       $end->{'sequence'}   = [ map {{ letter => $_, class => 'e1' }} split //, lc $end->{'slice'}->seq   ];
       
-      if ($config->{'variation'} eq 'on') {
+      if ($config->{'snp_display'} eq 'yes') {
         $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $start, $end;
       }
       
@@ -224,8 +223,8 @@ sub get_intron_sequence_data {
       
       @sequence = map {{ letter => $_, class => 'e1' }} split //, lc $slice->seq;
       
-      $self->add_variations($config, $slice, \@sequence) if $config->{'variation'} eq 'on';
-      $self->add_line_numbers($config, $intron_length) if $config->{'number'} ne 'off';
+      $self->add_variations($config, $slice, \@sequence) if $config->{'snp_display'} eq 'yes';
+      $self->add_line_numbers($config, $intron_length)   if $config->{'number'} ne 'off';
     }
   };
   
@@ -266,7 +265,7 @@ sub get_flanking_sequence_data {
   $upstream->{'sequence'}   = [ map {{ letter => $_, class => 'ef' }} split //, lc $upstream->{'seq'}   ];
   $downstream->{'sequence'} = [ map {{ letter => $_, class => 'ef' }} split //, lc $downstream->{'seq'} ];
   
-  if ($config->{'variation'} eq 'on') {
+  if ($config->{'snp_display'} eq 'yes') {
     $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $upstream, $downstream;
   }
   
@@ -289,13 +288,18 @@ sub add_variations {
     
     next unless $transcript_variation;
     
-    my $consequence = lc $transcript_variation->display_consequence;
+    my $consequence = $config->{'consequence_filter'} ? lc [ grep $config->{'consequence_filter'}{$_}, @{$transcript_variation->consequence_type} ]->[0] : undef;
+    
+    next if $config->{'consequence_filter'} && !$consequence;
+    
     my $name        = $vf->variation_name;
     my $start       = $vf->start - 1;
     my $end         = $vf->end   - 1;
     
     $start = 0 if $start < 0;
     $end   = $length if $end > $length;
+    
+    $consequence ||= lc $transcript_variation->display_consequence;
     
     $config->{'key'}->{'variations'}->{$consequence} = 1;
     

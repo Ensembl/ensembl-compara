@@ -38,12 +38,12 @@ sub get_sequence_data {
     $markup->{'exons'}->{0}->{'type'} = [ 'exon0' ];
   }
   
-  if ($config->{'variation'}) {
+  if ($config->{'snp_display'}) {
     foreach my $snp (reverse @{$object->variation_data($translation->get_Slice)}) {
       my $pos  = $snp->{'position'} - 1;
       my $dbID = $snp->{'vdbid'};
       
-      $markup->{'variations'}->{$pos}->{'type'}    = lc $snp->{'type'};
+      $markup->{'variations'}->{$pos}->{'type'}    = lc($config->{'consequence_filter'} ? [ grep $config->{'consequence_filter'}{$_}, @{$snp->{'tv'}->consequence_type} ]->[0] : $snp->{'type'});
       $markup->{'variations'}->{$pos}->{'alleles'} = $snp->{'allele'};
       $markup->{'variations'}->{$pos}->{'href'} ||= {
         type        => 'ZMenu',
@@ -61,24 +61,26 @@ sub get_sequence_data {
 
 sub initialize {
   my ($self, $translation) = @_;
-  
-  my $hub = $self->hub;
+  my $hub         = $self->hub;
+  my @consequence = $hub->param('consequence_filter');
   
   my $config = {
     display_width   => $hub->param('display_width') || 60,
     species         => $hub->species,
     maintain_colour => 1,
-    transcript      => 1
+    transcript      => 1,
   };
   
-  for (qw(exons variation number)) {
+  for (qw(exons snp_display number)) {
     $config->{$_} = $hub->param($_) eq 'yes' ? 1 : 0;
   }
-
+  
+  $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
+  
   my ($sequence, $markup) = $self->get_sequence_data($translation, $config);
   
   $self->markup_exons($sequence, $markup, $config)     if $config->{'exons'};
-  $self->markup_variation($sequence, $markup, $config) if $config->{'variation'};
+  $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
   $self->markup_line_numbers($sequence, $config)       if $config->{'number'};
   
   return ($sequence, $config);
