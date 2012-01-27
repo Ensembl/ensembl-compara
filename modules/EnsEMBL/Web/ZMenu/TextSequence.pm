@@ -7,6 +7,8 @@ package EnsEMBL::Web::ZMenu::TextSequence;
 
 use strict;
 
+use Bio::EnsEMBL::Variation::ConsequenceType;
+
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub render {
@@ -22,24 +24,24 @@ sub _content {
   my @v       = $hub->param('v');
   my @vf      = $hub->param('vf');
   my $lrg     = $hub->param('lrg');
-  my $adaptor = $hub->database('variation')->get_VariationAdaptor;
-  my $lrg_slice;
+  my $adaptor = $hub->get_adaptor('get_VariationAdaptor', 'variation');
   
   if ($lrg && $hub->referer->{'ENSEMBL_TYPE'} eq 'LRG') {
-    eval { $lrg_slice = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('LRG', $lrg); };
+    eval { $self->{'lrg_slice'} = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('LRG', $lrg); };
+  } elsif ($hub->referer->{'ENSEMBL_TYPE'} eq 'Transcript') {
+    $self->{'transcript'} = $hub->get_adaptor('get_TranscriptAdaptor')->fetch_by_stable_id($hub->param('t'));
   }
   
   for (0..$#v) {
     my $variation_object = $self->new_object('Variation', $adaptor->fetch_by_name($v[$_]), $object->__data);
-    $self->variation_content($variation_object, $lrg_slice, $v[$_], $vf[$_]);
+    $self->variation_content($variation_object, $v[$_], $vf[$_]);
   }
 }
 
 sub variation_content {
-  my ($self, $object, $lrg, $v, $vf) = @_;
+  my ($self, $object, $v, $vf) = @_;
   my $hub        = $self->hub;
-  my $variation  = $object->Obj;
-  my $genes      = $variation->get_all_Genes;  
+  my $variation  = $object->Obj;  
   my $feature    = $variation->get_VariationFeature_by_dbID($vf);
   my $seq_region = $feature->seq_region_name . ':';  
   my $chr_start  = $feature->start;
@@ -63,25 +65,9 @@ sub variation_content {
     $position = "$seq_region$chr_start-$chr_end";
   }
   
-  # Get a hash with HGVS names as URLs
-  #my $hgvs_urls  = $object->get_hgvs_names_url($vf);
-  #my $hgvs_count = scalar keys %$hgvs_urls;
-  #my @hgvs_html;
-  #
-  ## Loop over and format the URLs
-  #foreach my $allele (keys %$hgvs_urls) {
-  #  if ($hgvs_count > 1) {
-  #    push @hgvs_html, '' if scalar @hgvs_html;
-  #    push @hgvs_html, "<b>Variant allele $allele</b>";
-  #  }
-  #  
-  #  push @hgvs_html, @{$hgvs_urls->{$allele}};
-  #  push @hgvs_html, '' if $hgvs_count > 1;
-  #}
-  
   # If we have an LRG in the URL, get the LRG coordinates as well
-  if ($lrg) {
-    my $lrg_feature = $feature->transfer($lrg);
+  if ($self->{'lrg_slice'}) {
+    my $lrg_feature = $feature->transfer($self->{'lrg_slice'});
     my $lrg_start   = $lrg_feature->start;
     my $lrg_end     = $lrg_feature->end;
     $lrg_position   = $lrg_feature->seq_region_name . ":$lrg_start";
@@ -102,18 +88,13 @@ sub variation_content {
   
   push @entries, { caption => 'LRG position',  entry => $lrg_position } if $lrg_position;
   
-  #if (scalar @hgvs_html) {
-  #  if (scalar @hgvs_html > 1) {
-  #    push @entries, { cls     => 'hgvs', entry => 'HGVS notation' };
-  #    push @entries, { childOf => 'hgvs', entry => [ '', $_ ]} for @hgvs_html;
-  #  } else {
-  #    push @entries, { caption => 'HGVS notation', entry => $hgvs_html[0] };
-  #  }
-  #}
+  my %ct    = %Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_TYPES;
+  my %types = map { lc $_ => $ct{$_} } @{($self->{'transcript'} ? $feature->get_all_TranscriptVariations([$self->{'transcript'}])->[0] : $feature)->consequence_type};
+  my $style = $hub->species_defs->colour('variation');
   
   push @entries, (
     { caption => 'Alleles', entry => $allele },
-    { caption => 'Type',    entry => $feature->display_consequence },
+    { caption => 'Types',   entry => sprintf '<ul>%s</ul>', join '', map "<li>$style->{$_}{'text'}</li>", sort { $types{$a} <=> $types{$b} } keys %types },
     { entry => sprintf $link, $hub->url({ action => 'Mappings', %url_params }), 'Gene/Transcript Locations' }
   );
   
