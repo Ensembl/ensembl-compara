@@ -7,14 +7,12 @@ use strict;
 use base qw(EnsEMBL::Web::Component::Compara_Alignments);
 
 sub get_sequence_data {
-  my $self = shift;
-  my ($slices, $config) = @_;
-  my $hub = $self->hub;
-
-  my @sequence;
-  my @markup;
-  my @temp_slices;
-  my @pos;
+  my ($self, $slices, $config) = @_;
+  my $hub         = $self->hub;
+  my @consequence = $hub->param('consequence_filter');
+  my (@sequence, @markup, @temp_slices, @pos);
+  
+  $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if join('', @consequence) ne 'off';
   
   foreach my $sl (@$slices) {
     my $mk    = {};
@@ -44,6 +42,7 @@ sub get_sequence_data {
     
       eval {
         $snps = $slice->get_all_VariationFeatures;
+        $snps = [ map { my $snp = $_; grep($config->{'consequence_filter'}{$_}, @{$snp->consequence_type}) || $config->{'v'} eq $snp->variation_name ? $snp : () } @$snps ] if $snps && $config->{'consequence_filter'};
       };
       
       if (scalar @$snps) {
@@ -65,7 +64,6 @@ sub get_sequence_data {
       my @ordered_snps = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map {[ $_->end < $_->start ? 1 : 0, $_ ]} @$snps;
       
       foreach (@ordered_snps) {
-        my $snp_type       = lc $_->display_consequence;
         my $variation_name = $_->variation_name;
         my $var_class      = $_->can('var_class') ? $_->var_class : $_->can('variation') && $_->variation ? $_->variation->var_class : '';
         my $dbID           = $_->dbID;
@@ -75,6 +73,8 @@ sub get_sequence_data {
         my $ambigcode      = $var_class =~ /in\-?del|insertion|deletion/ ? '*' : $_->ambig_code;
         my $url            = $hub->url({ species => $name, r => undef, v => $variation_name, vf => $dbID });
         my $var            = $variation_name eq $config->{'v'} ? $ambigcode : qq{<a href="$url">$ambigcode</a>};
+        my $snp_type       = $config->{'consequence_filter'} ? lc [ grep $config->{'consequence_filter'}{$_}, @{$_->consequence_type} ]->[0] : undef;
+           $snp_type     ||= lc $_->display_consequence;
         
         # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
         if ($slice_strand < 0) {
