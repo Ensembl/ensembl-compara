@@ -28,21 +28,21 @@ sub new {
 
 # Used by Compara_Alignments, Gene::GeneSeq and Location::SequenceAlignment
 sub get_sequence_data {
-  my $self = shift;
-  my ($slices, $config) = @_;
-  
+  my ($self, $slices, $config) = @_;
   my $hub = $self->hub;
-  my @sequence;
-  my @markup;
-  my $population;
+  my (@sequence, @markup, $population);
   
   if ($config->{'snp_display'}) {
-    my $filter = $hub->param('population_filter');
+    my @consequence = $hub->param('consequence_filter');
+    my $pop_filter  = $hub->param('population_filter');
     
-    if ($filter && $filter ne 'off') {
-      $population = $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter);
-      $config->{'min_frequency'} = $hub->param('min_frequency');
-      $config->{'population_filter'} = $filter;
+    $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if join('', @consequence) ne 'off';
+    
+    if ($pop_filter && $pop_filter ne 'off') {
+      $population = $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($pop_filter);
+      
+      $config->{'min_frequency'}     = $hub->param('min_frequency');
+      $config->{'population_filter'} = $pop_filter;
     }
   }
   
@@ -112,6 +112,7 @@ sub get_sequence_data {
       
       eval {
         $snps = $population ? $slice->get_all_VariationFeatures_by_Population($population, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures(1);
+        $snps = [ map { my $snp = $_; grep($config->{'consequence_filter'}{$_}, @{$snp->consequence_type}) ? $snp : () } @$snps ] if $snps && $config->{'consequence_filter'};
       };
       
       if (scalar @$snps) {
@@ -132,16 +133,16 @@ sub get_sequence_data {
       # order variations descending by worst consequence rank so that the 'worst' variation will overwrite the markup of other variations in the same location
       # Also prioritize shorter variations over longer ones so they don't get hidden
       my @ordered_snps = map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->length, $_->most_severe_OverlapConsequence->rank, $_ ], @$snps;
-
-
+      
       foreach (@ordered_snps) {
-        my $snp_type       = $_->can('display_consequence') ? lc $_->display_consequence : 'snp';
         my $variation_name = $_->variation_name;
         my $var_class      = $_->can('var_class') ? $_->var_class : $_->can('variation') && $_->variation ? $_->variation->var_class : '';
         my $dbID           = $_->dbID;
         my $start          = $_->start;
         my $end            = $_->end;
         my $alleles        = $_->allele_string;
+        my $snp_type       = $_->can('display_consequence') ? lc $_->display_consequence : 'snp';
+           $snp_type       = lc [ grep $config->{'consequence_filter'}{$_}, @{$_->consequence_type} ]->[0] if $config->{'consequence_filter'};
         
         # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
         if ($slice_strand < 0) {
@@ -995,7 +996,7 @@ sub content_key {
   
   $config->{'site_type'} = ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
   
-  for (@{$self->{'key_params'}}, qw(exon_display population_filter min_frequency)) {
+  for (@{$self->{'key_params'}}, qw(exon_display population_filter min_frequency consequence_filter)) {
     $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
   }
   
@@ -1015,11 +1016,11 @@ sub get_key {
   my $class_to_style = $self->class_to_style;
   my $var_styles     = $hub->species_defs->colour('variation');
   my $image_config   = $hub->get_imageconfig('text_seq_legend');
-    
+  
   my $exon_type;
-  $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
-  $exon_type = $config->{'site_type'} if $exon_type eq 'core' || !$exon_type;
-  $exon_type = ucfirst $exon_type;
+     $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
+     $exon_type = 'All' if $exon_type eq 'core' || !$exon_type;
+     $exon_type = ucfirst $exon_type;
   
   my %key = (
     utr          => { class => 'cu',  text => 'UTR'                          },
@@ -1072,12 +1073,13 @@ sub get_key {
   $image_config->image_width(650);
   
   my $key_html;
-  $key_html .= sprintf '<li>Displaying variations for %s with a minimum frequency of %s</li>', $config->{'population_filter'}, $config->{'min_frequency'} if $config->{'population_filter'};
-  $key_html .= '<li>Conserved regions are where >50&#37; of bases in alignments match</li>'                                                               if $config->{'key'}->{'conservation'};
-  $key_html .= '<li>For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line</li>'     if $config->{'alignment_numbering'};
-  $key_html .= '<li><code>&middot;&nbsp;&nbsp;&nbsp;</code>Basepairs in secondary strains matching the reference strain are replaced with dots</li>'      if $config->{'match_display'};
-  $key_html .= '<li><code>~&nbsp;&nbsp;</code>No resequencing coverage at this position</li>'                                                             if $config->{'resequencing'};
-  $key_html  = "<ul>$key_html</ul>" if $key_html;
+     $key_html .= "<li>Displaying variations for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}</li>"             if $config->{'population_filter'};
+     $key_html .= '<li>Variations are filtered by consequence type</li>',                                                                                if $config->{'consequence_filter'};
+     $key_html .= '<li>Conserved regions are where >50&#37; of bases in alignments match</li>'                                                           if $config->{'key'}->{'conservation'};
+     $key_html .= '<li>For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line</li>' if $config->{'alignment_numbering'};
+     $key_html .= '<li><code>&middot;&nbsp;&nbsp;&nbsp;</code>Basepairs in secondary strains matching the reference strain are replaced with dots</li>'  if $config->{'match_display'};
+     $key_html .= '<li><code>~&nbsp;&nbsp;</code>No resequencing coverage at this position</li>'                                                         if $config->{'resequencing'};
+     $key_html  = "<ul>$key_html</ul>" if $key_html;
   
   return '<h4>Key</h4>' . $self->new_image(new EnsEMBL::Web::Fake({}), $image_config)->render . $key_html;
 }

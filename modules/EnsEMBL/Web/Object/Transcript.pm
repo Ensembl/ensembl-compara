@@ -1630,10 +1630,13 @@ sub variation_data {
   
   return [] unless $self->species_defs->databases->{'DATABASE_VARIATION'};
   
-  my $transcript      = $self->Obj;
-  my $cd_start        = $transcript->cdna_coding_start;
-  my $cd_end          = $transcript->cdna_coding_end;
-  my @coding_sequence = split '', substr $transcript->seq->seq, $cd_start - 1, $cd_end - $cd_start + 1;
+  my $hub                = $self->hub;
+  my $transcript         = $self->Obj;
+  my $cd_start           = $transcript->cdna_coding_start;
+  my $cd_end             = $transcript->cdna_coding_end;
+  my @coding_sequence    = split '', substr $transcript->seq->seq, $cd_start - 1, $cd_end - $cd_start + 1;
+  my %consequence_filter = map { $_ => 1 } $hub->param('consequence_filter');
+     %consequence_filter = () if join('', keys %consequence_filter) eq 'off';
   my @data;
   
   # Population filtered variations currently fail to return in a reasonable time
@@ -1657,6 +1660,7 @@ sub variation_data {
     
     next if !$include_utr && !$pos;
     next unless $tv->cdna_start && $tv->cdna_end;
+    next if scalar keys %consequence_filter && !grep $consequence_filter{$_}, @{$tv->consequence_type};
     
     my $vf    = $tv->variation_feature;
     my $vdbid = $vf->dbID;
