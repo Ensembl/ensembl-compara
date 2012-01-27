@@ -164,7 +164,6 @@ sub pipeline_analyses {
                 'target_dir'     => $self->o('target_dir'),
                 'cmd'            => 'find #work_dir# -name "#tree_type#*.#extension#" | sort -t . -k2 -n | xargs cat > #target_dir#/#dump_file_name#',
             },
-            -hive_capacity => 10,
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/#dump_file_name#' } },
             },
@@ -176,7 +175,6 @@ sub pipeline_analyses {
                 'work_dir'    => $self->o('work_dir'),
                 'cmd'         => 'rm -rf #work_dir#',
             },
-            -hive_capacity => 10,
             -wait_for => [ 'collate_dumps' ],
             -flow_into => {
                 1 => [ 'md5sum', 'copy_readme' ],
@@ -188,7 +186,6 @@ sub pipeline_analyses {
             -parameters => {
                 'cmd'   => 'gzip #full_name#',
             },
-            -hive_capacity => 10,
         },
 
         {   -logic_name => 'md5sum',
@@ -198,7 +195,6 @@ sub pipeline_analyses {
                 'cmd'         => 'cd #target_dir# ; md5sum *.gz >MD5SUM.#tree_type#',
             },
             -wait_for => [ 'archive_long_files' ],
-            -hive_capacity => 10,
         },
 
         {   -logic_name => 'copy_readme',
@@ -208,7 +204,6 @@ sub pipeline_analyses {
                 'target_dir'  => $self->o('target_dir'),
                 'cmd'         => 'cp #readme_dir#/README.#tree_type#.dumps #target_dir#',
             },
-            -hive_capacity => 10,
         },
     ];
 }
