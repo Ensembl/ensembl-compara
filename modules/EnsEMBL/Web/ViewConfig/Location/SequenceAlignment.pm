@@ -6,7 +6,7 @@ use strict;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
 sub init {
   my $self       = shift;
@@ -18,11 +18,13 @@ sub init {
   $strains{$_} = 'yes' for grep $_ ne $ref, @{$variations->{'DEFAULT_STRAINS'} || []};
   $strains{$_} = 'no'  for grep $_ ne $ref, @{$variations->{'DISPLAY_STRAINS'} || []};
   
+  $self->SUPER::init;
+  
   $self->set_defaults({
     display_width  => 120,
     exon_ori       => 'all',
     match_display  => 'dot',
-    snp_display    => 'snp',
+    snp_display    => 'yes',
     line_numbering => 'sequence',
     codons_display => 'off',
     title_display  => 'off',
@@ -61,7 +63,7 @@ sub form {
     ]
   });
   
-  $self->add_form_element($general_markup_options{'snp_display'}) if $variations;
+  $self->variation_options({ consequence => 'no' }) if $variations;
   $self->add_form_element($general_markup_options{'line_numbering'});
   $self->add_form_element($other_markup_options{'codons_display'});
   $self->add_form_element($other_markup_options{'title_display'});

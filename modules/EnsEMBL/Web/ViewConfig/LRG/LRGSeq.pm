@@ -6,7 +6,7 @@ use strict;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
 sub init {
   my $self = shift;
@@ -14,7 +14,6 @@ sub init {
   $self->set_defaults({
     flank5_display => 0,
     flank3_display => 0,
-    display_width  => 60,
     exon_display   => 'core',
     exon_ori       => 'all',
     snp_display    => 'snp_link',
@@ -22,6 +21,7 @@ sub init {
   });
 
   $self->title = 'Sequence';
+  $self->SUPER::init;
 }
 
 sub form {
@@ -42,7 +42,7 @@ sub form {
   $self->add_form_element($other_markup_options{'display_width'});
   $self->add_form_element($gene_markup_options{'exon_display'});
   $self->add_form_element($general_markup_options{'exon_ori'});
-  $self->add_form_element($general_markup_options{'snp_display'}) if $dbs->{'DATABASE_VARIATION'};
+  $self->variation_options if $dbs->{'DATABASE_VARIATION'};
   $self->add_form_element($general_markup_options{'line_numbering'});
 }
 

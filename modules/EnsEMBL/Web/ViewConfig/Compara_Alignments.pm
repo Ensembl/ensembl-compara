@@ -6,7 +6,7 @@ use strict;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
 sub init {
   my $self         = shift;
@@ -21,6 +21,8 @@ sub init {
       $defaults{lc "species_${key}_$_"} = [ join(' ', $n, map(lc, @name), '-', $species_defs->get_config($_, 'SPECIES_COMMON_NAME')), /ancestral/ ? 'off' : 'yes' ];
     }
   }
+  
+  $self->SUPER::init;
   
   $self->set_defaults({
     flank5_display        => 600,
@@ -62,7 +64,7 @@ sub form {
     $self->add_form_element($other_markup_options{'strand'}) if $self->{'strand_option'};
     $self->add_form_element($gene_markup_options{'exon_display'});
     $self->add_form_element($general_markup_options{'exon_ori'});
-    $self->add_form_element($general_markup_options{'snp_display'}) if $dbs->{'DATABASE_VARIATION'};
+    $self->variation_options if $dbs->{'DATABASE_VARIATION'};
     $self->add_form_element($general_markup_options{'line_numbering'});
     $self->add_form_element($other_markup_options{'codons_display'});
 

@@ -6,26 +6,24 @@ use strict;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
 sub init {
   my $self = shift;
   
   $self->set_defaults({
-    exons             => 'yes',
-    codons            => 'yes',
-    utr               => 'yes',
-    coding_seq        => 'yes',
-    display_width     => 60,
-    translation       => 'yes',
-    rna               => 'no',
-    variation         => 'yes',
-    population_filter => 'off',
-    min_frequency     => 0.1,
-    number            => 'yes'
+    exons       => 'yes',
+    codons      => 'yes',
+    utr         => 'yes',
+    coding_seq  => 'yes',
+    translation => 'yes',
+    rna         => 'no',
+    snp_display => 'yes',
+    number      => 'yes'
   });
   
   $self->title = 'cDNA sequence';
+  $self->SUPER::init;
 }
 
 sub form {
@@ -47,24 +45,7 @@ sub form {
   $self->add_form_element({ type => 'YesNo', name => 'coding_seq',  select => 'select', label => 'Show coding sequence'  });
   $self->add_form_element({ type => 'YesNo', name => 'translation', select => 'select', label => 'Show protein sequence' });
   $self->add_form_element({ type => 'YesNo', name => 'rna',         select => 'select', label => 'Show RNA features'     });
-  
-  if ($self->species_defs->databases->{'DATABASE_VARIATION'}) {
-    $self->add_form_element({ type => 'YesNo', name => 'variation', select => 'select', label => 'Show variation features' });
-    
-    # Population filtered variations currently fail to return in a reasonable time
-    #my $adaptor     = $self->hub->get_adaptor('get_PopulationAdaptor', 'variation');
-    #my @populations = map @{$adaptor->$_}, qw(fetch_all_HapMap_Populations fetch_all_1KG_Populations);
-    #
-    #if (scalar @populations) {
-    #  my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
-    #  
-    #  push @{$general_markup_options{'pop_filter'}{'values'}}, sort { $a->{'name'} cmp $b->{'name'} } map {{ value => $_->name, name => $_->name }} @populations;
-    #
-    #  $self->add_form_element($general_markup_options{'pop_filter'});
-    #  $self->add_form_element($general_markup_options{'pop_min_freq'});
-    #}
-  }
-  
+  $self->variation_options({ populations => [ 'fetch_all_HapMap_Populations', 'fetch_all_1KG_Populations' ], snp_link => 'no' }) if $self->species_defs->databases->{'DATABASE_VARIATION'};
   $self->add_form_element({ type => 'YesNo', name => 'number', select => 'select', label => 'Number residues' });
 }
 
