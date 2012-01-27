@@ -49,7 +49,7 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_default {
+sub param_defaults {
     return {
             'pvalue_lim' => 0.05,
            };
@@ -170,7 +170,7 @@ sub parse_cafe_output {
 
     my $cafeTree_Adaptor = $self->param('cafeTree_Adaptor');
     my $mlss_id = $self->param('mlss_id');
-    my $pvalue_lim = $self->param('pvalue_lim') || 0.005; # Don't hardcode!
+    my $pvalue_lim = $self->param('pvalue_lim');
     my $cafe_out_file = $self->param('cafe_out_file') . ".cafe";
     my $genomeDB_Adaptor = $self->param('genomeDB_Adaptor');
 
