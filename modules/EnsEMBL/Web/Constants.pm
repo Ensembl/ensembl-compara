@@ -135,9 +135,8 @@ sub GENERAL_MARKUP_OPTIONS {
       'name'   => 'snp_display',
       'label'  => 'Show variations',
       'values' => [
-        { 'value' => 'off',       'name' => 'No' },
-        { 'value' => 'snp',       'name' => 'Yes' },
-        { 'value' => 'snp_link' , 'name' => 'Yes and show links' },
+        { 'value' => 'off', 'name' => 'No'  },
+        { 'value' => 'yes', 'name' => 'Yes' },
       ]
     },
     'line_numbering' => {
@@ -175,6 +174,15 @@ sub GENERAL_MARKUP_OPTIONS {
       'label' => 'Minor allele frequency for population filter',  
       'name'  => 'min_frequency',
       'max'   => 0.5
+    },
+    'consequence_filter' => {
+      'type'     => 'DropDown',
+      'multiple' => 1,
+      'size'     => 5,
+      'select'   => 'select',
+      'name'     => 'consequence_filter',
+      'label'    => 'Filter variations by consequence type',
+      'values'   => [{ 'value' => 'off', 'name' => 'No filter' }]
     }
   );
 }
