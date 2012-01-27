@@ -32,7 +32,7 @@ $| = 1;
 my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$search_engine,$debug,$dump_real,$log,$dir,$help);
 GetOptions('species=s' => \$species_list,
            'ignore_species=s' => \$ignore_species_list,
-           'index=s'   => \$indexes_list,
+           'index|indices=s'   => \$indexes_list,
            'ignore_index=s' => \$ignore_indexes_list,
            'engine=s'  => \$search_engine,
            'debug'     => \$debug,
@@ -69,7 +69,6 @@ my %species_boost = (
   Zebrafish => '6.0',
 );
 
-
 #redirect STDOUT and maybe STDERR to a file
 $log ||= $debug ? '>-' : "dumping_${release}.log";
 open (LOG,    ">$log") or die "Can't open $log: $!";
@@ -83,7 +82,7 @@ if ($indexes_list eq 'ALL'){
   @indexes = ();
   my %ignored;
   @ignored{@ignore_indexes} = ();
-  foreach my $method (keys %indexXMLDumper::) {
+  foreach my $method (sort keys %indexXMLDumper::) {
     if ($method =~ s/dump(\w+)/$1/) {
       push @indexes, $method unless exists $ignored{$method};
     }
@@ -1051,17 +1050,30 @@ sub dumpStructuralVariations {
 
 sub StrucVarLine {
   my ($species, $id, $evidence, $study, $location, $desc, $action, $params, $counter ) = @_;
-  my $url = '';
+  my $url = sprintf(qq(%s/StructuralVariation/Summary?sv=%s),
+                    $species,
+                    $id);
   $species =~ s/_/ /;
-
   my $xml;
   if ($search_engine eq 'solr') {
+
+#####
+# $location, $action and $params contain info for location view, no point in adding it until we can pass it from
+# StructuralVariation/Summary
+#####
+
     $xml = qq(
 <doc>
-  <field name="id">$id</field>);
-
-    # feature specific code here
-
+  <field name="id">$id</field>
+  <field name="description">$desc</field>);
+    foreach (split ',', $evidence) {
+      $xml .= qq(
+  <field name="evidence">$_</field>);
+    }
+    if ($study) {
+      $xml .= qq(
+  <field name="study">$study</field>);
+    }
     $xml .= &common_fields($species,'StructuralVariation','variation');
     $xml .= qq(
   <field name="domain_url">$url</field>
@@ -1184,11 +1196,6 @@ sub dumpGenomicAlignment {
 
 sub GenomicAlignmentLine {
   my ($species, $id, $desc, $db_name, $db, $ftype, $params, $counter ) = @_;
-
-  #####
-  #url needed for solr (note that %params contains what's needed to switch the track on region in detail
-  #but there's no point in using it since we get to this via Location/Genome and lose the parameter)
-  ####
   my $url = sprintf(qq(%s/Location/Genome?ftype=%s;id=%s%s),
                     $species,
                     $ftype,
@@ -1197,6 +1204,12 @@ sub GenomicAlignmentLine {
   $species =~ s/_/ /;
   my $xml;
   if ($search_engine eq 'solr') {
+
+#####
+# $params contains what's needed to switch the track on region in detail but there's
+# no point in using it since we get to this via Location/Genome and lose the parameter)
+####
+
     $xml = qq(
 <doc>
   <field name="id">$id</field>
@@ -1311,16 +1324,20 @@ sub dumpOligoProbe {
 
 sub OligoProbeLine {
   my ($species,$hid,$desc,$pset,$db,$counter) = @_; 
-  my $url = '';
+  my $url = sprintf(qq(%s/Location/Genome?ftype=OligoProbe;id=%s),
+                    $species,
+                    $hid);
   $species =~ s/_/ /;
-
   my $xml;
   if ($search_engine eq 'solr') {
     $xml = qq(
 <doc>
-  <field name="id">$hid</field>);
+  <field name="id">$hid</field>
+  <field name="description">$desc</field>);
 
-    # feature specific code here
+#what's this one for ?
+    $xml .= qq(
+  <field name="ptype">$pset</field>);
 
     $xml .= &common_fields($species,'ProbeFeature',$db);
     $xml .= qq(
@@ -1402,7 +1419,9 @@ sub dumpDomain {
 
 sub DomainLine {
   my($species, $acc, $desc, $IDS, $count, $counter) = @_;
-  my $url = '';
+  my $url = sprintf(qq(%s/Location/Genome?ftype=Domain;id=%s),
+                    $species,
+                    $acc);
   $species =~ s/_/ /;
 
   my $ids = join ',', @$IDS;
@@ -1411,10 +1430,12 @@ sub DomainLine {
   if ($search_engine eq 'solr') {
     $xml = qq(
 <doc>
-  <field name="id">$acc</field>);
-
-    # feature specific code here
-
+  <field name="id">$acc</field>
+  <field name="description">$desc</field>);
+    foreach my $id (@$IDS) {
+      $xml .= qq(
+  <field name="synonym">$id</field>);
+  }
     $xml .= &common_fields($species,'Domain','core');
     $xml .= qq(
   <field name="domain_url">$url</field>
@@ -1508,17 +1529,16 @@ sub dumpFamily {
 
 sub FamilyLine {
   my($species, $fid, $desc, $counter) = @_;
-  my $url = '';
+  my $url = sprintf(qq(%s/Gene/Family/Genes?family=%s),
+                    $species,
+                    $fid);
   $species =~ s/_/ /;
-
   my $xml;
   if ($search_engine eq 'solr') {
     $xml = qq(
 <doc>
-  <field name="id">$fid</field>);
-
-    # feature specific code here
-
+  <field name="id">$fid</field>
+  <field name="description">$desc</field>);
     $xml .= &common_fields($species,'Family','core');
     $xml .= qq(
   <field name="domain_url">$url</field>
@@ -1696,7 +1716,7 @@ sub dumpSequence {
       if ($mapped_ids->{$cs_id}{$name}) {
         $prev_name   = $mapped_ids->{$cs_id}{$name}{'name'};
         if ($prev_name ne $name) {
-          print LOG "WARNING: found assembly mapped seq_region $prev_name instead of $name - please check this is correct since this we haven't come across this before\n";
+          print LOG "WARNING: found assembly mapped seq_region $prev_name mapped to $name (rather than $name) - please check this is correct\n";
         }
         next;
       }
@@ -1746,14 +1766,16 @@ sub sort_mf_names {
 
 sub SeqLine {
   my($species,$sr,$sr_type,$start,$end,$len,$name,$synonyms,$other_names,$type,$sanger,$counter) = @_;
-
-  my $url = '';
-
-  $species =~ s/_/ /;
-
   print LOG "WARNING: no type set for $name" unless $type;
   my $action = $len > 0.5e6 ? 'Overview' : 'View';
   my $r = "$sr:$start-$end";
+  my $url = sprintf(qq(%s/Location/%s?r=%s),
+                    $species,
+                    $action,
+                    $r);
+  $species =~ s/_/ /;
+
+
   my $desc = ($name eq $sr) ? "$type $name has a length of $len bp." : "$type $name (length $len bp) is mapped to $sr_type $sr.";
   my $extra_desc = '';
 
@@ -1782,16 +1804,17 @@ sub SeqLine {
   if ($search_engine eq 'solr') {
     $xml = qq(
 <doc>
-  <field name="id">$name</field>);
-
-    # feature specific code here
-
+  <field name="id">$name</field>
+  <field name="description">$desc</field>);
+    foreach my $syn (@$synonyms, @$other_names) {
+      $xml .= qq(
+  <field name="synonym">$syn</field>);
+    }
     $xml .= &common_fields($species,'Sequence','core');
     $xml .= qq(
   <field name="domain_url">$url</field>
 </doc>);
   }
-
   else {
     $xml = qq(
 <entry id="$name">
@@ -1983,7 +2006,6 @@ sub dumpGene {
     my $old;
     my ($gid,$tid,$tlid,$gsid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln);
     while (my $r = $sth->fetchrow_arrayref()) {
-#      warn "yes, $gis";
       ($gid,$tid,$tlid,$gsid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln) = @$r;
       my $wd = eval($webdata);
       next if $wd->{'gene'}{'do_not_display'};
@@ -2672,13 +2694,13 @@ sub do_archive_stable_ids {
 
 sub StableIdMappingLine {
   my ($species,$desc,$osi,$type,$db,$counter) = @_;
+  my $url = sprintf(qq(%s/%s/Idhistory?%s),
+                    $species,
+                    ucfirst($type),
+                    $type eq 'gene' ? "g=$osi" : $type eq 'transcript' ? "t=$osi" : "protein=$osi");
+  $species =~ s/_/ /;
   my $xml;
   if ($search_engine eq 'solr') {
-    my $url = sprintf(qq(%s/%s/Idhistory?%s),
-                      $species,
-                      ucfirst($type),
-                      $type eq 'gene' ? "g=$osi" : $type eq 'transcript' ? "t=$osi" : "protein=$osi");
-    $species =~ s/_/ /;
     $xml = qq(
 <doc>
   <field name="id">$osi</field>
@@ -2785,18 +2807,34 @@ sub dumpRegulatoryFeature {
 
 sub RegulatoryFeatureLine {
   my ($species,$desc,$id,$ids,$ftype,$params,$db,$counter) = @_;
-
-  my $url = '';
+  my $url;
+  if ($id =~ /ENSR|ENSMUSR/) {
+    $url = sprintf(qq(%s/Regulation/Cell_line?rf=%s),
+                   $species,
+                   $id);
+  }
+  else {
+    $url = sprintf(qq(%s/Location/Genome?ftype=RegulatoryFactor;id=%s;fset=RegulatoryFactor),
+                   $species,
+                   $id);
+  }
   $species =~ s/_/ /;
-
   my $xml;
   if ($search_engine eq 'solr') {
     $xml = qq(
 <doc>
-  <field name="id">$id</field>);
+  <field name="id">$id</field>
+  <field name="description">$desc</field>);
+    foreach my $syn (@$ids) {
+      $xml .= qq(
+  <field name="synonym">$syn</field>);
+    }
 
-    # feature specific code here
-
+    #what's this for ?
+    if (my $fs_name = $params->{'fs_name'}) {
+      $xml .= qq(
+  <field name="fs_name">$fs_name</field>);
+    }
     $xml .= &common_fields($species,$ftype,'regulatoryfeatures');
     $xml .= qq(
   <field name="domain_url">$url</field>
@@ -2869,18 +2907,23 @@ sub sort_lrgs {
 
 sub LRGLine {
   my ($species,$type,$gsi,$dbkey,$dbname,$tsids,$length) = @_;
-
-  my $url = '';
+  my $url = sprintf(qq(%s/LRG/Summary?lrg=%s),
+                    $species,
+                    $gsi);
   $species =~ s/_/ /;
   my $description = "$gsi is a fixed reference sequence of length $length with a fixed transcript(s) for reporting purposes. It was created for $dbname gene $dbkey";
   my $xml;
   if ($search_engine eq 'solr') {
     $xml = qq(
 <doc>
-  <field name="id">$gsi</field>);
-
-    # feature specific code here
-
+  <field name="id">$gsi</field>
+  <field name="description">$description</field>);
+    $xml .= qq(
+  <field name="xref">$dbkey</field>);
+    foreach my $tsi (@$tsids) {
+      $xml .= qq(
+  <field name="transcript">$tsi</field>);
+    }
     $xml .= &common_fields($species,$type,'core');
     $xml .= qq(
   <field name="domain_url">$url</field>
@@ -2992,7 +3035,7 @@ sub common_fields {
       $boost = ' boost="'.$boost_value.'"';
     }
     $xml = qq(
-  <field name="site">$website_url</field>
+  <field name="website">$website_url</field>
   <field name="feature_type">$feature_type</field>);
     if ($species eq 'All') {
       $xml .= qq(
