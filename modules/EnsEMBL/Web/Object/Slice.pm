@@ -17,11 +17,11 @@ package EnsEMBL::Web::Object::Slice;
 
 use strict;
 
-use Bio::EnsEMBL::Variation::ConsequenceType;
+use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(EnsEMBL::Web::Object);
 
-sub consequence_types { return $_[0]->{'consequence_types'} ||= \%Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_TYPES; }
+sub consequence_types { return $_[0]->{'consequence_types'} ||= { map { $_->display_term => $_->rank } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES }; }
 
 sub valids {
   ### Gets all the user's selected parameters from $self->params()

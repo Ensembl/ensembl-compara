@@ -7,7 +7,7 @@ package EnsEMBL::Web::ZMenu::TextSequence;
 
 use strict;
 
-use Bio::EnsEMBL::Variation::ConsequenceType;
+use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -88,13 +88,12 @@ sub variation_content {
   
   push @entries, { caption => 'LRG position',  entry => $lrg_position } if $lrg_position;
   
-  my %ct    = %Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_TYPES;
-  my %types = map { lc $_ => $ct{$_} } @{($self->{'transcript'} ? $feature->get_all_TranscriptVariations([$self->{'transcript'}])->[0] : $feature)->consequence_type};
-  my $style = $hub->species_defs->colour('variation');
+  my %ct    = map { $_->display_term => [ $_->label, $_->rank ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  my %types = map @{$ct{$_}}, @{($self->{'transcript'} ? $feature->get_all_TranscriptVariations([$self->{'transcript'}])->[0] : $feature)->consequence_type};
   
   push @entries, (
     { caption => 'Alleles', entry => $allele },
-    { caption => 'Types',   entry => sprintf '<ul>%s</ul>', join '', map "<li>$style->{$_}{'text'}</li>", sort { $types{$a} <=> $types{$b} } keys %types },
+    { caption => 'Types',   entry => sprintf '<ul>%s</ul>', join '', map "<li>$_</li>", sort { $types{$a} <=> $types{$b} } keys %types },
     { entry => sprintf $link, $hub->url({ action => 'Mappings', %url_params }), 'Gene/Transcript Locations' }
   );
   

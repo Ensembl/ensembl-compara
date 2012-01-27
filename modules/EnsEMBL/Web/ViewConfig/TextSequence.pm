@@ -4,7 +4,7 @@ package EnsEMBL::Web::ViewConfig::TextSequence;
 
 use strict;
 
-use Bio::EnsEMBL::Variation::ConsequenceType;
+use Bio::EnsEMBL::Variation::Utils::Constants;
 use EnsEMBL::Web::Constants;
 
 use base qw(EnsEMBL::Web::ViewConfig);
@@ -31,10 +31,9 @@ sub variation_options {
   $self->add_form_element($markup{'snp_display'});
   
   if ($options->{'consequence'} ne 'no') {
-    my %ct     = %Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_TYPES;
-    my $styles = $hub->species_defs->colour('variation');
+    my %consequence_types = map { $_->label ? ($_->label => $_->display_term) : () } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
     
-    push @{$markup{'consequence_filter'}{'values'}}, sort { $a->{'name'} cmp $b->{'name'} } map { $styles->{lc $_}{'text'} ? { value => $_, name => $styles->{lc $_}{'text'} } : () } keys %ct;
+    push @{$markup{'consequence_filter'}{'values'}}, map { name => $_, value => $consequence_types{$_} }, sort keys %consequence_types;
     
     $self->add_form_element($markup{'consequence_filter'});
   }
