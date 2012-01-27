@@ -937,7 +937,6 @@ sub structural_variation_table {
   
   foreach my $svf (@{$slice->$function}) {
     my $sv          = $svf->structural_variation;
-    next if ($sv->is_evidence);
     my $name        = $svf->variation_name;
     my $description = $sv->source_description;
     my $sv_class    = $sv->var_class;
