@@ -117,7 +117,7 @@ sub convert_to_drawing_parameters {
   }
   my $extra_columns = [
         {'key' => 'source',     'title' => 'Source',                  'sort' => ''},
-        {'key' => 'genes',      'title' => 'Associated Gene(s)',      'sort' => 'html'},
+        {'key' => 'genes',      'title' => 'Reported Gene(s)',      'sort' => 'html'},
         {'key' => 'phenotypes', 'title' => 'Phenotype(s) associated with this variant', 'sort' => ''},
         {'key' => 'p-values',   'title' => 'P value (negative log)',  'sort' => 'numeric'},
   ];
