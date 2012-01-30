@@ -122,6 +122,7 @@ sub run_cafe_script {
     my ($self) = @_;
 
     my $mlss_id = $self->param('mlss_id');
+    my $pval_lim = $self->param('pvalue_lim');
     my $cafe_out_file = $self->worker_temp_directory() . "cafe_${mlss_id}.out";
     print STDERR "CAFE results will be written into [$cafe_out_file]\n";
     my $script_file = $self->worker_temp_directory() . "cafe_${mlss_id}.sh";
@@ -139,7 +140,7 @@ sub run_cafe_script {
 
     print $sf '#!' . $cafe_shell . "\n\n";
     print $sf "tree $cafe_tree_str\n\n";
-    print $sf "load -i $cafe_table_file\n\n";
+    print $sf "load -p ${pval_lim} -i $cafe_table_file\n\n";
     print $sf "lambda ";
     print $sf $cafe_lambdas ? "-l $cafe_lambdas -t $cafe_struct_tree\n\n" : " -s\n\n";
     print $sf "report $cafe_out_file\n\n";
@@ -232,7 +233,7 @@ sub parse_cafe_output {
         #print "FAM_PVALUE:$avg_pvalue VS PVALUE_LIM:$pvalue_lim\n";
 
         next if ($avg_pvalue >= $pvalue_lim);
-#        print STDERR "FAM_ID:$fam_id\n";
+        print STDERR "FAM_ID:$fam_id\n";
 
         my $fam_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($fam_tree_str . ";");
 
@@ -247,15 +248,11 @@ sub parse_cafe_output {
 
             my $taxon_id;
             if (! $node->is_leaf()) {
-                print STDERR "INTERNAL NODE: $name\n";
                 $taxon_id = $name;
             } else {
-                print STDERR "LEAF: $name\n";
                 my $genomeDB = $genomeDB_Adaptor->_fetch_by_name($name);
                 $taxon_id = $genomeDB->taxon_id();
             }
-
-            print STDERR "TAXON_ID for family " . $node->name() . " IS $taxon_id\n";
 
             $info_by_nodes{$name}{'taxon_id'} = $taxon_id;
         }
