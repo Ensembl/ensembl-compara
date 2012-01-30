@@ -1093,11 +1093,10 @@ sub _summarise_compara_db {
   
   ###################################################################
   ## Section for storing the taxon_ids <=> species_name
-  $res_aref = $dbh->selectall_arrayref('SELECT DISTINCT taxon_id, name FROM ncbi_taxa_name JOIN protein_tree_tag ON taxon_id=value WHERE tag=\'lost_taxon_id\' AND  name_class=\'ensembl alias name\'');
-  
+  $res_aref = $dbh->selectall_arrayref(qq(SELECT DISTINCT taxon_id, name FROM ncbi_taxa_name JOIN gene_tree_node_tag ON taxon_id=value WHERE tag='lost_taxon_id' AND name_class='ensembl alias name'));
+
   foreach my $row (@$res_aref) {
     my ($taxon_id, $taxon_name) = @$row;
-    
     $self->db_tree->{$db_name}{'TAXON_NAME'}{$taxon_name} = $taxon_id;
     $self->db_tree->{$db_name}{'TAXON_NAME'}{$taxon_id} = $taxon_name;
   }
