@@ -286,6 +286,18 @@ FOREIGN KEY (alignment_id) REFERENCES alignment(alignment_id)
 ) ENGINE=InnoDB;
 
 
+-- These tables are for passing CAFE species trees and CAFE tables between runnables for
+-- CAFE Analysis
+
+DROP TABLE IF EXISTS CAFE_data;
+CREATE TABLE CAFE_data (
+       fam_id                 VARCHAR(20) NOT NULL,
+       tree                   mediumtext NOT NULL,
+       tabledata              mediumtext NOT NULL,
+
+PRIMARY KEY (fam_id)
+) ENGINE=InnoDB;
+
 -- ----------------------------------------------------------------------------------
 --
 -- Table structure for table 'protein_tree_qc'
