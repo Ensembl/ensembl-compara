@@ -640,6 +640,7 @@ sub load_user_tracks {
 }
 
 sub load_configured_bam    { shift->load_file_format('bam');    }
+sub load_configured_bigbed { shift->load_file_format('bigbed');    }
 sub load_configured_bigwig { shift->load_file_format('bigwig'); }
 sub load_configured_vcf    { shift->load_file_format('vcf');    }
 
@@ -676,6 +677,28 @@ sub _add_bam_track {
     options => {
       external => 'url',
       sub_type => 'bam'
+    },
+    @_
+  );
+}
+
+sub _add_bigbed_track {
+  my $self = shift;
+  my $desc = '
+    Bigbed file
+  ';
+  
+  $self->_add_file_format_track(
+    format      => 'BigBed',
+    description => $desc,
+    renderers   => [
+      'off',    'Off', 
+      'normal', 'Normal', 
+      'tiling', 'Wiggle plot',
+    ], 
+    options => {
+      external => 'url',
+      sub_type => 'bigbed'
     },
     @_
   );
