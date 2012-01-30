@@ -49,12 +49,12 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 
 # Prev release
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'compara1',
+    -host => 'compara4',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_prev',
-    -dbname => 'mp12_ensembl_compara_65',
+    -dbname => 'kb3_ensembl_compara_65',
 );
 
 # Curr
@@ -68,12 +68,12 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 );
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## TO BE FIXED BEFORE HOMOLOGY MERGE
-    -host => 'compara3',
+    -host => 'compara4',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_homology_merged',
-    -dbname => 'mp12_compara_homology_merged_66',
+    -dbname => 'mp12_mp12_compara_homology_merged_66_test',
 );
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## HAS TO BE CREATED (FINAL DB)
