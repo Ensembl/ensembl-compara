@@ -82,8 +82,9 @@ sub fetch_input {
     $self->param('tree_fmt', '%{n}%{":"d}'); # format for the tree
 
     my $cafe_species = $self->param('cafe_species');
-    if (scalar $cafe_species == 0) {  # No species for the tree
-        die "No species for the CAFE tree";
+    if (scalar $cafe_species == 0) {  # No species for the tree. Make a full tree
+#        die "No species for the CAFE tree";
+        print STDERR "No species provided for the CAFE tree. I will take them all\n" if ($self->debug());
     }
 
     return;
@@ -103,7 +104,12 @@ sub run {
     $self->ultrametrize($eval_species_tree);
     my $binTree = $self->binarize($eval_species_tree);
     $self->fix_zeros($binTree);
-    my $cafeTree = $self->prune_tree($binTree, $species);
+    my $cafeTree;
+    if (defined $species) {
+        $cafeTree = $self->prune_tree($binTree, $species);
+    } else {
+        $cafeTree = $binTree;
+    }
 #     if ($self->debug) {
 #         $self->check_tree($cafeTree);
 #     }
@@ -115,7 +121,7 @@ sub run {
 sub write_output {
     my ($self) = @_;
     my $cafe_tree_string = $self->param('cafe_tree_string');
-    # To CAFEDynamics
+    # To CAFETable
     $self->dataflow_output_id (
                                {
                                 'cafe_tree_string', $self->param('cafe_tree_string'),
@@ -189,7 +195,7 @@ sub include_distance_to_parent {
                 if ($mya) {
                     $child->distance_to_parent(int($mya));
                 } else {
-                    print STDERR "++ taxon_id " . $child->name() . "doesn't have 'ensembl timetree mya' tag (defaulting to 0)\n" if ($self->debug);
+                    print STDERR "++ taxon_id " . $child->name() . " doesn't have 'ensembl timetree mya' tag (defaulting to 0)\n" if ($self->debug);
                     $child->distance_to_parent(0);
                 }
             }
