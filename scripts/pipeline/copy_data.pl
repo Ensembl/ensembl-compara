@@ -156,6 +156,7 @@ my $to_name = undef;
 my $from_url = undef;
 my $to_url = undef;
 my $mlss_id = undef;
+my $re_enable = 1;
 
 #If true, then trust the TO database tables and update the FROM tables if 
 #necessary. Currently only applies to differences in the dnafrag table and 
@@ -169,16 +170,17 @@ my $trust_ce = 0;
 my $merge = 0;
 
 GetOptions(
-    "help"      => \$help,
-    "reg-conf|reg_conf|registry=s" => \$reg_conf,
-    "from=s"    => \$from_name,
-    "to=s"      => \$to_name,
-    "from_url=s" => \$from_url,
-    "to_url=s"  => \$to_url,
-    "mlss_id=i" => \$mlss_id,
-    "trust_to!" => \$trust_to,
-    "merge!"    => \$merge,
-    'trust_ce!' => \$trust_ce,
+           "help"      => \$help,
+           "reg-conf|reg_conf|registry=s" => \$reg_conf,
+           "from=s"    => \$from_name,
+           "to=s"      => \$to_name,
+           "from_url=s" => \$from_url,
+           "to_url=s"  => \$to_url,
+           "mlss_id=i" => \$mlss_id,
+           "trust_to!" => \$trust_to,
+           "merge!"    => \$merge,
+           'trust_ce!' => \$trust_ce,
+           're_enable=i' => \$re_enable,
   );
 
 # Print Help and exit if help is requested
@@ -937,9 +939,11 @@ sub copy_data {
     }
   }
 
-  #speed up writing of data by disabling keys, write the data, then enable 
-  #but takes far too long to ENABLE again
-  if (!$merge) {
+  if ($merge) {
+      $to_dba->dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
+  } else {
+      #speed up writing of data by disabling keys, write the data, then enable
+      #but takes far too long to ENABLE again
       $to_dba->dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
   }
   if ($binary_mode) {
@@ -947,7 +951,7 @@ sub copy_data {
   } else {
     copy_data_in_text_mode($from_dba, $to_dba, $table_name, $index_name, $min_id, $max_id, $query, $step);
   }
-  if (!$merge) {
+  if (!$merge && $re_enable) {
       $to_dba->dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
   }
 }
