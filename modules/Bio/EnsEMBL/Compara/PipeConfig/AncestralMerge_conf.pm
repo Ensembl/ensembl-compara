@@ -33,9 +33,9 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');   # instead of Co
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
+         %{$self->SUPER::default_options},
 
-        'rel'               => 65,                                                  # current release number
+        'rel'               => 66,                                                  # current release number
         'rel_suffix'        => '',                                                  # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),              # for convenience
 
@@ -44,21 +44,22 @@ sub default_options {
         'merge_script'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/copy_ancestral_core.pl',
 
         'pipeline_db' => {
-            -host   => 'compara1',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
             -dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name'),
         },
 
-        'prev_ancestral_db' => {
-            -driver => 'mysql',
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => 'lg4_ensembl_ancestral_64',
-        },
+            'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@compara1/mp12_ensembl_ancestral_65',
+#         'prev_ancestral_db' => {
+#             -driver => 'mysql',
+#             -host   => 'compara1',
+#             -port   => 3306,
+#             -user   => 'ensadmin',
+#             -pass   => $self->o('password'),
+#             -dbname => 'lg4_ensembl_ancestral_64',
+#         },
 
     };
 }
@@ -106,12 +107,14 @@ sub pipeline_analyses {
             -parameters => {
                 'inputlist'         => [        # this table needs to be edited prior to running the pipeline:
                         # copying from previous release:
-                    [ '505' => $self->dbconn_2_url('prev_ancestral_db'), ],                                                 # 3-way birds
-                    [ '528' => $self->dbconn_2_url('prev_ancestral_db'), ],                                                 # 5-way fish
+                                        [ '505' => $self->o('prev_ancestral_db'), ],     # 3-way birds
+                                        [ '528' => $self->o('prev_ancestral_db'), ],     # 5-way fish
+                                        [ '548' => $self->o('prev_ancestral_db'), ],     # 6-way primates
+                                        [ '547' => $self->o('prev_ancestral_db'), ],     # 12-way mammals
 
                         # copying from new sources:
-                    [ '548' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_6way_65_ancestral_core' ],   # 6-way primates
-                    [ '547' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_12way_65_ancestral_core' ],  # 12-way mammals
+#                     [ '548' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_6way_65_ancestral_core' ],   # 6-way primates
+#                     [ '547' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_12way_65_ancestral_core' ],  # 12-way mammals
                 ],
                 'input_id'          => { 'mlss_id' => '#_0#', 'from_url' => '#_1#' },
                 'fan_branch_code'   => 2,
