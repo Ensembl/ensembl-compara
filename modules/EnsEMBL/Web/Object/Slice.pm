@@ -307,7 +307,7 @@ sub get_data {
           throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @$sset > 1;
           
           push @result_sets, $sset->[0];
-          $data->{$cell_line}{$type}{'wiggle_features'}{$unique_feature_set_id} = 1;
+          $data->{$cell_line}{$type}{'wiggle_features'}{$unique_feature_set_id .":". $sset->[0]->dbID} = 1;
         }
       }
     }
@@ -321,7 +321,7 @@ sub get_data {
     
     foreach my $rset_id (keys %$wiggle_data) { 
       my $results_set           = $hub->get_adaptor('get_ResultSetAdaptor', 'funcgen')->fetch_by_dbID($rset_id);
-      my $unique_feature_set_id = $results_set->cell_type->name . ':' . $results_set->feature_type->name;
+      my $unique_feature_set_id = $results_set->cell_type->name . ':' . $results_set->feature_type->name .":". $results_set->dbID;
       my $features              = $wiggle_data->{$rset_id};
       
       $data->{'wiggle_data'}{$unique_feature_set_id} = $features;
