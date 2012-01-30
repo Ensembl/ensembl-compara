@@ -291,7 +291,7 @@ sub detail_panel {
     
     $data{'ncbi_term'} = (join ', ', @{$data{'ncbi_term'} || []}) || '-';
     
-    if($tv->affects_transcript) {
+    if($tv->affects_cds) {
       $data{context} = $self->render_context($tv, $tva);
       
       my $context_url = $hub->url({
