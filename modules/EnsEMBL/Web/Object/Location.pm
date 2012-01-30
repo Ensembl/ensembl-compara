@@ -830,7 +830,7 @@ sub retrieve_Variation {
     }
   }
   
-  return ($results, [ 'Located in gene(s)', 'Associated Gene(s)', 'Associated Phenotype(s)', 'P value (negative log)' ], $type);
+  return ($results, [ 'Located in gene(s)', 'Reported Gene(s)', 'Associated Phenotype(s)', 'P value (negative log)' ], $type);
 }
 
 sub retrieve_Xref {
