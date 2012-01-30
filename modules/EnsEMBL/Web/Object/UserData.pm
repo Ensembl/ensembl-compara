@@ -167,6 +167,33 @@ sub check_bigwig_data {
   return $error;
 }
 
+sub check_bigbed_data {
+  my ($self, $url) = @_;
+  my $error = '';
+  require Bio::DB::BigFile;
+
+  if ($url =~ /^ftp:\/\//i && !$self->hub->species_defs->ALLOW_FTP_BIGWIG) {
+    $error = "The BigBed file could not be added - FTP is not supported, please use HTTP.";
+  }
+  else {
+    # try to open and use the bigbed file
+    # this checks that the bigbed files is present and correct
+    my $bigbed;
+    eval {
+      Bio::DB::BigFile->set_udc_defaults;
+      $bigbed = Bio::DB::BigFile->bigBedFileOpen($url);
+      my $chromosome_list = $bigbed->chromList;
+    };
+    warn $@ if $@;
+    warn "Failed to open BigBed " . $url unless $bigbed;
+
+    if ($@ or !$bigbed) {
+      $error = "Unable to open remote BigBed file: $url<br>Ensure hat your web/ftp server is accessible to the Ensembl site";
+    }
+  }
+  return $error;
+}
+
 sub check_vcf_data {
   my ($self, $url) = @_;
   my $error = '';
