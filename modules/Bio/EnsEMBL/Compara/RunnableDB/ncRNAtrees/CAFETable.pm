@@ -134,7 +134,7 @@ sub get_cafe_table_from_db {
 
     my $cafe_table_file = "cafe_${mlss_id}.tbl";
 
-    my $cafe_table_output = $self->param('work_dir') . $cafe_table_file;
+    my $cafe_table_output = $self->param('work_dir') . "/" . $cafe_table_file;
     $self->param('cafe_table_file', $cafe_table_file);
 
     print STDERR "CAFE_TABLE_OUTPUT: $cafe_table_output\n" if ($self->debug());
@@ -143,14 +143,23 @@ sub get_cafe_table_from_db {
     print $cafe_fh "FAMILY_DESC\tFAMILY\t", join("\t", @$species), "\n";
 
     print STDERR Dumper $adaptor if ($self->debug());
-    my $clusterset = $adaptor->fetch_node_by_node_id($self->param('clusterset_id'));
-#    my $clusterset = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($self->param('clusterset_id'));
-    my $all_trees = $clusterset->children();
+#    my $clusterset = $adaptor->fetch_node_by_node_id($self->param('clusterset_id'));
+##    my $clusterset = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($self->param('clusterset_id'));
+#    my $all_trees = $clusterset->children();
+    my $all_trees = $adaptor->fetch_all();
     print STDERR scalar @$all_trees, " trees to process\n" if ($self->debug());
     my $ok_fams = 0;
-    for my $tree (@$all_trees) {
-        my $subtree = $tree->children->[0];
-        my $root_id = $subtree->node_id();
+    for my $subtree (@$all_trees) {
+#        my $subtree = $tree->children->[0];
+        my $root_id;
+        if (defined $subtree) {
+            $root_id = $subtree->node_id();
+        } else {
+            print STDERR "Undefined subtree for " . $subtree->node_id() . "\n";
+            next;
+        }
+        next if ($root_id == 1); ## This is the clusterset! We have to avoid taking the trees with 'type' 'clusterset'. Should be included in the gene tree API (nc_tree / protein_tree) at some point.
+        next if ($subtree->tree->tree_type() eq 'superproteintree'); ## For now you also get superproteintrees!!!
         print STDERR "ROOT_ID: $root_id\n" if ($self->debug());
         my $tree = $adaptor->fetch_node_by_node_id($root_id);
         my $name = $self->get_name($tree);
