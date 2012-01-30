@@ -92,7 +92,7 @@ sub content {
       "Genotypes for $pop_names{$selected_pop}", $selected_pop, 
       $self->new_table($columns, $rows{$selected_pop}, { sorting => [ 'Individual asc' ] }),
       1,
-      qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>}
+      qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span><br />}
     );
   }
   
