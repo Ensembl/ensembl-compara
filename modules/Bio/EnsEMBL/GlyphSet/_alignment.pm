@@ -475,13 +475,22 @@ sub render_ungrouped {
     $self->{'track_key'} = $feature_key;
     my $colour_key     = $self->colour_key( $feature_key );
     my $feature_colour = $self->my_colour( $colour_key, undef  );
+    my $A = $features{$feature_key};
+
+    ## Sanity check - make sure the feature set only contains arrayrefs, or the fancy transformation
+    ## below will barf (mainly when trying to handle userdata, which includes a config hashref)
+    my @ok_features;
+    foreach my $f (@{$features{$feature_key}}) {
+      next unless ref($f) eq 'ARRAY';
+      push @ok_features, $f;
+    }
 
     $self->_init_bump( undef, '0.5' );
     foreach my $f (
       sort { $a->[0] <=> $b->[0]      }
       map  { [$_->start, $_->end,$_ ] }
       grep { !($strand_flag eq 'b' && $strand != ( ( $_->can('hstrand') ? 1 : 1 ) * $_->strand||-1) || $_->start > $length || $_->end < 1) } 
-      map  { @$_                      } @{$features{$feature_key}}
+      map  { @$_                      } @ok_features
     ) {
       my($start,$end,$feat) = @$f;
       ($start,$end)         = ($end, $start) if $end<$start; # Flip start end YUK!

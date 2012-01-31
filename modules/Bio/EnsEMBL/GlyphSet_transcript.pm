@@ -82,7 +82,7 @@ sub render_collapsed {
     my $colour         = $self->my_colour($gene_key);
     my $label          = $self->my_colour($gene_key, 'text');
     my $highlight      = $selected_db eq $db && $selected_gene eq $gene_stable_id ? 'highlight1' : undef;
-    
+
     $used_colours{$label} = $colour;
     
     my $composite = $self->Composite({
@@ -233,7 +233,7 @@ sub render_transcripts {
   my $pix_per_bp        = $self->scalex;
   my $strand            = $self->strand;
   my $selected_db       = $self->core('db');
-  my $selected_trans    = $self->core('t');
+  my $selected_trans    = $self->core('t') || $self->core('pt') ;
   my $selected_gene     = $self->my_config('g') || $self->core('g');
   my $strand_flag       = $self->my_config('strand');
   my $db                = $self->my_config('db');
@@ -344,10 +344,10 @@ sub render_transcripts {
       my $colour     = $self->my_colour($colour_key);
       my $label      = $self->my_colour($colour_key, 'text');
       my $highlight  = $selected_db eq $db && $transcript_stable_id ? (
-        $selected_trans eq $transcript_stable_id ? 'highlight2' :
-        $selected_gene  eq $gene_stable_id       ? 'highlight1' : undef 
+        $selected_trans eq $transcript_stable_id              ? 'highlight2' :
+        $selected_gene && ($selected_gene eq $gene_stable_id) ? 'highlight1' : undef
       ) : undef;
-      
+
       $highlight = $self->my_colour('ccds_hi') || 'lightblue1' if $transcript->get_all_Attributes('ccds')->[0]; # use another highlight colour if the trans has got a CCDS attrib
 
       ($colour, $label) = ('orange', 'Other') unless $colour;
