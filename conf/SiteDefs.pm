@@ -118,9 +118,9 @@ use Sys::Hostname::Long;
 use Exporter();
 @ISA=qw(Exporter);
 
-$VERSION                   = 65;
-$ARCHIVE_VERSION           = "Dec2011";    # Change this to the archive site for this version
-$ENSEMBL_RELEASE_DATE      = 'Dec 2011';
+$VERSION                   = 66;
+$ARCHIVE_VERSION           = 'Feb2012';    # Change this to the archive site for this version
+$ENSEMBL_RELEASE_DATE      = 'Feb 2012';
 
 $ENSEMBL_MIN_SPARE_SERVERS =  5;
 $ENSEMBL_MAX_SPARE_SERVERS = 20;
@@ -179,7 +179,7 @@ $CGI_POST_MAX           = 5242880; # 5MB max upload
 
 $ENSEMBL_MART_ENABLED   = 0;
 $ENSEMBL_BLAST_ENABLED  = 0;
-$ENSEMBL_DAS_ENABLED  = 1;
+$ENSEMBL_DAS_ENABLED    = 1;
 
 $ENSEMBL_SERVER         = Sys::Hostname::Long::hostname_long();  # Local machine name
 
