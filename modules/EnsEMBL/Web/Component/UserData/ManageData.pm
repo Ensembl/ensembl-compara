@@ -57,7 +57,7 @@ sub content {
       my $sharers     = $file->{'code'} =~ /_$session_id$/ ? EnsEMBL::Web::Data::Session->count(code => $file->{'code'}, type => $file->{'type'}) : 0;
          $sharers-- if $sharers && !$file->{'user_id'}; # Take one off for the original user
       
-      if ($file->{'filename'} && !EnsEMBL::Web::TmpFile::Text->new(filename => $file->{'filename'}, prefix => $file->{'prefix'}, extension => $file->{'extension'})->exists) {
+      if ($file->{'filename'} && !EnsEMBL::Web::TmpFile::Text->new(filename => $file->{'filename'}, $file->{'prefix'} ? (prefix => $file->{'prefix'}) : (), extension => $file->{'extension'})->exists) {
         $file->{'name'} .= ' (File could not be found)';
         $not_found++;
       }
