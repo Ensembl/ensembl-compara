@@ -78,7 +78,6 @@ use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs;
-use Bio::EnsEMBL::Compara::RunnableDB::OrthoTree; # check_for_split_gene method
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree');
 
