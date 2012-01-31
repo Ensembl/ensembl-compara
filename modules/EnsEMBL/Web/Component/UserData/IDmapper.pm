@@ -101,7 +101,7 @@ sub format_mapped_ids {
     }
   } 
   
-  $table->add_columns({ key => $_, align => 'left', title => $_ }) for sort keys %releases;
+  $table->add_columns({ key => $_, align => 'left', title => $_ }) for sort {$a <=> $b} keys %releases;
   $table->add_rows(@rows);
 
   return  $table->render;

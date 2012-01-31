@@ -105,6 +105,7 @@ use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
   $MART_ENSEMBL_LINKS
   $ENSEMBL_MART_ENABLED
   $ENSEMBL_BLAST_ENABLED
+  $ENSEMBL_DAS_ENABLED
   $ENSEMBL_FLAG_NAMES
   $SAMTOOLS_DIR
   $SAMTOOLS_HTTP_PROXY
@@ -118,7 +119,7 @@ use Exporter();
 @ISA=qw(Exporter);
 
 $VERSION                   = 65;
-$ARCHIVE_VERSION           = "Nov2011";    # Change this to the archive site for this version
+$ARCHIVE_VERSION           = "Dec2011";    # Change this to the archive site for this version
 $ENSEMBL_RELEASE_DATE      = 'Dec 2011';
 
 $ENSEMBL_MIN_SPARE_SERVERS =  5;
@@ -178,6 +179,7 @@ $CGI_POST_MAX           = 5242880; # 5MB max upload
 
 $ENSEMBL_MART_ENABLED   = 0;
 $ENSEMBL_BLAST_ENABLED  = 0;
+$ENSEMBL_DAS_ENABLED  = 1;
 
 $ENSEMBL_SERVER         = Sys::Hostname::Long::hostname_long();  # Local machine name
 
@@ -753,6 +755,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT . '/biomart-perl/conf';
   $MART_ENSEMBL_LINKS
   $ENSEMBL_MART_ENABLED
   $ENSEMBL_BLAST_ENABLED
+  $ENSEMBL_DAS_ENABLED
 );
 
 ###################################
@@ -848,6 +851,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT . '/biomart-perl/conf';
     $MART_ENSEMBL_LINKS
     $ENSEMBL_MART_ENABLED
     $ENSEMBL_BLAST_ENABLED
+    $ENSEMBL_DAS_ENABLED
   )],
   
   WEB => [qw(
@@ -908,6 +912,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT . '/biomart-perl/conf';
     $MART_ENSEMBL_LINKS
     $ENSEMBL_MART_ENABLED
     $ENSEMBL_BLAST_ENABLED
+    $ENSEMBL_DAS_ENABLED
   )],
   
   APACHE => [qw(

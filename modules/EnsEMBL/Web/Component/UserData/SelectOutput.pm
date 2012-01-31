@@ -73,7 +73,7 @@ sub content {
   $html .= $form->render;
 
   if ($code) {
-    my $nearest = $self->hub->session->get_data(code => $code)->{'nearest'};
+    my $nearest = $self->hub->session->get_data(code => $code) ?  $self->hub->session->get_data(code => $code)->{'nearest'} : undef;
     
     if ($nearest) {
       $html .= sprintf(qq{

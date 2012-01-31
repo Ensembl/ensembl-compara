@@ -70,7 +70,7 @@ sub render {
     next unless $common;
     my $info = $species{$common};
     my $dir = $info->{'dir'};
-    (my $name = $dir) =~ s/_/ /;
+    (my $name = $dir) =~ s/_/ /g;
     my $link_text = $common =~ /\./ ? $name : $common;
     $html .= qq(<td style="width:8%;text-align:right;padding:10px 0px">);
     if ($dir) {

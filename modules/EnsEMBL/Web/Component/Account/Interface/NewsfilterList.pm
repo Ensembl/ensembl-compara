@@ -34,7 +34,7 @@ sub content {
 
     $table->add_columns(
         { 'key' => 'type',    'title' => 'Type',    'width' => '20%', 'align' => 'left' },
-        { 'key' => 'options', 'title' => 'Options', 'width' => '40%', 'align' => 'left' },
+        { 'key' => 'opts', 'title' => 'Options', 'width' => '40%', 'align' => 'left' },
         { 'key' => 'edit',    'title' => '',        'width' => '20%', 'align' => 'left' },
         { 'key' => 'delete',  'title' => '',        'width' => '20%', 'align' => 'left' },
     );
@@ -51,8 +51,7 @@ sub content {
         @species = ($object->species_defs->get_config($filter->species, 'SPECIES_COMMON_NAME'));
       }
       $row->{'type'} = 'Species';
-      $row->{'options'} = sprintf(qq(<a href="/info/website/news/index.html" title="View News" class="cp-external">%s</a>),
-                        join(', ', sort(@species)));
+      $row->{'opts'} = join(', ', sort(@species));
 
       $row->{'edit'} = $self->edit_link('Newsfilter', $filter->id);
       $row->{'delete'} = $self->delete_link('Newsfilter', $filter->id);

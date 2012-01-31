@@ -66,7 +66,10 @@ sub content {
   } elsif ($class && $class =~/^patch/){
     my $db_adaptor = $hub->database('core');
     my $slice  = $db_adaptor->get_SliceAdaptor->fetch_by_region('chromosome', $chr);
-    my $projections = $slice->project('supercontig');
+    my $projections = [];
+    if ($db_adaptor->get_CoordSystemAdaptor->fetch_by_name('supercontig')) {
+      $projections = $slice->project('supercontig');
+    }
     my $synonym = '';
     foreach my $projection_slice (@$projections) { 
       my $seqlevel_slice = $projection_slice->to_Slice();
