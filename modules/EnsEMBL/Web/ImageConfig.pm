@@ -816,7 +816,7 @@ sub _user_track_settings {
     @user_renderers = ( 'off', 'Off', 'tiling', 'Wiggle plot' );
   } else {
     $strand         = 'b'; 
-    @user_renderers = grep !/ungrouped/i, @{$self->{'alignment_renderers'}}; ## "Ungrouped" option not valid for user tracks at the moment. TODO - can we fix drawing code to allow ungrouped?
+    @user_renderers = @{$self->{'alignment_renderers'}};
   }
   
   return ($strand, \@user_renderers);

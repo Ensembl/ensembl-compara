@@ -1320,14 +1320,14 @@ sub mod_date {
   my $self = shift;
   my $time = $self->transcript->modified_date;
   return unless $time;
-  return $self->date_format($time,'%d/%m/%y'), $self->date_format($time, '%y/%m/%d');
+  return $self->date_format($time,'%d/%m/%y');
 }
 
 sub created_date {
   my $self = shift;
   my $time = $self->transcript->created_date;
   return unless $time;
-  return $self->date_format($time,'%d/%m/%y'), $self->date_format($time, '%y/%m/%d');
+  return $self->date_format($time,'%d/%m/%y');
 }
 
 sub date_format {

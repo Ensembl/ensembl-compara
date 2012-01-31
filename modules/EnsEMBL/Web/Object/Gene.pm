@@ -173,7 +173,8 @@ sub get_xref_available{
       eval { 
         @db_links = @{$my_transcripts[$i]->get_all_DBLinks};
       };
-      for (my $j=0;  !$available && ($j< scalar @db_links); $j++) {
+            
+      for (my $j=0; !$available && ($j< scalar @db_links); $j++) {
         $available = $available || ($db_links[$j]->type eq 'MISC') || ($db_links[$j]->type eq 'LIT');
       }      
     }
@@ -527,13 +528,13 @@ sub display_xref {
 sub mod_date {
   my $self = shift;
   my $time = $self->gene()->modified_date;
-  return $self->date_format( $time,'%d/%m/%y' ), $self->date_format( $time, '%y/%m/%d' );
+  return $self->date_format( $time,'%d/%m/%y' );
 }
 
 sub created_date {
   my $self = shift;
   my $time = $self->gene()->created_date;
-  return $self->date_format( $time,'%d/%m/%y' ), $self->date_format( $time, '%y/%m/%d' );
+  return $self->date_format( $time,'%d/%m/%y' );
 }
 
 sub get_author_name {

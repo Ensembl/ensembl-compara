@@ -149,9 +149,8 @@ sub _create_ProbeFeatures_linked_transcripts {
   ### Args: $ptype (string)
   ### Returns: arrayref of Bio::EnsEMBL::Transcript objects
   
-  my ($self, $ptype,) = @_;
+  my ($self, $ptype) = @_;
   my $db_adaptor     = $self->_get_funcgen_db_adaptor;
-  my $array = $self->param('array'); 
   
   my (@db_entries, @probe_objs, @transcripts, %seen);
 
@@ -165,15 +164,15 @@ sub _create_ProbeFeatures_linked_transcripts {
     @probe_objs = @{$probe_adaptor->fetch_all_by_name($self->param('id'))};
     foreach my $probe (@probe_objs) {
      my @entries = @{$probe->get_all_Transcript_DBEntries};
-     push(@db_entries, @entries) 
+     push(@db_entries, @entries);
     }
   }
-  
+
   ## Now retrieve transcript ID and create transcript Objects 
   foreach my $entry (@db_entries) {
     my $core_db_adaptor    = $self->_get_core_adaptor;
     my $transcript_adaptor = $core_db_adaptor->get_TranscriptAdaptor;
-      
+
     if (!exists $seen{$entry->primary_id}) {
       my $transcript = $transcript_adaptor->fetch_by_stable_id($entry->primary_id);
       push @transcripts, $transcript;
