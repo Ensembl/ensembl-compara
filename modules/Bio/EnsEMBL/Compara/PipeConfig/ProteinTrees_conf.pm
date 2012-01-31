@@ -241,6 +241,7 @@ sub resource_classes {
          0 => { -desc => 'default',          'LSF' => '' },
          1 => { -desc => 'hcluster_run',     'LSF' => '-C0 -M25000000 -q hugemem -R"select[mycompara2<500 && mem>25000] rusage[mycompara2=10:duration=10:decay=1:mem=25000]"' },
          2 => { -desc => 'mcoffee_himem',    'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },
+         9 => { -desc => 'CAFE',             'LSF' => '-q hugemem -M15000000 -R"select[mem>15000] rusage[mem=15000]"'},
     };
 }
 
