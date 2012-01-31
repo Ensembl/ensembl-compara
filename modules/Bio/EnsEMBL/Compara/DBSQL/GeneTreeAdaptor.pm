@@ -519,9 +519,9 @@ sub columns {
           't.right_index',
           't.distance_to_parent',
 
-          'tr.stable_id',
+          'tr.stable_id AS tstable_id',
           'tr.tree_type',
-          'tr.version',
+          'tr.version AS tversion',
           'tr.clusterset_id',
           'tr.method_link_species_set_id',
 
@@ -618,9 +618,15 @@ sub _add_GeneTree_wrapper {
         # Must create a new GeneTree
         my $tree = new Bio::EnsEMBL::Compara::GeneTree;
 
-        # Common Fields
-        foreach my $attr (qw(tree_type method_link_species_set_id clusterset_id stable_id version)) {
+        # Unique GeneTree fields
+        foreach my $attr (qw(tree_type method_link_species_set_id clusterset_id)) {
+            #print "ASSIGNING ", $rowhash->{$attr}, " TO $attr\n";
             $tree->$attr($rowhash->{$attr});
+        }
+        # GeneTree fields with the same name as a Member field
+        foreach my $attr (qw(stable_id version)) {
+            #print "ASSIGNING ", $rowhash->{"t$attr"}, " TO $attr\n";
+            $tree->$attr($rowhash->{"t$attr"});
         }
         $tree->adaptor($self);
         $node->tree($tree);
