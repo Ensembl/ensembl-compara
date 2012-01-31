@@ -26,46 +26,46 @@
 # gff_source, gff_feature
 #  - how to make a gff dump from features with this analysis
 
-CREATE TABLE IF NOT EXISTS analysis (
+# CREATE TABLE IF NOT EXISTS analysis (
 
-  analysis_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  created                     datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-  logic_name                  varchar(40) not null,
-  db                          varchar(120),
-  db_version                  varchar(40),
-  db_file                     varchar(255),
-  program                     varchar(255),
-  program_version             varchar(40),
-  program_file                varchar(255),
-  parameters                  TEXT,
-  module                      varchar(255),
-  module_version              varchar(40),
-  gff_source                  varchar(40),
-  gff_feature                 varchar(40),
+#   analysis_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+#   created                     datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+#   logic_name                  varchar(40) not null,
+#   db                          varchar(120),
+#   db_version                  varchar(40),
+#   db_file                     varchar(255),
+#   program                     varchar(255),
+#   program_version             varchar(40),
+#   program_file                varchar(255),
+#   parameters                  TEXT,
+#   module                      varchar(255),
+#   module_version              varchar(40),
+#   gff_source                  varchar(40),
+#   gff_feature                 varchar(40),
 
-  PRIMARY KEY (analysis_id),
-  KEY logic_name_idx( logic_name ),
-  UNIQUE (logic_name)
+#   PRIMARY KEY (analysis_id),
+#   KEY logic_name_idx( logic_name ),
+#   UNIQUE (logic_name)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+# ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
 #
 # Table structure for table 'analysis_description'
 #
 
-CREATE TABLE IF NOT EXISTS analysis_description (
-  analysis_id                int(10) unsigned NOT NULL,
-  description                text,
-  display_label              varchar(255),
-  displayable                boolean not null default 1,
-  web_data                   text,
+# CREATE TABLE IF NOT EXISTS analysis_description (
+#   analysis_id                int(10) unsigned NOT NULL,
+#   description                text,
+#   display_label              varchar(255),
+#   displayable                boolean not null default 1,
+#   web_data                   text,
 
-  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
+#   FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
 
-  UNIQUE KEY analysis_idx( analysis_id )
+#   UNIQUE KEY analysis_idx( analysis_id )
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+# ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
 #
