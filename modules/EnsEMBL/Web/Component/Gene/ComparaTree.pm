@@ -54,7 +54,7 @@ sub content {
   return $tree . $self->genomic_alignment_links($cdb) if $hub->param('g') && !$is_genetree && !defined $member;
 
   my $leaves               = $tree->get_all_leaves;
-  my $tree_stable_id       = $tree->stable_id;
+  my $tree_stable_id       = $tree->tree->stable_id;
   my $highlight_gene       = $hub->param('g1');
   my $highlight_ancestor   = $hub->param('anc');
   my $image_width          = $self->image_width            || 800;
@@ -224,7 +224,7 @@ sub content {
   
   return $html if $self->_export_image($image, 'no_text');
 
-  my $image_id = $gene ? $gene->stable_id : $tree->stable_id;
+  my $image_id = $gene ? $gene->stable_id : $tree_stable_id;
   my $li_tmpl  = '<li><a href="%s">%s</a></li>';
   my @view_links;
   
