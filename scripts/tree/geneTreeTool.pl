@@ -18,7 +18,7 @@ use Bio::EnsEMBL::Compara::NCBITaxon;
 use Bio::EnsEMBL::Compara::Graph::Algorithms;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::RunnableDB::OrthoTree;
+use Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Mapper::RangeRegistry; # mxe_metatranscript
 use Switch;
@@ -13901,7 +13901,7 @@ sub _compare_treefam
 sub _run_orthotree {
   my $self = shift;
   # nasty nasty reblessing hack
-  bless $self, "Bio::EnsEMBL::Compara::RunnableDB::OrthoTree";
+  bless $self, "Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree";
   $self->{'protein_tree'} = $self->{'tree'};
   if (defined($self->{'_readonly'})) {
     if ($self->{'_readonly'} == 0) {
@@ -13911,7 +13911,7 @@ sub _run_orthotree {
     $self->{'_readonly'} = 1;
   }
   $self->load_species_tree() unless($self->{_treefam}); #load only once
-  $self->Bio::EnsEMBL::Compara::RunnableDB::OrthoTree::_treefam_genepairlink_stats;
+  $self->Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree::_treefam_genepairlink_stats;
   bless $self, "Bio::EnsEMBL::Compara::ProteinTree";
 }
 
