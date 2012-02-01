@@ -24,35 +24,53 @@ sub content {
   my %collapsed_ids   = map { $_ => 1 } grep $_, split ',', $hub->param('collapse');
   my $leaf_count      = scalar @{$node->get_all_leaves};
   my $is_leaf         = $node->is_leaf;
+  my $is_root         = ($node->root eq $node);
   my $parent_distance = $node->distance_to_parent || 0;
   my $tagvalues       = $node->get_tagvalue_hash;
-  my $caption         = $tagvalues->{'taxon_name'};
-  
-  $caption   = $node->genome_db->name if !$caption && $is_leaf;
-  $caption ||= 'unknown';
-  $caption   = "Taxon: $caption";
-  
-  if ($tagvalues->{'taxon_alias_mya'}) {
-    $caption .= " ($tagvalues->{'taxon_alias_mya'})";
-  } elsif ($tagvalues->{'taxon_alias'}) {
-    $caption .= " ($tagvalues->{'taxon_alias'})";
+  my $taxon_id        = $tagvalues->{'taxon_id'};
+     $taxon_id        = $node->genome_db->taxon_id if !$taxon_id && $is_leaf;
+  my $taxon_name      = $tagvalues->{'taxon_name'};
+     $taxon_name      = $node->genome_db->taxon->name if !$taxon_name && $is_leaf;
+  my $taxon_mya       = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_MYA'}->{$taxon_id};
+  my $taxon_alias     = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$taxon_id};
+ 
+  my $caption   = "Taxon: ";
+  if (defined $taxon_alias) {
+    $caption .= $taxon_alias;
+    $caption .= (sprintf " ~%d MYA", $taxon_mya) if defined $taxon_mya;
+    $caption .= " ($taxon_name)" if defined $taxon_name;
+  } elsif (defined $taxon_name) {
+    $caption .= $taxon_name;
+    $caption .= (sprintf " ~%d MYA", $taxon_mya) if defined $taxon_mya;
+  } else {
+    $caption .= 'unknown';
   }
   
   $self->caption($caption);
   
   # Branch length
   $self->add_entry({
-    type  => 'Branch_Length',
+    type  => 'Branch Length',
     label => $parent_distance,
     order => 3
-  });
+  }) unless $is_root;
 
   # Bootstrap
   $self->add_entry({
     type => 'Bootstrap',
-    label => (defined $tagvalues->{'bootstrap'} ? $tagvalues->{'bootstrap'} : "NA"),
+    label => (exists $tagvalues->{'bootstrap'} ? $tagvalues->{'bootstrap'} : "NA"),
     order => 4
-  });
+  }) unless $is_root or $is_leaf;
+
+  if (defined $tagvalues->{'lost_taxon_id'}) {
+    my $lost_taxa = $tagvalues->{'lost_taxon_id'};
+    $lost_taxa = [$lost_taxa] if ref($lost_taxa) ne 'ARRAY';
+    $self->add_entry({
+      type  => 'Lost taxa',
+      label => join(', ', map {$hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$_} || "taxon_id: $_"}  @$lost_taxa ),
+      order => 5.6
+    });
+  }
 
   # Internal node_id
   $self->add_entry({
@@ -126,13 +144,15 @@ sub content {
     my $node_type = $tagvalues->{'node_type'};
     
     if (defined $node_type) {
-      my $con = sprintf '%.3f', $tagvalues->{'duplication_confidence_score'} || 0;
-      
-      $con = 'dubious' if $node_type eq 'dubious';
+      my $label;
+      $label = "Dubious duplication" if $node_type eq 'dubious';
+      $label = sprintf('Duplication (%d%s confid.)', 100*($tagvalues->{'duplication_confidence_score'} || 0), '%') if $node_type eq 'duplication';
+      $label = 'Speciation' if $node_type eq 'speciation';
+      $label = 'Gene split' if $node_type eq 'gene_split';
       
       $self->add_entry({
         type  => 'Type',
-        label => (($node_type eq 'gene_split') ? 'Gene split' : (($node_type eq 'speciation') ? 'Speciation' : "Duplication (confidence $con)")),
+        label => $label,
         order => 5
       });
     }
@@ -145,21 +165,10 @@ sub content {
       });
     }
 
-    # Hidden until the data is correct
-    #if (defined $tagvalues->{'lost_taxon_id'}) {
-    #  my $lost_taxa = $tagvalues->{'lost_taxon_id'};
-    #  $lost_taxa = [$lost_taxa] if ref($lost_taxa) ne 'ARRAY';
-    #  $self->add_entry({
-    #    type  => 'Lost taxa',
-    #    label => join(',', map {$hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$_} || "taxon_id: $_"}  @$lost_taxa ),
-    #    order => 5.6
-    #  });
-    #}
-
-    if ($node->root eq $node) {
+    if ($is_root) {
       # GeneTree StableID
       $self->add_entry({
-        type  => 'GeneTree_StableID',
+        type  => 'GeneTree StableID',
         label => $node->tree->stable_id,
         order => 1
        });
@@ -193,7 +202,7 @@ sub content {
     
     # Gene count
     $self->add_entry({
-      type  => 'Gene_Count',
+      type  => 'Gene Count',
       label => $leaf_count,
       order => 2
     });
