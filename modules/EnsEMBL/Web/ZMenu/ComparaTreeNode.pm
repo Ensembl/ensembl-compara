@@ -156,11 +156,11 @@ sub content {
     #  });
     #}
 
-    if ($node->stable_id) {
+    if ($node->root eq $node) {
       # GeneTree StableID
       $self->add_entry({
         type  => 'GeneTree_StableID',
-        label => $node->stable_id,
+        label => $node->tree->stable_id,
         order => 1
        });
 
