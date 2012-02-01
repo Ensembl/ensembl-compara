@@ -1163,20 +1163,20 @@ sub render_genes {
         $self->push(
           $tglyph,
           $self->Rect({
-            x            => $gr->{'start'} - 1,
-            y            => $tglyph->y + 2,
-            width        => 0,
-            height       => 4,
-            bordercolour => $gr->{'col'},
-            absolutey    => 1
+            x         => $gr->{'start'} - 1,
+            y         => $tglyph->y + 2,
+            width     => 0,
+            height    => 4,
+            colour    => $gr->{'col'},
+            absolutey => 1
           }),
           $self->Rect({
-            x            => $gr->{'start'} - 1,
-            y            => $tglyph->y + 2 + 4,
-            width        => 3 / $pix_per_bp,
-            height       => 0,
-            bordercolour => $gr->{'col'},
-            absolutey    => 1
+            x         => $gr->{'start'} - 1,
+            y         => $tglyph->y + 2 + 4,
+            width     => 3 / $pix_per_bp,
+            height    => 0,
+            colour    => $gr->{'col'},
+            absolutey => 1
           })
         );
         
