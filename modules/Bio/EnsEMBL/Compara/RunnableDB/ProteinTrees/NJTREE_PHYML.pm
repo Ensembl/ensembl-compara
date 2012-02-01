@@ -156,7 +156,7 @@ sub get_species_tree_file {
 
             my $tag_table_name = 'gene_tree_root_tag';
 
-            my $sth = $self->dbc->prepare( "select value from $tag_table_name where tag='species_tree_string'" );
+            my $sth = $self->compara_dba->dbc->prepare( "select value from $tag_table_name where tag='species_tree_string'" );
             $sth->execute;
             my ($species_tree_string) = $sth->fetchrow_array;
             $sth->finish;
@@ -229,7 +229,7 @@ sub run_njtree_phyml {
     #     $cmd .= " 2>&1 > /dev/null" unless($self->debug);
 
     my $worker_temp_directory = $self->worker_temp_directory;
-    my $full_cmd = "cd $worker_temp_directory; $cmd";
+    my $full_cmd = defined $worker_temp_directory ? "cd $worker_temp_directory; $cmd" : "$cmd";
     print STDERR "Running:\n\t$full_cmd\n" if($self->debug);
 
     $self->compara_dba->dbc->disconnect_when_inactive(1);
@@ -330,7 +330,7 @@ sub run_njtree_phyml {
   }
 
       #parse the tree into the datastucture:
-  $self->parse_newick_into_proteintree( $newick_file );
+  $protein_tree = $self->parse_newick_into_proteintree( $newick_file );
 
   my $runtime = time()*1000-$starttime;
 
@@ -643,6 +643,7 @@ sub parse_newick_into_proteintree {
       $self->throw("Phyml tree does not have all leaves as GeneTreeMembers\n");
     }
   }
+  return $newtree;
 }
 
 sub _store_tree_tags {
