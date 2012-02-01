@@ -32,7 +32,7 @@ sub content {
   my ($homologies, $html, %skipped);
   
   eval {
-    $homologies = $database->get_HomologyAdaptor->fetch_by_Member($qm);
+    $homologies = $database->get_HomologyAdaptor->fetch_all_by_Member($qm);
   };
   
   my %desc_mapping = (
