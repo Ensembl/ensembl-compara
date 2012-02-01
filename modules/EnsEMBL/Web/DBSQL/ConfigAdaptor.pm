@@ -19,6 +19,7 @@ sub new {
     session_id => $hub->session->session_id,
     user_id    => $hub->user ? $hub->user->id : undef,
     servername => $species_defs->ENSEMBL_SERVERNAME,
+    site_type  => $species_defs->ENSEMBL_SITETYPE,
     version    => $species_defs->ENSEMBL_VERSION,
     cache_tags => [],
   };
@@ -34,6 +35,7 @@ sub hub        { return $_[0]{'hub'};        }
 sub session_id { return $_[0]{'session_id'}; }
 sub user_id    { return $_[0]{'user_id'};    }
 sub servername { return $_[0]{'servername'}; }
+sub site_type  { return $_[0]{'site_type'};  }
 sub version    { return $_[0]{'version'};    }
 sub cache_tags { return $_[0]{'cache_tags'}; }
 
@@ -49,12 +51,13 @@ sub dbh {
 }
 
 sub record_type_query {
-  my $self = shift;
-  my @args  = grep $_, $self->session_id, $self->user_id;
-  my $where = 'cd.record_type = "session" AND cd.record_type_id = ?';
-     $where = qq{(($where) OR (cd.record_type = "user" AND cd.record_type_id = ?))} if scalar @args == 2;
+  my $self  = shift;
+  my @args   = grep $_, $self->session_id, $self->user_id;
+  my $where  = 'cd.record_type = "session" AND cd.record_type_id = ?';
+     $where  = qq{(($where) OR (cd.record_type = "user" AND cd.record_type_id = ?))} if scalar @args == 2;
+     $where .= ' AND cd.site_type = ?';
   
-  return ($where, @args);
+  return ($where, @args, $self->site_type);
 }
 
 sub all_configs {
@@ -150,7 +153,10 @@ sub new_config {
   my ($self, %args) = @_;
   my $dbh = $self->dbh;
   
-  $dbh->do('INSERT INTO configuration_details VALUES ("", ?, ?, "n", ?, ?, ?, ?)', {}, map(encode_entities($args{$_}) || '', qw(record_type record_type_id name description)), $self->servername, $self->version);
+  $dbh->do(
+    'INSERT INTO configuration_details VALUES ("", ?, ?, "n", ?, ?, ?, ?, ?)', {},
+    map(encode_entities($args{$_}) || '', qw(record_type record_type_id name description)), $self->servername, $self->site_type, $self->version
+  );
   
   my $record_id = $dbh->last_insert_id(undef, undef, 'configuration_details', 'record_id');
   my $data      = ref $args{'data'} ? $self->serialize_data($args{'data'}) : $args{'data'};
