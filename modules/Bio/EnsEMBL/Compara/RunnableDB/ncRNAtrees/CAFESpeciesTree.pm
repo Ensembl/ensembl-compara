@@ -114,8 +114,16 @@ sub run {
 #         $self->check_tree($cafeTree);
 #     }
     my $cafeTreeStr = $cafeTree->newick_format('ryo', $fmt);
+
+    my $cafe_tree_string_meta_key = 'cafe_tree_string';
     print STDERR "$cafeTreeStr\n" if ($self->debug());
-    $self->param('cafe_tree_string', $cafeTreeStr);
+    print STDERR "cafe_tree_string_meta_key => $cafe_tree_string_meta_key\n" if ($self->debug());
+    my $sql = "INSERT into meta (meta_key, meta_value) values (?,?);";
+    my $sth = $self->compara_dba->dbc->prepare($sql);
+    $sth->execute($cafe_tree_string_meta_key, $cafeTreeStr);
+    $sth->finish();
+
+    $self->param('cafe_tree_string_meta_key', $cafe_tree_string_meta_key);
 }
 
 sub write_output {
