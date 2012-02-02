@@ -1,9 +1,22 @@
-# Copyright (c) 1999-2012
-#
-# Ensembl module for Bio::EnsEMBL::DBSQL::MethodLinkSpeciesAdaptor
-#
-# POD documentation - main docs before the code
-#
+=head1 LICENSE
+
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=cut
 
 =head1 NAME
 
@@ -11,36 +24,6 @@ Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor - Object to access data in the 
 and method_link tables
 
 =head1 SYNOPSIS
-
-=head2 Connecting to the database using the old way:
-
-  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-  my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (
-      -host => $host,
-      -user => $dbuser,
-      -pass => $dbpass,
-      -port => $port,
-      -dbname => $dbname,
-      -conf_file => $conf_file);
-
-  my $mlssa = $db->get_MethodLinkSpeciesSetAdaptor();
-
-=head2 Connecting to the database using the new way (recommended):
-
-  use Bio::EnsEMBL::Registry;
-  Bio::EnsEMBL::Registry->load_all($conf_file); # $conf_file can be undef
-
-  use Bio::EnsEMBL::Registry;
-  Bio::EnsEMBL::Registry->load_all($conf_file); # $conf_file can be undef
-
-  Bio::EnsEMBL::Registry->load_all();
-
-  my $mlssa = Bio::EnsEMBL::Registry->get_adaptor(
-      $compara_db_name, "compara", "MethodLinkSpeciesSet");
-
-=head2 Store/Delete data from the database
-
-  $mlssa->store($method_link_species_set);
 
 =head2 Retrieve data from the database
 
@@ -51,15 +34,22 @@ and method_link tables
   my $method_link_species_set = $mlssa->fetch_by_method_link_type_registry_aliases(
         "BLASTZ_NET", ["human", "Mus musculus"]);
 
+  my $method_link_species_set = $mlssa->fetch_by_method_link_type_species_set_name(
+        "EPO", "mammals")
+  
   my $method_link_species_sets = $mlssa->fetch_all_by_method_link_type("BLASTZ_NET");
 
   my $method_link_species_sets = $mlssa->fetch_all_by_GenomeDB($genome_db);
 
   my $method_link_species_sets = $mlssa->fetch_all_by_method_link_type_GenomeDB(
         "PECAN", $gdb1);
-
+  
   my $method_link_species_set = $mlssa->fetch_by_method_link_type_GenomeDBs(
         "TRANSLATED_BLAT", [$gdb1, $gdb2]);
+
+=head2 Store/Delete data from the database
+
+  $mlssa->store($method_link_species_set);
 
 =head1 DESCRIPTION
 
@@ -77,23 +67,6 @@ This class inherits all the methods and attributes from Bio::EnsEMBL::DBSQL::Bas
  - Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
  - Bio::EnsEMBL::Compara::GenomeDB
  - Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
-
-=head1 AUTHOR
-
-Javier Herrero (jherrero@ebi.ac.uk)
-
-This modules is part of the Ensembl project http://www.ensembl.org
-
-=head1 COPYRIGHT
-
-Copyright (c) 1999-2012. EnsEMBL Team
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org). You may distribute
-it under the same terms as EnsEMBL itself.
-
-=head1 CONTACT
-
-Questions can be posted to the ensembl-dev mailing list: ensembl-dev@ebi.ac.uk
 
 =head1 APPENDIX
 
