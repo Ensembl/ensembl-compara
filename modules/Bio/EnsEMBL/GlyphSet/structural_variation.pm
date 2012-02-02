@@ -7,20 +7,31 @@ use base qw(Bio::EnsEMBL::GlyphSet_simple);
 sub my_label { return 'Structural variations'; }
 
 sub features {
-  my $self   = shift; 
-  my $slice  = $self->{'container'};
-  my $source = $self->my_config('source');
+  my $self     = shift; 
+  my $slice    = $self->{'container'};
+  my $source   = $self->my_config('source');
+  my $set_name = $self->my_config('set_name');
 
   my $var_features;
   
-  if ($source =~ /^\w/) {
+	# Structural variations by set
+  if (defined($set_name)) {
+    my $variation_db_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation');
+    my $set = $variation_db_adaptor->get_VariationSetAdaptor->fetch_by_name($set_name);
+    $var_features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($set);
+  }
+	# Structural variations by source
+  elsif ($source =~ /^\w/) {
     $var_features = $slice->get_all_StructuralVariationFeatures($source);
-  } else {
+  } 
+	# All structural variations
+	else {
     $var_features = $slice->get_all_StructuralVariationFeatures;
   }
-
   return $var_features;  
 }
+
+
 
 
 sub colour_key  {
