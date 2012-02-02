@@ -148,8 +148,9 @@ sub fetch_subtree_under_node {
   my $left_index = $node->left_index;
   my $right_index = $node->right_index;
   my $root_id = $node->_root_id;
-  my $constraint = "WHERE ($alias.root_id = $root_id) AND ($alias.left_index >= $left_index) AND ($alias.right_index <= $right_index)";
+  my $constraint = "WHERE ($alias.root_id = $root_id) AND ($alias.left_index > $left_index) AND ($alias.right_index < $right_index)";
   my $all_nodes = $self->_generic_fetch($constraint);
+  push @{$all_nodes}, $node;
   $self->_build_tree_from_nodes($all_nodes);
   return $node;
 }
