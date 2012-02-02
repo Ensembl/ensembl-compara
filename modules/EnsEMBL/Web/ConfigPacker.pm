@@ -272,9 +272,9 @@ sub _summarise_core_tables {
        left join object_xref using(object_xref_id) 
         left join xref using(xref_id) 
          left join external_db using(external_db_id)'
-					 );
+           );
     foreach my $row (@$oref) {
-	push @{$self->db_tree->{'SPECIES_ONTOLOGIES'}}, $row->[0] if ($row->[0]);
+  push @{$self->db_tree->{'SPECIES_ONTOLOGIES'}}, $row->[0] if ($row->[0]);
     }
 
   }
@@ -356,15 +356,36 @@ sub _summarise_variation_db {
   # get menu config from meta table if it exists
   my $v_conf_aref = $dbh->selectall_arrayref('select meta_value from meta where meta_key = "web_config" order by meta_id asc');
   foreach my $row(@$v_conf_aref) {
-	my ($type, $long_name, $key, $parent) = split /\#/, $row->[0];
-	
-	push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
-	  type       => $type,
-	  long_name  => $long_name,
-	  key        => $key,
-	  parent     => $parent
-	};
+    my ($type, $long_name, $key, $parent) = split /\#/, $row->[0];
+  
+    push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
+      type       => $type,
+      long_name  => $long_name,
+      key        => $key,
+      parent     => $parent
+    };
   }
+	
+	# Structural variation sets (added manually for the release 66 - Have to be fixed for e!67)
+	push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
+      type       => 'menu',
+      long_name  => 'Structural variants - 1000 Genomes',
+      key        => 'sv_1kg',
+      parent     => ''
+  };
+	push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
+      type       => 'sv_set',
+      long_name  => '1000 Genomes - High coverage - Trios',
+      key        => 'structural_variation_set_1kg_hct',
+      parent     => 'sv_1kg'
+  };
+	push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
+      type       => 'sv_set',
+      long_name  => '1000 Genomes - Low coverage',
+      key        => 'structural_variation_set_1kg_lc',
+      parent     => 'sv_1kg'
+  };	
+	
   
   my $t_aref = $dbh->selectall_arrayref( 'select source_id,name,description, if(somatic_status = "somatic", 1, 0), type from source' );
 #---------- Add in information about the sources from the source table
@@ -442,7 +463,41 @@ sub _summarise_variation_db {
   }
   $self->db_details($db_name)->{'tables'}{'structural_variation'}{cnv_probes}{'counts'} = \%cnv_probes;
   $self->db_details($db_name)->{'tables'}{'structural_variation'}{cnv_probes}{'descriptions'} = \%cnv_probes_descriptions;
+#--------- Add in Structural Variation set information
+  # First get all toplevel sets
+  my (%sv_super_sets, %sv_sub_sets, %sv_set_descriptions);
 
+  my $svt_aref = $dbh->selectall_arrayref('
+    select vs.variation_set_id, vs.name, vs.description, a.value
+      from variation_set vs, attrib a 
+      where not exists (
+        select * 
+          from variation_set_structure vss
+          where vss.variation_set_sub = vs.variation_set_id
+        )
+        and a.attrib_id = vs.short_name_attrib_id
+    and vs.variation_set_id IN (
+      select distinct variation_set_id from variation_set_structural_variation)'
+  );
+  
+  # then get subsets foreach toplevel set
+  foreach (@$svt_aref) {
+    my $set_id = $_->[0];
+    
+    $sv_super_sets{$set_id} = {
+      name        => $_->[1],
+      description => $_->[2],
+      short_name  => $_->[3],
+      subsets     => [],
+    };
+  
+    $sv_set_descriptions{$_->[3]} = $_->[2];
+    
+  }
+
+  $self->db_details($db_name)->{'tables'}{'structural_variation_set'}{'supersets'}    = \%sv_super_sets;  
+  $self->db_details($db_name)->{'tables'}{'structural_variation_set'}{'subsets'}      = \%sv_sub_sets;
+  $self->db_details($db_name)->{'tables'}{'structural_variation_set'}{'descriptions'} = \%sv_set_descriptions;
 #--------- Add in Variation set information
   # First get all toplevel sets
   my (%super_sets, %sub_sets, %set_descriptions);
@@ -468,8 +523,8 @@ sub _summarise_variation_db {
       short_name  => $_->[3],
       subsets     => [],
     };
-	
-	$set_descriptions{$_->[3]} = $_->[2];
+  
+  $set_descriptions{$_->[3]} = $_->[2];
     
     my $ss_aref = $dbh->selectall_arrayref("
       select vs.variation_set_id, vs.name, vs.description, a.value 
@@ -487,8 +542,8 @@ sub _summarise_variation_db {
         description => $sub_set->[2],
         short_name  => $sub_set->[3],
       };
-	  
-	  $set_descriptions{$sub_set->[3]} = $sub_set->[2];
+    
+    $set_descriptions{$sub_set->[3]} = $sub_set->[2];
     } 
   }
 
@@ -1183,10 +1238,10 @@ sub _summarise_go_db {
   foreach my $row (@$t_aref) {
       my ($oid, $ontology, $root_term, $description) = @$row;
       $self->db_tree->{'ONTOLOGIES'}->{$oid} = {
-	  db => $ontology,
-	  root => $root_term,
-	  description => $description
-	  };
+    db => $ontology,
+    root => $root_term,
+    description => $description
+    };
   }
 
   $dbh->disconnect();

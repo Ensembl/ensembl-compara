@@ -1130,7 +1130,7 @@ sub load_tracks {
     variation => [
       'add_sequence_variations',        # Add to variation_feature tree
       'add_structural_variations',      # Add to variation_feature tree
-			'add_copy_number_variant_probes', # Add to variation_feature tree
+      'add_copy_number_variant_probes', # Add to variation_feature tree
       'add_somatic_mutations'           # Add to somatic tree
     ],
   );
@@ -2209,6 +2209,9 @@ sub add_sequence_variations_meta {
     
     my $node;
     
+    # sv_set type
+    next if ($menu_item->{type} eq 'sv_set');
+    
     # just a named submenu
     if($menu_item->{type} eq 'menu') {
       $node = $self->create_submenu($menu_item->{key}, $menu_item->{long_name});
@@ -2379,7 +2382,32 @@ sub add_structural_variations {
   }
   
   $menu->append($structural_variation);
+  
+  
+  # Structural variation sets
+  foreach my $menu_item(@{$hashref->{'menu'}}) {
+    
+    next if ($menu_item->{type} ne 'sv_set');
+    
+     my $temp_name = $menu_item->{key};
+       $temp_name =~ s/^structural_variation_set_//;
+      
+    my $node = $self->create_track($menu_item->{key}, $menu_item->{long_name}, {
+        %options,
+        caption     => $menu_item->{long_name},
+        sources     => undef,
+        sets        => [ $menu_item->{long_name} ],
+        set_name    => $menu_item->{long_name},
+        description => $hashref->{'structural_variation_set'}{'descriptions'}{$temp_name}
+    });
+    
+    # get the node onto which we're going to add this item, then append it
+    my $curr_node = $self->get_node($menu_item->{parent}) || $menu;
+    
+    $curr_node->append($node);
+  }
 }
+
   
 sub add_copy_number_variant_probes {
   my ($self, $key, $hashref) = @_;
@@ -2407,7 +2435,7 @@ sub add_copy_number_variant_probes {
   }));
   
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'cnv_probes'}{'counts'} || {}}) {
-	  my $description = $hashref->{'source'}{'descriptions'}{$key_2};
+    my $description = $hashref->{'source'}{'descriptions'}{$key_2};
     (my $k = $key_2) =~ s/\W/_/g;
     
     $menu->append($self->create_track("variation_feature_cnv_$k", "$key_2", {
@@ -2419,6 +2447,7 @@ sub add_copy_number_variant_probes {
     }));  
   }
 }
+
 
 sub add_somatic_mutations {
   my ($self, $key, $hashref) = @_;
