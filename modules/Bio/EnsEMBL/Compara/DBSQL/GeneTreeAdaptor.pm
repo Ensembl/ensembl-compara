@@ -251,12 +251,11 @@ sub fetch_all_AlignedMembers_by_root_id {
 sub fetch_by_stable_id {
   my ($self, $stable_id) = @_;
 
-  my $sql = "SELECT root_id FROM gene_tree_root WHERE stable_id=\"$stable_id\"";
+  my $sql = qq(SELECT root_id FROM gene_tree_root WHERE stable_id=? LIMIT 1);
   my $sth = $self->prepare($sql);
-  $sth->execute();
+  $sth->execute($stable_id);
 
   my ($root_id) = $sth->fetchrow_array();
-  $sth->finish();
 
   return undef unless (defined $root_id);
 
