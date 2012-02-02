@@ -1,0 +1,36 @@
+
+{gene_type} is either "ncrna" or "protein"
+More information about the file formats can be found:
+ - OrthoXML at http://orthoxml.org
+ - PhyloXML at http://www.phyloxml.org
+
+
+Compara.{release}.{gene_type}_homologies.orthoxml.xml.gz
+  Contains all the orthologies in OrthoXML format. Each orthology maps to a
+  root orthologGroup containing two genes.
+
+Compara.{release}.{gene_type}_trees.orthoxml.xml.gz
+  Contains all the Compara trees in OrthoXML format. All the trees are
+  attached to the 'groups' tag.
+
+Compara.{release}.{gene_type}_trees.possorthol.orthoxml.xml.gz
+  Also contains all the Compara trees in OrthoXML format, but the duplication
+  nodes with a confidence score lower than 0.25 are considered as speciations.
+  This make the gene tree inconsistent with the species tree, but the derived
+  orthologies include the 'possible_orthologs'.
+
+
+The following three files are tar archives containing one file per tree.
+CAUTION: Be aware that untaring any of these files will create a directory
+         with more than 19,000 files !
+
+Compara.{release}.{gene_type}_trees.tree.orthoxml.tar.gz
+  Each file will contain one tree, in OrthoXML format.
+
+Compara.{release}.{gene_type}_trees.tree_possorthol.orthoxml.tar.gz
+  Each file will contain one tree, in OrthoXML format. Here again, duplication
+  nodes with a low confidence score are edited.
+
+Compara.{release}.{gene_type}_trees.tree.phyloxml.tar.gz
+  Each file will contain one tree, in PhyloXML format.
+

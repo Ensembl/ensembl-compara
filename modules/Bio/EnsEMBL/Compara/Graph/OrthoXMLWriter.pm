@@ -352,6 +352,7 @@ sub _get_members_list {
 
 sub _write_tree {
   my ($self, $tree) = @_;
+  no warnings 'recursion';
   
   # an OrthoXML file must begin with a orthologGroup
   if (_is_reliable_duplication($self, $tree)) {
@@ -381,6 +382,7 @@ sub _is_reliable_duplication {
 
 sub _process {
   my ($self, $node) = @_;
+  no warnings 'recursion';
 
   if(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeMember')) {
     return $self->_writer->emptyTag("geneRef", "id" => $node->member_id);
@@ -408,6 +410,7 @@ sub _process {
 #body writes data
 sub _genetreenode_body {
   my ($self, $node) = @_;
+  no warnings 'recursion';
   
   my $w = $self->_writer();
   

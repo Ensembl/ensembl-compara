@@ -22,7 +22,6 @@ my $orthoxml_trees;
 my $orthoxml_with_poss_orthologs;
 my $phyloxml;
 my $aa = 1;
-my $nc = 0;
 my $verbose = 0;
 my $dirpath;
 
@@ -40,7 +39,6 @@ GetOptions('help'           => \$help,
            'oxml|orthoxml_trees' => \$orthoxml_trees,
            'oxmlp|orthoxml_poss_orthol' => \$orthoxml_with_poss_orthologs,
            'pxml|phyloxml'  => \$phyloxml,
-           'nc=s'           => \$nc,
            'aa=s'           => \$aa,
            'verbose=s'      => \$verbose,
            'dirpath=s'      => \$dirpath,
@@ -74,10 +72,7 @@ unless (defined $url) {
 }
 
 my $dba = Bio::EnsEMBL::Hive::URLFactory->fetch( $url.';type=compara' );
-
-my ($prefix, $adaptor) = $nc
-    ? ('ncrna_trees.', $dba->get_NCTreeAdaptor)
-    : ('protein_trees.', $dba->get_ProteinTreeAdaptor);
+my $adaptor = $dba->get_GeneTreeAdaptor;
 
 my @tree_ids;
 if($tree_id_file and -r $tree_id_file) {
@@ -104,7 +99,7 @@ foreach my $tree_id (@tree_ids) {
 
   my $root = $adaptor->fetch_node_by_node_id($tree_id);
 
-  $tree_id = $prefix.$tree_id;
+  $tree_id = "tree.".$tree_id;
 
   my $fh1;
   my $fh2;
