@@ -213,6 +213,8 @@ my $reg = "Bio::EnsEMBL::Registry";
 my $species = "Homo sapiens";
 my $coord_system = "toplevel";
 my $conservation_scores_mlssid;
+my $conservation_scores_mlss_method_link = "GERP_CONSERVATION_SCORE";
+my $conservation_scores_mlss_species_set;
 my $chunk_size = 1000000;
 my $db_host;
 my $db_user;
@@ -249,7 +251,9 @@ eval{
 	       "seq_region=s" => \$seq_region_name,
 	       "seq_region_start=i" => \$seq_region_start,
 	       "seq_region_end=i" => \$seq_region_end,
-	       "conservation_scores_mlssid=i" => \$conservation_scores_mlssid,
+	       "mlss_id|conservation_scores_mlssid=i" => \$conservation_scores_mlssid,
+	       "method_link_type=s" => \$conservation_scores_mlss_method_link,
+	       "species_set_name=s" => \$conservation_scores_mlss_species_set,
 	       "chunk_size=s" => \$chunk_size,
 	       "output_dir=s" => \$output_dir,
                "output_format=s" => \$format,
@@ -307,7 +311,12 @@ perl dump_conservationScores_in_wigfix.pl
 
     For the scores:
     [--conservation_scores_mlssid method_link_species_set_id]
-        Method link species set id for the conservation scores 
+        Method link species set id for the conservation scores. Alternatively, you
+        can specify the method_link and the species_set (see below).
+    [--method_link method_link_type]
+        Method link type for the conservation scores. Default "GERP_CONSERVATION_SCORE"
+    [--species_set species_set_name]
+        Species set name for the conservation scores.
     --chunk_size chunk_size
          Chunk size for conservation scores to be retrieved. Default 1000000;
 
@@ -366,15 +375,21 @@ if (!defined $bsub_cmd) {
     throw("Incorrect arguments\n" . $usage . "\n");
 }
 
-#Add on rest of arguments
-if ($automatic_bsub) {
-    $bsub_cmd .= " --species \"$species\" --conservation_scores_mlssid $conservation_scores_mlssid --chunk_size $chunk_size --output_dir $output_dir --method_name $method_name --output_format $format";
-
-}
-
 #Read the conservation score mlss
 my $mlss_adaptor = $reg->get_adaptor($dbname, "compara", "MethodLinkSpeciesSet");
-my $mlss = $mlss_adaptor->fetch_by_dbID($conservation_scores_mlssid);
+my $mlss;
+if ($conservation_scores_mlssid) {
+    $mlss = $mlss_adaptor->fetch_by_dbID($conservation_scores_mlssid);
+} elsif ($conservation_scores_mlss_method_link and $conservation_scores_mlss_species_set) {
+    $mlss = $mlss_adaptor->fetch_by_method_link_type_species_set_name(
+            $conservation_scores_mlss_method_link, $conservation_scores_mlss_species_set);
+}
+
+#Add on rest of arguments
+if ($automatic_bsub) {
+    $bsub_cmd .= " --species \"$species\" --conservation_scores_mlssid ".$mlss->dbID." --chunk_size $chunk_size --output_dir $output_dir --method_name $method_name --output_format $format";
+}
+
 my $slice_adaptor = $reg->get_adaptor($species, 'core', 'Slice');
 throw("Registry configuration file has no data for connecting to <$species>") if (!$slice_adaptor);
 
