@@ -1022,6 +1022,7 @@ sub variation_feature_mapping { ## used for snpview
   ### Returns Arrayref of Bio::EnsEMBL::Variation::VariationFeatures
 
   my $self = shift;
+  my $recalculate = shift;
  
   my %data;
   foreach my $vari_feature_obj (@{ $self->get_variation_features }) { 
@@ -1031,7 +1032,7 @@ sub variation_feature_mapping { ## used for snpview
      $data{$varif_id}{start}          = $self->start($vari_feature_obj);
      $data{$varif_id}{end}            = $vari_feature_obj->end;
      $data{$varif_id}{strand}         = $vari_feature_obj->strand;
-     $data{$varif_id}{transcript_vari} = $self->transcript_variation($vari_feature_obj);
+     $data{$varif_id}{transcript_vari} = $self->transcript_variation($vari_feature_obj, undef, $recalculate);
   }
   return \%data;
 }
@@ -1124,14 +1125,21 @@ sub transcript_variation {
 
   ### Variation_features
   ### Args[0]    : Bio::EnsEMBL::Variation::Variation::Feature
-  ### Args[1]    : string transcript stable id (optional)  
+  ### Args[1]    : string transcript stable id (optional)
+  ### Args[2]    : boolean recalculate (optional) - discards DB consequences and recalculates (used for HGMD)
   ### Example    : my $consequence = $object->consequence($vari);
   ### Description: returns SNP consequence (synonymous, stop gained, ...). If a transcript stable id is specifed, will only return transcript_variations on that transcript
   ### Returns arrayref of transcript variation objs
 
-  my ($self, $vari_feature, $tr_stable_id) = @_;
+  my ($self, $vari_feature, $tr_stable_id, $recalculate) = @_;
   
   $self->hub->database('variation')->dnadb($self->database('core'));
+  
+  if($recalculate) {
+    $vari_feature->allele_string('A/C/G/T');
+    delete $vari_feature->{transcript_variations};
+    delete $vari_feature->{dbID};
+  }
   
   my $transcript_variation_obj =  $vari_feature->get_all_TranscriptVariations;
   

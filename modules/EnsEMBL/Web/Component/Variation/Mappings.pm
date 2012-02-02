@@ -21,7 +21,7 @@ sub content {
   return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
   return $self->detail_panel if $hub->param('allele');
   
-  my %mappings = %{$object->variation_feature_mapping};
+  my %mappings = %{$object->variation_feature_mapping($hub->param('recalculate'))};
 
   return [] unless keys %mappings;
 
@@ -40,6 +40,43 @@ sub content {
       'Consequences for this variation have been calculated using the Ensembl reference allele' . (defined $feature_slice ? ' (' . $feature_slice->seq .')' : ''),
       '50%'
     );
+  }
+  
+  # HGMD
+  if($source eq 'HGMD-PUBLIC' and $name =~ /^CM/) {
+    
+    if($hub->param('recalculate')) {
+      
+      my $url = $hub->url({
+        type   => 'Variation',
+        action => 'Mappings',
+        recalculate => undef,
+      });
+      
+      my $link = "<a href='$url'>Revert to original display</a>";
+      
+      $html .= $self->_info(
+        'Information',
+        "This display shows consequence predictions for all possible alleles at this position.<br/><br/>$link",
+        '50%',
+      ); 
+    }
+    
+    else {
+      my $url = $hub->url({
+        type   => 'Variation',
+        action => 'Mappings',
+        recalculate => 1,
+      });
+      
+      my $link = "<a href='$url'>Show consequence predictions for all possible alleles</a>";
+      
+      $html .= $self->_info(
+        'Information',
+        "Ensembl has permission to display only the public HGMD dataset; this dataset does not include alleles. The consequence predictions shown below are based on the variant\'s position only.<br/><br/>$link",
+        '50%',
+      );      
+    }
   }
   
   my @columns = (
@@ -229,7 +266,7 @@ sub detail_panel {
   my $allele   = $hub->param('allele');
   my $tr_id    = $hub->param('transcript');
   my $vf_id    = $hub->param('vf');
-  my %mappings = %{$object->variation_feature_mapping};
+  my %mappings = %{$object->variation_feature_mapping($hub->param('recalculate'))};
   my $html;
   
   foreach my $t_data(@{$mappings{$vf_id}{'transcript_vari'}}) {
@@ -563,8 +600,8 @@ sub render_context {
     my $tmp_phase    = ($tv_phase + 1) % 3;
        $ref_down_pep = join '', map " $_ ", split //, $down_pep;
        $var_down_pep = join '', map " $_ ", split //, $var_down_pep;
-       $ref_pep      = ' ' . (join ' ', split '', $ref_pep) . ' ' unless $ref_pep eq '';
-       $var_pep      = ' ' . (join ' ', split '', $var_pep) . ' ' unless $var_pep eq '';
+       $ref_pep      = ' ' . (join '  ', split '', $ref_pep) . ' ' unless $ref_pep eq '';
+       $var_pep      = ' ' . (join '  ', split '', $var_pep) . ' ' unless $var_pep eq '';
     
     # insertion
     if ($var_length_diff > 0) {
