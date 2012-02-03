@@ -2381,20 +2381,19 @@ sub add_structural_variations {
     }));  
   }
   
-  $menu->append($structural_variation);
-  
-  
   # Structural variation sets
   foreach my $menu_item(@{$hashref->{'menu'}}) {
     
     next if ($menu_item->{type} ne 'sv_set');
     
-     my $temp_name = $menu_item->{key};
+    my $temp_name = $menu_item->{key};
        $temp_name =~ s/^structural_variation_set_//;
+    
+    my $node_name = $menu_item->{long_name}.' (structural variants)';
       
-    my $node = $self->create_track($menu_item->{key}, $menu_item->{long_name}, {
+    my $node = $self->create_track($menu_item->{key}, $node_name, {
         %options,
-        caption     => $menu_item->{long_name},
+        caption     => $node_name,
         sources     => undef,
         sets        => [ $menu_item->{long_name} ],
         set_name    => $menu_item->{long_name},
@@ -2402,10 +2401,10 @@ sub add_structural_variations {
     });
     
     # get the node onto which we're going to add this item, then append it
-    my $curr_node = $self->get_node($menu_item->{parent}) || $menu;
-    
-    $curr_node->append($node);
+    $structural_variation->append($node);
   }
+  
+  $menu->append($structural_variation)
 }
 
   
