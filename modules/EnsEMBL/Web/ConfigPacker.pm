@@ -365,27 +365,21 @@ sub _summarise_variation_db {
       parent     => $parent
     };
   }
-	
-	# Structural variation sets (added manually for the release 66 - Have to be fixed for e!67)
-	push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
-      type       => 'menu',
-      long_name  => 'Structural variants - 1000 Genomes',
-      key        => 'sv_1kg',
-      parent     => ''
-  };
-	push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
+  
+  # Structural variation sets (added manually for the release 66 - Have to be fixed for e!67)
+  push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
       type       => 'sv_set',
       long_name  => '1000 Genomes - High coverage - Trios',
       key        => 'structural_variation_set_1kg_hct',
-      parent     => 'sv_1kg'
+      parent     => 'structural_variation'
   };
-	push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
+  push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
       type       => 'sv_set',
       long_name  => '1000 Genomes - Low coverage',
       key        => 'structural_variation_set_1kg_lc',
-      parent     => 'sv_1kg'
-  };	
-	
+      parent     => 'structural_variation'
+  };  
+  
   
   my $t_aref = $dbh->selectall_arrayref( 'select source_id,name,description, if(somatic_status = "somatic", 1, 0), type from source' );
 #---------- Add in information about the sources from the source table
