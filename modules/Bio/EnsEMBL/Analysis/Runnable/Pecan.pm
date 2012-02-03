@@ -1,11 +1,26 @@
-# Ensembl module for Bio::EnsEMBL::Analysis::Runnable::Pecan
-#
-# Copyright (c) 2005 Ensembl
-#
+=head1 LICENSE
+
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=cut
 
 =head1 NAME
 
-Bio::EnsEMBL::Analysis::Runnable::Pecan
+Bio::EnsEMBL::Analysis::Runnable::Pecan - 
 
 =head1 SYNOPSIS
 
@@ -23,9 +38,7 @@ Mavid expects to run the program mavid, a global multiple aligner for large geno
 using a fasta file and a tree file (Newick format), and eventually a constraints file.
 The output (multiple alignment) is parsed and return as a Bio::EnsEMBL::Compara::GenomicAlignBlock object.
 
-=head1 CONTACT
-
-Post questions to the Ensembl development list: ensembl-dev@ebi.ac.uk
+=head1 METHODS
 
 =cut
 
