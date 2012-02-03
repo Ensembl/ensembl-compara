@@ -19,15 +19,16 @@ sub content {
   my $mappings     = $object->variation_feature_mapping;
   my $validation   = $object->validation_status;
   my $failed       = $object->Obj->failed_description ? $self->failed() : ''; ## First warn if the SV has been failed
-  my $summary      = sprintf '<dt>Variation class</dt><dd>%s</dd>', $object->class;
+  my $sv_sets      = $object->get_variation_set_string;
+	my $summary      = sprintf '<dt>Variation class</dt><dd>%s</dd>', $object->class;
      $summary     .= $self->get_allele_types($source);
      $summary     .= $self->get_source($source, $object->source_description);
      $summary     .= $self->get_study; 
+		 $summary     .= "<dt>Present in </dt><dd><b>".join(', ',@$sv_sets)."</b></dd>" if scalar(@$sv_sets);
      $summary     .= $self->get_annotations;
      $summary     .= $self->location($mappings);
      $summary     .= $self->size($mappings);
      $summary     .= "<dt>Validation status</dt><dd>$validation</dd>" if $validation; 
-     
   return qq{
     <div class="summary_panel">
       $failed
