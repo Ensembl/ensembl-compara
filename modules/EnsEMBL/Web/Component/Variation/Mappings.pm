@@ -208,8 +208,28 @@ sub content {
       my $sift = $self->render_sift_polyphen($tva->sift_prediction || '-',     $show_scores eq 'yes' ? $tva->sift_score     : undef);
       my $poly = $self->render_sift_polyphen($tva->polyphen_prediction || '-', $show_scores eq 'yes' ? $tva->polyphen_score : undef);
       
-      my $allele  = $transcript_data->{'vf_allele'};
-         $allele .= " ($transcript_data->{'tr_allele'})" unless $transcript_data->{'vf_allele'} =~ /HGMD|LARGE|DEL|INS/;
+      # Allele
+      my  $allele = (length($a) > 50) ? substr($a,0,50).'...' : $a;
+      
+      my $html_full_tr_allele = ')';
+      
+      unless ($transcript_data->{'vf_allele'} =~ /HGMD|LARGE|DEL|INS/) {
+        my $tr_allele = $transcript_data->{'tr_allele'};
+        if (length($tr_allele) > 50) {
+          $tr_allele = substr($tr_allele,0,50).'...';
+          
+          if ($tr_allele ne $allele) {
+            my $full_tr_allele = $transcript_data->{'tr_allele'};
+            $html_full_tr_allele = $self->expandable_allele_box($full_tr_allele,$transcript_data,'tr',1);
+          }
+          
+          $allele .= '<br />';
+          
+        } else { 
+          $allele .= ' ';
+        }
+        $allele .= "(<small>$tr_allele</small>$html_full_tr_allele";
+      }
       
       my $row = {
         allele    => $allele,
@@ -310,6 +330,19 @@ sub detail_panel {
     
     my $prot_id = $tr->translation ? $tr->translation->stable_id : undef; 
     
+    # allele
+    if (length($allele)>50) {
+      my $display_allele = substr($allele,0,50).'...';
+      $display_allele .= $self->expandable_allele_box($allele,$t_data,'allele');
+      $allele = $display_allele;
+    }
+    # t_allele
+    if (length($t_allele)>50) {
+      my $display_allele = substr($t_allele,0,50).'...';
+      $display_allele .= $self->expandable_allele_box($t_allele,$t_data,'t_allele');
+      $t_allele = $display_allele;
+    }
+    
     my %data = (
       allele     => $allele,
       t_allele   => $t_allele,
@@ -398,7 +431,8 @@ sub detail_panel {
       $table->add_row({ name => $name, value => $data{$key} || '-' });
     }
     
-    $html .= $self->toggleable_table("Detail for $data{name} ($allele) in $tr_id", join('_', $tr_id, $vf_id, $allele), $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
+    my $a_label = (length($allele) > 50) ? substr($allele,0,50).'...' : $allele;
+    $html .= $self->toggleable_table("Detail for $data{name} ($a_label) in $tr_id", join('_', $tr_id, $vf_id, substr($allele,0,50)), $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
   }
   
   return $html;
@@ -628,4 +662,29 @@ sub render_context {
   return $context;
 }
 
+
+sub expandable_allele_box {
+  my $self        = shift;
+  my $allele      = shift;
+  my $transcript  = shift;
+  my $cell_prefix = shift;
+  my $parenthesis = shift;
+  
+  my $full_allele = $allele;
+     $full_allele =~ s/(.{60})/$1<br \/>/g;
+            
+  my $cell_name = $cell_prefix.'_'.$transcript->{'transcriptname'}.substr($allele,0,10);
+  
+  my $show = $self->hub->get_cookies("toggle_$cell_name") eq 'open';
+  my $html_full_allele = sprintf('<a class="toggle %s set_cookie" href="#" rel="%s" title="Click to toggle Sequence"></a>%s
+        <div class="%s"><div class="toggleable" style="font-weight:normal;%s"><pre>%s</pre></div></div>',
+        $show ? 'open' : 'closed',
+        $cell_name,
+        $parenthesis ? ')' : '',
+        $cell_name,
+        $show ? '' : 'display:none',
+        $full_allele
+    );
+  return $html_full_allele;
+}
 1;
