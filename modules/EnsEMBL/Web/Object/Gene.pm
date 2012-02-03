@@ -106,12 +106,13 @@ sub counts {
 #      similarity_matches => $self->count_xrefs
       similarity_matches => $self->get_xref_available,
       operons => 0,
-      structural_variation => scalar(@{$obj->slice->get_all_StructuralVariationFeatures}) + scalar(@{$obj->slice->get_all_CopyNumberVariantProbeFeatures})
     };
     if ($obj->feature_Slice->can('get_all_Operons')){
       $counts->{'operons'} = scalar @{$obj->feature_Slice->get_all_Operons};
     }
-    
+    if (my $vdb = $self->database('variation') ) {
+	$counts->{structural_variation} = scalar(@{$obj->slice->get_all_StructuralVariationFeatures}) + scalar(@{$obj->slice->get_all_CopyNumberVariantProbeFeatures});
+    }
     my $compara_db = $self->database('compara');
     
     if ($compara_db) {
