@@ -1,11 +1,26 @@
-# Ensembl module for Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment
-#
-# Copyright (c) 2007 Ensembl
-#
+=head1 LICENSE
+
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=cut
 
 =head1 NAME
 
-Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment
+Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment - 
 
 =head1 SYNOPSIS
 
@@ -24,9 +39,7 @@ Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment
 This module creates a new tree for those alignments which contain a segmental duplication. The module will runs treeBest where there are more than 3 sequences in an alignment, otherwise it will run semphy. This module is still under development.
 
 
-=head1 CONTACT
-
-Questions regarding this module should be addressed to the Ensembl development list: ensembl-dev@ebi.ac.uk
+=head1 METHODS
 
 =cut
 
