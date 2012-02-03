@@ -61,14 +61,14 @@ sub run {
 		my $mapping_id = $hit->[0];
 		my($target_info, $mapping_info) = (split("\n", $hit->[1]))[0,3];
 		my($coor_sys, $species, $seq_region_name) = (split(":", $target_info))[0,1,2];
-		my($score, $evalue, $alifrom, $alito) = (split(/ +/, $mapping_info))[2,4,8,9];
+		my($score,$bias, $evalue, $hmm_from, $hmm_to, $alifrom, $alito) = (split(/ +/, $mapping_info))[2,3,4,5,6,8,9];
 		my $strand = $alifrom > $alito ? "-1" : "1";
 		($alifrom, $alito) = ($alito, $alifrom) if $strand eq "-1";
 		my $taregt_genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('target_genome')->{"name"});
 		my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($taregt_genome_db, $seq_region_name);
 		next unless($dnafrag);	
 		push( @anchor_align_records, [ $self->param('mlssid_of_alignments'), $mapping_id, $dnafrag->dbID, $alifrom, $alito,
-						$strand, $score, 0, 0, $evalue ] );  
+						$strand, $score, $hmm_from, $hmm_to, $evalue ] );  
 	}	
 	$self->param('mapping_hits', \@anchor_align_records) if scalar( @anchor_align_records );
 	unlink("$stk_file");
