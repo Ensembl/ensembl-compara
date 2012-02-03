@@ -11,7 +11,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my $self     = shift;
   my %options  = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
-  my $defaults = { context => 20000 };
+  my $defaults = { context => 5000 };
 
   foreach (keys %options) {
     my %hash = %{$options{$_}};
