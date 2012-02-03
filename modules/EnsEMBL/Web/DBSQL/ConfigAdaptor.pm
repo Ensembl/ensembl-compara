@@ -32,12 +32,12 @@ sub new {
 }
 
 sub hub        { return $_[0]{'hub'};        }
-sub session_id { return $_[0]{'session_id'}; }
 sub user_id    { return $_[0]{'user_id'};    }
 sub servername { return $_[0]{'servername'}; }
 sub site_type  { return $_[0]{'site_type'};  }
 sub version    { return $_[0]{'version'};    }
 sub cache_tags { return $_[0]{'cache_tags'}; }
+sub session_id { return $_[0]{'session_id'} ||= $_[0]->hub->session->session_id; }
 
 sub dbh {
   my $species_defs = shift;
