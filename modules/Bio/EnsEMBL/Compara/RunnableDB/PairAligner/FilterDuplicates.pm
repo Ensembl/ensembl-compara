@@ -88,8 +88,7 @@ sub fetch_input {
       my $chunks = eval $option;
       $self->param('chunks', $chunks);
 
-      #Awful hack for now to retrieve the correct chunk
-      if ($self->analysis->logic_name() eq "query_filter_duplicates") {
+      if ($self->param('reference_species')) {
 	  $self->param('chunk_size', $chunks->{'ref'}{'chunk_size'});
 	  $self->param('overlap', $chunks->{'ref'}{'overlap'});
       } else {

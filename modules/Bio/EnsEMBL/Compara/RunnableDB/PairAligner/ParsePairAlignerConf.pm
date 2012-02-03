@@ -712,11 +712,13 @@ sub create_pair_aligner_dataflows {
 	#
 	my $ref_output_hash = {};
 	%$ref_output_hash = ('method_link_species_set_id'=>$mlss_id,
-			     'collection_name'=> $pair_aligner->{'reference_collection_name'});
+			     'collection_name'=> $pair_aligner->{'reference_collection_name'},
+			     'reference_species' => 1);
 
 	my $non_ref_output_hash = {};
 	%$non_ref_output_hash = ('method_link_species_set_id'=>$mlss_id,
-				 'collection_name'=>$pair_aligner->{'non_reference_collection_name'});
+				 'collection_name'=>$pair_aligner->{'non_reference_collection_name'},
+				 'reference_species' => 0);
 
 	$self->dataflow_output_id($ref_output_hash,3);
 	$self->dataflow_output_id($non_ref_output_hash,3);
