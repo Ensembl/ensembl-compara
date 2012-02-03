@@ -49,9 +49,11 @@ sub content {
   my $img_start  = $start;
   my $img_end    = $end;
   
+  
+  
   # Width max > length Slice > context
   if ($length >= $width && $length <= $width_max) {
-    my $new_width = 10000;
+    my $new_width = ($length < ($width_max-int($width_max/5))) ? int($length/10) : int($length-$width_max/2);
     $img_start -= $new_width; 
     $img_end   += $new_width;
   } elsif ($length > $width_max) { # length Slice > Width max
@@ -78,8 +80,8 @@ sub content {
       ', $object->type, $interval, $overview_link)
     );
   } else { # context > length Slice
-    $img_start -= $width / 2; 
-    $img_end   += $width / 2;
+    $img_start -= $width/2 - ($length/2); 
+    $img_end   += $width/2 - ($length/2);
   }
   
   my $slice        = $slice_adaptor->fetch_by_region($seq_type, $seq_region, $img_start, $img_end, 1);
