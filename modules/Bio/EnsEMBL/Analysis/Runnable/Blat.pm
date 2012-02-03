@@ -1,18 +1,30 @@
-#
-# Written by Kathryn Beal
-# Based on the module in Bio::EnsEMBL::Pipeline::Runnable::Blat
-# 
-# Copyright GRL/EBI 2007
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=cut
+
+=head1 AUTHORS
+
+Kathryn Beal
 
 =head1 NAME
 
-Bio::EnsEMBL::Analysis::Runnable::Blat
+Bio::EnsEMBL::Analysis::Runnable::Blat - 
 
 =head1 SYNOPSIS
 
@@ -35,10 +47,6 @@ Bio::EnsEMBL::Analysis::Runnable::Blat
 Blat takes a Bio::Seq (or Bio::PrimarySeq) object and runs Blat
 against a set of sequences.  The resulting output file is parsed
 to produce a set of features.
-
-=head1 CONTACT
-
-ensembl-dev@ebi.ac.uk
 
 =head1 APPENDIX
 
