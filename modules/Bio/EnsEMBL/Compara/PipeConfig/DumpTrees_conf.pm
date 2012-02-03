@@ -257,7 +257,7 @@ sub pipeline_analyses {
                 'target_dir'    => $self->o('target_dir'),
                 'cmd'           => 'find #work_dir# -name "tree.*.#extension#" | sort -t . -k2 -n | xargs cat > #target_dir#/emf/#dump_file_name#',
             },
-            -hive_capacity => -1,
+            -hive_capacity => 2,
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/emf/#dump_file_name#' } },
             },
@@ -289,7 +289,7 @@ sub pipeline_analyses {
                 'tree_type'     => $self->o('tree_type'),
                 'cmd'           => 'find #work_dir# -name "tree.*.#extension#" | sort -t . -k2 -n | tar cf #target_dir#/xml/#dump_file_name#.tar -T /dev/stdin --transform "s/^.*\//#tree_type#/"',
             },
-            -hive_capacity => -1,
+            -hive_capacity => 2,
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/xml/#dump_file_name#.tar' } },
             },
