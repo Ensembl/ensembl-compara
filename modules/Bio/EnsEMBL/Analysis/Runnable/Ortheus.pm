@@ -1,11 +1,30 @@
-# Ensembl module for Bio::EnsEMBL::Analysis::Runnable::Ortheus
-#
-# Copyright (c) 2007 Ensembl
-#
+=head1 LICENSE
+
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=cut
+
+=head1 AUTHORS
+
+Benedict Paten bjp@ebi.ac.uk
 
 =head1 NAME
 
-Bio::EnsEMBL::Analysis::Runnable::Ortheus
+Bio::EnsEMBL::Analysis::Runnable::Ortheus - 
 
 =head1 SYNOPSIS
 
@@ -26,12 +45,7 @@ ancestral sequences. Ortheus is based upon a probabilistic transducer model and 
 the evolution of both substitutions, insertions and deletions.
 
 
-=head1 CONTACT
-
-Ortheus was developed by Benedict Paten in the group of Ewan Birney at the EBI. You contact
-him at bjp (AT) ebi (DOT) ac (DOT) uk.
-
-Questions regarding this module should be addressed to the Ensembl development list: ensembl-dev@ebi.ac.uk
+=head1 METHODS
 
 =cut
 
