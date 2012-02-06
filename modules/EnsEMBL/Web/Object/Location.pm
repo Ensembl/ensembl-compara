@@ -103,6 +103,17 @@ sub counts {
   return $counts;
 }
 
+sub count_alignments {
+  my $self          = shift;
+  my $cdb           = shift || 'DATABASE_COMPARA';
+  my $c             = $self->SUPER::count_alignments($cdb);
+  my %intra_species = $self->species_defs->multi($cdb, 'INTRA_SPECIES_ALIGNMENTS');
+  
+  $c->{'patch'} = scalar @{$intra_species{'REGION_SUMMARY'}{$self->species}{$self->slice->seq_region_name} || []};
+  
+  return $c; 
+}
+
 sub short_caption {
   my $self = shift;
 
