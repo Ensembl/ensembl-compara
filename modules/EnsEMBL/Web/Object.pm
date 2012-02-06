@@ -68,18 +68,19 @@ sub DEPRECATED {
 }
 
 sub count_alignments {
-  my $self = shift;
-  my $cdb = shift || 'DATABASE_COMPARA';
-
-  my $species = $self->species;
-  my %alignments = $self->species_defs->multi($cdb, 'ALIGNMENTS');
-  my $c = { all => 0, pairwise => 0 };
+  my $self          = shift;
+  my $cdb           = shift || 'DATABASE_COMPARA';
+  my $species       = $self->species;
+  my %alignments    = $self->species_defs->multi($cdb, 'ALIGNMENTS');
+  my %intra_species = $self->species_defs->multi($cdb, 'INTRA_SPECIES_ALIGNMENTS');
+  my $c             = { all => 0, pairwise => 0, patch => 0 };
   
   foreach (grep $_->{'species'}{$species}, values %alignments) {
     $c->{'all'}++ ;
     $c->{'pairwise'}++ if $_->{'class'} =~ /pairwise_alignment/;
   }
   
+  $c->{'patch'} = scalar @{$intra_species{'REGION_SUMMARY'}{$species}{$self->slice->seq_region_name} || []};
   $c->{'multi'} = $c->{'all'} - $c->{'pairwise'};
   
   return $c; 
