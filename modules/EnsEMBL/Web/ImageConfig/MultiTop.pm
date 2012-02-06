@@ -43,11 +43,21 @@ sub init {
 }
 
 sub join_genes {
-  my ($self, $prev_species, $next_species) = @_;
+  my ($self, $chr, @slices) = @_;
+  my ($ps, $pt, $ns, $nt) = map { $_->{'species'}, $_->{'target'} } @slices;
+  my $sp         = $self->{'species'};
+  my $sd         = $self->species_defs;
+  my $multi_hash = $sd->multi_hash;
+  
+  for (map { @{$_->{'INTRA_SPECIES_ALIGNMENTS'}{'REGION_SUMMARY'}{$ps}{$pt} || []}, @{$_->{'INTRA_SPECIES_ALIGNMENTS'}{'REGION_SUMMARY'}{$ns}{$nt} || []} } map $multi_hash->{$_} || (), @{$sd->compara_like_databases}) {
+    $self->set_parameter('homologue', $_->{'homologue'}) if $_->{'species'}{"$sp--$chr"};
+  }
   
   foreach ($self->get_node('transcript')->nodes) {
-    $_->set('previous_species', $prev_species) if $prev_species;
-    $_->set('next_species', $next_species) if $next_species;
+    $_->set('previous_species', $ps) if $ps;
+    $_->set('next_species',     $ns) if $ns;
+    $_->set('previous_target',  $pt) if $pt;
+    $_->set('next_target',      $nt) if $nt;
     $_->set('join', 1);
   }
 }
