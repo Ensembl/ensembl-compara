@@ -60,10 +60,12 @@ sub href {
   my $o2 = $f->{'alternate_slice'}->strand;
   my $class = $self->colour_key($f);
   my $script = $ENV{'ENSEMBL_SCRIPT'} eq 'multicontigview' ? 'contigview' : $ENV{'ENSEMBL_SCRIPT'};
+  
   return $self->_url({
-    'action' => 'View',
-    'r'      => "$c2:$s2-$e2",
-    'class'   => $class,
+    species => $f->adaptor->db->species,
+    action  => 'View',
+    r       => "$c2:$s2-$e2",
+    class   => $class,
   });
 }
 
