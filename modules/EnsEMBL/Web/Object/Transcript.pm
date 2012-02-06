@@ -1635,7 +1635,7 @@ sub variation_data {
   my $cd_start           = $transcript->cdna_coding_start;
   my $cd_end             = $transcript->cdna_coding_end;
   my @coding_sequence    = split '', substr $transcript->seq->seq, $cd_start - 1, $cd_end - $cd_start + 1;
-  my %consequence_filter = map { $_ => 1 } $hub->param('consequence_filter');
+  my %consequence_filter = map { $_ ? ($_ => 1) : () } $hub->param('consequence_filter');
      %consequence_filter = () if join('', keys %consequence_filter) eq 'off';
   my @data;
   
