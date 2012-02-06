@@ -343,6 +343,14 @@ sub detail_panel {
       $t_allele = $display_allele;
     }
     
+    # HGVS
+    my $hgvs_c = $tva->hgvs_coding;
+       $hgvs_c =~ s/(.{35})/$1<br \/>/g;
+    my $hgvs_p = $tva->hgvs_protein;
+       $hgvs_p =~ s/(.{35})/$1<br \/>/g;
+    
+    
+    
     my %data = (
       allele     => $allele,
       t_allele   => $t_allele,
@@ -352,7 +360,7 @@ sub detail_panel {
       protein    => $prot_id ? qq{<a href="$prot_url">$prot_id</a>} : '-',
       ens_term   => join(', ', map { sprintf '%s <i>(%s)</i>', $_->label, $_->description } @$ocs),
       so_term    => join(', ', map { sprintf '%s (%s)', $_->SO_term, $hub->get_ExtURL_link($_->SO_accession, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @$ocs),
-      hgvs       => join('<br />', grep $_, $tva->hgvs_coding, $tva->hgvs_protein) || '-',
+      hgvs       => join('<br />', grep $_, $hgvs_c, $hgvs_p) || '-',
     );
     
     foreach my $oc (@$ocs) {
@@ -374,7 +382,6 @@ sub detail_panel {
         v      => $object->name,
       });
       
-      #$data{'context'} = $self->render_context($tv, $tva);
       $data{'context'} = qq{<a href="$context_url">Show in transcript</a>};
       
       # work out which exon it is in
@@ -432,7 +439,7 @@ sub detail_panel {
     }
     
     my $a_label = (length($allele) > 50) ? substr($allele,0,50).'...' : $allele;
-    $html .= $self->toggleable_table("Detail for $data{name} ($a_label) in $tr_id", join('_', $tr_id, $vf_id, substr($allele,0,50)), $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
+    $html .= $self->toggleable_table("Detail for $data{name} ($a_label) in $tr_id", join('_', $tr_id, $vf_id, $hub->param('allele')), $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
   }
   
   return $html;
