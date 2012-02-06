@@ -36,10 +36,10 @@ sub availability {
     if ($obj->isa('Bio::EnsEMBL::Variation::StructuralVariation')) {
       $availability->{'structural_variation'} = 1;
     }
-		
-		if (scalar @{$obj->get_all_SupportingStructuralVariants} != 0) {
-			$availability->{'supporting_structural_variation'} = 1;
-		}
+    
+    if (scalar @{$obj->get_all_SupportingStructuralVariants} != 0) {
+      $availability->{'supporting_structural_variation'} = 1;
+    }
 
     $self->{'_availability'} = $availability;
   }
@@ -51,9 +51,9 @@ sub short_caption {
   my $self = shift;
 
   my $type = 'Structural variation';
-	if ($self->class eq 'CNV_PROBE') {
- 		$type = 'CNV probe';
- 	}
+  if ($self->class eq 'CNV_PROBE') {
+     $type = 'CNV probe';
+   }
   my $short_type = 'S. Var';
   return $type.' displays' unless shift eq 'global';
 
@@ -66,7 +66,7 @@ sub caption {
  my $self = shift;
  my $type = 'Structural variation';
  if ($self->class eq 'CNV_PROBE') {
- 	$type = 'Copy number variation probe';
+   $type = 'Copy number variation probe';
  }
  my $caption = $type.': '.$self->name;
 
@@ -85,39 +85,81 @@ sub external_reference { my $self = shift; return (defined($self->study)) ? $sel
 sub supporting_sv      { my $self = shift; return $self->Obj->get_all_SupportingStructuralVariants;                   }
 
 sub validation_status  { 
-	my $self = shift; 
-	my $states = $self->Obj->get_all_validation_states;
-	if (scalar(@$states) and $states->[0]) {
-		return join (',',@$states);
-	}
-	else { 
-		return '';
-	}
+  my $self = shift; 
+  my $states = $self->Obj->get_all_validation_states;
+  if (scalar(@$states) and $states->[0]) {
+    return join (',',@$states);
+  }
+  else { 
+    return '';
+  }
 }    
 
 # SSV associated colours
 sub get_class_colour {
-	my $self  = shift;
-	my $class = shift;
-	
-	my %colour = (
-		'copy_number_variation'         => '#000000',
-		'insertion'                     => '#FFCC00',
+  my $self  = shift;
+  my $class = shift;
+  
+  my %colour = (
+    'copy_number_variation'         => '#000000',
+    'insertion'                     => '#FFCC00',
     'copy_number_gain'              => '#0000FF', 
     'copy_number_loss'              => '#FF0000',
-		'inversion'                     => '#9933FF', 
-		'complex_structural_alteration' => '#99CCFF',
+    'inversion'                     => '#9933FF', 
+    'complex_structural_alteration' => '#99CCFF',
     'tandem_duplication'            => '#0000FF',
-		'mobile_element_insertion'      => '#FFCC00',
-	);
-	my $c = $colour{$class};
-	$c = '#B2B2B2' if (!$c);
-	return $c;
+    'mobile_element_insertion'      => '#FFCC00',
+  );
+  my $c = $colour{$class};
+  $c = '#B2B2B2' if (!$c);
+  return $c;
 }
 
 sub get_structural_variation_annotations {
   my $self = shift;
-	return $self->Obj->get_all_StructuralVariationAnnotations;
+  return $self->Obj->get_all_StructuralVariationAnnotations;
+}
+
+
+# Variation sets ##############################################################
+
+sub get_variation_set_string {
+  my $self = shift;
+  my @vs = ();
+  my $vari_set_adaptor = $self->hub->database('variation')->get_VariationSetAdaptor;
+  my $sets = $vari_set_adaptor->fetch_all_by_StructuralVariation($self->Obj);
+
+  my $toplevel_sets = $vari_set_adaptor->fetch_all_top_VariationSets;
+  my $variation_string;
+  my %sets_observed; 
+  foreach (sort { $a->name cmp $b->name } @$sets){
+    $sets_observed{$_->name}  =1 
+  } 
+
+  foreach my $top_set (@$toplevel_sets){
+    next unless exists  $sets_observed{$top_set->name};
+    $variation_string = $top_set->name ;
+    my $sub_sets = $top_set->get_all_sub_VariationSets(1);
+    my $sub_set_string = " (";
+    foreach my $sub_set( sort { $a->name cmp $b->name } @$sub_sets ){ 
+      next unless exists $sets_observed{$sub_set->name};
+      $sub_set_string .= $sub_set->name .", ";  
+    }
+    if ($sub_set_string =~/\(\w/){
+      $sub_set_string =~s/\,\s+$//;
+      $sub_set_string .= ")";
+      $variation_string .= $sub_set_string;
+    }
+    push(@vs,$variation_string);
+  }
+  return \@vs;
+}
+
+sub get_variation_sets {
+  my $self = shift;
+  my $vari_set_adaptor = $self->hub->database('variation')->get_VariationSetAdaptor;
+  my $sets = $vari_set_adaptor->fetch_all_by_Variation($self->Obj); 
+  return $sets;
 }
 
 
@@ -135,15 +177,15 @@ sub variation_feature_mapping {
   my %data;
   foreach my $sv_feature_obj (@{ $self->get_structural_variation_features }) { 
      my $svf_id = $sv_feature_obj->dbID;
-		 $data{$svf_id}{Type}            = $sv_feature_obj->slice->coord_system_name;
+     $data{$svf_id}{Type}            = $sv_feature_obj->slice->coord_system_name;
      $data{$svf_id}{Chr}             = $sv_feature_obj->seq_region_name;
      $data{$svf_id}{start}           = $sv_feature_obj->start;
      $data{$svf_id}{end}             = $sv_feature_obj->end;
      $data{$svf_id}{strand}          = $sv_feature_obj->strand;
-		 $data{$svf_id}{outer_start}     = $sv_feature_obj->outer_start;
-		 $data{$svf_id}{inner_start}     = $sv_feature_obj->inner_start;
-	   $data{$svf_id}{inner_end}       = $sv_feature_obj->inner_end;
-		 $data{$svf_id}{outer_end}       = $sv_feature_obj->outer_end;
+     $data{$svf_id}{outer_start}     = $sv_feature_obj->outer_start;
+     $data{$svf_id}{inner_start}     = $sv_feature_obj->inner_start;
+     $data{$svf_id}{inner_end}       = $sv_feature_obj->inner_end;
+     $data{$svf_id}{outer_end}       = $sv_feature_obj->outer_end;
      $data{$svf_id}{transcript_vari} = undef;
   }
   return \%data;
@@ -175,5 +217,6 @@ sub not_unique_location {
   }
   return;
 }
+
 
 1;
