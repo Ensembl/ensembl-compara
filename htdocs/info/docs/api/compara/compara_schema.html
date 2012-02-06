@@ -61,8 +61,7 @@ secondary structure and genomic alignments.
       <li><a href="#species_set_tag">species_set_tag</a></li>
       <li><a href="#method_link">method_link</a></li>
       <li><a href="#method_link_species_set">method_link_species_set</a></li>
-      <li><a href="#analysis">analysis</a></li>
-      <li><a href="#analysis_description">analysis_description</a></li>
+      <li><a href="#method_link_species_set_tag">method_link_species_set_tag</a></li>
     </ul>
   </li>
 
@@ -93,10 +92,12 @@ secondary structure and genomic alignments.
       <li><a href="#homology_member">homology_member</a></li>
       <li><a href="#family">family</a></li>
       <li><a href="#family_member">family_member</a></li>
-      <li><a href="#protein_tree_node">protein_tree_node / super_protein_tree_node / nc_tree_node</a></li>
-      <li><a href="#protein_tree_tag">protein_tree_tag / super_protein_tree_tag / nc_tree_tag </a></li>
-      <li><a href="#protein_tree_attr">protein_tree_attr</a></li>
-      <li><a href="#protein_tree_member">protein_tree_member / super_protein_tree_member / nc_tree_member</a></li>
+      <li><a href="#gene_tree_root">gene_tree_root</a></li>
+      <li><a href="#gene_tree_root_tag">gene_tree_root_tag</a></li>
+      <li><a href="#gene_tree_node">gene_tree_node</a></li>
+      <li><a href="#gene_tree_node_tag">gene_tree_node_tag</a></li>
+      <li><a href="#gene_tree_node_attr">gene_tree_node_attr</a></li>
+      <li><a href="#gene_tree_member">gene_tree_member</a></li>
       <li><a href="#protein_tree_member_score">protein_tree_member_score</a></li>
       <li><a href="#sitewise_aln">sitewise_aln</a></li>
 
@@ -512,8 +513,6 @@ table.</p>
 
 
 <table class="spreadsheet">
-
-
   <caption>species_set table description</caption>
   <thead><tr>
     <th>Field</th>
@@ -833,231 +832,60 @@ relates a <a href="#method_link">method_link.method_link_id</a> with a set of sp
 correspond to all the EPO alignments in this database.
 </p>
 
-
 <!--
-#####################################################################
-TABLE ANALYSIS
-#####################################################################
+#######################################################################
+TABLE METHOD_LINK_SPECIES_SET_TAG
+#######################################################################
 -->
-<h4 id="analysis">analysis</h4>
+<h4 id="method_link_species_set_tag">method_link_species_set_tag</h4>
 
-
-<p>This table is mainly used for production purposes.</p>
-
-
+<p>
+Contains serveral tag/value data associated with
+method_link_species_set entries
+</p>
 <table class="spreadsheet">
-  <caption>analysis table description</caption>
-  <thead><tr>
-    <th>Field</th>
-    <th>Type</th>
-    <th>Null</th>
-    <th>Key</th>
-    <th>Default</th>
-    <th>Extra</th>
-    <th>Description</th>
-  </tr>
-  </thead>
+  <caption>method_link_species_set_tag</caption>
+    <thead></tr>
+      <th>Field</th>
+      <th>Type</th>
+      <th>Null</th>
+      <th>Key</th>
+      <th>Default</th>
+      <th>Extra</th>
+      <th>Description</th>
+    </tr>
+    </thead>
   <tbody>
     <tr>
-      <td>analysis_id</td>
+      <td>method_link_species_set_id</td>
       <td>int(10) unsigned</td>
       <td>NO</td>
-      <td>PRI</td>
+      <td>MUL</td>
       <td></td>
-      <td>auto_increment</td>
-      <td>internal unique ID</td>
+      <td></td>
+      <td>external reference to method_link_species_set.method_link_species_set_id</td>
     </tr>
     <tr>
-      <td>created</td>
-      <td>datetime</td>
+      <td>tag</td>
+      <td>varchar(50)</td>
+      <td>NO</td>
+      <td>MUL</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>value</td>
+      <td>mediumtext</td>
       <td>NO</td>
       <td></td>
-      <td>0000-00-00 00:00:00</td>
       <td></td>
-      <td>date to distinguish newer and older versions off the same analysis. Not well maintained so far.</td>
-    </tr>
-    <tr>
-      <td>logic_name</td>
-      <td>varchar(40)</td>
-      <td>NO</td>
-      <td>UNI</td>
-      <td></td>
-      <td></td>
-      <td>string to identify the analysis. Used mainly inside pipeline.</td>
-    </tr>
-    <tr>
-      <td>db</td>
-      <td>varchar(120)</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td rowspan="2">db should be a database name, db version the version of that db</td>
-    </tr>
-    <tr>
-      <td>db_version</td>
-      <td>varchar(40)</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>db_file</td>
-      <td>varchar(255)</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td>the file system location of that database, probably wiser to generate from just db and configurations</td>
-    </tr>
-    <tr>
-      <td>program</td>
-      <td>varchar(255)</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td rowspan="3">The binary used to create a feature. Similar semantic to above</td>
-    </tr>
-    <tr>
-      <td>program_version</td>
-      <td>varchar(40)</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>program_file</td>
-      <td>varchar(255)</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>parameters</td>
-      <td>text</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td>a parameter string which is processed by the perl module</td>
-    </tr>
-    <tr>
-      <td>module</td>
-      <td>varchar(255)</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td rowspan="2">Perl module names (RunnableDBS usually) executing this analysis</td>
-    </tr>
-    <tr>
-      <td>module_version</td>
-      <td>varchar(40)</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>gff_source</td>
-      <td>varchar(40)</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td rowspan="2">how to make a gff dump from features with this analysis</td>
-    </tr>
-    <tr>
-      <td>gff_feature</td>
-      <td>varchar(40)</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-    </tr>
-  </tbody>
-</table>
-
-
-<!--
-#####################################################################
-TABLE ANALYSIS_DESCRIPTION
-#####################################################################
--->
-<h4 id="analysis_description">analysis_description</h4>
-
-
-<p>This table has been added to comply with core
-Bio::EnsEMBL::DBSQL::AnalysisAdaptor requirements.</p>
-
-
-<table class="spreadsheet">
-
-
-  <caption>analysis_description table description</caption>
-  <thead><tr>
-    <th>Field</th>
-    <th>Type</th>
-    <th>Null</th>
-    <th>Key</th>
-    <th>Default</th>
-    <th>Extra</th>
-    <th>Description</th>
-  </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>analysis_id</td>
-      <td>int(10) unsigned</td>
-      <td>NO</td>
-      <td>PRI</td>
-      <td></td>
-      <td></td>
-      <td>external reference to <a href="#analysis">analysis.analysis_id</a></td>
-    </tr>
-    <tr>
-      <td>description</td>
-      <td>text</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>display_label</td>
-      <td>varchar(255)</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>displayable</td>
-      <td>tinyint(1)</td>
-      <td>NO</td>
-      <td></td>
-      <td>1</td>
-      <td></td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>web_data</td>
-      <td>text</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
       <td></td>
       <td></td>
     </tr>
   </tbody>
-</table>
 
+</table>
 
 <!--
 #####################################################################
@@ -3365,13 +3193,129 @@ be retieved using the <a href="#member">member_id</a>s. The multiple
 alignment can be restored using the cigar_lines.
 </p>
 
+<!--
+#####################################################################
+TABLE GENE_TREE_ROOT
+#####################################################################
+-->
+<h4 id="gene_tree_root">gene_tree_root</h4>
+
+
+<p>
+Header table to gene trees
+</p>
+
+
+<table class="spreadsheet">
+  <caption>gene_tree_root table description</caption>
+  <thead><tr>
+    <th>Field</th>
+    <th>Type</th>
+    <th>Null</th>
+    <th>Key</th>
+    <th>Default</th>
+    <th>Extra</th>
+    <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>root_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>PRI</td>
+      <td></td>
+      <td>auto_increment</td>
+      <td>internal unique ID</td>
+    </tr>
+    <tr>
+      <td>tree_type</td>
+      <td>enum('proteinclusterset','proteinsupertree','proteintree','ncrnatree','ncrnaclusterset')</td>
+      <td>NO</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>the type of tree</td>
+    </tr>
+    <tr>
+      <td>clusterset_id</td>
+      <td>int(10) unsigned</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>root_id for the set of clusters</td>
+    </tr>
+    <tr>
+      <td>method_link_species_set_id</td>
+      <td>int(10) unsigned</td>
+      <td>YES</td>
+      <td>MUL</td>
+      <td>NULL</td>
+      <td></td>
+      <td>links to method_link_species_set.method_link_species_set_id</td>
+    </tr>
+    <tr>
+      <td>stable_id</td>
+      <td>varchar(40)</td>
+      <td>YES</td>
+      <td>UNI</td>
+      <td></td>
+      <td></td>
+      <td>Stable id for the tree</td>
+    </tr>
+    <tr>
+      <td>version</td>
+      <td>int(10)</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>version of the stable_id</td>
+    </tr>
+  </tbody>
+</table>
+
+
+<p>The database is able to contain several sets of trees computed on
+  the same genes. We call these analysis "clustersets" and they can be
+  distinguished with the clusterset_id field. Traditionally, the
+  compara databases have contained only one clusterset
+  (clusterset_id=1), but currently (starting on release 66) we have at
+  least 2 (one for protein trees and one for ncRNA trees). The
+  following SQL query retrieves all the node_id of the current clustersets<p>
+
+<pre>
+mysql&gt; SELECT * from gene_tree_root where tree_type like '%clusterset%';
++-----------+-------------------+---------------+----------------------------+-----------+---------+
+| root_id   | tree_type         | clusterset_id | method_link_species_set_id | stable_id | version |
++-----------+-------------------+---------------+----------------------------+-----------+---------+
+|         1 | proteinclusterset |             1 |                      40079 | NULL      |    NULL |
+| 100000001 | ncrnaclusterset   |          NULL |                      40080 | NULL      |    NULL |
++-----------+-------------------+---------------+----------------------------+-----------+---------+
+</pre>
+
+<p> To get the number of trees of each type:</p>
+<pre>mysql&gt; SELECT tree_type, count(*) FROM gene_tree_root group by
+  tree_type order by count(*);
++-------------------+----------+
+| tree_type         | count(*) |
++-------------------+----------+
+| proteinclusterset |        1 |
+| ncrnaclusterset   |        1 |
+| ncrnatree         |      565 |
+| proteinsupertree  |      575 |
+| proteintree       |    19491 |
++-------------------+----------+
+</pre>
+
 
 <!--
 #####################################################################
-TABLE PROTEIN_TREE_NODE
+TABLE GENE_TREE_NODE
 #####################################################################
 -->
-<h4 id="protein_tree_node">protein_tree_node / super_protein_tree_node / nc_tree_node</h4>
+<h4 id="gene_tree_node">gene_tree_node</h4>
 
 
 <p>
@@ -3379,7 +3323,7 @@ Contains the data structure of each tree.</p>
 
 
 <table class="spreadsheet">
-  <caption>protein_tree_node / super_protein_tree_node / nc_tree_node table description</caption>
+  <caption>gene_tree_node table description</caption>
   <thead><tr>
     <th>Field</th>
     <th>Type</th>
@@ -3419,15 +3363,6 @@ Contains the data structure of each tree.</p>
       <td>link to the root node</td>
     </tr>
     <tr>
-      <td>clusterset_id</td>
-      <td>int(10) unsigned</td>
-      <td>NO</td>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td>node id of the set of clusters</td>
-    </tr>
-    <tr>
       <td>left_index</td>
       <td>int(10)</td>
       <td>NO</td>
@@ -3458,36 +3393,39 @@ Contains the data structure of each tree.</p>
 </table>
 
 
-<p>The database is able to contain several sets of trees computed on the same genes. We call these analysis "clustersets" and they can be distinguished with the clusterset_id field. So far, all the compara databases have contained only one clusterset (clusterset_id=1), but it may be different in the future. The following SQL query retrieves all the clustersets (usually, only one row in the resultset)<p>
-
-<pre>
-mysql&gt; SELECT * FROM protein_tree_node WHERE parent_id IS NULL;
-+---------+-----------+---------+---------------+------------+-------------+--------------------+
-| node_id | parent_id | root_id | clusterset_id | left_index | right_index | distance_to_parent |
-+---------+-----------+---------+---------------+------------+-------------+--------------------+
-|       1 |      NULL |    NULL |             1 |          0 |           0 |                  1 |
-+---------+-----------+---------+---------------+------------+-------------+--------------------+
-</pre>
-
 <p>In our data structure, all the trees of a given clusterset are arbitrarily connected to the same root. This eases to store and query in the same database the data from independant tree building analysis. Hence the "biological roots" of the trees are the children nodes of the main clusterset root. For instance the following SQL query</p>
 
-<pre>mysql&gt; SELECT COUNT(*) FROM protein_tree_node WHERE parent_id = 1;
-+----------+
-| COUNT(*) |
-+----------+
-|    19217 |
-+----------+
+<pre>mysql&gt; SELECT gtn.node_id FROM gene_tree_node gtn LEFT JOIN gene_tree_root gtr ON (gtn.parent_id = gtr.root_id) WHERE gtr.tree_type = 'proteinclusterset';
+
++---------+
+| node_id |
++---------+
+|       2 |
+|     242 |
+|     526 |
+|     537 |
+|     565 |
++---------+
+...
++---------+
+| 1007387 |
+| 1007393 |
+| 1007400 |
+| 1007405 |
+| 1007409 |
++---------+
+18916 rows in set (0.34 sec)
 </pre>
 
-<p>will return the number of independant trees stored in the database, and linked to to the default clusterset (id=1).</p>
+<p>will return the root nodes of the independant protein trees stored in the database</p>
 
 
 <!--
 #####################################################################
-TABLE PROTEIN_TREE_MEMBER
+TABLE GENE_TREE_MEMBER
 #####################################################################
 -->
-<h4 id="protein_tree_member">protein_tree_member / super_protein_tree_member / nc_tree_member</h4>
+<h4 id="gene_tree_member">gene_tree_member</h4>
 
 
 <p>
@@ -3504,7 +3442,7 @@ multiple alignment, then cigar_start/cigar_end should be set to their
 correct value.</p>
 
 <table class="spreadsheet">
-  <caption>protein_tree_member / super_protein_tree_member / nc_tree_member table description</caption>
+  <caption>gene_tree_member</caption>
   <thead><tr>
     <th>Field</th>
     <th>Type</th>
@@ -3526,15 +3464,6 @@ correct value.</p>
       <td>the id of node associated with this name</td>
     </tr>
     <tr>
-      <td>root_id</td>
-      <td>int(10) unsigned</td>
-      <td>NO</td>
-      <td>NUL</td>
-      <td></td>
-      <td></td>
-      <td>the id of the tree root</td>
-    </tr>
-    <tr>
       <td>member_id</td>
       <td>int(10) unsigned</td>
       <td>NO</td>
@@ -3542,15 +3471,6 @@ correct value.</p>
       <td></td>
       <td></td>
       <td>external reference to member.member_id. &nbsp;Should always link to a protein (usually member.source_name='ENSEMBLPEP')</td>
-    </tr>
-    <tr>
-      <td>method_link_species_set_id</td>
-      <td>int(10) unsigned</td>
-      <td>NO</td>
-      <td></td>
-      <td></td>
-      <td></td>
-      <td>external reference to method_link_species_set.method_link_species_set_id</td>
     </tr>
     <tr>
       <td>cigar_line</td>
@@ -3676,10 +3596,10 @@ to allow certain nodes (leaves) to have aligned protein member_scores attached t
 
 <!--
 #####################################################################
-TABLE PROTEIN_TREE_TAG
+TABLE GENE_TREE_NODE_TAG
 #####################################################################
 -->
-<h4 id="protein_tree_tag">protein_tree_tag / super_protein_tree_tag / nc_tree_tag</h4>
+<h4 id="gene_tree_tag">gene_tree_tag</h4>
 
 
 <p>
@@ -3688,7 +3608,7 @@ Contains several tag/value data attached to node_ids
 
 
 <table class="spreadsheet">
-  <caption>protein_tree_tag / super_protein_tree_tag / nc_tree_tag table description</caption>
+  <caption>gene_tree_node_tag table description</caption>
   <thead><tr>
     <th>Field</th>
     <th>Type</th>
@@ -3707,7 +3627,7 @@ Contains several tag/value data attached to node_ids
       <td>MUL</td>
       <td></td>
       <td></td>
-      <td>external reference to protein_tree_node.node_id</td>
+      <td>external reference to gene_tree_node.node_id</td>
     </tr>
     <tr>
       <td>tag</td>
@@ -3732,10 +3652,10 @@ Contains several tag/value data attached to node_ids
 
 <!--
 #####################################################################
-TABLE PROTEIN_TREE_ATTR
+TABLE GENE_TREE_NODE_ATTR
 #####################################################################
 -->
-<h4 id="protein_tree_attr">protein_tree_attr</h4>
+<h4 id="gene_tree_node_attr">gene_tree_node_attr</h4>
 
 
 <p>
@@ -3744,7 +3664,7 @@ Contains several protein tree attributes data attached to node_ids
 
 
 <table class="spreadsheet">
-  <caption>protein_tree_attr table description</caption>
+  <caption>gene_tree_node_attr table description</caption>
   <thead><tr>
     <th>Field</th>
     <th>Type</th>
@@ -3812,7 +3732,7 @@ Contains several protein tree attributes data attached to node_ids
     </tr>
     <tr>
       <td>tree_suport</td>
-      <td>set('phyml_nt','nj_ds','phyml_aa','nj_dn','nj_mm')</td>
+      <td>set('phyml_nt','nj_ds','phyml_aa','nj_dn','nj_mm','quicktree')</td>
       <td>YES</td>
       <td></td>
       <td>NULL</td>
@@ -3826,6 +3746,7 @@ Contains several protein tree attributes data attached to node_ids
           <li><strong>nj_dn</strong>: Neighbor-joining tree built using dn as a distance (number of non-synonymous changes)</li>
           <li><strong>nj_ds</strong>: Neighbor-joining tree built using ds as a distance (number of synonymous changes)</li>
           <li><strong>nj_mm</strong>: Neighbor-joining tree built using the "p-distance"</li>
+          <li><strong>quicktree</strong>: Neighbor-joining tree using QuickTree</li>
         </ul>
       </td>
     </tr>
@@ -3836,19 +3757,19 @@ Contains several protein tree attributes data attached to node_ids
 
 <!--
 #####################################################################
-TABLE NC_TREE_TAG
+TABLE GENE_TREE_ROOT_TAG
 #####################################################################
 -->
-<h4 id="protein_tree_attr">nc_tree_attr</h4>
+<h4 id="gene_tree_root_tag">gene_tree_root_tagr</h4>
 
 
 <p>
-Contains several nc tree attributes for ncRNA node_ids
+Contains several tag/value data for gene_tree_roots
 </p>
 
 
 <table class="spreadsheet">
-  <caption>nc_tree_attr table description</caption>
+  <caption>gene_tree_root_tag table description</caption>
   <thead><tr>
     <th>Field</th>
     <th>Type</th>
@@ -3861,85 +3782,31 @@ Contains several nc tree attributes for ncRNA node_ids
   </thead>
   <tbody>
     <tr>
-      <td>node_id</td>
+      <td>root_id</td>
       <td>int(10) unsigned</td>
       <td>NO</td>
       <td>PRI</td>
       <td></td>
       <td></td>
-      <td>external reference to protein_tree_node.node_id</td>
+      <td>external reference to gene_tree_root.node_id</td>
     </tr>
     <tr>
-      <td>duplication</td>
-      <td>tinyint(3) unsigned</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td>if the gene is involved in a duplication or not</td>
-    </tr>
-    <tr>
-      <td>taxon_id</td>
-      <td>int(10) unsigned</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td>refers to ncbi_taxa_node.node_id</td>
-    </tr>
-    <tr>
-      <td>taxon_name</td>
-      <td>varchar(255)</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td>refers to ncbi_taxa_name.name where ncbi_taxa_name.name_class='scientific name'</td>
-    </tr>
-    <tr>
-      <td>bootstrap</td>
-      <td>tinyint(3) unsigned</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td>the bootstrap value of the node in tree</td>
-    </tr>
-    <tr>
-      <td>duplication_confidence_score</td>
-      <td>double(5,4)</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>species_intersection_score</td>
-      <td>tinyint(3) unsigned</td>
-      <td>YES</td>
-      <td></td>
-      <td>NULL</td>
-      <td></td>
-      <td></td>
-    </tr>
-    <tr>
-      <td>acc_name</td>
+      <td>tag</td>
       <td>varchar(50)</td>
-      <td>YES</td>
+      <td>NO</td>
       <td></td>
-      <td>NULL</td>
       <td></td>
-      <td>name of the (RFAM) family this node belongs to</td>
+      <td></td>
+      <td></td>
     </tr>
     <tr>
-      <td>node_type</td>
-      <td>enum('duplication','dubious','speciation')</td>
-      <td>YES</td>
+      <td>value</td>
+      <td>mediumtext</td>
+      <td>NO</td>
       <td></td>
-      <td>NULL</td>
       <td></td>
-      <td>type of homology</td>
+      <td></td>
+      <td></td>
     </tr>
   </tbody>
 </table>
