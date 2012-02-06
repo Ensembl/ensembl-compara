@@ -58,43 +58,44 @@ sub init {
 }
 
 sub multi {
-  my ($self, $methods, $pos, $total, @slices) = @_;
- 
+  my ($self, $methods, $chr, $pos, $total, @slices) = @_;
   my $sp         = $self->{'species'};
   my $multi_hash = $self->species_defs->multi_hash;
   my $p          = $pos == $total && $total > 2 ? 2 : 1;
-  my $i;
-  my %alignments;
-  my @strands;
+  my ($i, %alignments, @strands);
   
-  foreach my $db (@{$self->species_defs->compara_like_databases||[]}) {
+  $_->{'species_check'} = $_->{'species'} eq $sp ? join '--', grep $_, $_->{'species'}, $_->{'target'} : $_->{'species'} for @slices;
+  
+  foreach my $db (@{$self->species_defs->compara_like_databases || []}) {
     next unless exists $multi_hash->{$db};
     
-    foreach (values %{$multi_hash->{$db}->{'ALIGNMENTS'}}) {
+    foreach (values %{$multi_hash->{$db}{'ALIGNMENTS'}}, @{$multi_hash->{$db}{'INTRA_SPECIES_ALIGNMENTS'}{'REGION_SUMMARY'}{$sp}{$chr} || []}) {
       next unless $methods->{$_->{'type'}};
       next unless $_->{'class'} =~ /pairwise_alignment/;
-      next unless $_->{'species'}->{$sp};
+      next unless $_->{'species'}{$sp} || $_->{'species'}{"$sp--$chr"};
       
-      my %align = %$_;
-      
-      next unless grep $align{'species'}->{$_->{'species'}}, @slices;
+      my %align = %$_; # Make a copy for modification
       
       $i = $p;
       
       foreach (@slices) {
-        if ($align{'species'}->{$_->{'species'}}) {
-          $align{'order'}     = $i;
-          $align{'other_ori'} = $_->{'ori'};
-          $align{'gene'}      = $_->{'g'};
+        if ($align{'species'}{$_->{'species_check'}}) {
+          $align{'order'} = $i;
+          $align{'ori'}   = $_->{'strand'};
+          $align{'gene'}  = $_->{'g'};
           last;
         }
         
         $i++;
       }
       
+      next unless $align{'order'};
+      
       $align{'db'} = lc substr $db, 9;
       
       push @{$alignments{$align{'order'}}}, \%align;
+      
+      $self->set_parameter('homologue', $align{'homologue'});
     }
   }
   
@@ -115,7 +116,7 @@ sub multi {
   
   foreach (sort keys %alignments) {
     my $strand = shift @strands;
-
+    
     foreach my $align (sort { $a->{'type'} cmp $b->{'type'} } @{$alignments{$_}}) {
       my ($other_species) = grep $_ ne $sp, keys %{$align->{'species'}};
       
@@ -124,13 +125,14 @@ sub multi {
           glyphset                   => '_alignment_pairwise',
           colourset                  => 'pairwise',
           name                       => $align->{'name'},
-          species                    => $other_species,
+          species                    => [split '--', $other_species]->[0],
           strand                     => $strand,
           display                    => $methods->{$align->{'type'}},
           db                         => $align->{'db'},
           type                       => $align->{'type'},
-          ori                        => $align->{'other_ori'},
+          ori                        => $align->{'ori'},
           method_link_species_set_id => $align->{'id'},
+          target                     => $align->{'target_name'},
           join                       => 1,
         })
       );
@@ -140,15 +142,25 @@ sub multi {
 
 sub join_genes {
   my $self = shift;
-  my ($pos, $total, @species) = @_;
+  my ($pos, $total, @slices) = @_;
   
-  my ($prev_species, $next_species) = @species;
-     ($prev_species, $next_species) = ('', $prev_species) if ($pos == 1 && $total == 2) || ($pos == 2 && $total > 2);
-  $next_species = $prev_species if $pos > 2 && $pos < $total && $total > 3;
+  my ($prev_species, $prev_target, $next_species, $next_target) = map { $_->{'species'}, $_->{'target'} } @slices;
+  
+  if (($pos == 1 && $total == 2) || ($pos == 2 && $total > 2)) {
+     ($prev_species, $next_species) = ('', $prev_species);
+     ($prev_target,  $next_target)  = ('', $prev_target);
+  }
+  
+  if ($pos > 2 && $pos < $total && $total > 3) {
+    $next_species = $prev_species;
+    $next_target  = $prev_target;
+  }
   
   foreach ($self->get_node('transcript')->nodes) {
     $_->set('previous_species', $prev_species) if $prev_species;
-    $_->set('next_species', $next_species) if $next_species;
+    $_->set('next_species',     $next_species) if $next_species;
+    $_->set('previous_target',  $prev_target)  if $prev_target;
+    $_->set('next_target',      $next_target)  if $next_target;
     $_->set('join', 1);
   }
 }
