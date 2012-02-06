@@ -32,12 +32,13 @@ sub content {
   my $primary_species = $hub->species;
   my $primary_strand  = $primary_slice->strand;
   my $slices          = $object->multi_locations;
+  my $seq_region_name = $object->seq_region_name;
   my $short_name      = $slices->[0]->{'short_name'};
   my $max             = scalar @$slices;
   my $base_url        = $hub->url($hub->multi_params);
   my $s               = $hub->get_viewconfig('MultiTop')->get('show_top_panel') eq 'yes' ? 3 : 2;
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
-  my $methods         = { BLASTZ_NET => $hub->param('opt_pairwise_blastz'), TRANSLATED_BLAT_NET => $hub->param('opt_pairwise_tblat') };
+  my $methods         = { BLASTZ_NET => $hub->param('opt_pairwise_blastz'), TRANSLATED_BLAT_NET => $hub->param('opt_pairwise_tblat'), LASTZ_PATCH => $hub->param('opt_pairwise_lpatch') };
   my $join_alignments = grep $_ ne 'off', values %$methods;
   my $join_genes      = $hub->param('opt_join_genes') eq 'on';
   my $compara_db      = $join_genes ? new EnsEMBL::Web::DBSQL::DBConnection($primary_species)->_get_compara_database : undef;
@@ -46,7 +47,7 @@ sub content {
   my @images;
   
   $methods->{'LASTZ_NET'} = $methods->{'BLASTZ_NET'};
-
+  
   foreach (@$slices) {
     my $image_config   = $hub->get_imageconfig('MultiBottom', "contigview_bottom_$i", $_->{'species'});
     my $highlight_gene = $hub->param('g' . ($i - 1));
@@ -66,15 +67,15 @@ sub content {
     $_->{'slice'}->adaptor->db->set_adaptor('compara', $compara_db) if $compara_db;
     
     if ($i == 1) {
-      $image_config->multi($methods, $i, $max, { species => $slices->[$i]->{'species'}, ori => $slices->[$i]->{'strand'} }) if $join_alignments && $max == 2 && $slices->[$i]->{'species'} ne $primary_species;
-      $image_config->join_genes($i, $max, $slices->[$i]->{'species'}) if $join_genes && $max == 2;
+      $image_config->multi($methods, $seq_region_name, $i, $max, $slices->[$i]) if $join_alignments && $max == 2;
+      $image_config->join_genes($i, $max, $slices->[$i]) if $join_genes && $max == 2;
       
       push @images, $primary_slice, $image_config if $max < 3;
       
       $primary_image_config = $image_config;
     } else {
-      $image_config->multi($methods, $i, $max, { species => $primary_species, ori => $primary_strand }) if $join_alignments && $_->{'species'} ne $primary_species;
-      $image_config->join_genes($i, $max, $primary_species) if $join_genes;
+      $image_config->multi($methods, $_->{'target'} || $seq_region_name, $i, $max, $slices->[0]) if $join_alignments;
+      $image_config->join_genes($i, $max, $slices->[0]) if $join_genes;
       $image_config->highlight($highlight_gene) if $highlight_gene;
       
       push @images, $_->{'slice'}, $image_config;
@@ -96,13 +97,11 @@ sub content {
         }
         
         if ($join_alignments) {
-          my @sl = map { $slices->[$_]->{'species'} eq $primary_species ? {} : { species => $slices->[$_]->{'species'}, ori => $slices->[$_]->{'strand'} }} $i - 1, $i;
-          
           $primary_image_config->get_node('scalebar')->set('caption', $short_name);
-          $primary_image_config->multi($methods, 1, $max, @sl);
+          $primary_image_config->multi($methods, $seq_region_name, 1, $max, map $slices->[$_], $i - 1, $i);
         }
         
-        $primary_image_config->join_genes(1, $max, map $slices->[$_]->{'species'}, $i-1, $i) if $join_genes;
+        $primary_image_config->join_genes(1, $max, map $slices->[$_], $i - 1, $i) if $join_genes;
         
         push @images, $primary_slice, $primary_image_config;
       }
