@@ -73,7 +73,7 @@ sub content {
     $image_config->highlight($highlight_gene) if $highlight_gene;
     
     if ($join_genes) {
-      $image_config->join_genes(map $_ >= 0 && $_ < $max ? $slices->[$_]->{'species'} : '', $i-2, $i);
+      $image_config->join_genes($slices->[$i-1]{'slice'}->seq_region_name, map $_ >= 0 && $_ < $max ? $slices->[$_] : {}, $i-2, $i);
       $slice->adaptor->db->set_adaptor('compara', $compara_db);
     }
     
