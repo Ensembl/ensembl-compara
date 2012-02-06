@@ -29,7 +29,7 @@ FROM gene_tree_node AS node
 	LEFT JOIN gene_tree_root AS root ON root.root_id=node.node_id
 	LEFT JOIN gene_tree_node_attr AS attr ON attr.node_id=node.node_id
 	LEFT JOIN gene_tree_node AS parent ON node.root_id=parent.root_id AND parent.left_index<node.left_index AND node.right_index<parent.right_index
-	LEFT JOIN gene_tree_node pip ON pip.node_id=parent.parent_id
+	LEFT JOIN gene_tree_node pip ON pip.node_id=parent.parent_id AND pip.root_id=node.root_id
 	LEFT JOIN gene_tree_member ptm ON node.node_id=ptm.node_id
 	LEFT JOIN member m USING(member_id)
 	LEFT JOIN genome_db g USING(genome_db_id)
