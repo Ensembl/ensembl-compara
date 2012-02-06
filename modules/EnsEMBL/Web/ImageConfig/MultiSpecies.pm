@@ -37,8 +37,10 @@ sub species_list {
     my $species_defs = $self->species_defs;
     my $referer      = $self->hub->referer;
     my $params       = $referer->{'params'};
+    my %seen;
+    my @species = grep !$seen{$_}++, $referer->{'ENSEMBL_SPECIES'}, map [ split '--', $params->{"s$_"}[0] ]->[0], sort { $a <=> $b } map { /^s(\d+)$/ ? $1 : () } keys %$params;
     
-    $self->{'species_list'} = [ map [ $_, $species_defs->SPECIES_COMMON_NAME($_) ], $referer->{'ENSEMBL_SPECIES'}, map $params->{"s$_"}->[0], sort { $a <=> $b } map { /^s(\d+)$/ ? $1 : () } keys %$params ];
+    $self->{'species_list'} = [ map [ $_, $species_defs->SPECIES_COMMON_NAME($_) ], @species ];
   }
   
   return $self->{'species_list'};
