@@ -820,6 +820,7 @@ sub _summarise_compara_db {
         and ss.genome_db_id = gd.genome_db_id 
         and mls.method_link_id = ml.method_link_id
         and ml.type not like "%PARALOGUES"
+        and mls.source != "ucsc"
       group by mls.method_link_species_set_id, mls.method_link_id
       having count = 1
   ');
