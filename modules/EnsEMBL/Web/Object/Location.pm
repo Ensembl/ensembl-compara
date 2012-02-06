@@ -89,7 +89,7 @@ sub counts {
     $counts = {
       synteny             => scalar keys %{$synteny{$self->species}||{}},
       alignments          => $alignments->{'all'},
-      pairwise_alignments => $alignments->{'pairwise'}
+      pairwise_alignments => $alignments->{'pairwise'} + $alignments->{'patch'}
     };
     
     $counts->{'reseq_strains'} = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'} if $self->species_defs->databases->{'DATABASE_VARIATION'};
