@@ -90,6 +90,7 @@ sub render_Text {
 #  return;
 
   my $gcolour = $glyph->colour() || "black";
+  $gcolour = $self->{'colourmap'}->hex_by_name( $gcolour ); 
   my $text  = $glyph->text();
 
 	my($x,$y) = $self->XY($glyph->pixelx,$glyph->pixely);
@@ -100,7 +101,7 @@ sub render_Text {
   my $S = ($glyph->{'ptsize'}||8)* $self->{sf};
   my $T = $self->{'canvas'}{'t'};
      $T->font( $self->{'canvas'}{'font'}, $S );
-     $T->fillcolor( $gcolour ); 
+     $T->fillcolor( '#'.$gcolour ); 
   if( $glyph->{'valign'} eq 'top' ) {
     $y -= $S;
   } elsif( $glyph->{'valign'} ne 'bottom' ) {
