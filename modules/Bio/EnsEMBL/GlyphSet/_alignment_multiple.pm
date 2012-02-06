@@ -69,8 +69,6 @@ sub draw_features {
       my $id          = 10; 
       my $max_contig  = 250000;
       
-      $zmenu->{'r'} = "$chr:$block_start-$block_end";
-      
       # use 'score' param to identify constrained elements track - 
       # in which case we show coordinates just for the block
       if ($constrained_element) {
@@ -85,6 +83,8 @@ sub draw_features {
         $zmenu->{'id'}     = $f->{'dbID'};
         $zmenu->{'ref_id'} = $f->{'ref_id'} if $f->{'ref_id'};
       }
+      
+      $zmenu->{'r'} = "$chr:$block_start-$block_end";
       
       if ($draw_cigar) {
         my $to_push = $self->Composite({
