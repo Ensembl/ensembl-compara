@@ -19,6 +19,7 @@ sub init {
   $self->set_defaults({
     opt_pairwise_blastz => 'normal',
     opt_pairwise_tblat  => 'normal',
+    opt_pairwise_lpatch => 'normal',
     opt_join_genes      => 'off',
   });
 }
@@ -43,29 +44,19 @@ sub form {
   
   $self->add_fieldset('Comparative features');
   
-  $self->add_form_element({
-    type   => 'DropDown',
-    select => 'select',
-    label  => 'BLASTz/LASTz net pairwise alignments',
-    name   => 'opt_pairwise_blastz',
-    values => [
-      { value => 0,         name => 'Off'     },
-      { value => 'normal',  name => 'Normal'  },
-      { value => 'compact', name => 'Compact' },
-    ],
-  });
-  
-  $self->add_form_element({
-    type   => 'DropDown',
-    select => 'select',
-    label  => 'Translated BLAT net pairwise alignments',
-    name   => 'opt_pairwise_tblat',
-    values => [
-      { value => 0,         name => 'Off'     },
-      { value => 'normal',  name => 'Normal'  },
-      { value => 'compact', name => 'Compact' },
-    ],
-  });
+  foreach ([ 'blastz', 'BLASTz/LASTz net pairwise alignments' ], [ 'tblat', 'Translated BLAT net pairwise alignments' ], [ 'lpatch', 'LASTz patch alignments' ]) {
+    $self->add_form_element({
+      type   => 'DropDown',
+      select => 'select',
+      name   => "opt_pairwise_$_->[0]",
+      label  => $_->[1],
+      values => [
+        { value => 0,         name => 'Off'     },
+        { value => 'normal',  name => 'Normal'  },
+        { value => 'compact', name => 'Compact' },
+      ],
+    });
+  }
   
   $self->add_form_element({
     type  => 'CheckBox', 
