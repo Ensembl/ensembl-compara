@@ -134,6 +134,7 @@ sub multi {
           method_link_species_set_id => $align->{'id'},
           target                     => $align->{'target_name'},
           join                       => 1,
+          menu                       => 'no'
         })
       );
     }
