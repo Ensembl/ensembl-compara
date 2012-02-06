@@ -125,14 +125,17 @@ sub render_collapsed {
 
     if ($link) {
       if ($gene_stable_id) {
-        my @gene_tags;
-        my $alt_alleles = $gene->get_all_alt_alleles;
+        my $alt_alleles     = $gene->get_all_alt_alleles;
+        my $seq_region_name = $gene->slice->seq_region_name;
+        my ($target, $legend, @gene_tags);
         
         if ($previous_species) {
           for ($self->get_homologous_gene_ids($gene, $previous_species, $join_types)) {
-            $self->join_tag($composite2, "$gene_stable_id:$_->[0]", 0.5, 0.5, $_->[1], 'line', $join_z);
+            $target = $previous_target ? ":$seq_region_name:$previous_target" : '';
             
-            (my $legend = $_->[2]) =~ s/_multi/ 1-to-many or many-to-many/;
+            $self->join_tag($composite2, "$gene_stable_id:$_->[0]$target", 0.5, 0.5, $_->[1], 'line', $join_z);
+            
+            ($legend = $_->[2]) =~ s/_multi/ 1-to-many or many-to-many/;
             $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
             $config->{'legend_features'}{'joins'}{'legend'}{ucfirst $legend} = $_->[1];
           }
@@ -142,9 +145,11 @@ sub render_collapsed {
 
         if ($next_species) {
           for ($self->get_homologous_gene_ids($gene, $next_species, $join_types)) {
-            $self->join_tag($composite2, "$_->[0]:$gene_stable_id", 0.5, 0.5, $_->[1], 'line', $join_z);
+            $target = $next_target ? ":$next_target:$seq_region_name" : '';
             
-            (my $legend = $_->[2]) =~ s/_multi/ 1-to-many or many-to-many/;
+            $self->join_tag($composite2, "$_->[0]:$gene_stable_id$target", 0.5, 0.5, $_->[1], 'line', $join_z);
+            
+            ($legend = $_->[2]) =~ s/_multi/ 1-to-many or many-to-many/;
             $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
             $config->{'legend_features'}{'joins'}{'legend'}{ucfirst $legend} = $_->[1];
           }
@@ -152,8 +157,7 @@ sub render_collapsed {
           push @gene_tags, map { join '=', $gene_stable_id, $_->stable_id } @{$self->filter_by_target($alt_alleles, $next_target)};
         }
         
-        # join alt_alleles
-        $self->join_tag($composite2, $_, 0.5, 0.5, $alt_alleles_col, 'line', $join_z) for @gene_tags;
+        $self->join_tag($composite2, $_, 0.5, 0.5, $alt_alleles_col, 'line', $join_z) for @gene_tags; # join alt_alleles
         
         if (@gene_tags) {
           $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
@@ -1070,14 +1074,17 @@ sub render_genes {
     $rect->height(4);
 
     if ($link) {
-      my @gene_tags;
-      my $alt_alleles = $gene->get_all_alt_alleles;
+      my $alt_alleles     = $gene->get_all_alt_alleles;
+      my $seq_region_name = $gene->slice->seq_region_name;
+      my ($target, $legend, @gene_tags);
       
       if ($previous_species) {
         for ($self->get_homologous_gene_ids($gene, $previous_species, $join_types)) {
-          $self->join_tag($rect, "$gene_stable_id:$_->[0]", 0.5, 0.5, $_->[1], 'line', $join_z);
-        
-          (my $legend = $_->[2]) =~ s/_multi/ 1-to-many or many-to-many/;
+          $target = $previous_target ? ":$seq_region_name:$previous_target" : '';
+          
+          $self->join_tag($rect, "$gene_stable_id:$_->[0]$target", 0.5, 0.5, $_->[1], 'line', $join_z);
+          
+          ($legend = $_->[2]) =~ s/_multi/ 1-to-many or many-to-many/;
           $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
           $config->{'legend_features'}{'joins'}{'legend'}{ucfirst $legend} = $_->[1];
         }
@@ -1087,9 +1094,11 @@ sub render_genes {
       
       if ($next_species) {
         for ($self->get_homologous_gene_ids($gene, $next_species, $join_types)) {
-          $self->join_tag($rect, "$_->[0]:$gene_stable_id", 0.5, 0.5, $_->[1], 'line', $join_z);
+          $target = $next_target ? ":$next_target:$seq_region_name" : '';
           
-          (my $legend = $_->[2]) =~ s/_multi/ 1-to-many or many-to-many/;
+          $self->join_tag($rect, "$_->[0]:$gene_stable_id$target", 0.5, 0.5, $_->[1], 'line', $join_z);
+          
+          ($legend = $_->[2]) =~ s/_multi/ 1-to-many or many-to-many/;
           $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
           $config->{'legend_features'}{'joins'}{'legend'}{ucfirst $legend} = $_->[1];
         }
@@ -1276,20 +1285,21 @@ sub render_text {
 sub get_homologous_gene_ids {
   my ($self, $gene, $species, $join_types) = @_;
   
-  my $compara_db = $gene->adaptor->db->get_adaptor('compara');
+  my $compara_db = $self->{'config'}->hub->database('compara');
   return unless $compara_db;
   
   my $ma = $compara_db->get_MemberAdaptor;
   return unless $ma;
   
-  my $qy_member = $ma->fetch_by_source_stable_id('ENSEMBLGENE', $gene->stable_id);
+  my $qy_member = $ma->fetch_by_source_stable_id(undef, $gene->stable_id);
   return unless defined $qy_member;
   
   my $config = $self->{'config'};
-  my $ha = $compara_db->get_HomologyAdaptor;
+  my $ha     = $compara_db->get_HomologyAdaptor;
+  my $method = $species eq $config->{'species'} ? [ $config->get_parameter('homologue') ] : undef;
   my @homologues;
   
-  foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $species)}) {
+  foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $species, $method)}) {
     my $colour_key = $join_types->{$homology->description};
     
     next if $colour_key eq 'hidden';
