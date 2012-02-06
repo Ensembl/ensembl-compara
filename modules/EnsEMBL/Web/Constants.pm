@@ -43,6 +43,7 @@ sub GENE_JOIN_TYPES {
     'within_species_paralog'    => 'paralogue',
     'other_paralog'             => 'paralogue',
     'between_species_paralog'   => 'paralogue',
+    'projection_unchanged'      => 'paralogue',
     'putative_gene_split'       => 'hidden',
     'contiguous_gene_split'     => 'hidden'
   }
