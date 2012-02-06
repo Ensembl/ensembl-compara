@@ -27,16 +27,28 @@ sub content_ajax {
   my $alignments      = $species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'} || {};
   my $primary_species = $hub->species;
   my %shown           = map { $params->{"s$_"} => $_ } grep s/^s(\d+)$/$1/, keys %$params; # get species (and parameters) already shown on the page
+  my $object          = $self->object;
+  my $start           = $object->seq_region_start;
+  my $end             = $object->seq_region_end;
+  my $intra_species   = ($hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'INTRA_SPECIES_ALIGNMENTS'} || {})->{'REGION_SUMMARY'}{$primary_species}{$object->seq_region_name};
+  my $chromosomes     = $species_defs->ENSEMBL_CHROMOSOMES;
   my %species;
+  
+  foreach my $alignment (grep $start < $_->{'end'} && $end > $_->{'start'}, @$intra_species) {
+    my $type = lc $alignment->{'type'};
+    my ($s)  = grep /--$alignment->{'target_name'}$/, keys %{$alignment->{'species'}};
+    my ($sp, $target) = split '--', $s;
+    s/_/ /g for $type, $target;
+    
+    $species{$s} = $species_defs->species_label($sp, 1) . (grep($target eq $_, @$chromosomes) ? ' chromosome' : '') . " $target - $type";
+  }
   
   foreach my $i (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
     foreach (keys %{$alignments->{$i}->{'species'}}) {
-      # this will fail for vega intra species compara
       if ($alignments->{$i}->{'species'}->{$primary_species} && $_ ne $primary_species) {
         my $type = lc $alignments->{$i}->{'type'};
-        
-        $type =~ s/_net//;
-        $type =~ s/_/ /g;
+           $type =~ s/_net//;
+           $type =~ s/_/ /g;
         
         if ($species{$_}) {
           $species{$_} .= "/$type";
