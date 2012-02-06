@@ -597,12 +597,7 @@ sub build_imageconfig_menus {
     $self->{'total_tracks'}->{$menu_class}++;
     
     if ($desc) {
-      $desc =~ s/&(?!\w+;)/&amp;/g;
-      $desc =~ s/href="?([^"]+?)"?([ >])/href="$1"$2/g;
-      $desc =~ s/<a>/<\/a>/g;
-      $desc =~ s/"[ "]*>/">/g;
       $desc = qq{<div class="desc">$desc</div>};
-      
       $help = qq{<div class="menu_help"></div>};
     } else {
       $help = qq{<div class="empty"></div>};
