@@ -97,7 +97,7 @@ sub createObjects {
     push @slices, {
       slice      => $slice,
       species    => $species,
-      target     => $chr,
+      target     => $inputs{$_}->{'chr'},
       name       => $slice->seq_region_name,
       short_name => $object->chr_short_name($slice, $species),
       start      => $slice->start,
@@ -122,8 +122,6 @@ sub generate_url {
 
 sub add_species {
   my ($self, $slice, $add) = @_;
-  
-  
   my $hub           = $self->hub;
   my $session       = $hub->session;
   my %valid_species = map { $_ => 1 } $self->species_defs->valid_species;
@@ -243,7 +241,7 @@ sub best_guess {
   my $width = $slice->end - $slice->start + 1;
   my $production_species = $self->species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
   
-  foreach my $method (qw( BLASTZ_NET LASTZ_NET TRANSLATED_BLAT TRANSLATED_BLAT_NET BLASTZ_RAW BLASTZ_CHAIN )) {
+  foreach my $method ($seq_region_name && $species eq $self->species ? 'LASTZ_PATCH' : (), qw(BLASTZ_NET LASTZ_NET TRANSLATED_BLAT TRANSLATED_BLAT_NET BLASTZ_RAW BLASTZ_CHAIN)) {
     my ($seq_region, $cp, $strand);
     
     eval {
@@ -361,7 +359,7 @@ sub realign {
 sub change_primary_species {
   my ($self, $inputs, $id) = @_;
   
-  my $old_species = $inputs->{0}->{'s'} . ($inputs->{0}->{'chr'} ? "--$inputs->{0}->{'chr'}" : '');
+  my $old_species = $inputs->{0}->{'s'};
   
   $inputs->{$id}->{'r'} =~ s/:-?1$//; # Remove strand parameter for the new primary species
   
@@ -371,7 +369,7 @@ sub change_primary_species {
   $self->delete_param('align'); # Remove the align parameter because it may not be applicable for the new species
   
   foreach my $i (grep $_, keys %$inputs) {
-    if ($inputs->{$i}->{'s'} eq $self->species && !$inputs->{$i}->{'chr'}) {
+    if ($inputs->{$i}->{'s'} eq $self->species) {
       $self->delete_param($_ . $i) for keys %{$inputs->{$i}}; # Remove parameters if one of the secondary species is the same as the primary (looking at an paralogue)
     } elsif ($i != $id) {
       $self->delete_param("$_$i") for qw(r g); # Strip location-setting parameters on other non-primary species
