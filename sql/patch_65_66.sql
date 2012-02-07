@@ -163,8 +163,22 @@ INSERT INTO gene_tree_node
        SELECT node_id, parent_id, root_id, left_index, right_index, distance_to_parent FROM protein_tree_node;
 INSERT INTO gene_tree_node
        SELECT node_id+100000000, parent_id+100000000, root_id+100000000, left_index, right_index, distance_to_parent FROM nc_tree_node;
+
 # fix clustersets' root_ids
 UPDATE gene_tree_node JOIN gene_tree_root ON gene_tree_node.node_id = gene_tree_root.root_id SET gene_tree_node.root_id = gene_tree_node.node_id, gene_tree_node.parent_id=NULL WHERE tree_type LIKE "%clusterset";
+
+## Inserts the clusterset tree leaves and updates left_index/right_index
+
+INSERT INTO gene_tree_node
+       SELECT NULL, clusterset_id, clusterset_id, node_id, node_id, 0 FROM protein_tree_node WHERE node_id = root_id;
+INSERT INTO gene_tree_node
+       SELECT NULL, clusterset_id+100000000, clusterset_id+100000000, node_id+100000000, node_id+100000000, 0 FROM nc_tree_node WHERE node_id = root_id;
+UPDATE gene_tree_node gtn1 JOIN gene_tree_node gtn2 ON gtn2.left_index = gtn2.right_index AND gtn2.left_index = gtn1.node_id SET gtn1.parent_id = gtn2.node_id;
+
+CREATE TEMPORARY TABLE tmp_clusterset_nodes (row_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, node_id INT NOT NULL);
+INSERT INTO tmp_clusterset_nodes (node_id) SELECT node_id FROM gene_tree_node JOIN gene_tree_root USING (root_id) WHERE tree_type LIKE "%clusterset" ORDER BY clusterset_id, parent_id IS NULL;
+
+UPDATE gene_tree_node JOIN tmp_clusterset_nodes USING (node_id) SET left_index=IF(node_id=root_id, 1, 2*row_id-1), right_index=2*row_id;
 
 ## %tag
 CREATE TABLE gene_tree_root_tag (
