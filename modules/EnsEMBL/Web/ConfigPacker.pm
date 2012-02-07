@@ -366,21 +366,6 @@ sub _summarise_variation_db {
     };
   }
   
-  # Structural variation sets (added manually for the release 66 - Have to be fixed for e!67)
-  push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
-      type       => 'sv_set',
-      long_name  => '1000 Genomes - High coverage - Trios',
-      key        => 'structural_variation_set_1kg_hct',
-      parent     => 'structural_variation'
-  };
-  push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
-      type       => 'sv_set',
-      long_name  => '1000 Genomes - Low coverage',
-      key        => 'structural_variation_set_1kg_lc',
-      parent     => 'structural_variation'
-  };  
-  
-  
   my $t_aref = $dbh->selectall_arrayref( 'select source_id,name,description, if(somatic_status = "somatic", 1, 0), type from source' );
 #---------- Add in information about the sources from the source table
   my $temp = {map {$_->[0],[$_->[1],0]} @$t_aref};
@@ -458,40 +443,26 @@ sub _summarise_variation_db {
   $self->db_details($db_name)->{'tables'}{'structural_variation'}{cnv_probes}{'counts'} = \%cnv_probes;
   $self->db_details($db_name)->{'tables'}{'structural_variation'}{cnv_probes}{'descriptions'} = \%cnv_probes_descriptions;
 #--------- Add in Structural Variation set information
-  # First get all toplevel sets
-  my (%sv_super_sets, %sv_sub_sets, %sv_set_descriptions);
-
+  # First get all sets
   my $svt_aref = $dbh->selectall_arrayref('
-    select vs.variation_set_id, vs.name, vs.description, a.value
-      from variation_set vs, attrib a 
-      where not exists (
-        select * 
-          from variation_set_structure vss
-          where vss.variation_set_sub = vs.variation_set_id
-        )
-        and a.attrib_id = vs.short_name_attrib_id
-    and vs.variation_set_id IN (
-      select distinct variation_set_id from variation_set_structural_variation)'
+    select distinct variation_set_id from variation_set_structural_variation'
   );
   
-  # then get subsets foreach toplevel set
-  foreach (@$svt_aref) {
-    my $set_id = $_->[0];
-    
-    $sv_super_sets{$set_id} = {
-      name        => $_->[1],
-      description => $_->[2],
-      short_name  => $_->[3],
-      subsets     => [],
+  # Structural variation sets (added manually for the release 66 - Have to be fixed for e!67)
+  if (scalar(@$svt_aref)) {
+    push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
+      type       => 'sv_set',
+      long_name  => '1000 Genomes - High coverage - Trios',
+      key        => 'structural_variation_set_1kg_hct',
+      parent     => 'structural_variation'
     };
-  
-    $sv_set_descriptions{$_->[3]} = $_->[2];
-    
+    push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
+      type       => 'sv_set',
+      long_name  => '1000 Genomes - Low coverage',
+      key        => 'structural_variation_set_1kg_lc',
+      parent     => 'structural_variation'
+    };  
   }
-
-  $self->db_details($db_name)->{'tables'}{'structural_variation_set'}{'supersets'}    = \%sv_super_sets;  
-  $self->db_details($db_name)->{'tables'}{'structural_variation_set'}{'subsets'}      = \%sv_sub_sets;
-  $self->db_details($db_name)->{'tables'}{'structural_variation_set'}{'descriptions'} = \%sv_set_descriptions;
 #--------- Add in Variation set information
   # First get all toplevel sets
   my (%super_sets, %sub_sets, %set_descriptions);
