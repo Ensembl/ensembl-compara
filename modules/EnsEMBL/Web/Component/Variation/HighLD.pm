@@ -43,14 +43,31 @@ sub summary_table {
   my $available_pops     = $self->ld_populations;
   my @pops               = @{$variation->adaptor->db->get_PopulationAdaptor->fetch_all_LD_Populations};
   my $table_with_no_rows = 0;
+  my %mappings        = %{$object->variation_feature_mapping};
   my $table              = $self->new_table([
     { key => 'name',   title => 'Population',              sort => 'html',   align => 'left'   },
     { key => 'desc',   title => 'Description',             sort => 'string', align => 'left'   },
-    { key => 'tag',    title => 'Tag SNP',                 sort => 'string', align => 'center' },
+    { key => 'tags',   title => 'Tags',                 sort => 'string', align => 'center' },
+    { key => 'tagged', title => 'Tagged by',              sort => 'string', align => 'center' },
     { key => 'table',  title => 'Linked variations table', sort => 'none',   align => 'center' },
     { key => 'plot',   title => 'LD plot (image)',         sort => 'none',   align => 'center' },
     { key => 'export', title => 'LD plot (table)',         sort => 'none',   align => 'center' },
   ], [], { data_table => 1, sorting => [ 'name asc' ] });
+  
+  my ($loc, $vf);
+  if (keys %mappings == 1) {
+    ($loc) = values %mappings;
+  } else { 
+    $loc = $mappings{$hub->param('vf')};
+  }
+  
+  # get the VF that matches the selected location  
+  foreach (@{$object->get_variation_features}) {
+    if ($_->seq_region_start == $loc->{'start'} && $_->seq_region_end == $loc->{'end'} && $_->seq_region_name eq $loc->{'Chr'}) {
+      $vf = $_;
+      last;
+    }
+  }
   
   
   foreach my $pop (@pops) {
@@ -65,10 +82,14 @@ sub summary_table {
       }
     }
     
+    # get tagging info
+    my ($tagged, $tagged_by) = @{$self->tag_data($vf, $pop)};
+    
     my $row = {
       name => $self->hub->get_ExtURL_link($pop->name, 'DBSNPPOP', $pop->get_all_synonyms('dbSNP')->[0]),
       desc => $description,
-      tag  => $object->tagged_snp->{$pop->name} ? 'Yes' : 'No',
+      tags  => $tagged,
+      tagged  => $tagged_by,
     };
     
     if ($available_pops->{$pop->name}) {
@@ -185,13 +206,15 @@ sub linked_var_table {
     { key => 'distance',    title => 'Distance (bp)',           align => 'center', sort => 'numeric'              },
     { key => 'r2',          title => 'r<sup>2</sup>',           align => 'center', sort => 'numeric'              },
     { key => 'd_prime',     title => q{D'},                     align => 'center', sort => 'numeric'              },
-    { key => 'tag',         title => 'Tag SNP',                 align => 'center', sort => 'string'               },
+    { key => 'tags',        title => 'Tags',                    align => 'center', sort => 'string'               },
+    { key => 'tagged',      title => 'Tagged by',               align => 'center', sort => 'string'               },
     { key => 'genes',       title => 'Located in gene(s)',      align => 'center', sort => 'html'                 },
     { key => 'annotations', title => 'Associated phenotype(s)', align => 'center', sort => 'html', width => '30%' },
   ], [], { data_table => 1 });
   
   # do some filtering
   my @old_values = @{$ldca->fetch_by_Slice($temp_slice, $pop)->get_all_ld_values};
+  
   my (@new_values, @other_vfs);
   
   foreach my $ld (@old_values) {
@@ -272,7 +295,7 @@ sub linked_var_table {
       }
       
       # get tagging info
-      my $tag = (grep $_->dbID == $pop_id, @{$ld_vf->is_tagged}) ? 'Yes' : 'No';
+      my ($tagged, $tagged_by) = @{$self->tag_data($ld_vf, $pop)};
       
       # get genes
       my $genes = join ', ', map sprintf(
@@ -312,7 +335,8 @@ sub linked_var_table {
         distance    => abs($start - ($vf_start > $vf_end ? $vf_end : $vf_start)),
         r2          => $ld->{'r2'},
         d_prime     => $ld->{'d_prime'},
-        tag         => $tag,
+        tags        => $tagged,
+        tagged      => $tagged_by,
         genes       => $genes     || '-',
         annotations => $va_string || '-',
       });
@@ -344,6 +368,71 @@ sub ld_populations {
   }
   
   return \%pops;
+}
+
+sub tag_data {
+  my $self = shift;
+  my $vf   = shift;
+  my $pop  = shift;
+  my $hub  = $self->hub;
+  
+  # get VFs this VF tags
+  my @tagged_list;
+  
+  foreach my $tvf(@{$vf->get_all_tagged_VariationFeatures($pop)}) {
+    
+    my $tmp_vf_url = $hub->url({
+      type   => 'Variation',
+      action => 'Summary',
+      vdb    => 'variation',
+      v      => $tvf->variation_name,
+      vf     => $tvf->dbID,
+    });
+    
+    push @tagged_list, sprintf(
+      '<a href="%s">%s</a>',
+      $hub->url({
+        type   => 'Variation',
+        action => 'Summary',
+        vdb    => 'variation',
+        v      => $tvf->variation_name,
+        vf     => $tvf->dbID,
+      }),
+      $tvf->variation_name
+    );
+  }
+  
+  my $tagged = (join ", ", @tagged_list) || '-';
+  
+  # get VFs this VF is tagged by
+  my @tagged_by_list;
+  
+  foreach my $tvf(@{$vf->get_all_tag_VariationFeatures($pop)}) {
+    
+    my $tmp_vf_url = $hub->url({
+      type   => 'Variation',
+      action => 'Summary',
+      vdb    => 'variation',
+      v      => $tvf->variation_name,
+      vf     => $tvf->dbID,
+    });
+    
+    push @tagged_by_list, sprintf(
+      '<a href="%s">%s</a>',
+      $hub->url({
+        type   => 'Variation',
+        action => 'Summary',
+        vdb    => 'variation',
+        v      => $tvf->variation_name,
+        vf     => $tvf->dbID,
+      }),
+      $tvf->variation_name
+    );
+  }
+  
+  my $tagged_by = (join ", ", @tagged_by_list) || '-';
+  
+  return [$tagged, $tagged_by];
 }
 
 1;
