@@ -88,7 +88,7 @@ sub content {
       my $method = $_->method_label; 
       my $score  = $_->score;
       
-      $self->add_subheader(($nearest_feature ? 'Nearest feature: ' : '') . $_->display_label) if $_->display_id ne $id || scalar @feat > 1;
+      $self->add_subheader(($nearest_feature ? 'Nearest feature: ' : '') . $_->display_label) if ($_->display_id ne $id && $_->display_id ne $self->caption) || scalar @feat > 1;
       
       $self->add_entry({ type => 'Type:',   label_html => $_->type_label });
       $self->add_entry({ type => 'Method:', label_html => $method }) if $method;
