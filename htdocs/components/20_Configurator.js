@@ -112,7 +112,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     this.elLk.viewConfigInputs.each(function () {
-      panel.viewConfig[this.name] = this.type === 'checkbox' ? this.checked ? this.value : 'off' : this.value;
+      panel.viewConfig[this.name] = this.type === 'checkbox' ? this.checked ? this.value : 'off' : this.type === 'select-multiple' ? $('option:selected', this).map(function () { return this.value; }).toArray() : this.value;
     });
     
     $(':input', this.elLk.viewConfigs).on('change', function () {
@@ -725,9 +725,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     this.elLk.viewConfigInputs.each(function () {
-      var value = this.type === 'checkbox' ? this.checked ? this.value : 'off' : this.value;
+      var value = this.type === 'checkbox' ? this.checked ? this.value : 'off' : this.type === 'select-multiple' ? $('option:selected', this).map(function () { return this.value; }).toArray() : this.value;
       
-      if (panel.viewConfig[this.name] !== value) {
+      if (panel.viewConfig[this.name].toString() !== value.toString()) {
         if (this.name === 'image_width') {
           Ensembl.setWidth(parseInt(value, 10), 1);
           panel.viewConfig.image_width = value;
@@ -735,6 +735,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         } else {
           viewConfig[this.name] = value;
           diff = true;
+          
+          if (this.type === 'select-multiple') {
+            panel.viewConfig[this.name] = value; // $.extend(['a','b','c'], ['d','e']) = ['d','e','c']. We want a replacement, not a merge
+          }
         }
       }
     });
