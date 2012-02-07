@@ -241,4 +241,8 @@ DROP TABLE nc_tree_attr;
 DROP TABLE nc_tree_tag;
 DROP TABLE protein_tree_tag;
 DROP TABLE protein_tree_qc;
+DROP TABLE super_protein_tree_attr;
+DROP TABLE super_protein_tree_tag;
+DROP TABLE super_protein_tree_member;
+DROP TABLE super_protein_tree_node;
 
