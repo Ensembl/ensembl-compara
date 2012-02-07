@@ -333,7 +333,7 @@ sub pipeline_analyses {
                 'input_id'          => { 'cmd' => '#cmd#'},
                 'fan_branch_code'   => 2,
             },
-            -wait_for => [ 'archive_long_files' ],
+            -wait_for => [ 'archive_long_files', 'dump_for_uniprot', 'dump_all_homologies', 'dump_all_trees'],
             -hive_capacity => -1,
             -flow_into => {
                 2 => [ 'prepare_dir' ],
