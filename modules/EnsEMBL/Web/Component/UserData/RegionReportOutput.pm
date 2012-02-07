@@ -43,7 +43,15 @@ sub content {
       my $data    = $tmpfile->retrieve; 
       my $name    = $record->{'name'} || 'region_report';
       $output .= sprintf('<h3>Download: <a href="/%s/download?file=%s;prefix=download;format=%s">%s</a></h3>', $hub->species, $filename, $extension, $name);
-      $output .= qq(<pre>$data</pre>);
+
+      $output .= '<p><b>Preview</b> (First 50 lines of report)</p><pre>';
+      my $i;
+      foreach my $line (split(/\n/, $data)) {
+        last if $i >= 50;
+        $output .= "$line\n";
+        $i++;
+      }
+      $output .= '</pre>';
     }
     else {
       $error = $data_error{'load_file'};
@@ -52,7 +60,7 @@ sub content {
 
   if ($error) {
     my $param = $hub->param('code') ? {'code' => $hub->param('code')} : {};
-    $error->{'message'} .= sprintf(' Would you like to <a href="%s">try again</a> with different region(s)?',
+    $error->{'message'} .= sprintf(' Would you like to <a href="%s" class="modal_link">try again</a> with different region(s)?',
               $self->url($hub->species_path($hub->data_species) . '/UserData/SelectReportOptions', $param)
               );
 
