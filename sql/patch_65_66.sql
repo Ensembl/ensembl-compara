@@ -58,7 +58,7 @@ CREATE TABLE CAFE_tree (
 
   PRIMARY KEY (root_id),
   KEY method_link_species_set_id (method_link_species_set_id)
-) ENGINE=MyISAM AUTO_INCREMENT=24 DEFAULT CHARSET=latin1
+) ENGINE=MyISAM AUTO_INCREMENT=24 DEFAULT CHARSET=latin1;
 
 CREATE TABLE CAFE_tree_node (
   node_id                 int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -71,7 +71,7 @@ CREATE TABLE CAFE_tree_node (
   KEY parent_id (parent_id),
   KEY root_id (root_id,left_index),
   KEY root_id_2 (root_id,right_index)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE CAFE_tree_attr (
   node_id               int(10) unsigned NOT NULL,
