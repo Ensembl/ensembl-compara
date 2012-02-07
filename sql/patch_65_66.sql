@@ -103,7 +103,7 @@ INSERT INTO gene_tree_member(node_id, member_id, cigar_line, cigar_start, cigar_
        SELECT node_id, member_id, cigar_line, cigar_start, cigar_end FROM protein_tree_member;
 
 INSERT INTO gene_tree_member(node_id, member_id, cigar_line, cigar_start, cigar_end)
-       SELECT node_id, member_id, cigar_line, cigar_start, cigar_end FROM nc_tree_member;
+       SELECT node_id+100000000, member_id, cigar_line, cigar_start, cigar_end FROM nc_tree_member;
 
 
 
@@ -121,21 +121,20 @@ CREATE TABLE gene_tree_root (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 INSERT INTO gene_tree_root(root_id, tree_type, clusterset_id) VALUES(1, 'proteinclusterset', 1);
-INSERT INTO gene_tree_root(root_id, tree_type, clusterset_id) VALUES(100000001, 'ncrnaclusterset', 1);
+INSERT INTO gene_tree_root(root_id, tree_type, clusterset_id) VALUES(100000001, 'ncrnaclusterset', 100000001);
 
 INSERT INTO gene_tree_root(root_id, tree_type, clusterset_id)
        SELECT node_id, 'proteintree', 1 FROM protein_tree_node WHERE node_id = root_id;
 
 INSERT INTO gene_tree_root(root_id, tree_type, clusterset_id)
-       SELECT node_id+100000001, 'ncrnatree', 100000001 FROM nc_tree_node WHERE node_id = root_id;
+       SELECT node_id+100000000, 'ncrnatree', 100000001 FROM nc_tree_node WHERE node_id = root_id;
 
 # method_link_species_set column
-UPDATE gene_tree_root SET method_link_species_set_id = (SELECT method_link_species_set_id FROM protein_tree_member WHERE gene_tree_root.root_id = protein_tree_member.root_id);
-UPDATE gene_tree_root SET method_link_species_set_id = (SELECT method_link_species_set_id FROM nc_tree_member WHERE gene_tree_root.root_id = nc_tree_member.root_id);
+UPDATE gene_tree_root JOIN protein_tree_member USING (root_id) SET gene_tree_root.method_link_species_set_id = protein_tree_member.method_link_species_set_id;
+UPDATE gene_tree_root JOIN nc_tree_member ON gene_tree_root.root_id=nc_tree_member.root_id+100000000 SET gene_tree_root.method_link_species_set_id = nc_tree_member.method_link_species_set_id;
 
 # stable_id & version columns
-UPDATE gene_tree_root SET stable_id = (SELECT stable_id FROM protein_tree_stable_id WHERE gene_tree_root.root_id = protein_tree_stable_id.node_id);
-UPDATE gene_tree_root SET version = (SELECT version FROM protein_tree_stable_id WHERE gene_tree_root.root_id = protein_tree_stable_id.node_id);
+UPDATE gene_tree_root JOIN protein_tree_stable_id ON gene_tree_root.root_id = protein_tree_stable_id.node_id SET gene_tree_root.stable_id = protein_tree_stable_id.stable_id, gene_tree_root.version = protein_tree_stable_id.version;
 
 # New table gene_tree_node
 CREATE TABLE gene_tree_node (
@@ -154,10 +153,9 @@ CREATE TABLE gene_tree_node (
 INSERT INTO gene_tree_node
        SELECT node_id, parent_id, root_id, left_index, right_index, distance_to_parent FROM protein_tree_node;
 INSERT INTO gene_tree_node
-       SELECT node_id+100000001, parent_id+100000001, root_id+100000001, left_index, right_index, distance_to_parent FROM nc_tree_node;
+       SELECT node_id+100000000, parent_id+100000000, root_id+100000000, left_index, right_index, distance_to_parent FROM nc_tree_node;
 # fix clustersets' root_ids
-UPDATE gene_tree_node SET root_id = 1 WHERE node_id = 1;
-UPDATE gene_tree_node SET root_id = 100000001 WHERE node_id = 100000001;
+UPDATE gene_tree_node SET root_id = node_id, parent_id=NULL WHERE node_id IN (1,100000001);
 
 ## %tag
 CREATE TABLE gene_tree_root_tag (
@@ -173,7 +171,7 @@ CREATE TABLE gene_tree_root_tag (
 INSERT INTO gene_tree_root_tag (root_id, tag, value)
        SELECT node_id, tag, value FROM protein_tree_tag ptg WHERE ptg.tag != 'lost_taxon_id' AND ptg.tag != 'species_intersection_score';
 INSERT INTO gene_tree_root_tag (root_id, tag, value)
-       SELECT node_id+100000001, tag, value FROM nc_tree_tag ntg WHERE ptg.tag != 'lost_taxon_id' AND ptg.tag != 'species_intersection_score';
+       SELECT node_id+100000000, tag, value FROM nc_tree_tag ntg WHERE ntg.tag != 'lost_taxon_id' AND ntg.tag != 'species_intersection_score';
 
 CREATE TABLE gene_tree_node_tag (
   node_id    int(10) unsigned NOT NULL,
@@ -186,8 +184,9 @@ CREATE TABLE gene_tree_node_tag (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 INSERT INTO gene_tree_node_tag
-       SELECT node_id, tag value FROM protein_tree_tag ptg WHERE ptg.tag = 'lost_taxon_id' OR ptg.tag = 'species_intersection_score';
-       SELECT node_id, tag value FROM nc_tree_tag ntg WHERE ntg.tag = 'lost_taxon_id';
+       SELECT node_id, tag, value FROM protein_tree_tag ptg WHERE ptg.tag = 'lost_taxon_id' OR ptg.tag = 'species_intersection_score';
+INSERT INTO gene_tree_node_tag
+       SELECT node_id+100000000, tag, value FROM nc_tree_tag ntg WHERE ntg.tag = 'lost_taxon_id';
 
 
 ## protein_tree_attr and nc_tree_attr
@@ -195,10 +194,13 @@ RENAME TABLE protein_tree_attr TO gene_tree_node_attr;
 ALTER TABLE gene_tree_node_attr MODIFY COLUMN tree_support set('phyml_nt','nj_ds','phyml_aa','nj_dn','nj_mm','quicktree') DEFAULT NULL;
 
 INSERT INTO gene_tree_node_tag (node_id, tag, value)
-       SELECT node_id+100000001, 'species_intersection_score', species_intersection_score FROM nc_tree_attr;
+       SELECT node_id+10000000, 'species_intersection_score', species_intersection_score FROM nc_tree_attr WHERE species_intersection_score IS NOT NULL ;
+
+## homology.ancestor_node_id and homology.tree_node_id can now be linked to gene_tree_node
+UPDATE homology SET tree_node_id=tree_node_id+100000000, ancestor_node_id=ancestor_node_id+100000000 WHERE homology_id>=100000000 AND description NOT LIKE "proj%";
 
 ## homology table has a new KEY
-ALTER TABLE homology ADD KEY ancestor_node_id (ancestor_node_id)
+ALTER TABLE homology ADD KEY ancestor_node_id (ancestor_node_id);
 
 ## protein_tree_member_score doesn't have root_id and method_link_species_set_id columns;
 ALTER TABLE protein_tree_member_score DROP KEY protein_tree_member_score_ibfk_2;
@@ -215,3 +217,4 @@ DROP TABLE nc_tree_attr;
 DROP TABLE nc_tree_tag;
 DROP TABLE protein_tree_tag;
 DROP TABLE protein_tree_qc;
+
