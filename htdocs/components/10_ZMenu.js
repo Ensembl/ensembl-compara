@@ -110,8 +110,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.timeout = setTimeout(function () {
       if (panel.populated === false) {
         panel.elLk.caption.html('Loading component');
+        panel.elLk.tbody.hide();
         panel.elLk.loading.show();
-        panel.show();
+        panel.show(panel.das);
       }
     }, 300);
   
@@ -165,6 +166,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   
   populateAjax: function (url, expand) {
     var timeout = this.timeout;
+    var caption = this.elLk.caption.html();
     
     url = url || this.href;
     
@@ -183,11 +185,15 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
             
             if (json.entries.length) {
               var body = '';
-              var row;
+              var subheader, row;
               
               for (var i in json.entries) {
                 if (json.entries[i].type === 'subheader') {
-                  row = '<th class="subheader" colspan="2">' + json.entries[i].link + '</th>';
+                  subheader = subheader || json.entries[i].link;
+                  
+                  if (json.entries[i].link !== caption) {
+                    row = '<th class="subheader" colspan="2">' + json.entries[i].link + '</th>';
+                  }
                 } else if (json.entries[i].type) {
                   row = '<th>' + json.entries[i].type + '</th><td>' + json.entries[i].link + '</td>';
                 } else {
@@ -201,7 +207,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
                 expand.replaceWith(body);
                 expand = null;
               } else {
-                this.elLk.tbody.html(function (i, html) { return html + body; });
+                this.elLk.tbody.html(function (j, html) { return caption && caption === (subheader || json.caption) ? body : html + body; });
                 this.elLk.caption.html(json.caption);
                 
                 this.show();
@@ -222,6 +228,13 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   
   populateNoAjax: function (force) {
     if (this.das && force !== true) {
+      this.populated = true;
+      
+      if (this.elLk.caption.html() === 'Loading component') {
+        this.elLk.caption.html(this.title.split('; ')[0]);
+      }
+      
+      this.show();
       return;
     }
     
@@ -466,12 +479,15 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       }
     }
     
-    this.populated = true;
-    
     this.elLk.tbody.html(body.join('') + extra);
     this.elLk.caption.html(caption);
     
-    this.show();
+    if (this.das) {
+      this.elLk.tbody.hide();
+    } else {
+      this.populated = true;
+      this.show();
+    }
   },
   
   zoomURL: function (scale) {
@@ -495,7 +511,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
   },
   
-  show: function () {
+  show: function (loading) {
     var menuWidth   = parseInt(this.width(), 10);
     var windowWidth = $(window).width() - 10;
     var scrollLeft  = $(window).scrollLeft();
@@ -510,8 +526,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       css.left = windowWidth + scrollLeft - menuWidth;
     }
     
-    if (this.elLk.tbody.html()) {
+    if (!loading && this.elLk.tbody.html()) {
       this.elLk.loading.hide();
+      this.elLk.tbody.show();
     }
     
     Ensembl.EventManager.trigger('panelToFront', this.id);
