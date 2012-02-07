@@ -56,9 +56,7 @@ sub content {
   $form->add_element( type => 'URL',  name => 'url',  label => 'or provide file URL', size => 30 );
 
   my $features = [
-    {'value' => 'g', 'caption' => 'Genes'},
-    {'value' => 't', 'caption' => 'Transcripts'},
-    {'value' => 'p', 'caption' => 'Proteins'},
+    {'value' => 'g', 'caption' => 'Genes, Transcripts and Proteins'},
     {'value' => 'q', 'caption' => 'Genomic Sequence'},
     {'value' => 'c', 'caption' => 'Constrained Elements'},
     {'value' => 'v', 'caption' => 'Variations (SNPs and InDels)'},
