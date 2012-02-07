@@ -40,7 +40,7 @@ sub initialize {
   };
   
   $config->{'end_number'}         = $config->{'number'};
-  $config->{'last_number'}        = $config->{'coding_start'} - $config->{'flanking'} - 1 if $config->{'number'} eq 'slice';
+  $config->{'last_number'}        = $exons[0]->seq_region_start - $config->{'flanking'} - 1 if $config->{'number'} eq 'slice';
   $config->{'snp_display'}        = 'off' unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
   $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
   
