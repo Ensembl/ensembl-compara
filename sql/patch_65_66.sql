@@ -120,14 +120,23 @@ CREATE TABLE gene_tree_root (
   KEY `method_link_species_set_id` (`method_link_species_set_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
-INSERT INTO gene_tree_root(root_id, tree_type, clusterset_id) VALUES(1, 'proteinclusterset', 1);
-INSERT INTO gene_tree_root(root_id, tree_type, clusterset_id) VALUES(100000001, 'ncrnaclusterset', 100000001);
+
+## Fix the clusterset_id
+CREATE TEMPORARY TABLE tmp_map_clusterset_node (node_id INT NOT NULL, clusterset_id INT NOT NULL);
+INSERT INTO tmp_map_clusterset_node SELECT node_id, clusterset_id FROM protein_tree_node WHERE root_id = 0;
+UPDATE protein_tree_node JOIN tmp_map_clusterset_node USING (clusterset_id) SET protein_tree_node.clusterset_id = tmp_map_clusterset_node.node_id;
+
+## Inserts the clusterset nodes
+INSERT INTO gene_tree_root(root_id, tree_type, clusterset_id)
+	SELECT node_id, 'proteinclusterset', clusterset_id FROM protein_tree_node WHERE (root_id IS NULL) OR (root_id = 0);
+INSERT INTO gene_tree_root(root_id, tree_type, clusterset_id)
+	SELECT node_id+100000000, 'ncrnaclusterset', clusterset_id+100000000 FROM protein_tree_node WHERE (root_id IS NULL) OR (root_id = 0);
 
 INSERT INTO gene_tree_root(root_id, tree_type, clusterset_id)
-       SELECT node_id, 'proteintree', 1 FROM protein_tree_node WHERE node_id = root_id;
+       SELECT node_id, 'proteintree', clusterset_id FROM protein_tree_node WHERE node_id = root_id;
 
 INSERT INTO gene_tree_root(root_id, tree_type, clusterset_id)
-       SELECT node_id+100000000, 'ncrnatree', 100000001 FROM nc_tree_node WHERE node_id = root_id;
+       SELECT node_id+100000000, 'ncrnatree', clusterset_id+100000000 FROM nc_tree_node WHERE node_id = root_id;
 
 # method_link_species_set column
 UPDATE gene_tree_root JOIN protein_tree_member USING (root_id) SET gene_tree_root.method_link_species_set_id = protein_tree_member.method_link_species_set_id;
@@ -155,7 +164,7 @@ INSERT INTO gene_tree_node
 INSERT INTO gene_tree_node
        SELECT node_id+100000000, parent_id+100000000, root_id+100000000, left_index, right_index, distance_to_parent FROM nc_tree_node;
 # fix clustersets' root_ids
-UPDATE gene_tree_node SET root_id = node_id, parent_id=NULL WHERE node_id IN (1,100000001);
+UPDATE gene_tree_node JOIN gene_tree_root ON gene_tree_node.node_id = gene_tree_root.root_id SET gene_tree_node.root_id = gene_tree_node.node_id, gene_tree_node.parent_id=NULL WHERE tree_type LIKE "%clusterset";
 
 ## %tag
 CREATE TABLE gene_tree_root_tag (
@@ -192,9 +201,10 @@ INSERT INTO gene_tree_node_tag
 ## protein_tree_attr and nc_tree_attr
 RENAME TABLE protein_tree_attr TO gene_tree_node_attr;
 ALTER TABLE gene_tree_node_attr MODIFY COLUMN tree_support set('phyml_nt','nj_ds','phyml_aa','nj_dn','nj_mm','quicktree') DEFAULT NULL;
+INSERT INTO gene_tree_node_attr SELECT node_id+100000000, node_type, taxon_id, taxon_name, bootstrap, duplication_confidence_score, NULL FROM nc_tree_attr;
 
 INSERT INTO gene_tree_node_tag (node_id, tag, value)
-       SELECT node_id+10000000, 'species_intersection_score', species_intersection_score FROM nc_tree_attr WHERE species_intersection_score IS NOT NULL ;
+       SELECT node_id+100000000, 'species_intersection_score', species_intersection_score FROM nc_tree_attr WHERE species_intersection_score IS NOT NULL ;
 
 ## homology.ancestor_node_id and homology.tree_node_id can now be linked to gene_tree_node
 UPDATE homology SET tree_node_id=tree_node_id+100000000, ancestor_node_id=ancestor_node_id+100000000 WHERE homology_id>=100000000 AND description NOT LIKE "proj%";
