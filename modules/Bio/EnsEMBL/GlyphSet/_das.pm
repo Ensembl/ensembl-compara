@@ -133,8 +133,7 @@ sub features {
           # Feature doesn't have groups so fake it with the feature id as group id
           # Do not display any group glyphs for "logical" groups (score-based or unbumped)
           my $pseudogroup = ($fs->{'use_score'} || $fs->{'style'}{'bump'} eq 'no' || $fs->{'style'}{'bump'} eq '0');
-          my $g     = $pseudogroup ? 'default' : $f->display_id;
-          my $label = $pseudogroup ? ''        : $f->display_label;
+          my $g = $pseudogroup ? 'default' : $f->display_id;
           
           # But do for "hacked" groups (shared feature IDs). May change this behaviour later as servers really shouldn't do this
           my $ty = $f->type_id;
@@ -159,7 +158,7 @@ sub features {
               'type'       => $ty,
               'type_label' => $f->type_label,
               'id'         => $g,
-              'label'      => $label,
+              'label'      => $f->display_label,
               'notes'      => $f->{'note'}, # Push the features notes/links and targets on
               'links'      => $f->{'link'},
               'targets'    => $f->{'target'},
