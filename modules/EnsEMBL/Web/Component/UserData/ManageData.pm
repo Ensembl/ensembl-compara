@@ -42,7 +42,9 @@ sub content {
       { key => 'species', title => 'Species',      width => '20%', align => 'left', sort => 'html'                  },
       { key => 'date',    title => 'Last updated', width => '20%', align => 'left', sort => 'numeric_hidden'        },
     );
-    
+   
+    push @columns, ({ key => 'download', title => '', width => '20px', align => 'center', sort => 'none' });
+ 
     if ($logins && $species_defs->SAVE_UPLOADED_DATA ne '0') {
       push @columns, (
         { key => 'save',  title => '', width => '22px', align => 'center', sort => 'none' },
@@ -115,6 +117,11 @@ sub table_row {
   my $delete_class = $sharers ? 'modal_confirm' : 'modal_link';
   my $title        = $sharers ? ' title="This data is shared with other users"' : '';
   my $delete       = sprintf '<a href="%%s" class="%s"%s><img src="%sdelete.png" alt="delete" title="Delete" /></a>', $delete_class, $title, $img_url;
+  my $download;
+  if ($file->{'prefix'} && $file->{'prefix'} eq 'download') {
+    my $format       = $file->{'format'} eq 'report' ? 'txt' : $file->{'format'};
+    $download     = sprintf '<a href="/%s/download?file=%s;prefix=download;format=%s"><img src="%sdownload.png" alt="download" title="Download" /></a>', $hub->species, $file->{'filename'}, $format, $img_url;
+  }
   my $share        = qq{<a href="%s" class="modal_link"><img src="${img_url}share.png" alt="share" title="Share" /></a>};
   my $user_record  = ref($file) =~ /Record/;
   my $name         = qq{<div><strong class="val" title="Click here to rename your data">$file->{'name'}</strong>};
@@ -187,6 +194,7 @@ sub table_row {
     species => sprintf('<em>%s</em>', $hub->species_defs->get_config($file->{'species'}, 'SPECIES_SCIENTIFIC_NAME')),
     date    => sprintf('<span class="hidden">%s</span>%s', $file->{'timestamp'} || '-', $self->pretty_date($file->{'timestamp'}, 'simple_datetime')),
     save    => $save,
+    download => $download,
     share   => sprintf($share, $hub->url({ action => 'SelectShare', %url_params })),
     delete  => sprintf($delete, $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'delete_remote' : 'delete_upload', %url_params })),
   };
