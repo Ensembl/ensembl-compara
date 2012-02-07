@@ -13,6 +13,8 @@
 .info_popup .T                  { background-color: #EEA2AD; }
 .info_popup .C                  { background-color: #B0C4DE; }
 .info_popup .G                  { background-color: #FFEC8B; }
+.info_popup ul                  { list-style: none; margin: 0; padding: 0; }
+.info_popup ul li               { list-style-image: none; }
 
 body.ie6 .info_popup span.close { background-image: url(/i/close2.gif); }
 
