@@ -194,18 +194,12 @@ sub get_sequence_data {
           $snp_end   = $end;
         }
         
-        if ($var_class =~ /in\-?del|insertion|deletion/ && $snp_type eq 'snp') {
-          if ($seq_region_start > $seq_region_end) {
-            $snp_type = 'insert';
-            
-            # Neither of the following if statements are guaranteed by $seq_region_start > $seq_region_end.
-            # It is possible to have inserts for compara alignments which fall in gaps in the sequence, where $s <= $e,
-            # and $snp_start only equals $s if $config->{'line_numbering'} is not 'slice';
-            $snp_start = $snp_end if $snp_start > $snp_end;
-            ($s, $e)   = ($e, $s) if $s > $e;
-          } else {
-            $snp_type = 'delete';
-          }
+        if ($var_class =~ /in-?del|insertion/ && $seq_region_start > $seq_region_end) {
+          # Neither of the following if statements are guaranteed by $seq_region_start > $seq_region_end.
+          # It is possible to have inserts for compara alignments which fall in gaps in the sequence, where $s <= $e,
+          # and $snp_start only equals $s if $config->{'line_numbering'} is not 'slice';
+          $snp_start = $snp_end if $snp_start > $snp_end;
+          ($s, $e)   = ($e, $s) if $s > $e;
         }
         
         # Add the sub slice start where necessary - makes the label for the variation show the correct position relative to the sequence
@@ -960,17 +954,7 @@ sub class_to_style {
       c1   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC1'}->{'default'}" } ],
       cu   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONUTR'}->{'default'}" } ],
       co   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODON'}->{'default'}" } ],
-      sn   => [ $i++, { 'background-color' => "#$styles->{'SEQ_SNP'}->{'default'}" } ],      
-      si   => [ $i++, { 'background-color' => "#$styles->{'SEQ_SNPINSERT'}->{'default'}" } ],
-      sd   => [ $i++, { 'background-color' => "#$styles->{'SEQ_SNPDELETE'}->{'default'}" } ],   
-      snt  => [ $i++, { 'background-color' => "#$styles->{'SEQ_SNP_TR'}->{'default'}" } ],
-      syn  => [ $i++, { 'background-color' => "#$styles->{'SEQ_SYN'}->{'default'}" } ],
-      snu  => [ $i++, { 'background-color' => "#$styles->{'SEQ_SNP_TR_UTR'}->{'default'}" } ],
-      siu  => [ $i++, { 'background-color' => "#$styles->{'SEQ_SNPINSERT_TR_UTR'}->{'default'}" } ],
-      sdu  => [ $i++, { 'background-color' => "#$styles->{'SEQ_SNPDELETE_TR_UTR'}->{'default'}" } ],
-      sf   => [ $i++, { 'background-color' => "#$styles->{'SEQ_FRAMESHIFT'}->{'default'}" } ],
       aa   => [ $i++, { 'color' => "#$styles->{'SEQ_AMINOACID'}->{'default'}" } ],
-      var  => [ $i++, { 'color' => "#$styles->{'SEQ_MAIN_SNP'}->{'default'}" } ],
       end  => [ $i++, { 'background-color' => "#$styles->{'SEQ_REGION_CHANGE'}->{'default'}", 'color' => "#$styles->{'SEQ_REGION_CHANGE'}->{'label'}" } ],
       bold => [ $i++, { 'font-weight' => 'bold' } ]
     );
@@ -982,6 +966,8 @@ sub class_to_style {
       
       $class_to_style{$_} = [ $i++, $style ];
     }
+    
+    $class_to_style{'var'} = [ $i++, { 'color' => "#$styles->{'SEQ_MAIN_SNP'}->{'default'}" } ];
     
     $self->{'class_to_style'} = \%class_to_style;
   }
@@ -1060,7 +1046,7 @@ sub get_key {
     }
   }
   
-  map $key{'variations'}{$_} = $var_styles->{$_}, keys %$var_styles;
+  $key{'variations'}{$_} = $var_styles->{$_} for keys %$var_styles;
   
   foreach my $type (keys %{$config->{'key'}}) {
     if (ref $config->{'key'}->{$type} eq 'HASH') {
