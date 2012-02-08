@@ -180,7 +180,7 @@ sub _store_tagvalue {
     $self->_read_attr_list($db_attrtable);
     #print STDERR "CALL _store_tagvalue $self/$object/$tag: ", Dumper($self->{"_attr_list_$db_attrtable"});
   
-    if (exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
+    if (defined $db_attrtable && exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
         #print STDERR "attr\n";
         warn "Trying to overload the value of attribute '$tag' ! This is not allowed for $self\n" if $allow_overloading;
         # It is an attribute
