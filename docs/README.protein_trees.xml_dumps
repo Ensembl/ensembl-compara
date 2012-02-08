@@ -1,0 +1,34 @@
+More information about the file formats can be found:
+ - OrthoXML at http://orthoxml.org
+ - PhyloXML at http://www.phyloxml.org
+
+
+Compara.{release}.protein.allhomologies.orthoxml.xml.gz
+  Contains all the orthologies in a single OrthoXML file. Each orthology is
+  stored as an orthologGroup containing two genes.
+
+Compara.{release}.protein.alltrees.orthoxml.xml.gz
+  Contains all the trees in a single OrthoXML file. All the trees are
+  attached to the root 'groups' tag.
+
+Compara.{release}.protein.alltrees_possorthol.orthoxml.xml.gz
+  Also contains all the trees in a single OrthoXML file, but the duplication
+  nodes with a confidence score lower than 0.25 are considered as speciations.
+  This makes the gene tree inconsistent with the species tree, but the derived
+  orthologies include the 'possible_orthologs'.
+
+
+The following three files are tar archives containing one file per tree.
+CAUTION: Be aware that untaring any of these files will create in your current
+	   directory more than 19,000 files !
+
+Compara.{release}.protein.tree.orthoxml.tar.gz
+  Each file will contain one tree, in OrthoXML format.
+
+Compara.{release}.protein.tree_possorthol.orthoxml.tar.gz
+  Each file will contain one tree, in OrthoXML format. Here again, duplication
+  nodes with a low confidence score are edited.
+
+Compara.{release}.protein.tree.phyloxml.tar.gz
+  Each file will contain one tree, in PhyloXML format.
+

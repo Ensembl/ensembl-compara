@@ -52,13 +52,11 @@ sub default_options {
         'pipeline_name'     => $self->o('tree_type').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
         'rel_db'      => {
-            #-host         => 'compara4',
-            -host         => 'compara2',
+            -host         => 'compara4', -dbname       => 'mp12_compara_nctrees_66c',
+            #-host         => 'compara2', -dbname       => 'mm14_compara_homology_66',
             -port         => 3306,
             -user         => 'ensro',
             -pass         => '',
-            #-dbname       => 'mp12_compara_nctrees_66c',
-            -dbname       => 'mm14_compara_homology_66',
             -driver       => 'mysql',
         },
 
@@ -187,14 +185,14 @@ sub pipeline_analyses {
             },
             -input_ids => [
                 {'tree_type' => $self->o('tree_type').'tree', 'file' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml'},
-                {'tree_type' => $self->o('tree_type').'tree', 'file' => '#target_dir#/xml/#name_root#.alltrees.possorthol.orthoxml.xml', 'possible_orth' => 1},
+                {'tree_type' => $self->o('tree_type').'tree', 'file' => '#target_dir#/xml/#name_root#.alltrees_possorthol.orthoxml.xml', 'possible_orth' => 1},
             ],
             -hive_capacity => -1,
             -rc_id => 1,
             -flow_into => {
                 1 => {
                     'archive_long_files' => { 'full_name' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml', },
-                    'archive_long_files' => { 'full_name' => '#target_dir#/xml/#name_root#.alltrees.possorthol.orthoxml.xml', },
+                    'archive_long_files' => { 'full_name' => '#target_dir#/xml/#name_root#.alltrees_possorthol.orthoxml.xml', },
                     }
             },
         },
