@@ -92,8 +92,8 @@ sub store_mapping_hits {
 
 	my $query = qq{
 	INSERT INTO anchor_align (method_link_species_set_id, anchor_id, dnafrag_id, dnafrag_start,	
-	dnafrag_end, dnafrag_strand, score, num_of_organisms, num_of_sequences, evalue)
-	VALUES (?,?,?,?,?,?,?,?,?,?)};
+	dnafrag_end, dnafrag_strand, score, num_of_organisms, num_of_sequences, evalue, anchor_status)
+	VALUES (?,?,?,?,?,?,?,?,?,?,?)};
 
 	my $sth = $self->prepare($query);
 	foreach my $anchor_hits( @$batch_records ) {
