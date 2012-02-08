@@ -41,7 +41,7 @@ sub _tokenize {
                                     character   : /[\w\.\s:\|]+/i
                                     literal     : character
                                         { $tokens[-1]->{literal} = $item{character} }
-                                    Letter_code : "n" | "c" | "d" | "t" | "l" | "h" | "s" | "p" | "m" | "g" | "i" | "e" | "o" | "x" | "S"
+                                    Letter_code : "n" | "c" | "d" | "t" | "l" | "h" | "s" | "p" | "m" | "g" | "i" | "e" | "o" | "x" | "S" | "N"
                                     preliteral  : character
                                         { $tokens[-1]->{ preliteral } = $item{character} }
                                     postliteral : character
@@ -197,11 +197,31 @@ my $sp_name_cb = sub {
   my ($self) = @_;
   my $species_name;
   if ($self->{tree}->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
-    $species_name = $self->{tree}->genome_db->name;
-    $species_name =~ s/\ /\_/g;
-    return $species_name
+      $species_name = $self->{tree}->genome_db->name;
+      $species_name =~ s/\ /\_/g;
+      return $species_name;
+  } elsif ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFETreeNode')){
+      my $taxon_id = $self->{tree}->taxon_id();
+      my $genome_db_adaptor = $self->{tree}->adaptor->db->get_GenomeDBAdaptor;
+      my $genome_db;
+      eval {
+          $genome_db = $genome_db_adaptor->fetch_by_taxon_id($taxon_id);
+      };
+      if ($@) {
+          return $taxon_id;
+      }
+      return $genome_db->name();
   }
   return undef;
+};
+
+my $n_members_cb = sub {
+    my ($self) = @_;
+    my $n_members;
+    if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFETreeNode')) {
+        return $self->{tree}->n_members();
+    }
+    return undef;
 };
 
 %callbacks = (
@@ -219,6 +239,7 @@ my $sp_name_cb = sub {
 	      'm' => $member_id_cb,
 	      'x' => $taxon_id_cb,
 	      'S' => $sp_name_cb,
+          'N' => $n_members_cb, # Used in cafe trees (number of members)
 #	      'E' =>  ## Implement the "Empty" option
 	     );
 
