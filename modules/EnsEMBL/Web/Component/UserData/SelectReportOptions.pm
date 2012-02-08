@@ -59,9 +59,9 @@ sub content {
   my $features = [
     {'value' => 'gt', 'caption' => 'Genes, Transcripts and Proteins'},
     {'value' => 'q', 'caption' => 'Genomic Sequence'},
-    {'value' => 'c', 'caption' => 'Constrained Elements'},
+    {'value' => 'c', 'caption' => 'Constrained Elements (Conserved Regions)'},
     {'value' => 'v', 'caption' => 'Variations (SNPs and InDels)'},
-    {'value' => 's', 'caption' => 'Structural Variations'},
+    {'value' => 's', 'caption' => 'Structural Variations (CNVs etc)'},
     {'value' => 'r', 'caption' => 'Regulatory Features'},
   ];
 
