@@ -103,9 +103,16 @@ sub fetch_by_GeneTree {
 sub fetch_all_children_for_node {
     my ($self, $node) = @_;
 	my $fam_id = $node->fam_id();
-    $self->final_clause("AND cta.fam_id = $fam_id GROUP BY node_id");
-    $self->SUPER::fetch_all_children_for_node($node);
-    $self->final_clause("GROUP BY node_id");
+
+    if (defined $fam_id) { ## The family is already in the db
+        $self->final_clause("AND cta.fam_id = $fam_id GROUP BY node_id");
+        $self->SUPER::fetch_all_children_for_node($node);
+        $self->final_clause("GROUP BY node_id");
+    } else {
+        $self->final_clause(" ");
+        $self->SUPER::fetch_all_children_for_node($node);
+        $self->final_clause("GROUP BY node_id");
+    }
     return;
 }
 
@@ -154,15 +161,10 @@ sub store {
         my $species_tree = $node->species_tree();
         my $lambdas = $node->lambdas();
         my $avg_pvalue = $node->avg_pvalue();
-#         my $sth = $self->prepare("SELECT method_link_species_set_id FROM CAFE_tree WHERE method_link_species_set_id=?");
-#         $sth->execute($mlss_id);
-#         if (scalar $sth->fetchrow_arrayref() == 0) { # No entry in the database for the $mlss_id
 
-            my $sth2 = $self->prepare("INSERT INTO CAFE_tree(root_id, method_link_species_set_id, species_tree, lambdas) VALUES(?,?,?,?)");
-            $sth2->execute($root_id, $mlss_id, $species_tree, $lambdas);
-            $sth2->finish();
-#         }
-#         $sth->finish();
+        my $sth2 = $self->prepare("INSERT INTO CAFE_tree(root_id, method_link_species_set_id, species_tree, lambdas) VALUES(?,?,?,?)");
+        $sth2->execute($root_id, $mlss_id, $species_tree, $lambdas);
+        $sth2->finish();
     }
 
     $node->build_leftright_indexing();
@@ -181,13 +183,11 @@ sub store_node {
         throw("set arg must be a [Bio::EnsEMBL::Compara::CAFETreeNode] not a $node'");
     }
 
-#    print "Storing node ", $node->name, "\n";
-
     if (defined $node->adaptor &&
         $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::CAFETreeAdaptor') &&
         $node->adaptor eq $self) {
         # already in the database, so just update
-#        print "Updating ", $node->name, "\n";
+#        print STDERR "Updating ", $node->name, "\n";
         return $self->update_node($node);
     }
 
