@@ -1,7 +1,7 @@
 
 /*
 
-	Set of statistics for the protein tree pipeline
+	Set of statistics for the gene tree pipelines
 	Requires a write access to the database to create
 	  temporary tables / keys
 
