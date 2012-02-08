@@ -72,7 +72,6 @@ sub fetch_all {
     return $nodes;
 }
 
-
 =head2 fetch_by_GeneTree
 
   Arg[1]      : Bio::EnsEMBL::Compara::GeneTree
@@ -81,8 +80,8 @@ sub fetch_all {
   Description : Fetches the CAFE tree from the database that contains the GeneTree
                 specified as input.
   ReturnType  : Bio::EnsEMBL::Compara::CAFETreeNode
-  Exceptions  :
-  Caller      :
+  Exceptions  : <>
+  Caller      : <>
 
 =cut
 
@@ -95,9 +94,9 @@ sub fetch_by_GeneTree {
     }
 
     my $node_id = $genetree->node_id();  # root_id?
-    my $constraint = "WHERE cta.gene_tree_root_id=$node_id";
-    my $trees = $self->_generic_fetch($constraint);
-    return $trees->[0];
+
+    my $cafeTree = $self->fetch_by_family_id($node_id);
+    return $cafeTree;
 }
 
 sub fetch_all_children_for_node {
