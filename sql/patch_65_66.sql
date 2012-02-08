@@ -125,21 +125,25 @@ CREATE TABLE gene_tree_root (
 CREATE TEMPORARY TABLE tmp_map_clusterset_node (node_id INT NOT NULL, clusterset_id INT NOT NULL);
 INSERT INTO tmp_map_clusterset_node SELECT node_id, clusterset_id FROM protein_tree_node WHERE root_id = 0;
 UPDATE protein_tree_node JOIN tmp_map_clusterset_node USING (clusterset_id) SET protein_tree_node.clusterset_id = tmp_map_clusterset_node.node_id;
+UPDATE super_protein_tree_node JOIN tmp_map_clusterset_node USING (clusterset_id) SET super_protein_tree_node.clusterset_id = tmp_map_clusterset_node.node_id;
 
 ## Inserts the clusterset nodes
 INSERT INTO gene_tree_root(root_id, tree_type, clusterset_id)
 	SELECT node_id, 'proteinclusterset', clusterset_id FROM protein_tree_node WHERE (root_id IS NULL) OR (root_id = 0);
 INSERT INTO gene_tree_root(root_id, tree_type, clusterset_id)
-	SELECT node_id+100000000, 'ncrnaclusterset', clusterset_id+100000000 FROM protein_tree_node WHERE (root_id IS NULL) OR (root_id = 0);
+	SELECT node_id+100000000, 'ncrnaclusterset', clusterset_id+100000000 FROM nc_tree_node WHERE (root_id IS NULL) OR (root_id = 0);
 
 INSERT INTO gene_tree_root(root_id, tree_type, clusterset_id)
        SELECT node_id, 'proteintree', clusterset_id FROM protein_tree_node WHERE node_id = root_id;
+INSERT INTO gene_tree_root(root_id, tree_type, clusterset_id)
+       SELECT node_id, 'proteinsupertree', clusterset_id FROM super_protein_tree_node WHERE root_id = clusterset_id;
 
 INSERT INTO gene_tree_root(root_id, tree_type, clusterset_id)
        SELECT node_id+100000000, 'ncrnatree', clusterset_id+100000000 FROM nc_tree_node WHERE node_id = root_id;
 
 # method_link_species_set column
 UPDATE gene_tree_root JOIN protein_tree_member USING (root_id) SET gene_tree_root.method_link_species_set_id = protein_tree_member.method_link_species_set_id;
+UPDATE gene_tree_root JOIN super_protein_tree_member USING (root_id) SET gene_tree_root.method_link_species_set_id = super_protein_tree_member.method_link_species_set_id;
 UPDATE gene_tree_root JOIN nc_tree_member ON gene_tree_root.root_id=nc_tree_member.root_id+100000000 SET gene_tree_root.method_link_species_set_id = nc_tree_member.method_link_species_set_id;
 
 # stable_id & version columns
@@ -162,23 +166,46 @@ CREATE TABLE gene_tree_node (
 INSERT INTO gene_tree_node
        SELECT node_id, parent_id, root_id, left_index, right_index, distance_to_parent FROM protein_tree_node;
 INSERT INTO gene_tree_node
+       SELECT node_id, clusterset_id, node_id, 0, 0, 0 FROM super_protein_tree_node WHERE root_id = clusterset_id;
+INSERT INTO gene_tree_node
        SELECT node_id+100000000, parent_id+100000000, root_id+100000000, left_index, right_index, distance_to_parent FROM nc_tree_node;
+
+## Rebuilds the supertrees
+CREATE TABLE tmp_sup AS
+	SELECT DISTINCT super_protein_tree_member.root_id AS st, protein_tree_member.root_id AS pt FROM super_protein_tree_member JOIN protein_tree_member USING (member_id)
+	UNION SELECT DISTINCT root_id, root_id FROM protein_tree_member;
+ALTER TABLE tmp_sup ADD KEY (st, pt);
+ALTER TABLE tmp_sup ADD KEY (pt, st);
+
+CREATE TABLE tmp_sup_cnt AS
+	SELECT st, COUNT(*) AS cnt FROM tmp_sup GROUP BY st;
+ALTER TABLE tmp_sup_cnt ADD KEY (st);
+
+CREATE TABLE tmp_sup_links AS
+	SELECT DISTINCT ts1.st AS st1, ts2.st AS st2, tc2.cnt FROM tmp_sup ts1 JOIN tmp_sup ts2 USING (pt) JOIN tmp_sup_cnt tc1 ON ts1.st=tc1.st JOIN tmp_sup_cnt tc2 ON ts2.st=tc2.st WHERE ts1.st!=ts2.st AND tc2.cnt>tc1.cnt ORDER BY st1, tc2.cnt;
+ALTER TABLE tmp_sup_links ADD KEY (st1, cnt);
+
+CREATE TABLE tmp_sup_hier AS
+	SELECT tt.st1, st2 FROM tmp_sup_links JOIN (SELECT st1, MIN(cnt) AS min_cnt FROM tmp_sup_links GROUP BY st1) tt ON tmp_sup_links.cnt=tt.min_cnt AND tmp_sup_links.st1=tt.st1;
+
+UPDATE gene_tree_node JOIN tmp_sup_hier ON gene_tree_node.node_id=tmp_sup_hier.st1 SET parent_id=st2;
 
 # fix clustersets' root_ids
 UPDATE gene_tree_node JOIN gene_tree_root ON gene_tree_node.node_id = gene_tree_root.root_id SET gene_tree_node.root_id = gene_tree_node.node_id, gene_tree_node.parent_id=NULL WHERE tree_type LIKE "%clusterset";
 
-## Inserts the clusterset tree leaves and updates left_index/right_index
+## Inserts the clusterset / supertree tree leaves and updates left_index/right_index
 
 INSERT INTO gene_tree_node
-       SELECT NULL, clusterset_id, clusterset_id, node_id, node_id, 0 FROM protein_tree_node WHERE node_id = root_id;
-INSERT INTO gene_tree_node
-       SELECT NULL, clusterset_id+100000000, clusterset_id+100000000, node_id+100000000, node_id+100000000, 0 FROM nc_tree_node WHERE node_id = root_id;
-UPDATE gene_tree_node gtn1 JOIN gene_tree_node gtn2 ON gtn2.left_index = gtn2.right_index AND gtn2.left_index = gtn1.node_id SET gtn1.parent_id = gtn2.node_id;
+	SELECT NULL, clusterset_id, clusterset_id, root_id, root_id, 0 FROM gene_tree_root WHERE tree_type LIKE "%tree";
+UPDATE gene_tree_node gtn1 JOIN gene_tree_node gtn2 ON gtn2.left_index = gtn2.right_index AND gtn2.left_index = gtn1.node_id SET gtn2.parent_id=gtn1.parent_id, gtn2.root_id=gtn1.parent_id, gtn1.parent_id = gtn2.node_id;
 
-CREATE TEMPORARY TABLE tmp_clusterset_nodes (row_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, node_id INT NOT NULL);
-INSERT INTO tmp_clusterset_nodes (node_id) SELECT node_id FROM gene_tree_node JOIN gene_tree_root USING (root_id) WHERE tree_type LIKE "%clusterset" ORDER BY clusterset_id, parent_id IS NULL;
+CREATE TEMPORARY TABLE tmp_leaves (row_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, node_id INT NOT NULL);
+INSERT INTO tmp_leaves (node_id) SELECT node_id FROM gene_tree_node JOIN gene_tree_root USING (root_id) WHERE tree_type LIKE "%clusterset" OR tree_type LIKE "%supertree" ORDER BY root_id, node_id=root_id;
 
-UPDATE gene_tree_node JOIN tmp_clusterset_nodes USING (node_id) SET left_index=IF(node_id=root_id, 1, 2*row_id-1), right_index=2*row_id;
+UPDATE gene_tree_node JOIN tmp_leaves USING (node_id) SET left_index=2*row_id, right_index=2*row_id+1;
+UPDATE gene_tree_node JOIN (SELECT root_id, MIN(left_index) AS mli FROM gene_tree_node WHERE root_id != node_id GROUP BY root_id) tli ON gene_tree_node.node_id = tli.root_id SET gene_tree_node.left_index=tli.mli-1;
+UPDATE gene_tree_node JOIN (SELECT root_id, left_index FROM gene_tree_node JOIN gene_tree_root USING (root_id) WHERE node_id=root_id AND left_index>1) tli USING (root_id ) SET gene_tree_node.left_index=gene_tree_node.left_index-tli.left_index+1, gene_tree_node.right_index=gene_tree_node.right_index-tli.left_index+1;
+UPDATE gene_tree_node JOIN gene_tree_root USING (root_id) SET right_index=6 WHERE tree_type LIKE "%super%" AND node_id=root_id AND right_index = 7;
 
 ## %tag
 CREATE TABLE gene_tree_root_tag (
@@ -245,4 +272,9 @@ DROP TABLE super_protein_tree_attr;
 DROP TABLE super_protein_tree_tag;
 DROP TABLE super_protein_tree_member;
 DROP TABLE super_protein_tree_node;
+
+DROP TABLE tmp_sup;
+DROP TABLE tmp_sup_cnt;
+DROP TABLE tmp_sup_links;
+DROP TABLE tmp_sup_hier;
 
