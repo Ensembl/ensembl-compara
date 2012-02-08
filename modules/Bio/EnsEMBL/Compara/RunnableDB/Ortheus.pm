@@ -150,6 +150,11 @@ sub fetch_input {
     throw("MethodLinkSpeciesSet is not defined for this Ortheus job");
   }
 
+  #set default to do transactions
+  if (!defined $self->param('do_transactions')) {
+      $self->param('do_transactions', 1);
+  }
+
   ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->dnafrag_regions(). At this point the
   ## DnaFragRegions are in random order
   $self->_load_DnaFragRegions($self->param('synteny_region_id'));
@@ -213,8 +218,7 @@ sub write_output {
     my ($self) = @_;
 
     print "WRITE OUTPUT\n" if $self->debug;
-
-    if ($self->do_transactions) {
+    if ($self->param('do_transactions')) {
 	my $compara_conn = $self->compara_dba->dbc;
 	my $ancestor_genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly("ancestral_sequences");
 	my $ancestral_conn = $ancestor_genome_db->db_adaptor->dbc;
@@ -524,7 +528,6 @@ sub parse_results {
 
 
       #   $self->workdir("/home/jherrero/ensembl/worker.8139/");
-
     my $tree_file;
     my $workdir;
     $tree_file = $self->worker_temp_directory . "/output.$$.tree";
@@ -1008,51 +1011,66 @@ sub species_order {
   return $self->{'_species_order'};
 }
 
+
 sub get_species_tree {
   my $self = shift;
+
+  my $newick_species_tree;
   my $species_tree_meta_key = "tree_" . $self->param('ortheus_mlssid');
-  my $newick_species_tree = $self->param("$species_tree_meta_key");
-  if (defined("$newick_species_tree")) {
-    $self->param('newick_species_tree', $newick_species_tree); 
-    $newick_species_tree =~ s/^\s*//;
-    $newick_species_tree =~ s/\s*$//;
-    $newick_species_tree =~ s/[\r\n]//g;
+
+  if (defined($self->param('species_tree'))) {
+    return $self->param('species_tree');
+  } elsif ($self->param($species_tree_meta_key)) {
+    $newick_species_tree = $self->param($species_tree_meta_key);
+  } elsif ($self->param('tree_file')) {
+    open(TREE_FILE, $self->param('tree_file')) or throw("Cannot open file ".$self->param('tree_file'));
+    $newick_species_tree = join("", <TREE_FILE>);
+    close(TREE_FILE);
+  }
+
+  if (!defined($newick_species_tree)) {
+    return undef;
+  }
+
+  $newick_species_tree =~ s/^\s*//;
+  $newick_species_tree =~ s/\s*$//;
+  $newick_species_tree =~ s/[\r\n]//g;
+
+  my $species_tree =
+      Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_species_tree);
+
+  #if the tree leaves are species names, need to convert these into genome_db_ids
+  my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
+
+  my %leaf_name;
+  my %leaf_check;
+  foreach my $genome_db (@$genome_dbs) {
+      my $name = $genome_db->name;
+      $name =~ tr/ /_/;
+      $leaf_name{$name} = $genome_db->dbID;
+      if ($name ne "ancestral_sequences") {
+	  $leaf_check{$genome_db->dbID} = 2;
+      }
+  }
+  foreach my $leaf (@{$species_tree->get_all_leaves}) {
+      #check have names rather than genome_db_ids
+      if ($leaf->name =~ /\D+/) {
+	  $leaf->name($leaf_name{lc($leaf->name)});
+      }
+      $leaf_check{lc($leaf->name)}++;
+  }
+
+  #Check have one instance in the tree of each genome_db in the database
+  #Don't worry about having extra elements in the tree that aren't in the
+  #genome_db table because these will be removed later
+  foreach my $name (keys %leaf_check) {
+      if ($leaf_check{$name} == 2) {
+	  throw("Unable to find genome_db_id $name in species_tree\n");
+      }
+  }
   
-    my $species_tree =
-        Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_species_tree);
-  
-    #if the tree leaves are species names, need to convert these into genome_db_ids
-    my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
-  
-    my %leaf_name;
-    my %leaf_check;
-    foreach my $genome_db (@$genome_dbs) {
-        my $name = $genome_db->name;
-        $name =~ tr/ /_/;
-        $leaf_name{$name} = $genome_db->dbID;
-        if ($name ne "ancestral_sequences") {
-  	  $leaf_check{$genome_db->dbID} = 2;
-        }
-    }
-    foreach my $leaf (@{$species_tree->get_all_leaves}) {
-        #check have names rather than genome_db_ids
-        if ($leaf->name =~ /\D+/) {
-  	  $leaf->name($leaf_name{lc($leaf->name)});
-        }
-        $leaf_check{lc($leaf->name)}++;
-    }
-  
-    #Check have one instance in the tree of each genome_db in the database
-    #Don't worry about having extra elements in the tree that aren't in the
-    #genome_db table because these will be removed later
-    foreach my $name (keys %leaf_check) {
-        if ($leaf_check{$name} == 2) {
-  	  throw("Unable to find genome_db_id $name in species_tree\n");
-        }
-    }
   $self->param('species_tree', $species_tree);
   return $self->param('species_tree');
- }
 }
 
 sub tree_string {
@@ -1072,18 +1090,6 @@ sub tree_string {
 #  $self->{'_max_block_size'} = shift if(@_);
 #  return $self->{'_max_block_size'};
 #}
-
-sub reference_species {
-  my $self = shift;
-  $self->{'_reference_species'} = shift if(@_);
-  return $self->{'_reference_species'};
-}
-
-sub do_transactions {
-  my $self = shift;
-  $self->{'_do_transactions'} = shift if(@_);
-  return $self->{'_do_transactions'};
-}
 
 
 ##########################################
@@ -1159,7 +1165,7 @@ sub _load_2XGenomes {
   my $genome_db_adaptor = $self->{'comparaDBA'}->get_GenomeDBAdaptor;
 
   #DEBUG this opens up connections to all the databases
-  my $ref_genome_db = $genome_db_adaptor->fetch_by_name_assembly($self->reference_species);
+  my $ref_genome_db = $genome_db_adaptor->fetch_by_name_assembly($self->param('reference_species'));
   my $ref_dba = $ref_genome_db->db_adaptor;
   my $ref_slice_adaptor = $ref_dba->get_SliceAdaptor();
 
@@ -1173,7 +1179,7 @@ sub _load_2XGenomes {
   
   #Return if there is no reference sequence in this synteny region
   if (scalar(@$ref_dnafrags) == 0) {
-      print "No " . $self->reference_species . " sequences found in syntenic block $synteny_region_id\n";
+      print "No " . $self->param('reference_species') . " sequences found in syntenic block $synteny_region_id\n";
       return;
   }
 
@@ -1212,7 +1218,7 @@ sub _load_2XGenomes {
       #find non_reference species name in pairwise alignment
       my $species_set = $pairwise_mlss->species_set;
       foreach my $genome_db (@$species_set) {
-	  if ($genome_db->name ne $self->reference_species) {
+	  if ($genome_db->name ne $self->param('reference_species')) {
 	      $target_species = $genome_db->name;
 	      last;
 	  }
