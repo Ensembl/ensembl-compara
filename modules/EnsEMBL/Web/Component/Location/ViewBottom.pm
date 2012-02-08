@@ -14,12 +14,38 @@ sub _init {
   $self->has_image(1);
 }
 
+sub _add_object_track {
+  my $self = shift;
+
+  my $extra = '';
+  my $hub = $self->hub;
+  my $image_config = $hub->get_imageconfig('contigviewbottom');
+  # Add track for gene if not on by default
+  if (my $gene = $hub->core_objects->{'gene'}) {
+    my $key  = $image_config->get_track_key('transcript', $gene);
+    my $node = $image_config->get_node(lc $key);
+ 
+    if($node && $node->get("display") eq 'off') { 
+      # Check user has not explicitly dimissed track in this session.
+      my $flag = $hub->session->get_data(type => 'auto_add', code => lc $key);
+      unless($flag->{'data'}) {
+        $image_config->update_track_renderer(lc $key,'transcript_label');
+        $extra .= $self->_info("Information","The track containing the highlighted gene has been added to your display.")."<br/>";
+        $hub->session->set_data(type => 'auto_add' , code => lc $key, data => 1); 
+        $hub->session->store();
+      }
+    }
+  }
+  return $extra;
+}
+
 sub content {
   my $self        = shift;
   my $hub         = $self->hub;
   my $object      = $self->object;
   my $threshold   = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
   my $image_width = $self->image_width;
+  my $info = '';
   
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
   
@@ -42,6 +68,8 @@ sub content {
     );
   }
 
+  $info .= $self->_add_object_track();
+
   # Add multicell configuration
   if (keys %{$hub->species_defs->databases->{'DATABASE_FUNCGEN'}{'tables'}{'cell_type'}{'ids'}}){
     my $web_slice_obj = $self->new_object( 'Slice', $slice, $object->__data );
@@ -59,7 +87,7 @@ sub content {
   $image->imagemap         = 'yes';
   $image->set_button('drag', 'title' => 'Click or drag to centre display');
   
-  return $image->render;
+  return $info.$image->render;
 }
 
 
