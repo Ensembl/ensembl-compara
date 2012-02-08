@@ -984,7 +984,7 @@ If you have any doubt ask Kathryn or Stephen
     If not happy, edit the changes, save the config file and exit the editor.
 
     Run init_pipeline.pl with this file:
-        init_pipeline.pl DumpTrees_conf.pm -tree_type protein_trees -host compara2
+        init_pipeline.pl DumpTrees_conf.pm -tree_type protein -pipeline_db -host=compara2 -pipeline_db -user=ensadmin -pipeline_db -dbname=mm14_dump_pt_trees_66 -password $ENSADMIN_PSW -target_dir ~/scratch/dump_pt_trees_66
         #
         # rel.64: testing sqlite mode failed: too many occurences of "database locked". We should stick to mysql.
 
@@ -994,9 +994,10 @@ If you have any doubt ask Kathryn or Stephen
 # rel_60: took 5 hours on a "bad lustre" day. On one of such days you're better off pointing at your home directory!
 # rel_64: 48m
 # rel65: 2h5m
+# rel66: more than 1 week (lustre was very slow, and dump_all_homologies takes ages)
     
 22b. Stay in the same directory, but now create another pipeline from the same config file:
-        init_pipeline.pl DumpTrees_conf.pm -tree_type ncrna_trees -host compara2
+        init_pipeline.pl DumpTrees_conf.pm -tree_type ncrna -pipeline_db -host=compara2 -pipeline_db -user=ensadmin -pipeline_db -dbname=mm14_dump_nc_trees_66 -password $ENSADMIN_PSW -target_dir ~/scratch/dump_nc_trees_66
 
     Then run both -sync and -loop variations of the beekeeper.pl command suggested by init_pipeline.pl .
     This pipeline will produce ncrna_tree dumps in the directory pointed at by 'target_dir' parameter.
@@ -1004,9 +1005,11 @@ If you have any doubt ask Kathryn or Stephen
 # rel60: 8m, the other extreme.
 # rel64: 5m
 # rel65: 7m
+# rel66: 1h in total
+
 22c. Commit the DumpTrees_conf.pm file into the CVS if you'd like to keep the changes.
 
-22d. Ask Matthieu to run some OrthoXML dumps (all the trees merged in one file)
+22d. Report the location of the tree content dump for Uniprot, in 'target_dir'/Compara.{release}.protein.tree_content.txt.gz
 
 22e. Report the locations of the dumps to the main Release Coordinator and/or the web people.
      'target_dir'/emf should go to /emf/ensembl-compara/homologies/ on the ftp
