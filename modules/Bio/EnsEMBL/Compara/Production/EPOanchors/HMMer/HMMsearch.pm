@@ -46,6 +46,9 @@ sub run {
 	print $hmm_build_command, " **\n";
 	system($hmm_build_command);
 	return unless(-e $hmm_file); # The sequences in the alignment are probably too short
+	my $hmm_len = `egrep "^LENG  " $hmm_file`;
+	chomp($hmm_len);
+	$hmm_len=~s/^LENG  //;
 	my $nhmmer_command = $self->param('nhmmer') . " --cpu 1 --noali" ." $hmm_file " . $self->param('target_genome')->{"genome_seq"};
 	print $nhmmer_command, " **\n";
 	my $nhmm_fh;
@@ -68,7 +71,7 @@ sub run {
 		my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($taregt_genome_db, $seq_region_name);
 		next unless($dnafrag);	
 		push( @anchor_align_records, [ $self->param('mlssid_of_alignments'), $mapping_id, $dnafrag->dbID, $alifrom, $alito,
-						$strand, $score, $hmm_from, $hmm_to, $evalue ] );  
+						$strand, $score, $hmm_from, $hmm_to, $evalue, $hmm_len ] );  
 	}	
 	$self->param('mapping_hits', \@anchor_align_records) if scalar( @anchor_align_records );
 	unlink("$stk_file");
