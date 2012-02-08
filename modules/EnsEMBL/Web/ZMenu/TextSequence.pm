@@ -86,6 +86,11 @@ sub variation_content {
     { caption => 'Position',  entry => $position },
   );
   
+  # check if the variation is failed
+  if(my @fd = @{$feature->variation->get_all_failed_descriptions()}) {
+    push @entries, { caption => 'Failed status', entry => join ", ", @fd } if scalar @fd;
+  }
+  
   push @entries, { caption => 'LRG position',  entry => $lrg_position } if $lrg_position;
   
   my %ct    = map { $_->display_term => [ $_->label, $_->rank ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
