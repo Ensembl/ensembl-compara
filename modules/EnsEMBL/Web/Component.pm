@@ -1115,4 +1115,54 @@ sub render_sift_polyphen {
   };
 }
 
+sub trim_large_string {
+  my $self        = shift;
+  my $string      = shift;
+  my $cell_prefix = shift;
+  
+  my $full_allele = $string;
+     $full_allele =~ s/(.{60})/$1<br \/>/g;
+     $full_allele =~ s/,/,<br \/>/g;
+            
+  my $cell_name = $cell_prefix.substr($string,0,10);
+
+  my $html_full_allele = sprintf('<a class="toggle closed" href="#" rel="%s" title="Click to show the full allele"></a>&nbsp;&nbsp;
+        <div class="%s"><div class="toggleable" style="font-weight:normal;display:none"><pre>%s</pre></div></div>',
+        $cell_name,
+        $cell_name,
+        $full_allele
+  );
+  return $html_full_allele;
+}
+
+sub trim_large_allele_string {
+  my $self        = shift;
+  my $allele      = shift;
+  my $cell_prefix = shift;
+  my $length      = shift;
+  
+  $length ||= 50;
+   my $large_allele = 0;
+  my $display_alleles;
+  my @l_alleles  = split '/', $allele;
+  foreach my $string_allele (@l_alleles) {
+    $display_alleles .= '/' if ($display_alleles);
+    $display_alleles .= substr($string_allele,0,$length);
+    if (length($string_allele) > $length) {
+      $large_allele += 1;
+      $display_alleles .= '...';
+    }
+  }
+  if ($large_allele != 1) {
+     $display_alleles = substr($allele,0,$length).'...';
+    $large_allele = 1;
+  }
+  
+  if ($large_allele) {
+    $display_alleles .= $self->trim_large_string($allele,$cell_prefix);
+  }
+  
+  return $display_alleles;
+}
+
 1;
