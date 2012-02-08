@@ -392,7 +392,7 @@ sub AUTOLOAD {
         return $self->get_all_values_for_tag($1);
     } elsif ( $AUTOLOAD =~ m/::get_(\w+)_value$/ ) {
         return $self->get_tagvalue($1);
-    } else {
+    } elsif( $AUTOLOAD !~ /::DESTROY$/) {
         use Carp;
         croak "$self does not understand method $AUTOLOAD\n";
     }
