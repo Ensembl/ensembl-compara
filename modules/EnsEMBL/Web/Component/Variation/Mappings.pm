@@ -211,24 +211,22 @@ sub content {
       # Allele
       my  $allele = (length($a) > 50) ? substr($a,0,50).'...' : $a;
       
-      my $html_full_tr_allele = ')';
+      my $html_full_tr_allele;
       
       unless ($transcript_data->{'vf_allele'} =~ /HGMD|LARGE|DEL|INS/) {
         my $tr_allele = $transcript_data->{'tr_allele'};
         if (length($tr_allele) > 50) {
           $tr_allele = substr($tr_allele,0,50).'...';
           
-          if ($tr_allele ne $allele) {
-            my $full_tr_allele = $transcript_data->{'tr_allele'};
-            $html_full_tr_allele = $self->expandable_allele_box($full_tr_allele,$transcript_data,'tr',1);
-          }
+          my $full_tr_allele = $transcript_data->{'tr_allele'};
+          $html_full_tr_allele = $self->trim_large_string($full_tr_allele,'tr_'.$transcript_data->{transcriptname});
           
           $allele .= '<br />';
           
         } else { 
           $allele .= ' ';
         }
-        $allele .= "(<small>$tr_allele</small>$html_full_tr_allele";
+        $allele .= "(<small>$tr_allele</small>)$html_full_tr_allele";
       }
       
       my $row = {
@@ -333,22 +331,29 @@ sub detail_panel {
     # allele
     if (length($allele)>50) {
       my $display_allele = substr($allele,0,50).'...';
-      $display_allele .= $self->expandable_allele_box($allele,$t_data,'allele');
+      $display_allele .= $self->trim_large_string($allele,'allele_'.$t_data->{transcriptname});
       $allele = $display_allele;
     }
     # t_allele
     if (length($t_allele)>50) {
       my $display_allele = substr($t_allele,0,50).'...';
-      $display_allele .= $self->expandable_allele_box($t_allele,$t_data,'t_allele');
+      $display_allele .= $self->trim_large_string($t_allele,'t_allele_'.$t_data->{transcriptname});
       $t_allele = $display_allele;
     }
     
     # HGVS
     my $hgvs_c = $tva->hgvs_coding;
-       $hgvs_c =~ s/(.{35})/$1<br \/>/g;
+    if (length($hgvs_c)>60) {
+      my $display_hgvs_c = substr($hgvs_c,0,60).'...';
+      $display_hgvs_c .= $self->trim_large_string($hgvs_c,'hgvs_c_'.$t_data->{transcriptname});
+      $hgvs_c = $display_hgvs_c;
+    }
     my $hgvs_p = $tva->hgvs_protein;
-       $hgvs_p =~ s/(.{35})/$1<br \/>/g;
-    
+    if (length($hgvs_p)>60) {
+      my $display_hgvs_p = substr($hgvs_p,0,60).'...';
+      $display_hgvs_p .= $self->trim_large_string($hgvs_p,'hgvs_p_'.$t_data->{transcriptname});
+      $hgvs_p = $display_hgvs_p;
+    }
     
     
     my %data = (
@@ -669,29 +674,4 @@ sub render_context {
   return $context;
 }
 
-
-sub expandable_allele_box {
-  my $self        = shift;
-  my $allele      = shift;
-  my $transcript  = shift;
-  my $cell_prefix = shift;
-  my $parenthesis = shift;
-  
-  my $full_allele = $allele;
-     $full_allele =~ s/(.{60})/$1<br \/>/g;
-            
-  my $cell_name = $cell_prefix.'_'.$transcript->{'transcriptname'}.substr($allele,0,10);
-  
-  my $show = $self->hub->get_cookies("toggle_$cell_name") eq 'open';
-  my $html_full_allele = sprintf('<a class="toggle %s set_cookie" href="#" rel="%s" title="Click to toggle Sequence"></a>%s
-        <div class="%s"><div class="toggleable" style="font-weight:normal;%s"><pre>%s</pre></div></div>',
-        $show ? 'open' : 'closed',
-        $cell_name,
-        $parenthesis ? ')' : '',
-        $cell_name,
-        $show ? '' : 'display:none',
-        $full_allele
-    );
-  return $html_full_allele;
-}
 1;
