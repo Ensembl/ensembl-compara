@@ -41,7 +41,7 @@ sub _tokenize {
                                     character   : /[\w\.\s:\|]+/i
                                     literal     : character
                                         { $tokens[-1]->{literal} = $item{character} }
-                                    Letter_code : "n" | "c" | "d" | "t" | "l" | "h" | "s" | "p" | "m" | "g" | "i" | "e" | "o" | "x" | "S" | "N"
+                                    Letter_code : "n" | "c" | "d" | "t" | "l" | "h" | "s" | "p" | "m" | "g" | "i" | "e" | "o" | "x" | "S" | "N" | "P"
                                     preliteral  : character
                                         { $tokens[-1]->{ preliteral } = $item{character} }
                                     postliteral : character
@@ -224,6 +224,15 @@ my $n_members_cb = sub {
     return undef;
 };
 
+my $pvalue_cb = sub {
+    my ($self) = @_;
+    my $pval;
+    if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFETreeNode')) {
+        return $self->{tree}->p_value();
+    }
+    return undef;
+};
+
 %callbacks = (
 	      'n' => $name_cb,
 	      'c' => $genbank_common_name,
@@ -240,6 +249,7 @@ my $n_members_cb = sub {
 	      'x' => $taxon_id_cb,
 	      'S' => $sp_name_cb,
           'N' => $n_members_cb, # Used in cafe trees (number of members)
+          'P' => $pvalue_cb, # Used in cafe trees (pvalue)
 #	      'E' =>  ## Implement the "Empty" option
 	     );
 
