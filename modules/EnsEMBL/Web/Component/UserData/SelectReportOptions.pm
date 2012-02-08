@@ -29,7 +29,8 @@ sub content {
 
   if (!$hub->param('filter_module')) { ## No errors
     $form->add_notes({'id' => 'upload_notes', 'heading' => 'IMPORTANT NOTE', 'text' => qq{
-      This web tool is only suitable for exporting a limited dataset. If you wish to produce a report based on many regions or regions with dense data, we recommend using the standalone API script, downloadable from our FTP site.
+      This web tool is only suitable for exporting a limited dataset: a maximum of <strong>5 megabases</strong> total input is allowed (1 megabase if variation or regulation is selected).<br /> 
+ If you wish to produce a report based on many regions or regions with dense data, we recommend using the standalone <a href="/tools.html">API script</a>
     }});
   }
 
@@ -56,7 +57,7 @@ sub content {
   $form->add_element( type => 'URL',  name => 'url',  label => 'or provide file URL', size => 30 );
 
   my $features = [
-    {'value' => 'g', 'caption' => 'Genes, Transcripts and Proteins'},
+    {'value' => 'gt', 'caption' => 'Genes, Transcripts and Proteins'},
     {'value' => 'q', 'caption' => 'Genomic Sequence'},
     {'value' => 'c', 'caption' => 'Constrained Elements'},
     {'value' => 'v', 'caption' => 'Variations (SNPs and InDels)'},
@@ -68,7 +69,7 @@ sub content {
       'type'    => 'Checklist',
       'name'    => 'include',
       'label'   => 'Features',
-      'value'   => 'g',
+      'value'   => 'gt',
       'values'  => $features,
   );
 
