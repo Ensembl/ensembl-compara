@@ -166,8 +166,10 @@ sub get_databases_species {
         'non_fatal_error' = Error message if fails to connect to any ancillary
           database
 
- Description : Internal call that gets the database connections 
- Return type : Hashref - The database connections requested 
+ Description : Internal call that gets the database connections.
+               Note - doesn't seem to be called by the webcode in e66,
+               all the work is now done by E::m::B::E::Registry.pm and E::m::B::E::U::ConfigRegistry.pm
+ Return type : Hashref - The database connections requested
 
 =cut
 
@@ -226,7 +228,7 @@ sub _get_databases_common {
 
   ## Other DBs
   # cdna
-  foreach (qw(cdna vega otherfeatures rnaseq)) {
+  foreach (qw(cdna vega vega_update otherfeatures rnaseq)) {
     if($databases{$_}) {
       $self->_get_db_with_dnadb( $_, $species);
       delete $databases{ $_ };
