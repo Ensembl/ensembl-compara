@@ -47,7 +47,7 @@ my $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
 $ua->timeout(10);
 my $response = $ua->get("http://$host:$port/selenium-server/driver/?cmd=testComplete");
 if($response->content ne 'OK') { 
-  print "\nSelenium Server is offline !!!!\n";
+  print "\nSelenium Server is offline or IP Address is wrong !!!!\n";
   exit;
 }
 
