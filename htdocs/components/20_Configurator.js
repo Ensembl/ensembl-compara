@@ -115,7 +115,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       panel.viewConfig[this.name] = this.type === 'checkbox' ? this.checked ? this.value : 'off' : this.type === 'select-multiple' ? $('option:selected', this).map(function () { return this.value; }).toArray() : this.value;
     });
     
-    $(':input', this.elLk.viewConfigs).on('change', function () {
+    $(this.elLk.viewConfigs).on('change', ':input', function () {
       var value, attr;
       
       if (this.type === 'checkbox') {
@@ -286,7 +286,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     // Header on search results and active tracks sections will act like the links on the left
-    $('.config_header', this.elLk.configDivs).on('click', function () {
+    $(this.elLk.configDivs).on('click', '.config_header', function () {
       var link = $(this).parent().attr('class').replace(/\s*config\s*/, '');
       $('a.' + link, panel.elLk.links).trigger('click');
     });
@@ -554,14 +554,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       ul = lis = null;
     }
     
-    function addSection() {
-      configDiv = $('<div>', {
-        'class': 'config view_config ' + active,
-        html:    '<div class="spinner">Loading Content</div>'
-      }).appendTo(panel.elLk.form);
-      
-      panel.elLk.configDivs  = $('div.config', panel.elLk.form);
-      panel.elLk.viewConfigs = panel.elLk.configDivs.filter('.view_config');
+    function addSection(configDiv) {
+      configDiv.html('<div class="spinner">Loading Content</div>');
       
       $.ajax({
         url: url,
@@ -661,20 +655,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           configDiv.children().removeClass('active').show();
         }
         
-        if (url && !configDiv.length) {
+        if (url && !configDiv.children().length) {
           this.addTracks(this.elLk.links.filter('.active').parent().siblings('a').attr('class')); // Add the tracks in the parent panel, for safety
-          addSection();
+          addSection(configDiv);
         } else {
           configDiv.find('ul.config_menu li').filter(function () { return this.style.display === 'none'; }).show();
         }
         
         this.elLk.imageConfigExtras[configDiv.hasClass('view_config') ? 'hide' : 'show']();
-    }
-    
-    if (this.elLk.links.filter('.active').is('.overflow') && !$('body').hasClass('ie67')) {
-      this.elLk.content.addClass('overflow').css('marginLeft', $('.modal_nav', this.el).outerWidth() + 2);
-    } else {
-      this.elLk.content.removeClass('overflow').css('marginLeft', 0);
     }
   },
   
