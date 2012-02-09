@@ -2113,7 +2113,7 @@ sub add_regulation_builds {
       depth       => $fg_data{$key_2}{'depth'} || 0.5,
       description => $fg_data{$key_2}{'description'},
       colourset   => 'feature_set',
-      display     => 'compact',
+      display     => 'off',
       menu        => 'no',
       cell_line   => $cell_line,
       renderers   => [
