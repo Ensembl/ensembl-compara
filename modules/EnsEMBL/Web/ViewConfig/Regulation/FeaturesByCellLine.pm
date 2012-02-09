@@ -11,7 +11,7 @@ sub init {
   
   $self->add_image_config('regulation_view'); 
   $self->SUPER::init;
-  $self->set_defaults({ opt_highlight => 'yes' });
+  $self->set_defaults({ opt_highlight => 'yes', context => 200 });
   $self->title = 'Details by cell line';
 }
 
