@@ -29,15 +29,28 @@ sub content {
     my $codons = $snp->{'codons'} || '-';
     
     if ($codons ne '-') {
-      $codons =~ s/([ACGT])/<b>$1<\/b>/g;
-      $codons =~ tr/acgt/ACGT/;
+      if (length($codons)>25) {
+        my $display_codons = substr($codons,0,25).'...';
+           $display_codons =~ s/([ACGT])/<b>$1<\/b>/g;
+           $display_codons =~ tr/acgt/ACGT/;
+           $codons =~ tr/acgt/ACGT/;
+            $display_codons .= $self->trim_large_string($codons,'codons_'.$snp->{'snp_id'});
+        $codons = $display_codons;
+      }
+      else {
+        $codons =~ s/([ACGT])/<b>$1<\/b>/g;
+         $codons =~ tr/acgt/ACGT/;
+      }
     }
-    
     my $allele = $snp->{'allele'};
     my $tva    = $snp->{'tva'};
     my $var_allele = $tva->variation_feature_seq;
     
-    $allele =~ s/(.{20})/$1\n/g;
+    # Check allele size (for display issues)
+    if (length($allele)>20) {
+      my $display_allele = $self->trim_large_allele_string($allele,'allele_'.$snp->{'snp_id'},20);
+      $allele = $display_allele;
+    }
     $allele =~ s/$var_allele/<b>$var_allele<\/b>/ if $allele =~ /\//;
     
     # consequence type
@@ -53,7 +66,9 @@ sub content {
     }
     
     else {
-      $type = join ", ", map{'<span title="'.$_->description.'">'.$_->label.'</span>'} @{$tva->get_all_OverlapConsequences};
+      # Avoid duplicated Ensembl terms
+      my %ens_term = map { '<span title="'.$_->description.'">'.$_->label.'</span>' => 1 } @{$tva->get_all_OverlapConsequences};
+      $type = join ', ', keys(%ens_term);
     }
     
     push @data, {
