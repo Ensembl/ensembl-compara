@@ -274,7 +274,7 @@ Ensembl.DataTable = {
               var hidden = $('.hidden:not(.export)', this);
               
               if (hidden.length) {
-                data[i].push($.trim($(this).clone().find('.hidden').remove().end().html()));
+                data[i].push($.trim($(this).clone().find(hidden).remove().end().html()));
               } else {
                 data[i].push($(this).html());
               }
