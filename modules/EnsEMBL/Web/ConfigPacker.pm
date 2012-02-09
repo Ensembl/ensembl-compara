@@ -678,18 +678,18 @@ sub _summarise_funcgen_db {
     $self->db_details($db_name)->{'tables'}{'feature_type'}{'ids'}{$feature_type_key} = 2;
   }
 
-  my $mt_aref = $dbh->selectall_arrayref(
-    'select meta_key, meta_value 
-       from meta 
-      where meta_key like "%regbuild%" and 
-            meta_key like "%ids"'
+  my $rs_aref = $dbh->selectall_arrayref(
+    'select name, string 
+       from regbuild_string 
+      where name like "%regbuild%" and 
+            name like "%ids"'
   );
-  foreach my $row (@$mt_aref ){
-    my ($meta_key, $meta_value) = @$row;
-    $meta_key =~s/regbuild\.//;
-    my @key_info = split(/\./,$meta_key); 
+  foreach my $row (@$rs_aref ){
+    my ($regbuild_name, $regbuild_string) = @$row; 
+    $regbuild_name =~s/regbuild\.//;
+    my @key_info = split(/\./,$regbuild_name); 
     my %data;  
-    my @ids = split(/\,/,$meta_value);
+    my @ids = split(/\,/,$regbuild_string);
     my $sth = $dbh->prepare(
           'select feature_type_id
              from feature_set
@@ -708,7 +708,7 @@ sub _summarise_funcgen_db {
       }
       $sth->finish;
     } 
-    $self->db_details($db_name)->{'tables'}{'meta'}{$key_info[1]}{$key_info[0]} = \%data;
+    $self->db_details($db_name)->{'tables'}{'regbuild_string'}{$key_info[1]}{$key_info[0]} = \%data;
   }
 
   $dbh->disconnect();

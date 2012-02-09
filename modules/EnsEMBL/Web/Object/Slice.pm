@@ -229,8 +229,8 @@ sub get_configured_tracks {
   my $tables            = $hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'};
   my %cell_lines        = %{$tables->{'cell_type'}{'ids'}};
   my %evidence_features = %{$tables->{'feature_type'}{'ids'}};
-  my %focus_set_ids     = %{$tables->{'meta'}{'focus_feature_set_ids'}};
-  my %feature_type_ids  = %{$tables->{'meta'}{'feature_type_ids'}};
+  my %focus_set_ids     = %{$tables->{'regbuild_string'}{'focus_feature_set_ids'}};
+  my %feature_type_ids  = %{$tables->{'regbuild_string'}{'feature_type_ids'}};
   
   foreach my $cell_line (keys %cell_lines) { 
     $cell_line =~ s/\:\d*//; 

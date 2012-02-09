@@ -26,7 +26,7 @@ sub init {
   my $cell_lines        = $funcgen_tables->{'cell_type'}{'ids'};
   my $evidence_features = $funcgen_tables->{'feature_type'}{'ids'};
   
-  $self->{'feature_type_ids'}  = $funcgen_tables->{'meta'}{'feature_type_ids'};
+  $self->{'feature_type_ids'}  = $funcgen_tables->{'regbuild_string'}{'feature_type_ids'};
   $self->{'type_descriptions'} = $funcgen_tables->{'feature_set'}{'analyses'}{'RegulatoryRegion'}{'desc'};
   
   my $defaults;

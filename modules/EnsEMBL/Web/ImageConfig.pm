@@ -1283,7 +1283,7 @@ sub _merge {
   my $config_name = $self->{'type'};
   my $data        = {};
   
-  foreach my $analysis (keys %$tree) {
+  foreach my $analysis (keys %$tree){ 
     my $sub_tree = $tree->{$analysis}; 
     
     next unless $sub_tree->{'disp'}; # Don't include non-displayable tracks
@@ -2103,8 +2103,8 @@ sub add_regulation_builds {
     }
     
     ### Add tracks for cell_line peaks and wiggles only if we have data to display
-    my @ftypes     = keys %{$db_tables->{'meta'}{'feature_type_ids'}{$cell_line}      || {}};  
-    my @focus_sets = keys %{$db_tables->{'meta'}{'focus_feature_set_ids'}{$cell_line} || {}};  
+    my @ftypes     = keys %{$db_tables->{'regbuild_string'}{'feature_type_ids'}{$cell_line}      || {}};  
+    my @focus_sets = keys %{$db_tables->{'regbuild_string'}{'focus_feature_set_ids'}{$cell_line} || {}};  
     
     my %options = (
       db          => $key,
@@ -2113,7 +2113,7 @@ sub add_regulation_builds {
       depth       => $fg_data{$key_2}{'depth'} || 0.5,
       description => $fg_data{$key_2}{'description'},
       colourset   => 'feature_set',
-      display     => 'off',
+      display     => 'compact',
       menu        => 'no',
       cell_line   => $cell_line,
       renderers   => [
