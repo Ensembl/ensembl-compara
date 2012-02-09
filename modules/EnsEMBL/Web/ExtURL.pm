@@ -27,7 +27,7 @@ sub set_species {
 
 
 sub get_url {
-  my ($self, $db, $data )=@_;
+  my ($self, $db, $data, $info_text )=@_;
   eval{
     if((defined($data)) && (not defined($data->{ID})) ){
       $data->{ID} = $data->{primary_id};
@@ -39,7 +39,8 @@ sub get_url {
   my $species        = $self->{'species'};
   $data->{'SPECIES'} ||= $species;
   $data->{'DB'}      = $db;
-## Sets URL to the the entry for the given name, OR the default value OTHERWISE returns....
+  $data->{'INFO_TEXT'} = $info_text;
+## Sets URL to the entry for the given name, OR the default value OTHERWISE returns....
   my $url= $self->{'URLS'}{$species}{ uc($db) } || $self->{'URLS'}{$species}{'DEFAULT'};
   $url =~ s/###(\w+)###/uri_escape( exists $data->{$1} ? $data->{$1} : "(($1))",  "^A-Za-z0-9\-_.!~*'():\/" )/ge;
   return encode_entities($url);
