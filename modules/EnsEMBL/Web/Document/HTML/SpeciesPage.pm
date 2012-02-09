@@ -37,10 +37,14 @@ sub render {
   if ($pre_species) {
     while (my ($bioname, $common) = each (%$pre_species)) {
       my $status = $species{$common} ? 'both' : 'pre';
-      $species{$common} = {
+      my $info = {
         'dir'     => $bioname,
         'status'  => $status,
       };
+      if ($status eq 'both') {
+        $info->{'assembly'}  = $species_defs->get_config($bioname, 'ASSEMBLY_NAME');
+      }
+      $species{$common} = $info;
     }
   }
   
