@@ -289,15 +289,19 @@ sub variation_table {
           my $trans_url     = "$base_trans_url;$url_transcript_prefix=$transcript_stable_id";
           my $allele_string = $snp->allele_string;
           
-          # break up allele string if too long (will disrupt highlight below, but for long alleles who cares)
-          $allele_string =~ s/(.{20})/$1\n/g;
-          
+          # Check allele string size (for display issues)
+          if (length($allele_string)>20) {
+            my $display_allele = $self->trim_large_allele_string($allele_string,'allele_'.$tva->dbID,20);
+            $allele_string = $display_allele;
+          }
           # highlight variant allele in allele string
           my $vf_allele  = $tva->variation_feature_seq;
           $allele_string =~ s/$vf_allele/<b>$vf_allele<\/b>/g if $allele_string =~ /\//;
           
           # sort out consequence type string
-          my $type = join ',<br />', map {$self->select_consequence_label($_, $cons_format)} @{$tva->get_all_OverlapConsequences || []};
+          # Avoid duplicated Ensembl terms
+          my %term = map {$self->select_consequence_label($_, $cons_format) =>1 } @{$tva->get_all_OverlapConsequences || []};
+          my $type = join ',<br />', keys(%term);
           $type  ||= '-';
           
           my $sift = $self->render_sift_polyphen(
@@ -390,12 +394,19 @@ sub get_hgvs {
   my $hgvs_p = $tva->hgvs_protein;
   
   if ($hgvs_c) {
-    $hgvs_c =~ s/(.{35})/$1\n/g;
+    if (length($hgvs_c)>35) {
+      my $display_hgvs_c = substr($hgvs_c,0,35).'...';
+         $display_hgvs_c .= $self->trim_large_string($hgvs_c,'hgvs_c_'.$tva->dbID);
+      $hgvs_c = $display_hgvs_c;
+    }
     $hgvs  .= $hgvs_c;
   }
-  
   if ($hgvs_p) {
-    $hgvs_p =~ s/(.{35})/$1\n/g;
+    if (length($hgvs_p)>35) {
+      my $display_hgvs_p = substr($hgvs_p,0,35).'...';
+         $display_hgvs_p .= $self->trim_large_string($hgvs_p,'hgvs_p_'.$tva->dbID);
+      $hgvs_p = $display_hgvs_p;
+    }
     $hgvs  .= "<br />$hgvs_p";
   }
   
