@@ -78,8 +78,9 @@ sub form {
   
   if ($self->hub->function eq 'Cell_line') {
     $self->form_evidence_types;
-  } elsif ($self->can('form_context')) {
-    $self->form_context;
+  } else {
+    $self->form_context if $self->can('form_context');
+    $self->add_fieldset($_, 'empty', 1) for qw(Regulatory_evidence_core Regulatory_evidence_other);
   }
 }
 
