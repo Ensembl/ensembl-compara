@@ -1103,7 +1103,7 @@ sub get_go_list {
 
   my %go_hash;
   my %hash;
-  
+
   foreach my $goxref (sort { $a->display_id cmp $b->display_id } @goxrefs) {
     my $go = $goxref->display_id;
     chomp $go; # Just in case
@@ -1112,7 +1112,7 @@ sub get_go_list {
     my ($otype, $go2) = $go =~ /([\w|\_]+):0*(\d+)/;
     my $term;
     next if exists $hash{$go2};
-    
+
     my $info_text;
     my $sources;
 
@@ -1126,15 +1126,26 @@ sub get_go_list {
 
       foreach my $e (@{$goxref->get_all_linkage_info}) {
         my ($linkage, $xref) = @{$e || []};
-        next unless $xref;     
-        my ($id, $db, $db_name) =  ($xref->display_id, $xref->dbname, $xref->db_display_name);
-        push @$sources, $self->hub->get_ExtURL_link("$db_name:$id", $db, $id);
+        next unless $xref;
+        my ($did, $pid, $db, $db_name) =  ($xref->display_id, $xref->primary_id, $xref->dbname, $xref->db_display_name);
+        my $label = "$db_name:$did";
+
+        #db schema won't (yet) support Vega GO supporting xrefs so use a specific form of info_text to generate URL and label
+        my $vega_go_xref = 0;
+        my $info_text = $xref->info_text;
+        if ($info_text =~ /Quick_Go:/) {
+          $vega_go_xref = 1;
+          $info_text =~ s/Quick_Go://;
+          $label = "(QuickGo)";
+        }
+        my $ext_url = $self->hub->get_ExtURL_link($label, $db, $pid, $info_text);
+        $ext_url = "$did $ext_url" if $vega_go_xref;
+        push @$sources, $ext_url;
       }
     }
 
-    
     $hash{$go2} = 1;
-    
+
     if (my $goa = $goadaptor->get_GOTermAdaptor) {
       my $term;
       eval { 
@@ -1142,7 +1153,7 @@ sub get_go_list {
       };
 
       warn $@ if $@;
-      
+
       my $term_name = $term ? $term->name : '';
       $term_name ||= $goxref->description || '';
 
@@ -1173,12 +1184,13 @@ sub get_go_list {
 
 
 =head2 get_oligo_probe_data
+
  Arg[1]       : none 
  Example      : %probe_data  = %{$transdate->get_oligo_probe_data}
  Description  : Retrieves all oligo probe releated DBEntries for this transcript
  Returntype   : Hashref of probe info
 
-=cut 
+=cut
 
 sub get_oligo_probe_data {
   my $self = shift; 
