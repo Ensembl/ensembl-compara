@@ -23,7 +23,7 @@ sub munge {
 
 sub munge_databases {
   my $self   = shift;
-  my @tables = qw(core cdna vega otherfeatures rnaseq);
+  my @tables = qw(core cdna vega vega_update otherfeatures rnaseq);
   
   $self->_summarise_core_tables($_, 'DATABASE_' . uc $_) for @tables;
   $self->_summarise_xref_types('DATABASE_' . uc $_) for @tables;
