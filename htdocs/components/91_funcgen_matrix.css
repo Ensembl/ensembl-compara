@@ -74,7 +74,7 @@ body.ie6  table.funcgen_matrix th.first div.select_all_row input   { right: 0; }
 
 /* tutorial */
 
-div.config div.funcgen_matrix .toggle_tutorial           { position: absolute; top: 5px; right: 5px; width: 110px; height: 25px; background: url(/i/tutorial.png) 0 top no-repeat; cursor: pointer; }
+div.config div.funcgen_matrix .toggle_tutorial           { position: absolute; top: 8px; right: 5px; width: 110px; height: 25px; background: url(/i/tutorial.png) 0 top no-repeat; cursor: pointer; }
 div.config div.funcgen_matrix .toggle_tutorial.on        { background-position: 0 bottom; }
 div.config div.funcgen_matrix .tutorial                  { position: absolute; background: url(/img/funcgen_matrix_tutorial.png) no-repeat; z-index: 10000; }
 div.config div.funcgen_matrix .tutorial.fil              { width: 210px; height: 77px; background-position: 0 -154px; top: -8px; left: 270px; }
