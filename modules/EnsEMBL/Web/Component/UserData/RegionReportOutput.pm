@@ -42,7 +42,8 @@ sub content {
     if ($tmpfile->exists) {
       my $data    = $tmpfile->retrieve; 
       my $name    = $record->{'name'} || 'region_report';
-      $output .= sprintf('<h3>Download: <a href="/%s/download?file=%s;prefix=download;format=%s">%s</a></h3>', $hub->species, $filename, $extension, $name);
+      my $url     = sprintf('/%s/download?file=%s;prefix=download;format=%s', $hub->species, $filename, $extension);
+      $output    .= qq(<h3>Download: <a href="$url">$name</a></h3>);
 
       $output .= '<p><b>Preview</b> (First 50 lines of report)</p><pre>';
       my $i;
@@ -51,7 +52,7 @@ sub content {
         $output .= "$line\n";
         $i++;
       }
-      $output .= '</pre>';
+      $output .= qq(</pre><p><strong>Preview only</strong> - <a href="$url">download complete file</a></p>);
     }
     else {
       $error = $data_error{'load_file'};
