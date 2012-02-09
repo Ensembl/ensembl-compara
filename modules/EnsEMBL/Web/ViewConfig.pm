@@ -275,7 +275,7 @@ sub get_form {
 }
 
 sub add_fieldset {
-  my ($self, $legend, $class) = @_;
+  my ($self, $legend, $class, $no_tree) = @_;
   
   (my $div_class = $legend) =~ s/ /_/g;
   my $fieldset   = $self->get_form->add_fieldset($legend);
@@ -283,7 +283,7 @@ sub add_fieldset {
   
   $fieldset->set_attribute('class', $class) if $class;
   
-  $tree->append($tree->create_node(lc $div_class, { url => '#', availability => 1, caption => $legend, class => $div_class }));
+  $tree->append($tree->create_node(lc $div_class, { url => '#', availability => 1, caption => $legend, class => $div_class })) unless $no_tree;
   
   return $fieldset;
 }
@@ -392,7 +392,11 @@ sub build_form {
       $wrapper_div->set_attribute('class', "config $div_class view_config");
     }
     
-    $wrapper_div->append_child($_->parent_node->replace_child($wrapper_div, $_));
+    if ($_->get_attribute('class') eq 'empty') {
+      $_->parent_node->replace_child($wrapper_div, $_);
+    } else {
+      $wrapper_div->append_child($_->parent_node->replace_child($wrapper_div, $_));
+    }
   }
   
   if ($image_config) {
