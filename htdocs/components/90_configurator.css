@@ -75,9 +75,6 @@ form.configuration.multi div.favourite_tracks img                   { margin: 0;
 form.configuration.multi div.config div.subset.first,
 form.configuration.multi div.config div.subset.active               { margin-top: 0; }
 
-div.config_wrapper.overflow                                         { position: relative; overflow: visible; }
-div.config_wrapper.overflow div.config                              { display: inline-block; width: 100%; }
-
 body.ie6 form.configuration div.config ul.config_menu li            { height: 21px; }
 body.ie6 form.configuration div.config ul.popup_menu li             { height: auto; }
 body.ie6 form.configuration div.config ul.popup_menu li img         { margin: 2px; }
