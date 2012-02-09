@@ -79,3 +79,13 @@ table.editable td.editable textarea { width: 95%; display: none; }
 table.editable td.editable a.save   { display: none!important; }
 
 body.ie6 table.editable td.editable { position: relative; }
+
+div.up_arrow   { width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 15px solid green; }
+div.down_arrow { width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top:    15px solid red;   }
+div.no_arrow   { width: 15px; height: 15px; background: grey; }
+
+div.score         { -moz-border-radius: 5px; border-radius: 5px; width: 50px; color: white; text-align:center; }
+div.score_good    { background: green;  }
+div.score_ok      { background: orange; }
+div.score_bad     { background: red;    }
+div.score_neutral { background: blue;   }
