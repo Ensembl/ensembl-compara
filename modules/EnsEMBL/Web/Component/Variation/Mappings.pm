@@ -193,7 +193,9 @@ sub content {
         # not all terms have an ncbi equiv so default to SO
         $type = join ', ', map { $_->NCBI_term || sprintf '<span title="%s (no NCBI term available)">%s*</span>', $_->description, $_->label } @{$tva->get_all_OverlapConsequences};
       } else {
-        $type = join ', ', map { '<span title="'.$_->description.'">'.$_->label.'</span>' } @{$tva->get_all_OverlapConsequences};
+        # Avoid duplicated Ensembl terms
+        my %ens_term = map { '<span title="'.$_->description.'">'.$_->label.'</span>' => 1 } @{$tva->get_all_OverlapConsequences};
+        $type = join ', ', keys(%ens_term);
       }
       
       # consequence rank
@@ -355,6 +357,7 @@ sub detail_panel {
       $hgvs_p = $display_hgvs_p;
     }
     
+    my %ens_term = map { sprintf ('%s <i>(%s)</i>', $_->label, $_->description) =>1 } @$ocs;
     
     my %data = (
       allele     => $allele,
@@ -363,7 +366,7 @@ sub detail_panel {
       gene       => qq{<a href="$gene_url">$gene_id</a>},
       transcript => qq{<a href="$tr_url">$tr_id</a>},
       protein    => $prot_id ? qq{<a href="$prot_url">$prot_id</a>} : '-',
-      ens_term   => join(', ', map { sprintf '%s <i>(%s)</i>', $_->label, $_->description } @$ocs),
+      ens_term   => join(', ', keys(%ens_term)),
       so_term    => join(', ', map { sprintf '%s (%s)', $_->SO_term, $hub->get_ExtURL_link($_->SO_accession, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @$ocs),
       hgvs       => join('<br />', grep $_, $hgvs_c, $hgvs_p) || '-',
     );
