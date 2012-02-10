@@ -694,6 +694,7 @@ sub _add_bigbed_track {
     renderers   => [
       'off',    'Off', 
       'normal', 'Normal', 
+      'labels', 'Labels',
       'tiling', 'Wiggle plot',
     ], 
     options => {
