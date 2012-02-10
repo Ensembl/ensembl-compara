@@ -8,9 +8,12 @@ use List::Util qw(min max);
 
 use Data::Dumper;
 
+use EnsEMBL::Web::Text::Feature::BED;
 use Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor;
 
-use base qw(Bio::EnsEMBL::GlyphSet_wiggle_and_block);
+use base qw(Bio::EnsEMBL::GlyphSet::_alignment Bio::EnsEMBL::GlyphSet_wiggle_and_block);
+
+use Carp qw(cluck);
 
 sub my_helplink { return "bigbed"; } # XXX check it's there and works
 
@@ -64,9 +67,44 @@ sub _draw_wiggle {
       score_colour => $self->my_config('colour'),
   }); 
   $self->draw_space_glyph();
-  return ('error'); # No error
+  return (); # No error
 }
 
+sub feature_group { $_[1]->id; }
+sub feature_label { $_[1]->id; }
+sub feature_title { return "XXX WRONG"; }
+
+# XXX  WRONG
+sub href {
+  # Links to /Location/Genome
+
+  my ($self,$f) = @_;
+
+  my $href = $self->{'parser'}{'tracks'}{$self->{'track_key'}}{'config'}{'url'};
+  $href =~ s/\$\$/$f->id/e;
+  return $href;
+}
+
+sub features {
+  my ($self) = @_;
+
+  my $slice = $self->{'container'};
+  my $features = $self->bigbed_adaptor->fetch_features($slice->seq_region_name,$slice->start,$slice->end); # XXX wrong? Too big?
+  warn sprintf("start %d end %d (%d)",$slice->start,$slice->end,scalar(@$features));
+  $_->map($slice) for @$features;
+  $self->{'itemRgb'} = 'on'; # XXX why not work?
+  $_->{'__extra__'}->{'item_colour'} = ['255,0,255'] for @$features; # XXX why not work?
+
+  return( 
+    'user' => [ $features,
+      {
+        dep => 20,
+        colour_key => 'red',
+      }
+    ],
+  );
+}
+ 
 sub draw_features {
   my ($self,$wiggle) = @_;
 
@@ -75,7 +113,6 @@ sub draw_features {
     push @error,$self->_draw_wiggle();
   }
   return 0 unless @error;
-  print STDERR @error;
   return join(" or ",@error);
 }
 
