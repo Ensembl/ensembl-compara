@@ -863,9 +863,9 @@ sub store_TransformedTranscripts {
 }
 
 sub store_TransformedSNPS {
-  my $self   = shift;
-  my $so_term = shift;
-  my $valids = $self->valids;
+  my $self     = shift;
+  my $so_terms = shift;
+  my $valids   = $self->valids;
   
   my $tva = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
   
@@ -878,18 +878,18 @@ sub store_TransformedSNPS {
   my $somatic_method = 'fetch_all_somatic_by_Transcripts';
   
   # SO term specified?
-  if(defined $so_term) {
+  if(defined $so_terms && scalar @$so_terms) {
     
     # tva needs an ontology term adaptor to fetch by SO term
     $tva->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
     
-    $method .= '_SO_term';
-    $somatic_method .= '_SO_term';
+    $method .= '_SO_terms';
+    $somatic_method .= '_SO_terms';
   }
   
   #foreach my $tv(@{$tva->fetch_all_by_Transcripts([map {$_->transcript} @transcripts])}) {
-  foreach my $tv(@{$tva->$method([map {$_->transcript} @transcripts], $so_term)}) {
-    foreach my $type(@{$tv->consequence_type || []}) {
+  foreach my $tv(@{$tva->$method([map {$_->transcript} @transcripts], $so_terms)}) {
+	foreach my $type(@{$tv->consequence_type || []}) {
       next unless $valids->{'opt_'.lc($type)};
       $tvs_by_tr->{$tv->transcript->stable_id}->{$tv->{'_variation_feature_id'}} = $tv;
       last;
@@ -897,7 +897,7 @@ sub store_TransformedSNPS {
   }
   
   # get somatic ones too
-  foreach my $tv(@{$tva->$somatic_method([map {$_->transcript} @transcripts], $so_term)}) {
+  foreach my $tv(@{$tva->$somatic_method([map {$_->transcript} @transcripts], $so_terms)}) {
     foreach my $type(@{$tv->consequence_type || []}) {
       next unless $valids->{'opt_'.lc($type)};
       $tvs_by_tr->{$tv->transcript->stable_id}->{$tv->{'_variation_feature_id'}} = $tv;
