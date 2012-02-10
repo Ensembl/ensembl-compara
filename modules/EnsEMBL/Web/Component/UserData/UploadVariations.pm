@@ -35,16 +35,14 @@ sub content {
       <p class="space-below">This tool takes a list of variant positions and
       alleles, and predicts the effects of each of these on overlapping
       transcripts and regulatory regions annotated in Ensembl. The tool accepts
-      substitutions, insertions and deletions as input, uploaded as a list of <a
-      href="/info/website/upload/var.html" target="_blank">tab separated
-      values</a>, <a href="http://www.1000genomes.org/wiki/Analysis/vcf4.0"
-      target="_blank">VCF</a> or Pileup format input. HGVS notations and variant
-      identifiers (e.g. rs123) are also accepted.</p>
+      substitutions, insertions and deletions as input, see <a
+      href="/info/docs/variation/vep/vep_formats.html" target="_blank">data
+      formats</a>.</p>
       
       <p>Upload is limited to $variation_limit variants; lines after the limit
       will be ignored. Users with more than $variation_limit variations can
       split files into smaller chunks, use the standalone <a
-      href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/variant_effect_predictor/?root=ensembl"
+      href="/info/docs/variation/vep/vep_script.html"
       target="_blank">perl script</a> or the <a
       href="/info/docs/api/variation/variation_tutorial.html#Consequence"
       target="_blank">variation API</a>. See also <a
