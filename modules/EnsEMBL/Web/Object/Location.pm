@@ -1637,14 +1637,16 @@ sub multi_locations {
     my $slice = $self->slice;
     
     push @$locations, {      
-      slice      => $slice,
-      species    => $self->species,
-      name       => $slice->seq_region_name,
-      short_name => $self->chr_short_name,
-      start      => $slice->start,
-      end        => $slice->end,
-      strand     => $slice->strand,
-      length     => $slice->seq_region_length
+      slice         => $slice,
+      species       => $self->species,
+      target        => $slice->seq_region_name,
+      species_check => $self->species,
+      name          => $slice->seq_region_name,
+      short_name    => $self->chr_short_name,
+      start         => $slice->start,
+      end           => $slice->end,
+      strand        => $slice->strand,
+      length        => $slice->seq_region_length
     }
   }
   

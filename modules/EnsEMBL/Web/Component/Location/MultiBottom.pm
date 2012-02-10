@@ -67,14 +67,14 @@ sub content {
     $_->{'slice'}->adaptor->db->set_adaptor('compara', $compara_db) if $compara_db;
     
     if ($i == 1) {
-      $image_config->multi($methods, $seq_region_name, $i, $max, $slices->[$i]) if $join_alignments && $max == 2;
+      $image_config->multi($methods, $seq_region_name, $i, $max, $slices->[$i]) if $join_alignments && $max == 2 && $slices->[$i]{'species_check'} ne $primary_species;
       $image_config->join_genes($i, $max, $slices->[$i]) if $join_genes && $max == 2;
       
       push @images, $primary_slice, $image_config if $max < 3;
       
       $primary_image_config = $image_config;
     } else {
-      $image_config->multi($methods, $_->{'target'} || $seq_region_name, $i, $max, $slices->[0]) if $join_alignments;
+      $image_config->multi($methods, $_->{'target'} || $seq_region_name, $i, $max, $slices->[0]) if $join_alignments && $_->{'species_check'} ne $primary_species;
       $image_config->join_genes($i, $max, $slices->[0]) if $join_genes;
       $image_config->highlight($highlight_gene) if $highlight_gene;
       

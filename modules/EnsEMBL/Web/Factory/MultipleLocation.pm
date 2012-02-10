@@ -95,15 +95,16 @@ sub createObjects {
     next if $@;
     
     push @slices, {
-      slice      => $slice,
-      species    => $species,
-      target     => $inputs{$_}->{'chr'},
-      name       => $slice->seq_region_name,
-      short_name => $object->chr_short_name($slice, $species),
-      start      => $slice->start,
-      end        => $slice->end,
-      strand     => $slice->strand,
-      length     => $slice->seq_region_length
+      slice         => $slice,
+      species       => $species,
+      target        => $inputs{$_}->{'chr'},
+      species_check => $species eq $hub->species ? join('--', grep $_, $species, $inputs{$_}->{'chr'}) : $species,
+      name          => $slice->seq_region_name,
+      short_name    => $object->chr_short_name($slice, $species),
+      start         => $slice->start,
+      end           => $slice->end,
+      strand        => $slice->strand,
+      length        => $slice->seq_region_length
     };
   }
   
@@ -152,7 +153,7 @@ sub add_species {
     } else {
       if ($valid_species{$species}) {
         if ($species eq $self->species) {
-          $paralogues++;
+          $paralogues++ unless $seq_region_name;
         } else {
           push @no_alignment, $self->species_defs->species_label($species) . ($seq_region_name ? " $seq_region_name" : '');
         }

@@ -59,12 +59,11 @@ sub init {
 
 sub multi {
   my ($self, $methods, $chr, $pos, $total, @slices) = @_;
-  my $sp         = $self->{'species'};
-  my $multi_hash = $self->species_defs->multi_hash;
-  my $p          = $pos == $total && $total > 2 ? 2 : 1;
+  my $sp              = $self->{'species'};
+  my $multi_hash      = $self->species_defs->multi_hash;
+  my $primary_species = $self->hub->species;
+  my $p               = $pos == $total && $total > 2 ? 2 : 1;
   my ($i, %alignments, @strands);
-  
-  $_->{'species_check'} = $_->{'species'} eq $sp ? join '--', grep $_, $_->{'species'}, $_->{'target'} : $_->{'species'} for @slices;
   
   foreach my $db (@{$self->species_defs->compara_like_databases || []}) {
     next unless exists $multi_hash->{$db};
@@ -79,7 +78,7 @@ sub multi {
       $i = $p;
       
       foreach (@slices) {
-        if ($align{'species'}{$_->{'species_check'}}) {
+        if ($align{'species'}{$_->{'species'} eq $sp ? $_->{'species_check'} : $_->{'species'}} && !($_->{'species_check'} eq $primary_species && $sp eq $primary_species)) {
           $align{'order'} = $i;
           $align{'ori'}   = $_->{'strand'};
           $align{'gene'}  = $_->{'g'};
