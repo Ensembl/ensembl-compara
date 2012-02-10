@@ -84,8 +84,8 @@ example, a three base pair deletion of nucleotides 12600, 12601, and
     to RefSeq transcripts</a> in the VEP script.</li>
     <li>Variant identifiers - these should be e.g. dbSNP rsIDs, or any synonym
     for a variant present in the Ensembl Variation database. See <a
-    href="/info/docs/variation/sources_test.html">here</a> for a list of
-    identifier sources in Ensembl.</li>
+    href="/info/docs/variation/sources_documentation.html">here</a> for a list
+    of identifier sources in Ensembl.</li>
 </ul>
 
 <p> When using the web VEP, ensure that you have the correct file format
@@ -100,35 +100,45 @@ identifier of known variations that occur at this position. The output
 columns are:</p>
 
 <ol>
-<li><strong>Uploaded variation</strong> - as chromosome_start_alleles</li>
-<li><strong>Location</strong> - in standard coordinate format (chr:start or chr:start-end)</li>
-<li><strong>Allele</strong> - the variant allele used to calculate the consequence</li>
-<li><strong>Gene</strong> - Ensembl stable ID of affected gene</li>
-<li><strong>Feature</strong> - Ensembl stable ID of feature</li>
-<li><strong>Feature type</strong> - type of feature. Currently one of Transcript, RegulatoryFeature, MotifFeature.</li>
-<li><strong>Consequence</strong> - consequence type of this variation</li>
-<li><strong>Relative position in cDNA</strong> - base pair position in cDNA sequence</li>
-<li><strong>Relative position in CDS</strong> - base pair position in coding sequence</li>
-<li><strong>Relative position in protein</strong> - amino acid position in protein</li>
-<li><strong>Amino acid change</strong> - only given if the variation affects the protein-coding sequence</li>
-<li><strong>Codons</strong> - the alternate codons with the variant base highlighted as bold (HTML) or upper case (text)</li>
-<li><strong>Corresponding variation</strong> - identifier of existing variation</li>
-<li><strong>Extra</strong> - this column contains extra information as key=value pairs separated by ";". The keys are as follows:
-	<ul>
-		<li><i>HGNC</i> - the HGNC gene identifier</li>
-		<li><i>ENSP</i> - the Ensembl protein identifier of the affected transcript</li>
-		<li><i>HGVSc</i> - the HGVS coding sequence name</li>
-		<li><i>HGVSp</i> - the HGVS protein sequence name</li>
-		<li><i>SIFT</i> - the SIFT prediction and/or score, with both given as prediction(score)</li>
-		<li><i>PolyPhen</i> - the PolyPhen prediction and/or score</li>
-		<li><i>Condel</i> - the Condel consensus prediction and/or score</li>
-		<li><i>MATRIX</i> - the source and identifier of a transcription factor binding profile aligned at this position</li>
-		<li><i>HIGH_INF_POS</i> - a flag indicating if the variant falls in a high information position of a transcription factor binding profile</li>
-	</ul>
-</li>
+	<li><strong>Uploaded variation</strong> - as chromosome_start_alleles</li>
+	<li><strong>Location</strong> - in standard coordinate format (chr:start or chr:start-end)</li>
+	<li><strong>Allele</strong> - the variant allele used to calculate the consequence</li>
+	<li><strong>Gene</strong> - Ensembl stable ID of affected gene</li>
+	<li><strong>Feature</strong> - Ensembl stable ID of feature</li>
+	<li><strong>Feature type</strong> - type of feature. Currently one of Transcript, RegulatoryFeature, MotifFeature.</li>
+	<li><strong>Consequence</strong> - consequence type of this variation</li>
+	<li><strong>Relative position in cDNA</strong> - base pair position in cDNA sequence</li>
+	<li><strong>Relative position in CDS</strong> - base pair position in coding sequence</li>
+	<li><strong>Relative position in protein</strong> - amino acid position in protein</li>
+	<li><strong>Amino acid change</strong> - only given if the variation affects the protein-coding sequence</li>
+	<li><strong>Codons</strong> - the alternate codons with the variant base highlighted as bold (HTML) or upper case (text)</li>
+	<li><strong>Corresponding variation</strong> - identifier of existing variation</li>
+	<li><strong>Extra</strong> - this column contains extra information as key=value pairs separated by ";". The keys are as follows:
+		<ul>
+			<li><i>HGNC</i> - the HGNC gene identifier</li>
+			<li><i>ENSP</i> - the Ensembl protein identifier of the affected transcript</li>
+			<li><i>HGVSc</i> - the HGVS coding sequence name</li>
+			<li><i>HGVSp</i> - the HGVS protein sequence name</li>
+			<li><i>SIFT</i> - the SIFT prediction and/or score, with both given as prediction(score)</li>
+			<li><i>PolyPhen</i> - the PolyPhen prediction and/or score</li>
+			<li><i>Condel</i> - the Condel consensus prediction and/or score</li>
+			<li><i>MATRIX</i> - the source and identifier of a transcription factor binding profile aligned at this position</li>
+			<li><i>HIGH_INF_POS</i> - a flag indicating if the variant falls in a high information position of a transcription factor binding profile (TFBP)</li>
+			<li><i>MOTIF_SCORE_CHANGE</i> - '+' if the variant sequence is closer to the TFBP consensus sequence, '-' if it is further, '0' if the score does not change</li>
+			<li><i>CANONICAL</i> - a flag indicating if the transcript is denoted as the canonical transcript for this gene</li>
+			<li><i>CCDS</i> - the CCDS identifer for this transcript, where applicable</li>
+			<li><i>INTRON</i> - the intron number (out of total number)</li>
+			<li><i>EXON</i> - the exon number (out of total number)</li>
+			<li><i>DOMAINS</i> - the source and identifer of any overlapping protein domains</li>
+		</ul>
+	</li>
 </ol>
 
-<p>Empty values are denoted by '-'.</p>
+<p>Empty values are denoted by '-'. Further fields in the Extra column can be
+added by <a href="vep_script.html#plugins">plugins</a> or using <a
+href="vep_script.html#custom">custom annotations</a> in the VEP script. Output
+fields can be configured using the --fields flag when running the VEP script.
+</p>
 
 <pre class="code">
 11_224088_C/A    11:224088   A  ENSG00000142082  ENST00000525319  Transcript         NON_SYNONYMOUS_CODING   742  716  239  T/N  aCc/aAc  -  SIFT=deleterious(0);PolyPhen=unknown(0)
@@ -138,17 +148,18 @@ columns are:</p>
 22_16084370_G/A  22:16084370 A  -                ENSR00000615113  RegulatoryFeature  REGULATORY_REGION       -    -    -    -    -        -  -
 </pre>
 
-<p> The VEP script (standalone) will also add a header to the output file. This
-contains information about the databases connected to, and also a key describing
-the key/value pairs used in the extra column. </p>
+<p> The VEP script will also add a header to the output file. This contains
+information about the databases connected to, and also a key describing the
+key/value pairs used in the extra column. </p>
 
 <pre class="code">
-## ENSEMBL VARIANT EFFECT PREDICTOR v2.2
-## Output produced at 2011-09-16 16:09:38
-## Connected to homo_sapiens_core_64_37 on ensembldb.ensembl.org
-## Using API version 64, DB version 64
+## ENSEMBL VARIANT EFFECT PREDICTOR v2.4
+## Output produced at 2012-02-20 16:09:38
+## Connected to homo_sapiens_core_66_37 on ensembldb.ensembl.org
+## Using API version 66, DB version 66
 ## Extra column keys:
 ## CANONICAL    : Indicates if transcript is canonical for this gene
+## CCDS         : Indicates if transcript is a CCDS transcript
 ## HGNC         : HGNC gene identifier
 ## ENSP         : Ensembl protein identifer
 ## HGVSc        : HGVS coding sequence name
@@ -156,9 +167,13 @@ the key/value pairs used in the extra column. </p>
 ## SIFT         : SIFT prediction
 ## PolyPhen     : PolyPhen prediction
 ## Condel       : Condel SIFT/PolyPhen consensus prediction
-## MATRIX       : The source and identifier of a transcription factor binding profile aligned at this position
-## HIGH_INF_POS : A flag indicating if the variant falls in a high information position of a transcription factor binding profile
+## EXON         : Exon number
+## INTRON       : Intron number
+## DOMAINS      : The source and identifer of any overlapping protein domains
+## MATRIX       : The source and identifier of a transcription factor binding profile (TFBP) aligned at this position
+## MATRIX_POS   : The relative position of the variation in the aligned TFBP
+## HIGH_INF_POS : A flag indicating if the variant falls in a high information position of the TFBP
+## MOTIF_SCORE_CHANGE : '+' if the variant sequence is closer to the TFBP consensus sequence, '-' if it is further, '0' if the score does not change
 </pre>
-
 </body>
 </html>
