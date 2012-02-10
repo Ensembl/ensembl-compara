@@ -14,8 +14,7 @@ sub init {
   my %options    = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
   my $defaults   = {
     consequence_format => 'ensembl',
-    show_scores        => 'no',
-		context            => 100,
+    context            => 100,
   };
   
   $defaults->{"opt_pop_$_"} = 'off' for @{$variations->{'DISPLAY_STRAINS'}};
@@ -103,16 +102,6 @@ sub form {
       { value => 'ncbi',     name => 'NCBI terms'              },
     ]
   });  
-  
-  if ($hub->species =~ /homo_sapiens/i) {
-    $self->add_form_element({
-      type  => 'CheckBox',
-      label => 'Show SIFT and PolyPhen scores',
-      name  => 'show_scores',
-      value => 'yes',
-      raw   => 1,
-    });
-  }
   
   # Add type selection
   $self->add_fieldset('Consequence type');

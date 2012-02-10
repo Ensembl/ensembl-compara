@@ -11,7 +11,6 @@ sub init {
   
   $self->set_defaults({
     consequence_format => 'ensembl',
-    show_scores        => 'no'
   });
 
   $self->title = 'Gene/Transcript';
@@ -31,16 +30,6 @@ sub form {
       { value => 'ncbi',    name => 'NCBI terms'              },
     ]
   });  
-  
-  if ($self->hub->species =~ /homo_sapiens/i) {
-    $self->add_form_element({
-      type  => 'CheckBox',
-      label => 'Show SIFT and PolyPhen scores',
-      name  => 'show_scores',
-      value => 'yes',
-      raw   => 1,
-    });
-  }
 }
 
 1;
