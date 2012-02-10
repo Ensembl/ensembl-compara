@@ -124,8 +124,18 @@ sub features {
     # No scores
   }
 
-  $self->{'itemRgb'} = 'on'; # XXX why not work?
-  $_->{'__extra__'}->{'item_colour'} = ['255,0,255'] for @$features; # XXX why not work?
+  if(grep {     defined $_->external_data 
+            and defined $_->external_data->{'item_colour'} 
+            and @{$_->external_data->{'item_colour'}} 
+            and $_->external_data->{'item_colour'}->[0] } @$features) {
+
+    foreach (@$features) {
+      next if defined $_->external_data->{'item_colour'};
+      $_->external_data->{'item_colour'} = $self->{'_default_colour'};
+    }
+    $config->{'itemRgb'} = 'on';
+
+  }
 
   return( 
     'url' => [ $features, $config ],
