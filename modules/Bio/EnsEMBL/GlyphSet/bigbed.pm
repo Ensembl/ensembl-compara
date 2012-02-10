@@ -72,7 +72,28 @@ sub _draw_wiggle {
 
 sub feature_group { $_[1]->id; }
 sub feature_label { $_[1]->id; }
-sub feature_title { return "XXX WRONG"; }
+
+sub feature_title {
+  my ($self,$f,$db_name) = @_;
+
+  my @title = (
+    [$self->{'track_key'}, $f->id],
+    ["Start", $f->seq_region_start],
+    ["End", $f->seq_region_end],
+    ["Strand", ("-","Forward","Reverse")[$f->seq_region_strand]], # remember, [-1] = at end
+    ["Hit start", $f->hstart],
+    ["Hit end", $f->hend],
+    ["Hit strand", $f->hstrand],
+    ["Score", $f->score],
+  );
+  my %extra = $f->extra_data && ref($f->extra_data) eq 'HASH' ? %{$f->extra_data} : ();
+  foreach my $k (sort keys %extra) {
+    next if $k eq '_type' or $k eq 'item_colour';  
+    push @title,[$k,join(", ",@{$extra{$k}})];
+  }
+  return join("; ",map { join(': ',@$_) } grep { $_->[1] } @title);
+}
+
 sub colour_key { return $_[1]; }
 
 # XXX  WRONG
@@ -92,7 +113,6 @@ sub features {
   my $slice = $self->{'container'};
 
   my $features = $self->bigbed_adaptor->fetch_features($slice->seq_region_name,$slice->start,$slice->end); # XXX wrong? Too big?
-  warn sprintf("start %d end %d (%d)",$slice->start,$slice->end,scalar(@$features));
   $_->map($slice) for @$features;
   $self->{'itemRgb'} = 'on'; # XXX why not work?
   $_->{'__extra__'}->{'item_colour'} = ['255,0,255'] for @$features; # XXX why not work?
