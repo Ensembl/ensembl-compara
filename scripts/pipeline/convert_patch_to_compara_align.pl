@@ -5,6 +5,9 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Registry;
 
+
+my $gap_cutoff_size = 50; # size of the gap (base pairs) in the reference or patch sequence greater than (>) this value will end the block
+
 my $mlssid;
 my $species_name = "human";
 my $db_user;
@@ -86,6 +89,7 @@ foreach my $patch_align(@$patch_align_features){
 	); 
 }	
 
+
 my($ga_id,$gab_id)=(1,1);
 
 foreach my $ref_name(keys %aligned_patch){
@@ -111,14 +115,16 @@ foreach my $ref_name(keys %aligned_patch){
 							}
 						}
 					}
-					next if $split_here; # the patch seqs are NOT adjacent, so the block ends here
 					my $patch_del = $arr->[$i]->{patch_start} - $arr->[$i+1]->{patch_end} - 1;
+					$split_here = $patch_del > $gap_cutoff_size ? 1 : $split_here;
+					next if $split_here; # the patch seqs are NOT adjacent OR a gap in the patch is > $gap_cutoff_size bp, so the block ends here
 					push(@{ $arr->[$i]->{ref_aln_bases} }, $patch_del . "D",  @{ $arr->[$i+1]->{ref_aln_bases} });
 					push(@{ $arr->[$i]->{patch_aln_bases} }, $patch_del, @{ $arr->[$i+1]->{patch_aln_bases} });
 					$arr->[$i]->{patch_start} = $arr->[$i+1]->{patch_start};
 				}
 				else { # patch seqs are contiguous 
 					my $ref_del = $arr->[$i+1]->{ref_start} - $arr->[$i]->{ref_end} - 1;
+					$split_here = $ref_del > $gap_cutoff_size ? 1 : $split_here; # block ends here if a gap in the ref is > $gap_cutoff_size bp
 					push(@{ $arr->[$i]->{patch_aln_bases} }, $ref_del . "D",  @{ $arr->[$i+1]->{patch_aln_bases} });
 					push(@{ $arr->[$i]->{ref_aln_bases} }, $ref_del, @{ $arr->[$i+1]->{ref_aln_bases} });
 					$arr->[$i]->{patch_start} = $arr->[$i+1]->{patch_start};
@@ -135,12 +141,15 @@ foreach my $ref_name(keys %aligned_patch){
 							}
 						}
 					}
-					next if $split_here;
 					my $patch_del = $arr->[$i+1]->{patch_start} - $arr->[$i]->{patch_end} - 1;
+					$split_here = $patch_del > $gap_cutoff_size ? 1 : $split_here; # block ends here if a gap in the patch is > $gap_cutoff_size bp
+					next if $split_here;
 					push(@{ $arr->[$i]->{ref_aln_bases} }, $patch_del . "D", @{ $arr->[$i+1]->{ref_aln_bases} });
 					push(@{ $arr->[$i]->{patch_aln_bases} }, $patch_del, @{ $arr->[$i+1]->{patch_aln_bases} });
 				}else{ # patch seq are contiguous
 					my $ref_del = $arr->[$i+1]->{ref_start} - $arr->[$i]->{ref_end} - 1;
+					$split_here = $ref_del > $gap_cutoff_size ? 1 : $split_here; # block ends here if a gap in the ref is > $gap_cutoff_size bp
+					next if $split_here;
 					push(@{ $arr->[$i]->{patch_aln_bases} }, $ref_del . "D", @{ $arr->[$i+1]->{patch_aln_bases} });
 					push(@{ $arr->[$i]->{ref_aln_bases} }, $ref_del, @{ $arr->[$i+1]->{ref_aln_bases} });
 				}
@@ -151,7 +160,9 @@ foreach my $ref_name(keys %aligned_patch){
 			splice(@$arr, $i+1, 1);
 			$i--;
 		}
+
 		# generate the cigar string
+
 		for(my$j=0;$j<@$arr;$j++){
 			$arr->[$j]->{genomic_align_block_id} = $gab_id++;
 			$arr->[$j]->{ref_genomic_align_id} = $ga_id++;
