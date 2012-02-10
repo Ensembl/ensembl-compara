@@ -15,7 +15,7 @@ use base qw(Bio::EnsEMBL::GlyphSet::_alignment Bio::EnsEMBL::GlyphSet_wiggle_and
 
 use Carp qw(cluck);
 
-sub my_helplink { return "bigbed"; } # XXX check it's there and works
+sub my_helplink { return "bigbed"; }
 
 sub bigbed_adaptor {
   my $self = shift;
@@ -94,7 +94,6 @@ sub feature_title {
   return join("; ",map { join(': ',@$_) } grep { $_->[1] } @title);
 }
 
-sub colour_key { return $_[1]; }
 
 # XXX  WRONG
 sub href {
@@ -111,17 +110,25 @@ sub features {
   my ($self) = @_;
 
   my $slice = $self->{'container'};
-
-  my $features = $self->bigbed_adaptor->fetch_features($slice->seq_region_name,$slice->start,$slice->end); # XXX wrong? Too big?
+  $self->{'_default_colour'} = $self->SUPER::my_colour($self->my_config('sub_type'));
+  my $features = $self->bigbed_adaptor->fetch_features($slice->seq_region_name,$slice->start,$slice->end);
   $_->map($slice) for @$features;
+  my $config = {};
+
+  # Check if any scores present to enable score-based colouring
+  if(grep { defined $_->score } @$features) {
+    # A score: let's enable greyscale
+    $config->{'useScore'} = 1;
+    $config->{'implicit_colour'} = 1;
+  } else {
+    # No scores
+  }
+
   $self->{'itemRgb'} = 'on'; # XXX why not work?
   $_->{'__extra__'}->{'item_colour'} = ['255,0,255'] for @$features; # XXX why not work?
 
   return( 
-    'url' => [ $features,
-      {
-      }
-    ],
+    'url' => [ $features, $config ],
   );
 }
  
@@ -137,6 +144,13 @@ sub draw_features {
 }
 
 sub render_text { warn "No text renderer for bigbed\n"; return ''; }
+
+
+sub my_colour {
+  my ($self, $k, $v) = @_;
+  my $c = $self->{'parser'}{'tracks'}{$self->{'track_key'}}{'config'}{'color'} || $self->{'_default_colour'};
+  return $v eq 'join' ?  $self->{'config'}->colourmap->mix($c, 'white', 0.8) : $c;
+}
 
 1;
 
