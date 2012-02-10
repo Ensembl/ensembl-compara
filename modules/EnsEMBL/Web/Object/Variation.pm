@@ -500,6 +500,25 @@ sub ancestor {
 }
 
 
+sub clinical_significance {
+
+  ### Variation_object_calls 
+  ### a
+  ### Example    : $object->clinical_significance;
+  ### Description: returns the clinical significance and the corresponding display colour.
+  ### Returns and array
+
+  my $self = shift;
+  my %cs_colours = ('non-pathogenic' => '#090',
+                    'begnin'         => '#090',
+                    'pathogenic'     => '#FF0000',
+                    'probable-non-pathogenic'  => '#FF9000',
+                    'probable-pathogenic'     => '#FF9000');                  
+  my $cs = $self->vari->clinical_significance;
+  my $colour = $cs_colours{$cs} ? $cs_colours{$cs} : '#779';
+  return $cs,$colour;
+}
+
 
 sub tagged_snp { 
 
