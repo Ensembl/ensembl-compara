@@ -10,6 +10,7 @@ sub _init {
   my $self = shift;
   $self->cacheable(0);
   $self->ajaxable(1);
+  #$self->has_image(1);
 }
 
 sub content {
@@ -42,7 +43,7 @@ sub content {
     );
   }
   
-  # HGMD
+  # HGMD (SNPs only)
   if($source eq 'HGMD-PUBLIC' and $name =~ /^CM/) {
     
     if($hub->param('recalculate')) {
@@ -57,7 +58,7 @@ sub content {
       
       $html .= $self->_info(
         'Information',
-        "This display shows consequence predictions for all possible alleles at this position.<br/><br/>$link",
+        "This display shows consequence predictions for all possible alleles (A/C/G/T) at this position.<br/><br/>$link",
         '50%',
       ); 
     }
@@ -93,8 +94,8 @@ sub content {
   
   if ($hub->species eq 'Homo_sapiens') {
     push @columns, (
-      { key => 'sift',      title => 'SIFT',     sort => 'position_html' },
-      { key => 'polyphen',  title => 'PolyPhen', sort => 'position_html' },
+      { key => 'sift',      title => 'SIFT',     sort => 'position_html', align => 'center' },
+      { key => 'polyphen',  title => 'PolyPhen', sort => 'position_html', align => 'center' },
     );
   }
   
@@ -105,6 +106,20 @@ sub content {
   my $trans_adaptor = $hub->get_adaptor('get_TranscriptAdaptor');
   my $max_length    = 20;
   my $flag;
+  
+  # create a regfeat table as well
+  my @reg_columns = (
+    { key => 'rf',       title => 'Feature',                   sort => 'html'                         },
+    { key => 'ftype',    title => 'Feature type',              sort => 'string'                       },
+    { key => 'allele',   title => 'Allele',                    sort => 'string',        width => '7%' },
+    { key => 'type',     title => 'Consequence type',          sort => 'position_html'                },
+    { key => 'matrix',   title => 'Motif name',                sort => 'string',                      },
+    { key => 'pos',      title => 'Motif position',            sort => 'numeric'                      },
+    { key => 'high_inf', title => 'High information position', sort => 'string'                       },
+    { key => 'score',    title => 'Motif score change',        sort => 'position_html'                },
+  );
+  my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc']});
+  
   
   foreach my $varif_id (grep $_ eq $hub->param('vf'), keys %mappings) {
     foreach my $transcript_data (@{$mappings{$varif_id}{'transcript_vari'}}) {
@@ -208,8 +223,8 @@ sub content {
       my $a = $transcript_data->{'vf_allele'};
       
       # sift
-      my $sift = $self->render_sift_polyphen($tva->sift_prediction || '-',     $show_scores eq 'yes' ? $tva->sift_score     : undef);
-      my $poly = $self->render_sift_polyphen($tva->polyphen_prediction || '-', $show_scores eq 'yes' ? $tva->polyphen_score : undef);
+      my $sift = $self->render_sift_polyphen($tva->sift_prediction, $tva->sift_score);
+      my $poly = $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
       
       # Allele
       my $allele = (length($a) > $max_length) ? substr($a,0,$max_length).'...' : $a;
@@ -234,8 +249,8 @@ sub content {
       
       my $row = {
         allele    => $allele,
-        gene      => qq{<a href="$gene_url">$gene_name</a><br/><span class="small">$gene_hgnc</span>},
-        trans     => qq{<nobr><a href="$transcript_url">$trans_name</a> ($strand)</nobr><br/><span class="small">$trans_type</span>},
+        gene      => qq{<a href="$gene_url">$gene_name</a><br/><span class="small" style="white-space:nowrap;">$gene_hgnc</span>},
+        trans     => qq{<nobr><a href="$transcript_url">$trans_name</a> ($strand)</nobr><br/><span class="small" style="white-space:nowrap;">$trans_type</span>},
         type      => $type,
         trans_pos => $self->_sort_start_end($transcript_data->{'cdna_start'},        $transcript_data->{'cdna_end'}),
         cds_pos   => $self->_sort_start_end($transcript_data->{'cds_start'},         $transcript_data->{'cds_end'}),
@@ -244,20 +259,124 @@ sub content {
         codon     => $codon,
         sift      => $sift,
         polyphen  => $poly,
-        detail    => $self->ajax_add($self->ajax_url(undef, { transcript => $trans_name, vf => $varif_id, allele => $a, update_panel => 1 }), "${trans_name}_${varif_id}_${a}"),
+        detail    => $self->ajax_add($self->ajax_url(undef, { transcript => $trans_name, vf => $varif_id, allele => $a, update_panel => 1 }).";single_transcript=variation_feature_variation=normal", "${trans_name}_${varif_id}_${a}"),
       };
       
       $table->add_row($row);
       $flag = 1;
     }
+    
+    
+    # reg feats
+    # get variation feature object
+    my ($vf_obj) = grep {$_->dbID eq $varif_id} @{$self->object->get_variation_features};
+    
+    # reset allele string if recalculating for HGMD
+    $vf_obj->allele_string('A/C/G/T') if $hub->param('recalculate');
+    
+    my $rfa = $hub->get_adaptor('get_RegulatoryFeatureAdaptor', 'funcgen');
+    
+    for my $rfv (@{ $vf_obj->get_all_RegulatoryFeatureVariations }) {
+        
+      # create a URL
+      my $url = $hub->url({
+        type   => 'Regulation',
+        action => 'Cell_line',
+        rf     => $rfv->regulatory_feature->stable_id,
+        fdb    => 'funcgen',
+      });
+      
+      $url .= ';regulation_view=variation_feature_variation=normal';
+      
+      for my $rfva (@{ $rfv->get_all_alternate_RegulatoryFeatureVariationAlleles }) {
+        
+        my $type;
+        
+        if ($cons_format eq 'so') {
+          $type = join ', ', map { $hub->get_ExtURL_link($_->SO_term, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @{$rfva->get_all_OverlapConsequences};
+        } elsif ($cons_format eq 'ncbi') {
+          # not all terms have an ncbi equiv so default to SO
+          $type = join ', ', map { $_->NCBI_term || sprintf '<span title="%s (no NCBI term available)">%s*</span>', $_->description, $_->label } @{$rfva->get_all_OverlapConsequences};
+        } else {
+          $type = join ', ', map { '<span title="'.$_->description.'">'.$_->label.'</span>' } @{$rfva->get_all_OverlapConsequences};
+        }
+        
+        my $row = {
+          rf       => sprintf('<a href="%s">%s</a>', $url, $rfv->regulatory_feature->stable_id),
+          ftype    => 'Regulatory feature',
+          allele   => $rfva->variation_feature_seq,
+          type     => $type || '-',
+          matrix   => '-',
+          pos      => '-',
+          high_inf => '-',
+          score    => '-',
+        };
+        
+        $reg_table->add_row($row);
+        $flag = 1;
+      }
+    }
+    
+    for my $mfv (@{ $vf_obj->get_all_MotifFeatureVariations }) {
+      my $mf = $mfv->motif_feature;
+     
+      # check that the motif has a binding matrix, if not there's not 
+      # much we can do so don't return anything
+      next unless defined $mf->binding_matrix;
+      my $matrix = $mf->display_label;
+      
+      my $matrix_url = $mf->binding_matrix->description =~ /Jaspar/ ? $hub->get_ExtURL_link($matrix, 'JASPAR', (split ':', $matrix)[-1]) : $matrix;
+      
+      # get the corresponding regfeat
+      my $rf = $rfa->fetch_all_by_Slice($mf->feature_Slice)->[0];
+      
+      # create a URL
+      my $url = $hub->url({
+        type   => 'Regulation',
+        action => 'Cell_line',
+        rf     => $rf->stable_id,
+        fdb    => 'funcgen',
+      });
+      
+      $url .= ';regulation_view=variation_feature_variation=normal';
+      
+      for my $mfva (@{ $mfv->get_all_alternate_MotifFeatureVariationAlleles }) {
+        my $type;
+        
+        if ($cons_format eq 'so') {
+          $type = join ', ', map { $hub->get_ExtURL_link($_->SO_term, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @{$mfva->get_all_OverlapConsequences};
+        } elsif ($cons_format eq 'ncbi') {
+          # not all terms have an ncbi equiv so default to SO
+          $type = join ', ', map { $_->NCBI_term || sprintf '<span title="%s (no NCBI term available)">%s*</span>', $_->description, $_->label } @{$mfva->get_all_OverlapConsequences};
+        } else {
+          $type = join ', ', map { '<span title="'.$_->description.'">'.$_->label.'</span>' } @{$mfva->get_all_OverlapConsequences};
+        }
+        
+        my $row = {
+          rf       => sprintf('%s<br/><span class="small" style="white-space:nowrap;"><a href="%s">%s</a></span>', $mf->binding_matrix->name, $url, $rf->stable_id),
+          ftype    => 'Motif feature',
+          allele   => $mfva->variation_feature_seq,
+          type     => $type,
+          matrix   => $matrix_url,
+          pos      => $mfva->motif_start,
+          high_inf => $mfva->in_informative_position ? 'Yes' : 'No',
+          score    => defined($mfva->motif_score_delta) ? render_motif_score($mfva->motif_score_delta) : '-',
+        };
+        
+        $reg_table->add_row($row);
+        $flag = 1;
+      }
+    }
   }
 
   if ($flag) {
-    $html .= $table->render;
+    $html .=
+      ($table->has_rows ? '<h2>Gene and Transcript consequences</h2>'.$table->render : '<h3>No Gene or Transcript consequences</h3>').
+      ($reg_table->has_rows ? '<h2>Regulatory consequences</h2>'.$reg_table->render : '<h3>No Regulatory consequences</h3>');
     
     return $html;
   } else { 
-    return $self->_info('', '<p>This variation has not been mapped to any Ensembl genes or transcripts</p>');
+    return $self->_info('', '<p>This variation has not been mapped to any Ensembl genes, transcripts or regulatory features</p>');
   }
 }
 
@@ -278,6 +397,29 @@ sub _sort_start_end {
   } else {
     return '-';
   };
+}
+
+sub render_motif_score {
+  my $score = shift;
+  
+  my $sort_score = sprintf("%.0f", (($score + 20) * 10000));
+  
+  my ($class, $message);
+  
+  if($score == 0) {
+    $class = 'no_arrow';
+    $message = 'No change';
+  }
+  elsif($score > 0) {
+    $class = 'up_arrow';
+    $message = 'More like consensus sequence';
+  }
+  elsif($score < 0) {
+    $class = 'down_arrow';
+    $message = 'Less like consensus sequence';
+  }
+  
+  return qq{<div class="hidden">$sort_score</div><div class="hidden export">$message</div><div class="$class" title="$message"></div>};
 }
 
 sub detail_panel {
@@ -422,7 +564,21 @@ sub detail_panel {
       $data{'exon_coord'} =
         ($tv->cdna_start - $exon->cdna_start($tr) + 1) .
         ($tv->cdna_end == $tv->cdna_start ? '' : '-' . ($tv->cdna_end - $exon->cdna_start($tr) + 1));
+        
+      # protein domains
+      my @strings;
+
+      for my $feat (@{$tv->get_overlapping_ProteinFeatures}) {
+          my $label = $feat->analysis->display_label.': '.$feat->hseqname;
+          push @strings, $label;
+      }
+
+      $data{domains} = join '<br/>', @strings if @strings;
     }
+    
+    #$data{'context'} =
+    #  $self->context_image($tva).
+    #  $self->render_context($tv, $tva);
     
     my @rows = (
       { name       => 'Variation name'             },      
@@ -437,6 +593,7 @@ sub detail_panel {
       { hgvs       => 'HGVS names'                 },
       { exon       => 'Exon'                       },
       { exon_coord => 'Position in exon'           },
+      { domains    => 'Overlapping protein domains'},
       { context    => 'Context'                    },
     );
     
@@ -444,11 +601,11 @@ sub detail_panel {
     
     foreach my $row (@rows) {
       my ($key, $name) = %$row;
-      $table->add_row({ name => $name, value => $data{$key} || '-' });
+      $table->add_row({ name => "<b>$name</b>", value => $data{$key} || '-' });
     }
     
     my $a_label = (length($allele) > 50) ? substr($allele,0,50).'...' : $allele;
-    $html .= $self->toggleable_table("Detail for $data{name} ($a_label) in $tr_id", join('_', $tr_id, $vf_id, $hub->param('allele')), $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
+    $html .= $self->toggleable_table("Consequence detail for $data{name} ($a_label) in $tr_id", join('_', $tr_id, $vf_id, $hub->param('allele')), $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>});
   }
   
   return $html;
@@ -677,5 +834,60 @@ sub render_context {
   
   return $context;
 }
+
+
+# renders the context as an image with transcripts
+sub context_image {
+  my $self = shift;
+  my $tva  = shift;
+  
+  my $transcript = $tva->transcript;
+  
+  # get slice
+  my $slice        = $transcript->feature_Slice;
+     $slice        = $slice->invert if $slice->strand < 1;
+  
+  my $transcriptObj = $self->new_object(
+    'Transcript', $transcript, $self->object->__data
+  );
+  
+  my $image_config = $transcriptObj->get_imageconfig('single_transcript');
+  
+  $image_config->set_parameters({
+    container_width => $slice->length,
+    image_width     => 800,
+    slice_number    => '1|1',
+  });
+  
+  # turn on the transcript
+  my $key  = $image_config->get_track_key('transcript', $transcriptObj);
+  
+  my $node = $image_config->get_node($key) || $image_config->get_node(lc $key);
+  if (!$node) {
+    warn ">>> NO NODE FOR KEY $key";
+    return "<p>Cannot display image for this transcript</p>";
+  }
+  
+  $node->set('display', 'transcript_label') if $node->get('display') eq 'off';
+  $node->set('show_labels', 'off');
+  
+  ## Show the ruler only on the same strand as the transcript
+  $image_config->modify_configs(
+    [ 'ruler' ],
+    { 'strand', $transcript->strand > 0 ? 'f' : 'r' }
+  );
+  
+  $image_config->set_parameter('single_Transcript' => $transcript->stable_id);
+  $image_config->set_parameter('single_Gene'       => $transcriptObj->gene->stable_id) if $transcriptObj->gene;
+  
+  my $image = $self->new_image($slice, $image_config, []);
+  
+  $image->imagemap         = 'yes';
+  $image->{'panel_number'} = 'transcript';
+  $image->set_button('drag', 'title' => 'Drag to select region');
+
+  return $image->render;
+}
+
 
 1;
