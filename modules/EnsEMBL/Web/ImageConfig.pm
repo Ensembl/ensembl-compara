@@ -1433,14 +1433,14 @@ sub add_dna_align_features {
 sub add_data_files {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->tree->get_node('rnaseq');
-  
+
   return unless $menu;
-  
+  my $alignment_renderers = ['off', 'Off', 'simple', 'On'];
+
   my ($keys, $data) = $self->_merge($hashref->{'data_file'});
   $self->generic_add($menu, $key, "data_file_${key}_$_", $data->{$_}, { 
       glyphset => '_alignment', 
-      renderers => $alignment_renderers,
-      strand => 'b', 
+      strand => 'b',
   }) for @$keys;
 }
 
