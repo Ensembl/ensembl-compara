@@ -701,7 +701,7 @@ sub _add_bigbed_track {
     ], 
     options => {
       external => 'url',
-      sub_type => 'user',
+      sub_type => 'url',
       colourset => 'feature',
     },
     @_

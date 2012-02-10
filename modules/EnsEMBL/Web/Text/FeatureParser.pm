@@ -540,6 +540,7 @@ sub _set_track_colour {
   else {
     foreach my $colour (@colours) {
       if (!$self->{'colourmap'}{$colour}) {
+        $config->{'implicit_colour'} = 1;
         $config->{'color'} = $colour;
         $self->{'colourmap'}{$colour} = 1;
         last;
