@@ -472,11 +472,13 @@ sub validation_status {
 
 
 sub clinical_significance {
-  my $self = shift;
+  my $self   = shift;
   my $object = $self->object;
-
+  my $hub    = $self->hub; 
   my ($clin_sign,$colour) = $object->clinical_significance;
-  return $clin_sign ? qq{<dt>Clinical sign.</dt><dd style="color:$colour">$clin_sign</dd>} : '';
+  my $c_link = $hub->get_ExtURL_link("dbSNP", "DBSNP_CLIN", '');
+  return $clin_sign ? qq{<dt>Clinical sign.</dt>
+                         <dd><span style="color:$colour">$clin_sign</span> (from $c_link)</dd>} : '';
 }
 
 
