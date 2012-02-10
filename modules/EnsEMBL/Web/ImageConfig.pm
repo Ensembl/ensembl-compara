@@ -647,6 +647,8 @@ sub load_configured_vcf    { shift->load_file_format('vcf');    }
 sub load_file_format {
   my ($self, $format)  = @_;
   my $internal_sources = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {}; # get the internal sources from config
+  my @A = keys %{$internal_sources||{}};
+  warn "Internal $format sources: @A";
   my $function         = "_add_${format}_track";
   
   foreach my $source_name (sort keys %$internal_sources) {
@@ -1107,6 +1109,7 @@ sub load_tracks {
   my %data_types = (
     core => [
       'add_dna_align_features',     # Add to cDNA/mRNA, est, RNA, other_alignment trees
+      'add_data_files',             # Add to gene/rnaseq tree
 #     'add_ditag_features',         # Add to ditag_feature tree
       'add_genes',                  # Add to gene, transcript, align_slice_transcript, tsv_transcript trees
       'add_trans_associated',       # Add to features associated with transcripts
@@ -1415,7 +1418,6 @@ sub add_dna_align_features {
         $display = 'simple';
         $alignment_renderers = ['off', 'Off', 'simple', 'On'];  
       }
-
       $self->generic_add($menu, $key, "dna_align_${key}_$key_2", $data->{$key_2}, {
         glyphset  => '_alignment',
         sub_type  => lc $k,
@@ -1426,6 +1428,20 @@ sub add_dna_align_features {
       });
     }
   }
+}
+
+sub add_data_files {
+  my ($self, $key, $hashref) = @_;
+  my $menu = $self->tree->get_node('rnaseq');
+  
+  return unless $menu;
+  
+  my ($keys, $data) = $self->_merge($hashref->{'data_file'});
+  $self->generic_add($menu, $key, "data_file_${key}_$_", $data->{$_}, { 
+      glyphset => '_alignment', 
+      renderers => $alignment_renderers,
+      strand => 'b', 
+  }) for @$keys;
 }
 
 sub add_ditag_features {
