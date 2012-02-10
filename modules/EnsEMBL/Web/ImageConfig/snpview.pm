@@ -35,9 +35,10 @@ sub init {
   );
   
   $self->add_tracks('other',
-    [ 'scalebar', '', 'scalebar', { display => 'normal', strand => 'r', name => 'Scale bar', description => 'Shows the scalebar' }],
-    [ 'ruler',    '', 'ruler',    { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }]
-  );
+    [ 'v_line',   '', 'v_line',   { display => 'normal', strand => 'b', name => 'Vertical mark', description => 'Shows the middle of the feature' }],
+    [ 'scalebar', '', 'scalebar', { display => 'normal', strand => 'r', name => 'Scale bar',     description => 'Shows the scalebar' }],
+    [ 'ruler',    '', 'ruler',    { display => 'normal', strand => 'b', name => 'Ruler',         description => 'Shows the length of the region being displayed' }],
+   );
 
   $self->load_tracks;
 
@@ -60,7 +61,8 @@ sub init {
     ['variation_feature_structural'],
     { display => 'normal', depth => 50 }
   );
-    $self->modify_configs(
+  
+  $self->modify_configs(
     ['somatic_mutation_COSMIC'],
     { display => 'normal', style => 'box', depth => 100000 }
   );
