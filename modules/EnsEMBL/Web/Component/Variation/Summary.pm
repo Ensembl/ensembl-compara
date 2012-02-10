@@ -26,6 +26,7 @@ sub content {
      $summary           .= $self->location;
      $summary           .= $self->co_located($feature_slice) if $feature_slice;
      $summary           .= $self->validation_status;
+     $summary           .= $self->clinical_significance;
      $summary           .= $self->synonyms;
      $summary           .= $self->hgvs;
   
@@ -467,6 +468,15 @@ sub validation_status {
   }
   
   return qq{ <dt>Validation status</dt><dd>$html</dd>};
+}
+
+
+sub clinical_significance {
+  my $self = shift;
+  my $object = $self->object;
+
+  my ($clin_sign,$colour) = $object->clinical_significance;
+  return $clin_sign ? qq{<dt>Clinical sign.</dt><dd style="color:$colour">$clin_sign</dd>} : '';
 }
 
 
