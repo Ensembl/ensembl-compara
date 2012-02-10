@@ -302,6 +302,7 @@ sub render_normal {
         if ($config->{'useScore'} == 1 && $config->{'implicit_colour'}) {
           my $index = int(($f->score * scalar(@greyscale)) / 1000);
           $feature_colour = $greyscale[$index];
+          $label_colour = '#333333';
         }
         elsif ($config->{'useScore'} == 2) {
           my $score = $f->score || 0;
