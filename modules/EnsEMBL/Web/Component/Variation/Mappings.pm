@@ -301,10 +301,17 @@ sub content {
           $type = join ', ', map { '<span title="'.$_->description.'">'.$_->label.'</span>' } @{$rfva->get_all_OverlapConsequences};
         }
         
+        my $r_allele = $rfva->variation_feature_seq;
+        if (length($r_allele)>25) {
+          my $display_r_allele  = substr($r_allele,0,25).'...';
+             $display_r_allele .= $self->trim_large_string($r_allele,'rfva_'.$rfv->regulatory_feature->stable_id);
+          $r_allele = $display_r_allele;
+        }
+        
         my $row = {
           rf       => sprintf('<a href="%s">%s</a>', $url, $rfv->regulatory_feature->stable_id),
           ftype    => 'Regulatory feature',
-          allele   => $rfva->variation_feature_seq,
+          allele   => $r_allele,
           type     => $type || '-',
           matrix   => '-',
           pos      => '-',
@@ -352,10 +359,17 @@ sub content {
           $type = join ', ', map { '<span title="'.$_->description.'">'.$_->label.'</span>' } @{$mfva->get_all_OverlapConsequences};
         }
         
+        my $m_allele = $mfva->variation_feature_seq;
+        if (length($m_allele)>25) {
+          my $display_m_allele  = substr($m_allele,0,25).'...';
+             $display_m_allele .= $self->trim_large_string($m_allele,'mfva_'.$rf->stable_id);
+          $m_allele = $display_m_allele;
+        }
+        
         my $row = {
           rf       => sprintf('%s<br/><span class="small" style="white-space:nowrap;"><a href="%s">%s</a></span>', $mf->binding_matrix->name, $url, $rf->stable_id),
           ftype    => 'Motif feature',
-          allele   => $mfva->variation_feature_seq,
+          allele   => $m_allele,
           type     => $type,
           matrix   => $matrix_url,
           pos      => $mfva->motif_start,
