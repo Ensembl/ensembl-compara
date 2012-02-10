@@ -103,6 +103,7 @@ sub content {
   my $table         = $self->new_table(\@columns, [], { data_table => 1, sorting => [ 'type asc', 'trans asc', 'allele asc'] });
   my $gene_adaptor  = $hub->get_adaptor('get_GeneAdaptor');
   my $trans_adaptor = $hub->get_adaptor('get_TranscriptAdaptor');
+  my $max_length    = 20;
   my $flag;
   
   foreach my $varif_id (grep $_ eq $hub->param('vf'), keys %mappings) {
@@ -211,14 +212,14 @@ sub content {
       my $poly = $self->render_sift_polyphen($tva->polyphen_prediction || '-', $show_scores eq 'yes' ? $tva->polyphen_score : undef);
       
       # Allele
-      my  $allele = (length($a) > 50) ? substr($a,0,50).'...' : $a;
+      my $allele = (length($a) > $max_length) ? substr($a,0,$max_length).'...' : $a;
       
       my $html_full_tr_allele;
       
       unless ($transcript_data->{'vf_allele'} =~ /HGMD|LARGE|DEL|INS/) {
         my $tr_allele = $transcript_data->{'tr_allele'};
-        if (length($tr_allele) > 50) {
-          $tr_allele = substr($tr_allele,0,50).'...';
+        if (length($tr_allele) > $max_length) {
+          $tr_allele = substr($tr_allele,0,$max_length).'...';
           
           my $full_tr_allele = $transcript_data->{'tr_allele'};
           $html_full_tr_allele = $self->trim_large_string($full_tr_allele,'tr_'.$transcript_data->{transcriptname});
