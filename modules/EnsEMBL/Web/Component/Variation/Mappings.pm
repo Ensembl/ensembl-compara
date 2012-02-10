@@ -109,14 +109,14 @@ sub content {
   
   # create a regfeat table as well
   my @reg_columns = (
-    { key => 'rf',       title => 'Feature',                   sort => 'html'                         },
-    { key => 'ftype',    title => 'Feature type',              sort => 'string'                       },
-    { key => 'allele',   title => 'Allele',                    sort => 'string',        width => '7%' },
-    { key => 'type',     title => 'Consequence type',          sort => 'position_html'                },
-    { key => 'matrix',   title => 'Motif name',                sort => 'string',                      },
-    { key => 'pos',      title => 'Motif position',            sort => 'numeric'                      },
-    { key => 'high_inf', title => 'High information position', sort => 'string'                       },
-    { key => 'score',    title => 'Motif score change',        sort => 'position_html'                },
+    { key => 'rf',       title => 'Feature',                   sort => 'html'                             },
+    { key => 'ftype',    title => 'Feature type',              sort => 'string'                           },
+    { key => 'allele',   title => 'Allele',                    sort => 'string',        width => '7%'     },
+    { key => 'type',     title => 'Consequence type',          sort => 'position_html'                    },
+    { key => 'matrix',   title => 'Motif name',                sort => 'string',                          },
+    { key => 'pos',      title => 'Motif position',            sort => 'numeric'                          },
+    { key => 'high_inf', title => 'High information position', sort => 'string'                           },
+    { key => 'score',    title => 'Motif score change',        sort => 'position_html', align => 'center' },
   );
   my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc']});
   
@@ -360,7 +360,7 @@ sub content {
           matrix   => $matrix_url,
           pos      => $mfva->motif_start,
           high_inf => $mfva->in_informative_position ? 'Yes' : 'No',
-          score    => defined($mfva->motif_score_delta) ? render_motif_score($mfva->motif_score_delta) : '-',
+          score    => defined($mfva->motif_score_delta) ? $self->render_motif_score($mfva->motif_score_delta) : '-',
         };
         
         $reg_table->add_row($row);
@@ -400,6 +400,7 @@ sub _sort_start_end {
 }
 
 sub render_motif_score {
+  my $self  = shift;
   my $score = shift;
   
   my $sort_score = sprintf("%.0f", (($score + 20) * 10000));
@@ -419,7 +420,13 @@ sub render_motif_score {
     $message = 'Less like consensus sequence';
   }
   
-  return qq{<div class="hidden">$sort_score</div><div class="hidden export">$message</div><div class="$class" title="$message"></div>};
+  my $score_text = '';
+  
+  if($self->hub->param('motif_score') eq 'yes') {
+    $score_text = sprintf('<span class="small">(%.3f)</span>', $score);
+  }
+  
+  return qq{<div align="center"><div class="hidden">$sort_score</div><div class="hidden export" style="float: left;">$message</div><div class="$class" title="$message"></div>$score_text</div>};
 }
 
 sub detail_panel {
