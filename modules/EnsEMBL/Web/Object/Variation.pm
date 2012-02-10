@@ -95,7 +95,9 @@ sub count_transcripts {
     next unless ($varif_id  eq $self->param('vf'));
     my @transcript_variation_data = @{ $mappings{$varif_id}{transcript_vari} };
     $counts = scalar @transcript_variation_data;
-  } 
+  }
+  
+  $counts += scalar map {@{$_->get_all_RegulatoryFeatureVariations}, @{$_->get_all_MotifFeatureVariations}} @{$self->get_variation_features};
 
   return $counts;
 }
@@ -537,6 +539,29 @@ sub tagged_snp {
   my %pops;
   foreach my $vf ( @vari_mappings ) {
     foreach my $pop_obj ( @{ $vf->is_tagged } ) {
+      $pops{$self->pop_name($pop_obj)} = "Tagged SNP";
+    }
+  }
+  return \%pops or {};
+}
+
+sub tag_snp { 
+
+  ### Variation_object_calls
+  ### Args: none
+  ### Example    : my $pops = $object->tagged_snp
+  ### Description: The "is_tagged" call returns an array ref of populations 
+  ###              objects Bio::Ensembl::Variation::Population where this SNP 
+  ###              is a tag SNP
+  ### Returns hashref of pop_name
+
+  my $self = shift;
+  my  @vari_mappings = @{ $self->get_variation_features };
+  return {} unless @vari_mappings;
+
+  my %pops;
+  foreach my $vf ( @vari_mappings ) {
+    foreach my $pop_obj ( @{ $vf->is_tag } ) {
       $pops{$self->pop_name($pop_obj)} = "Tag SNP";
     }
   }
