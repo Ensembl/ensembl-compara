@@ -73,6 +73,7 @@ sub _draw_wiggle {
 sub feature_group { $_[1]->id; }
 sub feature_label { $_[1]->id; }
 sub feature_title { return "XXX WRONG"; }
+sub colour_key { return $_[1]; }
 
 # XXX  WRONG
 sub href {
@@ -89,6 +90,7 @@ sub features {
   my ($self) = @_;
 
   my $slice = $self->{'container'};
+
   my $features = $self->bigbed_adaptor->fetch_features($slice->seq_region_name,$slice->start,$slice->end); # XXX wrong? Too big?
   warn sprintf("start %d end %d (%d)",$slice->start,$slice->end,scalar(@$features));
   $_->map($slice) for @$features;
@@ -96,10 +98,8 @@ sub features {
   $_->{'__extra__'}->{'item_colour'} = ['255,0,255'] for @$features; # XXX why not work?
 
   return( 
-    'user' => [ $features,
+    'url' => [ $features,
       {
-        dep => 20,
-        colour_key => 'red',
       }
     ],
   );
