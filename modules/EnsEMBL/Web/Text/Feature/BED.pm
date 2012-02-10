@@ -40,8 +40,9 @@ sub rawstart { my $self = shift; return $self->{'__raw__'}[1]+1; }
 sub rawend   { my $self = shift; return $self->{'__raw__'}[2]; }
 sub id       { my $self = shift; return $self->{'__raw__'}[3]; }
 
-sub score    { 
+sub _raw_score    { 
   my $self = shift;
+
   my $score = 0;
   if ( exists($self->{'__raw__'}[4]) && $self->{'__raw__'}[4] =~ /^-*\d+\.?\d*$/) {
     $score = $self->{'__raw__'}[4];
@@ -50,6 +51,14 @@ sub score    {
     $score = $self->{'__raw__'}[3];
   } 
   return $score;
+}
+
+sub score {
+  my $self = shift;
+
+  $self->{'score'} = $_[0] if @_;
+  $self->{'score'} = $self->_raw_score unless exists $self->{'score'};
+  return $self->{'score'};
 }
 
 sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__extra__'} : undef ; }
