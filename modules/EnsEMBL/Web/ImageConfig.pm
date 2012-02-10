@@ -632,7 +632,7 @@ sub load_user_tracks {
         strand      => $strand,
       }];
     }
-    
+   
     $menu->append($self->create_track(@$_)) for sort { lc($a->[2]{'source_name'}) cmp lc($b->[2]{'source_name'}) || lc($a->[1]) cmp lc($b->[1]) } @tracks;
   }
   
@@ -699,7 +699,8 @@ sub _add_bigbed_track {
     ], 
     options => {
       external => 'url',
-      sub_type => 'bigbed'
+      sub_type => 'user',
+      colourset => 'feature',
     },
     @_
   );
@@ -791,7 +792,7 @@ sub _add_file_format_track {
       encode_entities($args{'source'}{'source_url'})
     );
   }
-  
+ 
   my $track = $self->create_track($args{'key'}, $args{'source'}{'source_name'}, {
     display     => 'off',
     strand      => 'f',
