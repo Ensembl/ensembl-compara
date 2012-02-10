@@ -1111,11 +1111,6 @@ sub render_sift_polyphen {
     $rank_str = ' ';
   }
   
-  #return qq{
-  #  <span class="hidden">$rank</span>
-  #  <span style="color:$colours{$pred}">$pred$rank_str</span>
-  #};
-  
   my $width = defined($score) ? 50 : 15;
   
   return qq{
