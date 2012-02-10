@@ -37,9 +37,9 @@ sub populate_tree {
     { 'availability' => 'variation', 'concise' => 'Context' }
   );
 	
-  $context_menu->append($self->create_node('Mappings', 'Gene/Transcript  ([[counts::transcripts]])',
+  $context_menu->append($self->create_node('Mappings', 'Genes and regulation ([[counts::transcripts]])',
     [qw( summary EnsEMBL::Web::Component::Variation::Mappings )],
-    { 'availability' => 'variation has_transcripts', 'concise' => 'Gene/Transcript' }
+    { 'availability' => 'variation has_transcripts', 'concise' => 'Genes and regulation' }
   ));
     
   $self->create_node('Population', 'Population genetics ([[counts::populations]])',
