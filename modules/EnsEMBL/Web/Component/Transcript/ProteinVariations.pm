@@ -79,8 +79,8 @@ sub content {
       ambig  => $snp->{'ambigcode'} || '-',
       alt    => $snp->{'pep_snp'} || '-',
       codons => $codons,
-      sift   => $self->render_sift_polyphen($tva->sift_prediction || '-', $show_scores eq 'yes' ? $tva->sift_score : undef),
-      poly   => $self->render_sift_polyphen($tva->polyphen_prediction || '-', $show_scores eq 'yes' ? $tva->polyphen_score : undef),
+      sift   => $self->render_sift_polyphen($tva->sift_prediction, $tva->sift_score),
+      poly   => $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score),
     };
   }
   
