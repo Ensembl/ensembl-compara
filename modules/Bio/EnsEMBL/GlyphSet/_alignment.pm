@@ -284,6 +284,7 @@ sub render_normal {
     my $regexp = $pix_per_bp > 0.1 ? '\dI' : ( $pix_per_bp > 0.01 ? '\d\dI' : '\d\d\dI' );
 
     next unless keys %id;
+
     foreach my $i ( sort {
       $id{$a}[0][3] <=> $id{$b}[0][3]  ||
       $id{$b}[-1][4] <=> $id{$a}[-1][4]
@@ -298,7 +299,7 @@ sub render_normal {
 
       if ($config) {
         my $f = $F[0][2];
-        if ($config->{'useScore'} == 1 && !$feature_colour) {
+        if ($config->{'useScore'} == 1 && $config->{'implicit_colour'}) {
           my $index = int(($f->score * scalar(@greyscale)) / 1000);
           $feature_colour = $greyscale[$index];
         }
