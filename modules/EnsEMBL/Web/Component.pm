@@ -1078,14 +1078,16 @@ sub _warn_block {
 sub render_sift_polyphen {
   my ($self, $pred, $score) = @_;
   
-  my %colours = (
+  return '-' unless defined($pred) || defined($score);
+  
+  my %classes = (
     '-'                 => '',
-    'probably damaging' => 'red',
-    'possibly damaging' => 'orange',
-    'benign'            => 'green',
-    'unknown'           => 'blue',
-    'tolerated'         => 'green',
-    'deleterious'       => 'red'
+    'probably damaging' => 'bad',
+    'possibly damaging' => 'ok',
+    'benign'            => 'good',
+    'unknown'           => 'neutral',
+    'tolerated'         => 'good',
+    'deleterious'       => 'bad'
   );
   
   my %ranks = (
@@ -1102,16 +1104,24 @@ sub render_sift_polyphen {
   
   if(defined($score)) {
     $rank = int(1000 * $score) + 1;
-    $rank_str = " ($score)";
+    $rank_str = "$score";
   }
   else {
     $rank = $ranks{$pred};
-    $rank_str = '';
+    $rank_str = ' ';
   }
   
+  #return qq{
+  #  <span class="hidden">$rank</span>
+  #  <span style="color:$colours{$pred}">$pred$rank_str</span>
+  #};
+  
+  my $width = defined($score) ? 50 : 15;
+  
   return qq{
-    <span class="hidden">$rank</span>
-    <span style="color:$colours{$pred}">$pred$rank_str</span>
+    <span class="hidden">$rank</span><span class="hidden export">$pred(</span>
+    <div align="center"><div title="$pred" class="score score_$classes{$pred}">$rank_str</div></div>
+    <span class="hidden export">)</span>
   };
 }
 
