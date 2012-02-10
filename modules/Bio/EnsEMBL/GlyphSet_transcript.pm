@@ -1296,10 +1296,10 @@ sub get_homologous_gene_ids {
   
   my $config = $self->{'config'};
   my $ha     = $compara_db->get_HomologyAdaptor;
-  my $method = $species eq $config->{'species'} ? [ $config->get_parameter('homologue') ] : undef;
+  my $method = $species eq $config->{'species'} ? $config->get_parameter('homologue') : undef;
   my @homologues;
   
-  foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $species, $method)}) {
+  foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $species, $method ? [ $method ] : undef)}) {
     my $colour_key = $join_types->{$homology->description};
     
     next if $colour_key eq 'hidden';
