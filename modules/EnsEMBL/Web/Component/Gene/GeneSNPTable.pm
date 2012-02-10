@@ -14,12 +14,12 @@ sub _init {
   $self->ajaxable(1);
 }
 
-sub content {
+sub content {  
   my $self             = shift;
   my $hub              = $self->hub;
   my $consequence_type = $hub->param('sub_table');
   my $icontext         = $hub->param('context') || 100;
-  my $gene             = $self->configure($icontext);
+  my $gene             = $self->configure($icontext, $consequence_type);
   my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene->get_all_transcripts};
   my ($count, $msg);
   
@@ -37,16 +37,20 @@ sub content {
   
   my $html = $self->_hint('snp_table','Configuring the page', qq{<p>$msg\To extend or reduce the intronic sequence, use the "<strong>Configure this page - Intron Context</strong>" link on the left.</p>});
   
+  my $ret;
+  
   if ($consequence_type || $count < 25) {
     $consequence_type ||= 'ALL';
     
     my $table_rows = $self->variation_table($consequence_type, \@transcripts);
     my $table      = $table_rows ? $self->make_table($table_rows, $consequence_type) : undef;
     
-    return $self->render_content($table, $consequence_type);
+    $ret = $self->render_content($table, $consequence_type);
   } else {
-    return $html . $self->render_content($self->stats_table(\@transcripts)); # no sub-table selected, just show stats
+    $ret = $html . $self->render_content($self->stats_table(\@transcripts)); # no sub-table selected, just show stats
   }
+  
+  return $ret;
 }
 
 sub make_table {
@@ -65,12 +69,14 @@ sub make_table {
     { key => 'aacoord',  sort => 'position',  title => 'AA co-ordinate', align => 'center' },
   ];
   
-  # add SIFT and PolyPhen for human
+  # add GMAF, SIFT and PolyPhen for human
   if ($self->hub->species eq 'Homo_sapiens') {
     push @$columns, (
-      { key => 'sift',     sort => 'position_html', title => 'SIFT'     },
-      { key => 'polyphen', sort => 'position_html', title => 'PolyPhen' },
+      { key => 'sift',     sort => 'position_html', title => 'SIFT',     align => 'center'     },
+      { key => 'polyphen', sort => 'position_html', title => 'PolyPhen', align => 'center' },
     );
+    
+    splice(@$columns, 3, 0, { key => 'gmaf', sort => 'numerical', title => 'Frequency', align => 'center' });
   }
   
   push @$columns, { key => 'Transcript', sort => 'string' };
@@ -142,6 +148,7 @@ sub stats_table {
     foreach (@$gene_snps) {
       my ($snp, $chr, $start, $end) = @$_;
       my $vf_id = $snp->dbID;
+      
       my $tv    = $tvs->{$vf_id};
       
       if ($tv && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
@@ -305,13 +312,13 @@ sub variation_table {
           $type  ||= '-';
           
           my $sift = $self->render_sift_polyphen(
-            $tva->sift_prediction || '-',
-            $show_scores eq 'yes' ? $tva->sift_score : undef
+            $tva->sift_prediction,
+            $tva->sift_score
           );
           
           my $poly = $self->render_sift_polyphen(
-            $tva->polyphen_prediction || '-',
-            $show_scores eq 'yes' ? $tva->polyphen_score : undef
+            $tva->polyphen_prediction,
+            $tva->polyphen_score
           );
           
           # Adds LSDB/LRG sources
@@ -326,12 +333,21 @@ sub variation_table {
             }
           }
           
+          # global maf
+          my $gmaf = $snp->variation->minor_allele_frequency;
+          $gmaf    = sprintf("%.3f", $gmaf) if defined $gmaf;
+          $gmaf   .= " (".$snp->variation->minor_allele.")" if defined $gmaf;
+          
+          # validation
+          my $status = join "", map {qq{<img height="20px" width="20px" title="$_" src="/i/96/val_$_.gif"/><span class="hidden export">$_,</span>}} @$validation;
+          
           my $row = {
             ID         => qq{<a href="$url">$variation_name</a>},
             class      => $var_class,
             Alleles    => $allele_string,
             Ambiguity  => $snp->ambig_code,
-            status     => (join(', ',  @$validation) || '-'),
+            gmaf       => $gmaf || "-",
+            status     => $status || "-",#(join(', ',  @$validation) || '-'),
             chr        => "$chr:$start" . ($start == $end ? '' : "-$end"),
             Source     => $source,
             snptype    => $type,
@@ -353,7 +369,7 @@ sub variation_table {
 }
 
 sub configure {
-  my ($self, $context) = @_;
+  my ($self, $context, $consequence) = @_;
   my $object = $self->object;
   my $extent = $context eq 'FULL' ? 5000 : $context;
   
@@ -364,8 +380,23 @@ sub configure {
     [ 'transcripts', 'munged', $extent ]
   );
   
+  # map the selected consequence type to SO terms
+  my %cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  my %selected_so;
+  $consequence = undef if $consequence eq 'ALL';
+  
+  if(defined($consequence) && $self->hub->param('consequence_format') ne 'so') {
+    foreach my $con(keys %cons) {
+      foreach my $val(values %{$cons{$con}}) {
+        $selected_so{$con} = 1 if $val eq $consequence;
+      }
+    }
+  }
+  
+  my @so_terms = keys %selected_so;
+  
   $object->store_TransformedTranscripts; ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
-  $object->store_TransformedSNPS;        ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
+  $object->store_TransformedSNPS(\@so_terms); ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
   
   my $transcript_slice = $object->__data->{'slices'}{'transcripts'}[1];
   my (undef, $snps)    = $object->getVariationsOnSlice($transcript_slice, $object->__data->{'slices'}{'transcripts'}[2]);
