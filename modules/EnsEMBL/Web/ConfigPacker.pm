@@ -173,7 +173,7 @@ sub _summarise_core_tables {
   foreach my $table ( qw(
         dna_align_feature protein_align_feature simple_feature
         protein_feature marker_feature qtl_feature
-        repeat_feature ditag_feature data_file 
+        repeat_feature ditag_feature data_file
         transcript gene prediction_transcript unmapped_object
   )) { 
     my $res_aref = $dbh->selectall_arrayref(
