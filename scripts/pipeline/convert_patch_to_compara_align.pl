@@ -124,7 +124,8 @@ foreach my $ref_name(keys %aligned_patch){
 				}
 				else { # patch seqs are contiguous 
 					my $ref_del = $arr->[$i+1]->{ref_start} - $arr->[$i]->{ref_end} - 1;
-					$split_here = $ref_del > $gap_cutoff_size ? 1 : $split_here; # block ends here if a gap in the ref is > $gap_cutoff_size bp
+					$split_here = $ref_del > $gap_cutoff_size ? 1 : $split_here;
+					next if $split_here; # block ends here if a gap in the ref is > $gap_cutoff_size bp
 					push(@{ $arr->[$i]->{patch_aln_bases} }, $ref_del . "D",  @{ $arr->[$i+1]->{patch_aln_bases} });
 					push(@{ $arr->[$i]->{ref_aln_bases} }, $ref_del, @{ $arr->[$i+1]->{ref_aln_bases} });
 					$arr->[$i]->{patch_start} = $arr->[$i+1]->{patch_start};
