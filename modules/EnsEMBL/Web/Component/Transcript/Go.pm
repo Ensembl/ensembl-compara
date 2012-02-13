@@ -24,13 +24,13 @@ sub content {
 
   my $label = 'Ontology';
 
-  my $html          =  '<p><h3>The following ontology terms have been annotated to this entry:</h3></p>';
+  my $html          =  '<p><h3>The following ontology terms have been annotated to this entry</h3></p>';
   my $columns       = [   
-    { key => 'go',              title => 'Accession',      width => '5%',  align => 'left'   },
+    { key => 'go',              title => 'Accession',      width => '7%',  align => 'left'   },
     { key => 'description',     title => 'Term',           width => '30%', align => 'left'   },
     { key => 'evidence',        title => 'Evidence',          width => '3%',  align => 'center' },
-    { key => 'desc',            title => 'Annotation Source', width => '24%', align => 'center' },
-    { key => 'goslim_goa_acc',  title => 'GOSlim Accessions', width => '5%', align => 'centre' },
+    { key => 'desc',            title => 'Annotation Source', width => '18%', align => 'center' },
+    { key => 'goslim_goa_acc',  title => 'GOSlim Accessions', width => '9%', align => 'centre' },
     { key => 'goslim_goa_title',title => 'GOSlim Terms', width => '30%', align => 'centre' },
   ];
 
@@ -46,7 +46,7 @@ sub content {
     if (%$go_hash) {
 	$terms_found = 1;
         my $description = sprintf("%s: %s",$clusters{$oid}->{db},$clusters{$oid}->{description});
-	$html .= "<p><h3>The following terms are descendants of $description</h3>";
+	$html .= "<p><h4>Descendants of $description:</h4>";
       #add goslim_generic
       my $go_database=$self->hub->get_databases('go')->{'go'};    
       foreach (keys %$go_hash){
