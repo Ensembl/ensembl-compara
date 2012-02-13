@@ -122,9 +122,10 @@ columns are:</p>
 			<li><i>SIFT</i> - the SIFT prediction and/or score, with both given as prediction(score)</li>
 			<li><i>PolyPhen</i> - the PolyPhen prediction and/or score</li>
 			<li><i>Condel</i> - the Condel consensus prediction and/or score</li>
-			<li><i>MATRIX</i> - the source and identifier of a transcription factor binding profile aligned at this position</li>
+			<li><i>MOTIF_NAME</i> - the source and identifier of a transcription factor binding profile aligned at this position</li>
+			<li><i>MOTIF_POS</i> - The relative position of the variation in the aligned TFBP</li>
 			<li><i>HIGH_INF_POS</i> - a flag indicating if the variant falls in a high information position of a transcription factor binding profile (TFBP)</li>
-			<li><i>MOTIF_SCORE_CHANGE</i> - '+' if the variant sequence is closer to the TFBP consensus sequence, '-' if it is further, '0' if the score does not change</li>
+			<li><i>MOTIF_SCORE_CHANGE</i> - The difference in motif score of the reference and variant sequences for the TFBP</li>
 			<li><i>CANONICAL</i> - a flag indicating if the transcript is denoted as the canonical transcript for this gene</li>
 			<li><i>CCDS</i> - the CCDS identifer for this transcript, where applicable</li>
 			<li><i>INTRON</i> - the intron number (out of total number)</li>
@@ -170,10 +171,10 @@ key/value pairs used in the extra column. </p>
 ## EXON         : Exon number
 ## INTRON       : Intron number
 ## DOMAINS      : The source and identifer of any overlapping protein domains
-## MATRIX       : The source and identifier of a transcription factor binding profile (TFBP) aligned at this position
-## MATRIX_POS   : The relative position of the variation in the aligned TFBP
+## MOTIF_NAME   : The source and identifier of a transcription factor binding profile (TFBP) aligned at this position
+## MOTIF_POS    : The relative position of the variation in the aligned TFBP
 ## HIGH_INF_POS : A flag indicating if the variant falls in a high information position of the TFBP
-## MOTIF_SCORE_CHANGE : '+' if the variant sequence is closer to the TFBP consensus sequence, '-' if it is further, '0' if the score does not change
+## MOTIF_SCORE_CHANGE : The difference in motif score of the reference and variant sequences for the TFBP
 </pre>
 </body>
 </html>
