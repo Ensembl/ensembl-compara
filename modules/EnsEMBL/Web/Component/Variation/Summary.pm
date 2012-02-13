@@ -477,7 +477,7 @@ sub clinical_significance {
   my $hub    = $self->hub; 
   my ($clin_sign,$colour) = $object->clinical_significance;
   my $c_link = $hub->get_ExtURL_link("dbSNP", "DBSNP_CLIN", '');
-  return $clin_sign ? qq{<dt>Clinical sign.</dt>
+  return $clin_sign ? qq{<dt title="Clinical significance">Clinical sign.</dt>
                          <dd><span style="color:$colour">$clin_sign</span> (from $c_link)</dd>} : '';
 }
 
