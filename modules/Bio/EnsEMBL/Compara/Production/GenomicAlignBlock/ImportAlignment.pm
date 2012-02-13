@@ -20,7 +20,7 @@ This module imports a specified alignment. This is used in the low coverage geno
 
 =head1 CONTACT
 
-Post questions to the Ensembl development list: ensembl-dev@ebi.ac.uk
+Post questions to the Ensembl development list: dev@ensembl.org
 
 
 =head1 APPENDIX

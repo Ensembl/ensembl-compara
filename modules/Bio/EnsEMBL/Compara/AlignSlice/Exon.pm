@@ -73,7 +73,7 @@ You may distribute this module under the same terms as perl itself
 This modules is part of the EnsEMBL project (http://www.ensembl.org)
 
 Questions can be posted to the ensembl-dev mailing list:
-ensembl-dev@ebi.ac.uk
+dev@ensembl.org
 
 =head1 APPENDIX
 

@@ -29,7 +29,7 @@ Finds a good splitting point within the anchors. Leave the anchors as a 2bp long
 
 =head1 CONTACT
 
-ensembl-dev@ebi.ac.uk
+dev@ensembl.org
 
 =cut
 

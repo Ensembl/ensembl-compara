@@ -23,7 +23,7 @@ Describe the object here
 
 =head1 CONTACT
 
-Ensembl - ensembl-dev@ebi.ac.uk
+Ensembl - dev@ensembl.org
 
 =head1 APPENDIX
 

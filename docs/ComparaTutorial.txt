@@ -1,7 +1,7 @@
 EnsEMBL Compara Perl API Tutorial
 By Cara Woodwark, Abel Ureta-Vidal and Javier Herrero
 Revisions: CW Jun 04, AUV Aug 04, Nov 04, JH Nov 04, Apr 05, BB Jan 07, LG Nov 08
-NB: this tutorial has been tested to work with branch-ensembl-51, and with EnsEMBL databases release 51. However you may find still errors in it. Please email ensembl-dev@ebi.ac.uk, so that we can correct them.
+NB: this tutorial has been tested to work with branch-ensembl-51, and with EnsEMBL databases release 51. However you may find still errors in it. Please email dev@ensembl.org, so that we can correct them.
 Introduction
 This tutorial is an introduction to the EnsEMBL Compara API. A knowledge of the EnsEMBL core API is presumed, it is assumed that concepts and conventions presented in the EnsEMBL core API tutorial have been assimilated by the user. The EnsEMBL core API tutorial can be found at
 http://www.ensembl.org/info/docs/api/core/core_tutorial.html  (and in Nov'2008 a slightly outdated CVS version in ensembl/docs/tutorial/ensembl_tutorial.pdf) and should be read first as it provides a comprehensive guide to the EnsEMBL environment. 

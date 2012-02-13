@@ -29,7 +29,7 @@ This object represents the handle for a comparative DNA alignment database
 
 =head1 CONTACT
 
-Post questions the the EnsEMBL developer list: <ensembl-dev@ebi.ac.uk>
+Post questions the the EnsEMBL developer list: <dev@ensembl.org>
 
 =cut
 

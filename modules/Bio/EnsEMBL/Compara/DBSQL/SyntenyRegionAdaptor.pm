@@ -99,7 +99,7 @@ This class inherits all the methods and attributes from Bio::EnsEMBL::DBSQL::Bas
 
 =head1 CONTACT
 
-Ensembl - ensembl-dev@ebi.ac.uk
+Ensembl - dev@ensembl.org
 
 =head1 APPENDIX
 

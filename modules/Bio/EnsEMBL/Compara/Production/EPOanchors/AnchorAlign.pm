@@ -6,7 +6,7 @@
 
 =head1 CONTACT
 
-Ensembl-dev mailing list <ensembl-dev@ebi.ac.uk>
+Ensembl-dev mailing list <dev@ensembl.org>
 
 =head1 APPENDIX
 
