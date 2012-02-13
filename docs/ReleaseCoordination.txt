@@ -983,6 +983,7 @@ If you have any doubt ask Kathryn or Stephen
         target_dir      suitable for creating and storing the dumps in
     If not happy, edit the changes, save the config file and exit the editor.
 
+    Make sure you have the XML::Writer module in your PERL5LIB (there is a copy in ~mm14/src/orthoxml/)
     Run init_pipeline.pl with this file:
         init_pipeline.pl DumpTrees_conf.pm -tree_type protein -pipeline_db -host=compara2 -pipeline_db -user=ensadmin -pipeline_db -dbname=mm14_dump_pt_trees_66 -password $ENSADMIN_PSW -target_dir ~/scratch/dump_pt_trees_66
         #
