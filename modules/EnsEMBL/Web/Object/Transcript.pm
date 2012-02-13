@@ -1136,7 +1136,7 @@ sub get_go_list {
         if ($info_text =~ /Quick_Go:/) {
           $vega_go_xref = 1;
           $info_text =~ s/Quick_Go://;
-          $label = "(QuickGo)";
+          $label = "(QuickGo:$pid)";
         }
         my $ext_url = $self->hub->get_ExtURL_link($label, $db, $pid, $info_text);
         $ext_url = "$did $ext_url" if $vega_go_xref;
