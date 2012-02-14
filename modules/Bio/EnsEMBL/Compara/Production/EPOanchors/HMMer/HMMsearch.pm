@@ -4,32 +4,31 @@ use strict;
 use Data::Dumper;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
+use File::Basename;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
 	my ($self) = @_;
-	my $self_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor( 
-				-host => $self->dbc->host, 
-				-pass => $self->dbc->password, 
-				-port => $self->dbc->port, 
-				-user => $self->dbc->username,
-				-dbname => $self->dbc->dbname);
-	$self->param('self_dba', $self_dba);
 }
 
 sub run {
 	my ($self) = @_;
-	my $self_dba = $self->param('self_dba');
+
+	my $self_dba = $self->compara_dba;
+
 	my $dnafrag_adaptor = $self_dba->get_adaptor("DnaFrag");
 	my $gab_adaptor = $self_dba->get_adaptor("GenomicAlignBlock");
 	my $genome_db_adaptor = $self_dba->get_adaptor("GenomeDB");
 	my ($gab_id) = $self->param('gab_id');
-	my $self_gab_adaptor = $self->param('self_dba')->get_adaptor("GenomicAlignBlock");
+	my $self_gab_adaptor = $self_dba->get_adaptor("GenomicAlignBlock");
 	my @hits = ();
 	my $gab = $self_gab_adaptor->fetch_by_dbID($gab_id);
 	my $stk_file = "/tmp/sf5_$gab_id.stk";
 	my $hmm_file = "/tmp/sf5_$gab_id.hmm";
+
+	$self_dba->dbc->disconnect_when_inactive(1); 
+
 	open(IN, ">$stk_file") or throw("can not open stockholm file $stk_file for writing");
 	print IN "# STOCKHOLM 1.0\n";
 	foreach my $genomic_align( @{$gab->get_all_GenomicAligns} ){
@@ -42,6 +41,40 @@ sub run {
 	}
 	print IN "//";
 	close(IN);
+
+	my $genome_seq_file = $self->param('target_genome')->{"genome_seq"};
+	#Copy genome_seq to local disk only if md5sum parameter is set. 
+	if ($self->param('md5sum')) {
+	    #Copy genome_seq to local disk if it doesn't already exist
+	    my $name = basename($self->param('target_genome')->{"genome_seq"});
+	    my $tmp_file = "/tmp/" . $ENV{USER} . "_" . $self->param('target_genome')->{name} . "_" . $name;
+	    
+	    if (-e $tmp_file) {
+		print "$tmp_file already exists\n";
+		$genome_seq_file = $tmp_file;
+	    } else {
+		my $start_time = time;
+		print "Need to copy file\n";
+		my $rsync_cmd = "rsync $genome_seq_file $tmp_file";
+		print "$rsync_cmd\n";
+
+		system($rsync_cmd) == 0 or die "system $rsync_cmd failed:$?";
+
+		print "Time to rsync " . (time - $start_time) . "\n";
+		my $rsync_time = time;
+
+		#Check md5sum
+		my $md5sum = `md5sum $tmp_file`;
+		if ($md5sum == $self->param('md5sum')) {
+		    $genome_seq_file = $tmp_file;
+		} else {
+		    print "md5sum failed. Use $genome_seq_file\n";
+		}
+		print "Time to md5sum " . (time - $rsync_time) . "\n";
+		print "Total time" . (time - $start_time) . "\n";
+	    }
+	}
+
 	my $hmm_build_command = $self->param('hmmbuild') . " $hmm_file $stk_file";  
 	print $hmm_build_command, " **\n";
 	system($hmm_build_command);
@@ -49,7 +82,9 @@ sub run {
 	my $hmm_len = `egrep "^LENG  " $hmm_file`;
 	chomp($hmm_len);
 	$hmm_len=~s/^LENG  //;
-	my $nhmmer_command = $self->param('nhmmer') . " --cpu 1 --noali" ." $hmm_file " . $self->param('target_genome')->{"genome_seq"};
+#	my $nhmmer_command = $self->param('nhmmer') . " --cpu 1 --noali" ." $hmm_file " . $self->param('target_genome')->{"genome_seq"};
+
+	my $nhmmer_command = $self->param('nhmmer') . " --cpu 1 --noali" ." $hmm_file $genome_seq_file";
 	print $nhmmer_command, " **\n";
 	my $nhmm_fh;
 	open( $nhmm_fh, "$nhmmer_command |" ) or throw("Error opening nhmmer command: $? $!"); 
@@ -59,6 +94,9 @@ sub run {
 			push(@hits, [$gab_id, $mapping]);
 		}
 	}
+
+	$self_dba->dbc->disconnect_when_inactive(0); 
+
 	my @anchor_align_records;
 	foreach my $hit(@hits){
 		my $mapping_id = $hit->[0];
@@ -80,7 +118,7 @@ sub run {
 
 sub write_output{
 	my ($self) = @_;
-	my $self_anchor_align_adaptor = $self->param('self_dba')->get_adaptor("AnchorAlign");
+	my $self_anchor_align_adaptor = $self->compara_dba->get_adaptor("AnchorAlign");
 	$self_anchor_align_adaptor->store_mapping_hits( $self->param('mapping_hits') ) if $self->param('mapping_hits');
 }
 
