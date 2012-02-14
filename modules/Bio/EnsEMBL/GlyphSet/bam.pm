@@ -169,7 +169,7 @@ sub feature_title {
               "; Length: ".      ($f->end - $f->start +1) .
              # "; Type: ".        $self->get_atype($f) . ###### $f->atype .
               "; Insert size: ". $f->isize .
-              "; Paied: ".       ($f->paired ? 'Yes' : 'No');
+              "; Paired: ".       ($f->paired ? 'Yes' : 'No');
 
   if ($f->paired) {
     $title .= "; Mate: " . (($f->flag & 0x80) ? 'Second' : ($f->flag & 0x40) ? 'First' : 'Unknown');
