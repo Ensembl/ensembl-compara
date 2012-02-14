@@ -6,29 +6,45 @@
 <body>
 
 <h1>Variation API Tutorial</h1>
-
+<p>This is a tutorial about getting the Ensembl Variation data programmatically, using a Perl API. To get a description about the Ensembl Variation data, please go to this <a
+href="/info/docs/variation/index.html">page</a>.
+</p>
+<h2><a href="#intro" style="text-decoration:none">Introduction</a></h2>
 <ul>
-	<li><a href="#intro">Introduction</a></li>
-	<li><a href="#code">Code Conventions (and unconventions)</a></li>
-	<li><a href="#connect">Connecting an Ensembl variation database</a></li>
+	<li><a href="#code">Code Conventions</a></li>
+	<li><a href="#connect">Connecting an Ensembl Variation database</a></li>
+</ul>
+<h2><a href="#variation" style="text-decoration:none">Variations</a></h2>
+<ul>
 	<li><a href="#genome">Variations in the genome</a></li>
-	<li><a href="#alleles">Alleles and frequencies</a></li>
-	<li><a href="#genotypes">Genotypes</a></li>
 	<li><a href="#Consequence">Consequence type of variations</a></li>
 	<li><a href="#flanks">Variations, Flanking sequences and Genes</a></li>
 	<li><a href="#failed_variations">Failed variations</a></li>
 	<li><a href="#annotation">Variation annotations</a></li>
 	<li><a href="#variation_sets">Variation sets</a></li>
-	<li><a href="#structural">Structural variations</a></li>
+</ul>
+<h2><a href="#ag" style="text-decoration:none">Alleles and Genotypes</a></h2>
+<ul>
+	<li><a href="#alleles">Alleles and frequencies</a></li>
+	<li><a href="#genotypes">Genotypes</a></li>
 	<li><a href="#ld">LD calculation</a></li>
 	<li><a href="#strains">Specific strain information</a></li>
+</ul>
+<h2><a href="#sv" style="text-decoration:none">Structural variants</a></h2>
+<ul>
+	<li><a href="#structural">Structural variations</a></li>
+</ul>
+<h2><a href="#other" style="text-decoration:none">Others</a></h2>
+<ul>	
 	<li><a href="#iterators">Fetching Iterators</a></li>
 	<li><a href="#slice">Fetching variation features or structural variation features from a Slice</a></li>
 	<li><a href="#help">Further help</a></li>
 </ul>
-
 <br />
-<h2 id="intro">Introduction</h2>
+<hr />
+
+
+<h2 id="intro" style="font-size:large">Introduction</h2>
 
 <p>
 This tutorial is an introduction to the
@@ -37,24 +53,23 @@ Knowledge of the
 <a href="/info/docs/api/core/index.html">Ensembl Core API</a> and of the concepts and conventions in the
 <a href="/info/docs/api/core/core_tutorial.html">Ensembl Core API tutorial</a> is assumed.
 
-Documentation about the Variation database schema is available at
-<a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-variation/schema/?root=ensembl">
-http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-variation/schema/?root=ensembl</a> 
+Documentation about the Variation database schema is available 
+<a href="/info/docs/variation/variation_schema.html">here</a> 
 , and while not necessary for this tutorial, an understanding of the database tables may help as many of the adaptor modules are table-specific.
 </p>
 
 <br />
-<h2 id="code">Code Conventions (and unconventions)</h2>
+<h2 id="code">Code Conventions</h2>
 
 <p>
-Refer to the Ensembl core tutorial for a good description of the coding conventions normally used in Ensembl. Please note that there may be exceptions to these rules in variation.
+Refer to the <a href="/info/docs/api/core/core_tutorial.html">Ensembl Core tutorial</a> for a good description of the coding conventions normally used in Ensembl. We try as much as possible to stick to these rules in Variation.
 </p>
 
 <br />
-<h2 id="connect">Connecting an Ensembl variation database</h2>
+<h2 id="connect">Connecting an Ensembl Variation database</h2>
 
 <p>
-Connecting to an Ensembl variation database is made simple by using the Bio::EnsEMBL::Registry module:
+Connecting to an Ensembl Variation database is made simple by using the Bio::EnsEMBL::Registry module:
 </p>
 
 <pre class="code">
@@ -117,8 +132,9 @@ my $variation = $variation_adaptor-&gt;fetch_by_name('rs1333049');
 Only some of these adaptors will be used for illustration as part of this tutorial through commented perl scripts code.
 </p>
 
+<br /><hr />
+<h2 id="variation" style="font-size:large">Variations</h2>
 
-<br />
 <h2 id="genome">Variations in the genome</h2>
 
 <p>
@@ -152,68 +168,6 @@ foreach my $vf (@{$vfs}){
 
 
 <br />
-<h2 id="alleles">Alleles and frequencies</h2>
-
-<p>
-Most variations in the Ensembl Variation database have associated allele frequencies. Each allele object associated with a variation represents an observation of a variant allele in a given population, and may have an associated frequency. Populations are also represented as objects.
-</p>
-
-<pre class="code">
-use strict;
-use warnings;
-use Bio::EnsEMBL::Registry;
-
-my $registry = 'Bio::EnsEMBL::Registry';
-
-$registry-&gt;load_registry_from_db(
-    -host =&gt; 'ensembldb.ensembl.org',
-    -user =&gt; 'anonymous'
-);
-
-my $variation_adaptor = $registry-&gt;get_adaptor('mus_musculus', 'variation', 'variation');
-
-my $variation = $variation_adaptor-&gt;fetch_by_name('rs4224828');
-my $alleles = $variation-&gt;get_all_Alleles();
-
-foreach my $allele(@{$alleles}) {
-	print "Allele ", $allele-&gt;allele, " has frequency ", $allele-&gt;frequency,
-		" in population ", $allele-&gt;population-&gt;name, "\n";
-}
-</pre>
-
-
-<br />
-<h2 id="genotypes">Genotypes</h2>
-
-<p>
-Many variations in the Ensembl Variation database, especially those genotyped in the HapMap or 1000 Genomes projects, have associated genotypes. Genotypes are stored per individual as IndividualGenotype objects, and are associated with a Variation and Individual object. They can be retrieved from an IndividualGenotypeAdaptor, or directly from a Variation object.
-</p>
-
-<pre class="code">
-use strict;
-use warnings;
-use Bio::EnsEMBL::Registry;
-
-my $registry = 'Bio::EnsEMBL::Registry';
-
-$registry-&gt;load_registry_from_db(
-    -host =&gt; 'ensembldb.ensembl.org',
-    -user =&gt; 'anonymous'
-);
-
-my $variation_adaptor = $registry-&gt;get_adaptor('homo_sapiens', 'variation', 'variation');
-
-my $variation = $variation_adaptor-&gt;fetch_by_name('rs1333049');
-
-my $genotypes = $variation-&gt;get_all_IndividualGenotypes();
-
-foreach my $genotype(@{$genotypes}) {
-	print "Individual ", $genotype-&gt;individual->name, " has genotype ", $genotype-&gt;genotype_string, "\n";
-}
-</pre>
-
-
-<br />
 <h2 id="Consequence">Consequence type of variations</h2>
 
 <p>
@@ -223,7 +177,7 @@ href="http://sift.jcvi.org/" target="_blank">SIFT</a> and <a
 href="http://genetics.bwh.harvard.edu/pph/" target="_blank">PolyPhen</a>
 predictions of the effects of non-synonymous protein changes. For a complete
 list of the consequence types predicted by Ensembl, <a
-href="../../variation/index.html">click here</a>.
+href="../../variation/predicted_data.html#consequences">click here</a>.
 </p>
 
 <p>Consequences are represented by a hierarchy of objects as shown below:</p>
@@ -663,7 +617,8 @@ sub print_set {
 }
 </pre>
 <p>
-	Running the code in the example above on the human variation database produces a table similar to the one on the <a href="/info/docs/variation/index.html#variation_sets">About Variation Data</a> page.
+	Running the code in the example above on the human variation database produces a table similar to the one on
+	the <a href="/info/docs/variation/data_description.html#variation_sets">Variation Data Description</a> page.
 </p>
 <p>
 	In order to get objects for the variations assigned to a variation set, we use the get_Variation_Iterator method. Note that rather than returning a reference to a list of all variation objects, this 
@@ -745,71 +700,66 @@ foreach my $svf (@{$svfs}) {
 </pre>
 
 
-<br />
-<h2 id="structural">Structural variations</h2>
+<br /><hr />
+<h2 id="ag" style="font-size:large">Alleles and Genotypes</h2>
+
+<h2 id="alleles">Alleles and frequencies</h2>
 
 <p>
-The Ensembl variation database also stores information about structural variations. These data are imported from the DGVa (Database of Genomic Variants archive). Structural variants are remapped to the current genome assembly using the $slice->project() method from the Ensembl Core API, allowing for one gap in the resultant mapping.</p>
+Most variations in the Ensembl Variation database have associated allele frequencies. Each allele object associated with a variation represents an observation of a variant allele in a given population, and may have an associated frequency. Populations are also represented as objects.
+</p>
 
 <pre class="code">
 use strict;
 use warnings;
-
 use Bio::EnsEMBL::Registry;
 
-my $reg = 'Bio::EnsEMBL::Registry';
-my $host= 'ensembldb.ensembl.org';
-my $user= 'anonymous';
+my $registry = 'Bio::EnsEMBL::Registry';
 
-$reg-&gt;load_registry_from_db(
-  -host =&gt; $host,
-  -user =&gt; $user
+$registry-&gt;load_registry_from_db(
+    -host =&gt; 'ensembldb.ensembl.org',
+    -user =&gt; 'anonymous'
 );
 
-# Get adaptor to StructuralVariation object
-my $sva = $reg->get_adaptor("human", "variation", "structuralvariation");
+my $variation_adaptor = $registry-&gt;get_adaptor('mus_musculus', 'variation', 'variation');
 
-# Get the StructuralVariation object
-my $sv = $sva->fetch_by_name('esv214236');
+my $variation = $variation_adaptor-&gt;fetch_by_name('rs4224828');
+my $alleles = $variation-&gt;get_all_Alleles();
 
-print $sv->variation_name, " ",  $sv->var_class, " (SO term: ", $sv->class_SO_term, ")\n";
-
-# Get Study information
-if ($sv->study) {
-  print "This structural variation comes from the study ", $sv->source, "-", $sv->study->name, ": ", $sv->study->description, "\n";
+foreach my $allele(@{$alleles}) {
+	print "Allele ", $allele-&gt;allele, " has frequency ", $allele-&gt;frequency,
+		" in population ", $allele-&gt;population-&gt;name, "\n";
 }
 </pre>
-<p>Like the variation, you can fetch the structural variations using a Slice.</p>
-<pre class="code">
-#  Get adaptor to Slice object from core
-my $sa = $reg-&gt;get_adaptor("human", "core", "slice");
 
-my $slice = $sa-&gt;fetch_by_region('chromosome', 5, 1, 1000000);
 
-# get all structural variation features on the slice
-my $svfs = $slice-&gt;get_all_StructuralVariationFeatures();
+<br />
+<h2 id="genotypes">Genotypes</h2>
 
-# StructuralVariationFeature objects
-foreach my $svf (@$svfs) {
-  print $svf-&gt;variation_name, " ", $svf-&gt;seq_region_name, ":", $svf-&gt;seq_region_start, "-", $svf-&gt;seq_region_end, " ", 
-	$svf-&gt;var_class, " (SO term: ", $svf-&gt;class_SO_term, ")\n";
-}
-</pre>
 <p>
-You can also retrieve all the supporting evidences associated to a structural variant.
+Many variations in the Ensembl Variation database, especially those genotyped in the HapMap or 1000 Genomes projects, have associated genotypes. Genotypes are stored per individual as IndividualGenotype objects, and are associated with a Variation and Individual object. They can be retrieved from an IndividualGenotypeAdaptor, or directly from a Variation object.
 </p>
+
 <pre class="code">
-# Get adaptor to StructuralVariation object from variation
-my $sva = $reg->get_adaptor("human", "variation", "structuralvariation");
+use strict;
+use warnings;
+use Bio::EnsEMBL::Registry;
 
-# Get the StructuralVariation object
-my $sv = $sva->fetch_by_name('esv214236');
+my $registry = 'Bio::EnsEMBL::Registry';
 
-# Get the supporting evidences associated to the structural variation
-my $ssvs = $sv->get_all_SupportingStructuralVariants();
+$registry-&gt;load_registry_from_db(
+    -host =&gt; 'ensembldb.ensembl.org',
+    -user =&gt; 'anonymous'
+);
 
-foreach my $ssv (@$ssvs) {
-  print $ssv->variation_name, " ",  $ssv->var_class, " (SO term: ", $ssv-&gt;class_SO_term, ")\n";
+my $variation_adaptor = $registry-&gt;get_adaptor('homo_sapiens', 'variation', 'variation');
+
+my $variation = $variation_adaptor-&gt;fetch_by_name('rs1333049');
+
+my $genotypes = $variation-&gt;get_all_IndividualGenotypes();
+
+foreach my $genotype(@{$genotypes}) {
+	print "Individual ", $genotype-&gt;individual->name, " has genotype ", $genotype-&gt;genotype_string, "\n";
 }
 </pre>
 
@@ -910,7 +860,79 @@ foreach my $diff (@differences){
 </pre>
 
 
-<br />
+<br /><hr />
+<h2 id="sv" style="font-size:large">Structural variants</h2>
+
+<h2 id="structural">Structural variations</h2>
+<p>
+The Ensembl variation database also stores information about structural variations. These data are imported from the DGVa (Database of Genomic Variants archive). Structural variants are remapped to the current genome assembly using the $slice->project() method from the Ensembl Core API, allowing for one gap in the resultant mapping.</p>
+
+<pre class="code">
+use strict;
+use warnings;
+
+use Bio::EnsEMBL::Registry;
+
+my $reg = 'Bio::EnsEMBL::Registry';
+my $host= 'ensembldb.ensembl.org';
+my $user= 'anonymous';
+
+$reg-&gt;load_registry_from_db(
+  -host =&gt; $host,
+  -user =&gt; $user
+);
+
+# Get adaptor to StructuralVariation object
+my $sva = $reg->get_adaptor("human", "variation", "structuralvariation");
+
+# Get the StructuralVariation object
+my $sv = $sva->fetch_by_name('esv214236');
+
+print $sv->variation_name, " ",  $sv->var_class, " (SO term: ", $sv->class_SO_term, ")\n";
+
+# Get Study information
+if ($sv->study) {
+  print "This structural variation comes from the study ", $sv->source, "-", $sv->study->name, ": ", $sv->study->description, "\n";
+}
+</pre>
+<p>Like the variation, you can fetch the structural variations using a Slice.</p>
+<pre class="code">
+#  Get adaptor to Slice object from core
+my $sa = $reg-&gt;get_adaptor("human", "core", "slice");
+
+my $slice = $sa-&gt;fetch_by_region('chromosome', 5, 1, 1000000);
+
+# get all structural variation features on the slice
+my $svfs = $slice-&gt;get_all_StructuralVariationFeatures();
+
+# StructuralVariationFeature objects
+foreach my $svf (@$svfs) {
+  print $svf-&gt;variation_name, " ", $svf-&gt;seq_region_name, ":", $svf-&gt;seq_region_start, "-", $svf-&gt;seq_region_end, " ", 
+	$svf-&gt;var_class, " (SO term: ", $svf-&gt;class_SO_term, ")\n";
+}
+</pre>
+<p>
+You can also retrieve all the supporting evidences associated to a structural variant.
+</p>
+<pre class="code">
+# Get adaptor to StructuralVariation object from variation
+my $sva = $reg->get_adaptor("human", "variation", "structuralvariation");
+
+# Get the StructuralVariation object
+my $sv = $sva->fetch_by_name('esv214236');
+
+# Get the supporting evidences associated to the structural variation
+my $ssvs = $sv->get_all_SupportingStructuralVariants();
+
+foreach my $ssv (@$ssvs) {
+  print $ssv->variation_name, " ",  $ssv->var_class, " (SO term: ", $ssv-&gt;class_SO_term, ")\n";
+}
+</pre>
+
+
+<br /><hr />
+<h2 id="other" style="font-size:large">Others</h2>
+
 <h2 id="iterators">Fetching Iterators</h2>
 
 <p>
