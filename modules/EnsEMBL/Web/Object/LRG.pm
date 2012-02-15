@@ -276,7 +276,7 @@ sub count_self_alignments {
   my $sd = $self->species_defs;
 
   ## Get the compara database hash!
-  my $hash = $sd->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'};
+  my $hash = $sd->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'};
   my $matches = $hash->{'BLASTZ_RAW'}->{$species};
 
   ## Get details of the primary slice
@@ -308,7 +308,7 @@ sub check_compara_species_and_locations {
   my $self = shift;
   my $species = $self->species;
   my $sd = $self->species_defs;
-  my $hash = $sd->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'};
+  my $hash = $sd->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'};
   return 0 unless $hash;
   unless ($hash->{'BLASTZ_RAW'}{$species}) {
     return 0; #if this species is not in compara

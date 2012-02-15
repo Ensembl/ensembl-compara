@@ -155,7 +155,7 @@ sub get_slices {
   my ($slice, $align, $species, $start, $end, $cdb) = @_;
   
   my $species_defs = $self->hub->species_defs;
-  my $vega_compara = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'};
+  my $vega_compara = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'};
   my (@slices, @formatted_slices, $length);
 
   if ($align) {

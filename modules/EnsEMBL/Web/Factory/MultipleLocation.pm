@@ -258,6 +258,7 @@ sub best_guess {
       return 1 if $self->check_slice_exists($id, $seq_region, $start, $end, $strand);
     }
   }
+  return 0;
 }
 
 sub input_genes {
