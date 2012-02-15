@@ -1140,7 +1140,7 @@ sub _summarise_compara_alignments {
           my ($homologue)  = grep $_ != $mlss_id, @method_link_species_set_ids;
           
           push @{$region_summary->{ucfirst $p_species}{$source_name}}, {
-            species     => { ucfirst "$s_species--$target_name" => 1, ucfirst "$s_species--$source_name" => 1 },
+            species     => { ucfirst "$s_species--$target_name" => 1, ucfirst "$p_species--$source_name" => 1 },
             target_name => $target_name,
             start       => $source_start,
             end         => $source_end,
