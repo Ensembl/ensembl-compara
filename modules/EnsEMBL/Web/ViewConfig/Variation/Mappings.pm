@@ -11,9 +11,10 @@ sub init {
   
   $self->set_defaults({
     consequence_format => 'ensembl',
+    motif_scores       => 'no'
   });
 
-  $self->title = 'Gene/Transcript';
+  $self->title = 'Genes and regulation';
 }
 
 sub form {
@@ -29,7 +30,17 @@ sub form {
       { value => 'so',      name => 'Sequence Ontology terms' },
       { value => 'ncbi',    name => 'NCBI terms'              },
     ]
-  });  
+  }); 
+  
+  if ($self->hub->species =~ /homo_sapiens|mus_musculus/i) {
+    $self->add_form_element({
+      type  => 'CheckBox',
+      label => 'Show regulatory motif binding scores',
+      name  => 'motif_scores',
+      value => 'yes',
+      raw   => 1,
+    });
+  }
 }
 
 1;
