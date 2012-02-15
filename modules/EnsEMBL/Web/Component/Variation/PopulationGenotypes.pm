@@ -105,6 +105,7 @@ sub format_frequencies {
         my $allele_count = shift @{$data->{'AlleleCount'}} || undef;
         
         $pop_row{'Allele count'}{$gt}      = "$allele_count <strong>($gt)</strong>" if defined $allele_count;
+        $gt = substr($gt,0,10).'...' if (length($gt)>10);
         $pop_row{"Alleles&nbsp;<br />$gt"} = $self->format_number(shift @allele_freq);
       }
       
