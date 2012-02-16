@@ -87,13 +87,15 @@ sub gene_href {
 
   $params->{'r'} = undef if $self->{'container'}->{'web_species'} ne $self->species;
 
-  my $url_params = $self->{'config'}->core_objects->{'input'};
-  foreach my $p ( @{$url_params->{'.parameters'}} ) {
-    if ($p =~ /^s|r\d+/) {
-      $params->{$p} =  $url_params->{$p}[0];
+  my $hub = $self->{'config'}->hub;
+  my @url_params = $hub->param;
+  foreach my $p ( @url_params ) {
+    next unless $hub->param($p);
+    if ($p =~ /^(s|r)\d+/) {
+      $params->{$p} =  $hub->param($p);
     }
     if ($p eq 'r') {
-      $params->{'real_r'} =  $url_params->{$p}[0];
+      $params->{'real_r'} =  $hub->param($p);
     }
   }
 
