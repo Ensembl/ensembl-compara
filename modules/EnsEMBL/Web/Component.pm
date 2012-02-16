@@ -1132,9 +1132,8 @@ sub trim_large_string {
   my $cell_name = $cell_prefix.substr($string,0,10);
      $cell_name =~ s/\.//g;
      $cell_name =~ s/://g;
-
-  my $html_full_allele = sprintf('<a class="toggle closed" href="#" rel="%s" title="Click to show the full allele"></a>&nbsp;&nbsp;
-        <div class="%s"><div class="toggleable" style="font-weight:normal;display:none"><pre>%s</pre></div></div>',
+  my $html_full_allele = sprintf('<a class="toggle closed" href="#" rel="%s" title="Click to show the full allele"></a>  <div class="%s">
+                                  <div class="toggleable" style="font-weight:normal;display:none"><pre>%s</pre></div></div>',
         $cell_name,
         $cell_name,
         $full_allele
