@@ -40,7 +40,7 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');      # we want to
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},     # it will make sense to set this variable if you are going to use ehive frequently
+         %{$self->SUPER::default_options},
 
         'pipeline_name' => 'ncbi_taxonomy',            # name used by the beekeeper to prefix job names on the farm
         'name_suffix'   => '',                         # use a non-empty value if you want to test the pipeline
