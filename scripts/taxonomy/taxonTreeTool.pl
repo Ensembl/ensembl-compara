@@ -188,6 +188,7 @@ sub fetch_compara_ncbi_taxa {
 
   my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
   foreach my $gdb (@$gdb_list) {
+    next unless $gdb->taxon_id;
     my $taxon = $taxonDBA->fetch_node_by_taxon_id($gdb->taxon_id);
     $taxon->no_autoload_children;
 
@@ -200,6 +201,8 @@ sub fetch_compara_ncbi_taxa {
   
   my $newick = $root->newick_format;
   print("$newick\n");
+
+  print $root->newick_format('njtree'), "\n";
 
   $self->{'root'} = $root;
 #  drawPStree($self);
@@ -268,11 +271,11 @@ sub load_taxonomy_in_core {
     $mc->store_key_value('species.common_name',$node->common_name);
     print "Loading species.common_name = ",$node->common_name,"\n";
   }
-  if (defined $node->has_tag('ensembl common name')) {
+  if ($node->has_tag('ensembl common name')) {
     $mc->store_key_value('species.ensembl_common_name',$node->get_tagvalue('ensembl common name'));
     print "Loading species.ensembl_common_name = ",$node->get_tagvalue('ensembl common name'),"\n";
   }
-  if (defined $node->has_tag('ensembl alias name')) {
+  if ($node->has_tag('ensembl alias name')) {
     $mc->store_key_value('species.ensembl_alias_name',$node->get_tagvalue('ensembl alias name'));
     print "Loading species.ensembl_alias_name = ",$node->get_tagvalue('ensembl alias name'),"\n";
   }
