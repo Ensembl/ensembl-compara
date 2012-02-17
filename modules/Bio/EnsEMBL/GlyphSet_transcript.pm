@@ -1298,8 +1298,18 @@ sub get_homologous_gene_ids {
   my $ha     = $compara_db->get_HomologyAdaptor;
   my $method = $species eq $config->{'species'} ? $config->get_parameter('homologue') : undef;
   my @homologues;
-  
-  foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $species, $method ? [ $method ] : undef)}) {
+
+  # Need to be explicit because some methods may be missing (eg from Vega)
+  my @methods;
+  if(defined $method) { 
+    @methods = @$method;
+  } else {
+    @methods = ('ENSEMBL_ORTHOLOGUES'); # always present
+    my $compara_config = $self->{'config'}->hub->species_defs->multi_hash->{'DATABASE_COMPARA'};
+    push @methods,"ENSEMBL_PARALOGUES" if exists $compara_config->{'ENSEMBL_PARALOGUES'}; 
+  }
+
+  foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $species, \@methods)}) {
     my $colour_key = $join_types->{$homology->description};
     
     next if $colour_key eq 'hidden';
