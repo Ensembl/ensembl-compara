@@ -630,7 +630,7 @@ sub dumpVariation {
 
   my $sth;
 
-  my $locations = [];
+  my $locations = {};
   #66 - human ran out of memory so since we don't need location info don't retrieve it
 #  print LOG "    Preparing to get SNP location info ", &date_and_mem, "\n";
 #  my $query = qq(
