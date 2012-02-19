@@ -156,7 +156,7 @@ foreach my $index (@indexes) {
     }
 
     else {
-#      next if ($species =~ /^[N-Z]/);
+#      next unless ($species =~ /^[I-Z]/);
 #      next unless $species =~ /Callithrix_jacchus|Meleagris_gallopavo|Nomascus_leucogenys|Oryctolagus_cuniculus/;
       $conf->{'species'}                = $species;
       $conf->{'species_sci_name'}       = $species;
@@ -632,17 +632,17 @@ sub dumpVariation {
 
   my $locations = {};
   #66 - human ran out of memory so since we don't need location info don't retrieve it
-#  print LOG "    Preparing to get SNP location info ", &date_and_mem, "\n";
-#  my $query = qq(
-#    SELECT vf.variation_id, concat(sr.name, ':', vf.seq_region_start, '-',  vf.seq_region_end, ':', vf.seq_region_strand ) as location
-#      FROM $VariationDB.variation_feature vf, $VariationDB.seq_region sr
-#     WHERE vf.seq_region_id = sr.seq_region_id);
-#  $sth = $conf->{'dbh'}->prepare($query);
-#  $sth->execute;
-#  while ( my $rows = $sth->fetchrow_arrayref() ) {
-#    push @{$locations->{$rows->[0]}},$rows->[1];
-#  }
-#  print LOG "     Retrieved SNP location info ", &date_and_mem, "\n";
+  print LOG "    Preparing to get SNP location info ", &date_and_mem, "\n";
+  my $query = qq(
+    SELECT vf.variation_id, concat(sr.name, ':', vf.seq_region_start, '-',  vf.seq_region_end, ':', vf.seq_region_strand ) as location
+      FROM $VariationDB.variation_feature vf, $VariationDB.seq_region sr
+     WHERE vf.seq_region_id = sr.seq_region_id);
+  $sth = $conf->{'dbh'}->prepare($query);
+  $sth->execute;
+  while ( my $rows = $sth->fetchrow_arrayref() ) {
+    push @{$locations->{$rows->[0]}},$rows->[1];
+  }
+  print LOG "     Retrieved SNP location info ", &date_and_mem, "\n";
 
   print LOG "    Preparing to get extra SNP info (phenotypes etc) ", &date_and_mem, "\n";
 
@@ -680,9 +680,8 @@ sub dumpVariation {
   $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
 
   my ($ssid_sth, $stmt,$ssid_hash);
-  if (1) {
-  # the human database is so big that that dumping in one go runs out of memory, if fixed then can uncomment the line above and use in place of the one below
-#  if ($dbspecies ne 'Homo_sapiens') {
+  # the human database is so big that that dumping in one go runs out of memory even with 48Gb!
+  if ($dbspecies ne 'Homo_sapiens') {
     print LOG "    Preparing to get extra ssID info ", &date_and_mem, "\n";
     $stmt = qq{SELECT variation_id,
                       GROUP_CONCAT('ss',subsnp_id) as ssid
