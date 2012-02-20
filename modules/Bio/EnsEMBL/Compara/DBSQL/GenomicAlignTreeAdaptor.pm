@@ -1203,7 +1203,9 @@ sub left_join_clause {
 =cut
 
 sub default_where_clause {
-  return "gat.node_id = gag.node_id AND gag.genomic_align_id = ga.genomic_align_id";
+
+  return "gat.node_id = ga.node_id";
+#  return "gat.node_id = gag.node_id AND gag.genomic_align_id = ga.genomic_align_id";
 #  return "";
 }
 
