@@ -884,7 +884,7 @@ sub nohits2html {
 
 sub regions_table {
   my ($species,$csname,$regions) = @_;
-  my $hide = 1;
+  my $hide = 0;
   my $table_rows = [];
   my %table_row_data;
   my $html = "";
