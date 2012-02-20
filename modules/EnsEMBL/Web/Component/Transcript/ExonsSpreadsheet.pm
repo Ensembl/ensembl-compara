@@ -40,7 +40,7 @@ sub initialize {
   };
   
   $config->{'end_number'}         = $config->{'number'};
-  $config->{'last_number'}        = $exons[0]->seq_region_start - $config->{'flanking'} - 1 if $config->{'number'} eq 'slice';
+  $config->{'last_number'}        = $strand == 1 ? $exons[0]->seq_region_start - $config->{'flanking'} - 1 : $exons[0]->seq_region_end + $config->{'flanking'} + 1 if $config->{'number'} eq 'slice';
   $config->{'snp_display'}        = 'off' unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
   $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
   
@@ -78,8 +78,8 @@ sub initialize {
     push @data, $export ? $exon_seq : {
       Number     => $i,
       exint      => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'View', r => "$chr_name:" . ($exon_start - 50) . '-' . ($exon_end + 50) }), $exon_id),
-      Start      => $self->thousandify($exon_start),
-      End        => $self->thousandify($exon_end),
+      Start      => $self->thousandify($strand == 1 ? $exon_start : $exon_end),
+      End        => $self->thousandify($strand == 1 ? $exon_end   : $exon_start),
       StartPhase => $exon->phase     >= 0 ? $exon->phase     : '-',
       EndPhase   => $exon->end_phase >= 0 ? $exon->end_phase : '-',
       Length     => $self->thousandify(scalar @$exon_seq),
@@ -96,8 +96,8 @@ sub initialize {
       push @data, $export ? $intron_seq : {
         Number   => '&nbsp;',
         exint    => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'View', r => "$chr_name:" . ($intron_start - 50) . '-' . ($intron_end + 50) }), $intron_id),
-        Start    => $self->thousandify($intron_start),
-        End      => $self->thousandify($intron_end),
+        Start    => $self->thousandify($strand == 1 ? $intron_start : $intron_end),
+        End      => $self->thousandify($strand == 1 ? $intron_end   : $intron_start),
         Length   => $self->thousandify($intron_length),
         Sequence => $self->build_sequence($intron_seq, $config)
       };
@@ -325,20 +325,21 @@ sub add_line_numbers {
   
   my $i      = $config->{'export'} ? $config->{'lines'}++ : 0;
   my $start  = $config->{'last_number'};
-  my $length = $start + $seq_length;
+  my $strand = $config->{'strand'};
+  my $length = $start + ($seq_length * $strand);
   my $end;
   
   if ($truncated) {
     $end = $length;
-    push @{$config->{'line_numbers'}->{$i}}, { start => $start + 1, end => $end };
+    push @{$config->{'line_numbers'}->{$i}}, { start => $start + $strand, end => $end };
   } else {
-    while ($end < $length) {
-      $end = $start + $config->{'display_width'};
-      $end = $length if $end > $length;
+    while (($strand == 1 && $end < $length) || ($strand == -1 && $start > $length)) {
+      $end = $start + ($config->{'display_width'} * $strand);
+      $end = $length if ($strand == 1 && $end > $length) || ($strand == -1 && $end < $length);
       
-      push @{$config->{'line_numbers'}->{$i}}, { start => $start + 1, end => $end };
+      push @{$config->{'line_numbers'}->{$i}}, { start => $start + $strand, end => $end };
       
-      $start += $config->{'display_width'};
+      $start += $config->{'display_width'} * $strand;
     }
   }
   
