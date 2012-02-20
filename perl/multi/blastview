@@ -2138,7 +2138,7 @@ sub populate_result_summary{
   }
   elsif( $database =~ /PEP/i ){
     my $id_type = 'peptide';
-    if(  $database =~ /(ABINITIO)|(PREDICTION)/io ){ $id_type = 'transcript' }
+    if(  $database =~ /(ABINITIO)|(PREDICTION)/io ){ $id_type = 'pt' }
     my $nhref_t = ("/$species/Transcript/ProteinSummary?".
                    join( ';',
                          "$id_type=%s",
