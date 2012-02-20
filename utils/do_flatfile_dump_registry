@@ -498,14 +498,11 @@ foreach my $spp (@species) {
 
     # dump flatfiles for the chunks
     while ( my $chunked_slice = shift @{$chunked_slices} ) {
-      my $seq = $chunked_slice->seq();
-
 
       if($batch >= $chk_start){
-	foreach my $format ( sort keys %$formats_dir ) {
-	  dump_format( $chunked_slice, $format, $formats_dir->{$format},
-		       $seq );
-	}
+        foreach my $format ( sort keys %$formats_dir ) {
+          dump_format( $chunked_slice, $format, $formats_dir->{$format});
+        }
       }	
 
       if ( ++$count >= $CHUNK ) {
@@ -886,7 +883,7 @@ sub end_with_species {
 # uses static golden path adaptor to get virtual contig..
 
 sub dump_format {
-  my ( $slice, $format, $spp_dumpdir, $seq ) = @_;
+  my ( $slice, $format, $spp_dumpdir ) = @_;
 
   my $name = $slice->name();
 
@@ -899,7 +896,9 @@ sub dump_format {
 
     my $outfile;
     my $filename = "$spp_dumpdir/$name.$format";
-    $seq_dumper->dump( $slice, $format, $filename, $seq );
+    my $no_append = 1;
+    my $seq = undef;
+    $seq_dumper->dump( $slice, $format, $filename, $seq, $no_append );
   };
   if ($@) {
     warn( 1, "ERROR: Dumping Error! Cannot dump $name\n$@" );
