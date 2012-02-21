@@ -141,9 +141,9 @@ sub form {
       label     => 'Select location',
       inline    => 1,
       elements  => [
-        { type => 'string',   size => 1, value => $slice->seq_region_name, name => 'new_region', required => 1 },
-        { type => 'posint',   size => 8, value => $slice->start,           name => 'new_start',  required => 1 },
-        { type => 'posint',   size => 8, value => $slice->end,             name => 'new_end',    required => 1 },
+        { type => 'string',   size => 1, value => $slice->seq_region_name, name => 'new_region', required => 1, class => "as-param" },
+        { type => 'posint',   size => 8, value => $slice->start,           name => 'new_start',  required => 1, class => "as-param" },
+        { type => 'posint',   size => 8, value => $slice->end,             name => 'new_end',    required => 1, class => "as-param" },
         { type => 'dropdown', size => 1, value => $self->get('strand'),    name => 'strand',     values => [{ value => 1, caption => 1 }, { value => -1, caption => -1 }] },
       ],
     });

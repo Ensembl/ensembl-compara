@@ -31,7 +31,6 @@ sub get_formats {
   my $hub         = $self->hub;
   my $object      = $self->object;
   my $output      = $hub->param('output');
-  my $new_region  = $hub->param('new_region');
   my $strand      = $hub->param('strand');
   my $r           = $hub->param('r');
   my $flank5      = $hub->param('flank5_display');
@@ -39,19 +38,21 @@ sub get_formats {
   my $config      = $object->config;
   my $check_slice = 1;
 
-  if ($new_region) {
-    my $s = $hub->param('new_start'); 
-    my $e = $hub->param('new_end');
-    
+  my ($old_region,$old_start,$old_end) = split /[:-]/,$r;
+  my ($new_region,$new_start,$new_end) = 
+    map { $hub->param($_) } qw(new_region new_start new_end);
+  $new_region = $old_region unless defined $new_region;
+  $new_start = $old_start unless defined $new_start;
+  $new_end = $old_end unless defined $new_end;
+  unless($new_region eq $old_region and
+         $old_start  == $new_start and
+         $old_end    == $new_end) {
     # Flip start and end if end is less than start
-    if ($e < $s) {
-      my $t = $e;
-      $e = $s;
-      $s = $t;
-    }
+    ($new_end,$new_start) = ($new_start,$new_end) if($new_end < $new_start);
     
-    $r = $new_region . ":$s-$e";
-    $check_slice = $object->check_slice($new_region, $s, $e, $strand);
+    $r = sprintf("%s:%s-%s",$new_region,$new_start,$new_end);
+    $check_slice =
+      $object->check_slice($new_region, $new_start, $new_end, $strand);
   }
   
   my $params = {};

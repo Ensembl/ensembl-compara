@@ -34,11 +34,13 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
     var diff    = {};
     var i;
     
-    $('input[type=hidden]', form).each(function () { data[this.name] = this.value; });
-    
+    $('input[type=hidden], input.as-param', form).each(function () { data[this.name] = this.value; });
+    var skip     = {};
+    $('input.as-param', form).each(function() { skip[this.name] = 1; });
+
     if (form.hasClass('configuration')) {
       $.each(form.serializeArray(), function () {
-        if (panel.config[this.name] !== this.value) {
+        if (!skip[this.name] && panel.config[this.name] !== this.value) {
           diff[this.name] = this.value;
         }
 
