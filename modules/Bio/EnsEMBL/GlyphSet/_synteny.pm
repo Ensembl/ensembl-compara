@@ -30,7 +30,7 @@ sub features {
   foreach (@$syntenies) {
     my ($main_dfr, $other_dfr);
     
-    foreach my $dfr (@{$_->children}) {
+    foreach my $dfr (@{$_->get_all_DnaFragRegions}) {
       if ($dfr->dnafrag->genome_db->name eq $species) {
         $other_dfr = $dfr;
       } else {
@@ -56,8 +56,6 @@ sub features {
     $f->{'rel_ori'}       = $main_dfr->dnafrag_strand * $other_dfr->dnafrag_strand;
     
     push @features, $f;
-    
-    $_->release_tree;
   }
   
   return \@features;
