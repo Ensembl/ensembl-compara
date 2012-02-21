@@ -225,10 +225,7 @@ sub html   { return shift->output('html',   @_); }
 sub image_width { return $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
 sub _warning { return shift->_info_panel('warning', @_ ); } # Error message, but not fatal
 
-sub html_format {
-  my $self = shift;
-  return $self->{'html_format'} = 'HTML';
-}
+sub html_format { return $_[0]->hub->param('_format') ne "TextGz"; }
 
 sub _info_panel {
   my ($self, $class, $caption, $desc, $width, $id) = @_;
