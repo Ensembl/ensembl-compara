@@ -102,13 +102,13 @@ sub content {
       label_html => undef,
     });
     
-    $self->add_subheader('<span align="center">PWM Information</span>');
+    $self->add_subheader('<span align="center">Motif Information</span>');
 
     my $pwm_table = '
     <table cellpadding="0" cellspacing="0" style="border:0; padding:0px; margin:0px;">
       <tr>
         <th>Name</th>
-        <th>ID</th>
+        <th>PWM ID</th>
         <th>Score</th>
       </tr>
     ';

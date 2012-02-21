@@ -105,10 +105,10 @@ sub content {
     $self->add_entry ({
     label_html => undef,
     });
-    $self->add_subheader('<span align="center">PWM Information</span>');
+    $self->add_subheader('<span align="center">Motif Information</span>');
   
     my $pwm_table = '<table cellpadding="0" cellspacing="0" style="border:0; padding:0px; margin:0px; width:100%">
-                     <tr><th>Name</th><th>ID</th><th>Score</th></tr>';
+                     <tr><th>Name</th><th>PWM ID</th><th>Score</th></tr>';
  
     foreach my $motif (sort keys %motif_features){
       my ($name, $score, $binding_matrix_name) = @{$motif_features{$motif}};
