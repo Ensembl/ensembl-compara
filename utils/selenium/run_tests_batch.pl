@@ -22,11 +22,13 @@ GetOptions(
 $timeout   = qq{-timeout $timeout} if($timeout);
 $url       = qq{-url $url} if($url);
 my @module = split(/,/, $module) if($module);
+my $host   = "172.20.11.204";
+my $port   = "4444";
 
 # check to see if the selenium server is online(URL returns OK if server is online).
 my $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
 $ua->timeout(10);
-my $response = $ua->get("http://172.20.10.187:4444/selenium-server/driver/?cmd=testComplete");
+my $response = $ua->get("http://$host:$port/selenium-server/driver/?cmd=testComplete");
 if($response->content ne 'OK') { print "\nSelenium Server is offline !!!!\n";exit;}
 
 #prepare report dir
@@ -57,7 +59,7 @@ if(@module) {
 foreach (@non_species_modules) {
   print "\nRunning Module $_ Test \n"; 
   my $report = $_."_report.txt";
-  my $cmd = qq{perl run_tests.pl --module "$_" $timeout $url > "test_reports/$report" 2>&1 };
+  my $cmd = qq{perl run_tests.pl --module "$_" $timeout $url --host $host --port $port > "test_reports/$report" 2>&1 };
   #print "  $cmd\n";
   system $cmd;
 }
@@ -71,7 +73,7 @@ foreach (@species_modules) {
   $species    = qq{--species "mus_musculus"} if ($_ eq 'Regulation'); #Regulation test module needs to be run for mouse only
   $species    = qq{--species "homo_sapiens"} if ($_ eq 'Variation'); #Variation test module needs to be run for human only  
   
-  $cmd = qq{perl run_tests.pl --module "$_" $species $timeout $url > "test_reports/$report" 2>&1 };
+  $cmd = qq{perl run_tests.pl --module "$_" $species $timeout $url --host $host --port $port > "test_reports/$report" 2>&1 };
   #print "  $cmd\n";
   system $cmd;  
 }
