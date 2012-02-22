@@ -239,9 +239,12 @@ sub resource_classes {
     my ($self) = @_;
     return {
          0 => { -desc => 'default',          'LSF' => '' },
-         1 => { -desc => 'hcluster_run',     'LSF' => '-C0 -M25000000 -q hugemem -R"select[mycompara2<500 && mem>25000] rusage[mycompara2=10:duration=10:decay=1:mem=25000]"' },
-         2 => { -desc => 'mcoffee_himem',    'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },
-         9 => { -desc => 'CAFE',             'LSF' => '-q hugemem -M15000000 -R"select[mem>15000] rusage[mem=15000]"'},
+         1 => { -desc => '500Mb_job',        'LSF' => '-C0 -M500000   -R"select[mem>500]   rusage[mem=500]"' },
+         2 => { -desc => '1Gb_job',          'LSF' => '-C0 -M1000000  -R"select[mem>1000]  rusage[mem=1000]"' },
+         3 => { -desc => '2Gb_job',          'LSF' => '-C0 -M2000000  -R"select[mem>2000]  rusage[mem=2000]"' },
+         5 => { -desc => '8Gb_job',          'LSF' => '-C0 -M8000000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         9 => { -desc => 'CAFE',             'LSF' => '-C0 -M16000000 -R"select[mem>16000] rusage[mem=16000]" -q hugemem'},
+         7 => { -desc => '24Gb_job',         'LSF' => '-C0 -M24000000 -R"select[mem>24000] rusage[mem=24000]" -q hugemem' },
     };
 }
 
@@ -385,6 +388,7 @@ sub pipeline_analyses {
             },
             -wait_for => [ 'generate_reuse_ss' ],
             -hive_capacity => 10,    # allow for parallel execution
+            -rc_id => 1,
             -flow_into => {
                 2 => { 'sequence_table_reuse'       => undef,
                        'paf_table_reuse'            => undef,
@@ -420,6 +424,7 @@ sub pipeline_analyses {
             -wait_for => [ 'accumulate_reuse_ss' ], # to make sure some fresh members won't start because they were dataflown first (as this analysis can_be_empty)
             -can_be_empty  => 1,
             -hive_capacity => 4,
+            -rc_id => 1,
             -flow_into => {
                 1 => [ 'member_table_reuse' ],    # n_reused_species
                 2 => [ 'mysql:////sequence' ],
@@ -494,6 +499,7 @@ sub pipeline_analyses {
             -wait_for => [ 'accumulate_reuse_ss', 'subset_table_reuse', 'subset_member_table_reuse', 'member_table_reuse', 'sequence_table_reuse' ],
             -hive_capacity => -1,
             -can_be_empty  => 1,
+            -rc_id => 2,
             -flow_into => {
                 1 => [ 'dump_subset_create_blastdb', 'store_sequences_factory' ],
             },
@@ -552,6 +558,7 @@ sub pipeline_analyses {
             },
             -wait_for => [ 'load_fresh_members', 'dump_subset_create_blastdb', 'paf_table_reuse', 'paf_create_empty_table' ],
             -batch_size    =>  40,
+            -rc_id         => 1,
             -hive_capacity => $self->o('blastp_capacity'),
         },
 
@@ -598,7 +605,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'hcluster_parse_output' ],   # backbone
             },
-            -rc_id => 1,
+            -rc_id => 7,
         },
 
 
@@ -609,8 +616,9 @@ sub pipeline_analyses {
                 'cluster_dir'               => $self->o('cluster_dir'),
             },
             -hive_capacity => -1,
+            -rc_id => 3,
             -flow_into => {
-                1 => [ 'dummy_wait_alltrees', 'overall_clusterset_qc' ],   # backbone 
+                1 => [ 'overall_clusterset_qc' ],   # backbone 
                 2 => [ 'mcoffee' ],                 # fan n_clusters
             },
         },
@@ -621,6 +629,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PeptideMemberGroupingFactory',
             -parameters => { },
             -hive_capacity => -1,
+            -rc_id => 1,
             -flow_into => {
                 2 => [ 'store_sequences' ],
             },
@@ -630,6 +639,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FlowMemberSeq',
             -parameters => { },
             -hive_capacity => $self->o('store_sequences_capacity'),
+            -rc_id => 2,
             -flow_into => {
                 2 => [ 'mysql:////sequence_cds' ],
                 3 => [ 'mysql:////sequence_exon_bounded' ],
@@ -646,9 +656,9 @@ sub pipeline_analyses {
                 'groupset_tag'              => 'ClustersetQC',
             },
             -hive_capacity => 3,
-            #-flow_into => {
-            #    1 => [ 'dummy_wait_alltrees' ],    # backbone
-            #},
+            -flow_into => {
+                1 => [ 'dummy_wait_alltrees' ],    # backbone
+            },
         },
 
         {   -logic_name => 'per_genome_clusterset_qc',
@@ -678,6 +688,8 @@ sub pipeline_analyses {
             },
             -wait_for => [ 'store_sequences', 'per_genome_clusterset_qc' ],    # funnel #should contain overall_clusterset_qc
             -hive_capacity        => $self->o('mcoffee_capacity'),
+            -rc_id => 3,
+            -priority => 30,
             -flow_into => {
                -2 => [ 'mcoffee_himem' ],  # RUNLIMIT
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
@@ -698,11 +710,12 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -can_be_empty         => 1,
+            -priority => 40,
             -flow_into => {
                 1 => [ 'njtree_phyml' ],
                 3 => [ 'quick_tree_break' ],
             },
-            -rc_id => 2,
+            -rc_id => 5,
         },
 
         {   -logic_name => 'njtree_phyml',
@@ -714,7 +727,8 @@ sub pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
             },
             -hive_capacity        => $self->o('njtree_phyml_capacity'),
-            -failed_job_tolerance => 5,
+            -rc_id => 3,
+            -priority => 20,
             -flow_into => {
                 1 => [ 'ortho_tree' ],
                 2 => [ 'njtree_phyml' ],
@@ -727,7 +741,8 @@ sub pipeline_analyses {
                 'use_genomedb_id'           => $self->o('use_genomedb_id'),
             },
             -hive_capacity        => $self->o('ortho_tree_capacity'),
-            -failed_job_tolerance => 5,
+            -rc_id => 1,
+            -priority => 10,
             -flow_into => {
                 1 => [ 'build_HMM_aa', 'build_HMM_cds' ],
             },
@@ -740,7 +755,7 @@ sub pipeline_analyses {
                 'sreformat_exe'     => $self->o('sreformat_exe'),
             },
             -hive_capacity        => $self->o('build_hmm_capacity'),
-            -failed_job_tolerance => 5,
+            -rc_id => 1,
         },
 
         {   -logic_name => 'build_HMM_cds',
@@ -751,7 +766,7 @@ sub pipeline_analyses {
                 'sreformat_exe'     => $self->o('sreformat_exe'),
             },
             -hive_capacity        => $self->o('build_hmm_capacity'),
-            -failed_job_tolerance => 5,
+            -rc_id => 1,
         },
 
         {   -logic_name => 'quick_tree_break',
@@ -763,7 +778,8 @@ sub pipeline_analyses {
             },
             -hive_capacity        => 1, # this one seems to slow the whole loop down; why can't we have any more of these?
             -can_be_empty         => 1,
-            -failed_job_tolerance => 5,
+            -rc_id     => 1,
+            -priority  => 50,
             -flow_into => {
                 1 => [ 'other_paralogs' ],
                 2 => [ 'mcoffee' ],
@@ -784,7 +800,7 @@ sub pipeline_analyses {
             -parameters => { },
             -wait_for => [ 'dummy_wait_alltrees' ],
             -hive_capacity        => $self->o('other_paralogs_capacity'),
-            -failed_job_tolerance => 5,
+            -rc_id => 1,
         },
 
 # ---------------------------------------------[a QC step after main loop]----------------------------------------------------------
@@ -856,6 +872,7 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('homology_dNdS_capacity'),
             -failed_job_tolerance => 2,
+            -rc_id => 1,
         },
 
         {   -logic_name => 'threshold_on_dS',
