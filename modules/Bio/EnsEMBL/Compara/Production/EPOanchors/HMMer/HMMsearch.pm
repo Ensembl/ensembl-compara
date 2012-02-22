@@ -111,8 +111,8 @@ sub run {
 		push( @anchor_align_records, [ $self->param('mlssid_of_alignments'), $mapping_id, $dnafrag->dbID, $alifrom, $alito,
 						$strand, $score, $hmm_from, $hmm_to, $evalue, $hmm_len ] );  
 	}	
-	$self->param('mapping_hits', \@anchor_align_records) if scalar( @anchor_align_records );
 	unlink("$stk_file");
+	$self->param('mapping_hits', \@anchor_align_records) if scalar( @anchor_align_records );
 	unlink("$hmm_file");
 }
 
