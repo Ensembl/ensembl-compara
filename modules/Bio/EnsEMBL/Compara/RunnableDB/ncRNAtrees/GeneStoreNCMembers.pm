@@ -76,11 +76,11 @@ sub fetch_input {
         # fetch the Compara::GenomeDB object for the genome_db_id
     my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with id=$genome_db_id";
     $self->param('genome_db', $genome_db);
-  
+
         # using genome_db_id connect to external core database
     my $core_db = $genome_db->db_adaptor() or die "Can't connect to genome database for id=$genome_db_id";
     $self->param('core_db', $core_db);
-  
+
     $self->param('to_ncrna_subset', []);
     $self->param('to_gene_subset',  []);
 }
@@ -229,41 +229,41 @@ sub store_ncrna_gene {
 }
 
 sub fasta_description {
-  my ($self, $gene, $transcript) = @_;
-  my $acc = 'NULL'; my $biotype = undef;
-  $DB::single=1;1;
-  eval { $acc = $transcript->display_xref->primary_id;};
-  unless ($acc =~ /RF00/) {
-    $biotype = $transcript->biotype;
-    if ($biotype =~ /miRNA/) {
-      my @exons = @{$transcript->get_all_Exons};
-      $self->throw("unexpected miRNA with more than one exon") if (1 < scalar @exons);
-      my $exon = $exons[0];
-      my @supporting_features = @{$exon->get_all_supporting_features};
-      if (scalar(@supporting_features)!=1) {
-        warn "unexpected miRNA supporting features";
-        next;
-      }
-      my $supporting_feature = $supporting_features[0];
-      eval { $acc = $supporting_feature->hseqname; };
-    } elsif ($biotype =~ /snoRNA/) {
-      eval { $acc = $transcript->external_name; };
-      #     } elsif ($biotype =~ /Mt_tRNA/) { # wont deal with these at the moment
-      #       $acc = 'RF00005';
-    } elsif ($biotype =~ /Mt_rRNA/) {
-      # $acc = $biotype;
-    } else {
-      # We just leave it as NULL and will skip it in RFAMClassify
+    my ($self, $gene, $transcript) = @_;
+    my $acc = 'NULL'; my $biotype = undef;
+    $DB::single=1;1;
+    eval { $acc = $transcript->display_xref->primary_id;};
+
+    unless ($acc =~ /RF00/) {
+        $biotype = $transcript->biotype;
+        if ($biotype =~ /miRNA/) {
+            my @exons = @{$transcript->get_all_Exons};
+            $self->throw("unexpected miRNA with more than one exon") if (1 < scalar @exons);
+            my $exon = $exons[0];
+            my @supporting_features = @{$exon->get_all_supporting_features};
+            if (scalar(@supporting_features)!=1) {
+                warn "unexpected miRNA supporting features";
+                next;
+            }
+            my $supporting_feature = $supporting_features[0];
+            eval { $acc = $supporting_feature->hseqname; };
+        } elsif ($biotype =~ /snoRNA/) {
+            eval { $acc = $transcript->external_name; };
+        } elsif ($biotype =~ /Mt_rRNA/) {
+            # $acc = $biotype;
+        } else {
+            # Let's try with the gene
+            eval { $acc = $gene->get_all_xrefs('RFAM')->[0]->primary_id(); };
+        }
     }
-  }
-  my $description = "Transcript:" . $transcript->stable_id .
-                    " Gene:" .      $gene->stable_id .
-                    " Chr:" .       $gene->seq_region_name .
-                    " Start:" .     $gene->seq_region_start .
-                    " End:" .       $gene->seq_region_end.
-                    " Acc:" .       $acc;
-  print STDERR "Description... $description\n" if ($self->debug);
-  return $description;
+    my $description = "Transcript:" . $transcript->stable_id .
+                      " Gene:" .      $gene->stable_id .
+                      " Chr:" .       $gene->seq_region_name .
+                      " Start:" .     $gene->seq_region_start .
+                      " End:" .       $gene->seq_region_end.
+                      " Acc:" .       $acc;
+    print STDERR "Description... $description\n" if ($self->debug);
+    return $description;
 }
 
 1;
