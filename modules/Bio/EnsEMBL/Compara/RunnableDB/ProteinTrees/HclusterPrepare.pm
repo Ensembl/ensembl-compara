@@ -139,19 +139,20 @@ sub fetch_distances {
   };
   print("$sql\n") if ($self->debug);
   my $sth = $self->compara_dba->dbc->prepare($sql);
+  $sth->{mysql_use_result} = 1;
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
-  print("  done with fetch\n");
 
   my $filename = $self->param('cluster_dir') . '/' . "$table_name.hcluster.txt";
   open(FILE, ">$filename") or die "Could not open '$filename' for writing : $!";
-  while ( my $ref  = $sth->fetchrow_arrayref() ) {
-    my ($query_id, $hit_id, $score) = @$ref;
+  my ($query_id, $hit_id, $score);
+  $sth->bind_columns(\$query_id, \$hit_id, \$score);
+  while ($sth->fetch) {
     print FILE "$query_id\t$hit_id\t$score\n";
   }
   $sth->finish;
   close FILE;
-  printf("%1.3f secs to process\n", (time()-$starttime));
+  printf("%1.3f secs to fetch/process\n", (time()-$starttime));
 }
 
 
@@ -169,24 +170,19 @@ sub fetch_categories {
              "FROM $table_name WHERE qgenome_db_id=$genome_db_id;";
   print("$sql\n");
   my $sth = $self->compara_dba->dbc->prepare($sql);
+  $sth->{mysql_use_result} = 1;
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
-  print("  done with fetch\n");
 
   my $filename = $self->param('cluster_dir') . '/' . "$table_name.hcluster.cat";
-  my $member_id_hash;
-  while ( my $ref  = $sth->fetchrow_arrayref() ) {
-    my ($member_id) = @$ref;
-    $member_id_hash->{$member_id} = 1;
-  }
-  $sth->finish;
-  printf("%1.3f secs to gather distinct\n", (time()-$starttime));
   open(FILE, ">$filename") or die "Could not open '$filename' for writing : $!";
-  foreach my $member_id (keys %$member_id_hash) {
+  my $member_id;
+  $sth->bind_columns(\$member_id);
+  while ($sth->fetch) {
     print FILE "${member_id}_${genome_db_id}\t${outgroup_category}\n";
   }
   close FILE;
-  printf("%1.3f secs to process\n", (time()-$starttime));
+  printf("%1.3f secs to fetch/process\n", (time()-$starttime));
 }
 
 1;
