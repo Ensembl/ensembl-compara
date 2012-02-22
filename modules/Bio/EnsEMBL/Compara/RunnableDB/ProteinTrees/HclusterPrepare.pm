@@ -106,12 +106,12 @@ sub analyze_table {
       # Re-enable the keys before starting the queries
   my $sql = "ALTER TABLE $table_name ENABLE KEYS";
   print("$sql\n") if ($self->debug);
-  my $sth = $self->compara_dba->prepare($sql);
+  my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute();
 
   $sql = "ANALYZE TABLE $table_name";
   print("$sql\n") if ($self->debug);
-  $sth = $self->compara_dba->prepare($sql);
+  $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute();
 
   printf("  %1.3f secs to ANALYZE TABLE\n", (time()-$starttime));
@@ -138,7 +138,7 @@ sub fetch_distances {
        AND paf.qgenome_db_id=$genome_db_id
   };
   print("$sql\n") if ($self->debug);
-  my $sth = $self->compara_dba->prepare($sql);
+  my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
   print("  done with fetch\n");
@@ -168,7 +168,7 @@ sub fetch_categories {
             "qmember_id ".
              "FROM $table_name WHERE qgenome_db_id=$genome_db_id;";
   print("$sql\n");
-  my $sth = $self->compara_dba->prepare($sql);
+  my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
   print("  done with fetch\n");
