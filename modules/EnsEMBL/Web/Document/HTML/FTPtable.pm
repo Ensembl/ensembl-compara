@@ -34,7 +34,8 @@ sub render {
     'coll'       => 'Additional regulation data (not in database)',
     'bed'        => 'Constrained elements calculated using GERP',
     'extra'      => 'Additional release data stored as flat files rather than MySQL for performance reasons',
-    'ancestral' => 'Ancestral Allele data in FASTA format',
+    'ancestral'  => 'Ancestral Allele data in FASTA format',
+    'bam'        => 'Alignments against the genome',
   );
   
   $title{$_} = encode_entities($title{$_}) for keys %title;
@@ -98,35 +99,50 @@ sub render {
     { key => 'var3',    title => 'Variation (VEP)',     align => 'center', width => '10%', sort => 'html' },
     { key => 'funcgen', title => 'Regulation (GFF)',    align => 'center', width => '10%', sort => 'html' },
     { key => 'files',   title => 'Data files',          align => 'center', width => '10%', sort => 'html' },
+    { key => 'bam',     title => 'BAM',                 align => 'center', width => '10%', sort => 'html' },
   );
 
   my @species = $species_defs->ENSEMBL_DATASETS;
   my $rows;
-
+  
+  my $required_lookup = $self->required_types_for_species();
+  
   foreach my $spp (sort @{$species_defs->ENSEMBL_DATASETS}) {
     (my $sp_name = $spp) =~ s/_/ /;
     my $sp_dir =lc($spp);
     my $sp_var = lc($spp).'_variation';
     my $common = $species_defs->get_config($spp, 'DISPLAY_NAME');
-    my $variation = '-'; 
-    if ($sp_dir =~ /bos_taurus|canis_familiaris|danio_rerio|drosophila_melanogaster|equus_caballus|felis_catus|gallus_gallus|homo_sapiens|saccharomyces_cerevisiae|monodelphis_domestica|mus_musculus|ornithorhynchus_anatinus|pan_troglodytes|pongo_pygmaeus|rattus_norvegicus|sus_scrofa|taeniopygia_guttata|tetraodon_nigroviridis|pongo_abelii/) {
-      $variation = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/gvf/%s/">GVF</a>', $title{'gvf'}, $rel, $sp_dir;
-    }
-    my $vep = '-';
-    if ($sp_dir =~/bos_taurus|danio_rerio|homo_sapiens|mus_musculus|rattus_norvegicus/){
-      $vep = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/VEP/%s/">VEP</a>', $title{'vep'}, $rel, $sp_dir;
-    }
+  
     my $emf   = '-';
-    if ($sp_dir =~ /homo_sapiens|mus_musculus|rattus_norvegicus/) {
+    if($required_lookup->{var1}->{$sp_dir}) {
       $emf = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/emf/%s/">EMF</a>', $title{'emf'}, $rel, $sp_var;
     }
+    
+    my $variation = '-';
+    if($required_lookup->{var2}->{$sp_dir}) {
+      $variation = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/gvf/%s/">GVF</a>', $title{'gvf'}, $rel, $sp_dir;
+    }
+    
+    my $vep = '-';
+    if($required_lookup->{var3}->{$sp_dir}) {
+      $vep = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/VEP/%s/">VEP</a>', $title{'vep'}, $rel, $sp_dir;
+    }
+    
     my $funcgen = '-';
+    if($required_lookup->{funcgen}->{$sp_dir}) {
+      $funcgen = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/regulation/%s/">Regulation</a> (GFF)', $title{'funcgen'}, $rel, $sp_dir;      
+    }
+    
     my $extra = '-';
-    if ($sp_dir =~ /homo_sapiens/ || $sp_dir =~/mus_musculus/) {
-      $funcgen = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/regulation/%s/">Regulation</a> (GFF)', $title{'funcgen'}, $rel, $sp_dir;
+    if($required_lookup->{files}->{$sp_dir}) {
       my $dbs = $species_defs->get_config(ucfirst($sp_dir), 'databases');
       my $coll_dir = $dbs->{'DATABASE_FUNCGEN'}{'NAME'};
       $extra = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/data_files/%s/">Regulation data files</a>', $title{'extra'}, $rel, $coll_dir;
+    }
+    
+    my $bam = '-';
+    if($required_lookup->{bam}->{$sp_dir}) {
+      $bam = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/bam/%s/">BAM</a>', $title{'bam'}, $rel, $sp_dir;
     }
 
     $table->add_row({
@@ -144,6 +160,7 @@ sub render {
       'var3'          => $vep,
       'funcgen'       => $funcgen,
       'files'         => $extra,
+      'bam'           => $bam,
     });
   }
 
@@ -151,6 +168,49 @@ sub render {
   $html .= '</div>';
 
   return $html;
+}
+
+#Lookup for the types we need for species
+sub required_types_for_species {
+  my ($self) = @_;
+  my %required_lookup;
+  
+  #EMF
+  $required_lookup{var1} = { map { $_ => 1} qw/
+    homo_sapiens mus_musculus rattus_norvegicus
+  / };
+  
+  #GVF
+  $required_lookup{var2} = { map { $_ => 1 } qw/
+    bos_taurus canis_familiaris danio_rerio drosophila_melanogaster 
+    equus_caballus felis_catus gallus_gallus homo_sapiens 
+    saccharomyces_cerevisiae monodelphis_domestica mus_musculus 
+    ornithorhynchus_anatinus pan_troglodytes pongo_pygmaeus 
+    rattus_norvegicus sus_scrofa taeniopygia_guttata tetraodon_nigroviridis 
+    pongo_abelii
+  / };
+  
+  #VEP
+  $required_lookup{var3} = { map { $_ => 1 } qw/
+    bos_taurus danio_rerio homo_sapiens mus_musculus rattus_norvegicus
+  / };
+  
+  #Funcgen
+  $required_lookup{funcgen} = { map { $_ => 1 } qw/
+    homo_sapiens mus_musculus
+  / };
+  
+  #Funcgen files
+  $required_lookup{files} = { map { $_ => 1 } qw/
+    homo_sapiens mus_musculus
+  / };
+  
+  #BAM
+  $required_lookup{bam} = { map { $_ => 1 } qw/
+    pan_troglodytes
+  / };
+  
+  return \%required_lookup;
 }
 
 1; 
