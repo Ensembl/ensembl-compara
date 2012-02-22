@@ -62,7 +62,7 @@ sub resource_classes {
     my ($self) = @_;
     return {
          0 => { -desc => 'default', 'LSF' => '' },
-         7 => { -desc => 'himem',   'LSF' => '-C0 -M'.$self->o('idmap_gigs').'000000 -R"select[mem>'.$self->o('idmap_gigs').'000] rusage[mem='.$self->o('idmap_gigs').'000]"' },
+         17 => { -desc => 'himem',   'LSF' => '-C0 -M'.$self->o('idmap_gigs').'000000 -R"select[mem>'.$self->o('idmap_gigs').'000] rusage[mem='.$self->o('idmap_gigs').'000]"' },
     };
 }
 
@@ -80,7 +80,7 @@ sub pipeline_analyses {
             -input_ids     => [
                 { 'type' => 't' },
             ],
-            -rc_id => 7,    # NB: make sure you give it enough memory or it will crash
+            -rc_id => 17,    # NB: make sure you give it enough memory or it will crash
         },
         
         {   -logic_name    => 'treefam_xref_idmap',
@@ -92,7 +92,7 @@ sub pipeline_analyses {
                 { 'tf_release' => 7, 'tag_prefix' => '', },
                 { 'tf_release' => 8, 'tag_prefix' => 'dev_', },
             ],
-            -rc_id => 7,
+            -rc_id => 17,
         },
         
         #
