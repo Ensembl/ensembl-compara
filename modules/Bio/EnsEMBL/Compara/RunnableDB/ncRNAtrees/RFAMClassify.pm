@@ -168,7 +168,7 @@ sub run_rfamclassify {
         $clusterset_root->add_child($clusterset_leaf);
 
         my $cluster = new Bio::EnsEMBL::Compara::GeneTree;
-        $cluster->tree_type('nctree');
+        $cluster->tree_type('ncrnatree');
         $cluster->method_link_species_set_id($mlss_id);
 
         my $cluster_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
