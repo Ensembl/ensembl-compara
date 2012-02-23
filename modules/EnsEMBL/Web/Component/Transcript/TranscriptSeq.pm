@@ -44,7 +44,7 @@ sub get_sequence_data {
   my @markup;
 
   my @reference_seq = map {{ letter => $_ }} split //, $seq;
-  my $variation_seq = { name => 'variation',   seq => [] };
+  my $variation_seq = { name => 'snp_display', seq => [] };
   my $coding_seq    = { name => 'coding_seq',  seq => [] };
   my $protein_seq   = { name => 'translation', seq => [] };
   my @rna_seq; 
@@ -199,7 +199,7 @@ sub get_sequence_data {
   
   for ($variation_seq, $coding_seq, $protein_seq, @rna_seq) {
     if ($config->{$_->{'name'}}) {
-      if ($_->{'name'} eq 'variation') {
+      if ($_->{'name'} eq 'snp_display') {
         unshift @sequence, $_->{'seq'};
         unshift @markup, {};
         unshift @{$config->{'numbering'}}, 0;
