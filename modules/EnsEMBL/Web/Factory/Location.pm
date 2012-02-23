@@ -750,7 +750,7 @@ sub _create_from_slice {
       $self->problem('fatal', 'Cannot map slice', 'must all be in gaps'); 
     }
   } else {
-    $self->problem('fatal', 'Ensembl Error', "Cannot create slice - $type $id does not exist")
+    $self->problem('fatal', 'Ensembl Error', "Cannot create slice - $type $id does not exist");
   }
   
   return $location;
@@ -758,6 +758,14 @@ sub _create_from_slice {
 
 sub new_location {
   my ($self, $slice) = @_;
+  
+  if ($slice->start > $slice->end && !$slice->is_circular) {
+    $self->problem('fatal', 'Invalid location',
+      sprintf 'The start position of the location you have entered <strong>(%s:%s-%s)</strong> is greater than the end position.', $slice->seq_region_name, $self->thousandify($slice->start), $self->thousandify($slice->end)
+    );
+    
+    return undef;
+  }
   
   my $location = $self->new_object('Location', {
     type               => 'Location',
