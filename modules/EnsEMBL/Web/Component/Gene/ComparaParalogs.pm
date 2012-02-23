@@ -78,7 +78,8 @@ sub content {
           action => 'Multi',
           g1     => $stable_id,
           s1     => $spp,
-          r      => undef
+          r      => undef,
+          config => 'opt_join_genes_bottom=on',
         })
       );
       
