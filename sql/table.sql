@@ -1137,25 +1137,6 @@ values
 # ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 #
-# Table structure for CAFE_tree
-#
-# CAFE_tree stores information about the final species tree
-# (global information for the tree).
-#
-
-CREATE TABLE CAFE_tree (
-       root_id                    int(10) unsigned NOT NULL AUTO_INCREMENT,
-       method_link_species_set_id int(10) unsigned NOT NULL,
-       species_tree               mediumtext NOT NULL,
-       lambdas                    varchar(100),
-       p_value_lim                double(5,4),
-
-       FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
-       PRIMARY KEY (root_id)
-
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
-#
 # Table CAFE_tree_node
 #
 # CAFE_tree_node stores per-node information of the CAFE_tree
@@ -1169,12 +1150,32 @@ CREATE TABLE CAFE_tree_node (
        right_index         int(10) NOT NULL,
        distance_to_parent  double default 1.0,
 
-       FOREIGN KEY (root_id) REFERENCES CAFE_tree(root_id),
        PRIMARY KEY (node_id),
        KEY (parent_id),
        KEY (root_id, left_index),
        KEY (root_id, right_index)
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+#
+# Table structure for CAFE_tree
+#
+# CAFE_tree stores information about the final species tree
+# (global information for the tree).
+#
+
+CREATE TABLE CAFE_tree (
+       root_id                    int(10) unsigned NOT NULL AUTO_INCREMENT,
+       method_link_species_set_id int(10) unsigned NOT NULL,
+       species_tree               mediumtext NOT NULL,
+       lambdas                    varchar(100),
+       p_value_lim                double(5,4),
+
+       FOREIGN KEY (root_id) REFERENCES CAFE_tree_node(root_id),
+       FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+       PRIMARY KEY (root_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
 
 #
 # Table structure for table CAFE_tree_attr
