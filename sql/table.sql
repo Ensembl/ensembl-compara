@@ -764,7 +764,8 @@ CREATE TABLE gene_tree_root (
     FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
     PRIMARY KEY (root_id ),
-    UNIQUE KEY ( stable_id )
+    UNIQUE KEY ( stable_id ),
+    KEY (tree_type)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
