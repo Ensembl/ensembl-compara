@@ -60,7 +60,7 @@ sub make_table {
     { key => 'ID',       sort => 'html'                                                    },
     { key => 'chr' ,     sort => 'position',  title => 'Chr: bp'                           },
     { key => 'Alleles',  sort => 'string',                               align => 'center' },
-    { key => 'HGVS',     sort => 'string',    title => 'HGVS name(s)',   align => 'center' },
+    { key => 'HGVS',     sort => 'string',    title => 'HGVS name(s)',   align => 'center', export_options => { 'split_newline' => 2 } },
     { key => 'class',    sort => 'string',    title => 'Class',          align => 'center' },
     { key => 'Source',   sort => 'string'                                                  },
     { key => 'status',   sort => 'string',    title => 'Validation',     align => 'center' },

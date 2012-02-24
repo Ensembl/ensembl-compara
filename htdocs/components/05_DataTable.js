@@ -168,6 +168,8 @@ Ensembl.DataTable = {
         $.each(val, function () {
           options.aoColumns[this].bVisible = false;
         });
+      } else if ( this.name.indexOf("expopts") == 0) {
+        // no-op, this isn't an option for the client side
       } else if (typeof options[this.name] === 'object') {
         $.extend(true, options[this.name], val);
       } else {

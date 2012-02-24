@@ -125,19 +125,36 @@ sub table_export {
   my $r     = $hub->apache_handle;
   my $data  = from_json($hub->param('data'));
   my $clean = sub {
-    my $str = shift;
-       $str =~ s/<br.*?>/ /g;
-       $str = $self->strip_HTML(decode_entities($str));
-       $str =~ s/"/""/g; 
-       $str =~ s/^\s+//;
-       $str =~ s/\s+$//g; 
+    my ($str,$opts) = @_;
+    # split multiline columns
+    for (2..$opts->{'split_newline'}) {
+      unless($str =~ s/<br.*?>/\0/) {
+        $str =~ s/$/\0/;
+      }
+    }
+    #
+    $str =~ s/<br.*?>/ /g;
+    $str = $self->strip_HTML(decode_entities($str));
+    $str =~ s/"/""/g; 
+    $str =~ s/^\s+//;
+    $str =~ s/\s+$//g;
+    $str =~ s/\0/","/g;
     return $str;
   };
   
   $r->content_type('application/octet-string');
   $r->headers_out->add('Content-Disposition' => sprintf 'attachment; filename=%s.csv', $hub->param('filename'));
-  
-  print join '', sprintf qq{"%s"\n}, join '","', map { &$clean($_) } @$_ for @$data;
+
+  my $options = from_json($hub->param('expopts')) || (); 
+  foreach my $row (@$data) {
+    my @row_out;
+    my @row_opts = @$options;
+    foreach my $col (@$row) {
+      my $opt = shift @row_opts;
+      push @row_out,sprintf('"%s"',$clean->($col,$opt || {}));
+    }
+    print join(',',@row_out)."\n";
+  }
 }
 
 1;

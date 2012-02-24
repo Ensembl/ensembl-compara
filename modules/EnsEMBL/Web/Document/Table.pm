@@ -4,7 +4,7 @@ package EnsEMBL::Web::Document::Table;
 
 use strict;
 
-use JSON qw(from_json);
+use JSON qw(from_json to_json);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -35,6 +35,19 @@ sub filename   :lvalue { $_[0]{'filename'};   }
 
 sub has_rows { return !!@{$_[0]{'rows'}}; }
 
+sub export_options {
+  my $self = shift;
+
+  my @options;
+  my $index = -1;
+  foreach my $column (@{$self->{'columns'}}) {
+    $index++;
+    next unless defined $column->{'export_options'};
+    $options[$index] = $column->{'export_options'};
+  }
+  return to_json(\@options);
+}
+
 sub render {
   my $self = shift;
   
@@ -50,7 +63,7 @@ sub render {
   my $padding     = $options->{'cellpadding'} || 0;
   my $spacing     = $options->{'cellspacing'} || 0;
   my $align       = $options->{'align'}       || 'autocenter';
-  my $table_id    = $options->{'id'} ? qq{ id="$options->{'id'}"} : '';
+  my $table_id    = $options->{'id'} ? qq{ id="$options->{'id'}" } : '';
   my $data_table  = $options->{'data_table'};
   my $toggleable  = $options->{'toggleable'};
   my %table_class = map { $_ => 1 } split ' ', $options->{'class'};
@@ -111,10 +124,12 @@ sub render {
        $id       =~ s/[\W_]table//g;
     my $filename = join '-', grep $_, $id, $self->filename;
     
+    my $options =  sprintf(qq{<input type="hidden" name='expopts' value='%s' />},$self->export_options);
     $table .= qq{
       <form class="data_table_export" action="/Ajax/table_export" method="post">
         <input type="hidden" name="filename" value="$filename" />
         <input type="hidden" class="data" name="data" value="" />
+        $options
       </form>
     };
   }
@@ -215,6 +230,8 @@ sub data_table_config {
     $config .= qq{<input type="hidden" name="$_" value="$val" />};
   }
   
+  $config .= sprintf(qq{<input type="hidden" name='expopts' value='%s' />},$self->export_options);
+ 
   return qq{<form class="data_table_config" action="#">$config</form>};
 }
 
