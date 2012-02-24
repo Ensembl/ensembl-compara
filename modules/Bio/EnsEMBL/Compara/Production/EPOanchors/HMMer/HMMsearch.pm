@@ -24,8 +24,8 @@ sub run {
 	my $self_gab_adaptor = $self_dba->get_adaptor("GenomicAlignBlock");
 	my @hits = ();
 	my $gab = $self_gab_adaptor->fetch_by_dbID($gab_id);
-	my $stk_file = "/tmp/sf5_$gab_id.stk";
-	my $hmm_file = "/tmp/sf5_$gab_id.hmm";
+	my $stk_file = "/tmp/" . $ENV{USER} . "_$gab_id.stk";
+	my $hmm_file = "/tmp/" . $ENV{USER} . "_$gab_id.hmm";
 
 	$self_dba->dbc->disconnect_when_inactive(1); 
 
@@ -78,6 +78,9 @@ sub run {
 	my $hmm_build_command = $self->param('hmmbuild') . " $hmm_file $stk_file";  
 	print $hmm_build_command, " **\n";
 	system($hmm_build_command);
+
+	unlink($stk_file);
+	
 	return unless(-e $hmm_file); # The sequences in the alignment are probably too short
 	my $hmm_len = `egrep "^LENG  " $hmm_file`;
 	chomp($hmm_len);
@@ -113,7 +116,7 @@ sub run {
 	}	
 	unlink("$stk_file");
 	$self->param('mapping_hits', \@anchor_align_records) if scalar( @anchor_align_records );
-	unlink("$hmm_file");
+	unlink($hmm_file);
 }
 
 sub write_output{
