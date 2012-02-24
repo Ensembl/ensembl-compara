@@ -175,7 +175,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
   deleteRecord: function (tr, configId) {
     tr.parents('table').dataTable().fnDeleteRow(tr[0]);
     
-    Ensembl.EventManager.trigger('updateConfig', { deleted: [ configId ] });
+    Ensembl.EventManager.trigger('updateSavedConfig', { deleted: [ configId ] });
     
     tr = null;
   },
