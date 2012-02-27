@@ -218,6 +218,8 @@ Ensembl.LayoutManager.extend({
       var attr   = this.title ? 'title' : 'innerHTML';
       this[attr] = this[attr].replace(/^(Location: ).+/, '$1' + text.replace(/: /, ':'));
     });
+    
+    document.title = document.title.replace(/(Chromosome ).+/, '$1' + text);
   },
   
   toggleContent: function (rel) {
