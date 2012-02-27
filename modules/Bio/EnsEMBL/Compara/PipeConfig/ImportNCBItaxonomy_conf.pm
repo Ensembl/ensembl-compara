@@ -44,8 +44,8 @@ sub default_options {
 
         'pipeline_name' => 'ncbi_taxonomy',            # name used by the beekeeper to prefix job names on the farm
 
-        'name_prefix'   => 'lg4_',                      # use a non-empty value if you want to test the pipeline
-        'name_suffix'   => '_66a',                      # use a non-empty value if you want to test the pipeline
+        'name_prefix'   => $self->o('ENV', 'USER'),    # use a non-empty value if you want to test the pipeline
+        'name_suffix'   => '_66a',                     # use a non-empty value if you want to test the pipeline
 
         'pipeline_db' => {
 #            -host   => 'ens-livemirror',
