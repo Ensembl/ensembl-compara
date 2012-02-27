@@ -43,14 +43,17 @@ sub default_options {
          %{$self->SUPER::default_options},
 
         'pipeline_name' => 'ncbi_taxonomy',            # name used by the beekeeper to prefix job names on the farm
-        'name_suffix'   => '',                         # use a non-empty value if you want to test the pipeline
+
+        'name_prefix'   => 'lg4_',                      # use a non-empty value if you want to test the pipeline
+        'name_suffix'   => '_66a',                      # use a non-empty value if you want to test the pipeline
 
         'pipeline_db' => {
-            -host   => 'ens-livemirror',
+#            -host   => 'ens-livemirror',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => $self->o('pipeline_name').$self->o('name_suffix'),
+            -dbname => $self->o('name_prefix').$self->o('pipeline_name').$self->o('name_suffix'),
         },
 
         'taxdump_loc'   => 'ftp://ftp.ncbi.nih.gov/pub/taxonomy',   # the original location of the dump
@@ -171,7 +174,7 @@ sub pipeline_analyses {
                 1 => [ 'zero_parent_id' ],
                 2 => [ ':////ncbi_taxa_node' ],
             },
-            -rc_id => 1,
+            -rc_id => 2,
         },
 
         {   -logic_name    => 'zero_parent_id',
@@ -210,7 +213,7 @@ sub pipeline_analyses {
                 1 => [ 'load_merged_names' ],
                 2 => [ ':////ncbi_taxa_name' ],
             },
-            -rc_id => 1,
+            -rc_id => 2,
         },
 
         {   -logic_name => 'load_merged_names',
