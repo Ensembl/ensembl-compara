@@ -43,6 +43,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::Utils 'stringify';
 
 my $verbose = 0;
 
@@ -98,6 +99,7 @@ sub run {
     } else {
 	$self->parse_defaults();
     }
+
 }
 
 sub write_output {
@@ -134,6 +136,32 @@ sub write_output {
 	my $ref_genome_db = $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'genome_db'};
 	my $non_ref_genome_db = $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'genome_db'};
 	
+	#If include_non_reference is in auto-detect mode (-1), need to auto-detect!
+	#Auto-detect if need to use patches ie only use patches if the non-reference species has chromosomes
+	#(because these are the only analyses that we keep up-to-date by running the patch-pipeline)
+	if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} == -1) {
+	    if (defined $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'}) {
+		my ($coord_system_name, $name) = split ":", $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'};
+		if ($coord_system_name eq 'chromosome') {
+		    $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} = 1;
+		} else {
+		    $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} = 0;
+		}
+
+	    } else {
+		my $dnafrags = $self->compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB_region($non_ref_genome_db, 'chromosome');
+		print "num chr dnafrags for " .$non_ref_genome_db->name . " is " . @$dnafrags . "\n";
+		if (@$dnafrags == 0) {
+		    $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} = 0;
+		} else {
+		    $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} = 1;
+		}
+	    }
+	}
+	
+	print "include_non_reference " . $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} . "\n";
+	
+	
 	my $mlss = write_mlss_entry($self->compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db);
 	$pair_aligner->{'mlss_id'} = $mlss->dbID;
 
@@ -144,11 +172,10 @@ sub write_output {
 	$self->write_masking_options($dna_collections->{$pair_aligner->{'reference_collection_name'}}, $mlss, $pair_aligner->{'reference_masking_tag_name'});
 	$self->write_masking_options($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}, $mlss, $pair_aligner->{'non_reference_masking_tag_name'});
 
-
+	#Write options and chunks entries to method_link_species_set_tag table
+	#Write parameters and dna_collection with raw mlss_id for use in downstream analyses
+	$self->write_parameters_to_mlss_tag($mlss);
     }
-
-    #Write options and chunks entries to meta table
-    $self->write_parameters_to_meta();
 
     #Create dataflows for pair_aligner parts of the pipeline
     $self->create_pair_aligner_dataflows();
@@ -170,6 +197,9 @@ sub write_output {
 	
 	my $mlss = write_mlss_entry($self->compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db);
 	$net_config->{'mlss_id'} = $mlss->dbID;
+	#Write parameters and dna_collection with final mlss_id for use in release database
+	$self->write_parameters_to_mlss_tag($mlss);
+
     }
 
     #Write dataflows for chaining and netting parts of the pipeline
@@ -624,30 +654,59 @@ sub write_mlss_entry {
 }
 
 #
-#Write options and chunk parameters to meta table
+#Write options and chunk parameters to method_link_species_set_tag table
 #
-sub write_parameters_to_meta {
-    my ($self) = @_;
+#sub write_parameters_to_meta {
+sub write_parameters_to_mlss_tag {
+    my ($self, $mlss) = @_;
 
     my $pair_aligners = $self->param('pair_aligners');
     my $dna_collections = $self->param('dna_collections');
 
     foreach my $pair_aligner (@$pair_aligners) {
 	
-	#Write pair aligner options to meta table for use with PairAligner jobs (eg lastz)
-	my $key = "options_" . $pair_aligner->{'mlss_id'};
-	my $meta_container = $self->compara_dba->get_MetaContainer;
-	$meta_container->store_key_value($key, $pair_aligner->{'analysis_template'}->{'parameters'}{'options'});
-	
-	#Write chunk options to meta table for use with FilterDuplicates
+	#Write pair aligner options to mlss_tag table for use with PairAligner jobs (eg lastz)
+	$mlss->store_tag("param", $pair_aligner->{'analysis_template'}->{'parameters'}{'options'});
+
+	#Write chunk options to mlss_tag table for use with FilterDuplicates
 	my $ref_dna_collection = $dna_collections->{$pair_aligner->{'reference_collection_name'}};
 	my $non_ref_dna_collection = $dna_collections->{$pair_aligner->{'non_reference_collection_name'}};
 
-	my $chunk_data = "{'ref'=>{'chunk_size'=>'" . $ref_dna_collection->{'chunk_size'} . "','overlap'=>'". $ref_dna_collection->{'overlap'} . "'},'non_ref'=>{'chunk_size'=>'" . $non_ref_dna_collection->{'chunk_size'} . "', 'overlap'=>'". $non_ref_dna_collection->{'overlap'} . "'}}";
+	#Write dna_collection hash
+	my $ref_collection;
+	foreach my $key (keys %$ref_dna_collection) {
+	    if (defined $ref_dna_collection->{$key} && $key ne "genome_db") {
+		#Convert masking_options_file to $ENSEMBL_CVS_ROOT_DIR if defined
+		if ($key eq "masking_options_file") {
+		    my $ensembl_cvs_root_dir = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
+		    if ($ENV{'ENSEMBL_CVS_ROOT_DIR'} && $ref_dna_collection->{$key} =~ /^$ensembl_cvs_root_dir(.*)/) {
+			$ref_collection->{$key} = "\$ENSEMBL_CVS_ROOT_DIR$1";
+		    }
+		} else {
+		    $ref_collection->{$key} =  $ref_dna_collection->{$key};
+		}
+	    }
+	}
+	my $non_ref_collection;
 
-	$key = "chunk_" . $pair_aligner->{'mlss_id'};
-	$meta_container->store_key_value($key, $chunk_data);
+	foreach my $key (keys %$non_ref_dna_collection) {
+	    if (defined $non_ref_dna_collection->{$key} && $key ne "genome_db") {
+		#Convert masking_options_file to $ENSEMBL_CVS_ROOT_DIR if defined
+		if ($key eq "masking_options_file") {
+		    my $ensembl_cvs_root_dir = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
+		    if ($ENV{'ENSEMBL_CVS_ROOT_DIR'} && $non_ref_dna_collection->{$key} =~ /^$ensembl_cvs_root_dir(.*)/) {
+			$non_ref_collection->{$key} = "\$ENSEMBL_CVS_ROOT_DIR$1";
+		    }
+		} else {
+		    $non_ref_collection->{$key} =  $non_ref_dna_collection->{$key};
+		}
+	    }
+	}
+
+	$mlss->store_tag("ref_dna_collection", stringify($ref_collection));
+	$mlss->store_tag("non_ref_dna_collection", stringify($non_ref_collection));
     }
+
 }
 
 #
@@ -713,12 +772,14 @@ sub create_pair_aligner_dataflows {
 	my $ref_output_hash = {};
 	%$ref_output_hash = ('method_link_species_set_id'=>$mlss_id,
 			     'collection_name'=> $pair_aligner->{'reference_collection_name'},
-			     'reference_species' => 1);
+			     'chunk_size' => $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'chunk_size'},
+			     'overlap' => $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'overlap'});
 
 	my $non_ref_output_hash = {};
 	%$non_ref_output_hash = ('method_link_species_set_id'=>$mlss_id,
 				 'collection_name'=>$pair_aligner->{'non_reference_collection_name'},
-				 'reference_species' => 0);
+				 'chunk_size' => $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'chunk_size'},
+				 'overlap' => $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'overlap'});
 
 	$self->dataflow_output_id($ref_output_hash,3);
 	$self->dataflow_output_id($non_ref_output_hash,3);
@@ -848,6 +909,18 @@ sub create_net_dataflows {
     foreach my $net_config (@$net_configs) {
 
 	my $ref_species = $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->name;
+	my $non_ref_species = $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->name;
+
+	#
+	#Write ref_species and non_ref_species to method_link_species_set_tag table
+	#
+	my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+	my $mlss = $mlss_adaptor->fetch_by_dbID($net_config->{'mlss_id'});
+
+	$mlss->store_tag("reference_species", $ref_species);
+	$mlss->store_tag("non_reference_species", $non_ref_species);
+
+
 	my ($input_method_link_id, $input_method_link_type) = @{$net_config->{'input_method_link'}};
 	my $chain_config = find_config($all_configs, $dna_collections, $input_method_link_type, $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->name, $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->name);
 
@@ -877,26 +950,11 @@ sub create_net_dataflows {
 			      'mlss_id' => $net_config->{'mlss_id'});
 	$self->dataflow_output_id($healthcheck_hash, 8);
 	
-
 	#Dataflow to pairaligner_config
 	my $pairaligner_hash = {};
-	my $ref_dna_collection;
-	my $non_ref_dna_collection;
-	while (my ($key, $value) = each %{$dna_collections->{$pairaligner_config->{'reference_collection_name'}}}) {
-	    if (defined $value && (not ref($value))) {
-		$ref_dna_collection->{$key} = $value;
-	    }
-	}
-	while (my ($key, $value) = each %{$dna_collections->{$pairaligner_config->{'non_reference_collection_name'}}}) {
-	    if (defined $value && (not ref($value))) {
-		$non_ref_dna_collection->{$key} = $value;
-	    }
-	}
-	%$pairaligner_hash = ('ref_species' => $ref_species,
-			       'mlss_id' => $net_config->{'mlss_id'},
-			       'ref_dna_collection' => $ref_dna_collection,
-			       'non_ref_dna_collection' => $non_ref_dna_collection,
-			       'pair_aligner_options' => $pairaligner_config->{'analysis_template'}{'parameters'}{'options'});
+	%$pairaligner_hash = ('mlss_id' => $net_config->{'mlss_id'},
+			      'raw_mlss_id' => $pairaligner_config->{'mlss_id'});
+
 	$self->dataflow_output_id($pairaligner_hash,7);
     }
 }
