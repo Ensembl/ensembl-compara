@@ -195,6 +195,7 @@ sub pipeline_analyses {
                 'cmd'       => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/taxonomy/taxonTreeTool.pl -url '.$self->dbconn_2_url('pipeline_db').' -index',
             },
             -hive_capacity  => 10,  # to allow parallel branches
+            -wait_for => ['load_names'],
             -rc_id => 2,
         },
 
