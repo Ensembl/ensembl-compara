@@ -196,7 +196,7 @@ sub pipeline_analyses {
             },
             -hive_capacity  => 10,  # to allow parallel branches
             -wait_for => ['load_names'],
-            -rc_id => 2,
+            -rc_id => 1,
         },
 
 
