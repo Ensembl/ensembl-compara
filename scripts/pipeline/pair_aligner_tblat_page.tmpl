@@ -11,7 +11,7 @@
 <h2><TMPL_VAR NAME=REF_NAME> vs <TMPL_VAR NAME=NON_REF_NAME> <TMPL_VAR NAME=METHOD_TYPE> alignments</h2>
 
 <p><TMPL_VAR NAME=REF_NAME> (<i><TMPL_VAR NAME=REF_SPECIES></i>, <TMPL_VAR NAME=REF_ASSEMBLY>) and <TMPL_VAR NAME=NON_REF_NAME> (<i><TMPL_VAR NAME=NON_REF_SPECIES></i>, <TMPL_VAR NAME=NON_REF_ASSEMBLY>) were aligned using the <TMPL_VAR NAME=METHOD_TYPE> alignment algorithm (<TMPL_VAR NAME=REFERENCE>)
-in Ensembl release <TMPL_VAR NAME=ENSEMBL_RELEASE>. <TMPL_VAR NAME=REF_NAME>  was used as the reference species. After running <TMPL_VAR NAME=METHOD_TYPE> , the raw <TMPL_VAR NAME=METHOD_TYPE>  alignment blocks are chained according to their location in both genomes. During the final netting process, the best sub-chain is chosen in each region on the reference species.</p>
+in Ensembl release <TMPL_VAR NAME=ENSEMBL_RELEASE>. <TMPL_VAR NAME=REF_NAME>  was used as the reference species. After running <TMPL_VAR NAME=METHOD_TYPE>, the raw <TMPL_VAR NAME=METHOD_TYPE>  alignment blocks are chained according to their location in both genomes. During the final netting process, the best sub-chain is chosen in each region on the reference species.</p>
 
 <a href="/info/docs/compara/analyses.html" class="cp-external">Full list of 
 pairwise alignments</a>
@@ -43,6 +43,52 @@ pairwise alignments</a>
 </tr>
 </table>
 
+<h3 class="boxed">Chunking parameters</h3>
+<table style="text-align: left; width: 100%;" border="0" cellpadding="2"
+cellspacing="2">
+<tbody>
+<tr>
+<td style="vertical-align: top;">
+</td>
+<th style="vertical-align: top;"><TMPL_VAR NAME=REF_NAME>
+</th>
+<th style="vertical-align: top;"><TMPL_VAR NAME=NON_REF_NAME>
+</th>
+</tr>
+<tr>
+<th style="vertical-align: middle;">Chunk size
+</th>
+<td style="vertical-align: top;"><TMPL_VAR REF_CHUNK_SIZE>
+</td>
+<td style="vertical-align: top;"><TMPL_VAR NON_REF_CHUNK_SIZE>
+</td>
+</tr>
+<tr>
+<th style="vertical-align: middle;">Overlap
+</th>
+<td style="vertical-align: top;"><TMPL_VAR REF_OVERLAP>
+</td>
+<td style="vertical-align: top;"><TMPL_VAR NON_REF_OVERLAP>
+</td>
+</tr>
+<tr>
+<th style="vertical-align: middle;">Group set size
+</th>
+<td style="vertical-align: top;"><TMPL_VAR REF_GROUP_SET_SIZE>
+</td>
+<td style="vertical-align: top;"><TMPL_VAR NON_REF_GROUP_SET_SIZE>
+</td>
+</tr>
+<tr>
+<th style="vertical-align: middle;">Masking options
+</th>
+<td style="vertical-align: top;"><TMPL_VAR REF_MASKING>
+</td>
+<td style="vertical-align: top;"><TMPL_VAR NON_REF_MASKING>
+</td>
+</tr>
+</tbody>
+</table>
 
 <h3>Results</h3>
 
