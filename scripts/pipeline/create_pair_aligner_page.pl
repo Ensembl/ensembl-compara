@@ -169,7 +169,7 @@ if (defined $ucsc_url) {
     $pair_aligner_config->{method_link_type} eq "LASTZ_NET") {
 
     #Check if have results
-    if (defined $blastz_parameters->{O} && defined $blastz_parameters->{E}) {
+    if (keys %$blastz_parameters) {
 	#Open blastz/lastz template
 	$template = HTML::Template->new(filename => $blastz_template);
     } else {
@@ -178,7 +178,7 @@ if (defined $ucsc_url) {
     }
 } elsif ($pair_aligner_config->{method_link_type} eq "TRANSLATED_BLAT_NET") {
     #Check if have results
-    if (defined $tblat_parameters->{minScore} && defined $tblat_parameters->{t} && defined $tblat_parameters->{q}) {
+    if (%$tblat_parameters) {
 	#Open blastz/lastz template
 	$template = HTML::Template->new(filename => $tblat_template);
     } else {
