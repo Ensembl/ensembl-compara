@@ -128,7 +128,8 @@ sub createFilterDuplicatesJobs
   my $analysis = $self->param('filter_duplicates_analysis');
   my $region = $self->param('region');
   my $mlss_id = $self->param('method_link_species_set_id');
-  my $reference_species = $self->param('reference_species');
+  my $chunk_size = $self->param('chunk_size');
+  my $overlap = $self->param('overlap');
 
   #Now that we allow more than one region, this causes too many complications here.
   #Remove this as not restricting the region shouldn't make any difference because the alignments will
@@ -149,7 +150,8 @@ sub createFilterDuplicatesJobs
     #$input_hash->{'seq_region_start'} = $seq_region_start if (defined $seq_region_start);
     #$input_hash->{'seq_region_end'} = $seq_region_end if (defined $seq_region_end);
     $input_hash->{'method_link_species_set_id'} = $mlss_id if (defined $mlss_id);
-    $input_hash->{'reference_species'} = $reference_species;
+    $input_hash->{'chunk_size'} = $chunk_size;
+    $input_hash->{'overlap'} = $overlap;
 
     $self->dataflow_output_id($input_hash,2);
     
