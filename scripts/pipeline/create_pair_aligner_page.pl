@@ -23,7 +23,6 @@ This script will output a html document for a pairwise alignment showing the con
 perl create_pair_aligner_page.pl
    --config_url pair aligner configuration database
    --mlss_id method_link_species_set_id
-   [--ensembl_release ensembl schema version]
    [image_dir /path/to/write/image]
 
 =head1 OPTIONS
@@ -50,10 +49,6 @@ Location of the configuration database
 
 Method link species set id of the pairwise alignment
 
-=item B<[--ensembl_release Ensembl version number]>
-
-Ensembl version. Can be used to distinguish between identical method_link_species_set_ids for different Ensembl version.
-
 =item B<[--image_location /path/to/write/image]
 
 Directory to write image files. Default current working directory
@@ -63,6 +58,7 @@ Directory to write image files. Default current working directory
 use warnings;
 use strict;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Getopt::Long;
 use DBI;
 use HTML::Template;
@@ -81,19 +77,19 @@ perl update_config_database.pl
    --mlss_id method_link_species_set_id
       Method link species set id of the pairwise alignment
 
-   [--ensembl_release Ensembl version number]
-
    [--image_location Directory to write image files. Default cwd]
 
 };
 
 my $help;
 my $mlss_id;
-my $config_url;
-my $ensembl_release;
+my $compara_url;
 my $ucsc_url;
+my $url;
 my $image_dir = "./"; #location to write image files
 my $R_prog = "/software/R-2.9.0/bin/R ";
+my $reg = "Bio::EnsEMBL::Registry";
+
 
 my $this_directory = dirname($0);
 
@@ -108,11 +104,29 @@ my $references = {
        LastZ => "<a href=\"http://www.bx.psu.edu/miller_lab/dist/README.lastz-1.02.00/README.lastz-1.02.00a.html\">LastZ</a>",
        "Translated Blat" => "<a href=\"http://www.genome.org/cgi/content/abstract/12/4/656\">Kent W, Genome Res., 2002;12(4):656-64</a>"};
 
+#Set default parameters. Other parameters will be listed under "Additional parameters"
+my $blastz_options;
+%$blastz_options = ('O' => "Gap open penalty (O)",
+		    'E' => "Gap extend penalty (E)",
+		    'K' => "HSP threshold (K)",
+		    'L' => "Threshold for gapped extension (L)",
+		    'H' => "Threshold for alignments between gapped alignment blocks (H)",
+		    'M' => "Masking count (M)",
+		    'T' => "Seed and Transition value (T)",
+		    'Q' => "Scoring matrix (Q)");
+
+#Current blastz_parameters (set defaults)
+my $blastz_parameters;
+%$blastz_parameters = ('O' => 400,
+		       'E' => 30,
+		       'K' => 3000,
+		       'T' => 1);
+
 GetOptions(
            "help" => \$help,
-	   "config_url=s" => \$config_url,
+	   "url=s" => \$url,
+	   "compara_url=s" => \$compara_url,
 	   "mlss|mlss_id|method_link_species_set_id=s" => \$mlss_id,
-	   "ensembl_release=s" => \$ensembl_release,
 	   "image_location=s" => \$image_dir,
 	   "ucsc_url=s" => \$ucsc_url,
   );
@@ -128,13 +142,26 @@ if ($image_dir !~ /\/$/) {
     $image_dir .= "/";
 }
 
+#load core database in order to get common name
+if ($url) {
+    $reg->load_registry_from_url($url);
+}
+
 #Fetch data from the configuration database
-my ($alignment_results, $ref_results, $non_ref_results, $pair_aligner_config, $blastz_parameters, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config) = fetch_input($config_url, $mlss_id, $ensembl_release);
+my ($alignment_results, $ref_results, $non_ref_results, $pair_aligner_config, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config);
+
+($alignment_results, $ref_results, $non_ref_results, $pair_aligner_config, $blastz_parameters, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config) = fetch_input($compara_url, $mlss_id);
 
 # open the correct html template
 my $template;
 
+#Check if downloaded from ucsc
+if ($pair_aligner_config->{download_url}) {
+    $ucsc_url = $pair_aligner_config->{download_url};
+}
+
 if (defined $ucsc_url) {
+    
     $template = HTML::Template->new(filename => $ucsc_template);
     my $ucsc_html = "<a href=\"" . $ucsc_url . "\">UCSC</a>";
     $template->param(UCSC_URL => $ucsc_html);
@@ -154,7 +181,6 @@ if (defined $ucsc_url) {
 	}
     }
 } elsif ($pair_aligner_config->{method_link_type} eq "TRANSLATED_BLAT_NET") {
-
     #Check if have results
     if (defined $tblat_parameters->{minScore} && defined $tblat_parameters->{t} && defined $tblat_parameters->{q}) {
 	#Open blastz/lastz template
@@ -195,8 +221,8 @@ unless (defined $ucsc_url) {
 #Set html template variables for configuration parameters
 if ($pair_aligner_config->{method_link_type} eq "BLASTZ_NET" || 
     $pair_aligner_config->{method_link_type} eq "LASTZ_NET") {
-    if (defined $blastz_parameters->{O} &&
-	defined $blastz_parameters->{E}) {
+
+    if (keys %$blastz_parameters) {
 	$template->param(BLASTZ_O => $blastz_parameters->{O});
 	$template->param(BLASTZ_E => $blastz_parameters->{E});
 	$template->param(BLASTZ_K => $blastz_parameters->{K});
@@ -205,24 +231,58 @@ if ($pair_aligner_config->{method_link_type} eq "BLASTZ_NET" ||
 	$template->param(BLASTZ_M => $blastz_parameters->{M});
 	$template->param(BLASTZ_T => $blastz_parameters->{T});
 
+	if ($blastz_parameters->{other}) {
+	    $template->param(BLASTZ_OTHER => $blastz_parameters->{other});
+	}
+	
 	if (defined $blastz_parameters->{Q} && $blastz_parameters->{Q} ne "" ) {
 	    my $matrix = create_matrix_table($blastz_parameters->{Q});
 	    $template->param(BLASTZ_Q => $matrix);
 	} else {
 	    $template->param(BLASTZ_Q => "Default");
 	}
+
+	$template->param(REF_CHUNK_SIZE => format_number($ref_dna_collection_config->{chunk_size}));
+	$template->param(REF_OVERLAP => format_number($ref_dna_collection_config->{overlap}));
+	$template->param(REF_GROUP_SET_SIZE => format_number($ref_dna_collection_config->{group_set_size}));
+	$template->param(NON_REF_CHUNK_SIZE => format_number($non_ref_dna_collection_config->{chunk_size}));
+	$template->param(NON_REF_OVERLAP => format_number($non_ref_dna_collection_config->{overlap}));
+	$template->param(NON_REF_GROUP_SET_SIZE => format_number($non_ref_dna_collection_config->{group_set_size}));
+	#Masking variables
+	$template->param(REF_MASKING => $ref_dna_collection_config->{masking_options}) if ($ref_dna_collection_config->{masking_options});
+	$template->param(REF_MASKING => $ref_dna_collection_config->{masking_options_file}) if ($ref_dna_collection_config->{masking_options_file});
+
+	$template->param(NON_REF_MASKING => $non_ref_dna_collection_config->{masking_options}) if ($non_ref_dna_collection_config->{masking_options});
+	$template->param(NON_REF_MASKING => $non_ref_dna_collection_config->{masking_options_file}) if ($non_ref_dna_collection_config->{masking_options_file});
+	
     }
 } elsif ($pair_aligner_config->{method_link_type} eq "TRANSLATED_BLAT_NET" &&
 	defined $tblat_parameters->{minScore} && 
 	defined $tblat_parameters->{t} && 
 	defined $tblat_parameters->{q}) {
     
+    #Need to be within check for parameters
     $template->param(TBLAT_MINSCORE => $tblat_parameters->{minScore});
     $template->param(TBLAT_T => $tblat_parameters->{t});
     $template->param(TBLAT_Q => $tblat_parameters->{q});
     $template->param(TBLAT_MASK => $tblat_parameters->{mask});
     $template->param(TBLAT_QMASK => $tblat_parameters->{qMask});
+
+    $template->param(REF_CHUNK_SIZE => format_number($ref_dna_collection_config->{chunk_size}));
+    $template->param(REF_OVERLAP => format_number($ref_dna_collection_config->{overlap}));
+    $template->param(REF_GROUP_SET_SIZE => format_number($ref_dna_collection_config->{group_set_size}));
+    $template->param(NON_REF_CHUNK_SIZE => format_number($non_ref_dna_collection_config->{chunk_size}));
+    $template->param(NON_REF_OVERLAP => format_number($non_ref_dna_collection_config->{overlap}));
+    $template->param(NON_REF_GROUP_SET_SIZE => format_number($non_ref_dna_collection_config->{group_set_size}));
+    #Masking variables
+    $template->param(REF_MASKING => $ref_dna_collection_config->{masking_options}) if ($ref_dna_collection_config->{masking_options});
+    $template->param(REF_MASKING => $ref_dna_collection_config->{masking_options_file}) if ($ref_dna_collection_config->{masking_options_file});
+    $template->param(NON_REF_MASKING => $non_ref_dna_collection_config->{masking_options}) if ($non_ref_dna_collection_config->{masking_options});
+    $template->param(NON_REF_MASKING => $non_ref_dna_collection_config->{masking_options_file}) if ($non_ref_dna_collection_config->{masking_options_file});
+    
 }
+
+#Chunk parameters
 
 #Set html template variables for results
 $template->param(NUM_BLOCKS => $alignment_results->{num_blocks});
@@ -265,189 +325,112 @@ $template->param(NON_REF_ALIGN_CODEXON_PIE => "$file_non_ref_cod_align_pie");
 print $template->output;
 
 #
-#Fetch information from the configuration database given a mlss_id and ensembl_release
+#Fetch information from the configuration database given a mlss_id
 #
 sub fetch_input {
-    my ($config_url, $mlss_id, $ensembl_release) = @_;
+    my ($compara_url, $mlss_id) = @_;
     unless (defined $mlss_id) {
 	throw("Unable to find statistics without corresponding mlss_id\n");
     }
 
-    unless (defined $config_url) {
-	throw("Must define config_url");
-    }
-    my $dbh = open_db_connection($config_url);
-    my $sql;
-
-    #Create query
-    if (defined $ensembl_release) {
-	$sql = "SELECT pair_aligner_id,num_blocks,ref_genome_db_id, non_ref_genome_db_id,ref_alignment_coverage,ref_alignment_exon_coverage,non_ref_alignment_coverage,non_ref_alignment_exon_coverage FROM pair_aligner_statistics LEFT JOIN pair_aligner_config USING (pair_aligner_id) WHERE pair_aligner_statistics.method_link_species_set_id = ? AND ensembl_release = $ensembl_release";
-    } else {
-	$sql = "SELECT pair_aligner_id,num_blocks,ref_genome_db_id, non_ref_genome_db_id,ref_alignment_coverage,ref_alignment_exon_coverage,non_ref_alignment_coverage,non_ref_alignment_exon_coverage FROM pair_aligner_statistics WHERE method_link_species_set_id = ?";
-
+    unless (defined $compara_url) {
+	throw("Must define compara_url");
     }
 
-    my $sth = $dbh->prepare($sql);
-    $sth->execute($mlss_id);
+    my $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$compara_url);
+    my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
+    my $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+    
+    my $num_blocks = $mlss->get_value_for_tag("num_blocks");
     
     my $results;
     my $ref_results;
     my $non_ref_results;
+    $results->{num_blocks} = $num_blocks;
+    
+    my $ref_species = $mlss->get_value_for_tag("reference_species");
+    my $non_ref_species = $mlss->get_value_for_tag("non_reference_species");
 
-    #Retrieve pair_aligner_stats
-    while (my $row = $sth->fetchrow_arrayref()) {
-	$results->{pair_aligner_id} = $row->[0];
-	$results->{num_blocks} = $row->[1];
-	$ref_results->{genome_db_id} = $row->[2];
-	$non_ref_results->{genome_db_id} = $row->[3];
-	$ref_results->{alignment_coverage} = $row->[4];
-	$ref_results->{alignment_exon_coverage} = $row->[5];
-	$non_ref_results->{alignment_coverage} = $row->[6];
-	$non_ref_results->{alignment_exon_coverage} = $row->[7];
-    }
-    
-    #Retrieve genome_statistics
-    $sql = "SELECT name, assembly, length, coding_exon_length FROM genome_statistics WHERE genome_db_id = ?";
-    $sth = $dbh->prepare($sql);
-    $sth->execute($ref_results->{genome_db_id});
-    
-    while (my $row = $sth->fetchrow_arrayref()) {
-	$ref_results->{name} = $row->[0];
-	$ref_results->{assembly} = $row->[1];
-	$ref_results->{length} = $row->[2];
-	$ref_results->{coding_exon_length} = $row->[3];
-    }	
-    
-    $sth->execute($non_ref_results->{genome_db_id});
-    while (my $row = $sth->fetchrow_arrayref()) {
-	$non_ref_results->{name} = $row->[0];
-	$non_ref_results->{assembly} = $row->[1];
-	$non_ref_results->{length} = $row->[2];
-	$non_ref_results->{coding_exon_length} = $row->[3];
-    }
-    
-    #Retrieve pair_aligner_config
-    $sql = "SELECT method_link_type, reference_id, non_reference_id, ensembl_release, download_url FROM pair_aligner_config WHERE pair_aligner_id = ?";
-    $sth = $dbh->prepare($sql);
-    $sth->execute($results->{pair_aligner_id});
+    my $ref_genome_db = $genome_db_adaptor->fetch_by_name_assembly($ref_species);
+    $ref_results->{name} = $ref_genome_db->name;
+    $ref_results->{assembly} = $ref_genome_db->assembly;
 
-    my $pair_aligner_config;
-    while (my $row = $sth->fetchrow_arrayref()) {
-	$pair_aligner_config->{method_link_type} = $row->[0];
-	$pair_aligner_config->{reference_id} = $row->[1];
-	$pair_aligner_config->{non_reference_id} = $row->[2];
-	$pair_aligner_config->{ensembl_release} = $row->[3];
-	$pair_aligner_config->{download_url} = $row->[4];
+    $ref_results->{length} = $mlss->get_value_for_tag("ref_genome_length");
+    $ref_results->{coding_exon_length} = $mlss->get_value_for_tag("ref_coding_length");;
+    $ref_results->{alignment_coverage} = $mlss->get_value_for_tag("ref_genome_coverage");
+    $ref_results->{alignment_exon_coverage} = $mlss->get_value_for_tag("ref_coding_coverage");
+
+    my $non_ref_genome_db = $genome_db_adaptor->fetch_by_name_assembly($non_ref_species);
+    $non_ref_results->{name} = $non_ref_genome_db->name;
+    $non_ref_results->{assembly} = $non_ref_genome_db->assembly;
+
+    $non_ref_results->{length} = $mlss->get_value_for_tag("non_ref_genome_length");
+    $non_ref_results->{coding_exon_length} = $mlss->get_value_for_tag("non_ref_coding_length");;
+    $non_ref_results->{alignment_coverage} = $mlss->get_value_for_tag("non_ref_genome_coverage");
+    $non_ref_results->{alignment_exon_coverage} = $mlss->get_value_for_tag("non_ref_coding_coverage");
+
+    $pair_aligner_config->{method_link_type} = $mlss->method_link_type;
+
+    $pair_aligner_config->{ensembl_release} = $mlss->get_value_for_tag("ensembl_release");
+
+    if ($mlss->source eq "ucsc") {
+	$pair_aligner_config->{download_url} = $mlss->url;
     }
 
-    #Retrieve blastz_parameters
-    $sql = "SELECT T, L, H, K, O, E, M, Q FROM blastz_parameter WHERE pair_aligner_id = ?";
-    $sth = $dbh->prepare($sql);
-    $sth->execute($results->{pair_aligner_id});
-    my $blastz_parameters;
-    while (my $row = $sth->fetchrow_arrayref()) {
-	$blastz_parameters->{T} = $row->[0];
-	$blastz_parameters->{L} = $row->[1];
-	$blastz_parameters->{H} = $row->[2];
-	$blastz_parameters->{K} = $row->[3];
-	$blastz_parameters->{O} = $row->[4];
-	$blastz_parameters->{E} = $row->[5];
-	$blastz_parameters->{M} = $row->[6];
-	$blastz_parameters->{Q} = $row->[7];
+    my $pairwise_params = $mlss->get_value_for_tag("param");
+    if ($mlss->method_link_type eq "TRANSLATED_BLAT_NET") { 
+	unless (defined $pairwise_params) {
+	    $tblat_parameters = {};
+	}
+	my @params = split " ", $pairwise_params;
+	foreach my $param (@params) {
+	    my ($p, $v) = split "=", $param;
+	    $p =~ s/-//;
+	    $tblat_parameters->{$p} = $v; 
+	}
+    } else {
+	unless (defined $pairwise_params) {
+	    $blastz_parameters = {};
+	}
+
+	my @params = split " ", $pairwise_params;
+	foreach my $param (@params) {
+	    my ($p, $v) = split "=", $param;
+	    if ($blastz_options->{$p}) {
+		$blastz_parameters->{$p} = $v; 
+	    } else {
+		$blastz_parameters->{other} .= $param;
+	    }
+	}
     }
 
-    #Retrieve tblat_parameters
-    $sql = "SELECT minScore, t, q, mask, qMask FROM tblat_parameter WHERE pair_aligner_id = ?";
-    $sth = $dbh->prepare($sql);
-    $sth->execute($results->{pair_aligner_id});
-    my $tblat_parameters;
-    
-    #Check if have any parameters ie have a pair_aligner_id
-    while (my $row = $sth->fetchrow_arrayref()) {
-	$tblat_parameters->{minScore} = $row->[0];
-	$tblat_parameters->{t} = $row->[1];
-	$tblat_parameters->{q} = $row->[2];
-	$tblat_parameters->{mask} = $row->[3];
-	$tblat_parameters->{qMask} = $row->[4];
+    my $ref_common_name;
+    if ($url) {
+	$ref_common_name = $reg->get_adaptor($ref_species, "core", "MetaContainer")->list_value_by_key('species.ensembl_alias_name')->[0];
+#	$ref_common_name = $reg->get_adaptor($ref_species, "core", "MetaContainer")->get_common_name;
+    } else {
+	$ref_common_name = $ref_genome_db->db_adaptor->get_MetaContainer->list_value_by_key('species.ensembl_alias_name')->[0];
+#	$ref_common_name = $ref_genome_db->db_adaptor->get_MetaContainer->get_common_name;
     }
 
-    #Retrieve dna_collection
-    my $ref_dna_collection_config;
-    my $non_ref_dna_collection_config;
+    my $ref_dna_collection_config = eval $mlss->get_value_for_tag("ref_dna_collection");
+    my $non_ref_dna_collection_config = eval $mlss->get_value_for_tag("non_ref_dna_collection");
+    $ref_dna_collection_config->{name} = $ref_species;
+    $ref_dna_collection_config->{common_name} = $ref_common_name;
 
-    $sql = "SELECT name, common_name, chunk_size, group_set_size, overlap, masking_options FROM dna_collection WHERE dna_collection_id = ?";
-    $sth = $dbh->prepare($sql);
-    $sth->execute($pair_aligner_config->{reference_id});
-
-    while (my $row = $sth->fetchrow_arrayref()) {
-	$ref_dna_collection_config->{name} = $row->[0];
-	$ref_dna_collection_config->{common_name} = $row->[1];
-	$ref_dna_collection_config->{chunk_size} = $row->[2];
-	$ref_dna_collection_config->{group_set_size} = $row->[3];
-	$ref_dna_collection_config->{overlap} = $row->[4];
-	$ref_dna_collection_config->{masking_options} = $row->[5];
+    my $non_ref_common_name;
+    if ($url) {
+#	$non_ref_common_name = $reg->get_adaptor($non_ref_species, "core", "MetaContainer")->get_common_name;
+	$non_ref_common_name = $reg->get_adaptor($non_ref_species, "core", "MetaContainer")->list_value_by_key('species.ensembl_alias_name')->[0];
+    } else {
+	$non_ref_common_name = $non_ref_genome_db->db_adaptor->get_MetaContainer->list_value_by_key('species.ensembl_alias_name')->[0];
+	#$non_ref_common_name = $non_ref_genome_db->db_adaptor->get_MetaContainer->get_common_name;
     }
-    
-    $sth->execute($pair_aligner_config->{non_reference_id});
-    
-    while (my $row = $sth->fetchrow_arrayref()) {
-	$non_ref_dna_collection_config->{name} = $row->[0];
-	$non_ref_dna_collection_config->{common_name} = $row->[1];
-	$non_ref_dna_collection_config->{chunk_size} = $row->[1];
-	$non_ref_dna_collection_config->{group_set_size} = $row->[2];
-	$non_ref_dna_collection_config->{overlap} = $row->[3];
-	$non_ref_dna_collection_config->{masking_options} = $row->[4];
-    }
-    
-    $sth->finish;
-    
-    #Check the collection name and genome_statistics name are the same
-    if ($ref_dna_collection_config->{name} ne $ref_results->{name}) {
-	throw("dna_collection name " . $ref_dna_collection_config->{name} . " is not the same as the genome_statistics name " . $ref_results->{name} . "\n");
-    }
-
-    if ($non_ref_dna_collection_config->{name} ne $non_ref_results->{name}) {
-	throw("dna_collection name " . $non_ref_dna_collection_config->{name} . " is not the same as the genome_statistics name " . $non_ref_results->{name} . "\n");
-    }
-
-    close_db_connection($dbh);
+    $non_ref_dna_collection_config->{name} = $non_ref_species;
+    $non_ref_dna_collection_config->{common_name} = $non_ref_common_name;
 
     return ($results, $ref_results, $non_ref_results, $pair_aligner_config, $blastz_parameters, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config);
-}
 
-#
-#Create database handle from a valid url
-#
-sub open_db_connection {
-    my ($url) = @_;
-
-    my $dbh;
-    if ($url =~ /mysql\:\/\/([^\@]+\@)?([^\:\/]+)(\:\d+)?(\/.+)?/ ) {
-	my $user_pass = $1;
-	my $host      = $2;
-	my $port      = $3;
-	my $dbname    = $4;
-	
-	$user_pass =~ s/\@$//;
-	my ( $user, $pass ) = $user_pass =~ m/([^\:]+)(\:.+)?/;
-	    $pass    =~ s/^\:// if ($pass);
-	$port    =~ s/^\:// if ($port);
-	$dbname  =~ s/^\/// if ($dbname);
-	
-	$dbh = DBI->connect("DBI:mysql:$dbname;host=$host;port=$port", $user, $pass, { RaiseError => 1 });
-    } else {
-	throw("Invalid url $url\n");
-    }
-    return($dbh);
-}
-
-#
-#Close database connection
-#
-sub close_db_connection {
-    my ($dbh) = @_;
-
-    $dbh->disconnect;
 }
 
 #
