@@ -78,26 +78,6 @@ sub fetch_input {
       $self->param('window_size',1000000);  
   }
 
-  my $meta_container = $self->compara_dba->get_MetaContainer;
-
-  #Read chunk_size from meta table
-  unless (defined $self->param('chunk_size')) {
-      my $key = "chunk_" . $self->param('method_link_species_set_id');
-      my @option_list = $meta_container->list_value_by_key($key);
-      my $option = $option_list[0][0];
-      my $chunks = eval $option;
-      $self->param('chunks', $chunks);
-
-      if ($self->param('reference_species')) {
-	  $self->param('chunk_size', $chunks->{'ref'}{'chunk_size'});
-	  $self->param('overlap', $chunks->{'ref'}{'overlap'});
-      } else {
-	  $self->param('chunk_size', $chunks->{'non_ref'}{'chunk_size'});
-	  $self->param('overlap', $chunks->{'non_ref'}{'overlap'});
-      }
-
-  }
-
   throw("No dnafrag_id specified") unless defined($self->param('dnafrag_id'));
   throw("Window size (".$self->param('window_size').")must be > 0") if (!$self->param('window_size') or $self->param('window_size') <= 0);
   $self->print_params;
@@ -139,7 +119,8 @@ sub print_params {
   my $self = shift;
 
   print(" params:\n");
-  print("   method_link_species_set_id : ", $self->param('method_link_species_set_id'),"\n");
+  print("   method_link_species_set_id : ", $self->param('method_link_species_set_id'),"\t");
+  print "chunk_size ", $self->param('chunk_size'), " overlap ", $self->param('overlap'), "\n";
 }
 
 
@@ -245,7 +226,7 @@ sub filter_duplicates {
   printf("%d gabs to delete\n", scalar(keys(%{$self->param('delete_hash')})));
   printf("found %d equal GAB pairs\n", $self->param('identical_count'));
   printf("found %d overlapping GABs\n", $self->param('overlap_count'));
-  printf("%d GABs loadled\n", $self->param('gab_count'));
+  printf("%d GABs loaded\n", $self->param('gab_count'));
   printf("%d TRUNCATE gabs\n", $self->param('truncate_count'));
   printf("%d not TRUNCATE gabs\n", $self->param('not_truncate_count'));
 }
