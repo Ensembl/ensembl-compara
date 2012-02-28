@@ -174,11 +174,7 @@ if (defined $ucsc_url) {
 	$template = HTML::Template->new(filename => $blastz_template);
     } else {
 	$template = HTML::Template->new(filename => $no_config_template);
-	if (defined $pair_aligner_config->{download_url} && $pair_aligner_config->{download_url} ne "") {
-	    $template->param(CONFIG => "The alignments were downloaded from <a href=\"" . $pair_aligner_config->{download_url} ."\">UCSC.</a>");
-	} else {
-	    $template->param(CONFIG => "No configuration parameters are available");
-	}
+	$template->param(CONFIG => "No configuration parameters are available");
     }
 } elsif ($pair_aligner_config->{method_link_type} eq "TRANSLATED_BLAT_NET") {
     #Check if have results
@@ -187,6 +183,7 @@ if (defined $ucsc_url) {
 	$template = HTML::Template->new(filename => $tblat_template);
     } else {
 	$template = HTML::Template->new(filename => $no_config_template);
+	$template->param(CONFIG => "No configuration parameters are available");
     }
 } else {
     throw("Unsupported method_link_type " . $pair_aligner_config->{method_link_type} . "\n");
