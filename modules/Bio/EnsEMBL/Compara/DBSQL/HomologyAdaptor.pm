@@ -82,9 +82,9 @@ sub fetch_all_by_Member_paired_species {
     my $mlss;
     if ($gdb1->dbID == $gdb2->dbID) {
       next if ($ml eq 'ENSEMBL_ORTHOLOGUES');
-      $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1]);
+      $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1], "no_warning");
     } else {
-      $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1, $gdb2]);
+      $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1, $gdb2], "no_warning");
     }
     if (defined $mlss) {
       my $homologies = $self->fetch_all_by_Member_MethodLinkSpeciesSet($member, $mlss);
