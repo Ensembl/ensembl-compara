@@ -1294,20 +1294,11 @@ sub get_homologous_gene_ids {
   my $qy_member = $ma->fetch_by_source_stable_id(undef, $gene->stable_id);
   return unless defined $qy_member;
   
-  my $config = $self->{'config'};
-  my $ha     = $compara_db->get_HomologyAdaptor;
-  my $method = $species eq $config->{'species'} ? $config->get_parameter('homologue') : undef;
+  my $config  = $self->{'config'};
+  my $ha      = $compara_db->get_HomologyAdaptor;
+  my @methods = $species eq $config->{'species'} ? ($config->get_parameter('homologue')) :
+                  $config->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ENSEMBL_PARALOGUES'} ? qw(ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES) : qw(ENSEMBL_ORTHOLOGUES);
   my @homologues;
-
-  # Need to be explicit because some methods may be missing (eg from Vega)
-  my @methods;
-  if(defined $method) { 
-    @methods = @$method;
-  } else {
-    @methods = ('ENSEMBL_ORTHOLOGUES'); # always present
-    my $compara_config = $self->{'config'}->hub->species_defs->multi_hash->{'DATABASE_COMPARA'};
-    push @methods,"ENSEMBL_PARALOGUES" if exists $compara_config->{'ENSEMBL_PARALOGUES'}; 
-  }
 
   foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $species, \@methods)}) {
     my $colour_key = $join_types->{$homology->description};
@@ -1341,14 +1332,17 @@ sub get_homologous_peptide_ids_from_gene {
   my $qy_member = $ma->fetch_by_source_stable_id('ENSEMBLGENE', $gene->stable_id);
   return unless defined $qy_member;
   
-  my $ha = $compara_db->get_HomologyAdaptor;
+  my $config = $self->{'config'}; 
+  my $ha     = $compara_db->get_HomologyAdaptor;
+  my @methods = $species eq $config->{'species'} ? ($config->get_parameter('homologue')) :
+                  $config->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ENSEMBL_PARALOGUES'} ? qw(ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES) : qw(ENSEMBL_ORTHOLOGUES);
   my @homologues;
   my @homologue_genes;
   
   my $stable_id = undef;
   my $peptide_id = undef;
   
-  foreach my $homology (@{$ha->fetch_by_Member_paired_species($qy_member, $species)}) {
+  foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $species, \@methods)}) {
     my $colour_key = $join_types->{$homology->description};
     
     next if $colour_key eq 'hidden';
