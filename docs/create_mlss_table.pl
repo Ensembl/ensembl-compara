@@ -677,7 +677,9 @@ sub print_half_html_table {
           my $on_species = $_->name;
           $on_species =~ s/.*(\(.*\))/ $1/;
           $on_species = "" unless ($on_species =~ /^\s\(/);
-          "<font color=\"blue\"><a href=\"mlss/mlss_".$_->dbID.".html\">YES$on_species</a></font>";
+          ($method_link_type->[0] eq 'SYNTENY')
+              ? '<font color=blue>YES</font>'
+              : '<font color=blue><a href=mlss/mlss_'.$_->dbID.".html\">YES$on_species</a></font>";
         } @$these_method_link_species_sets;
       } else {
         @$these_method_link_species_sets = sort {$all_methods->{$a->method_link_type}->{order}
