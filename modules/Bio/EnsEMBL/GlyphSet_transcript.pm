@@ -1294,13 +1294,13 @@ sub get_homologous_gene_ids {
   my $qy_member = $ma->fetch_by_source_stable_id(undef, $gene->stable_id);
   return unless defined $qy_member;
   
-  my $config  = $self->{'config'};
-  my $ha      = $compara_db->get_HomologyAdaptor;
-  my @methods = $species eq $config->{'species'} ? ($config->get_parameter('homologue')) :
-                  $config->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ENSEMBL_PARALOGUES'} ? qw(ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES) : qw(ENSEMBL_ORTHOLOGUES);
+  my $config = $self->{'config'};
+  my $ha     = $compara_db->get_HomologyAdaptor;
+  my $method = $species eq $config->{'species'} ? $config->get_parameter('homologue') : undef;
   my @homologues;
-
-  foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $species, \@methods)}) {
+  
+  # $config->get_parameter('homologue') may be undef, so can't just do [ $config->get_parameter('homologue') ] because [ undef ] as an argument breaks fetch_all_by_Member_paired_species
+  foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $species, $method ? [ $method ] : undef)}) {
     my $colour_key = $join_types->{$homology->description};
     
     next if $colour_key eq 'hidden';
@@ -1332,17 +1332,16 @@ sub get_homologous_peptide_ids_from_gene {
   my $qy_member = $ma->fetch_by_source_stable_id('ENSEMBLGENE', $gene->stable_id);
   return unless defined $qy_member;
   
-  my $config = $self->{'config'}; 
-  my $ha     = $compara_db->get_HomologyAdaptor;
-  my @methods = $species eq $config->{'species'} ? ($config->get_parameter('homologue')) :
-                  $config->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ENSEMBL_PARALOGUES'} ? qw(ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES) : qw(ENSEMBL_ORTHOLOGUES);
+  my $config  = $self->{'config'}; 
+  my $ha      = $compara_db->get_HomologyAdaptor;
+  my $method = $species eq $config->{'species'} ? $config->get_parameter('homologue') : undef;
   my @homologues;
   my @homologue_genes;
   
   my $stable_id = undef;
   my $peptide_id = undef;
   
-  foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $species, \@methods)}) {
+  foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $species, $method ? [ $method ] : undef)}) {
     my $colour_key = $join_types->{$homology->description};
     
     next if $colour_key eq 'hidden';
