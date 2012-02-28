@@ -40,7 +40,7 @@ sub default_options {
 					       'group_set_size' => 100000000,
 					       'dump_dir' => $self->o('dump_dna_dir'),
 					       #human
-					       'include_non_reference' => 1,
+					       'include_non_reference' => 0, #Do not use non_reference regions (eg human assembly patches) since these will not be kept up-to-date
 					       'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec",
 					       #non-human
 					       #'masking_options' => '{default_soft_masking => 1}',
