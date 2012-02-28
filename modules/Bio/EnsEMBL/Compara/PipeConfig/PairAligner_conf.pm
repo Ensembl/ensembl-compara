@@ -52,7 +52,8 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-        'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
+        #'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
+        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, 
 
 	'release'               => '66',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
@@ -131,7 +132,10 @@ sub default_options {
          'default_chunks' => {#human example
 			     'reference'   => {'chunk_size' => 30000000,
 					       'overlap'    => 0,
-					       'include_non_reference' => 1,
+					       'include_non_reference' => -1, #1  => include non_reference regions (eg human assembly patches)
+					                                      #0  => do not include non_reference regions
+					                                      #-1 => auto-detect (only include non_reference regions if the non-reference species is high-coverage 
+					                                      #ie has chromosomes since these analyses are the only ones we keep up-to-date with the patches-pipeline)
 					       'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec"},
 			     #non human example
 #   			    'reference'     => {'chunk_size'      => 10000000,
@@ -146,6 +150,11 @@ sub default_options {
 	#Use transactions in pair_aligner and chaining/netting modules (eg LastZ.pm, PairAligner.pm, AlignmentProcessing.pm)
 	'do_transactions' => 1,
 
+        #
+	#Default filter_duplicates
+	#
+        'window_size' => 1000000,
+
 	#
 	#Default pair_aligner
 	#
@@ -155,7 +164,7 @@ sub default_options {
 	'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ',
 	'pair_aligner_options' => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', #hsap vs mammal
 	'pair_aligner_hive_capacity' => 100,
-	'pair_aligner_batch_size' => 10,
+	'pair_aligner_batch_size' => 3,
 	    
         #
         #Default chain
@@ -169,6 +178,11 @@ sub default_options {
   	'chain_parameters' => {'max_gap'=>'50','linear_gap'=> $self->o('linear_gap'), 'faToNib' => $self->o('faToNib_exe'), 'lavToAxt'=> $self->o('lavToAxt_exe'), 'axtChain'=>$self->o('axtChain_exe')}, 
   	'chain_batch_size' => 1,
   	'chain_hive_capacity' => 20,
+
+	#
+        #Default set_internal_ids
+        #
+	'skip_set_internal_ids' => 0,  #skip this module if set to 1
 
         #
         #Default net 
@@ -189,9 +203,8 @@ sub default_options {
         #
 	#Default pairaligner config
 	#
-	'skip_pairaligner_config' => 0, #skip this module if set to 1
+	'skip_pairaligner_stats' => 0, #skip this module if set to 1
 	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
-	'config_url' => '', #Location of pairwise config database. Must define on command line
 	'output_dir' => '/lustre/scratch103/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
     };
 }
@@ -220,8 +233,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 sub resource_classes {
     my ($self) = @_;
     return {
-        0 => { -desc => 'default, 8h',      'LSF' => '' },         
-	 #0 => { -desc => 'default',       'LSF' => '-R"select[mycompara1 <=800 && myens_staging1 <= 800 && myens_staging2 <=800 && myens_livemirror <=800] rusage[mycompara1=10:duration=3,myens_staging1=10:duration=3,myens_staging2=10:duration=3,myens_livemirror=10:duration=3]"' },
+	 0 => { -desc => 'default, 8h',      'LSF' => '-C0 -M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
 	 1 => { -desc => 'urgent',           'LSF' => '-q yesterday' },
          2 => { -desc => 'himem1',            'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
          3 => { -desc => 'himem2',            'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },
@@ -316,7 +328,7 @@ sub pipeline_analyses {
 			       4 => [ 'no_chunk_and_group_dna' ],
 			       5 => [ 'create_alignment_chains_jobs' ],
 			       6 => [ 'create_alignment_nets_jobs' ],
-			       7 => [ 'pairaligner_config' ],
+			       7 => [ 'pairaligner_stats' ],
 			       8 => [ 'healthcheck' ],
 			       9 => [ 'dump_dna' ],
 			      },
@@ -332,6 +344,15 @@ sub pipeline_analyses {
  	       },
  	    },
  	    {  -logic_name => 'store_sequence',
+ 	       -hive_capacity => 100,
+ 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
+ 	       -parameters => { },
+	       -flow_into => {
+ 	          -1 => [ 'store_sequence_again' ],
+ 	       },
+  	    },
+	    #If fail due to MEMLIMIT, probably due to memory leak, and rerunning with the default memory should be fine.
+ 	    {  -logic_name => 'store_sequence_again',
  	       -hive_capacity => 100,
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
  	       -parameters => { },
@@ -401,7 +422,9 @@ sub pipeline_analyses {
  	    },
  	     {  -logic_name   => 'filter_duplicates',
  	       -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
- 	       -parameters    => {},
+ 	       -parameters    => { 
+				  'window_size' => $self->o('window_size') 
+				 },
 	       -hive_capacity => 50,
 	       -batch_size    => 3,
  	    },
@@ -502,6 +525,7 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIds',
  	       -parameters => {
 			       'tables' => [ 'genomic_align_block', 'genomic_align' ],
+			       'skip' => $self->o('skip_set_internal_ids'),
 			      },
  	    },
  	    {  -logic_name => 'alignment_nets',
@@ -546,16 +570,14 @@ sub pipeline_analyses {
 			     },
 	      -wait_for => [ 'update_max_alignment_length_after_net' ],
 	    },
-	    { -logic_name => 'pairaligner_config',
-	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerConfig',
+	    { -logic_name => 'pairaligner_stats',
+	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats',
 	      -parameters => {
-			      'skip_pairaligner_config' => $self->o('skip_pairaligner_config'),
+			      'skip' => $self->o('skip_pairaligner_stats'),
 			      'dump_features' => $self->o('dump_features_exe'),
-			      'update_config_database' => $self->o('update_config_database_exe'),
 			      'create_pair_aligner_page' => $self->o('create_pair_aligner_page_exe'),
 			      'bed_dir' => $self->o('bed_dir'),
 			      'ensembl_release' => $self->o('release'),
-			      'config_url' => $self->o('config_url'),
 			      'reg_conf' => $self->o('reg_conf'),
 			      'output_dir' => $self->o('output_dir'),
 			     },
