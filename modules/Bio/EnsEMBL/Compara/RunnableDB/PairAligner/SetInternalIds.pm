@@ -66,6 +66,9 @@ sub fetch_input {
 
 sub run {
     my $self = shift;
+
+    return if ($self->param('skip'));
+
     $self->setInternalIds();
     
 
