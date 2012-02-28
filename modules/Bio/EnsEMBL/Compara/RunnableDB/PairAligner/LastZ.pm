@@ -100,20 +100,15 @@ sub configure_runnable {
   throw($program . " is not executable")
     unless ($program && -x $program);
 
-  #Get options from meta table
-  my $meta_container = $self->compara_dba->get_MetaContainer;
-  my $key = "options_" . $self->param('method_link_species_set')->dbID;
-  my @option_list = $meta_container->list_value_by_key($key);
+  my $mlss = $self->param('method_link_species_set');
+  my $options = $mlss->get_value_for_tag("param");
 
-  #Should be one entry in meta table
-  my $options = $option_list[0][0];
-
-  #If not in meta table (new pipeline) try param (old pipeline)
+  #If not in method_link_species_set_tag table (new pipeline) try param (old pipeline)
   if (!$options) {
       $options = $self->param('options');
   }
 
-  throw("Unable to find options in meta table") unless (defined $options);
+  throw("Unable to find options in method_link_species_set_tag table or in $self->param('options') ") unless (defined $options);
 
   if($self->debug) {
     print("running with analysis '".$self->analysis->logic_name."'\n");
