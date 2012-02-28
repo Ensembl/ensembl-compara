@@ -169,6 +169,8 @@ my $trust_ce = 0;
 #If true, then add new data to existing set of alignments
 my $merge = 0;
 
+my $patch_merge = 0; #special case for merging old patches again
+
 GetOptions(
            "help"      => \$help,
            "reg-conf|reg_conf|registry=s" => \$reg_conf,
@@ -434,7 +436,6 @@ sub copy_genomic_align_blocks {
 
       #print "to max_gab $to_max_gab min_gab $to_min_gab max_ga $to_max_ga min_ga $to_min_ga max_gab_gid $to_max_gab_gid min_gab_gid $to_min_gab_gid\n";
   }
-
   print "max_gab $max_gab min_gab $min_gab max_ga $max_ga min_ga $min_ga max_gab_gid $max_gab_gid min_gab_gid $min_gab_gid\n";
 
   my $lower_limit = $mlss_id * 10**10;
@@ -939,9 +940,8 @@ sub copy_data {
     }
   }
 
-  if ($merge) {
-      $to_dba->dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
-  } else {
+  #When merging the patches, there are so few items to be added, we have no need to disable the keys
+  if (!$merge) {
       #speed up writing of data by disabling keys, write the data, then enable
       #but takes far too long to ENABLE again
       $to_dba->dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
@@ -1007,8 +1007,18 @@ sub copy_data_in_text_mode {
     $sth->execute();
     my $all_rows = $sth->fetchall_arrayref;
     $sth->finish;
+    #print "start $start end $end $max_id rows " . @$all_rows . "\n";
+
     ## EXIT CONDITION
-    return if (!@$all_rows);
+    if ($patch_merge) {
+	#case in my patches db where the genomic_align_block_ids are not consecutive
+	return if ($end > $max_id && !@$all_rows);
+
+	next if (!@$all_rows);
+    } else {
+	return if (!@$all_rows);
+    } 
+
     my $time=time(); 
     my $filename = "/tmp/$table_name.copy_data.$$.$time.txt";
     open(TEMP, ">$filename") or die "could not open the file '$filename' for writing";
@@ -1016,8 +1026,8 @@ sub copy_data_in_text_mode {
       print TEMP join("\t", map {defined($_)?$_:'\N'} @$this_row), "\n";
     }
     close(TEMP);
+    #print "FILE $filename\n";
     #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
-
     system("mysqlimport -h$host -P$port -u$user ".($pass ? "-p$pass" : '')." -L -l -i $dbname $filename");
 
     unlink("$filename");
