@@ -113,7 +113,6 @@ sub configure_runnable {
   my $name = $dnafrag->name . "_" . $db_chunks->[0]->seq_start . "_" . $db_chunks->[0]->seq_end;
 
   #my $ref_species = $dnafrag->genome_db->name;
-   $DB::single = 1;
   #my $subset = $self->compara_dba->get_SubsetAdaptor->fetch_by_set_description($ref_species . " raw");
 
   my $dbChunkFile = "" . $self->param('target_fa_dir') . "/" . $name . ".fa";
@@ -131,8 +130,14 @@ sub configure_runnable {
 
   #my $options = $self->options . " -ooc=$oocFile";
 
-  my $option_str = "options_" . $self->param('mlss_id');
-  my $options = $self->param($option_str);
+  my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
+  my $options = $mlss->get_value_for_tag("pairwise_param");
+
+  #If not in method_link_species_set_tag table (new pipeline) try param (old pipeline)
+  if (!$options) {
+      $option_str = "options_" . $self->param('mlss_id');
+      $options = $self->param($option_str);
+  }
 
   if($self->debug) {
     print("running with analysis '".$self->analysis->logic_name."'\n");
