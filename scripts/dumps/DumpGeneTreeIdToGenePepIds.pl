@@ -41,21 +41,18 @@ sub write_tsv {
   $tsv->print($fh, [qw(GeneTreeStableID EnsPeptideStableID EnsGeneStableID Canonical)]);
     
   my $sql = <<'SQL';
-SELECT 
- ptsi.stable_id AS GeneTreeStableID, 
- pm.stable_id   AS EnsPeptideStableID, 
- gm.stable_id   AS EnsGeneStableID, 
- CASE m.member_id WHEN pm.member_id THEN 'Y' ELSE 'N' END as Canonical
-FROM 
- `protein_tree_stable_id` ptsi
-JOIN 
- `protein_tree_member` ptm on (ptsi.node_id = ptm.root_id)
-JOIN 
- `member` m on (ptm.member_id = m.member_id)
-JOIN 
- `member` gm on (m.gene_member_id = gm.member_id)
-JOIN 
- `member` pm on (gm.member_id = pm.gene_member_id)  
+SELECT
+    m.stable_id AS GeneTreeStableID,
+    gm.stable_id AS EnsGeneStableID,
+    pm.stable_id AS EnsPeptideStableID,
+    CASE m.member_id WHEN pm.member_id THEN 'Y' ELSE 'N' END AS Canonical
+FROM
+    gene_tree_root gtr
+    JOIN gene_tree_node gtn ON (gtr.root_id=gtn.root_id)
+    JOIN gene_tree_member gtm ON (gtn.node_id=gtm.node_id)
+    JOIN member m ON (gtm.member_id=m.member_id)
+    JOIN member gm ON (m.gene_member_id=gm.member_id)
+    JOIN member pm ON (gm.member_id=pm.gene_member_id) 
 SQL
 
   my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $DBA->dbc());
