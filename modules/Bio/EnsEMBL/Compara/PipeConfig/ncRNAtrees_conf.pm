@@ -34,11 +34,10 @@ sub default_options {
         'max_gene_count'    => 1500,
 
         'release'           => '66',
-        'rel_suffix'        => '',    # an empty string by default, a letter otherwise
+        'rel_suffix'        => 'e',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
-        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
-        'work_dir'             => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/nc_trees_'.$self->o('rel_with_suffix'),
+#        'work_dir'             => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/nc_trees_'.$self->o('rel_with_suffix'),
         'work_dir'             => $ENV{'HOME'}.'/ncrna_trees_'.$self->o('rel_with_suffix'),
 
         'email'             => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
@@ -72,7 +71,7 @@ sub default_options {
 
             # Data needed for CAFE
             'species_tree_meta_key' => 'full_species_tree_string',
-            'cafe_species'         =>  ['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus'],
+            'cafe_species'         =>  ['danio.rerio', 'gallus.gallus', 'canis.familiaris', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus'],
             'cafe_lambdas'         => '',  # in ncRNAs the lambda is calculated
             'cafe_struct_tree_str' => '',  # Not set by default
 
@@ -101,11 +100,11 @@ sub default_options {
         },
 
         'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
-            -host   => 'compara1',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'mp12_ensembl_compara_65',
+            -dbname => 'kb3_ensembl_compara_65',
         },
     };
 }
@@ -131,10 +130,10 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_;
     return {
-            0 => { -desc => 'default', 'LSF' => '' },
-            1 => { -desc => 'himem'  , 'LSF' => '-q hugemem -M15000000 -R"select[mem>15000] rusage[mem=15000]"' },
+            0 => { -desc => 'default', 'LSF' => '-M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
+            1 => { -desc => 'himem'  , 'LSF' => '-q long -M15000000 -R"select[mem>15000] rusage[mem=15000]"' },
             2 => { -desc => 'long'   , 'LSF' => '-q long' },
-            3 => { -desc => 'CAFE'   , 'LSF' => '-S 1024 -q long' },
+            3 => { -desc => 'CAFE'   , 'LSF' => '-S 1024 -q long -M15000000 -R"select[mem>15000] rusage[mem=15000]"' },
            };
 }
 
@@ -231,8 +230,9 @@ sub pipeline_analyses {
             },
             -wait_for  => [ 'innodbise_table' ], # have to wait for both, because subfan can be empty
             -flow_into => {
-                2 => [ 'load_genomedb' ],           # fan
-                1 => [ 'load_genomedb_funnel', 'load_rfam_models' ],    # backbone
+                           '2->A' => [ 'load_genomedb' ],           # fan
+                           '1->A' => [ 'load_genomedb_funnel', 'load_rfam_models' ],    # backbone
+                           'A->1' => [ 'rfam_classify' ],
             },
         },
 
@@ -339,9 +339,9 @@ sub pipeline_analyses {
         {   -logic_name    => 'load_rfam_models',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMLoadModels',
             -hive_capacity => -1,   # to allow for parallelization
-            -flow_into => {
-                1 => [ 'rfam_classify' ],
-            },
+#             -flow_into => {
+#                 1 => [ 'rfam_classify' ],
+#             },
         },
 
 # ---------------------------------------------[run RFAM classification]--------------------------------------------------------------
@@ -351,9 +351,9 @@ sub pipeline_analyses {
             -parameters    => {
                 'mlss_id'        => $self->o('mlss_id'),
             },
-            -wait_for => [ 'make_species_tree', 'store_lca_species_set', 'load_members_factory', 'load_members' ], # mega-funnel
+#            -wait_for => [ 'make_species_tree', 'store_lca_species_set', 'load_members_factory', 'load_members' ], # mega-funnel
             -flow_into => {
-                           2 => [ 'recover_epo', 'treebest_mmerge' ],
+                           2 => [ 'recover_epo' ],
                            1 => ['db_snapshot_after_Rfam_classify', 'make_full_species_tree'],
             },
         },
@@ -446,7 +446,8 @@ sub pipeline_analyses {
             -hive_capacity => 100,
             -wait_for => ['db_snapshot_after_Rfam_classify'],
             -flow_into => {
-                           1 => [ 'genomic_alignment', 'infernal' ],
+                           '1->A' => [ 'genomic_alignment', 'infernal' ],
+                           'A->1' => [ 'treebest_mmerge' ],
             },
         },
 
@@ -607,7 +608,7 @@ sub pipeline_analyses {
             -parameters => {
                             'treebest_exe' => $self->o('treebest_exe'),
                            },
-            -wait_for      => ['recover_epo', 'pre_sec_struct_tree','genomic_alignment', 'genomic_alignment_long', 'sec_struct_model_tree','sec_struct_model_tree_himem', 'genomic_tree', 'genomic_tree_himem', 'fast_trees', 'infernal' ],
+#            -wait_for      => ['recover_epo', 'pre_sec_struct_tree','genomic_alignment', 'genomic_alignment_long', 'sec_struct_model_tree','sec_struct_model_tree_himem', 'genomic_tree', 'genomic_tree_himem', 'fast_trees', 'infernal' ],
             -failed_job_tolerance => 5,
             -flow_into => {
                            1 => [ 'orthotree', 'ktreedist' ],
