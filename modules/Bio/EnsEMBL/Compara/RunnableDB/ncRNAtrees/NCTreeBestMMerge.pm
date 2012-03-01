@@ -83,8 +83,17 @@ sub param_defaults {
 sub fetch_input {
   my( $self) = @_;
 
+  my $nc_tree = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($self->param('nc_tree_id'));
+  if (scalar @{$nc_tree->get_all_leaves()} < 4) {
+      # We don't have enough data to create the trees
+      my $msg = sprintf "Tree cluster %d has <4 genes\n", $self->param('nc_tree_id');
+      print STDERR $msg if ($self->debug());
+      $self->input_job->incomplete(0);
+      die $msg;
+  }
+
       # Fetch sequences:
-  $self->param('nc_tree', $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($self->param('nc_tree_id')) );
+  $self->param('nc_tree', $nc_tree);
 
   $self->load_input_trees;
 
@@ -131,6 +140,9 @@ sub write_output {
   my $self = shift;
 
   $self->store_nctree if (defined($self->param('inputtrees_unrooted')));
+  $self->dataflow_output_id (
+                             $self->input_id, 2
+                            );
 }
 
 sub DESTROY {
