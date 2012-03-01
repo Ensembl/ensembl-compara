@@ -36,81 +36,11 @@ package Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::StableId::Adaptor;
 use Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink;
-use Bio::EnsEMBL::Hive::AnalysisJob;
-use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref);
 use Scalar::Util qw(looks_like_number);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
-
-=head2 new_without_hive()
-  
-  Arg [DB_ADAPTOR] : DBAdaptor pointing to current Compara DB 
-  Arg [TYPE] : The type of mapping to perform (f and t only supported)
-  Arg [RELEASE] : The release of the current database
-  Arg [PREV_RELEASE] : The release we are mapping IDs from
-  Arg [PREV_RELEASE_DB] : DBAdaptor or HASH of the connection details 
-                          to the prevous release database
-  Arg [MASTER_DB] : DBAdaptor or HASH of the connection details to the 
-                    master database instance
-  Returntype  : An instance of this class
-  Description : Builds an instance of this runnable to be used outside of a 
-                hive process 
-  Exceptions  : If DBAdaptor is not a Compara DBAdaptor
-  Status      : Beta  
- 
-=cut
-
-sub new_without_hive {
-  my ($class, @args) = @_;
-  my ($db_adaptor, $type, $release, $prev_release, $prev_release_db, $master_db) = 
-    rearrange([qw(db_adaptor type release prev_release prev_release_db master_db)], @args);
-  
-  assert_ref($db_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor');
-  throw 'Need a -TYPE' unless $type; 
-  throw 'Need a -RELEASE' unless $release;
-  throw 'Need a -PREV_RELEASE_DB' unless $prev_release_db;
-  throw 'Need a -MASTER_DB' unless $master_db;
-  
-  my $self = bless {}, $class;
-  #Put in so we can have access to $self->param()
-  my $job = Bio::EnsEMBL::Hive::AnalysisJob->new();
-  $self->input_job($job);
-  
-  $self->compara_dba($db_adaptor);
-  $self->param('type',          $type);
-  $self->param('release',       $release);
-  $self->param('prev_release',  $prev_release);
-  $self->param('prev_rel_db',   $prev_release_db);
-  $self->param('master_db',     $master_db);
-  
-  return $self;
-}
-
-
-=head2 run_without_hive()
-  
-  Returntype  : None
-  Description : Runs the three stages of the hive process in one continous
-                call.
-  Exceptions  : Lots possible from bad identifier mappings
-  Status      : Beta  
- 
-=cut
-
-sub run_without_hive {
-  my ($self) = @_;
-  $self->fetch_input();
-  $self->run();
-  $self->write_output();
-  return;
-}
 
 
 sub fetch_input {
@@ -122,10 +52,10 @@ sub fetch_input {
     return;
   }
 
-  $self->param('master_db')                       || throw "'master_db' is a required parameter";
-  my $type         = $self->param('type')         || throw "'type' is a required parameter, please set it in the input_id hashref to 'f' or 't'";
-  my $curr_release = $self->param('release')      || throw "'release' is a required numeric parameter, please set it in the input_id hashref";
-  looks_like_number($curr_release)                || throw "'release' is a numeric parameter. Check your input";
+  $self->param('master_db')                       || die "'master_db' is a required parameter";
+  my $type         = $self->param('type')         || die "'type' is a required parameter, please set it in the input_id hashref to 'f' or 't'";
+  my $curr_release = $self->param('release')      || die "'release' is a required numeric parameter, please set it in the input_id hashref";
+  looks_like_number($curr_release)                || die "'release' is a numeric parameter. Check your input";
   my $prev_release = $self->param('prev_release') || $curr_release - 1;
   my $prev_rel_dbc = $prev_rel_db && $self->go_figure_compara_dba($prev_rel_db)->dbc();
 
@@ -173,7 +103,7 @@ sub write_output {
     $adaptor->store_history($ncsl, $self->compara_dba()->dbc(), $time_when_started_storing, $master_dbc);
   };
   if($@) {
-    throw "Detected error during store. Check your database settings are correct for the master database (read/write): $@";
+    die "Detected error during store. Check your database settings are correct for the master database (read/write): $@";
   }
 }
 

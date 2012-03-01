@@ -52,71 +52,10 @@ use strict;
 use warnings;
 
 use Scalar::Util qw(looks_like_number);
-use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref);
 use Bio::EnsEMBL::Utils::SqlHelper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-
-#--- Non-hive methods
-
-=head2 new_without_hive()
-
-  Arg [DB_ADAPTOR]              : (DBAdaptor) Compara DBAdaptor to use
-  Arg [REPLACE]                 : (Boolean)   Forces the code to replace display labels 
-  Arg [DIE_IF_NO_CORE_ADAPTOR]  : (Boolean)   Kills the process if there is no core adaptor
-  Arg [GENOME_DB_IDS]           : (ArrayRef)  GenomeDB IDs to run this process over
-  Arg [DEBUG]                   : (Boolean)   Force debug output to STDOUT
-  
-  Example    : See synopsis
-  Description: Non-hive version of the object construction to be used with scripts
-  Returntype : Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayIdUpdater
-  Exceptions : if DB_ADAPTOR was not given and was not a valid object
-  Caller     : general
-
-=cut
-
-sub new_without_hive {
-  my ($class, @params) = @_;
-  
-  my $self = bless {}, $class;
-  #Put in so we can have access to $self->param()
-  my $job = Bio::EnsEMBL::Hive::AnalysisJob->new();
-  $self->input_job($job);
-  
-  my ($db_adaptor, $replace, $die_if_no_core_adaptor, $species, $debug) = 
-    rearrange(
-      [qw(db_adaptor replace die_if_no_core_adaptor species debug)], 
-      @params
-  );
-  
-  $self->compara_dba($db_adaptor);
-  $self->param('replace', $replace);
-  $self->param('die_if_no_core_adaptor', $die_if_no_core_adaptor);
-  $self->param('species', $species);
-  $self->debug($debug);
-  
-  return $self;
-}
-
-=head2 run_without_hive()
-
-Performs fetch_input(), run() and write_output() calls in one method.
-
-=cut
-
-sub run_without_hive {
-  my ($self) = @_;
-
-  $self->fetch_input();
-  $self->run();
-  $self->write_output();
-}
-
-
-#--- Hive methods
 
 =head2 fetch_input
 
@@ -153,6 +92,7 @@ sub fetch_input {
   $self->param('genome_dbs', \@genome_dbs);
 }
 
+
 =head2 run
 
     Title   :   run
@@ -179,6 +119,7 @@ sub run {
     $results->{$genome_db->dbID()} = $output;
   }
 }
+
 
 =head2 write_output
 
@@ -212,7 +153,7 @@ sub _process_genome_db {
 	print "Processing ${name}\n" if $self->debug();
 	
 	if(!$genome_db->db_adaptor()) {
-		throw('Cannot get an adaptor for GenomeDB '.$name) if $self->param('die_if_no_core_adaptor');
+		die 'Cannot get an adaptor for GenomeDB '.$name if $self->param('die_if_no_core_adaptor');
 		return;
 	}
 
