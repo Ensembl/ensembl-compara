@@ -611,7 +611,7 @@ sub pipeline_analyses {
 #            -wait_for      => ['recover_epo', 'pre_sec_struct_tree','genomic_alignment', 'genomic_alignment_long', 'sec_struct_model_tree','sec_struct_model_tree_himem', 'genomic_tree', 'genomic_tree_himem', 'fast_trees', 'infernal' ],
             -failed_job_tolerance => 5,
             -flow_into => {
-                           1 => [ 'orthotree', 'ktreedist' ],
+                           2 => [ 'orthotree', 'ktreedist' ],
                            -1 => [ 'treebest_mmerge_himem' ],
                            -2 => [ 'treebest_mmerge_himem' ],
             },
@@ -626,7 +626,7 @@ sub pipeline_analyses {
                         },
          -failed_job_tolerance => 5,
          -flow_into => {
-                        1 => [ 'orthotree', 'ktreedist' ],
+                        2 => [ 'orthotree', 'ktreedist' ],
                        },
          -rc_id => 1,
         },
