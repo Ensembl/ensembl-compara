@@ -17,7 +17,6 @@ package Bio::EnsEMBL::Compara::StableId::Adaptor;
 
 use strict;
 use DBI;
-use Treefam::Tree;
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Compara::StableId::NamedClusterSet;
 use Bio::EnsEMBL::Compara::StableId::Map;
@@ -59,6 +58,8 @@ sub guess_dbh {     # only works if you have .my.cnf properly pre-filled with co
     my ($self, $release, $type) = @_;
 
     if(($type eq 'c') or ($type eq 'w')) {
+
+        require Treefam::Tree;
 
         warn "${type}${release} - going to load the data from 'treefam_${release}'\n";
 
