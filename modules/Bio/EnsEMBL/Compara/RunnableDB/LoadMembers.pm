@@ -206,10 +206,10 @@ sub loadMembersFromCoreSlices {
               }
           }
       } else {
-          if (   lc($gene->biotype) eq 'protein_coding'
-             || lc($gene->biotype) eq 'ig_v_gene'
-             || lc($gene->biotype) eq 'ig_c_gene'
-             #         || lc($gene->biotype) eq 'polymorphic_pseudogene'     # lg4: not sure if this biotype is ok, as it has a stop codon in the middle
+          if ( lc($gene->biotype) eq 'protein_coding'
+               || lc($gene->biotype) =~ /ig_._gene/
+               || lc($gene->biotype) =~ /tr_._gene/
+             #  || lc($gene->biotype) eq 'polymorphic_pseudogene'     # lg4: not sure if this biotype is ok, as it has a stop codon in the middle
              ) {
               $self->param('realGeneCount', $self->param('realGeneCount')+1 );
               
