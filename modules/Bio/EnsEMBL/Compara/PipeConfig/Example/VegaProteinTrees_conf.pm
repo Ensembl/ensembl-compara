@@ -77,7 +77,7 @@ sub default_options {
     'reuse_db'                  => 0,
 
     # hive_capacity values for some analyses:
-    'store_sequences_capacity'  => 200,
+    'store_sequences_capacity'  => 50,
     'blastp_capacity'           => 450,
     'mcoffee_capacity'          => 100,
     'njtree_phyml_capacity'     => 100,
