@@ -368,10 +368,11 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters    => {
                 'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
+                'mlss_id'                 => $self->o('mlss_id'),
             },
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into  => {
-                3 => { 'mysql:////meta' => { 'meta_key' => 'species_tree_string', 'meta_value' => '#species_tree_string#' } },
+                3 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree', 'value' => '#species_tree_string#' } },
             },
         },
 
@@ -725,6 +726,7 @@ sub pipeline_analyses {
                 'bootstrap'                 => 1,
                 'use_genomedb_id'           => $self->o('use_genomedb_id'),
                 'treebest_exe'              => $self->o('treebest_exe'),
+                'mlss_id'                   => $self->o('mlss_id'),
             },
             -hive_capacity        => $self->o('njtree_phyml_capacity'),
             -rc_id => 3,
