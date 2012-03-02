@@ -87,10 +87,8 @@ sub fetch_all {
 
 sub fetch_by_GeneTree {
     my ($self, $genetree) = @_;
-    unless ($genetree->isa('Bio::EnsEMBL::Compara::GeneTreeNode') ||
-            $genetree->isa('Bio::EnsEMBL::Compara::ProteinTreeNode') ||
-            $genetree->isa('Bio::EnsEMBL::Compara::NCTreeNode')) {
-        throw("set arg must be a [Bio::EnsEMBL::Compara::GeneTreeNode] or [Bio::EnsEMBL::Compara::ProteinTreeNode] or [Bio::EnsEMBL::Compara::NCTreeNode] not a $genetree");
+    unless ($genetree->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+        throw("set arg must be a [Bio::EnsEMBL::Compara::GeneTreeNode] not a $genetree");
     }
 
     my $node_id = $genetree->node_id();  # root_id?
