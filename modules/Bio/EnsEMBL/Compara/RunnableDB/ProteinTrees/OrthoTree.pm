@@ -377,30 +377,6 @@ sub display_link_analysis
   return undef;
 }
 
-
-sub get_species_tree_string {
-    my $self = shift @_;
-
-    my $species_tree_string = $self->param('species_tree_string');
-
-    unless( $species_tree_string ) {
-        if( my $species_tree_file = $self->param('species_tree_file') ) {
-
-            $species_tree_string = $self->_slurp( $species_tree_file );
-
-        } else {
-            my $tag_table_name = 'gene_tree_root_tag';
-
-            my $sth = $self->dbc->prepare( "select value from $tag_table_name where tag='species_tree_string'" );
-            $sth->execute;
-            ($species_tree_string) = $sth->fetchrow_array;
-            $sth->finish;
-        }
-    }
-    return $species_tree_string;
-}
-
-
 sub load_species_tree_from_string {
   my ($self, $species_tree_string) = @_;
 
@@ -452,18 +428,6 @@ sub load_species_tree_from_string {
   }
   
   return $taxon_tree;
-}
-
-sub _slurp {
-  my ($self, $file_name) = @_;
-  my $slurped;
-  {
-    local $/ = undef;
-    open(my $fh, '<', $file_name);
-    $slurped = <$fh>;
-    close($fh);
-  }
-  return $slurped;
 }
 
 sub get_ancestor_species_hash

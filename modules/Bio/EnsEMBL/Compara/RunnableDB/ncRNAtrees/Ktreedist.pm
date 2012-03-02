@@ -129,48 +129,10 @@ sub write_output {
 #
 ##########################################
 
-sub get_species_tree_file {
-    my $self = shift @_;
-
-    unless( $self->param('species_tree_file') ) {
-
-        unless( $self->param('species_tree_string') ) {
-
-            my $tag_table_name = 'gene_tree_root_tag';
-
-            my $sth = $self->dbc->prepare( "select value from $tag_table_name where tag='species_tree_string'" );
-            $sth->execute;
-            my ($species_tree_string) = $sth->fetchrow_array;
-            $sth->finish;
-
-            $self->param('species_tree_string', $species_tree_string)
-                or die "Could not fetch 'species_tree_string' from $tag_table_name";
-        }
-
-        my $species_tree_string = $self->param('species_tree_string');
-        eval {
-            my $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
-            my @leaves = @{$eval_species_tree->get_all_leaves};
-        };
-        if($@) {
-            die "Error parsing species tree from the string '$species_tree_string'";
-        }
-
-            # store the string in a local file:
-        my $species_tree_file = $self->worker_temp_directory . "spec_tax.nh";
-        open SPECIESTREE, ">$species_tree_file" or die "Could not open '$species_tree_file' for writing : $!";
-        print SPECIESTREE $species_tree_string;
-        close SPECIESTREE;
-        $self->param('species_tree_file', $species_tree_file);
-    }
-    return $self->param('species_tree_file');
-}
-
 sub run_ktreedist {
   my $self = shift;
 
   my $root_id = $self->param('nc_tree')->node_id;
-#  my $species_tree_file = $self->param('species_tree_file');
   my $ktreedist_exe = $self->param('ktreedist_exe');
   my $temp_directory = $self->worker_temp_directory;
 
