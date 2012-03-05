@@ -108,7 +108,8 @@ sub parse_hclusteroutput {
     $protein_tree_adaptor->store($clusterset);
 
     my @allclusters;
-    $self->param('allclusters', \@allclusters);
+    my @allcluster_ids;
+    $self->param('allcluster_ids', \@allcluster_ids);
 
     # FIXME: load the entire file in a hash and store in decreasing
     # order by cluster size this will make big clusters go first in the
@@ -123,12 +124,20 @@ sub parse_hclusteroutput {
         my ($cluster_id, $dummy1, $dummy2, $dummy3, $dummy4, $dummy5, $cluster_list) = split("\t",$_);
 
         next if ($dummy5 < 2);
-        $cluster_list =~ s/\,^//;
+        $cluster_list =~ s/\,$//;
+        $cluster_list =~ s/_[0-9]*//g;
         my @cluster_list = split(",",$cluster_list);
 
         # If it's a singleton, we don't store it as a protein tree
         next if (2 > scalar(@cluster_list));
+        push @allclusters, \@cluster_list;
+    }
+    close FILE;
 
+    # load the entire file in a hash and store in decreasing order by cluster
+    # size this will make big clusters go first in the alignment process,
+    # which makes sense since they are going to take longer to process anyway
+    foreach my $cluster_list (sort {scalar(@$b) <=> scalar(@$a)} @allclusters) {
         my $clusterset_leaf = new Bio::EnsEMBL::Compara::GeneTreeNode;
         $clusterset_leaf->no_autoload_children();
         $clusterset_root->add_child($clusterset_leaf);
@@ -143,19 +152,15 @@ sub parse_hclusteroutput {
         $cluster_root->tree($cluster);
         $clusterset_leaf->add_child($cluster_root);
 
-        foreach my $member_hcluster_id (@cluster_list) {
-            my ($pmember_id, $genome_db_id) = split("_", $member_hcluster_id);
+        foreach my $member_id (@$cluster_list) {
             my $node = new Bio::EnsEMBL::Compara::GeneTreeMember;
             $cluster_root->add_child($node);
-
-            #the building method uses member_id's to reference unique nodes
-            #which are stored in the node_id value, copy to member_id
-            $node->member_id($pmember_id);
+            $node->member_id($member_id);
         }
 
         # Store the cluster:
         $protein_tree_adaptor->store($clusterset_leaf);
-        push @allclusters, $cluster->root_id;
+        push @allcluster_ids, $cluster->root_id;
 
         my $leafcount = scalar(@{$cluster->root->get_all_leaves});
         print STDERR "cluster $cluster with $leafcount leaves\n" if $self->debug;
@@ -164,7 +169,6 @@ sub parse_hclusteroutput {
         $cluster_root->release_tree();
 
     }
-    close FILE;
     $clusterset_root->build_leftright_indexing(1);
     $protein_tree_adaptor->store($clusterset);
     $self->param('clusterset_id', $clusterset_root->node_id);
@@ -177,7 +181,7 @@ sub parse_hclusteroutput {
 sub dataflow_clusters {
     my $self = shift;
 
-    foreach my $tree_id (@{$self->param('allclusters')}) {
+    foreach my $tree_id (@{$self->param('allcluster_ids')}) {
         $self->dataflow_output_id({ 'protein_tree_id' => $tree_id, }, 2);
     }
     $self->input_job->autoflow(0);
