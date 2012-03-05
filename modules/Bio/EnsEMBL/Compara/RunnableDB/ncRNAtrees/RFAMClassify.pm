@@ -65,15 +65,18 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify;
 
 use strict;
+
 use Data::Dumper;
 use IO::File;
+use LWP::Simple;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
-use LWP::Simple;
+use Bio::EnsEMBL::Compara::GeneTreeMember;
+use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -179,10 +182,8 @@ sub run_rfamclassify {
 
         foreach my $pmember_id (@cluster_list) {
             print STDERR "Adding $pmember_id\n" if ($self->debug);
-            my $node = new Bio::EnsEMBL::Compara::GeneTreeNode;
+            my $node = new Bio::EnsEMBL::Compara::GeneTreeMember;
             $cluster_root->add_child($node);
-            #leaves are GeneTreeNode objects, bless to make into GeneTreeMember objects
-            bless $node, "Bio::EnsEMBL::Compara::GeneTreeMember";
 
             #the building method uses member_id's to reference unique nodes
             #which are stored in the node_id value, copy to member_id

@@ -61,8 +61,7 @@ use strict;
 
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
-use Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
-use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use Bio::EnsEMBL::Compara::GeneTreeMember;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -146,10 +145,8 @@ sub parse_hclusteroutput {
 
         foreach my $member_hcluster_id (@cluster_list) {
             my ($pmember_id, $genome_db_id) = split("_", $member_hcluster_id);
-            my $node = new Bio::EnsEMBL::Compara::GeneTreeNode;
+            my $node = new Bio::EnsEMBL::Compara::GeneTreeMember;
             $cluster_root->add_child($node);
-            #leaves are GeneTreeNode objects, bless to make into GeneTreeMember objects
-            bless $node, "Bio::EnsEMBL::Compara::GeneTreeMember";
 
             #the building method uses member_id's to reference unique nodes
             #which are stored in the node_id value, copy to member_id
