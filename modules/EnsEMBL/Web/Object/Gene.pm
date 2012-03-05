@@ -52,7 +52,7 @@ sub availability {
       $availability->{'regulation'}    = !!$funcgen_res; 
       $availability->{'family'}        = !!$counts->{families};
       $availability->{'has_gene_tree'} = $gene_tree_sub->('compara');
-      $availability->{"has_$_"}        = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation);
+      $availability->{"has_$_"}        = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments);
       ## TODO - e63 hack - may need rewriting for subsequent releases
       $availability->{'not_patch'}     = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1;
 
@@ -128,8 +128,9 @@ sub counts {
         
         $counts->{'families'} = $res;
       }
-      
-      $counts->{'alignments'} = $self->count_alignments->{'all'} if $self->get_db eq 'core';
+      my $alignments = $self->count_alignments;
+      $counts->{'alignments'} = $alignments->{'all'} if $self->get_db eq 'core';
+      $counts->{'pairwise_alignments'} = $alignments->{'pairwise'} + $alignments->{'patch'};
     }
     if (my $compara_db = $self->database('compara_pan_ensembl')) {
       my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;

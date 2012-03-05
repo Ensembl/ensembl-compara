@@ -24,6 +24,7 @@ sub content {
   my $object       = $self->object;
   my $species_defs = $hub->species_defs;
   my $cdb          = shift || $hub->param('cdb') || 'compara';
+  my $availability = $object->availability;
   
   my @orthologues = (
     $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb), 
@@ -130,7 +131,10 @@ sub content {
       });
 
       # Check the target species are on the same portal - otherwise the multispecies link does not make sense
-      my $target_links = ($link_url =~ /^\// && $cdb eq 'compara') ? sprintf(
+      my $target_links = ($link_url =~ /^\// 
+        && $cdb eq 'compara'
+        && $availability->{'has_pairwise_alignments'}
+      ) ? sprintf(
         '<ul class="compact"><li class="first"><a href="%s" class="notext">Multi-species view</a></li>',
         $hub->url({
           type   => 'Location',
