@@ -17,6 +17,7 @@ sub _init {
 sub content {
   my $self           = shift;
   my $hub            = $self->hub;
+  my $availability   = $self->object->availability;
   my $cdb            = shift || $hub->param('cdb') || 'compara';
   my %paralogue_list = %{$self->object->get_homology_matches('ENSEMBL_PARALOGUES', 'paralog|gene_split', 'possible_ortholog', $cdb)};
   
@@ -71,7 +72,8 @@ sub content {
       
       my $id_info = qq{<p class="space-below"><a href="$link_url">$stable_id</a></p>} . join '<br />', @external;
 
-      my $links = sprintf (
+      my $links = ($availability->{'has_pairwise_alignments'}) ?
+        sprintf (
         '<ul class="compact"><li class="first"><a href="%s" class="notext">Multi-species view</a></li>',
         $hub->url({
           type   => 'Location',
@@ -81,7 +83,7 @@ sub content {
           r      => undef,
           config => 'opt_join_genes_bottom=on',
         })
-      );
+      ) : '';
       
       my ($target, $query);
       
