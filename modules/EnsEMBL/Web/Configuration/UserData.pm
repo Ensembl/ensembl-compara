@@ -177,11 +177,10 @@ sub populate_tree {
   ## Data conversion
   my $convert_menu = $self->create_submenu( 'Conversion', 'Data Converters' );
   my $mappings = $self->hub->species_defs->get_config($self->hub->species, 'ASSEMBLY_MAPPINGS');
-  my $available = ref($mappings) eq 'ARRAY' ? 1 : 0;
   $convert_menu->append(
     $self->create_node( 'SelectFeatures', 'Assembly Converter', 
       [qw(select_features EnsEMBL::Web::Component::UserData::SelectFeatures)],
-      {'availability' => $available},
+      {'availability' => $mappings ? 1 : 0},
     )
   );
   $convert_menu->append(
