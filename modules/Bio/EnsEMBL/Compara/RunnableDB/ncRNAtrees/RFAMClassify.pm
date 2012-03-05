@@ -173,7 +173,7 @@ sub run_rfamclassify {
 
         my $cluster_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
         $cluster->root($cluster_root);
-        $cluster->clusterset_id($cluster_root->node_id);
+        $cluster->clusterset_id($clusterset_root->node_id);
         $cluster_root->tree($cluster);
         $clusterset_leaf->add_child($cluster_root);
 
@@ -200,6 +200,7 @@ sub run_rfamclassify {
         $cluster->store_tag('clustering_id', $cm_id);
         $cluster->store_tag('model_name', $model_name) if (defined($model_name));
         $cluster_root->disavow_parent();
+        $cluster_root->release_tree();
 
     }
     $clusterset_root->build_leftright_indexing(1);
@@ -208,10 +209,10 @@ sub run_rfamclassify {
     my $leafcount = scalar(@{$clusterset->root->get_all_leaves});
     print STDERR "clusterset $clusterset with $leafcount leaves\n" if $self->debug;
 
+    # ???
     # Flow the members that havent been associated to a cluster at this
     # stage to the search for all models
 
-    return 1;
 }
 
 sub dataflow_clusters {

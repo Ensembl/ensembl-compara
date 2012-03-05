@@ -164,6 +164,7 @@ sub parse_hclusteroutput {
         print STDERR "cluster $cluster with $leafcount leaves\n" if $self->debug;
         $cluster->store_tag('gene_count', $leafcount);
         $cluster_root->disavow_parent();
+        $cluster_root->release_tree();
 
     }
     close FILE;
@@ -172,6 +173,7 @@ sub parse_hclusteroutput {
     $self->param('clusterset_id', $clusterset_root->node_id);
     my $leafcount = scalar(@{$clusterset->root->get_all_leaves});
     print STDERR "clusterset $clusterset with $leafcount leaves\n" if $self->debug;
+
 }
 
 
