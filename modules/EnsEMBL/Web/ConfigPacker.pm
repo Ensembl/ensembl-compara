@@ -448,21 +448,6 @@ sub _summarise_variation_db {
     select distinct variation_set_id from variation_set_structural_variation'
   );
   
-  # Structural variation sets (added manually for the release 66 - Have to be fixed for e!67)
-  if (scalar(@$svt_aref)) {
-    push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
-      type       => 'sv_set',
-      long_name  => '1000 Genomes - High coverage - Trios',
-      key        => 'structural_variation_set_1kg_hct',
-      parent     => 'structural_variation'
-    };
-    push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
-      type       => 'sv_set',
-      long_name  => '1000 Genomes - Low coverage',
-      key        => 'structural_variation_set_1kg_lc',
-      parent     => 'structural_variation'
-    };  
-  }
 #--------- Add in Variation set information
   # First get all toplevel sets
   my (%super_sets, %sub_sets, %set_descriptions);
