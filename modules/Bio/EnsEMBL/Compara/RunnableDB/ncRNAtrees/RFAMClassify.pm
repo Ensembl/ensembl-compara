@@ -380,7 +380,7 @@ sub tag_assembly_coverage_depth {
     my $name = $gdb->name;
     my $coreDBA = $gdb->db_adaptor;
     my $metaDBA = $coreDBA->get_MetaContainerAdaptor;
-    my $assembly_coverage_depth = @{$metaDBA->list_value_by_key('assembly.coverage_depth')}->[0];
+    my $assembly_coverage_depth = $metaDBA->list_value_by_key('assembly.coverage_depth')->[0];
     next unless (defined($assembly_coverage_depth) || $assembly_coverage_depth ne '');
     if ($assembly_coverage_depth eq 'low' || $assembly_coverage_depth eq '2x') {
       push @low_coverage, $gdb;
