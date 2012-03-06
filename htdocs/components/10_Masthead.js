@@ -173,8 +173,11 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
   },
   
   resize: function () {
-    var panel = this;
+    if (!this.widths) {
+      return; // In IE7, resize is triggered in between constructor, where the event is registered, and init, where this.widths are set. Ignore this occurence of the event.
+    }
     
+    var panel       = this;
     var minWidth    = Ensembl.minWidthEl.outerWidth();
     var windowWidth = $(window).width();
     var threshold   = windowWidth < minWidth ? minWidth : windowWidth;
