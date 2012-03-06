@@ -64,6 +64,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
                clusters and the clusterset, then flow the clusters into the
                branch 2.
   Arg [1]    : <arrayref> of <arrayref> of member_id
+  Parameters : clusterset, db_prefix, immediate_dataflow, hive_prefix, allcluster_ids, allclusters, sort_clusters
   Returntype : none
   Exceptions : none
   Caller     : general
@@ -91,6 +92,7 @@ sub store_and_dataflow_clusterset {
 =head2 create_clusterset
 
   Description: Create an empty clusterset and store it in the database.
+  Parameters : mlss_id, db_prefix, clusterset
   Returntype : GeneTree: the created clusterset
   Exceptions : none
   Caller     : general
@@ -124,6 +126,7 @@ sub create_clusterset {
 
   Description: Create a new cluster (a root node linked to many leafes) and
                store it in the database.
+  Parameters : clusterset, db_prefix, immediate_dataflow, hive_prefix, allcluster_ids
   Arg [1]    : <arrayref> of member_id
   Returntype : GeneTree: the created cluster
   Exceptions : none
@@ -183,6 +186,7 @@ sub add_cluster {
 =head2 finish_store_clusterset
 
   Description: Updates the left/right_index of the clusterset.
+  Parameters : clusterset
   Returntype : none
   Exceptions : none
   Caller     : general
@@ -206,6 +210,7 @@ sub finish_store_clusterset {
   Description: Creates one job per cluster into branch 2.
                Flows into branch 1 with the clusterset_id of the new clusterset
   Arg [1]    : <arrayref> of member_id
+  Parameters : hive_prefix, clusterset, allcluster_ids
   Returntype : none
   Exceptions : none
   Caller     : general
