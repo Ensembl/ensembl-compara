@@ -394,7 +394,7 @@ sub tag_assembly_coverage_depth {
 
   my $species_set_adaptor = $self->compara_dba->get_SpeciesSetAdaptor;
 
-  my $ss = new Bio::EnsEMBL::Compara::SpeciesSet(-genome_dbs => \@low_coverage);
+  my $ss = new Bio::EnsEMBL::Compara::SpeciesSet(-genome_dbs => \@low_coverage, -adaptor => $species_set_adaptor);
   # Stores if necessary. Updates $ss->dbID anyway
   $species_set_adaptor->store($ss);
   my $value = $ss->get_tagvalue('name');
