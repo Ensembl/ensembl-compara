@@ -78,7 +78,17 @@ use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
+
+
+sub param_defaults {
+    return {
+            'sort_clusters'         => 1,
+            'immediate_dataflow'    => 1,
+            'db_prefix'             => 'ncrna',
+            'hive_prefix'           => 'nc',
+    };
+}
 
 
 
@@ -107,7 +117,7 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->dataflow_clusters;
+    $self->store_and_dataflow_clusterset();
 }
 
 
@@ -120,7 +130,6 @@ sub write_output {
 sub run_rfamclassify {
     my $self = shift;
 
-    my $mlss_id = $self->param('mlss_id');
     # vivification:
     $self->param('rfamcms', {});
 
@@ -129,21 +138,8 @@ sub run_rfamclassify {
     #  $self->build_hash_cms('name');
     $self->build_hash_models();
 
-    my $nctree_adaptor = $self->compara_dba->get_NCTreeAdaptor;
-
-    # Create the clusterset and associate mlss
-    my $clusterset = new Bio::EnsEMBL::Compara::GeneTree;
-    $clusterset->tree_type('ncrnaclusterset');
-    $clusterset->method_link_species_set_id($mlss_id);
-    $self->param('clusterset', $clusterset);
-
-    my $clusterset_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
-    $clusterset->root($clusterset_root);
-    $nctree_adaptor->store($clusterset);
-
     my @allclusters;
     $self->param('allclusters', \@allclusters);
-
 
     # Classify the cluster that already have an RFAM id or mir id
     print STDERR "Storing clusters...\n" if ($self->debug);
@@ -166,63 +162,9 @@ sub run_rfamclassify {
 
         print STDERR "ModelName: $model_name\n" if ($self->debug);
 
-        my $clusterset_leaf = new Bio::EnsEMBL::Compara::GeneTreeNode;
-        $clusterset_leaf->no_autoload_children();
-        $clusterset_root->add_child($clusterset_leaf);
-
-        my $cluster = new Bio::EnsEMBL::Compara::GeneTree;
-        $cluster->tree_type('ncrnatree');
-        $cluster->method_link_species_set_id($mlss_id);
-
-        my $cluster_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
-        $cluster->root($cluster_root);
-        $cluster->clusterset_id($clusterset_root->node_id);
-        $cluster_root->tree($cluster);
-        $clusterset_leaf->add_child($cluster_root);
-
-        foreach my $pmember_id (@cluster_list) {
-            print STDERR "Adding $pmember_id\n" if ($self->debug);
-            my $node = new Bio::EnsEMBL::Compara::GeneTreeMember;
-            $cluster_root->add_child($node);
-
-            #the building method uses member_id's to reference unique nodes
-            #which are stored in the node_id value, copy to member_id
-            $node->member_id($pmember_id);
-        }
-        $DB::single=1;1;
-
-        # Store the cluster:
-        $nctree_adaptor->store($clusterset_leaf);
-        push @allclusters, $cluster->root_id;
-
-        my $leafcount = scalar(@{$cluster->root->get_all_leaves});
-        print STDERR "cluster $cluster with $leafcount leaves\n" if $self->debug;
-        $cluster->store_tag('gene_count', $leafcount);
-        $cluster->store_tag('clustering_id', $cm_id);
-        $cluster->store_tag('model_name', $model_name) if (defined($model_name));
-        $cluster_root->disavow_parent();
-        $cluster_root->release_tree();
+        push @allclusters, \@cluster_list;
 
     }
-    $clusterset_root->build_leftright_indexing(1);
-    $nctree_adaptor->store($clusterset);
-    $self->param('clusterset_id', $clusterset_root->node_id);
-    my $leafcount = scalar(@{$clusterset->root->get_all_leaves});
-    print STDERR "clusterset $clusterset with $leafcount leaves\n" if $self->debug;
-
-    # ???
-    # Flow the members that havent been associated to a cluster at this
-    # stage to the search for all models
-
-}
-
-sub dataflow_clusters {
-    my $self = shift;
-
-    foreach my $tree_id (@{$self->param('allclusters')}) {
-        $self->dataflow_output_id({ 'nc_tree_id' => $tree_id, }, 2);
-    }
-
 }
 
 sub build_hash_models {
