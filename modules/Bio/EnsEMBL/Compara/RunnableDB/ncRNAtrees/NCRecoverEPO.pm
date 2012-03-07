@@ -207,7 +207,7 @@ sub run_ncrecoverepo {
   my %pecan_restricted_gab_hash = ();
 
   if (keys %absent_gdbs) {
-    my $pecan_mlss = @{$self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('PECAN')}->[0];
+    my $pecan_mlss = $self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('PECAN')->[0];
 
     foreach my $leaf (@{$self->param('nc_tree')->get_all_leaves}) {
       my $gdb_name = $leaf->genome_db->name;
@@ -329,7 +329,7 @@ sub run_low_coverage_best_in_alignment {
 
   $self->param('epo_low_cov_gdbs', {});
 
-  my $epo_low_mlss = @{$self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('EPO_LOW_COVERAGE')}->[0];
+  my $epo_low_mlss = $self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('EPO_LOW_COVERAGE')->[0];
   foreach my $genome_db (@{$epo_low_mlss->species_set}) {
     $self->param('epo_low_cov_gdbs')->{$genome_db->dbID}++;
   }
@@ -420,7 +420,7 @@ sub run_low_coverage_best_in_alignment {
             my $temp_member_id = $member_id1; $member_id1 = $member_id2; $member_id2 = $temp_member_id;
           }
         }
-        my $mapped_slice2 = @{$slice2->project($slice1->coord_system->name)}->[0];
+        my $mapped_slice2 = $slice2->project($slice1->coord_system->name)->[0];
         next unless(defined($mapped_slice2)); # no projection, so pair of slices are different
         my $proj_slice2 = $mapped_slice2->to_Slice;
         if ($slice1->seq_region_name eq $proj_slice2->seq_region_name &&
