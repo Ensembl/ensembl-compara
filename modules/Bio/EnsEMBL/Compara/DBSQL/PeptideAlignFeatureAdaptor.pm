@@ -544,7 +544,7 @@ sub _store_PAFS {
   my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$first_qgenome_db_id";
 
   my $query = "INSERT INTO $tbl_name(".
-                "qmember_id,hmember_id,qgenome_db_id,hgenome_db_id,analysis_id," .
+                "qmember_id,hmember_id,qgenome_db_id,hgenome_db_id," .
                 "qstart,qend,hstart,hend,".
                 "score,evalue,align_length," .
                 "identical_matches,perc_ident,".
@@ -553,12 +553,6 @@ sub _store_PAFS {
   my $addComma=0;
   foreach my $paf (@out) {
     if($paf->isa('Bio::EnsEMBL::Compara::PeptideAlignFeature')) {
-
-      my $analysis_id = 0;
-      if($paf->analysis()) {
-        #print("paf has analysis '".$paf->analysis->logic_name()."' dbID=".$paf->analysis->dbID."\n");
-        $analysis_id=$paf->analysis()->dbID();
-      }
 
       # print STDERR "== ", $paf->query_member_id, " - ", $paf->hit_member_id, "\n";
       my $qgenome_db_id = $paf->query_genome_db_id;
@@ -576,7 +570,6 @@ sub _store_PAFS {
                 ",".$paf->hit_member_id.
                 ",".$qgenome_db_id.
                 ",".$hgenome_db_id.
-                ",".$analysis_id.
                 ",".$paf->qstart.
                 ",".$paf->qend.
                 ",".$paf->hstart.
@@ -650,8 +643,6 @@ sub _create_PAF_from_BaseAlignFeature {
       throw "couldnt find $stable_id\n";
     }
   }
-
-  $paf->analysis($feature->analysis);
 
   $paf->qstart($feature->start);
   $paf->hstart($feature->hstart);
@@ -760,7 +751,6 @@ sub _columns {
   return qw (paf.peptide_align_feature_id
              paf.qmember_id
              paf.hmember_id
-             paf.analysis_id
              paf.qstart
              paf.qend
              paf.hstart
@@ -811,10 +801,6 @@ sub _objs_from_sth {
     $paf->hit_rank($column{'hit_rank'});
     $paf->cigar_line($column{'cigar_line'});
     $paf->rhit_dbID($column{'pafid2'});
-
-    if($column{'analysis_id'} and $self->db->get_AnalysisAdaptor) {
-      $paf->analysis($self->db->get_AnalysisAdaptor->fetch_by_dbID($column{'analysis_id'}));
-    }
 
     my $memberDBA = $self->db->get_MemberAdaptor;
     if($column{'qmember_id'} and $memberDBA) {

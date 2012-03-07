@@ -390,19 +390,6 @@ sub hit_rank {
   return $self->{_hit_rank};
 }
 
-sub analysis
-{
-  my ($self,$analysis) = @_;
-
-  if (defined($analysis)) {
-    unless($analysis->isa('Bio::EnsEMBL::Analysis')) {
-      throw("arg must be a [Bio::EnsEMBL::Analysis] not a [$analysis]");
-    }
-    $self->{_analysis} = $analysis;
-  }
-  return $self->{_analysis};
-}
-
 sub dbID {
   my ( $self, $dbID ) = @_;
   $self->{'_dbID'} = $dbID if defined $dbID;

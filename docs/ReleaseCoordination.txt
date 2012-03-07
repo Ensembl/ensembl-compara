@@ -19,7 +19,7 @@ Remember that compara has one additional day after the declaration of intentions
 3. Set up a web page with intentions in the Confluence wiki system to
 allow easy tracking of the progress.
 
-Note: The current (rel.66) compara_master database is sf5_ensembl_compara_master on compara1 
+Note: The current (rel.67) compara_master database is sf5_ensembl_compara_master on compara1 
 
 #============================================================================
 # Important environment variables to be set
