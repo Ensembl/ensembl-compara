@@ -87,8 +87,7 @@ sub create_homology
   my $attribute;
   $attribute = new Bio::EnsEMBL::Compara::Attribute;
   $attribute->peptide_member_id($self->query_member->dbID);
-  $attribute->cigar_start($self->qstart);
-  $attribute->cigar_end($self->qend);
+  # $self->qstart and $self->qend could be stored
   my $qlen = ($self->qend - $self->qstart + 1);
   $attribute->perc_cov(int($qlen*100/$self->query_member->seq_length));
   $attribute->perc_id(int($self->identical_matches*100.0/$qlen));
@@ -114,8 +113,7 @@ sub create_homology
   #
   $attribute = new Bio::EnsEMBL::Compara::Attribute;
   $attribute->peptide_member_id($self->hit_member->dbID);
-  $attribute->cigar_start($self->hstart);
-  $attribute->cigar_end($self->hend);
+  # $self->hstart and $self->hend could be stored
   my $hlen = ($self->hend - $self->hstart + 1);
   $attribute->perc_cov(int($hlen*100/$self->hit_member->seq_length));
   $attribute->perc_id(int($self->identical_matches*100.0/$hlen));

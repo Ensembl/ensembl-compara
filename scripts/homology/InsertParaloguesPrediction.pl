@@ -32,6 +32,8 @@ ENSG00000184263 ENSP00000328059 47MD159MD243M39D37M2D4MD90M     \
 ENSG00000131263 ENSP00000253571 624M        \
 1       624     92.95   85.74   87.82
 
+cigar_start and cigar_end are NOT SUPPORTED any more
+
 \n";
 
 my $help = 0;
@@ -91,7 +93,7 @@ while (<>) {
     print STDERR "$translation_stable_id1 not in db\n";
     next;
   }
-  my $attribute1 = return_attribute($peptide_member1, $cigar_line1, $cigar_start1, $cigar_end1,$perc_cov1,$perc_id1,$perc_pos1);
+  my $attribute1 = return_attribute($peptide_member1, $cigar_line1,$perc_cov1,$perc_id1,$perc_pos1);
 
   my $gene_member2 = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$gene_stable_id2);
   unless (defined  $gene_member2) {
@@ -103,7 +105,7 @@ while (<>) {
     print STDERR "$translation_stable_id2 not in db\n";
     next;
   }
-  my $attribute2 = return_attribute($peptide_member2, $cigar_line2, $cigar_start2, $cigar_end2,$perc_cov2,$perc_id2,$perc_pos2);
+  my $attribute2 = return_attribute($peptide_member2, $cigar_line2,$perc_cov2,$perc_id2,$perc_pos2);
 
   my $homology = new Bio::EnsEMBL::Compara::Homology;
   my $stable_id = $gene_member1->taxon_id . "_" . $gene_member2->taxon_id . "_";
@@ -130,14 +132,12 @@ while (<>) {
 
 
 sub return_attribute {
-  my ($peptide_member, $cigar_line, $cigar_start, $cigar_end,$perc_cov,$perc_id,$perc_pos) = @_;
+  my ($peptide_member, $cigar_line, $perc_cov,$perc_id,$perc_pos) = @_;
   
   my $attribute = Bio::EnsEMBL::Compara::Attribute->new_fast
       ({'peptide_member_id' => $peptide_member->dbID});
 
   $attribute->cigar_line($cigar_line);
-  $attribute->cigar_start($cigar_start);
-  $attribute->cigar_end($cigar_end);
   $attribute->perc_cov($perc_cov);
   $attribute->perc_id($perc_id);
   $attribute->perc_pos($perc_pos);

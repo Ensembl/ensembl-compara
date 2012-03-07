@@ -88,8 +88,8 @@ foreach my $ma (@{$homology->get_all_Member_Attribute}) {
   }
 
 }
-print("Homology between ", $queryMA->{'gene'}->stable_id, "(",$queryMA->cigar_start, ",", $queryMA->cigar_end, ",", $queryMA->{'pep_len'}, ")" ,
-      " and ", $orthMA->{'gene'}->stable_id, "(",$orthMA->cigar_start, ",", $orthMA->cigar_end, ",", $orthMA->{'pep_len'}, ")\n\n"); 
+print("Homology between ", $queryMA->{'gene'}->stable_id, "(",$queryMA->{'pep_len'}, ")" ,
+      " and ", $orthMA->{'gene'}->stable_id, "(",$orthMA->{'pep_len'}, ")\n\n"); 
 #print($queryMA->{'peptide'}->sequence, "\n");
 #print($orthMA->{'peptide'}->sequence, "\n");
 
@@ -103,31 +103,6 @@ my $alignment = $homology->get_SimpleAlign();
 my ($seq1, $seq2)  = $alignment->each_seq;
 my $seqStr1 = "|".$seq1->seq().'|';
 my $seqStr2 = "|".$seq2->seq().'|';
-
-if($queryMA->cigar_start>1) {
-  my $missingSeq = substr($queryMA->{'peptide'}->sequence, 0, $queryMA->cigar_start-1);
-  $seqStr1 = $missingSeq . $seqStr1;
-}
-if($orthMA->cigar_start>1) {
-  my $missingSeq = substr($orthMA->{'peptide'}->sequence, 0, $orthMA->cigar_start-1);
-  $seqStr2 = $missingSeq . $seqStr2;
-}
-my $startdiff = $orthMA->cigar_start - $queryMA->cigar_start;
-while($startdiff>0) { $seqStr1 = " ".$seqStr1; $startdiff--; }
-while($startdiff<0) { $seqStr2 = " ".$seqStr2; $startdiff++; }
-
-if($queryMA->cigar_end < $queryMA->{'pep_len'}) {
-  my $missingSeq = substr($queryMA->{'peptide'}->sequence, $queryMA->cigar_end, $queryMA->{'pep_len'}-$queryMA->cigar_end);
-  $seqStr1 .= $missingSeq;
-}
-if($orthMA->cigar_end < $orthMA->{'pep_len'}) {
-  my $missingSeq = substr($orthMA->{'peptide'}->sequence, $orthMA->cigar_end, $orthMA->{'pep_len'}-$orthMA->cigar_end);
-  $seqStr2 .= $missingSeq;
-}
-my $enddiff = length($seqStr1) - length($seqStr2);
-while($enddiff>0) { $seqStr2 .= " "; $enddiff--; }
-while($enddiff<0) { $seqStr1 .= " "; $enddiff++; }
-
 
 my $label1 = sprintf("%20s : ", $seq1->id);
 my $label2 = sprintf("%20s : ", "");

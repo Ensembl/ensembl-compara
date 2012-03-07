@@ -362,8 +362,6 @@ sub fetch_all_by_relation {
                             hm.peptide_member_id
                             hm.peptide_align_feature_id
                             hm.cigar_line
-                            hm.cigar_start
-                            hm.cigar_end
                             hm.perc_cov
                             hm.perc_id
                             hm.perc_pos)];
@@ -729,8 +727,6 @@ sub create_AlignedMember_from_member_attribute {    # deprecated method?
 
   bless $member, "Bio::EnsEMBL::Compara::AlignedMember";
   $member->cigar_line($attribute->cigar_line);
-  $member->cigar_start($attribute->cigar_start);
-  $member->cigar_end($attribute->cigar_end);
   $member->adaptor(undef);
 
   return $member;

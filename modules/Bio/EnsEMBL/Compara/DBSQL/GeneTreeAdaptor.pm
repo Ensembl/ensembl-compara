@@ -405,8 +405,6 @@ sub update_node {
   if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
     my $sql = "UPDATE gene_tree_member SET ".
               "cigar_line='". $node->cigar_line . "'";
-    $sql .= ", cigar_start=" . $node->cigar_start if($node->cigar_start);
-    $sql .= ", cigar_end=" . $node->cigar_end if($node->cigar_end);
     $sql .= " WHERE node_id=". $node->node_id;
     #print $sql, "\n";
     $self->dbc->do($sql);
@@ -525,8 +523,6 @@ sub columns {
           'tr.method_link_species_set_id',
 
           'tm.cigar_line',
-          'tm.cigar_start',
-          'tm.cigar_end',
 
           @{Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->columns()}
           ];

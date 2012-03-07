@@ -128,7 +128,7 @@ while (my $line = <>) {
   my $peptide_member1 = return_peptide_member($translation_stable_id1, $genome_db1, $TranscriptAdaptor1);
   # create attribute1
   my $attribute1 = return_attribute($peptide_member1,
-                                    $cigar_line, $cigar_start1, $cigar_end1,
+                                    $cigar_line,
                                     $pcov1, $pid1, $pos1);
 
   # get or create/load member2
@@ -141,7 +141,7 @@ while (my $line = <>) {
   $inverse_cigar_line =~ s/I/D/g;
   $inverse_cigar_line =~ s/X/I/g;
   my $attribute2 = return_attribute($peptide_member2,
-                                    $inverse_cigar_line, $cigar_start2, $cigar_end2,
+                                    $inverse_cigar_line,
                                     $pcov2, $pid2, $pos2);
 
   # create an Homology object
@@ -233,7 +233,7 @@ sub return_peptide_member {
 }
 
 sub return_attribute {
-  my ($peptide_member, $cigar_line, $cigar_start, $cigar_end,$pcov,$pid,$pos) = @_;
+  my ($peptide_member, $cigar_line, $pcov,$pid,$pos) = @_;
   
   my $attribute = Bio::EnsEMBL::Compara::Attribute->new_fast
       ({'peptide_member_id' => $peptide_member->dbID});
@@ -261,8 +261,6 @@ sub return_attribute {
   }
   my $new_cigar_line = join("", @new_pieces);
   $attribute->cigar_line($new_cigar_line);
-  $attribute->cigar_start($cigar_start);
-  $attribute->cigar_end($cigar_end);
   $attribute->perc_cov($pcov);
   $attribute->perc_id($pid);
   $attribute->perc_pos($pos);

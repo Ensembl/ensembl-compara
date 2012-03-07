@@ -716,15 +716,11 @@ CREATE TABLE gene_tree_root (
 #    node_id                  -- the id of node associated with this name
 #    member_id                -- link to member.member_id in many-1 relation (single member per node)
 #    cigar_line               -- compressed alignment information
-#    cigar_start              -- gene start (0 if the whole gene is in the alignment)
-#    cigar_end                -- gene end (0 if the whole gene is in the alignment)
 
 CREATE TABLE gene_tree_member (
   node_id                     int(10) unsigned NOT NULL,
   member_id                   int(10) unsigned NOT NULL,
   cigar_line                  mediumtext,
-  cigar_start                 int(10),
-  cigar_end                   int(10),
 
   FOREIGN KEY (node_id) REFERENCES gene_tree_node(node_id),
   FOREIGN KEY (member_id) REFERENCES member(member_id),
@@ -744,8 +740,6 @@ CREATE TABLE gene_tree_member (
 #    node_id                  -- the id of node associated with this name
 #    member_id                -- link to member.member_id in many-1 relation (single member per node)
 #    cigar_line               -- string with the alignment score values 
-#    cigar_start              -- protein start (0 if the whole protein is in the alignment)
-#    cigar_end                -- protein end (0 if the whole protein is in the alignment)
 
 CREATE TABLE protein_tree_member_score LIKE gene_tree_member;
 
@@ -892,8 +886,6 @@ CREATE TABLE homology_member (
   peptide_member_id           int(10) unsigned, # FK member.member_id
   peptide_align_feature_id    int(10) unsigned, # FK peptide_align_feature.peptide_align_feature_id
   cigar_line                  mediumtext,
-  cigar_start                 int(10),
-  cigar_end                   int(10),
   perc_cov                    int(10),
   perc_id                     int(10),
   perc_pos                    int(10),
