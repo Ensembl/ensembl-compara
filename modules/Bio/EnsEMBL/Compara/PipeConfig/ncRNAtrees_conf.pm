@@ -633,8 +633,12 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'orthotree',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCOrthoTree',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -hive_capacity => 200,
+            -parameters => {
+                    'tree_id_str'       => 'nc_tree_id',
+                    'tag_split_genes'   => 0,
+            },
             -flow_into => {
                            -1 => ['orthotree_himem' ],
                            -2 => ['orthotree_himem' ],
@@ -643,8 +647,12 @@ sub pipeline_analyses {
 
         {
          -logic_name => 'orthotree_himem',
-         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCOrthoTree',
+         -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
          -hive_capacity => 200,
+         -parameters => {
+                    'tree_id_str'       => 'nc_tree_id',
+                    'tag_split_genes'   => 0,
+         },
          -failed_job_tolerance => 5,
          -rc_id => 1,
         },

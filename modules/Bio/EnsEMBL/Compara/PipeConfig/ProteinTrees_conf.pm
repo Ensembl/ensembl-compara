@@ -738,9 +738,11 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'ortho_tree',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
-                'use_genomedb_id'           => $self->o('use_genomedb_id'),
+                'use_genomedb_id'   => $self->o('use_genomedb_id'),
+                'tree_id_str'       => 'protein_tree_id',
+                'tag_split_genes'   => 1,
             },
             -hive_capacity        => $self->o('ortho_tree_capacity'),
             -rc_id => 1,

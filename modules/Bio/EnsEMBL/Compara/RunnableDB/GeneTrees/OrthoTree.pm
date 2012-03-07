@@ -18,11 +18,11 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree
+Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree
 
 =head1 DESCRIPTION
 
-This Analysis/RunnableDB is designed to take ProteinTree as input
+This Analysis/RunnableDB is designed to take GeneTree as input
 
 This must already have a rooted tree with duplication/sepeciation tags
 on the nodes.
@@ -31,12 +31,12 @@ It analyzes that tree structure to pick Orthologues and Paralogs for
 each genepair.
 
 input_id/parameters format eg: "{'protein_tree_id'=>1234}"
-    protein_tree_id : use 'id' to fetch a cluster from the ProteinTree
+    protein_tree_id : use 'id' to fetch a cluster from the GeneTree
 
 =head1 SYNOPSIS
 
 my $db    = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $otree = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree->new ( 
+my $otree = Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree->new ( 
                                                     -db      => $db,
                                                     -input_id   => $input_id,
                                                     -analysis   => $analysis );
@@ -64,7 +64,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree;
+package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree;
 
 use strict;
 
@@ -78,8 +78,8 @@ use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Graph::Link;
-use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::Graph::Node;
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
@@ -109,12 +109,13 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->param('treeDBA', $self->compara_dba->get_ProteinTreeAdaptor);
+    $self->param('treeDBA', $self->compara_dba->get_GeneTreeAdaptor);
     $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
 
     my $starttime = time();
-    my $tree_id = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
-    my $gene_tree = $self->param('treeDBA')->fetch_node_by_node_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
+    $self->param('tree_id_str') or die "tree_id_str is an obligatory parameter";
+    my $tree_id = $self->param($self->param('tree_id_str')) or die "'*_tree_id' is an obligatory parameter";
+    my $gene_tree = $self->param('treeDBA')->fetch_tree_at_node_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
     $self->param('gene_tree', $gene_tree);
 
     if($self->debug) {
@@ -383,7 +384,7 @@ sub load_species_tree_from_string {
   my $taxonDBA  = $self->compara_dba->get_NCBITaxonAdaptor();
   my $genomeDBA = $self->compara_dba->get_GenomeDBAdaptor();
   
-  my $taxon_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $species_tree_string );
+  my $taxon_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
   
   my %used_ids;
   
@@ -399,32 +400,32 @@ sub load_species_tree_from_string {
       $node->node_id($id);
       
       if($self->param('use_genomedb_id')) {
-      	my $gdb = $genomeDBA->fetch_by_dbID($id);
-      	$self->throw("Cannot find a GenomeDB for the ID ${id}. Ensure your tree is correct and you are using use_genomedb_id correctly") if !defined $gdb;
-      	$node->name($gdb->name());
-      	$used_ids{$id} = 1;
-      	$node->add_tag('_found_genomedb', 1);
+          my $gdb = $genomeDBA->fetch_by_dbID($id);
+          $self->throw("Cannot find a GenomeDB for the ID ${id}. Ensure your tree is correct and you are using use_genomedb_id correctly") if !defined $gdb;
+          $node->name($gdb->name());
+          $used_ids{$id} = 1;
+          $node->add_tag('_found_genomedb', 1);
       }
       else {
-      	my $ncbi_node = $taxonDBA->fetch_node_by_taxon_id($id);
-      	$node->name($ncbi_node->name) if (defined $ncbi_node);
+          my $ncbi_node = $taxonDBA->fetch_node_by_taxon_id($id);
+          $node->name($ncbi_node->name) if (defined $ncbi_node);
       }
-    } 
-    else {
+    } else { # doesn't look like number
       $node->name($id);
     }
     $node->add_tag('taxon_id', $id);
   }
-  
+
+  # if genome_db hasn't been found (it means that id doesn't looks_like_number)
   if($self->param('use_genomedb_id')) {
-  	print "Searching for overlapping identifiers\n" if $self->debug();
-  	my $max_id = max(keys(%used_ids));
-  	foreach my $node (@{$taxon_tree->all_nodes_in_graph()}) {
-  		if($used_ids{$node->node_id()} && ! $node->get_tagvalue('_found_genomedb')) {
-  			$max_id++;
-  			$node->node_id($max_id);
-  		}
-  	}
+      print "Searching for overlapping identifiers\n" if $self->debug();
+      my $max_id = max(keys(%used_ids));
+      foreach my $node (@{$taxon_tree->all_nodes_in_graph()}) {
+          if($used_ids{$node->node_id()} && ! $node->get_tagvalue('_found_genomedb')) {
+              $max_id++;
+              $node->node_id($max_id);
+          }
+      }
   }
   
   return $taxon_tree;
@@ -497,17 +498,17 @@ sub get_ancestor_taxon_level {
   my $species_hash = $self->get_ancestor_species_hash($ancestor);
 
   foreach my $gdbID (keys(%$species_hash)) {
-  	my $taxon;
+      my $taxon;
 
-  	if($self->param('use_genomedb_id')) {
-			$taxon = $taxon_tree->find_node_by_node_id($gdbID);
-			$self->throw("Missing node in species (taxon) tree for $gdbID") unless $taxon;
-  	}
-  	else {
-  		my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
-  		$taxon = $taxon_tree->find_node_by_node_id($gdb->taxon_id);
-  		$self->throw("oops missing taxon " . $gdb->taxon_id ."\n") unless $taxon;
-  	}
+      if($self->param('use_genomedb_id')) {
+            $taxon = $taxon_tree->find_node_by_node_id($gdbID);
+            $self->throw("Missing node in species (taxon) tree for $gdbID") unless $taxon;
+      }
+      else {
+          my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
+          $taxon = $taxon_tree->find_node_by_node_id($gdb->taxon_id);
+          $self->throw("oops missing taxon " . $gdb->taxon_id ."\n") unless $taxon;
+      }
 
     if($taxon_level) {
       $taxon_level = $taxon_level->find_first_shared_ancestor($taxon);
@@ -562,12 +563,12 @@ sub duplication_confidence_score {
   my $species_intersection_score = $ancestor->get_tagvalue("species_intersection_score");
   unless (defined($species_intersection_score)) {
     my $ancestor_node_id = $ancestor->node_id;
-    warn("Difference in the ProteinTree: duplication_confidence_score [$duplication_confidence_score] whereas species_intersection_score [$species_intersection_score] is undefined in njtree - ancestor $ancestor_node_id\n");
+    warn("Difference in the GeneTree: duplication_confidence_score [$duplication_confidence_score] whereas species_intersection_score [$species_intersection_score] is undefined in njtree - ancestor $ancestor_node_id\n");
     return;
   }
   if ($species_intersection_score ne $rounded_duplication_confidence_score && !defined($self->param('_readonly'))) {
     my $ancestor_node_id = $ancestor->node_id;
-    $self->throw("Inconsistency in the ProteinTree: duplication_confidence_score [$duplication_confidence_score] != species_intersection_score [$species_intersection_score] -  $ancestor_node_id\n");
+    $self->throw("Inconsistency in the GeneTree: duplication_confidence_score [$duplication_confidence_score] != species_intersection_score [$species_intersection_score] -  $ancestor_node_id\n");
   } else {
     $ancestor->delete_tag('species_intersection_score');
   }
@@ -618,8 +619,8 @@ sub delete_old_orthotree_tags
   foreach my $id (@node_ids) {
     push @list_ids, $id;
     if (scalar @list_ids == 2000) {
-        # FIXME
-      my $sql = "delete from gene_tree_node_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
+      # FIXME
+      my $sql = "delete from gene_tree_root_tag where root_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
       my $sth = $self->dbc->prepare($sql);
       $sth->execute;
       $sth->finish;
@@ -1039,24 +1040,25 @@ sub store_gene_link_as_homology {
   $homology->add_Member_Attribute([$gene_member2, $attribute]);
 
   # Pre-tagging potential_gene_split paralogies
-  if ($type eq 'within_species_paralog' && 0 == $perc_id1 && 0 == $perc_id2 && 0 == $perc_pos1 && 0 == $perc_pos2) {
-    $self->param('orthotree_homology_counts')->{'within_species_paralog'}--;
-    # If same seq region and less than 1MB distance
-    if ($gene_member1->chr_name eq $gene_member2->chr_name 
-        && (1000000 > abs($gene_member1->chr_start - $gene_member2->chr_start)) 
-        && $gene_member1->chr_strand eq $gene_member2->chr_strand ) {
-      $homology->description('contiguous_gene_split');
-      if (scalar(@{$ancestor->get_all_leaves}) == 2) {
-        $ancestor->store_tag('node_type', 'gene_split')
-          unless ($self->param('_readonly'));
+  if ($self->param('tag_split_genes')) {
+    if ($type eq 'within_species_paralog' && 0 == $perc_id1 && 0 == $perc_id2 && 0 == $perc_pos1 && 0 == $perc_pos2) {
+      $self->param('orthotree_homology_counts')->{'within_species_paralog'}--;
+      # If same seq region and less than 1MB distance
+      if ($gene_member1->chr_name eq $gene_member2->chr_name 
+          && (1000000 > abs($gene_member1->chr_start - $gene_member2->chr_start)) 
+          && $gene_member1->chr_strand eq $gene_member2->chr_strand ) {
+        $homology->description('contiguous_gene_split');
+        if (scalar(@{$ancestor->get_all_leaves}) == 2) {
+          $ancestor->store_tag('node_type', 'gene_split')
+            unless ($self->param('_readonly'));
+        }
+        $self->param('orthotree_homology_counts')->{'contiguous_gene_split'}++;
+      } else {
+        $homology->description('putative_gene_split');
+        $self->param('orthotree_homology_counts')->{'putative_gene_split'}++;
       }
-      $self->param('orthotree_homology_counts')->{'contiguous_gene_split'}++;
-    } else {
-      $homology->description('putative_gene_split');
-      $self->param('orthotree_homology_counts')->{'putative_gene_split'}++;
     }
   }
-
   ## Check if it has already been stored, in which case we dont need to store again
   my $matching_homology = 0;
   if (($self->input_job->retry_count > 0) and !defined($self->param('old_homologies_deleted'))) {
