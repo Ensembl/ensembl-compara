@@ -53,7 +53,7 @@ sub init {
         'density_mixed', 'Histogram and line'
       ],
     }],
-    [ 'Vsnps', 'Variations', 'Vdensity_features', {
+    $self->hub->species_defs->databases->{'DATABASE_VARIATION'} ? [ 'Vsnps', 'Variations', 'Vdensity_features', {
       display   => 'density_outline',
       colourset => 'densities',
       maxmin    => 1,
@@ -64,7 +64,7 @@ sub init {
         'density_bar',     'Bar chart - filled',
         'density_outline', 'Bar chart - outline',
       ],
-    }],
+    }] : (),
     [ 'drag_right', '', 'Vdraggable', { display => 'normal', part => 1, menu => 'no' }],
   );
   
