@@ -766,10 +766,6 @@ sub _build_tree_string {
     
     if ($self->param('tree_string')) {
 	$newick = $self->param('tree_string');
-    } elsif ($self->param('tree_analysis_data_id')) {
-	die "Taking tree from tree_analysis_data. No longer implemented.\n";
-	#my $analysis_data_adaptor = $self->{hiveDBA}->get_AnalysisDataAdaptor();
-	#$newick = $analysis_data_adaptor->fetch_by_dbID($self->param('tree_analysis_data_id'));
     } elsif ($self->param('tree_file'))  {
 	my $tree_file = $self->param('tree_file');
 
@@ -784,6 +780,9 @@ sub _build_tree_string {
 	    $tree_file =~ s/.*\/([^\/]+)$/$1/;
 	    $newick = $meta_adaptor->list_value_by_key("$tree_file")->[0];
 	}
+    } else {
+	#Read from method_link_species_set_tag table (default option)
+	$newick = $self->get_species_tree_string;
     }
     return undef if (!defined $newick);
     
