@@ -29,7 +29,10 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive datab
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
+	%{$self->SUPER::default_options},   # inherit the generic ones
+
+        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
+
 	'release'       => 65,
         'pipeline_name' => 'DUMP_'.$self->o('release'),  # name used by the beekeeper to prefix job names on the farm
 
@@ -119,7 +122,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 sub resource_classes {
     my ($self) = @_;
     return {
-         0 => { -desc => 'default, 8h',      'LSF' => '' },
+         0 => { -desc => 'default, 8h',      'LSF' => '-M2000000 -R"select[mem>2000] rusage[mem=2000]' },
 	 1 => { -desc => 'urgent',           'LSF' => '-q yesterday' },
          2 => { -desc => 'compara1',         'LSF' => '-R"select[mycompara1<800] rusage[mycompara1=10:duration=3]"' },
     };
