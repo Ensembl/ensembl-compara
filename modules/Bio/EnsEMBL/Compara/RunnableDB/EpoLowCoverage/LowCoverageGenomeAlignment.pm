@@ -65,7 +65,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-  if (!$self->param('method_link_species_set_id')) {
+  if (!$self->param('mlss_id')) {
     throw("MethodLinkSpeciesSet->dbID is not defined for this LowCoverageAlignment job");
   }
 
@@ -197,7 +197,7 @@ sub _write_output {
   $self->compara_dba->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
   
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-  my $mlss = $mlssa->fetch_by_dbID($self->param('method_link_species_set_id'));
+  my $mlss = $mlssa->fetch_by_dbID($self->param('mlss_id'));
   my $mlss_id = $mlss->dbID;
   my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
@@ -696,7 +696,7 @@ sub _parse_results {
     #fix the group_id so that it starts with the current mlss_id not that of
     #the base alignment. Will always do this.
     if ($group_id) {
-	$group_id = _fix_internal_ids($multi_gab->group_id, $multi_gab->method_link_species_set_id, $self->param('method_link_species_set_id'));
+	$group_id = _fix_internal_ids($multi_gab->group_id, $multi_gab->method_link_species_set_id, $self->param('mlss_id'));
     } 
     $tree->group_id($group_id);
 
@@ -958,18 +958,14 @@ sub get_species_tree {
   my $newick_species_tree;
   if (defined($self->param('_species_tree'))) {
     return $self->param('_species_tree');
-  } elsif ($self->param('tree_string')) {
-    $newick_species_tree = $self->param('tree_string');
-  } elsif ($self->param('tree_analysis_data_id')) {
-      print "Taking tree from tree_analysis_data. Not implemented yet\n";
-      #Leo has a new method for doing this so I don't need the analysis data adaptor here
-      #my $analysis_data_adaptor = $self->{hiveDBA}->get_AnalysisDataAdaptor();
-      #$newick_species_tree = $analysis_data_adaptor->fetch_by_dbID($self->param('tree_analysis_data_id'));
   } elsif ($self->param('tree_file')) {
       print "Taking tree from tree_file\n";
     open(TREE_FILE, $self->param('tree_file')) or throw("Cannot open file ".$self->param('tree_file'));
     $newick_species_tree = join("", <TREE_FILE>);
     close(TREE_FILE);
+  } else {
+      #get from mlss_tag table
+      $newick_species_tree = $self->get_species_tree_string;
   }
 
   if (!defined($newick_species_tree)) {
@@ -1025,21 +1021,18 @@ sub get_taxon_tree {
   if (defined($self->param('_taxon_tree'))) {
       #already read in taxon_tree, simply return
     return $self->param('_taxon_tree');
-  } elsif ($self->param('taxon_tree')) {
-      #read from a string
-      $newick_taxon_tree = $self->param('taxon_tree');
-  } elsif ($self->param('taxon_tree_analysis_data_id')) {
-      #read from analysis_data table
-      #Leo has a new method for doing this so I don't need the analysis data adaptor here
-      #my $analysis_data_adaptor = $self->{hiveDBA}->get_AnalysisDataAdaptor();
-      #$newick_taxon_tree = $analysis_data_adaptor->fetch_by_dbID($self->param('taxon_tree_analysis_data_id'));
-      print "Taking taxon tree from analysis_data. Not implemented yet\n";
   } elsif ($self->param('taxon_tree_file')) {
       print "Taking taxon tree from file\n";
       #read from file
       open(TREE_FILE, $self->param('taxon_tree_file')) or throw("Cannot open file ".$self->param('taxon_tree_file'));
       $newick_taxon_tree = join("", <TREE_FILE>);
       close(TREE_FILE);
+  } else {
+      #read from mlss_tag table
+      my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
+      die "Could not fetch MethodLinkSpeciesSet with the dbID '" . $self->param('mlss_id') . "'" unless defined $mlss;
+      
+      $newick_taxon_tree = $mlss->get_value_for_tag('taxon_tree');
   }
 
   if (!defined($newick_taxon_tree)) {
@@ -1345,7 +1338,7 @@ sub _construct_pairwise_locations {
     my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
 
     my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-    my $low_mlss = $mlss_adaptor->fetch_by_dbID($self->param('method_link_species_set_id'));
+    my $low_mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
 
     my $low_coverage_species_set;
     my $species_set = $low_mlss->species_set;
