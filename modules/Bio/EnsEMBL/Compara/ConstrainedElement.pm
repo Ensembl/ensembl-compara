@@ -31,7 +31,6 @@ Bio::EnsEMBL::Compara::ConstrainedElement - constrained element data produced by
           -score => 56.2,
           -p_value => '1.203e-6',
           -alignment_segments => [ [$dnafrag1_id, $start, $end, $genome_db_id, $dnafrag1_name ], [$dnafrag2_id, ... ], ... ],
-	  -taxonomic_level => "eutherian mammals",
       );
 
 GET / SET VALUES
@@ -40,7 +39,6 @@ GET / SET VALUES
   $constrained_element->method_link_species_set_id($method_link_species_set_id);
   $constrained_element->score(56.2);
   $constrained_element->p_value('5.62e-9');
-  $constrained_element->taxonomic_level("eutherian mammals");
   $constrained_element->alignment_segments([ [$dnafrag_id, $start, $end, $genome_db_id, $dnafrag_name ], ... ]);
   $constrained_element->slice($slice);
   $constrained_element->start($constrained_element_start - $slice_start + 1);
@@ -73,10 +71,6 @@ corresponds to constrained_element.score
 =item p_value
 
 corresponds to constrained_element.p_value
-
-=item taxonomic_level 
-
-corresponds to constrained_element.taxonoic_level
 
 =item slice
 
@@ -150,9 +144,6 @@ use Data::Dumper;
 		corresponding to the all the species in the constrained element block.
   Arg [-P_VALUE]
               : (opt.) string $p_value (the p_value of this constrained element)
-  Arg [-TAXONOMIC_LEVEL]
-              : (opt.) string $taxonomic_level (the taxonomic level of the alignments from which the 
-		constrained element was derived)
   Arg [-SLICE]
 	     : (opt.) Bio::EnsEMBL::Slice object
   Arg [-START]
@@ -173,7 +164,6 @@ use Data::Dumper;
                        -alignment_segments => [ [ $dnafrag_id, $dnafrag_start, $dnafrag_end, $genome_db_id, $dnafrag_name ], .. ], 
 									#danfarg_[start|end|id] from constrained_element table
                        -p_value => '5.023e-6',
-                       -taxonomic_level => "eutherian mammals",
 		       -slice => $slice_obj,
 		       -start => ( $dnafrag_start - $slice_obj->start + 1),
 		       -end => ( $dnafrag_end - $slice_obj->start + 1),
@@ -195,10 +185,10 @@ sub new {
     
   my ($adaptor, $dbID, $alignment_segments, 
 	$method_link_species_set_id, $score, $p_value, 
-	$taxonomic_level, $slice, $start, $end, $strand, $reference_dnafrag_id) = 
+	$slice, $start, $end, $strand, $reference_dnafrag_id) = 
     rearrange([qw(
         ADAPTOR DBID ALIGNMENT_SEGMENTS 
-  METHOD_LINK_SPECIES_SET_ID SCORE P_VALUE TAXONOMIC_LEVEL
+  METHOD_LINK_SPECIES_SET_ID SCORE P_VALUE 
   SLICE START END STRAND REFERENCE_DNAFRAG_ID 
 	)],
             @args);
@@ -212,8 +202,6 @@ sub new {
       if (defined ($alignment_segments));
   $self->score($score) if (defined ($score));
   $self->p_value($p_value) if (defined ($p_value));
-  $self->taxonomic_level($taxonomic_level)
-      if (defined($taxonomic_level));
   $self->slice($slice) if (defined ($slice));
   $self->start($start) if (defined ($start));
   $self->end($end) if (defined ($end));
@@ -301,26 +289,6 @@ sub p_value {
   return $self->{'p_value'};
 }
 
-=head2 taxonomic_level 
-
-  Arg [1]    : string $taxonomic_level
-  Example    : my $taxonomic_level = $constrained_element->taxonomic_level();
-  Example    : $constrained_element->taxonomic_level("eutherian mammals");
-  Description: Getter/Setter for the attribute taxonomic_level 
-  Returntype : string
-  Exceptions : returns undef if no ref.taxonomic_level
-  Caller     : general
-
-=cut
-
-sub taxonomic_level {
-  my ($self, $taxonomic_level) = @_;
-
-  if (defined($taxonomic_level)) {
-    $self->{'taxonomic_level'} = $taxonomic_level;
-  } 
-  return $self->{'taxonomic_level'};
-}
 
 =head2 score
 

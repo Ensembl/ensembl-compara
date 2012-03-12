@@ -57,9 +57,8 @@ sub store {
 		dnafrag_strand,
 		score,
 		method_link_species_set_id,
-		p_value,
-		taxonomic_level
-	) VALUES (?,?,?,?,?,?,?,?,?)};
+		p_value
+	) VALUES (?,?,?,?,?,?,?,?)};
     
     my $constrained_element_sth = $self->prepare($constrained_element_sql) or die;
     
@@ -82,8 +81,7 @@ sub store {
 					      $constrained_element->strand,
 					      $constrained_element->score,
 					      $mlssid,
-					      ($constrained_element->p_value or undef),
-					      ($constrained_element->taxonomic_level or undef)
+					      ($constrained_element->p_value or undef)
 					     );
 	}
     }
@@ -276,15 +274,14 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
        		dnafrag_end,
                 dnafrag_strand,
       		score,
-      		p_value,
-       		taxonomic_level
+      		p_value
        		FROM
        		constrained_element} . $sql;
 
 	my $sth = $self->prepare($sql);
 	$sth->execute($mlss_id, $dnafrag_id, $start, $end, $lower_bound);
-	my ($dbID, $ce_start, $ce_end, $ce_strand, $score, $p_value, $tax_level);
-	$sth->bind_columns(\$dbID, \$ce_start, \$ce_end, \$ce_strand, \$score, \$p_value, \$tax_level);
+	my ($dbID, $ce_start, $ce_end, $ce_strand, $score, $p_value);
+	$sth->bind_columns(\$dbID, \$ce_start, \$ce_end, \$ce_strand, \$score, \$p_value);
 	while ($sth->fetch()) {
 		my $constrained_element = Bio::EnsEMBL::Compara::ConstrainedElement->new_fast (
 			{
@@ -297,7 +294,6 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 				'method_link_species_set_id' => $mlss_id,
 				'score' => $score,
 				'p_value' => $p_value,
-				'taxonomic_level' => $tax_level,
 				'reference_dnafrag_id' => $dnafrag_id,
 			}
 		);
@@ -362,7 +358,6 @@ sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained eleme
        		ce.method_link_species_set_id,
       		ce.score,
       		ce.p_value,
-       		ce.taxonomic_level,
 		gdb.name,
 		df.name
        		FROM
@@ -380,15 +375,14 @@ sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained eleme
 	foreach my $constrained_element_id (@{ $dbIDs }) {
 		my (%general_attributes, @alignment_segments);
 		$sth->execute( $constrained_element_id );
-		my ($dbID, $dnafrag_id, $ce_start, $ce_end, $ce_strand, $mlssid, $score, $p_value, $tax_level, $species_name, $dnafrag_name);
+		my ($dbID, $dnafrag_id, $ce_start, $ce_end, $ce_strand, $mlssid, $score, $p_value, $species_name, $dnafrag_name);
 	 	$sth->bind_columns(\$dbID, \$dnafrag_id, \$ce_start, \$ce_end, \$ce_strand, \$mlssid, 
-					\$score, \$p_value, \$tax_level, \$species_name, \$dnafrag_name);	
+					\$score, \$p_value, \$species_name, \$dnafrag_name);	
 		while ($sth->fetch()) {
 			$general_attributes{dbID} = $dbID;
 			$general_attributes{mlssid} = $mlssid;
 			$general_attributes{score} = $score;
 			$general_attributes{p_value} = $p_value;
-			$general_attributes{taxonomic_level} = $tax_level;
 			push(@alignment_segments, [ $dnafrag_id, $ce_start, $ce_end, $ce_strand, $species_name, $dnafrag_name ]);
 		}
 		my $constrained_element = Bio::EnsEMBL::Compara::ConstrainedElement->new_fast (
@@ -399,7 +393,6 @@ sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained eleme
 				'method_link_species_set_id' => $general_attributes{mlssid},
 				'score' => $general_attributes{score},
 				'p_value' => $general_attributes{p_value},
-				'taxonomic_level' => $general_attributes{taxonomic_level},
 			}
 		);
 		push(@$constrained_elements, $constrained_element) if @alignment_segments;
