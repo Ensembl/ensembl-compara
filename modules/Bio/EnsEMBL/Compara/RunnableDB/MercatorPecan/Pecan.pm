@@ -42,7 +42,7 @@ Supported keys:
    'synteny_region_id' => <number>
        The region to be aligned by Pecan, defined as a SyntenyRegion in the database. Obligatory
 
-   'method_link_species_set_id' => <number>
+   'mlss_id' => <number>
        The MethodLinkSpeciesSet for the resulting Pecan alignment. Obligatory
 
    'tree_file' => <newick_tree>
@@ -104,7 +104,7 @@ sub fetch_input {
   #set default to 0. Run Ortheus to create the tree if a duplication is found
   $self->param('found_a_duplication', 0);
 
-  if (!$self->param('method_link_species_set_id')) {
+  if (!$self->param('mlss_id')) {
     throw("MethodLinkSpeciesSet->dbID is not defined for this Pecan job");
   }
 
@@ -220,7 +220,7 @@ sub _write_output {
   }
 
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-  my $mlss = $mlssa->fetch_by_dbID($self->param('method_link_species_set_id'));
+  my $mlss = $mlssa->fetch_by_dbID($self->param('mlss_id'));
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gaa = $self->compara_dba->get_GenomicAlignAdaptor;
 
@@ -568,16 +568,14 @@ sub get_species_tree {
   my $newick_species_tree;
   if (defined($self->param('species_tree'))) {
       return $self->param('species_tree');
-  } elsif ($self->param('tree_string')) {
-      $newick_species_tree = $self->param('tree_string');
-  } elsif ($self->param('tree_analysis_data_id')) {
-      die "Taking tree from tree_analysis_data. No longer implemented.\n";
-#      my $analysis_data_adaptor = $self->param('hiveDBA')->get_AnalysisDataAdaptor();
-#      $newick_species_tree = $analysis_data_adaptor->fetch_by_dbID($self->param('tree_analysis_data_id'));
   } elsif ($self->param('tree_file')) {
+      #open via a file (not currently used in the pipeline)
       open(TREE_FILE, $self->param('tree_file')) or throw("Cannot open file ".$self->param('tree_file'));
       $newick_species_tree = join("", <TREE_FILE>);
       close(TREE_FILE);
+  } else {
+      #get from mlss_tag table
+      $newick_species_tree = $self->get_species_tree_string;
   }
 
   if (!defined($newick_species_tree)) {
