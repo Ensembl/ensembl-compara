@@ -150,7 +150,7 @@ sub get_species_tree_string {
     my $table_column = 'meta_value';
     my $table_value = $species_tree_meta_key;
 
-    my $sth = $self->dbc->prepare( "select $table_column from $table_name where $table_key=?" );
+    my $sth = $self->compara_dba->dbc->prepare( "select $table_column from $table_name where $table_key=?" );
     $sth->execute($table_value);
     my ($species_tree_string) = $sth->fetchrow_array;
     $sth->finish;

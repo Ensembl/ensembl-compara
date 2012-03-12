@@ -346,7 +346,7 @@ sub _load_and_dump_alignment {
 
 #    my $sql_load_alignment = "SELECT member_id, aligned_sequence FROM aligned_sequence WHERE alignment_id = $alignment_id";
     my $sql_load_alignment = "SELECT member_id, aligned_sequence FROM aligned_sequence WHERE alignment_id = ?";
-    my $sth_load_alignment = $self->dbc->prepare($sql_load_alignment);
+    my $sth_load_alignment = $self->compara_dba->dbc->prepare($sql_load_alignment);
     print STDERR "SELECT member_id, aligned_sequence FROM aligned_sequence WHERE alignment_id = $alignment_id\n" if ($self->debug);
     $sth_load_alignment->execute($alignment_id);
     my $all_aln_seq_hashref = $sth_load_alignment->fetchall_arrayref({});

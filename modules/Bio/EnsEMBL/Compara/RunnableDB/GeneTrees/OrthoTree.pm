@@ -587,7 +587,7 @@ sub genepairlink_fetch_homology
             "join homology_member hm2 using (homology_id) " .
             "where hm1.peptide_member_id=? and hm2.peptide_member_id=?";
 
-  my $sth = $self->dbc->prepare($sql);
+  my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute($member1->member_id, $member2->member_id);
   my $ref = $sth->fetchrow_arrayref();
   return undef unless($ref);
@@ -621,7 +621,7 @@ sub delete_old_orthotree_tags
     if (scalar @list_ids == 2000) {
       # FIXME
       my $sql = "delete from gene_tree_root_tag where root_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
-      my $sth = $self->dbc->prepare($sql);
+      my $sth = $self->compara_dba->dbc->prepare($sql);
       $sth->execute;
       $sth->finish;
       @list_ids = ();
@@ -642,13 +642,13 @@ sub delete_old_homologies {
 
   # Delete first the members
   my $sql1 = 'DELETE homology_member FROM homology JOIN homology_member USING (homology_id) WHERE tree_node_id=?';
-  my $sth1 = $self->dbc->prepare($sql1);
+  my $sth1 = $self->compara_dba->dbc->prepare($sql1);
   $sth1->execute($tree_node_id);
   $sth1->finish;
 
   # And then the homologies
   my $sql2 = 'DELETE FROM homology WHERE tree_node_id=?';
-  my $sth2 = $self->dbc->prepare($sql2);
+  my $sth2 = $self->compara_dba->dbc->prepare($sql2);
   $sth2->execute($tree_node_id);
   $sth2->finish;
   printf("%1.3f secs build links and features\n", time()-$delete_time);
@@ -671,9 +671,9 @@ sub delete_old_homologies_old {
                         ($member1->gene_member, $member2->gene_member, 'ENSEMBL_PARALOGUES')};
 
   my $sql1 = "DELETE FROM homology WHERE homology_id=?";
-  my $sth1 = $self->dbc->prepare($sql1);
+  my $sth1 = $self->compara_dba->dbc->prepare($sql1);
   my $sql2 = "DELETE FROM homology_member WHERE homology_id=?";
-  my $sth2 = $self->dbc->prepare($sql2);
+  my $sth2 = $self->compara_dba->dbc->prepare($sql2);
 
   foreach my $homology (@homologies) {
     $sth1->execute($homology->dbID);
@@ -1086,8 +1086,8 @@ sub store_gene_link_as_homology {
       my $homology_id = $stored_homology->dbID;
       my $sql1 = "delete from homology where homology_id=$homology_id";
       my $sql2 = "delete from homology_member where homology_id=$homology_id";
-      my $sth1 = $self->dbc->prepare($sql1);
-      my $sth2 = $self->dbc->prepare($sql2);
+      my $sth1 = $self->compara_dba->dbc->prepare($sql1);
+      my $sth2 = $self->compara_dba->dbc->prepare($sql2);
       $sth1->execute;
       $sth2->execute;
       $sth1->finish;

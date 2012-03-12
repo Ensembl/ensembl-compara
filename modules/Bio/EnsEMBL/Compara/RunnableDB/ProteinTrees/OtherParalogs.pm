@@ -310,8 +310,8 @@ sub store_gene_link_as_homology {
             my $homology_id = $stored_homology->dbID;
             my $sql1 = "delete from homology where homology_id=$homology_id";
             my $sql2 = "delete from homology_member where homology_id=$homology_id";
-            my $sth1 = $self->dbc->prepare($sql1);
-            my $sth2 = $self->dbc->prepare($sql2);
+            my $sth1 = $self->compara_dba->dbc->prepare($sql1);
+            my $sth2 = $self->compara_dba->dbc->prepare($sql2);
             $sth1->execute;
             $sth2->execute;
             $sth1->finish;

@@ -356,7 +356,7 @@ sub store_fasta_alignment {
     # Insert a new alignment in the DB
     my $sql_new_alignment = "INSERT IGNORE INTO alignment (alignment_id, compara_table, compara_key) VALUES (?, 'ncrna', ?)";
     print STDERR "$sql_new_alignment\n" if ($self->debug);
-    my $sth_new_alignment = $self->dbc->prepare($sql_new_alignment);
+    my $sth_new_alignment = $self->compara_dba->dbc->prepare($sql_new_alignment);
     $sth_new_alignment->execute($uniq_alignment_id, $nc_tree_id);
     $sth_new_alignment->finish();
 
@@ -366,7 +366,7 @@ sub store_fasta_alignment {
     my $aln_header;
     my $aln_seq;
     my $sql_new_alnseq = "INSERT INTO aligned_sequence (alignment_id, aligned_length, member_id, aligned_sequence) VALUES (?,?,?,?)";
-    my $sth_new_alnseq = $self->dbc->prepare($sql_new_alnseq);
+    my $sth_new_alnseq = $self->compara_dba->dbc->prepare($sql_new_alnseq);
     while (<$aln_fh>) {
         chomp;
         if (/^>/) {
