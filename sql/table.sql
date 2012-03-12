@@ -370,8 +370,7 @@ CREATE TABLE constrained_element (
   dnafrag_end int(12) unsigned NOT NULL,
   dnafrag_strand int(2),
   method_link_species_set_id int(10) unsigned NOT NULL,
-  p_value mediumtext,
-  taxonomic_level mediumtext,
+  p_value double,
   score double NOT NULL default 0,
 
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
