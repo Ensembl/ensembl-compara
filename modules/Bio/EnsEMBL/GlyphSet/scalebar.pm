@@ -77,6 +77,8 @@ sub render {
       
       # Vertical lines across all species
       if ($register_line) {
+        $end += 0.5 if $end == $start; # stop tags being a cross in small regions
+        
         $self->join_tag($t, "ruler_$start", 0, 0, $start            % $major_unit ? 'grey90' : 'grey80');
         $self->join_tag($t, "ruler_$end",   1, 0, ($global_end + 1) % $major_unit ? 'grey90' : 'grey80') unless ($box_end + 1) % $minor_unit;
       }
