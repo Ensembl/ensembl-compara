@@ -135,7 +135,7 @@ sub configure_runnable {
 
   #If not in method_link_species_set_tag table (new pipeline) try param (old pipeline)
   if (!$options) {
-      $option_str = "options_" . $self->param('mlss_id');
+      my $option_str = "options_" . $self->param('mlss_id');
       $options = $self->param($option_str);
   }
 
