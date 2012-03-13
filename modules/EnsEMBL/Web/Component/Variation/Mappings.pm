@@ -58,7 +58,7 @@ sub content {
       
       $html .= $self->_info(
         'Information',
-        "This display shows consequence predictions for all possible alleles (A/C/G/T) at this position.<br/><br/>$link",
+        "This display shows consequence predictions in the 'Type' column for all possible alleles (A/C/G/T) at this position. Ensembl has permission to display only the public HGMD dataset which does not include alleles.<br/><br/>$link",
         '50%',
       ); 
     }
@@ -70,11 +70,9 @@ sub content {
         recalculate => 1,
       });
       
-      my $link = "<a href='$url'>Show consequence predictions for all possible alleles</a>";
-      
       $html .= $self->_info(
         'Information',
-        "Ensembl has permission to display only the public HGMD dataset; this dataset does not include alleles. The consequence predictions shown below are based on the variant\'s position only.<br/><br/>$link",
+        "Ensembl has permission to display only the public HGMD dataset which does not include alleles.<br /><a href='$url'>Show consequence predictions</a> (e.g. amino acid changes) for all possible alleles based only on the variant location.",
         '50%',
       );      
     }
