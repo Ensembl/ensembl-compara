@@ -99,8 +99,8 @@ sub variation_source {
     $home_link   = $hub->get_ExtURL_link($source, $sname, $name);
     $description =~ s/$sname/$home_link/i;
   } elsif ($source =~ /HGMD/) {
-    $version =~ /(\d)\/(\d+)/;
-    $version = " ($2.$1)";
+    $version =~ /(\d{4})(\d+)/;
+    $version = " ($1.$2)";
     my $va          = ($hub->get_adaptor('get_VariationAnnotationAdaptor', 'variation')->fetch_all_by_Variation($object->Obj))->[0];
     my $asso_gene   = $va->associated_gene;
        $sname       = 'HGMD-PUBLIC';
