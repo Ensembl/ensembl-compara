@@ -685,7 +685,7 @@ sub pipeline_analyses {
                 'mafft_exe'                 => $self->o('mafft_exe'),
                 'mafft_binaries'            => $self->o('mafft_binaries'),
             },
-            -wait_for => [ 'store_sequences', 'per_genome_clusterset_qc' ],    # funnel #should contain overall_clusterset_qc
+            -wait_for => [ 'store_sequences', 'overall_clusterset_qc', 'per_genome_clusterset_qc' ],    # funnel
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_id => 3,
             -priority => 30,
@@ -793,7 +793,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -parameters => {},
             -wait_for => [ 'mcoffee', 'mcoffee_himem', 'njtree_phyml', 'ortho_tree', 'quick_tree_break' ],    # funnel n_clusters
-		-flow_into => [ 'group_genomes_under_taxa', 'overall_genetreeset_qc' ],  # backbone
+		-flow_into => [ 'overall_genetreeset_qc' ],  # backbone
         },
 
 
@@ -815,9 +815,9 @@ sub pipeline_analyses {
                 'groupset_tag'              => 'GeneTreesetQC',
             },
             -hive_capacity => 3,
-            #-flow_into => {
-            #    1 => [ 'group_genomes_under_taxa' ],    # backbone
-            #},
+            -flow_into => {
+                1 => [ 'group_genomes_under_taxa' ],    # backbone
+            },
         },
 
         {   -logic_name => 'per_genome_genetreeset_qc',
