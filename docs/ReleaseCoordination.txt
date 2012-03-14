@@ -675,6 +675,9 @@ time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdat
 # If it is run on the final merged db use "--compara_db compara_curr"
 time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --compara_db compara_curr --debug 1
 
+## NOTE! Something happened with the display_labels update for
+   66. Make sure this update happens.
+
 # rel59 real    9m44.754s
 # rel60 real    10m23.002s
 # rel62 real    11m
