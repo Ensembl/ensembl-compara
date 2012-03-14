@@ -440,7 +440,7 @@ sub get_chunking {
 }
 
 sub get_default_chunking {
-    my ($dna_collection, $default_chunk) = @_;
+    my ($dna_collection, $default_chunk, $dump_dir_species) = @_;
 
     #chunk_size
     unless (defined $dna_collection->{'chunk_size'}) {
@@ -484,7 +484,7 @@ sub get_default_chunking {
 
     unless (defined $dna_collection->{'dump_loc'}) {
 	if (defined $default_chunk->{'dump_dir'}) {
-	    $dna_collection->{'dump_loc'} = $default_chunk->{'dump_dir'} . "/" . $dna_collection->{'genome_db'}->name;
+	    $dna_collection->{'dump_loc'} = $default_chunk->{'dump_dir'} . "/" . $dump_dir_species . "/" . $dna_collection->{'genome_db'}->name;
 	}
     }
     
@@ -556,7 +556,8 @@ sub parse_defaults {
     my $net_config = {};
     %$net_config = ('input_method_link' => $self->param('default_net_input'),
 		    'output_method_link' => $self->param('default_net_output'));
-    
+
+    my @genome_db_ids;
     #create dna_collections
     foreach my $genome_db (@$genome_dbs) {
 	#get and store locator
@@ -581,6 +582,8 @@ sub parse_defaults {
 	    $chain_config->{'non_reference_collection_name'} = $chain_name;
 	    $net_config->{'non_reference_collection_name'} = $chain_name;
 	}
+
+	push @genome_db_ids, $genome_db->dbID;
     }
 
     unless ($pair_aligner->{'reference_collection_name'}) {
@@ -591,9 +594,12 @@ sub parse_defaults {
 	}
     }
 
+    #create unique subdirectory to dump dna using genome_db_ids
+    my $dump_dir_species = join "_", @genome_db_ids;
+
     #Set default dna_collection chunking values if required
-    get_default_chunking($dna_collections->{$pair_aligner->{'reference_collection_name'}}, $self->param('default_chunks')->{'reference'});	
-    get_default_chunking($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}, $self->param('default_chunks')->{'non_reference'});
+    get_default_chunking($dna_collections->{$pair_aligner->{'reference_collection_name'}}, $self->param('default_chunks')->{'reference'}, $dump_dir_species);	
+    get_default_chunking($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}, $self->param('default_chunks')->{'non_reference'}, $dump_dir_species);
     
     #Store region, if defined, in the chain_config for use in no_chunk_and_group_dna
     if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'region'}) {
