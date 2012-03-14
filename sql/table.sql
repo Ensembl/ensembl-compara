@@ -1126,7 +1126,7 @@ CREATE TABLE CAFE_tree_attr (
        avg_pvalue        double(5,4),  # only for root nodes (node_id = root_id)
 
        FOREIGN KEY (node_id) REFERENCES CAFE_tree_node(node_id),
-       FOREIGN KEY (fam_id) REFERENCES gene_tree_root(root_id),
+ #      FOREIGN KEY (fam_id) REFERENCES gene_tree_root(root_id),
        UNIQUE KEY node_id(node_id, fam_id)
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
