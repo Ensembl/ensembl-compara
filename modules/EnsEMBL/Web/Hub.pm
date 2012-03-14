@@ -381,8 +381,8 @@ sub parse_referer {
   my @path = split /\//, $url;
   
   unshift @path, 'common' unless $path[0] =~ /(Multi|common)/ || $species_defs->valid_species($path[0]);
-
-  return {absolute_url => $ENV{'HTTP_REFERER'}} unless $self->valid_type($path[1]);
+  
+  return { absolute_url => $ENV{'HTTP_REFERER'} } unless $ENV{'HTTP_REFERER'} =~ /$ENV{'HTTP_HOST'}/ && $species_defs->OBJECT_TO_SCRIPT->{$path[1]};
 
   my ($species, $type, $action, $function) = @path;
 
@@ -430,11 +430,6 @@ sub parse_referer {
     uri              => "/$uri",
     absolute_url     => $ENV{'HTTP_REFERER'}
   };
-}
-
-sub valid_type {
-  ## Checks whether the given string is a valid 'Type'
-  return exists $SiteDefs::OBJECT_TO_SCRIPT->{pop @_};
 }
 
 sub filename {
