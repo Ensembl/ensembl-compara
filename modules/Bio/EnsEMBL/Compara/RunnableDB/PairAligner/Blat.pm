@@ -78,7 +78,6 @@ sub configure_defaults {
   #-ooc=/tmp/worker.????/5ooc
   #
 
-  $self->param('options', '-minScore=30 -t=dnax -q=dnax -mask=lower -qMask=lower') unless defined($self->param('options'));
   $self->param('method_link_type', 'TRANSLATED_BLAT_RAW') unless defined($self->param('method_link_type'));
   
   $self->param('do_transactions', 1) unless defined ($self->param('do_transactions'));
@@ -131,7 +130,7 @@ sub configure_runnable {
   #my $options = $self->options . " -ooc=$oocFile";
 
   my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
-  my $options = $mlss->get_value_for_tag("pairwise_param");
+  my $options = $mlss->get_value_for_tag("param");
 
   #If not in method_link_species_set_tag table (new pipeline) try param (old pipeline)
   if (!$options) {
@@ -139,9 +138,12 @@ sub configure_runnable {
       $options = $self->param($option_str);
   }
 
+  #Check options have been set.
+  throw("Unable to find options in method_link_species_set_tag table or in $self->param('options') ") unless (defined $options);
+
   if($self->debug) {
     print("running with analysis '".$self->analysis->logic_name."'\n");
-    print("  options : ", $self->param('options'), "\n");
+    print("  options : ", $options, "\n");
     print("  program : $program\n");
   }
 
