@@ -266,8 +266,8 @@ sub pipeline_analyses {
             },
 		-input_ids  => [ { } ],
             -flow_into => {
-                2 => [ 'copy_table'  ],
-                1 => [ 'innodbise_table_factory' ],     # backbone
+                '2->A' => [ 'copy_table'  ],
+                'A->1' => [ 'innodbise_table_factory' ],     # backbone
             },
         },
 
@@ -288,10 +288,9 @@ sub pipeline_analyses {
                 'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='".$self->o('pipeline_db','-dbname')."' AND table_name!='meta' AND engine='MyISAM' ",
                 'fan_branch_code' => 2,
             },
-            -wait_for  => [ 'copy_table' ],
             -flow_into => {
-                2 => [ 'innodbise_table'  ],
-                1 => [ 'load_genomedb_factory' ],           # backbone
+                '2->A' => [ 'innodbise_table'  ],
+                'A->1' => [ 'load_genomedb_factory' ],           # backbone
             },
         },
 
@@ -321,7 +320,6 @@ sub pipeline_analyses {
 
                 'fan_branch_code'       => 2,
             },
-            -wait_for  => [ 'innodbise_table' ], # have to wait for both, because subfan can be empty
             -flow_into => {
                 2 => [ 'load_genomedb' ],           # fan
                 1 => [ 'load_genomedb_funnel' ],    # backbone
@@ -863,8 +861,8 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory',
             -hive_capacity => -1,
             -flow_into => {
-                1 => [ 'threshold_on_dS' ],
-                2 => [ 'homology_dNdS' ],
+                'A->1' => [ 'threshold_on_dS' ],
+                '2->A' => [ 'homology_dNdS' ],
             },
         },
 
@@ -881,7 +879,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'threshold_on_dS',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS',
-            -wait_for => [ 'homology_dNdS' ],
             -hive_capacity => -1,
         },
 
