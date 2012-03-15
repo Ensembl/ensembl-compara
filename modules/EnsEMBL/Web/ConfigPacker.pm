@@ -1362,15 +1362,21 @@ sub _munge_meta {
   while (my ($species_id, $meta_hash) = each (%$meta_info)) {
     next unless $species_id && $meta_hash && ref($meta_hash) eq 'HASH';
     
-    ## Do species name and group
-    my ($species, $bioname, $bioshort);
+    my $species = ucfirst($meta_hash->{'species.production_name'}[0]);
+    my $bio_name = $meta_hash->{'species.scientific_name'}[0];
+    
+    ## Put other meta info into variables
+    while (my ($meta_key, $key) = each (%keys)) {
+      next unless $meta_hash->{$meta_key};
+      
+      my $value = scalar @{$meta_hash->{$meta_key}} > 1 ? $meta_hash->{$meta_key} : $meta_hash->{$meta_key}[0]; 
+      $self->tree->{$species}{$key} = $value;
+    }
+
+    ## Do species group
     my $taxonomy = $meta_hash->{'species.classification'};
     
     if ($taxonomy && scalar(@$taxonomy)) {
-      $species  = "$taxonomy->[1]_$taxonomy->[0]";
-      $bioname  = "$taxonomy->[1] $taxonomy->[0]";
-      $bioshort = substr($taxonomy->[1], 0, 1) . '.' . $taxonomy->[0];
-      
       my $order = $self->tree->{'TAXON_ORDER'};
       
       foreach my $taxon (@$taxonomy) {
@@ -1383,15 +1389,9 @@ sub _munge_meta {
         
         last if $self->tree->{$species}{'SPECIES_GROUP'};
       }
-    } else {
-      ## Default to same name as database 
-      $species   = $self->{'_species'};
-      ($bioname  = $species) =~ s/_/ /g;
-      ($bioshort = $bioname) =~ s/^([A-Z])[a-z]+_([a-z]+)$/$1.$2/;
     }
-    
-    $self->tree->{$species}{'SPECIES_BIO_NAME'}  = $bioname;
-    $self->tree->{$species}{'SPECIES_BIO_SHORT'} = $bioshort;
+    $self->tree->{$species}{'SPECIES_BIO_NAME'}  = $bio_name;
+    ($self->tree->{$species}{'SPECIES_BIO_SHORT'} = $bio_name) =~ s/^([A-Z])[a-z]+_([a-z]+)$/$1.$2/;
     
     if ($self->tree->{'ENSEMBL_SPECIES'}) {
       push @{$self->tree->{'DB_SPECIES'}}, $species;
@@ -1399,13 +1399,6 @@ sub _munge_meta {
       $self->tree->{'DB_SPECIES'} = [ $species ];
     }
 
-    ## Get assembly info
-    while (my ($meta_key, $key) = each (%keys)) {
-      next unless $meta_hash->{$meta_key};
-      
-      my $value = scalar @{$meta_hash->{$meta_key}} > 1 ? $meta_hash->{$meta_key} : $meta_hash->{$meta_key}[0]; 
-      $self->tree->{$species}{$key} = $value;
-    }
     
     $self->tree->{$species}{'SPECIES_META_ID'} = $species_id;
 
