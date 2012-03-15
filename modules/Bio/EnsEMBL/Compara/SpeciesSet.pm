@@ -1,15 +1,11 @@
 package Bio::EnsEMBL::Compara::SpeciesSet;
 
 use strict;
-
 use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 # FIXME: add throw not implemented for those not tag related?
-# use Bio::EnsEMBL::Compara::Graph::CGObject qw(add_tag store_tag has_tag get_tagvalue get_all_tags get_tagvalue_hash _load_tags name);
-use Bio::EnsEMBL::Compara::Graph::CGObject;
-
-our @ISA = qw(Bio::EnsEMBL::Compara::Graph::CGObject);
+use base ('Bio::EnsEMBL::Compara::Taggable');
 
 
 sub new {
