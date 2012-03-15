@@ -1,8 +1,8 @@
 package Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor;
 
-use vars qw(@ISA);
 use strict;
 
+use Scalar::Util qw(looks_like_number);
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::SpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
@@ -224,39 +224,58 @@ sub fetch_all_by_tag {
 }
 
 
-sub fetch_all_by_GenomeDBs {
-  my ($self, $genome_dbs) = @_;
-  return $self->fetch_by_GenomeDBs($genome_dbs);
-}
-
-
 =head2 fetch_by_GenomeDBs
 
-  Arg [1]     : listref of Bio::EnsEMBL::Compara::GenomeDB objects
+  Arg [1]     : listref of Bio::EnsEMBL::Compara::GenomeDB objects or their dbIDs
   Example     : my $species_set = $species_set_adaptor->fetch_by_GenomeDBs($genome_dbs);
   Description : Fetches the SpeciesSet object for that set of GenomeDBs
   Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
   Exceptions  : thrown if a GenomeDB has no dbID. Warns if more than one SpeciesSet has
                 this set of GenomeDBs
   Caller      : general
-  Status      : Stable
 
 =cut
 
 sub fetch_by_GenomeDBs {
-  my ($self, $genome_dbs) = @_;
-  my $species_set_id;
+    my ($self, $genome_dbs) = @_;
 
-  my $genome_db_ids;
+    my $species_set_id = $self->find_species_set_id_by_GenomeDBs_mix( $genome_dbs );
+
+    return $species_set_id && $self->fetch_by_dbID($species_set_id);
+}
+
+
+=head2 find_species_set_id_by_GenomeDBs_mix
+
+  Arg [1]     : listref of Bio::EnsEMBL::Compara::GenomeDB objects or their dbIDs
+  Example     : my $species_set = $species_set_adaptor->find_species_set_id_by_GenomeDBs_mix($genome_dbs);
+  Description : Fetches the SpeciesSet object for that set of GenomeDBs
+  Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
+  Exceptions  : thrown if a GenomeDB has no dbID. Warns if more than one SpeciesSet has
+                this set of GenomeDBs
+  Caller      : general
+
+=cut
+
+sub find_species_set_id_by_GenomeDBs_mix {
+  my ($self, $genome_dbs) = @_;
+
+  my @genome_db_ids = ();
   foreach my $genome_db (@$genome_dbs) {
-    throw "[$genome_db] must be a Bio::EnsEMBL::Compara::GenomeDB object or the corresponding dbID"
-        unless ($genome_db and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
-    my $genome_db_id = $genome_db->dbID;
-    throw "[$genome_db] must have a dbID" if (!$genome_db_id);
-    push (@$genome_db_ids, $genome_db_id);
+    if(looks_like_number($genome_db)) {
+        push @genome_db_ids, $genome_db;
+    } elsif($genome_db and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB")) {
+        if(my $genome_db_id = $genome_db->dbID) {
+            push @genome_db_ids, $genome_db_id;
+        } else {
+            throw "[$genome_db] must have a dbID";
+        }
+    } else {
+        throw "[$genome_db] must be a Bio::EnsEMBL::Compara::GenomeDB object or the corresponding dbID";
+    }
   }
 
-  if (!defined($genome_db_ids)) {
+  unless(@genome_db_ids) {
     return undef;
   }
 
@@ -267,9 +286,9 @@ sub fetch_by_GenomeDBs {
           FROM
             species_set
           WHERE
-            genome_db_id in (}.join(",", @$genome_db_ids).qq{)
+            genome_db_id in (}.join(",", @genome_db_ids).qq{)
           GROUP BY species_set_id
-          HAVING count = }.(scalar(@$genome_db_ids));
+          HAVING count = }.(scalar(@genome_db_ids));
   my $sth = $self->prepare($sql);
   $sth->execute();
   my $all_rows = $sth->fetchall_arrayref();
@@ -290,7 +309,7 @@ sub fetch_by_GenomeDBs {
           WHERE
             species_set_id in (}.join(",", @$species_set_ids).qq{)
           GROUP BY species_set_id
-          HAVING count = }.(scalar(@$genome_db_ids));
+          HAVING count = }.(scalar(@genome_db_ids));
   $sth = $self->prepare($sql);
   $sth->execute();
 
@@ -302,14 +321,11 @@ sub fetch_by_GenomeDBs {
     return undef;
   } elsif (@$all_rows > 1) {
     warning("Several species_set_ids have been found for genome_db_ids (".
-        join(",", @$genome_db_ids)."): ".join(",", map {$_->[0]} @$all_rows));
+        join(",", @genome_db_ids)."): ".join(",", map {$_->[0]} @$all_rows));
   }
-  $species_set_id = $all_rows->[0]->[0];
-
-  my $species_set = $self->fetch_by_dbID($species_set_id);
-
-  return $species_set;
+  return $all_rows->[0]->[0];
 }
+
 
 sub fetch_all {
   my $self = shift;
