@@ -1,3 +1,41 @@
+=head1 NAME
+
+ Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf
+
+=head1 SYNOPSIS
+
+    #1. Update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
+
+    #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+
+    #3. Check all default_options in PairAligner_conf.pm, especically:
+        release
+        pipeline_db (-host)
+        resource_classes 
+
+    #4. Check all default_options below, especially
+        ref_species (if not homo_sapiens)
+        default_chunks (especially if the reference is not human, since the masking_option_file option will have to be changed)
+        pair_aligner_options
+
+    #5. Run init_pipeline.pl script:
+        Using command line arguments:
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf --dbname drer_onil_tblat_67 --password <your password> --mlss_id 574 --pipeline_db -host=compara1 --ref_species danio_rerio --pipeline_name TBLAT_dr_on_67
+
+    #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
+
+
+=head1 DESCRIPTION  
+
+    This configuaration file gives defaults specific for the translated blat net pipeline. It inherits from PairAligner_conf.pm and parameters here will over-ride the parameters in PairAligner_conf.pm. 
+    Please see PairAligner_conf.pm for general details of the pipeline.
+
+=head1 CONTACT
+
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+
+=cut
+
 package Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf;
 
 use strict;
@@ -12,26 +50,27 @@ sub default_options {
 	    'pipeline_name'         => 'TBLAT_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
 	    #Define location of core databases separately (over-ride curr_core_sources_locs in Pairwise_conf.pm)
-#	    'reference' => {
-#	    	-host           => "host_name",
-#	    	-port           => port,
-#	    	-user           => "user_name",
-#	    	-dbname         => "my_human_database",
-#	    	-species        => "homo_sapiens"
-#	    },
+#           'reference' => {
+#               -host           => "host_name",
+#               -port           => port,
+#               -user           => "user_name",
+#               -dbname         => "my_human_database",
+#               -species        => "homo_sapiens"
+#           },
 #            'non_reference' => {
-#	    	    -host           => "host_name",
-#	    	    -port           => port,
-#	    	    -user           => "user_name",
-#	    	    -dbname         => "my_ciona_database",
-#	    	    -species        => "ciona_intestinalis"
-#	    	  },
+#                 -host           => "host_name",
+#                 -port           => port,
+#                 -user           => "user_name",
+#                 -dbname         => "my_ciona_database",
+#                 -species        => "ciona_intestinalis"
+#               },
 #	    'curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],
 #	    'curr_core_sources_locs'=> '',
 
 	    'ref_species' => 'homo_sapiens',
 
-	    #directory to dump dna files
+	    #directory to dump dna files. Note that 2 subdirectories will be appended to this, ${genome_db_id1}_${genome_db_id2}/species_name to
+	    #ensure uniqueness across pipelines
 	    'dump_dna_dir' => '/lustre/scratch101/ensembl/' . $ENV{USER} . '/pair_aligner/dna_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
 	    'default_chunks' => {

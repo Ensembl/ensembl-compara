@@ -1,3 +1,41 @@
+=head1 NAME
+
+ Bio::EnsEMBL::Compara::PipeConfig::Lastz_primate_conf
+
+=head1 SYNOPSIS
+
+    #1. Update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
+
+    #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+
+    #3. Check all default_options in PairAligner_conf.pm, especically:
+        release
+        pipeline_db (-host)
+        resource_classes 
+
+    #4. Check all default_options below, especially
+        ref_species (if not homo_sapiens)
+        default_chunks (especially if the reference is not human, since the masking_option_file option will have to be changed)
+        pair_aligner_options
+
+    #5. Run init_pipeline.pl script:
+        Using command line arguments:
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_primate_conf --dbname hsap_ggor_lastz_66 --password <your password> --mlss_id 534 --pipeline_db -host=compara1 --ref_species homo_sapiens --pipeline_name LASTZ_hs_gg_66
+
+    #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
+
+
+=head1 DESCRIPTION  
+
+    This configuaration file gives defaults specific for the lastz net pipeline between primates. It inherits from PairAligner_conf.pm and parameters here will over-ride the parameters in PairAligner_conf.pm. 
+    Please see PairAligner_conf.pm for general details of the pipeline.
+
+=head1 CONTACT
+
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+
+=cut
+
 package Bio::EnsEMBL::Compara::PipeConfig::Lastz_primate_conf;
 #
 #human vs primate specific configuration
