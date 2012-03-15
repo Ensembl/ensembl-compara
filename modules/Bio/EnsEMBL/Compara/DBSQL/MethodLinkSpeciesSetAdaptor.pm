@@ -251,15 +251,12 @@ sub store {
         $sth2->finish();
       }
       my $species_set_id;
-      if ($method_link_species_set->species_set_id) {
-        $species_set_id = $method_link_species_set->species_set_id;
+      if ($species_set_id = $method_link_species_set->species_set_id) {
         my $sth2 = $self->prepare("INSERT IGNORE INTO species_set VALUES (?, ?)");
         foreach my $genome_db_id (@genome_db_ids) {
           $sth2->execute($species_set_id, $genome_db_id);
         }
         $sth2->finish();
-      } else {
-        $species_set_id = $self->_get_species_set_id_from_species_set($species_set);
       }
       if (!$species_set_id) {
         my $sth2 = $self->prepare("INSERT INTO species_set VALUES (?, ?)");
@@ -617,7 +614,7 @@ sub fetch_all_by_method_link_type_GenomeDB {
   Arg 2      : listref of Bio::EnsEMBL::Compara::GenomeDB objects [$gdb1, $gdb2, $gdb3]
   Arg 3      : (optional) bool $no_warning
   Example    : my $method_link_species_set =
-                   $mlssa->fetch_by_method_link_type_GenomeDBs("MULTIZ",
+                   $mlssa->fetch_by_method_link_type_GenomeDBs('MULTIZ',
                        [$human_genome_db,
                        $rat_genome_db,
                        $mouse_genome_db])
@@ -633,27 +630,18 @@ sub fetch_all_by_method_link_type_GenomeDB {
 =cut
 
 sub fetch_by_method_link_type_GenomeDBs {
-  my ($self, $method_link_type, $genome_dbs, $no_warning) = @_;
-  my $method_link_species_set;
+    my ($self, $method_link_type, $genome_dbs, $no_warning) = @_;
 
-  my $genome_db_ids;
-  foreach my $genome_db (@$genome_dbs) {
-    throw "[$genome_db] must be a Bio::EnsEMBL::Compara::GenomeDB object or the corresponding dbID"
-        unless ($genome_db and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
-    my $genome_db_id = $genome_db->dbID;
-    throw "[$genome_db] must have a dbID" if (!$genome_db_id);
-    push (@$genome_db_ids, $genome_db_id);
-  }
-  my $method_link_id = ($self->get_method_link_id_from_method_link_type($method_link_type) || 0);
+    my $method_link_id = ($self->get_method_link_id_from_method_link_type($method_link_type) || 0);
+    my $species_set_id = $self->db->get_SpeciesSetAdaptor->find_species_set_id_by_GenomeDBs_mix( $genome_dbs );
 
-  $method_link_species_set = $self->_run_query_from_method_link_id_genome_db_ids($method_link_id, $genome_db_ids);
-  if (!$method_link_species_set and !$no_warning) {
-    my $warning = "No Bio::EnsEMBL::Compara::MethodLinkSpeciesSet found for\n".
-        "  <$method_link_type> and ".
-        join(", ", map {$_->name."(".$_->assembly.")"} @$genome_dbs);
-    warning($warning);
-  }
-  return $method_link_species_set;
+    my $method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set_id);
+    if (!$method_link_species_set and !$no_warning) {
+        my $warning = "No Bio::EnsEMBL::Compara::MethodLinkSpeciesSet found for\n".
+            "  <$method_link_type> and ".  join(", ", map {$_->name."(".$_->assembly.")"} @$genome_dbs);
+        warning($warning);
+    }
+    return $method_link_species_set;
 }
 
 
@@ -662,7 +650,7 @@ sub fetch_by_method_link_type_GenomeDBs {
   Arg  1     : string $method_link_type
   Arg 2      : listref of int [$gdbid1, $gdbid2, $gdbid3]
   Example    : my $method_link_species_set =
-                   $mlssa->fetch_by_method_link_type_genome_db_id("MULTIZ",
+                   $mlssa->fetch_by_method_link_type_genome_db_id('MULTIZ',
                        [$human_genome_db->dbID,
                        $rat_genome_db->dbID,
                        $mouse_genome_db->dbID])
@@ -678,12 +666,12 @@ sub fetch_by_method_link_type_GenomeDBs {
 =cut
 
 sub fetch_by_method_link_type_genome_db_ids {
-  my ($self, $method_link_type, $genome_db_ids) = @_;
-  my $method_link_species_set;
+    my ($self, $method_link_type, $genome_db_ids) = @_;
 
-  my $method_link_id = ($self->get_method_link_id_from_method_link_type($method_link_type) || 0);
+    my $method_link_id = ($self->get_method_link_id_from_method_link_type($method_link_type) || 0);
+    my $species_set_id = $self->db->get_SpeciesSetAdaptor->find_species_set_id_by_GenomeDBs_mix( $genome_db_ids );
 
-  return $self->_run_query_from_method_link_id_genome_db_ids($method_link_id, $genome_db_ids)
+    return $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set_id)
 }
 
 
@@ -752,12 +740,12 @@ sub fetch_by_method_link_type_species_set_name {
   my $all_method_link_species_sets = $self->fetch_all();
   my $species_set_adaptor = $self->db->get_SpeciesSetAdaptor;
 
-  my $all_species_sets = $species_set_adaptor->fetch_all_by_tag_value("name", $species_set_name);
+  my $all_species_sets = $species_set_adaptor->fetch_all_by_tag_value('name', $species_set_name);
   foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
       foreach my $this_species_set (@$all_species_sets) {
-	  if ($this_method_link_species_set->method_link_type eq $method_link_type && $this_method_link_species_set->species_set_id == $this_species_set->dbID) {
-	      return $this_method_link_species_set;
-	  }
+          if ($this_method_link_species_set->method_link_type eq $method_link_type && $this_method_link_species_set->species_set_id == $this_species_set->dbID) {
+              return $this_method_link_species_set;
+          }
       }
   }
   warning("Unable to find method_link_species_set with method_link_type of $method_link_type and species_set_tag value of $species_set_name\n");
@@ -803,18 +791,14 @@ sub get_max_alignment_length {
 }
 
 
-=head2 _run_query_from_method_link_id_genome_db_ids
+=head2 fetch_by_method_link_id_species_set_id
 
-  Arg  1     : int $method_link_id
-  Arg 2      : listref of int [$gdbid1, $gdbid2, $gdbid3]
+  Arg 1      : int $method_link_id
+  Arg 2      : int $species_set_id
   Example    : my $method_link_species_set =
-                   $mlssa->_run_query_from_method_link_id_genome_db_ids(1,
-                       [$human_genome_db->dbID,
-                       $mouse_genome_db->dbID])
+                   $mlssa->fetch_by_method_link_id_species_set_id(1, 1234)
   Description: Retrieve the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
-               corresponding to the given method_link_id and the given set of
-               Bio::EnsEMBL::Compara::GenomeDB objects defined by the set of
-               $genome_db_ids
+               corresponding to the given method_link_id and species_set_id
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Exceptions : Returns undef if no Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
                object is found
@@ -822,30 +806,21 @@ sub get_max_alignment_length {
 
 =cut
 
-sub _run_query_from_method_link_id_genome_db_ids {
-  my ($self, $method_link_id, $genome_db_ids) = @_;
-  my $method_link_species_set;
+sub fetch_by_method_link_id_species_set_id {
+    my ($self, $method_link_id, $species_set_id) = @_;
 
-  my $species_set_id = $self->_get_species_set_id_from_genome_db_ids($genome_db_ids);
+    my $method_link_species_set;
 
-  if ($species_set_id) {
-    my $sql = qq{
-            SELECT
-              method_link_species_set_id
-            FROM
-              method_link_species_set mlss
-            WHERE
-              species_set_id = \"$species_set_id\"
-              AND method_link_id = \"$method_link_id\"
-            };
-    my $sth = $self->prepare($sql);
-    $sth->execute();
-    my ($dbID) = $sth->fetchrow_array();
-    $sth->finish();
-    $method_link_species_set = $self->fetch_by_dbID($dbID);
-  }
+    if($method_link_id && $species_set_id) {
+        my $sql = "SELECT method_link_species_set_id FROM method_link_species_set mlss WHERE method_link_id=? AND species_set_id=?";
+        my $sth = $self->prepare($sql);
+        $sth->execute($method_link_id, $species_set_id);
+        my ($dbID) = $sth->fetchrow_array();
+        $sth->finish();
+        $method_link_species_set = $self->fetch_by_dbID($dbID);
+    }
 
-  return $method_link_species_set;
+    return $method_link_species_set;
 }
 
 
@@ -949,96 +924,6 @@ sub _get_ml_attributes_from_ml_id {
 	$attributes{class} = $class if defined $class;
 
   return \%attributes;
-}
-
-=head2 _get_species_set_id_from_species_set
-
-  Arg  1     : listref of Bio::EnsEMBL::Compara::GenomeDB obejcts $species_set
-  Example    : my $species_set_id = $mlssa->_get_species_set_id_from_species_set($mlss->species_set);
-  Description: Retrieve species_set_id corresponding to this set of species
-  Returntype : integer $species_set_id
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub _get_species_set_id_from_species_set {
-  my ($self, $species_set) = @_;
-  my $genome_db_ids = [];
-
-  foreach my $this_genome_db (@$species_set) {
-    if (UNIVERSAL::isa($this_genome_db, "Bio::EnsEMBL::Compara::GenomeDB") and $this_genome_db->dbID) {
-      push(@$genome_db_ids, $this_genome_db->dbID);
-    } else {
-      throw("[$this_genome_db] is not a Bio::EnsEMBL::Compara::GenomeDB or has no dbID");
-    }
-  }
-  return $self->_get_species_set_id_from_genome_db_ids([map {$_->dbID} @$species_set]);
-}
-
-=head2 _get_species_set_id_from_genome_db_ids
-
-  Arg  1     : listref of Bio::EnsEMBL::Compara::GenomeDB obejcts $species_set
-  Example    : my $species_set_id = $mlssa->_get_species_set_id_from_species_set($mlss->species_set);
-  Description: Retrieve species_set_id corresponding to this set of species
-  Returntype : integer $species_set_id
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub _get_species_set_id_from_genome_db_ids {
-  my ($self, $genome_db_ids) = @_;
-  my $species_set_id;
-
-  ## Fetch all the species_set which contain all these species_set_ids
-  my $sql = qq{
-          SELECT
-            species_set_id,
-            COUNT(*) as count
-          FROM
-            species_set
-          WHERE
-            genome_db_id in (}.join(",", @$genome_db_ids).qq{)
-          GROUP BY species_set_id
-          HAVING count = }.(scalar(@$genome_db_ids));
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  my $all_rows = $sth->fetchall_arrayref();
-  $sth->finish();
-
-  if (!@$all_rows) {
-    return undef;
-  }
-  my $species_set_ids = [map {$_->[0]} @$all_rows];
-
-  ## Keep only the species_set which does not contain any other genome_db_id
-  $sql = qq{
-          SELECT
-            species_set_id,
-            COUNT(*) as count
-          FROM
-            species_set
-          WHERE
-            species_set_id in (}.join(",", @$species_set_ids).qq{)
-          GROUP BY species_set_id
-          HAVING count = }.(scalar(@$genome_db_ids));
-  $sth = $self->prepare($sql);
-  $sth->execute();
-
-  $all_rows = $sth->fetchall_arrayref();
-
-  $sth->finish();
-
-  if (!@$all_rows) {
-    return undef;
-  } elsif (@$all_rows > 1) {
-    warning("Several species_set_ids have been found for genome_db_ids (".
-        join(",", @$genome_db_ids)."): ".join(",", map {$_->[0]} @$all_rows));
-  }
-  $species_set_id = $all_rows->[0]->[0];
-
-  return $species_set_id;
 }
 
 
