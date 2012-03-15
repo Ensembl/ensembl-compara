@@ -96,24 +96,8 @@ print "Test fetch_all_by_method_link(\"BLASTZ_NET\")\n";
   }
   print "\n";
 
-print "Test fetch_all_by_method_link_id(1)\n";
-  $mlss = $mlssa->fetch_all_by_method_link_id(1);
-  foreach my $this_mlss (sort {$a->dbID <=> $b->dbID } @$mlss) {
-    print " + ", $this_mlss->dbID, " - ", $this_mlss->method_link_type, " (", $this_mlss->method_link_id,
-        ") is: ", join(" - ", map {$_->name} @{$this_mlss->species_set}), "\n";
-  }
-  print "\n";
-
 print "Test fetch_all_by_method_link_type(\"BLASTZ_NET\")\n";
   $mlss = $mlssa->fetch_all_by_method_link_type("BLASTZ_NET");
-  foreach my $this_mlss (sort {$a->dbID <=> $b->dbID } @$mlss) {
-    print " + ", $this_mlss->dbID, " - ", $this_mlss->method_link_type, " (", $this_mlss->method_link_id,
-        ") is: ", join(" - ", map {$_->name} @{$this_mlss->species_set}), "\n";
-  }
-  print "\n";
-
-print "Test fetch_all_by_genome_db_id method(1)\n";
-  $mlss = $mlssa->fetch_all_by_genome_db_id(1);
   foreach my $this_mlss (sort {$a->dbID <=> $b->dbID } @$mlss) {
     print " + ", $this_mlss->dbID, " - ", $this_mlss->method_link_type, " (", $this_mlss->method_link_id,
         ") is: ", join(" - ", map {$_->name} @{$this_mlss->species_set}), "\n";
