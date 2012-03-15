@@ -23,10 +23,11 @@ sub render {
 
   my %species;
   foreach my $species (@valid_species) {
-    my $common = $species_defs->get_config($species, "SPECIES_COMMON_NAME");
+    my $common      = $species_defs->get_config($species, "SPECIES_COMMON_NAME");
     my $info = {
         'dir'       => $species,
         'status'    => 'live',
+        'sci_name'  => $species_defs->get_config($species, "SPECIES_SCIENTIFIC_NAME"),
         'assembly'  => $species_defs->get_config($species, 'ASSEMBLY_NAME'),
     };
     $species{$common} = $info;
@@ -35,15 +36,27 @@ sub render {
   ## Add in pre species
   my $pre_species = $species_defs->get_config('MULTI', 'PRE_SPECIES');
   if ($pre_species) {
-    while (my ($bioname, $common) = each (%$pre_species)) {
+    while (my ($bioname, $array) = each (%$pre_species)) {
+      my ($common, $assembly) = @$array;
+      $common =~ s/_/ /;
       my $status = $species{$common} ? 'both' : 'pre';
-      my $info = {
-        'dir'     => $bioname,
-        'status'  => $status,
-      };
-      if ($status eq 'both') {
-        $info->{'assembly'}  = $species_defs->get_config($bioname, 'ASSEMBLY_NAME');
+      my $info;
+      if ($status eq 'pre') {
+        ## This is a bit of a fudge, but we have only basic config atm
+        (my $sci_name = $bioname) =~ s/_/ /g;
+        $info = {
+          'dir'       => $bioname,
+          'sci_name'  => $sci_name,
+          'status'    => $status,
+          'assembly'  => $assembly,
+        };
       }
+      else {
+        ## Don't overwrite existing meta info!
+        $info = $species{$common};
+        $info->{'pre_assembly'} = $assembly;
+      }
+      $info->{'status'} = $status;
       $species{$common} = $info;
     }
   }
@@ -74,7 +87,7 @@ sub render {
     next unless $common;
     my $info = $species{$common};
     my $dir = $info->{'dir'};
-    (my $name = $dir) =~ s/_/ /g;
+    my $name = $info->{'sci_name'};
     my $link_text = $common =~ /\./ ? $name : $common;
     $html .= qq(<td style="width:8%;text-align:right;padding:10px 0px">);
     if ($dir) {
@@ -89,7 +102,8 @@ sub render {
         $html .= qq(<span style = "$link_style">$link_text</span> (<a href="http://pre.ensembl.org/$dir/" rel="external">preview - assembly only</a>));
       }
       elsif ($info->{'status'} eq 'both') {
-        $html .= qq#<a href="/$dir/Info/Index/"  style="$link_style">$link_text</a> (<a href="http://pre.ensembl.org/$dir/" rel="external">preview new assembly</a>)#;
+        my $pre_assembly = $info->{'pre_assembly'};
+        $html .= qq#<a href="/$dir/Info/Index/"  style="$link_style">$link_text</a> (<a href="http://pre.ensembl.org/$dir/" rel="external">preview new assembly $pre_assembly</a>)#;
       }
       else {
         $html .= qq(<a href="/$dir/Info/Index/"  style="$link_style">$link_text</a>);
