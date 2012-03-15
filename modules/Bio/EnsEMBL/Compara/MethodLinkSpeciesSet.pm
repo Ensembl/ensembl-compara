@@ -344,7 +344,7 @@ sub species_set_id {
   if (!defined($self->{'species_set_id'})
       && defined($self->{'species_set'})
       && defined($self->{'adaptor'})) {
-    $self->{'species_set_id'} = $self->adaptor->_get_species_set_id_from_species_set($self->{'species_set'});
+    $self->{'species_set_id'} = $self->adaptor->db->get_SpeciesSetAdaptor->find_species_set_id_by_GenomeDBs_mix( $self->{'species_set'} );
   }
 
   return $self->{'species_set_id'};
@@ -365,27 +365,32 @@ sub species_set_id {
 =cut
 
 sub species_set {
-  my ($self, $arg) = @_;
- 
-  if ($arg && @$arg) {
-    ## Check content
-    my $genome_dbs;
-    foreach my $gdb (@$arg) {
-      throw("undefined value used as a Bio::EnsEMBL::Compara::GenomeDB\n")
-        if (!defined($gdb));
-      throw("$gdb must be a Bio::EnsEMBL::Compara::GenomeDB\n")
-        unless $gdb->isa("Bio::EnsEMBL::Compara::GenomeDB");
+    my ($self, $arg) = @_;
 
-      unless (defined $genome_dbs->{$gdb->dbID}) {
-        $genome_dbs->{$gdb->dbID} = $gdb;
-      } else {
-        warn("GenomeDB (".$gdb->name."; dbID=".$gdb->dbID .
-             ") appears twice in this Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n");
-      }
+    if($arg) {
+        if(UNIVERSAL::isa($arg, 'Bio::EnsEMBL::Compara::SpeciesSet')) {
+
+            $self->{'species_set'} = $arg->genome_dbs;
+
+        } elsif(@$arg) {
+
+            my %genome_db_hash = ();
+            foreach my $gdb (@$arg) {
+                throw("undefined value used as a Bio::EnsEMBL::Compara::GenomeDB\n") if (!defined($gdb));
+                throw("$gdb must be a Bio::EnsEMBL::Compara::GenomeDB\n") unless $gdb->isa("Bio::EnsEMBL::Compara::GenomeDB");
+
+                unless (defined $genome_db_hash{$gdb->dbID}) {
+                    $genome_db_hash{$gdb->dbID} = $gdb;
+                } else {
+                    warn("GenomeDB (".$gdb->name."; dbID=".$gdb->dbID .") appears twice in this Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n");
+                }
+            }
+            $self->{'species_set'} = [ values %genome_db_hash ] ;
+        } else {
+            die "Wrong type of argument to $self->species_set()";
+        }
     }
-    $self->{'species_set'} = [ values %{$genome_dbs} ] ;
-  }
-  return $self->{'species_set'};
+    return $self->{'species_set'};
 }
 
 
