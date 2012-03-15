@@ -57,9 +57,9 @@ sub content {
   my $tree_stable_id       = $tree->tree->stable_id;
   my $highlight_gene       = $hub->param('g1');
   my $highlight_ancestor   = $hub->param('anc');
-  my $image_width          = $self->image_width            || 800;
-  my $collapsability       = $hub->param('collapsability') || ($is_genetree ? 'duplications' : 'gene');
-  my $colouring            = $hub->param('colouring')      || 'background';
+  my $image_width          = $self->image_width       || 800;
+  my $colouring            = $hub->param('colouring') || 'background';
+  my $collapsability       = $is_genetree ? '' : $hub->param('collapsability');
   my $show_exons           = $hub->param('exons') eq 'on' ? 1 : 0;
   my $image_config         = $hub->get_imageconfig('genetreeview');
   my @hidden_clades        = grep { $_ =~ /^group_/ && $hub->param($_) eq 'hide'     } $hub->param;
@@ -117,7 +117,7 @@ sub content {
       $html .= $self->_info('Highlighted genes',
         sprintf(
           'In addition to all <I>%s</I> genes, the %s gene (<I>%s</I>) and its paralogues have been highlighted. <a href="%s">Click here to switch off highlighting</a>.', 
-          $member->genome_db->name, $highlight_gene_display_label, $highlight_species, $hub->url
+          $member->genome_db->name, $highlight_gene_display_label, $highlight_species, $hub->url({ g1 => undef }, undef, 1)
         )
       );
     } else {
@@ -241,7 +241,7 @@ sub content {
   
   push @view_links, sprintf $li_tmpl, $hub->url({ collapse => $collapsed_to_dups, g1 => $highlight_gene }), 'View all duplication nodes';
   push @view_links, sprintf $li_tmpl, $hub->url({ collapse => 'none', g1 => $highlight_gene }), 'View fully expanded tree';
-  push @view_links, sprintf $li_tmpl, $hub->url, 'Switch off highlighting' if $highlight_gene;
+  push @view_links, sprintf $li_tmpl, $hub->url({ g1 => undef }, undef, 1), 'Switch off highlighting' if $highlight_gene;
 
   $html .= $image->render;
   $html .= sprintf(qq{
