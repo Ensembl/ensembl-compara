@@ -546,14 +546,18 @@ sub get_viewconfig {
   my $cache_code = "${type}::$component";
   
   return undef unless $session;
-  return $session->view_configs->{$cache_code} if $session->view_configs->{$cache_code};
   
-  my $module_name = $self->get_module_names('ViewConfig', $type, $component);
-  return unless $module_name;
+  my $config = $session->view_configs->{$cache_code};
   
-  my $config = $module_name->new($type, $component, $self);
+  if (!$config) {
+    my $module_name = $self->get_module_names('ViewConfig', $type, $component);
+    return unless $module_name;
+    
+    $config = $module_name->new($type, $component, $self);
+    
+    $session->apply_to_view_config($config, $type, $cache_code, $config->code); # $config->code and $cache_code can be different
+  }
   
-  $session->apply_to_view_config($config, $type, $cache_code, $config->code); # $config->code and $cache_code can be different
   $self->viewconfig = $config if $cache;
   
   return $config;
