@@ -166,14 +166,6 @@ sub fetch_all_by_Member_MethodLinkSpeciesSet {
   throw("method_link_species_set arg is required\n")
     unless ($method_link_species_set);
 
-#  my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
-#  my $mlss_arrayref = $mlssa->fetch_all_by_method_link_type_genome_db_id($method_link_type,$member->genome_db_id);
-  
-#  unless (scalar @{$mlss_arrayref}) {
-#    warning("There is no $method_link_type data stored in the database for " . $member->genome_db->name . "\n");
-#    return [];
-#  }
-
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
   my $constraint =  " h.method_link_species_set_id =" . $method_link_species_set->dbID;
 
