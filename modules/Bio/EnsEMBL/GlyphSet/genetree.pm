@@ -49,10 +49,6 @@ sub _init {
   # Handle collapsed/removed nodes
   my %collapsed_nodes = ( map{$_=>1} split( ',', $collapsed_nodes_str ) );  
   $self->{_collapsed_nodes} = \%collapsed_nodes;
-  # Keep the collapsed nodes in the URL. This is icky!
-  # I have mailed james to see if the arbitrary URL params can be included 
-  # by default.
-  $self->{'config'}->core_objects->{'parameters'}{'collapse'} = $collapsed_nodes_str;
 
   # $coloured_nodes is an array. It is sorted such as the largest clades
   # are used first. In case or a tie (i.e. all the genes are mammals and
@@ -312,16 +308,14 @@ sub _init {
         $txt->{colour} = $bold_colour;
       }
       
-      if( my $stable_id = $f->{_gene} ){ # Add a gene href
-        my $species = $f->{'_species'};
-        $species =~ s/\s/_/g;
-        my $href = $self->_url( {'species' => $species,
-                                 'type'    => 'Gene',
-                                 'action'  => 'ComparaTree',
-                                 '__clear' => $stable_id != $self->{'config'}->core_objects->{'parameters'}{'g'}, 
-                                 'r'       => undef,
-                                 'g'       => $stable_id } );
-        $txt->{'href'} = $href;
+      if ($f->{'_gene'}) {
+        $txt->{'href'} = $self->_url({
+          species  => $f->{'_species'},
+          type     => 'Gene',
+          action   => 'ComparaTree',
+          __clear  => 1,
+          g        => $f->{'_gene'},
+        });
       }
       
       push(@labels, $txt);
@@ -329,7 +323,7 @@ sub _init {
 
     }
   }
-    
+  
   $self->push( @bg_glyphs );
 
   my $max_x = (sort {$a->{x} <=> $b->{x}} @nodes)[-1]->{x};
@@ -588,14 +582,10 @@ sub features {
   # Process alignment
   if ($tree->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
     if ($tree->genome_db) {
+      $f->{'_species'} = ucfirst $tree->genome_db->name; # This will be used in URLs
 
-# This will be used in URLs
-      $f->{'_species'} = $tree->genome_db->name; 
-
-# This will be used for display
-      # FIXME: ucfirst tree->genome_db->name is a hack to get species names right.
-      # There should be a way of retrieving this name correctly instead.
-      $f->{'_species_label'} = $self->species_defs->get_config(ucfirst $tree->genome_db->name, 'SPECIES_SCIENTIFIC_NAME') || $self->species_defs->species_label($tree->genome_db->name) || $tree->genome_db->name; 
+      # This will be used for display
+      $f->{'_species_label'} = $self->species_defs->get_config($f->{'_species'}, 'SPECIES_SCIENTIFIC_NAME') || $self->species_defs->species_label($f->{'_species'}) || $f->{'_species'}; 
       $f->{'_genome_dbs'} ||= {};
       $f->{'_genome_dbs'}->{$tree->genome_db->dbID}++;
     }
