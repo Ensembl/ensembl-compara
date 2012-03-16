@@ -202,21 +202,6 @@ sub content {
     select => 'select',
   );
   
-  $form->add_element(
-    type   => 'DropDown',
-    select =>, 'select',
-    label  => 'Condel consensus (SIFT/PolyPhen) predictions',
-    name   => 'condel',
-    values => [
-      { value => 'no',    name => 'No'                   },
-      { value => 'pred',  name => 'Prediction only'      },
-      { value => 'score', name => 'Score only'           },
-      { value => 'both',  name => 'Prediction and score' },
-    ],
-    value  => 'no',
-    select => 'select',
-  );
-  
   
   $form->add_element('type' => 'SubHeader', 'value' => 'Frequency filtering of existing variants (human only)');
   
