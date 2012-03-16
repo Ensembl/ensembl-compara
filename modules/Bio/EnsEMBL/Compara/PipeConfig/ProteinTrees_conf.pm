@@ -547,8 +547,8 @@ sub pipeline_analyses {
             },
             -hive_capacity => 10,
             -flow_into => {
-                2 => [ 'blastp_with_reuse' ],  # fan n_members
-                1 => [ 'hcluster_dump_input_per_genome' ],   # n_species
+                '2->A' => [ 'blastp_with_reuse' ],  # fan n_members
+                'A->1' => [ 'hcluster_dump_input_per_genome' ],   # n_species
             },
         },
 
@@ -577,7 +577,6 @@ sub pipeline_analyses {
                 'outgroups'     => $self->o('outgroups'),
                 'cluster_dir'   => $self->o('cluster_dir'),
             },
-            -wait_for => [ 'blastp_with_reuse' ],  # funnel n_members
             -hive_capacity => 4,
             -flow_into => {
                 1 => [ 'per_genome_clusterset_qc' ],  # n_species
@@ -737,7 +736,7 @@ sub pipeline_analyses {
             -rc_id => 3,
             -priority => 20,
             -flow_into => {
-                1 => [ 'ortho_tree', 'CAFE_species_tree' ],
+                1 => [ 'ortho_tree', 'CAFE_species_tree', 'build_HMM_aa', 'build_HMM_cds' ],
                 2 => [ 'njtree_phyml' ],
             },
         },
@@ -791,9 +790,6 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('ortho_tree_capacity'),
             -rc_id => 1,
             -priority => 10,
-            -flow_into => {
-                1 => [ 'build_HMM_aa', 'build_HMM_cds' ],
-            },
         },
 
         {   -logic_name => 'build_HMM_aa',
@@ -829,11 +825,17 @@ sub pipeline_analyses {
             -rc_id     => 1,
             -priority  => 50,
             -flow_into => {
-                1 => [ 'other_paralogs' ],
-                2 => [ 'mcoffee' ],
+                'A->1' => [ 'other_paralogs' ],
+                '2->A' => [ 'mcoffee' ],
             },
         },
 
+        {   -logic_name => 'other_paralogs',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OtherParalogs',
+            -parameters => { },
+            -hive_capacity        => $self->o('other_paralogs_capacity'),
+            -rc_id => 1,
+        },
 
         {   -logic_name => 'dummy_wait_alltrees',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
@@ -842,14 +844,6 @@ sub pipeline_analyses {
 		-flow_into => [ 'overall_genetreeset_qc' ],  # backbone
         },
 
-
-        {   -logic_name => 'other_paralogs',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OtherParalogs',
-            -parameters => { },
-            -wait_for => [ 'dummy_wait_alltrees' ],
-            -hive_capacity        => $self->o('other_paralogs_capacity'),
-            -rc_id => 1,
-        },
 
 # ---------------------------------------------[a QC step after main loop]----------------------------------------------------------
 
