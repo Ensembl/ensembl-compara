@@ -87,14 +87,9 @@ if ($help || !$feature) {
   exit(0);
 }
 
-my $compara_dba;
+#Load core
 if ($reg_conf) {
-  $reg->load_all($reg_conf);
-  if ($compara_url) {
-    $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$compara_url);
-  } else { 
-    $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
-  }
+  $reg->load_all($reg_conf,1);
 } elsif ($host && $user && $dbname) {
    #load single, non-standard named core database
    new Bio::EnsEMBL::DBSQL::DBAdaptor(
@@ -104,16 +99,19 @@ if ($reg_conf) {
     -species => $species, 
     -group => 'core',
     -dbname => $dbname);
-  if ($compara_url) {
-    $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$compara_url);
-  }
 } else {
   $reg->load_registry_from_url($url);
-  if ($compara_url) {
+}
+
+#Load compara from url or Multi.
+my $compara_dba;
+if ($compara_url) {
     $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$compara_url);
-  } else { 
-    $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
-  }
+} else {
+    #May not need compara if dumping say, core toplevel.
+    eval {
+       $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
+      };
 }
 
 my $species_name = $reg->get_adaptor($species, "core", "MetaContainer")->get_production_name;
