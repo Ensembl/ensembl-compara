@@ -8,7 +8,7 @@ use Bio::EnsEMBL::Registry;
 
 use base qw(EnsEMBL::Web::Configuration);
 
-sub caption { return 'Karyotype'; }
+sub caption { return 'Location'; }
 
 sub set_default_action {
   my $self = shift;
