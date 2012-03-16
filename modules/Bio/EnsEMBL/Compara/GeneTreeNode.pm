@@ -216,7 +216,12 @@ sub consensus_cigar_line {
    foreach my $leaf (@all_leaves) {
      next unless( UNIVERSAL::can( $leaf, 'cigar_line' ) );
      my $cigar = $leaf->cigar_line;
-     $cigar =~ s/(\d*)([A-Z])/$2 x ($1||1)/ge; #Expand
+     my $newcigar = "";
+#     $cigar =~ s/(\d*)([A-Z])/$2 x ($1||1)/ge; #Expand
+      while ($cigar =~ /(\d*)([A-Z])/g) {
+          $newcigar .= $2 x ($1 || 1);
+      }
+     $cigar = $newcigar;
      push @cigars, $cigar;
    }
 
@@ -244,8 +249,12 @@ sub consensus_cigar_line {
    }
 
    # Collapse the consensus cigar, e.g. 'DDDD' = 4D
-   $cons_cigar =~ s/(\w)(\1*)/($2?length($2)+1:"").$1/ge;
-
+#   $cons_cigar =~ s/(\w)(\1*)/($2?length($2)+1:"").$1/ge;
+   my $collapsed_cigar = "";
+   while ($cons_cigar =~ /(D+|M+|I+|m+)/g) {
+     $collapsed_cigar .= (length($1) == 1 ? "" : length($1)) . substr($1,0,1)
+ }
+   $cons_cigar = $collapsed_cigar;
    # Return the consensus
    return $cons_cigar;
 }
