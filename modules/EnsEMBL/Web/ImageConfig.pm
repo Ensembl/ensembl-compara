@@ -647,17 +647,37 @@ sub load_configured_vcf    { shift->load_file_format('vcf');    }
 sub load_file_format {
   my ($self, $format)  = @_;
   my $internal_sources = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {}; # get the internal sources from config
-  my @A = keys %{$internal_sources||{}};
-  warn "Internal $format sources: @A";
   my $function         = "_add_${format}_track";
-  
+
   foreach my $source_name (sort keys %$internal_sources) {
     # get the target menu 
-    my $menu   = $self->get_node($internal_sources->{$source_name});
-    my $source = $menu ? $self->sd_call($source_name) : undef;
-    
-    $self->$function(key => $source_name, menu => $menu, source => $source, internal => 1) if $source;
+    my $source;
+    my $menu = $self->get_node($internal_sources->{$source_name});
+    if ($menu) {
+      $source = $self->sd_call($source_name);
+    }
+    else {
+      ## Probably an external datahub source
+      $source           = $internal_sources->{$source_name};
+      my $menu_key      = $source->{'menu_key'};
+      my $menu_name     = $source->{'menu_name'};
+      my $submenu_key   = $source->{'submenu_key'};
+      my $submenu_name  = $source->{'submenu_name'};
+
+      ## Insert new menu after Regulation
+      ## TODO - fine-tune positioning once we get multiple datahubs
+      my $reg_node      = $self->get_node('functional');
+
+      my $main_menu     = $self->get_node($menu_key)
+                            || $self->tree->insert_after($self->create_submenu($menu_key, $menu_name), $reg_node);
+      $menu             = $self->get_node($submenu_key)
+                            || $main_menu->append_child($self->create_submenu($submenu_key, $submenu_name));
+    }
+    my $desc = $source->{'description'};
+    $self->$function(key => $source_name, menu => $menu, source => $source,
+                      description => $desc, internal => 1) if $source;
   }
+  
 }
 
 sub _add_bam_track {
