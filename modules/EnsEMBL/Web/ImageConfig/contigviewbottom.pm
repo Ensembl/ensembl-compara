@@ -100,6 +100,8 @@ sub init {
   # Add in additional tracks
   $self->load_tracks;
   $self->load_configured_das;
+  $self->load_configured_bigwig;
+  $self->load_configured_bigbed;
 #  $self->load_configured_bam;
   
   # These tracks get added after the "auto-loaded tracks get addded
