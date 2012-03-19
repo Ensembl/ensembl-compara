@@ -157,6 +157,7 @@ sub get_available_adaptors {
       "ConstrainedElement" => "Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor",
       "SitewiseOmega" => "Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor",
       "SpeciesTree" => "Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor",
+      'Method'          => 'Bio::EnsEMBL::Compara::DBSQL::MethodAdaptor',
 
        #Production specific adaptors
        "DnaFragChunk" => "Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor",
