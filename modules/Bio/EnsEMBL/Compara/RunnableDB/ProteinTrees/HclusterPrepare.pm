@@ -32,8 +32,9 @@ Blah
 
 =head1 CONTACT
 
-  Contact Albert Vilella on module implemetation/design detail: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+  Please email comments or questions to the public Ensembl developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at <helpdesk@ensembl.org>.
 
 =cut
 
@@ -137,7 +138,7 @@ sub fetch_distances {
        AND ss.genome_db_id=paf.hgenome_db_id
        AND paf.qgenome_db_id=$genome_db_id
   };
-  print("$sql\n") if ($self->debug);
+  print +("$sql\n") if ($self->debug);
   my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->{mysql_use_result} = 1;
   $sth->execute();
@@ -168,7 +169,7 @@ sub fetch_categories {
   my $sql = "SELECT DISTINCT ".
             "qmember_id ".
              "FROM $table_name WHERE qgenome_db_id=$genome_db_id;";
-  print("$sql\n");
+  print +("$sql\n") if ($self->debug);
   my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->{mysql_use_result} = 1;
   $sth->execute();
