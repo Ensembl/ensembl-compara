@@ -35,6 +35,7 @@ use Bio::Species;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 
+use Data::Dumper;
 
 sub new {
   my ($class, @args) = @_;
@@ -151,12 +152,13 @@ sub dump_loc {
 
 =head2 add_member_id
 
-  Arg [1]    : $member_id
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
+  Arg [1]     : $member_id
+  Example     : my $count = $subset->add_member_id($member_id);
+  Description : Add a new member_id to the subset object and
+                returns the number of member_ids already in the object
+  Returntype  : A scalar with the number of member_ids in the object
+  Exceptions  :
+  Caller      :
 
 =cut
 
@@ -175,6 +177,19 @@ sub add_member_id {
   }
   return $count
 }
+
+
+=head2 add_member
+
+  Arg [1]      : A Bio::EnsEMBL::Compara::Member
+  Example      : my $count = $subset->add_member($member);
+  Description  : Add a new Bio::EnsEMBL::Compara::Member to the subset object
+                 and returns the number of members already in the object
+  ReturnType   : A scalar with the number of members in the object
+  Exceptions   :
+  Caller       :
+
+=cut
 
 sub add_member {
   my ($self, $member) = @_;
