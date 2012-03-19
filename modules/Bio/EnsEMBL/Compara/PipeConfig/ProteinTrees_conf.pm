@@ -498,6 +498,7 @@ sub pipeline_analyses {
             -can_be_empty  => 1,
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_id => 1,
+            -priority => -20,
             -flow_into => {
                 2 => [ 'mysql:////sequence_cds' ],
             },
@@ -513,6 +514,7 @@ sub pipeline_analyses {
             -can_be_empty  => 1,
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_id => 1,
+            -priority => -20,
             -flow_into => {
                 2 => [ 'mysql:////sequence_exon_bounded' ],
             },
@@ -529,6 +531,7 @@ sub pipeline_analyses {
             -wait_for   => [ 'accumulate_reuse_ss' ],     # have to wait until reuse_ss_csv is computed
             -hive_capacity => $self->o('reuse_capacity'),
             -can_be_empty  => 1,
+            -priority => -10,
         },
 
 # ---------------------------------------------[load the rest of members]------------------------------------------------------------
@@ -548,6 +551,7 @@ sub pipeline_analyses {
             -parameters => { },
             -hive_capacity => -1,
             -rc_id => 1,
+            -priority => -20,
             -flow_into => {
                 2 => [ 'store_sequences' ],
             },
@@ -558,6 +562,7 @@ sub pipeline_analyses {
             -parameters => { },
             -hive_capacity => $self->o('store_sequences_capacity'),
             -rc_id => 2,
+            -priority => -20,
             -flow_into => {
                 2 => [ 'mysql:////sequence_cds' ],
                 3 => [ 'mysql:////sequence_exon_bounded' ],
@@ -573,6 +578,7 @@ sub pipeline_analyses {
                 ],
             },
             -can_be_empty  => 1,
+            -priority => -10,
         },
 
 
@@ -737,7 +743,7 @@ sub pipeline_analyses {
                 'mafft_binaries'            => $self->o('mafft_binaries'),
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -priority => 40,
+            -priority => 35,
             -flow_into => {
                 1 => [ 'njtree_phyml' ],
                 3 => [ 'quick_tree_break' ],
@@ -769,6 +775,7 @@ sub pipeline_analyses {
                               'species_tree_meta_key' => $self->o('species_tree_meta_key'),
                              },
               -hive_capacity => -1,
+              -priority => 5,
               -flow_into => {
                              1 => ['CAFE_table'],
                             },
@@ -783,6 +790,7 @@ sub pipeline_analyses {
                               'type' => 'prot',
                              },
               -hive_capacity => 200,
+              -priority => 4,
               -rc_id => 5,
               -flow_into => {
                   2 => ['CAFE_analysis'],
@@ -799,6 +807,7 @@ sub pipeline_analyses {
                               'cafe_shell' => $self->o('cafe_shell'),
                              },
               -rc_id => 9,
+              -priority => 3,
               -hive_capacity => 200,
             },
 
@@ -856,6 +865,7 @@ sub pipeline_analyses {
             -parameters => { },
             -hive_capacity        => $self->o('other_paralogs_capacity'),
             -rc_id => 1,
+            -priority => 10,
         },
 
         {   -logic_name => 'dummy_wait_alltrees',
