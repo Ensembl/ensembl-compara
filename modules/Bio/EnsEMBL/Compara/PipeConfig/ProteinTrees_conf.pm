@@ -150,6 +150,7 @@ sub default_options {
         'cafe_struct_tree_str'      => '',
 
     # hive_capacity values for some analyses:
+        'reuse_capacity'            => 4,
         'store_sequences_capacity'  => 200,
         'blastp_capacity'           => 450,
         'mcoffee_capacity'          => 600,
@@ -307,7 +308,6 @@ sub pipeline_analyses {
                 'sql'         => "ALTER TABLE #table_name# ENGINE=InnoDB",
             },
             -hive_capacity => 10,
-            -can_be_empty  => 1,
         },
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
@@ -348,7 +348,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -wait_for => [ 'load_genomedb' ],
             -flow_into => {
-                1 => [ 'make_species_tree', 'accumulate_reuse_ss', 'generate_reuse_ss' ],  # "backbone"
+                1 => [ 'make_species_tree', 'generate_reuse_ss' ],  # "backbone"
             },
         },
 
@@ -363,6 +363,7 @@ sub pipeline_analyses {
                 ],
             },
             -flow_into => {
+                1 => [ 'accumulate_reuse_ss' ],
                 2 => { 'mysql:////meta' => { 'meta_key' => 'reuse_ss_id', 'meta_value' => '#_insert_id_0#' } },     # dynamically record it as a pipeline-wide parameter
             },
         },
@@ -396,9 +397,12 @@ sub pipeline_analyses {
             -hive_capacity => 10,    # allow for parallel execution
             -rc_id => 1,
             -flow_into => {
-                2 => { 'sequence_table_reuse'       => undef,
-                       'paf_table_reuse'            => undef,
-                       'mysql:////species_set'      => { 'genome_db_id' => '#genome_db_id#', 'species_set_id' => '#reuse_ss_id#' },
+                2 => {
+                    'sequence_table_reuse'              => undef,
+                    'sequence_cds_table_reuse'          => undef,
+                    'sequence_exon_bounded_table_reuse' => undef,
+                    'paf_table_reuse'                   => undef,
+                    'mysql:////species_set'             => { 'genome_db_id' => '#genome_db_id#', 'species_set_id' => '#reuse_ss_id#' },
                 },
                 3 => [ 'load_fresh_members', 'paf_create_empty_table' ],
             },
@@ -413,8 +417,11 @@ sub pipeline_analyses {
             -wait_for => [ 'check_reusability' ],
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into => {
-                1 => [ 'hcluster_run' ],
                 2 => [ 'mysql:////meta' ],
+                '1->A' => {
+                    'hcluster_merge_inputs' => [{'ext' => 'txt'}, {'ext' => 'cat'}],
+                },
+                'A->1' => [ 'hcluster_run' ],
             },
         },
 
@@ -427,13 +434,12 @@ sub pipeline_analyses {
                             'inputquery' => 'SELECT s.* FROM sequence s JOIN member USING (sequence_id) WHERE sequence_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
                             'fan_branch_code' => 2,
             },
-            -wait_for => [ 'accumulate_reuse_ss' ], # to make sure some fresh members won't start because they were dataflown first (as this analysis can_be_empty)
             -can_be_empty  => 1,
-            -hive_capacity => 4,
+            -hive_capacity => $self->o('reuse_capacity'),
             -rc_id => 1,
             -flow_into => {
-                1 => [ 'member_table_reuse' ],    # n_reused_species
                 2 => [ 'mysql:////sequence' ],
+                1 => [ 'member_table_reuse' ],
             },
         },
 
@@ -445,9 +451,8 @@ sub pipeline_analyses {
                 'where'         => 'member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
                 'mode'          => 'insertignore',
 		    },
-            -wait_for => [ 'accumulate_reuse_ss' ], # to make sure some fresh members won't start because they were dataflown first (as this analysis can_be_empty)
             -can_be_empty  => 1,
-            -hive_capacity => 4,
+            -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
                 1 => [ 'subset_table_reuse' ],   # n_reused_species
             },
@@ -461,9 +466,8 @@ sub pipeline_analyses {
                 'mode'          => 'insertignore',
                 'where'         => 'description LIKE "gdb:#genome_db_id# %"',
             },
-            -wait_for => [ 'accumulate_reuse_ss' ], # to make sure some fresh members won't start because they were dataflown first (as this analysis can_be_empty)
             -can_be_empty  => 1,
-            -hive_capacity => 4,
+            -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
                 1 => [ 'subset_member_table_reuse' ],    # n_reused_species
             },
@@ -477,10 +481,40 @@ sub pipeline_analyses {
                             'fan_branch_code' => 2,
             },
             -can_be_empty  => 1,
-            -hive_capacity => 4,
+            -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
-                1 => [ 'store_sequences_factory', 'dump_subset_create_blastdb' ],
                 2 => [ 'mysql:////subset_member' ],
+                1 => [ 'dump_subset_create_blastdb' ],
+            },
+        },
+
+        {   -logic_name => 'sequence_cds_table_reuse',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                            'db_conn'    => $self->o('reuse_db'),
+                            'inputquery' => 'SELECT s.* FROM sequence_cds s JOIN member USING (member_id) WHERE genome_db_id = #genome_db_id#',
+                            'fan_branch_code' => 2,
+            },
+            -can_be_empty  => 1,
+            -hive_capacity => $self->o('reuse_capacity'),
+            -rc_id => 1,
+            -flow_into => {
+                2 => [ 'mysql:////sequence_cds' ],
+            },
+        },
+
+        {   -logic_name => 'sequence_exon_bounded_table_reuse',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                            'db_conn'    => $self->o('reuse_db'),
+                            'inputquery' => 'SELECT s.* FROM sequence_exon_bounded s JOIN member USING (member_id) WHERE genome_db_id = #genome_db_id#',
+                            'fan_branch_code' => 2,
+            },
+            -can_be_empty  => 1,
+            -hive_capacity => $self->o('reuse_capacity'),
+            -rc_id => 1,
+            -flow_into => {
+                2 => [ 'mysql:////sequence_exon_bounded' ],
             },
         },
 
@@ -493,7 +527,7 @@ sub pipeline_analyses {
                 'where'         => 'hgenome_db_id IN (#reuse_ss_csv#)',
             },
             -wait_for   => [ 'accumulate_reuse_ss' ],     # have to wait until reuse_ss_csv is computed
-            -hive_capacity => 4,
+            -hive_capacity => $self->o('reuse_capacity'),
             -can_be_empty  => 1,
         },
 
@@ -502,14 +536,34 @@ sub pipeline_analyses {
         {   -logic_name => 'load_fresh_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
             -parameters => { },
-            -wait_for => [ 'accumulate_reuse_ss', 'subset_table_reuse', 'subset_member_table_reuse', 'member_table_reuse', 'sequence_table_reuse' ],
+            -wait_for => [ 'check_reusability', 'subset_table_reuse', 'subset_member_table_reuse', 'member_table_reuse', 'sequence_table_reuse' ],
             -hive_capacity => -1,
             -can_be_empty  => 1,
             -rc_id => 2,
+            -flow_into => [ 'store_sequences_factory', 'dump_subset_create_blastdb' ],
+        },
+
+        {   -logic_name => 'store_sequences_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PeptideMemberGroupingFactory',
+            -parameters => { },
+            -hive_capacity => -1,
+            -rc_id => 1,
             -flow_into => {
-                1 => [ 'dump_subset_create_blastdb', 'store_sequences_factory' ],
+                2 => [ 'store_sequences' ],
             },
         },
+
+        {   -logic_name => 'store_sequences',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FlowMemberSeq',
+            -parameters => { },
+            -hive_capacity => $self->o('store_sequences_capacity'),
+            -rc_id => 2,
+            -flow_into => {
+                2 => [ 'mysql:////sequence_cds' ],
+                3 => [ 'mysql:////sequence_exon_bounded' ],
+            },
+        },
+
 
         {   -logic_name => 'paf_create_empty_table',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
@@ -577,7 +631,7 @@ sub pipeline_analyses {
                 'outgroups'     => $self->o('outgroups'),
                 'cluster_dir'   => $self->o('cluster_dir'),
             },
-            -hive_capacity => 4,
+            -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
                 1 => [ 'per_genome_clusterset_qc' ],  # n_species
             },
@@ -586,12 +640,9 @@ sub pipeline_analyses {
         {   -logic_name    => 'hcluster_merge_inputs',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'cluster_dir'               => $self->o('cluster_dir'),
+                'cluster_dir'   => $self->o('cluster_dir'),
+                'cmd'           => 'cat #cluster_dir#/*.hcluster.#ext# > #cluster_dir#/hcluster.#ext#',
             },
-            -input_ids => [
-                { 'cmd' => 'cat #cluster_dir#/*.hcluster.txt > #cluster_dir#/hcluster.txt' },
-                { 'cmd' => 'cat #cluster_dir#/*.hcluster.cat > #cluster_dir#/hcluster.cat' },
-            ],
             -wait_for => [ 'hcluster_dump_input_per_genome' ],
             -hive_capacity => -1,   # to allow for parallelization
         },
@@ -604,8 +655,6 @@ sub pipeline_analyses {
                 'hcluster_exe'                  => $self->o('hcluster_exe'),
                 'cmd'                           => '#hcluster_exe# -m #clustering_max_gene_halfcount# -w 0 -s 0.34 -O -C #cluster_dir#/hcluster.cat -o #cluster_dir#/hcluster.out #cluster_dir#/hcluster.txt',
             },
-		-input_ids  => [ { } ],
-            -wait_for => [ 'hcluster_merge_inputs' ],
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into => {
                 1 => [ 'hcluster_parse_output' ],   # backbone
@@ -625,29 +674,6 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'overall_clusterset_qc' ],   # backbone 
                 2 => [ 'mcoffee' ],                 # fan n_clusters
-            },
-        },
-
-# ---------------------------------------------[sequence caching step]---------------------------------------------------------------
-
-        {   -logic_name => 'store_sequences_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PeptideMemberGroupingFactory',
-            -parameters => { },
-            -hive_capacity => -1,
-            -rc_id => 1,
-            -flow_into => {
-                2 => [ 'store_sequences' ],
-            },
-        },
-
-        {   -logic_name => 'store_sequences',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FlowMemberSeq',
-            -parameters => { },
-            -hive_capacity => $self->o('store_sequences_capacity'),
-            -rc_id => 2,
-            -flow_into => {
-                2 => [ 'mysql:////sequence_cds' ],
-                3 => [ 'mysql:////sequence_exon_bounded' ],
             },
         },
 
@@ -691,7 +717,7 @@ sub pipeline_analyses {
                 'mafft_exe'                 => $self->o('mafft_exe'),
                 'mafft_binaries'            => $self->o('mafft_binaries'),
             },
-            -wait_for => [ 'store_sequences', 'overall_clusterset_qc', 'per_genome_clusterset_qc' ],    # funnel
+            -wait_for => [ 'store_sequences', 'sequence_cds_table_reuse', 'sequence_exon_bounded_table_reuse', 'overall_clusterset_qc', 'per_genome_clusterset_qc' ],    # funnel
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_id => 3,
             -priority => 30,
