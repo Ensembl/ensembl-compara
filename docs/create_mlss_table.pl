@@ -449,12 +449,11 @@ sub print_html_list {
   my $species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor($reg_alias, 'compara', 'SpeciesSet');
   my $species_set_tags = $species_set_adaptor->fetch_all_by_tag("name"); 
 
-
   foreach my $this_method_link_species_set (sort {scalar @{$a->species_set} <=> scalar @{$b->species_set}} @$all_method_link_species_sets) {
       my $species_set_name;
       foreach my $species_set_tag (@$species_set_tags) {
           if ($species_set_tag->dbID == $this_method_link_species_set->species_set_id) {
-              $species_set_name = $species_set_tag->{_tags}->{name};
+	      $species_set_name = $species_set_tag->get_value_for_tag("name");
           }
       }
       if (defined $species_set_name) {
