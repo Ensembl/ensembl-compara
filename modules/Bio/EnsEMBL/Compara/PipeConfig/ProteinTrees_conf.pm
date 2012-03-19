@@ -672,8 +672,9 @@ sub pipeline_analyses {
             -hive_capacity => -1,
             -rc_id => 3,
             -flow_into => {
-                1 => [ 'overall_clusterset_qc' ],   # backbone 
-                2 => [ 'mcoffee' ],                 # fan n_clusters
+                '1->A' => [ 'overall_clusterset_qc' ], 
+                '2->A' => [ 'mcoffee' ],                 # fan n_clusters
+                'A->1' => [ 'dummy_wait_alltrees' ],    # backbone
             },
         },
 
@@ -687,9 +688,6 @@ sub pipeline_analyses {
                 'groupset_tag'              => 'ClustersetQC',
             },
             -hive_capacity => 3,
-            -flow_into => {
-                1 => [ 'dummy_wait_alltrees' ],    # backbone
-            },
         },
 
         {   -logic_name => 'per_genome_clusterset_qc',
@@ -722,7 +720,6 @@ sub pipeline_analyses {
             -rc_id => 3,
             -priority => 30,
             -flow_into => {
-               -2 => [ 'mcoffee_himem' ],  # RUNLIMIT
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
                 1 => [ 'njtree_phyml' ],
                 3 => [ 'quick_tree_break' ],
@@ -740,7 +737,6 @@ sub pipeline_analyses {
                 'mafft_binaries'            => $self->o('mafft_binaries'),
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -can_be_empty         => 1,
             -priority => 40,
             -flow_into => {
                 1 => [ 'njtree_phyml' ],
@@ -847,7 +843,6 @@ sub pipeline_analyses {
                 'sreformat_exe'     => $self->o('sreformat_exe'),
             },
             -hive_capacity        => 1, # this one seems to slow the whole loop down; why can't we have any more of these?
-            -can_be_empty         => 1,
             -rc_id     => 1,
             -priority  => 50,
             -flow_into => {
@@ -866,7 +861,6 @@ sub pipeline_analyses {
         {   -logic_name => 'dummy_wait_alltrees',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -parameters => {},
-            -wait_for => [ 'mcoffee', 'mcoffee_himem', 'njtree_phyml', 'ortho_tree', 'quick_tree_break' ],    # funnel n_clusters
 		-flow_into => [ 'overall_genetreeset_qc' ],  # backbone
         },
 
