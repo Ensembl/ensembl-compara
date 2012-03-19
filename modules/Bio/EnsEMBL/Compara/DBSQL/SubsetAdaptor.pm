@@ -100,11 +100,14 @@ sub fetch_by_description_pattern {
 =head2 fetch_all
 
   Arg        : None
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
+  Example    : my $all_subsets = $subset_Adaptor->fetch_all();
+  Description: Fetches from the database all the subsets.
+               The subset objects are populated with the ids of their members,
+               so it is safe to call $subset->member_id_list on the returned objects.
+               The members themselves are not stored in the objects.
+  Returntype : arrayref of Bio::EnsEMBL::Subset
+  Exceptions :
+  Caller     : General
 
 =cut
 
