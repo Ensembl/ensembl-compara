@@ -1,3 +1,5 @@
+#!/usr/bin/env perl
+
 use strict;
 use Bio::EnsEMBL::Registry;
 my $reg = "Bio::EnsEMBL::Registry";

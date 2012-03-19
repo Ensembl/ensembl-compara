@@ -1,4 +1,5 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
+
 use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::AlignIO;
