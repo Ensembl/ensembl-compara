@@ -184,7 +184,8 @@ sub add_member_id {
   Arg [1]      : A Bio::EnsEMBL::Compara::Member
   Example      : my $count = $subset->add_member($member);
   Description  : Add a new Bio::EnsEMBL::Compara::Member to the subset object
-                 and returns the number of members already in the object
+                 and returns the number of members already in the object.
+                 It also adds the member_id to the object.
   ReturnType   : A scalar with the number of members in the object
   Exceptions   :
   Caller       :
@@ -223,6 +224,7 @@ sub member_id_list {
   Caller     :
 
 =cut
+
 sub member_list {
   my $self = shift;
 
