@@ -20,7 +20,13 @@ sub default_options {
 
 
 sub pipeline_create_commands {
-    my ($self) = @_;
+
+    my $self    = shift @_;
+    my $db_conn = shift @_ || 'pipeline_db';
+
+    # sqlite: no concept of MyISAM/InnoDB
+    return $self->SUPER::pipeline_create_commands if $self->o($db_conn, '-driver') eq 'sqlite';
+
     return [
         @{$self->SUPER::pipeline_create_commands},    # inheriting database and hive table creation
 
