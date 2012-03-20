@@ -7,6 +7,10 @@
             $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/taxonomy/ensembl_aliases.sql needs to be updated
             as new species are integrated into Ensembl.
 
+            Make sure that for each species, the following name types are provided:
+                - ensembl alias names
+                - ensembl common name
+
             The basic rule for "ensembl common name" is to use "genbank common name"
             or any of "common name" available. If they don't exist you are free to invent one.
             This is used in the download page:
@@ -16,6 +20,14 @@
             The other source of info is here:
                 http://www.intlgenome.org/viewDatabase.cfm
 
+            For the Compara analysis, the ancestral species must be fully updated:
+                - ensembl alias name
+                - ensembl timetree mya
+
+            The "ensembl timetree mya" tags come from the TimeTree database (http://www.timetree.org).
+            Unfortunately, the website is not able to give the age of an ancestral species directly.
+            You will have to enter two extant species that have that ancestral species as their last common ancestor.
+ 
     # 2. edit $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/taxonomy/web_name_patches.sql to patch web names if needed.
 
             For "ensembl alias name", it is used at the top of the web page of each species,
