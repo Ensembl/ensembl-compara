@@ -687,16 +687,6 @@ SET @this_value='Wet nose lemurs';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
-SET @this_taxon_id=7147;
-SET @this_value='Flies';
-SET @this_name_class='ensembl alias name';
-insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
-
-SET @this_taxon_id=7157;
-SET @this_value='Mosquitos';
-SET @this_name_class='ensembl alias name';
-insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
-
 SET @this_taxon_id=7711;
 SET @this_value='Chordates';
 SET @this_name_class='ensembl alias name';
@@ -1068,11 +1058,6 @@ insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class fr
 
 SET @this_taxon_id=314293;
 SET @this_value='45.16';
-SET @this_name_class='ensembl timetree mya';
-insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
-
-SET @this_taxon_id=9528;
-SET @this_value='13.64';
 SET @this_name_class='ensembl timetree mya';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
