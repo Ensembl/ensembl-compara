@@ -144,6 +144,7 @@ sub default_options {
         'cafe_shell'                => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
 
     # Data needed for CAFE
+        'compute_CAFE'              => 1,  ## set to 0 if you don't want to make the CAFE analysis
         'species_tree_meta_key'     => 'species_tree_string',
         'cafe_lambdas'              => '',
         'cafe_species'              => '',
@@ -764,52 +765,10 @@ sub pipeline_analyses {
             -rc_id => 3,
             -priority => 20,
             -flow_into => {
-                1 => [ 'ortho_tree', 'CAFE_species_tree', 'build_HMM_aa', 'build_HMM_cds' ],
+                1 => [ 'ortho_tree', 'build_HMM_aa', 'build_HMM_cds' ],
                 2 => [ 'njtree_phyml' ],
             },
         },
-            { -logic_name => 'CAFE_species_tree',
-              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree',
-              -parameters => {
-                              'cafe_species' => $self->o('cafe_species'),
-                              'species_tree_meta_key' => $self->o('species_tree_meta_key'),
-                             },
-              -hive_capacity => -1,
-              -priority => 5,
-              -flow_into => {
-                             1 => ['CAFE_table'],
-                            },
-            },
-
-            { -logic_name => 'CAFE_table',
-              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFETable_PerFamTree',
-              -parameters => {
-                              'work_dir' => $self->o('work_dir'),
-                              'cafe_species' => $self->o('cafe_species'),
-                              'mlss_id' => $self->o('mlss_id'),
-                              'type' => 'prot',
-                             },
-              -hive_capacity => 200,
-              -priority => 4,
-              -rc_id => 5,
-              -flow_into => {
-                  2 => ['CAFE_analysis'],
-              }
-            },
-
-            { -logic_name => 'CAFE_analysis',
-              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFEAnalysis_PerFamTree',
-              -parameters => {
-                              'work_dir' => $self->o('work_dir'),
-                              'cafe_lambdas' => $self->o('cafe_lambdas'),
-                              'cafe_struct_tree_str' => $self->o('cafe_struct_tree_str'),
-                              'mlss_id' => $self->o('mlss_id'),
-                              'cafe_shell' => $self->o('cafe_shell'),
-                             },
-              -rc_id => 9,
-              -priority => 3,
-              -hive_capacity => 200,
-            },
 
         {   -logic_name => 'ortho_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
@@ -871,8 +830,52 @@ sub pipeline_analyses {
         {   -logic_name => 'dummy_wait_alltrees',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -parameters => {},
-		-flow_into => [ 'overall_genetreeset_qc' ],  # backbone
+            -flow_into => [ 'overall_genetreeset_qc', 'CAFE_species_tree' ],  # backbone
         },
+
+## ------------------------------- CAFE Analysis ----------------------------------------------------------#
+
+
+            { -logic_name => 'CAFE_species_tree',
+              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree',
+              -parameters => {
+                              'cafe_species' => $self->o('cafe_species'),
+                              'species_tree_meta_key' => $self->o('species_tree_meta_key'),
+                              'compute_CAFE' => $self->o('compute_CAFE'),
+                             },
+              -hive_capacity => -1,
+              -flow_into => {
+                             1 => ['CAFE_table'],
+                            },
+            },
+
+            { -logic_name => 'CAFE_table',
+              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFETable_PerFamTree',
+              -parameters => {
+                              'work_dir' => $self->o('work_dir'),
+                              'cafe_species' => $self->o('cafe_species'),
+                              'mlss_id' => $self->o('mlss_id'),
+                              'type' => 'prot',
+                             },
+              -hive_capacity => 200,
+              -rc_id => 5,
+              -flow_into => {
+                  2 => ['CAFE_analysis'],
+              }
+            },
+
+            { -logic_name => 'CAFE_analysis',
+              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFEAnalysis_PerFamTree',
+              -parameters => {
+                              'work_dir' => $self->o('work_dir'),
+                              'cafe_lambdas' => $self->o('cafe_lambdas'),
+                              'cafe_struct_tree_str' => $self->o('cafe_struct_tree_str'),
+                              'mlss_id' => $self->o('mlss_id'),
+                              'cafe_shell' => $self->o('cafe_shell'),
+                             },
+              -rc_id => 9,
+              -hive_capacity => 200,
+            },
 
 
 # ---------------------------------------------[a QC step after main loop]----------------------------------------------------------
