@@ -142,7 +142,7 @@ CREATE TABLE method_link (
   class                       varchar(50) DEFAULT '' NOT NULL,
 
   PRIMARY KEY (method_link_id),
-  KEY type (type)
+  UNIQUE KEY type (type)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
