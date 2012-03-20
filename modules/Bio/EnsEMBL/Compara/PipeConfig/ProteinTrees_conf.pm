@@ -151,15 +151,18 @@ sub default_options {
         'cafe_struct_tree_str'      => '',
 
     # hive_capacity values for some analyses:
-        'reuse_capacity'            => 4,
+        'reuse_capacity'            =>   4,
+        'blast_factory_capacity'    =>  50,
         'store_sequences_capacity'  => 200,
         'blastp_capacity'           => 450,
         'mcoffee_capacity'          => 600,
         'njtree_phyml_capacity'     => 400,
         'ortho_tree_capacity'       => 100,
+        'quick_tree_break_capacity' => 100,
         'build_hmm_capacity'        => 200,
         'other_paralogs_capacity'   =>  50,
         'homology_dNdS_capacity'    => 200,
+        'qc_capacity'               =>   4,
 
     # connection parameters to various databases:
 
@@ -606,7 +609,7 @@ sub pipeline_analyses {
                 'column_names'          => [ 'member_id' ],
                 'fan_branch_code'       => 2,
             },
-            -hive_capacity => 10,
+            -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
                 '2->A' => [ 'blastp_with_reuse' ],  # fan n_members
                 'A->1' => [ 'hcluster_dump_input_per_genome' ],   # n_species
@@ -694,7 +697,7 @@ sub pipeline_analyses {
                 'cluster_dir'               => $self->o('cluster_dir'),
                 'groupset_tag'              => 'ClustersetQC',
             },
-            -hive_capacity => 3,
+            -hive_capacity => $self->o('qc_capacity'),
         },
 
         {   -logic_name => 'per_genome_clusterset_qc',
@@ -704,7 +707,7 @@ sub pipeline_analyses {
                 'groupset_tag'              => 'Clusterset',
             },
             -wait_for => [ 'hcluster_parse_output' ],
-            -hive_capacity => 3,
+            -hive_capacity => $self->o('qc_capacity'),
             -flow_into => {
                 1 => [ 'per_genome_genetreeset_qc' ],   # n_species
             },
@@ -810,7 +813,7 @@ sub pipeline_analyses {
                 'quicktree_exe'     => $self->o('quicktree_exe'),
                 'sreformat_exe'     => $self->o('sreformat_exe'),
             },
-            -hive_capacity        => 1, # this one seems to slow the whole loop down; why can't we have any more of these?
+            -hive_capacity        => $self->o('quick_tree_break_capacity'),
             -rc_id     => 1,
             -priority  => 50,
             -flow_into => {
@@ -887,7 +890,7 @@ sub pipeline_analyses {
                 'cluster_dir'               => $self->o('cluster_dir'),
                 'groupset_tag'              => 'GeneTreesetQC',
             },
-            -hive_capacity => 3,
+            -hive_capacity => $self->o('qc_capacity'),
             -flow_into => {
                 1 => [ 'group_genomes_under_taxa' ],    # backbone
             },
@@ -900,7 +903,7 @@ sub pipeline_analyses {
                 'groupset_tag'              => 'GeneTreeset',
             },
             -wait_for => [ 'dummy_wait_alltrees' ],
-            -hive_capacity => 3,
+            -hive_capacity => $self->o('qc_capacity'),
         },
 
 # ---------------------------------------------[homology step]-----------------------------------------------------------------------
@@ -932,7 +935,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'homology_dNdS_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory',
-            -hive_capacity => -1,
+            -hive_capacity => $self->o('homology_dNdS_capacity'),
             -flow_into => {
                 'A->1' => [ 'threshold_on_dS' ],
                 '2->A' => [ 'homology_dNdS' ],
@@ -952,7 +955,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'threshold_on_dS',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS',
-            -hive_capacity => -1,
+            -hive_capacity => $self->o('homology_dNdS_capacity'),
         },
 
     ];
