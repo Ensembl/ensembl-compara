@@ -1283,8 +1283,8 @@ sub update_genome_db {
 	$sth->execute(@args);
 	$sth->finish();
 
-	#Make sure the cache is up to date
-	$genome_db_adaptor->create_GenomeDBs();
+        # force reload of the cache:
+	$genome_db_adaptor->cache_all(1);
 
 	$genome_db = $genome_db_adaptor->fetch_by_name_assembly(
 								$primary_species_binomial_name,
