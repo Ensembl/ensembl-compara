@@ -44,6 +44,8 @@ package Bio::EnsEMBL::Compara::Method;
 use strict;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+
 
 =head2 new
 
@@ -60,38 +62,18 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 
 sub new {
-    my($obj_class, @args) = @_;
+    my $caller = shift @_;
+    my $class = ref($caller) || $caller;
 
-    my $self = bless {}, $obj_class;
+    my $self = $class->SUPER::new(@_);
 
-    my ($dbID, $type, $class, $adaptor) =
-        rearrange([qw(DBID TYPE CLASS ADAPTOR)], @args);
+    my ($type, $class) =
+        rearrange([qw(TYPE CLASS)], @_);
 
-    $self->dbID($dbID)        if (defined ($dbID));
     $self->type($type)        if (defined ($type));
     $self->class($class)      if (defined ($class));
-    $self->adaptor($adaptor)  if (defined ($adaptor));
 
     return $self;
-}
-
-
-=head2 dbID
-
-  Arg [1]    : (opt.) integer dbID
-  Example    : my $dbID = $method->dbID();
-  Example    : $method->dbID(12);
-  Description: Getter/Setter for the dbID of this object in the database
-  Returntype : integer dbID
-
-=cut
-
-sub dbID {
-    my $self = shift;
-
-    $self->{'_method_id'} = shift if(@_);
-
-    return $self->{'_method_id'};
 }
 
 
@@ -133,24 +115,14 @@ sub class {
 }
 
 
-=head2 adaptor
+=head2 toString
 
-  Arg [1]    : (opt.) Bio::EnsEMBL::Compara::DBSQL::MethodAdaptor
-  Example    : my $method_adaptor = $method->adaptor();
-  Example    : $method->adaptor($method_adaptor);
-  Description: Getter/Setter for the adaptor this object uses for database interaction.
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::MethodAdaptor
+  Args       : (none)
+  Example    : print $method->toString()."\n";
+  Description: returns a stringified representation of the method
+  Returntype : string
 
 =cut
-
-sub adaptor {
-    my $self = shift;
-
-    $self->{'adaptor'} = shift if(@_);
-
-    return $self->{'adaptor'};
-}
-
 
 sub toString {
     my $self = shift;
