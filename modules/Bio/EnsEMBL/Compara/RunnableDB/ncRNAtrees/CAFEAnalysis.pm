@@ -250,7 +250,7 @@ sub parse_cafe_output {
             if (! $node->is_leaf()) {
                 $taxon_id = $name;
             } else {
-                my $genomeDB = $genomeDB_Adaptor->_fetch_by_name($name);
+                my $genomeDB = $genomeDB_Adaptor->fetch_by_name_assembly($name);
                 $taxon_id = $genomeDB->taxon_id();
             }
 

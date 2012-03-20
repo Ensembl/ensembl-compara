@@ -287,7 +287,7 @@ sub parse_cafe_output {
                 $taxon_id = $name;
             } else {
                 print STDERR "LEAF: $name\n";
-                my $genomeDB = $genomeDB_Adaptor->_fetch_by_name($name);
+                my $genomeDB = $genomeDB_Adaptor->fetch_by_name_assembly($name);
                 $taxon_id = $genomeDB->taxon_id();
             }
 
