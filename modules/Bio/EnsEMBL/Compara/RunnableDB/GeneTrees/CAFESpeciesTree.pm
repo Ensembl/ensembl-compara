@@ -68,6 +68,11 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
+    unless($self->param('compute_CAFE')) {
+        $self->input_job->incomplete(0);
+        die("No CAFE analysis will be computed");
+    }
+
     my $genomeDB_Adaptor = $self->compara_dba->get_GenomeDBAdaptor();
     $self->param('genomeDB_Adaptor', $genomeDB_Adaptor);
 
