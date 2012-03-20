@@ -164,9 +164,10 @@ sub _init {
     $collapsed_colour = 'grey' if (!$collapsed_colour); # Default colour
 
     my $node_href = $self->_url({ 
-      'action'      => "ComparaTreeNode$skey",
-      'node'        => $f->{'_id'},
-      'genetree_id' => $Config->get_parameter('genetree_id'),
+      action      => "ComparaTreeNode$skey",
+      node        => $f->{'_id'},
+      genetree_id => $Config->get_parameter('genetree_id'),
+      collapse    => $collapsed_nodes_str
     });
 
     my $collapsed_xoffset = 0;
@@ -314,7 +315,7 @@ sub _init {
           type     => 'Gene',
           action   => 'ComparaTree',
           __clear  => 1,
-          g        => $f->{'_gene'},
+          g        => $f->{'_gene'}
         });
       }
       
@@ -650,48 +651,5 @@ sub image_label {
   my ($self, $f ) = @_; 
   return $f->seqname(), $f->{type} || 'overlaid'; 
 }
-
-#sub zmenu {
-#  my( $self, $f ) = @_;
-#
-#  return( 'gene', $f->{_gene} );
-#
-#  my $href = '';
-#  my $blength = $f->{_cut} ? ($f->{'_distance'} * (10 ** ($f->{'_cut'}))): $f->{'_distance'};
-#  my $zmenu = { 
-#		caption               => $f->{'_id'},
-#		"60:Branch length: $blength"   => '',
-#	      };
-#
-#  $zmenu->{"30:Taxonomy name: $f->{'_name'}"} = '' if ($f->{_name});
-#  $zmenu->{"40:Taxonomy ID: $f->{'_taxon_id'}"} = '' if ($f->{_taxon_id});
-#  $zmenu->{"45:Dupl. Confidence: $f->{'_dupconf'}"} = '' if ($f->{_dupconf});
-#  $zmenu->{"50:Species: $f->{_species_label}"} = '' if ($f->{_species_label});
-#
-#  (my $ensembl_species = $f->{_species}) =~ s/ /\_/g;
-#
-#  if ($f->{_gene}) {
-#      $href = $ensembl_species ? sprintf("/%s/geneview?gene=%s", $ensembl_species, $f->{_gene}) : '';
-#      $zmenu->{"10:Gene: $f->{_gene}"} = $href;
-#  }
-#
-#  if ($f->{_protein}) {
-#      $zmenu->{"20:Protein: $f->{_protein}"} = $ensembl_species ? sprintf("/%s/protview?peptide=%s", $ensembl_species, $f->{_protein}) : '';
-#  }
-#
-#  $zmenu->{"70:Location: $f->{_location}"} = '' if ($f->{_location});
-#
-#  warn (Data::Dumper::Dumper($f));
-#
-#  my $id = 75;
-#  foreach my $link (@{$f->{_link}||[]}) {
-#      $zmenu->{"$id:".$link->{text}} = $link->{href};
-#      $id ++;
-#  }
-#
-##  warn Data::Dumper::Dumper($zmenu);
-#
-#  return ($zmenu, $href) ;
-#}
 
 1;
