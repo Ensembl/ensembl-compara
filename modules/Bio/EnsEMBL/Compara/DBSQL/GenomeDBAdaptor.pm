@@ -48,14 +48,10 @@ The rest of the documentation details each of the object methods. Internal metho
 =cut
 
 
-# Let the code begin...
-
-
 package Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor;
 
 use strict;
 
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Utils::Exception;
 
@@ -75,24 +71,11 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 =cut
 
 sub fetch_by_dbID {
-   my ($self,$dbid) = @_;
+    my ($self, $dbid) = @_;
 
-   if( !defined $dbid) {
-       throw("Must fetch by dbid");
-   }
+    throw("dbID must be defined and nonzero") unless($dbid);
 
-   # check to see whether all the GenomeDBs have already been created
-   if ( !defined $self->{'_GenomeDB_cache'}) {
-     $self->create_GenomeDBs;
-   }
-
-   my $gdb = $self->{'_cache'}->{$dbid};
-
-   if(!$gdb) {
-     return undef; # return undef if fed a bogus dbID
-   }
-
-   return $gdb;
+    return $self->cache_all->{$dbid};
 }
 
 
@@ -109,16 +92,11 @@ sub fetch_by_dbID {
 =cut
 
 sub fetch_all {
-  my ( $self ) = @_;
+    my ($self) = @_;
 
-  if ( !defined $self->{'_GenomeDB_cache'}) {
-    $self->create_GenomeDBs;
-  }
-
-  my @genomeDBs = values %{$self->{'_cache'}};
-
-  return \@genomeDBs;
+    return [ values %{ $self->cache_all } ];
 }
+
 
 =head2 fetch_by_name_assembly
 
@@ -135,60 +113,61 @@ sub fetch_all {
 =cut
 
 sub fetch_by_name_assembly {
-  my ($self, $name, $assembly) = @_;
+    my ($self, $name, $assembly) = @_;
 
-  unless($name) {
-    throw('name arguments are required');
-  }
+    throw("name argument is required") unless($name);
 
-  my $sth;
-
-  unless (defined $assembly && $assembly ne '') {
-    my $sql = "SELECT genome_db_id FROM genome_db WHERE name = ? AND assembly_default = 1";
-    $sth = $self->prepare($sql);
-    $sth->execute($name);
-  } else {
-    my $sql = "SELECT genome_db_id FROM genome_db WHERE name = ? AND assembly = ?";
-    $sth = $self->prepare($sql);
-    $sth->execute($name, $assembly);
-  }
-
-  my ($id) = $sth->fetchrow_array();
-
-  if (!defined $id) {
-    throw("No GenomeDB with this name [$name] and assembly [".
-        ($assembly or "--undef--")."]");
-  }
-  $sth->finish;
-  return $self->fetch_by_dbID($id);
-}
-
-sub _fetch_by_name {
-    my ($self, $name) = @_;
-
-    unless ($name) {
-        throw('name argument is required');
-    }
-
-    my $sth;
-    my $sql = "SELECT genome_db_id FROM genome_db WHERE name = ? AND assembly_default = 1";
-    $sth = $self->prepare($sql);
-    $sth->execute($name);
-
-    my @ids = $sth->fetchrow_array();
-    $sth->finish;
-
-    my $ret_cnt = scalar(@ids);
-    my $id;
-    if ($ret_cnt == 0) {
-        throw("No GenomeDB with this name [$name] has been found in the database");
-    } else {
-        ($id) = @ids;
-        if ($ret_cnt > 1) {
-            warning("name [$name] returned more than one row. Returning only the first one with ID [$id]");
+    my $found_gdb;
+    foreach my $gdb (@{ $self->fetch_all }) {
+        if( ($gdb->name eq $name) and ($assembly ? ($gdb->assembly eq $assembly) : $gdb->assembly_default)) {
+            if($found_gdb) {
+                warning("Multiple matches found for name '$name' and assembly '".($assembly||'--undef--')."', returning the first one");
+            } else {
+                $found_gdb = $gdb;
+            }
         }
     }
-    return $self->fetch_by_dbID($id);
+    
+    throw("No matches found for name '$name' and assembly '".($assembly||'--undef--')."'") unless($found_gdb);
+
+    return $found_gdb;
+}
+
+
+=head2 fetch_by_taxon_id
+
+  Arg [1]    : string $name
+  Arg [2]    : string $assembly
+  Example    : $gdb = $gdba->fetch_by_taxon_id(1234);
+  Description: Retrieves a genome db using the NCBI taxon_id of the species.
+  Returntype : Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions : thrown if GenomeDB of taxon_id $taxon_id cannot be found. Will
+               warn if the taxon returns more than one GenomeDB (possible in
+               some branches of the Taxonomy)
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub fetch_by_taxon_id {
+    my ($self, $taxon_id) = @_;
+
+    throw("taxon_id argument is required") unless($taxon_id);
+
+    my $found_gdb;
+    foreach my $gdb (@{ $self->fetch_all }) {
+        if( ($gdb->taxon_id == $taxon_id) and $gdb->assembly_default ) {
+            if($found_gdb) {
+                warning("Multiple matches found for taxon_id '$taxon_id', returning the first one");
+            } else {
+                $found_gdb = $gdb;
+            }
+        }
+    }
+    
+    throw("No matches found for taxon_id '$taxon_id'") unless($found_gdb);
+
+    return $found_gdb;
 }
 
 
@@ -221,6 +200,7 @@ sub fetch_by_registry_name {
   return $self->fetch_by_core_DBAdaptor($species_db_adaptor);
 }
 
+
 =head2 fetch_by_Slice
 
   Arg [1]    : Bio::EnsEMBL::Slice $slice
@@ -248,51 +228,6 @@ sub fetch_by_Slice {
   return $self->fetch_by_core_DBAdaptor($core_dba);
 }
 
-=head2 fetch_by_taxon_id
-
-  Arg [1]    : string $name
-  Arg [2]    : string $assembly
-  Example    : $gdb = $gdba->fetch_by_taxon_id(1234);
-  Description: Retrieves a genome db using the NCBI taxon_id of the species.
-  Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : thrown if GenomeDB of taxon_id $taxon_id cannot be found. Will
-               warn if the taxon returns more than one GenomeDB (possible in
-               some branches of the Taxonomy)
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub fetch_by_taxon_id {
-  my ($self, $taxon_id) = @_;
-
-  unless($taxon_id) {
-    throw('taxon_id argument is required');
-  }
-
-  my $sth;
-
-  my $sql = "SELECT genome_db_id FROM genome_db WHERE taxon_id = ? AND assembly_default = 1";
-  $sth = $self->prepare($sql);
-  $sth->execute($taxon_id);
-
-  my @ids = $sth->fetchrow_array();
-  $sth->finish;
-
-  my $return_count = scalar(@ids);
-  my $id;
-  if ($return_count ==0) {
-    throw("No GenomeDB with this taxon_id [$taxon_id]");
-  }
-  else {
-    ($id) = @ids;
-    if($return_count > 1) {
-      warning("taxon_id [${taxon_id}] returned more than one row. Returning the first at ID [${id}]");
-    }
-  }
-
-  return $self->fetch_by_dbID($id);
-}
 
 =head2 fetch_all_by_ancestral_taxon_id
 
@@ -343,6 +278,7 @@ sub fetch_all_by_ancestral_taxon_id {
   return $these_genome_dbs;
 }
 
+
 =head2 fetch_by_core_DBAdaptor
 
 	Arg [1]     : Bio::EnsEMBL::DBSQL::DBAdaptor
@@ -364,6 +300,7 @@ sub fetch_by_core_DBAdaptor {
   my $species_assembly = $highest_cs->version();
   return $self->fetch_by_name_assembly($species_name, $species_assembly);
 }
+
 
 =head2 get_species_name_from_core_MetaContainer
 
@@ -468,57 +405,55 @@ sub store {
     $gdb->dbID( $dbID );
     $gdb->adaptor( $self );
 
+    $self->cache_all(1);    # reload the adaptor cache
+
     return $gdb;
 }
 
 
-=head2 create_GenomeDBs
+=head2 cache_all
 
   Arg [1]    : none
   Example    : none
-  Description: Reads the genomedb table and creates an internal cache of the
-               values of the table.
-  Returntype : none
+  Description: Caches all the entries from genome_db table hashed by dbID; loads from db when necessary or asked
+  Returntype : Hash of {dbID->GenomeDB}
   Exceptions : none
   Caller     : internal
-  Status      : Stable
+  Status     : Stable
 
 =cut
 
-sub create_GenomeDBs {
-  my ( $self ) = @_;
+sub cache_all {
+    my ( $self, $force_reload ) = @_;
 
-  # grab all the possible species databases in the genome db table
-  my $sth = $self->prepare("
-     SELECT genome_db_id, name, assembly, taxon_id, assembly_default, genebuild, locator
-     FROM genome_db
-   ");
-   $sth->execute;
+    if(!$self->{'_cache'} or $force_reload) {
 
-  # build a genome db for each species
-  $self->{'_cache'} = undef;
-  my ($dbid, $name, $assembly, $taxon_id, $assembly_default, $genebuild, $locator);
-  $sth->bind_columns(\$dbid, \$name, \$assembly, \$taxon_id, \$assembly_default, \$genebuild, \$locator);
-  while ($sth->fetch()) {
+        $self->{'_cache'} = {};
+        my $sth = $self->prepare('SELECT genome_db_id, name, assembly, taxon_id, assembly_default, genebuild, locator FROM genome_db');
+        $sth->execute;
 
-    my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new_fast(
-        {'name' => $name,
-        'dbID' => $dbid,
-        'adaptor' => $self,
-        'assembly' => $assembly,
-        'assembly_default' => $assembly_default,
-        'genebuild' => $genebuild,
-        'taxon_id' => $taxon_id,
-        'locator' => $locator});
+        my ($dbid, $name, $assembly, $taxon_id, $assembly_default, $genebuild, $locator);
+        $sth->bind_columns(\$dbid, \$name, \$assembly, \$taxon_id, \$assembly_default, \$genebuild, \$locator);
+        while ($sth->fetch()) {
 
-    $self->{'_cache'}->{$dbid} = $gdb;
-  }
+            my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new_fast( {
+                'name'      => $name,
+                'dbID'      => $dbid,
+                'adaptor'   => $self,
+                'assembly'  => $assembly,
+                'assembly_default' => $assembly_default,
+                'genebuild' => $genebuild,
+                'taxon_id'  => $taxon_id,
+                'locator'   => $locator,
+            } );
 
-  $sth->finish();
+            $self->{'_cache'}->{$dbid} = $gdb;
+        }
+        $sth->finish();
 
-  $self->{'_GenomeDB_cache'} = 1;
-
-  $self->sync_with_registry();
+        $self->sync_with_registry();
+    }
+    return $self->{'_cache'};
 }
 
 
@@ -633,15 +568,16 @@ sub sync_with_registry {
 =cut
 
 sub deleteObj {
-  my $self = shift;
+    my $self = shift;
 
-  if($self->{'_cache'}) {
-    foreach my $dbID (keys %{$self->{'_cache'}}) {
-      delete $self->{'_cache'}->{$dbID};
+    if(my $cache = $self->{'_cache'}) {
+        foreach my $dbID (keys %$cache) {
+            delete $cache->{$dbID};
+        }
+        $self->{'_cache'} = undef;
     }
-  }
 
-  $self->SUPER::deleteObj;
+    $self->SUPER::deleteObj;
 }
 
 
