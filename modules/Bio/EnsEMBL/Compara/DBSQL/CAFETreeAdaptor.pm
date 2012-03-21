@@ -157,10 +157,10 @@ sub store {
     if (defined $mlss_id) {
         my $species_tree = $node->species_tree();
         my $lambdas = $node->lambdas();
-        my $avg_pvalue = $node->avg_pvalue();
+        my $pvalue_lim = $node->pvalue_lim();
 
-        my $sth2 = $self->prepare("INSERT INTO CAFE_tree(root_id, method_link_species_set_id, species_tree, lambdas) VALUES(?,?,?,?)");
-        $sth2->execute($root_id, $mlss_id, $species_tree, $lambdas);
+        my $sth2 = $self->prepare("INSERT INTO CAFE_tree(root_id, method_link_species_set_id, species_tree, lambdas, p_value_lim) VALUES(?,?,?,?,?)");
+        $sth2->execute($root_id, $mlss_id, $species_tree, $lambdas, $pvalue_lim);
         $sth2->finish();
     }
 
