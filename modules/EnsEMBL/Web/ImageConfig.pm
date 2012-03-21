@@ -169,7 +169,7 @@ sub menus {
     functional          => 'Regulation',
     
     # Encode (data hub)
-    encode              => 'Encode data',
+    encode              => 'ENCODE data',
     
     # Compara
     compara             => 'Comparative genomics',
@@ -654,7 +654,6 @@ sub load_file_format {
 
   foreach my $source_name (sort keys %$internal_sources) {
     # get the target menu 
-
     my $menu = $self->get_node($internal_sources->{$source_name});
     my $source;
     
@@ -1327,6 +1326,7 @@ sub _merge {
     } else {
       $data->{$key}{'description'} = $sub_tree->{'desc'};
     }
+    
     $data->{$key}{'format'} = $sub_tree->{'format'};
     
     push @{$data->{$key}{'logic_names'}}, $analysis;
@@ -1450,22 +1450,20 @@ sub add_data_files {
   my $menu = $self->tree->get_node('rnaseq');
 
   return unless $menu;
-  my $alignment_renderers = ['off', 'Off', 'simple', 'On'];
-
+  
   my ($keys, $data) = $self->_merge($hashref->{'data_file'});
+  
   foreach (@$keys) {
-    my $glyphset = $data->{$_}{'format'} || '_alignment';
     $self->generic_add($menu, $key, "data_file_${key}_$_", $data->{$_}, { 
-      glyphset => $glyphset, 
-      strand => 'f',
-      renderers   => [
+      glyphset  => $data->{$_}{'format'} || '_alignment', 
+      strand    => 'f',
+      renderers => [
         'off',       'Off', 
         'normal',    'Normal', 
         'unlimited', 'Unlimited', 
         'histogram', 'Coverage only'
       ], 
-      })
-    ;
+    });
   }
 }
 
