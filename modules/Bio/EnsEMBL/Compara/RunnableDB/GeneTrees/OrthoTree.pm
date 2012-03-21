@@ -433,8 +433,6 @@ sub get_ancestor_species_hash
   return $species_hash if($species_hash);
 
   $species_hash = {};
-  my $duplication_hash = {};
-  my $is_dup=0;
 
   if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
     my $node_genome_db_id = $node->genome_db_id;
@@ -445,16 +443,10 @@ sub get_ancestor_species_hash
 
   foreach my $child (@{$node->children}) {
     my $t_species_hash = $self->get_ancestor_species_hash($child);
-    next unless(defined($t_species_hash)); #shouldn't happen
     foreach my $genome_db_id (keys(%$t_species_hash)) {
       unless(defined($species_hash->{$genome_db_id})) {
         $species_hash->{$genome_db_id} = $t_species_hash->{$genome_db_id};
       } else {
-        #this species already existed in one of the other children
-        #this means this species was duplicated at this point between
-        #the species
-        $is_dup=1;
-        $duplication_hash->{$genome_db_id} = 1;
         $species_hash->{$genome_db_id} += $t_species_hash->{$genome_db_id};
       }
     }
@@ -464,18 +456,6 @@ sub get_ancestor_species_hash
   #$node->print_tree(20);
   
   $node->add_tag("species_hash", $species_hash);
-  if($is_dup && !($self->param('_treefam'))) {
-
-    $node->add_tag("duplication_hash", $duplication_hash);
-
-    my $original_node_type = $node->get_tagvalue('node_type');
-    if ((not defined $original_node_type) or ($original_node_type eq 'speciation')) {
-      # RAP did not predict a duplication here
-      $node->store_tag('node_type', 'duplication') unless ($self->param('_readonly'));
-
-    } # The other values should not need any treatment
-
-  }
   return $species_hash;
 }
 
@@ -780,13 +760,6 @@ sub ancient_residual_test
 
   #passed all the tests -> it's a simple ortholog
   # print $ancestor->node_id, " ", $ancestor->name,"\n";
-
-  # little hack to work around some weird treefam trees
-  if ($self->param('_treefam')) {
-    if(not $ancestor->has_tag('node_type')) {
-      $ancestor->add_tag('node_type', 'speciation');
-    }
-  }
 
 #  my $sis_value = $ancestor->get_tagvalue("species_intersection_score");
   if ($ancestor->get_tagvalue('node_type', '') eq 'duplication') {
