@@ -15,10 +15,11 @@
         ref_species (if not homo_sapiens)
         default_chunks (especially if the reference is not human, since the masking_option_file option will have to be changed)
         pair_aligner_options (eg if doing primate-primate alignments)
+        bed_dir if running pairaligner_stats module
 
     #4. Run init_pipeline.pl script:
         Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --dbname hsap_ggor_lastz_64 --password <your_password) --mlss_id 536 --dump_dir /lustre/scratch103/ensembl/kb3/scratch/hive/release_64/hsap_ggor_nib_files/ --pair_aligner_options "T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=/nfs/users/nfs_k/kb3/work/hive/data/primate.matrix --ambiguous=iupac" --config_url mysql://user:pass\@host:port/db_name
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --dbname hsap_ggor_lastz_64 --password <your_password) --mlss_id 536 --dump_dir /lustre/scratch103/ensembl/kb3/scratch/hive/release_64/hsap_ggor_nib_files/ --pair_aligner_options "T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=/nfs/users/nfs_k/kb3/work/hive/data/primate.matrix --ambiguous=iupac" --bed_dir /nfs/ensembl/compara/dumps/bed/
 
         Using a configuration file:
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --password ensembl --reg_conf reg.conf --conf_file input.conf --config_url mysql://user:pass\@host:port/db_name
@@ -122,6 +123,9 @@ sub default_options {
 	#directory to dump nib files
 	'dump_dir' => '/lustre/scratch103/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
+	#min length to dump dna as nib file
+	'dump_min_size' => 11500000, 
+
 	#Use 'quick' method for finding max alignment length (ie max(genomic_align_block.length)) rather than the more
 	#accurate method of max(genomic_align.dnafrag_end-genomic_align.dnafrag_start+1)
 	'quick' => 1,
@@ -204,7 +208,8 @@ sub default_options {
 	#Default pairaligner config
 	#
 	'skip_pairaligner_stats' => 0, #skip this module if set to 1
-	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
+#	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
+	'bed_dir' => '/lustre/scratch103/ensembl/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
 	'output_dir' => '/lustre/scratch103/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
     };
 }
@@ -334,7 +339,7 @@ sub pipeline_analyses {
 			       6 => [ 'create_alignment_nets_jobs' ],
 			       7 => [ 'pairaligner_stats' ],
 			       8 => [ 'healthcheck' ],
-			       9 => [ 'dump_dna' ],
+			       9 => [ 'dump_dna_factory' ],
 			      },
 	       -rc_id => 0,
   	    },
@@ -366,8 +371,8 @@ sub pipeline_analyses {
 	       -can_be_empty  => 1, 
 	       -rc_id => 2,
   	    },
-	    {  -logic_name => 'dump_dna',
-	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
+	    {  -logic_name => 'dump_dna_factory',
+	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollectionFactory',
 	       -parameters => {
 			       'dump_dna'=>1,
 			       'dump_min_size'=>1,
@@ -375,14 +380,25 @@ sub pipeline_analyses {
 	       -can_be_empty  => 1, 
 	       -wait_for => [ 'store_sequence', 'store_sequence_again' ],
 	       -rc_id => 1,
+	       -flow_into => {
+ 	          2 => [ 'dump_dna' ],
+ 	       },
+	    },
+	    {  -logic_name => 'dump_dna',
+	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
+	       -parameters => {
+			       'dump_dna'=>1,
+			       },
+	       -can_be_empty  => 1, 
+	       -hive_capacity => 10,
+	       -rc_id => 1,
 	    },
  	    {  -logic_name => 'create_pair_aligner_jobs',  #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs',
  	       -parameters => { },
 	       -hive_capacity => 10,
- 	       -wait_for => [ 'store_sequence', 'store_sequence_again', 'chunk_and_group_dna', 'dump_dna'  ],
+ 	       -wait_for => [ 'store_sequence', 'store_sequence_again', 'chunk_and_group_dna', 'dump_dna_factory', 'dump_dna'  ],
 	       -flow_into => {
-#			       1 => [ 'update_max_alignment_length_before_FD', 'update_max_alignment_length_after_FD' ], 
 			       1 => [ 'remove_inconsistencies_after_pairaligner' ],
 			       2 => [ $self->o('pair_aligner_logic_name')  ],
 			   },
@@ -463,10 +479,23 @@ sub pipeline_analyses {
 			       'flow_to_store_sequence' => 0,
 			      },
 	       -flow_into => {
-			      1 => [ 'dump_large_nib_for_chains' ],
+			      1 => [ 'dump_large_nib_for_chains_factory' ],
 			     },
 	       -wait_for  => ['update_max_alignment_length_after_FD' ],
 	       -rc_id => 2,
+ 	    },
+ 	    {  -logic_name => 'dump_large_nib_for_chains_factory',
+ 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollectionFactory',
+ 	       -parameters => {
+			       'faToNib_exe' => $self->o('faToNib_exe'),
+			       'dump_nib'=>1,
+			       'dump_min_size' => $self->o('dump_min_size'),
+			      },
+	       -hive_capacity => 1,
+	       -flow_into => {
+			      2 => [ 'dump_large_nib_for_chains' ],
+			     },
+	       -rc_id => 0,
  	    },
  	    {  -logic_name => 'dump_large_nib_for_chains',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
@@ -474,6 +503,7 @@ sub pipeline_analyses {
 			       'faToNib_exe' => $self->o('faToNib_exe'),
 			       'dump_nib'=>1,
 			      },
+	       -can_be_empty  => 1, 
 	       -hive_capacity => 10,
 	       -flow_into => {
 			      -1 => [ 'dump_large_nib_for_chains_himem' ],  # MEMLIMIT
@@ -498,7 +528,7 @@ sub pipeline_analyses {
 			      1 => [ 'remove_inconsistencies_after_chain' ],
 			      2 => [ 'alignment_chains' ],
 			     },
- 	       -wait_for => [ 'dump_large_nib_for_chains', 'dump_large_nib_for_chains_himem' ],
+ 	       -wait_for => [ 'dump_large_nib_for_chains_factory', 'dump_large_nib_for_chains', 'dump_large_nib_for_chains_himem' ],
 	       -rc_id => 1,
  	    },
  	    {  -logic_name => 'alignment_chains',
