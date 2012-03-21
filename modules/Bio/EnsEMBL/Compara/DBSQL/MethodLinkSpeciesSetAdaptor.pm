@@ -283,19 +283,17 @@ sub store {
   ## max_alignment_length, using the method here would result in adding a default
   ## max_alignment_length to those method_link_species_sets!
   if (defined($method_link_species_set->{max_alignment_length})) {
-    my $values = $self->db->get_MetaContainer->list_value_by_key("max_align_$dbID");
-    if (@$values) {
-      if ($values->[0] != $method_link_species_set->max_alignment_length){
-        #... update it if it was already defined and it is different from current one
-        $self->db->get_MetaContainer->update_key_value("max_align_$dbID",
-            $method_link_species_set->max_alignment_length);
-      }
-    } else {
-        #... store it if it was not defined yet
-      $self->db->get_MetaContainer->store_key_value("max_align_$dbID",
-          $method_link_species_set->max_alignment_length)
-    }
-  }
+     my $max_align = $method_link_species_set->get_value_for_tag("max_align");
+     if ($max_align) {
+	 if ($max_align != $method_link_species_set->max_alignment_length){
+	     #... update it if it was already defined and it is different from current one
+	     $method_link_species_set->store_tag("max_align", $method_link_species_set->max_alignment_length);
+	 } else {
+	     #... store it if it was not defined yet
+	     $method_link_species_set->store_tag("max_align", $method_link_species_set->max_alignment_length);
+	 }
+     }
+ }
 
   $method_link_species_set->dbID($dbID);
 
@@ -767,26 +765,16 @@ sub fetch_by_method_link_type_species_set_name {
 sub get_max_alignment_length {
   my ($self, $method_link_species_set) = @_;
 
-  my $method_link_species_set_id = ($method_link_species_set->dbID or 0);
-  my $values = $self->db->get_MetaContainer->list_value_by_key(
-      "max_align_$method_link_species_set_id");
-  if ($values && @$values) {
-    return $method_link_species_set->max_alignment_length($values->[0]);
+  my $max_align = $method_link_species_set->get_value_for_tag("max_align");
+
+  if ($max_align) {
+      return $method_link_species_set->max_alignment_length($max_align);
   } else {
-    $values = $self->db->get_MetaContainer->list_value_by_key("max_alignment_length");
-    if($values && @$values) {
-      warning("Meta table key 'max_align_$method_link_species_set_id' not defined\n" .
-          " -> using old meta table key 'max_alignment_length' [".$values->[0]."]");
-      return $method_link_species_set->max_alignment_length($values->[0]);
-    } else {
-      warning("Meta table key 'max_align_$method_link_species_set_id' not defined and\n" .
-          "old meta table key 'max_alignment_length' not defined\n" .
-          " -> using default value [$DEFAULT_MAX_ALIGNMENT]");
+      warning("method_link_species_set_tag key 'max_align' not defined\n" .
+	      " -> using default value [$DEFAULT_MAX_ALIGNMENT]");
       return $method_link_species_set->max_alignment_length($DEFAULT_MAX_ALIGNMENT);
-    }
   }
 }
-
 
 =head2 fetch_by_method_link_id_species_set_id
 

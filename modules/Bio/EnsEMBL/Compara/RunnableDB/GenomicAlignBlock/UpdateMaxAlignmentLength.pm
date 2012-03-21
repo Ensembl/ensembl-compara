@@ -90,7 +90,7 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-  $self->update_meta_table;
+  $self->update_mlss_tag_table;
   return 1;
 }
 
@@ -108,14 +108,17 @@ sub write_output
 #
 #####################################
 
-sub update_meta_table {
+sub update_mlss_tag_table {
   my $self = shift;
 
   my $dba = $self->compara_dba;
-  my $mc = $dba->get_MetaContainer;
 
   $dba->dbc->do("analyze table genomic_align_block");
   $dba->dbc->do("analyze table genomic_align");
+
+  #Get method_link_species_set object
+  my $mlssa = $dba->get_MethodLinkSpeciesSetAdaptor;
+  my $mlss = $mlssa->fetch_by_dbID($self->param('method_link_species_set_id'));
 
   #Don't like doing this but it looks to be the only way to avoid going mad WRT where & and clauses
   my @args;
@@ -144,19 +147,13 @@ sub update_meta_table {
   $sth->bind_columns(\$method_link_species_set_id,\$max_align);
 
   while ($sth->fetch()) {
-    my $key = "max_align_".$method_link_species_set_id;
-    $mc->delete_key($key);
-    $mc->store_key_value($key, $max_align + 1);
-    $max_alignment_length = $max_align if ($max_align > $max_alignment_length);
-    print STDERR "Stored key:$key value:",$max_align + 1," in meta table\n";
+      $mlss->delete_tag("max_align") if ($mlss->has_tag("max_align"));
+      $mlss->store_tag("max_align", $max_align + 1);
+      print STDERR "Stored key:max_align value:",$max_align + 1," in method_link_species_set_tag table\n";
   }
-  $mc->delete_key("max_alignment_length");
-  $mc->store_key_value("max_alignment_length", $max_alignment_length + 1);
-  print STDERR "Stored key:max_alignment_length value:",$max_alignment_length + 1," in meta table\n";
 
   $sth->finish;
 
 }
-
 
 1;
