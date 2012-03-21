@@ -282,7 +282,7 @@ sub store {
   ## none has been specified. As some method_link_species_sets do not have any
   ## max_alignment_length, using the method here would result in adding a default
   ## max_alignment_length to those method_link_species_sets!
-  if (defined($method_link_species_set->{max_alignment_length})) {
+  if (defined($method_link_species_set->{max_alignment_length})) { 
      my $max_align = $method_link_species_set->get_value_for_tag("max_align");
      if ($max_align) {
 	 if ($max_align != $method_link_species_set->max_alignment_length){
