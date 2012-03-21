@@ -154,7 +154,7 @@ sub get_species_tree_file {
         }
 
             # store the string in a local file:
-        my $file_basename = shift or "spec_tax.nh";
+        my $file_basename = shift || 'spec_tax.nh';
         my $species_tree_file = $self->worker_temp_directory . $file_basename;
         open SPECIESTREE, ">$species_tree_file" or die "Could not open '$species_tree_file' for writing : $!";
         print SPECIESTREE $species_tree_string;
