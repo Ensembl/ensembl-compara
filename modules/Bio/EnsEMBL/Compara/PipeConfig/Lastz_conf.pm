@@ -20,7 +20,7 @@
 
     #5. Run init_pipeline.pl script:
         Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf --dbname hsap_btau_lastz_64 --password <your password> --mlss_id 534 --pipeline_db -host=compara1 --ref_species homo_sapiens --pipeline_name LASTZ_hs_bt_64 --bed_dir /nfs/ensembl/compara/dumps/bed/
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf --dbname hsap_btau_lastz_64 --password <your password> --mlss_id 534 --pipeline_db -host=compara1 --ref_species homo_sapiens --pipeline_name LASTZ_hs_bt_64 
 
     #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
 
