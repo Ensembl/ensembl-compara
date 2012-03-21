@@ -116,6 +116,7 @@ sub write_output {
     my $lambda = $self->param('lambda');
     $self->dataflow_output_id ( {
                                  'cafe_lambda' => $self->param('lambda'),
+                                 'p_value_lim' => $self->param('pvalue_lim'),
                                  'cafe_table_file' => $self->param('work_dir') . "/" . $self->param('cafe_table_file'),
                                  'cafe_tree_string' => $self->param('cafe_tree_string'),
                                 }, 3);
@@ -242,18 +243,11 @@ sub parse_cafe_output {
 
 
 # Store the tree
-    print STDERR "Store the mlss_id... " if ($self->debug());
     $tree->method_link_species_set_id($mlss_id);
-    print STDERR "OK\n" if ($self->debug());
-    print STDERR "Store the species_tree... " if ($self->debug());
     $tree->species_tree($ids_tree_str);
-    print STDERR "OK\n" if ($self->debug());
-    print STDERR "Store the lambdas used... " if ($self->debug());
     $tree->lambdas($lambda);
-    print STDERR "OK\n" if ($self->debug());
-    print STDERR "Storing the tree... " if ($self->debug());
+    $tree->pvalue_lim($pvalue_lim);
     $cafeTree_Adaptor->store($tree);
-    print STDERR "OK\n" if ($self->debug());
 
     while (<$fh>) {
         last if $. == 10; # We skip several lines and go directly to the family information.
