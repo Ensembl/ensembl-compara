@@ -30,8 +30,8 @@ Bio::EnsEMBL::Compara::DBSQL::MethodAdaptor
 
     my $method_by_id    = $method_adaptor->fetch_by_dbID( 301 );    # inherited method
 
-    my ($bzn_method)    = $method_adaptor->fetch_all_by_type('BLASTZ_NET');
-    my ($fam_method)    = $method_adaptor->fetch_all_by_type('FAMILY');
+    my $bzn_method      = $method_adaptor->fetch_by_type('BLASTZ_NET');
+    my $fam_method      = $method_adaptor->fetch_by_type('FAMILY');
 
     foreach my $tree_method (@{ $method_adaptor->fetch_by_class_pattern('%tree_node')}) {
         print $tree_method->toString."\n";
@@ -93,19 +93,19 @@ sub _objs_from_sth {
 }
 
 
-=head2 fetch_all_by_type
+=head2 fetch_by_type
 
   Arg [1]     : string $type
-  Example     : my ($bzn_method) = $method_adaptor->fetch_all_by_type('BLASTZ_NET');
+  Example     : my $bzn_method = $method_adaptor->fetch_by_type('BLASTZ_NET');
   Description : Fetches the Method object(s) with a given type
   Returntype  : Bio::EnsEMBL::Compara::Method arrayref
 
 =cut
 
-sub fetch_all_by_type {
+sub fetch_by_type {
     my ($self, $type) = @_;
 
-    return $self->generic_fetch( "m.type = '$type'" );
+    return @{ $self->generic_fetch( "m.type = '$type'" ) };
 }
 
 
