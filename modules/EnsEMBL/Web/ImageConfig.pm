@@ -168,6 +168,9 @@ sub menus {
     # Regulation
     functional          => 'Regulation',
     
+    # Encode (data hub)
+    encode              => 'Encode data',
+    
     # Compara
     compara             => 'Comparative genomics',
     pairwise_blastz     => [ 'BLASTz/LASTz alignments',    'compara' ],
@@ -640,7 +643,7 @@ sub load_user_tracks {
 }
 
 sub load_configured_bam    { shift->load_file_format('bam');    }
-sub load_configured_bigbed { shift->load_file_format('bigbed');    }
+sub load_configured_bigbed { shift->load_file_format('bigbed'); }
 sub load_configured_bigwig { shift->load_file_format('bigwig'); }
 sub load_configured_vcf    { shift->load_file_format('vcf');    }
 
@@ -651,33 +654,24 @@ sub load_file_format {
 
   foreach my $source_name (sort keys %$internal_sources) {
     # get the target menu 
-    my $source;
     my $menu = $self->get_node($internal_sources->{$source_name});
+    my $source;
+    
     if ($menu) {
       $source = $self->sd_call($source_name);
-    }
-    else {
+    } else {
       ## Probably an external datahub source
-      $source           = $internal_sources->{$source_name};
-      my $menu_key      = $source->{'menu_key'};
-      my $menu_name     = $source->{'menu_name'};
-      my $submenu_key   = $source->{'submenu_key'};
-      my $submenu_name  = $source->{'submenu_name'};
-
-      ## Insert new menu after Regulation
-      ## TODO - fine-tune positioning once we get multiple datahubs
-      my $reg_node      = $self->get_node('functional');
-
-      my $main_menu     = $self->get_node($menu_key)
-                            || $self->tree->insert_after($self->create_submenu($menu_key, $menu_name), $reg_node);
-      $menu             = $self->get_node($submenu_key)
-                            || $main_menu->append_child($self->create_submenu($submenu_key, $submenu_name));
+         $source       = $internal_sources->{$source_name};
+      my $menu_key     = $source->{'menu_key'};
+      my $menu_name    = $source->{'menu_name'};
+      my $submenu_key  = $source->{'submenu_key'};
+      my $submenu_name = $source->{'submenu_name'};
+      my $main_menu    = $self->get_node($menu_key)    || $self->tree->prepend_child($self->create_submenu($menu_key, $menu_name));
+         $menu         = $self->get_node($submenu_key) || $main_menu->append_child($self->create_submenu($submenu_key, $submenu_name));
     }
-    my $desc = $source->{'description'};
-    $self->$function(key => $source_name, menu => $menu, source => $source,
-                      description => $desc, internal => 1) if $source;
+    
+    $self->$function(key => $source_name, menu => $menu, source => $source, description => $source->{'description'}, internal => 1) if $source;
   }
-  
 }
 
 sub _add_bam_track {
