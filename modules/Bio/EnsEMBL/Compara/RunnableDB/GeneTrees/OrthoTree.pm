@@ -597,57 +597,52 @@ sub genepairlink_fetch_homology
 
 sub delete_old_orthotree_tags
 {
-  my $self = shift;
+    my $self = shift;
 
-  return undef unless ($self->input_job->retry_count > 0);
+    return undef unless ($self->input_job->retry_count > 0);
 
-  print "deleting old orthotree tags\n" if ($self->debug);
-  my @node_ids;
+    my $tree_node_id = $self->param('gene_tree')->node_id;
 
-  foreach my $node ($self->param('gene_tree')->get_all_subnodes) {
-    push @node_ids, $node->node_id;
-  }
+    print "deleting old orthotree tags\n" if ($self->debug);
+    my $delete_time = time();
 
-  my @list_ids;
-  foreach my $id (@node_ids) {
-    push @list_ids, $id;
-    if (scalar @list_ids == 2000) {
-      # FIXME
-      my $sql = "delete from gene_tree_root_tag where root_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
-      my $sth = $self->compara_dba->dbc->prepare($sql);
-      $sth->execute;
-      $sth->finish;
-      @list_ids = ();
-    }
-  }
+    my $sql1 = 'UPDATE gene_tree_node_tag JOIN gene_tree_node USING (node_id) SET taxon_id = NULL, taxon_name = NULL, duplication_confidence_score = NULL WHERE root_id = ?';
+    my $sth1 = $self->compara_dba->dbc->prepare($sql1);
+    $sth1->execute($tree_node_id);
+    $sth1->finish;
+
+    my $sql2 = 'DELETE FROM gene_tree_root_tag WHERE tag LIKE "OrthoTree_%" AND root_id = ?';
+    my $sth2 = $self->compara_dba->dbc->prepare($sql2);
+    $sth2->execute($tree_node_id);
+    $sth2->finish;
+
+    printf("%1.3f secs to delete old orthotree tags\n", time()-$delete_time) if ($self->debug);
 }
 
 sub delete_old_homologies {
-  my $self = shift;
+    my $self = shift;
 
-  return undef unless ($self->input_job->retry_count > 0);
+    return undef unless ($self->input_job->retry_count > 0);
 
-  print "deleting old homologies\n" if ($self->debug);
+    my $tree_node_id = $self->param('gene_tree')->node_id;
 
-  # New method all in one go -- requires key on tree_node_id
-  my $delete_time = time();
-  my $tree_node_id = $self->param('gene_tree')->node_id;
+    # New method all in one go -- requires key on tree_node_id
+    print "deleting old homologies\n" if ($self->debug);
+    my $delete_time = time();
 
-  # Delete first the members
-  my $sql1 = 'DELETE homology_member FROM homology JOIN homology_member USING (homology_id) WHERE tree_node_id=?';
-  my $sth1 = $self->compara_dba->dbc->prepare($sql1);
-  $sth1->execute($tree_node_id);
-  $sth1->finish;
+    # Delete first the members
+    my $sql1 = 'DELETE homology_member FROM homology JOIN homology_member USING (homology_id) WHERE tree_node_id=?';
+    my $sth1 = $self->compara_dba->dbc->prepare($sql1);
+    $sth1->execute($tree_node_id);
+    $sth1->finish;
 
-  # And then the homologies
-  my $sql2 = 'DELETE FROM homology WHERE tree_node_id=?';
-  my $sth2 = $self->compara_dba->dbc->prepare($sql2);
-  $sth2->execute($tree_node_id);
-  $sth2->finish;
-  printf("%1.3f secs build links and features\n", time()-$delete_time);
-
-  $self->param('old_homologies_deleted', 1);
-  return undef;
+    # And then the homologies
+    my $sql2 = 'DELETE FROM homology WHERE tree_node_id=?';
+    my $sth2 = $self->compara_dba->dbc->prepare($sql2);
+    $sth2->execute($tree_node_id);
+    $sth2->finish;
+    
+    printf("%1.3f secs to delete old homologies\n", time()-$delete_time) if ($self->debug);
 }
 
 sub genepairlink_check_dups
@@ -1013,7 +1008,7 @@ sub store_gene_link_as_homology {
   }
   ## Check if it has already been stored, in which case we dont need to store again
   my $matching_homology = 0;
-  if (($self->input_job->retry_count > 0) and !defined($self->param('old_homologies_deleted'))) {
+  if ($self->input_job->retry_count > 0) {
     my $member_id1 = $gene1->gene_member->member_id;
     my $member_id2 = $gene2->gene_member->member_id;
     if ($member_id1 == $member_id2) {
