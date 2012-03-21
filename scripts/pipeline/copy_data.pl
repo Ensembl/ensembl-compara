@@ -207,6 +207,14 @@ exit(1) if !check_table("method_link", $from_dba, $to_dba, undef,
 exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
     "method_link_species_set_id = $mlss_id");
 
+#Copy all entries in method_link_species_set_tag table for a method_link_speceies_set_id
+copy_data($from_dba, $to_dba,
+	  "method_link_species_set_tag",
+	  undef, undef, undef,
+	  "SELECT method_link_species_set_id, tag, value" .
+	  " FROM method_link_species_set_tag " .
+	  " WHERE method_link_species_set_id = $mlss_id");
+
 if ($class =~ /^GenomicAlignBlock/ or $class =~ /^GenomicAlignTree/) {
   copy_genomic_align_blocks($from_dba, $to_dba, $method_link_species_set);
 } elsif ($class =~ /^ConservationScore.conservation_score/) {
@@ -870,6 +878,7 @@ sub copy_constrained_elements {
     exit(1);
   }
 
+  #Leave this for now, but should be deleted when all max_align has been moved to method_link_species_set_tag table
   copy_data($from_dba, $to_dba,
       "meta",
       undef, undef, undef,
