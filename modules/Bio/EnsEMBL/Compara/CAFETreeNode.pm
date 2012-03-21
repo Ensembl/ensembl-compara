@@ -90,6 +90,14 @@ sub avg_pvalue {
     return $self->{'_avg_pvalue'};
 }
 
+sub pvalue_lim {
+    my ($self, $pvalue) = @_;
+    if (defined $pvalue) {
+        $self->{'_pvalue_lim'} = $pvalue;
+    }
+    return $self->{'_pvalue_lim'};
+}
+
 sub fam_id {
     my ($self, $fam_id) = @_;
 
@@ -124,6 +132,27 @@ sub p_value {
         $self->{'_p_value'} = $pvalue;
     }
     return $self->{'_p_value'};
+}
+
+sub is_significant {
+    my ($self) = @_;
+    return $self->p_value() < $self->pvalue_lim();
+}
+
+sub is_expansion {
+    my ($self) = @_;
+    if ($self->has_parent) {
+        return 1 if ($self->n_members > $self->parent->n_members);
+    }
+    return 0;
+}
+
+sub is_contraction {
+    my ($self) = @_;
+    if ($self->has_parent) {
+        return 1 if ($self->n_members < $self->parent->n_members);
+    }
+    return 0;
 }
 
 1;
