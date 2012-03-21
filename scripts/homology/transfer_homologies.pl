@@ -28,6 +28,7 @@ if (defined $method_link_id && defined $method_link_species_set_id) {
 }
 
 my $source_mlssa =  Bio::EnsEMBL::Registry->get_adaptor('source_compara','compara','MethodLinkSpeciesSet');
+my $source_mla   =  Bio::EnsEMBL::Registry->get_adaptor('source_compara','compara','Method');
 my $source_ha =  Bio::EnsEMBL::Registry->get_adaptor('source_compara','compara','Homology');
 my $source_ma =  Bio::EnsEMBL::Registry->get_adaptor('source_compara','compara','Member');
 
@@ -38,7 +39,7 @@ my $destination_ma =  Bio::EnsEMBL::Registry->get_adaptor('destination_compara',
 my $mlss_aref;
 
 if (defined $method_link_id) {
-  my $method_link_type = $source_mlssa->get_method_link_type_from_method_link_id($method_link_id);
+  my $method_link_type = $source_mla->fetch_by_dbID($method_link_id)->type();
   $mlss_aref = $source_mlssa->fetch_all_by_method_link_type($method_link_type);
 } elsif (defined $method_link_species_set_id) {
   $mlss_aref = [ $source_mlssa->fetch_by_dbID($method_link_species_set_id) ];

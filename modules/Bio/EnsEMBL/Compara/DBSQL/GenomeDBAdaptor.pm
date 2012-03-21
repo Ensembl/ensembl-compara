@@ -477,15 +477,14 @@ sub cache_all {
 sub get_all_db_links {
   my ($self, $ref_gdb, $method_link_id) = @_;
 
-  my $gdb_list;
+  my $method_link_type = $self->db->get_MethodAdaptor->fetch_by_dbID( $method_link_id )->type();
 
-  my $method_link_species_set_adaptor = $self->db->get_MethodLinkSpeciesSetAdaptor;
-  my $method_link_type = $method_link_species_set_adaptor->
-      get_method_link_type_from_method_link_id($method_link_id);
-  my $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link_type_GenomeDB(
+  my $method_link_species_sets = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type_GenomeDB(
           $method_link_type,
           $ref_gdb
-      );
+  );
+
+  my $gdb_list;
 
   foreach my $this_method_link_species_set (@{$method_link_species_sets}) {
     foreach my $this_genome_db (@{$this_method_link_species_set->species_set}) {
