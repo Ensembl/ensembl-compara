@@ -19,6 +19,8 @@ my $reg = 'Bio::EnsEMBL::Registry';
 $reg->load_registry_from_db(
   -host=>'ensembldb.ensembl.org',
   -user=>'anonymous', 
+  -db_version=>66,
+  -verbose
 );
 
 
@@ -58,8 +60,7 @@ print "Number of constrained elements: " . @$cons . "\n";
 foreach my $ce (@$cons) {
     print "dbID:" . $ce->dbID . " from:" . ($ce->slice->start + $ce->start - 1 ) . " to:" . 
 	($ce->slice->start + $ce->end - 1) . " Constrained element score:" . $ce->score . 
-	" length:" . ($ce->end - $ce->start)  . " p_value:" . $ce->p_value . " taxonomic_level:" 
-	. "\"" .  $ce->taxonomic_level . "\"" . " dnafrag_id:". $ce->reference_dnafrag_id . "\n";
+	" length:" . ($ce->end - $ce->start)  . " p_value:" . $ce->p_value . " dnafrag_id:". $ce->reference_dnafrag_id . "\n";
 	print $alignIO $ce->get_SimpleAlign($orig_mlss, "uc");
 }
 
