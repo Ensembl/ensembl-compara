@@ -81,25 +81,6 @@ use Bio::EnsEMBL::Compara::AlignSlice;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-=head2 new (CONSTRUCTOR)
-
-  Arg        : 
-  Example    : 
-  Description: Creates a new AlignSliceAdaptor object
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::Registry->get_adaptor
-
-=cut
-
-sub new {
-  my $class = shift;
-
-  my $self = $class->SUPER::new(@_);
-
-  return $self;
-}
-
 
 =head2 fetch_by_Slice_MethodLinkSpeciesSet
 
