@@ -288,7 +288,11 @@ store_objects($new_dba->get_SpeciesSetAdaptor, $all_default_species_sets,
 ## Copy all the DnaFrags for the default assemblies
 copy_all_dnafrags($master_dba, $new_dba, $all_default_genome_dbs);
 
+
 if ($old_dba and !$skip_data) {
+## Copy all the MethodLinkSpeciesSetTags for MethodLinkSpeciesSets
+  copy_all_mlss_tags($old_dba, $new_dba, $all_default_method_link_species_sets);
+
 ## Copy DNA-DNA alignemnts
   copy_dna_dna_alignements($old_dba, $new_dba, $all_default_method_link_species_sets);
 ## Copy Ancestor dnafrags
@@ -649,6 +653,58 @@ sub copy_all_dnafrags {
     }
     close(TEMP);
     print "Copying dnafrag for ", $this_genome_db->name, ":\n . ";
+    if ($pass) {
+      system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    } else {
+      system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
+    }
+    unlink("$filename");
+  }
+}
+
+=head2 copy_all_mlss_tags
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
+  Arg[3]      : listref Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlsss
+  Description : copy from $from_dba to $to_dba all the MethodLinkSpeciesSetTags which
+                correspond to MethodLinkSpeciesSets from the $mlsss list only.
+  Returns     :
+  Exceptions  : throw if argument test fails
+
+=cut
+
+sub copy_all_mlss_tags {
+  my ($from_dba, $to_dba, $mlsss) = @_;
+
+  throw("[$from_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
+      unless (UNIVERSAL::isa($from_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+
+  throw("[$to_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
+      unless (UNIVERSAL::isa($to_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+
+  my $user = $new_dba->dbc->username;
+  my $pass = $new_dba->dbc->password;
+  my $host = $new_dba->dbc->host;
+  my $port = $new_dba->dbc->port;
+  my $dbname = $new_dba->dbc->dbname;
+
+  my $mlss_tag_fetch_sth = $from_dba->dbc->prepare("SELECT * FROM method_link_species_set_tag".
+      " WHERE method_link_species_set_id = ?");
+  foreach my $this_mlss (@$mlsss) {
+    $mlss_tag_fetch_sth->execute($this_mlss->dbID);
+    my $all_rows = $mlss_tag_fetch_sth->fetchall_arrayref;
+    if (!@$all_rows) {
+      next;
+    }
+    my $filename = "/tmp/method_link_species_set_tag.populate_new_database.".$this_mlss->dbID.".$$.txt";
+    open(TEMP, ">$filename") or die;
+    foreach my $this_row (@$all_rows) {
+      print TEMP join("\t", @$this_row), "\n";
+    }
+    close(TEMP);
+    print "Copying method_link_species_set_tag for ", $this_mlss->name, ":\n . ";
+
     if ($pass) {
       system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
     } else {
