@@ -1222,50 +1222,51 @@ sub _summarise_go_db {
 }
 
 sub _summarise_datahubs {
-  my $self = shift;
-
+  my $self    = shift;
   my $datahub = $self->tree->{'ENSEMBL_INTERNAL_DATAHUBS'};
+  
   return unless $datahub;
+  
+  my $parser = new Bio::EnsEMBL::ExternalData::DataHub::SourceParser({
+    timeout => 10,
+    proxy   => $self->tree->{'ENSEMBL_WWW_PROXY'},
+  });
 
-  my $settings = {
-    'timeout' => 10,
-    'proxy'   => $self->tree->{'ENSEMBL_WWW_PROXY'},
-  };
-  my $parser = new Bio::EnsEMBL::ExternalData::DataHub::SourceParser($settings);
-
-  while (my ($key,$url) = each (%$datahub)) {
+  while (my ($key, $val) = each (%$datahub)) {
+    my ($url, $menu) = ref $val eq 'ARRAY' ? @$val : ($val, undef);
+    
     ## Do we have data for this species?
     my $hub_info = $parser->get_hub_info($url);
+    
     if ($hub_info->{'error'}) {
-      warn "!!! COULD NOT CONTACT DATAHUB $key: ".$hub_info->{'error'};
-    }
-    else {
+      warn "!!! COULD NOT CONTACT DATAHUB $key: $hub_info->{'error'}";
+    } else {
       my $source_list = $hub_info->{$self->tree->{'UCSC_GOLDEN_PATH'}};
+      
       return unless scalar @$source_list;
-
+      
       ## Get tracks from hub
-      my $datahub_config = $parser->parse($url.$self->tree->{'UCSC_GOLDEN_PATH'}, $source_list);
+      my $datahub_config = $parser->parse($url . $self->tree->{'UCSC_GOLDEN_PATH'}, $source_list);
+      
       ## Create Ensembl-style tracks from the datahub configuration
       ## TODO - implement track grouping!
       foreach my $dataset (@$datahub_config) {
         if ($dataset->{'error'}) {
-          warn sprintf('!!! COULD NOT PARSE CONFIG %s: %s', $dataset->{'file'}, $dataset->{'error'});
-        }
-        else {
+          warn "!!! COULD NOT PARSE CONFIG $dataset->{'file'}: $dataset->{'error'}";
+        } else {
           (my $name = $key) =~ s/_/ /g;
+          
           my $options = {
-            'menu_key'      => $key,
-            'menu_name'     => $name,
-            'submenu_key'   => $dataset->{'config'}{'track'},
-            'submenu_name'  => $dataset->{'config'}{'shortLabel'},
-            'desc_url'      => $dataset->{'config'}{'description_url'},
+            menu_key     => $menu || $key,
+            menu_name    => $name,
+            submenu_key  => $dataset->{'config'}{'track'},
+            submenu_name => $dataset->{'config'}{'shortLabel'},
+            desc_url     => $dataset->{'config'}{'description_url'},
           };
+          
           if ($dataset->{'config'}{'subsets'}) {
-            foreach my $subset (@{$dataset->{'tracks'}}) {
-              $self->_add_datahub_tracks($subset->{'tracks'}, $options);
-            }
-          }
-          else {
+            $self->_add_datahub_tracks($_->{'tracks'}, $options) for @{$dataset->{'tracks'}};
+          } else {
             $self->_add_datahub_tracks($dataset->{'tracks'}, $options);
           }
         }
