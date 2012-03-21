@@ -457,7 +457,7 @@ sub get_ancestor_taxon_level {
   my $taxon_level = $ancestor->get_tagvalue('taxon_level');
   return $taxon_level if($taxon_level);
 
-  #printf("\ncalculate ancestor taxon level\n");
+  printf("\ncalculate ancestor taxon level for node_id=\n", $ancestor->node_id) if $self->debug;
   my $taxon_tree = $self->param('taxon_tree');
   my $species_hash = $self->get_ancestor_species_hash($ancestor);
 
@@ -837,8 +837,6 @@ sub store_homologies {
   $self->check_homology_consistency;
 
   $self->param('gene_tree')->tree->store_tag('OrthoTree_types_hashstr', stringify($self->param('orthotree_homology_counts'))) unless ($self->param('_readonly'));
-
-  return undef;
 }
 
 sub store_gene_link_as_homology {
