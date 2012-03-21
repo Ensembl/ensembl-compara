@@ -654,6 +654,7 @@ sub load_file_format {
 
   foreach my $source_name (sort keys %$internal_sources) {
     # get the target menu 
+
     my $menu = $self->get_node($internal_sources->{$source_name});
     my $source;
     
@@ -786,7 +787,6 @@ sub _add_flat_file_track {
 
 sub _add_file_format_track {
   my ($self, %args) = @_;
-  
   my $menu = $args{'menu'} || $self->get_node('user_data');
   
   return unless $menu;
@@ -1327,6 +1327,7 @@ sub _merge {
     } else {
       $data->{$key}{'description'} = $sub_tree->{'desc'};
     }
+    $data->{$key}{'format'} = $sub_tree->{'format'};
     
     push @{$data->{$key}{'logic_names'}}, $analysis;
   }
@@ -1427,7 +1428,7 @@ sub add_dna_align_features {
       }
       
       my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$self->{'alignment_renderers'}}) ? $data->{$key_2}{'display'} : 'off'; # needed because the same logic_name can be a gene and an alignment
-      
+
       if ($data->{$key_2}{'display'} && $data->{$key_2}{'display'} eq 'simple'){
         $display = 'simple';
         $alignment_renderers = ['off', 'Off', 'simple', 'On'];  
@@ -1452,10 +1453,20 @@ sub add_data_files {
   my $alignment_renderers = ['off', 'Off', 'simple', 'On'];
 
   my ($keys, $data) = $self->_merge($hashref->{'data_file'});
-  $self->generic_add($menu, $key, "data_file_${key}_$_", $data->{$_}, { 
-      glyphset => '_alignment', 
-      strand => 'b',
-  }) for @$keys;
+  foreach (@$keys) {
+    my $glyphset = $data->{$_}{'format'} || '_alignment';
+    $self->generic_add($menu, $key, "data_file_${key}_$_", $data->{$_}, { 
+      glyphset => $glyphset, 
+      strand => 'f',
+      renderers   => [
+        'off',       'Off', 
+        'normal',    'Normal', 
+        'unlimited', 'Unlimited', 
+        'histogram', 'Coverage only'
+      ], 
+      })
+    ;
+  }
 }
 
 sub add_ditag_features {
