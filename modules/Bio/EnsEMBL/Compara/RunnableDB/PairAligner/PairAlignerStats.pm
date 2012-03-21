@@ -62,7 +62,7 @@ sub fetch_input {
   return if ($self->param('skip'));
   #Default directory containing bed files.
   if (!defined $self->param('bed_dir')) {
-      $self->param('bed_dir', "/nfs/ensembl/compara/dumps/bed/");
+      die ("Must define a location to dump the bed files using the parameter 'bed_dir'");
   }
 
   #Find the mlss_id from the method_link_type and genome_db_ids
@@ -96,9 +96,11 @@ sub fetch_input {
   $self->param('ref_dbc_url', $ref_db->dbc->url . "?group=core\\&species=" . $self->param('ref_species'));
   $self->param('non_ref_dbc_url', $non_ref_db->dbc->url . "?group=core\\&species=" . $self->param('non_ref_species'));
 
+  my $perl_path = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
+
   #Set up paths to various perl scripts
   unless ($self->param('dump_features')) {
-      $self->param('dump_features', $self->param('perl_path') . "/scripts/dumps/dump_features.pl");
+      $self->param('dump_features', $perl_path . "/ensembl-compara/scripts/dumps/dump_features.pl");
   }
   
   unless (-e $self->param('dump_features')) {
@@ -106,10 +108,10 @@ sub fetch_input {
   }
   
   unless ($self->param('create_pair_aligner_page')) {
-      $self->param('create_pair_aligner_page', $self->param('perl_path') . "/scripts/pipeline/create_pair_aligner_page.pl");
+      $self->param('create_pair_aligner_page', $perl_path . "/ensembl-compara/scripts/pipeline/create_pair_aligner_page.pl");
   }
   unless (-e $self->param('create_pair_aligner_page')) {
-      die(self->param('create_pair_aligner_page') . " does not exist");
+      die($self->param('create_pair_aligner_page') . " does not exist");
   }
 
   #Get ensembl schema version from meta table if not defined
