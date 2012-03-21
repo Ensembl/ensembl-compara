@@ -261,13 +261,11 @@ sub run_analysis {
   foreach my $genepairlink (@sorted_genepairlinks) {
     $self->analyze_genepairlink($genepairlink);
   }
-  printf("%1.3f secs to analyze genepair links\n", time()-$tmp_time) 
-    if($self->debug > 1);
+  printf("%1.3f secs to analyze genepair links\n", time()-$tmp_time) if($self->debug > 1);
   
   #display summary stats of analysis 
   my $runtime = time()*1000-$starttime;  
-  $gene_tree->tree->store_tag('OrthoTree_runtime_msec', $runtime) 
-    unless ($self->param('_readonly'));
+  $gene_tree->tree->store_tag('OrthoTree_runtime_msec', $runtime) unless ($self->param('_readonly'));
 
   if($self->debug) {
     printf("%d genes in tree\n", scalar(@{$gene_tree->get_all_leaves}));
@@ -413,37 +411,43 @@ sub load_species_tree_from_string {
 
 sub get_ancestor_species_hash
 {
-  my $self = shift;
-  my $node = shift;
+    my $self = shift;
+    my $node = shift;
 
-  my $species_hash = $node->get_tagvalue('species_hash');
-  return $species_hash if($species_hash);
+    my $species_hash = $node->get_tagvalue('species_hash');
+    return $species_hash if($species_hash);
 
-  $species_hash = {};
+    $species_hash = {};
+    my $is_dup = 0;
 
-  if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
-    my $node_genome_db_id = $node->genome_db_id;
-    $species_hash->{$node_genome_db_id} = 1;
-    $node->add_tag('species_hash', $species_hash);
-    return $species_hash;
-  }
-
-  foreach my $child (@{$node->children}) {
-    my $t_species_hash = $self->get_ancestor_species_hash($child);
-    foreach my $genome_db_id (keys(%$t_species_hash)) {
-      unless(defined($species_hash->{$genome_db_id})) {
-        $species_hash->{$genome_db_id} = $t_species_hash->{$genome_db_id};
-      } else {
-        $species_hash->{$genome_db_id} += $t_species_hash->{$genome_db_id};
-      }
+    if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
+        my $node_genome_db_id = $node->genome_db_id;
+        $species_hash->{$node_genome_db_id} = 1;
+        $node->add_tag('species_hash', $species_hash);
+        return $species_hash;
     }
-  }
-  
-  #printf("\ncalc_ancestor_species_hash : %s\n", stringify($species_hash));
-  #$node->print_tree(20);
-  
-  $node->add_tag("species_hash", $species_hash);
-  return $species_hash;
+
+    foreach my $child (@{$node->children}) {
+        my $t_species_hash = $self->get_ancestor_species_hash($child);
+        foreach my $genome_db_id (keys(%$t_species_hash)) {
+            unless(defined($species_hash->{$genome_db_id})) {
+                $species_hash->{$genome_db_id} = $t_species_hash->{$genome_db_id};
+            } else {
+                $is_dup = 1;
+                $species_hash->{$genome_db_id} += $t_species_hash->{$genome_db_id};
+            }
+        }
+    }
+
+    if ($is_dup) {
+        my $original_node_type = $node->get_tagvalue('node_type');
+        if ((not defined $original_node_type) or ($original_node_type eq 'speciation')) {
+            $node->store_tag('node_type', 'duplication') unless ($self->param('_readonly'));
+        }
+    }
+
+    $node->add_tag("species_hash", $species_hash);
+    return $species_hash;
 }
 
 
@@ -539,7 +543,7 @@ sub delete_old_orthotree_tags
     print "deleting old orthotree tags\n" if ($self->debug);
     my $delete_time = time();
 
-    my $sql1 = 'UPDATE gene_tree_node_tag JOIN gene_tree_node USING (node_id) SET taxon_id = NULL, taxon_name = NULL, duplication_confidence_score = NULL WHERE root_id = ?';
+    my $sql1 = 'UPDATE gene_tree_node JOIN gene_tree_node_attr USING (node_id) SET taxon_id = NULL, taxon_name = NULL, duplication_confidence_score = NULL WHERE root_id = ?';
     my $sth1 = $self->compara_dba->dbc->prepare($sql1);
     $sth1->execute($tree_node_id);
     $sth1->finish;
@@ -580,39 +584,34 @@ sub delete_old_homologies {
 
 sub genepairlink_check_dups
 {
-  my $self = shift;
-  my $genepairlink = shift;
+    my $self = shift;
+    my $genepairlink = shift;
 
-  my ($pep1, $pep2) = $genepairlink->get_nodes;
+    my ($pep1, $pep2) = $genepairlink->get_nodes;
 
-  my $ancestor = $genepairlink->get_tagvalue('ancestor');
-  my $has_dup=0;
-  my $hops = 0;
-  my %nodes_between;
-  my $tnode = $pep1;
-  do {
-    $tnode = $tnode->parent;
-    if ($tnode->get_tagvalue('node_type', '') eq 'duplication') {
-      $has_dup = 1;
-    }
-    $nodes_between{$tnode->node_id} = $tnode;
-    $hops ++;
-  } while(!($tnode->equals($ancestor)));
+    my $ancestor = $genepairlink->get_tagvalue('ancestor');
+    my $has_dup = 0;
+    my $hops = 0;
+    my $tnode = $pep1;
+    do {
+        $tnode = $tnode->parent;
+        if ($tnode->get_tagvalue('node_type', '') eq 'duplication') {
+            $has_dup = 1;
+        }
+        $hops ++;
+    } while(!($tnode->equals($ancestor)));
 
-  $tnode = $pep2;
-  do {
-    $tnode = $tnode->parent;
-    if ($tnode->get_tagvalue('node_type', '') eq 'duplication') {
-      $has_dup = 1;
-    }
-    $nodes_between{$tnode->node_id} = $tnode;
-    $hops ++;
-  } while(!($tnode->equals($ancestor)));
+    $tnode = $pep2;
+    do {
+        $tnode = $tnode->parent;
+        if ($tnode->get_tagvalue('node_type', '') eq 'duplication') {
+            $has_dup = 1;
+        }
+        $hops ++;
+    } while(!($tnode->equals($ancestor)));
 
-  print "HOPS: $hops ", scalar(keys(%nodes_between)), "\n" if ($hops-1 != scalar(keys(%nodes_between)));
-  $genepairlink->add_tag("hops", scalar(keys(%nodes_between)));
-  $genepairlink->add_tag("has_dups", $has_dup);
-  return undef;
+    $genepairlink->add_tag("hops", $hops - 1);
+    $genepairlink->add_tag("has_dups", $has_dup);
 }
 
 
@@ -837,9 +836,7 @@ sub store_homologies {
 
   $self->check_homology_consistency;
 
-  $self->param('gene_tree')->tree->store_tag(
-      'OrthoTree_types_hashstr', 
-      stringify($self->param('orthotree_homology_counts'))) unless ($self->param('_readonly'));
+  $self->param('gene_tree')->tree->store_tag('OrthoTree_types_hashstr', stringify($self->param('orthotree_homology_counts'))) unless ($self->param('_readonly'));
 
   return undef;
 }
@@ -993,17 +990,17 @@ sub check_homology_consistency {
     my $self = shift;
 
     print "checking homology consistency\n" if ($self->debug);
-    my $bad_key = 0;
+    my $bad_key = undef;
 
     foreach my $mlss_member_id ( keys %{$self->param('homology_consistency')} ) {
         my $count = scalar(keys %{$self->param('homology_consistency')->{$mlss_member_id}});
         if ($count > 1) {
             my ($mlss, $member_id) = split("_", $mlss_member_id);
-            print "mlss member_id : $mlss $member_id\n" if ($self->debug);
-            $bad_key = 1;
+            $bad_key = "mlss member_id : $mlss $member_id";
+            print "$bad_key\n" if ($self->debug);
         }
     }
-    $self->throw("Inconsistent homologies !") if $bad_key;
+    $self->throw("Inconsistent homologies: $bad_key") if defined $bad_key;
 }
 
 
