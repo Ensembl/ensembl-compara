@@ -128,7 +128,7 @@ sub fetch_all_by_class_pattern {
 sub _check_presence_in_db {    # return autoinc_id/undef
     my ( $self, $method ) = @_;
 
-    my $sth = $self->prepare( "SELECT method_link_id FROM method_link WHERE type='".$method->type()."' AND class='".$method->class()."'" );
+    my $sth = $self->prepare( "SELECT method_link_id FROM method_link WHERE type='".$method->type()."'" );
     $sth->execute();
     my ($dbID) = $sth->fetchrow();
     $sth->finish;
