@@ -41,7 +41,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection;
 
 use strict;
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;;
+use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::Analysis::Runnable::Blat;
 use Bio::EnsEMBL::Analysis::RunnableDB;
@@ -49,8 +49,6 @@ use Bio::EnsEMBL::Analysis::RunnableDB;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use File::Path;
 
-
-my $DEFAULT_DUMP_MIN_SIZE = 11500000;
 
 =head2 fetch_input
 
@@ -65,23 +63,16 @@ my $DEFAULT_DUMP_MIN_SIZE = 11500000;
 sub fetch_input {
   my( $self) = @_;
 
-  if ($self->param('dna_collection_name')) {
-      $self->param('collection_name', $self->param('dna_collection_name'));
-  }
-
-  die("Missing dna_collection_name") unless($self->param('collection_name'));
-
-  unless ($self->param('dump_min_size')) {
-    $self->param('dump_min_size', $DEFAULT_DUMP_MIN_SIZE);
-  }
+  #Check for DnaFragChunk or DnaFragChunkSet
+  die("Missing DnaFragChunk or DnaFragChunkSet") unless ($self->param('DnaFragChunk') || $self->param('DnaFragChunkSet'));
 
   #If not defined, use one in path
   unless ($self->param('faToNib_exe')) {
       $self->param('faToNib_exe', 'faToNib');
   }
 
-  #must have dump_nib or dump_ooc defined
-  die("Missing dump_nib or dump_ooc method or dump_dna") unless ($self->param('dump_nib') || $self->param('dump_dna'));
+  #must have dump_nib or dump_dna defined
+  die("Missing dump_nib or dump_dna") unless ($self->param('dump_nib') || $self->param('dump_dna'));
 
   return 1;
 }
@@ -98,6 +89,7 @@ sub run
   if ($self->param('dump_dna')) {
       $self->dumpDnaFiles;
   }
+
 
   return 1;
 }
@@ -135,13 +127,8 @@ sub dumpNibFiles {
       mkpath($dump_loc); 
   }
 
-  foreach my $dna_object (@{$dna_collection->get_all_dna_objects}) {
-    if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
-      warn "At this point you should get DnaFragChunk objects not DnaFragChunkSet objects!\n";
-      next;
-    }
-    if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
-      next if ($dna_object->length <= $self->param('dump_min_size'));
+  if ($self->param('DnaFragChunk')) {
+      my $dna_object = $self->compara_dba->get_DnaFragChunkAdaptor->fetch_by_dbID($self->param('DnaFragChunk'));
 
       my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
 
@@ -163,7 +150,6 @@ sub dumpNibFiles {
       unlink $fastafile;
       $dna_object = undef;
     }
-  }
 
   if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->param('collection_name'));}
 
@@ -191,8 +177,8 @@ sub dumpDnaFiles {
       mkpath($dump_loc); 
   }
 
-  foreach my $dna_object (@{$dna_collection->get_all_dna_objects}) {
-    if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
+  if ($self->param('DnaFragChunkSet')) {
+	my $dna_object = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('DnaFragChunkSet'));
 
       my $first_dna_object = $dna_object->get_all_DnaFragChunks->[0];
       my $chunk_array = $dna_object->get_all_DnaFragChunks;
@@ -214,8 +200,8 @@ sub dumpDnaFiles {
 	  $chunk->dump_to_fasta_file(">".$fastafile);
       }
     }
-    if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
-      next if ($dna_object->length <= $self->param('dump_min_size'));
+  if ($self->param('DnaFragChunk')) {
+	my $dna_object = $self->compara_dba->get_DnaFragChunkAdaptor->fetch_by_dbID($self->param('DnaFragChunk'));
 
       my $name = $dna_object->dnafrag->name . "_" . $dna_object->seq_start . "_" . $dna_object->seq_end;
 
@@ -226,8 +212,7 @@ sub dumpDnaFiles {
       }
       $dna_object->dump_to_fasta_file(">".$fastafile);
     }
-    $dna_object = undef;
-  }
+#    $dna_object = undef;
 
   if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->param('collection_name'));}
 
