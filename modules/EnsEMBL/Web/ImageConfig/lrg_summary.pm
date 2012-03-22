@@ -45,7 +45,7 @@ sub init {
   $self->add_tracks('lrg',
     [ 'lrg_transcript', 'LRG', '_transcript', {
       display     => 'normal',
-      hide_empty  => 1,
+      strand      => 'f',
       name        => 'LRG transcripts', 
       description => 'Shows LRG transcripts',
       logic_names => [ 'LRG_import' ], 
@@ -57,7 +57,7 @@ sub init {
     }]
   );
  
-  $self->modify_configs(['transcript'], { hide_empty => 1});
+  $self->modify_configs(['transcript'], { strand => 'f'});
  
   $self->modify_configs(
     [ 'fg_regulatory_features_funcgen', 'transcript', 'prediction', 'variation' ],
