@@ -187,52 +187,23 @@ foreach my $spp (@valid_spp) {
       $genetypes .= sprintf(", '%s'",$authority);
     }
 
-    my ($known, $novel, $proj, $annotated, $pseudo, $rna, $ig_segments, $exons, $transcripts, $snps);  
+    my ($pseudo, $rna, $ig_segments, $exons, $transcripts, $snps, $statuses);  
 
     unless ($pre) { 
-      ($known) = &query( $db,
-        "select count(*)
-        from gene
-           join seq_region using (seq_region_id)
-           join coord_system using (coord_system_id)
-        where species_id=$spp_id
-        and biotype = 'protein_coding' 
-        and status = 'KNOWN'
-        ");    
-      print STDERR "Known Genes:$known\n" if $DEBUG;
-
-      ($proj) = &query( $db,
-        "select count(*)
+###
+     
+      ($statuses) = &query_status( $db,
+        "select status, count(*)
         from gene
            join seq_region using (seq_region_id)
            join coord_system using (coord_system_id)
         where species_id=$spp_id
         and biotype = 'protein_coding'
-        and status = 'KNOWN_BY_PROJECTION'
+        and status is not null
+        group by status
         ");
-      print STDERR "Projected Genes:$proj\n" if $DEBUG;
 
-      ( $novel ) = &query( $db,
-        "select count(*)
-        from gene
-           join seq_region using (seq_region_id)
-           join coord_system using (coord_system_id)
-        where species_id=$spp_id
-        and biotype = 'protein_coding' 
-        and status = 'NOVEL'
-        ");    
-      print STDERR "Novel Genes:$novel\n" if $DEBUG;
-
-      ( $annotated ) = &query( $db,
-        "select count(*)
-        from gene
-          join seq_region using (seq_region_id)
-          join coord_system using (coord_system_id)
-        where species_id=$spp_id
-        and biotype = 'protein_coding'
-        and status = 'ANNOTATED'
-        ");
-      print STDERR "Annotated Genes:$annotated\n" if $DEBUG;
+###
 
       ( $pseudo ) = &query( $db,
         "select count(*)
@@ -266,7 +237,7 @@ foreach my $spp (@valid_spp) {
         ");
       print STDERR "Segments:$ig_segments\n" if $DEBUG;
 
-    }
+    } #unlss pre
 
     ## DO OTHER RAW QUERIES
     my( $genpept ) = &query( $db,
@@ -498,49 +469,22 @@ foreach my $spp (@valid_spp) {
   <table class="ss tint species-stats">
   );
       $rowcount = 0;
-
-      if ($known) {
-        $known = thousandify($known);
-        $rowcount++;
-        $row = stripe_row($rowcount);
-        print STATS qq($row
-          <td class="data">Known protein-coding genes:</td>
-          <td class="value">$known</td>
-      </tr>
-      );
-      }
-
-      if ($proj) {
-        $proj = thousandify($proj);
-        $rowcount++;
-        $row = stripe_row($rowcount);
-        print STATS qq($row
-          <td class="data">Projected protein-coding genes:</td>
-          <td class="value">$proj</td>
-      </tr>
-      );
-      }
-
-      if ($novel) {
-        $novel = thousandify($novel);
-        $rowcount++;
-        $row = stripe_row($rowcount);
-        print STATS qq($row
-          <td class="data">Novel protein-coding genes:</td>
-          <td class="value">$novel</td>
-      </tr>
-      );
-      }
-
-      if ($annotated) {
-	  $annotated = thousandify($annotated);
-	  $rowcount++;
-	  $row = stripe_row($rowcount);
-        print STATS qq($row
-          <td class="data">Annotated protein-coding genes:</td>
-          <td class="value">$annotated</td>
-      </tr>
-        );
+   
+      if (scalar @$statuses){
+        foreach my $status_c (@$statuses) {
+	   warn  $status_c->[0].' -- ' .$status_c->[1];
+           my $status = $status_c->[0];           
+           my $count  = $status_c->[1];
+           $status =~ s/_/ /g;
+           $status = ucfirst(lc($status));
+	   $count = thousandify($count);
+	   $rowcount++;
+	   $row = stripe_row($rowcount);
+            print STATS qq($row
+            <td class="data">$status genes:</td>
+            <td class="value">$count</td>
+           </tr> );
+        }
       }
 
       if ($pseudo) {
@@ -670,6 +614,21 @@ exit;
 
 
 #############################################################################
+sub query_status { my( $db, $SQL ) = @_;
+   my $sth = $db->dbc->prepare($SQL);
+   $sth->execute();
+   my @Q;
+   my ($status, $count);
+   while ( ($status, $count) = $sth->fetchrow_array() ) 
+   {
+     my $stat = [ $status, $count ];
+     push @Q, $stat;
+   }
+
+   $sth->finish;
+   return \@Q;
+}
+
 
 sub query { my( $db, $SQL ) = @_;
    my $sth = $db->dbc->prepare($SQL);
