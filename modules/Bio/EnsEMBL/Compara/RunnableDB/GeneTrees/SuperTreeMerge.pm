@@ -131,7 +131,6 @@ sub run {
     $tree->print_tree;
     $self->print($tree);
 
-    $tree->add_tag('tree_support', 'quicktree');
     # This node_type is probably wrong, but it will be fixed later by OtherParalogs
     $tree->add_tag('node_type', 'speciation');
 

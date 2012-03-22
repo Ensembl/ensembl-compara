@@ -160,7 +160,8 @@ sub default_options {
         'ortho_tree_capacity'       => 100,
         'quick_tree_break_capacity' => 100,
         'build_hmm_capacity'        => 200,
-        'other_paralogs_capacity'   =>  50,
+        'merge_supertrees_capacity' => 100,
+        'other_paralogs_capacity'   => 100,
         'homology_dNdS_capacity'    => 200,
         'qc_capacity'               =>   4,
 
@@ -817,23 +818,36 @@ sub pipeline_analyses {
             -rc_id     => 1,
             -priority  => 50,
             -flow_into => {
-                'A->1' => [ 'other_paralogs' ],
                 '2->A' => [ 'mcoffee' ],
+                'A->1' => [ 'merge_supertrees' ],
             },
         },
 
-        {   -logic_name => 'other_paralogs',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OtherParalogs',
-            -parameters => { },
-            -hive_capacity        => $self->o('other_paralogs_capacity'),
-            -rc_id => 1,
-            -priority => 10,
+        {   -logic_name     => 'merge_supertrees',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SuperTreeMerge',
+            -parameters     => {
+                'tree_id_str'       => 'protein_tree_id',
+            },
+            -hive_capacity  => $self->o('merge_supertrees_capacity'),
+            -rc_id          => 1,
+            -priority       => 10,
+            -flow_into      => [ 'other_paralogs' ],
+        },
+ 
+        {   -logic_name     => 'other_paralogs',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
+            -parameters     => {
+                'tree_id_str'       => 'protein_tree_id',
+            },
+            -hive_capacity  => $self->o('other_paralogs_capacity'),
+            -rc_id          => 1,
+            -priority       => 10,
         },
 
-        {   -logic_name => 'dummy_wait_alltrees',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -parameters => {},
-            -flow_into => [ 'overall_genetreeset_qc', 'CAFE_species_tree' ],  # backbone
+        {   -logic_name     => 'dummy_wait_alltrees',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -parameters     => {},
+            -flow_into      => [ 'overall_genetreeset_qc', 'CAFE_species_tree' ],  # backbone
         },
 
 ## ------------------------------- CAFE Analysis ----------------------------------------------------------#

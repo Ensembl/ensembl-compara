@@ -18,17 +18,17 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OtherParalogs
+Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs
 
 =head1 DESCRIPTION
 
-This analysis will load a super protein tree and insert the
+This analysis will load a super gene tree and insert the
 extra paralogs into the homology tables.
 
 =head1 SYNOPSIS
 
 my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $otherparalogs = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OtherParalogs->new
+my $otherparalogs = Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs->new
   (
    -db         => $db,
    -input_id   => $input_id,
@@ -58,7 +58,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OtherParalogs;
+package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs;
 
 use strict;
 
@@ -71,7 +71,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree');
 
 sub param_defaults {
     return {
-            'tree_id_str'           => 'protein_tree_id',
             'store_homologies'      => 1,
     };
 }
@@ -102,6 +101,21 @@ sub run_analysis {
     # All the homologies will share this information
     my $ancestor = $gene_tree;
     my $taxon_name = $self->get_ancestor_taxon_level($ancestor)->name;
+
+    # The node_type of the root
+    unless ($self->param('_readonly')) {
+        my $original_node_type = $gene_tree->get_tagvalue('node_type');
+        if ($gene_tree->get_tagvalue('is_dup', 0)) {
+            $gene_tree->store_tag('node_type', 'duplication');
+            $self->duplication_confidence_score($gene_tree);
+        } elsif (($child1->get_tagvalue('taxon_name') eq $taxon_name) or ($child2->get_tagvalue('taxon_name') eq $taxon_name)) {
+            $gene_tree->store_tag('node_type', 'dubious');
+            $gene_tree->store_tag('duplication_confidence_score', 0);
+        } else {
+            $gene_tree->store_tag('node_type', 'speciation');
+        }
+        print "setting node_type of the root to ", $gene_tree->get_tagvalue('node_type'), "\n";
+    }
 
     # Each species
     foreach my $genome_db_id (keys %{$child1->get_tagvalue('gene_hash')}) {
@@ -136,7 +150,7 @@ sub run_analysis {
 =head2 get_ancestor_species_hash
 
     This function is optimized for super-trees:
-     - It fetches all the protein tree leaves in one go (with left/right_index)
+     - It fetches all the gene tree leaves in one go (with left/right_index)
      - It is able to jump from a super-tree to the sub-trees
      - It stores the list of all the leaves to save DB queries
 
@@ -170,15 +184,7 @@ sub get_ancestor_species_hash
             }
         }
 
-        if ($is_dup) {
-            my $original_node_type = $node->get_tagvalue('node_type');
-            if ((not defined $original_node_type) or ($original_node_type eq 'speciation')) {
-                print "fixing node_type of ", $node->node_id, "\n";
-                $node->store_tag('node_type', 'duplication') unless ($self->param('_readonly'));
-                $self->duplication_confidence_score($node);
-            }
-
-        }
+        $node->add_tag("is_dup", $is_dup);
     }
 
     $node->add_tag("species_hash", $species_hash);
