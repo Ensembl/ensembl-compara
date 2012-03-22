@@ -12,7 +12,6 @@ sub init {
   $self->set_parameters({
     opt_lines => 1,  # draw registry lines
     opt_empty_tracks => 1,     # include empty tracks
-    empty_track_exception => {'lrg'=> 1},
   });
 
   $self->create_menus(qw(
