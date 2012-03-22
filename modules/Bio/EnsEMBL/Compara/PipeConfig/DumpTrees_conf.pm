@@ -7,9 +7,9 @@
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -password <your_password> -tree_type protein_trees
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -password <your_password> -member_type protein
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -password <your_password> -tree_type ncrna_trees
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -password <your_password> -member_type ncrna
 
 =head1 DESCRIPTION  
 
@@ -47,9 +47,9 @@ sub default_options {
         'rel'               => 66,                                              # current release number
         'rel_suffix'        => '',                                              # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),          # for convenience
-        'tree_type'         => 'protein',                                       # either 'protein' or 'ncrna'
+        'member_type'         => 'protein',                                       # either 'protein' or 'ncrna'
 
-        'pipeline_name'     => $self->o('tree_type').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name'     => $self->o('member_type').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
         'rel_db'      => {
             -host         => 'compara4', -dbname       => 'mp12_compara_nctrees_66c',
@@ -63,7 +63,7 @@ sub default_options {
         'capacity'    => 100,                                                       # how many trees can be dumped in parallel
         'batch_size'  => 25,                                                        # how may trees' dumping jobs can be batched together
 
-        'name_root'   => 'Compara.'.$self->o('rel_with_suffix').'.'.$self->o('tree_type'),                              # dump file name root
+        'name_root'   => 'Compara.'.$self->o('rel_with_suffix').'.'.$self->o('member_type'),                              # dump file name root
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs',                                      # where the template README files are
         'target_dir'  => '/lustre/scratch103/ensembl/'.$self->o('ENV', 'USER').'/dumps/'.$self->o('pipeline_name'),     # where the final dumps will be stored
@@ -165,7 +165,7 @@ sub pipeline_analyses {
                 'ncrna_tree_range'      => '100000000-199999999',
             },
             -input_ids => [
-                {'id_range' => '#'.$self->o('tree_type').'_tree_range#', 'file' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml'},
+                {'id_range' => '#'.$self->o('member_type').'_tree_range#', 'file' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml'},
             ],
             -hive_capacity => -1,
             -rc_id => 1,
@@ -184,8 +184,8 @@ sub pipeline_analyses {
                 'target_dir'            => $self->o('target_dir'),
             },
             -input_ids => [
-                {'tree_type' => $self->o('tree_type').'tree', 'file' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml'},
-                {'tree_type' => $self->o('tree_type').'tree', 'file' => '#target_dir#/xml/#name_root#.alltrees_possorthol.orthoxml.xml', 'possible_orth' => 1},
+                {'tree_type' => 'tree', 'member_type' => $self->o('member_type'), 'file' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml'},
+                {'tree_type' => 'tree', 'member_type' => $self->o('member_type'), 'file' => '#target_dir#/xml/#name_root#.alltrees_possorthol.orthoxml.xml', 'possible_orth' => 1},
             ],
             -hive_capacity => -1,
             -rc_id => 1,
@@ -207,7 +207,7 @@ sub pipeline_analyses {
                 'fan_branch_code'       => 2,
             },
             -input_ids => [
-                { 'inputquery' => '#'.$self->o('tree_type').'_tree_query#', },
+                { 'inputquery' => '#'.$self->o('member_type').'_tree_query#', },
             ],
             -hive_capacity => -1,
             -flow_into => {
@@ -224,7 +224,7 @@ sub pipeline_analyses {
                 'work_dir'          => $self->o('work_dir'),
                 'protein_tree_args' => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -oxmlp 1 -pxml 1',
                 'ncrna_tree_args'   => '-nh 1 -a 1 -nhx 1 -f 1 -oxml 1 -oxmlp 1 -pxml 1',
-                'cmd'               => '#dump_script# --url #db_url# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #'.$self->o('tree_type').'_tree_args#',
+                'cmd'               => '#dump_script# --url #db_url# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #'.$self->o('member_type').'_tree_args#',
             },
             -hive_capacity => $self->o('capacity'),       # allow several workers to perform identical tasks in parallel
             -batch_size    => $self->o('batch_size'),
@@ -236,7 +236,7 @@ sub pipeline_analyses {
                 'name_root'         => $self->o('name_root'),
                 'protein_tree_list' => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta', 'cds.fasta' ],
                 'ncrna_tree_list'   => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta' ],
-                'inputlist'         => '#'.$self->o('tree_type').'_tree_list#',
+                'inputlist'         => '#'.$self->o('member_type').'_tree_list#',
                 'column_names'      => [ 'extension' ],
                 'input_id'          => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.#extension#'},
                 'fan_branch_code'   => 2,
@@ -267,7 +267,7 @@ sub pipeline_analyses {
                 'name_root'         => $self->o('name_root'),
                 'protein_tree_list' => [ 'tree.orthoxml.xml', 'tree_possorthol.orthoxml.xml', 'tree.phyloxml.xml' ],
                 'ncrna_tree_list'   => [ 'tree.orthoxml.xml', 'tree_possorthol.orthoxml.xml', 'tree.phyloxml.xml' ],
-                'inputlist'         => '#'.$self->o('tree_type').'_tree_list#',
+                'inputlist'         => '#'.$self->o('member_type').'_tree_list#',
                 'column_names'      => [ 'extension' ],
                 'input_id'          => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.#extension#'},
                 'fan_branch_code'   => 2,
@@ -284,8 +284,8 @@ sub pipeline_analyses {
             -parameters => {
                 'work_dir'      => $self->o('work_dir'),
                 'target_dir'    => $self->o('target_dir'),
-                'tree_type'     => $self->o('tree_type'),
-                'cmd'           => 'find #work_dir# -name "tree.*.#extension#" | sort -t . -k2 -n | tar cf #target_dir#/xml/#dump_file_name#.tar -T /dev/stdin --transform "s/^.*\//#tree_type#/"',
+                'member_type'     => $self->o('member_type'),
+                'cmd'           => 'find #work_dir# -name "tree.*.#extension#" | sort -t . -k2 -n | tar cf #target_dir#/xml/#dump_file_name#.tar -T /dev/stdin --transform "s/^.*\//#member_type#/"',
             },
             -hive_capacity => 2,
             -flow_into => {
@@ -320,12 +320,12 @@ sub pipeline_analyses {
                 'readme_dir'    => $self->o('readme_dir'),
                 'work_dir'      => $self->o('work_dir'),
                 'target_dir'    => $self->o('target_dir'),
-                'tree_type'     => $self->o('tree_type'),
+                'member_type'     => $self->o('member_type'),
                 'inputlist'     => [
-                    ['cd #target_dir#/emf ; md5sum *.gz >MD5SUM.#tree_type#_trees'],
-                    ['cd #target_dir#/xml ; md5sum *.gz >MD5SUM.#tree_type#_trees'],
-                    ['cp #readme_dir#/README.#tree_type#_trees.dumps #target_dir#/emf/'],
-                    ['cp #readme_dir#/README.#tree_type#_trees.xml_dumps #target_dir#/xml/'],
+                    ['cd #target_dir#/emf ; md5sum *.gz >MD5SUM.#member_type#_trees'],
+                    ['cd #target_dir#/xml ; md5sum *.gz >MD5SUM.#member_type#_trees'],
+                    ['cp #readme_dir#/README.#member_type#_trees.dumps #target_dir#/emf/'],
+                    ['cp #readme_dir#/README.#member_type#_trees.xml_dumps #target_dir#/xml/'],
                 ],
                 'column_names'      => [ 'cmd' ],
                 'input_id'          => { 'cmd' => '#cmd#'},

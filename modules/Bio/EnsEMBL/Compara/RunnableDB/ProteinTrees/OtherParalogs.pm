@@ -120,6 +120,8 @@ sub run_analysis {
         }
     }
     printf("%1.3f secs build links and features\n", time()-$tmp_time) if($self->debug>1);
+    
+    $self->param('orthotree_homology_counts', {'other_paralog' => $graphcount});
 
     print scalar(@genepairlinks), " pairings\n" if ($self->debug);
     $self->param('homology_links', \@genepairlinks);
@@ -148,8 +150,8 @@ sub get_ancestor_species_hash
     return $species_hash if($species_hash);
 
     my $gene_hash = {};
-    if ($node->tree->tree_type eq 'proteintree') {
-        foreach my $leaf (@{$node->get_all_leaves_indexed}) {
+    if ($node->tree->tree_type eq 'tree') {
+        foreach my $leaf (@{$self->param('treeDBA')->fetch_all_leaves_indexed($node)}) {
             $species_hash->{$leaf->genome_db_id} = 1 + ($species_hash->{$leaf->genome_db_id} || 0);
             push @{$gene_hash->{$leaf->genome_db_id}}, $leaf;
         }
@@ -157,13 +159,25 @@ sub get_ancestor_species_hash
     } else {
 
         delete $node->{'_children_loaded'} unless $node->get_child_count;
+        my $is_dup = 0;
         
         foreach my $child (@{$node->children}) {
             my $t_species_hash = $self->get_ancestor_species_hash($child);
             foreach my $genome_db_id (keys(%$t_species_hash)) {
+                $is_dup ||= (exists $species_hash->{$genome_db_id});
                 $species_hash->{$genome_db_id} = $t_species_hash->{$genome_db_id} + ($species_hash->{$genome_db_id} || 0);
                 push @{$gene_hash->{$genome_db_id}}, @{$child->get_tagvalue('gene_hash')->{$genome_db_id}};
             }
+        }
+
+        if ($is_dup) {
+            my $original_node_type = $node->get_tagvalue('node_type');
+            if ((not defined $original_node_type) or ($original_node_type eq 'speciation')) {
+                print "fixing node_type of ", $node->node_id, "\n";
+                $node->store_tag('node_type', 'duplication') unless ($self->param('_readonly'));
+                $self->duplication_confidence_score($node);
+            }
+
         }
     }
 

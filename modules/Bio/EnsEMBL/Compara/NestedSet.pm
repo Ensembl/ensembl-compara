@@ -33,6 +33,9 @@ use warnings;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Compara::FormatTree;
+
+use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
+
 use Bio::TreeIO;
 use Bio::EnsEMBL::Compara::Graph::Node;
 use Bio::EnsEMBL::Compara::Member;
@@ -1739,12 +1742,12 @@ sub _recursive_get_all_leaves {
      no warnings 'recursion';
      $child->_recursive_get_all_leaves($leaves);
   }
-  return undef;
 }
 
 
 sub get_all_leaves_indexed {
   my $self = shift;
+  deprecate("Use Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor->fetch_all_leaves_indexed() method instead");
 
   my @leaf_list = @{$self->adaptor->fetch_all_leaves_indexed($self)};
 

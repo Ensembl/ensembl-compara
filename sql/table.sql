@@ -349,7 +349,7 @@ CREATE TABLE genomic_align (
 CREATE TABLE conservation_score (
   genomic_align_block_id bigint unsigned not null,
   window_size            smallint unsigned not null,
-  position	         int unsigned not null,
+  position               int unsigned not null,
   expected_score         blob,
   diff_score             blob,
 
@@ -688,12 +688,13 @@ CREATE TABLE gene_tree_node (
 #    version           - numeric version of the stable_id (changes only when members move to/from existing trees)
 
 CREATE TABLE gene_tree_root (
-    root_id   INT(10) UNSIGNED NOT NULL,
-    tree_type                        ENUM('proteinclusterset','proteinsupertree','proteintree','ncrnatree','ncrnaclusterset') NOT NULL,
-    clusterset_id                   int(10) unsigned,
-    method_link_species_set_id                   int(10) unsigned NOT NULL,
-    stable_id VARCHAR(40)          , # unique stable id, e.g. 'ENSGT'.'0053'.'1234567890'
-    version   INT UNSIGNED         , # version of the stable_id (changes only when members move to/from existing trees)
+    root_id                         INT(10) UNSIGNED NOT NULL,
+    member_type                     ENUM('protein', 'ncrna') NOT NULL,
+    tree_type                       ENUM('clusterset', 'supertree', 'tree') NOT NULL,
+    clusterset_id                   INT(10) UNSIGNED,
+    method_link_species_set_id      INT(10) UNSIGNED NOT NULL,
+    stable_id                       VARCHAR(40),            # unique stable id, e.g. 'ENSGT'.'0053'.'1234567890'
+    version                         INT UNSIGNED,           # version of the stable_id (changes only when members move to/from existing trees)
 
     FOREIGN KEY (root_id) REFERENCES gene_tree_node(node_id),
     FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
@@ -1026,24 +1027,24 @@ CREATE TABLE protein_tree_hmmprofile (
 #   name is unique and lr_index should be equal to the SQL statement
 #   select max(right_index) from table_name
 # semantics:
-#		lr_index_offset_id -- id of the row since this is an InnoDB table
+#   lr_index_offset_id -- id of the row since this is an InnoDB table
 #   table_name      -- name of the table this lr_index corresponds to
 #   lr_index        -- max right index for the given table
 
 CREATE TABLE lr_index_offset (
   lr_index_offset_id int(10) unsigned NOT NULL AUTO_INCREMENT,
-	table_name  varchar(64) NOT NULL,
-	lr_index int(10) unsigned DEFAULT 0,
-	PRIMARY KEY (lr_index_offset_id),
-	UNIQUE KEY (table_name)
+  table_name  varchar(64) NOT NULL,
+  lr_index int(10) unsigned DEFAULT 0,
+  PRIMARY KEY (lr_index_offset_id),
+  UNIQUE KEY (table_name)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 # Auto-populate lr_index_offset with all tables
 INSERT INTO lr_index_offset (table_name, lr_index) 
 values 
-	('ncbi_taxa_node', 0), 
-	('genomic_align_tree', 0);
+  ('ncbi_taxa_node', 0), 
+  ('genomic_align_tree', 0);
 
 
 

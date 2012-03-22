@@ -80,7 +80,7 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compa
 
 sub fetch_all {
     my $self = shift;
-    my $constraint = "WHERE (t.node_id = t.root_id) AND (tr.tree_type NOT LIKE '%clusterset') AND (tr.tree_type NOT LIKE '%supertree')";
+    my $constraint = "WHERE (t.node_id = t.root_id) AND (tr.tree_type != 'clusterset') AND (tr.tree_type != 'supertree')";
 
     my $clusterset_id = shift;
     $constraint .= " AND (tr.clusterset_id = ${clusterset_id})" if defined $clusterset_id;
@@ -91,7 +91,7 @@ sub fetch_all {
 sub fetch_all_roots {
   my $self = shift;
 
-  my $constraint = "WHERE (t.node_id = t.root_id) AND (tr.tree_type LIKE '%clusterset')";
+  my $constraint = "WHERE (t.node_id = t.root_id) AND (tr.tree_type = 'clusterset')";
   return $self->_generic_fetch($constraint);
 }
 
@@ -313,16 +313,16 @@ sub store_tree {
     # Secondly, the tree itself
     if ($tree->adaptor and $tree->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor') and $tree->adaptor eq $self) {
         # Update 
-        my $sth = $self->prepare("UPDATE gene_tree_root SET tree_type = ?, clusterset_id = ?, method_link_species_set_id = ?, stable_id = ?, version = ? WHERE root_id = ?");
-        #print "UPDATE INTO gene_tree_root (", $root_id, " ", $tree->tree_type, " ", $tree->clusterset_id, " ", $tree->method_link_species_set_id, " ", $tree->stable_id, " ", $tree->version, "\n";
-        $sth->execute($tree->tree_type, $tree->clusterset_id, $tree->method_link_species_set_id, $tree->stable_id, $tree->version, $root_id);
+        my $sth = $self->prepare("UPDATE gene_tree_root SET tree_type = ?, member_type = ?, clusterset_id = ?, method_link_species_set_id = ?, stable_id = ?, version = ? WHERE root_id = ?");
+        #print "UPDATE INTO gene_tree_root (", $root_id, " ", $tree->tree_type, " ", $tree->member_type, " ", $tree->clusterset_id, " ", $tree->method_link_species_set_id, " ", $tree->stable_id, " ", $tree->version, "\n";
+        $sth->execute($tree->tree_type, $tree->member_type, $tree->clusterset_id, $tree->method_link_species_set_id, $tree->stable_id, $tree->version, $root_id);
         $sth->finish;
     } else {
         # Insert
         $tree->adaptor($self);
-        my $sth = $self->prepare("INSERT INTO gene_tree_root (root_id, tree_type, clusterset_id, method_link_species_set_id, stable_id, version) VALUES (?,?,?,?,?,?)");
-        #print "INSERT INTRO gene_tree_root (", $root_id, " ", $tree->tree_type, " ", $tree->clusterset_id, " ", $tree->method_link_species_set_id, " ", $tree->stable_id, " ", $tree->version, "\n";
-        $sth->execute($root_id, $tree->tree_type, $tree->clusterset_id, $tree->method_link_species_set_id, $tree->stable_id, $tree->version);
+        my $sth = $self->prepare("INSERT INTO gene_tree_root (root_id, tree_type, member_type, clusterset_id, method_link_species_set_id, stable_id, version) VALUES (?,?,?,?,?,?)");
+        #print "INSERT INTRO gene_tree_root (", $root_id, " ", $tree->tree_type, " ", $tree->member_type, " ", $tree->clusterset_id, " ", $tree->method_link_species_set_id, " ", $tree->stable_id, " ", $tree->version, "\n";
+        $sth->execute($root_id, $tree->tree_type, $tree->member_type, $tree->clusterset_id, $tree->method_link_species_set_id, $tree->stable_id, $tree->version);
         $sth->finish;
     }
 
@@ -478,7 +478,6 @@ sub delete_nodes_not_in_tree
 }
 
 
-
 ###################################
 #
 # tagging
@@ -518,6 +517,7 @@ sub columns {
 
           'tr.stable_id AS tstable_id',
           'tr.tree_type',
+          'tr.member_type',
           'tr.version AS tversion',
           'tr.clusterset_id',
           'tr.method_link_species_set_id',
@@ -614,7 +614,7 @@ sub _add_GeneTree_wrapper {
         my $tree = new Bio::EnsEMBL::Compara::GeneTree;
 
         # Unique GeneTree fields
-        foreach my $attr (qw(tree_type method_link_species_set_id clusterset_id)) {
+        foreach my $attr (qw(tree_type member_type method_link_species_set_id clusterset_id)) {
             #print "ASSIGNING ", $rowhash->{$attr}, " TO $attr\n";
             $tree->$attr($rowhash->{$attr});
         }

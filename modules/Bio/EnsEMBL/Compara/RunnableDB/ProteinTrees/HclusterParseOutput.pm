@@ -66,8 +66,8 @@ sub param_defaults {
     return {
             'sort_clusters'         => 1,
             'immediate_dataflow'    => 1,
-            'db_prefix'             => 'protein',
-            'hive_prefix'           => 'protein',
+            'member_type'           => 'protein',
+            'input_id_prefix'       => 'protein',
     };
 }
 

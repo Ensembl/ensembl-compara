@@ -56,7 +56,7 @@ use strict;
 use base ('Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor');
 
 sub default_where_clause {
-    return "tr.tree_type IN ('ncrnaclusterset', 'ncrnatree')";
+    return "tr.member_type = 'ncrna'";
 }
 
 

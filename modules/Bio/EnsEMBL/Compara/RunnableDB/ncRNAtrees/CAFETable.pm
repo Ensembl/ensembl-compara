@@ -159,7 +159,7 @@ sub get_cafe_table_from_db {
             next;
         }
         next if ($root_id == 1); ## This is the clusterset! We have to avoid taking the trees with 'type' 'clusterset'. Should be included in the gene tree API (nc_tree / protein_tree) at some point.
-        next if ($subtree->tree->tree_type() eq 'superproteintree'); ## For now you also get superproteintrees!!!
+        next if ($subtree->tree->tree_type() eq 'supertree'); ## For now you also get superproteintrees!!!
         print STDERR "ROOT_ID: $root_id\n" if ($self->debug());
         my $tree = $adaptor->fetch_node_by_node_id($root_id);
         my $name = $self->get_name($tree);

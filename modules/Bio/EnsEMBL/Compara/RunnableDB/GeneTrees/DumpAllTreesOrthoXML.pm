@@ -38,7 +38,7 @@ The following parameters are optional:
 =head1 SYNOPSIS
 
 standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllTreesOrthoXML
-  -compara_db 'mysql://ensro:@compara4:3306/mp12_compara_nctrees_66c' -tree_type ncrnatree -file dump_ncrna
+  -compara_db 'mysql://ensro:@compara4:3306/mp12_compara_nctrees_66c' -member_type ncrna -tree_type tree -file dump_ncrna
 
 =head1 AUTHORSHIP
 
@@ -99,8 +99,10 @@ sub fetch_input {
     my $list_trees = $self->compara_dba->get_GeneTreeAdaptor->fetch_all;
     my @filtered_list;
     foreach my $tree (@{$list_trees}) {
+        next if defined $self->param('tree_type') and $self->param('tree_type') eq $tree->tree->tree_type;
+        next if defined $self->param('member_type') and $self->param('member_type') eq $tree->tree->member_type;
         # Filter if asked
-        push @filtered_list, $tree if not defined $self->param('tree_type') or $self->param('tree_type') eq $tree->tree->tree_type;
+        push @filtered_list, $tree;
     }
     $self->param('tree_list', \@filtered_list);
 
@@ -115,6 +117,7 @@ sub run {
         my ($species) = @_;
         my $constraint = 'm.genome_db_id = '.($species->dbID);
         $constraint .= ' AND gtr.tree_type = "'.($self->param('tree_type')).'"' if defined $self->param('tree_type');
+        $constraint .= ' AND gtr.member_type = "'.($self->param('member_type')).'"' if defined $self->param('member_type');
         my $join = [[['gene_tree_member', 'gtm'], 'm.member_id = gtm.member_id', undef], [['gene_tree_node', 'gtn'], 'gtm.node_id = gtn.node_id', undef], [['gene_tree_root', 'gtr'], 'gtn.root_id = gtr.root_id', undef]];
         return $member_adaptor->_generic_fetch($constraint, $join);
     };

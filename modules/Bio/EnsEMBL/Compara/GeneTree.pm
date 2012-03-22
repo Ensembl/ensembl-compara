@@ -94,8 +94,7 @@ sub DESTROY {
 =head2 tree_type()
 
   Description : Getter/Setter for the tree_type field. This field can
-                currently be 'nctree', 'proteintree', 'superproteintree'
-                or 'clusterset'
+                currently be 'tree', 'supertree' or 'clusterset'
   Returntype  : String
   Exceptions  : None
   Example     : my $type = $tree->tree_type();
@@ -108,6 +107,25 @@ sub tree_type {
     $self->{'_tree_type'} = shift if(@_);
     return $self->{'_tree_type'};
 }
+
+
+=head2 member_type()
+
+  Description : Getter/Setter for the member_type field. This field can
+                currently be 'ncrna' or 'protein'
+  Returntype  : String
+  Exceptions  : None
+  Example     : my $type = $tree->member_type();
+  Status      : Stable  
+  
+=cut
+
+sub member_type {
+    my $self = shift;
+    $self->{'_member_type'} = shift if(@_);
+    return $self->{'_member_type'};
+}
+
 
 sub clusterset_id {
     my $self = shift;

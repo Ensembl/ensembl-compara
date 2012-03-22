@@ -358,7 +358,7 @@ sub generate_subtrees {
   my $final_original_num = scalar @{$self->param('protein_tree')->get_all_leaves};
   # Creating the supertree structure
   my $supertree = $self->param('protein_tree');
-  $supertree->tree->tree_type('proteinsupertree');
+  $supertree->tree->tree_type('supertree');
   my $supertree_leaf1 = new Bio::EnsEMBL::Compara::GeneTreeNode;
   my $supertree_leaf2 = new Bio::EnsEMBL::Compara::GeneTreeNode;
   $supertree_leaf1->tree($supertree->tree);
@@ -366,7 +366,8 @@ sub generate_subtrees {
 
   my $cluster1_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
   my $cluster1 = new Bio::EnsEMBL::Compara::GeneTree;
-  $cluster1->tree_type('proteintree');
+  $cluster1->tree_type('tree');
+  $cluster1->member_type($supertree->tree->member_type);
   $cluster1->method_link_species_set_id($supertree->tree->method_link_species_set_id);
   $cluster1->clusterset_id($supertree->tree->clusterset_id);
   $cluster1->root($cluster1_root);
@@ -374,7 +375,8 @@ sub generate_subtrees {
   
   my $cluster2_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
   my $cluster2 = new Bio::EnsEMBL::Compara::GeneTree;
-  $cluster2->tree_type('proteintree');
+  $cluster2->tree_type('tree');
+  $cluster2->member_type($supertree->tree->member_type);
   $cluster2->method_link_species_set_id($supertree->tree->method_link_species_set_id);
   $cluster2->clusterset_id($supertree->tree->clusterset_id);
   $cluster2->root($cluster2_root);

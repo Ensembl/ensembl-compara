@@ -57,7 +57,7 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor');
 
 
 sub default_where_clause {
-    return "tr.tree_type IN ('proteinclusterset', 'proteinsupertree', 'proteintree')";
+    return "tr.member_type = 'protein'";
 }
 
 

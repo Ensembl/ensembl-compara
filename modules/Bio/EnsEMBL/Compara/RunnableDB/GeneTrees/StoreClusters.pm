@@ -64,7 +64,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
                clusters and the clusterset, then flow the clusters into the
                branch 2.
   Arg [1]    : <arrayref> of <arrayref> of member_id
-  Parameters : clusterset, db_prefix, immediate_dataflow, hive_prefix, allcluster_ids, allclusters, sort_clusters
+  Parameters : clusterset, member_type, immediate_dataflow, input_id_prefix, allcluster_ids, allclusters, sort_clusters
   Returntype : none
   Exceptions : none
   Caller     : general
@@ -92,7 +92,7 @@ sub store_and_dataflow_clusterset {
 =head2 create_clusterset
 
   Description: Create an empty clusterset and store it in the database.
-  Parameters : mlss_id, db_prefix, clusterset
+  Parameters : mlss_id, member_type, clusterset
   Returntype : GeneTree: the created clusterset
   Exceptions : none
   Caller     : general
@@ -106,7 +106,8 @@ sub create_clusterset {
 
     # Create the clusterset and associate mlss
     my $clusterset = new Bio::EnsEMBL::Compara::GeneTree;
-    $clusterset->tree_type($self->param('db_prefix').'clusterset');
+    $clusterset->member_type($self->param('member_type'));
+    $clusterset->tree_type('clusterset');
     $clusterset->method_link_species_set_id($mlss_id);
     $self->param('clusterset', $clusterset);
 
@@ -126,7 +127,7 @@ sub create_clusterset {
 
   Description: Create a new cluster (a root node linked to many leafes) and
                store it in the database.
-  Parameters : clusterset, db_prefix, immediate_dataflow, hive_prefix, allcluster_ids
+  Parameters : clusterset, member_type, immediate_dataflow, input_id_prefix, allcluster_ids
   Arg [1]    : <arrayref> of member_id
   Returntype : GeneTree: the created cluster
   Exceptions : none
@@ -148,7 +149,8 @@ sub add_cluster {
 
     # The new cluster object
     my $cluster = new Bio::EnsEMBL::Compara::GeneTree;
-    $cluster->tree_type($self->param('db_prefix').'tree');
+    $cluster->member_type($self->param('member_type'));
+    $cluster->tree_type('tree');
     $cluster->method_link_species_set_id($clusterset->method_link_species_set_id);
     $cluster->clusterset_id($clusterset->root_id);
 
@@ -172,7 +174,7 @@ sub add_cluster {
     
     # Dataflows immediately or keep it for later
     if ($self->param('immediate_dataflow')) {
-        $self->dataflow_output_id({ $self->param('hive_prefix').'_tree_id' => $cluster->root_id, }, 2);
+        $self->dataflow_output_id({ $self->param('input_id_prefix').'_tree_id' => $cluster->root_id, }, 2);
     } else {
         push @{$self->param('allcluster_ids')}, $cluster->root_id;
     }
@@ -210,7 +212,7 @@ sub finish_store_clusterset {
   Description: Creates one job per cluster into branch 2.
                Flows into branch 1 with the clusterset_id of the new clusterset
   Arg [1]    : <arrayref> of member_id
-  Parameters : hive_prefix, clusterset, allcluster_ids
+  Parameters : input_id_prefix, clusterset, allcluster_ids
   Returntype : none
   Exceptions : none
   Caller     : general
@@ -222,7 +224,7 @@ sub dataflow_clusters {
 
     # Loop on all the clusters that haven't been dataflown yet
     foreach my $tree_id (@{$self->param('allcluster_ids')}) {
-        $self->dataflow_output_id({ $self->param('hive_prefix').'_tree_id' => $tree_id, }, 2);
+        $self->dataflow_output_id({ $self->param('input_id_prefix').'_tree_id' => $tree_id, }, 2);
     }
     $self->input_job->autoflow(0);
     $self->dataflow_output_id({ 'clusterset_id' => $self->param('clusterset')->root_id }, 1);
