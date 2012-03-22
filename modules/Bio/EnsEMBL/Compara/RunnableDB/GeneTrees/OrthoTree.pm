@@ -30,8 +30,8 @@ on the nodes.
 It analyzes that tree structure to pick Orthologues and Paralogs for
 each genepair.
 
-input_id/parameters format eg: "{'protein_tree_id'=>1234}"
-    protein_tree_id : use 'id' to fetch a cluster from the GeneTree
+input_id/parameters format eg: "{'tree_id'=>1234}"
+    tree_id : use 'id' to fetch a cluster from the GeneTree
 
 =head1 SYNOPSIS
 
@@ -109,12 +109,13 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
+    $self->param('treeDBA', $self->compara_dba->get_GeneTreeAdaptor);
     $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
 
     my $starttime = time();
     $self->param('tree_id_str') or die "tree_id_str is an obligatory parameter";
     my $tree_id = $self->param($self->param('tree_id_str')) or die "'*_tree_id' is an obligatory parameter";
-    my $gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_tree_at_node_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
+    my $gene_tree = $self->param('treeDBA')->fetch_tree_at_node_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
     $self->param('gene_tree', $gene_tree);
 
     if($self->debug) {
@@ -227,7 +228,7 @@ sub run_analysis {
     foreach my $gene2 (@all_gene_leaves) {
       my $ancestor = $gene1->find_first_shared_ancestor($gene2);
       # Line below will only become faster than above if we find a way to calculate long parent->parent journeys.
-      # This is probably doable by looking at the right1/left1 right2/left2 distances between the 2 proteins
+      # This is probably doable by looking at the right1/left1 right2/left2 distances between the 2 genes
       # my $ancestor = $self->param('treeDBA')->fetch_first_shared_ancestor_indexed($gene1,$gene2);
       my $taxon_level = $self->get_ancestor_taxon_level($ancestor);
       my $distance = $gene1->distance_to_ancestor($ancestor) +
@@ -442,6 +443,7 @@ sub get_ancestor_species_hash
     if ($is_dup) {
         my $original_node_type = $node->get_tagvalue('node_type');
         if ((not defined $original_node_type) or ($original_node_type eq 'speciation')) {
+            print "fixing node_type of ", $node->node_id, "\n";
             $node->store_tag('node_type', 'duplication') unless ($self->param('_readonly'));
         }
     }
@@ -595,18 +597,14 @@ sub genepairlink_check_dups
     my $tnode = $pep1;
     do {
         $tnode = $tnode->parent;
-        if ($tnode->get_tagvalue('node_type', '') eq 'duplication') {
-            $has_dup = 1;
-        }
+        $has_dup = 1 if ($tnode->get_tagvalue('node_type', '') eq 'duplication');
         $hops ++;
     } while(!($tnode->equals($ancestor)));
 
     $tnode = $pep2;
     do {
         $tnode = $tnode->parent;
-        if ($tnode->get_tagvalue('node_type', '') eq 'duplication') {
-            $has_dup = 1;
-        }
+        $has_dup = 1 if ($tnode->get_tagvalue('node_type', '') eq 'duplication');
         $hops ++;
     } while(!($tnode->equals($ancestor)));
 
@@ -832,11 +830,11 @@ sub store_homologies {
   }
 
   my $counts_str = stringify($self->param('orthotree_homology_counts'));
-  printf("$counts_str\n");
+  print "Homology counts: $counts_str\n";
 
   $self->check_homology_consistency;
 
-  $self->param('gene_tree')->tree->store_tag('OrthoTree_types_hashstr', stringify($self->param('orthotree_homology_counts'))) unless ($self->param('_readonly'));
+  $self->param('gene_tree')->tree->store_tag('OrthoTree_types_hashstr', $counts_str) unless ($self->param('_readonly'));
 }
 
 sub store_gene_link_as_homology {
