@@ -472,7 +472,6 @@ foreach my $spp (@valid_spp) {
    
       if (scalar @$statuses){
         foreach my $status_c (@$statuses) {
-	   warn  $status_c->[0].' -- ' .$status_c->[1];
            my $status = $status_c->[0];           
            my $count  = $status_c->[1];
            $status =~ s/_/ /g;
