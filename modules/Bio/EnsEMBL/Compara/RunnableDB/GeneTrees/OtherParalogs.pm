@@ -71,6 +71,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree');
 
 sub param_defaults {
     return {
+            'tag_split_genes'       => 0,
             'store_homologies'      => 1,
     };
 }
