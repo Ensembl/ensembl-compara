@@ -127,7 +127,7 @@ sub class {
 sub toString {
     my $self = shift;
 
-    return "dbID=".$self->dbID.", type='".$self->type."', class='".$self->class."'";
+    return ref($self).": dbID=".($self->dbID || '?').", type='".$self->type."', class='".$self->class."'";
 }
 
 1;
