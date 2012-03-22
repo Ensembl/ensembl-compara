@@ -221,7 +221,7 @@ sub render_collapsed {
       priority => $self->_pos,
       legend   => \@legend
     };
-  } elsif ($config->get_option('opt_empty_tracks') != 0) {
+  } elsif ($config->get_option('opt_empty_tracks') != 0 && !$self->my_config('hide_empty')) {
     $self->errorTrack(sprintf 'No %s in this region', $self->error_track_name);
   }
 }
@@ -510,7 +510,7 @@ sub render_transcripts {
       $self->push($composite);
     }
   }
-  
+ 
   if ($transcript_drawn) {
     my $type = $self->_type;
     my %legend_old = @{$config->{'legend_features'}{$type}{'legend'}||[]};
@@ -520,7 +520,7 @@ sub render_transcripts {
       priority => $self->_pos,
       legend   => \@legend
     };
-  } elsif ($config->get_option('opt_empty_tracks') != 0) {
+  } elsif ($config->get_option('opt_empty_tracks') != 0 && !$self->my_config('hide_empty')) {
     $self->errorTrack(sprintf 'No %s in this region', $self->error_track_name);
   }
 }
@@ -807,7 +807,7 @@ sub render_alignslice_transcript {
       priority => $self->_pos,
       legend   => \@legend
     };
-  } elsif ($config->get_option('opt_empty_tracks') != 0) {
+  } elsif ($config->get_option('opt_empty_tracks') != 0 && !$self->my_config('hide_empty')) {
     $self->errorTrack(sprintf 'No %s in this region', $self->error_track_name);
   }
 }
@@ -965,7 +965,7 @@ sub render_alignslice_collapsed {
       priority => $self->_pos,
       legend   => \@legend
     };
-  } elsif ($config->get_option('opt_empty_tracks') != 0) {
+  } elsif ($config->get_option('opt_empty_tracks') != 0 && !$self->my_config('hide_empty')) {
     $self->errorTrack(sprintf 'No %s in this region', $self->error_track_name);
   }
 }
@@ -1209,7 +1209,7 @@ sub render_genes {
       priority => $self->_pos,
       legend   => \@legend
     }
-  } elsif ($config->get_option('opt_empty_tracks') != 0) {
+  } elsif ($config->get_option('opt_empty_tracks') != 0 && !$self->my_config('hide_empty')) {
     $self->errorTrack(sprintf 'No %s in this region', $self->error_track_name);
   }
 }
