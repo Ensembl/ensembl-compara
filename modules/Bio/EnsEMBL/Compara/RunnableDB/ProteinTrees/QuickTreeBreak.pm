@@ -105,7 +105,7 @@ sub fetch_input {
     my $protein_tree_id     = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
     my $protein_tree        = $self->compara_dba->get_ProteinTreeAdaptor->fetch_node_by_node_id( $protein_tree_id )
                                         or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
-    $self->param('protein_tree', $protein_tree);
+    $self->param('gene_tree', $protein_tree);
 
     $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
 }
@@ -163,7 +163,7 @@ sub DESTROY {
 
     printf("QuickTreeBreak::DESTROY releasing trees\n") if($self->debug);
 
-    $self->release_tree('protein_tree');
+    $self->release_tree('gene_tree');
     $self->release_tree('max_subtree');
 
     $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
@@ -182,7 +182,7 @@ sub run_quicktreebreak {
 
   my $starttime = time()*1000;
 
-  my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $self->param('protein_tree') ) or return;
+  my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $self->param('gene_tree') ) or return;
 
   my $quicktree_exe = $self->param('quicktree_exe')
         or die "'quicktree_exe' is an obligatory parameter";
@@ -210,7 +210,7 @@ sub run_quicktreebreak {
   $self->generate_subtrees( $quicktree_newick_string );
 
   my $runtime = time()*1000-$starttime;
-  $self->param('protein_tree')->tree->store_tag('QuickTreeBreak_runtime_msec', $runtime);
+  $self->param('gene_tree')->tree->store_tag('QuickTreeBreak_runtime_msec', $runtime);
 }
 
 
@@ -222,15 +222,15 @@ sub run_quicktreebreak {
 
 sub dumpTreeMultipleAlignmentToWorkdir {
   my $self = shift;
-  my $protein_tree = shift;
+  my $gene_tree = shift;
 
-  $self->param('original_leafcount', scalar(@{$protein_tree->get_all_leaves}) );
+  $self->param('original_leafcount', scalar(@{$gene_tree->get_all_leaves}) );
   if($self->param('original_leafcount')<3) {
-    printf(STDERR "tree cluster %d has <3 proteins - can not build a tree\n", $protein_tree->node_id);
+    printf(STDERR "tree cluster %d has <3 proteins - can not build a tree\n", $gene_tree->node_id);
     return undef;
   }
 
-  my $file_root = $self->worker_temp_directory. "proteintree_". $protein_tree->node_id;
+  my $file_root = $self->worker_temp_directory. "proteintree_". $gene_tree->node_id;
   $file_root =~ s/\/\//\//g;  # converts any // in path to /
 
   my $aln_file = $file_root . '.aln';
@@ -246,7 +246,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   # njtree species_tree matching
   my %sa_params = ($self->param('use_genomedb_id')) ? ('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
 
-  my $sa = $protein_tree->get_SimpleAlign ( -id_type => 'MEMBER', %sa_params );
+  my $sa = $gene_tree->get_SimpleAlign ( -id_type => 'MEMBER', %sa_params );
   $sa->set_displayname_flat(1);
   my $alignIO = Bio::AlignIO->newFh ( -fh => \*OUTSEQ, -format => "fasta" );
   print $alignIO $sa;
@@ -286,10 +286,10 @@ sub store_proteintrees {
 sub store_clusters {
   my $self = shift;
 
-  my $protein_tree_adaptor = $self->compara_dba->get_ProteinTreeAdaptor;
+  my $gene_tree_adaptor = $self->compara_dba->get_GeneTreeAdaptor;
   my $starttime = time();
 
-  $protein_tree_adaptor->store($self->param('original_cluster'));
+  $gene_tree_adaptor->store($self->param('original_cluster'));
   $self->param('original_cluster')->root->store_tag('tree_support', 'quicktree');
 
   foreach my $cluster (@{$self->param('subclusters')}) {
@@ -313,12 +313,12 @@ sub generate_subtrees {
     my $quicktree_newick_string = shift @_;
 
     my $mlss_id = $self->param('mlss_id');
-    my $protein_tree = $self->param('protein_tree');
+    my $gene_tree = $self->param('gene_tree');
 
   #cleanup old tree structure- 
   #  flatten and reduce to only GeneTreeMember leaves
-  $protein_tree->flatten_tree;
-  $protein_tree->print_tree(20) if($self->debug);
+  $gene_tree->flatten_tree;
+  $gene_tree->print_tree(20) if($self->debug);
 
   #parse newick into a new tree object structure
   my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($quicktree_newick_string);
@@ -355,9 +355,9 @@ sub generate_subtrees {
     }
   }
 
-  my $final_original_num = scalar @{$self->param('protein_tree')->get_all_leaves};
+  my $final_original_num = scalar @{$self->param('gene_tree')->get_all_leaves};
   # Creating the supertree structure
-  my $supertree = $self->param('protein_tree');
+  my $supertree = $self->param('gene_tree');
   $supertree->tree->tree_type('supertree');
   my $supertree_leaf1 = new Bio::EnsEMBL::Compara::GeneTreeNode;
   my $supertree_leaf2 = new Bio::EnsEMBL::Compara::GeneTreeNode;
