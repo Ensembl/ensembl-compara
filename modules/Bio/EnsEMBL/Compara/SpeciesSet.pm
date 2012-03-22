@@ -1,101 +1,72 @@
 package Bio::EnsEMBL::Compara::SpeciesSet;
 
 use strict;
+
 use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 # FIXME: add throw not implemented for those not tag related?
-use base ('Bio::EnsEMBL::Compara::Taggable');
+use base (  'Bio::EnsEMBL::Storable',           # inherit dbID(), adaptor() and new() methods
+            'Bio::EnsEMBL::Compara::Taggable'   # inherit everything related to tagability
+         );
 
 
-sub new {
-  my($class, @args) = @_;
+=head2 new
 
-  my $self = {};
-  bless $self,$class;
-
-  my ($dbID, $adaptor, $genome_dbs) =
-      rearrange([qw(DBID ADAPTOR GENOME_DBS)], @args);
-
-  $self->dbID($dbID) if (defined ($dbID));
-  $self->adaptor($adaptor) if (defined ($adaptor));
-  $self->genome_dbs($genome_dbs) if (defined ($genome_dbs));
-
-  return $self;
-}
-
-=head2 dbID
-
-  Arg [1]    : (opt.) integer dbID
-  Example    : my $dbID = $species_set->dbID();
-  Example    : $species_set->dbID(12);
-  Description: Getter/Setter for the dbID of this object in the database
-  Returntype : integer dbID
-  Exceptions : none
-  Caller     : general
+  Arg [..]   : Takes a set of named arguments
+  Example    : my $my_species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
+                                -dbID            => $species_set_id,
+                                -genome_dbs      => [$gdb1, $gdb2, $gdb3 ],
+                                -adaptor         => $species_set_adaptor );
+  Description: Creates a new SpeciesSet object
+  Returntype : Bio::EnsEMBL::Compara::SpeciesSet
 
 =cut
 
+sub new {
+    my $caller = shift @_;
+    my $class = ref($caller) || $caller;
 
-sub dbID {
-  my $obj = shift;
+    my $self = $class->SUPER::new(@_);  # deal with Storable stuff
 
-  if (@_) {
-    $obj->{'dbID'} = shift;
-  }
+    my ($genome_dbs) = rearrange([qw(GENOME_DBS)], @_);
 
-  return $obj->{'dbID'};
+    $self->genome_dbs($genome_dbs) if (defined ($genome_dbs));
+
+    return $self;
 }
+
 
 =head2 species_set_id
 
   Arg [1]    : (opt.) integer species_set_id
   Example    : my $species_set_id = $species_set->species_set_id();
   Example    : $species_set->species_set_id(12);
-  Description: Getter/Setter for the species_set_id of this object in the database
+  Description: Getter/Setter for the species_set_id of this object in the database (alias for $ss->dbID())
   Returntype : integer species_set_id
   Exceptions : none
   Caller     : general
 
 =cut
 
-
 sub species_set_id {
-  my $obj = shift;
+    my $ss = shift @_;
 
-  if (@_) {
-    $obj->{'dbID'} = shift;
-  }
-
-  return $obj->{'dbID'};
+    return $ss->dbID($ss);
 }
 
 
+=head2 genome_dbs
 
-=head2 adaptor
-
-  Arg [1]    : (opt.) Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor
-  Example    : my $species_set_adaptor = $species_set->adaptor();
-  Example    : $species_set->adaptor($species_set_adaptor);
-  Description: Getter/Setter for the adaptor this object uses for database
-               interaction.
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor
+  Arg [1]    : (opt.) list of genome_db objects
+  Example    : my $genome_dbs = $species_set->genome_dbs();
+  Example    : $species_set->genome_dbs( [$gdb1, $gdb2, $gdb3] );
+  Description: Getter/Setter for the genome_dbs of this object in the database
+  Returntype : arrayref genome_dbs
   Exceptions : none
   Caller     : general
 
 =cut
-
-
-sub adaptor {
-  my $obj = shift;
-
-  if (@_) {
-    $obj->{'adaptor'} = shift;
-  }
-
-  return $obj->{'adaptor'};
-}
-
 
 sub genome_dbs {
   my ($self, $arg) = @_;
@@ -121,4 +92,23 @@ sub genome_dbs {
   return $self->{'genome_dbs'};
 }
 
+
+=head2 toString
+
+  Args       : (none)
+  Example    : print $species_set->toString()."\n";
+  Description: returns a stringified representation of the species_set
+  Returntype : string
+
+=cut
+
+sub toString {
+    my $self = shift;
+
+    return ref($self).": dbID=".($self->dbID || '?').", genome_dbs=[".join(', ', map { $_->name.'('.($_->dbID || '?').')'} @{ $self->genome_dbs })."]";
+}
+
+
+
 1;
+
