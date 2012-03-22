@@ -418,7 +418,7 @@ sub store_tags
         }
     }
 
-    my %mapped_tags = ('B' => 'bootstrap', 'SIS' => 'species_intersection_score', 'T' => 'tree_support');
+    my %mapped_tags = ('B' => 'bootstrap', 'SIS' => 'species_intersection_score');
     foreach my $tag (keys %mapped_tags) {
         if ($node->has_tag($tag)) {
             my $value = $node->get_tagvalue($tag);
