@@ -60,7 +60,7 @@ sub new {
 	
 	else {
 	  # for substitutions we just need to replace ',' with '/' in $alt
-	  $alt =~ s/\,/\//;
+	  $alt =~ s/\,/\//g;
 	}
   }
   
