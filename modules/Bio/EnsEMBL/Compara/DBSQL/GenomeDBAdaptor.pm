@@ -457,46 +457,6 @@ sub cache_all {
 }
 
 
-=head2 get_all_db_links
-
-  Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
-  Arg[2]     : int $method_link_id
-  Example    :
-  Description: For the GenomeDB object passed in, check is run to
-               verify which other genomes it has been analysed against
-               irrespective as to whether this was as the consensus
-               or query genome. Returns a list of matching dbIDs
-               separated by white spaces.
-  Returntype : listref of Bio::EnsEMBL::Compara::GenomeDBs
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::Compara::GenomeDB.pm
-  Status     : At risk
-
-=cut
-
-sub get_all_db_links {
-  my ($self, $ref_gdb, $method_link_id) = @_;
-
-  my $method_link_type = $self->db->get_MethodAdaptor->fetch_by_dbID( $method_link_id )->type();
-
-  my $method_link_species_sets = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type_GenomeDB(
-          $method_link_type,
-          $ref_gdb
-  );
-
-  my $gdb_list;
-
-  foreach my $this_method_link_species_set (@{$method_link_species_sets}) {
-    foreach my $this_genome_db (@{$this_method_link_species_set->species_set}) {
-      next if ($this_genome_db->dbID eq $ref_gdb->dbID);
-      $gdb_list->{$this_genome_db} = $this_genome_db;
-    }
-  }
-
-  return [values %$gdb_list];
-}
-
-
 =head2 sync_with_registry
 
   Example    :

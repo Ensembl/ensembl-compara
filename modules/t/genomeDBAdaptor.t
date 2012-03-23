@@ -153,6 +153,3 @@ $multi->restore('compara', 'genome_db');
 ## List of genomes are cached in a couple of globals in the Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
   $genome_db_adaptor->create_GenomeDBs; # reset globals
 
-$genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
-ok(scalar(@{$genome_db_adaptor->get_all_db_links($genome_db, $method_link_id)}), $num_of_db_links,
-    "Check number of links for genome_db_id($genome_db_id) and method_link_id($method_link_id)");
