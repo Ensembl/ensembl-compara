@@ -57,14 +57,12 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
 
 sub _tables {
-    my $self = shift;
 
     return (['method_link','m'])
 }
 
 
 sub _columns {
-    my $self = shift;
 
         #warning _objs_from_sth implementation depends on ordering
     return qw (
@@ -105,7 +103,8 @@ sub _objs_from_sth {
 sub fetch_by_type {
     my ($self, $type) = @_;
 
-    return @{ $self->generic_fetch( "m.type = '$type'" ) };
+    my ($method) = @{ $self->generic_fetch( "m.type = '$type'" ) };
+    return $method;
 }
 
 
