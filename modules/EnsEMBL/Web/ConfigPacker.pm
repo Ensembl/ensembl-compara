@@ -1234,7 +1234,7 @@ sub _summarise_datahubs {
 
   while (my ($key, $val) = each (%$datahub)) {
     my ($url, $menu) = ref $val eq 'ARRAY' ? @$val : ($val, undef);
-    
+  
     ## Do we have data for this species?
     my $hub_info = $parser->get_hub_info($url);
     
@@ -1255,19 +1255,14 @@ sub _summarise_datahubs {
           warn "!!! COULD NOT PARSE CONFIG $dataset->{'file'}: $dataset->{'error'}";
         } else {
           (my $name = $key) =~ s/_/ /g;
-          
-          my $options = {
-            menu_key     => $menu || $key,
-            menu_name    => $name,
-            submenu_key  => $dataset->{'config'}{'track'},
-            submenu_name => $dataset->{'config'}{'shortLabel'},
-            desc_url     => $dataset->{'config'}{'description_url'},
-          };
-          
+          my $menu_key = $menu || $key;  
           if ($dataset->{'config'}{'subsets'}) {
-            $self->_add_datahub_tracks($_->{'tracks'}, $options) for @{$dataset->{'tracks'}};
-          } else {
-            $self->_add_datahub_tracks($dataset->{'tracks'}, $options);
+            foreach (@{$dataset->{'tracks'}}) {
+              $self->_add_datahub_tracks($_, $name, $menu_key);
+            }
+          }
+          else {
+            $self->_add_datahub_tracks($dataset, $name, $menu_key);
           }
         }
       }
@@ -1276,11 +1271,19 @@ sub _summarise_datahubs {
 }
 
 sub _add_datahub_tracks {
-  my ($self, $tracks, $options) = @_;
+  my ($self, $dataset, $name, $menu_key) = @_;
 
-  foreach my $track (@$tracks) {
+  my $options = {
+                  menu_key     => $menu_key,
+                  menu_name    => $name,
+                  submenu_key  => $dataset->{'config'}{'track'},
+                  submenu_name => $dataset->{'config'}{'shortLabel'},
+                  desc_url     => $dataset->{'config'}{'description_url'},
+                  view         => $dataset->{'config'}{'view'},
+                };
+
+  foreach my $track (@{$dataset->{'tracks'}}) {
     my $link = ' <a href="'.$options->{'desc_url'}.'" rel="external">Go to track description on datahub</a>';
-    (my $menu_name = $options->{'menu'}) =~ s/_/ /g;
     (my $source_name = $track->{'shortLabel'}) =~ s/_/ /g;
     my $source = {
       'name'          => $track->{'track'},
@@ -1289,13 +1292,8 @@ sub _add_datahub_tracks {
       'source_url'    => $track->{'bigDataUrl'},
       %$options
     };
-    my $type = ref($track->{'type'}) eq 'HASH' ? $track->{'type'}{'format'} : $track->{'type'};
-    if ($type =~ /bigwig/i) {
-      $self->tree->{'ENSEMBL_INTERNAL_BIGWIG_SOURCES'}{$track->{'track'}} = $source;
-    }
-    elsif ($type =~ /bed/i) {
-      $self->tree->{'ENSEMBL_INTERNAL_BIGBED_SOURCES'}{$track->{'track'}} = $source;
-    }
+    my $type = ref($track->{'type'}) eq 'HASH' ? uc($track->{'type'}{'format'}) : uc($track->{'type'});
+    $self->tree->{'ENSEMBL_INTERNAL_'.$type.'_SOURCES'}{$track->{'track'}} = $source;
   }
 }
 
