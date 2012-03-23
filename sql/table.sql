@@ -100,11 +100,11 @@ CREATE TABLE genome_db (
 
 CREATE TABLE species_set (
   species_set_id              int(10) unsigned NOT NULL AUTO_INCREMENT,
-  genome_db_id                int(10) unsigned NOT NULL default 0,
+  genome_db_id                int(10) unsigned DEFAULT NULL,
 
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
 
-  PRIMARY KEY  (species_set_id,genome_db_id)
+  UNIQUE KEY  (species_set_id,genome_db_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -222,7 +222,7 @@ CREATE TABLE dnafrag (
   dnafrag_id                  bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   length                      int(11) DEFAULT 0 NOT NULL,
   name                        varchar(40) DEFAULT '' NOT NULL,
-  genome_db_id                int(10) unsigned DEFAULT 0 NOT NULL, # FK genome_db.genome_db_id
+  genome_db_id                int(10) unsigned NOT NULL, # FK genome_db.genome_db_id
   coord_system_name           varchar(40) DEFAULT NULL,
   is_reference                tinyint(1) DEFAULT 1,
 
