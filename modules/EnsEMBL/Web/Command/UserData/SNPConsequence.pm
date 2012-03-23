@@ -54,7 +54,7 @@ sub process {
     $session_data->{'filesize'} = length $temp_file->content;
     $session_data->{'filetype'} = 'Variant Effect Predictor';
     $session_data->{'format'}   = 'SNP_EFFECT';
-    $session_data->{'strand'}   = 'r';
+    $session_data->{'strand'}   = 'f';
     $session_data->{'border'}   = 'off'; ## show as unjoined features
     $session_data->{'md5'}      = $temp_file->md5;
     $session_data->{'nearest'}  = $nearest;
