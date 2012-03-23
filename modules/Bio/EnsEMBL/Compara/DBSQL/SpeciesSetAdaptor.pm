@@ -25,59 +25,49 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::Tag
 =cut
 
 sub store {
-  my ($self, $species_set) = @_;
+    my ($self, $species_set) = @_;
 
-  # First check all the GenomeDB objects
-  foreach my $genome_db (@{$species_set->genome_dbs}) {
-    throw if (!$genome_db->dbID);
-  }
-
-  # Check that the data do not exist already in the DB.
-  my $existing_species_set = $self->fetch_by_GenomeDBs($species_set->genome_dbs);
-
-  my $species_set_id;
-  
-  if ($existing_species_set) {
-    $species_set_id = $existing_species_set->dbID;
-  } else {
-    # Check the species_set_id. Assign it if it doesn't exist
-    $species_set_id = $species_set->dbID;
-    my $lock_tables = 0;
-    if (!$species_set_id) {
-      $lock_tables = 1;
-      $self->dbc->do("LOCK TABLES species_set WRITE");
-
-      my $sql = "SELECT MAX(species_set_id) FROM species_set";
-      my $sth = $self->prepare($sql);
-      $sth->execute();
-      $species_set_id = ($sth->fetchrow_array() or 0);
-      $species_set_id++;
+        # check whether all the GenomeDB objects have genome_db_ids:
+    foreach my $genome_db (@{$species_set->genome_dbs}) {
+        throw("GenomeDB ".$genome_db->toString." is missing a dbID") if (!$genome_db->dbID);
     }
-    throw if (!$species_set_id);
+
+    my $species_set_id;
+  
+        # Could we have a species_set in the DB with the given contents already?
+    if ( my $existing_species_set_id = $self->find_species_set_id_by_GenomeDBs_mix( $species_set->genome_dbs ) ) {
+        $species_set_id = $existing_species_set_id;
+    } elsif( not $species_set_id = $species_set->dbID ) {   # not set in the object either?
+
+            # grab a new species_set_id by using AUTO_INCREMENT:
+
+        my $grab_id_sql = 'INSERT INTO species_set VALUES ()';
+        $self->db->dbc->do( $grab_id_sql ) or die "Could not perform '$grab_id_sql'";
+
+        if( $species_set_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'species_set', 'species_set_id') ) {
+
+            my $empty_sql = "DELETE FROM species_set where species_set_id = $species_set_id";
+            $self->db->dbc->do( $empty_sql ) or die "Could not perform '$empty_sql'";
+        } else {
+            die "Failed to obtain a species_set_id for the species_set being stored";
+        }
+    }
 
     # Add the data into the DB
-    my $sql = qq{
-            INSERT INTO species_set(species_set_id,genome_db_id)
-            VALUES (?, ?)
-        };
+    my $sql = "INSERT INTO species_set (species_set_id, genome_db_id) VALUES (?, ?)";
     my $sth = $self->prepare($sql);
     foreach my $genome_db (@{$species_set->genome_dbs}) {
-      my $genome_db_id = $genome_db->dbID;
-#       print "$species_set_id, $genome_db_id\n";
-      $sth->execute($species_set_id, $genome_db_id);
+        my $genome_db_id = $genome_db->dbID;
+        $sth->execute($species_set_id, $genome_db_id);
     }
     $sth->finish();
-    
-    # Only unlock the table after adding the entries to make sure that not 2 threads try to use the species_set_id
-    if ($lock_tables) {
-      $self->dbc->do("UNLOCK TABLES");
-    }
-  }
-  $species_set->dbID($species_set_id);
 
-  $self->sync_tags_to_database($species_set);
+    $species_set->dbID( $species_set_id );
+    $species_set->adaptor( $self );
 
-  return $species_set;
+    $self->sync_tags_to_database( $species_set );
+
+    return $species_set;
 }
 
 
