@@ -227,6 +227,7 @@ sub render_normal {
     $self->{'track_key'} = $feature_key;
     next unless $features{$feature_key};
     my @T = @{$features{$feature_key}};
+
     if (ref($T[0]) eq 'ARRAY') {
       @features =  @{$T[0]};
       $config   = $T[1];
@@ -292,6 +293,7 @@ sub render_normal {
       my @F          = @{$id{$i}}; # sort { $a->[0] <=> $b->[0] } @{$id{$i}};
       my $START      = $F[0][0] < 1 ? 1 : $F[0][0];
       my $END        = $F[-1][1] > $length ? $length : $F[-1][1];
+      
       my $db_name    = $F[0][5];
       my( $txt, $bit, $w, $th );
       my $bump_start = int($START * $pix_per_bp) - 1;
@@ -380,7 +382,11 @@ sub render_normal {
         }
       }
       if( $h > 1 ) {
-        $Composite->bordercolour($feature_colour) unless $self->my_config('format') eq 'SNP_EFFECT'; # HACK omfg
+        my $border_colour = $feature_colour;
+        if ($self->{'my_config'}{'data'}{'border'} eq 'off') {
+          $border_colour = undef;
+        }
+        $Composite->bordercolour($border_colour);
       } else {
         $Composite->unshift( $self->Rect({
           'x'         => $Composite->{'x'},
