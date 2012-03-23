@@ -415,7 +415,6 @@ sub create_track {
   $details->{'colours'}   ||= $self->species_defs->colour($options->{'colourset'}) if exists $options->{'colourset'};
   $details->{'glyphset'}  ||= $code;
   $details->{'caption'}   ||= $caption;
- # $details->{'border'}      = 'off' if $details->{'format'} eq 'SNP_EFFECT';
 
   return $self->tree->create_node($code, $details);
 }
@@ -658,22 +657,23 @@ sub load_file_format {
   foreach my $source_name (sort keys %$internal_sources) {
     # get the target menu 
     my $menu = $self->get_node($internal_sources->{$source_name});
-    my $source;
+    my ($source, $view);
     
     if ($menu) {
       $source = $self->sd_call($source_name);
     } else {
       ## Probably an external datahub source
-         $source       = $internal_sources->{$source_name};
-      my $menu_key     = $source->{'menu_key'};
-      my $menu_name    = $source->{'menu_name'};
-      my $submenu_key  = $source->{'submenu_key'};
-      my $submenu_name = $source->{'submenu_name'};
-      my $main_menu    = $self->get_node($menu_key)    || $self->tree->prepend_child($self->create_submenu($menu_key, $menu_name));
-         $menu         = $self->get_node($submenu_key) || $main_menu->append_child($self->create_submenu($submenu_key, $submenu_name));
+      $source           = $internal_sources->{$source_name};
+      $view             = $source->{'view'},
+      my $menu_key      = $source->{'menu_key'};
+      my $menu_name     = $source->{'menu_name'};
+      my $submenu_key   = $source->{'submenu_key'};
+      my $submenu_name  = $source->{'submenu_name'};
+      my $main_menu     = $self->get_node($menu_key)    || $self->tree->prepend_child($self->create_submenu($menu_key, $menu_name));
+         $menu          = $self->get_node($submenu_key) || $main_menu->append_child($self->create_submenu($submenu_key, $submenu_name));
     }
     
-    $self->$function(key => $source_name, menu => $menu, source => $source, description => $source->{'description'}, internal => 1) if $source;
+    $self->$function(key => $source_name, menu => $menu, source => $source, description => $source->{'description'}, internal => 1, view => $view) if $source;
   }
 }
 
@@ -702,27 +702,33 @@ sub _add_bam_track {
 }
 
 sub _add_bigbed_track {
-  my $self = shift;
-  my $desc = '
-    Bigbed file
-  ';
-  
-  $self->_add_file_format_track(
-    format      => 'BigBed',
-    description => $desc,
-    renderers   => [
+  my ($self, %args) = @_;
+ 
+  my $renderers = [
       'off',    'Off', 
       'normal', 'Normal', 
       'labels', 'Labels',
-      'tiling', 'Wiggle plot',
-    ], 
-    options => {
+  ];
+ 
+  my $options = {
       external => 'url',
       sub_type => 'url',
       colourset => 'feature',
-      border    => 'off',
-    },
-    @_
+  };
+
+  if ($args{'view'} && $args{'view'} =~ /peaks/i) {
+    $options->{'border'} = 'off';  
+  }
+  else {
+    push @$renderers, ('tiling', 'Wiggle plot');
+  } 
+
+  $self->_add_file_format_track(
+    format      => 'BigBed',
+    description => 'Bigbed file',
+    renderers   =>  $renderers,
+    options     =>  $options,
+    %args,
   );
 }
 
