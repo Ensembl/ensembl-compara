@@ -415,7 +415,8 @@ sub create_track {
   $details->{'colours'}   ||= $self->species_defs->colour($options->{'colourset'}) if exists $options->{'colourset'};
   $details->{'glyphset'}  ||= $code;
   $details->{'caption'}   ||= $caption;
-  
+ # $details->{'border'}      = 'off' if $details->{'format'} eq 'SNP_EFFECT';
+
   return $self->tree->create_node($code, $details);
 }
 
@@ -503,7 +504,7 @@ sub load_user_tracks {
   # Now we deal with the url sources... again flat file
   foreach my $entry ($session->get_data(type => 'url')) {
     next unless $entry->{'species'} eq $self->{'species'};
-    
+
     $url_sources{"url_$entry->{'code'}"} = {
       source_type => 'session',
       source_name => $entry->{'name'} || $entry->{'url'},
@@ -519,7 +520,7 @@ sub load_user_tracks {
   
   foreach my $entry ($session->get_data(type => 'upload')) {
     next unless $entry->{'species'} eq $self->{'species'};
-    
+   
     if ($entry->{'analyses'}) {
       foreach my $analysis (split /, /, $entry->{'analyses'}) {
         $upload_sources{$analysis} = {
@@ -532,6 +533,7 @@ sub load_user_tracks {
       }
     } elsif ($entry->{'species'} eq $self->{'species'} && !$entry->{'nonpositional'}) {
       my ($strand, $renderers) = $self->_user_track_settings($entry->{'style'});
+      $strand = $entry->{'strand'} if $entry->{'strand'};
       
       $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
         external    => 'tmp',
@@ -612,6 +614,7 @@ sub load_user_tracks {
       next unless $analysis;
       
       my ($strand, $renderers) = $self->_user_track_settings($analysis->program_version);
+      $strand = $upload_sources{$logic_name}{'strand'} if $upload_sources{$logic_name}{'strand'};
       my $external    = $upload_sources{$logic_name}{'source_type'} eq 'user' ? 'user' : 'tmp';
       my $source_name = encode_entities($upload_sources{$logic_name}{'source_name'});
       my $description = encode_entities($analysis->description) || "User data from dataset $source_name";
@@ -717,6 +720,7 @@ sub _add_bigbed_track {
       external => 'url',
       sub_type => 'url',
       colourset => 'feature',
+      border    => 'off',
     },
     @_
   );
@@ -807,7 +811,6 @@ sub _add_file_format_track {
       encode_entities($args{'source'}{'source_url'})
     );
   }
- 
   my $track = $self->create_track($args{'key'}, $args{'source'}{'source_name'}, {
     display     => 'off',
     strand      => 'f',
