@@ -81,9 +81,28 @@ sub store {
 }
 
 
-sub _tables {
+sub _need_tags_for_query {
+    my $self = shift @_;
 
-    return ['species_set', 'ss'];
+    if(@_) {
+        $self->{'_need_tags_for_query'} = shift @_;
+    }
+    return $self->{'_need_tags_for_query'};
+}
+
+sub _tables {
+    my $self = shift @_;
+
+    return (
+        ['species_set', 'ss'],
+        $self->_need_tags_for_query ? ( ['species_set_tag', 'sst'] ) : ()
+    );
+}
+
+sub _left_join {
+    my $self = shift @_;
+
+    return $self->_need_tags_for_query ? ( [ 'species_set_tag', "sst.species_set_id = ss.species_set_id" ] ) : ();
 }
 
 sub _columns {
@@ -128,43 +147,10 @@ sub _objs_from_sth {
 }
 
 
-=head2 fetch_all_by_tag_value
-
-  Arg [1]     : string $tag
-  Arg [2]     : string $value
-  Example     : my $species_set = $species_set_adaptor->fetch_by_tag_value("name", "primates");
-  Description : Fetches the SpeciesSet object with that tag-value pair. If more than one
-                species_set exists with this tag-value pair, returns the species_set
-                with the largest species_set_id
-  Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
-  Exceptions  : None
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub fetch_all_by_tag_value {
-  my ($self, $tag, $value) = @_;
-
-  my @species_sets = ();
-
-  my $sql = "SELECT species_set_id FROM species_set_tag WHERE tag='$tag' AND value='$value'";
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-
-  while (my ($species_set_id) = $sth->fetchrow) {
-    push @species_sets, $self->fetch_by_dbID($species_set_id);
-  }
-  $sth->finish;
-
-  return \@species_sets;
-}
-
-
 =head2 fetch_all_by_tag
 
   Arg [1]     : string $tag
-  Example     : my $species_sets = $species_set_adaptor->fetch_all_by_tag("taxon_id");
+  Example     : my $species_sets = $species_set_adaptor->fetch_all_by_tag('taxon_id');
   Description : Fetches the SpeciesSet object that have this tag
   Returntype  : listref of Bio::EnsEMBL::Compara::SpeciesSet objects
   Exceptions  : None
@@ -174,29 +160,39 @@ sub fetch_all_by_tag_value {
 =cut
 
 sub fetch_all_by_tag {
-  my ($self, $tag) = @_;
-  my $species_sets = []; # returned object
+    my ($self, $tag) = @_;
 
-  my $sql = qq{
-          SELECT
-              species_set_id
-          FROM
-              species_set_tag
-          WHERE
-              tag = ?
-      };
+    $self->_need_tags_for_query(1);
+    my $entries = $self->generic_fetch( "sst.tag='$tag'" );
+    $self->_need_tags_for_query(0);
 
-  my $sth = $self->prepare($sql);
-  $sth->execute($tag);
-  my $species_set_id;
-  $sth->bind_columns(\$species_set_id);
-  while ($sth->fetch) {
-    push(@$species_sets, $self->fetch_by_dbID($species_set_id));
-  }
-  $sth->finish;
+    return $entries;
+}
 
-  return $species_sets;
 
+=head2 fetch_all_by_tag_value
+
+  Arg [1]     : string $tag
+  Arg [2]     : string $value
+  Example     : my $species_set = $species_set_adaptor->fetch_by_tag_value('name', 'primates');
+  Description : Fetches the SpeciesSet object with that tag-value pair. If more than one
+                species_set exists with this tag-value pair, returns the species_set
+                with the largest species_set_id
+  Returntype  : listref of Bio::EnsEMBL::Compara::SpeciesSet objects
+  Exceptions  : None
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub fetch_all_by_tag_value {
+    my ($self, $tag, $value) = @_;
+
+    $self->_need_tags_for_query(1);
+    my $entries = $self->generic_fetch( "sst.tag='$tag' AND sst.value='$value'" );
+    $self->_need_tags_for_query(0);
+
+    return $entries;
 }
 
 
