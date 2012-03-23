@@ -3,7 +3,6 @@ package Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor;
 use strict;
 
 use Scalar::Util qw(looks_like_number);
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::SpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
 
@@ -82,51 +81,50 @@ sub store {
 }
 
 
-=head2 fetch_by_dbID
+sub _tables {
 
-  Arg [1]     : int $species_set_id
-  Example     : my $species_set = $species_set_adaptor->fetch_by_dbID($species_set_id);
-  Description : Fetches the SpeciesSet object with that internal ID
-  Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
-  Exceptions  : None
-  Caller      : general
-  Status      : Stable
+    return ['species_set', 'ss'];
+}
 
-=cut
+sub _columns {
 
-sub fetch_by_dbID {
-  my ($self, $dbID) = @_;
+        #warning _objs_from_sth implementation depends on ordering
+    return qw (
+        ss.species_set_id
+        ss.genome_db_id
+    );
+}
 
-  my $sql = qq{
-          SELECT
-              species_set_id,
-              genome_db_id
-          FROM
-              species_set
-          WHERE
-              species_set_id = ?
-      };
+sub _objs_from_sth {
+    my ($self, $sth) = @_;
 
-  my $sth = $self->prepare($sql);
-  $sth->execute($dbID);
+    my %ss_content_hash = ();
+    my %ss_incomplete   = ();
+    my $gdb_adaptor = $self->db->get_GenomeDBAdaptor;
 
-  my ($species_set_id,$genome_db_id);
-  $sth->bind_columns(\$species_set_id,\$genome_db_id);
-  my $genome_dbs = [];
-  while ($sth->fetch) {
-    my $genome_db = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
-    push(@$genome_dbs, $genome_db) if (defined($genome_db));
-  }
-  $sth->finish();
+    while ( my ($species_set_id, $genome_db_id) = $sth->fetchrow() ) {
 
-  ## Create the object
-  my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
-     -adaptor => $self,
-     -dbID => $dbID,
-     -genome_dbs => $genome_dbs
-  );
+            # gdb objects are already cached on the $gdb_adaptor level, so no point in re-caching them here
+        if( my $gdb = $gdb_adaptor->fetch_by_dbID( $genome_db_id) ) {
+            push @{$ss_content_hash{$species_set_id}}, $gdb;
+        } else {
+            warning("Species set with dbID=$species_set_id is missing genome_db entry with dbID=$genome_db_id, so it will not be fetched");
+            $ss_incomplete{$species_set_id}++;
+        }
+    }
 
-  return $species_set;
+    my @ss_list;
+    while (my ($species_set_id, $species_set_contents) = each %ss_content_hash) {
+        unless($ss_incomplete{$species_set_id}) {
+            push @ss_list, Bio::EnsEMBL::Compara::SpeciesSet->new(
+                -genome_dbs => $species_set_contents,
+                -dbID       => $species_set_id,
+                -adaptor    => $self,
+            );
+        }
+    }
+
+    return \@ss_list;
 }
 
 
@@ -304,30 +302,6 @@ sub find_species_set_id_by_GenomeDBs_mix {
   return $all_rows->[0]->[0];
 }
 
-
-sub fetch_all {
-  my $self = shift;
-  my $species_sets = [];
-
-  my $sql = qq{
-          SELECT
-              distinct species_set_id
-          FROM
-              species_set
-      };
-
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  my ($species_set_id);
-  $sth->bind_columns(\$species_set_id);
-  while ($sth->fetch) {
-    my $species_set = $self->fetch_by_dbID($species_set_id);
-    push(@$species_sets, $species_set);
-  }
-  $sth->finish();
-
-  return $species_sets;
-}
 
 ###################################
 #
