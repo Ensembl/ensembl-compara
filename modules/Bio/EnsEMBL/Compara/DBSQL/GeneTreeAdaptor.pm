@@ -225,7 +225,7 @@ sub gene_member_id_is_in_tree {
 sub fetch_all_AlignedMembers_by_root_id {
   my ($self, $root_id) = @_;
 
-  my $constraint = "WHERE tm.root_id = $root_id";
+  my $constraint = "WHERE (tm.member_id IS NOT NULL) AND (t.root_id = $root_id)";
   my $nodes = $self->_generic_fetch($constraint);
   return $nodes;
 
