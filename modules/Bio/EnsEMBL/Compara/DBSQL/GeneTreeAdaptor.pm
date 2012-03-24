@@ -80,7 +80,7 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compa
 
 sub fetch_all {
     my $self = shift;
-    my $constraint = "WHERE (t.node_id = t.root_id) AND (tr.tree_type != 'clusterset') AND (tr.tree_type != 'supertree')";
+    my $constraint = "WHERE (t.node_id = t.root_id) AND (tr.tree_type = 'tree')";
 
     my $clusterset_id = shift;
     $constraint .= " AND (tr.clusterset_id = ${clusterset_id})" if defined $clusterset_id;
