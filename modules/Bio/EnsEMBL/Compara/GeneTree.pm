@@ -240,7 +240,7 @@ sub adaptor {
 sub root_id {
     my $self = shift;
     my $new = shift;
-    if ($new and ($self->{'_root_id'} ne $new)) {
+    if ($new and ((not defined $self->{'_root_id'}) or ($self->{'_root_id'} ne $new))) {
         #print "DEFINES root_id=$new IN $self\n";
         # defines the new root_id
         $self->{'_root_id'} = $new;
