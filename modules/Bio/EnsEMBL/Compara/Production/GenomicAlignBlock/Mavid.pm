@@ -36,6 +36,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Mavid;
 
 use strict;
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Analysis::Runnable::Mavid;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;;
@@ -256,7 +257,7 @@ sub dumpTreeFile {
     }
   }
   close F;
-  my $tree = Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor->parse_newick_into_tree($newick);
+  my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
   $self->update_node_names($tree);
   $tree_file = $WORKDIR . "/tree_file";
   open F, ">$tree_file";
