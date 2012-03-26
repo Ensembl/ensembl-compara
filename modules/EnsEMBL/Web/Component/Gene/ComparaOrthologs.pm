@@ -154,8 +154,10 @@ sub content {
             function => 'Alignment' . ($cdb =~ /pan/ ? '_pan_compara' : ''),
             g1       => $stable_id,
           });
-
-        $target_links .= sprintf '<li><a href="%s" class="notext">Alignment (protein)</a></li>', $align_url;
+        
+        unless ($object->Obj->biotype =~ /RNA/) {
+          $target_links .= sprintf '<li><a href="%s" class="notext">Alignment (protein)</a></li>', $align_url;
+        }
         $align_url    .= ';seq=cDNA';
         $target_links .= sprintf '<li><a href="%s" class="notext">Alignment (cDNA)</a></li>', $align_url;
         
