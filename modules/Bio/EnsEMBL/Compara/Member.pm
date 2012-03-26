@@ -875,7 +875,7 @@ sub gene_member {
 
 =head2 print_member
 
-  Arg[1]     : string $postfix
+  Arg[1]     : string to be prrinted instead of "\n"
   Example    : $member->print_member("BRH");
   Description: used for debugging, prints out key descriptive elements
                of member
