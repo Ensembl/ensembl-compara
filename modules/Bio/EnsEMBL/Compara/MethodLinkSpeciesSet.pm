@@ -103,6 +103,7 @@ package Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 use strict;
 
+use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
