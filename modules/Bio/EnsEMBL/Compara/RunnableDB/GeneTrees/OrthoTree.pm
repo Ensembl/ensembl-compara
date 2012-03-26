@@ -538,7 +538,7 @@ sub delete_old_orthotree_tags
 {
     my $self = shift;
 
-    return undef unless ($self->input_job->retry_count > 0);
+    #return undef unless ($self->input_job->retry_count > 0);
 
     my $tree_node_id = $self->param('gene_tree')->node_id;
 
@@ -561,7 +561,7 @@ sub delete_old_orthotree_tags
 sub delete_old_homologies {
     my $self = shift;
 
-    return undef unless ($self->input_job->retry_count > 0);
+    #return undef unless ($self->input_job->retry_count > 0);
 
     my $tree_node_id = $self->param('gene_tree')->node_id;
 
@@ -852,10 +852,10 @@ sub store_gene_link_as_homology {
 
   # create method_link_species_set
   my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  if ($type eq 'possible_ortholog' || $type eq 'within_species_paralog' || $type eq 'other_paralog') {
-      $mlss->method_link_type("ENSEMBL_ORTHOLOGUES");
-  } else {
+  if (($type eq 'possible_ortholog') or ($type eq 'within_species_paralog') or ($type eq 'other_paralog')) {
       $mlss->method_link_type("ENSEMBL_PARALOGUES");
+  } else {
+      $mlss->method_link_type("ENSEMBL_ORTHOLOGUES");
   }
   if ($gene1->genome_db->dbID == $gene2->genome_db->dbID) {
     $mlss->species_set([$gene1->genome_db]);
