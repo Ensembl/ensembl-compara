@@ -277,9 +277,10 @@ sub remove_nodes_by_taxon_ids {
   my $self = shift;
   my $species_arrayref = shift;
 
+  my @tax_ids = @{$species_arrayref};
   # Turn the arrayref into a hash.
   my %tax_hash;
-  map {$tax_hash{$_}=1} @{$species_arrayref};
+  map {$tax_hash{$_}=1} @tax_ids;
 
   my @to_delete;
   foreach my $leaf (@{$self->get_all_leaves}) {
