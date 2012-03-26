@@ -23,7 +23,7 @@ use File::Basename qw( dirname );
 use Pod::Usage;
 use Getopt::Long;
 
-use vars qw( $SERVERROOT $PLUGIN_ROOT $SCRIPT_ROOT $DEBUG $FUDGE $NOINTERPRO $NOSUMMARY $help $info @user_spp $allgenetypes $coordsys $list);
+use vars qw( $SERVERROOT $PLUGIN_ROOT $SCRIPT_ROOT $DEBUG $FUDGE $NOINTERPRO $NOSUMMARY $help $info @user_spp $allgenetypes $coordsys $list $pan_comp_species);
 
 BEGIN{
   &GetOptions( 
@@ -37,6 +37,7 @@ BEGIN{
                'nosummary' => \$NOSUMMARY,
                'plugin_root=s' => \$PLUGIN_ROOT,
                'coordsys' => \$coordsys,
+               'pan_c_sp' => \$pan_comp_species
 	     );
 
   pod2usage(-verbose => 2) if $info;
@@ -102,8 +103,11 @@ else {
 
 
 ##---------------------------- CREATE STATS ---------------------------------
-
 my $dbconn = EnsEMBL::Web::DBSQL::DBConnection->new(undef, $SD);
+
+if($pan_comp_species) {
+    do_pan_compara_species();
+}
 
 my ($count_spp,$total_spp) = (0,scalar @valid_spp);
 foreach my $spp (@valid_spp) {
@@ -126,6 +130,7 @@ foreach my $spp (@valid_spp) {
     my $databases = $dbconn->get_databases_species($spp, "variation");
     $var_db =  $databases->{'variation'} || undef;
   };
+
 
   if ($NOSUMMARY) {
     do_interpro($db, $spp);
@@ -663,6 +668,73 @@ sub stripe_row {
   return $row;
 }
 
+
+sub do_pan_compara_species {   
+
+    my $fq_path_dir = sprintf( STATS_PATH, $PLUGIN_ROOT);
+    &check_dir($fq_path_dir);
+    my $pan_comp_path_html = $fq_path_dir."pan_compara_species.html";
+    open (STAT_P_C, ">$pan_comp_path_html") or die "Cannot write $pan_comp_path_html: $!";
+    my $release_version = $SD->SITE_RELEASE_VERSION;
+    my $db_id = $SD->ENSEMBL_VERSION;
+    my $db_name = "ensembl_compara_pan_homology_".$release_version."_".$db_id;
+
+    my $db = @{ Bio::EnsEMBL::Registry->get_all_DBAdaptors_by_dbname($db_name) }[0];
+
+    my $SQL = qq(select 
+                distinct g.name name, g.taxon_id taxon_id, n.name sci_name
+                from ncbi_taxa_name n, genome_db g 
+                join species_set using (genome_db_id) 
+                join method_link_species_set using (species_set_id) 
+                join method_link m using (method_link_id) 
+                where g.taxon_id = n.taxon_id and n.name_class = "scientific name"
+                order by n.name);
+    my $sth = $db->dbc->prepare($SQL);
+    $sth->execute();
+
+    my ($spec_name, $spec_sci_name);
+    while (my ($name, $taxon_id, $sci_name) = $sth->fetchrow_array) {
+      push @{$spec_name}, $name;
+      push @{$spec_sci_name}, $sci_name;
+    }
+
+    my $link_style = 'font-size:1.1em;font-weight:bold;text-decoration:none;';
+    my $html .= qq{<table>\n<tr>\n<td colspan="3" style="width:50%;padding:2px;padding-bottom:1em">&nbsp;</td>\n};
+
+    my $total = scalar(@{$spec_name});
+    my $break = int($total / 3);
+    $break++ if $total % 3;
+
+    ## Reset total to number of cells required for a complete table
+    $total = $break * 3;
+
+    for (my $i=0; $i < $total; $i++) {
+	my $col = int($i % 3);
+	if ($col == 0 && $i < ($total - 1)) {
+	    $html .= qq(</tr>\n<tr>\n);
+	}
+	my $row = int($i/3);
+	my $j = $row + $break * $col;
+
+        my $species         = $spec_sci_name->[$j];
+        my $current_species = $spec_name->[$j];
+        my $site_hash       = $SD->ENSEMBL_SPECIES_SITE($current_species)  || $SD->ENSEMBL_SPECIES_SITE;
+        my $url_hash        = $SD->ENSEMBL_EXTERNAL_URLS($current_species) || $SD->ENSEMBL_EXTERNAL_URLS;
+
+	my $spsite          = uc $site_hash->{$current_species}; # Get the location of the species
+	my $url             = $url_hash->{$spsite} || '';        # Get the URL for the location
+	$url =~ s/\#\#\#SPECIES\#\#\#/$current_species/;         # Replace ###SPECIES### with the species name
+	$html .= qq(<td style="width:8%;text-align:left;padding-bottom:1em">);
+        $html .= qq(<a href="$url/Info/Index/"  style="$link_style">$species</a>);
+        $html .= qq(</td>\n);
+
+    }
+    $html .= qq(</tr>\n</table>);
+
+    print STAT_P_C $html;
+    close STAT_P_C;
+}
+
 sub do_interpro {
   my ($db, $species) = @_;
   print STDERR "Get top InterPro hits ($species)..." if $DEBUG;
@@ -670,10 +742,10 @@ sub do_interpro {
   ## Best to do this using API!
   
   ## First get all interpro accession IDs
-  my $SQL = qq(SELECT  i.interpro_ac,
+  my $SQL = qq(SELECT i.interpro_ac,
                       x.description,
                       count(*)
-                FROM  interpro i
+                FROM interpro i
                 LEFT JOIN xref x ON i.interpro_ac = x.dbprimary_acc
                 LEFT JOIN protein_feature pf ON i.id = pf.hit_name
 	        WHERE pf.hit_name IS NOT NULL
@@ -763,7 +835,7 @@ sub hits2html {
             <th>Number of genes</th>
             <th>Number of Ensembl hits</th>
          </tr>
-);
+  );
 
   my @classes = ('class="bg2"', 'class="bg1"');
   for (my $i = 0; $i< $number/2; $i++){
@@ -795,7 +867,7 @@ sub hits2html {
   <td><a href="/$species/Location/Genome?ftype=Domain;id=$name2">$gene2</a></td>
   <td>$count2</td>
 </tr>
-);
+  );
   }
 
   print("</table>");
@@ -809,7 +881,6 @@ sub hits2html {
     # >top40  page
     print qq(<p class="center"><a href="$interpro_path/IPtop40">View</a> top 40 InterPro hits</p>);
   }
-
   close(HTML);
 }
 
