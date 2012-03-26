@@ -203,7 +203,7 @@ if (!$method_link_species_set) {
 my $class = $method_link_species_set->method_link_class;
 
 exit(1) if !check_table("method_link", $from_dba, $to_dba, undef,
-    "method_link_id = ".$method_link_species_set->method_link_id);
+    "method_link_id = ".$method_link_species_set->method->dbID);
 exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
     "method_link_species_set_id = $mlss_id");
 

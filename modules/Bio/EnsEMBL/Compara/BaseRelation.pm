@@ -292,7 +292,7 @@ sub method_link_id {
   unless (defined $self->{'_method_link_id'}) {
     my $mlss = $self->method_link_species_set;
     throw("method_link_type needs a valid method_link_species_set") unless($mlss);
-    $self->{'_method_link_id'} = $mlss->method_link_id;
+    $self->{'_method_link_id'} = $mlss->method->dbID;
   }
 
   return $self->{'_method_link_id'};

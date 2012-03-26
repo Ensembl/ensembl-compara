@@ -255,7 +255,7 @@ if($only_show_intentions) {
         print "\t".$genome_db->dbID.": ".$genome_db->name."\n";
     }
     print "MethodLinkSpeciesSet entries to be copied:\n";
-    foreach my $mlss (sort {$a->method_link_id <=> $b->method_link_id} @$all_default_method_link_species_sets) {
+    foreach my $mlss (sort {$a->method->dbID <=> $b->method->dbID} @$all_default_method_link_species_sets) {
         print "\t".$mlss->dbID.": ".$mlss->name."\n";
     }
     print "SpeciesSet entries to be copied:\n";
@@ -753,7 +753,7 @@ sub copy_dna_dna_alignements {
   $new_dba->dbc->do("ALTER TABLE `genomic_align_tree` DISABLE KEYS");
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
     ## For DNA-DNA alignments, the method_link_id is < 100.
-    next if ($this_method_link_species_set->method_link_id >= 100);
+    next if ($this_method_link_species_set->method->dbID >= 100);
     print "Copying dna-dna alignments for ", $this_method_link_species_set->name,
         " (", $this_method_link_species_set->dbID, "): ";
     my $where = "genomic_align_block_id >= ".
@@ -818,7 +818,7 @@ sub copy_ancestor_dnafrag {
 
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
       ## For ancestral dnafrags, the method_link_id is < 100.
-      next if ($this_method_link_species_set->method_link_id >= 100);
+      next if ($this_method_link_species_set->method->dbID >= 100);
       if ($this_method_link_species_set->method_link_class() eq 
 	  "GenomicAlignTree.ancestral_alignment") {
 	  print "Copying ancestral dnafrags for ", $this_method_link_species_set->name,

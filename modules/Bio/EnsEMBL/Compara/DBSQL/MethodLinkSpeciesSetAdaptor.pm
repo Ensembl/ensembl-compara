@@ -80,20 +80,13 @@ package Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor;
 use strict;
 
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
 
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
 my $DEFAULT_MAX_ALIGNMENT = 20000;
-
-sub new {
-  my $class = shift;
-
-  my $self = $class->SUPER::new(@_);
-
-  return $self;
-}
 
 
 =head2 store
@@ -122,10 +115,6 @@ sub store {
 
   $method_link_species_set->adaptor($self);
 
-  my $method_link_sql = qq{SELECT 1 FROM method_link WHERE method_link_id = ?};
-  my $method_link_type_sql   = qq{SELECT method_link_id from method_link where type = ?};
-  my $method_link_insert_sql = qq{INSERT INTO method_link (type, class) VALUES(?, ?)};
-
   my $method_link_species_set_sql = qq{
         INSERT IGNORE INTO method_link_species_set (
           method_link_species_set_id,
@@ -137,39 +126,13 @@ sub store {
         VALUES (?, ?, ?, ?, ?, ?)
     };
 
-  my $method_link_id   = $method_link_species_set->method_link_id;
-  my $method_link_type = $method_link_species_set->method_link_type;
-  my $method_link_class = ($method_link_species_set->method_link_class or "");
-  my $species_set = $method_link_species_set->species_set;
+  my $method            = $method_link_species_set->method();
 
+  $self->db->get_MethodAdaptor->store( $method );   # will only store if the object needs storing (type is missing) and reload the dbID otherwise
 
-
-  ## If we have method_link_type but no method_link_id
-  if( $method_link_type and ! $method_link_id ){
-    # Is the type in the DB?
-    my $sth = $self->prepare($method_link_type_sql);
-    $sth->execute( $method_link_type );
-    ($method_link_id) = $sth->fetchrow_array;
-    $sth->finish();
-    if( ! $method_link_id ) {
-      # Insert new
-      $sth = $self->prepare($method_link_insert_sql);
-      $sth->execute( $method_link_type, $method_link_class );
-      $method_link_id = $sth->{'mysql_insertid'};
-      $sth->finish();
-    }
-    # Update the object
-    $method_link_species_set->method_link_id($method_link_id);
-  }
-
-  ## Checks if method_link_id already exists in the database
-  my $sth = $self->prepare($method_link_sql);
-  $sth->execute($method_link_id);
-  my ($has_ml) = $sth->fetchrow_array();
-  $sth->finish();
-  if (!$has_ml) {
-    throw("method_link_id $method_link_id is not in the database!\n");
-  }
+  my $method_link_id    = $method->dbID;
+  my $method_link_type  = $method->type;
+  my $species_set       = $method_link_species_set->species_set;
 
   ## Fetch genome_db_ids from Bio::EnsEMBL::Compara::GenomeDB objects
   my @genome_db_ids;
@@ -198,6 +161,7 @@ sub store {
                        method_link_species_set as mlss WRITE,
                        method_link_species_set as mlss1 WRITE,
                        method_link_species_set as mlss2 WRITE,
+                       method_link as m WRITE,
                        method_link as ml WRITE,
                        species_set WRITE,
                        species_set as ss WRITE,
@@ -216,8 +180,7 @@ sub store {
     if (!$dbID) {
       $dbID = $method_link_species_set->dbID();
       if (!$dbID) {
-        ## Use convetion rule for getting a new dbID. At the moment, we yse the following
-        ## ranges:
+        ## Use conversion rule for getting a new dbID. At the moment, we use the following ranges:
         ##
         ## dna-dna alignments: method_link_id E [1-100], method_link_species_set_id E [1-10000]
         ## synteny:            method_link_id E [101-100], method_link_species_set_id E [10001-20000]
@@ -285,15 +248,15 @@ sub store {
   if (defined($method_link_species_set->{max_alignment_length})) { 
      my $max_align = $method_link_species_set->get_value_for_tag("max_align");
      if ($max_align) {
-	 if ($max_align != $method_link_species_set->max_alignment_length){
-	     #... update it if it was already defined and it is different from current one
-	     $method_link_species_set->store_tag("max_align", $method_link_species_set->max_alignment_length);
-	 } else {
-	     #... store it if it was not defined yet
-	     $method_link_species_set->store_tag("max_align", $method_link_species_set->max_alignment_length);
-	 }
+         if ($max_align != $method_link_species_set->max_alignment_length){
+             #... update it if it was already defined and it is different from current one
+             $method_link_species_set->store_tag("max_align", $method_link_species_set->max_alignment_length);
+         } else {
+             #... store it if it was not defined yet
+             $method_link_species_set->store_tag("max_align", $method_link_species_set->max_alignment_length);
+         }
      }
- }
+  }
 
   $method_link_species_set->dbID($dbID);
 
@@ -379,41 +342,35 @@ sub fetch_all {
   $sth->bind_columns(\$method_link_species_set_id, \$method_link_id, \$name, \$source, \$url,
       \$species_set_id, \$genome_db_id, \$type, \$class);
   while ($sth->fetch()) {
-    $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_ID'} = $method_link_id;
+    my $method = Bio::EnsEMBL::Compara::Method->new( -dbID => $method_link_id, -type => $type, -class => $class, -adaptor => $self->db->get_MethodAdaptor);
+
+    $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD'} = $method;
+
+    $all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET_ID'} = $species_set_id;
+    push(@{$all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET'}}, $all_genome_dbs->{$genome_db_id});
+
     $all_method_link_species_sets->{$method_link_species_set_id}->{'NAME'} = $name;
     $all_method_link_species_sets->{$method_link_species_set_id}->{'SOURCE'} = $source;
     $all_method_link_species_sets->{$method_link_species_set_id}->{'URL'} = $url;
-    $all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET_ID'} = $species_set_id;
-    $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_TYPE'} = $type;
-    $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_CLASS'} = $class;
-    push(@{$all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET'}},
-        $all_genome_dbs->{$genome_db_id});
   }
 
   $sth->finish();
 
   foreach my $method_link_species_set_id (keys %$all_method_link_species_sets) {
     my $this_method_link_species_set;
-    $this_method_link_species_set = new_fast Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
-            {'adaptor' => $self,
-            'dbID' => $method_link_species_set_id,
-            'method_link_id' =>
-                $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_ID'},
-            'method_link_type' =>
-                $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_TYPE'},
-            'method_link_class' =>
-                $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD_LINK_CLASS'},
-            'name' =>
-                $all_method_link_species_sets->{$method_link_species_set_id}->{'NAME'},
-            'source' =>
-                $all_method_link_species_sets->{$method_link_species_set_id}->{'SOURCE'},
-            'url' =>
-                $all_method_link_species_sets->{$method_link_species_set_id}->{'URL'},
-            'species_set_id' =>
-                $all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET_ID'},
-            'species_set' =>
-                $all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET'},
-        });
+    $this_method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new_fast( {
+            'adaptor' =>            $self,
+            'dbID' =>               $method_link_species_set_id,
+
+            'method'            =>  $all_method_link_species_sets->{$method_link_species_set_id}->{'METHOD'},
+
+            'species_set_id' =>     $all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET_ID'},
+            'species_set' =>        $all_method_link_species_sets->{$method_link_species_set_id}->{'SPECIES_SET'},
+
+            'name' =>               $all_method_link_species_sets->{$method_link_species_set_id}->{'NAME'},
+            'source' =>             $all_method_link_species_sets->{$method_link_species_set_id}->{'SOURCE'},
+            'url' =>                $all_method_link_species_sets->{$method_link_species_set_id}->{'URL'},
+        } );
     push(@$method_link_species_sets, $this_method_link_species_set) if (defined($this_method_link_species_set));
   }
 
@@ -436,7 +393,6 @@ sub fetch_all {
 
 sub fetch_by_dbID {
   my ($self, $dbID) = @_;
-  my $method_link_species_set; # returned object
 
   my $gdba = $self->db->get_GenomeDBAdaptor;
   my $sql = qq{
@@ -448,7 +404,8 @@ sub fetch_by_dbID {
             url,
             mlss.species_set_id,
             genome_db_id,
-            type
+            type,
+            class
           FROM
             method_link_species_set mlss
             LEFT JOIN method_link ml USING (method_link_id),
@@ -456,7 +413,7 @@ sub fetch_by_dbID {
           WHERE
             mlss.species_set_id = ss.species_set_id
             AND method_link_species_set_id = ?
-	};
+  };
 
   my $sth = $self->prepare($sql);
   $sth->execute($dbID);
@@ -466,13 +423,17 @@ sub fetch_by_dbID {
   ## Get all rows corresponding to this method_link_species_set
   while (my ($method_link_species_set_id, $method_link_id, $name, $source, $url,
       $species_set_id, $genome_db_id, $type, $class) = $sth->fetchrow_array()) {
-    $this_method_link_species_set->{'METHOD_LINK_ID'} = $method_link_id;
-    $this_method_link_species_set->{'METHOD_LINK_TYPE'} = $type;
-    $this_method_link_species_set->{'METHOD_LINK_CLASS'} = $class;
+
+    my $method = Bio::EnsEMBL::Compara::Method->new( -dbID => $method_link_id, -type => $type, -class => $class, -adaptor => $self->db->get_MethodAdaptor);
+
+    $this_method_link_species_set->{'METHOD'} = $method;
+
+    $this_method_link_species_set->{'SPECIES_SET_ID'} = $species_set_id;
+    push(@{$this_method_link_species_set->{'SPECIES_SET'}}, $gdba->fetch_by_dbID($genome_db_id));
+
     $this_method_link_species_set->{'NAME'} = $name;
     $this_method_link_species_set->{'SOURCE'} = $source;
     $this_method_link_species_set->{'URL'} = $url;
-    push(@{$this_method_link_species_set->{'SPECIES_SET'}}, $gdba->fetch_by_dbID($genome_db_id));
   }
 
   $sth->finish();
@@ -480,18 +441,20 @@ sub fetch_by_dbID {
   return undef if (!defined($this_method_link_species_set));
 
   ## Create the object
-  $method_link_species_set = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
-          -adaptor => $self,
-          -dbID => $dbID,
-          -method_link_id => $this_method_link_species_set->{'METHOD_LINK_ID'},
-          -method_link_type => $this_method_link_species_set->{'METHOD_LINK_TYPE'},
-          -method_link_class => $this_method_link_species_set->{'METHOD_LINK_CLASS'},
-          -name => $this_method_link_species_set->{'NAME'},
-          -source => $this_method_link_species_set->{'SOURCE'},
-          -url => $this_method_link_species_set->{'URL'},
-          -species_set_id => $this_method_link_species_set->{'SPECIES_SET_ID'},
-          -species_set => $this_method_link_species_set->{'SPECIES_SET'}
-      );
+  my $method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new_fast( {
+          'adaptor'         => $self,
+          'dbID'            => $dbID,
+
+          'method'          => $this_method_link_species_set->{'METHOD'},
+
+          'species_set_id'  => $this_method_link_species_set->{'SPECIES_SET_ID'},
+          'species_set'     => $this_method_link_species_set->{'SPECIES_SET'},
+
+          'name'            => $this_method_link_species_set->{'NAME'},
+          'source'          => $this_method_link_species_set->{'SOURCE'},
+          'url'             => $this_method_link_species_set->{'URL'},
+  } );
+
   if (!$method_link_species_set) {
     warning("No Bio::EnsEMBL::Compara::MethodLinkSpeciesSet with id = $dbID found");
   }
@@ -627,7 +590,8 @@ sub fetch_all_by_method_link_type_GenomeDB {
 sub fetch_by_method_link_type_GenomeDBs {
     my ($self, $method_link_type, $genome_dbs, $no_warning) = @_;
 
-    my $method_link_id = ($self->get_method_link_id_from_method_link_type($method_link_type) || 0);
+    my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type);
+    my $method_link_id = $method ? $method->dbID : 0;
     my $species_set_id = $self->db->get_SpeciesSetAdaptor->find_species_set_id_by_GenomeDBs_mix( $genome_dbs );
 
     my $method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set_id);
@@ -663,7 +627,8 @@ sub fetch_by_method_link_type_GenomeDBs {
 sub fetch_by_method_link_type_genome_db_ids {
     my ($self, $method_link_type, $genome_db_ids) = @_;
 
-    my $method_link_id = ($self->get_method_link_id_from_method_link_type($method_link_type) || 0);
+    my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type);
+    my $method_link_id = $method ? $method->dbID : 0;
     my $species_set_id = $self->db->get_SpeciesSetAdaptor->find_species_set_id_by_GenomeDBs_mix( $genome_db_ids );
 
     return $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set_id)
@@ -765,16 +730,26 @@ sub fetch_by_method_link_type_species_set_name {
 sub get_max_alignment_length {
   my ($self, $method_link_species_set) = @_;
 
-  my $max_align = $method_link_species_set->get_value_for_tag("max_align");
-
-  if ($max_align) {
-      return $method_link_species_set->max_alignment_length($max_align);
+  my $method_link_species_set_id = ($method_link_species_set->dbID or 0);
+  my $values = $self->db->get_MetaContainer->list_value_by_key(
+      "max_align_$method_link_species_set_id");
+  if ($values && @$values) {
+    return $method_link_species_set->max_alignment_length($values->[0]);
   } else {
-      warning("method_link_species_set_tag key 'max_align' not defined\n" .
-	      " -> using default value [$DEFAULT_MAX_ALIGNMENT]");
+    $values = $self->db->get_MetaContainer->list_value_by_key("max_alignment_length");
+    if($values && @$values) {
+      warning("Meta table key 'max_align_$method_link_species_set_id' not defined\n" .
+          " -> using old meta table key 'max_alignment_length' [".$values->[0]."]");
+      return $method_link_species_set->max_alignment_length($values->[0]);
+    } else {
+      warning("Meta table key 'max_align_$method_link_species_set_id' not defined and\n" .
+          "old meta table key 'max_alignment_length' not defined\n" .
+          " -> using default value [$DEFAULT_MAX_ALIGNMENT]");
       return $method_link_species_set->max_alignment_length($DEFAULT_MAX_ALIGNMENT);
+    }
   }
 }
+
 
 =head2 fetch_by_method_link_id_species_set_id
 
@@ -806,109 +781,6 @@ sub fetch_by_method_link_id_species_set_id {
     }
 
     return $method_link_species_set;
-}
-
-
-=head2 _get_method_link_class_from_id
-
-  Arg  1     : none
-  Example    : my $method_link_class = $mlssa->_get_method_link_class_from_id()
-  Description: Retrieve method_link_class corresponding to the method_link_id
-  Returntype : string $method_link_class
-  Exceptions : none
-  Caller     :
-
-=cut
-
-sub _get_method_link_class_from_id {
-  my ($self, $method_link_id) = @_;
-	my $attributes = $self->_get_ml_attributes_from_ml_id($method_link_id);
-	return $attributes->{class};
-}
-
-
-=head2 get_method_link_type_from_method_link_id
-
-  Arg  1     : none
-  Example    : my $method_link_type = $mlssa->get_method_link_type_from_method_link_id()
-  Description: Retrieve method_link_type corresponding to the method_link_id
-  Returntype : string $method_link_type
-  Exceptions : none
-  Caller     :
-
-=cut
-
-sub get_method_link_type_from_method_link_id {
-  my ($self, $method_link_id) = @_;
-	my $attributes = $self->_get_ml_attributes_from_ml_id($method_link_id);
-	return $attributes->{type};
-}
-
-
-=head2 get_method_link_id_from_method_link_type
-
-  Arg  1     : string $method_link_type
-  Example    : my $method_link_id = $mlssa->get_method_link_id_from_method_link_type("BLASTZ_NET")
-  Description: Retrieve method_link_id corresponding to the method_link_type
-  Returntype : integer $method_link_id
-  Exceptions : warns when no method_link matches the $method_link_type
-  Caller     :
-
-=cut
-
-sub get_method_link_id_from_method_link_type {
-  my ($self, $method_link_type) = @_;
-
-  my $sql = q{
-		SELECT method_link_id
-		FROM method_link
-		WHERE type = ?
-	};
-
-  my $sth = $self->prepare($sql);
-  $sth->execute($method_link_type);
-
-  my ($dbID) = $sth->fetchrow_array();
-  $sth->finish;
-
-  if (!$dbID) {
-    warning("No method_link matches <$method_link_type>");
-  }
-
-  return $dbID;
-}
-
-=head2 _get_ml_attributes_from_ml_id
-
-  Arg  1     : int $method_link_id
-  Example    : my $values = $mlssa->_get_ml_values_from_ml_id(1)
-  Description: Retrieve attributes for a given Method Link ID
-  Returntype : HashRef keyed by type and class
-  Exceptions : warns when no method_link matches the $method_link_id
-  Caller     : Internal
-
-=cut
-
-sub _get_ml_attributes_from_ml_id {
-	my ($self, $method_link_id) = @_;
-
-	my $sql = qq{
-		SELECT type, class
-		FROM method_link
-		WHERE method_link_id = ?
-	};
-
-  my $sth = $self->prepare($sql);
-  $sth->execute($method_link_id);
-
-  my ($type, $class) = $sth->fetchrow_array();
-  $sth->finish();
-
-	my %attributes;
-	$attributes{type}  = $type if defined $type;
-	$attributes{class} = $class if defined $class;
-
-  return \%attributes;
 }
 
 

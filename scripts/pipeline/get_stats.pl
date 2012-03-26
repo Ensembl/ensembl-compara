@@ -308,8 +308,8 @@ sub print_stats_for_method_link_species_sets {
   my $alignment3_sth = $dbc->prepare($sql);
 
 
-  foreach my $method_link_species_set (sort {$a->method_link_id <=> $b->method_link_id} @$method_link_species_sets) {
-    last if ($method_link_species_set->method_link_id > 100); # keep only method_link related to genomic_aligns
+  foreach my $method_link_species_set (sort {$a->method->dbID <=> $b->method->dbID} @$method_link_species_sets) {
+    last if ($method_link_species_set->method->dbID > 100); # keep only method_link related to genomic_aligns
     if ($detail == 1) {
       print uc($method_link_species_set->method_link_type), " for";
       foreach my $this_genome_db (@{$method_link_species_set->species_set}) {

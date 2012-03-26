@@ -550,7 +550,7 @@ sub print_method_link_species_sets_to_update {
   foreach my $this_genome_db (@{$genome_db_adaptor->fetch_all()}) {
     next if ($this_genome_db->name ne $genome_db->name);
     foreach my $this_method_link_species_set (@{$method_link_species_set_adaptor->fetch_all_by_GenomeDB($this_genome_db)}) {
-      $method_link_species_sets->{$this_method_link_species_set->method_link_id}->
+      $method_link_species_sets->{$this_method_link_species_set->method->dbID}->
           {join("-", sort map {$_->name} @{$this_method_link_species_set->species_set})} = $this_method_link_species_set;
     }
   }
@@ -591,7 +591,7 @@ sub create_new_method_link_species_sets {
   foreach my $this_genome_db (@$all_genome_dbs) {
     next if ($this_genome_db->name ne $genome_db->name);
     foreach my $this_method_link_species_set (@{$method_link_species_set_adaptor->fetch_all_by_GenomeDB($this_genome_db)}) {
-      $method_link_species_sets->{$this_method_link_species_set->method_link_id}->
+      $method_link_species_sets->{$this_method_link_species_set->method->dbID}->
           {join("-", sort map {$_->name} @{$this_method_link_species_set->species_set})} = $this_method_link_species_set;
     }
   }

@@ -102,15 +102,14 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 use strict;
-use base ('Bio::EnsEMBL::Compara::Taggable');
-
-# Object preamble
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
+use base (  'Bio::EnsEMBL::Storable',           # inherit dbID(), adaptor() and new() methods
+            'Bio::EnsEMBL::Compara::Taggable'   # inherit everything related to tagability
+         );
 
-# new() is written here 
 
 =head2 new (CONSTRUCTOR)
 
@@ -153,24 +152,29 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 =cut
 
 sub new {
-  my($class, @args) = @_;
-  
-  my $self = {};
-  bless $self,$class;
-    
-  my ($dbID, $adaptor, $method_link_id, $method_link_type, $species_set_id, $species_set,
-      $method_link_class, $name, $source, $url, $max_alignment_length) =
-      rearrange([qw(
-          DBID ADAPTOR METHOD_LINK_ID METHOD_LINK_TYPE SPECIES_SET_ID SPECIES_SET
-          METHOD_LINK_CLASS NAME SOURCE URL MAX_ALIGNMENT_LENGTH)], @args);
+    my $caller = shift @_;
+    my $class = ref($caller) || $caller;
 
-  $self->dbID($dbID) if (defined ($dbID));
-  $self->adaptor($adaptor) if (defined ($adaptor));
+    my $self = $class->SUPER::new(@_);  # deal with Storable stuff
+
+    my ($method_link_id, $method_link_type, $method_link_class, $method, 
+        $species_set_id, $species_set,
+        $name, $source, $url, $max_alignment_length) =
+            rearrange([qw(
+                METHOD_LINK_ID METHOD_LINK_TYPE METHOD_LINK_CLASS METHOD
+                SPECIES_SET_ID SPECIES_SET
+                NAME SOURCE URL MAX_ALIGNMENT_LENGTH)], @_);
+
+  $self->method($method) if($method);
+
+    # the following three should generate a deprecated warning:
   $self->method_link_id($method_link_id) if (defined ($method_link_id));
   $self->method_link_type($method_link_type) if (defined ($method_link_type));
   $self->method_link_class($method_link_class) if (defined ($method_link_class));
+
   $self->species_set_id($species_set_id) if (defined ($species_set_id));
   $self->species_set($species_set) if (defined ($species_set));
+
   $self->name($name) if (defined ($name));
   $self->source($source) if (defined ($source));
   $self->url($url) if (defined ($url));
@@ -188,50 +192,14 @@ sub new_fast {
 }
 
 
-=head2 dbID
+sub method {
+    my $self = shift @_;
 
-  Arg [1]    : (opt.) integer dbID
-  Example    : my $dbID = $method_link_species_set->dbID();
-  Example    : $method_link_species_set->dbID(12);
-  Description: Getter/Setter for the dbID of this object in the database
-  Returntype : integer dbID
-  Exceptions : none
-  Caller     : general
+    if(@_) {
+        $self->{'method'} = shift @_;
+    }
 
-=cut
-
-sub dbID {
-  my $obj = shift;
-  
-  if (@_) {
-    $obj->{'dbID'} = shift;
-  }
-  
-  return $obj->{'dbID'};
-}
-
-
-=head2 adaptor
-
-  Arg [1]    : (opt.) Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor
-  Example    : my $meth_lnk_spcs_adaptor = $method_link_species_set->adaptor();
-  Example    : $method_link_species_set->adaptor($meth_lnk_spcs_adaptor);
-  Description: Getter/Setter for the adaptor this object uses for database
-               interaction.
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub adaptor {
-  my $obj = shift;
-  
-  if (@_) {
-    $obj->{'adaptor'} = shift;
-  }
-  
-  return $obj->{'adaptor'};
+    return $self->{'method'};
 }
 
 
@@ -244,23 +212,33 @@ sub adaptor {
   Returntype : integer
   Exceptions : none
   Caller     : general
+  Status     : DEPRECATED, use $mlss->method->dbID instead
  
 =cut
 
 sub method_link_id {
-  my ($self, $arg) = @_;
+    my $self = shift @_;
 
-  if (defined($arg)) {
-    $self->{'method_link_id'} = $arg ;
-  }
-  
-  if (!defined($self->{'method_link_id'})
-      && defined($self->{'method_link_type'})
-      && defined($self->{'adaptor'})) {
-    $self->{'method_link_id'} = $self->adaptor->get_method_link_id_from_method_link_type($self->{'method_link_type'});
-  }
+    if(@_) {
+        warning("MLSS->method_link_id() is DEPRECATED, please use MLSS->method->dbID()");
+        if($self->method) {
+            $self->method->dbID( @_ );
+        } else {
+            $self->method( Bio::EnsEMBL::Compara::Method->new(-dbID => @_) );
+        }
+    }
 
-  return $self->{'method_link_id'};
+        # type is known => fetch the method from DB and set all of its attributes
+    if (!$self->method->dbID and $self->adaptor and my $type = $self->method->type) {
+        my $method_adaptor = $self->adaptor->db->getMethodAdaptor;
+        if( my $fetched_method = $method_adaptor->fetch_by_type( $type ) ) {
+            $self->method( $fetched_method );
+        } else {
+            warning("Could not fetch method by type '$type'");
+        }
+    }
+
+    return $self->method->dbID();
 }
 
 
@@ -273,23 +251,33 @@ sub method_link_id {
   Returntype : string
   Exceptions : none
   Caller     : general
+  Status     : DEPRECATED, use $mlss->method->type instead
  
 =cut
 
 sub method_link_type {
-  my ($self, $arg) = @_;
+    my $self = shift @_;
 
-  if (defined($arg)) {
-    $self->{'method_link_type'} = $arg;
-  }
-  
-  if (!defined($self->{'method_link_type'})
-      && defined($self->{'method_link_id'})
-      && defined($self->{'adaptor'})) {
-    $self->{'method_link_type'} = $self->adaptor->get_method_link_type_from_method_link_id($self->{'method_link_id'});
-  }
+    if(@_) {
+        warning("MLSS->method_link_type() is DEPRECATED, please use MLSS->method->type()");
+        if($self->method) {
+            $self->method->type( @_ );
+        } else {
+            $self->method( Bio::EnsEMBL::Compara::Method->new(-type => @_) );
+        }
+    }
 
-  return $self->{'method_link_type'};
+        # dbID is known => fetch the method from DB and set all of its attributes
+    if (!$self->method->type and $self->adaptor and my $dbID = $self->method->dbID) {
+        my $method_adaptor = $self->adaptor->db->getMethodAdaptor;
+        if( my $fetched_method = $method_adaptor->fetch_by_dbID( $dbID ) ) {
+            $self->method( $fetched_method );
+        } else {
+            warning("Could not fetch method by dbID '$dbID'");
+        }
+    }
+
+    return $self->method->type();
 }
 
 
@@ -302,23 +290,33 @@ sub method_link_type {
   Returntype : string
   Exceptions : none
   Caller     : general
+  Status     : DEPRECATED, use $mlss->method->class instead
  
 =cut
 
 sub method_link_class {
-  my ($self, $arg) = @_;
+    my $self = shift @_;
 
-  if (defined($arg)) {
-    $self->{'method_link_class'} = $arg;
-  }
-  
-  if (!defined($self->{'method_link_class'})
-      && defined($self->{'method_link_id'})
-      && defined($self->{'adaptor'})) {
-    $self->{'method_link_class'} = $self->adaptor->_get_method_link_class_from_id($self->{'method_link_id'});
-  }
+    if(@_) {
+        warning("MLSS->method_link_class() is DEPRECATED, please use MLSS->method->class()");
+        if($self->method) {
+            $self->method->class( @_ );
+        } else {
+            $self->method( Bio::EnsEMBL::Compara::Method->new(-class => @_) );
+        }
+    }
 
-  return $self->{'method_link_class'};
+        # dbID is known => fetch the method from DB and set all of its attributes
+    if (!$self->method->class and $self->adaptor and my $dbID = $self->method->dbID) {
+        my $method_adaptor = $self->adaptor->db->getMethodAdaptor;
+        if( my $fetched_method = $method_adaptor->fetch_by_dbID( $dbID ) ) {
+            $self->method( $fetched_method );
+        } else {
+            warning("Could not fetch method by dbID '$dbID'");
+        }
+    }
+
+    return $self->method->class();
 }
 
 

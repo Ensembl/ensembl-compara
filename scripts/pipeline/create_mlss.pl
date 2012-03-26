@@ -201,7 +201,7 @@ Bio::EnsEMBL::Registry->load_all($reg_conf);
 
 my $compara_dba;
 if ($compara =~ /mysql:\/\//) {
-    $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$compara);
+    $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url=>$compara);
 } else {
     $compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
 }
@@ -210,6 +210,7 @@ if (!$compara_dba) {
   die "Cannot connect to compara database <$compara>.";
 }
 my $gdba = $compara_dba->get_GenomeDBAdaptor();
+my $ma = $compara_dba->get_MethodAdaptor();
 my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 ##
 #################################################
@@ -355,8 +356,10 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
     }
   }
   
-  my $new_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
-                                                                 -method_link_type => $method_link_type,
+  my $method = Bio::EnsEMBL::Compara::Method->new( -type => $method_link_type );
+
+  my $new_mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
+                                                                 -method => $method,
                                                                  -species_set => $all_genome_dbs,
                                                                  -name => $name,
                                                                  -source => $source,
@@ -390,11 +393,9 @@ sub ask_for_method_link_type {
 
   return undef if (!$compara_dba);
 
-  my $sth = $compara_dba->dbc->prepare("SELECT method_link_id, type FROM method_link");
-  $sth->execute();
-  my $all_rows = $sth->fetchall_arrayref;
+  my $method_link_types = { map { ($_->dbID => $_->type) } @{$compara_dba->get_MethodAdaptor()->fetch_all()} };
   my $answer;
-  my $method_link_types = {map {$_->[0], $_->[1]} @{$all_rows}};
+
   do {
     print "\n";
     foreach my $this_method_link_id (sort {$a <=> $b} keys %$method_link_types) {
