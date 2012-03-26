@@ -91,9 +91,11 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     this.base();
     this.wrapping();
     
-    $.each(this.dataTables, function () {
-      $(this.fnSettings().nTableWrapper).show();
-    });
+    if (this.dataTables) {
+      $.each(this.dataTables, function () {
+        $(this.fnSettings().nTableWrapper).show();
+      });
+    }
     
     tr = null;
   },
