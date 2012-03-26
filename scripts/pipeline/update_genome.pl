@@ -370,6 +370,7 @@ sub update_genome_db {
     $sth = $compara_dba->dbc->prepare($sql);
     $sth->execute(@args);
     $sth->finish();
+    $genome_db_adaptor->cache_all(1)        # reload the adaptor cache to update with the new species
     $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
          $primary_species_binomial_name,
          $assembly
