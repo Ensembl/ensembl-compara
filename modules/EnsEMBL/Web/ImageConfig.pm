@@ -910,9 +910,15 @@ sub update_from_url {
   
   foreach my $v (@values) {
     my @split    = split /=/, $v;
-    my $renderer = pop @split;
-    my $key      = join '=', @split;
-    
+    my ($key, $renderer);
+    if (scalar(@split) > 1) { 
+      ($key, $renderer) = @split;
+    }
+    else {
+      $key = $split[0];
+      $renderer = 'normal';
+    }
+
     if ($key =~ /^(\w+)[\.:](.*)$/) {
       my ($type, $p) = ($1, $2);
       
