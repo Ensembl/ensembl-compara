@@ -744,7 +744,7 @@ sub _add_bigwig_track {
     options => {
       external => 'url',
       sub_type => 'bigwig',
-      colour   => $args{'menu'}{'colour'} || 'red',
+      colour   => $args{'menu'}{'colour'} || $args{'source'}{'colour'} || 'red',
     },
     %args
   );
