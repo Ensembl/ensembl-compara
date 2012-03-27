@@ -22,7 +22,8 @@ GetOptions(
 $timeout   = qq{-timeout $timeout} if($timeout);
 $url       = qq{-url $url} if($url);
 my @module = split(/,/, $module) if($module);
-my $host   = "172.20.11.204";
+my $host = `host mib20062i`; #get the IP address of the selenium server which is on the macbook pro.
+$host =~ s/mib20062i.internal.sanger.ac.uk has address //;#'172.20.11.204';
 my $port   = "4444";
 
 # check to see if the selenium server is online(URL returns OK if server is online).
@@ -31,7 +32,7 @@ $ua->timeout(10);
 my $response = $ua->get("http://$host:$port/selenium-server/driver/?cmd=testComplete");
 if($response->content ne 'OK') { print "\nSelenium Server is offline !!!!\n";exit;}
 
-#prepare report dir
+#prepare report dir`
 if (-d 'test_reports') {
   print "Deleting old reports files\n";
   `rm -f test_reports/*.txt`;

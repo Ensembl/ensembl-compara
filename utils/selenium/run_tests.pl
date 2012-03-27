@@ -19,7 +19,8 @@ BEGIN {
 
 my $module;
 my $url = 'http://test.ensembl.org';
-my $host = '172.20.11.66';#'172.20.10.187';#'localhost'; 
+my $host = `host mib20062i`; #get the IP address of the selenium server which is on the macbook pro.
+$host =~ s/mib20062i.internal.sanger.ac.uk has address //;#'172.20.11.204';
 my $port = '4444';
 my $browser = '*firefox';
 my $test;
@@ -104,7 +105,7 @@ foreach (@species_list) {
   $object->set_species($_) if($_);
   foreach my $method (@methods) {
     next if @test and !grep {$method =~ /^(test_)?$_$/i} @test;
-    next if @skip and grep {$method =~ /^(test_)?$_$/i} @skip; 
+    next if @skip and grep {$method =~ /^(test_)?$_$/i} @skip;
     
     my $test_case = $method;
     $test_case =~ s/test_//g;
