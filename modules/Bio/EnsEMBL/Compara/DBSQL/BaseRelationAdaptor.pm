@@ -186,75 +186,6 @@ sub store_relation {
 }
 
 
-=head2 _tables
-
-  Args       : none
-  Example    : $tablename = $self->_table_name()
-  Description: ABSTRACT PROTECTED Subclasses are responsible for implementing
-               this method.  It should return list of [tablename, alias] pairs.
-               Additionally, the primary table (with the dbID, analysis_id, and
-               score) should be the first table in the list.
-               e.g:
-               ( ['repeat_feature',   'rf'],
-                 ['repeat_consensus', 'rc']);
-               used to obtain features.
-  Returntype : list of [tablename, alias] pairs
-  Exceptions : thrown if not implemented by subclass
-  Caller     : BaseFeatureAdaptor::generic_fetch
-
-=cut
-
-sub _tables {
-  my $self = shift;
-
-  $self->throw("abstract method _tables not defined by implementing" .
-               " subclass of BaseFeatureAdaptor");
-}
-
-
-=head2 _columns
-
-  Args       : none
-  Example    : $tablename = $self->_columns()
-  Description: ABSTRACT PROTECTED Subclasses are responsible for implementing
-               this method.  It should return a list of columns to be used
-               for feature creation
-  Returntype : list of strings
-  Exceptions : thrown if not implemented by subclass
-  Caller     : BaseFeatureAdaptor::generic_fetch
-
-=cut
-
-sub _columns {
-  my $self = shift;
-
-  $self->throw("abstract method _columns not defined by implementing" .
-               " subclass of BaseFeatureAdaptor");
-}
-
-
-=head2 _objs_from_sth
-
-  Arg [1]    : DBI::row_hashref $hashref containing key-value pairs
-               for each of the columns specified by the _columns method
-  Example    : my @feats = $self->_obj_from_hashref
-  Description: ABSTRACT PROTECTED The subclass is responsible for implementing
-               this method.  It should take in a DBI row hash reference and
-               return a list of created features in contig coordinates.
-  Returntype : list of Bio::EnsEMBL::*Features in contig coordinates
-  Exceptions : thrown if not implemented by subclass
-  Caller     : BaseFeatureAdaptor::generic_fetch
-
-=cut
-
-sub _objs_from_sth {
-  my $self = shift;
-
-  $self->throw("abstract method _obj_from_sth not defined by implementing"
-             . " subclass of BaseFeatureAdaptor");
-}
-
-
 =head2 _join
 
   Arg [1]    : none
@@ -269,48 +200,6 @@ sub _objs_from_sth {
 =cut
 
 sub _join {
-  my $self = shift;
-
-  return '';
-}
-
-
-=head2 _default_where_clause
-
-  Arg [1]    : none
-  Example    : none
-  Description: May be overridden to provide an additional where constraint to
-               the SQL query which is generated to fetch feature records.
-               This constraint is always appended to the end of the generated
-               where clause
-  Returntype : string
-  Exceptions : none
-  Caller     : generic_fetch
-
-=cut
-
-sub _default_where_clause {
-  my $self = shift;
-
-  return '';
-}
-
-
-=head2 _final_clause
-
-  Arg [1]    : none
-  Example    : none
-  Description: May be overriden to provide an additional clause to the end
-               of the SQL query used to fetch feature records.
-               This is useful to add a required ORDER BY clause to the
-               query for example.
-  Returntype : string
-  Exceptions : none
-  Caller     : generic_fetch
-
-=cut
-
-sub _final_clause {
   my $self = shift;
 
   return '';
