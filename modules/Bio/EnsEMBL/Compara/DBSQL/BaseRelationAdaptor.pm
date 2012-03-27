@@ -85,13 +85,6 @@ sub generic_fetch {
 }
 
 
-sub fetch_all {
-  my $self = shift;
-
-  return $self->generic_fetch();
-}
-
-
 =head2 fetch_by_dbID
 
   Arg [1]    : int $id
