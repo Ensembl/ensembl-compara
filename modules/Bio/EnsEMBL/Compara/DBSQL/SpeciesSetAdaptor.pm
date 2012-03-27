@@ -79,10 +79,9 @@ sub store {
         $sth->finish();
     }
 
-    $self->attach( $species_set );
+    $self->attach( $species_set, $dbID );
 
     $self->sync_tags_to_database( $species_set );
-
     return $species_set;
 }
 
