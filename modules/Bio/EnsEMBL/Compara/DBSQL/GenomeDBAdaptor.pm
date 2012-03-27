@@ -385,10 +385,8 @@ sub synchronise {
 
   Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $gdb
   Example    : $gdba->store($gdb);
-  Description: Stores a genome database object in the compara database if
-               it has not been stored already.  The internal id of the
-               stored genomeDB is returned.
-  Returntype : int
+  Description: Stores the GenomeDB object in the database unless it has been stored already; updates the dbID of the object.
+  Returntype : Bio::EnsEMBL::Compara::GenomeDB
   Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara:GenomeDB
   Caller     : general
   Status     : Stable

@@ -172,17 +172,15 @@ sub synchronise {    # return autoinc_id/undef
 
   Arg [1]     : Bio::EnsEMBL::Compara::Method $method
   Example     : $method_adaptor->store( $my_method );
-  Description : Stores the Method object in the database if necessary; updates the dbID of the object
-  Returntype  : boolean (1= needed storing, 0= was simply re-fetched)
+  Description : Stores the Method object in the database unless it has been stored already; updates the dbID of the object.
+  Returntype  : Bio::EnsEMBL::Compara::Method
 
 =cut
 
 sub store {
     my ($self, $method) = @_;
 
-    if($self->synchronise($method)) {
-        return 0;
-    } else {
+    unless($self->synchronise($method)) {
         my $sql = 'INSERT INTO method_link (type, class) VALUES (?, ?)';
         my $sth = $self->prepare( $sql ) or die "Could not prepare $sql";
 
@@ -194,8 +192,8 @@ sub store {
             $self->attach($method, $self->dbc->db_handle->last_insert_id(undef, undef, 'method_link', 'method_link_id') );
             $sth->finish();
         }
-        return 1;
     }
+    return $method;
 }
 
 

@@ -21,10 +21,8 @@ sub attach {
 
   Arg [1]     : Bio::EnsEMBL::Compara::SpeciesSet object
   Example     : my $species_set = $species_set_adaptor->store($species_set);
-  Description : Stores the object in the database. Checks that all the
-                Bio::EnsEMBL::Compara::GenomeDB objects in the genome_dbs
-                array have a dbID. Assigns a species_set_id if the object hasn't
-                got one (this locks the table). Also stores the tags if any
+  Description : Stores the SpeciesSet object in the database unless it has been stored already; updates the dbID of the object.
+                    Also makes sure tags are stored.
   Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
   Exceptions  : thrown if a GenomeDB has no dbID
   Caller      : general
@@ -82,6 +80,7 @@ sub store {
     $self->attach( $species_set, $dbID );
 
     $self->sync_tags_to_database( $species_set );
+
     return $species_set;
 }
 
