@@ -103,9 +103,10 @@ package Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 use strict;
 
-use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Compara::Method;
+use Bio::EnsEMBL::Compara::SpeciesSet;
 
 use base (  'Bio::EnsEMBL::Storable',           # inherit dbID(), adaptor() and new() methods
             'Bio::EnsEMBL::Compara::Taggable'   # inherit everything related to tagability
@@ -114,34 +115,22 @@ use base (  'Bio::EnsEMBL::Storable',           # inherit dbID(), adaptor() and 
 
 =head2 new (CONSTRUCTOR)
 
-  Arg [-DBID] : (opt.) int $dbID (the database internal ID for this object)
-  Arg [-ADAPTOR]
-              : (opt.) Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor $adaptor
-                (the adaptor for connecting to the database)
-  Arg [-METHOD_LINK_ID]
-              : (opt.) int $method_link_id (the database internal ID for the method_link)
-  Arg [-METHOD_LINK_TYPE]
-              : (opt.) string $method_link_type (the name of the method_link)
-  Arg [-METHOD_LINK_CLASS]
-              : (opt.) string $method_link_class (the class of the method_link)
-  Arg [-SPECIES_SET_ID]
-              : (opt.) int $species_set_id (the database internal ID for the species_set)
-  Arg [-SPECIES_SET]
-              : (opt.) arrayref $genome_dbs (a reference to an array of
-                Bio::EnsEMBL::Compara::GenomeDB objects)
-  Arg [-NAME]
-              : (opt.) string $name (the name for this method_link_species_set)
-  Arg [-SOURCE]
-              : (opt.) string $source (the source of these data)
-  Arg [-URL]
-              : (opt.) string $url (the original url of these data)
+  Arg [-DBID]           : (opt.) int $dbID (the database internal ID for this object)
+  Arg [-ADAPTOR]        : (opt.) Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor $adaptor
+                            (the adaptor for connecting to the database)
+  Arg [-METHOD]         : Bio::EnsEMBL::Compara::Method $method object
+  Arg [-SPECIES_SET]    : arrayref $genome_dbs (a reference to an array of
+                            Bio::EnsEMBL::Compara::GenomeDB objects)
+  Arg [-SPECIES_SET_ID] : (opt.) int $species_set_id (the database internal ID for the species_set)
+  Arg [-NAME]           : (opt.) string $name (the name for this method_link_species_set)
+  Arg [-SOURCE]         : (opt.) string $source (the source of these data)
+  Arg [-URL]            : (opt.) string $url (the original url of these data)
   Arg [-MAX_ALGINMENT_LENGTH]
-              : (opt.) int $max_alignment_length (the length of the largest alignment
-                for this MethodLinkSpeciesSet (only used for genomic alignments)
-  Example     : my $method_link_species_set =
-                   new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
+                        : (opt.) int $max_alignment_length (the length of the largest alignment
+                            for this MethodLinkSpeciesSet (only used for genomic alignments)
+  Example     : my $method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
                        -adaptor => $method_link_species_set_adaptor,
-                       -method_link_type => "MULTIZ",
+                       -method => Bio::EnsEMBL::Compara::Method->new( -type => 'MULTIZ' ),
                        -species_set => [$gdb1, $gdb2, $gdb3],
                        -max_alignment_length => 10000,
                    );
@@ -158,23 +147,31 @@ sub new {
 
     my $self = $class->SUPER::new(@_);  # deal with Storable stuff
 
-    my ($method_link_id, $method_link_type, $method_link_class, $method, 
-        $species_set_id, $species_set,
+    my ($method, $method_link_id, $method_link_type, $method_link_class,
+        $species_set, $species_set_id,
         $name, $source, $url, $max_alignment_length) =
             rearrange([qw(
-                METHOD_LINK_ID METHOD_LINK_TYPE METHOD_LINK_CLASS METHOD
-                SPECIES_SET_ID SPECIES_SET
+                METHOD METHOD_LINK_ID METHOD_LINK_TYPE METHOD_LINK_CLASS
+                SPECIES_SET SPECIES_SET_ID
                 NAME SOURCE URL MAX_ALIGNMENT_LENGTH)], @_);
 
-  $self->method($method) if($method);
+  if($method) {
+      $self->method($method);
+  } else {
+      warning("Please consider using -method to set the method instead of older/deprecated ways to do it");
+  }
 
     # the following three should generate a deprecated warning:
   $self->method_link_id($method_link_id) if (defined ($method_link_id));
   $self->method_link_type($method_link_type) if (defined ($method_link_type));
   $self->method_link_class($method_link_class) if (defined ($method_link_class));
 
-  $self->species_set_id($species_set_id) if (defined ($species_set_id));
+  warning("method has not been set in MLSS->new") unless($self->method());
+
   $self->species_set($species_set) if (defined ($species_set));
+  $self->species_set_id($species_set_id) if (defined ($species_set_id));
+
+  warning("species_set has not been set in MLSS->new") unless($self->species_set());
 
   $self->name($name) if (defined ($name));
   $self->source($source) if (defined ($source));
@@ -220,8 +217,9 @@ sub method {
 sub method_link_id {
     my $self = shift @_;
 
+    deprecate("MLSS->method_link_id() is DEPRECATED, please use MLSS->method->dbID()");
+
     if(@_) {
-        warning("MLSS->method_link_id() is DEPRECATED, please use MLSS->method->dbID()");
         if($self->method) {
             $self->method->dbID( @_ );
         } else {
@@ -259,8 +257,9 @@ sub method_link_id {
 sub method_link_type {
     my $self = shift @_;
 
+    deprecate("MLSS->method_link_type() is DEPRECATED, please use MLSS->method->type()");
+
     if(@_) {
-        warning("MLSS->method_link_type() is DEPRECATED, please use MLSS->method->type()");
         if($self->method) {
             $self->method->type( @_ );
         } else {
@@ -298,8 +297,9 @@ sub method_link_type {
 sub method_link_class {
     my $self = shift @_;
 
+    deprecate("MLSS->method_link_class() is DEPRECATED, please use MLSS->method->class()");
+
     if(@_) {
-        warning("MLSS->method_link_class() is DEPRECATED, please use MLSS->method->class()");
         if($self->method) {
             $self->method->class( @_ );
         } else {
