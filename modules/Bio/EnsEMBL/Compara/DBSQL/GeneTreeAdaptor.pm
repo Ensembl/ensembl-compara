@@ -320,7 +320,7 @@ sub store_tree {
     } else {
         # Insert
         $tree->adaptor($self);
-        my $sth = $self->prepare("INSERT INTO gene_tree_root (root_id, tree_type, member_type, clusterset_id, method_link_species_set_id, stable_id, version) VALUES (?,?,?,?,?,?)");
+        my $sth = $self->prepare("INSERT INTO gene_tree_root (root_id, tree_type, member_type, clusterset_id, method_link_species_set_id, stable_id, version) VALUES (?,?,?,?,?,?,?)");
         #print "INSERT INTRO gene_tree_root (", $root_id, " ", $tree->tree_type, " ", $tree->member_type, " ", $tree->clusterset_id, " ", $tree->method_link_species_set_id, " ", $tree->stable_id, " ", $tree->version, "\n";
         $sth->execute($root_id, $tree->tree_type, $tree->member_type, $tree->clusterset_id, $tree->method_link_species_set_id, $tree->stable_id, $tree->version);
         $sth->finish;
