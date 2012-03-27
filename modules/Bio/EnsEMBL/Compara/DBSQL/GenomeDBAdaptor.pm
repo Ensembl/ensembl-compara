@@ -327,6 +327,60 @@ sub get_species_name_from_core_MetaContainer {
   return $species_name;
 }
 
+
+sub attach {
+    my ($self, $object, $dbID) = @_;
+
+    $object->adaptor($self);
+    return $object->dbID($dbID);
+}
+
+
+sub synchronise {
+    my ($self, $gdb) = @_;
+
+    unless(defined $gdb && ref $gdb && $gdb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
+        throw("The argument to synchronise() must be a GenomeDB, not [$gdb]");
+    }
+
+    my $dbID                = $gdb->dbID;
+
+    my $name                = $gdb->name;
+    my $assembly            = $gdb->assembly;
+    my $genebuild           = $gdb->genebuild;
+
+    my $taxon_id            = $gdb->taxon_id;
+
+    if($taxon_id and not ($name && $assembly && $genebuild)) {
+        throw("GenomeDB object with a non-zero taxon_id must have a name, assembly and genebuild");
+    }
+
+    my $dbid_check = $dbID ? "genome_db_id=$dbID" : '0';
+    my @unique_key_data = ($name, $assembly, $genebuild);
+
+    my $sth = $self->prepare("SELECT genome_db_id, (name=? AND assembly=? AND genebuild=?) FROM genome_db WHERE $dbid_check OR (name=? AND assembly=? AND genebuild=?)");
+    $sth->execute( @unique_key_data, @unique_key_data );
+    my $vectors = $sth->fetchall_arrayref();
+    $sth->finish();
+
+    if( scalar(@$vectors) >= 2 ) {
+        die "Attempting to store an object with dbID=$dbID experienced partial collisions on both dbID and data in the db";
+    } elsif( scalar(@$vectors) == 1 ) {
+        my ($stored_dbID, $unique_key_check) = @{$vectors->[0]};
+
+        if(!$unique_key_check) {
+            die "Attempting to store an object with dbID=$dbID experienced a collision with same dbID but different data";
+        } elsif($dbID and ($dbID!=$stored_dbID)) {
+            die "Attempting to store an object with dbID=$dbID experienced a collision with same data but different dbID ($stored_dbID)";
+        } else {
+            return $self->attach( $gdb, $stored_dbID);
+        }
+    } else {
+        return undef;   # not found, safe to insert
+    }
+}
+
+
 =head2 store
 
   Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $gdb
@@ -344,66 +398,23 @@ sub get_species_name_from_core_MetaContainer {
 sub store {
     my ($self, $gdb) = @_;
 
-    unless(defined $gdb && ref $gdb && $gdb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
-        throw("Must have genomedb arg [$gdb]");
-    }
-
-    my $dbID                = $gdb->dbID;
-    my $name                = $gdb->name;
-    my $assembly            = $gdb->assembly;
-    my $genebuild           = $gdb->genebuild;
-
-    my $taxon_id            = $gdb->taxon_id;
-    my $assembly_default    = $gdb->assembly_default;
-    my $locator             = $gdb->locator;
-
-    if($taxon_id and not ($name && $assembly && $genebuild)) {
-        throw("GenomeDB object with a non-zero taxon_id must have a name, assembly and genebuild");
-    }
-
-    my $dbid_check = $dbID ? "genome_db_id=$dbID" : '0';
-    my @unique_key_data = ($name, $assembly, $genebuild);
-
-    my $sth_select = $self->prepare("SELECT genome_db_id, (name=? AND assembly=? AND genebuild=?) FROM genome_db WHERE $dbid_check OR (name=? AND assembly=? AND genebuild=?)");
-    $sth_select->execute( @unique_key_data, @unique_key_data );
-    my $vectors = $sth_select->fetchall_arrayref();
-    $sth_select->finish();
-
-    if( scalar(@$vectors) == 0 ) { # none found, safe to insert
-
-        my $sth_insert = $self->prepare("INSERT INTO genome_db (genome_db_id, name, assembly, genebuild, taxon_id, assembly_default, locator) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $sth_insert->execute( $dbID, $name, $assembly, $genebuild, $taxon_id, $assembly_default, $locator );
-
-        $dbID ||= $self->dbc->db_handle->last_insert_id(undef, undef, 'genome_db', 'genome_db_id');
-        $sth_insert->finish();
-
-    } elsif( scalar(@$vectors) >= 2 ) {
-
-        die "Attempting to store a GenomeDB object with dbID=$dbID and name/assembly/genebuild=$name/$assembly/$genebuild experienced partial collisions both with dbID and UNIQUE KEY in the db";
-
+    if($self->synchronise($gdb)) {
+        my $sql = 'UPDATE genome_db SET taxon_id=?, assembly_default=?, locator=? WHERE genome_db_id=?';
+        my $sth = $self->prepare( $sql ) or die "Could not prepare '$sql'";
+        $sth->execute( $gdb->taxon_id, $gdb->assembly_default, $gdb->locator, $gdb->dbID );
+        $sth->finish();
     } else {
-        my ($stored_dbID, $unique_key_check) = @{$vectors->[0]};
+        my $sql = 'INSERT INTO genome_db (genome_db_id, name, assembly, genebuild, taxon_id, assembly_default, locator) VALUES (?, ?, ?, ?, ?, ?, ?)';
+        my $sth= $self->prepare( $sql ) or die "Could not prepare '$sql'";
+        my $return_code = $sth->execute( $gdb->dbID, $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->taxon_id, $gdb->assembly_default, $gdb->locator )
+                # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
+            or die "Could not store gdb(name='".$gdb->name."', assembly='".$gdb->assembly."', genebuild='".$gdb->genebuild."')";
 
-        if(!$unique_key_check) {
-
-            die "Attempting to store a GenomeDB object with dbID=$dbID experienced a collision with same dbID but different data";
-
-        } elsif($dbID and ($dbID != $stored_dbID)) {
-
-            die "Attempting to store a GenomeDB object with name/assembly/genebuild=$name/$assembly/$genebuild experienced a collision with same UNIQUE KEY but different dbID";
-
-        } else {
-
-            $dbID ||= $stored_dbID;
-            
-            my $sth_update = $self->prepare("UPDATE genome_db SET taxon_id=?, assembly_default=?, locator=? WHERE genome_db_id=?");
-            $sth_update->execute( $taxon_id, $assembly_default, $locator, $stored_dbID );
-            $sth_update->finish();
+        if($return_code > 0) {     # <--- for the same reason we have to be explicitly numeric here
+            $self->attach($gdb, $self->dbc->db_handle->last_insert_id(undef, undef, 'genome_db', 'genome_db_id') );
+            $sth->finish();
         }
     }
-
-    $gdb->dbID( $dbID );
-    $gdb->adaptor( $self );
 
     $self->cache_all(1);    # reload the adaptor cache
 

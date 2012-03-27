@@ -124,28 +124,53 @@ sub fetch_all_by_class_pattern {
 }
 
 
-sub _check_presence_in_db {    # return autoinc_id/undef
+sub attach {
+    my ($self, $object, $dbID) = @_;
+
+    $object->adaptor($self);
+    return $object->dbID($dbID);
+}
+
+
+sub synchronise {    # return autoinc_id/undef
     my ( $self, $method ) = @_;
 
-    my $sth = $self->prepare( "SELECT method_link_id FROM method_link WHERE type='".$method->type()."'" );
+    unless(defined $method && ref $method && $method->isa('Bio::EnsEMBL::Compara::Method') ) {
+        throw("The argument to synchronise() must be a Method, not [$method]");
+    }
+
+    my $dbID            = $method->dbID();
+
+    my $dbid_check      = $dbID ? "method_link_id=$dbID" : 0;
+    my $unique_data_check   = "( type = '".$method->type."' )";
+
+    my $sth = $self->prepare( "SELECT method_link_id, $unique_data_check FROM method_link WHERE $dbid_check OR $unique_data_check" );
     $sth->execute();
-    my ($dbID) = $sth->fetchrow();
-    $sth->finish;
-    return $dbID;
+
+    my $vectors = $sth->fetchall_arrayref();
+    $sth->finish();
+
+    if( scalar(@$vectors) >= 2 ) {
+        die "Attempting to store an object with dbID=$dbID experienced partial collisions on both dbID and data in the db";
+    } elsif( scalar(@$vectors) == 1 ) {
+        my ($stored_dbID, $unique_key_check) = @{$vectors->[0]};
+
+        if(!$unique_key_check) {
+            die "Attempting to store an object with dbID=$dbID experienced a collision with same dbID but different data";
+        } elsif($dbID and ($dbID!=$stored_dbID)) {
+            die "Attempting to store an object with dbID=$dbID experienced a collision with same data but different dbID ($stored_dbID)";
+        } else {
+            return $self->attach( $method, $stored_dbID);
+        }
+    } else {
+        return undef;   # not found, safe to insert
+    }
 }
 
     
-sub _mark_stored {
-    my ($self, $method, $dbID) = @_;
-
-    $method->dbID($dbID);
-    $method->adaptor($self);
-}
-
-
 =head2 store
 
-  Arg [1]     : Method $method
+  Arg [1]     : Bio::EnsEMBL::Compara::Method $method
   Example     : $method_adaptor->store( $my_method );
   Description : Stores the Method object in the database if necessary; updates the dbID of the object
   Returntype  : boolean (1= needed storing, 0= was simply re-fetched)
@@ -155,8 +180,7 @@ sub _mark_stored {
 sub store {
     my ($self, $method) = @_;
 
-    if(my $dbID = $self->_check_presence_in_db($method)) {
-        $self->_mark_stored($method, $dbID);
+    if($self->synchronise($method)) {
         return 0;
     } else {
         my $sql = 'INSERT INTO method_link (type, class) VALUES (?, ?)';
@@ -164,10 +188,11 @@ sub store {
 
         my $return_code = $sth->execute( $method->type(), $method->class() )
                 # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
-            or die "Could not store method(type='".$method->type()."', class='".$method->class()."'";
+            or die "Could not store method(type='".$method->type."', class='".$method->class."')";
 
-        if($return_code > 0) {     # <--- for the same reason we have to be expliticly numeric here
-            $self->_mark_stored($method, $self->dbc->db_handle->last_insert_id(undef, undef, 'method_link', 'method_link_id') );
+        if($return_code > 0) {     # <--- for the same reason we have to be explicitly numeric here
+            $self->attach($method, $self->dbc->db_handle->last_insert_id(undef, undef, 'method_link', 'method_link_id') );
+            $sth->finish();
         }
         return 1;
     }
