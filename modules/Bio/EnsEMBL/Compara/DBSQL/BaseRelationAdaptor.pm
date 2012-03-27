@@ -171,18 +171,10 @@ sub fetch_all_by_method_link_type {
     return [];
   }
   
-  my $constraint = "";
+  my @tabs = $self->_tables;
+  my ($name, $syn) = @{$tabs[0]};
 
-  if ($self->isa('Bio::EnsEMBL::Compara::Homology')) {
-    $constraint .=  " h.method_link_species_set_id in (". join (",", (map {$_->dbID} @{$mlss_arrayref})) . ")";
-
-  } elsif ($self->isa('Bio::EnsEMBL::Compara::Family')) {
-    $constraint .=  " f.method_link_species_set_id in (". join (",", (map {$_->dbID} @{$mlss_arrayref})) . ")";
-
-  } elsif ($self->isa('Bio::EnsEMBL::Compara::Domain')) {
-    $constraint .=  " d.method_link_species_set_id in (". join (",", (map {$_->dbID} @{$mlss_arrayref})) . ")";
-
-  }
+  my $constraint =  " ${syn}.method_link_species_set_id in (". join (",", (map {$_->dbID} @{$mlss_arrayref})) . ")";
 
   return $self->generic_fetch($constraint);
 }
