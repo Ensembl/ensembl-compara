@@ -184,7 +184,12 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   
   sequenceKey: function () {
     if (!$('.sequence_key', this.el).length) {
-      var key    = Ensembl.EventManager.trigger('getSequenceKey');
+      var key = Ensembl.EventManager.trigger('getSequenceKey');
+      
+      if (!key) { 
+        return;
+      }
+      
       var params = {};
       
       $.each(key, function (id, k) {
