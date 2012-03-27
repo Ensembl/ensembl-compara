@@ -656,6 +656,20 @@ sub store {
 }
 
 
+sub store_relation {
+    my ($self, $member_attribute, $relation) = @_;
+
+    # Common interface between all relations to store the member
+    $self->SUPER::store_relation($member_attribute, $relation);
+
+    my ($member, $attribute) = @{$member_attribute};
+    $attribute->homology_id($relation->dbID);
+    my $sql = "INSERT IGNORE INTO homology_member (homology_id, member_id, peptide_member_id, cigar_line, perc_cov, perc_id, perc_pos) VALUES (?,?,?,?,?,?,?)";
+    my $sth = $self->prepare($sql);
+    $sth->execute($attribute->homology_id, $attribute->member_id, $attribute->peptide_member_id, $attribute->cigar_line, $attribute->perc_cov, $attribute->perc_id, $attribute->perc_pos);
+}
+
+
 =head2 update_genetic_distance
 
  Arg [1]    : Bio::EnsEMBL::Compara::Homology $homology

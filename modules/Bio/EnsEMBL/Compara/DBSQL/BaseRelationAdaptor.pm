@@ -190,44 +190,6 @@ sub store_relation {
   }
   $attribute->member_id($member->dbID);
 
-  my $sql;
-  my $sth;
-  
-  if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
-    $attribute->family_id($relation->dbID);
-    $sql = "INSERT IGNORE INTO family_member (family_id, member_id, cigar_line) VALUES (?,?,?)";
-    $sth = $self->prepare($sql);
-    $sth->execute($attribute->family_id, $attribute->member_id, $attribute->cigar_line);
-  }
-  elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
-    $attribute->domain_id($relation->dbID);
-    $sql = "INSERT IGNORE INTO domain_member (domain_id, member_id, member_start, member_end) VALUES (?,?,?,?)";
-    $sth = $self->prepare($sql);
-    $sth->execute($attribute->domain_id, $attribute->member_id, $attribute->member_start, $attribute->member_end);
-  }
-  elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
-    $attribute->homology_id($relation->dbID);
-    $sql = "INSERT IGNORE INTO homology_member (homology_id, member_id, peptide_member_id, cigar_line, perc_cov, perc_id, perc_pos) VALUES (?,?,?,?,?,?,?)";
-    $sth = $self->prepare($sql);
-    $sth->execute($attribute->homology_id, $attribute->member_id, $attribute->peptide_member_id, $attribute->cigar_line, $attribute->perc_cov, $attribute->perc_id, $attribute->perc_pos);
-  }
-}
-
-
-sub update_relation {
-  my ($self, $member_attribute) = @_;
-
-  my ($member, $attribute) = @{$member_attribute};
-  my $sql;
-  my $sth;
- 
-  if (defined $attribute->family_id) {
-    $sql = "UPDATE family_member SET cigar_line = ? WHERE family_id = ? AND member_id = ?";
-    $sth = $self->prepare($sql);
-    $sth->execute($attribute->cigar_line, $attribute->family_id, $attribute->member_id);
-  } else {
-    $self->throw("update_relation only implemented for family relation, but you have either a domain or homology relation\n");
-  }
 }
 
 

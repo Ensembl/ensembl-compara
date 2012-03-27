@@ -220,4 +220,17 @@ sub store {
   return $dom->dbID;
 }
 
+sub store_relation {
+    my ($self, $member_attribute, $relation) = @_;
+
+    # Common interface between all relations to store the member
+    $self->SUPER::store_relation($member_attribute, $relation);
+
+    my ($member, $attribute) = @{$member_attribute};
+    $attribute->homology_id($relation->dbID);
+    my $sql = "INSERT IGNORE INTO domain_member (domain_id, member_id, member_start, member_end) VALUES (?,?,?,?)";
+    my $sth = $self->prepare($sql);
+    $sth->execute($attribute->domain_id, $attribute->member_id, $attribute->member_start, $attribute->member_end);
+}
+
 1;
