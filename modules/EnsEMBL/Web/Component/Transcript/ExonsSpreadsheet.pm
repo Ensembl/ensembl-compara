@@ -54,10 +54,10 @@ sub initialize {
   }
   
   # Get flanking sequence
-  my ($upstream, $downstream) = $config->{'flanking'} && !$only_exon ? $self->get_flanking_sequence_data($config, $exons[0], $exons[-1]) : ();
+  my ($upstream, $downstream, $offset) = $config->{'flanking'} && !$only_exon ? $self->get_flanking_sequence_data($config, $exons[0], $exons[-1]) : ();
   
   if ($upstream) {
-    $self->add_line_numbers($config, $config->{'flanking'}) if $config->{'number'} ne 'off';
+    $self->add_line_numbers($config, $config->{'flanking'}, undef, $offset) if $config->{'number'} ne 'off';
     
     push @data, $export ? $upstream : {
       exint    => "5' upstream sequence", 
@@ -272,7 +272,7 @@ sub get_flanking_sequence_data {
   my @upstream_sequence   = (@dots, @{$upstream->{'sequence'}});
   my @downstream_sequence = (@{$downstream->{'sequence'}}, @dots);
   
-  return (\@upstream_sequence, \@downstream_sequence);
+  return (\@upstream_sequence, \@downstream_sequence, scalar @dots);
 }
 
 sub add_variations {
@@ -321,25 +321,27 @@ sub add_variations {
 }
 
 sub add_line_numbers {
-  my ($self, $config, $seq_length, $truncated) = @_;
+  my ($self, $config, $seq_length, $truncated, $offset) = @_;
   
   my $i      = $config->{'export'} ? $config->{'lines'}++ : 0;
   my $start  = $config->{'last_number'};
-  my $strand = $config->{'strand'};
+  my $strand = $config->{'number'} eq 'sequence' ? 1 : $config->{'strand'};
   my $length = $start + ($seq_length * $strand);
   my $end;
   
   if ($truncated) {
     $end = $length;
-    push @{$config->{'line_numbers'}->{$i}}, { start => $start + $strand, end => $end };
+    push @{$config->{'line_numbers'}{$i}}, { start => $start + $strand, end => $end };
   } else {
     while (($strand == 1 && $end < $length) || ($strand == -1 && $start > $length)) {
-      $end = $start + ($config->{'display_width'} * $strand);
-      $end = $length if ($strand == 1 && $end > $length) || ($strand == -1 && $end < $length);
+      $end  = $start + ($config->{'display_width'} * $strand);
+      $end -= $strand * $offset if $offset;
+      $end  = $length if ($strand == 1 && $end > $length) || ($strand == -1 && $end < $length);
       
-      push @{$config->{'line_numbers'}->{$i}}, { start => $start + $strand, end => $end };
+      push @{$config->{'line_numbers'}{$i}}, { start => $start + $strand, end => $end };
       
-      $start += $config->{'display_width'} * $strand;
+      $start  = $end;
+      $offset = 0;
     }
   }
   
