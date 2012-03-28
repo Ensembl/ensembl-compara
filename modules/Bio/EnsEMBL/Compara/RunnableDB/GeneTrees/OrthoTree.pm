@@ -91,6 +91,7 @@ sub param_defaults {
             'tree_scale'            => 1,
             'store_homologies'      => 1,
             'no_between'            => 0.25, # dont store all possible_orthologs
+            'doublecheck_homologies' => 0,
     };
 }
 
@@ -944,7 +945,7 @@ sub store_gene_link_as_homology {
   }
   ## Check if it has already been stored, in which case we dont need to store again
   my $matching_homology = 0;
-  if ($self->input_job->retry_count > 0) {
+  if ($self->param('doublecheck_homologies') and ($self->input_job->retry_count > 0)) {
     my $member_id1 = $gene1->gene_member->member_id;
     my $member_id2 = $gene2->gene_member->member_id;
     if ($member_id1 == $member_id2) {
