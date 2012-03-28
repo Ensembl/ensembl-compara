@@ -162,10 +162,34 @@ sub run_rfamclassify {
 
         print STDERR "ModelName: $model_name\n" if ($self->debug);
 
-        push @allclusters, \@cluster_list;
+        push @allclusters, [$cm_id, $model_name, \@cluster_list];
 
     }
 }
+
+sub store_and_dataflow_clusterset {
+    my $self = shift;
+    my $allclusters = $self->param('allclusters');
+    $self->create_clusterset();
+    if ($self->param('sort_clusters')) {
+        foreach my $cluster_list_extended (sort {scalar(@{$b->[2]}) <=> scalar(@{$a->[2]})} @$allclusters) {
+            my ($cm_id, $model_name, $cluster_list) = @$cluster_list_extended;
+            my $cluster = $self->add_cluster($cluster_list);
+            $cluster->store_tag('clustering_id', $cm_id);
+            $cluster->store_tag('model_name', $model_name) if (defined($model_name));
+        }
+    } else {
+        foreach my $cluster_list_extended (@$allclusters) {
+            my ($cm_id, $model_name, $cluster_list) = @$cluster_list_extended;
+            my $cluster = $self->add_cluster($cluster_list);
+            $cluster->store_tag('clustering_id', $cm_id);
+            $cluster->store_tag('model_name', $model_name) if (defined($model_name));
+        }
+    }
+    $self->finish_store_clusterset();
+    $self->dataflow_clusters();
+}
+
 
 sub build_hash_models {
   my $self = shift;
