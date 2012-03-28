@@ -14,6 +14,12 @@ use constant {
   DEFAULT_ROWS     => 10,
 };
 
+sub render {
+  ## @overrides
+  my $self = shift;
+  return $self->SUPER::render(@_).$self->render_shortnote(@_);
+}
+
 sub configure {
   ## @overrides the one in EnsEMBL::Web::Form::Element::String
   my ($self, $params) = @_;
