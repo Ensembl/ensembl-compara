@@ -128,6 +128,8 @@ sub fetch_input {
     $self->delete_old_homologies;
     $self->delete_old_orthotree_tags;
     $self->param('taxon_tree', $self->load_species_tree_from_string( $self->get_species_tree_string ) );
+    my %mlss_hash;
+    $self->param('mlss_hash', \%mlss_hash);
 }
 
 
@@ -850,20 +852,31 @@ sub store_gene_link_as_homology {
 
   my ($gene1, $gene2) = $genepairlink->get_nodes;
 
-  # create method_link_species_set
-  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+  # get or create method_link_species_set
+  my $mlss_type;
   if (($type eq 'possible_ortholog') or ($type eq 'within_species_paralog') or ($type eq 'other_paralog')) {
-      $mlss->method_link_type("ENSEMBL_PARALOGUES");
+      $mlss_type = "ENSEMBL_PARALOGUES";
   } else {
-      $mlss->method_link_type("ENSEMBL_ORTHOLOGUES");
+      $mlss_type = "ENSEMBL_ORTHOLOGUES";
   }
-  if ($gene1->genome_db->dbID == $gene2->genome_db->dbID) {
-    $mlss->species_set([$gene1->genome_db]);
-  } else {
-    $mlss->species_set([$gene1->genome_db, $gene2->genome_db]);
-  }
-  $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss) unless ($self->param('_readonly'));
+  # This should be unique to a pair of genome_db_ids, and equal if we switch the two genome_dbs
+  # WARNING: This trick is valid for genome_db_id up to 1000
+  my $mlss_key = sprintf("%s_%d", $mlss_type, $gene1->genome_db->dbID * $gene2->genome_db->dbID + 1000000*($gene1->genome_db->dbID+$gene2->genome_db->dbID));
 
+  my $mlss;
+  if (exists $self->param('mlss_hash')->{$mlss_key}) {
+    $mlss = $self->param('mlss_hash')->{$mlss_key};
+  } else {
+      $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+      $mlss->method_link_type($mlss_type);
+      if ($gene1->genome_db->dbID == $gene2->genome_db->dbID) {
+          $mlss->species_set([$gene1->genome_db]);
+      } else {
+          $mlss->species_set([$gene1->genome_db, $gene2->genome_db]);
+      }
+      $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss) unless ($self->param('_readonly'));
+      $self->param('mlss_hash')->{$mlss_key} = $mlss;
+  }
   # create an Homology object
   my $homology = new Bio::EnsEMBL::Compara::Homology;
   $homology->description($type);
