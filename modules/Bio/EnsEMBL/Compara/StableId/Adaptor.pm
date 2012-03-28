@@ -476,7 +476,7 @@ sub source {
 #Have to use basic DBI because we could have been given one 
 sub _get_db_version {
   my ($self, $dbh) = @_;
-  my $sql = 'select meta_value from meta where meta_key =? and species_id is null';
+  my $sql = 'select meta_value from meta where meta_key =? and species_id is null LIMIT 1';
   my $sth = $dbh->prepare($sql);
   my $row;
   eval {

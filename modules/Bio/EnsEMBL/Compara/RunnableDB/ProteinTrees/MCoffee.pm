@@ -515,8 +515,7 @@ sub parse_and_store_alignment_into_proteintree {
   # Read in the alignment using Bioperl.
   #
   use Bio::AlignIO;
-  my $alignio = Bio::AlignIO->new(-file => "$msa_output",
-				  -format => "$format");
+  my $alignio = Bio::AlignIO->new(-file => "$msa_output", -format => "$format");
   my $aln = $alignio->next_aln();
   my %align_hash;
   foreach my $seq ($aln->each_seq) {
@@ -600,7 +599,7 @@ sub parse_and_store_alignment_into_proteintree {
   foreach my $member (@{$tree->get_all_leaves}) {
       # Redo alignment is member_id based, new alignment is sequence_id based
       if ($align_hash{$member->sequence_id} eq "" && $align_hash{$member->member_id} eq "") {
-	  $self->throw("mcoffee produced an empty cigar_line for ".$member->stable_id."\n");
+        $self->throw("mcoffee produced an empty cigar_line for ".$member->stable_id."\n");
       }
       # Redo alignment is member_id based, new alignment is sequence_id based
       $member->cigar_line($align_hash{$member->sequence_id} || $align_hash{$member->member_id});
@@ -612,24 +611,24 @@ sub parse_and_store_alignment_into_proteintree {
       my $seq_cigar_length; map { $seq_cigar_length += $_ } @cigar_match_lengths;
       my $member_sequence = $member->sequence; $member_sequence =~ s/\*//g;
       if ($seq_cigar_length != length($member_sequence)) {
-	  print $member_sequence."\n".$member->cigar_line."\n" if ($self->debug);
-	  $self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
+        print $member_sequence."\n".$member->cigar_line."\n" if ($self->debug);
+        $self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
       }
 
       my $table_name = $self->param('output_table');
       unless (defined $table_name) {
-	  #
-	  # We can use the default store method for the $member.
+        #
+        # We can use the default store method for the $member.
           $self->compara_dba->get_ProteinTreeAdaptor->update_node($member);
       } else {
-	  #
-	  # Do a manual insert into the correct output table.
-	  #
-	  printf("Updating $table_name %s : %s\n",$member->stable_id,$member->cigar_line) if ($self->debug);
-	  my $sth = $self->param('tree_adaptor')->prepare("INSERT ignore INTO $table_name
+        #
+        # Do a manual insert into the correct output table.
+        #
+        printf("Updating $table_name %s : %s\n",$member->stable_id,$member->cigar_line) if ($self->debug);
+        my $sth = $self->param('tree_adaptor')->prepare("INSERT ignore INTO $table_name
                                (node_id,member_id,method_link_species_set_id,cigar_line)  VALUES (?,?,?,?)");
-	  $sth->execute($member->node_id,$member->member_id,$member->method_link_species_set_id,$member->cigar_line);
-	  $sth->finish;
+        $sth->execute($member->node_id,$member->member_id,$member->method_link_species_set_id,$member->cigar_line);
+        $sth->finish;
       }
       if (defined $self->param('mcoffee_scores')) {
         #
@@ -725,9 +724,9 @@ sub _get_alternate_alignment_tree {
 
         # Grab the correct cigar line for each leaf node.
         my $id = $leaf->member_id;
-        my $sql = "SELECT cigar_line FROM $table where member_id=$id;";
+        my $sql = "SELECT cigar_line FROM $table where member_id=? LIMIT 1;";
         my $sth = $pta->prepare($sql);
-        $sth->execute();
+        $sth->execute($id);
         my $data = $sth->fetchrow_hashref();
         $sth->finish();
         my $cigar = $data->{'cigar_line'};

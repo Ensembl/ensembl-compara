@@ -67,7 +67,7 @@ sub fetch_node_id_by_merged_taxon_id {
     throw "taxon_id is undefined";
   }
 
-  my $sql = "SELECT t.taxon_id FROM ncbi_taxa_node t, ncbi_taxa_name n WHERE n.name = ? and n.name_class = 'merged_taxon_id' AND t.taxon_id = n.taxon_id";
+  my $sql = "SELECT t.taxon_id FROM ncbi_taxa_node t, ncbi_taxa_name n WHERE n.name = ? and n.name_class = 'merged_taxon_id' AND t.taxon_id = n.taxon_id LIMIT 1";
 
   my $sth = $self->dbc->prepare($sql);
   $sth->execute($taxon_id);

@@ -102,7 +102,7 @@ sub _load_tagvalues {
     # Attributes ?
     if (defined $db_attrtable) {
         # Attributes (multiple values are forbidden)
-        $sth = $self->prepare("SELECT * FROM $db_attrtable WHERE $db_keyname=?");
+        $sth = $self->prepare("SELECT * FROM $db_attrtable WHERE $db_keyname=? LIMIT 1");
         $sth->execute($object->$perl_keyname);
         # Retrieve data
         my $attrs = $sth->fetchrow_hashref();
