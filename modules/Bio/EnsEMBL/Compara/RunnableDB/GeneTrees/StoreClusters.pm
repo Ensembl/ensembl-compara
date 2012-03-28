@@ -182,6 +182,8 @@ sub add_cluster {
     # Frees memory
     $cluster_root->disavow_parent();
     $cluster_root->release_tree();
+
+    return $cluster;
 }
 
 
