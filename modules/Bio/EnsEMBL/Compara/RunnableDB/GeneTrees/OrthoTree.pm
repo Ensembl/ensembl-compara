@@ -981,14 +981,14 @@ sub store_gene_link_as_homology {
     $self->param('homologyDBA')->store($homology);
   }
 
-  my $stable_id;
-  if($gene1->taxon_id < $gene2->taxon_id) {
-    $stable_id = $gene1->taxon_id . "_" . $gene2->taxon_id . "_";
-  } else {
-    $stable_id = $gene2->taxon_id . "_" . $gene1->taxon_id . "_";
-  }
-  $stable_id .= sprintf ("%011.0d",$homology->dbID) if($homology->dbID);
-  $homology->stable_id($stable_id);
+  #my $stable_id;
+  #if($gene1->taxon_id < $gene2->taxon_id) {
+  #  $stable_id = $gene1->taxon_id . "_" . $gene2->taxon_id . "_";
+  #} else {
+  #  $stable_id = $gene2->taxon_id . "_" . $gene1->taxon_id . "_";
+  #}
+  #$stable_id .= sprintf ("%011.0d",$homology->dbID) if($homology->dbID);
+  #$homology->stable_id($stable_id);
   #TODO: update the stable_id of the homology
 
   return $homology;
