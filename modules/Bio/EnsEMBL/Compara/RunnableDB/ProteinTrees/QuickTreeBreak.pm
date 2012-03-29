@@ -145,7 +145,7 @@ sub write_output {
     my $self = shift @_;
 
     $self->check_if_exit_cleanly;
-    $self->store_proteintrees;
+    $self->store_supertree;
 }
 
 sub release_tree {
@@ -271,25 +271,13 @@ sub dumpTreeMultipleAlignmentToWorkdir {
 }
 
 
-sub store_proteintrees {
-  my $self = shift;
-
-  $self->store_clusters;
-
-  if($self->debug >1) {
-    print("done storing\n");
-  }
-
-  return undef;
-}
-
-sub store_clusters {
+sub store_supertree {
   my $self = shift;
 
   my $gene_tree_adaptor = $self->compara_dba->get_GeneTreeAdaptor;
   my $starttime = time();
 
-  $gene_tree_adaptor->store($self->param('original_cluster'));
+  $gene_tree_adaptor->store_tree($self->param('original_cluster'));
   $self->param('original_cluster')->root->store_tag('tree_support', 'quicktree');
 
   foreach my $cluster (@{$self->param('subclusters')}) {
@@ -357,28 +345,29 @@ sub generate_subtrees {
 
   my $final_original_num = scalar @{$self->param('gene_tree')->get_all_leaves};
   # Creating the supertree structure
-  my $supertree = $self->param('gene_tree');
-  $supertree->tree->tree_type('supertree');
+  my $supertree_root = $self->param('gene_tree');
+  my $supertree = $supertree_root->tree;
+  $supertree->tree_type('supertree');
   my $supertree_leaf1 = new Bio::EnsEMBL::Compara::GeneTreeNode;
   my $supertree_leaf2 = new Bio::EnsEMBL::Compara::GeneTreeNode;
-  $supertree_leaf1->tree($supertree->tree);
-  $supertree_leaf2->tree($supertree->tree);
+  $supertree_leaf1->tree($supertree);
+  $supertree_leaf2->tree($supertree);
 
   my $cluster1_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
   my $cluster1 = new Bio::EnsEMBL::Compara::GeneTree;
   $cluster1->tree_type('tree');
-  $cluster1->member_type($supertree->tree->member_type);
-  $cluster1->method_link_species_set_id($supertree->tree->method_link_species_set_id);
-  $cluster1->clusterset_id($supertree->tree->clusterset_id);
+  $cluster1->member_type($supertree->member_type);
+  $cluster1->method_link_species_set_id($supertree->method_link_species_set_id);
+  $cluster1->clusterset_id($supertree->clusterset_id);
   $cluster1->root($cluster1_root);
   $cluster1_root->tree($cluster1);
   
   my $cluster2_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
   my $cluster2 = new Bio::EnsEMBL::Compara::GeneTree;
   $cluster2->tree_type('tree');
-  $cluster2->member_type($supertree->tree->member_type);
-  $cluster2->method_link_species_set_id($supertree->tree->method_link_species_set_id);
-  $cluster2->clusterset_id($supertree->tree->clusterset_id);
+  $cluster2->member_type($supertree->member_type);
+  $cluster2->method_link_species_set_id($supertree->method_link_species_set_id);
+  $cluster2->clusterset_id($supertree->clusterset_id);
   $cluster2->root($cluster2_root);
   $cluster2_root->tree($cluster2);
 
@@ -387,7 +376,7 @@ sub generate_subtrees {
   foreach my $leaf (@{$self->param('max_subtree')->get_all_leaves}) {
     $subtree_leaves->{$leaf->member_id} = 1;
   }
-  foreach my $leaf (@{$supertree->get_all_leaves}) {
+  foreach my $leaf (@{$supertree_root->get_all_leaves}) {
     if (defined $subtree_leaves->{$leaf->member_id}) {
       $cluster1_root->add_child($leaf);
       $leaf->tree($cluster1);
@@ -396,13 +385,13 @@ sub generate_subtrees {
       $leaf->tree($cluster2);
     }
   }
-  $supertree->add_child($supertree_leaf1, $self->param('max_subtree')->distance_to_parent/2);
-  $supertree->add_child($supertree_leaf2, $self->param('max_subtree')->distance_to_parent/2);
-  $supertree->build_leftright_indexing(1);
+  $supertree_root->add_child($supertree_leaf1, $self->param('max_subtree')->distance_to_parent/2);
+  $supertree_root->add_child($supertree_leaf2, $self->param('max_subtree')->distance_to_parent/2);
+  $supertree_root->build_leftright_indexing(1);
   
   if ($self->debug) {
     print "SUPERTREE " ;
-    $supertree->print_tree(20);
+    $supertree_root->print_tree(20);
     print "CLUSTER1 ";
     $cluster1_root->print_tree(20);
     print "CLUSTER2 ";
@@ -413,7 +402,7 @@ sub generate_subtrees {
 
   if ($self->debug) {
     print "FINAL STRUCTURE ";
-    $supertree->print_tree(20);
+    $supertree_root->print_tree(20);
   }
 
   $self->param('subclusters', [$cluster1, $cluster2]);
@@ -426,7 +415,7 @@ sub generate_subtrees {
     die "Incorrect sum of leaves [$final_max_num + $final_remaining_num != $final_original_num]";
   }
 
-  $self->param('original_cluster', $supertree->tree);
+  $self->param('original_cluster', $supertree);
 }
 
 1;
