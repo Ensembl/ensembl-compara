@@ -68,9 +68,10 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    unless ( $self->param('cafe_tree_string') ) {
-        die ('cafe_species_tree can not be found');
+    unless ( $self->param('cafe_tree_string_meta_key') ) {
+        die ('cafe_species_tree_meta_key can not be found');
     }
+    $self->param('cafe_tree_string', $self->get_tree_string_from_meta());
 
     unless ( $self->param('cafe_table_file') ) {
         die ('cafe_table_file must be set');
@@ -117,6 +118,20 @@ sub write_output {
 ###########################################
 ## Internal methods #######################
 ###########################################
+
+sub get_tree_string_from_meta {
+    my ($self) = @_;
+    my $cafe_tree_string_meta_key = $self->param('cafe_tree_string_meta_key');
+
+    my $sql = "SELECT meta_value FROM meta WHERE meta_key = ?";
+    my $sth = $self->compara_dba->dbc->prepare($sql);
+    $sth->execute($cafe_tree_string_meta_key);
+
+    my ($cafe_tree_string) = $sth->fetchrow_array();
+    $sth->finish;
+    print STDERR "CAFE_TREE_STRING: $cafe_tree_string\n" if ($self->debug());
+    return $cafe_tree_string;
+}
 
 sub run_cafe_script {
     my ($self) = @_;
@@ -215,6 +230,7 @@ sub parse_cafe_output {
     $tree->method_link_species_set_id($mlss_id);
     $tree->species_tree($ids_tree_str);
     $tree->lambdas($lambda);
+    $tree->pvalue_lim($pvalue_lim);
 
     $cafeTree_Adaptor->store($tree);
 
@@ -232,8 +248,8 @@ sub parse_cafe_output {
 
         #print "FAM_PVALUE:$avg_pvalue VS PVALUE_LIM:$pvalue_lim\n";
 
-        next if ($avg_pvalue >= $pvalue_lim);
-        print STDERR "FAM_ID:$fam_id\n";
+#        next if ($avg_pvalue >= $pvalue_lim);
+#        print STDERR "FAM_ID:$fam_id\n";
 
         my $fam_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($fam_tree_str . ";");
 
@@ -259,6 +275,7 @@ sub parse_cafe_output {
 
         $pvalue_pairs =~ tr/(/[/;
         $pvalue_pairs =~ tr/)/]/;
+        $pvalue_pairs =~ tr/-/1/;
         $pvalue_pairs = eval $pvalue_pairs;
 
         die "Problem processing the $pvalue_pairs\n" if (ref $pvalue_pairs ne "ARRAY");
@@ -279,28 +296,16 @@ sub parse_cafe_output {
         $tree->print_tree(0.2) if ($self->debug());
 
         # We store the attributes
-#        $tree->store_tag("p_value", $avg_pvalue);
         for my $node (@{$tree->get_all_nodes()}) {
             my $n = $node->name();
             $n =~ s/\./_/g;
 
             my $fam_id = $info_by_nodes{$n}{gene_tree_root_id};
-#            $node->store_tag("gene_tree_root_id", $fam_id);
-
             my $taxon_id = $info_by_nodes{$n}{taxon_id};
-#            $node->store_tag("taxon_id", $taxon_id);
-
             my $n_members = $info_by_nodes{$n}{n_members};
-#            $node->store_tag("n_members", $n_members);
-
             my $p_value = $info_by_nodes{$n}{p_value};
-#            $node->store_tag("p_value", $p_value);
             $cafeTree_Adaptor->store_tagvalues($node, $fam_id, $taxon_id, $n_members, $p_value, $avg_pvalue);
         }
-#         print STDERR "INFO BY NODES:\n";
-#         print STDERR Dumper \%info_by_nodes;
-#         print STDERR Dumper \%info_by_nodes if ($self->debug);
-
     }
     return
 }
