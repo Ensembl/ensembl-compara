@@ -43,10 +43,10 @@ sub content_ajax {
     $species{$s} = $species_defs->species_label($sp, 1) . (grep($target eq $_, @$chromosomes) ? ' chromosome' : '') . " $target - $type";
   }
   
-  foreach my $i (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
-    foreach (keys %{$alignments->{$i}->{'species'}}) {
-      if ($alignments->{$i}->{'species'}->{$primary_species} && $_ ne $primary_species) {
-        my $type = lc $alignments->{$i}->{'type'};
+  foreach my $alignment (grep { $_->{'species'}{$primary_species} && $_->{'class'} =~ /pairwise/ } values %$alignments) {
+    foreach (keys %{$alignment->{'species'}}) {
+      if ($_ ne $primary_species) {
+        my $type = lc $alignment->{'type'};
            $type =~ s/_net//;
            $type =~ s/_/ /g;
         
