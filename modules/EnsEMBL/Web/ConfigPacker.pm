@@ -1258,7 +1258,7 @@ sub _summarise_datahubs {
           my $menu_key = $menu || $key;  
           if ($dataset->{'config'}{'subsets'}) {
             foreach (@{$dataset->{'tracks'}}) {
-              $self->_add_datahub_tracks($_, $name, $menu_key);
+              $self->_add_datahub_tracks($_, $name, $menu_key, $dataset->{'config'}{'description_url'});
             }
           }
           else {
@@ -1271,14 +1271,14 @@ sub _summarise_datahubs {
 }
 
 sub _add_datahub_tracks {
-  my ($self, $dataset, $name, $menu_key) = @_;
+  my ($self, $dataset, $name, $menu_key, $desc_url) = @_;
 
   my $options = {
                   menu_key     => $menu_key,
                   menu_name    => $name,
                   submenu_key  => $dataset->{'config'}{'track'},
                   submenu_name => $dataset->{'config'}{'shortLabel'},
-                  desc_url     => $dataset->{'config'}{'description_url'},
+                  desc_url     => $desc_url || $dataset->{'config'}{'description_url'},
                   view         => $dataset->{'config'}{'view'},
                 };
 
