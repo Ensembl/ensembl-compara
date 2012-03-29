@@ -88,9 +88,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->param('protein_tree_adaptor', $self->compara_dba->get_ProteinTreeAdaptor);
-    $self->param('member_adaptor', $self->compara_dba->get_MemberAdaptor);
-    $self->param('groupset_tree', $self->param('protein_tree_adaptor')->fetch_node_by_node_id($self->param('clusterset_id'))->tree) or die "Could not fetch groupset tree";
+    $self->param('groupset_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_node_by_node_id($self->param('clusterset_id'))->tree) or die "Could not fetch groupset tree";
 
 }
 
@@ -113,21 +111,6 @@ sub run {
     }
 }
 
-
-=head2 write_output
-
-    Title   :   write_output
-    Usage   :   $self->write_output
-    Function:   stores something
-    Returns :   none
-    Args    :   none
-
-=cut
-
-sub write_output {
-  my $self = shift;
-
-}
 
 
 ##########################################
@@ -190,7 +173,7 @@ sub fetch_groupset {        # see Bio::EnsEMBL::Compara::StableId::Adaptor::load
   my $default_noname = 'NoName';
   my $dataset;
 
-  my $sql = "SELECT ptm.root_id, m2.stable_id FROM gene_tree_member ptm, member m1, member m2 where ptm.member_id=m1.member_id and m1.gene_member_id=m2.member_id";
+  my $sql = "SELECT gtn.root_id, m2.stable_id FROM gene_tree_node gtn, gene_tree_member gtm, member m1, member m2 WHERE gtm.member_id=m1.member_id AND m1.gene_member_id=m2.member_id AND gtn.node_id = gtm.node_id";
 
   my $sth = $given_compara_dba->dbc->prepare($sql);
   $sth->execute();
@@ -454,16 +437,17 @@ sub quantify_mapping {
   }
   close MAP;
 
-  my $reuse_protein_tree_adaptor = $reuse_compara_dba->get_ProteinTreeAdaptor;
+  my $current_gene_tree_adaptor = $self->compara_dba->get_GeneTreeAdaptor;
+  my $reuse_gene_tree_adaptor = $reuse_compara_dba->get_GeneTreeAdaptor;
   foreach my $mapped_cluster_id (keys %{$mapping_stats{mapped_tagging}}) {
     my $reuse_node_id = $mapping_stats{mapped_tagging}{$mapped_cluster_id};
     next unless (defined($reuse_node_id));
-    my $reuse_node = $reuse_protein_tree_adaptor->fetch_node_by_node_id($reuse_node_id);
+    my $reuse_node = $reuse_gene_tree_adaptor->fetch_node_by_node_id($reuse_node_id);
     next unless (defined($reuse_node));
     my $reuse_aln_runtime_value = $reuse_node->tree->get_tagvalue('aln_runtime');
     $reuse_node->release_tree;
     next if ($reuse_aln_runtime_value eq '');
-    my $this_node = $self->param('protein_tree_adaptor')->fetch_node_by_node_id($mapped_cluster_id);
+    my $this_node = $current_gene_tree_adaptor->fetch_node_by_node_id($mapped_cluster_id);
     next unless (defined($this_node));
     $this_node->store_tag('reuse_node_id',$reuse_node_id);
     $this_node->store_tag('reuse_aln_runtime',$reuse_aln_runtime_value);
