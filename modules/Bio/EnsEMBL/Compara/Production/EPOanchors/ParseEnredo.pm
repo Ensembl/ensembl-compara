@@ -187,7 +187,7 @@ sub set_gdb_locator { # fill in the locator field in the genome_db table
 	my $self = shift;
 	my $ancestor_db = $self->param('ancestor_db');
 	my $genome_db_names = shift;
-	Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs( $self->param('main_core_dbs') );
+	Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs( @{ $self->param('main_core_dbs') });
 	my @dbas = @{ Bio::EnsEMBL::Registry->get_all_DBAdaptors() };
 	foreach my $genome_db_name(split(",", $genome_db_names), $ancestor_db->{'-name'}){
 		my $core_genome_db_name = $genome_db_name . "_core_";

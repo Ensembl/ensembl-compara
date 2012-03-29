@@ -50,7 +50,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
 	my ($self) = @_;
-	Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs( $self->param('main_core_dbs') );
+	Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs( @{ $self->param('main_core_dbs') } );
 	my ($query_set, $target_set, $q_files, $t_files, $blastResults, $matches, $query_index);
 	my $synteny_region_id = $self->param('zero_st_dnafrag_region_id');
 	my $sth1 = $self->dbc->prepare("SELECT df.coord_system_name, dfr.dnafrag_id, df.name, gdb.name, dfr.dnafrag_start, dfr.dnafrag_end, dfr.dnafrag_strand FROM ". 
