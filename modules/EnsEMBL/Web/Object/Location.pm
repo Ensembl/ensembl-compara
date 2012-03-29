@@ -78,7 +78,7 @@ sub counts {
   my $self = shift;
   
   my $obj = $self->Obj;
-  my $key = '::COUNTS::LOCATION::' . $self->species;
+  my $key = '::COUNTS::LOCATION::' . $self->species . '::' . $self->slice->seq_region_name;
   my $counts = $self->{'_counts'};
   $counts ||= $MEMD->get($key) if $MEMD;
  

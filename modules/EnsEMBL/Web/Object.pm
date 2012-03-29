@@ -76,7 +76,7 @@ sub count_alignments {
   
   foreach (grep $_->{'species'}{$species}, values %alignments) {
     $c->{'all'}++ ;
-    $c->{'pairwise'}++ if $_->{'class'} =~ /pairwise_alignment/;
+    $c->{'pairwise'}++ if $_->{'class'} =~ /pairwise_alignment/ && scalar keys %{$_->{'species'}} == 2;
   }
   
   $c->{'multi'} = $c->{'all'} - $c->{'pairwise'};
