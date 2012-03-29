@@ -65,9 +65,11 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    unless ( $self->param('cafe_tree_string') ) {
-        die ('cafe_species_tree can not be found');
+    unless ( $self->param('cafe_tree_string_meta_key') ) {
+        die ('cafe_species_tree_meta_key needs to be defined to get the speciestree from the meta table');
     }
+    $self->param('cafe_tree_string', $self->get_tree_string_from_meta());
+    ### Here we have the small species tree that we will use in the CAFE analysis.
 
     unless ( $self->param('cafe_species') ) {
         # get the species you want to include and put then in $self->param('cafe_species')
@@ -100,13 +102,13 @@ sub run {
 sub write_output {
     my ($self) = @_;
     my $cafe_table_file = $self->param('cafe_table_file');
-    my $cafe_tree_string = $self->param('cafe_tree_string');
+    my $cafe_tree_string_meta_key = $self->param('cafe_tree_string_meta_key');
     print STDERR "$cafe_table_file\n" if ($self->debug());
-    print STDERR "$cafe_tree_string\n" if ($self->debug());
+    print STDERR "$cafe_tree_string_meta_key\n" if ($self->debug());
     $self->dataflow_output_id (
                                {
                                 'cafe_table_file' => $cafe_table_file,
-                                'cafe_tree_string' => $cafe_tree_string,
+                                'cafe_tree_string_meta_key' => $cafe_tree_string_meta_key,
                                }, 1
                               );
 }
@@ -115,6 +117,20 @@ sub write_output {
 ###########################################
 ## Internal methods #######################
 ###########################################
+
+sub get_tree_string_from_meta {
+    my ($self) = @_;
+    my $cafe_tree_string_meta_key = $self->param('cafe_tree_string_meta_key');
+
+    my $sql = "SELECT meta_value FROM meta WHERE meta_key = ?";
+    my $sth = $self->compara_dba->dbc->prepare($sql);
+    $sth->execute($cafe_tree_string_meta_key);
+
+    my ($cafe_tree_string) = $sth->fetchrow_array();
+    $sth->finish;
+    print STDERR "CAFE_TREE_STRING: $cafe_tree_string\n" if ($self->debug());
+    return $cafe_tree_string;
+}
 
 sub get_cafe_tree_from_string {
     my ($self) = @_;
