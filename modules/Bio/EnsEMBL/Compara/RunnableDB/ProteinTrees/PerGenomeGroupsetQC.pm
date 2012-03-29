@@ -83,7 +83,7 @@ sub run {
     my $reuse_db                = $self->param('reuse_db') or die "'reuse_db' connection parameters hash has to be defined in reuse mode";
     my $reuse_compara_dba       = $self->go_figure_compara_dba($reuse_db);    # may die if bad parameters
 
-    my $reuse_orphans           = $self->fetch_gdb_orphan_genes($reuse_compara_dba, $genome_db_id, 'protein_tree_member');
+    my $reuse_orphans           = $self->fetch_gdb_orphan_genes($reuse_compara_dba, $genome_db_id, 'gene_tree_member');
     my %common_orphans = ();
     my %new_orphans = ();
     foreach my $this_orphan_id (keys %$this_orphans) {
