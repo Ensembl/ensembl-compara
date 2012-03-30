@@ -37,25 +37,6 @@ sub new {
 }
 
 
-=head2 species_set_id
-
-  Arg [1]    : (opt.) integer species_set_id
-  Example    : my $species_set_id = $species_set->species_set_id();
-  Example    : $species_set->species_set_id(12);
-  Description: Getter/Setter for the species_set_id of this object in the database (alias for $ss->dbID())
-  Returntype : integer species_set_id
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub species_set_id {
-    my $ss = shift @_;
-
-    return $ss->dbID($ss);
-}
-
-
 =head2 genome_dbs
 
   Arg [1]    : (opt.) list of genome_db objects
