@@ -642,9 +642,9 @@ sub store {
   }
   
   unless($hom->dbID) {
-    my $sql = "INSERT INTO homology (method_link_species_set_id, description, subtype, ancestor_node_id, tree_node_id) VALUES (?,?,?,?,?,?)";
+    my $sql = "INSERT INTO homology (method_link_species_set_id, description, subtype, ancestor_node_id, tree_node_id) VALUES (?,?,?,?,?)";
     my $sth = $self->prepare($sql);
-    $sth->execute($hom->method_link_species_set_id,$hom->description, $hom->subtype, $hom->ancestor_node_id, $hom->tree_node_id);
+    $sth->execute($hom->method_link_species_set_id, $hom->description, $hom->subtype, $hom->ancestor_node_id, $hom->tree_node_id);
     $hom->dbID($sth->{'mysql_insertid'});
   }
 
@@ -664,9 +664,9 @@ sub store_relation {
 
     my ($member, $attribute) = @{$member_attribute};
     $attribute->homology_id($relation->dbID);
-    my $sql = "INSERT IGNORE INTO homology_member (homology_id, member_id, peptide_member_id, cigar_line, perc_cov, perc_id, perc_pos) VALUES (?,?,?,?,?,?,?)";
+    my $sql = "INSERT IGNORE INTO homology_member (homology_id, member_id, peptide_member_id, cigar_line, perc_id, perc_pos) VALUES (?,?,?,?,?,?)";
     my $sth = $self->prepare($sql);
-    $sth->execute($attribute->homology_id, $attribute->member_id, $attribute->peptide_member_id, $attribute->cigar_line, $attribute->perc_cov, $attribute->perc_id, $attribute->perc_pos);
+    $sth->execute($attribute->homology_id, $attribute->member_id, $attribute->peptide_member_id, $attribute->cigar_line, $attribute->perc_id, $attribute->perc_pos);
 }
 
 
