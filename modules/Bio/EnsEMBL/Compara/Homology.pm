@@ -610,36 +610,18 @@ sub print_homology {
 
 =head2 get_all_PeptideAlignFeature
 
-  Example    : my ($paf) = @{$homology->get_all_PeptideAlignFeature};
-               my ($paf, $recipPaf) = @{$homology->get_all_PeptideAlignFeature};
-  Description: return the peptide_align_feature object (and its reciprocal hit)
-               used to create this homology
-  Returntype : array ref of peptide_align_feature objects
+  Description: returns a reference to an empty array as we don't have any
+               PeptideAlignFeatures associated to the homologies
+  Returntype : array ref
   Exceptions :
   Caller     :
 
 =cut
 
 sub get_all_PeptideAlignFeature {
-  my $self = shift;
 
-  my @pafs;
-  throw("homology must have a valid adaptor and db in order to get peptide_align_features")
-    unless($self->adaptor and $self->adaptor->db);
-  my $pafDBA = $self->adaptor->db->get_PeptideAlignFeatureAdaptor;
-  
-  foreach my $RefArrayOfMemberAttributeArrayRef ($self->get_Member_Attribute_by_source("ENSEMBLGENE")) {
-    foreach my $memAttributeArrayRef (@{$RefArrayOfMemberAttributeArrayRef}) {
-      my $member = $memAttributeArrayRef->[0];
-      my $attribute = $memAttributeArrayRef->[1];
-
-      if($attribute->peptide_align_feature_id) {
-        my $paf = $pafDBA->fetch_by_dbID($attribute->peptide_align_feature_id);
-        push @pafs, $paf;
-      }
-    }
-  }
-  return \@pafs;
+    deprecated("Homologies don't have PeptideAlignFeatures any more");
+    return [];
 }
 
 

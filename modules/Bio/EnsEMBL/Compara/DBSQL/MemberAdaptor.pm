@@ -360,7 +360,6 @@ sub fetch_all_by_relation {
     my $extra_columns = [qw(hm.homology_id
                             hm.member_id
                             hm.peptide_member_id
-                            hm.peptide_align_feature_id
                             hm.cigar_line
                             hm.perc_cov
                             hm.perc_id
