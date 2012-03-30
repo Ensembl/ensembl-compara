@@ -86,8 +86,6 @@ use Bio::EnsEMBL::Utils::Exception;
 
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
-my $DEFAULT_MAX_ALIGNMENT = 20000;
-
 
 =head2 store
 
@@ -112,8 +110,6 @@ sub store {
   throw("method_link_species_set must be a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n")
     unless ($method_link_species_set && ref $method_link_species_set &&
         $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-
-  $method_link_species_set->adaptor($self);
 
   my $method_link_species_set_sql = qq{
         INSERT IGNORE INTO method_link_species_set (
@@ -239,26 +235,10 @@ sub store {
     $self->dbc()->disconnect_when_inactive($original_dwi);
   }
 
-  ## If this MethodLinkSpeciesSet object has a max_alignment_length attribute.
-  ## We have to use the attribute and not the method here as the method is used
-  ## for lazy-loading data from the meta table and could use default values if
-  ## none has been specified. As some method_link_species_sets do not have any
-  ## max_alignment_length, using the method here would result in adding a default
-  ## max_alignment_length to those method_link_species_sets!
-  if (defined($method_link_species_set->{max_alignment_length})) { 
-     my $max_align = $method_link_species_set->get_value_for_tag("max_align");
-     if ($max_align) {
-         if ($max_align != $method_link_species_set->max_alignment_length){
-             #... update it if it was already defined and it is different from current one
-             $method_link_species_set->store_tag("max_align", $method_link_species_set->max_alignment_length);
-         } else {
-             #... store it if it was not defined yet
-             $method_link_species_set->store_tag("max_align", $method_link_species_set->max_alignment_length);
-         }
-     }
-  }
-
   $method_link_species_set->dbID($dbID);
+  $method_link_species_set->adaptor($self);
+
+  $self->sync_tags_to_database( $method_link_species_set );
 
   $self->cache_all(1);
 
@@ -279,24 +259,14 @@ sub store {
 =cut
 
 sub delete {
-  my ($self, $method_link_species_set_id) = @_;
-  my $sth;
+    my ($self, $method_link_species_set_id) = @_;
 
-  my $method_link_species_set_sql = qq{
-          DELETE FROM
-            method_link_species_set
-          WHERE
-            method_link_species_set_id = ?
-      };
-  $sth = $self->prepare($method_link_species_set_sql);
-  $sth->execute($method_link_species_set_id);
-  $sth->finish();
+    my $method_link_species_set_sql = 'DELETE mlsst, mlss FROM method_link_species_set mlss LEFT JOIN method_link_species_set_tag mlsst WHERE method_link_species_set_id = ?';
+    my $sth = $self->prepare($method_link_species_set_sql);
+    $sth->execute($method_link_species_set_id);
+    $sth->finish();
 
-## Shouldn't all associated tags be removed prior to removing the object (to avoid FK complaints) ?
-#
-#  ## Delete corresponding entry in meta table
-#  $self->db->get_MetaContainer->delete_key("max_align_$method_link_species_set_id");
-
+    $self->cache_all(1);
 }
 
 
@@ -675,45 +645,6 @@ sub fetch_by_method_link_type_species_set_name {
   }
   warning("Unable to find method_link_species_set with method_link_type of $method_link_type and species_set_tag value of $species_set_name\n");
 }
-
-
-
-=head2 get_max_alignment_length
-
-  Arg 1      : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlss
-  Example    :
-  Description: Retrieve the maximum length for this type of alignments.
-               This method is used for genomic (dna/dna) alignments only.
-               This method sets and returns this attribute for this object
-  Returntype : integer
-  Exceptions :
-  Caller     : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor
-
-=cut
-
-sub get_max_alignment_length {
-  my ($self, $method_link_species_set) = @_;
-
-  my $method_link_species_set_id = ($method_link_species_set->dbID or 0);
-  my $values = $self->db->get_MetaContainer->list_value_by_key(
-      "max_align_$method_link_species_set_id");
-  if ($values && @$values) {
-    return $method_link_species_set->max_alignment_length($values->[0]);
-  } else {
-    $values = $self->db->get_MetaContainer->list_value_by_key("max_alignment_length");
-    if($values && @$values) {
-      warning("Meta table key 'max_align_$method_link_species_set_id' not defined\n" .
-          " -> using old meta table key 'max_alignment_length' [".$values->[0]."]");
-      return $method_link_species_set->max_alignment_length($values->[0]);
-    } else {
-      warning("Meta table key 'max_align_$method_link_species_set_id' not defined and\n" .
-          "old meta table key 'max_alignment_length' not defined\n" .
-          " -> using default value [$DEFAULT_MAX_ALIGNMENT]");
-      return $method_link_species_set->max_alignment_length($DEFAULT_MAX_ALIGNMENT);
-    }
-  }
-}
-
 
 
 ###################################

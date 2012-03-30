@@ -70,6 +70,8 @@ use base (  'Bio::EnsEMBL::Storable',           # inherit dbID(), adaptor() and 
             'Bio::EnsEMBL::Compara::Taggable'   # inherit everything related to tagability
          );
 
+my $DEFAULT_MAX_ALIGNMENT = 20000;
+
 
 =head2 new (CONSTRUCTOR)
 
@@ -519,15 +521,13 @@ sub get_common_classification {
 =cut
 
 sub max_alignment_length {
-  my ($self, $arg) = @_;
+    my $self = shift @_;
 
-  if (defined($arg)) {
-    $self->{'max_alignment_length'} = int($arg);
-  } elsif (!defined($self->{'max_alignment_length'}) and defined($self->adaptor)) {
-    $self->adaptor->get_max_alignment_length($self);
-  }
+    if(@_) {
+        $self->add_tag('max_align', shift @_);
+    }
 
-  return $self->{'max_alignment_length'};
+    return $self->get_value_for_tag('max_align') || $DEFAULT_MAX_ALIGNMENT;
 }
 
 
