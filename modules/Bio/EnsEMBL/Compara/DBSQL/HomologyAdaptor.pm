@@ -3,7 +3,7 @@ package Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
 use strict;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
-use Bio::EnsEMBL::Utils::Exception qw(deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
@@ -534,7 +534,9 @@ sub _recursive_get_orthocluster {
   printf("done with search query %s\n", $gene->stable_id) if($debug);
 }
 
-
+sub fetch_by_stable_id {
+    throw('Stable IDs are not implemented for homologies');
+}
 
 #
 # internal methods
@@ -553,7 +555,6 @@ sub _columns {
   my $self = shift;
 
   return qw (h.homology_id
-             h.stable_id
              h.method_link_species_set_id
              h.description
              h.subtype
@@ -570,10 +571,10 @@ sub _columns {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my ($homology_id, $stable_id, $description, $dn, $ds, $n, $s, $lnl, $threshold_on_ds,
+  my ($homology_id, $description, $dn, $ds, $n, $s, $lnl, $threshold_on_ds,
       $method_link_species_set_id, $subtype, $ancestor_node_id, $tree_node_id);
 
-  $sth->bind_columns(\$homology_id, \$stable_id, \$method_link_species_set_id,
+  $sth->bind_columns(\$homology_id, \$method_link_species_set_id,
                      \$description, \$subtype, \$dn, \$ds,
                      \$n, \$s, \$lnl, \$threshold_on_ds, \$ancestor_node_id, \$tree_node_id);
 
@@ -582,7 +583,6 @@ sub _objs_from_sth {
   while ($sth->fetch()) {
     push @homologies, Bio::EnsEMBL::Compara::Homology->new_fast
       ({'_dbID' => $homology_id,
-       '_stable_id' => $stable_id,
        '_description' => $description,
        '_method_link_species_set_id' => $method_link_species_set_id,
        '_subtype' => $subtype,
@@ -642,9 +642,9 @@ sub store {
   }
   
   unless($hom->dbID) {
-    my $sql = "INSERT INTO homology (stable_id, method_link_species_set_id, description, subtype, ancestor_node_id, tree_node_id) VALUES (?,?,?,?,?,?)";
+    my $sql = "INSERT INTO homology (method_link_species_set_id, description, subtype, ancestor_node_id, tree_node_id) VALUES (?,?,?,?,?,?)";
     my $sth = $self->prepare($sql);
-    $sth->execute($hom->stable_id,$hom->method_link_species_set_id,$hom->description, $hom->subtype, $hom->ancestor_node_id, $hom->tree_node_id);
+    $sth->execute($hom->method_link_species_set_id,$hom->description, $hom->subtype, $hom->ancestor_node_id, $hom->tree_node_id);
     $hom->dbID($sth->{'mysql_insertid'});
   }
 
