@@ -68,7 +68,7 @@ sub colour_key {
   if ($type =~/Promoter/){$type = 'Promoter_associated';}
   elsif ($type =~/Non/){$type = 'Non-genic';}
   elsif ($type =~/Gene/){$type = 'Genic';}
-  elsif ($type =~/Pol/){warn $type; $type = 'poliii_associated'}
+  elsif ($type =~/Pol/){$type = 'poliii_associated'}
   else  {$type = 'Unclassified';}
   return lc($type);
 }
