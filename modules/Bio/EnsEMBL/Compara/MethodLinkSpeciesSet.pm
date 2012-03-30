@@ -369,27 +369,35 @@ sub species_set {
     if($arg) {
         if(UNIVERSAL::isa($arg, 'Bio::EnsEMBL::Compara::SpeciesSet')) {
 
-            $self->{'species_set'} = $arg->genome_dbs;
+            $self->{'species_set'} = $arg;
 
-        } elsif(@$arg) {
+        } elsif((ref($arg) eq 'ARRAY') and @$arg) {
 
             my %genome_db_hash = ();
             foreach my $gdb (@$arg) {
                 throw("undefined value used as a Bio::EnsEMBL::Compara::GenomeDB\n") if (!defined($gdb));
                 throw("$gdb must be a Bio::EnsEMBL::Compara::GenomeDB\n") unless $gdb->isa("Bio::EnsEMBL::Compara::GenomeDB");
 
-                unless (defined $genome_db_hash{$gdb->dbID}) {
-                    $genome_db_hash{$gdb->dbID} = $gdb;
-                } else {
+                if(defined $genome_db_hash{$gdb->dbID}) {
                     warn("GenomeDB (".$gdb->name."; dbID=".$gdb->dbID .") appears twice in this Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n");
+                } else {
+                    $genome_db_hash{$gdb->dbID} = $gdb;
                 }
             }
-            $self->{'species_set'} = [ values %genome_db_hash ] ;
+            my $genome_dbs = [ values %genome_db_hash ] ;
+
+            my $species_set_id = $self->adaptor->db->get_SpeciesSetAdaptor->find_species_set_id_by_GenomeDBs_mix( $genome_dbs );
+
+            $self->{'species_set'} = Bio::EnsEMBL::Compara::SpeciesSet->new(
+                -genome_dbs     => $genome_dbs,
+                $species_set_id ? (-species_set_id => $species_set_id) : (),
+            );
+
         } else {
             die "Wrong type of argument to $self->species_set()";
         }
     }
-    return $self->{'species_set'};
+    return $self->{'species_set'}->genome_dbs;
 }
 
 
@@ -531,5 +539,26 @@ sub max_alignment_length {
 
   return $self->{'max_alignment_length'};
 }
+
+
+=head2 toString
+
+  Args       : (none)
+  Example    : print $mlss->toString()."\n";
+  Description: returns a stringified representation of the method_link_species_set
+  Returntype : string
+
+=cut
+
+sub toString {
+    my $self = shift;
+
+    return ref($self).": dbID=".($self->dbID || '?').
+                      ", name='".$self->name.
+                      "', source='".$self->source.
+                      "', url='".$self->url.
+                      "', {".$self->method->toString."} x {".$self->{'species_set'}->toString."}";
+}
+
 
 1;
