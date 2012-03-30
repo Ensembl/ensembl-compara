@@ -153,7 +153,7 @@ my $ortheus_mlss = $mlss_a->fetch_by_dbID($ortheus_mlss_id);
 throw("No such MethodLinkSpeciesSetID $ortheus_mlss_id in the master db\n") unless $ortheus_mlss;
 
 my $to_db_gdb_a = $db_to_populate->get_adaptor('GenomeDB');
-foreach my $genome_db ( @{ $ortheus_mlss->species_set() }, $ancestral_gdb ) {
+foreach my $genome_db ( @{ $ortheus_mlss->species_set_obj->genome_dbs }, $ancestral_gdb ) {
 	my $species_name = $genome_db->name;
 	push(@$genome_dbs, $genome_db);	
 	my $db_name = $core_db_data{ $species_name }{"dbname"} || $ancestral_db->dbc->dbname;
@@ -176,7 +176,7 @@ foreach my $genome_db ( @{ $ortheus_mlss->species_set() }, $ancestral_gdb ) {
 my $dnafrag_condition = " genome_db_id in (" . join(",", map { $_->dbID }@$genome_dbs) . ")";
 copy_table($master_db, $db_to_populate, "dnafrag", $dnafrag_condition);
 
-my $species_set_condition = " species_set_id = " . $ortheus_mlss->species_set_id;
+my $species_set_condition = " species_set_id = " . $ortheus_mlss->species_set_obj->dbID;
 copy_table($master_db, $db_to_populate, "species_set", $species_set_condition);
 
 copy_table($master_db, $db_to_populate, "method_link");

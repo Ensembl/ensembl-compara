@@ -452,8 +452,8 @@ sub print_html_list {
   foreach my $this_method_link_species_set (sort {scalar @{$a->species_set} <=> scalar @{$b->species_set}} @$all_method_link_species_sets) {
       my $species_set_name;
       foreach my $species_set_tag (@$species_set_tags) {
-          if ($species_set_tag->dbID == $this_method_link_species_set->species_set_id) {
-	      $species_set_name = $species_set_tag->get_value_for_tag("name");
+          if ($species_set_tag->dbID == $this_method_link_species_set->species_set_obj->dbID) {
+              $species_set_name = $species_set_tag->get_value_for_tag("name");
           }
       }
       if (defined $species_set_name) {

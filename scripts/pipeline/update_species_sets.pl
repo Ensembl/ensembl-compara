@@ -79,7 +79,7 @@ foreach my $this_species_set (@$species_sets_with_taxon_id) {
 
 my $low_coverage_species_sets = $species_set_adaptor->fetch_all_by_tag_value("name", "low-coverage");
 if (@$low_coverage_species_sets) {
-  my $low_coverage_species_set = (sort {$b->species_set_id <=> $a->species_set_id} @$low_coverage_species_sets)[0];
+  my $low_coverage_species_set = (sort {$b->species_set_obj->dbID <=> $a->species_set_obj->dbID} @$low_coverage_species_sets)[0];
   my $tag_value_hash = $low_coverage_species_set->get_tagvalue_hash();
   my $all_genome_dbs = $genome_db_adaptor->fetch_all();
   my $low_coverage_genome_dbs = [];

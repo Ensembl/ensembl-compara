@@ -508,8 +508,6 @@ sub get_all_method_link_species_sets {
     my $mlsss = [];
     foreach my $this_mlss_id (@$mlss_ids) {
       my $this_mlss = $method_link_species_set_adaptor->fetch_by_dbID($this_mlss_id);
-      $this_mlss->species_set_id; # Just to instantiate the species_set_id
-                                  # make sure we use the same in the new DB
       push(@$mlsss, $this_mlss);
     }
     return $mlsss;

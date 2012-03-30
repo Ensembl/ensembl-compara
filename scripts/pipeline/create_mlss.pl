@@ -57,7 +57,7 @@ perl create_mlss.pl
     [--pw] pairwise
     [--sg] singleton
     [--use_genomedb_ids] use GenomeDB IDs in MLSS name than truncated GenomeDB names
-    [--species_set_tag species_set_tag value] 
+    [--species_set_name species_set_name] 
 
 =head1 OPTIONS
 
@@ -124,9 +124,9 @@ in the list i.e. [1] [2] [3] [4] for a given  method link.
 Force the names of the create MLSS to use the Genome DB ID rather than the truncated form
 of its name (which is normally of the form H.sap).
 
-=head2 --species_set_tag
+=head2 --species_set_name
 
-Set the species_set_tag value for this species_set.
+Set the name for this species_set.
 
 =head2 Examples
 
@@ -134,7 +134,7 @@ perl create_mlss.pl
 
 perl create_mlss.pl --method_link_type BLASTZ_NET --genome_db_id 1,2
 
-perl create_mlss.pl --method_link_type PECAN --genome_db_id 1,2,3,4 --name "4 species PECAN" --source "ensembl" --url "" --species_set_tag "mammals"
+perl create_mlss.pl --method_link_type PECAN --genome_db_id 1,2,3,4 --name "4 species PECAN" --source "ensembl" --url "" --species_set_name "mammals"
 
 
 
@@ -164,7 +164,7 @@ my $force = 0;
 my $pairwise = 0;
 my $singleton = 0;
 my $use_genomedb_ids = 0;
-my $species_set_tag;
+my $species_set_name;
 
 GetOptions(
     "help" => \$help,
@@ -179,7 +179,7 @@ GetOptions(
     "pw" => \$pairwise,
     "sg" => \$singleton,
     "use_genomedb_ids" => \$use_genomedb_ids,
-    "species_set_tag=s" => \$species_set_tag,
+    "species_set_name|species_set_tag=s" => \$species_set_name,
   );
 
 if ($pairwise && $singleton) {
@@ -299,9 +299,9 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
     }
   }
 
-  if (!defined $species_set_tag) {
+  if (!defined $species_set_name) {
       unless ($force) {
-	  $species_set_tag = prompt("Set the value for this species set tag []");
+          $species_set_name = prompt("Set the value for this species_set name []");
       }
   }
 
@@ -313,11 +313,11 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($method_link_type, $genome_db_ids);
   if ($mlss) {
     print "This MethodLinkSpeciesSet already exists in the database!\n  $method_link_type: ",
-      join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set}), "\n",
+      join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set_obj->genome_dbs}), "\n",
         "  Name: ", $mlss->name, "\n",
           "  Source: ", $mlss->source, "\n",
             "  URL: $url\n";
-    print "  SpeciesSetTag: $species_set_tag\n" if (defined $species_set_tag);
+    print "  SpeciesSet name: $species_set_name\n" if (defined $species_set_name);
     print "  MethodLinkSpeciesSet has dbID: ", $mlss->dbID, "\n";
     $name = undef if ($pairwise || $singleton);
     next;
@@ -343,7 +343,7 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
       "  Name: $name\n",
         "  Source: $source\n",
           "  URL: $url\n";
-    print "  SpeciesSetTag: $species_set_tag\n" if (defined $species_set_tag);
+    print "  SpeciesSet name: $species_set_name\n" if (defined $species_set_name);
   unless ($force) {
     print "\nDo you want to continue? [y/N]? ";
     
@@ -369,10 +369,10 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   print "  MethodLinkSpeciesSet has dbID: ", $new_mlss->dbID, "\n";
   $name = undef if ($pairwise || $singleton);
 
-  if ($species_set_tag) {
+  if ($species_set_name) {
       my $sql = "INSERT INTO species_set_tag (species_set_id, tag, value) VALUES (?, 'name', ?)";
       my $sth = $compara_dba->dbc->prepare($sql);
-      $sth->execute($new_mlss->species_set_id, $species_set_tag);
+      $sth->execute($new_mlss->species_set_obj->dbID, $species_set_name);
       $sth->finish();
   }
 

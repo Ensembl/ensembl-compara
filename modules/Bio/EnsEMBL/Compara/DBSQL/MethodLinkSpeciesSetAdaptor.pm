@@ -132,7 +132,7 @@ sub store {
 
   my $method_link_id    = $method->dbID;
   my $method_link_type  = $method->type;
-  my $species_set       = $method_link_species_set->species_set;
+  my $species_set       = $method_link_species_set->species_set_obj->genome_dbs;
 
   ## Fetch genome_db_ids from Bio::EnsEMBL::Compara::GenomeDB objects
   my @genome_db_ids;
@@ -211,7 +211,7 @@ sub store {
         $sth2->finish();
       }
       my $species_set_id;
-      if ($species_set_id = $method_link_species_set->species_set_id) {
+      if ($species_set_id = $method_link_species_set->species_set_obj->dbID) {
         my $sth2 = $self->prepare("INSERT IGNORE INTO species_set VALUES (?, ?)");
         foreach my $genome_db_id (@genome_db_ids) {
           $sth2->execute($species_set_id, $genome_db_id);
@@ -327,20 +327,20 @@ sub cache_all {
         $sth->execute();
 
         while( my ($dbID, $method_link_id, $species_set_id, $name, $source, $url) = $sth->fetchrow_array()) {
-            my $method      = $method_hash->{$method_link_id} or warning "Could not fetch Method with dbID=$method_link_id for MLSS with dbID=$dbID";
-            my $species_set = $species_set_hash->{$species_set_id} or warning "Could not fetch SpeciesSet with dbID=$species_set_id for MLSS with dbID=$dbID";
+            my $method          = $method_hash->{$method_link_id} or warning "Could not fetch Method with dbID=$method_link_id for MLSS with dbID=$dbID";
+            my $species_set_obj = $species_set_hash->{$species_set_id} or warning "Could not fetch SpeciesSet with dbID=$species_set_id for MLSS with dbID=$dbID";
 
-            if($method and $species_set) {
+            if($method and $species_set_obj) {
                 my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
-                    -adaptor    => $self,
-                    -dbID       => $dbID,
+                    -adaptor            => $self,
+                    -dbID               => $dbID,
                     
-                    -method     => $method,
-                    -species_set=> $species_set,
+                    -method             => $method,
+                    -species_set_obj    => $species_set_obj,
 
-                    -name       => $name,
-                    -source     => $source,
-                    -url        => $url,
+                    -name               => $name,
+                    -source             => $source,
+                    -url                => $url,
                 );
 
                 $self->{'_cache'}->{$dbID} = $mlss;
@@ -413,7 +413,7 @@ sub fetch_by_method_link_id_species_set_id {
     if($method_link_id && $species_set_id) {
         foreach my $mlss (@{ $self->fetch_all() }) {
             if ($mlss->method->dbID() eq $method_link_id
-            and $mlss->species_set_id() == $species_set_id) {
+            and $mlss->species_set_obj->dbID() == $species_set_id) {
                 return $mlss;
             }
         }
@@ -480,7 +480,7 @@ sub fetch_all_by_GenomeDB {
 
     my @good_mlsss = ();
     foreach my $mlss (@{ $self->fetch_all() }) {
-        foreach my $this_genome_db (@{$mlss->species_set}) {
+        foreach my $this_genome_db (@{$mlss->species_set_obj->genome_dbs}) {
             if ($this_genome_db->dbID == $genome_db_id) {
                 push @good_mlsss, $mlss;
                 last;
@@ -519,7 +519,7 @@ sub fetch_all_by_method_link_type_GenomeDB {
   my $all_method_link_species_sets = $self->fetch_all();
   foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
     if ($this_method_link_species_set->method_link_type eq $method_link_type and
-        grep (/^$genome_db_id$/, map {$_->dbID} @{$this_method_link_species_set->species_set})) {
+        grep (/^$genome_db_id$/, map {$_->dbID} @{$this_method_link_species_set->species_set_obj->genome_dbs})) {
       push(@$method_link_species_sets, $this_method_link_species_set);
     }
   }
@@ -668,7 +668,7 @@ sub fetch_by_method_link_type_species_set_name {
   my $all_species_sets = $species_set_adaptor->fetch_all_by_tag_value('name', $species_set_name);
   foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
       foreach my $this_species_set (@$all_species_sets) {
-          if ($this_method_link_species_set->method_link_type eq $method_link_type && $this_method_link_species_set->species_set_id == $this_species_set->dbID) {
+          if ($this_method_link_species_set->method_link_type eq $method_link_type && $this_method_link_species_set->species_set_obj->dbID == $this_species_set->dbID) {
               return $this_method_link_species_set;
           }
       }
