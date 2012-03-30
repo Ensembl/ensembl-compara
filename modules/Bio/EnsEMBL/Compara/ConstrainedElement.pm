@@ -516,7 +516,7 @@ sub reference_dnafrag_id {
 
 =head2 get_SimpleAlign
 
-  Arg [1]    : The method_link_species_set_object of the original alignment from 
+  Arg [1]    : The method_link_species_set object of the original alignment from 
 		which the constrained elements were generated
   Example    : my $out = Bio::AlignIO->newFh(-fh=>\*STDOUT, -format=> "clustalw");
 	       my $cons = $ce_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
