@@ -116,7 +116,7 @@ Loads into param() the tag describing the species tree, from the method link spe
 sub _load_species_tree_tag_from_mlss {
     my $self = shift @_;
 
-    my $mlss_id = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
+    my $mlss_id = $self->param('mlss_id') or die "'mlss_id' is an obligatory to get the default species tree";
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
     die "Could not fetch MethodLinkSpeciesSet with the dbID '$mlss_id'" unless defined $mlss;
 
