@@ -414,6 +414,11 @@ sub get_chunking {
        $dna_collection->{'chunk_size'} = $default_chunk->{'chunk_size'};
    }
    
+   #group_set_size
+   unless (defined $dna_collection->{'group_set_size'}) {
+     $dna_collection->{'group_set_size'} = $default_chunk->{'group_set_size'};
+   }
+
    #overlap
    unless (defined $dna_collection->{'overlap'}) {
        $dna_collection->{'overlap'} = $default_chunk->{'overlap'};
