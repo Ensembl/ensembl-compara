@@ -95,14 +95,19 @@ sub run {
     my $species_tree_string = $self->param('full_species_tree');
     my $species = $self->param('cafe_species');
     my $fmt = $self->param('tree_fmt');
-    print Dumper $species if ($self->debug());
+    print STDERR Dumper $species if ($self->debug());
     my $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
 
     $self->include_distance_to_parent($eval_species_tree);
+    print STDERR "AFTER dtp:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n";
     $self->ensembl_timetree_mya_to_distance_to_parent($eval_species_tree);
+    print STDERR "AFTER mya:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n";
     $self->include_names($eval_species_tree);
+    print STDERR "AFTER names:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n";
     $self->ultrametrize($eval_species_tree);
+    print STDERR "AFTER ultrametrize:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n";
     my $binTree = $self->binarize($eval_species_tree);
+    print STDERR "AFTER binarize:\n", $binTree->newick_format('ryo', $fmt), "\n";
     $self->fix_zeros($binTree);
     my $cafeTree;
     if (defined $species) {
@@ -128,11 +133,10 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
-    my $cafe_tree_string = $self->param('cafe_tree_string');
     # To CAFETable
     $self->dataflow_output_id (
                                {
-                                'cafe_tree_string', $self->param('cafe_tree_string'),
+                                'cafe_tree_string_meta_key', $self->param('cafe_tree_string_meta_key'),
                                }, 1
                               );
 }
