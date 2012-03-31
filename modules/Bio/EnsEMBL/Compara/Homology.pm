@@ -285,13 +285,21 @@ sub taxonomy_level {
 
 sub taxonomy_alias {
 
-  my $self = shift;
+    my $self = shift;
 
-  my $ancestor_node_id = $self->ancestor_node_id;
-  my $tree_dba = $self->adaptor->db->get_ProteinTreeAdaptor;
-  my $ancestor = $tree_dba->fetch_node_by_node_id($ancestor_node_id);
+    my $ancestor_node_id = $self->ancestor_node_id;
+    return unless $ancestor_node_id;
 
-  return $ancestor->get_tagvalue('taxon_alias') || undef;
+    my $ancestor_node = $self->adaptor->db->get_GeneTreeAdaptor->fetch_node_by_node_id($ancestor_node_id);
+    return unless $ancestor_node;
+
+    my $taxon_id = $ancestor_node->get_tagvalue('taxon_id');
+    return unless $taxon_id;
+
+    my $taxon = $self->adaptor->db->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($taxon_id);
+    return unless $taxon;
+
+    return $taxon->ensembl_alias();
 }
 
 
