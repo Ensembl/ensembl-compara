@@ -1,4 +1,4 @@
-=head1 LICENSE
+=heada LICENSE
 
   Copyright (c) 1999-2012 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
@@ -98,7 +98,7 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '66',
+        'release'               => '67',
         'rel_suffix'            => '',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
         'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
@@ -160,7 +160,7 @@ sub default_options {
     # connection parameters to various databases:
 
         'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => 'compara4',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -202,11 +202,11 @@ sub default_options {
         'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
         'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
         'reuse_db' => {   # usually previous release database on compara1
-           -host   => 'compara1',
+           -host   => 'compara3',
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'mp12_ensembl_compara_65',
+           -dbname => 'mp12_ensembl_compara_66',
         },
 
         ## mode for testing the non-Blast part of the pipeline: reuse all Blasts
@@ -248,7 +248,7 @@ sub resource_classes {
          2 => { -desc => '1Gb_job',          'LSF' => '-C0 -M1000000  -R"select[mem>1000]  rusage[mem=1000]"' },
          3 => { -desc => '2Gb_job',          'LSF' => '-C0 -M2000000  -R"select[mem>2000]  rusage[mem=2000]"' },
          5 => { -desc => '8Gb_job',          'LSF' => '-C0 -M8000000  -R"select[mem>8000]  rusage[mem=8000]"' },
-         7 => { -desc => '24Gb_job',         'LSF' => '-C0 -M24000000 -R"select[mem>24000] rusage[mem=24000]" -q hugemem' },
+         7 => { -desc => '24Gb_job',         'LSF' => '-C0 -M24000000 -R"select[mem>24000] rusage[mem=24000]" -q long' },
     };
 }
 
@@ -395,8 +395,6 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => {
                     'sequence_table_reuse'              => undef,
-                    'sequence_cds_table_reuse'          => undef,
-                    'sequence_exon_bounded_table_reuse' => undef,
                     'paf_table_reuse'                   => undef,
                     'mysql:////species_set'             => { 'genome_db_id' => '#genome_db_id#', 'species_set_id' => '#reuse_ss_id#' },
                 },
@@ -450,7 +448,7 @@ sub pipeline_analyses {
             -can_be_empty  => 1,
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
-                1 => [ 'subset_table_reuse' ],   # n_reused_species
+                1 => [ 'subset_table_reuse', 'sequence_cds_table_reuse', 'sequence_exon_bounded_table_reuse' ],   # n_reused_species
             },
         },
 
@@ -573,7 +571,9 @@ sub pipeline_analyses {
                             'ALTER TABLE peptide_align_feature_#per_genome_suffix# DISABLE KEYS',
                 ],
             },
+            -batch_size    =>  100,  # they can be really, really short
             -can_be_empty  => 1,
+            -hive_capacity => -1,
             -priority => -10,
         },
 
@@ -586,6 +586,7 @@ sub pipeline_analyses {
                 'fasta_dir'                 => $self->o('fasta_dir'),
             },
             -batch_size    =>  20,  # they can be really, really short
+            -hive_capacity => -1,
             -flow_into => {
                 1 => [ 'blast_factory' ],   # n_species
             },
@@ -689,7 +690,8 @@ sub pipeline_analyses {
                 'cluster_dir'               => $self->o('cluster_dir'),
                 'groupset_tag'              => 'ClustersetQC',
             },
-            -hive_capacity => $self->o('qc_capacity'),
+            -hive_capacity  => $self->o('qc_capacity'),
+            -rc_id          => 1,
         },
 
         {   -logic_name => 'per_genome_clusterset_qc',
@@ -771,6 +773,7 @@ sub pipeline_analyses {
                 'use_genomedb_id'   => $self->o('use_genomedb_id'),
                 'tree_id_str'       => 'protein_tree_id',
                 'tag_split_genes'   => 1,
+                'mlss_id'                   => $self->o('mlss_id'),
             },
             -hive_capacity        => $self->o('ortho_tree_capacity'),
             -rc_id => 1,
@@ -852,6 +855,7 @@ sub pipeline_analyses {
                 'groupset_tag'              => 'GeneTreesetQC',
             },
             -hive_capacity => $self->o('qc_capacity'),
+            -rc_id          => 1,
             -flow_into => {
                 1 => [ 'group_genomes_under_taxa' ],    # backbone
             },
