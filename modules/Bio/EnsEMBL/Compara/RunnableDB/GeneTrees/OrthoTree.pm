@@ -868,13 +868,16 @@ sub store_gene_link_as_homology {
   if (exists $self->param('mlss_hash')->{$mlss_key}) {
     $mlss = $self->param('mlss_hash')->{$mlss_key};
   } else {
-      $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-      $mlss->method_link_type($mlss_type);
+      my $gdbs;
       if ($gene1->genome_db->dbID == $gene2->genome_db->dbID) {
-          $mlss->species_set([$gene1->genome_db]);
+          $gdbs = [$gene1->genome_db];
       } else {
-          $mlss->species_set([$gene1->genome_db, $gene2->genome_db]);
+          $gdbs = [$gene1->genome_db, $gene2->genome_db];
       }
+      $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
+        -method => $self->compara_dba->get_MethodAdaptor->fetch_by_type($mlss_type),
+        -species_set_obj => $self->compara_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs($gdbs),
+      );
       $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss) unless ($self->param('_readonly'));
       $self->param('mlss_hash')->{$mlss_key} = $mlss;
   }
@@ -882,11 +885,9 @@ sub store_gene_link_as_homology {
   my $homology = new Bio::EnsEMBL::Compara::Homology;
   $homology->description($type);
   $homology->subtype($subtype);
-  # $homology->node_id($ancestor->node_id);
   $homology->ancestor_node_id($ancestor->node_id);
   $homology->tree_node_id($tree_node_id);
-  $homology->method_link_type($mlss->method_link_type);
-  $homology->method_link_species_set($mlss);
+  $homology->method_link_species_set_id($mlss->dbID);
 
   my $key = $mlss->dbID . "_" . $gene1->dbID;
   $self->param('homology_consistency')->{$key}{$type} = 1;
