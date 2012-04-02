@@ -71,8 +71,8 @@ sub content {
       'width'   => '300px',
   );
 
-  my $example = qq(1   881907    881906    -/C   +
-5   140532    140532    T/C   +);
+  my $example = qq(1  881907  881906  -/C  +
+5  140532  140532  T/C  +);
 
   $form->add_element( type => 'Hidden', name => 'variation_limit', 'value' => $variation_limit);
   $form->add_element( type => 'String', name => 'name', label => 'Name for this upload (optional)' );
