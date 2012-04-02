@@ -299,9 +299,11 @@ sub calc_stats {
 	throw("$dump_features --url $dbc_url --compara_url $compara_url --species $species --feature $feature execution failed\n");
     }
 
-    my $coverage_data = `/software/ensembl/compara/bin/compare_beds.pl $genome_bed $alignment_bed --stats`;
-    my $coding_coverage_data = `/software/ensembl/compara/bin/compare_beds.pl $genome_bed $coding_exons_bed --stats`;
-    my $alignment_coding_data = `/software/ensembl/compara/bin/compare_beds.pl $coding_exons_bed $alignment_bed --stats`;
+    #Run compare_beds.pl
+    my $compare_beds = $self->param('compare_beds');
+    my $coverage_data = `$compare_beds $genome_bed $alignment_bed --stats`;
+    my $coding_coverage_data = `$compare_beds $genome_bed $coding_exons_bed --stats`;
+    my $alignment_coding_data = `$compare_beds $coding_exons_bed $alignment_bed --stats`;
 
     my $coverage = parse_compare_bed_output($coverage_data);
     my $coding_coverage = parse_compare_bed_output($coding_coverage_data);
