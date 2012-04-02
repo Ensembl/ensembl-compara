@@ -198,7 +198,7 @@ foreach my $sp (@$species) {
       # Add to the registry and check it came back OK
       my $tmp = _get_das_coords(_coord_system_as_xml($coord_type, '', $sp, $taxid), $coord_type);
       if (! $check_registry) {
-	$tmp->{$sp}{$coord_type} || die "[FATAL] Unable to create $coord_type $sp coordinates";
+	      $tmp->{$sp}{$coord_type} || warn "[FATAL] Unable to create $coord_type $sp coordinates";
       }
     }
   }
@@ -495,8 +495,10 @@ sub _get_das_coords {
   }
 
   my $resp = $ua->request( $req );
-  $resp->is_success || die "Unable to retrieve coordinate system list from the DAS Registry: ".$resp->status_line." : ".$resp->content;
-  
+  unless ($resp->is_success) {
+    warn "Unable to retrieve coordinate system list from the DAS Registry: ".$resp->status_line." : ".$resp->content;
+  }  
+
   my $xml = $resp->content;
   $xml =~ s{^\s*(<\?xml.*?>)?(\s*</?DASCOORDINATESYSTEM>\s*)?}{}mix;
   $xml =~ s/\s*$//mx;
@@ -547,45 +549,43 @@ sub publish_multi_species_sources {
     (my $vsp = $sp) =~ s/\_/ /g;
   
     foreach my $feature (@feature_types) {
-	print STDERR "[INFO]  Parsing Multi species source * $feature * at ".gmtime()."\n";
-	my $coord_type = $sources_info->{$feature}->{coord_system} or next;
-	unless (exists $das_coords->{$sp}{$coord_type}) {
-	    # Add to the registry and check it came back OK
-	    my $tmp = _get_das_coords(_coord_system_as_xml($coord_type, '', $sp, $taxid), $coord_type);
-	    $tmp->{$sp}{$coord_type} || die "[FATAL] Unable to create $coord_type $sp coordinates";
-	}
+	    print STDERR "[INFO]  Parsing Multi species source * $feature * at ".gmtime()."\n";
+	    my $coord_type = $sources_info->{$feature}->{coord_system} or next;
+	    unless (exists $das_coords->{$sp}{$coord_type}) {
+	      # Add to the registry and check it came back OK
+	      my $tmp = _get_das_coords(_coord_system_as_xml($coord_type, '', $sp, $taxid), $coord_type);
+	      $tmp->{$sp}{$coord_type} || die "[FATAL] Unable to create $coord_type $sp coordinates";
+	    }
 
-	my $dbn = $sources_info->{$feature}->{master_db} || 'DATABASE_CORE';
-	my $table = $sources_info->{$feature}->{master_table};
-	my $rv = $species_defs->table_info_other( $sp, $dbn, $table );
-	my $rows = $rv ? $rv->{'rows'} : 0;
+	    my $dbn = $sources_info->{$feature}->{master_db} || 'DATABASE_CORE';
+	    my $table = $sources_info->{$feature}->{master_table};
+	    my $rv = $species_defs->table_info_other( $sp, $dbn, $table );
+	    my $rows = $rv ? $rv->{'rows'} : 0;
 	
-	print STDERR "\t $sp : $feature : $table => ", $rows || 'Off',  "\n";
+	    print STDERR "\t $sp : $feature : $table => ", $rows || 'Off',  "\n";
 
-	next unless $rows || $sources_info->{$feature}->{params}->{species};
-	my $sql = $sources_info->{$feature}->{query};
-	my $sth = ($dbn =~ /COMPARA/) ? $cdbh->prepare($sql) : $dbh->prepare($sql);
-	my @params = $sources_info->{$feature}->{params}->{species} ? ($vsp) : ();
+	    next unless $rows || $sources_info->{$feature}->{params}->{species};
+	    my $sql = $sources_info->{$feature}->{query};
+	    my $sth = ($dbn =~ /COMPARA/) ? $cdbh->prepare($sql) : $dbh->prepare($sql);
+	    my @params = $sources_info->{$feature}->{params}->{species} ? ($vsp) : ();
 	
-	$sth->execute(@params);
-	my @r = $sth->fetchrow();
-	print STDERR "\t $sp : $feature : $table => Off (no features)\n" and next unless @r;
-	print STDERR "\t $sp : $feature : $table => ", join('*', @r), "\n";
-	next unless @r;
+	    $sth->execute(@params);
+	    my @r = $sth->fetchrow();
+	    print STDERR "\t $sp : $feature : $table => Off (no features)\n" and next unless @r;
+	    print STDERR "\t $sp : $feature : $table => ", join('*', @r), "\n";
+	    next unless @r;
 
+	    my %coords = ();
+	    # Set up the coordinate system details
+	    my $cs_xml = $das_coords->{''}{$coord_type}{''} || next;
+	    my $test_range = $r[0];
 
-
-	my %coords = ();
-	# Set up the coordinate system details
-	my $cs_xml = $das_coords->{''}{$coord_type}{''} || next;
-	my $test_range = $r[0];
-
-	$cs_xml =~ s/test_range=""/test_range="$test_range"/;
-	$coords{$coord_type}{''} = $cs_xml;
-	my $dsn = sprintf("Multi.Ensembl-GeneID.%s", $feature);
-	$shash->{$dsn}->{coords} = \%coords;
-	$shash->{$dsn}->{mapmaster} = $permalink_base;
-	$shash->{$dsn}->{description} = $sources_info->{$feature}->{description} || sprintf("%s Annotation source ", $sources_info->{$feature}->{name});
+	    $cs_xml =~ s/test_range=""/test_range="$test_range"/;
+	    $coords{$coord_type}{''} = $cs_xml;
+	    my $dsn = sprintf("Multi.Ensembl-GeneID.%s", $feature);
+	    $shash->{$dsn}->{coords} = \%coords;
+	    $shash->{$dsn}->{mapmaster} = $permalink_base;
+	    $shash->{$dsn}->{description} = $sources_info->{$feature}->{description} || sprintf("%s Annotation source ", $sources_info->{$feature}->{name});
     }
 }
 
