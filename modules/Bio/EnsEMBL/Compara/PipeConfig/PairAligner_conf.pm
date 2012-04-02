@@ -101,6 +101,7 @@ sub default_options {
 	# executable locations:
 	'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
 	'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
+	'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
 	'update_config_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/update_config_database.pl",
 	'create_pair_aligner_page_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/create_pair_aligner_page.pl",
 	'faToNib_exe' => '/software/ensembl/compara/bin/faToNib',
@@ -419,6 +420,9 @@ sub pipeline_analyses {
 	    {  -logic_name => $self->o('pair_aligner_logic_name') . "_himem1",
  	       -module     => $self->o('pair_aligner_module'),
  	       -hive_capacity => $self->o('pair_aligner_hive_capacity'),
+	       -parameters => { 
+			       'pair_aligner_exe' => $self->o('pair_aligner_exe'),
+			      },
  	       -batch_size => $self->o('pair_aligner_batch_size'),
  	       -program    => $self->o('pair_aligner_program'), 
 	       -can_be_empty  => 1, 
@@ -495,7 +499,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      2 => [ 'dump_large_nib_for_chains' ],
 			     },
-	       -rc_id => 0,
+	       -rc_id => 1,
  	    },
  	    {  -logic_name => 'dump_large_nib_for_chains',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
@@ -635,6 +639,7 @@ sub pipeline_analyses {
 	      -parameters => {
 			      'skip' => $self->o('skip_pairaligner_stats'),
 			      'dump_features' => $self->o('dump_features_exe'),
+			      'compare_beds' => $self->o('compare_beds_exe'),
 			      'create_pair_aligner_page' => $self->o('create_pair_aligner_page_exe'),
 			      'bed_dir' => $self->o('bed_dir'),
 			      'ensembl_release' => $self->o('release'),
