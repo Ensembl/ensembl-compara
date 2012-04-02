@@ -59,7 +59,7 @@ sub genome_dbs {
       throw("undefined value used as a Bio::EnsEMBL::Compara::GenomeDB\n")
         if (!defined($gdb));
       throw("$gdb must be a Bio::EnsEMBL::Compara::GenomeDB\n")
-        unless $gdb->isa("Bio::EnsEMBL::Compara::GenomeDB");
+        unless UNIVERSAL::isa($gdb, "Bio::EnsEMBL::Compara::GenomeDB");
 
       unless (defined $genome_dbs->{$gdb->dbID}) {
         $genome_dbs->{$gdb->dbID} = $gdb;
