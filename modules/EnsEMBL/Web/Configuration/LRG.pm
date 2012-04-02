@@ -113,22 +113,6 @@ sub populate_tree {
     { 'availability' => 'lrg' }
   ));
 
-#  $var_menu->append($self->create_node('Variation_LRG/Image',  'Variation Image',
-#    [qw( image EnsEMBL::Web::Component::LRG::LRGSNPImage )],
-#    { 'availability' => 'lrg' }
-#  ));
-
-  # External Data tree, including non-positional DAS sources
-  #my $external = $self->create_node('ExternalData', 'External Data',
-  #  [qw( external EnsEMBL::Web::Component::Gene::ExternalData )],
-  #  { 'availability' => 'gene' }
-  #);
-  
-  #$external->append($self->create_node('UserAnnotation', 'Personal annotation',
-  #  [qw( manual_annotation EnsEMBL::Web::Component::Gene::UserAnnotation )],
-  #  { 'availability' => 'gene' }
-  #));
-  
   $self->create_subnode('Output', 'Export LRG Data',
     [qw( export EnsEMBL::Web::Component::Export::Output )],
     { 'availability' => 'lrg', 'no_menu_entry' => 1 }
