@@ -647,20 +647,24 @@ sub parse_defaults {
 sub write_mlss_entry {
     my ($compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db) = @_;
 
-    #create method_link
-    my $sql = "INSERT ignore into method_link SET method_link_id=$method_link_id, type='$method_link_type'";
-    $compara_dba->dbc->do($sql);
+    my $method = Bio::EnsEMBL::Compara::Method->new(
+        -type               => $method_link_type,
+        -dbID               => $method_link_id,
+    );
 
-    # create method_link_species_set
-    my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-    $mlss->method_link_type($method_link_type);
-    
-    if ($ref_genome_db->dbID == $non_ref_genome_db->dbID) {
-	$mlss->species_set([$ref_genome_db]);
-    } else {
-	$mlss->species_set([$ref_genome_db,$non_ref_genome_db]);
-    } 
+    my $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
+        -genome_dbs         => ($ref_genome_db->dbID == $non_ref_genome_db->dbID)
+                                        ? [$ref_genome_db]
+                                        : [$ref_genome_db,$non_ref_genome_db]
+    );
+
+    my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
+        -method             => $method,
+        -species_set_obj    => $species_set_obj,
+    );
+
     $compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+
     return $mlss;
 }
 
