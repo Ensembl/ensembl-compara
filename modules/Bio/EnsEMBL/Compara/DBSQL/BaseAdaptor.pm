@@ -39,17 +39,22 @@ sub left_join_clause {
                 [qw(fm.family_id fm.member_id fm.cigar_line)]]
                 # any additional columns that the join could imply (optional)
                 # as an arrayref 
+  Arg [3]    : (optional) string $final_clause
+               Additional clause to the end of the SQL query used to fetch feature
+               records. This is useful to add a required ORDER BY or LIMIT clause
+               to the query for example. This argument overrides the return value
+               of $self->_final_clause()
   Example    : $arrayref = $a->generic_fetch($constraint, $join);
   Description: Performs a database fetch and returns BaseRelation-inherited objects
-  Returntype : arrayref of Bio::EnsEMBL::Compara::BaseRelation-inherited objects
+  Returntype : arrayref of objects
   Exceptions : none
   Caller     : various adaptors' specific fetch_ subroutines
 
 =cut
   
 sub generic_fetch {
-  my ($self, $constraint, $join) = @_;
-  
+  my ($self, $constraint, $join, $final_clause) = @_;
+
   my @tables = $self->_tables;
   my $columns = join(', ', $self->_columns());
   
@@ -89,7 +94,11 @@ sub generic_fetch {
   }
 
   #append additional clauses which may have been defined
-  $sql .= ' '.$self->_final_clause;
+  if ($final_clause) {
+    $sql .= ' '.$final_clause;
+  } else {
+    $sql .= ' '.$self->_final_clause;
+  }
 
   my $sth = $self->prepare($sql);
 
