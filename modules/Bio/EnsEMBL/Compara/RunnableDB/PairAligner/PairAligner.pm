@@ -148,14 +148,18 @@ sub fetch_input {
   #
   # create method_link_species_set
   #
-  my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  $mlss->method_link_type($self->param('method_link_type'));
-  if ($first_qy_chunk->dnafrag->genome_db->dbID == $first_db_chunk->dnafrag->genome_db->dbID) {
-    $mlss->species_set([$first_qy_chunk->dnafrag->genome_db]);
-  } else {
-    $mlss->species_set([$first_qy_chunk->dnafrag->genome_db,
-                        $first_db_chunk->dnafrag->genome_db]);
-  } 
+  my $method = Bio::EnsEMBL::Compara::Method->new( -type => $self->param('method_link_type') );
+
+  my $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
+        -genome_dbs => ($first_qy_chunk->dnafrag->genome_db->dbID == $first_db_chunk->dnafrag->genome_db->dbID)
+                            ? [$first_qy_chunk->dnafrag->genome_db]
+                            : [$first_qy_chunk->dnafrag->genome_db, $first_db_chunk->dnafrag->genome_db]
+  );
+        
+  my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
+        -method             => $method,
+        -species_set_obj    => $species_set_obj,
+  );
 
   $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
   $self->param('method_link_species_set', $mlss);
