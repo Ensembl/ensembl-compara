@@ -547,7 +547,8 @@ sub toString {
                       ", name='".$self->name.
                       "', source='".$self->source.
                       "', url='".$self->url.
-                      "', {".$self->method->toString."} x {".$self->species_set_obj->toString."}";
+                      "', max_alignment_length=".($self->max_alignment_length || '?').
+                      ", {".$self->method->toString."} x {".$self->species_set_obj->toString."}";
 }
 
 
