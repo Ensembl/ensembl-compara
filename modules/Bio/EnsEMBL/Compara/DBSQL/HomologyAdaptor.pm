@@ -546,14 +546,10 @@ sub fetch_by_stable_id {
 # internal methods used in multiple calls above to build homology objects from table data  
 
 sub _tables {
-  my $self = shift;
-
   return (['homology', 'h']);
 }
 
 sub _columns {
-  my $self = shift;
-
   return qw (h.homology_id
              h.method_link_species_set_id
              h.description
@@ -599,11 +595,6 @@ sub _objs_from_sth {
   }
   
   return \@homologies;  
-}
-
-sub _default_where_clause {
-  my $self = shift;
-  return '';
 }
 
 #

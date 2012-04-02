@@ -33,7 +33,7 @@ sub fetch_by_dbID {
   #construct a constraint like 't1.table1_id = 1'
   my $constraint = "${syn}.${name}_id = $id";
 
-  #return first element of _generic_fetch list
+  #return first element of generic_fetch list
   my ($obj) = @{$self->generic_fetch($constraint)};
   return $obj;
 }
@@ -66,7 +66,7 @@ sub fetch_by_stable_id {
   #construct a constraint like 't1.table1_id = 1'
   my $constraint = "${syn}.stable_id = '$stable_id'";
 
-  #return first element of _generic_fetch list
+  #return first element of generic_fetch list
   my ($obj) = @{$self->generic_fetch($constraint)};
   return $obj;
 }

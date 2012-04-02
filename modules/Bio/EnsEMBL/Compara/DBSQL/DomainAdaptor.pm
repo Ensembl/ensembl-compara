@@ -129,14 +129,10 @@ sub fetch_by_description_with_wildcards{
 # internal method used in multiple calls above to build domain objects from table data  
 
 sub _tables {
-  my $self = shift;
-
   return (['domain', 'd'], ['source', 's']);
 }
 
 sub _columns {
-  my $self = shift;
-
   return qw (d.domain_id
              d.stable_id
              d.description
@@ -168,8 +164,6 @@ sub _objs_from_sth {
 }
 
 sub _default_where_clause {
-  my $self = shift;
-
   return 'd.source_id = s.source_id';
 }
 

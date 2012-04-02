@@ -175,14 +175,10 @@ sub fetch_by_description_with_wildcards{
 #internal method used in multiple calls above to build family objects from table data  
 
 sub _tables {
-  my $self = shift;
-
   return (['family', 'f']);
 }
 
 sub _columns {
-  my $self = shift;
-
   return qw (f.family_id
              f.stable_id
              f.version
@@ -214,10 +210,6 @@ sub _objs_from_sth {
   return \@families;  
 }
 
-sub _default_where_clause {
-  my $self = shift;
-  return '';
-}
 
 #
 # STORE METHODS
