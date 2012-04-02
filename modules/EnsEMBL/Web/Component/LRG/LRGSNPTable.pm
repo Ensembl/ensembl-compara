@@ -17,7 +17,7 @@ sub content {
   my $hub              = $self->hub;
   my $consequence_type = $hub->param('sub_table');
 	my $icontext         = $hub->param('context') || 'FULL';
-  my $lrg              = $self->configure($icontext, $hub->get_imageconfig('lrgsnpview_transcript'));
+  my $lrg              = $self->configure($icontext, $consequence_type);
   my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$lrg->get_all_transcripts};
   
   my $count;
