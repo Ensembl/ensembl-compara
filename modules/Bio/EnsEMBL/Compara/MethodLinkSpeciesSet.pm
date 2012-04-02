@@ -319,7 +319,7 @@ sub _set_genome_dbs {
     }
     my $genome_dbs = [ values %genome_db_hash ] ;
 
-    my $species_set_id = $self->adaptor->db->get_SpeciesSetAdaptor->find_species_set_id_by_GenomeDBs_mix( $genome_dbs );
+    my $species_set_id = $self->adaptor && $self->adaptor->db->get_SpeciesSetAdaptor->find_species_set_id_by_GenomeDBs_mix( $genome_dbs );
 
     my $ss_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
         -genome_dbs     => $genome_dbs,
