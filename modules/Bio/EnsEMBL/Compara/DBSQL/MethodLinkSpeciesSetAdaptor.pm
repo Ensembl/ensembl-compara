@@ -105,42 +105,21 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::Tag
 =cut
 
 sub store {
-  my ($self, $method_link_species_set) = @_;
+  my ($self, $mlss) = @_;
 
   throw("method_link_species_set must be a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet\n")
-    unless ($method_link_species_set && ref $method_link_species_set &&
-        $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+    unless ($mlss && ref $mlss &&
+        $mlss->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
 
-  my $method_link_species_set_sql = qq{
-        INSERT IGNORE INTO method_link_species_set (
-          method_link_species_set_id,
-          method_link_id,
-          species_set_id,
-          name,
-          source,
-          url)
-        VALUES (?, ?, ?, ?, ?, ?)
-    };
-
-  my $method            = $method_link_species_set->method();
-
+  my $method            = $mlss->method();
   $self->db->get_MethodAdaptor->store( $method );   # will only store if the object needs storing (type is missing) and reload the dbID otherwise
 
-  my $method_link_id    = $method->dbID;
-  my $method_link_type  = $method->type;
-  my $species_set       = $method_link_species_set->species_set_obj->genome_dbs;
-
-  ## Fetch genome_db_ids from Bio::EnsEMBL::Compara::GenomeDB objects
-  my @genome_db_ids;
-  foreach my $species (@$species_set) {
-    push(@genome_db_ids, $species->dbID);
-  }
+  my $species_set_obj   = $mlss->species_set_obj();
+  $self->db->get_SpeciesSetAdaptor->store( $species_set_obj );
 
   my $dbID;
-  my $already_existing_method_link_species_set =
-      $self->fetch_by_method_link_type_GenomeDBs($method_link_type,$species_set, 1);
-  if ($already_existing_method_link_species_set) {
-    $dbID = $already_existing_method_link_species_set->dbID;
+  if(my $already_stored_method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method->dbID, $species_set_obj->dbID, 1) ) {
+    $dbID = $already_stored_method_link_species_set->dbID;
   }
 
   if (!$dbID) {
@@ -150,31 +129,27 @@ sub store {
     #   "It will not work to lock the table without specifying the alias"
     #Thus we need to lock method_link_species_set as a, method_link_species_set as b, and method_link_species_set
 
-		my $original_dwi = $self->dbc()->disconnect_when_inactive();
+	my $original_dwi = $self->dbc()->disconnect_when_inactive();
   	$self->dbc()->disconnect_when_inactive(0);
 
-    $self->dbc->do(qq{ LOCK TABLES method_link WRITE,
-                       method_link_species_set as mlss WRITE,
-                       method_link_species_set as mlss1 WRITE,
-                       method_link_species_set as mlss2 WRITE,
-                       method_link as m WRITE,
-                       method_link as ml WRITE,
-                       species_set WRITE,
-                       species_set as ss WRITE,
-                       species_set as ss1 WRITE,
-                       species_set as ss2 WRITE,
-                       method_link_species_set WRITE });
+    $self->dbc->do(qq{ LOCK TABLES
+                        method_link_species_set WRITE,
+                        method_link_species_set as mlss WRITE,
+                        method_link_species_set as mlss1 WRITE,
+                        method_link_species_set as mlss2 WRITE,
+                        method_link WRITE,
+                        method_link as m WRITE,
+                        method_link as ml WRITE
+   });
 
-    # Now, check if the object has not been stored before (tables are locked)
-    $already_existing_method_link_species_set =
-        $self->fetch_by_method_link_type_GenomeDBs($method_link_type,$species_set, 1);
-    if ($already_existing_method_link_species_set) {
-      $dbID = $already_existing_method_link_species_set->dbID;
+        # check again if the object has not been stored in the meantime (tables are locked)
+    if(my $already_stored_method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method->dbID, $species_set_obj->dbID, 1) ) {
+        $dbID = $already_stored_method_link_species_set->dbID;
     }
 
     # If the object still does not exist in the DB, store it
     if (!$dbID) {
-      $dbID = $method_link_species_set->dbID();
+      $dbID = $mlss->dbID();
       if (!$dbID) {
         ## Use conversion rule for getting a new dbID. At the moment, we use the following ranges:
         ##
@@ -185,6 +160,8 @@ sub store {
         ##
         ## => the method_link_species_set_id must be between 10000 times the hundreds in the
         ## method_link_id and the next hundred.
+
+        my $method_link_id    = $method->dbID;
         my $sth2 = $self->prepare("SELECT
             MAX(mlss1.method_link_species_set_id + 1)
             FROM method_link_species_set mlss1 LEFT JOIN method_link_species_set mlss2
@@ -206,28 +183,24 @@ sub store {
         }
         $sth2->finish();
       }
-      my $species_set_id;
-      if ($species_set_id = $method_link_species_set->species_set_obj->dbID) {
-        my $sth2 = $self->prepare("INSERT IGNORE INTO species_set VALUES (?, ?)");
-        foreach my $genome_db_id (@genome_db_ids) {
-          $sth2->execute($species_set_id, $genome_db_id);
-        }
-        $sth2->finish();
-      }
-      if (!$species_set_id) {
-        my $sth2 = $self->prepare("INSERT INTO species_set VALUES (?, ?)");
-        foreach my $genome_db_id (@genome_db_ids) {
-          $sth2->execute( ($species_set_id or undef), $genome_db_id);
-          $species_set_id = $sth2->{'mysql_insertid'};
-        }
-        $sth2->finish();
-      }
-      my $sth2 = $self->prepare($method_link_species_set_sql);
-      $sth2->execute(($dbID or undef), $method_link_id, $species_set_id,
-          ($method_link_species_set->name or undef), ($method_link_species_set->source or undef),
-          ($method_link_species_set->url or ""));
-      $dbID = $sth2->{'mysql_insertid'};
-      $sth2->finish();
+
+      my $method_link_species_set_sql = qq{
+            INSERT IGNORE INTO method_link_species_set (
+              method_link_species_set_id,
+              method_link_id,
+              species_set_id,
+              name,
+              source,
+              url)
+            VALUES (?, ?, ?, ?, ?, ?)
+      };
+
+      my $sth3 = $self->prepare($method_link_species_set_sql);
+      $sth3->execute(($dbID or undef), $method->dbID, $species_set_obj->dbID,
+          ($mlss->name or undef), ($mlss->source or undef),
+          ($mlss->url or ""));
+      $dbID = $sth3->{'mysql_insertid'};
+      $sth3->finish();
     }
 
     ## Unlock tables
@@ -235,14 +208,14 @@ sub store {
     $self->dbc()->disconnect_when_inactive($original_dwi);
   }
 
-  $method_link_species_set->dbID($dbID);
-  $method_link_species_set->adaptor($self);
+  $mlss->dbID($dbID);
+  $mlss->adaptor($self);
 
-  $self->sync_tags_to_database( $method_link_species_set );
+  $self->sync_tags_to_database( $mlss );
 
   $self->cache_all(1);
 
-  return $method_link_species_set;
+  return $mlss;
 }
 
 
@@ -378,7 +351,7 @@ sub fetch_all {
 =cut
 
 sub fetch_by_method_link_id_species_set_id {
-    my ($self, $method_link_id, $species_set_id) = @_;
+    my ($self, $method_link_id, $species_set_id, $no_warning) = @_;
 
     if($method_link_id && $species_set_id) {
         foreach my $mlss (@{ $self->fetch_all() }) {
@@ -389,7 +362,9 @@ sub fetch_by_method_link_id_species_set_id {
         }
     }
 
-    warning("Unable to find method_link_species_set with method_link_id='$method_link_id' and species_set_id='$species_set_id'");
+    unless($no_warning) {
+        warning("Unable to find method_link_species_set with method_link_id='$method_link_id' and species_set_id='$species_set_id'");
+    }
     return undef;
 }
 
