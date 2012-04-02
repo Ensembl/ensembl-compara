@@ -117,13 +117,17 @@ sub get_dna_align_features {
   my (%data, $max);
   
   foreach my $chr (@$chromosomes) {
+    my $slice    = $slice_adaptor->fetch_by_region('chromosome', $chr);
+    my $features = $feature_adaptor->fetch_all_by_Slice($slice, $logic_name);
+    
+    next unless scalar @$features;
+    
     my $start = 1;
     my $end   = $bin_size;
     my @scores;
     
     for (0..$bins-1) {
-      my $features = $feature_adaptor->fetch_all_by_Slice($slice_adaptor->fetch_by_region('chromosome', $chr, $start, $end), $logic_name); ## Fetch data from the userdata db, for this chr only
-      my $count    = scalar @$features;
+      my $count    = scalar grep { $_->start >= $start && $_->end <= $end } @$features;
       
       $_  += $bin_size for $start, $end;
       $max = $count if $max < $count;
@@ -131,13 +135,11 @@ sub get_dna_align_features {
       push @scores, $count;
     }
     
-    if ($max) {
-      $data{$chr}{'dnaAlignFeature'} = {
-        scores => \@scores,
-        colour => $colour,
-        sort   => 0,
-      };
-    }
+    $data{$chr}{'dnaAlignFeature'} = {
+      scores => \@scores,
+      colour => $colour,
+      sort   => 0,
+    };
   }
   
   return (\%data, $max);
