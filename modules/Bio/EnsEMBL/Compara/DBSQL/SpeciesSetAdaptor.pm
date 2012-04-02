@@ -252,19 +252,12 @@ sub find_species_set_id_by_GenomeDBs_mix {
   }
 
   unless(@genome_db_ids) {
+    warning("Empty genome_dbs list, nothing to look for");
     return undef;
   }
+  my $gc = join(',', sort @genome_db_ids);
 
-  my $sql = qq{
-          SELECT
-            species_set_id,
-            COUNT(*) as count
-          FROM
-            species_set
-          WHERE
-            genome_db_id in (}.join(",", @genome_db_ids).qq{)
-          GROUP BY species_set_id
-          HAVING count = }.(scalar(@genome_db_ids));
+  my $sql = "SELECT species_set_id FROM species_set GROUP BY species_set_id HAVING GROUP_CONCAT(genome_db_id ORDER BY genome_db_id)='$gc'";
   my $sth = $self->prepare($sql);
   $sth->execute();
   my $all_rows = $sth->fetchall_arrayref();
@@ -272,32 +265,8 @@ sub find_species_set_id_by_GenomeDBs_mix {
 
   if (!@$all_rows) {
     return undef;
-  }
-  my $species_set_ids = [map {$_->[0]} @$all_rows];
-
-  ## Keep only the species_set which does not contain any other genome_db_id
-  $sql = qq{
-          SELECT
-            species_set_id,
-            COUNT(*) as count
-          FROM
-            species_set
-          WHERE
-            species_set_id in (}.join(",", @$species_set_ids).qq{)
-          GROUP BY species_set_id
-          HAVING count = }.(scalar(@genome_db_ids));
-  $sth = $self->prepare($sql);
-  $sth->execute();
-
-  $all_rows = $sth->fetchall_arrayref();
-
-  $sth->finish();
-
-  if (!@$all_rows) {
-    return undef;
   } elsif (@$all_rows > 1) {
-    warning("Several species_set_ids have been found for genome_db_ids (".
-        join(",", @genome_db_ids)."): ".join(",", map {$_->[0]} @$all_rows));
+    warning("Several SpeciesSets([$gc]) have been found, species_set_ids: ".join(', ', map {$_->[0]} @$all_rows));
   }
   return $all_rows->[0]->[0];
 }
