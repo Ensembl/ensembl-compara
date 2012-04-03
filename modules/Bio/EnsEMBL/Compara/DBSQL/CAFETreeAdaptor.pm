@@ -356,6 +356,7 @@ sub columns {
             'ct.method_link_species_set_id',
             'ct.species_tree',
             'ct.lambdas',
+            'ct.p_value_lim',
 
             'cta.fam_id',
             'cta.taxon_id',
@@ -408,7 +409,6 @@ sub create_instance_from_rowhash {
 sub init_instance_from_rowhash {
     my ($self, $node, $rowhash) = @_;
 
-
     # SUPER is NestedSet
     $self->SUPER::init_instance_from_rowhash($node, $rowhash);
 
@@ -420,6 +420,7 @@ sub init_instance_from_rowhash {
     $node->taxon_id($rowhash->{taxon_id});
     $node->n_members($rowhash->{n_members});
     $node->fam_id($rowhash->{fam_id});
+    $node->pvalue_lim($rowhash->{p_value_lim});
 
     $node->adaptor($self);
     return $node;
