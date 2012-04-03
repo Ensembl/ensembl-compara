@@ -4,7 +4,6 @@ use strict;
 
 use GD;
 use GD::Simple;
-use GD::Text;
 use URI::Escape qw(uri_escape);
 use POSIX qw(floor ceil);
 
@@ -28,28 +27,82 @@ use base qw(Sanger::Graphics::GlyphSet);
 
 our %cache;
 
-#########
-# constructor
-#
-
-sub _colour_background {
-  return 1;
-}
-
-sub error_track_name { return $_[0]->my_config('caption'); }
-sub my_label         { return $_[0]->my_config('caption'); }
-
-sub render_normal {
-  my $self = shift;
-  my $rtn = $self->_init(@_);
+sub new {
+  my $class = shift;
+  my $data  = shift;
   
-  return $self->{'text_export'} && $self->can('render_text') ? $rtn : undef;
+  if (!$class) {
+    warn 'EnsEMBL::GlyphSet::failed at: ' . gmtime() . " in /$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}";
+    warn 'EnsEMBL::GlyphSet::failed with a call of new on an undefined value';
+    return undef;
+  }
+  
+  my $self = {
+    glyphs     => [],
+    x          => undef,
+    y          => undef,
+    width      => undef,
+    minx       => undef,
+    miny       => undef,
+    maxx       => undef,
+    maxy       => undef,
+    label      => undef,
+    label2     => undef,
+    bumped     => undef,
+    highlights => $data->{'highlights'},
+    strand     => $data->{'strand'},
+    container  => $data->{'container'},
+    config     => $data->{'config'},
+    my_config  => $data->{'my_config'},
+    display    => $data->{'display'} || 'off',
+    extras     => $data->{'extra'}   || {}
+  };
+  
+  bless $self, $class;
+  
+  $self->init_label;
+
+  return $self;
 }
+
+sub species            { return $_[0]->{'config'}{'species'} || $_[0]->{'container'}{'web_species'};               }
+sub species_defs       { return $_[0]->{'config'}->species_defs;                                                   }
+sub get_parameter      { return $_[0]->{'config'}->get_parameter($_[1]);                                           }
+sub core               { return $_[0]->{'config'}->core_objects->{'parameters'}{$_[1]};                            }
+sub scalex             { return $_[0]->{'config'}->transform->{'scalex'};                                          }
+sub image_width        { return $_[0]->{'config'}->get_parameter('panel_width') || $_[0]->{'config'}->image_width; }
+sub _url               { return shift->{'config'}->hub->url('ZMenu', @_);                                          }
+sub timer_push         { return shift->{'config'}->species_defs->timer->push(shift, shift || 3, shift || 'draw');  }
+sub dbadaptor          { shift; return Bio::EnsEMBL::Registry->get_DBAdaptor(@_);                                  }
+sub error_track_name   { return $_[0]->my_config('caption');                                                       }
+sub my_label           { return $_[0]->my_config('caption');                                                       }
+sub get_colour         { my $self = shift; return $self->my_colour($self->colour_key(shift), @_);                  }
+sub my_config          { return $_[0]->{'my_config'}->get($_[1]);                                                  }
+sub type               { return $_[0]->{'my_config'}{'id'};                                                        }
+sub _pos               { return $_[0]->{'config'}{'_pos'}++;                                                       }
+sub _colour_background { return 1;                                                                                 }
+sub colour_key         { return 'default';                                                                         }
+sub feature_label      { return '';                                                                                }
+sub canvas_attributes  { return ();                                                                                } # Used to add attributes to each feature for scrollable images
+
+### Helper functions to wrap round Glyphs
+sub Bezier     { my $self = shift; return new Sanger::Graphics::Glyph::Bezier(@_);     }
+sub Circle     { my $self = shift; return new Sanger::Graphics::Glyph::Circle(@_);     }
+sub Composite  { my $self = shift; return new Sanger::Graphics::Glyph::Composite(@_);  }
+sub Diagnostic { my $self = shift; return new Sanger::Graphics::Glyph::Diagnostic(@_); }
+sub Ellipse    { my $self = shift; return new Sanger::Graphics::Glyph::Ellipse(@_);    }
+sub Intron     { my $self = shift; return new Sanger::Graphics::Glyph::Intron(@_);     }
+sub Line       { my $self = shift; return new Sanger::Graphics::Glyph::Line(@_);       }
+sub Poly       { my $self = shift; return new Sanger::Graphics::Glyph::Poly(@_);       }
+sub Rect       { my $self = shift; return new Sanger::Graphics::Glyph::Rect(@_);       }
+sub Space      { my $self = shift; return new Sanger::Graphics::Glyph::Space(@_);      }
+sub Sprite     { my $self = shift; return new Sanger::Graphics::Glyph::Sprite(@_);     }
+sub Text       { my $self = shift; return new Sanger::Graphics::Glyph::Text(@_);       }
+sub Triangle   { my $self = shift; return new Sanger::Graphics::Glyph::Triangle(@_);   }
 
 sub render {
-  my $self = shift;
-  
-  my $method = 'render_' . $self->{'display'};
+  my $self   = shift;
+  my $method = "render_$self->{'display'}";
   
   $self->{'text_export'} = $self->{'config'}->get_parameter('text_export');
   
@@ -58,29 +111,34 @@ sub render {
   return $self->{'text_export'} ? $text_export : undef;
 }
 
+sub render_normal {
+  my $self = shift;
+  my $rtn  = $self->_init(@_);
+  return $self->{'text_export'} && $self->can('render_text') ? $rtn : undef;
+}
+
 sub _render_text {
   my $self = shift;
   my ($feature, $feature_type, $extra, $defaults) = @_;
   
   return unless $feature;
   
-  $extra = { 'headers' => [], 'values' => [] } unless keys %$extra;
+  $extra      = { headers => [], values => [] } unless keys %$extra;
   $defaults ||= {};
   
   my $format = $self->{'text_export'};
   my $header;
   
   if (!$self->{'export_header'}) {
-    my @default_fields = qw( seqname source feature start end score strand frame );
-    
-    $header = join ("\t", @default_fields, @{$extra->{'headers'}}) . "\r\n" if ($format ne 'gff');
-    
+    my @default_fields = qw(seqname source feature start end score strand frame);
+       $header         = join ("\t", @default_fields, @{$extra->{'headers'}}) . "\r\n" if $format ne 'gff';
+       
     $self->{'export_header'} = 1;
   }
   
   my $score   = $defaults->{'score'}  || ($feature->can('score') ? $feature->score : undef) || '.';
   my $frame   = $defaults->{'frame'}  || ($feature->can('frame') ? $feature->frame : undef) || '.';
-  my $source  = $defaults->{'source'} || ($feature->can('source') ? $feature->source : ($self->my_config('db') eq 'vega' ? 'Vega' : 'Ensembl'));
+  my $source  = $defaults->{'source'} || ($feature->can('source') ? $feature->source : $self->my_config('db') eq 'vega' ? 'Vega' : 'Ensembl');
   my $seqname = $defaults->{'seqname'};
   my $strand  = $defaults->{'strand'};
   my $start   = $defaults->{'start'};
@@ -95,20 +153,18 @@ sub _render_text {
   
   $strand ||= 
     ($feature->can('seq_region_strand') ? $feature->seq_region_strand : undef) || 
-    ($feature->can('strand') ? $feature->strand : undef) ||
+    ($feature->can('strand')            ? $feature->strand            : undef) ||
     '.';
   
   $start ||= ($feature->can('seq_region_start') ? $feature->seq_region_start : undef) || ($feature->can('start') ? $feature->start : undef);
-  $end   ||= ($feature->can('seq_region_end')   ? $feature->seq_region_end : undef)   || ($feature->can('end')   ? $feature->end : undef);
+  $end   ||= ($feature->can('seq_region_end')   ? $feature->seq_region_end   : undef) || ($feature->can('end')   ? $feature->end   : undef);
   
   $feature_type =~ s/\s+/ /g;
-  $source =~ s/\s+/ /g;
-  $seqname =~ s/\s+/ /g;
-  
-  $source = ucfirst $source;
-  
-  $strand = '+' if $strand == 1;
-  $strand = '-' if $strand == -1;
+  $source       =~ s/\s+/ /g;
+  $seqname      =~ s/\s+/ /g;
+  $source       = ucfirst $source;
+  $strand       = '+' if $strand == 1;
+  $strand       = '-' if $strand == -1;
   
   my @results = ($seqname, $source, $feature_type, $start, $end, $score, $strand, $frame);
   
@@ -119,60 +175,12 @@ sub _render_text {
       push @ex, "$extra->{'headers'}->[$_]=$extra->{'values'}->[$_]" if $extra->{'values'}->[$_];
     }
     
-    push (@results, join ("; ", @ex));
+    push @results, join '; ', @ex;
   } else {
-    push (@results, @{$extra->{'values'}});
+    push @results, @{$extra->{'values'}};
   }
   
-  return "$header" . join ("\t", @results) . "\r\n";
-}
-
-sub dbadaptor  {
-  my $self = shift;
-  return Bio::EnsEMBL::Registry->get_DBAdaptor( @_ );
-}
-sub species {
-  my $self = shift;
-  return $self->{'config'}{'species'} || $self->{'container'}{'web_species'};
-}
-sub timer_push {
-  my($self,$capt,$dep,$flag) = @_;
-  $dep  ||= 3;
-  $flag ||= 'draw';
-  $self->{'config'}->species_defs->timer->push($capt,$dep,$flag);
-}
-
-### Helper functions to wrap round Glyphs...
-
-sub Bezier     { my $self = shift; return new Sanger::Graphics::Glyph::Bezier(     @_ ); }
-sub Circle     { my $self = shift; return new Sanger::Graphics::Glyph::Circle(     @_ ); }
-sub Composite  { my $self = shift; return new Sanger::Graphics::Glyph::Composite(  @_ ); }
-sub Diagnostic { my $self = shift; return new Sanger::Graphics::Glyph::Diagnostic( @_ ); }
-sub Ellipse    { my $self = shift; return new Sanger::Graphics::Glyph::Ellipse(    @_ ); }
-sub Intron     { my $self = shift; return new Sanger::Graphics::Glyph::Intron(     @_ ); }
-sub Line       { my $self = shift; return new Sanger::Graphics::Glyph::Line(       @_ ); }
-sub Poly       { my $self = shift; return new Sanger::Graphics::Glyph::Poly(       @_ ); }
-sub Triangle   { my $self = shift; return new Sanger::Graphics::Glyph::Triangle(   @_ ); }
-sub Rect       { my $self = shift; return new Sanger::Graphics::Glyph::Rect(       @_ ); }
-sub Space      { my $self = shift; return new Sanger::Graphics::Glyph::Space(      @_ ); }
-sub Sprite     { my $self = shift; return new Sanger::Graphics::Glyph::Sprite(     @_ ); }
-sub Text       { my $self = shift; return new Sanger::Graphics::Glyph::Text(       @_ ); }
-
-sub core {
-  my $self = shift;
-  my $k    = shift;
-  return $self->{'config'}->core_objects->{'parameters'}{$k};
-}
-
-sub _url { return shift->{'config'}->hub->url('ZMenu', @_); }
-
-sub get_font_details {
-  my( $self, $type ) = @_;
-  my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE;
-  return (
-    $type =~ /fixed/i ? $ST->{'GRAPHIC_FONT_FIXED'} : $ST->{'GRAPHIC_FONT'},
-    $ST->{'GRAPHIC_FONTSIZE'} * ($ST->{'GRAPHIC_'.uc($type)}||1)
-  );
+  return $header . join ("\t", @results) . "\r\n";
 }
 
 sub init_label {
@@ -191,8 +199,8 @@ sub init_label {
   my $style     = $config->species_defs->ENSEMBL_STYLE;
   my $font      = $style->{'GRAPHIC_FONT'};
   my $fsze      = $style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'};
-  my @res       = $self->get_text_width(0, $text, '', 'font' => $font, 'ptsize' => $fsze);
-  my $track     = $self->_type;
+  my @res       = $self->get_text_width(0, $text, '', font => $font, ptsize => $fsze);
+  my $track     = $self->type;
   my $node      = $config->get_node($track);
   my $component = $config->get_parameter('component');
   my $hover     = $component && !$hub->param('export') && $node->get('menu') ne 'no';
@@ -246,159 +254,117 @@ sub init_label {
   }));
 }
 
-sub species_defs {
-### a
-  my $self = shift;
-  return $self->{'config'}->species_defs;
-}
-
-sub get_textheight {
-  my( $self, $name ) = @_;
-  my( $fontname, $fontsize ) = $self->get_font_details( $name );
-  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
-  return $res[3];
-}
-
 sub get_text_simple {
 ### Simple function which calls the get_font_details and caches the result!!
-  my( $self, $text, $text_size ) =@_;
-  $text     ||='X';
-  $text_size||='text';
-
-  my( $f, $fs ) = $self->get_font_details( $text_size );
- 
-  my @T = $self->get_text_width( 0, $text, '', 'ptsize' => $fs, 'font' => $f );
+  my ($self, $text, $text_size) = @_;
+  $text      ||= 'X';
+  $text_size ||= 'text';
+  my ($f, $fs) = $self->get_font_details($text_size);
+  my @t        = $self->get_text_width(0, $text, '', ptsize => $fs, font => $f);
 
   return {
-    'original' => $text,
-    'text'     => $T[0],
-    'bit'      => $T[1],
-    'width'    => $T[2],
-    'height'   => $T[3],
-    'font'     => $f,
-    'fontsize' => $fs
+    original => $text,
+    text     => $t[0],
+    bit      => $t[1],
+    width    => $t[2],
+    height   => $t[3],
+    font     => $f,
+    fontsize => $fs
   };
 }
 
+sub get_font_details {
+  my ($self, $type, $hash) = @_;
+  my $style  = $self->{'config'}->species_defs->ENSEMBL_STYLE;
+  my $font   = $type =~ /fixed/i ? $style->{'GRAPHIC_FONT_FIXED'} : $style->{'GRAPHIC_FONT'};
+  my $ptsize = $style->{'GRAPHIC_FONTSIZE'} * ($style->{'GRAPHIC_' . uc $type} || 1);
+  
+  return $hash ? (font => $font, ptsize => $ptsize) : ($font, $ptsize);
+}
+
 sub get_text_width {
-  my( $self, $width, $text, $short_text, %parameters ) = @_;
+  my ($self, $width, $text, $short_text, %parameters) = @_;
+     $text = 'X' if length $text == 1 && $parameters{'font'} =~ /Cour/i;               # Adjust the text for courier fonts
+  my $key  = "$width--$text--$short_text--$parameters{'font'}--$parameters{'ptsize'}"; # Look in the cache for a previous entry 
+  
+  return @{$cache{$key}} if exists $cache{$key};
 
-  # Adjust the text for courier fonts
-  if( length($text)==1 && $parameters{'font'} =~ /Cour/i ){ $text = 'X' }
-
-  # Look in the cache for a previous entry 
-  my $KEY = "$width--$text--$short_text--"
-      . "$parameters{'font'}--$parameters{'ptsize'}";
-  return @{$cache{$KEY}} if exists $cache{$KEY};
-
-  # Get the GD::Text object for this font/size
-  my $gd = $self->get_gd_simple($parameters{'font'},$parameters{'ptsize'})      || return(); # Ensure we have the text obj
-#use Data::Dumper; warn Dumper( $gd->fontMetrics($parameters{'font'},$parameters{'ptsize'},$text) );
+  my $gd = $self->get_gd($parameters{'font'}, $parameters{'ptsize'});
+  
+  return unless $gd;
+  
   # Use the text object to determine height/width of the given text;
   $width ||= 1e6; # Make initial width very big by default
-  my($w,$h) = $gd->stringBounds($text); 
+  
+  my ($w, $h) = $gd->stringBounds($text); 
   my @res;
-  if($w<$width) { 
-    @res = ($text,      'full', $w,$h);
-  } elsif($short_text) {
-    ($w,$h) = $gd->stringBounds($text);
-    if($w<$width) { 
-      @res = ($short_text,'short',$w,$h);
-    } else {
-      @res = ('',         'none', 0, 0 );
-    }
-  } elsif( $parameters{'ellipsis'} ) {
+  
+  if ($w < $width) { 
+    @res = ($text, 'full', $w, $h);
+  } elsif ($short_text) {
+    ($w, $h) = $gd->stringBounds($text);
+    @res = $w < $width ? ($short_text, 'short', $w, $h) : ('', 'none', 0, 0);
+  } elsif ($parameters{'ellipsis'}) {
     my $string = $text;
-    while( $string ) {
+    
+    while ($string) {
       chop $string;
-      ($w,$h) = $gd->stringBounds("$string...");
-      if($w<$width) { 
-        @res = ("$string...",'truncated',$w,$h);
+      
+      ($w, $h) = $gd->stringBounds("$string...");
+      
+      if ($w < $width) { 
+        @res = ("$string...", 'truncated', $w, $h);
         last;
       }
     }
   } else {
-    @res = ('',         'none', 0, 0 );
+    @res = ('', 'none', 0, 0);
   }
-  $self->{'_cache_'}{$KEY} = \@res; # Update the cache
-  $cache{$KEY} = \@res;
+  
+  $self->{'_cache_'}{$key} = $cache{$key} = \@res; # Update the cache
+  
   return @res;
 }
 
-sub get_gd_simple {
-### Returns the GD::Text object appropriate for the given fontname
-### and fontsize. GD::Text objects are cached against fontname and fontsize.
-  my $self   = shift;
-  my $font   = shift || 'Arial';
-  my $ptsize = shift || 10;
-
-  my $FONT_KEY = "${font}--${ptsize}"; 
-  return $cache{"2:".$FONT_KEY} if exists( $cache{"2:".$FONT_KEY} );
-  my $fontpath = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}."/$font.ttf";
-  my $gd = GD::Simple->new( 400,400 );
+sub get_gd {
+  ### Returns the GD::Simple object appropriate for the given fontname
+  ### and fontsize. GD::Simple objects are cached against fontname and fontsize.
+  
+  my $self     = shift;
+  my $font     = shift || 'Arial';
+  my $ptsize   = shift || 10;
+  my $font_key = "${font}--${ptsize}"; 
+  
+  return $cache{$font_key} if exists $cache{$font_key};
+  
+  my $fontpath = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}. "/$font.ttf";
+  my $gd       = GD::Simple->new(400, 400);
+  
   eval {
-    if( -e $fontpath ) {
-      $gd->font( $fontpath, $ptsize );
-    } elsif( $font eq 'Tiny' ) {
-      $gd->font( gdTinyFont );
-    } elsif( $font eq 'MediumBold' ) {
-      $gd->font( gdMediumBoldFont );
-    } elsif( $font eq 'Large' ) {
-      $gd->font( gdLargeFont );
-    } elsif( $font eq 'Giant' ) {
-      $gd->font( gdGiantFont );
+    if (-e $fontpath) {
+      $gd->font($fontpath, $ptsize);
+    } elsif ($font eq 'Tiny') {
+      $gd->font(gdTinyFont);
+    } elsif ($font eq 'MediumBold') {
+      $gd->font(gdMediumBoldFont);
+    } elsif ($font eq 'Large') {
+      $gd->font(gdLargeFont);
+    } elsif ($font eq 'Giant') {
+      $gd->font(gdGiantFont);
     } else {
       $font = 'Small';
-      $gd->font( gdSmallFont );
+      $gd->font(gdSmallFont);
     }
   };
+  
   warn $@ if $@;
 
-  $cache{"2:".$FONT_KEY} = $gd; # Update font cache
-  
-  return $cache{"2:".$FONT_KEY};
-}
-
-sub get_gd_text {
-### Returns the GD::Text object appropriate for the given fontname
-### and fontsize. GD::Text objects are cached against fontname and fontsize.
-  my $self   = shift;
-  my $font   = shift || 'arial';
-  my $ptsize = shift || 10;
-
-  my $FONT_KEY = "${font}--${ptsize}"; 
-  return $cache{$FONT_KEY} if exists( $cache{$FONT_KEY} );
-  
-  my $fontpath 
-      = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}
-        . '/' . $font . '.ttf';
-  my $gd_text = GD::Text->new();
-  eval {
-    if( -e $fontpath ) {
-      $gd_text->set_font( $font, $ptsize );
-    } elsif( $font eq 'Tiny' ) {
-      $gd_text->set_font( gdTinyFont );
-    } elsif( $font eq 'MediumBold' ) {
-      $gd_text->set_font( gdMediumBoldFont );
-    } elsif( $font eq 'Large' ) {
-      $gd_text->set_font( gdLargeFont );
-    } elsif( $font eq 'Giant' ) {
-      $gd_text->set_font( gdGiantFont );
-    } else {
-      $font = 'Small';
-      $gd_text->set_font( gdSmallFont );
-    }
-  };
-  warn $@ if $@;
-
-  $cache{$FONT_KEY} = $gd_text; # Update font cache
-  
-  return $cache{$FONT_KEY};
+  return $cache{$font_key} = $gd; # Update font cache
 }
 
 sub commify {
-### Puts commas into numbers over 1000
-  my( $self, $val ) = @_;
+  ### Puts commas into numbers over 1000
+  my ($self, $val) = @_;
   return $val if $val < 1000;
   $val = reverse $val;
   $val =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g;
@@ -406,158 +372,65 @@ sub commify {
 }
 
 sub slice2sr {
-  my( $self, $s, $e ) = @_;
+  my ($self, $s, $e) = @_;
 
   return $self->{'container'}->strand < 0 ?
-    ( $self->{'container'}->end   - $e + 1 , $self->{'container'}->end   - $s + 1 ) : 
-    ( $self->{'container'}->start + $s - 1 , $self->{'container'}->start + $e - 1 );
+    ($self->{'container'}->end   - $e + 1, $self->{'container'}->end   - $s + 1) : 
+    ($self->{'container'}->start + $s - 1, $self->{'container'}->start + $e - 1);
 }
 
 sub sr2slice {
-  my( $self, $s, $e ) = @_;
+  my ($self, $s, $e) = @_;
 
-  return $self->{'container'}->strand < 0 ?
-    (   $self->{'container'}->end   - $e + 1 ,   $self->{'container'}->end   - $s + 1 ) :
-    ( - $self->{'container'}->start + $s + 1 , - $self->{'container'}->start + $e + 1 );
-}
-
-sub new {
-  my $class = shift;
-  my $data  = shift;
-  if(!$class) {
-    warn( "EnsEMBL::GlyphSet::failed at: ".gmtime()." in /$ENV{'ENSEMBL_SPECIES'}/$ENV{'ENSEMBL_SCRIPT'}" );
-    warn( "EnsEMBL::GlyphSet::failed with a call of new on an undefined value" );
-    return undef;
-  }
-  my $self = {
-    'glyphs'     => [],
-    'x'          => undef,
-    'y'          => undef,
-    'width'      => undef,
-    'highlights' => $data->{'highlights'},
-    'strand'     => $data->{'strand'},
-    'minx'       => undef,
-    'miny'       => undef,
-    'maxx'       => undef,
-    'maxy'       => undef,
-    'label'      => undef,
-    'bumped'     => undef,
-    'bumpbutton' => undef,
-    'label2'     => undef,
-    'container'  => $data->{'container'},
-    'config'     => $data->{'config'},
-    'my_config'  => $data->{'my_config'},
-    'display'    => $data->{'display'}||'off',
-    'extras'     => $data->{'extra'}||{}
-  };
-  bless($self, $class);
-  $self->init_label;
-
-  return $self;
-}
-
-sub bumpbutton {
-  my $self = shift;
-  $self->{'bumpbutton'} = shift if @_;
-  return $self->{'bumpbutton'};
+  return $self->{'container'}->strand < 0 ? 
+    ( $self->{'container'}->end   - $e + 1,  $self->{'container'}->end   - $s + 1) :
+    (-$self->{'container'}->start + $s + 1, -$self->{'container'}->start + $e + 1);
 }
 
 sub label2 {
   my ($self, $val) = @_;
-  $self->{'label2'} = $val if(defined $val);
+  $self->{'label2'} = $val if defined $val;
   return $self->{'label2'};
 }
 
-sub get_parameter {
-  my( $self, $key ) = @_;
-  return $self->{'config'}->get_parameter( $key );
+sub cache {
+  my $self = shift;
+  my $key  = shift;
+  $self->{'config'}{'_cache'}{$key} = shift if @_;
+  return $self->{'config'}{'_cache'}{$key};
 }
-
-sub my_config {
-  my( $self, $key ) = @_;
-  return $self->{'my_config'}->get( $key );  ## Get value from track configuration...
-}
-
-## Stub - currently only implemented in vertical tracks
-sub data { return undef; }
-
-use Data::Dumper;
-our $CC = 0;
 
 sub my_colour {
-  my( $self, $colour, $part, $default ) = @_;
-  $self->{'colours'} ||= $self->my_config('colours')||{};
-  if( $part eq 'text' || $part eq 'style' ) {
-    if( $self->{'colours'} ) {
-      return $self->{'colours'}->{$colour  }{$part}     if exists $self->{'colours'}->{$colour  }{$part    };
-      return $self->{'colours'}->{'default'}{$part}     if exists $self->{'colours'}->{'default'}{$part    };
+  my ($self, $colour, $part, $default) = @_;
+  
+  $self->{'colours'} ||= $self->my_config('colours') || {};
+  
+  if ($part eq 'text' || $part eq 'style') {
+    if ($self->{'colours'}) {
+      return $self->{'colours'}->{$colour  }{$part} if exists $self->{'colours'}->{$colour  }{$part};
+      return $self->{'colours'}->{'default'}{$part} if exists $self->{'colours'}->{'default'}{$part};
     }
-    return defined( $default ) ? $default : 'Other (unknown)' if $part eq 'text';
+    
+    return defined $default ? $default : 'Other (unknown)' if $part eq 'text';
     return '';
   }
   
-  if( $self->{'colours'} ) {
+  if ($self->{'colours'}) {
     return $self->{'colours'}->{$colour  }{$part}     if exists $self->{'colours'}->{$colour  }{$part    };
     return $self->{'colours'}->{'default'}{$part}     if exists $self->{'colours'}->{'default'}{$part    };
     return $self->{'colours'}->{$colour  }{'default'} if exists $self->{'colours'}->{$colour  }{'default'};
     return $self->{'colours'}->{'default'}{'default'} if exists $self->{'colours'}->{'default'}{'default'};
   }
-  return defined( $default ) ? $default : 'black';
-}
-
-sub _c {
-  my( $self, $key ) = @_;
-  my $T = $self->{'my_config'}->get( $key );
-     $T = $self->{'config'}->get_parameter( $key ) unless defined $T;
-  return $T;
-}
-
-sub _type {
-  my $self = shift;
-  return $self->{'my_config'}->id;
-}
-
-sub _pos {
-  my $self = shift;
-  return $self->{'config'}->{'_pos'}++;
-}
-
-sub set_my_config {
-## Used to dynamically hack the configuration of this node... ## used by threshold calculation only at the moment...
-## will sort this at some point not to need it - only used by clones [ although not in new code!! ]
-  my( $self, $key, $val ) = @_;
-  $self->{'my_config'}->set( $key, $val );
-  return $val;
-}
-
-sub check {
-  my( $self ) = @_;
-  return $self->{'my_config'}{'id'};
-}
-
-# Stuff copied out of scalebar.pm so that contig.pm can use it!
-sub ID_URL {
-  my ($self, $db, $id) = @_;
   
-  return undef unless $self->species_defs;
-  return undef if $db eq 'NULL';
-  
-  if (exists($self->species_defs->ENSEMBL_EXTERNAL_URLS->{$db})) {
-    my $url = $self->species_defs->ENSEMBL_EXTERNAL_URLS->{$db};
-    $url =~ s/###ID###/$id/;
-    
-    return $url;
-  } else {
-    return '';
-  }
+  return defined $default ? $default : 'black';
 }
 
 sub draw_cigar_feature {
   my ($self, $params) = @_;
-  
   my ($composite, $f, $h) = map $params->{$_}, qw(composite feature height);
-  
-  my $ref = ref $f;
+  my $ref    = ref $f;
+  my $length = $self->{'container'}->length;
+  my $cigar;
  
   if (!$ref) {
     warn sprintf 'DRAWINGCODE_CIGAR < %s > %s not a feature', $f, $self->label->text;
@@ -569,26 +442,23 @@ sub draw_cigar_feature {
     warn sprintf 'DRAWINGCODE_CIGAR [ %s ] %s not a feature', join('; ', @$f), $self->label->text;
   }
 
-  if ($ref eq 'Bio::EnsEMBL::Funcgen::ProbeFeature' ){
+  if ($ref eq 'Bio::EnsEMBL::Funcgen::ProbeFeature') {
     $f = Bio::EnsEMBL::DnaDnaAlignFeature->new(
-      -slice  => $f->slice,
-      -start  => $f->start,
-      -end    => $f->end,
-      -strand => $self->strand,
-      -hstart => $f->start,
-      -hend   => $f->end,
+      -slice        => $f->slice,
+      -start        => $f->start,
+      -end          => $f->end,
+      -strand       => $self->strand,
+      -hstart       => $f->start,
+      -hend         => $f->end,
       -cigar_string => $f->cigar_string
     );
   }
-
-  my $length  = $self->{'container'}->length;
-  my $cigar;
   
   eval { $cigar = $f->cigar_string; };
   
   if ($@ || !$cigar) {
     my ($s, $e) = ($f->start, $f->end);
-    $s = 1 if $s < 1;
+    $s = 1       if $s < 1;
     $e = $length if $e > $length; 
     
     $composite->push($self->Rect({
@@ -606,14 +476,10 @@ sub draw_cigar_feature {
   my $strand  = $self->strand;
   my $fstrand = $f->strand;
   my $hstrand = $f->hstrand;
-  my ($start, $hstart, $hend);
-  my @delete;
-  
-  $start  = $f->start;
-  $hstart = $f->hstart;
-  $hend   = $f->hend;
-  
-  my ($slice_start, $slice_end, $tag1, $tag2);
+  my $start   = $f->start;
+  my $hstart  = $f->hstart;
+  my $hend    = $f->hend;
+  my ($slice_start, $slice_end, $tag1, $tag2, @delete);
   
   if ($f->slice) {
     $slice_start = $f->slice->start;
@@ -630,7 +496,7 @@ sub draw_cigar_feature {
   # like ('10M','2I','30M','I','M','20M','2D','2020M');
   # original string - "10M2I30MIM20M2D2020M"
   my @cigar = $f->cigar_string =~ /(\d*[MDImUXS=])/g;
-  @cigar = reverse @cigar if $fstrand == -1;
+     @cigar = reverse @cigar if $fstrand == -1;
   
   foreach (@cigar) {
     # Split each of the {number}{Letter} entries into a pair of [ {number}, {letter} ] 
@@ -729,6 +595,23 @@ sub draw_cigar_feature {
   }
 }
 
+sub sort_features_by_priority {
+  my ($self, %features) = @_;
+  my @sorted     = keys %features;
+  my $prioritize = 0;
+  
+  while (my ($k, $v) = each (%features)) {
+    if ($v && @$v > 1 && $v->[1]{'priority'}) {
+      $prioritize = 1;
+      last;
+    }
+  }
+  
+  @sorted = sort { ($features{$b}->[1]{'priority'} || 0) <=> ($features{$a}->[1]{'priority'} || 0) } keys %features if $prioritize;
+  
+  return @sorted;
+}
+
 sub no_features {
   my $self  = shift;
   my $label = $self->my_label;
@@ -737,11 +620,9 @@ sub no_features {
 
 sub errorTrack {
   my ($self, $message, $x, $y) = @_;
-  
-  my ($fontname, $fontsize) = $self->get_font_details('text');
-  
+  my %font   = $self->get_font_details('text', 1);
   my $length = $self->{'config'}->image_width;
-  my @res    = $self->get_text_width(0, $message, '', 'ptsize' => $fontsize, 'font' => $fontname);
+  my @res    = $self->get_text_width(0, $message, '', %font);
   
   $self->push($self->Text({
     x             => $x || int(($length - $res[2]) / 2),
@@ -750,77 +631,20 @@ sub errorTrack {
     textwidth     => $res[2],
     height        => $res[3],
     halign        => 'center',
-    font          => $fontname,
-    ptsize        => $fontsize,
     colour        => 'red',
     text          => $message,
     absolutey     => 1,
     absolutex     => 1,
     absolutewidth => 1,
-    pixperbp      => $self->{'config'}->{'transform'}->{'scalex'}
+    pixperbp      => $self->{'config'}->{'transform'}->{'scalex'},
+    %font
   }));
 
   return $res[3];
 }
 
-sub get_featurestyle {
-  my ($self, $f, $configuration) = @_;
-  
-  my $style;
-  
-  if ($configuration->{'use_style'}) {
-    $style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id};
-    $style ||= $configuration->{'styles'}{'default'}{$f->das_type_id};
-    $style ||= $configuration->{'styles'}{$f->das_type_category}{'default'};
-    $style ||= $configuration->{'styles'}{'default'}{'default'};
-  }
-  
-  $style ||= {};
-  $style->{'attrs'} ||= {};
-
-  # Set some defaults
-  my $colour = $style->{'attrs'}{'fgcolor'} || $configuration->{'colour'} || $configuration->{'color'} || 'blue';
-  $style->{'attrs'}{'height'} ||= $configuration->{'h'};
-  $style->{'attrs'}{'colour'} ||= $colour;
-  
-  return $style;
-}
-
-
-sub get_featuredata {
-  my ($self, $f, $configuration, $y_offset) = @_;
-
-  # keep within the window we're drawing
-  my $start = $f->das_start < 1 ? 1 : $f->das_start;
-  my $end   = $f->das_end   > $configuration->{'length'} ? $configuration->{'length'} : $f->das_end;
-  my $row_height = $configuration->{'h'};
-
-  # truncation flags
-  my $trunc_start = $start ne $f->das_start ? 1 : 0;
-  my $trunc_end   = $end ne $f->das_end     ? 1 : 0;
-  my $orientation = $f->das_orientation;
-
-  my $featuredata = {
-    row_height    => $row_height,
-    start         => $start,
-    end           => $end ,
-    pix_per_bp    => $self->{'pix_per_bp'},
-    y_offset      => $y_offset,
-    trunc_start   => $trunc_start,
-    trunc_end     => $trunc_end,
-    orientation   => $orientation
-  };
-  
-  return $featuredata;
-}
-
-# Function will display DAS features with variable y-offset depending on SCORE attribute
-# Similar to tiling array but allows for multiple types to be drawn side-by side 
-# when 2 or more features are merged due to resolution the highest score will be used to determine the feature height
-
-
 #==============================================================================================================
-# Bumping code support!=
+# Bumping code support
 #==============================================================================================================
 
 # _init_bump <- initialise the bumping code to be able to pack track...
@@ -841,44 +665,40 @@ sub _init_bump {
 
 sub _max_bump_row {
   my ($self, $key) = @_;
-  
-  $key ||= '_bump';
-  
-  return scalar @{$self->{$key}{'array'}||[]};
+  return scalar @{$self->{$key || '_bump'}{'array'} || []};
 }
 
 # compute the row to bump the feature to.. parameters are start/end in drawing (pixel co-ordinates)
 sub bump_row {
   my ($self, $start, $end, $truncate_if_outside, $key) = @_;
-  
-  $key ||= '_bump';
-
+  $key         ||= '_bump';
   ($end, $start) = ($start, $end) if $end < $start;
-
-  $start = 1 if $start < 1;
+  $start         = 1 if $start < 1;
+  my $row_length = $self->{$key}{'length'};
   
-  return -1 if $end > $self->{$key}{'length'} && $truncate_if_outside; # used to not display partial text labels
+  return -1 if $end > $row_length && $truncate_if_outside; # used to not display partial text labels
   
-  $end = $self->{$key}{'length'} if $end > $self->{$key}{'length'};
-
+  $end   = $row_length if $end > $row_length;
   $start = floor($start);
   $end   = ceil($end);
   
   my $length  = $end - $start + 1;
-  my $element = '0' x $self->{$key}{'length'};
+  my $element = '0' x $row_length;
   my $row     = 0;
 
   substr($element, $start, $length) = '1' x $length;
   
   while ($row < $self->{$key}{'rows'}) {
-    unless ($self->{$key}{'array'}[$row]) { # We have no entries in this row - so create a new row
+    if (!$self->{$key}{'array'}[$row]) { # We have no entries in this row - so create a new row
       $self->{$key}{'array'}[$row] = $element;
       return $row;
     }
+    
     if (($self->{$key}{'array'}[$row] & $element) == 0) { # We already have a row, but the element fits so include it
       $self->{$key}{'array'}[$row] |= $element;
       return $row;
     }
+    
     $row++; # Can't fit in on this row go to the next row..
   }
   
@@ -887,223 +707,37 @@ sub bump_row {
 
 sub bump_sorted_row {
   my ($self, $start, $end, $truncate_if_outside, $key) = @_;
-
-  $key ||= '_bump';
-
+  $key         ||= '_bump';
   ($end, $start) = ($start, $end) if $end < $start;
-
-  $start = 1 if $start < 1;
-
+  $start         = 1 if $start < 1;
   my $row_length = $self->{$key}{'length'};
 
   return -1 if $end > $row_length && $truncate_if_outside; # used to not display partial text labels
 
-  $end = $row_length if $end > $row_length;
-
+  $end   = $row_length if $end > $row_length;
   $start = floor($start);
   $end   = ceil($end);
-
-  # SMJS Extra check
-  $end = $start if $start > $end;
-
-  my $row     = 0;
-
-  my $max_rows = $self->{$key}{'rows'};
-
-  my $array_ref =  $self->{$key}{'array'} ;
+  $end   = $start if $start > $end;
+  
+  my $row       = 0;
+  my $max_rows  = $self->{$key}{'rows'};
+  my $array_ref = $self->{$key}{'array'};
 
   while ($row < $max_rows) {
-
-    unless ($array_ref->[$row]) { # We have no entries in this row - so create a new row
+    if (!$array_ref->[$row]) { # We have no entries in this row - so create a new row
       $array_ref->[$row] = $end;
       return $row;
     }
 
     if ($array_ref->[$row] < $start) {
       $array_ref->[$row] = $end;
-
       return $row;
     }
+    
     $row++; # Can't fit in on this row go to the next row..
   }
 
   return 1e9; # If we get to this point we can't draw the feature so return a very large number!
 }
 
-#==============================================================================================================
-# Return the das URL for the feature type....
-#==============================================================================================================
-
-
-
-sub de_camel { 
-  my ($self, $string) = @_;
-  $string =~ s/([a-z])([A-Z])/$1_$2/g;
-  return lc $string;
-}
-
-sub human_readable {
-  my ($self, $species) = @_;
-  $species =~ s/_/ /g;
-  return $species
-}
-
-sub readable_strand {
-  my ($self, $strand) = @_;
-  return $strand < 0 ? 'rev' : 'fwd';
-}
-
-sub cache {
-  my $self = shift;
-  my $key  = shift;
-  $self->{'config'}{'_cache'}{$key} = shift if @_;
-  return $self->{'config'}{'_cache'}{$key};
-}
-
-sub legend {
-  my ($self, $key, $priority);
-  $self->{'config'}{'legends'}{$key} ||= { priority => $priority, legend => [] };
-}
-
-sub scalex {
-  my $self = shift;
-  return $self->{'config'}->transform->{'scalex'};
-}
-
-sub image_width {
-  my $self = shift;
-  return $self->{'config'}->get_parameter('panel_width') || $self->{'config'}->image_width;
-}
-
-sub das_link {
-  my $self = shift;
-  
-  my $slice    = $self->{'container'};
-  my $das_type = $self->_das_type;
-  my $species  = $self->species;
-  
-  return undef unless $das_type;
-  
-  return sprintf(
-    '/das/%s.%s.%s/features?segment=%s:%d-%d',
-    $slice->seq_region_name,
-    $slice->species,
-    $self->species_defs->get_config($species, 'ENSEMBL_GOLDEN_PATH'),
-    join('-', $das_type,$self->my_config('db'), @{$self->my_config('logic_names')||[]}),
-    $slice->start,
-    $slice->end
-  );
-}
-
-#==============================================================================================================
-# Threshold update function to update parameters dependent on the width of the slice - this is a first stage
-# approach of "context sensitive" track displays.
-#==============================================================================================================
-
-# Update parameters of the display based on the size of the
-# slice... threshold_array contains a hash of values:
-# 'threshold_array' => { 
-#   slice_length_1 => { k=>v, .... } # hash 1
-#   slice_length_2 => { k=>v, .... } # hash 2
-# }
-# If slice_length <= slice_length_1 - do nothing
-# If slice_length_1 < slice_length <= slice_length_2 - update configuration values from - hash 1
-# If slice_length_2 < slice_length ...               - update configuration values from - hash 2
-# etc...
-sub _threshold_update {
-  my $self = shift;
-  
-  my $thresholds = $self->my_config('threshold_array');
-  
-  return unless $thresholds;
-  
-  my $container_length = $self->{'container'}->length;
-  
-  foreach my $th (sort { $a <=> $b } keys %$thresholds) {
-    if ($container_length > $th * 1000) {
-      $self->set_my_config($_, $thresholds->{$th}{$_}) for keys %{$thresholds->{$th}};
-    }
-  }
-}
-
-#==============================================================================================================
-# Shared by a number of the transcript/gene drawing code - so putting here!
-#==============================================================================================================
-
-sub transcript_label {
-  my ($self, $transcript, $gene) = @_;
-  my $pattern = $self->my_config('label_key') || '[text_label] [display_label]';
-  return '' if $pattern eq '-';
-  my $ini_entry = $self->my_colour($self->transcript_key($transcript, $gene), 'text');
-  if ($pattern =~ /[biotype]/) {
-    my $biotype  = $transcript->biotype ? $transcript->biotype : $gene->biotype;
-    $biotype =~ s/_/ /g;
-    $pattern =~ s/\[biotype\]/$biotype/g;
-  }
-  $pattern =~ s/\[text_label\]/$ini_entry/g;
-  $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $gene->analysis->$1 : $gene->$1/eg;
-  $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $transcript->analysis->$1 : $transcript->$1/eg;
-  return $pattern;
-}
-
-sub gene_label {
-  my ($self, $gene) = @_;
-  my $pattern = $self->my_config('label_key') || '[text_label] [display_label]';
-  return '' if $pattern eq '-';
-  my $ini_entry = $self->my_colour($self->gene_key($gene), 'text');
-  if ($pattern =~ /[biotype]/) {
-    my $biotype = $gene->biotype;
-    $biotype =~ s/_/ /;
-    $pattern =~ s/\[biotype\]/$biotype/g;
-  }
-  $pattern =~ s/\[text_label\]/$ini_entry/g;
-  $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $gene->analysis->$1 : $gene->$1/eg;
-  $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $gene->analysis->$1 : $gene->$1/eg;
-  return $pattern;
-}
-
-sub transcript_key {
-  my ($self, $transcript, $gene) = @_;
-  my $pattern = $self->my_config('colour_key') || '[biotype]';
-
-  #hate having to put ths hack here, needed because any logic_name specific web_data entries
-  #get lost when the track is merged - needs rewrite of imageconfig merging code
-  if ($transcript->analysis->logic_name =~ /ensembl_havana/) {
-     return 'merged';
-  }
-  $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
-  $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' ? $transcript->analysis->$1 : $transcript->$1/eg;
-  return lc $pattern;
-}
-
-sub gene_key {
-  my ($self, $gene) = @_;
-  my $pattern = $self->my_config('colour_key') || '[biotype]';
-  if ($gene->analysis->logic_name =~ /ensembl_havana/) {
-    return 'merged';
-  }
-  $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
-  $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
-  return lc $pattern;
-}
-
-sub sort_features_by_priority {
-  my ($self, %features) = @_;
-  my @sorted = keys %features;
-
-  my $prioritize = 0;
-  while (my ($k, $v) = each (%features)) {
-    if ($v && @$v > 1 && $v->[1]{'priority'}) {
-      $prioritize = 1;
-    }
-  }
-  if ($prioritize) {
-    @sorted = sort {
-      ($features{$b}->[1]{'priority'} || 0) <=> ($features{$a}->[1]{'priority'} || 0)
-      } keys %features;
-  }
-  return @sorted;
-}
-
 1;
-
