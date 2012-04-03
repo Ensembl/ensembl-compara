@@ -82,45 +82,81 @@ sub href {
 
 sub tag {
   my ($self, $f) = @_; 
-  my @result = (); 
-  my $bef = $f->get_scalar_attribute('BACend_flag');
-  (my $state = $f->get_scalar_attribute('state')) =~ s/^\d\d://;
-  my ($s,$e) = $self->sr2slice( $f->get_scalar_attribute('inner_start'), $f->get_scalar_attribute('inner_end') );
-  if( $s && $e ){
-    push @result, {
-      'style'  => 'rect',
-      'colour' => $f->{'_colour_flag'} || $self->my_colour($state),
-      'start'  => $s,
-      'end'    => $e
-    };
-  }
-  if( $f->get_scalar_attribute('fish') ) {
-    push @result, {
-      'style' => 'left-triangle',
-      'colour' => $self->my_colour('fish_tag'),
-    };
-  }
-  push @result, {
-    'style'  => 'right-end',
-    'colour' => $self->my_colour('bacend'),
-  } if ( $bef == 2 || $bef == 3 );
-  push @result, { 
-    'style'=>'left-end',  
-    'colour' => $self->my_colour('bacend'),
-  } if ( $bef == 1 || $bef == 3 );
-
+  my $bef     = $f->get_scalar_attribute('BACend_flag');
+  (my $state  = $f->get_scalar_attribute('state')) =~ s/^\d\d://;
   my $fp_size = $f->get_scalar_attribute('fp_size');
-  if( $fp_size && $fp_size > 0 ) {
-    my $start = int( ($f->start + $f->end - $fp_size)/2 );
-    my $end   = $start + $fp_size - 1 ;
-    push @result, {
-      'style' => 'underline',
-      'colour' => $self->my_colour('seq_len'),
-      'start'  => $start,
-      'end'    => $end
-    };
+  my ($s, $e) = $self->sr2slice($f->get_scalar_attribute('inner_start'), $f->get_scalar_attribute('inner_end'));
+  my @result;
+  
+  push @result, { style => 'rect',          start => $s,        end => $e,      colour => $f->{'_colour_flag'} || $self->my_colour($state) } if $s && $e;
+  push @result, { style => 'left-triangle', start => $f->start, end => $f->end, colour => $self->my_colour('fish_tag')                     } if $f->get_scalar_attribute('fish');
+  push @result, { style => 'right-end',     start => $f->start, end => $f->end, colour => $self->my_colour('bacend')                       } if $bef == 2 || $bef == 3;
+  push @result, { style => 'left-end',      start => $f->start, end => $f->end, colour => $self->my_colour('bacend')                       } if $bef == 1 || $bef == 3;
+  
+  if ($fp_size && $fp_size > 0) {
+    my $start = int(($f->start + $f->end - $fp_size) / 2);
+    my $end   = $start + $fp_size - 1;
+    
+    push @result, { style => 'underline', colour => $self->my_colour('seq_len'), start => $start, end => $end };
   }
+  
   return @result;
+}
+
+sub render_tag {
+  my ($self, $tag, $composite, $slice_length, $height, $start, $end) = @_;
+  my @glyph;
+  
+  if ($tag->{'style'} eq 'left-end' && $start == $tag->{'start'}) {
+    ## Draw a line on the left hand end
+    $composite->push($self->Rect({
+      x         => $start - 1,
+      y         => 0,
+      width     => 0,
+      height    => $height,
+      colour    => $tag->{'colour'},
+      absolutey => 1
+    }));
+  } elsif ($tag->{'style'} eq 'right-end' && $end == $tag->{'end'}) {
+    ## Draw a line on the right hand end
+    $composite->push($self->Rect({
+      x         => $end,
+      y         => 0,
+      width     => 0,
+      height    => $height,
+      colour    => $tag->{'colour'},
+      absolutey => 1
+    }));
+  } elsif ($tag->{'style'} eq 'underline') {
+    my $underline_start = $tag->{'start'} || $start;
+    my $underline_end   = $tag->{'end'}   || $end;
+       $underline_start = 1             if $underline_start < 1;
+       $underline_end   = $slice_length if $underline_end   > $slice_length;
+       
+    $composite->push($self->Rect({
+      x         => $underline_start - 1,
+      y         => $height,
+      width     => $underline_end - $underline_start + 1,
+      height    => 0,
+      colour    => $tag->{'colour'},
+      absolutey => 1
+    }));
+  } elsif ($tag->{'style'} eq 'left-triangle') {
+    my $triangle_end = $start - 1 + 3/$self->scalex;
+       $triangle_end = $end if $triangle_end > $end;
+
+    push @glyph, $self->Poly({
+      colour    => $tag->{'colour'},
+      absolutey => 1,
+      points    => [ 
+        $start - 1,    0,
+        $start - 1,    3,
+        $triangle_end, 0
+      ],
+    });
+  }
+  
+  return @glyph;
 }
 
 sub export_feature {
@@ -132,9 +168,5 @@ sub export_feature {
     'values' => [ [$self->feature_label($feature)]->[0] ]
   });
 }
-
-
-## Create the zmenu...
-## Include each accession id separately
 
 1;
