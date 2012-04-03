@@ -11,13 +11,13 @@ sub class {
 }
 
 sub features {
-  my ($self) = @_;
-  my $slice = $self->{'container'}; 
-  my $Config = $self->{'config'};
-  my $type = $self->check();
- 
-  my $fg_db = undef;
-  my $db_type  = $self->my_config('db_type')||'funcgen';
+  my $self    = shift;
+  my $slice   = $self->{'container'}; 
+  my $Config  = $self->{'config'};
+  my $type    = $self->type;
+  my $fg_db   = undef;
+  my $db_type = $self->my_config('db_type') || 'funcgen';
+
   unless($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
     $fg_db = $slice->adaptor->db->get_db_adaptor($db_type);
     if(!$fg_db) {
@@ -112,6 +112,43 @@ sub tag {
 
   return @result;
 
+}
+
+sub render_tag {
+  my ($self, $tag, $composite, $slice_length, $height, $start, $end) = @_;
+  
+  if ($tag->{'style'} eq 'fg_ends') {
+    my $f_start = $tag->{'start'} || $start;
+    my $f_end   = $tag->{'end'}   || $end;
+       $f_start = 1             if $f_start < 1;
+       $f_end   = $slice_length if $f_end   > $slice_length;
+       
+    $composite->push($self->Rect({
+      x         => $f_start - 1,
+      y         => $height / 2,
+      width     => $f_end - $f_start + 1,
+      height    => 0,
+      colour    => $tag->{'colour'},
+      absolutey => 1,
+      zindex    => 0
+    }), $self->Rect({
+      x       => $f_start - 1,
+      y       => 0,
+      width   => 0,
+      height  => $height,
+      colour  => $tag->{'colour'},
+      zindex => 1
+    }), $self->Rect({
+      x      => $f_end,
+      y      => 0,
+      width  => 0,
+      height => $height,
+      colour => $tag->{'colour'},
+      zindex => 1
+    }));
+  }
+  
+  return;
 }
 
 sub highlight {
