@@ -507,7 +507,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     if (this.align === true) {
       return this.baseURL.replace(/%s/, Ensembl.coreParams.r + ';align_start=' + start + ';align_end=' + end);
     } else {
-      return this.baseURL.replace(/%s/, this.chr + ':' + start + '-' + end);
+      return this.baseURL.replace(/%s/, (this.chr || Ensembl.location.name) + ':' + start + '-' + end);
     }
   },
   
