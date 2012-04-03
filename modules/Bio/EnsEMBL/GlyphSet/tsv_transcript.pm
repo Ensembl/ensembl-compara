@@ -2,11 +2,11 @@ package Bio::EnsEMBL::GlyphSet::tsv_transcript;
 
 use strict;
 
-use base qw(Bio::EnsEMBL::GlyphSet);
+use base qw(Bio::EnsEMBL::GlyphSet_transcript);
 
-sub _init {
+sub render_normal {
   my $self = shift;
-  my $type = $self->check;
+  my $type = $self->type;
   
   return unless defined $type; 
   return unless $self->strand == -1;
@@ -25,7 +25,7 @@ sub _init {
   
   # If stranded diagram skip if on wrong strand
   # For exon_structure diagram only given transcript
-  my $colour       = $self->my_colour($self->transcript_key($transcript, $gene));
+  my $colour       = $self->my_colour($self->colour_key($gene, $transcript));
   my $coding_start = $trans_ref->{'coding_start'};
   my $coding_end   = $trans_ref->{'coding_end'};
 
