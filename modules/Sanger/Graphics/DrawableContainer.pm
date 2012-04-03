@@ -199,7 +199,6 @@ sub new {
     ## go ahead and do all the database work
     for my $glyphset (@glyphsets) {
       ## load everything from the database
-      my $NAME = $glyphset->check();
       my $ref_glyphset = ref($glyphset);
       eval {
         $glyphset->_init();
