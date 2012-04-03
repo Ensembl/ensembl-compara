@@ -28,6 +28,7 @@ sub features {
 	else {
     $var_features = $slice->get_all_StructuralVariationFeatures;
   }
+  
   return $var_features;  
 }
 
@@ -42,108 +43,94 @@ sub colour_key  {
 sub tag {
   my ($self, $f) = @_;
   
-  my $core_colour  = '#000000';
-  my $bound_colour = '#AFAFAF';
-  my $arrow_colour = $bound_colour;
-  
+  my $colour         = $self->my_colour($self->colour_key($f), 'tag');
+  my $inner_crossing = $f->inner_start && $f->inner_end && $f->inner_start >= $f->inner_end ? 1 : 0;
   my @g_objects;
-  
-  my $inner_crossing = 0;
-  
-  my $outer_start = ($f->seq_region_start - $f->outer_start) - $f->start if (defined($f->outer_start));
-  my $inner_start = ($f->inner_start - $f->seq_region_start) + $f->start if (defined($f->inner_start));
-  my $inner_end   = $f->end - ($f->seq_region_end - $f->inner_end) if (defined($f->inner_end));
-  my $outer_end   = $f->end + ($f->outer_end - $f->seq_region_end) if (defined($f->outer_end));
-  
-  my $core_start = $f->start;
-  my $core_end   = $f->end;
-  
-  
-  # Check if inner_start < inner_end
-  if ($f->inner_start and $f->inner_end) {
-    $inner_crossing = 1 if ($f->inner_start >= $f->inner_end);
-  }
 
-  ## START ##
-  # outer & inner start
-  if ($f->outer_start and $f->inner_start) {
-    if ($f->outer_start != $f->inner_start && $inner_crossing == 0) {
+  # start of feature
+  if ($f->outer_start && $f->inner_start) {
+    if ($f->outer_start != $f->inner_start && !$inner_crossing) {
       push @g_objects, {
         style  => 'rect',
-        colour => $bound_colour,
+        colour => $colour,
         start  => $f->start,
-        end    => $inner_start
+        end    => $f->inner_start - $f->seq_region_start + $f->start
       };
-      $core_start = $inner_start;
     }
-  }
-  # Only outer start
-  elsif ($f->outer_start) {
+  } elsif ($f->outer_start) {
     if ($f->outer_start == $f->seq_region_start || $inner_crossing) {
       push @g_objects, {
         style  => 'bound_triangle_right',
-        colour => $arrow_colour,
+        colour => $colour,
         start  => $f->start,
         out    => 1
       };
     }
-  }
-  # Only inner start
-  elsif ($f->inner_start) {
-    if ($f->inner_start == $f->seq_region_start && $inner_crossing == 0) {
+  } elsif ($f->inner_start) {
+    if ($f->inner_start == $f->seq_region_start && !$inner_crossing) {
       push @g_objects, {
         style  => 'bound_triangle_left',
-        colour => $arrow_colour,
+        colour => $colour,
         start  => $f->start
       };
     }
   }
   
-  ## END ##
-  # outer & inner end
-  if ($f->outer_end and $f->inner_end) {
-    if ($f->outer_end != $f->inner_end && $inner_crossing == 0) {
+  # end of feature
+  if ($f->outer_end && $f->inner_end) {
+    if ($f->outer_end != $f->inner_end && !$inner_crossing) {
       push @g_objects, {
         style  => 'rect',
-        colour => $bound_colour,
-        start  => $inner_end,
+        colour => $colour,
+        start  => $f->end - $f->seq_region_end + $f->inner_end,
         end    => $f->end
       };
-      $core_end = $inner_end;
     }
-  }
-  # Only outer end
-  elsif ($f->outer_end) {
+  } elsif ($f->outer_end) {
     if ($f->outer_end == $f->seq_region_end || $inner_crossing) {
       push @g_objects, {
         style  => 'bound_triangle_left',
-        colour => $arrow_colour,
+        colour => $colour,
         start  => $f->end,
         out    => 1
       };
     }
-  }
-  # Only inner end
-  elsif ($f->inner_end) {
-    if ($f->inner_end == $f->seq_region_end && $inner_crossing == 0) {
+  } elsif ($f->inner_end) {
+    if ($f->inner_end == $f->seq_region_end && !$inner_crossing) {
       push @g_objects, {
         style  => 'bound_triangle_right',
-        colour => $arrow_colour,
+        colour => $colour,
         start  => $f->end
       };
     }
   }
   
-  # Central part of the structural variation
-  unshift @g_objects, {
-      style  => 'rect',
-      colour => $core_colour, #$self->my_colour($f->source),
-      start  => $core_start,
-      end    => $core_end
-    };
-  
   return @g_objects;
 } 
+
+sub render_tag {
+  my ($self, $tag, $composite, $slice_length, $width, $start, $end, $img_start, $img_end) = @_;
+  my @glyph;
+  
+  if ($tag->{'style'} =~ /^bound_triangle_(\w+)$/ && $img_start < $tag->{'start'} && $img_end > $tag->{'end'}) {
+    my $pix_per_bp = $self->scalex;
+    my $x          = $tag->{'start'} + ($tag->{'out'} == ($1 eq 'left') ? 1 : -1) * ($tag->{'out'} ? 0 : $width / 2 / $pix_per_bp);
+    my $y          = $width / 2;
+    
+    # Triangle returns an array: the triangle, and an invisible rectangle behind it for clicking purposes
+    @glyph = $self->Triangle({
+      mid_point    => [ $x, $y ],
+      colour       => $tag->{'colour'},
+      absolutey    => 1,
+      width        => $width,
+      height       => $y / $pix_per_bp,
+      direction    => $1,
+      bordercolour => 'black',
+    });
+  }
+  
+  return @glyph;
+}
 
 sub href {
   my ($self, $f) = @_;
@@ -197,4 +184,5 @@ sub highlight {
       absolutey => 1,
     }));
 }
+
 1;
