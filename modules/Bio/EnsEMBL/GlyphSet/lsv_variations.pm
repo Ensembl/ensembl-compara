@@ -9,7 +9,7 @@ use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_; 
-  my $type = $self->check(); ;
+  my $type = $self->type; ;
   return unless defined $type;
   return unless $self->strand() == -1;
 

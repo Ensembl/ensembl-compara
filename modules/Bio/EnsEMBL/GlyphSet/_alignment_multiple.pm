@@ -27,7 +27,7 @@ sub draw_features {
   my $caption             = $self->my_config('caption'); 
   my $length              = $self->{'container'}->length;
   my $pix_per_bp          = $self->scalex;
-  my $draw_cigar          = $self->check =~ /constrained/ ? undef : $pix_per_bp > 0.2;
+  my $draw_cigar          = $self->type =~ /constrained/ ? undef : $pix_per_bp > 0.2;
   my $name                = $self->my_config('short_name') || $self->my_config('name');
   my $constrained_element = $self->my_config('constrained_element');
   my $feature_type        = $constrained_element ?  'element' : 'feature';

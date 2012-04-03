@@ -51,7 +51,7 @@ sub _init {
   return unless ($self->strand() == -1);
 
   my $vc             = $self->{'container'};
-  my $type           = $self->check();
+  my $type           = $self->type;
   my $h              = 8;
   
   my $FONT           = $self->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'};
@@ -212,7 +212,7 @@ sub old_init {
   return unless ($self->strand() == -1);
 
   my $vc             = $self->{'container'};
-  my $type           = $self->check();
+  my $type           = $self->type;
   my $h              = 8;
   
   my $FONT           = $self->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'};

@@ -9,14 +9,14 @@ use base  qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;
-  my $type = $self->check();
-  my $Config         = $self->{'config'};
-  my $transcript     = $Config->{'transcript'}->{'transcript'};
+  my $type            = $self->type;
+  my $Config          = $self->{'config'};
+  my $transcript      = $Config->{'transcript'}->{'transcript'};
   my @coverage_levels = sort { $a <=> $b } @{$Config->{'transcript'}->{'coverage_level'}};
-  my $max_coverage   = $coverage_levels[-1];
-  my $min_coverage   = $coverage_levels[0] || $coverage_levels[1];
-  my $coverage_obj   = $Config->{'transcript'}->{'coverage_obj'};
-
+  my $max_coverage    = $coverage_levels[-1];
+  my $min_coverage    = $coverage_levels[0] || $coverage_levels[1];
+  my $coverage_obj    = $Config->{'transcript'}->{'coverage_obj'};
+ 
   unless (@$coverage_obj && @coverage_levels) {
     $self->push($self->Space({
       'x'         => 1,
