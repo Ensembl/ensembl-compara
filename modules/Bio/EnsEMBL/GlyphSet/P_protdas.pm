@@ -461,6 +461,47 @@ sub render_grouped {
   }
 }
 
+sub get_featurestyle {
+  my ($self, $f, $configuration) = @_;
+  my $style = {};
+  
+  if ($configuration->{'use_style'}) {
+    $style   = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id};
+    $style ||= $configuration->{'styles'}{'default'}{$f->das_type_id};
+    $style ||= $configuration->{'styles'}{$f->das_type_category}{'default'};
+    $style ||= $configuration->{'styles'}{'default'}{'default'};
+  }
+  
+  # Set some defaults
+  $style->{'attrs'}{'height'} ||= $configuration->{'h'};
+  $style->{'attrs'}{'colour'} ||= $style->{'attrs'}{'fgcolor'} || $configuration->{'colour'} || $configuration->{'color'} || 'blue';
+  
+  return $style;
+}
+
+sub get_featuredata {
+  my ($self, $f, $configuration, $y_offset) = @_;
+  my $start       = $f->das_start < 1 ? 1 : $f->das_start; # keep within the window we're drawing
+  my $end         = $f->das_end   > $configuration->{'length'} ? $configuration->{'length'} : $f->das_end;
+  my $row_height  = $configuration->{'h'};
+  my $trunc_start = $start ne $f->das_start ? 1 : 0; # truncation flags
+  my $trunc_end   = $end   ne $f->das_end   ? 1 : 0;
+  my $orientation = $f->das_orientation;
+
+  my $featuredata = {
+    row_height  => $row_height,
+    start       => $start,
+    end         => $end ,
+    pix_per_bp  => $self->{'pix_per_bp'},
+    y_offset    => $y_offset,
+    trunc_start => $trunc_start,
+    trunc_end   => $trunc_end,
+    orientation => $orientation
+  };
+  
+  return $featuredata;
+}
+
 
 1;
 
