@@ -338,7 +338,7 @@ sub track_boundaries {
     next unless scalar @{$glyphset->{'glyphs'}};
     
     my $height = $glyphset->height + $spacing;
-    my $type   = $glyphset->_type;
+    my $type   = $glyphset->type;
     my $node;  
     
     if ($track_ids{$type}) {
