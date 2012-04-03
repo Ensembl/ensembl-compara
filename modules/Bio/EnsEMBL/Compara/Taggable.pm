@@ -57,7 +57,7 @@ use strict;
                default is 0 (no overloading allowed, one tag points to one value)
   Example    : $ns_node->add_tag('scientific name', 'Mammalia');
                $ns_node->add_tag('lost_taxon_id', 9593, 1);
-  Returntype : Boolean indicating if the tag could be added
+  Returntype : Boolean indicating if the tag has been added
   Exceptions : none
   Caller     : general
 
@@ -105,9 +105,7 @@ sub add_tag {
                default is 0 (no overloading allowed, one tag points to one value)
   Example    : $ns_node->store_tag('scientific name', 'Mammalia');
                $ns_node->store_tag('lost_taxon_id', 9593, 1);
-  Returntype : 0 if the tag couldn't be stored,
-               1 if it is only in the PERL object,
-               2 if it is also stored in the database
+  Returntype : Boolean indicating if the tag has been stored
   Exceptions : none
   Caller     : general
 
@@ -123,10 +121,10 @@ sub store_tag {
     if ($self->add_tag($tag, $value, $allow_overloading)) {
         if($self->adaptor and $self->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::TagAdaptor")) {
             $self->adaptor->_store_tagvalue($self, lc($tag), $value, $allow_overloading);
-            return 2;
+            return 1;
         } else {
             warn "Calling store_tag on $self but the adaptor ", $self->adaptor, " doesn't have such capabilities\n";
-            return 1;
+            return 0;
         }
     } else {
         warn "add_tag has failed, store_tag is now skipped\n";
@@ -135,34 +133,32 @@ sub store_tag {
 }
 
 
-=head2 delete_tag
+=head2 remove_tag
 
-  Description: removes a tag from the metadata. If the value is provided, it tries
-               to delete only it (if present). Otherwise, it just clears the tag,
-               whatever value it was containing
+  Description: removes a tag from the metadata (in memory). If the value is provided,
+               it will only delete it (all its occurrences). Otherwise, it just clears
+               ell the values associated with the tag.
   Arg [1]    : <string> tag
   Arg [2]    : (optional) <string> value
   Example    : $ns_node->remove_tag('scientific name', 'Mammalia');
-               $ns_node->remove_tag('lost_taxon_id', 9593);
-  Returntype : 0 if the tag couldn't be removed,
-               1 if it is only in the PERL object,
-               2 if it is also stored in the database
+               $ns_node->remove_tag('lost_taxon_id');
+  Returntype : Boolean: 1 if something has been deleted, 0 otherwise
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub delete_tag {
+sub remove_tag {
     my $self = shift;
     my $tag = shift;
     my $value = shift;
 
     # Arguments check
-    unless (defined $tag)   {warn "delete_tag called on $self with an undef \$tag\n"; return 0};
+    unless (defined $tag)   {warn "remove_tag called on $self with an undef \$tag\n"; return 0};
     $tag = lc($tag);
 
     $self->_load_tags;
-    return 1 unless exists($self->{'_tags'}->{$tag});
+    return 0 unless exists($self->{'_tags'}->{$tag});
 
     # Updates the PERL object
     my $found = 0;
@@ -193,13 +189,37 @@ sub delete_tag {
         $found = 1;
     }
 
+    return $found;
+}
+
+
+=head2 delete_tag
+
+  Description: removes a tag from the metadata (both from memory and the database).
+               If the value is provided, it tries to delete only it (if present).
+               Otherwise, it just clears the tag, whatever value it was containing.
+  Arg [1]    : <string> tag
+  Arg [2]    : (optional) <string> value
+  Example    : $ns_node->remove_tag('scientific name', 'Mammalia');
+               $ns_node->remove_tag('lost_taxon_id', 9593);
+  Returntype : Boolean: 1 in case of success, 0 otherwise
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub delete_tag {
+    my $self = shift;
+    my $tag = shift;
+    my $value = shift;
+
     # Update the database
-    if ($found) {
+    if ($self->remove_tag($tag, $value)) {
         if($self->adaptor and $self->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::TagAdaptor")) {
             $self->adaptor->_delete_tagvalue($self, $tag, $value);
-            return 2;
-        } else {
             return 1;
+        } else {
+            return 0;
         }
     } else {
         return 1;
@@ -363,7 +383,7 @@ sub _load_tags {
     my $self = shift;
     #print STDERR "CALL _load_tags $self\n";
 
-    return if(defined($self->{'_tags'}));
+    return if exists $self->{'_tags'};
     $self->{'_tags'} = {};
     if($self->adaptor and $self->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::TagAdaptor")) {
         $self->adaptor->_load_tagvalues($self);

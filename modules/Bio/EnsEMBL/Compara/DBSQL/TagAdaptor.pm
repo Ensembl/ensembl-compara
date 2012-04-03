@@ -45,7 +45,6 @@ package Bio::EnsEMBL::Compara::DBSQL::TagAdaptor;
 
 use strict;
 
-#use Data::Dumper;
 
 =head2 _tag_capabilities
 
@@ -151,7 +150,6 @@ sub _read_attr_list {
     if ($@) {
         warn "$db_attrtable not available in this database\n";
     }
-    #print STDERR "adaptor $self: ", Dumper($self);
 }
 
 
@@ -178,11 +176,11 @@ sub _store_tagvalue {
     
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
     $self->_read_attr_list($db_attrtable);
-    #print STDERR "CALL _store_tagvalue $self/$object/$tag: ", Dumper($self->{"_attr_list_$db_attrtable"});
+    #print STDERR "CALL _store_tagvalue $self/$object/$tag/$value/$allow_overloading: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
   
     if (defined $db_attrtable && exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
         #print STDERR "attr\n";
-        warn "Trying to overload the value of attribute '$tag' ! This is not allowed for $self\n" if $allow_overloading;
+        warn "Trying to overload the value of an attribute ($tag) ! This is not allowed for $self. The new value will replace the old one.\n" if $allow_overloading;
         # It is an attribute
         my $sth = $self->prepare("INSERT IGNORE INTO $db_attrtable ($db_keyname) VALUES (?)");
         $sth->execute($object->$perl_keyname);
@@ -195,7 +193,10 @@ sub _store_tagvalue {
         #print STDERR "tag+\n";
         # It is a tag with multiple values allowed
         my $sth = $self->prepare("INSERT IGNORE INTO $db_tagtable ($db_keyname, tag, value) VALUES (?, ?, ?)");
-        $sth->execute($object->$perl_keyname, $tag, $value);
+        # Tests whether there is a UNIQUE key in the schema
+        if ($sth->execute($object->$perl_keyname, $tag, $value) == 0) {
+            die "The value '$value' has not been added to the tag '$tag' because it has another value and the SQL schema enforces '1 value per tag'.\n";
+        }
         $sth->finish;
     } else {
         #print STDERR "tag\n";
@@ -231,6 +232,7 @@ sub _delete_tagvalue {
     
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
     $self->_read_attr_list($db_attrtable);
+    #print STDERR "CALL _delete_tagvalue $self/$object/$tag/$value: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
   
     if (exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
         # It is an attribute
@@ -268,15 +270,49 @@ sub sync_tags_to_database {
     my $self = shift;
     my $object = shift;
 
-    # To load the tags from the database
-    my $hash = $object->get_tagvalue_hash();
-    foreach my $tag (keys %$hash) {
+    # No tags = nothing to write in the database
+    return unless exists $object->{'_tags'};
 
+    # memtags contains the tags that were in memory before the call
+    my $memtags = $object->{'_tags'};
+    # the object will load all the tags from the database
+    delete $object->{'_tags'};
+    # dbtags now contains the tags fetched from the database
+    my $dbtags = $object->get_tagvalue_hash();
+
+    # Whenever a tag has two values, we give priority to the memory
+    foreach my $tag (keys %$dbtags) {
+
+        # This bit would do "next" if the values are the same
+        if (exists $memtags->{$tag}) {
+            #print STDERR "Tag both in db and in memory: $tag=", $dbtags->{$tag}, "|", $memtags->{$tag}, "\n";
+            if ((ref($dbtags->{$tag}) eq 'ARRAY') and (ref($memtags->{$tag}) eq 'ARRAY')) {
+                #print STDERR "Comparing arrays: DB=", join("/", @{$dbtags->{$tag}}), " MEM=", join("/", @{$memtags->{$tag}}),"\n";
+                my %seen;
+                $seen{$_}++ for @{$dbtags->{$tag}};
+                $seen{$_}-- for @{$memtags->{$tag}};
+                next if not scalar(grep {$_} (values %seen));
+
+            } elsif ((ref($dbtags->{$tag}) eq 'ARRAY') or (ref($memtags->{$tag}) eq 'ARRAY')) {
+                # Different number of values
+            } else {
+                next if $dbtags->{$tag} eq $memtags->{$tag};
+            }
+        }
+            
         # Wipe out any previous value
         $self->_delete_tagvalue($object, $tag);
+        delete $dbtags->{$tag};
+    }
 
-        # Write the new one(s)
-        my $val = ${$hash}{$tag};
+    # All the tags that are in memory and not in the database
+    foreach my $tag (keys %$memtags) {
+        next if exists $dbtags->{$tag};
+
+        # Copy the values to the new hash
+        my $val = $dbtags->{$tag} = $memtags->{$tag};
+
+        # Store the value in the database
         if (ref($val) eq 'ARRAY') {
             foreach my $value (@$val) {
                 $self->_store_tagvalue($object, $tag, $value, 1);
