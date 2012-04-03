@@ -48,20 +48,23 @@ sub href {
 }
 
 sub _se {
-  my( $self, $f ) = @_;
-  my $f_proj = $f->project( 'toplevel' );
-  $_ = shift @$f_proj;
-  my $name = $_->[2]->seq_region_name;
-  my ($start,$end) = ($_->[2]->start, $_->[2]->end);
-  foreach( @$f_proj )  {
-    unless( $_->[2]->seq_region_name eq $name ) {
-      warn "CANNOT PROJECT AS NAMES DIFFERENT.... $name != ".$_->[2]->seq_region_name;
+  my ($self, $f) = @_;
+  my $f_proj = $f->project('toplevel');
+     $f      = shift @$f_proj;
+  my $name   = $f->[2]->seq_region_name;
+  my ($start, $end) = ($f->[2]->start, $f->[2]->end);
+  
+  foreach (@$f_proj)  {
+    if ($_->[2]->seq_region_name ne $name) {
+      warn "CANNOT PROJECT AS NAMES DIFFERENT.... $name != " . $_->[2]->seq_region_name;
       next;
     }
+    
     $start = $_->[2]->start if $_->[2]->start < $start;
     $end   = $_->[2]->end   if $_->[2]->end   > $end;
   }
-  return { 'name' => $name, 'start' => $start, 'end' => $end };
+  
+  return { name => $name, start => $start, end => $end };
 }
 
 sub tag {
@@ -94,6 +97,31 @@ sub tag {
     }
   }
   return @tags;
+}
+
+sub ID_URL {
+  my ($self, $db, $id) = @_;
+  
+  return undef unless $self->species_defs;
+  return undef if $db eq 'NULL';
+  
+  if (exists $self->species_defs->ENSEMBL_EXTERNAL_URLS->{$db}) {
+    my $url = $self->species_defs->ENSEMBL_EXTERNAL_URLS->{$db};
+       $url =~ s/###ID###/$id/;
+    
+    return $url;
+  } else {
+    return '';
+  }
+}
+
+sub canvas_attributes {
+  my ($self, $f) = @_;
+  
+  return (
+    id    => $f->qtl->dbID,
+    title => $self->title($f)
+  );
 }
 
 1;
