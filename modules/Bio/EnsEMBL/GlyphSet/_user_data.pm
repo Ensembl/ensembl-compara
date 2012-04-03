@@ -6,11 +6,6 @@ no warnings 'uninitialized';
 
 use base qw(Bio::EnsEMBL::GlyphSet::_alignment Bio::EnsEMBL::GlyphSet_wiggle_and_block);
 
-sub _das_link {
-  my $self = shift;
-  return undef;
-}
-
 sub feature_group {
   my( $self, $f ) = @_;
   return $f->id;

@@ -10,12 +10,6 @@ use Data::Dumper;
 # something diffirent - main one to be over-riden is probably the
 # features call - as it will need to take different parameters...
 #==============================================================================
-sub _das_link {
-## Returns the 'group' that a given feature belongs to. Features in the same
-## group are linked together via an open rectangle. Can be subclassed.
-  my $self = shift;
-  return de_camel( $self->my_config('object_type') || 'dna_align_feature' );
-}
 
 sub feature_group {
   my( $self, $f ) = @_;

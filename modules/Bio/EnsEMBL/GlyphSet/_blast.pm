@@ -29,11 +29,6 @@ sub _blast_adaptor {
   return $self->{'container'}{'blast_adaptor'};
 }
 
-sub _das_link {
-  my $self = shift;
-  return undef;
-}
-
 sub feature_group {
   my( $self, $f ) = @_;
   return $f->hseqname; 
