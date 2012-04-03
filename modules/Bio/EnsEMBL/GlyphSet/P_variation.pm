@@ -4,18 +4,11 @@ use strict;
 
 use base qw(Bio::EnsEMBL::GlyphSet);
 
+sub colour_key { return lc $_[1]->display_consequence; }
 
 sub my_label { 
   my $self = shift;  
-  my $label = $self->{'my_config'}->id =~/somatic/ ?'Somatic Mutations' : 'Variations'; 
-  return $label; 
-}
-
-
-sub my_colour {
-  my ($self, $key) = @_;
-  $self->{'colour_map'} ||= $self->{'config'}->species_defs->colour('variation');
-  return map $self->{'colour_map'}->{lc $key}->{$_}, qw(default text);
+  return $self->{'my_config'}->id =~ /somatic/ ? 'Somatic Mutations' : 'Variations'; 
 }
 
 sub _init {
@@ -29,16 +22,17 @@ sub _init {
   my $pix_per_bp = $self->scalex;
   my $t_width    = $h * 0.75 / $pix_per_bp;
   
-  $self->_init_bump(undef,  $self->my_config('depth') || 1e6);
+  $self->_init_bump(undef, $self->my_config('depth') || 1e6);
 
   return unless $snps;
   
-	my $is_somatic = $self->{'my_config'}->id =~/somatic/ ? 1 : 0;
+	my $is_somatic = $self->{'my_config'}->id =~ /somatic/ ? 1 : 0;
 	
   foreach my $snp (@$snps) {
-		next if ($snp->{'vf'}->is_somatic != $is_somatic);
-    my $x = $snp->{'position'};
-    my ($colour, $legend) = $self->my_colour($snp->{'type'});
+		next if $snp->{'vf'}->is_somatic != $is_somatic;
+    
+    my $x      = $snp->{'position'};
+    my $colour = $self->get_colour($snp->{'vf'});
     
     if ($snp->{'indel'}) {
       my ($y, $end, $direction) = $snp->{'indel'} eq 'insert' ? ($h, 1, 'down') : (0, $snp->{'length'} - 1, 'up');
@@ -75,10 +69,7 @@ sub _init {
       $self->push($glyph, $zmenu);
       
       # Force to the end of the legend
-      $config->{'P_variation_legend'}{"zz$type"} ||= {
-        text  => $type,
-        shape => 'Triangle'
-      };
+      $config->{'P_variation_legend'}{$type} ||= { shape => 'Triangle' };
     } else {
       my $glyph = $self->Rect({
         x             => $x - $h / 2,
@@ -107,20 +98,15 @@ sub _init {
       $glyph->y($glyph->y + 1.5 * $row * ($h + 2));
       $self->push($glyph);
       
-      $config->{'P_variation_legend'}{$legend} ||= {
-        text   => $legend,
-        colour => $colour,
-        shape  => 'Rect'
-      };
+      $config->{'P_variation_legend'}{$snp->{'vf'}->display_consequence} ||= { colour => $colour, shape => 'Rect' };
     }
   }
 }
 
 sub render_text {
-  my $self = shift;
-  
+  my $self      = shift;
   my $container = $self->{'container'};
-  my $snps = $self->cache('image_snps');
+  my $snps      = $self->cache('image_snps');
 
   return unless $snps;
 
