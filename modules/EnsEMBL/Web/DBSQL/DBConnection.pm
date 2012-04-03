@@ -87,7 +87,7 @@ sub get_DBAdaptor {
   if ($database eq 'funcgen' && $self->{'species_defs'}->databases->{'DATABASE_FUNCGEN'}{'NAME'} ){
     if ($species =~/^(mus|homo)/i ){
       my $root = $self->{'species_defs'}->ENSEMBL_REGULATION_FILE_PATH;
-      $root .= $species .'/' . $self->{'species_defs'}->ASSEMBLY_NAME;   
+      $root .= lc($species) .'/' . $self->{'species_defs'}->ASSEMBLY_NAME;   
 	    $dba->get_ResultSetAdaptor->dbfile_data_root($root);    
     }
   }  
