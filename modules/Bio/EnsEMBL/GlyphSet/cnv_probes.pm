@@ -4,7 +4,8 @@ use strict;
 
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub my_label { return 'Copy Number Variant Probes'; }
+sub my_label   { return 'Copy Number Variant Probes'; }
+sub colour_key { return 'cnv'; }
 
 sub features {
   my $self   = shift; 
@@ -21,23 +22,6 @@ sub features {
   
   return $var_features;  
 }
-
-
-sub colour_key  {
-  my ($self, $f) = @_;
-  return $f->source;
-}
-
-sub tag {
-  my ($self, $f) = @_;
-  
-  return ({
-    style  => 'fg_ends',
-    colour => $self->my_colour($f->source),
-		start  => $f->start,
-    end    => $f->end
-  });
-} 
 
 sub href {
   my ($self, $f) = @_;
@@ -64,31 +48,29 @@ sub title {
 }
 
 sub highlight {
-  my ($self, $f, $composite,$pix_per_bp, $h) = @_;
-  my $id = $f->variation_name;
-  my %highlights;
-  @highlights{$self->highlights} = (1);
-
-  my $length = ($f->end - $f->start) + 1; 
+  my ($self, $f, $composite, $pix_per_bp, $h) = @_;
   
-  return unless $highlights{$id};
+  return unless grep $_ eq $f->variation_name, $self->highlights;
   
   # First a black box
-  $self->unshift($self->Rect({
-      x         => $composite->x - 2/$pix_per_bp,
+  $self->unshift(
+    $self->Rect({
+      x         => $composite->x - 2 / $pix_per_bp,
       y         => $composite->y - 2, # + makes it go down
-      width     => $composite->width + 4/$pix_per_bp,
+      width     => $composite->width + 4 / $pix_per_bp,
       height    => $h + 4,
       colour    => 'black',
       absolutey => 1,
     }),
 		$self->Rect({ # Then a 1 pixel smaller green box
-      x         => $composite->x - 1/$pix_per_bp,
+      x         => $composite->x - 1 / $pix_per_bp,
       y         => $composite->y - 1, # + makes it go down
-      width     => $composite->width + 2/$pix_per_bp,
+      width     => $composite->width + 2 / $pix_per_bp,
       height    => $h + 2,
       colour    => 'green',
       absolutey => 1,
-    }));
+    })
+  );
 }
+
 1;
