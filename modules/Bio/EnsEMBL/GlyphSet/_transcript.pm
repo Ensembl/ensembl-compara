@@ -34,6 +34,7 @@ sub href {
   my ($self, $gene, $transcript) = @_;
   my $hub    = $self->{'config'}->hub;
   my $params = {
+    %{$hub->multi_params}
     species    => $self->species,
     type       => $transcript ? 'Transcript' : 'Gene',
     action     => $self->my_config('zmenu') ? $self->my_config('zmenu') : $hub->action,
@@ -41,7 +42,6 @@ sub href {
     db         => $self->my_config('db'),
     calling_sp => $hub->species,
     real_r     => $hub->param('r'),
-    %{$hub->multi_params}
   };
 
   $params->{'r'} = undef                  if $self->{'container'}{'web_species'} ne $self->species;
