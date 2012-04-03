@@ -1,36 +1,29 @@
 package Bio::EnsEMBL::GlyphSet_transcript;
 
 use strict;
+
 use base qw(Bio::EnsEMBL::GlyphSet);
-no warnings "uninitialized";
 
-use Time::HiRes;
-
-sub text_label { return undef; } 
-sub gene_text_label { return undef; } 
-
-sub features { return []; }
-
-sub href { return undef; }
-sub gene_href { return undef; }
+sub features { return [];    }
+sub href     { return undef; }
 
 ## Let us define all the renderers here...
 ## ... these are just all wrappers - the parameter is 1 to draw labels
 ## ... 0 otherwise...
 
-sub render_gene_label            { my $self = shift; $self->render_genes(1); }
-sub render_gene_nolabel          { my $self = shift; $self->render_genes(0); }
-sub render_collapsed_label       { my $self = shift; $self->render_collapsed(1); }
-sub render_collapsed_nolabel     { my $self = shift; $self->render_collapsed(0); }
-sub render_transcript_label      { my $self = shift; $self->render_transcripts(1); }
-sub render_transcript            { my $self = shift; $self->render_transcripts(1); }
-sub render_coding_only           { my $self = shift; $self->render_transcripts(1, 1); }
-sub render_normal                { my $self = shift; $self->render_transcripts(1); }
-sub render_transcript_nolabel    { my $self = shift; $self->render_transcripts(0); }
-sub render_as_transcript_label   { my $self = shift; $self->render_alignslice_transcript(1); }
-sub render_as_transcript_nolabel { my $self = shift; $self->render_alignslice_transcript(0); }
-sub render_as_collapsed_label    { my $self = shift; $self->render_alignslice_collapsed(1); }
-sub render_as_collapsed_nolabel  { my $self = shift; $self->render_alignslice_collapsed(0); }
+sub render_normal                { $_[0]->render_transcripts(1);           }
+sub render_transcript            { $_[0]->render_transcripts(1);           }
+sub render_transcript_label      { $_[0]->render_transcripts(1);           }
+sub render_coding_only           { $_[0]->render_transcripts(1, 1);        }
+sub render_transcript_nolabel    { $_[0]->render_transcripts(0);           }
+sub render_collapsed_label       { $_[0]->render_collapsed(1);             }
+sub render_collapsed_nolabel     { $_[0]->render_collapsed(0);             }
+sub render_gene_label            { $_[0]->render_genes(1);                 }
+sub render_gene_nolabel          { $_[0]->render_genes(0);                 }
+sub render_as_transcript_label   { $_[0]->render_alignslice_transcript(1); }
+sub render_as_transcript_nolabel { $_[0]->render_alignslice_transcript(0); }
+sub render_as_collapsed_label    { $_[0]->render_alignslice_collapsed(1);  }
+sub render_as_collapsed_nolabel  { $_[0]->render_alignslice_collapsed(0);  }
 
 sub render_collapsed {
   my ($self, $labels) = @_;
@@ -78,9 +71,9 @@ sub render_collapsed {
     $transcript_drawn = 1;
     
     my $gene_stable_id = $gene->stable_id;
-    my $gene_key       = $self->gene_key($gene);
-    my $colour         = $self->my_colour($gene_key);
-    my $label          = $self->my_colour($gene_key, 'text');
+    my $colour_key     = $self->colour_key($gene);
+    my $colour         = $self->my_colour($colour_key);
+    my $label          = $self->my_colour($colour_key, 'text');
     my $highlight      = $selected_db eq $db && $selected_gene eq $gene_stable_id ? 'highlight1' : undef;
 
     $used_colours{$label} = $colour;
@@ -89,7 +82,7 @@ sub render_collapsed {
       y      => $y,
       height => $h,
       title  => $self->gene_title($gene),
-      href   => $self->gene_href($gene)
+      href   => $self->href($gene)
     });
     
     my $composite2 = $self->Composite({ y => $y, height => $h });
@@ -171,9 +164,8 @@ sub render_collapsed {
     my $bump_height = $h + 2;
     
     if ($show_labels ne 'off' && $labels) {
-      if (my $text_label = $self->gene_text_label($gene)) {
-        my @lines = split "\n", $text_label;
-        $lines[0] = $gene_strand == 1 ? "$lines[0] >" : "< $lines[0]";
+      if (my $label = $self->feature_label($gene)) {
+        my @lines = split "\n", $label;
         
         for (my $i = 0; $i < @lines; $i++){
           my $line = "$lines[$i] ";
@@ -344,7 +336,7 @@ sub render_transcripts {
         href   => $self->href($gene, $transcript)
       });
 
-      my $colour_key = $self->transcript_key($transcript, $gene);
+      my $colour_key = $self->colour_key($transcript, $gene);
       my $colour     = $self->my_colour($colour_key);
       my $label      = $self->my_colour($colour_key, 'text');
       my $highlight  = $selected_db eq $db && $transcript_stable_id ? (
@@ -473,9 +465,8 @@ sub render_transcripts {
       my $bump_height = 1.5 * $h;
       
       if ($show_labels ne 'off' && $labels) {
-        if (my $text_label = $self->text_label($gene, $transcript)) {
-          my @lines = split "\n", $text_label; 
-          $lines[0] = $gene_strand == 1 ? "$lines[0] >" : "< $lines[0]";
+        if (my $label = $self->feature_label($gene, $transcript)) {
+          my @lines = split "\n", $label;
           
           for (my $i = 0; $i < @lines; $i++) {
             my $line = "$lines[$i] ";
@@ -512,7 +503,7 @@ sub render_transcripts {
   }
   
   if ($transcript_drawn) {
-    my $type = $self->_type;
+    my $type = $self->type;
     my %legend_old = @{$config->{'legend_features'}{$type}{'legend'}||[]};
     $used_colours{$_} = $legend_old{$_} for keys %legend_old;
     my @legend = %used_colours;
@@ -584,7 +575,7 @@ sub render_alignslice_transcript {
       
       my $transcript_stable_id = $transcript->stable_id;
       
-      my $colour_key = $self->transcript_key($transcript, $gene);    
+      my $colour_key = $self->colour_key($transcript, $gene);    
       my $colour     = $self->my_colour($colour_key);
       my $label      = $self->my_colour($colour_key, 'text');
       
@@ -711,9 +702,8 @@ sub render_alignslice_transcript {
       my $bump_height = 1.5 * $h;
       
       if ($show_labels ne 'off' && $labels) {
-        if (my $text_label = $self->text_label($gene, $transcript)) {
-          my @lines = split "\n", $text_label;
-          $lines[0] = $gene_strand == 1 ? "$lines[0] >" : "< $lines[0]";
+        if (my $label = $self->feature_label($gene, $transcript)) {
+          my @lines = split "\n", $label;
           
           for (my $i = 0; $i < scalar @lines; $i++) {
             my $line = $lines[$i];
@@ -847,10 +837,10 @@ sub render_alignslice_collapsed {
       y      => $y, 
       height => $h,
       title  => $self->gene_title($gene),
-      href   => $self->gene_href($gene)
+      href   => $self->href($gene)
     });
     
-    my $colour_key = $self->gene_key($gene);    
+    my $colour_key = $self->colour_key($gene);    
     my $colour     = $self->my_colour($colour_key);
     my $label      = $self->my_colour($colour_key, 'text');
     my $highlight  = $selected_db eq $db && $selected_gene eq $gene_stable_id ? 'highlight1' : undef;
@@ -918,9 +908,8 @@ sub render_alignslice_collapsed {
     my $bump_height = $h + 2;
     
     if ($show_labels ne 'off' && $labels) {
-      if (my $text_label = $self->gene_text_label($gene)) {
-        my @lines = split "\n", $text_label;
-        $lines[0] = $gene_strand == 1 ? "$lines[0] >" : "< $lines[0]";
+      if (my $label = $self->feature_label($gene)) {
+        my @lines = split "\n", $label;
         
         for (my $i = 0; $i < scalar @lines; $i++){
           my $line = "$lines[$i] ";
@@ -1016,10 +1005,10 @@ sub render_genes {
     
     next if $gene_strand != $strand && $strand_flag eq 'b';
     
-    my $gene_key       = $self->gene_key($gene);
-    my $gene_col       = $self->my_colour($gene_key);
-    my $gene_type      = $self->my_colour($gene_key, 'text');
-    my $label          = $gene->external_name || $gene->stable_id;
+    my $colour_key     = $self->colour_key($gene);
+    my $gene_col       = $self->my_colour($colour_key);
+    my $gene_type      = $self->my_colour($colour_key, 'text');
+    my $label          = $self->feature_label($gene);
     my $gene_stable_id = $gene->stable_id;
     my $high           = $gene_stable_id eq $selected_gene;
     my $start          = $gene->start;
@@ -1039,20 +1028,11 @@ sub render_genes {
       height    => $h,
       colour    => $gene_col,
       absolutey => 1,
+      href      => $show_navigation ? $self->href($gene) : undef,
       title     => ($gene->external_name ? $gene->external_name . '; ' : '') .
                    "Gene: $gene_stable_id; Location: " .
                    $gene->seq_region_name . ':' . $gene->seq_region_start . '-' . $gene->seq_region_end
     });
-    
-    if ($show_navigation) {
-      $rect->{'href'} = $self->_url({
-        species => $self->species,
-        type    => 'Gene',
-        action  => 'Summary',
-        g       => $gene_stable_id,
-        db      => $database
-      });
-    }
     
     push @genes_to_label, {
       start     => $start,
@@ -1143,9 +1123,7 @@ sub render_genes {
       $self->_init_bump;
 
       foreach my $gr (@genes_to_label) {
-        my $label = $gr->{'gene'}->strand == 1 ? "$gr->{'label'} > " : "< $gr->{'label'} ";
-        my $w     = ($self->get_text_width(0, $label, '', 'font' => $fontname, 'ptsize' => $fontsize))[2];
-        
+        my $w      = ($self->get_text_width(0, $gr->{'label'}, '', 'font' => $fontname, 'ptsize' => $fontsize))[2];
         my $tglyph = $self->Text({
           x         => ($gr->{'start'} - 1) + 4/$pix_per_bp,
           y         => 0,
@@ -1155,7 +1133,7 @@ sub render_genes {
           halign    => 'left',
           ptsize    => $fontsize,
           colour    => $gr->{'col'},
-          text      => $label,
+          text      => $gr->{'label'},
           title     => $gr->{'title'},
           href      => $gr->{'href'},
           absolutey => 1
@@ -1205,7 +1183,7 @@ sub render_genes {
     my %used_colours = map { $_->{'type'} => $_->{'col'} } @genes_to_label;
     my @legend = %used_colours;
     
-    $config->{'legend_features'}->{$self->_type} = {
+    $config->{'legend_features'}->{$self->type} = {
       priority => $self->_pos,
       legend   => \@legend
     }
@@ -1478,6 +1456,52 @@ sub gene_title {
   $title .= '; Location: ' . $gene->seq_region_name . ':' . $gene->seq_region_start . '-' . $gene->seq_region_end;
   
   return $title;
+}
+
+sub feature_label {
+  my $self       = shift;
+  my $gene       = shift;
+  my $transcript = shift || $gene;
+  my $id         = $transcript->external_name || $transcript->stable_id;
+     $id         = $transcript->strand == 1 ? "$id >" : "< $id";
+  
+  return $id if $self->get_parameter('opt_shortlabels') || $transcript == $gene;
+  
+  my $label = $self->my_config('label_key') || '[text_label] [display_label]';
+  
+  return $id if $label eq '-';
+  
+  my $ini_entry = $self->my_colour($self->colour_key($gene, $transcript), 'text');
+  
+  if ($label =~ /[biotype]/) {
+    my $biotype = $transcript->biotype;
+       $biotype =~ s/_/ /g;
+       $label   =~ s/\[biotype\]/$biotype/g;
+  }
+  
+  $label =~ s/\[text_label\]/$ini_entry/g;
+  $label =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $gene->analysis->$1 : $gene->$1/eg;
+  $label =~ s/\[(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $transcript->analysis->$1 : $transcript->$1/eg;
+  
+  $id .= "\n$label" unless $label eq '-';
+  
+  return $id;
+}
+
+sub colour_key {
+  my $self       = shift;
+  my $gene       = shift;
+  my $transcript = shift || $gene;
+  my $pattern    = $self->my_config('colour_key') || '[biotype]';
+   
+  # hate having to put ths hack here, needed because any logic_name specific web_data entries
+  # get lost when the track is merged - needs rewrite of imageconfig merging code
+  return 'merged' if $transcript->analysis->logic_name =~ /ensembl_havana/;
+  
+  $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
+  $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' ? $transcript->analysis->$1 : $transcript->$1/eg;
+  
+  return lc $pattern;
 }
 
 1;
