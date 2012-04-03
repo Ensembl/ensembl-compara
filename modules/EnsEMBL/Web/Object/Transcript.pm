@@ -1273,7 +1273,7 @@ sub sort_oligo_data {
       
       $text .= '<div class="multicol">';
       $text .= $probe_name;
-      $text .= qq{<span class="small">[$probe_text]</span>} if $probe_text;
+      $text .= qq{ <span class="small">[$probe_text]</span>} if $probe_text;
       $text .= qq{  [<a href="$url">view all locations</a>]</div>};
     }
     
