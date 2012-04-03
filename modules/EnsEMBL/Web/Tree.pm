@@ -13,10 +13,10 @@ sub new {
   $self->{'id'}        = 'aaaa';
   $self->{'data'}      = {};
   $self->{'user_data'} = {};
-  $self->{'tree_ids'}  = {}; # A complete list of unique identifiers in the tree
+  $self->{'tree_ids'}  = {}; # A complete list of unique identifiers in the tree, and their nodes
   $self->{$_}          = $args->{$_} for keys %{$args || {}}; # Overwrites the values above
   
-  $self->{'tree_ids'}{$self->{'id'}} = 1;
+  $self->{'tree_ids'}{$self->{'id'}} = $self;
   
   return $self;
 }
@@ -37,14 +37,7 @@ sub _flush_tree { $_[0]->{'user_data'} = {};          } # TODO: rename to flush_
 
 sub get_node {
   my ($self, $id) = @_;
-  
-  for (@{$self->child_nodes}) {
-    return $_ if $_->id eq $id;
-    my $child_with_this_id = $_->get_node($id);
-    return $child_with_this_id if defined $child_with_this_id;
-  }
-  
-  return undef;
+  return $self->tree_ids->{$id};
 }
 
 sub flush_user {
@@ -82,7 +75,7 @@ sub create_node {
     id        => $id,
     data      => $data,
     user_data => $self->user_data,
-    tree_ids  => $self->tree_ids
+    tree_ids  => $self->tree_ids,
   });
 }
 
