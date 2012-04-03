@@ -2,9 +2,9 @@ package Bio::EnsEMBL::GlyphSet::TSE_transcript;
 
 use strict;
 
-use base qw(Bio::EnsEMBL::GlyphSet);
+use base qw(Bio::EnsEMBL::GlyphSet_transcript);
 
-sub _init {
+sub render_normal {
   my $self              = shift;
   my $config            = $self->{'config'};
   my $h                 = 8; # Increasing this increases glyph height
@@ -14,7 +14,7 @@ sub _init {
   my $coding_start      = $trans_obj->{'coding_start'};
   my $coding_end        = $trans_obj->{'coding_end'};
   my $transcript        = $trans_obj->{'transcript'};
-  my $colour_key        = $self->transcript_key($transcript, $config->core_objects->{'gene'}); # need both gene and transcript to get the colour
+  my $colour_key        = $self->colour_key($config->core_objects->{'gene'}, $transcript); # need both gene and transcript to get the colour
   my $colour            = $self->my_colour($colour_key);
   my $strand            = $transcript->strand;
   my $tsi               = $transcript->stable_id;
