@@ -4,7 +4,10 @@ use strict;
 
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub squish {1;}
+sub readable_strand {
+  my ($self, $strand) = @_;
+  return $strand < 0 ? 'rev' : 'fwd';
+}
 
 sub my_label { return undef; }
 
@@ -88,6 +91,11 @@ sub export_feature {
     'headers' => [ 'alternate_slice' ],
     'values' => [ $feature->{'alternate_slice'}->seq_region_name ]
   });
+}
+
+sub canvas_attributes {
+  my ($self, $f) = @_;
+  return ( background => '#' . $self->{'config'}->colourmap->hex_by_name($self->my_colour($self->colour_key($f), 'join')) );
 }
 
 1;
