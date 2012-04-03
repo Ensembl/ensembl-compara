@@ -50,7 +50,7 @@ sub new {
     has_das          => 1,
     _core            => undef,
     _tree            => new EnsEMBL::Web::Tree,
-    transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene)],
+    transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript)],
     _parameters      => { # Default parameters
       image_width => $ENV{'ENSEMBL_IMAGE_WIDTH'} || 800,
       margin       => 5,
@@ -1496,7 +1496,6 @@ sub add_ditag_features {
 # loop through all core databases - and attach the gene
 # features from the gene tables...
 # there are a number of menus sub-types these are added to:
-# * gene                    # genes
 # * transcript              # ordinary transcripts
 # * alignslice_transcript   # transcripts in align slice co-ordinates
 # * tse_transcript          # transcripts in collapsed intro co-ords
@@ -1532,6 +1531,7 @@ sub add_genes {
         glyphset    => ($t =~ /_/ ? '' : '_') . $type, # QUICK HACK
         colours     => $colours,
         strand      => $t eq 'gene' ? 'r' : 'b',
+        canvas      => { type => 'Gene' },
         renderers   => $t eq 'transcript' ? [
           'off',                'Off',
           'gene_nolabel',       'No exon structure without labels',
@@ -1585,6 +1585,10 @@ sub add_marker_features {
       labels   => 'on',
       colours  => $colours,
       strand   => 'r',
+      canvas   => {
+        bumpLabels     => JSON::true,
+        maxLabelRegion => 5e4
+      }
     });
   }
 }
@@ -1604,7 +1608,11 @@ sub add_qtl_features {
     description => 'Quantative trait loci',
     display     => 'normal',
     renderers   => [ 'off', 'Off', 'normal', 'On' ],
-    strand      => 'r'
+    strand      => 'r',
+    canvas      => {
+      bump         => JSON::true,
+      labelOverlay => JSON::true
+    }
   }));
 }
 
@@ -1640,7 +1648,11 @@ sub add_misc_features {
       description       => $data->{$_}{'desc'},
       strand            => 'r',
       display           => $default_tracks->{$config_name}{$_}{'default'} || $data->{$_}{'display'} || 'off',
-      outline_threshold => $default_tracks->{$config_name}{$_}{'threshold'} eq 'no' ? undef : 350000
+      outline_threshold => $default_tracks->{$config_name}{$_}{'threshold'} eq 'no' ? undef : 350000,
+      canvas            => {
+        bump         => JSON::true,
+        labelOverlay => JSON::true
+      }
     });
   }
 }
@@ -1825,7 +1837,8 @@ sub add_decorations {
       strand      => 'f',
       description => 'Cytogenetic bands',
       colourset   => 'ideogram',
-      sortable    => 1
+      sortable    => 1,
+      canvas      => { labelOverlay => JSON::true }
     }));
   }
   
@@ -1839,7 +1852,8 @@ sub add_decorations {
       label_strand  => 'r',
       short_labels  => 0,
       description   => 'GRC assembly patches, haplotype (HAPs) and pseudo autosomal regions (PARs)',
-      colourset     => 'assembly_exception'
+      colourset     => 'assembly_exception',
+      canvas        => { type => 'Patch' }
     }));
   }
   
@@ -1895,7 +1909,8 @@ sub add_synteny {
       display     => 'off',
       renderers   => [qw(off Off normal On)],
       height      => 4,
-      strand      => 'r'
+      strand      => 'r',
+      canvas      => { type => 'Synteny' }
     }));
   }
 }
@@ -2412,15 +2427,19 @@ sub add_structural_variations {
     strand     => 'r', 
     bump_width => 0,
     colourset  => 'structural_variant',
-    display    => 'off'
+    display    => 'off',
   );
   
   $structural_variation->append($self->create_track('variation_feature_structural', 'Structural variants (all sources)', {   
     %options,
     caption     => 'All Structural variants',
     sources     => undef,
+    description => 'Structural variants from all sources',
     depth       => 5,
-    description => 'Structural variants from all sources'
+    canvas      => {
+      type  => 'StructuralVariation',
+      depth => 5
+    }
   }));
   
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'} || {}}) {
@@ -2431,38 +2450,36 @@ sub add_structural_variations {
       %options,
       caption     => $key_2,
       source      => $key_2,
+      description => $description,
       depth       => 0.5,
-      description => $description
-      
+      canvas      => {
+        type  => 'StructuralVariation',
+        depth => 0.5
+      }
     }));  
   }
   
   # Structural variation sets
-  foreach my $menu_item(@{$hashref->{'menu'}}) {
+  foreach my $menu_item (@{$hashref->{'menu'}}) {
+    next if $menu_item->{'type'} ne 'sv_set';
     
-    next if ($menu_item->{type} ne 'sv_set');
-    
-    my $temp_name = $menu_item->{key};
+    my $temp_name = $menu_item->{'key'};
        $temp_name =~ s/^structural_variation_set_//;
-    
-    my $node_name = $menu_item->{long_name}.' (structural variants)';
+    my $node_name = "$menu_item->{'long_name'} (structural variants)";
       
-    my $node = $self->create_track($menu_item->{key}, $node_name, {
-        %options,
-        caption     => $node_name,
-        sources     => undef,
-        sets        => [ $menu_item->{long_name} ],
-        set_name    => $menu_item->{long_name},
-        description => $hashref->{'structural_variation_set'}{'descriptions'}{$temp_name}
-    });
-    
-    # get the node onto which we're going to add this item, then append it
-    $structural_variation->append($node);
+    $structural_variation->append($self->create_track($menu_item->{'key'}, $node_name, {
+      %options,
+      caption     => $node_name,
+      sources     => undef,
+      sets        => [ $menu_item->{'long_name'} ],
+      set_name    => $menu_item->{'long_name'},
+      description => $hashref->{'structural_variation_set'}{'descriptions'}{$temp_name},
+      canvas      => { type => 'StructuralVariation' }
+    }));
   }
   
-  $menu->append($structural_variation)
+  $menu->append($structural_variation);
 }
-
   
 sub add_copy_number_variant_probes {
   my ($self, $key, $hashref) = @_;
