@@ -2,13 +2,16 @@ package Bio::EnsEMBL::GlyphSet::_variation;
 
 use strict;
 
+use Bio::EnsEMBL::Variation::Utils::Constants;
 use Bio::EnsEMBL::Variation::VariationFeature;
 
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
+sub colour_key { return lc $_[1]->display_consequence; }
+
 sub my_label { 
-  my $self = shift;  
-  my $label = $self->{'my_config'}->id =~/somatic/ ?'Somatic Mutations' : 'Variations'; 
+  my $self  = shift;  
+  my $label = $self->{'my_config'}->id =~ /somatic/ ? 'Somatic Mutations' : 'Variations'; 
   return $label; 
 }
 
@@ -19,6 +22,7 @@ sub features {
   
   if ($slice_length > $max_length * 1010 ) {
     $self->errorTrack("Variation features are not displayed for regions larger than ${max_length}Kb");
+    return [];
   } else {
     return $self->fetch_features;
   }
@@ -45,46 +49,50 @@ sub check_source {
 }
 
 sub fetch_features {
-  my ($self) = @_;
-
-  if (!$self->cache($self->{'my_config'}->id)) {
+  my $self      = shift;
+  my $config    = $self->{'config'};
+  my $slice     = $self->{'container'};
+  my $colourmap = $config->colourmap;
+  my $id        = $self->{'my_config'}->id;
+  
+  if (!$self->cache($id)) {
     # different retrieval method for somatic mutations
-    if( $self->{'my_config'}->id =~/somatic/){
+    if ($id =~ /somatic/) {
       my @somatic_mutations;
-      if ($self->my_config('filter')){ 
-        @somatic_mutations = 
-        #grep { $_->map_weight < 4 }
-        @{$self->{'container'}->get_all_somatic_VariationFeatures_with_annotation(undef, undef, $self->my_config('filter')) || []};
-
+      
+      if ($self->my_config('filter')) { 
+        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures_with_annotation(undef, undef, $self->my_config('filter')) || []};
       } else { 
-        @somatic_mutations = @{$self->{'container'}->get_all_somatic_VariationFeatures || []};
+        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures || []};
       }
-      $self->cache($self->{'my_config'}->id, \@somatic_mutations);   
+      
+      $self->cache($id, \@somatic_mutations);   
     } else { # get standard variations
       my $sources = $self->my_config('sources'); 
          $sources = { map { $_ => 1 } @$sources } if $sources; 
       my $sets    = $self->my_config('sets');
          $sets    = { map { $_ => 1 } @$sets } if $sets;
-      my %ct      = map {$_->display_term => $_->rank} values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-     
+      my %ct      = map { $_->display_term => $_->rank } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
       my @vari_features;
       
-      if ($self->{'my_config'}->id =~ /set/) {
-        my $track_set = $self->my_config('set_name');
-        my $variation_db_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation');
-        my $set_object = $variation_db_adaptor->get_VariationSetAdaptor->fetch_by_name($track_set);
+      if ($id =~ /set/) {
+        my $track_set            = $self->my_config('set_name');
+        my $variation_db_adaptor = $slice->adaptor->db->get_db_adaptor('variation');
+        my $set_object           = $variation_db_adaptor->get_VariationSetAdaptor->fetch_by_name($track_set);
       
         # Enable the display of failed variations in order to display the failed variation track
         my $failed_variations_track_name = 'Failed';
-        my $orig_failed_flag = $variation_db_adaptor->include_failed_variations();
-        $variation_db_adaptor->include_failed_variations(1) if ($track_set =~ m/^$failed_variations_track_name/i);
+        my $orig_failed_flag             = $variation_db_adaptor->include_failed_variations;
         
-        @vari_features =  @{$self->{'container'}->get_all_VariationFeatures_by_VariationSet($set_object) || []};
+        $variation_db_adaptor->include_failed_variations(1) if $track_set =~ m/^$failed_variations_track_name/i;
         
-        #ÊReset the flag for displaying of failed variations to its original state
+        @vari_features = @{$slice->get_all_VariationFeatures_by_VariationSet($set_object) || []};
+        
+        # Reset the flag for displaying of failed variations to its original state
         $variation_db_adaptor->include_failed_variations($orig_failed_flag);
       } else {
-        my @temp_variations =  @{$self->{'container'}->get_all_VariationFeatures($self->my_config('filter')) || []};  
+        my @temp_variations = @{$slice->get_all_VariationFeatures($self->my_config('filter')) || []}; 
+        
         ## Add a filtering step here
         @vari_features =
           map  { $_->[1] }                                                ## Quick indexing schwartzian transform
@@ -92,33 +100,18 @@ sub fetch_features {
           map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
           grep { $sources ? $self->check_source($_, $sources) : 1 }       ## If sources filter by source
           grep { $sets ? $self->check_set($_, $sets) : 1 }                ## If sets filter by set
-          #grep { $_->map_weight < 4 }
           @temp_variations;
       }
 
-      $self->cache($self->{'my_config'}->id, \@vari_features);
+      $self->cache($id, \@vari_features);
     }
   }
 
-  my $snps = $self->cache($self->{'my_config'}->id) || [];
+  my $snps = $self->cache($id) || [];
 
-  foreach my $f (@$snps) {
-    my $config  = $self->{'config'};
-    my $colours = $self->my_config('colours');
-    my $type    = lc $f->display_consequence; 
-
-    if (!$config->{'variation_types'}{$type}) {
-      push @{$config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{$type}->{'text'}, $colours->{$type}->{'default'};
-      $config->{'variation_types'}{$type} = 1;
-    }
-  }
+  $config->{'variation_legend'}{$_->display_consequence} ||= $self->get_colours($_)->{'feature'} for @$snps;
   
   return $snps;
-}
-
-sub colour_key {
-  my ($self, $f) = @_;
-  return lc $f->display_consequence;
 }
 
 sub title {
@@ -154,22 +147,80 @@ sub feature_label {
 sub tag {
   my ($self, $f) = @_;
   
+  my $colours = $self->get_colours($f);
+  my $colour  = $colours->{'feature'};
+  
   if ($self->my_config('style') eq 'box') {
     my $style        = $f->start > $f->end ? 'left-snp' : $f->var_class eq 'in-del' ? 'delta' : 'box';
-    my $letter       = $style eq 'box' ? $f->ambig_code : "";
-    my $colour_key   = $self->colour_key($f); 
-    my $label_colour = $self->my_colour($colour_key, 'label');
-       $label_colour = 'black' if $label_colour eq $self->my_colour($colour_key);
+    my $label_colour = $colours->{'label'};
+       $label_colour = 'black' if $label_colour eq $colour;
 
     return {
       style        => $style,
-      colour       => $self->my_colour($colour_key),
+      colour       => $colour,
       letter       => $style eq 'box' ? $f->ambig_code : '',
-      label_colour => $label_colour
+      label_colour => $label_colour,
+      start        => $f->start
     };
   }
   
-  return ({ style => 'insertion', colour => $self->my_colour(lc $f->display_consequence) }) if $f->start > $f->end;
+  return { style => 'insertion', colour => $colour } if $f->start > $f->end;
+}
+
+sub render_tag {
+  my ($self, $tag, $composite, $slice_length, $height, $start, $end) = @_;
+  my $pix_per_bp = $self->scalex;
+  my @glyph;
+  
+  if ($tag->{'style'} eq 'insertion') {
+    push @glyph, $self->Triangle({
+      mid_point  => [ $start - 1, $height - 1 ],
+      colour     => $tag->{'colour'},
+      absolutey  => 1,
+      width      => 4 / $pix_per_bp,
+      height     => 3,
+      direction  => 'up',
+    });
+  } elsif ($start <= $tag->{'start'}) {
+    my $box_width = 8 / $pix_per_bp;
+    
+    if ($tag->{'style'} eq 'box') {
+      my %font = $self->get_font_details($self->my_config('font') || 'innertext', 1);
+      my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $tag->{'letter'}, '', %font);
+      my $width = $text_width / $pix_per_bp;
+    
+      $composite->push($self->Rect({
+        x         => $start - 0.5 - 4/$pix_per_bp,
+        y         => 0,
+        width     => $box_width,
+        height    => $height,
+        colour    => $tag->{'colour'},
+        absolutey => 1
+      }), $self->Text({
+        x         => ($end + $start - $width) / 2,
+        y         => ($height - $text_height) / 2,
+        width     => $width,
+        textwidth => $text_width,
+        height    => $text_height,
+        halign    => 'center',
+        colour    => $tag->{'label_colour'},
+        text      => $tag->{'letter'},
+        absolutey => 1,
+        %font
+      }));
+    } elsif ($tag->{'style'} =~ /^(delta|left-snp)$/) {
+      push @glyph, $self->Triangle({
+        mid_point    => [ $start - 0.5, $tag->{'style'} eq 'delta' ? $height : 0 ],
+        colour       => $tag->{'colour'},
+        absolutey    => 1,
+        width        => $box_width,
+        height       => $height,
+        direction    => $tag->{'style'} eq 'delta' ? 'down' : 'up',
+      });
+    }
+  }
+  
+  return @glyph;
 }
 
 sub highlight {
@@ -177,12 +228,12 @@ sub highlight {
   my ($f, $composite, $pix_per_bp, $h, $hi_colour) = @_;
   
   ## Get highlights
-  my %highlights;
-  @highlights{$self->highlights} = (1);
+  my %highlights = map { $_ => 1 } $self->highlights;
 
   if ($self->{'config'}->core_objects->{'variation'}){
     my $var_id = $self->{'config'}->core_objects->{'variation'}->name;
-    $var_id =~ s/rs//;  
+       $var_id =~ s/rs//;
+       
     $highlights{$var_id} = 1;
   }
 
@@ -193,24 +244,21 @@ sub highlight {
   return unless $highlights{$id} || $highlights{"rs$id"};
   
 	# Different 'y' coordinates to highlight the variation, depending on the 'style'.
-	my $composite_y = $composite->y;
-	if ($self->my_config('style') ne 'box'){
-		$composite_y--; 
-	} 
+	my $composite_y = $composite->y - ($self->my_config('style') eq 'box' ? 0 : 1);
   
   $self->unshift(
     $self->Rect({ # First a black box
-      x         => $composite->x - 2/$pix_per_bp,
+      x         => $composite->x - 2 / $pix_per_bp,
       y         => $composite_y - 1, # + makes it go down
-      width     => $composite->width + 4/$pix_per_bp,
+      width     => $composite->width + 4 / $pix_per_bp,
       height    => $h + 4,
       colour    => 'black',
       absolutey => 1,
     }),
     $self->Rect({ # Then a 1 pixel smaller white box
-      x         => $composite->x - 1/$pix_per_bp,
+      x         => $composite->x - 1 / $pix_per_bp,
       y         => $composite_y, # + makes it go down
-      width     => $composite->width + 2/$pix_per_bp,
+      width     => $composite->width + 2 / $pix_per_bp,
       height    => $h + 2,
       colour    => 'white',
       absolutey => 1,
@@ -233,6 +281,5 @@ sub export_feature {
     values  => [ $variation_name, $feature->allele_string, $feature->var_class, $feature->display_consequence ]
   });
 }
-
 
 1;
