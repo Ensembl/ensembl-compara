@@ -2,6 +2,8 @@ package Bio::EnsEMBL::GlyphSet::P_variation_legend;
 
 use strict;
 
+use Bio::EnsEMBL::Variation::Utils::Constants;
+
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
@@ -14,17 +16,19 @@ sub _init {
   
   return unless $features;
   
+  my ($fontname, $fontsize) = $self->get_font_details('legend');
   my $im_width = $config->image_width;
   my $width    = 10;
   my $columns  = 4;
   my $x        = 0;
   my $h        = 4;
-  my @colours;
+  my @res      = $self->get_text_width(0, 'X', '', font => $fontname, ptsize => $fontsize);
+  my $th       = $res[3] - ($h / 2);
+  my $y        = $th;
+  my %labels   = map { $_->display_term => [ $_->rank, $_->label ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   
-  my ($fontname, $fontsize) = $self->get_font_details('legend');
-  my @res = $self->get_text_width(0, 'X', '', 'font' => $fontname, 'ptsize' => $fontsize);
-  my $th  = $res[3] - ($h / 2);
-  my $y   = $th;
+  $labels{'Insert'} = [ 9e9,     'Insert' ];
+  $labels{'Delete'} = [ 9e9 + 1, 'Delete' ];
   
   # Set up a separating line
   $self->push($self->Rect({
@@ -38,11 +42,11 @@ sub _init {
     absolutewidth => 1
   }));
   
-  foreach (sort keys %$features) {
-    my $colour = $features->{$_}->{'colour'};
-    my $text   = $features->{$_}->{'text'};
+  foreach (sort { $labels{$a}[0] <=> $labels{$b}[0] } keys %$features) {
+    my $colour = $features->{$_}{'colour'};
+    my $text   = $labels{$_}[1];
     
-    if ($features->{$_}->{'shape'} eq 'Triangle') {
+    if ($features->{$_}{'shape'} eq 'Triangle') {
       my $dir = $text eq 'Insert' ? 1 : -1;
       
       $self->push($self->Triangle({
