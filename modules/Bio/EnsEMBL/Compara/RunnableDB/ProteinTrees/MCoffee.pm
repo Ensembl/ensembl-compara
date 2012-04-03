@@ -150,7 +150,7 @@ sub fetch_input {
   #
   # Protein Tree input.
   if (defined $self->param('protein_tree_id')) {
-    $self->param('protein_tree')->flatten_tree; # This makes retries safer
+    #$self->param('protein_tree')->flatten_tree; # This makes retries safer
     # The extra option at the end adds the exon markers
     $self->param('input_fasta', $self->dumpProteinTreeToWorkdir($self->param('protein_tree'), $self->param('use_exon_boundaries')) );
   }
