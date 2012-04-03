@@ -34,7 +34,7 @@ sub href {
   my ($self, $gene, $transcript) = @_;
   my $hub    = $self->{'config'}->hub;
   my $params = {
-    %{$hub->multi_params}
+    %{$hub->multi_params},
     species    => $self->species,
     type       => $transcript ? 'Transcript' : 'Gene',
     action     => $self->my_config('zmenu') ? $self->my_config('zmenu') : $hub->action,
