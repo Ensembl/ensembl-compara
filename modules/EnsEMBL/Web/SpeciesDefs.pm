@@ -60,6 +60,7 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::ConfigRegistry;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 use Bio::EnsEMBL::Utils::Exception qw(verbose);
+use Bio::EnsEMBL::DBSQL::DataFileAdaptor;
 
 use EnsEMBL::Web::ConfigPacker;
 use EnsEMBL::Web::DASConfig;
@@ -296,7 +297,10 @@ sub parse {
   
   EnsEMBL::Web::Tools::RobotsTxt::create($self->ENSEMBL_DATASETS, $self);
   EnsEMBL::Web::Tools::OpenSearchDescription::create($self);
-  
+ 
+  ## Set location for file-based data
+  Bio::EnsEMBL::DBSQL::DataFileAdaptor->global_base_path($self->DATAFILE_BASE_PATH);
+ 
   $self->{'_parse_caller_array'} = [];
   
   my $C = 0;
