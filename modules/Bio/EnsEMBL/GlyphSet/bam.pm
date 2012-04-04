@@ -93,7 +93,7 @@ sub bam_adaptor {
       my $dfa = $dba->get_DataFileAdaptor();
       #my $filepath = $hub->species_defs->DATAFILE_BASE_PATH.'/'.lc($hub->species)
       #                .'/'.$hub->species_defs->config('ASSEMBLY_NAME').'/'.$self->my_config('type');
-      $dfa->global_base_path($hub->species_defs->DATAFILE_BASE_PATH);
+      $dfa->global_base_path($hub->species_defs->DATAFILE_BASE_PATH.'/');
       my ($logic_name) = @{$self->my_config('logic_names')||[]};
       my $datafiles = $dfa->fetch_all_by_logic_name($logic_name);
       my ($df) = @{$datafiles};
@@ -108,7 +108,7 @@ sub bam_adaptor {
 # get the alignment features
 sub features {
   my $self = shift;
-  
+
   my $slice = $self->{'container'};
   if (!exists($self->{_cache}->{features})) {
     $self->{_cache}->{features} = $self->bam_adaptor->fetch_alignments_filtered($slice->seq_region_name, $slice->start, $slice->end);
