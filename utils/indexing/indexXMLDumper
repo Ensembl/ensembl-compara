@@ -2010,6 +2010,7 @@ sub dumpGene {
       my $wd = eval($webdata);
       next if $wd->{'gene'}{'do_not_display'};
       next if ($ln =~ /rnaseq/);
+      next if ($ln =~ /ccds_import/); #exclude CCDS transcripts
       if( $old->{'gid'} != $gid ) {
         if( $old->{'gid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
@@ -2318,6 +2319,7 @@ sub dumpTranscript {
       my $wd = eval($webdata);
       next if $wd->{'gene'}{'do_not_display'};
       next if ($ln =~ /rnaseq/);
+      next if ($ln =~ /ccds_import/); #exclude CCDS transcripts
       if( $old->{'tid'} != $tid ) {
         if( $old->{'tid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
