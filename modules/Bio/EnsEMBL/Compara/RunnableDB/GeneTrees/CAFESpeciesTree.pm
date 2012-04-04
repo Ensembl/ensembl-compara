@@ -82,9 +82,10 @@ sub fetch_input {
     $self->param('tree_fmt', '%{n}%{":"d}'); # format for the tree
 
     my $cafe_species = $self->param('cafe_species');
-    if (scalar $cafe_species == 0) {  # No species for the tree. Make a full tree
+    if ((not defined $cafe_species) or (scalar(@{$cafe_species}) == 0)) {  # No species for the tree. Make a full tree
 #        die "No species for the CAFE tree";
         print STDERR "No species provided for the CAFE tree. I will take them all\n" if ($self->debug());
+        $self->param('cafe_species', undef);
     }
 
     return;
@@ -110,9 +111,11 @@ sub run {
     print STDERR "AFTER binarize:\n", $binTree->newick_format('ryo', $fmt), "\n";
     $self->fix_zeros($binTree);
     my $cafeTree;
-    if (defined $species && $species) {
+    if (defined $species) {
+        print STDERR "The tree is going to be pruned\n";
         $cafeTree = $self->prune_tree($binTree, $species);
     } else {
+        print STDERR "The tree is NOT going to be pruned\n";
         $cafeTree = $binTree;
     }
 #     if ($self->debug) {
