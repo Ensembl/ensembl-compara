@@ -70,6 +70,7 @@ sub default_options {
 			-db_version => $self->o('release'),
 		},
 	],
+	# dbs thay may be on genebuild dbs etc
 	other_core_dbs => {
 	},
 	  # mlssid of mappings to use
@@ -103,7 +104,7 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_; 
     return {
-         0 => { -desc => 'mem2000',  'LSF' => '-C0 -M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
+         0 => { -desc => 'mem2500',  'LSF' => '-C0 -M2500000 -R"select[mem>2500] rusage[mem=2500]"' },
          1 => { -desc => 'mem3500',  'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
          2 => { -desc => 'mem7500',  'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },  
          3 => { -desc => 'mem11400', 'LSF' => '-C0 -M11400000 -R"select[mem>11400] rusage[mem=11400]"' },  
@@ -220,6 +221,7 @@ return [
              -flow_into => {
                               1 => [ 'create_neighbour_nodes_jobs_alignment' ],
                      },  
+	     -wait_for => [ 'Ortheus' ],
             },  
 	    {	-logic_name => 'create_neighbour_nodes_jobs_alignment',
 		-parameters => {
