@@ -176,6 +176,56 @@ sub fetch_all {
   return $self->_generic_fetch();
 }
 
+sub fetch_all_Iterator {
+    my ($self, $cache_size) = @_;
+    return $self->_generic_fetch_Iterator($cache_size,"");
+}
+
+sub fetch_all_by_source_Iterator {
+    my ($self, $source_name, $cache_size) = @_;
+    throw("source_name arg is required\n") unless ($source_name);
+    return $self->_generic_fetch_Iterator($cache_size, "member.source_name = '$source_name'");
+}
+
+sub _generic_fetch_Iterator {
+    my ($self, $cache_size, $constraint) = @_;
+
+    my ($name, $syn) = @{$self->tables->[0]};
+    # Fetch all the dbIDs
+    my $sql = "SELECT ${name}.${name}_id FROM ${name}";
+    if ($constraint) {
+        $sql .= " WHERE $constraint";
+    }
+
+    my $sth = $self->prepare($sql);
+    $sth->execute();
+    my $member_id;
+    $sth->bind_columns(\$member_id);
+
+    my $more_items = 1;
+    $cache_size ||= 1000; ## Default: 1000 members per chunk
+    my @cache;
+
+    my $closure = sub {
+        if (@cache == 0 && $more_items) {
+            my @dbIDs;
+            my $items_counter = 0;
+            while ($sth->fetch) {
+                push @dbIDs, $member_id;
+                if (++$items_counter == $cache_size) {
+                    $more_items = 1;
+                    last;
+                }
+                $more_items = 0;
+            }
+            $sth->finish() unless ($more_items);
+            @cache = @{ $self->fetch_by_dbIDs(@dbIDs) } if @dbIDs;
+        }
+        return shift @cache;
+    };
+
+    return Bio::EnsEMBL::Utils::Iterator->new($closure);
+}
 
 =head2 fetch_all_by_source
 
