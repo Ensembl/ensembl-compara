@@ -102,13 +102,11 @@ sub fetch_all_children_for_node {
 	my $fam_id = $node->fam_id();
 
     if (defined $fam_id) { ## The family is already in the db
-        $self->final_clause("AND cta.fam_id = $fam_id GROUP BY node_id");
+        $self->final_clause("AND cta.fam_id = $fam_id");
         $self->SUPER::fetch_all_children_for_node($node);
-        $self->final_clause("GROUP BY node_id");
-    } else {
         $self->final_clause(" ");
+    } else {
         $self->SUPER::fetch_all_children_for_node($node);
-        $self->final_clause("GROUP BY node_id");
     }
     return;
 }
@@ -373,7 +371,7 @@ sub tables {
 
 sub left_join_clause {
     my ($self) = @_;
-    return "LEFT JOIN CAFE_tree_node ctn USING (node_id) LEFT JOIN CAFE_tree ct on (ctn.node_id = ct.root_id) ";
+    return "JOIN CAFE_tree_node ctn USING (node_id) LEFT JOIN CAFE_tree ct on (ctn.node_id = ct.root_id) ";
 }
 
 sub default_where_clause {
