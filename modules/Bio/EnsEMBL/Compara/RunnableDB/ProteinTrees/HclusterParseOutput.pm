@@ -109,7 +109,7 @@ sub parse_hclusteroutput {
         my ($cluster_id, $dummy1, $dummy2, $dummy3, $dummy4, $cluster_size, $cluster_list) = split("\t",$_);
 
         next if ($cluster_size < 2);
-        $cluster_list =~ s/\,^//;
+        $cluster_list =~ s/\,$//;
         $cluster_list =~ s/_[0-9]*//g;
         my @cluster_list = split(",", $cluster_list);
 
