@@ -73,7 +73,7 @@ use base ('Bio::EnsEMBL::DBSQL::DBAdaptor');
                [-URL mysql://user:pass@host:port/db_name] alternative way to specify the
                connection parameters. Pass and port are optional. If none is speciefied,
                the species name will be equal to the db_name.
-               [-GROUP] This option is *always* set to "compara". Use another DBAdaptor
+               [-GROUP] This option is *always* set to 'compara'. Use another DBAdaptor
                for other groups.
   Example    :  $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
                     -user   => 'root',
@@ -107,13 +107,13 @@ sub new {
     my ($user, $pass) = $user_pass =~ m/([^\:]+)(\:.+)?/;
     $pass =~ s/^\:// if ($pass);
     $port =~ s/^\:// if ($port);
-    push(@args, "-user" => $user) if ($user);
-    push(@args, "-pass" => $pass) if ($pass);
-    push(@args, "-port" => $port) if ($port);
-    push(@args, "-host" => $host);
-    push(@args, "-dbname" => $dbname);
+    push(@args, '-user' => $user) if ($user);
+    push(@args, '-pass' => $pass) if ($pass);
+    push(@args, '-port' => $port) if ($port);
+    push(@args, '-host' => $host);
+    push(@args, '-dbname' => $dbname);
     if (!$species) {
-      push(@args, "-species" => $dbname);
+      push(@args, '-species' => $dbname);
     }
   }
 
@@ -126,49 +126,58 @@ sub new {
 sub get_available_adaptors {
  
   my %pairs =  (
-      "MetaContainer" => "Bio::EnsEMBL::DBSQL::MetaContainer",
-      "MethodLinkSpeciesSet" => "Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor",
-      "SyntenyRegion"   => "Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor",
-      "DnaAlignFeature" => "Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor",
-      "GenomeDB"        => "Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor",
-      "SpeciesSet"      => "Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor",
-      "DnaFrag" => "Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor",
-      "DnaFragRegion" => "Bio::EnsEMBL::Compara::DBSQL::DnaFragRegionAdaptor",
-      "GenomicAlignBlock" => "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor",
-      "GenomicAlign" => "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor",
-      "GenomicAlignGroup" => "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor",
-      "GenomicAlignTree" => "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignTreeAdaptor",
-      "AlignSlice" => "Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor",
-      "Homology" => "Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor",
-      "Family" => "Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor",
-      "Domain" => "Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor",
-      "Subset" => "Bio::EnsEMBL::Compara::DBSQL::SubsetAdaptor",
-      "Member" => "Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor",
-      "Attribute" => "Bio::EnsEMBL::Compara::DBSQL::AttributeAdaptor",
-      "NCBITaxon" => "Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor",
-      "PeptideAlignFeature" => "Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor",
-      "Sequence" => "Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor",
-      #"GeneTree" => "Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor",
-      "GeneTreeNode" => "Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor",
-      "ProteinTree" => "Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor",
-      "NCTree" => "Bio::EnsEMBL::Compara::DBSQL::NCTreeAdaptor",
-      "CAFETree" => "Bio::EnsEMBL::Compara::DBSQL::CAFETreeAdaptor",
-      "Analysis" => "Bio::EnsEMBL::DBSQL::AnalysisAdaptor",
-      "ConservationScore" => "Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor",
-      "ConstrainedElement" => "Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor",
-      "SitewiseOmega" => "Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor",
-      "SpeciesTree" => "Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor",
-      'Method'          => 'Bio::EnsEMBL::Compara::DBSQL::MethodAdaptor',
+            # inherited from core:
+        'MetaContainer'         => 'Bio::EnsEMBL::DBSQL::MetaContainer',
+        'Analysis'              => 'Bio::EnsEMBL::DBSQL::AnalysisAdaptor',
 
-       #Production specific adaptors
-       "DnaFragChunk" => "Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor",
-       "DnaFragChunkSet" => "Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkSetAdaptor",
-       "DnaCollection" => "Bio::EnsEMBL::Compara::Production::DBSQL::DnaCollectionAdaptor",
-       "AnchorSeq" => "Bio::EnsEMBL::Compara::Production::DBSQL::AnchorSeqAdaptor",
-       "AnchorAlign" => "Bio::EnsEMBL::Compara::Production::DBSQL::AnchorAlignAdaptor",
+            # internal:
+        'Method'                => 'Bio::EnsEMBL::Compara::DBSQL::MethodAdaptor',
+        'GenomeDB'              => 'Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor',
+        'SpeciesSet'            => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor',
+        'MethodLinkSpeciesSet'  => 'Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor',
+        'NCBITaxon'             => 'Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor',
+        'SpeciesTree'           => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor',
 
-        );
-  return (\%pairs);
+            # genomic:
+        'DnaFrag'               => 'Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor',
+        'SyntenyRegion'         => 'Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor',
+        'DnaFragRegion'         => 'Bio::EnsEMBL::Compara::DBSQL::DnaFragRegionAdaptor',
+        'DnaAlignFeature'       => 'Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor',
+        'GenomicAlignBlock'     => 'Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor',
+        'GenomicAlign'          => 'Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor',
+        'GenomicAlignGroup'     => 'Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor',
+        'GenomicAlignTree'      => 'Bio::EnsEMBL::Compara::DBSQL::GenomicAlignTreeAdaptor',
+        'ConservationScore'     => 'Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor',
+        'ConstrainedElement'    => 'Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor',
+        'AlignSlice'            => 'Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor',
+
+            # genomic_production:
+        'DnaFragChunk'          => 'Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor',
+        'DnaFragChunkSet'       => 'Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkSetAdaptor',
+        'DnaCollection'         => 'Bio::EnsEMBL::Compara::Production::DBSQL::DnaCollectionAdaptor',
+        'AnchorSeq'             => 'Bio::EnsEMBL::Compara::Production::DBSQL::AnchorSeqAdaptor',
+        'AnchorAlign'           => 'Bio::EnsEMBL::Compara::Production::DBSQL::AnchorAlignAdaptor',
+
+            # gene-product:
+        'Sequence'              => 'Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor',
+        'Member'                => 'Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor',
+        'Attribute'             => 'Bio::EnsEMBL::Compara::DBSQL::AttributeAdaptor',
+        'Subset'                => 'Bio::EnsEMBL::Compara::DBSQL::SubsetAdaptor',
+        'Homology'              => 'Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor',
+        'Family'                => 'Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor',
+        'PeptideAlignFeature'   => 'Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor',
+        #'GeneTree'              => 'Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor',
+        'GeneTreeNode'          => 'Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor',
+        'ProteinTree'           => 'Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor',
+        'NCTree'                => 'Bio::EnsEMBL::Compara::DBSQL::NCTreeAdaptor',
+        'CAFETree'              => 'Bio::EnsEMBL::Compara::DBSQL::CAFETreeAdaptor',
+
+            # obsolete:
+        'Domain'                => 'Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor',
+        'SitewiseOmega'         => 'Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor',
+    );
+
+    return (\%pairs);
 }
  
 
