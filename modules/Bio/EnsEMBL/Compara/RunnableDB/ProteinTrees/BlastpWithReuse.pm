@@ -38,8 +38,8 @@ required for databse access.
 
 =head1 CONTACT
 
-  Contact Albert Vilella on module implemetation/design detail: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+  Please email comments or questions to the public Ensembl developers list at <dev@ensembl.org>.
+  Questions may also be sent to the Ensembl help desk at <helpdesk@ensembl.org>.
 
 =cut
 
