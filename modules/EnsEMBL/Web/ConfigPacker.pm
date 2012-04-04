@@ -177,7 +177,7 @@ sub _summarise_core_tables {
   foreach my $table ( qw(
         dna_align_feature protein_align_feature simple_feature
         protein_feature marker_feature qtl_feature
-        repeat_feature ditag_feature data_file
+        repeat_feature ditag_feature
         transcript gene prediction_transcript unmapped_object
   )) { 
     my $res_aref = $dbh->selectall_arrayref(
@@ -196,6 +196,24 @@ sub _summarise_core_tables {
       $self->db_details($db_name)->{'tables'}{$table}{'analyses'}{$a_ref->{'logic_name'}} = $value;
     }
   }
+
+    my $df_aref = $dbh->selectall_arrayref(
+      "select analysis_id,file_type from data_file group by analysis_id"
+      );
+  foreach my $T ( @$df_aref ) {
+    my $a_ref = $analysis->{$T->[0]}
+        || ( warn("Missing analysis entry data_file - $T->[0]\n") && next );
+    my $value = {
+        'name'    => $a_ref->{'name'},
+        'desc'    => $a_ref->{'description'},
+        'disp'    => $a_ref->{'displayable'},
+        'web'     => $a_ref->{'web_data'},
+        'count'   => 1,
+        'format'  => lc($T->[1]),
+    };
+    $self->db_details($db_name)->{'tables'}{'data_file'}{'analyses'}{$a_ref->{'logic_name'}} = $value;
+  }
+
 
 #---------- Additional queries - by type...
 
@@ -1411,6 +1429,7 @@ sub _munge_meta {
     species.production_name    SPECIES_PRODUCTION_NAME
     species.scientific_name    SPECIES_SCIENTIFIC_NAME
     assembly.accession         ASSEMBLY_ACCESSION
+    assembly.accession_source  ASSEMBLY_ACCESSION_SOURCE
     assembly.default           ASSEMBLY_NAME
     assembly.name              ASSEMBLY_DISPLAY_NAME
     liftover.mapping           ASSEMBLY_MAPPINGS
