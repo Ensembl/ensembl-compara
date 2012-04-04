@@ -24,6 +24,7 @@ sub content {
   $self->delete_entry_by_type('Transcript');
   $self->delete_entry_by_type('Protein product');
   $self->delete_entry_by_type('Gene type');
+  $self->delete_entry_by_type('Gene');
 }
 
 1;

@@ -19,7 +19,7 @@ sub content {
     extra => { abs_url => 1 },
     position => 2,
   });
-  
+  $self->delete_entry_by_type('Gene');
   $self->delete_entry_by_type('Gene type');
 }
 
