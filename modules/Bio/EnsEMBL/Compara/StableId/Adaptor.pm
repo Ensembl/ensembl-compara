@@ -208,7 +208,7 @@ sub load_compara_ncs {
                     WHERE (ptn.node_id = ptn.root_id  OR m.stable_id IS NOT NULL) AND left_index AND right_index
                     ORDER BY ptn.root_id,left_index
             };
-        } elsif ($schema_version == 65) {
+        } elsif ($schema_version == 66) {
             $sql = qq{
                 SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
                     FROM gene_tree_node gtn
