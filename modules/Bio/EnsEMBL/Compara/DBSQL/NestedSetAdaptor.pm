@@ -317,47 +317,6 @@ sub update_subtree {
   }
 }
 
-=head2 store
-
-  Arg [1]    :
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub store {
-  my ($self, $node) = @_;
-
-  throw("must subclass and provide correct table names");
-
-  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
-  }
-
-  my $sth = $self->prepare("INSERT INTO tree_node (parent_id, name) VALUES (?,?)");
-  if(defined($node->parent_node)) {
-    $sth->execute($node->parent_node->dbID, $node->name);
-  } else {
-    $sth->execute(0, $node->name);
-  }
-  $node->dbID( $sth->{'mysql_insertid'} );
-  $node->adaptor($self);
-  $sth->finish;
-
-  #
-  #now recursively do all the children
-  #
-  my $children = $node->children_nodes;
-  foreach my $child_node (@$children) {
-    $self->store($child_node);
-  }
-
-  return $node->dbID;
-}
-
 =head2 sync_tree_leftright_index
 
   Arg [1]    : Bio::EnsEMBL::Compara::NestedSet $root
