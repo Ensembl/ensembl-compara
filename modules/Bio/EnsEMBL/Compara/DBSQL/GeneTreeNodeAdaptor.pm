@@ -18,7 +18,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor
+Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor
 
 =head1 DESCRIPTION
 
@@ -26,7 +26,7 @@ Generic adaptor for a tree, later derived as ProteinTreeAdaptor or NCTreeAdaptor
 
 =head1 INHERITANCE TREE
 
-  Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor
+  Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor
   `- Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor
 
 =head1 AUTHORSHIP
@@ -48,7 +48,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor;
+package Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor;
 
 use strict;
 no strict 'refs';
@@ -273,7 +273,7 @@ sub fetch_by_stable_id {
 
 sub store {
     my ($self, $object) = @_;
-    #print "GeneTreeAdaptor::store($object)\n";
+    #print "GeneTreeNodeAdaptor::store($object)\n";
 
     if ($object->isa('Bio::EnsEMBL::Compara::GeneTree')) {
 
@@ -311,7 +311,7 @@ sub store_tree {
     my $root_id = $self->store($tree->root);
 
     # Secondly, the tree itself
-    if ($tree->adaptor and $tree->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor') and $tree->adaptor eq $self) {
+    if ($tree->adaptor and $tree->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor') and $tree->adaptor eq $self) {
         # Update 
         my $sth = $self->prepare("UPDATE gene_tree_root SET tree_type = ?, member_type = ?, clusterset_id = ?, method_link_species_set_id = ?, stable_id = ?, version = ? WHERE root_id = ?");
         #print "UPDATE INTO gene_tree_root (", $root_id, " ", $tree->tree_type, " ", $tree->member_type, " ", $tree->clusterset_id, " ", $tree->method_link_species_set_id, " ", $tree->stable_id, " ", $tree->version, "\n";
@@ -337,7 +337,7 @@ sub store_node {
   }
 
   if($node->adaptor and
-     $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor') and
+     $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor') and
      $node->adaptor eq $self)
   {
     #already stored so just update
@@ -663,7 +663,7 @@ foreach my $func_name (qw(
         fetch_subtree_under_node fetch_subroot_by_left_right_index fetch_root_by_node
         fetch_first_shared_ancestor_indexed
     )) {
-    my $full_name = "Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor::$func_name";
+    my $full_name = "Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor::$func_name";
     my $super_name = "SUPER::$func_name";
     *$full_name = sub {
         my $self = shift;

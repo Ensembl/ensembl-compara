@@ -15,7 +15,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'release'           => '66',
+        'release'           => '67',
         'rel_suffix'        => '',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
@@ -23,7 +23,7 @@ sub default_options {
 
             # family database connection parameters (our main database):
         'pipeline_db' => {
-            -host   => 'compara2',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -35,7 +35,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'ensembl_compara_65',
+            -dbname => 'ensembl_compara_66',
         },
 
         'master_db' => {     # used by the StableIdMapper as the location of the master 'mapping_session' table

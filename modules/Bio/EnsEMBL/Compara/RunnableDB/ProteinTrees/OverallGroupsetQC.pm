@@ -88,7 +88,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->param('groupset_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_node_by_node_id($self->param('clusterset_id'))->tree) or die "Could not fetch groupset tree";
+    $self->param('groupset_tree', $self->compara_dba->get_GeneTreeNodeAdaptor->fetch_node_by_node_id($self->param('clusterset_id'))->tree) or die "Could not fetch groupset tree";
 
 }
 
@@ -437,8 +437,8 @@ sub quantify_mapping {
   }
   close MAP;
 
-  my $current_gene_tree_adaptor = $self->compara_dba->get_GeneTreeAdaptor;
-  my $reuse_gene_tree_adaptor = $reuse_compara_dba->get_GeneTreeAdaptor;
+  my $current_gene_tree_adaptor = $self->compara_dba->get_GeneTreeNodeAdaptor;
+  my $reuse_gene_tree_adaptor = $reuse_compara_dba->get_GeneTreeNodeAdaptor;
   foreach my $mapped_cluster_id (keys %{$mapping_stats{mapped_tagging}}) {
     my $reuse_node_id = $mapping_stats{mapped_tagging}{$mapped_cluster_id};
     next unless (defined($reuse_node_id));

@@ -114,7 +114,7 @@ sub create_clusterset {
     # Create the clusterset root node
     my $clusterset_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
     $clusterset->root($clusterset_root);
-    $self->compara_dba->get_GeneTreeAdaptor->store($clusterset);
+    $self->compara_dba->get_GeneTreeNodeAdaptor->store($clusterset);
     
     my @allcluster_ids;
     $self->param('allcluster_ids', \@allcluster_ids);
@@ -168,7 +168,7 @@ sub add_cluster {
     }
 
     # Stores the cluster
-    $self->compara_dba->get_GeneTreeAdaptor->store($clusterset_leaf);
+    $self->compara_dba->get_GeneTreeNodeAdaptor->store($clusterset_leaf);
     $cluster->store_tag('gene_count', $cluster_root->get_child_count);
     print STDERR "cluster ", $cluster->root_id, " with ", $cluster_root->get_child_count, " leaves\n" if $self->debug;
     
@@ -203,7 +203,7 @@ sub finish_store_clusterset {
 
     # left/right_index for quicker clusterset retrieval
     $clusterset->root->build_leftright_indexing(1);
-    $self->compara_dba->get_GeneTreeAdaptor->store($clusterset);
+    $self->compara_dba->get_GeneTreeNodeAdaptor->store($clusterset);
     my $leafcount = scalar(@{$clusterset->root->get_all_leaves});
     print STDERR "clusterset ", $clusterset->root_id, " with $leafcount leaves\n" if $self->debug;
 }

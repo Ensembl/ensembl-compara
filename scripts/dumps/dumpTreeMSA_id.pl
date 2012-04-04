@@ -72,7 +72,7 @@ unless (defined $url) {
 }
 
 my $dba = Bio::EnsEMBL::Hive::URLFactory->fetch( $url.';type=compara' );
-my $adaptor = $dba->get_GeneTreeAdaptor;
+my $adaptor = $dba->get_GeneTreeNodeAdaptor;
 
 my @tree_ids;
 if($tree_id_file and -r $tree_id_file) {

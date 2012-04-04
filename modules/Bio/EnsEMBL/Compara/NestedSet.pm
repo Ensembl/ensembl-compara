@@ -1747,7 +1747,7 @@ sub _recursive_get_all_leaves {
 
 sub get_all_leaves_indexed {
   my $self = shift;
-  deprecate("Use Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor->fetch_all_leaves_indexed() method instead");
+  deprecate("Use Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor->fetch_all_leaves_indexed() method instead");
 
   my @leaf_list = @{$self->adaptor->fetch_all_leaves_indexed($self)};
 

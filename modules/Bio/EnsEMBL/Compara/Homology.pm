@@ -290,7 +290,7 @@ sub taxonomy_alias {
     my $ancestor_node_id = $self->ancestor_node_id;
     return unless $ancestor_node_id;
 
-    my $ancestor_node = $self->adaptor->db->get_GeneTreeAdaptor->fetch_node_by_node_id($ancestor_node_id);
+    my $ancestor_node = $self->adaptor->db->get_GeneTreeNodeAdaptor->fetch_node_by_node_id($ancestor_node_id);
     return unless $ancestor_node;
 
     my $taxon_id = $ancestor_node->get_tagvalue('taxon_id');

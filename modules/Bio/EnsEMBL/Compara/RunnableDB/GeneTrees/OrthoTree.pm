@@ -110,7 +110,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->param('treeDBA', $self->compara_dba->get_GeneTreeAdaptor);
+    $self->param('treeDBA', $self->compara_dba->get_GeneTreeNodeAdaptor);
     $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
 
     my $starttime = time();

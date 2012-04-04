@@ -96,7 +96,7 @@ sub fetch_input {
     $self->param('writer', $w);
 
     # List of all the trees
-    my $list_trees = $self->compara_dba->get_GeneTreeAdaptor->fetch_all;
+    my $list_trees = $self->compara_dba->get_GeneTreeNodeAdaptor->fetch_all;
     my @filtered_list;
     foreach my $tree (@{$list_trees}) {
         next if defined $self->param('tree_type') and $self->param('tree_type') eq $tree->tree->tree_type;

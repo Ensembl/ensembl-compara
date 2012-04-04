@@ -30,8 +30,6 @@ Phylogenetic tree
 
   Bio::EnsEMBL::Compara::GeneTreeNode
   `- Bio::EnsEMBL::Compara::NestedSet
-     `- Bio::EnsEMBL::Compara::Graph::CGObject
-        `- Bio::EnsEMBL::Compara::Taggable
 
 =head1 AUTHORSHIP
 

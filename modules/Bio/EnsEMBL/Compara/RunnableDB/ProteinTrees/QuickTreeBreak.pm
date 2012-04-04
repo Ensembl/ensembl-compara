@@ -274,7 +274,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
 sub store_supertree {
   my $self = shift;
 
-  my $gene_tree_adaptor = $self->compara_dba->get_GeneTreeAdaptor;
+  my $gene_tree_adaptor = $self->compara_dba->get_GeneTreeNodeAdaptor;
   my $starttime = time();
 
   $gene_tree_adaptor->store_tree($self->param('original_cluster'));

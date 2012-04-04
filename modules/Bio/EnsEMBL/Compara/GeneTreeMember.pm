@@ -32,12 +32,7 @@ GeneTreeNode) and an aligned member (inherits from AlignedMember).
 
   Bio::EnsEMBL::Compara::GeneTreeMember
   +- Bio::EnsEMBL::Compara::AlignedMember
-  |  `- Bio::EnsEMBL::Compara::Member
   `- Bio::EnsEMBL::Compara::GeneTreeNode
-     `- Bio::EnsEMBL::Compara::NestedSet
-        `- Bio::EnsEMBL::Compara::Graph::Node
-           `- Bio::EnsEMBL::Compara::Graph::CGObject
-              `- Bio::EnsEMBL::Compara::Taggable
 
 =head1 AUTHORSHIP
 

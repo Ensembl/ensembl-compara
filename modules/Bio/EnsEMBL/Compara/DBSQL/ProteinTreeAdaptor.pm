@@ -22,13 +22,12 @@ Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor
 
 =head1 DESCRIPTION
 
-Specialization of Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor for proteins
+Specialization of Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor for proteins
 
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor
-  `- Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor
-     `- Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor
+  `- Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor
 
 =head1 AUTHORSHIP
 
@@ -53,7 +52,7 @@ package Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor;
 
 use strict;
 
-use base ('Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor');
 
 
 sub default_where_clause {

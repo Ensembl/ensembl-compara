@@ -18,7 +18,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor
+Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor
 
 =head1 SYNOPSIS
 

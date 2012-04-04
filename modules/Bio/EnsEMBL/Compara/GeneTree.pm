@@ -229,7 +229,7 @@ sub root {
   Description : Getter/Setter for the DB adaptor that is used for database
                 queries. This field is automatically populated when the
                 tree is queried.
-  Returntype  : Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor
+  Returntype  : Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor
   Exceptions  : None
   Example     : $tree->adaptor($genetree_adaptor);
   Status      : Internal

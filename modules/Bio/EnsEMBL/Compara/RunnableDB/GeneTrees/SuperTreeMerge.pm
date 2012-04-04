@@ -79,7 +79,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
+    $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeNodeAdaptor);
 
     $self->param('tree_id_str') or die "tree_id_str is an obligatory parameter";
     my $tree_id = $self->param($self->param('tree_id_str')) or die "'*_tree_id' is an obligatory parameter";
