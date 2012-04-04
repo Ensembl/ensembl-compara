@@ -3,6 +3,7 @@ use strict;
 use base qw(Bio::EnsEMBL::GlyphSet::sequence);
 
 use Bio::EnsEMBL::ExternalData::BAM::BAMAdaptor;
+use Bio::EnsEMBL::DBSQL::DataFileAdaptor;
 use Data::Dumper;
 
 sub render_histogram {
@@ -74,14 +75,33 @@ sub reset {
 # get a bam adaptor
 sub bam_adaptor {
   my $self = shift;
-  
+ 
   my $url = $self->my_config('url');
-  if ($url =~ /\#\#\#CHR\#\#\#/) {
+  if ($url) { ## remote bam file
+    if ($url =~ /\#\#\#CHR\#\#\#/) {
       my $region = $self->{'container'}->seq_region_name;
       $url =~ s/\#\#\#CHR\#\#\#/$region/g;
+    }
+    $self->{_cache}->{_bam_adaptor} ||= Bio::EnsEMBL::ExternalData::BAM::BAMAdaptor->new($url);
   }
-  $self->{_cache}->{_bam_adaptor} ||= Bio::EnsEMBL::ExternalData::BAM::BAMAdaptor->new($url);
-  
+  else { ## Local bam file
+    my $config    = $self->{'config'};
+    my $hub       = $config->hub;
+    my $dba       = $hub->database($self->my_config('type'));
+
+    if ($dba) {
+      my $dfa = $dba->get_DataFileAdaptor();
+      #my $filepath = $hub->species_defs->DATAFILE_BASE_PATH.'/'.lc($hub->species)
+      #                .'/'.$hub->species_defs->config('ASSEMBLY_NAME').'/'.$self->my_config('type');
+      $dfa->global_base_path($hub->species_defs->DATAFILE_BASE_PATH);
+      my ($logic_name) = @{$self->my_config('logic_names')||[]};
+      my $datafiles = $dfa->fetch_all_by_logic_name($logic_name);
+      my ($df) = @{$datafiles};
+
+      $self->{_cache}->{_bam_adaptor} ||= $df->get_ExternalAdaptor();
+    }
+  }
+   
   return $self->{_cache}->{_bam_adaptor};
 }
 
