@@ -29,6 +29,9 @@ sub content {
     type  => 'Gene type',
     label => $biotype,
   });
+
+  $self->delete_entry_by_type('Gene');
+
 }
 
 1;
