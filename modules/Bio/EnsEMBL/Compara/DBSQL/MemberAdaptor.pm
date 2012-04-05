@@ -164,6 +164,10 @@ sub fetch_all_by_source_stable_ids {
   Arg        : None
   Example    : my $members = $ma->fetch_all;
   Description: Fetch all the members in the db
+               WARNING: Depending on the database where this method is called,
+                        it can return a lot of data (objects) that has to be kept in memory.
+                        Make sure you don't ask for more data than you can handle.
+                        To access this data in a safer way, use fetch_all_Iterator instead.
   Returntype : listref of Bio::EnsEMBL::Compara::Member objects
   Exceptions : 
   Caller     : 
@@ -176,10 +180,45 @@ sub fetch_all {
   return $self->_generic_fetch();
 }
 
+
+=head2 fetch_all_Iterator
+
+  Arg        : (optional) int $cache_size
+  Example    : my $memberIter = $memberAdaptor->fetch_all_Iterator();
+               for my $member ($memberIter->next) {
+                  #do something with $member
+               }
+  Description: Returns an iterator over all the members in the database
+               This is safer than fetch_all for large databases.
+  Returntype : Bio::EnsEMBL::Utils::Iterator
+  Exceptions : 
+  Caller     : 
+  Status     : Experimental
+
+=cut
+
 sub fetch_all_Iterator {
     my ($self, $cache_size) = @_;
     return $self->_generic_fetch_Iterator($cache_size,"");
 }
+
+=head2 fetch_all_Iterator
+
+  Arg[1]     : string $source_name
+  Arg[2]     : (optional) int $cache_size
+  Example    : my $memberIter = $memberAdaptor->fetch_all_by_source_Iterator("ENSEMBLGENE");
+               for my $member ($memberIter->next) {
+                  #do something with $member
+               }
+  Description: Returns an iterator over all the members corresponding
+               to a source_name in the database.
+               This is safer than fetch_all_by_source for large databases.
+  Returntype : Bio::EnsEMBL::Utils::Iterator
+  Exceptions : 
+  Caller     : 
+  Status     : Experimental
+
+=cut
 
 sub fetch_all_by_source_Iterator {
     my ($self, $source_name, $cache_size) = @_;
@@ -233,9 +272,14 @@ sub _generic_fetch_Iterator {
   Example    : my $members = $ma->fetch_all_by_source(
                    "Uniprot/SWISSPROT");
   Description: Fetches the member corresponding to a source_name.
+                WARNING: Depending on the database and the "source"
+                where this method is called, it can return a lot of data (objects)
+                that has to be kept in memory. Make sure you don't ask
+                for more data than you can handle.
+                To access this data in a safer way, use fetch_all_by_source_Iterator instead.
   Returntype : listref of Bio::EnsEMBL::Compara::Member objects
   Exceptions : throws if $source_name is undef
-  Caller     : 
+  Caller     :
 
 =cut
 
