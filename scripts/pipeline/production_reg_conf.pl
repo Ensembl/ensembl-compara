@@ -58,14 +58,14 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 );
 
 # Curr
-#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#    -host => 'compara3',
-#    -user => 'ensadmin',
-#    -pass => $ENV{'ENSADMIN_PSW'},
-#    -port => 3306,
-#    -species => 'compara_curr',
-#    -dbname => 'mp12_ensembl_compara_66',
-#);
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'compara3',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 3306,
+    -species => 'compara_curr',
+    -dbname => 'mm14_ensembl_compara_67',
+);
 
 #Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## TO BE FIXED BEFORE HOMOLOGY MERGE
 #    -host => 'compara4',
