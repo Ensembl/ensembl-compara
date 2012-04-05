@@ -101,6 +101,8 @@ sub run {
 
     $self->include_distance_to_parent($eval_species_tree);
     print STDERR "AFTER dtp:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n";
+    $self->fix_ensembl_timetree_mya($eval_species_tree);
+    print STDERR "AFTER fix_mya:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n";
     $self->ensembl_timetree_mya_to_distance_to_parent($eval_species_tree);
     print STDERR "AFTER mya:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n";
     $self->include_names($eval_species_tree);
@@ -110,6 +112,7 @@ sub run {
     my $binTree = $self->binarize($eval_species_tree);
     print STDERR "AFTER binarize:\n", $binTree->newick_format('ryo', $fmt), "\n";
     $self->fix_zeros($binTree);
+    print STDERR "AFTER fixing the zeros:\n", $binTree->newick_format('ryo', $fmt), "\n";
     my $cafeTree;
     if (defined $species) {
         print STDERR "The tree is going to be pruned\n";
