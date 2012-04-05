@@ -817,7 +817,7 @@ sub copy_ancestor_dnafrag {
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
       ## For ancestral dnafrags, the method_link_id is < 100.
       next if ($this_method_link_species_set->method->dbID >= 100);
-      if ($this_method_link_species_set->method_link_class() eq 
+      if ($this_method_link_species_set->method->class() eq 
 	  "GenomicAlignTree.ancestral_alignment") {
 	  print "Copying ancestral dnafrags for ", $this_method_link_species_set->name,
 	    " (", $this_method_link_species_set->dbID, "): ";
