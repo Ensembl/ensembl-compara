@@ -102,8 +102,8 @@ sub default_options {
 #             -pass   => $self->o('password'),
 #             -dbname => 'lg4_compara_families_66',
 #         },
-        'families_copy_tables'  => [ 'family', 'family_member' ],
-        'families_merge_tables' => [ 'member', 'sequence', 'stable_id_history' ],
+        'families_copy_tables'  => [ 'family', 'family_member', 'member' ],
+        'families_merge_tables' => [ 'subset', 'subset_member', 'sequence', 'stable_id_history' ],
 
             'nctrees_db' => 'mysql://ensro@compara4/mp12_compara_nctrees_66c',
 #         'nctrees_db' => {
@@ -114,7 +114,7 @@ sub default_options {
 #             -dbname => 'mp12_compara_nctrees_66c',
 #         },
         'nctrees_copy_tables'  => [ 'nc_profile' ],
-        'nctrees_merge_tables' => [ 'member', 'sequence', 'homology', 'homology_member' ],
+        'nctrees_merge_tables' => [ 'subset', 'subset_member', 'member', 'sequence', 'homology', 'homology_member' ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
     };
