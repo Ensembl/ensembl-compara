@@ -17,7 +17,7 @@ sub init {
   $self->title = 'Multi-species Overview';
   
   $self->set_defaults({
-    opt_join_genes => 'off',
+    opt_join_genes_top => 'off',
   });
 }
 
@@ -29,7 +29,7 @@ sub form {
   $self->add_form_element({
     type  => 'CheckBox', 
     label => 'Join genes',
-    name  => 'opt_join_genes',
+    name  => 'opt_join_genes_top',
     value => 'on',
   });
   

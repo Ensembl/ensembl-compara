@@ -40,7 +40,8 @@ sub content {
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
   my $methods         = { BLASTZ_NET => $hub->param('opt_pairwise_blastz'), TRANSLATED_BLAT_NET => $hub->param('opt_pairwise_tblat'), LASTZ_PATCH => $hub->param('opt_pairwise_lpatch') };
   my $join_alignments = grep $_ ne 'off', values %$methods;
-  my $join_genes      = $hub->param('opt_join_genes') eq 'on';
+  my $join_genes      = $hub->param('opt_join_genes_bottom') eq 'on';
+
   my $compara_db      = $join_genes ? new EnsEMBL::Web::DBSQL::DBConnection($primary_species)->_get_compara_database : undef;
   my $i               = 1;
   my $primary_image_config;

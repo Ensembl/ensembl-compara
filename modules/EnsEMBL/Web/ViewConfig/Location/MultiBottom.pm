@@ -17,10 +17,10 @@ sub init {
   $self->title = 'Multi-species Image';
   
   $self->set_defaults({
-    opt_pairwise_blastz => 'normal',
-    opt_pairwise_tblat  => 'normal',
-    opt_pairwise_lpatch => 'normal',
-    opt_join_genes      => 'off',
+    opt_pairwise_blastz   => 'normal',
+    opt_pairwise_tblat    => 'normal',
+    opt_pairwise_lpatch   => 'normal',
+    opt_join_genes_bottom => 'off',
   });
 }
 
@@ -59,9 +59,9 @@ sub form {
   }
   
   $self->add_form_element({
-    type  => 'CheckBox', 
+    type  => 'CheckBox',
     label => 'Join genes',
-    name  => 'opt_join_genes',
+    name  => 'opt_join_genes_bottom',
     value => 'on',
   });
   

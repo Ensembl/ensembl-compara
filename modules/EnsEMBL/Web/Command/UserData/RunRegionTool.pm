@@ -44,7 +44,16 @@ sub process {
                         $hub->species_defs->ENSEMBL_VERSION,
                         $hub->species_defs->DATABASE_DBUSER,
                       );
-  $oneliner .= sprintf('--password=%s', $hub->species_defs->DATABASE_DBPASS) if $hub->species_defs->DATABASE_DBPASS;
+  $oneliner .= sprintf(' --password=%s', $hub->species_defs->DATABASE_DBPASS) if $hub->species_defs->DATABASE_DBPASS;
+
+  ## Allow for ontology db maybe being on different server
+  $oneliner .= sprintf(' --secondaryhost=%s --secondaryport=%s --db_version=%s --secondaryuser=%s', 
+                       $hub->species_defs->multidb->{'DATABASE_GO'}{'HOST'},
+                       $hub->species_defs->multidb->{'DATABASE_GO'}{'PORT'},
+                       $hub->species_defs->ENSEMBL_VERSION,
+                       $hub->species_defs->multidb->{'DATABASE_GO'}{'USER'},
+                     );
+  $oneliner .= sprintf(' --secondarypassword=%s',$hub->species_defs->multidb->{'DATABASE_GO'}{'PASS'}) if $hub->species_defs->multidb->{'DATABASE_GO'}{'PASS'};
 
   ## Pipe straight to output file, to conserve memory
   my $output    = $self->temp_file_name;

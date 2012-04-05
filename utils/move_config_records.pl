@@ -9,9 +9,9 @@ use FindBin qw($Bin);
 BEGIN {
   my $serverroot = dirname($Bin);
   unshift @INC, "$serverroot/conf", $serverroot;
-  
+
   require SiteDefs;
-  
+
   unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
 
   require EnsEMBL::Web::Hub;
@@ -20,9 +20,15 @@ BEGIN {
 my $hub = new EnsEMBL::Web::Hub;
 my $sd  = $hub->species_defs;
 
+my $dsn = sprintf(
+  'DBI:mysql:database=%s;host=%s;port=%s',
+  $sd->multidb->{'DATABASE_SESSION'}{'NAME'} || $sd->ENSEMBL_USERDB_NAME,
+  $sd->multidb->{'DATABASE_SESSION'}{'HOST'} || $sd->ENSEMBL_USERDB_HOST,
+  $sd->multidb->{'DATABASE_SESSION'}{'PORT'} || $sd->ENSEMBL_USERDB_PORT,
+);
+
 my $dbh = DBI->connect(
-  sprintf('DBI:mysql:database=%s;host=%s;port=%s', $sd->ENSEMBL_USERDB_NAME, $sd->ENSEMBL_USERDB_HOST, $sd->ENSEMBL_USERDB_PORT),
-  $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS
+  $dsn, $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS
 );
 
 $dbh->do('CREATE TABLE session_record_tmp2 LIKE session_record');

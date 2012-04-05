@@ -13,7 +13,7 @@ use base qw(EnsEMBL::Web::Command);
 
 sub upload {
 ## Separate out the upload, to make code reuse easier
-  my ($self, $method) = @_;
+  my ($self, $method, $type) = @_;
   my $hub       = $self->hub;
   my $params    = {};
   my @orig_path = split '/', $hub->param($method);
@@ -61,7 +61,11 @@ sub upload {
     $error           = $response->{'error'};
     $args{'content'} = $response->{'content'};
   } elsif ($method eq 'text') {
-    $args{'content'} = $hub->param('text');
+    my $text = $hub->param('text');
+    if ($type eq 'coords') {
+      $text =~ s/\s/\n/g;
+    }
+    $args{'content'} = $text;
   } else {
     $args{'tmp_filename'} = $hub->input->tmpFileName($hub->param($method));
   }

@@ -106,8 +106,7 @@ sub content {
     <div class="twocol-left">
       <h3>YouTube videos</h3>
       <ul>
-        <li><a href="/Help/Movie?id=208">SNPs and other Variations - 1 of 2</a></li>
-        <li><a href="/Help/Movie?id=211">SNPs and other Variations - 2 of 2</a></li>
+        <li><a href="/Help/Movie?id=208">Browsing SNPs and CNVs in Ensembl</a></li>
         <li><a href="/Help/Movie?id=214">Clip: Genome Variation</a></li>
         <li><a href="/Help/Movie?id=284">BioMart: Variation IDs to HGNC Symbols</a></li>
       </ul>

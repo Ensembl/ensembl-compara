@@ -49,8 +49,10 @@ sub content {
     ## Munge data needed for form elements
     foreach (@mapping_species) {
       push @species_values, { value => $_, name => $species_defs->species_label($_, 1) };
-      
-      foreach my $string (sort { $b cmp $a } @{$assembly_mappings{$_}}) {
+     
+      my @mappings = ref($assembly_mappings{$_}) eq 'ARRAY' ? @{$assembly_mappings{$_}} : ($assembly_mappings{$_});
+ 
+      foreach my $string (sort { $b cmp $a } @mappings) {
         my ($to, $from) = split '#', $string;
         ## Which mapping set? Have to fetch all, for easy JS auto-changing with species
         push @forward,  { name => "$from -> $to", value => "${from}:$to", class => $_ };

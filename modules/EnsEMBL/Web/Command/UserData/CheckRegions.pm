@@ -20,7 +20,7 @@ sub process {
   my ($data, $content, $param);
   my ($method) = grep $hub->param($_), qw(text file url);
   if ($method) {
-    my $response = $self->upload($method);
+    my $response = $self->upload($method, 'coords');
     $data = $session->get_data(code => $response->{'code'});
     my $file = new EnsEMBL::Web::TmpFile::Text(filename => $data->{'filename'}, extension => $data->{'extension'});
     if ($file) {
@@ -43,14 +43,12 @@ sub process {
       my ($chr, $start, $end) = split(':|-|\.\.', $region);
       push @slices, {'chr' => $chr, 'start' => $start, 'end' => $end};
     }
-    warn ">>> FOUND ".scalar(@slices)." slices";
     ## Calculate total sequence length
     my $total_length;
     foreach my $slice (@slices) {
       my $l = $slice->{'start'} - $slice->{'end'};
       $total_length += abs($l);
     }
-    warn ">>> LENGTH $total_length";
     if ($total_length > $limit) {
       $param->{'error_code'} = 'location_toolarge';
     }

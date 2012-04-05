@@ -14,8 +14,8 @@ sub content {
   my $species = $hub->species;
      $species = !$species || $species eq 'Multi' || $species eq 'common' ? 'Multi' : $species;
   my $html;
-  
-  if ($self->species_defs->ENSEMBL_LOGINS) {
+  my $species_defs = $self->species_defs;
+  if ($species_defs->has_userdb and $species_defs->ENSEMBL_LOGINS) {
     if ($hub->user) {
       $html .= sprintf '<a class="constant modal_link" style="display:none" href="%s">Account</a>',            $hub->url({ __clear => 1, species => $species, type => 'Account', action => 'Links'  });
       $html .= sprintf ' &middot; <a class="constant" href="%s">Logout</a>',                                   $hub->url({ __clear => 1, species => $species, type => 'Account', action => 'Logout' });
@@ -25,7 +25,7 @@ sub content {
     }
   }
 
-  return $html;  
+  return $html;
 }
 
 1;
