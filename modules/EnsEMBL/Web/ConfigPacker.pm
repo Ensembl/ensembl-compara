@@ -1164,7 +1164,10 @@ sub _summarise_compara_alignments {
   
   my $key = $constraint ? 'INTRA_SPECIES_ALIGNMENTS' : 'ALIGNMENTS';
   
-  $self->db_tree->{$db_name}{$key} = \%config;
+  foreach my $method (keys %config) {
+    $self->db_tree->{$db_name}{$key}{$method} = $config{$method};
+  }
+  
   $self->db_tree->{$db_name}{$key}{'REGION_SUMMARY'} = $region_summary;
 }
 
