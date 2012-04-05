@@ -1913,7 +1913,6 @@ sub dumpGene {
 
     my %xrefs = ();
     foreach my $type( qw(Gene Transcript Translation) ) {
-#      print LOG "starting memory usage for type $type = ".&date_and_mem()."\n";
       my $sql = qq(
          SELECT ox.ensembl_id, x.display_label, x.dbprimary_acc,
                 x.description, x.external_db_id, x.xref_id
@@ -1930,12 +1929,12 @@ sub dumpGene {
           'xref_id'         => $_->[5],
         };
       }
-      print LOG "    $type xref query done ".&date_and_mem()."\n";
+#      print LOG "    $type xref query done ".&date_and_mem()."\n";
     }
 
     my %gene_trans_syns = ();
     if ($sitetype eq 'Vega') {
-      print LOG "    Getting gene and transcript synonyms ".&date_and_mem()."\n";
+#      print LOG "    Getting gene and transcript synonyms ".&date_and_mem()."\n";
       my $sql = qq(
          SELECT g.stable_id, ga.value
            FROM $dbname.gene g, $dbname.gene_attrib ga, $dbname.attrib_type at
@@ -1956,7 +1955,7 @@ sub dumpGene {
       foreach (@$T) {
         push @{$gene_trans_syns{$_->[0]}},$_->[1];
       }
-      print LOG "    Got gene and transcript synonyms ".&date_and_mem()."\n";
+#      print LOG "    Got gene and transcript synonyms ".&date_and_mem()."\n";
     }
 
     #disconnect and then connect to free up memory
@@ -1976,7 +1975,7 @@ sub dumpGene {
       $exons{$r->[0]}{$r->[1]}=1;
     }
     $sth->finish;
-    print LOG "    Exon query done ".&date_and_mem()."\n";
+#    print LOG "    Exon query done ".&date_and_mem()."\n";
 
     my $gene_locations = $conf->{'dbh'}->selectall_hashref(qq(
       SELECT g.stable_id, sr.name as sr_name, g.seq_region_start, g.seq_region_end, g.seq_region_strand, cs.name as sr_type, cs.version
@@ -2115,7 +2114,7 @@ sub dumpGene {
                  $db,
                  $counter),
         $nogzip, $fh) if ($old->{'gsid'});
-    print LOG "    Gene info query done and xml generated ".&date_and_mem()."\n";
+#    print LOG "    Gene info query done and xml generated ".&date_and_mem()."\n";
 
     #archive Stable IDs
     my $other_count = &do_archive_stable_ids( $dbname, $db, $fh, $counter, [ qw(gene transcript translation) ]);

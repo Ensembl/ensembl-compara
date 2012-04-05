@@ -1,4 +1,4 @@
-#$Id$
+# $Id$
 package EnsEMBL::Web::SpeciesDefs;
 
 ### SpeciesDefs - Ensembl web configuration accessor
@@ -297,10 +297,10 @@ sub parse {
   
   EnsEMBL::Web::Tools::RobotsTxt::create($self->ENSEMBL_DATASETS, $self);
   EnsEMBL::Web::Tools::OpenSearchDescription::create($self);
- 
+  
   ## Set location for file-based data
   Bio::EnsEMBL::DBSQL::DataFileAdaptor->global_base_path($self->DATAFILE_BASE_PATH);
- 
+  
   $self->{'_parse_caller_array'} = [];
   
   my $C = 0;
@@ -702,6 +702,20 @@ sub timer_push {
 }
 
 sub img_url { return $_[0]->ENSEMBL_STATIC_SERVER . ($_[0]->ENSEMBL_IMAGE_ROOT || '/i/'); }
+
+sub has_userdb {
+  my $self = shift;
+  my $dsn = sprintf(
+    'DBI:mysql:database=%s;host=%s;port=%s',
+    $self->ENSEMBL_USERDB_NAME,
+    $self->ENSEMBL_USERDB_HOST,
+    $self->ENSEMBL_USERDB_PORT
+  );
+  if (DBI->connect($dsn, $self->ENSEMBL_USERDB_USER, $self->ENSEMBL_USERDB_PASS)) {
+    return 1;
+  };
+  return 0;
+}
 
 sub marts {
   my $self = shift;

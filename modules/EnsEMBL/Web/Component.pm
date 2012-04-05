@@ -505,7 +505,7 @@ sub _matches {
 
   if ($output_as_table) {
     return $html . $self->new_table([ 
-      { key => 'dbtype', align => 'left', title => 'External database type' },
+      { key => 'dbtype', align => 'left', title => 'External database' },
       { key => 'dbid',   align => 'left', title => 'Database identifier'    }
     ], \@rows, { data_table => 'no_sort no_col_toggle', exportable => 1 })->render;
   } else {
