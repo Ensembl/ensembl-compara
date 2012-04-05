@@ -2011,6 +2011,7 @@ sub dumpGene {
       next if $wd->{'gene'}{'do_not_display'};
       next if ($ln =~ /rnaseq/);
       next if ($ln =~ /ccds_import/); #exclude CCDS transcripts
+      next if ($ln =~ /refseq_human_import/); #exclude RefSeq transcripts
       if( $old->{'gid'} != $gid ) {
         if( $old->{'gid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
@@ -2320,6 +2321,7 @@ sub dumpTranscript {
       next if $wd->{'gene'}{'do_not_display'};
       next if ($ln =~ /rnaseq/);
       next if ($ln =~ /ccds_import/); #exclude CCDS transcripts
+      next if ($ln =~ /refseq_human_import/); #exclude RefSeq transcripts
       if( $old->{'tid'} != $tid ) {
         if( $old->{'tid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
