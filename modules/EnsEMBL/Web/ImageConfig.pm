@@ -1838,7 +1838,10 @@ sub add_decorations {
       description => 'Cytogenetic bands',
       colourset   => 'ideogram',
       sortable    => 1,
-      canvas      => { labelOverlay => JSON::true }
+      canvas      => {
+        labelOverlay => JSON::true,
+        allData      => JSON::true
+      }
     }));
   }
   
