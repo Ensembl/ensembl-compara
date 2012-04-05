@@ -554,7 +554,7 @@ sub fetch_all_peptides_for_gene_member_id {
   Arg [1]    : int member_id of a gene member
   Example    : $pepMembers = $memberAdaptor->fetch_canonical_peptide_member_for_gene_member_id($gene_member_id);
   Description: given a member_id of a gene member,
-               fetches all canonical peptide members for this gene
+               fetches the canonical peptide member for this gene
   Returntype : Bio::EnsEMBL::Compara::Member object
   Exceptions :
   Caller     : general
@@ -591,7 +591,7 @@ sub fetch_canonical_peptide_member_for_gene_member_id {
   Arg [1]    : int member_id of a gene member
   Example    : $transMembers = $memberAdaptor->fetch_canonical_transcript_member_for_gene_member_id($gene_member_id);
   Description: given a member_id of a gene member,
-               fetches all canonical transcript members for this gene
+               fetches the canonical transcript member for this gene
   Returntype : Bio::EnsEMBL::Compara::Member object
   Exceptions :
   Caller     : general
@@ -604,10 +604,11 @@ sub fetch_canonical_transcript_member_for_gene_member_id {
   throw() unless (defined $gene_member_id);
 
   my $constraint = "m.gene_member_id = '$gene_member_id'";
+  my $join = [[['subset_member', 'sm'], 'sm.member_id = m.member_id']];
 
   my $obj = undef;
   eval {
-    ($obj) = @{$self->_generic_fetch($constraint)};
+    ($obj) = @{$self->_generic_fetch($constraint, $join)};
   };
   $self->_final_clause("");
   return $obj;
