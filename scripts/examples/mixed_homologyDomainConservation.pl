@@ -51,12 +51,12 @@ foreach my $gene (@$genes) {
       }
     }
     my $translation;
-    eval { $translation = $member->translation;};
+    eval { $translation = $member->get_Translation;};
     if ($@ || !defined($translation)) {
       my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($member->genome_db->name, "core");
       next if (!defined $dba);
       $member->genome_db->db_adaptor($dba);
-      $translation = $member->translation;
+      $translation = $member->get_Translation;
       next if (!defined $translation);
     }
     my @domains = @{$translation->get_all_ProteinFeatures('pfam')};

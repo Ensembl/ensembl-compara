@@ -1816,7 +1816,7 @@ sub _genomic_aln {
 #       ( $gene_stable_id, ($exon->start + $diff_start), ($exon->end + $diff_end) );
 
     my $ref_exon_number = 1;
-    foreach my $ref_exon (@{$clean_leaf->transcript->get_all_translateable_Exons}) {
+    foreach my $ref_exon (@{$clean_leaf->get_Transcript->get_all_translateable_Exons}) {
       my $ref_exon_stable_id = $ref_exon->stable_id;
       print STDERR "[$ref_exon_stable_id] ",time()-$self->{starttime}," secs...\n" if ($self->{verbose}); $self->{starttime} = time();
       my $slice = $ref_exon->feature_Slice;
@@ -3158,7 +3158,7 @@ sub _2xeval {
   my %seqs;
   foreach my $aln_member (@{$tree->get_all_leaves}) {
     my $id = $aln_member->member_id . "_" . $aln_member->taxon_id;
-    my $sequence = $aln_member->transcript->translateable_seq;
+    my $sequence = $aln_member->get_Transcript->translateable_seq;
     my $seq = Bio::LocatableSeq->new
       (-seq => $sequence,
        -display_id => $id);
@@ -3168,7 +3168,7 @@ sub _2xeval {
   foreach my $member (@members) {
     my $display_id = $member->stable_id . "_" . $member->taxon_id;
     my $query_seq = Bio::LocatableSeq->new
-      (-seq => $member->transcript->translateable_seq,
+      (-seq => $member->get_Transcript->translateable_seq,
        -display_id => $display_id);
     $seqs{$display_id} = $query_seq;
   }
@@ -5734,7 +5734,7 @@ sub _extra_dn_ds {
 #     $hash->{DISP_ID} = $DISP_ID;
 #     $hash->{GID} = $leaf->gene_member->stable_id;
 #     $hash->{ID} = $leaf->gene_member->stable_id;
-#     my $transcript = $leaf->transcript;
+#     my $transcript = $leaf->get_Transcript;
 #     # $DISP_ID = $transcript->stable_id . "." . $transcript->version;
 #     my $transcript_strand = (1 == $transcript->strand) ? ("+") : ("-");
 #     my $transcript_start = $transcript->start - 1;
@@ -7830,7 +7830,7 @@ sub _genetree_domains {
           my $d = $member->description; $d =~ /Gene\:(\S+)/; my $g = $1; $representative_member = $g; }
       }
 
-      my $translation = $member->translation;
+      my $translation = $member->get_Translation;
       if (!defined($translation)) {
         warn "missing translation for $member_id\n";
         next;
@@ -8003,7 +8003,7 @@ sub _genetree_domains {
 #     while (my $member = shift @leaves) {
 #       my $member_string;
 #       my $member_id = $member->dbID;
-#       my @domains = @{$member->translation->get_all_DomainFeatures};
+#       my @domains = @{$member->get_Translation->get_all_DomainFeatures};
 #       foreach my $pos (1 .. length($member->sequence)) {
 #         $member_string->{$pos} = 0;
 #       }
@@ -8083,7 +8083,7 @@ sub _genetree_domains {
 #     $chr_strand = "-" if (-1 == $chr_strand);
 #     my $stable_id = $member->stable_id;
 #     my $member_position;
-#     my $tm = $member->transcript->get_TranscriptMapper;
+#     my $tm = $member->get_Transcript->get_TranscriptMapper;
 #     while ($member_position = $sth2->fetchrow_array()) {
 #       #Gene	ABCD1	exon	curated	X	152511170	152512468	+	.	1.0e-12	1	1299
 #       my ($coords,$gaps) = $tm->pep2genomic($member_position,$member_position);
@@ -8288,7 +8288,7 @@ sub _genetree_domains {
 #   my %seqs;
 #   foreach my $aln_member (@{$tree->get_all_leaves}) {
 #     my $id = $aln_member->member_id . "_" . $aln_member->taxon_id;
-#     my $sequence = $aln_member->transcript->translateable_seq;
+#     my $sequence = $aln_member->get_Transcript->translateable_seq;
 #     my $seq = Bio::LocatableSeq->new
 #       (-seq => $sequence,
 #        -display_id => $id);
@@ -8296,7 +8296,7 @@ sub _genetree_domains {
 #   }
 #   # adding query seq
 #   my $query_seq = Bio::LocatableSeq->new
-#     (-seq => $member->transcript->translateable_seq,
+#     (-seq => $member->get_Transcript->translateable_seq,
 #     -display_id => $display_id);
 #   $seqs{$display_id} = $query_seq;
 
@@ -9792,7 +9792,7 @@ sub _genetree_domains {
 #   my $peptide_member = $self->{memberDBA}->fetch_by_dbID($member_id);
 
 #   my $sequence = $peptide_member->sequence;
-#   my $trans = $peptide_member->transcript;
+#   my $trans = $peptide_member->get_Transcript;
 #   my @exons = @{$trans->get_all_translateable_Exons};
 #   print $sequence if (1 == scalar @exons);
 
@@ -11513,8 +11513,8 @@ sub _split_genes_stats {
         print STDERR $homology->homology_key, ",contained gene split\n" if ($self->{debug});
         next;
       }
-      my $transcript1 = $member1->get_canonical_peptide_Member->transcript;
-      my $transcript2 = $member2->get_canonical_peptide_Member->transcript;
+      my $transcript1 = $member1->get_canonical_peptide_Member->get_Transcript;
+      my $transcript2 = $member2->get_canonical_peptide_Member->get_Transcript;
       my @prev_introns = @{$transcript1->get_all_Introns};
       my @next_introns = @{$transcript2->get_all_Introns};
       my $prev_intron_length = 'na'; $prev_intron_length = $prev_introns[-1]->length if (0 < scalar @prev_introns);
@@ -13139,8 +13139,8 @@ sub _merge_split_genes {
 #       # Generate a md5sum string to compare among databases
 #       1;                        #ONGOING
 #       my $gene_stable_id = $member->gene_member->stable_id;
-#       my $transcript_stable_id = $member->transcript->stable_id;
-#       my $transcript_analysis_logic_name = $member->transcript->analysis->logic_name;
+#       my $transcript_stable_id = $member->get_Transcript->stable_id;
+#       my $transcript_analysis_logic_name = $member->get_Transcript->analysis->logic_name;
 #       my $peptide_stable_id = $member->stable_id;
 #       my $seq = $member->sequence;
 #       my $md5sum = md5_hex($seq);

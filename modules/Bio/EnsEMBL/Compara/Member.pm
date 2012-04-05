@@ -581,7 +581,7 @@ sub sequence_exon_cased {
   my $self = shift;
 
   my $sequence = $self->sequence;
-  my $trans = $self->transcript;
+  my $trans = $self->get_Transcript;
   my @exons = @{$trans->get_all_translateable_Exons};
   return $sequence if (1 == scalar @exons);
 
@@ -650,7 +650,7 @@ sub _compose_sequence_exon_bounded {
   my $self = shift;
 
   my $sequence = $self->sequence;
-  my $trans = $self->transcript;
+  my $trans = $self->get_Transcript;
   my @exons = @{$trans->get_all_translateable_Exons};
   return $sequence if (1 == scalar @exons);
 
@@ -702,7 +702,7 @@ sub sequence_cds {
   }
 
   if(!defined($self->{'_sequence_cds'})) {
-    $self->{'_sequence_cds'} = $self->transcript->translateable_seq;
+    $self->{'_sequence_cds'} = $self->get_Transcript->translateable_seq;
   }
 
   return $self->{'_sequence_cds'};
@@ -992,14 +992,17 @@ sub get_Translation {
 
 sub gene {
   my $self = shift;
+  deprecate('Use get_Gene() instead');
   return $self->get_Gene;
 }
 sub transcript {
   my $self = shift;
+  deprecate('Use get_Transcript() instead');
   return $self->get_Transcript;
 }
 sub translation {
   my $self = shift;
+  deprecate('Use get_Translation() instead');
   return $self->get_Translation();
 }
 

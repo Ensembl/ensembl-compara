@@ -429,8 +429,8 @@ sub cdna_alignment_string {
     if ($@) {
       throw("can't connect to CORE to get transcript and cdna for "
             . "genome_db_id:" . $self->genome_db_id )
-        unless($self->transcript);
-      $cdna = $self->transcript->translateable_seq;
+        unless($self->get_Transcript);
+      $cdna = $self->get_Transcript->translateable_seq;
     }
 
     if (defined $self->cigar_start || defined $self->cigar_end) {

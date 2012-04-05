@@ -136,8 +136,8 @@ foreach my $homology (@mouse_homologies, @rat_homologies) {
   my $member2 = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", $gene2->stable_id);
   my $aligned_member2 = $proteintree_adaptor->fetch_AlignedMember_by_member_id_root_id($member2->get_canonical_peptide_Member->member_id);
 
-  print_transcript($aligned_member->transcript, $cdna_simple_align);
-  print_transcript($aligned_member2->transcript, $cdna_simple_align);
+  print_transcript($aligned_member->get_Transcript, $cdna_simple_align);
+  print_transcript($aligned_member2->get_Transcript, $cdna_simple_align);
 
 }
 

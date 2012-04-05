@@ -947,7 +947,7 @@ sub _internal_nhx_format {
 	  } elsif ($format_mode eq "display_label_composite") {
             my $display_label = $self->gene_member->display_label;
             if (!defined($display_label) || $display_label eq '') {
-              my $display_xref = $self->gene_member->gene->display_xref;
+              my $display_xref = $self->gene_member->get_Gene->display_xref;
               $display_label = $display_xref->display_id if (defined($display_xref));
             }
             if (defined($display_label)) {
@@ -958,7 +958,7 @@ sub _internal_nhx_format {
 	  } elsif ($format_mode eq "display_label") {
             my $display_label = $self->gene_member->display_label;
             if (!defined($display_label) || $display_label eq '') {
-              my $display_xref = $self->gene_member->gene->display_xref;
+              my $display_xref = $self->gene_member->get_Gene->display_xref;
               $display_label = $display_xref->display_id if (defined($display_xref));
             }
             if (defined($display_label) && $display_label =~ /^\w+$/) {
