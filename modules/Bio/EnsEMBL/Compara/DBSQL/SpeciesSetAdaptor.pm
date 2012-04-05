@@ -51,7 +51,7 @@ sub store {
         if($dbID) { # dbID is set in the object, but may refer to an object with different contents
 
             if($self->fetch_by_dbID( $dbID )) {
-                die "Attempting to store an object with dbID=$dbID experienced a collision with same dbID but different data";
+                die sprintf("Attempting to store an object with dbID=$dbID (ss=%s) experienced a collision with same dbID but different data", join("/", map {$_->dbID} @{$species_set->genome_dbs}  ));
             }
 
         } else { # grab a new species_set_id by using AUTO_INCREMENT:
@@ -255,7 +255,7 @@ sub find_species_set_id_by_GenomeDBs_mix {
     warning("Empty genome_dbs list, nothing to look for");
     return undef;
   }
-  my $gc = join(',', sort @genome_db_ids);
+  my $gc = join(',', sort {$a <=> $b} @genome_db_ids);
 
   my $sql = "SELECT species_set_id FROM species_set GROUP BY species_set_id HAVING GROUP_CONCAT(genome_db_id ORDER BY genome_db_id)='$gc'";
   my $sth = $self->prepare($sql);
