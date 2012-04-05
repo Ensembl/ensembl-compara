@@ -333,6 +333,9 @@ sub source_link {
   elsif ($url =~ /(.+)\?/) { # Only general source link
     $url = $1;
   }
+	else {
+		$url =~ s/###ID###//;
+	}
   return $url ? qq{<a rel="external" href="$url">[$source]</a>} : $source;
 }
 
