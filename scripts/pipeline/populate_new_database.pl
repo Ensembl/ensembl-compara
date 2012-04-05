@@ -534,7 +534,7 @@ sub get_all_method_link_species_sets {
     foreach my $this_method_link_species_set (@{$these_method_link_species_sets}) {
       next if ($skip_mlss->{$this_method_link_species_set->dbID});
       my $all_included = 1;
-      foreach my $this_included_genome_db (@{$this_method_link_species_set->species_set}) {
+      foreach my $this_included_genome_db (@{$this_method_link_species_set->species_set_obj->genome_dbs()}) {
         if (!defined($these_genome_dbs->{$this_included_genome_db->dbID})) {
           $all_included = 0;
           last;
