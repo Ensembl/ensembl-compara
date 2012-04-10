@@ -57,5 +57,4 @@ ALTER TABLE CAFE_tree_attr DROP KEY `fam_id`;
 -- ----------------------------
 
 ALTER TABLE constrained_element MODIFY COLUMN p_value DOUBLE DEFAULT NULL, DROP COLUMN taxonomic_level;
-ALTER TABLE constrained_element;
 
