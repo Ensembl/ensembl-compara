@@ -28,9 +28,10 @@ sub upload {
   } else {
     my @orig_path = split('/', $hub->param($method));
     
-    $filename         = $orig_path[-1];
-    $name             = $filename unless $name;
-    $args{'filename'} = $filename;
+    $filename = $orig_path[-1];
+    $name   ||= $filename;
+    
+    $args{'filename'} = $name;
   }
   
   $params->{'name'} = $name;

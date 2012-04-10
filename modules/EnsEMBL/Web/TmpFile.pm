@@ -199,11 +199,11 @@ sub drivers {
 
 
 ## Read-only
-## Returns md5 checksum of the file content
+## Returns md5 checksum of the filename and file content
 sub md5 { 
   my $self = shift;
 
-  $self->{md5} ||= md5_hex($self->content);
+  $self->{md5} ||= md5_hex($self->filename . $self->content);
   return $self->{md5};
 }
 
