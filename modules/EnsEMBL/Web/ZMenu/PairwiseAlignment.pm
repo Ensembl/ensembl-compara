@@ -84,7 +84,7 @@ sub content {
       });
 
       $self->add_entry({
-        label => 'Multi-species View',
+        label => 'Region Comparison View',
         link  => $url,
       });
     }
@@ -146,7 +146,7 @@ sub content {
     });
 
     $self->add_entry({
-      label => 'Multi-species View',
+      label => 'Region Comparison View',
       link  => $url,
     });
 

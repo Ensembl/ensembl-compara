@@ -86,14 +86,14 @@ sub populate_tree {
     { 'availability' => 'slice database:compara has_alignments', 'concise' => 'Alignments (text)' }
   ));
   
-  $align_menu->append($self->create_node('Multi', 'Multi-species view ([[counts::pairwise_alignments]])',
+  $align_menu->append($self->create_node('Multi', 'Region Comparison ([[counts::pairwise_alignments]])',
     [qw(
       selector EnsEMBL::Web::Component::Location::MultiSpeciesSelector
       top      EnsEMBL::Web::Component::Location::MultiTop
       botnav   EnsEMBL::Web::Component::Location::MultiBottomNav
       bottom   EnsEMBL::Web::Component::Location::MultiBottom
     )],
-    { 'availability' => 'slice database:compara has_pairwise_alignments', 'concise' => 'Multi-species view' }
+    { 'availability' => 'slice database:compara has_pairwise_alignments', 'concise' => 'Region Comparison' }
   ));
   
   $align_menu->append($self->create_subnode('ComparaGenomicAlignment', '',

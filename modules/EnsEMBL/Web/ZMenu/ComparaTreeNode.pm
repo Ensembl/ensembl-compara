@@ -257,7 +257,7 @@ sub content {
       
       $self->add_entry({
         type  => 'Comparison',
-        label => 'Jump to Multi-species view',
+        label => 'Jump to Region Comparison view',
         link  => $hub->url($url_params),
         order => 13
       });

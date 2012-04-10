@@ -66,7 +66,7 @@ sub content {
         );
         
         $other_loc = sprintf '<a href="%s">%s</a>', $hub->url({ species => $other, action => 'View', r => $other_r, g => $other_stable_id }), $other_r;
-        $multi     = sprintf '<a href="%s">Multi-species view</a>', $hub->url({ action => 'Multi', r => $r, s1 => $other, r1 => $other_r, g1 => $other_stable_id });
+        $multi     = sprintf '<a href="%s">Region Comparison</a>', $hub->url({ action => 'Multi', r => $r, s1 => $other, r1 => $other_r, g1 => $other_stable_id });
       } else {
         $other_ids = 'No homologues';
       }

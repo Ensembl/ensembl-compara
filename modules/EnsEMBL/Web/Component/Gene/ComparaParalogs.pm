@@ -74,7 +74,7 @@ sub content {
 
       my $links = ($availability->{'has_pairwise_alignments'}) ?
         sprintf (
-        '<ul class="compact"><li class="first"><a href="%s" class="notext">Multi-species view</a></li>',
+        '<ul class="compact"><li class="first"><a href="%s" class="notext">Region Comparison</a></li>',
         $hub->url({
           type   => 'Location',
           action => 'Multi',
