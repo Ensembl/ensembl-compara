@@ -64,7 +64,7 @@ sub process {
       
       my $data = $session->add_data(
         type      => 'url',
-        code      => join('_', md5_hex($url), $session->session_id),
+        code      => join('_', md5_hex($name . $url), $session->session_id),
         url       => $url,
         name      => $name,
         format    => $format,
