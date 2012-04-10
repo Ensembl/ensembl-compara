@@ -870,6 +870,7 @@ CREATE TABLE homology (
 
   PRIMARY KEY (homology_id),
   KEY (method_link_species_set_id),
+  KEY (ancestor_node_id),
   KEY (tree_node_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
