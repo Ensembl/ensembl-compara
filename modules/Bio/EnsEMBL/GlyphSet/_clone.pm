@@ -85,13 +85,14 @@ sub tag {
   my $bef     = $f->get_scalar_attribute('BACend_flag');
   (my $state  = $f->get_scalar_attribute('state')) =~ s/^\d\d://;
   my $fp_size = $f->get_scalar_attribute('fp_size');
-  my ($s, $e) = $self->sr2slice($f->get_scalar_attribute('inner_start'), $f->get_scalar_attribute('inner_end'));
+  my ($s, $e) = ($f->get_scalar_attribute('inner_start'), $f->get_scalar_attribute('inner_end'));
+     ($s, $e) = $self->sr2slice($s, $e) if $s && $e;
   my @result;
   
-  push @result, { style => 'rect',          start => $s,        end => $e,      colour => $f->{'_colour_flag'} || $self->my_colour($state) } if $s && $e;
-  push @result, { style => 'left-triangle', start => $f->start, end => $f->end, colour => $self->my_colour('fish_tag')                     } if $f->get_scalar_attribute('fish');
-  push @result, { style => 'right-end',     start => $f->start, end => $f->end, colour => $self->my_colour('bacend')                       } if $bef == 2 || $bef == 3;
-  push @result, { style => 'left-end',      start => $f->start, end => $f->end, colour => $self->my_colour('bacend')                       } if $bef == 1 || $bef == 3;
+  push @result, { style => 'rect',          start => $s,        end => $e,      colour => $self->my_colour($state)     } if $s && $e;
+  push @result, { style => 'left-triangle', start => $f->start, end => $f->end, colour => $self->my_colour('fish_tag') } if $f->get_scalar_attribute('fish');
+  push @result, { style => 'right-end',     start => $f->start, end => $f->end, colour => $self->my_colour('bacend')   } if $bef == 2 || $bef == 3;
+  push @result, { style => 'left-end',      start => $f->start, end => $f->end, colour => $self->my_colour('bacend')   } if $bef == 1 || $bef == 3;
   
   if ($fp_size && $fp_size > 0) {
     my $start = int(($f->start + $f->end - $fp_size) / 2);
