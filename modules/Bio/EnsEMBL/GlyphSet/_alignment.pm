@@ -5,6 +5,8 @@ use strict;
 use base qw(Bio::EnsEMBL::GlyphSet_wiggle_and_block );
 use Data::Dumper;
 
+use List::Util qw(min);
+
 #==============================================================================
 # The following functions can be over-riden if the class does require
 # something diffirent - main one to be over-riden is probably the
@@ -297,6 +299,7 @@ sub render_normal {
         my $f = $F[0][2];
         if ($config->{'useScore'} == 1 && $config->{'implicit_colour'}) {
           my $index = int(($f->score * scalar(@greyscale)) / 1000);
+          $index = min(scalar(@greyscale)-1,$index);
           $feature_colour = $greyscale[$index];
           $label_colour = '#333333';
         }
