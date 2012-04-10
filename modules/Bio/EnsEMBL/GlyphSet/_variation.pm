@@ -2,6 +2,8 @@ package Bio::EnsEMBL::GlyphSet::_variation;
 
 use strict;
 
+use List::Util qw(min);
+
 use Bio::EnsEMBL::Variation::Utils::Constants;
 use Bio::EnsEMBL::Variation::VariationFeature;
 
@@ -164,7 +166,7 @@ sub tag {
     };
   }
   
-  return { style => 'insertion', colour => $colour } if $f->start > $f->end;
+  return { style => 'insertion', colour => $colour, feature => $f } if $f->start > $f->end;
 }
 
 sub render_tag {
@@ -181,6 +183,18 @@ sub render_tag {
       height     => 3,
       direction  => 'up',
     });
+    
+    my $width = min(1, 16/$pix_per_bp);
+    
+    # invisible box to make inserts more clickable
+    $composite->push($self->Rect({
+      x         => $start - 1 - $width/2,
+      y         => 0,
+      absolutey => 1,
+      width     => $width,
+      height    => $height + 2,
+      href      => $self->href($tag->{'feature'})
+    }));
   } elsif ($start <= $tag->{'start'}) {
     my $box_width = 8 / $pix_per_bp;
     
@@ -210,12 +224,12 @@ sub render_tag {
       }));
     } elsif ($tag->{'style'} =~ /^(delta|left-snp)$/) {
       push @glyph, $self->Triangle({
-        mid_point    => [ $start - 0.5, $tag->{'style'} eq 'delta' ? $height : 0 ],
-        colour       => $tag->{'colour'},
-        absolutey    => 1,
-        width        => $box_width,
-        height       => $height,
-        direction    => $tag->{'style'} eq 'delta' ? 'down' : 'up',
+        mid_point => [ $start - 0.5, $tag->{'style'} eq 'delta' ? $height : 0 ],
+        colour    => $tag->{'colour'},
+        absolutey => 1,
+        width     => $box_width,
+        height    => $height,
+        direction => $tag->{'style'} eq 'delta' ? 'down' : 'up',
       });
     }
   }
