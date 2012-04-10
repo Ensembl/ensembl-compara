@@ -336,7 +336,7 @@ sub render_transcripts {
         href   => $self->href($gene, $transcript)
       });
 
-      my $colour_key = $self->colour_key($transcript, $gene);
+      my $colour_key = $self->colour_key($gene, $transcript);
       my $colour     = $self->my_colour($colour_key);
       my $label      = $self->my_colour($colour_key, 'text');
       my $highlight  = $selected_db eq $db && $transcript_stable_id ? (
@@ -575,7 +575,7 @@ sub render_alignslice_transcript {
       
       my $transcript_stable_id = $transcript->stable_id;
       
-      my $colour_key = $self->colour_key($transcript, $gene);    
+      my $colour_key = $self->colour_key($gene, $transcript);    
       my $colour     = $self->my_colour($colour_key);
       my $label      = $self->my_colour($colour_key, 'text');
       
@@ -1493,7 +1493,7 @@ sub colour_key {
   my $gene       = shift;
   my $transcript = shift || $gene;
   my $pattern    = $self->my_config('colour_key') || '[biotype]';
-   
+  
   # hate having to put ths hack here, needed because any logic_name specific web_data entries
   # get lost when the track is merged - needs rewrite of imageconfig merging code
   return 'merged' if $transcript->analysis->logic_name =~ /ensembl_havana/;
