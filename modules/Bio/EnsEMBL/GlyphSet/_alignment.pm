@@ -322,7 +322,10 @@ sub render_normal {
         $features_bumped++;
         next;
       }
-      $y_pos = $y_offset - $row * int( $h + $gap * $label_h ) * $strand;
+      # +1 below cos we render eg a rectangle from (100,100) of height
+      # and width 10 as (100,100)-(110,110), ie actually 11x11. -- ds23
+
+      $y_pos = $y_offset - $row * int( $h+1 + $gap * $label_h ) * $strand;
 
       my $Composite = $self->Composite({
         'href'  => $self->href( $F[0][2] ),
