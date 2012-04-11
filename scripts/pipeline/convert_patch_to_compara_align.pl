@@ -211,8 +211,10 @@ foreach my $ref_name(keys %aligned_patch){
 			$gab->{ref_aln_bases}=~s/M0D/M/g; # just in case (should never be used)
 			$gab->{patch_aln_bases}=~s/M0D/M/g; # just in case (should never be used)
 			my $gab_perc_id = int($gab->{gab_perc_num} / $align_len * 100);
+			# the last two fields (group_id and level_id) in the genomic_align_block table are filled using this hack to set the 
+			# group_id = (patch_dnafrag_id + mlss_prefix) and set level_id = 1
 			print join("\t", "GenomicAlignBlock", ($gab->{genomic_align_block_id} + $mlss_pref), 
-				$mlssid, '\N', $gab_perc_id, $align_len, '\N'), "\n";
+				$mlssid, '\N', $gab_perc_id, $align_len, ($hum_dfs{ $patch_name } + $mlss_pref), "1"), "\n"; 
 			print join("\t", "GenomicAlign", ($gab->{ref_genomic_align_id} + $mlss_pref), 
 				($gab->{genomic_align_block_id} + $mlss_pref), $mlssid, $hum_dfs{ $ref_name }, 
 				$gab->{ref_start}, $gab->{ref_end}, $gab->{ref_strand}, $gab->{ref_aln_bases}, "1", "1"), "\n"; 
