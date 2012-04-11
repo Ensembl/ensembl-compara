@@ -358,56 +358,60 @@ if($automatic_bsub) {
 	system($bsub_string);
     }
 } else {
-    #Write file
+    # Write file
     foreach my $seq_region(@$seq_regions) {
 	my $seq_region_name = $seq_region->seq_region_name;
 	my $seq_region_start = $seq_region->start;
 	my $seq_region_end = $seq_region->end;
+
+	# Open filehandle. If no filename is defined, use STDOUT
+	my $fh;
+	if (!defined $out_filename) {
+	    $fh =  *STDOUT;
+	} else {
+	    open $fh, '>'. $out_filename or throw("Error opening $out_filename for write");
+	}
+
+	# Print scores in defined format to filehandle
 	if (lc($format) eq "wigfix") {
-	    write_wigFix($species, $seq_region_name, $seq_region_start, $seq_region_end, $output_dir, $file_prefix);
+	    write_wigFix($fh, $seq_region_name, $seq_region_start, $seq_region_end);
 	} elsif (lc($format) eq "bed") {
-	    write_bed($species, $seq_region_name, $seq_region_start, $seq_region_end, $output_dir, $file_prefix);
+	    write_bed($fh, $seq_region_name, $seq_region_start, $seq_region_end);
+	}
+
+	# Close filehandle. If file is empty, delete.
+	if (!defined $out_filename) {
+	    $fh =  *STDOUT;
+	} else {
+	    close($fh) or die "Couldn't close file properly";
+	    if (-s $out_filename == 0) {
+		print STDERR "$out_filename is empty. Deleting \n";
+		unlink($out_filename);
+	    } 
 	}
     }
 }
 
 #Write scores in wigFix format
 sub write_wigFix {
-    my ($species, $seq_region_name, $seq_region_start, $seq_region_end, $output_dir, $file_prefix) = @_;
+    my ($fh, $seq_region_name, $seq_region_start, $seq_region_end) = @_;
 
     my $seq_region_length = ($seq_region_end-$seq_region_start+1);
 
-    #Open filehandle. If no filename is defined, use STDOUT
-    my $fh;
-    if (!defined $out_filename) {
-	$fh =  *STDOUT;
-    } else {
-	open $fh, '>'. $out_filename or throw("Error opening $out_filename for write");
-    }
-
     #Chunk seq_region to speed up score retrieval
-    my @chunk_regions;
-    my $chunk_number = int($seq_region_length / $chunk_size);
-    $chunk_number += $seq_region_length % $chunk_size ? 1 : 0;
-    my $chunk_start = $seq_region_start;
-    for(my$j=1;$j<$chunk_number;$j++) {
-	my $chunk_end = $chunk_start + $chunk_size;
-	push(@chunk_regions, [ $chunk_start, $chunk_end ]);
-	$chunk_start = $chunk_end;
-    }
-    push(@chunk_regions, [ $chunk_start, $seq_region_end ]);
+    my $chunk_regions = chunk_region($seq_region_start, $seq_region_length, $chunk_size);
+
     my $first_score_seen = 1;
     my $previous_position = 0;
     
     my $cs_adaptor = $reg->get_adaptor($dbname, 'compara', 'ConservationScore');
-    foreach my $chunk_region(@chunk_regions) {
+    foreach my $chunk_region(@$chunk_regions) {
 	my $display_size = $chunk_region->[1] - $chunk_region->[0] + 1;
 	my $chunk_slice = $slice_adaptor->fetch_by_region('toplevel', $seq_region_name, $chunk_region->[0], $chunk_region->[1]);
 
 	#Get scores
 	my $scores = $cs_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $chunk_slice, $display_size, "AVERAGE");
 	for(my$i=0;$i<@$scores;$i++) {
-	    my $line = "";
 	    if (defined $scores->[$i]->diff_score) {
 		#the following if-elsif-else should prevent the printing of scores from overlapping genomic_align_blocks
 		if ($chunk_region->[0] + $scores->[$i]->position > $previous_position && $i > 0) { 
@@ -450,18 +454,6 @@ sub write_wigFix {
 	    }
 	}
     }
-    if (!defined $out_filename) {
-	$fh =  *STDOUT;
-    } else {
-	close($fh) or die "Couldn't close file properly";
-    }
-
-    #Remove empty files.
-    if (defined $out_filename && -s $out_filename == 0) {
-	print STDERR "$out_filename is empty. Deleting \n";
-	unlink($out_filename);
-    } 
-
 }
 
 #Print header
@@ -474,34 +466,18 @@ sub print_wigFix_header {
 
 #Write scores in bed format
 sub write_bed {
-    my ($species, $seq_region_name, $seq_region_start, $seq_region_end, $output_dir, $file_prefix) = @_;
+    my ($fh, $seq_region_name, $seq_region_start, $seq_region_end) = @_;
 
     my $seq_region_length = ($seq_region_end-$seq_region_start+1);
 
-    #Open filehandle. If no filename is defined, use STDOUT
-    my $fh;
-    if (!defined $out_filename) {
-	$fh =  *STDOUT;
-    } else {
-	open $fh, '>'. $out_filename or throw("Error opening $out_filename for write");
-    }
-
     #Chunk seq_region to speed up score retrieval
-    my @chunk_regions;
-    my $chunk_number = int($seq_region_length / $chunk_size);
-    $chunk_number += $seq_region_length % $chunk_size ? 1 : 0;
-    my $chunk_start = $seq_region_start;
-    for(my$j=1;$j<$chunk_number;$j++) {
-	my $chunk_end = $chunk_start + $chunk_size;
-	push(@chunk_regions, [ $chunk_start, $chunk_end ]);
-	$chunk_start = $chunk_end;
-    }
-    push(@chunk_regions, [ $chunk_start, $seq_region_end ]);
-    my $first_score_seen = 1;
+    my $chunk_regions = chunk_region($seq_region_start, $seq_region_length, $chunk_size);
+
+    # my $first_score_seen = 1;
     my $previous_position = 0;
     
     my $cs_adaptor = $reg->get_adaptor($dbname, 'compara', 'ConservationScore');
-    foreach my $chunk_region(@chunk_regions) {
+    foreach my $chunk_region(@$chunk_regions) {
 	my $display_size = $chunk_region->[1] - $chunk_region->[0] + 1;
 	my $chunk_slice = $slice_adaptor->fetch_by_region('toplevel', $seq_region_name, $chunk_region->[0], $chunk_region->[1]);
 
@@ -514,7 +490,6 @@ sub write_bed {
 	#Get scores
 	my $scores = $cs_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $chunk_slice, $display_size, "AVERAGE");
 	for(my$i=0;$i<@$scores;$i++) {
-	    my $line = "";
 	    if (defined $scores->[$i]->diff_score) {
 		#the following if-elsif-else should prevent the printing of scores from overlapping genomic_align_blocks
 		if ($chunk_region->[0] + $scores->[$i]->position > $previous_position && $i > 0) { 
@@ -530,16 +505,23 @@ sub write_bed {
 	    }
 	}
     }
-    if (!defined $out_filename) {
-	$fh =  *STDOUT;
-    } else {
-	close($fh) or die "Couldn't close file properly";
+}
+
+sub chunk_region {
+    my ($seq_region_start, $seq_region_length, $chunk_size) = @_;
+    my $chunk_regions = [];
+
+    my $chunk_number = int($seq_region_length / $chunk_size);
+    $chunk_number += $seq_region_length % $chunk_size ? 1 : 0;
+    my $chunk_start = $seq_region_start;
+    for(my$j=1;$j<$chunk_number;$j++) {
+	my $chunk_end = $chunk_start + $chunk_size;
+	push(@$chunk_regions, [ $chunk_start, $chunk_end ]);
+	$chunk_start = $chunk_end;
     }
 
-    #Remove empty files.
-    if (defined $out_filename && -s $out_filename == 0) {
-	print STDERR "$out_filename is empty. Deleting \n";
-	unlink($out_filename);
-    } 
+    push(@$chunk_regions, [ $chunk_start, $seq_region_end ]);
 
+    return $chunk_regions;
 }
+
