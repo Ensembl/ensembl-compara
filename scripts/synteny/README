@@ -161,14 +161,14 @@ PATH=/usr/opt/java/bin/:$PATH
 Now build the synteny regions for each chromosome.
 
 ls *.syten.gff | sed "s/\.syten\.gff//" | \
- while read i; do echo "java -Xmx2000M -classpath \
+ while read i; do echo "java -Xmx3000M -classpath \
  ~/src/ensembl_main/ensembl-compara/scripts/synteny/BuildSynteny.jar \
  BuildSynteny $i.syten.gff 100000 100000 false \
  > $i.100000.100000.BuildSynteny.out 2> $i.100000.100000.BuildSynteny.err"; done > run
 
 chmod +x run
 
-bsub -R "select[mem>=2000] rusage[mem=2000]" -q bigmem -J HsapCfamSyn -o run.out -e run.err ./run
+bsub -R "select[mem>=8000] rusage[mem=8000]" -M8000000 -q yesterday -J HsapCfamSyn -o run.out -e run.err ./run
 
 NOTE-1: the last parameter "false" is only needed for human/mouse, human/rat and mouse/rat NOT for 
 elegans/briggsae (it can be ommitted). Don't ask me (Abel) what that does, Steve Searle included this 
