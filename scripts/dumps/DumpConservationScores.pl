@@ -116,6 +116,7 @@ my $seq_region_name;
 my $seq_region_start;
 my $seq_region_end;
 my $automatic_bsub = 0;
+my $bsub_options = '-qlong -R"select[mem>2500] rusage[mem=2500]" -M2500000';
 my $out_filename;
 my $add_seq_name_prefix = 0;
 my $seq_name_prefix = "";
@@ -168,7 +169,7 @@ perl dump_conservationScores_in_wigfix.pl
         ~/.ensembl_init will be used.
     [--dbname compara_db_name]
         the name of compara DB in the registry_configuration_file or any
-        of its aliases.
+        of its aliases. (default = $dbname)
 
     or:
     [--url ensembl_db as a url]
@@ -187,7 +188,7 @@ perl dump_conservationScores_in_wigfix.pl
 
   For the query slice:
     [--species query_species]
-         Query species. Default is human
+         Query species. (default is "$species")
     --seq_region region_name
         Sequence region name of the query slice, i.e. the chromosome name
     --seq_region_start start
@@ -198,14 +199,14 @@ perl dump_conservationScores_in_wigfix.pl
         This option allows to dump all the alignments on all the top-level
         sequence region of a given coordinate system. It can also be used
         in conjunction with the --seq_region option to specify the right
-        coordinate system. (default = toplevel)
+        coordinate system. (default = $coord_system)
 
   For the scores:
     [--conservation_scores_mlssid method_link_species_set_id]
         Method link species set id for the conservation scores. Alternatively, you
         can specify the method_link and the species_set (see below).
     [--method_link method_link_type]
-        Method link type for the conservation scores. Default "GERP_CONSERVATION_SCORE"
+        Method link type for the conservation scores. (default "$conservation_scores_mlss_method_link")
     [--species_set species_set_name]
         Species set name for the conservation scores.
 
@@ -213,20 +214,22 @@ perl dump_conservationScores_in_wigfix.pl
     --output_dir output directory
          Location of directory to write output files. Default: current directory
     --output_format output format
-          Currently only wigFix and bed format are supported
+          Currently only wigFix and bed format are supported. (default = $format)
     --output_file filename
-          File to contain conservation scores. Automatically generated in auotmatic_bsub mode
+          File to contain conservation scores. Automatically generated in automatic_bsub mode
     --file_prefix prefix
          Text to identify which method was used to produce the scores, used only for the filename.
-         (default = CS)
+         (default = $file_prefix)
     --add_seq_name_prefix
          Add 'chr' to the chromosome (not supercontigs) names. (default = FALSE)
 
   Other options
     --chunk_size chunk_size
-         Chunk size for conservation scores to be retrieved. Default 1000000;
+         Chunk size for conservation scores to be retrieved. (default $chunk_size);
     --automatic_bsub
          Automatically create jobs for all the toplevel regions for a species
+    --bsub_options
+         bsub options. (default = '$bsub_options')
 
 };
 
@@ -343,7 +346,7 @@ if($automatic_bsub) {
 	my $out_filename = $output_dir . "/" . $file_prefix . ".chr" . $unique_name . "." . $format;
 
 	#Create final string ready for submission
-	my $bsub_string = "bsub -qlong -J$job_name -o $bsub_out -e $bsub_err $0 --seq_region $seq_region_name --seq_region_start $seq_region_start --seq_region_end $seq_region_end --output_file $out_filename ";
+	my $bsub_string = "bsub $bsub_options -J$job_name -o $bsub_out -e $bsub_err $0 --seq_region $seq_region_name --seq_region_start $seq_region_start --seq_region_end $seq_region_end --output_file $out_filename ";
 
 	
 	#add on "chr" to the beginning of chromosomes if needed
