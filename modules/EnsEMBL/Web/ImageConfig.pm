@@ -1649,10 +1649,7 @@ sub add_misc_features {
       strand            => 'r',
       display           => $default_tracks->{$config_name}{$_}{'default'} || $data->{$_}{'display'} || 'off',
       outline_threshold => $default_tracks->{$config_name}{$_}{'threshold'} eq 'no' ? undef : 350000,
-      canvas            => {
-        bump         => JSON::true,
-        labelOverlay => JSON::true
-      }
+      canvas            => { type => 'Clone' }
     });
   }
 }
