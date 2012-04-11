@@ -2428,6 +2428,7 @@ sub add_structural_variations {
     bump_width => 0,
     colourset  => 'structural_variant',
     display    => 'off',
+    canvas      => { type => 'StructuralVariation' }
   );
   
   $structural_variation->append($self->create_track('variation_feature_structural', 'Structural variants (all sources)', {   
@@ -2435,11 +2436,7 @@ sub add_structural_variations {
     caption     => 'All Structural variants',
     sources     => undef,
     description => 'Structural variants from all sources',
-    depth       => 5,
-    canvas      => {
-      type  => 'StructuralVariation',
-      depth => 5
-    }
+    depth       => 5
   }));
   
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'} || {}}) {
@@ -2451,11 +2448,7 @@ sub add_structural_variations {
       caption     => $key_2,
       source      => $key_2,
       description => $description,
-      depth       => 0.5,
-      canvas      => {
-        type  => 'StructuralVariation',
-        depth => 0.5
-      }
+      depth       => 0.5
     }));  
   }
   
@@ -2474,7 +2467,6 @@ sub add_structural_variations {
       sets        => [ $menu_item->{'long_name'} ],
       set_name    => $menu_item->{'long_name'},
       description => $hashref->{'structural_variation_set'}{'descriptions'}{$temp_name},
-      canvas      => { type => 'StructuralVariation' }
     }));
   }
   
