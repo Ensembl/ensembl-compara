@@ -11,29 +11,19 @@ sub features {
   my $slice    = $self->{'container'};
   my $source   = $self->my_config('source');
   my $set_name = $self->my_config('set_name');
-
   my $var_features;
   
 	# Structural variations by set
-  if (defined($set_name)) {
-    my $variation_db_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation');
-    my $set = $variation_db_adaptor->get_VariationSetAdaptor->fetch_by_name($set_name);
-    $var_features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($set);
-  }
-	# Structural variations by source
-  elsif ($source =~ /^\w/) {
-    $var_features = $slice->get_all_StructuralVariationFeatures($source);
-  } 
-	# All structural variations
-	else {
-    $var_features = $slice->get_all_StructuralVariationFeatures;
+  if ($set_name) {
+    $var_features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', 'variation')->fetch_by_name($set_name));
+  } elsif ($source =~ /^\w/) {
+    $var_features = $slice->get_all_StructuralVariationFeatures($source); # Structural variations by source
+  }  else {
+    $var_features = $slice->get_all_StructuralVariationFeatures; # All structural variations
   }
   
   return $var_features;  
 }
-
-
-
 
 sub colour_key  {
   my ($self, $f) = @_;
@@ -42,7 +32,6 @@ sub colour_key  {
 
 sub tag {
   my ($self, $f) = @_;
-  
   my $colour         = $self->my_colour($self->colour_key($f), 'tag');
   my $inner_crossing = $f->inner_start && $f->inner_end && $f->inner_start >= $f->inner_end ? 1 : 0;
   my @g_objects;
@@ -135,14 +124,12 @@ sub render_tag {
 sub href {
   my ($self, $f) = @_;
   
-  my $href = $self->_url({
+  return $self->_url({
     type => 'StructuralVariation',
     sv   => $f->variation_name,
     svf  => $f->dbID,
     vdb  => 'variation'
   });
-  
-  return $href;
 }
 
 sub title {
@@ -168,21 +155,20 @@ sub highlight {
   
   # First a black box
   $self->unshift($self->Rect({
-      x         => $composite->x - 2/$pix_per_bp,
-      y         => $composite->y - 2, # + makes it go down
-      width     => $composite->width + 4/$pix_per_bp,
-      height    => $h + 4,
-      colour    => 'black',
-      absolutey => 1,
-    }),
-    $self->Rect({ # Then a 1 pixel smaller green box
-      x         => $composite->x - 1/$pix_per_bp,
-      y         => $composite->y - 1, # + makes it go down
-      width     => $composite->width + 2/$pix_per_bp,
-      height    => $h + 2,
-      colour    => 'green',
-      absolutey => 1,
-    }));
+    x         => $composite->x - 2/$pix_per_bp,
+    y         => $composite->y - 2, # + makes it go down
+    width     => $composite->width + 4/$pix_per_bp,
+    height    => $h + 4,
+    colour    => 'black',
+    absolutey => 1,
+  }), $self->Rect({ # Then a 1 pixel smaller green box
+    x         => $composite->x - 1/$pix_per_bp,
+    y         => $composite->y - 1, # + makes it go down
+    width     => $composite->width + 2/$pix_per_bp,
+    height    => $h + 2,
+    colour    => 'green',
+    absolutey => 1,
+  }));
 }
 
 1;
