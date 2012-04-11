@@ -77,9 +77,9 @@ sub tag {
   my @result;
   
   if ($s && $e) {
-    my ($relative_start, $relative_end) = $self->sr2slice($s, $e);
     (my $state = $f->get_scalar_attribute('state')) =~ s/^\d\d://;
-    push @result, { style => 'rect', abs_start => $s, abs_end => $e, start => $relative_start, end => $relative_end, colour => $self->my_colour($state) };
+    ($s, $e) = $self->sr2slice($s, $e);
+    push @result, { style => 'rect', start => $s, end => $e, colour => $self->my_colour($state) };
   }
   
   push @result, { style => 'left-triangle', start => $f->start, end => $f->end, colour => $self->my_colour('fish_tag') } if $f->get_scalar_attribute('fish');
