@@ -200,7 +200,7 @@ if (!$method_link_species_set) {
   exit(1);
 }
 
-my $class = $method_link_species_set->method_link_class;
+my $class = $method_link_species_set->method->class;
 
 exit(1) if !check_table("method_link", $from_dba, $to_dba, undef,
     "method_link_id = ".$method_link_species_set->method->dbID);
@@ -583,7 +583,7 @@ sub copy_genomic_align_blocks {
         }
     }
   }
-  my $class = $mlss->method_link_class;
+  my $class = $mlss->method->class;
   if ($class eq "GenomicAlignTree.ancestral_alignment") {
       copy_ancestral_dnafrags($from_dba, $to_dba, $mlss_id, $lower_limit, $upper_limit);
   }
