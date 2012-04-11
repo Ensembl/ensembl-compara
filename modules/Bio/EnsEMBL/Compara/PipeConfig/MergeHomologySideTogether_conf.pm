@@ -49,7 +49,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'mp12_compara_homology_merged_66_test',    # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_homology_merged_67',    # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
             -host   => 'compara4',
@@ -71,7 +71,7 @@ sub default_options {
 
         'master_copy_tables' => [ 'genome_db', 'species_set', 'method_link', 'method_link_species_set', 'mapping_session', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set_tag' ],
 
-            'prevrel_db' => 'mysql://ensro@compara4/kb3_ensembl_compara_65',
+            'prevrel_db' => 'mysql://ensro@compara3/mp12_ensembl_compara_66',
 #         'prevrel_db' => {
 #             -host   => 'compara4',
 #             -port   => 3306,
@@ -82,7 +82,7 @@ sub default_options {
 
         'prevrel_merge_tables' => [ 'stable_id_history' ],
 
-            'genetrees_db' => 'mysql://ensro@compara2/mm14_compara_homology_66',
+            'genetrees_db' => 'mysql://ensro@compara3/mm14_compara_homology_67',
 #         'genetrees_db' => {
 #             -host   => 'compara2',
 #             -port   => 3306,
@@ -91,10 +91,10 @@ sub default_options {
 #             -dbname => 'mm14_compara_homology_66',
 #         },
 
-        'genetrees_copy_tables'  => [ 'sequence_cds', 'sequence_exon_bounded', 'subset', 'subset_member', 'protein_tree_hmmprofile', 'protein_tree_member_score' ],
-        'genetrees_merge_tables' => [ 'stable_id_history', 'homology', 'homology_member' ],
+        'genetrees_copy_tables'  => [ 'sequence_cds', 'sequence_exon_bounded', 'protein_tree_hmmprofile', 'protein_tree_member_score' ],
+        'genetrees_merge_tables' => [ 'subset', 'subset_member', 'stable_id_history', 'homology', 'homology_member', 'CAFE_data', 'CAFE_tree', 'CAFE_tree_node', 'CAFE_tree_attr' ],
 
-            'families_db' => 'mysql://ensro@compara1/lg4_compara_families_66',
+            'families_db' => 'mysql://ensro@compara2/lg4_compara_families_67',
 #         'families_db' => {
 #             -host   => 'compara1',
 #             -port   => 3306,
@@ -102,10 +102,10 @@ sub default_options {
 #             -pass   => $self->o('password'),
 #             -dbname => 'lg4_compara_families_66',
 #         },
-        'families_copy_tables'  => [ 'family', 'family_member', 'member' ],
-        'families_merge_tables' => [ 'subset', 'subset_member', 'sequence', 'stable_id_history' ],
+        'families_copy_tables'  => [ 'family', 'family_member' ],
+        'families_merge_tables' => [ 'member', 'sequence', 'subset', 'subset_member', 'stable_id_history' ],
 
-            'nctrees_db' => 'mysql://ensro@compara4/mp12_compara_nctrees_66c',
+            'nctrees_db' => 'mysql://ensro@compara4/mp12_compara_nctrees_67noCAFE',
 #         'nctrees_db' => {
 #             -host   => 'compara4',
 #             -port   => 3306,
@@ -114,9 +114,10 @@ sub default_options {
 #             -dbname => 'mp12_compara_nctrees_66c',
 #         },
         'nctrees_copy_tables'  => [ 'nc_profile' ],
-        'nctrees_merge_tables' => [ 'subset', 'subset_member', 'member', 'sequence', 'homology', 'homology_member' ],
+        'nctrees_merge_tables' => [ 'subset', 'subset_member', 'member', 'sequence', 'homology', 'homology_member', 'CAFE_data', 'CAFE_tree', 'CAFE_tree_node', 'CAFE_tree_attr' ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
+        'compara_innodb_schema' => 0,                               # to override the default Compara setting
     };
 }
 
@@ -152,17 +153,6 @@ sub pipeline_create_commands {
 sub pipeline_analyses {
     my ($self) = @_;
     return [
-#         {   -logic_name => 'lr_index_offset_correction',
-#             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-#             -parameters => {
-#                 'sql' => 'DELETE FROM lr_index_offset WHERE lr_index=0',
-#             },
-#             -input_ids => [
-#                 { 'db_conn' => $self->o('pipeline_db') },
-#                 { 'db_conn' => $self->o('genetrees_db') },
-#                 { 'db_conn' => $self->o('nctrees_db') },
-#             ],
-#         },
 
         {   -logic_name => 'generate_job_list',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -186,7 +176,6 @@ sub pipeline_analyses {
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputlist'  => $self->o('nctrees_merge_tables') },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputquery' => "SHOW TABLES LIKE 'gene\_tree\_%'" },
             ],
-#            -wait_for => [ 'lr_index_offset_correction' ],
             -flow_into => {
                 2 => [ 'copy_table'  ],
                 4 => [ 'merge_table' ],
@@ -208,18 +197,8 @@ sub pipeline_analyses {
                 'mode'          => 'topup',
             },
             -hive_capacity => 1,    # prevent several workers from updating the same table (brute force)
-            -flow_into => {
-                           1 => { 'myisamize_table' => { 'table' => '#table#' } },
-            },
         },
 
-        {   -logic_name    => 'myisamize_table',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SQLCmd',
-            -parameters    => {
-                               'sql' => 'ALTER TABLE #table# ENGINE=MyISAM',
-                               },
-            -wait_for => [ 'merge_table' ],
-        },
     ];
 }
 
