@@ -396,10 +396,8 @@ if($automatic_bsub) {
 sub write_wigFix {
     my ($fh, $seq_region_name, $seq_region_start, $seq_region_end) = @_;
 
-    my $seq_region_length = ($seq_region_end-$seq_region_start+1);
-
     #Chunk seq_region to speed up score retrieval
-    my $chunk_regions = chunk_region($seq_region_start, $seq_region_length, $chunk_size);
+    my $chunk_regions = chunk_region($seq_region_start, $seq_region_end, $chunk_size);
 
     my $first_score_seen = 1;
     my $previous_position = 0;
@@ -407,6 +405,7 @@ sub write_wigFix {
     my $cs_adaptor = $reg->get_adaptor($dbname, 'compara', 'ConservationScore');
     foreach my $chunk_region(@$chunk_regions) {
 	my $display_size = $chunk_region->[1] - $chunk_region->[0] + 1;
+
 	my $chunk_slice = $slice_adaptor->fetch_by_region('toplevel', $seq_region_name, $chunk_region->[0], $chunk_region->[1]);
 
 	#Get scores
@@ -468,10 +467,8 @@ sub print_wigFix_header {
 sub write_bed {
     my ($fh, $seq_region_name, $seq_region_start, $seq_region_end) = @_;
 
-    my $seq_region_length = ($seq_region_end-$seq_region_start+1);
-
     #Chunk seq_region to speed up score retrieval
-    my $chunk_regions = chunk_region($seq_region_start, $seq_region_length, $chunk_size);
+    my $chunk_regions = chunk_region($seq_region_start, $seq_region_end, $chunk_size);
 
     # my $first_score_seen = 1;
     my $previous_position = 0;
@@ -508,8 +505,10 @@ sub write_bed {
 }
 
 sub chunk_region {
-    my ($seq_region_start, $seq_region_length, $chunk_size) = @_;
+    my ($seq_region_start, $seq_region_end, $chunk_size) = @_;
     my $chunk_regions = [];
+
+    my $seq_region_length = ($seq_region_end-$seq_region_start+1);
 
     my $chunk_number = int($seq_region_length / $chunk_size);
     $chunk_number += $seq_region_length % $chunk_size ? 1 : 0;
