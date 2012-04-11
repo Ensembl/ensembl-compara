@@ -11,7 +11,6 @@ sub features      { return [];           }
 sub feature_label { return ('', 'none'); }
 sub title         {}
 sub href          {}
-sub tag           {}
 sub class         {}
 sub render_tag    {}
 

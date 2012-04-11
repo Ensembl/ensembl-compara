@@ -83,6 +83,7 @@ sub _pos               { return $_[0]->{'config'}{'_pos'}++;                    
 sub _colour_background { return 1;                                                                                 }
 sub colour_key         { return 'default';                                                                         }
 sub feature_label      { return '';                                                                                }
+sub tag                { return ();                                                                                }
 sub canvas_attributes  { return ();                                                                                } # Used to add attributes to each feature for scrollable images
 
 ### Helper functions to wrap round Glyphs
