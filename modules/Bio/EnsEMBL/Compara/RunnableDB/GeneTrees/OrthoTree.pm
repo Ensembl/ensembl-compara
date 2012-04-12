@@ -861,8 +861,8 @@ sub store_gene_link_as_homology {
       $mlss_type = "ENSEMBL_ORTHOLOGUES";
   }
   # This should be unique to a pair of genome_db_ids, and equal if we switch the two genome_dbs
-  # WARNING: This trick is valid for genome_db_id up to 1000
-  my $mlss_key = sprintf("%s_%d", $mlss_type, $gene1->genome_db->dbID * $gene2->genome_db->dbID + 1000000*($gene1->genome_db->dbID+$gene2->genome_db->dbID));
+  # WARNING: This trick is valid for genome_db_id up to 10000
+  my $mlss_key = sprintf("%s_%d", $mlss_type, $gene1->genome_db->dbID * $gene2->genome_db->dbID + 100000000*($gene1->genome_db->dbID+$gene2->genome_db->dbID));
 
   my $mlss;
   if (exists $self->param('mlss_hash')->{$mlss_key}) {
