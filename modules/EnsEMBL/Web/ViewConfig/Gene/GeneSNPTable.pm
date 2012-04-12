@@ -14,7 +14,7 @@ sub init {
   my %options    = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
   my $defaults   = {
     consequence_format => 'ensembl',
-    context            => 100,
+    context            => 'FULL',
   };
   
   $defaults->{"opt_pop_$_"} = 'off' for @{$variations->{'DISPLAY_STRAINS'}};
