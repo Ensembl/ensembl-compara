@@ -5,6 +5,8 @@ use warnings;
 use Bio::EnsEMBL::Registry;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DnaFrag;
+use Bio::EnsEMBL::Compara::Method;
+use Bio::EnsEMBL::Compara::SpeciesSet;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 my $usage = "$0
@@ -46,7 +48,9 @@ my $qy_gdb = $gdba->fetch_by_registry_name($qy_species);
 my $tg_gdb = $gdba->fetch_by_registry_name($tg_species);
 
 my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
-	-METHOD_LINK_TYPE => $method_link_type, -SPECIES_SET => [$qy_gdb, $tg_gdb]);
+    -method => Bio::EnsEMBL::Compara::Method->new( -type => $method_link_type ),
+    -species_set_obj => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$qy_gdb, $tg_gdb] ),
+);
 $mlssa->store($mlss);
 
 my $qy_slices = get_slices($qy_gdb);
