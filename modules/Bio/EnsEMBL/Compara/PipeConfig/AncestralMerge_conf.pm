@@ -35,7 +35,7 @@ sub default_options {
     return {
          %{$self->SUPER::default_options},
 
-        'rel'               => 66,                                                  # current release number
+        'rel'               => 67,                                                  # current release number
         'rel_suffix'        => '',                                                  # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),              # for convenience
 
@@ -51,7 +51,7 @@ sub default_options {
             -dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name'),
         },
 
-            'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@compara1/mp12_ensembl_ancestral_65',
+            'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@compara3/mp12_ensembl_ancestral_66',
 #         'prev_ancestral_db' => {
 #             -driver => 'mysql',
 #             -host   => 'compara1',
@@ -110,11 +110,10 @@ sub pipeline_analyses {
                                         [ '505' => $self->o('prev_ancestral_db'), ],     # 3-way birds
                                         [ '528' => $self->o('prev_ancestral_db'), ],     # 5-way fish
                                         [ '548' => $self->o('prev_ancestral_db'), ],     # 6-way primates
-                                        [ '547' => $self->o('prev_ancestral_db'), ],     # 12-way mammals
 
                         # copying from new sources:
 #                     [ '548' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_6way_65_ancestral_core' ],   # 6-way primates
-#                     [ '547' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_12way_65_ancestral_core' ],  # 12-way mammals
+                      [ '578' => 'mysql://ensadmin:'.$self->o('password').'@compara1/kb3_12WAY_67_ancestral_core' ],  # 12-way mammals
                 ],
                 'input_id'          => { 'mlss_id' => '#_0#', 'from_url' => '#_1#' },
                 'fan_branch_code'   => 2,
