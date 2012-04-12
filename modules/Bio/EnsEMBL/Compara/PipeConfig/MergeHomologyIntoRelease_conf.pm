@@ -44,7 +44,7 @@ sub default_options {
 
             %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'compara_full_merge_66',         # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_full_merge_67',         # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {
             -host   => 'compara4',
@@ -59,7 +59,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'mp12_mp12_compara_homology_merged_66_test',
+            -dbname => 'mm14_compara_homology_merged_67',
         },
 
         'rel_db' => {
@@ -67,10 +67,10 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => 'mp12_ensembl_compara_66',
+            -dbname => 'mm14_ensembl_compara_67',
         },
 
-        'skipped_tables' => [ 'protein_tree_qc', 'meta', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set',
+        'skipped_tables' => [ 'meta', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set',
                               'analysis', 'analysis_data', 'job', 'job_file', 'job_message', 'analysis_stats', 'analysis_stats_monitor', 'analysis_ctrl_rule',
                               'dataflow_rule', 'worker', 'monitor', 'resource_description' ],
 
