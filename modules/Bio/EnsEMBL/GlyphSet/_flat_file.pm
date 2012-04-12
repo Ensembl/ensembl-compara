@@ -2,6 +2,8 @@ package Bio::EnsEMBL::GlyphSet::_flat_file;
 
 use strict;
 
+use List::Util qw(reduce);
+
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::Tools::Misc;
@@ -91,15 +93,18 @@ sub features {
     if ($self->my_config('format') eq 'SNP_EFFECT') {
       my %overlap_cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;      
       my %cons = map { $overlap_cons{$_}{'display_term'} => $overlap_cons{$_}{'rank'} } keys %overlap_cons;
-      
-      @{$T->{'features'}} = sort {$cons{$a->consequence} <=> $cons{$b->consequence}} @{$T->{'features'}};
+     
+      my %b_cons = map { # lowest rank consequence from comma-list
+        $_->consequence => reduce { $cons{$a} < $cons{$b} ? $a : $b } split(/,/,$_->consequence); 
+      } @{$T->{'features'}};
+      @{$T->{'features'}} = sort {$b_cons{$a->consequence} <=> $b_cons{$b->consequence}} @{$T->{'features'}};
       
       my $colours = $species_defs->colour('variation');
       
       $T->{'config'}{'itemRgb'} = 'on';
       
       foreach (@{$T->{'features'}}) {
-        $_->external_data->{'item_colour'}[0] = $colours->{lc $_->consequence}->{'default'};
+        $_->external_data->{'item_colour'}[0] = $colours->{lc $b_cons{$_->consequence}}->{'default'} || $colours->{'default'}->{'default'};
         $_->external_data->{'Type'}[0]        = $_->consequence;
       }
     }
