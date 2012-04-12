@@ -23,19 +23,21 @@
 	// Function to show/hide all the tables
 	function show_hide_all () {
 		expand_flag = document.getElementById('expand');
-		divs = document.getElementsByName('sqltable');
+		divs = document.getElementsByTagName('div');
 		for(var i=0; i < divs.length; i++){
 			param = divs[i].id.substring(4);
 			div   = document.getElementById('div_'+param);
 		  alink = document.getElementById('a_'+param);
 			
-			if (expand_flag.value=='0') {
-				div.style.display='inline';
-				alink.innerHTML='Hide';
-			}
-			else {
-				div.style.display='none';
-				alink.innerHTML='Show';
+			if (div && alink) {
+				if (expand_flag.value=='0') {
+					div.style.display='inline';
+					alink.innerHTML='Hide';
+				}
+				else {
+					div.style.display='none';
+					alink.innerHTML='Show';
+				}
 			}
 		}
 		if (expand_flag.value=='0') {
@@ -54,7 +56,7 @@
 
 <h2>Introduction</h2>
 
-
+<p><i>
 
 <p>
 This document gives a high-level description of the tables that
@@ -108,10 +110,13 @@ Different tables are populated throughout the gene build process:
 </table>
 
 <p>
-This document refers to version <strong>65</strong> of the EnsEMBL
+This document refers to version <strong>67</strong> of the EnsEMBL
 core schema.
 </p>
 
+
+
+</i></p>
 <br />
 
 <h3 id="top">List of the tables:</h3><h2>Fundamental Tables</h2>
@@ -127,12 +132,13 @@ core schema.
 		<li><a href="#exon_transcript"><b>exon_transcript</b></a></li>
 		<li><a href="#gene"><b>gene</b></a></li>
 		<li><a href="#gene_attrib"><b>gene_attrib</b></a></li>
+		<li><a href="#intron_supporting_evidence"><b>intron_supporting_evidence</b></a></li>
 		<li><a href="#karyotype"><b>karyotype</b></a></li>
 		<li><a href="#meta"><b>meta</b></a></li>
 		<li><a href="#meta_coord"><b>meta_coord</b></a></li>
 		<li><a href="#operon"><b>operon</b></a></li>
-		<li><a href="#operon_transcript"><b>operon_transcript</b></a></li>
 	</ul></td><td><ul>
+		<li><a href="#operon_transcript"><b>operon_transcript</b></a></li>
 		<li><a href="#operon_transcript_gene"><b>operon_transcript_gene</b></a></li>
 		<li><a href="#seq_region"><b>seq_region</b></a></li>
 		<li><a href="#seq_region_attrib"><b>seq_region_attrib</b></a></li>
@@ -186,9 +192,9 @@ core schema.
 		<li><a href="#gene_archive"><b>gene_archive</b></a></li>
 		<li><a href="#mapping_session"><b>mapping_session</b></a></li>
 		<li><a href="#mapping_set"><b>mapping_set</b></a></li>
-		<li><a href="#stable_id_event"><b>stable_id_event</b></a></li>
 		<li><a href="#peptide_archive"><b>peptide_archive</b></a></li>
 		<li><a href="#seq_region_mapping"><b>seq_region_mapping</b></a></li>
+		<li><a href="#stable_id_event"><b>stable_id_event</b></a></li>
 		</ul>
 </td></tr></table><h2>External References</h2>
 <table><tr><td>
@@ -207,8 +213,8 @@ core schema.
 </td></tr></table><h2>Miscellaneous</h2>
 <table><tr><td>
  <ul>
-		<li><a href="#interpro"><b>interpro</b></a></li>
 		<li><a href="#data_file"><b>data_file</b></a></li>
+		<li><a href="#interpro"><b>interpro</b></a></li>
 		</ul>
 </td></tr></table>
 	  <input type="button" onclick="show_hide_all()" style="background-color:#933;color:#FFF;cursor:pointer" value="Show/hide all" />
@@ -216,7 +222,9 @@ core schema.
 	<br />
 <hr />
 <h2>Fundamental Tables</h2>
-<p>A PDF document of the schema is available <a href="fundamental_tables_core.pdf">here</a>.</p>
+<p>A PDF document of the schema is available <a href="fundamental_tables_core.pdf" target="_blank">here</a>.
+<br />
+<a href="fundamental_tables_core.pdf" target="_blank"> <img border="0" src="fundamental_tables_thumb.png" alt="Fundamental Tables Schema Diagram" style="margin-left:20px; margin-top:20px;" /></a></p>
 <br />
   <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
     <tr style="vertical-align:middle">
@@ -229,7 +237,7 @@ core schema.
   </table>
 <p>The assembly table states, which parts of seq_regions are exactly equal. It enables to transform coordinates between seq_regions. Typically this contains how chromosomes are made of contigs, clones out of contigs, and chromosomes out of supercontigs. It allows you to artificially chunk chromosome sequence into smaller parts. The data in this table defines the "static golden path", i.e. the best effort draft full genome sequence as determined by the UCSC or NCBI (depending which assembly you are using). Each row represents a component, e.g. a contig,  (comp_seq_region_id, FK from seq_region table) at least part of which is present in the golden path. The part of the component that is in the path is delimited by fields cmp_start and cmp_end (start < end), and the absolute position within the golden path chromosome (or other appropriate assembled structure) (asm_seq_region_id) is given by asm_start and asm_end.</p>
 
-	<div id="div_assembly" name="sqltable" style="display:none">
+	<div id="div_assembly" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -260,7 +268,7 @@ core schema.
   </table>
 <p>Allows multiple sequence regions to point to the same sequence, analogous to a symbolic link in a filesystem pointing to the actual file. This mechanism has been implemented specifically to support haplotypes and PARs, but may be useful for other similar structures in the future.</p>
 
-	<div id="div_assembly_exception" name="sqltable" style="display:none">
+	<div id="div_assembly_exception" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -293,7 +301,7 @@ core schema.
   </table>
 <p>Provides codes, names and desctriptions of attribute types.</p>
 
-	<div id="div_attrib_type" name="sqltable" style="display:none">
+	<div id="div_attrib_type" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -320,7 +328,7 @@ core schema.
   </table>
 <p>Stores information about the available co-ordinate systems for the species identified through the species_id field. Note that for each species, there must be one co-ordinate system that has the attribute "top_level" and one that has the attribute "sequence_level".</p>
 
-	<div id="div_coord_system" name="sqltable" style="display:none">
+	<div id="div_coord_system" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -329,7 +337,7 @@ core schema.
 		<tr class="bg1"><td><b>name</b></td><td>VARCHAR(40)</td><td></td><td>Co-oridinate system name, e.g. 'chromosome', 'contig', 'scaffold' etc.</td><td>unique    key: name_idx</td></tr>
 		<tr class="bg2"><td><b>version</b></td><td>VARCHAR(255)</td><td>NULL</td><td>Assembly.</td><td>unique    key: name_idx</td></tr>
 		<tr class="bg1"><td><b>rank</b></td><td>INT</td><td></td><td>Co-oridinate system rank.</td><td>unique    key: rank_idx</td></tr>
-		<tr class="bg2"><td><b>attrib</b></td><td>SET('default_version', 'sequence_level')</td><td>_version'</td><td>Co-oridinate system attrib (e.g. "top_level", "sequence_level").</td><td></td></tr>
+		<tr class="bg2"><td><b>attrib</b></td><td>SET('default_version', 'sequence_level')</td><td></td><td>Co-oridinate system attrib (e.g. "top_level", "sequence_level").</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -351,7 +359,7 @@ core schema.
   </table>
 <p>Contains DNA sequence. This table has a 1:1 relationship with the contig table.</p>
 
-	<div id="div_dna" name="sqltable" style="display:none">
+	<div id="div_dna" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -376,7 +384,7 @@ core schema.
   </table>
 <p>Contains equivalent data to dna table, but 4 letters of DNA code are represented by a single binary character, based on 2 bit encoding.</p>
 
-	<div id="div_dnac" name="sqltable" style="display:none">
+	<div id="div_dnac" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -402,7 +410,7 @@ core schema.
   </table>
 <p>Stores data about exons. Associated with transcripts via exon_transcript. Allows access to contigs seq_regions. Note seq_region_start is always less that seq_region_end, i.e. when the exon is on the other strand the seq_region_start is specifying the 3prime end of the exon.</p>
 
-	<div id="div_exon" name="sqltable" style="display:none">
+	<div id="div_exon" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -413,8 +421,8 @@ core schema.
 		<tr class="bg1"><td><b>seq_region_strand</b></td><td>TINYINT(2)</td><td></td><td>Sequence region strand: 1 - forward; -1 - reverse.</td><td></td></tr>
 		<tr class="bg2"><td><b>phase</b></td><td>TINYINT(2)</td><td></td><td>The place where the intron lands inside the codon - 0 between codons, 1 between the 1st and second base, 2 between the second and 3rd base. Exons therefore have a start phase anda end phase, but introns have just one phase.</td><td></td></tr>
 		<tr class="bg1"><td><b>end_phase</b></td><td>TINYINT(2)</td><td></td><td>Usually, end_phase = (phase + exon_length)%3 but end_phase could be -1 if the exon is half-coding and its 3 prime end is UTR.</td><td></td></tr>
-		<tr class="bg2"><td><b>column</b></td><td></td><td></td><td>is_constitutive</td><td></td></tr>
-		<tr class="bg1"><td><b>column</b></td><td></td><td></td><td>stable_id		    Release-independent stable identifier.</td><td></td></tr>
+		<tr class="bg2"><td><b>is_current</b></td><td>BOOLEAN</td><td>1</td><td>1 - exon is current.</td><td></td></tr>
+		<tr class="bg1"><td><b>is_constitutive</b></td><td>BOOLEAN</td><td>0</td><td>1 - exon is constitutive.</td><td></td></tr>
 		<tr class="bg2"><td><b>stable_id</b></td><td>VARCHAR(128)</td><td>NULL</td><td>Release-independent stable identifier.</td><td>key: stable_id_idx</td></tr>
 		<tr class="bg1"><td><b>version</b></td><td>SMALLINT</td><td>1</td><td>Stable identifier version number.</td><td>key: stable_id_idx</td></tr>
 		<tr class="bg2"><td><b>created_date</b></td><td>DATETIME</td><td>'0000-00-00</td><td>Date created.</td><td></td></tr>
@@ -439,7 +447,7 @@ core schema.
   </table>
 <p>Relationship table linking exons with transcripts. The rank column indicates the 5' to 3' position of the exon within the transcript, i.e. a rank of 1 means the exon is the 5' most within this transcript.</p>
 
-	<div id="div_exon_transcript" name="sqltable" style="display:none">
+	<div id="div_exon_transcript" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -466,7 +474,7 @@ core schema.
   </table>
 <p>Allows transcripts to be related to genes.</p>
 
-	<div id="div_gene" name="sqltable" style="display:none">
+	<div id="div_gene" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -479,10 +487,10 @@ core schema.
 		<tr class="bg1"><td><b>seq_region_strand</b></td><td>TINYINT(2)</td><td></td><td>Sequence region strand: 1 - forward; -1 - reverse.</td><td></td></tr>
 		<tr class="bg2"><td><b>display_xref_id</b></td><td>INT(10)</td><td></td><td>External reference for EnsEMBL web site. Foreign key references to the <a href="#xref">xref</a> table.</td><td>key: xref_id_index</td></tr>
 		<tr class="bg1"><td><b>source</b></td><td>VARCHAR(20)</td><td></td><td>e.g ensembl, havana etc.</td><td></td></tr>
-		<tr class="bg2"><td><b>status</b></td><td>ENUM('KNOWN', 'NOVEL', 'PUTATIVE', 'PREDICTED', 'KNOWN_BY_PROJECTION', 'UNKNOWN')</td><td></td><td>Status, e.g.'KNOWN', 'NOVEL', 'PUTATIVE', 'PREDICTED', 'KNOWN_BY_PROJECTION', 'UNKNOWN'.</td><td></td></tr>
+		<tr class="bg2"><td><b>status</b></td><td>ENUM('KNOWN', 'NOVEL', 'PUTATIVE', 'PREDICTED', 'KNOWN_BY_PROJECTION', 'UNKNOWN', 'ANNOTATED')</td><td></td><td>Status, e.g.'KNOWN', 'NOVEL', 'PUTATIVE', 'PREDICTED', 'KNOWN_BY_PROJECTION', 'UNKNOWN'.</td><td></td></tr>
 		<tr class="bg1"><td><b>description</b></td><td>TEXT</td><td></td><td>Gene description</td><td></td></tr>
-		<tr class="bg2"><td><b>column</b></td><td></td><td></td><td>canonical_transcript_id     Foreign key references to the <a href="#transcript">transcript</a> table.</td><td></td></tr>
-		<tr class="bg1"><td><b>canonical_transcript_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#transcript">transcript</a> table.</td><td></td></tr>
+		<tr class="bg2"><td><b>is_current</b></td><td>BOOLEAN</td><td>1</td><td>1 - gene is current.</td><td></td></tr>
+		<tr class="bg1"><td><b>canonical_transcript_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#transcript">transcript</a> table.</td><td>key: canonical_transcript_id_idx</td></tr>
 		<tr class="bg2"><td><b>canonical_annotation</b></td><td>VARCHAR(255)</td><td>NULL</td><td>Canonical annotation.</td><td></td></tr>
 		<tr class="bg1"><td><b>stable_id</b></td><td>VARCHAR(128)</td><td>NULL</td><td>Release-independent stable identifier.</td><td>key: stable_id_idx</td></tr>
 		<tr class="bg2"><td><b>version</b></td><td>SMALLINT</td><td>1</td><td>Stable identifier version number.</td><td>key: stable_id_idx</td></tr>
@@ -510,19 +518,48 @@ core schema.
   </table>
 <p>Enables storage of attributes that relate to genes.</p>
 
-	<div id="div_gene_attrib" name="sqltable" style="display:none">
+	<div id="div_gene_attrib" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>gene_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#gene">gene</a> table.</td><td>key: gene_idx</td></tr>
-		<tr class="bg2"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>'0'</td><td>Foreign key references to the <a href="#attribute_type">attribute_type</a> table.</td><td>key: type_val_idx</td></tr>
+		<tr class="bg2"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>'0'</td><td>Foreign key references to the <a href="#attrib_type">attrib_type</a> table.</td><td>key: type_val_idx</td></tr>
 		<tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>Attribute value.</td><td>key: type_val_idx<br />key: val_only_idx</td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
 <ul>
 	<li><a href="#gene">gene</a></li>
-	<li><a href="#attribute_type">attribute_type</a></li>
+	<li><a href="#attrib_type">attrib_type</a></li>
+</ul>
+
+<br />
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="intron_supporting_evidence" style="font-size:11pt;font-weight:bold">intron_supporting_evidence</span></td>
+      <td style="width:180px;text-align:right"><a id="a_intron_supporting_evidence" style="cursor:pointer;text-decoration:underline" onclick="show_hide('intron_supporting_evidence')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Provides the evidence which we have used to declare an intronic region</p>
+
+	<div id="div_intron_supporting_evidence" style="display:none">
+
+	<table style="border:1px outset #222222">
+		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
+		<tr class="bg1"><td><b>intron_supporting_evidence_id</b></td><td>INT(10)</td><td></td><td>Surrogate primary key</td><td>primary key</td></tr>
+		<tr class="bg2"><td><b>previous_exon_id</b></td><td>INT(10)</td><td></td><td>Indicates the exon flanking upstream of the intron. Foreign key references to the <a href="#exon">exon</a> table.</td><td></td></tr>
+		<tr class="bg1"><td><b>next_exon_id</b></td><td>INT(10)</td><td></td><td>Indicates the exon flanking downstream of the intron. Foreign key references to the <a href="#exon">exon</a> table.</td><td></td></tr>
+		<tr class="bg2"><td><b>hit_name</b></td><td>VARCHAR(100)</td><td></td><td>External entity name/identifier.</td><td></td></tr>
+		<tr class="bg1"><td><b>score</b></td><td>DECIMAL(10,3)</td><td></td><td>Score supporting the intron </td><td></td></tr>
+		<tr class="bg2"><td><b>score_type</b></td><td>ENUM('NONE', 'DEPTH')</td><td>'NONE'</td><td>The type of score e.g. NONE</td><td></td></tr>
+</table>
+</div>
+<p><b>See also:</b></p>
+<ul>
+	<li><a href="#exon">exon</a></li>
 </ul>
 
 <br />
@@ -537,7 +574,7 @@ core schema.
   </table>
 <p>Describes bands that can be stained on the chromosome.</p>
 
-	<div id="div_karyotype" name="sqltable" style="display:none">
+	<div id="div_karyotype" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -566,7 +603,7 @@ core schema.
   </table>
 <p>Stores data about the data in the current schema. Taxonomy information, version information and the default value for the type column in the assembly table are stored here. Unlike other tables, data in the meta table is stored as key-value pairs. Also stores (via assembly.mapping keys) the relationships between co-ordinate systems in the assembly table. The species_id field of the meta table is used in multi-species databases and makes it possible to have species-specific meta key-value pairs. The species-specific meta key-value pairs needs to be repeated for each species_id. Entries in the meta table that are not specific to any one species, such as the schema_version key and any other schema-related information must have their species_id field set to NULL. The default species_id, and the only species_id value allowed in single-species databases, is 1.</p>
 
-	<div id="div_meta" name="sqltable" style="display:none">
+	<div id="div_meta" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -594,7 +631,7 @@ core schema.
   </table>
 <p>Describes which co-ordinate systems the different feature tables use.</p>
 
-	<div id="div_meta_coord" name="sqltable" style="display:none">
+	<div id="div_meta_coord" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -620,7 +657,7 @@ core schema.
   </table>
 <p>allows one or more polycistronic transcripts to be grouped together</p>
 
-	<div id="div_operon" name="sqltable" style="display:none">
+	<div id="div_operon" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -657,7 +694,7 @@ core schema.
   </table>
 <p>represents polycistronic transcripts which belong to operons and encode more than one gene</p>
 
-	<div id="div_operon_transcript" name="sqltable" style="display:none">
+	<div id="div_operon_transcript" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -696,7 +733,7 @@ core schema.
   </table>
 <p>allows association of genes with polycistronic transcripts</p>
 
-	<div id="div_operon_transcript_gene" name="sqltable" style="display:none">
+	<div id="div_operon_transcript_gene" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -722,7 +759,7 @@ core schema.
   </table>
 <p>Stores information about sequence regions. The primary key is used as a pointer into the dna table so that actual sequence can be obtained, and the coord_system_id allows sequence regions of multiple types to be stored. Clones, contigs and chromosomes are all now stored in the seq_region table. Contigs are stored with the co-ordinate system 'contig'. The relationship between contigs and clones is stored in the assembly table. The relationships between contigs and chromosomes, and between contigs and supercontigs, are stored in the assembly table.</p>
 
-	<div id="div_seq_region" name="sqltable" style="display:none">
+	<div id="div_seq_region" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -750,12 +787,12 @@ core schema.
   </table>
 <p>Allows "attributes" to be defined for certain seq_regions. Provides a way of storing extra information about particular seq_regions without adding extra columns to the seq_region table. e.g.</p>
 
-	<div id="div_seq_region_attrib" name="sqltable" style="display:none">
+	<div id="div_seq_region_attrib" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>seq_region_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#seq_region">seq_region</a> table.</td><td>key: seq_region_idx</td></tr>
-		<tr class="bg2"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>'0'</td><td>Foreign key references to the <a href="#attribute_type">attribute_type</a> table.</td><td>key: type_val_idx</td></tr>
+		<tr class="bg2"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>'0'</td><td>Foreign key references to the <a href="#attrib_type">attrib_type</a> table.</td><td>key: type_val_idx</td></tr>
 		<tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>Attribute value.</td><td>key: type_val_idx<br />key: val_only_idx</td></tr>
 </table>
 </div>
@@ -763,7 +800,6 @@ core schema.
 <ul>
 	<li><a href="#seq_region">seq_region</a></li>
 	<li><a href="#attrib_type">attrib_type</a></li>
-	<li><a href="#attribute_type">attribute_type</a></li>
 </ul>
 
 <br />
@@ -778,7 +814,7 @@ core schema.
   </table>
 <p>Stores information about transcripts. Has seq_region_start, seq_region_end and seq_region_strand for faster retrieval and to allow storage independently of genes and exons. Note that a transcript is usually associated with a translation, but may not be, e.g. in the case of pseudogenes and RNA genes (those that code for RNA molecules).</p>
 
-	<div id="div_transcript" name="sqltable" style="display:none">
+	<div id="div_transcript" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -791,10 +827,10 @@ core schema.
 		<tr class="bg1"><td><b>seq_region_strand</b></td><td>TINYINT(2)</td><td></td><td>Sequence region strand: 1 - forward; -1 - reverse.</td><td></td></tr>
 		<tr class="bg2"><td><b>display_xref_id</b></td><td>INT(10)</td><td></td><td>External reference for EnsEMBL web site. Foreign key references to the <a href="#xref">xref</a> table.</td><td>key: xref_id_index</td></tr>
 		<tr class="bg1"><td><b>biotype</b></td><td>VARCHAR(40)</td><td></td><td>Biotype, e.g. protein_coding.</td><td></td></tr>
-		<tr class="bg2"><td><b>status</b></td><td>ENUM('KNOWN', 'NOVEL', 'PUTATIVE', 'PREDICTED', 'KNOWN_BY_PROJECTION', 'UNKNOWN')</td><td></td><td>Status, e.g.'KNOWN', 'NOVEL', 'PUTATIVE', 'PREDICTED', 'KNOWN_BY_PROJECTION', 'UNKNOWN'.</td><td></td></tr>
+		<tr class="bg2"><td><b>status</b></td><td>ENUM('KNOWN', 'NOVEL', 'PUTATIVE', 'PREDICTED', 'KNOWN_BY_PROJECTION', 'UNKNOWN', 'ANNOTATED')</td><td></td><td>Status, e.g.'KNOWN', 'NOVEL', 'PUTATIVE', 'PREDICTED', 'KNOWN_BY_PROJECTION', 'UNKNOWN'.</td><td></td></tr>
 		<tr class="bg1"><td><b>description</b></td><td>TEXT</td><td></td><td>Transcript description.</td><td></td></tr>
-		<tr class="bg2"><td><b>column</b></td><td></td><td></td><td>canonical_translation_id    Foreign key references to the <a href="#canonical_translation">canonical_translation</a> table.</td><td></td></tr>
-		<tr class="bg1"><td><b>canonical_translation_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#canonical_translation">canonical_translation</a> table.</td><td>unique index: canonical_translation_idx</td></tr>
+		<tr class="bg2"><td><b>is_current</b></td><td>BOOLEAN</td><td>1</td><td>Indicates a current transcript.</td><td></td></tr>
+		<tr class="bg1"><td><b>canonical_translation_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#translation">translation</a> table.</td><td>unique index: canonical_translation_idx</td></tr>
 		<tr class="bg2"><td><b>stable_id</b></td><td>VARCHAR(128)</td><td>NULL</td><td>Release-independent stable identifier.</td><td>key: stable_id_idx</td></tr>
 		<tr class="bg1"><td><b>version</b></td><td>SMALLINT</td><td>1</td><td>Stable identifier version number.</td><td>key: stable_id_idx</td></tr>
 		<tr class="bg2"><td><b>created_date</b></td><td>DATETIME</td><td>'0000-00-00</td><td>Date created.</td><td></td></tr>
@@ -807,7 +843,7 @@ core schema.
 	<li><a href="#analysis">analysis</a></li>
 	<li><a href="#seq_region">seq_region</a></li>
 	<li><a href="#xref">xref</a></li>
-	<li><a href="#canonical_translation">canonical_translation</a></li>
+	<li><a href="#translation">translation</a></li>
 </ul>
 
 <br />
@@ -822,19 +858,19 @@ core schema.
   </table>
 <p>Enables storage of attributes that relate to transcripts.</p>
 
-	<div id="div_transcript_attrib" name="sqltable" style="display:none">
+	<div id="div_transcript_attrib" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>transcript_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#transcript">transcript</a> table.</td><td>key: transcript_idx</td></tr>
-		<tr class="bg2"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>'0'</td><td>Foreign key references to the <a href="#attribute_type">attribute_type</a> table.</td><td>key: type_val_idx</td></tr>
+		<tr class="bg2"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>'0'</td><td>Foreign key references to the <a href="#attrib_type">attrib_type</a> table.</td><td>key: type_val_idx</td></tr>
 		<tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>Attribute value.</td><td>key: type_val_idx<br />key: val_only_idx</td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
 <ul>
 	<li><a href="#transcript">transcript</a></li>
-	<li><a href="#attribute_type">attribute_type</a></li>
+	<li><a href="#attrib_type">attrib_type</a></li>
 </ul>
 
 <br />
@@ -849,7 +885,7 @@ core schema.
   </table>
 <p>Describes which parts of which exons are used in translation. The seq_start and seq_end columns are 1-based offsets into the relative coordinate system of start_exon_id and end_exon_id. i.e, if the translation starts at the first base of the exon, seq_start would be 1. Transcripts are related to translations by the transcript_id key in this table.</p>
 
-	<div id="div_translation" name="sqltable" style="display:none">
+	<div id="div_translation" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -883,12 +919,12 @@ core schema.
   </table>
 <p>Enables storage of attributes that relate to translations.</p>
 
-	<div id="div_translation_attrib" name="sqltable" style="display:none">
+	<div id="div_translation_attrib" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>translation_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#transcript">transcript</a> table.</td><td>key: translation_idx</td></tr>
-		<tr class="bg2"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>'0'</td><td>Foreign key references to the <a href="#attribute_type">attribute_type</a> table.</td><td>key: type_val_idx</td></tr>
+		<tr class="bg2"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>'0'</td><td>Foreign key references to the <a href="#attrib_type">attrib_type</a> table.</td><td>key: type_val_idx</td></tr>
 		<tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>Attribute value.</td><td>key: type_val_idx<br />key: val_only_idx</td></tr>
 </table>
 </div>
@@ -896,7 +932,7 @@ core schema.
 <ul>
 	<li><a href="#translation">translation</a></li>
 	<li><a href="#transcript">transcript</a></li>
-	<li><a href="#attribute_type">attribute_type</a></li>
+	<li><a href="#attrib_type">attrib_type</a></li>
 </ul>
 
 <br />
@@ -911,7 +947,7 @@ core schema.
   </table>
 <p>Describes transcripts that do not link to a single gene in the normal way.</p>
 
-	<div id="div_unconventional_transcript_association" name="sqltable" style="display:none">
+	<div id="div_unconventional_transcript_association" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -928,7 +964,9 @@ core schema.
 <br />
 <hr />
 <h2>Features and Analyses</h2>
-<p>A PDF document of the schema is available <a href="features_analyses_core.pdf">here</a>.</p>
+<p>A PDF document of the schema is available <a href="features_analyses_core.pdf" target="_blank">here</a>.
+<br />
+<a href="features_analyses_core.pdf" target="_blank"> <img border="0" src="features_analyses_thumb.png" alt="Features and Analyses Schema Diagram" style="margin-left:20px; margin-top:20px;" /></a></p>
 <br />
   <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
     <tr style="vertical-align:middle">
@@ -941,7 +979,7 @@ core schema.
   </table>
 <p>Stores information about genes on haplotypes that may be orthologous.</p>
 
-	<div id="div_alt_allele" name="sqltable" style="display:none">
+	<div id="div_alt_allele" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -967,7 +1005,7 @@ core schema.
   </table>
 <p>Usually describes a program and some database that together are used to create a feature on a piece of sequence. Each feature is marked with an analysis_id. The most important column is logic_name, which is used by the webteam to render a feature correctly on contigview (or even retrieve the right feature). Logic_name is also used in the pipeline to identify the analysis which has to run in a given status of the pipeline. The module column tells the pipeline which Perl module does the whole analysis, typically a RunnableDB module.</p>
 
-	<div id="div_analysis" name="sqltable" style="display:none">
+	<div id="div_analysis" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1004,7 +1042,7 @@ core schema.
   </table>
 <p>Allows the storage of a textual description of the analysis, as well as a "display label", primarily for the EnsEMBL web site.</p>
 
-	<div id="div_analysis_description" name="sqltable" style="display:none">
+	<div id="div_analysis_description" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1032,7 +1070,7 @@ core schema.
   </table>
 <p>Describes features representing a density, or precentage coverage etc. in a given region.</p>
 
-	<div id="div_density_feature" name="sqltable" style="display:none">
+	<div id="div_density_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1062,7 +1100,7 @@ core schema.
   </table>
 <p>Describes type representing a density, or percentage coverage etc. in a given region.</p>
 
-	<div id="div_density_type" name="sqltable" style="display:none">
+	<div id="div_density_type" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1091,7 +1129,7 @@ core schema.
   </table>
 <p>Represents a ditag object in the EnsEMBL database. Corresponds to original tag containing the full sequence. This can be a single piece of sequence like CAGE tags or a ditag with concatenated sequence from 5' and 3' end like GIS or GSC tags. This data is available as a DAS track in ContigView on the EnsEMBL web site.</p>
 
-	<div id="div_ditag" name="sqltable" style="display:none">
+	<div id="div_ditag" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1119,7 +1157,7 @@ core schema.
   </table>
 <p>Describes where ditags hit on the genome. Represents a mapped ditag object in the EnsEMBL database. These are the original tags separated into start ("L") and end ("R") parts if applicable, successfully aligned to the genome. Two DitagFeatures usually relate to one parent Ditag. Alternatively there are CAGE tags e.g. which only have a 5\'tag ("F").</p>
 
-	<div id="div_ditag_feature" name="sqltable" style="display:none">
+	<div id="div_ditag_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1157,7 +1195,7 @@ core schema.
   </table>
 <p>Stores DNA sequence alignments generated from Blast (or Blast-like) comparisons.</p>
 
-	<div id="div_dna_align_feature" name="sqltable" style="display:none">
+	<div id="div_dna_align_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1175,7 +1213,7 @@ core schema.
 		<tr class="bg2"><td><b>evalue</b></td><td>DOUBLE</td><td></td><td>Alignment e-value.</td><td></td></tr>
 		<tr class="bg1"><td><b>perc_ident</b></td><td>FLOAT</td><td></td><td>Alignment percentage identity.</td><td></td></tr>
 		<tr class="bg2"><td><b>cigar_line</b></td><td>TEXT</td><td></td><td>Used to encode gapped alignments.</td><td></td></tr>
-		<tr class="bg1"><td><b>external_db_id</b></td><td>SMALLINT</td><td></td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td>key: external_db_idx</td></tr>
+		<tr class="bg1"><td><b>external_db_id</b></td><td>INTEGER</td><td></td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td>key: external_db_idx</td></tr>
 		<tr class="bg2"><td><b>hcoverage</b></td><td>DOUBLE</td><td></td><td>Hit coverage.</td><td></td></tr>
 		<tr class="bg1"><td><b>external_data</b></td><td>TEXT</td><td></td><td>External data.</td><td></td></tr>
 		<tr class="bg2"><td><b>pair_dna_align_feature_id</b></td><td>INT(10)</td><td></td><td>The id of the dna feature aligned.</td><td>key: pair_idx</td></tr>
@@ -1201,7 +1239,7 @@ core schema.
   </table>
 <p>Stores the names of different genetic or radiation hybrid maps, for which there is marker map information.</p>
 
-	<div id="div_map" name="sqltable" style="display:none">
+	<div id="div_map" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1226,7 +1264,7 @@ core schema.
   </table>
 <p>Stores data about the marker itself. A marker in Ensembl consists of a pair of primer sequences, an expected product size and a set of associated identifiers known as synonyms.</p>
 
-	<div id="div_marker" name="sqltable" style="display:none">
+	<div id="div_marker" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1258,7 +1296,7 @@ core schema.
   </table>
 <p>Used to describe positions of markers on the assembly. Markers are placed on the genome electronically using an analysis program.</p>
 
-	<div id="div_marker_feature" name="sqltable" style="display:none">
+	<div id="div_marker_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1292,7 +1330,7 @@ core schema.
   </table>
 <p>Stores map locations (genetic, radiation hybrid and in situ hybridization) for markers obtained from experimental evidence.</p>
 
-	<div id="div_marker_map_location" name="sqltable" style="display:none">
+	<div id="div_marker_map_location" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1324,7 +1362,7 @@ core schema.
   </table>
 <p>Stores alternative names for markers, as well as their sources.</p>
 
-	<div id="div_marker_synonym" name="sqltable" style="display:none">
+	<div id="div_marker_synonym" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1351,19 +1389,19 @@ core schema.
   </table>
 <p>Stores arbitrary attributes about the features in the misc_feature table.</p>
 
-	<div id="div_misc_attrib" name="sqltable" style="display:none">
+	<div id="div_misc_attrib" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>misc_feature_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#misc_feature">misc_feature</a> table.</td><td>key: misc_feature_idx</td></tr>
-		<tr class="bg2"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>'0'</td><td>Foreign key references to the <a href="#attribute_type">attribute_type</a> table.</td><td>key: type_val_idx</td></tr>
+		<tr class="bg2"><td><b>attrib_type_id</b></td><td>SMALLINT(5)</td><td>'0'</td><td>Foreign key references to the <a href="#attrib_type">attrib_type</a> table.</td><td>key: type_val_idx</td></tr>
 		<tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>Attribute value.</td><td>key: type_val_idx<br />key: val_only_idx</td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
 <ul>
 	<li><a href="#misc_feature">misc_feature</a></li>
-	<li><a href="#attribute_type">attribute_type</a></li>
+	<li><a href="#attrib_type">attrib_type</a></li>
 </ul>
 
 <br />
@@ -1378,7 +1416,7 @@ core schema.
   </table>
 <p>Allows for storage of arbitrary features.</p>
 
-	<div id="div_misc_feature" name="sqltable" style="display:none">
+	<div id="div_misc_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1407,7 +1445,7 @@ core schema.
   </table>
 <p>This table classifies features into distinct sets.</p>
 
-	<div id="div_misc_feature_misc_set" name="sqltable" style="display:none">
+	<div id="div_misc_feature_misc_set" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1433,7 +1471,7 @@ core schema.
   </table>
 <p>Defines "sets" that the features held in the misc_feature table can be grouped into.</p>
 
-	<div id="div_misc_set" name="sqltable" style="display:none">
+	<div id="div_misc_set" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1461,7 +1499,7 @@ core schema.
   </table>
 <p>Stores exons that are predicted by ab initio gene finder programs. Unlike EnsEMBL exons they are not supported by any evidence.</p>
 
-	<div id="div_prediction_exon" name="sqltable" style="display:none">
+	<div id="div_prediction_exon" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1495,7 +1533,7 @@ core schema.
   </table>
 <p>Stores transcripts that are predicted by ab initio gene finder programs (e.g. genscan, SNAP). Unlike EnsEMBL transcripts they are not supported by any evidence.</p>
 
-	<div id="div_prediction_transcript" name="sqltable" style="display:none">
+	<div id="div_prediction_transcript" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1526,7 +1564,7 @@ core schema.
   </table>
 <p>Stores translation alignments generated from Blast (or Blast-like) comparisons.</p>
 
-	<div id="div_protein_align_feature" name="sqltable" style="display:none">
+	<div id="div_protein_align_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1543,8 +1581,8 @@ core schema.
 		<tr class="bg1"><td><b>evalue</b></td><td>DOUBLE</td><td></td><td>Alignment e-value.</td><td></td></tr>
 		<tr class="bg2"><td><b>perc_ident</b></td><td>FLOAT</td><td></td><td>Alignment percentage identity.</td><td></td></tr>
 		<tr class="bg1"><td><b>cigar_line</b></td><td>TEXT</td><td></td><td>Used to encode gapped alignments.</td><td></td></tr>
-		<tr class="bg2"><td><b>external_db_id</b></td><td>SMALLINT</td><td></td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td>key: external_db_idx</td></tr>
-		<tr class="bg1"><td><b>see</b></td><td></td><td></td><td>cigar_line</td><td></td></tr>
+		<tr class="bg2"><td><b>external_db_id</b></td><td>INTEGER</td><td></td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td>key: external_db_idx</td></tr>
+		<tr class="bg1"><td><b>hcoverage</b></td><td>DOUBLE</td><td></td><td>Alignment hit coverage.</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -1567,7 +1605,7 @@ core schema.
   </table>
 <p>Describes features on the translations (as opposed to the DNA sequence itself), i.e. parts of the peptide. In peptide co-ordinates rather than contig co-ordinates.</p>
 
-	<div id="div_protein_feature" name="sqltable" style="display:none">
+	<div id="div_protein_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1603,7 +1641,7 @@ core schema.
   </table>
 <p>Describes the markers (of which there may be up to three) which define Quantitative Trait Loci. Note that QTL is a statistical technique used to find links between certain expressed traits and regions in a genetic map. A QTL is defined by three markers, two flanking and one peak (optional) marker. Its a region (or more often a group of regions) which is likely to affect the phenotype (trait) described in this Qtl.</p>
 
-	<div id="div_qtl" name="sqltable" style="display:none">
+	<div id="div_qtl" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1632,14 +1670,14 @@ core schema.
   </table>
 <p>Describes Quantitative Trail Loci (QTL) positions as obtained from inbreeding experiments. Note the values in this table are in chromosomal co-ordinates. Also, this table is not populated for all schemas.</p>
 
-	<div id="div_qtl_feature" name="sqltable" style="display:none">
+	<div id="div_qtl_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>seq_region_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#seq_region">seq_region</a> table.</td><td>key: loc_idx</td></tr>
 		<tr class="bg2"><td><b>seq_region_start</b></td><td>INT(10)</td><td></td><td>Sequence start position.</td><td>key: loc_idx</td></tr>
 		<tr class="bg1"><td><b>seq_region_end</b></td><td>INT(10)</td><td></td><td>Sequence end position.</td><td></td></tr>
-		<tr class="bg2"><td><b>column</b></td><td></td><td></td><td>analysis_id                 Foreign key references to the <a href="#analysis">analysis</a> table.</td><td></td></tr>
+		<tr class="bg2"><td><b>qtl_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#qtl">qtl</a> table.</td><td>key: qtl_idx</td></tr>
 		<tr class="bg1"><td><b>analysis_id</b></td><td>SMALLINT</td><td></td><td>Foreign key references to the <a href="#analysis">analysis</a> table.</td><td>key: analysis_idx</td></tr>
 </table>
 </div>
@@ -1663,7 +1701,7 @@ core schema.
   </table>
 <p>Describes alternative names for Quantitative Trait Loci (QTLs).</p>
 
-	<div id="div_qtl_synonym" name="sqltable" style="display:none">
+	<div id="div_qtl_synonym" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1690,7 +1728,7 @@ core schema.
   </table>
 <p>Stores consensus sequences obtained from analysing repeat features.</p>
 
-	<div id="div_repeat_consensus" name="sqltable" style="display:none">
+	<div id="div_repeat_consensus" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1714,7 +1752,7 @@ core schema.
   </table>
 <p>Describes sequence repeat regions.</p>
 
-	<div id="div_repeat_feature" name="sqltable" style="display:none">
+	<div id="div_repeat_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1749,7 +1787,7 @@ core schema.
   </table>
 <p>Describes general genomic features that don't fit into any of the more specific feature tables.</p>
 
-	<div id="div_simple_feature" name="sqltable" style="display:none">
+	<div id="div_simple_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1781,7 +1819,7 @@ core schema.
   </table>
 <p>The splicing event table contains alternative splicing events and constitutive splicing events as reported by the AltSpliceFinder program. Multiple alternative splicing events can be observed on a gene. The location of the splicing event on the seq_region is reported. The type of event is stored in the @link attrib_type table.</p>
 
-	<div id="div_splicing_event" name="sqltable" style="display:none">
+	<div id="div_splicing_event" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1814,7 +1852,7 @@ core schema.
   </table>
 <p>Represents alternative splicing event features. If the event is a constitutive exon, the constitutive exon and the transcript it belongs to is reported in this table. If the event is a cassette exon, the cassette exon and the transcript it belongs to is represented in this table. The transcript association field associates a sequence number with a transcript id. Thus, several exons skipped in an event can be attached to the same transcript. The features are ordered according to their genomic location and this is reflected in the feature order field value.</p>
 
-	<div id="div_splicing_event_feature" name="sqltable" style="display:none">
+	<div id="div_splicing_event_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1848,7 +1886,7 @@ core schema.
   </table>
 <p>Describes a pair of spliced transcripts in a splicing event. A splicing event is an observation of a change of splice sites between two isoforms. To avoid redundancy, some events, like a skipped exon observed between different pairs of transcripts are reported only once. The splicing transcript pair table contains a list of all the combinations of 2 isoforms relating to the same event.</p>
 
-	<div id="div_splicing_transcript_pair" name="sqltable" style="display:none">
+	<div id="div_splicing_transcript_pair" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1876,7 +1914,7 @@ core schema.
   </table>
 <p>Describes the exon prediction process by linking exons to DNA or protein alignment features. As in several other tables, the feature_id column is a foreign key; the feature_type column specifies which table feature_id refers to.</p>
 
-	<div id="div_supporting_feature" name="sqltable" style="display:none">
+	<div id="div_supporting_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1903,7 +1941,7 @@ core schema.
   </table>
 <p>Describes the exon prediction process by linking transcripts to DNA or protein alignment features. As in several other tables, the feature_id column is a foreign key; the feature_type column specifies which table feature_id refers to.</p>
 
-	<div id="div_transcript_supporting_feature" name="sqltable" style="display:none">
+	<div id="div_transcript_supporting_feature" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1920,7 +1958,9 @@ core schema.
 <br />
 <hr />
 <h2>ID Mapping</h2>
-<p>A PDF document of the schema is available <a href="id_mapping_core.pdf">here</a>.</p>
+<p>A PDF document of the schema is available <a href="id_mapping_core.pdf" target="_blank">here</a>.
+<br />
+<a href="id_mapping_core.pdf" target="_blank"> <img border="0" src="id_mapping_thumb.png" alt="ID Mapping Schema Diagram" style="margin-left:20px; margin-top:20px;" /></a></p>
 <br />
   <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
     <tr style="vertical-align:middle">
@@ -1933,7 +1973,7 @@ core schema.
   </table>
 <p>Contains a snapshot of the stable IDs associated with genes deleted or changed between releases. Includes gene, transcript and translation stable IDs.</p>
 
-	<div id="div_gene_archive" name="sqltable" style="display:none">
+	<div id="div_gene_archive" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1966,7 +2006,7 @@ core schema.
   </table>
 <p>Stores details of ID mapping sessions - a mapping session represents the session when stable IDs where mapped from one database to another. Details of the "old" and "new" databases are stored.</p>
 
-	<div id="div_mapping_session" name="sqltable" style="display:none">
+	<div id="div_mapping_session" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -1998,7 +2038,7 @@ core schema.
   </table>
 <p>Table structure for seq_region mapping between releases.</p>
 
-	<div id="div_mapping_set" name="sqltable" style="display:none">
+	<div id="div_mapping_set" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -2012,36 +2052,6 @@ core schema.
     <tr style="vertical-align:middle">
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="stable_id_event" style="font-size:11pt;font-weight:bold">stable_id_event</span></td>
-      <td style="width:180px;text-align:right"><a id="a_stable_id_event" style="cursor:pointer;text-decoration:underline" onclick="show_hide('stable_id_event')">Show</a> columns
-				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
-<p>Represents what happened to all gene, transcript and translation stable IDs during a mapping session. This includes which IDs where deleted, created and related to each other. Each event is represented by one or more rows in the table.</p>
-
-	<div id="div_stable_id_event" name="sqltable" style="display:none">
-
-	<table style="border:1px outset #222222">
-		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>old_stable_id</b></td><td>VARCHAR(128)</td><td></td><td>Gene/transcript/translation stable id for the previous release.</td><td>unique key: uni_idx<br />key: old_idx</td></tr>
-		<tr class="bg2"><td><b>old_version</b></td><td>SMALLINT</td><td></td><td>Stable id version.</td><td></td></tr>
-		<tr class="bg1"><td><b>new_stable_id</b></td><td>VARCHAR(128)</td><td></td><td>Gene/transcript/translation stable id for the current release.</td><td>unique key: uni_idx<br />key: new_idx</td></tr>
-		<tr class="bg2"><td><b>new_version</b></td><td>SMALLINT</td><td></td><td>Stable id version.</td><td></td></tr>
-		<tr class="bg1"><td><b>mapping_session_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#mapping_session">mapping_session</a> table.</td><td>unique key: uni_idx</td></tr>
-		<tr class="bg2"><td><b>type</b></td><td>ENUM('gene', 'transcript', 'translation')</td><td></td><td>ENUM('gene', 'transcript', 'translation') NOT NULL,</td><td>unique key: uni_idx</td></tr>
-		<tr class="bg1"><td><b>score</b></td><td>FLOAT</td><td>0</td><td>Combined mapping score.</td><td></td></tr>
-</table>
-</div>
-<p><b>See also:</b></p>
-<ul>
-	<li><a href="#mapping_session">mapping_session</a></li>
-</ul>
-
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#000000"></td>
-      <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="peptide_archive" style="font-size:11pt;font-weight:bold">peptide_archive</span></td>
       <td style="width:180px;text-align:right"><a id="a_peptide_archive" style="cursor:pointer;text-decoration:underline" onclick="show_hide('peptide_archive')">Show</a> columns
 				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
@@ -2049,7 +2059,7 @@ core schema.
   </table>
 <p>Contains the peptides for deleted or changed translations.</p>
 
-	<div id="div_peptide_archive" name="sqltable" style="display:none">
+	<div id="div_peptide_archive" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -2071,7 +2081,7 @@ core schema.
   </table>
 <p>Describes how the core seq_region_id have changed from release to release.</p>
 
-	<div id="div_seq_region_mapping" name="sqltable" style="display:none">
+	<div id="div_seq_region_mapping" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -2085,10 +2095,42 @@ core schema.
 	<li><a href="#seq_region">seq_region</a></li>
 	<li><a href="#mapping_set">mapping_set</a></li>
 </ul>
+
+<br />
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="stable_id_event" style="font-size:11pt;font-weight:bold">stable_id_event</span></td>
+      <td style="width:180px;text-align:right"><a id="a_stable_id_event" style="cursor:pointer;text-decoration:underline" onclick="show_hide('stable_id_event')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p>Represents what happened to all gene, transcript and translation stable IDs during a mapping session. This includes which IDs where deleted, created and related to each other. Each event is represented by one or more rows in the table.</p>
+
+	<div id="div_stable_id_event" style="display:none">
+
+	<table style="border:1px outset #222222">
+		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
+		<tr class="bg1"><td><b>old_stable_id</b></td><td>VARCHAR(128)</td><td></td><td>Gene/transcript/translation stable id for the previous release.</td><td>unique key: uni_idx<br />key: old_idx</td></tr>
+		<tr class="bg2"><td><b>old_version</b></td><td>SMALLINT</td><td></td><td>Stable id version.</td><td></td></tr>
+		<tr class="bg1"><td><b>new_stable_id</b></td><td>VARCHAR(128)</td><td></td><td>Gene/transcript/translation stable id for the current release.</td><td>unique key: uni_idx<br />key: new_idx</td></tr>
+		<tr class="bg2"><td><b>new_version</b></td><td>SMALLINT</td><td></td><td>Stable id version.</td><td></td></tr>
+		<tr class="bg1"><td><b>mapping_session_id</b></td><td>INT(10)</td><td>'0'</td><td>Foreign key references to the <a href="#mapping_session">mapping_session</a> table.</td><td>unique key: uni_idx</td></tr>
+		<tr class="bg2"><td><b>type</b></td><td>ENUM('gene', 'transcript', 'translation')</td><td></td><td>ENUM('gene', 'transcript', 'translation') NOT NULL,</td><td>unique key: uni_idx</td></tr>
+		<tr class="bg1"><td><b>score</b></td><td>FLOAT</td><td>0</td><td>Combined mapping score.</td><td></td></tr>
+</table>
+</div>
+<p><b>See also:</b></p>
+<ul>
+	<li><a href="#mapping_session">mapping_session</a></li>
+</ul>
 <br />
 <hr />
 <h2>External References</h2>
-<p>A PDF document of the schema is available <a href="xrefs_core.pdf">here</a>.</p>
+<p>A PDF document of the schema is available <a href="xrefs_core.pdf" target="_blank">here</a>.
+<br />
+<a href="xrefs_core.pdf" target="_blank"> <img border="0" src="xrefs_thumb.png" alt="External References Schema Diagram" style="margin-left:20px; margin-top:20px;" /></a></p>
 <br />
   <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
     <tr style="vertical-align:middle">
@@ -2101,7 +2143,7 @@ core schema.
   </table>
 <p>Describes dependent external references which can't be directly mapped to Ensembl entities. They are linked to primary external references instead.</p>
 
-	<div id="div_dependent_xref" name="sqltable" style="display:none">
+	<div id="div_dependent_xref" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -2129,11 +2171,11 @@ core schema.
   </table>
 <p>Stores data about the external databases in which the objects described in the xref table are stored.</p>
 
-	<div id="div_external_db" name="sqltable" style="display:none">
+	<div id="div_external_db" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>external_db_id</b></td><td>SMALLINT</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
+		<tr class="bg1"><td><b>external_db_id</b></td><td>INTEGER</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
 		<tr class="bg2"><td><b>db_name</b></td><td>VARCHAR(100)</td><td></td><td>Database name.</td><td>unique index: db_name_db_release_idx</td></tr>
 		<tr class="bg1"><td><b>db_release</b></td><td>VARCHAR(255)</td><td></td><td>Database release.</td><td>unique index: db_name_db_release_idx</td></tr>
 		<tr class="bg2"><td><b>status</b></td><td>ENUM('KNOWNXREF','KNOWN','XREF','PRED','ORTH',<br />'PSEUDO')</td><td></td><td>Status, e.g. 'KNOWNXREF','KNOWN','XREF','PRED','ORTH','PSEUDO'.</td><td></td></tr>
@@ -2165,7 +2207,7 @@ core schema.
   </table>
 <p>Some xref objects can be referred to by more than one name. This table relates names to xref IDs.</p>
 
-	<div id="div_external_synonym" name="sqltable" style="display:none">
+	<div id="div_external_synonym" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -2190,7 +2232,7 @@ core schema.
   </table>
 <p>Describes how well a particular xref object matches the EnsEMBL object.</p>
 
-	<div id="div_identity_xref" name="sqltable" style="display:none">
+	<div id="div_identity_xref" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -2223,7 +2265,7 @@ core schema.
   </table>
 <p>Describes links between EnsEMBL objects and objects held in external databases. The EnsEMBL object can be one of several types; the type is held in the ensembl_object_type column. The ID of the particular EnsEMBL gene, translation or whatever is given in the ensembl_id column. The xref_id points to the entry in the xref table that holds data about the external object. Each EnsEMBL object can be associated with zero or more xrefs. An xref object can be associated with one or more EnsEMBL objects.</p>
 
-	<div id="div_object_xref" name="sqltable" style="display:none">
+	<div id="div_object_xref" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -2255,11 +2297,11 @@ core schema.
   </table>
 <p>This table associates Evidence Tags to the relationship between EnsEMBL objects and ontology accessions (primarily GO accessions). The relationship to GO that is stored in the database is actually derived through the relationship of EnsEMBL peptides to SwissProt peptides, i.e. the relationship is derived like this: ENSP -> SWISSPROT -> GO And the evidence tag describes the relationship between the SwissProt Peptide and the GO entry. In reality, however, we store this in the database like this: ENSP -> SWISSPROT ENSP -> GO and the evidence tag hangs off of the relationship between the ENSP and the GO identifier. Some ENSPs are associated with multiple closely related Swissprot entries which may both be associated with the same GO identifier but with different evidence tags. For this reason a single Ensembl - external db object relationship in the object_xref table can be associated with multiple evidence tags in the ontology_xref table.</p>
 
-	<div id="div_ontology_xref" name="sqltable" style="display:none">
+	<div id="div_ontology_xref" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>object_xref_id</b></td><td>INT(10)</td><td>'0'</td><td>Composite key. Foreign key references to the <a href="#object_xref">object_xref</a> table.</td><td>unique key: object_source_type_idx</td></tr>
+		<tr class="bg1"><td><b>object_xref_id</b></td><td>INT(10)</td><td>'0'</td><td>Composite key. Foreign key references to the <a href="#object_xref">object_xref</a> table.</td><td>key: object_idx<br />unique key: object_source_type_idx</td></tr>
 		<tr class="bg2"><td><b>source_xref_id</b></td><td>INT(10)</td><td>NULL</td><td>Composite key. Foreign key references to the <a href="#xref">xref</a> table.</td><td>key: source_idx<br />unique key: object_source_type_idx</td></tr>
 		<tr class="bg1"><td><b>linkage_type</b></td><td>VARCHAR(3)</td><td>NULL</td><td>Composite key. <a href="http://www.geneontology.org/GO.evidence.shtml">Evidence tags</a></td><td>unique key: object_source_type_idx</td></tr>
 </table>
@@ -2282,14 +2324,14 @@ core schema.
   </table>
 <p>Allows for storing multiple names for sequence regions.</p>
 
-	<div id="div_seq_region_synonym" name="sqltable" style="display:none">
+	<div id="div_seq_region_synonym" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>seq_region_synonym_id</b></td><td>INT</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
 		<tr class="bg2"><td><b>seq_region_id</b></td><td>INT(10)</td><td></td><td>Foreign key references to the <a href="#seq_region">seq_region</a> table.</td><td>key: seq_region_idx</td></tr>
 		<tr class="bg1"><td><b>synonym</b></td><td>VARCHAR(40)</td><td></td><td>Alternative name for sequence region.</td><td>unique key: syn_idx</td></tr>
-		<tr class="bg2"><td><b>external_db_id</b></td><td>SMALLINT</td><td></td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td></td></tr>
+		<tr class="bg2"><td><b>external_db_id</b></td><td>INTEGER</td><td></td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td></td></tr>
 </table>
 </div>
 <p><b>See also:</b></p>
@@ -2310,14 +2352,14 @@ core schema.
   </table>
 <p>Describes why a particular external entity was not mapped to an ensembl one.</p>
 
-	<div id="div_unmapped_object" name="sqltable" style="display:none">
+	<div id="div_unmapped_object" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>unmapped_object_id</b></td><td>INT(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
 		<tr class="bg2"><td><b>type</b></td><td>ENUM('xref', 'cDNA', 'Marker')</td><td></td><td>Object type: 'xref', 'cDNA', 'Marker'.</td><td></td></tr>
 		<tr class="bg1"><td><b>analysis_id</b></td><td>SMALLINT</td><td></td><td>Foreign key references to the <a href="#analysis">analysis</a> table.</td><td>key: anal_exdb_idx</td></tr>
-		<tr class="bg2"><td><b>external_db_id</b></td><td>SMALLINT</td><td></td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td>unique key: unique_unmapped_obj_idx<br />key: anal_exdb_idx<br />key: ext_db_identifier_idx</td></tr>
+		<tr class="bg2"><td><b>external_db_id</b></td><td>INTEGER</td><td></td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td>unique key: unique_unmapped_obj_idx<br />key: anal_exdb_idx<br />key: ext_db_identifier_idx</td></tr>
 		<tr class="bg1"><td><b>identifier</b></td><td>VARCHAR(255)</td><td></td><td>External database identifier.</td><td>unique key: unique_unmapped_obj_idx<br />key: id_idx<br />key: ext_db_identifier_idx</td></tr>
 		<tr class="bg2"><td><b>unmapped_reason_id</b></td><td>SMALLINT(5)</td><td></td><td>Foreign key references to the <a href="#unmapped_reason">unmapped_reason</a> table.</td><td>unique key: unique_unmapped_obj_idx</td></tr>
 		<tr class="bg1"><td><b>query_score</b></td><td>DOUBLE</td><td></td><td>Actual mapping query score.</td><td></td></tr>
@@ -2348,7 +2390,7 @@ core schema.
   </table>
 <p>Describes the reason why a mapping failed.</p>
 
-	<div id="div_unmapped_reason" name="sqltable" style="display:none">
+	<div id="div_unmapped_reason" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -2370,12 +2412,12 @@ core schema.
   </table>
 <p>Holds data about objects which are external to EnsEMBL, but need to be associated with EnsEMBL objects. Information about the database that the external object is stored in is held in the external_db table entry referred to by the external_db column.</p>
 
-	<div id="div_xref" name="sqltable" style="display:none">
+	<div id="div_xref" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
 		<tr class="bg1"><td><b>xref_id</b></td><td>INT(10)</td><td></td><td>Primary key, internal identifier.</td><td>primary key</td></tr>
-		<tr class="bg2"><td><b>external_db_id</b></td><td>SMALLINT</td><td></td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td>unique key: id_index</td></tr>
+		<tr class="bg2"><td><b>external_db_id</b></td><td>INTEGER</td><td></td><td>Foreign key references to the <a href="#external_db">external_db</a> table.</td><td>unique key: id_index</td></tr>
 		<tr class="bg1"><td><b>dbprimary_acc</b></td><td>VARCHAR(40)</td><td></td><td>Primary accession number.</td><td>unique key: id_index</td></tr>
 		<tr class="bg2"><td><b>display_label</b></td><td>VARCHAR(128)</td><td></td><td>Display label for the EnsEMBL web site.</td><td>key: display_index</td></tr>
 		<tr class="bg1"><td><b>version</b></td><td>VARCHAR(10)</td><td>'0'</td><td>Object version.</td><td></td></tr>
@@ -2398,27 +2440,6 @@ core schema.
     <tr style="vertical-align:middle">
       <td style="padding:0px;width:10px;background-color:#000000"></td>
       <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="interpro" style="font-size:11pt;font-weight:bold">interpro</span></td>
-      <td style="width:180px;text-align:right"><a id="a_interpro" style="cursor:pointer;text-decoration:underline" onclick="show_hide('interpro')">Show</a> columns
-				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
-<p><a href="http://www.ebi.ac.uk/interpro/">InterPro</a> - The InterPro website</p>
-
-	<div id="div_interpro" name="sqltable" style="display:none">
-
-	<table style="border:1px outset #222222">
-		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-		<tr class="bg1"><td><b>interpro_ac</b></td><td>VARCHAR(40)</td><td></td><td>InterPro protein accession number.</td><td>unique key: accession_idx</td></tr>
-		<tr class="bg2"><td><b>id</b></td><td>VARCHAR(40)</td><td></td><td>InterPro protein id.</td><td>unique key: accession_idx<br />key: id_idx</td></tr>
-</table>
-</div>
-
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#000000"></td>
-      <td style="width:2px"></td>
       <td style="width:420px;text-align:left;height:10px"><span id="data_file" style="font-size:11pt;font-weight:bold">data_file</span></td>
       <td style="width:180px;text-align:right"><a id="a_data_file" style="cursor:pointer;text-decoration:underline" onclick="show_hide('data_file')">Show</a> columns
 				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
@@ -2426,7 +2447,7 @@ core schema.
   </table>
 <p>Allows the storage of flat file locations used to store large quanitities of data currently unsuitable in a traditional database table.</p>
 
-	<div id="div_data_file" name="sqltable" style="display:none">
+	<div id="div_data_file" style="display:none">
 
 	<table style="border:1px outset #222222">
 		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
@@ -2438,6 +2459,27 @@ core schema.
 		<tr class="bg2"><td><b>absolute</b></td><td>tinyint(1)</td><td>0</td><td>Flags that the URL given is fully resolved and should be used without question</td><td></td></tr>
 		<tr class="bg1"><td><b>url</b></td><td>text</td><td></td><td>Optional path to the file (can be absolute or relative)</td><td></td></tr>
 		<tr class="bg2"><td><b>file_type</b></td><td>enum('BAM','BIGBED','BIGWIG','VCF')</td><td></td><td>Type of file e.g. BAM, BIGBED, BIGWIG and VCF</td><td>unique key: df_unq_idx</td></tr>
+</table>
+</div>
+
+<br />
+  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
+    <tr style="vertical-align:middle">
+      <td style="padding:0px;width:10px;background-color:#000000"></td>
+      <td style="width:2px"></td>
+      <td style="width:420px;text-align:left;height:10px"><span id="interpro" style="font-size:11pt;font-weight:bold">interpro</span></td>
+      <td style="width:180px;text-align:right"><a id="a_interpro" style="cursor:pointer;text-decoration:underline" onclick="show_hide('interpro')">Show</a> columns
+				&nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
+    </tr>
+  </table>
+<p><a href="http://www.ebi.ac.uk/interpro/">InterPro</a> - The InterPro website</p>
+
+	<div id="div_interpro" style="display:none">
+
+	<table style="border:1px outset #222222">
+		<tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
+		<tr class="bg1"><td><b>interpro_ac</b></td><td>VARCHAR(40)</td><td></td><td>InterPro protein accession number.</td><td>unique key: accession_idx</td></tr>
+		<tr class="bg2"><td><b>id</b></td><td>VARCHAR(40)</td><td></td><td>InterPro protein id.</td><td>unique key: accession_idx<br />key: id_idx</td></tr>
 </table>
 </div>
 
@@ -2485,7 +2527,6 @@ the number of rows in the feature table around 4-fold.
 </dd>
 </dl>
 <hr />
-
 
 
 </body>
