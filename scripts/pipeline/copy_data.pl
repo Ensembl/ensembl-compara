@@ -901,7 +901,7 @@ sub copy_constrained_elements {
     copy_data($from_dba, $to_dba,
         "constrained_element",
         "SELECT constrained_element_id+$fix, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand,
-	method_link_species_set_id, p_value, taxonomic_level, score".
+	method_link_species_set_id, p_value, score".
         " FROM constrained_element".
         " WHERE method_link_species_set_id = $mlss_id");
   } else {
@@ -911,7 +911,7 @@ sub copy_constrained_elements {
 		"constrained_element_id",
 		$min_ce, $max_ce,
 		"SELECT constrained_element_id+$fix, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand,
-	method_link_species_set_id, p_value, taxonomic_level, score".
+	method_link_species_set_id, p_value, score".
 		" FROM constrained_element ".
 		" WHERE method_link_species_set_id = $mlss_id",
 		$step);
