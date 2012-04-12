@@ -42,7 +42,7 @@ sub write_tsv {
     
   my $sql = <<'SQL';
 SELECT
-    m.stable_id AS GeneTreeStableID,
+    gtr.stable_id AS GeneTreeStableID,
     gm.stable_id AS EnsGeneStableID,
     pm.stable_id AS EnsPeptideStableID,
     CASE m.member_id WHEN pm.member_id THEN 'Y' ELSE 'N' END AS Canonical
