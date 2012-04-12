@@ -231,16 +231,14 @@ sub _get_display_label_lookup {
   my ($self, $genome_db, $source_name) = @_;
   	
   my $sql_lookup = {
-	  'ENSEMBLGENE'  => q{select gsi.stable_id, x.display_label 
-from gene_stable_id gsi 
-join gene g using (gene_id)  
+	  'ENSEMBLGENE'  => q{select g.stable_id, x.display_label 
+FROM gene g
 join xref x on (g.display_xref_id = x.xref_id) 
 join seq_region sr on (g.seq_region_id = sr.seq_region_id) 
 join coord_system cs using (coord_system_id) 
 where cs.species_id =?},
-	  'ENSEMBLPEP'   => q{select tsi.stable_id, x.display_label 
-from translation_stable_id tsi 
-join translation tr using (translation_id) 
+	  'ENSEMBLPEP'   => q{select tr.stable_id, x.display_label 
+FROM translation tr
 join transcript t using (transcript_id) 
 join xref x on (t.display_xref_id = x.xref_id) 
 join seq_region sr on (t.seq_region_id = sr.seq_region_id) 
