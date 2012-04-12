@@ -131,9 +131,6 @@ sub run {
     $tree->print_tree;
     $self->print($tree);
 
-    # This node_type is probably wrong, but it will be fixed later by OtherParalogs
-    $tree->add_tag('node_type', 'speciation');
-
     $self->param('trees_todelete', \@trees_todelete);
     $self->param('nodes_todelete', \@nodes_todelete);
 

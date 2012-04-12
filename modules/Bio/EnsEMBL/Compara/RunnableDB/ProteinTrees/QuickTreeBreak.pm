@@ -279,6 +279,7 @@ sub store_supertree {
 
   $gene_tree_adaptor->store_tree($self->param('original_cluster'));
   $self->param('original_cluster')->root->store_tag('tree_support', 'quicktree');
+  $self->param('original_cluster')->root->store_tag('node_type', 'speciation');
 
   foreach my $cluster (@{$self->param('subclusters')}) {
     my $node_id = $cluster->root_id;
@@ -290,7 +291,7 @@ sub store_supertree {
 
     # Dataflow clusters
     # This will create a new MSA alignment job for each of the newly generated clusters
-    $self->dataflow_output_id({'protein_tree_id' => $node_id}, 2);
+    #$self->dataflow_output_id({'protein_tree_id' => $node_id}, 2);
     print STDERR "Created new cluster $node_id\n";
   }
 }

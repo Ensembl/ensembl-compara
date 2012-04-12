@@ -77,6 +77,18 @@ sub param_defaults {
 }
 
 
+sub write_output {
+    my $self = shift @_;
+
+    $self->store_homologies;
+    if ($self->param('dataflow_subclusters')) {
+        foreach my $child (@{$self->param('children')}) {
+            $self->dataflow_output_id({'protein_tree_id' => $child->node_id}, 2);
+        }
+    }
+}
+
+
 =head2 run_analysis
 
     This function will create all the links between two genes from two different sub-trees, and from the same species
@@ -90,6 +102,7 @@ sub run_analysis {
     my $tree_node_id = $gene_tree->node_id;
 
     my ($child1, $child2) = @{$gene_tree->children};
+    $self->param('children', $gene_tree->children);
 
     print "Calculating ancestor species hash\n" if ($self->debug);
     $self->get_ancestor_species_hash($gene_tree);

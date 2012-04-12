@@ -811,10 +811,7 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
             -rc_id     => 1,
             -priority  => 50,
-            -flow_into => {
-                '2->A' => [ 'mcoffee' ],
-                'A->1' => [ 'merge_supertrees' ],
-            },
+            -flow_into => [ 'other_paralogs' ],
         },
 
         {   -logic_name     => 'merge_supertrees',
@@ -825,17 +822,21 @@ sub pipeline_analyses {
             -hive_capacity  => $self->o('merge_supertrees_capacity'),
             -rc_id          => 1,
             -priority       => 10,
-            -flow_into      => [ 'other_paralogs' ],
         },
  
         {   -logic_name     => 'other_paralogs',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
             -parameters     => {
+                'dataflow_subclusters' => 1,
                 'tree_id_str'       => 'protein_tree_id',
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
             -rc_id          => 1,
             -priority       => 10,
+            -flow_into => {
+                '2->A' => [ 'mcoffee' ],
+                'A->1' => [ 'merge_supertrees' ],
+            },
         },
 
         {   -logic_name     => 'dummy_wait_alltrees',
