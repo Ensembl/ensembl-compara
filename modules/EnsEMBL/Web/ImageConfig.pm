@@ -1472,6 +1472,7 @@ sub add_data_files {
     $self->generic_add($menu, $key, "data_file_${key}_$_", $data->{$_}, { 
       glyphset  => $data->{$_}{'format'} || '_alignment', 
       strand    => 'f',
+      colourset => $data->{$_}{'colour_key'} || 'feature',
       renderers => [
         'off',       'Off', 
         'normal',    'Normal', 
