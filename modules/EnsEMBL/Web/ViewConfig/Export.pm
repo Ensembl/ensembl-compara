@@ -83,14 +83,15 @@ sub form {
       value => $form_action->[1]->{$_}
     });
   }
-  
-  $self->add_form_element({
-    type  => 'NoEdit',
-    name  => 'location_to_export',
-    label => 'Location to export',
-    value => $slice->name
-  });
-  
+ 
+  if($function eq 'Location') { 
+    $self->add_form_element({
+      type  => 'NoEdit',
+      name  => 'location_to_export',
+      label => 'Location to export',
+      value => $slice->name
+    });
+  } 
   if ($function eq 'Gene') {
     $self->add_form_element({
       type  => 'NoEdit',
