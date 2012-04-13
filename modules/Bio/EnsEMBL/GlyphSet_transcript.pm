@@ -11,19 +11,19 @@ sub href     { return undef; }
 ## ... these are just all wrappers - the parameter is 1 to draw labels
 ## ... 0 otherwise...
 
-sub render_normal                { $_[0]->render_transcripts(1);           }
-sub render_transcript            { $_[0]->render_transcripts(1);           }
-sub render_transcript_label      { $_[0]->render_transcripts(1);           }
-sub render_coding_only           { $_[0]->render_transcripts(1, 1);        }
-sub render_transcript_nolabel    { $_[0]->render_transcripts(0);           }
-sub render_collapsed_label       { $_[0]->render_collapsed(1);             }
-sub render_collapsed_nolabel     { $_[0]->render_collapsed(0);             }
-sub render_gene_label            { $_[0]->render_genes(1);                 }
-sub render_gene_nolabel          { $_[0]->render_genes(0);                 }
-sub render_as_transcript_label   { $_[0]->render_alignslice_transcript(1); }
-sub render_as_transcript_nolabel { $_[0]->render_alignslice_transcript(0); }
-sub render_as_collapsed_label    { $_[0]->render_alignslice_collapsed(1);  }
-sub render_as_collapsed_nolabel  { $_[0]->render_alignslice_collapsed(0);  }
+sub render_normal                  { $_[0]->render_transcripts(1);           }
+sub render_transcript              { $_[0]->render_transcripts(1);           }
+sub render_transcript_label        { $_[0]->render_transcripts(1);           }
+sub render_transcript_label_coding { $_[0]->render_transcripts(1);           }
+sub render_transcript_nolabel      { $_[0]->render_transcripts(0);           }
+sub render_collapsed_label         { $_[0]->render_collapsed(1);             }
+sub render_collapsed_nolabel       { $_[0]->render_collapsed(0);             }
+sub render_gene_label              { $_[0]->render_genes(1);                 }
+sub render_gene_nolabel            { $_[0]->render_genes(0);                 }
+sub render_as_transcript_label     { $_[0]->render_alignslice_transcript(1); }
+sub render_as_transcript_nolabel   { $_[0]->render_alignslice_transcript(0); }
+sub render_as_collapsed_label      { $_[0]->render_alignslice_collapsed(1);  }
+sub render_as_collapsed_nolabel    { $_[0]->render_alignslice_collapsed(0);  }
 
 sub render_collapsed {
   my ($self, $labels) = @_;
@@ -55,7 +55,7 @@ sub render_collapsed {
   
   my ($fontname, $fontsize) = $self->get_font_details('outertext');
   
-  $self->_init_bump; 
+  $self->_init_bump;
   
   my $th = ($self->get_text_width(0, 'Xg', 'Xg', 'ptsize' => $fontsize, 'font' => $fontname))[3];
   
@@ -66,7 +66,7 @@ sub render_collapsed {
     next if $gene_strand != $strand && $strand_flag eq 'b';
     
     # Get all the exons which overlap the region for this gene
-    my @exons = map { $_->start > $length || $_->end < 1 ? () : $_ } map { @{$_->get_all_Exons} } @{$gene->get_all_Transcripts};
+    my @exons = map { $_->start > $length || $_->end < 1 ? () : $_ } @{$gene->{'draw_exons'}};
     
     $transcript_drawn = 1;
     
@@ -219,7 +219,7 @@ sub render_collapsed {
 }
 
 sub render_transcripts {
-  my ($self, $labels, $coding_only) = @_;
+  my ($self, $labels) = @_;
 
   return $self->render_text('transcript') if $self->{'text_export'};
   
@@ -258,15 +258,13 @@ sub render_transcripts {
   
   # For alternate splicing diagram only draw transcripts in gene
   foreach my $gene (@{$self->features}) {
-    my $gene_strand = $gene->strand;
+    my $gene_strand    = $gene->strand;
     my $gene_stable_id = $gene->can('stable_id') ? $gene->stable_id : undef;
     
     next if $gene_strand != $strand && $strand_flag eq 'b'; # skip features on wrong strand
     next if $target_gene && $gene_stable_id ne $target_gene;
     
-    my %tags;
-    my @gene_tags;
-    my $tsid;
+    my (%tags, @gene_tags, $tsid);
     
     if ($link && $gene_stable_id) {
       my $alt_alleles = $gene->get_all_alt_alleles;
@@ -312,17 +310,15 @@ sub render_transcripts {
       }
     }
     
-    my $is_coding_check    = $coding_only ? $self->is_coding_gene($gene) : 0;
-    my @sorted_transcripts = map $_->[1], sort { $b->[0] <=> $a->[0] } map [ $_->start * $gene_strand, $_ ], @{$gene->get_all_Transcripts};
+    my @sorted_transcripts = map $_->[1], sort { $b->[0] <=> $a->[0] } map [ $_->start * $gene_strand, $_ ], @{$gene->{'draw_transcripts'}};
     
     foreach my $transcript (@sorted_transcripts) {
-      next if $coding_only && $is_coding_check && !$transcript->translation;
       next if $transcript->start > $length || $transcript->end < 1;
       
-      my @exons = sort { $a->start <=> $b->start } grep { $_ } @{$transcript->get_all_Exons}; # sort exons on their start coordinate 
+      my @exons = @{$transcript->{'draw_exons'}};
       
       next unless scalar @exons; # Skip if no exons for this transcript
-      next if @exons[0]->strand != $gene_strand && $self->{'do_not_strand'} != 1; # If stranded diagram skip if on wrong strand
+      next if $exons[0]->strand != $gene_strand && $self->{'do_not_strand'} != 1; # If stranded diagram skip if on wrong strand
       next if $target && $transcript->stable_id ne $target; # For exon_structure diagram only given transcript
       
       my $transcript_stable_id = $transcript->stable_id;
@@ -368,30 +364,25 @@ sub render_transcripts {
       }
       
       for (my $i = 0; $i < @exons; $i++) {
-        my $exon = @exons[$i];
+        my $exon = $exons[$i];
         
         next unless defined $exon; # Skip this exon if it is not defined (can happen w/ genscans) 
         
-        my $next_exon = ($i < $#exons) ? @exons[$i+1] : undef; # First draw the exon
+        my $next_exon = ($i < $#exons) ? $exons[$i+1] : undef; # First draw the exon
         
         last if $exon->start > $length; # We are finished if this exon starts outside the slice
         
         my ($box_start, $box_end);
         
         # only draw this exon if is inside the slice
-        if ($exon->end > 0) { 
+        if ($exon->end > 0) {
           # calculate exon region within boundaries of slice
           $box_start = $exon->start;
           $box_start = 1 if $box_start < 1 ;
-          $box_end = $exon->end;
-          $box_end = $length if $box_end > $length;
+          $box_end   = $exon->end;
+          $box_end   = $length if $box_end > $length;        
           
-          # The start of the transcript is before the start of the coding
-          # region OR the end of the transcript is after the end of the
-          # coding regions.  Non coding portions of exons, are drawn as
-          # non-filled rectangles
-          # Draw a non-filled rectangle around the entire exon
-          if ($box_start < $coding_start || $box_end > $coding_end) {
+          if ($exon->{'draw_border'}) {
             $composite2->push($self->Rect({
               x            => $box_start - 1 ,
               y            => $y + $non_coding_start,
@@ -399,32 +390,32 @@ sub render_transcripts {
               height       => $non_coding_height,
               bordercolour => $colour,
               absolutey    => 1
-             }));
-           }
-           
-           # Calculate and draw the coding region of the exon
-           my $filled_start = $box_start < $coding_start ? $coding_start : $box_start;
-           my $filled_end   = $box_end > $coding_end ? $coding_end : $box_end;
-           
-           # only draw the coding region if there is such a region
-           if ($filled_start <= $filled_end ) {
-              # Draw a filled rectangle in the coding region of the exon
-              $composite2->push($self->Rect({
-                x         => $filled_start - 1,
-                y         => $y,
-                width     => $filled_end - $filled_start + 1,
-                height    => $h,
-                colour    => $colour,
-                absolutey => 1
-              }));
+            }));
+          }
+          
+          if ($exon->{'draw_fill'}) {
+            # Calculate and draw the coding region of the exon
+            my $fill_start = $box_start + $exon->{'draw_fill_start'};
+            my $fill_end   = $box_end   - $exon->{'draw_fill_end'};
+            
+            $composite2->push($self->Rect({
+              x         => $fill_start - 1,
+              y         => $y,
+              width     => $fill_end - $fill_start + 1,
+              height    => $h,
+              colour    => $colour,
+              absolutey => 1
+            }));
           }
         }
         
         # we are finished if there is no other exon defined
         last unless defined $next_exon;
-
+        
+        next if $next_exon->dbID eq $exon->dbID;
+        
         my $intron_start = $exon->end + 1; # calculate the start and end of this intron
-        my $intron_end = $next_exon->start - 1;
+        my $intron_end   = $next_exon->start - 1;
         
         next if $intron_end < 0;         # grab the next exon if this intron is before the slice
         last if $intron_start > $length; # we are done if this intron is after the slice
