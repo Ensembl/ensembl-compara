@@ -31,7 +31,7 @@ sub configure {
   ##  - id              Id attribute - if not options, this also goes in 'for' attribute of label.
   ##  - wrapper_id      Id attribute for the wrapper div if present (eg. in Checklist)
   ##  - name            Name attribute
-  ##  - value           Value attribute for text type field, selected/checked value for checkbox/radio/select -  can be an ArrayRef for multiple values
+  ##  - value           Value attribute for text type field or a checkbox; selected/checked value for checklist/radiolist/dropdown -  can be an ArrayRef for multiple values
   ##  - is_encoded      Flag kept on if the value does not need htmlencoding before being set as value attribute in case of String drived element or NoEdit
   ##  - shortnote       A short text to go just right the text/password/file or select.
   ##  - inline          Flag stating whether checkbox/radio buttons are to be disaplayed in a horizontal line in case of checklist/radiolist
@@ -54,10 +54,10 @@ sub configure {
   ##  - disabled        Flag for disabled attribute
   ##  - readonly        Flag for readonly attribute
   ##  - required        Flag to tell whether this field is required to be filled before submitting form (for JS)
-  ##  - multiple        Flag for multiple attribute in <select>, and for checklist, if on, makes type="checkbox" for <input> otherwise "radio"
+  ##  - multiple        Flag for multiple attribute in <select>
   ##  - maxlength       Maxlength attribute for <input>
   ##  - max             Allowed maximum value in case of integers
-  ##  - checked         Checked attribute (only for Checkbox or DASCheckBox) - (FOR CHECKLIST - see value key)
+  ##  - checked         Checked attribute (only for Checkbox or DASCheckBox) - (FOR CHECKLIST - see 'value' key)
   ##  - das             DAS object (only for DASCheckBox)
   warn "Web::Form::Element::configure needs to be overridden in the child class";
 }
