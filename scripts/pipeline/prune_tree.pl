@@ -16,12 +16,14 @@ my $url;
 my $tree_file;
 my $output_taxon_file;
 my $output_tree_file;
+my $species_set_id;
 
 GetOptions('help'        => \$help,
        'url=s'          => \$url,
        'tree_file=s'       => \$tree_file,
 	   'taxon_output_filename=s' => \$output_taxon_file,
 	   'njtree_output_filename=s' => \$output_tree_file,
+    'species_set_id=i'  => \$species_set_id,
 );
 
 if ($help) { usage(); }
@@ -40,7 +42,7 @@ if (defined $output_taxon_file) {
 if (defined $output_tree_file) {
 
     my $blength_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( `cat $tree_file` );
-    my $pruned_tree  = $compara_dba->get_SpeciesTreeAdaptor()->prune_tree( $blength_tree );
+    my $pruned_tree  = $compara_dba->get_SpeciesTreeAdaptor()->prune_tree( $blength_tree, $species_set_id );
 
     open FH, ">$output_tree_file" or die "$!";
     print FH $pruned_tree->newick_simple_format() . "\n";
@@ -55,6 +57,8 @@ sub usage {
   warn "  -tree_file <file>              : read in full newick tree from file\n";
   warn "  -taxon_output_filename <file>  : filename to write taxon_ids to\n";
   warn "  -njtree_output_filename <file> : filename to write pruned treee to\n";
+  warn "  -species_set_id <int>          : the ID of the species set giving the list of species (all the species, otherwise)\n";
+  warn "NOTE: The matching is done on the name\n";
   exit(1);  
 }
 
