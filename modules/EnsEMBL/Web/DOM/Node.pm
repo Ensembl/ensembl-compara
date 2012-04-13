@@ -9,7 +9,7 @@ use Data::Dumper;
 
 use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Exceptions;
-use EnsEMBL::Web::Tools::RandomString;
+use EnsEMBL::Web::Tools::RandomString qw(random_string);
 
 use constant {
   ELEMENT_NODE                 => 1,
@@ -643,7 +643,7 @@ sub unique_id {
   ## Gives a random unique string
   ## @return Unique string
   shift;
-  return EnsEMBL::Web::Tools::RandomString::random_string(@_);
+  return random_string(@_);
 }
 
 sub is_same_node {
