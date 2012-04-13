@@ -6,14 +6,13 @@ package EnsEMBL::Web::TmpFile;
 
 use strict;
 use IO::String;
-use Time::HiRes qw(gettimeofday);
 use HTTP::Request;
 use HTTP::Response;
 use LWP::UserAgent;
 use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Web::SpeciesDefs;
-use EnsEMBL::Web::Tools::RandomString;
+use EnsEMBL::Web::Tools::RandomString qw(random_ticket);
 use EnsEMBL::Web::TmpFile::Driver::Disk;
 use EnsEMBL::Web::TmpFile::Driver::Memcached;
 
@@ -160,13 +159,13 @@ sub fix_filename {
 
 
 ## Creates unique random-ish filename
-## have a look at EnsEMBL::Web::Tools::RandomString::ticket() if you curious about "random-ish"
+## have a look at EnsEMBL::Web::Tools::RandomString::random_ticket() if you curious about "random-ish"
 ## -> nothing
 ## <- always true
 sub generate_filename {
   my $self     = shift;
   my $pattern  = $self->{path_pattern};
-  my $ticket = EnsEMBL::Web::Tools::RandomString::ticket();
+  my $ticket   = random_ticket;
   
   ## Just to make sure :)
   $pattern =~ s!/+!/!g;
