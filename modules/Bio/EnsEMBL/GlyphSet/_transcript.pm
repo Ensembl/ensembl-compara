@@ -9,6 +9,7 @@ sub features {
   my $slice    = $self->{'container'};
   my $db_alias = $self->my_config('db');
   my $analyses = $self->my_config('logic_names');
+  my $display  = $self->my_config('display');
   my @features;
   
   ## FIXME - this is an ugly hack!
@@ -16,6 +17,52 @@ sub features {
     @features = map @{$slice->feature_Slice->get_all_Genes($_, $db_alias) || []}, @$analyses;
   } else {
     @features = map @{$slice->get_all_Genes($_, $db_alias, 1) || []}, @$analyses;
+  }
+  
+  if ($display =~ /collapsed/) {
+    $_->{'draw_exons'} = [ map @{$_->get_all_Exons}, @{$_->get_all_Transcripts} ] for @features;
+  } elsif ($display =~ /transcript/) {
+    my $coding_only = $display =~ /coding/;
+    
+    foreach (@features) {
+      my $is_coding_check = $coding_only ? $self->is_coding_gene($_) : 0;
+      my @transcripts = @{$_->get_all_Transcripts};
+         @transcripts = grep $_->translation, @transcripts if $is_coding_check;
+      
+      foreach (@transcripts) {
+        my $transcript_coding_start = defined $_->coding_region_start ? $_->coding_region_start : -1e6;
+        my $transcript_coding_end   = defined $_->coding_region_end   ? $_->coding_region_end   : -1e6;
+        my @exons;
+        
+        foreach (sort { $a->start <=> $b->start } grep $_, @{$_->get_all_Exons}) {
+          my ($start, $end) = ($_->start, $_->end);
+          my $coding_start  = $start < $transcript_coding_start ? $transcript_coding_start : $start;
+          my $coding_end    = $end   > $transcript_coding_end   ? $transcript_coding_end   : $end;
+          
+          # The start of the transcript is before the start of the coding
+          # region OR the end of the transcript is after the end of the
+          # coding regions.  Non coding portions of exons, are drawn as
+          # non-filled rectangles
+          # Draw a non-filled rectangle around the entire exon
+          if ($start < $transcript_coding_start || $end > $transcript_coding_end) {
+            $_->{'draw_border'} = 1;
+            push @exons, $_;
+          }
+          
+          # Draw a filled rectangle in the coding region of the exon
+          if ($coding_start <= $coding_end) {
+            $_->{'draw_fill'}       = 1;
+            $_->{'draw_fill_start'} = $coding_start - $start; # Calculate and draw the coding region of the exon
+            $_->{'draw_fill_end'}   = $end - $coding_end;
+            push @exons, $_;
+          }
+        }
+        
+        $_->{'draw_exons'} = \@exons;
+      }
+      
+      $_->{'draw_transcripts'} = \@transcripts;
+    }
   }
   
   return \@features;
