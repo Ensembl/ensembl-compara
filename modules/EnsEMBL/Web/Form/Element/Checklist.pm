@@ -10,6 +10,7 @@ use base qw(
 use constant {
   CSS_CLASS_SUBHEADING    => 'optgroup',
   CSS_CLASS_INNER_WRAPPER => 'ff-checklist',
+  CSS_CLASS_INNER_LABEL   => 'ff-checklist-label',
   SELECT_DESELECT_CAPTION => '<u><b>Select/deselect all</b></u>',
   
   _IS_MULTIPLE           => 1,               ## Overridden in Radiolist
@@ -45,7 +46,7 @@ sub configure {
   if (exists $params->{'values'}) {
     for (@{$params->{'values'}}) {
       $_ = {'value' => $_, 'caption' => $_} unless ref $_ eq 'HASH';
-      $_->{'checked'} = exists $_->{'value'} && defined $_->{'value'} && exists $checked_values->{$_->{'value'}} ? 1 : 0;
+      $_->{'checked'} = $_->{'checked'} || exists $_->{'value'} && defined $_->{'value'} && exists $checked_values->{$_->{'value'}} ? 1 : 0;
       $self->add_option($_);
     }
   }
@@ -57,12 +58,12 @@ sub add_option {
   ##  - id          Id attribute of <input>
   ##  - value       goes in value attribute of the option
   ##  - caption     Text string (or hashref set of attributes including inner_HTML or inner_text) for <label>, appearing right side of the checkbox/radiobutton
-  ##  - label_first flag if on, will add the label to the left of the checkbox/radiobutton - overrides the 'label_first' flag provided to the element
-  ##  - selected    flag to tell whether option is selected or not
-  ##  - group       Subheading caption - If subheading does not exist, a new one's created before adding it
+  ##  - checked     flag to tell whether option is selected or not
+  ##  - group       Subheading caption - option will be added under this subheading, but if this subheading does not exist, a new one's created before adding the option
   ##  - class       Only needed to override the default class attribute for all options
   ##  - name        Only needed to override the default name attribute for all options
   ##  - disabled    Only needed to override the default enabled status for all options
+  ##  - label_first Only needed to override the default label_first flag for all options
   ## @return newly added Node::Element::P/Span object containg an input and a label
   my ($self, $params) = @_;
   
@@ -78,9 +79,14 @@ sub add_option {
 
   $params->{$_} and $input->set_attribute($_, $params->{$_}) for qw(id class);
   $input->disabled(exists $params->{'disabled'} ? ($params->{'disabled'} ? 1 : 0) : $self->{'__option_disabled'});
-  $input->checked(1) if exists $params->{'checked'} && $params->{'checked'} == 1;
+  $input->checked(1) if $params->{'checked'};
   
-  my @children = ($input, exists $params->{'caption'} ? {'node_name' => 'label', 'for' => $input->id, ref $params->{'caption'} eq 'HASH' ? %{$params->{'caption'}} : 'inner_text' => $params->{'caption'}} : ());
+  my @children = ($input, exists $params->{'caption'} ? {
+    'node_name' => 'label',
+    'for'       => $input->id,
+    'class'     => $self->CSS_CLASS_INNER_LABEL,
+    ref $params->{'caption'} eq 'HASH' ? %{$params->{'caption'}} : 'inner_text' => $params->{'caption'}
+  } : ());
   $wrapper->append_children($params->{'label_first'} ? reverse @children : @children);
 
   my $next_heading = undef;
