@@ -2,9 +2,11 @@ package EnsEMBL::Web::Tools::RandomString;
 
 use strict;
 use Time::HiRes qw(gettimeofday);
+use Exporter qw(import);
 
-our @random_chars = ('a'..'z','A'..'Z','0'..'9','_');
-our @random_ticket_chars = ('A'..'Z','a'..'f');
+our @EXPORT               = qw(random_string random_ticket);
+our @random_chars         = ('a'..'z','A'..'Z','0'..'9','_');
+our @random_ticket_chars  = ('A'..'Z','a'..'f');
 
 ### Return a random string of given length
 ### (or 8 characters if no length passed)
@@ -17,8 +19,7 @@ sub random_string {
 ### former EnsEMBL::Web::Root->ticket
 ### this is not a normal distribution - first several letters depend on time
 ### so that generated strings alphabetically "grow" as time passes
-sub ticket {
-  my $self = shift;
+sub random_ticket {
   my $date = time() + shift;
   my($sec, $msec) = gettimeofday;
   my $rand = rand( 0xffffffff );
