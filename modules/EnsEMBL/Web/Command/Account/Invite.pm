@@ -6,7 +6,7 @@ use warnings;
 use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Mailer::User;
-use EnsEMBL::Web::Tools::RandomString;
+use EnsEMBL::Web::Tools::RandomString qw(random_string);
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -78,7 +78,7 @@ sub _send_invitation {
     email      => $details->{'email'},
     status     => 'pending',
     registered => $details->{'registered'},
-    code       => EnsEMBL::Web::Tools::RandomString::random_string,
+    code       => random_string,
   });
   
   my $mailer = new EnsEMBL::Web::Mailer::User;

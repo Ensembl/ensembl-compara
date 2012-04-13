@@ -5,7 +5,7 @@ use warnings;
 
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Filter::DuplicateUser;
-use EnsEMBL::Web::Tools::RandomString;
+use EnsEMBL::Web::Tools::RandomString qw(random_string);
 use EnsEMBL::Web::Mailer::User;
 use base qw(EnsEMBL::Web::Command);
 
@@ -53,7 +53,7 @@ sub process {
         $param->{'email'} = $object->param('email');
       }
       else {
-        $interface->data->salt(EnsEMBL::Web::Tools::RandomString::random_string(8));
+        $interface->data->salt(random_string(8));
         $interface->data->status('pending');
         $interface->data->password('');
         my $new_id = $interface->data->save;
