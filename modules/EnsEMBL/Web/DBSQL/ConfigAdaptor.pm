@@ -24,8 +24,8 @@ sub new {
     cache_tags => [],
   };
   
-  
   bless $self, $class;
+  
   $self->dbh;
   
   return $self;
@@ -41,37 +41,21 @@ sub session_id { return $_[0]{'session_id'} ||= $_[0]->hub->session->session_id;
 
 sub dbh {
   return $DBH if $DBH;
+  
   my $self = shift;
-  my $species_defs = $self->hub->species_defs;
-  my $user_dbname;
+  my $sd   = $self->hub->species_defs;
 
-  #try and get user db connection. If it fails the use backup port
-  my $dsn = sprintf(
-    'DBI:mysql:database=%s;host=%s;port=%s',
-    $species_defs->ENSEMBL_USERDB_NAME,
-    $species_defs->ENSEMBL_USERDB_HOST,
-    $species_defs->ENSEMBL_USERDB_PORT,
-  );
+  # try and get user db connection. If it fails the use backup port
   eval {
-    $DBH = DBI->connect($dsn, $species_defs->ENSEMBL_USERDB_USER, $species_defs->ENSEMBL_USERDB_PASS);
+    $DBH = DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $sd->ENSEMBL_USERDB_NAME, $sd->ENSEMBL_USERDB_HOST, $sd->ENSEMBL_USERDB_PORT),        $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS) ||
+           DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $sd->ENSEMBL_USERDB_NAME, $sd->ENSEMBL_USERDB_HOST, $sd->ENSEMBL_USERDB_PORT_BACKUP), $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS);
   };
-  unless ($DBH) {
-    warn "WARNING: cannot connect to Sanger UserDB, trying to use local copy instead";
-    $dsn = sprintf(
-      'DBI:mysql:database=%s;host=%s;port=%s',
-      $species_defs->ENSEMBL_USERDB_NAME,
-      $species_defs->ENSEMBL_USERDB_HOST,
-      $species_defs->ENSEMBL_USERDB_PORT_BACKUP || '',
-    );
-    eval {
-      $DBH = DBI->connect($dsn, $species_defs->ENSEMBL_USERDB_USER, $species_defs->ENSEMBL_USERDB_PASS);
-    };
-  }
+  
   return $DBH || undef;
 }
 
 sub record_type_query {
-  my $self  = shift;
+  my $self   = shift;
   my @args   = grep $_, $self->session_id, $self->user_id;
   my $where  = 'cd.record_type = "session" AND cd.record_type_id = ?';
      $where  = qq{(($where) OR (cd.record_type = "user" AND cd.record_type_id = ?))} if scalar @args == 2;
@@ -101,6 +85,7 @@ sub all_configs {
 sub filtered_configs {
   my ($self, $filter) = @_;
   my ($where, @args)  = $self->record_type_query;
+  my $dbh = $self->dbh || return {};
   
   foreach (sort keys %{$filter || {}}) {
     if (ref $filter->{$_} eq 'ARRAY') {
@@ -111,7 +96,8 @@ sub filtered_configs {
       push @args, $filter->{$_};
     }
   }
-  return $self->dbh ? $self->dbh->selectall_hashref("SELECT * FROM configuration_details cd, configuration_record cr WHERE cd.record_id = cr.record_id AND $where", 'record_id', {}, @args) : {};
+  
+  return $dbh->selectall_hashref("SELECT * FROM configuration_details cd, configuration_record cr WHERE cd.record_id = cr.record_id AND $where", 'record_id', {}, @args);
 }
 
 sub active_config {
@@ -170,8 +156,8 @@ sub save_config {
 
 sub new_config {
   my ($self, %args) = @_;
-  my $dbh = $self->dbh;
-  return unless $dbh;
+  my $dbh = $self->dbh || return;
+  
   $dbh->do(
     'INSERT INTO configuration_details VALUES ("", ?, ?, "n", ?, ?, ?, ?, ?)', {},
     map(encode_entities($args{$_}) || '', qw(record_type record_type_id name description)), $self->servername, $self->site_type, $self->version
@@ -200,6 +186,7 @@ sub new_config {
 
 sub link_configs {
   my ($self, @links) = @_;
+  my $dbh = $self->dbh || return;
   
   if (scalar @links == 1) {
     my $active = $self->active_config(@{$links[0]{'link'}});
@@ -215,8 +202,7 @@ sub link_configs {
   return unless grep $_->{'id'}, @links;
   
   my $query = 'UPDATE configuration_record SET link_id = ?, link_code = ? WHERE record_id = ?';
-  return unless $self->dbh;
-  my $sth   = $self->dbh->prepare($query);
+  my $sth   = $dbh->prepare($query);
   
   foreach ([ @links ], [ reverse @links ]) {
     if ($_->[0]{'id'} && ($configs->{$_->[0]{'id'}}{'link_id'} != $_->[1]{'id'} || $configs->{$_->[0]{'id'}}{'link_code'} ne $_->[1]{'code'})) {
@@ -232,20 +218,22 @@ sub link_configs_by_id {
   
   return unless scalar @ids == 2;
   
+  my $dbh   = $self->dbh || return;
   my $query = 'UPDATE configuration_record SET link_id = ? WHERE record_id = ?';
-  return unless $self->dbh;
-  my $sth   = $self->dbh->prepare($query);
+  my $sth   = $dbh->prepare($query);
+  
   $sth->execute(@ids);
   $sth->execute(reverse @ids);
 }
 
 sub set_data {
   my ($self, $record_id, $data) = @_;
+  my $dbh        = $self->dbh || return;
   my $config     = $self->all_configs->{$record_id};
   my $serialized = ref $data ? $self->serialize_data($data) : $data;
   
   if ($serialized ne $config->{'raw_data'}) {
-    $self->dbh->do('UPDATE configuration_record SET modified_at = now(), data = ? WHERE record_id = ?', {}, $serialized, $record_id);
+    $dbh->do('UPDATE configuration_record SET modified_at = now(), data = ? WHERE record_id = ?', {}, $serialized, $record_id);
     
     $config->{'data'}     = ref $data ? $data : eval($data) || {};
     $config->{'raw_data'} = $serialized;
@@ -258,9 +246,8 @@ sub set_data {
 
 sub delete_config {
   my ($self, @record_ids) = @_;
+  my $dbh     = $self->dbh || return ();
   my $configs = $self->all_configs;
-  my $dbh     = $self->dbh;
-  return () unless $dbh;
   my @deleted;
   
   foreach my $record_id (grep $configs->{$_}, @record_ids) {
@@ -310,11 +297,10 @@ sub update_active {
 
 sub edit_details {
   my ($self, $record_id, $type, $value, $is_set) = @_;
+  my $dbh     = $self->dbh || return 0;
   my $details = $is_set ? $self->all_sets : $self->all_configs;
   my $config  = $details->{$record_id};
-  my $dbh     = $self->dbh;
   my $success = 0;
-  return $success unless $dbh;
   
   foreach (grep $_, $config, $details->{$config->{'link_id'}}) { 
     if ($_->{$type} ne $value) {
@@ -329,8 +315,7 @@ sub edit_details {
 
 sub all_sets {
   my $self = shift;
-  my $dbh = $self->dbh;
-  return {} unless $dbh;
+  my $dbh  = $self->dbh || return {};
   
   if (!$self->{'all_sets'}) {
     my ($where, @args) = $self->record_type_query;
@@ -356,14 +341,13 @@ sub record_to_sets {
 
 sub create_set {
   my ($self, %args) = @_;
+  my $dbh        = $self->dbh || return;
   my $configs    = $self->all_configs;
   my @record_ids = grep $configs->{$_}, @{$args{'record_ids'}};
   
   return unless @record_ids;
   
-  my $dbh = $self->dbh;
-  return unless $dbh; ### correct ?
-  $dbh->do('INSERT INTO configuration_details VALUES ("", ?, ?, "y", ?, ?, ?, ?)', {}, map(encode_entities($args{$_}) || '', qw(record_type record_type_id name description)), $self->servername, $self->version);
+  $dbh->do('INSERT INTO configuration_details VALUES ("", ?, ?, "y", ?, ?, ?, ?, ?)', {}, map(encode_entities($args{$_}) || '', qw(record_type record_type_id name description)), map $self->$_, qw(servername site_type version));
   
   my $set_id = $dbh->last_insert_id(undef, undef, 'configuration_details', 'record_id');
   
@@ -398,12 +382,13 @@ sub activate_set {
 
 sub update_set_record {
   my ($self, $record_id, $ids) = @_;
+  my $dbh     = $self->dbh || return;
   my $sets    = $self->all_sets;
   my @set_ids = grep $sets->{$_}, @$ids;  
   
   return unless scalar @set_ids;
-  return unless $self->dbh;
-  $self->dbh->do(sprintf('INSERT INTO configuration_set VALUES %s', join ', ', map '(?, ?)', @set_ids), {}, map { $_, $record_id } @set_ids);
+  
+  $dbh->do(sprintf('INSERT INTO configuration_set VALUES %s', join ', ', map '(?, ?)', @set_ids), {}, map { $_, $record_id } @set_ids);
   
   foreach (@set_ids) {
     $sets->{$_}{'records'}{$record_id}         = 1;
@@ -413,12 +398,10 @@ sub update_set_record {
 
 sub delete_set {
   my ($self, $set_id) = @_;
+  my $dbh  = $self->dbh || return;
   my $sets = $self->all_sets;
   
   return unless $sets->{$set_id};
-  
-  my $dbh = $self->dbh;
-  return unless $self->dbh;
 
   $dbh->do('DELETE FROM configuration_set     WHERE set_id    = ?', {}, $set_id);
   $dbh->do('DELETE FROM configuration_details WHERE record_id = ?', {}, $set_id);
@@ -431,8 +414,9 @@ sub delete_set {
 
 sub add_records_to_set {
   my ($self, $set_id, @record_ids) = @_;
-  return unless $self->dbh;
-  $self->dbh->do(sprintf('INSERT INTO configuration_set VALUES %s', join ', ', map '(?, ?)', @record_ids), {}, map { $set_id, $_ } @record_ids);
+  my $dbh = $self->dbh || return;
+  
+  $dbh->do(sprintf('INSERT INTO configuration_set VALUES %s', join ', ', map '(?, ?)', @record_ids), {}, map { $set_id, $_ } @record_ids);
   
   foreach (@record_ids) {
     $self->{'all_sets'}{$set_id}{'records'}{$_} = 1;
@@ -442,13 +426,13 @@ sub add_records_to_set {
 
 sub delete_records_from_sets {
   my ($self, $set_id, @record_ids) = @_;
-  my $sets  = $self->all_sets;
+  my $dbh  = $self->dbh || return;
+  my $sets = $self->all_sets;
   
   return if $set_id && !$sets->{$set_id};
-  return unless $self->dbh;
   
   my $where   = $set_id ? ' AND set_id = ?' : '';
-  my $deleted = $self->dbh->do(sprintf('DELETE FROM configuration_set WHERE record_id IN (%s)%s', join(',', map '?', @record_ids), $where), {}, @record_ids, $set_id);
+  my $deleted = $dbh->do(sprintf('DELETE FROM configuration_set WHERE record_id IN (%s)%s', join(',', map '?', @record_ids), $where), {}, @record_ids, $set_id);
   
   foreach my $record_id (@record_ids) {
     my @set_ids = $self->record_to_sets($record_id);
@@ -467,12 +451,12 @@ sub delete_records_from_sets {
 
 sub delete_sets_from_record {
   my ($self, $record_id, @set_ids) = @_;
+  my $dbh = $self->dbh || return;
   
   return unless $self->all_configs->{$record_id};
-  return unless $self->dbh;
   
   my $sets    = $self->all_sets;
-  my $deleted = $self->dbh->do(sprintf('DELETE FROM configuration_set WHERE record_id = ? AND set_id IN (%s)', join(',', map '?', @set_ids)), {}, $record_id, @set_ids);
+  my $deleted = $dbh->do(sprintf('DELETE FROM configuration_set WHERE record_id = ? AND set_id IN (%s)', join(',', map '?', @set_ids)), {}, $record_id, @set_ids);
   
   foreach (@set_ids) {
     delete $sets->{$_}{'records'}{$record_id};
