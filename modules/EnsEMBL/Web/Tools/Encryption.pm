@@ -5,9 +5,9 @@ use warnings;
 use Exporter 'import';
 use Digest::MD5 qw(md5 md5_hex md5_base64);
 
-our @EXPORT_OK = qw(encryptPassword checksum validate_checksum);
+our @EXPORT_OK = qw(encrypt_password checksum validate_checksum);
 
-sub encryptPassword {
+sub encrypt_password {
   my ($password, $salt) = @_;
   return md5_hex($password);
 }

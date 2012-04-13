@@ -5,7 +5,7 @@ package EnsEMBL::Web::Filter::PasswordValid;
 use strict;
 
 use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::Tools::Encryption qw(encryptPassword);
+use EnsEMBL::Web::Tools::Encryption qw(encrypt_password);
 
 use base qw(EnsEMBL::Web::Filter);
 
@@ -29,7 +29,7 @@ sub catch {
     my $user = EnsEMBL::Web::Data::User->find(email => $hub->param('email'));
     
     if ($user) { 
-      my $encrypted = encryptPassword($password, $user->salt);
+      my $encrypted = encrypt_password($password, $user->salt);
       
       $self->error_code = 'invalid_password' if $user->password ne $encrypted;
     } else {

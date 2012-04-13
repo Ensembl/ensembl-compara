@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::Tools::Encryption qw(encryptPassword);
+use EnsEMBL::Web::Tools::Encryption qw(encrypt_password);
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -26,7 +26,7 @@ sub process {
     $error   = 1;
   }
   else {
-    $user->password(encryptPassword($new_password));
+    $user->password(encrypt_password($new_password));
     $user->status('active');
     $user->modified_by($user->id);
     $user->save;
