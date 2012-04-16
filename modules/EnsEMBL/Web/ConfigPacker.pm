@@ -865,7 +865,7 @@ sub _summarise_compara_db {
   $res_aref = $dbh->selectall_arrayref('SELECT method_link_species_set_id, value FROM method_link_species_set_tag JOIN method_link_species_set USING (method_link_species_set_id) JOIN method_link USING (method_link_id) WHERE type LIKE "%CONSERVATION\_SCORE" AND tag = "msa_mlss_id"');
   
   foreach my $row (@$res_aref) {
-    my ($conservation_score_id), $alignment_id) = ($row->[0], $row->[1]);
+    my ($conservation_score_id, $alignment_id) = ($row->[0], $row->[1]);
     
     next unless $conservation_score_id;
     
