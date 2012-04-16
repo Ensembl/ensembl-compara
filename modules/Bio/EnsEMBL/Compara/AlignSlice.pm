@@ -718,9 +718,8 @@ sub _get_condensed_conservation_scores {
     throw ("Must have method_link_species_set defined to retrieve conservation scores for a condensed AlignSlice") if (!defined $self->{_method_link_species_set});
     throw ("Must have reference slice defined to retrieve conservation scores for a condensed AlignSlice") if (!defined $self->{'reference_slice'});
 
-    #really hacky to get the mlss for the conservation score (which then uses 
-    #it to get the multiple alignment mlss, which is what I started with!
-    my $sql = 'SELECT method_link_species_set_id FROM method_link_species_set_tag WHERE tag = "gerp_mlss_id" AND value = ?';
+    # select the conservation score mlss_id linked to the msa
+    my $sql = 'SELECT method_link_species_set_id FROM method_link_species_set_tag JOIN method_link_species_set USING (method_link_species_set_id) JOIN method_link USING (method_link_id) WHERE type LIKE "%CONSERVATION\_SCORE" AND tag = "msa_mlss_id" AND value = ?';
     my $sth = $conservation_score_adaptor->prepare($sql);
     $sth->execute($self->{_method_link_species_set}->dbID);
     

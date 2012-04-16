@@ -181,7 +181,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     #need to convert conservation score mlss to the corresponding multiple 
     #alignment mlss
 
-    my $ma_mlss_id = $method_link_species_set->get_value_for_tag('gerp_mlss_id');
+    my $ma_mlss_id = $method_link_species_set->get_value_for_tag('msa_mlss_id');
     my $ma_mlss;
     if ($ma_mlss_id) {
 	$ma_mlss = $self->db->get_MethodLinkSpeciesSet->fetch_by_dbID($ma_mlss_id);

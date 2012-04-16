@@ -272,9 +272,9 @@ sub _run_conservation_scores_test {
   my $method_link_species_set_ids;
 
   if ($method_link_species_set_id) {
-    my $aln_mlss_id = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($method_link_species_set_id)->get_value_for_tag('gerp_mlss_id');
+    my $aln_mlss_id = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($method_link_species_set_id)->get_value_for_tag('msa_mlss_id');
     if (!$aln_mlss_id) {
-      die "The mlss_tag table does not contain the gerp_mlss_id entry for $method_link_species_set_id !\n";
+      die "The mlss_tag table does not contain the msa_mlss_id entry for $method_link_species_set_id !\n";
     }
     $method_link_species_set_ids = [$aln_mlss_id];
   } else {
@@ -285,9 +285,12 @@ sub _run_conservation_scores_test {
 
   foreach my $this_method_link_species_set_id (@$method_link_species_set_ids) {
     my $ma_mlss_id = $self->compara_dba->dbc->db_handle->selectrow_array(
-        "SELECT method_link_species_set_id FROM method_link_species_set_tag WHERE tag = 'gerp_mlss_id' AND value = $this_method_link_species_set_id");
+        'SELECT method_link_species_set_id FROM method_link_species_set_tag JOIN method_link_species_set USING (method_link_species_set_id) JOIN method_link USING (method_link_id) WHERE type LIKE "%CONSERVATION\_SCORE" AND tag = "msa_mlss_id" AND value = ?',
+        undef,
+        $this_method_link_species_set_id
+    );
     if (!$ma_mlss_id) {
-      die "There is no gerp_mlss_id entry in the method_link_species_set_tag table for mlss=".$this_method_link_species_set_id.
+      die "There is no msa_mlss_id entry in the method_link_species_set_tag table for mlss=".$this_method_link_species_set_id.
           "alignments!\n";
     } else {
       $self->warning("mlss_tag entry for $ma_mlss_id: OK.");
