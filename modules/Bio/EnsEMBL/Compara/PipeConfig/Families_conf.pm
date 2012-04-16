@@ -46,22 +46,23 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-#       'mlss_id'         => 30036,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'         => '66',
-        'rel_suffix'      => '',    # an empty string by default, a letter otherwise
+#       'mlss_id'         => 30037,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        'host'            => 'compara2',    # where the pipeline database will be created
+        'release'         => '67',          # current ensembl release number
+        'rel_suffix'      => '',            # an empty string by default, a letter otherwise
         'rel_with_suffix' => $self->o('release').$self->o('rel_suffix'),
 
-        'pipeline_name'   => 'FAM_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+        'pipeline_name'   => 'compara_families_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
 
             # code directories:
-        'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.23+/bin',
+        'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.26+/bin',
         'mcl_bin_dir'     => '/software/ensembl/compara/mcl-10-201/bin',
-        'mafft_root_dir'  => '/software/ensembl/compara/mafft-6.522',
+        'mafft_root_dir'  => '/software/ensembl/compara/mafft-6.864',
             
             # data directories:
-        'work_dir'        => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/families_'.$self->o('rel_with_suffix'),
+        'work_dir'        => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
         'blastdb_dir'     => $self->o('work_dir').'/blast_db',
         'blastdb_name'    => 'metazoa_'.$self->o('rel_with_suffix').'.pep',
         'tcx_name'        => 'families_'.$self->o('rel_with_suffix').'.tcx',
@@ -73,29 +74,22 @@ sub default_options {
         'first_n_big_families'  => 2,   # these are known to be big, so no point trying in small memory
 
             # resource requirements:
+        'blast_gigs'      => 2,
         'mcxload_gigs'    => 30,
         'mcl_gigs'        => 40,
         'mcl_procs'       =>  4,
+        'lomafft_gigs'    =>  2,
         'himafft_gigs'    => 14,
-        'dbresource'      => 'my'.$self->o('pipeline_db', '-host'),   # will work for compara1..compara4, but will have to be set manually otherwise
-        'blast_capacity'  => 1000,                                    # work both as hive_capacity and resource-level throttle
+        'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara4, but will have to be set manually otherwise
+        'blast_capacity'  => 1000,                                  # work both as hive_capacity and resource-level throttle
         'mafft_capacity'  =>  400,
         'cons_capacity'   =>  400,
 
-            # family database connection parameters (our main database):
-        'pipeline_db' => {
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => $self->o('ENV', 'USER').'_compara_families_'.$self->o('rel_with_suffix'),
-        },
-
             # homology database connection parameters (we inherit half of the members and sequences from there):
-        'homology_db'  => 'mysql://ensro@compara2/mm14_compara_homology_66',
+        'homology_db'  => 'mysql://ensro@compara3/mm14_compara_homology_67',
 
             # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/mp12_ensembl_compara_65',
+        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara3/mp12_ensembl_compara_66',
 
             # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ensembl_compara_master',    
@@ -138,11 +132,12 @@ sub resource_classes {
     return {
          0 => { -desc => 'default',          'LSF' => '' },
          1 => { -desc => 'urgent',           'LSF' => '-q yesterday' },
-         2 => { -desc => 'long_blast',       'LSF' => '-q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').'] rusage['.$self->o('dbresource').'=10:duration=10:decay=1]"' },
+         2 => { -desc => 'long_blast',       'LSF' => '-C0 -M'.$self->o('blast_gigs').'000000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('blast_gigs').'000]"' },
          3 => { -desc => 'mcxload',          'LSF' => '-C0 -M'.$self->o('mcxload_gigs').'000000 -q hugemem -R"select[mem>'.$self->o('mcxload_gigs').'000] rusage[mem='.$self->o('mcxload_gigs').'000]"' },
          4 => { -desc => 'mcl',              'LSF' => '-C0 -M'.$self->o('mcl_gigs').'000000 -n '.$self->o('mcl_procs').' -q hugemem -R"select[ncpus>='.$self->o('mcl_procs').' && mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000] span[hosts=1]"' },
          5 => { -desc => 'himem_mafft_idmap',   'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('himafft_gigs').'000]"' },
-         6 => { -desc => 'lomem_mafft',      'LSF' => '-R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').'] rusage['.$self->o('dbresource').'=10:duration=10:decay=1]"' },
+         6 => { -desc => 'lomem_mafft',         'LSF' => '-C0 -M'.$self->o('lomafft_gigs').'000000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('lomafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('lomafft_gigs').'000]"' },
+         7 => { -desc => 'two_gig',          'LSF' => '-C0 -M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
     };
 }
 
@@ -185,13 +180,13 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql'   => [
-                    'ALTER TABLE sequence       AUTO_INCREMENT=100000001',
-                    'ALTER TABLE member         AUTO_INCREMENT=100000001',
+                    'ALTER TABLE sequence       AUTO_INCREMENT=200000001',
+                    'ALTER TABLE member         AUTO_INCREMENT=200000001',
+                    'ALTER TABLE subset         AUTO_INCREMENT=200000001',
                     'ALTER TABLE family         ENGINE=InnoDB',
                     'ALTER TABLE family_member  ENGINE=InnoDB',
                 ],
             },
-#            -wait_for => [ 'copy_table' ],    # have to wait until the tables have been copied
             -flow_into => {
                     1 => [ 'genomedb_factory' ],
             },
@@ -222,6 +217,7 @@ sub pipeline_analyses {
                 'include_reference'     => 0,
             },
             -hive_capacity => -1,
+            -rc_id => 7,
         },
 
         {   -logic_name => 'load_uniprot_superfactory',
@@ -244,7 +240,6 @@ sub pipeline_analyses {
                     [ 'SPTREMBL',  'INV' ],
                 ],
             },
-#            -wait_for => [ 'load_nonref_members' ],
             -flow_into => {
                 '2->A' => [ 'load_uniprot_factory' ],
                 'A->1' => [ 'snapshot_after_load_uniprot' ],
@@ -258,7 +253,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'load_uniprot' ],
             },
-            -rc_id => 1,
+            -rc_id => 7,
         },
         
         {   -logic_name    => 'load_uniprot',
@@ -271,7 +266,7 @@ sub pipeline_analyses {
             -flow_into => {
                 3 => [ ':////subset_member' ],
             },
-            -rc_id => 0,
+            -rc_id => 7,
         },
 
         {   -logic_name => 'snapshot_after_load_uniprot',
@@ -282,7 +277,6 @@ sub pipeline_analyses {
                 'cmd'           => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 0).' '.$self->o('pipeline_db','-dbname').' >#filename#',
                 'filename'      => $self->o('work_dir').'/'.$self->o('pipeline_name').'_snapshot_after_load_uniprot.sql',
             },
-#            -wait_for  => [ 'load_uniprot_superfactory', 'load_uniprot_factory', 'load_uniprot' ],   # act as a funnel
             -flow_into => {
                 1 => { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#', 'blastdb_dir' => '#blastdb_dir#' } },
             },
@@ -308,7 +302,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'family_blast_factory' ],
             },
-            -rc_id => 1,
+            -rc_id => 7,
         },
 
         {   -logic_name => 'family_blast_factory',
@@ -322,7 +316,7 @@ sub pipeline_analyses {
                 '2->A' => [ 'family_blast' ],
                 'A->1' => { 'snapshot_after_family_blast' => { 'tcx_name' => $self->o('tcx_name'), 'itab_name' => $self->o('itab_name'), 'mcl_name' => $self->o('mcl_name') } },
             },
-            -rc_id => 1,
+            -rc_id => 7,
         },
 
         {   -logic_name    => 'family_blast',
@@ -346,7 +340,6 @@ sub pipeline_analyses {
                 'cmd'       => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 0).' '.$self->o('pipeline_db','-dbname').' >#filename#',
                 'filename'  => $self->o('work_dir').'/'.$self->o('pipeline_name').'_snapshot_after_family_blast.sql',
             },
-#            -wait_for => [ 'family_blast' ],    # act as a funnel
             -flow_into => {
                 1 => [ 'mcxload_matrix' ],
             },
@@ -424,12 +417,11 @@ sub pipeline_analyses {
                 'randomize'             => 1,
             },
             -hive_capacity => 20, # to enable parallel branches
-#            -wait_for => [ 'parse_mcl' ],
             -flow_into => {
                 2 => [ 'family_mafft_big'  ],
                 3 => [ 'family_mafft_main' ],
             },
-            -rc_id => 1,
+            -rc_id => 7,
         },
 
         {   -logic_name    => 'family_mafft_main',
@@ -460,7 +452,6 @@ sub pipeline_analyses {
                 ],
             },
             -hive_capacity => 20, # to enable parallel branches
-#            -wait_for => [ 'family_mafft_big', 'family_mafft_main' ],    # act as a funnel
             -flow_into => {
                 1 => [ 'insert_redundant_peptides' ],
             },
@@ -496,9 +487,6 @@ sub pipeline_analyses {
                 'input_id'        => { 'family_id' => '#_start_family_id#', 'minibatch' => '#_range_count#'},
             },
             -hive_capacity => 20, # run the two in parallel and enable parallel branches
-#            -input_ids  => [
-#            ],
-#            -wait_for => [ 'parse_mcl' ],
             -flow_into => {
                 2 => [ 'consensifier' ],
             },
@@ -521,8 +509,6 @@ sub pipeline_analyses {
                 'type'        => 'f',
                 'release'     => $self->o('release'),
             },
-#            -input_ids => [ {} ],
-#            -wait_for  => [ 'archive_long_files', 'insert_ensembl_genes', 'consensifier' ],
             -flow_into => {
                 1 => [ 'notify_pipeline_completed' ],
             },
@@ -547,6 +533,25 @@ sub pipeline_analyses {
 1;
 
 =head1 STATS and TIMING
+
+=head2 rel.67 stats
+
+    sequences to cluster:       4,035,467           [ SELECT count(*) from sequence; ]
+    distances by Blast:         749,490,988         [ SELECT count(*) from mcl_sparse_matrix; ]
+
+    non-reference genes:        1893                [ SELECT count(*) FROM member WHERE member_id>=100000001 AND source_name='ENSEMBLGENE'; ]
+    non-reference peps:         7198                [ SELECT count(*) FROM member WHERE member_id>=100000001 AND source_name='ENSEMBLPEP'; ]
+
+    uniprot loading method:     { 20 x pfetch }
+
+    total running time:         8.2 days            [ call time_analysis('%'); ]
+    uniprot_loading time:       1.1 days            [ call time_analysis('load_uniprot%'); ]
+    blasting time:              4.3 days            [ call time_analysis('family_blast%'); ]
+    mcxload running time:       1.7h                [ call time_analysis('mcxload_matrix'); ]
+    mcl running time:           7.6h                [ call time_analysis('mcl'); ]
+
+    memory used by mcxload:     20G mem + 20G swap  [ SELECT mem, swap FROM analysis JOIN worker USING(analysis_id) JOIN lsf_report USING(process_id) WHERE logic_name='mcxload_matrix'; ]
+    memory used by mcl:         25G mem + 26G swap  [ SELECT mem, swap FROM analysis JOIN worker USING(analysis_id) JOIN lsf_report USING(process_id) WHERE logic_name='mcl'; ]
 
 =head2 rel.66 stats
 
