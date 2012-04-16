@@ -86,12 +86,8 @@ sub fetch_input {
     my $mlss_adaptor = $compara_dba->get_adaptor("MethodLinkSpeciesSet");
     $self->param('mlss_id', $self->param('dump_mlss_id'));
     my $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
-    my $mlss_id = $self->param('mlss_id');
     if ($mlss->method_link_type eq "GERP_CONSERVATION_SCORE") {
-	#Get meta_container adaptor
-	my $meta_container = $compara_dba->get_MetaContainer;
-	my $key = "gerp_$mlss_id";
-	$self->param('mlss_id', $meta_container->list_value_by_key($key)->[0]);
+      $self->param('mlss_id', $mlss->get_value_for_tag('gerp_mlss_id'));
     }
 
     $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));

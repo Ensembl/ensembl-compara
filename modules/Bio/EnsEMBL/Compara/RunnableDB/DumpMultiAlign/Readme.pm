@@ -129,9 +129,7 @@ sub _create_specific_readme {
     #If dumping conservation scores, need to find associated multiple alignment
     #mlss
     if (($mlss->method_link_type) eq "GERP_CONSERVATION_SCORE") {
-	my $key = "gerp_" . $mlss->dbID;
-	my $mlss_id = $meta_container->list_value_by_key($key)->[0];
-	$mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
+	$mlss = $mlss_adaptor->fetch_by_dbID($mlss->get_value_for_tag('gerp_mlss_id'));
     }
 
     #Get tree and ordered set of genome_dbs

@@ -720,15 +720,11 @@ sub _get_condensed_conservation_scores {
 
     #really hacky to get the mlss for the conservation score (which then uses 
     #it to get the multiple alignment mlss, which is what I started with!
-    my $key = "gerp_%";
-    my $sql = "SELECT meta_key FROM meta WHERE meta_key like ? AND meta_value = ?";
+    my $sql = 'SELECT method_link_species_set_id FROM method_link_species_set_tag WHERE tag = "gerp_mlss_id" AND value = ?';
     my $sth = $conservation_score_adaptor->prepare($sql);
-    $sth->execute($key, $self->{_method_link_species_set}->dbID);
+    $sth->execute($self->{_method_link_species_set}->dbID);
     
-    my $cs_mlss_id;
-    while (my $arrRef = $sth->fetchrow_arrayref) {
-	($cs_mlss_id) = $arrRef->[0] =~ /gerp_(\d+)/;
-    }
+    my ($cs_mlss_id) = @{$sth->fetchrow_arrayref};
     $sth->finish;
 
     throw ("Unable to find conservation score method_link_species_set for this multiple alignment " . $self->{_method_link_species_set}->dbID) if (!defined $cs_mlss_id);
