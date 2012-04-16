@@ -67,11 +67,11 @@ sub new {
 
     my $self = $class->SUPER::new(@_);
 
-    my ($type, $class) =
+    my ($type, $mclass) =
         rearrange([qw(TYPE CLASS)], @_);
 
     $self->type($type)        if (defined ($type));
-    $self->class($class)      if (defined ($class));
+    $self->class($mclass)     if (defined ($mclass));
 
     return $self;
 }
