@@ -1428,7 +1428,7 @@ sub _munge_meta {
   
   my %keys = qw(
     species.taxonomy_id        TAXONOMY_ID
-    species.ensembl_alias_name SPECIES_COMMON_NAME
+    species.display_name       SPECIES_COMMON_NAME
     species.production_name    SPECIES_PRODUCTION_NAME
     species.scientific_name    SPECIES_SCIENTIFIC_NAME
     assembly.accession         ASSEMBLY_ACCESSION
@@ -1459,7 +1459,7 @@ sub _munge_meta {
       $self->tree->{'DISPLAY_NAME'} = $group_name;
     }
   } else {
-    $self->tree->{'DISPLAY_NAME'} = $meta_info->{1}{'ensembl_alias_name'}[0];
+    $self->tree->{'DISPLAY_NAME'} = $meta_info->{1}{'species.display_name'}[0];
   }
 
   while (my ($species_id, $meta_hash) = each (%$meta_info)) {
