@@ -438,7 +438,7 @@ my $meta_container = $compara_dba->get_MetaContainer();
 my $conservation_score_mlss;
 if ($method_link_species_set->method_link_class eq "ConservationScore.conservation_score") {
   $conservation_score_mlss = $method_link_species_set;
-  my $mlss_id = $meta_container->list_value_by_key('gerp_'.$conservation_score_mlss->dbID)->[0];
+  my $mlss_id = $conservation_score_mlss->get_value_for_tag('msa_mlss_id');
   $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($mlss_id);
   throw("I cannot find the link from the conservation scores to the original alignments!")
       if (!$method_link_species_set);

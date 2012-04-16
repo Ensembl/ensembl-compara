@@ -438,9 +438,7 @@ sub setup_pipeline() {
     
     #add entry into meta table linking gerp to it's multiple aligner mlss_id
     if (defined($alignment_params->{gerp_mlss_id})) {
-	my $key = "gerp_" . $alignment_params->{gerp_mlss_id};
-	my $value = $alignment_params->{method_link_species_set_id};
-	$self->{'comparaDBA'}->get_MetaContainer->store_key_value($key, $value);
+      $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($alignment_params->{gerp_mlss_id})->store_tag('msa_mlss_id', $alignment_params->{method_link_species_set_id});
     }
 
     #ANALYSIS 8 - CreateNeighbourNodesJobs
