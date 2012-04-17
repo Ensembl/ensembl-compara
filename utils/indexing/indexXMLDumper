@@ -1986,7 +1986,7 @@ sub dumpGene {
 
     $sql = qq(
       SELECT g.gene_id, t.transcript_id, tr.translation_id,
-             g.stable_id as gsid, t.stable_id as tsid, tr.stable_id as trsid,
+             g.stable_id as gsid, g.version as gversion, t.stable_id as tsid, t.version as tversion, tr.stable_id as trsid, tr.version as trversion,
              g.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, g.status, g.biotype, a.logic_name
         FROM (( $dbname.gene as g,
              $dbname.analysis as a,
@@ -2003,9 +2003,10 @@ sub dumpGene {
     $sth->execute();
 
     my $old;
-    my ($gid,$tid,$tlid,$gsid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln);
+    my $c;
+    my ($gid,$tid,$tlid,$gsid,$gver,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln);
     while (my $r = $sth->fetchrow_arrayref()) {
-      ($gid,$tid,$tlid,$gsid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln) = @$r;
+      ($gid,$tid,$tlid,$gsid,$gver,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln) = @$r;
       my $wd = eval($webdata);
       next if $wd->{'gene'}{'do_not_display'};
       next if ($ln =~ /rnaseq/);
@@ -2031,13 +2032,14 @@ sub dumpGene {
                        $db,
                        $counter),
               $nogzip, $fh);
+          $c++;
         }
 
         $old = {
           'gid'       => $gid,
-          'gsid'      => $gsid,
-          'tlsids'    => {$tlsid?($tlsid=>1):()},
-          'tsids'     => {$tsid ?($tsid=>1) :()}, 
+          'gsid'      => { $gsid => $gver },
+          'tlsids'    => { $tlsid ? ($tlsid => $tver)  :()},
+          'tsids'     => { $tsid  ? ($tsid  => $tlver) :()},
           'desc'      => $desc,
           'exons'     => {},
           'biotype'   => $biotype,
@@ -2097,29 +2099,33 @@ sub dumpGene {
         }
       }
     }
-    &p( GeneTransLine('Gene',
-                 $dbspecies,
-                 $old->{'gsid'},
-                 $old->{'tsids'},
-                 $old->{'tlsids'},
-                 $old->{'exons'},
-                 $old->{'biotype'},
-                 $old->{'ad_dl'},
-                 $old->{'disp_xref'},
-                 $old->{'desc'},
-                 $old->{'xrefs'},
-                 $old->{'xref_descriptions'},
-                 $old->{'synonyms'},
-                 $gene_locations->{$old->{'gsid'}},
-                 $db,
-                 $counter),
-        $nogzip, $fh) if ($old->{'gsid'});
+    if ($old->{'gsid'}) {
+      &p( GeneTransLine('Gene',
+                        $dbspecies,
+                        $old->{'gsid'},
+                        $old->{'tsids'},
+                        $old->{'tlsids'},
+                        $old->{'exons'},
+                        $old->{'biotype'},
+                        $old->{'ad_dl'},
+                        $old->{'disp_xref'},
+                        $old->{'desc'},
+                        $old->{'xrefs'},
+                        $old->{'xref_descriptions'},
+                        $old->{'synonyms'},
+                        $gene_locations->{$old->{'gsid'}},
+                        $db,
+                        $counter),
+          $nogzip, $fh);
+      $c++;
+    }
 #    print LOG "    Gene info query done and xml generated ".&date_and_mem()."\n";
+    print LOG "    Querying done, added $c entries ".&date_and_mem()."\n";
 
     #archive Stable IDs
     my $other_count = &do_archive_stable_ids( $dbname, $db, $fh, $counter, [ qw(gene transcript translation) ]);
 
-    print LOG "    Stable_id mapping querying done, added $other_count ".&date_and_mem()."\n";
+    print LOG "    Stable_id mapping querying done, added $other_count entries ".&date_and_mem()."\n";
     $total_c += footer( $counter->(),$nogzip,$fh);
 
     while (0) {
@@ -2296,7 +2302,7 @@ sub dumpTranscript {
       'stable_id');
 
     $sql = qq(
-      SELECT t.transcript_id, tr.translation_id, t.stable_id as tsid, tr.stable_id as trsid,
+      SELECT t.transcript_id, tr.translation_id, t.stable_id as tsid, t.version as tversion, tr.stable_id as trsid, tr.version as trversion,
              t.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, t.status, t.biotype, a.logic_name
         FROM (( $dbname.analysis_description as ad,
              $dbname.analysis as a,
@@ -2312,9 +2318,9 @@ sub dumpTranscript {
 
     my $old;
     my $c = 0;
-    my ($tid,$tlid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln);
+    my ($tid,$tlid,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln);
     while (my $r = $sth->fetchrow_arrayref()) {
-      ($tid,$tlid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln) = @$r;
+      ($tid,$tlid,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln) = @$r;
       $desc = $desc ? $desc : $gene_desc->{$tid}{'description'} ? $gene_desc->{$tid}{'description'} : '';
       my $wd = eval($webdata);
       next if $wd->{'gene'}{'do_not_display'};
@@ -2324,7 +2330,6 @@ sub dumpTranscript {
       if( $old->{'tid'} != $tid ) {
         if( $old->{'tid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
-          $c++;
           &p( GeneTransLine('Transcript',
                         $dbspecies,
                         $old->{'tsid'},
@@ -2342,12 +2347,13 @@ sub dumpTranscript {
                         $db,
                         $counter),
               $nogzip, $fh);
+          $c++;
         }
 
         $old = {
           'tid'       => $tid,
-          'tsid'      => $tsid,
-          'tlsids'    => {$tlsid?($tlsid=>1):()},
+          'tsid'      => { $tsid=>$tver },
+          'tlsids'    => { $tlsid ? ($tlsid=>$tlver):()},
           'desc'      => $desc,
           'exons'     => {},
           'biotype'   => $biotype,
@@ -2403,25 +2409,27 @@ sub dumpTranscript {
         }
       }
     }
-    $c++;
-    &p( GeneTransLine('Transcript',
-                  $dbspecies,
-                  $old->{'tsid'},
-                  {},
-                  $old->{'tlsids'},
-                  $old->{'exons'},
-                  $old->{'biotype'},
-                  $old->{'ad_dl'},
-                  $old->{'disp_xref'},
-                  $old->{'desc'},
-                  $old->{'xrefs'},
-                  $old->{'xref_descriptions'},
-                  $old->{'synonyms'},
-                  $trans_locations->{$old->{'tsid'}},
-                  $db,
-                  $counter),
-        $nogzip, $fh) if ($old->{'tsid'});
-    print LOG "    Transcript info query done and xml generated ".&date_and_mem()."\n";
+    if ($old->{'tsid'}) {
+      &p( GeneTransLine('Transcript',
+                        $dbspecies,
+                        $old->{'tsid'},
+                        {},
+                        $old->{'tlsids'},
+                        $old->{'exons'},
+                        $old->{'biotype'},
+                        $old->{'ad_dl'},
+                        $old->{'disp_xref'},
+                        $old->{'desc'},
+                        $old->{'xrefs'},
+                        $old->{'xref_descriptions'},
+                        $old->{'synonyms'},
+                        $trans_locations->{$old->{'tsid'}},
+                        $db,
+                        $counter),
+          $nogzip, $fh) if ($old->{'tsid'});
+      $c++;
+    }
+    print LOG "    Transcript info query done and xml generated, $c entries added ".&date_and_mem()."\n";
 
     #don't add archive stable IDs for solr, only need them in the gene
     if ($search_engine ne 'solr') {
@@ -2434,7 +2442,17 @@ sub dumpTranscript {
 }
 
 sub GeneTransLine {
-  my ($type, $species, $sid, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $xref_descriptions, $synonyms, $feat_loc, $db, $counter) = @_;
+  my ($type, $species, $id, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $xref_descriptions, $synonyms, $feat_loc, $db, $counter) = @_;
+
+  #get stable ID of object
+  my ($sid,$sid_ver);
+  if (scalar(%$id) > 1) {
+    print LOG "    WARNING: Multiple stable IDs for this object (".join ',',keys(%$id)."), check query\n";
+  }
+  else {
+    ($sid,$sid_ver) = each %$id;
+  }
+
   my $url = sprintf(qq(%s/%s/Summary?%s=%s&amp;db=%s),
                     $species,
                     $type,
@@ -2457,6 +2475,7 @@ sub GeneTransLine {
     $xml = qq(
 <doc>
   <field name="id">$sid</field>
+  <field name="id_ver">$sid.$sid_ver</field>
   <field name="name">$disp_xref</field>
   <field name="description">$description</field>);
     $xml .= &common_fields($species,$type,$db);
@@ -2500,17 +2519,19 @@ sub GeneTransLine {
     if (my $t_count = keys %$tsids) {
       $xml .= qq(
   <field name="transcript_count">$t_count</field>);
-      foreach my $tsi (keys %$tsids) {
+      while (my ($tsi,$tsi_ver) = each %$tsids) {
         $xml .= qq(
-  <field name="transcript">$tsi</field>);
+  <field name="transcript">$tsi</field>
+  <field name="transcript_ver">$tsi.$tsi_ver</field>);
       }
     }
     if (my $tl_count = keys %$tlsids) {
       $xml .= qq(
   <field name="translation_count">$tl_count</field>);
-      foreach my $tlsi (keys %$tlsids) {
+      while ( my ($tlsi, $tlsi_ver) = each %$tlsids) {
         $xml .= qq(
-  <field name="peptide">$tlsi</field>);
+  <field name="peptide">$tlsi</field>
+  <field name="peptide_ver">$tlsi.$tlsi_ver</field>);
       }
     }
     if (my $e_count = keys %$exons) {
@@ -2541,7 +2562,8 @@ sub GeneTransLine {
   <description>$description</description>);
 
     $xml .= qq(
-  <additional_fields>);
+  <additional_fields>
+    <field name="id_version">$sid.$sid_ver</field>);
     my (%seen_sources,%seen_syns,%seen_labels);
     foreach my $xref (@$xrefs) {
       my $dbname   = $xref->{'db_name'};
@@ -2581,14 +2603,14 @@ sub GeneTransLine {
         $xref_description = &clean($xref_description,'xref description');
         $xml .= qq(
     <field name="xref_description">$xref_description</field>);
+      }
     }
-  }
-  foreach my $syn (@$synonyms) {
-    next if $seen_syns{$syn};
-    $seen_syns{$syn} = 1;
-    $xml .= qq(
+    foreach my $syn (@$synonyms) {
+      next if $seen_syns{$syn};
+      $seen_syns{$syn} = 1;
+      $xml .= qq(
     <field name="name_synonym">$syn"</field>);
-  }
+    }
     $xml .= &common_fields($species,$type);
     $xml .= qq(
     <field name="action">Summary</field>
@@ -2601,13 +2623,15 @@ sub GeneTransLine {
       $xml .= qq(
     <field name="db">$db</field>);
     }
-    foreach my $tsi (keys %$tsids) {
+    while ( my ($tsi,$tver) = each %$tsids) {
       $xml .= qq(
-    <field name="transcript">$tsi</field>);
+    <field name="transcript">$tsi</field>
+    <field name="transcript_version">$tsi.$tver</field>);
     }
-    foreach my $tlsi (keys %$tlsids) {
+    while (my ($tlsi, $tlver) = each %$tlsids) {
       $xml .= qq(
-    <field name="peptide">$tlsi</field>);
+    <field name="peptide">$tlsi</field>
+    <field name="peptide_version">$tlsi.$tlver</field>);
     }
     foreach my $esi (keys %$exons) {
       $xml .= qq(
@@ -2621,6 +2645,7 @@ sub GeneTransLine {
   $counter->();
   return $xml;
 }
+
 
 ## methods for archive stable IDs (called by genes and transcripts) ##
 
