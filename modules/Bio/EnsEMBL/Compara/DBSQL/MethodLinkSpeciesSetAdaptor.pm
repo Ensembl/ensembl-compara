@@ -613,7 +613,7 @@ sub fetch_by_method_link_type_species_set_name {
   my $all_species_sets = $species_set_adaptor->fetch_all_by_tag_value('name', $species_set_name);
   foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
       foreach my $this_species_set (@$all_species_sets) {
-          if ($this_method_link_species_set->method_link_type eq $method_link_type && $this_method_link_species_set->species_set_obj->dbID == $this_species_set->dbID) {
+          if ($this_method_link_species_set->method->type eq $method_link_type && $this_method_link_species_set->species_set_obj->dbID == $this_species_set->dbID) {
               return $this_method_link_species_set;
           }
       }
