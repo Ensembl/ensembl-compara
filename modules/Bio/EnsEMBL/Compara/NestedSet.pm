@@ -743,24 +743,15 @@ sub _add_nodeI_to_node {
     my $node = shift; # Our node object (Compara)
     my $nodeI = shift; # Our nodeI object (BioPerl)
 
-    $node->node_id(-1);
-
     foreach my $c ($nodeI->each_Descendent) {
 	my $child = ref($node)->new;
 
-	my $name = $c->id;
+	my $name = $c->id || '';
 	$name =~ s/^\s+//;
 	$name =~ s/\s+$//;
 
-	if ($c->is_Leaf) {
-	    $child = Bio::EnsEMBL::Compara::Member->new();
-	    $child->stable_id($name);
-	    $child->source_name("NestedSet.pm");
-	}
-
 	# Set name.
 	$child->name($name);
-	$child->store_tag("name",$name);
 
 	# Set branch length.
 	$node->add_child($child,$c->branch_length);
