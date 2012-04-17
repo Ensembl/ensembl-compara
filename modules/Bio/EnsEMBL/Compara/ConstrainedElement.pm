@@ -532,15 +532,23 @@ sub reference_dnafrag_id {
 =cut
 
 sub get_SimpleAlign {
-	my ($self, $orig_mlss, @flags) = @_;
+	my ($self, @flags) = @_;
 
-        if (defined($orig_mlss)) {
-                throw("$orig_mlss is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")  
-                unless ($orig_mlss->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-        } else {
-                throw("undefined Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object");
-        }
+	my $mlss_adaptor = $self->adaptor->db->get_MethodLinkSpeciesSet;
 
+	my $cons_eles_mlss = $mlss_adaptor->fetch_by_dbID($self->method_link_species_set_id());
+
+	if (defined($cons_eles_mlss)) {
+		throw("$cons_eles_mlss is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
+		unless ($cons_eles_mlss->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+	} else {
+		throw("unable to get a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object from this constrained element");
+	}
+
+	my $msa_mlss_id = $cons_eles_mlss->get_tagvalue("msa_mlss_id"); # The mlss_id of the alignments from which the constrained elements were generated
+
+	my $msa_mlss = $mlss_adaptor->fetch_by_dbID( $msa_mlss_id );
+	
 	# setting the flags
 	my $skip_empty_GenomicAligns = 1;
 	my $uc = 0;
@@ -554,7 +562,7 @@ sub get_SimpleAlign {
 	my $genomic_align_block_adaptor = $self->adaptor->db->get_GenomicAlignBlock;
 	$self->start(1) if $self->start <= 0;
 	my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
-		$orig_mlss, $self->slice->sub_Slice($self->start, $self->end, $self->slice->strand));
+		$msa_mlss, $self->slice->sub_Slice($self->start, $self->end, $self->slice->strand));
 
 	my $sa = Bio::SimpleAlign->new();
 
