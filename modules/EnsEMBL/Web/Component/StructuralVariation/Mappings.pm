@@ -74,7 +74,7 @@ sub gene_transcript_table {
       my $gene_dbid = $gene->dbID;
       my $gene_link = $hub->url({
         type    => 'Gene',
-        action  => 'Summary',
+        action  => 'StructuralVariation_Gene',
         g       => $gs_id,
       });
 
