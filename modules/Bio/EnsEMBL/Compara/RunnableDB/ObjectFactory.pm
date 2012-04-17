@@ -8,9 +8,9 @@ Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory
 =head1 DESCRIPTION
 
 This is a Compara-specific generic job factory that:
-    1) creates an object adaptor
-    2) runs a fetch_all_by... method on that adaptor (which returns a list of objects)
-    3) flows each object into a job using a given getter-to-column mapping
+    1) Starting with the $self object executes a list of calls
+      (usually, getting the database, then an adaptor, calling a fetch, etc) which returns a list in the end.
+    2) Iterates through the list and flows each object into a job using a given getter-to-column mapping.
 
 It also serves as a good simple example of a Compara job factory:
     1) Inherits main factory functionality from Hive::RunnableDB::JobFactory
@@ -31,39 +31,50 @@ use base ('Bio::EnsEMBL::Hive::RunnableDB::JobFactory', 'Bio::EnsEMBL::Compara::
 sub fetch_input {
     my $self = shift @_;
 
-    my $adaptor_name            = $self->param('adaptor_name')   or die "'adaptor_name' is an obligatory parameter";
-    my $adaptor_method          = $self->param('adaptor_method') or die "'adaptor_method' is an obligatory parameter";
+    my $call_list               = $self->param_substitute( $self->param('call_list') );
 
-    my $method_param_list       = $self->param_substitute( $self->param('method_param_list') || [] );
+    unless($call_list) {
 
-    my $get_adaptor             = 'get_'.$adaptor_name;
-    my $adaptor                 = $self->compara_dba->$get_adaptor or die "Could not create a '$adaptor_name' on the database";
-    my $adaptor_method_result   = $adaptor->$adaptor_method( @$method_param_list ) or die "Could not call '$adaptor_method'(".stringify(@$method_param_list).") on '$adaptor_name'";
+        warn "This is the deprecated way of configuring this Runnable; please set 'call_list' parameter for more flexibility";
 
-    my $object_method           = $self->param('object_method');
+        my $adaptor_name            = $self->param('adaptor_name')   or die "'adaptor_name' is an obligatory parameter";
+        my $adaptor_method          = $self->param('adaptor_method') or die "'adaptor_method' is an obligatory parameter";
 
-    my $object_method_result    = $object_method
-                                    ? $adaptor_method_result->$object_method()
-                                    : $adaptor_method_result;
+        my $method_param_list       = $self->param_substitute( $self->param('method_param_list') || [] );
+
+        my $object_method           = $self->param('object_method');
+
+        $call_list = [ 'compara_dba', 'get_'.$adaptor_name, [ $adaptor_method, @$method_param_list ], ($object_method ? $object_method : ()) ];
+    }
+
+    my $current_result = $self;
+
+    foreach my $call (@$call_list) {
+        $call = [ $call ] unless(ref($call));
+
+        my $method = shift @$call or die "Method is missing or didn't properly resolve";
+
+        $current_result = $current_result->$method( @$call ) || die "Calling $current_result -> $method(".stringify(@$call).") returned a False";
+    }
 
     if(my $column_names2getters = $self->param_substitute( $self->param('column_names2getters') ) ) {
 
         my @getters             = values %$column_names2getters;
         my @inputlist           = ();
 
-        foreach my $object (@$object_method_result) {
+        foreach my $object (@$current_result) {
             push @inputlist, [ map { $object->$_ } @getters ];
         }
         $self->param('column_names', [ keys %$column_names2getters ] );
         $self->param('inputlist',    \@inputlist);
 
-    } elsif( ref($object_method_result) eq 'ARRAY') {   # caller should set 'column_names' for better results
+    } elsif( ref($current_result) eq 'ARRAY') {   # caller should set 'column_names' for better results
 
-        $self->param('inputlist', $object_method_result);
+        $self->param('inputlist', $current_result);
 
     } else {
 
-        die "Expected an arrayref instead of ".stringify($object_method_result);
+        die "Expected an arrayref instead of ".stringify($current_result);
     }
 }
 
