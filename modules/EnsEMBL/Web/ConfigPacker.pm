@@ -514,10 +514,17 @@ sub _summarise_variation_db {
         description => $sub_set->[2],
         short_name  => $sub_set->[3],
       };
-    
-    $set_descriptions{$sub_set->[3]} = $sub_set->[2];
     } 
   }
+  
+  # just get all descriptions
+  my $vs_aref = $dbh->selectall_arrayref("
+	SELECT a.value, vs.description
+	FROM variation_set vs, attrib a
+	WHERE vs.short_name_attrib_id = a.attrib_id
+  ");
+  
+  $set_descriptions{$_->[0]} = $_->[1] for @$vs_aref;
 
   $self->db_details($db_name)->{'tables'}{'variation_set'}{'supersets'}    = \%super_sets;  
   $self->db_details($db_name)->{'tables'}{'variation_set'}{'subsets'}      = \%sub_sets;
