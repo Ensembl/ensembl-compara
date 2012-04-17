@@ -48,12 +48,14 @@ sub content {
 	}	
 
 	# Create graphs
-	foreach my $pop_name (sort(keys(%$pop_freq))) {
+	foreach my $pop_name (sort {($a !~ /ALL/) cmp ($b !~ /ALL/) || $a cmp $b} (keys(%$pop_freq))) {
+		next if $pop_name =~ /low_coverage/;
+		
 		my $values = '';
 		my @pop_names = (split(':',$pop_name));
 		shift @pop_names;
 		my $p_name = join(':',@pop_names);
-		$p_name =~ /pilot_1_(.+)_low_coverage_panel/; # Gets a shorter name for the display
+		$p_name =~ /phase_1_(.+)/; # Gets a shorter name for the display
 		my $short_name = ($1) ? $1 : $p_name;
 		
 		my @freqs;
