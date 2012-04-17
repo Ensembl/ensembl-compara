@@ -196,12 +196,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
                 'mlss_id'               => $self->o('mlss_id'),
-
-                'adaptor_name'          => 'MethodLinkSpeciesSetAdaptor',
-                'adaptor_method'        => 'fetch_by_dbID',
-                'method_param_list'     => [ '#mlss_id#' ],
-                'object_method'         => 'species_set',
-
+                'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', [ 'fetch_by_dbID', '#mlss_id#'], 'species_set_obj', 'genome_dbs' ],
                 'column_names2getters'  => { 'genome_db_id' => 'dbID' },
             },
             -flow_into => {
