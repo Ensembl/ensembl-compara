@@ -80,19 +80,19 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compa
 
 sub fetch_all {
     my $self = shift;
-    my $constraint = "WHERE (t.node_id = t.root_id) AND (tr.tree_type = 'tree')";
+    my $constraint = "(t.node_id = t.root_id) AND (tr.tree_type = 'tree')";
 
     my $clusterset_id = shift;
     $constraint .= " AND (tr.clusterset_id = ${clusterset_id})" if defined $clusterset_id;
-    return $self->_generic_fetch($constraint);
+    return $self->generic_fetch($constraint);
 }
 
 
 sub fetch_all_roots {
   my $self = shift;
 
-  my $constraint = "WHERE (t.node_id = t.root_id) AND (tr.tree_type = 'clusterset')";
-  return $self->_generic_fetch($constraint);
+  my $constraint = "(t.node_id = t.root_id) AND (tr.tree_type = 'clusterset')";
+  return $self->generic_fetch($constraint);
 }
 
 
@@ -152,14 +152,8 @@ sub fetch_by_gene_Member_root_id {
 
   Arg[1]     : int member_id of a peptide member (longest translation)
   Arg[2]     : [optional] int clusterset_id (def. 0)
-  Example    :
-
-      my $aligned_member = $proteintree_adaptor->
-                            fetch_AlignedMember_by_member_id_root_id
-                            (
-                             $member->get_canonical_peptide_Member->member_id
-                            );
-
+  Example    : my $aligned_member = $proteintree_adaptor->
+                 fetch_AlignedMember_by_member_id_root_id($member->get_canonical_Member->member_id);
   Description: Fetches from the database the protein_tree that contains the member_id
   Returntype : Bio::EnsEMBL::Compara::GeneTreeMember
   Exceptions :
@@ -170,11 +164,9 @@ sub fetch_by_gene_Member_root_id {
 sub fetch_AlignedMember_by_member_id_root_id {
   my ($self, $member_id, $clusterset_id) = @_;
 
-  my $constraint = "WHERE tm.member_id = $member_id and m.member_id = $member_id";
+  my $constraint = "tm.member_id = $member_id and m.member_id = $member_id";
   $constraint .= " AND tr.clusterset_id = $clusterset_id" if($clusterset_id and $clusterset_id>0);
-  my $final_clause = "order by tm.node_id desc";
-  $self->final_clause($final_clause);
-  my ($node) = @{$self->_generic_fetch($constraint)};
+  my ($node) = @{$self->generic_fetch($constraint, '', "ORDER BY tm.node_id DESC")};
   return $node;
 }
 
@@ -182,14 +174,8 @@ sub fetch_AlignedMember_by_member_id_root_id {
 
   Arg[1]     : int member_id of a peptide member (longest translation)
   Arg[2]     : [optional] int clusterset_id (def. 0)
-  Example    :
-
-      my $aligned_member = $proteintree_adaptor->
-                            fetch_AlignedMember_by_member_id_mlssID
-                            (
-                             $member->get_canonical_peptide_Member->member_id, $mlssID
-                            );
-
+  Example    : my $aligned_member = $proteintree_adaptor->
+                 fetch_AlignedMember_by_member_id_mlssID($member->get_canonical_Member->member_id, $mlssID);
   Description: Fetches from the database the protein_tree that contains the member_id
   Returntype : Bio::EnsEMBL::Compara::GeneTreeMember
   Exceptions :
@@ -201,9 +187,9 @@ sub fetch_AlignedMember_by_member_id_root_id {
 sub fetch_AlignedMember_by_member_id_mlssID {
   my ($self, $member_id, $mlss_id) = @_;
 
-  my $constraint = "WHERE tm.member_id = $member_id and m.member_id = $member_id";
+  my $constraint = "tm.member_id = $member_id and m.member_id = $member_id";
   $constraint .= " AND tr.method_link_species_set_id = $mlss_id" if($mlss_id and $mlss_id>0);
-  my ($node) = @{$self->_generic_fetch($constraint)};
+  my ($node) = @{$self->generic_fetch($constraint)};
   return $node;
 }
 
@@ -225,9 +211,8 @@ sub gene_member_id_is_in_tree {
 sub fetch_all_AlignedMembers_by_root_id {
   my ($self, $root_id) = @_;
 
-  my $constraint = "WHERE (tm.member_id IS NOT NULL) AND (t.root_id = $root_id)";
-  my $nodes = $self->_generic_fetch($constraint);
-  return $nodes;
+  my $constraint = "(tm.member_id IS NOT NULL) AND (t.root_id = $root_id)";
+  return $self->generic_fetch($constraint);
 
 }
 
@@ -311,7 +296,7 @@ sub store_tree {
     my $root_id = $self->store($tree->root);
 
     # Secondly, the tree itself
-    if ($tree->adaptor and $tree->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor') and $tree->adaptor eq $self) {
+    if ($tree->adaptor) {
         # Update 
         my $sth = $self->prepare("UPDATE gene_tree_root SET tree_type = ?, member_type = ?, clusterset_id = ?, method_link_species_set_id = ?, stable_id = ?, version = ? WHERE root_id = ?");
         #print "UPDATE INTO gene_tree_root (", $root_id, " ", $tree->tree_type, " ", $tree->member_type, " ", $tree->clusterset_id, " ", $tree->method_link_species_set_id, " ", $tree->stable_id, " ", $tree->version, "\n";
@@ -336,9 +321,7 @@ sub store_node {
     throw("set arg must be a [Bio::EnsEMBL::Compara::GeneTreeNode] not a $node");
   }
 
-  if($node->adaptor and
-     $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor') and
-     $node->adaptor eq $self)
+  if($node->adaptor)
   {
     #already stored so just update
     return $self->update_node($node);
@@ -349,7 +332,7 @@ sub store_node {
     $parent_id = $node->parent->node_id;
   }
 
-  if (($node ne $node->root) or not $node->node_id->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+  if (($node ne $node->root) or defined $node->root->{'_node_id'}) {
     $root_id = $node->root->node_id;
   }
   #print "inserting parent_id=$parent_id, root_id=$root_id\n";
@@ -506,9 +489,8 @@ sub _tag_capabilities {
 #
 ##################################
 
-sub columns {
-  my $self = shift;
-  return ['t.node_id',
+sub _columns {
+  return ('t.node_id',
           't.parent_id',
           't.root_id',
           't.left_index',
@@ -525,37 +507,19 @@ sub columns {
           'tm.cigar_line',
 
           @{Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->columns()}
-          ];
+          );
 }
 
-sub tables {
-  my $self = shift;
-  return [['gene_tree_node', 't']];
+sub _tables {
+  return (['gene_tree_node', 't']);
 }
 
 sub left_join_clause {
-    my $self = shift;
     return "LEFT JOIN gene_tree_member tm ON t.node_id = tm.node_id LEFT JOIN member m ON tm.member_id = m.member_id LEFT JOIN gene_tree_root tr ON t.root_id = tr.root_id";
-}
-
-sub default_where_clause {
-    return "";
 }
 
 sub _get_starting_lr_index {
   return 1;
-}
-
-sub _objs_from_sth {
-  my ($self, $sth) = @_;
-  my $node_list = [];
-
-  while(my $rowhash = $sth->fetchrow_hashref) {
-    my $node = $self->create_instance_from_rowhash($rowhash);
-    push @$node_list, $node;
-  }
-
-  return $node_list;
 }
 
 

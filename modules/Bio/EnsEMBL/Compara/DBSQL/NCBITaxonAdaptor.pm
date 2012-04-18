@@ -45,36 +45,17 @@ sub fetch_node_by_taxon_id {
     throw ("taxon_id is not defined");
   }
 
-  my $constraint = "WHERE t.taxon_id = $taxon_id";
-  my ($node) = @{$self->_generic_fetch($constraint)};
+  my $constraint = "t.taxon_id = $taxon_id";
+  my ($node) = @{$self->generic_fetch($constraint)};
   unless ($node) {
-    my $new_taxon_id = $self->fetch_node_id_by_merged_taxon_id($taxon_id);
-    if (defined $new_taxon_id) {
-      $constraint = "WHERE t.taxon_id = $new_taxon_id";
-      ($node) = @{$self->_generic_fetch($constraint)};
-    }
+    my $join = [[['ncbi_taxa_name', 'n2'], 'n2.name_class = "merged_taxon_id" AND t.taxon_id = n2.taxon_id']];
+    $constraint = "n2.name = $taxon_id";
+    ($node) = @{$self->generic_fetch($constraint, $join)};
     if ($node) {
-      warning("The given taxon_id=$taxon_id is now deprecated and has been merged with taxon_id=".$node->taxon_id,"\n");
+      warning("The given taxon_id=$taxon_id is now deprecated and has been merged with taxon_id=".$node->taxon_id."\n");
     }
   }
   return $node;
-}
-
-sub fetch_node_id_by_merged_taxon_id {
-  my ($self, $taxon_id) = @_;
-
-  if (! defined $taxon_id) {
-    throw "taxon_id is undefined";
-  }
-
-  my $sql = "SELECT t.taxon_id FROM ncbi_taxa_node t, ncbi_taxa_name n WHERE n.name = ? and n.name_class = 'merged_taxon_id' AND t.taxon_id = n.taxon_id LIMIT 1";
-
-  my $sth = $self->dbc->prepare($sql);
-  $sth->execute($taxon_id);
-  my ($merged_taxon_id) = $sth->fetchrow_array();
-  $sth->finish;
-
-  return $merged_taxon_id;
 }
 
 
@@ -98,8 +79,8 @@ sub fetch_node_by_name {
     throw ("name is undefined");
   }
 
-  my $constraint = "WHERE n.name = '$name'";
-  my ($node) = @{$self->_generic_fetch($constraint)};
+  my $constraint = "n.name = '$name'";
+  my ($node) = @{$self->generic_fetch($constraint)};
   return $node;
 }
 
@@ -123,10 +104,45 @@ sub fetch_node_by_genome_db_id {
     throw "gdbID is undefined";
   }
 
-  my $constraint = "JOIN genome_db gdb ON ( t.taxon_id = gdb.taxon_id) 
-                    WHERE gdb.genome_db_id=$gdbID";
-  my ($node) = @{$self->_generic_fetch($constraint)};
+  my $join = [[['genome_db', 'gdb'], 't.taxon_id = gdb.taxon_id']];
+  my $constraint = "gdb.genome_db_id=$gdbID";
+  my ($node) = @{$self->generic_fetch($constraint, $join)};
   return $node;
+}
+
+
+#
+# Methods reimplemented because of the SQL column taxon_id (instead of node_id)
+################################################################################
+
+
+=head2 fetch_all
+
+  Arg[1]     : -none-
+  Example    : $ncbi_roots = $ncbitaxon_adaptor->fetch_all();
+  Description: Fetches from the database all the root nodes
+  Returntype : arrayref of Bio::EnsEMBL::Compara::NCBITaxon
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub fetch_all {
+  my ($self) = @_;
+
+  my $table = ($self->_tables)[0]->[1];
+  my $constraint = "$table.taxon_id = $table.root_id";
+  return $self->generic_fetch($constraint);
+}
+
+
+=head2 fetch_node_by_node_id
+  Description: Alias for fetch_node_by_taxon_id. Please use the later instead
+=cut
+
+sub fetch_node_by_node_id {
+    my $self = shift;
+    return $self->fetch_node_by_taxon_id(@_);
 }
 
 
@@ -140,7 +156,6 @@ sub fetch_node_by_genome_db_id {
 
 =cut
 
-
 sub fetch_parent_for_node {
   my ($self, $node) = @_;
 
@@ -148,8 +163,8 @@ sub fetch_parent_for_node {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
-  my $constraint = "WHERE t.taxon_id = " . $node->_parent_id;
-  my ($parent) = @{$self->_generic_fetch($constraint)};
+  my $constraint = "t.taxon_id = " . $node->_parent_id;
+  my ($parent) = @{$self->generic_fetch($constraint)};
   return $parent;
 }
 
@@ -160,29 +175,16 @@ sub fetch_parent_for_node {
 # subclass override methods
 #
 ##################################
-sub _objs_from_sth {
-  my ($self, $sth) = @_;
 
-  my $node_list = [];
-  while(my $rowhash = $sth->fetchrow_hashref) {
-    my $node = $self->create_instance_from_rowhash($rowhash);        
-    push @$node_list, $node;
-  }
-
-  return $node_list;
-}
-
-sub tables {
-  my $self = shift;
-  return [['ncbi_taxa_node', 't'],
+sub _tables {
+  return (['ncbi_taxa_node', 't'],
           ['ncbi_taxa_name', 'n']
-         ];
+         );
 }
 
 
-sub columns {
-  my $self = shift;
-  return ['t.taxon_id as node_id',
+sub _columns {
+  return ('t.taxon_id as node_id',
           't.parent_id',
           't.left_index',
           't.right_index',
@@ -190,13 +192,12 @@ sub columns {
           't.rank',
           't.genbank_hidden_flag',
           'n.name'
-          ];
+          );
 }
 
 
-sub default_where_clause {
-  my $self = shift;
-  return "t.taxon_id = n.taxon_id and n.name_class='scientific name'";
+sub _default_where_clause {
+    return "t.taxon_id = n.taxon_id AND n.name_class='scientific name'";
 }
 
 
@@ -263,7 +264,7 @@ sub update {
   }
   my $root_id = $node->root->node_id;
 
-  my $table= $self->tables->[0]->[0];
+  my $table= ($self->_tables)[0]->[0];
   my $sql = "UPDATE $table SET ".
                "parent_id=$parent_id".
                ",root_id=$root_id".

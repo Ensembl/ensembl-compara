@@ -103,8 +103,8 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 
   my $genomic_align_trees = [];
   foreach my $root_id (@$root_ids) {
-      my $constraint = "WHERE gat.root_id = $root_id";
-      my $genomic_align_nodes = $self->_generic_fetch($constraint);
+      my $constraint = "gat.root_id = $root_id";
+      my $genomic_align_nodes = $self->generic_fetch($constraint);
       my $root = $self->_build_tree_from_nodes($genomic_align_nodes);
       push @$genomic_align_trees, $root;
   }
@@ -149,7 +149,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   ## and links to the GenomicAlignTree entries. We extract
   ## the list of node IDs for the root of the GenomicAlignTrees
   ###########################################################################
-  my $constraint = "WHERE ga.method_link_species_set_id = $method_link_species_set_id
+  my $constraint = "ga.method_link_species_set_id = $method_link_species_set_id
       AND ga.dnafrag_id = $dnafrag_id";
 
   if (defined($start) and defined($end)) {
@@ -168,8 +168,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
     $final_clause = " LIMIT $limit_index_start, $limit_number";
   }
 
-  my $sql = $self->_construct_sql_query($constraint);
-  my $sth = $self->prepare($sql . $final_clause);
+  my $sql = $self->construct_sql_query($constraint, undef, $final_clause);
+  my $sth = $self->prepare($sql);
   $sth->execute();
   my $ref_to_root_hash = {};
   while(my $rowhash = $sth->fetchrow_hashref) {
@@ -188,10 +188,10 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   my $genomic_align_trees = [];
   while (my ($reference_genomic_align_id, $root_node_id) = each %$ref_to_root_hash) {
     #This does not work. Use same fix as fetch_by_GenomicAlignBlock
-    #$constraint = "WHERE gat.root_id = $root_node_id";
-    #my $genomic_align_nodes = $self->_generic_fetch($constraint);
+    #$constraint = "gat.root_id = $root_node_id";
+    #my $genomic_align_nodes = $self->generic_fetch($constraint);
 
-    $sql = "SELECT " . join(",", @{$self->columns}) . 	 
+    $sql = "SELECT " . join(",", $self->_columns) . 	 
 	   " FROM genomic_align_tree gat". " LEFT JOIN genomic_align ga USING (node_id) WHERE gat.root_id = $root_node_id";
 
     $sth = $self->prepare($sql); 	 
@@ -433,7 +433,7 @@ sub _fetch_by_genomic_align_block {
 
   #print STDERR "root_id $root_id\n";
   #whole tree
-  $sql = "SELECT " . join(",", @{$self->columns}) .  
+  $sql = "SELECT " . join(",", $self->_columns) .  
     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align ga USING (node_id) WHERE gat.root_id = $root_id";
 
   $sth = $self->prepare($sql);
@@ -446,8 +446,8 @@ sub _fetch_by_genomic_align_block {
 
   $genomic_align_trees = [$root];
 
- #my $constraint = "WHERE gat.node_id = $root_id";
- # my $genomic_align_trees = $self->_generic_fetch($constraint);
+ #my $constraint = "gat.node_id = $root_id";
+ # my $genomic_align_trees = $self->generic_fetch($constraint);
   if (@$genomic_align_trees > 1) {
     warning("Found more than 1 tree. This shouldn't happen. Returning the first one only");
   }
@@ -740,11 +740,11 @@ sub store_node {
 sub fetch_node_by_node_id {
   my ($self, $node_id) = @_;
 
-  #my $table= $self->tables->[0]->[1];
-  #my $constraint = "WHERE $table.node_id = $node_id";
-  #my ($node) = @{$self->_generic_fetch($constraint)};
+  #my $table=($self->_tables)[0]->[1];
+  #my $constraint = "$table.node_id = $node_id";
+  #my ($node) = @{$self->generic_fetch($constraint)};
 
-  my $sql = "SELECT " . join(",", @{$self->columns}) .  
+  my $sql = "SELECT " . join(",", $self->_columns) .  
      " FROM genomic_align_tree gat". " LEFT JOIN genomic_align ga USING (node_id) WHERE gat.node_id = " . $node_id;
    my $sth = $self->prepare($sql);
    $sth->execute;
@@ -773,11 +773,11 @@ sub fetch_node_by_node_id {
      throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
    }
 
-   #my $table= $self->tables->[0]->[1];
-   #my $constraint = "WHERE $table.node_id = " . $node->_parent_id;
-   #my ($parent) = @{$self->_generic_fetch($constraint)};
+   #my $table=($self->_tables)[0]->[1];
+   #my $constraint = "$table.node_id = " . $node->_parent_id;
+   #my ($parent) = @{$self->generic_fetch($constraint)};
 
-   my $sql = "SELECT " . join(",", @{$self->columns}) .  
+   my $sql = "SELECT " . join(",", $self->_columns) .  
      " FROM genomic_align_tree gat". " LEFT JOIN genomic_align ga USING (node_id) WHERE gat.node_id = " . $node->_parent_id;
 
    my $sth = $self->prepare($sql);
@@ -807,7 +807,7 @@ sub fetch_all_children_for_node {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
-  my $sql = "SELECT " . join(",", @{$self->columns}) .  
+  my $sql = "SELECT " . join(",", $self->_columns) .  
      " FROM genomic_align_tree gat". " LEFT JOIN genomic_align ga ON (gat.node_id = ga.node_id) WHERE gat.parent_id = " . $node->node_id;
 
    my $sth = $self->prepare($sql);
@@ -838,18 +838,18 @@ sub fetch_all_children_for_node {
      throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
    }
 
-   my $alias = $self->tables->[0]->[1];
+   my $alias = ($self->_tables)[0]->[1];
 
    my $left_index = $node->left_index;
    my $right_index = $node->right_index;
 
-#   my $constraint = "WHERE $alias.left_index <= $left_index AND $alias.right_index >= $right_index";
+#   my $constraint = "$alias.left_index <= $left_index AND $alias.right_index >= $right_index";
 
 
-#   my $nodes = $self->_generic_fetch($constraint);
+#   my $nodes = $self->generic_fetch($constraint);
 
 
-   my $sql = "SELECT " . join(",", @{$self->columns}) .  
+   my $sql = "SELECT " . join(",", $self->_columns) .  
      " FROM genomic_align_tree gat". " LEFT JOIN genomic_align ga USING (node_id) WHERE gat.left_index <= $left_index AND gat.right_index >= $right_index";
 
    my $sth = $self->prepare($sql);
@@ -1118,91 +1118,76 @@ sub set_neighbour_nodes_for_leaf {
 
 }
 
-=head2 columns
+
+#
+# Implementation of abstract DBSQL::BaseAdaptor methods
+#########################################################
+
+=head2 _columns
 
   Args       : none
-  Example    : $columns = $self->columns()
+  Example    : $columns = $self->_columns()
   Description: a list of [tablename, alias] pairs for use with generic_fetch
   Returntype : list of [tablename, alias] pairs
   Exceptions : none
-  Caller     : NestedSetAdaptor::generic_fetch
+  Caller     : BaseAdaptor::generic_fetch
   Status     : At risk
 
 =cut
 
-sub columns {
-  my $self = shift;
-  return ['gat.node_id',
-          'gat.parent_id',
-          'gat.root_id',
-          'gat.left_index',
-          'gat.right_index',
-          'gat.distance_to_parent',
-          'gat.left_node_id',
-          'gat.right_node_id',
-          'ga.genomic_align_id',
-          'ga.genomic_align_block_id',
-          'ga.method_link_species_set_id',
-          'ga.dnafrag_id',
-          'ga.dnafrag_start',
-          'ga.dnafrag_end',
-          'ga.dnafrag_strand',
-          'ga.cigar_line',
-          'ga.visible',
-          ];
+sub _columns {
+  return qw(gat.node_id
+            gat.parent_id
+            gat.root_id
+            gat.left_index
+            gat.right_index
+            gat.distance_to_parent
+            gat.left_node_id
+            gat.right_node_id
+            ga.genomic_align_id
+            ga.genomic_align_block_id
+            ga.method_link_species_set_id
+            ga.dnafrag_id
+            ga.dnafrag_start
+            ga.dnafrag_end
+            ga.dnafrag_strand
+            ga.cigar_line
+            ga.visible
+           );
 }
 
-=head2 tables
+=head2 _tables
 
   Args       : none
   Example    : $tables = $self->_tables()
   Description: a list of [tablename, alias] pairs for use with generic_fetch
   Returntype : list of [tablename, alias] pairs
   Exceptions : none
-  Caller     : NestedSetAdaptor::generic_fetch
+  Caller     : BaseAdaptor::generic_fetch
   Status     : At risk
 
 =cut
 
-sub tables {
-  my $self = shift;
-  return [
+sub _tables {
+  return (
       ['genomic_align_tree', 'gat'],
       ['genomic_align', 'ga'],
-      ];
+      );
 }
 
-=head2 left_join_clause
-
-  Args       : none
-  Example    : none
-  Description: a left join clause for use with generic_fetch
-  Returntype : none
-  Exceptions : none
-  Caller     : NestedSetAdaptor::generic_fetch
-  Status     : At risk
-
-=cut
-
-sub left_join_clause {
-#  return "LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.group_id)".
-#      " LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id)";
-  return "";
-}
-
-=head2 default_where_clause
+=head2 _default_where_clause
 
   Args       : none
   Example    : none
   Description: a where clause for use with generic_fetch
   Returntype : none
   Exceptions : none
-  Caller     : NestedSetAdaptor::generic_fetch
+  Caller     : BaseAdaptor::generic_fetch
   Status     : At risk
 
 =cut
 
-sub default_where_clause {
+sub _default_where_clause {
 
   return "gat.node_id = ga.node_id";
 #  return "gat.node_id = gag.node_id AND gag.genomic_align_id = ga.genomic_align_id";

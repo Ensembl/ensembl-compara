@@ -55,7 +55,7 @@ use Bio::EnsEMBL::Utils::SqlHelper;
 
 use Bio::EnsEMBL::Compara::NestedSet;
 
-use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
 ###########################
@@ -77,11 +77,9 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 sub fetch_all {
   my ($self) = @_;
 
-  my $table = $self->tables->[0]->[1];
-  my $constraint = "WHERE $table.node_id = $table.root_id";
-  my $nodes = $self->_generic_fetch($constraint);
-
-  return $nodes;
+  my $table = ($self->_tables)[0]->[1];
+  my $constraint = "$table.node_id = $table.root_id";
+  return $self->generic_fetch($constraint);
 }
 
 sub fetch_node_by_node_id {
@@ -91,9 +89,9 @@ sub fetch_node_by_node_id {
     throw("node_id is undefined")
   }
 
-  my $table= $self->tables->[0]->[1];
-  my $constraint = "WHERE $table.node_id = $node_id";
-  my ($node) = @{$self->_generic_fetch($constraint)};
+  my $table= ($self->_tables)[0]->[1];
+  my $constraint = "$table.node_id = $node_id";
+  my ($node) = @{$self->generic_fetch($constraint)};
   return $node;
 }
 
@@ -105,9 +103,9 @@ sub fetch_parent_for_node {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
-  my $table= $self->tables->[0]->[1];
-  my $constraint = "WHERE $table.node_id = " . $node->_parent_id;
-  my ($parent) = @{$self->_generic_fetch($constraint)};
+  my $table= ($self->_tables)[0]->[1];
+  my $constraint = "$table.node_id = " . $node->_parent_id;
+  my ($parent) = @{$self->generic_fetch($constraint)};
   return $parent;
 }
 
@@ -119,8 +117,8 @@ sub fetch_all_children_for_node {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
-  my $constraint = "WHERE parent_id = " . $node->node_id;
-  my $kids = $self->_generic_fetch($constraint);
+  my $constraint = "parent_id = " . $node->node_id;
+  my $kids = $self->generic_fetch($constraint);
   foreach my $child (@{$kids}) { $node->add_child($child); }
 
   return $node;
@@ -133,14 +131,12 @@ sub fetch_all_leaves_indexed {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
-  my $table= $self->tables->[0]->[1];
+  my $table= ($self->_tables)[0]->[1];
   my $left_index = $node->left_index;
   my $right_index = $node->right_index;
   my $root_id = $node->_root_id;
-  my $constraint = "WHERE ($table.root_id = $root_id) AND (($table.right_index - $table.left_index) = 1) AND ($table.left_index > $left_index) AND ($table.right_index < $right_index)";
-  my @leaves = @{$self->_generic_fetch($constraint)};
-
-  return \@leaves;
+  my $constraint = "($table.root_id = $root_id) AND (($table.right_index - $table.left_index) = 1) AND ($table.left_index > $left_index) AND ($table.right_index < $right_index)";
+  return $self->generic_fetch($constraint);
 }
 
 sub fetch_subtree_under_node {
@@ -156,13 +152,13 @@ sub fetch_subtree_under_node {
     return $node;
   }
 
-  my $alias = $self->tables->[0]->[1];
+  my $alias = ($self->_tables)[0]->[1];
 
   my $left_index = $node->left_index;
   my $right_index = $node->right_index;
   my $root_id = $node->_root_id;
-  my $constraint = "WHERE ($alias.root_id = $root_id) AND ($alias.left_index >= $left_index) AND ($alias.right_index <= $right_index)";
-  my $all_nodes = $self->_generic_fetch($constraint);
+  my $constraint = "($alias.root_id = $root_id) AND ($alias.left_index >= $left_index) AND ($alias.right_index <= $right_index)";
+  my $all_nodes = $self->generic_fetch($constraint);
   push @{$all_nodes}, $node;
   $self->_build_tree_from_nodes($all_nodes);
   return $node;
@@ -194,10 +190,8 @@ sub fetch_subroot_by_left_right_index {
   my $right_index = $node->right_index;
   my $root_id = $node->_root_id;
 
-  my $constraint = "WHERE parent_id = $root_id";
-  $constraint .= " AND left_index<=$left_index";
-  $constraint .= " AND right_index>=$right_index";
-  return $self->_generic_fetch($constraint)->[0];
+  my $constraint = "parent_id = $root_id AND left_index<=$left_index AND right_index>=$right_index";
+  return $self->generic_fetch($constraint)->[0];
 }
 
 
@@ -222,14 +216,14 @@ sub fetch_root_by_node {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
-  my $alias = $self->tables->[0]->[1];
+  my $alias = ($self->_tables)[0]->[1];
 
   my $left_index = $node->left_index;
   my $right_index = $node->right_index;
   my $root_id = $node->_root_id;
 
-  my $constraint = "WHERE ($alias.root_id = $root_id) AND ($alias.left_index <= $left_index) AND ($alias.right_index >= $right_index)";
-  my $nodes = $self->_generic_fetch($constraint);
+  my $constraint = "($alias.root_id = $root_id) AND ($alias.left_index <= $left_index) AND ($alias.right_index >= $right_index)";
+  my $nodes = $self->generic_fetch($constraint);
   my $root = $self->_build_tree_from_nodes($nodes);
 
   return $root;
@@ -265,12 +259,11 @@ sub fetch_first_shared_ancestor_indexed {
     $max_right = $node2->right_index if $node2->right_index > $max_right;
   }
 
-  my $alias = $self->tables->[0]->[1];
-  my $constraint = "WHERE $alias.root_id=$root_id AND $alias.left_index <= $min_left";
-  $constraint .= " AND $alias.right_index >= $max_right";
+  my $alias = ($self->_tables)[0]->[1];
+  my $constraint = "$alias.root_id=$root_id AND $alias.left_index <= $min_left AND $alias.right_index >= $max_right";
   my $final = " ORDER BY ($alias.right_index-$alias.left_index) LIMIT 1";
   
-  my $ancestor = $self->_generic_fetch($constraint, '', $final)->[0];
+  my $ancestor = $self->generic_fetch($constraint, '', $final)->[0];
   return $ancestor;
 }
 
@@ -293,7 +286,7 @@ sub update {
   }
   my $root_id = $node->root->node_id;
 
- my $table= $self->tables->[0]->[0];
+ my $table= ($self->_tables)[0]->[0];
   my $sql = "UPDATE $table SET ".
                "parent_id=$parent_id".
                ",root_id=$root_id".
@@ -394,7 +387,7 @@ sub _get_starting_lr_index {
 
 sub _lr_table_name {
   my ($self) = @_;
-  return $self->tables->[0]->[0];
+  return ($self->_tables)[0]->[0];
 }
 
 ##################################
@@ -403,29 +396,16 @@ sub _lr_table_name {
 #
 ##################################
 
-sub tables {
-  my $self = shift;
-  throw("must subclass and provide correct table names");
-}
 
-sub columns {
-  my $self = shift;
-  throw("must subclass and provide correct column names");
-}
+sub _objs_from_sth {
+    my ($self, $sth) = @_;
+    my $node_list = [];
 
-sub left_join_clause {
-  return "";
-}
-
-sub default_where_clause {
-  my $self = shift;
-  return '';
-}
-
-sub final_clause {
-  my $self = shift;
-  $self->{'final_clause'} = shift if(@_);
-  return $self->{'final_clause'};
+    while (my $rowhash = $sth->fetchrow_hashref) {
+        my $node = $self->create_instance_from_rowhash($rowhash);
+        push @$node_list, $node;
+    }
+    return $node_list;
 }
 
 
@@ -538,92 +518,6 @@ sub _build_tree_from_nodes {
     else { $root = $node; }
   }
   return $root;
-}
-
-
-###################################
-#
-# _generic_fetch system
-#
-#####################################
-
-=head2 _generic_fetch
-
-  Arg [1]    : (optional) string $constraint
-               An SQL query constraint (i.e. part of the WHERE clause)
-  Arg [2]    : (optional) string $logic_name
-               the logic_name of the analysis of the features to obtain
-  Example    : $fts = $a->_generic_fetch('WHERE contig_id in (1234, 1235)', 'Swall');
-  Description: Performs a database fetch and returns feature objects in
-               contig coordinates.
-  Returntype : listref of Bio::EnsEMBL::SeqFeature in contig coordinates
-  Exceptions : none
-  Caller     : BaseFeatureAdaptor, ProxyDnaAlignFeatureAdaptor::_generic_fetch
-
-=cut
-
-sub _generic_fetch {
-  my ($self, $constraint, $join, $final_clause) = @_;
-
-  my $sql = $self->_construct_sql_query($constraint, $join, $final_clause);
-
-#  print STDERR $sql,"\n";
-  my $node_list = [];
-  my $sth = $self->prepare($sql);
-  $sth->execute;
-  $node_list = $self->_objs_from_sth($sth);
-  $sth->finish;
-
-  return $node_list;
-}
-
-sub _construct_sql_query {
-  my ($self, $constraint, $join, $final_clause) = @_;
-
-  my @tables = @{$self->tables};
-  my $columns = join(', ', @{$self->columns()});
-
-  my $default_where = $self->default_where_clause;
-  if($default_where) {
-    if($constraint) {
-      $constraint .= " AND $default_where ";
-    } else {
-      $constraint = " WHERE $default_where ";
-    }
-  }
-
-  if ($join) {
-    foreach my $single_join (@{$join}) {
-      my ($tablename, $condition, $extracolumns) = @{$single_join};
-      if ($tablename && $condition) {
-        push @tables, $tablename;
-
-        if($constraint) {
-          $constraint .= " AND $condition";
-        } else {
-          $constraint = " WHERE $condition";
-        }
-      }
-      if ($extracolumns) {
-        $columns .= ", " . join(', ', @{$extracolumns});
-      }
-    }
-  }
-
-  #construct a nice table string like 'table1 t1, table2 t2'
-  my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
-
-  my $sql = "SELECT $columns FROM $tablenames";
-  $sql .= " ". $self->left_join_clause;
-  $sql .= " $constraint" if($constraint);
-
-  #append additional clauses which may have been defined
-  if (!$final_clause) {
-    $final_clause = $self->final_clause;
-  }
-  $sql .= " $final_clause" if($final_clause);
-
-  return $sql;
 }
 
 

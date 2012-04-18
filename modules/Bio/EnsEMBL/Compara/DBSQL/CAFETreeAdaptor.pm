@@ -66,10 +66,8 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor');
 
 sub fetch_all {
     my ($self) = @_;
-    my $table = $self->tables->[0]->[1];
-    my $constraint = "WHERE ctn.node_id = ct.root_id";
-    my $nodes = $self->_generic_fetch($constraint);
-    return $nodes;
+    my $constraint = "ctn.node_id = ct.root_id";
+    return $self->generic_fetch($constraint);
 }
 
 =head2 fetch_by_GeneTree
@@ -93,22 +91,19 @@ sub fetch_by_GeneTree {
 
     my $node_id = $genetree->node_id();  # root_id?
 
-    my $cafeTree = $self->fetch_by_family_id($node_id);
-    return $cafeTree;
+    return $self->fetch_by_family_id($node_id);
 }
 
 sub fetch_all_children_for_node {
     my ($self, $node) = @_;
-	my $fam_id = $node->fam_id();
+    my $fam_id = $node->fam_id();
 
-    if (defined $fam_id) { ## The family is already in the db
-        $self->final_clause("AND cta.fam_id = $fam_id");
-        $self->SUPER::fetch_all_children_for_node($node);
-        $self->final_clause(" ");
-    } else {
-        $self->SUPER::fetch_all_children_for_node($node);
-    }
-    return;
+    my $constraint = "parent_id = " . $node->node_id;
+    $constraint .= " AND cta.fam_id = $fam_id " if defined $fam_id;
+    my $kids = $self->generic_fetch($constraint);
+    foreach my $child (@{$kids}) { $node->add_child($child); }
+
+    return $node;
 }
 
 =head2 fetch_by_family_id
@@ -128,8 +123,8 @@ sub fetch_by_family_id {
     unless (defined $fam_id) {
         throw("fam_id is undefined");
     }
-    my $constraint = "WHERE cta.fam_id=$fam_id AND ctn.node_id = ctn.root_id";
-    my $trees = $self->_generic_fetch($constraint);
+    my $constraint = "cta.fam_id=$fam_id AND ctn.node_id = ctn.root_id";
+    my $trees = $self->generic_fetch($constraint);
     if (scalar @$trees > 1) {
         throw ("Many trees returned by fetch_by_family_id (only 1 expected)\n");
     }
@@ -342,56 +337,41 @@ sub _delete_tagvalue {
 #
 ##################################
 
-sub columns {
-    my ($self) = @_;
-    return ['ctn.node_id',
-            'ctn.parent_id',
-            'ctn.root_id',
-            'ctn.left_index',
-            'ctn.right_index',
-            'ctn.distance_to_parent',
+sub _columns {
+    return qw(ctn.node_id
+            ctn.parent_id
+            ctn.root_id
+            ctn.left_index
+            ctn.right_index
+            ctn.distance_to_parent
 
-            'ct.method_link_species_set_id',
-            'ct.species_tree',
-            'ct.lambdas',
-            'ct.p_value_lim',
+            ct.method_link_species_set_id
+            ct.species_tree
+            ct.lambdas
+            ct.p_value_lim
 
-            'cta.fam_id',
-            'cta.taxon_id',
-            'cta.n_members',
-            'cta.p_value',
-            'cta.avg_pvalue',
-           ];
+            cta.fam_id
+            cta.taxon_id
+            cta.n_members
+            cta.p_value
+            cta.avg_pvalue
+           );
 }
 
-sub tables {
-    my ($self) = @_;
-    return [[('CAFE_tree_attr', 'cta')]];
+sub _tables {
+    return (['CAFE_tree_attr', 'cta'], ['CAFE_tree_node', 'ctn']);
 }
 
 sub left_join_clause {
-    my ($self) = @_;
-    return "JOIN CAFE_tree_node ctn USING (node_id) LEFT JOIN CAFE_tree ct on (ctn.node_id = ct.root_id) ";
+    return "LEFT JOIN CAFE_tree ct ON (ctn.node_id = ct.root_id) ";
 }
 
-sub default_where_clause {
-    my ($self) = @_;
-    return "";
+sub _default_where_clause {
+    return "cta.node_id = ctn.node_id"
 }
 
 sub _get_starting_lr_index {
     return 1;
-}
-
-sub _objs_from_sth {
-    my ($self, $sth) = @_;
-    my $node_list = [];
-
-    while (my $rowhash = $sth->fetchrow_hashref) {
-        my $node = $self->create_instance_from_rowhash($rowhash);
-        push @$node_list, $node;
-    }
-    return $node_list;
 }
 
 
