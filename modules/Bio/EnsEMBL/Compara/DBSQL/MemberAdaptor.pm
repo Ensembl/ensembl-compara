@@ -5,11 +5,11 @@ use warnings;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump deprecate);
 
-our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 
 
@@ -62,31 +62,18 @@ sub fetch_by_dbID {
   if ( defined $member_is_cached ) {   
     $obj = $member_is_cached;
   } else { 
-    my ($name, $syn) = @{$self->tables->[0]};
+    my ($name, $syn) = @{($self->_tables)[0]};
   
     #construct a constraint like 't1.table1_id = 1'
     my $constraint = "${syn}.${name}_id = $id";
   
-    #return first element of _generic_fetch list
+    #return first element of generic_fetch list
   
-    ($obj) = @{$self->_generic_fetch($constraint)};  
+    ($obj) = @{$self->generic_fetch($constraint)};  
     $self->member_cache($id,$obj);  
   }
   return $obj;
 }
-
-
-
-## previous function 
-#   my ($name, $syn) = @{$self->tables->[0]};
-#   #construct a constraint like 't1.table1_id = 1'
-#   my $constraint = "${syn}.${name}_id = $id";
-  #return first element of _generic_fetch list
-#   my ($obj) = @{$self->_generic_fetch($constraint)};
-#   return $obj;
-#}
-
-
 
 
 
@@ -96,7 +83,7 @@ sub fetch_by_dbIDs {
 
   my $ids = join(',' , @_);
   my $constraint = "m.member_id in ($ids)";
-  return $self->_generic_fetch($constraint);
+  return $self->generic_fetch($constraint);
 }
 
 sub fetch_all_by_sequence_id {
@@ -106,7 +93,7 @@ sub fetch_all_by_sequence_id {
     unless (defined($sequence_id));
 
   my $constraint = "m.sequence_id = $sequence_id";
-  return $self->_generic_fetch($constraint);
+  return $self->generic_fetch($constraint);
 }
 
 =head2 fetch_by_source_stable_id
@@ -140,8 +127,8 @@ sub fetch_by_source_stable_id {
   $constraint = "m.source_name = '$source_name' AND " if ($source_name);
   $constraint .= "m.stable_id = '$stable_id'";
 
-  #return first element of _generic_fetch list
-  my ($obj) = @{$self->_generic_fetch($constraint)};
+  #return first element of generic_fetch list
+  my ($obj) = @{$self->generic_fetch($constraint)};
   return $obj;
 }
 
@@ -154,8 +141,8 @@ sub fetch_all_by_source_stable_ids {
   $constraint = "m.source_name = '$source_name' AND " if ($source_name);
   $constraint .= "m.stable_id IN ('".join("','", @$stable_ids). "')";
 
-  #return first element of _generic_fetch list
-  my $obj = $self->_generic_fetch($constraint);
+  #return first element of generic_fetch list
+  my $obj = $self->generic_fetch($constraint);
   return $obj;
 }
 
@@ -177,7 +164,7 @@ sub fetch_all_by_source_stable_ids {
 sub fetch_all {
   my $self = shift;
 
-  return $self->_generic_fetch();
+  return $self->generic_fetch();
 }
 
 
@@ -199,7 +186,7 @@ sub fetch_all {
 
 sub fetch_all_Iterator {
     my ($self, $cache_size) = @_;
-    return $self->_generic_fetch_Iterator($cache_size,"");
+    return $self->generic_fetch_Iterator($cache_size,"");
 }
 
 =head2 fetch_all_Iterator
@@ -223,13 +210,13 @@ sub fetch_all_Iterator {
 sub fetch_all_by_source_Iterator {
     my ($self, $source_name, $cache_size) = @_;
     throw("source_name arg is required\n") unless ($source_name);
-    return $self->_generic_fetch_Iterator($cache_size, "member.source_name = '$source_name'");
+    return $self->generic_fetch_Iterator($cache_size, "member.source_name = '$source_name'");
 }
 
-sub _generic_fetch_Iterator {
+sub generic_fetch_Iterator {
     my ($self, $cache_size, $constraint) = @_;
 
-    my ($name, $syn) = @{$self->tables->[0]};
+    my ($name, $syn) = @{($self->_tables)[0]};
     # Fetch all the dbIDs
     my $sql = "SELECT ${name}.${name}_id FROM ${name}";
     if ($constraint) {
@@ -291,7 +278,7 @@ sub fetch_all_by_source {
 
   my $constraint = "m.source_name = '$source_name'";
 
-  return $self->_generic_fetch($constraint);
+  return $self->generic_fetch($constraint);
 }
 
 
@@ -327,7 +314,7 @@ sub fetch_all_by_source_taxon {
 
   my $constraint = "m.source_name = '$source_name' and m.taxon_id = $taxon_id";
 
-  return $self->_generic_fetch($constraint);
+  return $self->generic_fetch($constraint);
 }
 
 =head2 fetch_all_by_source_genome_db_id
@@ -351,37 +338,24 @@ sub fetch_all_by_source_genome_db_id {
 
   my $constraint = "m.source_name = '$source_name' and m.genome_db_id = $genome_db_id";
 
-  return $self->_generic_fetch($constraint);
+  return $self->generic_fetch($constraint);
 }
 
 
 sub _fetch_all_by_source_taxon_chr_name_start_end_strand_limit {
   my ($self,$source_name,$taxon_id,$chr_name,$chr_start,$chr_end,$chr_strand,$limit) = @_;
 
-  $self->throw("source_name and taxon_id args are required") 
-    unless($source_name && $taxon_id && $chr_name && $chr_start && $chr_end && $chr_strand && $limit);
-
-  my $constraint = "m.source_name = '$source_name' and m.taxon_id = $taxon_id 
-                    and m.chr_name = \"$chr_name\" 
-                    and m.chr_start >= $chr_start and m.chr_end <= $chr_end 
-                    and m.chr_strand = $chr_strand limit $limit";
-
-  return $self->_generic_fetch($constraint);
-}
-
-sub _fetch_all_by_source_taxon_chr_name_start_end_strand {
-  my ($self,$source_name,$taxon_id,$chr_name,$chr_start,$chr_end,$chr_strand) = @_;
-
-  $self->throw("source_name and taxon_id args are required") 
+  $self->throw("all args are required") 
     unless($source_name && $taxon_id && $chr_name && $chr_start && $chr_end && $chr_strand);
 
   my $constraint = "m.source_name = '$source_name' and m.taxon_id = $taxon_id 
-                    and m.chr_name = \"$chr_name\" 
+                    and m.chr_name = '$chr_name' 
                     and m.chr_start >= $chr_start and m.chr_end <= $chr_end 
                     and m.chr_strand = $chr_strand";
 
-  return $self->_generic_fetch($constraint);
+  return $self->generic_fetch($constraint, undef, defined $limit ? "LIMIT $limit" : "");
 }
+
 
 =head2 get_source_taxon_count
 
@@ -464,7 +438,7 @@ sub fetch_all_by_relation {
     throw();
   }
 
-  return $self->_generic_fetch($constraint, $join);
+  return $self->generic_fetch($constraint, $join);
 }
 
 
@@ -489,7 +463,7 @@ sub fetch_all_by_subset_id {
 
   my $join = [[['subset_member', 'sm'], 'm.member_id = sm.member_id']];
 
-  return $self->_generic_fetch($constraint, $join);
+  return $self->generic_fetch($constraint, $join);
 }
 
 
@@ -516,7 +490,7 @@ sub fetch_gene_for_peptide_member_id {
 
   my $obj = undef;
   eval {
-    ($obj) = @{$self->_generic_fetch($constraint, $join)};
+    ($obj) = @{$self->generic_fetch($constraint, $join)};
   };
   return $obj;
 }
@@ -543,7 +517,7 @@ sub fetch_all_peptides_for_gene_member_id {
 
   my $peplist = undef;
   eval {
-    $peplist = $self->_generic_fetch($constraint);
+    $peplist = $self->generic_fetch($constraint);
   };
   return $peplist;
 }
@@ -571,9 +545,8 @@ sub fetch_canonical_member_for_gene_member_id {
 
     my $obj = undef;
     eval {
-        ($obj) = @{$self->_generic_fetch($constraint, $join)};
+        ($obj) = @{$self->generic_fetch($constraint, $join)};
     };
-    $self->_final_clause("");
     return $obj;
 }
 
@@ -609,80 +582,12 @@ sub fetch_canonical_transcript_member_for_gene_member_id {
 #
 ###################
 
-=head2 _generic_fetch
-
-  Arg [1]    : (optional) string $constraint
-               An SQL query constraint (i.e. part of the WHERE clause)
-  Arg [2]    : (optional) string $logic_name
-               the logic_name of the analysis of the features to obtain
-  Example    : $fts = $a->_generic_fetch('contig_id in (1234, 1235)', 'Swall');
-  Description: Performs a database fetch and returns feature objects in
-               contig coordinates.
-  Returntype : listref of Bio::EnsEMBL::SeqFeature in contig coordinates
-  Exceptions : none
-  Caller     : BaseFeatureAdaptor, ProxyDnaAlignFeatureAdaptor::_generic_fetch
-
-=cut
-  
-sub _generic_fetch {
-  my ($self, $constraint, $join) = @_;
-
-  my @tables = @{$self->tables};
-  my $columns = join(', ', @{$self->columns()});
-  
-  if ($join) {
-    foreach my $single_join (@{$join}) {
-      my ($tablename, $condition, $extra_columns) = @{$single_join};
-      if ($tablename && $condition) {
-        push @tables, $tablename;
-        
-        if($constraint) {
-          $constraint .= " AND $condition";
-        } else {
-          $constraint = " $condition";
-        }
-      } 
-      if ($extra_columns) {
-        $columns .= ", " . join(', ', @{$extra_columns});
-      }
-    }
-  }
-      
-  #construct a nice table string like 'table1 t1, table2 t2'
-  my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
-
-  my $sql = "SELECT $columns FROM $tablenames";
-
-  my $default_where = $self->_default_where_clause;
-  my $final_clause = $self->_final_clause;
-
-  #append a where clause if it was defined
-  if($constraint) { 
-    $sql .= " WHERE $constraint ";
-    if($default_where) {
-      $sql .= " AND $default_where ";
-    }
-  } elsif($default_where) {
-    $sql .= " WHERE $default_where ";
-  }
-
-  #append additional clauses which may have been defined
-  $sql .= " $final_clause" if($final_clause);
-
-  #print("$sql\n");
-  my $sth = $self->prepare($sql);
-  $sth->execute;
-
-#  print STDERR $sql,"\n";
-  return $self->_objs_from_sth($sth);
+sub _tables {
+  return (['member', 'm']);
 }
 
-sub tables {
-  return [['member', 'm']];
-}
-
-sub columns {
-  return ['m.member_id',
+sub _columns {
+  return ('m.member_id',
           'm.source_name',
           'm.stable_id',
           'm.version',
@@ -696,7 +601,7 @@ sub columns {
           'm.sequence_id',
           'm.gene_member_id',
           'm.display_label'
-          ];
+          );
 }
 
 sub create_instance_from_rowhash {
@@ -754,7 +659,7 @@ sub _objs_from_sth {
     my ($member,$attribute);
     $member = $self->create_instance_from_rowhash($rowhash);
     
-    my @_columns = @{$self->columns};
+    my @_columns = $self->_columns;
     if (scalar keys %{$rowhash} > scalar @_columns) {
       $attribute = new Bio::EnsEMBL::Compara::Attribute;
       $attribute->member_id($rowhash->{'member_id'});
@@ -773,17 +678,6 @@ sub _objs_from_sth {
   return \@members
 }
 
-sub _default_where_clause {
-  my $self = shift;
-  return '';
-}
-
-sub _final_clause {
-  my $self = shift;
-
-  $self->{'_final_clause'} = shift if(@_);
-  return $self->{'_final_clause'};
-}
 
 sub _fetch_sequence_by_id {
   my ($self, $sequence_id) = @_;
