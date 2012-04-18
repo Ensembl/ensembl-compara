@@ -468,8 +468,8 @@ sub fetch_protein_tree_with_gene {
 
   my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $gene_stable_id);
   $member->print_member;
-  $member->get_canonical_peptide_Member->print_member;
-  my $aligned_member = $treeDBA->fetch_AlignedMember_by_member_id_root_id($member->get_canonical_peptide_Member->member_id);
+  $member->get_canonical_Member->print_member;
+  my $aligned_member = $treeDBA->fetch_AlignedMember_by_member_id_root_id($member->get_canonical_Member->member_id);
   warn ''.$aligned_member."\n";
   $aligned_member->print_member;
   $aligned_member->gene_member->print_member;

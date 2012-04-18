@@ -487,7 +487,7 @@ sub add_matching_predictions {
 
     #the building method uses member_id's to reference unique nodes
     #which are stored in the node_id value, copy to member_id
-    $node->member_id($gene_member->get_canonical_peptide_Member->member_id);
+    $node->member_id($gene_member->get_canonical_Member->member_id);
     $node->method_link_species_set_id($self->param('mlss_id'));
     # We won't do the store until the end, otherwise it will affect the main loop
     print STDERR "adding matching prediction $gene_stable_id_to_add\n" if($self->debug);

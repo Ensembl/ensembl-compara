@@ -147,7 +147,7 @@ sub build_peptide_dbentries_from_Member {
     $db_names = [];
   }
   
-  my $peptide_member = ($member->source_name() eq 'ENSEMBLGENE') ? $member->get_canonical_peptide_Member() : $member;
+  my $peptide_member = ($member->source_name() eq 'ENSEMBLGENE') ? $member->get_canonical_Member() : $member;
   my $dbc = $peptide_member->genome_db()->db_adaptor()->dbc();
   my $t = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $dbc);
   

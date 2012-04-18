@@ -86,8 +86,8 @@ sub load_orthos {
       next;
     }
 
-    my $pep_member1 = $memberDBA->fetch_canonical_peptide_member_for_gene_member_id($gene1->dbID);
-    my $pep_member2 = $memberDBA->fetch_canonical_peptide_member_for_gene_member_id($gene2->dbID);
+    my $pep_member1 = $memberDBA->fetch_canonical_member_for_gene_member_id($gene1->dbID);
+    my $pep_member2 = $memberDBA->fetch_canonical_member_for_gene_member_id($gene2->dbID);
     if(!defined($pep_member1)) {
       warn("WARNING: no peptides for gene $stable_id1\n");
       next;

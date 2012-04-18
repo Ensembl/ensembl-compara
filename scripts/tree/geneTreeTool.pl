@@ -1302,7 +1302,7 @@ sub fetch_protein_tree_with_gene {
       fetch_by_source_stable_id('ENSEMBLGENE', $gene_stable_id);
   return 0 unless (defined $member);
   my $aligned_member = $treeDBA->
-    fetch_AlignedMember_by_member_id_root_id( $member->get_canonical_peptide_Member->member_id, $self->{'clusterset_id'});
+    fetch_AlignedMember_by_member_id_root_id( $member->get_canonical_Member->member_id, $self->{'clusterset_id'});
   return 0 unless (defined $aligned_member);
   my $node = $aligned_member->subroot;
 
@@ -2403,7 +2403,7 @@ sub _nytprof_get_homologous_peptide_ids_from_gene {
 #       # $self->{tree} = $self->{treeDBA}->fetch_by_Member_root_id($member);
 #       my $aligned_member = $self->{treeDBA}->fetch_AlignedMember_by_member_id_root_id
 #         (
-#          $member->get_canonical_peptide_Member->member_id,
+#          $member->get_canonical_Member->member_id,
 #          1);
 #       next unless (defined $aligned_member);
 #       my $node = $aligned_member->subroot;
@@ -2484,7 +2484,7 @@ sub _nytprof_get_homologous_peptide_ids_from_gene {
 #       print "$gene_stable_id,na,na,na,na,na\n";
 #       next;
 #     }
-#     my $canonical_peptide_member = $member->get_canonical_peptide_Member;
+#     my $canonical_peptide_member = $member->get_canonical_Member;
 #     my $canonical_peptide_member_stable_id = $canonical_peptide_member->stable_id;
 #     my $description = $canonical_peptide_member->description;
 #     $description =~ /Transcript:(\S+)\s+/;
@@ -3521,7 +3521,7 @@ sub _zmenu_prof {
   my $members = $self->{memberDBA}->fetch_all_by_source_taxon('ENSEMBLGENE',$self->{gdba}->fetch_by_name_assembly("Homo sapiens")->taxon_id);
   foreach my $member (@$members) {
     next unless ($member->stable_id eq 'ENSG00000199172');
-    my $prot_member = $member->get_canonical_peptide_Member;
+    my $prot_member = $member->get_canonical_Member;
     my $node = $self->{treeDBA}->fetch_by_Member_root_id($member);
     $DB::single=1;1;
     next unless defined($node);
@@ -3703,7 +3703,7 @@ sub _mxe_metatranscript_reads {
       $is_translateable = -1;
     }
     my $increase = 0;
-    my $canonical_translation = $member->get_canonical_peptide_Member->sequence;
+    my $canonical_translation = $member->get_canonical_Member->sequence;
     $translated_seq =~ s/\*$//;
     $increase = ((length($translated_seq) - length($canonical_translation))*100 / length($canonical_translation));
     if (1 == $is_translateable) {
@@ -3850,7 +3850,7 @@ sub _mxe_metatranscript {
       $is_translateable = -1;
     }
     my $increase = 0;
-    my $canonical_translation = $member->get_canonical_peptide_Member->sequence;
+    my $canonical_translation = $member->get_canonical_Member->sequence;
     $translated_seq =~ s/\*$//;
     $increase = ((length($translated_seq) - length($canonical_translation))*100 / length($canonical_translation));
     if (1 == $is_translateable) {
@@ -4007,7 +4007,7 @@ sub _check_human_reads {
       $is_translateable = -1;
     }
     my $increase = 0;
-    my $canonical_translation = $member->get_canonical_peptide_Member->sequence;
+    my $canonical_translation = $member->get_canonical_Member->sequence;
     $translated_seq =~ s/\*$//;
     $increase = ((length($translated_seq) - length($canonical_translation))*100 / length($canonical_translation));
     if (1 == $is_translateable) {
@@ -4748,7 +4748,7 @@ sub _dump_genetree_slices {
 #   }
 
 #   foreach my $this_homology (@homologies) {
-#     my ($member1,$member2) = map { $_->get_canonical_peptide_Member } @{$this_homology->gene_list};
+#     my ($member1,$member2) = map { $_->get_canonical_Member } @{$this_homology->gene_list};
 #     my $transcript1 = $member1->get_Transcript;
 #     my $transcript2 = $member2->get_Transcript;
 #     my $seq1 = Bio::Seq->new
@@ -5420,7 +5420,7 @@ sub _interpro_coverage {
   foreach my $gene (@$genes) {
     my $stable_id = $gene->stable_id;
     my $canonical_peptide;
-    eval { $canonical_peptide = $gene->get_canonical_peptide_Member;};
+    eval { $canonical_peptide = $gene->get_canonical_Member;};
     my $protein_stable_id = $canonical_peptide->stable_id;
     my $mcl_id = $canonical_peptide->member_id . "_" . $gdb_id;
     my @interpro_entries = @{$gene_adaptor->get_Interpro_by_geneid($stable_id)};
@@ -6789,9 +6789,9 @@ sub _extra_dn_ds {
 #         my $homology1 = $self->{_homologies_by_cluster}{$root_id}{$homology_id1};
 #         my $homology2 = $self->{_homologies_by_cluster}{$root_id}{$homology_id2};
 #         my @homology1_member_ids;
-#         @homology1_member_ids = map { $_->get_canonical_peptide_Member->member_id } @{$homology1->gene_list};
+#         @homology1_member_ids = map { $_->get_canonical_Member->member_id } @{$homology1->gene_list};
 #         my @homology2_member_ids;
-#         @homology2_member_ids = map { $_->get_canonical_peptide_Member->member_id } @{$homology2->gene_list};
+#         @homology2_member_ids = map { $_->get_canonical_Member->member_id } @{$homology2->gene_list};
 #         my %tetrad;
 #         $tetrad{$homology1_member_ids[0]} = 1;
 #         $tetrad{$homology1_member_ids[1]} = 1;
@@ -7009,9 +7009,9 @@ sub _extra_dn_ds {
 #         my $homology1 = $self->{_homologies_by_cluster}{$root_id}{$homology_id1};
 #         my $homology2 = $self->{_homologies_by_cluster}{$root_id}{$homology_id2};
 #         my @homology1_member_ids;
-#         @homology1_member_ids = map { $_->get_canonical_peptide_Member->member_id } @{$homology1->gene_list};
+#         @homology1_member_ids = map { $_->get_canonical_Member->member_id } @{$homology1->gene_list};
 #         my @homology2_member_ids;
-#         @homology2_member_ids = map { $_->get_canonical_peptide_Member->member_id } @{$homology2->gene_list};
+#         @homology2_member_ids = map { $_->get_canonical_Member->member_id } @{$homology2->gene_list};
 #         my %tetrad;
 #         $tetrad{$homology1_member_ids[0]} = 1;
 #         $tetrad{$homology1_member_ids[1]} = 1;
@@ -8212,7 +8212,7 @@ sub _genetree_domains {
 #   my $singleton_member_id = $self->{_singl_tb};
 #   open OUT, ">/lustre/scratch1/ensembl/avilella/genetree_biology/singleton_treebest/$singleton_member_id" or die "$!";
 #   my $gene_member = $self->{memberDBA}->fetch_by_dbID($singleton_member_id);
-#   my $member = $gene_member->get_canonical_peptide_Member;
+#   my $member = $gene_member->get_canonical_Member;
 #   my $pafs = $self->{ppafa}->fetch_all_by_qmember_id($member->dbID);
 #   my $connecting_trees;
 #   foreach my $paf (@$pafs) {
@@ -8932,7 +8932,7 @@ sub _genetree_domains {
 #     next if $gdb_name =~ /ncestral/;
 #     my @gene_members = @{$self->{ha}->fetch_all_orphans_by_GenomeDB($gdb)};
 #     foreach my $gene_member (@gene_members) {
-#       my $canonical = $gene_member->get_canonical_peptide_Member;
+#       my $canonical = $gene_member->get_canonical_Member;
 #       my $canonical_member_id = $canonical->member_id;
 #       my $canonical_stable_id = $canonical->stable_id;
 #       $self->{cluster_to_mcl1}{$cluster_count}{$canonical_stable_id} = $canonical_member_id;
@@ -8955,7 +8955,7 @@ sub _genetree_domains {
 #   while (my $cluster = shift @clusters) {
 #     next if ('1' eq $cluster->get_tagvalue('cluster_had_to_be_broken_down'));
 #     foreach my $leaf (@{$cluster->get_all_leaves}) {
-#       # my $canonical = $leaf->gene_member->get_canonical_peptide_Member;
+#       # my $canonical = $leaf->gene_member->get_canonical_Member;
 #       # my @all_transl = @{$leaf->gene_member->get_all_peptide_Members};
 #       my $canonical_member_id = $leaf->member_id;
 #       my $canonical_stable_id = $leaf->stable_id;
@@ -9000,7 +9000,7 @@ sub _genetree_domains {
 #     next if $gdb_name =~ /ncestral/;
 #     my @gene_members = @{$self->{ha}->fetch_all_orphans_by_GenomeDB($gdb)};
 #     foreach my $gene_member (@gene_members) {
-#       my $canonical = $gene_member->get_canonical_peptide_Member;
+#       my $canonical = $gene_member->get_canonical_Member;
 #       # my @all_transl = @{$gene_member->get_all_peptide_Members};
 #       my $canonical_stable_id = $canonical->stable_id;
 #       my $member_id = $canonical->member_id;
@@ -9024,7 +9024,7 @@ sub _genetree_domains {
 #   while (my $cluster = shift @clusters2) {
 #     next if ('1' eq $cluster->get_tagvalue('cluster_had_to_be_broken_down'));
 #     foreach my $leaf (@{$cluster->get_all_leaves}) {
-#       # my $canonical = $leaf->gene_member->get_canonical_peptide_Member;
+#       # my $canonical = $leaf->gene_member->get_canonical_Member;
 #       # my @all_transl = @{$leaf->gene_member->get_all_peptide_Members};
 #       my $canonical_stable_id = $leaf->stable_id;
 #       my $member_id = $leaf->member_id;
@@ -9159,7 +9159,7 @@ sub _genetree_domains {
 #     next if $gdb_name =~ /ancest/;
 #     my @gene_members = @{$self->{ha}->fetch_all_orphans_by_GenomeDB($gdb)};
 #     foreach my $gene_member (@gene_members) {
-#       my $canonical = $gene_member->get_canonical_peptide_Member;
+#       my $canonical = $gene_member->get_canonical_Member;
 #       my @all_transl = @{$gene_member->get_all_peptide_Members};
 #       my $canonical_member_id = $canonical->member_id;
 #       if (1 == scalar @all_transl) {
@@ -9190,7 +9190,7 @@ sub _genetree_domains {
 
 #   while (my $cluster = shift @clusters) {
 #     foreach my $leaf (@{$cluster->get_all_leaves}) {
-#       my $canonical = $leaf->gene_member->get_canonical_peptide_Member;
+#       my $canonical = $leaf->gene_member->get_canonical_Member;
 #       my @all_transl = @{$leaf->gene_member->get_all_peptide_Members};
 #       my $canonical_member_id = $canonical->member_id;
 #       if (1 == scalar @all_transl) {
@@ -10153,7 +10153,7 @@ sub _genetree_domains {
 #     my $gene2_stable_id = $gene2->stable_id;
 #     next if defined($self->{ignore}{$gene1_stable_id});
 #     next if defined($self->{ignore}{$gene2_stable_id});
-#     my @pafs = @{$self->{ppafa}->fetch_all_by_qmember_id_hmember_id($gene1->get_canonical_peptide_Member->dbID,$gene2->get_canonical_peptide_Member->dbID)};
+#     my @pafs = @{$self->{ppafa}->fetch_all_by_qmember_id_hmember_id($gene1->get_canonical_Member->dbID,$gene2->get_canonical_Member->dbID)};
 #     my $perc_id = "NA";
 #     my $perc_pos = "NA";
 #     my $score = "NA";
@@ -10269,9 +10269,9 @@ sub _genetree_domains {
 #         my $homology1 = $self->{_homologies_by_cluster}{$root_id}{$homology_id1};
 #         my $homology2 = $self->{_homologies_by_cluster}{$root_id}{$homology_id2};
 #         my @homology1_member_ids;
-#         @homology1_member_ids = map { $_->get_canonical_peptide_Member->member_id } @{$homology1->gene_list};
+#         @homology1_member_ids = map { $_->get_canonical_Member->member_id } @{$homology1->gene_list};
 #         my @homology2_member_ids;
-#         @homology2_member_ids = map { $_->get_canonical_peptide_Member->member_id } @{$homology2->gene_list};
+#         @homology2_member_ids = map { $_->get_canonical_Member->member_id } @{$homology2->gene_list};
 #         my $node_a = $self->{treeDBA}->fetch_AlignedMember_by_member_id_root_id($homology1_member_ids[0],$self->{'clusterset_id'});
 #         my $node_b = $self->{treeDBA}->fetch_AlignedMember_by_member_id_root_id($homology1_member_ids[1],$self->{'clusterset_id'});
 #         my $node_c = $self->{treeDBA}->fetch_AlignedMember_by_member_id_root_id($homology2_member_ids[0],$self->{'clusterset_id'});
@@ -11148,7 +11148,7 @@ sub _genetree_domains {
 #   foreach my $homology (@{$homologies}) {
 #     my $hom_subtype = $homology->description;
 #     next unless ($hom_subtype =~ /^within_species_paralog/);
-#     my @two_ids = map { $_->get_canonical_peptide_Member->member_id } @{$homology->gene_list};
+#     my @two_ids = map { $_->get_canonical_Member->member_id } @{$homology->gene_list};
 #     my $leaf_node_id = $homology->node_id;
 #     my $tree = $self->{treeDBA}->fetch_node_by_node_id($leaf_node_id);
 #     my $node_a = $self->{treeDBA}->fetch_AlignedMember_by_member_id_root_id($two_ids[0],$self->{'clusterset_id'});
@@ -11513,8 +11513,8 @@ sub _split_genes_stats {
         print STDERR $homology->homology_key, ",contained gene split\n" if ($self->{debug});
         next;
       }
-      my $transcript1 = $member1->get_canonical_peptide_Member->get_Transcript;
-      my $transcript2 = $member2->get_canonical_peptide_Member->get_Transcript;
+      my $transcript1 = $member1->get_canonical_Member->get_Transcript;
+      my $transcript2 = $member2->get_canonical_Member->get_Transcript;
       my @prev_introns = @{$transcript1->get_all_Introns};
       my @next_introns = @{$transcript2->get_all_Introns};
       my $prev_intron_length = 'na'; $prev_intron_length = $prev_introns[-1]->length if (0 < scalar @prev_introns);
@@ -12483,7 +12483,7 @@ sub _merge_split_genes {
 #   print STDERR "# $gdb_name has ", scalar(@$members), " orphan members\n";
 #   my $count = 0;
 #   foreach my $member (@$members) {
-#     $pafs = $self->{ppafa}->fetch_all_by_qmember_id($member->get_canonical_peptide_Member->dbID);
+#     $pafs = $self->{ppafa}->fetch_all_by_qmember_id($member->get_canonical_Member->dbID);
 #     unless (0 != scalar(@$pafs)) {
 #       print STDERR $member->stable_id, ",null,null,null,null,null,null,null,null,null,null\n";
 #       next;
@@ -12624,7 +12624,7 @@ sub _merge_split_genes {
 
 #   foreach my $homology (@homologies) {
 #     my $homology_description = $homology->description;
-#     my @two_ids = map { $_->get_canonical_peptide_Member->member_id } @{$homology->gene_list};
+#     my @two_ids = map { $_->get_canonical_Member->member_id } @{$homology->gene_list};
 #     my $subtype = $homology->subtype;
 #     my $pafs = $pafDBA->fetch_all_by_qmember_id_hmember_id($two_ids[0],$two_ids[1]);
 #     $subtype =~ s/\///g; $subtype =~ s/\ /\_/g;
@@ -13222,7 +13222,7 @@ sub _merge_split_genes {
 #     $out_string .= $cluster->node_id . ",$taxon";
 #     my @stable_ids;
 #     foreach my $member (@leaves) {
-#       my $pafs = $self->{ppafa}->fetch_all_by_qmember_id_hgenome_db_id($member->get_canonical_peptide_Member->dbID,$set->{$sp2});
+#       my $pafs = $self->{ppafa}->fetch_all_by_qmember_id_hgenome_db_id($member->get_canonical_Member->dbID,$set->{$sp2});
 #       my $paf;
 #       my $member_id = $member->dbID;
 #       my $member_stable_id = $member->stable_id;

@@ -37,7 +37,7 @@ foreach my $this_gene (@$these_genes) {
       "ENSEMBLGENE", $this_gene->stable_id);
 
   ## Get the canonical peptide: the gene trees are built using these
-  my $canonical_peptide = $member->get_canonical_peptide_Member;
+  my $canonical_peptide = $member->get_canonical_Member;
   print "Canonical peptide is: ", $canonical_peptide->stable_id, "\n";
 
   ## Get the tree for this peptide (cluster_set_id = 1)

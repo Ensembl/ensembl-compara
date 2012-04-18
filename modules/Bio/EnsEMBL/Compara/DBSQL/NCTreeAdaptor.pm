@@ -58,12 +58,4 @@ sub _default_where_clause {
     return "tr.member_type = 'ncrna'";
 }
 
-
-sub _get_canonical_Member {
-  my $self = shift;
-  my $member = shift;
-
-  return $member->get_canonical_transcript_Member;
-}
-
 1;

@@ -121,7 +121,7 @@ sub fetch_by_Member_root_id {
   return undef unless (defined $root_id);
   my $aligned_member = $self->fetch_AlignedMember_by_member_id_root_id
     (
-    $self->_get_canonical_Member($member)->member_id,
+    $member->get_canonical_Member->member_id,
      $clusterset_id);
   return undef unless (defined $aligned_member);
   my $node = $aligned_member->subroot;

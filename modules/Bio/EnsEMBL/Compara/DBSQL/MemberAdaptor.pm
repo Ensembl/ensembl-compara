@@ -7,7 +7,7 @@ use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump deprecate);
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -549,69 +549,58 @@ sub fetch_all_peptides_for_gene_member_id {
 }
 
 
-=head2 fetch_canonical_peptide_member_for_gene_member_id
+=head2 fetch_canonical_member_for_gene_member_id
 
   Arg [1]    : int member_id of a gene member
-  Example    : $pepMembers = $memberAdaptor->fetch_canonical_peptide_member_for_gene_member_id($gene_member_id);
+  Example    : $members = $memberAdaptor->fetch_canonical_member_for_gene_member_id($gene_member_id);
   Description: given a member_id of a gene member,
-               fetches the canonical peptide member for this gene
+               fetches the canonical peptide / transcript member for this gene
   Returntype : Bio::EnsEMBL::Compara::Member object
   Exceptions :
   Caller     : general
 
 =cut
 
+sub fetch_canonical_member_for_gene_member_id {
+    my ($self, $gene_member_id) = @_;
+
+    throw() unless (defined $gene_member_id);
+
+    my $constraint = "m.gene_member_id = '$gene_member_id'";
+    my $join = [[['subset_member', 'sm'], 'sm.member_id = m.member_id']];
+
+    my $obj = undef;
+    eval {
+        ($obj) = @{$self->_generic_fetch($constraint, $join)};
+    };
+    $self->_final_clause("");
+    return $obj;
+}
+
+
+=head2 fetch_canonical_peptide_member_for_gene_member_id
+
+  Description: DEPRECATED. Use fetch_canonical_member_for_gene_member_id() instead.
+
+=cut
+
 sub fetch_canonical_peptide_member_for_gene_member_id {
-  my ($self, $gene_member_id) = @_;
-
-  throw() unless (defined $gene_member_id);
-
-  my $constraint = "m.gene_member_id = '$gene_member_id'";
-  my $join = [[['subset_member', 'sm'], 'sm.member_id = m.member_id']];
-
-  #fixed fetch_canonical_peptide_member_for_gene_member_id so that it
-  #returns the same canonical peptide used in the
-  #peptide_align_feature.  There are some cases where a gene will have
-  #multiple transcripts but with the same translation sequence (and
-  #hence the same sequence length). The information comes from the
-  #ensembl core database and is specified by the canonical_transcript
-  #relationship
-
-  my $obj = undef;
-  eval {
-    ($obj) = @{$self->_generic_fetch($constraint, $join)};
-  };
-  $self->_final_clause("");
-  return $obj;
+    my $self = shift;
+    deprecate("Use fetch_canonical_member_for_gene_member_id() instead");
+    return $self->fetch_canonical_member_for_gene_member_id(@_);
 }
 
 
 =head2 fetch_canonical_transcript_member_for_gene_member_id
 
-  Arg [1]    : int member_id of a gene member
-  Example    : $transMembers = $memberAdaptor->fetch_canonical_transcript_member_for_gene_member_id($gene_member_id);
-  Description: given a member_id of a gene member,
-               fetches the canonical transcript member for this gene
-  Returntype : Bio::EnsEMBL::Compara::Member object
-  Exceptions :
-  Caller     : general
+  Description: DEPRECATED. Use fetch_canonical_member_for_gene_member_id() instead.
 
 =cut
 
 sub fetch_canonical_transcript_member_for_gene_member_id {
-  my ($self, $gene_member_id) = @_;
-
-  throw() unless (defined $gene_member_id);
-
-  my $constraint = "m.gene_member_id = '$gene_member_id'";
-  my $join = [[['subset_member', 'sm'], 'sm.member_id = m.member_id']];
-
-  my $obj = undef;
-  eval {
-    ($obj) = @{$self->_generic_fetch($constraint, $join)};
-  };
-  $self->_final_clause("");
-  return $obj;
+    my $self = shift;
+    deprecate("Use fetch_canonical_member_for_gene_member_id() instead");
+    return $self->fetch_canonical_member_for_gene_member_id(@_);
 }
 
 

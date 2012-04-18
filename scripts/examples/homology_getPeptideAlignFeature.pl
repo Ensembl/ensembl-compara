@@ -73,7 +73,7 @@ if ($compara_url) {
 
 my $member_adaptor = $compara_dba->get_MemberAdaptor;
 my $gene_member = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", $gene_stable_id);
-my $peptide_member = $gene_member->get_canonical_peptide_Member;
+my $peptide_member = $gene_member->get_canonical_Member;
 $peptide_member->print_member("query PEP\n");
 
 my $peptide_align_feature_adaptor = $compara_dba->get_PeptideAlignFeatureAdaptor;

@@ -1007,37 +1007,39 @@ sub translation {
 }
 
 
-=head2 get_canonical_peptide_Member
+=head2 get_canonical_Member
 
   Args       : none
-  Example    : $canonicalPepMember = $member->get_canonical_peptide_Member
-  Description: if member is an "ENSEMBLGENE" it will return the canonical peptide member
+  Example    : $canonicalMember = $member->get_canonical_Member
+  Description: if member is an "ENSEMBLGENE" it will return the canonical peptide / transcript member
                if member is an 'ENSEMBLPEP' it will get its gene member and have it
-               return the canonical peptide (which could be the same as the starting member)
+               if member is an 'ENSEMBLTRANS' it will get its gene member and have it
+               return the canonical peptide / transcript (which could be the same as the starting member)
   Returntype : Bio::EnsEMBL::Compara::Member or undef
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub get_canonical_peptide_Member {
+sub get_canonical_Member {
     my $self = shift;
 
     return unless($self->adaptor);
 
-    my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_canonical_peptide_member_for_gene_member_id')
+    my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_canonical_member_for_gene_member_id')
         ? $self->adaptor    # a MemberAdaptor or derivative
         : $self->adaptor->db->get_MemberAdaptor;
 
     if($self->source_name eq 'ENSEMBLGENE') {
 
-        return $able_adaptor->fetch_canonical_peptide_member_for_gene_member_id($self->dbID);
+        return $able_adaptor->fetch_canonical_member_for_gene_member_id($self->dbID);
 
-    } elsif($self->source_name eq 'ENSEMBLPEP') {
+    } elsif(($self->source_name eq 'ENSEMBLPEP') or ($self->source_name eq 'ENSEMBLTRANS')) {
 
         my $geneMember = $self->gene_member or return;
 
-        return $able_adaptor->fetch_canonical_peptide_member_for_gene_member_id($geneMember->dbID);
+        return $able_adaptor->fetch_canonical_member_for_gene_member_id($geneMember->dbID);
+
     } else {
 
         return undef;
@@ -1045,44 +1047,31 @@ sub get_canonical_peptide_Member {
 }
 
 
+=head2 get_canonical_peptide_Member
+
+  Description: DEPRECATED. Use get_canonical_Member() instead
+
+=cut
+
+sub get_canonical_peptide_Member {
+    my $self = shift;
+
+    deprecate('Use get_canonical_Member() instead');
+    return $self->get_canonical_Member(@_);
+}
+
+
 =head2 get_canonical_transcript_Member
 
-  Args       : none
-  Example    : $canonical_trans_member = $member->get_canonical_transcript_Member
-  Description: if member is an "ENSEMBLGENE" it will return the canonical transcript member
-               if member is an 'ENSEMBLTRANS' it will get its gene member and have it
-               return the canonical transcript (which could be the same as the starting member).
-               Note: This method is intended for ncRNA genes only. To access the canonical
-               transcript for a protein-coding gene, please refer to the
-               get_canonical_peptide_Member method
-  Returntype : Bio::EnsEMBL::Compara::Member or undef
-  Exceptions : none
-  Caller     : general
+  Description: DEPRECATED. Use get_canonical_Member() instead
 
 =cut
 
 sub get_canonical_transcript_Member {
     my $self = shift;
 
-    return unless($self->adaptor);
-
-    my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_canonical_transcript_member_for_gene_member_id')
-        ? $self->adaptor    # a MemberAdaptor or derivative
-        : $self->adaptor->db->get_MemberAdaptor;
-
-    if($self->source_name eq 'ENSEMBLGENE') {
-
-        return $able_adaptor->fetch_canonical_transcript_member_for_gene_member_id($self->dbID);
-
-    } elsif($self->source_name eq 'ENSEMBLTRANS') {
-
-        my $geneMember = $self->gene_member or return;
-
-        return $able_adaptor->fetch_canonical_transcript_member_for_gene_member_id($geneMember->dbID);
-    } else {
-
-        return undef;
-    }
+    deprecate('Use get_canonical_Member() instead');
+    return $self->get_canonical_Member(@_);
 }
 
 

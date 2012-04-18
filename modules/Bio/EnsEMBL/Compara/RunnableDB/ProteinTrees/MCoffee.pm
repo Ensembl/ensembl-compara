@@ -449,11 +449,11 @@ sub dumpProteinTreeToWorkdir {
     my $gene_member; my $canonical_member = undef;
     eval {
       $gene_member = $member->gene_member; 
-      $canonical_member = $gene_member->get_canonical_peptide_Member;
+      $canonical_member = $gene_member->get_canonical_Member;
     };
     if($self->debug() and $@) { print "ERROR IN EVAL (node_id=".$member->node_id.") : $@"; }
     unless (defined($canonical_member) && ($canonical_member->member_id eq $member->member_id) ) {
-      my $canonical_member2 = $gene_member->get_canonical_peptide_Member;
+      my $canonical_member2 = $gene_member->get_canonical_Member;
       my $clustered_stable_id = $member->stable_id;
       my $canonical_stable_id = $canonical_member->stable_id;
       $tree->store_tag('canon.'.$clustered_stable_id."_".$canonical_stable_id,1);

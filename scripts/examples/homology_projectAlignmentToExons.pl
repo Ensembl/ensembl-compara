@@ -33,7 +33,7 @@ my $member = $member_adaptor->
 my @mouse_homologies = @{$homology_adaptor->fetch_all_by_Member_paired_species($member, "Mus_musculus",['ENSEMBL_ORTHOLOGUES'])};
 my @rat_homologies = @{$homology_adaptor->fetch_all_by_Member_paired_species($member, "Rattus_norvegicus",['ENSEMBL_ORTHOLOGUES'])};
 
-my $aligned_member = $proteintree_adaptor->fetch_AlignedMember_by_member_id_root_id($member->get_canonical_peptide_Member->member_id);
+my $aligned_member = $proteintree_adaptor->fetch_AlignedMember_by_member_id_root_id($member->get_canonical_Member->member_id);
 
 sub print_transcript ($$)
 {
@@ -134,7 +134,7 @@ foreach my $homology (@mouse_homologies, @rat_homologies) {
     $gene2 = $temp;
   }
   my $member2 = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", $gene2->stable_id);
-  my $aligned_member2 = $proteintree_adaptor->fetch_AlignedMember_by_member_id_root_id($member2->get_canonical_peptide_Member->member_id);
+  my $aligned_member2 = $proteintree_adaptor->fetch_AlignedMember_by_member_id_root_id($member2->get_canonical_Member->member_id);
 
   print_transcript($aligned_member->get_Transcript, $cdna_simple_align);
   print_transcript($aligned_member2->get_Transcript, $cdna_simple_align);

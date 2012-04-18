@@ -43,7 +43,7 @@ foreach my $gene (@$genes) {
   	# finds a zebrafish gene
       $node_z = $leaf if ($leaf->taxon_id == 7955);
 	# finds the query gene
-	$node_h = $leaf if ($leaf->stable_id eq $member->get_canonical_peptide_Member->stable_id);
+	$node_h = $leaf if ($leaf->stable_id eq $member->get_canonical_Member->stable_id);
   }
   $node_h->print_member;
   $node_z->print_member,
