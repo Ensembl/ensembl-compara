@@ -279,7 +279,7 @@ sub _render_features {
       my $cell_style = $self->cell_style;
 
       foreach $col (@{$table_info->{'column_order'}||[]}) {
-        push @$columns, {'key' => $col, 'title' => $column_info->{$col}{'title'}, 'style' => $cell_style};
+        push @$columns, { 'key' => $col, 'style' => $cell_style, %{$column_info->{$col}} };
       }
 
       ## Add "extra" columns (unique to particular table types)
