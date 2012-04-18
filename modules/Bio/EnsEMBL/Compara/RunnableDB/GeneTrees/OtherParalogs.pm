@@ -100,6 +100,7 @@ sub run_analysis {
     my $starttime = time()*1000;
     my $gene_tree = $self->param('gene_tree');
     my $tree_node_id = $gene_tree->node_id;
+    $gene_tree->print_node if ($self->debug);
 
     my ($child1, $child2) = @{$gene_tree->children};
     $self->param('children', $gene_tree->children);
@@ -128,7 +129,7 @@ sub run_analysis {
         } else {
             $gene_tree->store_tag('node_type', 'speciation');
         }
-        print "setting node_type of the root to ", $gene_tree->get_tagvalue('node_type'), "\n";
+        print "setting node_type of the root to ", $gene_tree->get_tagvalue('node_type'), "\n" if ($self->debug);
     }
 
     # Each species
@@ -164,7 +165,7 @@ sub run_analysis {
 =head2 get_ancestor_species_hash
 
     This function is optimized for super-trees:
-     - It fetches all the gene tree leaves in one go (with left/right_index)
+     - It fetches all the gene tree leaves
      - It is able to jump from a super-tree to the sub-trees
      - It stores the list of all the leaves to save DB queries
 
@@ -177,9 +178,12 @@ sub get_ancestor_species_hash
     my $species_hash = $node->get_tagvalue('species_hash');
     return $species_hash if($species_hash);
 
+    print $node->node_id, " is a ", $node->tree->tree_type, "\n" if ($self->debug);
     my $gene_hash = {};
     if ($node->tree->tree_type eq 'tree') {
-        foreach my $leaf (@{$self->param('treeDBA')->fetch_all_leaves_indexed($node)}) {
+        foreach my $leaf (@{$node->get_all_leaves}) {
+            print "leaf " if ($self->debug);
+            $leaf->print_member if ($self->debug);
             $species_hash->{$leaf->genome_db_id} = 1 + ($species_hash->{$leaf->genome_db_id} || 0);
             push @{$gene_hash->{$leaf->genome_db_id}}, $leaf;
         }
@@ -190,6 +194,7 @@ sub get_ancestor_species_hash
         my $is_dup = 0;
         
         foreach my $child (@{$node->children}) {
+            print "child: ", $child->node_id, "\n" if ($self->debug);
             my $t_species_hash = $self->get_ancestor_species_hash($child);
             foreach my $genome_db_id (keys(%$t_species_hash)) {
                 $is_dup ||= (exists $species_hash->{$genome_db_id});
@@ -200,7 +205,7 @@ sub get_ancestor_species_hash
 
         $node->add_tag("is_dup", $is_dup);
     }
-
+    print $node->node_id, " contains ", scalar(keys %$species_hash), " species\n" if ($self->debug);
     $node->add_tag("species_hash", $species_hash);
     $node->add_tag("gene_hash", $gene_hash);
 
