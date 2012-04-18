@@ -188,7 +188,7 @@ sub feature_title {
               "; Strand: ".      ($f->reversed ? 'Reverse' : 'Forward') .
               "; Length: ".      ($f->end - $f->start +1) .
              # "; Type: ".        $self->get_atype($f) . ###### $f->atype .
-              "; Insert size: ". $f->isize .
+              "; Insert size: ". abs($f->isize) .
               "; Paired: ".       ($f->paired ? 'Yes' : 'No');
 
   if ($f->paired) {
