@@ -66,7 +66,7 @@ sub convert_to_drawing_parameters {
   my $extra_columns = [
                     {'key' => 'align',  'title' => 'Alignment length', 'sort' => 'numeric'}, 
                     {'key' => 'ori',    'title' => 'Rel ori'}, 
-                    {'key' => 'id',     'title' => '%id'}, 
+                    {'key' => 'id',     'title' => '%id', 'sort' => 'numeric'}, 
                     {'key' => 'score',  'title' => 'Score', 'sort' => 'numeric'}, 
                     {'key' => 'p-value', 'title' => 'p-value', 'sort' => 'numeric'},
   ];
