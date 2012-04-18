@@ -43,12 +43,6 @@ sub initialize_Text {
   $self->_init;
 }
 
-sub initialize_Excel {
-  my $self = shift; 
-  $self->add_body_elements(qw(content EnsEMBL::Web::Document::Content));
-  $self->_init;
-}
-
 sub initialize_XML {
   my $self = shift;
   my $doctype_version = shift || 'xhtml';
@@ -59,6 +53,8 @@ sub initialize_XML {
 }
 
 sub initialize_TextGz { shift->initialize_Text; }
+sub initialize_Excel  { shift->initialize_Text; }
+sub initialize_JSON   { shift->initialize_Text; }
 sub initialize_DAS    { shift->initialize_XML(@_); }
 
 sub initialize_error {
