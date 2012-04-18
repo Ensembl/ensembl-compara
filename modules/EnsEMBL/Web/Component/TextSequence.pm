@@ -949,7 +949,8 @@ sub class_to_style {
       eu   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONUTR'}->{'default'}" } ],
       ef   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONFLANK'}->{'default'}" } ],
       eo   => [ $i++, { 'background-color' => "#$styles->{'SEQ_EXONOTHER'}->{'default'}" } ],
-      eg   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONGENE'}->{'default'}", 'font-weight' => "bold" } ],
+      eg   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONGENE'}->{'default'}", 'font-weight' => "bold",
+                        'background-color' => "#$styles->{'SEQ_EXONOTHER'}->{'default'}" } ],
       c0   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC0'}->{'default'}" } ],
       c1   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC1'}->{'default'}" } ],
       cu   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONUTR'}->{'default'}" } ],
@@ -1033,7 +1034,6 @@ sub get_key {
   foreach my $type (keys %key) {
     if ($key{$type}{'class'}) {
       my $style = $class_to_style->{$key{$type}{'class'}}->[1];
-      
       $key{$type}{'default'} = $style->{'background-color'};
       $key{$type}{'label'}   = $style->{'color'};
     } else {
@@ -1055,6 +1055,7 @@ sub get_key {
       $image_config->{'legend'}->{$type} = $key{$type};
     }
   }
+
   
   $image_config->image_width(650);
   
