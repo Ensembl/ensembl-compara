@@ -217,10 +217,10 @@ foreach my $ref_name(keys %aligned_patch){
 				$mlssid, '\N', $gab_perc_id, $align_len, ($hum_dfs{ $patch_name } + $mlss_pref), "1"), "\n"; 
 			print join("\t", "GenomicAlign", ($gab->{ref_genomic_align_id} + $mlss_pref), 
 				($gab->{genomic_align_block_id} + $mlss_pref), $mlssid, $hum_dfs{ $ref_name }, 
-				$gab->{ref_start}, $gab->{ref_end}, $gab->{ref_strand}, $gab->{ref_aln_bases}, "1", "1"), "\n"; 
+				$gab->{ref_start}, $gab->{ref_end}, $gab->{ref_strand}, $gab->{ref_aln_bases}, "1", '\N'), "\n"; 
 			print join("\t", "GenomicAlign", ($gab->{patch_genomic_align_id} + $mlss_pref), 
 				($gab->{genomic_align_block_id} + $mlss_pref), $mlssid, $hum_dfs{ $patch_name }, 
-				$gab->{patch_start}, $gab->{patch_end}, $gab->{patch_strand}, $gab->{patch_aln_bases}, "1", "1"), "\n";
+				$gab->{patch_start}, $gab->{patch_end}, $gab->{patch_strand}, $gab->{patch_aln_bases}, "1", '\N'), "\n";
 		}
 	}
 }
