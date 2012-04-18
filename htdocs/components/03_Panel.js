@@ -15,7 +15,7 @@ Ensembl.Panel = Base.extend({
     var el;
     
     if (action === 'empty') {
-      this.el.empty();
+      this.el.empty().off();
     } else if (action !== 'cleanup') {
       this.el.remove();
     }
