@@ -6,6 +6,7 @@ use strict;
 
 use Apache2::Const;
 use HTML::Entities qw(encode_entities decode_entities);
+use JSON           qw(from_json);
 
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Document::Renderer::GzFile;
@@ -360,6 +361,32 @@ sub render_Text {
   $self->renderer->r->content_type('text/plain');
   
   print $self->clean_HTML(shift->{'content'});
+}
+
+sub render_JSON {
+  my $self = shift;
+  
+  $self->renderer->r->content_type('text/plain');
+  
+  my @content;
+  
+  # FIXME
+  # Ok, this is properly awful. content is wrapped in HTML, which we then remove.
+  # However, this can leave random strings behind, which are not JSON format,
+  # so we need to check each line to see if it is a JSON, and throw away the ones which aren't.
+  # A better way would be to rewrite the way we render all content so that, say, components return
+  # content in the required format.
+  foreach (split /\n/, $self->strip_HTML(shift->{'content'})) {
+    s/^\s+//;
+    eval { from_json($_); };
+    push @content, $_ unless $@;
+  }
+  
+  if (scalar @content == 1) {
+    print $content[0];
+  } else {
+    printf '[%s]', join ',', @content;
+  }
 }
 
 sub render_TextGz {

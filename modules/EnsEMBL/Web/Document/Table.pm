@@ -150,9 +150,6 @@ sub render_Text {
   
   return unless @{$self->{'columns'} || []};
   
-  my $options = $self->{'options'} || {};
-  my $align   = $options->{'align'} ? $options->{'align'} : 'autocenter';
-  my $width   = $options->{'width'} ? $options->{'width'} : '100%';
   my ($head, $body) = $self->process;
   my $output;
   
@@ -161,6 +158,21 @@ sub render_Text {
   }
   
   return $output;
+}
+
+sub render_JSON {
+  my $self = shift;
+  
+  return unless @{$self->{'columns'} || []};
+  
+  my ($head, $body) = $self->process;
+  my @json;
+  
+  foreach my $row ([ @$head ], @$body) {
+    push @json, [ map $self->strip_HTML($_), @{$row->[0]} ];
+  }
+  
+  return to_json(\@json);
 }
 
 sub render_Excel {
