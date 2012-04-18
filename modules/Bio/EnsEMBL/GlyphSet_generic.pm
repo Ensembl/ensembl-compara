@@ -166,7 +166,7 @@ sub _draw_features {
           $group->{'label'} || $group->{'id'},
           $group->{'start'} + $offset,
           $group->{'end'}   + $offset,
-          $group->{'strand'} > 0 ? '+' : '-',
+          $group->{'strand'} ? $group->{'strand'} > 0 ? '+' : '-' : 0,
           $group->{'count'} > 1 ? '; Features: ' . $group->{'count'} : ''
         );
         
