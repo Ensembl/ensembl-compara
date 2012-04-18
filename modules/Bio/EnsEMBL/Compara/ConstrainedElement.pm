@@ -516,17 +516,16 @@ sub reference_dnafrag_id {
 
 =head2 get_SimpleAlign
 
-  Arg [1]    : The method_link_species_set object of the original alignment from 
-		which the constrained elements were generated
+  Arg [1]    : Optional flags for formatting displayed MSA  
   Example    : my $out = Bio::AlignIO->newFh(-fh=>\*STDOUT, -format=> "clustalw");
 	       my $cons = $ce_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
                foreach my $constrained_element(@{ $cons }) {
-			my $simple_align = $constrained_element->get_SimpleAlign($orig_mlss, "uc");
+			my $simple_align = $constrained_element->get_SimpleAlign("uc");
 			print $out $simple_align;
 	       }
   Description: Rebuilds the constrained element alignment
   Returntype : Bio::SimpleAlign object
-  Exceptions : throw if Arg-1 is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
+  Exceptions : throw if you can not get a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object from the constrained element
   Caller     : object::methodname
 
 =cut
