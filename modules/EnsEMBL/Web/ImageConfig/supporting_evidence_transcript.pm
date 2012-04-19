@@ -10,7 +10,7 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    label_width      => 100,
+    label_width      => 115,
     opt_empty_tracks => 0,
   });
 
