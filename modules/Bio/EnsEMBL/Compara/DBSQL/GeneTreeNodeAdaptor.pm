@@ -506,7 +506,7 @@ sub _columns {
 
           'tm.cigar_line',
 
-          @{Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->_columns()}
+          Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->_columns()
           );
 }
 
