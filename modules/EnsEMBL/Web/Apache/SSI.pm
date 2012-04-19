@@ -9,7 +9,6 @@ use SiteDefs qw(:APACHE);
 
 use EnsEMBL::Web::Controller::Doxygen;
 use EnsEMBL::Web::Controller::SSI;
-use EnsEMBL::Web::Cookie;
 
 #############################################################
 # Mod_perl request handler all /htdocs pages
