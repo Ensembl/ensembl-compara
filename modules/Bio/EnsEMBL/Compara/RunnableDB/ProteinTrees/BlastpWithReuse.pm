@@ -85,7 +85,8 @@ sub fetch_input {
 
     my $reuse_ss = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($reuse_ss_id);    # this method cannot fail at the moment, but in future it may
 
-    my $reuse_ss_hash = { map { $_->dbID() => 1 } @{ $reuse_ss->genome_dbs() } };
+    my $reuse_ss_hash = {};
+       $reuse_ss_hash = { map { $_->dbID() => 1 } @{ $reuse_ss->genome_dbs() } } if $reuse_ss;
     $self->param('reuse_ss_hash', $reuse_ss_hash );
 
 
