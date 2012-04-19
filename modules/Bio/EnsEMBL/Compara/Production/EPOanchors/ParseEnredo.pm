@@ -172,13 +172,6 @@ sub write_output {
 		}
 		push(@synteny_region_ids, {synteny_region_id => $max_synteny_region_id});
 	}
-	# add the species_tree
-	my $compara_master = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%$master_db);
-	my $species_tree = $compara_master->get_SpeciesTreeAdaptor()->create_species_tree( -species_set_id => $ss_id );
-	my $newick_tree = lc( $species_tree->newick_format() );
-	$newick_tree=~s/ /_/g;
-	my $meta_sth = $self->dbc->prepare("REPLACE INTO meta (meta_key, meta_value) VALUES (?,?)");
-	$meta_sth->execute("tree_" . $self->param('ortheus_mlssid'), "$newick_tree");
 	$self->dataflow_output_id( $self->param('dfrs_with_zero_st'), 1 );
 	$self->dataflow_output_id( \@synteny_region_ids, 2 );
 }
