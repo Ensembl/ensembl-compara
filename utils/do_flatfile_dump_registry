@@ -155,7 +155,7 @@ if ( defined($farm) ) {
 
       my $usage =
         sprintf(
-            ' -R"select[linux] select[mem>%d] rusage[mem=%d]" '
+            ' -R"select[mem>%d] rusage[mem=%d]" '
           . '-M%d000 '
 #          . '-E"test -x %s" '
           . '-q %s '
