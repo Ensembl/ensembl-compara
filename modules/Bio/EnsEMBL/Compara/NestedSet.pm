@@ -1595,7 +1595,7 @@ sub find_leaf_by_name {
 
   my $leaves = $self->get_all_leaves;
   foreach my $leaf (@$leaves) {
-    return $leaf if($name eq $leaf->name);
+    return $leaf if((defined $leaf->name) and ($name eq $leaf->name));
   }
 
   return undef;
