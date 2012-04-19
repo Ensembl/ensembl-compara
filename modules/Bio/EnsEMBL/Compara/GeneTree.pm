@@ -146,6 +146,7 @@ sub clusterset_id {
   
 =cut
 
+# FIXME MLSS Object
 sub method_link_species_set_id {
     my $self = shift;
     $self->{'_method_link_species_set_id'} = shift if(@_);
@@ -216,9 +217,10 @@ sub root {
 
     if (not defined $self->{'_root'} and defined $self->{'_root_id'} and defined $self->{'_adaptor'}) {
         #print "UPDATES $self for root\n";
-        $self->{'_adaptor'}->{'_ref_tree'} = $self;
-        $self->{'_root'} = $self->{'_adaptor'}->fetch_node_by_node_id($self->{'_root_id'});
-        delete $self->{'_adaptor'}->{'_ref_tree'};
+        my $gtn_adaptor = $self->{'_adaptor'}->db->get_GeneTreeNodeAdaptor;
+        $gtn_adaptor->{'_ref_tree'} = $self;
+        $self->{'_root'} = $gtn_adaptor->fetch_node_by_node_id($self->{'_root_id'});
+        delete $gtn_adaptor->{'_ref_tree'};
     }
     return $self->{'_root'};
 }
@@ -269,6 +271,16 @@ sub root_id {
         $self->{'_root_id'} = $self->{'_root'}->node_id unless ref($self->{'_root'}->node_id);
     }
     return $self->{'_root_id'};
+}
+
+sub get_SimpleAlign {
+    my $self = shift;
+    return $self->root->get_SimpleAlign(@_);
+}
+
+sub consensus_cigar_line {
+    my $self = shift;
+    return $self->root->consensus_cigar_line(@_);
 }
 
 1;
