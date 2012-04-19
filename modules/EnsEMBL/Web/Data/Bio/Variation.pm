@@ -32,11 +32,12 @@ sub convert_to_drawing_parameters {
   # getting associated phenotypes and associated genes
   foreach my $va (@{$vaa->fetch_all_by_VariationFeature_list($data) || []}) {
     my $variation_id = $va->{'_variation_id'};
-    
-    push @{$associated_phenotypes{$variation_id}}, $va->{'phenotype_description'};
+
+    $associated_phenotypes{$variation_id}{$va->{'phenotype_description'}} = 1;
     
     if ($va->{'_phenotype_id'} eq $phenotype_id) {      
       # only get the p value log 10 for the pointer matching phenotype id and variation id
+      #warn ">>> PVAL ".$va->{'p_value'};
       $p_value_logs{$variation_id} = -(log($va->{'p_value'}) / log(10)) unless $va->{'p_value'} == 0;      
       $p_values{$variation_id} = $va->{'p_value'};
       
@@ -110,8 +111,8 @@ sub convert_to_drawing_parameters {
       extra          => {
         'source'     => $vf->source,
         'genes'      => join(', ', @assoc_gene_links),
-        'phenotypes' => join(', ', @{$associated_phenotypes{$variation_id} || []}),
-        'p-values'   => ($p_value_logs{$variation_id} ? sprintf('%.1f', $p_value_logs{$variation_id}) : ''), 
+        'phenotypes' => join('; ', sort keys %{$associated_phenotypes{$variation_id} || {}}),
+        'p-values'   => ($p_value_logs{$variation_id} ? sprintf('%.1f', $p_value_logs{$variation_id}) : '-'), 
       },
     };
   }
