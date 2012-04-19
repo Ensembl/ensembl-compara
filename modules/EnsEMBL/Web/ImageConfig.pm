@@ -2308,9 +2308,13 @@ sub add_sequence_variations_meta {
       my $temp_name = $menu_item->{key};
       $temp_name =~ s/^variation_set_//;
       
+      # shorten name for side of image
+      my $caption = $menu_item->{long_name};
+      $caption =~ s/1000 Genomes/1KG/;
+      
       $node = $self->create_track($menu_item->{key}, $menu_item->{long_name}, {
         %options,
-        caption     => $menu_item->{long_name},
+        caption     => $caption,
         sources     => undef,
         sets        => [ $menu_item->{long_name} ],
         set_name    => $menu_item->{long_name},
