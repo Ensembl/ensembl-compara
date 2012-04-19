@@ -333,7 +333,7 @@ sub content {
       my $matrix_url = $mf->binding_matrix->description =~ /Jaspar/ ? $hub->get_ExtURL_link($matrix, 'JASPAR', (split ':', $matrix)[-1]) : $matrix;
       
       # get the corresponding regfeat
-      my $rf = $rfa->fetch_all_by_Slice($mf->feature_Slice)->[0];
+      my $rf = $rfa->fetch_all_by_attribute_feature($mf)->[0];
       
       # create a URL
       my $url = $hub->url({
