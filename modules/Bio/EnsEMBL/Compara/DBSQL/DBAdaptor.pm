@@ -166,7 +166,7 @@ sub get_available_adaptors {
         'Homology'              => 'Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor',
         'Family'                => 'Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor',
         'PeptideAlignFeature'   => 'Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor',
-        #'GeneTree'              => 'Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor',
+        'GeneTree'              => 'Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor',
         'GeneTreeNode'          => 'Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor',
         'ProteinTree'           => 'Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor',
         'NCTree'                => 'Bio::EnsEMBL::Compara::DBSQL::NCTreeAdaptor',
