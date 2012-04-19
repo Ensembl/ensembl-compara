@@ -362,7 +362,7 @@ sub _tables {
     return (['CAFE_tree_attr', 'cta'], ['CAFE_tree_node', 'ctn']);
 }
 
-sub left_join_clause {
+sub _default_left_join_clause {
     return "LEFT JOIN CAFE_tree ct ON (ctn.node_id = ct.root_id) ";
 }
 

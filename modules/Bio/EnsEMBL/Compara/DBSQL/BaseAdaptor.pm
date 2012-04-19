@@ -14,14 +14,21 @@ sub attach {
 }
 
 
-sub left_join_clause {
-    my $self = shift @_;
+# _default_left_join_clause
+#
+#  Arg [1]    : none
+#  Example    : none
+#  Description: May be overridden to provide an additional left join
+#               constraint to the SQL query which is generated to
+#               fetch feature records.  This constraint is always
+#               appended to the end of the generated list of tables
+#  Returntype : string
+#  Exceptions : none
+#  Caller     : generic_fetch
+#
 
-    if(@_) {
-        $self->{'ljc'} = shift @_;
-    }
-
-    return $self->{'ljc'} || '';
+sub _default_left_join_clause {
+    return '';
 }
 
 
@@ -79,7 +86,7 @@ sub construct_sql_query {
   #construct a nice table string like 'table1 t1, table2 t2'
   my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
 
-  my $sql  = "SELECT $columns FROM $tablenames ".$self->left_join_clause;
+  my $sql  = "SELECT $columns FROM $tablenames ".$self->_default_left_join_clause;
 
   my $default_where = $self->_default_where_clause;
 

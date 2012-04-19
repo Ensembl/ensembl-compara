@@ -514,7 +514,7 @@ sub _tables {
   return (['gene_tree_node', 't']);
 }
 
-sub left_join_clause {
+sub _default_left_join_clause {
     return "LEFT JOIN gene_tree_member tm ON t.node_id = tm.node_id LEFT JOIN member m ON tm.member_id = m.member_id LEFT JOIN gene_tree_root tr ON t.root_id = tr.root_id";
 }
 
