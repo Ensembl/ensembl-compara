@@ -14,7 +14,7 @@ sub init {
   });
   
   $self->add_image_config('MultiBottom', 'nodas');
-  $self->title = 'Multi-species Image';
+  $self->title = 'Comparison Image';
   
   $self->set_defaults({
     opt_pairwise_blastz   => 'normal',
