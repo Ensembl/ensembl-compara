@@ -170,6 +170,35 @@ sub psychic {
       $flag  = 1;
     }
   }
+  elsif ($query =~ /([\w|_|-|\.]+):([\w|_|-|\.]+):(\d+):(\d+):?(\d?)/) {
+    ## Coordinate format assembly:region:start:end:strand
+
+    my ($assembly, $seq_region_name, $start, $end) = ($1, $2, $3, $4);
+
+    my %assemblies = $hub->species_defs->multiX('ASSEMBLIES');
+    my $release = $hub->species_defs->ENSEMBL_VERSION;
+    while (my($sp, $hash) = each (%assemblies)) {
+      next unless $hash->{$release} =~ /$assembly/i;
+      $species_path = $sp;
+      last;
+    }
+    ## Default to primary species if we can't find this assembly
+    $species_path = $hub->species_defs->ENSEMBL_PRIMARY_SPECIES unless $species_path;
+
+    if ($species_path) {
+      $seq_region_name =~ s/chr//;
+      $seq_region_name =~ s/ //g;
+      $start = $self->evaluate_bp($start);
+      $end   = $self->evaluate_bp($end);
+      ($end, $start) = ($start, $end) if $end < $start;
+
+      my $script = 'Location/View';
+      $script    = 'Location/Overview' if $end - $start > 1000000;
+
+      $url  = $self->escaped_url("/$species_path/$script?r=%s", $seq_region_name . ($start && $end ? ":$start-$end" : ''));
+      $flag = 1;
+    }
+  }
 
   if (!$flag) {
     $url = 
