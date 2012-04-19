@@ -117,7 +117,23 @@ sub generic_fetch {
     my $self = shift;
     my $sql = $self->construct_sql_query(@_);
     my $sth = $self->prepare($sql);
-    $sth->execute;
+
+    my $bind_parameters = $self->bind_param_generic_fetch();
+    if (defined $bind_parameters){
+        #if we have bind the parameters, call the DBI to bind them
+        my $i = 1;
+        foreach my $param (@{$bind_parameters}){
+            $sth->bind_param($i,$param->[0],$param->[1]);
+            $i++;
+        }   
+        #after binding parameters, undef for future queries
+        $self->{'_bind_param_generic_fetch'} = (); 
+    }
+    eval { $sth->execute() };
+    if ($@) {
+        throw("Detected an error whilst executing SQL '${sql}': $@");
+    }
+
     my $obj_list = $self->_objs_from_sth($sth);
     $sth->finish;
     return $obj_list;
