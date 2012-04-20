@@ -50,16 +50,16 @@ sub init {
   );
   
   $self->modify_configs(
+   [ 'gene_legend', 'variation_legend' ],
+   { display => 'off', menu => 'no' }
+  );
+    
+  $self->modify_configs(
     [ map "regulatory_regions_funcgen_$_", @feature_sets ],
     { menu => 'yes' }
   );
 
-  $self->modify_configs(
-    [ 'information' ],
-    { menu => 'no', display => 'off' }
-  );
-  
-  $self->get_node('opt_empty_tracks')->set('display', 'normal');
+  $self->get_node('opt_empty_tracks')->set('display', 'normal');	
 
   foreach my $cell_line (@cell_lines) {
     my $display = $cell_line =~ /^(MultiCell|CD4)$/ ? 'tiling_feature' : 'compact';
@@ -122,8 +122,8 @@ sub init_bottom {
     [ 'fg_background_regulation', '', 'fg_background_regulation', { display => 'normal', strand => 'r', menu => 'no', tag => 0            }],
     [ 'scalebar',                 '', 'scalebar',                 { display => 'normal', strand => 'r', menu => 'no', name => 'Scale bar' }],
     [ 'ruler',                    '', 'ruler',                    { display => 'normal', strand => 'r', menu => 'no', name => 'Ruler'     }],
-  );
-
+  ); 
+  
   $self->modify_configs(
     [ 'fg_regulatory_features_legend' ],
     { display => 'normal' },
@@ -132,8 +132,8 @@ sub init_bottom {
   $self->modify_configs(
     [ 'fg_segmentation_features_legend' ],
     { display => 'normal' }
-  );  
-  
+  );
+
 }
 
 1;
