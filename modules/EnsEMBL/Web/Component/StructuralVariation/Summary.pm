@@ -20,11 +20,11 @@ sub content {
   my $validation   = $object->validation_status;
   my $failed       = $object->Obj->failed_description ? $self->failed() : ''; ## First warn if the SV has been failed
   my $sv_sets      = $object->get_variation_set_string;
-	my $summary      = sprintf '<dt>Variation class</dt><dd>%s</dd>', $object->class;
+  my $summary      = sprintf '<dt>Variation class</dt><dd>%s</dd>', $object->class;
      $summary     .= $self->get_allele_types($source);
      $summary     .= $self->get_source($source, $object->source_description);
      $summary     .= $self->get_study; 
-		 $summary     .= "<dt>Present in </dt><dd><b>".join(', ',@$sv_sets)."</b></dd>" if scalar(@$sv_sets);
+     $summary     .= "<dt>Present in </dt><dd><b>".join(', ',@$sv_sets)."</b></dd>" if scalar(@$sv_sets);
      $summary     .= $self->get_annotations;
      $summary     .= $self->location($mappings);
      $summary     .= $self->size($mappings);
@@ -184,26 +184,58 @@ sub location {
     my $params    = $hub->core_params;
     my @locations = ({ value => 'null', name => 'None selected' });
     
+    my $is_breakpoint;
+    my $location_info;
+    
     # add locations for each mapping
     foreach (sort { $mappings->{$a}{'Chr'} cmp $mappings->{$b}{'Chr'} || $mappings->{$a}{'start'} <=> $mappings->{$b}{'start'}} keys %$mappings) {
-      my $region = $mappings->{$_}{'Chr'}; 
-      my $start  = $mappings->{$_}{'start'};
-      my $end    = $mappings->{$_}{'end'};
-      my $str    = $mappings->{$_}{'strand'};
+      my $region   = $mappings->{$_}{'Chr'}; 
+      my $start    = $mappings->{$_}{'start'};
+      my $end      = $mappings->{$_}{'end'};
+      my $str      = $mappings->{$_}{'strand'};
+      my $bp_order = $mappings->{$_}{'breakpoint_order'};
       
       push @locations, {
         value    => $_,
         name     => sprintf('%s (%s strand)', ($start == $end ? "$region:$start" : "$region:$start-$end"), ($str > 0 ? 'forward' : 'reverse')),
         selected => $svf == $_ ? ' selected' : ''
       };
+       
+      if (defined($bp_order)) {
+      
+        my $loc_text = '<b>'.($start == $end ? "$region:$start" : "$region:$start-$end"). '</b>';
+        
+            
+        my $loc_link = sprintf(
+          '<a href="%s">%s</a>',
+            $hub->url({
+              type              => 'Location',
+              action            => 'View',
+              r                 => $region . ':' . ($start - 500) . '-' . ($end + 500),
+              sv                => $name,
+              svf               => $svf,
+              contigviewbottom  => 'somatic_sv_feature=normal'
+          }), $loc_text
+        );
+        $loc_link .= ' ('.($str > 0 ? 'forward' : 'reverse').' strand)';
+        
+        if (!defined($location_info)) {
+          $location_info = "from $loc_link";
+        } else {
+          $location_info .= " to $loc_link";
+        }  
+        
+      }
     }
     
     # ignore svf and region as we want them to be overwritten
     my $core_params = join '', map $params->{$_} && $_ ne 'svf' && $_ ne 'r' ? qq{<input name="$_" value="$params->{$_}" type="hidden" />} : (), keys %$params;
     my $options     = join '', map qq{<option value="$_->{'value'}"$_->{'selected'}>$_->{'name'}</option>}, @locations;
     
+    $location_info = "This feature maps to $count genomic locations" if (!defined($location_info));
+    
     $html = sprintf('
-        This feature maps to %s genomic locations
+      %s
       </dd>
       <dt>Selected location</dt>
       <dd>
@@ -216,7 +248,7 @@ sub location {
           %s
         </form>
       </dd>',
-      $count,
+      $location_info,
       $hub->url({ svf => undef, sv => $name, source => $object->source }),
       $core_params,
       $options,
@@ -259,7 +291,11 @@ sub size {
   my $self     = shift; 
   my $mappings = shift;
   my $svf      = $self->hub->param('svf');
-  return sprintf '<dt>Genomic size</dt><dd>%s bp</dd>', $self->thousandify($mappings->{$svf}{'end'} - $mappings->{$svf}{'start'} + 1) if $svf || scalar(keys %$mappings) == 1;
+  
+  return sprintf ('<dt>Genomic size</dt><dd>%s bp%s</dd>', 
+                  $self->thousandify($mappings->{$svf}{'end'} - $mappings->{$svf}{'start'} + 1), 
+                  defined($mappings->{$svf}{'breakpoint_order'}) ? ' (breakpoint)' : ''
+                 ) if $svf || scalar(keys %$mappings) == 1;
 }
 
 sub get_annotations {
