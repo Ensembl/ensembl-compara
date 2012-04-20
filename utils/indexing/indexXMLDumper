@@ -70,7 +70,20 @@ my %species_boost = (
 );
 
 #redirect STDOUT and maybe STDERR to a file
-$log ||= $debug ? '>-' : "dumping_${release}.log";
+if ($debug) {
+  $log = '>-';
+}
+else {
+  my $counter = 1;
+  $log =  "dumping_${release}.log";
+  my $l =  $log."_".sprintf("%03d", $counter);
+  while ( -e $l ) {
+    $counter++;
+    $l = $log."_".sprintf("%03d", $counter);
+  }
+  $log = $l;
+}
+
 open (LOG,    ">$log") or die "Can't open $log: $!";
 LOG->autoflush(1); #normally file output is buffered but better to see output after every print
 unless ($debug) {
