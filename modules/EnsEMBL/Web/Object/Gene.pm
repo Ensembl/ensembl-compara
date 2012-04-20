@@ -111,7 +111,7 @@ sub counts {
       $counts->{'operons'} = scalar @{$obj->feature_Slice->get_all_Operons};
     }
     if (my $vdb = $self->database('variation') ) {
-	$counts->{structural_variation} = scalar(@{$obj->slice->get_all_StructuralVariationFeatures}) + scalar(@{$obj->slice->get_all_CopyNumberVariantProbeFeatures});
+  $counts->{structural_variation} = scalar(@{$obj->slice->get_all_StructuralVariationFeatures}) + scalar(@{$obj->slice->get_all_somatic_StructuralVariationFeatures}) + scalar(@{$obj->slice->get_all_CopyNumberVariantProbeFeatures});
     }
     my $compara_db = $self->database('compara');
     
@@ -890,7 +890,7 @@ sub store_TransformedSNPS {
   
   #foreach my $tv(@{$tva->fetch_all_by_Transcripts([map {$_->transcript} @transcripts])}) {
   foreach my $tv(@{$tva->$method([map {$_->transcript} @transcripts], $so_terms)}) {
-	foreach my $type(@{$tv->consequence_type || []}) {
+  foreach my $type(@{$tv->consequence_type || []}) {
       next unless $valids->{'opt_'.lc($type)};
       $tvs_by_tr->{$tv->transcript->stable_id}->{$tv->{'_variation_feature_id'}} = $tv;
       last;
