@@ -922,7 +922,7 @@ sub transcript_table {
 }
 
 sub structural_variation_table {
-  my ($self, $slice, $title, $table_id, $function, $open) = @_;
+  my ($self, $slice, $title, $table_id, $functions, $open) = @_;
   my $hub = $self->hub;
   my $rows;
   
@@ -935,7 +935,12 @@ sub structural_variation_table {
      { key => 'description', sort => 'string',        title => 'Study description', width => '50%' },
   ];
   
-  foreach my $svf (@{$slice->$function}) {
+  my $svfs;
+  foreach my $func (@{$functions}) {
+    push(@$svfs,@{$slice->$func});
+  }
+  
+  foreach my $svf (@{$svfs}) {
     my $sv          = $svf->structural_variation;
     my $name        = $svf->variation_name;
     my $description = $sv->source_description;
