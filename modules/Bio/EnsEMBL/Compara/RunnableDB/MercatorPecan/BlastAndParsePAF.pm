@@ -426,7 +426,6 @@ sub run {
 	    if($debug) {
 		warn "CMD:\t$cmd\n";
 	    }
-
 	    my $start_time = time();
 	    open( BLAST, "| $cmd") || die qq{could not execute "${cmd}", returned error code: $!};
 	    print BLAST @$fasta_list;
@@ -484,7 +483,7 @@ sub _write_output {
 
 	#AWFUL HACK to insert into the peptide_align_feature table but without going through the API. Only fill in
 	#some the of fields
-	my $sql = "INSERT INTO $peptide_table (qmember_id, hmember_id, qgenome_db_id, hgenome_db_id, analysis_id, qstart, qend, hstart, hend, score, evalue, hit_rank,identical_matches, perc_ident,align_length,positive_matches, perc_pos) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, ?,?)";
+	my $sql = "INSERT INTO $peptide_table (qmember_id, hmember_id, qgenome_db_id, hgenome_db_id, qstart, qend, hstart, hend, score, evalue, hit_rank,identical_matches, perc_ident,align_length,positive_matches, perc_pos) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?, ?,?)";
 	my $sth = $self->compara_dba->dbc->prepare( $sql );
 
 	#print "INSERT INTO $peptide_table (qmember_id, hmember_id, qgenome_db_id, hgenome_db_id, analysis_id, qstart, qend, hstart, hend, score, evalue, hit_rank,identical_matches, perc_ident,align_length,positive_matches, perc_pos) VALUES ('" . $feature->{qmember_id} , "','" . $feature->{hmember_id} . "'," . $feature->{qgenome_db_id} . "," . $feature->{hgenome_db_id} . "," . $feature->{analysis_id} . "," . $feature->{qstart} . "," . $feature->{qend} . "," . $feature->{hstart} . "," . $feature->{hend} . "," . $feature->{score} . "," . $feature->{evalue} . "," . $feature->{hit_rank} . "," . $feature->{identical_matches} . "," . $feature->{perc_ident} . "," . $feature->{length} . "," . $feature->{positive} . "," . $feature->{perc_pos} . "\n";
@@ -493,7 +492,7 @@ sub _write_output {
 		      $feature->{hmember_id},
 		      $feature->{qgenome_db_id},
 		      $feature->{hgenome_db_id},
-		      $feature->{analysis_id},
+		      #$feature->{analysis_id},
 		      $feature->{qstart},
 		      $feature->{qend},
 		      $feature->{hstart},
