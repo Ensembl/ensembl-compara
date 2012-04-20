@@ -69,7 +69,7 @@ foreach my $type (@object_types) {
     foreach my $node (@nodes) {
       my $action = $node->id;
       if ($old_links->{$type}{$action}) {
-        warn "... PAGE $type/$action has a mapping";
+        #warn "... PAGE $type/$action has a mapping";
       }
       else {
         warn "!!! NO MAPPING FOR PAGE $type/$action";
