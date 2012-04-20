@@ -157,7 +157,7 @@ sub stats_table {
     my $warning = $total > $max_lines ? $warning_text : '';
   
     push @rows, {
-      phen   => "All variations with a phenotype annotation $warning",
+      phen   => "ALL variations with a phenotype annotation $warning",
       count  => qq{<span class="hidden">-</span>$total}, # create a hidden span to add so that ALL is always last in the table
       view   => $self->ajax_add($self->ajax_url(undef, { sub_table => 'ALL' }), 'ALL'),
       source => '-',
