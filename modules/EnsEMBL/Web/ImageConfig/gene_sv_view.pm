@@ -41,14 +41,20 @@ sub init {
     { display => 'off' }
   );
   
-  $self->modify_configs(	 
+  $self->modify_configs(   
     [ 'transcript_core_ensembl', 'transcript_core_sg' ],
     { display => 'transcript_label' }
   );
-	
-	# structural variations
-	$self->modify_configs(
+  
+  # structural variations
+  $self->modify_configs(
     ['variation_feature_structural'],
+    { display => 'normal', depth => 100 }
+  );
+  
+  # Somatic structural variations
+  $self->modify_configs(
+    ['somatic_sv_feature'],
     { display => 'normal', depth => 50 }
   );
   

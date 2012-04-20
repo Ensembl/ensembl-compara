@@ -57,8 +57,15 @@ sub init {
     { display => 'normal' }
   );  
   
+  # structural variations
   $self->modify_configs(
     ['variation_feature_structural'],
+    { display => 'normal', depth => 100 }
+  );
+  
+  # Somatic structural variations
+  $self->modify_configs(
+    ['somatic_sv_feature'],
     { display => 'normal', depth => 50 }
   );
   
@@ -66,10 +73,10 @@ sub init {
     ['somatic_mutation_COSMIC'],
     { display => 'normal', style => 'box', depth => 100000 }
   );
-
+  
   $self->modify_configs(
     ['transcript_core_ensembl'],
-    { display => 'transcript_nolabel' }
+    { display => 'transcript_label' }
   );
 
   # Turn off cell line wiggle tracks

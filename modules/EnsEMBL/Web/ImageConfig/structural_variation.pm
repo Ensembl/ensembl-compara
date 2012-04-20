@@ -29,7 +29,7 @@ sub init {
     [ 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r' }]
   );
 
- 	$self->add_tracks('information',
+   $self->add_tracks('information',
     [ 'variation_legend', '', 'variation_legend', { display => 'normal', strand => 'r', name => 'Variation Legend', caption => 'Variation legend' }]
   );
   
@@ -46,8 +46,8 @@ sub init {
   );
 
   # variations
-	$self->modify_configs(
-   [ 'variation_legend', 'somatic', 'functional', 'fg_regulatory_features_legend' ],
+  $self->modify_configs(
+   [ 'variation_legend', 'gene_legend', 'somatic', ],
    { display => 'off' }
   );
   
@@ -56,27 +56,33 @@ sub init {
     { display => 'off', style => 'box', depth => 100000 }
   ); 
   
-	$self->modify_configs(
+  $self->modify_configs(
     ['somatic_mutation_COSMIC'],
     { style => 'box', depth => 100000 }
   );
 
-	# structural variations
-	$self->modify_configs(
+  # structural variations
+  $self->modify_configs(
     ['variation_feature_structural'],
+    { display => 'normal', depth => 100 }
+  );
+  
+  # Somatic structural variations
+  $self->modify_configs(
+    ['somatic_sv_feature'],
     { display => 'normal', depth => 50 }
   );
-	
-	# CNV probes
-	$self->modify_configs(
+  
+  # CNV probes
+  $self->modify_configs(
     ['variation_feature_cnv'],
     { display => 'normal', depth => 5 }
   );
-	
+  
   # genes
   $self->modify_configs(
     ['transcript_core_ensembl'],
-    { display => 'transcript_nolabel' }
+    { display => 'transcript_label' }
   );
 
   # Turn off cell line wiggle tracks
