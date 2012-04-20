@@ -2312,12 +2312,17 @@ sub add_sequence_variations_meta {
       my $caption = $menu_item->{long_name};
       $caption =~ s/1000 Genomes/1KG/;
       
+      # hack for HapMap set name - remove once variation team fix data for 68
+      my $set_name = $menu_item->{long_name};
+      $set_name =~ s/All HapMap/HapMap/;
+      next if $set_name =~ /HapMap.+/;
+      
       $node = $self->create_track($menu_item->{key}, $menu_item->{long_name}, {
         %options,
         caption     => $caption,
         sources     => undef,
-        sets        => [ $menu_item->{long_name} ],
-        set_name    => $menu_item->{long_name},
+        sets        => [ $set_name ],
+        set_name    => $set_name,
         description => $hashref->{'variation_set'}{'descriptions'}{$temp_name}
       });
     }
