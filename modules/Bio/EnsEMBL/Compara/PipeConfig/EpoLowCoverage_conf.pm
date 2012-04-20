@@ -11,15 +11,15 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-        'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
+        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
-	'release'       => 65,
-	'prev_release'  => 64,
+	'release'       => 67,
+	'prev_release'  => 66,
         'release_suffix'=> '', # set it to '' for the actual release
         'pipeline_name' => 'LOW35_'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
 
 	#location of new pairwise mlss if not in the pairwise_default_location eg:
-	'pairwise_exception_location' => { 545 => 'mysql://ensro@compara1/kb3_hsap_ogar_lastz_65'},
+	'pairwise_exception_location' => { 576 => 'mysql://ensro@compara1/sf5_hsap_stri_lastz_67'},
 	#'pairwise_exception_location' => { },
 
         'pipeline_db' => {
@@ -92,6 +92,10 @@ sub default_options {
 	'max_block_size'  => 1000000,                       #max size of alignment before splitting 
 	'pairwise_default_location' => $self->dbconn_2_url('live_compara_db'), #default location for pairwise alignments
 
+	#Use 'quick' method for finding max alignment length (ie max(genomic_align_block.length)) rather than the more
+	#accurate (and slow) method of max(genomic_align.dnafrag_end-genomic_align.dnafrag_start+1)
+	'quick' => 1,
+
 	 #gerp parameters
 	'gerp_version' => '2.1',                            #gerp program version
 	'gerp_window_sizes'    => '[1,10,100,500]',         #gerp window sizes
@@ -123,9 +127,11 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 sub resource_classes {
     my ($self) = @_;
     return {
-         #0 => { -desc => 'default, 8h',      'LSF' => '' },
-	 0 => { -desc => 'default',           'LSF' => '-R"select[mycompara1 <=800 && myens_staging1 <= 800 && myens_staging2 <=800 && myens_livemirror <=800] rusage[mycompara1=10:duration=3,myens_staging1=10:duration=3,myens_staging2=10:duration=3,myens_livemirror=10:duration=3]"' },
-	 1 => { -desc => 'urgent',           'LSF' => '-q yesterday' },
+	 #0 => { -desc => 'default',           'LSF' => '-R"select[mycompara1 <=800 && myens_staging1 <= 800 && myens_staging2 <=800 && myens_livemirror <=800] rusage[mycompara1=10:duration=3,myens_staging1=10:duration=3,myens_staging2=10:duration=3,myens_livemirror=10:duration=3]"' },
+         0 => { -desc => 'default, 8h',   'LSF' => '-C0 -M100000 -R"select[mem>100] rusage[mem=100]"' },
+	 1 => { -desc => 'low, 8h',       'LSF' => '-C0 -M1000000 -R"select[mem>1000] rusage[mem=1000]"' },  
+	 2 => { -desc => 'default, 8h',   'LSF' => '-C0 -M1800000 -R"select[mem>1800] rusage[mem=1800]"' },  
+         3 => { -desc => 'himem',         'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
     };
 }
 
@@ -150,6 +156,7 @@ sub pipeline_analyses {
 			       2 => [ 'innodbise_table'  ],
 			       1 => [ 'populate_new_database' ],
 			      },
+		-rc_id => 0,
 	    },
 
 	    {   -logic_name    => 'innodbise_table',
@@ -158,7 +165,8 @@ sub pipeline_analyses {
 				   'sql'         => "ALTER TABLE #table_name# ENGINE='InnoDB'",
 				  },
 		-hive_capacity => 10,
-		-can_be_empty  => 1
+		-can_be_empty  => 1,
+		-rc_id => 0,
 	    },
 
 # ---------------------------------------------[Run poplulate_new_database.pl script ]---------------------------------------------------
@@ -166,7 +174,6 @@ sub pipeline_analyses {
 	       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
 	       -parameters    => {
 				  'program'        => $self->o('populate_new_database_program'),
-				  #'master'         => $self->o('master_db_name'),
 				  'mlss_id'        => $self->o('low_epo_mlss_id'),
 				  'ce_mlss_id'     => $self->o('ce_mlss_id'),
 				  'cs_mlss_id'     => $self->o('cs_mlss_id'),
@@ -176,6 +183,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      1 => [ 'set_internal_ids' ],
 			     },
+		-rc_id => 1,
 	    },
 
 # ------------------------------------------------------[Set internal ids ]---------------------------------------------------------------
@@ -186,13 +194,13 @@ sub pipeline_analyses {
 				'sql'   => [
 					    'ALTER TABLE genomic_align_block AUTO_INCREMENT=#expr(($low_epo_mlss_id * 10**10) + 1)expr#',
 					    'ALTER TABLE genomic_align AUTO_INCREMENT=#expr(($low_epo_mlss_id * 10**10) + 1)expr#',
-					    'ALTER TABLE genomic_align_group AUTO_INCREMENT=#expr(($low_epo_mlss_id * 10**10) + 1)expr#',
 					    'ALTER TABLE genomic_align_tree AUTO_INCREMENT=#expr(($low_epo_mlss_id * 10**10) + 1)expr#',
 					   ],
 			       },
 		-flow_into => {
 			       1 => [ 'load_genomedb_factory' ],
 			      },
+		-rc_id => 0,
 	    },
 
 # ---------------------------------------------[Load GenomeDB entries from master+cores]--------------------------------------------------
@@ -215,14 +223,15 @@ sub pipeline_analyses {
 			       2 => [ 'load_genomedb' ],
 			       1 => [ 'load_genomedb_funnel' ],    # backbone
 			      },
+		-rc_id => 0,
 	    },
 	    {   -logic_name => 'load_genomedb',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
 		-parameters => {
 				'registry_dbs'  => [ $self->o('staging_loc1'), $self->o('staging_loc2'), $self->o('livemirror_loc')],
-#				'registry_dbs'  => [ $self->o('live_db'), $self->o('reg1'), $self->o('reg2')],
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
+		-rc_id => 0,
 	    },
 
 	    {   -logic_name => 'load_genomedb_funnel',
@@ -231,11 +240,14 @@ sub pipeline_analyses {
 		-flow_into => {
 		    1 => [ 'create_default_pairwise_mlss'],
 		},
+		-rc_id => 0,
         },
 # -------------------------------------------------------------[Load species tree]--------------------------------------------------------
 	    {   -logic_name    => 'make_species_tree',
 		-module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
-		-parameters    => { },
+		-parameters    => { 
+				   'mlss_id' => $self->o('low_epo_mlss_id'),
+				  },
 		-input_ids     => [
 				   {'blength_tree_file' => $self->o('species_tree_file'), 'newick_format' => 'simple' }, #species_tree
 				   {'newick_format'     => 'njtree' },                                                   #taxon_tree
@@ -243,9 +255,11 @@ sub pipeline_analyses {
 		-hive_capacity => -1,   # to allow for parallelization
 		-wait_for => [ 'load_genomedb_funnel' ],
 	        -flow_into  => {
-                   3 => { 'mysql:////meta' => { 'meta_key' => 'taxon_tree', 'meta_value' => '#species_tree_string#' } },
-                   4 => { 'mysql:////meta' => { 'meta_key' => 'tree_string', 'meta_value' => '#species_tree_string#' } },
+                   3 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'taxon_tree', 'value' => '#species_tree_string#' } },
+		   4 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree', 'value' => '#species_tree_string#' } },
+
                 },
+		-rc_id => 0,
 	    },
 
 # -----------------------------------[Create a list of pairwise mlss found in the default compara database]-------------------------------
@@ -263,7 +277,8 @@ sub pipeline_analyses {
 		-flow_into => {
 			       1 => [ 'import_alignment' ],
 			       3 => [ 'mysql:////meta' ],
-			      }
+			      },
+		-rc_id => 0,
 	    },
 
 # ------------------------------------------------[Import the high coverage alignments]---------------------------------------------------
@@ -278,6 +293,7 @@ sub pipeline_analyses {
 		-flow_into => {
 			       1 => [ 'create_low_coverage_genome_jobs' ],
 			      },
+		-rc_id => 1,
 	    },
 
 # ------------------------------------------------------[Low coverage alignment]----------------------------------------------------------
@@ -290,13 +306,14 @@ sub pipeline_analyses {
 		-flow_into => {
 			       1 => [ 'delete_alignment' ],
 			       2 => [ 'low_coverage_genome_alignment' ],
-			      }
+			      },
+		-rc_id => 0,
 	    },
 	    {   -logic_name => 'low_coverage_genome_alignment',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
 		-parameters => {
 				'max_block_size' => $self->o('max_block_size'),
-				'method_link_species_set_id' => $self->o('low_epo_mlss_id'),
+				'mlss_id' => $self->o('low_epo_mlss_id'),
 				'reference_species' => $self->o('ref_species'),
 				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
 				'pairwise_default_location' => $self->o('pairwise_default_location'),
@@ -308,13 +325,14 @@ sub pipeline_analyses {
 			       2 => [ 'gerp' ],
 			       -1 => [ 'low_coverage_genome_alignment_again' ],
 			      },
+		-rc_id => 2,
 	    },
 	    #If fail due to MEMLIMIT, probably due to memory leak, and rerunning with the default memory should be fine.
 	    {   -logic_name => 'low_coverage_genome_alignment_again',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
 		-parameters => {
 				'max_block_size' => $self->o('max_block_size'),
-				'method_link_species_set_id' => $self->o('low_epo_mlss_id'),
+				'mlss_id' => $self->o('low_epo_mlss_id'),
 				'reference_species' => $self->o('ref_species'),
 				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
 				'pairwise_default_location' => $self->o('pairwise_default_location'),
@@ -324,6 +342,7 @@ sub pipeline_analyses {
 		-flow_into => {
 			       2 => [ 'gerp' ],
 			      },
+		-rc_id => 2,
 	    },
 # ---------------------------------------------------------------[Gerp]-------------------------------------------------------------------
 	    {   -logic_name => 'gerp',
@@ -334,6 +353,7 @@ sub pipeline_analyses {
 				'gerp_exe_dir' => $self->o('gerp_exe_dir'),
 			       },
 		-hive_capacity   => 600,
+		-rc_id => 1,
 	    },
 
 # ---------------------------------------------------[Delete high coverage alignment]-----------------------------------------------------
@@ -341,7 +361,7 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
 		-parameters => {
 				'sql' => [
-					  'DELETE gag, gat, ga FROM genomic_align_group gag JOIN genomic_align_tree gat USING (node_id) JOIN genomic_align ga USING (genomic_align_id) WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id'),
+					  'DELETE gat, ga FROM genomic_align_tree gat JOIN genomic_align ga USING (node_id) WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id'),
 					  'DELETE FROM genomic_align_block WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id'),
 					 ],
 			       },
@@ -350,14 +370,20 @@ sub pipeline_analyses {
 		-flow_into => {
 			       1 => [ 'update_max_alignment_length' ],
 			      },
+		-rc_id => 0,
 	    },
 
 # ---------------------------------------------------[Update the max_align data in meta]--------------------------------------------------
 	    {  -logic_name => 'update_max_alignment_length',
 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
+	        -parameters => {
+			       'quick' => $self->o('quick'),
+			       'method_link_species_set_id' => $self->o('low_epo_mlss_id'),
+			      },
 	       -flow_into => {
 			      1 => [ 'create_neighbour_nodes_jobs_alignment' ],
 			     },
+		-rc_id => 0,
 	    },
 
 # --------------------------------------[Populate the left and right node_id of the genomic_align_tree table]-----------------------------
@@ -370,7 +396,8 @@ sub pipeline_analyses {
 		-flow_into => {
 			       1 => [ 'conservation_score_healthcheck' ],
 			       2 => [ 'set_neighbour_nodes' ],
-			      }
+			      },
+		-rc_id => 0,
 	    },
 	    {   -logic_name => 'set_neighbour_nodes',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
@@ -379,6 +406,7 @@ sub pipeline_analyses {
 			       },
 		-batch_size    => 10,
 		-hive_capacity => 15,
+		-rc_id => 2,
 	    },
 # -----------------------------------------------------------[Run healthcheck]------------------------------------------------------------
 	    {   -logic_name => 'conservation_score_healthcheck',
@@ -388,6 +416,7 @@ sub pipeline_analyses {
 				{'test' => 'conservation_jobs', 'logic_name'=>'gerp','method_link_type'=>'EPO_LOW_COVERAGE'}, 
 				{'test' => 'conservation_scores','method_link_species_set_id'=>$self->o('cs_mlss_id')},
 			       ],
+		-rc_id => 0,
 	    },
 
      ];
