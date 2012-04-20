@@ -483,7 +483,7 @@ sub _write_gerp_dataflow {
     my ($self, $gab_id, $mlss) = @_;
     
     my $species_set = "[";
-    my $genome_db_set  = $mlss->species_set;
+    my $genome_db_set  = $mlss->species_set_obj->genome_dbs();
     
     foreach my $genome_db (@$genome_db_set) {
 	$species_set .= $genome_db->dbID . ","; 
@@ -1016,14 +1016,16 @@ sub get_species_tree {
   my $self = shift;
 
   my $newick_species_tree;
+  my $mlss_a = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor();
+  my $mlss = $mlss_a->fetch_by_dbID($self->param('ortheus_mlssid'));
   my $species_tree_meta_key = "tree_" . $self->param('ortheus_mlssid');
 
-  if (defined($self->param('species_tree'))) {
-    return $self->param('species_tree');
+  if ( defined( $mlss ) ){
+	$newick_species_tree = $mlss->get_tagvalue("species_tree");
   } elsif ($self->param($species_tree_meta_key)) {
     $newick_species_tree = $self->param($species_tree_meta_key);
-  } elsif ($self->param('tree_file')) {
-    open(TREE_FILE, $self->param('tree_file')) or throw("Cannot open file ".$self->param('tree_file'));
+  } elsif ($self->param('species_tree_file')) {
+    open(TREE_FILE, $self->param('species_tree_file')) or throw("Cannot open file ".$self->param('species_tree_file'));
     $newick_species_tree = join("", <TREE_FILE>);
     close(TREE_FILE);
   }
