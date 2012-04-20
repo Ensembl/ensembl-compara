@@ -53,7 +53,10 @@ sub short_caption {
   my $type = 'Structural variation';
   if ($self->class eq 'CNV_PROBE') {
      $type = 'CNV probe';
-   }
+  }
+  elsif($self->is_somatic) {
+     $type = 'Somatic SV';
+  }
   my $short_type = 'S. Var';
   return $type.' displays' unless shift eq 'global';
 
@@ -67,6 +70,9 @@ sub caption {
  my $type = 'Structural variation';
  if ($self->class eq 'CNV_PROBE') {
    $type = 'Copy number variation probe';
+ }
+ elsif($self->is_somatic) {
+   $type = 'Somatic structural variation';
  }
  my $caption = $type.': '.$self->name;
 
@@ -83,6 +89,7 @@ sub study_description  { my $self = shift; return (defined($self->study)) ? $sel
 sub study_url          { my $self = shift; return (defined($self->study)) ? $self->study->url : undef;                }
 sub external_reference { my $self = shift; return (defined($self->study)) ? $self->study->external_reference : undef; }
 sub supporting_sv      { my $self = shift; return $self->Obj->get_all_SupportingStructuralVariants;                   }
+sub is_somatic         { my $self = shift; return $self->Obj->is_somatic;                                             }
 
 sub validation_status  { 
   my $self = shift; 
@@ -107,9 +114,11 @@ sub get_class_colour {
     'copy_number_loss'              => '#FF0000',
     'inversion'                     => '#9933FF', 
     'complex_structural_alteration' => '#99CCFF',
-    'tandem_duplication'            => '#0000FF',
+    'tandem_duplication'            => '#732E00',
     'mobile_element_insertion'      => '#FFCC00',
+    'translocation'                 => '#C3A4FF',
   );
+  
   my $c = $colour{$class};
   $c = '#B2B2B2' if (!$c);
   return $c;
@@ -177,16 +186,18 @@ sub variation_feature_mapping {
   my %data;
   foreach my $sv_feature_obj (@{ $self->get_structural_variation_features }) { 
      my $svf_id = $sv_feature_obj->dbID;
-     $data{$svf_id}{Type}            = $sv_feature_obj->slice->coord_system_name;
-     $data{$svf_id}{Chr}             = $sv_feature_obj->seq_region_name;
-     $data{$svf_id}{start}           = $sv_feature_obj->start;
-     $data{$svf_id}{end}             = $sv_feature_obj->end;
-     $data{$svf_id}{strand}          = $sv_feature_obj->strand;
-     $data{$svf_id}{outer_start}     = $sv_feature_obj->outer_start;
-     $data{$svf_id}{inner_start}     = $sv_feature_obj->inner_start;
-     $data{$svf_id}{inner_end}       = $sv_feature_obj->inner_end;
-     $data{$svf_id}{outer_end}       = $sv_feature_obj->outer_end;
-     $data{$svf_id}{transcript_vari} = undef;
+     $data{$svf_id}{Type}             = $sv_feature_obj->slice->coord_system_name;
+     $data{$svf_id}{Chr}              = $sv_feature_obj->seq_region_name;
+     $data{$svf_id}{start}            = $sv_feature_obj->start;
+     $data{$svf_id}{end}              = $sv_feature_obj->end;
+     $data{$svf_id}{strand}           = $sv_feature_obj->strand;
+     $data{$svf_id}{outer_start}      = $sv_feature_obj->outer_start;
+     $data{$svf_id}{inner_start}      = $sv_feature_obj->inner_start;
+     $data{$svf_id}{inner_end}        = $sv_feature_obj->inner_end;
+     $data{$svf_id}{outer_end}        = $sv_feature_obj->outer_end;
+     $data{$svf_id}{is_somatic}       = $sv_feature_obj->is_somatic;
+     $data{$svf_id}{breakpoint_order} = $sv_feature_obj->breakpoint_order;
+     $data{$svf_id}{transcript_vari}  = undef;
   }
   return \%data;
 }
