@@ -80,8 +80,8 @@ sub content {
       ', $object->type, $interval, $overview_link)
     );
   } else { # context > length Slice
-    $img_start -= $width/2 - ($length/2); 
-    $img_end   += $width/2 - ($length/2);
+    $img_start -= int($width/2 - ($length/2)); 
+    $img_end   += int($width/2 - ($length/2));
   }
   
   my $slice        = $slice_adaptor->fetch_by_region($seq_type, $seq_region, $img_start, $img_end, 1);
@@ -111,8 +111,8 @@ sub content {
     $html     .= "<h2>Features overlapping $vname:</h2><br />";
   }
   
-  $html .= $self->structural_variation_table($slice, 'Structural variants',         'sv',  'get_all_StructuralVariationFeatures', 1);
-  $html .= $self->structural_variation_table($slice, 'Copy number variants probes', 'cnv', 'get_all_CopyNumberVariantProbeFeatures');
+  $html .= $self->structural_variation_table($slice, 'Structural variants',         'sv',  ['get_all_StructuralVariationFeatures','get_all_somatic_StructuralVariationFeatures'], 1);
+  $html .= $self->structural_variation_table($slice, 'Copy number variants probes', 'cnv', ['get_all_CopyNumberVariantProbeFeatures']);
   $html .= $self->regulatory_feature_table($var_slice,  $vname, $image_config);
   $html .= $self->constrained_element_table($var_slice, $vname);
   
