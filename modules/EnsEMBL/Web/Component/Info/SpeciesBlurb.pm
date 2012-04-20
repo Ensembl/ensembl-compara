@@ -24,14 +24,17 @@ sub content {
 
   my $ensembl_version   = $hub->species_defs->ENSEMBL_VERSION;
   my $current_assembly  = $hub->species_defs->ASSEMBLY_NAME;
+  my $accession         = $hub->species_defs->ASSEMBLY_ACCESSION;
+  my $source            = $hub->species_defs->ASSEMBLY_ACCESSION_SOURCE || 'NCBI';
+  my $source_type       = $hub->species_defs->ASSEMBLY_ACCESSION_TYPE;
 
   ## Assembly blurb
   my $html = EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $file1);
 
   ## Add in GCA link 
-  if ($hub->species_defs->ASSEMBLY_ACCESSION){
-    my $accession_link = $hub->get_ExtURL_link($hub->species_defs->ASSEMBLY_ACCESSION, 'GCA', $hub->species_defs->ASSEMBLY_ACCESSION);
-    $html .= qq(<p class="space-below">The genome assembly represented here corresponds to GenBank Assembly ID $accession_link</p>);
+  if ($accession){
+    my $accession_link = $hub->get_ExtURL_link($accession, $accession.'_'.$source, $accession);
+    $html .= qq(<p class="space-below">The genome assembly represented here corresponds to $source_type $accession_link</p>);
   }
 
   ## Link to FTP site
