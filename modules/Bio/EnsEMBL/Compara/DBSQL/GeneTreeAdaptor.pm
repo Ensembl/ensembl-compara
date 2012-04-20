@@ -180,6 +180,27 @@ sub fetch_by_dbID {
 }
 
 
+=head2 fetch_by_node_id
+
+  Arg[1]     : int $tree_node_id
+  Example    : $tree = $genetree_adaptor->fetch_by_node_id(3);
+  Description: Fetches from the database the gene tree that contains
+               this node
+  Returntype : Bio::EnsEMBL::Compara::GeneTree
+  Exceptions : returns undef if $node_id is not found.
+  Caller     : general
+
+=cut
+
+sub fetch_by_node_id {
+    my ($self, $node_id) = @_;
+
+    $self->bind_param_generic_fetch($node_id, SQL_INTEGER);
+    my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id']];
+    return $self->generic_fetch('gtn.node_id = ?', $join)->[0];
+}
+
+
 =head2 fetch_all_by_Member
 
   Arg[1]     : Member or member_id
