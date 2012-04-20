@@ -463,7 +463,7 @@ sub fetch_all_by_method_link_type_GenomeDB {
 
   my $all_method_link_species_sets = $self->fetch_all();
   foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
-    if ($this_method_link_species_set->method_link_type eq $method_link_type and
+    if ($this_method_link_species_set->method->type eq $method_link_type and
         grep (/^$genome_db_id$/, map {$_->dbID} @{$this_method_link_species_set->species_set_obj->genome_dbs})) {
       push(@$method_link_species_sets, $this_method_link_species_set);
     }
