@@ -463,7 +463,7 @@ sub pipeline_analyses {
 				 },
 	       -hive_capacity => 50,
 	       -batch_size    => 3,
-	       -rc_id => 1,
+	       -rc_id => 2,
  	    },
  	    {  -logic_name => 'update_max_alignment_length_after_FD',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
