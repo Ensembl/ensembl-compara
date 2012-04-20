@@ -90,9 +90,11 @@ sub write_output {
 	my $ancestor_db = $self->param('ancestor_db');
 	my $genome_dbs_names_from_file = join("','", sort {$a cmp $b} @{ $self->param('genome_dbs') }, $ancestor_db->{'-name'});
 
+	# populate the genome_db table with info from the compara_master db for the species from the enredo file
 	my $genomeDB_where_clause = "assembly_default AND name IN ('".$genome_dbs_names_from_file."')";
 	my $genomeDB_pipe = $master_dump." -w \"$genomeDB_where_clause\""." genome_db".$to_db;
 	system($genomeDB_pipe);
+	# populate the species_set table
 	my $ss_cmd = $master_select.'species_set_id FROM method_link_species_set WHERE method_link_species_set_id ='.
 		$self->param('ortheus_mlssid').'"'; # get the species_set_id from the method_link_species_set table
 	my ($ss_id) = map{ chomp $_;$_ } `$ss_cmd`;
