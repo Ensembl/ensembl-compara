@@ -117,9 +117,9 @@ my $source_types = {
     'name'         => 'Gene Summary',
     'coord_system' => 'ensembl_gene',
     'query'        => '
-  select sid.stable_id
-    from gene t, gene_stable_id  sid
-   where t.gene_id = sid.gene_id limit 1',
+  select stable_id
+    from gene
+    limit 1',
     'source_id'    => 9,
     'multi_species' => 1,
   },
