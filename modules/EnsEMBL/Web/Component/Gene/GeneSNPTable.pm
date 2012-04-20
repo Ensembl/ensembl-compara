@@ -60,14 +60,20 @@ sub make_table {
     { key => 'ID',       sort => 'html'                                                    },
     { key => 'chr' ,     sort => 'position',  title => 'Chr: bp'                           },
     { key => 'Alleles',  sort => 'string',                               align => 'center' },
-    { key => 'HGVS',     sort => 'string',    title => 'HGVS name(s)',   align => 'center', export_options => { 'split_newline' => 2 } },
     { key => 'class',    sort => 'string',    title => 'Class',          align => 'center' },
     { key => 'Source',   sort => 'string'                                                  },
     { key => 'status',   sort => 'string',    title => 'Validation',     align => 'center' },
     { key => 'snptype',  sort => 'string',    title => 'Type',                             },
     { key => 'aachange', sort => 'string',    title => 'Amino Acid',     align => 'center' },
-    { key => 'aacoord',  sort => 'position',  title => 'AA co-ordinate', align => 'center' },
+    { key => 'aacoord',  sort => 'position',  title => 'AA coord',       align => 'center' },
   ];
+  
+  # HGVS
+  if($self->hub->param('hgvs') eq 'on') {
+    splice(@$columns, 3, 0, 
+      { key => 'HGVS',     sort => 'string',    title => 'HGVS name(s)',   align => 'center', export_options => { 'split_newline' => 2 } }
+    );
+  }
   
   # add GMAF, SIFT and PolyPhen for human
   if ($self->hub->species eq 'Homo_sapiens') {
@@ -289,8 +295,7 @@ sub variation_table {
           my $source            = $snp->source;
           
           my ($aachange, $aacoord) = $translation_start ? 
-            ($tva->pep_allele_string, sprintf('%s (%s)', $translation_start, (($transcript_variation->cdna_start - $cdna_coding_start) % 3 + 1))) : 
-            ('-', '-');
+            ($tva->pep_allele_string, $translation_start) : ('-', '-');
           
           my $url           = "$base_url;v=$variation_name;vf=$raw_id;source=$source";
           my $trans_url     = "$base_trans_url;$url_transcript_prefix=$transcript_stable_id";
@@ -303,7 +308,7 @@ sub variation_table {
           }
           # highlight variant allele in allele string
           my $vf_allele  = $tva->variation_feature_seq;
-          $allele_string =~ s/$vf_allele/<b>$vf_allele<\/b>/g if $allele_string =~ /\//;
+          $allele_string =~ s/$vf_allele/<b>$vf_allele<\/b>/g if $allele_string =~ /\/.+\//;
           
           # sort out consequence type string
           # Avoid duplicated Ensembl terms
@@ -356,7 +361,7 @@ sub variation_table {
             aacoord    => $aacoord,
             sift       => $sift,
             polyphen   => $poly,
-            HGVS       => $self->get_hgvs($tva) || '-',
+            HGVS       => $hub->param('hgvs') eq 'on' ? ($self->get_hgvs($tva) || '-') : undef,
           };
           
           push @rows, $row;
