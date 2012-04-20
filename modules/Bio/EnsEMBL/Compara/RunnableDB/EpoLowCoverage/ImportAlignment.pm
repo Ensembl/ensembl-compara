@@ -60,9 +60,6 @@ sub fetch_input {
   #with $self->db (Hive DBAdaptor)
   $self->compara_dba->dbc->disconnect_when_inactive(0);
 
-  my $reg = "Bio::EnsEMBL::Registry";
-  $reg->load_registry_from_url($self->param('from_db_url'));
-  
 }
 
 =head2 run
@@ -141,7 +138,12 @@ sub importAlignment {
 
     #HACK to just copy over one chr (22) for testing purposes
     #my $dnafrag_id = 905407;
+
     my $dnafrag_id;
+
+    if ($self->param('dnafrag_id')) {
+	$dnafrag_id = $self->param('dnafrag_id');
+    }
 
     #Copy the method_link_species_set
     copy_data($self->param('from_comparaDBA'), $self->compara_dba,
@@ -170,6 +172,26 @@ sub importAlignment {
 		  "SELECT * FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id");
     }
 
+    #copy genomic_align_tree table
+    if ($dnafrag_id) {
+	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
+		  "genomic_align_tree",
+		  "root_id",
+		  $min_root_id, $max_root_id,
+		  "SELECT gat.*".
+		  " FROM genomic_align_tree gat  LEFT JOIN genomic_align USING (node_id)".
+		  " WHERE node_id IS NOT NULL AND method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
+
+    } else {
+	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
+		  "genomic_align_tree",
+		  "root_id",
+		  $min_root_id, $max_root_id,
+		  "SELECT gat.*".
+		  " FROM genomic_align ga".
+		  " JOIN dnafrag USING (dnafrag_id)".
+		  " LEFT JOIN genomic_align_tree gat USING (node_id) WHERE ga.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id AND genome_db_id != 63");
+    }
     #copy genomic_align table
     if ($dnafrag_id) {
 	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
@@ -197,28 +219,6 @@ sub importAlignment {
 		  "SELECT genomic_align.*".
 		  " FROM genomic_align JOIN dnafrag USING (dnafrag_id)".
 		  " WHERE method_link_species_set_id = $mlss_id AND genome_db_id != 63");
-    }
-    #copy genomic_align_tree table
-    if ($dnafrag_id) {
-	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
-		  "genomic_align_tree",
-		  "root_id",
-		  $min_root_id, $max_root_id,
-		  "SELECT gat.*".
-		  " FROM genomic_align_tree gat LEFT JOIN genomic_align_group USING (node_id)".
-		  " LEFT JOIN genomic_align USING (genomic_align_id)".
-		  " WHERE node_id IS NOT NULL AND method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
-
-    } else {
-	copy_data($self->param('from_comparaDBA'), $self->compara_dba,
-		  "genomic_align_tree",
-		  "root_id",
-		  $min_root_id, $max_root_id,
-		  "SELECT gat.*".
-		  " FROM genomic_align ga".
-		  " JOIN dnafrag USING (dnafrag_id)".
-		  " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
-		  " LEFT JOIN genomic_align_tree gat USING (node_id) WHERE gag.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id AND genome_db_id != 63");
     }
 }
 
@@ -331,8 +331,8 @@ sub copy_data_in_text_mode {
   }
 }
 
-#Assumes the from and to databases are on the same server and downloads all entries from genomic_align_block, genomic_align,
-#genomic_align_group and genomic_align_tree
+#Assumes the from and to databases are on the same server and downloads all entries from genomic_align_block, genomic_align
+#and genomic_align_tree
 sub importAlignment_quick {
     my $self = shift;
 
