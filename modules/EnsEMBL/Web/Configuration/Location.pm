@@ -156,10 +156,31 @@ sub add_external_browsers {
   my %browsers = %{$species_defs->EXTERNAL_GENOME_BROWSERS || {}};
   $browsers{'UCSC_DB'} = $species_defs->UCSC_GOLDEN_PATH;
   $browsers{'NCBI_DB'} = $species_defs->NCBI_GOLDEN_PATH;
+  $browsers{'EG'}      = $species_defs->ENSEMBL_GENOMES;
   
   my ($chr, $start, $end) = $object ? ($object->seq_region_name, int $object->seq_region_start, int $object->seq_region_end) : ();
   my $url;
-  
+ 
+  if ($browsers{'EG'}) {
+    if ($chr) {
+      my $r = $chr;
+      if ($start) {
+        $r .= ":$start";
+      }
+      if ($end) {
+        $r .= "-$end";
+      }
+      $url = $hub->url({ r => $r });
+    } else {
+      $url = $hub->url({ r => '1:1-100000' });
+    }
+    $url = 'http://'.$browsers{'EG'}.'.ensembl.org'.$url;
+    
+    $self->get_other_browsers_menu->append($self->create_node('EnsemblGenomes', 'Ensembl '.ucfirst($browsers{'EG'}), [], { availability => 1, url => $url, raw => 1, external => 1 }));
+    
+    delete $browsers{'EG'};
+  }
+ 
   if ($browsers{'UCSC_DB'}) {
     if ($chr) {
       $url = $hub->get_ExtURL('EGB_UCSC', { UCSC_DB => $browsers{'UCSC_DB'}, CHR => $chr, START => $start, END => $end });
