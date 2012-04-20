@@ -1437,21 +1437,22 @@ sub _munge_meta {
   ##########################################
   
   my %keys = qw(
-    species.taxonomy_id        TAXONOMY_ID
-    species.display_name       SPECIES_COMMON_NAME
-    species.production_name    SPECIES_PRODUCTION_NAME
-    species.scientific_name    SPECIES_SCIENTIFIC_NAME
-    assembly.accession         ASSEMBLY_ACCESSION
-    assembly.accession_source  ASSEMBLY_ACCESSION_SOURCE
-    assembly.default           ASSEMBLY_NAME
-    assembly.name              ASSEMBLY_DISPLAY_NAME
-    liftover.mapping           ASSEMBLY_MAPPINGS
-    genebuild.method           GENEBUILD_METHOD
-    provider.name              PROVIDER_NAME
-    provider.url               PROVIDER_URL
-    provider.logo              PROVIDER_LOGO
-    species.strain             SPECIES_STRAIN
-    species.sql_name           SYSTEM_NAME
+    species.taxonomy_id           TAXONOMY_ID
+    species.display_name          SPECIES_COMMON_NAME
+    species.production_name       SPECIES_PRODUCTION_NAME
+    species.scientific_name       SPECIES_SCIENTIFIC_NAME
+    assembly.accession            ASSEMBLY_ACCESSION
+    assembly.web_accession_source ASSEMBLY_ACCESSION_SOURCE
+    assembly.web_accession_type   ASSEMBLY_ACCESSION_TYPE
+    assembly.default              ASSEMBLY_NAME
+    assembly.name                 ASSEMBLY_DISPLAY_NAME
+    liftover.mapping              ASSEMBLY_MAPPINGS
+    genebuild.method              GENEBUILD_METHOD
+    provider.name                 PROVIDER_NAME
+    provider.url                  PROVIDER_URL
+    provider.logo                 PROVIDER_LOGO
+    species.strain                SPECIES_STRAIN
+    species.sql_name              SYSTEM_NAME
   );
   
   my @months    = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
