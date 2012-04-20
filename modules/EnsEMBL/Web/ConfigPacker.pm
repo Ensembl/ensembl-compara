@@ -444,7 +444,7 @@ sub _summarise_variation_db {
   }
 
 #--------- Add in structural variation information
-  my $v_aref = $dbh->selectall_arrayref( "select s.name, count(*), s.description from structural_variation sv, source s, attrib a where sv.source_id=s.source_id and sv.class_attrib_id=a.attrib_id and a.value='structural_variant' group by sv.source_id");
+  my $v_aref = $dbh->selectall_arrayref("select s.name, count(*), s.description from structural_variation sv, source s, attrib a where sv.source_id=s.source_id and sv.class_attrib_id=a.attrib_id and a.value!='probe' and sv.somatic=0 group by sv.source_id");
   my %structural_variations;
   my %sv_descriptions;
   foreach (@$v_aref) {
@@ -455,7 +455,7 @@ sub _summarise_variation_db {
   $self->db_details($db_name)->{'tables'}{'structural_variation'}{'descriptions'} = \%sv_descriptions;
 
 #--------- Add in copy number variant probes information
-  my $cnv_aref = $dbh->selectall_arrayref( "select s.name, count(*), s.description from structural_variation sv, source s, attrib a where sv.source_id=s.source_id and sv.class_attrib_id=a.attrib_id and a.value='probe' group by sv.source_id");
+  my $cnv_aref = $dbh->selectall_arrayref("select s.name, count(*), s.description from structural_variation sv, source s, attrib a where sv.source_id=s.source_id and sv.class_attrib_id=a.attrib_id and a.value='probe' group by sv.source_id");
   my %cnv_probes;
   my %cnv_probes_descriptions;
   foreach (@$cnv_aref) {
@@ -464,12 +464,16 @@ sub _summarise_variation_db {
   }
   $self->db_details($db_name)->{'tables'}{'structural_variation'}{cnv_probes}{'counts'} = \%cnv_probes;
   $self->db_details($db_name)->{'tables'}{'structural_variation'}{cnv_probes}{'descriptions'} = \%cnv_probes_descriptions;
-#--------- Add in Structural Variation set information
-  # First get all sets
-  my $svt_aref = $dbh->selectall_arrayref('
-    select distinct variation_set_id from variation_set_structural_variation'
-  );
-  
+#--------- Add in somatic structural variation information
+  my $som_sv_aref = $dbh->selectall_arrayref("select s.name, count(*), s.description from structural_variation sv, source s, attrib a where sv.source_id=s.source_id and sv.class_attrib_id=a.attrib_id and a.value!='probe' and sv.somatic=1 group by sv.source_id");
+  my %somatic_sv;
+  my %somatic_sv_descriptions;
+  foreach (@$som_sv_aref) {
+   $somatic_sv{$_->[0]} = $_->[1];    
+   $somatic_sv_descriptions{$_->[0]} = $_->[2];
+  }
+  $self->db_details($db_name)->{'tables'}{'structural_variation'}{'somatic'}{'counts'} = \%somatic_sv;
+  $self->db_details($db_name)->{'tables'}{'structural_variation'}{'somatic'}{'descriptions'} = \%somatic_sv_descriptions;  
 #--------- Add in Variation set information
   # First get all toplevel sets
   my (%super_sets, %sub_sets, %set_descriptions);
