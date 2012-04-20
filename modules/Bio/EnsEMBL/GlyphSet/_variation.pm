@@ -257,26 +257,18 @@ sub highlight {
  
   return unless $highlights{$id} || $highlights{"rs$id"};
   
-	# Different 'y' coordinates to highlight the variation, depending on the 'style'.
-	my $composite_y = $composite->y - ($self->my_config('style') eq 'box' ? 0 : 1);
+  $composite->z(20);
   
   $self->unshift(
     $self->Rect({ # First a black box
       x         => $composite->x - 2 / $pix_per_bp,
-      y         => $composite_y - 1, # + makes it go down
+      y         => $composite->y - 2, # + makes it go down
       width     => $composite->width + 4 / $pix_per_bp,
       height    => $h + 4,
       colour    => 'black',
       absolutey => 1,
+      z         => 18,
     }),
-    $self->Rect({ # Then a 1 pixel smaller white box
-      x         => $composite->x - 1 / $pix_per_bp,
-      y         => $composite_y, # + makes it go down
-      width     => $composite->width + 2 / $pix_per_bp,
-      height    => $h + 2,
-      colour    => 'white',
-      absolutey => 1,
-    })
   );
 }
 

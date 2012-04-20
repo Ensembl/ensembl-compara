@@ -13,7 +13,7 @@ sub features {
   my $set_name = $self->my_config('set_name');
   my $var_features;
   
-	# Structural variations by set
+  # Structural variations by set
   if ($set_name) {
     $var_features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', 'variation')->fetch_by_name($set_name));
   } elsif ($source =~ /^\w/) {
@@ -22,12 +22,16 @@ sub features {
     $var_features = $slice->get_all_StructuralVariationFeatures; # All structural variations
   }
   
+  if ($self->my_config('display') eq 'normal') {
+    $self->get_render_normal;
+  }
+  
   return $var_features;  
 }
 
 sub colour_key  {
   my ($self, $f) = @_;
-  return $f->source;
+  return $f->class_SO_term;
 }
 
 sub tag {
@@ -35,6 +39,16 @@ sub tag {
   my $colour         = $self->my_colour($self->colour_key($f), 'tag');
   my $inner_crossing = $f->inner_start && $f->inner_end && $f->inner_start >= $f->inner_end ? 1 : 0;
   my @g_objects;
+
+  if ($inner_crossing && $f->inner_start == $f->seq_region_end) {
+    push @g_objects, {
+        style  => 'rect',
+        colour => $colour,
+        start  => $f->start,
+        end    => $f->end
+     };
+     return @g_objects;
+  }
 
   # start of feature
   if ($f->outer_start && $f->inner_start) {
@@ -97,13 +111,23 @@ sub tag {
   return @g_objects;
 } 
 
+
+sub get_render_normal {
+  my $self = shift;
+  
+  my ($font, $fontsize) = $self->get_font_details($self->my_config('font') || 'innertext');
+  my $height            = $self->my_config('height') || [$self->get_text_width(0, 'X', '', font => $font, ptsize => $fontsize)]->[3] + 2;
+  $self->{'extras'}{'height'} = $height/=2;
+}
+
+
 sub render_tag {
   my ($self, $tag, $composite, $slice_length, $width, $start, $end, $img_start, $img_end) = @_;
   my @glyph;
   
   if ($tag->{'style'} =~ /^bound_triangle_(\w+)$/ && $img_start < $tag->{'start'} && $img_end > $tag->{'end'}) {
     my $pix_per_bp = $self->scalex;
-    my $x          = $tag->{'start'} + ($tag->{'out'} == ($1 eq 'left') ? 1 : -1) * ($tag->{'out'} ? 0 : $width / 2 / $pix_per_bp);
+    my $x          = $tag->{'start'} + ($tag->{'out'} == ($1 eq 'left') ? 1 : -1) * ($tag->{'out'} ? $width  / 4 / $pix_per_bp : ($width + 2) / 2 / $pix_per_bp);
     my $y          = $width / 2;
     
     # Triangle returns an array: the triangle, and an invisible rectangle behind it for clicking purposes
@@ -114,7 +138,7 @@ sub render_tag {
       width        => $width,
       height       => $y / $pix_per_bp,
       direction    => $1,
-      bordercolour => 'black',
+      bordercolour => 'dimgray',
     });
   }
   
@@ -147,6 +171,7 @@ sub highlight {
   my ($self, $f, $composite, $pix_per_bp, $h) = @_;
   my $id = $f->variation_name;
   my %highlights;
+  my $extra = 0;
   @highlights{$self->highlights} = (1);
 
   my $length = ($f->end - $f->start) + 1; 
@@ -159,13 +184,6 @@ sub highlight {
     y         => $composite->y - 2, # + makes it go down
     width     => $composite->width + 4/$pix_per_bp,
     height    => $h + 4,
-    colour    => 'black',
-    absolutey => 1,
-  }), $self->Rect({ # Then a 1 pixel smaller green box
-    x         => $composite->x - 1/$pix_per_bp,
-    y         => $composite->y - 1, # + makes it go down
-    width     => $composite->width + 2/$pix_per_bp,
-    height    => $h + 2,
     colour    => 'green',
     absolutey => 1,
   }));
