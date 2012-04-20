@@ -85,7 +85,7 @@ my $help;
 my $mlss_id;
 my $compara_url;
 my $ucsc_url;
-my $url;
+my $urls;
 my $image_dir = "./"; #location to write image files
 my $R_prog = "/software/R-2.9.0/bin/R ";
 my $reg = "Bio::EnsEMBL::Registry";
@@ -124,7 +124,7 @@ my $blastz_parameters;
 
 GetOptions(
            "help" => \$help,
-	   "url=s" => \$url,
+	   "url=s" => \@$urls,
 	   "compara_url=s" => \$compara_url,
 	   "mlss|mlss_id|method_link_species_set_id=s" => \$mlss_id,
 	   "image_location=s" => \$image_dir,
@@ -143,8 +143,10 @@ if ($image_dir !~ /\/$/) {
 }
 
 #load core database in order to get common name
-if ($url) {
-    $reg->load_registry_from_url($url);
+if ($urls) {
+    foreach my $url (@$urls) {
+	$reg->load_registry_from_url($url);
+    }
 }
 
 #Fetch data from the configuration database
@@ -366,7 +368,7 @@ sub fetch_input {
     $non_ref_results->{alignment_coverage} = $mlss->get_value_for_tag("non_ref_genome_coverage");
     $non_ref_results->{alignment_exon_coverage} = $mlss->get_value_for_tag("non_ref_coding_coverage");
 
-    $pair_aligner_config->{method_link_type} = $mlss->method_link_type;
+    $pair_aligner_config->{method_link_type} = $mlss->method->type;
 
     $pair_aligner_config->{ensembl_release} = $mlss->get_value_for_tag("ensembl_release");
 
@@ -375,7 +377,7 @@ sub fetch_input {
     }
 
     my $pairwise_params = $mlss->get_value_for_tag("param");
-    if ($mlss->method_link_type eq "TRANSLATED_BLAT_NET") { 
+    if ($mlss->method->type eq "TRANSLATED_BLAT_NET") { 
 	unless (defined $pairwise_params) {
 	    $tblat_parameters = {};
 	}
@@ -400,13 +402,12 @@ sub fetch_input {
 	    }
 	}
     }
-
     my $ref_common_name;
-    if ($url) {
-	$ref_common_name = $reg->get_adaptor($ref_species, "core", "MetaContainer")->list_value_by_key('species.ensembl_alias_name')->[0];
+    if ($urls) {
+	$ref_common_name = $reg->get_adaptor($ref_species, "core", "MetaContainer")->list_value_by_key('species.display_name')->[0];
 #	$ref_common_name = $reg->get_adaptor($ref_species, "core", "MetaContainer")->get_common_name;
     } else {
-	$ref_common_name = $ref_genome_db->db_adaptor->get_MetaContainer->list_value_by_key('species.ensembl_alias_name')->[0];
+	$ref_common_name = $ref_genome_db->db_adaptor->get_MetaContainer->list_value_by_key('species.display_name')->[0];
 #	$ref_common_name = $ref_genome_db->db_adaptor->get_MetaContainer->get_common_name;
     }
 
@@ -416,11 +417,11 @@ sub fetch_input {
     $ref_dna_collection_config->{common_name} = $ref_common_name;
 
     my $non_ref_common_name;
-    if ($url) {
+    if ($urls) {
 #	$non_ref_common_name = $reg->get_adaptor($non_ref_species, "core", "MetaContainer")->get_common_name;
-	$non_ref_common_name = $reg->get_adaptor($non_ref_species, "core", "MetaContainer")->list_value_by_key('species.ensembl_alias_name')->[0];
+	$non_ref_common_name = $reg->get_adaptor($non_ref_species, "core", "MetaContainer")->list_value_by_key('species.display_name')->[0];
     } else {
-	$non_ref_common_name = $non_ref_genome_db->db_adaptor->get_MetaContainer->list_value_by_key('species.ensembl_alias_name')->[0];
+	$non_ref_common_name = $non_ref_genome_db->db_adaptor->get_MetaContainer->list_value_by_key('species.display_name')->[0];
 	#$non_ref_common_name = $non_ref_genome_db->db_adaptor->get_MetaContainer->get_common_name;
     }
     $non_ref_dna_collection_config->{name} = $non_ref_species;
