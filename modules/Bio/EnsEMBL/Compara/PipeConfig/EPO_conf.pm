@@ -271,6 +271,7 @@ return [
             },  
 		# set up jobs for updating left_index and right_index values in genomic_align_tree table
 	    {	-logic_name => 'create_neighbour_nodes_jobs_alignment',
+		-input_ids => [{}],
 		-parameters => {
 				'inputquery' => 'SELECT root_id FROM genomic_align_tree WHERE parent_id = 0',
 				'fan_branch_code' => 1,
