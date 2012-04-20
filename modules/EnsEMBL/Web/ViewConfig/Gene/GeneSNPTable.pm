@@ -15,6 +15,7 @@ sub init {
   my $defaults   = {
     consequence_format => 'ensembl',
     context            => 'FULL',
+    hgvs               => 'off',
   };
   
   $defaults->{"opt_pop_$_"} = 'off' for @{$variations->{'DISPLAY_STRAINS'}};
@@ -101,7 +102,15 @@ sub form {
       { value => 'so',       name => 'Sequence Ontology terms' },
       { value => 'ncbi',     name => 'NCBI terms'              },
     ]
-  });  
+  });
+  
+  $self->add_form_element({
+    type  => 'CheckBox',
+    label => 'Show HGVS notations',
+    name  => 'hgvs',
+    value => 'on',
+    raw   => 1
+  });
   
   # Add type selection
   $self->add_fieldset('Consequence type');
