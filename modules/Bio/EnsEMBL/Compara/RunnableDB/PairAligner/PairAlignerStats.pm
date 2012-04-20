@@ -142,6 +142,8 @@ sub run {
 sub write_output {
   my ($self) = @_;
 
+  return if ($self->param('skip'));
+
   #Dump bed files if necessary
   my ($ref_genome_bed, $ref_coding_exons_bed) = $self->dump_bed_file($self->param('ref_species'), $self->param('ref_dbc_url'), $self->param('reg_conf'));
   my ($non_ref_genome_bed, $non_ref_coding_exons_bed) = $self->dump_bed_file($self->param('non_ref_species'), $self->param('non_ref_dbc_url'), $self->param('reg_conf'));
