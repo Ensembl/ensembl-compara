@@ -14,8 +14,7 @@ sub content {
   my $db_adaptor      = $hub->database('variation');
   my $var_adaptor     = $db_adaptor->get_StructuralVariation;
   my $variation       = $var_adaptor->fetch_by_name($v_id); 
-  my $svf_adaptor     = $db_adaptor->get_StructuralVariationFeatureAdaptor;
-  my $svf             = $svf_adaptor->fetch_all_by_StructuralVariation($variation);
+  my $svf             = $variation->get_all_StructuralVariationFeatures();
   my $max_length      = ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1) * 1e6; 
   my $class            = $variation->var_class;
   my $vstatus         = $variation->get_all_validation_states;
@@ -25,6 +24,7 @@ sub content {
   my $study_name;
   my $description;
   my $study_url;
+  my $is_breakpoint;
   my $study = $variation->study;
   
   if (defined($study)) {
@@ -53,16 +53,19 @@ sub content {
     $position = "$seq_region:$start-$end";
   }
   
+  $is_breakpoint = " (breakpoint)" if ($start == $end && defined($feature->breakpoint_order));
+  
   if (! $description) {
     $description = $variation->source_description;
   }
   
-  if ($length > $max_length) {  
+  if ($length > $max_length) {
+    my $track_name = $variation->is_somatic ? 'somatic_sv_feature' : 'variation_feature_structural';  
     $location_link = $hub->url({
       type     => 'Location',
       action   => 'Overview',
       r        => $seq_region . ':' . $start . '-' . $end,
-      cytoview => 'variation_feature_structural=normal',
+      cytoview => "$track_name=normal",
     });
   } else {
     $location_link = $hub->url({
@@ -146,7 +149,7 @@ sub content {
 
   $self->add_entry({
     type  => 'Location',
-    label => $position,
+    label => $position.$is_breakpoint,
     link  => $location_link,
   });
 }
