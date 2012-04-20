@@ -829,6 +829,7 @@ sub pipeline_analyses {
             -parameters     => {
                 'dataflow_subclusters' => 1,
                 'tree_id_str'       => 'protein_tree_id',
+                'mlss_id'           => $self->o('mlss_id'),
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
             -rc_id          => 1,
