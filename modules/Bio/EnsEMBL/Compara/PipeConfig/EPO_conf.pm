@@ -287,8 +287,7 @@ return [
 		-parameters => {
 				'method_link_species_set_id' => $self->o('ortheus_mlssid'),
 			},
-		-batch_size    => 10,
-		-hive_capacity => 15,
+		-batch_size    => 20,
 	    },
 	
      ];
