@@ -1,5 +1,3 @@
-# $Id$
-
 package EnsEMBL::Web::Component::Variation::Summary;
 
 use strict;
@@ -348,11 +346,11 @@ sub location {
       $hub->url({
         type             => 'Location',
         action           => 'View',
-        r                => $region . ':' . ($start - 500) . '-' . ($end + 500),
+        r                => $region . ':' . ($start - 50) . '-' . ($end + 50),
         v                => $id,
         vf               => $vf,
         source           => $object->source,
-        contigviewbottom => ($variation->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($variation->failed_description ? ',variation_set_fail_all=normal' : '')
+        contigviewbottom => ($variation->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($variation->failed_description ? ',variation_set_fail_all=normal' : '') . ',seq=normal'
       })
     );
   }
