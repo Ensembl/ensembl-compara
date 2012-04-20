@@ -4,6 +4,8 @@ use strict;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use DBI qw(:sql_types);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
@@ -319,12 +321,17 @@ sub fetch_by_PMember_id_PMember_id {
 
 =head2 fetch_all_by_MethodLinkSpeciesSet
 
-  Arg [1]    : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlss
+  Arg [1]    : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlss or its dbID
+  Arg [-ORTHOLOGY_TYPE] (opt)
+             : string: the type of homology that have to be fetched
+  Arg [-SUBTYPE] (opt)
+             : string: the subtype (taxonomy level) of the homologies that have
+                       to be fetched
   Example    : $homologies = $HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
   Description: fetch all the homology relationships for the given MethodLinkSpeciesSet
-               Since each species pair Orthologue analysis is given a unique 
-	       MethodLinkSpeciesSet, this method can be used to grab all the 
-	       orthologues for a species pair.
+               Since the homology analysis of each species pair is given a unique 
+               MethodLinkSpeciesSet, this method can be used to grab all the 
+               orthologues for a species pair, refined by an orthology_type
   Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
   Exceptions : none
   Caller     : 
@@ -332,14 +339,25 @@ sub fetch_by_PMember_id_PMember_id {
 =cut
 
 sub fetch_all_by_MethodLinkSpeciesSet {
-  my ($self, $method_link_species_set) = @_;
+    my ($self, $mlss, @args) = @_;
 
-  throw("method_link_species_set arg is required\n")
-    unless ($method_link_species_set);
+    throw("method_link_species_set arg is required\n") unless ($mlss);
 
-  my $constraint =  " h.method_link_species_set_id =" . $method_link_species_set->dbID;
+    my ($orthology_type, $subtype) = rearrange([qw(ORTHOLOGY_TYPE SUBTYPE)], @args);
 
-  return $self->generic_fetch($constraint);
+    my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
+    my $constraint =  ' h.method_link_species_set_id = ?';
+    $self->bind_param_generic_fetch($mlss_id, SQL_INTEGER);
+
+    if (defined $orthology_type) {
+        $constraint .= ' AND h.description = ?';
+        $self->bind_param_generic_fetch($orthology_type, SQL_VARCHAR);
+    }
+    if (defined $subtype) {
+        $constraint .= ' AND h.subtype = ?';
+        $self->bind_param_generic_fetch($subtype, SQL_VARCHAR);
+    }
+    return $self->generic_fetch($constraint);
 }
 
 
@@ -398,79 +416,30 @@ sub fetch_all_by_genome_pair {
     return $self->generic_fetch($constraint);
 }
 
+
 =head2 fetch_all_by_MethodLinkSpeciesSet_orthology_type
 
-  Arg [1]    : method_link_species_set
-  Arg [2]    : orthology type
-  Example    : $homologies = $HomologyAdaptor->
-                  fetch_all_by_MethodLinkSpeciesSet_orthology_type(
-                  $mlss, 'ortholog_one2one');
-  Description: fetch all the homology relationships for the given
-               orthology type and for a mlss (corresponding to one or
-               a pair of genomes). This method can be used to grab all
-               the orthologues for one genome paralogues or a species
-               pair and an orthology type.
-  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
-  Exceptions : none
-  Caller     :
+  Description: DEPRECATED. Use fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type) instead
 
 =cut
 
 sub fetch_all_by_MethodLinkSpeciesSet_orthology_type {
-  my ($self, $method_link_species_set, $orthology_type) = @_;
-
-  throw ("method_link_species_set arg is required\n")
-    unless ($method_link_species_set);
-  throw ("[$method_link_species_set] must be a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object\n")
-    unless (UNIVERSAL::isa($method_link_species_set, "Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-  throw ("orthology_type arg is required\n")
-    unless ($orthology_type);
-
-  my $constraint =  " h.method_link_species_set_id =" . $method_link_species_set->dbID;
-  $constraint .= " AND h.description=\"$orthology_type\"";
-
-  $self->{'_this_one_first'} = undef; #not relevant
-
-  return $self->generic_fetch($constraint);
+    my ($self, $method_link_species_set, $orthology_type) = @_;
+    deprecate('Use fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type) instead');
+    return $self->fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type);
 }
+
 
 =head2 fetch_all_by_MethodLinkSpeciesSet_orthology_type_subtype
 
-  Arg [1]    : method_link_species_set
-  Arg [2]    : orthology type
-  Arg [3]    : orthology subtype
-  Example    : $homologies = $HomologyAdaptor->
-                  fetch_all_by_MethodLinkSpeciesSet_orthology_type_subtype(
-                  $mlss, 'ortholog_one2one','Mammalia');
-  Description: fetch all the homology relationships for the given
-               orthology type, mlss (corresponding to one or
-               a pair of genomes) and subtype (taxonomy level). This method can be
-               used to grab all the orthologues for one genome paralogues or a species
-               pair and an orthology type and taxonomy level.
-  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
-  Exceptions : none
-  Caller     :
+  Description: DEPRECATED. Use fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type, -subtype => $subtype) instead
 
 =cut
 
-
 sub fetch_all_by_MethodLinkSpeciesSet_orthology_type_subtype {
-  my ($self, $method_link_species_set, $orthology_type, $subtype) = @_;
-
-  throw ("method_link_species_set arg is required\n")
-    unless ($method_link_species_set);
-  throw ("[$method_link_species_set] must be a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object\n")
-    unless (UNIVERSAL::isa($method_link_species_set, "Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-  throw ("orthology_type arg is required\n")
-    unless ($orthology_type);
-
-  my $constraint =  " h.method_link_species_set_id =" . $method_link_species_set->dbID;
-  $constraint .= " AND h.description=\"$orthology_type\"";
-  $constraint .= " AND h.subtype=\"$subtype\"";
-
-  $self->{'_this_one_first'} = undef; #not relevant
-
-  return $self->generic_fetch($constraint);
+    my ($self, $method_link_species_set, $orthology_type, $subtype) = @_;
+    deprecate('Use fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type, -subtype => $subtype) instead');
+    return $self->fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type, -subtype => $subtype);
 }
 
 
