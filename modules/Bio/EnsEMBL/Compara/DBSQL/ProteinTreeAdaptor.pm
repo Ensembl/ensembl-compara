@@ -59,4 +59,9 @@ sub _default_where_clause {
     return "tr.member_type = 'protein'";
 }
 
+sub _default_member_type {
+    return 'protein';
+}
+
+
 1;

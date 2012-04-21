@@ -58,4 +58,8 @@ sub _default_where_clause {
     return "tr.member_type = 'ncrna'";
 }
 
+sub _default_member_type {
+    return 'ncrna';
+}
+
 1;
