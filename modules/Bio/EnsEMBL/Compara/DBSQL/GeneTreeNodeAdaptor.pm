@@ -22,12 +22,13 @@ Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor
 
 =head1 DESCRIPTION
 
-Generic adaptor for a tree, later derived as ProteinTreeAdaptor or NCTreeAdaptor
+Adaptor to retrieve nodes of gene trees
 
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor
-  `- Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor
+  +- Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor
+  `- Bio::EnsEMBL::Compara::DBSQL::TagAdaptor
 
 =head1 AUTHORSHIP
 
@@ -53,12 +54,15 @@ package Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor;
 use strict;
 no strict 'refs';
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
 use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
+
+use DBI qw(:sql_types);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
@@ -88,6 +92,10 @@ sub fetch_all {
 }
 
 
+=head2 fetch_all_roots
+
+=cut
+
 sub fetch_all_roots {
   my $self = shift;
 
@@ -110,7 +118,6 @@ sub fetch_all_roots {
   Caller     :
 
 =cut
-
 
 sub fetch_by_Member_root_id {
   my ($self, $member, $clusterset_id) = @_;
@@ -148,51 +155,87 @@ sub fetch_by_gene_Member_root_id {
 }
 
 
+=head2 fetch_all_AlignedMember_by_Member
+
+  Arg[1]     : Member or member_id
+  Arg [-METHOD_LINK_SPECIES_SET] (opt)
+             : MethodLinkSpeciesSet or int: either the object or its dbID
+  Arg [-CLUSTERSET_ID] (opt)
+             : int: the root_id of the clusterset node
+               NB: The definition of this argument is unstable and might change
+                   in the future
+  Example    : $all_members = $genetree_adaptor->fetch_all_AlignedMember_by_Member($member);
+  Description: Transforms the member into an AlignedMember. If the member is
+               not an ENSEMBLGENE, it has to be canoncal, otherwise, the
+               function would return an empty array
+               NB: This function currently returns an array of at most 1 element
+  Returntype : arrayref of Bio::EnsEMBL::Compara::AlignedMember
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub fetch_all_AlignedMember_by_Member {
+    my ($self, $member, @args) = @_;
+    my ($clusterset_id, $mlss) = rearrange([qw(CLUSTERSET_ID METHOD_LINK_SPECIES_SET)], @args);
+
+    # Discard the UNIPROT members
+    return if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
+
+    my $member_id = (ref($member) ? $member->dbID : $member);
+    my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?))';
+    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
+    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
+
+    my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
+    if (defined $mlss_id) {
+        $constraint .= ' AND (tr.method_link_species_set_id = ?)';
+        $self->bind_param_generic_fetch($mlss_id, SQL_INTEGER);
+    }
+
+    if (defined $clusterset_id) {
+        $constraint .= ' AND (tr.clusterset_id = ?)';
+        $self->bind_param_generic_fetch($clusterset_id, SQL_INTEGER);
+    }
+
+    if (defined $self->_default_member_type) {
+        $constraint .= ' AND (tr.member_type = ?)';
+        $self->bind_param_generic_fetch($self->_default_member_type, SQL_VARCHAR);
+    }
+
+    return $self->generic_fetch($constraint);
+}
+
+
 =head2 fetch_AlignedMember_by_member_id_root_id
 
-  Arg[1]     : int member_id of a peptide member (longest translation)
-  Arg[2]     : [optional] int clusterset_id (def. 0)
-  Example    : my $aligned_member = $proteintree_adaptor->
-                 fetch_AlignedMember_by_member_id_root_id($member->get_canonical_Member->member_id);
-  Description: Fetches from the database the protein_tree that contains the member_id
-  Returntype : Bio::EnsEMBL::Compara::GeneTreeMember
-  Exceptions :
-  Caller     :
+  Description: DEPRECATED. Use fetch_all_AlignedMember_by_Member() instead
 
 =cut
 
 sub fetch_AlignedMember_by_member_id_root_id {
-  my ($self, $member_id, $clusterset_id) = @_;
-
-  my $constraint = "tm.member_id = $member_id and m.member_id = $member_id";
-  $constraint .= " AND tr.clusterset_id = $clusterset_id" if($clusterset_id and $clusterset_id>0);
-  my ($node) = @{$self->generic_fetch($constraint, '', "ORDER BY tm.node_id DESC")};
-  return $node;
+    my ($self, $member_id, $clusterset_id) = @_;
+    deprecate('Use fetch_all_AlignedMember_by_Member($member_id, -clusterset_id=>$clusterset_id) instead');
+    return $self->fetch_all_AlignedMember_by_Member($member_id, -clusterset_id => $clusterset_id)->[0];
 }
+
 
 =head2 fetch_AlignedMember_by_member_id_mlssID
 
-  Arg[1]     : int member_id of a peptide member (longest translation)
-  Arg[2]     : [optional] int clusterset_id (def. 0)
-  Example    : my $aligned_member = $proteintree_adaptor->
-                 fetch_AlignedMember_by_member_id_mlssID($member->get_canonical_Member->member_id, $mlssID);
-  Description: Fetches from the database the protein_tree that contains the member_id
-  Returntype : Bio::EnsEMBL::Compara::GeneTreeMember
-  Exceptions :
-  Caller     :
+  Description: DEPRECATED. Use fetch_all_AlignedMember_by_Member() instead
 
 =cut
 
-
 sub fetch_AlignedMember_by_member_id_mlssID {
-  my ($self, $member_id, $mlss_id) = @_;
-
-  my $constraint = "tm.member_id = $member_id and m.member_id = $member_id";
-  $constraint .= " AND tr.method_link_species_set_id = $mlss_id" if($mlss_id and $mlss_id>0);
-  my ($node) = @{$self->generic_fetch($constraint)};
-  return $node;
+    my ($self, $member_id, $mlss_id) = @_;
+    deprecate('Use fetch_all_AlignedMember_by_Member($member_id, -method_link_species_set=>$mlss_id) instead');
+    return $self->fetch_all_AlignedMember_by_Member($member_id, -method_link_species_set => $mlss_id)->[0];
 }
 
+
+=head2 gene_member_id_is_in_tree
+
+=cut
 
 sub gene_member_id_is_in_tree {
   my ($self, $member_id) = @_;
@@ -208,10 +251,24 @@ sub gene_member_id_is_in_tree {
   }
 }
 
+
+=head2 fetch_all_AlignedMembers_by_root_id
+
+  Arg[1]     : int: root_id: ID of the root node of the tree
+  Example    : $all_members = $genetree_adaptor->fetch_all_AlignedMember_by_root_id($root_id);
+  Description: Gets all the AlignedMembers of the given tree. This is equivalent to fetching
+               the Member leaves of a tree, directly, without using the left/right_index
+  Returntype : arrayref of Bio::EnsEMBL::Compara::AlignedMember
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub fetch_all_AlignedMembers_by_root_id {
   my ($self, $root_id) = @_;
 
-  my $constraint = "(tm.member_id IS NOT NULL) AND (t.root_id = $root_id)";
+  my $constraint = '(tm.member_id IS NOT NULL) AND (t.root_id = ?)';
+  $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
   return $self->generic_fetch($constraint);
 
 }
@@ -405,9 +462,7 @@ sub merge_nodes {
 
   # printf("MERGE children from parent %d => %d\n", $node2->node_id, $node1->node_id);
 
-  my $sth = $self->prepare("UPDATE gene_tree_node SET
-                              parent_id=?
-			      WHERE parent_id=?");
+  my $sth = $self->prepare("UPDATE gene_tree_node SET parent_id=? WHERE parent_id=?");
   $sth->execute($node1->node_id, $node2->node_id);
   $sth->finish;
 
@@ -519,7 +574,7 @@ sub _default_left_join_clause {
 }
 
 sub _get_starting_lr_index {
-  return 1;
+    return 1;
 }
 
 
