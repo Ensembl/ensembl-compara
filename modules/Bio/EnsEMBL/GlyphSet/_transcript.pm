@@ -12,7 +12,7 @@ sub features {
   my $display  = $self->my_config('display');
   my $selected_gene  = $self->my_config('g') || $self->core('g');
   my $selected_trans = $self->core('t') || $self->core('pt');
-  my $highlight      = $self->core('db') eq $self->my_config('db') ? $display =~ /gene/ ? 'highlight2' : 'highlight1' : '';
+  my $highlight      = $self->core('db') eq $self->my_config('db') ? $display =~ /gene/ ? 'highlight2' : 'highlight1' : undef;
   my @features;
   
   ## FIXME - this is an ugly hack!
@@ -68,8 +68,13 @@ sub features {
         $_->{'draw_exons'} = \@exons;
         
         if ($highlight) {
-          $_->{'draw_highlight'}   = 'highlight2' if $_->stable_id eq $selected_trans;
-          $_->{'draw_highlight'} ||= $gene->{'draw_highlight'};
+          if ($_->get_all_Attributes('ccds')->[0]) {
+            $_->{'draw_highlight'} = $self->{'colours'}{'ccds_hi'} ? $self->my_colour('ccds_hi') : 'lightblue1'; # use another highlight colour if the trans has got a CCDS attrib
+          } elsif ($_->stable_id eq $selected_trans) {
+            $_->{'draw_highlight'} = 'highlight2';
+          } else {
+            $_->{'draw_highlight'} ||= $gene->{'draw_highlight'};
+          }
         }
       }
       
