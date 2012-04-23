@@ -10,6 +10,9 @@ sub features {
   my $db_alias = $self->my_config('db');
   my $analyses = $self->my_config('logic_names');
   my $display  = $self->my_config('display');
+  my $selected_gene  = $self->my_config('g') || $self->core('g');
+  my $selected_trans = $self->core('t') || $self->core('pt');
+  my $highlight      = $self->core('db') eq $self->my_config('db') ? $display =~ /gene/ ? 'highlight2' : 'highlight1' : '';
   my @features;
   
   ## FIXME - this is an ugly hack!
@@ -19,14 +22,18 @@ sub features {
     @features = map @{$slice->get_all_Genes($_, $db_alias, 1) || []}, @$analyses;
   }
   
+  if ($highlight) {
+    $_->{'draw_highlight'} = $highlight for grep $_->stable_id eq $selected_gene, @features;
+  }
+  
   if ($display =~ /collapsed/) {
     $_->{'draw_exons'} = [ map @{$_->get_all_Exons}, @{$_->get_all_Transcripts} ] for @features;
   } elsif ($display =~ /transcript/) {
     my $coding_only = $display =~ /coding/;
     
-    foreach (@features) {
-      my $is_coding_check = $coding_only ? $self->is_coding_gene($_) : 0;
-      my @transcripts = @{$_->get_all_Transcripts};
+    foreach my $gene (@features) {
+      my $is_coding_check = $coding_only ? $self->is_coding_gene($gene) : 0;
+      my @transcripts = @{$gene->get_all_Transcripts};
          @transcripts = grep $_->translation, @transcripts if $is_coding_check;
       
       foreach (@transcripts) {
@@ -59,9 +66,14 @@ sub features {
         }
         
         $_->{'draw_exons'} = \@exons;
+        
+        if ($highlight) {
+          $_->{'draw_highlight'}   = 'highlight2' if $_->stable_id eq $selected_trans;
+          $_->{'draw_highlight'} ||= $gene->{'draw_highlight'};
+        }
       }
       
-      $_->{'draw_transcripts'} = \@transcripts;
+      $gene->{'draw_transcripts'} = \@transcripts;
     }
   }
   
