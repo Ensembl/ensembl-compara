@@ -223,7 +223,7 @@ sub set_core_params {
   ### Initialises core parameter hash from CGI parameters
 
   my $self = shift;
-  my $core_params = {};
+  my $core_params = { db => 'core' };
 
   foreach (@{$self->species_defs->core_params}) {
     my @param = $self->param($_);
