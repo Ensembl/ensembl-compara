@@ -74,7 +74,6 @@ sub render_collapsed {
     my $colour_key     = $self->colour_key($gene);
     my $colour         = $self->my_colour($colour_key);
     my $label          = $self->my_colour($colour_key, 'text');
-    my $highlight      = $selected_db eq $db && $selected_gene eq $gene_stable_id ? 'highlight1' : undef;
 
     $used_colours{$label} = $colour;
     
@@ -197,7 +196,7 @@ sub render_collapsed {
     
     # shift the composite container by however much we're bumped
     $composite->y($composite->y - $strand * $bump_height * $row);
-    $composite->colour($highlight) if defined $highlight;
+    $composite->colour($gene->{'draw_highlight'}) if $gene->{'draw_highlight'};
     $self->push($composite);
   }
 
@@ -335,12 +334,6 @@ sub render_transcripts {
       my $colour_key = $self->colour_key($gene, $transcript);
       my $colour     = $self->my_colour($colour_key);
       my $label      = $self->my_colour($colour_key, 'text');
-      my $highlight  = $selected_db eq $db && $transcript_stable_id ? (
-        $selected_trans eq $transcript_stable_id              ? 'highlight2' :
-        $selected_gene && ($selected_gene eq $gene_stable_id) ? 'highlight1' : undef
-      ) : undef;
-
-      $highlight = $self->my_colour('ccds_hi') || 'lightblue1' if $transcript->get_all_Attributes('ccds')->[0]; # use another highlight colour if the trans has got a CCDS attrib
 
       ($colour, $label) = ('orange', 'Other') unless $colour;
       $used_colours{$label} = $colour;
@@ -488,7 +481,7 @@ sub render_transcripts {
       
       # shift the composite container by however much we're bumped
       $composite->y($composite->y - $strand * $bump_height * $row);
-      $composite->colour($highlight) if defined $highlight && !defined $target;
+      $composite->colour($transcript->{'draw_highlight'}) if $transcript->{'draw_highlight'} && !defined $target;
       $self->push($composite);
     }
   }
@@ -569,11 +562,6 @@ sub render_alignslice_transcript {
       my $colour_key = $self->colour_key($gene, $transcript);    
       my $colour     = $self->my_colour($colour_key);
       my $label      = $self->my_colour($colour_key, 'text');
-      
-      my $highlight = $selected_db eq $db && $transcript_stable_id ? (
-        $selected_trans eq $transcript_stable_id ? 'highlight2' : 
-        $selected_gene  eq $gene_stable_id       ? 'highlight1' : undef 
-      ) : undef;
       
       ($colour, $label) = ('orange', 'Other') unless $colour;
       $used_colours{$label} = $colour; 
@@ -726,7 +714,7 @@ sub render_alignslice_transcript {
       
       # shift the composite container by however much we've bumped
       $composite->y($composite->y - $strand * $bump_height * $row);
-      $composite->colour($highlight) if defined $highlight && !defined $target;
+      $composite->colour($transcript->{'draw_highlight'}) if $transcript->{'draw_highlight'} && !defined $target;
       $self->push($composite);
       
       if ($target) {
@@ -834,7 +822,6 @@ sub render_alignslice_collapsed {
     my $colour_key = $self->colour_key($gene);    
     my $colour     = $self->my_colour($colour_key);
     my $label      = $self->my_colour($colour_key, 'text');
-    my $highlight  = $selected_db eq $db && $selected_gene eq $gene_stable_id ? 'highlight1' : undef;
     
     ($colour, $label) = ('orange', 'Other') unless $colour;
     
@@ -932,7 +919,7 @@ sub render_alignslice_collapsed {
     
     # shift the composite container by however much we're bumped
     $composite->y($composite->y - $strand * $bump_height * $row);
-    $composite->colour($highlight) if defined $highlight;
+    $composite->colour($gene->{'draw_highlight'}) if $gene->{'draw_highlight'};
     $self->push($composite);
   }
   
@@ -1001,7 +988,6 @@ sub render_genes {
     my $gene_type      = $self->my_colour($colour_key, 'text');
     my $label          = $self->feature_label($gene);
     my $gene_stable_id = $gene->stable_id;
-    my $high           = $gene_stable_id eq $selected_gene;
     my $start          = $gene->start;
     my $end            = $gene->end;
     
@@ -1033,7 +1019,7 @@ sub render_genes {
       title     => $rect->{'title'},
       gene      => $gene,
       col       => $gene_col,
-      highlight => $high,
+      highlight => $gene->{'draw_highlight'},
       type      => $gene_type
     };
     
@@ -1087,13 +1073,13 @@ sub render_genes {
     
     $self->push($rect);
     
-    if ($high) {
+    if ($gene->{'draw_highlight'}) {
       $self->unshift($self->Rect({
         x         => ($start - 1) - 1/$pix_per_bp,
         y         => $rect->y - 1,
         width     => ($end - $start + 1) + 2/$pix_per_bp,
         height    => $rect->height + 2,
-        colour    => 'highlight2',
+        colour    => $gene->{'draw_highlight'},
         absolutey => 1
       }));
     }
@@ -1164,7 +1150,7 @@ sub render_genes {
             y         => $tglyph->y + 1,
             width     => ($tglyph->width + 1) + 2/$pix_per_bp,
             height    => $tglyph->height + 2,
-            colour    => 'highlight2',
+            colour    => $gr->{'highlight'},
             absolutey => 1
           }));
         }
@@ -1419,14 +1405,14 @@ sub map_AlignSlice_Exons {
 }
 
 sub is_coding_gene {
-   my ($self, $gene) = @_;
-	 
-   foreach (@{$gene->get_all_Transcripts}) {
-     return 1 if $_->translation;
-   }
-   
-   return 0;
- }
+  my ($self, $gene) = @_;
+	
+  foreach (@{$gene->get_all_Transcripts}) {
+    return 1 if $_->translation;
+  }
+  
+  return 0;
+}
 
 # Generate title tag which will be used to render z-menu
 sub title {
