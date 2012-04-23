@@ -156,16 +156,19 @@ sub write_output {
         $tree_adaptor->store($tree);
         foreach my $node (@{$self->param('nodes_todelete')}) {
             $tree_adaptor->delete_node($node);
+            print "deleting node ", $node->node_id, "\n";
         }
         foreach my $root (@{$self->param('trees_todelete')}) {
             my $old_root_id = $root->root_id;
             my $new_root_id = $tree->node_id;
+            print "UPDATE homology SET tree_node_id=$new_root_id WHERE tree_node_id=$old_root_id\n";
             $self->compara_dba->dbc->do("UPDATE homology SET tree_node_id=$new_root_id WHERE tree_node_id=$old_root_id");
+            print "DELETE FROM gene_tree_root_tag WHERE root_id=$old_root_id\n";
             $self->compara_dba->dbc->do("DELETE FROM gene_tree_root_tag WHERE root_id=$old_root_id");
+            print "DELETE FROM gene_tree_root WHERE root_id=$old_root_id\n";
             $self->compara_dba->dbc->do("DELETE FROM gene_tree_root WHERE root_id=$old_root_id");
         }
     }
-    $tree_adaptor->sync_tags_to_database($tree);
 }
 
 1;
