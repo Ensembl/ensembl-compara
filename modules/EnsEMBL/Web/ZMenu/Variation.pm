@@ -198,6 +198,20 @@ sub content {
       last;
     }
   }
+
+  my $ega = $hub->database('variation')->get_VariationAnnotationAdaptor->fetch_all_by_Variation($var);
+  if (scalar(@{$ega || []})) {
+    $self->add_entry({
+      'label_html' => 'Phenotype data',
+      'link' => $hub->url({
+                    type   => 'Variation',
+                    action => 'Phenotype',
+                    v      => $feature->variation_name,
+                    vf     => $feature->dbID,
+                    source => $feature->source
+                    }),
+    });
+  }
 }
 
 1;
