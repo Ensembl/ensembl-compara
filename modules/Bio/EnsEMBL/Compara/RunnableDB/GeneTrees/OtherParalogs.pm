@@ -103,10 +103,10 @@ sub run_analysis {
     $gene_tree->print_node if ($self->debug);
 
     my ($child1, $child2) = @{$gene_tree->children};
-    $self->param('children', $gene_tree->children);
 
     print "Calculating ancestor species hash\n" if ($self->debug);
     $self->get_ancestor_species_hash($gene_tree);
+    $self->param('children', [$child1->children->[0], $child2->children->[0]]);
 
     my $tmp_time = time();
     print "build paralogs graph\n" if ($self->debug);
@@ -180,19 +180,22 @@ sub get_ancestor_species_hash
 
     print $node->node_id, " is a ", $node->tree->tree_type, "\n" if ($self->debug);
     my $gene_hash = {};
+
     if ($node->tree->tree_type eq 'tree') {
+
+        # "Normal" tree: get_all_leaves
         foreach my $leaf (@{$node->get_all_leaves}) {
             print "leaf " if ($self->debug);
             $leaf->print_member if ($self->debug);
             $species_hash->{$leaf->genome_db_id} = 1 + ($species_hash->{$leaf->genome_db_id} || 0);
             push @{$gene_hash->{$leaf->genome_db_id}}, $leaf;
         }
-    
-    } else {
+   
+    } elsif ($node->get_child_count) {
 
-        delete $node->{'_children_loaded'} unless $node->get_child_count;
+        # Super-tree root
+        print "super-tree root", $node->node_id, " children=", $node->get_child_count, "\n";
         my $is_dup = 0;
-        
         foreach my $child (@{$node->children}) {
             print "child: ", $child->node_id, "\n" if ($self->debug);
             my $t_species_hash = $self->get_ancestor_species_hash($child);
@@ -204,6 +207,17 @@ sub get_ancestor_species_hash
         }
 
         $node->add_tag("is_dup", $is_dup);
+ 
+    } else {
+
+        # Super-tree leaf
+        $node->adaptor->fetch_all_children_for_node($node);
+        print "super-tree leaf", $node->node_id, " children=", $node->get_child_count, "\n";
+        my $child = $node->children->[0];
+
+        $species_hash = $self->get_ancestor_species_hash($child);
+        $gene_hash = $child->get_tagvalue('gene_hash');
+
     }
     print $node->node_id, " contains ", scalar(keys %$species_hash), " species\n" if ($self->debug);
     $node->add_tag("species_hash", $species_hash);
