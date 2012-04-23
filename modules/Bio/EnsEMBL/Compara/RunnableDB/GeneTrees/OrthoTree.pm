@@ -462,7 +462,7 @@ sub get_ancestor_taxon_level {
   my $taxon_level = $ancestor->get_tagvalue('taxon_level');
   return $taxon_level if($taxon_level);
 
-  printf("\ncalculate ancestor taxon level for node_id=\n", $ancestor->node_id) if $self->debug;
+  printf("\ncalculate ancestor taxon level for node_id=%d\n", $ancestor->node_id) if $self->debug;
   my $taxon_tree = $self->param('taxon_tree');
   my $species_hash = $self->get_ancestor_species_hash($ancestor);
 
