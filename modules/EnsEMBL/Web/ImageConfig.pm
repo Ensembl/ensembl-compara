@@ -1223,6 +1223,7 @@ sub load_configured_das {
       my $sub_menu = $menu->get_node($key);
       
       if (!$sub_menu) {
+        warn "$sub_category, $seen{$sub_category}";
         push @{$adding[1]{$category}}, $sub_category unless $seen{$sub_category}++;
         next;
       }
@@ -1265,12 +1266,13 @@ sub load_configured_das {
       $self->create_menus(@{$adding[1]{$k}});
       
       foreach (@{$adding[1]{$k}}) {
-        my $menu    = $self->get_node($k);
-        my $submenu = $menu->get_node($_);
+        my $key      = join '_', $k, lc $_;
+        my $menu     = $self->get_node($k);
+        my $sub_menu = $menu->get_node($key);
         
-        if (!$submenu) {
+        if (!$sub_menu) {
           (my $caption = $_) =~ s/_/ /g;
-          $menu->append($self->create_submenu("${k}_" . lc $_, $caption));
+          $menu->append($self->create_submenu($key, $caption));
         }
       }
       
