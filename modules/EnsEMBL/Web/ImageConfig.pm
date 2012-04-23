@@ -2612,7 +2612,7 @@ sub add_somatic_structural_variations {
     
     $somatic_sv->append($self->create_track("somatic_sv_feature_$k", "$key_2 somatic structural variations", {
       %options,
-      caption     => $key_2,
+      caption     => "$key_2 somatic",
       source      => $key_2,
       description => $description,
       depth       => 0.5
