@@ -68,7 +68,7 @@ sub new {
 sub species            { return $_[0]->{'config'}{'species'} || $_[0]->{'container'}{'web_species'};               }
 sub species_defs       { return $_[0]->{'config'}->species_defs;                                                   }
 sub get_parameter      { return $_[0]->{'config'}->get_parameter($_[1]);                                           }
-sub core               { return $_[0]->{'config'}->core_objects->{'parameters'}{$_[1]};                            }
+sub core               { return $_[0]->{'config'}->hub->core_params->{$_[1]};                                      }
 sub scalex             { return $_[0]->{'config'}->transform->{'scalex'};                                          }
 sub image_width        { return $_[0]->{'config'}->get_parameter('panel_width') || $_[0]->{'config'}->image_width; }
 sub _url               { return shift->{'config'}->hub->url('ZMenu', @_);                                          }
