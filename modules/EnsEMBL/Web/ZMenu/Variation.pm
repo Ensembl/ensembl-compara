@@ -181,6 +181,23 @@ sub content {
       label  => $p_value,
     });
   }
+  my $allele_list = $feature->get_all_Alleles;
+  foreach (@$allele_list) {
+    my $pop_obj = $_->population;
+    if ($pop_obj) {
+      $self->add_entry({
+        'label_html' => 'Population genetics',
+        'link' => $hub->url({
+                    type   => 'Variation',
+                    action => 'Population',
+                    v      => $feature->variation_name,
+                    vf     => $feature->dbID,
+                    source => $feature->source
+                    }),
+      });
+      last;
+    }
+  }
 }
 
 1;
