@@ -65,7 +65,7 @@ sub init {
   );
   
   $self->modify_configs(
-    [ 'reg_feats_MultiCell', 'variation_feature_variation' ],
+    [ 'reg_feats_MultiCell' ],
     { display => 'normal' }
   );
 
