@@ -667,7 +667,7 @@ sub markup_line_numbers {
         for ($s..$e) {
           # Check the array element exists - must be done so we don't create new elements and mess up the padding at the end of the last line
           if ($seq->[$_]) {
-            $seq_length++ if $seq->[$_]->{'letter'} =~ /\w/;
+            $seq_length++ if $config->{'line_numbering'} eq 'slice' || $seq->[$_]->{'letter'} =~ /\w/;
             $segment .= $seq->[$_]->{'letter'};
           }
         }
