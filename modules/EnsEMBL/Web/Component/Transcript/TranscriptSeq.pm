@@ -18,6 +18,7 @@ sub get_sequence_data {
   
   my $hub          = $self->hub;
   my $trans        = $object->Obj;
+  my $slice        = $trans->feature_Slice;
   my @exons        = @{$trans->get_all_Exons};
   my $trans_strand = $exons[0]->strand;
   my $start_phase  = $exons[0]->phase;
@@ -75,7 +76,7 @@ sub get_sequence_data {
   $config->{'length'}    = $length;
   $config->{'numbering'} = [1];
   $config->{'seq_order'} = [ $config->{'species'} ];
-  $config->{'slices'}    = [{ slice => $seq, name => $config->{'species'} }];
+  $config->{'slices'}    = [{ slice => $slice, name => $config->{'species'} }];
   
   for (0..$length-1) {
     # Set default vaules
@@ -130,8 +131,6 @@ sub get_sequence_data {
   }
   
   if ($config->{'snp_display'}) {
-    my $slice = $trans->feature_Slice;
-    
     foreach my $snp (reverse @{$object->variation_data($slice, $config->{'utr'})}) {
       my $dbID              = $snp->{'vdbid'};
       my $tv                = $snp->{'tv'};
@@ -204,13 +203,13 @@ sub get_sequence_data {
         unshift @markup, {};
         unshift @{$config->{'numbering'}}, 0;
         unshift @{$config->{'seq_order'}}, $_->{'name'};
-        unshift @{$config->{'slices'}}, { slice => join('', map $_->{'letter'}, @{$_->{'seq'}}), name => $_->{'name'} };
+        unshift @{$config->{'slices'}}, { slice => $slice, name => $_->{'name'} };
       } else {
         push @sequence, $_->{'seq'};
         push @markup, {};
         push @{$config->{'numbering'}}, 1;
         push @{$config->{'seq_order'}}, $_->{'name'};
-        push @{$config->{'slices'}}, { slice => join('', map $_->{'letter'}, @{$_->{'seq'}}), name => $_->{'name'} };
+        push @{$config->{'slices'}}, { slice => $slice, name => $_->{'name'} };
       }
     }
   }
@@ -259,18 +258,23 @@ sub initialize {
     transcript      => 1,
   };
   
-  $config->{$_} = $hub->param($_) eq 'yes' ? 1 : 0 for qw(exons codons coding_seq translation rna snp_display number utr);
+  $config->{$_} = $hub->param($_) eq 'yes' ? 1 : 0 for qw(exons codons coding_seq translation rna snp_display utr);
   
   $config->{'codons'}             = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
   $config->{'snp_display'}        = 0 unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
   $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
+  
+  if ($hub->param('line_numbering') ne 'off') {
+    $config->{'line_numbering'} = $hub->param('line_numbering');
+    $config->{'number'}         = 1;
+  }
   
   my ($sequence, $markup, $raw_seq) = $self->get_sequence_data($object, $config);
   
   $self->markup_exons($sequence, $markup, $config)     if $config->{'exons'};
   $self->markup_codons($sequence, $markup, $config)    if $config->{'codons'};
   $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};  
-  $self->markup_line_numbers($sequence, $config)       if $config->{'number'};
+  $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
   
   $config->{'v_space'} = "\n" if $config->{'coding_seq'} || $config->{'translation'} || $config->{'rna'};
   

@@ -12,14 +12,14 @@ sub init {
   my $self = shift;
   
   $self->set_defaults({
-    exons       => 'yes',
-    codons      => 'yes',
-    utr         => 'yes',
-    coding_seq  => 'yes',
-    translation => 'yes',
-    rna         => 'no',
-    snp_display => 'yes',
-    number      => 'yes'
+    exons          => 'yes',
+    codons         => 'yes',
+    utr            => 'yes',
+    coding_seq     => 'yes',
+    translation    => 'yes',
+    rna            => 'no',
+    snp_display    => 'yes',
+    line_numbering => 'sequence',
   });
   
   $self->title = 'cDNA sequence';
@@ -27,8 +27,9 @@ sub init {
 }
 
 sub form {
-  my $self = shift;
-
+  my $self   = shift;
+  my %markup = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
+  
   $self->add_form_element({
     type   => 'DropDown', 
     select => 'select',
@@ -46,7 +47,7 @@ sub form {
   $self->add_form_element({ type => 'YesNo', name => 'translation', select => 'select', label => 'Show protein sequence' });
   $self->add_form_element({ type => 'YesNo', name => 'rna',         select => 'select', label => 'Show RNA features'     });
   $self->variation_options({ populations => [ 'fetch_all_HapMap_Populations', 'fetch_all_1KG_Populations' ], snp_link => 'no' }) if $self->species_defs->databases->{'DATABASE_VARIATION'};
-  $self->add_form_element({ type => 'YesNo', name => 'number', select => 'select', label => 'Number residues' });
+  $self->add_form_element($markup{'line_numbering'});
 }
 
 1;
