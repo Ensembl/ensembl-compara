@@ -2439,6 +2439,7 @@ sub add_structural_variations {
     glyphset   => 'structural_variation',
     strand     => 'r', 
     bump_width => 0,
+    height     => 5.5,
     colourset  => 'structural_variant',
     display    => 'off',
     canvas     => { type => 'StructuralVariation' },
@@ -2499,6 +2500,7 @@ sub add_copy_number_variant_probes {
     glyphset   => 'cnv_probes',
     strand     => 'r', 
     bump_width => 0,
+    height     => 5.5,
     colourset  => 'structural_variant',
     display    => 'off'
   );
@@ -2507,7 +2509,7 @@ sub add_copy_number_variant_probes {
     %options,
     caption     => 'CNV probes',
     sources     => undef,
-    depth       => 5,
+    depth       => 10,
     description => 'Copy number variant probes from all sources'
   }));
   
@@ -2525,14 +2527,13 @@ sub add_copy_number_variant_probes {
   }
 }
 
-
 sub add_somatic_mutations {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('somatic');
   
   return unless $menu;
   
-  my $somatic_v = $self->create_submenu('somatic_mutation', 'Somatic variants');
+  my $somatic = $self->create_submenu('somatic_mutation', 'Somatic variants');
   
   my %options = (
     db         => $key,
@@ -2549,9 +2550,8 @@ sub add_somatic_mutations {
     
     my $description  = $hashref->{'source'}{'descriptions'}{$key_2};
     (my $k = $key_2) =~ s/\W/_/g;
-
-   # $menu->append($self->create_track("somatic_mutation_$k", "Somatic variants (all sources)", {
-    $somatic_v->append($self->create_track("somatic_mutation_$k", "Somatic variants (all sources)", {
+    
+    $somatic->append($self->create_track("somatic_mutation_$k", "Somatic variants (all sources)", {
       %options,
       caption     => 'Somatic variants (all sources)',
       description => 'Somatic variants from all sources'
@@ -2566,9 +2566,8 @@ sub add_somatic_mutations {
       my $formatted_site         = $site;
       $site                      =~ s/\W/_/g;
       $formatted_site            =~ s/\_/ /g;
-
-     # $menu->append($self->create_track("somatic_mutation_${k}_$site", "$key_2 somatic mutations in $formatted_site", {
-      $somatic_v->append($self->create_track("somatic_mutation_${k}_$site", "$key_2 somatic mutations in $formatted_site", {
+      
+      $somatic->append($self->create_track("somatic_mutation_${k}_$site", "$key_2 somatic mutations in $formatted_site", {
         %options,
         caption     => "$key_2 $formatted_site tumours",
         filter      => $phenotype_id,
@@ -2577,9 +2576,8 @@ sub add_somatic_mutations {
     }
   }
   
-  $menu->append($somatic_v);
+  $menu->append($somatic);
 }
-
 
 sub add_somatic_structural_variations {
   my ($self, $key, $hashref) = @_;
@@ -2587,30 +2585,31 @@ sub add_somatic_structural_variations {
   
   return unless $menu && $hashref->{'structural_variation'}{'rows'} > 0;
   
-  my $somatic_sv = $self->create_submenu('somatic_structural_variation', 'Somatic structural variants');
+  my $somatic = $self->create_submenu('somatic_structural_variation', 'Somatic structural variants');
   
   my %options = (
     db         => $key,
     glyphset   => 'somatic_structural_variation',
     strand     => 'r', 
     bump_width => 0,
+    height     => 5.5,
     colourset  => 'structural_variant',
     display    => 'off',
   );
   
-  $somatic_sv->append($self->create_track('somatic_sv_feature', 'Somatic structural variants (all sources)', {   
+  $somatic->append($self->create_track('somatic_sv_feature', 'Somatic structural variants (all sources)', {   
     %options,
     caption     => 'Somatic structural variants',
     sources     => undef,
     description => 'Somatic structural variants from all sources. For an explanation of the display, see the <a rel="external" href="http://www.ncbi.nlm.nih.gov/dbvar/content/overview/#representation">dbVar documentation</a>. In addition, we display the breakpoints in yellow.',
-    depth       => 5
+    depth       => 10
   }));
   
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'somatic'}{'counts'} || {}}) {
     my $description = $hashref->{'source'}{'descriptions'}{$key_2};
     (my $k = $key_2) =~ s/\W/_/g;
     
-    $somatic_sv->append($self->create_track("somatic_sv_feature_$k", "$key_2 somatic structural variations", {
+    $somatic->append($self->create_track("somatic_sv_feature_$k", "$key_2 somatic structural variations", {
       %options,
       caption     => "$key_2 somatic",
       source      => $key_2,
@@ -2619,7 +2618,7 @@ sub add_somatic_structural_variations {
     }));  
   }
   
-  $menu->append($somatic_sv);
+  $menu->append($somatic);
 }
 
 1;
