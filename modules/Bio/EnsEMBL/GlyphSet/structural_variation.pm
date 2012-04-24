@@ -13,9 +13,8 @@ sub features {
   my $set_name = $self->my_config('set_name');
   my $var_features;
   
-  # Structural variations by set
   if ($set_name) {
-    $var_features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', 'variation')->fetch_by_name($set_name));
+    $var_features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', 'variation')->fetch_by_name($set_name)); # Structural variations by set
   } elsif ($source =~ /^\w/) {
     $var_features = $slice->get_all_StructuralVariationFeatures($source); # Structural variations by source
   }  else {
@@ -51,17 +50,17 @@ sub tag {
   if ($f->outer_start && $f->inner_start) {
     if ($f->outer_start != $f->inner_start && !$inner_crossing) {
       push @g_objects, {
-        style  => 'rect',
-        start  => $f->start,
-        end    => $f->inner_start - $f->seq_region_start + $f->start
+        style => 'rect',
+        start => $f->start,
+        end   => $f->inner_start - $f->seq_region_start + $f->start
       };
     }
   } elsif ($f->outer_start) {
     if ($f->outer_start == $f->seq_region_start || $inner_crossing) {
       push @g_objects, {
-        style  => 'bound_triangle_right',
-        start  => $f->start,
-        out    => 1
+        style => 'bound_triangle_right',
+        start => $f->start,
+        out   => 1
       };
     }
   } elsif ($f->inner_start) {
@@ -77,24 +76,24 @@ sub tag {
   if ($f->outer_end && $f->inner_end) {
     if ($f->outer_end != $f->inner_end && !$inner_crossing) {
       push @g_objects, {
-        style  => 'rect',
-        start  => $f->end - $f->seq_region_end + $f->inner_end,
-        end    => $f->end
+        style => 'rect',
+        start => $f->end - $f->seq_region_end + $f->inner_end,
+        end   => $f->end
       };
     }
   } elsif ($f->outer_end) {
     if ($f->outer_end == $f->seq_region_end || $inner_crossing) {
       push @g_objects, {
-        style  => 'bound_triangle_left',
-        start  => $f->end,
-        out    => 1
+        style => 'bound_triangle_left',
+        start => $f->end,
+        out   => 1
       };
     }
   } elsif ($f->inner_end) {
     if ($f->inner_end == $f->seq_region_end && !$inner_crossing) {
       push @g_objects, {
-        style  => 'bound_triangle_right',
-        start  => $f->end
+        style => 'bound_triangle_right',
+        start => $f->end
       };
     }
   }
