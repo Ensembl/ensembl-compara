@@ -827,6 +827,7 @@ sub pipeline_analyses {
         {   -logic_name     => 'other_paralogs',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
             -parameters     => {
+                'use_genomedb_id'   => $self->o('use_genomedb_id'),
                 'dataflow_subclusters' => 1,
                 'tree_id_str'       => 'protein_tree_id',
                 'mlss_id'           => $self->o('mlss_id'),
