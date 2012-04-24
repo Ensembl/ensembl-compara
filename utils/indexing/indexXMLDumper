@@ -2028,6 +2028,7 @@ sub dumpGene {
       if( $old->{'gid'} != $gid ) {
         if( $old->{'gid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
+	  (my $old_gsi) = keys %{$old->{'gsid'}};
           &p( GeneTransLine('Gene',
                        $dbspecies,
                        $old->{'gsid'},
@@ -2041,7 +2042,7 @@ sub dumpGene {
                        $old->{'xrefs'},
                        $old->{'xref_descriptions'},
                        $old->{'synonyms'},
-                       $gene_locations->{$old->{'gsid'}},
+                       $gene_locations->{$old_gsi},
                        $db,
                        $counter),
               $nogzip, $fh);
@@ -2113,6 +2114,7 @@ sub dumpGene {
       }
     }
     if ($old->{'gsid'}) {
+      (my $old_gsi) = keys %{$old->{'gsid'}};
       &p( GeneTransLine('Gene',
                         $dbspecies,
                         $old->{'gsid'},
@@ -2126,7 +2128,7 @@ sub dumpGene {
                         $old->{'xrefs'},
                         $old->{'xref_descriptions'},
                         $old->{'synonyms'},
-                        $gene_locations->{$old->{'gsid'}},
+                        $gene_locations->{$old_gsi},
                         $db,
                         $counter),
           $nogzip, $fh);
@@ -2343,6 +2345,7 @@ sub dumpTranscript {
       if( $old->{'tid'} != $tid ) {
         if( $old->{'tid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
+	  (my $old_tsi) = keys %{$old->{'tsid'}};
           &p( GeneTransLine('Transcript',
                         $dbspecies,
                         $old->{'tsid'},
@@ -2356,7 +2359,7 @@ sub dumpTranscript {
                         $old->{'xrefs'},
                         $old->{'xref_descriptions'},
                         $old->{'synonyms'},
-                        $trans_locations->{$old->{'tsid'}},
+                        $trans_locations->{$old_tsi},
                         $db,
                         $counter),
               $nogzip, $fh);
@@ -2423,6 +2426,7 @@ sub dumpTranscript {
       }
     }
     if ($old->{'tsid'}) {
+      (my $old_tsi) = keys %{$old->{'tsid'}};
       &p( GeneTransLine('Transcript',
                         $dbspecies,
                         $old->{'tsid'},
@@ -2436,7 +2440,7 @@ sub dumpTranscript {
                         $old->{'xrefs'},
                         $old->{'xref_descriptions'},
                         $old->{'synonyms'},
-                        $trans_locations->{$old->{'tsid'}},
+                        $trans_locations->{$old_tsi},
                         $db,
                         $counter),
           $nogzip, $fh) if ($old->{'tsid'});
