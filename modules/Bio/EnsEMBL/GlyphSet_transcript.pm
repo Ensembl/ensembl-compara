@@ -2,6 +2,8 @@ package Bio::EnsEMBL::GlyphSet_transcript;
 
 use strict;
 
+use List::Util qw(min max);
+
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub features { return [];    }
@@ -87,11 +89,8 @@ sub render_collapsed {
     my $composite2 = $self->Composite({ y => $y, height => $h });
     
     foreach my $exon (@exons) {
-      my $s   = $exon->start;
-      my $e   = $exon->end;
-      
-      $s = 1 if $s < 0;
-      $e = $length if $e > $length;
+      my $s = max($exon->start, 1);
+      my $e = min($exon->end, $length);
       
       $composite2->push($self->Rect({
         x         => $s - 1,
@@ -370,10 +369,8 @@ sub render_transcripts {
         # only draw this exon if is inside the slice
         if ($exon->end > 0) {
           # calculate exon region within boundaries of slice
-          $box_start = $exon->start;
-          $box_start = 1 if $box_start < 1 ;
-          $box_end   = $exon->end;
-          $box_end   = $length if $box_end > $length;        
+          $box_start = max($exon->start, 1);
+          $box_end   = min($exon->end, $length);
           
           if ($exon->{'draw_border'}) {
             $composite2->push($self->Rect({
@@ -386,10 +383,10 @@ sub render_transcripts {
             }));
           }
           
-          if ($exon->{'draw_fill'}) {
+          if ($exon->{'draw_fill'} && $box_end > $exon->{'draw_fill_end'}) {
             # Calculate and draw the coding region of the exon
-            my $fill_start = $box_start + $exon->{'draw_fill_start'};
-            my $fill_end   = $box_end   - $exon->{'draw_fill_end'};
+            my $fill_start = max($box_start + $exon->{'draw_fill_start'}, 1);
+            my $fill_end   = min($box_end   - $exon->{'draw_fill_end'}, $length);
             
             $composite2->push($self->Rect({
               x         => $fill_start - 1,
