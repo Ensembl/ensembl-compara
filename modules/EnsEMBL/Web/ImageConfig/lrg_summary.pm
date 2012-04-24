@@ -70,7 +70,7 @@ sub init {
   );
 
   $self->modify_configs(
-    [ 'transcript_core_ensembl' ],
+    [ 'transcript_otherfeatures_refseq_human_import', 'transcript_core_ensembl' ],
     { display => 'transcript_label' }
   );
 }
