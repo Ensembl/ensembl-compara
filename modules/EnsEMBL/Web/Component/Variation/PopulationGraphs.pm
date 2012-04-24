@@ -24,7 +24,7 @@ sub content {
 	return '' unless (scalar @pop_phase1);
 	
   my $html = qq{
-    <h2>1000 genomes alleles frequencies</h2>
+    <h2>1000 Genomes allele frequencies</h2>
     <input type="hidden" class="panel_type" value="PopulationGraph" />
   };
   
