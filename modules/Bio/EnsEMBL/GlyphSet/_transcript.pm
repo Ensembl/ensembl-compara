@@ -5,13 +5,13 @@ use strict;
 use base qw(Bio::EnsEMBL::GlyphSet_transcript);
 
 sub features {
-  my $self     = shift;
-  my $slice    = $self->{'container'};
-  my $db_alias = $self->my_config('db');
-  my $analyses = $self->my_config('logic_names');
-  my $display  = $self->my_config('display');
+  my $self           = shift;
+  my $slice          = $self->{'container'};
+  my $db_alias       = $self->my_config('db');
+  my $analyses       = $self->my_config('logic_names');
+  my $display        = $self->my_config('display');
   my $selected_gene  = $self->my_config('g') || $self->core('g');
-  my $selected_trans = $self->core('t') || $self->core('pt');
+  my $selected_trans = $self->core('t')      || $self->core('pt');
   my $highlight      = $self->core('db') eq $self->my_config('db') ? $display =~ /gene/ ? 'highlight2' : 'highlight1' : undef;
   my @features;
   
@@ -61,7 +61,7 @@ sub features {
             $_->{'draw_fill'}       = 1;
             $_->{'draw_fill_start'} = $coding_start - $start; # Calculate and draw the coding region of the exon
             $_->{'draw_fill_end'}   = $end - $coding_end;
-            push @exons, $_;
+            push @exons, $_ unless $_->{'draw_border'};
           }
         }
         
