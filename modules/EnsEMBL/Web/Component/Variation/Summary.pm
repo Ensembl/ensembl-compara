@@ -27,7 +27,7 @@ sub content {
      $summary           .= $self->clinical_significance;
      $summary           .= $self->synonyms;
      $summary           .= $self->hgvs;
-  
+    
   return qq{
     <div class="summary_panel">
       $failed
@@ -143,7 +143,8 @@ sub co_located {
       next unless $v_start == $start && $v_end == $end; 
       
       my $link      = $hub->url({ v => $v_name, vf => $_->dbID });
-      my $variation = qq{<a href="$link">$v_name</a>};
+      my $alleles   = ' ('.$_->allele_string.')' if $_->allele_string =~ /\//;
+      my $variation = qq{<a href="$link">$v_name</a>$alleles};
       
       push @{$by_source{$_->source}}, $variation;
     }
