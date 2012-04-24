@@ -85,10 +85,19 @@ sub summary_table {
     # get tagging info
     my ($tagged, $tagged_by) = @{$self->tag_data($vf, $pop)};
     
+    my $pop_syns = $pop->get_all_synonyms('dbSNP');
+    my $pop_link;
+    if($pop->name =~ /^1000GENOMES/) {
+      $pop_link = $self->hub->get_ExtURL_link($pop->name, '1KG_POP'); 
+    }
+    else {
+      $pop_link = $pop_syns ? $self->hub->get_ExtURL_link($pop->name, 'DBSNPPOP', $pop_syns->[0]) : $pop->name;
+    }
+    
     my $row = {
-      name => $self->hub->get_ExtURL_link($pop->name, 'DBSNPPOP', $pop->get_all_synonyms('dbSNP')->[0]),
-      desc => $description,
-      tags  => $tagged,
+      name    => $pop_link,
+      desc    => $description,
+      tags    => $tagged,
       tagged  => $tagged_by,
     };
     
@@ -136,6 +145,13 @@ sub summary_table {
   }
   
   my $html = '<h2>Links to linkage disequilibrium data by population</h2>';
+  
+  $html .= $self->_hint(
+    '1KGtag',
+    'Tagging information',
+    qq{NB: For release 67, tagged data has not been calculated for the 1000 Genomes phase 1 data.},
+    '80%'
+  );
   
   if ($table_with_no_rows) {
     $html .= $self->_hint('HighLD', 'Linked variation information', qq{

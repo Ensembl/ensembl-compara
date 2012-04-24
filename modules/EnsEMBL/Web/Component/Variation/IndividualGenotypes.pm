@@ -163,7 +163,7 @@ sub summary_tables {
   
   if ($od_table->has_rows && ($hm_table->has_rows || $tg_table->has_rows)) {
     if ($self->html_format) {
-      $html .= $self->toggleable_table("Other data ($other_row_count)", 'other', $od_table);
+      $html .= $self->toggleable_table("Other data ($other_row_count)", 'other', $od_table, 1);
     } else {
       $html .= '<h2>Other data</h2>' . $od_table->render;
     }
@@ -181,7 +181,16 @@ sub format_parent {
 
 sub pop_url {
   my ($self, $pop_name, $pop_dbSNP) = @_;
-  return $pop_dbSNP ? $self->hub->get_ExtURL_link($pop_name, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_name;
+  
+  my $pop_url;
+  if($pop_name =~ /^1000GENOMES/) {
+    $pop_url = $self->hub->get_ExtURL_link($pop_name, '1KG_POP'); 
+  }
+  else {
+    $pop_url = $pop_dbSNP ? $self->hub->get_ExtURL_link($pop_name, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_name;
+  }
+  
+  return $pop_url;
 }
 
 1;

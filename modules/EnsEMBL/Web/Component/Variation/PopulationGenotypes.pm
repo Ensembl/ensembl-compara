@@ -34,6 +34,7 @@ sub content {
       HapMap => 2,
       Other  => 3,
       Failed => 4,
+      Pilot  => 5,
     );
     
     foreach (sort {$table_order{(split /\s+/, $a->[0])[0]} <=> $table_order{(split /\s+/, $b->[0])[0]}} @$table_array) {
@@ -42,7 +43,9 @@ sub content {
       # hide "other" and "failed" table
       if ($title =~ /other|failed/i) {
         my $id = $title =~ /other/i ? 'other' : 'failed';
-        $html .= $self->toggleable_table($title, $id, $table);
+        $html .= $self->toggleable_table($title, $id, $table, 1);
+      } elsif ($title =~ /pilot/i) {
+        $html .= $self->toggleable_table($title, 'pilot', $table);
       } else {     
         $html .= "<h2>$title</h2>" . $table->render;
       }
@@ -62,7 +65,7 @@ sub format_frequencies {
   
   # split off 1000 genomes, HapMap and failed if present
   if (!$tg_flag) {
-    my ($tg_data, $hm_data, $fv_data);
+    my ($tg_data, $pi_data, $hm_data, $fv_data);
     
     foreach my $pop_id (keys %$freq_data) {
       foreach my $ssid (keys %{$freq_data->{$pop_id}}) {
@@ -71,8 +74,10 @@ sub format_frequencies {
         if ($freq_data->{$pop_id}{$ssid}{'failed_desc'}) {
           $fv_data->{$pop_id}{$ssid}                = delete $freq_data->{$pop_id}{$ssid};
           $fv_data->{$pop_id}{$ssid}{'failed_desc'} =~ s/Variation submission/Variation submission $ssid/;
-        } elsif ($name =~ /^1000genomes\:.*/i) {
+        } elsif ($name =~ /^1000genomes\:phase.*/i) {
           $tg_data->{$pop_id}{$ssid} = delete $freq_data->{$pop_id}{$ssid};
+        } elsif ($name =~ /^1000genomes\:.*/i) {
+          $pi_data->{$pop_id}{$ssid} = delete $freq_data->{$pop_id}{$ssid};
         } elsif ($name =~ /^cshl\-hapmap/i) {
           $hm_data->{$pop_id}{$ssid} = delete $freq_data->{$pop_id}{$ssid};
         }
@@ -80,7 +85,8 @@ sub format_frequencies {
     }
     
     # recurse this method with just the tg_data and a flag to indicate it
-    push @table_array,  @{$self->format_frequencies($tg_data, '1000 genomes')} if $tg_data;
+    push @table_array,  @{$self->format_frequencies($tg_data, '1000 Genomes')} if $tg_data;
+    push @table_array,  @{$self->format_frequencies($pi_data, 'Pilot 1000 Genomes')} if $pi_data;
     push @table_array,  @{$self->format_frequencies($hm_data, 'HapMap')}       if $hm_data;
     push @table_array,  @{$self->format_frequencies($fv_data, 'Failed data')}  if $fv_data;
   }
@@ -128,6 +134,11 @@ sub format_frequencies {
       $pop_row{'Super-Population'} = $self->sort_extra_pops($data->{'pop_info'}{'Super-Population'});
       $pop_row{'Sub-Population'}   = $self->sort_extra_pops($data->{'pop_info'}{'Sub-Population'});
       $pop_row{'detail'}           = $self->ajax_add($self->ajax_url(undef, { function => 'IndividualGenotypes', pop => $pop_id, update_panel => 1 }), $pop_id);
+      
+      # force ALL population to be displayed on top
+      if($data->{'pop_info'}{'Name'} =~ /ALL/) {
+        $pop_row{'pop'} = qq{<span class="hidden">0</span>}.$pop_row{'pop'};
+      }
 
       push @rows, \%pop_row;
       
@@ -202,7 +213,16 @@ sub pop_url {
    ### Returns  string
 
   my ($self, $pop_name, $pop_dbSNP) = @_;
-  return $pop_dbSNP ? $self->hub->get_ExtURL_link($pop_name, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_name;
+  
+  my $pop_url;
+  if($pop_name =~ /^1000GENOMES/) {
+    $pop_url = $self->hub->get_ExtURL_link($pop_name, '1KG_POP'); 
+  }
+  else {
+    $pop_url = $pop_dbSNP ? $self->hub->get_ExtURL_link($pop_name, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_name;
+  }
+  
+  return $pop_url;
 }
 
 
