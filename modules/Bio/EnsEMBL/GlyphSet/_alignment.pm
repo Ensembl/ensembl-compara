@@ -97,7 +97,7 @@ sub render_simple {
 
 sub render_half_height {
   my $self = shift;
-  $self->render_normal( $self->my_config('height')/2 || 4);
+  $self->render_normal( $self->my_config('height')/2 || 4, 20);
 }
 
 sub colour_key {
