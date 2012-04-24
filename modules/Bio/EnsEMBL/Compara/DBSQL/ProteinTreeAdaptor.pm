@@ -22,7 +22,14 @@ Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor
 
 =head1 DESCRIPTION
 
-Specialization of Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor for proteins
+Specialization of Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor for proteins.
+
+Please refer to Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor for the documentation
+on the methods. The trees fetched by the ProteinTreeAdaptor are restricted to
+protein-coding genes, but the methods are the same as in the GeneTreeNodeAdaptor.
+
+Similarly, you can use the NCTreeAdaptor to fetch trees for ncRNA genes or the
+GeneTreeAdaptor to fetch trees for all types of genes.
 
 =head1 INHERITANCE TREE
 
@@ -37,7 +44,7 @@ Ensembl Team. Individual contributions can be found in the CVS log.
 
 $Author$
 
-=head VERSION
+=head1 VERSION
 
 $Revision$
 

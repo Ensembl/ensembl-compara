@@ -24,6 +24,14 @@ Bio::EnsEMBL::Compara::DBSQL::NCTreeAdaptor
 
 Specialization of Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor for non-coding genes
 
+Please refer to Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor for the documentation
+on the methods. The trees fetched by the NCTreeAdaptor are restricted to
+ncRNA genes, but the methods are the same as in the GeneTreeNodeAdaptor.
+
+Similarly, you can use the ProteinTreeAdaptor to fetch trees for protein-coding genes or the
+GeneTreeAdaptor to fetch trees for all types of genes.
+
+
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::DBSQL::NCTreeAdaptor
@@ -37,7 +45,7 @@ Ensembl Team. Individual contributions can be found in the CVS log.
 
 $Author$
 
-=head VERSION
+=head1 VERSION
 
 $Revision$
 
