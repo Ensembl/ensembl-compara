@@ -103,10 +103,7 @@ sub fetch_parent_for_node {
     throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
   }
 
-  my $table= ($self->_tables)[0]->[1];
-  my $constraint = "$table.node_id = " . $node->_parent_id;
-  my ($parent) = @{$self->generic_fetch($constraint)};
-  return $parent;
+  return $self->fetch_node_by_node_id($node->_parent_id);
 }
 
 

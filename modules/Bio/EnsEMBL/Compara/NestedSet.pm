@@ -227,7 +227,7 @@ sub release_children {
 sub parent {
   my $self = shift;
   if(!defined($self->{'_parent_link'}) and $self->adaptor and $self->_parent_id) {
-    my $parent = $self->adaptor->fetch_parent_for_node($self);
+    my $parent = $self->adaptor->fetch_node_by_node_id($self->_parent_id);
     #print("fetched parent : "); $parent->print_node;
 #     if (!defined($parent)) {
 #       $DB::single=1;1;

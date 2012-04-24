@@ -146,30 +146,6 @@ sub fetch_node_by_node_id {
 }
 
 
-=head2 fetch_parent_for_node
-
-  Overview   : returns the parent NCBITaxon object for this node
-  Example    : my $my_parent = $object->parent();
-  Returntype : undef or Bio::EnsEMBL::Compara::NCBITaxon
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub fetch_parent_for_node {
-  my ($self, $node) = @_;
-
-  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
-  }
-
-  my $constraint = "t.taxon_id = " . $node->_parent_id;
-  my ($parent) = @{$self->generic_fetch($constraint)};
-  return $parent;
-}
-
-
-
 ##################################
 #
 # subclass override methods
