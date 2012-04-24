@@ -61,21 +61,20 @@ sub render_collapsed {
   
   my $th = ($self->get_text_width(0, 'Xg', 'Xg', 'ptsize' => $fontsize, 'font' => $fontname))[3];
   
-  # For alternate splicing diagram only draw transcripts in gene
-  foreach my $gene (@{$self->features}) {
-    my $gene_strand = $gene->strand;
+  my ($genes, $highlights, $transcripts, $exons) = $self->features;
+  
+  foreach my $gene (@$genes) {
+    my $gene_stable_id = $gene->stable_id;
+    my $gene_strand    = $gene->strand;
     
     next if $gene_strand != $strand && $strand_flag eq 'b';
     
-    # Get all the exons which overlap the region for this gene
-    my @exons = map { $_->start > $length || $_->end < 1 ? () : $_ } @{$gene->{'draw_exons'}};
-    
     $transcript_drawn = 1;
     
-    my $gene_stable_id = $gene->stable_id;
-    my $colour_key     = $self->colour_key($gene);
-    my $colour         = $self->my_colour($colour_key);
-    my $label          = $self->my_colour($colour_key, 'text');
+    my @exons      = map { $_->start > $length || $_->end < 1 ? () : $_ } @{$exons->{$gene_stable_id}}; # Get all the exons which overlap the region for this gene
+    my $colour_key = $self->colour_key($gene);
+    my $colour     = $self->my_colour($colour_key);
+    my $label      = $self->my_colour($colour_key, 'text');
 
     $used_colours{$label} = $colour;
     
@@ -195,7 +194,7 @@ sub render_collapsed {
     
     # shift the composite container by however much we're bumped
     $composite->y($composite->y - $strand * $bump_height * $row);
-    $composite->colour($gene->{'draw_highlight'}) if $gene->{'draw_highlight'};
+    $composite->colour($highlights->{$gene_stable_id}) if $highlights->{$gene_stable_id};
     $self->push($composite);
   }
 
@@ -254,8 +253,9 @@ sub render_transcripts {
   
   $self->_init_bump;
   
-  # For alternate splicing diagram only draw transcripts in gene
-  foreach my $gene (@{$self->features}) {
+  my ($genes, $highlights, $transcripts, $exons) = $self->features;
+  
+  foreach my $gene (@$genes) {
     my $gene_strand    = $gene->strand;
     my $gene_stable_id = $gene->can('stable_id') ? $gene->stable_id : undef;
     
@@ -308,18 +308,18 @@ sub render_transcripts {
       }
     }
     
-    my @sorted_transcripts = map $_->[1], sort { $b->[0] <=> $a->[0] } map [ $_->start * $gene_strand, $_ ], @{$gene->{'draw_transcripts'}};
+    my @sorted_transcripts = map $_->[1], sort { $b->[0] <=> $a->[0] } map [ $_->start * $gene_strand, $_ ], @{$transcripts->{$gene_stable_id}};
     
     foreach my $transcript (@sorted_transcripts) {
-      next if $transcript->start > $length || $transcript->end < 1;
-      
-      my @exons = @{$transcript->{'draw_exons'}};
-      
-      next unless scalar @exons; # Skip if no exons for this transcript
-      next if $exons[0]->strand != $gene_strand && $self->{'do_not_strand'} != 1; # If stranded diagram skip if on wrong strand
-      next if $target && $transcript->stable_id ne $target; # For exon_structure diagram only given transcript
-      
       my $transcript_stable_id = $transcript->stable_id;
+      
+      next if $transcript->start > $length || $transcript->end < 1;
+      next if $target && $transcript_stable_id ne $target; # For exon_structure diagram only given transcript
+      next unless $exons->{$transcript_stable_id};          # Skip if no exons for this transcript
+      
+      my @exons = @{$exons->{$transcript_stable_id}};
+      
+      next if $exons[0][0]->strand != $gene_strand && $self->{'do_not_strand'} != 1; # If stranded diagram skip if on wrong strand
       
       $transcript_drawn = 1;        
 
@@ -346,7 +346,7 @@ sub render_transcripts {
         $self->join_tag($composite2, $_->[0], 0.5, 0.5, $_->[1], 'line', $join_z) for @{$tags{$transcript->translation->stable_id}||[]};
       }
       
-      if ($transcript->stable_id eq $tsid) {
+      if ($transcript_stable_id eq $tsid) {
         $self->join_tag($composite2, $_, 0.5, 0.5, $alt_alleles_col, 'line', $join_z) for @gene_tags;
         
         if (@gene_tags) {
@@ -356,11 +356,11 @@ sub render_transcripts {
       }
       
       for (my $i = 0; $i < @exons; $i++) {
-        my $exon = $exons[$i];
+        my $exon = $exons[$i][0];
         
         next unless defined $exon; # Skip this exon if it is not defined (can happen w/ genscans) 
         
-        my $next_exon = ($i < $#exons) ? $exons[$i+1] : undef; # First draw the exon
+        my $next_exon = ($i < $#exons) ? $exons[$i+1][0] : undef; # First draw the exon
         
         last if $exon->start > $length; # We are finished if this exon starts outside the slice
         
@@ -372,7 +372,7 @@ sub render_transcripts {
           $box_start = max($exon->start, 1);
           $box_end   = min($exon->end, $length);
           
-          if ($exon->{'draw_border'}) {
+          if ($exons[$i][1] eq 'border') {
             $composite2->push($self->Rect({
               x            => $box_start - 1 ,
               y            => $y + $non_coding_start,
@@ -381,12 +381,9 @@ sub render_transcripts {
               bordercolour => $colour,
               absolutey    => 1
             }));
-          }
-          
-          if ($exon->{'draw_fill'} && $box_end > $exon->{'draw_fill_end'}) {
-            # Calculate and draw the coding region of the exon
-            my $fill_start = max($box_start + $exon->{'draw_fill_start'}, 1);
-            my $fill_end   = min($box_end   - $exon->{'draw_fill_end'}, $length);
+          } elsif ($exons[$i][1] eq 'fill' && $box_end > $exons[$i][3]) {
+            my $fill_start = max($box_start + $exons[$i][2], 1);
+            my $fill_end   = min($box_end   - $exons[$i][3], $length);
             
             $composite2->push($self->Rect({
               x         => $fill_start - 1,
@@ -478,7 +475,7 @@ sub render_transcripts {
       
       # shift the composite container by however much we're bumped
       $composite->y($composite->y - $strand * $bump_height * $row);
-      $composite->colour($transcript->{'draw_highlight'}) if $transcript->{'draw_highlight'} && !defined $target;
+      $composite->colour($highlights->{$transcript_stable_id}) if $highlights->{$transcript_stable_id} && !defined $target;
       $self->push($composite);
     }
   }
@@ -526,14 +523,16 @@ sub render_alignslice_transcript {
   
   $self->_init_bump;
   
-  foreach my $gene (@{$self->features}) {
-    my $gene_strand = $gene->strand;
+  my ($genes, $highlights, $transcripts) = $self->features;
+  
+  foreach my $gene (@$genes) {
+    my $gene_strand    = $gene->strand;
     my $gene_stable_id = $gene->can('stable_id') ? $gene->stable_id : undef;
     
     next if $gene_strand != $strand && $strand_flag eq 'b'; # skip features on wrong strand
     next if $target_gene && $gene_stable_id ne $target_gene;
     
-    my @sorted_transcripts = map $_->[1], sort { $b->[0] <=> $a->[0] } map [ $_->start * $gene_strand, $_ ], @{$gene->get_all_Transcripts};
+    my @sorted_transcripts = map $_->[1], sort { $b->[0] <=> $a->[0] } map [ $_->start * $gene_strand, $_ ], @{$transcripts->{$gene_stable_id}};
     
     foreach my $transcript (@sorted_transcripts) {
       next if $transcript->start > $length || $transcript->end < 1;
@@ -711,7 +710,7 @@ sub render_alignslice_transcript {
       
       # shift the composite container by however much we've bumped
       $composite->y($composite->y - $strand * $bump_height * $row);
-      $composite->colour($transcript->{'draw_highlight'}) if $transcript->{'draw_highlight'} && !defined $target;
+      $composite->colour($highlights->{$transcript_stable_id}) if $highlights->{$transcript_stable_id} && !defined $target;
       $self->push($composite);
       
       if ($target) {
@@ -803,8 +802,10 @@ sub render_alignslice_collapsed {
   
   $self->_init_bump;
   
-  foreach my $gene (@{$self->features}) {
-    my $gene_strand = $gene->strand;
+  my ($genes, $highlights) = $self->features;
+  
+  foreach my $gene (@$genes) {
+    my $gene_strand    = $gene->strand;
     my $gene_stable_id = $gene->stable_id;
     
     next if $gene_strand != $strand && $strand_flag eq 'b';
@@ -828,7 +829,7 @@ sub render_alignslice_collapsed {
     
     # In compact mode we 'collapse' exons showing just the gene structure, i.e overlapping exons/transcripts will be merged
     foreach my $transcript (@{$gene->get_all_Transcripts}) {
-      next if $transcript->start > $length ||  $transcript->end < 1;
+      next if $transcript->start > $length || $transcript->end < 1;
       push @exons, $self->map_AlignSlice_Exons($transcript, $length);
     }
     
@@ -916,7 +917,7 @@ sub render_alignslice_collapsed {
     
     # shift the composite container by however much we're bumped
     $composite->y($composite->y - $strand * $bump_height * $row);
-    $composite->colour($gene->{'draw_highlight'}) if $gene->{'draw_highlight'};
+    $composite->colour($highlights->{$gene_stable_id}) if $highlights->{$gene_stable_id};
     $self->push($composite);
   }
   
@@ -975,7 +976,9 @@ sub render_genes {
   my $flag = 0;
   my @genes_to_label;
   
-  foreach my $gene (@{$self->features}) {
+  my ($genes, $highlights) = $self->features;
+  
+  foreach my $gene (@$genes) {
     my $gene_strand = $gene->strand;
     
     next if $gene_strand != $strand && $strand_flag eq 'b';
@@ -1016,7 +1019,7 @@ sub render_genes {
       title     => $rect->{'title'},
       gene      => $gene,
       col       => $gene_col,
-      highlight => $gene->{'draw_highlight'},
+      highlight => $highlights->{$gene_stable_id},
       type      => $gene_type
     };
     
@@ -1070,13 +1073,13 @@ sub render_genes {
     
     $self->push($rect);
     
-    if ($gene->{'draw_highlight'}) {
+    if ($highlights->{$gene_stable_id}) {
       $self->unshift($self->Rect({
         x         => ($start - 1) - 1/$pix_per_bp,
         y         => $rect->y - 1,
         width     => ($end - $start + 1) + 2/$pix_per_bp,
         height    => $rect->height + 2,
-        colour    => $gene->{'draw_highlight'},
+        colour    => $highlights->{$gene_stable_id},
         absolutey => 1
       }));
     }
@@ -1176,9 +1179,10 @@ sub render_text {
   my $strand_flag = $self->my_config('strand') || 'b';
   my $target      = $self->get_parameter('single_Transcript');
   my $target_gene = $self->get_parameter('single_Gene');
+  my ($genes)     = $self->features;
   my $export;
   
-  foreach my $gene (@{$self->features}) { # For alternate splicing diagram only draw transcripts in gene
+  foreach my $gene (@$genes) {
     my $gene_id = $gene->can('stable_id') ? $gene->stable_id : undef;
     
     next if $target_gene && $gene_id ne $target_gene;
@@ -1195,7 +1199,7 @@ sub render_text {
     } else {
       my $exons = {};
       
-      foreach my $transcript (@{$gene->get_all_Transcripts}) {      
+      foreach my $transcript (@{$gene->get_all_Transcripts}) {
         next if $transcript->start > $length || $transcript->end < 1;
         
         my $transcript_id = $transcript->stable_id;
