@@ -52,7 +52,7 @@ sub callback_list_members {
   my ($species) = @_;
   my $constraint = 'm.genome_db_id = '.($species->dbID);
   my $join = [[['gene_tree_member', 'tm'], 'm.member_id = tm.member_id', [qw(tm.member_id)]]];
-  return $ma->_generic_fetch($constraint, $join);
+  return $ma->generic_fetch($constraint, $join);
 }
 my $list_trees = $ta->fetch_all;
 $w->write_data($list_species, \&callback_list_members, $list_trees);
