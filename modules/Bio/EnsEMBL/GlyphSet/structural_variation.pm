@@ -2,39 +2,40 @@ package Bio::EnsEMBL::GlyphSet::structural_variation;
 
 use strict;
 
+use List::Util qw(min max);
+
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub my_label { return 'Structural variations'; }
+sub somatic    { return $_[0]->{'my_config'}->id =~ /somatic/; }
+sub colour_key { return $_[1]->class_SO_term; }
 
 sub features {
   my $self     = shift; 
   my $slice    = $self->{'container'};
   my $source   = $self->my_config('source');
   my $set_name = $self->my_config('set_name');
-  my $var_features;
+  my $func     = $self->somatic ? 'get_all_somatic_StructuralVariationFeatures' : 'get_all_StructuralVariationFeatures';
   
-  if ($set_name) {
-    $var_features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', 'variation')->fetch_by_name($set_name)); # Structural variations by set
-  } elsif ($source =~ /^\w/) {
-    $var_features = $slice->get_all_StructuralVariationFeatures($source); # Structural variations by source
-  }  else {
-    $var_features = $slice->get_all_StructuralVariationFeatures; # All structural variations
-  }
-  
-  return $var_features;  
-}
-
-sub colour_key  {
-  my ($self, $f) = @_;
-  return $f->class_SO_term;
+  return $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', 'variation')->fetch_by_name($set_name)) if $set_name;
+  return $slice->$func($source =~ /^\w/ ? $source : undef);  
 }
 
 sub tag {
   my ($self, $f) = @_;
+  
+  if ($f->is_somatic && $f->start == $f->end) {
+    return ({
+      style  => 'breakpoint',
+      colour => 'gold',
+      border => 'goldenrod',
+      start  => $f->start,
+    });
+  }
+  
   my $colour         = $self->my_colour($self->colour_key($f), 'tag');
   my $border         = 'dimgray';
   my $inner_crossing = $f->inner_start && $f->inner_end && $f->inner_start >= $f->inner_end ? 1 : 0;
-  my @g_objects;
+  my @tags;
   
   if ($inner_crossing && $f->inner_start == $f->seq_region_end) {
     return {
@@ -49,7 +50,7 @@ sub tag {
   # start of feature
   if ($f->outer_start && $f->inner_start) {
     if ($f->outer_start != $f->inner_start && !$inner_crossing) {
-      push @g_objects, {
+      push @tags, {
         style => 'rect',
         start => $f->start,
         end   => $f->inner_start - $f->seq_region_start + $f->start
@@ -57,7 +58,7 @@ sub tag {
     }
   } elsif ($f->outer_start) {
     if ($f->outer_start == $f->seq_region_start || $inner_crossing) {
-      push @g_objects, {
+      push @tags, {
         style => 'bound_triangle_right',
         start => $f->start,
         out   => 1
@@ -65,7 +66,7 @@ sub tag {
     }
   } elsif ($f->inner_start) {
     if ($f->inner_start == $f->seq_region_start && !$inner_crossing) {
-      push @g_objects, {
+      push @tags, {
         style => 'bound_triangle_left',
         start => $f->start
       };
@@ -75,7 +76,7 @@ sub tag {
   # end of feature
   if ($f->outer_end && $f->inner_end) {
     if ($f->outer_end != $f->inner_end && !$inner_crossing) {
-      push @g_objects, {
+      push @tags, {
         style => 'rect',
         start => $f->end - $f->seq_region_end + $f->inner_end,
         end   => $f->end
@@ -83,7 +84,7 @@ sub tag {
     }
   } elsif ($f->outer_end) {
     if ($f->outer_end == $f->seq_region_end || $inner_crossing) {
-      push @g_objects, {
+      push @tags, {
         style => 'bound_triangle_left',
         start => $f->end,
         out   => 1
@@ -91,19 +92,19 @@ sub tag {
     }
   } elsif ($f->inner_end) {
     if ($f->inner_end == $f->seq_region_end && !$inner_crossing) {
-      push @g_objects, {
+      push @tags, {
         style => 'bound_triangle_right',
         start => $f->end
       };
     }
   }
   
-  foreach (@g_objects) {
+  foreach (@tags) {
     $_->{'colour'} = $colour;
     $_->{'border'} = $border;
   }
   
-  return @g_objects;
+  return @tags;
 }
 
 sub render_tag {
@@ -125,6 +126,32 @@ sub render_tag {
       height       => $y / $pix_per_bp,
       direction    => $1,
     });
+  } elsif ($tag->{'style'} eq 'breakpoint') {
+    my $h     = $self->my_config('height') || [$self->get_text_width(0, 'X', '', $self->get_font_details($self->my_config('font') || 'innertext'), 1)]->[3] + 2;
+    my $x     = $tag->{'start'};
+    my $y     = $h / 2;
+    my $width = 10 / $self->scalex;
+    
+    # Triangle returns an array: the triangle, and an invisible rectangle behind it for clicking purposes
+    @glyph = ($self->Triangle({
+      mid_point    => [ $x, $y ],
+      colour       => $tag->{'colour'},
+      bordercolour => $tag->{'border'},
+      absolutey    => 1,
+      width        => $width,
+      height       => $y,
+      direction    => 'up',
+      z            => 12,
+    }), $self->Triangle({
+      mid_point    => [ $x, ($y / 2) + 2 ],
+      colour       => $tag->{'colour'},
+      bordercolour => $tag->{'border'},
+      absolutey    => 1,
+      width        => $width,
+      height       => $y,
+      direction    => 'down',
+      z            => 12,
+    }));
   }
   
   return @glyph;
@@ -153,21 +180,19 @@ sub title {
 }
 
 sub highlight {
-  my ($self, $f, $composite, $pix_per_bp, $h) = @_;
-  my $id = $f->variation_name;
-  my %highlights;
-  @highlights{$self->highlights} = (1);
-
-  my $length = ($f->end - $f->start) + 1; 
+  my ($self, $f, $composite, $pix_per_bp, $h, undef, @tags) = @_;
   
-  return unless $highlights{$id};
+  return unless $self->core('sv') eq $f->variation_name;
+  
+  my $width = max(map $_->width, $composite, @tags);
+  my $x     = min(map $_->x,     $composite, @tags);
   
   $self->unshift($self->Rect({
-    x         => $composite->x - 2/$pix_per_bp,
-    y         => $composite->y - 2, # + makes it go down
-    width     => $composite->width + 4/$pix_per_bp,
-    height    => $h + 4,
-    colour    => 'green',
+    x         => $x - 1/$pix_per_bp,
+    y         => $composite->y - 1,
+    width     => $width + 2/$pix_per_bp,
+    height    => $h + 2,
+    bordercolour    => 'green',
     absolutey => 1,
   }));
 }
