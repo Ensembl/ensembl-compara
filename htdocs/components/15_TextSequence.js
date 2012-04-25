@@ -108,7 +108,6 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
             feature = json[i];
              
             for (j = 0; j < feature.length; j++) {
-              caption = feature[j].caption || null;
               entry   = feature[j].entry   || [];
               childOf = feature[j].childOf || '';
               cls     = (feature[j].cls    || childOf).replace(/\W/g, '_');
@@ -119,7 +118,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
                 entry = [ entry ];
               }
               
-              caption = caption || entry.shift();
+              caption = typeof feature[j].caption === 'undefined' ? entry.shift() : feature[j].caption;
               
               if (cls) {
                 classes[cls] = 1;
@@ -135,8 +134,8 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
               }
               
               row = $('<tr>', { 'class': cls }).appendTo(tbody);
-             
-              if (caption !== null && entry.length) {
+              
+              if (typeof caption !== 'undefined' && entry.length) {
                 row.append($('<' + tag + '>', { html: caption, css: css })).append($('<' + tag + '>', { html: entry.join(' ') }));
               } else {
                 row.append($('<' + tag + '>', { html: (caption || entry.join(' ')), colspan: 2 }));
