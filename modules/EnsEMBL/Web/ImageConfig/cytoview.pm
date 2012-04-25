@@ -50,33 +50,28 @@ sub init {
   }
 
   $self->load_tracks;
-
+  $self->load_configured_das({ strand => 'r' });
+  
   $self->modify_configs(
     [ 'transcript' ],
     { render => 'gene_label', strand => 'r' }
   );
-
+  
   $self->modify_configs(
     [ 'marker' ],
     { labels => 'off' }
   );
 
   $self->modify_configs(
-    [ 'variation' ],
+    [ 'variation', 'somatic' ],
     { display => 'off', menu => 'no' }
   );
+  
   $self->modify_configs(
-    [ 'variation_feature_structural' ],
+    [ 'variation_feature_structural', 'somatic_sv_feature' ],
     { display => 'normal', menu => 'yes' }
   );
-  $self->modify_configs(
-    [ 'das' ],
-    { display => 'off', menu => 'yes' }
-  );
-
-  $self->load_configured_das({ strand => 'r' });
-
-
+  
   $self->add_tracks('decorations',
     [ 'scalebar',  '', 'scalebar',  { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
     [ 'ruler',     '', 'ruler',     { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
