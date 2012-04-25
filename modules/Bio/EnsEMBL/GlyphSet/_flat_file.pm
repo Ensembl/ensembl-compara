@@ -131,7 +131,7 @@ sub features {
         foreach my $c (@{$_->external_data->{'Type'}[0]||[]}) {
           $dedupe{$c}++;
         }
-        $_->external_data->{'Type'}[0] = join(', ', sort keys %dedupe);
+        $_->external_data->{'Type'}[0] = join(', ', sort {$cons_lookup{$a} <=> $cons_lookup{$b}} keys %dedupe);
       }
     }
     else {
