@@ -188,12 +188,12 @@ sub highlight {
   my $x     = min(map $_->x,     $composite, @tags);
   
   $self->unshift($self->Rect({
-    x         => $x - 1/$pix_per_bp,
-    y         => $composite->y - 1,
-    width     => $width + 2/$pix_per_bp,
-    height    => $h + 2,
-    bordercolour    => 'green',
-    absolutey => 1,
+    x            => $x - 1/$pix_per_bp,
+    y            => $composite->y - 1,
+    width        => $width + 2/$pix_per_bp,
+    height       => $h + 2,
+    bordercolour => 'green',
+    absolutey    => 1,
   }));
 }
 
