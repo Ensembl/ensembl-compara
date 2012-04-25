@@ -492,12 +492,11 @@ sub render_ungrouped {
       next unless ref($f) eq 'ARRAY';
       push @ok_features, $f;
     }
-
     $self->_init_bump( undef, '0.5' );
     foreach my $f (
       sort { $a->[0] <=> $b->[0]      }
       map  { [$_->start, $_->end,$_ ] }
-      grep { !($strand_flag eq 'b' && $strand != ( ( $_->can('hstrand') ? 1 : 1 ) * $_->strand||-1) || $_->start > $length || $_->end < 1) } 
+      grep { !($strand_flag eq 'b' && $strand != ( ( $_->can('hstrand') ? $_->hstrand : 1 ) * $_->strand||-1) || $_->start > $length || $_->end < 1) } 
       map  { @$_                      } @ok_features
     ) {
       my($start,$end,$feat) = @$f;
