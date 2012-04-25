@@ -2256,21 +2256,7 @@ sub add_sequence_variations {
   
   return unless $menu && $hashref->{'variation_feature'}{'rows'} > 0;
   
-  if ($hashref->{'menu'}) {
-    $self->add_sequence_variations_meta($key, $hashref);
-  } else {
-    $self->add_sequence_variations_default($key, $hashref);
-  }
-
-  $self->add_track('information', 'variation_legend', 'Variation Legend', 'variation_legend', { strand => 'r' });
-}
-
-# adds variation tracks in structure defined in variation meta table
-sub add_sequence_variations_meta {
-  my ($self, $key, $hashref) = @_;
-  my $menu = $self->get_node('variation');
-  
-  my %options = (
+  my $options = {
     db         => $key,
     glyphset   => '_variation',
     strand     => 'r',
@@ -2278,50 +2264,52 @@ sub add_sequence_variations_meta {
     bump_width => 0,
     colourset  => 'variation',
     display    => 'off'
-  );
+  };
+  
+  if ($hashref->{'menu'}) {
+    $self->add_sequence_variations_meta($key, $hashref, $options);
+  } else {
+    $self->add_sequence_variations_default($key, $hashref, $options);
+  }
+
+  $self->add_track('information', 'variation_legend', 'Variation Legend', 'variation_legend', { strand => 'r' });
+}
+
+# adds variation tracks in structure defined in variation meta table
+sub add_sequence_variations_meta {
+  my ($self, $key, $hashref, $options) = @_;
+  my $menu = $self->get_node('variation');
   
   foreach my $menu_item(@{$hashref->{'menu'}}) {
+    next if $menu_item->{'type'} eq 'sv_set'; # sv_set type
     
     my $node;
     
-    # sv_set type
-    next if ($menu_item->{type} eq 'sv_set');
-    
-    # just a named submenu
-    if($menu_item->{type} eq 'menu') {
-      $node = $self->create_submenu($menu_item->{key}, $menu_item->{long_name});
-    }
-    
-    # source type
-    elsif($menu_item->{type} eq 'source') {
-      my $temp_name = $menu_item->{long_name};
-      $temp_name =~ s/ variants$//;
+    if ($menu_item->{'type'} eq 'menu') { # just a named submenu
+      $node = $self->create_submenu($menu_item->{'key'}, $menu_item->{'long_name'});
+    } elsif ($menu_item->{'type'} eq 'source') { # source type
+      my $temp_name     = $menu_item->{'long_name'};
+         $temp_name     =~ s/ variants$//;
+      my $other_sources = $menu_item->{'long_name'} =~ /all other sources/;
       
-      $node = $self->create_track($menu_item->{key}, $menu_item->{long_name}, {
-        %options,
-        caption     => $menu_item->{long_name},
-        sources     => ($menu_item->{long_name} =~ /all other sources/ ? undef : [ $temp_name ]),
-        description => ($menu_item->{long_name} =~ /all other sources/ ? "Sequence variants from all sources" : $hashref->{'source'}{'descriptions'}{$temp_name}),
+      $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
+        %$options,
+        caption     => $menu_item->{'long_name'},
+        sources     => $other_sources ? undef : [ $temp_name ],
+        description => $other_sources ? 'Sequence variants from all sources' : $hashref->{'source'}{'descriptions'}{$temp_name},
       });
-    }
-    
-    # set type
-    elsif($menu_item->{type} eq 'set') {
+    } elsif ($menu_item->{'type'} eq 'set') { # set type
+      my $temp_name = $menu_item->{'key'};
+         $temp_name =~ s/^variation_set_//;
+      my $caption   = $menu_item->{'long_name'};
+         $caption   =~ s/1000 Genomes/1KG/; # shorten name for side of image
+      my $set_name  = $menu_item->{'long_name'};
+         $set_name  =~ s/All HapMap/HapMap/; # hack for HapMap set name - remove once variation team fix data for 68
       
-      my $temp_name = $menu_item->{key};
-      $temp_name =~ s/^variation_set_//;
-      
-      # shorten name for side of image
-      my $caption = $menu_item->{long_name};
-      $caption =~ s/1000 Genomes/1KG/;
-      
-      # hack for HapMap set name - remove once variation team fix data for 68
-      my $set_name = $menu_item->{long_name};
-      $set_name =~ s/All HapMap/HapMap/;
       next if $set_name =~ /HapMap.+/;
       
-      $node = $self->create_track($menu_item->{key}, $menu_item->{long_name}, {
-        %options,
+      $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
+        %$options,
         caption     => $caption,
         sources     => undef,
         sets        => [ $set_name ],
@@ -2331,31 +2319,18 @@ sub add_sequence_variations_meta {
     }
     
     # get the node onto which we're going to add this item, then append it
-    my $curr_node = $self->get_node($menu_item->{parent}) || $menu;
-    
-    $curr_node->append($node);
+    ($self->get_node($menu_item->{'parent'}) || $menu)->append($node) if $node;
   }
 }
 
 # adds variation tracks the old, hacky way
 sub add_sequence_variations_default {
-  my ($self, $key, $hashref) = @_;
-  my $menu = $self->get_node('variation');
-  
-  my %options = (
-    db         => $key,
-    glyphset   => '_variation',
-    strand     => 'r',
-    depth      => 0.5,
-    bump_width => 0,
-    colourset  => 'variation',
-    display    => 'off'
-  );
-  
+  my ($self, $key, $hashref, $options) = @_;
+  my $menu               = $self->get_node('variation');
   my $sequence_variation = $self->create_submenu('sequence_variations', 'Sequence variants');
   
   $sequence_variation->append($self->create_track("variation_feature_$key", 'Sequence variants (all sources)', {
-    %options,
+    %$options,
     sources     => undef,
     description => 'Sequence variants from all sources',
   }));
@@ -2367,7 +2342,7 @@ sub add_sequence_variations_default {
     (my $k = $key_2) =~ s/\W/_/g;
     
     $sequence_variation->append($self->create_track("variation_feature_${key}_$k", "$key_2 variations", {
-      %options,
+      %$options,
       caption     => $key_2,
       sources     => [ $key_2 ],
       description => $hashref->{'source'}{'descriptions'}{$key_2},
@@ -2394,7 +2369,7 @@ sub add_sequence_variations_default {
       my $set_variation = scalar @{$toplevel_set->{'subsets'}} ? $self->create_submenu("set_variation_$key", $name) : $variation_sets;
       
       $set_variation->append($self->create_track("variation_set_$key", $caption, {
-        %options,
+        %$options,
         caption     => $caption,
         sources     => undef,
         sets        => [ $name ],
@@ -2411,7 +2386,7 @@ sub add_sequence_variations_default {
           my $sub_set_key         = $sub_set->{'short_name'};
           
           $set_variation->append($self->create_track("variation_set_$sub_set_key", $sub_set_name, {
-            %options,
+            %$options,
             caption     => $sub_set_name,
             sources     => undef,
             sets        => [ $sub_set_name ],
@@ -2439,7 +2414,7 @@ sub add_structural_variations {
     glyphset   => 'structural_variation',
     strand     => 'r', 
     bump_width => 0,
-    height     => 5.5,
+    height     => 6,
     colourset  => 'structural_variant',
     display    => 'off',
     canvas     => { type => 'StructuralVariation' },
@@ -2500,7 +2475,7 @@ sub add_copy_number_variant_probes {
     glyphset   => 'cnv_probes',
     strand     => 'r', 
     bump_width => 0,
-    height     => 5.5,
+    height     => 6,
     colourset  => 'structural_variant',
     display    => 'off'
   );
@@ -2589,10 +2564,10 @@ sub add_somatic_structural_variations {
   
   my %options = (
     db         => $key,
-    glyphset   => 'somatic_structural_variation',
+    glyphset   => 'structural_variation',
     strand     => 'r', 
     bump_width => 0,
-    height     => 5.5,
+    height     => 6,
     colourset  => 'structural_variant',
     display    => 'off',
   );
