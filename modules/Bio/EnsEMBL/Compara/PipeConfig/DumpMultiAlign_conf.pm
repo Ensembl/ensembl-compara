@@ -1,3 +1,4 @@
+##
 ## Configuration file for DumpMultiAlign pipeline
 #Release 65
 #
@@ -31,7 +32,6 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
 	'release'       => 67,
         'pipeline_name' => 'DUMP_'.$self->o('release'),  # name used by the beekeeper to prefix job names on the farm
@@ -43,7 +43,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => $ENV{USER}.'_'.$self->o('dbname'),
+            -dbname => $self->('ENV', 'USER').'_'.$self->o('dbname'),
         },
 
         'staging_loc1' => {                     # general location of half of the current release core databases
