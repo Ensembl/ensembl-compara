@@ -130,7 +130,7 @@ sub features {
   my $adaptor   = $container->adaptor;
   my @features;
   
-  foreach (@{$container->project('contig') || []}) {
+  foreach (@{$container->project('seqlevel') || []}) {
     my $ctg_slice     = $_->to_Slice;
     my $name          = $ctg_slice->coord_system->name eq 'ancestralsegment' ? $ctg_slice->{'_tree'} : $ctg_slice->seq_region_name; # This is a Slice of Ancestral sequences: display the tree instead of the ID
     my $feature_slice = $adaptor ? $adaptor->fetch_by_region('seqlevel', $name)->project('toplevel')->[0]->to_Slice : $ctg_slice;
