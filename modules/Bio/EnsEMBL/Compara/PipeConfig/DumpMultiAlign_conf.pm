@@ -33,13 +33,13 @@ sub default_options {
 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
-	'release'       => 65,
+	'release'       => 67,
         'pipeline_name' => 'DUMP_'.$self->o('release'),  # name used by the beekeeper to prefix job names on the farm
 
         'dbname' => 'dumpMultiAlign'.$self->o('release'),  # database suffix (without user name prepended)
 
         'pipeline_db' => {                               # connection parameters
-            -host   => 'compara4',
+            -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -122,9 +122,9 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 sub resource_classes {
     my ($self) = @_;
     return {
-         0 => { -desc => 'default, 8h',      'LSF' => '-M2000000 -R"select[mem>2000] rusage[mem=2000]' },
+         0 => { -desc => 'default, 8h',      'LSF' => '-M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
 	 1 => { -desc => 'urgent',           'LSF' => '-q yesterday' },
-         2 => { -desc => 'compara1',         'LSF' => '-R"select[mycompara1<800] rusage[mycompara1=10:duration=3]"' },
+         2 => { -desc => 'compara1',         'LSF' => '-M2000000 -R"select[mem>2000 && mycompara1<800] rusage[mem=2000,mycompara1=10:duration=3]"' },
     };
 }
 
@@ -213,7 +213,7 @@ sub pipeline_analyses {
             -input_ids     => [
             ],
 	   -hive_capacity => 15,
-	   -rc_id => 2,
+	   -rc_id => 0,
 	    -flow_into => {
 	       2 => [ 'emf2maf' ],
 	       1 => [ 'compress' ]
