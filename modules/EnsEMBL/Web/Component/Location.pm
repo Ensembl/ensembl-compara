@@ -135,4 +135,41 @@ sub _user_track_colour {
   return $track->{'config'} && $track->{'config'}{'color'} ? $track->{'config'}{'color'} : 'black';      
 }
 
+sub get_chr_legend {
+  my ($self,$legend) = @_;
+  return '' if (!$legend || 1> keys %$legend);
+  my $hub            = $self->hub;
+  my $species_defs = $hub->species_defs;
+  my $styles       = $species_defs->colour('ideogram');
+  my $image_config   = $hub->get_imageconfig('text_seq_legend');
+  $image_config->{'legend'}={'Chromosome Type'=>$legend};
+  $image_config->image_width(650);
+  my $image = $self->new_image(new EnsEMBL::Web::Fake({}), $image_config);
+  $image->set_button('drag',undef);
+  return $image->render;
+  
+  #return $self->new_image(new EnsEMBL::Web::Fake({}), $image_config)->render;
+}
+
+sub chr_colour_key {
+#figure out which chromosomes to colorize
+  my $self = shift;
+  my $hub          = $self->hub;
+  my $species = $hub->param('species') || $hub->species;
+  my $db = $hub->databases->get_DBAdaptor('core', $species);
+  my $sa = $db->get_SliceAdaptor,
+  my $species_defs = $hub->species_defs;
+  my $styles       = $species_defs->colour('ideogram');
+  my $colours = {};
+  my $chromosomes  = $species_defs->ENSEMBL_CHROMOSOMES || [];
+  for my $chr (@$chromosomes){
+    my $slice = $sa->fetch_by_region(undef,$chr);
+    my ($disp) = map {$_->value} @{$slice->get_all_Attributes('chr_type')};
+    if($disp){
+      $colours->{$chr}=$styles->{$disp};
+    }
+  }
+  return $colours;
+}
+
 1;
