@@ -66,6 +66,13 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor');
 
 sub fetch_all {
     my ($self) = @_;
+
+#    my $table = $self->tables->[0]->[1];
+#    my $constraint = "WHERE ctn.node_id = ct.root_id";
+##    my $constraint = "";
+#    my $nodes = $self->_generic_fetch($constraint);
+#    return $nodes;
+
     my $constraint = "ctn.node_id = ct.root_id";
     return $self->generic_fetch($constraint);
 }
@@ -85,11 +92,11 @@ sub fetch_all {
 
 sub fetch_by_GeneTree {
     my ($self, $genetree) = @_;
-    unless ($genetree->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
-        throw("set arg must be a [Bio::EnsEMBL::Compara::GeneTreeNode] not a $genetree");
+    unless ($genetree->isa('Bio::EnsEMBL::Compara::GeneTree')) {
+        throw("set arg must be a [Bio::EnsEMBL::Compara::GeneTree] not a $genetree");
     }
 
-    my $node_id = $genetree->node_id();  # root_id?
+    my $node_id = $genetree->root_id();  # root_id?
 
     return $self->fetch_by_family_id($node_id);
 }
