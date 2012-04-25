@@ -54,13 +54,20 @@ sub init {
     information
   ));
   
+  my %desc = (
+    contig    => 'Track showing underlying assembly contigs.',
+    seq       => 'Track showing sequence in both directions. Only displayed at 1Kb and below.',
+    codon_seq => 'Track showing 6-frame translation of sequence. Only displayed at 500bp and below.',
+    codons    => 'Track indicating locations of start and stop codons in region. Only displayed at 50Kb and below.'
+  );
+  
   # Note these tracks get added before the "auto-loaded tracks" get added
-  $self->add_tracks( 'sequence', 
-    [ 'contig',    'Contigs',             'stranded_contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' }],
-    [ 'seq',       'Sequence',            'sequence',        { display => 'off',    strand => 'b', colourset => 'seq',      threshold => 0.2, bump_width => 0, description => 'Track showing sequence in both directions'     }],
-    [ 'codon_seq', 'Translated sequence', 'codonseq',        { display => 'off',    strand => 'b', colourset => 'codonseq', threshold => 0.5, bump_width => 0, description => 'Track showing 6-frame translation of sequence' }],
-    [ 'codons',    'Start/stop codons',   'codons',          { display => 'off',    strand => 'b', colourset => 'codons',   threshold => 50,  description => 'Track indicating locations of start and stop codons in region'  }],
-    [ 'blast',     'BLAT/BLAST hits',     '_blast',          { display => 'normal', strand => 'b', colourset => 'feature',  sub_type => 'blast', menu => 'no' }]
+  $self->add_tracks('sequence', 
+    [ 'contig',    'Contigs',             'stranded_contig', { display => 'normal', strand => 'r', description => $desc{'contig'}                                                                }],
+    [ 'seq',       'Sequence',            'sequence',        { display => 'normal', strand => 'b', description => $desc{'seq'},       colourset => 'seq',      threshold => 1,   bump_width => 0 }],
+    [ 'codon_seq', 'Translated sequence', 'codonseq',        { display => 'off',    strand => 'b', description => $desc{'codon_seq'}, colourset => 'codonseq', threshold => 0.5, bump_width => 0 }],
+    [ 'codons',    'Start/stop codons',   'codons',          { display => 'off',    strand => 'b', description => $desc{'codons'},    colourset => 'codons',   threshold => 50                   }],
+    [ 'blast',     'BLAT/BLAST hits',     '_blast',          { display => 'normal', strand => 'b',                                    colourset => 'feature',  sub_type => 'blast', menu => 'no' }]
   );
   
   $self->add_track('decorations', 'gc_plot', '%GC', 'gcplot', { display => 'normal',  strand => 'r', description => 'Shows percentage of Gs & Cs in region', sortable => 1 });
