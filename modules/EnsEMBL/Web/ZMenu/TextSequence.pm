@@ -47,12 +47,12 @@ sub variation_content {
   my $chr_start  = $feature->start;
   my $chr_end    = $feature->end;
   my $allele     = $feature->allele_string;
+  my @failed     = @{$feature->variation->get_all_failed_descriptions};
   my $link       = '<a href="%s">%s</a>';
   my $position   = "$seq_region$chr_start";
-  my $lrg_position;
-  my %population_data;
+  my ($lrg_position, %population_data);
   
-  my %url_params  = (
+  my %url_params = (
     type   => 'Variation',
     v      => $v,
     vf     => $vf,
@@ -86,12 +86,13 @@ sub variation_content {
     { caption => 'Position',  entry => $position },
   );
   
-  # check if the variation is failed
-  if(my @fd = @{$feature->variation->get_all_failed_descriptions()}) {
-    push @entries, { caption => 'Failed status', entry => join ", ", @fd } if scalar @fd;
+  if (scalar @failed) {
+    push @entries, { caption => 'Failed status', entry => shift @failed };
+    push @entries, { caption => '',              entry => shift @failed } while @failed;
   }
   
-  push @entries, { caption => 'LRG position',  entry => $lrg_position } if $lrg_position;
+  #push @entries, { caption => 'Failed status', entry => join ', ', @failed } if scalar @failed;
+  push @entries, { caption => 'LRG position', entry => $lrg_position } if $lrg_position;
   
   my %ct    = map { $_->display_term => [ $_->label, $_->rank ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   my %types = map @{$ct{$_}}, @{($self->{'transcript'} ? $feature->get_all_TranscriptVariations([$self->{'transcript'}])->[0] : $feature)->consequence_type};
@@ -105,17 +106,17 @@ sub variation_content {
   push @entries, { entry => sprintf $link, $hub->url({ action => 'Phenotype', %url_params }), 'Phenotype Data' } if scalar @{$object->get_external_data};
   
   foreach my $pop (
-    sort { $a->{'pop_info'}->{'Name'} cmp $b->{'pop_info'}->{'Name'} }
+    sort { $a->{'pop_info'}{'Name'} cmp $b->{'pop_info'}{'Name'} }
     sort { $a->{'submitter'} cmp $b->{'submitter'} }
-    grep { $_->{'pop_info'}->{'Name'} =~ /^1000genomes.+pilot_\d/i }
+    grep { $_->{'pop_info'}{'Name'} =~ /^1000genomes.+phase_\d/i }
     map  { values %$_ }
     values %{$object->freqs($feature)}
   ) {
-    my $key  = join ', ', map { "$pop->{'Alleles'}->[$_]: " . sprintf '%.3f', $pop->{'AlleleFrequency'}->[$_] } 0..$#{$pop->{'Alleles'}}; # $key is the allele frequencies in the form C: 0.400, T: 0.600
-    my $name = [ split /:/, $pop->{'pop_info'}->{'Name'} ]->[-1]; # shorten the population name
-       $name =~ s/pilot_\d_//;
-       $name =~ s/_panel//;
-       $name =~ s/_/ /g;
+    # $key is the allele frequencies in the form C: 0.400, T: 0.600
+    my $key  = join ', ', map { $pop->{'AlleleFrequency'}[$_] ? "$pop->{'Alleles'}[$_]: " . sprintf '%.3f', $pop->{'AlleleFrequency'}[$_] : () } 0..$#{$pop->{'Alleles'}};
+    my $name = [ split /:/, $pop->{'pop_info'}{'Name'} ]->[-1]; # shorten the population name
+       $name =~ /phase_1_(.+)/;
+       $name = $1;
     
     $population_data{$name}{$key} .= ($population_data{$name}{$key} ? ' / ' : '') . $pop->{'submitter'}; # concatenate population submitters if they provide the same frequencies
   }
@@ -129,10 +130,14 @@ sub variation_content {
     foreach my $submitter (keys %display) {
       my @freqs = map { split /: /, $_ } split /, /, $display{$submitter};
       my $img;
-      $img .= sprintf '<span class="freq %s" style="width:%spx"></span>', shift @freqs, 100 * shift @freqs while @freqs;
+         $img .= sprintf '<span class="freq %s" style="width:%spx"></span>', shift @freqs, 100 * shift @freqs while @freqs;
       
-      push @entries, { childOf => 'population', entry => [ $i++ ? '' : $name, $submitter ]};
-      push @entries, { childOf => 'population', entry => [ '', $img, "<div>$display{$submitter}</div>" ]};
+      if ($submitter) {
+        push @entries, { childOf => 'population', entry => [ $i++ ? '' : $name, $submitter ]};
+        push @entries, { childOf => 'population', entry => [ '', $img, "<div>$display{$submitter}</div>" ]};
+      } else {
+        push @entries, { childOf => 'population', entry => [ $name, $img, "<div>$display{$submitter}</div>" ]};
+      }
     }
   }
   
