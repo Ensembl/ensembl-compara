@@ -171,6 +171,9 @@ sub new {
         my $colour_2 = $glyphset->my_config('colour_2') || ($feature_type_2 ? $glyphset->my_colour($feature_type_2, 'label') : undef);
         
         if ($label_1) {
+          my $chr_colour_key = $config->get_parameter('chr_colour_key');
+          my $chr = $glyphset->{'chr'};
+          $colour_1 = $chr_colour_key->{$chr}->{'label'} if $chr_colour_key && $chr_colour_key->{$chr};
           $glyphset->push($glyphset->Text({
             x         => $label_x / $scalex,
             y         => ($glyphset->maxy + $glyphset->miny - length($label_1) * $gw) / 2,
