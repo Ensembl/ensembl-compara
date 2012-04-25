@@ -46,6 +46,7 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::CAFETreeNode;
 
 use strict;
+use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::NestedSet');
 
@@ -134,9 +135,36 @@ sub p_value {
     return $self->{'_p_value'};
 }
 
-sub is_significant {
+sub tree_is_significant {
     my ($self) = @_;
-    return $self->p_value() < $self->pvalue_lim();
+    return $self->avg_pvalue() < $self->pvalue_lim();
+}
+
+sub node_is_significant {
+    my ($self) = @_;
+    return $self->p_value() < $self->root->pvalue_lim();
+}
+
+sub get_contractions {
+    my ($self) = @_;
+    my $contractions;
+    for my $node (@{$self->get_all_nodes}) {
+        if (defined $node->p_value && ($node->p_value < $self->pvalue_lim) && $node->is_contraction) {
+            push @{$contractions}, $node;
+        }
+    }
+    return $contractions || [];
+}
+
+sub get_expansions {
+    my ($self) = @_;
+    my $expansions;
+    for my $node (@{$self->get_all_nodes}) {
+        if (defined $node->p_value && ($node->p_value < $self->pvalue_lim) && $node->is_expansion) {
+            push @{$expansions}, $node;
+        }
+    }
+    return $expansions || [];
 }
 
 sub is_expansion {
