@@ -1929,38 +1929,41 @@ sub add_alignments {
   return if $species_defs->ENSEMBL_SITETYPE eq 'Pre';
   
   my $alignments = {};
-  my $vega       = $species_defs->ENSEMBL_SITETYPE eq 'Vega';
   my $self_label = $species_defs->species_label($species, 'no_formatting');
-  my $regexp     = $species =~ /^([A-Z])[a-z]*_([a-z]{3})/ ? "-?$1.$2-?" : 'xxxxxx';
   
   foreach my $row (values %{$hashref->{'ALIGNMENTS'}}) {
     next unless $row->{'species'}{$species};
     
     if ($row->{'class'} =~ /pairwise_alignment/) {
       my ($other_species) = grep { !/^$species$|ancestral_sequences$/ } keys %{$row->{'species'}};
-      $other_species ||= $species if $vega && $row->{'species'}->{$species} && scalar keys %{$row->{'species'}} == 2;
+         $other_species ||= $species if scalar keys %{$row->{'species'}} == 1;
+      my $other_label     = $species_defs->species_label($other_species, 'no_formatting');
+      my ($menu_key, $description, $type);
       
-      my $other_label = $species_defs->species_label($other_species, 'no_formatting');
-      my $menu_key;
-      my $description;
-      
-      if ($row->{'type'} =~ /(B?)LASTZ/) {
+      if ($row->{'type'} =~ /(B?)LASTZ_(\w+)/) {
+        next if $2 eq 'PATCH';
+        
         $menu_key    = 'pairwise_blastz';
-        $description = qq{<a href="/info/docs/compara/analyses.html" class="cp-external">$1LASTz net pairwise alignments</a> between $self_label and $other_label};
+        $type        = sprintf '%sLASTz %s', $1, lc $2;
+        $description = "$type pairwise alignments";
       } elsif ($row->{'type'} =~ /TRANSLATED_BLAT/) {
+        $type        = '';
         $menu_key    = 'pairwise_tblat';
-        $description = qq{<a href="/info/docs/compara/analyses.html" class="cp-external">Trans. BLAT net pairwise alignments</a> between $self_label and $other_label};
+        $description = 'Trans. BLAT net pairwise alignments';
       } else {
+        $type        = ucfirst lc $row->{'type'};
+        $type        =~ s/\W/ /g;
         $menu_key    = 'pairwise_align';
-        $description = qq{<a href="/info/docs/compara/analyses.html" class="cp-external">Pairwise alignments</a> between $self_label and $other_label};
+        $description = 'Pairwise alignments';
       }
       
+      $description  = sprintf '<a href="/info/docs/compara/analyses.html" class="cp-external">%s</a> between %s and %s', $description, $self_label, $other_label;
       $description .= " $1" if $row->{'name'} =~ /\((on.+)\)/;
       
       $alignments->{$menu_key}{$row->{'id'}} = {
         db                         => $key,
         glyphset                   => '_alignment_pairwise',
-        name                       => "$other_label - $row->{'type'}",
+        name                       => $other_label . ($type ?  " - $type" : ''),
         caption                    => $other_label,
         type                       => $row->{'type'},
         species                    => $other_species,
@@ -1973,7 +1976,7 @@ sub add_alignments {
         renderers                  => [ 'off', 'Off', 'compact', 'Compact', 'normal', 'Normal' ],
       };
     } else {
-      my $n_species = grep { $_ ne "ancestral_sequences" } keys %{$row->{'species'}};
+      my $n_species = grep { $_ ne 'ancestral_sequences' } keys %{$row->{'species'}};
       
       my %options = (
         db                         => $key,
