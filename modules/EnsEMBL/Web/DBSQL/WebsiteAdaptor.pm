@@ -9,6 +9,7 @@ use warnings;
 no warnings 'uninitialized';
 
 use DBI;
+use HTML::Strip;
 
 sub new {
   my ($class, $hub) = @_;
@@ -233,6 +234,19 @@ sub fetch_glossary {
       lc($a->{'word'}) cmp lc($b->{'word'})
     } @$records;
   return \@sorted;
+}
+
+sub fetch_glossary_text_lookup {
+  my $self = shift;
+  my $records = {};
+
+  my @words = @{$self->fetch_glossary||[]};
+  my $stripper = new HTML::Strip;
+
+  foreach my $word (@words) {
+    $records->{$word->{'word'}} = $stripper->parse($word->{'meaning'});
+  }
+  return $records;
 }
 
 ##---------------- NEWS ------------------------
