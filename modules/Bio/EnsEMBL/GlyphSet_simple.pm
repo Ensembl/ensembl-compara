@@ -247,7 +247,7 @@ sub _init {
     }
     
     $self->push($composite, @tag_glyphs);
-    $self->highlight($f, $composite, $pix_per_bp, $height, 'highlight1');
+    $self->highlight($f, $composite, $pix_per_bp, $height, 'highlight1', @tag_glyphs);
   }
 }
 
