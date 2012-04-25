@@ -85,31 +85,60 @@ sub features {
   ## Now we translate all the features to their rightful co-ordinates
   while (my ($key, $T) = each (%{$parser->{'tracks'}})) {
     $_->map($container) for @{$T->{'features'}};
-    
+  
     ## Set track depth a bit higher if there are lots of user features
     $T->{'config'}{'dep'} = scalar @{$T->{'features'}} > 20 ? 20 : scalar @{$T->{'features'}};
 
     ### ensure the display of the VEP features using colours corresponding to their consequence
     if ($self->my_config('format') eq 'SNP_EFFECT') {
       my %overlap_cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;      
-      my %cons = map { $overlap_cons{$_}{'display_term'} => $overlap_cons{$_}{'rank'} } keys %overlap_cons;
-     
-      my %b_cons = map { # lowest rank consequence from comma-list
-        $_->consequence => reduce { $cons{$a} < $cons{$b} ? $a : $b } split(/,/,$_->consequence); 
+      my %cons_lookup = map { $overlap_cons{$_}{'display_term'} => $overlap_cons{$_}{'rank'} } keys %overlap_cons;
+    
+      ## Group results into sets by start, end and allele, so we can treat them 
+      ## as single features in the next step 
+      my %cons = map { # lowest rank consequence from comma-list
+        $_->consequence => reduce { $cons_lookup{$a} < $cons_lookup{$b} ? $a : $b } split(/,/,$_->consequence); 
       } @{$T->{'features'}};
-      @{$T->{'features'}} = sort {$b_cons{$a->consequence} <=> $b_cons{$b->consequence}} @{$T->{'features'}};
-      
+      @{$T->{'features'}} = sort {$a->start <=> $b->start
+          || $a->end <=> $b->end
+          || $a->allele_string cmp $b->allele_string
+          || $cons_lookup{$cons{$a->consequence}} <=> $cons_lookup{$cons{$b->consequence}}
+        } @{$T->{'features'}};
+
       my $colours = $species_defs->colour('variation');
       
       $T->{'config'}{'itemRgb'} = 'on';
-      
+    
+      ## Merge raw features into a set of unique variants with multiple consequences 
+      my ($start, $end, $allele);
       foreach (@{$T->{'features'}}) {
-        $_->external_data->{'item_colour'}[0] = $colours->{lc $b_cons{$_->consequence}}->{'default'} || $colours->{'default'}->{'default'};
-        $_->external_data->{'Type'}[0]        = $_->consequence;
+        my $last = $features->[-1];
+        if ($last && $last->start == $_->start && $last->end == $_->end && $last->allele_string eq $_->allele_string) {
+          push @{$last->external_data->{'Type'}[0]}, $_->consequence;
+        }
+        else {
+          $_->external_data->{'item_colour'}[0] = $colours->{lc $cons{$_->consequence}}->{'default'} || $colours->{'default'}->{'default'};
+          $_->external_data->{'Type'}[0]        = [$_->consequence];
+          push @$features, $_;
+          $start = $_->start;
+          $end = $_->end;
+          $allele = $_->allele_string;
+        }
+      }
+      ## FinallY dedupe the consequences
+      foreach (@$features) {
+        my %dedupe;
+        foreach my $c (@{$_->external_data->{'Type'}[0]||[]}) {
+          $dedupe{$c}++;
+        }
+        $_->external_data->{'Type'}[0] = join(', ', sort keys %dedupe);
       }
     }
+    else {
+      $features = $T->{'features'};
+    }
 
-    $results{$key} = [$T->{'features'}, $T->{'config'}];
+    $results{$key} = [$features, $T->{'config'}];
   }
   
   return %results;
