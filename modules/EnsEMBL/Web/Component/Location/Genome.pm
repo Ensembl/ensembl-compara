@@ -46,7 +46,6 @@ sub _render_features {
   my $species      = $hub->species;
   my $species_defs = $hub->species_defs;
   my ($html, $total_features, $mapped_features, $unmapped_features, $has_internal_data, $has_userdata);
-
   my $chromosomes  = $species_defs->ENSEMBL_CHROMOSOMES || [];
   my %chromosome = map {$_ => 1} @$chromosomes;
   while (my ($type, $set) = each (%$features)) {
@@ -84,9 +83,13 @@ sub _render_features {
     }
   }
 
+  ## Attach the colorizing key before making the image
+  my $chr_colour_key = $self->chr_colour_key;
+  $image_config->set_parameter('chr_colour_key',$chr_colour_key);
+  my $image = $self->new_karyotype_image($image_config);
+
   ## Draw features on karyotype, if any
   if (scalar @$chromosomes && $species_defs->MAX_CHR_LENGTH) {
-    my $image = $self->new_karyotype_image($image_config);
 
     ## Map some user-friendly display names
     my $feature_display_name = {
@@ -193,7 +196,8 @@ sub _render_features {
     return if $self->_export_image($image,'no_text');
       
     $html .= $image->render;
- 
+    $html .= $self->get_chr_legend($chr_colour_key);
+
     ## Add colour key if required
     if ($self->html_format && (scalar(keys %$legend_info) > 1 || $has_gradient)) { 
       $html .= '<h3>Key</h3>';
