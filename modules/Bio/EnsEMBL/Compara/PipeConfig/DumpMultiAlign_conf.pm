@@ -32,7 +32,6 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-
 	'release'       => 67,
         'pipeline_name' => 'DUMP_'.$self->o('release'),  # name used by the beekeeper to prefix job names on the farm
 
@@ -43,7 +42,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => $self->('ENV', 'USER').'_'.$self->o('dbname'),
+            -dbname => $self->o('ENV', 'USER').'_'.$self->o('dbname'),
         },
 
         'staging_loc1' => {                     # general location of half of the current release core databases
