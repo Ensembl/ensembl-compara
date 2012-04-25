@@ -5,6 +5,7 @@ package EnsEMBL::Web::Component::Gene::GeneSNPTable;
 use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
+use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
@@ -62,12 +63,16 @@ sub make_table {
     { key => 'Alleles',  sort => 'string',                               align => 'center' },
     { key => 'class',    sort => 'string',    title => 'Class',          align => 'center' },
     { key => 'Source',   sort => 'string'                                                  },
-    { key => 'status',   sort => 'string',    title => 'Validation',     align => 'center' },
+    { key => 'status',   sort => 'string',    label => 'Validation', title => $glossary->{'Validation status'}, align => 'center' },
     { key => 'snptype',  sort => 'string',    title => 'Type',                             },
     { key => 'aachange', sort => 'string',    title => 'Amino Acid',     align => 'center' },
     { key => 'aacoord',  sort => 'position',  title => 'AA coord',       align => 'center' },
   ];
-  
+ 
+  ## Glossary
+  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($self->hub);
+  my $glossary = $adaptor->fetch_glossary_text_lookup;
+ 
   # HGVS
   if($self->hub->param('hgvs') eq 'on') {
     splice(@$columns, 3, 0, 
@@ -78,8 +83,8 @@ sub make_table {
   # add GMAF, SIFT and PolyPhen for human
   if ($self->hub->species eq 'Homo_sapiens') {
     push @$columns, (
-      { key => 'sift',     sort => 'position_html', title => 'SIFT',     align => 'center'     },
-      { key => 'polyphen', sort => 'position_html', title => 'PolyPhen', align => 'center' },
+      { key => 'sift',     sort => 'position_html', label => 'SIFT',     title => $glossary->{'SIFT'}, align => 'center' },
+      { key => 'polyphen', sort => 'position_html', label => 'PolyPhen', title => $glossary->{'PolyPhen'}, align => 'center' },
     );
     
     splice(@$columns, 3, 0, { key => 'gmaf', sort => 'numerical', title => 'Frequency', align => 'center' });
