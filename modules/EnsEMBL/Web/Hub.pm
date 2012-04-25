@@ -137,7 +137,7 @@ sub clear_problems     { $_[0]{'_problem'} = {}; }
 # If more than one cookie name is given, returns a hash of name => value
 sub get_cookies {
   my $self     = shift;
-  my %cookies  = %{$self->cookies};
+  my %cookies  = %{$self->cookies || {}};
   %cookies     = map { exists $cookies{$_} ? ($_ => $cookies{$_}) : () } @_ if @_;
   $cookies{$_} = $cookies{$_}->value for grep exists $cookies{$_}, @_;
   return scalar keys %cookies > 1 ? \%cookies : [ values %cookies ]->[0];
