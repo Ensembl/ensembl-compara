@@ -457,7 +457,11 @@ sub _coord_system_as_xml {
   #need to do this whilst Vega has no versions
   $authority = $authority eq 'VEG' ? 'VEGA' : $authority;
   $version  = $version eq 'A' ? '' : $version;
-  
+
+  #And this while Ciona has no version
+  $authority = $authority eq 'K' ? 'KH' : $authority;
+  $version  = $version eq 'H' ? '' : $version;
+
   my %reverse_types = map { $TYPE_MAPPINGS{$_} => $_ } keys %TYPE_MAPPINGS;
   my %reverse_auths = map { $AUTHORITY_MAPPINGS{$_} => $_ } keys %AUTHORITY_MAPPINGS;
   
@@ -485,7 +489,7 @@ sub _get_das_coords {
   # If we have XML for a new coordinate system, add it
   if ($add_data) {
     if ($check_registry) {
-      print STDERR "[WARN]  Data to be manually added to registry is $add_data\n";			
+      print STDERR "[WARN]  Data to be manually added to registry is:\n$add_data\n";			
       return;
     }
     print STDERR "[INFO]  Adding coordinate system '$add_name' to the DAS Registry\n";
