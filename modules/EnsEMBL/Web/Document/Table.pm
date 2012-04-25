@@ -261,8 +261,9 @@ sub process {
     
     $col->{'style'}  = join ';', map { join ':', $_, $style{$_} } keys %style;
     $col->{'class'} .= ($col->{'class'} ? ' ' : '') . "sort_$col->{'sort'}" if $col->{'sort'};
-    
-    push @{$head[0]}, sprintf '<th%s>%s</th>', join('', map { $col->{$_} ? qq{ $_="$col->{$_}"} : () } qw(id class title style colspan rowspan)), exists $col->{'title'} ? $col->{'title'} : $col->{'key'};
+   
+    my $label = $col->{'label'} || $col->{'title'} || $col->{'key'}; 
+    push @{$head[0]}, sprintf '<th%s>%s</th>', join('', map { $col->{$_} ? qq{ $_="$col->{$_}"} : () } qw(id class title style colspan rowspan)), $label;
   }
   
   $head[1] = ' class="ss_header"';
