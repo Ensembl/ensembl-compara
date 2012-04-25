@@ -45,4 +45,6 @@ sub title {
 
 sub fixed { return 1; }
 
+sub errorTrack {}
+
 1;
