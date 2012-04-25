@@ -335,24 +335,24 @@ sub check_slice_exists {
 sub realign {
   my ($self, $inputs, $id) = @_;
   my $hub        = $self->hub;
-  my $species    = $inputs->{0}->{'s'};
+  my $species    = $inputs->{0}{'s'};
   my $params     = $hub->multi_params($id);
   my $alignments = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'} || {};
   
   my %allowed;
   
   foreach my $i (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
-    foreach (keys %{$alignments->{$i}->{'species'}}) {
-      $allowed{$_} = 1 if $alignments->{$i}->{'species'}->{$species} && $_ ne $species; 
+    foreach (keys %{$alignments->{$i}{'species'}}) {
+      $allowed{$_} = 1 if $alignments->{$i}{'species'}{$species} && ($_ ne $species || scalar keys %{$alignments->{$i}{'species'}} == 1);
     }
   }
   
   # Retain r/g for species with no alignments
   foreach (keys %$inputs) {
-    next if $allowed{$inputs->{$_}->{'s'}} || $_ == 0;
+    next if $allowed{$inputs->{$_}{'s'}} || $_ == 0;
     
-    $params->{"r$_"} = $inputs->{$_}->{'r'};
-    $params->{"g$_"} = $inputs->{$_}->{'g'};
+    $params->{"r$_"} = $inputs->{$_}{'r'};
+    $params->{"g$_"} = $inputs->{$_}{'g'};
   }
   
   $self->problem('redirect', $hub->url($params));
