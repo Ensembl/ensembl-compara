@@ -86,7 +86,8 @@ sub genome_dbs {
 sub toString {
     my $self = shift;
 
-    return ref($self).": dbID=".($self->dbID || '?').", genome_dbs=[".join(', ', map { $_->name.'('.($_->dbID || '?').')'} @{ $self->genome_dbs })."]";
+    my $name = $self->get_tagvalue('name');
+    return ref($self).": dbID=".($self->dbID || '?').", name='".($name || '?')."', genome_dbs=[".join(', ', map { $_->name.'('.($_->dbID || '?').')'} @{ $self->genome_dbs })."]";
 }
 
 
