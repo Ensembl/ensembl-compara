@@ -860,7 +860,7 @@ sub calculate_consequence_data {
           $feature_count++;
           
           # if this is a variation ID or HGVS, we can use VEP.pm method to parse into VFs
-          if($f->isa('EnsEMBL::Web::Text::Feature::ID')) {            
+          if($f->isa('EnsEMBL::Web::Text::Feature::ID') || $f->isa('EnsEMBL::Web::Text::Feature::VEP_VCF')) {
             push @vfs, @{parse_line($vep_config, $f->id)};
             next;
           }
@@ -1001,7 +1001,7 @@ sub consequence_table {
       my $allele            = $f->allele;
       my $url_location      = $f->seqname . ':' . ($f->rawstart - 500) . '-' . ($f->rawend + 500);
       my $uploaded_loc      = $f->id;
-      my $transcript_id     = $f->transcript;
+      my $feature_id        = $f->feature;
       my $feature_type      = $f->feature_type;
       my $gene_id           = $f->gene;
       my $consequence       = $f->consequence;
@@ -1012,9 +1012,13 @@ sub consequence_table {
       my $codons            = $f->codons;
       my $extra             = $f->extra_col;
       my $snp_id            = $f->snp;
-      my $transcript_string = $transcript_id;
+      my $feature_string    = $feature_id;
       my $gene_string       = $gene_id;
       my $snp_string        = $snp_id;
+      
+      # guess core type from feature ID
+      my $core_type = 'core';
+      $core_type = 'otherfeatures' unless $feature_id =~ /^ENS/ and $feature_id !~ /^ENSEST/;
       
       my $location_url = $hub->url({
         species          => $species,
@@ -1024,28 +1028,42 @@ sub consequence_table {
         contigviewbottom => "variation_feature_variation=normal,upload_$code=normal",
       });
       
-      if ($transcript_id =~ /^ENS.{0,3}T/) {
-        my $transcript_url = $hub->url({
+      # transcript
+      if ($feature_type = 'Transcript') {
+        my $feature_url = $hub->url({
           species => $species,
           type    => 'Transcript',
           action  => 'Summary',
-          t       =>  $transcript_id,
+          db      => $core_type,
+          t       => $feature_id,
         });
         
-        $transcript_string = qq{<a href="$transcript_url" rel="external">$transcript_id</a>};
+        $feature_string = qq{<a href="$feature_url" rel="external">$feature_id</a>};
       }
-      elsif ($transcript_id =~ /^ENS.{0,3}R/) {
-        my $transcript_url = $hub->url({
+      # reg feat
+      elsif ($feature_id =~ /^ENS.{0,3}R/) {
+        my $feature_url = $hub->url({
           species => $species,
           type    => 'Regulation',
           action  => 'Cell_line',
-          rf      => $transcript_id,
+          rf      => $feature_id,
         });
         
-        $transcript_string = qq{<a href="$transcript_url" rel="external">$transcript_id</a>};
+        $feature_string = qq{<a href="$feature_url" rel="external">$feature_id</a>};
+      }
+      # gene
+      elsif ($feature_id =~ /^ENS.{0,3}G/) {
+        my $feature_url = $hub->url({
+          species => $species,
+          type    => 'Gene',
+          action  => 'Summary',
+          rf      => $feature_id,
+        });
+        
+        $feature_string = qq{<a href="$feature_url" rel="external">$feature_id</a>};
       }
       else {
-        $transcript_string = $transcript_id;
+        $feature_string = $feature_id;
       }
 
       if ($gene_id ne '-') {
@@ -1056,7 +1074,8 @@ sub consequence_table {
           species => $species,
           type    => 'Gene',
           action  => 'Summary',
-          g       =>  $gene_id,
+          db      => $core_type,
+          g       => $gene_id,
         });
         
         $gene_string = qq{<a href="$gene_url" rel="external">$gene_id</a>};
@@ -1094,7 +1113,7 @@ sub consequence_table {
         species => $species,
         type    => 'Transcript',
         action  => 'ProteinSummary',
-        t       =>  $transcript_id,
+        t       =>  $feature_id,
       }).'" rel="external">'.$1.'<\/a>'/e;
       
       #$consequence = qq{<span class="hidden">$ranks{$consequence}</span>$consequence};
@@ -1103,7 +1122,7 @@ sub consequence_table {
       $row->{'location'} = qq{<a href="$location_url" rel="external">$location</a>};
       $row->{'allele'}   = $allele;
       $row->{'gene'}     = $gene_string;
-      $row->{'trans'}    = $transcript_string;
+      $row->{'trans'}    = $feature_string;
       $row->{'ftype'}    = $feature_type;
       $row->{'con'}      = $consequence;
       $row->{'cdna_pos'} = $cdna_pos;
@@ -1309,9 +1328,9 @@ sub configure_vep {
     $vep_config{vfa} = Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor->new_fake($species);
   }
 
-  $vep_config{sa}  = $self->get_adaptor('get_SliceAdaptor', 'core', $species);
-  $vep_config{ga}  = $self->get_adaptor('get_GeneAdaptor', 'core', $species);;
-  $vep_config{csa} = $self->get_adaptor('get_CoordSystemAdaptor', 'core', $species);
+  $vep_config{sa}  = $self->get_adaptor('get_SliceAdaptor', $vep_config{'core_type'}, $species);
+  $vep_config{ga}  = $self->get_adaptor('get_GeneAdaptor', $vep_config{'core_type'}, $species);;
+  $vep_config{csa} = $self->get_adaptor('get_CoordSystemAdaptor', $vep_config{'core_type'}, $species);
   
   if(defined($vep_config{regulatory})) {
     foreach my $type(@REG_FEAT_TYPES) {
@@ -1331,11 +1350,13 @@ sub configure_vep {
   $vep_config{whole_genome}   = 1;
   $vep_config{chunk_size}     = 50000;
   $vep_config{quiet}          = 1;
+  $vep_config{failed}         = 0;
   $vep_config{check_alleles}  = 1 if $vep_config{check_existing} eq 'allele';
   $vep_config{check_existing} = 1 if defined($vep_config{check_frequency}) && exists $species_dbs{'DATABASE_VARIATION'};
   
   delete $vep_config{format} if $vep_config{format} eq 'id';
-
+  $vep_config{format} = 'vcf' if $vep_config{format} eq 'vep_vcf';
+  
   return \%vep_config;
 }
 
