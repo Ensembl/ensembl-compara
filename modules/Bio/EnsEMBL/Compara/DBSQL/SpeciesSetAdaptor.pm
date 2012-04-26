@@ -9,14 +9,6 @@ use Bio::EnsEMBL::Utils::Exception;
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
 
-sub attach {
-    my ($self, $object, $dbID) = @_;
-
-    $object->adaptor($self);
-    return $object->dbID($dbID);
-}
-
-
 =head2 store
 
   Arg [1]     : Bio::EnsEMBL::Compara::SpeciesSet object

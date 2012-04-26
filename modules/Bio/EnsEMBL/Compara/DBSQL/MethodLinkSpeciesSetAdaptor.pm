@@ -84,7 +84,7 @@ use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
 
-use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
 
 =head2 store
@@ -111,10 +111,10 @@ sub store {
     unless ($mlss && ref $mlss &&
         $mlss->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
 
-  my $method            = $mlss->method();
+  my $method            = $mlss->method()           or die "No Method defined, cannot store";
   $self->db->get_MethodAdaptor->store( $method );   # will only store if the object needs storing (type is missing) and reload the dbID otherwise
 
-  my $species_set_obj   = $mlss->species_set_obj();
+  my $species_set_obj   = $mlss->species_set_obj()  or die "No SpeciesSet defined, cannot store";
   $self->db->get_SpeciesSetAdaptor->store( $species_set_obj );
 
   my $dbID;
@@ -208,8 +208,7 @@ sub store {
     $self->dbc()->disconnect_when_inactive($original_dwi);
   }
 
-  $mlss->dbID($dbID);
-  $mlss->adaptor($self);
+  $self->attach( $mlss, $dbID);
 
   $self->sync_tags_to_database( $mlss );
 
