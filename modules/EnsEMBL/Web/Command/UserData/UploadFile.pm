@@ -15,7 +15,7 @@ sub process {
   return $self->set_format if $hub->function eq 'set_format';
   
   my $error      = $hub->input->cgi_error;
-  my ($method)   = grep $hub->param($_), qw(text file url);
+  my ($method)   = grep $hub->param($_), qw(file url text);
   my $url_params = { __clear => 1 };
 
   if ($error =~ /413/) {
