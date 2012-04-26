@@ -15,6 +15,7 @@ package EnsEMBL::Web::Object::Gene;
 
 use strict;
 
+use Data::Dumper;
 use EnsEMBL::Web::Cache;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
@@ -110,8 +111,10 @@ sub counts {
     if ($obj->feature_Slice->can('get_all_Operons')){
       $counts->{'operons'} = scalar @{$obj->feature_Slice->get_all_Operons};
     }
-    if (my $vdb = $self->database('variation') ) {
-  $counts->{structural_variation} = scalar(@{$obj->slice->get_all_StructuralVariationFeatures}) + scalar(@{$obj->slice->get_all_somatic_StructuralVariationFeatures}) + scalar(@{$obj->slice->get_all_CopyNumberVariantProbeFeatures});
+    $counts->{structural_variation} = 0;
+    if ($self->database('variation')){ 
+      my $vdb = $self->species_defs->get_config($self->species,'databases')->{'DATABASE_VARIATION'};
+      $counts->{structural_variation} = $vdb->{'tables'}{'structural_variation'}{'rows'};
     }
     my $compara_db = $self->database('compara');
     
