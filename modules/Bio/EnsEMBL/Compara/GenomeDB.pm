@@ -434,4 +434,26 @@ sub connect_to_genome_locator
 }
 
 
+=head2 toString
+
+  Args       : (none)
+  Example    : print $dbID->toString()."\n";
+  Description: returns a stringified representation of the object
+  Returntype : string
+
+=cut
+
+sub toString {
+    my $self = shift;
+
+    return ref($self).": dbID=".($self->dbID || '?')
+        .", name='".$self->name
+        ."', assembly='".$self->assembly
+        ."', genebuild='".$self->genebuild
+        ."', taxon_id='".$self->taxon_id
+        ."', locator='".$self->locator
+        ."'";
+}
+
+
 1;
