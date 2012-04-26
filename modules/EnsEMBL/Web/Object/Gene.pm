@@ -15,7 +15,6 @@ package EnsEMBL::Web::Object::Gene;
 
 use strict;
 
-use Data::Dumper;
 use EnsEMBL::Web::Cache;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
