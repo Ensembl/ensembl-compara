@@ -99,10 +99,14 @@ sub fetch_input {
     my $list_trees = $self->compara_dba->get_GeneTreeNodeAdaptor->fetch_all;
     my @filtered_list;
     foreach my $tree (@{$list_trees}) {
-        next if defined $self->param('tree_type') and $self->param('tree_type') eq $tree->tree->tree_type;
-        next if defined $self->param('member_type') and $self->param('member_type') eq $tree->tree->member_type;
+        print "Testing ", $tree->node_id, "\n" if $self->debug;
+        printf("*%s*%s*\n", $self->param('tree_type'), $tree->tree->tree_type) if $self->debug;
+        printf("*%s*%s*\n", $self->param('member_type'), $tree->tree->member_type) if $self->debug;
+        next if defined $self->param('tree_type') and $self->param('tree_type') ne $tree->tree->tree_type;
+        next if defined $self->param('member_type') and $self->param('member_type') ne $tree->tree->member_type;
         # Filter if asked
         push @filtered_list, $tree;
+        print "OK\n" if $self->debug;
     }
     $self->param('tree_list', \@filtered_list);
 
