@@ -38,7 +38,7 @@ sub id                { return $_[0]->{'__raw__'}[0]; }
 sub location          { return $_[0]->{'__raw__'}[1];  }
 sub allele            { return $_[0]->{'__raw__'}[2];  }
 sub gene              { return $_[0]->{'__raw__'}[3];  }
-sub transcript        { return $_[0]->{'__raw__'}[4];  }
+sub feature           { return $_[0]->{'__raw__'}[4];  }
 sub feature_type      { return $_[0]->{'__raw__'}[5];  }
 sub consequence       { return $_[0]->{'__raw__'}[6];  }
 sub cdna_position     { return $_[0]->{'__raw__'}[7];  }
