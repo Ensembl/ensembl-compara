@@ -396,11 +396,16 @@ sub synchronise {
 sub store {
     my ($self, $gdb) = @_;
 
+    if(my $reference_dba = $self->db->reference_dba()) {
+        $reference_dba->get_GenomeDBAdaptor->store( $gdb );
+    }
+
     if($self->synchronise($gdb)) {
         my $sql = 'UPDATE genome_db SET taxon_id=?, assembly_default=?, locator=? WHERE genome_db_id=?';
         my $sth = $self->prepare( $sql ) or die "Could not prepare '$sql'";
         $sth->execute( $gdb->taxon_id, $gdb->assembly_default, $gdb->locator, $gdb->dbID );
         $sth->finish();
+        $self->attach($gdb, $gdb->dbID() );     # make sure it is (re)attached to the "$self" adaptor in case it got stuck to the $reference_dba
     } else {
         my $sql = 'INSERT INTO genome_db (genome_db_id, name, assembly, genebuild, taxon_id, assembly_default, locator) VALUES (?, ?, ?, ?, ?, ?, ?)';
         my $sth= $self->prepare( $sql ) or die "Could not prepare '$sql'";
@@ -520,32 +525,6 @@ sub sync_with_registry {
       }
     }
   }
-}
-
-=head2 deleteObj
-
-  Arg         : none
-  Example     : none
-  Description : Called automatically by DBConnection during object destruction
-                phase. Clears the cache to avoid memory leaks.
-  Returntype  : none
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub deleteObj {
-    my $self = shift;
-
-    if(my $cache = $self->{'_cache'}) {
-        foreach my $dbID (keys %$cache) {
-            delete $cache->{$dbID};
-        }
-        $self->{'_cache'} = undef;
-    }
-
-    $self->SUPER::deleteObj;
 }
 
 
