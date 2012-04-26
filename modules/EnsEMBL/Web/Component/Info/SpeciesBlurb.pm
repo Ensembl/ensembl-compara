@@ -33,7 +33,7 @@ sub content {
 
   ## Add in GCA link 
   if ($accession){
-    my $accession_link = $hub->get_ExtURL_link($accession, $accession.'_'.$source, $accession);
+    my $accession_link = $hub->get_ExtURL_link($accession, 'ASSEMBLY_ACCESSION_SOURCE_'.$source, $accession);
     $html .= qq(<p class="space-below">The genome assembly represented here corresponds to $source_type $accession_link</p>);
   }
 
