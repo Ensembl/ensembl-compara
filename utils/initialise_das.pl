@@ -451,16 +451,7 @@ sub _coord_system_as_xml {
       }
     }
   }
-  
-  ($authority, $version) = $cs_version =~ m/([^\d]+)(.+)/;
-
-  #need to do this whilst Vega has no versions
-  $authority = $authority eq 'VEG' ? 'VEGA' : $authority;
-  $version  = $version eq 'A' ? '' : $version;
-
-  #And this while Ciona has no version
-  $authority = $authority eq 'K' ? 'KH' : $authority;
-  $version  = $version eq 'H' ? '' : $version;
+  ($authority, $version) = $cs_version =~ m/([^\d]+)([\d\.]*)/;
 
   my %reverse_types = map { $TYPE_MAPPINGS{$_} => $_ } keys %TYPE_MAPPINGS;
   my %reverse_auths = map { $AUTHORITY_MAPPINGS{$_} => $_ } keys %AUTHORITY_MAPPINGS;
