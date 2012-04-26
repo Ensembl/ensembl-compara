@@ -55,7 +55,7 @@ use strict;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Utils::Exception;
 
-use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
 =head2 fetch_by_dbID
@@ -119,7 +119,7 @@ sub fetch_by_name_assembly {
 
     my $found_gdb;
     foreach my $gdb (@{ $self->fetch_all }) {
-        if( ($gdb->name eq $name) and ($assembly ? ($gdb->assembly eq $assembly) : $gdb->assembly_default)) {
+        if( (lc($gdb->name) eq lc($name)) and ($assembly ? (lc($gdb->assembly) eq lc($assembly)) : $gdb->assembly_default)) {
             if($found_gdb) {
                 warning("Multiple matches found for name '$name' and assembly '".($assembly||'--undef--')."', returning the first one");
             } else {
