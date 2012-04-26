@@ -22,15 +22,13 @@ sub content {
   my $object     = $self->object;
   my $html       = '<h2>Stable ID Mapper Results:</h2>';
   my $size_limit = $hub->param('id_limit'); 
-  
-  my @files = ($hub->param('convert_file'));
+  my @files      = $hub->param('convert_file');
 
   foreach my $file_name (@files) {
     my ($file, $name)    = split ':', $file_name;
     my ($ids, $unmapped) = @{$object->get_stable_id_history_data($file, $size_limit)}; 
-    my $table            = $self->format_mapped_ids($ids);
     
-    $html .= $table;
+    $html .= $self->format_mapped_ids($ids);
     $html .= $self->_info('Information', '<p>The numbers in the above table indicate the version of a stable ID present in a particular release.</p>', '100%');
     $html .= $self->add_unmapped_ids($unmapped) if scalar keys %$unmapped > 0;
   }
@@ -40,8 +38,8 @@ sub content {
 
 sub add_unmapped_ids {
   my ($self, $unmapped) = @_;
-  my $html = '<h2>No ID history was found for the following identifiers:</h2>';
-  $html   .= "<br />$_" for sort keys %$unmapped;
+  my $html  = '<h2>No ID history was found for the following identifiers:</h2>';
+     $html .= "<br />$_" for sort keys %$unmapped;
   
   return $html;
 }
@@ -55,29 +53,28 @@ sub format_mapped_ids {
   
   my $table = $self->new_table([], [], { margin => '1em 0px' });
   
-  $table->add_option('triangular', 1);
   $table->add_columns(
     { key => 'request', align => 'left', title => 'Requested ID'  },
     { key => 'match',   align => 'left', title => 'Matched ID(s)' },
     { key => 'rel',     align => 'left', title => 'Releases:'     },
   );
-
-
+  
   my (%releases, @rows);
 
   foreach my $req_id (sort keys %stable_ids) {
-    my $matches = {};
+    my %matches;
     
-    foreach my $a_id (@{$stable_ids{$req_id}->[1]->get_all_ArchiveStableIds}) {
-      my $linked_text = $a_id->version;
-      $releases{$a_id->release} = 1; 
+    foreach (@{$stable_ids{$req_id}->[1]->get_all_ArchiveStableIds}) {
+      my $linked_text = $_->version;
       
-      if ($a_id->release > $earliest_archive) {
-        my $archive_link = $self->archive_link($stable_ids{$req_id}->[0], $a_id->stable_id, $a_id->version, $a_id->release);
-        $linked_text = qq{<a href="$archive_link">$linked_text</a>} if $archive_link;
+      $releases{$_->release} = 1; 
+      
+      if ($_->release > $earliest_archive) {
+        my $archive_link = $self->archive_link($stable_ids{$req_id}[0], $_->stable_id, $_->version, $_->release);
+           $linked_text  = qq{<a href="$archive_link">$linked_text</a>} if $archive_link;
       }
       
-     $matches->{$a_id->stable_id}->{$a_id->release} = $linked_text; 
+     $matches{$_->stable_id}{$_->release} = $linked_text; 
     }
     
     # self matches
@@ -85,26 +82,26 @@ sub format_mapped_ids {
       request => $self->idhistoryview_link($stable_ids{$req_id}->[0], $req_id),
       match   => $req_id,
       rel     => '',
-       %{$matches->{$req_id}}
+       %{$matches{$req_id}}
     };
 
     # other matches
-    foreach my $a_id (sort keys %$matches) {
-      next if $a_id eq $req_id;
+    foreach (sort keys %matches) {
+      next if $_ eq $req_id;
       
       push @rows, {
         request => '',
-        match   => $a_id,
+        match   => $_,
         rel     => '',
-        %{$matches->{$a_id}},
+        %{$matches{$_}},
       };
     }
   } 
   
-  $table->add_columns({ key => $_, align => 'left', title => $_ }) for sort {$a <=> $b} keys %releases;
+  $table->add_columns({ key => $_, align => 'left', title => $_ }) for sort { $a <=> $b } keys %releases;
   $table->add_rows(@rows);
 
-  return  $table->render;
+  return $table->render;
 }
 
 
@@ -122,9 +119,8 @@ sub idhistoryview_link {
   
   my $param = lc substr $type, 0, 1;
   my $link  = $self->hub->url({ type => $type, action => $action, $param => $stable_id });
-  my $url   =  qq{<a href="$link">$stable_id</a>};
   
-  return $url;
+  return qq{<a href="$link">$stable_id</a>};
 }
 
 sub archive_link {
