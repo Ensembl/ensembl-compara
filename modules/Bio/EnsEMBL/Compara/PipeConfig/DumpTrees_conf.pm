@@ -44,16 +44,16 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'rel'               => 66,                                              # current release number
+        'rel'               => 67,                                              # current release number
         'rel_suffix'        => '',                                              # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),          # for convenience
-        'member_type'         => 'protein',                                       # either 'protein' or 'ncrna'
+        # Commented out to make sure people define it on the command line
+        #'member_type'         => 'protein',                                       # either 'protein' or 'ncrna'
 
         'pipeline_name'     => $self->o('member_type').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
         'rel_db'      => {
-            -host         => 'compara4', -dbname       => 'mp12_compara_nctrees_66c',
-            #-host         => 'compara2', -dbname       => 'mm14_compara_homology_66',
+            -host         => 'compara3', -dbname       => 'mm14_ensembl_compara_67',
             -port         => 3306,
             -user         => 'ensro',
             -pass         => '',
@@ -95,7 +95,7 @@ sub resource_classes {
     my ($self) = @_;
     return {
          0 => { -desc => 'default',          'LSF' => '' },
-         1 => { -desc => 'long_dumps',       'LSF' => '-q long' },
+         1 => { -desc => 'long_dumps',       'LSF' => '-C0 -M2000000  -R"select[mem>2000]  rusage[mem=2000]" -q long' },
     };
 }
 
@@ -131,6 +131,7 @@ sub pipeline_analyses {
                 'db_conn'       => $self->dbconn_2_mysql('rel_db', 1),
                 'name_root'     => $self->o('name_root'),
                 'target_dir'    => $self->o('target_dir'),
+                'member_type'   => $self->o('member_type'),
                 'query'         => qq|
                     SELECT 
                         gtr.stable_id AS GeneTreeStableID, 
@@ -144,6 +145,8 @@ sub pipeline_analyses {
                         JOIN member m on (gtm.member_id = m.member_id)
                         JOIN member gm on (m.gene_member_id = gm.member_id)
                         JOIN member pm on (gm.member_id = pm.gene_member_id)
+                    WHERE
+                        gtr.member_type = #member_type#
                 |,
             },
             -input_ids => [
@@ -201,13 +204,13 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'               => $self->o('rel_db'),
-                'protein_tree_query'    => "SELECT root_id FROM gene_tree_member JOIN gene_tree_node USING (node_id) GROUP BY root_id HAVING COUNT(*) > 1",
-                'ncrna_tree_query'      => "SELECT root_id FROM gene_tree_member JOIN gene_tree_node USING (node_id) GROUP BY root_id HAVING SUM(LENGTH(cigar_line))",
+                'member_type'           => $self->o('member_type'),
+                'query'                 => "SELECT root_id FROM gene_tree_root WHERE tree_type = 'tree' AND member_type = '#member_type#'",
                 'input_id'              => { 'tree_id' => '#root_id#', 'hash_dir' => '#expr(dir_revhash($root_id))expr#' },
                 'fan_branch_code'       => 2,
             },
             -input_ids => [
-                { 'inputquery' => '#'.$self->o('member_type').'_tree_query#', },
+                { 'inputquery' => '#query#', },
             ],
             -hive_capacity => -1,
             -flow_into => {
