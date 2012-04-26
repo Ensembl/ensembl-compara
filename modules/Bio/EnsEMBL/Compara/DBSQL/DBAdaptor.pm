@@ -123,6 +123,16 @@ sub new {
 }
 
 
+sub reference_dba {
+    my $self = shift @_;
+    
+    if(@_) {
+        $self->{'_reference_dba'} = shift @_;
+    }
+    return $self->{'_reference_dba'};
+}
+
+
 sub get_available_adaptors {
  
   my %pairs =  (
