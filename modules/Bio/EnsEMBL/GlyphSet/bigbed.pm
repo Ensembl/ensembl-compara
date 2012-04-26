@@ -153,6 +153,11 @@ sub draw_features {
   return join(" or ",@error);
 }
 
+sub render_normal {
+  my $self = shift;
+  $self->SUPER::render_normal(8, 20);  
+}
+
 sub render_text { warn "No text renderer for bigbed\n"; return ''; }
 
 
