@@ -1395,7 +1395,7 @@ sub hgvs {
     # Loop over the transcript variations 
     foreach my $tv (@{$tvs_by_allele{$allele}}) {      
       # Loop over the genomic, coding and protein HGVS strings
-      foreach my $type ('hgvs_genomic', 'hgvs_coding', 'hgvs_protein') {
+      foreach my $type ('hgvs_genomic', 'hgvs_transcript', 'hgvs_protein') {
         my $h = $tv->{$type};
         
         next unless $h && $h !~ m/\(p\.=\)/;
