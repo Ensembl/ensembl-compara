@@ -74,8 +74,9 @@ pod2usage( -verbose => 1 ) if $help;
 
 use Bio::EnsEMBL::Registry;
 my $reg = 'Bio::EnsEMBL::Registry';
+$reg->no_cache_warnings(1);
 
-if ( !defined($dbname) ) {
+if ( !defined($dbname) ) {  
   $reg->load_registry_from_db(
     -host       => $host,
     -port       => $port,
