@@ -254,6 +254,7 @@ sub process {
   my (@head, @body);
   
   foreach my $col (@$columns) {
+    my $label = exists $col->{'title'} ? $col->{'title'} : $col->{'key'};
     my %style = $col->{'style'} ? ref $col->{'style'} eq 'HASH' ? %{$col->{'style'}} : map { s/(^\s+|\s+$)//g; split ':' } split ';', $col->{'style'} : ();
     
     $style{'text-align'} ||= $col->{'align'} if $col->{'align'};
@@ -261,8 +262,8 @@ sub process {
     
     $col->{'style'}  = join ';', map { join ':', $_, $style{$_} } keys %style;
     $col->{'class'} .= ($col->{'class'} ? ' ' : '') . "sort_$col->{'sort'}" if $col->{'sort'};
-   
-    my $label = $col->{'label'} || $col->{'title'} || $col->{'key'}; 
+    $col->{'title'}  = $col->{'help'} if $col->{'help'};
+    
     push @{$head[0]}, sprintf '<th%s>%s</th>', join('', map { $col->{$_} ? qq{ $_="$col->{$_}"} : () } qw(id class title style colspan rowspan)), $label;
   }
   
@@ -281,6 +282,7 @@ sub process {
       $cell = { value => $cell } unless ref $cell eq 'HASH';
       
       my %style = $cell->{'style'} ? ref $cell->{'style'} eq 'HASH' ? %{$cell->{'style'}} : map { s/(^\s+|\s+$)//g; split ':' } split ';', $cell->{'style'} : ();
+      
       $style{'text-align'} ||= $columns->[$i]{'align'};
       $style{'width'}      ||= $columns->[$i]{'width'};
       
