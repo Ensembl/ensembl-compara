@@ -6,7 +6,7 @@ use Scalar::Util qw(looks_like_number);
 use Bio::EnsEMBL::Compara::SpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
 
-use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
 
 sub attach {
@@ -85,29 +85,12 @@ sub store {
 }
 
 
-sub _need_tags_for_query {
-    my $self = shift @_;
-
-    if(@_) {
-        $self->{'_need_tags_for_query'} = shift @_;
-    }
-    return $self->{'_need_tags_for_query'};
-}
-
 sub _tables {
     my $self = shift @_;
 
-    return (
-        ['species_set', 'ss'],
-        $self->_need_tags_for_query ? ( ['species_set_tag', 'sst'] ) : ()
-    );
+    return ( ['species_set', 'ss'] );
 }
 
-sub _left_join {
-    my $self = shift @_;
-
-    return $self->_need_tags_for_query ? ( [ 'species_set_tag', "sst.species_set_id = ss.species_set_id" ] ) : ();
-}
 
 sub _columns {
 
@@ -166,9 +149,7 @@ sub _objs_from_sth {
 sub fetch_all_by_tag {
     my ($self, $tag) = @_;
 
-    $self->_need_tags_for_query(1);
-    my $entries = $self->generic_fetch( "sst.tag='$tag'" );
-    $self->_need_tags_for_query(0);
+    my $entries = $self->generic_fetch("sst.tag='$tag'", [[['species_set_tag', 'sst'], 'sst.species_set_id=ss.species_set_id', ['sst.tag', 'sst.value']]] );
 
     return $entries;
 }
@@ -192,9 +173,7 @@ sub fetch_all_by_tag {
 sub fetch_all_by_tag_value {
     my ($self, $tag, $value) = @_;
 
-    $self->_need_tags_for_query(1);
-    my $entries = $self->generic_fetch( "sst.tag='$tag' AND sst.value='$value'" );
-    $self->_need_tags_for_query(0);
+    my $entries = $self->generic_fetch("sst.tag='$tag' AND sst.value='$value'", [[['species_set_tag', 'sst'], 'sst.species_set_id=ss.species_set_id', ['sst.tag', 'sst.value']]] );
 
     return $entries;
 }
