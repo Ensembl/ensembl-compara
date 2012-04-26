@@ -53,7 +53,7 @@ package Bio::EnsEMBL::Compara::DBSQL::MethodAdaptor;
 use strict;
 
 use Bio::EnsEMBL::Compara::Method;
-use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
 sub _tables {
@@ -124,14 +124,6 @@ sub fetch_all_by_class_pattern {
 }
 
 
-sub attach {
-    my ($self, $object, $dbID) = @_;
-
-    $object->adaptor($self);
-    return $object->dbID($dbID);
-}
-
-
 sub synchronise {    # return autoinc_id/undef
     my ( $self, $method ) = @_;
 
@@ -179,6 +171,10 @@ sub synchronise {    # return autoinc_id/undef
 
 sub store {
     my ($self, $method) = @_;
+
+    if(my $reference_dba = $self->db->reference_dba()) {
+        $reference_dba->get_MethodAdaptor->store( $method );
+    }
 
     unless($self->synchronise($method)) {
         my $sql = 'INSERT INTO method_link (method_link_id, type, class) VALUES (?, ?, ?)';
