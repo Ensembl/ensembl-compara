@@ -20,7 +20,7 @@ use Bio::AlignIO;
 use IO::String;
 
 use EnsEMBL::Web::Component::Compara_Alignments;
-use EnsEMBL::Web::Document::SpreadSheet;
+use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::SeqDumper;
 use Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
@@ -914,7 +914,7 @@ sub misc_sets {
   
   foreach (@misc_sets, '_gene') {
     $header = $header_map->{$_} || $header_map->{'default'};
-    $table = new EnsEMBL::Web::Document::SpreadSheet if $self->html_format;
+    $table  = new EnsEMBL::Web::Document::Table if $self->html_format;
     
     $self->html(sprintf "<h2>$header->{'title'}</h2>", $sets->{$_}->{'name'});
     

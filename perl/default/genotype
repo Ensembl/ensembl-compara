@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl                                                                                                                                                                                          
 use CGI;
 use Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor;
-use EnsEMBL::Web::Document::SpreadSheet;
+use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::RegObj;
 use Time::HiRes qw (sleep);
 use Data::Dumper;
@@ -25,7 +25,7 @@ return "error:Error reading VCF file" unless ($vcf);
 $vcf->parse_header();
 my $a = $vcf->next_data_hash();
 
-my $table1000    = new EnsEMBL::Web::Document::SpreadSheet([], [], {  data_table => 1, sorting => [ 'Individual asc' ], exportable => 0, id => "1000Genomes_table"  });
+my $table1000    = new EnsEMBL::Web::Document::Table([], [], {  data_table => 1, sorting => [ 'Individual asc' ], exportable => 0, id => "1000Genomes_table"  });
 $table1000->add_columns(
         { key => 'count',       title => 'Number of genotypes', width => '15%', sort => 'numeric', align => 'right'  },
         { key => 'view',        title => '',                    width => '5%',  sort => 'none',    align => 'center' },                                                                                         
@@ -101,7 +101,7 @@ $table1000->add_columns(
         'view'        => $view_html,
       });
 
-  my $table    = new EnsEMBL::Web::Document::SpreadSheet([], [], {  data_table => 1, sorting => [ 'Individual asc' ], exportable => 0, id => "${pos}_table"  });
+  my $table    = new EnsEMBL::Web::Document::Table([], [], {  data_table => 1, sorting => [ 'Individual asc' ], exportable => 0, id => "${pos}_table"  });
 
   $table->add_columns(
 		      { key => 'Individual', title => 'Individual<br />',
