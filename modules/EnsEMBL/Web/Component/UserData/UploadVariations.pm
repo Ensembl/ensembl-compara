@@ -100,6 +100,18 @@ sub content {
   $form->add_element('type' => 'SubHeader', 'value' => 'Options');
   
   $form->add_element(
+      'type'    => 'DropDown',
+      'name'    => 'core_type',
+      'label'   => "Transcript database to use",
+      'values'  => [
+        { value => 'core',          name => 'Ensembl'                     },
+        { value => 'otherfeatures', name => 'Otherfeatures (inc. RefSeq)' },
+      ],
+      'value'   => 'core',
+      'select'  => 'select',
+  );
+  
+  $form->add_element(
     type  => 'CheckBox',
     name  => "regulatory",
     label => "Get regulatory region consequences (human and mouse only)",
