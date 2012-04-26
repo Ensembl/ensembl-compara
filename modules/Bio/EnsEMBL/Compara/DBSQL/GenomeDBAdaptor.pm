@@ -328,14 +328,6 @@ sub get_species_name_from_core_MetaContainer {
 }
 
 
-sub attach {
-    my ($self, $object, $dbID) = @_;
-
-    $object->adaptor($self);
-    return $object->dbID($dbID);
-}
-
-
 sub synchronise {
     my ($self, $gdb) = @_;
 
