@@ -158,6 +158,11 @@ sub render_normal {
   $self->SUPER::render_normal(8, 20);  
 }
 
+sub render_compact {
+  my $self = shift;
+  $self->SUPER::render_normal(8, 0);  
+}
+
 sub render_text { warn "No text renderer for bigbed\n"; return ''; }
 
 

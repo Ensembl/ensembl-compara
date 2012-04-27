@@ -169,7 +169,8 @@ sub render_normal {
     if (ref $tmp[0] eq 'ARRAY') {
       @features = @{$tmp[0]};
       $config   = $tmp[1];
-      $dep    ||= $tmp[1]->{'dep'};
+      # below not ||= because 0 || undef is undef, we want //= but don't have 5.10
+      $dep  = defined $dep ? $dep : $tmp[1]->{'dep'};
     } else {
       @features = @tmp;
     }
@@ -247,11 +248,14 @@ sub render_normal {
            $bump_end = $text_end if $text_end > $bump_end;
       }
       
-      my $row = $self->bump_row($bump_start, $bump_end);
-      
-      if ($row > $dep) {
-        $features_bumped++;
-        next;
+      my $row = 0;
+      if($dep > 0) {
+        $row = $self->bump_row($bump_start, $bump_end);
+        
+        if ($row > $dep) {
+          $features_bumped++;
+          next;
+        }
       }
       
       # +1 below cos we render eg a rectangle from (100, 100) of height
