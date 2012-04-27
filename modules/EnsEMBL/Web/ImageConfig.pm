@@ -718,7 +718,7 @@ sub _add_bigbed_track {
   };
 
   if ($args{'view'} && $args{'view'} =~ /peaks/i) {
-    $options->{'border'} = 'off';  
+    $options->{'join'} = 'off';  
   }
   else {
     push @$renderers, ('tiling', 'Wiggle plot');
