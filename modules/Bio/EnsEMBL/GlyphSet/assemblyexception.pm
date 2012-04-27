@@ -50,18 +50,20 @@ sub title {
 
 sub href {
   my ($self, $f) = @_;
-  my $c2    = $f->{'alternate_slice'}->seq_region_name;
-  my $s2    = $f->{'alternate_slice'}->start;
-  my $e2    = $f->{'alternate_slice'}->end;
-  my $o2    = $f->{'alternate_slice'}->strand;
+  my $slice = $f->alternate_slice;
+  my $c2    = $slice->seq_region_name;
+  my $s2    = $slice->start;
+  my $e2    = $slice->end;
+  my $o2    = $slice->strand;
   my $class = $self->colour_key($f);
   
   return $self->_url({
-    species => $f->adaptor->db->species,
-    action  => 'View',
-    r       => "$c2:$s2-$e2",
-    align_r => $self->{'config'}->hub->action eq 'Multi' ? '' : $self->{'config'}->hub->param('r'),
-    class   => $class,
+    species     => $f->species,
+    action      => 'View',
+    r           => "$c2:$s2-$e2",
+    target      => $f->slice->seq_region_name,
+    target_type => [ split ' ', $f->type ]->[0],
+    class       => $class,
   });
 }
 
