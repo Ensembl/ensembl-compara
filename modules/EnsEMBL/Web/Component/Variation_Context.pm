@@ -129,7 +129,7 @@ sub regulatory_feature_table {
   my $columns = [
     { key => 'id',         sort => 'string',        title => 'Name'              },
     { key => 'location',   sort => 'position_html', title => 'Chr:bp'            },
-    { key => 'bound',      sort => 'numerical',     title => 'Bound coordinates' },
+    { key => 'bound',      sort => 'numeric',       title => 'Bound coordinates' },
     { key => 'type',       sort => 'string',        title => 'Type'              },
     { key => 'featureset', sort => 'string',        title => 'Feature set'       },
   ];
@@ -193,20 +193,16 @@ sub constrained_element_table {
   
   if ($mlssa && $cea) {
     foreach my $mlss (@{$mlssa->fetch_all_by_method_link_type('GERP_CONSTRAINED_ELEMENT')}) {
+      my $level = ucfirst $mlss->species_set_obj->get_tagvalue('name');
+      
       foreach my $ce (@{$cea->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice)}) {
         my $loc_string = $slice_region_name . ':' . ($slice_start + $ce->start - 1) . '-' . ($slice_start + $ce->end - 1);
         
-        my $loc_link = $hub->url({
-          type   => 'Location',
-          action => 'View',
-          r      => $loc_string,
-        });
-        
         push @$rows, {
-          'location' => qq{<a href="$loc_link">$loc_string</a>},
+          'location' => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'View', r => $loc_string }), $loc_string),
           'score'    => $ce->score,
           'p-value'  => $ce->p_value,
-          'level'    => ucfirst $ce->taxonomic_level,
+          'level'    => $level,
         };
       }
     }
