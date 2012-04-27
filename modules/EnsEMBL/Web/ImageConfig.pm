@@ -708,6 +708,7 @@ sub _add_bigbed_track {
       'off',    'Off', 
       'normal', 'Normal', 
       'labels', 'Labels',
+      'compact', 'Compact',
   ];
  
   my $options = {
