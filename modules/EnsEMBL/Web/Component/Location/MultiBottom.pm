@@ -123,15 +123,7 @@ sub content {
   $image->set_button('drag', 'title' => 'Click or drag to centre display');
   $image->{'panel_number'} = 'bottom';
   
-  my $html = $image->render;
-  
-  $html .= $self->_info(
-    'Configuring the display',
-    '<p>To change the tracks you are displaying, use the "<strong>Configure this page</strong>" button on the left.</p>
-     <p>To add or remove species, click the "<strong>Select species</strong>" button.</p>'
-  );
-  
-  return $html;
+  return $image->render;
 }
 
 1;
