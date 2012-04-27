@@ -168,6 +168,7 @@ foreach my $spp (@valid_spp) {
     $b_latest || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_LATEST!";
     my $b_id    = $SD->get_config($spp, 'GENEBUILD_BY') || '';
     $b_id   || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_BY!" unless $pre;
+    my $b_version  = $SD->get_config($spp, 'GENEBUILD_VERSION') || '';
     #my $b_method  = ucfirst($SD->get_config($spp, 'GENEBUILD_METHOD')) || '';
     my @A = @{$meta_container->list_value_by_key('genebuild.method')};
     my $b_method  = ucfirst($A[0]) || '';
@@ -463,6 +464,10 @@ foreach my $spp (@valid_spp) {
       <tr class="bg2">
           <td class="data">Genebuild last updated/patched:</td>
           <td class="value">$b_latest</td>
+      </tr>
+      <tr>
+        <td class="data">Genebuild version:</td>
+        <td class="value">$b_version</td>
       </tr>
   </table>
   );
@@ -1014,6 +1019,9 @@ B<--plugin_root>
   edit.  Defaults to $Sitedefs::SERVERROOT/public-plugins/ensembl. If
   a relative path is given, this is assumed relative to
   $Sitedefs::SERVERROOT.
+
+B<--coordsys>
+  Print a table of Coordinate Systems (chromosomes, contigs, ...)
 
 =head1 DESCRIPTION
 
