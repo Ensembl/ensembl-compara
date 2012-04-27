@@ -41,7 +41,7 @@ sub content {
   my $validator = new XHTML::Validator('extended');
   my $id        = $feature_id || $group_id || 'default';
   
-  $strand = $strand_map{$strand} || '0';
+  $strand = $strand_map{$strand};
   
   $self->caption($hub->param('label'));
   
@@ -94,8 +94,8 @@ sub content {
       $self->add_entry({ type => 'Method:', label_html => $method }) if $method;
       $self->add_entry({ type => 'Start:',  label_html => $_->seq_region_start });
       $self->add_entry({ type => 'End:',    label_html => $_->seq_region_end });
-      $self->add_entry({ type => 'Strand:', label_html => $strand });
-      $self->add_entry({ type => 'Score:',  label_html => $score }) if $score;
+      $self->add_entry({ type => 'Strand:', label_html => $strand }) if $strand;
+      $self->add_entry({ type => 'Score:',  label_html => $score })  if $score;
       
       $self->add_entry({ label_html => $_->{'txt'}, link => decode_entities($_->{'href'}), extra => { external => ($_->{'href'} !~ /^http:\/\/www.ensembl.org/) } }) for @{$_->links};
       

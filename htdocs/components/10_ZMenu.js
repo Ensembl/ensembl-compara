@@ -139,10 +139,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   populateDas: function () {
-    var strandMap = { '+': 1, '-': -1, '0': 0 };
+    var strandMap = { '+': 1, '-': -1 };
     var start     = this.title.match(/Start: (\d+)/)[1];
     var end       = this.title.match(/End: (\d+)/)[1];
-    var strand    = this.title.match(/Strand: ([\-+0])/)[1];
+    var strand    = (this.title.match(/Strand: ([-+])/) || [])[1];
     var id        = this.title.match(/; Id: ([^;]+)$/)[1];
     var url       = [
       window.location.pathname.replace(/\/(\w+)\/\w+$/, '/ZMenu/$1/Das'),
