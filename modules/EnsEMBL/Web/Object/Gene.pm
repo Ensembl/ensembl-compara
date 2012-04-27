@@ -870,10 +870,6 @@ sub store_TransformedSNPS {
   my $so_terms = shift;
   my $valids   = $self->valids;
   
-  # HACK: ontology DB is incorrect for 67, undef $so_terms
-  # should only result in slightly slower page return on GeneSNPTable
-  undef $so_terms;
-  
   my $tva = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
   
   my @transcripts = @{$self->get_all_transcripts};
