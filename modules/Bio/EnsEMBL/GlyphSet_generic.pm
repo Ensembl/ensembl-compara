@@ -162,11 +162,11 @@ sub _draw_features {
 
         my $href = undef;
         my $title = sprintf(
-          '%s; Start: %s; End: %s; Strand: %s%s',
+          '%s; Start: %s; End: %s%s%s',
           $group->{'label'} || $group->{'id'},
           $group->{'start'} + $offset,
           $group->{'end'}   + $offset,
-          $group->{'strand'} ? $group->{'strand'} > 0 ? '+' : '-' : 0,
+          $group->{'strand'} ? '; Strand: ' . ($group->{'strand'} > 0 ? '+' : '-') : '',
           $group->{'count'} > 1 ? '; Features: ' . $group->{'count'} : ''
         );
         
@@ -183,7 +183,7 @@ sub _draw_features {
         }
         
         $title .= '; Type: ' . ($group->{'type_label'} || $group->{'type'}) if $group->{'type'};
-        $title .= '; Id: ' . $group->{'id'} if $group->{'id'}; ### Id attribute MUST BE THE LAST thing in the title tag or z-menus won't work properly
+        $title .= '; Id: '   . $group->{'id'}                               if $group->{'id'}; ### Id attribute MUST BE THE LAST thing in the title tag or z-menus won't work properly
 
         if ($group->{'extent_end'} > 0 && $group->{'extent_start'} < $seq_len) {
           my $row = $self->bump_row($group->{'start'} * $ppbp, $end * $ppbp) + $self->{'_row_offset'};
@@ -278,13 +278,13 @@ sub _draw_features {
               my $href = @{$f->{'link'}||[]} ? $f->{'link'}->[0]{'href'} : undef;
               
               my $title = sprintf(
-                '%s; Start: %s; End: %s; Strand: %s%s%s',
+                '%s; Start: %s; End: %s%s%s%s',
                 $f->display_label || $f->display_id,
                 $f->seq_region_start,
                 $f->seq_region_end,
-                $f->seq_region_strand ? $f->seq_region_strand > 0 ? '+' : '-' : 0,
-                $f->type_id ? '; Type: ' . ($f->type_label || $f->type_id) : '',
-                $f->display_id ? '; Id: ' . $f->display_id : '' ### Id attribute MUST BE THE LAST thing in the title tag or z-menus won't work properly
+                $f->seq_region_strand ? '; Strand: ' . ($f->seq_region_strand > 0 ? '+' : '-') : '',
+                $f->type_id           ? '; Type: '   . ($f->type_label || $f->type_id)         : '',
+                $f->display_id        ? '; Id: '     . $f->display_id                          : '' ### Id attribute MUST BE THE LAST thing in the title tag or z-menus won't work properly
               );
 
               $self->push($self->Space({
