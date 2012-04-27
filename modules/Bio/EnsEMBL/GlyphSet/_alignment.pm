@@ -150,9 +150,11 @@ sub render_normal {
   my $label_h         = 0;
   my ($fontname, $fontsize);
   
+  my $join = $self->{'my_config'}{'data'}{'join'} ne 'off';
   if ($self->{'show_labels'}) {
     ($fontname, $fontsize) = $self->get_font_details('outertext');
     $label_h = [ $self->get_text_width(0, 'X', '', ptsize => $fontsize, font => $fontname) ]->[3];
+    $join = 1; # The no-join thing gets completely mad with labels on.
   }
   
   foreach my $feature_key (@sorted) {
@@ -177,13 +179,13 @@ sub render_normal {
 
     $self->_init_bump(undef, $dep);
     
+    my $nojoin_id = 1;
     foreach my $f (map $_->[2], sort { $a->[0] <=> $b->[0] }  map [ $_->start,$_->end, $_ ], @features) {
       my $s = $f->start;
       my $e = $f->end;
       
-      next if $strand_flag eq 'b' && $strand != (($f->can('hstrand') ? $f->hstrand : 1) * $f->strand || -1) || $e < 1 || $s > $length;
-      
-      my $fgroup_name = $self->feature_group($f);
+      next if $strand_flag eq 'b' && $strand != (($f->can('hstrand') ? $f->hstrand : 1) * $f->strand || -1) || $e < 1 || $s > $length;      
+      my $fgroup_name = $join ? $self->feature_group($f) : $nojoin_id++;
       my $db_name     = $f->can('external_db_id') ? $extdbs->{$f->external_db_id}{'db_name'} : 'OLIGO';
       
       push @{$id{$fgroup_name}}, [ $s, $e, $f, int($s * $pix_per_bp), int($e * $pix_per_bp), $db_name ];
@@ -322,7 +324,7 @@ sub render_normal {
       }
       
       if ($h > 1) {
-        $composite->bordercolour($feature_colour) unless $self->{'my_config'}{'data'}{'border'} eq 'off';
+        $composite->bordercolour($feature_colour) if $join;
       } else {
         $composite->unshift($self->Rect({
           x         => $composite->{'x'},
