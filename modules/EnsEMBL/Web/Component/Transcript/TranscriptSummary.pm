@@ -40,6 +40,8 @@ sub content {
     $table->add_row('CCDS', sprintf('<p>This transcript is a member of the %s CCDS set: %s</p>', $sp, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS), 1);
   }
 
+  $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);
+
   ## add some Vega info
   if ($db eq 'vega') {
     my $class   = $object->transcript_class;

@@ -130,6 +130,8 @@ sub content {
   # add a row to the table
   $table->add_row('LRG', $lrg_html, 1) if $lrg_html;
 
+  $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);
+
   # add some Vega info
   if ($db eq 'vega') {
     my $type    = $object->gene_type;
