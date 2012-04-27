@@ -11,12 +11,12 @@ sub _init {
   
   $self->SUPER::_init;
 
-  $self->{'link_text'}       = 'Select species';
-  $self->{'included_header'} = 'Selected species';
-  $self->{'excluded_header'} = 'Unselected species';
+  $self->{'link_text'}       = 'Select species or regions';
+  $self->{'included_header'} = 'Selected species or regions';
+  $self->{'excluded_header'} = 'Unselected species or regions';
   $self->{'panel_type'}      = 'MultiSpeciesSelector';
   $self->{'url_param'}       = 's';
-  $self->{'rel'}             = 'modal_select_species';
+  $self->{'rel'}             = 'modal_select_species_or_regions';
 }
 
 sub content_ajax {

@@ -29,7 +29,7 @@ sub extra_tabs {
   my $hub  = $self->hub;
   
   return [
-    'Select species',
+    'Select species or regions',
     $hub->url('Component', {
       action   => 'Web',
       function => 'MultiSpeciesSelector/ajax',
