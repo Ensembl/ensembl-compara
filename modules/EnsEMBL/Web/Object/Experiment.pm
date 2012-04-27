@@ -17,6 +17,7 @@ sub new {
 
   my $funcgen_db_adaptor    = $hub->database('funcgen');
   my $feature_set_adaptor   = $funcgen_db_adaptor->get_FeatureSetAdaptor;
+  my $feature_type_adaptor  = $funcgen_db_adaptor->get_FeatureTypeAdaptor;
 
   my $param_to_filter_map   = $self->{'_param_to_filter_map'}   = {'all' => 'All', 'cell_type' => 'Cell/Tissue', 'evidence_type' => 'Evidence type', 'project' => 'Project'};
   my $grouped_feature_sets  = $self->{'_grouped_feature_sets'}  = $funcgen_db_adaptor->get_ExperimentAdaptor->fetch_experiment_filter_counts;
@@ -29,6 +30,10 @@ sub new {
   if ($param =~ /^name\-(.+)$/) {
     $feature_sets = [ $feature_set_adaptor->fetch_by_name($1) || () ];
   }
+  elsif ($param =~ /^ftname\-(.+)$/) {
+    my $feature_type  = $feature_type_adaptor->fetch_by_name($1);
+    $feature_sets     = $feature_type ? $feature_set_adaptor->fetch_all_by_FeatureType($feature_type) : [];
+  }
   else {
     my $constraints = {};
     if ($param ne 'all') {
@@ -37,13 +42,15 @@ sub new {
 
       while (my ($filter, $value) = each(%$filters)) {
         if ($filter eq 'cell_type') {
-          $constraints->{'cell_types'} = [ map $funcgen_db_adaptor->get_CellTypeAdaptor->fetch_by_name($_), @$value ];
+          my $cell_type_adaptor = $funcgen_db_adaptor->get_CellTypeAdaptor;
+          $constraints->{'cell_types'} = [ map $cell_type_adaptor->fetch_by_name($_), @$value ];
         }
         elsif ($filter eq 'evidence_type') {
           $constraints->{'evidence_types'} = $value;
         }
         elsif ($filter eq 'project') {
-          $constraints->{'projects'} = [ map $funcgen_db_adaptor->get_ExperimentalGroupAdaptor->fetch_by_name($_), @$value ];
+          my $experimental_group_adaptor = $funcgen_db_adaptor->get_ExperimentalGroupAdaptor;
+          $constraints->{'projects'} = [ map $experimental_group_adaptor->fetch_by_name($_), @$value ];
         }
       }
     }
@@ -51,7 +58,7 @@ sub new {
   }
 
   my $binding_matrix_adaptor      = $funcgen_db_adaptor->get_BindingMatrixAdaptor;
-  my $regulatory_evidence_labels  = $funcgen_db_adaptor->get_FeatureTypeAdaptor->get_regulatory_evidence_labels;
+  my $regulatory_evidence_labels  = $feature_type_adaptor->get_regulatory_evidence_labels;
 
   # Get info for all feature sets and pack it in an array of hashes
   foreach my $feature_set (@$feature_sets) {
@@ -115,6 +122,12 @@ sub is_single_feature_view {
   return $self->hub->param('ex') =~ /^name\-/ ? 1 : undef;
 }
 
+sub is_single_feature_type_name_view {
+  ## Tells whether filter is applied wrt single feature type name - acc to the ex param
+  my $self = shift;
+  return $self->hub->param('ex') =~ /^ftname\-/ ? 1 : undef;
+}
+
 sub total_experiments {
   ## Gets the number of all experiments without any filter applied
   ## @return int
@@ -149,6 +162,12 @@ sub is_filter_applied {
 
   my $applied_filters = $self->applied_filters;
 
+  # if filter param is provided
+  if ($filter_name) {
+    $_ eq $value and return 1 for @{$applied_filters->{$filter_name} || []};
+  }
+
+  # if filter title is provided
   if ($filter_name = $self->{'_filter_to_param_map'}{$filter_name}) {
     $_ eq $value and return 1 for @{$applied_filters->{$filter_name} || []};
   }
@@ -164,7 +183,7 @@ sub get_filter_title {
 
 sub get_url_param {
   ## Takes filter name(s) and value(s) and returns corresponding param name for the url
-  ## @param Hashref with keys as filter names and values as filter values
+  ## @param Hashref with keys as filter names (or params) and values as filter values
   ## @param Flag to tell whether to add, remove the given filters from existing filters, or ignore the existing filters
   ##  - 0  Ignore the existing filters
   ##  - 1  Add the given filters to existing ones
@@ -174,11 +193,12 @@ sub get_url_param {
 
   return 'all' if !scalar keys %$filters || exists $filters->{'All'};
 
-  $self->{'_filter_to_param_map'} ||= { reverse %{$self->{'_param_to_filter_map'}} };
+  return "ftname-$filters->{'ftname'}" if exists $filters->{'ftname'};
 
   my $params = $flag ? $self->applied_filters : {};
   while (my ($filter, $value) = each %$filters) {
-    if (my $param_for_filter = $self->{'_filter_to_param_map'}{$filter}) {
+    my $param_for_filter = exists $self->{'_param_to_filter_map'}{$filter} ? $filter : $self->{'_filter_to_param_map'}{$filter};
+    if ($param_for_filter) {
       $params->{$param_for_filter} ||= [];
       if ($flag >= 0) {
         push @{$params->{$param_for_filter}}, $value;
