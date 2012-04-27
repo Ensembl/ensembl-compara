@@ -101,6 +101,7 @@ sub populate_tree {
   
   $prot_menu->append($self->create_node('ProteinSummary', 'Protein summary',
     [qw(
+      moreinfo   EnsEMBL::Web::Component::Transcript::TranslationInfo
       image      EnsEMBL::Web::Component::Transcript::TranslationImage
       statistics EnsEMBL::Web::Component::Transcript::PepStats
     )],
