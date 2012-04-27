@@ -37,7 +37,7 @@ sub content {
       my $all_count         = $grouped_feature_types->{'count'};
       my $filtered_count    = $grouped_feature_types->{'filtered'} || '0';
       my $filter_applied    = $object->is_filter_applied($filter_type, $filter_value);
-      my $filter_link       = $filter_type eq 'All' || $total_actual_experiments eq $total_fetched_experiments || $object->is_single_feature_view || $filter_applied
+      my $filter_link       = $filter_type eq 'All' || $total_actual_experiments eq $total_fetched_experiments || $object->is_single_feature_view || $object->is_single_feature_type_name_view || $filter_applied
         ? !$filter_applied
         ? $filter_type eq 'All' && $total_actual_experiments eq $total_fetched_experiments
         ? 'Displayed'
