@@ -282,7 +282,7 @@ sub _draw_features {
                 $f->display_label || $f->display_id,
                 $f->seq_region_start,
                 $f->seq_region_end,
-                $ori > $f->seq_region_strand ? '+' : '-',
+                $f->seq_region_strand ? $f->seq_region_strand > 0 ? '+' : '-' : 0,
                 $f->type_id ? '; Type: ' . ($f->type_label || $f->type_id) : '',
                 $f->display_id ? '; Id: ' . $f->display_id : '' ### Id attribute MUST BE THE LAST thing in the title tag or z-menus won't work properly
               );
