@@ -151,7 +151,7 @@ sub format_frequencies {
   
   foreach my $col (sort { $b cmp $a } keys %columns) {
     next if $col =~ /pop|ssid|submitter|Description|detail|count|failed/;
-    unshift @header_row, { key => $col, align => 'left', title => $col, sort => 'numerical' };
+    unshift @header_row, { key => $col, align => 'left', title => $col, sort => 'numeric' };
   }
   
   if (exists $columns{'ssid'}) {
