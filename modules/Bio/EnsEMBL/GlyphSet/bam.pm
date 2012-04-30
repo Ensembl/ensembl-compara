@@ -87,7 +87,7 @@ sub bam_adaptor {
   else { ## Local bam file
     my $config    = $self->{'config'};
     my $hub       = $config->hub;
-    my $dba       = $hub->database($self->my_config('type'));
+    my $dba       = $hub->database($self->my_config('type'), $self->species);
 
     if ($dba) {
       my $dfa = $dba->get_DataFileAdaptor();
