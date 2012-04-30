@@ -302,21 +302,23 @@ sub hover_labels {
         <p class="header">%s</p>
         %s
         %s
-        <img class="url" src="${img_url}link.png" alt="Link" title="URL to turn this track on" />
+        %s
         <a href="$label->{'fav'}[1]" class="config favourite%s" rel="$label->{'component'}" title="Favourite track"></a>
         <a href="$label->{'off'}" class="config" rel="$label->{'component'}"><img src="${img_url}cross_red_13.png" alt="Turn track off" title="Turn track off" /></a>
         <div class="desc">%s</div>
         <div class="config">%s</div>
-        <div class="url"><p>Copy <a href="$label->{'conf_url'}">this link</a> to force this track to be turned on</p></div>
+        <div class="url">%s</div>
         <div class="spinner"></div>
       </div>},
       $label->{'class'},
       $label->{'header'},
-      $label->{'desc'}   ? qq{<img class="desc" src="${img_url}info_blue_13.png" alt="Info" title="Info" />} : '',
-      $renderers         ? qq{<img class="config" src="${img_url}config_13.png" alt="Change track style" title="Change track style" />} : '',
-      $label->{'fav'}[0] ? ' selected' : '',
+      $label->{'desc'}     ? qq{<img class="desc" src="${img_url}info_blue_13.png" alt="Info" title="Info" />}                            : '',
+      $renderers           ? qq{<img class="config" src="${img_url}config_13.png" alt="Change track style" title="Change track style" />} : '',
+      $label->{'conf_url'} ? qq{<img class="url" src="${img_url}link.png" alt="Link" title="URL to turn this track on" />}                : '',
+      $label->{'fav'}[0]   ? ' selected' : '',
       $desc,
-      $renderers         ? "<p>Change track style:</p><ul>$renderers</ul>" : ''
+      $renderers           ? qq{<p>Change track style:</p><ul>$renderers</ul>}                                                : '',
+      $label->{'conf_url'} ? qq{<p>Copy <a href="$label->{'conf_url'}">this link</a> to force this track to be turned on</p>} : ''
     );
   }
   
