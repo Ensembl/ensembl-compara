@@ -75,13 +75,29 @@ sub store_and_dataflow_clusterset {
     my $self = shift;
     my $allclusters = $self->param('allclusters');
     $self->create_clusterset();
+    print STDERR "STORING AND DATAFLOWING THE CLUSTERSET\n" if ($self->debug());
+    for my $cluster_name (keys %$allclusters) {
+        print STDERR "$cluster_name has ", scalar @{$allclusters->{$cluster_name}{clusters}} , " members (leaves)\n";
+    }
     if ($self->param('sort_clusters')) {
-        foreach my $cluster_list (sort {scalar(@$b) <=> scalar(@$a)} @$allclusters) {
-            $self->add_cluster($cluster_list);
+        foreach my $cluster_name (sort {scalar(@{$allclusters->{$b}{clusters}}) <=> scalar(@{$allclusters->{$a}{clusters}})} keys %$allclusters) {
+            print STDERR "Storing cluster with name $cluster_name\n" if ($self->debug());
+            my $cluster = $self->add_cluster($allclusters->{$cluster_name}{clusters});
+            delete $allclusters->{$cluster_name}{clusters};
+            for my $tag (keys %{$allclusters->{$cluster_name}}) {
+                print STDERR "Storing tag $tag => ", $allclusters->{$cluster_name}->{$tag} , "\n" if ($self->debug);
+                $cluster->store_tag($tag, $allclusters->{$cluster_name}->{$tag});
+            }
         }
     } else {
-        foreach my $cluster_list (@$allclusters) {
-            $self->add_cluster($cluster_list);
+        foreach my $cluster_name (keys %$allclusters) {
+            print STDERR "Storing cluster with name $cluster_name\n" if ($self->debug());
+            my $cluster = $self->add_cluster($allclusters->{$cluster_name}{clusters});
+            delete $allclusters->{$cluster_name}{clusters};
+            for my $tag (keys %{$allclusters->{$cluster_name}}) {
+                print STDERR "Storing tag $tag => ", $allclusters->{$cluster_name}->{$tag} , "\n" if ($self->debug);
+                $cluster->store_tag($tag, $allclusters->{$cluster_name}->{$tag});
+            }
         }
     }
     $self->finish_store_clusterset();
@@ -228,7 +244,6 @@ sub dataflow_clusters {
     foreach my $tree_id (@{$self->param('allcluster_ids')}) {
         $self->dataflow_output_id({ $self->param('input_id_prefix').'_tree_id' => $tree_id, }, 2);
     }
-    $self->input_job->autoflow(0);
     $self->dataflow_output_id({ 'clusterset_id' => $self->param('clusterset')->root_id }, 1);
 }
 
