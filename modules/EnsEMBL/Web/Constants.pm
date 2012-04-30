@@ -36,6 +36,7 @@ sub GENE_JOIN_TYPES {
     'apparent_ortholog_one2one' => 'orthologue',
     'ortholog_one2many'         => 'orthologue_multi',
     'ortholog_many2many'        => 'orthologue_multi',
+    'possible_ortholog'         => 'possible_ortholog',
     'UBRH'                      => 'orthologue',
     'BRH'                       => 'orthologue',
     'MBRH'                      => 'orthologue',
@@ -43,9 +44,9 @@ sub GENE_JOIN_TYPES {
     'within_species_paralog'    => 'paralogue',
     'other_paralog'             => 'paralogue',
     'between_species_paralog'   => 'paralogue',
-    'projection_unchanged'      => 'paralogue',
+    'projection_unchanged'      => 'projection',
     'putative_gene_split'       => 'hidden',
-    'contiguous_gene_split'     => 'hidden'
+    'contiguous_gene_split'     => 'hidden',
   }
 }
 
