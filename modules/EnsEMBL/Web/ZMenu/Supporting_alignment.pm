@@ -16,15 +16,15 @@ sub content {
   my $db_adaptor   = $hub->database(lc $db);
   my $adaptor_name = "get_${object_type}Adaptor";
   my $feat_adap    = $db_adaptor->$adaptor_name;
-  my $features     = $feat_adap->fetch_all_by_hit_name($id) || [];
   my $click_start  = $hub->param('click_start');
   my $click_end    = $hub->param('click_end');
+  my $logic_name   = $hub->param('ln');
+  my $features     = $feat_adap->fetch_all_by_hit_name($id) || [];
+  my ($feature)    = $logic_name ? grep $_->analysis->logic_name eq $logic_name, @$features : $features->[0];
 
   $self->caption($id);
-
-  if ($features->[0]->analysis->logic_name =~ /intron/) {
-    warn 'multiple intron objects, not good, code is written for single ones' if scalar @$features > 1;
-    
+  
+  if ($feature->analysis->logic_name =~ /intron/) {
     $self->add_entry({
       type  => 'Location',
       label => $object->seq_region_name . ':' . $object->seq_region_start . '-' . $object->seq_region_end,
@@ -32,7 +32,7 @@ sub content {
     
     $self->add_entry({
       type  => 'Read coverage',
-      label => $features->[0]->score,
+      label => $feature->score,
     });
   } else {
     my $longest_feat_dbID;
@@ -62,7 +62,7 @@ sub content {
   }
 
   $self->add_entry({
-    label_html => $features->[0]->analysis->description
+    label_html => $feature->analysis->description
   });
 }
 
