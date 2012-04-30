@@ -238,7 +238,7 @@ sub init_label {
       renderers => \@r,
       fav       => [ $fav, "$url;$track=favourite_" ],
       off       => "$url;$track=off",
-      conf_url  => $hub->url . ";$config->{'type'}=$track=$self->{'display'}"
+      conf_url  => $self->species eq $hub->species ? $hub->url($hub->multi_params) . ";$config->{'type'}=$track=$self->{'display'}" : ''
     };
   }
   
