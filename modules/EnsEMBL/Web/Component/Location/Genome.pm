@@ -85,12 +85,13 @@ sub _render_features {
 
   ## Attach the colorizing key before making the image
   my $chr_colour_key = $self->chr_colour_key;
-  $image_config->set_parameter('chr_colour_key',$chr_colour_key);
-  my $image = $self->new_karyotype_image($image_config);
-
+  
+  $image_config->set_parameter('chr_colour_key', $chr_colour_key) if $image_config;
+  
   ## Draw features on karyotype, if any
   if (scalar @$chromosomes && $species_defs->MAX_CHR_LENGTH) {
-
+    my $image = $self->new_karyotype_image($image_config);
+    
     ## Map some user-friendly display names
     my $feature_display_name = {
       'Xref'                => 'External Reference',
