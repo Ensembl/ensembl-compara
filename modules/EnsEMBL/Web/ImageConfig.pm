@@ -910,13 +910,14 @@ sub update_from_url {
   my $species = $hub->species;
   
   foreach my $v (@values) {
-    my @split    = split /=/, $v;
+    my @split = split /=/, $v;
     my ($key, $renderer);
-    if (scalar(@split) > 1) { 
-      ($key, $renderer) = @split;
-    }
-    else {
-      $key = $split[0];
+    
+    if (scalar @split > 1) { 
+      $renderer = pop @split;
+      $key      = join '=', @split;
+    } else {
+      $key      = $split[0];
       $renderer = 'normal';
     }
 
