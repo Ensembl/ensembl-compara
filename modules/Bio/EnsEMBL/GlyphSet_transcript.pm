@@ -117,7 +117,7 @@ sub render_collapsed {
       if ($gene_stable_id) {
         my $alt_alleles     = $gene->get_all_alt_alleles;
         my $seq_region_name = $gene->slice->seq_region_name;
-        my ($target, $legend, @gene_tags);
+        my ($target, @gene_tags);
         
         if ($previous_species) {
           for ($self->get_homologous_gene_ids($gene, $previous_species, $join_types)) {
@@ -125,9 +125,8 @@ sub render_collapsed {
             
             $self->join_tag($composite2, "$gene_stable_id:$_->[0]$target", 0.5, 0.5, $_->[1], 'line', $join_z);
             
-            ($legend = $_->[2]) =~ s/_multi/ 1-to-many or many-to-many/;
             $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
-            $config->{'legend_features'}{'joins'}{'legend'}{ucfirst $legend} = $_->[1];
+            $config->{'legend_features'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
           }
           
           push @gene_tags, map { join '=', $_->stable_id, $gene_stable_id } @{$self->filter_by_target($alt_alleles, $previous_target)};
@@ -139,9 +138,8 @@ sub render_collapsed {
             
             $self->join_tag($composite2, "$_->[0]:$gene_stable_id$target", 0.5, 0.5, $_->[1], 'line', $join_z);
             
-            ($legend = $_->[2]) =~ s/_multi/ 1-to-many or many-to-many/;
             $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
-            $config->{'legend_features'}{'joins'}{'legend'}{ucfirst $legend} = $_->[1];
+            $config->{'legend_features'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
           }
           
           push @gene_tags, map { join '=', $gene_stable_id, $_->stable_id } @{$self->filter_by_target($alt_alleles, $next_target)};
@@ -287,9 +285,8 @@ sub render_transcripts {
         push @gene_tags, map { join '=', $_->stable_id, $tsid } @{$self->filter_by_target(\@transcripts, $previous_target)};
         
         for (@$homologues) {
-          (my $legend = $_->[2]) =~ s/_multi/ 1-to-many or many-to-many/;
           $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
-          $config->{'legend_features'}{'joins'}{'legend'}{ucfirst $legend} = $_->[1];
+          $config->{'legend_features'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
         }
       }
       
@@ -301,9 +298,8 @@ sub render_transcripts {
         push @gene_tags, map { join '=', $tsid, $_->stable_id } @{$self->filter_by_target(\@transcripts, $next_target)};
         
         for (@$homologues) {
-          (my $legend = $_->[2]) =~ s/_multi/ 1-to-many or many-to-many/;
           $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
-          $config->{'legend_features'}{'joins'}{'legend'}{ucfirst $legend} = $_->[1];
+          $config->{'legend_features'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
         }
       }
     }
@@ -1033,7 +1029,7 @@ sub render_genes {
     if ($link) {
       my $alt_alleles     = $gene->get_all_alt_alleles;
       my $seq_region_name = $gene->slice->seq_region_name;
-      my ($target, $legend, @gene_tags);
+      my ($target, @gene_tags);
       
       if ($previous_species) {
         for ($self->get_homologous_gene_ids($gene, $previous_species, $join_types)) {
@@ -1041,9 +1037,8 @@ sub render_genes {
           
           $self->join_tag($rect, "$gene_stable_id:$_->[0]$target", 0.5, 0.5, $_->[1], 'line', $join_z);
           
-          ($legend = $_->[2]) =~ s/_multi/ 1-to-many or many-to-many/;
           $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
-          $config->{'legend_features'}{'joins'}{'legend'}{ucfirst $legend} = $_->[1];
+          $config->{'legend_features'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
         }
         
         push @gene_tags, map { join '=', $_->stable_id, $gene_stable_id } @{$self->filter_by_target($alt_alleles, $previous_target)};
@@ -1055,9 +1050,8 @@ sub render_genes {
           
           $self->join_tag($rect, "$_->[0]:$gene_stable_id$target", 0.5, 0.5, $_->[1], 'line', $join_z);
           
-          ($legend = $_->[2]) =~ s/_multi/ 1-to-many or many-to-many/;
           $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
-          $config->{'legend_features'}{'joins'}{'legend'}{ucfirst $legend} = $_->[1];
+          $config->{'legend_features'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
         }
         
         push @gene_tags, map { join '=', $gene_stable_id, $_->stable_id } @{$self->filter_by_target($alt_alleles, $next_target)};
@@ -1262,13 +1256,14 @@ sub get_homologous_gene_ids {
     next if $colour_key eq 'hidden';
     
     my $colour = $self->my_colour($colour_key . '_join');
+    my $label  = $self->my_colour($colour_key . '_join', 'text');
     
     foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
       my ($member, $attribute) = @$member_attribute;
       
       next if $member->stable_id eq $qy_member->stable_id;
       
-      push @homologues, [ $member->stable_id, $colour, $colour_key ];
+      push @homologues, [ $member->stable_id, $colour, $label ];
     }
   }
   
@@ -1303,6 +1298,7 @@ sub get_homologous_peptide_ids_from_gene {
     next if $colour_key eq 'hidden';
     
     my $colour = $self->my_colour($colour_key . '_join');
+    my $label  = $self->my_colour($colour_key . '_join', 'text');
     
     foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
       my ($member, $attribute) = @$member_attribute;
@@ -1313,7 +1309,7 @@ sub get_homologous_peptide_ids_from_gene {
           $stable_id = $T->stable_id;
         }
       } else {
-        push @homologues, [ $attribute->peptide_member_id, $colour, $colour_key ];
+        push @homologues, [ $attribute->peptide_member_id, $colour, $label ];
         push @homologue_genes, [ $member->stable_id, $colour ];
       }
     }
