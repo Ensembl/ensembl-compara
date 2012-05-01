@@ -41,9 +41,9 @@ sub content {
         ? !$filter_applied
         ? $filter_type eq 'All' && $total_actual_experiments eq $total_fetched_experiments
         ? 'Displayed'
-        : sprintf('<a href="%s">Show</a>', $hub->url({'ex' => $object->get_url_param({$filter_type, $filter_value})}))
-        : sprintf('<a href="%s">Remove filter</a>', $hub->url({'ex' => $object->get_url_param({$filter_type, $filter_value}, -1)}))
-        : sprintf('<a href="%s">Add filter</a>', $hub->url({'ex' => $object->get_url_param({$filter_type, $filter_value}, 1)}))
+        : sprintf('<a href="%s">Show</a>', $object->get_url({$filter_type, $filter_value}))
+        : sprintf('<a href="%s">Remove filter</a>', $object->get_url({$filter_type, $filter_value}, -1))
+        : sprintf('<a href="%s">Add filter</a>', $object->get_url({$filter_type, $filter_value}, 1))
       ;
 
       $table->add_row({
