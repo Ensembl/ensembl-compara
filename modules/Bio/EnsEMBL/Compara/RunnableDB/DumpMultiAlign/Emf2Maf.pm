@@ -34,7 +34,6 @@ The RunnableDB module runs emf2maf jobs. It creates compression jobs
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Emf2Maf;
 
 use strict;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 strict_hash_format

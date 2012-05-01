@@ -34,7 +34,6 @@ necessary and compression jobs
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign;
 
 use strict;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 strict_hash_format

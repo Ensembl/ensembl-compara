@@ -34,7 +34,6 @@ This RunnableDB module generates a general README.{emf} file and a specific READ
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Readme;
 
 use strict;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

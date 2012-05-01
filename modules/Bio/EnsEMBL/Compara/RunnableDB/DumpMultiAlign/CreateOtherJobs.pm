@@ -36,7 +36,6 @@ $split_size chunks
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateOtherJobs;
 
 use strict;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use POSIX qw(ceil);

@@ -34,7 +34,6 @@ This RunnableDB module runs gzip -9
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Compress;
 
 use strict;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 strict_hash_format

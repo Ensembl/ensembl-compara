@@ -35,7 +35,6 @@ supercontigs 3) gabs without $species (others)
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs;
 
 use strict;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
