@@ -7,6 +7,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::Object);
 
+use constant URL_ANCHOR => 'ExperimentalMetaData';
+
 sub new {
   ## @overrides
   ## @constructor
@@ -181,42 +183,53 @@ sub get_filter_title {
   return shift->{'_param_to_filter_map'}{pop @_};
 }
 
-sub get_url_param {
-  ## Takes filter name(s) and value(s) and returns corresponding param name for the url
+sub get_url {
+  ## Takes filter name(s) and value(s) and returns corresponding url
   ## @param Hashref with keys as filter names (or params) and values as filter values
   ## @param Flag to tell whether to add, remove the given filters from existing filters, or ignore the existing filters
   ##  - 0  Ignore the existing filters
   ##  - 1  Add the given filters to existing ones
   ##  - -1 Remove the given filters from the existing ones
-  ## @return String to go inside the URL param 'ex' as value
+  ## @return URL string
   my ($self, $filters, $flag) = @_;
 
-  return 'all' if !scalar keys %$filters || exists $filters->{'All'};
+  my $param;
 
-  return "ftname-$filters->{'ftname'}" if exists $filters->{'ftname'};
+  # All
+  if (!scalar keys %$filters || exists $filters->{'All'}) {
+    $param = 'all';
 
-  my $params = $flag ? $self->applied_filters : {};
-  while (my ($filter, $value) = each %$filters) {
-    my $param_for_filter = exists $self->{'_param_to_filter_map'}{$filter} ? $filter : $self->{'_filter_to_param_map'}{$filter};
-    if ($param_for_filter) {
-      $params->{$param_for_filter} ||= [];
-      if ($flag >= 0) {
-        push @{$params->{$param_for_filter}}, $value;
-      }
-      else {
-        $params->{$param_for_filter} = [ map {$_ eq $value ? () : $_} @{$params->{$param_for_filter}} ];
-        delete $params->{$param_for_filter} unless @{$params->{$param_for_filter}};
+  # Feature type name
+  } elsif (exists $filters->{'ftname'}) {
+    $param = "ftname-$filters->{'ftname'}";
+
+  # Other filters
+  } else {
+    my $params = $flag ? $self->applied_filters : {};
+    while (my ($filter, $value) = each %$filters) {
+      my $param_for_filter = exists $self->{'_param_to_filter_map'}{$filter} ? $filter : $self->{'_filter_to_param_map'}{$filter};
+      if ($param_for_filter) {
+        $params->{$param_for_filter} ||= [];
+        if ($flag >= 0) {
+          push @{$params->{$param_for_filter}}, $value;
+        }
+        else {
+          $params->{$param_for_filter} = [ map {$_ eq $value ? () : $_} @{$params->{$param_for_filter}} ];
+          delete $params->{$param_for_filter} unless @{$params->{$param_for_filter}};
+        }
       }
     }
+  
+    my $param_str   = join '', map {ref $_ ? @$_ : $_} %$params;
+    my $delimiters  = [ qw(_ ,), ('a'..'z'), ('A'..'Z'), (1..9) ];
+    my $counter     = 0;
+    my $delimiter   = '-';
+    $delimiter      = $delimiters->[$counter++] while $delimiter && index($param_str, $delimiter) >= 0;
+  
+    $param = join($delimiter, (map {$_, sort @{$params->{$_}}} sort keys %$params), '') || 'all';
   }
 
-  my $param_str   = join '', map {ref $_ ? @$_ : $_} %$params;
-  my $delimiters  = [ qw(_ ,), ('a'..'z'), ('A'..'Z'), (1..9) ];
-  my $counter     = 0;
-  my $delimiter   = '-';
-  $delimiter      = $delimiters->[$counter++] while $delimiter && index($param_str, $delimiter) >= 0;
-
-  return join($delimiter, (map {$_, sort @{$params->{$_}}} sort keys %$params), '') || 'all';
+  return sprintf('%s#%s', $self->hub->url({'ex' => $param}), $self->URL_ANCHOR);
 }
 
 1;
