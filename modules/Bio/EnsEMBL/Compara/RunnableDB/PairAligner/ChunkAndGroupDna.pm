@@ -69,8 +69,6 @@ use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
 
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
-
 use Bio::EnsEMBL::Analysis::RunnableDB;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');

@@ -51,7 +51,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentChainsJob
 use strict;
 
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
