@@ -105,17 +105,7 @@ sub fetch_input {
     }
     $self->param('hmm_type', $hmm_type);
 
-    my $node_id = $self->param('protein_tree')->node_id;
-    my $table_name = 'protein_tree_hmmprofile';
-    my $query = "SELECT hmmprofile FROM $table_name WHERE type=\"$hmm_type\" AND node_id=$node_id";
-    print STDERR "$query\n" if ($self->debug);
-    my $sth = $self->compara_dba->dbc->prepare($query);
-    $sth->execute;
-    my $result = $sth->fetch;
-    if (defined($result)) { # Has been done already
-        $self->param('done', 1);
-        return;
-    }
+    $self->param('done', 1) if $protein_tree->tree->has_tag("hmm_$hmm_type");
 
   my @to_delete;
 
@@ -334,9 +324,7 @@ sub store_hmmprofile {
   my $hmm_text = join('', <FH>);
   close(FH);
 
-  my $table_name = 'protein_tree_hmmprofile';
-  my $sth = $self->compara_dba->dbc->prepare("INSERT INTO $table_name VALUES (?,?,?)");
-  $sth->execute($protein_tree->node_id, $self->param('hmm_type'), $hmm_text);
+  $protein_tree->tree->store_tag("hmm_".$self->param('hmm_type'), $hmm_text);
 }
 
 1;

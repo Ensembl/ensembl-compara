@@ -24,7 +24,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee
 
 This Analysis/RunnableDB is designed to take a protein_tree cluster as input
 Run an MCOFFEE multiple alignment on it, and store the resulting alignment
-back into the protein_tree_member and protein_tree_member_score table.
+back into the protein_tree_member table.
 
 input_id/parameters format eg: "{'protein_tree_id'=>726093}"
     protein_tree_id       : use family_id to run multiple alignment on its members
@@ -631,17 +631,10 @@ sub parse_and_store_alignment_into_proteintree {
         $sth->finish;
       }
       if (defined $self->param('mcoffee_scores')) {
-        #
-        # Do a manual insert of the *scores* into the correct score output table.
-        #
-        my $table_name = 'protein_tree_member_score' if not defined $table_name;
-        my $sth = $self->param('tree_adaptor')->prepare("REPLACE INTO $table_name (node_id,member_id,cigar_line)  VALUES (?,?,?)");
         my $score_string = $score_hash{$member->sequence_id} || '';
         $score_string =~ s/[^\d-]/9/g;   # Convert non-digits and non-dashes into 9s. This is necessary because t_coffee leaves some leftover letters.
-        printf("Updating $table_name %s : %s\n",$member->stable_id,$score_string) if ($self->debug);
-
-        $sth->execute($member->node_id, $member->member_id, $score_string);
-        $sth->finish;
+        printf("Updating the score of %s : %s\n",$member->stable_id,$score_string) if ($self->debug);
+        $member->store_tag('aln_score', $score_string);
       }
   }
 }

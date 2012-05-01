@@ -185,16 +185,9 @@ sub fetch_hmmprofile {
   my $self = shift;
 
   my $hmm_type = $self->{type} || 'aa';
-  my $node_id = $self->{tree}->node_id;
   print STDERR "type = $hmm_type\n" if ($self->debug);
 
-  my $query = "SELECT hmmprofile FROM protein_tree_hmmprofile WHERE type = ? AND node_id = ? LIMIT 1";
-  print STDERR "$query\n" if ($self->debug);
-  my $sth = $self->{comparaDBA}->dbc->prepare($query);
-  $sth->execute($hmm_type, $node_id);
-  my $result = $sth->fetchrow_hashref;
-  $self->{hmmprofile} = $result->{hmmprofile} if (defined($result->{hmmprofile}));
-  $sth->finish;
+  $self->{hmmprofile} = $self->{tree}->get_value_for_tag("hmm_$hmm_type");
 
   return 1;
 }
