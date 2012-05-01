@@ -19,8 +19,6 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign;
 
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
-
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;

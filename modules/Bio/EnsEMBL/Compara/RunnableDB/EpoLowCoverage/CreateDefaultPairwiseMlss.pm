@@ -42,7 +42,7 @@ use strict;
 
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {

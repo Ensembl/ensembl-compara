@@ -30,7 +30,6 @@ package Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor;
 
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 
