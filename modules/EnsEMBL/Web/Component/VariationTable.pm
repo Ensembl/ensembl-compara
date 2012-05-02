@@ -148,7 +148,7 @@ sub stats_table {
   $ranks{'unclassified'} = 99999999999;
 
   foreach my $tr (@$transcripts) { 
-    my $tr_stable_id = $tr->stable_id; warn join "\n", keys %{$tr->__data->{'transformed'}};
+    my $tr_stable_id = $tr->stable_id;
     my $tvs          = $tr->__data->{'transformed'}{'snps'} || {};
     my $gene_snps    = $tr->__data->{'transformed'}{'gene_snps'};
     my $tr_start     = $tr->__data->{'transformed'}{'start'};
@@ -408,8 +408,6 @@ sub configure {
     next if $object_type eq 'Transcript' && $_->stable_id ne $self->hub->param('t'); 
     $_->__data->{'transformed'}{'extent'}    = $extent;
     $_->__data->{'transformed'}{'gene_snps'} = \@gene_snps;
-    warn $_->stable_id;
-    warn $_->__data->{'transformed'}{'snps'};
   }
 
   return $gene_object;
