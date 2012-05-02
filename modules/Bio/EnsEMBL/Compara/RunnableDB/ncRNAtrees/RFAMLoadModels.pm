@@ -39,8 +39,11 @@ alignment process.
 
 =head1 CONTACT
 
-  Contact Albert Vilella on module implementation/design detail: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =cut
 
@@ -61,12 +64,15 @@ use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use LWP::Simple;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadModels');
 
 sub param_defaults {
     return {
-        'type'  => 'infernal',
+            'type'  => 'infernal',
+            'url' => 'ftp://ftp.sanger.ac.uk/pub/databases/Rfam/10.1/',
+            'remote_file' => 'Rfam.cm.gz',
+            'expanded_basename' => 'Rfam.cm',
+            'expander' => 'gunzip ',
     };
 }
 
@@ -83,7 +89,6 @@ sub param_defaults {
 
 sub fetch_input {
     my $self = shift @_;
-
 }
 
 
@@ -101,7 +106,7 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    $self->download_rfam_models;
+    $self->download_models();
 }
 
 
@@ -109,7 +114,7 @@ sub run {
 
     Title   :   write_output
     Usage   :   $self->write_output
-    Function:   stores nctree
+    Function:   stores the RFAM models
     Returns :   none
     Args    :   none
 
@@ -120,87 +125,9 @@ sub write_output {
     my $self = shift @_;
 
     $self->store_hmmprofile;
+    $self->clean_directory();
 }
 
-
-##########################################
-#
-# internal methods
-#
-##########################################
-
-sub download_rfam_models {
-  my $self = shift;
-
-  my $starttime = time();
-
-  my $worker_temp_directory = $self->worker_temp_directory;
-  my $url = 'ftp://ftp.sanger.ac.uk/pub/databases/Rfam/10.0/'; my $file = 'Rfam.cm.gz';
-#  my $url  = 'ftp://ftp.sanger.ac.uk/pub/databases/Rfam/CURRENT/'; my $file = 'infernal-latest.tar.gz';
-  my $expanded_file = $worker_temp_directory . $file; $expanded_file =~ s/\.gz$//;
-
-  unlink($expanded_file); # retry safe
-  my $ftp_file = $url . $file;
-  my $tmp_file = $worker_temp_directory . $file;
-  my $status = getstore($ftp_file, $tmp_file);
-  die "Error $status on $ftp_file" unless is_success($status);
-  my $cmd = "gunzip $tmp_file";
-  # my $cmd = "tar xzf $tmp_file";
-
-  unless(system("cd $worker_temp_directory; $cmd") == 0) {
-    print("$cmd\n");
-    $self->throw("error expanding RFAMLoadModels $!\n");
-  }
-  printf("time for RFAMLoadModels fetch : %1.3f secs\n" , time()-$starttime);
-
-  $self->param('multicm_file', $expanded_file);
-
-  return 1;
-}
-
-
-sub store_hmmprofile {
-  my $self = shift;
-
-  my $multicm_file = $self->param('multicm_file');
-  open MULTICM,$multicm_file or die "$!\n";
-  my $name; my $model_id;
-  my $profile_content = undef;
-  while (<MULTICM>) {
-    $profile_content .= $_;
-    if ($_ =~ /NAME/) { 
-      my ($tag,$this_name) = split(" ",$_);
-      $name = $this_name;
-    } elsif ($_ =~ /ACCESSION/) { 
-      my ($tag,$accession) = split(" ",$_);
-      $model_id = $accession;
-    } elsif ($_ =~ /\/\//) {
-      # End of profile, let's store it
-      $self->throw("Error loading cm profile [$model_id]\n") unless (defined($model_id) && defined($profile_content));
-      $self->load_cmprofile($profile_content,$model_id,$name);
-      $model_id = undef;
-      $profile_content = undef;
-    }
-  }
-
-  return 1;
-}
-
-
-sub load_cmprofile {
-  my $self = shift;
-  my $cm_profile = shift;
-  my $model_id = shift;
-  my $name = shift;
-
-  print("load profile $model_id\n") if($self->debug);
-
-  my $table_name = 'nc_profile';
-  my $sth = $self->compara_dba->dbc->prepare("INSERT IGNORE INTO $table_name VALUES (?,?,?,?)");
-  $sth->execute($model_id, $name, $self->param('type'), $cm_profile);
-  $sth->finish;
-
-  return undef;
-}
 
 1;
+
