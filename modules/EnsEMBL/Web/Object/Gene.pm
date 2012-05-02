@@ -825,28 +825,31 @@ sub getVariationsOnSlice {
 
 sub store_TransformedTranscripts {
   my( $self ) = @_;
-
+  my $page_type     = $self->hub->type;
+  my $focus_transcript = $page_type eq 'Transcript' ? $self->param('t') : undef;
+ 
   my $offset = $self->__data->{'slices'}{'transcripts'}->[1]->start -1;
   foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
+    next if $focus_transcript && $trans_obj->stable_id ne $focus_transcript;
     my $transcript = $trans_obj->Obj;
-  my ($raw_coding_start,$coding_start);
-  if (defined( $transcript->coding_region_start )) {    
-    $raw_coding_start = $transcript->coding_region_start;
-    $raw_coding_start -= $offset;
-    $coding_start = $raw_coding_start + $self->munge_gaps( 'transcripts', $raw_coding_start );
-  }
-  else {
-    $coding_start  = undef;
+    my ($raw_coding_start,$coding_start);
+    if (defined( $transcript->coding_region_start )) {    
+      $raw_coding_start = $transcript->coding_region_start;
+      $raw_coding_start -= $offset;
+      $coding_start = $raw_coding_start + $self->munge_gaps( 'transcripts', $raw_coding_start );
+    }
+    else {
+      $coding_start  = undef;
     }
 
-  my ($raw_coding_end,$coding_end);
-  if (defined( $transcript->coding_region_end )) {
-    $raw_coding_end = $transcript->coding_region_end;
-    $raw_coding_end -= $offset;
-      $coding_end = $raw_coding_end   + $self->munge_gaps( 'transcripts', $raw_coding_end );
+    my ($raw_coding_end,$coding_end);
+    if (defined( $transcript->coding_region_end )) {
+      $raw_coding_end = $transcript->coding_region_end;
+      $raw_coding_end -= $offset;
+        $coding_end = $raw_coding_end   + $self->munge_gaps( 'transcripts', $raw_coding_end );
     }
-  else {
-    $coding_end = undef;
+    else {
+      $coding_end = undef;
     }
     my $raw_start = $transcript->start;
     my $raw_end   = $transcript->end  ;
@@ -873,7 +876,10 @@ sub store_TransformedSNPS {
   my $tva = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
   
   my @transcripts = @{$self->get_all_transcripts};
-  
+  if ($self->hub->type eq 'Transcript'){
+    @transcripts = ($self->hub->core_objects->{'transcript'});
+  } 
+
   # get all TVs and arrange them by transcript stable ID and VF ID, ignore non-valids
   my $tvs_by_tr;
   
@@ -907,9 +913,13 @@ sub store_TransformedSNPS {
       last;
     }
   }
-  
+
   # then store them in the transcript's data hash
-  $_->__data->{'transformed'}{'snps'} = $tvs_by_tr->{$_->stable_id} foreach @transcripts;
+  #$_->__data->{'transformed'}{'snps'} = $tvs_by_tr->{$_->stable_id} foreach @transcripts;
+  foreach my $trans_obj (@{$self->get_all_transcripts}) {
+    next if $self->hub->type eq 'Transcript' && $trans_obj->stable_id ne $self->hub->param('t');
+    $trans_obj->__data->{'transformed'}{'snps'} = $tvs_by_tr->{$trans_obj->stable_id}; 
+  }
 }
 
 sub store_TransformedDomains {
@@ -960,12 +970,17 @@ sub get_munged_slice {
   my $extent        = $context eq 'FULL' ? 5000 : $context;
   my $features      = $slice->get_all_Genes(undef, $self->param('opt_db'));
   my @lengths;
-  
+
+  # Allow return of data for a single transcript
+  my $page_type     = $self->hub->type;
+  my $focus_transcript = $page_type eq 'Transcript' ? $self->param('t') : undef;  
+
   if ($context eq 'FULL') {
     @lengths = ($length);
   } else {
     foreach my $gene (grep { $_->stable_id eq $stable_id } @$features) {   
       foreach my $transcript (@{$gene->get_all_Transcripts}) {
+        next if $focus_transcript && $transcript->stable_id ne $focus_transcript; 
         foreach my $exon (@{$transcript->get_all_Exons}) {
           my $start       = $exon->start - $extent;
           my $exon_length = $exon->end   - $exon->start + 1 + 2 * $extent;
