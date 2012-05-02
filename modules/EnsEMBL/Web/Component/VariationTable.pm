@@ -362,7 +362,7 @@ sub configure {
   my $gene_object;
   my $transcript_object;
 
-  if ($object->isa('EnsEMBL::Web::Object::Gene')){
+  if ($object->isa('EnsEMBL::Web::Object::Gene') || $object->isa('EnsEMBL::Web::Object::LRG')){
     $gene_object = $object;
   } else {
     $transcript_object = $object;
