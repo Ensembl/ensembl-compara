@@ -39,6 +39,7 @@ sub configure {
     GO                  => undef,
     FASTA               => undef,
     WEB_COMMON          => undef,
+    PRODUCTION          => undef,
   );
 
   for my $species (keys %{$self->{'conf'}->{'_storage'}}, 'MULTI') {
