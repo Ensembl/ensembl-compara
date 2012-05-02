@@ -86,6 +86,11 @@ sub populate_tree {
   ));
 
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
+
+  $var_menu->append($self->create_node('Variation_Transcript', 'Variation Table',
+    [qw( transsnptable EnsEMBL::Web::Component::Transcript::SNPTable )],
+    { 'availability' => 'transcript database:variation core' }
+  ));
     
   $var_menu->append($self->create_node('Population', 'Population comparison',
     [qw( snptable EnsEMBL::Web::Component::Transcript::TranscriptSNPTable )],
