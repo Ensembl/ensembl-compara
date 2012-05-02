@@ -381,7 +381,7 @@ sub parse_referer {
   
   unshift @path, 'common' unless $path[0] =~ /(Multi|common)/ || $species_defs->valid_species($path[0]);
   
-  return { absolute_url => $ENV{'HTTP_REFERER'} } unless $ENV{'HTTP_REFERER'} =~ /$servername/ && $species_defs->OBJECT_TO_SCRIPT->{$path[1]};
+  return { absolute_url => $ENV{'HTTP_REFERER'} } unless $ENV{'HTTP_REFERER'} =~ /$servername/i && $species_defs->OBJECT_TO_SCRIPT->{$path[1]};
 
   my ($species, $type, $action, $function) = @path;
 
