@@ -39,18 +39,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use Cwd;
 
-
-=head2 strict_hash_format
-
-    Description : Implements strict_hash_format() interface method of Bio::EnsEMBL::Hive::Process that is used to set the strictness level of the parameters' parser.
-                  Here we return 0 in order to indicate that neither input_id() nor parameters() is required to contain a hash.
-
-=cut
-
-sub strict_hash_format {
-    return 0;
-}
-
 sub fetch_input {
     my $self = shift;
 
@@ -116,8 +104,9 @@ sub _create_specific_readme {
 	Bio::EnsEMBL::Registry->load_all();
     }
 
-    my $compara_dba = $self->go_figure_compara_dba($self->param('compara_db'));
- 
+    #Note this is using the database set in $self->param('compara_db') rather than the underlying compara database.
+    my $compara_dba = $self->compara_dba;
+
     #Get meta_container adaptor
     my $meta_container = $compara_dba->get_MetaContainer;
 
@@ -134,7 +123,6 @@ sub _create_specific_readme {
     #Get tree and ordered set of genome_dbs
     my ($newick_species_tree, $species_set) = $self->_get_species_tree($mlss);
     my $method_link = $mlss->method_link_type;
-
     my $filename = $self->param('output_dir') . "/README." . lc($method_link) . "_" . @$species_set . "_way";
 
     #Get first schema_version

@@ -36,17 +36,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign;
 use strict;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-=head2 strict_hash_format
-
-    Description : Implements strict_hash_format() interface method of Bio::EnsEMBL::Hive::Process that is used to set the strictness level of the parameters' parser.
-                  Here we return 0 in order to indicate that neither input_id() nor parameters() is required to contain a hash.
-
-=cut
-
-sub strict_hash_format {
-    return 0;
-}
-
 sub fetch_input {
     my $self = shift;
 }

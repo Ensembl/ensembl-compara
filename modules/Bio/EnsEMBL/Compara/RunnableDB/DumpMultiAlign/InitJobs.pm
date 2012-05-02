@@ -41,17 +41,6 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
-=head2 strict_hash_format
-
-    Description : Implements strict_hash_format() interface method of Bio::EnsEMBL::Hive::Process that is used to set the strictness level of the parameters' parser.
-                  Here we return 0 in order to indicate that neither input_id() nor parameters() is required to contain a hash.
-
-=cut
-
-sub strict_hash_format {
-    return 0;
-}
-
 sub fetch_input {
     my $self = shift;
 
@@ -72,7 +61,8 @@ sub fetch_input {
 	Bio::EnsEMBL::Registry->load_all();
     }
 
-    my $compara_dba = $self->go_figure_compara_dba($self->param('compara_db'));
+    #Note this is using the database set in $self->param('compara_db') rather than the underlying compara database.
+    my $compara_dba = $self->compara_dba;
 
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
     my $genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('species'));
