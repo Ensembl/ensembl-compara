@@ -18,7 +18,7 @@ sub process {
 
   ## Get the data!
   my ($data, $content, $param);
-  my ($method) = grep $hub->param($_), qw(text file url);
+  my ($method) = grep $hub->param($_), qw(file url text);
   if ($method) {
     my $response = $self->upload($method, 'coords');
     $data = $session->get_data(code => $response->{'code'});

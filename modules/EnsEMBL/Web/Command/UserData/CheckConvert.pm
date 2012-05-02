@@ -18,7 +18,7 @@ sub process {
   my $id_mapper          = $hub->param('id_mapper');
   my $consequence_mapper = $hub->param('consequence_mapper');
   my $url_params         = { __clear => 1 };
-  my ($method)           = grep $hub->param($_), qw(text file url);
+  my ($method)           = grep $hub->param($_), qw(file url text);
   my @files_to_convert;
 
   if ($id_mapper) {
