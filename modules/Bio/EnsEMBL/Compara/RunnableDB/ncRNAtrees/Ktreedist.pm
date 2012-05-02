@@ -30,10 +30,6 @@ $ktreedist->write_output(); #writes to DB
 
 =head1 DESCRIPTION
 
-This Analysis will take the sequences from a cluster, the cm from
-nc_profile and run a profiled alignment, storing the results as
-cigar_lines for each sequence.
-
 =cut
 
 

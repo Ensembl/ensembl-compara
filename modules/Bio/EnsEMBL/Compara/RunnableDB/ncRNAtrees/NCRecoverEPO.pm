@@ -30,10 +30,6 @@ $nc_recover_epo->write_output(); #writes to DB
 
 =head1 DESCRIPTION
 
-This Analysis will take the sequences from a cluster, the cm from
-nc_profile and run a profiled alignment, storing the results as
-cigar_lines for each sequence.
-
 =cut
 
 
@@ -81,12 +77,16 @@ sub param_defaults {
 sub fetch_input {
   my $self = shift @_;
 
+  return if ($self->param('skip'));
+
   $self->input_job->transient_error(0);
   my $mlss_id    = $self->param('mlss_id')    || die "'mlss_id' is an obligatory numeric parameter\n";
   my $epo_db     = $self->param('epo_db')     || die "'epo_db' is an obligatory hash parameter\n";
   my $nc_tree_id = $self->param('nc_tree_id') || die "'nc_tree_id' is an obligatory numeric parameter\n";
   $self->input_job->transient_error(1);
 
+
+  print "$nc_tree_id\n";
   $self->param('nc_tree', $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($nc_tree_id));
 
   $self->param('member_adaptor', $self->compara_dba->get_MemberAdaptor);
@@ -137,6 +137,8 @@ sub fetch_input {
 sub run {
   my $self = shift @_;
 
+  return if ($self->param('skip'));
+
   $self->run_ncrecoverepo;
   $self->run_low_coverage_best_in_alignment;
 }
@@ -155,6 +157,8 @@ sub run {
 
 sub write_output {
   my $self = shift @_;
+
+  return if ($self->param('skip'));
 
   $self->param('predictions_to_add', {});
   $self->remove_low_cov_predictions;
