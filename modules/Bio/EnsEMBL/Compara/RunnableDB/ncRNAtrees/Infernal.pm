@@ -31,7 +31,7 @@ $infernal->write_output(); #writes to DB
 =head1 DESCRIPTION
 
 This Analysis will take the sequences from a cluster, the cm from
-nc_profile and run a profiled alignment, storing the results as
+hmm_profile and run a profiled alignment, storing the results as
 cigar_lines for each sequence.
 
 =cut
@@ -262,7 +262,7 @@ sub run_infernal {
 
 #   if (1 < scalar keys %{$self->param('model_id_hash')}) {
 #     # We revert to the clustering_id tag, which maps to the RFAM
-#     # 'name' field in nc_profile (e.g. 'mir-135' instead of 'RF00246')
+#     # 'name' field in hmm_profile (e.g. 'mir-135' instead of 'RF00246')
 #     print STDERR "WARNING: More than one model: ", join(",",keys %{$self->param('model_id_hash')}), "\n";
 #     $model_id = $self->param('nc_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
 #     # $self->throw("This cluster has more than one associated model");
@@ -285,7 +285,7 @@ sub run_infernal {
     $self->param('nc_tree')->release_tree;
     $self->param('nc_tree', undef);
     $self->input_job->transient_error(0);
-    die ("Failed to find '$model_id' both in 'model_id' and 'name' fields of 'nc_profile' table");
+    die ("Failed to find '$model_id' both in 'model_id' and 'name' fields of 'hmm_profile' table");
   }
 
 
@@ -361,7 +361,7 @@ sub dump_model {
   my $model_id = shift;
 
   my $sql = 
-    "SELECT hc_profile FROM nc_profile ".
+    "SELECT hc_profile FROM hmm_profile ".
       "WHERE $field=\"$model_id\"";
   my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute();
