@@ -8,6 +8,7 @@ use base qw(Bio::EnsEMBL::GlyphSet_transcript);
 
 sub features {
   my $self           = shift;
+  my @genes          = @_;
   my $slice          = $self->{'container'};
   my $db_alias       = $self->my_config('db');
   my $analyses       = $self->my_config('logic_names');
@@ -15,13 +16,15 @@ sub features {
   my $selected_gene  = $self->my_config('g') || $self->core('g');
   my $selected_trans = $self->core('t')      || $self->core('pt');
   my $highlight      = $self->core('db') eq $self->my_config('db') ? $display =~ /gene/ ? 'highlight2' : 'highlight1' : undef;
-  my (@genes, %highlights, %transcripts, %exons);
+  my (%highlights, %transcripts, %exons);
   
-  ## FIXME - this is an ugly hack!
-  if ($slice->isa('Bio::EnsEMBL::LRGSlice') && $analyses->[0] ne 'LRG_import') {
-    @genes = map @{$slice->feature_Slice->get_all_Genes($_, $db_alias) || []}, @$analyses;
-  } else {
-    @genes = map @{$slice->get_all_Genes($_, $db_alias, 1) || []}, @$analyses;
+  if (!scalar @genes) {
+    ## FIXME - this is an ugly hack!
+    if ($slice->isa('Bio::EnsEMBL::LRGSlice') && $analyses->[0] ne 'LRG_import') {
+      @genes = map @{$slice->feature_Slice->get_all_Genes($_, $db_alias) || []}, @$analyses;
+    } else {
+      @genes = map @{$slice->get_all_Genes($_, $db_alias, 1) || []}, @$analyses;
+    }
   }
   
   if ($highlight) {
