@@ -161,7 +161,7 @@ sub menus {
     feature             => 'Protein features',
     
     # Variations
-    variation           => 'Germline variation',
+    variation           => 'Variation',
     somatic             => 'Somatic mutations',
     ld_population       => 'Population features',
     
