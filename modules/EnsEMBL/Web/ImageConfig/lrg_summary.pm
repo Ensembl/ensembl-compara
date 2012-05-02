@@ -44,7 +44,7 @@ sub init {
 
   $self->add_tracks('lrg',
     [ 'lrg_transcript', 'LRG', '_transcript', {
-      display     => 'normal',
+      display     => 'transcript_label',
       strand      => 'f',
       name        => 'LRG transcripts', 
       description => 'Shows LRG transcripts',
