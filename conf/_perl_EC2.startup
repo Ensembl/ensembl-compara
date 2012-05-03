@@ -1,0 +1,233 @@
+#!/usr/local/bin/perl
+
+use strict;
+use warnings;
+no warnings 'uninitialized';
+
+warn " Executing perl startup file\n";
+
+# for things in the /perl directory
+use ModPerl::Registry;
+
+# for status info
+use Apache2::Status;
+use Apache2::SizeLimit;
+use Apache2::ServerUtil;
+
+$Apache2::SizeLimit::MAX_PROCESS_SIZE = 1000000; # Kill httpd over 1000Mb
+
+use CGI qw(-compile :cgi); # Load CGI.pm and call its compile method to precompile its autoloaded routines
+use DBI;
+use GD; # for making gifs
+use Storable qw(nfreeze freeze thaw);
+
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
+
+use EnsEMBL::Web::Tools::DHTMLmerge;
+use EnsEMBL::Web::SpeciesDefs;
+
+# EnsEMBL::Web::Registry must be used here in order to uncover any use errors in dependant modules.
+# If it is not used here, the only error you will see is 'Global symbol "$ENSEMBL_WEB_REGISTRY" requires explicit package name' from some plugin module
+use EnsEMBL::Web::Registry;
+
+my $conf = new EnsEMBL::Web::SpeciesDefs;
+
+# Plugin in .pm files
+# The effect of this is that any plugin with an EnsEMBL::Web:: namespace is used to extend that module in the core directory
+# Functions that exist in both the core and the plugin will be overwritten, functions that exist only in the plugin will be added
+require LoadPlugins;
+LoadPlugins::plugin(sub { /\.pm$/ && !/(Root|SpeciesDefs|ConfigPacker|DHTMLmerge|Cache)\.pm/; });
+
+if ($conf->ENSEMBL_MART_ENABLED > 0) {
+  require 'BioMart/Initializer.pm';
+  BioMart::Initialize->import;
+  require 'BioMart/AttributeTable.pm';
+  require 'BioMart/Configurator.pm';
+  require 'BioMart/DatasetI.pm';
+  require 'BioMart/Exception.pm';
+  require 'BioMart/FormatterI.pm';
+  require 'BioMart/Initializer.pm';
+  require 'BioMart/Links.pm';
+  require 'BioMart/Query.pm';
+  require 'BioMart/QueryRunner.pm';
+  require 'BioMart/Registry.pm';
+  require 'BioMart/ResultTable.pm';
+  require 'BioMart/Root.pm';
+  require 'BioMart/RootI.pm';
+  require 'BioMart/Web.pm';
+  require 'BioMart/Configuration/Attribute.pm';
+  require 'BioMart/Configuration/AttributeCollection.pm';
+  require 'BioMart/Configuration/AttributeGroup.pm';
+  require 'BioMart/Configuration/AttributeList.pm';
+  require 'BioMart/Configuration/AttributeTree.pm';
+  require 'BioMart/Configuration/BaseFilter.pm';
+  require 'BioMart/Configuration/BooleanFilter.pm';
+  require 'BioMart/Configuration/ConfigurationTree.pm';
+  require 'BioMart/Configuration/DBLocation.pm';
+  require 'BioMart/Configuration/FilterCollection.pm';
+  require 'BioMart/Configuration/FilterGroup.pm';
+  require 'BioMart/Configuration/FilterList.pm';
+  require 'BioMart/Configuration/FilterTree.pm';
+  require 'BioMart/Configuration/Location.pm';
+  require 'BioMart/Configuration/MartDBLocation.pm';
+  require 'BioMart/Configuration/MartURLLocation.pm';
+  require 'BioMart/Configuration/Option.pm';
+  require 'BioMart/Configuration/PushAction.pm';
+  require 'BioMart/Configuration/RegistryDBPointer.pm';
+  require 'BioMart/Configuration/RegistryURLPointer.pm';
+  require 'BioMart/Configuration/URLLocation.pm';
+  require 'BioMart/Configuration/ValueFilter.pm';
+  require 'BioMart/Configuration/VirtualSchema.pm';
+  require 'BioMart/Dataset/GenomicAlign.pm';
+  require 'BioMart/Dataset/GenomicMAlign.pm';
+  require 'BioMart/Dataset/GenomicSequence.pm';
+  require 'BioMart/Dataset/GenomicSequenceMod.pm';
+  require 'BioMart/Dataset/TableSet.pm';
+  require 'BioMart/Dataset/GenomicSequence/DNAAdaptor.pm';
+  require 'BioMart/Formatter/ADF.pm';
+  require 'BioMart/Formatter/AXT.pm';
+  require 'BioMart/Formatter/AXTPLUS.pm';
+  require 'BioMart/Formatter/CSV.pm';
+  require 'BioMart/Formatter/FASTA.pm';
+  require 'BioMart/Formatter/FASTAA.pm';
+  require 'BioMart/Formatter/FASTACDNA.pm';
+  require 'BioMart/Formatter/FASTAH.pm';
+  require 'BioMart/Formatter/GFF.pm';
+  require 'BioMart/Formatter/HTML.pm';
+  require 'BioMart/Formatter/MAF.pm';
+  require 'BioMart/Formatter/MAF_NOPREVIEW.pm';
+  require 'BioMart/Formatter/MAF_RESTRICTED.pm';
+  require 'BioMart/Formatter/MFA.pm';
+  require 'BioMart/Formatter/MFASTA.pm';
+  require 'BioMart/Formatter/TSV.pm';
+  require 'BioMart/Formatter/TXT.pm';
+  require 'BioMart/Formatter/XLS.pm';
+  require 'BioMart/Formatter/CSV_36.pm';
+  require 'BioMart/Formatter/HTML_36.pm';
+  require 'BioMart/Formatter/TSV_36.pm';
+  require 'BioMart/Formatter/ALL.pm';
+  require 'BioMart/Formatter/ALL_TSV.pm';
+  require 'BioMart/Formatter/DIFF.pm';
+  require 'BioMart/Formatter/DIFF_TSV.pm';
+  require 'BioMart/Formatter/SAME.pm';
+  require 'BioMart/Formatter/SAME_TSV.pm';
+  require 'BioMart/Web/CGIXSLT.pm';
+  require 'BioMart/Web/PageStub.pm';
+  require 'BioMart/Web/SiteDefs.pm';
+  require 'BioMart/Web/TemplateBuilder.pm';
+  require 'BioMart/Web/Zlib.pm';
+}
+
+# below are needed for renewing from the saved martconf.packed file
+
+if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first pass
+  $conf->store;
+  
+  EnsEMBL::Web::Tools::DHTMLmerge::merge_all($conf);
+
+  # dynamically build mart registry file
+  if (keys %{$conf->{'_multi'}{'marts'}} && !$SiteDefs::ENSEMBL_NOMART) { # NOMARTS
+    require EnsEMBL::Web::Tools::MartRegistry;
+    EnsEMBL::Web::Tools::MartRegistry::create($conf->multidb, $conf->marts);
+    
+    my $mr_file = "${SiteDefs::ENSEMBL_SERVERROOT}/biomart-perl/conf/martRegistry.xml";
+    
+    if (! -e $mr_file) {
+      open  FH, ">$mr_file";
+      print FH $conf->create_martRegistry;
+      close FH;
+    }                             
+  }
+  
+  # Remove cached image files
+  my @cached_images = map { glob($conf->ENSEMBL_TMP_DIR_CACHE."/$_.*") } 'mapview', 'chromoview';
+  my $icount        = unlink @cached_images;
+  
+  warn "[CONF]    [INFO] Removed $icount cached image files\n" if $icount;
+  warn "[CONF]    [WARN] Some cached image files not removed: $!" unless $icount == @cached_images;
+
+  my $extra = '';
+  
+  if ($conf->ENSEMBL_MEMCACHED && $conf->ENSEMBL_MEMCACHED->{'servers'} && @{$conf->ENSEMBL_MEMCACHED->{'servers'} || []}) {
+    eval { require EnsEMBL::Web::Cache; };
+    
+    if (!$@ && new EnsEMBL::Web::Cache) {
+      $extra .= '
+ Memcached enabled:  ' . join "\n                     ", sort @{$conf->ENSEMBL_MEMCACHED->{'servers'} || []};
+    
+      $extra .= '
+
+ Memcached flags:    '. join "\n                     ", sort @{$conf->ENSEMBL_MEMCACHED->{'flags'} || []};
+    }
+  }
+
+  if ($conf->ENSEMBL_DEBUG_FLAGS & $conf->ENSEMBL_DEBUG_VERBOSE_STARTUP) {
+    my $i = 1;
+    my $T = $conf->ENSEMBL_DEBUG_FLAGS;
+    $extra .= '
+
+ Debug flags:        ' . join "\n                     ", grep { $T & (($i <<= 1) >> 1) } @{$conf->ENSEMBL_FLAG_NAMES_HR};
+
+    $i = 0;
+    $extra .= '
+
+==============================================================================
+
+ Species' . 
+    join("\n        ", 
+      map { sprintf '%4d  %-6.6s %-32.32s %s', ++$i, $conf->get_config($_, 'SPECIES_RELEASE_VERSION'), $_, $conf->get_config($_, 'SPECIES_COMMON_NAME') } @{$conf->ENSEMBL_DATASETS}
+    );
+  }
+  
+  warn sprintf '
+==============================================================================
+ Server information:
+==============================================================================
+
+ Ensembl version:    %d
+
+ Database Host:      %s
+
+ External address:   %s/
+ Real address:       %s://%s:%s
+
+ Cache namespace:    %s
+
+ Server root:        %s
+
+ PID file:           %s
+ Access logs:        %s
+ Error logs:         %s
+
+ CSS file:           %s/%s/%s.css
+ JavaScript file:    %s/%s/%s.js
+
+ Plugins installed:  %s
+
+==============================================================================
+
+',
+  $conf->ENSEMBL_VERSION,
+
+  $conf->DATABASE_HOST,
+
+  $conf->ENSEMBL_BASE_URL,
+  $conf->ENSEMBL_PROTOCOL, $conf->ENSEMBL_AMAZON_SERVER, $conf->ENSEMBL_PORT,
+
+  $conf->ENSEMBL_BASE_URL,
+
+  $conf->ENSEMBL_SERVERROOT,
+
+  $conf->ENSEMBL_PIDFILE,
+  $conf->ENSEMBL_CUSTOMLOG,
+  $conf->ENSEMBL_ERRORLOG,
+
+  $conf->ENSEMBL_BASE_URL, $conf->ENSEMBL_JSCSS_TYPE, $conf->ENSEMBL_CSS_NAME,
+  $conf->ENSEMBL_BASE_URL, $conf->ENSEMBL_JSCSS_TYPE, $conf->ENSEMBL_JS_NAME,
+  join("\n                     ", grep(/::/, @{$conf->ENSEMBL_PLUGINS || []}), $extra);
+  
+  require EnsEMBL::Web::BlastView::MetaDataBlast;
+}
+
+1;
