@@ -1,6 +1,6 @@
 =head1 NAME
 
-  Bio::EnsEMBL::Hive::DBSQL::PeptideAlignFeatureAdaptor
+  Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor
 
 =head1 SYNOPSIS
 
