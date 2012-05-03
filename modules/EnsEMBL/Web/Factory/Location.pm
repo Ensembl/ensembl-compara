@@ -181,7 +181,7 @@ sub createObjects {
         $start = $cp - ($w - 1) / 2;
         $end   = $cp + ($w - 1) / 2;
       }
-      
+
       my $anchor1 = $self->param('anchor1'); 
       
       if ($seq_region && !$anchor1) {
@@ -195,7 +195,7 @@ sub createObjects {
         # The exception to this is the Marker parameter m, since markers can map to 0, 1 or many locations, the location is not generated in the Marker factory
         # For a list of core parameters, look in Model.pm
         my @params = (
-          [ 'Gene',                [qw(gene                            )] ],
+          [ 'Gene',                [qw(gene geneid                     )] ],
           [ 'Transcript',          [qw(transcript                      )] ],
           [ 'Variation',           [qw(snp variation                   )] ],
           [ 'StructuralVariation', [qw(sv                              )] ],
@@ -269,6 +269,9 @@ sub createObjects {
             
             last if $location;
           }
+          ## If we still haven't managed to find a location (e.g. an incoming link with a bogus URL), 
+          ## throw a warning rather than an ugly runtime error!
+          $self->problem('fatal', 'Malformed URL', $self->_help("The URL used to reach this page may be incomplete or out-of-date."));
         }
       }
     }
