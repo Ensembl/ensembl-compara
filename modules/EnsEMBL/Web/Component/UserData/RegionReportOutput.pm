@@ -45,7 +45,7 @@ sub content {
       my $url     = sprintf('/%s/download?file=%s;prefix=download;format=%s', $hub->species, $filename, $extension);
       $output    .= qq(<h3>Download: <a href="$url">$name</a></h3>);
 
-      $output .= '<p><b>Preview</b> (First 50 lines of report)</p><pre>';
+      $output .= qq(<p><b>Preview</b> (First 50 lines of report)  - <a href="$url">download complete file</a></p><pre>);
       my $i;
       foreach my $line (split(/\n/, $data)) {
         last if $i >= 50;
