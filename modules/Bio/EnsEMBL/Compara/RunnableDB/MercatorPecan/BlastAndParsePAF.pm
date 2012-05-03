@@ -512,7 +512,7 @@ sub get_table_name_from_dbID {
   my ($self, $gdb_id) = @_;
   my $table_name = "peptide_align_feature";
 
-  my $gdba = $self->{'comparaDBA'}->get_GenomeDBAdaptor;
+  my $gdba = $self->compara_dba->get_GenomeDBAdaptor;
   my $gdb = $gdba->fetch_by_dbID($gdb_id);
   return $table_name if (!$gdb);
 

@@ -56,12 +56,9 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::PairwiseSynteny;
 
 use strict;
-use Getopt::Long;
 use Time::HiRes qw(time gettimeofday tv_interval);
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
@@ -78,57 +75,8 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 sub fetch_input {
   my( $self) = @_;
 
-  $self->{'clusterset_id'} = 1;
-
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-
-  # Get the needed adaptors here
-  $self->{gdba} = $self->{'comparaDBA'}->get_GenomeDBAdaptor;
-
-  $self->get_params($self->parameters);
-  $self->get_params($self->input_id);
-
-# # For long parameters, look at analysis_data
-#   if($self->{analysis_data_id}) {
-#     my $analysis_data_id = $self->{analysis_data_id};
-#     my $analysis_data_params = $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($analysis_data_id);
-#     $self->get_params($analysis_data_params);
-#   }
-
   $self->fetch_pairwise_blasts;
   $self->fetch_coordinates;
-
-  return 1;
-}
-
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n") if($self->debug);
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  if($self->debug) {
-    foreach my $key (keys %$params) {
-      print("  $key : ", $params->{$key}, "\n");
-    }
-  }
-
-  foreach my $key (qw[param1 gdbs analysis_data_id]) {
-    my $value = $params->{$key};
-    $self->{$key} = $value if defined $value;
-  }
-
-  return;
 }
 
 
@@ -183,9 +131,11 @@ sub run_pairwise_synteny {
 sub fetch_pairwise_blasts {
   my $self = shift;
 
-  my @genome_dbs = @{$self->{gdbs}};
-  my $genome_db1 = $self->{gdba}->fetch_by_dbID($genome_dbs[0]);
-  my $genome_db2 = $self->{gdba}->fetch_by_dbID($genome_dbs[1]);
+  my $gdba = $self->compara_dba->get_GenomeDBAdaptor;
+
+  my @genome_dbs = @{ $self->param('gdbs') };
+  my $genome_db1 = $gdba->fetch_by_dbID($genome_dbs[0]);
+  my $genome_db2 = $gdba->fetch_by_dbID($genome_dbs[1]);
 
   my $tmp = $self->worker_temp_directory;
   unlink </tmp/*.blasts>;
@@ -241,7 +191,7 @@ sub fetch_coordinates {
 
   my $starttime = time();
 
-  foreach my $genome_db_id (@{$self->{gdbs}}) {
+  foreach my $genome_db_id (@{ $self->param('gdbs') }) {
     my $sql = "SELECT ".
               "concat(m2.member_id,' ',m1.chr_name,' ',m1.chr_start,' ',m1.chr_end,' ',if(m1.chr_strand=1,'-','+')) ".
               "FROM member m1, member m2, subset_member sm ".

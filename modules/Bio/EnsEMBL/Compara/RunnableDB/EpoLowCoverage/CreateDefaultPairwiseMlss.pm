@@ -40,40 +40,21 @@ package Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::CreateDefaultPairwise
 
 use strict;
 
-use Bio::EnsEMBL::Hive;
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub fetch_input {
+
+sub run {
   my $self = shift;
 
-  # create a Compara::DBAdaptor which shares my DBConnection
-  $self->param('comparaDBA', Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc));
-
-  return 1;
-}
-
-
-sub run
-{
-  my $self = shift;
   $self->create_default_mlss();
-  return 1;
 }
 
-
-sub write_output
-{
-  my $self = shift;
-  return 1;
-}
 
 sub create_default_mlss {
     my ($self) = @_;
 
     #Get all pairwise mlss for pairwise_url
-    my $mlss_adaptor = $self->param('comparaDBA')->get_MethodLinkSpeciesSetAdaptor;
+    my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
     my $low_mlss = $mlss_adaptor->fetch_by_dbID($self->param('new_method_link_species_set_id'));
     my $species_set = $low_mlss->species_set;
 
@@ -82,7 +63,7 @@ sub create_default_mlss {
 	#open database defined in url
 	$locator = "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor/url=>" . $self->param('pairwise_default_location');
     } else {
-	throw "Invalid url " . $self->param('pairwise_default_location') . ". Should be of the form: mysql://user:pass\@host:port/db_name\n";
+        die( "Invalid url " . $self->param('pairwise_default_location') . ". Should be of the form: mysql://user:pass\@host:port/db_name" );
     }
     my $pairwise_dba = Bio::EnsEMBL::DBLoader->new($locator);
     my $pairwise_genome_db_adaptor = $pairwise_dba->get_GenomeDBAdaptor;
@@ -93,7 +74,7 @@ sub create_default_mlss {
 	#open database defined in url
 	$base_locator = "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor/url=>" . $self->param('base_location');
     } else {
-	throw "Invalid url " . $self->param('base_db') . ". Should be of the form: mysql://user:pass\@host:port/db_name\n";
+	    die( "Invalid url " . $self->param('base_db') . ". Should be of the form: mysql://user:pass\@host:port/db_name" );
     }
     my $base_dba = Bio::EnsEMBL::DBLoader->new($base_locator);
     my $base_mlss_adaptor = $base_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -113,7 +94,7 @@ sub create_default_mlss {
 	$all_species_set{$genome_db->dbID} = 1;
     }
     if (!defined $ref_genome_db) {
-	throw("Unable to find reference species");
+        die( "Unable to find reference species" );
     }
 
     #Find only low coverage species by removing the high coverage ones from the list of all of them

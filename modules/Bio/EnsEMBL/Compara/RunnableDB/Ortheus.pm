@@ -97,19 +97,14 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::Ortheus;
 
 use strict;
-use Bio::EnsEMBL::Analysis::Runnable::Ortheus;
-use Bio::EnsEMBL::Compara::DnaFragRegion;
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use Bio::EnsEMBL::Compara::NestedSet;
+use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Analysis::Config::Compara; #for $PYTHON and $ORTHEUS and $EXONERATE
 use Bio::EnsEMBL::Analysis::Runnable::Ortheus;
+use Bio::EnsEMBL::Compara::DnaFragRegion;
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
+use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
-use Bio::EnsEMBL::Utils::SqlHelper;
-use Data::Dumper;
-
-use Bio::EnsEMBL::Hive::Process;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -1164,7 +1159,7 @@ sub _load_2XGenomes {
   }
 
   #Find the slice on the reference genome
-  my $genome_db_adaptor = $self->{'comparaDBA'}->get_GenomeDBAdaptor;
+  my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
 
   #DEBUG this opens up connections to all the databases
   my $ref_genome_db = $genome_db_adaptor->fetch_by_name_assembly($self->param('reference_species'));
@@ -1197,7 +1192,7 @@ sub _load_2XGenomes {
       my $compara_db_url = $param->{'compara_db_url'};
 
       #if the database name is defined in the url, then open that
-      my $compara_dba;
+      my $pairwise_dba;
       my $locator;
       if ($compara_db_url =~ /mysql:\/\/.*@.*\/.+/) {
 	  #open database defined in url
@@ -1206,15 +1201,15 @@ sub _load_2XGenomes {
 	  throw "Invalid url $compara_db_url. Should be of the form: mysql://user:pass\@host:port/db_name\n";
       }
 
-      $compara_dba = Bio::EnsEMBL::DBLoader->new($locator);
+      $pairwise_dba = Bio::EnsEMBL::DBLoader->new($locator);
 
       #need to store this to allow disconnect when call ortheus
-      $self->{pairwise_compara_dba}->{$compara_dba->dbc->dbname} = $compara_dba;
+      $self->{pairwise_compara_dba}->{$pairwise_dba->dbc->dbname} = $pairwise_dba;
       #Get pairwise genomic_align_block adaptor
-      my $gaba = $compara_dba->get_GenomicAlignBlockAdaptor;
+      my $gaba = $pairwise_dba->get_GenomicAlignBlockAdaptor;
 
       #Get pairwise method_link_species_set
-      my $p_mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
+      my $p_mlss_adaptor = $pairwise_dba->get_MethodLinkSpeciesSetAdaptor;
       my $pairwise_mlss = $p_mlss_adaptor->fetch_by_dbID($param->{'method_link_species_set_id'});
 
       #find non_reference species name in pairwise alignment
@@ -1274,7 +1269,7 @@ sub _load_2XGenomes {
 
 	  print "SIMPLE CASE: longest_region $longest_ref_region length " . $sum_lengths->[$longest_ref_region] . "\n" if $self->debug;
 	  
-	  _build_2x_composite_seq($self, $compara_dba, $ref_slice_adaptor, $target_slice_adaptor, $ga_frag_array->[$longest_ref_region]);
+	  $self->_build_2x_composite_seq($pairwise_dba, $ref_slice_adaptor, $target_slice_adaptor, $ga_frag_array->[$longest_ref_region]);
 
 	  push @{$self->{ga_frag}}, $ga_frag_array->[$longest_ref_region];
 	  push @{$self->{'2x_dnafrag_region'}}, $ga_frag_array->[$longest_ref_region]->[0]->{dnafrag_region};
@@ -1329,7 +1324,7 @@ sub _load_2XGenomes {
 	  print "longest_ref_region $longest_ref_region length " . $sum_lengths->[$longest_ref_region] . "\n" if $self->debug;
 
 	  #store composite_seq in ga_frag_array->[$longest_ref_region]
-	  _build_2x_composite_seq($self, $compara_dba, $ref_slice_adaptor, $target_slice_adaptor, $ga_frag_array->[$longest_ref_region]);
+	  $self->_build_2x_composite_seq($pairwise_dba, $ref_slice_adaptor, $target_slice_adaptor, $ga_frag_array->[$longest_ref_region]);
 	  push @{$self->{ga_frag}}, $ga_frag_array->[$longest_ref_region];
 
 	  push @{$self->{'2x_dnafrag_region'}}, $ga_frag_array->[$longest_ref_region]->[0]->{dnafrag_region};
@@ -1602,7 +1597,7 @@ sub _create_block_frag_array {
 		#print "REVERSE $ref_start $ref_end\n";
 	    }
 
-	    my $dnafrag_adaptor = $self->{'comparaDBA'}->get_DnaFragAdaptor;
+	    my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
 	    
 	    my $dnafrag_region = new Bio::EnsEMBL::Compara::DnaFragRegion(
 			      -dnafrag_id => $ga->dnafrag->dbID,
@@ -1742,7 +1737,7 @@ sub _create_span_frag_array {
 		    $ref_min_start = $ref_start;
 		}
 		
-		my $dnafrag_adaptor = $self->{'comparaDBA'}->get_DnaFragAdaptor;
+		my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
 
 		my $dnafrag_region = new Bio::EnsEMBL::Compara::DnaFragRegion(
   	               -dnafrag_id => $dnafrag->dbID,

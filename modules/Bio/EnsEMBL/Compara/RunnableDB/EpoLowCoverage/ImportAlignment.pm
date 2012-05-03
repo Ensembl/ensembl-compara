@@ -203,7 +203,7 @@ sub importAlignment {
 		  " WHERE method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
 
     } else {
-#	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
+#	copy_data($self->{'from_comparaDBA'}, $self->compara_dba,
 #		  "genomic_align",
 #		  "genomic_align_id",
 #		  $min_ga, $max_ga,
