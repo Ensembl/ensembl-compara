@@ -137,7 +137,7 @@ sub filter_munged_snps {
     sort { $a->[0] <=> $b->[0] }                                                             # [ index, [fake_s, fake_e, SNP] ] Sort snps on schwartzian index
     map  {[ $_->[1] + $consequence_types->{$_->[2]->display_consequence($gene)} * 1e9, $_ ]} # [ index, [fake_s, fake_e, SNP] ] Compute schwartzian index [ consequence type priority, fake SNP ]
     grep {( @{$_->[2]->get_all_validation_states} ? 
-      (grep { $valids->{"opt_$_"} } @{$_->[2]->get_all_validation_states}) : 
+      (grep { $valids->{"opt_$_"} } map {lc($_)} @{$_->[2]->get_all_validation_states}) : 
       $valids->{'opt_noinfo'}
     )}                                                                                       # [ fake_s, fake_e, SNP ] Grep features to see if they are valid
     grep { scalar map { $valids->{'opt_' . lc $_} ? 1 : () } @{$_->[2]->consequence_type} }  # [ fake_s, fake_e, SNP ] Filter our unwanted consequence types
