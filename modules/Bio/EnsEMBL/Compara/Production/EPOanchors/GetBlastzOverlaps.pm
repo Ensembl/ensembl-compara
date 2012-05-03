@@ -68,14 +68,14 @@ sub fetch_input {
 	#create a Compara::DBAdaptor which shares the same DBI handle with $self->db (Hive DBAdaptor)
 	$self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc) or die "cant connect\n";
 	$self->{'comparaDBA'}->dbc->disconnect_if_idle();
-	$self->{'hiveDBA'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-DBCONN => $self->{'comparaDBA'}->dbc) or die "cant connect\n";
-	$self->{'hiveDBA'}->dbc->disconnect_if_idle();
-	my $analysis_data_adaptor = $self->{hiveDBA}->get_AnalysisDataAdaptor();
+
 	my $mlssid_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "MethodLinkSpeciesSet");
 	my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GenomeDB");
 	my $genomic_align_block_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GenomicAlignBlock"); 
 	$self->genomic_align_block_adaptor( $genomic_align_block_adaptor );
 	my $dnafrag_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "DNAFrag");
+
+	my $analysis_data_adaptor = $self->db->get_AnalysisDataAdaptor();
 	$self->analysis_data( eval $analysis_data_adaptor->fetch_by_dbID($self->analysis_data_id) );
 	$self->get_input_id($self->input_id);
 	$self->reference_genome_db( $genome_db_adaptor->fetch_by_dbID($self->genome_db_ids->[0]) );

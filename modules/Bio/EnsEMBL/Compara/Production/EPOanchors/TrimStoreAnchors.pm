@@ -68,8 +68,6 @@ sub fetch_input {
 	#create a Compara::DBAdaptor which shares the same DBI handle with $self->db (Hive DBAdaptor)
 	$self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc) or die "cant connect\n";
 	$self->{'comparaDBA'}->dbc->disconnect_if_idle();
-	$self->{'hiveDBA'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-DBCONN => $self->{'comparaDBA'}->dbc) or die "cant connect\n";
-	$self->{'hiveDBA'}->dbc->disconnect_if_idle();
 	
 	return 1;
 }

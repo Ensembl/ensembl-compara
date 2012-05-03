@@ -68,12 +68,10 @@ sub fetch_input {
 	#create a Compara::DBAdaptor which shares the same DBI handle with $self->db (Hive DBAdaptor)
 	$self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
 	$self->{'comparaDBA'}->dbc->disconnect_if_idle();
-	$self->{'hiveDBA'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-DBCONN => $self->{'comparaDBA'}->dbc);
-	$self->{'hiveDBA'}->dbc->disconnect_if_idle();
 	$self->get_input_id($self->input_id);
 	my $genomic_align_block_adaptor = $self->{comparaDBA}->get_GenomicAlignBlockAdaptor();
 	my $align_slice_adaptor = $self->{comparaDBA}->get_AlignSliceAdaptor();
-	my $analysis_data_adaptor = $self->{hiveDBA}->get_AnalysisDataAdaptor();
+	my $analysis_data_adaptor = $self->db->get_AnalysisDataAdaptor();
 	my $target_genome_files = eval $analysis_data_adaptor->fetch_by_dbID($self->analysis_data_id);
 	$self->target_file( $target_genome_files->{target_genomes}->{ $self->target_genome_db_id } );
 	my $genomic_align_block_id = $self->genomic_align_block_id;

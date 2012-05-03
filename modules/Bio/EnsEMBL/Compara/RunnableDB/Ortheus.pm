@@ -1149,7 +1149,7 @@ sub _load_2XGenomes {
   my ($self, $synteny_region_id, $analysis_data_id) = @_;
 
   #get data from analysis_data table
-  my $analysis_data_adaptor = $self->{hiveDBA}->get_AnalysisDataAdaptor();
+  my $analysis_data_adaptor = $self->db->get_AnalysisDataAdaptor();
   my @parameters = split (" ",$analysis_data_adaptor->fetch_by_dbID($analysis_data_id));
 
   #if no 2x genomes defined, return
