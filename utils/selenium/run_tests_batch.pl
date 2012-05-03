@@ -23,7 +23,8 @@ $timeout   = qq{-timeout $timeout} if($timeout);
 $url       = qq{-url $url} if($url);
 my @module = split(/,/, $module) if($module);
 my $host = `host mib20062i`; #get the IP address of the selenium server which is on the macbook pro.
-$host =~ s/mib20062i.internal.sanger.ac.uk has address //;#'172.20.11.204';
+$host =~ s/mib20062i.internal.sanger.ac.uk has address //;
+#$host = '172.20.10.187';
 my $port   = "4444";
 
 # check to see if the selenium server is online(URL returns OK if server is online).
@@ -45,7 +46,7 @@ if (-d 'test_reports') {
 my @non_species_modules = qw(Generic);  
 
 #species related test modules .... running every thing by default, new one (species related) needs to be added here
-my @species_modules = qw(GenomeStatistics Gene Karyotype Location Regulation Transcript Variation);
+my @species_modules = qw(GenomeStatistics Gene Karyotype Location Regulation Transcript Variation Blat);
 
 # running specific module from the command line e.g: -module Generic,Gene
 if(@module) {
