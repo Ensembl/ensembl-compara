@@ -49,14 +49,6 @@ sub content {
   if ($object->is_single_feature_view) {
     $html = "Showing a single experiment out of $total_experiments experiments";
   }
-  elsif ($object->is_single_feature_type_name_view) {
-    $html .= sprintf('%s&nbsp;(<a href="%s" title="Show all experiments">%s</a>)',
-      $shown_experiments
-        ? sprintf('Showing %s experiments with feature type name: %s', $shown_experiments, encode_entities($feature_sets_info->[0]{'feature_type_name'}))
-        : 'No experiment found for the given feature type name.',
-      $object->get_url({}),
-      $shown_experiments ? 'Remove Filter' : 'Show all');
-  }
   elsif ($total_experiments == $shown_experiments) {
     $html .= "Showing all  $total_experiments experiments";
   }
@@ -120,10 +112,11 @@ sub evidence_link {
   my ($self, $feature_type_name) = @_;
   my $object = $self->object;
 
-  return $object->is_single_feature_type_name_view
+  return $object->is_feature_type_filter_on
     ? encode_entities($feature_type_name)
-    : sprintf('<a href="%s" title="View all experiments with feature type name %s">%2$s</a>',
-        $object->get_url({'ftname' => $feature_type_name}),
+    : sprintf('<a href="%s" title="%s experiments with feature type name %s">%3$s</a>',
+        $object->get_url({'feature_type' => $feature_type_name}, 1),
+        $object->is_filter_applied ? 'Filter' : 'View all', 
         encode_entities($feature_type_name),
     )
   ;

@@ -21,7 +21,7 @@ sub new {
   my $feature_set_adaptor   = $funcgen_db_adaptor->get_FeatureSetAdaptor;
   my $feature_type_adaptor  = $funcgen_db_adaptor->get_FeatureTypeAdaptor;
 
-  my $param_to_filter_map   = $self->{'_param_to_filter_map'}   = {'all' => 'All', 'cell_type' => 'Cell/Tissue', 'evidence_type' => 'Evidence type', 'project' => 'Project'};
+  my $param_to_filter_map   = $self->{'_param_to_filter_map'}   = {'all' => 'All', 'cell_type' => 'Cell/Tissue', 'evidence_type' => 'Evidence type', 'project' => 'Project', 'feature_type' => 'Feature type'};
   my $grouped_feature_sets  = $self->{'_grouped_feature_sets'}  = $funcgen_db_adaptor->get_ExperimentAdaptor->fetch_experiment_filter_counts;
   my $feature_sets_info     = $self->{'_feature_sets_info'}     = [];
   my $feature_sets          = [];
@@ -31,10 +31,6 @@ sub new {
   # Get the feature set according to the url param
   if ($param =~ /^name\-(.+)$/) {
     $feature_sets = [ $feature_set_adaptor->fetch_by_name($1) || () ];
-  }
-  elsif ($param =~ /^ftname\-(.+)$/) {
-    my $feature_type  = $feature_type_adaptor->fetch_by_name($1);
-    $feature_sets     = $feature_type ? $feature_set_adaptor->fetch_all_by_FeatureType($feature_type) : [];
   }
   else {
     my $constraints = {};
@@ -53,6 +49,9 @@ sub new {
         elsif ($filter eq 'project') {
           my $experimental_group_adaptor = $funcgen_db_adaptor->get_ExperimentalGroupAdaptor;
           $constraints->{'projects'} = [ map $experimental_group_adaptor->fetch_by_name($_), @$value ];
+        }
+        elsif ($filter eq 'feature_type') {
+          $constraints->{'feature_types'} = [ map $feature_type_adaptor->fetch_by_name($_), @$value ];
         }
       }
     }
@@ -124,10 +123,11 @@ sub is_single_feature_view {
   return $self->hub->param('ex') =~ /^name\-/ ? 1 : undef;
 }
 
-sub is_single_feature_type_name_view {
-  ## Tells whether filter is applied wrt single feature type name - acc to the ex param
-  my $self = shift;
-  return $self->hub->param('ex') =~ /^ftname\-/ ? 1 : undef;
+sub is_feature_type_filter_on {
+  ## Tells whether feature type filter is applied
+  my $self    = shift;
+  my $filters = $self->applied_filters;
+  return exists $filters->{'feature_type'};
 }
 
 sub total_experiments {
@@ -160,18 +160,22 @@ sub applied_filters {
 sub is_filter_applied {
   ## Checks whether a filter is already applied or not
   ## @return 1 or undef accordingly
-  my ($self, $filter_name, $value) = @_;
+  my $self    = shift;
+  my $filters = $self->applied_filters;
 
-  my $applied_filters = $self->applied_filters;
+  # If a specific filter not provided
+  return scalar keys %$filters ? 1 : 0 unless @_;
+
+  my ($filter_name, $value) = @_;
 
   # if filter param is provided
   if ($filter_name) {
-    $_ eq $value and return 1 for @{$applied_filters->{$filter_name} || []};
+    $_ eq $value and return 1 for @{$filters->{$filter_name} || []};
   }
 
   # if filter title is provided
   if ($filter_name = $self->{'_filter_to_param_map'}{$filter_name}) {
-    $_ eq $value and return 1 for @{$applied_filters->{$filter_name} || []};
+    $_ eq $value and return 1 for @{$filters->{$filter_name} || []};
   }
   return undef;
 }
@@ -198,10 +202,6 @@ sub get_url {
   # All
   if (!scalar keys %$filters || exists $filters->{'All'}) {
     $param = 'all';
-
-  # Feature type name
-  } elsif (exists $filters->{'ftname'}) {
-    $param = "ftname-$filters->{'ftname'}";
 
   # Other filters
   } else {
