@@ -55,7 +55,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignment
 
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

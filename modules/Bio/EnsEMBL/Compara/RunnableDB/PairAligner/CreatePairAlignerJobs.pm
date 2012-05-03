@@ -51,15 +51,11 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs;
 
 use strict;
 
-use Bio::EnsEMBL::Hive;
-
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
-
+use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
 
-use Bio::EnsEMBL::Analysis::RunnableDB;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {

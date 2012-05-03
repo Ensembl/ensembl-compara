@@ -52,17 +52,12 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence;
 
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
-
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBLoader;
-
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
-
+use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
 
-use Bio::EnsEMBL::Analysis::RunnableDB;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 fetch_input

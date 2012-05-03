@@ -29,24 +29,14 @@ Abstract base class of AlignmentChains and AlignmentNets
 =cut
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
 
-use vars qw(@ISA);
 use strict;
 
-#use Bio::EnsEMBL::Hive::Process;
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::SqlHelper;
+use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-############################################################
-sub new {
-  my ($class,@args) = @_;
-  my $self = $class->SUPER::new(@args);
- 
-  return $self;
-}
 
 sub fetch_input {
     my ($self) = @_;

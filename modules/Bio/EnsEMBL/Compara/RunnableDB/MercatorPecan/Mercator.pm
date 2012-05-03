@@ -52,10 +52,9 @@ Supported keys:
 package Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Mercator;
 
 use strict;
+use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Analysis::Runnable::Mercator;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;;
-use Bio::EnsEMBL::Utils::Exception;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

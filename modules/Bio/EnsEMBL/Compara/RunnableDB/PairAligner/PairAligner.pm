@@ -51,21 +51,17 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
 
 use strict;
-
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
+use Time::HiRes qw(time gettimeofday tv_interval);
+use File::Basename;
+use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::SqlHelper;
+use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
-use Bio::EnsEMBL::Utils::Exception;
-use Time::HiRes qw(time gettimeofday tv_interval);
-use File::Basename;
 
-use Bio::EnsEMBL::Analysis::RunnableDB;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
-use Bio::EnsEMBL::Utils::SqlHelper;
 
 
 ##########################################

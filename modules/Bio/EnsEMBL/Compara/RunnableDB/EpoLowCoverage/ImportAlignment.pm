@@ -37,7 +37,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::ImportAlignment;
 
 use strict;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');

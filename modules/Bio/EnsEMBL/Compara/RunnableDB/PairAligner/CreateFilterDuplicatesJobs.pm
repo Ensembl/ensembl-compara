@@ -51,15 +51,10 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJo
 
 use strict;
 
-#use Bio::EnsEMBL::Hive;
-#use Bio::EnsEMBL::Hive::Extensions;
-
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
-
+use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
-use Bio::EnsEMBL::Utils::Exception;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

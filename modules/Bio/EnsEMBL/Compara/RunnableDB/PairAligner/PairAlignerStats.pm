@@ -46,9 +46,9 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats;
 
 use strict;
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 fetch_input
 

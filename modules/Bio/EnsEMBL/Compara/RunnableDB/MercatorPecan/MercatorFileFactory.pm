@@ -35,7 +35,6 @@ Supported keys:
 package Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::MercatorFileFactory;
 
 use strict;
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');

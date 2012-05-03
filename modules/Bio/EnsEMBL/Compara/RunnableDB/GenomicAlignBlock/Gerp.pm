@@ -45,16 +45,14 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp;
 
 use strict;
 use File::Basename;
-
-use Bio::EnsEMBL::Compara::DnaFragRegion;
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Utils::Exception;
 use Bio::SimpleAlign;
 use Bio::AlignIO;
 use Bio::LocatableSeq;
+use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::SqlHelper;
+use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::ConservationScore;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use Bio::EnsEMBL::Utils::SqlHelper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

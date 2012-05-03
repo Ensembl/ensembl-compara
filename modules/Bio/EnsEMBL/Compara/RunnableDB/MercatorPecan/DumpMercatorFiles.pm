@@ -55,11 +55,10 @@ Supported keys:
 package Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::DumpMercatorFiles;
 
 use strict;
+use Time::HiRes qw(time gettimeofday tv_interval);
+use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Analysis::Runnable::Mercator;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;;
-use Bio::EnsEMBL::Utils::Exception;
-use Time::HiRes qw(time gettimeofday tv_interval);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

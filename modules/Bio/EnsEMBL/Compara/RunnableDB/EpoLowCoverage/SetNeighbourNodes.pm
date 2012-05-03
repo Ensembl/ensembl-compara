@@ -40,8 +40,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes;
 
 use strict;
 
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 $| = 1;
