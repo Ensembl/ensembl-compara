@@ -6,6 +6,8 @@ no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Text::Feature);
 
+use List::Util qw(min);
+
 sub new {
   my( $class, $args ) = @_;
   my $extra      = {
@@ -51,15 +53,14 @@ sub check_format {
   return 0;
 }
 
-
 sub coords {
   my ($self, $data) = @_;
-  return ($data->[13], $data->[15], $data->[16]);
+  return ($data->[13], $data->[15]+1, $data->[16]);
 }
 
 sub _seqname { my $self = shift; return $self->{'__raw__'}[13]; }
 sub strand   { my $self = shift; return $self->_strand( substr($self->{'__raw__'}[8],-1) ); }
-sub rawstart { my $self = shift; return $self->{'__raw__'}[15]; }
+sub rawstart { my $self = shift; return $self->{'__raw__'}[15]+1; }
 sub rawend   { my $self = shift; return $self->{'__raw__'}[16]; }
 sub id       { my $self = shift; return $self->{'__raw__'}[9]; }
 
@@ -71,29 +72,37 @@ sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__e
 sub cigar_string {
   my $self = shift;
   return $self->{'_cigar'} if $self->{'_cigar'};
-  my $strand = $self->strand();
-  my $cigar;
-  my @block_starts  = split /,/,$self->{'__raw__'}[19];
-  my @block_lengths = split /,/,$self->{'__raw__'}[18];
-  my $end = 0;
-  my ($count_starts,$count_lengths)=(scalar @block_starts,scalar @block_lengths);
-# ENSEMBL-813 defensive coding:
-# Too many loops executed when lengths/starts are not checked
-  if (! $count_starts || ($count_lengths != $count_starts )){
-    return $self->{'_cigar'}="";
-  }
-  foreach(0..( $self->{'__raw__'}[17]-1) ) {
-    my $start =shift @block_starts;
-    my $length = shift @block_lengths;
-    if($_) {
-      $cigar.= ( $start - $end - 1)."I";
+  my @raw = @{$self->{'__raw__'}};
+  # extract lists
+  my @qst = split /,/,$raw[19];
+  my @tst = split /,/,$raw[20];
+  my @len = split /,/,$raw[18];
+  my $num_blocks = min($raw[17],scalar @qst,scalar @tst,scalar @len); 
+  # rearrange into (q,t,l),(q,t,l),.... Easier to process.
+  my @aligns = map { { qst => $qst[$_]+0, 
+                       tst => $tst[$_]+0, 
+                       len => $len[$_]+0} } (0 .. $num_blocks-1);
+  return "" unless @aligns;
+  # Sort into tst order (may be in any order) (paranoia)
+  @aligns = sort { $a->{'tst'} <=> $b->{'tst'} } @aligns;
+  # If multiplying size of last block by three would take us to the end,
+  # do so (assuming AA-block sizes rather than bases). Same hack at UCSC.
+  my $multiplier = 1;
+  my $block_end = $raw[16]; # +ve strand
+  $block_end = $raw[14]-$raw[15] if($self->strand < 0); # -ve strand, uses a == x-b iff x-a == b
+  $multiplier = 3 if(($aligns[-1]->{'tst'}+$aligns[-1]->{'len'}*3) == $block_end);
+  # Roll cigar
+  my @cigar;
+  foreach (0..$num_blocks-1) {
+    push @cigar,[$aligns[$_]->{'len'} * $multiplier,"M"];
+    if($_ < $num_blocks-1) {
+      push @cigar,[$aligns[$_+1]->{'tst'} - $aligns[$_]->{'tst'} - $aligns[$_]->{'len'} * $multiplier,"I"];
+      push @cigar,[$aligns[$_+1]->{'qst'} - $aligns[$_]->{'qst'} - $aligns[$_]->{'len'},"D"];
     }
-    $cigar.= $length.'M';
-    $end = $start + $length -1;
-    ($count_starts,$count_lengths)=(scalar @block_starts,scalar @block_lengths);
-    if (! $count_starts || ($count_lengths != $count_starts )){ last; }
   }
-  return $self->{'_cigar'}=$cigar;
+  @cigar = grep { $_->[0] } @cigar; # delete 0X
+  for(@cigar) { $_->[0]='' if($_->[0] == 1); } # map 1X to X
+  return $self->{'_cigar'} = join("",map { $_->[0].$_->[1] } @cigar);
 }
 
 1;
