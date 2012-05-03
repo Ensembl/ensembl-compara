@@ -138,8 +138,10 @@ sub run_rfamclassify {
     #  $self->build_hash_cms('name');
     $self->build_hash_models();
 
-    my @allclusters;
-    $self->param('allclusters', \@allclusters);
+    my %allclusters;
+#    my @allclusters;
+    $self->param('allclusters', \%allclusters);
+#    $self->param('allclusters', \@allclusters);
 
     # Classify the cluster that already have an RFAM id or mir id
     print STDERR "Storing clusters...\n" if ($self->debug);
@@ -162,7 +164,11 @@ sub run_rfamclassify {
 
         print STDERR "ModelName: $model_name\n" if ($self->debug);
 
-        push @allclusters, [$cm_id, $model_name, \@cluster_list];
+        $allclusters{$cm_id} = {'clusters' => [@cluster_list],
+                                'model_name' => $model_name,
+                                'clustering_id' => $cm_id,
+                               }
+#        push @allclusters, [$cm_id, $model_name, \@cluster_list];
 
     }
 }
@@ -258,7 +264,7 @@ sub build_hash_cms {
   my $self = shift;
   my $field = shift;
 
-  my $sql = "SELECT $field from nc_profile";
+  my $sql = "SELECT $field from hmm_profile";
   my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute;
   while( my $ref  = $sth->fetchrow_arrayref() ) {
@@ -274,7 +280,7 @@ sub load_names_model_id {
   $self->param('model_id_names', {});
   $self->param('model_name_ids', {});
 
-  my $sql = "SELECT model_id, name from nc_profile";
+  my $sql = "SELECT model_id, name from hmm_profile";
   my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute;
   while( my $ref  = $sth->fetchrow_arrayref() ) {
