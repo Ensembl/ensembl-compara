@@ -160,6 +160,7 @@ sub render_normal {
 
 sub render_compact {
   my $self = shift;
+  $self->{'renderer_no_join'} = 1;
   $self->SUPER::render_normal(8, 0);  
 }
 

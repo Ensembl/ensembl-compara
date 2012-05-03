@@ -150,7 +150,7 @@ sub render_normal {
   my $label_h         = 0;
   my ($fontname, $fontsize);
   
-  my $join = $self->{'my_config'}{'data'}{'join'} ne 'off';
+  my $join = ($self->{'my_config'}{'data'}{'join'} ne 'off' && !$self->{'renderer_no_join'});
   if ($self->{'show_labels'}) {
     ($fontname, $fontsize) = $self->get_font_details('outertext');
     $label_h = [ $self->get_text_width(0, 'X', '', ptsize => $fontsize, font => $fontname) ]->[3];
