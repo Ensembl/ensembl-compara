@@ -148,6 +148,7 @@ my $count_proj_trans = 0;
 my $count_homology = 0;
 
 my %compara_to_core;
+my %dbID_to_Member;
 
 sub fetch_or_store_gene {
     my $gene = shift;
@@ -162,6 +163,7 @@ sub fetch_or_store_gene {
         my $counter = shift;
         ${$counter} ++;
     }
+    $dbID_to_Member{$gene_member->dbID} = $gene_member;
     $compara_to_core{$gene_member} = $gene;
     return $gene_member;
 }
@@ -288,7 +290,8 @@ print "total transcripts fetched: ".$transcript_count."\n";
 
 # canonical translations
 my $count_can_trans = 0;
-foreach my $gene_member (@{$subset_genes->member_list}) {
+foreach my $gene_member_id (@{$subset_genes->member_id_list}) {
+    my $gene_member = $dbID_to_Member{$gene_member_id};
     print "CANONICAL ", $gene_member->stable_id, " ";
     my $can_trans = $compara_to_core{$gene_member}->canonical_transcript;
     my $can_member = fetch_or_store_transcript($can_trans, $gene_member, $compara_to_core{$gene_member}, \$count_can_trans);
