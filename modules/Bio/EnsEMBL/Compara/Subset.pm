@@ -214,23 +214,6 @@ sub member_id_list {
   return $self->{'_member_id_list'};
 }
 
-=head2 member_list
-
-  Arg [1]    : 
-  Example    :
-  Description:
-  Returntype : reference to array of Bio::EnsEMBL::Compara::Member objects
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub member_list {
-  my $self = shift;
-
-  return $self->{'_cached_member_list'};
-}
-
 sub count {
   my $self = shift;
 
