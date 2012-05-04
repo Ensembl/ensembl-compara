@@ -477,7 +477,7 @@ sub quantify_mapping {
   print STDERR "# Average contribution mapped clusters = $average_mapped_contribution\n";
 
   my $groupset_tree = $self->param('groupset_tree');
-  my $groupset_tag  = $self->param('groupset_tag');
+  my $groupset_tag  = $self->param('groupset_tag').'QC';
 
   $groupset_tree->store_tag('sid_map_novel_cls' . '_' . $groupset_tag, $num_novel_clusters);
   $groupset_tree->store_tag('sid_map_mapped_cls' . '_' . $groupset_tag, $num_mapped_clusters);
