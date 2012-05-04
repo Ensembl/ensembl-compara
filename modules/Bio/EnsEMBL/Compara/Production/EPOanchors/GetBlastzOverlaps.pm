@@ -60,46 +60,45 @@ sub fetch_input {
 	my $mlssid_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor();
 	my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor();
 	my $genomic_align_block_adaptor = $self->compara_dba->get_GenomicAlignBlockAdaptor();
-	$self->genomic_align_block_adaptor( $genomic_align_block_adaptor );
+	$self->param('genomic_align_block_adaptor', $genomic_align_block_adaptor );
 	my $dnafrag_adaptor = $self->compara_dba->get_DNAFragAdaptor();
 
 	my $analysis_data_adaptor = $self->db->get_AnalysisDataAdaptor();
-	$self->analysis_data( eval $analysis_data_adaptor->fetch_by_dbID($self->param('analysis_data_id') ) );
+	$self->param('analysis_data', eval $analysis_data_adaptor->fetch_by_dbID($self->param('analysis_data_id') ) );
 
-	$self->reference_genome_db( $genome_db_adaptor->fetch_by_dbID($self->param('genome_db_ids')->[0]) );
-	$self->ref_dnafrag( $dnafrag_adaptor->fetch_by_dbID($self->param('ref_dnafrag_id')) );
+	$self->param('reference_genome_db', $genome_db_adaptor->fetch_by_dbID($self->param('genome_db_ids')->[0]) );
+	$self->param('ref_dnafrag', $dnafrag_adaptor->fetch_by_dbID($self->param('ref_dnafrag_id')) );
 	my (@ref_dnafrag_coords, @mlssid_adaptors, $chunk_from, $chunk_to);
 	for(my$i=1;$i<@{$self->param('genome_db_ids')};$i++){ #$self->param('genome_db_ids')->[0] is the reference genome_db_id
 		my $mlss_id = $mlssid_adaptor->fetch_by_method_link_type_GenomeDBs(
 				$self->param('method_type'), 
 				[ 
-					$self->reference_genome_db,
+					$self->param('reference_genome_db'),
 					$genome_db_adaptor->fetch_by_dbID( $self->param('genome_db_ids')->[$i] ),
 				] );
 		push(@mlssid_adaptors, $mlss_id);
 		my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag( 
-						$mlss_id, $self->ref_dnafrag, $self->param('dnafrag_chunks')->[0], $self->param('dnafrag_chunks')->[1] );
+						$mlss_id, $self->param('ref_dnafrag'), $self->param('dnafrag_chunks')->[0], $self->param('dnafrag_chunks')->[1] );
 		foreach my $genomic_align_block( @$gabs ) {
-			next if $genomic_align_block->length < $self->analysis_data->{min_anc_size};
+			next if $genomic_align_block->length < $self->param('analysis_data')->{min_anc_size};
 			push( @ref_dnafrag_coords, [ $genomic_align_block->reference_genomic_align->dnafrag_start,
 					$genomic_align_block->reference_genomic_align->dnafrag_end,
 					$self->param('genome_db_ids')->[$i] ] );
 		}
 	}				
-	$self->mlssids( \@mlssid_adaptors );
-	$self->ref_dnafrag_coords( [ sort {$a->[0] <=> $b->[0]} @ref_dnafrag_coords ] ); #sort reference genomic_align_blocks (gabs) by start position
+	$self->param('mlssids', \@mlssid_adaptors );
+	$self->param('ref_dnafrag_coords', [ sort {$a->[0] <=> $b->[0]} @ref_dnafrag_coords ] ); #sort reference genomic_align_blocks (gabs) by start position
 	print "INPUT: ", scalar(@ref_dnafrag_coords), "\n"; 
-	return 1;
 }
 
 sub run {
 	my ($self) = @_;
 	my(@dnafrag_overlaps, @ref_coords_to_gerp);
-	for(my$i=0;$i<@{$self->ref_dnafrag_coords}-1;$i++) { #find overlapping gabs in reference seq coords
-		my $temp_end = $self->ref_dnafrag_coords->[$i]->[1];
-		for(my$j=$i+1;$j<@{$self->ref_dnafrag_coords};$j++) {
-			if($temp_end >= $self->ref_dnafrag_coords->[$j]->[0]) {
-				$temp_end = $temp_end > $self->ref_dnafrag_coords->[$j]->[1] ? $temp_end : $self->ref_dnafrag_coords->[$j]->[1];
+	for(my$i=0;$i<@{$self->param('ref_dnafrag_coords')}-1;$i++) { #find overlapping gabs in reference seq coords
+		my $temp_end = $self->param('ref_dnafrag_coords')->[$i]->[1];
+		for(my$j=$i+1;$j<@{$self->param('ref_dnafrag_coords')};$j++) {
+			if($temp_end >= $self->param('ref_dnafrag_coords')->[$j]->[0]) {
+				$temp_end = $temp_end > $self->param('ref_dnafrag_coords')->[$j]->[1] ? $temp_end : $self->param('ref_dnafrag_coords')->[$j]->[1];
 			}
 			else {
 				push(@dnafrag_overlaps, [$i, --$j]);
@@ -110,29 +109,29 @@ sub run {
 	}
 	for(my$k=0;$k<@dnafrag_overlaps;$k++) {
 		my(%bases, @bases);
-		for(my$l=$dnafrag_overlaps[$k]->[0];$l<=$dnafrag_overlaps[$k]->[1];$l++) {#indices for $self->ref_dnafrag_coords
-			for(my$m=$self->ref_dnafrag_coords->[$l]->[0];$m<=$self->ref_dnafrag_coords->[$l]->[1];$m++) {
-				$bases{$m}{$self->ref_dnafrag_coords->[$l]->[2]}++; #count the number of non_ref org hits per base
+		for(my$l=$dnafrag_overlaps[$k]->[0];$l<=$dnafrag_overlaps[$k]->[1];$l++) {#indices for $self->param('ref_dnafrag_coords')
+			for(my$m=$self->param('ref_dnafrag_coords')->[$l]->[0];$m<=$self->param('ref_dnafrag_coords')->[$l]->[1];$m++) {
+				$bases{$m}{$self->param('ref_dnafrag_coords')->[$l]->[2]}++; #count the number of non_ref org hits per base
 			}
 		}
 		foreach my $base(sort {$a <=> $b} keys %bases) {
-			if((keys %{$bases{$base}}) >= $self->analysis_data->{min_number_of_org_hits_per_base}) {
+			if((keys %{$bases{$base}}) >= $self->param('analysis_data')->{min_number_of_org_hits_per_base}) {
 				push(@bases, $base);
 			}
 		}
 		if(@bases) {
-			if($bases[-1] - $bases[0] >= $self->analysis_data->{min_anc_size}) {
+			if($bases[-1] - $bases[0] >= $self->param('analysis_data')->{min_anc_size}) {
 				push(@ref_coords_to_gerp, [ $bases[0], $bases[-1] ]);
 			}
 		}
 	}
 	my (%genomic_aligns_on_ref_slice);
-	my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($self->reference_genome_db->name, "core", "Slice");
+	my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($self->param('reference_genome_db')->name, "core", "Slice");
 	foreach my $coord_pair(@ref_coords_to_gerp) {
 		my $ref_slice = $query_slice_adaptor->fetch_by_region( 
-			$self->ref_dnafrag->coord_system_name, $self->ref_dnafrag->name, $coord_pair->[0], $coord_pair->[1] );
-		foreach my $mlss_id(@{$self->mlssids}) {			
-			my $gabs = $self->genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss_id, $ref_slice);
+			$self->param('ref_dnafrag')->coord_system_name, $self->param('ref_dnafrag')->name, $coord_pair->[0], $coord_pair->[1] );
+		foreach my $mlss_id(@{$self->param('mlssids')}) {			
+			my $gabs = $self->param('genomic_align_block_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss_id, $ref_slice);
 			foreach my $gab (@$gabs) {
 				my $rgab = $gab->restrict_between_reference_positions($coord_pair->[0], $coord_pair->[1]);
 				my $restricted_non_reference_genomic_aligns = $rgab->get_all_non_reference_genomic_aligns;
@@ -151,9 +150,8 @@ sub run {
 			}
 		}
 	}
-	$self->genomic_aligns_on_ref_slice( \%genomic_aligns_on_ref_slice );
+	$self->param('genomic_aligns_on_ref_slice', \%genomic_aligns_on_ref_slice );
 	print "RUN: ", scalar(keys %genomic_aligns_on_ref_slice), "\n";
-	return 1;
 }
 
 sub write_output {
@@ -172,7 +170,7 @@ sub write_output {
 	foreach my$sql_statement(keys %sql_statements) {#prepare all the sql statements
 	       	$sql_statements{$sql_statement} = $self->compara_dba->dbc->prepare($sql_statements{$sql_statement});
 	}
-	my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($self->reference_genome_db->name, "core", "Slice");
+	my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($self->param('reference_genome_db')->name, "core", "Slice");
 	eval {
 		$sql_statements{select_next_analysis_id}->execute( $self->param('analysis_id') ) or die;
 	};
@@ -185,15 +183,15 @@ sub write_output {
 	$sql_statements{select_species_set_id}->execute( $next_method_link_species_set_id );
 	$sql_statements{select_genome_db_ids}->execute( ($sql_statements{select_species_set_id}->fetchrow_array)[0] );
 	my $genome_db_ids = ($sql_statements{select_genome_db_ids}->fetchrow_array)[0];
-	foreach my $ref_coords(sort keys %{$self->genomic_aligns_on_ref_slice}) {
+	foreach my $ref_coords(sort keys %{$self->param('genomic_aligns_on_ref_slice')}) {
 		my @Synteny_blocks_to_insert;
 		my $temp_next_analysis_id = $next_analysis_id;
 		my ($ref_from, $ref_to) = split("-", $ref_coords);
-		push(@Synteny_blocks_to_insert, [ $self->ref_dnafrag->dbID, $ref_from, $ref_to, $self->param('ref_dnafrag_strand') ]);
-		foreach my $non_ref_dnafrag_id(sort keys %{$self->genomic_aligns_on_ref_slice->{$ref_coords}}) {
-			foreach my $non_ref_strand(sort keys %{$self->genomic_aligns_on_ref_slice->{$ref_coords}->{$non_ref_dnafrag_id}}) {
-				my $non_ref_coords = $self->genomic_aligns_on_ref_slice->{$ref_coords}->{$non_ref_dnafrag_id}->{$non_ref_strand};
-				next if ($non_ref_coords->[-1]->[1] - $non_ref_coords->[0]->[0] < $self->analysis_data->{min_anc_size} || 
+		push(@Synteny_blocks_to_insert, [ $self->param('ref_dnafrag')->dbID, $ref_from, $ref_to, $self->param('ref_dnafrag_strand') ]);
+		foreach my $non_ref_dnafrag_id(sort keys %{$self->param('genomic_aligns_on_ref_slice')->{$ref_coords}}) {
+			foreach my $non_ref_strand(sort keys %{$self->param('genomic_aligns_on_ref_slice')->{$ref_coords}->{$non_ref_dnafrag_id}}) {
+				my $non_ref_coords = $self->param('genomic_aligns_on_ref_slice')->{$ref_coords}->{$non_ref_dnafrag_id}->{$non_ref_strand};
+				next if ($non_ref_coords->[-1]->[1] - $non_ref_coords->[0]->[0] < $self->param('analysis_data')->{min_anc_size} || 
 					($non_ref_coords->[-1]->[1] - $non_ref_coords->[0]->[0]) < ($ref_to - $ref_from) * 0.2 ||
 					($non_ref_coords->[-1]->[1] - $non_ref_coords->[0]->[0]) > ($ref_to - $ref_from) * 5 ); #need to change - gets rid of unalignable rubbish 
 				push(@Synteny_blocks_to_insert, [$non_ref_dnafrag_id, $non_ref_coords->[0]->[0], 
@@ -234,75 +232,6 @@ sub write_output {
 		}
 	}
 	print "Genome_db_ids: $genome_db_ids\n";
-	return 1;
-}
-
-
-sub mlssids {
-	my $self = shift;
-	if (@_) {
-		$self->{_mlssids} = shift;
-	}
-	return $self->{_mlssids};
-}
-
-
-sub analysis_data {
-	my $self = shift;
-	if (@_) {
-		$self->{_analysis_data} = shift;
-	}
-	return $self->{_analysis_data};
-}
-
-sub ref_dnafrag_coords {
-	my $self = shift;
-	if (@_) {
-		$self->{_ref_dnafrag_coords} = shift;
-	}
-	return $self->{_ref_dnafrag_coords};
-}
-
-sub genomic_aligns_on_ref_slice {
-	my $self = shift;
-	if (@_) {
-		$self->{_genomic_aligns_on_ref_slice} = shift;
-	}
-	return $self->{_genomic_aligns_on_ref_slice};
-}
-
-sub dnafrag_overlaps {
-	my $self = shift;
-	if (@_) {
-		$self->{_dnafrag_overlaps} = shift;
-	}
-	return $self->{_dnafrag_overlaps};
-}
-
-sub reference_genome_db {
-	my $self = shift;
-	if (@_){
-		$self->{_reference_genome_db} = shift;
-	}
-	return $self->{_reference_genome_db};
-}
-
-
-sub genomic_align_block_adaptor {
-	my $self = shift;
-	if (@_){
-		$self->{_genomic_align_block_adaptor} = shift;
-	}
-	return $self->{_genomic_align_block_adaptor};
-}
-
-
-sub ref_dnafrag {
-	my $self = shift;
-	if (@_){
-		$self->{_ref_dnafrag} = shift;
-	}
-	return $self->{_ref_dnafrag};
 }
 
 
