@@ -15,7 +15,7 @@ ALTER TABLE mapping_session DROP KEY `type`;
 ALTER TABLE mapping_session ADD UNIQUE KEY `type` (`type`,`rel_from`,`rel_to`,`prefix`);
 
 -- Updating the schema version
-UPDATE meta SET meta_value = 66 where meta_key = "schema_version";
+UPDATE meta SET meta_value = 67 where meta_key = "schema_version";
 
 
 -- Gene trees
@@ -25,8 +25,8 @@ UPDATE meta SET meta_value = 66 where meta_key = "schema_version";
 ALTER TABLE gene_tree_root CHANGE COLUMN tree_type old_tree_type ENUM('proteinclusterset','proteinsupertree','proteintree','ncrnatree','ncrnaclusterset');
 ALTER TABLE gene_tree_root ADD COLUMN member_type ENUM('protein', 'ncrna') NOT NULL AFTER root_id;
 ALTER TABLE gene_tree_root ADD COLUMN tree_type ENUM('clusterset', 'supertree', 'tree') NOT NULL AFTER member_type;
-UPDATE gene_tree_root SET member_type = 'protein' WHERE tree_type LIKE 'protein%';
-UPDATE gene_tree_root SET member_type = 'ncrna' WHERE tree_type LIKE 'ncrna%';
+UPDATE gene_tree_root SET member_type = 'protein' WHERE old_tree_type LIKE 'protein%';
+UPDATE gene_tree_root SET member_type = 'ncrna' WHERE old_tree_type LIKE 'ncrna%';
 UPDATE gene_tree_root SET tree_type = 'clusterset' WHERE old_tree_type LIKE '%clusterset';
 -- super-trees will be temporarily called 'tree'
 UPDATE gene_tree_root SET tree_type = 'tree' WHERE old_tree_type LIKE '%tree';
