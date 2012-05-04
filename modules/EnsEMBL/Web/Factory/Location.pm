@@ -271,7 +271,7 @@ sub createObjects {
           }
           ## If we still haven't managed to find a location (e.g. an incoming link with a bogus URL), 
           ## throw a warning rather than an ugly runtime error!
-          $self->problem('fatal', 'Malformed URL', $self->_help("The URL used to reach this page may be incomplete or out-of-date."));
+          $self->problem('fatal', 'Malformed URL', $self->_help("The URL used to reach this page may be incomplete or out-of-date.")) if $self->hub->action ne 'Genome';
         }
       }
     }
