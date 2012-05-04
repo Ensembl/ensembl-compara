@@ -20,7 +20,7 @@ sub content {
   my $pop_freq = $self->format_frequencies($freq_data);
   return '' unless (defined($pop_freq));
   
-	my @pop_phase1 = grep{ !/low_coverage/} keys(%$pop_freq);
+	my @pop_phase1 = grep{ /phase_1/} keys(%$pop_freq);
 	return '' unless (scalar @pop_phase1);
 	
   my $html = qq{
@@ -48,8 +48,8 @@ sub content {
         push (@alleles, $allele);
       }
     }
-  }  
-
+  }
+  
   # Create graphs
   foreach my $pop_name (sort {($a !~ /ALL/) cmp ($b !~ /ALL/) || $a cmp $b} (@pop_phase1)) {
     
