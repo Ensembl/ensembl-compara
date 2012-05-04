@@ -14,6 +14,9 @@ ALTER TABLE dnafrag MODIFY COLUMN genome_db_id int(10) unsigned NOT NULL;
 ALTER TABLE mapping_session DROP KEY `type`;
 ALTER TABLE mapping_session ADD UNIQUE KEY `type` (`type`,`rel_from`,`rel_to`,`prefix`);
 
+-- Updating the schema version
+UPDATE meta SET meta_value = 67 where meta_key = "schema_version";
+
 
 -- Gene trees
 -- ------------
