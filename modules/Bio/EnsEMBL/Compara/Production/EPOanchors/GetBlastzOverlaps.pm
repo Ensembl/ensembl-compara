@@ -37,65 +37,53 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
 =cut
-#
+
 package Bio::EnsEMBL::Compara::Production::EPOanchors::GetBlastzOverlaps;
 
 use strict;
-use Data::Dumper;
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::Process;
+use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Analysis;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Registry;
 
 Bio::EnsEMBL::Registry->load_all;
 Bio::EnsEMBL::Registry->no_version_check(1);
 
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-
-sub configure_defaults {
- 	my $self = shift;
-	$self->ref_dnafrag_strand(1); #reference strand is always 1 
-  	return 1;
-}
 
 sub fetch_input {
 	my ($self) = @_;
-	$self->configure_defaults();
-	$self->get_parameters($self->parameters);
-	#create a Compara::DBAdaptor which shares the same DBI handle with $self->db (Hive DBAdaptor)
-	$self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc) or die "cant connect\n";
-	$self->{'comparaDBA'}->dbc->disconnect_if_idle();
 
-	my $mlssid_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "MethodLinkSpeciesSet");
-	my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GenomeDB");
-	my $genomic_align_block_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GenomicAlignBlock"); 
+	$self->param('ref_dnafrag_strand', 1); #reference strand is always 1 
+	$self->compara_dba->dbc->disconnect_if_idle();
+
+	my $mlssid_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor();
+	my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor();
+	my $genomic_align_block_adaptor = $self->compara_dba->get_GenomicAlignBlockAdaptor();
 	$self->genomic_align_block_adaptor( $genomic_align_block_adaptor );
-	my $dnafrag_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "DNAFrag");
+	my $dnafrag_adaptor = $self->compara_dba->get_DNAFragAdaptor();
 
 	my $analysis_data_adaptor = $self->db->get_AnalysisDataAdaptor();
-	$self->analysis_data( eval $analysis_data_adaptor->fetch_by_dbID($self->analysis_data_id) );
-	$self->get_input_id($self->input_id);
-	$self->reference_genome_db( $genome_db_adaptor->fetch_by_dbID($self->genome_db_ids->[0]) );
-	$self->ref_dnafrag( $dnafrag_adaptor->fetch_by_dbID($self->ref_dnafrag_id) );
+	$self->analysis_data( eval $analysis_data_adaptor->fetch_by_dbID($self->param('analysis_data_id') ) );
+
+	$self->reference_genome_db( $genome_db_adaptor->fetch_by_dbID($self->param('genome_db_ids')->[0]) );
+	$self->ref_dnafrag( $dnafrag_adaptor->fetch_by_dbID($self->param('ref_dnafrag_id')) );
 	my (@ref_dnafrag_coords, @mlssid_adaptors, $chunk_from, $chunk_to);
-	for(my$i=1;$i<@{$self->genome_db_ids};$i++){ #$self->genome_db_ids->[0] is the reference genome_db_id
+	for(my$i=1;$i<@{$self->param('genome_db_ids')};$i++){ #$self->param('genome_db_ids')->[0] is the reference genome_db_id
 		my $mlss_id = $mlssid_adaptor->fetch_by_method_link_type_GenomeDBs(
-				$self->method_type, 
+				$self->param('method_type'), 
 				[ 
 					$self->reference_genome_db,
-					$genome_db_adaptor->fetch_by_dbID( $self->genome_db_ids->[$i] ),
+					$genome_db_adaptor->fetch_by_dbID( $self->param('genome_db_ids')->[$i] ),
 				] );
 		push(@mlssid_adaptors, $mlss_id);
 		my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag( 
-						$mlss_id, $self->ref_dnafrag, $self->dnafrag_chunks->[0], $self->dnafrag_chunks->[1] );
+						$mlss_id, $self->ref_dnafrag, $self->param('dnafrag_chunks')->[0], $self->param('dnafrag_chunks')->[1] );
 		foreach my $genomic_align_block( @$gabs ) {
 			next if $genomic_align_block->length < $self->analysis_data->{min_anc_size};
 			push( @ref_dnafrag_coords, [ $genomic_align_block->reference_genomic_align->dnafrag_start,
 					$genomic_align_block->reference_genomic_align->dnafrag_end,
-					$self->genome_db_ids->[$i] ] );
+					$self->param('genome_db_ids')->[$i] ] );
 		}
 	}				
 	$self->mlssids( \@mlssid_adaptors );
@@ -182,11 +170,11 @@ sub write_output {
 		select_genome_db_ids => "SELECT GROUP_CONCAT(genome_db_id) FROM species_set WHERE species_set_id = ?",
 	);
 	foreach my$sql_statement(keys %sql_statements) {#prepare all the sql statements
-	       	$sql_statements{$sql_statement} = $self->{'comparaDBA'}->dbc->prepare($sql_statements{$sql_statement});
+	       	$sql_statements{$sql_statement} = $self->compara_dba->dbc->prepare($sql_statements{$sql_statement});
 	}
 	my $query_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($self->reference_genome_db->name, "core", "Slice");
 	eval {
-		$sql_statements{select_next_analysis_id}->execute( $self->analysis_id ) or die;
+		$sql_statements{select_next_analysis_id}->execute( $self->param('analysis_id') ) or die;
 	};
 	if($@) {
 		die $@;
@@ -201,7 +189,7 @@ sub write_output {
 		my @Synteny_blocks_to_insert;
 		my $temp_next_analysis_id = $next_analysis_id;
 		my ($ref_from, $ref_to) = split("-", $ref_coords);
-		push(@Synteny_blocks_to_insert, [ $self->ref_dnafrag->dbID, $ref_from, $ref_to, $self->ref_dnafrag_strand ]);
+		push(@Synteny_blocks_to_insert, [ $self->ref_dnafrag->dbID, $ref_from, $ref_to, $self->param('ref_dnafrag_strand') ]);
 		foreach my $non_ref_dnafrag_id(sort keys %{$self->genomic_aligns_on_ref_slice->{$ref_coords}}) {
 			foreach my $non_ref_strand(sort keys %{$self->genomic_aligns_on_ref_slice->{$ref_coords}->{$non_ref_dnafrag_id}}) {
 				my $non_ref_coords = $self->genomic_aligns_on_ref_slice->{$ref_coords}->{$non_ref_dnafrag_id}->{$non_ref_strand};
@@ -213,18 +201,18 @@ sub write_output {
 			}
 		}
 		if(@Synteny_blocks_to_insert > 2) { #need at least 3 sequences for gerp
-			$self->{'comparaDBA'}->dbc->db_handle->do("LOCK TABLES synteny_region WRITE");
-			$sql_statements{insert_synteny_region}->execute( $self->method_link_species_set_id );
-			$sql_statements{select_max_synteny_region_id}->execute( $self->method_link_species_set_id );
+			$self->compara_dba->dbc->db_handle->do("LOCK TABLES synteny_region WRITE");
+			$sql_statements{insert_synteny_region}->execute( $self->param('method_link_species_set_id') );
+			$sql_statements{select_max_synteny_region_id}->execute( $self->param('method_link_species_set_id') );
 			my $synteny_region_id = ($sql_statements{select_max_synteny_region_id}->fetchrow_array)[0];
-			$self->{'comparaDBA'}->dbc->db_handle->do("UNLOCK TABLES");
+			$self->compara_dba->dbc->db_handle->do("UNLOCK TABLES");
 			while($temp_next_analysis_id) {
 				my($input_id_string, $next_logic_name);
 				$sql_statements{select_logic_name}->execute( $temp_next_analysis_id );
 				$next_logic_name = ($sql_statements{select_logic_name}->fetchrow_array)[0];
 				if( $next_logic_name=~/pecan/i ) {
 					$input_id_string = "{ synteny_region_id=>$synteny_region_id, method_link_species_set_id=>" .
-						$next_method_link_species_set_id . ", tree_analysis_data_id=>" . $self->tree_analysis_data_id . ", }"; 
+						$next_method_link_species_set_id . ", tree_analysis_data_id=>" . $self->param('tree_analysis_data_id') . ", }"; 
 				}
 				elsif( $next_logic_name=~/gerp/i ) {
 					$input_id_string = "{genomic_align_block_id=>$synteny_region_id,species_set=>[$genome_db_ids]}";
@@ -249,6 +237,7 @@ sub write_output {
 	return 1;
 }
 
+
 sub mlssids {
 	my $self = shift;
 	if (@_) {
@@ -257,29 +246,6 @@ sub mlssids {
 	return $self->{_mlssids};
 }
 
-sub ref_dnafrag_strand {
-	my $self = shift;
-	if (@_) {
-		$self->{_ref_dnafrag_strand} = shift;
-	}
-	return $self->{_ref_dnafrag_strand};
-}
-
-sub tree_analysis_data_id {
-	my $self = shift;
-	if (@_) {
-		$self->{_tree_analysis_data_id} = shift;
-	}
-	return $self->{_tree_analysis_data_id};
-}
-
-sub analysis_data_id {
-	my $self = shift;
-	if (@_) {
-		$self->{_analysis_data_id} = shift;
-	}
-	return $self->{_analysis_data_id};
-}
 
 sub analysis_data {
 	my $self = shift;
@@ -287,14 +253,6 @@ sub analysis_data {
 		$self->{_analysis_data} = shift;
 	}
 	return $self->{_analysis_data};
-}
-
-sub analysis_id {
-	my $self = shift;
-	if (@_) {
-		$self->{_analysis_id} = shift;
-	}
-	return $self->{_analysis_id};
 }
 
 sub ref_dnafrag_coords {
@@ -329,13 +287,6 @@ sub reference_genome_db {
 	return $self->{_reference_genome_db};
 }
 
-sub genome_db_ids {
-	my $self = shift;
-	if (@_){
-		$self->{_genome_db_ids} = shift;
-	}
-	return $self->{_genome_db_ids};
-}
 
 sub genomic_align_block_adaptor {
 	my $self = shift;
@@ -345,21 +296,6 @@ sub genomic_align_block_adaptor {
 	return $self->{_genomic_align_block_adaptor};
 }
 
-sub ref_dnafrag_id {
-	my $self = shift;
-	if (@_){
-		$self->{_ref_dnafrag_id} = shift;
-	}
-	return $self->{_ref_dnafrag_id};
-}
-
-sub dnafrag_chunks {
-	my $self = shift;
-	if (@_){
-		$self->{_dnafrag_chunks} = shift;
-	}
-	return $self->{_dnafrag_chunks};
-}
 
 sub ref_dnafrag {
 	my $self = shift;
@@ -369,66 +305,6 @@ sub ref_dnafrag {
 	return $self->{_ref_dnafrag};
 }
 
-sub method_type {
-	my $self = shift;
-	if (@_){
-		$self->{_method_type} = shift;
-	}
-	return $self->{_method_type};
-}
-
-sub method_link_species_set_id {
-	my $self = shift;
-	if (@_){
-		$self->{_method_link_species_set_id} = shift;
-	}
-	return $self->{_method_link_species_set_id};
-}
-
-sub get_parameters {
-	my $self = shift;
-	my $param_string = shift;
-	
-	return unless($param_string);
-	my $params = eval($param_string);
-	if(defined($params->{'analysis_data_id'})) {
-		$self->analysis_data_id($params->{'analysis_data_id'});
-	}
-	if(defined($params->{'method_link_species_set_id'})) {
-		$self->method_link_species_set_id($params->{'method_link_species_set_id'});
-	}
-	if(defined($params->{'tree_analysis_data_id'})) {
-		$self->tree_analysis_data_id($params->{'tree_analysis_data_id'});
-	}
-	if(defined($params->{'analysis_id'})) {
-		$self->analysis_id($params->{'analysis_id'});
-	}
-}
-
-sub get_input_id {
-	my $self = shift;
-	my $input_id_string = shift;
-
-	return unless($input_id_string);
-	print("parsing input_id string : ",$input_id_string,"\n");
-	
-	my $params = eval($input_id_string);
-	return unless($params);
-	
-	if(defined($params->{'method_type'})) {
-		$self->method_type($params->{'method_type'});
-	}
-	if(defined($params->{'genome_db_ids'})) {
-		$self->genome_db_ids($params->{'genome_db_ids'});
-	}
-	if(defined($params->{'ref_dnafrag_id'})) {
-		$self->ref_dnafrag_id($params->{'ref_dnafrag_id'});
-	}
-	if(defined($params->{'dnafrag_chunks'})) {
-		$self->dnafrag_chunks($params->{'dnafrag_chunks'});
-	}
-	return 1;
-}
 
 1;
 
