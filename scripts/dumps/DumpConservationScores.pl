@@ -120,6 +120,7 @@ my $bsub_options = '-qlong -R"select[mem>2500] rusage[mem=2500]" -M2500000';
 my $out_filename;
 my $add_seq_name_prefix = 0;
 my $seq_name_prefix = "";
+my $min_expected_score = 0.0;
 
 my $num_args = @ARGV;
 
@@ -142,6 +143,7 @@ eval{
 	       "mlss_id|conservation_scores_mlssid=i" => \$conservation_scores_mlssid,
 	       "method_link_type=s" => \$conservation_scores_mlss_method_link,
 	       "species_set_name=s" => \$conservation_scores_mlss_species_set,
+	       "min_expected_score=f" => \$min_expected_score,
 
 	       "output_dir=s" => \$output_dir,
                "output_format=s" => \$format,
@@ -209,6 +211,8 @@ perl dump_conservationScores_in_wigfix.pl
         Method link type for the conservation scores. (default "$conservation_scores_mlss_method_link")
     [--species_set species_set_name]
         Species set name for the conservation scores.
+    [--min_expected_score min_score]
+        Ignore GERP scores if exptected score is lower that this threshold (default = $min_expected_score)
 
   Output:
     --output_dir output directory
@@ -289,7 +293,7 @@ if ($conservation_scores_mlssid) {
 
 #Add on rest of arguments
 if ($automatic_bsub) {
-    $bsub_cmd .= " --species \"$species\" --conservation_scores_mlssid ".$mlss->dbID." --chunk_size $chunk_size --output_dir $output_dir --file_prefix $file_prefix --output_format $format";
+    $bsub_cmd .= " --species \"$species\" --conservation_scores_mlssid ".$mlss->dbID." --chunk_size $chunk_size --output_dir $output_dir --file_prefix $file_prefix --output_format $format --min_expected_score $min_expected_score";
 }
 
 my $slice_adaptor = $reg->get_adaptor($species, 'core', 'Slice');
@@ -414,7 +418,7 @@ sub write_wigFix {
 	#Get scores
 	my $scores = $cs_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $chunk_slice, $display_size, "AVERAGE");
 	for(my$i=0;$i<@$scores;$i++) {
-	    if (defined $scores->[$i]->diff_score) {
+	    if (defined $scores->[$i]->diff_score and $scores->[$i]->expected_score >= $min_expected_score) {
 		#the following if-elsif-else should prevent the printing of scores from overlapping genomic_align_blocks
 		if ($chunk_region->[0] + $scores->[$i]->position > $previous_position && $i > 0) { 
 		    $previous_position = $chunk_region->[0] + $scores->[$i]->position;
