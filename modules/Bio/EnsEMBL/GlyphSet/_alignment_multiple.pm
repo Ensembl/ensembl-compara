@@ -182,6 +182,8 @@ sub element_features {
 sub score_features {
   my $self  = shift;
   my $slice = $self->{'container'};
+
+  return $slice->display_Slice_name eq $slice->{'web_species'} ? $slice->{'_align_slice'}->get_all_ConservationScores($self->image_width) : [] if $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice');
   
   my $K  = $self->my_config('conservation_score');
   my $db = $self->dbadaptor('multi', $self->my_config('db'));
@@ -189,18 +191,6 @@ sub score_features {
   return [] unless $K && $db;
   
   my $method_link_species_set = $db->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($K);
-  
-  if($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
-    return [] unless($slice->display_Slice_name eq $slice->{'web_species'});
-    my $mapper = $slice->{'_align_slice'}->{'_reference_Mapper'};
-    my $ref = $slice->{'_align_slice'}->reference_Slice();
-    my $out = $db->get_ConservationScoreAdaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($method_link_species_set, $ref, $self->image_width);
-    for (@$out) {
-      my @coords = $mapper->map_coordinates("sequence",$_->start+$ref->chr_start(),$_->end+$ref->chr_start(),1,"sequence");
-      $_->position($coords[0]->start) if @coords;
-    }
-    return $out;
-  }
   
   return [] unless $method_link_species_set;
 
