@@ -432,6 +432,13 @@ sub draw_cigar_feature {
   my $ref    = ref $f;
   my $length = $self->{'container'}->length;
   my $cigar;
+  my $inverted = $params->{'inverted'} || 0;
+
+  my $match_colour = $params->{'feature_colour'};
+  if($inverted) {
+    # Wash out matches when mismatches are to be emphasised
+    $match_colour = $self->{'config'}->colourmap->mix($match_colour,'white',0.9),
+  }
  
   if (!$ref) {
     warn sprintf 'DRAWINGCODE_CIGAR < %s > %s not a feature', $f, $self->label->text;
@@ -467,7 +474,7 @@ sub draw_cigar_feature {
       y         => 0,
       width     => $e - $s + 1,
       height    => $h,
-      colour    => $params->{'feature_colour'},
+      colour    => $match_colour,
       absolutey => 1
     }));
     
@@ -499,6 +506,7 @@ sub draw_cigar_feature {
   my @cigar = $f->cigar_string =~ /(\d*[MDImUXS=])/g;
      @cigar = reverse @cigar if $fstrand == -1;
   
+  my $last_e = -1;
   foreach (@cigar) {
     # Split each of the {number}{Letter} entries into a pair of [ {number}, {letter} ] 
     # representing length and feature type ( 'M' -> 'Match/mismatch', 'I' -> Insert, 'D' -> Deletion )
@@ -540,7 +548,7 @@ sub draw_cigar_feature {
         y         => 0,
         width     => $e - $s + 1,
         height    => $h,
-        colour    => $params->{'feature_colour'},
+        colour    => $match_colour,
         absolutey => 1
       });
       
@@ -574,6 +582,20 @@ sub draw_cigar_feature {
       }
       
       $composite->push($box);
+
+      if($inverted && $last_e != -1) {
+        $composite->push($self->Rect({
+          x         => $last_e,
+          y         => 0,
+          width     => $s - $last_e + 1,
+          height    => $h,
+          colour    => $params->{'feature_colour'},
+          absolutey => 1
+        }));
+        
+      }
+      $last_e = $e;
+
     } elsif ($type eq 'D') { # If a deletion temp store it so that we can draw after all matches
       ($s, $e) = ($e, $s) if $s < $e;
       

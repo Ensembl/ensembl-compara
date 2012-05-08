@@ -442,7 +442,8 @@ sub render_ungrouped {
           height         => $h, 
           feature_colour => $feature_colour, 
           delete_colour  => 'black', 
-          scalex         => $pix_per_bp
+          scalex         => $pix_per_bp,
+          inverted       => $self->{'inverted'} || 0,
         });
       } else {
         $self->push($self->Rect({
@@ -504,6 +505,15 @@ sub render_text {
   }
   
   return $export;
+}
+
+# Renders with emphasis on positions with poor alignment. Useful, eg for patches.
+sub render_misalign {
+  my $self = shift;
+  my %features       = $self->features;
+
+  $self->{'inverted'} = 1;
+  $self->render_ungrouped(@_);
 }
 
 1;
