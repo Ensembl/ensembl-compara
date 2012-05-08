@@ -531,7 +531,7 @@ sub load_user_tracks {
         $self->_compare_assemblies($entry, $session);
       }
     } elsif ($entry->{'species'} eq $self->{'species'} && !$entry->{'nonpositional'}) {
-      my ($strand, $renderers) = $self->_user_track_settings($entry->{'style'});
+      my ($strand, $renderers) = $self->_user_track_settings($entry->{'style'},$entry->{'format'});
       $strand = $entry->{'strand'} if $entry->{'strand'};
       
       $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
@@ -612,7 +612,7 @@ sub load_user_tracks {
       
       next unless $analysis;
       
-      my ($strand, $renderers) = $self->_user_track_settings($analysis->program_version);
+      my ($strand, $renderers) = $self->_user_track_settings($analysis->program_version,$analysis->program_version);
       $strand = $upload_sources{$logic_name}{'strand'} if $upload_sources{$logic_name}{'strand'};
       my $external    = $upload_sources{$logic_name}{'source_type'} eq 'user' ? 'user' : 'tmp';
       my $source_name = encode_entities($upload_sources{$logic_name}{'source_name'});
@@ -777,7 +777,7 @@ sub _add_flat_file_track {
   
   return unless $menu;
  
-  my ($strand, $renderers) = $self->_user_track_settings($options{'style'});
+  my ($strand, $renderers) = $self->_user_track_settings($options{'style'},$options{'format'});
 
   my $track = $self->create_track($key, $name, {
     display     => 'off',
@@ -835,7 +835,7 @@ sub _add_file_format_track {
 }
 
 sub _user_track_settings {
-  my ($self, $style) = @_;
+  my ($self, $style, $format) = @_;
   my ($strand, @user_renderers);
       
   if ($style =~ /^(wiggle|WIG)$/) {
@@ -844,6 +844,7 @@ sub _user_track_settings {
   } else {
     $strand         = 'b'; 
     @user_renderers = @{$self->{'alignment_renderers'}};
+    push @user_renderers,'misalign','Imperfections' if lc $format eq 'psl'; # Maybe, in future, other formats, too
   }
   
   return ($strand, \@user_renderers);
