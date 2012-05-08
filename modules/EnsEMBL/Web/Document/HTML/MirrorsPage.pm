@@ -1,0 +1,60 @@
+package EnsEMBL::Web::Document::HTML::MirrorsPage;
+
+use strict;
+use warnings;
+
+use Exporter qw(import);
+
+use EnsEMBL::Web::SpeciesDefs;
+
+our @EXPORT = qw(mirrors_list);
+
+sub mirrors_list {
+  return [
+    'UK'      => {'name'  => 'UK (Sanger Institute)',
+                  'url'   => 'http://www.ensembl.org',
+                  'blurb' => 'Main site, best for Europe, Africa and Middle East',
+                  'flag'  => 'flag_uk.png',
+                  },
+    'USWEST'  => {'name'  => 'US West (Amazon AWS)',
+                  'url'   => 'http://uswest.ensembl.org',
+                  'blurb' => 'Faster connections from the Pacific Rim',
+                  'flag'  => 'flag_usa.png',
+                  },
+    'USEAST'  => {'name'  => 'US East (Amazon AWS)',
+                  'url'   => 'http://useast.ensembl.org',
+                  'blurb' => 'Cloud-based mirror on East Coast of US',
+                  'flag'  => 'flag_usa.png',
+                  },
+    'ASIA'    => {'name'  => 'Asia (Amazon AWS)',
+                  'url'   => 'http://asia.ensembl.org',
+                  'blurb' => 'Cloud-based mirror in Singapore',
+                  'flag'  => 'flag_sg.png',
+                  },
+  ];
+}
+
+sub render {
+  my $mirrors = mirrors_list;
+  my $html    = [];
+  my $sd      = EnsEMBL::Web::SpeciesDefs->new;
+
+  while (my ($key, $mirror) = splice @$mirrors, 0, 2) {
+    my $flag = sprintf '<img src="%s%s" alt="flag" style="width:40px;height:24px;vertical-align:middle;border:1px solid #ccc;" />', $sd->img_url, $mirror->{'flag'} || 'blank.gif';
+    my $site = '<strong>'.$mirror->{'name'}.'</strong>';
+
+    if ($mirror->{'url'} eq $sd->ENSEMBL_BASE_URL || ($key eq 'UK' && $sd->ENSEMBL_BASE_URL =~ /sanger/)) {
+      push @$html, sprintf('%s %s - <span class="red">YOU ARE HERE!</span>', $flag, $site);
+    } else {
+      push @$html, sprintf('<a href="%s">%s</a> <a href="%1$s"><strong>%s</strong></a> - %s', 
+        $mirror->{'url'},
+        $flag,
+        $mirror->{'name'},
+        $mirror->{'blurb'}
+      );
+    }
+  }
+  return join '', map sprintf('<p class="space-below">%s</p>', $_), @$html;
+}
+
+1;
