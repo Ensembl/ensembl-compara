@@ -20,9 +20,9 @@ sub content {
   my $pop_freq = $self->format_frequencies($freq_data);
   return '' unless (defined($pop_freq));
   
-	my @pop_phase1 = grep{ /phase_1/} keys(%$pop_freq);
-	return '' unless (scalar @pop_phase1);
-	
+  my @pop_phase1 = grep{ /phase_1/} keys(%$pop_freq);
+  return '' unless (scalar @pop_phase1);
+  
   my $html = qq{
     <h2>1000 Genomes allele frequencies</h2>
     <input type="hidden" class="panel_type" value="PopulationGraph" />
@@ -71,11 +71,12 @@ sub content {
         my ($allele,$freq) = split(':',$afreq);
         if ($al eq $allele and $freq != 0)  {
           $values .= ',' if ($values ne '');
+          $freq = 0.5 if ($freq < 0.5); # Fixed bug if freq between 0 and 0.5
           $values .= "['$allele',$freq]";
           last;
         }
       }
-    }  
+    }
     my $border = $short_name eq 'ALL' ? '2px' : '1px';
     $input  .= qq{<input type="hidden" class="population" value="[$values]" />};
     $graph  .= qq{<td style="border:$border solid #000">&nbsp;<b>$short_name</b><div id="graphHolder$graph_id" style="width:118px;height:50px;"></div></td>};
@@ -92,8 +93,7 @@ sub content {
   $html .= $input;
   $html .= '<table>';
   $html .= "<tr>$graph</tr>";  
-  $html .= '</table><br />';
-  
+  $html .= '</table><br />'; 
   return $html;
 }
 
