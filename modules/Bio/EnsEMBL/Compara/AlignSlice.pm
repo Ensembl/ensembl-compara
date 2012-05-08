@@ -654,14 +654,33 @@ sub _get_expanded_conservation_scores {
     my $y_axis_max;
 
     my $all_conservation_scores = [];
+    my $offset = 0; #the start of each gab in alignment coords
+    my $prev_gab_end;
     foreach my $this_genomic_align_block (@{$self->get_all_GenomicAlignBlocks()}) {
 	$this_genomic_align_block->{restricted_aln_start} = $this_genomic_align_block->{_alignslice_from};
 	$this_genomic_align_block->{restricted_aln_end} = $this_genomic_align_block->{_alignslice_to};
 
+	#Need to map the coords I get back from the conservation_score_adaptor onto the slice using the start position of the genomic_align_block
 	my $all_these_conservation_scores = $conservation_score_adaptor->fetch_all_by_GenomicAlignBlock(
 													$this_genomic_align_block, 1,$this_genomic_align_block->length, $self->get_all_Slices()->[0]->length, 
 													$display_size, $display_type, $window_size);
-	
+
+	#Need to account for gaps between gabs which will be slice end - start on the reference slice.
+	if ($prev_gab_end) {
+	    my $gap = $this_genomic_align_block->reference_slice_start - $prev_gab_end - 1;
+	    if ($gap)  {
+		$offset += $gap;
+	    }
+	}
+	$prev_gab_end = $this_genomic_align_block->reference_slice_end;
+
+	foreach my $score (@$all_these_conservation_scores) {
+	    $score->position($score->position + $offset);
+	}
+
+	#offset is the sum of preceding gab lengths
+	$offset += ($this_genomic_align_block->{restricted_aln_end} - $this_genomic_align_block->{restricted_aln_start} + 1);
+
 	#initialise y axis min and max
 	if (!defined $y_axis_max) {
 	    $y_axis_max = $all_these_conservation_scores->[0]->y_axis_max;
