@@ -251,7 +251,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.elLk.search.on({
       keyup: function () {
-        if (this.value.length < 3) {
+        if (this.value.length < 2) {
           panel.lastQuery = this.value;
         }
         
