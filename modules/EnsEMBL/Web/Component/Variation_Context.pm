@@ -87,6 +87,19 @@ sub content {
   my $slice        = $slice_adaptor->fetch_by_region($seq_type, $seq_region, $img_start, $img_end, 1);
   my $image_config = $hub->get_imageconfig($im_cfg);
   
+  my $sv_count = scalar(@{$slice->get_all_StructuralVariationFeatures});
+    
+  $html .= $self->_warning(
+    "Structural variants display",
+    sprintf('
+      <p>
+        There are %s structural variants overlapping this region. 
+        Some of them might not be displayed as we limit the size of this track to 100 rows.
+      </p>
+      ', $sv_count)
+  ) if $sv_count > 100;
+  
+  
   $image_config->set_parameters( {
     image_width     => $self->image_width || 900,
     container_width => $slice->length,
