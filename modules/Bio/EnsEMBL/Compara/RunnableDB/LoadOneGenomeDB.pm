@@ -17,7 +17,7 @@ Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB
 
         # load a genome_db given a reg_conf and species_name as locator
     standaloneJob.pl LoadOneGenomeDB.pm -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara2/lg4_test_load1genome" \
-        -reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
+        -reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/examples/ensembldb_reg.conf \
         -locator 'mus_musculus'
 
         # load a genome_db given a reg_conf and species_name as locator with a specific genome_db_id
