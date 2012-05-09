@@ -133,32 +133,25 @@ sub new_fast {
   Description: Getter/Setter for the DBAdaptor containing sequence 
                information for the genome represented by this object.
   Returntype : Bio::EnsEMBL::DBSQL::DBAdaptor
-  Exceptions : thrown if the argument is not a
-               Bio::EnsEMBL::DBSQL::DBAdaptor
   Caller     : general
   Status     : Stable
 
 =cut
 
 sub db_adaptor {
-  my ( $self, $dba ) = @_;
+    my ( $self, $dba ) = @_;
 
-  eval {
-      if($dba) {
-	  unless($dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) {
-	      throw("dba arg must be a Bio::EnsEMBL::DBSQL::DBAdaptor not a [$dba]\n");
-	  }
-	  $self->{'_db_adaptor'} = $dba;
-      }
-  };
+    if($dba) {
+        $self->{'_db_adaptor'} = ($dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor'))
+            ? $dba
+            : undef;
+    }
 
-  $self->{'_db_adaptor'} = undef if $@; # if there was an error force a new db adaptor to be made
-  
-  unless (defined $self->{'_db_adaptor'}) {
-    $self->{'_db_adaptor'} = $self->connect_to_genome_locator;
-  }
-  
-  return $self->{'_db_adaptor'};
+    unless($self->{'_db_adaptor'}) {
+        $self->{'_db_adaptor'} = $self->connect_to_genome_locator;
+    }
+
+    return $self->{'_db_adaptor'};
 }
 
 
@@ -421,15 +414,13 @@ sub locator {
 
 =cut
 
-sub connect_to_genome_locator
-{
+sub connect_to_genome_locator {
   my $self = shift;
 
   return undef if($self->locator eq '');
 
   my $genomeDBA = undef;
   eval {$genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator); };
-  return undef unless($genomeDBA);
   return $genomeDBA;
 }
 
