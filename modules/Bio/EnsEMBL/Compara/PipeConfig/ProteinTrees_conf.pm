@@ -291,7 +291,7 @@ sub pipeline_analyses {
             -parameters => {
                 'mlss_id'               => $self->o('mlss_id'),
 
-                'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', ['fetch_by_dbID', '#mlss_id#'], 'species_set_obj', 'genome_dbs'],
+                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
                 'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator' },
 
                 'fan_branch_code'       => 2,
@@ -498,7 +498,7 @@ sub pipeline_analyses {
         {   -logic_name => 'genome_reuse_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_SubsetAdaptor', ['fetch_by_dbID', '#reuse_ss_id#'], 'species_set_obj', 'genome_dbs'],
+                'call_list'             => [ 'compara_dba', 'get_SpeciesSetAdaptor', ['fetch_by_dbID', '#reuse_ss_id#'], 'genome_dbs'],
                 'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name' },
                 'fan_branch_code'       => 2,
             },
@@ -614,7 +614,7 @@ sub pipeline_analyses {
         {   -logic_name => 'genome_loadfresh_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_SubsetAdaptor', ['fetch_by_dbID', '#nonreuse_ss_id#'], 'member_id_list'],
+                'call_list'             => [ 'compara_dba', 'get_SpeciesSEtAdaptor', ['fetch_by_dbID', '#nonreuse_ss_id#'], 'genome_dbs'],
                 'fan_branch_code'       => 2,
             },
             -hive_capacity => -1,
@@ -777,7 +777,7 @@ sub pipeline_analyses {
             -parameters => {
                 'mlss_id'               => $self->o('mlss_id'),
 
-                'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', ['fetch_by_dbID', '#mlss_id#'], 'species_set_obj', 'genome_dbs'],
+                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
                 'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator' },
 
                 'fan_branch_code'       => 2,
