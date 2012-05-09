@@ -23,14 +23,14 @@ sub default_options {
  		       -host           => "ens-livemirror",
  		       -port           => 3306,
  		       -user           => "ensro",
- 		       -dbname         => "homo_sapiens_core_65_37",
+ 		       -dbname         => "homo_sapiens_core_66_37",
 		       -species        => "homo_sapiens"
  		      },
  	    'non_reference' => {
  		       '-host'           => "ens-livemirror",
  		       '-port'           => 3306,
  		       '-user'           => "ensro",
- 		       '-dbname'         => "mus_musculus_core_65_37",
+ 		       '-dbname'         => "mus_musculus_core_66_37",
  		       '-species'        => "mus_musculus"
  		      },
 	    'curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],
@@ -75,9 +75,9 @@ sub default_options {
 	    'net_output_method_link' => [16, 'LASTZ_NET'],
 
 	    #
-	    #Skip pairaligner configuration module
+	    #Skip pairaligner stats module
 	    #
-	    'skip_pairaligner_config' => 1,
+	    'skip_pairaligner_stats' => 1,
 	    'bed_dir' => $self->o('dump_dir').'/bed_files', 
 	    'output_dir' => $self->o('dump_dir').'/output', 
 	   };

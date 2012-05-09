@@ -22,9 +22,9 @@ sub default_options {
 	    'pair_aligner_exe' => '/software/ensembl/compara/bin/lastz',
 
 	    #
-	    #Skip pairaligner configuration module
+	    #Skip pairaligner stats module
 	    #
-	    'skip_pairaligner_config' => 1,
+	    'skip_pairaligner_stats' => 1,
 	    'bed_dir' => $self->o('dump_dir').'/bed_files', 
 	    'output_dir' => $self->o('dump_dir').'/output', 
 	   };

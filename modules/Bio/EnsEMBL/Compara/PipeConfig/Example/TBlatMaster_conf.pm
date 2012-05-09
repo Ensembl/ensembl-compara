@@ -11,7 +11,7 @@ sub default_options {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 	    'pipeline_name'         => 'TBLAT_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 	    #'master_db' => 'mysql://user@host/ensembl_compara_master',
-	    'master_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_65', #Use a release database for the test only.
+	    'master_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_66', #Use a release database for the test only.
 	    'mlss_id'   => 421, #human vs chicken tblat-net
 
 	    'livemirror_loc' => {
@@ -19,7 +19,7 @@ sub default_options {
 				 -port   => 3306,
 				 -user   => 'ensro',
 				 -pass   => '',
-				 -db_version => 65,
+				 -db_version => 66,
 				},
 	    
 	    'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ], 

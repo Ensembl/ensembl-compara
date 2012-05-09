@@ -19,7 +19,7 @@ sub default_options {
 	    'pipeline_name'         => 'LASTZ_TEST_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
 	    #'master_db' => 'mysql://user@host/ensembl_compara_master',
-	    'master_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_65', #Use a release database for the test only.
+	    'master_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_66', #Use a release database for the test only.
 	    'mlss_id'   => 410,
 
 	    'curr_core_sources_locs'    => '',
@@ -66,9 +66,9 @@ sub default_options {
 	    'net_output_method_link' => [16, 'LASTZ_NET'],
 
 	    #
-	    #Skip pairaligner configuration module
+	    #Skip pairaligner stats module
 	    #
-	    'skip_pairaligner_config' => 1,
+	    'skip_pairaligner_stats' => 1,
 	    'bed_dir' => $self->o('dump_dir').'/bed_files', 
 	    'output_dir' => $self->o('dump_dir').'/output', 
 	   };
