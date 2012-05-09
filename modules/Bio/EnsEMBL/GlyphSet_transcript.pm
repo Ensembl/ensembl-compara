@@ -333,9 +333,6 @@ sub render_transcripts {
       ($colour, $label) = ('orange', 'Other') unless $colour;
       $used_colours{$label} = $colour;
       
-      my $coding_start = defined $transcript->coding_region_start ? $transcript->coding_region_start : -1e6;
-      my $coding_end   = defined $transcript->coding_region_end   ? $transcript->coding_region_end   : -1e6;
-      
       my $composite2 = $self->Composite({ y => $y, height => $h });
             
       if ($transcript->translation) {
@@ -377,18 +374,20 @@ sub render_transcripts {
               bordercolour => $colour,
               absolutey    => 1
             }));
-          } elsif ($exons[$i][1] eq 'fill' && $box_end > $exons[$i][3]) {
-            my $fill_start = max($box_start + $exons[$i][2], 1);
-            my $fill_end   = min($box_end   - $exons[$i][3], $length);
+          } elsif ($exons[$i][1] eq 'fill') {
+            my $fill_start = max($exon->start + $exons[$i][2], 1);
+            my $fill_end   = min($exon->end   - $exons[$i][3], $length);
             
-            $composite2->push($self->Rect({
-              x         => $fill_start - 1,
-              y         => $y,
-              width     => $fill_end - $fill_start + 1,
-              height    => $h,
-              colour    => $colour,
-              absolutey => 1
-            }));
+            if ($fill_end > $fill_start) {
+              $composite2->push($self->Rect({
+                x         => $fill_start - 1,
+                y         => $y,
+                width     => $fill_end - $fill_start + 1,
+                height    => $h,
+                colour    => $colour,
+                absolutey => 1
+              }));
+            }
           }
         }
         
