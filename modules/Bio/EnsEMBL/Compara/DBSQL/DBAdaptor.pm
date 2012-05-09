@@ -60,7 +60,6 @@ package Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use vars qw(@ISA);
 use strict;
 
-use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 

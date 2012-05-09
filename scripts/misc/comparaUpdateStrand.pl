@@ -8,7 +8,6 @@ use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::Analysis;
 use Bio::EnsEMBL::Pipeline::Rule;
 use Bio::EnsEMBL::Compara::GenomeDB;
-use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::Compara::Hive::Extensions;

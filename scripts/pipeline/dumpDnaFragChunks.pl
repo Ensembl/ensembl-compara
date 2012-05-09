@@ -9,7 +9,6 @@ use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::Analysis;
 use Bio::EnsEMBL::Pipeline::Rule;
 use Bio::EnsEMBL::Compara::GenomeDB;
-use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Hive::URLFactory;
 
 

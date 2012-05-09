@@ -5,7 +5,6 @@ use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
-use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::Hive::URLFactory;

@@ -46,7 +46,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates;
 
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
-use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;

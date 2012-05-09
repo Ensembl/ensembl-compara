@@ -9,7 +9,6 @@ use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::SimpleNets;
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Hive;
-use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Registry;
 
 Bio::EnsEMBL::Registry->no_version_check(1);

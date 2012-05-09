@@ -8,7 +8,6 @@ use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::Analysis;
 use Bio::EnsEMBL::Pipeline::Rule;
 use Bio::EnsEMBL::Compara::GenomeDB;
-use Bio::EnsEMBL::DBLoader;
 
 
 # ok this is a hack, but I'm going to pretend I've got an object here

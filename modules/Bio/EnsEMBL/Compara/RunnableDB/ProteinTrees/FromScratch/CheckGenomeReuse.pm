@@ -35,7 +35,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FromScratch::CheckGenom
 
 use strict;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');

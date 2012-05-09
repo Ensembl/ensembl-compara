@@ -38,7 +38,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusabilit
 use strict;
 use Scalar::Util qw(looks_like_number);
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');

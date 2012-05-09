@@ -27,7 +27,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::CheckReuseDB;
 
 use strict;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 

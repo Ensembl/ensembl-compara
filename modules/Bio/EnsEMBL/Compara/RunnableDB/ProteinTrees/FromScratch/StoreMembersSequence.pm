@@ -47,7 +47,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FromScratch::StoreMembe
 use strict;
 use Bio::Perl;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Subset;
