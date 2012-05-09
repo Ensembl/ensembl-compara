@@ -283,5 +283,11 @@ sub consensus_cigar_line {
     return $self->root->consensus_cigar_line(@_);
 }
 
+
+sub release_tree {
+    my ($self) = @_;
+    $self->root->release_tree();
+}
+
 1;
 
