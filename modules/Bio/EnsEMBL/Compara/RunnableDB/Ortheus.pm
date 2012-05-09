@@ -1194,17 +1194,7 @@ sub _load_2XGenomes {
       #open compara database containing 2x genome vs $ref_name blastz results
       my $compara_db_url = $param->{'compara_db_url'};
 
-      #if the database name is defined in the url, then open that
-      my $pairwise_dba;
-      my $locator;
-      if ($compara_db_url =~ /mysql:\/\/.*@.*\/.+/) {
-	  #open database defined in url
-	  $locator = "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor/url=>$compara_db_url";
-      } else {
-	  throw "Invalid url $compara_db_url. Should be of the form: mysql://user:pass\@host:port/db_name\n";
-      }
-
-      $pairwise_dba = Bio::EnsEMBL::DBLoader->new($locator);
+      my $pairwise_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -url => $compara_db_url );
 
       #need to store this to allow disconnect when call ortheus
       $self->{pairwise_compara_dba}->{$pairwise_dba->dbc->dbname} = $pairwise_dba;

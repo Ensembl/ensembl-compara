@@ -58,27 +58,12 @@ sub create_default_mlss {
     my $low_mlss = $mlss_adaptor->fetch_by_dbID($self->param('new_method_link_species_set_id'));
     my $species_set = $low_mlss->species_set;
 
-    my $locator;
-    if ($self->param('pairwise_default_location') =~ /mysql:\/\/.*@.*\/.+/) {
-	#open database defined in url
-	$locator = "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor/url=>" . $self->param('pairwise_default_location');
-    } else {
-        die( "Invalid url " . $self->param('pairwise_default_location') . ". Should be of the form: mysql://user:pass\@host:port/db_name" );
-    }
-    my $pairwise_dba = Bio::EnsEMBL::DBLoader->new($locator);
+    my $pairwise_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -url => $self->param('pairwise_default_location') );
     my $pairwise_genome_db_adaptor = $pairwise_dba->get_GenomeDBAdaptor;
     my $pairwise_mlss_adaptor = $pairwise_dba->get_MethodLinkSpeciesSetAdaptor;
 
-    my $base_locator;
-    if ($self->param('base_location') =~ /mysql:\/\/.*@.*\/.+/) {
-	#open database defined in url
-	$base_locator = "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor/url=>" . $self->param('base_location');
-    } else {
-	    die( "Invalid url " . $self->param('base_db') . ". Should be of the form: mysql://user:pass\@host:port/db_name" );
-    }
-    my $base_dba = Bio::EnsEMBL::DBLoader->new($base_locator);
+    my $base_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -url => $self->param('base_location') );
     my $base_mlss_adaptor = $base_dba->get_MethodLinkSpeciesSetAdaptor;
-
     my $base_mlss = $base_mlss_adaptor->fetch_by_dbID($self->param('base_method_link_species_set_id'));
 
     my $ref_genome_db;

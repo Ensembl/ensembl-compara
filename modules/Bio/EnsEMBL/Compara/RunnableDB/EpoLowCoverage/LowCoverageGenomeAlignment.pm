@@ -1152,17 +1152,7 @@ sub _load_2XGenomes {
       #my $compara_db_url = $param->{'compara_db_url'};
       my $compara_db_url = $pairwise_locations->{$mlss_id};
 
-      #if the database name is defined in the url, then open that
-      my $compara_dba;
-      my $locator;
-      if ($compara_db_url =~ /mysql:\/\/.*@.*\/.+/) {
-	  #open database defined in url
-	  $locator = "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor/url=>$compara_db_url";
-      } else {
-	  throw "Invalid url $compara_db_url. Should be of the form: mysql://user:pass\@host:port/db_name\n";
-      }
-
-      $compara_dba = Bio::EnsEMBL::DBLoader->new($locator);
+      my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -url => $compara_db_url );
 
       #need to store this to allow disconnect when call ortheus
       my $pairwise_compara_dba = $self->param('pairwise_compara_dba');
@@ -1366,17 +1356,7 @@ sub _construct_pairwise_locations {
 		
 		my $compara_db_url = $pairwise_location->{$mlss_id};
 		
-	    #if the database name is defined in the url, then open that
-		my $compara_dba;
-		my $locator;
-		if ($compara_db_url =~ /mysql:\/\/.*@.*\/.+/) {
-		    #open database defined in url
-		    $locator = "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor/url=>$compara_db_url";
-		} else {
-		    throw "Invalid url $compara_db_url. Should be of the form: mysql://user:pass\@host:port/db_name\n";
-		}
-
-		$compara_dba = Bio::EnsEMBL::DBLoader->new($locator);
+        my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -url => $compara_db_url );
 		
 		my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 		my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
