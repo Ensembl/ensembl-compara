@@ -25,7 +25,7 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence
 =head1 SYNOPSIS
 
 my $db       = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $runnable = Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::StoreSequence>new (
+my $runnable = Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence>new (
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );

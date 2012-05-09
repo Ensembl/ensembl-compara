@@ -18,7 +18,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::PairAligner
+Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner
 
 =cut
 
