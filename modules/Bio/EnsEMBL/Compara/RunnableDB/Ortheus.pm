@@ -292,7 +292,10 @@ sub _write_output {
 		  #Insert into seq_region with dummy name to get the seq_region_id and then update with the new name
 		  #"Ancestor_" . $mlss_id . "_$seq_region_id";
 		  #Need to make unique dummy name
-		  my $dummy_name = "dummy_" . $$;
+		  #my $dummy_name = "dummy_" . $$;
+
+		  #Use worker id instead of $$ to create unique name
+		  my $dummy_name = "dummy_" . $self->worker->dbID;
  		  my $slice = new Bio::EnsEMBL::Slice(
  						      -seq_region_name   => $dummy_name,
  						      -start             => 1,
@@ -304,8 +307,8 @@ sub _write_output {
  		  my $this_seq_region_id = $slice_adaptor->store($slice, \$genomic_align->original_sequence);
 
  		  my $name = "Ancestor_" . $mlss->dbID . "_" . $this_seq_region_id;
-		  #print "name $name\n";
-		  $sth->execute($name, $this_seq_region_id);
+		  #print "name $dummy_name $name\n";
+		  $sth->execute($name, $this_seq_region_id) or die "Unable to update seq_region name from $dummy_name to $name with error " . $sth->errstr;
  		  my $dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
 					   -name => $name,
 					   -genome_db => $ancestor_genome_db,
