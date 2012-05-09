@@ -25,14 +25,14 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateFilterDuplicatesJobs->new (
+my $runnable = Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs->new (
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
-$repmask->fetch_input(); #reads from DB
-$repmask->run();
-$repmask->output();
-$repmask->write_output(); #writes to DB
+$runnable->fetch_input(); #reads from DB
+$runnable->run();
+$runnable->output();
+$runnable->write_output(); #writes to DB
 
 =cut
 

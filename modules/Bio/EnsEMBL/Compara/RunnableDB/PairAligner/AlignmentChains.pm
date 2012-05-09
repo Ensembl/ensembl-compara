@@ -22,15 +22,15 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains
 
 =head1 SYNOPSIS
 
-  my $db      = Bio::EnsEMBL::DBAdaptor->new($locator);
-  my $genscan = Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::AlignmentChains->new (
+my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
+my $runnable = Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains->new (
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
-  $genscan->fetch_input();
-  $genscan->run();
-  $genscan->write_output(); #writes to DB
-
+$runnable->fetch_input(); #reads from DB
+$runnable->run();
+$runnable->output();
+$runnable->write_output(); #writes to DB
 
 =head1 DESCRIPTION
 
