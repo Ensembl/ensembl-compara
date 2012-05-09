@@ -89,8 +89,8 @@ sub fetch_input {
   my $non_ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('non_ref_species'));
 
 
-  my $ref_db = $ref_genome_db->connect_to_genome_locator;
-  my $non_ref_db = $non_ref_genome_db->connect_to_genome_locator;
+  my $ref_db = $ref_genome_db->db_adaptor;
+  my $non_ref_db = $non_ref_genome_db->db_adaptor;
 
   #Modify url to make it a valid core url
   $self->param('ref_dbc_url', $ref_db->dbc->url . "?group=core\\&species=" . $self->param('ref_species'));

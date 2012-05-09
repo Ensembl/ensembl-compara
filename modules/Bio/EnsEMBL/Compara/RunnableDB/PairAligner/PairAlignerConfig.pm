@@ -152,7 +152,7 @@ sub fetch_input {
 
   #Get ref_dbc_url and non_ref_dbc_url from genome_db table
   #unless ($self->param('ref_dbc_url')) {
-      my $ref_db = $ref_genome_db->connect_to_genome_locator;
+      my $ref_db = $ref_genome_db->db_adaptor;
       #$self->param('ref_db', $ref_db);
 
       #This doesn't not produce a valid "core" url ie it appends the database name instead of just the db_version so
@@ -161,7 +161,7 @@ sub fetch_input {
   #}
   #unless ($self->param('non_ref_dbc_url')) {
 
-      my $non_ref_db = $non_ref_genome_db->connect_to_genome_locator;
+      my $non_ref_db = $non_ref_genome_db->db_adaptor;
       #$self->param('non_ref_db', $non_ref_db);
 
       #This doesn't not produce a valid "core" url ie it appends the database name instead of just the db_version so
