@@ -204,6 +204,8 @@ sub default_options {
 	'previous_db' => $self->o('livemirror_loc'),
 	'prev_release' => 0,   # 0 is the default and it means "take current release number and subtract 1"    
 	'max_percent_diff' => 20,
+	'do_pairwise_gabs' => 1,
+	'do_compare_to_previous_db' => 1,
 
         #
 	#Default pairaligner config
@@ -330,6 +332,8 @@ sub pipeline_analyses {
 				  'registry_dbs' => $self->o('curr_core_sources_locs'),
 				  'core_dbs' => $self->o('curr_core_dbs_locs'),
 				  'master_db' => $self->o('master_db'),
+				  'do_pairwise_gabs' => $self->o('do_pairwise_gabs'), #healthcheck options
+				  'do_compare_to_previous_db' => $self->o('do_compare_to_previous_db'), #healthcheck options
   				  }, 
 		-flow_into => {
 			       1 => [ 'create_pair_aligner_jobs'],
