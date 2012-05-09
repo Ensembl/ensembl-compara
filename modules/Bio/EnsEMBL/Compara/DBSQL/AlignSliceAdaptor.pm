@@ -166,7 +166,7 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
 
   my $genomic_align_trees = ();
   my $species_order;
-  if ($method_link_species_set->method_link_class =~ /GenomicAlignTree/ and @$genomic_align_blocks) {
+  if ($method_link_species_set->method->class =~ /GenomicAlignTree/ and @$genomic_align_blocks) {
     my $genomic_align_tree_adaptor = $self->db->get_GenomicAlignTreeAdaptor;
     foreach my $this_genomic_align_block (@$genomic_align_blocks) {
 #       print $this_genomic_align_block->reference_genomic_align, "\n";

@@ -119,8 +119,8 @@ sub new {
   if ($method_link_species_set and ref($method_link_species_set) and
       $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")) {
     $self->{_method_link_species_set} = $method_link_species_set;
-    $version .= "+".$method_link_species_set->method_link_type;
-    my $species_set = $method_link_species_set->species_set();
+    $version .= "+".$method_link_species_set->method->type;
+    my $species_set = $method_link_species_set->species_set_obj->genome_dbs();
     if ($species_set) {
       $species_set = [sort {$a->name cmp $b->name} @{$species_set}];
       $version .= "(\"".join("\"+\"", map {$_->name} @$species_set)."\")";
