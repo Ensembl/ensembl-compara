@@ -478,7 +478,7 @@ sub _run_compare_to_previous_db_test {
   }
   
   #Load previous url
-  my $previous_compara_dba = $self->go_figure_compara_dba($previous_db);
+  my $previous_compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($previous_db);
 
   #get the previous method_link_species_set adaptor
   my $previous_mlss_adaptor = $previous_compara_dba->get_MethodLinkSpeciesSetAdaptor;

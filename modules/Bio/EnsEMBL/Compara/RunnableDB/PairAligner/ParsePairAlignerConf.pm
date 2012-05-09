@@ -295,7 +295,7 @@ sub get_species {
     print "SPECIES\n" if ($self->debug);
     my $gdb_adaptor;
     if ($master_db) {
-	my $compara_dba = $self->go_figure_compara_dba( $master_db );
+	my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $master_db );
 	$gdb_adaptor = $compara_dba->get_GenomeDBAdaptor;
     } else {
 	$gdb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
@@ -1430,7 +1430,7 @@ sub update_dnafrags {
 sub load_mlss_from_master {
     my ($self, $genome_db1, $genome_db2, $method_link_type) = @_;
 
-    my $master_dba = $self->go_figure_compara_dba( $self->param('master_db') );
+    my $master_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('master_db') );
     my $mlss = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($method_link_type, [$genome_db1, $genome_db2]);
     
     if ($mlss) {

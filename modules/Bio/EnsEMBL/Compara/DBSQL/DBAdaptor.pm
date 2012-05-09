@@ -57,9 +57,8 @@ Internal methods are usually preceded with an underscore (_)
 
 package Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-use vars qw(@ISA);
 use strict;
-
+use Carp;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
@@ -190,4 +189,59 @@ sub get_available_adaptors {
 }
  
 
+=head2 go_figure_compara_dba
+
+    Description: this is a method that tries lots of different ways to find connection parameters
+                 from a given object/hash and returns a Compara DBA. Does not hash anything, just does the detective magic.
+
+=cut
+
+sub go_figure_compara_dba {
+    my ($self, $foo) = @_;
+
+        
+    if(UNIVERSAL::isa($foo, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor')) {   # it is already a Compara adaptor - just return it
+
+        return $foo;   
+
+    } elsif(ref($foo) eq 'HASH') {  # simply a hash with connection parameters, plug them in:
+
+        return Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( %$foo );
+
+    } elsif(UNIVERSAL::isa($foo, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # a DBConnection itself, plug it in:
+
+        return Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -DBCONN => $foo );
+
+    } elsif(UNIVERSAL::can($foo, 'dbc') and UNIVERSAL::isa($foo->dbc, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # another DBAdaptor, possibly Hive::DBSQL::DBAdaptor
+
+        return Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -DBCONN => $foo->dbc );
+
+    } elsif(UNIVERSAL::can($foo, 'db') and UNIVERSAL::can($foo->db, 'dbc') and UNIVERSAL::isa($foo->db->dbc, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # another data adaptor or Runnable:
+
+        return Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -DBCONN => $foo->db->dbc );
+
+    } elsif(!ref($foo) and $foo=~m{^\w*://}) {
+
+        return Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -url => $foo );
+
+    } else {
+    
+        unless(ref($foo)) {    # maybe it is simply a registry key?
+        
+            my $dba;
+            eval {
+                require Bio::EnsEMBL::Registry;
+                $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($foo, 'compara');
+            };
+            if($dba) {
+                return $dba;
+            }
+        }
+
+        croak "Sorry, could not figure out how to make a Compara DBAdaptor out of $foo";
+    }
+}
+
+
 1;
+

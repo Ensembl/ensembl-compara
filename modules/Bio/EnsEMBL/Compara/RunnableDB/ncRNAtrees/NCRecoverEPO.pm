@@ -92,7 +92,7 @@ sub fetch_input {
   $self->param('member_adaptor', $self->compara_dba->get_MemberAdaptor);
   $self->param('nctree_adaptor', $self->compara_dba->get_NCTreeAdaptor);
 
-  my $epo_dba = $self->go_figure_compara_dba($epo_db);
+  my $epo_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($epo_db);
   $self->param('epo_gab_adaptor', $epo_dba->get_GenomicAlignBlockAdaptor);
   $self->param('epo_mlss_adaptor', $epo_dba->get_MethodLinkSpeciesSetAdaptor);
 

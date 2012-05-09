@@ -57,7 +57,7 @@ sub fetch_input {
   my $curr_release = $self->param('release')      || die "'release' is a required numeric parameter, please set it in the input_id hashref";
   looks_like_number($curr_release)                || die "'release' is a numeric parameter. Check your input";
   my $prev_release = $self->param('prev_release') || $curr_release - 1;
-  my $prev_rel_dbc = $prev_rel_db && $self->go_figure_compara_dba($prev_rel_db)->dbc();
+  my $prev_rel_dbc = $prev_rel_db && Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($prev_rel_db)->dbc();
 
   my $adaptor   = Bio::EnsEMBL::Compara::StableId::Adaptor->new();
   my $from_ncs  = $adaptor->fetch_ncs($prev_release, $type, $prev_rel_dbc);
@@ -96,7 +96,7 @@ sub write_output {
   my $ncsl      = $self->param('ncsl');
   my $master_db = $self->param('master_db');
 
-  my $master_dbc = $master_db && $self->go_figure_compara_dba($master_db)->dbc();
+  my $master_dbc = $master_db && Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($master_db)->dbc();
   my $time_when_started_storing = time();  
   eval {
     $adaptor->store_map($ncsl->to, $self->compara_dba()->dbc());

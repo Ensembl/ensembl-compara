@@ -87,7 +87,7 @@ sub fetch_input {
     if(my $reuse_db = $self->param('reuse_db')) {
 
             # Need to check that the genome_db_id has not changed (treat the opposite as a signal not to reuse) :
-        my $reuse_compara_dba       = $self->go_figure_compara_dba($reuse_db);    # may die if bad parameters
+        my $reuse_compara_dba       = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($reuse_db);    # may die if bad parameters
         my $reuse_genome_db_adaptor = $reuse_compara_dba->get_GenomeDBAdaptor();
         my $reuse_genome_db;
         eval {
