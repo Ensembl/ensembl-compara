@@ -61,7 +61,6 @@ sub fetch_input {
     if (!$self->param('conf_file') &&  $self->param('get_species_list') || !$self->param('master_db')) {
 	return;
     }
-
     #
     #Must load the registry first
     #
@@ -545,90 +544,140 @@ sub parse_defaults {
     if ($self->param('mlss_id')) {
 	my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 	$mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
-	$genome_dbs = $mlss->species_set;
+	$genome_dbs = $mlss->species_set_obj->genome_dbs;
     } 
 
-    my $pair_aligner = {};
-    $pair_aligner->{'method_link'} = $self->param('default_pair_aligner');
-    $pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $self->param('default_parameters');
-    
-    my $chain_config = {};
-    %$chain_config = ('input_method_link' => $self->param('default_chain_input'),
-		      'output_method_link' => $self->param('default_chain_output'));
-    
-    
-    my $net_config = {};
-    %$net_config = ('input_method_link' => $self->param('default_net_input'),
-		    'output_method_link' => $self->param('default_net_output'));
+    #Create a collection of pairs from the list of genome_dbs
+    my $collection;
+    if (@$genome_dbs > 2) {
+	#Have a collection. Make triangular matrix, ordered by genome_db_id?
 
-    my @genome_db_ids;
-    #create dna_collections
-    foreach my $genome_db (@$genome_dbs) {
-	#get and store locator
-	$self->get_locator($genome_db);
-	$self->compara_dba->get_GenomeDBAdaptor->store($genome_db);
+	my @ordered_genome_dbs = sort {$b->dbID <=> $a->dbID} @$genome_dbs;
+	while (@ordered_genome_dbs) {
+	    my $ref_genome_db = shift @ordered_genome_dbs;
+	    foreach my $genome_db (@ordered_genome_dbs) {
+		print "ref " . $ref_genome_db->dbID . " " . $genome_db->dbID . "\n";
+		my $pair;
+		%$pair = ('ref_genome_db'     => $ref_genome_db,
+			  'non_ref_genome_db' => $genome_db);
+		push @$collection, $pair;
+
+		#Load pairwise mlss from master
+		$self->load_mlss_from_master($ref_genome_db, $genome_db, $self->param('default_net_output')->[1]);
+
+	    }
+	}
+    } elsif (@$genome_dbs == 2) {
+	#Normal case of a pair of species
+	my $pair;
+	foreach my $genome_db (@$genome_dbs) {
+	    if ($genome_db->name eq $self->param('ref_species')) {
+		$pair->{ref_genome_db} = $genome_db;
+	    } else {
+		$pair->{non_ref_genome_db} = $genome_db;
+	    }
+	}
+	unless ($pair->{ref_genome_db}) {
+	    if ($mlss) {
+		throw ("Unable to find " . $self->param('ref_species') . " in this mlss " . $mlss->name . " (" . $mlss->dbID . ")") 
+	    } else {
+		throw ("Unable to find " . $self->param('ref_species') . " in these genome_dbs (" . join ",", @$genome_dbs . ")")
+	    }
+	}
+	push @$collection, $pair;
+    } else {
+	#What about self comparisons? 
+	die "Must define at least 2 species";
+    }
+
+    foreach my $pair (@$collection) {
+	#print $pair->{ref_genome_db}->name . " " . $pair->{non_ref_genome_db}->name . "\n";
 	
-	my $raw_name = $genome_db->name . " raw";
-	my $chain_name = $genome_db->name . " for chain";
-	my $dump_loc = $self->param('dump_dir') . "/" . $genome_db->name . "_nib_for_chain";
+	my $pair_aligner = {};
+	$pair_aligner->{'method_link'} = $self->param('default_pair_aligner');
+	$pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $self->param('default_parameters');
+    
+	my $chain_config = {};
+	%$chain_config = ('input_method_link' => $self->param('default_chain_input'),
+			  'output_method_link' => $self->param('default_chain_output'));
 	
-	%{$dna_collections->{$raw_name}} = ('genome_db' => $genome_db);
-	%{$dna_collections->{$chain_name}} = ('genome_db' => $genome_db,
-					      'dump_loc' => $dump_loc);
+	my $net_config = {};
+	%$net_config = ('input_method_link' => $self->param('default_net_input'),
+			'output_method_link' => $self->param('default_net_output'));
+
+	#If used input mlss, check if the method_link_type is the same as the value defined in the conf file used in init_pipeline
+	if ($mlss && ($self->param('default_net_output')->[1] ne $mlss->method->type)) {
+	    warn("The default net_output_method_link " . $self->param('default_net_output')->[1] . " is not the same as the type " . $mlss->method->type . " of the mlss_id (" . $mlss->dbID .") used. Using " . $self->param('default_net_output')->[1] .".\n");
+	}
+	
+	my @genome_db_ids;
+	#create dna_collections
+	#foreach my $genome_db (@$genome_dbs) {
+	foreach my $genome_db ($pair->{ref_genome_db}, $pair->{non_ref_genome_db}) {
+	    #get and store locator
+	    $self->get_locator($genome_db);
+	    $self->compara_dba->get_GenomeDBAdaptor->store($genome_db);
+	    
+	    push @genome_db_ids, $genome_db->dbID;
+	    
+	}
+	
 	
 	#create pair_aligners
-	if ($genome_db->name eq $self->param('ref_species')) {
-	    $pair_aligner->{'reference_collection_name'} = $raw_name;
-	    $chain_config->{'reference_collection_name'} = $chain_name;
-	    $net_config->{'reference_collection_name'} = $chain_name;
-	} else {
-	    $pair_aligner->{'non_reference_collection_name'} = $raw_name;
-	    $chain_config->{'non_reference_collection_name'} = $chain_name;
-	    $net_config->{'non_reference_collection_name'} = $chain_name;
+	$pair_aligner->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " raw";
+	$chain_config->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " for chain";
+	$net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " for chain";
+
+
+	my $dump_loc = $self->param('dump_dir') . "/" . $pair->{ref_genome_db}->name . "_nib_for_chain";
+	
+	%{$dna_collections->{$pair_aligner->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db});
+	%{$dna_collections->{$chain_config->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db},
+									      'dump_loc' => $dump_loc);
+
+	$pair_aligner->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->name . " raw";;
+	$chain_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->name . " for chain";
+	$net_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->name . " for chain";
+	    
+	$dump_loc = $self->param('dump_dir') . "/" . $pair->{non_ref_genome_db}->name . "_nib_for_chain";
+	
+	%{$dna_collections->{$pair_aligner->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db});
+	%{$dna_collections->{$chain_config->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db},
+										   'dump_loc' => $dump_loc);
+
+	#create unique subdirectory to dump dna using genome_db_ids
+	my $dump_dir_species = join "_", @genome_db_ids;
+	
+	#Set default dna_collection chunking values if required
+	get_default_chunking($dna_collections->{$pair_aligner->{'reference_collection_name'}}, $self->param('default_chunks')->{'reference'}, $dump_dir_species);	
+	get_default_chunking($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}, $self->param('default_chunks')->{'non_reference'}, $dump_dir_species);
+    
+	#Store region, if defined, in the chain_config for use in no_chunk_and_group_dna
+	if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'region'}) {
+	    $dna_collections->{$chain_config->{'reference_collection_name'}}->{'region'} = 
+	      $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'region'};
 	}
-
-	push @genome_db_ids, $genome_db->dbID;
-    }
-
-    unless ($pair_aligner->{'reference_collection_name'}) {
-	if ($mlss) {
-	    throw ("Unable to find " . $self->param('ref_species') . " in this mlss " . $mlss->name . " (" . $mlss->dbID . ")") 
-	} else {
-	    throw ("Unable to find " . $self->param('ref_species') . " in these genome_dbs (" . join ",", @$genome_dbs . ")")
+	if ($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'}) {
+	    $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'region'} = 
+	      $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'};
 	}
+	#Store include_non_reference, if defined, in the chain_config for use in no_chunk_and_group_dna
+	if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'}) {
+	    $dna_collections->{$chain_config->{'reference_collection_name'}}->{'include_non_reference'} = 
+	      $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'};
+	}
+	if ($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'include_non_reference'}) {
+	    $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'include_non_reference'} = 
+	      $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'include_non_reference'};
+	}
+	
+	
+	push @$pair_aligners, $pair_aligner;
+	push @$chain_configs, $chain_config;
+	push @$net_configs, $net_config;
+
     }
 
-    #create unique subdirectory to dump dna using genome_db_ids
-    my $dump_dir_species = join "_", @genome_db_ids;
-
-    #Set default dna_collection chunking values if required
-    get_default_chunking($dna_collections->{$pair_aligner->{'reference_collection_name'}}, $self->param('default_chunks')->{'reference'}, $dump_dir_species);	
-    get_default_chunking($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}, $self->param('default_chunks')->{'non_reference'}, $dump_dir_species);
-    
-    #Store region, if defined, in the chain_config for use in no_chunk_and_group_dna
-    if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'region'}) {
-	$dna_collections->{$chain_config->{'reference_collection_name'}}->{'region'} = 
-	  $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'region'};
-    }
-    if ($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'}) {
-	$dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'region'} = 
-	  $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'};
-    }
-    #Store include_non_reference, if defined, in the chain_config for use in no_chunk_and_group_dna
-    if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'}) {
-	$dna_collections->{$chain_config->{'reference_collection_name'}}->{'include_non_reference'} = 
-	  $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'};
-    }
-    if ($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'include_non_reference'}) {
-	$dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'include_non_reference'} = 
-	  $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'include_non_reference'};
-    }
-
-    
-    push @$pair_aligners, $pair_aligner;
-    push @$chain_configs, $chain_config;
-    push @$net_configs, $net_config;
-    
     $self->param('dna_collections', $dna_collections);
     $self->param('pair_aligners', $pair_aligners);
     $self->param('chain_configs', $chain_configs);
@@ -939,7 +988,6 @@ sub create_net_dataflows {
 	my ($input_method_link_id, $input_method_link_type) = @{$net_config->{'input_method_link'}};
 	my $chain_config = find_config($all_configs, $dna_collections, $input_method_link_type, $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->name, $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->name);
 
-
 	my ($chain_input_method_link_id, $chain_input_method_link_type) = @{$chain_config->{'input_method_link'}};
 	my $pairaligner_config = find_config($all_configs, $dna_collections, $chain_input_method_link_type, $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->name, $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->name);
 
@@ -955,17 +1003,22 @@ sub create_net_dataflows {
 	$self->dataflow_output_id($output_hash,6);
 
 	#Dataflow to healthcheck
-	my $healthcheck_hash = {};
-	%$healthcheck_hash = ('test' => 'pairwise_gabs',
-			      'mlss_id' => $net_config->{'mlss_id'});
-	$self->dataflow_output_id($healthcheck_hash, 8);
 
-	$healthcheck_hash = {};
-	%$healthcheck_hash = ('test' => 'compare_to_previous_db',
-			      'mlss_id' => $net_config->{'mlss_id'});
-	$self->dataflow_output_id($healthcheck_hash, 8);
-	
-	#Dataflow to pairaligner_config
+	if ($self->param('do_pairwise_gabs')) {
+	    my $healthcheck_hash = {};
+	    %$healthcheck_hash = ('test' => 'pairwise_gabs',
+				  'mlss_id' => $net_config->{'mlss_id'});
+	    $self->dataflow_output_id($healthcheck_hash, 8);
+	}
+
+	if ($self->param('do_compare_to_previous_db')) {
+	    my $healthcheck_hash = {};
+	    %$healthcheck_hash = ('test' => 'compare_to_previous_db',
+				  'mlss_id' => $net_config->{'mlss_id'});
+	    $self->dataflow_output_id($healthcheck_hash, 8);
+	}
+
+	#Dataflow to pairaligner_stats
 	my $pairaligner_hash = {};
 	%$pairaligner_hash = ('mlss_id' => $net_config->{'mlss_id'},
 			      'raw_mlss_id' => $pairaligner_config->{'mlss_id'});
@@ -1374,6 +1427,15 @@ sub update_dnafrags {
   print "  ok!\n\n";
 }
 
+sub load_mlss_from_master {
+    my ($self, $genome_db1, $genome_db2, $method_link_type) = @_;
 
+    my $master_dba = $self->go_figure_compara_dba( $self->param('master_db') );
+    my $mlss = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($method_link_type, [$genome_db1, $genome_db2]);
+    
+    if ($mlss) {
+	$self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+    }
+}
 
 1;
