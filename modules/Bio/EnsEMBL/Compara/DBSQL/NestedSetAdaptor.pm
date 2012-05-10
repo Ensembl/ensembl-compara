@@ -176,8 +176,9 @@ sub fetch_tree_at_node_id {
 }
 
 
-# UNUSED
 sub fetch_subroot_by_left_right_index {
+  deprecate('fetch_subroot_by_left_right_index() should not be used and will be removed in release 70.
+  If you are using it, please contact the dev mailing-list dev@ensembl.org');
   my ($self,$node) = @_;
 
   unless ($node->left_index && $node->right_index) {

@@ -41,8 +41,7 @@ foreach my $gene (@$genes) {
     my $tree = $proteintree_adaptor->fetch_node_by_node_id($leaf_node_id);
     my $node_a = $proteintree_adaptor->fetch_AlignedMember_by_member_id_root_id($two_ids[0],1);
     my $node_b = $proteintree_adaptor->fetch_AlignedMember_by_member_id_root_id($two_ids[1],1);
-    my $root = $node_a->subroot;
-    $root->merge_node_via_shared_ancestor($node_b);
+    $node_a->root->merge_node_via_shared_ancestor($node_b);
     my $ancestor = $node_a->find_first_shared_ancestor($node_b);
     $ancestor->print_tree(20) if ($verbose);
     my $distance_a = $node_a->distance_to_ancestor($ancestor);

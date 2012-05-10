@@ -420,7 +420,7 @@ sub fetch_protein_tree {
       warn ''.$aligned_member."\n";
       $aligned_member->print_member;
       $aligned_member->gene_member->print_member;
-      $tree = $aligned_member->subroot;
+      $tree = $aligned_member->root;
       $treeDBA->fetch_all_children_for_node($tree);
     }
   }
@@ -564,8 +564,8 @@ sub reroot {
 
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   my $node = $treeDBA->fetch_node_by_node_id($node_id);  
-  warn "tree at ". $node->subroot->node_id ."\n";
-  my $tree = $treeDBA->fetch_node_by_node_id($node->subroot->node_id);  
+  warn "tree at ". $node->root->node_id ."\n";
+  my $tree = $treeDBA->fetch_node_by_node_id($node->root->node_id);  
   $tree->print_tree($self->{'scale'});
   
   my $new_root = $tree->find_node_by_node_id($node_id);

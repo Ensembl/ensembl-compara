@@ -227,11 +227,7 @@ sub update_node {
 
     if ($node->parent()) {
         $parent_id = $node->parent->node_id;
-        if (ref($node->node_id)) {
-            $root_id = $node->root->node_id();
-        } else {
-            $root_id = $node->subroot->node_id();
-        }
+        $root_id = $node->root->node_id();
     }
 
     my $sth = $self->prepare("UPDATE CAFE_tree_node SET

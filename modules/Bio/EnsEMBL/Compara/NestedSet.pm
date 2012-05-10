@@ -299,6 +299,8 @@ sub root {
 }
 
 sub subroot {
+  deprecate('subroot() should not be used and will be removed in release 70.
+  If you are using it, please contact the dev mailing-list dev@ensembl.org');
   my $self = shift;
 
   return undef unless($self->parent);
@@ -522,7 +524,7 @@ sub get_all_adjacent_subtrees {
   my @node_path_to_root = ($self, @{$self->get_all_ancestors} );
   my %path_node_ids = map{ $_->node_id => 1 } @node_path_to_root;
 
-  my $this = $self->subroot; # Start at the root node
+  my $this = $self->root; # Start at the root node
 
   my @adjacent_subtrees;
   while( $this ){

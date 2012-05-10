@@ -131,7 +131,7 @@ sub fetch_by_Member_root_id {
     $member->get_canonical_Member->member_id,
      $clusterset_id);
   return undef unless (defined $aligned_member);
-  my $node = $aligned_member->subroot;
+  my $node = $aligned_member->root;
   return undef unless (defined $node);
   my $gene_tree = $self->fetch_node_by_node_id($node->node_id);
 
