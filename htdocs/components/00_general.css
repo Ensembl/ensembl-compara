@@ -76,6 +76,8 @@ span.sequence { font-family: Courier New, Courier, monospace; }
 .latin        { font-style: italic;                           }
 .normal       { font-style: normal; font-weight: normal;      }
 .small        { font-size: 80%;                               }
+.bigtext      { font-size: 14px; font-weight: bold;           }
+a.bigtext     { text-decoration: none;                        }
 
 /*----------------------------------------------------------------------
   Text layout
