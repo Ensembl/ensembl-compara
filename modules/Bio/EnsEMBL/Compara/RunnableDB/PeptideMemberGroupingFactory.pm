@@ -57,7 +57,6 @@ sub fetch_input {
     my $species_set = ($genome_db_id ? [ $genome_db_id ] : $self->param('species_set'))
         or die "Either 'species_set' list or 'genome_db_id' parameter has to be defined";
 
-    my $genomedb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
     my $member_adaptor   = $self->compara_dba->get_MemberAdaptor;
 
     my @member_ids = ();
