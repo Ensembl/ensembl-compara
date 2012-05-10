@@ -161,7 +161,7 @@ SQL
 
   my $translation_sql = <<SQL;
 SELECT $columns
-FROM translation_stable_id si
+FROM translation si
 JOIN object_xref ox ON (si.translation_id = ox.ensembl_id AND ox.ensembl_object_type =?)
 $xref_join
 $where
