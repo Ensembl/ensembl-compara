@@ -12,32 +12,13 @@ my %params = %{ $cgi->Vars };
 my $biomart_url = "http://www.ensembl.org/biomart/martview?";
 
 foreach my $key (keys %params) {
-  if ($params{$key}) {
-    $biomart_url .= $key . "=" . $params{$key};
-  }
+    if ($params{$key}) {
+	$biomart_url .= $key . "=" . $params{$key};
+    }
 }
 
-print "Content-Type: text/html\n\n";
-print qq(
-<html>
-<head>
-<title>Redirecting to Biomart</title>
-<meta http-equiv="refresh" content="5;url=$biomart_url">
-</head>
-<body style='background:#dfdfdf; margin: 25px; font-family:Helvetica, Arial, sans-serif;'>
-<div id='container' style='padding-top: 20px; text-align: center;'>
-<div id='content' style='width: 60%; padding: 10px; margin:0px auto; border: solid 1px #000066; background: #fff;'>
-<img src='http://www.biomart.org/martview/images/biomart-logo.gif' width='105' height='33' alt='Biomart'><br /><br />
-<b>Redirecting your request to Biomart</b><br /><br />
-You should be redirected to <a href=') . $biomart_url . qq('>BioMart</a> shortly.
-</div>
-</body>
-
-);
-#print qq(
-#<head>
-#<meta http-equiv="refresh" content="0;url=http://">
-#</head>
-#);
+$cgi->redirect($biomart_url);
 
 1;
+
+ 
