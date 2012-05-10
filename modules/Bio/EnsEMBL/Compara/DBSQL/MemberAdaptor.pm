@@ -679,22 +679,6 @@ sub _objs_from_sth {
 }
 
 
-sub _fetch_sequence_by_id {
-  my ($self, $sequence_id) = @_;
-  return $self->db->get_SequenceAdaptor->fetch_by_dbID($sequence_id);
-}
-
-sub _fetch_sequence_exon_bounded_by_member_id {
-  my ($self, $member_id) = @_;
-  return $self->db->get_SequenceAdaptor->fetch_sequence_exon_bounded_by_member_id($member_id);
-}
-
-sub _fetch_sequence_cds_by_member_id {
-  my ($self, $member_id) = @_;
-  return $self->db->get_SequenceAdaptor->fetch_sequence_cds_by_member_id($member_id);
-}
-
-
 sub create_AlignedMember_from_member_attribute {    # deprecated method?
   my $self = shift;
   my $member_attribute = shift;

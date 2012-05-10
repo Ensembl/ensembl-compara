@@ -557,7 +557,7 @@ sub sequence {
      defined($self->sequence_id()) and     
      defined($self->adaptor))
   {
-    $self->{'_sequence'} = $self->adaptor->_fetch_sequence_by_id($self->sequence_id);
+    $self->{'_sequence'} = $self->adaptor->db->get_SequenceAdaptor->fetch_by_dbID($self->sequence_id);
     $self->{'_seq_length'} = length($self->{'_sequence'}) if(defined($self->{'_sequence'}));
   }
 
@@ -635,7 +635,7 @@ sub sequence_exon_bounded {
   }
 
   if(!defined($self->{'_sequence_exon_bounded'})) {
-    $self->{'_sequence_exon_bounded'} = $self->adaptor->db->get_MemberAdaptor->_fetch_sequence_exon_bounded_by_member_id($self->member_id);
+    $self->{'_sequence_exon_bounded'} = $self->adaptor->db->get_SequenceAdaptor->fetch_sequence_exon_bounded_by_member_id($self->member_id);
   }
 
   if(!defined($self->{'_sequence_exon_bounded'})) {
@@ -698,7 +698,7 @@ sub sequence_cds {
   }
 
   if(!defined($self->{'_sequence_cds'})) {
-    $self->{'_sequence_cds'} = $self->adaptor->db->get_MemberAdaptor->_fetch_sequence_cds_by_member_id($self->member_id);
+    $self->{'_sequence_cds'} = $self->adaptor->db->get_SequenceAdaptor->fetch_sequence_cds_by_member_id($self->member_id);
   }
 
   if(!defined($self->{'_sequence_cds'})) {

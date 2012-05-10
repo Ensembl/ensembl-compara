@@ -658,19 +658,6 @@ sub _add_GeneTree_wrapper {
 
 
 
-##########################################################
-#
-# explicit method forwarding to MemberAdaptor
-#
-##########################################################
-
-sub _fetch_sequence_by_id {
-  my $self = shift;
-  return $self->db->get_MemberAdaptor->_fetch_sequence_by_id(@_);
-}
-
-
-
 ###############################################################################
 #
 # Dynamic redefinition of functions to reuse the link to the GeneTree object
