@@ -27,7 +27,7 @@ sub init {
   ));
   
   $self->add_tracks('sequence',
-    [ 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r' }]
+    [ 'contig', 'Contigs', 'contig', { display => 'normal', strand => 'r' }]
   );
 
   $self->add_tracks('information',

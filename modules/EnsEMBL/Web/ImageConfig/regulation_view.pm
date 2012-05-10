@@ -41,7 +41,7 @@ sub init {
   $self->load_configured_das('functional');
   
   $self->add_tracks('sequence',
-    [ 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r' }]
+    [ 'contig', 'Contigs', 'contig', { display => 'normal', strand => 'r' }]
   );
   
   $self->modify_configs(
