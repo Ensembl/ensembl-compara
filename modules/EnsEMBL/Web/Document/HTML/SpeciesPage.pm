@@ -4,14 +4,15 @@ package EnsEMBL::Web::Document::HTML::SpeciesPage;
 
 use strict;
 
+use POSIX qw(ceil floor);
 use EnsEMBL::Web::RegObj;
 
 sub render {
 
   my ($class, $request) = @_;
 
-  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
-  my $sitename = $species_defs->ENSEMBL_SITETYPE;
+  my $species_defs  = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $sitename      = $species_defs->ENSEMBL_SITETYPE;
   my $static_server = $species_defs->ENSEMBL_STATIC_SERVER;
 
   ## Get current Ensembl species
@@ -23,8 +24,8 @@ sub render {
 
   my %species;
   foreach my $species (@valid_species) {
-    my $common      = $species_defs->get_config($species, "SPECIES_COMMON_NAME");
-    my $info = {
+    my $common  = $species_defs->get_config($species, "SPECIES_COMMON_NAME");
+    my $info    = {
         'dir'       => $species,
         'status'    => 'live',
         'sci_name'  => $species_defs->get_config($species, "SPECIES_SCIENTIFIC_NAME"),
@@ -60,69 +61,47 @@ sub render {
       $species{$common} = $info;
     }
   }
-  
 
-  my $total = scalar(keys %species);
-  my $break = int($total / 3);
-  $break++ if $total % 3;
-  ## Reset total to number of cells required for a complete table
-  $total = $break * 3;
-  my $link_style = 'font-size:1.1em;font-weight:bold;text-decoration:none;';
-
-  my $html = qq(
-<h2>$sitename Species</h2>
-<table>
-  <tr>
+  ## Display all the species in three column layout
+  my @htmlspecies;
+  my %htmllinks = (
+    'pre'   => '<span class="bigtext">%2$s</span> (<a href="http://pre.ensembl.org/%1$s/" rel="external">preview - assembly only</a>)',
+    'both'  => '<a class="bigtext" href="/%1$s/Info/Index/">%2$s</a> (<a href="http://pre.ensembl.org/%1$s/" rel="external">preview new assembly %4$s</a>)',
+    'live'  => '<a class="bigtext" href="/%1$s/Info/Index/">%2$s</a>'
   );
-  my ($row, $col);
-  my @species = sort keys %species;
-  for (my $i=0; $i < $total; $i++) {
-    $row = int($i/3);
-    $col = $i % 3;
-    if ($col == 0 && $i < ($total - 1)) {
-     $html .= qq(</tr>\n<tr>);
-    }
-    my $j = $row + $break * $col;
-    my $common = $species[$j];
-    next unless $common;
-    my $info = $species{$common};
-    my $dir = $info->{'dir'};
-    my $name = $info->{'sci_name'};
-    my $link_text = $common =~ /\./ ? $name : $common;
-    $html .= qq(<td style="width:8%;text-align:right;padding:10px 0px">);
-    if ($dir) {
-      $html .= qq(<img src="$static_server/img/species/thumb_$dir.png" alt="$name" />);
-    }
-    else {
-      $html .= '&nbsp;';
-    }
-    $html .= qq(</td><td style="width:25%;padding:2px;padding:10px 0px">);
-    if ($dir) {
-      if ($info->{'status'} eq 'pre') {
-        $html .= qq(<span style = "$link_style">$link_text</span> (<a href="http://pre.ensembl.org/$dir/" rel="external">preview - assembly only</a>));
-      }
-      elsif ($info->{'status'} eq 'both') {
-        my $pre_assembly = $info->{'pre_assembly'};
-        $html .= qq#<a href="/$dir/Info/Index/"  style="$link_style">$link_text</a> (<a href="http://pre.ensembl.org/$dir/" rel="external">preview new assembly $pre_assembly</a>)#;
-      }
-      else {
-        $html .= qq(<a href="/$dir/Info/Index/"  style="$link_style">$link_text</a>);
-      }
-      unless ($common =~ /\./) {
-        $html .= qq(<br /><span style="color:#000"><i>$name</i></span>);
-      }
-    }
-    else {
-      $html .= '&nbsp;';
-    }
-    $html .= '<br />'.$info->{'assembly'};
 
-    $html .= '</td>';
+  for (sort keys %species) {
+    next unless $_;
+    my $info      = $species{$_};
+    my $dir       = $info->{'dir'};
+    next unless $dir;
+    my $name      = $info->{'sci_name'};
+    my $link_text = $_ =~ /\./ ? $name : $_;
+
+    push @htmlspecies, sprintf(
+      '<div class="species-box"><img src="%3$s/img/species/thumb_%1$s.png" alt="%5$s" />'.$htmllinks{$info->{'status'}}.($_ =~ /\./ ? '' : '<br /><i>%5$s</i>').'<br />%6$s</div>',
+      $dir,
+      $link_text,
+      $static_server,
+      $info->{'pre_assembly'},
+      $name,
+      $info->{'assembly'}
+    );
   }
-  $html .= qq(
-  </tr>
-</table>);
-  return $html;
+
+  my $row_count = ceil(@htmlspecies / 3);
+
+  return sprintf('<h2>%s Species</h2>
+    <div class="threecol-wrapper">
+      <div class="threecol-column"><div class="threecol-padding">%s</div></div>
+      <div class="threecol-column"><div class="threecol-padding">%s</div></div>
+      <div class="threecol-column"><div class="threecol-padding">%s</div></div>
+    </div>',
+    $sitename,
+    join('', splice @htmlspecies, 0, $row_count),
+    join('', splice @htmlspecies, 0, $row_count),
+    join('', @htmlspecies)
+  );
 }
 
 1;

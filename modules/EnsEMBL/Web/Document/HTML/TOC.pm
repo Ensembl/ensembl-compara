@@ -35,8 +35,8 @@ sub render {
     my $title        = $section->{'_title'} || ucfirst $dir;
     my @second_level = @{$self->create_links($section, ' style="font-weight:bold"')};
     
-    $html{$column} .= qq{<div class="plain-box" style="margin:0 0 2%;padding:2%"><h2 class="first">$title</h2>\n};
-    
+    $html{$column} .= qq{<div class="plain-box"><h2 class="first">$title</h2>\n};
+
     if (scalar @second_level) {
       $html{$column} .= '<ul>';
   
@@ -61,14 +61,14 @@ sub render {
     
     $html{$column} .= '</div>';
   }
-  
-  $html{$_} = qq{<div class="threecol-$_ widepage">$html{$_}</div>} for grep $html{$_}, keys %html;
-  
-  return qq{<div style="width:100%">
+
+  $html{$_} = qq(<div class="threecol-column"><div class="threecol-padding">$html{$_}</div></div>) for grep $html{$_}, keys %html;
+
+  return qq(<div class="threecol-wrapper">
               $html{'left'}
               $html{'middle'}
               $html{'right'}
-            </div>};
+            </div>);
 }
 
 sub create_links {
