@@ -42,10 +42,10 @@ sub init {
   # Add in additional tracks
   $self->load_tracks;
   $self->load_configured_das;
-  
+    
   $self->add_tracks('sequence', 
-    [ 'contig', 'Contigs',  'stranded_contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' }],
-    [ 'seq',    'Sequence', 'sequence',        { display => 'normal', strand => 'b', description => 'Track showing sequence in both directions. Only displayed at 500bp and below.',       colourset => 'seq',      threshold => 0.5,   bump_width => 0 }],
+    [ 'contig', 'Contigs',  'contig',   { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' }],
+    [ 'seq',    'Sequence', 'sequence', { display => 'normal', strand => 'b', description => 'Track showing sequence in both directions. Only displayed at 1Kb and below.', colourset => 'seq', threshold => 1, depth => 1 }],
   );
   
   $self->add_tracks('decorations',
