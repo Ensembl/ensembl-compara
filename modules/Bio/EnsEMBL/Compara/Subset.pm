@@ -52,7 +52,6 @@ sub new {
     $self->adaptor($adaptor)         if($adaptor);
 
     $self->{'_member_id_list'} = [];
-    $self->{'_cached_member_list'} = [];
   }
 
   return $self;
@@ -201,11 +200,7 @@ sub add_member {
     "not a [$member]");
   }
 
-  my $count = $self->add_member_id($member->dbID);
-
-  push @{$self->{'_cached_member_list'}}, $member;
-
-  return $count;
+  return $self->add_member_id($member->dbID);
 }
 
 sub member_id_list {
@@ -218,37 +213,10 @@ sub count {
   my $self = shift;
 
   return $#{$self->member_id_list()} + 1;
-  #return $#{$self->member_list()} + 1;
-
-  #my @idList = @{$self->member_id_list()};
-  #my $count = $#idList;
-  #return $count;
 }
 
 
-sub output_to_fasta {
-  my ($self, $fastaPath, $prefix) = @_;
-
-  if(defined($fastaPath)) {
-    if($fastaPath ne "stdout") {
-      open FASTA_FP,">$fastaPath";
-    } else {
-      open FASTA_FP,">-";
-    }
-  }
-
-  foreach my $member (@{member_list()}) {
-
-    my $seq_string = $member->sequence;
-    $seq_string =~ s/(.{72})/$1\n/g;
-    
-    print FASTA_FP ">$prefix" .
-        $member->stable_id . " " .
-        $member->description . "\n" .
-        $seq_string . "\n";
-  }
-
-  close(FASTA_FP);
-}
+# FIXME There should be a function to print a FASTA file
+#sub output_to_fasta
 
 1;
