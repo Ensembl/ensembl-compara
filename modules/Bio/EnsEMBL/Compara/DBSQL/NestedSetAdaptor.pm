@@ -95,15 +95,27 @@ sub fetch_node_by_node_id {
   return $node;
 }
 
+=head2 fetch_parent_for_node
+
+  Arg[1]     : NestedSet: $node
+  Example    : $parent_node = $genetree_adaptor->fetch_parent_for_node($node);
+  Description: Fetches from the database the parent node of a node, or returns
+                the already-loaded instance if available
+  Returntype : Bio::EnsEMBL::Compara::NestedSet
+
+=cut
 
 sub fetch_parent_for_node {
-  my ($self, $node) = @_;
+    my ($self, $node) = @_;
 
-  unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
-  }
+    unless($node->isa('Bio::EnsEMBL::Compara::NestedSet')) {
+        throw("set arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a $node");
+    }
 
-  return $self->fetch_node_by_node_id($node->_parent_id);
+    return $node->{'_parent_link'}->get_neighbor($node) if defined $node->{'_parent_link'};
+    my $parent = $self->fetch_node_by_node_id($node->_parent_id);
+    $parent->add_child($node);
+    return $parent;
 }
 
 

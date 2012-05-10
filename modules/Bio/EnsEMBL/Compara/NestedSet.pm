@@ -225,18 +225,11 @@ sub release_children {
 =cut
 
 sub parent {
-  my $self = shift;
-  if(!defined($self->{'_parent_link'}) and $self->adaptor and $self->_parent_id) {
-    my $parent = $self->adaptor->fetch_node_by_node_id($self->_parent_id);
-    #print("fetched parent : "); $parent->print_node;
-#     if (!defined($parent)) {
-#       $DB::single=1;1;
-#     }
-    $parent->add_child($self);
-  }
-  return undef unless($self->{'_parent_link'});
-  return $self->{'_parent_link'}->get_neighbor($self);
+    my $self = shift;
+    return $self->adaptor->fetch_parent_for_node($self) if defined $self->adaptor;
+    return $self->{'_parent_link'}->get_neighbor($self) if defined $self->{'_parent_link'};
 }
+
 
 sub parent_link {
   my $self = shift;
