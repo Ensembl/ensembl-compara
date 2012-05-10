@@ -38,20 +38,13 @@ p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 body.ie6 .twocol-left,
 body.ie6 .twocol-right { width: 40%; }
 
-.threecol-left   { float:left; width:31%; margin:0 0 1% 0; padding:1%; clear:left; }
-.threecol-middle { float:left; width:31%; margin:0 0 1% 0; padding:1%; }
-.threecol-right  { float:right; width:31%; margin:0 1% 0 0; padding:1%; }
+.threecol-wrapper                   { overflow: hidden;             }
+.threecol-column                    { float: left; width:33.3333%;  }
+.threecol-padding                   { margin: 0 5px;                }
 
-/* because three-columns on full-width page looks odd */
-.widepage { width:31% }
-
-body.ie67 .threecol-left,
-body.ie67 .threecol-middle,
-body.ie67 .threecol-right { margin: 0 }
-
-body.ie6 .threecol-left,
-body.ie6 .threecol-middle,
-body.ie6 .threecol-right { width: 33%; }
+/* IE clearly doesn't understand simple mathematics */
+body.ie7 .threecol-column           { width:33.2%; }
+body.ie6 .threecol-column           { width:32.6%; }
 
 table.blobs { width:100%; }
 table.blobs td { 
@@ -67,6 +60,7 @@ img.portal {
 }
 
 .plain-box  { color:[[PANEL_TEXT]]; background-color:[[PANEL_BG]]; border:1px solid [[PANEL_BORDER]]; }
+.threecol-column  .plain-box { padding: 10px; margin-bottom: 10px; }
 .tinted-box { color:[[PANEL_TEXT]]; background-color:[[TINT_BG]]; border:1px solid [[TINT_BORDER]]; }
 .info-box { color:[[CONTRAST_TEXT]]; background-color:[[CONTRAST_BG]]; border:1px solid [[CONTRAST_BORDER]]; }
 .alert-box { color:[[ALERT_TEXT]]; background-color:[[ALERT_BG]]; border:1px solid [[ALERT_BORDER]]; }
