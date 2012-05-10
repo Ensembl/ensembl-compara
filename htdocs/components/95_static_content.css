@@ -58,6 +58,12 @@ div.species-news p.headline { margin:0; padding:4px 0; font-size:110%; min-heigh
 ul#favourites_list li, ul#species_list li { cursor:move; }
 
 /*----------------------------------------------------------------------
+species page
+----------------------------------------------------------------------*/
+div.species-box     { margin: 10px 0; overflow: hidden; padding: 3px; }
+div.species-box img { float: left; height: 40px; margin-right: 3px; width: 40px; }
+
+/*----------------------------------------------------------------------
   Species homepages
 ----------------------------------------------------------------------*/
 
