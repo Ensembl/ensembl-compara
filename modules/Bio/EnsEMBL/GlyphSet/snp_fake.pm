@@ -98,7 +98,7 @@ sub href {
     action   => 'Variation',
     v        => $f->variation_name,
     vf       => $f->dbID,
-    vt       => $f->{'transcriptVariations'}[-1]->transcript->stable_id,
+    vt       => $f->{'transcriptVariations'} ? $f->{'transcriptVariations'}[-1]->transcript->stable_id : undef,
     snp_fake => 1
   });
 }
