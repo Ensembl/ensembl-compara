@@ -54,7 +54,7 @@ sub init {
   
   $self->modify_configs(
     [ 'transcript' ],
-    { render => 'gene_label', strand => 'r' }
+    { strand => 'r' }
   );
   
   $self->modify_configs(
