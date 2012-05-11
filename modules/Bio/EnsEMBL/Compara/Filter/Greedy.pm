@@ -23,12 +23,12 @@ use strict;
 sub filter {
   my ($self,$DnaDnaAlignFeatures) = @_;
 
-  my @{$DnaDnaAlignFeatures} = sort {$b->score <=> $a->score} @{$DnaDnaAlignFeatures};
+  my @SortedDnaDnaAlignFeatures = sort {$b->score <=> $a->score} @{$DnaDnaAlignFeatures};
   
   my @DnaDnaAlignFeatures_filtered;
   my $ref_strand;
 
-  foreach my $fp (@{$DnaDnaAlignFeatures}) {
+  foreach my $fp (@SortedDnaDnaAlignFeatures) {
 
     if ($fp->strand < 0) {
       $fp->reverse_complement;
