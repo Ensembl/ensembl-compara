@@ -114,7 +114,7 @@ sub render {
     bed       => '-',
     xml       => '-',
     ancestral => '-',
-  }], { cellpadding => 4, cellspacing => 2 })->render, $table->render);
+  }], { cellpadding => 4, cellspacing => 2, id => 'ftp-table1' })->render, $table->render);
 }
 
 # Lookup for the types we need for species
