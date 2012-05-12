@@ -99,7 +99,7 @@ sub default_options {
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'release'               => '67',
-        'rel_suffix'            => 'x',    # an empty string by default, a letter otherwise
+        'rel_suffix'            => 'y',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
         'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
 
@@ -613,31 +613,11 @@ sub pipeline_analyses {
 
         {   -logic_name => 'load_fresh_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
-            -parameters => { },
-            -hive_capacity => -1,
-            -rc_id => 2,
-            -flow_into => [ 'store_sequences_factory' ],
-        },
-
-        {   -logic_name => 'store_sequences_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PeptideMemberGroupingFactory',
-            -parameters => { },
-            -hive_capacity => -1,
-            -rc_id => 1,
-            -flow_into => {
-                2 => [ 'store_sequences' ],
+            -parameters => {
+                'store_related_pep_sequences' => 1,
             },
-        },
-
-        {   -logic_name => 'store_sequences',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FlowMemberSeq',
-            -parameters => { },
-            -hive_capacity => $self->o('store_sequences_capacity'),
-            -rc_id => 2,
-            -flow_into => {
-                2 => [ 'mysql:////sequence_cds' ],
-                3 => [ 'mysql:////sequence_exon_bounded' ],
-            },
+            -hive_capacity => -1,
+            -rc_id => 3,
         },
 
         {   -logic_name => 'paf_create_empty_table',
@@ -647,7 +627,7 @@ sub pipeline_analyses {
                             'ALTER TABLE peptide_align_feature_#species_name#_#genome_db_id# DISABLE KEYS',
                 ],
             },
-            -priority       => -10
+            -priority       => -10,
             -batch_size     =>  100,  # they can be really, really short
             -hive_capacity  => -1,
         },
