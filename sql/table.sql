@@ -663,6 +663,7 @@ CREATE TABLE gene_tree_node (
   distance_to_parent              double default 1.0 NOT NULL,
 
   FOREIGN KEY (root_id) REFERENCES gene_tree_node(node_id),
+  FOREIGN KEY (parent_id) REFERENCES gene_tree_node(node_id),
 
   PRIMARY KEY (node_id),
   KEY (parent_id),
