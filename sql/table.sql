@@ -180,7 +180,7 @@ CREATE TABLE method_link_species_set_tag (
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
-  UNIQUE KEY tag_mlss_id (method_link_species_set_id,tag)
+  PRIMARY KEY tag_mlss_id (method_link_species_set_id,tag)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -462,7 +462,7 @@ CREATE TABLE subset_member (
   FOREIGN KEY (member_id) REFERENCES member(member_id),
 
   KEY (member_id),
-  UNIQUE subset_member_id (subset_id, member_id)
+  PRIMARY KEY subset_member_id (subset_id, member_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -594,7 +594,7 @@ CREATE TABLE family_member (
   FOREIGN KEY (family_id) REFERENCES family(family_id),
   FOREIGN KEY (member_id) REFERENCES member(member_id),
 
-  UNIQUE family_member_id (family_id,member_id),
+  PRIMARY KEY family_member_id (family_id,member_id),
   KEY (family_id),
   KEY (member_id)
 
@@ -722,7 +722,7 @@ CREATE TABLE gene_tree_member (
   FOREIGN KEY (node_id) REFERENCES gene_tree_node(node_id),
   FOREIGN KEY (member_id) REFERENCES member(member_id),
 
-  UNIQUE (node_id),
+  PRIMARY KEY (node_id),
   KEY (member_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
@@ -877,7 +877,7 @@ CREATE TABLE homology_member (
   FOREIGN KEY (member_id) REFERENCES member(member_id),
   FOREIGN KEY (peptide_member_id) REFERENCES member(member_id),
 
-  UNIQUE homology_member_id (homology_id,member_id),
+  PRIMARY KEY homology_member_id (homology_id,member_id),
   KEY (homology_id),
   KEY (member_id),
   KEY (peptide_member_id)
