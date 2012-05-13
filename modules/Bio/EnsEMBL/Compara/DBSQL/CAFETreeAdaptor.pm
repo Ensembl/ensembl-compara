@@ -362,11 +362,13 @@ sub _columns {
 }
 
 sub _tables {
-    return (['CAFE_tree_attr', 'cta'], ['CAFE_tree_node', 'ctn']);
+    return (['CAFE_tree_attr', 'cta'], ['CAFE_tree_node', 'ctn'], ['CAFE_tree', 'ct']);
 }
 
-sub _default_left_join_clause {
-    return "LEFT JOIN CAFE_tree ct ON (ctn.node_id = ct.root_id) ";
+sub _left_join {
+    return (
+        ['CAFE_tree', 'ctn.node_id = ct.root_id']
+    );
 }
 
 sub _default_where_clause {

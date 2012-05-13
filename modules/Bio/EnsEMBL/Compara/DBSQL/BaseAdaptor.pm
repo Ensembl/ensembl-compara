@@ -14,24 +14,6 @@ sub attach {
 }
 
 
-# _default_left_join_clause
-#
-#  Arg [1]    : none
-#  Example    : none
-#  Description: May be overridden to provide an additional left join
-#               constraint to the SQL query which is generated to
-#               fetch feature records.  This constraint is always
-#               appended to the end of the generated list of tables
-#  Returntype : string
-#  Exceptions : none
-#  Caller     : generic_fetch
-#
-
-sub _default_left_join_clause {
-    return '';
-}
-
-
 =head2 construct_sql_query
 
   Arg [1]    : (optional) string $constraint
@@ -60,54 +42,80 @@ sub _default_left_join_clause {
 =cut
   
 sub construct_sql_query {
-  my ($self, $constraint, $join, $final_clause) = @_;
+    my ($self, $constraint, $join, $final_clause) = @_;
 
-  my @tables = $self->_tables;
-  my $columns = join(', ', $self->_columns());
-  
-  if ($join) {
-    foreach my $single_join (@{$join}) {
-      my ($tablename, $condition, $extra_columns) = @{$single_join};
-      if ($tablename && $condition) {
-        push @tables, $tablename;
-        
-        if($constraint) {
-          $constraint .= " AND $condition";
-        } else {
-          $constraint = " $condition";
+    my @tabs = $self->_tables;
+    my $columns = join(', ', $self->_columns());
+
+    if ($join) {
+        foreach my $single_join (@{$join}) {
+            my ($tablename, $condition, $extra_columns) = @{$single_join};
+            if ($tablename && $condition) {
+                push @tabs, $tablename;
+
+                if($constraint) {
+                    $constraint .= " AND $condition";
+                } else {
+                    $constraint = " $condition";
+                }
+            } 
+            if ($extra_columns) {
+                $columns .= ", " . join(', ', @{$extra_columns});
+            }
         }
-      } 
-      if ($extra_columns) {
-        $columns .= ", " . join(', ', @{$extra_columns});
-      }
     }
-  }
-      
-  #construct a nice table string like 'table1 t1, table2 t2'
-  my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
 
-  my $sql  = "SELECT $columns FROM $tablenames ".$self->_default_left_join_clause;
-
-  my $default_where = $self->_default_where_clause;
-
-  #append a where clause if it was defined
-  if($constraint) { 
-    $sql .= " WHERE $constraint ";
-    if($default_where) {
-      $sql .= " AND $default_where ";
+    #
+    # Construct a left join statement if one was defined, and remove the
+    # left-joined table from the table list
+    #
+    my @left_join_list = $self->_left_join();
+    my $left_join_prefix = '';
+    my $left_join = '';
+    my @tables;
+    if(@left_join_list) {
+        my %left_join_hash = map { $_->[0] => $_->[1] } @left_join_list;
+        while(my $t = shift @tabs) {
+            my $t_alias = $t->[0] . " " . $t->[1];
+            if( exists $left_join_hash{ $t->[0] } || exists $left_join_hash{$t_alias}) {
+                my $condition = $left_join_hash{ $t->[0] };
+                $condition ||= $left_join_hash{$t_alias};
+                my $syn = $t->[1];
+                $left_join .= " LEFT JOIN " . $t->[0] . " $syn ON $condition)";
+                $left_join_prefix .= '(';
+            } else {
+                push @tables, $t;
+            }
+        }
+    } else {
+        @tables = @tabs;
     }
-  } elsif($default_where) {
-    $sql .= " WHERE $default_where ";
-  }
 
-  #append additional clauses which may have been defined
-  if ($final_clause) {
-    $sql .= ' '.$final_clause;
-  } else {
-    $sql .= ' '.$self->_final_clause;
-  }
+    #construct a nice table string like 'table1 t1, table2 t2'
+    my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
 
-  return $sql;
+    my $sql  = "SELECT $columns FROM $left_join_prefix ($tablenames) $left_join";
+
+    #append a where clause if it was defined
+    my $default_where = $self->_default_where_clause;
+    if($constraint) { 
+        $sql .= " WHERE $constraint";
+        if($default_where) {
+            $sql .= " AND $default_where";
+        }
+    } elsif($default_where) {
+        $sql .= " WHERE $default_where";
+    }
+
+    #append additional clauses which may have been defined
+    if ($final_clause) {
+        $sql .= ' '.$final_clause;
+    } else {
+        $sql .= ' '.$self->_final_clause;
+    }
+
+    #warn "$sql\n";
+    return $sql;
 }
 
 

@@ -566,11 +566,18 @@ sub _columns {
 }
 
 sub _tables {
-  return (['gene_tree_node', 't']);
+  return (['gene_tree_node', 't'], ['gene_tree_member', 'tm'], ['member', 'm'], ['gene_tree_root', 'tr']);
 }
 
-sub _default_left_join_clause {
-    return "LEFT JOIN gene_tree_member tm ON t.node_id = tm.node_id LEFT JOIN member m ON tm.member_id = m.member_id LEFT JOIN gene_tree_root tr ON t.root_id = tr.root_id";
+sub _left_join {
+    return (
+        ['gene_tree_member', 't.node_id = tm.node_id'],
+        ['member', 'tm.member_id = m.member_id'],
+    );
+}
+
+sub _default_where_clause {
+    return "t.root_id = tr.root_id";
 }
 
 sub _get_starting_lr_index {
@@ -654,6 +661,11 @@ sub _add_GeneTree_wrapper {
         }
         #print STDERR "NEW GeneTree for $node :", Dumper($tree);
     }
+}
+
+
+sub _default_member_type {
+    return undef;
 }
 
 
