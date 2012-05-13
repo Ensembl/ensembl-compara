@@ -212,6 +212,7 @@ sub root {
         # defines the new root
         $self->{'_root'} = $new;
         #print "UPDATES $self for root_id\n";
+        delete $self->{'_root_id'};
         $self->{'_root_id'} = $new->node_id unless ref($new->node_id);
     } 
 
@@ -219,9 +220,10 @@ sub root {
         #print "UPDATES $self for root\n";
         my $gtn_adaptor = $self->{'_adaptor'}->db->get_GeneTreeNodeAdaptor;
         $gtn_adaptor->{'_ref_tree'} = $self;
-        $self->{'_root'} = $gtn_adaptor->fetch_node_by_node_id($self->{'_root_id'});
+        $self->{'_root'} = $gtn_adaptor->fetch_tree_at_node_id($self->{'_root_id'});
         delete $gtn_adaptor->{'_ref_tree'};
     }
+    $self->{'_root'}->tree($self) if $self->{'_root'};
     return $self->{'_root'};
 }
 
