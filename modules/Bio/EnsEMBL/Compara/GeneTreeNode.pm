@@ -61,17 +61,19 @@ use Bio::SimpleAlign;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
-use Bio::EnsEMBL::Compara::BaseRelation;
-use Bio::EnsEMBL::Compara::SitewiseOmega;
-
 use base ('Bio::EnsEMBL::Compara::NestedSet');
 
 
 sub tree {
-  my $self = shift;
-  $self->{'_tree'} = shift if(@_);
-  return $self->{'_tree'};
+    my $self = shift;
+    if (@_) {
+        $self->{'_tree'} = shift;
+    } elsif ((not defined $self->{'_tree'}) and (defined $self->adaptor)) {
+        $self->{'_tree'} = $self->adaptor->db->get_GeneTreeAdaptor->fetch_by_root_id($self->{_root_id});
+    }
+    return $self->{'_tree'};
 }
+
 
 # tweaked to take into account the GeneTree object
 sub root {

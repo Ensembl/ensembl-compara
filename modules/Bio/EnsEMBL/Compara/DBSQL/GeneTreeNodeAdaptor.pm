@@ -72,86 +72,58 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compa
 
 =head2 fetch_all
 
-  Arg[1]     : [optional] int clusterset_id (def. 1)
-  Example    : $all_trees = $proteintree_adaptor->fetch_all(1);
-
-  Description: Fetches from the database all the protein trees
-  Returntype : arrayref of Bio::EnsEMBL::Compara::GeneTreeNode
-  Exceptions :
-  Caller     :
+  Description: DEPRECATED. Use GeneTreeAdaptor::fetch_all(-tree_type=>"tree") instead
+                            (possibly with a -member_type option)
 
 =cut
 
+# This function must stay here to override the one from NestedSetAdaptor
 sub fetch_all {
     my $self = shift;
-    my $constraint = "(t.node_id = t.root_id) AND (tr.tree_type = 'tree')";
-
-    my $clusterset_id = shift;
-    $constraint .= " AND (tr.clusterset_id = ${clusterset_id})" if defined $clusterset_id;
-    return $self->generic_fetch($constraint);
+    deprecate('See Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor::fetch_all(-tree_type=>"tree") instead (possibly with a member_type constraint)');
+    return $self->_extract_roots_from_trees($self->db->get_GeneTreeAdaptor->fetch_all(-tree_type => 'tree'));
 }
 
 
 =head2 fetch_all_roots
 
+  Description: DEPRECATED. Use GeneTreeAdaptor::fetch_all(-tree_type=>"clusterset") instead
+                            (possibly with a -member_type option)
+
 =cut
 
 sub fetch_all_roots {
-  my $self = shift;
-
-  my $constraint = "(t.node_id = t.root_id) AND (tr.tree_type = 'clusterset')";
-  return $self->generic_fetch($constraint);
+    my $self = shift;
+    deprecat_('See Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor::fetch_all(-tree_tproteinype=>"clusterset") instead (possibly with a member_type constraint)');
+    return $self->_extract_roots_from_trees($self->db->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset'));
 }
 
 
 =head2 fetch_by_Member_root_id
 
-  Arg[1]     : Bio::EnsEMBL::Compara::Member
-  Arg[2]     : [optional] int clusterset_id (def. 1)
-  Example    : $protein_tree = $proteintree_adaptor->fetch_by_Member_root_id($member);
-
-  Description: Fetches from the database the protein_tree that contains the
-               member. If you give it a clusterset id of 0 this will cause
-               the search span across all known clustersets.
-  Returntype : Bio::EnsEMBL::Compara::GeneTreeNode
-  Exceptions :
-  Caller     :
+  Description: DEPRECATED. Use GeneTreeAdaptor::fetch_all_by_Member() instead
+                            (possibly with a -clusterset_id option)
 
 =cut
 
 sub fetch_by_Member_root_id {
-  my ($self, $member, $clusterset_id) = @_;
-  $clusterset_id = 1 if ! defined $clusterset_id;
-
-  my $root_id = $self->gene_member_id_is_in_tree($member->gene_member_id || $member->member_id);
-
-  return undef unless (defined $root_id);
-  my $aligned_member = $self->fetch_AlignedMember_by_member_id_root_id
-    (
-    $member->get_canonical_Member->member_id,
-     $clusterset_id);
-  return undef unless (defined $aligned_member);
-  my $node = $aligned_member->root;
-  return undef unless (defined $node);
-  my $gene_tree = $self->fetch_node_by_node_id($node->node_id);
-
-  return $gene_tree;
+    my ($self, $member, $clusterset_id) = @_;
+    deprecate('Use Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor::fetch_all_by_Member instead');
+    return $self->_extract_roots_from_trees($self->db->get_GeneTreeAdaptor->fetch_all_by_Member($member, -clusterset_id => $clusterset_id))->[0];
 }
 
 
 =head2 fetch_by_gene_Member_root_id
 
+  Description: DEPRECATED. Use GeneTreeAdaptor::fetch_all_by_Member() instead
+                            (possibly with a -clusterset_id option)
+
 =cut
 
 sub fetch_by_gene_Member_root_id {
-  my ($self, $member, $clusterset_id) = @_;
-  $clusterset_id = 1 if ! defined $clusterset_id;
-
-  my $root_id = $self->gene_member_id_is_in_tree($member->member_id);
-  return undef unless (defined $root_id);
-  my $gene_tree = $self->fetch_node_by_node_id($root_id);
-
-  return $gene_tree;
+    my ($self, $member, $clusterset_id) = @_;
+    deprecate('Use Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor::fetch_all_by_Member instead');
+    return $self->_extract_roots_from_trees($self->db->get_GeneTreeAdaptor->fetch_all_by_Member($member, -clusterset_id => $clusterset_id))->[0];
 }
 
 
@@ -203,7 +175,8 @@ sub fetch_all_AlignedMember_by_Member {
         $self->bind_param_generic_fetch($self->_default_member_type, SQL_VARCHAR);
     }
 
-    return $self->generic_fetch($constraint);
+    my $join = [[['gene_tree_root', 'tr'], 't.root_id = tr.root_id']];
+    return $self->generic_fetch($constraint, $join);
 }
 
 
@@ -235,20 +208,15 @@ sub fetch_AlignedMember_by_member_id_mlssID {
 
 =head2 gene_member_id_is_in_tree
 
+  Description: DEPRECATED. Use fetch_all_by_Member($member_id) instead
+
 =cut
 
 sub gene_member_id_is_in_tree {
-  my ($self, $member_id) = @_;
-
-  my $sth = $self->prepare("SELECT gtn.root_id FROM member m, gene_tree_member gtm, gene_tree_node gtn WHERE gtm.member_id=m.member_id AND gtm.node_id=gtn.node_id AND m.gene_member_id=? LIMIT 1");
-  $sth->execute($member_id);
-  my($root_id) = $sth->fetchrow_array;
-
-  if (defined($root_id)) {
-    return $root_id;
-  } else {
-    return undef;
-  }
+    my ($self, $member_id) = @_;
+    deprecate('Use fetch_all_by_Member($member_id) instead');
+    my $trees = $self->fetch_all_AlignedMember_by_Member($member_id);
+    return $trees->[0]->root_id if $trees;
 }
 
 
@@ -280,30 +248,15 @@ sub fetch_all_AlignedMembers_by_root_id {
 
 =head2 fetch_by_stable_id
 
-  Arg[1]     : string $protein_tree_stable_id
-  Example    : $protein_tree = $proteintree_adaptor->fetch_by_stable_id("ENSGT00590000083078");
-
-  Description: Fetches from the database the protein_tree for that stable ID
-  Returntype : Bio::EnsEMBL::Compara::GeneTreeNode
-  Exceptions : returns undef if $stable_id is not found.
-  Caller     :
+  Description: DEPRECATED. Use GeneTreeAdaptor::fetch_by_stable_id instead.
 
 =cut
 
 sub fetch_by_stable_id {
-  my ($self, $stable_id) = @_;
-
-  my $sql = qq(SELECT root_id FROM gene_tree_root WHERE stable_id=? LIMIT 1);
-  my $sth = $self->prepare($sql);
-  $sth->execute($stable_id);
-
-  my ($root_id) = $sth->fetchrow_array();
-
-  return undef unless (defined $root_id);
-
-  my $protein_tree = $self->fetch_node_by_node_id($root_id);
-
-  return $protein_tree;
+    my $self = shift;
+    deprecate('Use Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor::fetch_by_stable_id instead');
+    my $tree = $self->db->get_GeneTreeAdaptor->fetch_by_stable_id(@_);
+    return $tree->root if (not defined $self->_default_member_type) or ($tree->member_type eq $self->_default_member_type);
 }
 
 
@@ -523,18 +476,7 @@ sub delete_nodes_not_in_tree
 ###################################
 
 sub _tag_capabilities {
-    my $self = shift;
-    my $object = shift;
-    #print "CAPABILITIES $object ";
-    if ($object->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
-        #print " = NODE\n";
-        return ("gene_tree_node_tag", "gene_tree_node_attr", "node_id", "node_id");
-    } elsif ($object->isa('Bio::EnsEMBL::Compara::GeneTree')) {
-        #print " = ROOT\n";
-        return ("gene_tree_root_tag", undef, "root_id", "root_id");
-    } else {
-        die "$self cannot handle tags/attributes for $object\n";
-    }
+    return ('gene_tree_node_tag', 'gene_tree_node_attr', 'node_id', 'node_id');
 }
 
 
@@ -552,13 +494,6 @@ sub _columns {
           't.right_index',
           't.distance_to_parent',
 
-          'tr.stable_id AS tstable_id',
-          'tr.tree_type',
-          'tr.member_type',
-          'tr.version AS tversion',
-          'tr.clusterset_id',
-          'tr.method_link_species_set_id',
-
           'tm.cigar_line',
 
           Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor->_columns()
@@ -566,7 +501,7 @@ sub _columns {
 }
 
 sub _tables {
-  return (['gene_tree_node', 't'], ['gene_tree_member', 'tm'], ['member', 'm'], ['gene_tree_root', 'tr']);
+  return (['gene_tree_node', 't'], ['gene_tree_member', 'tm'], ['member', 'm']);
 }
 
 sub _left_join {
@@ -574,10 +509,6 @@ sub _left_join {
         ['gene_tree_member', 't.node_id = tm.node_id'],
         ['member', 'tm.member_id = m.member_id'],
     );
-}
-
-sub _default_where_clause {
-    return "t.root_id = tr.root_id";
 }
 
 sub _get_starting_lr_index {
@@ -623,6 +554,19 @@ sub init_instance_from_rowhash {
     return $node;
 }
 
+
+# Used as convenience to map the GeneTree objects to GeneTreeNode
+# This method is actually only used by deprecated methods
+sub _extract_roots_from_trees {
+    my $self = shift;
+    my $treearray_ref = shift;
+    my @nodearray = ();
+    #print scalar(@$treearray_ref), " elements to convert\n";
+    foreach my $tree (@{$treearray_ref}) {
+        push @nodearray, $tree->root if (not defined $self->_default_member_type) or ($tree->member_type eq $self->_default_member_type);
+    }
+    return \@nodearray;
+}
 
 sub _add_GeneTree_wrapper {
     my $self = shift;
