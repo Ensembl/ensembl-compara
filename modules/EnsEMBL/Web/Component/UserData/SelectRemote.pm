@@ -71,7 +71,10 @@ We currently accept attachment of the following formats: $format_list.
   # of confusing existing users who don't need this feature. Also this
   # feature only works some of the time at the moment. Flag will be
   # removed when feature is ready. -- ds23
-  my $feature_remote_trackline = $self->hub->species_defs->get_config('MULTI', 'experimental')->{'FEATURE_REMOTE_TRACKLINE'};
+  my $feature_remote_trackline = 0;
+  if($self->hub->species_defs->get_config('MULTI', 'experimental')) {
+    $feature_remote_trackline = $self->hub->species_defs->get_config('MULTI', 'experimental')->{'FEATURE_REMOTE_TRACKLINE'};
+  }
 
   if($feature_remote_trackline) {
     $form->add_field([{
