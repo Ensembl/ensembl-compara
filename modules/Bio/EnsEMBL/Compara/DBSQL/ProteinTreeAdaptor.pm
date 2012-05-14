@@ -62,13 +62,8 @@ use strict;
 use base ('Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor');
 
 
-sub _default_where_clause {
-    return "t.root_id = tr.root_id AND tr.member_type = 'protein'";
-}
-
 sub _default_member_type {
     return 'protein';
 }
-
 
 1;

@@ -31,7 +31,6 @@ ncRNA genes, but the methods are the same as in the GeneTreeNodeAdaptor.
 Similarly, you can use the ProteinTreeAdaptor to fetch trees for protein-coding genes or the
 GeneTreeAdaptor to fetch trees for all types of genes.
 
-
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::DBSQL::NCTreeAdaptor
@@ -62,9 +61,6 @@ use strict;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor');
 
-sub _default_where_clause {
-    return "t.root_id = tr.root_id AND tr.member_type = 'ncrna'";
-}
 
 sub _default_member_type {
     return 'ncrna';
