@@ -61,7 +61,7 @@ sub fetch_input {
 				next unless $seg=~/:/;
 				my($species,$chromosome,$start,$end,$strand) =
 				$seg=~/^([\w:]+):([^\:]+):(\d+):(\d+) \[(.*)\]/;
-				# %StartEnd : this is a hack, as not all adjacent enredo blocks have a 1 bp overlap (~20% dont), 
+				# %StartEnd : this is a hack, as not all adjacent enredo blocks have a 2 bp overlap (~20% dont), 
 				# so we cant just say "($start,$end) = ($start+1,$end-1);"
 				push( @{ $StartEnd{$species}{$chromosome} }, 
 					[ $start, $end, $strand, $dnafrag_region, join(":", $species,$chromosome,$start,$end,$strand) ] );
@@ -85,7 +85,7 @@ sub fetch_input {
 			}
 		}
 	}
-	# replace the original coordinates with a bp overlap with the non-overlapping coordinates
+	# replace the original coordinates with a 2 bp overlap with the non-overlapping coordinates
 	foreach my $species(sort keys %StartEnd){
 		foreach my $chromosome(sort keys %{ $StartEnd{$species} }){
 			our $arr;
