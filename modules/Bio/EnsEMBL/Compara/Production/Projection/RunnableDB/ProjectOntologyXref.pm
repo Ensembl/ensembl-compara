@@ -51,6 +51,7 @@ use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref);
 use File::Spec;
 
 use Bio::EnsEMBL::Hive::URLFactory;
+use Bio::EnsEMBL::Hive::AnalysisJob;
 
 use Bio::EnsEMBL::Compara::Production::Projection::RunnableDB::RunnableLogger;
 use Bio::EnsEMBL::Compara::Production::Projection::Writer::ProjectedDBEntryWriter;
@@ -303,7 +304,7 @@ sub _writer {
     }
   }
   
-  return $self->param('writer');
+  return $self->{writer};
 }
 
 =head2 write_dba()
