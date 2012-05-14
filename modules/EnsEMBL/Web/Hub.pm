@@ -215,7 +215,7 @@ sub core_param {
   my $self = shift;
   my $name = shift;
   return unless $name;
-  $self->{'_core_params'}->{$name} = @_ if @_;
+  $self->{'_core_params'}->{$name} = shift if @_;
   return $self->{'_core_params'}->{$name};
 }
 
