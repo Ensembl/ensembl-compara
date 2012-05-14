@@ -66,7 +66,22 @@ We currently accept attachment of the following formats: $format_list.
     'label'     => 'Save URL to my account',
     'notes'     => 'N.B. Only the file address will be saved, not the data itself',
   } : ()]);
+  
+  # This is turned off by default because there are serious UI issues
+  # of confusing existing users who don't need this feature. Also this
+  # feature only works some of the time at the moment. Flag will be
+  # removed when feature is ready. -- ds23
+  my $feature_remote_trackline = $self->hub->species_defs->get_config('MULTI', 'experimental')->{'FEATURE_REMOTE_TRACKLINE'};
 
+  if($feature_remote_trackline) {
+    $form->add_field([{
+      'type'      => 'string',
+      'name'      => 'trackline',
+      'label'     => 'Additional track line data',
+      'size'      => '30',
+      'notes'     => '( advanced, blank is ok )',    
+    }]);
+  }
   return $form->render;
 }
 

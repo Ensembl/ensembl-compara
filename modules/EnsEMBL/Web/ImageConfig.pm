@@ -715,6 +715,7 @@ sub _add_bigbed_track {
       external => 'url',
       sub_type => 'url',
       colourset => 'feature',
+      style => $args{'source'}{'style'},
   };
 
   if ($args{'view'} && $args{'view'} =~ /peaks/i) {

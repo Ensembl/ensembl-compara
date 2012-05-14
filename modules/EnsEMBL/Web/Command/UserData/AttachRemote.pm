@@ -7,6 +7,7 @@ use strict;
 use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Web::Root;
+use Bio::EnsEMBL::ExternalData::AttachedFormat;
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -32,9 +33,9 @@ sub process {
   ## We have to do some intelligent checking here, in case the user
   ## doesn't select a format, or tries to attach a large format file
   ## with a small format selected in the form
-  my $format = !$chosen_format || (grep(/$chosen_format/i, @small_formats) && grep(/$pattern/i, @big_exts)) ? uc $extension : $chosen_format;
+  my $format_name = !$chosen_format || (grep(/$chosen_format/i, @small_formats) && grep(/$pattern/i, @big_exts)) ? uc $extension : $chosen_format;
 
-  if (!$format) {
+  if (!$format_name) {
     $redirect .= 'SelectRemote';
     
     $session->add_data(
@@ -46,9 +47,17 @@ sub process {
   }
 
   if ($url) {
-    my $check_method      = sprintf 'check_%s_data', lc $format;
-    my ($error, $options) = $object->can($check_method) ? $object->$check_method($url) : $object->check_url_data($url);
-    
+    my $format;
+    my $format_package = "Bio::EnsEMBL::ExternalData::AttachedFormat::".uc($format_name);
+    my $trackline = $self->hub->param('trackline');
+    if (EnsEMBL::Web::Root::dynamic_use(undef, $format_package)) {
+      $format = $format_package->new($self->hub,$format_name,$url,$trackline);
+    } else {
+      $format = Bio::EnsEMBL::ExternalData::AttachedFormat->new($self->hub,$format_name,$url,$trackline);
+    }
+
+    my ($error,$options) = $format->check_data();
+        
     if ($error) {
       $redirect .= 'SelectRemote';
       
@@ -60,15 +69,16 @@ sub process {
       );
     } else {
       ## This next bit is a hack - we need to implement userdata configuration properly! 
-      $redirect .= $format eq 'BIGWIG' ? 'ConfigureBigWig' : 'RemoteFeedback';
-      
+      my $extra_config_page = $format->extra_config_page;
+      $redirect .= $extra_config_page || "RemoteFeedback";
+            
       my $data = $session->add_data(
         type      => 'url',
         code      => join('_', md5_hex($name . $url), $session->session_id),
         url       => $url,
         name      => $name,
-        format    => $format,
-        style     => $format,
+        format    => $format->name,
+        style     => $format->trackline,
         species   => $hub->data_species,
         timestamp => time,
         %$options,
@@ -79,7 +89,7 @@ sub process {
       $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
       
       %params = (
-        format => $format,
+        format => $format->name,
         type   => 'url',
         code   => $data->{'code'},
       );
