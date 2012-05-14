@@ -503,7 +503,13 @@ sub create_instance_from_rowhash {
   }
 
   $self->init_instance_from_rowhash($node, $rowhash);
-  $self->_add_GeneTree_wrapper($node, $rowhash);
+
+    if ((defined $self->{'_ref_tree'}) and ($self->{'_ref_tree'}->root_id eq $rowhash->{root_id})) {
+        # GeneTree was passed via _ref_tree
+        #print STDERR "REUSING GeneTree for $node :", $self->{'_ref_tree'};
+        $node->tree($self->{'_ref_tree'});
+    } 
+
   return $node;
 }
 
@@ -541,45 +547,6 @@ sub _extract_roots_from_trees {
         push @nodearray, $tree->root if (not defined $self->_default_member_type) or ($tree->member_type eq $self->_default_member_type);
     }
     return \@nodearray;
-}
-
-sub _add_GeneTree_wrapper {
-    my $self = shift;
-    my $node = shift;
-    my $rowhash = shift;
-
-    if ((defined $self->{'_ref_tree'}) and ($self->{'_ref_tree'}->root_id eq $rowhash->{root_id})) {
-        # GeneTree was passed via _ref_tree
-        #print STDERR "REUSING GeneTree for $node :", $self->{'_ref_tree'};
-        $node->tree($self->{'_ref_tree'});
-
-    } else {
-
-        # Must create a new GeneTree
-        my $tree = new Bio::EnsEMBL::Compara::GeneTree;
-
-        # Unique GeneTree fields
-        foreach my $attr (qw(tree_type member_type method_link_species_set_id clusterset_id)) {
-            #print "ASSIGNING ", $rowhash->{$attr}, " TO $attr\n";
-            $tree->$attr($rowhash->{$attr});
-        }
-        # GeneTree fields with the same name as a Member field
-        foreach my $attr (qw(stable_id version)) {
-            #print "ASSIGNING ", $rowhash->{"t$attr"}, " TO $attr\n";
-            $tree->$attr($rowhash->{"t$attr"});
-        }
-        $tree->adaptor($self);
-        $node->tree($tree);
-       
-        # Lazy initialisation: only one of root() and root_id() is needed
-        if ($node->node_id == $rowhash->{root_id}) {
-            # The node is the tree root
-            $tree->root($node);
-        } else {
-            $tree->root_id($rowhash->{root_id})
-        }
-        #print STDERR "NEW GeneTree for $node :", Dumper($tree);
-    }
 }
 
 
