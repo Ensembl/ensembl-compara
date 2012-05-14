@@ -188,6 +188,28 @@ sub fetch_tree_at_node_id {
 }
 
 
+
+=head2 fetch_tree_by_root_id
+
+  Arg[1]     : root_id: integer
+  Example    : $root_node = $proteintree_adaptor->fetch_tree_by_root_id(3);
+  Description: Fetches from the database all the nodes linked to this root_id
+                and links them in a tree structure. Returns the root node
+  Returntype : Bio::EnsEMBL::Compara::NestedSet
+  Caller     : general
+
+=cut
+
+sub fetch_tree_by_root_id {
+  my ($self, $root_id) = @_;
+
+  my $table = ($self->_tables)[0]->[1];
+  my $constraint = "$table.root_id = $root_id";
+  return $self->_build_tree_from_nodes($self->generic_fetch($constraint));
+}
+
+
+
 sub fetch_subroot_by_left_right_index {
   deprecate('fetch_subroot_by_left_right_index() should not be used and will be removed in release 70.
   If you are using it, please contact the dev mailing-list dev@ensembl.org');
