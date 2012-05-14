@@ -171,7 +171,7 @@ sub render_normal {
     if (ref $tmp[0] eq 'ARRAY') {
       @features = @{$tmp[0]};
       $config   = $tmp[1];
-      # below not ||= because 0 || undef is undef, we want //= but don't have 5.10
+      # below not ||= because 0 || undef is undef; we want //= but don't have 5.10
       $dep  = defined $dep ? $dep : $tmp[1]->{'dep'};
     } else {
       @features = @tmp;
@@ -229,6 +229,9 @@ sub render_normal {
       if ($config) {
         my $f = $feat[0][2];
         
+        # implicit_colour means that a colour has been arbitrarily assigned
+        # during parsing and some stronger indication, such as the presence 
+        # of scores, should override those assignments. -- ds23
         if ($config->{'useScore'} == 1 && $config->{'implicit_colour'}) {
           my $index          = int(($f->score * scalar @greyscale) / 1000);
              $index          = min(scalar(@greyscale) - 1, $index);

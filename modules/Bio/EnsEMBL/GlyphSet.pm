@@ -437,7 +437,7 @@ sub draw_cigar_feature {
   my $match_colour = $params->{'feature_colour'};
   if($inverted) {
     # Wash out matches when mismatches are to be emphasised
-    $match_colour = $self->{'config'}->colourmap->mix($match_colour,'white',0.9),
+    $match_colour = $self->{'config'}->colourmap->mix($match_colour,'white',0.9);
   }
  
   if (!$ref) {
