@@ -267,36 +267,24 @@ sub fetch_by_stable_id {
 ###########################
 
 sub store {
-    my ($self, $object) = @_;
-    #print "GeneTreeNodeAdaptor::store($object)\n";
+    my ($self, $node) = @_;
 
-    if ($object->isa('Bio::EnsEMBL::Compara::GeneTree')) {
+    # Firstly, store the node
+    $self->store_node($node);
 
-        # We have a GeneTree object
-        return $self->db->get_GeneTreeAdaptor->store($object);
-
-    } elsif ($object->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
-
-        # We have a GeneTreeNode object
-        my $node = $object;
-        # Firstly, store the node
-        $self->store_node($node);
-        # Secondly, recursively do all the children
-        my $children = $node->children;
-        foreach my $child_node (@$children) {
-            # Store the GeneTreeNode or the new GeneTree if different
-            if ((not defined $child_node->tree) or ($child_node->root eq $node->root)) {
-                $self->store($child_node);
-            } else {
-                $self->db->get_GeneTreeAdaptor->store($child_node->tree);
-            }
+    # Secondly, recursively do all the children
+    my $children = $node->children;
+    foreach my $child_node (@$children) {
+        # Store the GeneTreeNode or the new GeneTree if different
+        if ((not defined $child_node->tree) or ($child_node->root eq $node->root)) {
+            $self->store($child_node);
+        } else {
+            $self->db->get_GeneTreeAdaptor->store($child_node->tree);
         }
-
-        return $node->node_id;
-
-    } else {
-        throw("arg must be a [Bio::EnsEMBL::Compara::GeneTreeNode] or a [Bio::EnsEMBL::Compara::GeneTree], but not a $object");
     }
+
+    return $node->node_id;
+
 }
 
 sub store_node {
