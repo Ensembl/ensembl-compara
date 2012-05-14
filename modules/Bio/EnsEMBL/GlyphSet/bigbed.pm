@@ -10,6 +10,7 @@ use Data::Dumper;
 
 use EnsEMBL::Web::Text::Feature::BED;
 use Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor;
+use Bio::EnsEMBL::ExternalData::AttachedFormat::BIGBED;
 
 use base qw(Bio::EnsEMBL::GlyphSet::_alignment Bio::EnsEMBL::GlyphSet_wiggle_and_block);
 
@@ -22,6 +23,18 @@ sub bigbed_adaptor {
 
   my $url = $self->my_config('url');
   return $self->{'_cache'}->{'_bigbed_adaptor'} ||= Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($url);
+}
+
+sub format {
+  my $self = shift;
+
+  return $self->{'_cache'}->{'format'} ||=
+    Bio::EnsEMBL::ExternalData::AttachedFormat::BIGBED->new(
+      $self->{'config'}->hub,
+      "BIGBED",
+      $self->my_config('url'),
+      $self->my_config('style'), # contains trackline
+    );
 }
 
 sub wiggle_features {
@@ -109,33 +122,32 @@ sub href {
 sub features {
   my ($self) = @_;
 
+  my $format = $self->format;
+
   my $slice = $self->{'container'};
   $self->{'_default_colour'} = $self->SUPER::my_colour($self->my_config('sub_type'));
   my $features = $self->bigbed_adaptor->fetch_features($slice->seq_region_name,$slice->start,$slice->end);
   $_->map($slice) for @$features;
   my $config = {};
 
-  # Check if any scores present to enable score-based colouring
-  if(grep { defined $_->score } @$features) {
-    # A score: let's enable greyscale
+  # WORK OUT HOW TO CONFIGURE FEATURES FOR ENDERING
+  # Explicit: Check if mode is specified on trackline
+  my $style = $format->style;
+  
+  if($style eq 'score') {
     $config->{'useScore'} = 1;
     $config->{'implicit_colour'} = 1;
-  } else {
-    # No scores
-  }
-
-  if(grep {     defined $_->external_data 
-            and defined $_->external_data->{'item_colour'} 
-            and @{$_->external_data->{'item_colour'}} 
-            and $_->external_data->{'item_colour'}->[0] } @$features) {
-
+  } elsif($style eq 'colour') {
+    $config->{'useScore'} = 2;
     foreach (@$features) {
       next if defined $_->external_data->{'item_colour'};
       $_->external_data->{'item_colour'} = $self->{'_default_colour'};
     }
-    $config->{'itemRgb'} = 'on';
-
+    $config->{'itemRgb'} = 'on';    
   }
+
+  my $trackline = $format->parse_trackline($format->trackline);
+  $config = { %$config, %$trackline };
 
   return( 
     'url' => [ $features, $config ],
@@ -163,6 +175,13 @@ sub render_compact {
   $self->{'renderer_no_join'} = 1;
   $self->SUPER::render_normal(8, 0);  
 }
+
+sub render_labels {
+  my $self = shift;
+  $self->{'show_labels'} = 1;
+  $self->render_normal(@_);
+}
+
 
 sub render_text { warn "No text renderer for bigbed\n"; return ''; }
 
