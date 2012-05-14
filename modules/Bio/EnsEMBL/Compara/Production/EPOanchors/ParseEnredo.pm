@@ -50,7 +50,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
 	my ($self) = @_;
-	my (%DF, %SEG, %Zero_st, @Zero_st, $dnafrag_region);
+	my (%DF, %SEG, %Zero_st, %StartEnd, @Zero_st, $dnafrag_region);
 	open(IN, $self->param('enredo_out_file')) or die;
 	{
 		local $/ = "block";
@@ -61,12 +61,44 @@ sub fetch_input {
 				next unless $seg=~/:/;
 				my($species,$chromosome,$start,$end,$strand) =
 				$seg=~/^([\w:]+):([^\:]+):(\d+):(\d+) \[(.*)\]/;
-				($start,$end) = ($start+1,$end-1); # assuming anchors have been split and have a one base overlap
+				# %StartEnd : this is a hack, as not all adjacent enredo blocks have a 1 bp overlap (~20% dont), 
+				# so we cant just say "($start,$end) = ($start+1,$end-1);"
+				push( @{ $StartEnd{$species}{$chromosome} }, 
+					[ $start, $end, $strand, $dnafrag_region, join(":", $species,$chromosome,$start,$end,$strand) ] );
 				$DF{$species}++;
 				$Zero_st{$dnafrag_region}++ unless $strand; # catch the dnafrag_region_id if there is a least one zero strand
 				$SEG{$dnafrag_region}{ join(":", $species,$chromosome,$start,$end,$strand) }++; 
 	    		}
 	   	}
+	}
+	# fix the start and ends of genomic coordinates with overlaps	
+	foreach my $species(sort keys %StartEnd){
+		foreach my $chromosome(sort keys %{ $StartEnd{$species} }){
+			our $arr;
+			*arr = \$StartEnd{$species}{$chromosome};
+			@$arr = sort {$a->[0] <=> $b->[0]} @$arr;
+			for(my$i=1;$i<@$arr;$i++){
+				if($arr->[$i]->[0] == $arr->[$i-1]->[1] - 1){
+					$arr->[$i-1]->[1] -= 1;
+					$arr->[$i]->[0] += 1;
+				}
+			}
+		}
+	}
+	# replace the original coordinates with a bp overlap with the non-overlapping coordinates
+	foreach my $species(sort keys %StartEnd){
+		foreach my $chromosome(sort keys %{ $StartEnd{$species} }){
+			our $arr;
+			*arr = \$StartEnd{$species}{$chromosome};
+			for(my$i=0;$i<@$arr;$i++){
+				my $new_coords = join(":", $species, $chromosome, @{ $arr->[$i] }[0..2]);
+				unless($new_coords eq $arr->[$i]->[4]){
+					delete( $SEG{$arr->[$i]->[3] }{ $arr->[$i]->[4] } ); # remove the original overlapping segment 
+					$SEG{ $arr->[$i]->[3] }{ $new_coords }--; # replace it with the the non-ovelapping segment
+				}
+			} 
+			
+		}
 	}
 	$self->param('genome_dbs', [ keys %DF ]);
 	$self->param('dnafrag_regions', \%SEG);
