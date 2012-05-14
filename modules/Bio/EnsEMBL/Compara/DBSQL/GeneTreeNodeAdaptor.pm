@@ -273,7 +273,7 @@ sub store {
     if ($object->isa('Bio::EnsEMBL::Compara::GeneTree')) {
 
         # We have a GeneTree object
-        return $self->store_tree($object);
+        return $self->db->get_GeneTreeAdaptor->store($object);
 
     } elsif ($object->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
 
@@ -288,7 +288,7 @@ sub store {
             if ((not defined $child_node->tree) or ($child_node->root eq $node->root)) {
                 $self->store($child_node);
             } else {
-                $self->store_tree($child_node->tree);
+                $self->db->get_GeneTreeAdaptor->store($child_node->tree);
             }
         }
 
@@ -297,31 +297,6 @@ sub store {
     } else {
         throw("arg must be a [Bio::EnsEMBL::Compara::GeneTreeNode] or a [Bio::EnsEMBL::Compara::GeneTree], but not a $object");
     }
-}
-
-sub store_tree {
-    my ($self, $tree) = @_;
-
-    # Firstly, store the nodes
-    my $root_id = $self->store($tree->root);
-
-    # Secondly, the tree itself
-    if ($tree->adaptor) {
-        # Update 
-        my $sth = $self->prepare("UPDATE gene_tree_root SET tree_type = ?, member_type = ?, clusterset_id = ?, method_link_species_set_id = ?, stable_id = ?, version = ? WHERE root_id = ?");
-        #print "UPDATE INTO gene_tree_root (", $root_id, " ", $tree->tree_type, " ", $tree->member_type, " ", $tree->clusterset_id, " ", $tree->method_link_species_set_id, " ", $tree->stable_id, " ", $tree->version, "\n";
-        $sth->execute($tree->tree_type, $tree->member_type, $tree->clusterset_id, $tree->method_link_species_set_id, $tree->stable_id, $tree->version, $root_id);
-        $sth->finish;
-    } else {
-        # Insert
-        $tree->adaptor($self);
-        my $sth = $self->prepare("INSERT INTO gene_tree_root (root_id, tree_type, member_type, clusterset_id, method_link_species_set_id, stable_id, version) VALUES (?,?,?,?,?,?,?)");
-        #print "INSERT INTRO gene_tree_root (", $root_id, " ", $tree->tree_type, " ", $tree->member_type, " ", $tree->clusterset_id, " ", $tree->method_link_species_set_id, " ", $tree->stable_id, " ", $tree->version, "\n";
-        $sth->execute($root_id, $tree->tree_type, $tree->member_type, $tree->clusterset_id, $tree->method_link_species_set_id, $tree->stable_id, $tree->version);
-        $sth->finish;
-    }
-
-    return $root_id;
 }
 
 sub store_node {
