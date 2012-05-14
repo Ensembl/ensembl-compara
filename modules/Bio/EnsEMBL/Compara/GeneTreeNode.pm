@@ -68,7 +68,7 @@ sub tree {
     my $self = shift;
     if (@_) {
         $self->{'_tree'} = shift;
-    } elsif ((not defined $self->{'_tree'}) and (defined $self->adaptor)) {
+    } elsif ((not defined $self->{'_tree'}) and (defined $self->adaptor) and (defined $self->{_root_id})) {
         $self->{'_tree'} = $self->adaptor->db->get_GeneTreeAdaptor->fetch_by_root_id($self->{_root_id});
     }
     return $self->{'_tree'};
