@@ -123,9 +123,6 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    # It would be better to die!? We can't do nothing with single peptide trees.
-    # Hopefully single peptide trees doesn't reach this runnable
-    return if ($self->param('single_peptide_tree'));
     $self->run_infernal;
 }
 
@@ -164,11 +161,11 @@ sub dump_sequences_to_workdir {
   print STDERR Dumper $cluster if ($self->debug);
 
   my $fastafile = $self->worker_temp_directory . "cluster_" . $cluster->node_id . ".fasta";
-  print("fastafile = '$fastafile'\n") if($self->debug);
+  print STDERR "fastafile: $fastafile\n" if($self->debug);
 
   my $seq_id_hash;
   my $residues = 0;
-  print "fetching sequences...\n" if ($self->debug);
+  print STDERR "fetching sequences...\n" if ($self->debug);
 
   my $node_id = $cluster->node_id;
   my $member_list = $cluster->get_all_leaves;
