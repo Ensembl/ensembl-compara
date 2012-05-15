@@ -27,6 +27,7 @@ my @options = qw(
   display_xrefs
   all_sources
   one_to_many
+  dbentry_type=s@
   file=s 
   registry=s 
   log_cfg=s
@@ -49,34 +50,34 @@ sub _get_opts {
   my $opts = {};
   GetOptions($opts, @options) or pod2usage(1);
   pod2usage( -exitstatus => 0, -verbose => 1 ) if $opts->{help};
-	pod2usage( -exitstatus => 0, -verbose => 2 ) if $opts->{man};
-	
-	#Source & target check
-	_exit('No -source option given', 1, 1) if ! $opts->{source};
-	_exit('No -target option given', 1, 1) if ! $opts->{target};
-	_exit('No -compara option given', 1, 1) if ! $opts->{compara};
-	
-	#Registry work
-	my $reg = $opts->{registry};
-	_exit('No -registry option given', 2, 1) if ! $reg && ! -f $reg;
-	my @args = ($reg);
-	push @args, 1 if $opts->{verbose};
-	Bio::EnsEMBL::Registry->load_all(@args);
-	
-	#Engine work
-	if(! $opts->{engine}) {
-	  my $base = 'Bio::EnsEMBL::Compara::Production::Projection::';
-	  if($opts->{display_xrefs}) {
-	    $opts->{engine} = $base.'DisplayXrefProjectionEngine';
-	  }
-	  else {
-	    $opts->{engine} = $base.'GOAProjectionEngine';
-	  }
-	}
-	
-	if(! $opts->{write_to_db} && ! $opts->{file}) {
-	  _exit('-write_to_db and -file were not specified. We need one', 3, 1);
-	}
+  pod2usage( -exitstatus => 0, -verbose => 2 ) if $opts->{man};
+  
+  #Source & target check
+  _exit('No -source option given', 1, 1) if ! $opts->{source};
+  _exit('No -target option given', 1, 1) if ! $opts->{target};
+  _exit('No -compara option given', 1, 1) if ! $opts->{compara};
+  
+  #Registry work
+  my $reg = $opts->{registry};
+  _exit('No -registry option given', 2, 1) if ! $reg && ! -f $reg;
+  my @args = ($reg);
+  push @args, 1 if $opts->{verbose};
+  Bio::EnsEMBL::Registry->load_all(@args);
+  
+  #Engine work
+  if(! $opts->{engine}) {
+    my $base = 'Bio::EnsEMBL::Compara::Production::Projection::';
+    if($opts->{display_xrefs}) {
+      $opts->{engine} = $base.'DisplayXrefProjectionEngine';
+    }
+    else {
+      $opts->{engine} = $base.'GOAProjectionEngine';
+    }
+  }
+  
+  if(! $opts->{write_to_db} && ! $opts->{file}) {
+    _exit('-write_to_db and -file were not specified. We need one', 3, 1);
+  }
 	
   return $opts;
 }
@@ -104,6 +105,7 @@ sub _build_engine {
   );
   $args{-ALL_SOURCES} = 1 if $opts->{all_sources};
   $args{-ONE_TO_MANY} = 1 if $opts->{one_to_many};
+  $args{-DBENTRY_TYPES} = $opts->{dbentry_type} if $opts->{dbentry_type};
   $args{-SOURCE}      = $opts->{source_name} if $opts->{source_name};
   return $mod->new(%args);
 }
@@ -114,6 +116,7 @@ sub _get_genome_db {
   my $core_dba = _get_adaptor($name, 'core');
   my $gdb_a = $compara_dba->get_GenomeDBAdaptor();
   my $gdb = $gdb_a->fetch_by_core_DBAdaptor($core_dba);
+
   return $gdb;
 }
 
@@ -237,11 +240,16 @@ Flags we wish to project display Xrefs
 
 =item B<--all_sources>
 
-Allow the input of any sources of information
+Allow the input of any sources of information - only relevant for display xrefs
 
 =item B<--one_to_many>
 
-Bring in 1:m relationships rather than just 1:1
+Bring in 1:m relationships rather than just 1:1 - only relevant for display xrefs
+
+=item B<--dbentry_type>
+
+External DB name(s) of Xrefs we wish to consider for GO projection. Can specify
+multiple --dbentry_type
 
 =item B<--write_to_db>
 
