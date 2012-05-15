@@ -220,7 +220,7 @@ sub gene_member_id_is_in_tree {
 }
 
 
-=head2 fetch_all_AlignedMembers_by_root_id
+=head2 fetch_all_AlignedMember_by_root_id
 
   Arg[1]     : int: root_id: ID of the root node of the tree
   Example    : $all_members = $genetree_adaptor->fetch_all_AlignedMember_by_root_id($root_id);
@@ -232,7 +232,7 @@ sub gene_member_id_is_in_tree {
 
 =cut
 
-sub fetch_all_AlignedMembers_by_root_id {
+sub fetch_all_AlignedMember_by_root_id {
   my ($self, $root_id) = @_;
 
   my $constraint = '(tm.member_id IS NOT NULL) AND (t.root_id = ?)';
