@@ -334,7 +334,9 @@ sub content {
       
       # get the corresponding regfeat
       my $rf = $rfa->fetch_all_by_attribute_feature($mf)->[0];
-      
+
+      next unless $rf;
+
       # create a URL
       my $url = $hub->url({
         type   => 'Regulation',
