@@ -147,8 +147,10 @@ sub build_peptide_dbentries_from_Member {
     $db_names = [];
   }
   
-  my $peptide_member = ($member->source_name() eq 'ENSEMBLGENE') ? $member->get_canonical_Member() : $member;
-  my $dbc = $peptide_member->genome_db()->db_adaptor()->dbc();
+  #my $peptide_member = ($member->source_name() eq 'ENSEMBLGENE') ? $member->get_canonical_Member() : $member;
+  my $canonical_member = $member->get_canonical_Member;
+
+  my $dbc = $canonical_member->genome_db()->db_adaptor()->dbc();
   my $t = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $dbc);
   
   my $columns  = 'x.xref_id, x.external_db_id, x.dbprimary_acc, x.display_label, x.version, x.description, x.info_type, x.info_text, oxr.linkage_type, ed.db_name, ed.type, ed.db_release, oxr.object_xref_id';
@@ -169,7 +171,7 @@ SQL
 
   my $transcript_sql = <<SQL;
 SELECT $columns
-FROM transcript_stable_id si
+FROM transcript si
 JOIN object_xref ox ON (si.transcript_id = ox.ensembl_id AND ox.ensembl_object_type =?)
 $xref_join
 $where
@@ -177,7 +179,7 @@ SQL
 
   my $gene_sql = <<SQL;
 SELECT $columns
-FROM gene_stable_id si
+FROM gene si
 JOIN object_xref ox ON (si.gene_id = ox.ensembl_id AND ox.ensembl_object_type =?)
 $xref_join
 $where
@@ -193,8 +195,13 @@ SQL
     ENSEMBLTRANS => 'Transcript',
     ENSEMBLPEP => 'Translation'
   }->{$member->source_name()};
+  my $stable_id = {
+    ENSEMBLGENE => $member->stable_id,
+    ENSEMBLTRANS => $member->get_canonical_Member->stable_id,
+    ENSEMBLPEP  => $member->get_canonical_Member->stable_id,
+  }->{$member->source_name()};
 
-  my $params = [$type, $peptide_member->stable_id()];
+  my $params = [$type, $stable_id];
   
   if($db_names) {
     my @conditions;
@@ -205,10 +212,14 @@ SQL
     my $joined_condition = join(' OR ', @conditions);
     $sql .= " AND ($joined_condition)";
   }
-  
-  my $entries = $t->execute(-SQL => $sql, -CALLBACK => sub {
+
+  my $callback = sub {
     my ($row) = @_;
-    my ($xref_id, $external_db_id, $primary_ac, $display_label, $version, $description, $info_type, $info_text, $linkage, $dbname, $type, $db_release, $ontology_xref_ox_id) = @{$row};
+    
+    my ($xref_id, $external_db_id, $primary_ac, $display_label, 
+        $version, $description, $info_type, $info_text, 
+        $linkage, $dbname, $type, $db_release, 
+        $ontology_xref_ox_id) = @{$row};
     
     my $hash_to_bless = {
       dbID => $xref_id,
@@ -234,7 +245,9 @@ SQL
       $xref = Bio::EnsEMBL::DBEntry->new_fast($hash_to_bless);
     }
     return $xref;
-  }, -PARAMS => $params);
+  };
+
+  my $entries = $t->execute(-SQL => $sql, -CALLBACK => $callback, -PARAMS => $params);
   
   return $class->new(-DBENTRIES => $entries);
 }
