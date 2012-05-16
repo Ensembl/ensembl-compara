@@ -2520,7 +2520,7 @@ sub _nytprof_get_homologous_peptide_ids_from_gene {
 #       $self->{gdb_short_names}{$sp2_gdb_short_name} = 1;
 #       my $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
 #       print STDERR "Fetching homologies btw $species1 and $species2...\n" if ($self->{verbose});
-#       my @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss,"ortholog_one2one")};
+#       my @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss,  -orthology_type => "ortholog_one2one")};
 #       foreach my $homology (@homologies) {
 #         my ($ma1,$ma2) = @{$homology->get_all_Member_Attribute};
 #         my ($member1, $attribute1) = @{$ma1};
@@ -4732,7 +4732,7 @@ sub _dump_genetree_slices {
 #   $self->{mlssa} = $self->{comparaDBA}->get_MethodLinkSpeciesSetAdaptor;
 #   my $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
 #   $self->{ha} = $self->{comparaDBA}->get_HomologyAdaptor;
-#   my @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss,'ortholog_one2one')};
+#   my @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss,  -orthology_type => 'ortholog_one2one')};
 
 #   eval {require Bio::Tools::Run::Alignment::Exonerate;};
 #   if ($@) {
@@ -6511,7 +6511,7 @@ sub _extra_dn_ds {
 #   } while ($taxonomy_parent->dbID != $taxonomy_root->dbID);
 
 #   my $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
-#   my @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss,'ortholog_one2one')};
+#   my @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss,  -orthology_type => 'ortholog_one2one')};
 #   my $homology_count=0;
 #   my $totalnum_homologies = scalar(@homologies);
 #   my $sth;
@@ -6630,7 +6630,7 @@ sub _extra_dn_ds {
 #       $gdb_short_names{$sp1_gdb->name} = $sp1_gdb->short_name;
 #       $gdb_short_names{$sp2_gdb->name} = $sp2_gdb->short_name;
 #       my $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
-#       my @homology_set = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss,'ortholog_one2one')};
+#       my @homology_set = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss,  -orthology_type => 'ortholog_one2one')};
 #       @homologies = (@homologies, @homology_set);
 #     }
 #   }
@@ -6721,7 +6721,7 @@ sub _extra_dn_ds {
 #       $gdb_short_names{$sp2_gdb->short_name} = 1;
 #       my $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
 #       print STDERR "Fetching homologies btw $species1 and $species2...\n" if ($self->{verbose});
-#       my @homology_set = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss,'ortholog_one2one')};
+#       my @homology_set = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss,  -orthology_type => 'ortholog_one2one')};
 #       @homologies = (@homologies, @homology_set);
 #     }
 #   }
@@ -6941,7 +6941,7 @@ sub _extra_dn_ds {
 #       $gdb_short_names{$sp2_gdb->short_name} = 1;
 #       my $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
 #       print STDERR "Fetching homologies btw $species1 and $species2...\n" if ($self->{verbose});
-#       my @homology_set = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss,'ortholog_one2one')};
+#       my @homology_set = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss,  -orthology_type => 'ortholog_one2one')};
 #       @homologies = (@homologies, @homology_set);
 #     }
 #   }
@@ -10068,11 +10068,11 @@ sub _genetree_domains {
 #       my $gdb2_short_name = $gdb2->short_name;
 #       my $mlss_orth = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$gdb1, $gdb2]);
 #       my $mlss_para = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES',  [$gdb1, $gdb2]);
-#       my @orth_one2one = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss_orth,"ortholog_one2one")};
-#       my @orth_app_one2one = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss_orth,"apparent_ortholog_one2one")};
-#       my @orth_one2many = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss_orth,"ortholog_one2many")};
-#       my @orth_many2many = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss_orth, "ortholog_many2many")};
-#       my @para = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss_para,"between_species_paralog")};
+#       my @orth_one2one = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss_orth,  -orthology_type => "ortholog_one2one")};
+#       my @orth_app_one2one = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss_orth,  -orthology_type => "apparent_ortholog_one2one")};
+#       my @orth_one2many = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss_orth,  -orthology_type => "ortholog_one2many")};
+#       my @orth_many2many = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss_orth,  -orthology_type =>  "ortholog_many2many")};
+#       my @para = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss_para,  -orthology_type => "between_species_paralog")};
 #       print OUTFILE $gdb1_short_name, ",",
 #         $gdb2_short_name, ",",
 #           scalar(@orth_one2one), ",",
@@ -10216,7 +10216,7 @@ sub _genetree_domains {
 #   my @homologies; 
 #   unless ($species1 eq $species2) {
 #     $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
-#     @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss,'ortholog_one2one')};
+#     @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss,  -orthology_type => 'ortholog_one2one')};
 #   } else {
 #     $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$sp1_gdb]);
 #     @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss)};
@@ -11500,7 +11500,7 @@ sub _split_genes_stats {
     $species_name =~ s/\ /\_/g;
     my $mlss = $self->{mlssa}->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$gdb]);
     print STDERR $mlss->name, "\n" if ($self->{debug});
-    my @splits = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss,"contiguous_gene_split")};
+    my @splits = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss,  -orthology_type => "contiguous_gene_split")};
     foreach my $homology (@splits) {
       my ($member1, $member2) = @{$homology->gene_list};
       my $taxonomy_level = $homology->taxonomy_level; $taxonomy_level =~ s/\ /\_/g;

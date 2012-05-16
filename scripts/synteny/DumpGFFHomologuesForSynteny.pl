@@ -68,8 +68,8 @@ foreach my $ortho_type (@A_ortholog_types) {
   print STDERR "\nStarting with =$ortho_type= and =".$mlss->name()."=\n" ;
 
   #Get all homologies
-  #my $homols = $ha->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss,'ortholog_one2one');
-  my $homols = $ha->fetch_all_by_MethodLinkSpeciesSet_orthology_type($mlss,$ortho_type);
+  #my $homols = $ha->fetch_all_by_MethodLinkSpeciesSet($mlss, -orthology_type => 'ortholog_one2one');
+  my $homols = $ha->fetch_all_by_MethodLinkSpeciesSet($mlss, -orthology_type => $ortho_type);
 
   #For each members
   my $name = $mlss->name() ; $name =~ s/ /_/g ;
