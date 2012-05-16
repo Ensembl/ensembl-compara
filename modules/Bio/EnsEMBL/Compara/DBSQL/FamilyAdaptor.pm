@@ -275,7 +275,7 @@ sub store_relation {
     $self->SUPER::store_relation($member_attribute, $relation);
 
     my ($member, $attribute) = @{$member_attribute};
-    $attribute->homology_id($relation->dbID);
+    $attribute->family_id($relation->dbID);
     my $sql = "INSERT IGNORE INTO family_member (family_id, member_id, cigar_line) VALUES (?,?,?)";
     my $sth = $self->prepare($sql);
     $sth->execute($attribute->family_id, $attribute->member_id, $attribute->cigar_line);
