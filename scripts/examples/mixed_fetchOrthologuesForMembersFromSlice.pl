@@ -27,7 +27,7 @@ my $homologyDBA = $comparaDBA->get_HomologyAdaptor;
 # get GenomeDB for human
 my $ratGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("rat");
 
-my $members = $comparaDBA->get_MemberAdaptor->fetch_by_source_taxon(
+my $members = $comparaDBA->get_MemberAdaptor->fetch_all_by_source_taxon(
   'ENSEMBLPEP', $ratGDB->taxon_id);
 
 foreach my $pep (@{$members}) {

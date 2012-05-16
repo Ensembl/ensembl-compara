@@ -32,7 +32,7 @@ my $member_adaptor = $reg->get_adaptor('Multi', 'compara', 'Member');
 my $m1 = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000060069");
 $m1->print_member;
 
-my $members = $member_adaptor->fetch_by_source_taxon("ENSEMBLPEP", $humanGDB->taxon_id);
+my $members = $member_adaptor->fetch_all_by_source_taxon("ENSEMBLPEP", $humanGDB->taxon_id);
 printf("fetched %d members\n", scalar(@$members));
 
 foreach my $m2 (@{$members}) {

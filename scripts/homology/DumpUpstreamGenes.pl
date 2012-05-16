@@ -38,7 +38,7 @@ my $ha = $db->get_HomologyAdaptor;
 
 
 
-my $members = $ma->fetch_by_source_taxon('ENSEMBLGENE',$taxon_id);
+my $members = $ma->fetch_all_by_source_taxon('ENSEMBLGENE',$taxon_id);
 
 foreach my $member (@{$members}) {
   
