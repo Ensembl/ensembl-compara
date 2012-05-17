@@ -114,6 +114,12 @@ User-Agent: Sanger Search Bot/Nutch-1.1 (Nutch Spider; http://www.sanger.ac.uk; 
 Allow: /info/*
 Allow: /index.html
 
+# Limit Blekkobot's crawl rate to only one page every 20 seconds.
+# Default rate is quite mad but at least is well behaved wrt robots.txt.
+User-agent: Blekkobot
+Crawl-delay: 20
+
+
 );
     close FH;
   } else {
