@@ -248,11 +248,13 @@ sub glyphset_configs {
           push @default_order, $track;
         }
       } else {
-        my $clone = $self->tree->create_node($track->id . '_tmp'); # Id is replaced in the for loop below
+        my $canvas = $track->get('canvas');
+        my $clone  = $self->tree->create_node($track->id . '_tmp'); # Id is replaced in the for loop below
         $clone->{$_} = $_ eq 'data' ? { %{$track->{'data'}} } : $track->{$_} for keys %$track; # Make a new hash for data, so that drawing_strand can differ
         
         $clone->set('drawing_strand', 'f');
         $track->set('drawing_strand', 'r');
+        $track->set('canvas', { %$canvas, type => "$canvas->{'type'}Bottom" }) if $canvas && $canvas->{'type'};
         
         unshift @default_order, $clone;
         push    @default_order, $track;
@@ -1182,7 +1184,7 @@ sub load_tracks {
     }
   }
   
-  $self->add_options('information', [ 'opt_empty_tracks', 'Display empty tracks', undef, undef, 'off' ]);
+  $self->add_options('information', [ 'opt_empty_tracks', 'Display empty tracks', undef, undef, 'off' ]) unless $self->get_parameter('opt_empty_tracks') eq '0';
   $self->tree->append_child($self->create_option('track_order')) if $self->get_parameter('sortable_tracks');
 }
 
