@@ -6,39 +6,6 @@ use Bio::EnsEMBL::Utils::Exception;
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
-=head2 fetch_by_dbID
-
-  Arg [1]    : int $id
-               the unique database identifier for the feature to be obtained
-  Example    : $feat = $adaptor->fetch_by_dbID(1234);
-  Description: Returns the feature created from the database defined by the
-               the id $id.
-  Returntype : Bio::EnsEMBL::SeqFeature
-  Exceptions : thrown if $id is not defined
-  Caller     : general
-
-=cut
-
-sub fetch_by_dbID {
-  my ($self, $id) = @_;
-
-  unless(defined $id) {
-    $self->throw("fetch_by_dbID must have an id");
-  }
-
-  my @tabs = $self->_tables;
-
-  my ($name, $syn) = @{$tabs[0]};
-
-  #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "${syn}.${name}_id = $id";
-
-  #return first element of generic_fetch list
-  my ($obj) = @{$self->generic_fetch($constraint)};
-  return $obj;
-}
-
-
 =head2 fetch_by_stable_id
 
   Arg [1]    : string $stable_id
