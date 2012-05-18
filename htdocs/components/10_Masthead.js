@@ -234,8 +234,8 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
   },
   
   hashChange: function (r, init) {
-    var shortTab = this.elLk.shortTabs.filter('.location');
-    var longTab  = this.elLk.longTabs.filter('.location');
+    var shortTab = this.elLk.shortTabs.filter('.Location');
+    var longTab  = this.elLk.longTabs.filter('.Location');
     var recent   = Ensembl.speciesCommon + ': ' + Ensembl.lastR;
     var text     = r.split(/\W/);
         text     = 'Location: ' + text[0] + ':' + Ensembl.thousandify(text[1]) + '-' + Ensembl.thousandify(text[2]);
