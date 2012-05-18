@@ -158,7 +158,7 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
     
     this.elLk.list.html(lis.join('')).find('li').on({
       click: function () {
-        panel.elLk.input.val($('.name', this).text());
+        panel.elLk.input.val(''); // stop q parameter getting into URL
         panel.elLk.g.val($('.stable_id', this).text());
         panel.elLk.db.val($('.db', this).val());
         panel.elLk.form.trigger('submit');
