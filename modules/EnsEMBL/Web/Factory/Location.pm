@@ -28,16 +28,15 @@ sub __level         :lvalue { $_[0]->__species_hash->{'level'};                 
 sub __golden_path   :lvalue { $_[0]->__species_hash->{'golden_path'};                                  }
 sub __coord_systems :lvalue { $_[0]->__species_hash->{'coord_systems'};                                }
 
-sub _gene_adaptor                 { return shift->_adaptor('Gene',                 @_);          }
-sub _transcript_adaptor           { return shift->_adaptor('Transcript',           @_);          }
-sub _predtranscript_adaptor       { return shift->_adaptor('PredictionTranscript', @_);          }
-sub _exon_adaptor                 { return shift->_adaptor('Exon',                 @_);          }
-sub _variation_adaptor            { return shift->_adaptor('Variation',            'variation'); }
-sub _variation_feature_adaptor    { return shift->_adaptor('VariationFeature',     'variation'); }
-sub _structural_variation_adaptor { return shift->_adaptor('StructuralVariation',  'variation'); }
-sub _slice_adaptor                { return shift->_adaptor('Slice');                             }
-sub _coord_system_adaptor         { return shift->_adaptor('CoordSystem');                       }
-sub _marker_adaptor               { return shift->_adaptor('Marker');                            }
+sub _gene_adaptor                 { return shift->_adaptor('Gene',                 @_);           }
+sub _transcript_adaptor           { return shift->_adaptor('Transcript',           @_);           }
+sub _predtranscript_adaptor       { return shift->_adaptor('PredictionTranscript', @_);           }
+sub _exon_adaptor                 { return shift->_adaptor('Exon',                 @_);           }
+sub _variation_adaptor            { return shift->_adaptor("$_[0]Variation",        'variation'); }
+sub _variation_feature_adaptor    { return shift->_adaptor("$_[0]VariationFeature", 'variation'); }
+sub _slice_adaptor                { return shift->_adaptor('Slice');                              }
+sub _coord_system_adaptor         { return shift->_adaptor('CoordSystem');                        }
+sub _marker_adaptor               { return shift->_adaptor('Marker');                             }
 
 sub _adaptor {
   my $self = shift;
@@ -195,15 +194,14 @@ sub createObjects {
         # The exception to this is the Marker parameter m, since markers can map to 0, 1 or many locations, the location is not generated in the Marker factory
         # For a list of core parameters, look in Model.pm
         my @params = (
-          [ 'Gene',                [qw(gene geneid                     )] ],
-          [ 'Transcript',          [qw(transcript                      )] ],
-          [ 'Variation',           [qw(snp variation                   )] ],
-          [ 'StructuralVariation', [qw(sv                              )] ],
-          [ 'Exon',                [qw(exon                            )] ],
-          [ 'Peptide',             [qw(p peptide protein               )] ],
-          [ 'MiscFeature',         [qw(mapfrag miscfeature misc_feature)] ],
-          [ 'Marker',              [qw(m marker                        )] ],
-          [ 'Band',                [qw(band                            )] ],
+          [ 'Gene',        [qw(gene                            )] ],
+          [ 'Transcript',  [qw(transcript                      )] ],
+          [ 'Variation',   [qw(snp                             )] ],
+          [ 'Exon',        [qw(exon                            )] ],
+          [ 'Peptide',     [qw(p peptide protein               )] ],
+          [ 'MiscFeature', [qw(mapfrag miscfeature misc_feature)] ],
+          [ 'Marker',      [qw(m marker                        )] ],
+          [ 'Band',        [qw(band                            )] ],
         );
       
         my @anchorview;
@@ -269,9 +267,9 @@ sub createObjects {
             
             last if $location;
           }
-          ## If we still haven't managed to find a location (e.g. an incoming link with a bogus URL), 
-          ## throw a warning rather than an ugly runtime error!
-          $self->problem('fatal', 'Malformed URL', $self->_help("The URL used to reach this page may be incomplete or out-of-date.")) if $self->hub->action ne 'Genome';
+          
+          ## If we still haven't managed to find a location (e.g. an incoming link with a bogus URL), throw a warning rather than an ugly runtime error!
+          $self->problem('no_location', 'Malformed URL', $self->_help('The URL used to reach this page may be incomplete or out-of-date.')) if $self->hub->type eq 'Location' && $self->hub->action ne 'Genome' && !$location;
         }
       }
     }
@@ -495,51 +493,41 @@ sub _location_from_Band {
 }
 
 sub _location_from_Variation {
-  my ($self, $id) = @_;
+  my ($self, $id, $structural) = @_;
   
+  my $adaptor         = $self->_variation_adaptor($structural);
+  my $feature_adaptor = $self->_variation_feature_adaptor($structural);
   my $variation;
   
   eval {
-    $variation = $self->_variation_adaptor->fetch_by_name($id);
+    $variation = $adaptor->fetch_by_name($id);
   };
   
+  $structural = lc "$structural " if $structural;
+  
   if ($@ || !$variation) {
-    $self->problem('fatal', 'Invalid Variation ID', $self->_help("Variation $id cannot be located within Ensembl"));
+    $self->problem('fatal', "Invalid ${structural}variation id", $self->_help(ucfirst "${structural}variation $id cannot be located within Ensembl"));
     return;
   }
   
-  foreach my $vf (@{$self->_variation_feature_adaptor->fetch_all_by_Variation($variation)}) {
-    if ($vf->seq_region_name) {
+  foreach (@{$feature_adaptor->fetch_all_by_Variation($variation)}) {
+    if ($_->seq_region_name) {
       my $slice;
       
       eval {
-        $slice = $self->_slice_adaptor->fetch_by_region(undef, $vf->seq_region_name, $vf->seq_region_start, $vf->seq_region_end);
+        $slice = $self->_slice_adaptor->fetch_by_region(undef, $_->seq_region_name, $_->seq_region_start, $_->seq_region_end);
       };
       
       return $self->_create_from_slice('Variation', $id, $self->expand($slice)) if $slice;
     }
   }
   
-  $self->problem('fatal', 'Non-mapped Variation', $self->_help("Variation $id is in Ensembl, but not mapped to the current assembly"));
+  $self->problem('fatal', "Non-mapped ${structural}variation", $self->_help(ucfirst "${structural}variation $id is in Ensembl, but not mapped to the current assembly"));
   
   return undef;
 }
 
-sub _location_from_StructuralVariation {
-  my ($self, $id) = @_;
-  
-  my $structural_variation;
-  
-  eval {
-    $structural_variation = $self->_structural_variation_adaptor->fetch_by_name($id);
-  };
-  
-  return $self->_create_from_slice('StructuralVariation', $id, $self->expand($structural_variation->feature_Slice)) if $structural_variation;
-  
-  $self->problem('fatal', 'Invalid structural variation id', $self->_help("Structural variation $id cannot be located within Ensembl"));
-  
-  return undef;
-}
+sub _location_from_StructuralVariation { return shift->_location_from_Variation(@_, 'Structural'); }
 
 sub _location_from_Marker {
   my ($self, $id, $chr) = @_;
