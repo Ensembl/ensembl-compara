@@ -142,7 +142,7 @@ sub store_tag {
   Arg [2]    : (optional) <string> value
   Example    : $ns_node->remove_tag('scientific name', 'Mammalia');
                $ns_node->remove_tag('lost_taxon_id');
-  Returntype : Boolean: 1 if something has been deleted, 0 otherwise
+  Returntype : Boolean -- 1 if something has been deleted, 0 otherwise
   Exceptions : none
   Caller     : general
 
@@ -202,7 +202,7 @@ sub remove_tag {
   Arg [2]    : (optional) <string> value
   Example    : $ns_node->remove_tag('scientific name', 'Mammalia');
                $ns_node->remove_tag('lost_taxon_id', 9593);
-  Returntype : Boolean: 1 in case of success, 0 otherwise
+  Returntype : Boolean -- 1 in case of success, 0 otherwise
   Exceptions : none
   Caller     : general
 
