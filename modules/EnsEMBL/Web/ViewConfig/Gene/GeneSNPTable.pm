@@ -14,9 +14,9 @@ sub init {
   my %options    = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
   my $defaults   = {
     consequence_format => 'ensembl',
-    context            => 'FULL',
+    context            => 100,
     hgvs               => 'off',
-  };
+  }; # Don't change context if you want the page to come back!!
   
   $defaults->{"opt_pop_$_"} = 'off' for @{$variations->{'DISPLAY_STRAINS'}};
   $defaults->{"opt_pop_$_"} = 'on'  for @{$variations->{'DEFAULT_STRAINS'}};
