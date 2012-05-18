@@ -1229,7 +1229,6 @@ sub load_configured_das {
       my $sub_menu = $menu->get_node($key);
       
       if (!$sub_menu) {
-        warn "$sub_category, $seen{$sub_category}";
         push @{$adding[1]{$category}}, $sub_category unless $seen{$sub_category}++;
         next;
       }
