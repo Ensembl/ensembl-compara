@@ -13,14 +13,16 @@ Ensembl.extend({
       window.name = 'ensembl_' + new Date().getTime() + '_' + Math.floor(Math.random() * 10000);
     }
     
-    this.hashRegex     = new RegExp(/[\?;&]r=([^;&]+)/);
-    this.ajax          = this.cookie.get('ENSEMBL_AJAX') || this.setAjax();
-    this.width         = parseInt(this.cookie.get('ENSEMBL_WIDTH'), 10) || this.setWidth(undefined, 1);
-    this.dynamicWidth  = !!this.cookie.get('DYNAMIC_WIDTH');
-    this.hideHints     = {};
-    this.initialPanels = $('.initial_panel');
-    this.minWidthEl    = $('#min_width_container');
-    this.images        = { // Store image panel details for highlighting
+    this.locationURL     = typeof window.history.pushState === 'function' ? 'search' : 'hash';
+    this.locationMatch   = new RegExp(/[?;&]r=([^;&]+)/);
+    this.locationReplace = new RegExp(/([?;&]r=)[^;&]+((;&)?)/);
+    this.ajax            = this.cookie.get('ENSEMBL_AJAX') || this.setAjax();
+    this.width           = parseInt(this.cookie.get('ENSEMBL_WIDTH'), 10) || this.setWidth(undefined, 1);
+    this.dynamicWidth    = !!this.cookie.get('DYNAMIC_WIDTH');
+    this.hideHints       = {};
+    this.initialPanels   = $('.initial_panel');
+    this.minWidthEl      = $('#min_width_container');
+    this.images          = { // Store image panel details for highlighting
       total: imagePanels.length,
       last:  imagePanels.last()[0]
     };
@@ -36,7 +38,22 @@ Ensembl.extend({
     this.setCoreParams();
     
     this.LayoutManager.initialize();
+    
+    // If there's a hash in the URL with a new location in it, and the browser supports history API,
+    // update window.location.search to contain the new location.
+    // Also change all ajax_load values, so panels are loaded matching the new location.
+    var removeHash = this.locationURL === 'hash' ? '' : window.location.hash.replace(/^#/, '?').match(this.locationMatch);
+    
+    if (removeHash) {
+      window.history.replaceState({}, '', window.location.search.replace(this.locationReplace, '$1' + removeHash[1] + '$2'));
+      $('input.ajax_load').val(function (i, val) { return val.replace(Ensembl.locationReplace, '$1' + removeHash[1] + '$2'); });
+    }
+    
     this.PanelManager.initialize();
+    
+    if (removeHash) {
+      this.EventManager.trigger('hashChange', removeHash[1]); // update links and HTML for the new location
+    }
   },
   
   cookie: {
@@ -140,7 +157,7 @@ Ensembl.extend({
   },
   
   cleanURL: function (url) {
-    return unescape(url.replace(/&/g, ';').replace(/#.*$/g, '').replace(/([\?;])time=[^;]+;?/g, '$1').replace(/[\?;]$/g, ''));
+    return unescape(url.replace(/&/g, ';').replace(/#.*$/g, '').replace(/([?;])time=[^;]+;?/g, '$1').replace(/[?;]$/g, ''));
   },
   
   // Remove the old time stamp from a URL and replace with a new one
@@ -168,12 +185,22 @@ Ensembl.extend({
     window.location = url;
   },
   
+  updateLocation: function (r) {
+    if (this.locationURL === 'hash') {
+      window.location.hash = 'r=' + r;
+    } else {
+      window.history.pushState({}, '', window.location.search.replace(this.locationReplace, '$1' + r + '$2'));
+      this.setCoreParams();
+      this.EventManager.trigger('hashChange', r);
+    }
+  },
+  
   urlFromHash: function (url, paramOnly) {
-    var hash  = window.location.hash.replace(/^#/, '?') + ';';
-    var match = hash.match(this.hashRegex);
-    var r     = match ? match[1] : this.initialR || '';
+    var location = window.location[this.locationURL].replace(/^#/, '?') + ';';
+    var match    = location.match(this.locationMatch);
+    var r        = match ? match[1] : this.initialR || '';
     
-    return paramOnly ? r : url.match(this.hashRegex) ? url.replace(/([\?;]r=)[^;]+(;?)/, '$1' + r + '$2') : r ? url + (url.match(/\?/) ? ';r=' : '?r=') + r : url;
+    return paramOnly ? r : url.match(this.locationMatch) ? url.replace(this.locationReplace, '$1' + r + '$2') : r ? url + (url.match(/\?/) ? ';r=' : '?r=') + r : url;
   },
   
   thousandify: function (str) {

@@ -4,9 +4,6 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
   constructor: function (id, params) {
     this.base(id, params);
     
-    this.matchRegex   = new RegExp(/[\?;&]r=([^;&]+)/);
-    this.replaceRegex = new RegExp(/([\?;&]r=)[^;&]+(;&?)*/);
-    
     Ensembl.EventManager.register('hashChange',  this, this.getContent);
     Ensembl.EventManager.register('changeWidth', this, this.resize);
     Ensembl.EventManager.register('imageResize', this, this.resize);
@@ -28,7 +25,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     this.enabled = this.params.enabled || false;
     this.reload  = false;
     
-    var match        = (window.location.hash.replace(/^#/, '?') + ';').match(this.matchRegex);
+    var match        = (window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.locationMatch);
     var sliderConfig = $('span.ramp', this.el).hide().children();
     var sliderLabel  = $('.slider_label', this.el);
     var hash, boundaries, r, l, i;
@@ -76,10 +73,10 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
           panel.reload = true;
         }
         
-        newR = this.href.match(panel.matchRegex)[1];
+        newR = this.href.match(Ensembl.locationMatch)[1];
         
         if (newR !== Ensembl.coreParams.r) {
-          window.location.hash = 'r=' + newR; 
+          Ensembl.updateLocation(newR);
         }
         
         return false;
@@ -98,7 +95,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       change: function (e, ui) {      
         var input = sliderConfig[ui.value];
         var url   = input.href;
-        var r     = url.match(panel.matchRegex)[1];
+        var r     = url.match(Ensembl.locationMatch)[1];
         
         sliderLabel.html(input.name + ' bp');
         
@@ -109,13 +106,13 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         } else if (panel.enabled === false) {
           Ensembl.redirect(url);
           return false;
-        } else if ((!window.location.hash || window.location.hash === '#') && url === window.location.href) {
+        } else if (Ensembl.locationURL === 'hash' && !window.location.hash.match(Ensembl.locationMatch) && window.location.search.match(Ensembl.locationMatch)[1] === r) {
           return false;
-        } else if (window.location.hash.match('r=' + r)) {
+        } else if ((window.location[Ensembl.locationURL].match(Ensembl.locationMatch) || [])[1] === r) {
           return false;
         }
         
-        window.location.hash = 'r=' + r;
+        Ensembl.updateLocation(r);
       },
       stop: function () {
         sliderLabel.hide();
@@ -154,7 +151,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
           panel.elLk.locationInput.val(json.shift());
           
           panel.elLk.navLinks.not('.ramp').attr('href', function () {
-            return this.href.replace(panel.replaceRegex, '$1' + json.shift() + '$2');
+            return this.href.replace(Ensembl.locationReplace, '$1' + json.shift() + '$2');
           });
         }
       });

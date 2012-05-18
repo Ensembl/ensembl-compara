@@ -739,7 +739,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       if (!files.length) {
         if (r) {
           panel.hashChangeReload = true;
-          window.location.hash = 'r=' + r;
+          Ensembl.updateLocation(r);
         }
         
         return;
