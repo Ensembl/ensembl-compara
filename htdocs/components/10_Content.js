@@ -51,51 +51,19 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     $('.navbar', this.el).width(Ensembl.width);
     
     this.elLk.ajaxLoad.each(function () {
-      var el   = $(this);
-      var urls = $('input.ajax_load', this).map(function () { return this.value; }).toArray();
-      var content, caption, component, referer, url, params, i, j;
+      var url = $('input.ajax_load', this).val();
       
-      if (!urls.length) {
+      if (!url) {
         return;
       }
       
-      if (urls[0].substr(0, 1) !== '/') {
-        caption = urls.shift();
-        content = $('<div class="content"></div>');
-        
-        el.append('<h4>' + caption + '</h4>').append(content);
+      if (url.match(/\?/)) {
+        url = Ensembl.replaceTimestamp(url);
       } else {
-        content = el;
+        url += '?';
       }
       
-      for (i = 0; i < urls.length; i++) {
-        component = urls[i];
-        
-        if (component.substr(0, 1) === '/') {
-          if (component.match(/\?/)) {
-            referer = '';
-            url     = [];
-            params  = component.split(/;/);
-            j       = params.length;
-            
-            while (j--) {
-              if (params[j].match(/^_referer=/)) {
-                referer = params[j];
-              } else {
-                url.unshift(params[j]);
-              }
-            }
-            
-            component = Ensembl.replaceTimestamp(url.join(';')) + referer;
-          } else {
-            component += '?';
-          }
-          
-          panel.getContent(component, content, { updateURL: component + ';update_panel=1' });
-        }
-      }
-      
-      el = content = null;
+      panel.getContent(url, $(this), { updateURL: url + ';update_panel=1' });
     });
   },
   
