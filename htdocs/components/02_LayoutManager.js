@@ -23,7 +23,7 @@ Ensembl.LayoutManager.extend({
     
     $('#header a:not(#tabs a)').addClass('constant');
     
-    if ((window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.hashRegex)) {
+    if ((window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.locationMatch)) {
       $('.ajax_load').val(function (i, val) {
         return Ensembl.urlFromHash(val);
       });
@@ -89,7 +89,7 @@ Ensembl.LayoutManager.extend({
         Ensembl.LayoutManager.windowHeight = windowHeight;
       },
       hashchange: function (e) {
-        if ((window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.hashRegex) || !window.location.hash && Ensembl.hash.match(Ensembl.hashRegex)) {
+        if ((window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.locationMatch) || !window.location.hash && Ensembl.hash.match(Ensembl.locationMatch)) {
           Ensembl.setCoreParams();
           Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
         }
@@ -212,11 +212,6 @@ Ensembl.LayoutManager.extend({
     
     $('h1.summary-heading').html(function (i, html) {
       return html.replace(/^(Chromosome ).+/, '$1' + text);
-    });
-    
-    $('#masthead li.Location a').each(function () {
-      var attr   = this.title ? 'title' : 'innerHTML';
-      this[attr] = this[attr].replace(/^(Location: ).+/, '$1' + text.replace(/: /, ':'));
     });
     
     document.title = document.title.replace(/(Chromosome ).+/, '$1' + text);
