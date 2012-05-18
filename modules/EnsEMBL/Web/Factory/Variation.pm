@@ -53,6 +53,7 @@ sub createObjects {
     
     $self->param('vdb', 'variation');
     $self->param('v', $variation->name) unless $self->param('v'); # For same reason as vf check above
+    $self->delete_param('snp');
   } else { 
     my $dbsnp_version = $db->{'dbSNP_VERSION'} ? "which includes data from dbSNP $db->{'dbSNP_VERSION'}," : '';
     my $help_message  ="Either $identifier does not exist in the current Ensembl database, $dbsnp_version or there was a problem retrieving it.";

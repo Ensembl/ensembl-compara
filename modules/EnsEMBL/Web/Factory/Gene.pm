@@ -125,6 +125,7 @@ sub createObjects {
     }
     
     $self->param('g', $gene->stable_id) unless $param eq 'family';
+    $self->delete_param('gene');
   }
 }
 

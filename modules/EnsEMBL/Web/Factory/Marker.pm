@@ -24,6 +24,7 @@ sub createObjects {
   $self->DataObjects($self->new_object('Marker', \@markers, $self->__data));
   
   $self->param('m', $marker);
+  $self->delete_param('marker');
 }
 
 1;
