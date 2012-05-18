@@ -65,6 +65,11 @@ Ensembl.LayoutManager.extend({
       }
     });
     
+    function popState() {
+      Ensembl.setCoreParams();
+      Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
+    }
+    
     this.window = $(window).on({
       resize: function () {
         // jquery ui 1.8.14 causes window.resize to fire on resizable when using jquery 1.6.2
@@ -90,11 +95,12 @@ Ensembl.LayoutManager.extend({
       },
       hashchange: function (e) {
         if ((window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.locationMatch) || !window.location.hash && Ensembl.hash.match(Ensembl.locationMatch)) {
-          Ensembl.setCoreParams();
-          Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
+          popState();
         }
       }
     });
+    
+    window.onpopstate = popState;
     
     var userMessage = unescape(Ensembl.cookie.get('user_message'));
     
