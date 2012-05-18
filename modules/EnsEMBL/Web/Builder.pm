@@ -100,6 +100,13 @@ sub create_objects {
   
   $hub->clear_problem_type('fatal') if $type eq 'MultipleLocation' && $self->object('Location');
   
+  my ($no_location) = $type eq 'Location' && !$self->object('Location') ? $hub->get_problem_type('no_location') : undef;
+  
+  if ($no_location) {
+    $hub->problem('fatal', $no_location->name, $no_location->description);
+    $hub->clear_problem_type('no_location');
+  }
+  
   if ($request eq 'page') {
     my ($redirect) = $hub->get_problem_type('redirect');
     my ($new_url, $redirect_url);
@@ -132,10 +139,10 @@ sub create_factory {
   my $hub = $self->hub;
   
   $data ||= {
-    _hub           => $hub,
-    _input         => $hub->input,
-    _databases     => $hub->databases,
-    _referer       => $hub->referer
+    _hub       => $hub,
+    _input     => $hub->input,
+    _databases => $hub->databases,
+    _referer   => $hub->referer
   };
   
   my $factory = $self->new_factory($type, $data);
