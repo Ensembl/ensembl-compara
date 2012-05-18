@@ -16,7 +16,6 @@ Ensembl.extend({
     this.locationURL     = typeof window.history.pushState === 'function' ? 'search' : 'hash';
     this.locationMatch   = new RegExp(/[?;&]r=([^;&]+)/);
     this.locationReplace = new RegExp(/([?;&]r=)[^;&]+((;&)?)/);
-    this.ajax            = this.cookie.get('ENSEMBL_AJAX') || this.setAjax();
     this.width           = parseInt(this.cookie.get('ENSEMBL_WIDTH'), 10) || this.setWidth(undefined, 1);
     this.dynamicWidth    = !!this.cookie.get('DYNAMIC_WIDTH');
     this.hideHints       = {};
@@ -74,10 +73,6 @@ Ensembl.extend({
       var cookie = document.cookie.match(new RegExp('(^|;)\\s*' + (unescaped === true ? name : escape(name)) + '=([^;\\s]*)'));
       return cookie ? unescape(cookie[2]) : '';
     }
-  },
-  
-  setAjax: function () {
-    return this.cookie.set('ENSEMBL_AJAX', ($.ajaxSettings.xhr() || false) ? 'enabled' : 'none');
   },
   
   setWidth: function (w, changed) {

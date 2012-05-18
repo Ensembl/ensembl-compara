@@ -209,7 +209,6 @@ sub postReadRequestHandler {
   
   $r->subprocess_env->{'ENSEMBL_IMAGE_WIDTH'}   = $width || $ENSEMBL_IMAGE_WIDTH || 800;
   $r->subprocess_env->{'ENSEMBL_DYNAMIC_WIDTH'} = $cookies{'DYNAMIC_WIDTH'} && $cookies{'DYNAMIC_WIDTH'}->value ? 1 : $width ? 0 : 1;
-  $r->subprocess_env->{'ENSEMBL_AJAX_VALUE'}    = $cookies{'ENSEMBL_AJAX'}  && $cookies{'ENSEMBL_AJAX'}->value  ? $cookies{'ENSEMBL_AJAX'}->value : 'none';
   
   $ENSEMBL_WEB_REGISTRY->timer_push('Post read request handler completed', undef, 'Apache');
   

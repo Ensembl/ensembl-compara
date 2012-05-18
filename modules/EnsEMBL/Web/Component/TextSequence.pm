@@ -10,7 +10,6 @@ use URI::Escape qw(uri_unescape);
 
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 
-use EnsEMBL::Web::Document::Renderer::Assembler;
 use EnsEMBL::Web::Fake;
 use EnsEMBL::Web::TmpFile::Text;
 
@@ -894,35 +893,21 @@ sub chunked_content {
   my ($total_length, $chunk_length, $base_url) = @_;
 
   my $hub = $self->hub;
-
-  my $i        = 1;
-  my $j        = $chunk_length;
-  my $end      = (int ($total_length / $j)) * $j; # Find the final position covered by regular chunking - we will add the remainer once we get past this point.
-  my $renderer = ($ENV{'ENSEMBL_AJAX_VALUE'} eq 'enabled') ? undef : new EnsEMBL::Web::Document::Renderer::Assembler(session => $hub->session);
+  my $i   = 1;
+  my $j   = $chunk_length;
+  my $end = (int ($total_length / $j)) * $j; # Find the final position covered by regular chunking - we will add the remainer once we get past this point.
   my ($url, $html);
   
   # The display is split into a managable number of sub slices, which will be processed in parallel by requests
   while ($j <= $total_length) {
-    $url = qq{$base_url;subslice_start=$i;subslice_end=$j};
-
-    if ($renderer) {
-      map { $url .= ";$_=" . $hub->param($_) } $hub->param;
-
-      $renderer->print(new HTTP::Request('GET', $hub->species_defs->ENSEMBL_BASE_URL . $url));
-    } else {
-      $html .= qq{<div class="ajax"><input type="hidden" class="ajax_load" value="$url" /></div>};
-    }
+    $url   = qq{$base_url;subslice_start=$i;subslice_end=$j};
+    $html .= qq{<div class="ajax"><input type="hidden" class="ajax_load" value="$url" /></div>};
 
     last if $j == $total_length;
 
     $i  = $j + 1;
     $j += $chunk_length;
     $j  = $total_length if $j > $end;
-  }
-
-  if ($renderer) {
-    $renderer->close;
-    $html = $renderer->content;
   }
 
   return $html;

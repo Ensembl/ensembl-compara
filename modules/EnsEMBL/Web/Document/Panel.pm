@@ -7,7 +7,6 @@ use strict;
 use HTML::Entities qw(encode_entities);
 use HTTP::Request;
 
-use EnsEMBL::Web::Document::Renderer::Assembler;
 use EnsEMBL::Web::Document::Renderer::String;
 
 use base qw(EnsEMBL::Web::Root);
@@ -362,14 +361,6 @@ sub component_content {
   my $function     = $hub->function;
   my $is_html      = ($hub->param('_format') || 'HTML') eq 'HTML';
   
-  # Check if ajax enabled
-  my $renderer = $hub->check_ajax ? undef : new EnsEMBL::Web::Document::Renderer::Assembler(
-    r              => $self->renderer->r,
-    cache          => $self->renderer->cache,
-    session        => $hub ? $hub->session : undef,
-    _modal_dialog_ => $modal
-  );
-  
   foreach my $entry (map @{$self->{'components'}->{$_} || []}, $self->components) {
     my ($module_name, $content_function) = split /\//, $entry;
     my $component;
@@ -390,21 +381,16 @@ sub component_content {
     }
     
     ### If this component is configured to be loaded by an AJAX request, print just the div which the content will be loaded into
-    ### If the user has AJAX disabled, use Renderer::Assembler to build the page using parallel HTTP requests
     if ($component->ajaxable && !$ajax_request && $is_html) {
       my $url   = $component->ajax_url($content_function);
       my $class = 'initial_panel' . ($component->has_image ? ' image_panel' : ''); # classes required by the javascript
       
-      if ($renderer) {
-        $renderer->print(qq{<div class="$class">}, HTTP::Request->new('GET', "$base_url$url"), '</div>');
-      } else {
-        # Safari requires a unique name on inputs when using browser-cached content (eq when the user presses the back button)
-        # $panel_name is the memory location of the current object, so unique for each panel.
-        # Without this, ajax panels don't load, or load the wrong content.
-        my ($panel_name) = $self =~ /\((.+)\)$/;
-        
-        $html .= sprintf qq{<div class="ajax $class"><input type="hidden" class="ajax_load" name="$panel_name" value="%s" /></div>}, encode_entities($url);
-      }
+      # Safari requires a unique name on inputs when using browser-cached content (eq when the user presses the back button)
+      # $panel_name is the memory location of the current object, so unique for each panel.
+      # Without this, ajax panels don't load, or load the wrong content.
+      my ($panel_name) = $self =~ /\((.+)\)$/;
+      
+      $html .= sprintf qq{<div class="ajax $class"><input type="hidden" class="ajax_load" name="$panel_name" value="%s" /></div>}, encode_entities($url);
     } else {
       my $content;
       
@@ -432,12 +418,6 @@ sub component_content {
         $html .= $content;
       }
     }
-  }
-  
-  ### If the has AJAX disabled, process the HTTP requests stored in Renderer::Assembler
-  if ($renderer) {
-    $renderer->close;
-    $html .= $renderer->content;
   }
   
   $html .= sprintf '<div class="more"><a href="%s">more about %s ...</a></div>', $self->{'link'}, encode_entities($self->parse($self->{'caption'})) if $self->{'link'};
