@@ -2,6 +2,19 @@ package EnsEMBL::Web::Tools::RobotsTxt;
 
 use strict;
 
+use File::Path qw(make_path);
+
+sub _lines { # utility
+  my $type = shift;
+  my $lines = join("\n",map { "$type: $_" } @_);
+  return sprintf("%s%s\n",($type eq 'User-agent')?"\n":'',$lines);
+}
+
+sub _box {
+  my $text = shift;
+  return join("\n",'-' x length $text,$text,'-' x length $text,'');
+}
+
 sub create {
   ### This is to try and stop search engines killing e! - it gets created each
   ### time on server startup and gets placed in the first directory in the htdocs
@@ -13,8 +26,7 @@ sub create {
   my @allowed = @{$sd->ENSEMBL_EXTERNAL_SEARCHABLE||[]};
   
   #check if directory for creating .cvsignore and robots.txt exist
-  my $root_exist = `ls $root 2>&1`;
-  `mkdir -p $root` if($root_exist =~ /No such file or directory/);
+  make_path($root) unless(-e $root);
 
   my %ignore = qw(robots.txt 1 .cvsignore 1);
   if( -e "$root/.cvsignore" ) {
@@ -24,107 +36,60 @@ sub create {
     }
     close I;
   }
-warn "------------------------------------------------------------------------------
- Placing .cvsignore and robots.txt into  $root 
-------------------------------------------------------------------------------
-";
+  warn _box("Placing .cvsignore and robots.txt into $root");
 
   open O, ">$root/.cvsignore";
   print O join "\n", sort keys %ignore;
   close O;
 
- #Create a different Robots.txt for google sitemap
-  my $server_root = $sd->ENSEMBL_SERVERROOT;  
-  my $sitemap = `ls $server_root/htdocs/sitemaps/sitemap-index.xml 2>&1`;  
-  if($sitemap !~ /No such file or directory/)
-  {
-warn "---------------------------------------------------------------
-  Creating robots.txt for google sitemap
----------------------------------------------------------------
-";
-    my @letters = ('A'..'Z');    
-    open FH, ">$root/robots.txt";
-    
-    print FH qq(User-agent: *
-Disallow: /Multi/
-Disallow: /biomart/
-Disallow: /Account/
-Disallow: /ExternalData/
-Disallow: /UserAnnotation/
-Disallow: */Ajax/
-Disallow: */Config/
-Disallow: */blastview/
-Disallow: */Export/
-Disallow: */Experiment/
-Disallow: */Location/
-Disallow: */LRG/
-Disallow: */Phenotype/
-Disallow: */Regulation/
-Disallow: */Search/
-Disallow: */UserConfig/
-Disallow: */UserData/
-Disallow: */Variation/);
-
-    foreach my $row(@letters){
-      if($row ne 'S')
-      {
-        my $row_lowercase = lc($row);
-        print FH qq(
-Disallow:*/Gene/$row_lowercase*
-Disallow:*/Gene/$row*
-Disallow:*/Transcript/$row_lowercase*
-Disallow:*/Transcript/$row*);      
-      }
-    }
-    
-    print FH qq(
-Sitemap: http://www.ensembl.org/sitemap-index.xml);
-
-    close FH;
+  my $server_root = $sd->ENSEMBL_SERVERROOT;
+  unless(open FH, ">$root/robots.txt") {
+    warn _box("UNABLE TO CREATE ROBOTS.TXT FILE IN $root/");
+    return;
   }
-  elsif ( open FH, ">$root/robots.txt" ) {
-## Allowed list is empty so we only allow access to the main
-## index page... /index.html...
+  if(-e "$server_root/htdocs/sitemaps/sitemap-index.xml") {
+    # If we have a sitemap we need a less-restrictive robots.txt, so
+    # that the crawler can use the sitemap.
+    warn _box("Creating robots.txt for google sitemap");    
 
-    if( @allowed ) {      
-        print FH qq(
-User-agent: *
-Disallow:   /Multi/
-Disallow:   /biomart/);
-        foreach( @{$species||[]} ) {
-          print FH qq(
-
-Disallow:   /$_/);
-          foreach my $view ( @allowed ) {
-            print FH qq(
-Allow:      /$_/$view);
-          }
-        }
-    } else {
-      print FH qq(
-User-agent: *
-Disallow:   /);
+    print FH _lines("User-agent","*");
+    print FH _lines("Disallow",qw(
+      /Multi/  /biomart/  /Account/  /ExternalData/  /UserAnnotation/
+      */Ajax/  */Config/  */blastview/  */Export/  */Experiment/  
+      */Location/  */LRG/  */Phenotype/  */Regulation/  */Search/
+      */UserConfig/  */UserData/  */Variation/      
+    ));
+    
+    foreach my $row (('A'..'Z','a'..'z')){
+      next if lc $row eq 's';
+      print FH _lines("Disallow","*/Gene/$row*","*/Transcript/$row*");
     }
-    print FH qq(
-
-User-Agent: W3C-checklink
-Allow: /info
-
-User-Agent: Sanger Search Bot/Nutch-1.1 (Nutch Spider; http://www.sanger.ac.uk; webmaster at sanger dot ac dot uk)
-Allow: /info/*
-Allow: /index.html
-
-# Limit Blekkobot's crawl rate to only one page every 20 seconds.
-# Default rate is quite mad but at least is well behaved wrt robots.txt.
-User-agent: Blekkobot
-Crawl-delay: 20
-
-
-);
-    close FH;
+    
+    print FH _lines("Sitemap","http://www.ensembl.org/sitemap-index.xml");
   } else {
-    warn "\n*********************************** UNABLE TO CREATES ROBOTS.TXT FILE IN $root/ ****************************************************";
+    # No sitemap, use old, restrictive robots.txt.
+    if( @allowed ) {      
+      print FH _lines("User-agent","*");
+      print FH _lines("Disallow",qw(/Multi/  /biomart/));
+      foreach my $sp ( @{$species||[]} ) {
+        print FH _lines("Disallow","/$sp/");
+        print FH _lines("Allow",map { "/$sp/$_" } @allowed);
+      }
+    } else {
+      ## Allowed list is empty so we only allow access to the main
+      ## index page... /index.html...
+      print FH _lines("User-agent","*");
+      print FH _lines("Disallow","/");
+    }
+    print FH _lines("User-agent","W3C-checklink");
+    print FH _lines("Allow","/info");
+    print FH _lines("User-agent","Sanger Search Bot/Nutch-1.1 (Nutch Spider; http://www.sanger.ac.uk; webmaster at sanger dot ac dot uk)");
+    print FH _lines("Allow",qw(/info/* /index.html));
+    # Limit Blekkobot's crawl rate to only one page every 20 seconds.
+    print FH _lines("User-agent","Blekkobot");
+    print FH _lines("Crawl-delay","20");
   }
+  close FH;
   return;
 }
 
