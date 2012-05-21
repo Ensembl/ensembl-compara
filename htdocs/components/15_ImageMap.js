@@ -69,7 +69,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     $('.iexport a', this.el).on('click', function () {
-      panel.elLk.exportMenu.css({ left: parseInt($(this).offset().left, 10) - 1, top: $(this).parent().position().top + $(this).height() + 2 }).toggle();
+      panel.elLk.exportMenu.css({ left: $(this).offset().left, top: $(this).parent().position().top + $(this).outerHeight() }).toggle();
       return false;
     });
   },
