@@ -23,15 +23,15 @@ sub render {
   }
 
   my %species;
-  foreach my $species (@valid_species) {
-    my $common  = $species_defs->get_config($species, "SPECIES_COMMON_NAME");
+  foreach my $sp (@valid_species) {
     my $info    = {
-        'dir'       => $species,
+        'dir'       => $sp,
+        'common'    => $species_defs->get_config($sp, "SPECIES_COMMON_NAME"),
         'status'    => 'live',
-        'sci_name'  => $species_defs->get_config($species, "SPECIES_SCIENTIFIC_NAME"),
-        'assembly'  => $species_defs->get_config($species, 'ASSEMBLY_NAME'),
+        'sci_name'  => $species_defs->get_config($sp, "SPECIES_SCIENTIFIC_NAME"),
+        'assembly'  => $species_defs->get_config($sp, 'ASSEMBLY_NAME'),
     };
-    $species{$common} = $info;
+    $species{$sp} = $info;
   }
 
   ## Add in pre species
@@ -40,13 +40,14 @@ sub render {
     while (my ($bioname, $array) = each (%$pre_species)) {
       my ($common, $assembly) = @$array;
       $common =~ s/_/ /;
-      my $status = $species{$common} ? 'both' : 'pre';
+      my $status = $species{$bioname} ? 'both' : 'pre';
       my $info;
       if ($status eq 'pre') {
         ## This is a bit of a fudge, but we have only basic config atm
         (my $sci_name = $bioname) =~ s/_/ /g;
         $info = {
           'dir'       => $bioname,
+          'common'    => $common,
           'sci_name'  => $sci_name,
           'status'    => $status,
           'assembly'  => $assembly,
@@ -54,11 +55,11 @@ sub render {
       }
       else {
         ## Don't overwrite existing meta info!
-        $info = $species{$common};
+        $info = $species{$bioname};
         $info->{'pre_assembly'} = $assembly;
       }
       $info->{'status'} = $status;
-      $species{$common} = $info;
+      $species{$bioname} = $info;
     }
   }
 
@@ -70,13 +71,13 @@ sub render {
     'live'  => '<a class="bigtext" href="/%1$s/Info/Index/">%2$s</a>'
   );
 
-  for (sort keys %species) {
-    next unless $_;
-    my $info      = $species{$_};
+  foreach my $info (sort {$a->{'common'} cmp $b->{'common'}} values %species) {
+    next unless $info;
     my $dir       = $info->{'dir'};
     next unless $dir;
+    my $common    = $info->{'common'};
     my $name      = $info->{'sci_name'};
-    my $link_text = $_ =~ /\./ ? $name : $_;
+    my $link_text = $common =~ /\./ ? $name : $common;
 
     push @htmlspecies, sprintf(
       '<div class="species-box"><img src="%3$s/img/species/thumb_%1$s.png" alt="%5$s" />'.$htmllinks{$info->{'status'}}.($_ =~ /\./ ? '' : '<br /><i>%5$s</i>').'<br />%6$s</div>',
