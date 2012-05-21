@@ -480,9 +480,9 @@ sub render {
         if ($_->{'text'}) {
           next if $self->{'export'} =~ /no_text/;
           
-          $export .= qq{<div><a href="$href" style="width:9em" rel="external">Export as $_->{'label'}</a></div>};
+          $export .= qq{<div><a href="$href" rel="external">Export as $_->{'label'}</a></div>};
         } else {
-          $export .= qq{<div><a href="$href;download=1" style="width:9em" rel="external">Export as $_->{'label'}</a><a class="view" href="$href" rel="external">[view]</a></div>};
+          $export .= qq{<div><a href="$href;download=1" rel="external">Export as $_->{'label'}</a><a class="view" href="$href" rel="external">[view]</a></div>};
         }
       }
       
