@@ -730,7 +730,7 @@ sub do_pan_compara_species {
 	my $url             = $url_hash->{$spsite} || '';        # Get the URL for the location
 	$url =~ s/\#\#\#SPECIES\#\#\#/$current_species/;         # Replace ###SPECIES### with the species name
 	$html .= qq(<td style="width:8%;text-align:left;padding-bottom:1em">);
-        $html .= qq(<a href="$url/Info/Index/"  style="$link_style">$species</a>);
+        $html .= qq(<a href="$url/Info/Index/" rel="external" style="$link_style">$species</a>);
         $html .= qq(</td>\n);
 
     }
