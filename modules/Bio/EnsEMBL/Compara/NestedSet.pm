@@ -228,6 +228,7 @@ sub parent {
     my $self = shift;
     return $self->adaptor->fetch_parent_for_node($self) if defined $self->adaptor;
     return $self->{'_parent_link'}->get_neighbor($self) if defined $self->{'_parent_link'};
+    return undef;
 }
 
 
