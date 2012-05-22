@@ -1430,14 +1430,25 @@ sub _parse_das_server {
 sub _munge_meta {
   my $self = shift;
   
-  ##########################################
-  # SPECIES_COMMON_NAME     = Human        #
-  # SPECIES_PRODUCTION_NAME = homo_sapiens #
-  # SPECIES_SCIENTIFIC_NAME = Homo sapiens #
-  ##########################################
+  ##################################################
+  # All species info is keyed on the standard URL: #
+  # SPECIES_URL             = Homo_sapiens         #
+  # (for backwards compatibility, we also set this #
+  # value as SPECIES_BIO_NAME, but deprecated)     #
+  #                                                #
+  # Name used in headers and dropdowns             #
+  # SPECIES_COMMON_NAME     = Human                #
+  #                                                #
+  # Database root name (also used with compara?)   #                        
+  # SPECIES_PRODUCTION_NAME = homo_sapiens         #
+  #                                                #
+  # Full scientific name shown on species homepage #
+  # SPECIES_SCIENTIFIC_NAME = Homo sapiens         #
+  ##################################################
   
   my %keys = qw(
     species.taxonomy_id           TAXONOMY_ID
+    species.url                   SPECIES_URL
     species.display_name          SPECIES_COMMON_NAME
     species.production_name       SPECIES_PRODUCTION_NAME
     species.scientific_name       SPECIES_SCIENTIFIC_NAME
@@ -1476,7 +1487,7 @@ sub _munge_meta {
   while (my ($species_id, $meta_hash) = each (%$meta_info)) {
     next unless $species_id && $meta_hash && ref($meta_hash) eq 'HASH';
     
-    my $species = ucfirst($meta_hash->{'species.production_name'}[0]);
+    my $species  = $meta_hash->{'species.url'}[0];
     my $bio_name = $meta_hash->{'species.scientific_name'}[0];
     
     ## Put other meta info into variables
@@ -1504,7 +1515,15 @@ sub _munge_meta {
         last if $self->tree->{$species}{'SPECIES_GROUP'};
       }
     }
+
+    ## create lookup hash for species aliases
+    foreach my $alias (@{$meta_hash->{'species.alias'}}) {
+      $self->full_tree->{'MULTI'}{'SPECIES_ALIASES'}{$alias} = $species;
+    }
+
+    ## Backwards compatibility
     $self->tree->{$species}{'SPECIES_BIO_NAME'}  = $bio_name;
+    ## Used mainly in <head> links
     ($self->tree->{$species}{'SPECIES_BIO_SHORT'} = $bio_name) =~ s/^([A-Z])[a-z]+_([a-z]+)$/$1.$2/;
     
     if ($self->tree->{'ENSEMBL_SPECIES'}) {
@@ -1519,20 +1538,20 @@ sub _munge_meta {
     ## Munge genebuild info
     my @A = split '-', $meta_hash->{'genebuild.start_date'}[0];
     
-    $self->tree->{$species}{'GENEBUILD_START'} = "$months[$A[1]] $A[0]";
+    $self->tree->{$species}{'GENEBUILD_START'} = $A[1] ? "$months[$A[1]] $A[0]" : undef;
     $self->tree->{$species}{'GENEBUILD_BY'}    = $A[2];
 
     @A = split '-', $meta_hash->{'genebuild.initial_release_date'}[0];
     
-    $self->tree->{$species}{'GENEBUILD_RELEASE'} = "$months[$A[1]] $A[0]";
+    $self->tree->{$species}{'GENEBUILD_RELEASE'} = $A[1] ? "$months[$A[1]] $A[0]" : undef;
     
     @A = split '-', $meta_hash->{'genebuild.last_geneset_update'}[0];
 
-    $self->tree->{$species}{'GENEBUILD_LATEST'} = "$months[$A[1]] $A[0]";
+    $self->tree->{$species}{'GENEBUILD_LATEST'} = $A[1] ? "$months[$A[1]] $A[0]" : undef;
     
     @A = split '-', $meta_hash->{'assembly.date'}[0];
     
-    $self->tree->{$species}{'ASSEMBLY_DATE'} = "$months[$A[1]] $A[0]";
+    $self->tree->{$species}{'ASSEMBLY_DATE'} = $A[1] ? "$months[$A[1]] $A[0]" : undef;
     
 
     $self->tree->{$species}{'HAVANA_DATAFREEZE_DATE'} = $meta_hash->{'genebuild.havana_datafreeze_date'}[0];
