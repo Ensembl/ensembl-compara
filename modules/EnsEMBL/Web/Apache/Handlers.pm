@@ -287,7 +287,7 @@ sub handler {
   my @raw_path = split m|/|, $file;
   shift @raw_path; # Always empty
 
-  my $aliases = $species_defs->multi_val('SPECIES_ALIASES');
+  my $aliases = $species_defs->multi_val('SPECIES_ALIASES') || {};
   my %species_map = (
     %$aliases,
     common => 'common',
