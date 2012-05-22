@@ -37,7 +37,7 @@ sub content {
 
   $image_config->tree->dump('Tree', '[[caption]]') if $species_defs->ENSEMBL_DEBUG_FLAGS & $species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
 
-  my $image = $self->new_image($peptide, $image_config, []);
+  my $image = $self->new_image($peptide, $image_config, [], 0);
   
   return if $self->_export_image($image);
   
