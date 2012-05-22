@@ -76,7 +76,7 @@ sub content_ajax {
     
           if ($nearest) {
             $html .= sprintf('
-              <p class="space-below"><strong>Go to %s region with data</strong>: <a href="%s">%s</a></p>
+              <p class="space-below"><strong>Go to %s region with data</strong>: <a href="%s;contigviewbottom=%s">%s</a></p>
               <p class="space-below">or</p>',
               $hub->referer->{'params'}{'r'} ? 'nearest' : 'first',
               $hub->url({
@@ -87,6 +87,7 @@ sub content_ajax {
                 r        => $nearest,
                 __clear => 1
               }),
+              join(',', map $_ ? "$_=on" : (), $data->{'analyses'} ? split ', ', $data->{'analyses'} : join '_', $data->{'type'}, $data->{'code'}),
               $nearest
             );
           }
