@@ -66,8 +66,10 @@ Ensembl.LayoutManager.extend({
     });
     
     function popState() {
-      Ensembl.setCoreParams();
-      Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
+      if ((window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.locationMatch) || !window.location.hash && Ensembl.hash.match(Ensembl.locationMatch)) {
+        Ensembl.setCoreParams();
+        Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
+      }
     }
     
     this.window = $(window).on({
@@ -93,11 +95,7 @@ Ensembl.LayoutManager.extend({
         Ensembl.LayoutManager.windowWidth  = windowWidth;
         Ensembl.LayoutManager.windowHeight = windowHeight;
       },
-      hashchange: function (e) {
-        if ((window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.locationMatch) || !window.location.hash && Ensembl.hash.match(Ensembl.locationMatch)) {
-          popState();
-        }
-      }
+      hashchange: popState
     });
     
     window.onpopstate = popState;
