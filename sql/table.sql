@@ -819,7 +819,7 @@ CREATE TABLE gene_tree_node_attr (
 
 
 CREATE TABLE hmm_profile (
-  model_id                    varchar(20) NOT NULL,
+  model_id                    varchar(40) NOT NULL,
   name                        varchar(40),
   type                        varchar(40) DEFAULT 'ncrna' NOT NULL,
   hc_profile                  mediumtext,
