@@ -104,15 +104,18 @@ sub _init {
 }
 
 sub render_text {
-  my $self      = shift;
-  my $container = $self->{'container'};
-  my $snps      = $self->cache('image_snps');
-
+  my $self       = shift;
+  my $container  = $self->{'container'};
+  my $snps       = $self->cache('image_snps');
+  my $is_somatic = $self->{'my_config'}->id =~ /somatic/ ? 1 : 0;
+  
   return unless $snps;
 
   my $export;
 
   foreach my $snp (@$snps) {
+		next if $snp->{'vf'}->is_somatic != $is_somatic;
+    
     my $codon = $snp->{'ambigcode'} ? join '', map { $_ == $snp->{'codon_var_pos'} ? "[$snp->{'ambigcode'}]" : $snp->{'codon_seq'}->[$_] } 0..2 : '';
     my $class;
     
