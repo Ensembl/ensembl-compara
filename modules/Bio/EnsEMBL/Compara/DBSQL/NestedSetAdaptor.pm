@@ -113,7 +113,8 @@ sub fetch_parent_for_node {
     }
 
     return $node->{'_parent_link'}->get_neighbor($node) if defined $node->{'_parent_link'};
-    my $parent = $self->fetch_node_by_node_id($node->_parent_id);
+    my $parent = undef;
+    $parent = $self->fetch_node_by_node_id($node->_parent_id) if defined $node->_parent_id;
     $parent->add_child($node) if defined $parent;
     return $parent;
 }
