@@ -286,7 +286,7 @@ sub _init {
     'timer'         => $Contents->[0][1]->species_defs->timer
   };
   
-  $self->{'strandedness'} = 1 if $self->{'config'}->get_parameter('text_export');
+  $self->{'strandedness'} = 1 if $self->{'config'}->get_parameter('text_export') && !defined $strandedness;
   
   bless( $self, $class );
   return $self;
