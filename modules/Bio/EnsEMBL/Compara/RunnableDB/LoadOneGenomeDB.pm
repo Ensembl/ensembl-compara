@@ -60,6 +60,9 @@ supported keys:
     'ensembl_genomes' => <0|1>
         optional, sets the preferential order of precedence of species_name sources, depending on whether the module is run by EG or Compara
 
+    'db_version'    => <integer>
+        optional, sets the prefered version of the core databases to load from
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB;
@@ -102,7 +105,7 @@ sub fetch_input {
 
         for(my $r_ind=0; $r_ind<scalar(@$registry_dbs); $r_ind++) {
 
-            Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $suffix_separator.$r_ind );
+            Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $suffix_separator.$r_ind, -db_version => $self->param('db_version') );
 
 
 	    my $no_alias_check = 1;
