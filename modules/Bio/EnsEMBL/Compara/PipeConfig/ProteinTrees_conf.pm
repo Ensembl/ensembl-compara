@@ -419,6 +419,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters => {
                 'registry_dbs'  => $self->o('curr_core_sources_locs'),
+                'db_version'    => $self->o('release'),
             },
             -batch_size => 500,
             -hive_capacity => -1,
