@@ -52,10 +52,11 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::GeneTree;
 
 use strict;
+no strict 'refs';
 
 use base ('Bio::EnsEMBL::Compara::Taggable');
 
-
+#our $AUTOLOAD;
 
 =head2 new()
 
@@ -275,21 +276,49 @@ sub root_id {
     return $self->{'_root_id'};
 }
 
-sub get_SimpleAlign {
-    my $self = shift;
-    return $self->root->get_SimpleAlign(@_);
+# sub get_SimpleAlign {
+#     my $self = shift;
+#     return $self->root->get_SimpleAlign(@_);
+# }
+
+# sub consensus_cigar_line {
+#     my $self = shift;
+#     return $self->root->consensus_cigar_line(@_);
+# }
+
+
+# sub release_tree {
+#     my ($self) = @_;
+#     $self->root->release_tree();
+# }
+
+# sub AUTOLOAD {
+#     my $self = shift @_;
+#     my $type = ref($self) or die "$self is not an object\n";
+#     my $name = $AUTOLOAD;
+#     $name =~ s/.*://;
+#     $self->root->can($name) or die "$self can't $name\n";
+#     $self->root->$name(@_);
+# }
+
+
+
+# Dynamic definition of functions to allow NestedSet methods work with GeneTrees
+foreach my $func_name (qw(get_all_leaves_indexed get_all_leaves get_all_sorted_leaves
+                          find_leaf_by_node_id find_leaf_by_name find_node_by_node_id node_id
+                          find_node_by_name remove_nodes build_leftright_indexing flatten_tree
+                          newick_simple_format newick_format nhx_format string_tree print_tree
+                          get_all_nodes release_tree copy get_SimpleAlign consensus_cigar_line
+                        )) {
+    my $full_name = "Bio::EnsEMBL::Compara::GeneTree::$func_name";
+    *$full_name = sub {
+        my $self = shift;
+        my $ret = $self->root->$func_name(@_);
+        return $ret;
+    };
+#    print STDERR "REDEFINE $func_name\n";
 }
 
-sub consensus_cigar_line {
-    my $self = shift;
-    return $self->root->consensus_cigar_line(@_);
-}
-
-
-sub release_tree {
-    my ($self) = @_;
-    $self->root->release_tree();
-}
 
 1;
 
