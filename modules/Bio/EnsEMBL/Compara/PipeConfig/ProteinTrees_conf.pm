@@ -120,7 +120,9 @@ sub default_options {
         'clustering_max_gene_halfcount' => 750,     # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
 
     # tree building parameters:
-        'tree_max_gene_count'       => 400,     # affects 'mcoffee' and 'mcoffee_himem'
+        'treebreak_gene_count'      => 400,     # affects msa_chooser
+        'mafft_gene_count'          => 200,     # affects msa_chooser
+        'mafft_runtime'             => 7200,    # affects msa_chooser
         'use_exon_boundaries'       => 0,       # affects 'mcoffee' and 'mcoffee_himem'
         'use_genomedb_id'           => 0,       # affects 'njtree_phyml' and 'ortho_tree'
         'species_tree_input_file'   => '',      # you can define your own species_tree for 'njtree_phyml' and 'ortho_tree'
@@ -751,7 +753,7 @@ sub pipeline_analyses {
                 'fan_branch_code'       => 2,
             },
             -flow_into => {
-                2 => [ 'per_genome_qc' ],
+                2 => { 'per_genome_qc' => {'genome_db_id' => '#genome_db_id#', 'groupset_tag', '#groupset_tag#'} },
                 1 => [ 'overall_qc' ],
             },
         },
@@ -781,25 +783,72 @@ sub pipeline_analyses {
         {   -logic_name => 'tree_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'mlss_id'               => $self->o('mlss_id'),
-
-                'input_query'           => 'SELECT root_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" GROUP BY root_id ORDER BY COUNT(*) DESC',
-
-                'fan_branch_code'       => 2,
+                'inputquery'        => 'SELECT root_id AS protein_tree_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" GROUP BY root_id ORDER BY COUNT(*) DESC, root_id ASC',
+                'fan_branch_code'   => 2,
             },
-            -flow_into => {
-                '2->A' => {'mcoffee' => { 'protein_tree_id' => '#root_id#'}},
-                'A->1'   => { 'run_qc_tests' => { 'groupset_tag' => 'GeneTreeset' } },
+            -flow_into  => {
+                '2->A'      => [ 'msa_chooser' ],
+                'A->1'      => { 'run_qc_tests' => { 'groupset_tag' => 'GeneTreeset' } },
             },
         },
 
-        {   -logic_name => 'mcoffee',
+        {   -logic_name => 'msa_chooser',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSAChooser',
+            -parameters => {
+                'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
+                'mafft_gene_count'      => $self->o('mafft_gene_count'),
+                'mafft_runtime'         => $self->o('mafft_runtime'),
+            },
+            -batch_size => 10,
+            -rc_id => 2,
+            -priority => 30,
+            -flow_into => {
+                '2->A' => [ 'mcoffee_cmcoffee' ],
+                '3->A' => [ 'mafft' ],
+                'A->1' => [ 'NJTREE_PHYML' ],
+                '4->B' => [ 'mafft' ],
+                'B->5' => [ 'quick_tree_break' ],
+            },
+        },
+
+        {   -logic_name => 'mcoffee_cmcoffee',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -parameters => {
-                'method'                    => 'cmcoffee',      # presumably, at the moment it refers to the 'initial' method
+                'method'                => 'cmcoffee',
+                'use_exon_boundaries'   => $self->o('use_exon_boundaries'),
+                'mcoffee_exe'           => $self->o('mcoffee_exe'),
+                'flow_other_method'     => 1,
+            },
+            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -rc_id => 3,
+            -priority => 30,
+            -flow_into => {
+               -1 => [ 'mcoffee_cmcoffee_himem' ],  # MEMLIMIT
+                2 => [ 'mcoffee_fmcoffee' ],
+            },
+        },
+
+        {   -logic_name => 'mcoffee_fmcoffee',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
+            -parameters => {
+                'method'                => 'fmcoffee',
+                'use_exon_boundaries'   => $self->o('use_exon_boundaries'),
+                'mcoffee_exe'           => $self->o('mcoffee_exe'),
+                'flow_other_method'     => 1,
+            },
+            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -rc_id => 3,
+            -priority => 30,
+            -flow_into => {
+               -1 => [ 'mcoffee_fmcoffee_himem' ],  # MEMLIMIT
+                2 => [ 'mafft' ],
+            },
+        },
+
+        {   -logic_name => 'mafft',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
+            -parameters => {
                 'use_exon_boundaries'       => $self->o('use_exon_boundaries'),
-                'max_gene_count'            => $self->o('tree_max_gene_count'),
-                'mcoffee_exe'               => $self->o('mcoffee_exe'),
                 'mafft_exe'                 => $self->o('mafft_exe'),
                 'mafft_binaries'            => $self->o('mafft_binaries'),
             },
@@ -807,28 +856,51 @@ sub pipeline_analyses {
             -rc_id => 3,
             -priority => 30,
             -flow_into => {
-               -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
-                1 => [ 'njtree_phyml' ],
-                3 => [ 'quick_tree_break' ],
+               -1 => [ 'mafft_himem' ],  # MEMLIMIT
             },
         },
 
-        {   -logic_name => 'mcoffee_himem',
+        {   -logic_name => 'mcoffee_cmcoffee_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -parameters => {
-                'method'                    => 'cmcoffee',      # presumably, at the moment it refers to the 'initial' method
+                'method'                => 'cmcoffee',
+                'use_exon_boundaries'   => $self->o('use_exon_boundaries'),
+                'mcoffee_exe'           => $self->o('mcoffee_exe'),
+                'flow_other_method'     => 1,
+            },
+            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -rc_id => 5,
+            -priority => 30,
+            -flow_into => {
+                2 => [ 'mcoffee_fmcoffee_himem' ],
+            },
+        },
+
+        {   -logic_name => 'mcoffee_fmcoffee_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
+            -parameters => {
+                'method'                => 'fmcoffee',
+                'use_exon_boundaries'   => $self->o('use_exon_boundaries'),
+                'mcoffee_exe'           => $self->o('mcoffee_exe'),
+                'flow_other_method'     => 1,
+            },
+            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -rc_id => 5,
+            -priority => 30,
+            -flow_into => {
+                2 => [ 'mafft_himem' ],
+            },
+        },
+
+        {   -logic_name => 'mafft_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
+            -parameters => {
                 'use_exon_boundaries'       => $self->o('use_exon_boundaries'),
-                'max_gene_count'            => $self->o('tree_max_gene_count'),
-                'mcoffee_exe'               => $self->o('mcoffee_exe'),
                 'mafft_exe'                 => $self->o('mafft_exe'),
                 'mafft_binaries'            => $self->o('mafft_binaries'),
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -priority => 35,
-            -flow_into => {
-                1 => [ 'njtree_phyml' ],
-                3 => [ 'quick_tree_break' ],
-            },
             -rc_id => 5,
         },
 
@@ -909,7 +981,7 @@ sub pipeline_analyses {
             -rc_id          => 1,
             -priority       => 40,
             -flow_into => {
-                '2->A' => [ 'mcoffee' ],
+                '2->A' => [ 'msa_chooser' ],
                 'A->1' => [ 'merge_supertrees' ],
             },
         },
