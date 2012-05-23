@@ -97,8 +97,8 @@ sub parse_hclusteroutput {
 
     my $filename      = $self->param('cluster_dir') . '/hcluster.out';
 
-    my @allclusters;
-    $self->param('allclusters', \@allclusters);
+    my %allclusters = ();
+    $self->param('allclusters', \%allclusters);
     
     open(FILE, $filename) or die "Could not open '$filename' for reading : $!";
     while (<FILE>) {
@@ -115,7 +115,7 @@ sub parse_hclusteroutput {
 
         # If it's a singleton, we don't store it as a protein tree
         next if (2 > scalar(@cluster_list));
-        push @allclusters, \@cluster_list;
+        $allclusters{$cluster_id} = { 'members' => \@cluster_list };
     }
     close FILE;
 

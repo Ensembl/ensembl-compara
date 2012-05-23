@@ -77,28 +77,20 @@ sub store_and_dataflow_clusterset {
     $self->create_clusterset();
     print STDERR "STORING AND DATAFLOWING THE CLUSTERSET\n" if ($self->debug());
     for my $cluster_name (keys %$allclusters) {
-        print STDERR "$cluster_name has ", scalar @{$allclusters->{$cluster_name}{clusters}} , " members (leaves)\n";
+        print STDERR "$cluster_name has ", scalar @{$allclusters->{$cluster_name}{members}} , " members (leaves)\n";
     }
+
+    # Do we sort the clusters by decreasing size ?
+    my @cluster_list;
     if ($self->param('sort_clusters')) {
-        foreach my $cluster_name (sort {scalar(@{$allclusters->{$b}{clusters}}) <=> scalar(@{$allclusters->{$a}{clusters}})} keys %$allclusters) {
-            print STDERR "Storing cluster with name $cluster_name\n" if ($self->debug());
-            my $cluster = $self->add_cluster($allclusters->{$cluster_name}{clusters});
-            delete $allclusters->{$cluster_name}{clusters};
-            for my $tag (keys %{$allclusters->{$cluster_name}}) {
-                print STDERR "Storing tag $tag => ", $allclusters->{$cluster_name}->{$tag} , "\n" if ($self->debug);
-                $cluster->store_tag($tag, $allclusters->{$cluster_name}->{$tag});
-            }
-        }
+        @cluster_list = sort {scalar(@{$allclusters->{$b}->{members}}) <=> scalar(@{$allclusters->{$a}->{members}})} keys %$allclusters;
     } else {
-        foreach my $cluster_name (keys %$allclusters) {
-            print STDERR "Storing cluster with name $cluster_name\n" if ($self->debug());
-            my $cluster = $self->add_cluster($allclusters->{$cluster_name}{clusters});
-            delete $allclusters->{$cluster_name}{clusters};
-            for my $tag (keys %{$allclusters->{$cluster_name}}) {
-                print STDERR "Storing tag $tag => ", $allclusters->{$cluster_name}->{$tag} , "\n" if ($self->debug);
-                $cluster->store_tag($tag, $allclusters->{$cluster_name}->{$tag});
-            }
-        }
+        @cluster_list = keys %$allclusters;
+    }
+
+    foreach my $cluster_name (@cluster_list) {
+        print STDERR "Storing cluster with name $cluster_name\n" if ($self->debug());
+        my $cluster = $self->add_cluster($allclusters->{$cluster_name});
     }
     $self->finish_store_clusterset();
     $self->dataflow_clusters();
@@ -130,7 +122,7 @@ sub create_clusterset {
     # Create the clusterset root node
     my $clusterset_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
     $clusterset->root($clusterset_root);
-    $self->compara_dba->get_GeneTreeNodeAdaptor->store($clusterset);
+    $self->compara_dba->get_GeneTreeAdaptor->store($clusterset);
     
     my @allcluster_ids;
     $self->param('allcluster_ids', \@allcluster_ids);
@@ -153,10 +145,11 @@ sub create_clusterset {
 
 sub add_cluster {
     my $self = shift;
-    my $cluster_list = shift;
+    my $cluster_def = shift;
+    my $gene_list = $cluster_def->{members};
     my $clusterset = $self->param('clusterset');
 
-    return if (2 > scalar(@$cluster_list));
+    return if (2 > scalar(@$gene_list));
 
     # Every cluster maps to a leaf of the clusterset
     my $clusterset_leaf = new Bio::EnsEMBL::Compara::GeneTreeNode;
@@ -177,7 +170,7 @@ sub add_cluster {
     $clusterset_leaf->add_child($cluster_root);
 
     # The cluster leaves
-    foreach my $member_id (@$cluster_list) {
+    foreach my $member_id (@$gene_list) {
         my $leaf = new Bio::EnsEMBL::Compara::GeneTreeMember;
         $leaf->member_id($member_id);
         $cluster_root->add_child($leaf);
@@ -188,6 +181,13 @@ sub add_cluster {
     $cluster->store_tag('gene_count', $cluster_root->get_child_count);
     print STDERR "cluster ", $cluster->root_id, " with ", $cluster_root->get_child_count, " leaves\n" if $self->debug;
     
+    # Stores the tags
+    for my $tag (keys %$cluster_def) {
+        next if $tag eq 'members';
+        print STDERR "Storing tag $tag => ", $cluster_def->{$tag} , "\n" if ($self->debug);
+        $cluster->store_tag($tag, $cluster_def->{$tag});
+    }
+
     # Dataflows immediately or keep it for later
     if ($self->param('immediate_dataflow')) {
         $self->dataflow_output_id({ $self->param('input_id_prefix').'_tree_id' => $cluster->root_id, }, 2);
@@ -219,7 +219,8 @@ sub finish_store_clusterset {
 
     # left/right_index for quicker clusterset retrieval
     $clusterset->root->build_leftright_indexing(1);
-    $self->compara_dba->get_GeneTreeNodeAdaptor->store($clusterset);
+    $clusterset->root->print_tree if $self->debug;
+    $self->compara_dba->get_GeneTreeAdaptor->store($clusterset);
     my $leafcount = scalar(@{$clusterset->root->get_all_leaves});
     print STDERR "clusterset ", $clusterset->root_id, " with $leafcount leaves\n" if $self->debug;
 }

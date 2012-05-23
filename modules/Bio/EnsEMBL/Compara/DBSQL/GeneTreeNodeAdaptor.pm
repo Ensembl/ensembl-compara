@@ -317,6 +317,7 @@ sub store_node {
 
     if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
         if ($new_node) {
+            #print 'INSERT IGNORE INTO gene_tree_member (node_id, member_id, cigar_line)  VALUES (?,?,?) ', $node->node_id, ' ', $node->member_id, ' ', $node->cigar_line, "\n";
             $sth = $self->prepare("INSERT IGNORE INTO gene_tree_member (node_id, member_id, cigar_line)  VALUES (?,?,?)");
             $sth->execute($node->node_id, $node->member_id, $node->cigar_line);
             $sth->finish;

@@ -164,7 +164,7 @@ sub run_rfamclassify {
 
         print STDERR "ModelName: $model_name\n" if ($self->debug);
 
-        $allclusters{$cm_id} = {'clusters' => [@cluster_list],
+        $allclusters{$cm_id} = {'members' => [@cluster_list],
                                 'model_name' => $model_name,
                                 'clustering_id' => $cm_id,
                                }
