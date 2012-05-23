@@ -116,7 +116,7 @@ sub fetch_input {
     my $starttime = time();
     $self->param('tree_id_str') or die "tree_id_str is an obligatory parameter";
     my $tree_id = $self->param($self->param('tree_id_str')) or die "'*_tree_id' is an obligatory parameter";
-    my $gene_tree = $self->param('treeDBA')->fetch_tree_at_node_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
+    my $gene_tree = $self->param('treeDBA')->fetch_tree_by_root_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
     $self->param('gene_tree', $gene_tree);
 
     if($self->debug) {
