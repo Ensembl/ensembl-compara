@@ -306,7 +306,7 @@ sub store_node {
     $parent_id = $node->parent->node_id if($node->parent);
 
     my $root_id = $node->root->node_id;
-    #print "inserting parent_id=$parent_id, root_id=$root_id\n";
+    #print "inserting new_noe=$new_node parent_id=$parent_id, root_id=$root_id\n";
 
     my $sth = $self->prepare("UPDATE gene_tree_node SET parent_id=?, root_id=?, left_index=?, right_index=?, distance_to_parent=?  WHERE node_id=?");
     #print "UPDATE gene_tree_node  (", $parent_id, ",", $root_id, ",", $node->left_index, ",", $node->right_index, ",", $node->distance_to_parent, ") for ", $node->node_id, "\n";
@@ -317,12 +317,13 @@ sub store_node {
 
     if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
         if ($new_node) {
-            #print 'INSERT IGNORE INTO gene_tree_member (node_id, member_id, cigar_line)  VALUES (?,?,?) ', $node->node_id, ' ', $node->member_id, ' ', $node->cigar_line, "\n";
-            $sth = $self->prepare("INSERT IGNORE INTO gene_tree_member (node_id, member_id, cigar_line)  VALUES (?,?,?)");
+            $sth = $self->prepare("INSERT INTO gene_tree_member (node_id, member_id, cigar_line)  VALUES (?,?,?)");
             $sth->execute($node->node_id, $node->member_id, $node->cigar_line);
             $sth->finish;
         } else {
-            $self->dbc->do('UPDATE gene_tree_member SET cigar_line = ? WHERE node_id = ?', undef, $node->cigar_line, $node->node_id);
+            $sth = $self->prepare('UPDATE gene_tree_member SET cigar_line=? WHERE node_id = ?');
+            $sth->execute($node->cigar_line, $node->node_id);
+            $sth->finish;
         }
     }
     
