@@ -199,14 +199,14 @@ sub default_options {
 
         # "production mode"
         'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
-        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-        'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
+        'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
+        'prev_release'              => 67,   # 0 is the default and it means "take current release number and subtract 1"
         'reuse_db' => {   # usually previous release database on compara1
            -host   => 'ens-livemirror',
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'ensembl_compara_66',
+           -dbname => 'ensembl_compara_67',
         },
 
         ## mode for testing the non-Blast part of the pipeline: reuse all Blasts
@@ -225,7 +225,7 @@ sub default_options {
 }
 
 
-sub pipeline_create_commands_ {
+sub pipeline_create_commands {
     my ($self) = @_;
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
@@ -459,8 +459,8 @@ sub pipeline_analyses {
                     'DELETE method_link_species_set FROM method_link_species_set JOIN tmp_ss USING (species_set_id)',
                     'DELETE species_set FROM species_set JOIN tmp_ss USING (species_set_id)',
                     # Stores the species sets in CSV format
-                    'INSERT INTO meta (meta_key,meta_value) SELECT "reuse_ss_csv", GROUP_CONCAT(genome_db_id) FROM species_set WHERE species_set_id=#reuse_ss_id#',
-                    'INSERT INTO meta (meta_key,meta_value) SELECT "nonreuse_ss_csv", GROUP_CONCAT(genome_db_id) FROM species_set WHERE species_set_id=#nonreuse_ss_id#',
+                    'INSERT INTO meta (meta_key,meta_value) SELECT "reuse_ss_csv", IFNULL(GROUP_CONCAT(genome_db_id), "-1") FROM species_set WHERE species_set_id=#reuse_ss_id#',
+                    'INSERT INTO meta (meta_key,meta_value) SELECT "nonreuse_ss_csv", IFNULL(GROUP_CONCAT(genome_db_id), "-1") FROM species_set WHERE species_set_id=#nonreuse_ss_id#',
                 ],
             },
             -hive_capacity => -1,
@@ -561,7 +561,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                             'db_conn'    => $self->o('reuse_db'),
-                            'inputquery' => 'SELECT s.* FROM sequence_cds s JOIN member USING (member_id) WHERE genome_db_id = #genome_db_id#',
+                            'inputquery' => 'SELECT s.member_id, s.length, s.sequence_cds FROM sequence_cds s JOIN member USING (member_id) WHERE genome_db_id = #genome_db_id#',
                             'fan_branch_code' => 2,
             },
             -hive_capacity => $self->o('reuse_capacity'),
@@ -575,7 +575,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                             'db_conn'    => $self->o('reuse_db'),
-                            'inputquery' => 'SELECT s.* FROM sequence_exon_bounded s JOIN member USING (member_id) WHERE genome_db_id = #genome_db_id#',
+                            'inputquery' => 'SELECT s.member_id, s.length, s.sequence_exon_bounded FROM sequence_exon_bounded s JOIN member USING (member_id) WHERE genome_db_id = #genome_db_id#',
                             'fan_branch_code' => 2,
             },
             -hive_capacity => $self->o('reuse_capacity'),
@@ -732,7 +732,10 @@ sub pipeline_analyses {
             -hive_capacity => -1,
             -rc_id => 3,
             -flow_into => {
-                1 => { 'run_qc_tests' => {'groupset_tag' => 'Clusterset' } },
+                1 => {
+                    'run_qc_tests' => {'groupset_tag' => 'Clusterset' },
+                    'mysql:////meta' => { 'meta_key' => 'clusterset_id', 'meta_value' => '#clusterset_id#' },
+                },
             },
         },
 
@@ -777,17 +780,16 @@ sub pipeline_analyses {
 # ---------------------------------------------[main tree creation loop]-------------------------------------------------------------
 
         {   -logic_name => 'tree_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::JobFactory',
             -parameters => {
                 'mlss_id'               => $self->o('mlss_id'),
 
-                'call_list'             => [ 'compara_dba', 'get_GeneTreeAdaptor', ['fetch_all', '-tree_type', 'tree']],
-                'column_names2getters'  => { 'protein_tree_id' => 'root_id' },
+                'input_query'           => 'SELECT root_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" GROUP BY root_id ORDER BY COUNT(*) DESC',
 
                 'fan_branch_code'       => 2,
             },
             -flow_into => {
-                '2->A' => [ 'mcoffee' ],
+                '2->A' => {'mcoffee' => { 'protein_tree_id' => '#root_id#'}},
                 'A->1'   => { 'run_qc_tests' => { 'groupset_tag' => 'GeneTreeset' } },
             },
         },
