@@ -290,7 +290,7 @@ sub pipeline_analyses {
                 'mlss_id'               => $self->o('mlss_id'),
 
                 'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator' },
+                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
 
                 'fan_branch_code'       => 2,
             },
@@ -487,11 +487,10 @@ sub pipeline_analyses {
 # ---------------------------------------------[reuse members and pafs]--------------------------------------------------------------
 
         {   -logic_name => 'genome_reuse_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_SpeciesSetAdaptor', ['fetch_by_dbID', '#reuse_ss_id#'], 'genome_dbs'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name' },
-                'fan_branch_code'       => 2,
+                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #reuse_ss_id#',
+                'fan_branch_code'   => 2,
             },
             -hive_capacity => -1,
             -flow_into => {
@@ -590,7 +589,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
                 'src_db_conn'   => $self->o('reuse_db'),
-                'table'         => 'peptide_align_feature_#species_name#_#genome_db_id#',
+                'table'         => 'peptide_align_feature_#name#_#genome_db_id#',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                 'where'         => 'hgenome_db_id IN (#reuse_ss_csv#)',
             },
@@ -600,11 +599,10 @@ sub pipeline_analyses {
 # ---------------------------------------------[load the rest of members]------------------------------------------------------------
 
         {   -logic_name => 'genome_loadfresh_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_SpeciesSetAdaptor', ['fetch_by_dbID', '#nonreuse_ss_id#'], 'genome_dbs'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name' },
-                'fan_branch_code'       => 2,
+                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id#',
+                'fan_branch_code'   => 2,
             },
             -hive_capacity => -1,
             -flow_into => {
@@ -624,8 +622,8 @@ sub pipeline_analyses {
         {   -logic_name => 'paf_create_empty_table',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
-                'sql' => [  'CREATE TABLE IF NOT EXISTS peptide_align_feature_#species_name#_#genome_db_id# LIKE peptide_align_feature',
-                            'ALTER TABLE peptide_align_feature_#species_name#_#genome_db_id# DISABLE KEYS',
+                'sql' => [  'CREATE TABLE IF NOT EXISTS peptide_align_feature_#name#_#genome_db_id# LIKE peptide_align_feature',
+                            'ALTER TABLE peptide_align_feature_#name#_#genome_db_id# DISABLE KEYS',
                 ],
             },
             -priority       => -10,
@@ -748,7 +746,7 @@ sub pipeline_analyses {
                 'mlss_id'               => $self->o('mlss_id'),
 
                 'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator' },
+                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
 
                 'fan_branch_code'       => 2,
             },
@@ -781,7 +779,7 @@ sub pipeline_analyses {
 # ---------------------------------------------[main tree creation loop]-------------------------------------------------------------
 
         {   -logic_name => 'tree_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'mlss_id'               => $self->o('mlss_id'),
 
