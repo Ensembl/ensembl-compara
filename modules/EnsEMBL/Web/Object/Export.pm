@@ -739,7 +739,7 @@ sub gff3_features {
   my $species_defs = $self->hub->species_defs;
   
   # Always use the forward strand, else CDS coordinates are incorrect (Bio::EnsEMBL::Exon->coding_region_start and _end return coords for forward strand only. Thanks, Core API team.)
-  $slice = $slice->invert if $slice->strand == -1;
+  $slice = $slice->invert if $slice->strand < 0;
   
   $self->{'config'} = {
     format             => 'gff3',
@@ -785,7 +785,10 @@ sub gff3_features {
         }
         
         if ($params->{'intron'}) {
-          $self->feature('intron', $_, { Parent => $t_id, Name => $self->id_counter('intron') }, $properties) for @{$t->get_all_Introns};
+          for my $intron (@{$t->get_all_Introns}){
+            next unless $intron->length;
+            $self->feature('intron', $intron, { Parent => $t_id, Name => $self->id_counter('intron') }, $properties);
+          }
         }
         
         if ($params->{'exon'} || $params->{'cds'}) {
@@ -794,13 +797,8 @@ sub gff3_features {
             
             if ($params->{'cds'}) {
               my $start = $e->coding_region_start($t);
-              my $end   = $e->coding_region_end($t);
-              
-              next unless $start || $end;
-              
-              $_ += $slice->start - 1 for $start, $end; # why isn't there an API call for this?
-              
-              $self->feature('CDS', $e, { Parent => $t_id, Name => $t->translation->stable_id }, { start => $start, end => $end, %$properties });
+              next unless $start; # $start will be undef if the exon is not coding
+              $self->feature('CDS', $e, { Parent => $t_id, Name => $t->translation->stable_id }, $properties);
             }
           }
         }
@@ -810,8 +808,8 @@ sub gff3_features {
   
   my %order = reverse %{$self->{'config'}->{'feature_order'}};
   
-  $self->string(join "\t", '##gff-version', '3');
-  $self->string(join "\t", '##sequence-region', $slice->seq_region_name, '1', $slice->seq_region_length);
+  $self->string('##gff-version 3');
+  $self->string(sprintf('##sequence-region %s 1 %d', $slice->seq_region_name, $slice->seq_region_length));
   $self->string('');
   $self->string($self->output($order{$_})) for sort { $a <=> $b } keys %order;
 }
