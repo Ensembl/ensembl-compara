@@ -347,8 +347,9 @@ sub update_genome_db {
     print "New genome in compara. Taxon #$taxon_id; Name: $primary_species_binomial_name; Assembly $assembly\n\n";
 
     $sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly_default = 0 WHERE name =?');
-    $sth->execute($primary_species_binomial_name);
+    my $nrows = $sth->execute($primary_species_binomial_name);
     $sth->finish();
+    print "$nrows of the species '$primary_species_binomial_name' were un-defaulted\n";
 
     #New ID search if $offset is true
     my @args = ($taxon_id, $primary_species_binomial_name, $assembly, $genebuild);
