@@ -16,7 +16,7 @@ sub init_canvas {
   $self->{'im_width'}  = $im_width;
   $self->{'im_height'} = $im_height;
 
-  my $canvas = GD::Image->newTrueColor($im_height, $im_width);
+  my $canvas = GD::Image->newTrueColor($self->{sf} * $im_height, $self->{sf} * $im_width);
 
   my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE;
   $self->{'ttf_path'} = "/usr/local/share/fonts/ttfonts/";
@@ -24,7 +24,7 @@ sub init_canvas {
 
   $self->canvas($canvas);
   my $bgcolor = $self->colour($config->bgcolor);
-  $self->{'canvas'}->filledRectangle(0,0, $im_height, $im_width, $bgcolor );
+  $self->{'canvas'}->filledRectangle(0,0, $self->{sf} * $im_height, $self->{sf} * $im_width, $bgcolor );
 
   $self->{'config'}->species_defs->timer_push( "CANVAS INIT", 1, 'draw' );
 }

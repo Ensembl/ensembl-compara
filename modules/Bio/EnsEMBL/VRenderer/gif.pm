@@ -59,10 +59,10 @@ sub render_Rect {
   my $bordercolour  = $self->colour($gbordercolour);
   my $colour        = $self->colour($gcolour);
   
-  my $x1 = $glyph->pixelx();
-  my $x2 = $glyph->pixelx() + $glyph->pixelwidth();
-  my $y1 = $glyph->pixely();
-  my $y2 = $glyph->pixely() + $glyph->pixelheight();
+  my $x1 = $self->{sf} * $glyph->pixelx();
+  my $x2 = $self->{sf} * ($glyph->pixelx() + $glyph->pixelwidth());
+  my $y1 = $self->{sf} * $glyph->pixely();
+  my $y2 = $self->{sf} * ($glyph->pixely() + $glyph->pixelheight());
   
   $canvas->filledRectangle($y1, $x1, $y2, $x2, $colour) if(defined $gcolour);
   $canvas->rectangle($y1, $x1, $y2, $x2, $bordercolour) if(defined $gbordercolour);
@@ -71,25 +71,32 @@ sub render_Rect {
 sub render_Text {
   my ($self, $glyph) = @_;
   my $colour         = $self->colour($glyph->colour());
-  
+
+  my $top        = $self->{sf} * $glyph->{'pixely'} || 0;
+  my $left       = $self->{sf} * $glyph->{'pixelx'} || 0;
+
   #########
   # BAH! HORRIBLE STINKY STUFF!
   # I'd take GD voodoo calls any day
   #
-  if($glyph->font() eq "Tiny") {
-    $self->{'canvas'}->string(gdTinyFont, $glyph->pixely(), $glyph->pixelx(), $glyph->text(), $colour);
+  if(int($self->{sf}) != 1) {
+    my $font = int($self->{sf}) > 2 ? gdGiantFont :  int($self->{sf}) ==  2 ? gdMediumBoldFont : gdSmallFont;
+    $left += int($left/100) if int($self->{sf}) > 1; #adjustment of the text
+    $self->{'canvas'}->string($font, $top, $left, $glyph->text(), $colour);
+  } elsif($glyph->font() eq "Tiny") {
+    $self->{'canvas'}->string(gdTinyFont, $top, $left, $glyph->text(), $colour);
     
   } elsif($glyph->font() eq "Small") {
-    $self->{'canvas'}->string(gdSmallFont, $glyph->pixely(), $glyph->pixelx(), $glyph->text(), $colour);
+    $self->{'canvas'}->string(gdSmallFont, $top, $left, $glyph->text(), $colour);
     
   } elsif($glyph->font() eq "MediumBold") {
-    $self->{'canvas'}->string(gdMediumBoldFont, $glyph->pixely(), $glyph->pixelx(), $glyph->text(), $colour);
+    $self->{'canvas'}->string(gdMediumBoldFont, $top, $left, $glyph->text(), $colour);
     
   } elsif($glyph->font() eq "Large") {
-    $self->{'canvas'}->string(gdLargeFont, $glyph->pixely(), $glyph->pixelx(), $glyph->text(), $colour);
+    $self->{'canvas'}->string(gdLargeFont, $top, $left, $glyph->text(), $colour);
     
   } elsif($glyph->font() eq "Giant") {
-    $self->{'canvas'}->string(gdGiantFont, $glyph->pixely(), $glyph->pixelx(), $glyph->text(), $colour);
+    $self->{'canvas'}->string(gdGiantFont, $top, $left, $glyph->text(), $colour);
   }
 }
 
@@ -113,12 +120,12 @@ sub render_Intron {
   # todo: check rotation conditions
   #
   $strand  = $glyph->strand();
-  $xstart  = $glyph->pixelx();
-  $xend    = $glyph->pixelx() + $glyph->pixelwidth();
-  $xmiddle = $glyph->pixelx() + int($glyph->pixelwidth() / 2);
-  $ystart  = $glyph->pixely() + int($glyph->pixelheight() / 2);
+  $xstart  = $self->{sf} * $glyph->pixelx();
+  $xend    = $self->{sf} * ($glyph->pixelx() + $glyph->pixelwidth());
+  $xmiddle = $self->{sf} * ($glyph->pixelx() + int($glyph->pixelwidth() / 2));
+  $ystart  = $self->{sf} * ($glyph->pixely() + int($glyph->pixelheight() / 2));
   $yend    = $ystart;
-  $ymiddle = ($strand == 1)?$glyph->pixely():($glyph->pixely()+$glyph->pixelheight());
+  $ymiddle = ($strand == 1)? $self->{sf} * $glyph->pixely() : $self->{sf} * ($glyph->pixely()+$glyph->pixelheight());
   
   $self->{'canvas'}->line($xstart, $ystart, $xmiddle, $ymiddle, $colour);
   $self->{'canvas'}->line($xmiddle, $ymiddle, $xend, $yend, $colour);
@@ -128,14 +135,14 @@ sub render_Line {
   my ($self, $glyph) = @_;
   
   my $colour = $self->colour($glyph->colour());
-  my $x1     = $glyph->pixelx() + 0;
-  my $y1     = $glyph->pixely() + 0;
-  my $x2     = $x1 + $glyph->pixelwidth();
-  my $y2     = $y1 + $glyph->pixelheight();
+  my $x1     = $self->{sf} * $glyph->pixelx() + 0;
+  my $y1     = $self->{sf} * $glyph->pixely() + 0;
+  my $x2     = $x1 + $self->{sf} * $glyph->pixelwidth();
+  my $y2     = $y1 + $self->{sf} * $glyph->pixelheight();
   
   if(defined $glyph->dotted()) {
     $self->{'canvas'}->dashedLine($y1, $x1, $y2, $x2, $colour);
-  } else {
+  } else {  
     $self->{'canvas'}->line($y1, $x1, $y2, $x2, $colour);
   }
 }
@@ -157,7 +164,7 @@ sub render_Poly {
     my $x = shift @points;
     my $y = shift @points;
     
-    $poly->addPt($y,$x);
+    $poly->addPt($self->{sf} * $y, $self->{sf} * $x);
   }
   
   if(defined $colour) {
