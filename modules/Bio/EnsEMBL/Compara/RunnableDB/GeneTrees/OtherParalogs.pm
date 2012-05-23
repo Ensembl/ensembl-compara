@@ -194,7 +194,7 @@ sub get_ancestor_species_hash
     } elsif ($node->get_child_count) {
 
         # Super-tree root
-        print "super-tree root", $node->node_id, " children=", $node->get_child_count, "\n";
+        print "super-tree root=", $node->node_id, " children=", $node->get_child_count, "\n";
         my $is_dup = 0;
         foreach my $child (@{$node->children}) {
             print "child: ", $child->node_id, "\n" if ($self->debug);
@@ -212,7 +212,7 @@ sub get_ancestor_species_hash
 
         # Super-tree leaf
         $node->adaptor->fetch_all_children_for_node($node);
-        print "super-tree leaf", $node->node_id, " children=", $node->get_child_count, "\n";
+        print "super-tree leaf=", $node->node_id, " children=", $node->get_child_count, "\n";
         my $child = $node->children->[0];
 
         $species_hash = $self->get_ancestor_species_hash($child);
