@@ -123,6 +123,7 @@ sub create_clusterset {
     my $clusterset_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
     $clusterset->root($clusterset_root);
     $self->compara_dba->get_GeneTreeAdaptor->store($clusterset);
+    $self->param('clusterset_id', $clusterset_root->node_id);
     
     my @allcluster_ids;
     $self->param('allcluster_ids', \@allcluster_ids);
