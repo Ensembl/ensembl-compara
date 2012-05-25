@@ -750,10 +750,12 @@ sub pipeline_analyses {
                 'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
                 'column_names2getters'  => { 'genome_db_id' => 'dbID' },
 
+                'input_id'              => {'genome_db_id' => '#genome_db_id#', 'groupset_tag', '#groupset_tag#'},
+
                 'fan_branch_code'       => 2,
             },
             -flow_into => {
-                2 => { 'per_genome_qc' => {'genome_db_id' => '#genome_db_id#', 'groupset_tag', '#groupset_tag#'} },
+                2 => [ 'per_genome_qc' ],
                 1 => [ 'overall_qc' ],
             },
         },
@@ -916,10 +918,7 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('njtree_phyml_capacity'),
             -rc_id => 3,
             -priority => 20,
-            -flow_into => {
-                1 => [ 'ortho_tree', 'build_HMM_aa', 'build_HMM_cds' ],
-                2 => [ 'njtree_phyml' ],
-            },
+            -flow_into => [ 'ortho_tree', 'build_HMM_aa', 'build_HMM_cds' ],
         },
 
         {   -logic_name => 'ortho_tree',
