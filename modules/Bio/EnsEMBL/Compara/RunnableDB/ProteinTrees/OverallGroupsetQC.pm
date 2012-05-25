@@ -88,7 +88,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->param('groupset_tree', $self->compara_dba->get_GeneTreeNodeAdaptor->fetch_node_by_node_id($self->param('clusterset_id'))->tree) or die "Could not fetch groupset tree";
+    $self->param('groupset_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('clusterset_id'))) or die "Could not fetch groupset tree";
 
 }
 
@@ -437,24 +437,22 @@ sub quantify_mapping {
   }
   close MAP;
 
-  my $current_gene_tree_adaptor = $self->compara_dba->get_GeneTreeNodeAdaptor;
-  my $reuse_gene_tree_adaptor = $reuse_compara_dba->get_GeneTreeNodeAdaptor;
+  my $current_gene_tree_adaptor = $self->compara_dba->get_GeneTreeAdaptor;
+  my $reuse_gene_tree_adaptor = $reuse_compara_dba->get_GeneTreeAdaptor;
   foreach my $mapped_cluster_id (keys %{$mapping_stats{mapped_tagging}}) {
     my $reuse_node_id = $mapping_stats{mapped_tagging}{$mapped_cluster_id};
     next unless (defined($reuse_node_id));
-    my $reuse_node = $reuse_gene_tree_adaptor->fetch_node_by_node_id($reuse_node_id);
+    my $reuse_node = $reuse_gene_tree_adaptor->fetch_by_dbID($reuse_node_id);
     next unless (defined($reuse_node));
-    my $reuse_aln_runtime_value = $reuse_node->tree->get_tagvalue('aln_runtime');
-    $reuse_node->release_tree;
+    my $reuse_aln_runtime_value = $reuse_node->get_tagvalue('aln_runtime');
     next if ($reuse_aln_runtime_value eq '');
-    my $this_node = $current_gene_tree_adaptor->fetch_node_by_node_id($mapped_cluster_id);
+    my $this_node = $current_gene_tree_adaptor->fetch_by_dbID($mapped_cluster_id);
     next unless (defined($this_node));
     $this_node->store_tag('reuse_node_id',$reuse_node_id);
     $this_node->store_tag('reuse_aln_runtime',$reuse_aln_runtime_value);
     my $contribution = $mapping_stats{mapped}{$mapped_cluster_id};
     next unless (defined($contribution));
     $this_node->store_tag('reuse_contribution',$contribution);
-    $this_node->release_tree;
   }
 
   my $num_novel_clusters = scalar keys %{$mapping_stats{novel}};
