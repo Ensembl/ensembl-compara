@@ -87,7 +87,6 @@ sub param_defaults {
             'cdna'              => 1,   # always use cdna for njtree_phyml
             'bootstrap'         => 1,
 		'check_split_genes' => 1,
-            'correction_mode'   => 'max_diff_lk',   # can be either max_diff_lk or jackknife
     };
 }
 
@@ -97,11 +96,11 @@ sub fetch_input {
 
     $self->check_if_exit_cleanly;
 
-    $self->param('member_adaptor',       $self->compara_dba->get_MemberAdaptor);
-    $self->param('protein_tree_adaptor', $self->compara_dba->get_ProteinTreeAdaptor);
+    $self->param('member_adaptor', $self->compara_dba->get_MemberAdaptor);
+    $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
 
     my $protein_tree_id     = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
-    my $protein_tree        = $self->param('protein_tree_adaptor')->fetch_node_by_node_id( $protein_tree_id )
+    my $protein_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $protein_tree_id )
                                         or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
     $protein_tree->print_tree(10) if($self->debug);
 
@@ -157,7 +156,7 @@ sub run_njtree_phyml {
 
   $self->check_for_split_genes if ($self->param('check_split_genes')) ;
 
-  my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $protein_tree ) or return;
+  my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $protein_tree->root ) or return;
 
   my $newick_file = $input_aln . "_njtree_phyml_tree.txt ";
 
@@ -168,11 +167,15 @@ sub run_njtree_phyml {
 
   my $species_tree_file = $self->get_species_tree_file();
 
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
   # ./njtree best -f spec-v4.1.nh -p tree -o $BASENAME.best.nhx \
   # $BASENAME.nucl.mfa -b 100 2>&1/dev/null
 
-  my $cmd = $treebest_exe;
   if (1 == $self->param('bootstrap')) {
+    my $comput_ok = 0;
+    until ($comput_ok) {
+
+    my $cmd = $treebest_exe;
     $cmd .= " best ";
     if(my $max_diff_lk = $self->param('max_diff_lk')) {
         $cmd .= " -Z $max_diff_lk";
@@ -186,8 +189,8 @@ sub run_njtree_phyml {
     if ($self->param('extra_args')) {
       $cmd .= " ".($self->param('extra_args')).' ';
     }
-    my $logfile = $self->worker_temp_directory. "proteintree_". $protein_tree->node_id . ".log";
-    my $errfile = $self->worker_temp_directory. "proteintree_". $protein_tree->node_id . ".err";
+    my $logfile = $self->worker_temp_directory. "proteintree_". $protein_tree->root_id . ".log";
+    my $errfile = $self->worker_temp_directory. "proteintree_". $protein_tree->root_id . ".err";
     $cmd .= " 1>$logfile 2>$errfile";
     #     $cmd .= " 2>&1 > /dev/null" unless($self->debug);
 
@@ -195,8 +198,6 @@ sub run_njtree_phyml {
     my $full_cmd = defined $worker_temp_directory ? "cd $worker_temp_directory; $cmd" : "$cmd";
     print STDERR "Running:\n\t$full_cmd\n" if($self->debug);
 
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
-    
     if(my $rc = system($full_cmd)) {
       my $system_error = $!;
 
@@ -216,38 +217,21 @@ sub run_njtree_phyml {
 	  }
 	}
 	if ($handled_failure) {
-        if ($self->param("correction_mode") eq "jackknife") {
-          # Do jack-knife treebest starting by the sequence with more Ns
-          my $jackknife_value = $self->param('jackknife') if ($self->param('jackknife'));
-          $jackknife_value++;
-          $self->dataflow_output_id({'protein_tree_id' => $protein_tree->node_id, 'jackknife' => $jackknife_value}, 2);
-          $protein_tree->release_tree;
-          $self->param('protein_tree', undef);
-          $self->input_job->incomplete(0);
-          die "PHYML error, dataflowing to NJTREE_PHYML+jackknife\n$logfile";
-
-        } elsif ($self->param("correction_mode") eq "max_diff_lk") {
 	    # Increase the tolerance max_diff_lk in the computation
 
           my $max_diff_lk_value = $self->param('max_diff_lk') ?  $self->param('max_diff_lk') : 1e-5;
-          print STDERR sprintf("*%f*%f*\n", $self->param('max_diff_lk'), $max_diff_lk_value);
 	    $max_diff_lk_value *= 10;
-          print STDERR sprintf("*%f*%f*\n", $self->param('max_diff_lk'), $max_diff_lk_value);
-          $self->dataflow_output_id({'protein_tree_id' => $protein_tree->node_id, 'max_diff_lk' => $max_diff_lk_value}, 2);
-          $protein_tree->release_tree;
-          $self->param('protein_tree', undef);
-          $self->input_job->incomplete(0);
-          die "PHYML error, dataflowing to NJTREE_PHYML+max_diff_lk\n$logfile";
-        }
+          $self->param('max_diff_lk', $max_diff_lk_value);
       }
       $self->throw("error running njtree phyml: $system_error\n$logfile");
+    } else {
+        $comput_ok = 1;
     }
-
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
+    }
   } elsif (0 == $self->param('bootstrap')) {
     # first part
     # ./njtree phyml -nS -f species_tree.nh -p 0.01 -o $BASENAME.cons.nh $BASENAME.nucl.mfa
-    $cmd = $treebest_exe;
+    my $cmd = $treebest_exe;
     $cmd .= " phyml -nS";
     if($species_tree_file) {
       $cmd .= " -f ". $species_tree_file;
@@ -276,24 +260,23 @@ sub run_njtree_phyml {
     $cmd .= " 1> " . $newick_file;
     $cmd .= " 2> /dev/null" unless($self->debug);
 
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
     print("$cmd\n") if($self->debug);
     my $worker_temp_directory = $self->worker_temp_directory;
     if(system("cd $worker_temp_directory; $cmd")) {
       my $system_error = $!;
       $self->throw("Error running njtree phyml noboot (step 2 of 2) : $system_error");
     }
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
   } else {
     $self->throw("NJTREE PHYML -- wrong bootstrap option");
   }
 
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
       #parse the tree into the datastucture:
-  $protein_tree = $self->parse_newick_into_proteintree( $newick_file );
+  $self->parse_newick_into_proteintree( $newick_file );
 
   my $runtime = time()*1000-$starttime;
 
-  $protein_tree->tree->store_tag('NJTREE_PHYML_runtime_msec', $runtime);
+  $protein_tree->store_tag('NJTREE_PHYML_runtime_msec', $runtime);
 }
 
 
@@ -395,28 +378,6 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   }
   $self->param('split_genes', \%split_genes);
 
-  if ($self->param('jackknife')) {
-    # my $coverage_hash;
-    my $empty_hash;
-    foreach my $seq ($sa->each_seq) {
-      my $sequence = $seq->seq;
-      $sequence =~ s/\-//g;
-      my $full_length = length($sequence);
-      $sequence =~ s/N//g;
-      my $covered_length = length($sequence);
-      my $coverage_proportion = $covered_length/$full_length;
-      my $empty_length = $full_length - $covered_length;
-      # $coverage_hash->{$coverage_proportion} = $seq->display_id if ($coverage_proportion < 1);
-      $empty_hash->{$empty_length} = $seq->display_id if ($empty_length > 0);
-    }
-    my @lowest = sort {$b<=>$a} keys %$empty_hash;
-    my $i = 0;
-    while ($i < $self->param('jackknife')) {
-      $sa->remove_seq($sa->each_seq_with_id($empty_hash->{$lowest[$i]}));
-      $i++;
-    }
-    $sa = $sa->remove_gaps(undef,1);
-  }
   $sa->set_displayname_flat(1);
 
   my $alignIO = Bio::AlignIO->newFh
@@ -436,25 +397,21 @@ sub store_proteintree
     my $self = shift;
 
     my $tree = $self->param('protein_tree') or return;
-    my $tree_adaptor = $self->param('protein_tree_adaptor');
+    my $tree_adaptor = $self->param('tree_adaptor');
 
     printf("PHYML::store_proteintree\n") if($self->debug);
 
-    $tree->build_leftright_indexing(1);
+    $tree->root->build_leftright_indexing(1);
     $tree_adaptor->store($tree);
-    $tree_adaptor->delete_nodes_not_in_tree($tree);
+    $self->compara_dba->get_GeneTreeNodeAdaptor->delete_nodes_not_in_tree($tree->root);
 
     if($self->debug >1) {
         print("done storing - now print\n");
         $tree->print_tree;
     }
 
-    $self->store_tags($tree);
+    $self->store_tags($tree->root);
 
-    if($self->param('jackknife')) {
-        my $leaf_count = $tree->num_leaves;
-        $tree->tree->store_tag( 'gene_count', $leaf_count );
-    }
     $self->_store_tree_tags;
 
 }
@@ -520,9 +477,9 @@ sub parse_newick_into_proteintree {
   
   #cleanup old tree structure- 
   #  flatten and reduce to only GeneTreeMember leaves
-  $tree->flatten_tree;
-  $tree->print_tree(20) if($self->debug);
-  foreach my $node (@{$tree->get_all_leaves}) {
+  $tree->root->flatten_tree;
+  $tree->root->print_tree(20) if($self->debug);
+  foreach my $node (@{$tree->root->get_all_leaves}) {
     next if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
     $node->disavow_parent;
   }
@@ -534,8 +491,8 @@ sub parse_newick_into_proteintree {
   while(<FH>) { $newick .= $_;  }
   close(FH);
 
-  my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
-  $newtree->print_tree(20) if($self->debug > 1);
+  my $newroot = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
+  $newroot->print_tree(20) if($self->debug > 1);
 
   my $nsplits = 0;
   my $split_genes = $self->param('split_genes');
@@ -545,7 +502,7 @@ sub parse_newick_into_proteintree {
         print STDERR "$name is split_gene of $other_name\n" if $self->debug;
         my $node = new Bio::EnsEMBL::Compara::GeneTreeNode;
         $node->name($name);
-        my $othernode = $newtree->find_node_by_name($other_name);
+        my $othernode = $newroot->find_node_by_name($other_name);
         print STDERR "$node is split_gene of $othernode\n" if $self->debug;
         my $newnode = new Bio::EnsEMBL::Compara::GeneTreeNode;
         $nsplits++;
@@ -558,19 +515,19 @@ sub parse_newick_into_proteintree {
     }
 
   # get rid of the taxon_id needed by njtree -- name tag
-  foreach my $leaf (@{$newtree->get_all_leaves}) {
+  foreach my $leaf (@{$newroot->get_all_leaves}) {
     my $njtree_phyml_name = $leaf->get_tagvalue('name');
     $njtree_phyml_name =~ /(\d+)\_\d+/;
     my $member_id = $1;
     $leaf->add_tag('name', $member_id);
   }
-  $newtree->print_tree(20) if($self->debug > 1);
+  $newroot->print_tree(20) if($self->debug > 1);
 
   # Leaves of newick tree are named with member_id of members from
   # input tree move members (leaves) of input tree into newick tree to
   # mirror the 'member_id' nodes
-  foreach my $member (@{$tree->get_all_leaves}) {
-    my $tmpnode = $newtree->find_node_by_name($member->member_id);
+  foreach my $member (@{$tree->root->get_all_leaves}) {
+    my $tmpnode = $newroot->find_node_by_name($member->member_id);
     if($tmpnode) {
       $member->Bio::EnsEMBL::Compara::AlignedMember::copy($tmpnode);
       bless $tmpnode, 'Bio::EnsEMBL::Compara::GeneTreeMember';
@@ -582,53 +539,52 @@ sub parse_newick_into_proteintree {
     }
   }
 
-  $newtree->node_id($tree->node_id);
-  $newtree->adaptor($tree->adaptor);
-  $newtree->tree($tree->tree);
-  $self->param('protein_tree', $newtree);
+  $newroot->node_id($tree->node_id);
+  $newroot->adaptor($tree->root->adaptor);
   # to keep the link to the super-tree
-  if ($tree->has_parent) {
-      $tree->parent->add_child($newtree);
+  if ($tree->root->has_parent) {
+      $tree->root->parent->add_child($newroot);
    }
 
   # Newick tree is now empty so release it
-  $tree->release_tree;
+  $tree->root->release_tree;
+  $tree->root($newroot);
+  $newroot->tree($tree);
 
-  $newtree->print_tree if($self->debug);
+  $newroot->print_tree if($self->debug);
   # check here on the leaf to test if they all are GeneTreeMembers as
   # minimize_tree/minimize_node might not work properly
-  foreach my $leaf (@{$newtree->get_all_leaves}) {
+  foreach my $leaf (@{$newroot->get_all_leaves}) {
     unless($leaf->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
       $self->throw("Phyml tree does not have all leaves as GeneTreeMembers\n");
     }
   }
-  return $newtree;
+  return $newroot;
 }
 
 sub _store_tree_tags {
     my $self = shift;
     my $tree = $self->param('protein_tree');
-    my $pta = $self->compara_dba->get_ProteinTreeAdaptor;
 
     print "Storing Tree tags...\n";
 
-    my @leaves = @{$tree->get_all_leaves};
-    my @nodes = @{$tree->get_all_nodes};
+    my @leaves = @{$tree->root->get_all_leaves};
+    my @nodes = @{$tree->root->get_all_nodes};
 
     # Tree number of leaves.
     my $tree_num_leaves = scalar(@leaves);
-    $tree->tree->store_tag("tree_num_leaves",$tree_num_leaves);
+    $tree->store_tag("tree_num_leaves",$tree_num_leaves);
 
     # Tree number of human peptides contained.
     my $num_hum_peps = 0;
     foreach my $leaf (@leaves) {
 	$num_hum_peps++ if ($leaf->taxon_id == 9606);
     }
-    $tree->tree->store_tag("tree_num_human_peps",$num_hum_peps);
+    $tree->store_tag("tree_num_human_peps",$num_hum_peps);
 
     # Tree max root-to-tip distance.
-    my $tree_max_length = $tree->max_distance;
-    $tree->tree->store_tag("tree_max_length",$tree_max_length);
+    my $tree_max_length = $tree->root->max_distance;
+    $tree->store_tag("tree_max_length",$tree_max_length);
 
     # Tree max single branch length.
     my $tree_max_branch = 0;
@@ -636,7 +592,7 @@ sub _store_tree_tags {
         my $dist = $node->distance_to_parent;
         $tree_max_branch = $dist if ($dist > $tree_max_branch);
     }
-    $tree->tree->store_tag("tree_max_branch",$tree_max_branch);
+    $tree->store_tag("tree_max_branch",$tree_max_branch);
 
     # Tree number of duplications and speciations.
     my $num_dups = 0;
@@ -649,8 +605,8 @@ sub _store_tree_tags {
             $num_specs++;
         }
     }
-    $tree->tree->store_tag("tree_num_dup_nodes",$num_dups);
-    $tree->tree->store_tag("tree_num_spec_nodes",$num_specs);
+    $tree->store_tag("tree_num_dup_nodes",$num_dups);
+    $tree->store_tag("tree_num_spec_nodes",$num_specs);
 
     print "Done storing stuff!\n" if ($self->debug);
 }
