@@ -41,6 +41,7 @@ no warnings 'uninitialized';
 
 use File::Basename qw( dirname );
 use FindBin qw($Bin);
+use POSIX qw(strftime);
 use Getopt::Long;
 
 my $serverroot;
@@ -50,6 +51,13 @@ BEGIN {
   unshift @INC, "$serverroot/conf";
 };
 
+use SiteDefs;
+
+if($SiteDefs::ENSEMBL_CTRLLOG && open(LOG,">>$SiteDefs::ENSEMBL_CTRLLOG")) {
+  print LOG sprintf("%s [005] begin restart cycle (manual invocation)\n",
+              strftime("%Y-%m-%d %H:%M:%S",localtime));
+  close LOG;
+}
 
 my ($help, $rmconfig, $delay, $single, $tail, $flush, $species);
 &GetOptions(
@@ -117,6 +125,12 @@ warn "Restart OK.\n";
 
 if ($tail) {
   system("$Bin/taillog") ==0 or exit;
+}
+
+if($SiteDefs::ENSEMBL_CTRLLOG && open(LOG,">>$SiteDefs::ENSEMBL_CTRLLOG")) {
+  print LOG sprintf("%s [006] end restart cycle (manual invocation)\n",
+              strftime("%Y-%m-%d %H:%M:%S",localtime));
+  close LOG;
 }
 
 exit;

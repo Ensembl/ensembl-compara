@@ -38,6 +38,7 @@ no warnings 'uninitialized';
 
 use FindBin qw($Bin);
 use File::Basename qw( dirname );
+use POSIX qw( strftime );
 use Sys::Hostname::Long;
 use Getopt::Long;
 
@@ -112,6 +113,12 @@ Options:
     exit;
 }
 
+if($SiteDefs::ENSEMBL_CTRLLOG && open(LOG,">>$SiteDefs::ENSEMBL_CTRLLOG")) {
+  print LOG sprintf("%s [001] attempt server start (manual invocation)\n",
+              strftime("%Y-%m-%d %H:%M:%S",localtime));
+  close LOG; 
+}
+
 my $hostname = hostname_long();
 
 # start the server
@@ -150,3 +157,10 @@ $cmd .= "$exe -d $SiteDefs::APACHE_DIR -f $serverroot/$confdir/httpd.conf" . ($s
 require $_ for @start_before;
 system($cmd) == 0 or die " Could not start server: $!.\n[FATAL] Server start failed.\n";
 require $_ for @start_after;
+
+if($SiteDefs::ENSEMBL_CTRLLOG && open(LOG,">>$SiteDefs::ENSEMBL_CTRLLOG")) {
+  print LOG sprintf("%s [002] server started (manual invocation)\n",
+              strftime("%Y-%m-%d %H:%M:%S",localtime));
+  close LOG; 
+}
+

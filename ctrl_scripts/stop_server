@@ -39,6 +39,7 @@ no warnings 'uninitialized';
 
 use FindBin qw($Bin);
 use File::Basename qw( dirname );
+use POSIX qw(strftime);
 use Sys::Hostname::Long;
 
 my $serverroot;
@@ -49,6 +50,12 @@ BEGIN {
 };
 
 use SiteDefs;
+
+if($SiteDefs::ENSEMBL_CTRLLOG && open(LOG,">>$SiteDefs::ENSEMBL_CTRLLOG")) {
+  print LOG sprintf("%s [003] attempt server stop (manual invocation)\n",
+              strftime("%Y-%m-%d %H:%M:%S",localtime));
+  close LOG;
+}
 
 ## Walk through the plugin tree and see if there's 'ctrl_scripts/*' in there
 ## any files starting with 00_stop* to 49_stop* will be executed before apache
@@ -115,14 +122,22 @@ eval {
   chomp $pid;
   
   if ($pid =~ /\d+/) {
-  
-    system("kill -TERM $pid") == 0 or warn
-        "Could not stop server: $!.\n" .
-        "STOP failed.\n";
-  
+    kill('TERM',$pid) or warn "Could not stop server: $!.\nSTOP failed.\n";
     if ($delay) {
-        warn "Waiting $delay seconds for server to shut down...\n";
-        sleep $delay;
+        if($delay >= 0) {
+          warn "Waiting $delay seconds for server to shut down...\n";
+          sleep $delay;
+        } else {
+          warn "Waiting for process to die\n";
+          my $begin = time;
+          while(time - $begin < -$delay) {
+            last unless kill(0,$pid);
+            warn "process still exists\n";
+            sleep 1;
+          }
+          warn "killed process with SIGKILL\n" if kill("KILL",$pid);
+          warn "process gone\n";
+        }
     }
   
   } else {
@@ -137,6 +152,11 @@ for (@stop_after) {
   warn $@ if $@;
 }
 
+if($SiteDefs::ENSEMBL_CTRLLOG && open(LOG,">>$SiteDefs::ENSEMBL_CTRLLOG")) {
+  print LOG sprintf("%s [004] server stopped (manual invocation)\n",
+              strftime("%Y-%m-%d %H:%M:%S",localtime));
+  close LOG;
+}
 
 warn "Done.\n";
 
