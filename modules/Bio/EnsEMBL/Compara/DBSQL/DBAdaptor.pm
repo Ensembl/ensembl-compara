@@ -169,7 +169,7 @@ sub get_available_adaptors {
             # gene-product:
         'Sequence'              => 'Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor',
         'Member'                => 'Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor',
-        'Attribute'             => 'Bio::EnsEMBL::Compara::DBSQL::AttributeAdaptor',
+        'AlignedMember'         => 'Bio::EnsEMBL::Compara::DBSQL::AlignedMemberAdaptor',
         'Subset'                => 'Bio::EnsEMBL::Compara::DBSQL::SubsetAdaptor',
         'Homology'              => 'Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor',
         'Family'                => 'Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor',
