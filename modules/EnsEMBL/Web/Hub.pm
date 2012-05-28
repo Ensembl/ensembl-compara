@@ -371,17 +371,18 @@ sub parse_referer {
   my $self         = shift;
   my $species_defs = $self->species_defs;
   my $servername   = $species_defs->ENSEMBL_SERVERNAME;
-  my $uri          = $ENV{'HTTP_REFERER'}; 
+  my $server       = $species_defs->ENSEMBL_SERVER;
+  my $uri          = $ENV{'HTTP_REFERER'};
      $uri          =~ s/^(https?:\/\/.*?)?\///i;
      $uri          =~ s/[;&]$//;
-  
+     
   my ($url, $query_string) = split /\?/, $uri;
   my @path = split /\//, $url;
   
   unshift @path, 'common' unless $path[0] =~ /(Multi|common)/ || $species_defs->valid_species($path[0]);
   
-  return { absolute_url => $ENV{'HTTP_REFERER'} } unless $ENV{'HTTP_REFERER'} =~ /$servername/i && $species_defs->OBJECT_TO_SCRIPT->{$path[1]};
-
+  return { absolute_url => $ENV{'HTTP_REFERER'} } unless $species_defs->OBJECT_TO_SCRIPT->{$path[1]} && ($ENV{'HTTP_REFERER'} =~ /$servername/i || $ENV{'HTTP_REFERER'} =~ /$server/);
+  
   my ($species, $type, $action, $function) = @path;
 
   my @pairs  = split /[&;]/, $query_string;
