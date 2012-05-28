@@ -420,7 +420,10 @@ sub alignment_string_bounded {
 =cut
 
 sub cdna_alignment_string {
-  my $self = shift;
+  my ($self, $changeSelenos) = @_;
+  $changeSelenos = 0 unless (defined $changeSelenos);
+
+    print "cdna_alignment_string:", Dumper($self);
 
   unless (defined $self->{'cdna_alignment_string'}) {
 
@@ -442,7 +445,6 @@ sub cdna_alignment_string {
       $cdna = substr($cdna, $offset, $length);
     }
 
-    my $cdna_len = length($cdna);
     my $start = 0;
     my $cdna_align_string = '';
 
@@ -451,6 +453,9 @@ sub cdna_alignment_string {
     foreach my $pep (unpack("A1" x length($alignment_string), $alignment_string)) {
       if($pep eq '-') {
         $cdna_align_string .= '--- ';
+      } elsif ((($pep eq 'U') and $changeSelenos) or ($pep eq '*')) {
+	  $cdna_align_string .= 'NNN ';
+	  $start += 3;  
       } else {
         my $codon = substr($cdna, $start, 3);
         unless (length($codon) == 3) {
@@ -462,7 +467,7 @@ sub cdna_alignment_string {
         $start += 3;
       }
     }
-    $self->{'cdna_alignment_string'} = $cdna_align_string
+    $self->{'cdna_alignment_string'} = $cdna_align_string;
   }
   
   return $self->{'cdna_alignment_string'};
