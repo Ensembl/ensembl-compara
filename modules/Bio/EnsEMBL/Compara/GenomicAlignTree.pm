@@ -587,6 +587,10 @@ sub restrict_between_alignment_positions {
     $this_node->adaptor($self->adaptor);
   }
 
+  my $final_alignment_length = $end - $start + 1;
+
+  #Get all the nodes and restrict but only remove leaves if necessary. Call minimize_tree at the end to 
+  #remove the internal nodes
   foreach my $this_node (@{$genomic_align_tree->get_all_nodes}) {
     my $genomic_align_group = $this_node->genomic_align_group;
     next if (!$genomic_align_group);
@@ -616,18 +620,24 @@ sub restrict_between_alignment_positions {
         $genomic_align_group->add_GenomicAlign($this_genomic_align);
       }
     } else {
-      $this_node->disavow_parent();
-      my $reference_genomic_align = $genomic_align_tree->reference_genomic_align;
-      if ($reference_genomic_align) {
-	  my $reference_genomic_align_node = $genomic_align_tree->reference_genomic_align_node;
-	  $genomic_align_tree = $genomic_align_tree->minimize_tree();
-	  ## Make sure links are not broken after tree minimization
-	  $genomic_align_tree->reference_genomic_align($reference_genomic_align);
-	  $genomic_align_tree->reference_genomic_align->genomic_align_block($genomic_align_tree);
-	  $genomic_align_tree->reference_genomic_align_node($reference_genomic_align_node);
-      }
+
+	#Only remove leaves. Use minimise_tree to tidy up the internal nodes
+	if ($this_node->is_leaf) {
+	    $this_node->disavow_parent();
+	    my $reference_genomic_align = $genomic_align_tree->reference_genomic_align;
+	    if ($reference_genomic_align) {
+		my $reference_genomic_align_node = $genomic_align_tree->reference_genomic_align_node;
+		$genomic_align_tree = $genomic_align_tree->minimize_tree();
+		## Make sure links are not broken after tree minimization
+		$genomic_align_tree->reference_genomic_align($reference_genomic_align);
+		$genomic_align_tree->reference_genomic_align->genomic_align_block($genomic_align_tree);
+		$genomic_align_tree->reference_genomic_align_node($reference_genomic_align_node);
+	    }
+	}
     }
   }
+  $genomic_align_tree = $genomic_align_tree->minimize_tree();
+  $genomic_align_tree->length($final_alignment_length);
 
   return $genomic_align_tree;
 }
@@ -771,7 +781,7 @@ sub print {
   if (grep {$_ eq $reference_genomic_align} @{$self->get_all_genomic_aligns_for_node}) {
     $mark = "* ";
   }
-  print STDERR " " x $level, $mark,
+  print STDERR "  " x $level, $mark,
       "[", $self->node_id, "/", ($self->get_original_strand?"+":"-"), "] ",
       $self->genomic_align_group->genome_db->name,":",
       $self->genomic_align_group->dnafrag->name,":",
@@ -842,6 +852,7 @@ sub get_all_leaves {
   my $leaves = {};
   $self->_recursive_get_all_leaves($leaves);
   my @leaf_list = values(%{$leaves});
+
   return \@leaf_list;
 }
 
