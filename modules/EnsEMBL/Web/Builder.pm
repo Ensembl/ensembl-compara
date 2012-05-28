@@ -23,11 +23,15 @@ sub new {
   my ($class, $args) = @_;
   
   my $self = { 
-    objects => {},
+    objects       => {},
+    object_params => [],
     %$args
   };
-   
+  
   bless $self, $class;
+  
+  $self->{'object_types'}    = $self->hub->object_types || { map { $_->[0] => $_->[1] } @{$self->object_params} };
+  $self->{'ordered_objects'} = [ map $_->[0], @{$self->object_params} ];
   
   return $self; 
 }
