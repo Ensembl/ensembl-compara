@@ -650,7 +650,6 @@ sub get_SimpleAlign {
         $aln_end = $aln_end*3 if $alphabet eq 'dna';
 
         $seqstr =~ s/\*/X/g if ($stop2x);
-
         my $seq = Bio::LocatableSeq->new(
                 -SEQ        => $seqstr,
                 -ALPHABET   => $alphabet,
@@ -666,7 +665,7 @@ sub get_SimpleAlign {
             $sa->add_seq($seq);
         }
     }
-
+    $sa = $sa->remove_gaps if UNIVERSAL::can($sa, 'remove_gaps');
     return $sa;
 }
 
