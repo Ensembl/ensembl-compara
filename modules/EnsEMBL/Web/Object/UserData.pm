@@ -1175,7 +1175,8 @@ sub configure_vep {
   }
 
   $vep_config{sa}  = $self->get_adaptor('get_SliceAdaptor', $vep_config{'core_type'}, $species);
-  $vep_config{ga}  = $self->get_adaptor('get_GeneAdaptor', $vep_config{'core_type'}, $species);;
+  $vep_config{ta}  = $self->get_adaptor('get_TranscriptAdaptor', $vep_config{'core_type'}, $species);
+  $vep_config{ga}  = $self->get_adaptor('get_GeneAdaptor', $vep_config{'core_type'}, $species);
   $vep_config{csa} = $self->get_adaptor('get_CoordSystemAdaptor', $vep_config{'core_type'}, $species);
   
   if(defined($vep_config{regulatory})) {
