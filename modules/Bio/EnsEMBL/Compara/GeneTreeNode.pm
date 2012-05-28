@@ -56,10 +56,10 @@ use strict;
 
 use IO::File;
 
-use Bio::SimpleAlign;
-
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
+
+use Bio::EnsEMBL::Compara::AlignedMemberSet;
 
 use base ('Bio::EnsEMBL::Compara::NestedSet');
 
@@ -133,130 +133,30 @@ sub get_leaf_by_Member {
   }
 }
 
+sub get_AlignedMemberSet {
+    my $self = shift;
+    my $set = Bio::EnsEMBL::Compara::AlignedMemberSet->new(
+        -adaptor => $self->adaptor,
+        -method_link_species_set_id => $self->tree->method_link_species_set_id,
+        -stable_id => $self->tree->stable_id,
+        -version => sprintf("%d.%d", $self->tree->version, $self->node_id),
+    );
+    foreach my $member (@{$self->get_all_leaves}) {
+        $set->add_AlignedMember($member) if $member->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
+    }
+    return $set;
+}
+
 sub get_SimpleAlign {
-  my ($self, @args) = @_;
-
-  my $id_type = 'STABLE';
-  my $unique_seqs = 0;
-  my $cdna = 0;
-  my $stop2x = 0;
-  my $append_taxon_id = 0;
-  my $append_sp_short_name = 0;
-  my $append_genomedb_id = 0;
-  my $exon_cased = 0;
-  if (scalar @args) {
-    ($unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased) =
-       rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED)], @args);
-  }
-  $id_type = 'STABLE' unless(defined($id_type));
-
-  my $sa = Bio::SimpleAlign->new();
-
-  #Hack to try to work with both bioperl 0.7 and 1.2:
-  #Check to see if the method is called 'addSeq' or 'add_seq'
-  my $bio07 = 0;
-  $bio07=1 if(!$sa->can('add_seq'));
-
-  my $seq_id_hash = {};
-  foreach my $member (@{$self->get_all_leaves}) {
-    next unless($member->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
-    next if($unique_seqs and $seq_id_hash->{$member->sequence_id});
-    $seq_id_hash->{$member->sequence_id} = 1;
-
-    my $seqstr;
-    if ($cdna) {
-      $seqstr = $member->cdna_alignment_string;
-      $seqstr =~ s/\s+//g;
-    } else {
-      $seqstr = $member->alignment_string($exon_cased);
-    }
-    next if(!$seqstr);
-
-    my $seqID = $member->stable_id;
-    $seqID = $member->sequence_id if($id_type eq "SEQ");
-    $seqID = $member->member_id if($id_type eq "MEMBER");
-    $seqID .= "_" . $member->taxon_id if($append_taxon_id);
-    $seqID .= "_" . $member->genome_db_id if ($append_genomedb_id);
-
-    ## Append $seqID with Speciae short name, if required
-    if ($append_sp_short_name) {
-      my $species = $member->genome_db->short_name;
-      $species =~ s/\s/_/g;
-      $seqID .= "_" . $species . "_";
-    }
-
-#    $seqID .= "_" . $member->genome_db->taxon_id if($append_taxon_id); # this may be needed if you have subspecies or things like that
-    $seqstr =~ s/\*/X/g if ($stop2x);
-    my $seq = Bio::LocatableSeq->new(-SEQ    => $seqstr,
-                                     -START  => 1,
-                                     -END    => length($seqstr),
-                                     -ID     => $seqID,
-                                     -STRAND => 0);
-
-    if($bio07) {
-      $sa->addSeq($seq);
-    } else {
-      $sa->add_seq($seq);
-    }
-  }
-
-  return $sa;
+    my $self = shift;
+    return $self->get_AlignedMemberSet->get_SimpleAlign(@_);
 }
 
 # Takes a protein tree and creates a consensus cigar line from the
 # constituent leaf nodes.
 sub consensus_cigar_line {
-
-   my $self = shift;
-   my @cigars;
-
-   # First get an 'expanded' cigar string for each leaf of the subtree
-   my @all_leaves = @{$self->get_all_leaves};
-   my $num_leaves = scalar(@all_leaves);
-   foreach my $leaf (@all_leaves) {
-     next unless( UNIVERSAL::can( $leaf, 'cigar_line' ) );
-     my $cigar = $leaf->cigar_line;
-     my $newcigar = "";
-#     $cigar =~ s/(\d*)([A-Z])/$2 x ($1||1)/ge; #Expand
-      while ($cigar =~ /(\d*)([A-Z])/g) {
-          $newcigar .= $2 x ($1 || 1);
-      }
-     $cigar = $newcigar;
-     push @cigars, $cigar;
-   }
-
-   # Itterate through each character of the expanded cigars.
-   # If there is a 'D' at a given location in any cigar,
-   # set the consensus to 'D', otherwise assume an 'M'.
-   # TODO: Fix assumption that cigar strings are always the same length,
-   # and start at the same point.
-   my $cigar_len = length( $cigars[0] );
-   my $cons_cigar;
-   for( my $i=0; $i<$cigar_len; $i++ ){
-     my $char = 'M';
-     my $num_deletions = 0;
-     foreach my $cigar( @cigars ){
-       if ( substr($cigar,$i,1) eq 'D'){
-         $num_deletions++;
-       }
-     }
-     if ($num_deletions * 3 > 2 * $num_leaves) {
-       $char = "D";
-     } elsif ($num_deletions * 3 > $num_leaves) {
-       $char = "m";
-     }
-     $cons_cigar .= $char;
-   }
-
-   # Collapse the consensus cigar, e.g. 'DDDD' = 4D
-#   $cons_cigar =~ s/(\w)(\1*)/($2?length($2)+1:"").$1/ge;
-   my $collapsed_cigar = "";
-   while ($cons_cigar =~ /(D+|M+|I+|m+)/g) {
-     $collapsed_cigar .= (length($1) == 1 ? "" : length($1)) . substr($1,0,1)
- }
-   $cons_cigar = $collapsed_cigar;
-   # Return the consensus
-   return $cons_cigar;
+    my $self = shift;
+    return $self->get_AlignedMemberSet->consensus_cigar_line(@_);
 }
 
 
