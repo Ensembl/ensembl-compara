@@ -37,8 +37,7 @@ sub new {
     [ 'GeneTree',            'gt'  ],
   ];
   
-  my $object_types    = { map { $_->[0] => $_->[1] } @$object_params };
-  my $ordered_objects = [ map $_->[0], @$object_params ];
+  my $object_types = { map { $_->[0] => $_->[1] } @$object_params };
   
   my $hub = new EnsEMBL::Web::Hub({
     apache_handle  => $r,
@@ -49,10 +48,8 @@ sub new {
   });
   
   my $builder = new EnsEMBL::Web::Builder({
-    hub             => $hub,
-    object_params   => $object_params,
-    object_types    => $object_types,
-    ordered_objects => $ordered_objects
+    hub           => $hub,
+    object_params => $object_params
   });
   
   my $self = {
