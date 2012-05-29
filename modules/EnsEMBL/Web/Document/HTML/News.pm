@@ -22,8 +22,6 @@ sub render {
   my $release      = $adaptor->fetch_release($release_id);
   my $release_date = $release->{'date'};
 
-  $html .= qq(<h1>What's New in Release $release_id ($release_date)</h1>);
-
   ## Are we using static news content output from a script?
   my $file         = '/ssi/whatsnew.html';
   my $include = EnsEMBL::Web::Controller::SSI::template_INCLUDE(undef, $file);
@@ -40,7 +38,12 @@ sub render {
     my $adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
     my @changes = ();
     if ($adaptor) {
-      @changes = @{$adaptor->fetch_changelog({'release' => $release_id})};
+      my $params = {'release' => $release_id};
+      if ($hub->species) {
+        $params->{'species'} = $hub->species;
+      }
+      #warn '>>> SPECIES '.$hub->species;
+      @changes = @{$adaptor->fetch_changelog($params)};
     }
  
     if (scalar(@changes) > 0) {
