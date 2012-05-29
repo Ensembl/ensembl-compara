@@ -48,15 +48,19 @@ sub fetch_changelog {
       SELECT
         c.changelog_id, c.title, c.content, c.team
       FROM
-        changelog as c, species as s, changelog_species as cs 
+        changelog as c
+      LEFT JOIN 
+        changelog_species as cs 
+        ON c.changelog_id = cs.changelog_id
+      LEFT JOIN
+        species as s
+        ON s.species_id = cs.species_id
       WHERE 
-        c.changelog_id = cs.changelog_id
-        AND s.species_id = cs.species_id
-        AND c.title != ''
+        c.title != ''
         AND c.content != ''
         AND c.status = 'handed_over'
         AND c.release_id = ?
-        AND s.name = ?
+        AND (s.url_name = ? OR s.url_name IS NULL)
       ORDER BY
         c.team,
         c.priority DESC
@@ -116,8 +120,8 @@ sub fetch_changelog {
     while (my @sp = $sth2->fetchrow_array()) {
       push @$species, {
         'id'          => $sp[0],
-        'name'        => $sp[1],
-        'common_name' => $sp[2],
+        'url_name'    => $sp[1],
+        'web_name'    => $sp[2],
       };
     }
 
