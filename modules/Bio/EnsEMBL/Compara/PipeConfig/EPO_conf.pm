@@ -18,11 +18,11 @@ sub default_options {
 	'core_db_version' => 67,
 
 	   # parameters that are likely to change from execution to another:
-	'release'               => '101',
+	'release'               => '68',
 	'rel_suffix'            => '',    # an empty string by default, a letter otherwise
 	   # dependent parameters:
 	'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
-	'species_tag' 		=> 'test2_13mammals_',
+	'species_tag' 		=> '12way',
 
 	   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
@@ -30,7 +30,7 @@ sub default_options {
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
-		-dbname => $self->o('ENV', 'USER').'_compara_epo_'.$self->o('species_tag').$self->o('rel_with_suffix'),
+		-dbname => $self->o('ENV', 'USER').'_compara_epo_'.$self->o('species_tag')."_".$self->o('rel_with_suffix'),
    	},
 	 # ancestral seqs db
 	'ancestor_db' => {
@@ -47,7 +47,7 @@ sub default_options {
 		-port => 3306,
 		-pass => '',
 		-host => 'compara3',
-		-dbname => 'sf5_epo_test_anc_template_101',
+		-dbname => 'sf5_compara_template_anchor_align',
 	},
 	 # master db
 	'compara_master' => {
@@ -61,26 +61,40 @@ sub default_options {
 		{
 			-user => 'ensro',
 			-port => 3306,
-			-host => 'ens-staging1',
+			-host => 'ens-livemirror',
 			-dbname => '',
 			-db_version => $self->o('core_db_version') || $self->o('release'),
 		},
 	
+#		{
+#			-user => 'ensro',
+#			-port => 3306,
+#			-host => 'ens-staging2',
+#			-dbname => '',
+#			-db_version => $self->o('core_db_version') || $self->o('release'),
+#		},
+	],
+	# dbs thay may be on genebuild dbs etc
+	other_core_dbs => [
 		{
 			-user => 'ensro',
 			-port => 3306,
+			-dbname => 'cgg_dog_ref',
+			-species => "canis_familiaris",
+			-host => 'genebuild1',
+		},
+		{
+			-user => 'ensro',
+			-port => 3306,
+			-dbname => 'mus_musculus_core_68_38',
+			-species => "mus_musculus",
 			-host => 'ens-staging2',
-			-dbname => '',
-			-db_version => $self->o('core_db_version') || $self->o('release'),
 		},
 	],
-	# dbs thay may be on genebuild dbs etc
-	other_core_dbs => {
-	},
 	  # mlssid of mappings to use
 	'mapping_mlssid' => 13,
 	  # mlssid of ortheus alignments
-	'ortheus_mlssid' => 578,
+	'ortheus_mlssid' => 595,
 	  # species tree file
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
 	  # data directories:
@@ -123,6 +137,7 @@ sub pipeline_wide_parameters {
 		'compara_mapped_anchor_db' => $self->o('compara_mapped_anchor_db'),
 		'compara_master' => $self->o('compara_master'),
 		'main_core_dbs' => $self->o('main_core_dbs'),
+		'other_core_dbs' => $self->o('other_core_dbs'),
 		'mapping_mlssid' => $self->o('mapping_mlssid'),
 		'ortheus_mlssid' => $self->o('ortheus_mlssid'),
 		'mapping_file' => $self->o('mapping_file'),
