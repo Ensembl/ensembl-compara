@@ -135,12 +135,12 @@ sub p_value {
     return $self->{'_p_value'};
 }
 
-sub tree_is_significant {
+sub is_tree_significant {
     my ($self) = @_;
     return $self->avg_pvalue() < $self->pvalue_lim();
 }
 
-sub node_is_significant {
+sub is_node_significant {
     my ($self) = @_;
     return $self->p_value() < $self->root->pvalue_lim();
 }
