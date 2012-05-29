@@ -214,6 +214,10 @@ sub set_gdb_locator { # fill in the locator field in the genome_db table
 	my $self = shift;
 	my $ancestor_db = $self->param('ancestor_db');
 	my $genome_db_names = shift;
+	foreach my $additional_species_db(@{ $self->param('other_core_dbs') }){
+		my $additional_species_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(%{ $additional_species_db });
+		Bio::EnsEMBL::Registry->add_DBAdaptor( $additional_species_db->{'-species'}, "core", $additional_species_dba );
+	}
 	Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs( @{ $self->param('main_core_dbs') });
 	my @dbas = @{ Bio::EnsEMBL::Registry->get_all_DBAdaptors() };
 	foreach my $genome_db_name(split(",", $genome_db_names), $ancestor_db->{'-name'}){

@@ -50,6 +50,12 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
 	my ($self) = @_;
+	# add the dbs that are on non-standard servers
+        foreach my $additional_species_db(@{ $self->param('other_core_dbs') }){ 
+                my $additional_species_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(%{ $additional_species_db }); 
+                Bio::EnsEMBL::Registry->add_DBAdaptor( $additional_species_db->{'-species'}, "core", $additional_species_dba );  
+        }   
+
 	Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs( @{ $self->param('main_core_dbs') } );
 	my ($query_set, $target_set, $q_files, $t_files, $blastResults, $matches, $query_index);
 	my $synteny_region_id = $self->param('zero_st_dnafrag_region_id');
@@ -67,7 +73,10 @@ sub fetch_input {
 		} else {
 			my $slice = $slice_a->fetch_by_region( "$coord_sys", "$dnafrag_name", $dnafrag_start, $dnafrag_end, 1);
 			push(@$query_set, [ $dnafrag_id, $dnafrag_start, $dnafrag_end, $slice ]);
-			$query_index->{ $slice->name } = $z++;
+			eval { $query_index->{ $slice->name } = $z++ };
+			if($@){
+				print $@, join(":", $coord_sys, $dnafrag_id, $dnafrag_name, $species_name, $dnafrag_start, $dnafrag_end, $dnafrag_strand), "\n";
+			}
 		}
 	}
 	# if all the sequences have 0 strand, use the first one as the target
