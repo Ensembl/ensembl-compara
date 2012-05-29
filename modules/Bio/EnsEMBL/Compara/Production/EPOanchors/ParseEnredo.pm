@@ -159,7 +159,6 @@ sub write_output {
 	my $quoted_gdb_names = '\''.$genome_dbs_names_from_file.'\'';
 	my $genome_db_ids_from_names = $master_select.'GROUP_CONCAT(genome_db_id) FROM genome_db WHERE assembly_default AND name IN ('.$quoted_gdb_names.')"';
 	my($gdb_ids) = map{ chomp $_;$_ } `$genome_db_ids_from_names`;
-print $gdb_ids, " **** \n";
 	# populate the method_link, method_link_species_set and dnafrag tables
 	my $dnafrag_where_clause = "genome_db_id in (".$gdb_ids.")";
 	my $dnafrag_pipe = $master_dump." -w \"$dnafrag_where_clause\""." dnafrag".$to_db;
@@ -217,9 +216,10 @@ sub set_gdb_locator { # fill in the locator field in the genome_db table
 	my $genome_db_names = shift;
 	my %additional_db_names; # dbs from non-standard servers (eg genebuild*)
 	foreach my $additional_species_db(@{ $self->param('other_core_dbs') }){
-		$additional_db_names{ $additional_species_db->{'-dbname'} }++;
+		my $additional_species = $additional_species_db->{'-species'};
+		$additional_db_names{ $additional_species } =  $additional_species_db->{'-dbname'};
 		my $additional_species_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(%{ $additional_species_db });
-		Bio::EnsEMBL::Registry->add_DBAdaptor( $additional_species_db->{'-species'}, "core", $additional_species_dba );
+		Bio::EnsEMBL::Registry->add_DBAdaptor( $additional_species, "core", $additional_species_dba );
 	}
 	Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs( @{ $self->param('main_core_dbs') });
 	my @dbas = @{ Bio::EnsEMBL::Registry->get_all_DBAdaptors() };
@@ -227,7 +227,7 @@ sub set_gdb_locator { # fill in the locator field in the genome_db table
 		my $core_genome_db_name = $genome_db_name . "_core_";
 		my($host,$port,$db_name,$user,$pass,$locator_string);
 		foreach my $dba(@dbas){
-			if($dba->dbc->dbname=~m/$core_genome_db_name/ || exists($additional_db_names{ $dba->dbc->dbname })) {
+			if( $dba->dbc->dbname=~m/$core_genome_db_name/ || ( $additional_db_names{ $genome_db_name } eq $dba->dbc->dbname ) ){
 				$host = $dba->dbc->host;
 				$port = $dba->dbc->port;
 				$db_name = $dba->dbc->dbname;
