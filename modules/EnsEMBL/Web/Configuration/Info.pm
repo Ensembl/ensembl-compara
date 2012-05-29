@@ -48,7 +48,7 @@ sub populate_tree {
     [qw(blurb EnsEMBL::Web::Component::Info::SpeciesBlurb)],
     { availability => 1 }
   );
-  
+ 
   $index->append($self->create_subnode('Error', 'Unknown error',
     [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],
     { availability  => 1, no_menu_entry => 1, }
@@ -78,8 +78,8 @@ sub populate_tree {
     [qw(ip500 EnsEMBL::Web::Component::Info::IPtop500)],
     { availability => 1 }
   ));
-
-  $self->create_node('WhatsNew', "What's New",
+  my $version = $species_defs->ENSEMBL_VERSION;
+  $self->create_node('WhatsNew', "What's New in Release $version",
     [qw(whatsnew EnsEMBL::Web::Component::Info::WhatsNew)],
     { availability => 1 }
   );
