@@ -132,7 +132,7 @@ sub read_clustalw {
 }
 
 sub load_cigars_from_fasta {
-    my ($self, $file, $store) = @_;
+    my ($self, $file) = @_;
 
   my $alignio = Bio::AlignIO->new
     (-file => "$file",
@@ -173,15 +173,6 @@ sub load_cigars_from_fasta {
 
     }
   }
-
-        # either store everything or nothing:
-    if($store) {
-        my $family_adaptor = $self->adaptor();
-
-        foreach my $member_attribute (@members_attributes) {
-            $family_adaptor->update_relation($member_attribute);
-        }
-    }
 }
 
 sub get_SimpleAlign {

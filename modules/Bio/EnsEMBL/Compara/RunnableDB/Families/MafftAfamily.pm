@@ -134,6 +134,10 @@ sub write_output {
         my $family = $self->param('family');
         $family->load_cigars_from_fasta($mafft_file, 1);
 
+        foreach my $member_attribute (@{$family->get_all_Member_Attribute}) {
+            $family->adaptor->update_relation($member_attribute) unless $member_attribute->[0]->source_name eq 'ENSEMBLGENE';
+        }
+
         unless($self->debug) {
             unlink $mafft_file;
         }
