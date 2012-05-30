@@ -154,8 +154,6 @@ sub run_njtree_phyml {
 
   my $starttime = time()*1000;
 
-  $self->check_for_split_genes if ($self->param('check_split_genes')) ;
-
   my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $protein_tree->root ) or return;
 
   my $newick_file = $input_aln . "_njtree_phyml_tree.txt ";
@@ -324,19 +322,21 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   # This will have the effect of grouping the different
   # fragments of a gene split event together in a subtree
   #
-  unless ($self->param('gs_mirror') =~ /FALSE/) {
-    my $holding_node = $alignment_edits->holding_node;
-    foreach my $link (@{$holding_node->links}) {
-      my $node1 = $link->get_neighbor($holding_node);
-      my $protein1 = $protein_tree->find_leaf_by_node_id($node1->node_id);
+  if ($self->param('check_split_genes')) {
+    my $gene_splits = $self->compara_dba->dbc->selectall_arrayref('SELECT DISTINCT gene_split_id FROM split_genes');
+    my $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_member USING (member_id) WHERE gene_split_id = ?');
+    foreach my $gene_split (@$gene_splits) {
+      $sth->execute($gene_split->{gene_split_id});
+      my $partial_genes = $sth->fetchall_arrayref;
+      my $node1 = shift @$partial_genes;
+      my $protein1 = $protein_tree->find_leaf_by_node_id($node1->{node_id});
       #print STDERR "node1 ", $node1, " ", $protein1, "\n";
       my $name1 = ($protein1->member_id)."_".($self->param('use_genomedb_id') ? $protein1->genome_db_id : $protein1->taxon_id);
       my $cdna = $protein1->cdna_alignment_string;
       #print STDERR "cnda1 $cdna\n";
-      foreach my $node2 (@{$node1->all_nodes_in_graph}) {
-        my $protein2 = $protein_tree->find_leaf_by_node_id($node2->node_id);
+      foreach my $node2 (@$partial_genes) {
+        my $protein2 = $protein_tree->find_leaf_by_node_id($node2->{node_id});
         #print STDERR "node2 ", $node2, " ", $protein2, "\n";
-        next if $node2->node_id eq $node1->node_id;
         my $name2 = ($protein2->member_id)."_".($self->param('use_genomedb_id') ? $protein2->genome_db_id : $protein2->taxon_id);
         $split_genes{$name2} = $name1;
         #print STDERR Dumper(%split_genes);
@@ -609,149 +609,6 @@ sub _store_tree_tags {
     $tree->store_tag("tree_num_spec_nodes",$num_specs);
 
     print "Done storing stuff!\n" if ($self->debug);
-}
-
-sub check_for_split_genes {
-  my $self = shift;
-  my $protein_tree = $self->param('protein_tree');
-
-  my $alignment_edits = $self->param('alignment_edits', new Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs);
-
-  my $tmp_time = time();
-
-  my @all_protein_leaves = @{$protein_tree->get_all_leaves};
-  printf("%1.3f secs to fetch all leaves\n", time()-$tmp_time) if ($self->debug);
-
-  if($self->debug) {
-    printf("%d proteins in tree\n", scalar(@all_protein_leaves));
-  }
-  printf("build paralogs graph\n") if($self->debug);
-  my @genepairlinks;
-  my $graphcount = 0;
-  my $tree_node_id = $protein_tree->node_id;
-  while (my $protein1 = shift @all_protein_leaves) {
-    foreach my $protein2 (@all_protein_leaves) {
-      next unless ($protein1->genome_db_id == $protein2->genome_db_id);
-      my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link
-        (
-         $protein1, $protein2, 0
-        );
-      $genepairlink->add_tag("tree_node_id", $tree_node_id);
-      push @genepairlinks, $genepairlink;
-      print STDERR "build graph $graphcount\n" if ($graphcount++ % 10 == 0);
-    }
-  }
-  printf("%1.3f secs build links and features\n", time()-$tmp_time) if($self->debug>1);
-
-  # We sort the pairings by seq_region (chr) name, then by distance between
-  # the start of link_node pairs.
-  # This is to try to do the joining up of cdnas in the best order in
-  # cases of e.g. 2 cases of 3-way split genes in same species.
-  my @sorted_genepairlinks = sort { 
-    $a->{_link_node1}->chr_name <=> $b->{_link_node1}->chr_name 
- || $a->{_link_node2}->chr_name <=> $b->{_link_node2}->chr_name 
- || abs($a->{_link_node1}->chr_start - $a->{_link_node2}->chr_start) <=> abs($b->{_link_node1}->chr_start - $b->{_link_node2}->chr_start) } @genepairlinks;
-
-  foreach my $genepairlink (@sorted_genepairlinks) {
-    my $type = 'within_species_paralog';
-    my ($protein1, $protein2) = $genepairlink->get_nodes;
-    my ($cigar_line1, $perc_id1, $perc_pos1,
-        $cigar_line2, $perc_id2, $perc_pos2) = 
-        $self->generate_attribute_arguments($protein1, $protein2,$type);
-    print STDERR "Pair: ", $protein1->stable_id, " - ", $protein2->stable_id, "\n" if ($self->debug);
-
-    # Checking for gene_split cases
-    if ($type eq 'within_species_paralog' && 0 == $perc_id1 && 0 == $perc_id2 && 0 == $perc_pos1 && 0 == $perc_pos2) {
-
-      # Condition A1: If same seq region and less than 1MB distance
-      my $gene_member1 = $protein1->gene_member; my $gene_member2 = $protein2->gene_member;
-      if ($gene_member1->chr_name eq $gene_member2->chr_name 
-          && (1000000 > abs($gene_member1->chr_start - $gene_member2->chr_start)) 
-          && $gene_member1->chr_strand eq $gene_member2->chr_strand ) {
-
-        # Condition A2: there have to be the only 2 or 3 protein coding
-        # genes in the range defined by the gene pair. This should
-        # strictly be 2, only the pair in question, but in clean perc_id
-        # = 0 cases, we allow for 2+1: the rare case where one extra
-        # protein coding gene is partially or fully embedded in another.
-        my $start1 = $gene_member1->chr_start; my $start2 = $gene_member2->chr_start; my $starttemp;
-        my $end1 = $gene_member1->chr_end; my $end2 = $gene_member2->chr_end; my $endtemp;
-        if ($start1 > $start2) { $starttemp = $start1; $start1 = $start2; $start2 = $starttemp; }
-        if ($end1   <   $end2) {   $endtemp = $end1;     $end1 = $end2;     $end2 = $endtemp; }
-        my $strand1 = $gene_member1->chr_strand; my $taxon_id1 = $gene_member1->taxon_id; my $name1 = $gene_member1->chr_name;
-        print STDERR "Checking split genes overlap\n";
-        my @genes_in_range = @{$self->param('member_adaptor')->_fetch_all_by_source_taxon_chr_name_start_end_strand_limit('ENSEMBLGENE',$taxon_id1,$name1,$start1,$end1,$strand1,4)};
-
-        if (3 < scalar @genes_in_range) {
-          foreach my $gene (@genes_in_range) {
-            print STDERR "More than 2 genes in range...";
-            print STDERR "Genes in range ($start1,$end1,$strand1): ", $gene->stable_id,",", $gene->chr_start,",", $gene->chr_end,"\n";
-          }
-          next;
-        }
-        $alignment_edits->add_connection($protein1->node_id, $protein2->node_id);
-      }
-
-
-      # This is a second level of contiguous gene split events, more
-      # stringent on contig but less on alignment, for "skidding"
-      # alignment cases.
-
-      # These cases take place when a few of the aminoacids in the
-      # alignment have been wrongly displaced from the columns that
-      # correspond to the fragment, so the identity level is slightly
-      # above 0. This small number of misplaced aminoacids look like
-      # "skid marks" in the alignment view.
-
-      # Condition B1: all 4 percents below 10
-    } elsif ($type eq 'within_species_paralog' 
-             && $perc_id1 < 10 
-             && $perc_id2 < 10 
-             && $perc_pos1 < 10 
-             && $perc_pos2 < 10) {
-      my $gene_member1 = $protein1->gene_member; my $gene_member2 = $protein2->gene_member;
-
-    # Condition B2: If non-overlapping and smaller than 500kb start and 500kb end distance
-      if ($gene_member1->chr_name eq $gene_member2->chr_name 
-          && (500000 > abs($gene_member1->chr_start - $gene_member2->chr_start)) 
-          && (500000 > abs($gene_member1->chr_end - $gene_member2->chr_end)) 
-          && (($gene_member1->chr_start - $gene_member2->chr_start)*($gene_member1->chr_end - $gene_member2->chr_end)) > 1
-          && $gene_member1->chr_strand eq $gene_member2->chr_strand ) {
-
-    # Condition B3: they have to be the only 2 genes in the range:
-        my $start1 = $gene_member1->chr_start; my $start2 = $gene_member2->chr_start; my $starttemp;
-        my $end1 = $gene_member1->chr_end; my $end2 = $gene_member2->chr_end; my $endtemp;
-        if ($start1 > $start2) { $starttemp = $start1; $start1 = $start2; $start2 = $starttemp; }
-        if ($end1   <   $end2) {   $endtemp = $end1;     $end1 = $end2;     $end2 = $endtemp; }
-        my $strand1 = $gene_member1->chr_strand; my $taxon_id1 = $gene_member1->taxon_id; my $name1 = $gene_member1->chr_name;
-
-        my @genes_in_range = @{$self->param('member_adaptor')->_fetch_all_by_source_taxon_chr_name_start_end_strand_limit('ENSEMBLGENE',$taxon_id1,$name1,$start1,$end1,$strand1,4)};
-        if (2 < scalar @genes_in_range) {
-          foreach my $gene (@genes_in_range) {
-            print STDERR "More than 2 genes in range...";
-            print STDERR "Genes in range ($start1,$end1,$strand1): ", $gene->stable_id,",", $gene->chr_start,",", $gene->chr_end,"\n";
-          }
-          next;
-        }
-
-    # Condition B4: discard if the smaller protein is 1/10 or less of the larger and all percents above 2
-        my $len1 = length($protein1->sequence); my $len2 = length($protein2->sequence); my $temp;
-        if ($len1 < $len2) { $temp = $len1; $len1 = $len2; $len2 = $temp; }
-        if ($len1/$len2 > 10 && $perc_id1 > 2 && $perc_id2 > 2 && $perc_pos1 > 2 && $perc_pos2 > 2) {
-          next;
-        }
-        $alignment_edits->add_connection($protein1->node_id, $protein2->node_id);
-      }
-    }
-  }
-
-  printf("%1.3f secs label gene splits\n", time()-$tmp_time) if($self->debug>1);
-
-  if($self->debug) {
-    printf("%d pairings\n", scalar(@sorted_genepairlinks));
-  }
-
-  return 1;
 }
 
 

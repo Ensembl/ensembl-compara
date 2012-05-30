@@ -681,6 +681,7 @@ sub inspecies_paralog_test
   #passed all the tests -> it's an inspecies_paralog
 #  $genepairlink->add_tag("orthotree_type", 'inspecies_paralog');
   $genepairlink->add_tag("orthotree_type", 'within_species_paralog');
+  $genepairlink->add_tag("orthotree_type", 'contiguous_gene_split') if $ancestor->get_tagvalue('node_type') eq 'gene_split';
   $genepairlink->add_tag("orthotree_subtype", $taxon->name);
   # Duplication_confidence_score
   if (not $ancestor->has_tag("duplication_confidence_score")) {
@@ -924,24 +925,13 @@ sub store_gene_link_as_homology {
   my $gene_member2 = $gene2->gene_member;
   $homology->add_Member_Attribute([$gene_member2, $attribute]);
 
-  # Pre-tagging potential_gene_split paralogies
+  # at this stage, contiguous_gene_split have been retrieved from the node types
   if ($self->param('tag_split_genes')) {
+    # Potential split genes: within_species_paralog that do not overlap at all
     if ($type eq 'within_species_paralog' && 0 == $perc_id1 && 0 == $perc_id2 && 0 == $perc_pos1 && 0 == $perc_pos2) {
-      $self->param('orthotree_homology_counts')->{'within_species_paralog'}--;
-      # If same seq region and less than 1MB distance
-      if ($gene_member1->chr_name eq $gene_member2->chr_name 
-          && (1000000 > abs($gene_member1->chr_start - $gene_member2->chr_start)) 
-          && $gene_member1->chr_strand eq $gene_member2->chr_strand ) {
-        $homology->description('contiguous_gene_split');
-        if (scalar(@{$ancestor->get_all_leaves}) == 2) {
-          $ancestor->store_tag('node_type', 'gene_split')
-            unless ($self->param('_readonly'));
-        }
-        $self->param('orthotree_homology_counts')->{'contiguous_gene_split'}++;
-      } else {
+        $self->param('orthotree_homology_counts')->{'within_species_paralog'}--;
         $homology->description('putative_gene_split');
         $self->param('orthotree_homology_counts')->{'putative_gene_split'}++;
-      }
     }
   }
   ## Check if it has already been stored, in which case we dont need to store again
