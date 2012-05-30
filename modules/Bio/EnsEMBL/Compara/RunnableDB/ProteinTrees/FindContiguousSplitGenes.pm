@@ -260,7 +260,7 @@ sub store_split_genes {
     $sth0->finish;
 
     my $sth1 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (member_id) VALUES (?)');
-    my $sth2 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (member_id, split_gene_id) VALUES (?, ?)');
+    my $sth2 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (member_id, gene_split_id) VALUES (?, ?)');
 
     foreach my $link (@{$holding_node->links}) {
         my $node1 = $link->get_neighbor($holding_node);

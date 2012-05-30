@@ -335,10 +335,10 @@ CREATE TABLE protein_tree_qc (
 
 CREATE TABLE split_genes (
 	member_id   	int(10) unsigned UNIQUE NOT NULL,
-	split_gene_id	int(10) unsigned NOT NULL AUTO_INCREMENT,
+	gene_split_id	int(10) unsigned NOT NULL AUTO_INCREMENT,
 
 	PRIMARY KEY (member_id),
-	KEY split_gene_id (split_gene_id),
+	KEY gene_split_id (gene_split_id),
 
 	FOREIGN KEY member_id (member_id) REFERENCES member (member_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
