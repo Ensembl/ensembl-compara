@@ -423,8 +423,6 @@ sub cdna_alignment_string {
   my ($self, $changeSelenos) = @_;
   $changeSelenos = 0 unless (defined $changeSelenos);
 
-    print "cdna_alignment_string:", Dumper($self);
-
   unless (defined $self->{'cdna_alignment_string'}) {
 
     my $cdna;
