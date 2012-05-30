@@ -18,7 +18,7 @@ sub default_options {
 	'core_db_version' => 67,
 
 	   # parameters that are likely to change from execution to another:
-	'release'               => '68',
+	'release'               => '200',
 	'rel_suffix'            => '',    # an empty string by default, a letter otherwise
 	   # dependent parameters:
 	'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
@@ -26,7 +26,7 @@ sub default_options {
 
 	   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
-		-host   => 'compara3',
+		-host   => 'compara1',
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
@@ -126,6 +126,7 @@ sub resource_classes {
          1 => { -desc => 'mem3500',  'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
          2 => { -desc => 'mem7500',  'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },  
          3 => { -desc => 'mem14000', 'LSF' => '-C0 -M14000000 -R"select[mem>14000] rusage[mem=14000]"' },  
+	 4 => { -desc => 'mem30000', 'LSF' => '-C0 -M30000000 -R"select[mem>30000] rusage[mem=30000]" -qhugemem' },
     };  
 }
 
@@ -272,8 +273,22 @@ return [
 		},
 		-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
 		-hive_capacity => 10,
-		-can_be_empty => 1,
+		-flow_into => {
+			-1 => [ 'Ortheus_huge_mem' ],
+		},
 		-rc_id => 3,
+	   },
+
+		# increase compute memory and java memory if previous settings fail 
+	   {	-logic_name => 'Ortheus_huge_mem',
+		-parameters => {
+			max_block_size=>1000000,
+			java_options=>'-server -Xmx10000M',
+		},
+		-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
+		-hive_capacity => 10,
+		-can_be_empty => 1,
+		-rc_id => 4,
 	   },
 
 	   {  -logic_name => 'update_max_alignment_length',
