@@ -113,17 +113,15 @@ sub create_clusterset {
     my $mlss_id = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
 
     # Create the clusterset and associate mlss
-    my $clusterset = new Bio::EnsEMBL::Compara::GeneTree;
-    $clusterset->member_type($self->param('member_type'));
-    $clusterset->tree_type('clusterset');
-    $clusterset->method_link_species_set_id($mlss_id);
+    my $clusterset = new Bio::EnsEMBL::Compara::GeneTree(
+        -member_type => $self->param('member_type'),
+        -tree_type => 'clusterset',
+        -method_link_species_set_id => $mlss_id,
+    );
     $self->param('clusterset', $clusterset);
-
-    # Create the clusterset root node
-    my $clusterset_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
-    $clusterset->root($clusterset_root);
+    # Assumes a root node will be automatically created
     $self->compara_dba->get_GeneTreeAdaptor->store($clusterset);
-    $self->param('clusterset_id', $clusterset_root->node_id);
+    $self->param('clusterset_id', $clusterset->root_id);
     
     my @allcluster_ids;
     $self->param('allcluster_ids', \@allcluster_ids);
@@ -158,16 +156,15 @@ sub add_cluster {
     $clusterset->root->add_child($clusterset_leaf);
 
     # The new cluster object
-    my $cluster = new Bio::EnsEMBL::Compara::GeneTree;
-    $cluster->member_type($self->param('member_type'));
-    $cluster->tree_type('tree');
-    $cluster->method_link_species_set_id($clusterset->method_link_species_set_id);
-    $cluster->clusterset_id($clusterset->root_id);
+    my $cluster = new Bio::EnsEMBL::Compara::GeneTree(
+        -member_type => $self->param('member_type'),
+        -tree_type => 'tree',
+        -method_link_species_set_id => $clusterset->method_link_species_set_id,
+        -clusterset_id => $clusterset->root_id,
+    );
 
     # The cluster root node
-    my $cluster_root = new Bio::EnsEMBL::Compara::GeneTreeNode;
-    $cluster_root->tree($cluster);
-    $cluster->root($cluster_root);
+    my $cluster_root = $cluster->root;
     $clusterset_leaf->add_child($cluster_root);
 
     # The cluster leaves

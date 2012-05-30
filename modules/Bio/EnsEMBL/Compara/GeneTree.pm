@@ -28,6 +28,7 @@ the root of the tree, as long as general tree properties.
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::GeneTree
+  +- Bio::EnsEMBL::Compara::AlignedMemberSet
   `- Bio::EnsEMBL::Compara::Taggable
 
 =head1 AUTHORSHIP
@@ -51,27 +52,43 @@ Internal methods are usually preceded with an underscore (_)
 
 package Bio::EnsEMBL::Compara::GeneTree;
 
+use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+
+use Bio::EnsEMBL::Compara::GeneTreeNode;
+use Bio::EnsEMBL::Compara::GeneTreeMember;
+use Bio::EnsEMBL::Compara::AlignedMember;
+
 use strict;
 no strict 'refs';
 
-use base ('Bio::EnsEMBL::Compara::Taggable');
+use base ('Bio::EnsEMBL::Compara::AlignedMemberSet', 'Bio::EnsEMBL::Compara::Taggable');
 
-#our $AUTOLOAD;
 
-=head2 new()
+=head2 new
 
-  Description : Creates a new GeneTree object. 
-  Returntype  : Bio::EnsEMBL::Compara::GeneTree
-  Exceptions  : None
-  Example     : my $w = Bio::EnsEMBL::Compara::GeneTree->new();
-  Status      : Stable  
-  
+  Arg [1]    : 
+  Example    : 
+  Description: 
+  Returntype : Bio::EnsEMBL::Compara::GeneTree
+  Exceptions : 
+  Caller     : 
+
 =cut
 
 sub new {
-    my $class = shift;
-    my $self = {};
-    bless $self, $class;
+    my($class,@args) = @_;
+
+    my $self = $class->SUPER::new(@args);
+
+    if (scalar @args) {
+        my ($root_id, $member_type, $tree_type) = rearrange([qw(ROOT_ID MEMBER_TYPE TREE_TYPE)], @args);
+
+        $self->{'_root_id'} = $root_id if defined $root_id;
+        $member_type && $self->member_type($member_type);
+        $tree_type && $self->tree_type($tree_type);
+    }
+
     return $self;
 }
 
@@ -135,69 +152,12 @@ sub clusterset_id {
 }
 
 
-=head2 method_link_species_set_id()
-
-  Description : Getter/Setter for the method_link_species_set_id field.
-                This field should be a valid dbID of a MethodLinkSpeciesSet
-                object.
-  Returntype  : Integer
-  Exceptions  : None
-  Example     : $tree->method_link_species_set_id($mlss_id);
-  Status      : Stable  
-  
-=cut
-
-# FIXME MLSS Object
-sub method_link_species_set_id {
-    my $self = shift;
-    $self->{'_method_link_species_set_id'} = shift if(@_);
-    return $self->{'_method_link_species_set_id'};
-}
-
-
-=head2 stable_id()
-
-  Description : Getter/Setter for the stable_id field. Currently, only the
-                'proteintree' have a stable id. This field should be empty
-                for other tree types.
-  Returntype  : String
-  Exceptions  : None
-  Example     : my $stable_id = $tree->stable_id();
-  Status      : Stable  
-  
-=cut
-
-sub stable_id {
-    my $self = shift;
-    $self->{'_stable_id'} = shift if(@_);
-    return $self->{'_stable_id'};
-}
-
-
-=head2 version()
-
-  Description : Getter/Setter for the version field. It contains the numeric
-                version of a tree which keeps an identical stable id (when
-                members are removed / added)
-  Returntype  : Numeric
-  Exceptions  : None
-  Example     : my $version = $tree->version();
-  Status      : Stable  
-  
-=cut
-
-sub version {
-    my $self = shift;
-    $self->{'_version'} = shift if(@_);
-    return $self->{'_version'};
-}
-
 
 =head2 root()
 
-  Description : Getter/Setter for the root node of the tree. This is
-                internally synchronised with the root_id() method and
-                vice-versa to ensure consistency.
+  Description : Getter for the root node of the tree. This returns an
+                object fetch from the database if root_id is defined.
+                Otherwise, it will create a new GeneTreeNode object.
   Returntype  : Bio::EnsEMBL::Compara::GeneTreeNode
   Exceptions  : None
   Example     : my $root_node = $tree->root();
@@ -207,45 +167,34 @@ sub version {
 
 sub root {
     my $self = shift;
-    my $new = shift;
-    if ($new) {
-        #print "DEFINE root=$new IN $self\n";
-        # defines the new root
-        $self->{'_root'} = $new;
-        #print "UPDATES $self for root_id\n";
-        delete $self->{'_root_id'};
-        $self->{'_root_id'} = $new->node_id unless ref($new->node_id);
-    } 
 
-    if (not defined $self->{'_root'} and defined $self->{'_root_id'} and defined $self->{'_adaptor'}) {
-        #print "UPDATES $self for root\n";
-        my $gtn_adaptor = $self->{'_adaptor'}->db->get_GeneTreeNodeAdaptor;
-        $gtn_adaptor->{'_ref_tree'} = $self;
-        $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
-        delete $gtn_adaptor->{'_ref_tree'};
+    if (not defined $self->{'_root'}) {
+        if (defined $self->{'_root_id'} and defined $self->{'_adaptor'}) {
+            # Loads all the nodes in one go
+            my $gtn_adaptor = $self->{'_adaptor'}->db->get_GeneTreeNodeAdaptor;
+            $gtn_adaptor->{'_ref_tree'} = $self;
+            $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
+            delete $gtn_adaptor->{'_ref_tree'};
+
+            # Loads all the gene members in one go
+            my %leaves;
+            foreach my $pm (@{$self->{'_root'}->get_all_leaves}) {
+                $leaves{$pm->gene_member_id} = $pm if UNIVERSAL::isa($pm, 'Bio::EnsEMBL::Compara::GeneTreeMember');
+            }
+            my @m_ids = keys(%leaves);
+            my $all_gm = $self->{'_adaptor'}->db->get_MemberAdaptor->fetch_all_by_dbID_list(\@m_ids);
+            foreach my $gm (@$all_gm) {
+                $leaves{$gm->dbID}->gene_member($gm);
+            }
+        } else {
+            # Creates a new GeneTreeNode object
+            $self->{'_root'} = new Bio::EnsEMBL::Compara::GeneTreeNode;
+            $self->{'_root'}->tree($self);
+        }
     }
-    $self->{'_root'}->tree($self) if $self->{'_root'};
     return $self->{'_root'};
 }
 
-
-=head2 adaptor()
-
-  Description : Getter/Setter for the DB adaptor that is used for database
-                queries. This field is automatically populated when the
-                tree is queried.
-  Returntype  : Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor
-  Exceptions  : None
-  Example     : $tree->adaptor($genetree_adaptor);
-  Status      : Internal
-  
-=cut
-
-sub adaptor {
-    my $self = shift;
-    $self->{'_adaptor'} = shift if(@_);
-    return $self->{'_adaptor'};
-}
 
 
 =head2 root_id()
@@ -262,53 +211,69 @@ sub adaptor {
 
 sub root_id {
     my $self = shift;
-    my $new = shift;
-    if ($new and ((not defined $self->{'_root_id'}) or ($self->{'_root_id'} ne $new))) {
-        #print "DEFINES root_id=$new IN $self\n";
-        # defines the new root_id
-        $self->{'_root_id'} = $new;
-        # should update the root object accordingly, but I prefer delaying the fetch_node_by_node_id
-        delete $self->{'_root'};
-    }
-    if (not defined $self->{'_root_id'} and defined $self->{'_root'}) {
-        $self->{'_root_id'} = $self->{'_root'}->node_id unless ref($self->{'_root'}->node_id);
-    }
     return $self->{'_root_id'};
 }
 
-# sub get_SimpleAlign {
-#     my $self = shift;
-#     return $self->root->get_SimpleAlign(@_);
-# }
+=head2 get_all_AlignedMember
 
-# sub consensus_cigar_line {
-#     my $self = shift;
-#     return $self->root->consensus_cigar_line(@_);
-# }
+  Arg [1]    : None
+  Example    : 
+  Description: 
+  Returntype : array reference of Bio::EnsEMBL::Compara::AlignedMember
+  Exceptions : 
+  Caller     : 
 
+=cut
 
-# sub release_tree {
-#     my ($self) = @_;
-#     $self->root->release_tree();
-# }
+sub get_all_AlignedMember {
+    my ($self) = @_;
 
-# sub AUTOLOAD {
-#     my $self = shift @_;
-#     my $type = ref($self) or die "$self is not an object\n";
-#     my $name = $AUTOLOAD;
-#     $name =~ s/.*://;
-#     $self->root->can($name) or die "$self can't $name\n";
-#     $self->root->$name(@_);
-# }
+    unless (defined $self->{'_member_array'}) {
 
+        $self->{'_member_array'} = [];
+        $self->{'_members_by_source'} = {};
+        $self->{'_members_by_source_taxon'} = {};
+        $self->{'_members_by_source_genome_db'} = {};
+        $self->{'_members_by_genome_db'} = {};
+        foreach my $leaf (@{$self->root->get_all_leaves}) {
+            $self->SUPER::add_AlignedMember($leaf) if UNIVERSAL::isa($leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember');
+        }
+    }
+    return $self->{'_member_array'};
+}
+
+=head2 add_AlignedMember
+
+  Arg [1]    : AlignedMember
+  Example    : 
+  Description: Add a new AlignedMember to this set
+  Returntype : none
+  Exceptions : Throws if input objects don't check
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub add_AlignedMember {
+    my ($self, $member) = @_;
+    assert_ref($member, 'Bio::EnsEMBL::Compara::AlignedMember');
+    if (UNIVERSAL::isa($member, 'Bio::EnsEMBL::Compara::GeneTreeMember')) {
+        $self->root->add_child($member);
+    } else {
+        my $gtm = new Bio::EnsEMBL::Compara::GeneTreeMember;
+        $member->Bio::EnsEMBL::Compara::AlignedMember::copy($gtm);
+        $gtm->tree($self);
+        $self->root->add_child($gtm);
+    }
+} 
 
 
 # Dynamic definition of functions to allow NestedSet methods work with GeneTrees
-foreach my $func_name (qw(get_all_leaves_indexed get_all_leaves get_all_sorted_leaves
+foreach my $func_name (qw(get_all_nodes get_all_leaves get_all_sorted_leaves
                           find_leaf_by_node_id find_leaf_by_name find_node_by_node_id node_id
                           find_node_by_name remove_nodes build_leftright_indexing flatten_tree
                           newick_simple_format newick_format nhx_format string_tree print_tree
-                          get_all_nodes release_tree copy get_SimpleAlign consensus_cigar_line
+                          release_tree
                         )) {
     my $full_name = "Bio::EnsEMBL::Compara::GeneTree::$func_name";
     *$full_name = sub {

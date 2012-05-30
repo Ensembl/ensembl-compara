@@ -258,13 +258,7 @@ sub dumpProteinTreeToWorkdir {
   my $tree = shift;
   my $use_exon_boundaries = shift;
 
-  my $fastafile;
-  if ($use_exon_boundaries) {
-      $fastafile = $self->worker_temp_directory. "proteintree_exon_". $tree->node_id. ".fasta";
-  } else {
-    my $node_id = $tree->node_id;
-    $fastafile = $self->worker_temp_directory. "proteintree_". $node_id. ".fasta";
-  }
+  my $fastafile =$self->worker_temp_directory.($use_exon_boundaries ? 'proteintree_exon_' : 'proteintree_').($tree->root_id).'.fasta';
 
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
   return $fastafile if((-e $fastafile) and not $use_exon_boundaries);

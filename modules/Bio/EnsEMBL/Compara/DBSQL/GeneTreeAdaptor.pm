@@ -304,20 +304,21 @@ sub store {
     my ($self, $tree) = @_;
 
     # Firstly, store the nodes
-    $self->db->get_GeneTreeNodeAdaptor->store($tree->root);
+    my $root_id = $self->db->get_GeneTreeNodeAdaptor->store($tree->root);
+    $tree->{'_root_id'} = $root_id;
 
     # Secondly, the tree itself
     # trick: we INSERT IGNORE to create an entry and we then update it
     # method_link_species_set_id must be set to its real value because of the foreign key
     my $sth = $self->prepare('INSERT IGNORE INTO gene_tree_root (root_id, method_link_species_set_id) VALUES (?, ?)');
-    $sth->execute($tree->root_id, $tree->method_link_species_set_id);
+    $sth->execute($root_id, $tree->method_link_species_set_id);
 
     $sth = $self->prepare('UPDATE gene_tree_root SET tree_type = ?, member_type = ?, clusterset_id = ?, method_link_species_set_id = ?, stable_id = ?, version = ? WHERE root_id = ?'),
-    $sth->execute($tree->tree_type, $tree->member_type, $tree->clusterset_id, $tree->method_link_species_set_id, $tree->stable_id, $tree->version, $tree->root_id);
+    $sth->execute($tree->tree_type, $tree->member_type, $tree->clusterset_id, $tree->method_link_species_set_id, $tree->stable_id, $tree->version, $root_id);
     
     $tree->adaptor($self);
 
-    return $tree->root_id;
+    return $root_id;
 }
 
 
@@ -357,14 +358,7 @@ sub _objs_from_sth {
   my @tree_list = ();
 
   while(my $rowhash = $sth->fetchrow_hashref) {
-
-    # a new GeneTree object
-    my $tree = new Bio::EnsEMBL::Compara::GeneTree;
-    foreach my $attr (qw(root_id tree_type member_type clusterset_id method_link_species_set_id stable_id version)) {
-        $tree->$attr($rowhash->{$attr});
-    }
-    $tree->adaptor($self);
-
+    my $tree = new Bio::EnsEMBL::Compara::GeneTree(-adaptor => $self, %$rowhash);
     push @tree_list, $tree;
   }
 
