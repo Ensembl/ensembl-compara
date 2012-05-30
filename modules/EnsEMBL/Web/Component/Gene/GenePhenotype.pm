@@ -22,7 +22,7 @@ sub content {
   my ($display_name, $dbname, $ext_id, $dbname_disp, $info_text) = $object->display_xref;
   
   # Gene phenotypes  
-  my $html = $phenotype ? '' : $self->gene_phenotypes('RenderAsTables', [ 'MIM disease' ]);
+  my $html = $phenotype ? '' : $self->gene_phenotypes('RenderAsTables', [ 'MIM disease', 'Orphanet' ]);
   
   # Check if a variation database exists for the species.
   if ($hub->database('variation')) {
@@ -90,9 +90,9 @@ sub stats_table {
   my $columns = [
     { key => 'count',   title => 'Number of variants', sort => 'numeric_hidden', width => '10%', align => 'right'  },   
     { key => 'view',    title => '',                   sort => 'none',           width => '5%',  align => 'center' },
-    { key => 'phen',    title => 'Phenotype',          sort => 'string',         width => '45%'                    },
-    { key => 'source',  title => 'Source(s)',          sort => 'string',         width => '30%'                    },
-    { key => 'lview',   title => 'Link',               sort => 'none',           width => '10%'                    },
+    { key => 'phen',    title => 'Phenotype',          sort => 'string',         width => '48%'                    },
+    { key => 'source',  title => 'Source(s)',          sort => 'string',         width => '26%'                    },
+    { key => 'lview',   title => 'Link',               sort => 'none',           width => '11%'                    },
   ];
   
   foreach my $va (@{$va_adaptor->fetch_all_by_associated_gene($gene_name)}) {
@@ -333,9 +333,9 @@ sub source_link {
   elsif ($url =~ /(.+)\?/) { # Only general source link
     $url = $1;
   }
-	else {
-		$url =~ s/###ID###//;
-	}
+  else {
+    $url =~ s/###ID###//;
+  }
   return $url ? qq{<a rel="external" href="$url">[$source]</a>} : $source;
 }
 
@@ -378,32 +378,32 @@ sub gene_phenotypes {
   my @keys             = ('MISC');
   my @similarity_links = @{$object->get_similarity_hash($obj)};
   my $html             = qq{<br /><a id="gene_phenotype"></a><h2>List of phenotype(s) associated with the gene $g_name</h2>};
-  my (@rows, $text, $current_key, $list_html);
+  my (@rows, %list, $list_html);
   
   $self->_sort_similarity_links($output_as_table, @similarity_links);
   
   # to preserve the order, we use @links for access to keys
   foreach my $link (map @{$object->__data->{'links'}{$_} || []}, @keys) {
     my $key = $link->[0];
-    
     next unless grep $key eq $_, @$types_list;
     
-    push @rows, { dbtype => $key, dbid => $text } if $key ne $current_key && defined $current_key;
-    
-    $current_key = $key;
-    
-    $list_html .= qq{<tr><th style="white-space:nowrap;padding-right:1em"><strong>$key:</strong></th><td>};
-    $text      .= "$link->[1]<br />";
+    $list{$key} .= "$link->[1]<br />";
   }  
   
-  push @rows, { dbtype => $current_key, phenotype => $text } if defined $current_key;
+  while (my($dbtype,$phen) = each(%list)) {
+    push @rows, { dbtype => $dbtype, phenotype => $phen };
+  }
   
   if ($output_as_table) {
     return $html . $self->new_table([ 
-        { key => 'dbtype',      align => 'left', title => 'Database type' },
-        { key => 'phenotype',   align => 'left', title => 'Phenotype'     }
+        { key => 'dbtype',    align => 'left', title => 'Database type' },
+        { key => 'phenotype', align => 'left', title => 'Phenotype'     }
       ], \@rows, { data_table => 'no_sort no_col_toggle', exportable => 1 })->render;
   } else {
+    while (my($dbtype,$phen) = each(%list)) {
+      $list_html .= qq{<tr><td style="white-space:nowrap;padding-right:1em"><strong>$dbtype</strong></td>
+                       <td>$phen</td></tr>}
+    }
     return "<table>$list_html</table>";
   }
 }
