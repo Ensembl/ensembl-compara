@@ -312,6 +312,7 @@ sub add_AlignedMember {
     my $source_name = $member->source_name();
     my $taxon_id = $member->taxon_id();
     my $genome_db_id = $member->genome_db_id();
+    #print "adding $source_name: ", $member->dbID, "\n";
 
     if (defined $self->{'_this_one_first'} && $self->{'_this_one_first'} eq $member->stable_id) {
         unshift @{$self->{'_member_array'}}, $member ;
@@ -665,7 +666,7 @@ sub get_SimpleAlign {
             $sa->add_seq($seq);
         }
     }
-    $sa = $sa->remove_gaps if UNIVERSAL::can($sa, 'remove_gaps');
+    $sa = $sa->remove_gaps(undef, 1) if UNIVERSAL::can($sa, 'remove_gaps');
     return $sa;
 }
 
