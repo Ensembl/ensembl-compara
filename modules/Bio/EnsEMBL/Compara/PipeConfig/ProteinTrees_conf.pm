@@ -150,6 +150,7 @@ sub default_options {
         'store_sequences_capacity'  => 200,
         'blastp_capacity'           => 450,
         'mcoffee_capacity'          => 600,
+        'split_genes_capacity'      => 600,
         'njtree_phyml_capacity'     => 400,
         'ortho_tree_capacity'       => 100,
         'quick_tree_break_capacity' => 100,
@@ -807,7 +808,7 @@ sub pipeline_analyses {
             -flow_into => {
                 '2->A' => [ 'mcoffee_cmcoffee' ],
                 '3->A' => [ 'mafft' ],
-                'A->1' => [ 'NJTREE_PHYML' ],
+                'A->1' => [ 'split_genes' ],
                 '4->B' => [ 'mafft' ],
                 'B->5' => [ 'quick_tree_break' ],
             },
@@ -904,6 +905,15 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -priority => 35,
             -rc_id => 5,
+        },
+
+        {   -logic_name     => 'split_genes',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
+            -hive_capacity  => $self->o('split_genes_capacity'),
+            -rc_id          => 1,
+            -batch_size     => 20,
+            -priority       => 20,
+            -flow_into      => [ 'njtree_phyml' ],
         },
 
         {   -logic_name => 'njtree_phyml',
