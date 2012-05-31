@@ -1,4 +1,4 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 use strict;
 
@@ -279,6 +279,11 @@ my $max_gap_length = 100;
 my $max_intron_length = 100000;
 my $strict_order_of_exon_pieces = 1;
 my $strict_order_of_exons = 0;
+
+#get_all_Genes parameters
+my $logic_name; #The name of the analysis used to generate the genes to retrieve
+my $dbtype;     #The dbtype of genes to obtain
+
 my $help;
 
 GetOptions(
@@ -343,7 +348,6 @@ Bio::EnsEMBL::Registry->load_all($reg_conf);
 ##
 
 my $genome_dbs;
-
 # Get the adaptor
 my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomeDB');
 
@@ -353,13 +357,8 @@ throw("Registry configuration file has no data for connecting to <$dbname>")
 
 # Fill in the @$genome_dbs array.
 foreach my $this_species (split(":", $set_of_species)) {
-  my $this_meta_container_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
-      $this_species, 'core', 'MetaContainer');
-  throw("Registry configuration file has no data for connecting to <$this_species>")
-      if (!$this_meta_container_adaptor);
-  my $this_binomial_id = $this_meta_container_adaptor->get_Species->binomial;
-  # Fetch Bio::EnsEMBL::Compara::GenomeDB object
-  my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($this_binomial_id);
+  my $genome_db = $genome_db_adaptor->fetch_by_registry_name($this_species);
+
   # Add Bio::EnsEMBL::Compara::GenomeDB object to the list
   push(@$genome_dbs, $genome_db);
 }
@@ -417,19 +416,8 @@ throw("No Slice can be created with coordinates $seq_region:$seq_region_start-$s
 ## Fetching Genome DB adaptor for the source species
 ##
 
-# Get the MetaContainer adaptor
-my $meta_container_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
-    $source_species, 'core', 'MetaContainer');
-
-# Check the adaptor
-throw("Registry configuration file has no data for connecting to <$source_species>")
-    if (!$meta_container_adaptor);
-
-# Get the binomial name for this species from the MetaContainer adaptor
-my $source_binomial_id = $meta_container_adaptor->get_Species->binomial;
-
 # Fetch the Bio::EnsEMBL::Compara::GenomeDB object
-my $source_genome_db = $genome_db_adaptor->fetch_by_name_assembly($source_binomial_id);
+my $source_genome_db = $genome_db_adaptor->fetch_by_registry_name($source_species);
 
 ##
 ##############################################################################################
@@ -452,7 +440,7 @@ my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
     );
 
 # Get all the genes from the source species and map them on the query genome
-my $mapped_genes = $align_slice->{slices}->{$source_genome_db->name}->get_all_Genes(
+my $mapped_genes = $align_slice->{slices}->{$source_genome_db->name}->[0]->get_all_Genes($logic_name, $dbtype, undef,
         -MAX_REPETITION_LENGTH => 100,
         -MAX_GAP_LENGTH => 100,
         -MAX_INTRON_LENGTH => 100000,
@@ -468,13 +456,7 @@ my $mapped_genes = $align_slice->{slices}->{$source_genome_db->name}->get_all_Ge
 ##
 ## Print the aligned genes on the genomic sequence they are aligned to
 ##
-
-$meta_container_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
-    $species, 'core', 'MetaContainer');
-throw("Registry configuration file has no data for connecting to <$species>")
-    if (!$meta_container_adaptor);
-my $query_binomial_id = $meta_container_adaptor->get_Species->binomial;
-my $query_genome_db = $genome_db_adaptor->fetch_by_name_assembly($query_binomial_id);
+my $query_genome_db = $genome_db_adaptor->fetch_by_registry_name($species);
 
 foreach my $gene (sort {$a->stable_id cmp $b->stable_id} @$mapped_genes) {
   print "GENE: ", $gene->stable_id,
@@ -506,7 +488,8 @@ foreach my $gene (sort {$a->stable_id cmp $b->stable_id} @$mapped_genes) {
       } else {
         $seq = ("." x 50).$exon->seq->revcom->seq.("." x 50);
       }
-      my $aseq = $align_slice->{slices}->{$query_genome_db->name}->subseq($exon->start-50, $exon->end+50);
+
+      my $aseq = $align_slice->{slices}->{$query_genome_db->name}->[0]->subseq($exon->start-50, $exon->end+50);
       $seq =~ s/(.{80})/$1\n/g;
       $aseq =~ s/(.{80})/$1\n/g;
       $seq =~ s/(.{20})/$1 /g;
