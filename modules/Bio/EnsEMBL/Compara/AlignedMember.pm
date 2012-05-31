@@ -49,7 +49,6 @@ use Bio::EnsEMBL::Compara::Member;
 
 use base ('Bio::EnsEMBL::Compara::Member');
 
-#TODO: add set() method
 
 ##################################
 # overriden superclass methods
@@ -277,6 +276,12 @@ sub method_link_species_set_id {
   $self->{'method_link_species_set_id'} = shift if(@_);
   $self->{'method_link_species_set_id'} = 0 unless(defined($self->{'method_link_species_set_id'}));
   return $self->{'method_link_species_set_id'};
+}
+
+
+sub set {
+    my $self = shift;
+    return $self->{'set'};
 }
 
 

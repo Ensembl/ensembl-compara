@@ -47,6 +47,7 @@ sequence, which is represented as an AlignedMember object.
 package Bio::EnsEMBL::Compara::AlignedMemberSet;
 
 use strict;
+use Scalar::Util qw(weaken);
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Attribute;
@@ -348,6 +349,9 @@ sub add_AlignedMember {
             push @{$self->{_members_by_genome_db}{$genome_db_id}}, $member;
         }
     }
+
+    $member->{'set'} = $self;
+    weaken($member->{'set'});
 }
 
 sub add_Member_Attribute {  # DEPRECATED
@@ -1210,7 +1214,6 @@ sub get_4D_SimpleAlign {
     my %member_seqstr;
     foreach my $member (@{$self->get_all_AlignedMember}) {
         next if $member->source_name ne 'ENSEMBLPEP';
-        $member->print_member;
         my $seqstr = $member->cdna_alignment_string();
         next if(!$seqstr);
         #print STDERR $seqstr,"\n";
