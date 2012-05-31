@@ -417,8 +417,25 @@ sub write_wigFix {
 
 	#Get scores
 	my $scores = $cs_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $chunk_slice, $display_size, "AVERAGE");
+	my $found_min_score = 0;
 	for(my$i=0;$i<@$scores;$i++) {
-	    if (defined $scores->[$i]->diff_score and $scores->[$i]->expected_score >= $min_expected_score) {
+#	    if (defined $scores->[$i]->diff_score and $scores->[$i]->expected_score >= $min_expected_score) {
+	    if (defined $scores->[$i]->diff_score) {
+
+		#Do not print scores when the expected_score is below min_expected_score. Must print
+		#a new header when find a score above the $min_expected_score since all scores below a 
+		#header must be consecutive.
+		if ($found_min_score && $scores->[$i]->expected_score >= $min_expected_score) {
+		    print_wigFix_header($fh, $seq_region_name, 
+					$chunk_region->[0] + $scores->[$i]->position, 
+					$scores->[$i]->window_size);
+		    $found_min_score = 0;
+		} elsif ($scores->[$i]->expected_score < $min_expected_score) {
+		    $found_min_score = 1;
+		    #Skip printing the score
+		    next;
+		}
+
 		#the following if-elsif-else should prevent the printing of scores from overlapping genomic_align_blocks
 		if ($chunk_region->[0] + $scores->[$i]->position > $previous_position && $i > 0) { 
 		    $previous_position = $chunk_region->[0] + $scores->[$i]->position;
@@ -456,6 +473,7 @@ sub write_wigFix {
 		    }
 		}
 		printf $fh ("%.4f\n", $scores->[$i]->diff_score);
+#		printf $fh ("%.4f %.4f\n", $scores->[$i]->expected_score, $scores->[$i]->diff_score);
 		#printf $fh "%d %.4f\n", ($scores->[$i]->position+$chunk_region->[0]), $scores->[$i]->diff_score;
 	    }
 	}
