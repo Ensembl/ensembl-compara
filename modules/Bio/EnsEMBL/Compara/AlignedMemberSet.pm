@@ -49,6 +49,16 @@ package Bio::EnsEMBL::Compara::AlignedMemberSet;
 use strict;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Compara::Attribute;
+use Bio::EnsEMBL::Compara::Member;
+use Bio::EnsEMBL::Compara::AlignedMember;
+
+####################################
+#                                  #
+#  Constructor, getters / setters  #
+#                                  #
+####################################
+
 
 =head2 new
 
@@ -74,24 +84,24 @@ use Bio::EnsEMBL::Utils::Exception;
 =cut
 
 sub new {
-  my ($class, @args) = @_;
+    my ($class, @args) = @_;
 
-  my $self = bless {}, $class;
+    my $self = bless {}, $class;
 
-  if (scalar @args) {
-    #do this explicitly.
-    my ($dbid, $stable_id, $version, $method_link_species_set_id, $description, $adaptor)
-        = rearrange([qw(DBID STABLE_ID VERSION METHOD_LINK_SPECIES_SET_ID DESCRIPTION ADAPTOR)], @args);
-    
-    $dbid && $self->dbID($dbid);
-    $stable_id && $self->stable_id($stable_id);
-    $version && $self->version($version);
-    $description && $self->description($description);
-    $method_link_species_set_id && $self->method_link_species_set_id($method_link_species_set_id);
-    $adaptor && $self->adaptor($adaptor);
-  }
-  
-  return $self;
+    if (scalar @args) {
+        #do this explicitly.
+        my ($dbid, $stable_id, $version, $method_link_species_set_id, $description, $adaptor)
+            = rearrange([qw(DBID STABLE_ID VERSION METHOD_LINK_SPECIES_SET_ID DESCRIPTION ADAPTOR)], @args);
+
+        $dbid && $self->dbID($dbid);
+        $stable_id && $self->stable_id($stable_id);
+        $version && $self->version($version);
+        $description && $self->description($description);
+        $method_link_species_set_id && $self->method_link_species_set_id($method_link_species_set_id);
+        $adaptor && $self->adaptor($adaptor);
+    }
+
+    return $self;
 }
 
 =head2 new_fast
@@ -108,9 +118,9 @@ sub new {
 =cut
 
 sub new_fast {
-  my ($class, $hashref) = @_;
+    my ($class, $hashref) = @_;
 
-  return bless $hashref, $class;
+    return bless $hashref, $class;
 }
 
 =head2 dbID
@@ -126,9 +136,9 @@ sub new_fast {
 =cut
 
 sub dbID {
-  my $self = shift;
-  $self->{'_dbID'} = shift if(@_);
-  return $self->{'_dbID'};
+    my $self = shift;
+    $self->{'_dbID'} = shift if(@_);
+    return $self->{'_dbID'};
 }
 
 =head2 stable_id
@@ -144,9 +154,9 @@ sub dbID {
 =cut
 
 sub stable_id {
-  my $self = shift;
-  $self->{'_stable_id'} = shift if(@_);
-  return $self->{'_stable_id'};
+    my $self = shift;
+    $self->{'_stable_id'} = shift if(@_);
+    return $self->{'_stable_id'};
 }
 
 =head2 version
@@ -162,9 +172,9 @@ sub stable_id {
 =cut
 
 sub version {
-  my $self = shift;
-  $self->{'_version'} = shift if(@_);
-  return $self->{'_version'};
+    my $self = shift;
+    $self->{'_version'} = shift if(@_);
+    return $self->{'_version'};
 }
 
 =head2 description
@@ -180,9 +190,9 @@ sub version {
 =cut
 
 sub description {
-  my $self = shift;
-  $self->{'_description'} = shift if(@_);
-  return $self->{'_description'};
+    my $self = shift;
+    $self->{'_description'} = shift if(@_);
+    return $self->{'_description'};
 }
 
 =head2 method_link_species_set
@@ -200,25 +210,25 @@ sub description {
 =cut
 
 sub method_link_species_set {
-  my $self = shift;
+    my $self = shift;
 
-  if(@_) {
-    my $mlss = shift;
-    unless ($mlss->isa('Bio::EnsEMBL::Compara::MethodLinkSpeciesSet')) {
-      throw("Need to add a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet, not a $mlss\n");
+    if(@_) {
+        my $mlss = shift;
+        unless ($mlss->isa('Bio::EnsEMBL::Compara::MethodLinkSpeciesSet')) {
+            throw("Need to add a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet, not a $mlss\n");
+        }
+        $self->{'_method_link_species_set'} = $mlss;
+        $self->{'_method_link_species_set_id'} = $mlss->dbID;
     }
-    $self->{'_method_link_species_set'} = $mlss;
-    $self->{'_method_link_species_set_id'} = $mlss->dbID;
-  }
 
-  #lazy load from method_link_species_set_id
-  if ( ! defined $self->{'_method_link_species_set'} && defined $self->method_link_species_set_id) {
-    my $mlssa = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor;
-    my $mlss = $mlssa->fetch_by_dbID($self->method_link_species_set_id);
-    $self->{'_method_link_species_set'} = $mlss;
-  }
+    #lazy load from method_link_species_set_id
+    if ( ! defined $self->{'_method_link_species_set'} && defined $self->method_link_species_set_id) {
+        my $mlssa = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor;
+        my $mlss = $mlssa->fetch_by_dbID($self->method_link_species_set_id);
+        $self->{'_method_link_species_set'} = $mlss;
+    }
 
-  return $self->{'_method_link_species_set'};
+    return $self->{'_method_link_species_set'};
 }
 
 =head2 method_link_species_set_id
@@ -235,10 +245,10 @@ sub method_link_species_set {
 =cut
 
 sub method_link_species_set_id {
-  my $self = shift;
+    my $self = shift;
 
-  $self->{'_method_link_species_set_id'} = shift if (@_);
-  return $self->{'_method_link_species_set_id'};
+    $self->{'_method_link_species_set_id'} = shift if (@_);
+    return $self->{'_method_link_species_set_id'};
 }
 
 =head2 method_link_type
@@ -247,9 +257,9 @@ sub method_link_species_set_id {
 
 =cut
 
-sub method_link_type {
+sub method_link_type {  # DEPRECATED
     my $self = shift;
-
+    deprecate('Use method_link_species_set()->method()->type() instead. This is not a setter any more.');
     return $self->method_link_species_set->method->type() if defined $self->{'_method_link_species_set_id'};
 }
 
@@ -260,9 +270,9 @@ sub method_link_type {
 
 =cut
 
-sub method_link_id {
+sub method_link_id {  # DEPRECATED
     my $self = shift;
-
+    deprecate('Use method_link_species_set()->method()->dbID() instead. This is not a setter any more.');
     return $self->method_link_species_set->method->dbID if defined $self->{'_method_link_species_set_id'};
 }
 
@@ -282,11 +292,18 @@ sub method_link_id {
 =cut
 
 sub adaptor {
-  my $self = shift;
-  $self->{'_adaptor'} = shift if(@_);
-  return $self->{'_adaptor'};
+    my $self = shift;
+    $self->{'_adaptor'} = shift if(@_);
+    return $self->{'_adaptor'};
 }
 
+
+
+###########################
+#                         #
+#  AlignedMember content  #
+#                         #
+###########################
 
 =head2 add_AlignedMember
 
@@ -331,6 +348,27 @@ sub add_AlignedMember {
             push @{$self->{_members_by_genome_db}{$genome_db_id}}, $member;
         }
     }
+}
+
+sub add_Member_Attribute {  # DEPRECATED
+    my ($self, $member_attribute) = @_;
+
+    my $am = Bio::EnsEMBL::Compara::AlignedMember::_new_from_Member_Attribute(@{$member_attribute});
+    $self->add_AlignedMember($am);
+}
+
+sub _tranform_array_to_Member_Attributes {
+    my ($self, $array) = @_;
+    my @all_ma;
+    foreach my $am (@$array) {
+        my $member = Bio::EnsEMBL::Compara::Member::copy($am);
+        my $attribute = new Bio::EnsEMBL::Compara::Attribute;
+        foreach my $key (qw(cigar_line perc_cov perc_id perc_pos)) {
+            $attribute->$key($am->$key);
+        }
+        push @all_ma, [$member, $attribute];
+    }
+    return \@all_ma;
 }
 
 
@@ -379,17 +417,48 @@ sub get_all_AlignedMember {
 =cut
 
 sub get_all_GeneMembers {
-  my ($self) = @_;
+    my ($self) = @_;
 
-  my $members = [];
-  foreach my $aligned_member (@{$self->get_all_AlignedMember}) {
-    push @$members, $aligned_member->gene_member if defined $aligned_member->gene_member;
-  }
+    my $members = [];
+    foreach my $aligned_member (@{$self->get_all_AlignedMember}) {
+        push @$members, $aligned_member->gene_member if defined $aligned_member->gene_member;
+    }
 
-  return $members;
+    return $members;
+}
+=head2 gene_list
+
+  Example    : my $pair = $homology->gene_list
+  Description: return the pair of members for the homology
+  Returntype : array ref of (2) Bio::EnsEMBL::Compara::Member objects
+  Caller     : general
+
+=cut
+
+
+sub gene_list {  # DEPRECATED
+    my $self = shift;
+    return $self->get_all_GeneMembers
 }
 
 
+
+sub get_all_Members {  # DEPRECATED
+    my $self = shift;
+    return $self->get_all_AlignedMember;
+}
+
+sub get_all_Member_Attribute {  # DEPRECATED
+    my $self = shift;
+    return $self->_tranform_array_to_Member_Attributes($self->get_all_AlignedMember);
+}
+
+
+#################################
+#                               #
+#  AlignedMembers per category  #
+#                               #
+#################################
 
 =head2 get_AlignedMember_by_source
 
@@ -494,6 +563,114 @@ sub _get_AlignedMember {
     return $self->{$scope}->{$key};
 }
 
+
+=head2 get_Member_Attribute_by_source
+
+  Arg [1]    : string $source_name
+               e.g. "ENSEMBLPEP"
+  Example    : 
+  Description: 
+  Returntype : array reference of Bio::EnsEMBL::Compara::Member and attribute
+  Exceptions : 
+  Caller     : public
+
+=cut
+
+sub get_Member_Attribute_by_source {  # DEPRECATED
+    my ($self, $source_name) = @_;
+    throw("Should give defined source_name as arguments\n") unless (defined $source_name);
+    my ($attribute_scope, $key) = ('_members_by_source', $source_name);
+    return $self->_get_Member_Attribute($attribute_scope, $key);
+}
+
+=head2 get_Member_Attribute_by_source_taxon
+
+  Arg [1]    : string $source_name
+  Arg [2]    : int $taxon_id
+  Example    : $domain->get_Member_by_source_taxon('ENSEMBLPEP',9606)
+  Description: 
+  Returntype : array reference of Bio::EnsEMBL::Compara::Member
+  Exceptions : 
+  Caller     : public
+
+=cut
+
+sub get_Member_Attribute_by_source_taxon {  # DEPRECATED
+    my ($self, $source_name, $taxon_id) = @_;
+    throw("Should give defined source_name and taxon_id as arguments\n") unless (defined $source_name && defined $taxon_id);
+    my ($attribute_scope, $key) = ('_members_by_source_taxon', "${source_name}_${taxon_id}");
+    return $self->_get_Member_Attribute($attribute_scope, $key);
+}
+
+=head2 get_Member_Attribute_by_GenomeDB
+
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Example    : $domain->get_Member_Attribute_by_GenomeDB($genome_db)
+  Description: Returns all [Member_Attribute] entries linked to this GenomeDB. 
+               This will only return EnsEMBL based entries since UniProtKB 
+               entries are not linked to a GenomeDB.
+  Returntype : array reference of Bio::EnsEMBL::Compara::Member
+  Exceptions : If input is undefined & genome db is not of expected type
+  Caller     : public
+
+=cut
+
+sub get_Member_Attribute_by_GenomeDB {  # DEPRECATED
+    my ($self, $genome_db) = @_;
+    throw("Should give defined genome_db as an argument\n") unless defined $genome_db;
+    throw("Param was not a GenomeDB. Was [${genome_db}]") unless $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB');
+    my ($attribute_scope, $key) = ('_members_by_genome_db', $genome_db->dbID());
+    return $self->_get_Member_Attribute($attribute_scope, $key);
+}
+
+=head2 get_Member_Attribute_by_source_GenomeDB
+
+  Arg [1]    : string $source_name
+  Arg [2]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Example    : $domain->get_Member_by_source_taxon('ENSEMBLPEP', $genome_db)
+  Description: Returns all [Member_Attribute] entries linked to this GenomeDB
+               and the given source_name. This will only return EnsEMBL based 
+               entries since UniProtKB entries are not linked to a GenomeDB.
+  Returntype : array reference of Bio::EnsEMBL::Compara::Member
+  Exceptions : If input is undefined & genome db is not of expected type
+  Caller     : public
+
+=cut
+
+sub get_Member_Attribute_by_source_GenomeDB {  # DEPRECATED
+    my ($self, $source_name, $genome_db) = @_;
+    throw("Should give defined source_name & genome_db as arguments\n") unless defined $source_name && $genome_db;
+    throw("Param was not a GenomeDB. Was [${genome_db}]") unless $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB');
+    my ($attribute_scope, $key) = ('_members_by_source_genome_db', "${source_name}_".$genome_db->dbID());
+    return $self->_get_Member_Attribute($attribute_scope, $key);
+}
+
+=head2 _get_Member_Attribute
+
+  Arg [1]    : string $attribute_scope
+  Arg [2]    : string $key
+  Example    : $domain->_get_Member_Attribute('_members_by_source', 'ENSEMBLPEP')
+  Description: Used as the generic reference point for all 
+               get_Memeber_Attribute_by* methods. The method searches the given
+               scope & if the values cannot be found will initalize that value
+               to an empty array reference.
+  Returntype : array reference of Bio::EnsEMBL::Compara::Member
+  Exceptions : None.
+  Caller     : internal
+
+=cut
+
+sub _get_Member_Attribute {  # DEPRECATED
+    my ($self, $attribute_scope, $key) = @_;
+    $self->get_all_Member_Attribute();
+    $self->{$attribute_scope}->{$key} = [] unless defined $self->{$attribute_scope}->{$key};
+    return $self->_tranform_array_to_Member_Attributes($self->{$attribute_scope}->{$key});
+}
+
+
+
+
+
 =head2 Member_count_by_source
 
   Arg [1]    : string $source_name
@@ -507,11 +684,11 @@ sub _get_AlignedMember {
 =cut
 
 sub Member_count_by_source {
-  my ($self, $source_name) = @_; 
-  
-  throw("Should give a defined source_name as argument\n") unless (defined $source_name);
-  
-  return scalar @{$self->get_AlignedMember_by_source($source_name)};
+    my ($self, $source_name) = @_; 
+
+    throw("Should give a defined source_name as argument\n") unless (defined $source_name);
+
+    return scalar @{$self->get_AlignedMember_by_source($source_name)};
 }
 
 =head2 Member_count_by_source_taxon
@@ -569,6 +746,190 @@ sub Member_count_by_source_GenomeDB {
     my ($self, $source_name, $genome_db) = @_;
     return scalar @{$self->get_AlignedMember_by_source_GenomeDB($source_name, $genome_db)};
 }
+
+
+=head2 get_all_taxa_by_member_source_name
+
+  Arg [1]    : string $source_name
+               e.g. "ENSEMBLPEP"
+  Example    : 
+  Description: Returns the distinct taxons found in this family across
+               the specified source. If you do not specify a source then
+               the code will return all taxons in this family.
+  Returntype : array reference of distinct Bio::EnsEMBL::Compara::NCBITaxon 
+               objects found in this family
+  Exceptions : 
+  Caller     : public
+
+=cut
+
+sub get_all_taxa_by_member_source_name {
+    my ($self, $source_name) = @_;
+
+    my $ncbi_ta = $self->adaptor->db->get_NCBITaxonAdaptor();
+    my @taxa;
+    $self->get_all_AlignedMember;
+    foreach my $key (keys %{$self->{_members_by_source_taxon}}) {
+        my @parts = split('_', $key);
+        if ($parts[0] eq $source_name) {
+            push @taxa, $ncbi_ta->fetch_node_by_taxon_id($parts[1]);
+        }
+    }
+    return \@taxa;
+}
+
+=head2 get_all_GenomeDBs_by_member_source_name
+
+  Arg [1]    : string $source_name
+               e.g. "ENSEMBLPEP"
+  Example    : 
+  Description: Returns the distinct GenomeDBs found in this family. Please note
+               that if you specify a source other than an EnsEMBL based one
+               the chances of getting back GenomeDBs are very low.
+  Returntype : array reference of distinct Bio::EnsEMBL::Compara::GenomeDB 
+               objects found in this family
+  Exceptions : 
+  Caller     : public
+
+=cut
+
+sub get_all_GenomeDBs_by_member_source_name {
+    my ($self, $source_name) = @_;
+
+    my $gdb_a = $self->adaptor->db->get_GenomeDBAdaptor();
+    my @gdbs;
+    $self->get_all_AlignedMember;
+    foreach my $key (keys $self->{_members_by_source_genome_db}) {
+        my @parts = split('_', $key);
+        if ($parts[0] eq $source_name) {
+            push @gdbs, $gdb_a->fetch_by_dbID($parts[1]);
+        }
+    }
+    return \@gdbs;
+}
+
+=head2 has_species_by_name
+
+  Arg [1]    : string $species_name
+  Example    : my $ret = $homology->has_species_by_name("Homo sapiens");
+  Description: return TRUE or FALSE whether one of the members in the homology is from the given species
+  Returntype : 1 or 0
+  Exceptions :
+  Caller     :
+
+=cut
+
+
+sub has_species_by_name {
+  my $self = shift;
+  my $species_name = shift;
+  
+  foreach my $member (@{$self->get_all_AlignedMember}) {
+    return 1 if($member->genome_db->name eq $species_name);
+  }
+  return 0;
+}
+
+
+
+######################
+# Alignment sections #
+######################
+
+
+=head2 read_clustalw
+
+  Arg [1]    : string $file 
+               The name of the file containing the clustalw output  
+  Example    : $family->read_clustalw('/tmp/clustalw.aln');
+  Description: Parses the output from clustalw and sets the alignment strings
+               of each of the memebers of this family
+  Returntype : none
+  Exceptions : thrown if file cannot be parsed
+               warning if alignment file contains identifiers for sequences
+               which are not members of this family
+  Caller     : general
+
+=cut
+
+sub read_clustalw {
+    my $self = shift;
+    my $file = shift;
+
+    my %align_hash;
+    my $FH = IO::File->new();
+    $FH->open($file) || throw("Could not open alignment file [$file]");
+
+    <$FH>; #skip header
+    while(<$FH>) {
+        next if($_ =~ /^\s+/);  #skip lines that start with space
+
+        my ($id, $align) = split;
+        $align_hash{$id} ||= '';
+        $align_hash{$id} .= $align;
+    }
+
+    $FH->close;
+
+    #place all members in a hash on their member name
+    my %member_hash;
+    foreach my $member (@{$self->get_all_AlignedMember}) {
+        $member_hash{$member->stable_id} = $member;
+    }
+
+    #assign cigar_line to each of the member attribute
+    foreach my $id (keys %align_hash) {
+        throw("No member for alignment portion: [$id]") unless exists $member_hash{$id};
+
+        my $alignment_string = $align_hash{$id};
+        $alignment_string =~ s/\-([A-Z])/\- $1/g;
+        $alignment_string =~ s/([A-Z])\-/$1 \-/g;
+
+        my @cigar_segments = split " ",$alignment_string;
+
+        my $cigar_line = "";
+        foreach my $segment (@cigar_segments) {
+            my $seglength = length($segment);
+            $seglength = "" if ($seglength == 1);
+            if ($segment =~ /^\-+$/) {
+                $cigar_line .= $seglength . "D";
+            } else {
+                $cigar_line .= $seglength . "M";
+            }
+        }
+
+        $member_hash{$id}->cigar_line($cigar_line);
+    }
+}
+
+sub load_cigars_from_fasta {
+    my ($self, $file) = @_;
+
+    my $alignio = Bio::AlignIO->new(-file => "$file", -format => "fasta");
+
+    my $aln = $alignio->next_aln or die "Bio::AlignIO could not get next_aln() from file '$file'";
+
+    #place all members in a hash on their member name
+    my %member_hash;
+    foreach my $member (@{$self->get_all_AlignedMember}) {
+        $member_hash{$member->stable_id} = $member;
+    }
+
+    #assign cigar_line to each of the member attribute
+    foreach my $seq ($aln->each_seq) {
+        my $id = $seq->display_id;
+        throw("No member for alignment portion: [$id]") unless exists $member_hash{$id};
+
+        my $cigar_line = '';
+        my $seq_string = $seq->seq();
+        while($seq_string=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
+            $cigar_line .= ($2 ? length($2)+1 : '').(($1 eq '-') ? 'D' : 'M');
+        }
+
+        $member_hash{$id}->cigar_line($cigar_line);
+    }
+}
+
 
 
 sub get_SimpleAlign {
@@ -726,6 +1087,208 @@ sub consensus_cigar_line {
    $cons_cigar = $collapsed_cigar;
    # Return the consensus
    return $cons_cigar;
+}
+
+
+my %TWOD_CODONS = ("TTT" => "Phe",#Phe
+                   "TTC" => "Phe",
+                   
+                   "TTA" => "Leu",#Leu
+                   "TTG" => "Leu",
+                   
+                   "TAT" => "Tyr",#Tyr
+                   "TAC" => "Tyr",
+                   
+                   "CAT" => "His",#His
+                   "CAC" => "His",
+
+                   "CAA" => "Gln",#Gln
+                   "CAG" => "Gln",
+                   
+                   "AAT" => "Asn",#Asn
+                   "AAC" => "Asn",
+                   
+                   "AAA" => "Lys",#Lys
+                   "AAG" => "Lys",
+                   
+                   "GAT" => "Asp",#Asp
+                   "GAC" => "Asp",
+
+                   "GAA" => "Glu",#Glu
+                   "GAG" => "Glu",
+                   
+                   "TGT" => "Cys",#Cys
+                   "TGC" => "Cys",
+                   
+                   "AGT" => "Ser",#Ser
+                   "AGC" => "Ser",
+                   
+                   "AGA" => "Arg",#Arg
+                   "AGG" => "Arg",
+                   
+                   "ATT" => "Ile",#Ile
+                   "ATC" => "Ile",
+                   "ATA" => "Ile");
+
+my %FOURD_CODONS = ("CTT" => "Leu",#Leu
+                    "CTC" => "Leu",
+                    "CTA" => "Leu",
+                    "CTG" => "Leu",
+                    
+                    "GTT" => "Val",#Val 
+                    "GTC" => "Val",
+                    "GTA" => "Val",
+                    "GTG" => "Val",
+                    
+                    "TCT" => "Ser",#Ser
+                    "TCC" => "Ser",
+                    "TCA" => "Ser",
+                    "TCG" => "Ser",
+                    
+                    "CCT" => "Pro",#Pro
+                    "CCC" => "Pro",
+                    "CCA" => "Pro",
+                    "CCG" => "Pro",
+                    
+                    "ACT" => "Thr",#Thr
+                    "ACC" => "Thr",
+                    "ACA" => "Thr",
+                    "ACG" => "Thr",
+                    
+                    "GCT" => "Ala",#Ala
+                    "GCC" => "Ala",
+                    "GCA" => "Ala",
+                    "GCG" => "Ala",
+                    
+                    "CGT" => "Arg",#Arg
+                    "CGC" => "Arg",
+                    "CGA" => "Arg",
+                    "CGG" => "Arg",
+                    
+                    "GGT" => "Gly",#Gly
+                    "GGC" => "Gly",
+                    "GGA" => "Gly",
+                    "GGG" => "Gly");
+                    
+my %CODONS =   ("ATG" => "Met",
+                "TGG" => "Trp",
+                "TAA" => "TER",
+                "TAG" => "TER",
+                "TGA" => "TER",
+                "---" => "---");
+
+foreach my $codon (keys %TWOD_CODONS) {
+    $CODONS{$codon} = $TWOD_CODONS{$codon};
+}
+foreach my $codon (keys %FOURD_CODONS) {
+    $CODONS{$codon} = $FOURD_CODONS{$codon};
+}
+
+
+=head2 get_4D_SimpleAlign
+
+  Example    : $4d_align = $homology->get_4D_SimpleAlign();
+  Description: get 4 times degenerate positions pairwise simple alignment
+  Returntype : Bio::SimpleAlign
+
+=cut
+
+sub get_4D_SimpleAlign {
+    my $self = shift;
+
+    my $sa = Bio::SimpleAlign->new();
+
+    #Hack to try to work with both bioperl 0.7 and 1.2:
+    #Check to see if the method is called 'addSeq' or 'add_seq'
+    my $bio07 = 0;
+    if(!$sa->can('add_seq')) {
+        $bio07 = 1;
+    }
+
+    my $ma = $self->adaptor->db->get_MemberAdaptor;
+
+    my %member_seqstr;
+    foreach my $member (@{$self->get_all_AlignedMember}) {
+        next if $member->source_name ne 'ENSEMBLPEP';
+        $member->print_member;
+        my $seqstr = $member->cdna_alignment_string();
+        next if(!$seqstr);
+        #print STDERR $seqstr,"\n";
+        my @tmp_tab = split /\s+/, $seqstr;
+        #print STDERR "tnp_tab 0: ", $tmp_tab[0],"\n";
+        $member_seqstr{$member->stable_id} = \@tmp_tab;
+    }
+
+    my $seqstr_length;
+    foreach my $seqid (keys %member_seqstr) {
+        unless (defined $seqstr_length) {
+            #print STDERR $member_seqstr{$seqid}->[0],"\n";
+            $seqstr_length = scalar @{$member_seqstr{$seqid}};
+            next;
+        }
+        unless ($seqstr_length == scalar @{$member_seqstr{$seqid}}) {
+            die "Length of dna alignment are not the same, $seqstr_length and " . scalar @{$member_seqstr{$seqid}} ." respectively for homology_id " . $self->dbID . "\n";
+        }
+    }
+
+    my %FourD_member_seqstr;
+    for (my $i=0; $i < $seqstr_length; $i++) {
+        my $FourD_codon = 1;
+        my $FourD_aminoacid;
+        foreach my $seqid (keys %member_seqstr) {
+            if (FourD_codon($member_seqstr{$seqid}->[$i])) {
+                if (defined $FourD_aminoacid && $FourD_aminoacid eq $FOURD_CODONS{$member_seqstr{$seqid}->[$i]}) {
+                    #print STDERR "YES ",$FOURD_CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i],"\n";
+                    next;
+                } elsif (defined $FourD_aminoacid) {
+                    #print STDERR "NO ",$FOURD_CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i],"\n";
+                    $FourD_codon = 0;
+                    last;
+                } else {
+                    $FourD_aminoacid = $FOURD_CODONS{$member_seqstr{$seqid}->[$i]};
+                    #print STDERR $FOURD_CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i]," ";
+                }
+                next;
+            } else {
+                #print STDERR "NO ",$CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i],"\n";
+                $FourD_codon = 0;
+                last;
+            }
+        }
+        next unless ($FourD_codon);
+        foreach my $seqid (keys %member_seqstr) {
+            $FourD_member_seqstr{$seqid} .= substr($member_seqstr{$seqid}->[$i],2,1);
+        }
+    }
+
+    foreach my $seqid (keys %FourD_member_seqstr) {
+
+        my $seq = Bio::LocatableSeq->new(
+                -SEQ    => $FourD_member_seqstr{$seqid},
+                -START  => 1,
+                -END    => length($FourD_member_seqstr{$seqid}),
+                -ID     => $seqid,
+                -STRAND => 0
+        );
+
+        if($bio07) {
+            $sa->addSeq($seq);
+        } else {
+            $sa->add_seq($seq);
+        }
+    }
+
+    return $sa;
+}
+
+sub FourD_codon {
+    my ($codon) = @_;
+    return (defined $FOURD_CODONS{$codon} ? 1 : 0);
+}
+
+sub TwoD_codon {
+    my ($codon) = @_;
+    return (defined $TWOD_CODONS{$codon} ? 1 : 0);
 }
 
 
