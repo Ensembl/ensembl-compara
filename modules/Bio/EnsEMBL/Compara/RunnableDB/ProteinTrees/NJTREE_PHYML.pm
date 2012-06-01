@@ -323,8 +323,10 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   # fragments of a gene split event together in a subtree
   #
   if ($self->param('check_split_genes')) {
-    my $gene_splits = $self->compara_dba->dbc->selectall_arrayref('SELECT DISTINCT gene_split_id FROM split_genes');
-    my $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_member USING (member_id) WHERE gene_split_id = ?');
+    my $sth = $self->compara_dba->dbc->prepare('SELECT DISTINCT gene_split_id FROM split_genes JOIN gene_tree_member USING (member_id) JOIN gene_tree_node USING (node_id) WHERE root_id = ?');
+    $sth->execute($self->param('protein_tree_id'));
+    my $gene_splits = $sth->selectall_arrayref();
+    $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_member USING (member_id) WHERE gene_split_id = ?');
     foreach my $gene_split (@$gene_splits) {
       $sth->execute($gene_split->{gene_split_id});
       my $partial_genes = $sth->fetchall_arrayref;
