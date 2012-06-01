@@ -73,13 +73,19 @@ sub new {
       
       push @glyphsets, $glyphset unless $@;
     } else {
+      my %glyphset_ids;
+      
+      if ($config->get_parameter('text_export')) {
+        $glyphset_ids{$_->id}++ for @{$config->glyphset_configs};
+      }
+      
       ## This is much simplified as we just get a row of configurations
       foreach my $row_config (@{$config->glyphset_configs}) {
         my $display = $row_config->get('display') || ($row_config->get('on') eq 'on' ? 'normal' : 'off');
         next if $display eq 'off';
         
         my $strand = $row_config->get('drawing_strand') || $row_config->get('strand');
-        next if $self->{'strandedness'} && $strand eq 'f';
+        next if ($self->{'strandedness'} || $glyphset_ids{$row_config->id} > 1) && $strand eq 'f';
         
         my $classname = "$self->{'prefix'}::GlyphSet::" . $row_config->get('glyphset');
         next unless $self->dynamic_use($classname);
@@ -285,8 +291,6 @@ sub _init {
     '__extra_block_spacing__'    => 0,
     'timer'         => $Contents->[0][1]->species_defs->timer
   };
-  
-  $self->{'strandedness'} = 1 if $self->{'config'}->get_parameter('text_export') && !defined $strandedness;
   
   bless( $self, $class );
   return $self;
