@@ -108,6 +108,11 @@ sub default_options {
         'pipeline_name'         => 'PT_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp_with_reuse'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
+        'dump_dir'              => $self->o('work_dir') . '/dumps',
+
+    # dump parameters:
+        'dump_table_list'       => '#updated_tables#',  # probably either '#updated_tables#' or '' (to dump everything)
+        'dump_exclude_ehive'    => 1,
 
     # blast parameters:
         'blast_options'             => '-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1',
@@ -233,12 +238,12 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
+        'mkdir -p '.$self->o('cluster_dir'),
+        'mkdir -p '.$self->o('dump_dir'),
         'mkdir -p '.$self->o('fasta_dir'),
 
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
         'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1 || echo "Striping is not available on this system" ',
-
-        'mkdir -p '.$self->o('cluster_dir'),
     ];
 }
 
@@ -264,7 +269,10 @@ sub pipeline_analyses {
 
         {   -logic_name => 'backbone_fire_db_prepare',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-		-input_ids  => [ {} ],
+		-input_ids  => [ {
+                'table_list'    => $self->o('dump_table_list'),
+                'exclude_ehive' => $self->o('dump_exclude_ehive'),
+            } ],
             -flow_into  => {
                 '1->A'  => [ 'copy_table_factory', 'innodbise_table_factory' ],
                 'A->1'  => [ 'backbone_fire_species_list_prepare' ],
@@ -280,31 +288,38 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'backbone_fire_genome_load',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+            -parameters => {
+                'updated_tables'    => 'meta genome_db species_set method_link method_link_species_set method_link_species_set_tag ncbi_taxa_node ncbi_taxa_name',
+                'filename'          => 'snapshot_before_genome_load.sql',
+                'output_file'       => $self->o('dump_dir').'/#filename#',
+            },
             -flow_into  => {
                 '1->A'  => [ 'genome_reuse_factory' ],
-                'A->1'  => [ 'backbone_allvsallblast_factory' ],
+                'A->1'  => [ 'backbone_fire_allvsallblast' ],
             },
         },
 
-        {   -logic_name => 'backbone_allvsallblast_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+        {   -logic_name => 'backbone_fire_allvsallblast',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'mlss_id'               => $self->o('mlss_id'),
-
-                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
-
-                'fan_branch_code'       => 2,
+                'updated_tables'    => 'sequence sequence_cds sequence sequence_exon_bounded member subset subset_member peptide_align_feature%',
+                'filename'          => 'snapshot_before_allvsallblast.sql',
+                'output_file'       => $self->o('dump_dir').'/#filename#',
             },
             -flow_into  => {
-                '2->A'  => [ 'dump_subset_create_blastdb' ],
+                '1->A'  => [ 'allvsallblast_factory' ],
                 'A->1'  => [ 'backbone_fire_hcluster' ],
             },
         },
 
         {   -logic_name => 'backbone_fire_hcluster',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+            -parameters => {
+                'updated_tables'    => 'peptide_align_feature_%',
+                'filename'          => 'snapshot_before_hcluster.sql',
+                'output_file'       => $self->o('dump_dir').'/#filename#',
+            },
             -flow_into  => {
                 '1->A'  => [ 'hcluster_merge_factory' ],
                 'A->1'  => [ 'backbone_fire_tree_building' ],
@@ -312,7 +327,12 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'backbone_fire_tree_building',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+            -parameters => {
+                'updated_tables'    => 'meta gene_tree_root gene_tree_root_tag gene_tree_node gene_tree_member',
+                'filename'          => 'snapshot_before_tree_building.sql',
+                'output_file'       => $self->o('dump_dir').'/#filename#',
+            },
             -flow_into  => {
                 '1->A'  => [ 'tree_factory' ],
                 'A->1'  => [ 'backbone_fire_dnds' ],
@@ -320,7 +340,12 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'backbone_fire_dnds',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+            -parameters => {
+                'updated_tables'    => 'gene_tree_root gene_tree_root_tag gene_tree_node gene_tree_member gene_tree_node_attr gene_tree_node_tag homology homology_member',
+                'filename'          => 'snapshot_before_dnds.sql',
+                'output_file'       => $self->o('dump_dir').'/#filename#',
+            },
             -flow_into  => {
                 '1->A'  => [ 'group_genomes_under_taxa' ],
                 'A->1'  => [ 'backbone_pipeline_finished' ],
@@ -635,6 +660,19 @@ sub pipeline_analyses {
         },
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
+
+        {   -logic_name => 'allvsallblast_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -parameters => {
+                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
+                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
+
+                'fan_branch_code'       => 2,
+            },
+            -flow_into  => {
+                '2'  => [ 'dump_subset_create_blastdb' ],
+            },
+        },
 
         {   -logic_name => 'dump_subset_create_blastdb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::DumpSubsetCreateBlastDB',
