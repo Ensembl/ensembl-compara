@@ -1,10 +1,14 @@
 package Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
 
 use strict;
+
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
+
 use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+
 use DBI qw(:sql_types);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
@@ -440,6 +444,139 @@ sub fetch_all_by_MethodLinkSpeciesSet_orthology_type_subtype {
     my ($self, $method_link_species_set, $orthology_type, $subtype) = @_;
     deprecate('Use fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type, -subtype => $subtype) instead');
     return $self->fetch_all_by_MethodLinkSpeciesSet($method_link_species_set, -orthology_type => $orthology_type, -subtype => $subtype);
+}
+
+
+=head2 fetch_all_in_paralogues_from_Member_NCBITaxon
+
+  Arg [1]    : member (Bio::EnsEMBL::Compara::Member)
+  Arg [2]    : boundary_species (Bio::EnsEMBL::Compara::NCBITaxon)
+  Example    : $homologies = $HomologyAdaptor->fetch_all_in_paralogues_from_Member_NCBITaxon
+                    $human_member, $chicken_genomdb->taxon);
+  Description: fetch all the same species paralogues of this member, that are more recent than
+                the speciation even refered to by the boundary_species argument
+  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
+
+=cut
+
+sub fetch_all_in_paralogues_from_Member_NCBITaxon {
+    my ($self, $member, $boundary_species) = @_;
+
+    assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
+    assert_ref($boundary_species, 'Bio::EnsEMBL::Compara::NCBITaxon');
+
+    my $all_paras = $self->fetch_all_by_Member_MethodLinkSpeciesSet(
+        $member,
+        $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$member->genome_db]),
+    );
+    return $self->_filter_paralogues_by_ancestral_species($all_paras, $member->genome_db, $boundary_species, 1);
+}
+
+
+=head2 fetch_all_out_paralogues_from_Member_NCBITaxon
+
+  Arg [1]    : member (Bio::EnsEMBL::Compara::Member)
+  Arg [2]    : boundary_species (Bio::EnsEMBL::Compara::NCBITaxon)
+  Example    : $homologies = $HomologyAdaptor->fetch_all_in_paralogues_from_Member_NCBITaxon
+                    $human_member, $chicken_genomdb->taxon);
+  Description: fetch all the same species paralog of this member, that are older than
+                the speciation even refered to by the boundary_species argument
+  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
+  Caller     :
+
+=cut
+
+sub fetch_all_out_paralogues_from_Member_NCBITaxon {
+    my ($self, $member, $boundary_species) = @_;
+
+    assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
+    assert_ref($boundary_species, 'Bio::EnsEMBL::Compara::NCBITaxon');
+
+    my $all_paras = $self->fetch_all_by_Member_MethodLinkSpeciesSet(
+        $member,
+        $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$member->genome_db]),
+    );
+    return $self->_filter_paralogues_by_ancestral_species($all_paras, $member->genome_db, $boundary_species, 0);
+}
+
+
+=head2 fetch_all_in_paralogues_from_GenomeDB_NCBITaxon
+
+  Arg [1]    : species (Bio::EnsEMBL::Compara::GenomeDB)
+  Arg [2]    : boundary_species (Bio::EnsEMBL::Compara::NCBITaxon)
+  Example    : $homologies = $HomologyAdaptor->fetch_all_in_paralogues_from_GenomeDB_NCBITaxon
+                    $human_genomedb, $chicken_genomdb->taxon);
+  Description: fetch all the same species paralog of this species, that are more recent than
+                the speciation even refered to by the boundary_species argument
+  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
+  Caller     :
+
+=cut
+
+sub fetch_all_in_paralogues_from_GenomeDB_NCBITaxon {
+    my ($self, $species, $boundary_species) = @_;
+
+    assert_ref($species, 'Bio::EnsEMBL::Compara::GenomeDB');
+    assert_ref($boundary_species, 'Bio::EnsEMBL::Compara::NCBITaxon');
+
+    my $all_paras = $self->fetch_all_by_MethodLinkSpeciesSet(
+        $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$species]),
+    );
+
+    return $self->_filter_paralogues_by_ancestral_species($all_paras, $species, $boundary_species, 1);
+}
+
+
+=head2 fetch_all_out_paralogues_from_GenomeDB_NCBITaxon
+
+  Arg [1]    : species (Bio::EnsEMBL::Compara::GenomeDB)
+  Arg [2]    : boundary_species (Bio::EnsEMBL::Compara::NCBITaxon)
+  Example    : $homologies = $HomologyAdaptor->fetch_all_out_paralogues_from_GenomeDB_NCBITaxon
+                    $human_genomedb, $chicken_genomdb->taxon);
+  Description: fetch all the same species paralog of this species, that are older than
+                the speciation even refered to by the boundary_species argument
+  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
+  Caller     :
+
+=cut
+
+sub fetch_all_out_paralogues_from_GenomeDB_NCBITaxon {
+    my ($self, $species, $boundary_species) = @_;
+
+    assert_ref($species, 'Bio::EnsEMBL::Compara::GenomeDB');
+    assert_ref($boundary_species, 'Bio::EnsEMBL::Compara::NCBITaxon');
+
+    my $all_paras = $self->fetch_all_by_MethodLinkSpeciesSet(
+        $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$species]),
+    );
+
+    return $self->_filter_paralogues_by_ancestral_species($all_paras, $species, $boundary_species, 0);
+}
+
+
+# Convenience method to filter a list of homologies
+sub _filter_paralogues_by_ancestral_species {
+    my ($self, $all_paras, $species1, $species2, $in_out) = @_;
+
+    assert_ref($species1, 'Bio::EnsEMBL::Compara::GenomeDB');
+    assert_ref($species2, 'Bio::EnsEMBL::Compara::NCBITaxon');
+
+    my $ncbi_a = $self->db->get_NCBITaxonAdaptor;
+
+    # The last common ancestor of $species1 and $species2 defines the boundary
+    my $lca =  $ncbi_a->fetch_first_shared_ancestor_indexed($species1->taxon, $species2);
+
+    my @good_paralogues;
+    foreach my $hom (@$all_paras) {
+
+        # The taxon where the homology "appeared"
+        my $ancspec = $ncbi_a->fetch_node_by_name($hom->subtype);
+    
+        # Compares the homology taxon to the boundary
+        push @good_paralogues, $hom if $in_out xor ($ancspec eq $ncbi_a->fetch_first_shared_ancestor_indexed($lca, $ancspec));
+    }
+
+    return \@good_paralogues;
 }
 
 
