@@ -61,8 +61,9 @@ use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs;
+use Bio::EnsEMBL::Compara::AlignedMemberSet;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
@@ -158,7 +159,7 @@ sub check_for_split_genes {
     foreach my $genepairlink (@sorted_genepairlinks) {
         my ($protein1, $protein2) = @$genepairlink;
         my ($cigar_line1, $perc_id1, $perc_pos1, $cigar_line2, $perc_id2, $perc_pos2) = 
-            $self->generate_attribute_arguments($protein1, $protein2, 'within_species_paralog');
+            Bio::EnsEMBL::Compara::AlignedMemberSet::generate_alignment_stats($protein1, $protein2);
         print "Pair: ", $protein1->stable_id, " - ", $protein2->stable_id, "\n" if ($self->debug);
 
         # Checking for gene_split cases
