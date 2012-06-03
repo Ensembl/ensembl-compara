@@ -1179,14 +1179,10 @@ my %CODONS =   ("ATG" => "Met",
                 "TAA" => "TER",
                 "TAG" => "TER",
                 "TGA" => "TER",
-                "---" => "---");
-
-foreach my $codon (keys %TWOD_CODONS) {
-    $CODONS{$codon} = $TWOD_CODONS{$codon};
-}
-foreach my $codon (keys %FOURD_CODONS) {
-    $CODONS{$codon} = $FOURD_CODONS{$codon};
-}
+                "---" => "---",
+                %TWOD_CODONS,
+                %FOURD_CODONS,
+                );
 
 
 =head2 get_4D_SimpleAlign
@@ -1239,7 +1235,7 @@ sub get_4D_SimpleAlign {
         my $FourD_codon = 1;
         my $FourD_aminoacid;
         foreach my $seqid (keys %member_seqstr) {
-            if (FourD_codon($member_seqstr{$seqid}->[$i])) {
+            if (defined $FOURD_CODONS{$member_seqstr{$seqid}->[$i]}) {
                 if (defined $FourD_aminoacid && $FourD_aminoacid eq $FOURD_CODONS{$member_seqstr{$seqid}->[$i]}) {
                     #print STDERR "YES ",$FOURD_CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i],"\n";
                     next;
@@ -1284,14 +1280,168 @@ sub get_4D_SimpleAlign {
     return $sa;
 }
 
-sub FourD_codon {
-    my ($codon) = @_;
-    return (defined $FOURD_CODONS{$codon} ? 1 : 0);
+my %matrix_hash;
+
+{
+  my $BLOSUM62 = "#  Matrix made by matblas from blosum62.iij
+#  * column uses minimum score
+#  BLOSUM Clustered Scoring Matrix in 1/2 Bit Units
+#  Blocks Database = /data/blocks_5.0/blocks.dat
+#  Cluster Percentage: >= 62
+#  Entropy =   0.6979, Expected =  -0.5209
+   A  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V  B  Z  X  *
+A  4 -1 -2 -2  0 -1 -1  0 -2 -1 -1 -1 -1 -2 -1  1  0 -3 -2  0 -2 -1  0 -4
+R -1  5  0 -2 -3  1  0 -2  0 -3 -2  2 -1 -3 -2 -1 -1 -3 -2 -3 -1  0 -1 -4
+N -2  0  6  1 -3  0  0  0  1 -3 -3  0 -2 -3 -2  1  0 -4 -2 -3  3  0 -1 -4
+D -2 -2  1  6 -3  0  2 -1 -1 -3 -4 -1 -3 -3 -1  0 -1 -4 -3 -3  4  1 -1 -4
+C  0 -3 -3 -3  9 -3 -4 -3 -3 -1 -1 -3 -1 -2 -3 -1 -1 -2 -2 -1 -3 -3 -2 -4
+Q -1  1  0  0 -3  5  2 -2  0 -3 -2  1  0 -3 -1  0 -1 -2 -1 -2  0  3 -1 -4
+E -1  0  0  2 -4  2  5 -2  0 -3 -3  1 -2 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4
+G  0 -2  0 -1 -3 -2 -2  6 -2 -4 -4 -2 -3 -3 -2  0 -2 -2 -3 -3 -1 -2 -1 -4
+H -2  0  1 -1 -3  0  0 -2  8 -3 -3 -1 -2 -1 -2 -1 -2 -2  2 -3  0  0 -1 -4
+I -1 -3 -3 -3 -1 -3 -3 -4 -3  4  2 -3  1  0 -3 -2 -1 -3 -1  3 -3 -3 -1 -4
+L -1 -2 -3 -4 -1 -2 -3 -4 -3  2  4 -2  2  0 -3 -2 -1 -2 -1  1 -4 -3 -1 -4
+K -1  2  0 -1 -3  1  1 -2 -1 -3 -2  5 -1 -3 -1  0 -1 -3 -2 -2  0  1 -1 -4
+M -1 -1 -2 -3 -1  0 -2 -3 -2  1  2 -1  5  0 -2 -1 -1 -1 -1  1 -3 -1 -1 -4
+F -2 -3 -3 -3 -2 -3 -3 -3 -1  0  0 -3  0  6 -4 -2 -2  1  3 -1 -3 -3 -1 -4
+P -1 -2 -2 -1 -3 -1 -1 -2 -2 -3 -3 -1 -2 -4  7 -1 -1 -4 -3 -2 -2 -1 -2 -4
+S  1 -1  1  0 -1  0  0  0 -1 -2 -2  0 -1 -2 -1  4  1 -3 -2 -2  0  0  0 -4
+T  0 -1  0 -1 -1 -1 -1 -2 -2 -1 -1 -1 -1 -2 -1  1  5 -2 -2  0 -1 -1  0 -4
+W -3 -3 -4 -4 -2 -2 -3 -2 -2 -3 -2 -3 -1  1 -4 -3 -2 11  2 -3 -4 -3 -2 -4
+Y -2 -2 -2 -3 -2 -1 -2 -3  2 -1 -1 -2 -1  3 -3 -2 -2  2  7 -1 -3 -2 -1 -4
+V  0 -3 -3 -3 -1 -2 -2 -3 -3  3  1 -2  1 -1 -2 -2  0 -3 -1  4 -3 -2 -1 -4
+B -2 -1  3  4 -3  0  1 -1  0 -3 -4  0 -3 -3 -2  0 -1 -4 -3 -3  4  1 -1 -4
+Z -1  0  0  1 -3  3  4 -2  0 -3 -3  1 -1 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4
+X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
+* -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4  1
+";
+  my $matrix_string;
+  my @lines = split(/\n/,$BLOSUM62);
+  foreach my $line (@lines) {
+    next if ($line =~ /^\#/);
+    if ($line =~ /^[A-Z\*\s]+$/) {
+      $matrix_string .= sprintf "$line\n";
+    } else {
+      my @t = split(/\s+/,$line);
+      shift @t;
+      #       print scalar @t,"\n";
+      $matrix_string .= sprintf(join(" ",@t)."\n");
+    }
+  }
+
+#  my %matrix_hash;
+  @lines = ();
+  @lines = split /\n/, $matrix_string;
+  my $lts = shift @lines;
+  $lts =~ s/^\s+//;
+  $lts =~ s/\s+$//;
+  my @letters = split /\s+/, $lts;
+
+  foreach my $letter (@letters) {
+    my $line = shift @lines;
+    $line =~ s/^\s+//;
+    $line =~ s/\s+$//;
+    my @penalties = split /\s+/, $line;
+    die "Size of letters array and penalties array are different\n"
+      unless (scalar @letters == scalar @penalties);
+    for (my $i=0; $i < scalar @letters; $i++) {
+      $matrix_hash{uc $letter}{uc $letters[$i]} = $penalties[$i];
+    }
+  }
 }
 
-sub TwoD_codon {
-    my ($codon) = @_;
-    return (defined $TWOD_CODONS{$codon} ? 1 : 0);
+
+sub generate_alignment_stats {
+  my ($gene1, $gene2) = @_;
+
+  my $new_aln1_cigarline = "";
+  my $new_aln2_cigarline = "";
+
+  my $perc_id1 = 0;
+  my $perc_pos1 = 0;
+  my $perc_id2 = 0;
+  my $perc_pos2 = 0;
+
+  my $identical_matches = 0;
+  my $positive_matches = 0;
+
+  my ($aln1state, $aln2state);
+  my ($aln1count, $aln2count);
+
+  # my @aln1 = split(//, $gene1->alignment_string); # Speed up
+  # my @aln2 = split(//, $gene2->alignment_string);
+  my $alignment_string = $gene1->alignment_string;
+  my @aln1 = unpack("A1" x length($alignment_string), $alignment_string);
+  $alignment_string = $gene2->alignment_string;
+  my @aln2 = unpack("A1" x length($alignment_string), $alignment_string);
+
+  for (my $i=0; $i <= $#aln1; $i++) {
+    next if ($aln1[$i] eq "-" && $aln2[$i] eq "-");
+    my ($cur_aln1state, $cur_aln2state) = qw(M M);
+    if ($aln1[$i] eq "-") {
+      $cur_aln1state = "D";
+    }
+    if ($aln2[$i] eq "-") {
+      $cur_aln2state = "D";
+    }
+    if ($cur_aln1state eq "M" && $cur_aln2state eq "M" && $aln1[$i] eq $aln2[$i]) {
+      $identical_matches++;
+      $positive_matches++;
+    } elsif ($cur_aln1state eq "M" && $cur_aln2state eq "M" && $matrix_hash{uc $aln1[$i]}{uc $aln2[$i]} > 0) {
+        $positive_matches++;
+    }
+    unless (defined $aln1state) {
+      $aln1count = 1;
+      $aln2count = 1;
+      $aln1state = $cur_aln1state;
+      $aln2state = $cur_aln2state;
+      next;
+    }
+    if ($cur_aln1state eq $aln1state) {
+      $aln1count++;
+    } else {
+      if ($aln1count == 1) {
+        $new_aln1_cigarline .= $aln1state;
+      } else {
+        $new_aln1_cigarline .= $aln1count.$aln1state;
+      }
+      $aln1count = 1;
+      $aln1state = $cur_aln1state;
+    }
+    if ($cur_aln2state eq $aln2state) {
+      $aln2count++;
+    } else {
+      if ($aln2count == 1) {
+        $new_aln2_cigarline .= $aln2state;
+      } else {
+        $new_aln2_cigarline .= $aln2count.$aln2state;
+      }
+      $aln2count = 1;
+      $aln2state = $cur_aln2state;
+    }
+  }
+  if ($aln1count == 1) {
+    $new_aln1_cigarline .= $aln1state;
+  } else {
+    $new_aln1_cigarline .= $aln1count.$aln1state;
+  }
+  if ($aln2count == 1) {
+    $new_aln2_cigarline .= $aln2state;
+  } else {
+    $new_aln2_cigarline .= $aln2count.$aln2state;
+  }
+  my $seq_length1 = $gene1->seq_length;
+  unless (0 == $seq_length1) {
+    $perc_id1  = (int((100.0 * $identical_matches / $seq_length1 + 0.5)));
+    $perc_pos1 = (int((100.0 * $positive_matches  / $seq_length1 + 0.5)));
+  }
+  my $seq_length2 = $gene2->seq_length;
+  unless (0 == $seq_length2) {
+    $perc_id2  = (int((100.0 * $identical_matches / $seq_length2 + 0.5)));
+    $perc_pos2 = (int((100.0 * $positive_matches  / $seq_length2 + 0.5)));
+  }
+
+  return ($new_aln1_cigarline, $perc_id1, $perc_pos1, $new_aln2_cigarline, $perc_id2, $perc_pos2);
 }
 
 
