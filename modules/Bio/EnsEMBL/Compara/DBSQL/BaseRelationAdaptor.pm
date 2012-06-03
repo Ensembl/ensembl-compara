@@ -61,16 +61,4 @@ sub fetch_all_by_method_link_type {
 }
 
 
-sub store_relation {
-  my ($self, $member_attribute, $relation) = @_;
-
-  my ($member, $attribute) = @{$member_attribute};
-  my $member_adaptor = $self->db->get_MemberAdaptor;
-  unless (defined $member->dbID) {
-    $member_adaptor->store($member);
-  }
-  $attribute->member_id($member->dbID);
-
-}
-
 1;

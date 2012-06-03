@@ -756,10 +756,10 @@ sub store {
 sub store_relation {
     my ($self, $member_attribute, $relation) = @_;
 
-    # Common interface between all relations to store the member
-    $self->SUPER::store_relation($member_attribute, $relation);
-
     my ($member, $attribute) = @{$member_attribute};
+    # Stores the member if not yet stored
+    $self->db->get_MemberAdaptor->store($member) unless (defined $member->dbID);
+    $attribute->member_id($member->dbID);
     $attribute->homology_id($relation->dbID);
     my $sql = "INSERT IGNORE INTO homology_member (homology_id, member_id, peptide_member_id, cigar_line, perc_id, perc_pos) VALUES (?,?,?,?,?,?)";
     my $sth = $self->prepare($sql);
