@@ -1351,105 +1351,108 @@ X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
 }
 
 
-sub generate_alignment_stats {
-  my ($gene1, $gene2) = @_;
-
-  my $new_aln1_cigarline = "";
-  my $new_aln2_cigarline = "";
-
-  my $perc_id1 = 0;
-  my $perc_pos1 = 0;
-  my $perc_id2 = 0;
-  my $perc_pos2 = 0;
-
-  my $identical_matches = 0;
-  my $positive_matches = 0;
-
-  my ($aln1state, $aln2state);
-  my ($aln1count, $aln2count);
-
-   my @aln1 = split(//, $gene1->alignment_string); # Speed up
-   my @aln2 = split(//, $gene2->alignment_string);
-
-  for (my $i=0; $i <= $#aln1; $i++) {
-    next if ($aln1[$i] eq '-' && $aln2[$i] eq '-');
-    my $cur_aln1state = ($aln1[$i] eq '-' ? 'D' : 'M');
-    my $cur_aln2state = ($aln2[$i] eq '-' ? 'D' : 'M');
-    if ($cur_aln1state eq 'M' && $cur_aln2state eq 'M') {
-      if ($aln1[$i] eq $aln2[$i]) {
-        $identical_matches++;
-        $positive_matches++;
-      } elsif ($matrix_hash{uc $aln1[$i]}{uc $aln2[$i]} > 0) {
-        $positive_matches++;
-      }
-    }
-    unless (defined $aln1state) {
-      $aln1count = 1;
-      $aln2count = 1;
-      $aln1state = $cur_aln1state;
-      $aln2state = $cur_aln2state;
-      next;
-    }
-    if ($cur_aln1state eq $aln1state) {
-      $aln1count++;
-    } else {
-      if ($aln1count == 1) {
-        $new_aln1_cigarline .= $aln1state;
-      } else {
-        $new_aln1_cigarline .= $aln1count.$aln1state;
-      }
-      $aln1count = 1;
-      $aln1state = $cur_aln1state;
-    }
-    if ($cur_aln2state eq $aln2state) {
-      $aln2count++;
-    } else {
-      if ($aln2count == 1) {
-        $new_aln2_cigarline .= $aln2state;
-      } else {
-        $new_aln2_cigarline .= $aln2count.$aln2state;
-      }
-      $aln2count = 1;
-      $aln2state = $cur_aln2state;
-    }
-  }
-  if ($aln1count == 1) {
-    $new_aln1_cigarline .= $aln1state;
-  } else {
-    $new_aln1_cigarline .= $aln1count.$aln1state;
-  }
-  if ($aln2count == 1) {
-    $new_aln2_cigarline .= $aln2state;
-  } else {
-    $new_aln2_cigarline .= $aln2count.$aln2state;
-  }
-  my $seq_length1 = $gene1->seq_length;
-  unless (0 == $seq_length1) {
-    $perc_id1  = (int((100.0 * $identical_matches / $seq_length1 + 0.5)));
-    $perc_pos1 = (int((100.0 * $positive_matches  / $seq_length1 + 0.5)));
-  }
-  my $seq_length2 = $gene2->seq_length;
-  unless (0 == $seq_length2) {
-    $perc_id2  = (int((100.0 * $identical_matches / $seq_length2 + 0.5)));
-    $perc_pos2 = (int((100.0 * $positive_matches  / $seq_length2 + 0.5)));
-  }
-
-  return ($new_aln1_cigarline, $perc_id1, $perc_pos1, $new_aln2_cigarline, $perc_id2, $perc_pos2);
-}
-
 sub update_alignment_stats {
     my $self = shift;
-    my $min_seq = shift;
 
     my $genes = $self->get_all_Members;
     my $ngenes = scalar(@$genes);
+
+    if ($ngenes == 2) {
+        # This code is >4 times faster with pairs of genes
+
+        my $gene1 = $genes->[0];
+        my $gene2 = $genes->[1];
+        my $new_aln1_cigarline = "";
+        my $new_aln2_cigarline = "";
+
+        my $identical_matches = 0;
+        my $positive_matches = 0;
+
+        my ($aln1state, $aln2state);
+        my ($aln1count, $aln2count);
+        my ($aln1cov, $aln2cov) = (0,0);
+
+        my @aln1 = split(//, $gene1->alignment_string);
+        my @aln2 = split(//, $gene2->alignment_string);
+
+        for (my $i=0; $i <= $#aln1; $i++) {
+            next if ($aln1[$i] eq '-' && $aln2[$i] eq '-');
+            my $cur_aln1state = ($aln1[$i] eq '-' ? 'D' : 'M');
+            my $cur_aln2state = ($aln2[$i] eq '-' ? 'D' : 'M');
+            $aln1cov++ if $cur_aln1state ne 'D';
+            $aln2cov++ if $cur_aln2state ne 'D';
+            if ($cur_aln1state eq 'M' && $cur_aln2state eq 'M') {
+                if ($aln1[$i] eq $aln2[$i]) {
+                    $identical_matches++;
+                    $positive_matches++;
+                } elsif ($matrix_hash{uc $aln1[$i]}{uc $aln2[$i]} > 0) {
+                    $positive_matches++;
+                }
+            }
+            unless (defined $aln1state) {
+                $aln1count = 1;
+                $aln2count = 1;
+                $aln1state = $cur_aln1state;
+                $aln2state = $cur_aln2state;
+                next;
+            }
+            if ($cur_aln1state eq $aln1state) {
+                $aln1count++;
+            } else {
+                if ($aln1count == 1) {
+                    $new_aln1_cigarline .= $aln1state;
+                } else {
+                    $new_aln1_cigarline .= $aln1count.$aln1state;
+                }
+                $aln1count = 1;
+                $aln1state = $cur_aln1state;
+            }
+            if ($cur_aln2state eq $aln2state) {
+                $aln2count++;
+            } else {
+                if ($aln2count == 1) {
+                    $new_aln2_cigarline .= $aln2state;
+                } else {
+                    $new_aln2_cigarline .= $aln2count.$aln2state;
+                }
+                $aln2count = 1;
+                $aln2state = $cur_aln2state;
+            }
+        }
+        if ($aln1count == 1) {
+            $new_aln1_cigarline .= $aln1state;
+        } else {
+            $new_aln1_cigarline .= $aln1count.$aln1state;
+        }
+        if ($aln2count == 1) {
+            $new_aln2_cigarline .= $aln2state;
+        } else {
+            $new_aln2_cigarline .= $aln2count.$aln2state;
+        }
+        my $seq_length1 = $gene1->seq_length;
+        unless (0 == $seq_length1) {
+            $gene1->cigar_line($new_aln1_cigarline);
+            $gene1->perc_id( int((100.0 * $identical_matches / $seq_length1 + 0.5)) );
+            $gene1->perc_pos( int((100.0 * $positive_matches  / $seq_length1 + 0.5)) );
+            $gene1->perc_cov( int((100.0 * $aln1cov / $seq_length1 + 0.5)) );
+        }
+        my $seq_length2 = $gene2->seq_length;
+        unless (0 == $seq_length2) {
+            $gene2->cigar_line($new_aln2_cigarline);
+            $gene2->perc_id( int((100.0 * $identical_matches / $seq_length2 + 0.5)) );
+            $gene2->perc_pos( int((100.0 * $positive_matches  / $seq_length2 + 0.5)) );
+            $gene2->perc_cov( int((100.0 * $aln2cov / $seq_length2 + 0.5)) );
+        }
+        return undef;
+    }
+
+    my $min_seq = shift;
     $min_seq = int($min_seq * $ngenes) if $min_seq <= 1;
 
-    # output variables
-    my @new_cigars = ('') x $ngenes;
-
+    my @new_cigars   = ('') x $ngenes;
     my @nmatch_id    = (0) x $ngenes; 
     my @nmatch_pos   = (0) x $ngenes; 
+    my @nmatch_cov   = (0) x $ngenes; 
     my @alncount     = (1) x $ngenes;
     my @alnstate     = (undef) x $ngenes;
     my @cur_alnstate = (undef) x $ngenes;
@@ -1482,6 +1485,7 @@ sub update_alignment_stats {
             if ($char_i[$j] eq '-') {
                 $cur_alnstate[$j] = 'D';
             } else {
+                $nmatch_cov[$j]++;
                 $cur_alnstate[$j] = 'M';
                 if ($seen{$char_i[$j]} >= $min_seq) {
                     $nmatch_id[$j]++;
@@ -1523,6 +1527,7 @@ sub update_alignment_stats {
         unless (0 == $seq_length) {
             $genes->[$j]->perc_id( int((100.0 * $nmatch_id[$j] / $seq_length + 0.5)) );
             $genes->[$j]->perc_pos( int((100.0 * $nmatch_pos[$j] / $seq_length + 0.5)) );
+            $genes->[$j]->perc_cov( int((100.0 * $nmatch_cov[$j] / $seq_length + 0.5)) );
         }
     }
 }
