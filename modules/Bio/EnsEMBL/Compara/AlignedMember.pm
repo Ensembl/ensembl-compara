@@ -83,14 +83,17 @@ sub copy {
                $self->SUPER::copy($mycopy);
   bless $mycopy, 'Bio::EnsEMBL::Compara::AlignedMember';
 
-  $mycopy->cigar_line($self->cigar_line);
-  $mycopy->cigar_start($self->cigar_start);
-  $mycopy->cigar_end($self->cigar_end);
-  $mycopy->perc_cov($self->perc_cov);
-  $mycopy->perc_id($self->perc_id);
-  $mycopy->perc_pos($self->perc_pos);
-  $mycopy->method_link_species_set_id($self->method_link_species_set_id);
-  
+  # The following does not Work if the initial object is only a Member
+  if (UNIVERSAL::isa($self, 'Bio::EnsEMBL::Compara::AlignedMember')) {
+    $mycopy->cigar_line($self->cigar_line);
+    $mycopy->cigar_start($self->cigar_start);
+    $mycopy->cigar_end($self->cigar_end);
+    $mycopy->perc_cov($self->perc_cov);
+    $mycopy->perc_id($self->perc_id);
+    $mycopy->perc_pos($self->perc_pos);
+    $mycopy->method_link_species_set_id($self->method_link_species_set_id);
+  }
+
   return $mycopy;
 }
 
