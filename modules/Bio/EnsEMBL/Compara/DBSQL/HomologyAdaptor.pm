@@ -739,20 +739,20 @@ sub store {
   }
   
   unless($hom->dbID) {
-    my $sql = "INSERT INTO homology (method_link_species_set_id, description, subtype, ancestor_node_id, tree_node_id) VALUES (?,?,?,?,?)";
+    my $sql = 'INSERT INTO homology (method_link_species_set_id, description, subtype, ancestor_node_id, tree_node_id) VALUES (?,?,?,?,?)';
     my $sth = $self->prepare($sql);
     $sth->execute($hom->method_link_species_set_id, $hom->description, $hom->subtype, $hom->ancestor_node_id, $hom->tree_node_id);
     $hom->dbID($sth->{'mysql_insertid'});
   }
 
+  my $sql = 'INSERT IGNORE INTO homology_member (homology_id, member_id, peptide_member_id, cigar_line, perc_id, perc_pos) VALUES (?,?,?,?,?,?)';
+  my $sth = $self->prepare($sql);
   foreach my $member_attribute (@{$hom->get_all_Member_Attribute}) {   
     my ($member, $attribute) = @{$member_attribute};
     # Stores the member if not yet stored
     $self->db->get_MemberAdaptor->store($member) unless (defined $member->dbID);
     $attribute->member_id($member->dbID);
     $attribute->homology_id($hom->dbID);
-    my $sql = "INSERT IGNORE INTO homology_member (homology_id, member_id, peptide_member_id, cigar_line, perc_id, perc_pos) VALUES (?,?,?,?,?,?)";
-    my $sth = $self->prepare($sql);
     $sth->execute($attribute->homology_id, $attribute->member_id, $attribute->peptide_member_id, $attribute->cigar_line, $attribute->perc_id, $attribute->perc_pos);
   }
 
