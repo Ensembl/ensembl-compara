@@ -367,7 +367,7 @@ sub _tranform_array_to_Member_Attributes {
     foreach my $am (@$array) {
         my $member = Bio::EnsEMBL::Compara::Member::copy($am);
         my $attribute = new Bio::EnsEMBL::Compara::Attribute;
-        foreach my $key (qw(cigar_line perc_cov perc_id perc_pos)) {
+        foreach my $key (qw(cigar_line perc_cov perc_id perc_pos member_id)) {
             $attribute->$key($am->$key);
         }
         push @all_ma, [$member, $attribute];
@@ -409,7 +409,7 @@ sub get_all_AlignedMember {
 
 
 
-=head2 get_all_GeneMembers
+=head2 get_all_GeneMember
 
   Arg [1]    : None
   Example    : 
@@ -420,7 +420,7 @@ sub get_all_AlignedMember {
 
 =cut
 
-sub get_all_GeneMembers {
+sub get_all_GeneMember {
     my ($self) = @_;
 
     my $members = [];
@@ -442,7 +442,7 @@ sub get_all_GeneMembers {
 
 sub gene_list {  # DEPRECATED
     my $self = shift;
-    return $self->get_all_GeneMembers
+    return $self->get_all_GeneMember
 }
 
 
@@ -829,7 +829,7 @@ sub has_species_by_name {
   my $species_name = shift;
   
   foreach my $member (@{$self->get_all_AlignedMember}) {
-    return 1 if($member->genome_db->name eq $species_name);
+    return 1 if defined $member->genome_db and ($member->genome_db->name eq $species_name);
   }
   return 0;
 }
