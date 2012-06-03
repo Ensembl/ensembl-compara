@@ -261,35 +261,37 @@ sub store {
     $fam->dbID($sth->{'mysql_insertid'});
   }
 
-  foreach my $member_attribue (@{$fam->get_all_Member_Attribute}) {   
-    $self->store_relation($member_attribue, $fam);
+  foreach my $member_attribute (@{$fam->get_all_Member_Attribute}) {   
+    my ($member, $attribute) = @{$member_attribute};
+    # Stores the member if not yet stored
+    $self->db->get_MemberAdaptor->store($member) unless (defined $member->dbID);
+    $attribute->member_id($member->dbID);
+    $attribute->family_id($fam->dbID);
+    my $sql = "INSERT IGNORE INTO family_member (family_id, member_id, cigar_line) VALUES (?,?,?)";
+    my $sth = $self->prepare($sql);
+    $sth->execute($attribute->family_id, $attribute->member_id, $attribute->cigar_line);
   }
 
   return $fam->dbID;
 }
 
-sub store_relation {
-    my ($self, $member_attribute, $relation) = @_;
 
+sub update {
+  my ($self,$fam) = @_;
+
+  $fam->isa('Bio::EnsEMBL::Compara::Family') ||
+    $self->throw("You have to store a Bio::EnsEMBL::Compara::Family object, not a $fam");
+
+  my $sql = 'UPDATE family SET stable_id = ?, version = ?, method_link_species_set_id = ?, description = ?, description_score = ? WHERE family_id = ?';
+  my $sth = $self->prepare($sql);
+  $sth->execute($fam->stable_id, $fam->version, $fam->method_link_species_set_id, $fam->description, $fam->description_score, $fam->dbID);
+
+  $sql = "UPDATE family_member SET cigar_line = ? WHERE family_id = ? AND member_id = ?";
+  $sth = $self->prepare($sql);
+  foreach my $member_attribute (@{$fam->get_all_Member_Attribute}) {   
     my ($member, $attribute) = @{$member_attribute};
-    # Stores the member if not yet stored
-    $self->db->get_MemberAdaptor->store($member) unless (defined $member->dbID);
-    $attribute->member_id($member->dbID);
-    $attribute->family_id($relation->dbID);
-    my $sql = "INSERT IGNORE INTO family_member (family_id, member_id, cigar_line) VALUES (?,?,?)";
-    my $sth = $self->prepare($sql);
-    $sth->execute($attribute->family_id, $attribute->member_id, $attribute->cigar_line);
-}
-
-
-sub update_relation {
-    my ($self, $member_attribute) = @_;
-
-    my ($member, $attribute) = @{$member_attribute};
-
-    my $sql = "UPDATE family_member SET cigar_line = ? WHERE family_id = ? AND member_id = ?";
-    my $sth = $self->prepare($sql);
     $sth->execute($attribute->cigar_line, $attribute->family_id, $attribute->member_id);
+  }
 }
 
 

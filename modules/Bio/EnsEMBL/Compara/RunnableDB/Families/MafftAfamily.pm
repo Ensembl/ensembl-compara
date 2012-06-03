@@ -127,16 +127,13 @@ sub write_output {
 
     if(my $singleton_relation = $self->param('singleton_relation')) {
 
-        $self->compara_dba()->get_FamilyAdaptor()->update_relation( $singleton_relation );
+        $self->compara_dba()->get_FamilyAdaptor()->update($self->param('family'));
 
     } elsif(my $mafft_file = $self->param('mafft_file')) {
 
         my $family = $self->param('family');
         $family->load_cigars_from_fasta($mafft_file, 1);
-
-        foreach my $member_attribute (@{$family->get_all_Member_Attribute}) {
-            $family->adaptor->update_relation($member_attribute) unless $member_attribute->[0]->source_name eq 'ENSEMBLGENE';
-        }
+        $family->adaptor->update($family);
 
         unless($self->debug) {
             unlink $mafft_file;

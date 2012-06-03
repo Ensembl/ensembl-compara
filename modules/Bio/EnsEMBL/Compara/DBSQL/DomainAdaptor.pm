@@ -208,23 +208,18 @@ sub store {
   }
   
   foreach my $member_attribute (@{$dom->get_all_Member_Attribute}) {
-    $self->store_relation($member_attribute, $dom);
+    my ($member, $attribute) = @{$member_attribute};
+    # Stores the member if not yet stored
+    $self->db->get_MemberAdaptor->store($member) unless (defined $member->dbID);
+    $attribute->member_id($member->dbID);
+    $attribute->homology_id($dom->dbID);
+    my $sql = "INSERT IGNORE INTO domain_member (domain_id, member_id, member_start, member_end) VALUES (?,?,?,?)";
+    my $sth = $self->prepare($sql);
+    $sth->execute($attribute->domain_id, $attribute->member_id, $attribute->member_start, $attribute->member_end);
   }
 
   return $dom->dbID;
 }
 
-sub store_relation {
-    my ($self, $member_attribute, $relation) = @_;
-
-    my ($member, $attribute) = @{$member_attribute};
-    # Stores the member if not yet stored
-    $self->db->get_MemberAdaptor->store($member) unless (defined $member->dbID);
-    $attribute->member_id($member->dbID);
-    $attribute->homology_id($relation->dbID);
-    my $sql = "INSERT IGNORE INTO domain_member (domain_id, member_id, member_start, member_end) VALUES (?,?,?,?)";
-    my $sth = $self->prepare($sql);
-    $sth->execute($attribute->domain_id, $attribute->member_id, $attribute->member_start, $attribute->member_end);
-}
 
 1;

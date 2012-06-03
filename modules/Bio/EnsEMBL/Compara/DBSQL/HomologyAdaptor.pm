@@ -746,24 +746,17 @@ sub store {
   }
 
   foreach my $member_attribute (@{$hom->get_all_Member_Attribute}) {   
-    $self->store_relation($member_attribute, $hom);
-  }
-
-  return $hom->dbID;
-}
-
-
-sub store_relation {
-    my ($self, $member_attribute, $relation) = @_;
-
     my ($member, $attribute) = @{$member_attribute};
     # Stores the member if not yet stored
     $self->db->get_MemberAdaptor->store($member) unless (defined $member->dbID);
     $attribute->member_id($member->dbID);
-    $attribute->homology_id($relation->dbID);
+    $attribute->homology_id($hom->dbID);
     my $sql = "INSERT IGNORE INTO homology_member (homology_id, member_id, peptide_member_id, cigar_line, perc_id, perc_pos) VALUES (?,?,?,?,?,?)";
     my $sth = $self->prepare($sql);
     $sth->execute($attribute->homology_id, $attribute->member_id, $attribute->peptide_member_id, $attribute->cigar_line, $attribute->perc_id, $attribute->perc_pos);
+  }
+
+  return $hom->dbID;
 }
 
 
