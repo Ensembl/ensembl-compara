@@ -22,81 +22,88 @@ package Bio::EnsEMBL::Compara::FormatTree;
 
 use strict;
 use warnings;
+
+use Parse::RecDescent;
 use Data::Dumper;
 use Carp;
 
-# Grammar to parse $fmt
-sub _tokenize {
-  my ($self) = @_;
-  eval { require Parse::RecDescent };
-  if ($@) {
-    die 'You need Parse::RecDescent installed to role-your-own tree format\n'
-  }
-  my $parser = Parse::RecDescent->new(q(
-                                   {my @tokens; push @tokens,{}}
-                                    hyphen      : "-"
-                                    has_parent  : "^"
-                                    { $tokens[-1]->{has_parent} = 1 }
-                                    or          : "|"
-                                    character   : /[\w\.\s:\|]+/i
-                                    literal     : character
-                                        { $tokens[-1]->{literal} = $item{character} }
-                                    Letter_code : "n" | "c" | "d" | "t" | "l" | "h" | "s" | "p" | "m" | "g" | "i" | "e" | "o" | "x" | "S" | "N" | "P"
-                                    preliteral  : character
-                                        { $tokens[-1]->{ preliteral } = $item{character} }
-                                    postliteral : character
-                                       { $tokens[-1]->{ postliteral } = $item{character} }
-                                    In_leaf     : hyphen Letter_code
-                                      {
-                                         $tokens[-1]->{main} = $item{Letter_code}
-                                      }
-                                    In_internal : Letter_code hyphen
-                                      {
-                                         $tokens[-1]->{main} = $item{Letter_code}
-                                      }
-                                    Format      : /^/ Entry(s) /$/ {\@tokens}
-                                    Entry       : (Token_or_literal)(s)
-                                    Token_or_literal : Token
-                                    Token_or_literal : literal
-                                      {
-                                         push @tokens, {}
-                                      }
-
-                                    Token       : "%{" (has_parent)(?) ('"' <skip: ''> preliteral '"')(?) Condition ('"' <skip: ''> postliteral '"')(?) "}"
-                                      {
-                                         push @tokens, {}
-                                      }
-
-                                    Condition   : Code ( or Letter_code )(s?)
-                                      {
-                                        if (scalar @{$item[2]}) {
-                                            $tokens[-1]->{alternatives} = join "", @{$item[2]}
-                                        }
-                                      }
-                                    Code        : In_leaf
-                                      {
-                                         $tokens[-1]->{place} = "Leaf";
-                                      }
-                                    Code        : In_internal
-                                      {
-                                         $tokens[-1]->{place} = "Internal";
-                                      }
-                                    Code        : Letter_code
-                                      {
-                                         $tokens[-1]->{place} = "Both";
-                                         $tokens[-1]->{main} = $item{Letter_code}
-                                      }
-));
-  my $fmt = $self->{fmt};
-  my $tokens = $parser->Format($fmt);
-  croak "Format $fmt is not valid\n" unless (defined $tokens);
-  my @tokens = grep {scalar keys %{$_} > 0} @$tokens;    ## Hacky... but shouldn't be needed anymore (just a pop)
-  $self->{tokens} = [@tokens];
+my $parser = Parse::RecDescent->new(q(
+{
+    my @tokens;
+    push @tokens, {}
 }
+
+hyphen      : "-"
+
+has_parent  : "^"
+{
+    $tokens[-1]->{has_parent} = 1
+}
+
+or          : "|"
+
+character   : /[\w\.\s:\|]+/i
+
+literal     : character
+{
+    $tokens[-1]->{literal} = $item{character}
+}
+
+Letter_code : "n" | "c" | "d" | "t" | "l" | "h" | "s" | "p" | "m" | "g" | "i" | "e" | "o" | "x" | "S" | "N" | "P"
+
+preliteral  : character
+{
+    $tokens[-1]->{ preliteral } = $item{character}
+}
+
+postliteral : character
+{
+    $tokens[-1]->{ postliteral } = $item{character}
+}
+
+Format      : /^/ Entry(s) /$/ {\@tokens}
+
+Entry       : (Token_or_literal)(s)
+
+Token_or_literal : Token
+Token_or_literal : literal
+{
+    push @tokens, {}
+}
+
+Token       : "%{" (has_parent)(?) ('"' <skip: ''> preliteral '"')(?) Condition ('"' <skip: ''> postliteral '"')(?) "}"
+{
+    push @tokens, {}
+}
+
+Condition   : Code ( or Letter_code )(s?)
+{
+    if (scalar @{$item[2]}) {
+        $tokens[-1]->{alternatives} = join "", @{$item[2]}
+    }
+}
+
+Code        : hyphen Letter_code
+{
+    $tokens[-1]->{place} = "Leaf";
+    $tokens[-1]->{main} = $item{Letter_code}
+}
+
+Code        : Letter_code hyphen
+{
+    $tokens[-1]->{place} = "Internal";
+    $tokens[-1]->{main} = $item{Letter_code}
+}
+
+Code        : Letter_code
+{
+    $tokens[-1]->{place} = "Both";
+    $tokens[-1]->{main} = $item{Letter_code}
+}
+));
 
 ## Callbacks
 
-my %callbacks = ();
 
 ## maybe we can use AUTOLOAD to populate most of these?
 
@@ -135,8 +142,7 @@ my $ensembl_common_name = sub {
 
 my $ensembl_timetree_mya_cb = sub {
   my ($self) = @_;
-  my $str = sprintf ("%s", $self->{tree}->get_tagvalue('ensembl timetree mya'));
-  return $str eq "" ? undef : $str;
+  return $self->{tree}->get_tagvalue('ensembl timetree mya');
 };
 
 my $gdb_id_cb = sub {
@@ -233,49 +239,50 @@ my $pvalue_cb = sub {
     return undef;
 };
 
-%callbacks = (
-	      'n' => $name_cb,
-	      'c' => $genbank_common_name,
-	      'e' => $ensembl_common_name,
-	      'd' => $distance_to_parent_cb,
-	      't' => $ensembl_timetree_mya_cb,
-	      'g' => $gdb_id_cb,
-	      'o' => $node_id_cb,
-	      'l' => $label_cb,
-	      's' => $sp_short_name_cb,
-	      'i' => $stable_id_cb,
-	      'p' => $prot_id_cb,
-	      'm' => $member_id_cb,
-	      'x' => $taxon_id_cb,
-	      'S' => $sp_name_cb,
-          'N' => $n_members_cb, # Used in cafe trees (number of members)
-          'P' => $pvalue_cb, # Used in cafe trees (pvalue)
-#	      'E' =>  ## Implement the "Empty" option
-	     );
+my %callbacks = (
+        'n' => $name_cb,
+        'c' => $genbank_common_name,
+        'e' => $ensembl_common_name,
+        'd' => $distance_to_parent_cb,
+        't' => $ensembl_timetree_mya_cb,
+        'g' => $gdb_id_cb,
+        'o' => $node_id_cb,
+        'l' => $label_cb,
+        's' => $sp_short_name_cb,
+        'i' => $stable_id_cb,
+        'p' => $prot_id_cb,
+        'm' => $member_id_cb,
+        'x' => $taxon_id_cb,
+        'S' => $sp_name_cb,
+        'N' => $n_members_cb, # Used in cafe trees (number of members)
+        'P' => $pvalue_cb, # Used in cafe trees (pvalue)
+        #'E' =>  ## Implement the "Empty" option
+);
 
 
 # Maybe leaves and internal nodes should be formatted different?
 my %cache;
 sub new {
-  my ($class,$fmt) = @_;
-  $fmt = "%{n}" unless (defined $fmt); # "full" by default
-  if (defined $cache{$fmt}) {
-    return $cache{$fmt};
-  }
-  my $obj = bless ({
-		    'fmt' => $fmt,
-		    'tokens' => [],
-		    'callbacks' => {%callbacks},
-		   }, $class);
-  eval {
-    $obj->_tokenize();
-  };
-  if ($@) {
-    die $@ if ($@ =~ /Parse::RecDescent/);
-    die "Bad format : $fmt\n";
-  }
-  $cache{$fmt} = $obj;
-  return $obj;
+    my ($class,$fmt) = @_;
+    $fmt = "%{n}" unless (defined $fmt); # "full" by default
+    return $cache{$fmt} if defined $cache{$fmt};
+    
+    my $obj = bless ({
+            'fmt' => $fmt,
+            'callbacks' => {%callbacks},
+    }, $class);
+    eval {
+        my $tokens = $parser->Format($fmt);
+        croak "Format $fmt is not valid\n" unless (defined $tokens);
+        my @tokens = grep {scalar keys %{$_} > 0} @$tokens;    ## Hacky... but shouldn't be needed anymore (just a pop)
+        $obj->{tokens} = [@tokens];
+    };
+    if ($@) {
+        die $@ if ($@ =~ /Parse::RecDescent/);
+        die "Bad format : $fmt\n";
+    }
+    $cache{$fmt} = $obj;
+    return $obj;
 }
 
 sub format_newick {
@@ -284,41 +291,41 @@ sub format_newick {
 }
 
 sub _internal_format_newick {
-  my ($self, $tree) = @_;
+    my ($self, $tree) = @_;
 
-  my $newick = "";
-  if ($tree->get_child_count()>0) {
-    $newick .= "(";
-    my $first_child = 1;
-    for my $child (@{$tree->sorted_children}) {
-      $newick .= "," unless ($first_child);
-      $newick .= $self->_internal_format_newick($child);
-      $first_child = 0;
+    my $newick = "";
+    if ($tree->get_child_count()>0) {
+        $newick .= "(";
+        my $first_child = 1;
+        for my $child (@{$tree->sorted_children}) {
+            $newick .= "," unless ($first_child);
+            $newick .= $self->_internal_format_newick($child);
+            $first_child = 0;
+        }
+        $newick .= ")";
     }
-    $newick .= ")";
-  }
 
-  my $header = "";
-  $self->{tree} = $tree;
-  for my $token (@{$self->{tokens}}) {
-    if (defined $token->{literal}) {
-      $header .= $token->{literal}
-    } elsif (($token->{place} eq "Leaf") && ($tree->is_leaf) ||
-	     ($token->{place} eq "Internal") && (! $tree->is_leaf) ||
-	     ($token->{place} eq "Both")) {
-      next if (defined $token->{has_parent} && $token->{has_parent} == 1 && !$tree->parent);
-      for my $item (split //,$token->{main}.$token->{alternatives}x!!$token->{alternatives}) {  ## For "main" and "alternatives"
-	my $itemstr = $self->{callbacks}{$item}->($self);
-#	print STDERR "ITEMSTR:$itemstr\n";exit;
-	if (defined $itemstr) {
-	  $header .= $token->{preliteral}x!!$token->{preliteral}.$itemstr.$token->{postliteral}x!!$token->{postliteral};
-	  last;
-	}
-      }
+    my $header = "";
+    $self->{tree} = $tree;
+    for my $token (@{$self->{tokens}}) {
+        if (defined $token->{literal}) {
+            $header .= $token->{literal}
+        } elsif (($token->{place} eq "Leaf") && ($tree->is_leaf) ||
+                ($token->{place} eq "Internal") && (! $tree->is_leaf) ||
+                ($token->{place} eq "Both")) {
+            next if (defined $token->{has_parent} && $token->{has_parent} == 1 && !$tree->parent);
+            for my $item (split //,$token->{main}.$token->{alternatives}x!!$token->{alternatives}) {  ## For "main" and "alternatives"
+                my $itemstr = $self->{callbacks}{$item}->($self);
+                #print STDERR "ITEMSTR:$itemstr\n";exit;
+                if (defined $itemstr) {
+                    $header .= $token->{preliteral}x!!$token->{preliteral}.$itemstr.$token->{postliteral}x!!$token->{postliteral};
+                    last;
+                }
+            }
+        }
     }
-  }
 #  $header .= ":".$self->{callbacks}{d}->($self);
-  return $newick.$header;
+    return $newick.$header;
 }
 
 

@@ -32,7 +32,6 @@ use strict;
 use warnings;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Compara::FormatTree;
 
 use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
 
@@ -1113,6 +1112,7 @@ sub _internal_newick_format_ryo {
   my ($self,$fmt) = @_;
   my $tree;
   eval {
+    use Bio::EnsEMBL::Compara::FormatTree;
     my $newick = Bio::EnsEMBL::Compara::FormatTree->new($fmt);
     $tree = $newick->format_newick($self);
   };
