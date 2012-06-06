@@ -1,8 +1,6 @@
 package Bio::EnsEMBL::Compara::DBSQL::SubsetAdaptor;
 
 use strict;
-use Bio::EnsEMBL::Compara::Member;
-use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::Compara::Subset;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
