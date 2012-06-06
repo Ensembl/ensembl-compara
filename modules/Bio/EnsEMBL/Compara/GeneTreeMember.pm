@@ -83,10 +83,10 @@ sub copy {
 }
 
 
-=head2 print_node (overrides default method in Bio::EnsEMBL::Compara::NestedSet)
+=head2 string_node (overrides default method in Bio::EnsEMBL::Compara::NestedSet)
 
   Arg [1]     : none
-  Example     : $aligned_member->print_node();
+  Example     : $aligned_member->string_node();
   Description : Outputs the info for this GeneTreeMember. First, the node_id, the
                 left and right indexes are printed, then the species name. If the
                 gene member can be determined, the methods prints the stable_id,
@@ -99,24 +99,24 @@ sub copy {
 
 =cut
 
-sub print_node {
+sub string_node {
   my $self  = shift;
-  printf("(%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
+  my $str = sprintf("(%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
     if($self->genome_db_id and $self->adaptor) {
       my $genome_db = $self->genome_db;
       if (!defined($genome_db)) {
         $DB::single=1;1;
       }
-      printf(" %s", $genome_db->name) 
+      $str .= sprintf(" %s", $genome_db->name) 
     }
   if($self->gene_member) {
-    printf(" %s %s %s:%d-%d",
+    $str .= sprintf(" %s %s %s:%d-%d",
       $self->gene_member->stable_id, $self->gene_member->display_label || '', $self->gene_member->chr_name,
       $self->gene_member->chr_start, $self->gene_member->chr_end);
   } elsif($self->stable_id) {
-    printf(" (%d) %s", $self->member_id, $self->stable_id);
+    $str .= sprintf(" (%d) %s", $self->member_id, $self->stable_id);
   }
-  print("\n");
+  $str .= "\n";
 }
 
 
