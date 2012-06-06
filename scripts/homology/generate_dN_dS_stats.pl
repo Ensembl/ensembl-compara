@@ -2,10 +2,7 @@
 
 use strict;
 use Getopt::Long;
-use Bio::EnsEMBL::Compara::Member;
-use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::AlignIO;
 
 $| = 1;
 
