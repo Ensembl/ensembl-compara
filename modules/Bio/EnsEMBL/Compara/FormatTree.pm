@@ -26,7 +26,9 @@ use warnings;
 use Parse::RecDescent;
 use Data::Dumper;
 use Carp;
+#$::RD_HINT = 1;
 
+# Grammar to parse $fmt
 my $grammar = q(
 {
     my @tokens;
@@ -42,44 +44,80 @@ has_parent  : "^"
 
 or          : "|"
 
-character   : /[\w\.\s:\|]+/i
-
-literal     : character
+modifier_dot   : "."
 {
-    $tokens[-1]->{literal} = $item{character}
+    $tokens[-1]->{modifier} = "dot";
+}
+modifier_comma : ","
+{
+    $tokens[-1]->{modifier} = "comma";
+}
+modifier_upper : "^"
+{
+    $tokens[-1]->{upper} = 1;
 }
 
-Letter_code : "n" | "c" | "d" | "t" | "l" | "h" | "s" | "p" | "m" | "g" | "i" | "e" | "o" | "x" | "S" | "N" | "P"
+string   : /[^%{}\"\(\)\,]+/i
 
-preliteral  : character
+number      : /[0-9]+/
+
+Tag_condition : "," string ( "," string )(?)
 {
-    $tokens[-1]->{ preliteral } = $item{character}
+    $tokens[-1]->{tag_condition} = $item[2];
+    $tokens[-1]->{tag_value} = $item[3]->[0] if scalar(@{$item[3]});
 }
 
-postliteral : character
+Tag_reader   : "T(" string (Tag_condition)(?) ")"
 {
-    $tokens[-1]->{ postliteral } = $item{character}
+    $tokens[-1]->{tag_name} = $item{string};
+    "T";
 }
 
-Format      : /^/ Entry(s) /$/ {\@tokens}
+Method_caller : "C(" string ( "," string )(s?) ")"
+{
+    $tokens[-1]->{method_name} = [$item[2], @{$item[3]}] ;
+    "C";
+}
 
-Entry       : (Token_or_literal)(s)
+Letter_code : "n" | "c" | "d" | "t" | "l" | "h" | "s" | "p" | "m" | "g" | "i" | "e" | "o" | "x" | "S" | "N" | "P" | "E" | Tag_reader | Method_caller
 
-Token_or_literal : Token
-Token_or_literal : literal
+preliteral  : string
+{
+    $tokens[-1]->{ preliteral } = $item{string}
+}
+
+postliteral : string
+{
+    $tokens[-1]->{ postliteral } = $item{string}
+}
+
+Format      : /^/ Entry(s) /$/
+{
+    \@tokens
+}
+
+Entry       : (Token | literal)(s)
+
+literal     : string
+{
+    push @tokens, {};
+    $tokens[-1]->{literal} = $item{string}
+}
+
+Len_limit : number
+{
+    $tokens[-1]->{len_limit} = $item{number}
+}
+
+Token       : "%"  (Len_limit)(?) "{" (has_parent)(?) ('"' <skip: ''> preliteral '"')(?) Condition ('"' <skip: ''> postliteral '"')(?) "}"
 {
     push @tokens, {}
 }
 
-Token       : "%{" (has_parent)(?) ('"' <skip: ''> preliteral '"')(?) Condition ('"' <skip: ''> postliteral '"')(?) "}"
+Condition   : Code ( modifier_dot | modifier_comma )(?) (modifier_upper)(?)  ( or Letter_code )(s?)
 {
-    push @tokens, {}
-}
-
-Condition   : Code ( or Letter_code )(s?)
-{
-    if (scalar @{$item[2]}) {
-        $tokens[-1]->{alternatives} = join "", @{$item[2]}
+    if (scalar @{$item[4]}) {
+        $tokens[-1]->{alternatives} = join "", @{$item[4]}
     }
 }
 
@@ -107,6 +145,7 @@ Code        : Letter_code
 
 ## maybe we can use AUTOLOAD to populate most of these?
 
+# C(name)
 my $name_cb = sub {
   my ($self) = @_;
   return sprintf ("%s",$self->{tree}->name || '');
@@ -122,24 +161,19 @@ my $distance_to_parent_cb = sub {
   }
 };
 
+# T(genbank common name)
 my $genbank_common_name = sub {
   my ($self) = @_;
-  my $common = uc($self->{tree}->get_tagvalue('genbank common name'));
-  $common =~ s/\,//g;
-  $common =~ s/\ /\./g;
-  $common =~ s/\'//g;
-  return $common || undef;
+  return $self->{tree}->get_tagvalue('genbank common name');
 };
 
+# T(ensembl common name)
 my $ensembl_common_name = sub {
   my ($self) = @_;
-  my $common = uc($self->{tree}->get_tagvalue('ensembl common name'));
-  $common =~ s/\,//g;
-  $common =~ s/\ /\./g;
-  $common =~ s/\'//g;
-  return $common;
+  return $self->{tree}->get_tagvalue('ensembl common name');
 };
 
+# T(ensembl timetree mya)
 my $ensembl_timetree_mya_cb = sub {
   my ($self) = @_;
   return $self->{tree}->get_tagvalue('ensembl timetree mya');
@@ -154,17 +188,20 @@ my $gdb_id_cb = sub {
   return $gdb_id;
 };
 
+# C(node_id)
 my $node_id_cb = sub {  ## only if we are in a leaf? ... if ($self->{tree}->is_leaf);
   my ($self) = @_;
   return sprintf("%s", $self->{tree}->node_id);
 };
 
+# C(gene_member,display_label)
 my $label_cb = sub { ## only if we are in a leaf? ... if ($self->{tree}->is_leaf);
   my ($self) = @_;
   my $display_label = $self->{tree}->gene_member->display_label;
   return $display_label;
 };
 
+# C(genome_db,short_name)
 my $sp_short_name_cb = sub {
   my ($self) = @_;
   my $sp;
@@ -174,11 +211,13 @@ my $sp_short_name_cb = sub {
   return $sp;
 };
 
+# C(gene_member,stable_id)
 my $stable_id_cb = sub {  ## only if we are in a leaf?
   my ($self) = @_;
   return $self->{tree}->gene_member->stable_id;
 };
 
+# C(get_canonical_Member,stable_id)
 my $prot_id_cb = sub {
   my ($self) = @_;
   my $prot_member;
@@ -186,11 +225,13 @@ my $prot_id_cb = sub {
   return $prot_member;
 };
 
+# C(member_id)
 my $member_id_cb = sub {
   my ($self) = @_;
   return sprintf ("%s",$self->{tree}->member_id);
 };
 
+# C(taxon_id)
 my $taxon_id_cb = sub {
   my ($self) = @_;
   my $taxon_id;
@@ -221,6 +262,7 @@ my $sp_name_cb = sub {
   return undef;
 };
 
+# C(n_members)
 my $n_members_cb = sub {
     my ($self) = @_;
     my $n_members;
@@ -230,6 +272,7 @@ my $n_members_cb = sub {
     return undef;
 };
 
+# C(p_value)
 my $pvalue_cb = sub {
     my ($self) = @_;
     my $pval;
@@ -237,6 +280,31 @@ my $pvalue_cb = sub {
         return $self->{tree}->p_value();
     }
     return undef;
+};
+
+my $empty_cb = sub {
+    return '';
+};
+
+my $tag_cb = sub {
+    my ($self, $token) = @_;
+    my $value = $self->{tree}->get_tagvalue($token->{tag_name});
+    return $value unless exists $token->{tag_condition};
+    return undef unless defined $value;
+    return undef unless $value eq $token->{tag_condition};
+    return $token->{tag_value} if exists $token->{tag_value};
+    return $value;
+};
+
+my $method_cb = sub {
+    my ($self, $token) = @_;
+    my $value = $self->{tree};
+    foreach my $method (@{$token->{method_name}}) {
+        return undef unless defined $value;
+        return undef unless $value->can($method);
+        $value = $value->$method;
+    }
+    return $value;
 };
 
 my %callbacks = (
@@ -256,7 +324,9 @@ my %callbacks = (
         'S' => $sp_name_cb,
         'N' => $n_members_cb, # Used in cafe trees (number of members)
         'P' => $pvalue_cb, # Used in cafe trees (pvalue)
-        #'E' =>  ## Implement the "Empty" option
+        'E' => $empty_cb, ## Implement the "Empty" option
+        'T' => $tag_cb,
+        'C' => $method_cb,
 );
 
 
@@ -274,6 +344,7 @@ sub new {
     eval {
         my $parser = Parse::RecDescent->new($grammar);
         my $tokens = $parser->Format($fmt);
+        #print Dumper($tokens);
         croak "Format $fmt is not valid\n" unless (defined $tokens);
         my @tokens = grep {scalar keys %{$_} > 0} @$tokens;    ## Hacky... but shouldn't be needed anymore (just a pop)
         $obj->{tokens} = [@tokens];
@@ -316,10 +387,26 @@ sub _internal_format_newick {
                 ($token->{place} eq "Both")) {
             next if (defined $token->{has_parent} && $token->{has_parent} == 1 && !$tree->parent);
             for my $item (split //,$token->{main}.$token->{alternatives}x!!$token->{alternatives}) {  ## For "main" and "alternatives"
-                my $itemstr = $self->{callbacks}{$item}->($self);
+                die "Callback $item not defined\n" unless exists $self->{callbacks}{$item};
+                my $itemstr = $self->{callbacks}{$item}->($self, $token);
                 #print STDERR "ITEMSTR:$itemstr\n";exit;
                 if (defined $itemstr) {
-                    $header .= $token->{preliteral}x!!$token->{preliteral}.$itemstr.$token->{postliteral}x!!$token->{postliteral};
+                    #print Dumper($itemstr);
+                    #print Dumper($token);
+                    if (exists $token->{modifier}) {
+                        if ($token->{modifier} eq 'comma') {
+                            $itemstr =~ s/[,(:)]//g;
+                        } elsif ($token->{modifier} eq 'dot') {
+                            $itemstr =~ s/\,//g;
+                            $itemstr =~ s/\ /\./g;
+                            $itemstr =~ s/\'//g;
+                        }
+                    }
+                    $itemstr = uc $itemstr if exists $token->{upper};
+
+                    my $str_to_append = $token->{preliteral}x!!$token->{preliteral}.$itemstr.$token->{postliteral}x!!$token->{postliteral};
+                    $str_to_append = substr($str_to_append, 0, $token->{len_limit}) if exists $token->{Len_limit};
+                    $header .= $str_to_append;
                     last;
                 }
             }
