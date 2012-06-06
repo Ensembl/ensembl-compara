@@ -52,6 +52,10 @@ modifier_comma : ","
 {
     $tokens[-1]->{modifier} = "comma";
 }
+modifier_underscore: "_"
+{
+    $tokens[-1]->{modifier} = "underscore";
+}
 modifier_upper : "^"
 {
     $tokens[-1]->{upper} = 1;
@@ -79,7 +83,7 @@ Method_caller : "C(" string ( "," string )(s?) ")"
     "C";
 }
 
-Letter_code : "n" | "c" | "d" | "t" | "l" | "h" | "s" | "p" | "m" | "g" | "i" | "e" | "o" | "x" | "S" | "N" | "P" | "E" | Tag_reader | Method_caller
+Letter_code : "n" | "c" | "d" | "t" | "r" | "l" | "L" | "h" | "s" | "p" | "m" | "g" | "i" | "e" | "o" | "x" | "S" | "N" | "P" | "E" | Tag_reader | Method_caller
 
 preliteral  : string
 {
@@ -101,7 +105,8 @@ Entry       : (Token | literal)(s)
 literal     : string
 {
     push @tokens, {};
-    $tokens[-1]->{literal} = $item{string}
+    $tokens[-1]->{literal} = $item{string};
+    push @tokens, {};
 }
 
 Len_limit : number
@@ -114,7 +119,7 @@ Token       : "%"  (Len_limit)(?) "{" (has_parent)(?) ('"' <skip: ''> preliteral
     push @tokens, {}
 }
 
-Condition   : Code ( modifier_dot | modifier_comma )(?) (modifier_upper)(?)  ( or Letter_code )(s?)
+Condition   : Code ( modifier_dot | modifier_comma | modifier_underscore )(?) (modifier_upper)(?)  ( or Letter_code )(s?)
 {
     if (scalar @{$item[4]}) {
         $tokens[-1]->{alternatives} = join "", @{$item[4]}
@@ -148,7 +153,7 @@ Code        : Letter_code
 # C(name)
 my $name_cb = sub {
   my ($self) = @_;
-  return sprintf ("%s",$self->{tree}->name || '');
+  return $self->{tree}->name;
 };
 
 my $distance_to_parent_cb = sub {
@@ -181,17 +186,13 @@ my $ensembl_timetree_mya_cb = sub {
 
 my $gdb_id_cb = sub {
   my ($self) = @_;
-  my $gdb_id;
-  eval {
-    $gdb_id = $self->{tree}->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->{tree}->taxon_id)->dbID;
-  };
-  return $gdb_id;
+  return $self->{tree}->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->{tree}->taxon_id)->dbID;
 };
 
 # C(node_id)
 my $node_id_cb = sub {  ## only if we are in a leaf? ... if ($self->{tree}->is_leaf);
   my ($self) = @_;
-  return sprintf("%s", $self->{tree}->node_id);
+  return $self->{tree}->node_id;
 };
 
 # C(gene_member,display_label)
@@ -201,14 +202,30 @@ my $label_cb = sub { ## only if we are in a leaf? ... if ($self->{tree}->is_leaf
   return $display_label;
 };
 
+# C(gene_member,display_label)
+my $label_ext_cb = sub {
+    my ($self) = @_;
+    my $display_label = $self->{tree}->gene_member->display_label;
+    if (!defined($display_label) || $display_label eq '') {
+        my $display_xref = $self->gene_member->get_Gene->display_xref;
+        $display_label = $display_xref->display_id if (defined($display_xref));
+    }    
+    if (defined($display_label) && $display_label =~ /^\w+$/) {
+        return $display_label;
+    }
+    return undef;
+};
+
 # C(genome_db,short_name)
 my $sp_short_name_cb = sub {
   my ($self) = @_;
-  my $sp;
-  eval {
-    $sp = $self->{tree}->genome_db->short_name
-  };
-  return $sp;
+  return $self->{tree}->genome_db->short_name;
+};
+
+my $transcriptid_cb = sub {
+    my ($self) = @_;
+    $self->{tree}->description =~ /Transcript:(\w+)/;
+    return $1;
 };
 
 # C(gene_member,stable_id)
@@ -220,24 +237,19 @@ my $stable_id_cb = sub {  ## only if we are in a leaf?
 # C(get_canonical_Member,stable_id)
 my $prot_id_cb = sub {
   my ($self) = @_;
-  my $prot_member;
-  eval {$prot_member = $self->{tree}->get_canonical_Member->stable_id};
-  return $prot_member;
+  return $self->{tree}->get_canonical_Member->stable_id;
 };
 
 # C(member_id)
 my $member_id_cb = sub {
   my ($self) = @_;
-  return sprintf ("%s",$self->{tree}->member_id);
+  return $self->{tree}->member_id;
 };
 
 # C(taxon_id)
 my $taxon_id_cb = sub {
   my ($self) = @_;
-  my $taxon_id;
-  eval { $taxon_id = $self->{tree}->taxon_id };
-  return $taxon_id;
-#  return sprintf ("%s", $self->{tree}->taxon_id);
+  return $self->{tree}->taxon_id;
 };
 
 my $sp_name_cb = sub {
@@ -316,8 +328,10 @@ my %callbacks = (
         'g' => $gdb_id_cb,
         'o' => $node_id_cb,
         'l' => $label_cb,
+        'L' => $label_ext_cb,
         's' => $sp_short_name_cb,
         'i' => $stable_id_cb,
+        'r' => $transcriptid_cb,
         'p' => $prot_id_cb,
         'm' => $member_id_cb,
         'x' => $taxon_id_cb,
@@ -344,7 +358,7 @@ sub new {
     eval {
         my $parser = Parse::RecDescent->new($grammar);
         my $tokens = $parser->Format($fmt);
-        #print Dumper($tokens);
+        print Dumper($tokens);
         croak "Format $fmt is not valid\n" unless (defined $tokens);
         my @tokens = grep {scalar keys %{$_} > 0} @$tokens;    ## Hacky... but shouldn't be needed anymore (just a pop)
         $obj->{tokens} = [@tokens];
@@ -400,6 +414,8 @@ sub _internal_format_newick {
                             $itemstr =~ s/\,//g;
                             $itemstr =~ s/\ /\./g;
                             $itemstr =~ s/\'//g;
+                        } elsif ($token->{modifier} eq 'underscore') {
+                            $itemstr =~ s/\ /\_/g;
                         }
                     }
                     $itemstr = uc $itemstr if exists $token->{upper};
