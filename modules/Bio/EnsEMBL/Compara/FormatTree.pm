@@ -27,7 +27,7 @@ use Parse::RecDescent;
 use Data::Dumper;
 use Carp;
 
-my $parser = Parse::RecDescent->new(q(
+my $grammar = q(
 {
     my @tokens;
     push @tokens, {}
@@ -100,7 +100,7 @@ Code        : Letter_code
     $tokens[-1]->{place} = "Both";
     $tokens[-1]->{main} = $item{Letter_code}
 }
-));
+);
 
 ## Callbacks
 
@@ -272,6 +272,7 @@ sub new {
             'callbacks' => {%callbacks},
     }, $class);
     eval {
+        my $parser = Parse::RecDescent->new($grammar);
         my $tokens = $parser->Format($fmt);
         croak "Format $fmt is not valid\n" unless (defined $tokens);
         my @tokens = grep {scalar keys %{$_} > 0} @$tokens;    ## Hacky... but shouldn't be needed anymore (just a pop)
