@@ -880,179 +880,6 @@ sub string_node {
     return $str;
 }
 
-sub nhx_format {
-  my $self = shift;
-  my $format_mode = shift;
-  
-  $format_mode="protein_id" unless(defined($format_mode));
-  my $nhx = $self->_internal_nhx_format($format_mode); 
-  $nhx .= ";";
-  return $nhx;
-}
-
-
-sub _internal_nhx_format {
-  my $self = shift;
-  my $format_mode = shift;
-  my $nhx = "";
-  
-  if($self->get_child_count() > 0) {
-    $nhx .= "(";
-    my $first_child=1;
-    foreach my $child (@{$self->sorted_children}) {  
-      $nhx .= "," unless($first_child);
-      $nhx .= $child->_internal_nhx_format($format_mode);
-      $first_child = 0;
-    }
-    $nhx .= ")";
-  }
-  
-  if($format_mode eq "full" || $format_mode eq "full_web" || $format_mode eq "display_label" || $format_mode eq "display_label_composite" || $format_mode eq "treebest_ortho" || $format_mode eq "transcript_id" || $format_mode eq "gene_id" || $format_mode eq "protein_id" || $format_mode eq "member_id_taxon_id" || ref $format_mode eq "HASH") { 
-      #full: name and distance on all nodes
-      if($self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
-	  if ($format_mode eq "transcript_id") {
-	      $self->description =~ /Transcript:(\w+)/;
-	      my $transcript_stable_id = $1;
-	      $nhx .= sprintf("%s", $transcript_stable_id);
-	  } elsif ($format_mode eq "member_id_taxon_id") {
-            $nhx .= $self->member_id;
-            $nhx .= "_";
-            $nhx .= $self->taxon_id;
-	  } elsif ($format_mode eq "gene_id") {
-            my $gene_stable_id = $self->gene_member->stable_id;
-            $nhx .= sprintf("%s", $gene_stable_id);
-	  } elsif ($format_mode eq "display_label_composite") {
-            my $display_label = $self->gene_member->display_label;
-            if (!defined($display_label) || $display_label eq '') {
-              my $display_xref = $self->gene_member->get_Gene->display_xref;
-              $display_label = $display_xref->display_id if (defined($display_xref));
-            }
-            if (defined($display_label)) {
-              $nhx .= $display_label . "_";
-            }
-            $nhx .= $self->gene_member->stable_id;
-            $nhx .= "_" . $self->genome_db->short_name;
-	  } elsif ($format_mode eq "display_label") {
-            my $display_label = $self->gene_member->display_label;
-            if (!defined($display_label) || $display_label eq '') {
-              my $display_xref = $self->gene_member->get_Gene->display_xref;
-              $display_label = $display_xref->display_id if (defined($display_xref));
-            }
-            if (defined($display_label) && $display_label =~ /^\w+$/) {
-              $nhx .= $display_label . "_";
-            } else {
-              $nhx .= $self->gene_member->stable_id . "_";
-            }
-            # $nhx .= $self->gene_member->stable_id;
-            $nhx .= $self->genome_db->short_name;
-	  } elsif ($format_mode eq "protein_id") {
-            $nhx .= sprintf("%s", $self->name);
-
-	  } elsif (ref $format_mode eq "HASH") {
-            $nhx .= $format_mode->{name}->($self);
-
-	  } elsif ($format_mode eq "treebest_ortho") {
-            $nhx .= $self->member_id . "_" . $self->taxon_id;
-          }
-      } else {
-        if ($format_mode eq "member_id_taxon_id") {
-          my $node_id = $self->node_id;
-          my $taxon_id = $self->get_tagvalue("taxon_id");
-          $nhx .= $node_id . "_" . $taxon_id;
-
-        } elsif (ref $format_mode eq "HASH") {        	
-        	$nhx .= $format_mode->{name}->($self);
-
-        } else {
-          my $name = sprintf("%s", $self->has_tag('name') ? $self->get_tagvalue('name') :  $self->get_tagvalue('taxon_name', ''));
-          $name =~ s/\ /\_/g;
-          $nhx .= $name;
-        }
-      }
-    $nhx .= sprintf(":%1.4f", $self->distance_to_parent);
-    $nhx .= "[&&NHX";
-    if(defined $self->get_tagvalue("node_type") && ($self->get_tagvalue("node_type") eq 'duplication' || $self->get_tagvalue("node_type") eq 'dubious' )) { 
-        # mark as duplication
-        $nhx .= ":D=Y";
-    } else {
-        # this only applies to internal nodes, hence the name of the
-        # method and the reason we can safely add this here
-        $nhx .= ":D=N";
-    }
-    if($self->has_tag("bootstrap")) { 
-      my $bootstrap_value = $self->get_tagvalue("bootstrap");
-        # mark as duplication
-        $nhx .= ":B=$bootstrap_value";
-    }
-    my $taxon_id;
-    if($self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
-      my $gene_stable_id;
-      eval { $gene_stable_id = $self->gene_member->stable_id;};
-      if (defined $gene_stable_id && $format_mode eq "transcript_id") {
-        $nhx .= ":G=$gene_stable_id";
-      } elsif (defined $gene_stable_id && $format_mode eq "gene_id") {
-        $self->description =~ /Transcript:(\w+)/;
-        my $transcript_stable_id = $1;
-        $nhx .= ":G=$transcript_stable_id";
-      } elsif (defined $gene_stable_id && $format_mode eq "protein_id") {
-        $nhx .= ":G=$gene_stable_id";
-
-      } elsif (defined $gene_stable_id && ref $format_mode eq "HASH") {
-        $nhx .= $format_mode->{gene_stable_id}->($self); 
-
-      } elsif (defined $gene_stable_id && $format_mode eq "treebest_ortho") {
-# #         $nhx .= ":O=" . $self->stable_id;
-# #         $nhx .= ":G=$gene_stable_id";
-      }
-      $taxon_id = $self->taxon_id;
-    } else {
-      $taxon_id = $self->get_tagvalue("taxon_id");
-    }
-    if(defined ($taxon_id) && (!($taxon_id eq ''))) {
-        $nhx .= ":T=$taxon_id";
-	$nhx .= ":S=$taxon_id" if ($format_mode eq "treebest_ortho");
-    }
-    if(defined $self->get_tagvalue("TID") && $self->get_tagvalue("TID") ne '') { 
-      my $tid_value = $self->get_tagvalue("TID");
-        # mark as duplication
-        $nhx .= ":TID=$tid_value";
-    }
-    # GJ 2009-02-01 : Add img tags to string if necessary.
-      if ($self->has_tag('img')) {
-	  $nhx .= ":IMG=".$self->get_tagvalue("img");
-      }
-
-    $nhx .= "]";
-  }
-  if($format_mode eq 'simple') { 
-    #simplified: name only on leaves, dist only if has parent
-    if($self->parent) {
-      if($self->is_leaf) {
-      	if (ref $format_mode eq "HASH") {
-      		$nhx .= $format_mode->{name}->($self);
-      	} else {
-          $nhx .= sprintf("%s", $self->name);
-        }
-      }
-      $nhx .= sprintf(":%1.4f", $self->distance_to_parent);
-    }
-  }
-  if($format_mode eq 'phylip') { 
-    #phylip: restrict names to 21 characters
-    if($self->parent) {
-      if($self->is_leaf) {
-        my $name = $self->name;
-        $name =~ s/[,(:)]//g;
-        $name = substr($name, 0 , 21);
-        $nhx .= sprintf("%s", $name);
-      }
-      $nhx .= sprintf(":%1.4f", $self->distance_to_parent);
-    }
-  }
-
-  return $nhx;
-}
-
 
 =head2 newick_format
 
@@ -1070,7 +897,7 @@ sub _internal_nhx_format {
 
 my %ryo_modes = (
     'member_id' => '%{^-m}:%{d}',
-    'member_id_taxon_id' => '%{^-m}%{^"_"-x}:%{d}',
+    'member_id_taxon_id' => '%{-m}%{"_"-x}:%{d}',
     'display_label_composite' => '%{-l"_"}%{n}%{"_"-s}:%{d}',
     'full_common' => '%{n}%{" "-c.^}%{"."-g}%{"_"-t"_MYA"}:%{d}',
     'gene_stable_id_composite' => '%{-i"_"}%{n}%{"_"-s}:%{d}',
@@ -1081,12 +908,43 @@ my %ryo_modes = (
     'full' => '%{n}:%{d}',
     'species' => '%{^-S|p}',
     'species_short_name' => '%{^-s|p}',
-    'otu_id' => '%{-s"|"}%{-l}%{n}:%{d}',
+    'otu_id' => '%{-s"|"}%{-l"|"}%{n}:%{d}',
     'int_node_id' => '%{-n}%{o-}:%{d}',
     'full_web' => '%{n-}%{-n|p}%{"_"-s"_"}%{":"d}',
     'phylip' => '%21{n,}:%{d}',
     'njtree' => '%{o}%{-T(is_incomplete)|E"*"}%{-T(is_incomplete,0,*)}',
 );
+
+my $nhx0 = '%{n-_|T(taxon_name)}:%{d}';
+my $nhx1 = ':D=%{-E"N"}%{T(node_type,duplication,Y)-}%{T(node_type,dubious,Y)-}%{T(node_type,gene_split,Y)-}%{T(node_type,speciation,N)}%{":B="T(bootstrap)}';
+my $nhx2 = ':T=%{-x}%{T(taxon_id)-}';
+
+my %nhx_ryo_modes_1 = (
+    'member_id_taxon_id' => '%{-m}%{o-}_%{-x}%{T(taxon_id)-}:%{d}',
+    'protein_id' => '%{-n}'.$nhx0,
+    'transcript_id' => '%{-r}'.$nhx0,
+    'gene_id' => '%{-i}'.$nhx0,
+    'full' => $nhx0,
+    'full_web' => $nhx0,
+    'display_label' => '%{-L|i}%{"_"-s}'.$nhx0,
+    'display_label_composite' => '%{-L"_"}%{-i}%{"_"-s}'.$nhx0,
+    'treebest_ortho' => '%{-m}%{"_"-x}'.$nhx0,
+    'simple' => $ryo_modes{'simple'},
+    'phylip' => $ryo_modes{'phylip'},
+);
+
+my %nhx_ryo_modes_2 = (
+    'member_id_taxon_id' => $nhx1.$nhx2,
+    'protein_id' => $nhx1.'%{":G="-i}'.$nhx2,
+    'transcript_id' => $nhx1.'%{":G="-i}'.$nhx2,
+    'gene_id' => $nhx1.'%{":G="-r}'.$nhx2,
+    'full' => $nhx1.$nhx2,
+    'full_web' => $nhx1.$nhx2,
+    'display_label' => $nhx1.$nhx2,
+    'display_label_composite' => $nhx1.$nhx2,
+    'treebest_ortho' => $nhx1.$nhx2.':S=%{-x}%{T(taxon_id)-}',
+);
+
 
 sub newick_format {
     my $self = shift;
@@ -1106,6 +964,36 @@ sub newick_format {
     } else {
         throw("Unrecognized format '$format_mode'. Please use 'ryo' to introduce a roll-your-own format string\n");
     }
+    return $self->_internal_newick_format_ryo($ryo_string);
+}
+
+sub nhx_format {
+    my ($self, $format_mode) = @_;
+    my $ryo_string1;
+    my $ryo_string2;
+
+    if (not defined $format_mode) {
+        $ryo_string1 = $nhx_ryo_modes_1{'protein_id'};
+        $ryo_string2 = $nhx_ryo_modes_2{'protein_id'};
+
+    } elsif ($format_mode eq "ryo") {
+        $ryo_string1 = shift @_;
+        $ryo_string2 = shift @_;
+
+    } elsif (defined $nhx_ryo_modes_1{$format_mode}) {
+        $ryo_string1 = $nhx_ryo_modes_1{$format_mode};
+        $ryo_string2 = $nhx_ryo_modes_2{$format_mode};
+
+    } else {
+        throw("Unrecognized format '$format_mode'. Please use 'ryo' to introduce a roll-your-own format string\n");
+    }
+    my $fmt = $ryo_string1;
+    $fmt = $ryo_string1.'[&&NHX'.$ryo_string2.']' if defined $ryo_string2;
+    return $self->_internal_newick_format_ryo($fmt);
+}
+
+sub _internal_newick_format_ryo {
+    my ($self, $ryo_string) = @_;
     my $newick_str;
     eval {
         use Bio::EnsEMBL::Compara::FormatTree;
@@ -1118,28 +1006,15 @@ sub newick_format {
     return "$newick_str;";
 }
 
-sub _internal_nhx_format_ryo {
-  my ($self,$fmt1, $fmt2) = @_;
-  my $fmt = "$fmt1\[&&NHX$fmt2\]";
-  return $self->_internal_newick_format_ryo($fmt);
-}
-
-
 =head2 newick_simple_format
 
-  Arg [1]     : -none-
-  Example     : $this_node->newick_simple_format();
-  Description : Prints this tree in simple Newick format. This is an
-                alias for $this_node->newick_format("simple");
-  Returntype  : undef
-  Exceptions  :
-  Caller      : general
-  Status      : Stable
+    DEPRECATED. Use newick_format("simple") instead
 
 =cut
 
 sub newick_simple_format {
   my $self = shift;
+  deprecate('Use newick_format("simple") instead.');
   return $self->newick_format('simple'); 
 }
 
