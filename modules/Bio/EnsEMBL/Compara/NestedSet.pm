@@ -1072,7 +1072,7 @@ my %ryo_modes = (
     'member_id' => '%{^-m}:%{d}',
     'member_id_taxon_id' => '%{^-m}%{^"_"-x}:%{d}',
     'display_label_composite' => '%{-l"_"}%{n}%{"_"-s}:%{d}',
-    'full_common' => '%{n}%{" "-c}%{"."-g}%{"_"-t"_MYA"}:%{d}',
+    'full_common' => '%{n}%{" "-c.^}%{"."-g}%{"_"-t"_MYA"}:%{d}',
     'gene_stable_id_composite' => '%{-i"_"}%{n}%{"_"-s}:%{d}',
     'gene_stable_id' => '%{-i}:%{d}',
     'ncbi_taxon' => '%{o}',
@@ -1084,85 +1084,44 @@ my %ryo_modes = (
     'otu_id' => '%{-s"|"}%{-l}%{n}:%{d}',
     'int_node_id' => '%{-n}%{o-}:%{d}',
     'full_web' => '%{n-}%{-n|p}%{"_"-s"_"}%{":"d}',
+    'phylip' => '%21{n,}:%{d}',
+    'njtree' => '%{o}%{-T(is_incomplete)|E"*"}%{-T(is_incomplete,0,*)}',
 );
 
 sub newick_format {
-  my $self = shift;
-  my $format_mode = shift;
+    my $self = shift;
+    my $format_mode = shift;
 
-  my $newick;
-  if (not defined $format_mode) {
-    $newick = $self->_internal_newick_format_ryo($ryo_modes{'full'});
+    my $ryo_string;
 
-  } elsif ($format_mode eq "ryo") {
-    my $fmt = shift @_;
-    $newick = $self->_internal_newick_format_ryo($fmt);
-  
-  } elsif (defined $ryo_modes{$format_mode}) {
-    $newick = $self->_internal_newick_format_ryo($ryo_modes{$format_mode});
+    if (not defined $format_mode) {
+        $ryo_string = $ryo_modes{'full'};
 
-  } else {
-    $newick = $self->_internal_newick_format($format_mode);
-  }
-  $newick .= ";";
-  return $newick;
+    } elsif ($format_mode eq "ryo") {
+        $ryo_string = shift @_;
+
+    } elsif (defined $ryo_modes{$format_mode}) {
+        $ryo_string = $ryo_modes{$format_mode};
+
+    } else {
+        throw("Unrecognized format '$format_mode'. Please use 'ryo' to introduce a roll-your-own format string\n");
+    }
+    my $newick_str;
+    eval {
+        use Bio::EnsEMBL::Compara::FormatTree;
+        my $ryo_formatter = Bio::EnsEMBL::Compara::FormatTree->new($ryo_string);
+        $newick_str = $ryo_formatter->format_newick($self);
+    };
+    if ($@) {
+        throw("Something bad happened while trying to stringify the tree: $@\n");
+    }
+    return "$newick_str;";
 }
 
-sub _internal_newick_format_ryo {
-  my ($self,$fmt) = @_;
-  my $tree;
-  eval {
-    use Bio::EnsEMBL::Compara::FormatTree;
-    my $newick = Bio::EnsEMBL::Compara::FormatTree->new($fmt);
-    $tree = $newick->format_newick($self);
-  };
-  if ($@) {
-    print STDERR "Something bad happened while trying to stringify the tree: \n";
-    print STDERR "$@\n";
-    return undef;
-  }
-  return $tree;
-}
-
-sub _internal_newick_format {
-  my $self = shift;
-  my $format_mode = shift;
-  my $newick = "";
-
-  if($self->get_child_count() > 0) {
-    $newick .= "(";
-    my $first_child=1;
-    foreach my $child (@{$self->sorted_children}) {  
-      $newick .= "," unless($first_child);
-      $newick .= $child->_internal_newick_format($format_mode);
-      $first_child = 0;
-    }
-    $newick .= ")";
-  }
-
-  if($format_mode eq 'njtree') { 
-    #name leaves an internal nodes by ncbi taxon_id
-    #add * for leaves
-      my $ncbi_taxon_id = $self->node_id;
-      if($self->is_leaf) { 
-        my $is_incomplete = $self->get_tagvalue("is_incomplete", 0);
-        $ncbi_taxon_id .= "*" unless $is_incomplete;
-      }
-      $newick .= sprintf("%s", $ncbi_taxon_id);
-  }
-  if($format_mode eq 'phylip') { 
-    #phylip: restrict names to 21 characters
-    if($self->parent) {
-      if($self->is_leaf) {
-        my $name = $self->name;
-        $name =~ s/[,(:)]//g;
-        $name = substr($name, 0 , 21);
-        $newick .= sprintf("%s", $name);
-      }
-      $newick .= sprintf(":%1.4f", $self->distance_to_parent);
-    }
-  }
-  return $newick;
+sub _internal_nhx_format_ryo {
+  my ($self,$fmt1, $fmt2) = @_;
+  my $fmt = "$fmt1\[&&NHX$fmt2\]";
+  return $self->_internal_newick_format_ryo($fmt);
 }
 
 
