@@ -49,6 +49,7 @@ package Bio::EnsEMBL::Compara::AlignedMemberSet;
 use strict;
 use Scalar::Util qw(weaken);
 use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Scalar;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::Compara::Member;
@@ -215,18 +216,18 @@ sub method_link_species_set {
 
     if(@_) {
         my $mlss = shift;
-        unless ($mlss->isa('Bio::EnsEMBL::Compara::MethodLinkSpeciesSet')) {
-            throw("Need to add a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet, not a $mlss\n");
-        }
+        assert_ref($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet');
         $self->{'_method_link_species_set'} = $mlss;
         $self->{'_method_link_species_set_id'} = $mlss->dbID;
-    }
 
+    } elsif (defined $self->{'_method_link_species_set_id'}) {
     #lazy load from method_link_species_set_id
-    if ( ! defined $self->{'_method_link_species_set'} && defined $self->method_link_species_set_id) {
-        my $mlssa = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor;
-        my $mlss = $mlssa->fetch_by_dbID($self->method_link_species_set_id);
-        $self->{'_method_link_species_set'} = $mlss;
+        if ((not defined $self->{'_method_link_species_set'})
+             or ($self->{'_method_link_species_set'}->dbID ne $self->{'_method_link_species_set_id'})) {
+            my $mlssa = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor;
+            my $mlss = $mlssa->fetch_by_dbID($self->method_link_species_set_id);
+            $self->{'_method_link_species_set'} = $mlss;
+        }
     }
 
     return $self->{'_method_link_species_set'};
@@ -283,9 +284,9 @@ sub method_link_id {  # DEPRECATED
                corresponding to a perl module
   Example    : 
   Description: getter/setter method for the adaptor for this relation. Usually
-               this will be an object from a subclass of
-               Bio::EnsEMBL::Compara::AlignedMemberSetAdaptor
-  Returntype : Bio::EnsEMBL::Compara::AlignedMemberSetAdaptor object
+               this will be either GeneTreeAdaptor, FamilyAdaptor, or
+               HomologyAdaptor
+  Returntype : Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor object
   Exceptions : none
   Caller     : general
   Status     : Stable
@@ -321,11 +322,7 @@ sub adaptor {
 sub add_AlignedMember {
     my ($self, $member) = @_;
 
-    throw("member argument not defined\n") unless($member);
-
-    unless ($member->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
-        throw("Need to add a Bio::EnsEMBL::Compara::AlignedMember, not a $member\n");
-    }
+    assert_ref($member, 'Bio::EnsEMBL::Compara::AlignedMember');
 
     my $source_name = $member->source_name();
     my $taxon_id = $member->taxon_id();
@@ -518,7 +515,7 @@ sub get_AlignedMember_by_source_taxon {
 sub get_AlignedMember_by_GenomeDB {
     my ($self, $genome_db) = @_;
     throw("Should give defined genome_db as an argument\n") unless defined $genome_db;
-    throw("Param was not a GenomeDB. Was [${genome_db}]") unless $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB');
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
     my ($scope, $key) = ('_members_by_genome_db', $genome_db->dbID());
     return $self->_get_AlignedMember($scope, $key);
 }
@@ -540,7 +537,7 @@ sub get_AlignedMember_by_GenomeDB {
 sub get_AlignedMember_by_source_GenomeDB {
     my ($self, $source_name, $genome_db) = @_;
     throw("Should give defined source_name & genome_db as arguments\n") unless defined $source_name && $genome_db;
-    throw("Param was not a GenomeDB. Was [${genome_db}]") unless $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB');
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
     my ($scope, $key) = ('_members_by_source_genome_db', "${source_name}_".$genome_db->dbID());
     return $self->_get_AlignedMember($scope, $key);
 }
@@ -622,7 +619,7 @@ sub get_Member_Attribute_by_source_taxon {  # DEPRECATED
 sub get_Member_Attribute_by_GenomeDB {  # DEPRECATED
     my ($self, $genome_db) = @_;
     throw("Should give defined genome_db as an argument\n") unless defined $genome_db;
-    throw("Param was not a GenomeDB. Was [${genome_db}]") unless $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB');
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
     my ($attribute_scope, $key) = ('_members_by_genome_db', $genome_db->dbID());
     return $self->_get_Member_Attribute($attribute_scope, $key);
 }
@@ -644,7 +641,7 @@ sub get_Member_Attribute_by_GenomeDB {  # DEPRECATED
 sub get_Member_Attribute_by_source_GenomeDB {  # DEPRECATED
     my ($self, $source_name, $genome_db) = @_;
     throw("Should give defined source_name & genome_db as arguments\n") unless defined $source_name && $genome_db;
-    throw("Param was not a GenomeDB. Was [${genome_db}]") unless $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB');
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
     my ($attribute_scope, $key) = ('_members_by_source_genome_db', "${source_name}_".$genome_db->dbID());
     return $self->_get_Member_Attribute($attribute_scope, $key);
 }
