@@ -156,6 +156,10 @@ foreach my $spp (@valid_spp) {
     my( $a_id ) = ( @{$meta_container->list_value_by_key('assembly.name')},
                     @{$meta_container->list_value_by_key('assembly.default')});
                     
+    warn "[ERROR] $spp "
+        ."missing both meta->assembly.name and meta->assembly.default"
+        unless( $a_id );                    
+                    
     if ($ena) {
       # look for long name and accession num
       my ($long) = @{$meta_container->list_value_by_key('assembly.long_name')};
@@ -164,10 +168,6 @@ foreach my $spp (@valid_spp) {
       $acc = sprintf('INSDC Assembly <a href="http://www.ebi.ac.uk/ena/data/view/%s">%s</a>', $acc, $acc) if $acc;
       $a_id .= ", $acc" if $acc; 
     }                    
-                    
-    warn "[ERROR] $spp "
-        ."missing both meta->assembly.name and meta->assembly.default"
-        unless( $a_id );
 
     my $a_date  = $SD->get_config($spp, 'ASSEMBLY_DATE') || '';
     $a_date || warn "[ERROR] $spp missing SpeciesDefs->ASSEMBLY_DATE!";
