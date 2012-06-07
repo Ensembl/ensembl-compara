@@ -15,7 +15,7 @@ Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter
     -SOURCE => 'Ensembl', -SOURCE_VERSION => 63, -HANDLE => $string_handle
   );
   
-  my $pt = $dba->get_ProteinTreeAdaptor()->fetch_node_by_node_id(2);
+  my $pt = $dba->get_GeneTreeAdaptor()->fetch_by_dbID(3);
   
   $w->write_trees($pt);
   $w->finish(); #YOU MUST CALL THIS TO WRITE THE FINAL TAG
