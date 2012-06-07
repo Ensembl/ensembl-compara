@@ -78,9 +78,7 @@ sub fetch_input {
   $self->param('max_evalue', 0.05);
 
   if(defined($self->param('protein_tree_id'))) {
-    $self->param('tree', 
-         $self->compara_dba->get_ProteinTreeAdaptor->fetch_node_by_node_id($self->param('protein_tree_id'))
-    );
+    $self->param('tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('protein_tree_id')));
     printf("  protein_tree_id : %d\n", $self->param('protein_tree_id')) if ($self->debug);
   }
 
@@ -147,7 +145,7 @@ sub fetch_hmmprofile {
 sub run_search_hmm {
   my $self = shift;
 
-  my $node_id = $self->param('tree')->node_id;
+  my $node_id = $self->param('tree')->root_id;
   my $type = $self->param('type');
   my $hmmprofile = $self->param('hmmprofile');
   my $fastafile = $self->param('fastafile');
@@ -205,7 +203,7 @@ sub run_search_hmm {
 sub search_hmm_store_hits {
   my $self = shift;
   my $type = $self->param('type');
-  my $node_id = $self->param('tree')->node_id;
+  my $node_id = $self->param('tree')->root_id;
   my $qtaxon_id = $self->param('qtaxon_id') || 0;
 
   my $sth = $self->compara_dba->dbc->prepare

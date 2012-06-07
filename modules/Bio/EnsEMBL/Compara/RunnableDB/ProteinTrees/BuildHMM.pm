@@ -91,7 +91,7 @@ sub fetch_input {
     $self->check_if_exit_cleanly;
 
     my $protein_tree_id     = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
-    my $protein_tree        = $self->compara_dba->get_ProteinTreeAdaptor->fetch_node_by_node_id( $protein_tree_id )
+    my $protein_tree        = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID( $protein_tree_id )
                                         or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
     $self->param('protein_tree', $protein_tree);
 
@@ -105,7 +105,7 @@ sub fetch_input {
     }
     $self->param('hmm_type', $hmm_type);
 
-    $self->param('done', 1) if $protein_tree->tree->has_tag("hmm_$hmm_type");
+    $self->param('done', 1) if $protein_tree->has_tag("hmm_$hmm_type");
 
   my @to_delete;
 
@@ -114,7 +114,7 @@ sub fetch_input {
       next unless ($leaf->taxon_id eq $self->param('notaxon'));
       push @to_delete, $leaf;
     }
-    $protein_tree = $protein_tree->remove_nodes(\@to_delete);
+    $protein_tree->root->remove_nodes(\@to_delete);
   }
 
   if ($self->param('taxon_ids')) {
@@ -126,7 +126,7 @@ sub fetch_input {
       next if (defined($taxon_ids_to_keep->{$leaf->taxon_id}));
       push @to_delete, $leaf;
     }
-    $protein_tree = $protein_tree->remove_nodes(\@to_delete);
+    $protein_tree->root->remove_nodes(\@to_delete);
   }
 
   if (!defined($protein_tree)) {
@@ -208,7 +208,7 @@ sub run_buildhmm {
 
   my $starttime = time()*1000;
 
-  my $stk_file = $self->dumpTreeMultipleAlignmentToWorkdir ( $self->param('protein_tree') ) or return;
+  my $stk_file = $self->dumpTreeMultipleAlignmentToWorkdir ( $self->param('protein_tree')->root ) or return;
   return if($self->param('done'));
 
   my $hmm_file = $self->param('hmm_file', $stk_file . '_hmmbuild.hmm');
@@ -240,7 +240,7 @@ sub run_buildhmm {
   $self->compara_dba->dbc->disconnect_when_inactive(0);
   my $runtime = time()*1000-$starttime;
 
-  $self->param('protein_tree')->tree->store_tag('BuildHMM_runtime_msec', $runtime);
+  $self->param('protein_tree')->store_tag('BuildHMM_runtime_msec', $runtime);
 }
 
 
@@ -324,7 +324,7 @@ sub store_hmmprofile {
   my $hmm_text = join('', <FH>);
   close(FH);
 
-  $protein_tree->tree->store_tag("hmm_".$self->param('hmm_type'), $hmm_text);
+  $protein_tree->store_tag("hmm_".$self->param('hmm_type'), $hmm_text);
 }
 
 1;
