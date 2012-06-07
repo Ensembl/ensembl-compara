@@ -48,7 +48,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-        'clusterset_id'  => 1,
         'tree_fmt'       => '%{n}%{":"d}',
     };
 }
@@ -75,15 +74,7 @@ sub fetch_input {
         die ('type is mandatory [prot|nc]');
     }
 
-    if ($self->param('type') eq 'nc') {
-        my $ncTree_Adaptor = $self->compara_dba->get_NCTreeAdaptor();
-        $self->param('adaptor', $ncTree_Adaptor);
-    } elsif ($self->param('type') eq 'prot') {
-        my $protTree_Adaptor = $self->compara_dba->get_ProteinTreeAdaptor();
-        $self->param('adaptor', $protTree_Adaptor);
-    } else {
-        die 'type must be [prot|nc]';
-    }
+    $self->param('adaptor', $self->compara_dba->get_GeneTreeAdaptor);
 
     if ($self->param('perFamTable')) {
         $self->warning("Per-family CAFE Analysis");
@@ -111,6 +102,9 @@ sub write_output {
     my $number_of_fams = $self->param('number_of_fams');
     my $all_fams = $self->param('all_fams');
     for my $fam_id (@$all_fams) {
+
+        print STDERR "FIRING FAM: $fam_id\n";
+
         $self->dataflow_output_id (
                                    {
                                     'fam_id' => $fam_id,
@@ -119,6 +113,7 @@ sub write_output {
                                   );
     }
 }
+
 
 ###########################################
 ## Internal methods #######################
@@ -159,20 +154,11 @@ sub get_full_cafe_table_from_db {
 
 #    print $cafe_fh "FAMILY_DESC\tFAMILY\t", join("\t", @$species), "\n";
 
-    my $all_trees = $adaptor->fetch_all();
+    my $all_trees = $adaptor->fetch_all(-tree_type => 'tree');
     print STDERR scalar @$all_trees, " trees to process\n" if ($self->debug());
     my $ok_fams = 0;
     for my $tree (@$all_trees) {
-        my $root_id;
-        if (defined $tree) {
-            $root_id = $tree->node_id();
-        } else {
-            next;
-        }
-        ## Warning: I think this is not needed anymore.
-#        next if ($root_id == 1); ## This is the clusterset! We have to avoid taking the trees with 'type' 'clusterset'. Should be included in the gene tree API (nc_tree / protein_tree) at some point.
-#        next if ($subtree->tree->tree_type() eq 'supertree'); ## For now you also get superproteintrees!!!
-#        my $tree = $adaptor->fetch_node_by_node_id($root_id);
+        my $root_id = $tree->root_id;
         my $name = $self->get_name($tree);
         my $tree_members = $tree->get_all_leaves();
         my %species;
@@ -214,25 +200,17 @@ sub get_per_family_cafe_table_from_db {
     my $sp_tree = $self->param('cafe_tree');
     my $mlss_id = $self->param('mlss_id');
 
-#    my $clusterset = $adaptor->fetch_node_by_node_id($self->param('clusterset_id'));
-
-#    my $all_trees = $clusterset->children();
-    my $all_trees = $adaptor->fetch_all();
+    my $all_trees = $adaptor->fetch_all(-tree_type => 'tree');
     print STDERR scalar @$all_trees, " trees to process\n" if ($self->debug());
     my $ok_fams = 0;
     my @all_fams;
     for my $tree (@$all_trees) {
-#        my $subtree = $tree->children->[0];
-        my $root_id;
-        if (defined $tree) {
-            $root_id = $tree->node_id();
-        } else {
-            print STDERR "Undefined tree for " . $tree->node_id() . "\n";
-            next;
-        }
-#        my $tree = $adaptor->fetch_node_by_node_id($root_id);
+        my $root_id = $tree->root_id();
+        print STDERR "ROOT_ID: $root_id\n" if ($self->debug());
         my $name = $self->get_name($tree);
+        print STDERR "MODEL_NAME: $name\n" if ($self->debug());
         my $tree_members = $tree->get_all_leaves();
+        print STDERR "NUMBER_OF_LEAVES: ", scalar @$tree_members, "\n" if ($self->debug());
         my %species;
         for my $member (@$tree_members) {
             my $sp;
@@ -241,19 +219,24 @@ sub get_per_family_cafe_table_from_db {
             $sp =~ s/_/\./;
             $species{$sp}++;
         }
+        print STDERR scalar (keys %species) , " species for this tree\n";
         next if (scalar (keys %species) < 4);
 
         ## TODO: Should we filter out low-coverage genomes?
         my $species = [keys %species];
+#        print STDERR "SPECIES IN THE TREE:\n" if ($self->debug());
+#        print STDERR Dumper $species if ($self->debug());
 
         my @leaves = ();
         for my $node (@{$sp_tree->get_all_leaves}) {
+#            print STDERR "NODE : ", $node->name(), "\n" if ($self->debug());
             if (is_in($node->name, $species)) {
                 push @leaves, $node;
             }
         }
         next unless (scalar @leaves > 1);
 
+#        print STDERR "LEAVES: ", Dumper \@leaves;
         my $lca = $sp_tree->find_first_shared_ancestor_from_leaves([@leaves]);
         next unless (defined $lca);
         my $lca_str = $lca->newick_format('ryo', $fmt);
@@ -292,7 +275,6 @@ sub get_per_family_cafe_table_from_db {
     return;
 }
 
-
 sub has_member_at_root {
     my ($self, $sps) = @_;
     my $sp_tree = $self->param('cafe_tree');
@@ -327,7 +309,7 @@ sub get_name {
     if ($self->param('type') eq 'nc') {
         $name = $tree->tree->get_tagvalue('model_name');
     } else {
-        $name = $tree->node_id();
+        $name = $tree->root_id();
     }
     return $name;
 }

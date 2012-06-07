@@ -48,7 +48,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-        'clusterset_id'  => 1,
+        'tree_fmt'       => '%{n}%{":"d}',
     };
 }
 
@@ -75,15 +75,7 @@ sub fetch_input {
         die ('type is mandatory [prot|nc]');
     }
 
-    if ($self->param('type') eq 'nc') {
-        my $ncTree_Adaptor = $self->compara_dba->get_NCTreeAdaptor();
-        $self->param('adaptor', $ncTree_Adaptor);
-    } elsif ($self->param('type') eq 'prot') {
-        my $protTree_Adaptor = $self->compara_dba->get_ProteinTreeAdaptor();
-        $self->param('adaptor', $protTree_Adaptor);
-    } else {
-        die 'type must be [prot|nc]';
-    }
+    $self->param('adaptor', $self->compara_dba->get_GeneTreeAdaptor);
 
     return;
 }
@@ -143,29 +135,18 @@ sub get_cafe_tree_from_string {
 
 sub get_cafe_table_from_db {
     my ($self) = @_;
-    my $fmt = $self->param('tree_fmt') || '%{n}%{":"d}';
+    my $fmt = $self->param('tree_fmt');
     my $adaptor = $self->param('adaptor');
     my $sp_tree = $self->param('cafe_tree');
     my $mlss_id = $self->param('mlss_id');
 
-#    my $clusterset = $adaptor->fetch_node_by_node_id($self->param('clusterset_id'));
-
-#    my $all_trees = $clusterset->children();
-    my $all_trees = $adaptor->fetch_all();
+    my $all_trees = $adaptor->fetch_all(-tree_type => 'tree');
     print STDERR scalar @$all_trees, " trees to process\n" if ($self->debug());
     my $ok_fams = 0;
     my @all_fams;
     for my $tree (@$all_trees) {
-#        my $subtree = $tree->children->[0];
-        my $root_id;
-        if (defined $tree) {
-            $root_id = $tree->node_id();
-        } else {
-            print STDERR "Undefined tree for " . $tree->node_id() . "\n";
-            next;
-        }
+        my $root_id = $tree->root_id();
         print STDERR "ROOT_ID: $root_id\n" if ($self->debug());
-#        my $tree = $adaptor->fetch_node_by_node_id($root_id);
         my $name = $self->get_name($tree);
         print STDERR "MODEL_NAME: $name\n" if ($self->debug());
         my $tree_members = $tree->get_all_leaves();
@@ -219,7 +200,7 @@ sub get_cafe_table_from_db {
         print STDERR "TABLE FOR THIS FAM:\n$fam_table\n" if ($self->debug());
         $ok_fams++;
 
-        my $sth = $self->compara_dba->dbc->prepare("insert into CAFE_data (fam_id, tree, tabledata) values (?,?,?);");
+        my $sth = $self->compara_dba->dbc->prepare("INSERT INTO CAFE_data (fam_id, tree, tabledata) VALUES (?,?,?);");
         $sth->execute($name, $lca_str, $fam_table);
         $sth->finish();
 
@@ -268,7 +249,7 @@ sub get_name {
     if ($self->param('type') eq 'nc') {
         $name = $tree->tree->get_tagvalue('model_name');
     } else {
-        $name = $tree->node_id();
+        $name = $tree->root_id();
     }
     return $name;
 }
