@@ -154,7 +154,11 @@ sub run_njtree_phyml {
 
   my $starttime = time()*1000;
 
-  my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $protein_tree->root ) or return;
+  if (scalar(@{$protein_tree->root->get_all_leaves}) < 3) {
+    printf(STDERR "tree cluster %d has <3 proteins - can not build a tree\n", $protein_tree->root_id);
+    return;
+  }
+  my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $protein_tree->root );
 
   my $newick_file = $input_aln . "_njtree_phyml_tree.txt ";
 
@@ -275,123 +279,6 @@ sub run_njtree_phyml {
   my $runtime = time()*1000-$starttime;
 
   $protein_tree->store_tag('NJTREE_PHYML_runtime_msec', $runtime);
-}
-
-
-########################################################
-#
-# GeneTree input/output section
-#
-########################################################
-
-sub dumpTreeMultipleAlignmentToWorkdir {
-  my $self = shift;
-  my $protein_tree = shift;
-
-  my $alignment_edits = $self->param('alignment_edits');
-
-  my $leafcount = scalar(@{$protein_tree->get_all_leaves});
-  if($leafcount<3) {
-    printf(STDERR "tree cluster %d has <3 proteins - can not build a tree\n", 
-           $protein_tree->node_id);
-    return undef;
-  }
-
-  my $file_root = $self->worker_temp_directory. "proteintree_". $protein_tree->node_id;
-  $file_root =~ s/\/\//\//g;  # converts any // in path to /
-
-  my $aln_file = $file_root . '.aln';
-  return $aln_file if(-e $aln_file);
-  if($self->debug) {
-    printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $leafcount);
-    print("aln_file = '$aln_file'\n");
-  }
-
-  open(OUTSEQ, ">$aln_file")
-    or $self->throw("Error opening $aln_file for write");
-
-  # Using append_taxon_id will give nice seqnames_taxonids needed for
-  # njtree species_tree matching
-  my %sa_params = $self->param('use_genomedb_id') ? ('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
-
-  my %split_genes;
-
-  ########################################
-  # Gene split mirroring code
-  #
-  # This will have the effect of grouping the different
-  # fragments of a gene split event together in a subtree
-  #
-  if ($self->param('check_split_genes')) {
-    my $sth = $self->compara_dba->dbc->prepare('SELECT DISTINCT gene_split_id FROM split_genes JOIN gene_tree_member USING (member_id) JOIN gene_tree_node USING (node_id) WHERE root_id = ?');
-    $sth->execute($self->param('protein_tree_id'));
-    my $gene_splits = $sth->selectall_arrayref();
-    $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_member USING (member_id) WHERE gene_split_id = ?');
-    foreach my $gene_split (@$gene_splits) {
-      $sth->execute($gene_split->{gene_split_id});
-      my $partial_genes = $sth->fetchall_arrayref;
-      my $node1 = shift @$partial_genes;
-      my $protein1 = $protein_tree->find_leaf_by_node_id($node1->{node_id});
-      #print STDERR "node1 ", $node1, " ", $protein1, "\n";
-      my $name1 = ($protein1->member_id)."_".($self->param('use_genomedb_id') ? $protein1->genome_db_id : $protein1->taxon_id);
-      my $cdna = $protein1->cdna_alignment_string;
-      #print STDERR "cnda1 $cdna\n";
-      foreach my $node2 (@$partial_genes) {
-        my $protein2 = $protein_tree->find_leaf_by_node_id($node2->{node_id});
-        #print STDERR "node2 ", $node2, " ", $protein2, "\n";
-        my $name2 = ($protein2->member_id)."_".($self->param('use_genomedb_id') ? $protein2->genome_db_id : $protein2->taxon_id);
-        $split_genes{$name2} = $name1;
-        #print STDERR Dumper(%split_genes);
-        print STDERR "Joining in ", $protein1->stable_id, " / $name1 and ", $protein2->stable_id, " / $name2 in input cdna alignment\n" if ($self->debug);
-        my $other_cdna = $protein2->cdna_alignment_string;
-        $cdna =~ s/-/substr($other_cdna, pos($cdna), 1)/eg;
-        #print STDERR "cnda2 $cdna\n";
-      }
-      $protein1->{'cdna_alignment_string'} = $cdna;
-        # We start with the original cdna alignment string of the first gene, and
-        # add the position in the other cdna for every gap position, and iterate
-        # through all the other cdnas
-        # cdna1 = AAA AAA AAA AAA AAA --- --- --- --- --- --- --- --- --- --- --- ---
-        # cdna2 = --- --- --- --- --- --- TTT TTT TTT TTT TTT --- --- --- --- --- ---
-        # become
-        # cdna1 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- --- --- --- --- ---
-        # and now then paired with 3, they becomes the full gene model:
-        # cdna3 = --- --- --- --- --- --- --- --- --- --- --- --- CCC CCC CCC CCC CCC
-        # and form:
-        # cdna1 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- CCC CCC CCC CCC CCC
-        # We then directly override the cached cdna_alignment_string
-        # hash, which will be used next time is called for
-    }
-  }
-  ########################################
-
-  print STDERR "fetching alignment\n" if ($self->debug);
-  my $sa = $protein_tree->get_SimpleAlign
-    (
-     -id_type => 'MEMBER',
-     -cdna=>$self->param('cdna'),
-     -stop2x => 1,
-     %sa_params
-    );
-  # Removing duplicate sequences of split genes
-  print STDERR "split_genes hash: ", Dumper(%split_genes), "\n" if $self->debug;
-  foreach my $gene_to_remove (keys %split_genes) {
-    $sa->remove_seq($sa->each_seq_with_id($gene_to_remove));
-  }
-  $self->param('split_genes', \%split_genes);
-
-  $sa->set_displayname_flat(1);
-
-  my $alignIO = Bio::AlignIO->newFh
-    (
-     -fh => \*OUTSEQ,
-     -format => "fasta"
-    );
-  print $alignIO $sa;
-
-  close OUTSEQ;
-
-  return $aln_file;
 }
 
 

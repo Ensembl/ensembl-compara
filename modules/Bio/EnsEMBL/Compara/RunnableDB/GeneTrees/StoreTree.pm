@@ -10,6 +10,126 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+
+sub dumpTreeMultipleAlignmentToWorkdir {
+  my $self = shift;
+  my $gene_tree = shift;
+  my $convert_to_stockholm = shift;
+  
+  my $leafcount = scalar(@{$gene_tree->get_all_leaves});
+
+  my $file_root = $self->worker_temp_directory. $gene_tree->node_id;
+  $file_root =~ s/\/\//\//g;  # converts any // in path to /
+
+  my $aln_file = $file_root . '.aln';
+  return $aln_file if(-e $aln_file);
+  if($self->debug) {
+    printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $leafcount);
+    print("aln_file = '$aln_file'\n");
+  }
+
+  open(OUTSEQ, ">$aln_file") or die "Could not open '$aln_file' for writing : $!";
+
+  # Using append_taxon_id will give nice seqnames_taxonids needed for
+  # njtree species_tree matching
+  my %sa_params = $self->param('use_genomedb_id') ? ('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
+
+  print STDERR "fetching alignment\n" if ($self->debug);
+  my $sa = $gene_tree->get_SimpleAlign(
+     -id_type => 'MEMBER',
+     -cdna => $self->param('cdna'),
+     -stop2x => 1,
+     %sa_params,
+  );
+
+  ########################################
+  # Gene split mirroring code
+  #
+  # This will have the effect of grouping the different
+  # fragments of a gene split event together in a subtree
+  #
+  if ($self->param('check_split_genes')) {
+    my %split_genes;
+    my $sth = $self->compara_dba->dbc->prepare('SELECT DISTINCT gene_split_id FROM split_genes JOIN gene_tree_member USING (member_id) JOIN gene_tree_node USING (node_id) WHERE root_id = ?');
+    $sth->execute($self->param('protein_tree_id'));
+    my $gene_splits = $sth->selectall_arrayref();
+    $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_member USING (member_id) WHERE gene_split_id = ?');
+    foreach my $gene_split (@$gene_splits) {
+      $sth->execute($gene_split->{gene_split_id});
+      my $partial_genes = $sth->fetchall_arrayref;
+      my $node1 = shift @$partial_genes;
+      my $protein1 = $gene_tree->find_leaf_by_node_id($node1->{node_id});
+      #print STDERR "node1 ", $node1, " ", $protein1, "\n";
+      my $name1 = ($protein1->member_id)."_".($self->param('use_genomedb_id') ? $protein1->genome_db_id : $protein1->taxon_id);
+      my $cdna = $protein1->cdna_alignment_string;
+      #print STDERR "cnda1 $cdna\n";
+      foreach my $node2 (@$partial_genes) {
+        my $protein2 = $gene_tree->find_leaf_by_node_id($node2->{node_id});
+        #print STDERR "node2 ", $node2, " ", $protein2, "\n";
+        my $name2 = ($protein2->member_id)."_".($self->param('use_genomedb_id') ? $protein2->genome_db_id : $protein2->taxon_id);
+        $split_genes{$name2} = $name1;
+        #print STDERR Dumper(%split_genes);
+        print STDERR "Joining in ", $protein1->stable_id, " / $name1 and ", $protein2->stable_id, " / $name2 in input cdna alignment\n" if ($self->debug);
+        my $other_cdna = $protein2->cdna_alignment_string;
+        $cdna =~ s/-/substr($other_cdna, pos($cdna), 1)/eg;
+        #print STDERR "cnda2 $cdna\n";
+      }
+      $protein1->{'cdna_alignment_string'} = $cdna;
+        # We start with the original cdna alignment string of the first gene, and
+        # add the position in the other cdna for every gap position, and iterate
+        # through all the other cdnas
+        # cdna1 = AAA AAA AAA AAA AAA --- --- --- --- --- --- --- --- --- --- --- ---
+        # cdna2 = --- --- --- --- --- --- TTT TTT TTT TTT TTT --- --- --- --- --- ---
+        # become
+        # cdna1 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- --- --- --- --- ---
+        # and now then paired with 3, they becomes the full gene model:
+        # cdna3 = --- --- --- --- --- --- --- --- --- --- --- --- CCC CCC CCC CCC CCC
+        # and form:
+        # cdna1 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- CCC CCC CCC CCC CCC
+        # We then directly override the cached cdna_alignment_string
+        # hash, which will be used next time is called for
+    }
+
+    # Removing duplicate sequences of split genes
+    print STDERR "split_genes hash: ", Dumper(%split_genes), "\n" if $self->debug;
+    foreach my $gene_to_remove (keys %split_genes) {
+      $sa->remove_seq($sa->each_seq_with_id($gene_to_remove));
+    }
+    $self->param('split_genes', \%split_genes);
+  }
+  $sa->set_displayname_flat(1);
+
+  my $alignIO = Bio::AlignIO->newFh( -fh => \*OUTSEQ, -format => "fasta");
+  print $alignIO $sa;
+
+  close OUTSEQ;
+
+  unless(-e $aln_file and -s $aln_file) {
+    die "There are no alignments in '$aln_file', cannot continue";
+  }
+
+  return $aln_file unless $convert_to_stockholm;
+
+  print STDERR "Using sreformat to change to stockholm format\n" if ($self->debug);
+  my $stk_file = $file_root . '.stk';
+
+  my $sreformat_exe = $self->param('sreformat_exe')
+        or die "'sreformat_exe' is an obligatory parameter";
+
+  die "Cannot execute '$sreformat_exe'" unless(-x $sreformat_exe);
+
+  my $cmd = "$sreformat_exe stockholm $aln_file > $stk_file";
+
+  if(system($cmd)) {
+    die "Error running command [$cmd] : $!";
+  }
+  unless(-e $stk_file and -s $stk_file) {
+    die "'$cmd' did not produce any data in '$stk_file'";
+  }
+
+  return $stk_file;
+}
+
 sub store_genetree
 {
     my $self = shift;

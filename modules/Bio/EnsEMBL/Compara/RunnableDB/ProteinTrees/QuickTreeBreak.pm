@@ -83,7 +83,7 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 
 =head2 fetch_input
@@ -181,8 +181,14 @@ sub run_quicktreebreak {
   my $self = shift;
 
   my $starttime = time()*1000;
+  my $gene_tree = $self->param('gene_tree');
 
-  my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $self->param('gene_tree')->root ) or return;
+  $self->param('original_leafcount', scalar(@{$gene_tree->get_all_leaves}) );
+  if($self->param('original_leafcount')<3) {
+    printf(STDERR "tree cluster %d has <3 proteins - can not build a tree\n", $gene_tree->root_id);
+    return;
+  }
+  my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $gene_tree->root, 1 );
 
   my $quicktree_exe = $self->param('quicktree_exe')
         or die "'quicktree_exe' is an obligatory parameter";
@@ -210,7 +216,7 @@ sub run_quicktreebreak {
   $self->generate_subtrees( $quicktree_newick_string );
 
   my $runtime = time()*1000-$starttime;
-  $self->param('gene_tree')->store_tag('QuickTreeBreak_runtime_msec', $runtime);
+  $gene_tree->store_tag('QuickTreeBreak_runtime_msec', $runtime);
 }
 
 
@@ -219,56 +225,6 @@ sub run_quicktreebreak {
 # ProteinTree input/output section
 #
 ########################################################
-
-sub dumpTreeMultipleAlignmentToWorkdir {
-  my $self = shift;
-  my $gene_tree = shift;
-
-  $self->param('original_leafcount', scalar(@{$gene_tree->get_all_leaves}) );
-  if($self->param('original_leafcount')<3) {
-    printf(STDERR "tree cluster %d has <3 proteins - can not build a tree\n", $gene_tree->node_id);
-    return undef;
-  }
-
-  my $file_root = $self->worker_temp_directory. "proteintree_". $gene_tree->node_id;
-  $file_root =~ s/\/\//\//g;  # converts any // in path to /
-
-  my $aln_file = $file_root . '.aln';
-  return $aln_file if(-e $aln_file);
-  if($self->debug) {
-    printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $self->param('original_leafcount') );
-    print("aln_file = '$aln_file'\n");
-  }
-
-  open(OUTSEQ, ">$aln_file") or die "Could not open '$aln_file' for writing : $!";
-
-  # Using append_taxon_id will give nice seqnames_taxonids needed for
-  # njtree species_tree matching
-  my %sa_params = ($self->param('use_genomedb_id')) ? ('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
-
-  my $sa = $gene_tree->get_SimpleAlign ( -id_type => 'MEMBER', %sa_params );
-  $sa->set_displayname_flat(1);
-  my $alignIO = Bio::AlignIO->newFh ( -fh => \*OUTSEQ, -format => "fasta" );
-  print $alignIO $sa;
-
-  close OUTSEQ;
-
-  print STDERR "Using sreformat to change to stockholm format\n" if ($self->debug);
-  my $stk_file = $file_root . '.stk';
-  
-  my $sreformat_exe = $self->param('sreformat_exe')
-        or die "'sreformat_exe' is an obligatory parameter";
-
-  die "Cannot execute '$sreformat_exe'" unless(-x $sreformat_exe);
-  
-  my $cmd = "$sreformat_exe stockholm $aln_file > $stk_file";
-
-  if(system($cmd)) {
-    die "Error running command [$cmd] : $!";
-  }
-
-  return $stk_file;
-}
 
 
 sub store_supertree {

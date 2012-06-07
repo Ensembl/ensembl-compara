@@ -76,7 +76,7 @@ use Bio::SimpleAlign;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 sub param_defaults {
     return {
@@ -208,8 +208,7 @@ sub run_buildhmm {
 
   my $starttime = time()*1000;
 
-  my $stk_file = $self->dumpTreeMultipleAlignmentToWorkdir ( $self->param('protein_tree')->root ) or return;
-  return if($self->param('done'));
+  my $stk_file = $self->dumpTreeMultipleAlignmentToWorkdir ( $self->param('protein_tree')->root, 1 );
 
   my $hmm_file = $self->param('hmm_file', $stk_file . '_hmmbuild.hmm');
 
@@ -249,69 +248,6 @@ sub run_buildhmm {
 # ProteinTree input/output section
 #
 ########################################################
-
-sub dumpTreeMultipleAlignmentToWorkdir {
-  my $self = shift;
-  my $protein_tree = shift;
-  
-  my $leafcount = scalar(@{$protein_tree->get_all_leaves});
-
-  my $file_root = $self->worker_temp_directory. $protein_tree->node_id;
-  $file_root =~ s/\/\//\//g;  # converts any // in path to /
-
-  my $aln_file = $file_root . '.aln';
-#  return $aln_file if(-e $aln_file);
-  if($self->debug) {
-    printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $leafcount);
-    print("aln_file = '$aln_file'\n");
-  }
-
-  open(OUTSEQ, ">$aln_file") or die "Could not open '$aln_file' for writing : $!";
-
-  my $sa = $protein_tree->get_SimpleAlign (
-     -id_type => 'MEMBER',
-     -cdna => $self->param('cdna'),
-     -stop2x => 1
-  );
-  $sa->set_displayname_flat(1);
-
-  # Pairwise alns can sometimes be empty
-  if (0 == scalar($sa->each_seq)) {
-    return $self->param('done', 1);
-  }
-
-  my $alignIO = Bio::AlignIO->newFh
-    (
-     -fh => \*OUTSEQ,
-     -format => "fasta"
-    );
-  print $alignIO $sa;
-
-  close OUTSEQ;
-
-  unless(-e $aln_file and -s $aln_file) {
-    die "There are no alignments in '$aln_file', cannot continue";
-  }
-
-  my $stk_file = $file_root . '.stk';
-
-  my $sreformat_exe = $self->param('sreformat_exe')
-        or die "'sreformat_exe' is an obligatory parameter";
-
-  die "Cannot execute '$sreformat_exe'" unless(-x $sreformat_exe);
-
-  my $cmd = "$sreformat_exe stockholm $aln_file > $stk_file";
-  if(system($cmd)) {
-    my $system_error = $!;
-    die "Could not run [$cmd] : $system_error";
-  }
-  unless(-e $stk_file and -s $stk_file) {
-    die "'$cmd' did not produce any data in '$stk_file'";
-  }
-
-  return $stk_file;
-}
-
 
 sub store_hmmprofile {
   my $self = shift;
