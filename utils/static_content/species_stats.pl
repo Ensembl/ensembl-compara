@@ -23,7 +23,7 @@ use File::Basename qw( dirname );
 use Pod::Usage;
 use Getopt::Long;
 
-use vars qw( $SERVERROOT $PLUGIN_ROOT $SCRIPT_ROOT $DEBUG $FUDGE $NOINTERPRO $NOSUMMARY $help $info @user_spp $allgenetypes $coordsys $list $pan_comp_species);
+use vars qw( $SERVERROOT $PLUGIN_ROOT $SCRIPT_ROOT $DEBUG $FUDGE $NOINTERPRO $NOSUMMARY $help $info @user_spp $allgenetypes $coordsys $list $pan_comp_species $ena);
 
 BEGIN{
   &GetOptions( 
@@ -37,7 +37,8 @@ BEGIN{
                'nosummary' => \$NOSUMMARY,
                'plugin_root=s' => \$PLUGIN_ROOT,
                'coordsys' => \$coordsys,
-               'pan_c_sp' => \$pan_comp_species
+               'pan_c_sp' => \$pan_comp_species,
+               'ena' => \$ena
 	     );
 
   pod2usage(-verbose => 2) if $info;
@@ -154,6 +155,16 @@ foreach my $spp (@valid_spp) {
 
     my( $a_id ) = ( @{$meta_container->list_value_by_key('assembly.name')},
                     @{$meta_container->list_value_by_key('assembly.default')});
+                    
+    if ($ena) {
+      # look for long name and accession num
+      my ($long) = @{$meta_container->list_value_by_key('assembly.long_name')};
+      $a_id .= " ($long)" if $long; 
+      my ($acc) = @{$meta_container->list_value_by_key('assembly.accession')};
+      $acc = sprintf('INSDC Assembly <a href="http://www.ebi.ac.uk/ena/data/view/%s">%s</a>', $acc, $acc) if $acc;
+      $a_id .= ", $acc" if $acc; 
+    }                    
+                    
     warn "[ERROR] $spp "
         ."missing both meta->assembly.name and meta->assembly.default"
         unless( $a_id );
