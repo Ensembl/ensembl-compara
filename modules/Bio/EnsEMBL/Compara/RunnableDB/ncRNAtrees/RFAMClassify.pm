@@ -117,7 +117,7 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->store_and_dataflow_clusterset();
+    $self->store_and_dataflow_clusterset('default', $self->param('allclusters'));
 }
 
 
@@ -139,9 +139,7 @@ sub run_rfamclassify {
     $self->build_hash_models();
 
     my %allclusters;
-#    my @allclusters;
     $self->param('allclusters', \%allclusters);
-#    $self->param('allclusters', \@allclusters);
 
     # Classify the cluster that already have an RFAM id or mir id
     print STDERR "Storing clusters...\n" if ($self->debug);
@@ -168,32 +166,8 @@ sub run_rfamclassify {
                                 'model_name' => $model_name,
                                 'clustering_id' => $cm_id,
                                }
-#        push @allclusters, [$cm_id, $model_name, \@cluster_list];
 
     }
-}
-
-sub store_and_dataflow_clusterset {
-    my $self = shift;
-    my $allclusters = $self->param('allclusters');
-    $self->create_clusterset();
-    if ($self->param('sort_clusters')) {
-        foreach my $cluster_list_extended (sort {scalar(@{$b->[2]}) <=> scalar(@{$a->[2]})} @$allclusters) {
-            my ($cm_id, $model_name, $cluster_list) = @$cluster_list_extended;
-            my $cluster = $self->add_cluster($cluster_list);
-            $cluster->store_tag('clustering_id', $cm_id);
-            $cluster->store_tag('model_name', $model_name) if (defined($model_name));
-        }
-    } else {
-        foreach my $cluster_list_extended (@$allclusters) {
-            my ($cm_id, $model_name, $cluster_list) = @$cluster_list_extended;
-            my $cluster = $self->add_cluster($cluster_list);
-            $cluster->store_tag('clustering_id', $cm_id);
-            $cluster->store_tag('model_name', $model_name) if (defined($model_name));
-        }
-    }
-    $self->finish_store_clusterset();
-    $self->dataflow_clusters();
 }
 
 

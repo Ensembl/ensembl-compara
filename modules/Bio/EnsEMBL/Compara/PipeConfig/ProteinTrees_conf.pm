@@ -768,13 +768,13 @@ sub pipeline_analyses {
             -parameters => {
                 'mlss_id'                   => $self->o('mlss_id'),
                 'cluster_dir'               => $self->o('cluster_dir'),
+                'additional_clustersets'    => ['phyml_aa', 'phyml_nt', 'nj_dn', 'nj_ds', 'nj_mm', 'super-align'],
             },
             -hive_capacity => -1,
             -rc_id => 3,
             -flow_into => {
                 1 => {
                     'run_qc_tests' => {'groupset_tag' => 'Clusterset' },
-                    'mysql:////meta' => { 'meta_key' => 'clusterset_id', 'meta_value' => '#clusterset_id#' },
                 },
             },
         },

@@ -688,7 +688,7 @@ CREATE TABLE gene_tree_root (
     root_id                         INT(10) UNSIGNED NOT NULL,
     member_type                     ENUM('protein', 'ncrna') NOT NULL,
     tree_type                       ENUM('clusterset', 'supertree', 'tree') NOT NULL,
-    clusterset_id                   INT(10) UNSIGNED,
+    clusterset_id                   VARCHAR(20) NOT NULL,
     method_link_species_set_id      INT(10) UNSIGNED NOT NULL,
     stable_id                       VARCHAR(40),            # unique stable id, e.g. 'ENSGT'.'0053'.'1234567890'
     version                         INT UNSIGNED,           # version of the stable_id (changes only when members move to/from existing trees)

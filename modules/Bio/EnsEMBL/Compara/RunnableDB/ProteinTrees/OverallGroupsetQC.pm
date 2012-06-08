@@ -88,7 +88,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->param('groupset_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('clusterset_id'))) or die "Could not fetch groupset tree";
+    $self->param('groupset_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'default')->[0]) or die "Could not fetch groupset tree";
 
 }
 

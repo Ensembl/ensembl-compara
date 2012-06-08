@@ -167,7 +167,7 @@ sub fetch_all_AlignedMember_by_Member {
 
     if (defined $clusterset_id) {
         $constraint .= ' AND (tr.clusterset_id = ?)';
-        $self->bind_param_generic_fetch($clusterset_id, SQL_INTEGER);
+        $self->bind_param_generic_fetch($clusterset_id, SQL_VARCHAR);
     }
 
     if (defined $self->_default_member_type) {

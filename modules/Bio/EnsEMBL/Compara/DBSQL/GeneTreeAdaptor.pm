@@ -114,7 +114,7 @@ sub fetch_all {
 
     if (defined $clusterset_id) {
         push @constraint, '(gtr.clusterset_id = ?)';
-        $self->bind_param_generic_fetch($clusterset_id, SQL_INTEGER);
+        $self->bind_param_generic_fetch($clusterset_id, SQL_VARCHAR);
     }
 
     return $self->generic_fetch(join(' AND ', @constraint));
@@ -241,7 +241,7 @@ sub fetch_all_by_Member {
     }
     if (defined $clusterset_id) {
         $constraint .= ' AND (gtr.clusterset_id = ?)';
-        $self->bind_param_generic_fetch($clusterset_id, SQL_INTEGER);
+        $self->bind_param_generic_fetch($clusterset_id, SQL_VARCHAR);
     }
 
     return $self->generic_fetch($constraint, $join);
