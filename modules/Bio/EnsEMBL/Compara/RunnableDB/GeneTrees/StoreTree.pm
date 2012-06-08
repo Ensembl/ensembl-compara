@@ -341,5 +341,24 @@ sub store_tree_tags {
     print "Done storing stuff!\n" if ($self->debug);
 }
 
+sub copy_tree_to_clusterset {
+    my $self = shift;
+    my $initree = shift;
+    my $clusterset = shift;
+    my $newtree = $initree->deep_copy;
+
+    # We don't need cigar lines
+    foreach my $member (@{$newtree->get_all_Members}) {
+        $member->cigar_line('');
+    }
+
+    my $clusterset_leaf = new Bio::EnsEMBL::Compara::GeneTreeNode;
+    $clusterset_leaf->no_autoload_children();
+    $clusterset->root->add_child($clusterset_leaf);
+    $clusterset_leaf->add_child($newtree->root);
+
+    $clusterset->adaptor->db->get_GeneTreeNodeAdaptor->store($clusterset_leaf);
+    return $newtree;
+}
 
 1;

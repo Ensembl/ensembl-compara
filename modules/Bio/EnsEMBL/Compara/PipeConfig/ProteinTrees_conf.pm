@@ -768,7 +768,7 @@ sub pipeline_analyses {
             -parameters => {
                 'mlss_id'                   => $self->o('mlss_id'),
                 'cluster_dir'               => $self->o('cluster_dir'),
-                'additional_clustersets'    => ['phyml_aa', 'phyml_nt', 'nj_dn', 'nj_ds', 'nj_mm', 'super-align'],
+                'additional_clustersets'    => qw(phyml-aa phyml-nt nj-dn nj-ds nj-mm super-align filtered-align),
             },
             -hive_capacity => -1,
             -rc_id => 3,
@@ -959,6 +959,8 @@ sub pipeline_analyses {
             -parameters => {
                 'cdna'                      => 1,
                 'bootstrap'                 => 1,
+                'store_intermediate_trees'  => 1,
+                'store_filtered_align'      => 1,
                 'use_genomedb_id'           => $self->o('use_genomedb_id'),
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'mlss_id'                   => $self->o('mlss_id'),
@@ -1009,6 +1011,7 @@ sub pipeline_analyses {
                 'mlss_id'           => $self->o('mlss_id'),
                 'quicktree_exe'     => $self->o('quicktree_exe'),
                 'sreformat_exe'     => $self->o('sreformat_exe'),
+                'store_super_align' => 1,
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
             -rc_id     => 1,

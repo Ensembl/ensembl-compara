@@ -68,11 +68,9 @@ use strict;
 
 use IO::File;
 use File::Basename;
+use File::Path;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Data::Dumper;
-
-use Bio::AlignIO;
-use Bio::SimpleAlign;
 
 use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::Member;
@@ -117,13 +115,35 @@ sub run {
 
 
 sub write_output {
-  my $self = shift;
+    my $self = shift;
 
-  $self->check_if_exit_cleanly;
-  $self->store_genetree($self->param('protein_tree'));
-  if (defined $self->param('output_dir')) {
-    system("zip -r -9 ".($self->param('output_dir'))."/".($self->param('protein_tree_id')).".zip ".$self->worker_temp_directory);
-  }
+    $self->check_if_exit_cleanly;
+    $self->store_genetree($self->param('protein_tree'));
+
+    if ($self->param('store_intermediate_trees')) {
+        foreach my $clusterset_id (qw(phyml-aa phyml-nt nj-dn nj-ds nj-mm)) {
+            my $clusterset = $self->param('tree_adaptor')->fetch_all(-tree_type => 'clusterset', -clusterset_id => $clusterset_id)->[0];
+            my $newtree = $self->copy_tree_to_clusterset($self->param('protein_tree'), $clusterset);
+            $self->parse_newick_into_tree( sprintf('%s/interm.%s.nhx', $self->worker_temp_directory, $clusterset_id) , $newtree );
+            $self->store_genetree($newtree);
+            $newtree->store_tag('merged_tree', $self->param('protein_tree_id'));
+        }
+    }
+    if ($self->param('store_filtered_align')) {
+        my $clusterset = $self->param('tree_adaptor')->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'filtered-align')->[0];
+        my $newtree = $self->copy_tree_to_clusterset($self->param('protein_tree'), $clusterset);
+        foreach my $member (@{$newtree->get_all_Members}) {
+            $member->stable_id(sprintf("%d_%d", $member->dbID, $self->param('use_genomedb_id') ? $member->genome_db_id : $member->taxon_id));
+        }
+        $newtree->load_cigars_from_fasta( sprintf('%s/filtalign.fa', $self->worker_temp_directory) , $newtree );
+        $self->store_genetree($newtree);
+        $newtree->store_tag('merged_tree', $self->param('protein_tree_id'));
+    }
+
+    if (defined $self->param('output_dir')) {
+        system("zip -r -9 ".($self->param('output_dir'))."/".($self->param('protein_tree_id')).".zip ".$self->worker_temp_directory);
+    }
+    rmtree([$self->worker_temp_directory]);
 }
 
 
