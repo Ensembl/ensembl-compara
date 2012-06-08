@@ -358,7 +358,7 @@ sub new {
     eval {
         my $parser = Parse::RecDescent->new($grammar);
         my $tokens = $parser->Format($fmt);
-        print Dumper($tokens);
+        #print Dumper($tokens);
         croak "Format $fmt is not valid\n" unless (defined $tokens);
         my @tokens = grep {scalar keys %{$_} > 0} @$tokens;    ## Hacky... but shouldn't be needed anymore (just a pop)
         $obj->{tokens} = [@tokens];
