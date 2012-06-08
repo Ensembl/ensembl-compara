@@ -188,7 +188,7 @@ sub _objs_from_sth {
     while(my $rowhash = $sth->fetchrow_hashref) {
         my $member = Bio::EnsEMBL::Compara::AlignedMember->new;
         $member = Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::init_instance_from_rowhash($self, $member, $rowhash);
-        foreach my $attr (qw(cigar_line perc_cov perc_id perc_pos)) {
+        foreach my $attr (qw(cigar_line cigar_start cigar_end perc_cov perc_id perc_pos)) {
             $member->$attr($rowhash->{$attr}) if defined $rowhash->{$attr};
         }
         push @members, $member;
