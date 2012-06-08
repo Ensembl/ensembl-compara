@@ -413,15 +413,6 @@ sub fetch_all_by_relation {
                             fm.cigar_line)];
     $join = [[['family_member', 'fm'], 'm.member_id = fm.member_id', $extra_columns]];
   }
-  elsif ($relation->isa('Bio::EnsEMBL::Compara::Domain')) {
-    my $domain_id = $relation->dbID;
-    $constraint = "dm.domain_id = $domain_id";
-    my $extra_columns = [qw(dm.domain_id
-                            dm.member_id
-                            dm.member_start
-                            dm.member_end)];
-    $join = [[['domain_member', 'dm'], 'm.member_id = dm.member_id', $extra_columns]];
-  }
   elsif ($relation->isa('Bio::EnsEMBL::Compara::Homology')) {
     my $homology_id = $relation->dbID;
     $constraint .= "hm.homology_id = $homology_id";
@@ -440,6 +431,44 @@ sub fetch_all_by_relation {
 
   return $self->generic_fetch($constraint, $join);
 }
+
+sub fetch_all_by_Domain {
+    my ($self, $domain) = @_;
+    assert_ref($domain, 'Bio::EnsEMBL::Compara::Domain');
+
+    my $domain_id = $domain->dbID;
+    my $constraint = "dm.domain_id = $domain_id";
+    my $extra_columns = [qw(dm.domain_id dm.member_start dm.member_end)];
+    my $join = [[['domain_member', 'dm'], 'm.member_id = dm.member_id', $extra_columns]];
+
+    return $self->generic_fetch($constraint, $join);
+}
+
+
+=head2 fetch_all_by_MemberSet
+
+  Arg[1]     : MemberSet $set: Currently: Domain, Family, Homology and GeneTree
+                are supported
+  Example    : $family_members = $m_adaptor->fetch_all_by_MemberSet($family);
+  Description: Fetches from the database all the members attached to this set
+  Returntype : arrayref of Bio::EnsEMBL::Compara::Member
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub fetch_all_by_MemberSet {
+    my ($self, $set) = @_;
+    assert_ref($set, 'Bio::EnsEMBL::Compara::MemberSet');
+    if (UNIVERSAL::isa($set, 'Bio::EnsEMBL::Compara::AlignedMemberSet')) {
+        return $self->db->get_AlignedMemberSetAdaptor->fetch_all_by_AlignedMemberSet($set);
+    } elsif (UNIVERSAL::isa($set, 'Bio::EnsEMBL::Compara::Domain')) {
+        return $self->fetch_all_by_Domain($set);
+    } else {
+        throw("$self is not a recognized MemberSet object\n");
+    }
+}
+
 
 
 =head2 fetch_all_by_subset_id
@@ -661,11 +690,17 @@ sub _objs_from_sth {
     
     my @_columns = $self->_columns;
     if (scalar keys %{$rowhash} > scalar @_columns) {
-      $attribute = new Bio::EnsEMBL::Compara::Attribute;
-      $attribute->member_id($rowhash->{'member_id'});
-      foreach my $autoload_method (keys %$rowhash) {
-        next if (grep /$autoload_method/,  @_columns);
-        $attribute->$autoload_method($rowhash->{$autoload_method});
+      if (exists $rowhash->{domain_id}) {
+        bless $member, 'Bio::EnsEMBL::Compara::MemberDomain';
+        $member->member_start($rowhash->{member_start});
+        $member->member_end($rowhash->{member_end});
+      } else {
+        $attribute = new Bio::EnsEMBL::Compara::Attribute;
+        $attribute->member_id($rowhash->{'member_id'});
+        foreach my $autoload_method (keys %$rowhash) {
+          next if (grep /$autoload_method/,  @_columns);
+          $attribute->$autoload_method($rowhash->{$autoload_method});
+        }
       }
     }
     if (defined $attribute) {

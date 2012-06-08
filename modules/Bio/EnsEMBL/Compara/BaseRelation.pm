@@ -25,8 +25,7 @@ Ensembl Team. Individual contributions can be found in the CVS log.
 =head1 NAME
 
 BaseRelation - A superclass for pairwise or multiple relationships, base of
-Bio::EnsEMBL::Compara::Family, Bio::EnsEMBL::Compara::Homology and
-Bio::EnsEMBL::Compara::Domain.
+Bio::EnsEMBL::Compara::Family, Bio::EnsEMBL::Compara::Homology
 
 =head1 DESCRIPTION
 
@@ -450,7 +449,7 @@ sub get_Member_Attribute_by_source {
 
   Arg [1]    : string $source_name
   Arg [2]    : int $taxon_id
-  Example    : $domain->get_Member_by_source_taxon('ENSEMBLPEP',9606)
+  Example    : $family->get_Member_by_source_taxon('ENSEMBLPEP',9606)
   Description: 
   Returntype : array reference of Bio::EnsEMBL::Compara::Member
   Exceptions : 
@@ -468,7 +467,7 @@ sub get_Member_Attribute_by_source_taxon {
 =head2 get_Member_Attribute_by_GenomeDB
 
   Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Example    : $domain->get_Member_Attribute_by_GenomeDB($genome_db)
+  Example    : $family->get_Member_Attribute_by_GenomeDB($genome_db)
   Description: Returns all [Member_Attribute] entries linked to this GenomeDB. 
                This will only return EnsEMBL based entries since UniProtKB 
                entries are not linked to a GenomeDB.
@@ -490,7 +489,7 @@ sub get_Member_Attribute_by_GenomeDB {
 
   Arg [1]    : string $source_name
   Arg [2]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Example    : $domain->get_Member_by_source_taxon('ENSEMBLPEP', $genome_db)
+  Example    : $family->get_Member_by_source_taxon('ENSEMBLPEP', $genome_db)
   Description: Returns all [Member_Attribute] entries linked to this GenomeDB
                and the given source_name. This will only return EnsEMBL based 
                entries since UniProtKB entries are not linked to a GenomeDB.
@@ -512,7 +511,7 @@ sub get_Member_Attribute_by_source_GenomeDB {
 
   Arg [1]    : string $attribute_scope
   Arg [2]    : string $key
-  Example    : $domain->_get_Member_Attribute('_members_by_source', 'ENSEMBLPEP')
+  Example    : $family->_get_Member_Attribute('_members_by_source', 'ENSEMBLPEP')
   Description: Used as the generic reference point for all 
                get_Memeber_Attribute_by* methods. The method searches the given
                scope & if the values cannot be found will initalize that value
@@ -534,7 +533,7 @@ sub _get_Member_Attribute {
 
   Arg [1]    : string $source_name
                e.g. "ENSEMBLPEP"
-  Example    : $domain->Member_count_by_source('ENSEMBLPEP');
+  Example    : $family->Member_count_by_source('ENSEMBLPEP');
   Description: 
   Returntype : int
   Exceptions : 

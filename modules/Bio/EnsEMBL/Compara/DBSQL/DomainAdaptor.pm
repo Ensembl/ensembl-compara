@@ -209,13 +209,10 @@ sub store {
   
   $sql = "INSERT IGNORE INTO domain_member (domain_id, member_id, member_start, member_end) VALUES (?,?,?,?)";
   $sth = $self->prepare($sql);
-  foreach my $member_attribute (@{$dom->get_all_Member_Attribute}) {
-    my ($member, $attribute) = @{$member_attribute};
+  foreach my $member (@{$dom->get_all_Members}) {
     # Stores the member if not yet stored
     $self->db->get_MemberAdaptor->store($member) unless (defined $member->dbID);
-    $attribute->member_id($member->dbID);
-    $attribute->homology_id($dom->dbID);
-    $sth->execute($attribute->domain_id, $attribute->member_id, $attribute->member_start, $attribute->member_end);
+    $sth->execute($self->dbID, $member->dbID, $member->member_start, $member->member_end);
   }
 
   return $dom->dbID;
