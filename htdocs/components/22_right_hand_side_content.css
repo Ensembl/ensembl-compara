@@ -38,13 +38,19 @@ p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 body.ie6 .twocol-left,
 body.ie6 .twocol-right { width: 40%; }
 
-.threecol-wrapper                   { overflow: hidden;             }
-.threecol-column                    { float: left; width:33.3333%;  }
-.threecol-padding                   { margin: 0 5px;                }
+div.column-wrapper, div.column-wrapper-padded    { overflow: hidden;             } /* wraps the columns */
+div.column-two                                   { float: left; width:50%;       } /* actual column for 2 col layout */
+div.column-three                                 { float: left; width:33.3333%;  } /* actual column for 3 col layout */
+div.column-padding                               { margin: 0 5px;                } /* inner div for columns to provide padding */
+
+div.column-wrapper div.column-three:first-child div.column-padding,
+div.column-wrapper div.column-two:first-child   div.column-padding  { margin: 0 5px 0 0; }  /* removes left padding on lef hand side column */
+div.column-wrapper div.column-three:last-child  div.column-padding,
+div.column-wrapper div.column-two:last-child    div.column-padding  { margin: 0 0 0 5px; }  /* removes right padding on right hand side column */
 
 /* IE clearly doesn't understand simple mathematics */
-body.ie7 .threecol-column           { width:33.2%; }
-body.ie6 .threecol-column           { width:32.6%; }
+body.ie7 .column-three           { width:33.2%; }
+body.ie6 .column-three           { width:32.6%; }
 
 table.blobs { width:100%; }
 table.blobs td { 
@@ -60,7 +66,7 @@ img.portal {
 }
 
 .plain-box  { color:[[PANEL_TEXT]]; background-color:[[PANEL_BG]]; border:1px solid [[PANEL_BORDER]]; }
-.threecol-column  .plain-box { padding: 10px; margin-bottom: 10px; }
+.column-three .plain-box, .column-two .plain-box { padding: 10px; margin-bottom: 10px; }
 .tinted-box { color:[[PANEL_TEXT]]; background-color:[[TINT_BG]]; border:1px solid [[TINT_BORDER]]; }
 .info-box { color:[[CONTRAST_TEXT]]; background-color:[[CONTRAST_BG]]; border:1px solid [[CONTRAST_BORDER]]; }
 .alert-box { color:[[ALERT_TEXT]]; background-color:[[ALERT_BG]]; border:1px solid [[ALERT_BORDER]]; }
