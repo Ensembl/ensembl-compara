@@ -49,7 +49,7 @@ while (my $f = shift @$families) {
     }
 
     my $members = $ens_only
-        ? [ map { $_->[0] } @{$f->get_Member_Attribute_by_source('ENSEMBLPEP')} ]
+        ? [ grep { $_->source_name eq 'ENSEMBLPEP' } @{$f->get_all_Members()} ]
         : [ grep { $_->sequence() } @{$f->get_all_Members()} ];
 
     next if(scalar(@$members) < $min_fam_size);
