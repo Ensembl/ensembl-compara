@@ -263,13 +263,10 @@ sub store {
 
   $sql = "INSERT IGNORE INTO family_member (family_id, member_id, cigar_line) VALUES (?,?,?)";
   $sth = $self->prepare($sql);
-  foreach my $member_attribute (@{$fam->get_all_Member_Attribute}) {   
-    my ($member, $attribute) = @{$member_attribute};
+  foreach my $member (@{$fam->get_all_Members}) {   
     # Stores the member if not yet stored
     $self->db->get_MemberAdaptor->store($member) unless (defined $member->dbID);
-    $attribute->member_id($member->dbID);
-    $attribute->family_id($fam->dbID);
-    $sth->execute($attribute->family_id, $attribute->member_id, $attribute->cigar_line);
+    $sth->execute($member->set->dbID, $member->dbID, $member->cigar_line);
   }
 
   return $fam->dbID;
@@ -277,20 +274,21 @@ sub store {
 
 
 sub update {
-  my ($self,$fam) = @_;
+  my ($self, $fam, $content_only) = @_;
 
   $fam->isa('Bio::EnsEMBL::Compara::Family') ||
     $self->throw("You have to store a Bio::EnsEMBL::Compara::Family object, not a $fam");
 
-  my $sql = 'UPDATE family SET stable_id = ?, version = ?, method_link_species_set_id = ?, description = ?, description_score = ? WHERE family_id = ?';
-  my $sth = $self->prepare($sql);
-  $sth->execute($fam->stable_id, $fam->version, $fam->method_link_species_set_id, $fam->description, $fam->description_score, $fam->dbID);
+  unless ($content_only) {
+    my $sql = 'UPDATE family SET stable_id = ?, version = ?, method_link_species_set_id = ?, description = ?, description_score = ? WHERE family_id = ?';
+    my $sth = $self->prepare($sql);
+    $sth->execute($fam->stable_id, $fam->version, $fam->method_link_species_set_id, $fam->description, $fam->description_score, $fam->dbID);
+  }
 
-  $sql = 'UPDATE family_member SET cigar_line = ? WHERE family_id = ? AND member_id = ?';
-  $sth = $self->prepare($sql);
-  foreach my $member_attribute (@{$fam->get_all_Member_Attribute}) {   
-    my ($member, $attribute) = @{$member_attribute};
-    $sth->execute($attribute->cigar_line, $attribute->family_id, $attribute->member_id);
+  my $sql = 'UPDATE family_member SET cigar_line = ? WHERE family_id = ? AND member_id = ?';
+  my $sth = $self->prepare($sql);
+  foreach my $member (@{$fam->get_all_Members}) {   
+    $sth->execute($member->cigar_line, $member->set->dbID, $member->dbID);
   }
 }
 

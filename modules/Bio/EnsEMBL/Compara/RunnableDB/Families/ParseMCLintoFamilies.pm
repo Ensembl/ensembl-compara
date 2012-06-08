@@ -6,7 +6,6 @@ use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Family;
-use Bio::EnsEMBL::Compara::Attribute;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -67,10 +66,10 @@ sub write_output {
 
             if($member) {
                 # A funny way to add members to a family.
-                # You cannot do it without introducing an empty attribute, it seems?
+                # You cannot do it without introducing a fake AlignedMember, it seems?
                 #
-                my $attribute = new Bio::EnsEMBL::Compara::Attribute;
-                $family->add_Member_Attribute([$member, $attribute]);
+                bless $member, 'Bio::EnsEMBL::Compara::AlignedMember';
+                $family->add_Member($member);
             }
         }
 

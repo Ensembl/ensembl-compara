@@ -26,56 +26,32 @@ sub fetch_input {
         }
     }
 
-    my @members_attributes = ();
-
-    push @members_attributes,@{$family->get_Member_Attribute_by_source('ENSEMBLPEP')};
-    push @members_attributes,@{$family->get_Member_Attribute_by_source('Uniprot/SWISSPROT')};
-    push @members_attributes,@{$family->get_Member_Attribute_by_source('Uniprot/SPTREMBL')};
-
-    if(scalar @members_attributes == 0) {
-        die "family $family_id does not seem to contain any members";
-
-    } elsif(scalar @members_attributes == 1) {    # the simple singleton case: just load the fake cigar_line
-
-        my ($member,$attribute) = @{$members_attributes[0]};
-
-        my $cigar_line = length($member->sequence).'M';
-        eval { $attribute->cigar_line($cigar_line) };
-        if($@) {
-            die "could not set the cigar_line for singleton family $family_id, because: $@ ";
-        }
-
-            # by setting this parameter we will trigger the update in write_output()
-        $self->param('singleton_relation', [$member, $attribute]);
-
-        return;
-    }
-
     # otherwise prepare the files and perform the actual mafft run:
 
     my $rand = time().rand(1000);
     my $pep_file   = "/tmp/family_${family_id}.pep.$rand";
     my $mafft_file = "/tmp/family_${family_id}.mafft.$rand";
-    my $pep_counter = 0;
 
-    open PEP, ">$pep_file";
-    foreach my $member_attribute (@members_attributes) {
-        my ($member,$attribute) = @{$member_attribute};
-        my $member_stable_id = $member->stable_id;
-        my $seq = $member->sequence;
+    my $pep_counter = $family->print_sequences_to_fasta($pep_file);
 
-        print PEP ">$member_stable_id\n";
-        $seq =~ s/(.{72})/$1\n/g;
-        chomp $seq;
-        unless (defined($seq)) {
-            die "member $member_stable_id in family $family_id doesn't have a sequence";
+    if ($pep_counter == 0) {
+        unlink $pep_file;
+        die "family $family_id does not seem to contain any members";
+
+    } elsif ($pep_counter == 1) {
+
+        unlink $pep_file;
+        my $member = (grep {$_->source_name ne 'ENSEMBLGENE'} @{$family->get_all_Members})[0];
+        my $cigar_line = length($member->sequence).'M';
+        eval {$member->cigar_line($cigar_line) };
+        if($@) {
+            die "could not set the cigar_line for singleton family $family_id, because: $@ ";
         }
-        print PEP $seq,"\n";
-        $pep_counter++;
-    }
-    close PEP;
+        # by setting this parameter we will trigger the update in write_output()
+        $self->param('singleton_relation', $member);
+        return;
 
-    if($pep_counter>=20000) {
+    } elsif ($pep_counter>=20000) {
         my $mafft_args = $self->param('mafft_args') || '';
         $self->param('mafft_args', $mafft_args.' --parttree' );
     }
@@ -125,15 +101,15 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    if(my $singleton_relation = $self->param('singleton_relation')) {
+    if($self->param('singleton_relation')) {
 
-        $self->compara_dba()->get_FamilyAdaptor()->update($self->param('family'));
+        $self->compara_dba()->get_FamilyAdaptor()->update($self->param('family'), 1);
 
     } elsif(my $mafft_file = $self->param('mafft_file')) {
 
         my $family = $self->param('family');
         $family->load_cigars_from_fasta($mafft_file, 1);
-        $family->adaptor->update($family);
+        $family->adaptor->update($family, 1);
 
         unless($self->debug) {
             unlink $mafft_file;
