@@ -257,7 +257,7 @@ sub content {
         codon     => $codon,
         sift      => $sift,
         polyphen  => $poly,
-        detail    => $self->ajax_add($self->ajax_url(undef, { transcript => $trans_name, vf => $varif_id, allele => $a, update_panel => 1 }).";single_transcript=variation_feature_variation=normal", "${trans_name}_${varif_id}_${a}"),
+        detail    => $self->ajax_add($self->ajax_url(undef, { t => $trans_name, vf => $varif_id, allele => $a, update_panel => 1 }).";single_transcript=variation_feature_variation=normal", "${trans_name}_${varif_id}_${a}"),
       };
       
       $table->add_row($row);
@@ -448,7 +448,7 @@ sub detail_panel {
   my $object   = $self->object;
   my $hub      = $self->hub;
   my $allele   = $hub->param('allele');
-  my $tr_id    = $hub->param('transcript');
+  my $tr_id    = $hub->param('t');
   my $vf_id    = $hub->param('vf');
   my %mappings = %{$object->variation_feature_mapping($hub->param('recalculate'))};
   my $html;
