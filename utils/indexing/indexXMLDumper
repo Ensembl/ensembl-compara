@@ -931,13 +931,13 @@ sub VariationLine {
 
 ########################################################################## Variation Phenotypes
 
-sub dumpVariationPhenotype {
+sub dumpPhenotype {
   my $conf = shift;
   my $VariationDB = $conf->{'dbs'}->{'DATABASE_VARIATION'};
   return unless $VariationDB;
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
-  my $file = $conf->{'directory'}."/${VariationDB}_VariationPhenotype.xml";
+  my $file = $conf->{'directory'}."/${VariationDB}_Phenotype.xml";
   $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'variation';
@@ -956,13 +956,13 @@ sub dumpVariationPhenotype {
   #phenotype info
   my $phenotype_info = $conf->{'dbh'}->selectall_hashref("select description, phenotype_id from $VariationDB.phenotype",'description');
   foreach my $phen (keys %$phenotype_info) {
-    &p( VariationPhenLine( $dbspecies, $phen, $phenotype_info->{$phen}{'phenotype_id'}, $counter ), $nogzip, $fh);
+    &p( PhenLine( $dbspecies, $phen, $phenotype_info->{$phen}{'phenotype_id'}, $counter ), $nogzip, $fh);
   }
 
   return footer( $counter->(),$nogzip,$fh);
 }
 
-sub VariationPhenLine {
+sub PhenLine {
   my ($species, $name, $id, $counter ) = @_;
   my $url = sprintf(qq(%s/Phenotype/Locations?ph=%s),
                     $species,
