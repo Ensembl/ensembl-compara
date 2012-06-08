@@ -48,6 +48,9 @@ package Bio::EnsEMBL::Compara::AlignedMemberSet;
 
 use strict;
 use Scalar::Util qw(weaken);
+
+use Bio::AlignIO;
+
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar;
 use Bio::EnsEMBL::Utils::Exception;
