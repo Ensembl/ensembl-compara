@@ -162,11 +162,13 @@ foreach my $spp (@valid_spp) {
                     
     if ($ena) {
       # look for long name and accession num
-      my ($long) = @{$meta_container->list_value_by_key('assembly.long_name')};
-      $a_id .= " ($long)" if $long; 
-      my ($acc) = @{$meta_container->list_value_by_key('assembly.accession')};
-      $acc = sprintf('INSDC Assembly <a href="http://www.ebi.ac.uk/ena/data/view/%s">%s</a>', $acc, $acc) if $acc;
-      $a_id .= ", $acc" if $acc; 
+      if (my ($long) = @{$meta_container->list_value_by_key('assembly.long_name')}) {
+        $a_id .= " ($long)"; 
+      }
+      if (my ($acc) = @{$meta_container->list_value_by_key('assembly.accession')}) {
+        $acc = sprintf('INSDC Assembly <a href="http://www.ebi.ac.uk/ena/data/view/%s">%s</a>', $acc, $acc);
+        $a_id .= ", $acc"; 
+      }
     }                    
 
     my $a_date  = $SD->get_config($spp, 'ASSEMBLY_DATE') || '';
