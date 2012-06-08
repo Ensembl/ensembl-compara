@@ -67,11 +67,8 @@ my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor('Multi','compara');
 my $mc = $dba->get_MetaContainer;
 my $release = $mc->get_schema_version;
 
-my $pta = $dba->get_ProteinTreeAdaptor;
-
-
 my $localtime = localtime;
-my $root = $pta->fetch_node_by_node_id($root_id);
+my $root = $dba->get_GeneTreeAdaptor->fetch_by_dbID($root_id)->root;
 
 my $aln_out_fh;
 my $nh_out_fh;

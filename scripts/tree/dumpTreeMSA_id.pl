@@ -17,7 +17,6 @@ my $nh_out;
 my $nhx_out;
 my $verbose = 0;
 my $aa = 1;
-my $nc = 0;
 my %compara_conf;
 
 $| = 1;
@@ -30,7 +29,6 @@ GetOptions('help'      => \$help,
            'fc|fasta_cds_out=s' => \$fasta_cds_out,
            'nh|nh_out=s'  => \$nh_out,
            'nhx|nhx_out=s' => \$nhx_out,
-           'nc=s' => \$nc,
            'verbose=s' => \$verbose,
            'aa'        => \$aa);
 
@@ -101,8 +99,7 @@ unless ($@) {
   my $release = $mc->get_schema_version;
 }
 
-my $pta = $dba->get_ProteinTreeAdaptor;
-my $nta = $dba->get_NCTreeAdaptor;
+my $gta = $dba->get_GeneTreeAdaptor;
 
 open LIST, "$tree_id_list" or die "couldnt open $tree_id_list: $!\n";
 my @ids;
@@ -116,11 +113,7 @@ my ($treevolume,$treedirectories,$treefile) = File::Spec->splitpath( $tree_id_li
 
 foreach my $tree_id (@ids) {
 
-  my $root = $pta->fetch_node_by_node_id($tree_id) unless (1==$nc);
-  if (1==$nc) {
-    $root = $nta->fetch_node_by_node_id($tree_id);
-    $tree_id = "nc".$tree_id;
-  }
+  my $root = $gta->fetch_by_dbID($tree_id)->root;
   my $fh1;
   my $fh2;
   my $fh3;

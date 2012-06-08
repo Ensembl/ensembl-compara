@@ -81,7 +81,7 @@ if ($compara_url) {
   $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
 }
 
-my $tree_adaptor = $compara_dba->get_ProteinTreeAdaptor(); # Repeat with TreeAdaptor
-my $tree = $tree_adaptor->fetch_node_by_node_id($tree_id);
+my $tree_adaptor = $compara_dba->get_GeneTreeAdaptor();
+my $tree = $tree_adaptor->fetch_by_dbID($tree_id);
 
 print $tree->newick_format('ryo',$fmt),"\n";
