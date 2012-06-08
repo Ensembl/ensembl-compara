@@ -60,7 +60,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-        'clusterset_id' => 1,
         'context_size'  => '120%',
     };
 }

@@ -57,11 +57,6 @@ use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    return {
-        'clusterset_id'  => 1,
-    };
-}
 
 =head2 fetch_input
 

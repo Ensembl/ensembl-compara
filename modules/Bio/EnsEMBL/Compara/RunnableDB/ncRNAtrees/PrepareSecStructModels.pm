@@ -119,7 +119,6 @@ sub run {
                                   );
         $self->dataflow_output_id (
                                    {
-                                    'clusterset_id' => 1,
                                     'nc_tree_id' => $nc_tree_id,
                                    }, 1
                                   );

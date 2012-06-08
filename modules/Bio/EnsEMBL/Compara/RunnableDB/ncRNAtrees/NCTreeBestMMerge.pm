@@ -62,12 +62,6 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 
-sub param_defaults {
-    return {
-        'clusterset_id'  => 1,
-    };
-}
-
 
 =head2 fetch_input
 
