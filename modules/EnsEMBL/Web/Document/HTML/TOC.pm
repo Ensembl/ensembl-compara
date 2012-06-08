@@ -62,9 +62,9 @@ sub render {
     $html{$column} .= '</div>';
   }
 
-  $html{$_} = qq(<div class="threecol-column"><div class="threecol-padding">$html{$_}</div></div>) for grep $html{$_}, keys %html;
+  $html{$_} = qq(<div class="column-three"><div class="column-padding">$html{$_}</div></div>) for grep $html{$_}, keys %html;
 
-  return qq(<div class="threecol-wrapper">
+  return qq(<div class="column-wrapper">
               $html{'left'}
               $html{'middle'}
               $html{'right'}

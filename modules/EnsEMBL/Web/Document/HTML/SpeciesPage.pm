@@ -93,10 +93,10 @@ sub render {
   my $row_count = ceil(@htmlspecies / 3);
 
   return sprintf('<h2>%s Species</h2>
-    <div class="threecol-wrapper">
-      <div class="threecol-column"><div class="threecol-padding">%s</div></div>
-      <div class="threecol-column"><div class="threecol-padding">%s</div></div>
-      <div class="threecol-column"><div class="threecol-padding">%s</div></div>
+    <div class="column-wrapper">
+      <div class="column-three"><div class="column-padding">%s</div></div>
+      <div class="column-three"><div class="column-padding">%s</div></div>
+      <div class="column-three"><div class="column-padding">%s</div></div>
     </div>',
     $sitename,
     join('', splice @htmlspecies, 0, $row_count),
