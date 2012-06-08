@@ -142,7 +142,7 @@ sub get_AlignedMemberSet {
         -version => sprintf("%d.%d", $self->tree->version, $self->node_id),
     );
     foreach my $member (@{$self->get_all_leaves}) {
-        $set->add_AlignedMember($member) if $member->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
+        $set->add_Member($member) if $member->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
     }
     return $set;
 }

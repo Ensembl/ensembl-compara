@@ -330,9 +330,9 @@ sub generate_subtrees {
   }
   foreach my $leaf (@{$supertree_root->get_all_leaves}) {
     if (defined $subtree_leaves->{$leaf->member_id}) {
-      $cluster1->add_AlignedMember($leaf);
+      $cluster1->add_Member($leaf);
     } else {
-      $cluster2->add_AlignedMember($leaf);
+      $cluster2->add_Member($leaf);
     }
   }
   $supertree_root->add_child($supertree_leaf1, $self->param('max_subtree')->distance_to_parent/2);

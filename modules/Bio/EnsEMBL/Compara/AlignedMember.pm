@@ -54,16 +54,6 @@ use base ('Bio::EnsEMBL::Compara::Member');
 # overriden superclass methods
 ##################################
 
-sub _new_from_Member_Attribute {
-    my ($member, $attr) = @_;
-    my $am = Bio::EnsEMBL::Compara::Member::copy($member);
-    bless $am, 'Bio::EnsEMBL::Compara::AlignedMember';
-    foreach my $key (qw(cigar_line perc_cov perc_id perc_pos)) {
-        $am->$key($attr->$key);
-    }
-    return $am;
-}
-
 =head2 copy
 
   Arg [1]     : none

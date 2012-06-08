@@ -57,12 +57,25 @@ use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
-use Bio::EnsEMBL::Compara::AlignedMember;
 
 use strict;
 no strict 'refs';
 
 use base ('Bio::EnsEMBL::Compara::AlignedMemberSet', 'Bio::EnsEMBL::Compara::Taggable');
+
+
+=head2 member_class
+
+  Description: Returns the type of member used in the set
+  Returntype : String: Bio::EnsEMBL::Compara::GeneTreeMember
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub member_class {
+    return 'Bio::EnsEMBL::Compara::GeneTreeMember';
+}
 
 
 =head2 new
@@ -214,18 +227,18 @@ sub root_id {
     return $self->{'_root_id'};
 }
 
-=head2 get_all_AlignedMember
+=head2 get_all_Members
 
   Arg [1]    : None
   Example    : 
   Description: 
-  Returntype : array reference of Bio::EnsEMBL::Compara::AlignedMember
+  Returntype : array reference of Bio::EnsEMBL::Compara::GeneTreeMember
   Exceptions : 
   Caller     : 
 
 =cut
 
-sub get_all_AlignedMember {
+sub get_all_Members {
     my ($self) = @_;
 
     unless (defined $self->{'_member_array'}) {
@@ -236,17 +249,21 @@ sub get_all_AlignedMember {
         $self->{'_members_by_source_genome_db'} = {};
         $self->{'_members_by_genome_db'} = {};
         foreach my $leaf (@{$self->root->get_all_leaves}) {
-            $self->SUPER::add_AlignedMember($leaf) if UNIVERSAL::isa($leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember');
+            $self->SUPER::add_Member($leaf) if UNIVERSAL::isa($leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember');
         }
     }
     return $self->{'_member_array'};
 }
 
-=head2 add_AlignedMember
+sub member_class {
+    return 'Bio::EnsEMBL::Compara::GeneTreeMember';
+}
 
-  Arg [1]    : AlignedMember
+=head2 add_Member
+
+  Arg [1]    : GeneTreeMember
   Example    : 
-  Description: Add a new AlignedMember to this set
+  Description: Add a new GeneTreeMember to this set
   Returntype : none
   Exceptions : Throws if input objects don't check
   Caller     : general
@@ -254,17 +271,12 @@ sub get_all_AlignedMember {
 
 =cut
 
-sub add_AlignedMember {
+sub add_Member {
     my ($self, $member) = @_;
-    assert_ref($member, 'Bio::EnsEMBL::Compara::AlignedMember');
-    if (UNIVERSAL::isa($member, 'Bio::EnsEMBL::Compara::GeneTreeMember')) {
-        $self->root->add_child($member);
-    } else {
-        my $gtm = new Bio::EnsEMBL::Compara::GeneTreeMember;
-        $member->Bio::EnsEMBL::Compara::AlignedMember::copy($gtm);
-        $gtm->tree($self);
-        $self->root->add_child($gtm);
-    }
+    assert_ref($member, 'Bio::EnsEMBL::Compara::GeneTreeMember');
+    $self->root->add_child($member);
+    $member->tree($self);
+    $self->SUPER::add_Member($member);
 } 
 
 
