@@ -123,9 +123,8 @@ sub pipeline_analyses {
         {   -logic_name => 'tree_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
-                'adaptor_name' => 'ProteinTreeAdaptor',
-                'adaptor_method' => 'fetch_all',
-                'column_names2getters'  => { 'protein_tree_id' => 'node_id' },
+                'call_list'             => [ 'compara_dba', 'get_GeneTreeAdaptor', ['fetch_all', '-tree_type', 'tree']],
+                'column_names2getters'  => { 'protein_tree_id' => 'root_id' },
                 'input_id' => { 'protein_tree_id' => '#protein_tree_id#', 'kingdom' => '#kingdom#', 'compara_db' => '#compara_db#', },
                 'fan_branch_code' => 2,
             },

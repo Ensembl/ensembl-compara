@@ -24,7 +24,7 @@ my $human_gene_adaptor = $reg->get_adaptor("Homo sapiens", "core", "Gene");
 
 my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
 my $member_adaptor = $comparaDBA->get_MemberAdaptor;
-my $proteintree_adaptor = $comparaDBA->get_ProteinTreeAdaptor;
+my $genetree_adaptor = $comparaDBA->get_GeneTreeAdaptor;
 
 my $genes = $human_gene_adaptor->fetch_all_by_external_name('BRCA2');
 
@@ -33,13 +33,12 @@ foreach my $gene (@$genes) {
     fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
   die "no members" unless (defined $member);
 
-  # Fetch the proteintree
-  my $proteintree =  $proteintree_adaptor->
-    fetch_by_gene_Member_root_id($member);
+  # Fetch the tree
+  my $genetree = $genetree_adaptor->fetch_all_by_Member($member)->[0];
 
   # Get the protein multialignment and the back-translated CDS alignment
-  my $protein_align = $proteintree->get_SimpleAlign;
-  my $cds_align = $proteintree->get_SimpleAlign(-cdna=>1);
+  my $protein_align = $genetree->get_SimpleAlign;
+  my $cds_align = $genetree->get_SimpleAlign(-cdna=>1);
 
   eval {require Bio::AlignIO;};
   last if ($@);

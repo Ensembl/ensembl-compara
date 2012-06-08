@@ -23,7 +23,7 @@ my $human_gene_adaptor = $reg->get_adaptor("Homo sapiens", "core", "Gene");
 
 my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
 my $member_adaptor = $comparaDBA->get_MemberAdaptor;
-my $proteintree_adaptor = $comparaDBA->get_ProteinTreeAdaptor;
+my $genetree_adaptor = $comparaDBA->get_GeneTreeAdaptor;
 
 my $genes = $human_gene_adaptor->fetch_all_by_external_name('FRY');
 
@@ -38,13 +38,12 @@ foreach my $gene (@$genes) {
     fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
   die "no members" unless (defined $member);
 
-  # Fetch the proteintree
-  my $proteintree =  $proteintree_adaptor->
-    fetch_by_Member_root_id($member);
+  # Fetch the gene tree
+  my $genetree = $genetree_adaptor->fetch_all_by_Member($member)->[0];
 
   # List of unwanted leaves
   my @discarded_nodes;
-  foreach my $leaf (@{$proteintree->get_all_leaves}) {
+  foreach my $leaf (@{$genetree->get_all_leaves}) {
     my $stable_id = $leaf->stable_id;
     unless ($wanted_species->{$leaf->genome_db->name}) {
       push @discarded_nodes, $leaf;
@@ -52,7 +51,7 @@ foreach my $gene (@$genes) {
   }
 
   # Compute the new tree
-  my $ret_tree = $proteintree->remove_nodes(\@discarded_nodes);
+  my $ret_tree = $genetree->remove_nodes(\@discarded_nodes);
 
   # Print it
   $ret_tree->print_tree(10);

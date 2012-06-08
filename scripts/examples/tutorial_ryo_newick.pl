@@ -47,15 +47,8 @@ my $new_id = <>;
 chomp $new_id;
 $tree_id = $new_id eq '' ? $tree_id : $new_id;
 
-my $tree_Adaptor = $compara_dba->get_ProteinTreeAdaptor();
-my $tree;
-eval { $tree = $tree_Adaptor->fetch_node_by_node_id($tree_id); };
-if (! defined $tree) {
-  $tree_Adaptor = $compara_dba->get_NCTreeAdaptor();
-  eval {
-    $tree = $tree_Adaptor->fetch_node_by_node_id($tree_id);
-  };
-}
+my $tree_Adaptor = $compara_dba->get_GeneTreeAdaptor();
+my $tree = $tree_Adaptor->fetch_by_dbID($tree_id);
 die "The ID supplied ($tree_id) is not a valid ProteinTree ID or NCTree ID\n" unless (defined $tree);
 
 print "Running the script with ncRNA tree with ID: $tree_id\n\n";

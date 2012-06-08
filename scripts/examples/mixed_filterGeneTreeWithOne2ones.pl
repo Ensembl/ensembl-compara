@@ -27,7 +27,7 @@ my $human_gene_adaptor = $reg->get_adaptor("Homo sapiens", "core", "Gene");
 my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
 my $member_adaptor = $comparaDBA->get_MemberAdaptor;
 my $homology_adaptor = $comparaDBA->get_HomologyAdaptor;
-my $proteintree_adaptor = $comparaDBA->get_ProteinTreeAdaptor;
+my $genetree_adaptor = $comparaDBA->get_GeneTreeAdaptor;
 
 my $genes = $human_gene_adaptor->fetch_all_by_external_name('PAX2');
 
@@ -53,25 +53,24 @@ foreach my $gene (@$genes) {
     $leaves_names{$gene2->stable_id} = 1;
   }
 
-  # Fetch the proteintree
-  my $proteintree =  $proteintree_adaptor->
-    fetch_by_gene_Member_root_id($member);
+  # Fetch the gene tree
+  my $genetree = $genetree_adaptor->fetch_all_by_Member($member)->[0];
 
   # Delete the part that is not one2one wrt the human gene
-  foreach my $leaf (@{$proteintree->get_all_leaves}) {
+  foreach my $leaf (@{$genetree->get_all_leaves}) {
     my $gene_name = $leaf->gene_member->stable_id;
     unless (defined $leaves_names{$gene_name}) {
       $leaf->disavow_parent;
-      $proteintree = $proteintree->minimize_tree;
     }
   }
+  $genetree = $genetree->minimize_tree;
 
   # Print the minimized tree
-  $proteintree->print_tree;
+  $genetree->print_tree;
 
   # Obtain the MSA for human and all one2ones
-  my $protein_align = $proteintree->get_SimpleAlign;
+  my $protein_align = $genetree->root->get_SimpleAlign;
   print $stdout_alignio $protein_align;
-  $proteintree->release_tree;
+  $genetree->release_tree;
 }
 
