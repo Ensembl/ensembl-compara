@@ -813,7 +813,7 @@ sub get_all_GenomeDBs_by_member_source_name {
     my $gdb_a = $self->adaptor->db->get_GenomeDBAdaptor();
     my @gdbs;
     $self->get_all_Member;
-    foreach my $key (keys $self->{_members_by_source_genome_db}) {
+    foreach my $key (keys %{$self->{_members_by_source_genome_db}}) {
         my @parts = split('_', $key);
         if ($parts[0] eq $source_name) {
             push @gdbs, $gdb_a->fetch_by_dbID($parts[1]);

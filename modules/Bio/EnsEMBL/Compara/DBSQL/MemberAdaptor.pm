@@ -6,6 +6,7 @@ use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
+use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump deprecate);
 
@@ -461,7 +462,7 @@ sub fetch_all_by_MemberSet {
     my ($self, $set) = @_;
     assert_ref($set, 'Bio::EnsEMBL::Compara::MemberSet');
     if (UNIVERSAL::isa($set, 'Bio::EnsEMBL::Compara::AlignedMemberSet')) {
-        return $self->db->get_AlignedMemberSetAdaptor->fetch_all_by_AlignedMemberSet($set);
+        return $self->db->get_AlignedMemberAdaptor->fetch_all_by_AlignedMemberSet($set);
     } elsif (UNIVERSAL::isa($set, 'Bio::EnsEMBL::Compara::Domain')) {
         return $self->fetch_all_by_Domain($set);
     } else {
