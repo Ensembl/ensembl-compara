@@ -876,8 +876,8 @@ sub store_gene_link_as_homology {
           $gdbs = [$gene1->genome_db, $gene2->genome_db];
       }
       $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
-        -method => $self->compara_dba->get_MethodAdaptor->fetch_by_type($mlss_type),
-        -species_set_obj => $self->compara_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs($gdbs),
+        -method => ($self->compara_dba->get_MethodAdaptor->fetch_by_type($mlss_type) || new Bio::EnsEMBL::Compara::Method(-type => $mlss_type, -class => 'Homology.homology')),
+        -species_set_obj => ($self->compara_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs($gdbs) || new Bio::EnsEMBL::Compara::SpeciesSet(-genomedbs => $gdbs)),
       );
       $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss) unless ($self->param('_readonly'));
       $self->param('mlss_hash')->{$mlss_key} = $mlss;
