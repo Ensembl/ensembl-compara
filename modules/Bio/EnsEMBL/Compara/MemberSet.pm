@@ -320,6 +320,33 @@ sub member_class {
     return 'Bio::EnsEMBL::Compara::Member';
 }
 
+
+=head2 deep_copy
+
+  Description: Returns a copy of $self. All the members are themselves copied
+  Returntype : Bio::EnsEMBL::Compara::MemberSet
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub deep_copy {
+    my $self = shift;
+    my $copy = {};
+    bless $copy, ref($self);
+
+    foreach my $attr (qw(_dbID _adaptor _version _stable_id _description _method_link_species_set_id)) {
+        $copy->{$attr} = $self->{$attr};
+    }
+
+    foreach my $member (@{$self->get_all_Members}) {
+        $copy->add_Member($member->copy());
+    }
+
+    return $copy;
+}
+
+
 =head2 add_Member
 
   Arg [1]    : Member
@@ -380,11 +407,10 @@ sub add_Member_Attribute {  # DEPRECATED
 sub _tranform_array_to_Member_Attributes {
     my ($self, $array) = @_;
     my @all_ma;
-    foreach my $am (@$array) {
-        my $member = Bio::EnsEMBL::Compara::Member::copy($am);
+    foreach my $member (@$array) {
         my $attribute = new Bio::EnsEMBL::Compara::Attribute;
         foreach my $key (keys %Bio::EnsEMBL::Compara::Attribute::ok_field) {
-            $attribute->$key($am->$key) if defined $am->$key;
+            $attribute->$key($member->$key) if defined $member->$key;
         }
         push @all_ma, [$member, $attribute];
     }
