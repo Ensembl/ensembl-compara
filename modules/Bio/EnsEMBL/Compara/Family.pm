@@ -51,4 +51,20 @@ sub description_score {
 }
 
 
+=head2 deep_copy
+
+  Description: Returns a copy of $self. All the members are themselves copied
+  Returntype : Bio::EnsEMBL::Compara::Family
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub deep_copy {
+    my $self = shift;
+    my $copy = $self->SUPER::deep_copy();
+    $copy->description_score($self->description_score);
+    return $copy;
+}
+
 1;

@@ -106,6 +106,25 @@ sub new {
     return $self;
 }
 
+=head2 deep_copy
+
+  Description: Returns a copy of $self. All the members are themselves copied
+  Returntype : Bio::EnsEMBL::Compara::GeneTree
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub deep_copy {
+    my $self = shift;
+    my $copy = $self->SUPER::deep_copy();
+    foreach my $attr (qw(tree_type member_type clusterset_id)) {
+        $copy->$attr($self->$attr);
+    }
+    return $copy;
+}
+
+
 
 =head2 DESTROY()
 
