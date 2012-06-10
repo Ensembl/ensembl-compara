@@ -122,6 +122,9 @@ sub write_output {
 
     if ($self->param('store_intermediate_trees')) {
         foreach my $clusterset_id (qw(phyml-aa phyml-nt nj-dn nj-ds nj-mm)) {
+            my $filename = sprintf('%s/interm.%s.nhx', $self->worker_temp_directory, $clusterset_id);
+            next unless -e $filename;
+            print STDERR "Found file $filename for clusterset $clusterset_id\n";
             my $clusterset = $self->param('tree_adaptor')->fetch_all(-tree_type => 'clusterset', -clusterset_id => $clusterset_id)->[0];
             my $newtree = $self->param('protein_tree')->deep_copy();
             # We don't need cigar lines
@@ -129,21 +132,26 @@ sub write_output {
                 $member->cigar_line('');
             }
             $self->store_tree_into_clusterset($self->param('protein_tree'), $clusterset);
-            $self->parse_newick_into_tree( sprintf('%s/interm.%s.nhx', $self->worker_temp_directory, $clusterset_id) , $newtree );
+            $self->parse_newick_into_tree($filename, $newtree);
+            $newtree->print_tree(10);
             $self->store_genetree($newtree);
             $newtree->store_tag('merged_tree', $self->param('protein_tree_id'));
         }
     }
     if ($self->param('store_filtered_align')) {
-        my $clusterset = $self->param('tree_adaptor')->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'filtered-align')->[0];
-        my $newtree = $self->param('protein_tree')->deep_copy();
-        $self->store_tree_into_clusterset($self->param('protein_tree'), $clusterset);
-        foreach my $member (@{$newtree->get_all_Members}) {
-            $member->stable_id(sprintf("%d_%d", $member->dbID, $self->param('use_genomedb_id') ? $member->genome_db_id : $member->taxon_id));
+        my $filename = sprintf('%s/filtalign.fa', $self->worker_temp_directory);
+        if (-e $filename) {
+            print STDERR "Found filtered alignment: $filename\n";
+            my $clusterset = $self->param('tree_adaptor')->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'filtered-align')->[0];
+            my $newtree = $self->param('protein_tree')->deep_copy();
+            $self->store_tree_into_clusterset($self->param('protein_tree'), $clusterset);
+            foreach my $member (@{$newtree->get_all_Members}) {
+                $member->stable_id(sprintf("%d_%d", $member->dbID, $self->param('use_genomedb_id') ? $member->genome_db_id : $member->taxon_id));
+            }
+            $newtree->load_cigars_from_fasta($filename, $newtree);
+            $self->store_genetree($newtree);
+            $newtree->store_tag('merged_tree', $self->param('protein_tree_id'));
         }
-        $newtree->load_cigars_from_fasta( sprintf('%s/filtalign.fa', $self->worker_temp_directory) , $newtree );
-        $self->store_genetree($newtree);
-        $newtree->store_tag('merged_tree', $self->param('protein_tree_id'));
     }
 
     if (defined $self->param('output_dir')) {
