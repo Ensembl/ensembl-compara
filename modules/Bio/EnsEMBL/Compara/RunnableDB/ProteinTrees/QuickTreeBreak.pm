@@ -250,7 +250,9 @@ sub store_supertree {
     #$self->dataflow_output_id({'protein_tree_id' => $node_id}, 2);
     print STDERR "Created new cluster $node_id\n";
   }
-  $self->compara_dba->get_GeneTreeNodeAdaptor->store($self->param('super_align_tree'));
+  my $super_align_clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'super-align')->[0];
+  $self->store_tree_into_clusterset($self->param('super_align_tree'), $super_align_clusterset);
+  $self->param('super_align_tree')->store_tag('detailed_tree', $self->param('protein_tree_id'));
 }
 
 
@@ -263,12 +265,8 @@ sub generate_subtrees {
     
     # The tree to hold the super-alignment
     my $super_align_tree = $gene_tree->deep_copy();
-    my $clusterset_leaf = new Bio::EnsEMBL::Compara::GeneTreeNode;
-    $clusterset_leaf->no_autoload_children();
-    my $clusterset = $self->param('tree_adaptor')->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'super-align')->[0];
-    $clusterset->root->add_child($clusterset_leaf);
-    $clusterset_leaf->add_child($super_align_tree->root);
-    $self->param('super_align_tree', $clusterset_leaf);
+    $super_align_tree->clusterset_id('super-align');
+    $self->param('super_align_tree', $super_align_tree);
 
   #cleanup old tree structure- 
   #  flatten and reduce to only GeneTreeMember leaves
