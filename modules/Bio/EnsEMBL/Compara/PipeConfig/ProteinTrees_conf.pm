@@ -168,7 +168,7 @@ sub default_options {
     # connection parameters to various databases:
 
         'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => 'compara3',
+            -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -767,7 +767,7 @@ sub pipeline_analyses {
             -parameters => {
                 'mlss_id'                   => $self->o('mlss_id'),
                 'cluster_dir'               => $self->o('cluster_dir'),
-                'additional_clustersets'    => qw(phyml-aa phyml-nt nj-dn nj-ds nj-mm super-align filtered-align),
+                'additional_clustersets'    => [qw(phyml-aa phyml-nt nj-dn nj-ds nj-mm super-align filtered-align)],
             },
             -hive_capacity => -1,
             -rc_name => '2Gb_job',
