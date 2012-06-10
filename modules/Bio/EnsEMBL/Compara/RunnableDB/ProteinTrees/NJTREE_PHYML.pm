@@ -123,7 +123,12 @@ sub write_output {
     if ($self->param('store_intermediate_trees')) {
         foreach my $clusterset_id (qw(phyml-aa phyml-nt nj-dn nj-ds nj-mm)) {
             my $clusterset = $self->param('tree_adaptor')->fetch_all(-tree_type => 'clusterset', -clusterset_id => $clusterset_id)->[0];
-            my $newtree = $self->copy_tree_to_clusterset($self->param('protein_tree'), $clusterset);
+            my $newtree = $self->param('protein_tree')->deep_copy();
+            # We don't need cigar lines
+            foreach my $member (@{$newtree->get_all_Members}) {
+                $member->cigar_line('');
+            }
+            $self->store_tree_into_clusterset($self->param('protein_tree'), $clusterset);
             $self->parse_newick_into_tree( sprintf('%s/interm.%s.nhx', $self->worker_temp_directory, $clusterset_id) , $newtree );
             $self->store_genetree($newtree);
             $newtree->store_tag('merged_tree', $self->param('protein_tree_id'));
@@ -131,7 +136,8 @@ sub write_output {
     }
     if ($self->param('store_filtered_align')) {
         my $clusterset = $self->param('tree_adaptor')->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'filtered-align')->[0];
-        my $newtree = $self->copy_tree_to_clusterset($self->param('protein_tree'), $clusterset);
+        my $newtree = $self->param('protein_tree')->deep_copy();
+        $self->store_tree_into_clusterset($self->param('protein_tree'), $clusterset);
         foreach my $member (@{$newtree->get_all_Members}) {
             $member->stable_id(sprintf("%d_%d", $member->dbID, $self->param('use_genomedb_id') ? $member->genome_db_id : $member->taxon_id));
         }
@@ -145,7 +151,6 @@ sub write_output {
     }
     rmtree([$self->worker_temp_directory]);
 }
-
 
 sub DESTROY {
   my $self = shift;
