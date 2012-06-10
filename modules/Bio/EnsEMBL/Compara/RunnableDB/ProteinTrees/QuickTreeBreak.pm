@@ -264,9 +264,7 @@ sub generate_subtrees {
     my $gene_tree = $self->param('gene_tree');
     
     # The tree to hold the super-alignment
-    my $super_align_tree = $gene_tree->deep_copy();
-    $super_align_tree->clusterset_id('super-align');
-    $self->param('super_align_tree', $super_align_tree);
+    $self->param('super_align_tree', $gene_tree->deep_copy());
 
   #cleanup old tree structure- 
   #  flatten and reduce to only GeneTreeMember leaves
