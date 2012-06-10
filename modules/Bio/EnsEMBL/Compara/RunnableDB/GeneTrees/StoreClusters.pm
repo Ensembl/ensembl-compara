@@ -128,7 +128,8 @@ sub create_clusterset {
     );
     # Assumes a root node will be automatically created
     $self->compara_dba->get_GeneTreeAdaptor->store($clusterset);
-    
+    print STDERR "Clusterset '$clusterset_id' created with root_id=", $clusterset->root_id, "\n" if $self->debug;
+
     return $clusterset;
 }
 
@@ -181,7 +182,7 @@ sub add_cluster {
     # Stores the cluster
     $self->compara_dba->get_GeneTreeNodeAdaptor->store($clusterset_leaf);
     $cluster->store_tag('gene_count', $cluster_root->get_child_count);
-    print STDERR "cluster ", $cluster->root_id, " with ", $cluster_root->get_child_count, " leaves\n" if $self->debug;
+    print STDERR "cluster root_id=", $cluster->root_id, " in clusterset '", $clusterset->clusterset_id, "' with ", $cluster_root->get_child_count, " leaves\n" if $self->debug;
     
     # Stores the tags
     for my $tag (keys %$cluster_def) {
@@ -219,10 +220,10 @@ sub finish_store_clusterset {
 
     # left/right_index for quicker clusterset retrieval
     $clusterset->root->build_leftright_indexing(1);
-    $clusterset->root->print_tree if $self->debug;
     $self->compara_dba->get_GeneTreeAdaptor->store($clusterset);
     my $leafcount = scalar(@{$clusterset->root->get_all_leaves});
     print STDERR "clusterset ", $clusterset->root_id, " / ", $clusterset->clusterset_id, " with $leafcount leaves\n" if $self->debug;
+    $clusterset->root->print_tree if $self->debug;
 }
 
 
