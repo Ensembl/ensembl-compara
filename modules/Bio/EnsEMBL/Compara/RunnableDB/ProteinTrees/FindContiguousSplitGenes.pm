@@ -159,8 +159,8 @@ sub check_for_split_genes {
     foreach my $genepairlink (@sorted_genepairlinks) {
         my ($protein1, $protein2) = @$genepairlink;
         my $pair = new Bio::EnsEMBL::Compara::AlignedMemberSet;
-        $pair->add($protein1);
-        $pair->add($protein2);
+        $pair->add_Member($protein1);
+        $pair->add_Member($protein2);
         $pair->update_alignment_stats;
         print "Pair: ", $protein1->stable_id, " - ", $protein2->stable_id, "\n" if ($self->debug);
 
