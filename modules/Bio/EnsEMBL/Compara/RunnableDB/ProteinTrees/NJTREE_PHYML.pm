@@ -131,7 +131,7 @@ sub write_output {
             foreach my $member (@{$newtree->get_all_Members}) {
                 $member->cigar_line('');
             }
-            $self->store_tree_into_clusterset($self->param('protein_tree'), $clusterset);
+            $self->store_tree_into_clusterset($newtree, $clusterset);
             $self->parse_newick_into_tree($filename, $newtree);
             $newtree->print_tree(10);
             $self->store_genetree($newtree);
@@ -144,7 +144,7 @@ sub write_output {
             print STDERR "Found filtered alignment: $filename\n";
             my $clusterset = $self->param('tree_adaptor')->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'filtered-align')->[0];
             my $newtree = $self->param('protein_tree')->deep_copy();
-            $self->store_tree_into_clusterset($self->param('protein_tree'), $clusterset);
+            $self->store_tree_into_clusterset($newtree, $clusterset);
             foreach my $member (@{$newtree->get_all_Members}) {
                 $member->stable_id(sprintf("%d_%d", $member->dbID, $self->param('use_genomedb_id') ? $member->genome_db_id : $member->taxon_id));
             }
