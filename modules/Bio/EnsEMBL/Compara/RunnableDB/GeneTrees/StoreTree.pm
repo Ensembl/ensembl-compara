@@ -4,7 +4,7 @@ use strict;
 
 use Data::Dumper;
 
-use Bio::EnsEMBL::Utils::Scalar;
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
@@ -52,19 +52,20 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     my %split_genes;
     my $sth = $self->compara_dba->dbc->prepare('SELECT DISTINCT gene_split_id FROM split_genes JOIN gene_tree_member USING (member_id) JOIN gene_tree_node USING (node_id) WHERE root_id = ?');
     $sth->execute($self->param('protein_tree_id'));
-    my $gene_splits = $sth->selectall_arrayref();
+    my $gene_splits = $sth->fetchall_arrayref();
+    $sth->finish;
     $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_member USING (member_id) WHERE gene_split_id = ?');
     foreach my $gene_split (@$gene_splits) {
-      $sth->execute($gene_split->{gene_split_id});
+      $sth->execute($gene_split->[0]);
       my $partial_genes = $sth->fetchall_arrayref;
       my $node1 = shift @$partial_genes;
-      my $protein1 = $gene_tree->find_leaf_by_node_id($node1->{node_id});
+      my $protein1 = $gene_tree->find_leaf_by_node_id($node1->[0]);
       #print STDERR "node1 ", $node1, " ", $protein1, "\n";
       my $name1 = ($protein1->member_id)."_".($self->param('use_genomedb_id') ? $protein1->genome_db_id : $protein1->taxon_id);
       my $cdna = $protein1->cdna_alignment_string;
       #print STDERR "cnda1 $cdna\n";
       foreach my $node2 (@$partial_genes) {
-        my $protein2 = $gene_tree->find_leaf_by_node_id($node2->{node_id});
+        my $protein2 = $gene_tree->find_leaf_by_node_id($node2->[0]);
         #print STDERR "node2 ", $node2, " ", $protein2, "\n";
         my $name2 = ($protein2->member_id)."_".($self->param('use_genomedb_id') ? $protein2->genome_db_id : $protein2->taxon_id);
         $split_genes{$name2} = $name1;
@@ -91,7 +92,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     }
 
     # Removing duplicate sequences of split genes
-    print STDERR "split_genes hash: ", Dumper(%split_genes), "\n" if $self->debug;
+    print STDERR "split_genes hash: ", Dumper(\%split_genes), "\n" if $self->debug;
     foreach my $gene_to_remove (keys %split_genes) {
       $sa->remove_seq($sa->each_seq_with_id($gene_to_remove));
     }
@@ -267,13 +268,15 @@ sub parse_newick_into_tree {
   foreach my $member (@{$tree->root->get_all_leaves}) {
     my $tmpnode = $newroot->find_node_by_name($member->member_id);
     if($tmpnode) {
-      $member->Bio::EnsEMBL::Compara::AlignedMember::copy($tmpnode);
-      bless $tmpnode, 'Bio::EnsEMBL::Compara::GeneTreeMember';
-      $tmpnode->node_id($member->node_id);
-      $tmpnode->adaptor($member->adaptor);
+      $tmpnode->parent->add_child($member);
+      $tmpnode->disavow_parent;
+      #$member->Bio::EnsEMBL::Compara::AlignedMember::copy($tmpnode);
+      #bless $tmpnode, 'Bio::EnsEMBL::Compara::GeneTreeMember';
+      #$tmpnode->node_id($member->node_id);
+      #$tmpnode->adaptor($member->adaptor);
     } else {
-      print("unable to find node in newick for member");
       $member->print_member;
+      die "unable to find node in newick for member";
     }
   }
 
@@ -350,6 +353,7 @@ sub store_tree_into_clusterset {
     $clusterset_leaf->no_autoload_children();
     $clusterset->root->add_child($clusterset_leaf);
     $clusterset_leaf->add_child($newtree->root);
+    $newtree->clusterset_id($clusterset->clusterset_id);
     $clusterset->adaptor->db->get_GeneTreeNodeAdaptor->store($clusterset_leaf);
 
 }
