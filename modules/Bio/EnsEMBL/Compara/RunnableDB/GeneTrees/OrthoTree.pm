@@ -828,7 +828,7 @@ sub store_homologies {
     my $dcs = $genepairlink->get_tagvalue('ancestor')->get_tagvalue('duplication_confidence_score');
     next if ($type eq 'possible_ortholog' and $dcs > $self->param('no_between'));
 
-    $self->store_gene_link_as_homology($genepairlink);
+    $self->store_gene_link_as_homology($genepairlink) if $self->param('store_homologies');
     print STDERR "homology links $hlinkscount\n" if ($hlinkscount++ % 500 == 0);
   }
 
@@ -936,7 +936,7 @@ sub store_gene_link_as_homology {
     }
   }
   
-  $self->param('homologyDBA')->store($homology) if $self->param('store_homologies');
+  $self->param('homologyDBA')->store($homology);
 
   return $homology;
 }
