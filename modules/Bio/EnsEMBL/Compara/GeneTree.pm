@@ -95,11 +95,12 @@ sub new {
     my $self = $class->SUPER::new(@args);
 
     if (scalar @args) {
-        my ($root_id, $member_type, $tree_type) = rearrange([qw(ROOT_ID MEMBER_TYPE TREE_TYPE)], @args);
+        my ($root_id, $member_type, $tree_type, $clusterset_id) = rearrange([qw(ROOT_ID MEMBER_TYPE TREE_TYPE CLUSTERSET_ID)], @args);
 
         $self->{'_root_id'} = $root_id if defined $root_id;
         $member_type && $self->member_type($member_type);
         $tree_type && $self->tree_type($tree_type);
+        $clusterset_id && $self->clusterset_id($clusterset_id);
     }
 
     return $self;
