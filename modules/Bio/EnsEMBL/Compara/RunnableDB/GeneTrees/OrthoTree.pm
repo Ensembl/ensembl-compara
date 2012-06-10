@@ -91,7 +91,6 @@ sub param_defaults {
             'tree_scale'            => 1,
             'store_homologies'      => 1,
             'no_between'            => 0.25, # dont store all possible_orthologs
-            'doublecheck_homologies' => 0,
     };
 }
 
@@ -849,38 +848,40 @@ sub store_gene_link_as_homology {
   return unless($type);
   my $subtype = $genepairlink->get_tagvalue('taxon_name');
   my $ancestor = $genepairlink->get_tagvalue('ancestor');
+  warn "Tag tree_node_id undefined\n" unless $genepairlink->has_tag('tree_node_id');
   my $tree_node_id = $genepairlink->get_tagvalue('tree_node_id');
-  warn("Tag tree_node_id undefined\n") unless(defined($tree_node_id) && $tree_node_id ne '');
 
   my ($gene1, $gene2) = $genepairlink->get_nodes;
 
   # get or create method_link_species_set
-  my $mlss_type;
-  if (($type eq 'possible_ortholog') or ($type eq 'within_species_paralog') or ($type eq 'other_paralog')) {
-      $mlss_type = "ENSEMBL_PARALOGUES";
-  } else {
-      $mlss_type = "ENSEMBL_ORTHOLOGUES";
-  }
-  # This should be unique to a pair of genome_db_ids, and equal if we switch the two genome_dbs
-  # WARNING: This trick is valid for genome_db_id up to 10000
-  my $mlss_key = sprintf("%s_%d", $mlss_type, $gene1->genome_db->dbID * $gene2->genome_db->dbID + 100000000*($gene1->genome_db->dbID+$gene2->genome_db->dbID));
-
   my $mlss;
-  if (exists $self->param('mlss_hash')->{$mlss_key}) {
-    $mlss = $self->param('mlss_hash')->{$mlss_key};
-  } else {
-      my $gdbs;
-      if ($gene1->genome_db->dbID == $gene2->genome_db->dbID) {
-          $gdbs = [$gene1->genome_db];
+  {
+      my $mlss_type;
+      if (($type eq 'possible_ortholog') or ($type eq 'within_species_paralog') or ($type eq 'other_paralog')) {
+          $mlss_type = "ENSEMBL_PARALOGUES";
       } else {
-          $gdbs = [$gene1->genome_db, $gene2->genome_db];
+          $mlss_type = "ENSEMBL_ORTHOLOGUES";
       }
-      $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
-        -method => ($self->compara_dba->get_MethodAdaptor->fetch_by_type($mlss_type) || new Bio::EnsEMBL::Compara::Method(-type => $mlss_type, -class => 'Homology.homology')),
-        -species_set_obj => ($self->compara_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs($gdbs) || new Bio::EnsEMBL::Compara::SpeciesSet(-genomedbs => $gdbs)),
-      );
-      $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss) unless ($self->param('_readonly'));
-      $self->param('mlss_hash')->{$mlss_key} = $mlss;
+    # This should be unique to a pair of genome_db_ids, and equal if we switch the two genome_dbs
+    # WARNING: This trick is valid for genome_db_id up to 10000
+      my $mlss_key = sprintf("%s_%d", $mlss_type, $gene1->genome_db->dbID * $gene2->genome_db->dbID + 100000000*($gene1->genome_db->dbID+$gene2->genome_db->dbID));
+
+      if (exists $self->param('mlss_hash')->{$mlss_key}) {
+          $mlss = $self->param('mlss_hash')->{$mlss_key};
+      } else {
+          my $gdbs;
+          if ($gene1->genome_db->dbID == $gene2->genome_db->dbID) {
+              $gdbs = [$gene1->genome_db];
+          } else {
+              $gdbs = [$gene1->genome_db, $gene2->genome_db];
+          }
+          $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
+                  -method => ($self->compara_dba->get_MethodAdaptor->fetch_by_type($mlss_type) || new Bio::EnsEMBL::Compara::Method(-type => $mlss_type, -class => 'Homology.homology')),
+                  -species_set_obj => ($self->compara_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs($gdbs) || new Bio::EnsEMBL::Compara::SpeciesSet(-genomedbs => $gdbs)),
+                  );
+          $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss) unless ($self->param('_readonly'));
+          $self->param('mlss_hash')->{$mlss_key} = $mlss;
+      }
   }
   # create an Homology object
   my $homology = new Bio::EnsEMBL::Compara::Homology;
@@ -934,54 +935,8 @@ sub store_gene_link_as_homology {
         $self->param('orthotree_homology_counts')->{'putative_gene_split'}++;
     }
   }
-  ## Check if it has already been stored, in which case we dont need to store again
-  my $matching_homology = 0;
-  if ($self->param('doublecheck_homologies') and ($self->input_job->retry_count > 0)) {
-    my $member_id1 = $gene1->gene_member->member_id;
-    my $member_id2 = $gene2->gene_member->member_id;
-    if ($member_id1 == $member_id2) {
-      my $tree_id = $self->param('gene_tree')->node_id;
-      my $pmember_id1 = $gene1->member_id; my $pstable_id1 = $gene1->stable_id;
-      my $pmember_id2 = $gene2->member_id; my $pstable_id2 = $gene2->stable_id;
-      $self->throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
-    }
-    my $stored_homology = $self->param('homologyDBA')->fetch_by_Member_id_Member_id($member_id1,$member_id2);
-    if (defined($stored_homology)) {
-      $matching_homology = 1;
-      $matching_homology = 0 if ($stored_homology->description ne $homology->description);
-      $matching_homology = 0 if ($stored_homology->subtype ne $homology->subtype);
-      $matching_homology = 0 if ($stored_homology->ancestor_node_id ne $homology->ancestor_node_id);
-      $matching_homology = 0 if ($stored_homology->tree_node_id ne $homology->tree_node_id);
-      $matching_homology = 0 if ($stored_homology->method_link_type ne $homology->method_link_type);
-      $matching_homology = 0 if ($stored_homology->method_link_species_set->dbID ne $homology->method_link_species_set->dbID);
-    }
-
-    # Delete old one, then proceed to store new one
-    if (defined($stored_homology) && (0 == $matching_homology)) {
-      my $homology_id = $stored_homology->dbID;
-      my $sql1 = "delete from homology where homology_id=$homology_id";
-      my $sql2 = "delete from homology_member where homology_id=$homology_id";
-      my $sth1 = $self->compara_dba->dbc->prepare($sql1);
-      my $sth2 = $self->compara_dba->dbc->prepare($sql2);
-      $sth1->execute;
-      $sth2->execute;
-      $sth1->finish;
-      $sth2->finish;
-    }
-  }
-  if($self->param('store_homologies') and (0 == $matching_homology)) {
-    $self->param('homologyDBA')->store($homology);
-  }
-
-  #my $stable_id;
-  #if($gene1->taxon_id < $gene2->taxon_id) {
-  #  $stable_id = $gene1->taxon_id . "_" . $gene2->taxon_id . "_";
-  #} else {
-  #  $stable_id = $gene2->taxon_id . "_" . $gene1->taxon_id . "_";
-  #}
-  #$stable_id .= sprintf ("%011.0d",$homology->dbID) if($homology->dbID);
-  #$homology->stable_id($stable_id);
-  #TODO: update the stable_id of the homology
+  
+  $self->param('homologyDBA')->store($homology) if $self->param('store_homologies');
 
   return $homology;
 }
