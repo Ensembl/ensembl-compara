@@ -86,7 +86,7 @@ sub download_models {
 }
 
 sub store_hmmprofile {
-    my ($self, $multicm_file, $hmm_name) = @_;
+    my ($self, $multicm_file, $hmm_name, $consensus) = @_;
 
     $multicm_file ||= $self->param('cm_file_or_directory');
     print STDERR "Opening file $multicm_file\n" if ($self->debug());
@@ -101,10 +101,10 @@ sub store_hmmprofile {
         } elsif ($line =~ /ACCESSION/) {
             my ($tag, $accession) = split(/\s+/,$line);
             $model_id = defined $hmm_name ? $hmm_name : $accession;
-        } elsif ($line =~ /\/\//) {
+        } elsif ($line =~ /^\/\//) {
             # End of profile, let's store it
             $self->throw("Error loading profile [$hmm_name, $name, $model_id]\n") unless (defined($model_id) && defined ($profile_content));
-            $self->load_cmprofile($profile_content, $model_id, $name);
+            $self->load_hmmprofile($profile_content, $model_id, $name, $consensus);
             $model_id = undef;
             $profile_content = undef;
         }
@@ -112,12 +112,11 @@ sub store_hmmprofile {
     }
 }
 
-sub load_cmprofile {
-    my ($self, $cm_profile, $model_id, $model_name) = @_;
-    print STDERR "Load profile with model_id: $model_id\n" if ($self->debug());
+sub load_hmmprofile {
+    my ($self, $cm_profile, $model_id, $model_name, $consensus) = @_;
     my $table_name = 'hmm_profile';
-    my $sth = $self->compara_dba->dbc->prepare("INSERT IGNORE INTO $table_name VALUES (?,?,?,?)");
-    $sth->execute($model_id, $model_name, $self->param('type'), $cm_profile);
+    my $sth = $self->compara_dba->dbc->prepare("INSERT IGNORE INTO $table_name VALUES (?,?,?,?,?)");
+    $sth->execute($model_id, $model_name, $self->param('type'), $cm_profile, $consensus || undef);
     $sth->finish;
     return;
 }
@@ -129,7 +128,7 @@ sub clean_directory {
     if (-d $tmp_file) {
         my $res;
         remove_tree($tmp_file, \$res);
-        print STDERR "Files removed: ". scalar @$res . "\n" if ($self->debug());
+#        print STDERR "Files removed: ". scalar @$res . "\n" if ($self->debug());
         print STDERR Dumper $res if ($self->debug());
     } elsif (-f $tmp_file) {
         unlink($tmp_file);
