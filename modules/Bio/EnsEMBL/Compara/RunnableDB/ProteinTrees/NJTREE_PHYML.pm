@@ -75,8 +75,9 @@ use Data::Dumper;
 use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
+use Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 
 
 sub param_defaults {
@@ -125,7 +126,7 @@ sub write_output {
             my $filename = sprintf('%s/interm.%s.nhx', $self->worker_temp_directory, $clusterset_id);
             next unless -e $filename;
             print STDERR "Found file $filename for clusterset $clusterset_id\n";
-            my $clusterset = $self->param('tree_adaptor')->fetch_all(-tree_type => 'clusterset', -clusterset_id => $clusterset_id)->[0];
+            my $clusterset = $self->fetch_or_create_clusterset($clusterset_id);
             my $newtree = $self->param('protein_tree')->deep_copy();
             # We don't need cigar lines
             foreach my $member (@{$newtree->get_all_Members}) {
@@ -142,7 +143,7 @@ sub write_output {
         my $filename = sprintf('%s/filtalign.fa', $self->worker_temp_directory);
         if (-e $filename) {
             print STDERR "Found filtered alignment: $filename\n";
-            my $clusterset = $self->param('tree_adaptor')->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'filtered-align')->[0];
+            my $clusterset = $self->fetch_or_create_clusterset('filtered-align');
             my $newtree = $self->param('protein_tree')->deep_copy();
             $self->store_tree_into_clusterset($newtree, $clusterset);
             foreach my $member (@{$newtree->get_all_Members}) {
@@ -150,6 +151,7 @@ sub write_output {
             }
             $newtree->load_cigars_from_fasta($filename, $newtree);
             $self->store_genetree($newtree);
+            Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA::_store_aln_tags($self, $newtree);
             $newtree->store_tag('merged_tree', $self->param('protein_tree_id'));
         }
     }
