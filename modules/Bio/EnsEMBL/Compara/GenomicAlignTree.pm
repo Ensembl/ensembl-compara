@@ -586,7 +586,6 @@ sub restrict_between_alignment_positions {
   foreach my $this_node (@{$genomic_align_tree->get_all_nodes}) {
     $this_node->adaptor($self->adaptor);
   }
-
   my $final_alignment_length = $end - $start + 1;
 
   #Get all the nodes and restrict but only remove leaves if necessary. Call minimize_tree at the end to 
@@ -601,6 +600,7 @@ sub restrict_between_alignment_positions {
 
       if ($genomic_align_tree->reference_genomic_align eq $this_genomic_align) {
         ## Update the reference_genomic_align
+
         $genomic_align_tree->reference_genomic_align($restricted_genomic_align);
         $genomic_align_tree->reference_genomic_align_node($this_node);
       }
@@ -610,7 +610,11 @@ sub restrict_between_alignment_positions {
         ## Always skip composite segments outside of the range of restriction
         ## The cigar_line will contain only X's
         next if ($restricted_genomic_align->cigar_line =~ /^\d*X$/);
-        $restricted_genomic_align->genomic_align_block($genomic_align_tree);
+	
+        #Set the genomic_align_block_id of the restricted genomic_align
+        $restricted_genomic_align->genomic_align_block_id($this_genomic_align->genomic_align_block_id);
+        #$restricted_genomic_align->genomic_align_block($genomic_align_tree);
+
         push(@$new_genomic_aligns, $restricted_genomic_align);
       }
     }
@@ -620,7 +624,6 @@ sub restrict_between_alignment_positions {
         $genomic_align_group->add_GenomicAlign($this_genomic_align);
       }
     } else {
-
 	#Only remove leaves. Use minimise_tree to tidy up the internal nodes
 	if ($this_node->is_leaf) {
 	    $this_node->disavow_parent();
@@ -630,7 +633,11 @@ sub restrict_between_alignment_positions {
 		$genomic_align_tree = $genomic_align_tree->minimize_tree();
 		## Make sure links are not broken after tree minimization
 		$genomic_align_tree->reference_genomic_align($reference_genomic_align);
-		$genomic_align_tree->reference_genomic_align->genomic_align_block($genomic_align_tree);
+                
+                #Set the genomic_align_block_id of the restricted genomic_align
+                $genomic_align_tree->reference_genomic_align->genomic_align_block_id($reference_genomic_align->genomic_align_block_id);
+
+		#$genomic_align_tree->reference_genomic_align->genomic_align_block($genomic_align_tree);
 		$genomic_align_tree->reference_genomic_align_node($reference_genomic_align_node);
 	    }
 	}
