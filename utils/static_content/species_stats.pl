@@ -155,11 +155,10 @@ foreach my $spp (@valid_spp) {
 
     my( $a_id ) = ( @{$meta_container->list_value_by_key('assembly.name')},
                     @{$meta_container->list_value_by_key('assembly.default')});
-                    
     warn "[ERROR] $spp "
         ."missing both meta->assembly.name and meta->assembly.default"
-        unless( $a_id );                    
-                    
+        unless( $a_id );
+
     if ($ena) {
       # look for long name and accession num
       if (my ($long) = @{$meta_container->list_value_by_key('assembly.long_name')}) {
@@ -786,8 +785,11 @@ sub do_interpro {
   my $ga = $adaptor->get_GeneAdaptor;
 
   foreach my $ac_id (keys %$domain) { 
-    my @genes = @{$ga->fetch_all_by_domain($ac_id)};
-    next if !@genes;
+    my @genes;
+    for my $gene (@{$ga->fetch_all_by_domain($ac_id)}){
+      push(@genes,$gene) if($gene->species=~/^$species$/i);
+    }
+    next if (!@genes);
     $domain->{$ac_id}{genes} = @genes;
     #foreach my $g (@genes) {
     #  $domain->{$acc}{count} += @{ $g->get_all_Transcripts };
