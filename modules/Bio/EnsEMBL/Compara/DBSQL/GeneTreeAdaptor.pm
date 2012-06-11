@@ -296,6 +296,45 @@ sub fetch_subtrees {
 }
 
 
+=head2 fetch_all_linked_trees
+
+  Arg[1]     : GeneTree $tree or its root_id
+  Example    : $othertrees = $genetree_adaptor->fetch_all_linked_trees($tree);
+  Description: Fetches from the database all trees that are associated to the argument tree.
+                The other trees generally contain the same members, but are either build
+                with a different phylogenetic model, or have a different multiple alignment.
+  Returntype : arrayref of Bio::EnsEMBL::Compara::GeneTree
+  Caller     : general
+
+=cut
+
+sub fetch_all_linked_trees {
+    my ($self, $tree) = @_;
+
+    my $ini_tree_id = (ref($tree) ? $tree->root_id : $tree);
+
+    my %results = ($ini_tree_id => $tree);
+    my @todo = ($ini_tree_id);
+
+    my $join = [[['gene_tree_root_tag', 'gtrt'], 'gtr.root_id = gtrt.value']];
+
+    while (scalar(@todo)) {
+        
+        my $constraint = '(gtrt.tag LIKE "%\_tree\_root\_id") AND (gtrt.root_id IN ('.join(',',@todo).'))';
+        @todo = ();
+        my $array1 = $self->generic_fetch($constraint, $join);
+        foreach my $other_tree (@$array1) {
+            next if exists $results{$other_tree->root_id};
+            push @todo, $other_tree->root_id;
+            $results{$other_tree->root_id} = $other_tree;
+        }
+    }
+    delete $results{$ini_tree_id};
+    my @results = values %results;
+    return \@results;
+}
+
+
 #
 # STORE methods
 ###########################
