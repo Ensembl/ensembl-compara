@@ -147,9 +147,10 @@ sub store_genetree
         $tree->print_tree;
     }
 
-    $self->store_node_tags($tree->root);
-    $self->store_tree_tags($tree);
-
+    if ($tree->root->get_child_count == 2) {
+        $self->store_node_tags($tree->root);
+        $self->store_tree_tags($tree);
+    }
 }
 
 sub store_node_tags
