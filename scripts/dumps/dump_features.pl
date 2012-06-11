@@ -16,6 +16,7 @@ my $species = "Homo sapiens";
 my $regions;
 my $feature = "";
 my $extra;
+my $print_strand = 0;
 my $from;
 my $host;
 my $user;
@@ -67,6 +68,7 @@ GetOptions(
   'regions=s' => \$regions,
   'feature=s' => \$feature,
   'extra=s' => \$extra,
+  'print_strand!' => \$print_strand,
   'from=s' => \$from,
   'host=s' => \$host,
   'user=s' => \$user,
@@ -149,6 +151,15 @@ if ($feature =~ /^top/) {
 } elsif ($feature =~ /^cassette/) {
   $track_name = "cassette coding-exons.e$version";
   $description = "$species_name cassette coding-exons (for protein-coding genes only) in Ensembl $version";
+} elsif ($feature =~ /^utr/) {
+  $track_name = "utr.e$version";
+  $description = "$species_name utr in Ensembl $version";
+} elsif ($feature =~ /^intron/) {
+  $track_name = "intron.e$version";
+  $description = "$species_name intron in Ensembl $version";
+} elsif ($feature =~ /^splice_site/) {
+  $track_name = "splice_site.e$version";
+  $description = "$species_name splice site in Ensembl $version";
 } elsif ($feature =~ /^transcript/) {
   $track_name = "transcript.e$version";
   $description = "$species_name transcript in Ensembl $version";
@@ -236,6 +247,87 @@ foreach my $slice (sort {
       foreach my $this_transcript (@$transcripts) {
         my $exons = $this_transcript->get_all_translateable_Exons();
         push(@$all_features, @$exons);
+      }
+    }
+  } elsif ($feature =~ /^utr/) {
+     my $genes = $slice->get_all_Genes_by_type('protein_coding');
+     foreach my $this_gene (@$genes) {
+       my $transcripts = $this_gene->get_all_Transcripts;
+       foreach my $this_transcript (@$transcripts) {
+         next if ($this_transcript->biotype ne "protein_coding");
+         foreach my $exon (@{$this_transcript->get_all_Exons}) {
+           my ($start, $end);
+           #5' utr
+           next if (!$this_transcript->coding_region_start);
+           if ($exon->start < $this_transcript->coding_region_start) {
+               $start = $exon->start;
+               if ($exon->end < $this_transcript->coding_region_start) {
+                  $end = $exon->end;
+               } else {
+                  $end = $this_transcript->coding_region_start-1;
+               }
+               my $utr = new Bio::EnsEMBL::Feature(-start => $start,
+                                                   -end => $end,
+                                                   -slice => $slice,
+                                                   -strand => $this_transcript->strand);
+               if ($utr->end - $utr->start >= 0) {
+                  push @$all_features, $utr;
+               }
+           }
+           #3' utr
+           next if (!$this_transcript->coding_region_end);
+           if ($exon->end > $this_transcript->coding_region_end) {
+              $end = $exon->end;
+              if ($exon->start > $this_transcript->coding_region_end) {
+                 $start = $exon->start;
+              } else {
+                 $start = $this_transcript->coding_region_end+1;
+              }
+               my $utr = new Bio::EnsEMBL::Feature(-start => $start,
+                                                   -end => $end,
+                                                   -slice => $slice,
+                                                   -strand => $this_transcript->strand);
+               if ($utr->end - $utr->start >= 0) {
+                  push @$all_features, $utr;
+               }
+           }
+         }
+       }
+     }
+  } elsif ($feature =~ /^intron/) {
+    my $genes = $slice->get_all_Genes;
+    foreach my $this_gene (@$genes) {
+      #get transcripts
+      foreach my $this_transcript (@{$this_gene->get_all_Transcripts}) {
+        foreach my $intron (@{$this_transcript->get_all_Introns}) {
+          push @$all_features, $intron;
+        }
+      }
+    }
+  } elsif ($feature =~ /^splice_site/) {
+    my $genes = $slice->get_all_Genes_by_type('protein_coding');
+    foreach my $this_gene (@$genes) {
+      #get transcripts
+      foreach my $this_transcript (@{$this_gene->get_all_Transcripts}) {
+        foreach my $intron (@{$this_transcript->get_all_Introns}) {
+          #start of intron
+          my $start = $intron->start - 3;
+          my $end = $intron->start + 3;
+          my $splice_site = new Bio::EnsEMBL::Feature(-start => $start,
+                                                      -end => $end,
+                                                      -slice => $intron->slice,
+                                                      -strand => $intron->strand);
+          push @$all_features, $splice_site;
+
+          #end of intron
+          $start = $intron->end - 3;
+          $end = $intron->end + 3;
+          $splice_site = new Bio::EnsEMBL::Feature(-start => $start,
+                                                    -end => $end,
+                                                    -slice => $intron->slice,
+                                                    -strand => $intron->strand);
+          push @$all_features, $splice_site;
+        }
       }
     }
   } elsif ($feature =~ /^constitutive/) {
@@ -366,8 +458,18 @@ foreach my $slice (sort {
     next;
   }
   foreach my $this_feature (sort {$a->start <=> $b->start} @$all_features) {
-    print join("\t", $name, $this_feature->seq_region_start - 1,
-        $this_feature->seq_region_end, $this_feature->display_id), "\n";
+   my $biotype = "";
+   #print out biotype for genes
+   if ($feature =~ /^gene/) {
+       $biotype = $this_feature->biotype if (defined $this_feature->biotype);
+   }
+   if ($print_strand) {
+       print join("\t", $name, $this_feature->seq_region_start - 1,
+           $this_feature->seq_region_end, $this_feature->seq_region_strand, $this_feature->display_id, $biotype), "\n";
+   } else {
+       print join("\t", $name, $this_feature->seq_region_start - 1,
+           $this_feature->seq_region_end, $this_feature->display_id, $biotype), "\n";
+   }
   }
 }
 
