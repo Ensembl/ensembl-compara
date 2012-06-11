@@ -380,7 +380,8 @@ sub fetch_all_by_GenomicAlignBlock {
 	$display_size, $display_type, $window_size) = @_;
 
 
-    #print "fetch_all_by_GenomicAlignBlock start $start end $end\n";
+    #print "fetch_all_by_GenomicAlignBlock start $start end $end $display_size\n";
+
     my $scores = [];
 
     #default display_size is 700
@@ -474,13 +475,22 @@ sub fetch_all_by_GenomicAlignBlock {
     if (!$reference_genomic_align) {
 	$genomic_align_block->reference_genomic_align($genomic_align_block->get_all_GenomicAligns->[0]);
     }
+
+    #Find the genomic_align_block_id. 
+    #If passing in a GenomicAlignTree, find the corresponding genomic_align_block from a genomic_align
+    my $new_genomic_align_block;
+    if (UNIVERSAL::isa($genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
+        $new_genomic_align_block = $genomic_align_block->get_all_leaves->[0]->genomic_align_group->get_all_GenomicAligns->[0]->genomic_align_block;
+    } else {
+        $new_genomic_align_block = $genomic_align_block;
+    }
+
     #need this in case the dbID is not set ie if the $genomic_align_block has
     #been restricted
-    my $gab_id;
-    if (defined $genomic_align_block->{'dbID'}) {
-	$gab_id = $genomic_align_block->{'dbID'};
+    my $gab_id;    if (defined $new_genomic_align_block->{'dbID'}) {
+        $gab_id = $new_genomic_align_block->{'dbID'};
     } else {
-	$gab_id = $genomic_align_block->{'original_dbID'};
+        $gab_id = $new_genomic_align_block->{'original_dbID'};
     }
 
     my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($gab_id, $window_size, $PACKED);
@@ -502,7 +512,7 @@ sub fetch_all_by_GenomicAlignBlock {
     #print "align_start $align_start align_end $align_end start $start end $end\n";
     $scores = $self->_get_alignment_scores($conservation_scores, $align_start, 
 					   $align_end, $display_type, $window_size, 
-					   $genomic_align_block);
+					   $genomic_align_block, $gab_id);
 
     if (scalar(@$scores) == 0) {
 	return $scores;
@@ -1373,7 +1383,7 @@ sub _get_aligned_scores_from_cigar_line_fast {
 =cut
 
 sub _get_alignment_scores {
-    my ($self, $conservation_scores, $align_start, $align_end, $display_type, $window_size, $genomic_align_block) = @_;
+    my ($self, $conservation_scores, $align_start, $align_end, $display_type, $window_size, $genomic_align_block, $genomic_align_block_id) = @_;
 
     my $num_rows = scalar(@$conservation_scores);
     my @exp_scores;
@@ -1454,8 +1464,6 @@ sub _get_alignment_scores {
 	$end = $num_rows-1;
 	$end_offset = int(($align_end - $conservation_scores->[$end]->{position})/$window_size);
     }
-
-    my $genomic_align_block_id = $genomic_align_block->dbID;
 
     #go through rows $start to $end
     for (my $i = $start; $i <= $end; $i++) {
