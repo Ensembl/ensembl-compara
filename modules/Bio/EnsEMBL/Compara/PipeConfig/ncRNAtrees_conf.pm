@@ -362,10 +362,9 @@ sub pipeline_analyses {
 # -------------------------------------------------------------------------------------------------------------------
 
             {   -logic_name => 'db_snapshot_after_Rfam_classify',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
                 -parameters => {
-                                'cmd'      => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 0).' '.$self->o('pipeline_db','-dbname').' >#filename#',
-                                'filename'  => $ENV{'HOME'}.'/db_snapshot_after_Rfam_classify',
+                                'output_file'  => $ENV{'HOME'}.'/db_snapshot_after_Rfam_classify',
                                },
             },
 
