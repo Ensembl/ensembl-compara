@@ -73,6 +73,15 @@ sub species_tree {
     return $self->{'_species_tree'};
 }
 
+sub genome_db {
+    my ($self) = @_;
+    return undef unless ($self->is_leaf);
+    $self->throw("taxon_id is not set in this node") unless ($self->taxon_id);
+    my $GenomeDBAdaptor = $self->adaptor->db->get_GenomeDBAdaptor;
+    my $genomeDB = $GenomeDBAdaptor->fetch_by_taxon_id($self->taxon_id);
+    return $genomeDB;
+}
+
 sub lambdas {
     my ($self, $lambdas) = @_;
 
