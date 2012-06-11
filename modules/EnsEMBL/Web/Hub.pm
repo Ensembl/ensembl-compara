@@ -612,12 +612,14 @@ sub fetch_userdata_by_id {
     my $aa       = $self->get_adaptor('get_AnalysisAdaptor',        'userdata');
     my $features = $fa->fetch_all_by_logic_name($record_id);
     my $analysis = $aa->fetch_by_logic_name($record_id);
-    my $config   = $analysis->web_data;
+    if ($analysis) {
+      my $config   = $analysis->web_data;
     
-    $config->{'track_name'}  = $analysis->description   || $record_id;
-    $config->{'track_label'} = $analysis->display_label || $analysis->description || $record_id;
+      $config->{'track_name'}  = $analysis->description   || $record_id;
+      $config->{'track_label'} = $analysis->display_label || $analysis->description || $record_id;
     
-    $data->{$record_id} = { features => $features, config => $config };
+      $data->{$record_id} = { features => $features, config => $config };
+    }
   }
   
   return $data;
