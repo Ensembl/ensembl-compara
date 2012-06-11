@@ -1,4 +1,4 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl -w
 
 my $description = q{
 ###########################################################################
@@ -436,7 +436,7 @@ if ($method_link_species_set_id) {
 my $meta_container = $compara_dba->get_MetaContainer();
 
 my $conservation_score_mlss;
-if ($method_link_species_set->method_link_class eq "ConservationScore.conservation_score") {
+if ($method_link_species_set->method->class eq "ConservationScore.conservation_score") {
   $conservation_score_mlss = $method_link_species_set;
   my $mlss_id = $conservation_score_mlss->get_value_for_tag('msa_mlss_id');
   $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($mlss_id);
@@ -484,7 +484,7 @@ if ($species and !$skip_species and ($coord_system or $seq_region)) {
 
 # Get the GenomicAlignBlockAdaptor or the GenomicAlignTreeAdaptor:
 my $genomic_align_set_adaptor;
-if ($method_link_species_set->method_link_class =~ /GenomicAlignTree/) {
+if ($method_link_species_set->method->class =~ /GenomicAlignTree/) {
   $genomic_align_set_adaptor = $compara_dba->get_GenomicAlignTreeAdaptor;
 } else {
   $genomic_align_set_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
@@ -673,7 +673,7 @@ sub print_header {
     } else {
       my $slice = $query_slices[0];
       print "# Region: ",
-          $slice->adaptor->db->get_MetaContainer->get_Species->binomial,
+        $slice->adaptor->db->get_MetaContainer->get_scientific_name, 
           " ", $slice->name, "\n";
     }
     print "# File $num\n" if ($num);
@@ -868,7 +868,14 @@ sub print_my_emf {
       my $name = "${1}${2}_";
       $name = ucfirst($name);
       if (@$genomic_aligns > 1) {
-        $name .= "Composite_".$this_genomic_align_tree->genomic_align_group->dbID;
+        my $dbID;
+        if ($this_genomic_align_tree->genomic_align_group->dbID) {
+            $dbID = $this_genomic_align_tree->genomic_align_group->dbID;
+        } else {
+            $dbID = $this_genomic_align_tree->genomic_align_group->{original_dbID};
+        }
+        #$name .= "Composite_".$this_genomic_align_tree->genomic_align_group->dbID;
+        $name .= "Composite_".$dbID;
         my $length = 0;
         foreach my $this_genomic_align (@{$genomic_aligns}) {
           $length += $this_genomic_align->dnafrag_end - $this_genomic_align->dnafrag_start + 1;
@@ -892,14 +899,19 @@ sub print_my_emf {
 
 if ($conservation_score_mlss) {
     print "SCORE ", $conservation_score_mlss->name, "\n";
+
     my $new_genomic_align_block = $genomic_align_block;
     if (UNIVERSAL::isa($genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
       $new_genomic_align_block = $genomic_align_block->get_all_leaves->[0]->genomic_align_group->get_all_GenomicAligns->[0]->genomic_align_block;
       $new_genomic_align_block->reverse_complement if ($reverse);
     }
+    my $start = 1;
+    my $end = $genomic_align_block->length;
+    my $length = $end-$start+1;
+
     my $conservation_scores = $new_genomic_align_block->adaptor->db->get_ConservationScoreAdaptor->
-        fetch_all_by_GenomicAlignBlock($new_genomic_align_block, undef, undef, undef,
-            $new_genomic_align_block->length, undef, 1);
+        fetch_all_by_GenomicAlignBlock($genomic_align_block, $start, $end, $length, $length, undef, 1);
+
     my $this_conservation_score = shift @$conservation_scores;
      for (my $i = 0; $i<@$aligned_seqs; $i++) {
        if ($this_conservation_score and $this_conservation_score->position == $i + 1) {
@@ -1047,7 +1059,15 @@ sub get_coordinates {
       push(@names, $this_composite_genomic_align->get_Slice->name);
       $dnafrag_length += $this_composite_genomic_align->length;
     }
-    $dnafrag_name = $this_genomic_align->dnafrag->name."_".$this_genomic_align->dbID;
+    my $dbID;
+    if ($this_genomic_align->dbID) {
+        $dbID = $this_genomic_align->dbID;
+    } else {
+        $dbID = $this_genomic_align->{original_dbID};
+    }
+
+    #$dnafrag_name = $this_genomic_align->dnafrag->name."_".$this_genomic_align->dbID;
+    $dnafrag_name = $this_genomic_align->dnafrag->name."_".$dbID;
     print "### $species_name $dnafrag_name is: ", join(" + ", @names), "\n";
     $dnafrag_start = 1;
     $dnafrag_end = $dnafrag_length;
