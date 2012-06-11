@@ -297,6 +297,29 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
             $restrict
         );
 
+    #If the GenomicAlignTree has been restricted, set up the correct values 
+    #for restricted_aln_start and restricted_aln_end
+    foreach my $this_genomic_align_tree (@$these_genomic_align_trees) {
+
+	#print "GAB adaptor restricted start " . $this_genomic_align_tree->{'restricted_aln_start'} . " end " . $this_genomic_align_tree->{'restricted_aln_end'} . " length " . $this_genomic_align_tree->{'original_length'} . "\n";
+    
+    
+	if (defined $this_genomic_align_tree->{'restricted_aln_start'}) {
+	    my $tmp_start = $this_genomic_align_tree->{'restricted_aln_start'};
+	    #if ($reference_slice->strand != $this_genomic_align_tree->reference_genomic_align->dnafrag_strand) {
+
+	    #the start and end are always calculated for the forward strand
+	    if ($reference_slice->strand == 1) {
+		$this_genomic_align_tree->{'restricted_aln_start'}++;
+		$this_genomic_align_tree->{'restricted_aln_end'} = $this_genomic_align_tree->{'original_length'} - $this_genomic_align_tree->{'restricted_aln_end'};
+	    } else {
+		$this_genomic_align_tree->{'restricted_aln_start'} = $this_genomic_align_tree->{'restricted_aln_end'} + 1;
+		$this_genomic_align_tree->{'restricted_aln_end'} = $this_genomic_align_tree->{'original_length'} - $tmp_start;
+	    }
+	    #print "GAB adaptor after restricted start " . $this_genomic_align_tree->{'restricted_aln_start'} . " end " . $this_genomic_align_tree->{'restricted_aln_end'} . " length " . $this_genomic_align_tree->{'original_length'} . "\n";
+	}
+    }
+
     my $top_slice = $this_slice->seq_region_Slice;
     throw if ($top_slice->name ne $this_slice->seq_region_Slice->name);
 #     print join("\n", $top_slice->name, $this_slice->seq_region_Slice->name), "\n";
