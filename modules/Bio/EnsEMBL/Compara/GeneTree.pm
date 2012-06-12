@@ -302,9 +302,9 @@ sub add_Member {
 
 # Dynamic definition of functions to allow NestedSet methods work with GeneTrees
 foreach my $func_name (qw(get_all_nodes get_all_leaves get_all_sorted_leaves
-                          find_leaf_by_node_id find_leaf_by_name find_node_by_node_id node_id
+                          find_leaf_by_node_id find_leaf_by_name find_node_by_node_id
                           find_node_by_name remove_nodes build_leftright_indexing flatten_tree
-                          newick_simple_format newick_format nhx_format string_tree print_tree
+                          newick_format nhx_format string_tree print_tree
                           release_tree
                         )) {
     my $full_name = "Bio::EnsEMBL::Compara::GeneTree::$func_name";
