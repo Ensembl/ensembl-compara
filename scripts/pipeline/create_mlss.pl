@@ -357,10 +357,11 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   }
   
   my $method = Bio::EnsEMBL::Compara::Method->new( -type => $method_link_type );
+  my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $all_genome_dbs );
 
   my $new_mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
                                                                  -method => $method,
-                                                                 -species_set => $all_genome_dbs,
+                                                                 -species_set_obj => $species_set,
                                                                  -name => $name,
                                                                  -source => $source,
                                                                  -url => $url);
