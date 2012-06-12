@@ -91,7 +91,7 @@ sub fetch_input {
     my $nc_tree_id = $self->param('nc_tree_id') || die "'nc_tree_id' is an obligatory numeric parameter\n";
     $self->input_job->transient_error(1);
 
-    my $nc_tree    = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
+    my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
 
 #     my $n_nodes = $nc_tree->get_tagvalue('gene_count');
 #     if ($n_nodes == 1) {
@@ -160,19 +160,19 @@ sub dump_sequences_to_workdir {
 
   print STDERR Dumper $cluster if ($self->debug);
 
-  my $fastafile = $self->worker_temp_directory . "cluster_" . $cluster->node_id . ".fasta";
+  my $fastafile = $self->worker_temp_directory . "cluster_" . $cluster->root_id . ".fasta";
   print STDERR "fastafile: $fastafile\n" if($self->debug);
 
   my $seq_id_hash;
   my $residues = 0;
   print STDERR "fetching sequences...\n" if ($self->debug);
 
-  my $node_id = $cluster->node_id;
+  my $root_id = $cluster->root_id;
   my $member_list = $cluster->get_all_leaves;
   if (2 > scalar @$member_list) {
 #      $self->input_job->transient_error(0);
       $self->input_job->incomplete(0);
-      die ("Only one member for cluster [$node_id]");
+      die ("Only one member for cluster [$root_id]");
 #      return undef
   }
   print STDERR "Counting number of members\n" if ($self->debug);
@@ -211,7 +211,7 @@ sub dump_sequences_to_workdir {
   }
   close(OUTSEQ);
   unless (keys %{$self->param('model_id_hash')}) {
-      die "No Accs found for nc_tree_id $node_id : ", join ",",@no_acc_members;
+      die "No Accs found for nc_tree_id $root_id : ", join ",",@no_acc_members;
   }
 
 
@@ -237,7 +237,7 @@ sub update_single_peptide_tree {
     next unless($member->sequence);
     $DB::single=1;1;
     $member->cigar_line(length($member->sequence)."M");
-    $self->compara_dba->get_NCTreeAdaptor->update_node($member);
+    $self->compara_dba->get_GeneTreeNodeAdaptor->update_node($member);
     printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
   }
 }
@@ -271,7 +271,7 @@ sub run_infernal {
   if (scalar keys %{$self->param('model_id_hash')} > 1) {
       print STDERR "WARNING: More than one model: ", join(",",keys %{$self->param('model_id_hash')}), "\n";
   }
-  $model_id = $self->param('nc_tree')->tree->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
+  $model_id = $self->param('nc_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
 
   $self->param('model_id', $model_id );
 
@@ -397,7 +397,7 @@ sub parse_and_store_alignment_into_tree {
     $ss_cons_string .= $1;
   }
   close(STKFILE);
-  $self->param('nc_tree')->tree->store_tag('ss_cons', $ss_cons_string);
+  $self->param('nc_tree')->store_tag('ss_cons', $ss_cons_string);
 
   #
   # parse alignment file into hash: combine alignment lines
@@ -482,7 +482,7 @@ sub parse_and_store_alignment_into_tree {
     }
     #
 #    printf("update nc_tree_member %s : %s\n",$member->stable_id, $member->cigar_line) if($self->debug);
-    $self->compara_dba->get_NCTreeAdaptor->update_node($member);
+    $self->compara_dba->get_GeneTreeNodeAdaptor->update_node($member);
   }
 
   return undef;
@@ -493,33 +493,31 @@ sub _store_aln_tags {
     my $tree = $self->param('nc_tree');
     return unless($tree);
 
-    my $pta = $self->compara_dba->get_NCTreeAdaptor;
-
     print "Storing Alignment tags...\n";
     my $sa = $tree->get_SimpleAlign;
     $DB::single=1;1;
     # Model id
-    $tree->tree->store_tag("model_id",$self->param('model_id') );
+    $tree->store_tag("model_id",$self->param('model_id') );
 
     # Alignment percent identity.
     my $aln_pi = $sa->average_percentage_identity;
-    $tree->tree->store_tag("aln_percent_identity",$aln_pi);
+    $tree->store_tag("aln_percent_identity",$aln_pi);
 
     # Alignment length.
     my $aln_length = $sa->length;
-    $tree->tree->store_tag("aln_length",$aln_length);
+    $tree->store_tag("aln_length",$aln_length);
 
     # Alignment runtime.
     my $aln_runtime = int(time()*1000-$self->param('infernal_starttime'));
-    $tree->tree->store_tag("aln_runtime",$aln_runtime);
+    $tree->store_tag("aln_runtime",$aln_runtime);
 
     # Alignment method.
     my $aln_method = $self->param('method');
-    $tree->tree->store_tag("aln_method",$aln_method);
+    $tree->store_tag("aln_method",$aln_method);
 
     # Alignment residue count.
     my $aln_num_residues = $sa->no_residues;
-    $tree->tree->store_tag("aln_num_residues",$aln_num_residues);
+    $tree->store_tag("aln_num_residues",$aln_num_residues);
 
 }
 

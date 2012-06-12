@@ -88,9 +88,6 @@ sub fetch_input {
         die ('mlss_id must be set')
     }
 
-#    my $nctree_Adaptor = $self->compara_dba->get_NCTreeAdaptor;
-#    $self->param('nctree_Adaptor', $nctree_Adaptor);
-
     my $cafetree_Adaptor = $self->compara_dba->get_CAFETreeAdaptor;
     $self->param('cafeTree_Adaptor', $cafetree_Adaptor);
 

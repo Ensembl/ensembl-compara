@@ -75,7 +75,7 @@ sub fetch_input {
     my $nc_tree_id = $self->param('nc_tree_id') || die "'nc_tree_id' is an obligatory parameter\n";
     $self->input_job->transient_error(1);
 
-    my $nc_tree = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($nc_tree_id) or $self->throw("Couldn't fetch nc_tree with id $nc_tree_id\n");
+    my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or $self->throw("Couldn't fetch nc_tree with id $nc_tree_id\n");
     $self->param('nc_tree', $nc_tree);
 
     if (my $alignment_id = $self->param('alignment_id')) {
@@ -142,7 +142,7 @@ sub _run_fasttree {
 #    my $aln_file = $self->param('input_aln');
     return unless (defined($aln_file));
 
-    my $root_id = $self->param('nc_tree')->node_id;
+    my $root_id = $self->param('nc_tree')->root_id;
     my $fasttree_tag = $root_id . ".". $self->worker->process_id . ".fasttree";
 
     my $fasttree_exe = $self->param('fasttree_exe')
@@ -177,7 +177,7 @@ sub _run_parsimonator {
     die "$aln_file is not defined" unless (defined($aln_file));
 #    return unless(defined($aln_file));
 
-    my $root_id = $self->param('nc_tree')->node_id;
+    my $root_id = $self->param('nc_tree')->root_id;
     my $parsimonator_tag = $root_id . "." . $self->worker->process_id . ".parsimonator";
 
     my $parsimonator_exe = $self->param('parsimonator_exe')
@@ -208,7 +208,7 @@ sub _run_raxml_light {
     my $aln_file = $self->param('input_aln');
     my $parsimony_tree = $self->param('parsimony_tree_file');
     my $worker_temp_directory = $self->worker_temp_directory;
-    my $root_id = $self->param('nc_tree')->node_id;
+    my $root_id = $self->param('nc_tree')->root_id;
 
     my $raxmlight_tag = $root_id . "." . $self->worker->process_id . ".raxmlight";
 
@@ -244,7 +244,7 @@ sub _run_raxml_light {
 sub _dumpMultipleAlignmentStructToWorkdir {
     my ($self, $tree) = @_;
 
-  my $root_id = $tree->node_id;
+  my $root_id = $tree->root_id;
   my $leafcount = scalar(@{$tree->get_all_leaves});
   if($leafcount<4) {
       $self->input_job->incomplete(0);
@@ -328,10 +328,10 @@ sub _store_newick_into_nc_tree_tag_string {
   close(FH);
   $newick =~ s/(\d+\.\d{4})\d+/$1/g; # We round up to only 4 digits
 
-  $self->param('nc_tree')->tree->store_tag($tag, $newick);
+  $self->param('nc_tree')->store_tag($tag, $newick);
   if (defined($self->param('model'))) {
     my $bootstrap_tag = $self->param('model') . "_bootstrap_num";
-    $self->param('nc_tree')->tree->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
+    $self->param('nc_tree')->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
   }
 }
 
@@ -358,7 +358,7 @@ sub _load_and_dump_alignment {
         open my $aln_fasta_fh, ">", $aln_fasta or $self->throw("Error opening $aln_fasta for writing");
         for my $row_hashref (@$all_aln_seq_hashref) {
             my $mem_id = $row_hashref->{member_id};
-            my $member = $self->compara_dba->get_NCTreeAdaptor->fetch_AlignedMember_by_member_id_root_id($mem_id);
+            my $member = $self->compara_dba->get_MemberAdaptor->fetch_by_dbID($mem_id);
             my $taxid = $member->taxon_id();
             my $aln_seq = $row_hashref->{aligned_sequence};
             print $aln_fasta_fh ">" . $mem_id . "_" . $taxid . "\n";
@@ -371,7 +371,7 @@ sub _load_and_dump_alignment {
     print $outaln scalar(@$all_aln_seq_hashref), " ", $seqLen, "\n";
     for my $row_hashref (@$all_aln_seq_hashref) {
         my $mem_id = $row_hashref->{member_id};
-        my $member = $self->compara_dba->get_NCTreeAdaptor->fetch_AlignedMember_by_member_id_root_id($mem_id);
+        my $member = $self->compara_dba->get_MemberAdaptor->fetch_by_dbID($mem_id);
         my $taxid = $member->taxon_id();
         my $aln_seq = $row_hashref->{aligned_sequence};
         print STDERR "$mem_id\t" if ($self->debug);

@@ -77,7 +77,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 sub fetch_input {
   my( $self) = @_;
 
-  my $nc_tree = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($self->param('nc_tree_id'));
+  my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('nc_tree_id'));
   if (scalar @{$nc_tree->get_all_leaves()} < 4) {
       # We don't have enough data to create the trees
       my $msg = sprintf "Tree cluster %d has <4 genes\n", $self->param('nc_tree_id');
@@ -161,7 +161,7 @@ sub DESTROY {
 sub run_treebest_mmerge {
   my $self = shift;
 
-  my $root_id = $self->param('nc_tree')->node_id;
+  my $root_id = $self->param('nc_tree')->root_id;
   my $species_tree_file = $self->get_species_tree_file();
   my $treebest_exe = $self->param('treebest_exe');
   my $temp_directory = $self->worker_temp_directory;
@@ -191,12 +191,12 @@ sub run_treebest_mmerge {
 sub calculate_branch_lengths {
   my $self = shift;
 
-  $self->param('input_aln', $self->dumpTreeMultipleAlignmentToWorkdir($self->param('nc_tree')) );
+  $self->param('input_aln', $self->dumpTreeMultipleAlignmentToWorkdir($self->param('nc_tree')->root) );
 
   my $leafcount = scalar(@{$self->param('nc_tree')->get_all_leaves});
   if($leafcount<3) {
     printf(STDERR "tree cluster %d has <3 genes - can not build a tree\n", 
-           $self->param('nc_tree')->node_id);
+           $self->param('nc_tree')->root_id);
     $self->param('mmerge_blengths_output', $self->param('mmerge_output'));
     $self->parse_newick_into_nctree($self->param('mmerge_blengths_output'), $self->param('nc_tree'));
     return;
@@ -234,7 +234,7 @@ sub calculate_branch_lengths {
 sub reroot_inputtrees {
   my $self = shift;
 
-  my $root_id = $self->param('nc_tree')->node_id;
+  my $root_id = $self->param('nc_tree')->root_id;
   my $species_tree_file = $self->get_species_tree_file;
   my $treebest_exe = $self->param('treebest_exe');
 
@@ -281,7 +281,7 @@ sub reroot_inputtrees {
 
 sub load_input_trees {
   my $self = shift;
-  my $tree = $self->param('nc_tree')->tree;
+  my $tree = $self->param('nc_tree');
 
   foreach my $tag ($tree->get_all_tags) {
     next unless $tag =~ m/_it_/;

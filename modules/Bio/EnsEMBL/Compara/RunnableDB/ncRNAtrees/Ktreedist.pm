@@ -73,7 +73,7 @@ sub fetch_input {
   my( $self) = @_;
 
     # Fetch sequences:
-  $self->param('nc_tree', $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($self->param('nc_tree_id')) );
+  $self->param('nc_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('nc_tree_id')) );
 
   $self->load_input_trees;
 
@@ -128,7 +128,7 @@ sub write_output {
 sub run_ktreedist {
   my $self = shift;
 
-  my $root_id = $self->param('nc_tree')->node_id;
+  my $root_id = $self->param('nc_tree')->root_id;
   my $ktreedist_exe = $self->param('ktreedist_exe');
   my $temp_directory = $self->worker_temp_directory;
 
@@ -182,7 +182,7 @@ sub run_ktreedist {
 sub load_input_trees {
 
   my $self = shift;
-  my $tree = $self->param('nc_tree')->tree;
+  my $tree = $self->param('nc_tree');
 
   foreach my $tag ($tree->get_all_tags) {
     next unless $tag =~ m/_it_/;
@@ -209,7 +209,7 @@ sub load_input_trees {
 sub reroot_inputtrees {
   my $self = shift;
 
-  my $root_id = $self->param('nc_tree')->node_id;
+  my $root_id = $self->param('nc_tree')->root_id;
   my $species_tree_file = $self->get_species_tree_file();
 
   my $treebest_exe = $self->param('treebest_exe')
@@ -260,7 +260,7 @@ sub reroot_inputtrees {
 
 sub store_ktreedist_score {
   my $self = shift;
-  my $root_id = $self->param('nc_tree')->node_id;
+  my $root_id = $self->param('nc_tree')->root_id;
 
   my $sth = $self->compara_dba->dbc->prepare
     ("INSERT IGNORE INTO ktreedist_score 

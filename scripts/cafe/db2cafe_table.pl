@@ -93,7 +93,7 @@ if ($compara_url) {
 
 # Get all the adaptors
 my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
-my $nctree_adaptor = $compara_dba->get_NCTreeAdaptor();
+my $tree_adaptor = $compara_dba->get_GeneTreeAdaptor();
 my $genomeDB_Adaptor = $compara_dba->get_GenomeDBAdaptor();
 
 # Get all the species for the mlss:
@@ -110,13 +110,12 @@ if ($exclude_lcg) {
 my @species_names = map {(split /_/, $_->name)[0]} @sps_set;
 
 # Get the number of members per family
-my $all_trees = $nctree_adaptor->fetch_all();
+my $all_trees = $tree_adaptor->fetch_all(-tree_type => 'tree', -member_type => 'ncrna', -clusterset_id => 'default');
 print "FAMILYDESC\tFAMILY\t", join("\t", @species_names), "\n";
 for my $tree (@$all_trees) {
-  my $root_id = $tree->node_id();
-  my $nctree = $nctree_adaptor->fetch_node_by_node_id($root_id);
-  my $model_name = $nctree->get_tagvalue('model_name');
-  my $nctree_members = $nctree->get_all_leaves();
+  my $root_id = $tree->root_id();
+  my $model_name = $tree->get_tagvalue('model_name');
+  my $nctree_members = $tree->get_all_leaves();
   my %species;
   for my $member (@$nctree_members) {
     my $sp;

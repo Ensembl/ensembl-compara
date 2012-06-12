@@ -68,7 +68,7 @@ sub fetch_input {
     my $nc_tree_id = $self->param('nc_tree_id') or $self->throw("An 'nc_tree_id' is mandatory");  # Better to have a nc_tree instead?
     $self->input_job->transient_error(1);
 
-    my $nc_tree = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
+    my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
     $self->param('nc_tree',$nc_tree);
 
     if(my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
@@ -87,7 +87,7 @@ sub run {
     my $aln_file = $self->param('input_aln');
     my $struct_file = $self->param('struct_aln') or die "An struct_aln is mandatory";
     my $bootstrap_num = $self->param('bootstrap_num') or die "A boostrap_num is mandatory";
-    my $root_id = $nc_tree->node_id;
+    my $root_id = $nc_tree->root_id;
 
     my $raxml_tag = $root_id . "." . $self->worker->process_id . ".raxml";
 
@@ -97,11 +97,11 @@ sub run {
     die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
 
     my $tag = 'ss_IT_' . $model;
-    if ($self->param('nc_tree')->tree->has_tag($tag)) {
+    if ($self->param('nc_tree')->has_tag($tag)) {
         my $eval_tree;
         # Checks the tree string can be parsed successfully
         eval {
-            $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($self->param('nc_tree')->tree->get_value_for_tag($tag));
+            $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($self->param('nc_tree')->get_value_for_tag($tag));
         };
         if (defined($eval_tree) and !$@) {
             # The secondary structure RAxML tree for this model has been obtained already and the tree can be parsed successfully.
@@ -154,7 +154,7 @@ sub run {
     my $raxml_output = $self->worker_temp_directory . "RAxML_bestTree.$raxml_tag.$model";
     $self->_store_newick_into_protein_tree_tag_string($tag,$raxml_output);
     my $model_runtime = "${model}_runtime_msec";
-    $nc_tree->tree->store_tag($model_runtime,$runtime_msec);
+    $nc_tree->store_tag($model_runtime,$runtime_msec);
 
     #Unlink run files
     my $temp_regexp = $worker_temp_directory."*$raxml_tag.$model.RUN.*";
@@ -189,10 +189,10 @@ sub _store_newick_into_protein_tree_tag_string {
   close(FH);
   $newick =~ s/(\d+\.\d{4})\d+/$1/g; # We round up to only 4 digits
 
-  $self->param('nc_tree')->tree->store_tag($tag, $newick);
+  $self->param('nc_tree')->store_tag($tag, $newick);
   if (defined($self->param('model'))) {
     my $bootstrap_tag = $self->param('model') . "_bootstrap_num";
-    $self->param('nc_tree')->tree->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
+    $self->param('nc_tree')->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
   }
 }
 
@@ -202,12 +202,12 @@ sub _dumpMultipleAlignmentStructToWorkdir {
 
     my $leafcount = scalar(@{$tree->get_all_leaves});
     if($leafcount<4) {
-        my $node_id = $tree->node_id;
+        my $node_id = $tree->root_id;
         $self->input_job->incomplete(0);
         die ("tree cluster $node_id has <4 proteins - can not build a raxml tree\n");
     }
 
-    my $file_root = $self->worker_temp_directory. "nctree_". $tree->node_id;
+    my $file_root = $self->worker_temp_directory. "nctree_". $tree->root_id;
     $file_root    =~ s/\/\//\//g;  # converts any // in path to /
 
     my $aln_file = $file_root . ".aln";
@@ -249,7 +249,7 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     }
     close OUTSEQ;
 
-    my $struct_string = $self->param('nc_tree')->tree->get_tagvalue('ss_cons');
+    my $struct_string = $self->param('nc_tree')->get_tagvalue('ss_cons');
     # Allowed Characters are "( ) < > [ ] { } " and "."
     $struct_string =~ s/[^\(^\)^\<^\>^\[^\]^\{^\}^\.]/\./g;
     my $struct_file = $file_root . ".struct";

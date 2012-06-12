@@ -14,9 +14,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my ($self) = @_;
     my $nc_tree_id = $self->param('nc_tree_id');
-    my $nc_tree = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($nc_tree_id);
+    my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id);
     $self->throw("tree with id $nc_tree_id is undefined") unless (defined $nc_tree);
-    $self->param('nc_tree', $nc_tree);
     $self->param('input_fasta', $self->dump_sequences_to_workdir($nc_tree));
 
     # Autovivification
@@ -101,7 +100,7 @@ sub write_output {
 
 sub dump_sequences_to_workdir {
     my ($self,$cluster) = @_;
-    my $fastafile = $self->worker_temp_directory . "cluster_" . $cluster->node_id . ".fasta";
+    my $fastafile = $self->worker_temp_directory . "cluster_" . $cluster->root_id . ".fasta";
 
     my $member_list = $cluster->get_all_leaves;
     $self->param('tag_gene_count', scalar (@{$member_list}) );
@@ -153,7 +152,7 @@ sub update_single_peptide_tree {
         next unless($member->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
         next unless($member->sequence);
         $member->cigar_line(length($member->sequence)."M");
-        $self->compara_dba->get_NCTreeAdaptor->update_node($member);
+        $self->compara_dba->get_GeneTreeNodeAdaptor->update_node($member);
         printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
     }
 }

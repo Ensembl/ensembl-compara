@@ -82,12 +82,10 @@ sub fetch_input {
     my $nc_tree_id = $self->param('nc_tree_id') || die "'nc_tree_id' is an obligatory numeric parameter\n";
     $self->input_job->transient_error(1);
 
-    my $nc_tree    = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
-    $self->param('nc_tree', $nc_tree);
+    my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
+    $self->param('model_id', $nc_tree->get_tagvalue('clustering_id'));
 
-    $self->param('model_id', $nc_tree->tree->get_tagvalue('clustering_id'));
-
-    $self->fetch_recovered_member_entries($nc_tree->node_id);
+    $self->fetch_recovered_member_entries($nc_tree_id);
 
         # Get the needed adaptors here:
     $self->param('genomedb_adaptor', $self->compara_dba->get_GenomeDBAdaptor);
@@ -146,7 +144,7 @@ sub run_ncrecoversearch {
   die "Cannot execute '$cmsearch_exe'" unless(-x $cmsearch_exe);
 
   my $worker_temp_directory = $self->worker_temp_directory;
-  my $root_id = $self->param('nc_tree')->node_id;
+  my $root_id = $self->param('nc_tree_id');
 
   my $input_fasta = $worker_temp_directory . $root_id . ".db";
   open FILE,">$input_fasta" or die "$!\n";
@@ -176,8 +174,6 @@ sub run_ncrecoversearch {
   my $ret1 = $self->dump_model('model_id', $model_id);
   my $ret2 = $self->dump_model('name',     $model_id) if (1 == $ret1);
   if (1 == $ret2) {
-    $self->param('nc_tree')->release_tree;
-    $self->param('nc_tree', undef);
     $self->input_job->transient_error(0);
     die "Failed to find '$model_id' both in 'model_id' and 'name' fields of 'hmm_profile' table";
   }

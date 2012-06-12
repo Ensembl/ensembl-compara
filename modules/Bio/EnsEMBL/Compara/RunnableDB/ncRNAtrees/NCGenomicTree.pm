@@ -11,7 +11,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my ($self) = @_;
     my $nc_tree_id = $self->param('nc_tree_id');
-    my $nc_tree = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($nc_tree_id);
+    my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id);
     $self->param('nc_tree', $nc_tree);
     my $alignment_id = $self->param('alignment_id');
     print STDERR "ALN INPUT ID: " . $alignment_id . "\n" if ($self->debug);
@@ -110,7 +110,7 @@ sub store_newick_into_protein_tree_tag_string {
   $newick =~ s/(\d+\.\d{4})\d+/$1/g; # We round up to only 4 digits
   return if ($newick eq '_null_;');
   my $tag = "pg_IT_" . $method;
-  $self->param('nc_tree')->tree->store_tag($tag, $newick);
+  $self->param('nc_tree')->store_tag($tag, $newick);
 }
 
 sub _load_and_dump_alignment {
@@ -130,7 +130,7 @@ sub _load_and_dump_alignment {
 
     for my $row_hashref (@$all_aln_seq_hashref) {
         my $mem_id = $row_hashref->{member_id};
-        my $member = $self->compara_dba->get_NCTreeAdaptor->fetch_AlignedMember_by_member_id_root_id($mem_id);
+        my $member = $self->compara_dba->get_MemberAdaptor->fetch_by_dbID($mem_id);
         my $taxid = $member->taxon_id();
         my $aln_seq = $row_hashref->{aligned_sequence};
         $aln_seq =~ s/^N/A/;  # To avoid RAxML failure
