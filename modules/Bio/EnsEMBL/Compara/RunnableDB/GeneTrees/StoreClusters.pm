@@ -129,14 +129,16 @@ sub fetch_or_create_clusterset {
 
     # Tries to get it from the database
     my $clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(%params);
-    return $clusterset->[0] if $clusterset;
+    return $clusterset->[0] if scalar(@$clusterset);
 
-    $self->dbc->do('LOCK TABLES gene_tree_root WRITE');
+    $self->dbc->do('LOCK TABLES gene_tree_root WRITE, gene_tree_root AS gtr WRITE');
 
     # In case someone has meanwhile created the clusterset
     $clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(%params);
-    
-    if (not defined $clusterset) {
+   
+    if (scalar(@$clusterset)) {
+        $clusterset = $clusterset->[0];
+    } else {
         # Create the clusterset and associate mlss
         $clusterset = new Bio::EnsEMBL::Compara::GeneTree(%params);
         # Assumes a root node will be automatically created
