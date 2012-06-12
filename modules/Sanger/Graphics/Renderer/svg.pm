@@ -119,9 +119,9 @@ sub render_Rect {
     my $h = $glyph->pixelheight();
 
     $x = sprintf("%0.3f",$x*$self->{sf});
-    $w = sprintf("%0.3f",$w*$self->{sf}+1);
+    $w = sprintf("%0.3f",($w+1)*$self->{sf});
     $y = sprintf("%0.3f",$y*$self->{sf});
-    $h = sprintf("%0.3f",$h*$self->{sf}+1);
+    $h = sprintf("%0.3f",($h+1)*$self->{sf});
     $self->add_string(qq(<rect x="$x" y="$y" width="$w" height="$h" $style />\n)); 
 }
 
