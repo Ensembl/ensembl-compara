@@ -878,7 +878,7 @@ CREATE TABLE homology_member (
 
   PRIMARY KEY homology_member_id (homology_id,member_id),
   KEY (homology_id),
-  KEY (member_id),
+  KEY (member_id)
 ) MAX_ROWS = 300000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
