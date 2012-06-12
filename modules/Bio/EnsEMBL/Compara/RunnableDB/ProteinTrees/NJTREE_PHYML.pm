@@ -134,6 +134,7 @@ sub write_output {
             $self->store_genetree($newtree);
             $newtree->store_tag('merged_tree_root_id', $self->param('protein_tree_id'));
             $self->param('protein_tree')->store_tag('other_tree_root_id', $newtree->root_id, 1);
+            $self->dataflow_output_id({'protein_tree_id' => $newtree->root_id}, 2);
         }
     }
     if ($self->param('store_filtered_align')) {

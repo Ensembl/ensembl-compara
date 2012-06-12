@@ -99,7 +99,7 @@ sub default_options {
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'release'               => '67',
-        'rel_suffix'            => 'y',    # an empty string by default, a letter otherwise
+        'rel_suffix'            => 'x',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
         'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
 
@@ -158,6 +158,7 @@ sub default_options {
         'split_genes_capacity'      => 600,
         'njtree_phyml_capacity'     => 400,
         'ortho_tree_capacity'       => 100,
+        'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
         'build_hmm_capacity'        => 200,
         'merge_supertrees_capacity' => 100,
@@ -967,7 +968,10 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('njtree_phyml_capacity'),
             -rc_name => '2Gb_job',
             -priority => 20,
-            -flow_into => [ 'ortho_tree', 'build_HMM_aa', 'build_HMM_cds' ],
+            -flow_into => {
+                1 => [ 'ortho_tree', 'build_HMM_aa', 'build_HMM_cds' ],
+                2 => [ 'ortho_tree_annot' ],
+            }
         },
 
         {   -logic_name => 'ortho_tree',
@@ -976,9 +980,23 @@ sub pipeline_analyses {
                 'use_genomedb_id'   => $self->o('use_genomedb_id'),
                 'tree_id_str'       => 'protein_tree_id',
                 'tag_split_genes'   => 1,
-                'mlss_id'                   => $self->o('mlss_id'),
+                'mlss_id'           => $self->o('mlss_id'),
             },
-            -hive_capacity        => $self->o('ortho_tree_capacity'),
+            -hive_capacity      => $self->o('ortho_tree_capacity'),
+            -rc_name => '500Mb_job',
+            -priority => 10,
+        },
+
+        {   -logic_name => 'ortho_tree_annot',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
+            -parameters => {
+                'use_genomedb_id'   => $self->o('use_genomedb_id'),
+                'tree_id_str'       => 'protein_tree_id',
+                'tag_split_genes'   => 1,
+                'mlss_id'           => $self->o('mlss_id'),
+                'store_homologies'  => 0,
+            },
+            -hive_capacity        => $self->o('ortho_tree_annot_capacity'),
             -rc_name => '500Mb_job',
             -priority => 10,
         },
