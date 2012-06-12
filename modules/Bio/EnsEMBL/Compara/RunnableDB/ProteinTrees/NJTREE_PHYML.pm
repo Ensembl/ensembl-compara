@@ -127,13 +127,13 @@ sub write_output {
         foreach my $filename (glob(sprintf('%s/%s.*.nhx', $self->worker_temp_directory, $self->param('intermediate_prefix')) )) {
             $filename =~ /\.([^\.]*)\.nhx$/;
             my $clusterset_id = $1;
+            next if $clusterset_id eq 'mmerge';
+            next if $clusterset_id eq 'phyml';
             print STDERR "Found file $filename for clusterset $clusterset_id\n";
             my $clusterset = $self->fetch_or_create_clusterset($clusterset_id);
             my $newtree = $self->fetch_or_create_other_tree($clusterset, $self->param('protein_tree'));
             $self->parse_newick_into_tree($filename, $newtree);
             $self->store_genetree($newtree);
-            $newtree->store_tag('merged_tree_root_id', $self->param('protein_tree_id'));
-            $self->param('protein_tree')->store_tag('other_tree_root_id', $newtree->root_id, 1);
             $self->dataflow_output_id({'protein_tree_id' => $newtree->root_id}, 2);
         }
     }
@@ -141,13 +141,23 @@ sub write_output {
         my $filename = sprintf('%s/filtalign.fa', $self->worker_temp_directory);
         if (-e $filename) {
             print STDERR "Found filtered alignment: $filename\n";
-            my $clusterset = $self->fetch_or_create_clusterset('filtered-align');
-            my $newtree = $self->fetch_or_create_other_tree($clusterset, $self->param('protein_tree'));
-            $newtree->load_cigars_from_fasta($filename, $newtree);
-            $self->store_genetree($newtree);
-            Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA::_store_aln_tags($self, $newtree);
-            $newtree->store_tag('unfiltered_tree_root_id', $self->param('protein_tree_id'));
-            $self->param('protein_tree')->store_tag('other_tree_root_id', $newtree->root_id, 1);
+            my $alignio = Bio::AlignIO->new(-file => $filename, -format => 'fasta');
+            my $aln = $alignio->next_aln or die "Bio::AlignIO could not get next_aln() from file '$filename'";
+            $self->param('protein_tree')->store_tag('filtered_alignment_length', $aln->length()/3);
+            #my $clusterset = $self->fetch_or_create_clusterset('filtered-align');
+            #my $newtree = $self->fetch_or_create_other_tree($clusterset, $self->param('protein_tree'));
+            #$newtree->load_cigars_from_fasta($filename, $newtree, 1);
+            #my $split_genes = $self->param('split_genes');
+            #while ( my ($name, $other_name) = each(%{$split_genes})) {
+            #    my $node = $newtree->find_node_by_name($name);
+            #    $node->disavow_parent if $node;
+            #    $node = $newtree->find_node_by_name($other_name);
+            #    $node->disavow_parent if $node;
+            #}
+            #$self->store_genetree($newtree);
+            #Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA::_store_aln_tags($self, $newtree);
+            #$newtree->store_tag('unfiltered_tree_root_id', $self->param('protein_tree_id'));
+            #$self->param('protein_tree')->store_tag('other_tree_root_id', $newtree->root_id, 1);
         }
     }
 
@@ -317,7 +327,7 @@ sub fetch_or_create_other_tree {
 
     if (not defined $self->param('other_trees')) {
         my %other_trees;
-        foreach my $tree (@{$self->db->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
+        foreach my $tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
             $other_trees{$tree->clusterset_id} = $tree;
         }
         $self->param('other_trees', \%other_trees);
@@ -327,10 +337,12 @@ sub fetch_or_create_other_tree {
         my $newtree = $tree->deep_copy();
         # Reformat things
         foreach my $member (@{$newtree->get_all_Members}) {
-            $member->cigar_line('');
+            $member->cigar_line(undef);
             $member->stable_id(sprintf("%d_%d", $member->dbID, $self->param('use_genomedb_id') ? $member->genome_db_id : $member->taxon_id));
         }
         $self->store_tree_into_clusterset($newtree, $clusterset);
+        $newtree->store_tag('merged_tree_root_id', $tree->root_id);
+        $tree->store_tag('other_tree_root_id', $newtree->root_id, 1);
         ${$self->param('other_trees')}{$clusterset->clusterset_id} = $newtree;
     }
 
