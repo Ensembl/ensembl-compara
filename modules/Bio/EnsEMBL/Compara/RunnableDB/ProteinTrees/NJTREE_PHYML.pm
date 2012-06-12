@@ -71,6 +71,7 @@ use File::Basename;
 use File::Path;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Data::Dumper;
+use File::Glob;
 
 use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::Member;
@@ -86,6 +87,7 @@ sub param_defaults {
             'bootstrap'         => 1,
 		'check_split_genes' => 1,
             'store_tree_support'    => 1,
+            'intermediate_prefix'   => 'interm',
     };
 }
 
@@ -122,21 +124,16 @@ sub write_output {
     $self->store_genetree($self->param('protein_tree'));
 
     if ($self->param('store_intermediate_trees')) {
-        foreach my $clusterset_id (qw(phyml-aa phyml-nt nj-dn nj-ds nj-mm)) {
-            my $filename = sprintf('%s/interm.%s.nhx', $self->worker_temp_directory, $clusterset_id);
-            next unless -e $filename;
+        foreach my $filename (glob(sprintf('%s/%s.*.nhx', $self->worker_temp_directory, $self->param('intermediate_prefix')) )) {
+            $filename =~ /\.([^\.]*)\.nhx$/;
+            my $clusterset_id = $1;
             print STDERR "Found file $filename for clusterset $clusterset_id\n";
             my $clusterset = $self->fetch_or_create_clusterset($clusterset_id);
-            my $newtree = $self->param('protein_tree')->deep_copy();
-            # We don't need cigar lines
-            foreach my $member (@{$newtree->get_all_Members}) {
-                $member->cigar_line('');
-            }
-            $self->store_tree_into_clusterset($newtree, $clusterset);
+            my $newtree = $self->fetch_or_create_other_tree($clusterset, $self->param('protein_tree'));
             $self->parse_newick_into_tree($filename, $newtree);
-            $newtree->print_tree(10);
             $self->store_genetree($newtree);
-            $newtree->store_tag('merged_tree', $self->param('protein_tree_id'));
+            $newtree->store_tag('merged_tree_root_id', $self->param('protein_tree_id'));
+            $self->param('protein_tree')->store_tag('other_tree_root_id', $newtree->root_id, 1);
         }
     }
     if ($self->param('store_filtered_align')) {
@@ -144,15 +141,12 @@ sub write_output {
         if (-e $filename) {
             print STDERR "Found filtered alignment: $filename\n";
             my $clusterset = $self->fetch_or_create_clusterset('filtered-align');
-            my $newtree = $self->param('protein_tree')->deep_copy();
-            $self->store_tree_into_clusterset($newtree, $clusterset);
-            foreach my $member (@{$newtree->get_all_Members}) {
-                $member->stable_id(sprintf("%d_%d", $member->dbID, $self->param('use_genomedb_id') ? $member->genome_db_id : $member->taxon_id));
-            }
+            my $newtree = $self->fetch_or_create_other_tree($clusterset, $self->param('protein_tree'));
             $newtree->load_cigars_from_fasta($filename, $newtree);
             $self->store_genetree($newtree);
             Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA::_store_aln_tags($self, $newtree);
-            $newtree->store_tag('merged_tree', $self->param('protein_tree_id'));
+            $newtree->store_tag('unfiltered_tree_root_id', $self->param('protein_tree_id'));
+            $self->param('protein_tree')->store_tag('other_tree_root_id', $newtree->root_id, 1);
         }
     }
 
@@ -221,7 +215,7 @@ sub run_njtree_phyml {
       $cmd .= " -f ". $species_tree_file;
     }
     $cmd .= " ". $input_aln;
-    $cmd .= " -p interm ";
+    $cmd .= " -p ".$self->param('intermediate_prefix');
     $cmd .= " -o " . $newick_file;
     if ($self->param('extra_args')) {
       $cmd .= " ".($self->param('extra_args')).' ';
@@ -315,6 +309,33 @@ sub run_njtree_phyml {
 
   $protein_tree->store_tag('NJTREE_PHYML_runtime_msec', $runtime);
 }
+
+
+sub fetch_or_create_other_tree {
+    my ($self, $clusterset, $tree) = @_;
+
+    if (not defined $self->param('other_trees')) {
+        my %other_trees;
+        foreach my $tree (@{$self->db->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
+            $other_trees{$tree->clusterset_id} = $tree;
+        }
+        $self->param('other_trees', \%other_trees);
+    }
+
+    if (not exists ${$self->param('other_trees')}{$clusterset->clusterset_id}) {
+        my $newtree = $tree->deep_copy();
+        # Reformat things
+        foreach my $member (@{$newtree->get_all_Members}) {
+            $member->cigar_line('');
+            $member->stable_id(sprintf("%d_%d", $member->dbID, $self->param('use_genomedb_id') ? $member->genome_db_id : $member->taxon_id));
+        }
+        $self->store_tree_into_clusterset($newtree, $clusterset);
+        ${$self->param('other_trees')}{$clusterset->clusterset_id} = $newtree;
+    }
+
+    return ${$self->param('other_trees')}{$clusterset->clusterset_id};
+}
+
 
 
 1;
