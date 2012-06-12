@@ -48,7 +48,6 @@ use IO::File; ## ??
 use File::Path qw/remove_tree/;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use LWP::Simple;
-use Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Panther::FamLibBuilder;  ## Make sure we have this in PERL5LIB
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -63,19 +62,38 @@ sub fetch_input {
 
     die "blast_path has to be set\n" if (!defined $self->param('blast_path'));
 
+    my $pantherScore_path = $self->param('pantherScore_path');
+    $self->throw('pantherScore_path is an obligatory parameter') unless (defined $pantherScore_path);
+
+    push @INC, "$pantherScore_path/lib";
+    require FamLibBuilder;
+#    import FamLibBuilder;
+
+
     my $basedir = $self->param('hmm_library_basedir') or die "The base dir of the library is needed\n";
     my $hmmLibrary = FamLibBuilder->new($basedir, "prod");
 
     my $code = $hmmLibrary->assureExists();
     if (!defined $code) {
-        die "Error creating the library!\n";
+        $self->throw("Error creating the library!\n");
     }
     if ($code == -1) {
         $self->input_job->incomplete(0);
-        die "The library already exists. I will reuse it"
+        die "The library already exists. I will reuse it (but have you set the stripe on it?)";
     }
     if ($code == 1) {
         print STDERR "OK creating the library\n" if ($self->debug());
+
+        my $book_stripe_cmd = "lfs setstripe " . $hmmLibrary->bookDir() . " -c -1";
+        my $global_stripe_cmd = "lfs setstripe " . $hmmLibrary->globalsDir() . " -c -1";
+
+        for my $dir ($hmmLibrary->bookDir(), $hmmLibrary->globalsDir()) {
+            my $stripe_cmd = "lfs setstripe $dir -c -1";
+            print STDERR "$stripe_cmd\n" if ($self->debug());
+            if (system $stripe_cmd) {
+                $self->throw("Impossible to set stripe on $dir");
+            }
+        }
     }
 
     $self->param('hmmLibrary', $hmmLibrary);
@@ -102,13 +120,17 @@ sub dump_models {
     my $hmmLibrary = $self->param('hmmLibrary');
     my $bookDir = $hmmLibrary->bookDir();
 
-    my $sql = "SELECT model_id, hc_profile FROM hmm_profile";
+    my $sql = "SELECT model_id FROM hmm_profile"; ## mysql runs out of memory if we include here all the profiles
     my $sth = $self->compara_dba->dbc->prepare($sql);
+    my $sql2 = "SELECT hc_profile FROM hmm_profile WHERE model_id = ?";
+    my $sth2 = $self->compara_dba->dbc->prepare($sql2);
     $sth->execute();
-    while (my ($model_id, $profile) = $sth->fetchrow) {
+    while (my ($model_id) = $sth->fetchrow) {
         print STDERR "Dumping model_id $model_id\n";
         mkdir "$bookDir/$model_id" or die $!;
         open my $fh, ">", "$bookDir/$model_id/hmmer.hmm" or die $!;
+        $sth2->execute($model_id);
+        my ($profile) = $sth2->fetchrow;
         print $fh $profile;
         close($fh);
     }
@@ -126,6 +148,7 @@ sub create_blast_db {
     my $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute();
     while (my ($id, $seq) = $sth->fetchrow) {
+        chomp ($seq);
         print $consFh ">$id\n$seq\n";
     }
     $sth->finish();
