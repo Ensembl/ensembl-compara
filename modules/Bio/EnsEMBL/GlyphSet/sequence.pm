@@ -20,6 +20,7 @@ sub features {
       -end     => $start,
       -strand  => $strand,
       -seqname => $_,
+      -slice   => $self->{'container'},
     )
   } split //, $seq;
   
@@ -40,7 +41,7 @@ sub feature_label {
 
 sub title {
   my ($self, $f) = @_;
-  return sprintf '%s; Position: %s:%s', $f->seqname, $self->{'container'}->seq_region_name, $self->{'container'}->start + $f->start - 1;
+  return sprintf '%s; Position: %s:%s', $f->seqname, $self->{'container'}->seq_region_name, $f->seq_region_start;
 }
 
 sub fixed { return 1; }
