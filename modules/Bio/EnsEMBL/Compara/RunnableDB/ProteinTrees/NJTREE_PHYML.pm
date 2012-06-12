@@ -159,6 +159,13 @@ sub write_output {
             #$newtree->store_tag('unfiltered_tree_root_id', $self->param('protein_tree_id'));
             #$self->param('protein_tree')->store_tag('other_tree_root_id', $newtree->root_id, 1);
         }
+        $filename = sprintf('%s/prog-filtalign.fa', $self->worker_temp_directory);
+        if (-e $filename) {
+            print STDERR "Found filtered alignment: $filename\n";
+            my $alignio = Bio::AlignIO->new(-file => $filename, -format => 'fasta');
+            my $aln = $alignio->next_aln or die "Bio::AlignIO could not get next_aln() from file '$filename'";
+            $self->param('protein_tree')->store_tag('progfiltered_alignment_length', $aln->length()/3);
+        }
     }
 
     if (defined $self->param('output_dir')) {
@@ -227,7 +234,7 @@ sub run_njtree_phyml {
     if ($species_tree_file) {
       $cmd .= " -f ". $species_tree_file;
     }
-    $cmd .= " ".(defined $self->param('filt_cmdline') ? "filteredalign.fa" : $input_aln);
+    $cmd .= " ".(defined $self->param('filt_cmdline') ? "prog-filtalign.fa" : $input_aln);
     $cmd .= " -p ".$self->param('intermediate_prefix');
     $cmd .= " -o " . $newick_file;
     if ($self->param('extra_args')) {
@@ -238,7 +245,7 @@ sub run_njtree_phyml {
     $cmd .= " 1>$logfile 2>$errfile";
     #     $cmd .= " 2>&1 > /dev/null" unless($self->debug);
 
-    $cmd = sprintf($self->param('filt_cmdline'), $input_aln, 'filteredalign.fa')." ; $cmd" if defined $self->param('filt_cmdline');
+    $cmd = sprintf($self->param('filt_cmdline'), $input_aln, 'prog-filtalign.fa')." ; $cmd" if defined $self->param('filt_cmdline');
     my $worker_temp_directory = $self->worker_temp_directory;
     my $full_cmd = defined $worker_temp_directory ? "cd $worker_temp_directory; $cmd" : "$cmd";
     print STDERR "Running:\n\t$full_cmd\n" if($self->debug);
