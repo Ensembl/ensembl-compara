@@ -868,7 +868,6 @@ CREATE TABLE homology (
 CREATE TABLE homology_member (
   homology_id                 int(10) unsigned NOT NULL, # FK homology.homology_id
   member_id                   int(10) unsigned NOT NULL, # FK member.member_id
-  peptide_member_id           int(10) unsigned, # FK member.member_id
   cigar_line                  mediumtext,
   perc_cov                    int(10),
   perc_id                     int(10),
@@ -876,12 +875,10 @@ CREATE TABLE homology_member (
 
   FOREIGN KEY (homology_id) REFERENCES homology(homology_id),
   FOREIGN KEY (member_id) REFERENCES member(member_id),
-  FOREIGN KEY (peptide_member_id) REFERENCES member(member_id),
 
   PRIMARY KEY homology_member_id (homology_id,member_id),
   KEY (homology_id),
   KEY (member_id),
-  KEY (peptide_member_id)
 ) MAX_ROWS = 300000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 

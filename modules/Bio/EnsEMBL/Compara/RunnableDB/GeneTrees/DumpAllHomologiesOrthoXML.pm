@@ -112,7 +112,7 @@ sub run {
     print $HANDLE "</genes></database></species>\n" if defined $last;
     print $HANDLE "<groups>\n";
 
-    $sql = "SELECT homology_id, peptide_member_id, homology.description FROM homology_member JOIN homology USING (homology_id) JOIN method_link_species_set USING (method_link_species_set_id) WHERE method_link_id=".$self->param('ortholog_method_link_id');
+    $sql = "SELECT homology_id, member_id, homology.description FROM homology_member JOIN homology USING (homology_id) JOIN method_link_species_set USING (method_link_species_set_id) WHERE method_link_id=".$self->param('ortholog_method_link_id');
     if (defined $self->param('id_range')) {
         my $range = $self->param_substitute($self->param('id_range'));
         $range =~ s/-/ AND /;
@@ -124,10 +124,10 @@ sub run {
     my %seen;
     while(my $rowhash = $sth->fetchrow_hashref) {
         if (exists $seen{${$rowhash}{homology_id}}) {
-            print $HANDLE "<orthologGroup id=\"", ${$rowhash}{homology_id}, "\"><property name=\"homology_description\" value=\"", ${$rowhash}{description}, "\" /><geneRef id=\"", ${$rowhash}{peptide_member_id}, "\" /><geneRef id=\"", $seen{${$rowhash}{homology_id}}, "\" /></orthologGroup>\n";
+            print $HANDLE "<orthologGroup id=\"", ${$rowhash}{homology_id}, "\"><property name=\"homology_description\" value=\"", ${$rowhash}{description}, "\" /><geneRef id=\"", ${$rowhash}{member_id}, "\" /><geneRef id=\"", $seen{${$rowhash}{homology_id}}, "\" /></orthologGroup>\n";
             delete $seen{${$rowhash}{homology_id}};
         } else {
-            $seen{${$rowhash}{homology_id}} = ${$rowhash}{peptide_member_id};
+            $seen{${$rowhash}{homology_id}} = ${$rowhash}{member_id};
         }
     }
     

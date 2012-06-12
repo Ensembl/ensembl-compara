@@ -82,8 +82,7 @@ foreach my $ortho_type (@A_ortholog_types) {
       my $score = 1 ;
 
       #print "=== TEST NEW HOMOLOGY! ===\n" ;
-      foreach my $member_attribute (@{$homol->get_all_Member_Attribute}) {
-	my ($member, $attribute) = @{$member_attribute};
+      foreach my $member (@{$homol->get_all_Members}) {
 
 	#Get the "query" member and the "target" member
 	my $genom = $member->genome_db->name() ;

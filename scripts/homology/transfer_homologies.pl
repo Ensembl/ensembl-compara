@@ -62,15 +62,11 @@ foreach my $mlss (@{$mlss_aref}) {
     $homology->method_link_species_set($mlss);
     print "fetching old homology ",$homology->dbID,"\n";
     my $store = 1;
-    foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
-      my ($member, $attribute) = @{$member_attribute};
-      my $peptide_member = $source_ma->fetch_by_dbID($attribute->peptide_member_id);
+    foreach my $member (@{$homology->get_all_Members}) {
 
-      my $destination_peptide_member = $destination_ma->fetch_by_source_stable_id($peptide_member->source_name,$peptide_member->stable_id);
       my $destination_member = $destination_ma->fetch_by_source_stable_id($member->source_name,$member->stable_id);
       if (defined $destination_member->dbID) {
         $member->dbID($destination_member->dbID);
-        $attribute->peptide_member_id($destination_peptide_member->dbID);
       } else {
         $store = 0;
         print "member not in db ",$member->source_name,"\n";

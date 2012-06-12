@@ -2522,9 +2522,7 @@ sub _nytprof_get_homologous_peptide_ids_from_gene {
 #       print STDERR "Fetching homologies btw $species1 and $species2...\n" if ($self->{verbose});
 #       my @homologies = @{$self->{ha}->fetch_all_by_MethodLinkSpeciesSet($mlss,  -orthology_type => "ortholog_one2one")};
 #       foreach my $homology (@homologies) {
-#         my ($ma1,$ma2) = @{$homology->get_all_Member_Attribute};
-#         my ($member1, $attribute1) = @{$ma1};
-#         my ($member2, $attribute2) = @{$ma2};
+#         my ($member1,$member2) = @{$homology->get_all_Members};
 #         my $short_name1 = $member1->genome_db->short_name;
 #         my $short_name2 = $member2->genome_db->short_name;
 #         $self->{homology_sets}{$member1->stable_id}{$short_name1}{$short_name2} = 1;

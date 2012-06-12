@@ -1,11 +1,9 @@
 package Bio::EnsEMBL::Compara::Homology;
 
 use strict;
-use Bio::EnsEMBL::Compara::BaseRelation;
 use Bio::EnsEMBL::Utils::Exception qw( deprecate throw warning );
-use Bio::SimpleAlign;
 
-our @ISA = qw(Bio::EnsEMBL::Compara::BaseRelation);
+use base ('Bio::EnsEMBL::Compara::AlignedMemberSet');
 
 =head1 NAME
 
@@ -56,176 +54,6 @@ This class inherits all the methods and attributes from Bio::EnsEMBL::DBSQL::Bas
 The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
 
 =cut
-
-my %TWOD_CODONS = ("TTT" => "Phe",#Phe
-                   "TTC" => "Phe",
-                   
-                   "TTA" => "Leu",#Leu
-                   "TTG" => "Leu",
-                   
-                   "TAT" => "Tyr",#Tyr
-                   "TAC" => "Tyr",
-                   
-                   "CAT" => "His",#His
-                   "CAC" => "His",
-
-                   "CAA" => "Gln",#Gln
-                   "CAG" => "Gln",
-                   
-                   "AAT" => "Asn",#Asn
-                   "AAC" => "Asn",
-                   
-                   "AAA" => "Lys",#Lys
-                   "AAG" => "Lys",
-                   
-                   "GAT" => "Asp",#Asp
-                   "GAC" => "Asp",
-
-                   "GAA" => "Glu",#Glu
-                   "GAG" => "Glu",
-                   
-                   "TGT" => "Cys",#Cys
-                   "TGC" => "Cys",
-                   
-                   "AGT" => "Ser",#Ser
-                   "AGC" => "Ser",
-                   
-                   "AGA" => "Arg",#Arg
-                   "AGG" => "Arg",
-                   
-                   "ATT" => "Ile",#Ile
-                   "ATC" => "Ile",
-                   "ATA" => "Ile");
-
-my %FOURD_CODONS = ("CTT" => "Leu",#Leu
-                    "CTC" => "Leu",
-                    "CTA" => "Leu",
-                    "CTG" => "Leu",
-                    
-                    "GTT" => "Val",#Val 
-                    "GTC" => "Val",
-                    "GTA" => "Val",
-                    "GTG" => "Val",
-                    
-                    "TCT" => "Ser",#Ser
-                    "TCC" => "Ser",
-                    "TCA" => "Ser",
-                    "TCG" => "Ser",
-                    
-                    "CCT" => "Pro",#Pro
-                    "CCC" => "Pro",
-                    "CCA" => "Pro",
-                    "CCG" => "Pro",
-                    
-                    "ACT" => "Thr",#Thr
-                    "ACC" => "Thr",
-                    "ACA" => "Thr",
-                    "ACG" => "Thr",
-                    
-                    "GCT" => "Ala",#Ala
-                    "GCC" => "Ala",
-                    "GCA" => "Ala",
-                    "GCG" => "Ala",
-                    
-                    "CGT" => "Arg",#Arg
-                    "CGC" => "Arg",
-                    "CGA" => "Arg",
-                    "CGG" => "Arg",
-                    
-                    "GGT" => "Gly",#Gly
-                    "GGC" => "Gly",
-                    "GGA" => "Gly",
-                    "GGG" => "Gly");
-                    
-my %CODONS =   ("ATG" => "Met",
-                "TGG" => "Trp",
-                "TAA" => "TER",
-                "TAG" => "TER",
-                "TGA" => "TER",
-                "---" => "---");
-
-foreach my $codon (keys %TWOD_CODONS) {
-  $CODONS{$codon} = $TWOD_CODONS{$codon};
-}
-foreach my $codon (keys %FOURD_CODONS) {
-  $CODONS{$codon} = $FOURD_CODONS{$codon};
-}
-
-=head2 get_SimpleAlign
-
-  Arg [1]    : string 'cdna' (optional)
-  Example    : $simple_align = $homology->get_SimpleAlign();
-               $cdna_s_align = $homology->get_SimpleAlign('cdna');
-  Description: get pairwise simple alignment (from the multialignment)
-  Returntype : Bio::SimpleAlign
-
-=cut
-
-sub get_SimpleAlign {
-  my $self = shift;
-  my $alignment = shift;
-  my $changeSelenos = shift;
-  unless (defined $changeSelenos) {
-      $changeSelenos = 0;
-  }
-  
-  my $sa = Bio::SimpleAlign->new();
-
-  #Hack to try to work with both bioperl 0.7 and 1.2:
-  #Check to see if the method is called 'addSeq' or 'add_seq'
-  my $bio07 = 0;
-  if(!$sa->can('add_seq')) {
-    $bio07 = 1;
-  }
-
-  my $ma = $self->adaptor->db->get_MemberAdaptor;
-
-  foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
-    my ($member, $attribute) = @{$member_attribute};
-    if ($member->chr_name =~ /mt/i) {
-      # codeml icodes
-      #      0:universal code (default)
-      my $class;
-      eval {$class = member->taxon->classification;};
-      unless ($@) {
-        if ($class =~ /vertebrata/i) {
-          #      1:mamalian mt
-          $sa->{_special_codeml_icode} = 1;
-        } else {
-          #      4:invertebrate mt
-          $sa->{_special_codeml_icode} = 4;
-        }
-      }
-    }
-    my $peptide_member = $ma->fetch_by_dbID($attribute->peptide_member_id);
-    my $seqstr;
-    my $alphabet = 'protein';
-    if (defined $alignment && $alignment =~ /^cdna$/i) {
-      $seqstr = $attribute->cdna_alignment_string($peptide_member,$changeSelenos);
-      $seqstr =~ s/\s+//g;
-      $alphabet = 'dna';
-    } else {
-      $seqstr = $attribute->alignment_string($peptide_member);
-    }
-    next if(!$seqstr);
-    my $aln_end = $peptide_member->seq_length;
-    $aln_end = $aln_end*3 if (defined $alignment && $alignment =~ /^cdna$/i);
-    my $seq = Bio::LocatableSeq->new(-SEQ    => $seqstr,
-                                     -ALPHABET  => $alphabet,
-                                     -START  => 1,
-                                     -END    => $aln_end,
-                                     -ID     => $peptide_member->stable_id,
-                                     -STRAND => 0);
-
-    if($bio07) {
-      $sa->addSeq($seq);
-    } else {
-      $sa->add_seq($seq);
-    }
-  }
-
-  return $sa;
-}
 
 
 =head2 subtype
@@ -480,121 +308,6 @@ sub dnds_ratio {
 }
 
 
-=head2 get_4D_SimpleAlign
-
-  Example    : $4d_align = $homology->get_4D_SimpleAlign();
-  Description: get 4 times degenerate positions pairwise simple alignment
-  Returntype : Bio::SimpleAlign
-
-=cut
-
-sub get_4D_SimpleAlign {
-  my $self = shift;
-  
-  my $sa = Bio::SimpleAlign->new();
-
-  #Hack to try to work with both bioperl 0.7 and 1.2:
-  #Check to see if the method is called 'addSeq' or 'add_seq'
-  my $bio07 = 0;
-  if(!$sa->can('add_seq')) {
-    $bio07 = 1;
-  }
-
-  my $ma = $self->adaptor->db->get_MemberAdaptor;
-
-  my %member_seqstr;
-  foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
-    my ($member, $attribute) = @{$member_attribute};
-    my $peptide_member = $ma->fetch_by_dbID($attribute->peptide_member_id);
-    my $seqstr;
-    $seqstr = $attribute->cdna_alignment_string($peptide_member);
-    next if(!$seqstr);
-#    print STDERR $seqstr,"\n";
-    my @tmp_tab = split /\s+/, $seqstr;
-#    print STDERR "tnp_tab 0: ", $tmp_tab[0],"\n";
-    $member_seqstr{$peptide_member->stable_id} = \@tmp_tab;
-  }
-  
-  my $seqstr_length;
-  foreach my $seqid (keys %member_seqstr) {
-    unless (defined $seqstr_length) {
- #     print STDERR $member_seqstr{$seqid}->[0],"\n";
-      $seqstr_length = scalar @{$member_seqstr{$seqid}};
-      next;
-    }
-    unless ($seqstr_length == scalar @{$member_seqstr{$seqid}}) {
-      die "Length of dna alignment are not the same, $seqstr_length and " . scalar @{$member_seqstr{$seqid}} ." respectively for homology_id " . $self->dbID . "\n";
-    }
-  }
-  
-  my %FourD_member_seqstr;
-  for (my $i=0; $i < $seqstr_length; $i++) {
-    my $FourD_codon = 1;
-    my $FourD_aminoacid;
-    foreach my $seqid (keys %member_seqstr) {
-      if (FourD_codon($member_seqstr{$seqid}->[$i])) {
-        if (defined $FourD_aminoacid && 
-            $FourD_aminoacid eq $FOURD_CODONS{$member_seqstr{$seqid}->[$i]}) {
-#          print STDERR "YES ",$FOURD_CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i],"\n";
-          next;
-        } elsif (defined $FourD_aminoacid) {
-#          print STDERR "NO ",$FOURD_CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i],"\n";
-          $FourD_codon = 0;
-          last;
-        } else {
-          $FourD_aminoacid = $FOURD_CODONS{$member_seqstr{$seqid}->[$i]};
-#          print STDERR $FOURD_CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i]," ";
-        }
-        next;
-      } else {
-#        print STDERR "NO ",$CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i],"\n";
-        $FourD_codon = 0;
-        last;
-      }
-    }
-    next unless ($FourD_codon);
-    foreach my $seqid (keys %member_seqstr) {
-      $FourD_member_seqstr{$seqid} .= substr($member_seqstr{$seqid}->[$i],2,1);
-    }
-  }
-  
-  foreach my $seqid (keys %FourD_member_seqstr) {
-  
-    my $seq = Bio::LocatableSeq->new(-SEQ    => $FourD_member_seqstr{$seqid},
-                                     -START  => 1,
-                                     -END    => length($FourD_member_seqstr{$seqid}),
-                                     -ID     => $seqid,
-                                     -STRAND => 0);
-    
-    if($bio07) {
-      $sa->addSeq($seq);
-    } else {
-      $sa->add_seq($seq);
-    }
-  }
-  
-  return $sa;
-}
-
-sub FourD_codon {
-  my ($codon) = @_;
-  
-  if (defined $FOURD_CODONS{$codon}) {
-    return 1;
-  }
-
-  return 0;
-}
-
-sub TwoD_codon {
-  my ($codon) = @_;
-  
-  if (defined $TWOD_CODONS{$codon}) {
-    return 1;
-  }
-
-  return 0;
-}
 
 =head2 print_homology
 
@@ -609,8 +322,7 @@ sub print_homology {
   my $self = shift;
   
   printf("Homology %d,%s,%s : ", $self->dbID, $self->description, $self->subtype);
-  foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
-    my ($member, $attribute) = @{$member_attribute};
+  foreach my $member (@{$self->gene_list}) {
     printf("%s(%d)\t", $member->stable_id, $member->dbID);
   }
   print("\n");
@@ -634,49 +346,6 @@ sub get_all_PeptideAlignFeature {
 }
 
 
-=head2 has_species_by_name
-
-  Arg [1]    : string $species_name
-  Example    : my $ret = $homology->has_species_by_name("Homo sapiens");
-  Description: return TRUE or FALSE whether one of the members in the homology is from the given species
-  Returntype : 1 or 0
-  Exceptions :
-  Caller     :
-
-=cut
-
-
-sub has_species_by_name {
-  my $self = shift;
-  my $species_name = shift;
-  
-  foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
-    my ($member, $attribute) = @{$member_attribute};
-    return 1 if($member->genome_db->name eq $species_name);
-  }
-  return 0;
-}
-
-
-=head2 gene_list
-
-  Example    : my $pair = $homology->gene_list
-  Description: return the pair of members for the homology
-  Returntype : array ref of (2) Bio::EnsEMBL::Compara::Member objects
-  Caller     : general
-
-=cut
-
-
-sub gene_list {
-  my $self = shift;
-  my @genes;
-  foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
-    my ($member, $attribute) = @{$member_attribute};
-    push @genes, $member;
-  }
-  return \@genes;
-}
 
 
 =head2 homology_key
@@ -695,12 +364,7 @@ sub homology_key {
   my $self = shift;
   return $self->{'_homology_key'} if(defined($self->{'_homology_key'}));
   
-  my @genes;
-  foreach my $member_attribute (@{$self->get_all_Member_Attribute}) {
-    my ($member, $attribute) = @{$member_attribute};
-    push @genes, $member;
-  }
-  @genes = sort {$a->taxon_id <=> $b->taxon_id || $a->stable_id cmp $b->stable_id} @genes;
+  my @genes = sort {$a->taxon_id <=> $b->taxon_id || $a->stable_id cmp $b->stable_id} @{$self->gene_list};
   @genes = map ($_->stable_id, @genes);
 
   my $homology_key = join('_', @genes);

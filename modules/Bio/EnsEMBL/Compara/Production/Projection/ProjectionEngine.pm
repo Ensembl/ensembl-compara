@@ -268,7 +268,7 @@ sub project {
   
   $log->info('Looping over '.scalar(@{$homologies}).' homologies');
   foreach my $homology (@{$homologies}) {
-    my ($query_member, $query_attribute, $target_member, $target_attribute) = $self->_decode_homology($homology);
+    my ($query_member, $target_member) = $self->_decode_homology($homology);
     
     if($self->log()->is_trace()) {
       my $q_id = $query_member->stable_id();
@@ -294,7 +294,7 @@ sub project {
         
         if($self->_transfer_dbentry_by_targets($dbentry, $target_dbentry_holder->get_all_DBEntries(), $target_member->stable_id())) {
           $log->trace('DBEntry will be transferred');
-          my $projection = $self->build_projection($query_member, $target_member, $query_attribute, $target_attribute, $dbentry, $homology);
+          my $projection = $self->build_projection($query_member, $target_member, $dbentry, $homology);
           push(@projections, $projection) if defined $projection;
         }
         else {
@@ -320,10 +320,8 @@ sub project {
 
   Arg[1]      : Member; source member of projection
   Arg[2]      : Member; target member of projection
-  Arg[3]      : Source attribute
-  Arg[4]      : Target attribute
-  Arg[5]      : DBEntry projected
-  Arg[6]      : The homology used for projection
+  Arg[3]      : DBEntry projected
+  Arg[4]      : The homology used for projection
   Description : Provides an abstraction to building a projection from a 
                 set of elements.
   Returntype  : Projection object. Can be null & the current projection code
@@ -332,13 +330,13 @@ sub project {
 =cut
 
 sub build_projection {
-  my ($self, $query_member, $target_member, $query_attribute, $target_attribute, $dbentry, $homology) = @_;
+  my ($self, $query_member, $target_member, $dbentry, $homology) = @_;
   return Bio::EnsEMBL::Compara::Production::Projection::Projection->new(
     -ENTRY => $dbentry,
     -FROM => $query_member->get_canonical_Member(),
     -TO => $target_member->get_canonical_Member(),
-    -FROM_IDENTITY => $query_attribute->perc_id(),
-    -TO_IDENTITY => $target_attribute->perc_id(),
+    -FROM_IDENTITY => $query_member->perc_id(),
+    -TO_IDENTITY => $target_member->perc_id(),
     -TYPE => $homology->description()
   );
 }
@@ -399,21 +397,19 @@ sub _transfer_dbentry_by_targets {
 sub _decode_homology {
   my ($self, $homology) = @_;
   
-  my @query;
-  my @target;
+  my $query;
+  my $target;
   
-  my @mas = @{$homology->get_all_Member_Attribute()};
-  foreach my $ma (@mas) {
-    my ($member) = @{$ma};
+  foreach my $member (@{$self->get_all_Members}) {
     if($member->genome_db()->dbID() == $self->genome_db()->dbID()) {
-      @query = @{$ma};
+      $query = $member;
     }
     else {
-      @target = @{$ma};
+      $target = $member;
     }
   }
   
-  return (@query, @target);
+  return ($query, $target);
 }
 
 sub _get_homologies {

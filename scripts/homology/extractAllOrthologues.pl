@@ -56,9 +56,9 @@ foreach my $gdb1 (keys %{$species_list}) {
 # All the orthologues between two arbitrary species. It is more efficient than trying all the gene of a given species
 my $homologies = $homology_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss_cache{$tmp1}->{$tmp2});
 foreach my $homology (@{$homologies}) {
-	my ($gene_member, $attribute) = @{(@{$homology->get_all_Member_Attribute})[0]};
+	my $gene_member = $homology->get_all_Members->[0];
 	my $member_set = {};
-	my $ok = _recursive_get_orthocluster($gene_member, {}, {},  $member_set), "\n";
+	my $ok = _recursive_get_orthocluster($gene_member, {}, {},  $member_set);
 
 	# now, ok is 0 if an unwanted species is in the cluster, 1 otherwise
 	# member_set is a hash which associates species names to the list of corresponding genes
@@ -117,8 +117,7 @@ sub _recursive_get_orthocluster {
 			next if($ortho_set->{$homology->dbID});
 			$ortho_set->{$homology->dbID} = $homology;
 
-			foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
-				my ($member, $attribute) = @{$member_attribute};
+			foreach my $member (@{$homology->get_all_Members}) {
 				next if($member->dbID == $gene->dbID); #skip query gene
 				return 0 unless _recursive_get_orthocluster($member, $ortho_set, $tmp_set, $member_set);
 			}

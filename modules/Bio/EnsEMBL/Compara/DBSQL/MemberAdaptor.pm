@@ -419,7 +419,6 @@ sub fetch_all_by_relation {
     $constraint .= "hm.homology_id = $homology_id";
     my $extra_columns = [qw(hm.homology_id
                             hm.member_id
-                            hm.peptide_member_id
                             hm.cigar_line
                             hm.perc_cov
                             hm.perc_id
@@ -713,22 +712,6 @@ sub _objs_from_sth {
   $sth->finish;
   return \@members
 }
-
-
-sub create_AlignedMember_from_member_attribute {    # deprecated method?
-  my $self = shift;
-  my $member_attribute = shift;
-
-  my ($gene_member, $attribute) = @{$member_attribute};
-  my $member = $self->fetch_by_dbID($attribute->peptide_member_id);
-
-  bless $member, "Bio::EnsEMBL::Compara::AlignedMember";
-  $member->cigar_line($attribute->cigar_line);
-  $member->adaptor(undef);
-
-  return $member;
-}
-
 
 
 #

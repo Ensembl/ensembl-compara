@@ -5,6 +5,7 @@ use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Member;
+use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 
@@ -126,10 +127,11 @@ while (my $line = <>) {
   my $member1 = return_member($gene1, $genome_db1);
   # get or create/load peptide_member1
   my $peptide_member1 = return_peptide_member($translation_stable_id1, $genome_db1, $TranscriptAdaptor1);
-  # create attribute1
-  my $attribute1 = return_attribute($peptide_member1,
-                                    $cigar_line,
-                                    $pcov1, $pid1, $pos1);
+  bless $peptide_member1, 'Bio::EnsEMBL::Compara::AlignedMember';
+  $peptide_member1->cigar_line($cigar_line);
+  $peptide_member1->perc_cov($pcov1);
+  $peptide_member1->perc_id($pid1);
+  $peptide_member1->perc_pos($pos1);
 
   # get or create/load member2
   my $member2 = return_member($gene2, $genome_db2);
@@ -140,9 +142,11 @@ while (my $line = <>) {
   $inverse_cigar_line =~ s/D/X/g;
   $inverse_cigar_line =~ s/I/D/g;
   $inverse_cigar_line =~ s/X/I/g;
-  my $attribute2 = return_attribute($peptide_member2,
-                                    $inverse_cigar_line,
-                                    $pcov2, $pid2, $pos2);
+  bless $peptide_member2, 'Bio::EnsEMBL::Compara::AlignedMember';
+  $peptide_member2->cigar_line($inverse_cigar_line);
+  $peptide_member2->perc_cov($pcov2);
+  $peptide_member2->perc_id($pid2);
+  $peptide_member2->perc_pos($pos2);
 
   # create an Homology object
   my $homology = new Bio::EnsEMBL::Compara::Homology;
@@ -151,8 +155,8 @@ while (my $line = <>) {
   $homology->stable_id($stable_id);
   $homology->source_name("ENSEMBL_HOMOLOGS");
   $homology->description($type);
-  $homology->add_Member_Attribute([$member1, $attribute1]);
-  $homology->add_Member_Attribute([$member2, $attribute2]);
+  $homology->add_Member($peptide_member1);
+  $homology->add_Member($peptide_member2);
 
   if (defined $homologies{$member1->stable_id . "_" . $member2->stable_id}) {
     # As we are running build_pairs.pl symmetrically, we can get more than one

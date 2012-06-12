@@ -890,46 +890,18 @@ sub store_gene_link_as_homology {
   $homology->ancestor_node_id($ancestor->node_id);
   $homology->tree_node_id($tree_node_id);
   $homology->method_link_species_set_id($mlss->dbID);
+  
+  $homology->add_Member($gene1);
+  $homology->add_Member($gene2);
+  $homology->update_alignment_stats;
 
   my $key = $mlss->dbID . "_" . $gene1->dbID;
   $self->param('homology_consistency')->{$key}{$type} = 1;
-  #$homology->dbID(-1);
-
-  # NEED TO BUILD THE Attributes (ie homology_members)
-  my ($cigar_line1, $perc_id1, $perc_pos1,
-      $cigar_line2, $perc_id2, $perc_pos2) = 
-        Bio::EnsEMBL::Compara::Homology::generate_alignment_stats($gene1, $gene2);
-
-  # QUERY member
-  #
-  my $attribute;
-  $attribute = new Bio::EnsEMBL::Compara::Attribute;
-  $attribute->peptide_member_id($gene1->dbID);
-  $attribute->cigar_line($cigar_line1);
-  $attribute->perc_cov(100);
-  $attribute->perc_id(int($perc_id1));
-  $attribute->perc_pos(int($perc_pos1));
-
-  my $gene_member1 = $gene1->gene_member;
-  $homology->add_Member_Attribute([$gene_member1, $attribute]);
-
-  #
-  # HIT member
-  #
-  $attribute = new Bio::EnsEMBL::Compara::Attribute;
-  $attribute->peptide_member_id($gene2->dbID);
-  $attribute->cigar_line($cigar_line2);
-  $attribute->perc_cov(100);
-  $attribute->perc_id(int($perc_id2));
-  $attribute->perc_pos(int($perc_pos2));
-
-  my $gene_member2 = $gene2->gene_member;
-  $homology->add_Member_Attribute([$gene_member2, $attribute]);
 
   # at this stage, contiguous_gene_split have been retrieved from the node types
   if ($self->param('tag_split_genes')) {
     # Potential split genes: within_species_paralog that do not overlap at all
-    if ($type eq 'within_species_paralog' && 0 == $perc_id1 && 0 == $perc_id2 && 0 == $perc_pos1 && 0 == $perc_pos2) {
+    if ($type eq 'within_species_paralog' && 0 == $gene1->perc_id && 0 == $gene2->perc_id && 0 == $gene1->perc_pos && 0 == $gene2->perc_pos) {
         $self->param('orthotree_homology_counts')->{'within_species_paralog'}--;
         $homology->description('putative_gene_split');
         $self->param('orthotree_homology_counts')->{'putative_gene_split'}++;

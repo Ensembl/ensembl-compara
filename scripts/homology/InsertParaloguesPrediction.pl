@@ -4,7 +4,6 @@ use strict;
 use Getopt::Long;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Homology;
-use Bio::EnsEMBL::Compara::Attribute;
 
 my $usage = "
 $0 options input_data_file
@@ -93,7 +92,7 @@ while (<>) {
     print STDERR "$translation_stable_id1 not in db\n";
     next;
   }
-  my $attribute1 = return_attribute($peptide_member1, $cigar_line1,$perc_cov1,$perc_id1,$perc_pos1);
+  make_alignedmember($peptide_member1, $cigar_line1,$perc_cov1,$perc_id1,$perc_pos1);
 
   my $gene_member2 = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$gene_stable_id2);
   unless (defined  $gene_member2) {
@@ -105,7 +104,7 @@ while (<>) {
     print STDERR "$translation_stable_id2 not in db\n";
     next;
   }
-  my $attribute2 = return_attribute($peptide_member2, $cigar_line2,$perc_cov2,$perc_id2,$perc_pos2);
+  make_alignedmember($peptide_member2, $cigar_line2,$perc_cov2,$perc_id2,$perc_pos2);
 
   my $homology = new Bio::EnsEMBL::Compara::Homology;
   my $stable_id = $gene_member1->taxon_id . "_" . $gene_member2->taxon_id . "_";
@@ -121,8 +120,8 @@ while (<>) {
   $homology->s($s);
   $homology->lnl($lnl);
   $homology->threshold_on_ds($threshold_on_ds);
-  $homology->add_Member_Attribute([$gene_member1, $attribute1]);
-  $homology->add_Member_Attribute([$gene_member2, $attribute2]);
+  $homology->add_Member($peptide_member1);
+  $homology->add_Member($peptide_member2);
   print STDERR $homology->stable_id," ready to load\n";
   $ha->store($homology);
   if (defined $homology->n) {
@@ -131,16 +130,14 @@ while (<>) {
 }
 
 
-sub return_attribute {
+sub make_alignedmember {
   my ($peptide_member, $cigar_line, $perc_cov,$perc_id,$perc_pos) = @_;
-  
-  my $attribute = Bio::EnsEMBL::Compara::Attribute->new_fast
-      ({'peptide_member_id' => $peptide_member->dbID});
 
-  $attribute->cigar_line($cigar_line);
-  $attribute->perc_cov($perc_cov);
-  $attribute->perc_id($perc_id);
-  $attribute->perc_pos($perc_pos);
+  bless $peptide_member, 'Bio::EnsEMBL::Compara::AlignedMember';
 
-  return $attribute;
+  $peptide_member->cigar_line($cigar_line);
+  $peptide_member->perc_cov($perc_cov);
+  $peptide_member->perc_id($perc_id);
+  $peptide_member->perc_pos($perc_pos);
+
 }

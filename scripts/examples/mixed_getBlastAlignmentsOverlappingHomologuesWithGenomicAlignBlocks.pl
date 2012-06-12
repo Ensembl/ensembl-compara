@@ -48,11 +48,9 @@ foreach my $homology (@{$homology_list}) {
     $count++;
     $homology->print_homology;
 
-    my $mem_attribs = $homology->get_all_Member_Attribute;
     my $human_gene = undef;
     my $mouse_gene = undef;
-    foreach my $member_attribute (@{$mem_attribs}) {
-        my ($member, $atrb) = @{$member_attribute};
+    foreach my $member(@{$homology->get_all_Members}) {
         if($member->genome_db_id == $mouse_gdb_id) { $mouse_gene = $member; }
         if($member->genome_db_id == $human_gdb_id) { $human_gene = $member; }
     }

@@ -208,15 +208,8 @@ sub fetch_or_store_homology {
     $homology->ancestor_node_id(0);
     $homology->tree_node_id(0);
     $homology->method_link_species_set_id($mlss->dbID);
-
-    my $attribute;
-    $attribute = new Bio::EnsEMBL::Compara::Attribute;
-    $attribute->peptide_member_id($trans_member1->dbID);
-    $homology->add_Member_Attribute([$trans_member1->gene_member, $attribute]);
-
-    $attribute = new Bio::EnsEMBL::Compara::Attribute;
-    $attribute->peptide_member_id($trans_member2->dbID);
-    $homology->add_Member_Attribute([$trans_member2->gene_member, $attribute]);
+    $homology->add_Member($trans_member1);
+    $homology->add_Member($trans_member2);
 
     print "NEW: $homology "; $homology->print_homology();
     $homology_adaptor->store($homology) unless $no_store;

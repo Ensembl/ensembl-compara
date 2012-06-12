@@ -193,10 +193,8 @@ sub project {
 
   Arg[1]      : Member; source member of projection
   Arg[2]      : Member; target member of projection
-  Arg[3]      : Source attribute
-  Arg[4]      : Target attribute
-  Arg[5]      : DBEntry projected
-  Arg[6]      : The homology used for projection
+  Arg[3]      : DBEntry projected
+  Arg[4]      : The homology used for projection
   Description : Provides an abstraction to building a projection from a 
                 set of elements.
   Returntype  : Projection object
@@ -204,7 +202,7 @@ sub project {
 =cut
 
 sub build_projection {
-  my ($self, $query_member, $target_member, $query_attribute, $target_attribute, $dbentry, $homology) = @_;
+  my ($self, $query_member, $target_member, $dbentry, $homology) = @_;
   
   my $target_gene_member  = ($target_member->source_name eq 'ENSEMBLGENE') 
                           ? $target_member 
@@ -216,8 +214,8 @@ sub build_projection {
     -ENTRY => $dbentry,
     -FROM => ($query_member->source_name eq 'ENSEMBLGENE') ? $query_member : $query_member->gene_member(),
     -TO => $target_gene_member,
-    -FROM_IDENTITY => $query_attribute->perc_id(),
-    -TO_IDENTITY => $target_attribute->perc_id(),
+    -FROM_IDENTITY => $query_member->perc_id(),
+    -TO_IDENTITY => $target_member->perc_id(),
     -TYPE => $homology->description(),
     -TOTAL => $descriptor->{total},
     -CURRENT_INDEX => $descriptor->{current_index}
@@ -244,7 +242,7 @@ sub _homology_predicate_builder {
   #true and will always be run if the type predicate worked
   my $worker_predicate = Data::Predicate::ClosurePredicate->new( closure => sub {
     my ($homology) = @_;
-    my ($query_member, $query_attribute, $target_member, $target_attribute) = $self->_decode_homology($homology);
+    my ($query_member, $target_member) = $self->_decode_homology($homology);
     my $sid = $target_member->stable_id();
     $self->_homology_descriptor()->{$sid}->{current_index}++;
     return 1;
@@ -352,7 +350,7 @@ sub _generate_homology_descriptor {
   my ($self, $homologies) = @_;
   my $descriptor = {};
   foreach my $h (@{$homologies}) {
-    my ($query_member, $query_attribute, $target_member, $target_attribute) = $self->_decode_homology($h);
+    my ($query_member, $target_member) = $self->_decode_homology($h);
     my $sid = $target_member->stable_id();
     if(! exists $descriptor->{$sid}) {
       $descriptor->{$sid} = { current_index => 0, total => 0 };

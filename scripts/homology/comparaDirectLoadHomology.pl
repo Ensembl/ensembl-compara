@@ -6,7 +6,6 @@ use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::Homology;
-use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
@@ -118,14 +117,10 @@ sub load_orthos {
     $homology->stable_id($stable_id);
     $homology->description("DWGA");
     $homology->method_link_species_set($mlss);
-    
-    my $attribute1 = new Bio::EnsEMBL::Compara::Attribute;
-    $attribute1->peptide_member_id($pep_member1->dbID);
-    $homology->add_Member_Attribute([$gene1, $attribute1]);
-
-    my $attribute2 = new Bio::EnsEMBL::Compara::Attribute;
-    $attribute2->peptide_member_id($pep_member2->dbID);
-    $homology->add_Member_Attribute([$gene2, $attribute2]);
+    bless $pep_member1, 'Bio::EnsEMBL::Compara::AlignedMember';
+    $homology->add_Member($pep_member1); 
+    bless $pep_member2, 'Bio::EnsEMBL::Compara::AlignedMember';
+    $homology->add_Member($pep_member2); 
 
     #print($homology->stable_id . "\n");
     $homologyDBA->store($homology);

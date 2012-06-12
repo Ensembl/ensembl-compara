@@ -147,10 +147,8 @@ sub dbentry_source_object {
 
   Arg[1]      : Member; source member of projection
   Arg[2]      : Member; target member of projection
-  Arg[3]      : Source attribute
-  Arg[4]      : Target attribute
-  Arg[5]      : DBEntry projected
-  Arg[6]      : The homology used for projection
+  Arg[3]      : DBEntry projected
+  Arg[4]      : The homology used for projection
   Description : Provides an abstraction to building a projection from a 
                 set of elements.
   Returntype  : Projection object. Can be null & the current projection code
@@ -159,13 +157,13 @@ sub dbentry_source_object {
 =cut
 
 sub build_projection {
-  my ($self, $query_member, $target_member, $query_attribute, $target_attribute, $dbentry, $homology) = @_;
+  my ($self, $query_member, $target_member, $dbentry, $homology) = @_;
   return Bio::EnsEMBL::Compara::Production::Projection::Projection->new(
     -ENTRY => $dbentry,
     -FROM => $self->_decode_member($query_member),
     -TO => $self->_decode_member($target_member),
-    -FROM_IDENTITY => $query_attribute->perc_id(),
-    -TO_IDENTITY => $target_attribute->perc_id(),
+    -FROM_IDENTITY => $query_member->perc_id(),
+    -TO_IDENTITY => $target_member->perc_id(),
     -TYPE => $homology->description()
   );
 }
@@ -213,8 +211,8 @@ sub _homology_predicate_builder {
   
   my $percentage_identity_predicate = Data::Predicate::ClosurePredicate->new(closure => sub {
     my ($homology) = @_;
-    my ($member_attribute_a, $member_attribute_b) = @{$homology->get_all_Member_Attribute()};
-    return $member_attribute_a->[1]->perc_id() >= 40 && $member_attribute_b->[1]->perc_id() >= 40;
+    my ($member_a, $member_b) = @{$homology->get_all_Members()};
+    return $member_a->perc_id() >= 40 && $member_b->perc_id() >= 40;
   }, description => 'Filtering of homology where both members had >= 40% identity');
   
   return p_and($type_predicate, $percentage_identity_predicate);

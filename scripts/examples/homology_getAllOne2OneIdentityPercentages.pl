@@ -36,13 +36,10 @@ foreach my $gene (@$genes) {
   foreach my $this_homology (@$all_homologies) {
     my $description = $this_homology->description;
     next unless ($description =~ /one2one/); # if only one2one wanted
-    my $all_member_attributes = 
-    $this_homology->get_all_Member_Attribute();
     my $first_found = 0;
-    foreach my $ma (@$all_member_attributes) {
-      my ($mb, $attr) = @$ma;
-      my $label = $mb->display_label || $mb->stable_id;
-      print $mb->genome_db->short_name, ",", $label, "\t";
+    foreach my $member (@{$this_homology->get_all_GeneMembers}) {
+      my $label = $member->display_label || $member->stable_id;
+      print $member->genome_db->short_name, ",", $label, "\t";
     }
     my $pairwise_alignment_from_multiple = $this_homology->get_SimpleAlign;
     my $overall_pid = $pairwise_alignment_from_multiple->overall_percentage_identity;

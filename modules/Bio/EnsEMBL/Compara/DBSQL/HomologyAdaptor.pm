@@ -28,11 +28,12 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 sub fetch_all_by_Member {
   my ($self, $member) = @_;
 
+  $member = $member->get_canonical_Member;
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
   my $constraint = "hm.member_id = " .$member->dbID;
 
-  # This internal variable is used by add_Member_Attribute method 
-  # in Bio::EnsEMBL::Compara::BaseRelation to make sure that the first element
+  # This internal variable is used by add_Member method 
+  # in Bio::EnsEMBL::Compara::MemberSet to make sure that the first element
   # of the member array is the one that has been used by the user to fetch the
   # homology object
   $self->{'_this_one_first'} = $member->stable_id;
@@ -127,6 +128,7 @@ sub fetch_all_by_Member_method_link_type {
         "::".$member->stable_id.") with no GenomeDB");
     return [];
   }
+  $member = $member->get_canonical_Member;
 
   throw("method_link_type arg is required\n")
     unless ($method_link_type);
@@ -168,6 +170,7 @@ sub fetch_all_by_Member_MethodLinkSpeciesSet {
   unless ($member->isa('Bio::EnsEMBL::Compara::Member')) {
     throw("The argument must be a Bio::EnsEMBL::Compara::Member object, not $member");
   }
+  $member = $member->get_canonical_Member;
 
   throw("method_link_species_set arg is required\n")
     unless ($method_link_species_set);
@@ -226,6 +229,9 @@ sub fetch_by_Member_Member_method_link_type {
     return [];
   }
 
+  $member1 = $member1->get_canonical_Member;
+  $member2 = $member2->get_canonical_Member;
+
   #  my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
   my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];
   my $constraint =  " h.method_link_species_set_id =" . $mlss->dbID;
@@ -259,26 +265,11 @@ sub fetch_by_Member_id_Member_id {
   unless ($member_id1 ne $member_id2) {
     throw("The members should be different");
   }
-  my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];
 
-  my $constraint .= " hm1.member_id = " . $member_id1;
-  $constraint .= " AND hm2.member_id = " . $member_id2;
+  my $pmember_id1 = $self->db_get_MemberAdaptor->fetch_canonical_member_for_gene_member_id($member_id1)->dbID;
+  my $pmember_id2 = $self->db_get_MemberAdaptor->fetch_canonical_member_for_gene_member_id($member_id2)->dbID;
 
-  # See in fetch_all_by_Member what is this internal variable for
-  $self->{'_this_one_first'} = $member_id1;
-
-  my $homology = $self->generic_fetch($constraint, $join);
-
-  return undef unless (defined $homology || 0 == scalar @$homology);
-
-  # At production time, we may have more than one entry due to the
-  # OtherParalogs code, so we allow fetching with the extra parameter,
-  # but the duplicity is cleaned up afterwards
-  if (1 < scalar @$homology && !defined($allow_duplicates)) {
-    throw("Returns more than one element");
-  }
-
-  return shift @{$homology};
+  return $self->fetch_by_PMember_id_PMember_id($pmember_id1, $pmember_id2, $allow_duplicates);
 }
 
 =head2 fetch_by_PMember_id_PMember_id
@@ -302,8 +293,8 @@ sub fetch_by_PMember_id_PMember_id {
   }
   my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];
 
-  my $constraint .= " hm1.peptide_member_id = " . $member_id1;
-  $constraint .= " AND hm2.peptide_member_id = " . $member_id2;
+  my $constraint .= " hm1.member_id = " . $member_id1;
+  $constraint .= " AND hm2.member_id = " . $member_id2;
 
   # See in fetch_by_PMember what is this internal variable for
   $self->{'_this_one_first'} = $member_id1;
@@ -627,8 +618,7 @@ sub _recursive_get_orthocluster {
   foreach my $homology (@{$homologies}) {
     next if($ortho_set->{$homology->dbID});
     
-    foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
-      my ($member, $attribute) = @{$member_attribute};
+    foreach my $member (@{$homology->get_all_GeneMembers}) {
       next if($member->dbID == $gene->dbID); #skip query gene
       $member->print_member if($debug);
 
@@ -745,15 +735,12 @@ sub store {
     $hom->dbID($sth->{'mysql_insertid'});
   }
 
-  my $sql = 'INSERT IGNORE INTO homology_member (homology_id, member_id, peptide_member_id, cigar_line, perc_id, perc_pos) VALUES (?,?,?,?,?,?)';
+  my $sql = 'INSERT IGNORE INTO homology_member (homology_id, member_id, cigar_line, perc_id, perc_pos, perc_cov) VALUES (?,?,?,?,?,?,?)';
   my $sth = $self->prepare($sql);
-  foreach my $member_attribute (@{$hom->get_all_Member_Attribute}) {   
-    my ($member, $attribute) = @{$member_attribute};
+  foreach my $member(@{$hom->get_all_Members}) {
     # Stores the member if not yet stored
     $self->db->get_MemberAdaptor->store($member) unless (defined $member->dbID);
-    $attribute->member_id($member->dbID);
-    $attribute->homology_id($hom->dbID);
-    $sth->execute($attribute->homology_id, $attribute->member_id, $attribute->peptide_member_id, $attribute->cigar_line, $attribute->perc_id, $attribute->perc_pos);
+    $sth->execute($member->set->dbID, $member->dbID, $member->cigar_line, $member->perc_id, $member->perc_pos, $member->perc_cov);
   }
 
   return $hom->dbID;
@@ -827,7 +814,7 @@ sub fetch_all_orphans_by_GenomeDB {
     unless ($gdb);
 
   my $gdb_id = $gdb->dbID;
-  my $sql = "SELECT m.member_id from member m LEFT JOIN homology_member hm ON m.member_id=hm.member_id WHERE m.source_name='ENSEMBLGENE' AND m.genome_db_id=$gdb_id AND hm.member_id IS NULL";
+  my $sql = "SELECT m.member_id from member m JOIN member mp ON m.member_id = mp.gene_member_id JOIN subset_member sm ON sm.member_id = mp.member_id LEFT JOIN homology_member hm ON mp.member_id=hm.member_id WHERE m.source_name='ENSEMBLGENE' AND m.genome_db_id=$gdb_id AND hm.member_id IS NULL";
   my $sth = $self->dbc->prepare($sql);
   $sth->execute();
   my $ma = $self->db->get_MemberAdaptor;

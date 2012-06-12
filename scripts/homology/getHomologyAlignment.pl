@@ -74,17 +74,16 @@ my ($homology) = @{$self->{'comparaDBA'}->get_HomologyAdaptor->fetch_all_by_Memb
 my $queryMA;
 my $orthMA;
 
-foreach my $ma (@{$homology->get_all_Member_Attribute}) {
-  my ($other_member, $attribute) = @{$ma};
+foreach my $other_member (@{$homology->get_all_Members}) {
 
-  $attribute->{'gene'} = $other_member;
-  $attribute->{'peptide'} = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID($attribute->peptide_member_id);
-  $attribute->{'pep_len'} = $attribute->{'peptide'}->seq_length;
+  $other_member->{'gene'} = $other_member->gene_member;
+  $other_member->{'peptide'} = $other_member;
+  $other_member->{'pep_len'} = $other_member->{'peptide'}->seq_length;
 
-  if($other_member->dbID ne $member->dbID) {
-    $orthMA = $attribute;
+  if($other_member->gene_member->dbID ne $member->dbID) {
+    $orthMA = $other_member;
   } else {
-    $queryMA = $attribute;
+    $queryMA = $other_member;
   }
 
 }

@@ -46,7 +46,6 @@ package Bio::EnsEMBL::Compara::PeptideAlignFeature;
 
 use strict;
 use Bio::EnsEMBL::Compara::Homology;
-use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::Utils::Exception;
 
 #se overload '<=>' => "sort_by_score_evalue_and_pid";   # named method
@@ -80,61 +79,40 @@ sub create_homology
   $homology->stable_id($stable_id);
   $homology->method_link_type("ENSEMBL_ORTHOLOGUES");
 
-  # NEED TO BUILD THE Attributes (ie homology_members)
   #
   # QUERY member
   #
-  my $attribute;
-  $attribute = new Bio::EnsEMBL::Compara::Attribute;
-  $attribute->peptide_member_id($self->query_member->dbID);
-  # $self->qstart and $self->qend could be stored
   my $qlen = ($self->qend - $self->qstart + 1);
-  $attribute->perc_cov(int($qlen*100/$self->query_member->seq_length));
-  $attribute->perc_id(int($self->identical_matches*100.0/$qlen));
-  $attribute->perc_pos(int($self->positive_matches*100/$qlen));
-  $attribute->peptide_align_feature_id($self->dbID);
+  $self->query_member->perc_cov(int($qlen*100/$self->query_member->seq_length));
+  $self->query_member->perc_id(int($self->identical_matches*100.0/$qlen));
+  $self->query_member->perc_pos(int($self->positive_matches*100/$qlen));
 
   my $cigar_line = $self->cigar_line;
   #print("original cigar_line '$cigar_line'\n");
   $cigar_line =~ s/I/M/g;
   $cigar_line = compact_cigar_line($cigar_line);
-  $attribute->cigar_line($cigar_line);
+  $self->query_member->cigar_line($cigar_line);
   #print("   '$cigar_line'\n");
 
-  if($self->query_member->gene_member) {
-    #print("add query member gene : ", $self->query_member->gene_member->stable_id, "\n");
-    $homology->add_Member_Attribute([$self->query_member->gene_member, $attribute]);
-  } else {
-    #print("add query member : ", $self->query_member->stable_id, "\n");
-    $homology->add_Member_Attribute([$self->query_member, $attribute]);
-  }
+  $homology->add_Member($self->query_member);
 
   # HIT member
   #
-  $attribute = new Bio::EnsEMBL::Compara::Attribute;
-  $attribute->peptide_member_id($self->hit_member->dbID);
   # $self->hstart and $self->hend could be stored
   my $hlen = ($self->hend - $self->hstart + 1);
-  $attribute->perc_cov(int($hlen*100/$self->hit_member->seq_length));
-  $attribute->perc_id(int($self->identical_matches*100.0/$hlen));
-  $attribute->perc_pos(int($self->positive_matches*100/$hlen));
-  $attribute->peptide_align_feature_id($self->rhit_dbID);
+  $self->hit_member->perc_cov(int($hlen*100/$self->hit_member->seq_length));
+  $self->hit_member->perc_id(int($self->identical_matches*100.0/$hlen));
+  $self->hit_member->perc_pos(int($self->positive_matches*100/$hlen));
 
   $cigar_line = $self->cigar_line;
   #print("original cigar_line\n    '$cigar_line'\n");
   $cigar_line =~ s/D/M/g;
   $cigar_line =~ s/I/D/g;
   $cigar_line = compact_cigar_line($cigar_line);
-  $attribute->cigar_line($cigar_line);
+  $self->hit_member->cigar_line($cigar_line);
   #print("   '$cigar_line'\n");
 
-  if($self->hit_member->gene_member) {
-    #print("add hit member gene : ", $self->hit_member->gene_member->stable_id, "\n");
-    $homology->add_Member_Attribute([$self->hit_member->gene_member, $attribute]);
-  } else {
-    #print("add hit member : ", $self->hit_member->stable_id, "\n");
-    $homology->add_Member_Attribute([$self->hit_member, $attribute]);
-  }
+  $homology->add_Member($self->hit_member);
 
   return $homology;
 }

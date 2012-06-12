@@ -54,8 +54,6 @@ foreach my $gene_id (split(':',$input)) {
     # next unless ($description =~ /para/);    # uncomment for paralogues only
     # next unless ($description =~ /orth/);    # uncomment for orthologs only
     # next unless ($description =~ /one2one/); # uncomment for one2one orthologs only
-    my $all_member_attributes = 
-    $this_homology->get_all_Member_Attribute();
     my $first_found = 0;
     my ($a,$b) = @{$this_homology->gene_list};
     my $spa = $a->taxon->short_name;
