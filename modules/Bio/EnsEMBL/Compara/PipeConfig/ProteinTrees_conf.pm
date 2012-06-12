@@ -767,7 +767,7 @@ sub pipeline_analyses {
             -parameters => {
                 'mlss_id'                   => $self->o('mlss_id'),
                 'cluster_dir'               => $self->o('cluster_dir'),
-                'additional_clustersets'    => [qw(super-align filtered-align)],
+                'additional_clustersets'    => [qw(super-align filtered-align phyml-aa phyml-nt nj-dn nj-ds nj-mm)],
             },
             -hive_capacity => -1,
             -rc_name => '2Gb_job',
