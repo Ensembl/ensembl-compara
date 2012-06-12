@@ -254,7 +254,8 @@ sub glyphset_configs {
         
         $clone->set('drawing_strand', 'f');
         $track->set('drawing_strand', 'r');
-        $track->set('canvas', { %$canvas, type => "$canvas->{'type'}Bottom" }) if $canvas && $canvas->{'type'};
+        
+        push @{$canvas->{'inherit'}}, 'Stranded' if $canvas;
         
         unshift @default_order, $clone;
         push    @default_order, $track;
