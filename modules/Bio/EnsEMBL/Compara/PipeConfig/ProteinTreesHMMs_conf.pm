@@ -747,6 +747,7 @@ sub pipeline_analyses {
                              'hmm_library_basedir' => $self->o('hmm_library_basedir'),
                             },
              -hive_capacity => 10,
+             -rc_id => 5,
             },
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
