@@ -131,7 +131,7 @@ sub fetch_or_create_clusterset {
     my $clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(%params);
     return $clusterset->[0] if scalar(@$clusterset);
 
-    $self->dbc->do('LOCK TABLES gene_tree_root WRITE, gene_tree_root AS gtr WRITE');
+    $self->compara_dba->dbc->do('LOCK TABLES gene_tree_root WRITE, gene_tree_root AS gtr WRITE');
 
     # In case someone has meanwhile created the clusterset
     $clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(%params);
@@ -146,7 +146,7 @@ sub fetch_or_create_clusterset {
         print STDERR "Clusterset '$clusterset_id' created with root_id=", $clusterset->root_id, "\n" if $self->debug;
     }
 
-    $self->dbc->do('UNLOCK TABLES');
+    $self->compara_dba->dbc->do('UNLOCK TABLES');
     return $clusterset;
 }
 
