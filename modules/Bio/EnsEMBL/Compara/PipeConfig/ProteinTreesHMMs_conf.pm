@@ -745,6 +745,7 @@ sub pipeline_analyses {
                              'pantherScore_path'   => $self->o('pantherScore_path'),
                              'hmmer_path'          => $self->o('hmmer_path'),
                              'hmm_library_basedir' => $self->o('hmm_library_basedir'),
+                             'mlss_id'             => $self->o('mlss_id'),
                             },
              -hive_capacity => 10,
              -rc_id => 5,
