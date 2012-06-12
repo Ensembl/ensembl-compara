@@ -162,7 +162,9 @@ sub write_output {
     }
 
     if (defined $self->param('output_dir')) {
-        system("zip -r -9 ".($self->param('output_dir'))."/".($self->param('protein_tree_id')).".zip ".$self->worker_temp_directory);
+        my $cmd = sprintf('zip -r -9 %s/%d.zip', $self->param('output_dir'), $self->param('protein_tree_id'));
+        $cmd = sprintf('cd %s; %s', $self->worker_temp_directory, $cmd) if $self->worker_temp_directory;
+        system($cmd);
     }
     rmtree([$self->worker_temp_directory]);
 }
@@ -225,7 +227,7 @@ sub run_njtree_phyml {
     if ($species_tree_file) {
       $cmd .= " -f ". $species_tree_file;
     }
-    $cmd .= " ". $input_aln;
+    $cmd .= " ".(defined $self->param('filt_cmdline') ? "filteredalign.fa" : $input_aln);
     $cmd .= " -p ".$self->param('intermediate_prefix');
     $cmd .= " -o " . $newick_file;
     if ($self->param('extra_args')) {
@@ -236,6 +238,7 @@ sub run_njtree_phyml {
     $cmd .= " 1>$logfile 2>$errfile";
     #     $cmd .= " 2>&1 > /dev/null" unless($self->debug);
 
+    $cmd = sprintf($self->param('filt_cmdline'), $input_aln, 'filteredalign.fa')." ; $cmd" if defined $self->param('filt_cmdline');
     my $worker_temp_directory = $self->worker_temp_directory;
     my $full_cmd = defined $worker_temp_directory ? "cd $worker_temp_directory; $cmd" : "$cmd";
     print STDERR "Running:\n\t$full_cmd\n" if($self->debug);
