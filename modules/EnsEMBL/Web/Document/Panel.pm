@@ -5,7 +5,6 @@ package EnsEMBL::Web::Document::Panel;
 use strict;
 
 use HTML::Entities qw(encode_entities);
-use HTTP::Request;
 
 use EnsEMBL::Web::Document::Renderer::String;
 
