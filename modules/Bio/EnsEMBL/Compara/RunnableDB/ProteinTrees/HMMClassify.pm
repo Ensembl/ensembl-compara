@@ -91,6 +91,7 @@ sub fetch_input {
     my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
     $self->param('genome_db', $genome_db);
 
+    $self->throw('mlss_id is an obligatory parameter') unless (defined $self->param('mlss_id'));
     $self->throw('blast_path is an obligatory parameter') unless (defined $self->param('blast_path'));
     $self->throw('hmm_library_basedir is an obligatory parameter') unless (defined $self->param('hmm_library_basedir'));
     my $hmmLibrary = FamLibBuilder->new($self->param('hmm_library_basedir'), 'prod');
