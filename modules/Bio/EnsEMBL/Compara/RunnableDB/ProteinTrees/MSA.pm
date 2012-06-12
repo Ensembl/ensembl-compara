@@ -185,7 +185,7 @@ sub write_output {
     $self->parse_and_store_alignment_into_proteintree;
 
     # Store various alignment tags:
-    $self->_store_aln_tags unless ($self->param('redo'));
+    $self->_store_aln_tags($self->param('protein_tree')) unless ($self->param('redo'));
 
 }
 
@@ -460,7 +460,7 @@ sub _to_cigar_line {
 
 sub _store_aln_tags {
     my $self = shift;
-    my $tree = shift || $self->param('protein_tree');
+    my $tree = shift;
 
     print "Storing Alignment tags...\n";
 
