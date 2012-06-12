@@ -2272,7 +2272,8 @@ sub add_sequence_variations {
     depth      => 0.5,
     bump_width => 0,
     colourset  => 'variation',
-    display    => 'off'
+    display    => 'off',
+    canvas     => { type => 'Variation' },
   };
   
   if ($hashref->{'menu'}) {
