@@ -48,7 +48,7 @@ sub default_options {
 
 #       'mlss_id'         => 30037,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'host'            => 'compara2',    # where the pipeline database will be created
-        'release'         => '67',          # current ensembl release number
+        'release'         => '68',          # current ensembl release number
         'rel_suffix'      => '',            # an empty string by default, a letter otherwise
         'rel_with_suffix' => $self->o('release').$self->o('rel_suffix'),
 
@@ -78,7 +78,7 @@ sub default_options {
         'mcxload_gigs'    => 30,
         'mcl_gigs'        => 40,
         'mcl_procs'       =>  4,
-        'lomafft_gigs'    =>  2,
+        'lomafft_gigs'    =>  4,
         'himafft_gigs'    => 14,
         'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara4, but will have to be set manually otherwise
         'blast_capacity'  => 1000,                                  # work both as hive_capacity and resource-level throttle
@@ -130,14 +130,13 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 sub resource_classes {
     my ($self) = @_;
     return {
-         0 => { -desc => 'default',          'LSF' => '' },
-         1 => { -desc => 'urgent',           'LSF' => '-q yesterday' },
-         2 => { -desc => 'long_blast',       'LSF' => '-C0 -M'.$self->o('blast_gigs').'000000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('blast_gigs').'000]"' },
-         3 => { -desc => 'mcxload',          'LSF' => '-C0 -M'.$self->o('mcxload_gigs').'000000 -q hugemem -R"select[mem>'.$self->o('mcxload_gigs').'000] rusage[mem='.$self->o('mcxload_gigs').'000]"' },
-         4 => { -desc => 'mcl',              'LSF' => '-C0 -M'.$self->o('mcl_gigs').'000000 -n '.$self->o('mcl_procs').' -q hugemem -R"select[ncpus>='.$self->o('mcl_procs').' && mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000] span[hosts=1]"' },
-         5 => { -desc => 'himem_mafft_idmap',   'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('himafft_gigs').'000]"' },
-         6 => { -desc => 'lomem_mafft',         'LSF' => '-C0 -M'.$self->o('lomafft_gigs').'000000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('lomafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('lomafft_gigs').'000]"' },
-         7 => { -desc => 'two_gig',          'LSF' => '-C0 -M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
+         1 => { -desc => 'Urgent',           'LSF' => '-q yesterday' },
+         2 => { -desc => 'LongBlast',        'LSF' => '-C0 -M'.$self->o('blast_gigs').'000000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('blast_gigs').'000]"' },
+         3 => { -desc => 'BigMcxload',       'LSF' => '-C0 -M'.$self->o('mcxload_gigs').'000000 -q hugemem -R"select[mem>'.$self->o('mcxload_gigs').'000] rusage[mem='.$self->o('mcxload_gigs').'000]"' },
+         4 => { -desc => 'BigMcl',           'LSF' => '-C0 -M'.$self->o('mcl_gigs').'000000 -n '.$self->o('mcl_procs').' -q hugemem -R"select[ncpus>='.$self->o('mcl_procs').' && mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000] span[hosts=1]"' },
+         5 => { -desc => 'BigMafft',         'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('himafft_gigs').'000]"' },
+         6 => { -desc => '4GigMem',          'LSF' => '-C0 -M'.$self->o('lomafft_gigs').'000000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('lomafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('lomafft_gigs').'000]"' },
+         7 => { -desc => '2GigMem',          'LSF' => '-C0 -M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
     };
 }
 
@@ -212,7 +211,7 @@ sub pipeline_analyses {
                 'include_reference'     => 0,
             },
             -hive_capacity => -1,
-            -rc_id => 7,
+            -rc_name => '2GigMem',
         },
 
         {   -logic_name => 'load_uniprot_superfactory',
@@ -239,7 +238,7 @@ sub pipeline_analyses {
                 '2->A' => [ 'load_uniprot_factory' ],
                 'A->1' => [ 'snapshot_after_load_uniprot' ],
             },
-            -rc_id => 1,
+            -rc_name => 'Urgent',
         },
 
         {   -logic_name    => 'load_uniprot_factory',
@@ -248,7 +247,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'load_uniprot' ],
             },
-            -rc_id => 7,
+            -rc_name => '2GigMem',
         },
         
         {   -logic_name    => 'load_uniprot',
@@ -261,7 +260,7 @@ sub pipeline_analyses {
             -flow_into => {
                 3 => [ ':////subset_member' ],
             },
-            -rc_id => 7,
+            -rc_name => '2GigMem',
         },
 
         {   -logic_name => 'snapshot_after_load_uniprot',
@@ -286,7 +285,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'make_blastdb' ],
             },
-            -rc_id => 5,    # NB: now needs more memory than what is given by default (actually, 2G RAM & 2G SWAP). Does the code need checking for leaks?
+            -rc_name => '4GigMem',    # NB: now needs more memory than what is given by default (actually, 2G RAM & 2G SWAP). Does the code need checking for leaks?
         },
 
         {   -logic_name => 'make_blastdb',
@@ -297,7 +296,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'family_blast_factory' ],
             },
-            -rc_id => 7,
+            -rc_name => '2GigMem',
         },
 
         {   -logic_name => 'family_blast_factory',
@@ -311,7 +310,7 @@ sub pipeline_analyses {
                 '2->A' => [ 'family_blast' ],
                 'A->1' => { 'snapshot_after_family_blast' => { 'tcx_name' => $self->o('tcx_name'), 'itab_name' => $self->o('itab_name'), 'mcl_name' => $self->o('mcl_name') } },
             },
-            -rc_id => 7,
+            -rc_name => '2GigMem',
         },
 
         {   -logic_name    => 'family_blast',
@@ -326,7 +325,7 @@ sub pipeline_analyses {
             -flow_into => {
                 3 => [ ':////mcl_sparse_matrix?insertion_method=REPLACE' ],
             },
-            -rc_id => 2,
+            -rc_name => 'LongBlast',
         },
 
         {   -logic_name => 'snapshot_after_family_blast',
@@ -349,7 +348,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'mcl' ],
             },
-            -rc_id => 3,
+            -rc_name => 'BigMcxload',
         },
 
         {   -logic_name => 'mcl',
@@ -363,7 +362,7 @@ sub pipeline_analyses {
                 },
                 'A->1'  => [ 'family_idmap' ],
             },
-            -rc_id => 4,
+            -rc_name => 'BigMcl',
         },
 
         {   -logic_name => 'parse_mcl',
@@ -391,7 +390,7 @@ sub pipeline_analyses {
                     'find_update_singleton_cigars' => { },
                 }
             },
-            -rc_id => 1,
+            -rc_name => 'Urgent',
         },
 
 # <Archiving flow-in sub-branch>
@@ -401,7 +400,7 @@ sub pipeline_analyses {
                 'cmd'   => 'gzip #input_filenames#',
             },
             -hive_capacity => 20, # to enable parallel branches
-            -rc_id => 1,
+            -rc_name => 'Urgent',
         },
 # </Archiving flow-in sub-branch>
 
@@ -416,7 +415,7 @@ sub pipeline_analyses {
                 2 => [ 'family_mafft_big'  ],
                 3 => [ 'family_mafft_main' ],
             },
-            -rc_id => 7,
+            -rc_name => '2GigMem',
         },
 
         {   -logic_name    => 'family_mafft_main',
@@ -426,14 +425,14 @@ sub pipeline_analyses {
             -flow_into => {
                 -1 => [ 'family_mafft_big' ],
             },
-            -rc_id => 6,
+            -rc_name => '2GigMem',
         },
 
         {   -logic_name    => 'family_mafft_big',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
             -hive_capacity => 20,
             -batch_size    => 1,
-            -rc_id => 5,
+            -rc_name => 'BigMafft',
         },
 
         {   -logic_name => 'find_update_singleton_cigars',      # example of an SQL-session within a job (temporary table created, used and discarded)
@@ -450,7 +449,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'insert_redundant_peptides' ],
             },
-            -rc_id => 1,
+            -rc_name => 'Urgent',
         },
 
         {   -logic_name => 'insert_redundant_peptides',
@@ -462,7 +461,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'insert_ensembl_genes' ],
             },
-            -rc_id => 1,
+            -rc_name => 'Urgent',
         },
 
         {   -logic_name => 'insert_ensembl_genes',
@@ -471,7 +470,7 @@ sub pipeline_analyses {
                 'sql' => "INSERT INTO family_member SELECT fm.family_id, m.gene_member_id, NULL FROM member m, family_member fm WHERE m.member_id=fm.member_id AND m.source_name='ENSEMBLPEP' GROUP BY family_id, gene_member_id",
             },
             -hive_capacity => 20, # to enable parallel branches
-            -rc_id => 1,
+            -rc_name => 'Urgent',
         },
 # </Mafft sub-branch>
 
@@ -485,13 +484,12 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'consensifier' ],
             },
-            -rc_id => 1,
+            -rc_name => 'Urgent',
         },
 
         {   -logic_name    => 'consensifier',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::ConsensifyAfamily',
             -hive_capacity => $self->o('cons_capacity'),
-            -rc_id => 0,
         },
 # </Consensifier sub-branch>
 
@@ -507,7 +505,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'notify_pipeline_completed' ],
             },
-            -rc_id => 5,    # NB: make sure you give it enough memory or it will crash
+            -rc_name => '4GigMem',    # NB: make sure you give it enough memory or it will crash
         },
         
         {   -logic_name => 'notify_pipeline_completed',
@@ -516,7 +514,7 @@ sub pipeline_analyses {
                 'subject' => "FamilyPipeline(".$self->o('rel_with_suffix').") has completed",
                 'text' => "This is an automatic message.\nFamilyPipeline for release ".$self->o('rel_with_suffix')." has completed.",
             },
-            -rc_id => 1,
+            -rc_name => 'Urgent',
         },
 
         #
