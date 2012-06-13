@@ -288,4 +288,10 @@ sub export_feature {
   });
 }
 
+sub canvas_attributes {
+  return (
+    legend => $_[0]->my_colour($_[0]->colour_key($_[1]), 'text'),
+  );
+}
+
 1;
