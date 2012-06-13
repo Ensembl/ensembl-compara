@@ -35,10 +35,11 @@ sub features {
     
     push @features, map {
       Bio::EnsEMBL::Feature->new(
-        -start => $start+=3,
-        -end   => $start+2,
+        -start   => $start += 3,
+        -end     => $start +  2,
         -seqname => $_,
-        -strand  => $strand
+        -strand  => $strand,
+        -slice   => $self->{'container'},
       )
     } split //, $string;
   }
@@ -49,7 +50,7 @@ sub features {
 sub title {
   my ($self, $f) = @_;
   my $start = $self->{'container'}->start - 1;
-  return sprintf '%s; Location: %s:%s-%s', $f->seqname, $self->{'container'}->seq_region_name, $start + $f->start, $start + $f->end;
+  return sprintf '%s; Location: %s:%s-%s', $f->seqname, $self->{'container'}->seq_region_name, $f->seq_region_start, $f->seq_region_end;
 }
 
 1;
