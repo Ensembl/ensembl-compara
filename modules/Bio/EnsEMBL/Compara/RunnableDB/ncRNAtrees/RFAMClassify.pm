@@ -49,7 +49,7 @@ to their RFAM id. It also takes into account information from mirBase.
 
 =head1 CONTACT
 
-  Contact Albert Vilella on module implementation/design detail: avilella@ebi.ac.uk
+  Contact the Ensembl Compara Team on module implementation and design detail: ensembl-compara@ebi.ac.uk
 
 =cut
 
@@ -169,7 +169,6 @@ sub run_rfamclassify {
 
     }
 }
-
 
 sub build_hash_models {
   my $self = shift;
