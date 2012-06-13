@@ -291,7 +291,7 @@ sub hover_labels {
       my $text = $_->{'text'};
       
       if ($_->{'current'}) {
-        $renderers .= qq{<li class="current"><img src="${img_url}render/$_->{'current'}.gif" alt="$text" title="$text" /><img src="${img_url}tick.png" class="tick" alt="Selected" title="Selected" /> $text</li>};
+        $renderers .= qq{<li class="current"><img src="${img_url}render/$_->{'val'}.gif" alt="$text" title="$text" /><img src="${img_url}tick.png" class="tick" alt="Selected" title="Selected" /> $text</li>};
       } else {
         $renderers .= qq{<li><a href="$_->{'url'}" class="config" rel="$label->{'component'}"><img src="${img_url}render/$_->{'val'}.gif" alt="$text" title="$text" /> $text</a></li>};
       }
