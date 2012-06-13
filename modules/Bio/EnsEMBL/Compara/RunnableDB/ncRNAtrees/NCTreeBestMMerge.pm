@@ -198,7 +198,7 @@ sub calculate_branch_lengths {
     printf(STDERR "tree cluster %d has <3 genes - can not build a tree\n", 
            $self->param('nc_tree')->root_id);
     $self->param('mmerge_blengths_output', $self->param('mmerge_output'));
-    $self->parse_newick_into_nctree($self->param('mmerge_blengths_output'), $self->param('nc_tree'));
+    $self->parse_newick_into_tree($self->param('mmerge_blengths_output'), $self->param('nc_tree'));
     return;
   }
 
