@@ -227,7 +227,7 @@ sub calculate_branch_lengths {
   $self->param('mmerge_blengths_output', $tree_with_blengths);
 
   #parse the tree into the datastucture
-  $self->parse_newick_into_nctree($self->param('mmerge_blengths_output'), $self->param('nc_tree'));
+  $self->parse_newick_into_tree($self->param('mmerge_blengths_output'), $self->param('nc_tree'));
   return 1;
 }
 
