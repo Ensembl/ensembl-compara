@@ -83,6 +83,8 @@ sub _pos               { return $_[0]->{'config'}{'_pos'}++;                    
 sub _colour_background { return 1;                                                                                 }
 sub colour_key         { return 'default';                                                                         }
 sub feature_label      { return '';                                                                                }
+sub title              { return '';                                                                                }
+sub href               { return undef;                                                                             }
 sub tag                { return ();                                                                                }
 sub canvas_attributes  { return ();                                                                                } # Used to add attributes to each feature for scrollable images
 
@@ -222,11 +224,7 @@ sub init_label {
     
     if (scalar @renderers > 4) {
       while (my ($val, $text) = splice @renderers, 0, 2) {
-        if ($val eq $self->{'display'}) {
-          push @r, { current => $val, text => $text };
-        } else {
-          push @r, { url => "$url;$track=$val", val => $val, text => $text };
-        }
+        push @r, { url => "$url;$track=$val", val => $val, text => $text, current => $val eq $self->{'display'} };
       }
     }
     
