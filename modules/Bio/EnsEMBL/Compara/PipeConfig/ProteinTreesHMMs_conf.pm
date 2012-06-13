@@ -316,7 +316,7 @@ sub pipeline_analyses {
              -logic_name => 'backbone_fire_hmmClassify',
              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
              -parameters => {
-                             'updated_tables' => 'sequence sequence_cds sequence sequence_exon_bounded member subset subset_member peptide_align_feature%',
+                             'updated_tables' => 'sequence sequence_cds sequence_exon_bounded member subset subset_member peptide_align_feature%',
                              'filename'       => 'snapshot_before_hmmClassify.sql',
                              'output_file'     => $self->o('dump_dir') .'/#filename#',
                             },
@@ -340,7 +340,7 @@ sub pipeline_analyses {
         {   -logic_name => 'backbone_fire_allvsallblast',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'updated_tables'    => 'sequence sequence_cds sequence sequence_exon_bounded member subset subset_member peptide_align_feature%',
+                'updated_tables'    => 'sequence sequence_cds sequence_exon_bounded member subset subset_member peptide_align_feature%',
                 'filename'          => 'snapshot_before_allvsallblast.sql',
                 'output_file'       => $self->o('dump_dir').'/#filename#',
             },
