@@ -46,8 +46,8 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-#       'mlss_id'         => 30037,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'host'            => 'compara2',    # where the pipeline database will be created
+#       'mlss_id'         => 30038,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        'host'            => 'compara4',    # where the pipeline database will be created
         'release'         => '68',          # current ensembl release number
         'rel_suffix'      => '',            # an empty string by default, a letter otherwise
         'rel_with_suffix' => $self->o('release').$self->o('rel_suffix'),
@@ -86,10 +86,10 @@ sub default_options {
         'cons_capacity'   =>  400,
 
             # homology database connection parameters (we inherit half of the members and sequences from there):
-        'homology_db'  => 'mysql://ensro@compara3/mm14_compara_homology_67',
+        'homology_db'  => 'mysql://ensro@compara3/mm14_compara_homology_68',
 
             # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara3/mp12_ensembl_compara_66',
+        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara3/mm14_ensembl_compara_67',
 
             # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ensembl_compara_master',    
@@ -130,13 +130,13 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 sub resource_classes {
     my ($self) = @_;
     return {
-         1 => { -desc => 'Urgent',           'LSF' => '-q yesterday' },
-         2 => { -desc => 'LongBlast',        'LSF' => '-C0 -M'.$self->o('blast_gigs').'000000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('blast_gigs').'000]"' },
-         3 => { -desc => 'BigMcxload',       'LSF' => '-C0 -M'.$self->o('mcxload_gigs').'000000 -q hugemem -R"select[mem>'.$self->o('mcxload_gigs').'000] rusage[mem='.$self->o('mcxload_gigs').'000]"' },
-         4 => { -desc => 'BigMcl',           'LSF' => '-C0 -M'.$self->o('mcl_gigs').'000000 -n '.$self->o('mcl_procs').' -q hugemem -R"select[ncpus>='.$self->o('mcl_procs').' && mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000] span[hosts=1]"' },
-         5 => { -desc => 'BigMafft',         'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('himafft_gigs').'000]"' },
-         6 => { -desc => '4GigMem',          'LSF' => '-C0 -M'.$self->o('lomafft_gigs').'000000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('lomafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('lomafft_gigs').'000]"' },
-         7 => { -desc => '2GigMem',          'LSF' => '-C0 -M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
+         'Urgent'       => { 'LSF' => '-q yesterday' },
+         'LongBlast'    => { 'LSF' => '-C0 -M'.$self->o('blast_gigs').'000000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('blast_gigs').'000]"' },
+         'BigMcxload'   => { 'LSF' => '-C0 -M'.$self->o('mcxload_gigs').'000000 -q hugemem -R"select[mem>'.$self->o('mcxload_gigs').'000] rusage[mem='.$self->o('mcxload_gigs').'000]"' },
+         'BigMcl'       => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').'000000 -n '.$self->o('mcl_procs').' -q hugemem -R"select[ncpus>='.$self->o('mcl_procs').' && mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000] span[hosts=1]"' },
+         'BigMafft'     => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('himafft_gigs').'000]"' },
+         '4GigMem'      => { 'LSF' => '-C0 -M'.$self->o('lomafft_gigs').'000000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('lomafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('lomafft_gigs').'000]"' },
+         '2GigMem'      => { 'LSF' => '-C0 -M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
     };
 }
 
@@ -294,12 +294,12 @@ sub pipeline_analyses {
                 'cmd' => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #blastdb_dir#/make_blastdb.log -in #fasta_name#',
             },
             -flow_into => {
-                1 => [ 'family_blast_factory' ],
+                1 => [ 'blast_factory' ],
             },
             -rc_name => '2GigMem',
         },
 
-        {   -logic_name => 'family_blast_factory',
+        {   -logic_name => 'blast_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'      => 'SELECT DISTINCT s.sequence_id seqid FROM member m, sequence s WHERE m.sequence_id=s.sequence_id AND m.source_name IN ("Uniprot/SPTREMBL", "Uniprot/SWISSPROT", "ENSEMBLPEP") ',
@@ -307,13 +307,13 @@ sub pipeline_analyses {
                 'step'            => 100,
             },
             -flow_into => {
-                '2->A' => [ 'family_blast' ],
-                'A->1' => { 'snapshot_after_family_blast' => { 'tcx_name' => $self->o('tcx_name'), 'itab_name' => $self->o('itab_name'), 'mcl_name' => $self->o('mcl_name') } },
+                '2->A' => [ 'blast' ],
+                'A->1' => { 'snapshot_after_blast' => { 'tcx_name' => $self->o('tcx_name'), 'itab_name' => $self->o('itab_name'), 'mcl_name' => $self->o('mcl_name') } },
             },
             -rc_name => '2GigMem',
         },
 
-        {   -logic_name    => 'family_blast',
+        {   -logic_name    => 'blast',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::BlastAndParseDistances',
             -parameters    => {
                 'blastdb_dir'   => $self->o('blastdb_dir'),
@@ -328,11 +328,11 @@ sub pipeline_analyses {
             -rc_name => 'LongBlast',
         },
 
-        {   -logic_name => 'snapshot_after_family_blast',
+        {   -logic_name => 'snapshot_after_blast',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'cmd'       => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 0).' '.$self->o('pipeline_db','-dbname').' >#filename#',
-                'filename'  => $self->o('work_dir').'/'.$self->o('pipeline_name').'_snapshot_after_family_blast.sql',
+                'filename'  => $self->o('work_dir').'/'.$self->o('pipeline_name').'_snapshot_after_blast.sql',
             },
             -flow_into => {
                 1 => [ 'mcxload_matrix' ],
@@ -360,7 +360,7 @@ sub pipeline_analyses {
                 '1->A' => { 'archive_long_files' => { 'input_filenames' => '#work_dir#/#tcx_name# #work_dir#/#itab_name#' },
                             'parse_mcl'          => { 'mcl_name' => '#work_dir#/#mcl_name#' },
                 },
-                'A->1'  => [ 'family_idmap' ],
+                'A->1'  => [ 'stable_id_map' ],
             },
             -rc_name => 'BigMcl',
         },
@@ -381,7 +381,7 @@ sub pipeline_analyses {
                     ],
                 },
                 '1->A' => {
-                    'family_mafft_factory' => [
+                    'mafft_factory' => [
                         { 'fan_branch_code' => 2, 'inputquery' => 'SELECT family_id FROM family_member WHERE family_id<=#first_n_big_families# GROUP BY family_id HAVING count(*)>1', },
                         { 'fan_branch_code' => 3, 'inputquery' => 'SELECT family_id FROM family_member WHERE family_id >#first_n_big_families# GROUP BY family_id HAVING count(*)>1', },
                     ],
@@ -405,30 +405,30 @@ sub pipeline_analyses {
 # </Archiving flow-in sub-branch>
 
 # <Mafft sub-branch>
-        {   -logic_name => 'family_mafft_factory',
+        {   -logic_name => 'mafft_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'randomize'             => 1,
             },
             -hive_capacity => 20, # to enable parallel branches
             -flow_into => {
-                2 => [ 'family_mafft_big'  ],
-                3 => [ 'family_mafft_main' ],
+                2 => [ 'mafft_big'  ],
+                3 => [ 'mafft_main' ],
             },
             -rc_name => '2GigMem',
         },
 
-        {   -logic_name    => 'family_mafft_main',
+        {   -logic_name    => 'mafft_main',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
             -hive_capacity => $self->o('mafft_capacity'),
             -batch_size    =>  10,
             -flow_into => {
-                -1 => [ 'family_mafft_big' ],
+                -1 => [ 'mafft_big' ],
             },
             -rc_name => '2GigMem',
         },
 
-        {   -logic_name    => 'family_mafft_big',
+        {   -logic_name    => 'mafft_big',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
             -hive_capacity => 20,
             -batch_size    => 1,
@@ -494,7 +494,7 @@ sub pipeline_analyses {
 # </Consensifier sub-branch>
 
 # job funnel:
-        {   -logic_name    => 'family_idmap',
+        {   -logic_name    => 'stable_id_map',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper',
             -parameters    => {
                 'master_db'   => $self->o('master_db'),
