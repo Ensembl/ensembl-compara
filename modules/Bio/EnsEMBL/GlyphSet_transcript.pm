@@ -7,7 +7,6 @@ use List::Util qw(min max);
 use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub features { return [];    }
-sub href     { return undef; }
 
 ## Let us define all the renderers here...
 ## ... these are just all wrappers - the parameter is 1 to draw labels

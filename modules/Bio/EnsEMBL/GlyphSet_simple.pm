@@ -9,8 +9,6 @@ use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub features      { return [];           } 
 sub feature_label { return ('', 'none'); }
-sub title         {}
-sub href          {}
 sub class         {}
 sub render_tag    {}
 
