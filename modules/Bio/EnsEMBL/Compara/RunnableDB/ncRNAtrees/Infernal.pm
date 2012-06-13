@@ -237,7 +237,7 @@ sub update_single_peptide_tree {
     next unless($member->sequence);
     $DB::single=1;1;
     $member->cigar_line(length($member->sequence)."M");
-    $self->compara_dba->get_GeneTreeNodeAdaptor->update_node($member);
+    $self->compara_dba->get_GeneTreeNodeAdaptor->store_node($member);
     printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
   }
 }
@@ -482,7 +482,7 @@ sub parse_and_store_alignment_into_tree {
     }
     #
 #    printf("update nc_tree_member %s : %s\n",$member->stable_id, $member->cigar_line) if($self->debug);
-    $self->compara_dba->get_GeneTreeNodeAdaptor->update_node($member);
+    $self->compara_dba->get_GeneTreeNodeAdaptor->store_node($member);
   }
 
   return undef;
