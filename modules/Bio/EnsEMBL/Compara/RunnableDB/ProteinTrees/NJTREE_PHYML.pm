@@ -143,21 +143,20 @@ sub write_output {
             print STDERR "Found filtered alignment: $filename\n";
             my $alignio = Bio::AlignIO->new(-file => $filename, -format => 'fasta');
             my $aln = $alignio->next_aln or die "Bio::AlignIO could not get next_aln() from file '$filename'";
+
+            #place all members in a hash on their member name
+            my %member_hash;
+            foreach my $member (@{$self->get_all_Members}) {
+                $member_hash{$member->member_id} = $member;
+            }
+
+            # Storing the alignment as tags
             $self->param('protein_tree')->store_tag('filtered_alignment_length', $aln->length()/3);
-            #my $clusterset = $self->fetch_or_create_clusterset('filtered-align');
-            #my $newtree = $self->fetch_or_create_other_tree($clusterset, $self->param('protein_tree'));
-            #$newtree->load_cigars_from_fasta($filename, $newtree, 1);
-            #my $split_genes = $self->param('split_genes');
-            #while ( my ($name, $other_name) = each(%{$split_genes})) {
-            #    my $node = $newtree->find_node_by_name($name);
-            #    $node->disavow_parent if $node;
-            #    $node = $newtree->find_node_by_name($other_name);
-            #    $node->disavow_parent if $node;
-            #}
-            #$self->store_genetree($newtree);
-            #Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA::_store_aln_tags($self, $newtree);
-            #$newtree->store_tag('unfiltered_tree_root_id', $self->param('protein_tree_id'));
-            #$self->param('protein_tree')->store_tag('other_tree_root_id', $newtree->root_id, 1);
+            foreach my $seq ($aln->each_seq) {
+                $seq->display_id =~ /(\d+)\_\d+/;
+                $member_hash{$1}->store_tag('filtered_alignment') = $seq->seq();
+            }
+
         }
         $filename = sprintf('%s/prog-filtalign.fa', $self->worker_temp_directory);
         if (-e $filename) {
