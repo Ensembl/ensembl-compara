@@ -91,6 +91,7 @@ sub fetch_input {
     my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
     $self->param('genome_db', $genome_db);
 
+    $self->throw('cluster_dir is an obligatory parameter') unless (defined $self->param('cluster_dir'));
     $self->throw('mlss_id is an obligatory parameter') unless (defined $self->param('mlss_id'));
     $self->throw('blast_path is an obligatory parameter') unless (defined $self->param('blast_path'));
     $self->throw('hmm_library_basedir is an obligatory parameter') unless (defined $self->param('hmm_library_basedir'));
@@ -120,7 +121,7 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
-    $self->store_and_dataflow_clusterset('default', $self->param('allclusters'));
+#    $self->store_and_dataflow_clusterset('default', $self->param('allclusters'));
 }
 
 
@@ -180,8 +181,13 @@ sub run_HMM_search {
     my $hmmer_cutoff = $self->param('hmmer_cutoff'); ## Not used for now!!
     my $library_path = $hmmLibrary->libDir();
 
-    my %allclusters = ();
-    $self->param('allclusters', \%allclusters);
+    my $genome_db_id = $self->param('genome_db_id');
+    my $cluster_dir  = $self->param('cluster_dir');
+
+    print STDERR "Results are going to be stored in $cluster_dir/${genome_db_id}.hmmres\n" if ($self->debug());
+    open my $hmm_res, ">", "$cluster_dir/${genome_db_id}.hmmres" or die $!;
+
+
     my $cmd = "PATH=\$PATH:$blast_path:$hmmer_path; PERL5LIB=\$PERL5LIB:$pantherScore_path/lib; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_path 2>/dev/null";
     print STDERR "$cmd\n" if ($self->debug());
 
@@ -189,13 +195,13 @@ sub run_HMM_search {
     while (<$pipe>) {
         chomp;
         my ($seq_id, $hmm_id, $eval) = split /\s+/, $_, 4;
-        next if ($hmm_id =~ /:SF\d+/);
-        push @{$allclusters{$hmm_id}{clusters}}, $seq_id;
+        next if ($hmm_id =~ /:SF\d+/); ## Needed?
+        print STDERR "Writting [$seq_id, $hmm_id, $eval] to file $cluster_dir/${genome_db_id}.hmmres\n" if ($self->debug());
+        print $hmm_res join "\t", ($seq_id, $hmm_id, $eval);
+        print $hmm_res "\n";
     }
+    close($hmm_res);
     close($pipe);
-    for my $model_name (keys %allclusters) {
-        $allclusters{$model_name}{model_name} = $model_name;
-    }
 
     return;
 }
