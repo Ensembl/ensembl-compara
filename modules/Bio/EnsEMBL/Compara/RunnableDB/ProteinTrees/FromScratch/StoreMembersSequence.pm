@@ -45,6 +45,8 @@ supported keys:
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FromScratch::StoreMembersSequence;
 
 use strict;
+use warnings;
+
 use Bio::Perl;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::GenomeDB;
@@ -62,6 +64,7 @@ sub fetch_input {
 	# Adaptors
 	my $compara_dba = $self->compara_dba();
 	$self->param('member_adaptor', $compara_dba->get_MemberAdaptor());
+      $self->param('sequence_adaptor', $compara_dba->get_SequenceAdaptor());
 
 	$self->param('genome_db_id', $compara_dba->get_GenomeDBAdaptor->fetch_by_taxon_id($self->param('ncbi_taxon_id'))->dbID );
 
@@ -80,9 +83,13 @@ sub run {
 	my $genome_db_id = $self->param('genome_db_id');
 	my $member_adaptor = $self->param('member_adaptor');
 
-	# FASTA file
-	my @allseq = read_all_sequences($self->param('data_dir')."/".$self->param('filename'));
-	print scalar(@allseq), " sequences read in ", $self->param('filename'), " (taxon_id: ", $self->param('ncbi_taxon_id'), " taxon_name: ", $self->param('species_name'), ")\n" if ($self->debug);
+      print "\treading from ".$self->param('protein_file')." and ".$self->param('cds_file')."\n" if $self->debug;
+      # load peptides
+	my @allseq = read_all_sequences($self->param('protein_file'));
+	print scalar(@allseq), " sequences read in ", $self->param('protein_file'), " (taxon_id: ", $self->param('ncbi_taxon_id'), " taxon_name: ", $self->param('species_name'), ")\n" if ($self->debug);
+	# load transcripts
+	my $allseq_cds = read_all_sequences_hash($self->param('cds_file'));
+	print keys(%$allseq_cds), " sequences read in ", $self->param('cds_file'), " (taxon_id: ", $self->param('ncbi_taxon_id'), " taxon_name: ", $self->param('species_name'), ")\n" if ($self->debug);
 
 	my $count = 0;
 	foreach my $sequence (@allseq) {
@@ -120,7 +127,15 @@ sub run {
 
 		$member_adaptor->store_gene_peptide_link($gene_member->dbID, $pep_member->dbID);
 
-	};
+            my $sequence_cds = $allseq_cds->{$sequence->id};
+            if ((defined $self->param('cds_file')) and (not exists $allseq_cds->{$sequence->id})) {
+                die "Could not retrieve CDS object for ".$sequence->id."\n";    
+            }
+
+            $pep_member->sequence_cds( $sequence_cds->seq );
+            $self->param('sequence_adaptor')->store_sequence_cds($pep_member);
+
+      };
 
 	print $self->param('geneSubset')->count(), " genes and ", $self->param('pepSubset')->count(), " peptides in subsets\n" if ($self->debug);
 }
@@ -132,6 +147,28 @@ sub write_output {      # dataflow
 	$self->dataflow_output_id( { 'genome_db_id' => $self->param('genome_db_id'), 'species_name' => $self->param('species_name') } , 1);
 }
 
+##########################################
+#
+# internal methods
+#
+##########################################
+
+sub read_all_sequences_hash{
+    my $input_file = shift;
+    my %sequence2hash = ();
+    return \%sequence2hash if not defined $input_file;
+
+    my $in_file  = Bio::SeqIO->new(-file => $input_file , '-format' => 'Fasta');
+    while ( my $seq = $in_file->next_seq() ) {
+        $sequence2hash{$seq->id} = $seq;
+    }
+
+    if(!keys(%sequence2hash)){
+        die "Could not read fasta sequences from $input_file\n";
+    }
+    print "\tFound ".keys(%sequence2hash)." sequences\n";
+    return \%sequence2hash;
+}
 
 1;
 
