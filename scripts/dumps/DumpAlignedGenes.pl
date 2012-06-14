@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use strict;
+use Data::Dumper;
 
 my $description = q{
 ###########################################################################
@@ -48,6 +49,7 @@ perl DumpMultiAlign.pl
     [--reg_conf registry_configuration_file]
     [--dbname compara_db_name]
     [--species species]
+    [--species_set_name]
     [--coord_system coordinates_name]
     --seq_region region_name
     --seq_region_start start
@@ -167,6 +169,11 @@ The list of species used to get those alignments. Default is
 core database in the registry_configuration_file or any of its
 aliases
 
+=item B<[--species_set_name]>
+
+If working with multiple alignments use the species_set_name flag eg. 
+"mammals" or "fish". By default it is set to undef. 
+
 =item B<[--expanded]>
   
 By default the genes are aligned on the original query species.
@@ -250,6 +257,9 @@ perl DumpAlignedGenes.pl
         "human:mouse". The names should correspond to the name of the
         core database in the registry_configuration_file or any of its
         aliases
+    [--species_set_name] 
+       If working with multiple alignments use the species_set_name flag eg. 
+       "mammals" or "fish". By default it is set to undef.
     [--expanded]
         By default the genes are aligned on the original query species.
         In the expanded mode, the deletions in the query species are taken
@@ -260,18 +270,26 @@ perl DumpAlignedGenes.pl
     [--output_file filename]
         The name of the output file. By default the output is the
         standard output
+   Example for pairwise alignments:
+     perl DumpAlignedGenes.pl  --alignment_type BLASTZ_NET --set_of_species mouse:rat --seq_region 8 \
+               --seq_region_start 21180813 --seq_region_end 21188452 --species rat --genes_from mouse
+   Example for multiple alignments:
+     perl DumpAlignedGenes.pl  --alignment_type EPO_LOW_COVERAGE --species_set_name mammals --seq_region 8 \
+               --seq_region_start 21180813 --seq_region_end 21188452 --species rat --genes_from chimp
+                               
 };
 
 my $reg_conf;
 my $dbname = "compara";
-my $species = "human";
+my $species = "rat";
+my $species_set_name = undef;
 my $coord_system = "chromosome";
-my $seq_region = "14";
-my $seq_region_start = 50000000;
-my $seq_region_end =   50250000;
-my $source_species = "rat"; ## for genes_from
+my $seq_region = "8";
+my $seq_region_start = 21180813;
+my $seq_region_end =   21188452;
+my $source_species = "mouse"; ## for genes_from
 my $alignment_type = "BLASTZ_NET";
-my $set_of_species = "human:rat";
+my $set_of_species = "mouse:rat";
 my $expanded = 0;
 my $output_file = undef;
 my $max_repetition_length = 100;
@@ -292,6 +310,7 @@ GetOptions(
     "dbname=s" => \$dbname,
 
     "species=s" => \$species,
+    "species_set_name=s" => \$species_set_name,
     "coord_system=s" => \$coord_system,
     "seq_region=s" => \$seq_region,
     "seq_region_start=i" => \$seq_region_start,
@@ -336,7 +355,8 @@ if ($output_file) {
 ## ~/.ensembl_init if all the previous fail.
 ##
 
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+Bio::EnsEMBL::Registry->load_registry_from_db(
+  -host=>'ensembldb.ensembl.org', -user=>'anonymous', -port=>'5306');
 
 ##
 ##############################################################################################
@@ -377,9 +397,14 @@ my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
     $dbname, 'compara', 'MethodLinkSpeciesSet');
 
 # Fetch the object
-my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
+my $method_link_species_set;
+if($species_set_name){
+  $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name(
+   $alignment_type, "$species_set_name");
+} else {
+  $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
         $alignment_type, $genome_dbs);
-
+}
 # Check the object
 throw("The database do not contain any $alignment_type data for $set_of_species!")
     if (!$method_link_species_set);
@@ -439,7 +464,11 @@ my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
         $expanded
     );
 
+
 # Get all the genes from the source species and map them on the query genome
+
+die "no alignments available in $species chr$seq_region:$seq_region_start-$seq_region_end which contain sequences from $source_species" 
+ unless $align_slice->{slices}->{$source_genome_db->name}->[0];
 my $mapped_genes = $align_slice->{slices}->{$source_genome_db->name}->[0]->get_all_Genes($logic_name, $dbtype, undef,
         -MAX_REPETITION_LENGTH => 100,
         -MAX_GAP_LENGTH => 100,
