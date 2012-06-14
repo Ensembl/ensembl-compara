@@ -731,7 +731,8 @@ sub pipeline_analyses {
                               'fan_branch_code'      => 2,
                              },
              -flow_into  => {
-                             '2' => [ 'HMMer_classify' ],
+                             '2->A' => [ 'HMMer_classify' ],
+                             'A->1' => [ 'HMM_clusterize' ]
                             },
             },
 
@@ -744,9 +745,26 @@ sub pipeline_analyses {
                              'hmmer_path'          => $self->o('hmmer_path'),
                              'hmm_library_basedir' => $self->o('hmm_library_basedir'),
                              'mlss_id'             => $self->o('mlss_id'),
+                             'cluster_dir'         => $self->o('cluster_dir'),
                             },
              -hive_capacity => 10,
              -rc_id => 5,
+            },
+
+            {
+             -logic_name => 'HMM_clusterize',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize',
+             -parameters => {
+                             'cluster_dir'        => $self->o('cluster_dir'),
+                            },
+             -hive_capacity => -1,
+             -rc_id => 5,
+             -flow_into => {
+                            1 => {
+                                  'run_qc_tests' => {'groupset_tag' => 'Clusterset' },
+                                  'mysql:////meta' => { 'meta_key' => 'clusterset_id', 'meta_value' => '#clusterset_id#' },
+                                 },
+                           },
             },
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
