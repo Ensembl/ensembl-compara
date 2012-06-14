@@ -131,7 +131,7 @@ sub fetch_or_create_clusterset {
     my $clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(%params);
     return $clusterset->[0] if scalar(@$clusterset);
 
-    $self->compara_dba->dbc->do('LOCK TABLES gene_tree_root WRITE, gene_tree_root AS gtr WRITE');
+    $self->compara_dba->dbc->do('LOCK TABLES gene_tree_root WRITE, gene_tree_root AS gtr READ, gene_tree_node WRITE');
 
     # In case someone has meanwhile created the clusterset
     $clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(%params);

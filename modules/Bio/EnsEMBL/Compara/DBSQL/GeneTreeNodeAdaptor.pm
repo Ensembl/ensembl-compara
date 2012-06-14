@@ -269,11 +269,11 @@ sub fetch_by_stable_id {
 sub store {
     my ($self, $node) = @_;
 
+    my $children = $node->children;
     # Firstly, store the node
     $self->store_node($node);
 
     # Secondly, recursively do all the children
-    my $children = $node->children;
     foreach my $child_node (@$children) {
         # Store the GeneTreeNode or the new GeneTree if different
         if ((not defined $child_node->tree) or ($child_node->root eq $node->root)) {
