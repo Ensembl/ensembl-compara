@@ -98,8 +98,8 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '67',
-        'rel_suffix'            => 'x',    # an empty string by default, a letter otherwise
+        'release'               => '68',
+        'rel_suffix'            => '',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
         'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
 
@@ -111,8 +111,8 @@ sub default_options {
         'dump_dir'              => $self->o('work_dir') . '/dumps',
 
     # dump parameters:
-        'dump_table_list'       => '#updated_tables#',  # probably either '#updated_tables#' or '' (to dump everything)
-        'dump_exclude_ehive'    => 1,
+        'dump_table_list'       => '',  # probably either '#updated_tables#' or '' (to dump everything)
+        'dump_exclude_ehive'    => 0,
 
     # blast parameters:
         'blast_options'             => '-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1',
@@ -169,7 +169,7 @@ sub default_options {
     # connection parameters to various databases:
 
         'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => 'compara2',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -208,14 +208,14 @@ sub default_options {
 
         # "production mode"
         'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
-        'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
-        'prev_release'              => 67,   # 0 is the default and it means "take current release number and subtract 1"
+        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
+        'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
         'reuse_db' => {   # usually previous release database on compara1
-           -host   => 'ens-livemirror',
+           -host   => 'compara3',
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'ensembl_compara_67',
+           -dbname => 'mm14_ensembl_compara_67',
         },
 
         ## mode for testing the non-Blast part of the pipeline: reuse all Blasts
@@ -269,7 +269,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'backbone_fire_db_prepare',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-		-input_ids  => [ {
+            -input_ids  => [ {
                 'table_list'    => $self->o('dump_table_list'),
                 'exclude_ehive' => $self->o('dump_exclude_ehive'),
             } ],
@@ -303,12 +303,12 @@ sub pipeline_analyses {
         {   -logic_name => 'backbone_fire_allvsallblast',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'updated_tables'    => 'sequence sequence_cds sequence sequence_exon_bounded member subset subset_member peptide_align_feature%',
+                'updated_tables'    => 'sequence sequence_cds sequence_exon_bounded member subset subset_member peptide_align_feature%',
                 'filename'          => 'snapshot_before_allvsallblast.sql',
                 'output_file'       => $self->o('dump_dir').'/#filename#',
             },
             -flow_into  => {
-                '1->A'  => [ 'allvsallblast_factory' ],
+                '1->A'  => [ 'species_factory' ],
                 'A->1'  => [ 'backbone_fire_hcluster' ],
             },
         },
@@ -334,7 +334,7 @@ sub pipeline_analyses {
                 'output_file'       => $self->o('dump_dir').'/#filename#',
             },
             -flow_into  => {
-                '1->A'  => [ 'tree_factory' ],
+                '1->A'  => [ 'species_factory' ],
                 'A->1'  => [ 'backbone_fire_dnds' ],
             },
         },
@@ -551,7 +551,7 @@ sub pipeline_analyses {
                 'table'         => 'member',
                 'where'         => 'member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
                 'mode'          => 'insertignore',
-		    },
+            },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
                 1 => [ 'subset_table_reuse', 'sequence_cds_table_reuse', 'sequence_exon_bounded_table_reuse' ],
@@ -564,7 +564,7 @@ sub pipeline_analyses {
                 'src_db_conn'   => $self->o('reuse_db'),
                 'table'         => 'subset',
                 'mode'          => 'insertignore',
-                'where'         => 'description LIKE "gdb:#genome_db_id# %"',
+                'where'         => 'description LIKE "gdb:#genome_db_id# %" AND subset_id<='.$self->o('protein_members_range'),
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
@@ -576,7 +576,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                             'db_conn'    => $self->o('reuse_db'),
-                            'inputquery' => 'SELECT sm.* FROM subset_member sm JOIN subset USING (subset_id) WHERE member_id<='.$self->o('protein_members_range').' AND description LIKE "gdb:#genome_db_id# %"',
+                            'inputquery' => 'SELECT sm.* FROM subset_member sm JOIN subset USING (subset_id) WHERE member_id<='.$self->o('protein_members_range').' AND description LIKE "gdb:#genome_db_id# %" AND subset_id<='.$self->o('protein_members_range'),
                             'fan_branch_code' => 2,
             },
             -hive_capacity => $self->o('reuse_capacity'),
@@ -661,7 +661,7 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
 
-        {   -logic_name => 'allvsallblast_factory',
+        {   -logic_name => 'species_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
                 'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
@@ -821,7 +821,7 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[main tree creation loop]-------------------------------------------------------------
 
-        {   -logic_name => 'tree_factory',
+        {   -logic_name => 'species_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'        => 'SELECT root_id AS protein_tree_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" GROUP BY root_id ORDER BY COUNT(*) DESC, root_id ASC',
@@ -1074,22 +1074,22 @@ sub pipeline_analyses {
             },
             -hive_capacity => -1,
             -flow_into => {
-                2 => [ 'homology_mlss_factory' ],
+                2 => [ 'mlss_factory' ],
             },
         },
 
-        {   -logic_name => 'homology_mlss_factory',
+        {   -logic_name => 'mlss_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
             -parameters => {
-		    'method_link_types'  => ['ENSEMBL_ORTHOLOGUES', 'ENSEMBL_PARALOGUES'],
-		},
+                'method_link_types'  => ['ENSEMBL_ORTHOLOGUES', 'ENSEMBL_PARALOGUES'],
+            },
             -hive_capacity => -1,
             -flow_into => {
-                2 => [ 'homology_dNdS_factory' ],
+                2 => [ 'homology_factory' ],
             },
         },
 
-        {   -logic_name => 'homology_dNdS_factory',
+        {   -logic_name => 'homology_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory',
             -hive_capacity => $self->o('homology_dNdS_capacity'),
             -flow_into => {
