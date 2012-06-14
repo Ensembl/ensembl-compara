@@ -748,7 +748,7 @@ sub pipeline_analyses {
                              'cluster_dir'         => $self->o('cluster_dir'),
                             },
              -hive_capacity => 10,
-             -rc_id => 5,
+             -rc_name => '8Gb_job',
             },
 
             {
@@ -758,7 +758,7 @@ sub pipeline_analyses {
                              'cluster_dir'        => $self->o('cluster_dir'),
                             },
              -hive_capacity => -1,
-             -rc_id => 5,
+             -rc_name => '8Gb_job',
              -flow_into => {
                             1 => {
                                   'run_qc_tests' => {'groupset_tag' => 'Clusterset' },
