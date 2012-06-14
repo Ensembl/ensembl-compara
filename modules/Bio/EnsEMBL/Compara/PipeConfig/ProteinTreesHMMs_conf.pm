@@ -369,7 +369,7 @@ sub pipeline_analyses {
                 'output_file'       => $self->o('dump_dir').'/#filename#',
             },
             -flow_into  => {
-                '1->A'  => [ 'species_factory' ],
+                '1->A'  => [ 'cluster_factory' ],
                 'A->1'  => [ 'backbone_fire_dnds' ],
             },
         },
@@ -929,7 +929,7 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[main tree creation loop]-------------------------------------------------------------
 
-        {   -logic_name => 'species_factory',
+        {   -logic_name => 'cluster_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'        => 'SELECT root_id AS protein_tree_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" GROUP BY root_id ORDER BY COUNT(*) DESC, root_id ASC',
