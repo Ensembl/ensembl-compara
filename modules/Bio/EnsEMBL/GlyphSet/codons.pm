@@ -18,7 +18,7 @@ sub _init {
       width     => 3,
       height    => 2,
       absolutey => 1,
-      %$_
+      %$_,
     }));
   }
 }
@@ -32,17 +32,15 @@ sub features {
   my $fullheight  = $height * 2 + $padding;
   my $stop_col    = $self->my_colour('stop')  || 'red';
   my $start_col   = $self->my_colour('start') || 'green';
-  my (@codons, @features, $offset, $strand, $base);
+  my (@codons, @features, $offset, $strand);
   
   if ($self->cache('codon_cache')) { # Reverse strand (2nd to display) so we retrieve information from the codon cache  
     $offset = 3;                              # For drawing loop look at elements 3, 4, 7, 8, 11, 12
     $strand = -1;                             # Reverse strand
-    $base   = $height;                        # Start at the bottom
     @codons = @{$self->cache('codon_cache')}; # retrieve data from cache
   } else {
     $offset = 1;                              # For drawing loop look at elements 1, 2, 5, 6, 9, 10
     $strand = 1;                              # Forward strand
-    $base   = 0;                              # Start at the top
     
     # As this is the first time around we will have to create the cache in the @data array    
     my $seq = $slice->seq;
@@ -78,7 +76,7 @@ sub features {
       foreach (@{$codons[$i]}) {
         push @features, {
           x      => $_,
-          y      => $base + ((2 - $phase) * $fullheight) + ($i == $index ? 0 : $height) * $strand,
+          y      => ((2 - $phase) * $fullheight + ($i == $index ? 0 : $height)) * $strand,
           start  => $_ + $slice_start,
           end    => $_ + $slice_start + 3,
           colour => $i == $index ? $start_col : $stop_col,
