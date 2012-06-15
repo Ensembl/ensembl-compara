@@ -219,7 +219,7 @@ sub _get_members_by_source {
 	my $member_a = $self->compara_dba()->get_MemberAdaptor();
 	my $gdb_id = $genome_db->dbID();
 	my $constraint = qq(m.source_name = '${source_name}' and m.genome_db_id = ${gdb_id});
-	my $members = $member_a->_generic_fetch($constraint);
+	my $members = $member_a->generic_fetch($constraint);
 	my $members_hash = {};
 	foreach my $member (@{$members}) {
 		$members_hash->{$member->stable_id()} = $member;
