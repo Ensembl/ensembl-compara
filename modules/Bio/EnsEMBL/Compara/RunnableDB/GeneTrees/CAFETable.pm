@@ -224,12 +224,9 @@ sub get_per_family_cafe_table_from_db {
 
         ## TODO: Should we filter out low-coverage genomes?
         my $species = [keys %species];
-#        print STDERR "SPECIES IN THE TREE:\n" if ($self->debug());
-#        print STDERR Dumper $species if ($self->debug());
 
         my @leaves = ();
         for my $node (@{$sp_tree->get_all_leaves}) {
-#            print STDERR "NODE : ", $node->name(), "\n" if ($self->debug());
             if (is_in($node->name, $species)) {
                 push @leaves, $node;
             }
@@ -307,7 +304,7 @@ sub get_name {
     my ($self, $tree) = @_;
     my $name;
     if ($self->param('type') eq 'nc') {
-        $name = $tree->tree->get_tagvalue('model_name');
+        $name = $tree->get_tagvalue('model_name');
     } else {
         $name = $tree->root_id();
     }
