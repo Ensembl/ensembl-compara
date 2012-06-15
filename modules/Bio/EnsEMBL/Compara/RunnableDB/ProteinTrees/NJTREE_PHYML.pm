@@ -135,6 +135,7 @@ sub write_output {
             $self->parse_newick_into_tree($filename, $newtree);
             $self->store_genetree($newtree);
             $self->dataflow_output_id({'protein_tree_id' => $newtree->root_id}, 2);
+            $newtree->release_tree;
         }
     }
     if ($self->param('store_filtered_align')) {
@@ -157,13 +158,6 @@ sub write_output {
                 $member_hash{$1}->store_tag('filtered_alignment', $seq->seq());
             }
 
-        }
-        $filename = sprintf('%s/prog-filtalign.fa', $self->worker_temp_directory);
-        if (-e $filename) {
-            print STDERR "Found filtered alignment: $filename\n";
-            my $alignio = Bio::AlignIO->new(-file => $filename, -format => 'fasta');
-            my $aln = $alignio->next_aln or die "Bio::AlignIO could not get next_aln() from file '$filename'";
-            $self->param('protein_tree')->store_tag('progfiltered_alignment_length', $aln->length()/3);
         }
     }
 
