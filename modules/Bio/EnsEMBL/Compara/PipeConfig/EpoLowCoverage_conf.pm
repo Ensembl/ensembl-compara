@@ -32,25 +32,18 @@ sub default_options {
 
 	#Location of compara db containing most pairwise mlss ie previous compara
 	'live_compara_db' => {
-            -host   => 'ens-livemirror',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-#	    -dbname => 'ensembl_compara_63',
-	    -dbname => 'ensembl_compara_' . $self->o('prev_release'),
+	    -dbname => 'mm14_ensembl_compara_67',
+#	    -dbname => 'ensembl_compara_' . $self->o('prev_release'),
 	    -driver => 'mysql',
         },
 
 	#Location of compara db containing the high coverage alignments
-	#Make this a url that you provide on the command line
-	#'epo_db' => {
-        #    -host   => 'compara3',
-        #    -port   => 3306,
-        #    -user   => 'ensro',
-        #    -pass   => '',
-	#    -dbname => 'sf5_compara_12way_64',
-	#    -driver => 'mysql',
-        #},
+	'epo_db' => 'mysql://ensro@compara3:3306/sf5_compara_epo_12way_68',
+
 	master_db => { 
             -host   => 'compara1',
             -port   => 3306,
