@@ -146,7 +146,7 @@ sub write_output {
 
             #place all members in a hash on their member name
             my %member_hash;
-            foreach my $member (@{$self->get_all_Members}) {
+            foreach my $member (@{$self->param('protein_tree')->get_all_Members}) {
                 $member_hash{$member->member_id} = $member;
             }
 
@@ -154,7 +154,7 @@ sub write_output {
             $self->param('protein_tree')->store_tag('filtered_alignment_length', $aln->length()/3);
             foreach my $seq ($aln->each_seq) {
                 $seq->display_id =~ /(\d+)\_\d+/;
-                $member_hash{$1}->store_tag('filtered_alignment') = $seq->seq();
+                $member_hash{$1}->store_tag('filtered_alignment', $seq->seq());
             }
 
         }
@@ -273,8 +273,9 @@ sub run_njtree_phyml {
           my $max_diff_lk_value = $self->param('max_diff_lk') ?  $self->param('max_diff_lk') : 1e-5;
 	    $max_diff_lk_value *= 10;
           $self->param('max_diff_lk', $max_diff_lk_value);
+      } else {
+        $self->throw("error running njtree phyml: $system_error\n$logfile");
       }
-      $self->throw("error running njtree phyml: $system_error\n$logfile");
     } else {
         $comput_ok = 1;
     }
