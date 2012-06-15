@@ -72,14 +72,15 @@ sub features {
   foreach my $phase (0..2) {
     my $index = $offset + $phase * 4;
     
-    foreach my $i ($index, $index + 1) {
-      foreach (@{$codons[$i]}) {
+    foreach my $i (0..1) {
+      foreach (@{$codons[$index + $i]}) {
         push @features, {
           x      => $_,
-          y      => ((2 - $phase) * $fullheight + ($i == $index ? 0 : $height)) * $strand,
+          y      => ((2 - $phase) * $fullheight + ($i ? $height : 0)) * $strand,
           start  => $_ + $slice_start,
           end    => $_ + $slice_start + 3,
-          colour => $i == $index ? $start_col : $stop_col,
+          colour => $i ? $stop_col : $start_col,
+          y_inc  => $i ^ $strand == -1
         };
       }
     }
