@@ -366,7 +366,7 @@ sub pipeline_analyses {
 					 ],
 			       },
 		#-input_ids => [{}],
-		-wait_for  => [ 'low_coverage_genome_alignment', 'gerp' ],
+		-wait_for  => [ 'low_coverage_genome_alignment', 'gerp', 'low_coverage_genome_alignment_again' ],
 		-flow_into => {
 			       1 => [ 'update_max_alignment_length' ],
 			      },
