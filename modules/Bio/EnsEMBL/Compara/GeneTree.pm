@@ -209,16 +209,6 @@ sub root {
             $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
             delete $gtn_adaptor->{'_ref_tree'};
 
-            # Loads all the gene members in one go
-            my %leaves;
-            foreach my $pm (@{$self->{'_root'}->get_all_leaves}) {
-                $leaves{$pm->gene_member_id} = $pm if UNIVERSAL::isa($pm, 'Bio::EnsEMBL::Compara::GeneTreeMember');
-            }
-            my @m_ids = keys(%leaves);
-            my $all_gm = $self->{'_adaptor'}->db->get_MemberAdaptor->fetch_all_by_dbID_list(\@m_ids);
-            foreach my $gm (@$all_gm) {
-                $leaves{$gm->dbID}->gene_member($gm);
-            }
         } else {
             # Creates a new GeneTreeNode object
             $self->{'_root'} = new Bio::EnsEMBL::Compara::GeneTreeNode;
@@ -228,6 +218,23 @@ sub root {
     return $self->{'_root'};
 }
 
+
+
+sub preload {
+    my $self = shift;
+    return unless defined $self->{'_adaptor'};
+
+    # Loads all the gene members in one go
+    my %leaves;
+    foreach my $pm (@{$self->root->get_all_leaves}) {
+        $leaves{$pm->gene_member_id} = $pm if UNIVERSAL::isa($pm, 'Bio::EnsEMBL::Compara::GeneTreeMember');
+    }
+    my @m_ids = keys(%leaves);
+    my $all_gm = $self->{'_adaptor'}->db->get_MemberAdaptor->fetch_all_by_dbID_list(\@m_ids);
+    foreach my $gm (@$all_gm) {
+        $leaves{$gm->dbID}->gene_member($gm);
+    }
+}
 
 
 =head2 root_id()
