@@ -108,8 +108,6 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
-#    $self->store_expansion_contraction();
-#    $self->store_cafe_tree();
 
     my $lambda = $self->param('lambda');
     $self->dataflow_output_id ( {
@@ -166,14 +164,15 @@ sub run_cafe_script {
     $cafe_tree_str =~ s/:\d+$//; # remove last branch length
 
 #    my $cafe_table_file = $self->param('work_dir') . "/" . $self->param('cafe_table_file');
-    my $cafe_lambdas = $self->param('cafe_lambdas');
+    my $cafe_lambdas = $self->param('cafe_lambdas');  ## For now, it only works with 1 lambda
     my $cafe_struct_tree = $self->param('cafe_struct_tree_str');
 
     print $sf '#!' . $cafe_shell . "\n\n";
     print $sf "tree $cafe_tree_str\n\n";
     print $sf "load -p ${pval_lim} -i $cafe_table_file\n\n";
-    print $sf "lambda -s\n";
- #   print $sf $cafe_lambdas ? "-l $cafe_lambdas -t $cafe_struct_tree\n\n" : " -s\n\n";
+    print $sf "lambda \n";
+    print $sf $cafe_lambdas ? " -l $cafe_lambdas\n\n" : " -s\n\n";
+#    print $sf $cafe_lambdas ? "-l $cafe_lambdas -t $cafe_struct_tree\n\n" : " -s\n\n";
     print $sf "report $cafe_out_file\n\n";
     close ($sf);
 
@@ -221,7 +220,7 @@ sub parse_cafe_output {
 
     print STDERR "CAFE OUT FILE [$cafe_out_file]\n" if ($self->debug);
 
-    open my $fh, "<". $cafe_out_file or die $!;
+    open my $fh, "<". $cafe_out_file or die "$!: $cafe_out_file\n";
 
     my $tree_line = <$fh>;
     my $tree_str = substr($tree_line, 5, length($tree_line) - 6);
@@ -339,40 +338,5 @@ sub parse_cafe_output {
     }
     return
 }
-
-# sub store_cafe_tree {
-#     my ($self) = @_;
-
-#     my $cafe_tree = new Bio::EnsEMBL::Compara::CAFETreeNode;
-# }
-
-# Not used anymore for now
-# sub store_expansion_contraction {
-#     my ($self) = @_;
-#     my $cafe_out_file = $self->param('cafe_out_file');
-#     my $nctree_Adaptor = $self->param('nctree_Adaptor');
-
-#     open my $fh, "<", $cafe_out_file.".cafe" or die $!;
-# #     my $tree_line = <$fh>;
-# #     my $lambda_line = <$fh>;
-# #     my $ids_line = <$fh>;
-
-# ## WARNI1NG: if the lambda tree is provided, 1 more line in the output file will be present.
-
-#     while (my $fam_line = <$fh>) {
-#         if ($fam_line =~ /^Lambda:\s(\d+\.\d+)/) {
-#             $self->param('lambda', $1);
-#             next;
-#         }
-#         next unless $fam_line =~ /^\d+/;
-#         chomp $fam_line;
-#         my @flds = split /\s+/, $fam_line;
-#         my ($node_id, $avg_expansion) = @flds[0,2];
-#         my $nc_tree = $nctree_Adaptor->fetch_node_by_node_id($node_id);
-#         $nc_tree->store_tag('average_expansion', $avg_expansion);
-#     }
-
-#     return;
-# }
 
 1;
