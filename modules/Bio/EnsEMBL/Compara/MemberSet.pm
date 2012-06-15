@@ -466,7 +466,7 @@ sub get_all_GeneMembers {
     my ($self) = @_;
 
     my $members = [];
-    foreach my $aligned_member (@{$self->get_all_Member}) {
+    foreach my $aligned_member (@{$self->get_all_Members}) {
         push @$members, $aligned_member->gene_member if defined $aligned_member->gene_member;
     }
 
@@ -490,7 +490,7 @@ sub gene_list {  # DEPRECATED
 
 sub get_all_Member_Attribute {  # DEPRECATED
     my $self = shift;
-    return $self->_tranform_array_to_Member_Attributes($self->get_all_Member);
+    return $self->_tranform_array_to_Member_Attributes($self->get_all_Members);
 }
 
 
@@ -598,7 +598,7 @@ sub get_Member_by_source_GenomeDB {
 
 sub _get_Member {
     my ($self, $scope, $key) = @_;
-    $self->get_all_Member();
+    $self->get_all_Members();
     $self->{$scope}->{$key} = [] unless defined $self->{$scope}->{$key};
     return $self->{$scope}->{$key};
 }
@@ -808,7 +808,7 @@ sub get_all_taxa_by_member_source_name {
 
     my $ncbi_ta = $self->adaptor->db->get_NCBITaxonAdaptor();
     my @taxa;
-    $self->get_all_Member;
+    $self->get_all_Members;
     foreach my $key (keys %{$self->{_members_by_source_taxon}}) {
         my @parts = split('_', $key);
         if ($parts[0] eq $source_name) {
@@ -838,7 +838,7 @@ sub get_all_GenomeDBs_by_member_source_name {
 
     my $gdb_a = $self->adaptor->db->get_GenomeDBAdaptor();
     my @gdbs;
-    $self->get_all_Member;
+    $self->get_all_Members;
     foreach my $key (keys %{$self->{_members_by_source_genome_db}}) {
         my @parts = split('_', $key);
         if ($parts[0] eq $source_name) {
@@ -864,7 +864,7 @@ sub has_species_by_name {
   my $self = shift;
   my $species_name = shift;
   
-  foreach my $member (@{$self->get_all_Member}) {
+  foreach my $member (@{$self->get_all_Members}) {
     return 1 if defined $member->genome_db and ($member->genome_db->name eq $species_name);
   }
   return 0;
