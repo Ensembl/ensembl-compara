@@ -735,7 +735,7 @@ sub store {
     $hom->dbID($sth->{'mysql_insertid'});
   }
 
-  my $sql = 'INSERT IGNORE INTO homology_member (homology_id, member_id, cigar_line, perc_id, perc_pos, perc_cov) VALUES (?,?,?,?,?,?,?)';
+  my $sql = 'INSERT IGNORE INTO homology_member (homology_id, member_id, cigar_line, perc_id, perc_pos, perc_cov) VALUES (?,?,?,?,?,?)';
   my $sth = $self->prepare($sql);
   foreach my $member(@{$hom->get_all_Members}) {
     # Stores the member if not yet stored
