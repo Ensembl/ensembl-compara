@@ -351,7 +351,7 @@ sub _fetch_all_by_source_taxon_chr_name_start_end_strand_limit {
 
   my $constraint = "m.source_name = '$source_name' and m.taxon_id = $taxon_id 
                     and m.chr_name = '$chr_name' 
-                    and m.chr_start >= $chr_start and m.chr_end <= $chr_end 
+                    and m.chr_start >= $chr_start and m.chr_start <= $chr_end and m.chr_end <= $chr_end 
                     and m.chr_strand = $chr_strand";
 
   return $self->generic_fetch($constraint, undef, defined $limit ? "LIMIT $limit" : "");
