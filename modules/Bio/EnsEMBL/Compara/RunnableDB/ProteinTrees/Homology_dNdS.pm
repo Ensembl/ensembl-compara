@@ -120,7 +120,7 @@ sub calc_genetic_distance {
   $homology->print_homology if ($self->debug);
   
   # second argument will change selenocyteine TGA codons to NNN
-  my $aln = $homology->get_SimpleAlign("cdna", 1);
+  my $aln = $homology->get_SimpleAlign(-cdna => 1);
 
   $self->compara_dba->dbc->disconnect_when_inactive(1);
   
