@@ -867,6 +867,7 @@ sub pipeline_analyses {
             -priority => 30,
             -flow_into => {
                -1 => [ 'mcoffee_cmcoffee_himem' ],  # MEMLIMIT
+               -2 => [ 'mafft' ],
                 2 => [ 'mcoffee_fmcoffee' ],
             },
         },
@@ -884,6 +885,7 @@ sub pipeline_analyses {
             -priority => 30,
             -flow_into => {
                -1 => [ 'mcoffee_fmcoffee_himem' ],  # MEMLIMIT
+               -2 => [ 'mafft' ],
                 2 => [ 'mafft' ],
             },
         },
@@ -915,6 +917,7 @@ sub pipeline_analyses {
             -rc_name => '8Gb_job',
             -priority => 30,
             -flow_into => {
+               -2 => [ 'mafft_himem' ],
                 2 => [ 'mcoffee_fmcoffee_himem' ],
             },
         },
@@ -931,6 +934,7 @@ sub pipeline_analyses {
             -rc_name => '8Gb_job',
             -priority => 30,
             -flow_into => {
+               -2 => [ 'mafft_himem' ],
                 2 => [ 'mafft_himem' ],
             },
         },
