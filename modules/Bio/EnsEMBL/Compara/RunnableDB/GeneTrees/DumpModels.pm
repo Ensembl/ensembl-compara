@@ -73,13 +73,13 @@ sub fetch_input {
     my $basedir = $self->param('hmm_library_basedir') or die "The base dir of the library is needed\n";
     my $hmmLibrary = FamLibBuilder->new($basedir, "prod");
 
-    my $code = $hmmLibrary->assureExists();
+    my $code = $hmmLibrary->create();
     if (!defined $code) {
         $self->throw("Error creating the library!\n");
     }
     if ($code == -1) {
         $self->input_job->incomplete(0);
-        die "The library already exists. I will reuse it (but have you set the stripe on it?)";
+        die "The library already exists. I will reuse it (but have you set the stripe on it?)\n";
     }
     if ($code == 1) {
         print STDERR "OK creating the library\n" if ($self->debug());
@@ -126,7 +126,7 @@ sub dump_models {
     my $sth2 = $self->compara_dba->dbc->prepare($sql2);
     $sth->execute();
     while (my ($model_id) = $sth->fetchrow) {
-        print STDERR "Dumping model_id $model_id\n";
+        print STDERR "Dumping model_id $model_id into $bookDir/$model_id\n";
         mkdir "$bookDir/$model_id" or die $!;
         open my $fh, ">", "$bookDir/$model_id/hmmer.hmm" or die $!;
         $sth2->execute($model_id);
