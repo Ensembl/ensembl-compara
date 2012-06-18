@@ -65,10 +65,14 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    unless ( $self->param('cafe_tree_string_meta_key') ) {
-        die ('cafe_species_tree_meta_key needs to be defined to get the speciestree from the meta table');
+    unless ( $self->param('cafe_tree_string_mlss_tag') ) {
+        die ('cafe_species_tree_mlss_tag needs to be defined to get the speciestree from the method_link_species_tree_tag table');
     }
-    $self->param('cafe_tree_string', $self->get_tree_string_from_meta());
+    $self->param('cafe_tree_string', $self->get_tree_string_from_mlss_tag());
+
+    unless ( $self->param('mlss_id') ) {
+        die ('mlss_id is mandatory');
+    }
 
     unless ( $self->param('type') ) {
         die ('type is mandatory [prot|nc]');
@@ -119,13 +123,14 @@ sub write_output {
 ## Internal methods #######################
 ###########################################
 
-sub get_tree_string_from_meta {
+sub get_tree_string_from_mlss_tag {
     my ($self) = @_;
-    my $cafe_tree_string_meta_key = $self->param('cafe_tree_string_meta_key');
+    my $cafe_tree_string_mlss_tag = $self->param('cafe_tree_string_mlss_tag');
+    my $mlss_id = $self->param('mlss_id');
 
-    my $sql = "SELECT meta_value FROM meta WHERE meta_key = ?";
+    my $sql = "SELECT value FROM method_link_species_set_tag WHERE tag = ? AND method_link_species_set_id = ?";
     my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($cafe_tree_string_meta_key);
+    $sth->execute($cafe_tree_string_mlss_tag, $mlss_id);
 
     my ($cafe_tree_string) = $sth->fetchrow_array();
     $sth->finish;

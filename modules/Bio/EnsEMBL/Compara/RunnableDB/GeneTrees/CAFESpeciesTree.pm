@@ -81,6 +81,8 @@ sub fetch_input {
 
     $self->param('tree_fmt', '%{n}%{":"d}'); # format for the tree
 
+    die "mlss_id is an obligatory parameter\n" unless (defined $self->param('mlss_id'));
+
     my $cafe_species = $self->param('cafe_species');
     if ((not defined $cafe_species) or (scalar(@{$cafe_species}) == 0)) {  # No species for the tree. Make a full tree
 #        die "No species for the CAFE tree";
@@ -96,29 +98,30 @@ sub run {
     my $species_tree_string = $self->param('full_species_tree');
     my $species = $self->param('cafe_species');
     my $fmt = $self->param('tree_fmt');
+    my $mlss_id = $self->param('mlss_id');
     print STDERR Dumper $species if ($self->debug());
     my $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
 
     $self->include_distance_to_parent($eval_species_tree);
-    print STDERR "AFTER dtp:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n";
+    print STDERR "AFTER dtp:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n" if ($self->debug());
     $self->fix_ensembl_timetree_mya($eval_species_tree);
-    print STDERR "AFTER fix_mya:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n";
+    print STDERR "AFTER fix_mya:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n" if ($self->debug());
     $self->ensembl_timetree_mya_to_distance_to_parent($eval_species_tree);
-    print STDERR "AFTER mya:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n";
+    print STDERR "AFTER mya:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n" if ($self->debug());
     $self->include_names($eval_species_tree);
-    print STDERR "AFTER names:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n";
+    print STDERR "AFTER names:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n" if ($self->debug());
     $self->ultrametrize($eval_species_tree);
-    print STDERR "AFTER ultrametrize:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n";
+    print STDERR "AFTER ultrametrize:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n" if ($self->debug());
     my $binTree = $self->binarize($eval_species_tree);
-    print STDERR "AFTER binarize:\n", $binTree->newick_format('ryo', $fmt), "\n";
+    print STDERR "AFTER binarize:\n", $binTree->newick_format('ryo', $fmt), "\n" if ($self->debug());
     $self->fix_zeros($binTree);
-    print STDERR "AFTER fixing the zeros:\n", $binTree->newick_format('ryo', $fmt), "\n";
+    print STDERR "AFTER fixing the zeros:\n", $binTree->newick_format('ryo', $fmt), "\n" if ($self->debug());
     my $cafeTree;
     if (defined $species) {
-        print STDERR "The tree is going to be pruned\n";
+        print STDERR "The tree is going to be pruned\n" if ($self->debug());
         $cafeTree = $self->prune_tree($binTree, $species);
     } else {
-        print STDERR "The tree is NOT going to be pruned\n";
+        print STDERR "The tree is NOT going to be pruned\n" if ($self->debug());
         $cafeTree = $binTree;
     }
 #     if ($self->debug) {
@@ -126,15 +129,15 @@ sub run {
 #     }
     my $cafeTreeStr = $cafeTree->newick_format('ryo', $fmt);
 
-    my $cafe_tree_string_meta_key = 'cafe_tree_string';
+    my $cafe_tree_string_mlss_tag = 'cafe_tree_string';
     print STDERR "$cafeTreeStr\n" if ($self->debug());
-    print STDERR "cafe_tree_string_meta_key => $cafe_tree_string_meta_key\n" if ($self->debug());
-    my $sql = "INSERT into meta (meta_key, meta_value) values (?,?);";
+    print STDERR "cafe_tree_string_mlss_tag => $cafe_tree_string_mlss_tag\n" if ($self->debug());
+    my $sql = "INSERT into method_link_species_set_tag (method_link_species_set_id, tag, value) values (?,?,?);";
     my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($cafe_tree_string_meta_key, $cafeTreeStr);
+    $sth->execute($cafe_tree_string_mlss_tag, $cafeTreeStr);
     $sth->finish();
 
-    $self->param('cafe_tree_string_meta_key', $cafe_tree_string_meta_key);
+    $self->param('cafe_tree_string_mlss_tag', $cafe_tree_string_mlss_tag);
 }
 
 sub write_output {
