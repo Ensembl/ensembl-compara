@@ -561,7 +561,7 @@ sub pipeline_analyses {
             -flow_into => {
                 '2->A' => [ 'sequence_table_reuse' ],
                 'A->1' => [ 'genome_loadfresh_factory' ],
-                2 => [ 'paf_table_reuse' ],
+                 $self->o('hmm_clustering') ? () : (2 => [ 'paf_table_reuse' ]),
             },
         },
 
@@ -671,7 +671,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => -1,
             -flow_into => {
-                2 => [ 'load_fresh_members', 'paf_create_empty_table' ],
+                2 => $self->o('hmm_clustering') ? [ 'load_fresh_members' ] : [ 'load_fresh_members', 'paf_create_empty_table' ],
             },
         },
 
