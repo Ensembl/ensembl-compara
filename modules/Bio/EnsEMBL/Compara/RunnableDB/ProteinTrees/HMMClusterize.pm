@@ -42,8 +42,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize;
 
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
+use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 
 
 sub fetch_input {
