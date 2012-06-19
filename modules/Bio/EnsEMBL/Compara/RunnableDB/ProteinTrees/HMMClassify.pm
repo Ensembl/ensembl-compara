@@ -56,9 +56,7 @@ use Data::Dumper;
 # To be deprecated:
 use DBI;
 
-#use Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Panther::FamLibBuilder;
-
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
@@ -92,7 +90,6 @@ sub fetch_input {
     $self->param('genome_db', $genome_db);
 
     $self->throw('cluster_dir is an obligatory parameter') unless (defined $self->param('cluster_dir'));
-    $self->throw('mlss_id is an obligatory parameter') unless (defined $self->param('mlss_id'));
     $self->throw('blast_path is an obligatory parameter') unless (defined $self->param('blast_path'));
     $self->throw('hmm_library_basedir is an obligatory parameter') unless (defined $self->param('hmm_library_basedir'));
     my $hmmLibrary = FamLibBuilder->new($self->param('hmm_library_basedir'), 'prod');
