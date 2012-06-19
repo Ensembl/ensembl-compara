@@ -157,7 +157,7 @@ sub dump_sequences_to_workdir {
         my $seq = $member->sequence;
         $seq =~ s/(.{72})/$1\n/g;
         chomp $seq;
-        print $fastafh ">" . $member->sequence_id . "\n$seq\n";
+        print $fastafh ">" . $member->member_id . "\n$seq\n";
     }
 
     close ($fastafh);
