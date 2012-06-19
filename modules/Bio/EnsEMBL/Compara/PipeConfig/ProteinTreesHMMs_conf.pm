@@ -217,7 +217,7 @@ sub default_options {
 
 
         # "production mode"
-        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
+        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ], ## Make it empty to avoid reusing
         'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
         'prev_release'              => 67,   # 0 is the default and it means "take current release number and subtract 1"
         'reuse_db' => {   # usually previous release database on compara1
@@ -746,7 +746,6 @@ sub pipeline_analyses {
                              'pantherScore_path'   => $self->o('pantherScore_path'),
                              'hmmer_path'          => $self->o('hmmer_path'),
                              'hmm_library_basedir' => $self->o('hmm_library_basedir'),
-                             'mlss_id'             => $self->o('mlss_id'),
                              'cluster_dir'         => $self->o('cluster_dir'),
                             },
              -hive_capacity => 10,
@@ -758,6 +757,7 @@ sub pipeline_analyses {
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize',
              -parameters => {
                              'cluster_dir'        => $self->o('cluster_dir'),
+                             'mlss_id'            => $self->o('mlss_id'),
                             },
              -hive_capacity => -1,
              -rc_name => '8Gb_job',
