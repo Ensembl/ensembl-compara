@@ -473,7 +473,7 @@ sub write_dna_collection {
     }
     
     #Find common name
-    my $common_name = $reg->get_adaptor($name, "core", "MetaContainer")->list_value_by_key('species.ensembl_alias_name')->[0];
+    my $common_name = $reg->get_adaptor($name, "core", "MetaContainer")->list_value_by_key('species.alias')->[0];
     
     my $masking_options;
     if (defined $dnaCollectionConf->{masking_options_file}) {
@@ -566,8 +566,8 @@ sub write_default_config_params {
     #print "REF $ref_species $non_ref_species\n";
     #Find common name
 
-    my $ref_common_name = $reg->get_adaptor($ref_species, "core", "MetaContainer")->list_value_by_key('species.ensembl_alias_name')->[0];
-    my $non_ref_common_name = $reg->get_adaptor($non_ref_species, "core", "MetaContainer")->list_value_by_key('species.ensembl_alias_name')->[0];
+    my $ref_common_name = $reg->get_adaptor($ref_species, "core", "MetaContainer")->list_value_by_key('species.alias')->[0];
+    my $non_ref_common_name = $reg->get_adaptor($non_ref_species, "core", "MetaContainer")->list_value_by_key('species.alias')->[0];
 
     #Check if reference already present
     my $check_sql = "SELECT dna_collection_id FROM dna_collection WHERE name = ? AND chunk_size = 0 AND group_set_size = 0 AND overlap = 0";
