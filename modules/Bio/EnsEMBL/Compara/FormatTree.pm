@@ -172,10 +172,10 @@ my $genbank_common_name = sub {
   return $self->{tree}->get_tagvalue('genbank common name');
 };
 
-# T(ensembl common name)
+# C(common_name)
 my $ensembl_common_name = sub {
   my ($self) = @_;
-  return $self->{tree}->get_tagvalue('ensembl common name');
+  return $self->{tree}->common_name;
 };
 
 # T(ensembl timetree mya)
