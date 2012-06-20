@@ -43,6 +43,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize;
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters;
+use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 
@@ -83,13 +84,25 @@ sub load_hmmer_classifications {
         open my $hmmer_clas_fh, "<", $hmmer_clas_file or die $!;
         while (<$hmmer_clas_fh>) {
             chomp;
-            my ($seq_id, $hmm_id, $eval) = split /\t/;
-            push @{$allclusters{$hmm_id}{members}}, $seq_id;
+            my ($member_id, $hmm_id, $eval) = split /\t/;
+            $allclusters{$hmm_id}{members}{$member_id} = 1; ## Avoid duplicates
+#            push @{$allclusters{$hmm_id}{members}}, $seq_id;
         }
     }
 
     for my $model_name (keys %allclusters) {
-        $allclusters{$model_name}{model_name} = $model_name;
+        ## we filter out clusters singleton clusters
+        if (scalar keys %{$allclusters{$model_name}{members}} == 1) {
+#            if (scalar @{$allclusters{$model_name}{members}} == 1) {
+            delete $allclusters{$model_name};
+        } else {
+            # If it is not a singleton, we add the name of the model to store in the db
+            print STDERR Dumper $allclusters{$model_name};
+            my @members = keys %{$allclusters{$model_name}{members}};
+            delete $allclusters{$model_name}{members};
+            @{$allclusters{$model_name}{members}} = @members;
+            $allclusters{$model_name}{model_name} = $model_name;
+        }
     }
 }
 
