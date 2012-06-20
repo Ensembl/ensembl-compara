@@ -283,8 +283,8 @@ sub process {
       
       my %style = $cell->{'style'} ? ref $cell->{'style'} eq 'HASH' ? %{$cell->{'style'}} : map { s/(^\s+|\s+$)//g; split ':' } split ';', $cell->{'style'} : ();
       
-      $style{'text-align'} ||= $columns->[$i]{'align'};
-      $style{'width'}      ||= $columns->[$i]{'width'};
+      $style{'text-align'} ||= $columns->[$i]{'align'} if $columns->[$i]{'align'};
+      $style{'width'}      ||= $columns->[$i]{'width'} if $columns->[$i]{'width'};
       
       $cell->{'style'} = join ';', map { join ':', $_, $style{$_} } keys %style;
       
