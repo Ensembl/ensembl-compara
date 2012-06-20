@@ -41,13 +41,11 @@ sub content {
   foreach my $pop_name (sort(keys(%$pop_freq))) {
     my $values = '';
     my $p_name = (split(':',$pop_name))[1];
-    foreach my $afreq (@{$pop_freq->{$pop_name}}) {
-      my ($allele,$freq) = split(':',$afreq);
-      
-      if (!grep {$allele eq $_} @alleles) {
-        push (@alleles, $allele);
-      }
-    }
+    foreach my $ssid (keys %{$pop_freq->{$pop_name}}) {
+			foreach my $allele (keys %{$pop_freq->{$pop_name}{$ssid}}) {
+        push (@alleles, $allele) if (!grep {$allele eq $_} @alleles);
+     	}
+		}	
   }
   
   # Create graphs
@@ -60,23 +58,25 @@ sub content {
     $p_name =~ /phase_1_(.+)/; # Gets a shorter name for the display
     my $short_name = ($1) ? $1 : $p_name;
     
-    my @freqs;
-    my $af;
-    
+    #my @freqs;
+    #my $af;
+		
     # Constructs the array for the pie charts: [allele,frequency]
     foreach my $al (@alleles) {
       my $al_flag = 0;
       my $al_freq = 0;
-      foreach my $afreq (@{$pop_freq->{$pop_name}}) {
-        my ($allele,$freq) = split(':',$afreq);
-        if ($al eq $allele and $freq != 0)  {
-          $values .= ',' if ($values ne '');
-          $freq = 0.5 if ($freq < 0.5); # Fixed bug if freq between 0 and 0.5
-          $values .= "['$allele',$freq]";
-          last;
-        }
-      }
-    }
+			foreach my $ssid (keys %{$pop_freq->{$pop_name}}) {
+
+        next if (!$pop_freq->{$pop_name}{$ssid}{$al});
+					
+			  my $freq = $pop_freq->{$pop_name}{$ssid}{$al};
+					
+        $values .= ',' if ($values ne '');
+        $freq = 0.5 if ($freq < 0.5); # Fixed bug if freq between 0 and 0.5
+        $values .= "['$al',$freq]";
+        last;
+    	}
+		}
     my $border = $short_name eq 'ALL' ? '2px' : '1px';
     $input  .= qq{<input type="hidden" class="population" value="[$values]" />};
     $graph  .= qq{<td style="border:$border solid #000">&nbsp;<b>$short_name</b><div id="graphHolder$graph_id" style="width:118px;height:50px;"></div></td>};
@@ -100,7 +100,7 @@ sub content {
 
 sub format_frequencies {
   my ($self, $freq_data) = @_;
-  my $hub        = $self->hub;
+  my $hub = $self->hub;
   my $pop_freq;
   
    foreach my $pop_id (keys %$freq_data) {
@@ -110,13 +110,12 @@ sub format_frequencies {
       next if($freq_data->{$pop_id}{$ssid}{failed_desc});
       # Freqs alleles ---------------------------------------------
       my @allele_freq = @{$freq_data->{$pop_id}{$ssid}{'AlleleFrequency'}};
-      
       foreach my $gt (@{$freq_data->{$pop_id}{$ssid}{'Alleles'}}) {
         next unless $gt =~ /(\w|\-)+/;
         
         my $freq = $self->format_number(shift @allele_freq);
         if ($freq ne 'unknown' and $freq != 0) {
-          push (@{$pop_freq->{$pop_name}}, "$gt:$freq");
+          $pop_freq->{$pop_name}{$ssid}{$gt} = $freq;
         }
       }
     }
@@ -131,9 +130,7 @@ sub format_number {
   ### Returns "unknown" if null or formats the number to 3 decimal places
 
   my ($self, $number) = @_;
-  if (defined $number) {
-    $number = $number*100;
-  }
+  $number = $number*100 if (defined $number);
   return defined $number ? sprintf '%.2f', $number : 'unknown';
 }
 
