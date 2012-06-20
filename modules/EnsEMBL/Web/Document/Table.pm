@@ -63,7 +63,7 @@ sub render {
   my $padding     = $options->{'cellpadding'} || 0;
   my $spacing     = $options->{'cellspacing'} || 0;
   my $align       = $options->{'align'}       || 'autocenter';
-  my $table_id    = $options->{'id'} ? qq{ id="$options->{'id'}" } : '';
+  my $table_id    = $options->{'id'} ? qq( id="$options->{'id'}" ) : '';
   my $data_table  = $options->{'data_table'};
   my $toggleable  = $options->{'toggleable'};
   my %table_class = map { $_ => 1 } split ' ', $options->{'class'};
@@ -97,7 +97,7 @@ sub render {
       
       foreach my $header (@{$self->{'spanning'}}) {
         my $span = $header->{'colspan'} || 1;
-        $thead .= qq{<th colspan="$span"><em>$header->{'title'}</em></th>};
+        $thead .= qq(<th colspan="$span"><em>$header->{'title'}</em></th>);
       }
       
       $thead .= '</tr>';
@@ -111,13 +111,13 @@ sub render {
   $thead  = "<thead>$thead</thead>" if $thead;
   $tbody  = "<tbody>$tbody</tbody>" if $tbody;
   
-  my $table = qq{
+  my $table = qq(
     <table$table_id class="$class" style="width:$width;margin:$margin;$options->{'style'}" cellpadding="$padding" cellspacing="$spacing">
       $thead
       $tbody
     </table>
     $config
-  };
+  );
   
   if ($data_table && $options->{'exportable'} ne '0') {
     my $id       = $options->{'id'};
@@ -264,7 +264,7 @@ sub process {
     $col->{'class'} .= ($col->{'class'} ? ' ' : '') . "sort_$col->{'sort'}" if $col->{'sort'};
     $col->{'title'}  = $col->{'help'} if $col->{'help'};
     
-    push @{$head[0]}, sprintf '<th%s>%s</th>', join('', map { $col->{$_} ? qq{ $_="$col->{$_}"} : () } qw(id class title style colspan rowspan)), $label;
+    push @{$head[0]}, sprintf '<th%s>%s</th>', join('', map { $col->{$_} ? qq( $_="$col->{$_}") : () } qw(id class title style colspan rowspan)), $label;
   }
   
   $head[1] = ' class="ss_header"';
@@ -288,12 +288,12 @@ sub process {
       
       $cell->{'style'} = join ';', map { join ':', $_, $style{$_} } keys %style;
       
-      $cell = sprintf '<td%s>%s</td>', join('', map { $cell->{$_} ? qq{ $_="$cell->{$_}"} : () } qw(id class title style colspan rowspan)), $cell->{'value'};
+      $cell = sprintf '<td%s>%s</td>', join('', map { $cell->{$_} ? qq( $_="$cell->{$_}") : () } qw(id class title style colspan rowspan)), $cell->{'value'};
       
       $i++;
     }
     
-    push @body, [ \@cells, join('', map { $options->{$_} ? qq{ $_="$options->{$_}"} : () } qw(id class style valign)) ];
+    push @body, [ \@cells, join('', map { $options->{$_} ? qq( $_="$options->{$_}") : () } qw(id class style valign)) ];
   }
   
   return (\@head, \@body);
