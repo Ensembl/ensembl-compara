@@ -26,6 +26,7 @@ my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
 my $member_adaptor = $comparaDBA->get_MemberAdaptor;
 my $homology_adaptor = $comparaDBA->get_HomologyAdaptor;
 my $genetreenode_adaptor = $comparaDBA->get_GeneTreeNodeAdaptor;
+my $ncbitaxon_adaptor = $comparaDBA->get_NCBITaxonAdaptor;
 
 my $genes = $human_gene_adaptor->fetch_all_by_external_name('BRCA2');
 
@@ -49,7 +50,7 @@ foreach my $gene (@$genes) {
     print $node_a->stable_id, ",",
           $node_b->stable_id, ",",
           $ancestor->get_tagvalue("taxon_name"), ",",
-          $ancestor->get_tagvalue("taxon_alias_mya"), ",",
+          $ncbitaxon_adaptor->fetch_by_dbID($ancestor->get_tagvalue('taxon_id'))->get_tagvalue('ensembl timetree mya'), ",",
           $tree->get_tagvalue("taxon_name"), ",",
           $distance_a, ",",
           $distance_b, "\n";
