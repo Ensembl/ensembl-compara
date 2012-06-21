@@ -57,7 +57,7 @@ sub content {
 
     if (scalar(@faqs) == 1) {
 
-      $html .= sprintf('<h3>%s</h3><p>%s</p>', $faqs[0]->{'question'}, $faqs[0]->{'answer'});
+      $html .= sprintf('<h3>%s</h3><p>%s</p>', $faqs[0]->{'question'}, $self->parse_help_html($faqs[0]->{'answer'}, $adaptor));
 
       $html .= qq(<ul><li><a href="/Help/Faq" class="popup">More FAQs</a></li></ul>);
     }
