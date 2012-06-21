@@ -16,30 +16,11 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my $hub = $self->hub;
-
+  my $self    = shift;
+  my $hub     = $self->hub;
   my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
 
-  my $html;
-
-  my @records = @{$adaptor->fetch_help_by_ids([$hub->param('id')])};
-  
-  if (@records) {
-    my $help = $records[0];
-    my $content = $help->{'content'};
-    ### Parse help looking for embedded movie placeholders
-    foreach my $line (split('\n', $content)) {
-      if ($line =~ /\[\[movie=(\d+)/i) {
-        my $movies = $adaptor->fetch_help_by_ids([$1]) || [];
-        $line = $self->embed_movie($movies->[0]);
-      }
-      
-      $html .= $line;
-    }
-  }
-
-  return $html;
+  return $self->parse_help_html($_->{'content'}, $adaptor) for @{$adaptor->fetch_help_by_ids([$hub->param('id')]) || []};
 }
 
 1;
