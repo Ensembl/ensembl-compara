@@ -20,8 +20,8 @@ sub embed_movie {
 
   return sprintf '
     <h3>%s</h3>
-    <div><iframe width="640" height="480" src="http://www.youtube-nocookie.com/embed/%s" frameborder="0" allowfullscreen="allowfullscreen" style="margin:0 auto"></iframe></div>
-    <p><a href="http://www.youtube.com/user/EnsemblHelpdesk"><img alt="" src="%s/img/youtube.png" /></a></p>',
+    <p class="space-below"><iframe width="640" height="480" src="http://www.youtube-nocookie.com/embed/%s" frameborder="0" allowfullscreen="allowfullscreen" style="margin:0 auto"></iframe></p>
+    <p class="space-below"><a href="http://www.youtube.com/user/EnsemblHelpdesk"><img alt="" src="%s/img/youtube.png" /></a></p>',
     $movie->{'title'}, $movie->{'youtube_id'}, $self->hub->species_defs->ENSEMBL_STATIC_SERVER;
 }
 
