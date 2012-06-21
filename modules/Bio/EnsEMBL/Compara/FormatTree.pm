@@ -83,7 +83,7 @@ Method_caller : "C(" string ( "," string )(s?) ")"
     "C";
 }
 
-Letter_code : "n" | "c" | "d" | "t" | "r" | "l" | "L" | "h" | "s" | "p" | "m" | "g" | "i" | "e" | "o" | "x" | "S" | "N" | "P" | "E" | Tag_reader | Method_caller
+Letter_code : "n" | "c" | "d" | "t" | "r" | "l" | "L" | "h" | "s" | "p" | "m" | "g" | "i" | "o" | "x" | "S" | "N" | "P" | "E" | Tag_reader | Method_caller
 
 preliteral  : string
 {
@@ -170,12 +170,6 @@ my $distance_to_parent_cb = sub {
 my $genbank_common_name = sub {
   my ($self) = @_;
   return $self->{tree}->get_tagvalue('genbank common name');
-};
-
-# C(common_name)
-my $ensembl_common_name = sub {
-  my ($self) = @_;
-  return $self->{tree}->common_name;
 };
 
 # T(ensembl timetree mya)
@@ -322,7 +316,6 @@ my $method_cb = sub {
 my %callbacks = (
         'n' => $name_cb,
         'c' => $genbank_common_name,
-        'e' => $ensembl_common_name,
         'd' => $distance_to_parent_cb,
         't' => $ensembl_timetree_mya_cb,
         'g' => $gdb_id_cb,
