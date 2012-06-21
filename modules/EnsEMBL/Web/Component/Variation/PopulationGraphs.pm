@@ -35,6 +35,7 @@ sub content {
   my $graph_id = 0;
   my $count    = 1;
   my $line_lim = 5;
+	my $height   = 50;
   
   my @alleles;
   # Get alleles list
@@ -43,11 +44,20 @@ sub content {
     my $p_name = (split(':',$pop_name))[1];
     foreach my $ssid (keys %{$pop_freq->{$pop_name}}) {
 			foreach my $allele (keys %{$pop_freq->{$pop_name}{$ssid}}) {
-        push (@alleles, $allele) if (!grep {$allele eq $_} @alleles);
+				my $freq = $pop_freq->{$pop_name}{$ssid}{$allele};
+        push (@alleles, $allele) if ((!grep {$allele eq $_} @alleles) && $freq>0);
      	}
 		}	
   }
-  
+	
+	my $nb_alleles = scalar(@alleles);
+	if ($nb_alleles>2) {
+		while ($nb_alleles != 2) {
+			$height += 5;
+			$nb_alleles --;
+		}
+	}
+ 
   # Create graphs
   foreach my $pop_name (sort {($a !~ /ALL/) cmp ($b !~ /ALL/) || $a cmp $b} (@pop_phase1)) {
     
@@ -57,14 +67,9 @@ sub content {
     my $p_name = join(':',@pop_names);
     $p_name =~ /phase_1_(.+)/; # Gets a shorter name for the display
     my $short_name = ($1) ? $1 : $p_name;
-    
-    #my @freqs;
-    #my $af;
 		
     # Constructs the array for the pie charts: [allele,frequency]
     foreach my $al (@alleles) {
-      my $al_flag = 0;
-      my $al_freq = 0;
 			foreach my $ssid (keys %{$pop_freq->{$pop_name}}) {
 
         next if (!$pop_freq->{$pop_name}{$ssid}{$al});
@@ -77,9 +82,10 @@ sub content {
         last;
     	}
 		}
+		
     my $border = $short_name eq 'ALL' ? '2px' : '1px';
     $input  .= qq{<input type="hidden" class="population" value="[$values]" />};
-    $graph  .= qq{<td style="border:$border solid #000">&nbsp;<b>$short_name</b><div id="graphHolder$graph_id" style="width:118px;height:50px;"></div></td>};
+    $graph  .= qq{<td style="border:$border solid #000">&nbsp;<b>$short_name</b><div id="graphHolder$graph_id" style="width:118px;height:$height\px;"></div></td>};
     $graph  .= qq{<td style="width:15px"></td>} if ($short_name eq 'ALL');
     
     if ($count == $line_lim) { 
@@ -114,7 +120,7 @@ sub format_frequencies {
         next unless $gt =~ /(\w|\-)+/;
         
         my $freq = $self->format_number(shift @allele_freq);
-        if ($freq ne 'unknown' and $freq != 0) {
+        if ($freq ne 'unknown') {
           $pop_freq->{$pop_name}{$ssid}{$gt} = $freq;
         }
       }
