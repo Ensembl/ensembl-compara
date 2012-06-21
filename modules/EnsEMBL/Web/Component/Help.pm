@@ -33,5 +33,22 @@ sub embed_movie {
   return $html;
 }
 
+sub parse_help_html {
+  my ($self, $content, $adaptor) = @_;
+
+  my $html;
+
+  ### Parse help looking for embedded movie placeholders
+  foreach my $line (split('\n', $content)) {
+    if ($line =~ /\[\[movie=(\d+)/i) {
+      $line = $self->embed_movie(@{$adaptor->fetch_help_by_ids([$1]) || []});
+    }
+
+    $html .= $line;
+  }
+
+  return $html;
+}
+
 
 1;
