@@ -1947,15 +1947,17 @@ sub dumpGene {
 
     my %gene_trans_syns = ();
     if ($sitetype eq 'Vega') {
-#      print LOG "    Getting gene and transcript synonyms ".&date_and_mem()."\n";
+      print LOG "    Getting gene and transcript synonyms ".&date_and_mem()."\n";
+      my ($gc,$tc) = (0,0);
       my $sql = qq(
          SELECT g.stable_id, ga.value
            FROM $dbname.gene g, $dbname.gene_attrib ga, $dbname.attrib_type at
-          WHERE i.gene_id = ga.gene_id
+          WHERE g.gene_id = ga.gene_id
             AND ga.attrib_type_id = at.attrib_type_id
             AND at.code = 'synonym');
-      my $T = $conf->{'dbh'}->selectall_arrayref($sql);
-      foreach (@$T) {
+      my $G = $conf->{'dbh'}->selectall_arrayref($sql);
+      foreach (@$G) {
+        $gc++;
         push @{$gene_trans_syns{$_->[0]}},$_->[1];
       }
       $sql = qq(
@@ -1964,11 +1966,12 @@ sub dumpGene {
           WHERE t.transcript_id = ta.transcript_id
             AND ta.attrib_type_id = at.attrib_type_id
             AND at.code = 'synonym');
-      $T = $conf->{'dbh'}->selectall_arrayref($sql);
+      my $T = $conf->{'dbh'}->selectall_arrayref($sql);
       foreach (@$T) {
+        $tc++;
         push @{$gene_trans_syns{$_->[0]}},$_->[1];
       }
-#      print LOG "    Got gene and transcript synonyms ".&date_and_mem()."\n";
+      print LOG "    Got $gc gene and $tc transcript synonyms ".&date_and_mem()."\n";
     }
 
     #disconnect and then connect to free up memory
@@ -2052,8 +2055,8 @@ sub dumpGene {
         $old = {
           'gid'       => $gid,
           'gsid'      => { $gsid => $gver },
-          'tlsids'    => { $tlsid ? ($tlsid => $tver)  :()},
-          'tsids'     => { $tsid  ? ($tsid  => $tlver) :()},
+          'tlsids'    => { $tlsid ? ($tlsid => $tlver)  :()},
+          'tsids'     => { $tsid  ? ($tsid  => $tver) :()},
           'desc'      => $desc,
           'exons'     => {},
           'biotype'   => $biotype,
@@ -2089,8 +2092,8 @@ sub dumpGene {
         }
       }
       else {
-        $old->{'tsids' }{$tsid }=1;
-        $old->{'tlsids'}{$tlsid}=1 if $tlsid;
+        $old->{'tsids' }{$tsid }= ($tsid  => $tver);
+        $old->{'tlsids'}{$tlsid}= ($tlsid => $tlver) if $tlsid;
         push @{$old->{'synonyms'}}, @{$gene_trans_syns{$tsid}||[]};
 
         #add xref details
