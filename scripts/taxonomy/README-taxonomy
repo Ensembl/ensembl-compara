@@ -7,19 +7,7 @@
             $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/taxonomy/ensembl_aliases.sql needs to be updated
             as new species are integrated into Ensembl.
 
-		WARNING: This must be updated with the retirement of some keys
-            Make sure that for each species, the following name types are provided:
-                - ensembl alias names
-                - ensembl common name
-
-            The basic rule for "ensembl common name" is to use "genbank common name"
-            or any of "common name" available. If they don't exist you are free to invent one.
-            This is used in the download page:
-                http://www.ensembl.org/info/data/download.html
-                http://www.ensembl.org/info/about/species.html
-
-            The other source of info is here:
-                http://www.intlgenome.org/viewDatabase.cfm
+            Make sure that for each species, 'ensembl alias name' is provided.
 
 		NB: The following two keys are only used by Compara and Production does not need to update them
             For the Compara analysis, the ancestral species must be fully updated:

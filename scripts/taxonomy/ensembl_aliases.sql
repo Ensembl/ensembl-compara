@@ -1,4 +1,4 @@
---  set the "ensembl alias name" and "ensembl common name" for each species used in Ensembl
+--  set the "ensembl alias name" for each species used in Ensembl
 --  this values are also uploaded in the meta table of each core db and then used by
 --  the web code for display.
 
