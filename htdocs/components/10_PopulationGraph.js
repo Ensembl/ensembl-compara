@@ -18,7 +18,7 @@ Ensembl.Panel.PopulationGraph = Ensembl.Panel.extend({
   getContent: function () {
     var alleles   = [ 'A', 'T', 'G', 'C' ];
     var acolours  = [ '#00BB00', '#FF0000', '#FFD700', '#0000FF' ];
-    var bcolours  = [ '#FF00FF', '#000000', '#008080', '#7B68EE' ]; // Other colours if the allele is not A, T, G or C
+    var bcolours  = [ '#222222', '#FF00FF', '#008080', '#7B68EE' ]; // Other colours if the allele is not A, T, G or C
     var graphData = [];
     var i, j, k, raphael, pieData, pieColors, piePercent, b, colourFlag;
     
@@ -33,7 +33,8 @@ Ensembl.Panel.PopulationGraph = Ensembl.Panel.extend({
       piePercent = [];
       raphael    = Raphael('graphHolder' + i);
       raphael.g.txtattr.font = "12px 'Luxi Sans','Helvetica', sans-serif";
-            
+      b = 0;      
+      
       // For each allele
       for (j in graphData[i]) {
         pieData.push(graphData[i][j][1]);
