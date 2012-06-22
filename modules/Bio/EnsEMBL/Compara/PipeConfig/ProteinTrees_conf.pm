@@ -99,7 +99,7 @@ sub default_options {
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'release'               => '68',
-        'rel_suffix'            => '',    # an empty string by default, a letter otherwise
+        'rel_suffix'            => 'h',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
         'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
 
@@ -181,7 +181,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'sf5_ensembl_compara_master',
+            -dbname => 'mm14_tmp_master',
         },
 
         'staging_loc1' => {                     # general location of half of the current release core databases
@@ -207,15 +207,17 @@ sub default_options {
 
 
         # "production mode"
+        #'reuse_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
         'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
         'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
-        'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
+        'curr_file_sources_locs'    => [ '/lustre/scratch101/ensembl/mm14/gibbon/species_list.json' ],
+        'prev_release'              => 68,   # 0 is the default and it means "take current release number and subtract 1"
         'reuse_db' => {   # usually previous release database on compara1
            -host   => 'compara3',
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'mm14_ensembl_compara_67',
+           -dbname => 'mm14_compara_homology_67',
         },
 
         ## mode for testing the non-Blast part of the pipeline: reuse all Blasts
@@ -448,6 +450,7 @@ sub pipeline_analyses {
             -parameters => {
                 'registry_dbs'  => $self->o('curr_core_sources_locs'),
                 'db_version'    => $self->o('release'),
+                'registry_files'    => $self->o('curr_file_sources_locs'),
             },
             -batch_size => 500,
             -hive_capacity => -1,
@@ -631,12 +634,25 @@ sub pipeline_analyses {
         {   -logic_name => 'genome_loadfresh_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id#',
+                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id# AND locator LIKE "Bio::EnsEMBL::DBSQL::DBAdaptor/%"',
                 'fan_branch_code'   => 2,
             },
             -hive_capacity => -1,
             -flow_into => {
                 2 => [ 'load_fresh_members', 'paf_create_empty_table' ],
+                1 => [ 'genome_loadfresh_fromfile_factory' ],
+            },
+        },
+
+        {   -logic_name => 'genome_loadfresh_fromfile_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id# AND locator NOT LIKE "Bio::EnsEMBL::DBSQL::DBAdaptor/%"',
+                'fan_branch_code'   => 2,
+            },
+            -hive_capacity => -1,
+            -flow_into => {
+                2 => [ 'load_fresh_members_fromfile', 'paf_create_empty_table' ],
             },
         },
 
@@ -645,6 +661,12 @@ sub pipeline_analyses {
             -parameters => {
                 'store_related_pep_sequences' => 1,
             },
+            -hive_capacity => -1,
+            -rc_name => '2Gb_job',
+        },
+
+        {   -logic_name => 'load_fresh_members_fromfile',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembersFromFiles',
             -hive_capacity => -1,
             -rc_name => '2Gb_job',
         },
