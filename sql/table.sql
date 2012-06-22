@@ -1059,8 +1059,6 @@ CREATE TABLE CAFE_tree (
        lambdas                    varchar(100),
        p_value_lim                double(5,4),
 
-       FOREIGN KEY (root_id) REFERENCES CAFE_tree_node(root_id),
-#       FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
        PRIMARY KEY (root_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
