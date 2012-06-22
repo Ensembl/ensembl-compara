@@ -421,6 +421,7 @@ sub connect_to_genome_locator {
 
   my $genomeDBA = undef;
   eval {$genomeDBA = Bio::EnsEMBL::DBLoader->new($self->locator); };
+  warn "The locator could not be loaded because: $@" if $@;
   return $genomeDBA;
 }
 
