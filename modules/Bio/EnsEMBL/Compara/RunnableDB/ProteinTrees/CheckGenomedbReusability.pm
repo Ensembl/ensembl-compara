@@ -37,6 +37,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusabilit
 
 use strict;
 use Scalar::Util qw(looks_like_number);
+use Digest::MD5 qw(md5_hex);
+
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
@@ -106,16 +108,36 @@ sub fetch_input {
             return;
         }
 
-            # now use the registry to find the previous release core database candidate:
-
-        Bio::EnsEMBL::Registry->no_version_check(1);
-
-            # load the prev.release registry:
-        foreach my $prev_reg_conn (@{ $self->param('registry_dbs') }) {
-            Bio::EnsEMBL::Registry->load_registry_from_db( %{ $prev_reg_conn }, -db_version => $prev_release, -species_suffix => $suffix_separator.$prev_release );
+        if (not comes_from_core_database($reuse_genome_db) and comes_from_core_database($genome_db)) {
+            $self->warning("Cannot compare a 'core' species to a reused 'file' species ($species_name)");
+            $self->param('reuse_this', 0);
+            return;
         }
 
-        if( my $prev_core_dba = $self->param('prev_core_dba', Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$suffix_separator.$prev_release, 'core')) ) {
+        $self->param('genome_db', $genome_db);
+        $self->param('reuse_genome_db', $reuse_genome_db);
+
+        my $prev_core_dba;
+
+        if (comes_from_core_database($genome_db)) {
+            
+            # now use the registry to find the previous release core database candidate:
+
+            Bio::EnsEMBL::Registry->no_version_check(1);
+
+            # load the prev.release registry:
+            foreach my $prev_reg_conn (@{ $self->param('registry_dbs') }) {
+                Bio::EnsEMBL::Registry->load_registry_from_db( %{ $prev_reg_conn }, -db_version => $prev_release, -species_suffix => $suffix_separator.$prev_release );
+            }
+            $prev_core_dba = $self->param('prev_core_dba', Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$suffix_separator.$prev_release, 'core'));
+
+        } else {
+
+            $prev_core_dba = $reuse_genome_db->db_adaptor;
+
+        }
+
+        if ($prev_core_dba) {
             my $curr_core_dba = $self->param('curr_core_dba', $genome_db->db_adaptor);
 
             my $curr_assembly = $curr_core_dba->extract_assembly_name;
@@ -145,21 +167,23 @@ sub run {
 
     return if(defined($self->param('reuse_this')));  # bypass run() in case 'reuse_this' has either been passed or already computed
 
-    my $species_name    = $self->param('species_name');
-    my $prev_core_dba   = $self->param('prev_core_dba');
-    my $curr_core_dba   = $self->param('curr_core_dba');
+    my ($prev_hash, $curr_hash);
+    if (comes_from_core_database($self->param('genome_db'))) {
+        $prev_hash = hash_all_exons_from_dbc( $self->param('prev_core_dba') );
+        $curr_hash = hash_all_exons_from_dbc( $self->param('curr_core_dba') );
+    } else {
+        $prev_hash = hash_all_sequences_from_db( $self->param('reuse_genome_db') );
+        $curr_hash = hash_all_sequences_from_file( $self->param('genome_db') );
+    }
+    my ($removed, $remained1) = check_hash_equals($prev_hash, $curr_hash);
+    my ($added, $remained2)   = check_hash_equals($curr_hash, $prev_hash);
 
-    my $prev_exons = hash_all_exons_from_dbc( $prev_core_dba );
-    my $curr_exons = hash_all_exons_from_dbc( $curr_core_dba );
-    my ($removed, $remained1) = check_presence($prev_exons, $curr_exons);
-    my ($added, $remained2)   = check_presence($curr_exons, $prev_exons);
-
-    my $coding_exons_differ = $added || $removed;
-    if($coding_exons_differ) {
-        $self->warning("The coding exons changed: $added hash keys were added and $removed were removed");
+    my $coding_objects_differ = $added || $removed;
+    if($coding_objects_differ) {
+        $self->warning("The coding objects changed: $added hash keys were added and $removed were removed");
     }
 
-    $self->param('reuse_this', $coding_exons_differ ? 0 : 1);
+    $self->param('reuse_this', $coding_objects_differ ? 0 : 1);
 }
 
 
@@ -187,6 +211,10 @@ sub write_output {      # store the genome_db and dataflow
 
 # ------------------------- non-interface subroutines -----------------------------------
 
+sub comes_from_core_database {
+    my $genome_db = shift;
+    return ($genome_db->locator =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/ ? 1 : 0);
+}
 
 sub Bio::EnsEMBL::DBSQL::DBAdaptor::extract_assembly_name {
     my $self = shift @_;
@@ -225,14 +253,42 @@ sub hash_all_exons_from_dbc {
     return \%exon_set;
 }
 
+sub hash_all_sequences_from_db {
+    my $genome_db = shift;
 
-sub check_presence {
-    my ($from_exons, $to_exons) = @_;
+    my $sql = 'SELECT stable_id, MD5(sequence) FROM member JOIN sequence USING (sequence_id) WHERE genome_db_id = ?';
+    my $sth = $genome_db->adaptor->dbc->prepare($sql);
+    $sth->execute($genome_db->dbID);
+
+    my %sequence_set = ();
+
+    while(my ($stable_id, $seq_md5) = $sth->fetchrow()) {
+        $sequence_set{$stable_id} = lc $seq_md5;
+    }
+
+    return \%sequence_set;
+}
+
+sub hash_all_sequences_from_file {
+    my $genome_db = shift;
+
+    my $prot_seq = $genome_db->db_adaptor->get_protein_sequences;
+
+    my %sequence_set = ();
+
+    foreach my $stable_id (keys %$prot_seq) {
+        $sequence_set{$stable_id} = lc md5_hex($prot_seq->{$stable_id}->seq);
+    }
+    return \%sequence_set;
+}
+
+sub check_hash_equals {
+    my ($from_hash, $to_hash) = @_;
 
     my @presence = (0, 0);
 
-    foreach my $from_exon (keys %$from_exons) {
-        $presence[ exists($to_exons->{$from_exon}) ? 1 : 0 ]++;
+    foreach my $stable_id (keys %$from_hash) {
+        $presence[ (exists($to_hash->{$stable_id}) and ($to_hash->{$stable_id} eq $from_hash->{$stable_id})) ? 1 : 0 ]++;
     }
     return @presence;
 }

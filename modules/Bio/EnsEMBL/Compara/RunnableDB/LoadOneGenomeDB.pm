@@ -71,6 +71,7 @@ use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Compara::GenomeDB;
+use Bio::EnsEMBL::Compara::GenomeMF;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -97,21 +98,14 @@ sub fetch_input {
             $self->param('locator', $core_dba->locator() );  # substitute the given locator by one in conventional format
         }
 
-    } elsif( my $species_name = $self->param('species_name') ) {    # perform our tricky multiregistry search: find the last one still suitable
+    } elsif( $self->param('species_name') ) {    # perform our tricky multiregistry search: find the last one still suitable
 
         my $genebuild = $self->param('genebuild');
 
-        my $registry_dbs = $self->param('registry_dbs') || die "unless 'locator' is specified, 'registry_dbs' becomes obligatory parameter";
+        foreach my $this_core_dba (@{$self->iterate_through_registered_species}) {
 
-        for(my $r_ind=0; $r_ind<scalar(@$registry_dbs); $r_ind++) {
-
-            Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $suffix_separator.$r_ind, -db_version => $self->param('db_version') );
-
-
-	    my $no_alias_check = 1;
-            my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$suffix_separator.$r_ind, 'core', $no_alias_check) || next;
             my $this_assembly = $this_core_dba->extract_assembly_name();
-	    my $this_start_date = $this_core_dba->get_MetaContainer->get_genebuild();
+            my $this_start_date = $this_core_dba->get_MetaContainer->get_genebuild();
 
             $genebuild ||= $this_start_date;
             $assembly_name ||= $this_assembly;
@@ -160,7 +154,7 @@ sub run {
     my $genome_db_id    = $self->param('genome_db_id')      || undef;
     my $genebuild       = $meta_container->get_genebuild()    || '';
     my $genome_name     = $meta_container->get_production_name() or die "Could not fetch production_name, please investigate";
-    my $locator		    = $self->param('locator') || $core_dba->locator();
+    my $locator         = $self->param('locator') || $core_dba->locator();
 
     my $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new();
     $genome_db->dbID( $genome_db_id );
@@ -190,6 +184,32 @@ sub write_output {      # store the genome_db and dataflow
 }
 
 # ------------------------- non-interface subroutines -----------------------------------
+
+sub iterate_through_registered_species {
+    my $self = shift;
+
+    my $registry_dbs = $self->param('registry_dbs');
+    my $registry_files = $self->param('registry_files');
+    $registry_dbs || $registry_files || die "unless 'locator' is specified, 'registry_dbs' or 'registry_files' become obligatory parameter";
+
+    my @core_dba_list = ();
+
+    for(my $r_ind=0; $r_ind<scalar(@$registry_dbs); $r_ind++) {
+        Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $suffix_separator.$r_ind, -db_version => $self->param('db_version') );
+
+        my $no_alias_check = 1;
+        my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($self->param('species_name').$suffix_separator.$r_ind, 'core', $no_alias_check) || next;
+        push @core_dba_list, $this_core_dba;
+    }
+
+    for(my $r_ind=0; $r_ind<scalar(@$registry_files); $r_ind++) {
+
+        my $reg_content = Bio::EnsEMBL::Compara::GenomeMF->all_from_file( $registry_files->[$r_ind] );
+        push @core_dba_list, grep {$_->get_production_name() eq $self->param('species_name')} @$reg_content;
+    }
+
+    return \@core_dba_list;
+}
 
 sub Bio::EnsEMBL::DBSQL::DBAdaptor::extract_assembly_name {  # with much regret I have to introduce the highly demanded method this way
     my $self = shift @_;
