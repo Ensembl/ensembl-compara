@@ -486,6 +486,7 @@ sub sync_with_registry {
   my $genomeDBs = $self->fetch_all();
 
   foreach my $genome_db (@{$genomeDBs}) {
+    next if $genome_db->locator and not $genome_db->locator =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/;
     my $coreDBA;
     my $registry_name;
     if ($genome_db->assembly) {
