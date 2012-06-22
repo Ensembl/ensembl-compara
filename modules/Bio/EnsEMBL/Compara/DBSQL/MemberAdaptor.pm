@@ -36,6 +36,7 @@ sub member_cache {
   return $result ; 
 }  
 
+
 =head2 fetch_by_dbID
 
   Arg [1]    : int $id
@@ -48,6 +49,7 @@ sub member_cache {
   Caller     : general
 
 =cut
+
 sub fetch_by_dbID {
   my ($self,$id) = @_;
 
@@ -77,8 +79,6 @@ sub fetch_by_dbID {
 }
 
 
-
-
 sub fetch_by_dbIDs {
   my $self = shift;
 
@@ -87,15 +87,14 @@ sub fetch_by_dbIDs {
   return $self->generic_fetch($constraint);
 }
 
-sub fetch_all_by_sequence_id {
-  my ($self, $sequence_id) = @_;
 
-  $self->throw("sequence_id arg is required\n")
-    unless (defined($sequence_id));
+sub fetch_by_sequence_id {
+    my ($self, $sequence_id) = @_;
 
-  my $constraint = "m.sequence_id = $sequence_id";
-  return $self->generic_fetch($constraint);
+    my ($member) = @{ $self->generic_fetch( "m.sequence_id = $sequence_id", undef, "LIMIT 1" )};
+    return $member;
 }
+
 
 =head2 fetch_by_source_stable_id
 

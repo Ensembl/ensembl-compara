@@ -20,20 +20,20 @@ sub write_output {
 
     my $mcl_name        = $self->param('mcl_name')      || die "'mcl_name' is an obligatory parameter, please set it in the input_id hashref";
     my $family_prefix   = $self->param('family_prefix') || 'ENSF';
-    my $family_offset   = $self->param('family_offset') || 1;
+    my $family_offset   = $self->param('family_offset') || 0;
 
     my $compara_dba     = $self->compara_dba();
 
         # make sure we have the correct $mlss:
-    my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-    $mlss->species_set(\@{$compara_dba->get_GenomeDBAdaptor->fetch_all});
-    $mlss->method_link_type('FAMILY');
+    my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
+        -method             => Bio::EnsEMBL::Compara::Method->new( -type => 'FAMILY'),
+        -species_set_obj    => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $compara_dba->get_GenomeDBAdaptor->fetch_all ),
+    );
     $compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
-
 
     my $fa            = $compara_dba->get_FamilyAdaptor();
     my $ma            = $compara_dba->get_MemberAdaptor();
-    my $cluster_index = 0;
+    my $cluster_index = 1;
 
     open (MCL, $mcl_name) || die "could not open '$mcl_name' for reading: $!";
     while (my $line = <MCL>) {
@@ -51,25 +51,23 @@ sub write_output {
 
         my $family_stable_id = sprintf ("$family_prefix%011.0d",$cluster_index + $family_offset);
         my $family = Bio::EnsEMBL::Compara::Family->new_fast({
-            '_stable_id'               => $family_stable_id,
-            '_version'                 => 1,
-            '_method_link_species_set' => $mlss,
-            '_description_score'       => 0,
+            '_stable_id'                    => $family_stable_id,
+            '_version'                      => 1,
+            '_method_link_species_set'      => $mlss,
+            '_method_link_species_set_id'   => $mlss->dbID,
+            '_description_score'            => 0,
         });
 
         foreach my $tab_idx (@cluster_members) {
 
-            my ($member) = @{ $ma->fetch_all_by_sequence_id($tab_idx) };
-            unless($member) {
-                warn "Could not fetch member by sequence_id=$tab_idx";
-            }
-
-            if($member) {
+            if( my $member = $ma->fetch_by_sequence_id($tab_idx) ) {
                 # A funny way to add members to a family.
                 # You cannot do it without introducing a fake AlignedMember, it seems?
                 #
                 bless $member, 'Bio::EnsEMBL::Compara::AlignedMember';
                 $family->add_Member($member);
+            } else {
+                warn "Could not fetch member by sequence_id=$tab_idx";
             }
         }
 
