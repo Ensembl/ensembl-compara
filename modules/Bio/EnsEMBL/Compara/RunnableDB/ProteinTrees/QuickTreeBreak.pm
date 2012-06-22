@@ -83,7 +83,7 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 
 
 =head2 fetch_input
@@ -250,7 +250,8 @@ sub store_supertree {
     #$self->dataflow_output_id({'protein_tree_id' => $node_id}, 2);
     print STDERR "Created new cluster $node_id\n";
   }
-  my $super_align_clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'super-align')->[0];
+  my $super_align_clusterset = $self->fetch_or_create_clusterset('super-align');
+# compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'super-align')->[0];
   $self->store_tree_into_clusterset($self->param('super_align_tree'), $super_align_clusterset);
   $self->param('super_align_tree')->store_tag('other_tree_root_id', $self->param('protein_tree_id'));
   $self->param('original_cluster')->store_tag('other_tree_root_id', $self->param('super_align_tree')->root_id, 1);
