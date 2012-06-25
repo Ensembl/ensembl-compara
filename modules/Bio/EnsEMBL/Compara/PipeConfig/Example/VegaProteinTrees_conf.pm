@@ -57,8 +57,8 @@ sub default_options {
     %{$self->SUPER::default_options},   # inherit the generic ones
 
     # parameters that are likely to change from execution to another:
-    'mlss_id'               => 24,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-    'release'               => '67',
+#    'mlss_id'               => 24,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
+#    'release'               => '67',
     'rel_suffix'            => 'vega',
     'work_dir'              => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/compara_generation/vega_genetree_20120319_67',
     'outgroups'             => [ ],   # affects 'hcluster_dump_input_per_genome'
@@ -123,7 +123,7 @@ sub pipeline_analyses {
     my $name = $_->{'-logic_name'};
     if($name eq 'mcoffee') {
       $_->{'-rc_id'} = 4;
-      $_->{'-flow_into'}->{-2} = ['mcoffee_veryhimem'];
+      $_->{'-flow_into'}->{-2} = ['mcoffee_himem'];
     } elsif($name eq 'dummy_wait_alltrees') {
       push @{$_->{'-wait_for'}},'mcoffee_veryhimem','mcoffee_mafft';
     }
