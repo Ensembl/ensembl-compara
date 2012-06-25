@@ -415,7 +415,7 @@ sub pipeline_analyses {
                 2 => [ 'mafft_big'  ],
                 3 => [ 'mafft_main' ],
             },
-            -rc_name => '2GigMem',
+            -rc_name => '4GigMem',
         },
 
         {   -logic_name    => 'mafft_main',
@@ -484,7 +484,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'consensifier' ],
             },
-            -rc_name => 'Urgent',
+            -rc_name => '2GigMem',
         },
 
         {   -logic_name    => 'consensifier',
