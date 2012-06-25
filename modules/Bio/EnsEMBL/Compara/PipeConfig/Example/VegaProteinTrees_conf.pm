@@ -58,9 +58,9 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
 #    'mlss_id'               => 24,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-#    'release'               => '66', # specify and uncomment each run!
+#    'release'               => '67',
     'rel_suffix'            => 'vega',
-#    'work_dir'              => '/lustre/scratch101/sanger/ds23/compara/compara-vega47/ds23_vega_genetree_20111219_66_faster', # specify and uncomment each run
+    'work_dir'              => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/compara_generation/vega_genetree_20120319_67',
     'outgroups'             => [ ],   # affects 'hcluster_dump_input_per_genome'
     'taxlevels'             => [ 'Theria' ],
     'filter_high_coverage'  => 1,   # affects 'group_genomes_under_taxa'
@@ -73,7 +73,7 @@ sub default_options {
       -port   => 5304,
       -user   => 'ottadmin',
       -pass   => $self->o('password'),
-#      -dbname => 'ds23_vega_genetree_20111219_66_faster', # spcify and uncomment each run
+      -dbname => $self->o('ENV', 'USER').'_vega_genetree_20120319_'.$self->o('release'),
     },
 
     # the master database for synchronization of various ids
@@ -83,7 +83,6 @@ sub default_options {
       -user   => 'ottadmin',
       -pass   => $self->o('password'),
       -dbname => 'vega_compara_master',
-#      -dbname => 'vega_compara_master_64',
     },
 
     # switch off the reuse:
@@ -124,6 +123,7 @@ sub pipeline_analyses {
     my $name = $_->{'-logic_name'};
     if($name eq 'mcoffee') {
       $_->{'-rc_id'} = 4;
+      $_->{'-flow_into'}->{-2} = ['mcoffee_himem'];
     } elsif($name eq 'dummy_wait_alltrees') {
       push @{$_->{'-wait_for'}},'mcoffee_veryhimem','mcoffee_mafft';
     }
@@ -131,6 +131,7 @@ sub pipeline_analyses {
   }
   # find mcoffee_himem and use as template for mcoffee_veryhimem and mcoffee_mafft
   my $himem_i;
+
   for(my $i=0;$i<@$analyses;$i++) {
     $himem_i = $i if $analyses->[$i]->{'-logic_name'} eq 'mcoffee_himem';
   }
