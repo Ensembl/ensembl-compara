@@ -23,7 +23,13 @@ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -password <your_pa
 
 =head1 DESCRIPTION  
 
-    The PipeConfig file for CAFE pipeline that should automate most of the tasks
+    The PipeConfig file for CAFE pipeline. It is used as an analysis_topup pipeline.
+
+    ++ For rel68 in ncRNA pipeline it has been run with the following command:
+    init_pipeline.pl modules/Bio/EnsEMBL/Compara/PipeConfig/CAFE_conf.pm -mlss_id 40084 -work_dir /nfs/users/nfs_m/mp12/ensembl_main/ncrna_trees_68 -analysis_topup  -wait_for db_snapshot_after_Rfam_classify -per_family_table 0 -type nc -pipeline_name compara_nctrees_68 -host compara2
+
+    ++ For rel68 in proteinTree pipeline it has benn run with the following command:
+    
 
 =head1 CONTACT
 
@@ -50,13 +56,21 @@ sub default_options {
             'cafe_lambdas'          => '',  # For now, we don't supply lambdas
             'cafe_struct_tree_str'  => '',  # Not set by default
             'cafe_shell'            => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
+
+            'pipeline_db'   => {
+                                -host   => $self->o('host'),
+                                -port   => 3306,
+                                -user   => 'ensadmin',
+                                -pass   => $self->o('password'),
+                                -dbname => $self->o('pipeline_name'),  # redefined (defined also in HiveGeneric_conf.pm) to allow toping up in other user's pipelines
+                               },
            };
 }
 
 ## WARNING!!
 ## Currently init_pipeline.pl doesn't run this method when a pipeline is created with the -analysis_topup option
 ## So make sure that $self->o('work_dir') exists in the filesystem before running the pipeline
-## This method remains here for documentation purposes (to support this warning) and in case the init_pipeline is modified to allow topup analysis create its own commands
+## This method remains here for documentation purposes (to support this warning) and in case the init_pipeline/hive is modified to allow topup analysis create its own commands
 sub pipeline_create_commands {
     my ($self) = @_;
     return [
@@ -68,14 +82,14 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_;
     return {
-            300 => { -desc => 'CAFE'   , 'LSF' => '-S 1024 -q long -M15000000 -R"select[mem>15000] rusage[mem=15000]"' },
+            'cafe_default' => { 'LSF' => '-C0 -M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
+            'cafe' => { 'LSF' => '-S 1024 -q long -M15000000 -R"select[mem>15000] rusage[mem=15000]"' },
            };
 }
 
 sub pipeline_analyses {
     my ($self) = @_;
     return [
-
             {
              -logic_name => 'make_full_species_tree',
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
@@ -98,6 +112,7 @@ sub pipeline_analyses {
              -parameters => {
                              'cafe_species' => $self->o('cafe_species'),
                              'species_tree_meta_key' => $self->o('species_tree_meta_key'),
+                             'mlss_id' => $self->o('mlss_id'),
                             },
              -hive_capacity => -1, # to allow for parallelization
              -flow_into => {
@@ -114,8 +129,11 @@ sub pipeline_analyses {
                              'mlss_id'      => $self->o('mlss_id'),
                              'type'         => $self->o('type'),   # [nc|prot]
                              'perFamTable'  => $self->o('per_family_table'),
+                             'mlss_id'      => $self->o('mlss_id'),
+                             'cafe_shell'   => $self->o('cafe_shell'),
                             },
              -hive_capacity => -1,
+             -rc_name => 'cafe_default',
              -flow_into => {
                             2 => ['CAFE_analysis'],
                            },
@@ -126,13 +144,13 @@ sub pipeline_analyses {
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFEAnalysis',
              -parameters => {
                              'work_dir'             => $self->o('work_dir'),
-                             'cafe_lambdas'         => $self->o('cafe_lambdas'),
+#                             'cafe_lambdas'         => $self->o('cafe_lambdas'),
 #                             'cafe_struct_taxons'  => $self->o('cafe_'),
                              'cafe_struct_tree_str' => $self->o('cafe_struct_tree_str'),
                              'mlss_id'              => $self->o('mlss_id'),
                              'cafe_shell'           => $self->o('cafe_shell'),
                             },
-             -rc_id => 300,
+             -rc_name => 'cafe',
              -hive_capacity => -1,
              -flow_into => {
                             3 => {
