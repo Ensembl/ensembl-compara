@@ -240,23 +240,10 @@ sub pipeline_analyses {
             },
             -hive_capacity  => 10,  # to allow parallel branches
             -flow_into => {
-                1 => [ 'ensembl_name_aliases' ],
-            },
-            -rc_id => 1,
-        },
-
-        {   -logic_name    => 'ensembl_name_aliases',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters    => {
-                'cmd'       => 'mysql '.$self->dbconn_2_mysql('pipeline_db', 1).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/taxonomy/ensembl_aliases.sql',
-            },
-            -hive_capacity  => 10,  # to allow parallel branches
-            -flow_into => {
                 1 => [ 'add_import_date' ],
             },
             -rc_id => 1,
         },
-
 
         {   -logic_name => 'add_import_date',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
