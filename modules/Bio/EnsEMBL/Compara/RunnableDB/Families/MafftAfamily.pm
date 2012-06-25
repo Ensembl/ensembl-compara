@@ -80,8 +80,8 @@ sub run {
 
     # $ENV{MAFFT_BINARIES} = $mafft_root_dir.'/bin'; # not needed (actually, in the way) for newer versions of MAFFT
 
-    # my $cmd_line = "$mafft_executable --anysymbol $mafft_args $pep_file > $mafft_file"; # helps when Uniprot sequence contains 'U' or other funny aminoacid codes
-    my $cmd_line = "$mafft_executable $mafft_args $pep_file > $mafft_file";
+    my $cmd_line = "$mafft_executable --anysymbol $mafft_args $pep_file > $mafft_file"; # helps when Uniprot sequence contains 'U' or other funny aminoacid codes
+    # my $cmd_line = "$mafft_executable $mafft_args $pep_file > $mafft_file";
     if($self->debug) {
         warn "About to execute: $cmd_line\n";
     }
