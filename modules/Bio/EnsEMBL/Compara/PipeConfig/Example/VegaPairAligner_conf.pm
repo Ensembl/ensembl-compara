@@ -65,9 +65,11 @@ sub default_options {
       -port   => 5304,
       -user   => 'ottadmin',
       -pass   => $self->o('password'), 
-      -dbname => $self->o('ENV', 'USER').'_vega_genomicalignment_20120319_'.$self->o('release'),
+      -dbname => $self->o('ENV', 'USER').'_vega_genomicalignment_20120319_'.$self->o('release').'_testing',
     },
 
+    #nmeed to overwrite the value from ../Lastz_conf.pm
+    'masking_options_file' => '',
 
 	#Set for single pairwise mode
 #	'mlss_id' => '',
@@ -76,7 +78,7 @@ sub default_options {
 #	'conf_file' => '',
 
 	#directory to dump nib files
-#	'dump_dir' => '/lustre/scratch103/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
+    'dump_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
 	#min length to dump dna as nib file
 #	'dump_min_size' => 11500000, 
@@ -95,13 +97,14 @@ sub default_options {
 
 	#
 	#Default pair_aligner
-	#
-        'pair_aligner_exe' => '/software/ensembl/compara/bin/lastz',
+	
+    'pair_aligner_exe' => '/software/ensembl/compara/bin/lastz',
         #
 	#Default pairaligner config
 	#
-	'skip_pairaligner_stats' => 0, #skip this module if set to 1
-	'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_genomicalignment_20120319_'.$self->o('release'),
+    'skip_pairaligner_stats' => 0, #skip this module if set to 1
+    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_genomicalignment_20120319_'.$self->o('release'),
+#    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_genomicalignment_20120319_67_testing',
     };
 }
 
