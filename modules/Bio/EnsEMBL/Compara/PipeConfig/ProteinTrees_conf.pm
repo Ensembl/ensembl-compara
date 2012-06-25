@@ -831,7 +831,7 @@ sub pipeline_analyses {
             },
             -hive_capacity  => $self->o('qc_capacity'),
             -failed_job_tolerance => 0,
-            -rc_name    => '500Mb_job',
+            -rc_name    => '1Gb_job',
         },
 
         {   -logic_name => 'per_genome_qc',
@@ -865,7 +865,7 @@ sub pipeline_analyses {
                 'mafft_runtime'         => $self->o('mafft_runtime'),
             },
             -batch_size => 10,
-            -rc_name => '1Gb_job',
+            -rc_name => '500Mb_job',
             -priority => 30,
             -flow_into => {
                 '2->A' => [ 'mcoffee_cmcoffee' ],
@@ -1087,7 +1087,6 @@ sub pipeline_analyses {
                 'tree_id_str'       => 'protein_tree_id',
             },
             -hive_capacity  => $self->o('merge_supertrees_capacity'),
-            -rc_name        => '500Mb_job',
             -priority       => 40,
         },
 
