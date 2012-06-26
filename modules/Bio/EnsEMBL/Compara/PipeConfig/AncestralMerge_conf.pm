@@ -35,7 +35,7 @@ sub default_options {
     return {
          %{$self->SUPER::default_options},
 
-        'rel'               => 67,                                                  # current release number
+        'rel'               => 68,                                                  # current release number
         'rel_suffix'        => '',                                                  # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),              # for convenience
 
@@ -51,7 +51,7 @@ sub default_options {
             -dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name'),
         },
 
-            'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@compara3/mp12_ensembl_ancestral_66',
+            'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@compara3/mm14_ensembl_ancestral_67',
 #         'prev_ancestral_db' => {
 #             -driver => 'mysql',
 #             -host   => 'compara1',
@@ -78,9 +78,8 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_;
     return {
-         0 => { -desc => 'default',          'LSF' => '' },
-         1 => { -desc => 'urgent',           'LSF' => '-q yesterday' },
-         2 => { -desc => 'more_mem',         'LSF' => '-M5000000 -R "select[mem>5000] rusage[mem=5000]"' },
+         'urgent'   => {  'LSF' => '-q yesterday' },
+         'more_mem' => {  'LSF' => '-M5000000 -R "select[mem>5000] rusage[mem=5000]"' },
     };
 }
 
@@ -99,7 +98,7 @@ sub pipeline_analyses {
             -flow_into  => {
                 1 => [ 'generate_merge_jobs' ],
             },
-            -rc_id => 1,
+            -rc_name => 'urgent',
         },
 
         {   -logic_name => 'generate_merge_jobs',
@@ -113,7 +112,7 @@ sub pipeline_analyses {
 
                         # copying from new sources:
 #                     [ '548' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_compara_6way_65_ancestral_core' ],   # 6-way primates
-                      [ '578' => 'mysql://ensadmin:'.$self->o('password').'@compara1/kb3_12WAY_67_ancestral_core' ],  # 12-way mammals
+                      [ '595' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ancestral_sequences_core_68' ],  # 12-way mammals
                 ],
                 'input_id'          => { 'mlss_id' => '#_0#', 'from_url' => '#_1#' },
                 'fan_branch_code'   => 2,
@@ -121,7 +120,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'merge_an_ancestor' ],
             },
-            -rc_id => 1,
+            -rc_name => 'urgent',
         },
 
         {   -logic_name    => 'merge_an_ancestor',
@@ -131,7 +130,7 @@ sub pipeline_analyses {
                 'cmd'    => 'perl ' . $self->o('merge_script').' --from_url #from_url# --to_url #to_url# --mlss_id #mlss_id#',
             },
             -hive_capacity  => 1,   # do them one-by-one
-            -rc_id => 2,
+            -rc_name => 'more_mem',
         },
     ];
 }

@@ -49,7 +49,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'compara_homology_merged_67',    # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_homology_merged_68',    # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
             -host   => 'compara4',
@@ -71,7 +71,7 @@ sub default_options {
 
         'master_copy_tables' => [ 'genome_db', 'species_set', 'method_link', 'method_link_species_set', 'mapping_session', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set_tag' ],
 
-            'prevrel_db' => 'mysql://ensro@compara3/mp12_ensembl_compara_66',
+            'prevrel_db' => 'mysql://ensro@compara3/mm14_ensembl_compara_67',
 #         'prevrel_db' => {
 #             -host   => 'compara4',
 #             -port   => 3306,
@@ -82,7 +82,7 @@ sub default_options {
 
         'prevrel_merge_tables' => [ 'stable_id_history' ],
 
-            'genetrees_db' => 'mysql://ensro@compara3/mm14_compara_homology_67',
+            'genetrees_db' => 'mysql://ensro@compara3/mm14_compara_homology_68',
 #         'genetrees_db' => {
 #             -host   => 'compara2',
 #             -port   => 3306,
@@ -92,9 +92,9 @@ sub default_options {
 #         },
 
         'genetrees_copy_tables'  => [ 'sequence_cds', 'sequence_exon_bounded' ],
-        'genetrees_merge_tables' => [ 'subset', 'subset_member', 'stable_id_history', 'homology', 'homology_member', 'CAFE_data', 'CAFE_tree', 'CAFE_tree_node', 'CAFE_tree_attr' ],
+        'genetrees_merge_tables' => [ 'subset', 'subset_member', 'stable_id_history', 'homology', 'homology_member', 'method_link_species_set_tag', 'CAFE_tree', 'CAFE_tree_node', 'CAFE_tree_attr' ],
 
-            'families_db' => 'mysql://ensro@compara2/lg4_compara_families_67',
+            'families_db' => 'mysql://ensro@compara4/lg4_compara_families_68',
 #         'families_db' => {
 #             -host   => 'compara1',
 #             -port   => 3306,
@@ -105,7 +105,7 @@ sub default_options {
         'families_copy_tables'  => [ 'family', 'family_member' ],
         'families_merge_tables' => [ 'member', 'sequence', 'subset', 'subset_member', 'stable_id_history' ],
 
-            'nctrees_db' => 'mysql://ensro@compara4/mp12_compara_nctrees_67noCAFE',
+            'nctrees_db' => 'mysql://ensro@compara2/mp12_compara_nctrees_68',
 #         'nctrees_db' => {
 #             -host   => 'compara4',
 #             -port   => 3306,
@@ -113,8 +113,8 @@ sub default_options {
 #             -pass   => $self->o('password'),
 #             -dbname => 'mp12_compara_nctrees_66c',
 #         },
-        'nctrees_copy_tables'  => [ 'nc_profile' ],
-        'nctrees_merge_tables' => [ 'subset', 'subset_member', 'member', 'sequence', 'homology', 'homology_member', 'CAFE_data', 'CAFE_tree', 'CAFE_tree_node', 'CAFE_tree_attr' ],
+        'nctrees_copy_tables'  => [  ],
+        'nctrees_merge_tables' => [ 'subset', 'subset_member', 'member', 'sequence', 'homology', 'homology_member', 'method_link_species_set_tag', 'CAFE_tree', 'CAFE_tree_node', 'CAFE_tree_attr' ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
         'compara_innodb_schema' => 0,                               # to override the default Compara setting
@@ -139,8 +139,6 @@ sub pipeline_create_commands {
 
     Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
                   Here it defines four analyses:
-
-                    * 'lr_index_offset_correction'  removes unused entries from lr_index_offset table, to simplify the merger
 
                     * 'generate_job_list'           generates a list of tables to be copied from master_db
 
