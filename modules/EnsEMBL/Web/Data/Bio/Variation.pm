@@ -27,13 +27,17 @@ sub convert_to_drawing_parameters {
   my $vaa          = $vardb->get_adaptor('VariationAnnotation');
   my @results;
   
-  my (%associated_phenotypes, %associated_genes, %p_value_logs, %p_values);
+  my (%associated_phenotypes, %associated_genes, %p_value_logs, %p_values, %phenotypes_sources);
   
   # getting associated phenotypes and associated genes
   foreach my $va (@{$vaa->fetch_all_by_VariationFeature_list($data) || []}) {
     my $variation_id = $va->{'_variation_id'};
 
     $associated_phenotypes{$variation_id}{$va->{'phenotype_description'}} = 1;
+    my $source_name = $va->source_name;
+       $source_name =~ s/_/ /g;
+    $phenotypes_sources{$variation_id}{$source_name} = 1;
+    
     
     if ($va->{'_phenotype_id'} eq $phenotype_id) {      
       # only get the p value log 10 for the pointer matching phenotype id and variation id
@@ -99,31 +103,32 @@ sub convert_to_drawing_parameters {
 
     #the html id is used to match the SNP on the karyotype (html_id in area tag) with the row in the feature table (table_class in the table row)
     push @results, {
-      region         => $seq_region,
-      start          => $start,
-      end            => $end,
-      strand         => $vf->strand,
-      html_id        => qq{${name}_$dbID},
-      label          => $name,
-      href           => $zmenu_url,       
-      p_value        => $p_value_logs{$variation_id},
-      somatic        => $vf->is_somatic,
-      extra          => {
-        'source'     => $vf->source,
-        'genes'      => join(', ', @assoc_gene_links),
-        'phenotypes' => join('; ', sort keys %{$associated_phenotypes{$variation_id} || {}}),
-        'p-values'   => ($p_value_logs{$variation_id} ? sprintf('%.1f', $p_value_logs{$variation_id}) : '-'), 
+      region          => $seq_region,
+      start           => $start,
+      end             => $end,
+      strand          => $vf->strand,
+      html_id         => qq{${name}_$dbID},
+      label           => $name,
+      href            => $zmenu_url,       
+      p_value         => $p_value_logs{$variation_id},
+      somatic         => $vf->is_somatic,
+      extra           => {
+        'source'      => $vf->source,
+        'genes'       => join(', ', @assoc_gene_links),
+        'phenotypes'  => join('; ', sort keys %{$associated_phenotypes{$variation_id} || {}}),
+        'phe_sources' => join(', ', sort keys %{$phenotypes_sources{$variation_id} || {}}),
+        'p-values'    => ($p_value_logs{$variation_id} ? sprintf('%.1f', $p_value_logs{$variation_id}) : '-'), 
       },
     };
   }
   my $extra_columns = [
-        {'key' => 'source',     'title' => 'Source',                  'sort' => ''},
-        {'key' => 'genes',      'title' => 'Reported Gene(s)',      'sort' => 'html'},
-        {'key' => 'phenotypes', 'title' => 'Phenotype(s) associated with this variant', 'sort' => ''},
-        {'key' => 'p-values',   'title' => 'P value (negative log)',  'sort' => 'numeric'},
+        {'key' => 'source',      'title' => 'Variant source',         'sort' => ''},
+        {'key' => 'genes',       'title' => 'Reported gene(s)',       'sort' => 'html'},
+        {'key' => 'phenotypes',  'title' => 'Phenotype(s) associated with this variant', 'sort' => ''},
+        {'key' => 'phe_sources', 'title' => 'Phenotype(s) source(s)', 'sort' => ''},
+        {'key' => 'p-values',    'title' => 'P value (negative log)', 'sort' => 'numeric'},
   ];
   return [\@results, $extra_columns];
 }
-
 
 1;
