@@ -180,6 +180,10 @@ sub pipeline_analyses {
                     'ALTER TABLE homology AUTO_INCREMENT=100000001',
                     'ALTER TABLE gene_tree_node AUTO_INCREMENT=100000001',
                     'ALTER TABLE CAFE_tree_node AUTO_INCREMENT=100000001',
+                    # Removes the SS and the MLSS associated with non-valid genome_db_ids
+                    'CREATE TEMPORARY TABLE tmp_ss SELECT species_set_id FROM species_set LEFT JOIN genome_db USING (genome_db_id) GROUP BY species_set_id HAVING COUNT(*) != COUNT(genome_db.genome_db_id)',
+                    'DELETE method_link_species_set FROM method_link_species_set JOIN tmp_ss USING (species_set_id)',
+                    'DELETE species_set FROM species_set JOIN tmp_ss USING (species_set_id)',
                 ],
             },
             -wait_for => [ 'copy_table' ],    # have to wait until the tables have been copied
