@@ -83,10 +83,9 @@ foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::ENSEMBL_DATASETS) {
     next unless $ids;
     
     $sth = $adaptor->prepare(
-      "SELECT gs.stable_id, xr.display_label, cs.species_id 
-        FROM gene g, gene_stable_id gs, xref xr, seq_region sr, coord_system cs
+      "SELECT g.stable_id, xr.display_label, cs.species_id 
+        FROM gene g,  xref xr, seq_region sr, coord_system cs
         WHERE g.display_xref_id  = xr.xref_id         AND
-              g.gene_id          = gs.gene_id         AND
               g.seq_region_id    = sr.seq_region_id   AND
               sr.coord_system_id = cs.coord_system_id AND
               g.analysis_id IN ($ids)"

@@ -1,30 +1,33 @@
 $(function () {
-  if (window.location.href.indexOf('Doxygen') !== -1) {
-    var doxygenBreadcrumbs = $('#nav-path').find('li').removeClass();
-    var breadcrumbs        = $('#main').children('.breadcrumbs');
-    
-    breadcrumbs.append('<li><a href="' + window.location.href.replace(/(.+)\/.+\.html/, '$1/index.html') +'">' + document.title.split(':')[0] + '</a></li>');
-    
-    if (doxygenBreadcrumbs.length) {
-      breadcrumbs.append(doxygenBreadcrumbs);
+  setTimeout(function () {
+    if (window.location.href.indexOf('Doxygen') !== -1) {
+      var doxygenBreadcrumbs = $('#nav-path').find('li').removeClass();
+      var breadcrumbs        = $('#main').children('.breadcrumbs');
+      
+      breadcrumbs.append('<li><a href="' + window.location.href.replace(/(.+)\/.+\.html/, '$1/index.html') +'">' + document.title.split(':')[0] + '</a></li>');
+      
+      if (doxygenBreadcrumbs.length) {
+        breadcrumbs.append(doxygenBreadcrumbs);
+      }
+      
+      breadcrumbs.find('li.last').removeClass('last').siblings(':last').addClass('last');
+      
+      breadcrumbs = doxygenBreadcrumbs = null;
     }
     
-    breadcrumbs.find('li.last').removeClass('last').siblings(':last').addClass('last');
+    function resize() {
+      var outerHeight = $(window).height() - $('#doxygen').offset().top - 85;
+      var innerHeight = outerHeight - $('#nav-path').height() - $('#top').height();
+      $('#doxygen').height(outerHeight);
+      $('#side-nav, #nav-tree, #doc-content, #pdoc_iframe').height(innerHeight);
+    }
     
-    breadcrumbs = doxygenBreadcrumbs = null;
-  }
-  
-  function resize() {
-    var outerHeight = $(window).height() - $('#doxygen').offset().top - 85;
-    var innerHeight = outerHeight - $('#nav-path').height() - $('#top').height();
-    $('#doxygen').height(outerHeight);
-    $('#side-nav, #nav-tree, #doc-content, #pdoc_iframe').height(innerHeight); 
-  }
-  
-  $(window).resize(resize);
-  resize();
+    if ($('body').not('.ie67').length) {
+      $(window).resize(resize);
+      resize();
+    }
+  }, 1);
 });
-
 
 
 /**

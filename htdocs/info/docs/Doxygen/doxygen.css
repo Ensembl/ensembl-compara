@@ -338,7 +338,7 @@
 
 #doxygen #nav-tree .children_ul { margin: 0; padding: 4px; }
 #doxygen #nav-tree ul { list-style: none outside none; margin: 0px; padding: 0px; }
-#doxygen #nav-tree li { white-space: nowrap; margin: 0px; padding: 0px; }
+#doxygen #nav-tree li { list-style-image: none; white-space: nowrap; margin: 0px; padding: 0px; }
 #doxygen #nav-tree .plus { margin: 0px; }
 #doxygen #nav-tree .selected { background-image: url(/info/docs/Doxygen/external-api/tab_a.png); background-repeat: repeat-x; color: #fff; text-shadow: 0px 1px 1px rgba(0, 0, 0, 1.0); }
 #doxygen #nav-tree img { margin: 0px; padding: 0px; border: 0px; vertical-align: middle; }

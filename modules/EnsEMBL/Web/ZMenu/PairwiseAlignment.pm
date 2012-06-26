@@ -84,6 +84,7 @@ sub content {
       });
 
       $self->add_entry({
+        type  => 'RegionComparisonView',
         label => 'Region Comparison View',
         link  => $url,
       });

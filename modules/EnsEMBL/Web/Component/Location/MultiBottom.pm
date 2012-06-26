@@ -17,6 +17,7 @@ sub _init {
 }
 
 sub content {
+
   my $self   = shift;
   my $hub    = $self->hub;
   my $object = $self->object;
@@ -38,7 +39,7 @@ sub content {
   my $base_url        = $hub->url($hub->multi_params);
   my $s               = $hub->get_viewconfig('MultiTop')->get('show_top_panel') eq 'yes' ? 3 : 2;
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
-  my $methods         = { BLASTZ_NET => $hub->param('opt_pairwise_blastz'), TRANSLATED_BLAT_NET => $hub->param('opt_pairwise_tblat'), LASTZ_PATCH => $hub->param('opt_pairwise_lpatch') };
+  my $methods         = { BLASTZ_NET => $hub->param('opt_pairwise_blastz'), TRANSLATED_BLAT_NET => $hub->param('opt_pairwise_tblat'), LASTZ_PATCH => $hub->param('opt_pairwise_lpatch'), LASTZ_RAW => $hub->param('opt_pairwise_raw') };
   my $join_alignments = grep $_ ne 'off', values %$methods;
   my $join_genes      = $hub->param('opt_join_genes_bottom') eq 'on';
 
@@ -46,9 +47,7 @@ sub content {
   my $i               = 1;
   my $primary_image_config;
   my @images;
-  
-  $methods->{'LASTZ_NET'} = $methods->{'BLASTZ_NET'};
-  
+
   foreach (@$slices) {
     my $image_config   = $hub->get_imageconfig('MultiBottom', "contigview_bottom_$i", $_->{'species'});
     my $highlight_gene = $hub->param('g' . ($i - 1));

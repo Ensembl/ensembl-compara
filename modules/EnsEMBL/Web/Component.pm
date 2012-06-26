@@ -446,7 +446,7 @@ sub _matches {
   if (!$object->__data->{'links'}) {
     my @similarity_links = @{$object->get_similarity_hash($obj)};
     return unless @similarity_links;
-    $self->_sort_similarity_links($output_as_table, $show_version, @similarity_links);
+    $self->_sort_similarity_links($output_as_table, $show_version, $keys[0], @similarity_links );
   }
 
   my @links = map { @{$object->__data->{'links'}{$_}||[]} } @keys;
@@ -516,7 +516,8 @@ sub _matches {
 sub _sort_similarity_links {
   my $self             = shift;
   my $output_as_table  = shift || 0;
-  my $show_version = shift || 0;
+  my $show_version     = shift || 0;
+  my $xref_type        = shift || '';
   my @similarity_links = @_;
 
   my $hub              = $self->hub;
@@ -552,6 +553,7 @@ sub _sort_similarity_links {
     next if $externalDB eq 'Vega_transcript';
     next if $externalDB eq 'Vega_translation';
     next if $externalDB eq 'OTTP' && $display_id =~ /^\d+$/;    # don't show vega translation internal IDs
+    next if $externalDB eq 'shares_CDS_with_ENST';
 
     if ($externalDB =~ /^($ontologies)$/) {
       push @{$object->__data->{'links'}{'go'}}, $display_id;
@@ -646,7 +648,7 @@ sub _sort_similarity_links {
         id     => $link_name,
         ftype  => $link_type
       });
-      $text .= qq{  [<a href="$k_url">view all locations</a>]};
+      $text .= qq{  [<a href="$k_url">view all locations</a>]} unless $xref_type =~ /^ALT/;
     }
 
     $text .= '</div>' if $join_links;
@@ -662,26 +664,59 @@ sub remove_redundant_xrefs {
   my ($self, @links) = @_;
   my %priorities;
 
-  foreach my $link (@links) {
-    my ($key, $text) = @$link;
-    $priorities{$key} = $text if $text =~ />OTT|>ENST/;
-  }
-
-  foreach my $type (
-    'Transcript having exact match between ENSEMBL and HAVANA',
-    'Ensembl transcript having exact match with Havana',
-    'Havana transcript having same CDS',
-    'Ensembl transcript sharing CDS with Havana',
-    'Havana transcript'
-  ) {
-    if ($priorities{$type}) {
-      my @munged_links;
-      $munged_links[0] = [ $type, $priorities{$type} ];
-      return @munged_links;;
+  # We can have multiple OTT/ENS xrefs but need to filter some out since there can be duplicates.
+  # Therefore need to generate a data structure that has the stable ID as the key
+  my %links;
+  foreach (@links) {
+    if ($_->[1] =~ /[t|g]=(\w+)/) {
+      my $sid = $1;
+      if ($sid =~ /[ENS|OTT]/) { 
+        push @{$links{$sid}->{$_->[0]}}, $_->[1];
+      }
     }
   }
-  
-  return @links;
+
+  # There can be more than db_link type for each particular stable ID, need to order by priority
+  my @priorities = ('Transcript having exact match between ENSEMBL and HAVANA',
+                    'Ensembl transcript having exact match with Havana',
+                    'Havana transcript having same CDS',
+                    'Ensembl transcript sharing CDS with Havana',
+                    'Havana transcript');
+
+  my @new_links;
+  foreach my $sid (keys %links) {
+    my $wanted_link_type;
+  PRIORITY:
+    foreach my $link_type (@priorities) {
+      foreach my $db_link_type ( keys %{$links{$sid}} ) {
+        if ($db_link_type eq $link_type) {
+          $wanted_link_type = $db_link_type;
+          last PRIORITY;
+        }
+      }
+    }
+
+    return @links unless $wanted_link_type; #show something rather than nothing if we have unexpected (ie none in the above list) xref types
+
+    #if there is only one link for a particular db_link type it's easy...
+    if ( @{$links{$sid}->{$wanted_link_type}} == 1) {
+      push @new_links, [ $wanted_link_type, @{$links{$sid}->{$wanted_link_type}} ];
+    }
+    else {
+      #... otherwise differentiate between multiple xrefs of the same type if the version numbers are different
+      my $max_version = 0;
+      foreach my $link (@{$links{$sid}->{$wanted_link_type}}) {
+        if ( $link =~ /version (\d{1,2})/ ) {
+          $max_version = $1 if $1 > $max_version;
+        }
+      }
+      foreach my $link (@{$links{$sid}->{$wanted_link_type}}) {
+        next if ($max_version && ($link !~ /version $max_version/));
+        push @new_links, [ $wanted_link_type, $link ];
+      }
+    }
+  }
+  return @new_links;
 }
 
 sub transcript_table {

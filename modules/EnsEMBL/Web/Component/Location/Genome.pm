@@ -130,7 +130,7 @@ sub _render_features {
         else {
           my @A = sort keys %$features;
           $data_type = $A[0];
-          $assoc_name = $hub->param('name');
+          $assoc_name = $hub->param('phenotype_name') || $hub->param('name');
           unless ($assoc_name) {
             $assoc_name = $xref_type.' ';
             $assoc_name .= $id;
