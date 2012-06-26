@@ -15,7 +15,7 @@ ALTER TABLE gene_tree_root MODIFY COLUMN clusterset_id VARCHAR(20) NOT NULL;
 UPDATE gene_tree_root SET clusterset_id = "default";
 
 -- These things are now stored as tags to make them available via the API
-INSERT INTO gene_tree_root_tag SELECT node_id, 'aln_score', cigar_line FROM protein_tree_member_score;
+INSERT INTO gene_tree_node_tag SELECT node_id, 'aln_score', cigar_line FROM protein_tree_member_score;
 DROP TABLE protein_tree_member_score;
 INSERT INTO gene_tree_root_tag SELECT node_id, CONCAT('hmm_', node_id), hmmprofile FROM protein_tree_hmmprofile;
 DROP TABLE protein_tree_hmmprofile;
