@@ -50,7 +50,7 @@ sub variation_content {
   my @failed     = @{$feature->variation->get_all_failed_descriptions};
   my $link       = '<a href="%s">%s</a>';
   my $position   = "$seq_region$chr_start";
-  my ($lrg_position, %population_data);
+  my ($lrg_position, %population_data, %population_allele);
   
   my %url_params = (
     type   => 'Variation',
@@ -87,20 +87,20 @@ sub variation_content {
   );
   
   if (scalar @failed) {
-    push @entries, { caption => 'Failed status', entry => shift @failed };
-    push @entries, { caption => '',              entry => shift @failed } while @failed;
+    push @entries, { caption => 'Failed status', entry => sprintf '<span style="color:red">%s</span>',shift @failed };
+    push @entries, { caption => '',              entry => sprintf '<span style="color:red">%s</span>',shift @failed } while @failed;
   }
   
   #push @entries, { caption => 'Failed status', entry => join ', ', @failed } if scalar @failed;
   push @entries, { caption => 'LRG position', entry => $lrg_position } if $lrg_position;
   
-  my %ct    = map { $_->display_term => [ $_->label, $_->rank ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  my %ct    = map { $_->SO_term => [ $_->label, $_->rank ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   my %types = map @{$ct{$_}}, @{($self->{'transcript'} ? $feature->get_all_TranscriptVariations([$self->{'transcript'}])->[0] : $feature)->consequence_type};
   
   push @entries, (
     { caption => 'Alleles', entry => $allele },
     { caption => 'Types',   entry => sprintf '<ul>%s</ul>', join '', map "<li>$_</li>", sort { $types{$a} <=> $types{$b} } keys %types },
-    { entry => sprintf $link, $hub->url({ action => 'Mappings', %url_params }), 'Gene/Transcript Locations' }
+    { entry   => sprintf $link, $hub->url({ action => 'Mappings', %url_params }), 'Gene/Transcript Locations' }
   );
   
   push @entries, { entry => sprintf $link, $hub->url({ action => 'Phenotype', %url_params }), 'Phenotype Data' } if scalar @{$object->get_external_data};
@@ -112,35 +112,51 @@ sub variation_content {
     map  { values %$_ }
     values %{$object->freqs($feature)}
   ) {
-    # $key is the allele frequencies in the form C: 0.400, T: 0.600
-    my $key  = join ', ', map { $pop->{'AlleleFrequency'}[$_] ? "$pop->{'Alleles'}[$_]: " . sprintf '%.3f', $pop->{'AlleleFrequency'}[$_] : () } 0..$#{$pop->{'Alleles'}};
     my $name = [ split /:/, $pop->{'pop_info'}{'Name'} ]->[-1]; # shorten the population name
        $name =~ /phase_1_(.+)/;
        $name = $1;
+
+    my @afreqs = @{$pop->{'AlleleFrequency'}};
+    foreach my $allele (@{$pop->{Alleles}}) {
     
-    $population_data{$name}{$key} .= ($population_data{$name}{$key} ? ' / ' : '') . $pop->{'submitter'}; # concatenate population submitters if they provide the same frequencies
+      push (@{$population_allele{$name}}, $allele) if (!grep {$_ eq $allele} @{$population_allele{$name}});
+      
+      my $freq = sprintf '%.3f',shift(@afreqs);
+      $population_data{$name}{$pop->{submitter}}{$allele} = $freq;
+    }
   }
-  
+    
   push @entries, { cls => 'population', entry => sprintf $link, $hub->url({ action => 'Population', %url_params }), 'Population Allele Frequencies' } if scalar keys %population_data;
   
-  foreach my $name (keys %population_data) {
-    my %display = reverse %{$population_data{$name}};
-    my $i       = 0;
+  foreach my $name (sort {($a !~ /ALL/) cmp ($b !~ /ALL/) || $a cmp $b} keys %population_data) {
+    my $i = 0;
     
-    foreach my $submitter (keys %display) {
-      my @freqs = map { split /: /, $_ } split /, /, $display{$submitter};
+    foreach my $submitter (keys %{$population_data{$name}}) {
+ 
+      my @freqs;
+      my $af;
+      # Keep the alleles order
+      foreach my $al (@{$population_allele{$name}}) {
+        if ($population_data{$name}{$submitter}{$al}){
+          push @freqs, $al;
+          push @freqs, $population_data{$name}{$submitter}{$al};
+          $af .= $af ? ', ' : '';
+          $af .= "$al: ".$population_data{$name}{$submitter}{$al};
+        }
+      }
+
       my $img;
          $img .= sprintf '<span class="freq %s" style="width:%spx"></span>', shift @freqs, 100 * shift @freqs while @freqs;
-      
+
+      $af = qq{<div>$af</div>};
       if ($submitter) {
         push @entries, { childOf => 'population', entry => [ $i++ ? '' : $name, $submitter ]};
-        push @entries, { childOf => 'population', entry => [ '', $img, "<div>$display{$submitter}</div>" ]};
+        push @entries, { childOf => 'population', entry => [ '', $img, $af ]};
       } else {
-        push @entries, { childOf => 'population', entry => [ $name, $img, "<div>$display{$submitter}</div>" ]};
+        push @entries, { childOf => 'population', entry => [ $name, $img, $af ]};
       }
     }
   }
-  
   unshift @{$self->{'entries'}}, \@entries;
 }
 
