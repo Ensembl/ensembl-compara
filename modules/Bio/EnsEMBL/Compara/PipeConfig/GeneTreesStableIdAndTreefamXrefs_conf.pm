@@ -15,7 +15,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'release'           => '67',
+        'release'           => '68',
         'rel_suffix'        => '',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
@@ -35,7 +35,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'ensembl_compara_66',
+            -dbname => 'ensembl_compara_67',
         },
 
         'master_db' => {     # used by the StableIdMapper as the location of the master 'mapping_session' table
@@ -61,8 +61,7 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_;
     return {
-         0 => { -desc => 'default', 'LSF' => '' },
-         17 => { -desc => 'himem',   'LSF' => '-C0 -M'.$self->o('idmap_gigs').'000000 -R"select[mem>'.$self->o('idmap_gigs').'000] rusage[mem='.$self->o('idmap_gigs').'000]"' },
+        'idmap_himem' => {'LSF' => '-C0 -M'.$self->o('idmap_gigs').'000000 -R"select[mem>'.$self->o('idmap_gigs').'000] rusage[mem='.$self->o('idmap_gigs').'000]"' },
     };
 }
 
@@ -80,7 +79,7 @@ sub pipeline_analyses {
             -input_ids     => [
                 { 'type' => 't' },
             ],
-            -rc_id => 17,    # NB: make sure you give it enough memory or it will crash
+            -rc_name => 'idmap_himem',
         },
         
         {   -logic_name    => 'treefam_xref_idmap',
@@ -92,7 +91,7 @@ sub pipeline_analyses {
                 { 'tf_release' => 7, 'tag_prefix' => '', },
                 { 'tf_release' => 8, 'tag_prefix' => 'dev_', },
             ],
-            -rc_id => 17,
+            -rc_name => 'idmap_himem',
         },
         
         #
