@@ -13,19 +13,22 @@ my $usage = "$0
 --help                print this menu
 --dbname string
 [--reg_conf string]
---qy string
---tg string
+--ref string [previously named --qy]
+--nonref string [previously named -tg]
+--mlss_id int: the expected mlss_id of the synteny
 \n";
 
 my $help = 0;
-my ($dbname,$qy_species, $tg_species, $reg_conf);
+my ($dbname,$qy_species, $tg_species, $reg_conf, $mlss_id);
 my $method_link_type = "SYNTENY";
 
 GetOptions('help' => \$help,
 	   'dbname=s' => \$dbname,
 	   'reg_conf=s' => \$reg_conf,
-	   'qy=s' => \$qy_species,
-	   'tg=s' => \$tg_species);
+	   'qy|ref=s' => \$qy_species,
+	   'tg|nonref=s' => \$tg_species,
+         'mlss_id=i' => \$mlss_id,         
+);
 
 $|=1;
 
@@ -52,6 +55,7 @@ my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
     -species_set_obj => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$qy_gdb, $tg_gdb] ),
 );
 $mlssa->store($mlss);
+warn ("A new MLSS has been created with the dbID ".($mlss->dbID)." instead of $mlss_id") if defined $mlss_id and $mlss_id != $mlss->dbID;
 
 my $qy_slices = get_slices($qy_gdb);
 my $tg_slices = get_slices($tg_gdb);
