@@ -1244,7 +1244,10 @@ sub get_homologous_gene_ids {
   
   my $config = $self->{'config'};
   my $ha     = $compara_db->get_HomologyAdaptor;
-  my $method = $species eq $config->{'species'} ? $config->get_parameter('homologue') : undef;
+  my $method = $config->get_parameter('force_homologue') ? $config->get_parameter('force_homologue')
+               : $species eq $config->{'species'} ? $config->get_parameter('homologue')
+               : undef;
+
   my @homologues;
   
   # $config->get_parameter('homologue') may be undef, so can't just do [ $config->get_parameter('homologue') ] because [ undef ] as an argument breaks fetch_all_by_Member_paired_species
