@@ -304,7 +304,7 @@ sub _writer {
     }
   }
   
-  return $self->param('writer');
+  return $self->{writer};
 }
 
 =head2 write_dba()
