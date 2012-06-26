@@ -40,7 +40,7 @@ sub configure {
   if (exists $params->{'selectall'}) {
     $self->add_option({
       'value'         => 'select_all',
-      'caption'       => $self->SELECT_DESELECT_CAPTION
+      'caption'       => {'inner_HTML' => $self->SELECT_DESELECT_CAPTION}  ## TODO - this needs a class name for general purpose use
     });
   }
   if (exists $params->{'values'}) {
