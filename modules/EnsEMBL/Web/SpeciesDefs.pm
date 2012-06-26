@@ -377,27 +377,6 @@ sub _load_in_species_pages {
   return $spp_tree;
 }
 
-sub _merge_in_dhtml {
-  my ($self, $tree) = @_;
-  my $inifile = $SiteDefs::ENSEMBL_CONF_DIRS[0] . '/packed/dhtml.ini';
-  
-  return unless -e $inifile && open I, $inifile;
-  
-  while (<I>) {
-    next unless /^(\w+)\s*=\s*(\w+)/;
-    
-    if ($1 eq 'css') {
-      $tree->{'ENSEMBL_CSS_NAME'} = $2;
-    } elsif ($1 eq 'js') {
-      $tree->{'ENSEMBL_JS_NAME'} = $2;
-    } elsif ($1 eq 'type') {
-      $tree->{'ENSEMBL_JSCSS_TYPE'} = $2;
-    }
-  }
-  
-  close I;
-}
-
 sub _read_in_ini_file {
   my ($self, $filename, $defaults) = @_;
   my $inifile = undef;
@@ -623,8 +602,6 @@ sub _parse {
   }
   
   $self->_info_log('Parser', 'Post processing ini files');
-  
-  $self->_merge_in_dhtml($tree);
   
   # Loop over each tree and make further manipulations
   foreach my $species (@$ENSEMBL_DATASETS, 'MULTI') {
