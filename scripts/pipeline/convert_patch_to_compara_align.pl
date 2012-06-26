@@ -13,7 +13,6 @@ my $species_name = "human";
 my $db_user;
 my $db_host;
 my $release_version;
-my $compara_master;
 my $dnafrags_file;
 
 

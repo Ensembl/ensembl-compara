@@ -38,7 +38,7 @@ Note: The current (rel.67) compara_master database is sf5_ensembl_compara_master
 #============================================================================
 
 ### WARNING!
-### THIS SHOULD NOW (FROM 67-) BE RUN BY RHODA. MAKE SURE THAT IS THE
+### THIS SHOULD NOW (FROM 68-) BE RUN BY E!PRODUCTION. MAKE SURE THAT IS THE
 ### CASE AND GO DIRECTLY TO POINT 5.2
 5.1 Update the NCBI taxonomy local "mirror". Follow the instructions in
     $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/taxonomy/README-taxonomy
@@ -48,6 +48,7 @@ The execution of the pipeline normally takes about 2.5-3h.
 # rel.64: 2.7 hours
 # rel.65: 2.2 hours
 # rel.66: 1.5 hours
+# rel.67: 1hr 50min
 
 5.2 Update the ncbi_taxa_node and ncbi_taxa_name in the master DB using the
 ncbi_taxonomy database located in mysql://ens-livemirror:3306/ncbi_taxonomy
@@ -60,12 +61,7 @@ ncbi_taxa_node ncbi_taxa_name | mysql -u ensadmin -p${ENSADMIN_PSW} -h compara1 
 # rel.64: 45 sec
 # rel.65: 47 sec
 # rel.66: 47 sec
-
-5.3 (mp12 -- should we update here the ncbi_taxa_name table to include
-the ensembl_timetree_mya for the new species?. The problem could be if
-the new species finally don't make it into the release). If we do this
-in point 8.2 then it is late since master has been already copied into
-the final db.
+# rel.67: 30 sec
 
 #============================================================================
 # Master compara database (handover to compara)
@@ -269,16 +265,16 @@ time $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/populate_new_databas
 # rel.64:   2.6h
 # rel.65:   2.5h
 # rel.66:   4.8h
+# rel.67:   2.1h (launched from compara3)
 
 If new method_link_species_sets are added in the master after this, you use this
-script again to copy the new relevant data. In such case, you will have to skip
-the old_database in order to avoid trying to copy the dna-dna alignments and
-syntenies again.
+script again to copy the new relevant data. In such case, you will have to:
+ - skip the old_database in order to avoid trying to copy the dna-dna alignments and syntenies again
+ - empty ncbi_taxa_name before
 
 $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/populate_new_database.pl \
     --reg-conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --master compara_master --new compara_curr
 
-[This doesn't have to be done for rel65. Check for rel66!]
 # 8.1. Copy the species_set_tag table -- CAREFUL: this may have generated the species_set_tag mess we had in rel.63!
 # This needs to be added to the populate_new_database script and not just copied from the master where all old tags need to be deleted.
 # But copy from master till this is done.
@@ -291,12 +287,19 @@ View full list of all Ensembl species
 Species tree (Requires Java)
 
 Select Arrow and select where you want the new species to go (use ncbi taxonomy or wikipedia etc) eg Gadus morhua
-Tree Edit
-Add
-Sister
+Then select in the menu "Tree Edit > Add > Sister"
+Click on the empty node and edit name (add new name) and branch length
 
-Click on empty node
-Edit Name (add new name)
+The new branch lengths are computed from the protein trees
+
+Between the new species and the new ancestral node:
+\
+Between two ancestral nodes
+SELECT distance_to_parent FROM gene_tree_node_attr gtna1 JOIN gene_tree_node gtn USING (node_id) JOIN gene_tree_node_attr gtna2 ON gtna2.node_id = gtn.parent_id WHERE gtna1.taxon_id = 123370 AND gtna2.taxon_id = 186625 AND gtna2.node_type = 'speciation' AND gtna1.node_type = 'speciation' 
+
+[the median is usually fine. Have a look at the distribution to make sure]
+
+# rel.67: tilapia 0.102518
 
 The tree should appear in the Toolbox but if not, then save the tree
 Copy the new tree into
@@ -357,10 +360,7 @@ time ./run-healthcheck.sh -d mp12_ensembl_compara_66 -type compara -d2 .+_core_6
 
 10. Merge data.
 
-## NOTE: In 66 we added a new flag to copy_data.pl to avoid
-   re-enabling FK after the merge of each step.
-   We haven't tested this new flag, though. So please, ask to Miguel
-   or Leo about it. Once tested, this note can be removed.
+## NOTE: All the runs of copy_data.pl (except the last one) should have the flag "-re_enable 0" to avoid constantly recomputing the indices
 
 10.1 TRANSLATED_BLAT_NET, BlastZ-Net, Pecan, Gerp
 
@@ -402,6 +402,9 @@ time ./run-healthcheck.sh -d mp12_ensembl_compara_66 -type compara -d2 .+_core_6
 #
 #    Note_4: for multiple alignments that SHOULD HAVE BEEN automatically copied from the prev.release,
 #    check that you have the ancestral dnafrags copied. Again this should now happen automatically.
+
+#    Note 5: the "patch-to-ref" alignment as the mlss_id 556, which is skipped (via meta) because the data needs to be recomputed
+#    every release. This means that the entry in the mlss table is not present and must be manually added.
 
 # rel.58
 #           30m to copy over Human-vs-Marmoset
@@ -506,6 +509,21 @@ time ./run-healthcheck.sh -d mp12_ensembl_compara_66 -type compara -d2 .+_core_6
 
 #      40s to copy over Human_ref-vs-Human_patches
 
+# rel.67
+#      57m: sf5_hsap_stri_lastz_67  mlss_id=576 [forgot to switch off keys)
+#       4m: sf5_hsap_sscr_lastz_67  mlss_id=577
+#       4m: kb3_sscr_btau_lastz_67  mlss_id=579
+#      50s: kb3_hsap_onil_tblat_67  mlss_id=573
+#      70s: sf5_mmus_onil           mlss_id=575
+#      60s: kb3_drer_onil_tblat_67  mlss_id=574
+#      30s: sf5_compara_human_lastz_patch_and_haplotype_67 mlss_id=556
+#       4m: kb3_pecan_19way_67      mlss_id=580
+#       3m: kb3_pecan_19way_67      ce_mlss_id=581
+#      31m: kb3_pecan_19way_67      cs_mlss_id=50037
+#      42m: kb3_epo_35way_67        mlss_id=582
+#      13m: kb3_epo_35way_67        ce_mlss_id=583
+#      53m: kb3_epo_35way_67        cs_mlss_id=50038
+#       5m: kb3_12WAY_67            mlss_id=578
 
 10.1.1 Human patches for high coverage blastz-net alignments
 ## Make sure that all the pairwise alignment are in the database
@@ -519,6 +537,7 @@ before loading these (TRANSLATED_BLAT_NET and BlastZ-Net).
 
 # rel.64: 1h (13 affected mlsss)
 # rel.66: 12m49s (14 affected mlss_ids)
+# rel.67: 10m  (14 affected mlss_ids)
 
 10.2 Syntenies
 
@@ -547,6 +566,13 @@ before loading these (TRANSLATED_BLAT_NET and BlastZ-Net).
         2) names and locations of current and previous ancestral core databases
         3) the table of ancestral sequence sources in the second analysis (some entries might point to the previous release ancestral database, some will be new)
 
+    For (3), you can run the following query on your release database and on the previous database:
+         SELECT * FROM method_link_species_set WHERE method_link_id = 13; (equivalent to method_link_type = "EPO")
+      The new mlss_id should be attached to their production database:
+         '578' => 'mysql://ensadmin:$ENSADMIN_PSW@compara1/kb3_12WAY_67_ancestral_core' 
+      The mlss_id that are reused should be linked to the previous database
+         '505' => $self->o('prev_ancestral_db'),
+
     Save the changes, exit the editor and run init_pipeline.pl with this file:
         init_pipeline.pl AncestralMerge_conf.pm -password $ENSADMIN_PSW
 
@@ -563,6 +589,8 @@ before loading these (TRANSLATED_BLAT_NET and BlastZ-Net).
     Make sure all tables are turned into MyISAM (or add a couple of analyses to the pipeline to do it).
     You may need to remove a foreign key in analysis_description before that.
 
+# rel.67  20min
+
 10.4 Merging GeneTrees+Families+NCTrees together is now done by running a mini-pipeline.
 
 10.4.1  Make sure you have performed StableID mapping step on ProteinTrees (done manually)
@@ -576,10 +604,6 @@ ProteinTrees (done manually)
 10.4.4  Actually perform the merging step:
 
     Go to $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig and open the PipeConfig file MergeHomologySideTogether_conf.pm
-## WARNING! The PipeConfig file has been modified and never tested. We
-    changed the way the merged tables are MyISAMized (didn't work for
-    66).
-    So YOU are the tester of the pipeline.
     
     It has 6 sections for connecting to databases where you will have to change the names of the databases and possibly their locations:
         pipeline_db  - is your intermediate target (all protein side pipelines merged together)
@@ -602,10 +626,18 @@ ProteinTrees (done manually)
 10.4.5 Run the script to include projections of genes as homologies
 ## Change database names and ports accordingly (they refer to ens_staging servers)
 
-   perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/convert_patch_to_compara_homologies.pl -core_host ens-staging -core_port 3306 -core_user ensro -core_dbname homo_sapiens_core_66_37 -of_host ens-staging -of_port 3306 -of_user ensro -of_dbname homo_sapiens_otherfeatures_66_37 -comp_url mysql://ensadmin:${ENSADMIN_PSW}@compara4/mp12_mp12_compara_homology_merged_66_test -species homo_sapiens
+   You should first update the AUTO_INCREMENT of the following tables to 
+       ALTER TABLE member   AUTO_INCREMENT=300000001;
+       ALTER TABLE sequence AUTO_INCREMENT=300000001;
+       ALTER TABLE subset   AUTO_INCREMENT=300000001;
+       ALTER TABLE homology AUTO_INCREMENT=300000001;
+   It makes easier to spot the new entries
+
+   perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/convert_patch_to_compara_homologies.pl -core_host ens-staging -core_port 3306 -core_user ensro -core_dbname homo_sapiens_core_67_37 -of_host ens-staging -of_port 3306 -of_user ensro -of_dbname homo_sapiens_core_67_37 -comp_url mysql://ensadmin:${ENSADMIN_PSW}@compara4/mm14_compara_homology_merged_67 -species homo_sapiens
 
 #         30min for release 65
 #          3min for release 66
+#          2min for release 67
 
 10.5 Final merger of "protein side" into the release database is done by running another mini-pipeline.
 
@@ -643,7 +675,7 @@ Removal of redundant method_link entries:
     DELETE ml FROM method_link ml LEFT JOIN method_link_species_set mlss ON ml.method_link_id=mlss.method_link_id WHERE mlss.method_link_id IS NULL;
 
 
-12. Updating member.display_label and member.description fields for the members generated by EnsEMBL prediction.
+12. Updating member.display_label fields for the members generated by EnsEMBL prediction.
 
 This step has to happen ASAP, but AFTER the Core name projections have been done. And before you analyze/optimize the tables.
 (1. Matthieu/Leo runs the Homology pipeline
@@ -665,18 +697,17 @@ ensembl-compara/scripts/pipeline/production_reg_conf.pl
 12.2 Run the command
 
 # NB: Please note that your --compara_db will have to be set to the database where you want to perform the member update;
-#     in the following example it is the result of intermediate merger of homology databases, but in most cases will probably be the final release database.
+#     It can be the intermediate homology database if it hasn't been merged into the release database yet, or the release database itself.
 
-# To update member display_labels:
-# This can be done on the intermediate database or in the final database (after the homology merge with the final database)
-# If run in the intermediate db:
+The script is only updating NULL labels. To make sure it updates everything *and* resets to NULL genes that have lost their label, please run:
+   UPDATE member SET display_label = NULL WHERE source_name IN ('ENSEMBLGENE', 'ENSEMBLPEP') ;
+on the database you are going to run the script
+
+Then, run the script:
 time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --compara_db compara_homology_merged --debug 1
 
-# If it is run on the final merged db use "--compara_db compara_curr"
-time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --compara_db compara_curr --debug 1
-
-## NOTE! Something happened with the display_labels update for
-   66. Make sure this update happens.
+You can use "--compara_db compara_curr" if it is run on the final merged db,
+ or "--compara_db mysql://ensadmin:${ENSADMIN_PSW}@compara3:3306/lg4_compara_homology_merged_64" if you do not have the databases in the Registry
 
 # rel59 real    9m44.754s
 # rel60 real    10m23.002s
@@ -685,9 +716,8 @@ time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdat
 # rel.64    12m
 # rel.65    24m
 # rel.66    5m
+# rel.67    5m
 
-# Or, if you do not have the 'compara_homology_merged' in the Registry, you can specify compara_db using an URL:
-time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --compara_db mysql://ensadmin:${ENSADMIN_PSW}@compara3:3306/lg4_compara_homology_merged_64 --debug 1
 
 13. Run the healthchecks:
 
@@ -697,6 +727,7 @@ time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdat
 # rel.62: 4sec, all successful
 # rel.63: 14sec, all successful after analyzing 3 tables
 # rel.65: 13sec, all successful after analyzing the tables.
+# rel.67: 8sec, all successful
 
 13.2 Update the max_alignment_length. You can use the corresponding healthcheck with the -repair option:
 
@@ -737,10 +768,6 @@ time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdat
 
 ...and correct mismatches if any!
 
-
-**** NOTE **** Remember Leo's experiment about delete analysis and
-     analysis_description tables after the merging but before copying
-     to staging!
 
 14. Ask the release coordinator to point the test web server to the compara DB.
 
@@ -820,7 +847,9 @@ EOF
     export ENSADMIN_PSW='...'
 
 
-16.4. Run the script to actually copy the data:
+16.4  Drop the previous release databases of both staging servers (first make sure that the release coordinator is happy with that)
+
+16.5. Run the script to actually copy the data:
 
 time perl ~mp12/ensembl_main/ensembl/misc-scripts/CopyDBoverServer.pl -pass $ENSADMIN_PSW \
         -noflush /tmp/mp12_ensembl_compara_66.copy_options > /tmp/mp12_ensembl_compara_66.copy.err 2>&1
@@ -940,12 +969,12 @@ Or you can use the order of species given in the species tree:
     --trim --method_link SYNTENY > synteny.inc
 
  # for protein and ncrna trees
-  cat $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/sql/tree-stats.sql
-     | mysql -hcompara2 -uensadmin -p${ENSADMIN_PSW} mm14_compara_homology_66 -H | sed 's/\/TABLE>/\/TABLE>\n/g' | grep -v optimize | \
+  cat $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/sql/tree-stats.sql \
+     | mysql -hcompara3 -uensadmin -p${ENSADMIN_PSW} mm14_compara_homology_67 -H | sed 's/\/TABLE>/\/TABLE>\n/g' | grep -v optimize | \
      bash $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/get_stats_trees.sh pt > protein_trees.inc
 
   cat $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/sql/tree-stats.sql | sed 's/ENSEMBLPEP/ENSEMBLTRANS/' | sed 's/pep/trans/g' \
-     | mysql -hcompara4 -uensadmin -p${ENSADMIN_PSW} mp12_compara_nctrees_66c -H | sed 's/\/TABLE>/\/TABLE>\n/g' | grep -v optimize | \
+     | mysql -hcompara4 -uensadmin -p${ENSADMIN_PSW} mp12_compara_nctrees_67noCAFE -H | sed 's/\/TABLE>/\/TABLE>\n/g' | grep -v optimize | \
      bash $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/get_stats_trees.sh nc > nc_trees.inc
 
 CVS commit these files.
@@ -955,17 +984,17 @@ CVS commit these files.
 
 cd $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/pipeline_diagrams
 
-$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara2/mm14_compara_homology_66 -output ProteinTrees.png
-$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara4/mp12_compara_nctrees_66c -output ncRNAtrees.png
-$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara1/lg4_compara_families_66 -output Families.png
-#$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara1/kb3_pecan_19way_65 -output MercatorPecan.png
-#$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara1/kb3_epo_35way_65 -output EpoLowCoverage.png
+perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara3/mm14_compara_homology_67 -output ProteinTrees.png
+perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara4/mp12_compara_nctrees_67noCAFE -output ncRNAtrees.png
+perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara2/lg4_compara_families_67 -output Families.png
+perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara1/kb3_pecan_19way_67 -output MercatorPecan.png
+perl $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/generate_graph.pl -url mysql://ensro@compara1/kb3_epo_35way_67 -output EpoLowCoverage.png
 
 CVS commit these files.
 
 
 20. Update the schema and tutorial documentation files compara_schema.html and compara_tutorial.html in this directory:
-    ensembl-webcode/htdocs/info/docs/api/compara/
+    $ENSEMBL_CVS_ROOT_DIR/ensembl-webcode/htdocs/info/docs/api/compara/
     (previously - public-plugins/ensembl/htdocs/info/docs/api/compara )
 
 CVS commit the changes.
@@ -988,7 +1017,7 @@ If you have any doubt ask Kathryn or Stephen
 
     Make sure you have the XML::Writer module in your PERL5LIB (there is a copy in ~mm14/src/orthoxml/)
     Run init_pipeline.pl with this file:
-        init_pipeline.pl DumpTrees_conf.pm -tree_type protein -pipeline_db -host=compara2 -pipeline_db -user=ensadmin -pipeline_db -dbname=mm14_dump_pt_trees_66 -password $ENSADMIN_PSW -target_dir ~/scratch/dump_pt_trees_66
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -tree_type protein -pipeline_db -host=compara2 -pipeline_db -user=ensadmin
         #
         # rel.64: testing sqlite mode failed: too many occurences of "database locked". We should stick to mysql.
 
@@ -1013,7 +1042,7 @@ If you have any doubt ask Kathryn or Stephen
 
 22c. Commit the DumpTrees_conf.pm file into the CVS if you'd like to keep the changes.
 
-22d. Report the location of the tree content dump for Uniprot, in 'target_dir'/Compara.{release}.protein.tree_content.txt.gz
+22d. Report to Javier the location of the tree content dump for Uniprot, in 'target_dir'/Compara.{release}.protein.tree_content.txt.gz
 
 22e. Report the locations of the dumps to the main Release Coordinator and/or the web people.
      'target_dir'/emf should go to /emf/ensembl-compara/homologies/ on the ftp

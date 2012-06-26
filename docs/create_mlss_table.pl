@@ -265,10 +265,12 @@ if (defined $species_tree_file or $species_tree_from_db) {
     foreach my $this_leaf (@$all_leaves) {
 
         my $long_name = $this_leaf->name;
+        $long_name =~ s/Ictidomys/Spermophilus/;
         $long_name =~ tr/_/ /d;
         my $spp = { 'long_name' => $long_name };
 
         my $name = $this_leaf->name;
+        $name =~ s/Ictidomys/Spermophilus/;
         $name = lc $name;
         $name =~ tr/ /_/d;
 
@@ -286,7 +288,7 @@ if (defined $species_tree_file or $species_tree_from_db) {
 
 
 foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
-  foreach my $this_species (@{$this_method_link_species_set->species_set}) {
+  foreach my $this_species (@{$this_method_link_species_set->species_set_obj->genome_dbs}) {
       #need to modify the name 
       my $scientific_name = $this_species->name;
       $scientific_name =~ tr/_/ /d;
@@ -332,9 +334,9 @@ sub print_blastz_net_list {
     my $mlss_ids;
     #find reference species by parsing name field of mlss table
     foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
-        if ($this_method_link_species_set->method_link_type ne "BLASTZ_NET" && 
-	   $this_method_link_species_set->method_link_type ne "LASTZ_NET") {
-            print "only to be used for BLASTZ_NET or LASTZ_NET not " . $this_method_link_species_set->method_link_type . "\n";
+        if ($this_method_link_species_set->method->type ne "BLASTZ_NET" && 
+	   $this_method_link_species_set->method->type ne "LASTZ_NET") {
+            print "only to be used for BLASTZ_NET or LASTZ_NET not " . $this_method_link_species_set->method->type . "\n";
             next;
         }
 
@@ -344,7 +346,7 @@ sub print_blastz_net_list {
             my $ref_genome_db = findGenomeDBFromShortName($short_ref_name); 
 
             #store the other species which also have this reference
-            foreach my $this_species (@{$this_method_link_species_set->species_set}) {
+            foreach my $this_species (@{$this_method_link_species_set->species_set_obj->genome_dbs}) {
                 if ($this_species->dbID != $ref_genome_db->dbID) {
                     push @{$ref_species->{$ref_genome_db->dbID}}, $this_species->dbID;
                     $mlss_ids->{$ref_genome_db->dbID}->{$this_species->dbID} = $this_method_link_species_set->dbID;
@@ -441,7 +443,7 @@ sub print_html_list {
   my ($all_method_link_species_sets) = @_;
 
   @$all_method_link_species_sets = sort {
-          ($a->method_link_id <=> $b->method_link_id) or ($a->name cmp $b->name)
+          ($a->method->dbID <=> $b->method->dbID) or ($a->name cmp $b->name)
       } @$all_method_link_species_sets;
 
   my $these_method_link_species_sets = [];
@@ -449,7 +451,7 @@ sub print_html_list {
   my $species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor($reg_alias, 'compara', 'SpeciesSet');
   my $species_set_tags = $species_set_adaptor->fetch_all_by_tag("name"); 
 
-  foreach my $this_method_link_species_set (sort {scalar @{$a->species_set} <=> scalar @{$b->species_set}} @$all_method_link_species_sets) {
+  foreach my $this_method_link_species_set (sort {scalar @{$a->species_set_obj->genome_dbs} <=> scalar @{$b->species_set_obj->genome_dbs}} @$all_method_link_species_sets) {
       my $species_set_name;
       foreach my $species_set_tag (@$species_set_tags) {
           if ($species_set_tag->dbID == $this_method_link_species_set->species_set_obj->dbID) {
@@ -457,7 +459,7 @@ sub print_html_list {
           }
       }
       if (defined $species_set_name) {
-            my $type = $this_method_link_species_set->method_link_type;
+            my $type = $this_method_link_species_set->method->type;
             print "<h4>", $this_method_link_species_set->name, "</h4>";
             print "<h5>", "(method_link_type=\"$type\" : species_set_name=\"$species_set_name\")", "</h5>";
       } else {
@@ -466,7 +468,7 @@ sub print_html_list {
 
       my $genome_ids;
       #store the other species which also have this reference
-      foreach my $this_species (@{$this_method_link_species_set->species_set}) {
+      foreach my $this_species (@{$this_method_link_species_set->species_set_obj->genome_dbs}) {
           push @$genome_ids, $this_species->dbID;
       }
       foreach my $genome_id (sort order_tree @$genome_ids) {
@@ -482,9 +484,9 @@ sub print_full_html_table {
 
   my $table;
   foreach my $this_method_link_species_set (@{$all_method_link_species_sets}) {
-    my $this_method_link_type = $this_method_link_species_set->method_link_type();
+    my $this_method_link_type = $this_method_link_species_set->method->type();
     my $genome_db_names;
-    foreach my $genome_db (@{$this_method_link_species_set->species_set}) {
+    foreach my $genome_db (@{$this_method_link_species_set->species_set_obj->genome_dbs}) {
       my $genome_db_name = $genome_db->name;
       push (@$genome_db_names, $genome_db_name);
     }
@@ -527,34 +529,34 @@ sub print_full_html_table {
       if ($i > $j) {
         print qq{<td class="bg3 center">};
         foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
-          if (defined($bottom_methods->{$this_method_link_species_set->method_link_type})) {
+          if (defined($bottom_methods->{$this_method_link_species_set->method->type})) {
             push(@$these_method_link_species_sets, $this_method_link_species_set);
           }
         }
-        @$these_method_link_species_sets = sort {$bottom_methods->{$a->method_link_type}->{order}
-            <=> $bottom_methods->{$b->method_link_type}->{order}} @$these_method_link_species_sets;
+        @$these_method_link_species_sets = sort {$bottom_methods->{$a->method->type}->{order}
+            <=> $bottom_methods->{$b->method->type}->{order}} @$these_method_link_species_sets;
         @$these_method_link_species_sets = map {
           if ($use_names) {
             $_->name
           } else {
-            $bottom_methods->{$_->method_link_type}->{string}
+            $bottom_methods->{$_->method->type}->{string}
           }} @$these_method_link_species_sets;
       } elsif ($i == $j) {
         print qq{<td class="center bg3">};
         foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
-          if (defined($diagonal_methods->{$this_method_link_species_set->method_link_type})) {
+          if (defined($diagonal_methods->{$this_method_link_species_set->method->type})) {
             push(@$these_method_link_species_sets, $this_method_link_species_set);
           }
         }
-        @$these_method_link_species_sets = sort {$diagonal_methods->{$a->method_link_type}->{order}
-            <=> $diagonal_methods->{$b->method_link_type}->{order}} @$these_method_link_species_sets;
+        @$these_method_link_species_sets = sort {$diagonal_methods->{$a->method->type}->{order}
+            <=> $diagonal_methods->{$b->method->type}->{order}} @$these_method_link_species_sets;
         @$these_method_link_species_sets = map {
           if ($use_names) {
             $_->name
           } else {
-            $diagonal_methods->{$_->method_link_type}->{string}
+            $diagonal_methods->{$_->method->type}->{string}
           }} @$these_method_link_species_sets;
-  #       foreach my $this_method_link (map {$_->method_link_type} @$all_method_link_species_sets) {
+  #       foreach my $this_method_link (map {$_->method->type} @$all_method_link_species_sets) {
   #         if (defined($diagonal_methods->{$this_method_link})) {
   #           push(@$these_method_links, $this_method_link);
   #         }
@@ -565,17 +567,17 @@ sub print_full_html_table {
       } else {
         print qq{<td class="center bg4">};
         foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
-          if (defined($top_methods->{$this_method_link_species_set->method_link_type})) {
+          if (defined($top_methods->{$this_method_link_species_set->method->type})) {
             push(@$these_method_link_species_sets, $this_method_link_species_set);
           }
         }
-        @$these_method_link_species_sets = sort {$top_methods->{$a->method_link_type}->{order}
-            <=> $top_methods->{$b->method_link_type}->{order}} @$these_method_link_species_sets;
+        @$these_method_link_species_sets = sort {$top_methods->{$a->method->type}->{order}
+            <=> $top_methods->{$b->method->type}->{order}} @$these_method_link_species_sets;
         @$these_method_link_species_sets = map {
           if ($use_names) {
             $_->name
           } else {
-            $top_methods->{$_->method_link_type}->{string}
+            $top_methods->{$_->method->type}->{string}
           }} @$these_method_link_species_sets;
       }
       
@@ -612,9 +614,9 @@ sub print_half_html_table {
 
   my $table;
   foreach my $this_method_link_species_set (@{$all_method_link_species_sets}) {
-    my $this_method_link_type = $this_method_link_species_set->method_link_type();
+    my $this_method_link_type = $this_method_link_species_set->method->type();
     my $genome_db_names;
-    foreach my $genome_db (@{$this_method_link_species_set->species_set}) {
+    foreach my $genome_db (@{$this_method_link_species_set->species_set_obj->genome_dbs}) {
       my $genome_db_name = $genome_db->name;
       $genome_db_name =~ tr/_/ /d;
       $genome_db_name = ucfirst $genome_db_name;
@@ -667,7 +669,7 @@ sub print_half_html_table {
         }
       }
       foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
-        if (defined($all_methods->{$this_method_link_species_set->method_link_type})) {
+        if (defined($all_methods->{$this_method_link_species_set->method->type})) {
           push(@$these_method_link_species_sets, $this_method_link_species_set);
         }
       }
@@ -681,20 +683,20 @@ sub print_half_html_table {
               : '<font color=blue><a href=mlss/mlss_'.$_->dbID.".html\">YES$on_species</a></font>";
         } @$these_method_link_species_sets;
       } else {
-        @$these_method_link_species_sets = sort {$all_methods->{$a->method_link_type}->{order}
-            <=> $all_methods->{$b->method_link_type}->{order}} @$these_method_link_species_sets;
+        @$these_method_link_species_sets = sort {$all_methods->{$a->method->type}->{order}
+            <=> $all_methods->{$b->method->type}->{order}} @$these_method_link_species_sets;
         @$these_method_link_species_sets = map {
             my $string;
             if ($use_names) {
               $string = $_->name;
             } else {
-              $string = $all_methods->{$_->method_link_type}->{string}
+              $string = $all_methods->{$_->method->type}->{string}
             }
-            if ($all_methods->{$_->method_link_type}->{bold}) {
+            if ($all_methods->{$_->method->type}->{bold}) {
               $string = "<b>$string</b>";
             }
-            if ($all_methods->{$_->method_link_type}->{color}) {
-            #  my $color = $all_methods->{$_->method_link_type}->{color};
+            if ($all_methods->{$_->method->type}->{color}) {
+            #  my $color = $all_methods->{$_->method->type}->{color};
             #  $string = "<font color=\"$color\">dd$string</font>";
 	      $string;
             }
@@ -737,7 +739,7 @@ sub print_html_list_per_genome {
   my $table;
   foreach my $this_method_link_species_set (@{$all_method_link_species_sets}) {
     my $genome_db_names;
-    foreach my $genome_db (@{$this_method_link_species_set->species_set}) {
+    foreach my $genome_db (@{$this_method_link_species_set->species_set_obj->genome_dbs}) {
       my $genome_db_name = $genome_db->name;
       push (@$genome_db_names, $genome_db_name);
     }
@@ -753,7 +755,7 @@ sub print_html_list_per_genome {
     my $these_method_link_species_sets = [];
 
     foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
-      if (defined($all_methods->{$this_method_link_species_set->method_link_type})) {
+      if (defined($all_methods->{$this_method_link_species_set->method->type})) {
         push(@$these_method_link_species_sets, $this_method_link_species_set);
       }
     }
@@ -761,20 +763,20 @@ sub print_html_list_per_genome {
     if (@$method_link_type == 1 and !$use_names) {
       @$these_method_link_species_sets = map {"Yes"} @$these_method_link_species_sets;
     } else {
-      @$these_method_link_species_sets = sort {$all_methods->{$a->method_link_type}->{order}
-          <=> $all_methods->{$b->method_link_type}->{order}} @$these_method_link_species_sets;
+      @$these_method_link_species_sets = sort {$all_methods->{$a->method->type}->{order}
+          <=> $all_methods->{$b->method->type}->{order}} @$these_method_link_species_sets;
       @$these_method_link_species_sets = map {
 	my $string;
 	if ($use_names) {
 	  $string = $_->name;
 	} else {
-	  $string = $all_methods->{$_->method_link_type}->{string}
+	  $string = $all_methods->{$_->method->type}->{string}
 	}
-	if ($all_methods->{$_->method_link_type}->{bold}) {
+	if ($all_methods->{$_->method->type}->{bold}) {
 	  $string = "<b>$string</b>";
 	}
-	if ($all_methods->{$_->method_link_type}->{color}) {
-	  my $color = $all_methods->{$_->method_link_type}->{color};
+	if ($all_methods->{$_->method->type}->{color}) {
+	  my $color = $all_methods->{$_->method->type}->{color};
 	  $string = "<font color=\"$color\">$string</font>";
 	}
       } @$these_method_link_species_sets;
@@ -810,12 +812,12 @@ sub print_html_table_per_genome {
   my $table;
   foreach my $this_method_link_species_set (@{$all_method_link_species_sets}) {
     my $genome_db_names;
-    foreach my $genome_db (@{$this_method_link_species_set->species_set}) {
+    foreach my $genome_db (@{$this_method_link_species_set->species_set_obj->genome_dbs}) {
       my $genome_db_name = $genome_db->name;
       push (@$genome_db_names, $genome_db_name);
     }
     foreach my $genome_db_name (@$genome_db_names) {
-      $table->{$genome_db_name}->{$this_method_link_species_set->method_link_type} = 1;
+      $table->{$genome_db_name}->{$this_method_link_species_set->method->type} = 1;
     }
   }
 
