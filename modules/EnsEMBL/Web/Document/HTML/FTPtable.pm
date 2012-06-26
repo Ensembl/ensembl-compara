@@ -64,8 +64,7 @@ sub render {
     (my $sp_name  = $spp) =~ s/_/ /;
     my $sp_dir    = lc $spp;
     my $sp_var    = lc $spp . '_variation';
-    my $files_dir = $species_defs->get_config(ucfirst $sp_dir, 'databases')->{'DATABASE_FUNCGEN'}{'NAME'};
-    
+
     $table->add_row({
       species => sprintf('<strong><i>%s</i></strong> (%s)', $sp_name, $species_defs->get_config($spp, 'DISPLAY_NAME')),
       dna     => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a>',   $title{'dna'},     $rel, $sp_dir),
@@ -78,10 +77,10 @@ sub render {
       mysql   => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/mysql/">MySQL</a>',          $title{'mysql'},   $rel),
       var1    => $required_lookup->{'var1'}{$sp_dir}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/emf/%s/">EMF</a>',                          $title{'emf'},     $rel, $sp_var)    : '-',
       var2    => $required_lookup->{'var2'}{$sp_dir}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/gvf/%s/">GVF</a>',                $title{'gvf'},     $rel, $sp_dir)    : '-',
-      var3    => $required_lookup->{'var3'}{$sp_dir}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/VEP/%s/">VEP</a>',                $title{'vep'},     $rel, $sp_dir)    : '-',
+      var3    => $required_lookup->{'var3'}{$sp_dir}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/VEP/">VEP</a>',                $title{'vep'},     $rel )    : '-',
       funcgen => $required_lookup->{'funcgen'}{$sp_dir} ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/regulation/%s/">Regulation</a> (GFF)',      $title{'funcgen'}, $rel, $sp_dir)    : '-',
       bam     => $required_lookup->{'bam'}{$sp_dir}     ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/bam/%s/">BAM</a>',                          $title{'bam'},     $rel, $sp_dir)    : '-',
-      files   => $required_lookup->{'files'}{$sp_dir}   ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/data_files/%s/">Regulation data files</a>', $title{'files'},   $rel, $files_dir) : '-',
+      files   => $required_lookup->{'files'}{$sp_dir}   ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/data_files/%s/">Regulation data files</a>', $title{'files'},   $rel, $sp_dir) : '-',
     });
   }
   
@@ -134,7 +133,7 @@ sub required_types_for_species {
     saccharomyces_cerevisiae monodelphis_domestica mus_musculus 
     ornithorhynchus_anatinus pan_troglodytes pongo_pygmaeus 
     rattus_norvegicus sus_scrofa taeniopygia_guttata tetraodon_nigroviridis 
-    pongo_abelii
+    pongo_abelii macaca_mulatta
   )};
   
   # VEP
@@ -154,7 +153,7 @@ sub required_types_for_species {
   
   # BAM
   $required_lookup{'bam'} = { map { $_ => 1 } qw(
-    pan_troglodytes
+    pan_troglodytes sus_scrofa oreochromis_niloticus
   )};
   
   return \%required_lookup;
