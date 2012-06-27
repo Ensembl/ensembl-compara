@@ -13,7 +13,7 @@ sub content {
   $self->caption($object->stable_id);
 
   #change label for gene type
-  $self->modify_entry_by_type({
+  $self->modify_entry_by('type',{
     type  => 'Gene type',
     label => $object->Obj->biotype,
   });

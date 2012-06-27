@@ -27,7 +27,7 @@ sub content {
   $biotype    =~ s/_/ /;
   $biotype    =~ s/rna/RNA/;
 
-  $self->modify_entry_by_type({
+  $self->modify_entry_by('type',{
     type  => 'Gene type',
     label => $biotype,
   });

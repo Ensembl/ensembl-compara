@@ -16,7 +16,7 @@ sub content {
   $self->caption($caption);
 
   # change label for gene type
-  $self->modify_entry_by_type({
+  $self->modify_entry_by('type',{
     type  => 'Gene type',
     label => $transcript->biotype,
   });
