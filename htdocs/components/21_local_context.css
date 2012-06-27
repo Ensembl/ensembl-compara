@@ -1,5 +1,4 @@
-.nav                               { width: 208px; margin: 8px 0 0 8px; border: 0; padding: 0; 
-                                     z-index: 100; position: absolute; left: 0; }
+.nav                               { width: 208px; margin: 3px; border: 0; padding: 0; z-index: 100; position: absolute; left: 0; }
 .nav div.header                    { font-weight: bold; border: 1px solid [[PANEL_BORDER]]; border-bottom: 0; padding: 2px; }
 .nav ul                            { margin: 0 0 4px 0; border: 1px solid [[PANEL_BORDER]]; padding: 2px 0 0 16px; background-color: [[PANEL_BG]]; }
 .nav ul li                         { margin-bottom: 0; list-style-image: none; color: [[CONTRAST_HEADER]]; }
@@ -21,23 +20,25 @@
 body.ie67 .nav                         { margin-top: 3px; }
 body.ie67 .nav ul.local_context li img { margin: 0; vertical-align: top; }
 
-.tool_buttons p, .other_tool { display: none; margin: 0; }
-.tool_buttons a, .tool_buttons p.disabled { background-position: 7px 50%; background-repeat: no-repeat; border: 3px double [[PAGE_BG]]; margin: 4px 0px; padding: 4px 4px 4px 28px; }
-.tool_buttons a { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; text-decoration: none; display: block; }
+.tool_buttons p,
+.other_tool              { display: none; margin: 0; }
+.tool_buttons a,
+.tool_buttons p.disabled { background-position: 7px 50%; background-repeat: no-repeat; border: 3px double [[PAGE_BG]]; margin: 4px 0px; padding: 4px 4px 4px 28px; }
+.tool_buttons a          { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; text-decoration: none; display: block; }
 .tool_buttons p.disabled { background-color: [[BUTTON_DISABLED]]; color: [[BUTTON_TEXT]]; }
       
-.tool_buttons a:hover   { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
-.tool_buttons a:visited { color: [[BUTTON_TEXT]]; }
+.tool_buttons a:hover    { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
+.tool_buttons a:visited  { color: [[BUTTON_TEXT]]; }
      
-.tool_buttons .config   { background-image: url(/i/16/rev/setting.png);   background-repeat: no-repeat; }
-.tool_buttons .data     { background-image: url(/i/16/rev/page-user.png); background-repeat: no-repeat; }
-.tool_buttons .export   { background-image: url(/i/16/rev/download.png);  background-repeat: no-repeat; }
-.tool_buttons .csv      { background-image: url(/i/16/rev/page-csv.png);  background-repeat: no-repeat; }
-.tool_buttons .bookmark { background-image: url(/i/16/rev/tag.png);       background-repeat: no-repeat; }
-.tool_buttons .find     { background-image: url(/i/16/rev/search.png);    background-repeat: no-repeat; }
-.tool_buttons .add      { background-image: url(/i/16/rev/add.png);       background-repeat: no-repeat; }
-.tool_buttons .save     { background-image: url(/i/16/rev/save.png);      background-repeat: no-repeat; }
-.tool_buttons .load     { background-image: url(/i/16/rev/paste.png);     background-repeat: no-repeat; }
-.tool_buttons .list     { background-image: url(/i/16/rev/list.png);      background-repeat: no-repeat; }
-.tool_buttons .reset    { background-image: url(/i/16/rev/reload.png);    background-repeat: no-repeat; }
+.tool_buttons .config    { background-image: url(/i/16/rev/setting.png);   }
+.tool_buttons .data      { background-image: url(/i/16/rev/page-user.png); }
+.tool_buttons .export    { background-image: url(/i/16/rev/download.png);  }
+.tool_buttons .csv       { background-image: url(/i/16/rev/page-csv.png);  }
+.tool_buttons .bookmark  { background-image: url(/i/16/rev/tag.png);       }
+.tool_buttons .find      { background-image: url(/i/16/rev/search.png);    }
+.tool_buttons .add       { background-image: url(/i/16/rev/add.png);       }
+.tool_buttons .save      { background-image: url(/i/16/rev/save.png);      }
+.tool_buttons .load      { background-image: url(/i/16/rev/paste.png);     }
+.tool_buttons .list      { background-image: url(/i/16/rev/list.png);      }
+.tool_buttons .reset     { background-image: url(/i/16/rev/reload.png);    }
  

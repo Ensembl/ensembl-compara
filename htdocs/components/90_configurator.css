@@ -15,7 +15,7 @@ div.modal_content div.species_select select { display: block; width: 100%; margi
 
 form.configuration div,
 form.configuration h2                                               { -webkit-margin-collapse: collapse; }
-form.configuration h1                                               { color: [[CONTRAST_HEADER]]; border-bottom: 1px solid [[PANEL_BORDER]]; display: none; padding: 2px; margin: 4px 0 6px; }
+form.configuration h1                                               { border-bottom: 1px solid [[PANEL_BORDER]]; display: none; padding: 2px; margin: 4px 0 6px; }
 form.configuration h1,
 form.configuration div.config h2                                    { cursor: pointer; font-size: 20px; }
 form.configuration div.config h2                                    { margin: 4px 0 9px; }
@@ -64,7 +64,7 @@ form.configuration div.view_config fieldset div.fnotes              { padding: 6
 form.configuration.single div.config ul.config_menu li.hidden       { display: none!important; }
 
 form.export div.view_config h2,
-form.configuration.multi div.config h2                              { font-size: 15px; margin: 6px 0 2px; border-bottom-width: 0; }
+form.configuration.multi div.config h2                              { font-size: 15px; margin: 6px 0 2px; border-bottom-width: 0; color: [[MENU_LINK]]; }
 form.export div.view_config h2                                      { border-bottom-width: 1px; }
 form.configuration.multi div.config h3,
 form.configuration.multi div.config h4,
@@ -85,19 +85,17 @@ body.mac div.track_order span.menu_option                           { cursor: ns
 
 /* image config notes */
 
-div.image_config_notes                               { border-top: 0!important; padding: 4px; }
-div.image_config_notes .border                       { border-top: 1px solid [[PANEL_BORDER]]; padding-top: 10px; }
+div.image_config_notes                               { padding: 4px; }
+div.image_config_notes .border                       { border-top: 1px solid [[PANEL_BORDER]]; border-bottom: 0; padding-top: 10px; }
 div.image_config_notes .content div                  { float: left; margin-right: 32px; }
 div.image_config_notes ul.configuration_key          { list-style: none; padding: 0; margin-left: 4px; }
 div.image_config_notes ul.configuration_key li       { list-style-image: none; }
 div.image_config_notes ul.configuration_key li span  { vertical-align: middle; padding: 1px; margin-left: 4px; }
 div.image_config_notes ul.configuration_key li img   { vertical-align: middle; padding: 1px; }
-div.image_config_notes h2                            { border-top: 1px solid [[PANEL_BORDER]]!important; margin: 4px 0; }
+div.image_config_notes h2                            { margin: 4px 0; }
 div.image_config_notes h4                            { margin: 4px 0; padding-top: 4px; }
 div.image_config_notes h4,
 div.image_config_notes p                             { clear: both; padding-left: 3px; }
-
-.config_header { color: [[MENU_LINK]]; }
 
 /* save as popup */
 
@@ -105,7 +103,7 @@ div#config_save_as_bg         { top: -20px; left: 0; width: 100%; height: 100%; 
 div#config_save_as_bg,
 div.config_save_as            { display: none; position: absolute; }
 div.config_save_as            { top: 50%; left: 50%; z-index: 10001; background-color: #FFF; width: 400px; margin-left: -200px; padding: 10px; border: 2px solid #000; }
-div.config_save_as h1         { display: block!important; margin: 0 0 5px; color: [[CONTRAST_HEADER]]; }
+div.config_save_as h1         { display: block!important; margin: 0 0 5px; }
 div.config_save_as label      { display: block; font-weight: bold; margin: 10px 0 3px; }
 div.config_save_as span       { padding-right: 30px; }
 div.config_save_as span input { position: relative; top: 2px; }

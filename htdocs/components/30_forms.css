@@ -1,5 +1,3 @@
-form { margin-bottom:16px; }
-
 form div, form > fieldset, form h2 {
   -webkit-margin-collapse: separate; /* crome and safari fix for margins of form components */
 }

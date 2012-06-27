@@ -1,8 +1,6 @@
-#main { margin: 8px 0 32px 224px; padding: 0; border: 0; position: relative; }
+#main { margin-left: 213px; padding: 0; border: 0; position: relative; }
 
 body.static #main { margin-left: 0; }
-
-body.static #main #static { margin:0 16px; }
 
 @media print {
    #main { margin-left: 0; }
@@ -21,9 +19,8 @@ body.static div#content { margin-left: 240px; }
 div#content div.panel { background-color:[[PANEL_BG]]; }
 */
 
-
-a.help-header { color:inherit; text-decoration:none; }
-body.ie7 .help-header { float: left; }
+a.help-header { color: [[PAGE_HEADER]]; text-decoration: none; background: url(/i/16/info.png) no-repeat right center; padding-right: 24px; }
+body.ie7 a.help-header { float: left; }
 
 .glossary_mouseover { border-bottom:1px dotted #00c; cursor:pointer; }
 .floating_popup { 
@@ -44,7 +41,8 @@ body.ie7 .help-header { float: left; }
 p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 
 /* Columns for static content */
-#static                               { margin: 0; padding:8px; }
+#static    { margin: 0 16px; }
+#static h1 { margin-top: 0; }
 
 /*
 .onecol { margin:0 0 1% 0; padding:1% }

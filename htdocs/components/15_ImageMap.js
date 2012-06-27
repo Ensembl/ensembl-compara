@@ -67,11 +67,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (typeof FileReader !== 'undefined') {
       this.dropFileUpload();
     }
-    
-    $('.iexport a', this.el).on('click', function () {
-      panel.elLk.exportMenu.css({ left: $(this).offset().left, top: $(this).parent().position().top + $(this).outerHeight() }).toggle();
+   
+    panel.elLk.exportMenu.appendTo('body').css($('.iexport a', this.el).on('click', function () {
+      panel.elLk.exportMenu.toggle();
       return false;
-    });
+    }).offset());
   },
   
   hashChange: function (r) {

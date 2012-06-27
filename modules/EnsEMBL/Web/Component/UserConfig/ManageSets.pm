@@ -44,12 +44,12 @@ sub sets_table {
 
   return unless scalar @sets;
 
-  my $configs  = $adaptor->all_configs;  my $img_url  = $self->img_url;
-  my $icon_url = $self->img_url.'16/';  my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div><img class="t
-oggle" src="${img_url}closed2.gif" />%s<a href="%s" class="save"></a></div>};  my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div><img class="toggle" src="${img_url}closed2.gif" /></di
-v>};
-  my $active   = qq{<a class="edit" href="%s" rel="%s"><img src="${icon_url}saved.png" alt="use" title="Use this configu
-ration set" /></a><div class="config_used">Configuration set applied</div>};
+  my $configs  = $adaptor->all_configs;
+  my $img_url  = $self->img_url;
+  my $icon_url = $img_url . '16/';
+  my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div><img class="toggle" src="${img_url}closed2.gif" />%s<a href="%s" class="save"></a></div>};
+  my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div><img class="toggle" src="${img_url}closed2.gif" /></div>};
+  my $active   = qq{<a class="edit" href="%s" rel="%s"><img src="${icon_url}saved.png" alt="use" title="Use this configuration set" /></a><div class="config_used">Configuration set applied</div>};
   my @rows;
   
   my @columns = (
@@ -65,16 +65,18 @@ ration set" /></a><div class="config_used">Configuration set applied</div>};
     my $record_id = $_->{'record_id'};
     (my $desc     = $_->{'description'}) =~ s/\n/<br \/>/g;
     my %params    = ( action => 'ModifyConfig', __clear => 1, record_id => $record_id, is_set => 1 );
-    my (@confs, @rel);    
+    my (@confs, @rel);
+     
     foreach (map $configs->{$_} || (), keys %{$_->{'records'}}) {
       my $view_config = $hub->get_viewconfig(reverse split '::', $_->{'type'} eq 'view_config' ? $_->{'code'} : $_->{'link_code'});
       my $config_type = join ' - ', $view_config->type, $view_config->title;
-      push @confs, [ $config_type, $_->{'record_id'}, qq{$_->{'name'} <b class="ellipsis">...</b><span>$config_type</spa
-n>} ];
+      push @confs, [ $config_type, $_->{'record_id'}, qq{$_->{'name'} <b class="ellipsis">...</b><span>$config_type</span>} ];
       push @rel, [split '::', $view_config->code]->[-1];
-    }    
-    push @rows, {      name    => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $hub->
-url({ function => 'edit_details', %params })), class => 'editable wrap' },      desc    => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
+    }
+    
+    push @rows, {
+      name    => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
+      desc    => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
       configs => { value => scalar @confs ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[2]</li>}, sort { $a->[0] cmp $b->[0] } @confs) : 'There are no configurations in this set', class => 'wrap' },
       active  => sprintf($active, $hub->url({ function => 'activate_set', %params }), join ' ', @rel),
       edit    => sprintf('<a class="edit_record" href="#" rel="%s"><img src="%spencil.png" alt="edit" title="Edit configurations" /></a>', $record_id, $icon_url),

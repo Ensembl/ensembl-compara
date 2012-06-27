@@ -20,7 +20,8 @@
 
 .hover_label                       { position: absolute; padding: 0 0 5px 0; border: 1px solid; z-index: 999; display: none; text-align: left; width: auto; cursor: default; }
 .hover_label img,
-.hover_label a.favourite           { margin: 0 4px; display: inline-block; width: 16px; height: 16px; background: url(/i/star.png) no-repeat top left; }
+.hover_label a.favourite           { margin: 0 4px; }
+.hover_label a.favourite           { display: inline-block; width: 16px; height: 16px; background: url(/i/star.png) no-repeat top left; }
 .hover_label img.config,
 .hover_label img.url,
 .hover_label img.desc              { cursor: pointer; }

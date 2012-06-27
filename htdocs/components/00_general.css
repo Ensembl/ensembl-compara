@@ -4,7 +4,7 @@
 
 body { font-family: Luxi Sans, Helvetica, Arial, Geneva, sans-serif; color: [[PAGE_TEXT]]; background-color: [[PAGE_BG]]; font-size: 80%; padding: 0; margin: 0; border: 0; }
 pre, code, kbd { font-family: Courier New, Courier, monospace; }
-div, p, span, li, dd, dt, th, td, pre, code, kbd { font-size: 1em; line-height:1.2em; }
+div, p, span, li, dd, dt, th, td, pre, code, kbd { font-size: 1em; }
 
 body.ie6 th, body.ie6 td { font-size: 13px; }
 
@@ -50,11 +50,11 @@ body.ie6 #min_width_holder    { display: inline-block; position: relative; margi
   Headings
 ----------------------------------------------------------------------*/
 
-h1, h2, h3, h4 { margin:0; padding: 0; }
-h1     { font-size: 1.5em; color: [[PAGE_HEADER]]; }
-h2     { font-size: 1.3em; color: [[CONTRAST_HEADER]]; padding-top:16px; }
-h3     { font-size: 1.2em; color: [[CONTRAST_HEADER]]; padding-top:16px;  }
-h4     { font-size: 1.1em; color: [[CONTRAST_HEADER]]; padding-top:16px;   }
+h1, h2, h3, h4 { color: [[PAGE_HEADER]]; }
+h1     { font-size: 1.5em; }
+h2     { font-size: 1.2em; }
+h3     { font-size: 1.1em; }
+h4     { font-size: 1em;   }
 .first, .box-header { margin: 0; padding:0; }
 
 /*----------------------------------------------------------------------
@@ -136,28 +136,25 @@ dd { margin-bottom: 1em; }
 .error-pad { padding: 0.5em; }
 
 div.error div, div.warning div,
-div.info div, div.hint div        { border:1px solid; border-radius: 0 0 8px 8px;
-                                    -moz-border-radius: 0 0 8px 8px; -webkit-border-radius: 0 0 8px 8px; }
+div.info div, div.hint div        { border: 1px solid; border-radius: 0 0 8px 8px; -moz-border-radius: 0 0 8px 8px; -webkit-border-radius: 0 0 8px 8px; }
 
-div.syntax-error, div.error                 { color:#333; background-color:#fff; }
-div.error, div.warning, div.info, div.hint  { border:none; }
-div.error div                               { border-color:#a55; }
-div.warning div                             { border-color:#fd9; }
-div.info div, div.hint div                  { border-color:#ccc;}
+div.syntax-error, div.error                 { color: #333; background-color: #fff; }
+div.error, div.warning, div.info, div.hint  { border: none; margin: 4px 0; }
+div.error div                               { border-color: #a55; }
+div.warning div                             { border-color: #fd9; }
+div.info div, div.hint div                  { border-color: #ccc; }
 
 div.error h3, div.warning h3,
-div.info h3, div.hint h3      { border-radius: 8px 8px 0 0; -moz-border-radius: 8px 8px 0 0;
-                                  -webkit-border-radius: 8px 8px 0 0; 
-                                  margin:0; padding: 4px 8px 2px 24px; }
+div.info h3, div.hint h3      { border-radius: 8px 8px 0 0; -moz-border-radius: 8px 8px 0 0; -webkit-border-radius: 8px 8px 0 0; margin: 0; padding: 4px 8px 2px 24px; }
 
-div.error h3, div.warning h3  { background-repeat: no-repeat; background-position:4px 2px; }
-div.error h3, div.error h4    { background-image: url(/i/16/rev/alert.png); background-color:#a55; color:#fff; }
-div.warning h3                { background-image: url(/i/16/rev/alert.png); background-color:#daa246; }
+div.error h3, div.warning h3  { background-repeat: no-repeat; background-position: 4px 2px; }
+div.error h3, div.error h4    { background-image: url(/i/16/rev/alert.png); background-color: #a55; color: #fff; }
+div.warning h3                { background-image: url(/i/16/rev/alert.png); background-color: #daa246; }
 div.info h3, div.hint h3      { background-image: none; padding: 4px 8px 2px 8px; background-color: #ccc; }
 div.hint h3                   { height: 20px; padding-top: 8px; }
 
 /* "close" icon */
-div.hint h3 img { float: right; margin:0; padding:0; }
+div.hint h3 img { float: right; margin: 0; padding: 0; }
 
 .ajax_error { color: [[ALERT_TEXT]]; background-color: [[ALERT_BG]]; border: solid 1px [[ALERT_TEXT]]; font-weight: bold; margin: 1em; padding: 1em; }
 

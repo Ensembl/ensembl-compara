@@ -292,14 +292,13 @@ sub _caption_h1 {
 }
 
 sub _caption_h2_with_helplink {
-  my $self    = shift;
-  my $img_url = $self->hub ? $self->img_url.'16/' : undef;
-  my $id      = $self->{'help'};
-  my $html    = '<h1 class="caption">';
-  $html      .= sprintf ' <a href="/Help/View?id=%s" class="popup help-header constant" title="Click for Help">', encode_entities($id) if $id;
-  $html      .= $self->{'caption'};
-  $html      .= sprintf ' <img src="%sinfo.png" class="helplink" alt="(i)" title="Help (opens in new window)" class="print_hide" /></a>', $img_url if $id && $img_url;
-  $html      .= '</h1>';
+  my $self  = shift;
+  my $id    = $self->{'help'};
+  my $html  = '<h1 class="caption">';
+     $html .= sprintf ' <a href="/Help/View?id=%s" class="popup help-header constant" title="Click for help (opens in new window)">', encode_entities($id) if $id;
+     $html .= $self->{'caption'};
+     $html .= '</a>' if $id;
+     $html .= '</h1>';
 
   return $html;
 }

@@ -1,11 +1,12 @@
-.panel { padding: 8px 0 0 8px; }
+.panel { padding: 16px 0 0 16px; }
 
-@media print {
-  .panel { border: 1px solid [[PANEL_BORDER]]; padding: 0; margin: 0.25em; }
-}
+.panel h1,
+.panel h1.summary-heading   { text-align: left; margin: 0 0 16px; padding: 0; }
+
+.panel div.content        { padding: 0; margin: 0; }
 
 .panel span.summary-subhead { color: [[PANEL_TEXT]]; font-size: 0.7em; }
-.panel img.helplink       { width:16px; height:16px; padding-left:2px; vertical-align:top; }
+.panel img.helplink       { width:16px; height:16px; padding-left:2px; vertical-align: middle; }
 
 .panel h2                 { padding: 2px 0; margin: 0; }
 .panel h2.legend          { padding: 2px 0; margin: 8px 0; }

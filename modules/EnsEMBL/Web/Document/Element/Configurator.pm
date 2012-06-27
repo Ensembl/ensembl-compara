@@ -120,8 +120,8 @@ sub add_image_config_notes {
   my $img_url = $self->img_url;
   
   $panel->set_content(qq{
+    <h2 class="border">Key</h2>
     <div>
-      <h2>Key</h2>
       <ul class="configuration_key">
         <li><img src="${img_url}render/normal.gif" /><span>Track style</span></li>
         <li><img src="${img_url}strand-f.png" /><span>Forward strand</span></li>
@@ -131,13 +131,12 @@ sub add_image_config_notes {
       </ul>
     </div>
     <div>
-      <h4>External tracks</h4>
       <ul class="configuration_key">
         <li><img src="${img_url}track-das.gif" /><span>Distributed Annotation Source (DAS)</span></li>
         <li><img src="${img_url}track-user.gif" /><span>User-added track</span></li>
       </ul>
     </div>
-    <p class="space-below">Please note that the content of external tracks is not the responsibility of the Ensembl project.</p>
+    <p class="border space-below">Please note that the content of external tracks is not the responsibility of the Ensembl project.</p>
     <p>URL-based or DAS tracks may either slow down your ensembl browsing experience OR may be unavailable as these are served and stored from other servers elsewhere on the Internet.</p>
   });
 

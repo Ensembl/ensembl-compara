@@ -51,7 +51,6 @@ body.ie6 .modal_title .modal_close { background-image: url(/i/cp_close.gif); }
 
 .modal_content                   { position: absolute; height: 100%; width: 100%; overflow: auto; border: solid [[PANEL_TEXT]]; border-width: 0 1px 1px; }
 .modal_content .modal_wrapper    { padding-left: 3px; }
-.modal_content .config_wrapper   { overflow: hidden; }
 .modal_content .no_local_context { margin-left: 3px !important; padding-left: 0; }
 .modal_content .panel            { padding: 3px 3px 3px 0; margin: 0; border:0; }
 .modal_content .panel .content   { padding: 8px; }
@@ -59,7 +58,9 @@ body.ie6 .modal_title .modal_close { background-image: url(/i/cp_close.gif); }
 .modal_content p.modal_error     { color: #C33; }
 .modal_content p.modal_a         { margin: 10px 0; }
 .modal_content p.modal_a a       { background-color: [[MH_BG]]; color: #FFF; border: outset [[MH_BG]] 2px; text-decoration: none; padding: 2px 8px; }
-div.config_wrapper div.panel div.content { padding: 0 8px; }
+
+.modal_content .config_wrapper                 { overflow: hidden; }
+.modal_content .config_wrapper .panel .content { padding: 0 8px; }
 
 .modal_content .modal_nav                 { width: auto; min-width: 210px; float: left; position: relative; margin: 3px -1px 3px 3px; border-right: 1px solid [[PANEL_BORDER]]; padding-right: 10px;  min-height: 99%; }
 .modal_content .modal_nav .tool_buttons p { margin: 0 -3px 0 -1px; }
