@@ -57,7 +57,8 @@ sub content {
     other_species => $other,
     line          => $loc
   }, $image_config);
-  
+
+  $image->centred    = 1;  
   $image->imagemap   = 'yes';
   $image->image_type = 'syntenyview';
   $image->image_name = "$species-$chr-$other";
