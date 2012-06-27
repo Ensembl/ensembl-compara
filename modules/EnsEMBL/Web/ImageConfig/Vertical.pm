@@ -38,7 +38,9 @@ sub load_user_tracks {
   );
   
   foreach ($menu->nodes) {
-    if ($remote_formats{lc $_->get('format')}) {
+    if ($remote_formats{lc $_->get('format')}
+      || ($_->get('format') eq 'report' || $_->get('name') eq 'Region report')
+      ) {
       $_->remove;
     } else {
       $_->set('renderers', \@renderers);
