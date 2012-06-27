@@ -39,7 +39,7 @@ corresponding to the next HSP-like alignment.
 
 =head1 CONTACT
 
-Ensembl development mailing list <ensembl-dev@ebi.ac.uk>
+Ensembl development mailing list <dev@ensembl.org>
 Abel Ureta-Vidal <abel@ebi.ac.uk>
 
 =head1 APPENDIX
