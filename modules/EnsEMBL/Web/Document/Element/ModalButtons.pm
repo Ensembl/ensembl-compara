@@ -10,11 +10,11 @@ use base qw(EnsEMBL::Web::Document::Element::ToolButtons);
 
 sub label_classes {
   return {
-    'Add custom track'    => 'data',
-    'Reset configuration' => 'config',
-    'Reset track order'   => 'config',
     'Save as...'          => 'save',
-    'Load configuration'  => 'load'
+    'Load configuration'  => 'load',
+    'Reset configuration' => 'reset',
+    'Reset track order'   => 'list',
+    'Add custom track'    => 'data',
   };
 }
 
