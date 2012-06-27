@@ -41,7 +41,7 @@ body.ie7 a.help-header { float: left; }
 p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 
 /* Columns for static content */
-#static    { margin: 0 16px; }
+#static    { margin: 0 16px; padding: 8px 0 }
 #static h1 { margin-top: 0; }
 
 /*
