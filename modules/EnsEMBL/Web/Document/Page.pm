@@ -489,7 +489,9 @@ sub html_template {
           $elements->{'message'}
           $elements->{'content'}
         </div>
-        <div id="$footer_id">$elements->{'copyright'}$elements->{'footerlinks'}</div>
+        <div id="$footer_id">$elements->{'copyright'}$elements->{'footerlinks'}
+          <p class="invisible">.</p>
+        </div>
       </div>
     </div>
   </div>
