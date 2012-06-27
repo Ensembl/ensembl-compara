@@ -73,7 +73,7 @@ sub content {
   foreach my $button (@buttons) {
     if (($i % $break) == 0) {
       $html .= qq(
-        <div class="centered">
+        <div">
       );
     } 
     my $title = $button->{'title'};
