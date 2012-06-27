@@ -69,8 +69,7 @@ sub navbar {
   my $g_input      = $g ? qq{<input name="g" value="$g" type="hidden" />} : '';
   
   return sprintf (qq{
-    <div class="autocenter_wrapper">
-      <div class="autocenter navbar print_hide" style="width:$image_width">
+      <div class="navbar print_hide" style="width:$image_width">
         <input type="hidden" class="panel_type" value="LocationNav" />
         <input type="hidden" class="update_url" value="%s" />
         <div class="relocate">
@@ -93,22 +92,21 @@ sub navbar {
           </div>
         </div>
         <div class="image_nav">
-          <a href="%s" class="move left_2"></a>
-          <a href="%s" class="move left_1"></a>
-          <a href="%s" class="zoom_in"></a>
+          <a href="%s" class="move left_2" title="Back 2 windows"></a>
+          <a href="%s" class="move left_1" title="Back 1 window"></a>
+          <a href="%s" class="zoom_in" title="Zoom in"></a>
           <span class="ramp">$ramp</span>
           <span class="slider_wrapper">
             <span class="slider_left"></span>
             <span class="slider"><span class="slider_label floating_popup">$wd</span></span>
             <span class="slider_right"></span>
           </span>
-          <a href="%s" class="zoom_out"></a>
-          <a href="%s" class="move right_1"></a>
-          <a href="%s" class="move right_2"></a>
+          <a href="%s" class="zoom_out" title="Zoom out"></a>
+          <a href="%s" class="move right_1" title="Forward 1 window"></a>
+          <a href="%s" class="move right_2" title="Forward 2 windows"></a>
         </div>
         <div class="invisible"></div>
-      </div>
-    </div>},
+      </div>},
     @$values
   );
 }
