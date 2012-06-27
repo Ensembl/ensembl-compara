@@ -168,20 +168,12 @@ sub init {
     my $id   = $controller->isa('EnsEMBL::Web::Controller::Doxygen') ? 'doxygen' : 'static';
     my ($panel_content, $hr);
     
-    if ($ENV{'SCRIPT_NAME'} eq '/index.html') {
-      $hr = '';
-    } elsif ($page->include_navigation) {
-      $hr = '<hr class="end-of-doc with-nav" />';
-    } else {
-      $hr = '<hr class="end-of-doc" />';
-    } 
-    
     if ($page->include_navigation) {
-      $panel_content .= qq{<div id="content"><div id="$id">$html</div></div>$hr};
+      $panel_content .= qq{<div id="content"><div id="$id">$html</div></div>};
     } elsif ($ENV{'SCRIPT_NAME'} eq '/blog.html') {
       $panel_content = $html;
     } else {
-      $panel_content = qq{\n<div id="$id">$html</div>$hr};
+      $panel_content = qq{\n<div id="$id">$html</div>};
     }
     
     $self->add_panel(new EnsEMBL::Web::Document::Panel(raw => $panel_content));
