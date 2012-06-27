@@ -113,10 +113,10 @@ sub content {
 sub table_row {
   my ($self, $file, $sharers) = @_;
   my $hub          = $self->hub;
-  my $img_url      = $self->img_url;
+  my $img_url      = $self->img_url.'16/';
   my $delete_class = $sharers ? 'modal_confirm' : 'modal_link';
   my $title        = $sharers ? ' title="This data is shared with other users"' : '';
-  my $delete       = sprintf '<a href="%%s" class="%s"%s><img src="%sdelete.png" alt="delete" title="Delete" /></a>', $delete_class, $title, $img_url;
+  my $delete       = sprintf '<a href="%%s" class="%s"%s><img src="%strash.png" alt="delete" title="Delete" /></a>', $delete_class, $title, $img_url;
   my $download;
   if ($file->{'prefix'} && $file->{'prefix'} eq 'download') {
     my $format       = $file->{'format'} eq 'report' ? 'txt' : $file->{'format'};
@@ -131,7 +131,7 @@ sub table_row {
   if ($user_record) {
     $url_params{'id'} = $file->id;
     
-    $save = qq{<img src="${img_url}saved.png" alt="saved" title="Saved data" />};
+    $save = qq{<img src="${img_url}database.png" alt="saved" title="Saved data" />};
   } else {
     my $save_html = qq{<a href="%s" class="modal_link"><img src="${img_url}save.png" alt="save" title="%s" /></a>};
     my $save_url  = $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'save_remote' : 'save_upload', code => $file->{'code'}, __clear => 1 });
@@ -203,13 +203,13 @@ sub table_row {
 sub table_row_das {
   my ($self, $file, $user_record) = @_;
   my $hub     = $self->hub;
-  my $img_url = $self->img_url;
+  my $img_url = $self->img_url.'16/';
   my $link    = qq{<a href="%s" class="modal_link"><img src="${img_url}%s.png" alt="%s" title="%s" /></a>};
   my (%url_params, $save);
   
   if ($user_record) {
     %url_params = ( id => $file->id );
-    $save       = qq{<img src="${img_url}saved.png" alt="saved" title="Saved data" />};
+    $save       = qq{<img src="${img_url}database.png" alt="saved" title="Saved data" />};
   } else {
     my $save_url    = $hub->url({ action => 'ModifyData', function => 'save_remote', dsn => $file->logic_name, __clear => 1 });
     my @save_params = $hub->user ? ($save_url, 'Save to account') : ($hub->url({ type => 'Account', action => 'Login', __clear => 1, then => uri_escape($save_url), modal_tab => 'modal_user_data' }), 'Log in to save');
@@ -221,7 +221,7 @@ sub table_row_das {
     type   => 'DAS',
     name   => { value => $file->label, class => 'wrap' },
     date   => '<span class="hidden">-</span>-',
-    delete => sprintf($link, $hub->url({ action => 'ModifyData', function => 'delete_remote', source => 'das', __clear => 1, %url_params }), 'delete', 'delete', 'Delete'),
+    delete => sprintf($link, $hub->url({ action => 'ModifyData', function => 'delete_remote', source => 'das', __clear => 1, %url_params }), 'trash', 'delete', 'Delete'),
     save   => $save
   };
 }

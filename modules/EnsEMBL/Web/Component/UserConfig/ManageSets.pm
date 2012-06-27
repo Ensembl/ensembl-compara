@@ -41,14 +41,15 @@ sub sets_table {
   my $hub     = $self->hub;
   my $adaptor = $hub->config_adaptor;
   my @sets    = values %{$adaptor->all_sets};
-  
+
   return unless scalar @sets;
-  
-  my $configs  = $adaptor->all_configs;
-  my $img_url  = $self->img_url;
-  my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div><img class="toggle" src="${img_url}closed2.gif" />%s<a href="%s" class="save"></a></div>};
-  my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div><img class="toggle" src="${img_url}closed2.gif" /></div>};
-  my $active   = qq{<a class="edit" href="%s" rel="%s"><img src="${img_url}activate.png" alt="use" title="Use this configuration set" /></a><div class="config_used">Configuration set applied</div>};
+
+  my $configs  = $adaptor->all_configs;  my $img_url  = $self->img_url;
+  my $icon_url = $self->img_url.'16/';  my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div><img class="t
+oggle" src="${img_url}closed2.gif" />%s<a href="%s" class="save"></a></div>};  my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div><img class="toggle" src="${img_url}closed2.gif" /></di
+v>};
+  my $active   = qq{<a class="edit" href="%s" rel="%s"><img src="${icon_url}saved.png" alt="use" title="Use this configu
+ration set" /></a><div class="config_used">Configuration set applied</div>};
   my @rows;
   
   my @columns = (
@@ -59,32 +60,31 @@ sub sets_table {
     { key => 'edit',    title => '',               width => '20px', align => 'center', sort => 'none' },
     { key => 'delete',  title => '',               width => '20px', align => 'center', sort => 'none' },
   );
-  
+
   foreach (sort { $a->{'name'} cmp $b->{'name'} } @sets) {
     my $record_id = $_->{'record_id'};
     (my $desc     = $_->{'description'}) =~ s/\n/<br \/>/g;
     my %params    = ( action => 'ModifyConfig', __clear => 1, record_id => $record_id, is_set => 1 );
-    my (@confs, @rel);
-    
+    my (@confs, @rel);    
     foreach (map $configs->{$_} || (), keys %{$_->{'records'}}) {
       my $view_config = $hub->get_viewconfig(reverse split '::', $_->{'type'} eq 'view_config' ? $_->{'code'} : $_->{'link_code'});
       my $config_type = join ' - ', $view_config->type, $view_config->title;
-      push @confs, [ $config_type, $_->{'record_id'}, qq{$_->{'name'} <b class="ellipsis">...</b><span>$config_type</span>} ];
+      push @confs, [ $config_type, $_->{'record_id'}, qq{$_->{'name'} <b class="ellipsis">...</b><span>$config_type</spa
+n>} ];
       push @rel, [split '::', $view_config->code]->[-1];
-    }
-    
-    push @rows, {
-      name    => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
-      desc    => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
+    }    
+    push @rows, {      name    => { value => sprintf($editable, $_->{'name'}, '<input type="text" maxlength="255" name="name" />', $hub->
+url({ function => 'edit_details', %params })), class => 'editable wrap' },      desc    => { value => sprintf($editable, $desc,        '<textarea rows="5" name="description" />',          $hub->url({ function => 'edit_details', %params })), class => 'editable wrap' },
       configs => { value => scalar @confs ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[2]</li>}, sort { $a->[0] cmp $b->[0] } @confs) : 'There are no configurations in this set', class => 'wrap' },
       active  => sprintf($active, $hub->url({ function => 'activate_set', %params }), join ' ', @rel),
-      edit    => sprintf('<a class="edit_record" href="#" rel="%s"><img src="%sedit.png" alt="edit" title="Edit configurations" /></a>', $record_id, $img_url),
-      delete  => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sdelete.png" alt="delete" title="Delete" /></a>', $hub->url({ function => 'delete_set', %params }), $record_id, $img_url),
+      edit    => sprintf('<a class="edit_record" href="#" rel="%s"><img src="%spencil.png" alt="edit" title="Edit configurations" /></a>', $record_id, $icon_url),
+      delete  => sprintf('<a class="edit" href="%s" rel="%s"><img src="%strash.png" alt="delete" title="Delete" /></a>', $hub->url({ function => 'delete_set', %params }), $record_id, $icon_url),
     };
   }
-  
+
   return $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
 }
+
 
 sub records_table {
   my $self    = shift;

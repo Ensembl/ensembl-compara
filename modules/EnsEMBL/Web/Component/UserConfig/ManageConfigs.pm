@@ -39,14 +39,15 @@ sub records_table {
   my $module_name = "EnsEMBL::Web::Configuration::$referer->{'ENSEMBL_TYPE'}";
   my @components  = $self->dynamic_use($module_name) ? @{$module_name->new_for_components($hub, { tree => new EnsEMBL::Web::Tree }, $referer->{'ENSEMBL_ACTION'}, $referer->{'ENSEMBL_FUNCTION'})} : ();
   my $html;
-  
+
   if (scalar @components) {
     my $adaptor  = $hub->config_adaptor;
     my $sets     = $adaptor->all_sets;
     my $img_url  = $self->img_url;
+    my $icon_url = $self->img_url.'16/';
     my $editable = qq{<div><div class="heightWrap"><div class="val" title="Click here to edit">%s</div></div><img class="toggle" src="${img_url}closed2.gif" />%s<a rel="%s" href="%s" class="save"></a></div>};
     my $list     = qq{<div><div class="heightWrap"><ul>%s</ul></div><img class="toggle" src="${img_url}closed2.gif" /></div>};
-    my $active   = qq{<a class="edit" href="%s" rel="%s"><img src="${img_url}activate.png" alt="use" title="Use this configuration" /></a><div class="config_used">Configuration applied</div>};
+    my $active   = qq{<a class="edit" href="%s" rel="%s"><img src="${icon_url}saved.png" alt="use" title="Use this configuration" /></a><div class="config_used">Configuration applied</div>};
     my (%configs, %rows);
     
     my @columns = (
@@ -69,7 +70,7 @@ sub records_table {
          $code        =~ s/^.+?::/${type}::/ unless $code =~ /^${type}::/;
          $configs{$_} = { component => $component, title => $title } for grep $_, $code, $view_config->image_config;
     }
-    
+
     my $filtered_configs = $adaptor->filtered_configs({ code => [ sort keys %configs ] });
     my @config_records   = values %$filtered_configs;
     my %linked_configs   = map { !$_->{'active'} && $_->{'link_id'} ? ($_->{'record_id'} => $_) : () } @config_records;
@@ -95,7 +96,7 @@ sub records_table {
         
         push @config, [ $labels->{$_} || $_, $value_labels->{$_}{$settings->{$_}} || ($settings->{$_} eq lc $settings->{$_} ? ucfirst $settings->{$_} : $settings->{$_}) ] for sort keys %$settings;
       }
-      
+
       if ($ic) {
         my $image_config = $hub->get_imageconfig($ic->{'code'});
         my $settings     = eval $ic->{'data'} || {};
@@ -124,11 +125,11 @@ sub records_table {
         config => { value => scalar @config ? sprintf($list, join '', map qq{<li>$_->[0]: <span class="cfg">$_->[1]</span></li>}, @config) : '', class => 'wrap' },
         sets   => { value => scalar @sets   ? sprintf($list, join '', map qq{<li class="$_->[1]">$_->[0]</li>}, @sets)                     : '', class => 'wrap' },
         active => sprintf($active, $hub->url({ function => 'activate', %params }), $configs{$code}{'component'}),
-        edit   => sprintf('<a class="edit_record" href="#" rel="%s"><img src="%sedit.png" alt="edit" title="Edit sets" /></a>', $record_id, $img_url),
-        delete => sprintf('<a class="edit" href="%s" rel="%s"><img src="%sdelete.png" alt="delete" title="Delete" /></a>', $hub->url({ function => 'delete', %params, link_id => $_->{'link_id'} }), $record_id, $img_url),
+        edit   => sprintf('<a class="edit_record" href="#" rel="%s"><img src="%spencil.png" alt="edit" title="Edit sets" /></a>', $record_id, $icon_url),
+        delete => sprintf('<a class="edit" href="%s" rel="%s"><img src="%strash.png" alt="delete" title="Delete" /></a>', $hub->url({ function => 'delete', %params, link_id => $_->{'link_id'} }), $record_id, $icon_url),
       };
     }
-    
+
     foreach (sort keys %rows) {
       $html .= sprintf('
         <div class="config_group">
@@ -140,7 +141,7 @@ sub records_table {
       );
     }
   }
-  
+
   return $html || '<p>You have no custom configurations for this page.</p>';
 }
 

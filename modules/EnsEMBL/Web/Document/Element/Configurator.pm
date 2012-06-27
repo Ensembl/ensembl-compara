@@ -127,16 +127,14 @@ sub add_image_config_notes {
         <li><img src="${img_url}strand-f.png" /><span>Forward strand</span></li>
         <li><img src="${img_url}strand-r.png" /><span>Reverse strand</span></li>
         <li><img src="${img_url}star-on.png" /><span>Favourite track</span></li>
-        <li><img src="${img_url}info_blue_17.png" /><span>Track information</span></li>
+        <li><img src="${img_url}16/info.png" /><span>Track information</span></li>
       </ul>
     </div>
     <div>
       <h4>External tracks</h4>
       <ul class="configuration_key">
-        <li><img src="${img_url}track-das.gif" /><span>Distributed Annotation Source</span></li>
-        <li><img src="${img_url}track-tmp.gif" /><span>Custom track - uploaded data</span></li>
-        <li><img src="${img_url}track-url.gif" /><span>Custom track - UCSC-style web resource</span></li>
-        <li><img src="${img_url}track-user.gif" /><span>Custom data saved to your user account</span></li>
+        <li><img src="${img_url}track-das.gif" /><span>Distributed Annotation Source (DAS)</span></li>
+        <li><img src="${img_url}track-user.gif" /><span>User-added track</span></li>
       </ul>
     </div>
     <p class="space-below">Please note that the content of external tracks is not the responsibility of the Ensembl project.</p>
