@@ -16,18 +16,18 @@
  as we have to remove the href tags to get IE to work - make the whole of the slice "clickable"...
 **/
 
-.drag_select { cursor: pointer; }
+.drag_select { cursor: pointer; position: relative; } 
 
 .hover_label                       { position: absolute; padding: 0 0 5px 0; border: 1px solid; z-index: 999; display: none; text-align: left; width: auto; cursor: default; }
 .hover_label img,
-.hover_label a.favourite           { margin: 0 4px; }
+.hover_label a.favourite           { margin: 0 4px; display: inline-block; width: 16px; height: 16px; background: url(/i/star.png) no-repeat top left; }
 .hover_label img.config,
 .hover_label img.url,
 .hover_label img.desc              { cursor: pointer; }
 .hover_label a.config              { text-decoration: none; }
 .hover_label a.favourite           { display: inline-block; width: 13px; height: 13px; background: url(/i/star_13.png) no-repeat top left; }
 .hover_label a.favourite.selected  { background-position: bottom left; }
-.hover_label p.header              { margin-bottom: 5px; padding: 2px 5px; background-color: [[BUTTON_BG]]; color: #FFF; border-bottom: 1px solid #000; }
+.hover_label p.header              { margin-bottom: 5px; padding: 2px 5px; background-color: [[BUTTON_BG]]; color: #FFF; }
 .hover_label div                   { display: none; padding: 0 5px; }
 .hover_label p                     { padding: 3px 0; margin: 0; }
 .hover_label div.spinner           { width: 75px; height: 75px; }

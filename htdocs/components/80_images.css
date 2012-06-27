@@ -12,6 +12,12 @@ img.screenshot { text-align: center; margin: 10px auto; }
 img.karyomap   { text-align: center; margin: auto; }
 img.flash      { margin: 20px auto; }
 
+/* Dynamic images */
+
+div.image_container { position: relative; border: 1px solid #999999; }
+
+body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
+
 /* Below is the image export CSS code */
 
 div.iexport   { text-align: right; margin: 0px auto; position: relative; margin-bottom: 2em; }

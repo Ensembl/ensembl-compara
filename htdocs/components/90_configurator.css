@@ -85,17 +85,19 @@ body.mac div.track_order span.menu_option                           { cursor: ns
 
 /* image config notes */
 
-div.image_config_notes                               { border-top: 1px solid [[PANEL_BORDER]]!important; padding: 5px; }
-div.image_config_notes .content div                  { float: left; margin-right: 30px; }
-div.image_config_notes ul.configuration_key          { list-style: none; padding: 0; margin-left: 5px; }
+div.image_config_notes                               { border-top: 0!important; padding: 4px; }
+div.image_config_notes .border                       { border-top: 1px solid [[PANEL_BORDER]]; padding-top: 10px; }
+div.image_config_notes .content div                  { float: left; margin-right: 32px; }
+div.image_config_notes ul.configuration_key          { list-style: none; padding: 0; margin-left: 4px; }
 div.image_config_notes ul.configuration_key li       { list-style-image: none; }
-div.image_config_notes ul.configuration_key li span,
-div.image_config_notes ul.configuration_key li img   { vertical-align: middle; padding-right: 5px; }
-div.image_config_notes h2                            { border: 0!important; margin: 4px 0; }
+div.image_config_notes ul.configuration_key li span  { vertical-align: middle; padding: 1px; margin-left: 4px; }
+div.image_config_notes ul.configuration_key li img   { vertical-align: middle; padding: 1px; }
+div.image_config_notes h2                            { border-top: 1px solid [[PANEL_BORDER]]!important; margin: 4px 0; }
 div.image_config_notes h4                            { margin: 4px 0; padding-top: 4px; }
 div.image_config_notes h4,
 div.image_config_notes p                             { clear: both; padding-left: 3px; }
-div.image_config_notes p.space-below                 { padding-top: 10px; border-top: 1px solid [[PANEL_BORDER]]; }
+
+.config_header { color: [[MENU_LINK]]; }
 
 /* save as popup */
 

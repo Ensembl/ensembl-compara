@@ -1,6 +1,7 @@
-.nav                               { width: 15.5em; margin: 0 0.25em; border: 0; padding: 0; z-index: 100; position: absolute; left: 0; }
+.nav                               { width: 208px; margin: 8px 0 0 8px; border: 0; padding: 0; 
+                                     z-index: 100; position: absolute; left: 0; }
 .nav div.header                    { font-weight: bold; border: 1px solid [[PANEL_BORDER]]; border-bottom: 0; padding: 2px; }
-.nav ul                            { margin: 0 0 0.5em 0; border: 1px solid [[PANEL_BORDER]]; padding: 0.2em 0 0 1.5em; background-color: [[PANEL_BG]]; }
+.nav ul                            { margin: 0 0 4px 0; border: 1px solid [[PANEL_BORDER]]; padding: 2px 0 0 16px; background-color: [[PANEL_BG]]; }
 .nav ul li                         { margin-bottom: 0; list-style-image: none; color: [[CONTRAST_HEADER]]; }
 .nav ul.local_context              { padding: 0; list-style: none; white-space: nowrap; }
 .nav ul.local_context li           { width: 100%; list-style-image: none; margin: 0; overflow: hidden; }
@@ -15,7 +16,7 @@
 .nav ul.local_context li.active li { font-weight: normal; }
 .nav ul.local_context li.closed ul { display: none; }
 .nav ul.local_context li .disabled { color: [[PAGE_TEXT]]; }
-.nav ul.local_context a            { color: [[MH_BORDER]]; text-decoration: none; }
+.nav ul.local_context a            { color: [[MENU_LINK]]; text-decoration: none; }
 
 body.ie67 .nav                         { margin-top: 3px; }
 body.ie67 .nav ul.local_context li img { margin: 0; vertical-align: top; }
@@ -27,11 +28,16 @@ body.ie67 .nav ul.local_context li img { margin: 0; vertical-align: top; }
       
 .tool_buttons a:hover   { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
 .tool_buttons a:visited { color: [[BUTTON_TEXT]]; }
-      
-.tool_buttons .config   { background-image: url(/i/config.png);   background-repeat: no-repeat; }
-.tool_buttons .data     { background-image: url(/i/data.png);     background-repeat: no-repeat; }
-.tool_buttons .export   { background-image: url(/i/export.png);   background-repeat: no-repeat; }
-.tool_buttons .bookmark { background-image: url(/i/bookmark.png); background-repeat: no-repeat; }
-.tool_buttons .find     { background-image: url(/i/find.png);     background-repeat: no-repeat; }
-.tool_buttons .save     { background-image: url(/i/save.png);     background-repeat: no-repeat; }
-.tool_buttons .load     { background-image: url(/i/load.png);     background-repeat: no-repeat; }
+     
+.tool_buttons .config   { background-image: url(/i/16/rev/setting.png);   background-repeat: no-repeat; }
+.tool_buttons .data     { background-image: url(/i/16/rev/page-user.png); background-repeat: no-repeat; }
+.tool_buttons .export   { background-image: url(/i/16/rev/download.png);  background-repeat: no-repeat; }
+.tool_buttons .csv      { background-image: url(/i/16/rev/page-csv.png);  background-repeat: no-repeat; }
+.tool_buttons .bookmark { background-image: url(/i/16/rev/tag.png);       background-repeat: no-repeat; }
+.tool_buttons .find     { background-image: url(/i/16/rev/search.png);    background-repeat: no-repeat; }
+.tool_buttons .add      { background-image: url(/i/16/rev/add.png);       background-repeat: no-repeat; }
+.tool_buttons .save     { background-image: url(/i/16/rev/save.png);      background-repeat: no-repeat; }
+.tool_buttons .load     { background-image: url(/i/16/rev/paste.png);     background-repeat: no-repeat; }
+.tool_buttons .list     { background-image: url(/i/16/rev/list.png);      background-repeat: no-repeat; }
+.tool_buttons .reset    { background-image: url(/i/16/rev/reload.png);    background-repeat: no-repeat; }
+ 

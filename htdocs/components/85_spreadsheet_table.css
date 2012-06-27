@@ -17,6 +17,9 @@ table.fixed th.wrap,
 table.fixed td.wrap { word-wrap: break-word; word-break: break-all; padding-left: 10px; padding-right: 10px; }
 body.ie table.fixed,
 body.ienew table.fixed { table-layout: auto; }
+
+table.padded-cell td,
+table.padded-cell th    { padding: 8px; }
  
 table.data_table                     { border: 1px solid [[PAGE_TEXT]]; }
 table.data_table th                  { cursor: pointer; padding: 2px 20px 2px 5px; }
