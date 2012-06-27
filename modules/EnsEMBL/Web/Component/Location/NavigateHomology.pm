@@ -23,6 +23,7 @@ sub content {
   my $chromosome_end = $chromosome->end;
   my $start          = $object->seq_region_start;
   my $end            = $object->seq_region_end;
+  my $img_url        = $self->img_url.'16/';
 
   ## Don't show this component if the slice covers or exceeds the whole chromosome!
   return if $chromosome->length < 1e6 || ($hub->param('r') =~ /:/ && $start < 2 && $end > ($chromosome_end - 1));
