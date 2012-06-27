@@ -260,7 +260,7 @@ sub pipeline_analyses {
 		-logic_name    => 'gerp_constrained_element',
 		-module => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
 		-parameters    => { 'window_sizes' => '[1,10,100,500]', 'gerp_exe_dir' => $self->o('gerp_exe_dir'), 
-				    'program_version' => $self->o('gerp_program_version'), },
+				    'program_version' => $self->o('gerp_program_version'), 'mlss_id' => $self->o('pecan_mlssid'), },
 #		-wait_for      => [ 'dump_species_tree' ],
 		-hive_capacity => 50,
 		-batch_size    => 5,
