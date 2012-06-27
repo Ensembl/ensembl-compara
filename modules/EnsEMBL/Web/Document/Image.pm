@@ -17,6 +17,7 @@ sub new {
     species_defs       => $species_defs,
     image_configs      => $image_configs || [],
     drawable_container => undef,
+    centred            => 0,
     imagemap           => 'no',
     image_type         => 'image',
     image_name         => undef,
@@ -33,8 +34,8 @@ sub new {
   return $self;
 }
 
-sub object             :lvalue { $_[0]->{'object'};             }
 sub drawable_container :lvalue { $_[0]->{'drawable_container'}; }
+sub centred            :lvalue { $_[0]->{'centred'};   }
 sub imagemap           :lvalue { $_[0]->{'imagemap'};           }
 sub button             :lvalue { $_[0]->{'button'};             }
 sub button_id          :lvalue { $_[0]->{'button_id'};          }
@@ -408,6 +409,8 @@ sub render {
   my $html    = $self->introduction;
   my $image   = new EnsEMBL::Web::TmpFile::Image;
   my $content = $self->drawable_container->render('png');
+  my $caption_style  = 'font-weight:bold;';
+     $caption_style .= ' text-align:center;' if $self->centred;
 
   $image->content($content);
   $image->save;
@@ -418,7 +421,7 @@ sub render {
     
     $self->{'hidden'}{'total_height'} = $image->height;
     
-    $image_html .= sprintf '<div style="text-align: center; font-weight: bold">%s</div>', $self->caption if $self->caption;
+    $image_html .= sprintf '<div style="%s">%s</div>', $caption_style, $self->caption if $self->caption;
     
     foreach (keys %{$self->{'hidden'}}) {
       $inputs .= sprintf(
@@ -431,17 +434,19 @@ sub render {
     }
     
     $html .= sprintf(
-      '<div class="autocenter_wrapper"><form style="width: %spx" class="autocenter" action="%s" method="get"><div>%s</div><div class="autocenter">%s</div></form></div>',
+      $self->centred ? 
+        '<div class="autocenter_wrapper"><form style="width:%spx" class="autocenter" action="%s" method="get"><div>%s</div><div class="autocenter">%s</div></form></div>' : 
+        '<form style="width:%spx" action="%s" method="get"><div>%s</div>%s</form>',
       $image->width,
       $self->{'URL'},
       $inputs,
-      $image_html
+      $image_html,
     );
-    
+
     $self->{'counter'}++;
   } elsif ($self->button eq 'yes') {
     $html .= $self->render_image_button($image);
-    $html .= sprintf '<div style="text-align: center; font-weight: bold">%s</div>', $self->caption if $self->caption;
+    $html .= sprintf '<div style="%s">%s</div>', $caption_style, $self->caption if $self->caption;
   } elsif ($self->button eq 'drag') {
     my $img = $self->render_image_tag($image);
 
@@ -493,38 +498,43 @@ sub render {
     }
     
     my $wrapper = sprintf('
-      <div class="drag_select" style="margin:0px auto; border:solid 1px black; position:relative; width:%dpx">
+      <div class="drag_select" style="margin:%s;">
         %s
         %s
         %s
         %s
       </div>',
-      $image->width,
+      $self->centred ? '0px auto' : '0px',
       $img,
       $self->imagemap eq 'yes' ? $self->render_image_map($image) : '',
       $self->moveable_tracks($image),
       $self->hover_labels
     );
-    
-    $html .= sprintf('
-      <div style="text-align:center">
-        <div style="text-align:center; margin:auto; border:0px; padding:0px">
-          %s
+
+    my $template = $self->centred ? '
+      <div class="image_container" style="width:%spx;text-align:center">
+        <div style="text-align:center;margin:auto">
           %s
           %s
         </div>
-      </div>',
-      $wrapper,
-      $export,
-      $self->caption ? sprintf '<div style="text-align:center; font-weight:bold">%s</div>', $self->caption : ''
-    );
+      </div>
+    ' : '
+      <div class="image_container" style="width:%spx">
+        %s
+        %s
+      </div>
+        %s
+    ';
+  
+    $html .= sprintf $template, $image->width, $wrapper, ($self->caption ? sprintf '<div style="%s">%s</div>', $caption_style, $self->caption : ''), $export;
+  
   } else {
     $html .= join('',
       $self->render_image_tag($image),
       $self->imagemap eq 'yes' ? $self->render_image_map($image) : '',
       $self->moveable_tracks($image),
       $self->hover_labels,
-      $self->caption ? sprintf('<div style="text-align:center; font-weight:bold">%s</div>', $self->caption) : ''
+      $self->caption ? sprintf('<div style="%s">%s</div>', $caption_style, $self->caption) : ''
     );
   }
 
