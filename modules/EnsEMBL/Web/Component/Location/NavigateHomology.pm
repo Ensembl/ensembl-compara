@@ -55,10 +55,10 @@ sub content {
     
     my $up_start  = @up_sample ? $start - $up_sample[-1]->end  : 0;
     my $up_end    = @up_sample ? $start - $up_sample[0]->start : 0;
-    
+
     $up_link = sprintf('
-      <a href="%s"><span style="margin-right: 2px; word-spacing: -7px;">&lt; &lt;</span> %s upstream %s</a>',
-      $hub->url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => "$chr:$up_start-$up_end" }), $up_count, $gene_text
+      <a href="%s"><img src="%sback2.png" alt="&lt;&lt;" style="vertical-align:middle" /> %s upstream %s</a>',
+      $hub->url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => "$chr:$up_start-$up_end" }), $img_url, $up_count, $gene_text
     );
   } else {
     $up_link = 'No upstream homologues';
@@ -78,10 +78,10 @@ sub content {
     my $down_start = @down_sample ? $down_sample[0]->start + $seq_region_end : 0;
     $down_start    = -$down_start if $down_start < 0;
     my $down_end   = @down_sample ? $down_sample[-1]->end + $seq_region_end : 0;
-    
+  
     $down_link = sprintf('
-      <a href="%s">%s downstream %s <span style="margin-left: 2px; word-spacing: -7px;">&gt; &gt;</span></a>',
-      $hub->url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => "$chr:$down_start-$down_end" }), $down_count, $gene_text
+      <a href="%s">%s downstream %s <img src="%sforward2.png" alt="&gt; &gt;" style="vertical-align:middle" /></a>',
+      $hub->url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => "$chr:$down_start-$down_end" }), $down_count, $gene_text, $img_url
     );
   } else {
     $down_link = 'No downstream homologues';
@@ -92,9 +92,9 @@ sub content {
       <div class="navbar autocenter">
         <table style="width:100%">
           <tr>
-            <td class="left" style="padding:0px 2em">$up_link</td>
-            <td class="center" style="font-size:1.2em;padding:0px 2em">Navigate homology</td>
-            <td class="right" style="padding:0px 2em">$down_link</td>
+            <td class="left" style="padding:0px 2em; vertical-align:middle;">$up_link</td>
+            <td class="center" style="font-size:1.2em;padding:0px 2em; vertical-align:middle">Navigate homology</td>
+            <td class="right" style="padding:0px 2em; vertical-align:middle;">$down_link</td>
           </tr>
         </table>
       </div>
