@@ -37,9 +37,10 @@ sub render {
   my $input_size          = $page_species eq 'Multi' ? 30 : 50;
   my $favourites          = $self->favourites;
   my $q                   = $self->{'query'};
+  my $class = $page_species eq 'Multi' ? ' class="center"' : '';
   
   my $html = qq{
-  <div class="center">
+  <div$class>
     <form action="$search_url" method="get"><div>
       <input type="hidden" name="site" value="$default_search_code" />};
   
@@ -83,8 +84,8 @@ sub render {
   
   if (keys %$sample_data) {
     my @examples = map $sample_data->{$_} || (), qw(GENE_TEXT LOCATION_TEXT SEARCH_TEXT);
-  
-    $html .= sprintf '<p>e.g. %s</p>', join ' or ', map qq{<strong><a href="$search_url?q=$_" style="text-decoration:none">$_</a></strong>}, @examples if scalar @examples;
+ 
+    $html .= sprintf '<p style="padding:4px 0 8px 72px">e.g. %s</p>', join ' or ', map qq{<strong><a href="$search_url?q=$_" style="text-decoration:none">$_</a></strong>}, @examples if scalar @examples;
     $html .= '
       </div></form>
     </div>';
