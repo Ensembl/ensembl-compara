@@ -62,8 +62,7 @@ method_link_type for the multiple alignments. Default: PECAN
 =head2 conservation_scores
 
 This test checks whether there are conservation scores in the table, whether
-these correspond to existing genomic_align_blocks, whether the
-right gerp_XXX entry exists in the meta table and whether there
+these correspond to existing genomic_align_blocks, and whether there
 are no alignments wiht more than 3 seqs and no scores.
 
 Parameters:
@@ -235,8 +234,7 @@ sub _run_conservation_jobs_test {
   Example     : $self->_run_conservation_scores_test(
                     "{method_link_species_set_id=>123}");
   Description : Tests whether there are conservation scores in the table, whether
-                these correspond to existing genomic_align_blocks, whether the
-                right gerp_XXX entry exists in the meta table and whether there
+                these correspond to existing genomic_align_blocks, and hether there
                 are no alignments with more than 3 seqs and no scores.
   Returntype  :
   Exceptions  : die on failure
