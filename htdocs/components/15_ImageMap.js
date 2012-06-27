@@ -236,7 +236,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       function () {
         var width = $(this).parent().outerWidth();
         
-        $(this).siblings('div').hide().filter('.' + this.className).show().width(function (i, value) {
+        $(this).siblings('div').hide().filter('.' + this.className.replace(/ /g, '.')).show().width(function (i, value) {
           return value > width && value > 300 ? 300 : value;
         });
       },
