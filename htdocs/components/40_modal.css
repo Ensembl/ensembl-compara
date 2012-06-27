@@ -52,8 +52,8 @@ body.ie6 .modal_title .modal_close { background-image: url(/i/cp_close.gif); }
 .modal_content                   { position: absolute; height: 100%; width: 100%; overflow: auto; border: solid [[PANEL_TEXT]]; border-width: 0 1px 1px; }
 .modal_content .modal_wrapper    { padding-left: 3px; }
 .modal_content .no_local_context { margin-left: 3px !important; padding-left: 0; }
-.modal_content .panel            { padding: 3px 3px 3px 0; margin: 0; border:0; }
-.modal_content .panel .content   { padding: 8px; }
+.modal_content .panel            { padding: 3px 3px 3px 0; margin: 0; }
+.modal_content .panel .content   { padding: 8px; margin: 0; }
 .modal_content .panel h2         { border-bottom: 1px solid [[PANEL_BORDER]]; }
 .modal_content p.modal_error     { color: #C33; }
 .modal_content p.modal_a         { margin: 10px 0; }
