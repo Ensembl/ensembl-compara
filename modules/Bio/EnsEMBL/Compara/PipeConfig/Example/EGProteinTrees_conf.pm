@@ -198,10 +198,14 @@ sub pipeline_create_commands {
 sub resource_classes {
   my ($self) = @_;
   return {
-    0 => { -desc => 'default',          'LSF' => '-q production' },
-    1 => { -desc => 'hcluster_run',     'LSF' => '-q production -M 16384 -R "rusage[mem=16384]"' },
-    2 => { -desc => 'mcoffee_himem',    'LSF' => '-q production -M 32768 -R "rusage[mem=32768]" -W 24:00' },
-    3 => { -desc => 'mcoffee',          'LSF' => '-q production -W 24:00' },
+         'default'      => {'LSF' => '-q production' },
+         '500Mb_job'    => {'LSF' => '-q production -C0 -M500   -R"select[mem>500]   rusage[mem=500]"' },
+         '1Gb_job'      => {'LSF' => '-q production -C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
+         '2Gb_job'      => {'LSF' => '-q production -C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
+         '8Gb_job'      => {'LSF' => '-q production -C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         '24Gb_job'     => {'LSF' => '-q production -C0 -M24000 -R"select[mem>24000] rusage[mem=24000]"' },
+         'mcoffee'      => {'LSF' => '-q production -W 24:00' },
+         'mcoffee_himem'    => {'LSF' => '-q production -M 32768 -R "rusage[mem=32768]" -W 24:00' },
   };
 }
 
@@ -222,7 +226,7 @@ sub _new_analyses {
       -module => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
       -parameters => { },
       -flow_into => {
-        1 => { 'mysql:////gene_tree_root_tag' => { node_id => '#protein_tree_id#', tag => 'division', value => $self->o('division_name') } }
+        1 => { 'mysql:////gene_tree_root_tag' => { root_id => '#protein_tree_id#', tag => 'division', value => $self->o('division_name') } }
       }
     },
     {
@@ -237,7 +241,7 @@ sub _new_analyses {
       -input_ids => [
         {}
       ],
-      -wait_for => ['overall_genetreeset_qc'],
+      -wait_for => ['backbone_fire_dnds'],
       -flow_into => {
         1 => [ 'update_member_display_labels' ]
       }
@@ -264,7 +268,7 @@ sub _new_analyses {
       -input_ids => [
         {}
       ],
-      -wait_for => ['overall_genetreeset_qc']
+      -wait_for => ['backbone_fire_dnds']
     }
   ];
 }
@@ -272,23 +276,24 @@ sub _new_analyses {
 sub _modify_analyses {
   my ($self, $list) = @_;
 
-  #Mcoffee resource alteration
-  $self->_get_analysis($list, 'mcoffee')->{-rc_id} = 3;
-
-  #Get normal flow to send a job to division_tag_protein_trees all the time
-  #rather than having the flow do the write; for some reason this old
-  #version stopped working
-  push(@{$self->_get_analysis($list, 'ortho_tree')->{-flow_into}->{1}}, 'divison_tag_protein_trees');
-
-  return;
-}
-
-sub _get_analysis {
-  my ($self, $list, $name) = @_;
   foreach my $analysis (@{$list}) {
-    return $analysis if $analysis->{'-logic_name'} eq $name;
+    if ($analysis->{'-logic_name'} =~ /^mcoffee/ or $analysis->{'-logic_name'} =~ /^mafft/) {
+      #Mcoffee resource alteration
+      if ($analysis->{'-logic_name'} =~ /himem$/) {
+        $analysis->{-rc_name} = 'mcoffee_himem';
+      } else {
+        $analysis->{-rc_name} = 'mcoffee';
+      }
+    } elsif (not exists $analysis->{-rc_name}) {
+      $analysis->{-rc_name} = 'default';
+    } elsif ($analysis->{'-logic_name'} eq 'ortho_tree') {
+      #Get normal flow to send a job to division_tag_protein_trees all the time
+      #rather than having the flow do the write; for some reason this old
+      #version stopped working
+      push(@{$analysis->{-flow_into}->{1}}, 'divison_tag_protein_trees');
+    }
   }
-  throw('Cannot find an analysis for '.$name)
+
 }
 
 1;
