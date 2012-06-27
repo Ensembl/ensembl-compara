@@ -85,22 +85,27 @@ sub remove_entries {
   delete $self->{'stored_entries'}->{$_} for @_;
 }
 
-# Grab hold of an existing entry and modify it
-sub modify_entry_by_type {
-  my ($self, $entry) = @_;
-  
+# Generic code to grab hold of an existing entry and modify it
+sub modify_entry_by {
+  my ($self, $type, $entry) = @_;
   for my $i (0..$#{$self->{'entries'}}) {
-    if ($self->{'entries'}[$i]{'type'} eq $entry->{'type'}) {
+    if ($self->{'entries'}[$i]{$type} eq $entry->{$type}) {
       $self->{'entries'}[$i]{$_} = $entry->{$_} for keys %$entry;
       last;
     }
   }
 }
 
+sub modify_entry_by_type {
+  my ($self, $entry) = @_;
+  warn "DEPRECATED, use modify_entry_by";
+  $self->modify_entry_by($entry->{'type'},$entry);
+}
+
 # Delete an entry by its value
 sub delete_entry_by_value {
   my ($self, $value) = @_;
-  
+
   for my $i (0..$#{$self->{'entries'}}) {
     foreach my $key (keys %{$self->{'entries'}[$i]}) {
       if ($self->{'entries'}[$i]{$key} eq $value) {
@@ -155,7 +160,7 @@ sub render {
 
 
     #quick bug fix:
-    $link =~ s/(\?|;)ac=(.+?)"(.*?)>InterPro</$1ac=$2"$3>$2</g if ($type =~ /View InterPro/);    
+    $link =~ s/(\?|;)ac=(.+?)"(.*?)>InterPro</$1ac=$2"$3>$2</g if ($type =~ /View InterPro/);
     $link =~ s/&amp;amp;/&amp;/g if ($link =~ /&amp;amp;/);
     push @entries, { link => $link, type => $type };
   }
