@@ -29,7 +29,7 @@ sub content {
         Views in %s are separated into gene based views and transcript based views according to which level the information is more appropriately associated with. 
         This view is a transcript level view. To flip between the two sets of views you can click on the Gene and Transcript tabs in the menu bar at the top of the page.
       </p>', $object->species_defs->ENSEMBL_SITETYPE, $object->species_defs->ENSEMBL_SITETYPE
-    ));
+    ), '100%');
   }
   
   return $html;
