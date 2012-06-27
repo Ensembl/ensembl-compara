@@ -161,10 +161,10 @@ sub store_node_tags
     my $self = shift;
     my $node = shift;
 
+    my $node_type = '';
     if (not $node->is_leaf) {
-        my $node_type;
-        if ($node->has_tag('node_type')) {
-            $node_type = $node->get_tagvalue('node_type');
+        if ($node->has_tag('gene_split')) {
+            $node_type = 'gene_split';
         } elsif ($node->get_tagvalue("DD", 0)) {
             $node_type = 'dubious';
         } elsif ($node->get_tagvalue('Duplication', '') eq '1') {
@@ -196,7 +196,7 @@ sub store_node_tags
         my $value = $node->get_tagvalue($tag);
         my $db_tag = $mapped_tags{$tag};
         # Because the duplication_confidence_score won't be computed for dubious nodes
-        $db_tag = 'duplication_confidence_score' if ($node->get_tagvalue('node_type') eq 'dubious' and $tag eq 'SIS');
+        $db_tag = 'duplication_confidence_score' if ($node_type eq 'dubious') and ($tag eq 'SIS');
         # tree_support is only valid in protein trees (so far)
         next if ($tag eq 'T') and (not $self->param('store_tree_support'));
 
@@ -252,7 +252,7 @@ sub parse_newick_into_tree {
         $othernode->parent->add_child($newnode);
         $newnode->add_child($othernode);
         $newnode->add_child($node);
-        $newnode->add_tag('node_type', 'gene_split');
+        $newnode->add_tag('gene_split', 1);
         $newnode->print_tree(10);
     }
   }
@@ -335,8 +335,7 @@ sub store_tree_tags {
     my $num_dups = 0;
     my $num_specs = 0;
     foreach my $node (@nodes) {
-        my $node_type = $node->get_tagvalue("node_type");
-        if ((defined $node_type) and ($node_type ne 'speciation')) {
+        if ($node->has_tag('node_type') and ($node->get_tagvalue('node_type') ne 'speciation')) {
             $num_dups++;
         } else {
             $num_specs++;
