@@ -24,7 +24,7 @@ sub render {
   my $static_server  = $sd->ENSEMBL_STATIC_SERVER;
   my $img_url        = $sd->img_url;
   my $sitename       = $sd->ENSEMBL_SITETYPE;
-  my $html           = '<h2 class="first">New to '.$sitename.'?</h2>'; 
+  my $html           = '<h2 class="box-header">New to '.$sitename.'?</h2>'; 
 
   my $rss_url = $sd->ENSEMBL_TIPS_RSS;
   my $tips = $MEMD && $MEMD->get('::TIPS') || [];
