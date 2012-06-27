@@ -218,7 +218,7 @@ copy_data($from_dba, $to_dba,
 if ($class =~ /^GenomicAlignBlock/ or $class =~ /^GenomicAlignTree/) {
   copy_genomic_align_blocks($from_dba, $to_dba, $method_link_species_set);
 } elsif ($class =~ /^ConservationScore.conservation_score/) {
-  copy_conservation_scores($from_dba, $to_dba, $mlss_id);
+  copy_conservation_scores($from_dba, $to_dba, $method_link_species_set);
 } elsif ($class =~ /^ConstrainedElement.constrained_element/) {
   copy_constrained_elements($from_dba, $to_dba, $mlss_id);
 } else {
@@ -270,10 +270,6 @@ sub get_DBAdaptor {
     }
   } elsif ($name) {
     $compara_db_adaptor = Bio::EnsEMBL::Registry->get_DBAdaptor($name, "compara");
-  }
-
-  if (!$compara_db_adaptor->get_MetaContainer) {
-    return undef;
   }
 
   return $compara_db_adaptor;
@@ -724,11 +720,11 @@ sub copy_ancestral_dnafrags {
 =cut
 
 sub copy_conservation_scores {
-  my ($from_dba, $to_dba, $mlss_id) = @_;
+  my ($from_dba, $to_dba, $method_link_species_set) = @_;
 
-  my ($gab_mlss_id) = @{$from_dba->get_MetaContainer->list_value_by_key("gerp_$mlss_id")};
+  my $gab_mlss_id = $method_link_species_set->get_value_for_tag('msa_mlss_id');
   if (!$gab_mlss_id) {
-    print " ** ERROR **  Needs a <gerp_$mlss_id> entry in the meta table!\n";
+    print " ** ERROR **  Needs a 'msa_mlss_id' entry in the method_link_species_set_tag table!\n";
     exit(1);
   }
   exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
@@ -774,13 +770,6 @@ sub copy_conservation_scores {
     exit(1);
   }
 
-  copy_data($from_dba, $to_dba,
-      "meta",
-      undef, undef, undef,
-      "SELECT NULL, species_id, meta_key, meta_value".
-        " FROM meta ".
-        " WHERE meta_key = \"gerp_$mlss_id\"");
-
   # Most of the times, you want to copy all the data. Check if this is the case as it will be much faster!
   $sth = $from_dba->dbc->prepare("SELECT count(*)
       FROM conservation_score LEFT JOIN genomic_align_block
@@ -804,6 +793,10 @@ sub copy_conservation_scores {
           " WHERE cs.genomic_align_block_id IS NOT NULL AND gab.method_link_species_set_id = $gab_mlss_id");
   } elsif ($fix) {
     ## These are the only scores but need to fix them.
+    print " ** WARNING **\n";
+    print " ** WARNING ** Copying in 'fix' mode\n";
+    print " ** WARNING ** This process might be very slow.\n";
+    print " ** WARNING **\n";
     copy_data($from_dba, $to_dba,
         "conservation_score",
         "genomic_align_block_id", $min_cs, $max_cs,
@@ -877,14 +870,6 @@ sub copy_constrained_elements {
       " ** ERROR **  convention!\n";
     exit(1);
   }
-
-  #Leave this for now, but should be deleted when all max_align has been moved to method_link_species_set_tag table
-  copy_data($from_dba, $to_dba,
-      "meta",
-      undef, undef, undef,
-      "SELECT NULL, species_id, meta_key, meta_value".
-        " FROM meta ".
-        " WHERE meta_key = \"max_align_$mlss_id\"");
 
   # Most of the times, you want to copy all the data. Check if this is the case as it will be much faster!
   $sth = $from_dba->dbc->prepare("SELECT count(*)
