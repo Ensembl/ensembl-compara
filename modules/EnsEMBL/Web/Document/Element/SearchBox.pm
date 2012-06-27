@@ -36,7 +36,7 @@ sub content {
             <tr>
               <td class="sites button"><img class="search_image" src="%ssearch/%s.gif" alt="" /><img src="%ssearch/down.gif" style="width:7px" alt="" /><input type="hidden" name="site" value="%s" /></td>
               <td><label class="hidden" for="se_q">Search terms</label><input id="se_q" type="text" name="q" /></td>
-              <td class="button"><input type="image" src="%ssearch/mag.gif" alt="Search&gt;&gt;" /></td>
+              <td class="button"><input type="image" src="%s16/search.png" alt="Search&gt;&gt;" /></td>
             </tr>
           </table>
           <dl class="site_menu" style="display: none">
