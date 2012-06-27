@@ -75,8 +75,7 @@ sub content {
   
   ## Get the species in the alignment
   return sprintf(qq{
-    <div class="autocenter_wrapper">
-      <div class="autocenter navbar" style="width:%spx; text-align:left">
+      <div class="navbar" style="width:%spx; text-align:left">
         <form action="%s" method="get">
           <div style="padding:2px;">
             <label for="align">Alignment:</label> <select name="align" id="align">%s</select>
@@ -84,8 +83,7 @@ sub content {
             <input value="Go" type="submit" class="go-button" />
           </div>
         </form>
-      </div>
-    </div>},
+      </div>},
     $self->image_width, 
     $url->[0],
     $options,
