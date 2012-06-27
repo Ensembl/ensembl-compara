@@ -4,6 +4,17 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+sub ICON_MAPPINGS {
+  my $component = shift || 'page';
+  return {
+      'config'    => {'file' => 'setting.png', 'alt' => 'config', 'title' => "Configure this $component"},
+      'search'    => {'file' => 'search.png', 'alt' => 'search', 'title' => "Search this $component"},
+      'download'  => {'file' => 'download.png', 'alt' => 'download', 'title' => "Download data from this $component"},
+      'image'     => {'file' => 'picture.png', 'alt' => 'image', 'title' => "Export this image"},
+      'userdata'  => {'file' => 'page-user.png', 'alt' => 'data', 'title' => "Manage your custom tracks"},
+  };
+}
+
 sub FORMATS {
   warn "!!! DEPRECATED - PLEASE USE 'EXPORT_FORMATS' INSTEAD";
   return &EXPORT_FORMATS;
