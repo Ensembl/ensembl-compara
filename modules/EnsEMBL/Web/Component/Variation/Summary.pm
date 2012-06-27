@@ -27,6 +27,7 @@ sub content {
      $summary           .= $self->clinical_significance;
      $summary           .= $self->synonyms;
      $summary           .= $self->hgvs;
+     $summary           .= $self->sets;
     
   return qq{
     <div class="summary_panel">
@@ -187,6 +188,8 @@ sub synonyms {
       
       next unless @urls;
     } elsif ($db =~ /HGVbase|TSC/) {
+      next;
+    } elsif ($db =~ /Affy|Illumina/){ ##moving genotyping chip data to sets
       next;
     } elsif ($db =~ /Uniprot/) { 
       push @urls, $hub->get_ExtURL_link($_, 'UNIPROT_VARIATION', $_) for @ids;
@@ -520,5 +523,33 @@ sub hgvs {
   
   return $html;
 }
+
+sub sets{
+
+  my $self           = shift;
+  my $hub            = $self->hub;
+  my $object         = $self->object;
+  my $status         = $object->status;
+  my @variation_sets = sort @{$object->get_variation_set_string};
+
+  my @genotyping_sets_list;
+
+  foreach my $vs (@variation_sets){
+      next unless $vs =~/Affy|Illumina/;  ## only showing genotyping chip sets
+      push @genotyping_sets_list,  $vs;
+  }
+
+  my $count_sets = scalar @genotyping_sets_list;
+
+  if ($count_sets > 1) {
+    my $list = join(', ', @genotyping_sets_list);
+    return qq{ <dt>Genotyping chips</dt><dd>This variation has assays on: $list</dd>};
+
+  } else {
+    return ;
+
+  }
+}
+
 
 1;
