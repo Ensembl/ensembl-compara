@@ -69,10 +69,21 @@ sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__e
 sub cigar_string {
   my $self = shift;
   if($self->{'__attribs__'}->{'Gap'}) {
-    # We have a CIGAR string, so use it.
-    my $cigar = $self->{'__attribs__'}->{'Gap'};
-    $cigar =~ s/\+//g;
-    return $self->{'_cigar'} ||= $cigar;
+    # We have an alignment string, so use it.
+    my $gap = $self->{'__attribs__'}->{'Gap'};
+    # convert GFF gap format to CIGAR
+    # In a GFF, Gap attrib "I" means an insert wrt reference, but as we 
+    # are probably displaying /on/ reference, we actually need a D 
+    # meaning ref has missing sequence, and vice-versa. Should probably 
+    # make this configurable, but this seems like the most common 
+    # detault, hence the tr///. -- ds23
+    my $flip_cigar_sense = 1;
+    my @steps = map {
+      s/(\D)(\d+)/$2$1/; 
+      tr/ID/DI/ if($flip_cigar_sense);
+      $_; 
+    } split(/[+ ]/,$gap);
+    return $self->{'_cigar'} ||= join("",@steps);
   }
   return $self->{'_cigar'}||=($self->{'__raw__'}[4]-$self->{'__raw__'}[3]+1)."M";
 }
