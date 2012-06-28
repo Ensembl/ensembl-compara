@@ -67,8 +67,8 @@ sub render {
   
   my $html = '
   <form action="#">
-    <h3>All genomes</h3>
-    <div>
+    <h3 class="box-header">All genomes</h3>
+    <div style="margin-top:8px;">
     <select name="species" class="dropdown_redirect">
       <option value="/">-- Select a species --</option>
   ';

@@ -95,8 +95,7 @@ sub render_species_list {
   
   # output list
   my $html = '
-    <div class="static_favourite_species">
-      <p>';
+    <div class="static_favourite_species">';
   
   if ($logins && $user && scalar(@ok_faves)) {
     $html .= '<h3 class="box-header">Favourite genomes</h3>';
@@ -113,7 +112,6 @@ sub render_species_list {
   }
   
   $html .= sprintf('
-      </p>
       <div class="species_list_container">%s</div>
     </div>
   ', $fav_html);
