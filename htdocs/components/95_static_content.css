@@ -55,7 +55,8 @@ kbd.line { display:block; margin-left:20px; }
 
 /* Species thumbnail images */
 
-.sp-thumb { float:left; margin-right:4px; clear:left; }
+.sp-thumb { float:left; margin-right:4px; clear:left; border-width:1px; border-style:solid; border-color:#ccc;
+  border-radius:8px; -moz-border-radius: 8px; -webkit-border-radius: 8px;}
 
 /* Species list */
 dl.species-list dt { margin:0; padding:0; min-height:16px;   font-size:120%; font-weight:bold; }
@@ -73,7 +74,7 @@ ul#favourites_list li, ul#species_list li { cursor:move; }
 species page
 ----------------------------------------------------------------------*/
 div.species-box     { margin: 10px 0; overflow: hidden; padding: 3px; }
-div.species-box img { float: left; height: 40px; margin-right: 3px; width: 40px; }
+div.species-box img { float: left; height: 48px; margin-right: 8px; width: 48px; }
 
 /*----------------------------------------------------------------------
   Species homepages
