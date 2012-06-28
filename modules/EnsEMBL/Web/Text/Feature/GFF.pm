@@ -33,7 +33,10 @@ sub new {
   $extra->{'feature_type'} = [ $args->[2] ];
   $extra->{'score'}        = [ $args->[5] ];
   $extra->{'frame'}        = [ $args->[7]];
-  return bless { '__raw__' => $args, '__extra__' => $extra }, $class;
+  my $attribs = { split(/[;=]/,$args->[8]) }; 
+  return bless { '__raw__' => $args, 
+                 '__extra__' => $extra, 
+                 '__attribs__' => $attribs }, $class;
 }
 
 sub coords {
@@ -65,6 +68,12 @@ sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__e
 
 sub cigar_string {
   my $self = shift;
+  if($self->{'__attribs__'}->{'Gap'}) {
+    # We have a CIGAR string, so use it.
+    my $cigar = $self->{'__attribs__'}->{'Gap'};
+    $cigar =~ s/\+//g;
+    return $self->{'_cigar'} ||= $cigar;
+  }
   return $self->{'_cigar'}||=($self->{'__raw__'}[4]-$self->{'__raw__'}[3]+1)."M";
 }
 
