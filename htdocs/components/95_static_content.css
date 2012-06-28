@@ -4,13 +4,16 @@
 **
 ***********************************************************************/
 
-body.static p, body.static li, body.static pre { font-size: 1em; line-height:1.2em; }
+body.static p, body.static li, body.static pre { font-size: 1em; line-height:1.2em; 
+                                                 margin:0 0 4px 0; padding:0; }
 
 body.static h1     { color: [[PAGE_HEADER]]; }
 body.static h2     { color: [[CONTRAST_HEADER]]; padding-top:16px; }
 body.static h3     { color: [[CONTRAST_HEADER]]; padding-top:16px;  }
 body.static h4     { color: [[CONTRAST_HEADER]]; padding-top:16px;   }
 body.static .box-header { margin: 0; padding:0; }
+
+body.static form   { margin-bottom:16px; }
 
 /*----------------------------------------------------------------------
   References, footnotes, etc
