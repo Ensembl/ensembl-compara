@@ -4,6 +4,14 @@
 **
 ***********************************************************************/
 
+body.static p, body.static li, body.static pre { font-size: 1em; line-height:1.2em; }
+
+body.static h1     { color: [[PAGE_HEADER]]; }
+body.static h2     { color: [[CONTRAST_HEADER]]; padding-top:16px; }
+body.static h3     { color: [[CONTRAST_HEADER]]; padding-top:16px;  }
+body.static h4     { color: [[CONTRAST_HEADER]]; padding-top:16px;   }
+body.static .box-header { margin: 0; padding:0; }
+
 /*----------------------------------------------------------------------
   References, footnotes, etc
 ----------------------------------------------------------------------*/
@@ -47,8 +55,9 @@ kbd.line { display:block; margin-left:20px; }
 .sp-thumb { float:left; margin-right:4px; clear:left; }
 
 /* Species list */
-dl.species-list dt { margin:0; padding:0; min-height:15px;   font-size:120%; font-style:italic; font-weight:bold; }
+dl.species-list dt { margin:0; padding:0; min-height:16px;   font-size:120%; font-weight:bold; }
 dl.species-list dd { margin:-2px 0 2px 0; padding:0; min-height:40px; }
+dl.species-list dd:last-child { min-height:32px; }
 dl.species-list dt a, dl.species-list dd a { text-decoration:none; }
 
 body.ie7 dl.species-list dd { margin: -28px 0 2px 44px; }

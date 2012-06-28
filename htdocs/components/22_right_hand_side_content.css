@@ -55,12 +55,12 @@ body.ie6 .twocol-right { width: 40%; }
 .threecol-column                    { float: left; width:304px;  }
 .threecol-padding                   { margin: 0 4px;                }
 */
-div.column-wrapper, 
-div.column-wrapper-padded   { overflow: hidden;             } /* wraps the columns */
+div.column-wrapper  { overflow: hidden;             } /* wraps the columns */
 
 div.column-two              { float: left; width:50%;       } /* actual column for 2 col layout */
 div.column-three            { float: left; width:33.3333%;  } /* actual column for 3 col layout */
-div.column-padding          { margin: 0 4px;                } /* inner div for columns to provide padding */
+div.column-padding          { margin-left: 4px; margin-right: 4px; } /* inner div for columns to provide padding */
+div.column-vpadding         { margin-top: 8px; } /* inner div for columns to provide padding */
 
 div.column-wrapper div.column-three:first-child div.column-padding,
 div.column-wrapper div.column-two:first-child   div.column-padding  { margin: 0 4px 0 0; }  /* removes left padding on left hand side column */
@@ -85,7 +85,7 @@ img.portal {
 }
 
 .plain-box, .tinted-box,
-.alert-box, .embedded-box { [[PANEL_TEXT]]; padding: 16px; margin-bottom: 8px; 
+.alert-box, .embedded-box { [[PANEL_TEXT]]; padding: 16px 16px 0px 16px; margin-bottom: 8px; 
                              border-width: 1px; border-style: solid; }
 .plain-box    { background-color:[[PANEL_BG]]; border-color: [[PANEL_BORDER]]; }
 .tinted-box   { background-color:[[TINT_BG]]; border-color: [[TINT_BORDER]]; }
