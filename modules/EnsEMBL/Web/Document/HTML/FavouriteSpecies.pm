@@ -158,7 +158,7 @@ sub render_with_images {
     $html .= qq{
       <dt>
         <a href="$_->{'key'}/Info/Index">
-          <img src="$static_server/img/species/thumb_$_->{'key'}$image_type" alt="$_->{'name'}" title="Browse $_->{'name'}" class="sp-thumb" height="40" width="40" />
+          <img src="$static_server/i/species/48/$_->{'key'}$image_type" alt="$_->{'name'}" title="Browse $_->{'name'}" class="sp-thumb" height="48" width="48" />
           $_->{'common'}
         </a>
       </dt>

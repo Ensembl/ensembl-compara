@@ -80,7 +80,7 @@ sub render {
     my $link_text = $common =~ /\./ ? $name : $common;
 
     push @htmlspecies, sprintf(
-      '<div class="species-box"><img src="%3$s/img/species/thumb_%1$s.png" alt="%5$s" />'.$htmllinks{$info->{'status'}}.($_ =~ /\./ ? '' : '<br /><i>%5$s</i>').'<br />%6$s</div>',
+      '<div class="species-box"><img src="%3$s/i/species/48/%1$s.png" alt="%5$s" class="sp-thumb" />'.$htmllinks{$info->{'status'}}.($_ =~ /\./ ? '' : '<br /><i>%5$s</i>').'<br />%6$s</div>',
       $dir,
       $link_text,
       $static_server,
