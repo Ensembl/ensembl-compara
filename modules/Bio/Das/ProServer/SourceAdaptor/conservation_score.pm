@@ -149,14 +149,6 @@ sub build_features
 
     my $method_link = $self->config()->{'analysis'};
 
-    my $stored_max_alignment_length;
-
-    my $values = $meta_con->list_value_by_key("max_alignment_length");
-
-    if(@$values) {
-        $stored_max_alignment_length = $values->[0];
-    }
-
     my $species1_genome_db;
     my @other_species_genome_dbs;
 
