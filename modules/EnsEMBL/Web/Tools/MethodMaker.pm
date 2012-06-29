@@ -10,8 +10,13 @@ package EnsEMBL::Web::Tools::MethodMaker;
 
 ### @usage 2
 ### package EnsEMBL::Module
-### use EnsEMBL::Web::Tools::MethodMaker (copy => ['new', '_new'])
-### # This renames the new method to _new - useful for plugins
+### use EnsEMBL::Web::Tools::MethodMaker (copy => {'new' => '_new'})
+### # This makes a copy of 'new' method to '_new' - useful for plugins if you need to modify the 'new' method
+
+### @usage 3
+### package Example;
+### use EnsEMBL::Web::Tools::MethodMaker qw(copy_method add_method)
+### # This imports methods 'copy_method' and 'add_method' to the calling package
 
 use strict;
 
@@ -36,12 +41,12 @@ sub import {
 
     } elsif (grep {$_ eq $arg} @KEYS_OK) {
       my $arguments = shift;
-      warn sprintf('Values to key %s must be an arrayref while importing %s', $arg,  __PACKAGE__) unless $arguments && ref $arguments eq 'ARRAY';
+      my @arguments = ref $arguments ? ref $arguments eq 'HASH' ? %$arguments : @$arguments : $arguments;
       if ($arg =~ /^(copy|add)$/) {
         my $function = "${arg}_method";
-        $function->($caller, @$arguments);
+        $function->($caller, @arguments);
       } else {
-        _create_method($caller, $arg, @$arguments);
+        _create_method($caller, $arg, @arguments);
       }
     }
   }
@@ -79,9 +84,14 @@ sub add_method {
   }
 }
 
-sub create_get_method               { _create_method('get',     @_); } ## @method ## Creates getter methods for given key names ## Creates method with name 'get_property' if property is the key
-sub create_set_method               { _create_method('set',     @_); } ## @method ## Creates setter methods for given key names ## Creates method with name 'set_property' if property is the key
-sub create_get_set_method           { _create_method('get_set', @_); } ## @method ## Creates getter and setter methods for given key names  ## Creates both 'get_property' and 'set_property' for a property key 
+sub create_get_method {
+  ## Creates getter methods for given key names
+  ## Creates method with name 'get_<key name>'
+  ## 
+  _create_method('get', @_);
+}
+sub create_set_method               { _create_method('set',     @_); } ## Creates setter methods for given key names        ## Creates method with name 'set_<key name>' ##
+sub create_get_set_method           { _create_method('get_set', @_); } ## Creates getter/setter methods for given key names ## Creates method same as the key name       ##
 
 sub _create_method {
   my ($type, $class) = splice @_, 0, 2;
