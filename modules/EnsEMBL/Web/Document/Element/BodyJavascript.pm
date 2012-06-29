@@ -7,12 +7,18 @@ use strict;
 use base qw(EnsEMBL::Web::Document::Element);
 
 sub new {
-  return shift->SUPER::new({
+  my $self = shift->SUPER::new({
     %{$_[0]},
     scripts => '',
-    sources => {}
+    sources => {},
   });
+  
+  $self->debug = $self->hub->param('debug') eq 'js';
+  
+  return $self;
 }
+
+sub debug :lvalue { $_[0]{'debug'}; }
 
 sub add_source { 
   my ($self, $src) = @_;
@@ -42,7 +48,7 @@ sub init {
   my $self         = shift;
   my $species_defs = $self->species_defs;
   
-  if ($self->hub->param('debug') eq 'js') {
+  if ($self->debug) {
     foreach my $root (reverse @{$species_defs->ENSEMBL_HTDOCS_DIRS}) {
       my $dir = "$root/components";
 
