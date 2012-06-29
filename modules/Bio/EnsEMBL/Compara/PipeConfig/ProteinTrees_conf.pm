@@ -152,7 +152,6 @@ sub default_options {
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   4,
         'blast_factory_capacity'    =>  50,
-        'store_sequences_capacity'  => 200,
         'blastp_capacity'           => 450,
         'mcoffee_capacity'          => 600,
         'split_genes_capacity'      => 600,
