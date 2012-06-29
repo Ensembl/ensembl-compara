@@ -34,6 +34,7 @@ sub import {
 
 sub copy_method {
   ## Copies one method to another
+  ## @param Name of the class that contains the method
   ## @param Name of the method to be copied
   ## @param Name of new method
   ## Multiple methods can be copied by providing a list of old method and new method in series
@@ -49,6 +50,7 @@ sub copy_method {
 
 sub add_method {
   ## Create a new method
+  ## @param Class name
   ## @param Method name
   ## @param subroutine code
   ## Multiple methods can be added by providing a list of method name and subroutine code in series
