@@ -65,7 +65,7 @@ sub render {
   my $favourites   = $self->favourites;
   my (@group_order, %label_check);
   
-  my $html = '
+  my $html = '<div class="static_all_species">
   <form action="#">
     <h3 class="box-header">All genomes</h3>
     <div style="margin-top:8px;">
@@ -125,6 +125,7 @@ sub render {
       </div>
     </form>
     <p><a href="/info/about/species.html">View full list of all $sitename species</a></p>
+    </div>
   };
   
   return $html;
