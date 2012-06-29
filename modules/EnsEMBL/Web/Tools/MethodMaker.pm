@@ -30,8 +30,6 @@ sub import {
   my $class  = shift;
   my $caller = caller;
 
-  my (@keys, @subs);
-
   no strict qw(refs);
 
   while (@_) {
