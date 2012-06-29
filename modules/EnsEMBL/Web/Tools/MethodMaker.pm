@@ -85,15 +85,25 @@ sub add_method {
 }
 
 sub create_get_method {
-  ## Creates getter methods for given key names
-  ## Creates method with name 'get_<key name>'
-  ## 
+  ## Creates getter methods for given key names - 'get_<key name>'
+  ## @params List of property names for which methods are to be added
   _create_method('get', @_);
 }
-sub create_set_method               { _create_method('set',     @_); } ## Creates setter methods for given key names        ## Creates method with name 'set_<key name>' ##
-sub create_get_set_method           { _create_method('get_set', @_); } ## Creates getter/setter methods for given key names ## Creates method same as the key name       ##
+
+sub create_set_method {
+  ## Creates setter methods for given key names - 'set_<key name>'
+  ## @params List of property names for which methods are to be added
+  _create_method('set', @_);
+}
+
+sub create_get_set_method {
+  ## Creates getter/setter methods for given key names - method name same as the key name
+  ## @params List of property names for which methods are to be added
+  _create_method('get_set', @_);
+}
 
 sub _create_method {
+  ## @private
   my ($type, $class) = splice @_, 0, 2;
   $class = ref $class if ref $class;
 
