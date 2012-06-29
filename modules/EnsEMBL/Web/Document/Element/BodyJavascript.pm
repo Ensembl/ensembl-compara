@@ -10,15 +10,8 @@ sub new {
   return shift->SUPER::new({
     %{$_[0]},
     scripts => '',
-    sources => {},
-    debug   => 0
+    sources => {}
   });
-}
-
-sub debug {
-  my $self = shift;
-  $self->{'debug'} = shift if @_;
-  return $self->{'debug'};
 }
 
 sub add_source { 
@@ -37,15 +30,12 @@ sub add_script {
 }
 
 sub content {
-  my $self    = shift;
-  my $content = qq{
+  my $self = shift;
+  
+  return qq{
     $self->{'scripts'}
     <div id="uploadframe_div" style="display: none"><iframe name="uploadframe"></iframe></div>
   };
-  
-  $content .= '<div id="debug"></div>' if $self->debug;
-  
-  return $content;
 } 
 
 sub init {
