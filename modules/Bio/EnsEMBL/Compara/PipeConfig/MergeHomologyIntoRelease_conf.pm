@@ -44,7 +44,7 @@ sub default_options {
 
             %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'compara_full_merge_67',         # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_full_merge_68',         # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {
             -host   => 'compara4',
@@ -59,7 +59,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'mm14_compara_homology_merged_67',
+            -dbname => 'mm14_compara_homology_merged_68',
         },
 
         'rel_db' => {
@@ -67,12 +67,12 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => 'mm14_ensembl_compara_67',
+            -dbname => 'mm14_ensembl_compara_68',
         },
 
         'skipped_tables' => [ 'meta', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set',
                               'analysis', 'analysis_data', 'job', 'job_file', 'job_message', 'analysis_stats', 'analysis_stats_monitor', 'analysis_ctrl_rule',
-                              'dataflow_rule', 'worker', 'monitor', 'resource_description' ],
+                              'dataflow_rule', 'worker', 'monitor', 'resource_description', 'resource_class', 'method_link_species_set_tag' ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
     };
@@ -132,6 +132,19 @@ sub pipeline_analyses {
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
         },
 
+        {   -logic_name    => 'merge_table',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters    => {
+                'src_db_conn'   => $self->o('merged_homology_db'),
+                'dest_db_conn'  => $self->o('rel_db'),
+                'mode'          => 'topup',
+                'filter_cmd'    => 'sed "s/ENGINE=InnoDB/ENGINE=MyISAM/"',
+            },
+            -input_ids     => [
+                {"table" => "method_link_species_set_tag"},
+            ],
+            -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+        },
     ];
 }
 
