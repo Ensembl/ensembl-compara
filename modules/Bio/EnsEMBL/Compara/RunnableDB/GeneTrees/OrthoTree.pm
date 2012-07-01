@@ -857,7 +857,7 @@ sub store_gene_link_as_homology {
   my $mlss;
   {
       my $mlss_type;
-      if (($type eq 'possible_ortholog') or ($type eq 'within_species_paralog') or ($type eq 'other_paralog')) {
+      if ((not $type =~ /^ortholog/) and (not $type =~ /^apparent_ortholog/)) {
           $mlss_type = "ENSEMBL_PARALOGUES";
       } else {
           $mlss_type = "ENSEMBL_ORTHOLOGUES";
