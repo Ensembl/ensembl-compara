@@ -142,44 +142,26 @@ foreach my $logic_name (@projected_logic_names){
 my $transcript_count = 0;
 
 my $count_orig_gene = 0;
-my $count_orig_trans = 0;
 my $count_proj_gene = 0;
-my $count_proj_trans = 0;
-my $count_homology = 0;
 
-my %compara_to_core;
-my %dbID_to_Member;
+my %gene_stable_id_2_compara_transcript;
 
 sub fetch_or_store_gene {
     my $gene = shift;
+    my $counter = shift;
     my $gene_member = $member_adaptor->fetch_by_source_stable_id('ENSEMBLGENE', $gene->stable_id);
     if (defined $gene_member) {
         print "REUSE: $gene_member "; $gene_member->print_member();
+        $gene_stable_id_2_compara_transcript{$gene->stable_id} = $gene_member->get_canonical_Member;
     } else {
         $gene_member = Bio::EnsEMBL::Compara::Member->new_from_gene(-gene=>$gene, -genome_db=>$human_genome_db);
         print "NEW: $gene_member "; $gene_member->print_member();
         $member_adaptor->store($gene_member) unless $no_store;
         $subset_genes->add_member($gene_member);
-        my $counter = shift;
         ${$counter} ++;
-    }
-    $dbID_to_Member{$gene_member->dbID} = $gene_member;
-    $compara_to_core{$gene_member} = $gene;
-    return $gene_member;
-}
- 
 
-sub fetch_or_store_transcript {
-    my $transcript = shift;
-
-    my $trans_member = $member_adaptor->fetch_by_source_stable_id('ENSEMBLTRANS', $transcript->stable_id);
-       $trans_member = $member_adaptor->fetch_by_source_stable_id('ENSEMBLPEP', $transcript->translation->stable_id) unless $trans_member or not $transcript->translation;
-    if (defined $trans_member) {
-        print "REUSE: $trans_member ";  $trans_member->print_member();
-    } else {
-        my $gene_member = shift;
-        my $gene = shift;
-        $trans_member = Bio::EnsEMBL::Compara::Member->new_from_transcript(
+        my $transcript = $gene->canonical_transcript;
+        my $trans_member = Bio::EnsEMBL::Compara::Member->new_from_transcript(
                 -transcript     => $transcript,
                 -genome_db      => $human_genome_db,
                 -description    => Bio::EnsEMBL::Compara::RunnableDB::LoadMembers::fasta_description(undef, $gene, $transcript),
@@ -189,34 +171,24 @@ sub fetch_or_store_transcript {
         print "NEW: $trans_member "; $trans_member->print_member();
         $member_adaptor->store($trans_member) unless $no_store;
         $member_adaptor->store_gene_peptide_link($gene_member->dbID, $trans_member->dbID) unless $no_store;
-        my $counter = shift;
-        ${$counter} ++;
+        $subset_peps->add_member($trans_member);
+        $gene_stable_id_2_compara_transcript{$gene->stable_id} = $trans_member;
+
     }
-    $compara_to_core{$trans_member} = $transcript;
-    return $trans_member;
+    return $gene_member;
 }
 
 
-sub fetch_or_store_homology {
-    my $trans_member1 = shift;
-    my $trans_member2 = shift;
+my %stored_homologies;
+sub keep_homology_in_mind {
+    my $trans_gene1   = shift;
+    my $trans_gene2   = shift;
     my $homology_type = shift;
 
-    my $homology = new Bio::EnsEMBL::Compara::Homology;
-    $homology->description($homology_type);
-    $homology->subtype('');
-    $homology->ancestor_node_id(0);
-    $homology->tree_node_id(0);
-    $homology->method_link_species_set_id($mlss->dbID);
-    $homology->add_Member($trans_member1);
-    $homology->add_Member($trans_member2);
-
-    print "NEW: $homology "; $homology->print_homology();
-    $homology_adaptor->store($homology) unless $no_store;
-    $count_homology ++;
-
-    return $homology;
+    $stored_homologies{$trans_gene1->stable_id} = [$trans_gene2->stable_id, $homology_type];
+    $stored_homologies{$trans_gene2->stable_id} = [$trans_gene1->stable_id, $homology_type];
 }
+
 
 
 
@@ -262,16 +234,12 @@ TRANSCRIPT:
 
                 # Create the original gene member if necessary
                 my $orig_gene_member = fetch_or_store_gene($orig_gene, \$count_orig_gene);
-                # Create the original transcript member if necessary
-                my $orig_trans_member = fetch_or_store_transcript($orig_transcript, $orig_gene_member, $orig_gene, \$count_orig_trans);
                 # Create the patch gene member if necessary
                 my $proj_gene_member = fetch_or_store_gene($proj_gene, \$count_proj_gene);
-                # Create the patch transcript member if necessary
-                my $proj_trans_member = fetch_or_store_transcript($proj_transcript, $proj_gene_member, $proj_gene, \$count_proj_trans);
 
-                # Create the homology link id necessary
-                #fetch_or_store_homology($orig_trans_member, $proj_trans_member, $homology_type);
-                print $proj_transcript->stable_id." ".$orig_transcript_id." ".$patch_type." ".$alt_seq."\n";
+                # Keep in a hash the homology
+                keep_homology_in_mind($orig_gene, $proj_gene, $homology_type);
+                print $proj_gene->stable_id." ".$orig_gene->stable_id." ".$patch_type." ".$alt_seq."\n";
 
                 next TRANSCRIPT;
             }
@@ -281,22 +249,40 @@ TRANSCRIPT:
 
 print "total transcripts fetched: ".$transcript_count."\n";
 
-# canonical translations
-my $count_can_trans = 0;
-foreach my $gene_member_id (@{$subset_genes->member_id_list}) {
-    my $gene_member = $dbID_to_Member{$gene_member_id};
-    print "CANONICAL ", $gene_member->stable_id, " ";
-    my $can_trans = $compara_to_core{$gene_member}->canonical_transcript;
-    my $can_member = fetch_or_store_transcript($can_trans, $gene_member, $compara_to_core{$gene_member}, \$count_can_trans);
-    $subset_peps->add_member($can_member);
+
+sub store_homology {
+    my $trans_member1 = shift;
+    my $trans_member2 = shift;
+    my $homology_type = shift;
+
+    my $homology = new Bio::EnsEMBL::Compara::Homology;
+    $homology->description($homology_type);
+    $homology->subtype('');
+    $homology->ancestor_node_id(0);
+    $homology->tree_node_id(0);
+    $homology->method_link_species_set_id($mlss->dbID);
+    bless $trans_member1, 'Bio::EnsEMBL::Compara::AlignedMember';
+    $homology->add_Member($trans_member1);
+    bless $trans_member2, 'Bio::EnsEMBL::Compara::AlignedMember';
+    $homology->add_Member($trans_member2);
+
+    print "NEW: $homology "; $homology->print_homology();
+    $homology_adaptor->store($homology) unless $no_store;
+
+    return $homology;
+}
+
+my $count_homology = 0;
+foreach my $gene1 (keys %stored_homologies) {
+    my ($gene2, $homology_type) = @{$stored_homologies{$gene1}};
+    next unless $gene1 lt $gene2;
+    store_homology($gene_stable_id_2_compara_transcript{$gene1}, $gene_stable_id_2_compara_transcript{$gene2}, $homology_type);
+    $count_homology ++;
 }
 
 
 print "new compara entries:\n";
 print $count_orig_gene, " ref genes\n";
-print $count_orig_trans, " ref transcripts\n";
 print $count_proj_gene, " projected genes\n";
-print $count_proj_trans, " projected transcripts\n";
 print $count_homology, " new homologies\n";
-print $count_can_trans, " new canonical transcripts\n";
 
