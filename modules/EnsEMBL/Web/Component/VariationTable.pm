@@ -32,27 +32,27 @@ sub content {
  
   $count += scalar @{$_->__data->{'transformed'}{'gene_snps'}} for @transcripts;
 
-    if ($icontext) {
-      if ($icontext eq 'FULL') {
-        $msg = "The <b>full</b> intronic sequence around this $object_type is used.";
-      } else {
-        $msg = "Currently <b>$icontext"."bp</b> of intronic sequence is included either side of the exons.";
-      }
-
-      $msg .= '<br />';
-    }
-
-    if ($consequence_type || $count < 25) {
-      $consequence_type ||= 'ALL';
-
-      my $table_rows = $self->variation_table($consequence_type, \@transcripts);
-      my $table      = $table_rows ? $self->make_table($table_rows, $consequence_type) : undef;
-
-      $html = $self->render_content($table, $consequence_type);
+  if ($icontext) {
+    if ($icontext eq 'FULL') {
+      $msg = "The <b>full</b> intronic sequence around this $object_type is used.";
     } else {
-      $html  = $self->_hint('snp_table', 'Configuring the page', qq{<p>${msg}To extend or reduce the intronic sequence, use the "<strong>Configure this page - Intron Context</strong>" link on the left.</p>});
-      $html .= $self->render_content($self->stats_table(\@transcripts)); # no sub-table selected, just show stats
+      $msg = "Currently <b>$icontext"."bp</b> of intronic sequence is included either side of the exons.";
     }
+
+    $msg .= '<br />';
+  }
+
+  if ($consequence_type || $count < 25) {
+    $consequence_type ||= 'ALL';
+
+    my $table_rows = $self->variation_table($consequence_type, \@transcripts);
+    my $table      = $table_rows ? $self->make_table($table_rows, $consequence_type) : undef;
+
+    $html = $self->render_content($table, $consequence_type);
+  } else {
+    $html  = $self->_hint('snp_table', 'Configuring the page', qq{<p>${msg}To extend or reduce the intronic sequence, use the "<strong>Configure this page - Intron Context</strong>" link on the left.</p>});
+    $html .= $self->render_content($self->stats_table(\@transcripts, $gene_object)); # no sub-table selected, just show stats
+  }
   
   return $html;
 }
@@ -109,8 +109,9 @@ sub render_content {
 }
 
 sub stats_table {
-  my ($self, $transcripts) = @_;
+  my ($self, $transcripts, $gene_object) = @_;
   
+
   my $hub         = $self->hub;
   my $cons_format = $hub->param('consequence_format');
   
@@ -122,6 +123,7 @@ sub stats_table {
   ];
   
   my (%counts, %total_counts, %ranks, %descriptions, %labels);
+  my $total_counts;
   
   my @all_cons = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   
@@ -131,47 +133,58 @@ sub stats_table {
     my $term = $self->select_consequence_term($con, $cons_format);
     
     if ($cons_format eq 'so') {
-      $labels{$term}       = $term;
-      $descriptions{$term} = $hub->get_ExtURL_link($con->SO_accession, 'SEQUENCE_ONTOLOGY', $con->SO_accession) unless $descriptions{$term};
-    } elsif ($cons_format eq 'ncbi') {
-      $labels{$term}       = $term;
-      $descriptions{$term} = '-';
-    } else {
       $labels{$term}       = $con->label;
-      $descriptions{$term} = $con->description;
+      $descriptions{$term} = $con->description.' <span class="small">('.$hub->get_ExtURL_link($con->SO_accession, 'SEQUENCE_ONTOLOGY', $con->SO_accession).')</span' unless $descriptions{$term};
+    } else {
+      $labels{$term}       = uc($con->display_term);
+      $descriptions{$term} = '-';
     }
     
     $ranks{$term} = $con->rank if $con->rank < $ranks{$term} || !defined($ranks{$term});
   }
-  
-  # mini-hack for when NCBI don't have a term
-  $ranks{'unclassified'} = 99999999999;
 
-  foreach my $tr (@$transcripts) { 
-    my $tr_stable_id = $tr->stable_id;
-    my $tvs          = $tr->__data->{'transformed'}{'snps'} || {};
-    my $gene_snps    = $tr->__data->{'transformed'}{'gene_snps'};
-    my $tr_start     = $tr->__data->{'transformed'}{'start'};
-    my $tr_end       = $tr->__data->{'transformed'}{'end'};
-    my $extent       = $tr->__data->{'transformed'}{'extent'};
-    
-    foreach (@$gene_snps) {
-      my ($snp, $chr, $start, $end) = @$_;
-      my $vf_id = $snp->dbID;
-      my $tv    = $tvs->{$vf_id};
+  if (!exists($gene_object->__data->{'conscounts'})) {
+# Generate the data the hard way - from all the vfs and tvs
+    my %counts_hash;
+    my %total_counts_hash;
+
+    foreach my $tr (@$transcripts) { 
+      my $tr_stable_id = $tr->stable_id;
+      my $tvs          = $tr->__data->{'transformed'}{'snps'} || {};
+      my $gene_snps    = $tr->__data->{'transformed'}{'gene_snps'};
+      my $tr_start     = $tr->__data->{'transformed'}{'start'};
+      my $tr_end       = $tr->__data->{'transformed'}{'end'};
+      my $extent       = $tr->__data->{'transformed'}{'extent'};
       
-      if ($tv && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
-        foreach my $tva (@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
-          foreach my $con (@{$tva->get_all_OverlapConsequences}) {
-            my $key  = join '_', $tr_stable_id, $vf_id, $tva->variation_feature_seq;
-            my $term = $self->select_consequence_term($con, $cons_format);
-            
-            $counts{$term}{$key} = 1 if $con;
-            $total_counts{$key}  = 1;
+      foreach (@$gene_snps) {
+        my ($snp, $chr, $start, $end) = @$_;
+        my $vf_id = $snp->dbID;
+        my $tv    = $tvs->{$vf_id};
+        
+        if ($tv && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
+          foreach my $tva (@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
+            foreach my $con (@{$tva->get_all_OverlapConsequences}) {
+              my $key  = join '_', $tr_stable_id, $vf_id, $tva->variation_feature_seq;
+              my $term = $self->select_consequence_term($con, $cons_format);
+              
+              $counts_hash{$term}{$key} = 1 if $con;
+              $total_counts_hash{$key}++;
+            }
           }
         }
       }
     }
+    
+    foreach my $con (keys %descriptions) {
+      $counts{$con} = scalar keys %{$counts_hash{$con}};
+    }
+    $total_counts = scalar keys %total_counts_hash;
+
+  } else {
+# Use the results of the TV count queries
+    %counts = %{$gene_object->__data->{'conscounts'}};
+
+    $total_counts = $counts{'ALL'};
   }
   
   my $warning_text = qq{<span style="color:red;">(WARNING: table may not load for this number of variants!)</span>};
@@ -179,12 +192,13 @@ sub stats_table {
   
   foreach my $con (keys %descriptions) {
     if ($counts{$con}) {
-      my $warning = scalar keys %{$counts{$con}} > 10000 ? $warning_text : '';
+      my $count = $counts{$con};
+      my $warning = $count > 10000 ? $warning_text : '';
       
       push @rows, {
         type  => qq{<span class="hidden">$ranks{$con}</span>$labels{$con}},
         desc  => $descriptions{$con}.' '.$warning,
-        count => scalar keys %{$counts{$con}},
+        count => $count,
         view  => $self->ajax_add($self->ajax_url(undef, { sub_table => $con, update_panel => 1 }), $con)
       };
     } else {
@@ -198,7 +212,7 @@ sub stats_table {
   }
   
   # add the row for ALL variations if there are any
-  if (my $total = scalar keys %total_counts) {
+  if (my $total = $total_counts) {
     my $hidden_span = qq{<span class="hidden">-</span>}; # create a hidden span to add so that ALL is always last in the table
     my $warning     = $total > 10000 ? $warning_text : '';
     
@@ -260,7 +274,6 @@ sub variation_table {
     my $tr_start             = $transcript->__data->{'transformed'}{'start'};
     my $tr_end               = $transcript->__data->{'transformed'}{'end'};
     my $extent               = $transcript->__data->{'transformed'}{'extent'};
-    my $cdna_coding_start    = $transcript->Obj->cdna_coding_start;
     my $gene                 = $transcript->gene;
 
     foreach (@$gene_snps) {
@@ -287,7 +300,7 @@ sub variation_table {
         next if $skip;
         
         if ($tva && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
-          my $var                  = $snp->variation;
+          #my $var                  = $snp->variation;
           my $validation           = $snp->get_all_validation_states || [];
           my $variation_name       = $snp->variation_name;
           my $var_class            = $snp->var_class;
@@ -321,10 +334,10 @@ sub variation_table {
                  $source   .= ', ' . $hub->get_ExtURL_link($s_source, $s_source, $synonym);
             }
           }
+          
+          my $gmaf   = $snp->minor_allele_frequency; # global maf
+             $gmaf   = sprintf '%.3f (%s)', $gmaf, $snp->minor_allele if defined $gmaf;
 
-
-          my $gmaf   = $var->minor_allele_frequency; # global maf
-             $gmaf   = sprintf '%.3f (%s)', $gmaf, $var->minor_allele if defined $gmaf;
           my $status = join '', map {qq{<img height="20px" width="20px" title="$_" src="/i/96/val_$_.gif"/><span class="hidden export">$_,</span>}} @$validation; # validation
           
           my $row = {
@@ -352,6 +365,28 @@ sub variation_table {
   }
 
   return \@rows;
+}
+
+sub create_so_term_subsets {
+  my ($self) = @_;
+
+  my @all_cons = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  my $cons_format = $self->hub->param('consequence_format');
+
+  my %so_term_subsets;
+  
+  foreach my $con (@all_cons) {
+    next if $con->SO_accession =~ /x/i;
+    
+    my $term = $self->select_consequence_term($con, $cons_format);
+    
+    if (!exists($so_term_subsets{$term})) {
+      $so_term_subsets{$term} = [];
+    }
+    push @{$so_term_subsets{$term}}, $con->SO_term;
+  }
+
+  return \%so_term_subsets;
 }
 
 sub configure {
@@ -386,15 +421,31 @@ sub configure {
         $selected_so{$con} = 1 if $val eq $consequence;
       }
     }
+  } elsif ( defined $consequence && $consequence ne 'ALL') {
+    $selected_so{$consequence} = 1;
   }
  
+  
   my @so_terms = keys %selected_so;
 
   $gene_object->store_TransformedTranscripts;      ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
-  $gene_object->store_TransformedSNPS(\@so_terms); ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
  
   my $transcript_slice = $gene_object->__data->{'slices'}{'transcripts'}[1];
-  my (undef, $snps)    = $gene_object->getVariationsOnSlice($transcript_slice, $gene_object->__data->{'slices'}{'transcripts'}[2]);
+  my (undef, $snps)    = $gene_object->getVariationsOnSlice($transcript_slice, $gene_object->__data->{'slices'}{'transcripts'}[2], undef,  scalar(@so_terms) ? \@so_terms : undef);
+
+
+  my $vf_objs = [ map $_->[2], @$snps];
+
+  # For stats table (no $consquence) without a set intron context ($context). Also don't try for a single transcript (because its slower)
+  if (!$consequence && !$transcript_object && $context eq 'FULL') {
+    my $so_term_subsets = $self->create_so_term_subsets;
+    $gene_object->store_ConsequenceCounts($so_term_subsets, $vf_objs);
+  }
+
+  # If doing subtable or can't calculate consequence counts
+  if ($consequence || !exists($gene_object->__data->{'conscounts'})) {
+    $gene_object->store_TransformedSNPS(\@so_terms,$vf_objs); ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
+  }
 
   ## Map SNPs for the last SNP display  
   my @gene_snps = map {[
@@ -449,8 +500,6 @@ sub select_consequence_term {
 
   if ($format eq 'so') {
     return $con->SO_term;
-  } elsif ($format eq 'ncbi') {
-    return $con->NCBI_term || 'unclassified';
   } else {
     return $con->display_term;
   }
@@ -460,11 +509,9 @@ sub select_consequence_label {
   my ($self, $con, $format) = @_;
 
   if ($format eq 'so') {
-    return $self->hub->get_ExtURL_link($con->SO_term, 'SEQUENCE_ONTOLOGY', $con->SO_accession);
-  } elsif ($format eq 'ncbi') {
-    return $con->NCBI_term || 'unclassified';
+    return $self->hub->get_ExtURL_link($con->label, 'SEQUENCE_ONTOLOGY', $con->SO_accession);
   } else {
-    return sprintf '<span title="%s">%s</span>', $con->description, $con->label;
+    return $con->display_term;
   }
 }
 
