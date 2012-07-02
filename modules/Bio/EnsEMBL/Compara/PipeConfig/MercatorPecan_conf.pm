@@ -51,12 +51,13 @@ sub default_options {
 #       'ce_mlss_id'            => 523,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	#conservation score mlss_id
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '65',
+        'release'               => '68',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
         'ensembl_cvs_root_dir'  => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 	'dbname'                => $ENV{USER}.'_pecan_19way_'.$self->o('release').$self->o('release_suffix'),
-        'work_dir'              => '/lustre/scratch101/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('dbname'),
-	'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
+        'work_dir'              => '/lustre/scratch109/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('dbname'),
+#	'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
+	'do_not_reuse_list'     => [ 87 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 
     # dependent parameters:
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
@@ -73,6 +74,10 @@ sub default_options {
 
     #master database
         'master_db_name' => 'sf5_ensembl_compara_master', 
+
+    #update_max_alignment_length
+    'quick' => 1, #use quick method for calculating the max_alignment_length (genomic_align_block->length 
+                  #instead of genomic_align->dnafrag_end - genomic_align->dnafrag_start + 1
 
     # Mercator default parameters
     'strict_map'        => 1,
@@ -147,12 +152,13 @@ sub default_options {
        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
        'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
+
        'reuse_db' => {   # usually previous pecan production database
            -host   => 'compara1',
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'kb3_pecan_19way_64',
+           -dbname => 'kb3_pecan_19way_67',
 	   -driver => 'mysql',
         },
 
@@ -645,6 +651,7 @@ sub pipeline_analyses {
              -flow_into => {
                  1 => [ 'gerp' ],
 		 2 => [ 'pecan_mem1'], #retry with more heap memory
+		-2 => [ 'pecan_mem1'], #RUNLIMIT
              },
 	    -rc_id => 2,
          },
@@ -664,6 +671,7 @@ sub pipeline_analyses {
              -flow_into => {
                  1 => [ 'gerp' ],
 		 2 => [ 'pecan_mem2'], #retry with even more heap memory
+		-2 => [ 'pecan_mem2'], #RUNLIMIT
              },
          },
          {   -logic_name => 'pecan_mem2',
@@ -681,6 +689,7 @@ sub pipeline_analyses {
              -flow_into => {
                  1 => [ 'gerp' ],
 		 2 => [ 'pecan_mem3'], #retry with even more heap memory
+		-2 => [ 'pecan_mem3'], #RUNLIMIT
              },
          },
          {   -logic_name => 'pecan_mem3',
@@ -712,8 +721,34 @@ sub pipeline_analyses {
              },
 #             -wait_for => [ 'mercator' ],
              -hive_capacity => 500,  
+             -flow_into => {
+		 2 => [ 'gerp_mem1'], #retry with more memory
+             },
 	     -rc_id => 1,
          },
+         {   -logic_name    => 'gerp_himem',
+             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
+             -parameters    => {
+		 'program_version' => $self->o('gerp_version'),
+                 'window_sizes'    => $self->o('window_sizes'),
+		 'gerp_exe_dir'    => $self->o('gerp_exe_dir'),
+                 'mlss_id'         => $self->o('mlss_id'),  #to retrieve species_tree from mlss_tag table
+             },
+ 	    -can_be_empty  => 1,
+            -hive_capacity => 500,  
+	     -rc_id => 2,
+         },
+ 	 {  -logic_name => 'update_max_alignment_length',
+	    -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
+	    -parameters => { 
+			    'quick'                      => $self->o('quick'),
+			    'method_link_species_set_id' => $self->o('mlss_id'),
+
+			   },
+            -input_ids => [{}],
+	    -wait_for => [ 'pecan', 'pecan_mem1', 'pecan_mem2', 'pecan_mem3','gerp', 'gerp_himem'],
+	    -rc_id => 0,
+	 },
 
 # ---------------------------------------------[healthcheck]---------------------------------------------------------------------
         {   -logic_name    => 'conservation_score_healthcheck',
@@ -724,7 +759,7 @@ sub pipeline_analyses {
                  { 'test' => 'conservation_jobs', 'logic_name' => 'Gerp','method_link_type' => 'PECAN',},
 		 { 'test' => 'conservation_scores', 'method_link_species_set_id' => $self->o('cs_mlss_id')},
              ],
-             -wait_for => [ 'pecan', 'pecan_mem1', 'pecan_mem2', 'pecan_mem3','gerp' ],
+             -wait_for => ['update_max_alignment_length' ],
              -hive_capacity => -1,   # to allow for parallelization
 	    -rc_id => 0,
 	},
