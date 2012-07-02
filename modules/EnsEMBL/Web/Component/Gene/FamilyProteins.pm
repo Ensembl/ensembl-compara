@@ -34,7 +34,7 @@ sub content_other {
   my $html;
 
   foreach my $key (sort keys %sources) {
-    my @peptides = map { $_->[0]->stable_id } @{$object->member_by_source($family, $sources{$key}{'key'})};
+    my @peptides = map { $_->stable_id } @{$object->member_by_source($family, $sources{$key}{'key'})};
     my $row_count;
     
     if (@peptides) {
@@ -110,7 +110,7 @@ sub content_ensembl {
   
   foreach my $taxon (@taxa) {
     my $id        = $taxon->ncbi_taxid;
-    my @peptides  = map $_->[0]->stable_id, @{$family->get_Member_Attribute_by_source_taxon('ENSEMBLPEP', $id) || []};
+    my @peptides  = map $_->stable_id, @{$family->get_Member_by_source_taxon('ENSEMBLPEP', $id) || []};
     $data{$taxon} = \@peptides;
     $count       += scalar(@peptides);
   }

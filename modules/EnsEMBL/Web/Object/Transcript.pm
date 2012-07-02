@@ -449,7 +449,7 @@ sub get_families {
       $family_hash->{$family->stable_id} = {
         'description' => $family->description,
         'count'       => $family->Member_count_by_source_taxon('ENSEMBLGENE', $taxon_id),
-        'genes'       => [ map { $ga->fetch_by_stable_id($_->[0]->stable_id) } @{$family->get_Member_Attribute_by_source_taxon('ENSEMBLGENE', $taxon_id) || []} ],
+        'genes'       => [ map { $ga->fetch_by_stable_id($_->stable_id) } @{$family->get_Member_by_source_taxon('ENSEMBLGENE', $taxon_id) || []} ],
       };
     }
   }

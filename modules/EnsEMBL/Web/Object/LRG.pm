@@ -588,7 +588,7 @@ sub get_all_families {
     my $genes = [];
     foreach my $member (@$members) {
       $member->genome_db($genome_db);
-      my $gene = $member->gene;
+      my $gene = $member->get_Gene;
       push @$genes, $gene if $gene;
     }
     $info->{'genes'} = $genes;
@@ -624,7 +624,7 @@ sub create_family {
 
 sub member_by_source {
   my ($self, $family, $source) = @_;
-  return $family->get_Member_Attribute_by_source($source) || [];
+  return $family->get_Member_by_source($source) || [];
 }
 
 sub chromosome {

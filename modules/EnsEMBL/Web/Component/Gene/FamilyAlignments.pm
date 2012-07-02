@@ -48,14 +48,13 @@ sub _embed_jalview {
   my $file = new EnsEMBL::Web::TmpFile::Text(extension => 'fa', prefix => 'family_alignment');
   my $URL  = $file->URL;
 
-  foreach my $member_attribute (@$refs) {
-    my ($member, $attribute) = @$member_attribute;
+  foreach my $member (@$refs) {
     my $align;
-    eval { $align = $attribute->alignment_string($member); };
+    eval { $align = $member->alignment_string; };
     unless ($@) {
-      if($attribute->alignment_string($member)) {
+      if($member->alignment_string) {
         print $file ">".$member->stable_id."\n";
-        print $file $attribute->alignment_string($member)."\n";
+        print $file $member->alignment_string."\n";
         $outcount++;
       }
     }
