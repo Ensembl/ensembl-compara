@@ -279,12 +279,18 @@ sub add_variations {
   my ($self, $config, $slice, $sequence) = @_;
   
   my $transcript         = $self->object->Obj;
-  my $variation_features = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;
+  my $variation_features = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;  
   my $length             = scalar @$sequence - 1;
   my (%href, %class);
   
+  # fetch transcript variations here, it's quicker
+  my $tva = $self->object->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+  my @transcript_variations = grep {$_->transcript->stable_id eq $transcript->stable_id} @{$tva->fetch_all_by_VariationFeatures($variation_features)};
+  my %tvs_by_vf;
+  push @{$tvs_by_vf{$_->variation_feature->dbID}}, $_ for @transcript_variations;
+  
   foreach my $vf (map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->length, $_->most_severe_OverlapConsequence->rank, $_ ], @$variation_features) {
-    my $transcript_variation = $vf->get_all_TranscriptVariations([$transcript])->[0];
+    my $transcript_variation = $tvs_by_vf{$vf->dbID}->[0];
     
     next unless $transcript_variation;
     
