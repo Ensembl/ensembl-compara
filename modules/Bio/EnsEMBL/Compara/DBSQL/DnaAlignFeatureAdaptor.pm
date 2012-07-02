@@ -217,11 +217,16 @@ sub fetch_all_by_Slice {
 
   my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor();
   my $cs_genome_db = $genome_db_adaptor->fetch_by_Slice($orig_slice);
-  my $qy_genome_db = $genome_db_adaptor->fetch_by_name_assembly($qy_species, $qy_assembly);
-  if(! $qy_genome_db && ! $qy_assembly) {
-  	#Only use the registry if we cannot find one by name & assembly was not defined.
+  #my $qy_genome_db = $genome_db_adaptor->fetch_by_registry_name($qy_species);
+
+  my $qy_genome_db;
+  if($qy_assembly) {
+      $qy_genome_db = $genome_db_adaptor->fetch_by_name_assembly($qy_species, $qy_assembly);
+  } else {
+  	#Only use the registry if assembly was not defined.
   	$qy_genome_db = $genome_db_adaptor->fetch_by_registry_name($qy_species);
   }
+
   return [] if (!$cs_genome_db or !$qy_genome_db);
 
   my $method_link_species_set_adaptor = $self->db->get_MethodLinkSpeciesSetAdaptor();
@@ -541,7 +546,7 @@ sub _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures {
         'hseqname'     => $qdf_name,
         'hspecies'     => $query_genomic_align->genome_db->name,
         'hslice'       => $top_slice,
-        'alignment_type' => $this_genomic_align_block->method_link_species_set->method_link_type,
+        'alignment_type' => $this_genomic_align_block->method_link_species_set->method->type,
         'group_id'     => $ga_group_id,
         'level_id'     => $ga_level_id,
         'strands_reversed' => $ga_strands_reversed});
