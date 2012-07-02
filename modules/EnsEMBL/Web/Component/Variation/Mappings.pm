@@ -600,6 +600,7 @@ sub detail_panel {
             type       => 'Variation',
             action     => 'Summary',
             vf         => $other_vf->dbID,
+            v          => $other_vf->variation_name
           });
           push @same_aa, sprintf('<a href="%s">%s</a>', $vf_url, $other_vf->variation_name);
         }
