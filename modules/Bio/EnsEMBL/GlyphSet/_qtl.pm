@@ -115,13 +115,4 @@ sub ID_URL {
   }
 }
 
-sub canvas_attributes {
-  my ($self, $f) = @_;
-  
-  return (
-    id    => $f->qtl->dbID,
-    title => $self->title($f)
-  );
-}
-
 1;

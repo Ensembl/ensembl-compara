@@ -106,6 +106,4 @@ sub feature_label {
   return $self->my_colour($self->colour_key($f), 'label') eq 'invisible' ? '' : $f->name;
 }
 
-sub canvas_attributes { return ( borderColor => '#000000' ); }
-
 1;

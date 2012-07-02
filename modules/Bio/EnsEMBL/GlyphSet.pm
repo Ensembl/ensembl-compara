@@ -86,7 +86,6 @@ sub feature_label      { return '';                                             
 sub title              { return '';                                                                                }
 sub href               { return undef;                                                                             }
 sub tag                { return ();                                                                                }
-sub canvas_attributes  { return ();                                                                                } # Used to add attributes to each feature for scrollable images
 
 ### Helper functions to wrap round Glyphs
 sub Bezier     { my $self = shift; return new Sanger::Graphics::Glyph::Bezier(@_);     }

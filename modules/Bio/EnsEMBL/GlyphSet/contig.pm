@@ -162,11 +162,4 @@ sub feature_label {
   return $f->strand == 1 ? "$f->{'name'} >" : "< $f->{'name'}";
 }
 
-sub canvas_attributes {
-  return (
-    id         => $_[1]->{'name'},
-    labelColor => '#FFFFFF',
-  );
-}
-
 1;

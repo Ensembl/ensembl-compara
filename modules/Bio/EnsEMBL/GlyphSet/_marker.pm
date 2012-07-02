@@ -139,6 +139,4 @@ sub href {
   });
 }
 
-sub canvas_attributes { return ( id => $_[1]->{'drawing_id'} ); }
-
 1;
