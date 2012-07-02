@@ -1,10 +1,9 @@
-# $Id$
-
 package EnsEMBL::Web::Component::Variation::Mappings;
 
 use strict;
 
 use base qw(EnsEMBL::Web::Component::Variation);
+use Bio::EnsEMBL::Variation::Utils::VariationEffect qw(overlap);
 
 sub _init {
   my $self = shift;
@@ -202,13 +201,10 @@ sub content {
       my $type;
       
       if ($cons_format eq 'so') {
-        $type = join ', ', map { $hub->get_ExtURL_link($_->SO_term, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @{$tva->get_all_OverlapConsequences};
-      } elsif ($cons_format eq 'ncbi') {
-        # not all terms have an ncbi equiv so default to SO
-        $type = join ', ', map { $_->NCBI_term || sprintf '<span title="%s (no NCBI term available)">%s*</span>', $_->description, $_->label } @{$tva->get_all_OverlapConsequences};
+        $type = join ', ', map { $hub->get_ExtURL_link($_->label, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @{$tva->get_all_OverlapConsequences};
       } else {
         # Avoid duplicated Ensembl terms
-        my %ens_term = map { '<span title="'.$_->description.'">'.$_->label.'</span>' => 1 } @{$tva->get_all_OverlapConsequences};
+        my %ens_term = map { $_->display_term() => 1 } @{$tva->get_all_OverlapConsequences};
         $type = join ', ', keys(%ens_term);
       }
       
@@ -459,6 +455,7 @@ sub detail_panel {
     
     my $tv       = $t_data->{'tv'};
     my $tva      = $t_data->{'tva'};
+    my $vf       = $t_data->{'vf'};
     my $t_allele = $tva->feature_seq;
     my $tr       = $tv->transcript;
     my $ocs      = $tva->get_all_OverlapConsequences;
@@ -521,7 +518,7 @@ sub detail_panel {
       $hgvs_p = $display_hgvs_p;
     }
     
-    my %ens_term = map { sprintf ('%s <i>(%s)</i>', $_->label, $_->description) =>1 } @$ocs;
+    my %ens_term = map { $_->display_term => 1 } @$ocs;
     
     my %data = (
       allele     => $allele,
@@ -531,18 +528,12 @@ sub detail_panel {
       transcript => qq{<a href="$tr_url">$tr_id</a>},
       protein    => $prot_id ? qq{<a href="$prot_url">$prot_id</a>} : '-',
       ens_term   => join(', ', keys(%ens_term)),
-      so_term    => join(', ', map { sprintf '%s (%s)', $_->SO_term, $hub->get_ExtURL_link($_->SO_accession, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @$ocs),
+      so_term    => join(', ', map { sprintf '%s - <i>(%s)</i> (%s)', $_->label, $_->description, $hub->get_ExtURL_link($_->SO_accession, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @$ocs),
       hgvs       => join('<br />', grep $_, $hgvs_c, $hgvs_p) || '-',
     );
     
-    foreach my $oc (@$ocs) {
-      push @{$data{'ncbi_term'}}, $oc->NCBI_term if defined $oc->NCBI_term;
-    }
-    
-    $data{'ncbi_term'} = (join ', ', @{$data{'ncbi_term'} || []}) || '-';
-    
     if($tv->affects_cds) {
-      $data{context} = $self->render_context($tv, $tva);
+      #$data{context} = $self->render_context($tv, $tva);
       
       my $context_url = $hub->url({
         type   => 'Transcript',
@@ -595,6 +586,26 @@ sub detail_panel {
       }
 
       $data{domains} = join '<br/>', @strings if @strings;
+      
+      # find vars in same AA
+      my @same_aa;
+      
+      foreach my $other_vf(@{$vf->feature_Slice->expand(3, 3)->get_all_VariationFeatures}) {
+        next if $other_vf->dbID == $vf->dbID;
+        
+        foreach my $other_tv(@{$other_vf->get_all_TranscriptVariations([$tv->transcript])}) {
+          next unless defined($tv->translation_start) && defined($tv->translation_end) && defined($other_tv->translation_start) && defined($other_tv->translation_end);
+          next unless overlap($other_tv->translation_start, $other_tv->translation_end, $tv->translation_start, $tv->translation_end);
+          my $vf_url = $hub->url({
+            type       => 'Variation',
+            action     => 'Summary',
+            vf         => $other_vf->dbID,
+          });
+          push @same_aa, sprintf('<a href="%s">%s</a>', $vf_url, $other_vf->variation_name);
+        }
+      }
+      
+      $data{same_aa} = (join ", ", @same_aa) || "-";
     }
     
     #$data{'context'} =
@@ -608,13 +619,13 @@ sub detail_panel {
       { protein    => 'Protein'                    },
       { allele     => 'Allele (variation)'         },
       { t_allele   => 'Allele (transcript)'        },
-      { ens_term   => 'Consequence (Ensembl term)' },
       { so_term    => 'Consequence (SO term)'      },
-      { ncbi_term  => 'Consequence (NCBI term)'    },
+      { ens_term   => 'Consequence (Ensembl term)' },
       { hgvs       => 'HGVS names'                 },
       { exon       => 'Exon'                       },
       { exon_coord => 'Position in exon'           },
       { domains    => 'Overlapping protein domains'},
+      { same_aa    => 'Variants in same codon'     },
       { context    => 'Context'                    },
     );
     
