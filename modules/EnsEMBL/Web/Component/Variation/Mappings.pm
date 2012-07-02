@@ -183,8 +183,8 @@ sub content {
       my $hgvs;
       
       unless ($object->is_somatic_with_different_ref_base) {
-        $hgvs  = $tva->hgvs_coding             if defined $tva->hgvs_coding;
-        $hgvs .= '<br />' . $tva->hgvs_protein if defined $tva->hgvs_protein;
+        $hgvs  = $tva->hgvs_transcript          if defined $tva->hgvs_transcript;
+        $hgvs .= '<br />' .  $tva->hgvs_protein if defined $tva->hgvs_protein;
       }
 
       # Now need to add to data to a row, and process rows somehow so that a gene ID is only displayed once, regardless of the number of transcripts;
@@ -508,7 +508,7 @@ sub detail_panel {
     }
     
     # HGVS
-    my $hgvs_c = $tva->hgvs_coding;
+    my $hgvs_c = $tva->hgvs_transcript;
     if (length($hgvs_c)>60) {
       my $display_hgvs_c = substr($hgvs_c,0,60).'...';
       $display_hgvs_c .= $self->trim_large_string($hgvs_c,'hgvs_c_'.$t_data->{transcriptname});
