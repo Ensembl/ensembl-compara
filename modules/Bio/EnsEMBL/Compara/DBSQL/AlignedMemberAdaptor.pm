@@ -136,7 +136,7 @@ sub fetch_all_by_Family {
 
     my $extra_columns = ['fm.cigar_line'];
     my $join = [[['family_member', 'fm'], 'm.member_id = fm.member_id', $extra_columns]];
-    my $constraint = 'fm.family_id = ? AND m.source_name != "ENSEMBLGENE"';
+    my $constraint = 'fm.family_id = ?';
     my $final_clause = 'ORDER BY m.source_name';
 
     $self->bind_param_generic_fetch($family->dbID, SQL_INTEGER);
