@@ -81,7 +81,7 @@ sub fetch_features {
         my $track_set            = $self->my_config('set_name');
         my $variation_db_adaptor = $slice->adaptor->db->get_db_adaptor('variation');
         my $set_object           = $variation_db_adaptor->get_VariationSetAdaptor->fetch_by_name($track_set);
-      
+		
         # Enable the display of failed variations in order to display the failed variation track
         my $failed_variations_track_name = 'Failed';
         my $orig_failed_flag             = $variation_db_adaptor->include_failed_variations;
@@ -93,7 +93,7 @@ sub fetch_features {
         # Reset the flag for displaying of failed variations to its original state
         $variation_db_adaptor->include_failed_variations($orig_failed_flag);
       } else {
-        my @temp_variations = @{$slice->get_all_VariationFeatures($self->my_config('filter')) || []}; 
+        my @temp_variations = @{$slice->get_all_VariationFeatures() || []}; 
         
         ## Add a filtering step here
         @vari_features =
