@@ -56,7 +56,7 @@ sub default_options {
         #'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, 
 
-	'release'               => '67',
+	'release'               => '68',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
 	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
 
@@ -159,6 +159,8 @@ sub default_options {
 	#Default filter_duplicates
 	#
         'window_size' => 1000000,
+	'filter_duplicates_rc_id' => 1,
+	'filter_duplicates_himem_rc_id' => 3,
 
 	#
 	#Default pair_aligner
@@ -170,7 +172,7 @@ sub default_options {
 	'pair_aligner_options' => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', #hsap vs mammal
 	'pair_aligner_hive_capacity' => 100,
 	'pair_aligner_batch_size' => 3,
-	    
+
         #
         #Default chain
         #
@@ -467,14 +469,27 @@ sub pipeline_analyses {
 				 },
 	       -hive_capacity => 50,
 	       -batch_size    => 3,
-	       -rc_id => 2,
+	       -flow_into => {
+			       -1 => [ 'filter_duplicates_himem' ], # MEMLIMIT
+			     },
+	       -rc_id => $self->o('filter_duplicates_rc_id'),
+ 	    },
+	    {  -logic_name   => 'filter_duplicates_himem',
+ 	       -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
+ 	       -parameters    => { 
+				  'window_size' => $self->o('window_size') 
+				 },
+	       -hive_capacity => 50,
+	       -batch_size    => 3,
+	       -can_be_empty  => 1, 
+	       -rc_id => $self->o('filter_duplicates_himem_rc_id'),
  	    },
  	    {  -logic_name => 'update_max_alignment_length_after_FD',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
  	       -parameters => {
 			       'quick' => $self->o('quick'),
 			      },
- 	       -wait_for =>  [ 'filter_duplicates' ],
+ 	       -wait_for =>  [ 'filter_duplicates', 'filter_duplicates_himem' ],
 	       -rc_id => 0,
  	    },
 #
