@@ -248,14 +248,11 @@ sub glyphset_configs {
           push @default_order, $track;
         }
       } else {
-        my $canvas = $track->get('canvas');
-        my $clone  = $self->tree->create_node($track->id . '_tmp'); # Id is replaced in the for loop below
+        my $clone = $self->tree->create_node($track->id . '_tmp'); # Id is replaced in the for loop below
         $clone->{$_} = $_ eq 'data' ? { %{$track->{'data'}} } : $track->{$_} for keys %$track; # Make a new hash for data, so that drawing_strand can differ
         
         $clone->set('drawing_strand', 'f');
         $track->set('drawing_strand', 'r');
-        
-        push @{$canvas->{'inherit'}}, 'Stranded' if $canvas;
         
         unshift @default_order, $clone;
         push    @default_order, $track;
@@ -1538,11 +1535,10 @@ sub add_genes {
       next unless $menu;
       
       $self->generic_add($menu, $key, "${t}_${key}_$key2", $data->{$key2}, {
-        glyphset    => ($t =~ /_/ ? '' : '_') . $type, # QUICK HACK
-        colours     => $colours,
-        strand      => $t eq 'gene' ? 'r' : 'b',
-        canvas      => { type => 'Gene' },
-        renderers   => $t eq 'transcript' ? [
+        glyphset  => ($t =~ /_/ ? '' : '_') . $type, # QUICK HACK
+        colours   => $colours,
+        strand    => $t eq 'gene' ? 'r' : 'b',
+        renderers => $t eq 'transcript' ? [
           'off',                     'Off',
           'gene_nolabel',            'No exon structure without labels',
           'gene_label',              'No exon structure with labels',
@@ -1595,10 +1591,6 @@ sub add_marker_features {
       labels   => 'on',
       colours  => $colours,
       strand   => 'r',
-      canvas   => {
-        bumpLabels     => JSON::true,
-        maxLabelRegion => 5e4
-      }
     });
   }
 }
@@ -1619,10 +1611,6 @@ sub add_qtl_features {
     display     => 'normal',
     renderers   => [ 'off', 'Off', 'normal', 'On' ],
     strand      => 'r',
-    canvas      => {
-      bump         => JSON::true,
-      labelOverlay => JSON::true
-    }
   }));
 }
 
@@ -1659,7 +1647,6 @@ sub add_misc_features {
       strand            => 'r',
       display           => $default_tracks->{$config_name}{$_}{'default'} || $data->{$_}{'display'} || 'off',
       outline_threshold => $default_tracks->{$config_name}{$_}{'threshold'} eq 'no' ? undef : 350000,
-      canvas            => { type => 'Clone' }
     });
   }
 }
@@ -1845,25 +1832,20 @@ sub add_decorations {
       description => 'Cytogenetic bands',
       colourset   => 'ideogram',
       sortable    => 1,
-      canvas      => {
-        labelOverlay => JSON::true,
-        allData      => JSON::true
-      }
     }));
   }
   
   if ($key eq 'core' && $hashref->{'assembly_exception'}{'rows'} > 0) {
     $menu->append($self->create_track("assembly_exception_$key", 'Assembly exceptions', {
-      db            => $key,
-      glyphset      => 'assemblyexception',
-      height        => 2,
-      display       => 'normal',
-      strand        => 'x',
-      label_strand  => 'r',
-      short_labels  => 0,
-      description   => 'GRC assembly patches, haplotype (HAPs) and pseudo autosomal regions (PARs)',
-      colourset     => 'assembly_exception',
-      canvas        => { type => 'Patch' }
+      db           => $key,
+      glyphset     => 'assemblyexception',
+      height       => 2,
+      display      => 'normal',
+      strand       => 'x',
+      label_strand => 'r',
+      short_labels => 0,
+      description  => 'GRC assembly patches, haplotype (HAPs) and pseudo autosomal regions (PARs)',
+      colourset    => 'assembly_exception',
     }));
   }
   
@@ -1920,7 +1902,6 @@ sub add_synteny {
       renderers   => [qw(off Off normal On)],
       height      => 4,
       strand      => 'r',
-      canvas      => { type => 'Synteny' }
     }));
   }
 }
@@ -2274,7 +2255,6 @@ sub add_sequence_variations {
     bump_width => 0,
     colourset  => 'variation',
     display    => 'off',
-    canvas     => { type => 'Variation' },
   };
   
   if ($hashref->{'menu'}) {
@@ -2428,7 +2408,6 @@ sub add_structural_variations {
     height     => 6,
     colourset  => 'structural_variant',
     display    => 'off',
-    canvas     => { type => 'StructuralVariation' },
   );
   
   $structural_variation->append($self->create_track('variation_feature_structural', 'Structural variants (all sources)', {   
