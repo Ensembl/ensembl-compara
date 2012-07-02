@@ -70,12 +70,21 @@ sub sources {
   eval {
     @sources = @{$self->variation_adaptor->get_VariationAdaptor->get_all_sources || []};
   };
-  
-  my %sources = map { $valids->{'opt_' . lc $_} ? ($_ => 1) : () } @sources;
-     %sources = map { $_ => 1 } @sources unless keys %sources;
+
+  my %sources;
+  foreach my $source (@sources) {
+    my $source_vkey = $source;
+    $source_vkey =~ s/ /_/g;
+    if (exists($valids->{'opt_' . lc $source_vkey})) {
+      $sources{$source} = 1;
+    }
+  }
+
+  %sources = map { $_ => 1 } @sources unless keys %sources;
      
   return \%sources;
 }
+
 
 sub getFakeMungedVariationFeatures {
   ### Arg1        : Subslices
@@ -86,21 +95,29 @@ sub getFakeMungedVariationFeatures {
   ### arrayref of munged 'fake snps' = [ fake_s, fake_e, SNP ]
   ### scalar - number of SNPs filtered out by the context filter
 
-  my ($self, $subslices, $gene) = @_;
-  my $all_snps = $self->Obj->get_all_VariationFeatures;
-  push @$all_snps, @{$self->Obj->get_all_somatic_VariationFeatures};
+  my ($self, $subslices, $gene, $so_terms) = @_;
+  
+  if ($so_terms) {
+    my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation');
+    $vfa->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+  }
+  my $all_snps = $self->Obj->get_all_VariationFeatures($so_terms);
+  my $ngot =  scalar(@$all_snps);
+  push @$all_snps, @{$self->Obj->get_all_somatic_VariationFeatures($so_terms)};
 
   my @on_slice_snps = 
     map  { $_->[1] ? [ $_->[0]->start + $_->[1], $_->[0]->end + $_->[1], $_->[0] ] : () } # [ fake_s, fake_e, SNP ] Filter out any SNPs not on munged slice
     map  {[ $_, $self->munge_gaps($subslices, $_->start, $_->end) ]}                      # [ SNP, offset ]         Create a munged version of the SNPS
     grep { $_->map_weight < 4 }                                                           # [ SNP ]                 Filter out all the multiply hitting SNPs
     @$all_snps;
-
+    
   my $count_snps            = scalar @on_slice_snps;
   my $filtered_context_snps = scalar @$all_snps - $count_snps;
   
   return (0, [], $filtered_context_snps) unless $count_snps;
-  return ($count_snps, $self->filter_munged_snps(\@on_slice_snps, $gene), $filtered_context_snps);
+  
+  my $filtered_snps = $self->filter_munged_snps(\@on_slice_snps, $gene);
+  return ($count_snps, $filtered_snps, $filtered_context_snps);
 }
 
 sub munge_gaps {
@@ -120,6 +137,86 @@ sub munge_gaps {
   return undef;
 }
 
+sub make_all_source_opt_hash {
+  my $self   = shift;
+  my @sources;
+  my %allsources;
+
+  eval {
+    @sources = @{$self->variation_adaptor->get_VariationAdaptor->get_all_sources || []};
+  };
+  foreach my $source (@sources) {
+    $source =~ s/ /_/g;
+    $allsources{'opt_' . lc $source} = 1;
+  }
+     
+  return \%allsources;
+}
+
+sub need_source_filter {
+  my $self   = shift;
+  my $valids = $self->valids;
+  my $allsources;
+  
+  $allsources = $self->make_all_source_opt_hash();
+  
+  foreach my $sourcekey (keys %$allsources) {
+    if (!exists($valids->{$sourcekey})) { 
+      return 1;
+    }
+  }
+     
+  return 0;
+}
+
+sub need_consequence_filter {
+  my( $self ) = @_;
+
+  my %options =  EnsEMBL::Web::Constants::VARIATION_OPTIONS;
+
+  my $hub  = $self->hub;
+
+  foreach ($hub->param) {
+    if ($hub->param($_) eq 'off' && $_ =~ /opt_/ && exists($options{'type'}{$_})) {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+sub need_validation_filter {
+  my( $self ) = @_;
+
+  my %options =  EnsEMBL::Web::Constants::VARIATION_OPTIONS;
+
+  my $hub  = $self->hub;
+
+  foreach ($hub->param) {
+    if ($hub->param($_) eq 'off' && $_ =~ /opt_/ && exists($options{'variation'}{$_})) {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+sub need_class_filter {
+  my( $self ) = @_;
+
+  my %options =  EnsEMBL::Web::Constants::VARIATION_OPTIONS;
+
+  my $hub  = $self->hub;
+
+  foreach ($hub->param) {
+    if ($hub->param($_) eq 'off' && $_ =~ /opt_/ && exists($options{'class'}{$_})) {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
 sub filter_munged_snps {
   ### Arg1        : arrayref of munged 'fake snps' = [ fake_s, fake_e, SNP ]
   ### Arg2        : gene (optional)
@@ -132,20 +229,45 @@ sub filter_munged_snps {
   my $sources           = $self->sources;
   my $consequence_types = $self->consequence_types;
 
-  my @filtered_snps =
-    map  { $_->[1] }                                                                         # [ fake_s, fake_e, SNP ] Remove the schwartzian index
-    sort { $a->[0] <=> $b->[0] }                                                             # [ index, [fake_s, fake_e, SNP] ] Sort snps on schwartzian index
-    map  {[ $_->[1] + $consequence_types->{$_->[2]->display_consequence($gene)} * 1e9, $_ ]} # [ index, [fake_s, fake_e, SNP] ] Compute schwartzian index [ consequence type priority, fake SNP ]
-    grep {( @{$_->[2]->get_all_validation_states} ? 
-      (grep { $valids->{"opt_$_"} } map {lc($_)} @{$_->[2]->get_all_validation_states}) : 
-      $valids->{'opt_noinfo'}
-    )}                                                                                       # [ fake_s, fake_e, SNP ] Grep features to see if they are valid
-    grep { scalar map { $valids->{'opt_' . lc $_} ? 1 : () } @{$_->[2]->consequence_type} }  # [ fake_s, fake_e, SNP ] Filter our unwanted consequence types
-    grep { scalar map { $sources->{$_} ? 1 : () } @{$_->[2]->get_all_sources} }              # [ fake_s, fake_e, SNP ] Filter our unwanted sources
-    grep { $valids->{'opt_class_' . lc $_->[2]->var_class} }                                 # [ fake_s, fake_e, SNP ] Filter our unwanted classes
-    @$snps;
+  my $needvalidation  = $self->need_validation_filter();
+  my $needconsequence = $self->need_consequence_filter();
+  my $needclass       = $self->need_class_filter();
 
-  return \@filtered_snps;
+  my $needsource      = $self->need_source_filter();
+  
+  if (!$needvalidation && !$needsource && !$needconsequence && !$needclass) {
+    return $snps;
+  } else {
+
+    my @filtered_snps = @$snps;
+
+    if ($needsource) {
+      @filtered_snps =
+ # Will said to change this to ->source (get_all_sources does a db query for each one - not good!).       grep { scalar map { $sources->{$_} ? 1 : () } @{$_->[2]->get_all_sources} }              # [ fake_s, fake_e, SNP ] Filter our unwanted sources
+        grep { $sources->{$_->[2]->source} }                                 # [ fake_s, fake_e, SNP ] Filter our unwanted classes
+        @filtered_snps;
+    }
+ 
+    if ($needvalidation) {
+      @filtered_snps =
+        grep {( @{$_->[2]->get_all_validation_states} ? 
+          (grep { $valids->{"opt_" . lc $_} } @{$_->[2]->get_all_validation_states}) : 
+          $valids->{'opt_noinfo'}
+        )} @filtered_snps;                                                                                      # [ fake_s, fake_e, SNP ] Grep features to see if they are valid
+    }
+    if ($needconsequence) {
+      @filtered_snps =
+        grep { scalar map { $valids->{'opt_' . lc $_} ? 1 : () } @{$_->[2]->consequence_type} }  # [ fake_s, fake_e, SNP ] Filter our unwanted consequence types
+        @filtered_snps;
+    }
+    if ($needclass) {
+      @filtered_snps =
+        grep { $valids->{'opt_class_' . lc $_->[2]->var_class} }                                 # [ fake_s, fake_e, SNP ] Filter our unwanted classes
+        @filtered_snps;
+    }
+    
+    return \@filtered_snps;
+  }
 }
 
 # Sequence Align View ---------------------------------------------------
@@ -266,6 +388,8 @@ sub get_data {
   my $count                = 0;
   my @result_sets;
   my %feature_sets_on;
+
+  return $data if (!scalar(keys %$data));
   
   foreach my $regf_fset (@{$hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen')->fetch_all_by_type('regulatory')}) { 
     my $regf_data_set = $dataset_adaptor->fetch_by_product_FeatureSet($regf_fset);

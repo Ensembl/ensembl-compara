@@ -18,6 +18,7 @@ use strict;
 use EnsEMBL::Web::Cache;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
+
 use Time::HiRes qw(time);
 
 use base qw(EnsEMBL::Web::Object);
@@ -63,7 +64,7 @@ sub availability {
           my $hgnc_name = $hgncs[0]->display_id;
           if ($hgnc_name) {
             my $vaa = Bio::EnsEMBL::Registry->get_adaptor($self->species, 'variation', 'VariationAnnotation');
-            $availability->{'phenotype'} = scalar(@{$vaa->fetch_all_by_associated_gene($hgnc_name)});
+            $availability->{'phenotype'} = $vaa->count_all_by_associated_gene($hgnc_name);
           }
         }
       }
@@ -814,10 +815,10 @@ sub valids {
 }
 
 sub getVariationsOnSlice {
-  my( $self, $slice, $subslices, $gene ) = @_;
+  my( $self, $slice, $subslices, $gene, $so_terms ) = @_;
   my $sliceObj = $self->new_object('Slice', $slice, $self->__data);
   
-  my ($count_snps, $filtered_snps, $context_count) = $sliceObj->getFakeMungedVariationFeatures($subslices,$gene);
+  my ($count_snps, $filtered_snps, $context_count) = $sliceObj->getFakeMungedVariationFeatures($subslices,$gene,$so_terms);
   $self->__data->{'sample'}{"snp_counts"} = [$count_snps, scalar @$filtered_snps];
   $self->__data->{'SNPS'} = $filtered_snps; 
   return ($count_snps, $filtered_snps, $context_count);
@@ -827,7 +828,7 @@ sub store_TransformedTranscripts {
   my( $self ) = @_;
   my $page_type     = $self->hub->type;
   my $focus_transcript = $page_type eq 'Transcript' ? $self->param('t') : undef;
- 
+
   my $offset = $self->__data->{'slices'}{'transcripts'}->[1]->start -1;
   foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
     next if $focus_transcript && $trans_obj->stable_id ne $focus_transcript;
@@ -840,13 +841,13 @@ sub store_TransformedTranscripts {
     }
     else {
       $coding_start  = undef;
-    }
+      }
 
     my ($raw_coding_end,$coding_end);
     if (defined( $transcript->coding_region_end )) {
       $raw_coding_end = $transcript->coding_region_end;
       $raw_coding_end -= $offset;
-        $coding_end = $raw_coding_end   + $self->munge_gaps( 'transcripts', $raw_coding_end );
+      $coding_end = $raw_coding_end   + $self->munge_gaps( 'transcripts', $raw_coding_end );
     }
     else {
       $coding_end = undef;
@@ -868,9 +869,35 @@ sub store_TransformedTranscripts {
   }
 }
 
+sub get_included_so_terms {
+  my $self     = shift;
+
+  # map the selected consequence type to SO terms
+  my %cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  my %options =  EnsEMBL::Web::Constants::VARIATION_OPTIONS; 
+
+  my $hub  = $self->hub;
+
+  my %selected_so;
+
+  foreach ($hub->param) {
+    if ($hub->param($_) eq 'on' && $_ =~ /opt_/ && exists($options{'type'}{$_})) {
+      foreach my $con (keys %cons) {
+        my $consequence = "opt_" . lc $cons{$con}->SO_term;
+        $selected_so{$con} = 1 if $_ eq $consequence;
+      }
+    }
+  }
+
+  my @so_terms = keys %selected_so;
+  return \@so_terms;
+}
+
 sub store_TransformedSNPS {
   my $self     = shift;
   my $so_terms = shift;
+  my $vfs      = shift;
+
   my $valids   = $self->valids;
   
   my $tva = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
@@ -878,48 +905,130 @@ sub store_TransformedSNPS {
   my @transcripts = @{$self->get_all_transcripts};
   if ($self->hub->type eq 'Transcript'){
     @transcripts = ($self->hub->core_objects->{'transcript'});
-  } 
+  }
+
+  my $included_so;
+  if ($self->need_consequence_check) {
+    $included_so = $self->get_included_so_terms;
+  }
 
   # get all TVs and arrange them by transcript stable ID and VF ID, ignore non-valids
   my $tvs_by_tr;
   
-  my $method         = 'fetch_all_by_Transcripts';
-  my $somatic_method = 'fetch_all_somatic_by_Transcripts';
-  
-  # SO term specified?
-  if(defined $so_terms && scalar @$so_terms) {
-    
+  my $method        = 'fetch_all_by_VariationFeatures';
+  my $have_so_terms = (defined $so_terms && scalar @$so_terms);
+  my $filtered_vfs  = $vfs;
+
+  if ($have_so_terms) {
     # tva needs an ontology term adaptor to fetch by SO term
     $tva->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
-    
-    $method .= '_SO_terms';
-    $somatic_method .= '_SO_terms';
-  }
   
-  #foreach my $tv(@{$tva->fetch_all_by_Transcripts([map {$_->transcript} @transcripts])}) {
-  foreach my $tv(@{$tva->$method([map {$_->transcript} @transcripts], $so_terms)}) {
-  foreach my $type(@{$tv->consequence_type || []}) {
-      next unless $valids->{'opt_'.lc($type)};
-      $tvs_by_tr->{$tv->transcript->stable_id}->{$tv->{'_variation_feature_id'}} = $tv;
-      last;
+    $method .= '_SO_terms';
+
+    my %term_hash;
+    foreach my $so_term (@$so_terms) {
+      $term_hash{$so_term} = 1;
+    }
+
+    my @vfs_with_term = grep { scalar map { $term_hash{$_} ? 1 : () } @{$_->consequence_type('SO')} } @$vfs;
+    $filtered_vfs = \@vfs_with_term;
+  }
+
+  my $tvs;
+  if (!$have_so_terms && $included_so ) {
+    $tva->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+    $tvs = $tva->fetch_all_by_VariationFeatures_SO_terms($filtered_vfs,[map {$_->transcript} @transcripts],$included_so,1) ;
+  } else {
+    $tvs = $tva->$method($filtered_vfs,[map {$_->transcript} @transcripts],$so_terms,0, $included_so) ;
+  }
+
+  if (!$self->need_consequence_check) {
+    foreach my $tv (@$tvs) {
+      $tvs_by_tr->{$tv->transcript->stable_id}->{$tv->variation_feature->dbID} = $tv;
+    }
+  } else {
+    foreach my $tv (@$tvs) {
+      my $found = 0;
+      foreach my $type(@{$tv->consequence_type || []}) {
+        if (exists($valids->{'opt_'.lc($type)})) {
+          $tvs_by_tr->{$tv->transcript->stable_id}->{$tv->variation_feature->dbID} = $tv;
+          $found=1;
+          last;
+        }
+      }
     }
   }
   
-  # get somatic ones too
-  foreach my $tv(@{$tva->$somatic_method([map {$_->transcript} @transcripts], $so_terms)}) {
-    foreach my $type(@{$tv->consequence_type || []}) {
-      next unless $valids->{'opt_'.lc($type)};
-      $tvs_by_tr->{$tv->transcript->stable_id}->{$tv->{'_variation_feature_id'}} = $tv;
-      last;
+  # then store them in the transcript's data hash
+  my $total_tv_count = 0;
+  foreach my $trans_obj (@{$self->get_all_transcripts}) {
+    $trans_obj->__data->{'transformed'}{'snps'} = $tvs_by_tr->{$trans_obj->stable_id};    
+    $total_tv_count += scalar(keys %{$tvs_by_tr->{$trans_obj->stable_id}});
+  }
+}
+
+sub store_ConsequenceCounts {
+  my $self     = shift;
+  my $so_term_sets = shift;
+  my $vfs      = shift;
+
+  my $tva = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+  
+  my @transcripts = @{$self->get_all_transcripts};
+  if ($self->hub->type eq 'Transcript'){
+    @transcripts = ($self->hub->core_objects->{'transcript'});
+  }
+
+  my $included_so;
+
+  if ($self->need_consequence_check) {
+    # Can't use counts with consequence check so clear any existing stored conscounts and return - no longer true
+    # if (exists($self->__data->{'conscounts'})) { delete $self->__data->{'conscounts'}; }
+    #return;
+    $included_so = $self->get_included_so_terms;
+  }
+
+  $tva->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+
+  my %conscounts;
+
+  foreach my $cons (keys %$so_term_sets) {
+    my $filtered_vfs = $vfs;
+
+    my $so_terms = $so_term_sets->{$cons};
+
+    my %term_hash = map {$_ => 1} @$so_terms;
+  
+    my @vfs_with_term = grep { scalar map { $term_hash{$_} ? 1 : () } @{$_->consequence_type()} } @$vfs;
+    $filtered_vfs = \@vfs_with_term;
+  
+    $conscounts{$cons} = $tva->count_all_by_VariationFeatures_SO_terms($filtered_vfs,[map {$_->transcript} @transcripts],$so_terms,$included_so) ;;
+  }
+  
+  if (!$included_so) {
+    $conscounts{'ALL'} = $tva->count_all_by_VariationFeatures($vfs,[map {$_->transcript} @transcripts]) ;
+  } else {
+    $conscounts{'ALL'} = $tva->count_all_by_VariationFeatures_SO_terms($vfs,[map {$_->transcript} @transcripts], $included_so) ;
+  }
+  
+  # then store them in the gene's data hash
+  $self->__data->{'conscounts'} = \%conscounts;
+}
+
+sub need_consequence_check {
+  my( $self ) = @_; 
+
+  my %options =  EnsEMBL::Web::Constants::VARIATION_OPTIONS; 
+
+  my $hub  = $self->hub;
+
+  foreach ($hub->param) {
+    if ($hub->param($_) eq 'off' && $_ =~ /opt_/ && exists($options{'type'}{$_})) {
+      return 1;
     }
   }
 
-  # then store them in the transcript's data hash
-  #$_->__data->{'transformed'}{'snps'} = $tvs_by_tr->{$_->stable_id} foreach @transcripts;
-  foreach my $trans_obj (@{$self->get_all_transcripts}) {
-    next if $self->hub->type eq 'Transcript' && $trans_obj->stable_id ne $self->hub->param('t');
-    $trans_obj->__data->{'transformed'}{'snps'} = $tvs_by_tr->{$trans_obj->stable_id}; 
-  }
+  return 0;
 }
 
 sub store_TransformedDomains {
@@ -961,7 +1070,12 @@ sub munge_gaps {
 
 sub get_munged_slice {
   my $self          = shift;
-  my $master_config = ref($_[0]) =~ /ImageConfig/ ? shift : undef;
+  my $master_config = undef;
+  if (ref($_[0]) =~ /ImageConfig/) {
+    $master_config = shift;
+  } else {
+    shift;
+  }
   my $slice         = $self->get_Slice(@_);
   my $stable_id     = $self->stable_id;
   my $length        = $slice->length; 
@@ -974,17 +1088,22 @@ sub get_munged_slice {
   # Allow return of data for a single transcript
   my $page_type     = $self->hub->type;
   my $focus_transcript = $page_type eq 'Transcript' ? $self->param('t') : undef;  
-
+  
   if ($context eq 'FULL') {
     @lengths = ($length);
   } else {
     foreach my $gene (grep { $_->stable_id eq $stable_id } @$features) {   
       foreach my $transcript (@{$gene->get_all_Transcripts}) {
-        next if $focus_transcript && $transcript->stable_id ne $focus_transcript; 
+        next if $focus_transcript && $transcript->stable_id ne $focus_transcript;
         foreach my $exon (@{$transcript->get_all_Exons}) {
           my $start       = $exon->start - $extent;
           my $exon_length = $exon->end   - $exon->start + 1 + 2 * $extent;
-          substr($munged, $start - 1, $exon_length) = '1' x $exon_length;
+          if ($start-1 >= 0) {
+            substr($munged, $start - 1, $exon_length) = '1' x $exon_length;
+          } else {
+            warn "Got negative substr when munging slices - don't think this should happen\n";
+            substr($munged, 0, $exon_length - $start) = '1' x $exon_length;
+          }
         }
       }
     }
