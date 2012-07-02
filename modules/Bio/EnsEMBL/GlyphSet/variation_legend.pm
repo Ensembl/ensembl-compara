@@ -20,7 +20,7 @@ sub _init {
   my $pix_per_bp            = $config->transform->{'scalex'};
   my ($fontname, $fontsize) = $self->get_font_details('legend');
   my $text_height           = [ $self->get_text_width(0, 'X', '', font => $fontname, ptsize => $fontsize) ]->[3];
-  my %labels                = map { $_->display_term => [ $_->rank, $_->label ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  my %labels                = map { $_->SO_term => [ $_->rank, $_->label ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   my $type                  = 'all';
   my $box_width             = 20;
   my $cols                  = 3;
