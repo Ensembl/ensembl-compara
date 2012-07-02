@@ -324,16 +324,16 @@ sub variation_table {
           my $poly = $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
           
           # Adds LSDB/LRG sources
-          if ($self->isa('EnsEMBL::Web::Component::LRG::LRGSNPTable')) {
-            my $syn_sources = $var->get_all_synonym_sources;
-            
-            foreach my $s_source (@$syn_sources) {
-              next if $s_source !~ /LSDB|LRG/;
-              
-              my ($synonym) = $var->get_all_synonyms($s_source);
-                 $source   .= ', ' . $hub->get_ExtURL_link($s_source, $s_source, $synonym);
-            }
-          }
+          #if ($self->isa('EnsEMBL::Web::Component::LRG::LRGSNPTable')) {
+          #  my $syn_sources = $var->get_all_synonym_sources;
+          #  
+          #  foreach my $s_source (@$syn_sources) {
+          #    next if $s_source !~ /LSDB|LRG/;
+          #    
+          #    my ($synonym) = $var->get_all_synonyms($s_source);
+          #       $source   .= ', ' . $hub->get_ExtURL_link($s_source, $s_source, $synonym);
+          #  }
+          #}
           
           my $gmaf   = $snp->minor_allele_frequency; # global maf
              $gmaf   = sprintf '%.3f (%s)', $gmaf, $snp->minor_allele if defined $gmaf;
