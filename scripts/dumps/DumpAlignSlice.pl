@@ -1,15 +1,9 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 my $description = q{
 ###########################################################################
 ##
 ## PROGRAM DumpAlignSlice.pl
-##
-## AUTHORS
-##    Javier Herrero (jherrero@ebi.ac.uk)
-##
-## COPYRIGHT
-##    This modules is part of the Ensembl project http://www.ensembl.org
 ##
 ## DESCRIPTION
 ##    This script dumps genomic alignments from an EnsEMBL Compara
@@ -22,17 +16,27 @@ my $description = q{
 
 };
 
+=head1 LICENSE
+
+  Copyright (c) 1999-2012 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
 =head1 NAME
 
 DumpAlignSlice.pl
-
-=head1 AUTHORS
-
- Javier Herrero (jherrero@ebi.ac.uk)
-
-=head1 COPYRIGHT
-
-This script is part of the Ensembl project http://www.ensembl.org
 
 =head1 DESCRIPTION
 
@@ -44,8 +48,8 @@ gaps defined by the genomic alignment).
 
 =head1 SYNOPSIS
 
-perl DumpAlignSlice.pl --species human --seq_region 14 --seq_region_start 75000000
-    --seq_region_end 75010000 --alignment_type BLASTZ_NET --set_of_species mouse:rat:dog
+perl DumpAlignSlice.pl --species human --seq_region 13 --seq_region_start 32906420
+    --seq_region_end 32906519  --alignment_type EPO --species_set_name mammals
 
 perl DumpAlignSlice.pl
     [--reg_conf registry_configuration_file]
@@ -214,12 +218,14 @@ perl DumpAlignSlice.pl
 
   For the alignments:
     [--alignment_type method_link_name]
-        The type of alignment. Default is "MAVID"
+        The type of alignment. Default is "EPO"
     [--set_of_species species1:species2:species3:...]
-        The list of other species used to fetch original pairwise alignments
-        and build fake multiple one. Default is "mouse:rat". The names
-        should correspond to the name of the core database in the
+        The list of other species used to fetch original alignments
+        eg "mouse". The names should correspond to the name of the core database in the
         registry_configuration_file or any of its aliases
+    [--species_set_name name]
+        Pre-defined name for the set of species used. For multiple alignment sets only.
+        eg "mammals" or "primates" for EPO alignments; "amniotes" for PECAN alignments. Default is "mammals"
     [--[no]condensed]
         By default, the AlignSlice is created in "expanded" mode. Use
         this option for getting the AlignSlice in "condensed" mode
@@ -261,12 +267,13 @@ my $reg_conf;
 my $dbname = "compara";
 my $query_species = "human";
 my $coord_system = "chromosome";
-my $seq_region = "7";
-my $seq_region_start = 73549956;
-my $seq_region_end = 73549966;
+my $seq_region = "13";
+my $seq_region_start = 32906420;
+my $seq_region_end = 32906519;
 my $seq_region_strand = 1;
-my $alignment_type = "MAVID";
-my $set_of_species = "mouse:rat";
+my $alignment_type = "EPO";
+my $set_of_species = "";
+my $species_set_name = "mammals";
 my $condensed = 0;
 my $solve_overlapping = 0;
 my $print_genomic = 1;
@@ -289,6 +296,7 @@ GetOptions(
     "seq_region_strand=i" => \$seq_region_strand,
     "alignment_type=s" => \$alignment_type,
     "set_of_species=s" => \$set_of_species,
+    "species_set_name=s" => \$species_set_name,
     "condensed!" => \$condensed,
     "solve_overlapping!" => \$solve_overlapping,
     "print_genomic!" => \$print_genomic,
@@ -327,27 +335,35 @@ my $genome_db;
 my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomeDB');
 throw("Registry configuration file has no data for connecting to <$dbname>")
     if (!$genome_db_adaptor);
-foreach my $this_species ($query_species, split(":", $set_of_species)) {
-  my $this_meta_container_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
-      $this_species, 'core', 'MetaContainer');
-  throw("Registry configuration file has no data for connecting to <$this_species>")
-      if (!$this_meta_container_adaptor);
-  my $this_binomial_id = $this_meta_container_adaptor->get_Species->binomial;
 
-  # Fetch Bio::EnsEMBL::Compara::GenomeDB object
-  $genome_db->{$this_species} = $genome_db_adaptor->fetch_by_name_assembly($this_binomial_id);
-}
-    
 my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
         $dbname,
         'compara',
         'MethodLinkSpeciesSet'
     );
-my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
-      $alignment_type, [values(%$genome_db)]);
-throw("The database does not contain any $alignment_type data for ".join(", ", keys(%$genome_db))."!")
-    if (!$method_link_species_set);
 
+my $method_link_species_set;
+if ($set_of_species) {
+    foreach my $this_species ($query_species, split(":", $set_of_species)) {
+        #my $this_meta_container_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
+        #    $this_species, 'core', 'MetaContainer');
+  #throw("Registry configuration file has no data for connecting to <$this_species>")
+        #    if (!$this_meta_container_adaptor);
+        #my $this_binomial_id = $this_meta_container_adaptor->get_Species->binomial;
+        
+        # Fetch Bio::EnsEMBL::Compara::GenomeDB object
+        #$genome_db->{$this_species} = $genome_db_adaptor->fetch_by_name_assembly($this_binomial_id);
+        $genome_db->{$this_species} = $genome_db_adaptor->fetch_by_registry_name($this_species);
+    }
+    $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
+                                                                                                        $alignment_type, [values(%$genome_db)]);
+throw("The database does not contain any $alignment_type data for ".join(", ", keys(%$genome_db))."!")
+  if (!$method_link_species_set);
+} elsif ($species_set_name) {
+    $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name($alignment_type, $species_set_name);
+}
+
+    
 ## Create an AlignSlice for projecting on query_slice
 my $align_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, "compara", "AlignSlice");
 my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
@@ -362,6 +378,9 @@ if ($print_genomic) {
 
 if ($print_contigs) {
   foreach my $slice (@{$align_slice->get_all_Slices()}) {
+    #skip any ancestral sequences since we cannot project these
+    next if ($slice->seq_region_name eq "ancestral_sequences");
+
     foreach my $projection_segment (@{($slice->project("contig") or [])}) {
       my $this_seq = "." x $slice->length;
       my $start = $projection_segment->from_start;
