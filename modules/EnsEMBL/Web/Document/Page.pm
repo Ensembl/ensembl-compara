@@ -331,8 +331,8 @@ sub render_DAS {
 
 sub render_XML {
   my $self    = shift;
-  my $content = qq{<?xml version="1.0" standalone="no"?>\n};
-  $content   .= qq{<?xml-stylesheet type="text/xsl" href="$self->{'xsl'}"?>\n} if $self->{'xsl'};
+  my $content = qq(<?xml version="1.0" standalone="no"?>\n);
+  $content   .= qq(<?xml-stylesheet type="text/xsl" href="$self->{'xsl'}"?>\n) if $self->{'xsl'};
   $content   .= $self->doc_type;
   $content   .= "\<$self->{'doc_type_version'}\>\n";
   $content   .= shift->{'content'};
@@ -441,31 +441,31 @@ sub html_template {
   my $species_path        = $self->species_defs->species_path;
   my $species_common_name = $self->species_defs->SPECIES_COMMON_NAME;
   my $core_params         = $self->hub ? $self->hub->core_params : {};
-  my $core_params_html    = join '',   map qq{<input type="hidden" name="$_" value="$core_params->{$_}" />}, keys %$core_params;
+  my $core_params_html    = join '',   map qq(<input type="hidden" name="$_" value="$core_params->{$_}" />), keys %$core_params;
   my $html_tag            = join '',   $self->doc_type, $self->html_tag;
   my $head                = join "\n", map $elements->{$_->[0]} || (), @{$self->head_order};  
   my $body_attrs          = join ' ',  map { sprintf '%s="%s"', $_, $self->{'body_attr'}{$_} } grep $self->{'body_attr'}{$_}, keys %{$self->{'body_attr'}};
-  my $tabs                = $elements->{'tabs'} ? qq{<div class="tabs_holder print_hide">$elements->{'tabs'}</div>} : '';
+  my $tabs                = $elements->{'tabs'} ? qq(<div class="tabs_holder print_hide">$elements->{'tabs'}</div>) : '';
   my $footer_id           = 'wide-footer';
   my $panel_type          = $self->can('panel_type') ? $self->panel_type : '';
-  my $main_holder         = $panel_type ? qq{<div id="main_holder" class="js_panel">$panel_type} : '<div id="main_holder">';
+  my $main_holder         = $panel_type ? qq(<div id="main_holder" class="js_panel">$panel_type) : '<div id="main_holder">';
   my $nav;
   
   if ($self->include_navigation) {
-    $nav = qq{<div id="page_nav" class="nav print_hide js_panel">
+    $nav = qq(<div id="page_nav" class="nav print_hide js_panel">
           $elements->{'navigation'}
           $elements->{'tool_buttons'}
           $elements->{'acknowledgements'}
           <p class="invisible">.</p>
         </div>
-    };
+    );
     
     $footer_id = 'footer';
   }
   
-  $html_tag = qq{<?xml version="1.0" encoding="utf-8"?>\n$html_tag} if $self->{'doc_type'} eq 'XHTML';
+  $html_tag = qq(<?xml version="1.0" encoding="utf-8"?>\n$html_tag) if $self->{'doc_type'} eq 'XHTML';
   
-  return qq{$html_tag
+  return qq($html_tag
 <head>
   $head
 </head>
@@ -504,7 +504,7 @@ sub html_template {
   $elements->{'body_javascript'}
 </body>
 </html>
-};
+);
 }
 
 1;
