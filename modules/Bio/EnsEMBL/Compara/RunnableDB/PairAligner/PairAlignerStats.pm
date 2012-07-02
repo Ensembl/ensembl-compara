@@ -227,7 +227,7 @@ sub write_pairaligner_statistics {
     $method_link_species_set->store_tag("num_blocks", $num_blocks);
 
     #Find the reference and non-reference genome_db
-    my $species_set = $method_link_species_set->species_set;
+    my $species_set = $method_link_species_set->species_set_obj->genome_dbs();
 
     my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
     my $ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('ref_species'));
