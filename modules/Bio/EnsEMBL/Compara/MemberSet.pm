@@ -363,7 +363,6 @@ sub add_Member {
     my ($self, $member) = @_;
 
     assert_ref($member, $self->member_class);
-
     my $source_name = $member->source_name();
     my $taxon_id = $member->taxon_id();
     my $genome_db_id = $member->genome_db_id();
@@ -410,7 +409,7 @@ sub _tranform_array_to_Member_Attributes {
     foreach my $member (@$array) {
         my $attribute = new Bio::EnsEMBL::Compara::Attribute;
         foreach my $key (keys %Bio::EnsEMBL::Compara::Attribute::ok_field) {
-            $attribute->$key($member->$key) if defined $member->$key;
+            $attribute->$key($member->can($key) ? $member->$key : undef);
         }
         push @all_ma, [$member, $attribute];
     }
