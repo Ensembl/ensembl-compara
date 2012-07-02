@@ -57,17 +57,12 @@ sub content {
     my $type;
     
     if($cons_format eq 'so') {
-      $type = join ", ", map {$hub->get_ExtURL_link($_->SO_term, 'SEQUENCE_ONTOLOGY', $_->SO_accession)} @{$tva->get_all_OverlapConsequences};
-    }
-    
-    elsif($cons_format eq 'ncbi') {
-      # not all terms have an ncbi equiv so default to SO
-      $type = join ", ", map {$_->NCBI_term || $hub->get_ExtURL_link($_->SO_term, 'SEQUENCE_ONTOLOGY', $_->SO_accession).'<span style="color:red;">*</span>'} @{$tva->get_all_OverlapConsequences};
+      $type = join ", ", map {$hub->get_ExtURL_link($_->label, 'SEQUENCE_ONTOLOGY', $_->SO_accession)} @{$tva->get_all_OverlapConsequences};
     }
     
     else {
       # Avoid duplicated Ensembl terms
-      my %ens_term = map { '<span title="'.$_->description.'">'.$_->label.'</span>' => 1 } @{$tva->get_all_OverlapConsequences};
+      my %ens_term = map { '<span title="'.$_->description.'">'.$_->display_term.'</span>' => 1 } @{$tva->get_all_OverlapConsequences};
       $type = join ', ', keys(%ens_term);
     }
     

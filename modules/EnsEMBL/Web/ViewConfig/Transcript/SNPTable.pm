@@ -13,7 +13,7 @@ sub init {
   my $variations = $self->species_defs->databases->{'DATABASE_VARIATION'} || {};
   my %options    = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
   my $defaults   = {
-    consequence_format => 'ensembl',
+    consequence_format => 'so',
     context            => 'FULL',
     hgvs               => 'off',
   };
@@ -98,9 +98,8 @@ sub form {
     label  => 'Type of consequences to display',
     name   => 'consequence_format',
     values => [
-      { value => 'ensembl',  name => 'Ensembl terms'           },
       { value => 'so',       name => 'Sequence Ontology terms' },
-      { value => 'ncbi',     name => 'NCBI terms'              },
+      { value => 'ensembl',  name => 'Ensembl terms'           },
     ]
   });
   

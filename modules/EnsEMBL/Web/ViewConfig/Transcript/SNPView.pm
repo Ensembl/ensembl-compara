@@ -119,9 +119,8 @@ sub form {
     label  => 'Type of consequences to display',
     name   => 'consequence_format',
     values => [
-      { value => 'label', name => 'Ensembl terms'           },
-      { value => 'SO',    name => 'Sequence Ontology terms' },
-      { value => 'NCBI',  name => 'NCBI terms'              },
+      { value => 'label',   name => 'Sequence Ontology terms' },
+      { value => 'display', name => 'Ensembl terms'           },
     ]
   });  
   

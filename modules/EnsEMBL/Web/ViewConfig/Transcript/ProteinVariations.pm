@@ -10,7 +10,7 @@ sub init {
   my $self = shift;
   
   $self->set_defaults({
-    consequence_format => 'ensembl',
+    consequence_format => 'so',
   });
 
   $self->title = 'Protein Variations';
@@ -25,9 +25,8 @@ sub form {
     label  => 'Type of consequences to display',
     name   => 'consequence_format',
     values => [
-      { value => 'ensembl', name => 'Ensembl terms'           },
       { value => 'so',      name => 'Sequence Ontology terms' },
-      { value => 'ncbi',    name => 'NCBI terms'              },
+      { value => 'ensembl', name => 'Ensembl terms'           },
     ]
   });  
 }

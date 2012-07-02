@@ -94,7 +94,7 @@ sub variation_content {
   #push @entries, { caption => 'Failed status', entry => join ', ', @failed } if scalar @failed;
   push @entries, { caption => 'LRG position', entry => $lrg_position } if $lrg_position;
   
-  my %ct    = map { $_->SO_term => [ $_->label, $_->rank ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  my %ct    = map { $_->SO_term => [ $_->SO_term, $_->rank ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   my %types = map @{$ct{$_}}, @{($self->{'transcript'} ? $feature->get_all_TranscriptVariations([$self->{'transcript'}])->[0] : $feature)->consequence_type};
   
   push @entries, (
@@ -128,8 +128,9 @@ sub variation_content {
     
   push @entries, { cls => 'population', entry => sprintf $link, $hub->url({ action => 'Population', %url_params }), 'Population Allele Frequencies' } if scalar keys %population_data;
   
-  foreach my $name (sort {($a !~ /ALL/) cmp ($b !~ /ALL/) || $a cmp $b} keys %population_data) {
-    my $i = 0;
+  foreach my $name (sort {$b =~ /ALL/ cmp $a =~ /ALL/ || $a cmp $b} keys %population_data) {
+    my %display = reverse %{$population_data{$name}};
+    my $i       = 0;
     
     foreach my $submitter (keys %{$population_data{$name}}) {
  

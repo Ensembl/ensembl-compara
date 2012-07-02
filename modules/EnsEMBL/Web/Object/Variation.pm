@@ -1195,7 +1195,7 @@ sub transcript_variation {
     next if $tr_stable_id && $tvari_obj->transcript->stable_id ne $tr_stable_id;
      
     foreach my $tva_obj(@{ $tvari_obj->get_all_alternate_TranscriptVariationAlleles }) {
-      my $type = join ", " , map {$_->display_term} @{ $tva_obj->get_all_OverlapConsequences || [] };
+      my $type = join ", " , map {$_->SO_term} @{ $tva_obj->get_all_OverlapConsequences || [] };
   
       push (@data, {
               vf_allele =>        $tva_obj->variation_feature_seq,
