@@ -112,7 +112,7 @@ sub fetch_all_by_Homology {
     assert_ref($homology, 'Bio::EnsEMBL::Compara::Homology');
 
     my $extra_columns = ['hm.cigar_line', 'hm.perc_cov', 'hm.perc_id', 'hm.perc_pos'];
-    my $join = [[['homology_member', 'hm'], 'm.member_id = hm.member_id', $extra_columns]];
+    my $join = [[['homology_member', 'hm'], 'm.member_id = hm.peptide_member_id', $extra_columns]];
     my $constraint = 'hm.homology_id = ?';
 
     $self->bind_param_generic_fetch($homology->dbID, SQL_INTEGER);

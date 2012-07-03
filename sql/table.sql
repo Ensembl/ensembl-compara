@@ -729,6 +729,19 @@ CREATE TABLE gene_tree_member (
 
 
 #
+# Table structure for table 'protein_tree_member_score'
+#
+# overview:
+#   to allow certain nodes (leaves) to have aligned protein member_scores attached to them
+# semantics:
+#    node_id                  -- the id of node associated with this name
+#    member_id                -- link to member.member_id in many-1 relation (single member per node)
+#    cigar_line               -- string with the alignment score values 
+
+CREATE TABLE protein_tree_member_score LIKE gene_tree_member;
+
+
+#
 # Table structure for table 'gene_tree_node_tag'
 #
 # overview:
@@ -868,6 +881,7 @@ CREATE TABLE homology (
 CREATE TABLE homology_member (
   homology_id                 int(10) unsigned NOT NULL, # FK homology.homology_id
   member_id                   int(10) unsigned NOT NULL, # FK member.member_id
+  peptide_member_id           int(10) unsigned, # FK member.member_id
   cigar_line                  mediumtext,
   perc_cov                    int(10),
   perc_id                     int(10),
@@ -875,10 +889,12 @@ CREATE TABLE homology_member (
 
   FOREIGN KEY (homology_id) REFERENCES homology(homology_id),
   FOREIGN KEY (member_id) REFERENCES member(member_id),
+  FOREIGN KEY (peptide_member_id) REFERENCES member(member_id),
 
   PRIMARY KEY homology_member_id (homology_id,member_id),
   KEY (homology_id),
-  KEY (member_id)
+  KEY (member_id),
+  KEY (peptide_member_id)
 ) MAX_ROWS = 300000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
@@ -978,6 +994,25 @@ CREATE TABLE sitewise_aln (
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
+#
+# Table structure for table 'protein_tree_hmmprofile'
+#
+# overview:
+#   to allow nodes to have hmm profiles attached to them
+# semantics:
+#    node_id                  -- the id of the root node associated with this hmm profile
+#    type                     -- type of hmm profile (eg: 'hmmls','hmmfs','hmms','hmmsw')
+#    hmmprofile               -- foreign key from method_link_species_set table
+
+CREATE TABLE protein_tree_hmmprofile (
+  node_id                     int(10) unsigned NOT NULL,
+  type                        varchar(40) DEFAULT '' NOT NULL,
+  hmmprofile                  mediumtext,
+
+  KEY(node_id),
+  UNIQUE KEY type_node_id (type, node_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 #
 # Table structure for table 'lr_index_offset'
