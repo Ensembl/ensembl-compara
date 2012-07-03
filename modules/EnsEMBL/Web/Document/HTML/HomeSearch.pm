@@ -87,7 +87,7 @@ sub render {
   }
 
   # search input box & submit button
-  $field->add_element({'type' => 'string', 'value' => $q, 'id' => 'q', 'size' => $input_size}, 1);
+  $field->add_element({'type' => 'string', 'value' => $q, 'id' => 'q', 'size' => $input_size, 'name' => 'q'}, 1);
   $field->add_element({'type' => 'submit', 'value' => 'Go'}, 1);
 
   return $form->render;
