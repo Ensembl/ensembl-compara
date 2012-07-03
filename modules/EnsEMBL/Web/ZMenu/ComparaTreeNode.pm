@@ -309,7 +309,7 @@ sub dump_tree_as_text {
   my $file_fa = new EnsEMBL::Web::TmpFile::Text(extension => 'fa', prefix => 'gene_tree');
   my $file_nh = new EnsEMBL::Web::TmpFile::Text(extension => 'nh', prefix => 'gene_tree');
   my $format  = 'fasta';
-  my $align   = $tree->get_SimpleAlign('', '', '', '', '', 1);
+  my $align   = $tree->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);
   my $aio     = new Bio::AlignIO(-format => $format, -fh => new IO::String($var));
   
   $aio->write_aln($align); # Write the fasta alignment using BioPerl
