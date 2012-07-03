@@ -23,7 +23,7 @@ use File::Basename qw( dirname );
 use Pod::Usage;
 use Getopt::Long;
 
-use vars qw( $SERVERROOT $PLUGIN_ROOT $SCRIPT_ROOT $DEBUG $FUDGE $NOINTERPRO $NOSUMMARY $help $info @user_spp $allgenetypes $coordsys $list $pan_comp_species $ena);
+use vars qw( $SERVERROOT $PRE $PLUGIN_ROOT $SCRIPT_ROOT $DEBUG $FUDGE $NOINTERPRO $NOSUMMARY $help $info @user_spp $allgenetypes $coordsys $list $pan_comp_species $ena);
 
 BEGIN{
   &GetOptions( 
@@ -36,6 +36,7 @@ BEGIN{
                'nointerpro'=> \$NOINTERPRO,
                'nosummary' => \$NOSUMMARY,
                'plugin_root=s' => \$PLUGIN_ROOT,
+               'pre'       => \$PRE,
                'coordsys' => \$coordsys,
                'pan_c_sp' => \$pan_comp_species,
                'ena' => \$ena
@@ -46,7 +47,9 @@ BEGIN{
 
   $SCRIPT_ROOT = dirname( $Bin );
   ($SERVERROOT = $SCRIPT_ROOT) =~ s#/utils##;
-  $PLUGIN_ROOT ||= $SERVERROOT.'/public-plugins/ensembl';
+  my $plugin = $PRE ? '/sanger-plugins/pre' : 'public-plugins/ensembl';
+  $PLUGIN_ROOT ||= $SERVERROOT.$plugin;
+
   unless( $PLUGIN_ROOT =~ /^\// ){ # Relative path
     $PLUGIN_ROOT = $SERVERROOT.'/'.$PLUGIN_ROOT;
   }
