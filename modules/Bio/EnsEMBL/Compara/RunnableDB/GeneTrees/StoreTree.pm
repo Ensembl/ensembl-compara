@@ -272,7 +272,7 @@ sub parse_newick_into_tree {
   foreach my $member (@{$tree->root->get_all_leaves}) {
     my $tmpnode = $newroot->find_node_by_name($member->member_id);
     if($tmpnode) {
-      $tmpnode->parent->add_child($member);
+      $tmpnode->parent->add_child($member, $tmpnode->distance_to_parent);
       $tmpnode->disavow_parent;
       #$member->Bio::EnsEMBL::Compara::AlignedMember::copy($tmpnode);
       #bless $tmpnode, 'Bio::EnsEMBL::Compara::GeneTreeMember';
