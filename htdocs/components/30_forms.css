@@ -129,10 +129,16 @@ input.fbutton.disabled, input.fbutton.disabled:active {
 .ff-checklist {
   margin-right: 10px;
 }
-.ff-checklist label {
+.ff-checklist input {
+  float: left;
+}
+.ff-checklist label.ff-checklist-label {
   margin: 0 10px;
+  font-weight: normal;
+  display: inline-block;
 }
 .panel p.ff-checklist {
+  line-height: 20px;
   margin-bottom: 10px;
 }
 div.select_all label {
