@@ -75,6 +75,7 @@ sub content {
             $gene->stable_id,
             $peptide->stable_id,
             sprintf('%d aa', $peptide->seq_length),
+            sprintf('%d %%', $peptide->perc_id),
             $location,
           ]; 
         } else {
@@ -89,6 +90,7 @@ sub content {
               $peptide->stable_id
             ),
             sprintf('%d aa', $peptide->seq_length),
+            sprintf('%d %%', $peptide->perc_id),
             sprintf('<a href="%s">%s</a>',
               $hub->url({ species => $member_species, type => 'Location', action => 'View', g => $gene->stable_id, r => $location, t => undef }),
               $location
@@ -110,10 +112,11 @@ sub content {
       $html .= "<h2>Orthologue type: $homology_desc_mapped</h2>";
       
       my $ss = $self->new_table([
-          { title => 'Species',          width => '20%' },
-          { title => 'Gene ID',          width => '20%' },
-          { title => 'Peptide ID',       width => '20%' },
-          { title => 'Peptide length',   width => '20%' },
+          { title => 'Species',          width => '18%' },
+          { title => 'Gene ID',          width => '18%' },
+          { title => 'Peptide ID',       width => '18%' },
+          { title => 'Peptide length',   width => '13%' },
+          { title => '% identity',       width => '13%' },
           { title => 'Genomic location', width => '20%' }
         ],
         $data
