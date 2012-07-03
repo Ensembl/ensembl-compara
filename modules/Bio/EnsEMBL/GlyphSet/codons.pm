@@ -78,7 +78,7 @@ sub features {
           x      => $_,
           y      => ((2 - $phase) * $fullheight + ($i ? $height : 0)) * $strand,
           start  => $_ + $slice_start,
-          end    => $_ + $slice_start + 3,
+          end    => $_ + $slice_start + 2,
           colour => $i ? $stop_col : $start_col,
           y_inc  => $i ^ $strand == -1
         };
