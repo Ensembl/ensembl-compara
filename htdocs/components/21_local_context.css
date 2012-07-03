@@ -34,7 +34,7 @@ body.ie67 .nav ul.local_context li img { margin: 0; vertical-align: top; }
 .tool_buttons .data      { background-image: url(/i/16/rev/page-user.png); }
 .tool_buttons .export    { background-image: url(/i/16/rev/download.png);  }
 .tool_buttons .csv       { background-image: url(/i/16/rev/page-csv.png);  }
-.tool_buttons .bookmark  { background-image: url(/i/16/rev/tag.png);       }
+.tool_buttons .bookmark  { background-image: url(/i/16/rev/bookmark.png);  }
 .tool_buttons .find      { background-image: url(/i/16/rev/search.png);    }
 .tool_buttons .add       { background-image: url(/i/16/rev/add.png);       }
 .tool_buttons .save      { background-image: url(/i/16/rev/save.png);      }
