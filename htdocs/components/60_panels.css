@@ -1,4 +1,4 @@
-.panel { padding: 16px 0 0 16px; }
+.panel { padding: 16px 16px 0; }
 
 .panel h1,
 .panel h1.summary-heading   { text-align: left; margin: 0; padding: 0; }
