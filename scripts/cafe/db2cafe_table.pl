@@ -114,7 +114,7 @@ my $all_trees = $tree_adaptor->fetch_all(-tree_type => 'tree', -member_type => '
 print "FAMILYDESC\tFAMILY\t", join("\t", @species_names), "\n";
 for my $tree (@$all_trees) {
   my $root_id = $tree->root_id();
-  my $model_name = $tree->get_tagvalue('model_name');
+  my $model_name = $tree->get_tagvalue('model_name') || $tree->stable_id() || $tree->root_id();
   my $nctree_members = $tree->get_all_leaves();
   my %species;
   for my $member (@$nctree_members) {
