@@ -41,7 +41,7 @@ body.ie7 a.help-header { float: left; }
 p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 
 /* Columns for static content */
-#static    { margin: 0 16px; padding: 8px 0 }
+#static    { margin: 8px; }
 #static h1 { margin-top: 0; }
 
 /*
@@ -85,7 +85,7 @@ img.portal {
 }
 
 .plain-box, .tinted-box,
-.alert-box, .embedded-box { [[PANEL_TEXT]]; padding: 16px 16px 0px 16px; margin-bottom: 8px; 
+.alert-box, .embedded-box { [[PANEL_TEXT]]; padding: 16px; margin-bottom: 8px; 
                              border-width: 1px; border-style: solid; }
 .plain-box    { background-color:[[PANEL_BG]]; border-color: [[PANEL_BORDER]]; }
 .tinted-box   { background-color:[[TINT_BG]]; border-color: [[TINT_BORDER]]; }
