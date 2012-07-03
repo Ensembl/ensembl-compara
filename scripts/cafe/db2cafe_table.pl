@@ -94,7 +94,6 @@ if ($compara_url) {
 # Get all the adaptors
 my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 my $tree_adaptor = $compara_dba->get_GeneTreeAdaptor();
-my $treenode_adaptor = $compara_dba->get_GeneTreeNodeAdaptor();
 my $genomeDB_Adaptor = $compara_dba->get_GenomeDBAdaptor();
 
 # Get all the species for the mlss:
@@ -112,24 +111,19 @@ my @species_names = map {(split /_/, $_->name)[0]} @sps_set;
 
 # Get the number of members per family
 my $all_trees = $tree_adaptor->fetch_all(-tree_type => 'tree', -member_type => 'ncrna', -clusterset_id => 'default');
+my $sth = $tree_adaptor->prepare('SELECT genome_db_id FROM gene_tree_node JOIN gene_tree_member USING (node_id) JOIN member USING (member_id) WHERE root_id = ?');
 print "FAMILYDESC\tFAMILY\t", join("\t", @species_names), "\n";
 for my $tree (@$all_trees) {
   my $root_id = $tree->root_id();
-  my $model_name = $tree->get_tagvalue('model_name') || $tree->stable_id() || $tree->root_id();
-  #my $nctree_members = $tree->get_all_leaves();
-  my $nctree_members = $treenode_adaptor->fetch_all_AlignedMember_by_root_id($root_id);
+  my $model_name = $tree->stable_id() || $tree->get_tagvalue('model_name') || $tree->root_id();
+  $sth->execute($root_id);
+
   my %species;
-  for my $member (@$nctree_members) {
-    my $sp;
-    eval {$sp = $member->genome_db->name};
-    next if ($@);
-    $species{$sp}++;
+  while (my $row = $sth->fetchrow_arrayref) {
+    $species{$row->[0]}++;
   }
 
-  my @flds = ($model_name, $root_id);
-  for my $sp (@species_names) {
-    push @flds, ($species{$sp} || 0);
-  }
+  my @flds = ($model_name, $root_id, map {$species{$_->dbID} || 0} @sps_set);
   print join ("\t", @flds), "\n";
 }
 
