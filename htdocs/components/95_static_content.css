@@ -106,3 +106,21 @@ body.ie6 ul.breadcrumbs          { height: 22px; }
 
 #pdoc_iframe,
 iframe#doxygen { border: #ccc 1px solid; }
+
+/*----------------------------------------------------------------------
+search-form on home page and species home page
+----------------------------------------------------------------------*/
+form.search-form div.form-field { margin-top: 0; }
+
+form.search-form          label.ff-label { line-height: 22px; font-weight: normal; width: auto; }
+form.homepage-search-form label.ff-label { line-height: 20px; }
+
+form.search-form          div.ff-right,
+form.search-form          div.ff-notes { padding-left: 72px; }
+form.homepage-search-form div.ff-right,
+form.homepage-search-form div.ff-notes { padding-left: 50px; }
+
+form.search-form input.ftext { padding: 2px 0; }
+form.search-form div.ff-right label { margin-right: 6px; }
+form.search-form div.ff-notes a { font-weight: bold; text-decoration: none; }
+form.homepage-search-form { width: 530px; margin: 0 auto !important; }
