@@ -48,6 +48,7 @@ sub add_option {
   ##  - caption   Text string (or hashref set of attributes including inner_HTML or inner_text, excluding 'value' and 'class' attrib) for <option>
   ##  - selected  flag to tell whether option is selected or not
   ##  - class     Class attribute - overrides the one added by option_class key in the element itself
+  ##  - disabled  Disabled attribute
   ##  - group     (optional) Label attribute for the parent Optgroup for the option - If optgroup does not exist, a new one's created before adding it
   ## @return newly added Node::Element::Option object
   my ($self, $params) = @_;
@@ -60,7 +61,8 @@ sub add_option {
     'value' => $params->{'value'},
     $params->{'class'}    ? ('class'    => $params->{'class'}) : (),
     $params->{'id'}       ? ('id'       => $params->{'id'})    : (),
-    $params->{'selected'} ? ('selected' => 'selected')         : ()
+    $params->{'selected'} ? ('selected' => 'selected')         : (),
+    $params->{'disabled'} ? ('disabled' => 'disabled')         : ()
   });
 
   my $group = undef;
