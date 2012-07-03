@@ -1060,8 +1060,7 @@ sub fetch_homologues_of_gene_in_species {
   my @homologues;
   
   foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $paired_species, ['ENSEMBL_ORTHOLOGUES'])}){
-    foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
-      my ($member, $attribute) = @$member_attribute;
+    foreach my $member (@{$homology->get_all_GeneMembers}) {
       next if $member->stable_id eq $qy_member->stable_id;
       push @homologues, $member;  
     }

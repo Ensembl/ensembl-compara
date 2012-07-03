@@ -48,21 +48,20 @@ sub content {
     my $sa;
     
     eval {
-      $sa = $homology->get_SimpleAlign($seq eq 'cDNA' ? 'cdna' : undef);
+      $sa = $homology->get_SimpleAlign(-CDNA => ($seq eq 'cDNA' ? 1 : 0));
     };
     
     if ($sa) {
       my $data = [];
       my $flag = !$second_gene;
       
-      foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
-        my ($member, $attribute) = @{$member_attribute};
+      foreach my $peptide (@{$homology->get_all_Members}) {
         
-        $flag = 1 if $member->stable_id eq $second_gene;
+        my $gene = $peptide->gene_member;
+        $flag = 1 if $gene->stable_id eq $second_gene;
         
-        my $peptide        = $member->{'_adaptor'}->db->get_MemberAdaptor->fetch_by_dbID($attribute->peptide_member_id);
-        my $member_species = ucfirst $member->genome_db->name;
-        my $location       = sprintf '%s:%d-%d', $member->chr_name, $member->chr_start, $member->chr_end;
+        my $member_species = ucfirst $peptide->genome_db->name;
+        my $location       = sprintf '%s:%d-%d', $gene->chr_name, $gene->chr_start, $gene->chr_end;
         
         if (!$second_gene && $member_species ne $species && $hub->param('species_' . lc $member_species) eq 'off') {
           $flag = 0;
@@ -70,10 +69,10 @@ sub content {
           next;
         }
         
-        if ($member->stable_id eq $gene_id) {
+        if ($gene->stable_id eq $gene_id) {
           push @$data, [
             $species_defs->get_config($member_species, 'SPECIES_SCIENTIFIC_NAME'),
-            $member->stable_id,
+            $gene->stable_id,
             $peptide->stable_id,
             sprintf('%d aa', $peptide->seq_length),
             $location,
@@ -82,8 +81,8 @@ sub content {
           push @$data, [
             $species_defs->get_config($member_species, 'SPECIES_SCIENTIFIC_NAME') || $species_defs->species_label($member_species),
             sprintf('<a href="%s">%s</a>',
-              $hub->url({ species => $member_species, type => 'Gene', action => 'Summary', g => $member->stable_id, r => undef }),
-              $member->stable_id
+              $hub->url({ species => $member_species, type => 'Gene', action => 'Summary', g => $gene->stable_id, r => undef }),
+              $gene->stable_id
             ),
             sprintf('<a href="%s">%s</a>',
               $hub->url({ species => $member_species, type => 'Transcript', action => 'ProteinSummary', peptide => $peptide->stable_id, __clear => 1 }),
@@ -91,7 +90,7 @@ sub content {
             ),
             sprintf('%d aa', $peptide->seq_length),
             sprintf('<a href="%s">%s</a>',
-              $hub->url({ species => $member_species, type => 'Location', action => 'View', g => $member->stable_id, r => $location, t => undef }),
+              $hub->url({ species => $member_species, type => 'Location', action => 'View', g => $gene->stable_id, r => $location, t => undef }),
               $location
             )
           ];

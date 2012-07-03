@@ -827,14 +827,14 @@ sub fetch_homology_species_hash {
  foreach my $homology (@{$homologies_array}){
     next unless ($homology->description =~ /$homology_description/);
     my ($query_perc_id, $target_perc_id, $genome_db_name, $target_member, $dnds_ratio);
-    foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
-      my ($member, $attribute) = @{$member_attribute};
-      if ($member->stable_id eq $query_member->stable_id) {
-        $query_perc_id  = $attribute->perc_id;
+    foreach my $member (@{$homology->get_all_Members}) {
+      my $gene_member - $member->gene_member;
+      if ($gene_member->stable_id eq $query_member->stable_id) {
+        $query_perc_id  = $member->perc_id;
       } else {
-        $target_perc_id = $attribute->perc_id;
+        $target_perc_id = $member->perc_id;
         $genome_db_name = $member->genome_db->name;
-        $target_member  = $member;
+        $target_member  = $gene_member;
         $dnds_ratio     = $homology->dnds_ratio; 
       }
     }  
