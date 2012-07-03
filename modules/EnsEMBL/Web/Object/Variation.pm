@@ -1405,7 +1405,17 @@ sub hgvs {
       }
     }
   }
-  
+ 
+  # add hgvs notations from the variation feature if there are no transcript variations
+  # for the variation (intergenic variation)
+  unless (%hgvs) {
+    my %seen_genomic;
+    my %hgvs_notations = %{$vf->get_all_hgvs_notations()};
+    foreach my $allele (keys %hgvs_notations) {
+      next if $seen_genomic{$hgvs_notations{$allele}}++;
+      push @{$hgvs{$allele}}, $hgvs_notations{$allele};
+    }
+  }
   return \%hgvs;
 }
 
