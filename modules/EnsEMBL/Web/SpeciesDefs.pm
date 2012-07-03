@@ -455,41 +455,46 @@ sub _expand_database_templates {
   if (exists $tree->{'databases'}) {
     foreach my $key (keys %{$tree->{'databases'}}) {
       my $DB_NAME = $tree->{'databases'}{$key};
+      my $VERSION = $tree->{'general'}{"${key}_VERSION"} || $SiteDefs::ENSEMBL_VERSION;
       
       if ($DB_NAME =~ /^%_(\w+)_%_%$/) {
-        $DB_NAME = lc(sprintf '%s_%s_%s_%s_%s', $filename , $1, $SiteDefs::SITE_RELEASE_VERSION, $SiteDefs::ENSEMBL_VERSION, $tree->{'general'}{'SPECIES_RELEASE_VERSION'});
+        $DB_NAME = lc(sprintf '%s_%s_%s_%s_%s', $filename , $1, $SiteDefs::SITE_RELEASE_VERSION, $VERSION, $tree->{'general'}{'SPECIES_RELEASE_VERSION'});
       } elsif ($DB_NAME =~ /^%_(\w+)_%$/) {
-        $DB_NAME = lc(sprintf '%s_%s_%s_%s', $filename , $1, $SiteDefs::ENSEMBL_VERSION, $tree->{'general'}{'SPECIES_RELEASE_VERSION'});
+        $DB_NAME = lc(sprintf '%s_%s_%s_%s', $filename , $1, $VERSION, $tree->{'general'}{'SPECIES_RELEASE_VERSION'});
       } elsif ($DB_NAME =~/^%_(\w+)$/) {
-        $DB_NAME = lc(sprintf '%s_%s_%s', $filename , $1, $SiteDefs::ENSEMBL_VERSION);
+        $DB_NAME = lc(sprintf '%s_%s_%s', $filename , $1, $VERSION);
       } elsif ($DB_NAME =~/^(\w+)_%$/) {
-        $DB_NAME = lc(sprintf '%s_%s', $1, $SiteDefs::ENSEMBL_VERSION);
+        $DB_NAME = lc(sprintf '%s_%s', $1, $VERSION);
       }
       
       if ($tree->{'databases'}{$key} eq '') {
         delete $tree->{'databases'}{$key};
-      } elsif (exists $tree->{$key} && exists $tree->{$key}{'HOST'}) {
-        my %cnf = %{$tree->{$key}};
-        
-        $tree->{'databases'}{$key} = {
-          NAME   => $DB_NAME,
-          HOST   => exists $cnf{'HOST'}   ? $cnf{'HOST'}   : $HOST,
-          USER   => exists $cnf{'USER'}   ? $cnf{'USER'}   : $USER,
-          PORT   => exists $cnf{'PORT'}   ? $cnf{'PORT'}   : $PORT,
-          PASS   => exists $cnf{'PASS'}   ? $cnf{'PASS'}   : $PASS,
-          DRIVER => exists $cnf{'DRIVER'} ? $cnf{'DRIVER'} : $DRIVER,
-        };
-        
-        delete $tree->{$key};
       } else {
-        $tree->{'databases'}{$key} = {
-          NAME   => $DB_NAME,
-          HOST   => $HOST,
-          USER   => $USER,
-          PORT   => $PORT,
-          PASS   => $PASS,
-          DRIVER => $DRIVER
-        };
+        if (exists $tree->{$key} && exists $tree->{$key}{'HOST'}) {
+          my %cnf = %{$tree->{$key}};
+          
+          $tree->{'databases'}{$key} = {
+            NAME   => $DB_NAME,
+            HOST   => exists $cnf{'HOST'}   ? $cnf{'HOST'}   : $HOST,
+            USER   => exists $cnf{'USER'}   ? $cnf{'USER'}   : $USER,
+            PORT   => exists $cnf{'PORT'}   ? $cnf{'PORT'}   : $PORT,
+            PASS   => exists $cnf{'PASS'}   ? $cnf{'PASS'}   : $PASS,
+            DRIVER => exists $cnf{'DRIVER'} ? $cnf{'DRIVER'} : $DRIVER,
+          };
+          
+          delete $tree->{$key};
+        } else {
+          $tree->{'databases'}{$key} = {
+            NAME   => $DB_NAME,
+            HOST   => $HOST,
+            USER   => $USER,
+            PORT   => $PORT,
+            PASS   => $PASS,
+            DRIVER => $DRIVER
+          };
+        }
+        
+        $tree->{'databases'}{$key}{$_} = $tree->{'general'}{"${key}_$_"} for grep $tree->{'general'}{"${key}_$_"}, qw(HOST PORT);
       }
     }
   }
