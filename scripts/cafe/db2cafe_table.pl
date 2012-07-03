@@ -98,7 +98,7 @@ my $genomeDB_Adaptor = $compara_dba->get_GenomeDBAdaptor();
 
 # Get all the species for the mlss:
 my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($mlss);
-my $species_set = $method_link_species_set->species_set();
+my $species_set = $method_link_species_set->species_set_obj->genome_dbs();
 
 my @sps_set = @$species_set;
 if ($exclude_lcg) {
