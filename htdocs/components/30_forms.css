@@ -2,16 +2,14 @@ form div, form > fieldset, form h2 {
   -webkit-margin-collapse: separate; /* crome and safari fix for margins of form components */
 }
 
-form fieldset {
-  border: none;
-}
+form fieldset { border: none; padding: 0; margin: 0; }
 
 form.std label, form.nonstd label { font-weight:bold; }
 
-form.std fieldset { padding: 0 0.5em; text-align: left; margin: 0; }
+form.std fieldset { text-align: left; }
 form.nonstd fieldset { padding: 0.5em; margin: 0; }
 
-form.std              { margin: 0; padding:4px 0;}
+form.std              { margin: 0; padding: 0;}
 form.std table        { width:100% }
 form.std fieldset     { padding: 0; }
 form.std fieldset th, 
