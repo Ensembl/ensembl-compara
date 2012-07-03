@@ -22,6 +22,6 @@ my $SPECIES_DEFS  = EnsEMBL::Web::SpeciesDefs->new;
 my $DBCONNECTION  = EnsEMBL::Web::DBSQL::DBConnection->new( undef, $SPECIES_DEFS );
 my $blast_adaptor = $DBCONNECTION->get_databases_species( $SPECIES_DEFS->ENSEMBL_PRIMARY_SPECIES, 'blast')->{'blast'};
    $blast_adaptor->rotate_daily_tables();
-   $blast_adaptor->clean_blast_database(4);
+   $blast_adaptor->clean_blast_database(7);
 
 exit 0;
