@@ -134,7 +134,7 @@ sub run {
     print STDERR "cafe_tree_string_mlss_tag => $cafe_tree_string_mlss_tag\n" if ($self->debug());
     my $sql = "INSERT into method_link_species_set_tag (method_link_species_set_id, tag, value) values (?,?,?);";
     my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($cafe_tree_string_mlss_tag, $cafeTreeStr);
+    $sth->execute($self->param('mlss_id'), $cafe_tree_string_mlss_tag, $cafeTreeStr);
     $sth->finish();
 
     $self->param('cafe_tree_string_mlss_tag', $cafe_tree_string_mlss_tag);
