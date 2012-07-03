@@ -94,6 +94,7 @@ if ($compara_url) {
 # Get all the adaptors
 my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 my $tree_adaptor = $compara_dba->get_GeneTreeAdaptor();
+my $treenode_adaptor = $compara_dba->get_GeneTreeNodeAdaptor();
 my $genomeDB_Adaptor = $compara_dba->get_GenomeDBAdaptor();
 
 # Get all the species for the mlss:
@@ -115,7 +116,8 @@ print "FAMILYDESC\tFAMILY\t", join("\t", @species_names), "\n";
 for my $tree (@$all_trees) {
   my $root_id = $tree->root_id();
   my $model_name = $tree->get_tagvalue('model_name') || $tree->stable_id() || $tree->root_id();
-  my $nctree_members = $tree->get_all_leaves();
+  #my $nctree_members = $tree->get_all_leaves();
+  my $nctree_members = $treenode_adaptor->fetch_all_AlignedMember_by_root_id($root_id);
   my %species;
   for my $member (@$nctree_members) {
     my $sp;
