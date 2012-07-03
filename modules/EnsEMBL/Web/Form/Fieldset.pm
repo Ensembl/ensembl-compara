@@ -141,7 +141,7 @@ sub add_field {
   }
 
   my $field_params  = { map {exists $params->{$_} ? ($_, delete $params->{$_}) : ()} qw(field_class label head_notes notes inline) };
-  my $elements      = exists $params->{'elements'} ? ref($params->{'elements'}) eq 'HASH' ? [ $params->{'elements'} ] : $params->{'elements'} : [ $params ];
+  my $elements      = exists $params->{'elements'} ? ref($params->{'elements'}) eq 'HASH' ? [ $params->{'elements'} ] : $params->{'elements'} : $params->{'type'} ? [ $params ] : [];
   my $is_honeypot   = 0;
 
   for (@$elements) {
