@@ -10,8 +10,8 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 sub store {
   my ($self, @args) = @_;
-  my ($anchor_id, $dnafrag_id, $start, $end, $strand, $mlssid, $test_mlssid, $sequence) = 
-	rearrange([qw(ANCHOR_ID, DNAFRAG_ID, START, END, STRAND, MLSSID, SEQUENCE, LENGTH)], @args);
+  my ($anchor_id, $dnafrag_id, $start, $end, $strand, $mlssid, $sequence) = 
+	rearrange([qw(ANCHOR_ID, DNAFRAG_ID, START, END, STRAND, MLSSID, SEQUENCE)], @args);
 
 
   my $dcs = $self->dbc->disconnect_when_inactive();
