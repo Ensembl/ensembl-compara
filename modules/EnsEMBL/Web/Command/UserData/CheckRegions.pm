@@ -26,6 +26,7 @@ sub process {
     if ($file) {
       $content = $file->retrieve;
       $param->{'code'} = $data->{'code'};
+      $param->{'name'} = $hub->param('name');
     }
     else {
       $param->{'error_code'} = 'load_file';

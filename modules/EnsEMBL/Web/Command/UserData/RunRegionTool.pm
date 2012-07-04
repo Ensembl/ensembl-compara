@@ -90,7 +90,7 @@ sub process {
           filename  => $output,
           code      => $code,
           md5       => md5_hex($output),
-          name      => 'Region report',
+          name      => $hub->param('name') || 'Region report',
           species   => $data->{'species'},
           format    => $hub->param('output_format'),
           timestamp => time,
