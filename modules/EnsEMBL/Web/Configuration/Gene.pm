@@ -84,6 +84,13 @@ sub populate_tree {
   
   $compara_menu->append($tree_node);
 
+  my $species_tree_node = $self->create_node('SpeciesTree', 'Species Tree',
+      [qw( image EnsEMBL::Web::Component::Gene::SpeciesTree )],
+      { 'availability' => 'gene database:compara core has_gene_tree' }
+    );  
+    
+  $compara_menu->append($species_tree_node);   
+    
   my $ol_node = $self->create_node('Compara_Ortholog', 'Orthologues ([[counts::orthologs]])',
     [qw( orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs )],
     { 'availability' => 'gene database:compara core has_orthologs', 'concise' => 'Orthologues' }
