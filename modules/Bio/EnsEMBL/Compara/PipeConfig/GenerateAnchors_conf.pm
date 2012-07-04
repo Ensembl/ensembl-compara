@@ -26,7 +26,7 @@ sub default_options {
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
-		-dbname => $ENV{'USER'}.'_new_mammal_anchors'.$self->o('rel_with_suffix'),
+		-dbname => $ENV{'USER'}.'_test_mammal_anchors'.$self->o('rel_with_suffix'),
    	},
 	  # database containing the pairwise alignments needed to get the overlaps
 	'compara_pairwise_db' => {
@@ -60,6 +60,8 @@ sub default_options {
 	'overlaps_mlssid' => 10000, 
 	'species_tree_dump_dir' => '/nfs/users/nfs_s/sf5/Mammals/Tree/', # dir to dump species tree for gerp
 	'max_frag_diff' => 1.5, # max difference in sizes between non-reference dnafrag and reference to generate the overlaps from
+	'min_ce_length' => 40, # min length of each sequence in the constrained elenent 
+	'max_anchor_seq_len' => 100,
      };
 }
 
@@ -224,14 +226,6 @@ sub pipeline_analyses {
 				2 => [ 'mysql:////method_link_species_set_tag' ],
 		},
 	   },
-#	   {
-#		-logic_name    => 'dump_species_tree',
-#		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-#		-input_ids     => [ {
-#			'cmd'        => 'cat ' . $self->o('species_tree_file') . ' | tr \'[A-Z]\' \'[a-z]\' > ' .
-#						 $self->o('species_tree_dump_dir') . '/species_tree',
-#		} ],
-#	   },		
 	   {
 		-logic_name	=> 'find_pairwise_overlaps',
 		-module		=> 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindPairwiseOverlaps',
@@ -251,21 +245,89 @@ sub pipeline_analyses {
 				    'max_block_size' => $self->o('pecan_block_size'),
 				    'java_options' => '-server -Xmx1000M',},
 		-flow_into      => {
+					-1 => [ 'pecan_high_mem' ],
 					1 => [ 'gerp_constrained_element' ],
 				   },
 		-hive_capacity => 50,
-		-failed_job_tolerance => 5, # % of jobs allowed to fail
+		-failed_job_tolerance => 10, 
    	   },
+           {    -logic_name => 'pecan_high_mem',
+                -parameters => {
+			'mlss_id' => $self->o('pecan_mlssid'),
+                        'max_block_size' => $self->o('pecan_block_size'),
+                        java_options => '-server -Xmx6000M',
+                },  
+                -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
+                -hive_capacity => 10, 
+                -can_be_empty => 1,
+                -rc_id => 2,
+           },  
 	   {
 		-logic_name    => 'gerp_constrained_element',
 		-module => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
 		-parameters    => { 'window_sizes' => '[1,10,100,500]', 'gerp_exe_dir' => $self->o('gerp_exe_dir'), 
 				    'program_version' => $self->o('gerp_program_version'), 'mlss_id' => $self->o('pecan_mlssid'), },
-#		-wait_for      => [ 'dump_species_tree' ],
 		-hive_capacity => 50,
 		-batch_size    => 5,
 	   },
-				
+	   { 
+		-logic_name     => 'transfer_ce_data_to_anchor_align',
+		-module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+		-input_ids => [{'min_ce_length'=>$self->o('min_ce_length'),}],
+		-wait_for       => [ 'gerp_constrained_element' ],
+		-parameters => {
+				'sql' => [
+					'INSERT INTO anchor_align (method_link_species_set_id, anchor_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand) '.
+					'SELECT method_link_species_set_id, constrained_element_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand FROM '. 
+					'constrained_element WHERE (dnafrag_end - dnafrag_start + 1) >= '. $self->o('min_ce_length') .' ORDER BY constrained_element_id',
+				],
+		},
+	    },
+            {   -logic_name => 'trim_anchor_align_factory',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+		-input_ids => [{}],
+                -parameters => {
+                                'inputquery'      => "SELECT DISTINCT(anchor_id) AS anchor_id FROM anchor_align",
+                                'fan_branch_code' => 2,
+                               },  
+                -flow_into => {
+                               2 => [ 'trim_anchor_align' ],
+                              },  
+		-wait_for  => [ 'transfer_ce_data_to_anchor_align' ],
+            },  
+	    {   -logic_name => 'trim_anchor_align',			
+		-module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::TrimAnchorAlign',
+		-parameters => {
+				'input_method_link_species_set_id' => $self->o('gerp_constrained_element_mlssid'),
+				'output_method_link_species_set_id' => $self->o('overlaps_mlssid'),
+			},
+		-failed_job_tolerance => 10,
+		-hive_capacity => 200,
+		-batch_size    => 10,
+		
+	    },
+	    {   -logic_name => 'load_anchor_sequence_factory',
+		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+		-input_ids => [{}],
+		-parameters => {
+				'inputquery'  => 'SELECT DISTINCT(anchor_id) AS anchor_id FROM anchor_align WHERE method_link_species_set_id = ' . $self->o('overlaps_mlssid'),
+				'fan_branch_code' => 2,
+			},
+		-flow_into => {
+			2 => [ 'load_anchor_sequence' ],
+			}, 
+		-wait_for  => [ 'trim_anchor_align' ],
+	   },	
+	   {   -logic_name => 'load_anchor_sequence',
+	       -module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::LoadAnchorSequence',
+	       -parameters => {
+				'input_method_link_species_set_id' => $self->o('overlaps_mlssid'),
+				'max_anchor_seq_len' => $self->o('max_anchor_seq_len'),
+				'min_anchor_seq_len' => $self->o('min_ce_length'),
+			},
+		-batch_size    => 10,
+		-hive_capacity => 100,
+	   },
     ];
 }	
 
