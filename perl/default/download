@@ -6,7 +6,7 @@ use EnsEMBL::Web::TmpFile::Text;
 
 my $cgi    = new CGI;
 my $file   = $cgi->param('file');
-my $name   = $cgi->param('name');
+my $name   = $cgi->param('name') || $file;
 my $format = $cgi->param('format') || 'gff';
 my $prefix = $cgi->param('prefix');
 ## Strip any invalid characters from params to prevent downloading of arbitrary files!
