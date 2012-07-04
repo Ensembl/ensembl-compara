@@ -63,7 +63,7 @@ sub _init {
           {'clade' => $clade, 'colour' => $colour};
     }
   }
-
+  
   # Create a sorted list of tree nodes sorted by rank then id
   my @nodes = ( sort { ($a->{_rank} <=> $b->{_rank}) * 10  
                            + ( $a->{_id} <=> $b->{_id}) } 
@@ -79,10 +79,12 @@ sub _init {
   # | nodes_width | labels_width |                       |
   # +----------------------------------------------------+
   # Set 60% to the tree, and 40% to the alignments
-  my $tree_bitmap_width  = int( $bitmap_width * 0.6 );
+  my $tree_bitmap_width  = $tree->isa('Bio::EnsEMBL::Compara::CAFETreeNode') ? int( $bitmap_width * 0.95 )  : int( $bitmap_width * 0.6 );
+      
   my $align_bitmap_width = $bitmap_width - $tree_bitmap_width;
   # Calculate space to reserve for the labels
   my( $fontname, $fontsize ) = $self->get_font_details( 'small' );
+  $fontsize = 8 if($tree->isa('Bio::EnsEMBL::Compara::CAFETreeNode'));
   my( $longest_label ) = ( sort{ length($b) <=> length($a) } 
                            map{$_->{label}} @nodes );
   my @res = $self->get_text_width( 0, $longest_label, '', 
@@ -99,10 +101,9 @@ sub _init {
   my( $max_x_offset ) = ( sort{ $b <=> $a }
                           map{$_->{_x_offset} + ($_->{_collapsed_distance}||0)}
                           @nodes );
+                          
   my $nodes_scale = ($nodes_bitmap_width) / ($max_x_offset||1);
   #----------
-
-
   
   # Draw each node
   my %Nodes;
@@ -111,17 +112,20 @@ sub _init {
   my @node_glyphs;
   my @bg_glyphs;
   my @labels;
-#  use Data::Dumper;
+  my $node_href;
+#use Data::Dumper; warn Dumper(@nodes);
   foreach my $f (@nodes) {
      # Ensure connector enters at base of node glyph
     my $parent_node = $Nodes{$f->{_parent}} || {x=>0};
     my $min_x = $parent_node->{x} + 4;
+
+    $f->{_x_offset} = $max_x_offset if ($tree->isa('Bio::EnsEMBL::Compara::CAFETreeNode') && $f->{label});  #Align all the ending nodes with lables in the cafe tree
     ($f->{x}) = sort{$b<=>$a} int($f->{_x_offset} * $nodes_scale), $min_x;
     
     if ($f->{_cigar_line}){
       push @alignments, [ $f->{y} , $f->{_cigar_line}, $f->{_collapsed}, $f->{_aligned_exon_lengths}] ;
     }
-    
+
     # Node glyph, coloured for for duplication/speciation
     my ($node_colour, $label_colour, $collapsed_colour, $bold);
     my $bold_colour = "white";
@@ -131,7 +135,15 @@ sub _init {
       $node_colour = 'turquoise';
     } elsif ($f->{_node_type} eq 'gene_split') {
       $node_colour = 'SandyBrown';
-    }
+    } elsif ($f->{_node_type} eq 'expansion') {
+      $node_colour = 'red';      
+    } elsif ($f->{_node_type} eq 'contractions') {
+      $node_colour = 'Green';
+      $node_colour = 'LightGreen' if($f->{_n_members}) == 0;
+    } elsif ($f->{_node_type} eq 'default') {
+      $node_colour = 'black';
+      $node_colour = 'grey' if($f->{_n_members}) == 0;
+    } 
 
     if ($f->{label}) {
       if( $f->{_genes}->{$other_gene} ){
@@ -163,12 +175,22 @@ sub _init {
     $label_colour = "black" if (!$label_colour); # Default colour
     $collapsed_colour = 'grey' if (!$collapsed_colour); # Default colour
 
-    my $node_href = $self->_url({ 
-      action      => "ComparaTreeNode$skey",
-      node        => $f->{'_id'},
-      genetree_id => $Config->get_parameter('genetree_id'),
-      collapse    => $collapsed_nodes_str
-    });
+    #cafetree zmenu else comparatree zmenu
+    if ($tree->isa('Bio::EnsEMBL::Compara::CAFETreeNode')){
+      $node_href = $self->_url({ 
+        action      => "SpeciesTree",
+        node        => $f->{'_id'},
+        genetree_id => $Config->get_parameter('genetree_id'),
+        collapse    => $collapsed_nodes_str
+      });
+    } else {
+      $node_href = $self->_url({ 
+        action      => "ComparaTreeNode$skey",
+        node        => $f->{'_id'},
+        genetree_id => $Config->get_parameter('genetree_id'),
+        collapse    => $collapsed_nodes_str
+      });
+    }
 
     my $collapsed_xoffset = 0;
     if ($f->{_bg_colour}) {
@@ -187,12 +209,12 @@ sub _init {
           });
     }
     if( $f->{_collapsed} ){ # Collapsed
-
       my $height = $f->{_height};
       my $width  = $f->{_collapsed_distance} * $nodes_scale + 10; 
       my $y = $f->{y} + 2;
       my $x = $f->{x} + 2;
       $collapsed_xoffset = $width;
+
       push @node_glyphs, Sanger::Graphics::Glyph::Poly->new
           ({
             'points' => [ $x, $y,
@@ -225,7 +247,23 @@ sub _init {
       }
 
     }
-    elsif( $f->{_child_count} ){ # Expanded internal node
+    elsif( $f->{_child_count} ){ # Expanded internal node   
+# Draw n_members label on top of the node
+      my $nodes_label = $self->Text
+          ({
+            'text'       => $f->{_n_members},
+            'height'     => $font_height,
+            'width'      => $labels_bitmap_width,
+            'font'       => $fontname,
+            'ptsize'     => $fontsize,
+            'halign'     => 'left',
+            'colour'     => $label_colour,
+            'y' => $f->{y}-10,
+            'x' => $f->{x}-10,
+            'zindex' => 40,
+  	  });
+      push(@labels, $nodes_label);
+                
       # Add a 'collapse' href
       my $node_glyph = Sanger::Graphics::Glyph::Rect->new
           ({
@@ -265,22 +303,25 @@ sub _init {
       }
 
     }
-    else{ # Leaf node
+    else{ # Leaf node  
+    my $type = $f->{_node_type};
+
+    my $color_type = $tree->isa('Bio::EnsEMBL::Compara::CAFETreeNode') ? "colour" : "bordercolour";
       push @node_glyphs, Sanger::Graphics::Glyph::Rect->new
           ({
             'x'         => $f->{x},
             'y'         => $f->{y},
             'width'     => 5,
             'height'    => 5,
-            'bordercolour' => $node_colour,
+            $color_type => $node_colour,
             'zindex'    => -20,
             'href'      => $node_href,
           });
     }
     
     # Leaf label or collapsed node label, coloured for focus gene/species
-    if ($f->{label}) {
-      # Draw the label
+    if ($f->{label}) {      
+      # Draw the label      
       my $txt = $self->Text
           ({
             'text'       => $f->{label},
@@ -365,75 +406,76 @@ sub _init {
   my $min_length      = int($alignment_length / $alignment_width);   
   my $alignment_scale = $alignment_width / $alignment_length;   
   #warn("==> AL: START: $alignment_start, LENGTH: $alignment_length, ",
-  #      "WIDTH: $alignment_width, MIN: $min_length");
-  
+  #      "WIDTH: $alignment_width, MIN: $min_length");    
   foreach my $a (@alignments) {
-    my ($yc, $al, $collapsed, $exon_lengths) = @$a;
-
-    # Draw the exon splits under the boxes
-    my $exon_end = 0;
-    foreach my $exon_length (@$exon_lengths) {
-      $exon_end += $exon_length;
-      my $e = $self->Line({
-        'x'         => $alignment_start + $exon_end * $alignment_scale,
-        'y'         => $yc - 3 - $EXON_TICK_SIZE,
-        'width'     => 0,
-        'height'    => $font_height + (2 * $EXON_TICK_SIZE),
-        'colour'    => $EXON_TICK_COLOUR,
+    if(@$a) {        
+      my ($yc, $al, $collapsed, $exon_lengths) = @$a;
+  
+      # Draw the exon splits under the boxes
+      my $exon_end = 0;
+      foreach my $exon_length (@$exon_lengths) {
+        $exon_end += $exon_length;
+        my $e = $self->Line({
+          'x'         => $alignment_start + $exon_end * $alignment_scale,
+          'y'         => $yc - 3 - $EXON_TICK_SIZE,
+          'width'     => 0,
+          'height'    => $font_height + (2 * $EXON_TICK_SIZE),
+          'colour'    => $EXON_TICK_COLOUR,
+          'zindex' => 0,
+        });
+  
+        $self->push( $e );
+      }
+  
+      my $box_colour = $collapsed ? 'darkgreen' : 'yellowgreen';
+  
+      my $t = $self->Rect({
+        'x'         => $alignment_start,
+        'y'         => $yc - 3,
+        'width'     => $alignment_width,
+        'height'    => $font_height,
+        'colour'    => $box_colour,
         'zindex' => 0,
       });
-
-      $self->push( $e );
-    }
-
-    my $box_colour = $collapsed ? 'darkgreen' : 'yellowgreen';
-
-    my $t = $self->Rect({
-      'x'         => $alignment_start,
-      'y'         => $yc - 3,
-      'width'     => $alignment_width,
-      'height'    => $font_height,
-      'colour'    => $box_colour,
-      'zindex' => 0,
-    });
-
-    $self->push( $t );
-
-
-    my @inters = split (/([MmDG])/, $al);
-    my $ms = 0;
-    my $ds = 0;
-    my $box_start = 0;
-    my $box_end = 0;
-    my $colour = 'white';
-    my $zc = 10;
-    
-    while (@inters) {
-      $ms = (shift (@inters) || 1);
-      my $mtype = shift (@inters);
+  
+      $self->push( $t );
+  
+  
+      my @inters = split (/([MmDG])/, $al);
+      my $ms = 0;
+      my $ds = 0;
+      my $box_start = 0;
+      my $box_end = 0;
+      my $colour = 'white';
+      my $zc = 10;
       
-      $box_end = $box_start + $ms -1;
-      
-      if ($mtype =~ /G|M/) {
-# Skip normal alignment and gaps in alignments
-        $box_start = $box_end + 1;
-        next;
-      }
-      
-      if ($ms >= $min_length ) { 
-        my $t = $self->Rect({
-          'x'         => $alignment_start + ($box_start * $alignment_scale),
-          'y'         => $yc - 2,
-          'z'         => $zc,
-          'width'     => abs( $box_end - $box_start + 1 ) * $alignment_scale,
-          'height'    => $font_height - 2,
-          'colour' => ($mtype eq "m"?"yellowgreen":$colour), 
-          'absolutey' => 1,
-        });
+      while (@inters) {
+        $ms = (shift (@inters) || 1);
+        my $mtype = shift (@inters);
         
-        $self->push($t);
+        $box_end = $box_start + $ms -1;
+        
+        if ($mtype =~ /G|M/) {
+  # Skip normal alignment and gaps in alignments
+          $box_start = $box_end + 1;
+          next;
+        }
+        
+        if ($ms >= $min_length ) { 
+          my $t = $self->Rect({
+            'x'         => $alignment_start + ($box_start * $alignment_scale),
+            'y'         => $yc - 2,
+            'z'         => $zc,
+            'width'     => abs( $box_end - $box_start + 1 ) * $alignment_scale,
+            'height'    => $font_height - 2,
+            'colour' => ($mtype eq "m"?"yellowgreen":$colour), 
+            'absolutey' => 1,
+          });
+          
+          $self->push($t);
+        }
+        $box_start = $box_end + 1;
       }
-      $box_start = $box_end + 1;
     }
   }
 
@@ -455,7 +497,7 @@ sub _draw_tree_connectors {
       
       # Connector colour depends on scaling
       my $col = $connector_colours{ ($Nodes{$f}->{_cut} || 0) } || 'red';
-      $col = $Nodes{$f}->{_fg_colour} if ($Nodes{$f}->{_fg_colour});
+      $col = $Nodes{$f}->{_fg_colour} if ($Nodes{$f}->{_fg_colour});      
 
       # Vertical connector
       my $v_line = $self->Line
@@ -468,7 +510,7 @@ sub _draw_tree_connectors {
             'zindex'    => 0, 
           });
       $self->push( $v_line );
-      
+
       # Horizontal connector
       my $width = $xc - $xp - 2;
       if( $width ){
@@ -495,9 +537,10 @@ sub features {
   my $parent_id  = shift || 0;
   my $x_offset   = shift || 0;
   my $show_exons = shift || 0;
+  my $node_type;
 
   # Scale the branch length
-  my $distance = $tree->distance_to_parent;
+  my $distance = $tree->distance_to_parent;   
   my $cut      = 0;
   
   while ($distance > 1) {
@@ -505,20 +548,37 @@ sub features {
     $cut++;
   }
   
-  $x_offset += $distance;
+  $x_offset += $distance;  
 
+  if ($tree->isa('Bio::EnsEMBL::Compara::CAFETreeNode')) {
+     if ($tree->is_node_significant) {
+       if ($tree->is_expansion) {
+          #print "expansion\n";
+          $node_type = 'expansion';
+       } elsif ($tree->is_contraction) {
+          #print "contraction\n";
+          $node_type = 'contractions';
+       }
+     } else {
+       $node_type = 'default';
+     }
+  }
+  
   # Create the feature for this recursion
   my $node_id  = $tree->node_id;
   my @features;
-  
+  my $n_members = ($tree->isa('Bio::EnsEMBL::Compara::CAFETreeNode'))? $tree->n_members : '';
+  $cut = 0 if ($tree->isa('Bio::EnsEMBL::Compara::CAFETreeNode')); #only for cafe tree, cut is 0 so that the branch are single blue line (no dotted or other colours)
+
   my $f = {
     _distance    => $distance,
     _x_offset    => $x_offset,
-    _node_type   => $tree->get_tagvalue('node_type'),
+    _node_type   => $node_type ? $node_type : $tree->get_tagvalue('node_type'),
     _id          => $node_id, 
     _rank        => $rank++,
     _parent      => $parent_id,
     _cut         => $cut,
+    _n_members   => $n_members,
   };
   
   # Initialised colouring
@@ -534,7 +594,7 @@ sub features {
     my %genome_dbs;
     my %genes;
     my %leaves;
-    
+
     foreach my $leaf (@{$tree->get_all_leaves}) {
       my $dist = $leaf->distance_to_ancestor($tree);
       $leaf_count++;
@@ -553,6 +613,7 @@ sub features {
     $f->{'_genes'}              = \%genes;
     $f->{'_leaves'}             = \%leaves;
     $f->{'label'}               = sprintf '%s: %d homologs', $tree->get_tagvalue('taxon_name'), $leaf_count;
+
   }
   
   # Recurse for each child node
@@ -564,11 +625,11 @@ sub features {
   }
 
   # Assign 'y' coordinates
-  if (@features > 0) { # Internal node
+  if (@features > 0) { # Internal node  
     $f->{'y'}      = ($features[0]->{'y'} + $features[-1]->{'y'}) / 2;
     $f->{'y_from'} = $features[0]->{'y_from'};
     $f->{'y_to'}   = $features[-1]->{'y_to'};
-  } else { # Leaf node or collapsed
+  } else { # Leaf node or collapsed  
     my $height = int($f->{'_height'} || 0) + 1;
     $height    = $MIN_ROW_HEIGHT if $height < $MIN_ROW_HEIGHT;
     
@@ -576,10 +637,20 @@ sub features {
     $f->{'y_from'} = $CURRENT_Y;
     
     $CURRENT_Y += $height;
-    
-    $f->{'y_to'} = $CURRENT_Y;
+    $f->{'y_to'} = $CURRENT_Y;    
   }
   
+   if ($tree->isa('Bio::EnsEMBL::Compara::CAFETreeNode') && $tree->genome_db) {
+     $f->{'_species'} = ucfirst $tree->genome_db->name; # This will be used in URLs     
+     
+     #adding extra space after the n members so as to align the species name
+     my $n_members = $tree->n_members;
+     $n_members = $n_members < 10 ? (sprintf '%-8s', $n_members) : (sprintf '%-7s', $n_members);
+          
+     $f->{'_species_label'} = $self->species_defs->get_config($f->{'_species'}, 'SPECIES_SCIENTIFIC_NAME') || $self->species_defs->species_label($f->{'_species'}) || $f->{'_species'};      
+     $f->{'label'} = $f->{'_display_id'} = $n_members."$f->{'_species_label'}";
+   }
+
   # Process alignment
   if ($tree->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
     if ($tree->genome_db) {
@@ -595,7 +666,7 @@ sub features {
       $f->{'_protein'} = $tree->stable_id;
       $f->{'label'}    = "$f->{'_stable_id'} $f->{'_species_label'}";
     }
-    
+
     if (my $member = $tree->gene_member) {
       my $stable_id = $member->stable_id;
       my $chr_name  = $member->chr_name;
@@ -638,7 +709,7 @@ sub features {
   }
   
   push @features, $f;
-  
+ 
   return \@features;
 }
 
