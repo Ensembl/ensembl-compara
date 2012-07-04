@@ -121,8 +121,8 @@ sub psychic {
         $index_t = 'Chromosome';
       }
     }
-    elsif ($jump_query =~ /^(contig|clone|supercontig|scaffold|region)/i) {
-      $jump_query =~ s/^(contig|clone|supercontig|scaffold|region)\s+//i;
+    elsif ($jump_query =~ /^(contig|clone|ultracontig|supercontig|scaffold|region)/i) {
+      $jump_query =~ s/^(contig|clone|ultracontig|supercontig|scaffold|region)\s+//i;
       $index_t = 'Sequence';
       $flag = $1;
     }
