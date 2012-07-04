@@ -783,8 +783,7 @@ sub get_GeneTree {
     
     $self->{$cache_key} = $tree;
     $self->{"_member_$compara_db"} = $member;
-  }
-  
+  }  
   return $self->{$cache_key};
 }
 
@@ -798,6 +797,27 @@ sub get_gene_slices {
       $self->__data->{'slices'}{$array->[0]} = $self->get_munged_slice($master_config, $array->[2], 1);
     }
   }
+}
+
+# Function to call compara API to get the species Tree
+sub get_SpeciesTree {
+  my $self       = shift;
+  my $compara_db = shift || 'compara';
+  my $cache_key  = "_species_tree_$compara_db";
+  my $database   = $self->database($compara_db);
+  
+  if (!$self->{$cache_key}) {
+    my $cafeTree_Adaptor = $database->get_CAFETreeAdaptor();
+    my $geneTree_Adaptor = $database->get_GeneTreeAdaptor();    
+
+    my $member   = $self->get_compara_Member($compara_db)           || return;
+    my $geneTree = $geneTree_Adaptor->fetch_all_by_Member($member)->[0];
+    my $cafeTree = $cafeTree_Adaptor->fetch_by_GeneTree($geneTree);
+    
+    $self->{$cache_key} = $cafeTree;
+  }
+
+  return $self->{$cache_key};
 }
 
 # Calls for GeneSNPView
