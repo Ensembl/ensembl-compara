@@ -23,12 +23,18 @@ sub render_normal {
   my $th = $res[3];
   my $pix_per_bp = $self->scalex;
 
-  my @branches = (
+  my @branches = $vc->isa('Bio::EnsEMBL::Compara::CAFETreeNode') ? (['N number of members', 'blue', undef]) :(
     ['x1 branch length', 'blue', undef],
     ['x10 branch length', 'blue', 1],
     ['x100 branch length', 'red', 1]
   );
-  my @nodes = (
+  my @nodes = $vc->isa('Bio::EnsEMBL::Compara::CAFETreeNode') ?  (
+    ['Expansion Event', 'red'],
+    ['Contraction Event', 'Green'],
+    ['Contraction Event with 0 members', 'LightGreen'],
+    ['No Signifance Event', 'black'],
+    ['No Signifance Event with 0 members', 'Grey'],
+  ): (
     ['speciation node', 'navyblue'],
     ['duplication node', 'red3'],
     ['ambiguous node', 'turquoise'],
@@ -37,7 +43,7 @@ sub render_normal {
   if ($highlight_ancestor) {
     push(@nodes, ['ancestor node', '444444', "bold"]);
   }
-  my @orthos = (
+  my @orthos = $vc->isa('Bio::EnsEMBL::Compara::CAFETreeNode') ? [] :(
     ['current gene', 'red', 'Gene ID'],
     ['within-sp. paralog', 'blue', 'Gene ID'],
   );
@@ -49,17 +55,19 @@ sub render_normal {
       ['other within-sp. paralog', 'black', 'Gene ID', 'white'],
     );
   }
-  my @polys = (
+  my @polys = $vc->isa('Bio::EnsEMBL::Compara::CAFETreeNode') ? [] :(
     ['collapsed sub-tree', 'grey'], 
     ['collapsed (current gene)', 'red' ],
     ['collapsed (paralog)', 'royalblue'],
   );
-  
+   
   my $alphabet = "AA";
   if (UNIVERSAL::isa($vc, "Bio::EnsEMBL::Compara::NCTree")) {
     $alphabet = "Nucl.";
   }
-  my @boxes = (
+  
+  #no alignments legend required for cafetree/speciestree
+  my @boxes = $vc->isa('Bio::EnsEMBL::Compara::CAFETreeNode') ? [] : (
     ["$alphabet alignment match/mismatch",   'yellowgreen', 'yellowgreen'],
     ["$alphabet consensus > 66% (mis)match",      'darkgreen',   'darkgreen'],
     ["$alphabet consensus > 33% (mis)match",      'yellowgreen',   'darkgreen'],
@@ -85,20 +93,31 @@ sub render_normal {
 
 
   my ($x,$y) = (0, 0);
-  foreach my $branch (@branches) {
-    ($legend, $colour, $style) = @$branch;
-    $self->push($self->Line({
-      'x'         => $im_width * $x/$NO_OF_COLUMNS,
-      'y'         => $y * ( $th + 3 ) + 8 + $th,
-      'width'     => 20,
-      'height'    => 0,
-      'colour'    => $colour,
-      'dotted'    => $style,
-      })
-    );
-    $label = $self->_create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH, $th, $fontsize, $fontname, $legend);
-    $self->push($label);
-    $y++;
+  if($vc->isa('Bio::EnsEMBL::Compara::CAFETreeNode')) {
+    foreach my $branch (@branches) {
+      ($legend, $colour, $style) = @$branch;
+      
+      $self->_draw_symbol($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH, $th, $fontsize, $fontname, $legend, $colour, $style) if ($legend =~ /N number/);       #function to draw the symbol for n numbers, only be called for this specific legend
+      $label = $self->_create_label($im_width, $x, $y + 2, $NO_OF_COLUMNS, $BOX_WIDTH, $th, $fontsize, $fontname, $legend);
+      $self->push($label);
+      $y++;
+    }    
+  } else {
+    foreach my $branch (@branches) {
+      ($legend, $colour, $style) = @$branch;  
+      $self->push($self->Line({
+        'x'         => $im_width * $x/$NO_OF_COLUMNS,
+        'y'         => $y * ( $th + 3 ) + 8 + $th,
+        'width'     => 20,
+        'height'    => 0,
+        'colour'    => $colour,
+        'dotted'    => $style,
+        })
+      );
+      $label = $self->_create_label($im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH, $th, $fontsize, $fontname, $legend);
+      $self->push($label);
+      $y++;
+    }
   }
   
   ($x, $y) = (1, 0);
@@ -139,7 +158,7 @@ sub render_normal {
     $y++;
   }
 
-  ($x, $y) = (2, 0);
+  ($x, $y) = ($vc->isa('Bio::EnsEMBL::Compara::CAFETreeNode') ? 1 : 2, 0);
   foreach my $node (@nodes) {
     my $modifier;
     ($legend, $colour, $modifier) = @$node;
@@ -245,6 +264,65 @@ sub _create_label {
       'absolutex' => 1,
       'absolutewidth'=>1
     });
+}
+
+#function to draw the n members symbol
+sub _draw_symbol {
+  my ($self,$im_width, $x, $y, $NO_OF_COLUMNS, $BOX_WIDTH, $th, $fontsize, $fontname, $legend, $colour, $style) = @_;
+# Drawing first horizontal line    
+  $self->push($self->Line({
+    'x'         => 13,
+    'y'         => $y * ( $th + 3 ) + 15 + $th,
+    'width'     => 10,
+    'height'    => 0,
+    'colour'    => $colour,
+    'dotted'    => $style,
+    })
+  );
+# Draw vertical line      
+  $self->push($self->Line({
+    'x'         => 13,
+    'y'         => $y * ( $th + 3 ) + 15 + $th,
+    'width'     => 0,
+    'height'    => 10,
+    'colour'    => $colour,
+    'dotted'    => $style,
+    })
+  );
+#Draw horizontal line next to the N      
+  $self->push($self->Line({
+    'x'         => -1,
+    'y'         => $y * ( $th + 3 ) + 32 + $th,
+    'width'     => 10,
+    'height'    => 0,
+    'colour'    => $colour,
+    'dotted'    => $style,
+    })
+  );
+
+# Draw N as a label
+  my $n_label = $self->_create_label($im_width, '0', '2', '1', '2', $th, '7', $fontname, 'N');
+  $self->push($n_label);      
+  
+  $self->push($self->Line({
+    'x'         => 13,
+    'y'         => $y * ( $th + 3 ) + 38 + $th,
+    'width'     => 0,
+    'height'    => 10,
+    'colour'    => $colour,
+    'dotted'    => $style,
+    })
+  );
+       
+  $self->push($self->Line({
+    'x'         => 13,
+    'y'         => $y * ( $th + 3 ) + 48 + $th,
+    'width'     => 10,
+    'height'    => 0,
+    'colour'    => $colour,
+    'dotted'    => $style,
+    })
+  );  
 }
 
 1;
