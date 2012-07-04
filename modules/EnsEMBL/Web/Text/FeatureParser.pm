@@ -19,12 +19,10 @@ sub new {
   my $drawn_chrs   = $species_defs->get_config($data_species, 'ENSEMBL_CHROMOSOMES');
   my $all_chrs     = $species_defs->get_config($data_species, 'ALL_CHROMOSOMES');
   my $colourlist   = $species_defs->TRACK_COLOUR_ARRAY || [qw(black red blue green)];
-  my %valid_coords = map { $_ => $all_chrs->{$_} } @$drawn_chrs;
   
   my $self = {
     current_location => $location,
     drawn_chrs       => $drawn_chrs,
-    valid_coords     => { map { $_ => $all_chrs->{$_} } @$drawn_chrs },
     colourlist       => $colourlist,
     colourmap        => { map { $_ => 0 } @$colourlist },
   };
@@ -113,6 +111,7 @@ sub filter {
 
 sub parse { 
   my ($self, $data, $format) = @_;
+  $format = 'BED' if $format eq 'BEDGRAPH';
   return 'No data supplied' unless $data;
   #use Carp qw(cluck); cluck $format;
 
@@ -135,7 +134,6 @@ sub parse {
     my $count;
     my $current_max = 0;
     my $current_min = 0;
-    my $valid_coords = $self->{'valid_coords'}; 
 
     ## On upload, keep track of current location so we can find nearest feature
     my ($current_index, $current_region, $current_start, $current_end);    
@@ -218,13 +216,6 @@ sub parse {
                       }
             ) unless $self->{'_find_nearest'}{'done'};
           
-          if (keys %$valid_coords && scalar(@$columns) >1 && $format !~ /snp|pileup|vcf/i) { 
-            ## We only validate on chromosomal coordinates, to prevent errors on vertical code
-            next unless $valid_coords->{$chr}; ## Chromosome is valid and has length
-            next unless $start > 0 && $end <= $valid_coords->{$chr};
-          
-          } 
-
           ## Optional - filter content by location
           if ($filter->{'chr'}) {
             next unless ($chr eq $filter->{'chr'} || $chr eq 'chr'.$filter->{'chr'}); 
