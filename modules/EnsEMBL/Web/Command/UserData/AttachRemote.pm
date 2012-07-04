@@ -50,6 +50,9 @@ sub process {
     my $format;
     my $format_package = "Bio::EnsEMBL::ExternalData::AttachedFormat::".uc($format_name);
     my $trackline = $self->hub->param('trackline');
+    if (!$trackline) {
+      $trackline = $format;
+    }
     if (EnsEMBL::Web::Root::dynamic_use(undef, $format_package)) {
       $format = $format_package->new($self->hub,$format_name,$url,$trackline);
     } else {
