@@ -24,7 +24,7 @@ sub render {
   my $static_server  = $sd->ENSEMBL_STATIC_SERVER;
   my $img_url        = $sd->img_url;
   my $sitename       = $sd->ENSEMBL_SITETYPE;
-  my $html           = '<h2 class="box-header">New to '.$sitename.'?</h2>'; 
+  my $html           = ''; 
 
   my $rss_url = $sd->ENSEMBL_TIPS_RSS;
   my $tips = $MEMD && $MEMD->get('::TIPS') || [];
@@ -41,7 +41,7 @@ sub render {
   ## Now pick a random tip and display it
   if (scalar(@$tips)) {
     $html .= qq(<div class="info-box embedded-box float-right">
-<h3 class="first">Did you know...?</h3>);
+<h3 class="box-header">Did you know...?</h3>);
 
     my $random = int(rand(scalar(@$tips)));
     my $tip = $tips->[$random];
@@ -51,10 +51,8 @@ sub render {
   }
 
   $html .= qq(
-  <p>
-Did you know you can:
-</p>
-
+<h2 class="box-header">New to $sitename?</h2>
+<p>Did you know you can:</p>
 <dl>
 <dt><img src="${img_url}e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
 <a href="/info/website/tutorials/">Learn how to use $sitename</a></dt>
