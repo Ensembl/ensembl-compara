@@ -122,7 +122,7 @@ sub psychic {
       }
     }
     elsif ($jump_query =~ /^(contig|clone|supercontig|scaffold|region)/i) {
-      $jump_query =~ s/^(contig|clone|supercontig|scaffold|region)[\s_]*//i;
+      $jump_query =~ s/^(contig|clone|supercontig|scaffold|region)\s+//i;
       $index_t = 'Sequence';
       $flag = $1;
     }
