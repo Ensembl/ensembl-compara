@@ -91,7 +91,7 @@ sub fetch_all_by_AlignedMemberSet {
     } elsif (UNIVERSAL::isa($set, 'Bio::EnsEMBL::Compara::GeneTree')) {
         return $self->fetch_all_by_GeneTree($set);
     } else {
-        throw("$self is not a recognized AlignedMemberSet object\n");
+        throw("$set is not a recognized AlignedMemberSet object\n");
     }
 }
 
