@@ -42,7 +42,7 @@ sub content {
     if ($tmpfile->exists) {
       my $data    = $tmpfile->retrieve; 
       my $name    = $record->{'name'} || 'region_report';
-      my $url     = sprintf('/%s/download?file=%s;prefix=download;format=%s', $hub->species, $filename, $extension);
+      my $url     = sprintf('/%s/download?file=%s;prefix=download;format=%s;name=%s', $hub->species, $filename, $extension, $name);
       $output    .= qq(<h3>Download: <a href="$url">$name</a></h3>);
 
       $output .= qq(<p><b>Preview</b> (First 50 lines of report)  - <a href="$url">download complete file</a></p><pre>);
