@@ -133,9 +133,7 @@ body.ie6 #modal_panel .fixed_width .modal_wrapper .panel { border-left: 0; }
 .modal_content .multi_selector_list ul.included li span.switch { background-image: url(/i/16/delete.png); }
 .modal_content .multi_selector_list ul.excluded li span.switch { background-image: url(/i/16/add.png); }
 
-.modal_content .multi_selector_hint                            { width: 200px; border: 1px [[CONTRAST_BORDER]] solid; padding: 4px; background-color: [[CONTRAST_BG]]; overflow: hidden; }
-.modal_content .multi_selector_hint h4                         { background-image: url(/i/infoicon.gif); background-repeat: no-repeat; background-position: top left; margin: 0 0 5px 10px; padding-left: 16px; }
-.modal_content .multi_selector_hint p                          { padding-left: 10px; }
+.modal_content .multi_selector_hint                            { margin: 16px; }
 
 /* config manager */
 

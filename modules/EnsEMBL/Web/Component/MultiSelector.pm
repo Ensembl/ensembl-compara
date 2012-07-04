@@ -21,9 +21,9 @@ sub _init {
 sub content {
   my $self = shift;
   my $url  = $self->ajax_url('ajax');
-  my $rel  = $self->{'rel'} ? qq{ rel="$self->{'rel'}"} : '';
+  my $rel  = $self->{'rel'} ? qq( rel="$self->{'rel'}") : '';
   
-  return qq{<div class="other_tool"><p><a class="config modal_link" href="$url"$rel>$self->{'link_text'}</a></p></div>};
+  return qq(<div class="other_tool"><p><a class="config modal_link" href="$url"$rel>$self->{'link_text'}</a></p></div>);
 }
 
 sub content_ajax {
@@ -64,10 +64,12 @@ sub content_ajax {
   );
   
   my $hint = qq{
-    <div class="multi_selector_hint">
-      <h4>Tip</h4>
-      <p>Click on the plus and minus buttons to select or deselect options.</p>
-      <p>Selected options can be reordered by dragging them to a different position in the list</p>
+    <div class="multi_selector_hint hint">
+      <h3>Tip</h3>
+      <div class="error-pad">
+        <p>Click on the plus and minus buttons to select or deselect options.</p>
+        <p>Selected options can be reordered by dragging them to a different position in the list</p>
+      </div>
     </div>
   };
   
