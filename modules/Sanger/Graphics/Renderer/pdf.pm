@@ -50,8 +50,8 @@ sub XY { my( $self, $x, $y ) = @_; return ( $x* $self->{sf}, $self->{'canvas'}{'
 sub H { my( $self, $glyph ) = @_; return 1 + $glyph->pixelheight()* $self->{sf}; }
 sub W { my( $self, $glyph ) = @_; return 1 + $glyph->pixelwidth()* $self->{sf}; }
 
-sub strokecolor { my $self = shift; $self->{'canvas'}{'g'}->strokecolor( "#".$self->{'colourmap'}->hex_by_name( shift ) ); }
-sub fillcolor   { my $self = shift; $self->{'canvas'}{'g'}->fillcolor(   "#".$self->{'colourmap'}->hex_by_name( shift ) ); }
+sub strokecolor { my $self = shift; $self->{'canvas'}{'g'}->strokecolor( $self->{'colourmap'}->hex_by_name( shift ) ); }
+sub fillcolor   { my $self = shift; $self->{'canvas'}{'g'}->fillcolor(   $self->{'colourmap'}->hex_by_name( shift ) ); }
 sub stroke    { my $self = shift; $self->{'canvas'}{'g'}->stroke; }
 sub fill    { my $self = shift; $self->{'canvas'}{'g'}->fill; }
 sub rect    { my $self = shift; $self->{'canvas'}{'g'}->rect(@_); }
@@ -101,7 +101,7 @@ sub render_Text {
   my $S = ($glyph->{'ptsize'}||8)* $self->{sf};
   my $T = $self->{'canvas'}{'t'};
      $T->font( $self->{'canvas'}{'font'}, $S );
-     $T->fillcolor( '#'.$gcolour ); 
+     $T->fillcolor( $gcolour ); 
   if( $glyph->{'valign'} eq 'top' ) {
     $y -= $S;
   } elsif( $glyph->{'valign'} ne 'bottom' ) {

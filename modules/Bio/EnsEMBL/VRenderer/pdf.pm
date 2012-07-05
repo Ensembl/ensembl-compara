@@ -46,8 +46,8 @@ sub XY { my( $self, $x, $y ) = @_; return ( $x* $self->{sf}, $self->{'canvas'}{'
 sub H { my( $self, $glyph ) = @_; return 1 + $glyph->pixelheight()* $self->{sf}; }
 sub W { my( $self, $glyph ) = @_; return 1 + $glyph->pixelwidth()* $self->{sf}; }
 
-sub strokecolor { my $self = shift; $self->{'canvas'}{'g'}->strokecolor( "#".$self->{'colourmap'}->hex_by_name( shift ) ); }
-sub fillcolor   { my $self = shift; $self->{'canvas'}{'g'}->fillcolor(   "#".$self->{'colourmap'}->hex_by_name( shift ) ); }
+sub strokecolor { my $self = shift; $self->{'canvas'}{'g'}->strokecolor( $self->{'colourmap'}->hex_by_name( shift ) ); }
+sub fillcolor   { my $self = shift; $self->{'canvas'}{'g'}->fillcolor(   $self->{'colourmap'}->hex_by_name( shift ) ); }
 sub stroke    { my $self = shift; $self->{'canvas'}{'g'}->stroke; }
 sub fill    { my $self = shift; $self->{'canvas'}{'g'}->fill; }
 sub rect    { my $self = shift; $self->{'canvas'}{'g'}->rect(@_); }
