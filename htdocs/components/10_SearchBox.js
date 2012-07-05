@@ -6,9 +6,8 @@ Ensembl.Panel.SearchBox = Ensembl.Panel.extend({
     
     this.base();
     
-    this.elLk.search    = $('table.search', this.el);
-    this.elLk.img       = $('.search_image', this.elLk.search);
-    this.elLk.sites     = $('.sites', this.elLk.search);
+    this.elLk.img       = $('.search_image', this.el);
+    this.elLk.sites     = $('.sites', this.el);
     this.elLk.siteInput = $('input', this.elLk.sites);
     this.elLk.menu      = $('.site_menu', this.el);
     
