@@ -222,7 +222,7 @@ Ensembl.LayoutManager.extend({
   },
   
   changeWidth: function () {
-    $('.navbar, div.info, div.hint, div.warning, div.error').width(Ensembl.width);
+    $('.navbar, div.info, div.hint, div.warning, div.error').not('.fixed_width').width(Ensembl.width);
   }
 });
 
