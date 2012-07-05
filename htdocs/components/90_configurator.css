@@ -3,10 +3,12 @@ div.config_wrapper div.panel div.content { padding: 0 }
 
 body.ie6 div.config_wrapper              { border: 0 }
 
-div.modal_content div.configuration_search             { position: relative; float: right; top: 5px; }
+div.modal_content div.configuration_search             { float: right; }
 div.modal_content div.configuration_search img         { position: absolute; top: 2px; border: 1px solid; padding: 2px 3px; right: 3px; background: #FFF; }
 div.modal_content div.configuration_search input       { color: #999999; border: 1px solid #000; padding: 2px 3px; position: relative; right: 3px; width: 170px; }
 div.modal_content div.configuration_search input:hover { background: [[CONTRAST_BG]]; }
+
+body.ie67 div.modal_content div.configuration_search   { position: relative; top: 3px; }
 
 div.modal_content div.species_select        { font-weight: bold; margin: 2px 0; padding: 0 10px; border-bottom: 1px solid [[PANEL_BORDER]]; }
 div.modal_content div.species_select select { display: block; width: 100%; margin-bottom: 5px; }
