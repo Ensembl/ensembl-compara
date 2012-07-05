@@ -72,28 +72,22 @@ Ensembl.LayoutManager.extend({
       }
     }
     
-    this.window = $(window).on({
+    $(window).on({
       resize: function () {
-        // jquery ui 1.8.14 causes window.resize to fire on resizable when using jquery 1.6.2
-        // This is a hack to stop the windowResize event being triggered in that situation, until the bug is fixed
-        // See http://bugs.jqueryui.com/ticket/7514
-        var windowWidth  = Ensembl.LayoutManager.window.width();
-        var windowHeight = Ensembl.LayoutManager.window.height();
-        var width        = Ensembl.width;
-        
-        if (windowWidth !== Ensembl.LayoutManager.windowWidth || windowHeight !== Ensembl.LayoutManager.windowHeight) {
+        // jquery ui resizable events cause window.resize to fire (all events bubble to window)
+        // if target has no tagName it is window or document. Don't resize unless this is the case
+        if (!e.target.tagName) {
+          var width = Ensembl.width;
+          
           Ensembl.setWidth(undefined, Ensembl.dynamicWidth);
           
           Ensembl.EventManager.trigger('windowResize');
           
           if (Ensembl.dynamicWidth && Ensembl.width !== width) {
-            $('.navbar, div.info, div.hint, div.warning, div.error').width(Ensembl.width);
+            Ensembl.LayoutManager.changeWidth();
             Ensembl.EventManager.trigger('imageResize');
           }
         }
-        
-        Ensembl.LayoutManager.windowWidth  = windowWidth;
-        Ensembl.LayoutManager.windowHeight = windowHeight;
       },
       hashchange: popState
     });
