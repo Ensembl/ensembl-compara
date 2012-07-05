@@ -236,10 +236,11 @@ sub _info_panel {
   my ($self, $class, $caption, $desc, $width, $id) = @_;
   
   return $self->html_format ? sprintf(
-    '<div%s style="width:%s" class="%s"><h3>%s</h3><div class="error-pad">%s</div></div>',
+    '<div%s style="width:%s" class="%s%s"><h3>%s</h3><div class="error-pad">%s</div></div>',
     $id ? qq{ id="$id"} : '',
     $width || $self->image_width . 'px', 
     $class, 
+    $width ? ' fixed_width' : '',
     $caption, 
     $desc
   ) : '';

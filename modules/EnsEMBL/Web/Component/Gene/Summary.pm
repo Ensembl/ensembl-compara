@@ -34,7 +34,7 @@ sub content {
       This view is a gene level view. To access the transcript level displays select a Transcript ID in the table above and then navigate to the information you want using the menu at the left hand side of the page.  
       To return to viewing gene level information click on the Gene tab in the menu bar at the top of the page.
     </p>', $object->species_defs->ENSEMBL_SITETYPE, $extra
-  ), '100%');
+  ));
 
   return $html;
 }
