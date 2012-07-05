@@ -7,9 +7,6 @@ ALTER TABLE sequence_cds DROP PRIMARY KEY, DROP KEY member_id, DROP COLUMN seque
 ALTER TABLE family_member DROP KEY family_member_id, ADD PRIMARY KEY family_member_id (family_id,member_id);
 ALTER TABLE gene_tree_member DROP KEY node_id, ADD PRIMARY KEY (node_id);
 
--- One more foreign key
-ALTER TABLE gene_tree_node ADD FOREIGN KEY (parent_id) REFERENCES gene_tree_node(node_id);
-
 -- clusterset_id is now a string
 ALTER TABLE gene_tree_root MODIFY COLUMN clusterset_id VARCHAR(20) NOT NULL;
 UPDATE gene_tree_root SET clusterset_id = "default";
