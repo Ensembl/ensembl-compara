@@ -768,22 +768,13 @@ sub get_GeneTree {
 
   if (!$self->{$cache_key}) {
     my $member  = $self->get_compara_Member($compara_db)           || return;
-    my $adaptor = $member->adaptor->db->get_adaptor('ProteinTree') || return;
-    my $tree;
-    
-    eval {
-      $tree = $adaptor->fetch_by_gene_Member_root_id($member);
-    };
-    
-    if ($@ || !$tree) {
-      my $nctree_adaptor = $member->adaptor->db->get_adaptor('NCTree') || return;
-      $tree = $nctree_adaptor->fetch_by_gene_Member_root_id($member);
-      return unless $tree;
-    }
+    my $adaptor = $member->adaptor->db->get_adaptor('GeneTree')    || return;
+    my $tree    = $adaptor->fetch_all_by_Member($member, -clusterset_id => 'default')->[0]->root;
+    return unless $tree;
     
     $self->{$cache_key} = $tree;
     $self->{"_member_$compara_db"} = $member;
-  }  
+  }
   return $self->{$cache_key};
 }
 
