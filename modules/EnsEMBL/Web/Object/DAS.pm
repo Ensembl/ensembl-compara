@@ -172,32 +172,33 @@ sub Stylesheet {
 }
 
 sub _Stylesheet {
-  my( $self, $category_hashref ) = @_;
-  $category_hashref ||= {};
+  my ($self, $category) = @_;
+  my $colourmap  = $self->hub->colourmap;
   my $stylesheet = qq(<STYLESHEET version="1.0">\n);
-  foreach my $category_id ( keys %$category_hashref ) {
-    $stylesheet .= qq(  <CATEGORY id="$category_id">\n);
-    my $type_hashref = $category_hashref->{$category_id};
-    foreach my $type_id ( keys %$type_hashref ) {
-      $stylesheet .= qq(    <TYPE id="$type_id">\n);
-      my $glyph_arrayref = $type_hashref->{$type_id};
-      foreach my $glyph_hashref (@$glyph_arrayref ) {
-        $stylesheet .= sprintf qq(      <GLYPH%s>\n        <%s>\n),
-          $glyph_hashref->{'zoom'} ? qq( zoom="$glyph_hashref->{'zoom'}") : '',
-          uc($glyph_hashref->{'type'});
-        foreach my $key (keys %{$glyph_hashref->{'attrs'}||{}} ) {
-          $stylesheet .= sprintf qq(          <%s>%s</%s>\n),
-            uc($key),
-            $glyph_hashref->{'attrs'}{$key},
-            uc($key);
-        }
-        $stylesheet .= sprintf qq(        </%s>\n      </GLYPH>\n),  uc($glyph_hashref->{'type'});
+     $category ||= {};
+  
+  foreach (keys %$category) {
+    my $type = $category->{$_};
+    
+    $stylesheet .= qq(  <CATEGORY id="$_">\n);
+    
+    foreach (keys %$type) {
+      $stylesheet .= qq(    <TYPE id="$_">\n);
+      
+      foreach my $glyph (@{$type->{$_}}) {
+        $stylesheet .= sprintf qq(      <GLYPH%s>\n        <%s>\n), $glyph->{'zoom'} ? qq( zoom="$glyph->{'zoom'}") : '', uc $glyph->{'type'};
+        $stylesheet .= sprintf qq(          <%s>%s</%s>\n), uc $_, $colourmap->{$glyph->{'attrs'}{$_}} ? $colourmap->hex_by_name($glyph->{'attrs'}{$_}) : $glyph->{'attrs'}{$_}, uc $_ for keys %{$glyph->{'attrs'} || {}};
+        $stylesheet .= sprintf qq(        </%s>\n      </GLYPH>\n), uc $glyph->{'type'};
       }
+      
       $stylesheet .= qq(    </TYPE>\n);
     }
+    
     $stylesheet .= qq(  </CATEGORY>\n);
   }
+  
   $stylesheet .= qq(</STYLESHEET>\n);
+  
   return $stylesheet;
 }
 
