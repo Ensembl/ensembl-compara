@@ -23,7 +23,7 @@ sub createObjects {
   
   return $self->problem('fatal', 'Database Error', 'Could not connect to the compara database.') unless $database;
   
-  my $tree = $database->get_ProteinTreeAdaptor->fetch_by_stable_id($gt);
+  my $tree = $database->get_GeneTreeAdaptor->fetch_by_stable_id($gt)->root;
  
   if ($tree) {
     $self->DataObjects($self->new_object('GeneTree', $tree, $self->__data));
