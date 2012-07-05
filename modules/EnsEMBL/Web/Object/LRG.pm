@@ -914,9 +914,10 @@ sub get_GeneTree {
     # Fetch the objects
     my $member = $self->get_compara_Member($compara_db)
         || &$error( "No compara member for this gene" );
-    my $tree_adaptor = $member->adaptor->db->get_adaptor('ProteinTree')
-        || &$error( "Cannot COMPARA->get_adaptor('ProteinTree')" );
-    my $tree = $tree_adaptor->fetch_by_Member_root_id($member, 0) 
+    my $tree_adaptor = $member->adaptor->db->get_adaptor('GeneTree')
+        || &$error( "Cannot COMPARA->get_adaptor('GeneTree')" );
+    my $tree = $tree_adaptor->fetch_all_by_Member($member, -clusterset_id => 'default');
+    $tree = $tree->[0]->root
         || &$error( "No compara tree for ENSEMBLGENE $member" );
     # Update the cache
     $self->{$cachekey} = $tree;
