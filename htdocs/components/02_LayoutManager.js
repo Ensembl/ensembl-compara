@@ -73,7 +73,7 @@ Ensembl.LayoutManager.extend({
     }
     
     $(window).on({
-      resize: function () {
+      resize: function (e) {
         // jquery ui resizable events cause window.resize to fire (all events bubble to window)
         // if target has no tagName it is window or document. Don't resize unless this is the case
         if (!e.target.tagName) {
