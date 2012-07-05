@@ -23,7 +23,7 @@ body.ie67 .nav ul.local_context li img { margin: 0; vertical-align: top; }
 .tool_buttons p,
 .other_tool              { display: none; margin: 0; }
 .tool_buttons a,
-.tool_buttons p.disabled { background-position: 7px 50%; background-repeat: no-repeat; border: 3px double [[PAGE_BG]]; margin: 4px 0px; padding: 4px 4px 4px 28px; }
+.tool_buttons p.disabled { background-position: 7px 50%; background-repeat: no-repeat; border: 3px double [[PAGE_BG]]; margin: 4px 0px; padding: 4px 4px 4px 29px; }
 .tool_buttons a          { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; text-decoration: none; display: block; }
 .tool_buttons p.disabled { background-color: [[BUTTON_DISABLED]]; color: [[BUTTON_TEXT]]; }
       
