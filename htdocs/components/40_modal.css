@@ -155,7 +155,7 @@ body.ie6 #modal_panel .fixed_width .modal_wrapper .panel { border-left: 0; }
 .modal_content .config_manager table tr.disabled              { background-color: #AAA; }
 .modal_content .config_manager table tr.disabled *            { color: #666!important; }
 .modal_content .config_manager tr a.add_to_set                { display: block; width: 16px; height: 16px; background-image: url(/i/16/add.png); position: absolute; right: 0; }
-.modal_content .config_manager tr.added    a.add_to_set       { background-image: url(/i/16/minus.png); }
+.modal_content .config_manager tr.added    a.add_to_set       { background-image: url(/i/16/remove.png); }
 .modal_content .config_manager tr.disabled a.add_to_set       { display: none; }
 .modal_content .config_manager table td ul                    { margin: 0 0 -0.5em 0; padding: 0; list-style: none; }
 .modal_content .config_manager table td ul li                 { padding: 0; list-style-image: none; clear: both; }
