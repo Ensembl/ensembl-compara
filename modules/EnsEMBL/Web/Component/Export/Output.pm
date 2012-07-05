@@ -127,7 +127,7 @@ sub genetic_variation {
           my $colour = $row->{'aachange'} eq '-' ? '' : $colour_map->hex_by_name($colours->{lc $type}->{'default'});
           
           push @info, "$row->{'ID'}; $type; $row->{'aachange'};";
-          push @row_style, $colour ? "background-color:#$colour" : '';
+          push @row_style, $colour ? "background-color:$colour" : '';
         }
       } else {
         push @info, '';
