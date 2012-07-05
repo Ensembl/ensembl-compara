@@ -45,15 +45,15 @@ sub make_table {
   my ($self, $table_rows, $phenotype) = @_;
     
   my $columns = [
-    { key => 'ID',       sort => 'html'                                                       },
+    { key => 'ID',       sort => 'html',      title => 'Variant ID'                           },
     { key => 'chr' ,     sort => 'position',  title => 'Chr: bp'                              },
     { key => 'Alleles',  sort => 'string',                                  align => 'center' },
     { key => 'class',    sort => 'string',    title => 'Class',             align => 'center' },
     { key => 'psource',  sort => 'string',    title => 'Phenotype Sources'                    },
     { key => 'pstudy',   sort => 'string',    title => 'Phenotype Studies'                    },
-    { key => 'status',   sort => 'string',    title => 'Validation',        align => 'center' },
   ];
 
+  push (@$columns, { key => 'phe',   sort => 'string',    title => 'Phenotypes' }) if ($phenotype eq 'ALL');
   my $table_id = $phenotype;
      $table_id =~ s/[^\w]/_/g;
   
@@ -99,7 +99,6 @@ sub stats_table {
     my $var_name   = $va->variation->name;  
     my $phe        = $va->phenotype_description;
     my $phe_source = $va->source_name;
-    my $phe_ext    = $va->external_reference;
     
     $phenotypes{$phe} ||= { id => $va->{'_phenotype_id'} };
     push @{$phenotypes{$phe}{'count'}},  $var_name   unless grep $var_name   eq $_, @{$phenotypes{$phe}{'count'}};
@@ -197,16 +196,18 @@ sub variation_table {
   my $va_adaptor = $self->hub->database('variation')->get_VariationAnnotationAdaptor;
   
   my %list_sources;
+  my %list_phe;
   my $list_variations;
+  
+  my $all_flag = ($phenotype eq 'ALL') ? 1 : 0;
       
   foreach my $va (@{$va_adaptor->fetch_all_by_associated_gene($gene_name)}) {
       
-    next if ($phenotype ne $va->phenotype_description && $phenotype ne 'ALL');
+    next if ($phenotype ne $va->phenotype_description && $all_flag == 0);
     
     #### Phenotype ####
     my $var        = $va->variation;
     my $var_name   = $var->name;
-    my $validation = $var->get_all_validation_states || [];
     my $list_sources;
 
     if (!$list_variations->{$var_name}) {
@@ -235,7 +236,6 @@ sub variation_table {
       }
     
       $list_variations->{$var_name} = { 'class'      => $var->var_class,
-                                        'validation' =>  (join(', ',  @$validation) || '-'),
                                         'chr'        => $location,
                                         'allele'     => $allele
                                       };
@@ -244,6 +244,8 @@ sub variation_table {
     # List the phenotype sources for the variation
     my $phe_source = $va->source_name;
     my $ref_source = $va->external_reference;
+    
+    $list_phe{$var_name}{$va->phenotype_description} = 1 if ($all_flag == 1);
     
     if ($list_sources{$var_name}{$phe_source}) {
       push (@{$list_sources{$var_name}{$phe_source}}, $ref_source) if $ref_source;
@@ -278,19 +280,21 @@ sub variation_table {
       
     }
     if (scalar(@sources_list)) {  
+    
       my $var_url    = "$base_url;v=$var_name";
     
       my $row = {
             ID      => qq{<a href="$var_url">$var_name</a>},
             class   => $list_variations->{$var_name}{'class'},
             Alleles => $list_variations->{$var_name}{'allele'},
-            status  => $list_variations->{$var_name}{'validation'},
             chr     => $list_variations->{$var_name}{'chr'},
             psource => join(', ',@sources_list),
             pstudy  => join(', ',@ext_ref_list),
-          };
+        };
           
-          push @rows, $row;
+      $row->{'phe'} = join('; ',keys(%{$list_phe{$var_name}})) if ($all_flag == 1);
+
+      push @rows, $row;
     }
   }    
   return \@rows;
