@@ -50,7 +50,7 @@ SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=4932;
-SET @this_value='Saccharomyces cerevisiae';
+SET @this_value='S.cerevisiae';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
@@ -105,7 +105,7 @@ SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=9371;
-SET @this_value='Lesser hedgehog tenrec';
+SET @this_value='Tenrec';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
@@ -266,7 +266,7 @@ SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=9557;
-SET @this_value='Hamadryas baboon';
+SET @this_value='Baboon';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
@@ -326,7 +326,7 @@ insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class fr
 
 -- Internal nodes for the GeneTrees
 SET @this_taxon_id=33553;
-SET @this_value='Mouse/Rat/Squirrel ancestor';
+SET @this_value='Squirrels and Old World rodents';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
@@ -346,7 +346,7 @@ SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=207598;
-SET @this_value='Human/Chimp/Gorilla ancestor';
+SET @this_value='Hominines';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
@@ -356,12 +356,12 @@ SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=314145;
-SET @this_value='Carnivore/Insectivore/Ungulate mammalian ancestor';
+SET @this_value='Laurasiatherian mammals';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=314146;
-SET @this_value='Primates/Rodents ancestor';
+SET @this_value='Primates and Rodents';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
@@ -391,7 +391,7 @@ SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=31031;
-SET @this_value='puffers';
+SET @this_value='Puffers';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
@@ -421,12 +421,12 @@ SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=314147;
-SET @this_value='Rodents and rabbits';
+SET @this_value='Rodents and Rabbits';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=7718;
-SET @this_value='Ciona ancestor';
+SET @this_value='Ciona sea squirts';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
@@ -436,17 +436,17 @@ SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=9526;
-SET @this_value='Apes and old world monkeys';
+SET @this_value='Apes and Old World monkeys';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=9604;
-SET @this_value='Human/Chimp/Orang ancestor';
+SET @this_value='Great apes';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=9975;
-SET @this_value='Rabbit/Pika ancestor';
+SET @this_value='Rabbits and Pikas';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
@@ -456,12 +456,12 @@ SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=32525;
-SET @this_value='Marsupial/Mammal';
+SET @this_value='Marsupials and Placental mammals';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=33154;
-SET @this_value='Fungi/Metazoa ancestor';
+SET @this_value='Animals and Fungi';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
@@ -476,12 +476,12 @@ SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=376913;
-SET @this_value='Human/Chimp/Orang/Macaque/Tarsier ancestor';
+SET @this_value='Dry-nosed primates';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=91561;
-SET @this_value='Cow/Alpaca/Dolphin ancestor';
+SET @this_value='Cetaceans and Even-toed ungulates';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
@@ -501,7 +501,7 @@ SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=9348;
-SET @this_value='Sloth/Anteater/Armadillo ancestor';
+SET @this_value='Xenarthran mammals';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
@@ -516,7 +516,7 @@ SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=379584;
-SET @this_value='Dog/Giant Panda ancestor';
+SET @this_value='Caniforms';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
@@ -541,7 +541,7 @@ SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 SET @this_taxon_id=123370;
-SET @this_value='Bony fish, not zebrafish';
+SET @this_value='Bony fish (without Zebrafish)';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
