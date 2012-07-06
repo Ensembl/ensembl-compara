@@ -31,7 +31,7 @@ sub variation_options {
   $self->add_form_element($markup{'snp_display'});
   
   if ($options->{'consequence'} ne 'no') {
-    my %consequence_types = map { $_->label ? ($_->label => $_->display_term) : () } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+    my %consequence_types = map { $_->label ? ($_->label => $_->SO_term) : () } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
     
     push @{$markup{'consequence_filter'}{'values'}}, map { name => $_, value => $consequence_types{$_} }, sort keys %consequence_types;
     
