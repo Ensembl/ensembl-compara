@@ -43,7 +43,7 @@ sub default_options {
 	'non_ref_genome_db_ids' => [39,61,57,3,132,108],
 #	'non_ref_genome_db_ids' => [],
 	  # location of species core dbs which were used in the pairwise alignments
-	'core_db_url' => 'mysql://ensro@ens-livemirror:3306/67',
+	'core_db_urls' => [ 'mysql://ensro@ens-livemirror:3306/67' ],
 	  # alignment chunk size
 	'chunk_size' => 10000000,
 	  # max block size for pecan to align
@@ -172,7 +172,7 @@ sub pipeline_analyses {
 	    {
 		-logic_name     => 'set_genome_db_locator',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::SetGenomeDBLocator',
-		-parameters     => { 'core_db_url' => $self->o('core_db_url') },
+		-parameters     => { 'core_db_urls' => $self->o('core_db_urls') },
 		-input_ids => [{}],
 		-wait_for       => [ 'innodbise_table' ],
 		-flow_into => {

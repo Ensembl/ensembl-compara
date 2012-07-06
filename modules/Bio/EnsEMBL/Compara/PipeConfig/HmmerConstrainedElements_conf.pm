@@ -45,7 +45,7 @@ sub default_options {
 	'ce_batch_size' => 100,
 	'high_coverage_species' => ["rattus_norvegicus","macaca_mulatta","pan_troglodytes","canis_familiaris","mus_musculus","pongo_abelii","equus_caballus","bos_taurus","homo_sapiens","sus_scrofa","gorilla_gorilla","callithrix_jacchus"],
 	'repeat_dump_dir' => '/data/blastdb/Ensembl/compara_repeats',
-	'core_db_url' => 'mysql://ensro@ens-livemirror:3306/62',
+	'core_db_urls' => [ 'mysql://ensro@ens-livemirror:3306/62' ],
     };
 }
 
@@ -78,7 +78,7 @@ sub pipeline_wide_parameters {
 		'mlssid_of_constrained_elements' => $self->o('mlssid_of_constrained_elements'),
 		'high_coverage_species' => $self->o('high_coverage_species'),
 		'repeat_dump_dir' => $self->o('repeat_dump_dir'),
-		'core_db_url' => $self->o('core_db_url'),
+		'core_db_urls' => $self->o('core_db_urls'),
 		'find_overlaps' => $self->o('find_overlaps'),
 		'target_genome' => $self->o('target_genome'),
         };
