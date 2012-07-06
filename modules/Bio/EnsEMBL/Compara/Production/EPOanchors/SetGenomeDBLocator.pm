@@ -4,20 +4,17 @@
 # POD documentation - main docs before the code
 =head1 NAME
 
-Bio::EnsEMBL::Compara::Production::EPOanchors::HMMerAnchors 
+Bio::EnsEMBL::Compara::Production::EPOanchors::SetGenomeDBLocator
 
 =head1 SYNOPSIS
 
 $exonate_anchors->fetch_input();
-$exonate_anchors->run();
 $exonate_anchors->write_output(); writes to database
 
 =head1 DESCRIPTION
 
-Given a database with anchor sequences and a target genome. This modules exonerates 
-the anchors against the target genome. The required information (anchor batch size,
-target genome file, exonerate parameters are provided by the analysis, analysis_job 
-and analysis_data tables  
+module to set the locator field in the genome_db table given a set of species and
+a locator string(s) for the core dbs of those species
 
 =head1 AUTHOR - compara
 
