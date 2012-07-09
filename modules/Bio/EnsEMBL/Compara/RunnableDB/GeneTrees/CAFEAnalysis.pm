@@ -68,10 +68,6 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    unless ( $self->param('number_of_fams') ) {
-        die ('number_of_fams is not set');
-    }
-
     unless ( $self->param('fam_id') ) {
         die ('fam_id is not set');
     }
@@ -89,13 +85,17 @@ sub fetch_input {
         die ('mlss_id must be set')
     }
 
+    unless ( $self->param('lambda') ) {
+        die ('lambda is an obligatory parameter');
+    }
+
     my $cafetree_Adaptor = $self->compara_dba->get_CAFETreeAdaptor;
     $self->param('cafeTree_Adaptor', $cafetree_Adaptor);
 
     my $genomeDB_Adaptor = $self->compara_dba->get_GenomeDBAdaptor;
     $self->param('genomeDB_Adaptor', $genomeDB_Adaptor);
 
-    # cafe_shell, mlss_id, cafe_lambdas and cafe_struct_tree_str are also defined parameters
+    # cafe_shell is also defined parameters
 
     return;
 }
@@ -164,21 +164,19 @@ sub run_cafe_script {
     $cafe_tree_str =~ s/:\d+$//; # remove last branch length
 
 #    my $cafe_table_file = $self->param('work_dir') . "/" . $self->param('cafe_table_file');
-    my $cafe_lambdas = $self->param('cafe_lambdas');  ## For now, it only works with 1 lambda
+    my $lambda = $self->param('lambda');  ## For now, it only works with 1 lambda
     my $cafe_struct_tree = $self->param('cafe_struct_tree_str');
 
     print $sf '#!' . $cafe_shell . "\n\n";
     print $sf "tree $cafe_tree_str\n\n";
     print $sf "load -p ${pval_lim} -i $cafe_table_file\n\n";
-    print $sf "lambda \n";
-    print $sf $cafe_lambdas ? " -l $cafe_lambdas\n\n" : " -s\n\n";
+    print $sf "lambda -l $lambda\n";
+#    print $sf $cafe_lambdas ? " -l $cafe_lambdas\n\n" : " -s\n\n";
 #    print $sf $cafe_lambdas ? "-l $cafe_lambdas -t $cafe_struct_tree\n\n" : " -s\n\n";
     print $sf "report $cafe_out_file\n\n";
     close ($sf);
 
     print STDERR "CAFE output in [$cafe_out_file]\n" if ($self->debug());
-
-
 
     chmod 0755, $script_file;
 
@@ -263,7 +261,7 @@ sub parse_cafe_output {
 
     while (<$fh>) {
         last if $. == 10; # We skip several lines and go directly to the family information.
-# Is it always 10??
+# Is it always 10?? Even if lambda is set??
     }
 
     while (my $fam_line = <$fh>) {

@@ -30,11 +30,11 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'mlss_id'           => 40080,
+        'mlss_id'           => 40084,
         'max_gene_count'    => 1500,
 
-        'release'           => '66',
-        'rel_suffix'        => 'e',    # an empty string by default, a letter otherwise
+        'release'           => '68',
+        'rel_suffix'        => '',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
 #        'work_dir'             => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/nc_trees_'.$self->o('rel_with_suffix'),
@@ -46,7 +46,7 @@ sub default_options {
 
         'pipeline_db' => {                                  # connection parameters
                           -driver => 'mysql',
-                          -host   => 'compara4',
+                          -host   => 'compara2',
                           -port   => 3306,
                           -user   => 'ensadmin',
                           -pass   => $self->o('password'),
@@ -67,29 +67,22 @@ sub default_options {
             'ktreedist_exe'    => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
             'fasttree_exe'     => '/software/ensembl/compara/fasttree/FastTree',
             'treebest_exe'     => '/software/ensembl/compara/treebest.doubletracking',
-            'cafe_shell'       => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
 
-            # Data needed for CAFE
-            'species_tree_meta_key' => 'full_species_tree_string',
-            'cafe_species'         =>  ['danio.rerio', 'gallus.gallus', 'canis.familiaris', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus'],
-            'cafe_lambdas'         => '',  # in ncRNAs the lambda is calculated
-            'cafe_struct_tree_str' => '',  # Not set by default
+            'skip_epo' => 0,
 
-        'reg1' => {
-          -host   => 'ens-staging',
-#           -host => 'ens-livemirror',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-        },
+            'reg1' => {
+                   -host   => 'ens-staging',
+                   -port   => 3306,
+                   -user   => 'ensro',
+                   -pass   => '',
+                  },
 
-        'reg2' => {
-           -host   => 'ens-staging2',
-#           -host => 'ens-livemirror',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-        },
+            'reg2' => {
+                       -host   => 'ens-staging2',
+                       -port   => 3306,
+                       -user   => 'ensro',
+                       -pass   => '',
+                      },
 
         'master_db' => {
             -host   => 'compara1',
@@ -99,14 +92,14 @@ sub default_options {
             -dbname => 'sf5_ensembl_compara_master', # 'sf5_ensembl_compara_master',
         },
 
-        'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
-            -host   => 'compara4',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -dbname => 'kb3_ensembl_compara_65',
-        },
-    };
+            'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
+                         -host   => 'compara3',
+                         -port   => 3306,
+                         -user   => 'ensro',
+                         -pass   => '',
+                         -dbname => 'mm14_ensembl_compara_67',
+                        },
+           };
 }
 
 
@@ -130,10 +123,9 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_;
     return {
-            0 => { -desc => 'default', 'LSF' => '-M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
-            1 => { -desc => 'himem'  , 'LSF' => '-q long -M15000000 -R"select[mem>15000] rusage[mem=15000]"' },
-            2 => { -desc => 'long'   , 'LSF' => '-q long' },
-            3 => { -desc => 'CAFE'   , 'LSF' => '-S 1024 -q long -M15000000 -R"select[mem>15000] rusage[mem=15000]"' },
+            'himem'   => { 'LSF' => '-q basement -M15000000 -R"select[mem>15000] rusage[mem=15000]"' },
+            'long'    => { 'LSF' => '-q long' },
+            'default' => { 'LSF' => '-M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
            };
 }
 
@@ -175,9 +167,10 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql'   => [
-                    'ALTER TABLE member   AUTO_INCREMENT=200000001',
-                    'ALTER TABLE sequence AUTO_INCREMENT=200000001',
-                    'ALTER TABLE homology AUTO_INCREMENT=100000001',
+                    'ALTER TABLE member         AUTO_INCREMENT=100000001',
+                    'ALTER TABLE sequence       AUTO_INCREMENT=100000001',
+                    'ALTER TABLE subset         AUTO_INCREMENT=100000001',
+                    'ALTER TABLE homology       AUTO_INCREMENT=100000001',
                     'ALTER TABLE gene_tree_node AUTO_INCREMENT=100000001',
                     'ALTER TABLE CAFE_tree_node AUTO_INCREMENT=100000001',
                     # Removes the SS and the MLSS associated with non-valid genome_db_ids
@@ -328,6 +321,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'load_members' ],   # per-genome fan
             },
+            -rc_name => 'default',
         },
 
         {   -logic_name    => 'load_members',
@@ -337,6 +331,7 @@ sub pipeline_analyses {
                 3 => [ 'mysql:////subset_member' ],   # every ncrna member is added to the corresponding subset
                 4 => [ 'mysql:////subset_member' ],   # every gene  member is added to the corresponding subset
             },
+            -rc_name => 'default',
         },
 
 # ---------------------------------------------[load RFAM models]---------------------------------------------------------------------
@@ -344,9 +339,8 @@ sub pipeline_analyses {
         {   -logic_name    => 'load_rfam_models',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMLoadModels',
             -hive_capacity => -1,   # to allow for parallelization
-#             -flow_into => {
-#                 1 => [ 'rfam_classify' ],
-#             },
+            -parameters    => { },
+            -rc_name => 'default',
         },
 
 # ---------------------------------------------[run RFAM classification]--------------------------------------------------------------
@@ -356,11 +350,11 @@ sub pipeline_analyses {
             -parameters    => {
                 'mlss_id'        => $self->o('mlss_id'),
             },
-#            -wait_for => [ 'make_species_tree', 'store_lca_species_set', 'load_members_factory', 'load_members' ], # mega-funnel
             -flow_into => {
                            2 => [ 'recover_epo' ],
-                           1 => ['db_snapshot_after_Rfam_classify', 'make_full_species_tree'],
+                           1 => ['db_snapshot_after_Rfam_classify'],
             },
+            -rc_name => 'default',
         },
 
 # -------------------------------------------------------------------------------------------------------------------
@@ -370,75 +364,9 @@ sub pipeline_analyses {
                 -parameters => {
                                 'output_file'  => $ENV{'HOME'}.'/db_snapshot_after_Rfam_classify',
                                },
+                -rc_name => 'default',
             },
 
-#--------------------------------------------------------------------------------
-
-            {
-             -logic_name => 'make_full_species_tree',
-             -module => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
-             -parameters => {
-                             'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
-                             'species_tree_string' => '',
-                            },
-             -hive_capacity => -1,   # to allow for parallelization
-             -wait_for => ['db_snapshot_after_Rfam_classify'],
-             -flow_into  => {
-                             3 => { 'mysql:////meta' => { 'meta_key' => $self->o('species_tree_meta_key'), 'meta_value' => '#species_tree_string#' } },
-                             1 => ['CAFE_species_tree'],
-                            },
-            },
-
-            {
-             -logic_name => 'CAFE_species_tree',
-             -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::CAFESpeciesTree',
-             -parameters => {
-                             'cafe_species' => $self->o('cafe_species'),
-                             'species_tree_meta_key' => $self->o('species_tree_meta_key'),
-                            },
-             -hive_capacity => -1, # to allow for parallelization
-             -flow_into => {
-                            1 => ['CAFE_table'],
-                           },
-            },
-
-            {
-             -logic_name => 'CAFE_table',
-             -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::CAFETable',
-             -parameters => {
-                             'work_dir'     => $self->o('work_dir'),
-                             'cafe_species' => $self->o('cafe_species'),
-                             'mlss_id'      => $self->o('mlss_id'),
-                             'type'         => 'nc',
-                            },
-             -hive_capacity => -1,
-             -flow_into => {
-                            1 => ['CAFE_analysis'],
-                           },
-
-            },
-
-            {
-             -logic_name => 'CAFE_analysis',
-             -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::CAFEAnalysis',
-             -parameters => {
-                             'work_dir'             => $self->o('work_dir'),
-                             'cafe_lambdas'         => $self->o('cafe_lambdas'),
-#                             'cafe_struct_taxons'   => $self->o('cafe_'),
-                             'cafe_struct_tree_str' => $self->o('cafe_struct_tree_str'),
-                             'mlss_id'              => $self->o('mlss_id'),
-                             'cafe_shell'           => $self->o('cafe_shell'),
-                            },
-             -rc_id => 3,
-             -hive_capacity => -1,
-             -flow_into => {
-                            3 => {
-                                  'mysql:////meta' => { 'meta_key' => 'cafe_lambda', 'meta_value' => '#cafe_lambda#' },
-                                  'mysql:////meta' => { 'meta_key' => 'cafe_table_file', 'meta_value' => '#cafe_table_file#' },
-                                  'mysql:////meta' => { 'meta_key' => 'CAFE_tree_string', 'meta_value' => '#cafe_tree_string#' },
-                                 },
-                           }
-            },
 #----------------------------------------[by-cluster branches]----------------------------------------
 
         {   -logic_name    => 'recover_epo',
@@ -446,6 +374,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'mlss_id'        => $self->o('mlss_id'),
                 'epo_db'         => $self->o('epo_db'),
+                'skip'           => $self->o('skip_epo'),
             },
             -hive_capacity => 100,
             -wait_for => ['db_snapshot_after_Rfam_classify'],
@@ -453,6 +382,7 @@ sub pipeline_analyses {
                            '1->A' => [ 'genomic_alignment', 'infernal' ],
                            'A->1' => [ 'treebest_mmerge' ],
             },
+            -rc_name => 'default',
         },
 
 #         {   -logic_name    => 'recover_search',
@@ -475,6 +405,7 @@ sub pipeline_analyses {
             -flow_into => {
                            1 => ['pre_sec_struct_tree' ],
                           },
+            -rc_name => 'default',
         },
 
             {
@@ -486,11 +417,10 @@ sub pipeline_analyses {
                             },
              -flow_into => {
                             2 => [ 'sec_struct_model_tree'],
-#                            -1 => [ 'pre_sec_struct_tree_himem' ],
-#                            -2 => [ 'sec_struct_model_tree_himem' ],
                             -1 => ['fast_trees'],  # -1 is MEMLIMIT
                             -2 => ['fast_trees'],  # -2 is TIMELIMIT
                            },
+             -rc_name => 'default',
             },
 
 #         {
@@ -519,6 +449,7 @@ sub pipeline_analyses {
                            -1 => [ 'sec_struct_model_tree_himem' ],
                            -2 => [ 'sec_struct_model_tree_himem' ],
                           },
+            -rc_name => 'default',
         },
 
         {
@@ -530,7 +461,7 @@ sub pipeline_analyses {
                         },
          -failed_job_tolerance => 3,
          -can_be_empty => 1,
-         -rc_id => 1,
+         -rc_name => 'himem',
         },
 
         {   -logic_name    => 'genomic_alignment',
@@ -549,6 +480,7 @@ sub pipeline_analyses {
                            3  => ['fast_trees'],
                            2  => ['genomic_tree'],
                           },
+            -rc_name => 'default',
         },
 
             {
@@ -561,7 +493,7 @@ sub pipeline_analyses {
                              'raxmlLight_exe' => $self->o('raxmlLight_exe'),
                             },
              -can_be_empty => 1,
-             -rc_id => 1,
+             -rc_name => 'himem',
             },
 
         {
@@ -576,7 +508,7 @@ sub pipeline_analyses {
                            },
          -failed_job_tolerance => 5,
          -can_be_empty => 1,
-         -rc_id => 1,
+         -rc_name => 'himem',
          -flow_into => {
                         2 => ['genomic_tree_himem'],
                        },
@@ -588,11 +520,13 @@ sub pipeline_analyses {
              -hive_capacity => 200,
              -parameters => {
                              'treebest_exe' => $self->o('treebest_exe'),
+                             'mlss_id' => $self->o('mlss_id'),
                             },
              -flow_into => {
                             -2 => ['genomic_tree_himem'],
                             -1 => ['genomic_tree_himem'],
                            },
+             -rc_name => 'default',
             },
 
             {
@@ -601,9 +535,10 @@ sub pipeline_analyses {
              -hive_capacity => 200,
              -parameters => {
                              'treebest_exe' => $self->o('treebest_exe'),
+                             'mlss_id' => $self->o('mlss_id'),
                             },
              -can_be_empty => 1,
-             -rc_id => 1,
+             -rc_name => 'himem',
             },
 
         {   -logic_name    => 'treebest_mmerge',
@@ -611,6 +546,7 @@ sub pipeline_analyses {
             -hive_capacity => 400,
             -parameters => {
                             'treebest_exe' => $self->o('treebest_exe'),
+                            'mlss_id' => $self->o('mlss_id'),
                            },
 #            -wait_for      => ['recover_epo', 'pre_sec_struct_tree','genomic_alignment', 'genomic_alignment_long', 'sec_struct_model_tree','sec_struct_model_tree_himem', 'genomic_tree', 'genomic_tree_himem', 'fast_trees', 'infernal' ],
             -failed_job_tolerance => 5,
@@ -619,6 +555,7 @@ sub pipeline_analyses {
                            -1 => [ 'treebest_mmerge_himem' ],
                            -2 => [ 'treebest_mmerge_himem' ],
             },
+            -rc_name => 'default',
         },
 
         {
@@ -627,25 +564,28 @@ sub pipeline_analyses {
          -hive_capacity => 400,
          -parameters => {
                          'treebest_exe' => $self->o('treebest_exe'),
+                         'mlss_id' => $self->o('mlss_id'),
                         },
          -failed_job_tolerance => 5,
          -flow_into => {
                         2 => [ 'orthotree', 'ktreedist' ],
                        },
-         -rc_id => 1,
+         -rc_name => 'himem',
         },
 
         {   -logic_name    => 'orthotree',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -hive_capacity => 200,
             -parameters => {
-                    'tree_id_str'       => 'nc_tree_id',
-                    'tag_split_genes'   => 0,
+                            'tree_id_str'       => 'nc_tree_id',
+                            'tag_split_genes'   => 0,
+                            'mlss_id' => $self->o('mlss_id'),
             },
             -flow_into => {
                            -1 => ['orthotree_himem' ],
                            -2 => ['orthotree_himem' ],
                           },
+            -rc_name => 'default',
         },
 
         {
@@ -653,11 +593,12 @@ sub pipeline_analyses {
          -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
          -hive_capacity => 200,
          -parameters => {
-                    'tree_id_str'       => 'nc_tree_id',
-                    'tag_split_genes'   => 0,
+                         'tree_id_str'       => 'nc_tree_id',
+                         'tag_split_genes'   => 0,
+                         'mlss_id' => $self->o('mlss_id'),
          },
          -failed_job_tolerance => 5,
-         -rc_id => 1,
+         -rc_name => 'himem',
         },
 
         {   -logic_name    => 'ktreedist',
@@ -666,11 +607,13 @@ sub pipeline_analyses {
             -parameters => {
                             'treebest_exe'  => $self->o('treebest_exe'),
                             'ktreedist_exe' => $self->o('ktreedist_exe'),
+                            'mlss_id' => $self->o('mlss_id'),
                            },
             -failed_job_tolerance =>  5,    # that many per cent jobs are allowed to fail
             -flow_into => {
                            -1 => [ 'ktreedist_himem' ],
                           },
+            -rc_name => 'default',
         },
 
         {
@@ -680,9 +623,10 @@ sub pipeline_analyses {
          -parameters => {
                          'treebest_exe'  => $self->o('treebest_exe'),
                          'ktreedist_exe' => $self->o('ktreedist_exe'),
+                         'mlss_id' => $self->o('mlss_id'),
                         },
          -failed_job_tolerance => 5,
-         -rc_id => 1,
+         -rc_name => 'himem',
         },
 
     ];
