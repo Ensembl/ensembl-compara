@@ -48,7 +48,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-        'tree_fmt'       => '%{n}%{":"d}',
+            'tree_fmt'         => '%{n}%{":"d}',
+            'norm_factor'      => 0.1,
+            'norm_factor_step' => 0.1,
     };
 }
 
@@ -65,13 +67,19 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    unless ( $self->param('cafe_tree_string_mlss_tag') ) {
-        die ('cafe_species_tree_mlss_tag needs to be defined to get the speciestree from the method_link_species_tree_tag table');
-    }
+#     unless ( $self->param('cafe_tree_string_mlss_tag') ) {
+#         die ('cafe_species_tree_mlss_tag needs to be defined to get the speciestree from the method_link_species_tree_tag table');
+#     }
     $self->param('cafe_tree_string', $self->get_tree_string_from_mlss_tag());
+    $self->get_cafe_tree_from_string();
 
     unless ( $self->param('mlss_id') ) {
         die ('mlss_id is mandatory');
+    }
+
+## Needed for lambda calculation
+    if (! defined $self->param('lambda') && ! defined $self->param('cafe_shell')) {
+        die ('cafe_shell is mandatory if lambda is not provided');
     }
 
     unless ( $self->param('type') ) {
@@ -92,19 +100,31 @@ sub fetch_input {
 sub run {
     my ($self) = @_;
 
-    $self->get_cafe_tree_from_string();
-    if ($self->param('perFamTable')) {
+    if (defined $self->param('lambda') and defined $self->param('perFamTable')) {
         $self->get_per_family_cafe_table_from_db();
+        return;
+    }
+
+    my $table = $self->get_full_cafe_table_from_db();
+    if (!defined $self->param('lambda')) {
+        $self->param('lambda', $self->get_lambda($table));
+    }
+    print STDERR "FINAL LAMBDA IS ", $self->param('lambda'), "\n";
+    if (!defined $self->param('perFamTable')) {
+        my $sth = $self->compara_dba->dbc->prepare("INSERT INTO CAFE_data (fam_id, tree, tabledata) VALUES (?,?,?);");
+        $sth->execute(1, $self->param('cafe_tree_string'), $table);
+        $sth->finish();
+        $self->param('all_fams', [1]);
     } else {
-        $self->get_full_cafe_table_from_db();
+        $self->get_per_family_cafe_table_from_db();
     }
 }
 
 sub write_output {
     my ($self) = @_;
 
-    my $number_of_fams = $self->param('number_of_fams');
     my $all_fams = $self->param('all_fams');
+    my $lambda = $self->param('lambda');
     for my $fam_id (@$all_fams) {
 
         print STDERR "FIRING FAM: $fam_id\n";
@@ -112,7 +132,7 @@ sub write_output {
         $self->dataflow_output_id (
                                    {
                                     'fam_id' => $fam_id,
-                                    'number_of_fams' => $number_of_fams,
+                                    'lambda' => $lambda,
                                    }, 2
                                   );
     }
@@ -125,12 +145,12 @@ sub write_output {
 
 sub get_tree_string_from_mlss_tag {
     my ($self) = @_;
-    my $cafe_tree_string_mlss_tag = $self->param('cafe_tree_string_mlss_tag');
+#    my $cafe_tree_string_mlss_tag = $self->param('cafe_tree_string_mlss_tag');
     my $mlss_id = $self->param('mlss_id');
 
-    my $sql = "SELECT value FROM method_link_species_set_tag WHERE tag = ? AND method_link_species_set_id = ?";
+    my $sql = "SELECT value FROM method_link_species_set_tag WHERE tag = 'cafe_tree_string' AND method_link_species_set_id = ?";
     my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($cafe_tree_string_mlss_tag, $mlss_id);
+    $sth->execute($mlss_id);
 
     my ($cafe_tree_string) = $sth->fetchrow_array();
     $sth->finish;
@@ -149,15 +169,21 @@ sub get_cafe_tree_from_string {
 
 sub get_full_cafe_table_from_db {
     my ($self) = @_;
+    my $cafe_tree = $self->param('cafe_tree');
     my $species = $self->param('cafe_species');
+    unless (ref $species eq "ARRAY") { ## if we don't have an arrayref, all the species are used
+        my @sps;
+        for my $sp (@{$cafe_tree->get_all_leaves()}) {
+            push @sps, $sp->name();
+        }
+        $species = [@sps];
+    }
     my $adaptor = $self->param('adaptor');
 
     my $mlss_id = $self->param('mlss_id');
 
     my $table = "FAMILY_DESC\tFAMILY\t" . join("\t", @$species);
     $table .= "\n";
-
-#    print $cafe_fh "FAMILY_DESC\tFAMILY\t", join("\t", @$species), "\n";
 
     my $all_trees = $adaptor->fetch_all(-tree_type => 'tree');
     print STDERR scalar @$all_trees, " trees to process\n" if ($self->debug());
@@ -183,19 +209,15 @@ sub get_full_cafe_table_from_db {
             $ok_fams++;
             $table .= join ("\t", @flds);
             $table .= "\n";
-#            print $cafe_fh join("\t", @flds), "\n";
         }
+        $tree->release_tree();
+#        last if ($ok_fams == 10);
     }
-#    close($cafe_fh);
 
-    my $sth = $self->compara_dba->dbc->prepare("INSERT INTO CAFE_data (fam_id, tree, tabledata) VALUES (?,?,?);");
-    $sth->execute(1, $self->param('cafe_tree_string'), $table);
-    $sth->finish();
-
-    $self->param('all_fams', [1]);
-    $self->param('number_of_fams', 1);
+#    $self->param('all_fams', [1]);
     print STDERR "$ok_fams families in final table\n" if ($self->debug());
-    return;
+    print STDERR "$table\n";
+    return $table;
 }
 
 sub get_per_family_cafe_table_from_db {
@@ -238,7 +260,6 @@ sub get_per_family_cafe_table_from_db {
         }
         next unless (scalar @leaves > 1);
 
-#        print STDERR "LEAVES: ", Dumper \@leaves;
         my $lca = $sp_tree->find_first_shared_ancestor_from_leaves([@leaves]);
         next unless (defined $lca);
         my $lca_str = $lca->newick_format('ryo', $fmt);
@@ -247,7 +268,6 @@ sub get_per_family_cafe_table_from_db {
         my $all_species_in_tree = $lca->get_all_leaves();
         for my $sp_node (@$all_species_in_tree) {
             my $sp = $sp_node->name();
-#        for my $sp (@$species) {
             $fam_table .= "\t$sp";
         }
         $fam_table .= "\n";
@@ -255,7 +275,6 @@ sub get_per_family_cafe_table_from_db {
         my @flds = ($name, $root_id);
         for my $sp_node (@$all_species_in_tree) {
             my $sp = $sp_node->name();
-#       for my $sp (@$species) {
             push @flds, ($species{$sp} || 0);
         }
 
@@ -273,7 +292,6 @@ sub get_per_family_cafe_table_from_db {
 
     print STDERR "$ok_fams families in final table\n" if ($self->debug());
     $self->param('all_fams', [@all_fams]);
-    $self->param('number_of_fams', $ok_fams);
     return;
 }
 
@@ -323,5 +341,160 @@ sub is_in {
     }
     return 0;
 }
+
+########################################
+## Subroutines for lambda calculation
+########################################
+
+sub get_lambda {
+    my ($self, $table) = @_;
+    my $cafe_shell = $self->param('cafe_shell');
+    my $tmp_dir = $self->worker_temp_directory;
+    my $norm_factor = $self->param('norm_factor');
+    my $norm_factor_step = $self->param('norm_factor_step');
+    my $lambda = 0;
+LABEL:    while (1) {
+        my $new_table = $self->get_normalized_table($table, $norm_factor);
+        my $table_file = $self->get_table_file($new_table);
+        my $script     = $self->get_script($table_file);
+        print STDERR "NORM_FACTOR: $norm_factor\n";
+        print STDERR "Table file is:  $table_file\n";
+        print STDERR "Script file is: $script\n";
+        chmod 0755, $script;
+        $self->compara_dba->dbc->disconnect_when_inactive(0);
+        open my $cafe_proc, "-|", $script or die $!;  ## clean after! (cafe leaves output files)
+        my $inf;
+        my $inf_in_row;
+        while (<$cafe_proc>) {
+            chomp;
+            next unless (/^Lambda\s+:\s+(0\.\d+)\s+&\s+Score\s*:\s+(.+)/);
+            $lambda = $1;
+            my $score = $2;
+#            print STDERR "$_\n";
+#            print STDERR "++ LAMBDA: $lambda, SCORE: $score\n";
+            if ($score eq '-inf') {
+                $inf++;
+                $inf_in_row++;
+                print STDERR "-inf score! => INF: $inf, INF_IN_ROW: $inf_in_row\n";
+            } else {
+                $inf_in_row = 0;
+            }
+            if ($inf >= 10 || $inf_in_row >= 4) {
+                $norm_factor+=$norm_factor_step;
+                print STDERR "FAILED LAMBDA CALCULATION -- RETRYING WITH $norm_factor\n";
+                next LABEL;
+            }
+        }
+        last LABEL;
+    }
+    return $lambda;
+}
+
+sub get_normalized_table {
+    my ($self, $table, $n) = @_;
+    my ($header, @table) = split /\n/, $table;
+    my @species = split /\t/, $header;
+    my @headers = @species[0,1];
+    @species = @species[2..$#species];
+
+    my $data;
+    my $fams;
+
+    for my $row (@table) {
+        chomp;
+        my @flds = split/\t/, $row;
+        push @$fams, [@flds];
+        for my $i (2..$#flds) {
+            push @{$data->{$species[$i-2]}}, $flds[$i];
+        }
+    }
+    print STDERR Dumper $data;
+    my $means_a;
+    for my $sp (@species) {
+        my $mean = mean(@{$data->{$sp}});
+        my $stdev = stdev($mean, @{$data->{$sp}});
+        #  $means->{$sp} = {mean => $mean, stdev => $stdev};
+        push @$means_a, {mean => $mean, stdev => $stdev};
+    }
+
+    my $newTable = join "\t", @headers, @species;
+    $newTable .= "\n";
+    my $nfams = 0;
+    for my $famdata (@$fams) {
+        my $v = 0;
+        for my $i (0 .. $#species) {
+            my $vmean = $means_a->[$i]->{mean};
+            my $vstdev = $means_a->[$i]->{stdev};
+            my $vreal = $famdata->[$i+2];
+
+            $v++ if (($vreal > ($vmean - $vstdev/$n)) && ($vreal < ($vmean + $vstdev/$n)));
+        }
+        if ($v == scalar(@species)) {
+            $newTable .= join "\t", @$famdata;
+            $newTable .= "\n";
+            $nfams++;
+        }
+    }
+    print STDERR "$nfams families written in tbl file\n";
+    return $newTable;
+}
+
+sub get_table_file {
+    my ($self, $table) = @_;
+    my $tmp_dir = $self->worker_temp_directory;
+    my $mlss_id = $self->param('mlss_id');
+    my $table_file = "${tmp_dir}/cafe_${mlss_id}_lambda.tbl";
+    open my $table_fh, ">", $table_file or die "$!: $table_file\n";
+    print $table_fh $table;
+    close ($table_fh);
+    return $table_file;
+}
+
+
+sub get_script {
+    my ($self, $table_file) = @_;
+    my $tmp_dir = $self->worker_temp_directory;
+    my $cafe_shell = $self->param('cafe_shell');
+    my $mlss_id = $self->param('mlss_id');
+    my $cafe_tree_string = $self->param('cafe_tree_string');
+    chop($cafe_tree_string); #remove final semicolon
+    $cafe_tree_string =~ s/:\d+$//; # remove last branch length
+    my $script_file = "${tmp_dir}/cafe_${mlss_id}_lambda.sh";
+
+    open my $sf, ">", $script_file or die "$!: $script_file\n";
+    print $sf '#!' . $cafe_shell . "\n\n";
+    print $sf "tree $cafe_tree_string\n\n";
+    print $sf "load -i $table_file\n\n";
+    print $sf "lambda -s\n";
+    close ($sf);
+
+    return $script_file;
+}
+
+sub mean {
+    my (@items) = @_;
+    return sum(@items) / (scalar @items);
+}
+
+sub sum {
+    my (@items) = @_;
+    my $res;
+    for my $next (@items) {
+        die unless (defined $next);
+        $res += $next;
+    }
+    return $res;
+}
+
+sub stdev {
+    my ($mean, @items) = @_;
+    my $var = 0;
+    my $n_items = scalar @items;
+    for my $item (@items) {
+        $var += ($mean - $item) * ($mean - $item);
+    }
+    return sqrt($var / (scalar @items));
+}
+
 
 1;
