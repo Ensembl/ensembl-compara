@@ -612,7 +612,7 @@ sub features {
     $f->{'_genome_dbs'}         = \%genome_dbs;
     $f->{'_genes'}              = \%genes;
     $f->{'_leaves'}             = \%leaves;
-    $f->{'label'}               = sprintf '%s: %d homologs', $tree->get_tagvalue('taxon_name'), $leaf_count;
+    $f->{'label'}               = sprintf '%s: %d homologs', ($self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$tree->get_tagvalue('taxon_id')} || $tree->get_tagvalue('taxon_name')), $leaf_count;
 
   }
   
@@ -657,7 +657,7 @@ sub features {
       $f->{'_species'} = ucfirst $tree->genome_db->name; # This will be used in URLs
 
       # This will be used for display
-      $f->{'_species_label'} = $self->species_defs->get_config($f->{'_species'}, 'SPECIES_SCIENTIFIC_NAME') || $self->species_defs->species_label($f->{'_species'}) || $f->{'_species'}; 
+      $f->{'_species_label'} = $self->species_defs->get_config($f->{'_species'}, 'DISPLAY_NAME') || $self->species_defs->species_label($f->{'_species'}) || $f->{'_species'}; 
       $f->{'_genome_dbs'} ||= {};
       $f->{'_genome_dbs'}->{$tree->genome_db->dbID}++;
     }
