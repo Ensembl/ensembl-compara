@@ -769,10 +769,10 @@ sub get_GeneTree {
   if (!$self->{$cache_key}) {
     my $member  = $self->get_compara_Member($compara_db)           || return;
     my $adaptor = $member->adaptor->db->get_adaptor('GeneTree')    || return;
-    my $tree    = $adaptor->fetch_all_by_Member($member, -clusterset_id => 'default')->[0]->root;
+    my $tree    = $adaptor->fetch_all_by_Member($member, -clusterset_id => 'default')->[0];
     return unless $tree;
     
-    $self->{$cache_key} = $tree;
+    $self->{$cache_key} = $tree->root;
     $self->{"_member_$compara_db"} = $member;
   }
   return $self->{$cache_key};

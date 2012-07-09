@@ -23,13 +23,13 @@ sub createObjects {
   
   return $self->problem('fatal', 'Database Error', 'Could not connect to the compara database.') unless $database;
   
-  my $tree = $database->get_GeneTreeAdaptor->fetch_by_stable_id($gt)->root;
+  my $tree = $database->get_GeneTreeAdaptor->fetch_by_stable_id($gt);
  
   if ($tree) {
-    $self->DataObjects($self->new_object('GeneTree', $tree, $self->__data));
+    $self->DataObjects($self->new_object('GeneTree', $tree->root, $self->__data));
   }
   else { 
-    return $self->problem('fatal', "Could not find Marker $gt", "Either $gt does not exist in the current Ensembl database, or there was a problem retrieving it.");
+    return $self->problem('fatal', "Could not find GeneTree $gt", "Either $gt does not exist in the current Ensembl database, or there was a problem retrieving it.");
   }
   
   $self->param('gt', $gt);
