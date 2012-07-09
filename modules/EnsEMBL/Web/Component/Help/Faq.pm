@@ -18,9 +18,9 @@ sub _init {
 sub content {
   my $self = shift;
   my $hub = $self->hub;
-  my $id = $hub->param('id') || $hub->param('feedback');
+  my $id = shift || $hub->param('id') || $hub->param('feedback');
   $id+=0;
-  my $html = qq(<h2>FAQs</h2>);
+  my $html;
   
   my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
   my $args;
@@ -62,6 +62,7 @@ sub content {
       $html .= qq(<ul><li><a href="/Help/Faq" class="popup">More FAQs</a></li></ul>);
     }
     else {
+      $html .= qq(<h2>FAQs</h2>);
       foreach my $faq (@faqs) {
         next unless $faq;
         next if $single_cat && $faq->{'category'} ne $single_cat;
