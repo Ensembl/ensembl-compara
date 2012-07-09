@@ -209,7 +209,7 @@ sub default_options {
         #'reuse_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
         'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
         'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
-        'curr_file_sources_locs'    => [ '/lustre/scratch101/ensembl/mm14/gibbon/species_list.json' ],
+        'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
         'prev_release'              => 68,   # 0 is the default and it means "take current release number and subtract 1"
         'reuse_db' => {   # usually previous release database on compara1
            -host   => 'compara3',
