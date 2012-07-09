@@ -1088,6 +1088,9 @@ sub reset {
 
 sub get_track_key {
   my ($self, $prefix, $obj) = @_;
+  
+  return if $obj->gene && $obj->gene->isa('Bio::EnsEMBL::ArchiveStableId');
+  
   my $logic_name = $obj->gene ? $obj->gene->analysis->logic_name : $obj->analysis->logic_name;
   my $db         = $obj->get_db;
   my $db_key     = 'DATABASE_' . uc $db;
