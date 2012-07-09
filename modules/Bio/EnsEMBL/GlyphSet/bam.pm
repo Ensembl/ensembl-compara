@@ -2,9 +2,17 @@ package Bio::EnsEMBL::GlyphSet::bam;
 use strict;
 use base qw(Bio::EnsEMBL::GlyphSet::sequence);
 
+use Bio::EnsEMBL::GlyphSet;
+
 use Bio::EnsEMBL::ExternalData::BAM::BAMAdaptor;
 use Bio::EnsEMBL::DBSQL::DataFileAdaptor;
 use Data::Dumper;
+
+# Hack to override parent errorTrack method
+# sequence glyph errorTrack has been hacked so this unhacks it
+sub errorTrack {
+  Bio::EnsEMBL::GlyphSet::errorTrack(@_); 
+}
 
 sub render_histogram {
   my ($self) = @_;
@@ -48,12 +56,17 @@ sub render_normal {
     local $SIG{ALRM} = sub { die "alarm\n" }; # NB: \n required
     alarm $timeout;
     # render
-    #print STDERR "Rendering coverage\n";
-    $self->render_coverage(%options) if $options{show_coverage}; 
-    #print STDERR "Done rendering coverage\n";
-    #print STDERR "Rendering reads\n";
-    $self->render_sequence_reads(%options) if $options{show_reads};  
-    #print STDERR "Done rendering reads\n";
+    if (!scalar(@{$self->features})) {
+      $self->no_features;
+    } else {
+
+      #print STDERR "Rendering coverage\n";
+      $self->render_coverage(%options) if $options{show_coverage};
+      #print STDERR "Done rendering coverage\n";
+      #print STDERR "Rendering reads\n";
+      $self->render_sequence_reads(%options) if $options{show_reads};
+      #print STDERR "Done rendering reads\n";
+    }
     alarm 0;
   };
   if ($@) {
