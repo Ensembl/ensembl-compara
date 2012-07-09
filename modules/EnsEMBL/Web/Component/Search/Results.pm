@@ -3,7 +3,7 @@ package EnsEMBL::Web::Component::Search::Results;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component::Search);
 use EnsEMBL::Web::Document::HTML::HomeSearch;
 
 # --------------------------------------------------------------------
@@ -29,25 +29,28 @@ sub content {
   my $html;
 
   if ($hub->species ne 'Multi' && $hub->param('q')) {
-    $html = "<p>Your search for <strong>" . $hub->param('q')  . "</strong> returned <strong>"
+    if ($search->{total_hits} < 1) {
+      $html = $self->no_results($hub->param('q'));
+    }
+    else {
+      $html = "<p>Your search for <strong>" . $hub->param('q')  . "</strong> returned <strong>"
               .$search->{total_hits}."</strong> hits.</p>";
-    $html .= "<p>Please note that because this site uses a direct MySQL search,  we limit the search to 10 results per category and search term, in order to avoid overloading the database server.";
+      $html .= "<p>Please note that because this site uses a direct MySQL search,  we limit the search to 10 results per category and search term, in order to avoid overloading the database server.";
 
-    # Eagle change to order the results differently
-    # we can either order the results by our own @order_results array, the species.ini files ( @idxs ), or just by sorting by keys as below. 	
-    # ## Filter by configured indices
+      # Eagle change to order the results differently
+      # we can either order the results by our own @order_results array, the species.ini files ( @idxs ), or just by sorting by keys as below. 	
+      # ## Filter by configured indices
 
-    # # These are the methods for the current species that we want to try and run
-    # # The array is ordered in the way that they are listed in the .ini file
-    # my @idxs = @{$hub->species_defs->ENSEMBL_SEARCH_IDXS};
+      # # These are the methods for the current species that we want to try and run
+      # # The array is ordered in the way that they are listed in the .ini file
+      # my @idxs = @{$hub->species_defs->ENSEMBL_SEARCH_IDXS};
 	
-    # the first value is the search method/species ini term. The second value is the display label.
-    my @order_results = ( ['Gene', 'Gene or Gene Product' ], [ 'Marker', 'Genetic Marker'], [ 'OligoProbe', 'Array Probe Set' ], [ 'SNP', 'SNP'], [ 'Domain', 'Interpro Domain'], [ 'Family', 'Gene Family'], ['GenomicAlignment', 'Sequence Aligned to Genome, eg. EST or Protein' ], [ 'Sequence', 'Genomic Region, eg. Clone or Contig' ], [ 'QTL', 'QTL' ]  ); 
+      # the first value is the search method/species ini term. The second value is the display label.
+      my @order_results = ( ['Gene', 'Gene or Gene Product' ], [ 'Marker', 'Genetic Marker'], [ 'OligoProbe', 'Array Probe Set' ], [ 'SNP', 'SNP'], [ 'Domain', 'Interpro Domain'], [ 'Family', 'Gene Family'], ['GenomicAlignment', 'Sequence Aligned to Genome, eg. EST or Protein' ], [ 'Sequence', 'Genomic Region, eg. Clone or Contig' ], [ 'QTL', 'QTL' ]  ); 
 
-    foreach my $search_ref ( @order_results ) {
-      my $search_index = $search_ref->[0];
-      my $display_term = $search_ref->[1]; 
-      #foreach my $search_index ( sort keys %{$search->{'results'} } ) {
+      foreach my $search_ref ( @order_results ) {
+        my $search_index = $search_ref->[0];
+        my $display_term = $search_ref->[1]; 
         if ( $search->{'results'}{$search_index} ) { 
 	        my( $results ) = @{ $search->{'results'}{$search_index} };
           my $count = scalar(@$results);
@@ -70,7 +73,7 @@ sub content {
 	        }
 	        $html .= '</ol>';
         }
-      #}
+      }
     }
   }
   else {
