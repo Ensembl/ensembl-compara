@@ -837,9 +837,8 @@ sub getVariationsOnSlice {
 
 sub store_TransformedTranscripts {
   my( $self ) = @_;
-  my $page_type     = $self->hub->type;
-  my $focus_transcript = $page_type eq 'Transcript' ? $self->param('t') : undef;
-
+  my $focus_transcript = $self->hub->type eq 'Transcript' ? $self->param('t') : undef;
+ 
   my $offset = $self->__data->{'slices'}{'transcripts'}->[1]->start -1;
   foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
     next if $focus_transcript && $trans_obj->stable_id ne $focus_transcript;
@@ -1045,8 +1044,11 @@ sub need_consequence_check {
 sub store_TransformedDomains {
   my( $self, $key ) = @_; 
   my %domains;
+  my $focus_transcript = $self->hub->type eq 'Transcript' ? $self->param('t') : undef;
+
   my $offset = $self->__data->{'slices'}{'transcripts'}->[1]->start -1;
   foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
+    next if $focus_transcript && $trans_obj->stable_id ne $focus_transcript;
     my %seen;
     my $transcript = $trans_obj->Obj; 
     next unless $transcript->translation; 
@@ -1086,7 +1088,8 @@ sub get_munged_slice {
     $master_config = shift;
   } else {
     shift;
-  }
+  } 
+
   my $slice         = $self->get_Slice(@_);
   my $stable_id     = $self->stable_id;
   my $length        = $slice->length; 
@@ -1095,6 +1098,7 @@ sub get_munged_slice {
   my $extent        = $context eq 'FULL' ? 5000 : $context;
   my $features      = $slice->get_all_Genes(undef, $self->param('opt_db'));
   my @lengths;
+  my $offset;
 
   # Allow return of data for a single transcript
   my $page_type     = $self->hub->type;
@@ -1105,8 +1109,15 @@ sub get_munged_slice {
   } else {
     foreach my $gene (grep { $_->stable_id eq $stable_id } @$features) {   
       foreach my $transcript (@{$gene->get_all_Transcripts}) {
-        next if $focus_transcript && $transcript->stable_id ne $focus_transcript;
-        foreach my $exon (@{$transcript->get_all_Exons}) {
+        next if $focus_transcript && $transcript->stable_id ne $focus_transcript; 
+        if (defined($offset)) {
+          if ($offset > $transcript->start-$extent) {
+            $offset = $transcript->start-$extent;
+          }
+        } else {
+          $offset = $transcript->start-$extent;
+        }
+        foreach my $exon (@{$transcript->get_all_Exons}) { 
           my $start       = $exon->start - $extent;
           my $exon_length = $exon->end   - $exon->start + 1 + 2 * $extent;
           if ($start-1 >= 0) {
@@ -1119,9 +1130,11 @@ sub get_munged_slice {
       }
     }
     
+    $munged =~ s/^0+//;
+    $munged =~ s/0+$//;
     @lengths = map length($_), split /(0+)/, $munged;
   }
-  
+
   # @lengths contains the sizes of gaps and exons(+/- context)
 
   $munged = undef;
@@ -1129,7 +1142,7 @@ sub get_munged_slice {
   my $collapsed_length = 0;
   my $flag             = 0;
   my $subslices        = [];
-  my $pos              = 0;
+  my $pos              = $offset; 
   
   foreach (@lengths, 0) {
     if ($flag = 1 - $flag) {
@@ -1141,7 +1154,6 @@ sub get_munged_slice {
     
     $pos += $_;
   }
-
   # compute the width of the slice image within the display
   my $pixel_width =
     ($master_config ? $master_config->get_parameter('image_width') : 800) - 
@@ -1164,7 +1176,6 @@ sub get_munged_slice {
 
   # Compute offset for each subslice
   my $start = 0;
-  
   foreach (@$subslices) {
     $_->[2] = $start  - $_->[0];
     $start += $_->[1] - $_->[0] - 1 + $padding;
