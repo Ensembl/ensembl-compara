@@ -14,8 +14,8 @@ body.ie6 th, body.ie6 td { font-size: 13px; }
 
 img  { border: 0; }
 pre  { margin-left: 1em; }
-p    { margin: 0.6em 0; }
-form { border: none; margin-top: 0; margin-bottom: 0; padding: 0; }
+p    { margin: 8px 0; }
+form { border: none; margin-top: 16px; margin-bottom: 0; padding: 0; }
 
 /*----------------------------------------------------------------------
   Minimum page width
@@ -50,7 +50,7 @@ body.ie6 #min_width_holder    { display: inline-block; position: relative; margi
   Headings
 ----------------------------------------------------------------------*/
 
-h1, h2, h3, h4 { color: [[PAGE_HEADER]]; }
+h1, h2, h3, h4 { color: [[PAGE_HEADER]]; margin: 16px 0 0; }
 h1     { font-size: 1.5em; }
 h2     { font-size: 1.2em; }
 h3     { font-size: 1.1em; }
@@ -91,7 +91,9 @@ a.bigtext     { text-decoration: none;                        }
 .bottom             { vertical-align: bottom; }
 .autocenter_wrapper { text-align: center;     }
 .autocenter         { text-align: left; margin: 0 auto; }
-.invisible          { font-size: 1px; color: #fff; height: 0; clear: both; overflow: hidden; } /* Force divs to wrap their contents using an invisible paragraph at the end! */
+.invisible          { display: none; font-size: 1px; color: #fff; height: 0; clear: both; overflow: hidden; } /* Force divs to wrap their contents using an invisible paragraph at the end! */
+body.ie6 .invisible { display: block; }
+
 
 /*----------------------------------------------------------------------
  Links 
@@ -138,7 +140,7 @@ div.error div, div.warning div,
 div.info div, div.hint div        { border: 1px solid; border-radius: 0 0 8px 8px; -moz-border-radius: 0 0 8px 8px; -webkit-border-radius: 0 0 8px 8px; }
 
 div.syntax-error, div.error                 { color: #333; background-color: #fff; }
-div.error, div.warning, div.info, div.hint  { border: none; margin: 4px 0; }
+div.error, div.warning, div.info, div.hint  { border: none; margin: 16px 0 0; }
 div.error div                               { border-color: #a55; }
 div.warning div                             { border-color: #fd9; }
 div.info div, div.hint div                  { border-color: #ccc; }
