@@ -101,37 +101,37 @@ sub content {
 
   ## Variation documentation links
   $html .= qq(
-    <h2>Help with variations</h2>
-
-    <div class="twocol-left">
-      <h3>YouTube videos</h3>
-      <ul>
-        <li><a href="/Help/Movie?id=208">Browsing SNPs and CNVs in Ensembl</a></li>
-        <li><a href="/Help/Movie?id=214">Clip: Genome Variation</a></li>
-        <li><a href="/Help/Movie?id=284">BioMart: Variation IDs to HGNC Symbols</a></li>
-      </ul>
-
-      <h3>Interactive tools</h3>
-      <ul>
-        <li><a href="/$species/UserData/UploadVariations?db=core" class="modal_link">Variant Effect Predictor</a></li>
-      </ul>
+    <div class="column-wrapper">
+      <div class="column-two">
+        <div class="column-padding">
+          <h2>Using the website</h2>
+          <ul>
+            <li>Video: <a href="/Help/Movie?id=208">Browsing SNPs and CNVs in Ensembl</a></li>
+            <li>Video: <a href="/Help/Movie?id=214">Clip: Genome Variation</a></li>
+            <li>Video: <a href="/Help/Movie?id=284">BioMart: Variation IDs to HGNC Symbols</a></li>
+            <li>Exercise: <a href="http://www.ensembl.org/info/website/tutorials/malaria_basic_genetics_exercises_Ensembl.pdf">Genomes and SNPs in Malaria</a></li>
+          </ul>
+          <h2>Analysing your data</h2>
+          <ul>
+            <li>Test your own variants with the <a href="/$species/UserData/UploadVariations?db=core" class="modal_link">Variant Effect Predictor</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="column-two">
+        <div class="column-padding">
+          <h2>Programmatic access</h2>
+          <ul>
+            <li>Tutorial: <a href="http://www.ensembl.org/info/docs/api/variation/variation_tutorial.html">Accessing variation data with the Variation API</a></li>
+          </ul>
+          <h2>Reference materials</h2>
+          <ul>
+            <li><a href="http://www.ensembl.org/info/docs/variation/index.html">Ensembl variation data: background and terminology</a></li>
+            <!--<li><a href="http://www.ensembl.org/info/website/tutorials/variations_worked_example.pdf">Website Walkthrough - Variations</a></li>-->
+            <li><a href="http://www.ensembl.org/info/website/tutorials/Ensembl_variation_quick_reference_card.pdf">Variation Quick Reference card</a></li>
+          </ul>
+        </div>
+      </div>
     </div>
-
-    <div class="twocol-right">
-      <h3>Reference materials</h3>
-      <ul>
-        <li><a href="http://www.ensembl.org/info/docs/variation/index.html">Ensembl variation data: background and terminology</a></li>
-        <!--<li><a href="http://www.ensembl.org/info/website/tutorials/variations_worked_example.pdf">Website Walkthrough - Variations</a></li>-->
-        <li><a href="http://www.ensembl.org/info/website/tutorials/Ensembl_variation_quick_reference_card.pdf">Variation Quick Reference card</a></li>
-      </ul>
-
-      <h3>Additional resources</h3>
-      <ul>
-        <li><a href="http://www.ensembl.org/info/docs/api/variation/variation_tutorial.html">Accessing variation data with the Variation API</a></li>
-        <li><a href="http://www.ensembl.org/info/website/tutorials/malaria_basic_genetics_exercises_Ensembl.pdf">Genomes and SNPs in Malaria</a></li>
-      </ul>
-    </div>
-
   );
 
   return $html;
