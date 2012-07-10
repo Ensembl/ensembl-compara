@@ -1,4 +1,4 @@
-#masthead form               { padding: 0; border: 0; }
+#masthead form               { padding: 0; border: 0; margin: 0; }
 table.search                 { background-color: [[PANEL_BG]]; border: 1px solid [[MH_BORDER]]; border-collapse: collapse; }
 table.search img             { cursor: pointer; padding: 2px; height: 16px; width: 16px; }
 table.search td              { border: 1px solid [[MH_BORDER]]; vertical-align: middle; }
