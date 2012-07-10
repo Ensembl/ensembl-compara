@@ -1,4 +1,4 @@
-.nav                               { width: 208px; margin: 3px; border: 0; padding: 0; z-index: 100; position: absolute; left: 0; }
+.nav                               { width: 221px; margin: 3px; border: 0; padding: 0; z-index: 100; position: absolute; left: 0; }
 .nav div.header                    { font-weight: bold; border: 1px solid [[PANEL_BORDER]]; border-bottom: 0; padding: 2px; }
 .nav ul                            { margin: 0 0 4px 0; border: 1px solid [[PANEL_BORDER]]; padding: 2px 0 0 16px; background-color: [[PANEL_BG]]; }
 .nav ul li                         { margin-bottom: 0; list-style-image: none; color: [[CONTRAST_HEADER]]; }
