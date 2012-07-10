@@ -87,18 +87,23 @@ sub populate_tree {
 
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
 
-  $var_menu->append($self->create_node('Variation_Transcript', 'Variation Table',
-    [qw( transsnptable EnsEMBL::Web::Component::Transcript::SNPTable )],
+  $var_menu->append($self->create_node('Variation_Transcript/Table', 'Variation table',
+    [qw( variationtable EnsEMBL::Web::Component::Transcript::VariationTable )],
+    { 'availability' => 'transcript database:variation core' }
+  ));
+
+  $var_menu->append($self->create_node('Variation_Transcript/Image', 'Variation image',
+    [qw( variationimage EnsEMBL::Web::Component::Transcript::VariationImage )],
     { 'availability' => 'transcript database:variation core' }
   ));
     
   $var_menu->append($self->create_node('Population', 'Population comparison',
-    [qw( snptable EnsEMBL::Web::Component::Transcript::TranscriptSNPTable )],
+    [qw( snptable EnsEMBL::Web::Component::Transcript::PopulationTable )],
     { 'availability' => 'strains database:variation core' }
   ));
   
   $var_menu->append($self->create_node('Population/Image', 'Comparison image',
-    [qw( snps EnsEMBL::Web::Component::Transcript::SNPView )],
+    [qw( snps EnsEMBL::Web::Component::Transcript::PopulationImage )],
     { 'availability' => 'strains database:variation core' }
   ));
   
@@ -131,7 +136,7 @@ sub populate_tree {
   ));
   
   # External Data tree, including non-positional DAS sources
-  my $external = $self->create_node('ExternalData', 'External Data',
+  my $external = $self->create_node('ExternalData', 'External data',
     [qw( external EnsEMBL::Web::Component::Transcript::ExternalData )],
     { 'availability' => 'transcript' }
   );
