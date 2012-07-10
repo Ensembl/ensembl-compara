@@ -3,7 +3,7 @@
 .panel h1,
 .panel h1.summary-heading   { text-align: left; margin: 0; padding: 0; }
 
-.panel div.content        { padding: 0; margin-top: 1em; }
+.panel div.content        { padding: 0; margin-top: 16px; margin-bottom: 16px; }
 
 .panel span.summary-subhead { color: [[PANEL_TEXT]]; font-size: 0.7em; }
 .panel img.helplink       { width:16px; height:16px; padding-left:2px; vertical-align: middle; }
@@ -12,8 +12,7 @@
 .panel h2.legend          { padding: 2px 0; margin: 8px 0; }
 .panel h2.normal          { border:none; padding: 2px 0; margin: 8px 0 0 0; }
 
-.panel p                  { margin: 0; padding: 0; }
-.panel p.space-below      { margin-bottom:0.5em; }
+.panel p                  { margin: 16px 0 0; padding: 0; line-height: 16px; }
 .panel dl.summary         { margin: 0; position: relative; clear: left; }
 .panel dl.summary dt      { margin-bottom:4px; clear: left; float: left; width: 160px; }
 .panel dl.summary dd      { margin: 4px 0 4px 160px; }  
