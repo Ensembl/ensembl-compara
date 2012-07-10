@@ -1,13 +1,6 @@
-#wide-footer  { clear: both; text-align: center; font-size: 0.9em; 
-                padding: 2px 0; margin: 8px 0 16px 0; }
-#footer       { clear: both; text-align: center; font-size: 0.9em; 
-                padding: 2px 0; margin: 8px 0 16px 224px; }
+#footer, #wide-footer         { clear: both; text-align: center; font-size: 0.9em; padding: 16px 0 0; margin: 16px; border-top: [[NEUTRAL_BORDER]] solid 1px; }
+#footer                       { margin-left: 240px; }
 @media print {
-  #footer { clear: both; text-align: center; font-size: 0.9em; padding: 2px 0; margin-left: 0; }
+  #footer                     { margin-left: 16px; }
 }
 #footer img, #wide-footer img { vertical-align: middle; height: 20px }
-#footer p, #wide-footer p { margin: 0 0 1em 0 }
-
-body.static #footer, body.static #wide-footer { margin:0 16px; }
-
-#p_link { margin-top:8px 0; }
