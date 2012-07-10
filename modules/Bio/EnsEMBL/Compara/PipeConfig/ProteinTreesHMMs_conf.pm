@@ -98,7 +98,7 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '67',
+        'release'               => '68',
         'rel_suffix'            => 'hmm',    # an empty string by default, a letter otherwise
         'work_dir'              => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
         'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
@@ -175,6 +175,7 @@ sub default_options {
         'other_paralogs_capacity'   => 100,
         'homology_dNdS_capacity'    => 200,
         'qc_capacity'               =>   4,
+        'HMMer_classify_capacity'   => 100,
 
     # connection parameters to various databases:
 
@@ -195,14 +196,14 @@ sub default_options {
         },
 
         'staging_loc1' => {                     # general location of half of the current release core databases
-            -host   => 'ens-livemirror',
+            -host   => 'ens-staging1',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
         },
 
         'staging_loc2' => {                     # general location of the other half of the current release core databases
-            -host   => 'ens-livemirror',
+            -host   => 'ens-staging2',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
@@ -217,16 +218,17 @@ sub default_options {
 
 
         # "production mode"
-        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ], ## Make it empty to avoid reusing
-        'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
+#        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ], ## Make it empty to avoid reusing
+        'reuse_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
+        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
         'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
-        'prev_release'              => 67,   # 0 is the default and it means "take current release number and subtract 1"
+        'prev_release'              => 68,   # 0 is the default and it means "take current release number and subtract 1"
         'reuse_db' => {   # usually previous release database on compara1
-           -host   => 'ens-livemirror',
+           -host   => 'compara3',
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'ensembl_compara_67',
+           -dbname => 'mm14_compara_homology_68',
         },
 
         ## mode for testing the non-Blast part of the pipeline: reuse all Blasts
@@ -729,7 +731,6 @@ sub pipeline_analyses {
              -flow_into  => {
                              '1->A' => [ 'dump_models' ],
                              'A->1' => [ 'HMMer_factory' ],
-
                             },
 
             },
@@ -746,7 +747,6 @@ sub pipeline_analyses {
 
             {
              -logic_name  => 'HMMer_factory',
-#             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMerFactory', ## ObjectFactory?
              -module      => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
              -parameters  => {
                               'call_list'            => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all' ],
@@ -769,7 +769,7 @@ sub pipeline_analyses {
                              'hmm_library_basedir' => $self->o('hmm_library_basedir'),
                              'cluster_dir'         => $self->o('cluster_dir'),
                             },
-             -hive_capacity => 10,
+             -hive_capacity => $self->o('HMMer_classify_capacity'),
              -rc_name => '8Gb_job',
             },
 
