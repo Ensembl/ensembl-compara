@@ -22,11 +22,12 @@ sub content {
   my $year = @time[5] + 1900;
   
   return qq{
-    <div class="twocol-left left unpadded">
-      &copy; $year <span class="print_hide"><a href="http://www.sanger.ac.uk/" class="nowrap">WTSI</a> / 
-      <a href="http://www.ebi.ac.uk/" style="white-space:nowrap">EBI</a></span> 
-      <span class="screen_hide_inline">WTSI / EBI</span>.
-      (<a href="http://www.ensembl.org/info/about/legal/privacy.html">Privacy policy</a>)
+    <div class="column-two left">
+      <p class="no-top-margin">&copy; $year <span class="print_hide"><a href="http://www.sanger.ac.uk/" class="nowrap">WTSI</a> / 
+        <a href="http://www.ebi.ac.uk/" style="white-space:nowrap">EBI</a></span>
+        <span class="screen_hide_inline">WTSI / EBI</span>.
+        (<a href="http://www.ensembl.org/info/about/legal/privacy.html">Privacy policy</a>)
+      </p>
     </div>
   };
 }
@@ -36,4 +37,3 @@ sub init {
 }
 
 1;
-
