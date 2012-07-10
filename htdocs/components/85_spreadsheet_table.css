@@ -2,7 +2,7 @@
 ** 'Spreadsheet' with striped rows
 ***********************************************************************/
 
-table.ss                { width: 100%; border: 1px [[NEUTRAL_BORDER]] solid }
+table.ss                { width: 100%; border: 1px [[NEUTRAL_BORDER]] solid; margin: 16px 0; }
 table.ss   th, 
 table.ss   tr.ss_header { background-color: [[NEUTRAL_BORDER]]; }
 table.ss   th           { padding: 0 2px; }
@@ -21,7 +21,7 @@ body.ienew table.fixed { table-layout: auto; }
 table.padded-cell td,
 table.padded-cell th    { padding: 8px; }
  
-table.data_table                     { border: 1px solid [[PAGE_TEXT]]; }
+table.data_table                     { border: 1px solid [[NEUTRAL_BORDER]]; border-spacing: 2px; margin-bottom: 0; }
 table.data_table th                  { cursor: pointer; padding: 2px 20px 2px 5px; }
 table.data_table th:first-child,
 table.data_table td:first-child.wrap { padding-left: 2px; }
@@ -29,28 +29,33 @@ table.data_table th.sorting_disabled { cursor: text; padding-right: 5px; }
 table.data_table th div              { height: 19px; padding: 3px 0; }
 table.toggle_table th div            { padding: 0; }
 
-.dataTables_wrapper, .toggleTable_wrapper { margin: 1em 0; clear: both; position: relative; }
+.dataTables_wrapper, .toggleTable_wrapper { margin: 10px 0; clear: both; position: relative; }
 
 .dataTables_top,
-.dataTables_bottom { height: 22px; padding: 7px 10px 5px; border: 1px solid [[PAGE_TEXT]]; background-color: [[TABLE_HEADER]]; color: [[PANEL_BG]]; }
+.dataTables_bottom { height: 22px; padding: 7px 10px 5px; border: 1px solid [[NEUTRAL_BORDER]]; background-color: [[TABLE_HEADER]]; color: [[PANEL_BG]]; }
 .dataTables_top    { border-bottom: 0; }
 .dataTables_bottom { border-top: 0; }
 
-.dataTables_info     { float: left; }
+.dataTables_info     { float: left; line-height: 20px; }
 .dataTables_length   { float: left; width: 33%; }
 .dataTables_filter   { float: right; text-align: right; position: relative; }
-.dataTables_paginate { float: right; text-align: right; color: [[PAGE_TEXT]]; font-size: 10px; }
 .dataTables_export   { float: right; position: relative; top: -3px; width: 25px; height: 25px; margin-left: 10px; background: url(/i/export_csv.png) no-repeat; cursor: pointer; }
 
+.dataTables_paginate                                      { float: right; text-align: right; color: [[PAGE_TEXT]]; font-size: 10px; }
+.dataTables_paginate span.first                           { border-radius: 4px 0 0 4px; -moz-border-radius: 4px 0 0 4px; -webkit-border-radius: 4px 0 0 4px; }
+.dataTables_paginate span.last                            { border-radius: 0 4px 4px 0; -moz-border-radius: 0 4px 4px 0; -webkit-border-radius: 0 4px 4px 0; }
+.dataTables_paginate span.paginate_button_disabled        { color: [[NEUTRAL_BORDER]]; cursor: default; }
+.dataTables_paginate span.paginate_button_disabled:hover  { background-color: [[TINT_BG]] !important;   }
+
 .dataTables_length select,
-.dataTables_filter input    { border: 1px solid [[PAGE_TEXT]]; }
+.dataTables_filter input    { border: 1px solid [[NEUTRAL_BORDER]]; }
 .dataTables_filter input    { height: 16px; width: 140px; }
-.dataTables_filter .overlay { position: absolute; color: #999999; left: 2px; top: 2px; }
+.dataTables_filter .overlay { position: absolute; color: #999999; left: 2px; top: 2px; line-height: 16px; }
 
 body.ie6 .dataTables_filter input { height: 20px; }
 
 .dataTables_paginate span.paginate_button,
-.dataTables_paginate span.paginate_active       { border: 1px solid [[PAGE_TEXT]]; padding: 2px 5px; margin: 0 3px; cursor: pointer; display: inline-block; }
+.dataTables_paginate span.paginate_active       { border: none; padding: 0px 8px; margin: 0 1px 0 0; cursor: pointer; display: inline-block; line-height: 20px; }
 .dataTables_paginate span.paginate_button       { background-color: [[TINT_BG]]; }
 .dataTables_paginate span.paginate_button:hover { background-color: #BFD0FF; }
 .dataTables_paginate span.paginate_active       { background-color: #99B3FF; }
