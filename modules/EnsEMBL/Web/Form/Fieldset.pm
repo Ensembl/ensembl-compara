@@ -33,14 +33,17 @@ use constant {
   _FLAG_HONEYPOT            => '_is_honeypot',
   _FLAG_BUTTON              => '_is_button',
   _FLAG_STRIPED             => '_is_striped',
-  _FLAG_LEGEND              => '_is_legend'
+  _FLAG_LEGEND              => '_is_legend',
+  _FLAG_SKIP_REQUIRED_NOTES => '_no_required_notes'
 };
 
 sub render {
   ## @overrides
   my $self = shift;
 
-  $_->has_class(EnsEMBL::Web::Form::Element::CSS_CLASS_REQUIRED) and $self->add_notes($self->FOOT_NOTE_REQUIRED) and last for @{$self->inputs};
+  unless ($self->has_flag($self->_FLAG_SKIP_REQUIRED_NOTES)) {
+    $_->has_class(EnsEMBL::Web::Form::Element::CSS_CLASS_REQUIRED) and $self->add_notes($self->FOOT_NOTE_REQUIRED) and last for @{$self->inputs};
+  }
 
   #css stuff
   my $css_class = {
@@ -74,8 +77,9 @@ sub configure {
   ## Configures the fieldset with some extra flags and variables
   ## @return Configured fieldset
   my ($self, $params) = @_;
-  $self->legend($params->{'legend'})          if $params->{'legend'};
-  $self->set_flag($self->_FLAG_STRIPED)       if $params->{'stripes'};
+  $self->legend($params->{'legend'})                if $params->{'legend'};
+  $self->set_flag($self->_FLAG_STRIPED)             if $params->{'stripes'};
+  $self->set_flag($self->_FLAG_SKIP_REQUIRED_NOTES) if $params->{'no_required_notes'};
   return $self;
 }
 
@@ -153,7 +157,8 @@ sub add_field {
       $is_honeypot = 1;
     }
 
-    $_->{'id'} ||= $self->_next_id;
+    $_->{'no_asterisk'} ||= $self->has_flag($self->_FLAG_SKIP_REQUIRED_NOTES);
+    $_->{'id'}          ||= $self->_next_id;
   }
 
   my $field = $self->dom->create_element('form-field')->configure({%$field_params, 'elements', $elements});
