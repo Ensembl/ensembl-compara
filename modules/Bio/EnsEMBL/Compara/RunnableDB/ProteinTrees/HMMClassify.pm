@@ -64,11 +64,7 @@ sub param_defaults {
             'immediate_dataflow'  => 1,
             'member_type'         => 'protein',
             'input_id_prefix'     => 'protein',
-#            'pantherScore_path'   => '/software/ensembl/compara/pantherScore1.03',
-#            'library_path'        => '/lustre/scratch110/ensembl/mp12/pfam_hmms/',
-#            'blast_path'          => '/software/ensembl/compara/ncbi-blast-2.2.26+/bin/',
             'hmmer_cutoff'        => 0.001,
-#            'hmmer_path'          => '/software/ensembl/compara/hmmer-2.3.2/src/',
            };
 }
 
@@ -188,6 +184,7 @@ sub run_HMM_search {
     my $cmd = "PATH=\$PATH:$blast_path:$hmmer_path; PERL5LIB=\$PERL5LIB:$pantherScore_path/lib; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_path 2>/dev/null";
     print STDERR "$cmd\n" if ($self->debug());
 
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
     open my $pipe, "-|", $cmd or die $!;
     while (<$pipe>) {
         chomp;
@@ -199,6 +196,7 @@ sub run_HMM_search {
     }
     close($hmm_res);
     close($pipe);
+    $self->compara_dba->dbc->disconnect_when_inactive(0);
 
     return;
 }
