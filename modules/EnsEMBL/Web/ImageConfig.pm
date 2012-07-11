@@ -80,6 +80,7 @@ sub new {
       'stack',       'Stacked',
       'unlimited',   'Stacked unlimited',
       'ungrouped',   'Ungrouped',
+      'difference',  'Differences',
     ],
   };
   
