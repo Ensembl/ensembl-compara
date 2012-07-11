@@ -85,7 +85,7 @@ img.portal {
   border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px;
 }
 
-.plain-box, .tinted-box,
+.plain-box, .tinted-box, .info-box,
 .alert-box, .embedded-box { [[PANEL_TEXT]]; padding: 16px; margin-top: 16px;
                              border-width: 1px; border-style: solid; }
 .plain-box    { background-color:[[PANEL_BG]]; border-color: [[PANEL_BORDER]]; }
