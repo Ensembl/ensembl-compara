@@ -27,7 +27,7 @@ sub populate_tree {
   );
 
   $self->create_node('Splice', 'Splice variants ([[counts::transcripts]])',
-    [qw( image EnsEMBL::Web::Component::Gene::GeneSpliceImage )],
+    [qw( image EnsEMBL::Web::Component::Gene::SpliceImage )],
     { 'availability' => 'gene has_transcripts', 'concise' => 'Splice variants' }
   );
 
@@ -67,24 +67,24 @@ sub populate_tree {
     { 'availability' => 'gene database:compara core has_alignments' }
   ));
   
-  my $tree_node = $self->create_node('Compara_Tree', 'Gene Tree (image)',
+  my $tree_node = $self->create_node('Compara_Tree', 'Gene tree (image)',
     [qw( image EnsEMBL::Web::Component::Gene::ComparaTree )],
     { 'availability' => 'gene database:compara core has_gene_tree' }
   );
   
-  $tree_node->append($self->create_subnode('Compara_Tree/Text', 'Gene Tree (text)',
+  $tree_node->append($self->create_subnode('Compara_Tree/Text', 'Gene tree (text)',
     [qw( treetext EnsEMBL::Web::Component::Gene::ComparaTree/text )],
     { 'availability' => 'gene database:compara core has_gene_tree' }
   ));
   
-  $tree_node->append($self->create_subnode('Compara_Tree/Align', 'Gene Tree (alignment)',
+  $tree_node->append($self->create_subnode('Compara_Tree/Align', 'Gene tree (alignment)',
     [qw( treealign EnsEMBL::Web::Component::Gene::ComparaTree/align )],
     { 'availability' => 'gene database:compara core has_gene_tree' }
   ));
   
   $compara_menu->append($tree_node);
 
-  my $species_tree_node = $self->create_node('SpeciesTree', 'Species Tree',
+  my $species_tree_node = $self->create_node('SpeciesTree', 'Species tree',
       [qw( image EnsEMBL::Web::Component::Gene::SpeciesTree )],
       { 'availability' => 'gene database:compara core has_gene_tree' }
     );  
@@ -96,7 +96,7 @@ sub populate_tree {
     { 'availability' => 'gene database:compara core has_orthologs', 'concise' => 'Orthologues' }
   );
   
-  $ol_node->append($self->create_subnode('Compara_Ortholog/Alignment', 'Orthologue Alignment',
+  $ol_node->append($self->create_subnode('Compara_Ortholog/Alignment', 'Orthologue alignment',
     [qw( alignment EnsEMBL::Web::Component::Gene::HomologAlignment )],
     { 'availability'  => 'gene database:compara core has_orthologs', 'no_menu_entry' => 1 }
   ));
@@ -108,7 +108,7 @@ sub populate_tree {
     { 'availability' => 'gene database:compara core has_paralogs', 'concise' => 'Paralogues' }
   );
   
-  $pl_node->append($self->create_subnode('Compara_Paralog/Alignment', 'Paralogue Alignment',
+  $pl_node->append($self->create_subnode('Compara_Paralog/Alignment', 'Paralogue alignment',
     [qw( alignment EnsEMBL::Web::Component::Gene::HomologAlignment )],
     { 'availability' => 'gene database:compara core has_paralogs', 'no_menu_entry' => 1 }
   ));
@@ -147,17 +147,17 @@ sub populate_tree {
 	
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
 
-  $var_menu->append($self->create_node('Variation_Gene/Table', 'Variation Table',
-    [qw( snptable EnsEMBL::Web::Component::Gene::GeneSNPTable )],
+  $var_menu->append($self->create_node('Variation_Gene/Table', 'Variation table',
+    [qw( snptable EnsEMBL::Web::Component::Gene::VariationTable )],
     { 'availability' => 'gene database:variation core not_patch' }
   ));
   
-  $var_menu->append($self->create_node('Variation_Gene/Image',  'Variation Image',
-    [qw( image EnsEMBL::Web::Component::Gene::GeneSNPImage )],
+  $var_menu->append($self->create_node('Variation_Gene/Image',  'Variation image',
+    [qw( image EnsEMBL::Web::Component::Gene::VariationImage )],
     { 'availability' => 'gene database:variation core not_patch' }
   ));
 	
-	$var_menu->append($self->create_node('StructuralVariation_Gene', 'Structural Variation',
+	$var_menu->append($self->create_node('StructuralVariation_Gene', 'Structural variation',
     [qw(
       svimage EnsEMBL::Web::Component::Gene::SVImage
       svtable EnsEMBL::Web::Component::Gene::SVTable
@@ -166,7 +166,7 @@ sub populate_tree {
   ));
 
   # External Data tree, including non-positional DAS sources
-  my $external = $self->create_node('ExternalData', 'External Data',
+  my $external = $self->create_node('ExternalData', 'External data',
     [qw( external EnsEMBL::Web::Component::Gene::ExternalData )],
     { 'availability' => 'gene' }
   );
