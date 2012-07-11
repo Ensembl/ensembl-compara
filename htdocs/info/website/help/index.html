@@ -3,88 +3,67 @@
 <meta name="order" content="1" />
 <title>Help & FAQs</title>
 </head>
-
 <body>
-
-<div class="onecol unpadded">
 <h1>Ensembl Online Help</h1>
+<div class="column-wrapper">
+  <div class="column-two">
+    <div class="column-padding">
+      <div class="info-box help-contact">
+        <a href="/Help/Contact" class="popup"><img src="/img/help/a-quest.gif" alt="@?" class="float-left" /></a>
+        <p>If you have a question that is not answered here, please <a href="/Help/Contact" class="popup">Contact our HelpDesk</a></p>
+      </div>
+      <div class="plain-box">
+        <img src="/img/help/new_help_button.png" style="border:1px solid #cccccc; width: auto;" class="float-right" alt="[screenshot showing help button]" title="Click on the e? button for context-sensitive help" />
+        <h2 class="box-header">Looking for context-sensitive help?</h2>
+        <p><strong>Our help button has changed!</strong></p>
+        <p>Instead of the blue 'Help' button in the top right corner of each page, 
+        you will now find individual buttons next to most headings on the Location, Gene, 
+        Transcript and Variation pages.</p>
+        <p style="line-height: 20px;">Click on the <img src="/i/help-button.png" style="vertical-align: middle; height:20px;width:40px" alt="h(e!)p" /> button to get a pop-up help box
+        containing a brief explanation of the page or image you're looking at.</p>
+      </div>
+      <div class="tinted-box">
+        <h2 class="box-header">Search our Help database</h2>
+
+        [[SCRIPT::EnsEMBL::Web::Document::HTML::HelpSearch]]
+
+        <h3>Search Tips</h3>
+        <ul>
+          <li>Words shorter than 4 characters in length (eg SNP) are ignored.</li>
+          <li>Words that occur in more than 50% of the records are ignored.</li>
+          <li>Wildcard characters are not available.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="column-two">
+    <div class="column-padding">
+      <div class="plain-box">
+
+        [[SCRIPT::EnsEMBL::Web::Document::HTML::TopFAQs]]
+
+      </div>
+      <div class="plain-box">
+        <h2 class="box-header">Supported browsers</h2>
+        <p>The following browsers are fully supported, i.e. all site features including JavaScript and CSS styles should work properly:</p>
+        <ul>
+          <li>Firefox 3.5+</li>
+          <li>Internet Explorer 8+</li>
+          <li>Safari</li>
+          <li>Chrome</li>
+        </ul>
+        <p>We recommend <a href="http://www.mozilla.org/products/firefox/" title="Get Firefox!">Firefox</a> for browsing Ensembl.</p>
+        <h3>Other browsers</h3>
+        <p>The following are not officially supported but should work with most or all of the site's current features:</p>
+        <ul>
+          <li>Firefox 3</li>
+          <li>Internet Explorer 6 and 7</li>
+          <li>Camino</li>
+          <li>Opera 9+</li>
+        </ul>
+      </div>
+    </div>
+  </div>
 </div>
-
-<div class="twocol-left info-box">
-  <a href="/Help/Contact" class="popup"><img src="/img/help/a-quest.gif" alt="@?" class="float-left" style="width:45px;height:42px;margin:0px 5px;padding:0;vertical-align:middle" /></a><p>If you have a question that is not answered here, please <a href="/Help/Contact" class="popup">Contact our HelpDesk</a></p>
-</div>
-
-<div class="twocol-right plain-box">
-
-  [[SCRIPT::EnsEMBL::Web::Document::HTML::TopFAQs]]
-
-</div>
-
-<div class="twocol-left plain-box">
-
-    <h2 class="first">Looking for context-sensitive help?</h2>
-    <p>
-    <img src="/img/help/new_help_button.png" style="border:1px solid #555555;float:right" alt="[screenshot showing help button]" title="Click on the e? button for context-sensitive help" />
-    </p>
-    <p><strong>Our help button has changed!</strong></p>
-    <p>Instead of the blue 'Help' button in the top right corner of each page, 
-    you will now find individual buttons next to most headings on the Location, Gene, 
-    Transcript and Variation pages.</p>
-    <p>Click on the <img src="/i/help-button.png" style="vertical-align: middle; height:20px;width:40px" alt="h(e!)p" /> button to get a pop-up help box 
-    containing a brief explanation of the page or image you're looking at.</p>
-</div>
-
-<div class="twocol-left tinted-box">
-    <h2 class="first">Search our Help database</h2>
-
-    <form name="helpsearch" action="/Help/DoSearch" id="helpsearch" class="std check" method="get">
-      <fieldset>
-        <div><dl>
-          <dt><label for="helpsearch_1">Search for:</label></dt>
-          <dd><input type="text" name="string" value="" id="helpsearch_1" size="20" class="input-text _string required" /></dd>
-        </dl></div>
-        <div><dl>
-          <dt></dt>
-          <dd><label for="helpsearch_2">
-            <input type="checkbox" name="hilite" id="helpsearch_2" value="yes" class="input-checkbox _optional" />Highlight search term(s)</label>
-          </dd>
-        </dl></div>
-        <div><dl>
-          <dt></dt>
-          <dd><input type="submit" name="submit" value="Go" class="input-submit" /></dd>
-        </dl></div>
-      </fieldset>
-    </form>
-
-    <h3>Search Tips</h3>
-    <ul>
-    <li>Words shorter than 4 characters in length (eg SNP) are ignored.</li>
-    <li>Words that occur in more than 50% of the records are ignored.</li>
-    <li>Wildcard characters are not available.</li>
-    </ul>
-</div>
-
-
-<div class="twocol-right plain-box">
-    <h2 class="first">Supported browsers</h2>
-    <p>The following browsers are fully supported, i.e. all site features including
-JavaScript and CSS styles should work properly:</p>
-    <ul>
-      <li>Firefox 3.5+</li>
-      <li>Internet Explorer 8+</li>
-      <li>Safari</li>
-      <li>Chrome</li>
-    </ul>
-    <p>We recommend <a href="http://www.mozilla.org/products/firefox/" title="Get Firefox!">Firefox</a> for browsing Ensembl.</p>
-    <h3>Other browsers</h3>
-    <p>The following are not officially supported but should work with most or all of the site's current features:</p>
-    <ul>
-      <li>Firefox 3</li>
-      <li>Internet Explorer 6 and 7</li>
-      <li>Camino</li>
-      <li>Opera 9+</li>
-    </ul>
-</div>
-
 </body>
 </html>
