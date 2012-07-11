@@ -14,21 +14,22 @@ sub _init {
 sub content {
   my $self        = shift;
   my $no_snps     = shift;
-  my $ic_type     = shift || 'GeneSNPView';
+  my $ic_type     = shift || 'gene_variation';  
   my $hub         = $self->hub;
   my $object      = $self->object;
   my $image_width = $self->image_width     || 800;  
   my $context     = $hub->param('context') || 100; 
   my $extent      = $context eq 'FULL' ? 5000 : $context;
   my @confs       = qw(gene transcripts_top transcripts_bottom);
-  my ($image_configs, $snp_counts, $gene_object, $transcript_object, $config_type, @trans);
-  my $config_type = 'GeneSNPView'; 
+  my ($image_configs, $config_type, $snp_counts, $gene_object, $transcript_object, @trans);
 
   if ($object->isa('EnsEMBL::Web::Object::Gene') || $object->isa('EnsEMBL::Web::Object::LRG')){
     $gene_object = $object;
+    $config_type = 'gene_variation';
   } else {
     $transcript_object = $object;
     $gene_object = $self->hub->core_objects->{'gene'};
+    $config_type = $ic_type;
   }
  
   # Padding
@@ -38,7 +39,7 @@ sub content {
   push @confs, 'snps' unless $no_snps;  
 
   foreach (@confs) { 
-    $image_configs->{$_} = $hub->get_imageconfig($config_type, $_);  
+    $image_configs->{$_} = $hub->get_imageconfig($_ eq 'gene' ? $ic_type : $config_type, $_);  
     $image_configs->{$_}->set_parameters({
       image_width => $image_width, 
       context     => $context
@@ -112,7 +113,7 @@ sub content {
     
     $image_config->{'transcript'}{'snps'} = $transformed_slice->{'snps'} unless $no_snps;
     
-    # Turn on track associated with this db/logic name
+    # Turn on track associated with this db/logic name 
     $image_config->modify_configs(
       [ $image_config->get_track_key('gsv_transcript', $gene_object) ],
       { display => 'normal', show_labels => 'off', caption => '' }
