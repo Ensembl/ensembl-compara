@@ -4,3 +4,4 @@
   #footer                     { margin-left: 16px; }
 }
 #footer img, #wide-footer img { vertical-align: middle; height: 20px }
+#footer p,   #wide-footer p   { padding: 0; }
