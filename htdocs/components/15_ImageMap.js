@@ -67,11 +67,13 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (typeof FileReader !== 'undefined') {
       this.dropFileUpload();
     }
-   
-    panel.elLk.exportMenu.appendTo('body').css($('.iexport a', this.el).on('click', function () {
-      panel.elLk.exportMenu.toggle();
+    
+    panel.elLk.exportMenu.appendTo('body').css('left', this.elLk.img.offset().left);
+    
+    $('a.iexport', this.el).on('click', function () {
+      panel.elLk.exportMenu.css({ top: $(this).parent().hasClass('bottom') ? $(this).parent().offset().top - panel.elLk.exportMenu.outerHeight() : panel.elLk.img.offset().top }).toggle();
       return false;
-    }).offset());
+    });
   },
   
   hashChange: function (r) {
