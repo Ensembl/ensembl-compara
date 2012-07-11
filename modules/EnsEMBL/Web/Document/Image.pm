@@ -11,10 +11,11 @@ use Bio::EnsEMBL::VDrawableContainer;
 use EnsEMBL::Web::TmpFile::Image;
 
 sub new {
-  my ($class, $species_defs, $image_configs) = @_;
+  my ($class, $hub, $component, $image_configs) = @_;
 
   my $self = {
-    species_defs       => $species_defs,
+    hub                => $hub,
+    component          => $component,
     image_configs      => $image_configs || [],
     drawable_container => undef,
     centred            => 0,
@@ -30,10 +31,16 @@ sub new {
     format             => 'png',
   };
 
+  if ($image_configs) {
+    $self->{'toolbars'}{$_} = $image_configs->[0]->toolbars->{$_} for qw(top bottom);
+  }
+
   bless $self, $class;
   return $self;
 }
 
+sub hub                :lvalue { $_[0]->{'hub'};       }
+sub component          :lvalue { $_[0]->{'component'}; }
 sub drawable_container :lvalue { $_[0]->{'drawable_container'}; }
 sub centred            :lvalue { $_[0]->{'centred'};   }
 sub imagemap           :lvalue { $_[0]->{'imagemap'};           }
@@ -47,8 +54,84 @@ sub introduction       :lvalue { $_[0]->{'introduction'};       }
 sub tailnote           :lvalue { $_[0]->{'tailnote'};           }
 sub caption            :lvalue { $_[0]->{'caption'};            }
 sub format             :lvalue { $_[0]->{'format'};             }
+sub toolbars           :lvalue { $_[0]->{'toolbars'};  }
 
 sub image_width { $_[0]->drawable_container->{'config'}->get_parameter('image_width'); }
+
+sub has_toolbars { return 1 if ($_[0]->{'toolbars'}{'top'} || $_[0]->{'toolbars'}{'bottom'}); }
+
+sub render_toolbar {
+  my ($self, $image) = @_;
+  my $icon_mapping = EnsEMBL::Web::Constants::ICON_MAPPINGS('image');
+
+  return unless $icon_mapping;
+
+  my ($toolbar, $export, $top, $bottom);
+
+  ## Config panel link
+  if (grep $_->storable, @{$self->{'image_configs'}}) {
+    my $config_url = $self->hub->url('Config', {
+      action   => $self->component,
+      function => undef,
+    });
+
+    $toolbar .= sprintf '<a href="%s" class="config modal_link force" title="%s" rel="modal_config_%s"></a>', $config_url, $icon_mapping->{'config'}{'title'}, lc $self->component;
+    $toolbar .= sprintf '<a href="/UserData/ManageData" class="data modal_link" title="%s" rel="modal_user_data"></a>', $icon_mapping->{'userdata'}{'title'};
+  }
+  ## Image export popup menu
+  if ($self->{'export'}) {
+    my @formats = (
+      { f => 'pdf',     label => 'PDF' },
+      { f => 'svg',     label => 'SVG' },
+      { f => 'eps',     label => 'PostScript' },
+      { f => 'png-5',   label => 'PNG (x5)' },
+      { f => 'png-2',   label => 'PNG (x2)' },
+      { f => 'png',     label => 'PNG' },
+      { f => 'png-0.5', label => 'PNG (x0.5)' },
+      { f => 'gff',     label => 'Text (GFF)', text => 1 }
+    );
+   
+    splice @formats, 3, 0, { f => 'png-10',  label => 'PNG (x10)' } unless $image->height > 32000; ## PNG renderer will crash if image too tall!
+
+    my $url  = $ENV{'REQUEST_URI'};
+       $url  =~ s/;$//;
+       $url .= ($url =~ /\?/ ? ';' : '?') . 'export=';
+
+    foreach (@formats) {
+      my $href = $url . $_->{'f'};
+
+      if ($_->{'text'}) {
+        next if $self->{'export'} =~ /no_text/;
+
+        $export .= qq{<div><div>$_->{'label'}</div><a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a></div>};
+      } else {
+        $export .= qq{
+          <div>
+            <div>$_->{'label'}</div>
+            <a class="view" href="$href" rel="external"><img src="/i/16/eye.png" alt="view" title="View image" /></a>
+            <a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a>
+          </div>
+        };
+      }
+    }
+    $export = qq{
+      <div class="iexport_menu">
+        <div class="header">Export as:</div>
+        $export
+      </div>
+    };
+   
+    $toolbar .= sprintf '<a href="%spdf" class="export %s" title="%s"></a>', $url, $self->{'export'}, $icon_mapping->{'image'}{'title'};
+  }
+
+  if ($toolbar) {
+    $top    = $self->toolbars->{'top'}    ? sprintf '<div class="image_toolbar top print_hide">%s</div>%s',    $toolbar, $export             : '';
+    $bottom = $self->toolbars->{'bottom'} ? sprintf '<div class="image_toolbar bottom print_hide">%s</div>%s', $toolbar, $top ? '' : $export : '';
+  }
+
+  return ($top, $bottom);
+}
+
 
 #----------------------------------------------------------------------------
 # FUNCTIONS FOR CONFIGURING AND CREATING KARYOTYPE IMAGES
@@ -279,7 +362,7 @@ sub render_image_map {
 
 sub hover_labels {
   my $self    = shift;
-  my $img_url = $self->{'species_defs'}->img_url;
+  my $img_url = $self->hub->species_defs->img_url;
   my ($html, %done);
   
   foreach my $label (map values %{$_->{'hover_labels'} || {}}, @{$self->{'image_configs'}}) {
@@ -414,6 +497,8 @@ sub render {
 
   $image->content($content);
   $image->save;
+
+  my ($top_toolbar, $bottom_toolbar) = $self->has_toolbars ? $self->render_toolbar($image) : ();
   
   if ($self->button eq 'form') {
     my $image_html = $self->render_image_button($image);
@@ -436,11 +521,13 @@ sub render {
     $html .= sprintf(
       $self->centred ? 
         '<div class="autocenter_wrapper"><form style="width:%spx" class="autocenter" action="%s" method="get"><div>%s</div><div class="autocenter">%s</div></form></div>' : 
-        '<form style="width:%spx" action="%s" method="get"><div>%s</div>%s</form>',
+        '<form style="width:%spx" action="%s" method="get"><div>%s</div>%s%s%s</form>',
       $image->width,
       $self->{'URL'},
       $inputs,
+      $top_toolbar,
       $image_html,
+      $bottom_toolbar,
     );
 
     $self->{'counter'}++;
@@ -455,60 +542,22 @@ sub render {
     # butted up to another container - if you need a vertical padding of 10px add it
     # outside this module
     
-    my $export;
-    
-    if ($self->{'export'}) {
-      my @formats = (
-        { f => 'pdf',     label => 'PDF' },
-        { f => 'svg',     label => 'SVG' },
-        { f => 'eps',     label => 'PostScript' },
-      );
-      ## PNG renderer will crash if image too tall!
-      unless ($image->height > 32000) {
-        push @formats, { f => 'png-10',  label => 'PNG (x10)' };
-      }
-      push @formats, (
-        { f => 'png-5',   label => 'PNG (x5)' },
-        { f => 'png-2',   label => 'PNG (x2)' },
-        { f => 'png',     label => 'PNG' },
-        { f => 'png-0.5', label => 'PNG (x0.5)' },
-        { f => 'gff',     label => 'text (GFF)', text => 1 }
-      );
-      
-      my $url = $ENV{'REQUEST_URI'};
-      $url =~ s/;$//;
-      $url .= ($url =~ /\?/ ? ';' : '?') . 'export=';
-      
-      for (@formats) {
-        my $href = $url . $_->{'f'};
-        
-        if ($_->{'text'}) {
-          next if $self->{'export'} =~ /no_text/;
-          
-          $export .= qq{<div><a href="$href" rel="external">Export as $_->{'label'}</a></div>};
-        } else {
-          $export .= qq{<div><a href="$href;download=1" rel="external">Export as $_->{'label'}</a><a class="view" href="$href" rel="external">[view]</a></div>};
-        }
-      }
-      
-      $export = qq{
-        <div class="$self->{'export'}" style="width:$image->{'width'}px;"><a class="print_hide" href="${url}pdf">Export Image</a></div>
-        <div class="iexport_menu">$export</div>
-      };
-    }
-    
     my $wrapper = sprintf('
+      %s
       <div class="drag_select" style="margin:%s;">
         %s
         %s
         %s
         %s
-      </div>',
+      </div>
+      %s',
+      $top_toolbar,
       $self->centred ? '0px auto' : '0px',
       $img,
       $self->imagemap eq 'yes' ? $self->render_image_map($image) : '',
       $self->moveable_tracks($image),
-      $self->hover_labels
+      $self->hover_labels,
+      $bottom_toolbar,
     );
 
     my $template = $self->centred ? '
@@ -525,8 +574,8 @@ sub render {
       </div>
         %s
     ';
-  
-    $html .= sprintf $template, $image->width, $wrapper, ($self->caption ? sprintf '<div style="%s">%s</div>', $caption_style, $self->caption : ''), $export;
+ 
+    $html .= sprintf $template, $image->width, $wrapper, $self->caption ? sprintf '<div style="%s">%s</div>', $caption_style, $self->caption : '';
   
   } else {
     $html .= join('',
@@ -546,7 +595,7 @@ sub render {
   }
   
   $self->{'width'} = $image->width;
-  $self->{'species_defs'}->timer_push('Image->render ending', undef, 'draw');
+  $self->hub->species_defs->timer_push('Image->render ending', undef, 'draw');
   
   return $html;
 }

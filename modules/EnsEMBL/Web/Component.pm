@@ -346,8 +346,8 @@ sub new_image {
   }
   
   $_->set_parameter('component', $id) for grep $_->{'type'} eq $config_type, @image_configs;
-  
-  my $image = new EnsEMBL::Web::Document::Image($hub->species_defs, \@image_configs);
+ 
+  my $image = new EnsEMBL::Web::Document::Image($hub, $self->id, \@image_configs); 
   $image->drawable_container = new Bio::EnsEMBL::DrawableContainer(@_) if $self->html_format;
   
   return $image;
@@ -355,7 +355,7 @@ sub new_image {
 
 sub new_vimage {
   my $self  = shift;
-  my $image = new EnsEMBL::Web::Document::Image($self->hub->species_defs);
+  my $image = new EnsEMBL::Web::Document::Image($self->hub, $self->id);
   $image->drawable_container = new Bio::EnsEMBL::VDrawableContainer(@_) if $self->html_format;
   
   return $image;
@@ -363,7 +363,7 @@ sub new_vimage {
 
 sub new_karyotype_image {
   my ($self, $image_config) = @_;  
-  my $image = new EnsEMBL::Web::Document::Image($self->hub->species_defs, $image_config ? [ $image_config ] : undef);
+  my $image = new EnsEMBL::Web::Document::Image($self->hub, $self->id, $image_config ? [ $image_config ] : undef);
   $image->{'object'} = $self->object;
   
   return $image;

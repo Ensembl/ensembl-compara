@@ -57,19 +57,20 @@ sub new {
       spacing      => 2,
       label_width  => 113,
       show_labels  => 'yes',
-      slice_number => '1|1'
+      slice_number => '1|1',
+      toolbars     => {'top' => 1,'bottom'  => 0},
     },
     extra_menus      => {
       active_tracks    => 1,
       favourite_tracks => 1,
       search_results   => 1,
-      display_options  => 1
+      display_options  => 1,
     },
     unsortable_menus => {
       decorations => 1,
       information => 1,
       options     => 1,
-      other       => 1
+      other       => 1,
     },
     alignment_renderers => [
       'off',         'Off',
@@ -203,30 +204,31 @@ sub storable :lvalue { $_[0]->{'storable'}; } # Set to 1 if configuration can be
 sub altered  :lvalue { $_[0]->{'altered'};  } # Set to 1 if the configuration has been updated
 sub has_das  :lvalue { $_[0]->{'has_das'};  } # Set to 1 if there are DAS tracks
 
-sub hub                 { return $_[0]->{'hub'};                                                                     }
-sub code                { return $_[0]->{'code'};                                                                    }
-sub core_objects        { return $_[0]->hub->core_objects;                                                           }
-sub colourmap           { return $_[0]->hub->colourmap;                                                              }
-sub species_defs        { return $_[0]->hub->species_defs;                                                           }
-sub sd_call             { return $_[0]->species_defs->get_config($_[0]->{'species'}, $_[1]);                         }
-sub databases           { return $_[0]->sd_call('databases');                                                        }
-sub texthelper          { return $_[0]->{'_texthelper'};                                                             }
-sub transform           { return $_[0]->{'transform'};                                                               }
-sub tree                { return $_[0]->{'_tree'};                                                                   }
-sub species             { return $_[0]->{'species'};                                                                 }
-sub multi_species       { return 0;                                                                                  }
-sub bgcolor             { return $_[0]->get_parameter('bgcolor') || 'background1';                                   }
-sub bgcolour            { return $_[0]->bgcolor;                                                                     }
-sub get_node            { return shift->tree->get_node(@_);                                                          }
-sub get_user_settings   { return $_[0]->tree->user_data;                                                             }
-sub get_parameters      { return $_[0]->{'_parameters'};                                                             }
-sub get_parameter       { return $_[0]->{'_parameters'}{$_[1]};                                                      }
-sub set_width           { $_[0]->set_parameter('width', $_[1]);                                                      } # TODO: find out why we have width and image_width. delete?
-sub image_height        { return shift->parameter('image_height',    @_);                                            }
-sub image_width         { return shift->parameter('image_width',     @_);                                            }
-sub container_width     { return shift->parameter('container_width', @_);                                            }
-sub slice_number        { return shift->parameter('slice_number',    @_);                                            } # TODO: delete?
-sub get_tracks          { return grep { $_->{'data'}{'node_type'} eq 'track' } $_[0]->tree->nodes;                   } # return a list of track nodes
+sub hub                 { return $_[0]->{'hub'};                                               }
+sub code                { return $_[0]->{'code'};                                              }
+sub core_objects        { return $_[0]->hub->core_objects;                                     }
+sub colourmap           { return $_[0]->hub->colourmap;                                        }
+sub species_defs        { return $_[0]->hub->species_defs;                                     }
+sub sd_call             { return $_[0]->species_defs->get_config($_[0]->{'species'}, $_[1]);   }
+sub databases           { return $_[0]->sd_call('databases');                                  }
+sub texthelper          { return $_[0]->{'_texthelper'};                                       }
+sub transform           { return $_[0]->{'transform'};                                         }
+sub tree                { return $_[0]->{'_tree'};                                             }
+sub species             { return $_[0]->{'species'};                                           }
+sub multi_species       { return 0;                                                            }
+sub bgcolor             { return $_[0]->get_parameter('bgcolor') || 'background1';             }
+sub bgcolour            { return $_[0]->bgcolor;                                               }
+sub get_node            { return shift->tree->get_node(@_);                                    }
+sub get_user_settings   { return $_[0]->tree->user_data;                                       }
+sub get_parameters      { return $_[0]->{'_parameters'};                                       }
+sub get_parameter       { return $_[0]->{'_parameters'}{$_[1]};                                }
+sub set_width           { $_[0]->set_parameter('width', $_[1]);  } # TODO: find out why we have width and image_width. delete?
+sub image_height        { return shift->parameter('image_height',    @_);                      }
+sub image_width         { return shift->parameter('image_width',     @_);                      }
+sub container_width     { return shift->parameter('container_width', @_);                      }
+sub toolbars            { return shift->parameter('toolbars',        @_);                      }
+sub slice_number        { return shift->parameter('slice_number',    @_);                      } # TODO: delete?
+sub get_tracks          { return grep { $_->{'data'}{'node_type'} eq 'track' } $_[0]->tree->nodes; } # return a list of track nodes
 sub get_sortable_tracks { return grep { $_->get('sortable') && $_->get('menu') ne 'no' } @{$_[0]->glyphset_configs}; }
 
 sub glyphset_configs {
@@ -527,7 +529,6 @@ sub load_user_tracks {
           source_type => 'session',
           assembly    => $entry->{'assembly'},
         };
-        
         $self->_compare_assemblies($entry, $session);
       }
     } elsif ($entry->{'species'} eq $self->{'species'} && !$entry->{'nonpositional'}) {
