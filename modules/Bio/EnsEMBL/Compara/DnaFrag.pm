@@ -473,6 +473,7 @@ sub slice {
       warn "Cannot get the Bio::EnsEMBL::DBSQL::DBAdaptor corresponding to [".$self->genome_db->name."]";
       return undef;
     }
+    $dba->dbc->reconnect_when_lost(1);
 
     $self->{'_slice'} = $dba->get_SliceAdaptor->fetch_by_region($self->coord_system_name, $self->name);
   }
