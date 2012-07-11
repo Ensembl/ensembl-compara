@@ -35,7 +35,7 @@ sub render {
     my $title        = $section->{'_title'} || ucfirst $dir;
     my @second_level = @{$self->create_links($section, ' style="font-weight:bold"')};
     
-    $html{$column} .= qq{<div class="plain-box"><h2 class="first">$title</h2>\n};
+    $html{$column} .= qq{<div class="plain-box"><h2 class="box-header">$title</h2>\n};
 
     if (scalar @second_level) {
       $html{$column} .= '<ul>';
