@@ -25,6 +25,25 @@ sub _render_background {
   }));        
 }
 
+sub _render_fname {
+  my ($self,$left,$string,$bump_offset) = @_;
+
+  my ($font, $fontsize) = $self->get_font_details($self->my_config('font') || 'innertext'); 
+  my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $string, '', font => $font, ptsize => $fontsize);
+  $self->push($self->Text({
+    x         => $left + 6 / $self->scalex,
+    y         => $bump_offset + 38 - $text_height,
+    width     => $text_width / $self->scalex,
+    height    => $text_height,
+    font      => $font,
+    ptsize    => $fontsize,
+    halign    => 'left',
+    colour    => '#333366',
+    text      => $string,
+    absolutey => 1,
+  }));
+}
+
 sub _cluster_zmenu {
   my ($self,$c) = @_;
 
@@ -320,12 +339,12 @@ sub _add_blob {
   # check we don't fall off LHS
   $disp_start = max(-$f->start,$disp_start);
   $blob_start = max(-$f->start,$blob_start);
-  my $name = $f->seqname;
-  $name = $f->seq_region_name if $f->can('seq_region_name'); # missing from GFF
+  my $rname = $f->seqname;
+  $rname = $f->seq_region_name if $f->can('seq_region_name'); # missing from GFF
   my $ref_to_coord = $self->{'container'}->start + $f->start;
   my $ref_span = $ref_end-$ref_start;
   return {
-    ref_name  => $name,                       # reference name
+    ref_name  => $rname,                      # reference name
     ref_start => $ref_start,                  # true reference start
     ref_end => $ref_end,                      # true reference end
     disp_ref_start => $disp_start,            # where we want to start displaying the reference (eg maybe truncated)
@@ -360,6 +379,7 @@ sub draw_cigar_difference {
     smallest_width => 8,
     composite_width => 32,
     leeway => 24,
+    skip_labels => 0,
     %$options
   };
 
@@ -390,8 +410,10 @@ sub draw_cigar_difference {
         next;
       }
       my @cigar = $f->cigar_string =~ /(\d*\D)/g;
-      my $bump_start = max(0,$f->start)*$self->scalex;
-      my $bump_end = min($self->{'container'}->length,$f->end)*$self->scalex;      
+      my $draw_start = max(0,$f->start);
+      my $bump_start = $draw_start*$self->scalex;
+      my $draw_end = min($self->{'container'}->length,$f->end);
+      my $bump_end = $draw_end*$self->scalex;      
       my $row = $self->bump_row($bump_start,$bump_end);
       my $img_bp = 0;
       foreach my $i (0..$#cigar) {
@@ -407,7 +429,10 @@ sub draw_cigar_difference {
                                                \@cigar,$i);
       }
       my $rh = $options->{'row_height'};
+      my $fname;
+      $fname = $f->display_id if $f->can('display_id');
       $self->_render_background(max(0,$f->start),min($self->{'container'}->length,$f->end),$row*$rh);
+      $self->_render_fname($draw_start,$fname,$row*$rh) if $fname and not $options->{'skip_labels'};
       my $deletes = $self->_calc_clusters($parts{'D'}||[],$options);
       $self->_draw_delete_domains($deletes,$row*$rh);
       $self->_draw_delete_blobs($deletes,$row*$rh);
