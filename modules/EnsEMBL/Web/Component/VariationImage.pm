@@ -59,17 +59,20 @@ sub content {
   # Fake SNPs
   # Grab the SNPs and map them to subslice co-ordinate
   # $snps contains an array of array each sub-array contains [fake_start, fake_end, B:E:Variation object] # Stores in $object->__data->{'SNPS'}
-  my ($count_snps, $snps, $context_count) = $gene_object->getVariationsOnSlice($transcript_slice, $sub_slices);  
-  my $start_difference   = $gene_object->__data->{'slices'}{'transcripts'}[1]->start - $gene_object->__data->{'slices'}{'gene'}[1]->start;
-  my @fake_filtered_snps = map [ $_->[2]->start + $start_difference, $_->[2]->end + $start_difference, $_->[2] ], @$snps;
+  my ($count_snps, $snps, $context_count);
+  if (!$no_snps) {
+    ($count_snps, $snps, $context_count) = $gene_object->getVariationsOnSlice($transcript_slice, $sub_slices);
+    my $start_difference   = $gene_object->__data->{'slices'}{'transcripts'}[1]->start - $gene_object->__data->{'slices'}{'gene'}[1]->start;
+    my @fake_filtered_snps = map [ $_->[2]->start + $start_difference, $_->[2]->end + $start_difference, $_->[2] ], @$snps;
+    $image_configs->{'gene'}->{'filtered_fake_snps'} = \@fake_filtered_snps unless $no_snps;
+  }   
+
   my @domain_logic_names = qw(Pfam scanprosite Prints pfscan PrositePatterns PrositeProfiles Tigrfam Superfamily Smart PIRSF);
-  
-  $image_configs->{'gene'}->{'filtered_fake_snps'} = \@fake_filtered_snps unless $no_snps;
   
   # Make fake transcripts
   $gene_object->store_TransformedTranscripts;                            # Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
   $gene_object->store_TransformedDomains($_) for @domain_logic_names;    # Stores in $transcript_object->__data->{'transformed'}{'Pfam_hits'}
-  $gene_object->store_TransformedSNPS unless $no_snps;                   # Stores in $transcript_object->__data->{'transformed'}{'snps'}
+  $gene_object->store_TransformedSNPS(undef,[ map $_->[2], @$snps]) unless $no_snps;   # Stores in $transcript_object->__data->{'transformed'}{'snps'}
 
 
   # This is where we do the configuration of containers
