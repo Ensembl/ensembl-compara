@@ -71,7 +71,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   
   open: function (el) {
     var caption = /modal_title_([^\s]+)/.exec(el.className + ' ');
-    var rel     = this.el.is(':visible') ? el.rel : this.activePanel.match(/config/) && el.rel.match(/config/) ? this.activePanel : el.rel;
+    var rel     = this.el.is(':visible') || $(el).hasClass('force') ? el.rel : this.activePanel.match(/config/) && el.rel.match(/config/) ? this.activePanel : el.rel;
     var tab     = rel ? this.elLk.tabs.children('a.' + rel) : [];
     
     if (tab.length) {
