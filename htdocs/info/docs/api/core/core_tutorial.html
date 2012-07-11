@@ -681,7 +681,10 @@ It is important to remember that some Ensembl transcripts are non-coding
 The primary purpose of a Translation object is to define the CDS and
 UTRs of its associated Transcript object.
 Peptide sequence is obtained directly from a Transcript object not a
-Translation object as might be expected.
+Translation object as might be expected. Once you have a Translation
+you can go back to its Transcript. If you retrieved the Translation using
+a stable identifier then the API will fetch the appropriate Transcript 
+automatically.
 The following example obtains the protein sequence of a Transcript and
 the Translation's stable identifier:
 </p>
@@ -695,6 +698,8 @@ my $transcript = $transcript_adaptor-&gt;fetch_by_stable_id($stable_id);
 
 print $transcript-&gt;translation()-&gt;stable_id(), "\n";
 print $transcript-&gt;translate()-&gt;seq(),         "\n";
+
+print $transcript-&gt;translation()-&gt;transcript()-&gt;stable_id(), "\n";
 </pre>
 
 <p>
