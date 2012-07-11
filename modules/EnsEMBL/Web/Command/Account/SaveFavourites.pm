@@ -5,7 +5,7 @@ package EnsEMBL::Web::Command::Account::SaveFavourites;
 use strict;
 
 use EnsEMBL::Web::Data::Record::SpeciesList;
-use EnsEMBL::Web::Document::HTML::SpeciesList;
+use EnsEMBL::Web::Document::HTML::FavouriteSpecies;
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -21,7 +21,7 @@ sub process {
   $species_list->user_id($user->id);
   $species_list->save;
 
-  print new EnsEMBL::Web::Document::HTML::SpeciesList($hub)->render('fragment');
+  print new EnsEMBL::Web::Document::HTML::FavouriteSpecies($hub)->render('fragment');
 }
 
 1;
