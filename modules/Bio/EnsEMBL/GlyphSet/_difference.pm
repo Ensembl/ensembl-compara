@@ -8,22 +8,16 @@ use Data::Dumper;
 
 use List::Util qw(min max);
 
-my $DEBUG = 0;
-
-my $xxx_scale_px = 8;
-my $xxx_cluster_px = 32;
-my $xxx_row_height = 40;
-
 sub colourmap {
   return $_[0]->{'config'}->hub->colourmap;
 }
 
 sub _render_background {
-  my ($self,$start,$end,$row) = @_;
+  my ($self,$start,$end,$bump_offset) = @_;
 
   $self->push($self->Rect({
     x         => $start,
-    y         => 20 + $row*$xxx_row_height,
+    y         => 20 + $bump_offset,
     width     => $end-$start+1,
     height    => 8,
     colour    =>'#ddddff',
@@ -71,23 +65,22 @@ sub _cluster_zmenu {
   });
 }
 
-my $leeway_px = 3 * $xxx_scale_px;
 sub _calc_clusters {
-  my ($self,$blobs) = @_;
+  my ($self,$blobs,$options) = @_;
   
   @$blobs = sort { $a->{'req_start'} <=> $b->{'req_start'} } @$blobs; 
   my @clusters;
   foreach my $blob (@$blobs) {
     my $reuse = 0;
     my $c = $clusters[$#clusters];
-    if(defined $c and ($c->{'reserve_end'} + $leeway_px / $self->scalex >= $blob->{'req_start'})) {
+    if(defined $c and ($c->{'reserve_end'} + $options->{'leeway'} / $self->scalex >= $blob->{'req_start'})) {
       # Add to existing cluster
       push @{$c->{'blobs'}},$blob;
       my $ref_delta = $blob->{'disp_ref_start'} - $c->{'disp_ref_start'};
       $c->{'disp_ref_start'} += $ref_delta if($ref_delta < 0);
       $c->{'disp_ref_end'} = max($c->{'disp_ref_end'},$blob->{'disp_ref_end'});
       $c->{'int_size'} += $blob->{'int_size'};
-      $c->{'min_size'} = $xxx_cluster_px/$self->scalex;
+      $c->{'min_size'} = $options->{'composite_width'}/$self->scalex;
       $c->{'midel'} ||= $blob->{'midel'};
       $c->{'length'} += $blob->{'length'};
       $c->{'ref_start'} = min($c->{'ref_start'},$blob->{'ref_start'});
@@ -97,7 +90,7 @@ sub _calc_clusters {
       push @clusters,{
         %$blob,
         'blobs'         => [ $blob ],
-        'min_size'      => $xxx_scale_px/$self->scalex,
+        'min_size'      => $options->{'smallest_width'}/$self->scalex,
         'reserve_start' => $blob->{'req_start'},
       };
     }
@@ -109,8 +102,8 @@ sub _calc_clusters {
   # Calculate full space now reserved for blob
   foreach my $c (@clusters) {
     # extend reservations XXX cleverer nudging
-    $c->{'reserve_start'} -= $leeway_px/2/$self->scalex;
-    $c->{'reserve_end'} += $leeway_px/2/$self->scalex;
+    $c->{'reserve_start'} -= $options->{'leeway'}/2/$self->scalex;
+    $c->{'reserve_end'} += $options->{'leeway'}/2/$self->scalex;
   }
   foreach my $c (@clusters) {
     # keep it on screen, truncate if just too massive
@@ -137,13 +130,13 @@ sub _calc_clusters {
 }
 
 sub _draw_delete_domains {
-  my ($self,$clusters,$row) = @_;
+  my ($self,$clusters,$bump_offset) = @_;
   
   foreach my $c (@$clusters) {
     
     $self->push($self->Rect({
       x         => $c->{'disp_ref_start'} + $c->{'ref_to_img'},
-      y         => 20 + $xxx_row_height*$row,
+      y         => 20 + $bump_offset,
       width     => $c->{'disp_ref_end'} - $c->{'disp_ref_start'},
       height    => 8,
       colour    => '#ffdddd',
@@ -217,6 +210,27 @@ sub _overlay_text {
   }));
 }
 
+sub _debug_reservations {
+  my ($self,$c,$y) = @_;
+  
+  $self->push($self->Rect({
+    x         => $c->{'reserve_start'}+$c->{'ref_to_img'},
+    y         => $y,
+    width     => 1,
+    height    => 40,
+    colour    => 'orange',
+    absolutey => 1,
+  }));
+  $self->push($self->Rect({
+    x         => $c->{'reserve_end'}+$c->{'ref_to_img'},
+    y         => $y,
+    width     => 1,
+    height    => 40,
+    colour    => 'purple',
+    absolutey => 1,
+  }));
+}
+
 sub _draw_blob {
   my ($self,$c,$y,$colour) = @_;
 
@@ -236,26 +250,8 @@ sub _draw_blob {
     absolutey => 1,
     href      => $self->_cluster_zmenu($c),
   }));
-  if($DEBUG) {
-    $self->push($self->Rect({
-      x         => $c->{'reserve_start'}+$c->{'ref_to_img'},
-      y         => $y,
-      width     => 1,
-      height    => 40,
-      colour    => 'orange',
-      absolutey => 1,
-  #      href      => $url,
-    }));
-    $self->push($self->Rect({
-      x         => $c->{'reserve_end'}+$c->{'ref_to_img'},
-      y         => $y,
-      width     => 1,
-      height    => 40,
-      colour    => 'purple',
-      absolutey => 1,
-  #      href      => $url,
-    }));
-  }
+  # uncomment to see reserve_{start,end} on the track
+  #$self->_debug_reservations($c,$y);
   if(@{$c->{'blobs'}}>1) {
     $self->_overlay_text($c,$middle,$y,"../../..",'white');
   }
@@ -270,33 +266,33 @@ sub _draw_blob {
 }
 
 sub _draw_delete_blobs {
-  my ($self,$clusters,$row) = @_;
+  my ($self,$clusters,$bump_offset) = @_;
   
   foreach my $c (@$clusters) {
-    $self->_draw_blob($c,20+$xxx_row_height*$row,'brown');
+    $self->_draw_blob($c,20+$bump_offset,'brown');
   }
 }
 
 sub _draw_insert_blobs {
-  my ($self,$clusters,$row) = @_;
+  my ($self,$clusters,$bump_offset) = @_;
   
   foreach my $c (@$clusters) {
-    $self->_draw_blob($c,$xxx_row_height*$row,'#2aa52a');
+    $self->_draw_blob($c,$bump_offset,'#2aa52a');
   }
 }
 
 sub _draw_insert_lines {
-  my ($self,$clusters,$row) = @_;
+  my ($self,$clusters,$bump_offset) = @_;
   
   foreach my $c (@$clusters) {
     my $dmiddle = $self->_blob_middle($c);
 
     $self->push($self->Poly({
       points => [
-        $c->{'disp_ref_start'} + $c->{'ref_to_img'},18+$xxx_row_height*$row,    # left on ref
-        $c->{'disp_ref_end'} + $c->{'ref_to_img'},18+$xxx_row_height*$row,      # right on ref
-        $dmiddle + $c->{'size'}/2 + $c->{'ref_to_img'},10+$xxx_row_height*$row, # right on top
-        $dmiddle - $c->{'size'}/2 + $c->{'ref_to_img'},10+$xxx_row_height*$row, # left on top
+        $c->{'disp_ref_start'} + $c->{'ref_to_img'},18+$bump_offset,    # left on ref
+        $c->{'disp_ref_end'} + $c->{'ref_to_img'},18+$bump_offset,      # right on ref
+        $dmiddle + $c->{'size'}/2 + $c->{'ref_to_img'},10+$bump_offset, # right on top
+        $dmiddle - $c->{'size'}/2 + $c->{'ref_to_img'},10+$bump_offset, # left on top
       ],
       colour    => '#2aa52a',
       absolutey => 1,
@@ -305,35 +301,67 @@ sub _draw_insert_lines {
   }
 }
 
-sub _render_delete_subtrack {
-  my ($self,$deletes,$row) = @_;
-
-  my $clusters = $self->_calc_clusters($deletes);
-  $self->_draw_delete_domains($clusters,$row);
-  $self->_draw_delete_blobs($clusters,$row);
-}
-
-sub _render_insert_subtrack {
-  my ($self,$inserts,$row) = @_;
-
-  my $clusters = $self->_calc_clusters($inserts);
-  $self->_draw_insert_blobs($clusters,$row);
-  $self->_draw_insert_lines($clusters,$row);
+sub _add_blob {
+  my ($self,$f,$ref_start,$ref_end,$type,$length,$cigar,$i) = @_;
+  
+  my $midel = 0;
+  my $size=$length;
+  if($length > $self->{'container'}->length * 0.2 and $type eq 'I') {
+    # massive insert feature: will probably shift everything so
+    # much that it looks screwed. Apply middle-ellipsis.
+    $size =  $self->{'container'}->length * 0.2;
+    $midel = 1;
+  }
+  my $blob_start = $ref_start;
+  if($type eq 'I') {
+    $blob_start -= $size/2; # put blob at /middle/ of insert point   
+  }
+  my $disp_start = $ref_start;
+  # check we don't fall off LHS
+  $disp_start = max(-$f->start,$disp_start);
+  $blob_start = max(-$f->start,$blob_start);
+  my $name = $f->seqname;
+  $name = $f->seq_region_name if $f->can('seq_region_name'); # missing from GFF
+  my $ref_to_coord = $self->{'container'}->start + $f->start;
+  my $ref_span = $ref_end-$ref_start;
+  return {
+    ref_name  => $name,                       # reference name
+    ref_start => $ref_start,                  # true reference start
+    ref_end => $ref_end,                      # true reference end
+    disp_ref_start => $disp_start,            # where we want to start displaying the reference (eg maybe truncated)
+    disp_ref_end  => $disp_start + $ref_span, # where we want to start displaying the reference (eg maybe truncated)
+    int_size => $size,                        # what is the "size" of this feature (in bp)
+    req_start => $blob_start,                 # where we'd ideally want our display to start
+    ref_to_img => $f->start,                  # delta from reference to image start
+    ref_to_coord => $ref_to_coord,            # delta from reference to true coord
+    midel => $midel,                          # middle ellipsis: insert too long to display in full on this scale
+    type_str => { 'I' => 'insert',            # For zmenus
+                  'D' => 'delete'  }->{$type},
+    length => $length,                        # true length
+    cigar => $cigar,                          # Full CIGAR line for zmenu
+    cigar_idx => $i,                          # Index in CIGAR for zmenu
+  };
 }
 
 sub draw_cigar_difference {
   my ($self,$options) = @_;
   
   $self->_init_bump;
-  
   my %features = $self->features;
-  
   my $strand          = $self->strand;
   my @sorted          = $self->sort_features_by_priority(%features);                                    # Sort (user tracks) by priority
      @sorted          = $strand < 0 ? sort keys %features : reverse sort keys %features unless @sorted;
   my $size = $self->{'container'}->length;
-
   return unless $self->strand == 1; # Always display on +ve strand. Is this ok?
+
+  $options ||= {};
+  $options = { # set defaults: relies on later initialiazers overriding earlier.
+    row_height => 40,
+    smallest_width => 8,
+    composite_width => 32,
+    leeway => 24,
+    %$options
+  };
 
   # How big are our clusters?
   my $pix_per_cluster = 8; # Maybe make configurable, maybe wrong size?
@@ -369,53 +397,23 @@ sub draw_cigar_difference {
       foreach my $i (0..$#cigar) {
         local $_ = $cigar[$i];
         my ($length, $type) = /^(\d+)(\D)/ ? ($1, $2) : (1, $_);
-        my $blob_start = $img_bp;
         my $ref_start = $img_bp;
         $img_bp += $length unless($type eq 'I');
         my $ref_end = $img_bp;
         next if $type eq 'M';
-        my $ref_span = $length;
-        next if $blob_start+$f->start+$length+$length < 0 or $blob_start+$f->start > $self->{'container'}->length;
-        my $midel = 0;
-        my $size=$length;
-        if($length > $self->{'container'}->length * 0.2 and $type eq 'I') {
-          # massive insert feature: will probably shift everything so
-          # much that it looks screwed. Apply middle-ellipsis.
-          $size =  $self->{'container'}->length * 0.2;
-          $midel = 1;
-        }
-        if($type eq 'I') {
-          $blob_start -= $size/2; # put blob at /middle/ of insert point   
-          $ref_span = 0; # inserts do not span reference
-        }
-        my $disp_start = $img_bp;
-        # check we don't fall off LHS
-        $disp_start = max(-$f->start,$disp_start);
-        $blob_start = max(-$f->start,$blob_start);
-        my $name = $f->seqname;
-        $name = $f->seq_region_name if $f->can('seq_region_name'); # missing from GFF
-        my $ref_to_coord = $self->{'container'}->start + $f->start;
-        push @{$parts{$type}},{
-          ref_name  => $name,                       # reference name
-          ref_start => $ref_start,                  # true reference start
-          ref_end => $ref_end,                      # true reference end
-          disp_ref_start => $disp_start,            # where we want to start displaying the reference (eg maybe truncated)
-          disp_ref_end  => $disp_start + $ref_span, # where we want to start displaying the reference (eg maybe truncated)
-          int_size => $size,                        # what is the "size" of this feature (in bp)
-          req_start => $blob_start,                 # where we'd ideally want our display to start
-          ref_to_img => $f->start-1,                # delta from reference to image start
-          ref_to_coord => $ref_to_coord,            # delta from reference to true coord
-          midel => $midel,                          # middle ellipsis: insert too long to display in full on this scale
-          type_str => { 'I' => 'insert',            # For zmenus
-                        'D' => 'delete'  }->{$type},
-          length => $length,                        # true length
-          cigar => \@cigar,                         # Full CIGAR line for zmenu
-          cigar_idx => $i,                          # Index in CIGAR for zmenu
-        };
+        next if $ref_end+$f->start < 0 or $ref_start+$f->start > $self->{'container'}->length;
+        push @{$parts{$type}},$self->_add_blob($f,$ref_start,$ref_end,
+                                               $type,$length,
+                                               \@cigar,$i);
       }
-      $self->_render_background(max(0,$f->start),min($self->{'container'}->length,$f->end),$row);
-      $self->_render_delete_subtrack($parts{'D'}||[],$row);
-      $self->_render_insert_subtrack($parts{'I'}||[],$row);
+      my $rh = $options->{'row_height'};
+      $self->_render_background(max(0,$f->start),min($self->{'container'}->length,$f->end),$row*$rh);
+      my $deletes = $self->_calc_clusters($parts{'D'}||[],$options);
+      $self->_draw_delete_domains($deletes,$row*$rh);
+      $self->_draw_delete_blobs($deletes,$row*$rh);
+      my $inserts = $self->_calc_clusters($parts{'I'}||[],$options);
+      $self->_draw_insert_blobs($inserts,$row*$rh);
+      $self->_draw_insert_lines($inserts,$row*$rh);
     }
   }
 }
