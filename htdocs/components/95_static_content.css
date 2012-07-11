@@ -118,9 +118,11 @@ form.homepage-search-form label.ff-label { line-height: 20px; }
 form.search-form          div.ff-right,
 form.search-form          div.ff-notes { padding-left: 72px; }
 form.homepage-search-form div.ff-right,
-form.homepage-search-form div.ff-notes { padding-left: 50px; }
+form.homepage-search-form div.ff-notes { padding-left: 50px; text-align: left; }
+
+form.homepage-search-form fieldset { display: inline; }
 
 form.search-form input.ftext { padding: 2px 0; }
 form.search-form div.ff-right label { margin-right: 6px; }
 form.search-form div.ff-notes a { font-weight: bold; text-decoration: none; }
-form.homepage-search-form { width: 530px; margin: 0 auto !important; }
+form.homepage-search-form { text-align: center; margin: 0 !important; }
