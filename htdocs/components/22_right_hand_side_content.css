@@ -86,7 +86,7 @@ img.portal {
 
 .plain-box, .tinted-box, .info-box,
 .alert-box, .embedded-box { [[PANEL_TEXT]]; padding: 16px; margin-top: 16px;
-                             border-width: 1px; border-style: solid; }
+                             border-width: 1px; border-style: solid; overflow: hidden; }
 .plain-box    { background-color:[[PANEL_BG]]; border-color: [[PANEL_BORDER]]; }
 .tinted-box   { background-color:[[TINT_BG]]; border-color: [[TINT_BORDER]]; }
 .info-box     { background-color:[[CONTRAST_BG]]; border-color:[[CONTRAST_BORDER]]; }
