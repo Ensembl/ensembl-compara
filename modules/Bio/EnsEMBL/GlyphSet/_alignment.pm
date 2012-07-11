@@ -2,9 +2,9 @@ package Bio::EnsEMBL::GlyphSet::_alignment;
 
 use strict;
 
-use List::Util qw(min);
+use List::Util qw(min max);
 
-use base qw(Bio::EnsEMBL::GlyphSet_wiggle_and_block);
+use base qw(Bio::EnsEMBL::GlyphSet_wiggle_and_block Bio::EnsEMBL::GlyphSet::_difference);
 
 #==============================================================================
 # The following functions can be over-riden if the class does require
@@ -377,6 +377,15 @@ sub render_normal {
   
   $self->errorTrack(sprintf q{No features from '%s' in this region}, $self->my_config('name')) unless $features_drawn || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
   $self->errorTrack(sprintf(q{%s features from '%s' omitted}, $features_bumped, $self->my_config('name')), undef, $y_offset) if $self->get_parameter('opt_show_bumped') && $features_bumped;
+}
+
+# First we cluster to a sensible scale for this display. Then we characterise
+# each cluster as: perfect match; contains inserts; contains deletes; mixed.
+
+sub render_difference {
+  my ($self) = @_;
+
+  $self->draw_cigar_difference({});
 }
 
 sub render_ungrouped {
