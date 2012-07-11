@@ -20,7 +20,6 @@ div#content div.panel { background-color:[[PANEL_BG]]; }
 */
 
 a.help-header { color: [[PAGE_HEADER]]; text-decoration: none; background: url(/i/16/info.png) no-repeat right center; padding-right: 24px; }
-body.ie7 a.help-header { float: left; }
 
 .glossary_mouseover { border-bottom:1px dotted #00c; cursor:pointer; }
 .floating_popup { 
@@ -92,7 +91,7 @@ img.portal {
 .tinted-box   { background-color:[[TINT_BG]]; border-color: [[TINT_BORDER]]; }
 .info-box     { background-color:[[CONTRAST_BG]]; border-color:[[CONTRAST_BORDER]]; }
 .alert-box    { background-color:[[ALERT_BG]]; border-color:[ALERT_BORDER]]; }
-.embedded-box { width:80%; margin:16px auto; padding:8px; }
+.embedded-box { margin:16px 0; padding:8px; }
 
 .centered { text-align:center; margin:0 auto; }
 .float-right  { float:right;  width:30%; margin: 0; padding: 16px; }
