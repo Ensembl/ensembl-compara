@@ -134,7 +134,7 @@ dd { margin-bottom: 1em; }
   Errors and info boxes
 ----------------------------------------------------------------------*/
 
-.error-pad { padding: 0.5em; }
+.error-pad { padding: 0 16px 16px; }
 
 div.error div, div.warning div,
 div.info div, div.hint div        { border: 1px solid; border-radius: 0 0 8px 8px; -moz-border-radius: 0 0 8px 8px; -webkit-border-radius: 0 0 8px 8px; }
