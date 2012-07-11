@@ -7,7 +7,7 @@ use base qw(EnsEMBL::Web::ViewConfig::Transcript::VariationTable);
 sub init {
   my $self = shift;
   $self->SUPER::init;
-  $self->add_image_config('TranscriptSNPView', 'nodas');
+  $self->add_image_config('transcript_variation', 'nodas');
 }
 
 1;
