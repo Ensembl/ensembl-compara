@@ -1,4 +1,4 @@
-table.search_results                  { width: 100%; }
+table.search_results                  { width: 100%; margin: 16px 0; }
 table.search_results th,
 table.search_results td               { color: [[PANEL_TEXT]]; background-color: [[TINT_BG]]; border: 1px solid [[TINT_BORDER]]; padding: 2px 4px; }
 table.search_results th               { font-weight: bold; }
