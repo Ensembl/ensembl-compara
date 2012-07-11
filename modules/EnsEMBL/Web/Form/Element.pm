@@ -54,6 +54,7 @@ sub configure {
   ##  - disabled        Flag for disabled attribute
   ##  - readonly        Flag for readonly attribute
   ##  - required        Flag to tell whether this field is required to be filled before submitting form (for JS)
+  ##  - no_asterisk     Flag if on, will not display an asterisk next to the element even if it's a 'required field'
   ##  - multiple        Flag for multiple attribute in <select>
   ##  - maxlength       Maxlength attribute for <input>
   ##  - max             Allowed maximum value in case of integers
