@@ -102,8 +102,6 @@ sub populate_tree {
   $align_menu->append($self->create_node('Synteny', 'Synteny ([[counts::synteny]])',
     [qw(
       image    EnsEMBL::Web::Component::Location::SyntenyImage
-      species  EnsEMBL::Web::Component::Location::ChangeSpecies
-      change   EnsEMBL::Web::Component::Location::ChangeChromosome
       homo_nav EnsEMBL::Web::Component::Location::NavigateHomology
       matches  EnsEMBL::Web::Component::Location::SyntenyMatches
     )],

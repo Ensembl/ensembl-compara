@@ -63,8 +63,66 @@ sub content {
   $image->image_type = 'syntenyview';
   $image->image_name = "$species-$chr-$other";
   $image->set_button('drag', 'title' => 'Click or drag to change region');
-  
-  return $image->render;
+
+  my $chr_form = $self->chromosome_form('Vsynteny');
+
+  $chr_form->add_element(
+      type  => 'Hidden',
+      name  => 'otherspecies',
+      value => $self->hub->param('otherspecies') || $self->default_otherspecies,
+  );
+
+  my $html = sprintf('
+<div class="column-wrapper">
+  <div class="column-two">
+    <div class="column-padding">
+    %s
+    </div>
+  </div>
+  <div class="column-two">
+    <div class="column-padding">
+    %s
+    %s
+    </div>
+  </div>
+</div>
+', $image->render, $self->species_form->render, $chr_form->render);
+
+  return $html;
 }
+
+sub species_form {
+  my $self             = shift;
+  my $hub              = $self->hub;
+  my $species_defs     = $hub->species_defs;
+  my $url              = $hub->url({ otherspecies => undef }, 1);
+  my $image_config     = $hub->get_imageconfig('Vsynteny');
+  my $vwidth           = $image_config->image_height;
+  my $form             = $self->new_form({ id => 'change_sp', action => $url->[0], method => 'get', class => 'nonstd autocenter labels_right check', style => $vwidth ? "width:${vwidth}px" : undef });
+  my %synteny_hash     = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+  my %synteny          = %{$synteny_hash{$hub->species} || {}};
+  my @sorted_by_common = sort { $a->{'common'} cmp $b->{'common'} } map {{ name => $_, common => $species_defs->get_config($_, 'SPECIES_COMMON_NAME') }} keys %synteny;
+  my @values;
+
+  foreach my $next (@sorted_by_common) {
+    next if $next->{'name'} eq $hub->species;
+    push @values, { name => $next->{'common'}, value => $next->{'name'} };
+  }
+
+  $form->add_hidden({ name => $_, value => $url->[1]->{$_} }) for keys %{$url->[1]};
+  $form->add_element(
+    type         => 'DropDownAndSubmit',
+    select       => 'select',
+    style        => 'narrow',
+    name         => 'otherspecies',
+    label        => 'Change Species',
+    values       => \@values,
+    value        => $hub->param('otherspecies') || $hub->param('species') || $self->default_otherspecies,
+    button_value => 'Go'
+  );
+
+  return $form;
+}
+
 
 1;
