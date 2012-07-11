@@ -118,10 +118,10 @@ sub content {
  
   if ($length > $width_max){ # Variation truncated (slice very large)
     $var_slice = $slice;
-    $html .= '<h2>Features overlapping the variation context:</h2><br />';
+    $html .= '<h2>Features overlapping the variation context:</h2>';
   } else {
     $var_slice = $slice_adaptor->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
-    $html     .= "<h2>Features overlapping $vname:</h2><br />";
+    $html     .= "<h2>Features overlapping $vname:</h2>";
   }
   
   $html .= $self->structural_variation_table($slice, 'Structural variants',         'sv',  ['get_all_StructuralVariationFeatures','get_all_somatic_StructuralVariationFeatures'], 1);
