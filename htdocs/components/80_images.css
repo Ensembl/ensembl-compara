@@ -18,14 +18,26 @@ div.image_container { position: relative; border: 1px solid #999999; }
 
 body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 
+/* Icon toolbar for dynamic images */
+
+div.image_toolbar        { background-color: [[TABLE_HEADER]]; color: #FFFFFF; height: 16px; padding: 4px 0; }
+div.image_toolbar.top    { border-bottom: 1px solid #999999; }
+div.image_toolbar.bottom { border-top: 1px solid #999999; }
+div.image_toolbar a      { float: left; width: 16px; height: 16px; display: block; margin: 0 4px 2px 4px; }
+
+div.image_toolbar a.config { background-image: url(/i/16/rev/setting.png);   }
+div.image_toolbar a.data   { background-image: url(/i/16/rev/page-user.png); }
+div.image_toolbar a.export { background-image: url(/i/16/rev/picture.png);   }
+
 /* Below is the image export CSS code */
 
-div.iexport   { text-align: right; position: relative; height: 16px; padding: 0 2px; }
-div.iexport a { background-color: [[TINT_BG]]; border: 1px outset [[TINT_BORDER]]; padding-bottom: 2px; text-decoration: none; font-size: 10px; font-weight: bold; float: right; width: 170px; text-align: center; }
+div.iexport_menu            { width: 120px; margin: 0; left: 0; }
+div.iexport_menu div        { background: [[TINT_BG]]; border-color: #999999; color: [[CONTRAST_TEXT]]; font-size: 12px; line-height: 16px; margin: 0; padding: 0 4px; }
+div.iexport_menu div.header { background: [[TABLE_HEADER]]; color: #FFFFFF; font-weight: bold; }
+div.iexport_menu div div    { display: inline-block; border: none; background: none; margin: 0; padding: 0; width: 60px; }
+div.iexport_menu div a      { position: absolute; right: 26px; }
+div.iexport_menu div a.view { right: 6px; margin: 0; float: none; }
+div.iexport_menu div a img  { float: none; margin: 0; }
 
-div.iexport_menu            { z-index: 1000; width: 172px; border-top: 1px solid [[TINT_BORDER]]; position: absolute; cursor: pointer; display: none; margin-top: 15px; }
-div.iexport_menu div        { border: 1px solid [[MH_BORDER]]; border-top: 0; font-size: 0.8em; background-color: [[TINT_BG]]; text-align: left; padding: 2px; }
-div.iexport_menu div a      { text-decoration: none; font-weight: bold; }
-div.iexport_menu div a.view { position: absolute; right: 4px; }
+body.ie67 div.iexport_menu a { margin-top: -16px; }
 
-body.ie6 div.iexport_menu   { width: 170px; margin-left: -205px; }
