@@ -91,7 +91,7 @@ a.bigtext     { text-decoration: none;                        }
 .bottom             { vertical-align: bottom; }
 .autocenter_wrapper { text-align: center;     }
 .autocenter         { text-align: left; margin: 0 auto; }
-.invisible          { display: none; font-size: 1px; color: #fff; height: 0; clear: both; overflow: hidden; } /* Force divs to wrap their contents using an invisible paragraph at the end! */
+.invisible          { display: none; font-size: 1px; color: #fff; height: 0; clear: both; overflow: hidden; margin: 0!important; line-height: 0!important; }
 body.ie6 .invisible { display: block; }
 
 
