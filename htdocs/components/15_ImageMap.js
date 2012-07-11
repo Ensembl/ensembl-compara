@@ -33,8 +33,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.base();
     
-    this.imageConfig = $('input.image_config', this.el).val();
-    this.lastImage   = this.el.parents('.image_panel')[0] === Ensembl.images.last;
+    this.imageConfig      = $('input.image_config', this.el).val();
+    this.lastImage        = this.el.parents('.image_panel')[0] === Ensembl.images.last;
     this.hashChangeReload = this.lastImage || $('.hash_change_reload', this.el).length;
     
     this.params.highlight = (Ensembl.images.total === 1 || !this.lastImage);
@@ -68,7 +68,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.dropFileUpload();
     }
     
-    panel.elLk.exportMenu.appendTo('body').css('left', this.elLk.img.offset().left);
+    panel.elLk.exportMenu.appendTo('body').css('left', this.el.offset().left);
     
     $('a.iexport', this.el).on('click', function () {
       panel.elLk.exportMenu.css({ top: $(this).parent().hasClass('bottom') ? $(this).parent().offset().top - panel.elLk.exportMenu.outerHeight() : panel.elLk.img.offset().top }).toggle();
