@@ -1,6 +1,7 @@
-.navbar     { color: [[CONTRAST_TEXT]]; background-color: [[TINT_BG]]; text-align: right; margin: 1em 0; padding: 5px 0 8px; font-weight: bold; border: 1px solid [[TABLE_HEADER]]; position: relative; overflow:hidden; }
-.navbar a   { font-size: 1.2em; color: [[MH_BORDER]]; text-decoration: none; margin: 1px; position: relative; top: 2px; }
-.navbar div { margin: 0 5px; }
+.navbar      { color: [[CONTRAST_TEXT]]; background-color: [[TINT_BG]]; text-align: right; margin: 1em 0; padding: 5px 0 8px; font-weight: bold; border: 1px solid [[TABLE_HEADER]]; position: relative; overflow:hidden; }
+.navbar a    { font-size: 1.2em; color: [[MH_BORDER]]; text-decoration: none; margin: 1px; position: relative; top: 2px; }
+.navbar div  { margin: 0 5px; }
+.navbar form { margin-top: 0; }
 
 .navbar span.ramp            { position: relative; float: left; bottom: 3px; text-align: center; width: 80px; }
 .navbar span.ramp a          { background-color: [[MH_BORDER]]; height: 4px; vertical-align: bottom; width: 4px; border: outset 1px [[MH_BORDER]]; display: inline-block; }
@@ -10,10 +11,10 @@
 
 .relocate                { float: left; }
 .relocate input          { border: 1px solid [[TINT_BORDER]]; height: 18px; padding: 2px 4px 1px; width: 250px; }
-body.ie6 .relocate input { height: 24px; }
 .relocate input:hover    { background-color: [[CONTRAST_BG]]; }
-.relocate form           { float: left; padding: 2px 0; width: 370px; margin-top: 0; }
+.relocate form           { float: left; padding: 2px 0; width: 370px; }
 .relocate form label     { float: left; display: block; width: 5em; margin-top: 5px; padding-right: 5px; }
+body.ie6 .relocate input { height: 24px; }
 
 input.go-button       { padding: 0; height: 24px; width: 34px; color: [[MH_BORDER]]; background-color: [[TINT_BORDER]]; border: 1px outset [[TINT_BORDER]]; font-weight: bold; }
 input.go-button:hover { background-color: [[TINT_BORDER]]; }
