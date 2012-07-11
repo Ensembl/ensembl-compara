@@ -13,7 +13,7 @@ sub render {
   my $self = shift;
 
   my $html = '
-    <h2 class="first">FAQs</h2>
+    <h2 class="box-header">FAQs</h2>
     <h3>Top 5 Frequently Asked Questions</h3>
   ';
 
