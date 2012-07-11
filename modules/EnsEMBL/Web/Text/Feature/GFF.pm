@@ -77,7 +77,7 @@ sub cigar_string {
     # meaning ref has missing sequence, and vice-versa. Should probably 
     # make this configurable, but this seems like the most common 
     # detault, hence the tr///. -- ds23
-    my $flip_cigar_sense = 1;
+    my $flip_cigar_sense = 0;
     my @steps = map {
       s/(\D)(\d+)/$2$1/; 
       tr/ID/DI/ if($flip_cigar_sense);
