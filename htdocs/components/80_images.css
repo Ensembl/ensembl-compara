@@ -14,7 +14,7 @@ img.flash      { margin: 20px auto; }
 
 /* Dynamic images */
 
-div.image_container { position: relative; border: 1px solid #999999; }
+div.image_container { position: relative; border: 1px solid #999999; margin-top: 16px; }
 
 body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 

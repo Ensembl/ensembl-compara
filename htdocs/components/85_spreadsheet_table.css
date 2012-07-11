@@ -21,7 +21,7 @@ body.ienew table.fixed { table-layout: auto; }
 table.padded-cell td,
 table.padded-cell th    { padding: 8px; }
  
-table.data_table                     { border: 1px solid [[NEUTRAL_BORDER]]; border-spacing: 2px; margin-bottom: 0; }
+table.data_table                     { border: 1px solid [[NEUTRAL_BORDER]]; margin-bottom: 0; }
 table.data_table th                  { cursor: pointer; padding: 2px 20px 2px 5px; }
 table.data_table th:first-child,
 table.data_table td:first-child.wrap { padding-left: 2px; }

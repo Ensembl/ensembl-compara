@@ -99,19 +99,22 @@ img.portal {
 .unpadded { margin:0 1%; padding:0; }
 .noclear { clear:none; }
 
-ul.compact, ul.compact li {list-style-image:none;}
-ul.compact li {margin-top:-2px; margin-left:-25px;}
-ul.compact li.first {margin-top:-10px;}
+ul.compact, ul.compact li { list-style-image: none; }
+ul.compact li { margin-top: -2px; margin-left: -25px; }
+ul.compact li.first { margin-top: -10px; }
 
 .ajax_add span               { display: none;   }
 .ajax_add.closed span.closed { display: inline; }
 .ajax_add.open span.open     { display: inline; }
 
-ul.no-bullet, ul.no-bullet li {list-style-image:none; list-style:none;}
+ul.no-bullet, ul.no-bullet li { list-style-image: none; list-style: none; }
 
 div.reorder_species ul li          { cursor: n-resize; }
 body.mac div.reorder_species ul li { cursor: ns-resize; }
 
-div.toggleable_table             { margin: 8px 0; clear: both; }
-div.toggleable_table h2          { float: left; padding-bottom: 10px; }
+div.toggleable_table             { clear: both; }
+div.toggleable_table h2          { float: left; }
 div.toggleable_table h2 a.toggle { color: [[CONTRAST_HEADER]]; background-position: right 50%; }
+
+form.data_table_config,
+form.data_table_export { display: none; }
