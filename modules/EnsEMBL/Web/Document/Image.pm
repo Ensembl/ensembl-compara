@@ -61,7 +61,7 @@ sub image_width { $_[0]->drawable_container->{'config'}->get_parameter('image_wi
 sub has_toolbars { return 1 if ($_[0]->{'toolbars'}{'top'} || $_[0]->{'toolbars'}{'bottom'}); }
 
 sub render_toolbar {
-  my ($self, $image) = @_;
+  my ($self, $height) = @_;
   my $icon_mapping = EnsEMBL::Web::Constants::ICON_MAPPINGS('image');
 
   return unless $icon_mapping;
@@ -91,7 +91,7 @@ sub render_toolbar {
       { f => 'gff',     label => 'Text (GFF)', text => 1 }
     );
    
-    splice @formats, 3, 0, { f => 'png-10',  label => 'PNG (x10)' } unless $image->height > 32000; ## PNG renderer will crash if image too tall!
+    splice @formats, 3, 0, { f => 'png-10',  label => 'PNG (x10)' } unless $height > 32000; ## PNG renderer will crash if image too tall!
 
     my $url  = $ENV{'REQUEST_URI'};
        $url  =~ s/;$//;
@@ -498,7 +498,7 @@ sub render {
   $image->content($content);
   $image->save;
 
-  my ($top_toolbar, $bottom_toolbar) = $self->has_toolbars ? $self->render_toolbar($image) : ();
+  my ($top_toolbar, $bottom_toolbar) = $self->has_toolbars ? $self->render_toolbar($image->height) : ();
   
   if ($self->button eq 'form') {
     my $image_html = $self->render_image_button($image);
