@@ -123,6 +123,14 @@ form.homepage-search-form div.ff-notes { padding-left: 50px; text-align: left; }
 form.homepage-search-form fieldset { display: inline; }
 
 form.search-form input.ftext { padding: 2px 0; }
-form.search-form div.ff-right label { margin-right: 6px; }
+form.search-form div.ff-right label { margin-right: 6px; margin-left: 0; line-height: 20px; }
+form.search-form div.ff-right .submit { margin-top: 9px; }
 form.search-form div.ff-notes a { font-weight: bold; text-decoration: none; }
 form.homepage-search-form { text-align: center; margin: 0 !important; }
+
+/*-----------------------------------------------------------------------
+contact link on help and faq page 
+-------------------------------------------------------------------------*/
+
+div.help-contact img { padding-top: 0; height: 42px; width: 45px; }
+div.help-contact p   { padding: 0; margin: 0; line-height: 42px; }
