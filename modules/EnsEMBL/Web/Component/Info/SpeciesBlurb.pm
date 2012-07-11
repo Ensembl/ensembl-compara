@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Info::SpeciesBlurb;
 
 use strict;
@@ -14,69 +16,56 @@ sub _init {
 }
 
 sub content {
-  my $self        = shift;
-  my $hub         = $self->hub;
-  my $species     = $hub->species;
-  my $common_name = $hub->species_defs->SPECIES_COMMON_NAME;
-
-  my $file1       = '/ssi/species/'.$species.'_assembly.html';
-  my $file2       = '/ssi/species/'.$species.'_annotation.html';
-
-  my $ensembl_version   = $hub->species_defs->ENSEMBL_VERSION;
-  my $current_assembly  = $hub->species_defs->ASSEMBLY_NAME;
-  my $accession         = $hub->species_defs->ASSEMBLY_ACCESSION;
-  my $source            = $hub->species_defs->ASSEMBLY_ACCESSION_SOURCE || 'NCBI';
-  my $source_type       = $hub->species_defs->ASSEMBLY_ACCESSION_TYPE;
-
-  ## Assembly blurb
-  my $html = EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $file1);
-
-  ## Add in GCA link 
-  if ($accession){
-    my $accession_link = $hub->get_ExtURL_link($accession, 'ASSEMBLY_ACCESSION_SOURCE_'.$source, $accession);
-    $html .= qq(<p class="space-below">The genome assembly represented here corresponds to $source_type $accession_link</p>);
-  }
-
+  my $self              = shift;
+  my $hub               = $self->hub;
+  my $species_defs      = $hub->species_defs;
+  my $species           = $hub->species;
+  my $common_name       = $species_defs->SPECIES_COMMON_NAME;
+  my $ensembl_version   = $species_defs->ENSEMBL_VERSION;
+  my $current_assembly  = $species_defs->ASSEMBLY_NAME;
+  my $accession         = $species_defs->ASSEMBLY_ACCESSION;
+  my $source            = $species_defs->ASSEMBLY_ACCESSION_SOURCE || 'NCBI';
+  my $source_type       = $species_defs->ASSEMBLY_ACCESSION_TYPE;
+  my %archive           = %{$species_defs->get_config($species, 'ENSEMBL_ARCHIVES') || {}};
+  my %assemblies        = %{$species_defs->get_config($species, 'ASSEMBLIES')       || {}};
+  my $previous          = $current_assembly;
+  my $html              = EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_assembly.html"); ## Assembly blurb
+  my @old_archives;
+  
+  $html .= sprintf '<p>The genome assembly represented here corresponds to %s %s</p>', $source_type, $hub->get_ExtURL_link($accession, "ASSEMBLY_ACCESSION_SOURCE_$source", $accession) if $accession; ## Add in GCA link
+  
   ## Link to FTP site
- if ($hub->species_defs->ENSEMBL_SITETYPE ne 'Pre'){
-  my $ftp_url = 'ftp://ftp.ensembl.org/pub/release-'.$ensembl_version.'/fasta/'.lc($species).'/dna/';
-  $html .= qq(<p style="margin-top:1em"><a href=$ftp_url"><img src="/i/helix.gif" alt="" /></a>
-                <a href="$ftp_url">Download $common_name genome sequence</a> (FASTA)</p>);
+  if ($species_defs->ENSEMBL_SITETYPE ne 'Pre') {
+    my $ftp_url = sprintf 'ftp://ftp.ensembl.org/pub/release-%s/fasta/%s/dna/', $ensembl_version, lc $species;
+       $html   .= qq{<p><a href=$ftp_url"><img src="/i/helix.gif" alt="" /></a><a href="$ftp_url">Download $common_name genome sequence</a> (FASTA)</p>};
   }
 
   ## Insert dropdown list of old assemblies
-  my %archive = %{$hub->species_defs->get_config($species, 'ENSEMBL_ARCHIVES')||{}};
-  my %assemblies = %{$hub->species_defs->get_config($species, 'ASSEMBLIES')||{}};
-
-  my @old_archives;
-  my $previous = $current_assembly;
   foreach my $release (reverse sort keys %archive) {
-    next if $release == $hub->species_defs->ENSEMBL_VERSION;
+    next if $release == $ensembl_version;
     next if $assemblies{$release} eq $previous;
+    
     push @old_archives, {
-        'url' => 'http://'.lc($archive{$release}).".archive.ensembl.org/$species/", 
-        'text' => $assemblies{$release}.' (Release '.$release.', '.$archive{$release}.')',
+      url  => sprintf('http://%s.archive.ensembl.org/%s/', lc $archive{$release}, $species),
+      text => "$assemblies{$release} (Release $release, $archive{$release})",
     };
+    
     $previous = $assemblies{$release};
   }
 
   if (@old_archives) {
-    $html .= '<h3 style="clear:both;padding-top:1em">Previous assemblies</h3>';
-    $html .= qq{
-      <form action="/$species/redirect" method="get">
+    $html .= sprintf('
+      <h3 style="clear:both">Previous assemblies</h3>
+      <form action="/%s/redirect" method="get">
         <select name="url">
-    };
-    foreach my $archive (@old_archives) {
-      $html .= '<option value="'.$archive->{'url'}.'">'.$archive->{'text'}.'</option>';
-    }
-    $html .= qq{
+          %s
         </select> <input type="submit" name="submit" value="Go to archive" />
       </form>
-    };
+    ', $species, join '', map qq{<option value="$_->{'url'}">$_->{'text'}</option>}, @old_archives);
   }
 
-  ## Annotation blurb
-  $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $file2);
+  
+  $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_annotation.html"); ## Annotation blurb
   
   return $html;  
 }
