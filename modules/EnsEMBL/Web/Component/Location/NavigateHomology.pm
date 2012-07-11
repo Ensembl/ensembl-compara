@@ -34,7 +34,8 @@ sub content {
   my $chr            = $object->seq_region_name; 
   my $sliceAdaptor   = $hub->get_adaptor('get_SliceAdaptor');
   my $max_index      = 15;
-  my $max_minus      = -15;
+  warn "<<< UPSTREAM SLICE 1 - ".($start - 1);
+  warn ">>> DNSTREAM SLICE ".($seq_region_end + 1).' - '.$chromosome_end;
   my $upstream       = $sliceAdaptor->fetch_by_region('chromosome', $chr, 1, $start - 1 );
   my $downstream     = $sliceAdaptor->fetch_by_region('chromosome', $chr, $seq_region_end + 1, $chromosome_end );
   my @up_genes       = $upstream ?   reverse @{$object->get_synteny_local_genes($upstream)} : ();
@@ -46,7 +47,7 @@ sub content {
   if ($up_count) {
     my @up_sample;
     
-    for (my $i = -1; $i >= $max_minus; $i--) {
+    for (my $i = 0; $i < $max_index; $i++) {
       next if !$up_genes[$i];
       push @up_sample, $up_genes[$i];
     }
@@ -54,8 +55,8 @@ sub content {
     $up_count  = @up_sample;
     $gene_text = $up_count > 1 ? 'genes' : 'gene';
     
-    my $up_start  = @up_sample ? $start - $up_sample[-1]->end  : 0;
-    my $up_end    = @up_sample ? $start - $up_sample[0]->start : 0;
+    my $up_start  = @up_sample ? $up_sample[-1]->start  : 0;
+    my $up_end    = @up_sample ? $up_sample[0]->end : 0;
 
     $up_link = sprintf('
       <a href="%s"><img src="%sback2.png" alt="&lt;&lt;" style="vertical-align:middle" /> %s upstream %s</a>',
@@ -79,7 +80,7 @@ sub content {
     my $down_start = @down_sample ? $down_sample[0]->start + $seq_region_end : 0;
     $down_start    = -$down_start if $down_start < 0;
     my $down_end   = @down_sample ? $down_sample[-1]->end + $seq_region_end : 0;
-  
+ 
     $down_link = sprintf('
       <a href="%s">%s downstream %s <img src="%sforward2.png" alt="&gt; &gt;" style="vertical-align:middle" /></a>',
       $hub->url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => "$chr:$down_start-$down_end" }), $down_count, $gene_text, $img_url
@@ -87,14 +88,26 @@ sub content {
   } else {
     $down_link = 'No downstream homologues';
   }
-  
+
+  my $centre_content = 'Navigate homology';
+  if ($hub->param('g')) {
+    my $gene = $hub->{'_core_objects'}{'gene'};
+    my $padding = 1000000;
+    my $start = $gene->seq_region_start - $padding > 0 ? $gene->seq_region_start - $padding : 0;
+    my $end   = $gene->seq_region_end   + $padding < $chromosome_end 
+                  ? $gene->seq_region_end + $padding : $chromosome_end;
+    my $gene_neighbourhood = sprintf('%s:%d-%d', $chr, $start, $end);
+
+    $centre_content = sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => $gene_neighbourhood }), 'Centre on gene '.$gene->Obj->external_name);
+  }
+
   return qq{
     <div class="autocenter_wrapper">
       <div class="navbar autocenter">
         <table style="width:100%">
           <tr>
             <td class="left" style="padding:0px 2em; vertical-align:middle;">$up_link</td>
-            <td class="center" style="font-size:1.2em;padding:0px 2em; vertical-align:middle">Navigate homology</td>
+            <td class="center" style="padding:0px 2em; vertical-align:middle">$centre_content</td>
             <td class="right" style="padding:0px 2em; vertical-align:middle;">$down_link</td>
           </tr>
         </table>
