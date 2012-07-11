@@ -32,6 +32,7 @@ sub content {
   $form->add_notes({ 
     'heading'=>'Variant Effect Predictor:',
     'text'=>qq(
+      <img src="/i/vep_logo_sm.png" style="float:right" alt="logo" />
       <p class="space-below">This tool takes a list of variant positions and
       alleles, and predicts the effects of each of these on overlapping
       transcripts and regulatory regions annotated in Ensembl. The tool accepts
