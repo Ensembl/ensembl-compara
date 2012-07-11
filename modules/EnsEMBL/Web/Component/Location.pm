@@ -39,16 +39,32 @@ sub default_otherspecies {
   return $has_synteny[0];
 }
 
-# Method to create an array of chromosome names for use in dropdown lists
-sub chr_list {
-  my $self = shift;
+sub chromosome_form {
+  my $self         = shift;
+  my $hub          = $self->hub;
+  my $object       = $self->object;
+  my $image_config = $hub->get_imageconfig('Vsynteny');
+  my $vwidth       = $image_config->image_height;
+  my $form         = $self->new_form({ id => 'change_chr', action => $hub->url({ __clear => 1 }), method => 'get', class => 'nonstd autocenter labels_right check', style => $vwidth ? sprintf "width:${vwidth}px" : undef });
   
-  my @all_chr = @{$self->object->species_defs->ENSEMBL_CHROMOSOMES};
   my @chrs;
+  push @chrs, { 'name' => $_, 'value' => $_ } for @{$self->object->species_defs->ENSEMBL_CHROMOSOMES};
+  my $chr_name     = $object->seq_region_name;
+  my $label        = 'Jump to Chromosome';
+
+  $form->add_element(
+    type         => 'DropDownAndSubmit',
+    select       => 'select',
+    style        => 'narrow',
+    on_change     => 'submit',
+    name         => 'r',
+    label        => $label,
+    values       => \@chrs,
+    value        => $chr_name,
+    button_value => 'Go'
+  );
   
-  push @chrs, { 'name' => $_, 'value' => $_ } for @all_chr;
-  
-  return @chrs;
+  return $form;
 }
 
 ##---------------------------------------------------------------------------------------

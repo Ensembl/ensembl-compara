@@ -39,8 +39,6 @@ sub populate_tree {
   $self->create_node('Chromosome', 'Chromosome summary',
     [qw(
       image  EnsEMBL::Web::Component::Location::ChromosomeImage
-      change EnsEMBL::Web::Component::Location::ChangeChromosome
-      stats  EnsEMBL::Web::Component::Location::ChromosomeStats
     )],
     { 'availability' => 'chromosome', 'disabled' => 'This sequence region is not part of an assembled chromosome' }
   );

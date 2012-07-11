@@ -64,7 +64,80 @@ sub content {
   my $script = $object->species_defs->NO_SEQUENCE ? 'Overview' : 'View';
   $image->karyotype($self->hub, $object, \@pointers, $config_name);
   $image->caption = 'Click on the image above to zoom into that point';
-  return $image->render;
+
+  my $html = sprintf('
+<div class="column-wrapper">
+  <div class="column-two">
+    <div class="column-padding">
+    %s
+    </div>
+  </div>
+  <div class="column-two">
+    <div class="column-padding">
+    <h3>Chromosome Statistics</h3>
+    %s
+    <div style="margin-top:48px">%s</div>
+    </div>
+  </div>
+</div>
+', $image->render, $self->stats_table->render, $self->chromosome_form->render);
+
+  return $html;
+}
+
+sub stats_table {
+  my $self = shift;
+  my $object = $self->object;
+
+  my @orderlist = (
+    'Length (bps)',
+    'known protein_coding Gene Count',
+    'novel protein_coding Gene Count',
+    'pseudogene Gene Count',
+    'miRNA Gene Count',
+    'ncRNA Gene Count',
+    'rRNA Gene Count',
+    'snRNA Gene Count',
+    'snoRNA Gene Count',
+    'tRNA Gene Count',
+    'misc_RNA Gene Count',
+    'SNP Count',
+    'Number of fingerprint contigs',
+    'Number of clones selected for sequencing',
+    'Number of clones sent for sequencing',
+    'Number of accessioned sequence clones',
+    'Number of finished sequence clones',
+    'Total number of sequencing clones',
+    'Raw percentage of map covered by sequence clones',
+  );
+  
+  my $table = new EnsEMBL::Web::Document::Table([], [], { data_table => 0, exportable => 0 });
+  $table->add_columns(
+    { key => 'header', title => ''},
+    { key => 'value',  title => ''},
+  );
+
+  my ($stats, %chr_stats);
+  my $chr = $object->Obj->{'slice'};
+  foreach my $attrib (@{$chr->get_all_Attributes}) {
+    $chr_stats{$attrib->name} += $attrib->value;
+  }
+  $chr_stats{'Length (bps)'} = $chr->seq_region_length ;
+
+  for my $stat (@orderlist) {
+    my $value = $object->thousandify( $chr_stats{$stat} );
+    next if !$value;
+    $stat = 'Estimated length (bps)' if $stat eq 'Length (bps)' && $object->species_defs->NO_SEQUENCE;
+    $stat =~ s/Raw p/P/;
+    $stat =~ s/protein_coding/Protein-coding/;
+    $stat =~ s/_/ /g;
+    $stat =~ s/ Count$/s/;
+    $stat = ucfirst($stat) unless $stat =~ /^[a-z]+RNA/;
+
+    $table->add_row({'header' => $stat, 'value' => $value}); 
+  }
+
+  return $table;
 }
 
 1;
