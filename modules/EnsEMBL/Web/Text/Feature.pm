@@ -69,5 +69,8 @@ sub slide    {
   $self->{'end'}   = $self->rawend + $offset;
 }
 
+sub display_id {
+  return undef; # override
+}
 
 1;

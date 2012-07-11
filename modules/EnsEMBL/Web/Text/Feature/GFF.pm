@@ -102,4 +102,10 @@ sub extra_data {
   return \%extra;
 }
 
+sub display_id {
+  my ($self) = @_;
+  
+  return $self->{'__attribs__'}->{'ID'};
+}
+
 1;
