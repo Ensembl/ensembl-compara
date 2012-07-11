@@ -126,8 +126,9 @@ sub fieldset {
 sub add_fieldset {
   ## Adds a fieldset to the form
   ## @param String with Legend text or HashRef with following keys
-  ##  - legend  Legend string
-  ##  - stripes Shows the fieldset child nodes in alternative bg colour
+  ##  - legend            Legend string
+  ##  - stripes           Shows the fieldset child nodes in alternative bg colour
+  ##  - no_required_notes Flag if on will not print a note about the required fields 
   ## @return Form::Fieldset object
   my $self = shift;
   my $fieldset = $self->dom->create_element('form-fieldset');
