@@ -188,8 +188,8 @@ sub write_output {      # store the genome_db and dataflow
 sub iterate_through_registered_species {
     my $self = shift;
 
-    my $registry_dbs = $self->param('registry_dbs');
-    my $registry_files = $self->param('registry_files');
+    my $registry_dbs = $self->param('registry_dbs') || [];
+    my $registry_files = $self->param('registry_files') || [];
     $registry_dbs || $registry_files || die "unless 'locator' is specified, 'registry_dbs' or 'registry_files' become obligatory parameter";
 
     my @core_dba_list = ();
