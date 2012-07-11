@@ -28,7 +28,7 @@ sub configure {
     $selected_values  = { map { $_ => 1 } @{ $params->{'value'} } };
   }
   
-  $params->{'shortnote'} = '<strong title="Required field">*</strong> '.($params->{'shortnote'} || '') if $params->{'required'};
+  $params->{'shortnote'} = '<strong title="Required field">*</strong> '.($params->{'shortnote'} || '') if $params->{'required'} && !$params->{'no_asterisk'};
   $self->{'__shortnote'} = $params->{'shortnote'} if exists $params->{'shortnote'};
   $self->{'__option_class'} = $params->{'option_class'} if exists $params->{'option_class'};
   if (exists $params->{'values'}) {

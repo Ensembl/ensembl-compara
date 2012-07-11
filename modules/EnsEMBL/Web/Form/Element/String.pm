@@ -28,7 +28,7 @@ sub configure {
   exists $params->{$_} and $self->set_attribute($_, $params->{$_}) for qw(id name value size class maxlength);
   $params->{$_} and $self->$_(1) for qw(disabled readonly);
 
-  $params->{'shortnote'} = '<strong title="Required field">*</strong> '.($params->{'shortnote'} || '') if $params->{'required'};
+  $params->{'shortnote'} = '<strong title="Required field">*</strong> '.($params->{'shortnote'} || '') if $params->{'required'} && !$params->{'no_asterisk'};
   $self->{'__shortnote'} = $params->{'shortnote'} if exists $params->{'shortnote'};
 }
 
