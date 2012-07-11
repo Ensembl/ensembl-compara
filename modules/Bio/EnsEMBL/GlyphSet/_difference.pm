@@ -12,17 +12,18 @@ my $DEBUG = 0;
 
 my $xxx_scale_px = 8;
 my $xxx_cluster_px = 32;
+my $xxx_row_height = 40;
 
 sub colourmap {
   return $_[0]->{'config'}->hub->colourmap;
 }
 
 sub _render_background {
-  my ($self,$start,$end) = @_;
+  my ($self,$start,$end,$row) = @_;
 
   $self->push($self->Rect({
     x         => $start,
-    y         => 20,
+    y         => 20 + $row*$xxx_row_height,
     width     => $end-$start+1,
     height    => 8,
     colour    =>'#ddddff',
@@ -136,13 +137,13 @@ sub _calc_clusters {
 }
 
 sub _draw_delete_domains {
-  my ($self,$clusters) = @_;
+  my ($self,$clusters,$row) = @_;
   
   foreach my $c (@$clusters) {
     
     $self->push($self->Rect({
       x         => $c->{'disp_ref_start'} + $c->{'ref_to_img'},
-      y         => 20,
+      y         => 20 + $xxx_row_height*$row,
       width     => $c->{'disp_ref_end'} - $c->{'disp_ref_start'},
       height    => 8,
       colour    => '#ffdddd',
@@ -269,33 +270,33 @@ sub _draw_blob {
 }
 
 sub _draw_delete_blobs {
-  my ($self,$clusters) = @_;
+  my ($self,$clusters,$row) = @_;
   
   foreach my $c (@$clusters) {
-    $self->_draw_blob($c,20,'brown');
+    $self->_draw_blob($c,20+$xxx_row_height*$row,'brown');
   }
 }
 
 sub _draw_insert_blobs {
-  my ($self,$clusters) = @_;
+  my ($self,$clusters,$row) = @_;
   
   foreach my $c (@$clusters) {
-    $self->_draw_blob($c,0,'#2aa52a');
+    $self->_draw_blob($c,$xxx_row_height*$row,'#2aa52a');
   }
 }
 
 sub _draw_insert_lines {
-  my ($self,$clusters) = @_;
+  my ($self,$clusters,$row) = @_;
   
   foreach my $c (@$clusters) {
     my $dmiddle = $self->_blob_middle($c);
 
     $self->push($self->Poly({
       points => [
-        $c->{'disp_ref_start'} + $c->{'ref_to_img'},18,    # left on ref
-        $c->{'disp_ref_end'} + $c->{'ref_to_img'},18,      # right on ref
-        $dmiddle + $c->{'size'}/2 + $c->{'ref_to_img'},10, # right on top
-        $dmiddle - $c->{'size'}/2 + $c->{'ref_to_img'},10, # left on top
+        $c->{'disp_ref_start'} + $c->{'ref_to_img'},18+$xxx_row_height*$row,    # left on ref
+        $c->{'disp_ref_end'} + $c->{'ref_to_img'},18+$xxx_row_height*$row,      # right on ref
+        $dmiddle + $c->{'size'}/2 + $c->{'ref_to_img'},10+$xxx_row_height*$row, # right on top
+        $dmiddle - $c->{'size'}/2 + $c->{'ref_to_img'},10+$xxx_row_height*$row, # left on top
       ],
       colour    => '#2aa52a',
       absolutey => 1,
@@ -305,23 +306,25 @@ sub _draw_insert_lines {
 }
 
 sub _render_delete_subtrack {
-  my ($self,$deletes) = @_;
+  my ($self,$deletes,$row) = @_;
 
   my $clusters = $self->_calc_clusters($deletes);
-  $self->_draw_delete_domains($clusters);
-  $self->_draw_delete_blobs($clusters);
+  $self->_draw_delete_domains($clusters,$row);
+  $self->_draw_delete_blobs($clusters,$row);
 }
 
 sub _render_insert_subtrack {
-  my ($self,$inserts) = @_;
+  my ($self,$inserts,$row) = @_;
 
   my $clusters = $self->_calc_clusters($inserts);
-  $self->_draw_insert_blobs($clusters);
-  $self->_draw_insert_lines($clusters);
+  $self->_draw_insert_blobs($clusters,$row);
+  $self->_draw_insert_lines($clusters,$row);
 }
 
 sub draw_cigar_difference {
   my ($self,$options) = @_;
+  
+  $self->_init_bump;
   
   my %features = $self->features;
   
@@ -330,7 +333,7 @@ sub draw_cigar_difference {
      @sorted          = $strand < 0 ? sort keys %features : reverse sort keys %features unless @sorted;
   my $size = $self->{'container'}->length;
 
-  next unless $self->strand == 1; # Always display on +ve strand. Is this ok?
+  return unless $self->strand == 1; # Always display on +ve strand. Is this ok?
 
   # How big are our clusters?
   my $pix_per_cluster = 8; # Maybe make configurable, maybe wrong size?
@@ -348,8 +351,8 @@ sub draw_cigar_difference {
     } else {
       @features = @tmp;
     }
-    my %parts;
     foreach my $f (@features) {
+      my %parts;
       my $cigar;
       eval { $cigar = $f->cigar_string; };
       unless($cigar) {
@@ -359,6 +362,9 @@ sub draw_cigar_difference {
         next;
       }
       my @cigar = $f->cigar_string =~ /(\d*\D)/g;
+      my $bump_start = max(0,$f->start)*$self->scalex;
+      my $bump_end = min($self->{'container'}->length,$f->end)*$self->scalex;      
+      my $row = $self->bump_row($bump_start,$bump_end);
       my $img_bp = 0;
       foreach my $i (0..$#cigar) {
         local $_ = $cigar[$i];
@@ -407,11 +413,10 @@ sub draw_cigar_difference {
           cigar_idx => $i,                          # Index in CIGAR for zmenu
         };
       }
-      $self->_render_background(max(0,$f->start),min($self->{'container'}->length,$f->end));
+      $self->_render_background(max(0,$f->start),min($self->{'container'}->length,$f->end),$row);
+      $self->_render_delete_subtrack($parts{'D'}||[],$row);
+      $self->_render_insert_subtrack($parts{'I'}||[],$row);
     }
-    my $size_bp = $self->{'container'}->length;
-    $self->_render_delete_subtrack($parts{'D'}||[]);
-    $self->_render_insert_subtrack($parts{'I'}||[]);
   }
 }
 
