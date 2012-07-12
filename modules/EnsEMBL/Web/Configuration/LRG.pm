@@ -109,7 +109,7 @@ sub populate_tree {
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
 
   $var_menu->append($self->create_node('Variation_LRG/Table', 'Variation Table',
-    [qw( snptable EnsEMBL::Web::Component::LRG::LRGSNPTable )],
+    [qw( snptable EnsEMBL::Web::Component::LRG::VariationTable )],
     { 'availability' => 'lrg' }
   ));
 
