@@ -13,7 +13,7 @@ $exonate_anchors->write_output(); writes to disc and database
 
 =head1 DESCRIPTION
 
-module to set dump the genome sequence of a given species
+module to dump the genome sequence of a given set of pecies to file
 
 =head1 AUTHOR - compara
 
@@ -41,6 +41,7 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence;
 use strict;
 use Data::Dumper;
 use File::Path qw(make_path remove_tree);
+use Bio::EnsEMBL::Utils::IO::FASTASerializer;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -48,22 +49,29 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
 	my ($self) = @_;
 	my $seq_dump_loc = $self->param('seq_dump_loc');
+	my $chunk_factor = $self->param('genome_chunk_size');
+	my $seq_width = $self->param('seq_width');
 	$seq_dump_loc = $seq_dump_loc . "/" . $self->param('genome_db_name') . "_" . $self->param('genome_db_assembly');
 	make_path("$seq_dump_loc", {verbose => 1,});
 	my $genome_db_adaptor = $self->compara_dba()->get_adaptor("GenomeDB");
 	my $genome_db = $genome_db_adaptor->fetch_by_dbID( $self->param('genome_db_id') );
 	my $dnafrag_adaptor = $self->compara_dba()->get_adaptor("DnaFrag");
-	open(IN, ">$seq_dump_loc/genome_seq") or die "cant open $seq_dump_loc\n";
+	open(my $filehandle, ">$seq_dump_loc/genome_seq") or die "cant open $seq_dump_loc\n";
+	my $serializer = Bio::EnsEMBL::Utils::IO::FASTASerializer->new($filehandle);
+	$serializer->chunk_factor($chunk_factor);
+	$serializer->line_width($seq_width);
 	foreach my $ref_dnafrag( @{ $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db) } ){
 		next unless $ref_dnafrag->is_reference;
 		next if ($ref_dnafrag->name=~/MT.*/i and $self->param('dont_dump_MT'));
-		my $header = ">" . join(":", $ref_dnafrag->coord_system_name, $genome_db->assembly,
-			$ref_dnafrag->name, 1, $ref_dnafrag->length, 1);
-		print IN $header, "\n";
-		my $slice = $ref_dnafrag->slice;
-		print IN $ref_dnafrag->slice->seq, "\n";
+		$serializer = Bio::EnsEMBL::Utils::IO::FASTASerializer->new($filehandle,
+		  sub{
+			my $slice = shift;
+			return join(":", $slice->coord_system_name(), $slice->coord_system->version(), 
+					$slice->seq_region_name(), 1, $slice->length, 1); 
+		}); 
+		$serializer->print_Seq($ref_dnafrag->slice);	
 	}
-	close(IN);
+	close($filehandle);
 	my $batch_size = $self->param('anchor_batch_size');
 	if($batch_size){
 		my $anchor_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor( %{ $self->param('compara_anchor_db') } );
