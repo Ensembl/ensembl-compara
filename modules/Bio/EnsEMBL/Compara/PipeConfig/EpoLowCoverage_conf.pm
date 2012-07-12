@@ -113,18 +113,17 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     my ($self) = @_;
 
     return {
-	    'pipeline_name' => $self->o('pipeline_name'), #Essential for the beekeeper to work correctly
+            %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
     };
 }
 
 sub resource_classes {
     my ($self) = @_;
     return {
-	 #0 => { -desc => 'default',           'LSF' => '-R"select[mycompara1 <=800 && myens_staging1 <= 800 && myens_staging2 <=800 && myens_livemirror <=800] rusage[mycompara1=10:duration=3,myens_staging1=10:duration=3,myens_staging2=10:duration=3,myens_livemirror=10:duration=3]"' },
-         0 => { -desc => 'default, 8h',   'LSF' => '-C0 -M100000 -R"select[mem>100] rusage[mem=100]"' },
-	 1 => { -desc => 'low, 8h',       'LSF' => '-C0 -M1000000 -R"select[mem>1000] rusage[mem=1000]"' },  
-	 2 => { -desc => 'default, 8h',   'LSF' => '-C0 -M1800000 -R"select[mem>1800] rusage[mem=1800]"' },  
-         3 => { -desc => 'himem',         'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
+         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+         '100Mb' => { 'LSF' => '-C0 -M100000 -R"select[mem>100] rusage[mem=100]"' },
+         '1Gb'   => { 'LSF' => '-C0 -M1000000 -R"select[mem>1000] rusage[mem=1000]"' },
+	 '1.8Gb' => { 'LSF' => '-C0 -M1800000 -R"select[mem>1800] rusage[mem=1800]"' },
     };
 }
 
@@ -149,7 +148,7 @@ sub pipeline_analyses {
 			       2 => [ 'innodbise_table'  ],
 			       1 => [ 'populate_new_database' ],
 			      },
-		-rc_id => 0,
+		-rc_name => '100Mb',
 	    },
 
 	    {   -logic_name    => 'innodbise_table',
@@ -159,7 +158,7 @@ sub pipeline_analyses {
 				  },
 		-hive_capacity => 10,
 		-can_be_empty  => 1,
-		-rc_id => 0,
+		-rc_name => '100Mb',
 	    },
 
 # ---------------------------------------------[Run poplulate_new_database.pl script ]---------------------------------------------------
@@ -176,7 +175,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      1 => [ 'set_internal_ids' ],
 			     },
-		-rc_id => 1,
+		-rc_name => '100Mb',
 	    },
 
 # ------------------------------------------------------[Set internal ids ]---------------------------------------------------------------
@@ -193,7 +192,7 @@ sub pipeline_analyses {
 		-flow_into => {
 			       1 => [ 'load_genomedb_factory' ],
 			      },
-		-rc_id => 0,
+		-rc_name => '100Mb',
 	    },
 
 # ---------------------------------------------[Load GenomeDB entries from master+cores]--------------------------------------------------
@@ -216,7 +215,7 @@ sub pipeline_analyses {
 			       2 => [ 'load_genomedb' ],
 			       1 => [ 'load_genomedb_funnel' ],    # backbone
 			      },
-		-rc_id => 0,
+		-rc_name => '100Mb',
 	    },
 	    {   -logic_name => 'load_genomedb',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
@@ -224,7 +223,7 @@ sub pipeline_analyses {
 				'registry_dbs'  => [ $self->o('staging_loc1'), $self->o('staging_loc2'), $self->o('livemirror_loc')],
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
-		-rc_id => 0,
+		-rc_name => '100Mb',
 	    },
 
 	    {   -logic_name => 'load_genomedb_funnel',
@@ -233,7 +232,7 @@ sub pipeline_analyses {
 		-flow_into => {
 		    1 => [ 'create_default_pairwise_mlss'],
 		},
-		-rc_id => 0,
+		-rc_name => '100Mb',
         },
 # -------------------------------------------------------------[Load species tree]--------------------------------------------------------
 	    {   -logic_name    => 'make_species_tree',
@@ -252,7 +251,7 @@ sub pipeline_analyses {
 		   4 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree', 'value' => '#species_tree_string#' } },
 
                 },
-		-rc_id => 0,
+		-rc_name => '100Mb',
 	    },
 
 # -----------------------------------[Create a list of pairwise mlss found in the default compara database]-------------------------------
@@ -271,7 +270,7 @@ sub pipeline_analyses {
 			       1 => [ 'import_alignment' ],
 			       3 => [ 'mysql:////meta' ],
 			      },
-		-rc_id => 0,
+		-rc_name => '100Mb',
 	    },
 
 # ------------------------------------------------[Import the high coverage alignments]---------------------------------------------------
@@ -286,7 +285,7 @@ sub pipeline_analyses {
 		-flow_into => {
 			       1 => [ 'create_low_coverage_genome_jobs' ],
 			      },
-		-rc_id => 1,
+		-rc_name =>'1Gb',
 	    },
 
 # ------------------------------------------------------[Low coverage alignment]----------------------------------------------------------
@@ -300,7 +299,7 @@ sub pipeline_analyses {
 			       1 => [ 'delete_alignment' ],
 			       2 => [ 'low_coverage_genome_alignment' ],
 			      },
-		-rc_id => 0,
+		-rc_name => '100Mb',
 	    },
 	    {   -logic_name => 'low_coverage_genome_alignment',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
@@ -318,7 +317,7 @@ sub pipeline_analyses {
 			       2 => [ 'gerp' ],
 			       -1 => [ 'low_coverage_genome_alignment_again' ],
 			      },
-		-rc_id => 2,
+		-rc_name => '1.8Gb',
 	    },
 	    #If fail due to MEMLIMIT, probably due to memory leak, and rerunning with the default memory should be fine.
 	    {   -logic_name => 'low_coverage_genome_alignment_again',
@@ -332,10 +331,11 @@ sub pipeline_analyses {
 			       },
 		-batch_size      => 5,
 		-hive_capacity   => 30,
+                -can_be_empty  => 1,
 		-flow_into => {
 			       2 => [ 'gerp' ],
 			      },
-		-rc_id => 2,
+		-rc_name => '1.8Gb',
 	    },
 # ---------------------------------------------------------------[Gerp]-------------------------------------------------------------------
 	    {   -logic_name => 'gerp',
@@ -346,7 +346,7 @@ sub pipeline_analyses {
 				'gerp_exe_dir' => $self->o('gerp_exe_dir'),
 			       },
 		-hive_capacity   => 600,
-		-rc_id => 1,
+		-rc_name => '1Gb',
 	    },
 
 # ---------------------------------------------------[Delete high coverage alignment]-----------------------------------------------------
@@ -363,7 +363,7 @@ sub pipeline_analyses {
 		-flow_into => {
 			       1 => [ 'update_max_alignment_length' ],
 			      },
-		-rc_id => 0,
+		-rc_name => '100Mb',
 	    },
 
 # ---------------------------------------------------[Update the max_align data in meta]--------------------------------------------------
@@ -376,7 +376,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      1 => [ 'create_neighbour_nodes_jobs_alignment' ],
 			     },
-		-rc_id => 0,
+		-rc_name => '100Mb',
 	    },
 
 # --------------------------------------[Populate the left and right node_id of the genomic_align_tree table]-----------------------------
@@ -390,7 +390,7 @@ sub pipeline_analyses {
 			       1 => [ 'conservation_score_healthcheck' ],
 			       2 => [ 'set_neighbour_nodes' ],
 			      },
-		-rc_id => 0,
+		-rc_name => '100Mb',
 	    },
 	    {   -logic_name => 'set_neighbour_nodes',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
@@ -399,7 +399,7 @@ sub pipeline_analyses {
 			       },
 		-batch_size    => 10,
 		-hive_capacity => 15,
-		-rc_id => 2,
+		-rc_name => '1.8Gb',
 	    },
 # -----------------------------------------------------------[Run healthcheck]------------------------------------------------------------
 	    {   -logic_name => 'conservation_score_healthcheck',
@@ -409,7 +409,7 @@ sub pipeline_analyses {
 				{'test' => 'conservation_jobs', 'logic_name'=>'gerp','method_link_type'=>'EPO_LOW_COVERAGE'}, 
 				{'test' => 'conservation_scores','method_link_species_set_id'=>$self->o('cs_mlss_id')},
 			       ],
-		-rc_id => 0,
+		-rc_name => '100Mb',
 	    },
 
      ];
