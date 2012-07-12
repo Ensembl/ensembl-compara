@@ -23,4 +23,11 @@ sub get_phenotype_desc {
   return $vaa->fetch_phenotype_description_by_id($self->hub->param('ph'));
 };
 
+sub get_all_phenotypes {
+  my $self = shift;
+  my $vardb = $self->hub->database('variation');
+  my $pa    = $vardb->get_adaptor('Phenotype');
+  return $pa->fetch_all();
+};
+
 1;
