@@ -1734,7 +1734,8 @@ sub dumpSequence {
         next;
       }
       else {
-        print LOG "Not dumping $name on coord_system $cs_id since it's an old assembly with no mapping\n";
+	#This was here to remind the genbuilders to remove them, but is really just noise so commented out
+#        print LOG "Not dumping $name on coord_system $cs_id since it's an old assembly with no mapping\n";
         next;
       }
     }
@@ -1860,9 +1861,11 @@ sub sanger_project_names {
   my $sanger_species_name = $SPECIES{$conf->{'species'}};
   return {} unless $sanger_species_name;
   my $clones = {};
-  my $dbh = DBI->connect("DBI:mysql:host=otterlive;port=3324;database=submissions", 'ottro', undef, {RaiseError => 1});
+  my $host = 'otterlive';
+  my $port = '3324';
+  my $dbh = DBI->connect("DBI:mysql:host=$host;port=$port;database=submissions", 'ottro', undef, {RaiseError => 1});
   unless( $dbh ) {
-    warn "Can't connect to submissions database as 'read_only' ", DBI::errstr();
+    print LOG "WARNING: Can't connect to submissions database on $host:$port", DBI::errstr();
     return $clones;
   }
   my $sth = $dbh->prepare(
