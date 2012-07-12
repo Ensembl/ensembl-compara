@@ -36,7 +36,7 @@ sub configure {
     BLAST               => undef,
     BLAST_LOG           => undef,
     MART                => undef,
-    GO                  => undef,
+    GO                  => [ 'Bio::EnsEMBL::DBSQL::OntologyDBAdaptor', 'ontology' ],
     FASTA               => undef,
     WEB_COMMON          => undef,
     PRODUCTION          => undef,
@@ -73,10 +73,12 @@ sub configure {
       
       ## Check to see if the adaptor is in the known list above
       if ($type =~ /DATABASE_(\w+)/ && exists $adaptors{$1}) {
+        my ($module, $group) = ref $adaptors{$1} eq 'ARRAY' ? @{$adaptors{$1}} : ($adaptors{$1}, lc $1);
+        
         ## If the value is defined then we will create the adaptor here
-        if (my $module = $adaptors{$1}) {
+        if ($module) {
           ## Create a new "module" object. Stores info - but doesn't create connection yet
-          $module->new(%arg, '-group' => lc $1) if $self->dynamic_use($module);
+          $module->new(%arg, '-group' => $group) if $self->dynamic_use($module);
         }
       } else {
         warn "unknown database type $type\n";
