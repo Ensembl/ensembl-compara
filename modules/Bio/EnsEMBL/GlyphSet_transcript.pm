@@ -119,7 +119,7 @@ sub render_collapsed {
         my ($target, @gene_tags);
         
         if ($previous_species) {
-          for ($self->get_homologous_gene_ids($gene, $previous_species, $join_types)) {
+          for ($self->get_gene_joins($gene, $previous_species, $join_types)) {
             $target = $previous_target ? ":$seq_region_name:$previous_target" : '';
             
             $self->join_tag($composite2, "$gene_stable_id:$_->[0]$target", 0.5, 0.5, $_->[1], 'line', $join_z);
@@ -132,7 +132,7 @@ sub render_collapsed {
         }
 
         if ($next_species) {
-          for ($self->get_homologous_gene_ids($gene, $next_species, $join_types)) {
+          for ($self->get_gene_joins($gene, $next_species, $join_types)) {
             $target = $next_target ? ":$next_target:$seq_region_name" : '';
             
             $self->join_tag($composite2, "$_->[0]:$gene_stable_id$target", 0.5, 0.5, $_->[1], 'line', $join_z);
@@ -277,10 +277,13 @@ sub render_transcripts {
       }
       
       if ($previous_species) {
-        my ($sid, $pid, $homologues, $homologue_genes) = $self->get_homologous_peptide_ids_from_gene($gene, $previous_species, $join_types);
+        my ($peptide_id, $homologues, $homologue_genes) = $self->get_gene_joins($gene, $previous_species, $join_types, 'ENSEMBLGENE');
         
-        push @{$tags{$sid}}, map {[ "$_->[0]:$pid", $_->[1] ]} @$homologues if $sid && $pid;
-        push @{$tags{$sid}}, map {[ "$gene_stable_id:$_->[0]", $_->[1] ]} @$homologue_genes if $sid;
+        if ($peptide_id) {
+          push @{$tags{$peptide_id}}, map {[ "$_->[0]:$peptide_id",     $_->[1] ]} @$homologues;
+          push @{$tags{$peptide_id}}, map {[ "$gene_stable_id:$_->[0]", $_->[1] ]} @$homologue_genes;
+        }
+        
         push @gene_tags, map { join '=', $_->stable_id, $tsid } @{$self->filter_by_target(\@transcripts, $previous_target)};
         
         for (@$homologues) {
@@ -290,10 +293,13 @@ sub render_transcripts {
       }
       
       if ($next_species) {
-        my ($sid, $pid, $homologues, $homologue_genes) = $self->get_homologous_peptide_ids_from_gene($gene, $next_species, $join_types);
+        my ($peptide_id, $homologues, $homologue_genes) = $self->get_gene_joins($gene, $next_species, $join_types, 'ENSEMBLGENE');
         
-        push @{$tags{$sid}}, map {[ "$pid:$_->[0]", $_->[1] ]} @$homologues if $sid && $pid;
-        push @{$tags{$sid}}, map {[ "$_->[0]:$gene_stable_id", $_->[1] ]} @$homologue_genes if $sid;
+        if ($peptide_id) {
+          push @{$tags{$peptide_id}}, map {[ "$peptide_id:$_->[0]",     $_->[1] ]} @$homologues;
+          push @{$tags{$peptide_id}}, map {[ "$_->[0]:$gene_stable_id", $_->[1] ]} @$homologue_genes;
+        }
+        
         push @gene_tags, map { join '=', $tsid, $_->stable_id } @{$self->filter_by_target(\@transcripts, $next_target)};
         
         for (@$homologues) {
@@ -1030,7 +1036,7 @@ sub render_genes {
       my ($target, @gene_tags);
       
       if ($previous_species) {
-        for ($self->get_homologous_gene_ids($gene, $previous_species, $join_types)) {
+        for ($self->get_gene_joins($gene, $previous_species, $join_types)) {
           $target = $previous_target ? ":$seq_region_name:$previous_target" : '';
           
           $self->join_tag($rect, "$gene_stable_id:$_->[0]$target", 0.5, 0.5, $_->[1], 'line', $join_z);
@@ -1043,7 +1049,7 @@ sub render_genes {
       }
       
       if ($next_species) {
-        for ($self->get_homologous_gene_ids($gene, $next_species, $join_types)) {
+        for ($self->get_gene_joins($gene, $next_species, $join_types)) {
           $target = $next_target ? ":$next_target:$seq_region_name" : '';
           
           $self->join_tag($rect, "$_->[0]:$gene_stable_id$target", 0.5, 0.5, $_->[1], 'line', $join_z);
@@ -1230,28 +1236,30 @@ sub render_text {
 #============================================================================#
 
 # Get homologous gene ids for given gene
-sub get_homologous_gene_ids {
-  my ($self, $gene, $species, $join_types) = @_;
+sub get_gene_joins {
+  my ($self, $gene, $species, $join_types, $source) = @_;
   
-  my $compara_db = $self->{'config'}->hub->database('compara');
+  my $config     = $self->{'config'};
+  my $compara_db = $config->hub->database('compara');
   return unless $compara_db;
   
   my $ma = $compara_db->get_MemberAdaptor;
   return unless $ma;
   
-  my $qy_member = $ma->fetch_by_source_stable_id(undef, $gene->stable_id);
+  my $qy_member = $ma->fetch_by_source_stable_id($source, $gene->stable_id);
   return unless defined $qy_member;
   
-  my $config = $self->{'config'};
-  my $ha     = $compara_db->get_HomologyAdaptor;
-  my $method = $config->get_parameter('force_homologue') ? $config->get_parameter('force_homologue')
-               : $species eq $config->{'species'} ? $config->get_parameter('homologue')
-               : undef;
-
+  my $method = $config->get_parameter('force_homologue') || $species eq $config->{'species'} ? $config->get_parameter('homologue') : undef;
+  my $func   = $source ? 'get_homologous_peptide_ids_from_gene' : 'get_homologous_gene_ids';
+  
+  return $self->$func($species, $join_types, $compara_db->get_HomologyAdaptor, $qy_member, $method ? [ $method ] : undef);
+}
+  
+sub get_homologous_gene_ids {
+  my ($self, $species, $join_types, $homology_adaptor, $qy_member, $method) = @_;
   my @homologues;
   
-  # $config->get_parameter('homologue') may be undef, so can't just do [ $config->get_parameter('homologue') ] because [ undef ] as an argument breaks fetch_all_by_Member_paired_species
-  foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $species, $method ? [ $method ] : undef)}) {
+  foreach my $homology (@{$homology_adaptor->fetch_all_by_Member_paired_species($qy_member, $species, $method)}) {
     my $colour_key = $join_types->{$homology->description};
     
     next if $colour_key eq 'hidden';
@@ -1259,9 +1267,7 @@ sub get_homologous_gene_ids {
     my $colour = $self->my_colour($colour_key . '_join');
     my $label  = $self->my_colour($colour_key . '_join', 'text');
     
-    foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
-      my ($member, $attribute) = @$member_attribute;
-      
+    foreach my $member (@{$homology->get_all_GeneMembers}) {
       next if $member->stable_id eq $qy_member->stable_id;
       
       push @homologues, [ $member->stable_id, $colour, $label ];
@@ -1273,27 +1279,10 @@ sub get_homologous_gene_ids {
 
 # Get homologous protein ids for given gene
 sub get_homologous_peptide_ids_from_gene {
-  my ($self, $gene, $species, $join_types) = @_;
+  my ($self, $species, $join_types, $homology_adaptor, $qy_member, $method) = @_;
+  my ($stable_id, @homologues, @homologue_genes);
   
-  my $compara_db = $gene->adaptor->db->get_adaptor('compara');
-  return unless $compara_db;
-  
-  my $ma = $compara_db->get_MemberAdaptor;
-  return unless $ma;
-  
-  my $qy_member = $ma->fetch_by_source_stable_id('ENSEMBLGENE', $gene->stable_id);
-  return unless defined $qy_member;
-  
-  my $config  = $self->{'config'}; 
-  my $ha      = $compara_db->get_HomologyAdaptor;
-  my $method = $species eq $config->{'species'} ? $config->get_parameter('homologue') : undef;
-  my @homologues;
-  my @homologue_genes;
-  
-  my $stable_id = undef;
-  my $peptide_id = undef;
-  
-  foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $species, $method ? [ $method ] : undef)}) {
+  foreach my $homology (@{$homology_adaptor->fetch_all_by_Member_paired_species($qy_member, $species, $method)}) {
     my $colour_key = $join_types->{$homology->description};
     
     next if $colour_key eq 'hidden';
@@ -1301,22 +1290,19 @@ sub get_homologous_peptide_ids_from_gene {
     my $colour = $self->my_colour($colour_key . '_join');
     my $label  = $self->my_colour($colour_key . '_join', 'text');
     
-    foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
-      my ($member, $attribute) = @$member_attribute;
+    foreach my $member (@{$homology->get_all_Members}) {
+      my $gene_member = $member->gene_member;
       
-      if ($member->stable_id eq $qy_member->stable_id) {
-        unless ($stable_id) {
-          my $T = $ma->fetch_by_dbID($peptide_id = $attribute->peptide_member_id);
-          $stable_id = $T->stable_id;
-        }
+      if ($gene_member->stable_id eq $qy_member->stable_id) {
+        $stable_id = $member->stable_id;
       } else {
-        push @homologues, [ $attribute->peptide_member_id, $colour, $label ];
-        push @homologue_genes, [ $member->stable_id, $colour ];
+        push @homologues,      [ $member->stable_id,      $colour, $label ];
+        push @homologue_genes, [ $gene_member->stable_id, $colour         ];
       }
     }
   }
   
-  return ($stable_id, $peptide_id, \@homologues, \@homologue_genes);
+  return ($stable_id, \@homologues, \@homologue_genes);
 }
 
 sub filter_by_target {
