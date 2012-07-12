@@ -118,11 +118,12 @@ sub write_output {
     my $end_gab_id;
     my $chunk = 1;
 
+    
     #
     #Create a table (other_gab) to store the genomic_align_block_ids of those
     #blocks which do not contain $self->param('species')
     #
-    foreach my $gab (@$skip_genomic_align_blocks) {
+    foreach my $gab (sort {$a->dbID <=> $b->dbID} @$skip_genomic_align_blocks) {
 	my $sql_cmd = "INSERT INTO other_gab (genomic_align_block_id) VALUES (?)";
 	my $dump_sth = $self->analysis->adaptor->dbc->prepare($sql_cmd);
 	$dump_sth->execute($gab->dbID);
