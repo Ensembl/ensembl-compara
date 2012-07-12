@@ -1,4 +1,7 @@
 
+-- MySQL should 'die' on warnings, ensuring data is not truncated
+SET session sql_mode='TRADITIONAL';
+
 -- Unique keys promoted to primary keys
 ALTER TABLE method_link_species_set_tag DROP KEY tag_mlss_id, ADD PRIMARY KEY tag_mlss_id (method_link_species_set_id,tag);
 ALTER TABLE subset_member DROP KEY subset_member_id, ADD PRIMARY KEY subset_member_id (subset_id, member_id);
