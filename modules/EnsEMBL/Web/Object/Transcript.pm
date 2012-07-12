@@ -524,7 +524,7 @@ sub get_transcript_slices {
 sub get_munged_slice {
   my $self          = shift;
   my $config_name   = shift;
-  my $master_config = $self->get_imageconfig($config_name eq 'tsv_transcript' ? 'TranscriptSNPView' : $config_name);
+  my $master_config = $self->get_imageconfig($config_name eq 'tsv_transcript' ? 'transcript_population' : $config_name);
   my $slice         = $self->get_transcript_Slice(@_); # pushes it onto forward strand, expands if necc.
   my $length        = $slice->length;
   my $munged        = '0' x $length;                   # Munged is string of 0, length of slice
