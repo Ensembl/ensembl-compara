@@ -397,8 +397,14 @@ sub configure {
   my $gene_object;
   my $transcript_object;
 
-  if ($object->isa('EnsEMBL::Web::Object::Gene') || $object->isa('EnsEMBL::Web::Object::LRG')){
+  if ($object->isa('EnsEMBL::Web::Object::Gene')){ #|| $object->isa('EnsEMBL::Web::Object::LRG')){
     $gene_object = $object;
+  } elsif ($object->isa('EnsEMBL::Web::Object::LRG')){
+    my @genes       = @{$object->Obj->get_all_Genes('LRG_import')||[]};
+    my $gene = $genes[0];  
+    my $factory = $self->builder->create_factory('Gene');  
+    $factory->createObjects($gene);
+    $gene_object = $factory->object;
   } else {
     $transcript_object = $object;
     $gene_object = $self->hub->core_objects->{'gene'};
