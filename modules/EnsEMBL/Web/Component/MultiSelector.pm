@@ -40,7 +40,7 @@ sub content_ajax {
   
   my $content = sprintf('
     <div class="content">
-      <form action="%s" method="get">%s</form>
+      <form action="%s" method="get" class="hidden">%s</form>
       <div class="multi_selector_list">
         <h2>%s</h2>
         <ul class="included">
