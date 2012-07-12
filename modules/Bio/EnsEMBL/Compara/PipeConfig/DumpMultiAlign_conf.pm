@@ -32,7 +32,7 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-	'release'       => 67,
+	'release'       => 68,
         'pipeline_name' => 'DUMP_'.$self->o('release'),  # name used by the beekeeper to prefix job names on the farm
 
         'dbname' => 'dumpMultiAlign'.$self->o('release'),  # database suffix (without user name prepended)
@@ -110,8 +110,8 @@ sub pipeline_create_commands {
 
 sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
     my ($self) = @_;
-
     return {
+            %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 	    'pipeline_name' => $self->o('pipeline_name'), #This must be defined for the beekeeper to work properly
     };
 }
@@ -119,10 +119,11 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
 sub resource_classes {
     my ($self) = @_;
+
     return {
-         0 => { -desc => 'default, 8h',      'LSF' => '-M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
-	 1 => { -desc => 'urgent',           'LSF' => '-q yesterday' },
-         2 => { -desc => 'compara1',         'LSF' => '-M2000000 -R"select[mem>2000 && mycompara1<800] rusage[mem=2000,mycompara1=10:duration=3]"' },
+            %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+
+            '2GbMem' => {'LSF' => '-M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
     };
 }
 
@@ -189,6 +190,7 @@ sub pipeline_analyses {
 			      },
             -input_ids     => [
             ],
+	   -rc_name => '2GbMem',
 	   -hive_capacity => 10, #make this large to allow any dumpMultiAlign jobs to start
 	    -flow_into => {
 	       2 => [ 'dumpMultiAlign' ]
@@ -211,7 +213,7 @@ sub pipeline_analyses {
             -input_ids     => [
             ],
 	   -hive_capacity => 15,
-	   -rc_id => 0,
+	   -rc_name => '2GbMem',
 	    -flow_into => {
 	       2 => [ 'emf2maf' ],
 	       1 => [ 'compress' ]
