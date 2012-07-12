@@ -1565,6 +1565,14 @@ sub _munge_meta {
       (my $k1 = $k) =~ s/^sample\.//;
       $shash->{uc $k1} = $meta_hash->{$k}->[0];
     }
+    ## add in any missing values where text omitted because same as param
+    while (my ($key, $value) = each (%$shash)) {
+      next unless $key =~ /PARAM/;
+      (my $type = $key) =~ s/_PARAM//;
+      unless ($shash->{$type.'_TEXT'}) {
+        $shash->{$type.'_TEXT'} = $value;
+      } 
+    }
     
     $self->tree->{$species}{'SAMPLE_DATA'} = $shash if $shash;
 
