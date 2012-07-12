@@ -53,6 +53,8 @@ sub render {
     if ($hub->species) {
       foreach (@changes) {
         next if $seen{$_->{'id'}};
+        next if ($_->{'team'} eq 'Variation' && !exists $hub->species_defs->databases->{'DATABASE_VARIATION'});
+        next if ($_->{'team'} eq 'Funcgen' && !exists $hub->species_defs->databases->{'DATABASE_FUNCGEN'});
         push @sorted, $_;
         $seen{$_->{'id'}}++;
       }
