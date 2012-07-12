@@ -46,7 +46,7 @@ sub fetch_changelog {
   if ($criteria->{'species'}) {
     $sql = qq(
       SELECT
-        c.changelog_id, c.title, c.content, c.team
+        c.changelog_id, c.title, c.content, c.team, s.species_id
       FROM
         changelog as c
       LEFT JOIN 
@@ -95,7 +95,7 @@ sub fetch_changelog {
       FROM
         species
       WHERE
-        s.db_name = ?
+        db_name = ?
     );
   }
   else {
@@ -115,14 +115,25 @@ sub fetch_changelog {
     
     ## get the species info for this record
     my $species = [];
-    my $arg2 = $criteria->{'species'} || $data[0];
-    $sth2->execute($arg2);
-    while (my @sp = $sth2->fetchrow_array()) {
-      push @$species, {
-        'id'          => $sp[0],
-        'url_name'    => $sp[1],
-        'web_name'    => $sp[2],
-      };
+    my $arg2;
+    if ($criteria->{'species'}) {
+      ## Only get species info if this is in fact a species-specific record!
+      if ($data[4]) {
+        $arg2 = $criteria->{'species'};
+      }
+    }
+    else {
+      $arg2 = $data[0];
+    }
+    if ($arg2) {
+      $sth2->execute($arg2);
+      while (my @sp = $sth2->fetchrow_array()) {
+        push @$species, {
+          'id'          => $sp[0],
+          'url_name'    => $sp[1],
+          'web_name'    => $sp[2],
+        };
+      }
     }
 
     my $record = {

@@ -1,6 +1,6 @@
 package EnsEMBL::Web::Document::HTML::News;
 
-### This module outputs news for previous Ensembl releases 
+### This module outputs news for a given Ensembl release
 
 use strict;
 use warnings;
@@ -41,19 +41,35 @@ sub render {
       my $params = {'release' => $release_id};
       if ($hub->species) {
         $params->{'species'} = $hub->species;
+        @changes = @{$adaptor->fetch_changelog($params)};
       }
-      #warn '>>> SPECIES '.$hub->species;
-      @changes = @{$adaptor->fetch_changelog($params)};
+      else {
+        @changes = @{$adaptor->fetch_changelog($params)};
+      }
     }
+
+    ## Sort and dedupe records
+    my (@sorted, %seen);
+    if ($hub->species) {
+      foreach (@changes) {
+        next if $seen{$_->{'id'}};
+        push @sorted, $_;
+        $seen{$_->{'id'}}++;
+      }
+    }
+    else {
+      @sorted = @changes;
+    }
+    @sorted = sort {$a->{'team'} cmp $b->{'team'} || $a->{'priority'} <=> $b->{'priority'}} @sorted;
  
-    if (scalar(@changes) > 0) {
+    if (scalar(@sorted) > 0) {
 
       my ($record, $prev_team);;
 
       ## Quick'n'dirty TOC
       $html .= qq(<h2>Teams</h2>
                 <ul>\n);
-      foreach $record (@changes) {
+      foreach $record (@sorted) {
         if ($record->{'team'} ne $prev_team) {
           $html .= sprintf '<li><a href="#team-%s">%s</a></li>', $record->{'team'}, $record->{'team'};
         }
@@ -64,7 +80,7 @@ sub render {
 
 
       ## format news changes
-      foreach my $record (@changes) {
+      foreach my $record (@sorted) {
 
         ## is it a new category?
         if ($prev_team ne $record->{'team'}) {
@@ -85,11 +101,11 @@ sub render {
         else {
           my @names;
           foreach my $sp (@species) {
-            if ($sp->{'common_name'} =~ /\./) {
-              push @names, '<i>'.$sp->{'common_name'}.'</i>';
+            if ($sp->{'web_name'} =~ /\./) {
+              push @names, '<i>'.$sp->{'web_name'}.'</i>';
             }
             else {
-              push @names, $sp->{'common_name'};
+              push @names, $sp->{'web_name'};
             } 
           }
           $sp_text = join(', ', @names);
@@ -141,11 +157,11 @@ sub render {
           my @names;
           foreach my $sp (@species) {
             next unless $sp->{'id'} > 0;
-            if ($sp->{'common_name'} =~ /\./) { ## No common name, only Latin
-              push @names, '<i>'.$sp->{'common_name'}.'</i>';
+            if ($sp->{'web_name'} =~ /\./) { ## No common name, only Latin
+              push @names, '<i>'.$sp->{'web_name'}.'</i>';
             }
             else {
-              push @names, $sp->{'common_name'};
+              push @names, $sp->{'web_name'};
             }
           }
           $sp_text = join(', ', @names);
