@@ -56,7 +56,8 @@ sub id       {
   return $self->{'__extra__'}{'transcript_id'} ? $self->{'__extra__'}{'transcript_id'}[0]
        : $self->{'__extra__'}{'genscan'      } ? $self->{'__extra__'}{'genscan'}[0]
        : $self->{'__extra__'}{'hid'          } ? $self->{'__extra__'}{'hid'}[0]
-       : $self->{'__raw__'}[8]                ? $self->{'__raw__'}[8]
+       : $self->{'__attribs__'}{'ID'         } ? $self->{'__attribs__'}{'ID'}
+       : $self->{'__raw__'}[8]                ?  $self->{'__raw__'}[8]
        :                                         $self->{'__raw__'}[2]
        ;
 }
