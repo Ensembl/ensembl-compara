@@ -247,14 +247,18 @@ sub fetch_input {
 
     my $reuse_ss = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($reuse_ss_id);    # this method cannot fail at the moment, but in future it may
 
-    my $reuse_ss_hash = { map { $_->dbID() => 1 } @{ $reuse_ss->genome_dbs() } };
+    my $reuse_ss_hash = {};
+
+    if ($reuse_ss) {
+        $reuse_ss_hash = { map { $_->dbID() => 1 } @{ $reuse_ss->genome_dbs() } };
+    }
     $self->param('reuse_ss_hash', $reuse_ss_hash );
 
      # We get the list of genome_dbs to execute, then go one by one with this member
 
     my $mlss_id         = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
     my $mlss            = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
-    my $species_set     = $mlss->species_set;
+    my $species_set     = $mlss->species_set_obj->genome_dbs;
 
     my $genome_db_list;
 
@@ -405,7 +409,6 @@ sub run {
     $self->compara_dba->dbc->disconnect_when_inactive(1); 
 
     my $cross_pafs;
-
     foreach my $genome_db (@{$self->param('genome_db_list')}) {
 	my $fastafile = $genome_db->name() . '_' . $genome_db->assembly() . '.fasta';
 	$fastafile =~ s/\s+/_/g;    # replace whitespace with '_' characters
