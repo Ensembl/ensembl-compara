@@ -1134,6 +1134,70 @@ sub store_TransformedSNPS {
 	$_->__data->{'transformed'}{'snps'} = $tvs_by_tr->{$_->stable_id} foreach @transcripts;
 }
 
+sub store_ConsequenceCounts {
+  my $self     = shift;
+  my $so_term_sets = shift;
+  my $vfs      = shift;
+
+  my $tva = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+
+  my @transcripts = @{$self->get_all_transcripts};
+  if ($self->hub->type eq 'Transcript'){
+    @transcripts = ($self->hub->core_objects->{'transcript'});
+  }
+
+  my $included_so;
+
+  if ($self->need_consequence_check) {
+    # Can't use counts with consequence check so clear any existing stored conscounts and return - no longer true
+    # if (exists($self->__data->{'conscounts'})) { delete $self->__data->{'conscounts'}; }
+    #return;
+    $included_so = $self->get_included_so_terms;
+  }
+
+  $tva->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+
+  my %conscounts;
+
+  foreach my $cons (keys %$so_term_sets) {
+    my $filtered_vfs = $vfs;
+
+    my $so_terms = $so_term_sets->{$cons};
+
+    my %term_hash = map {$_ => 1} @$so_terms;
+
+    my @vfs_with_term = grep { scalar map { $term_hash{$_} ? 1 : () } @{$_->consequence_type()} } @$vfs;
+    $filtered_vfs = \@vfs_with_term;
+
+    $conscounts{$cons} = $tva->count_all_by_VariationFeatures_SO_terms($filtered_vfs,[map {$_->transcript} @transcripts],$so_terms,$included_so) ;;
+  }
+
+  if (!$included_so) {
+    $conscounts{'ALL'} = $tva->count_all_by_VariationFeatures($vfs,[map {$_->transcript} @transcripts]) ;
+  } else {
+    $conscounts{'ALL'} = $tva->count_all_by_VariationFeatures_SO_terms($vfs,[map {$_->transcript} @transcripts], $included_so) ;
+  }
+
+  # then store them in the gene's data hash
+  $self->__data->{'conscounts'} = \%conscounts;
+}
+
+sub need_consequence_check {
+  my( $self ) = @_;
+
+  my %options =  EnsEMBL::Web::Constants::VARIATION_OPTIONS;
+
+  my $hub  = $self->hub;
+
+  foreach ($hub->param) {
+    if ($hub->param($_) eq 'off' && $_ =~ /opt_/ && exists($options{'type'}{$_})) {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
 sub store_TransformedDomains {
   my ($self, $key) = @_;
   
